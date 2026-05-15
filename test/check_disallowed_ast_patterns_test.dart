@@ -1,111 +1,13 @@
 import 'package:test/test.dart';
 
 import '../tool/check_disallowed_ast_patterns.dart';
-
-const _testYaml = r'''
-rules:
-  - id: cascade_void_clear
-    message: 'no cascade clear'
-    match:
-      kind: cascaded_method_invocation
-      method_names:
-        - clear
-  - id: stream_where_is_map_as
-    message: 'use whereType'
-    match:
-      kind: stream_where_is_map_as
-  - id: avoid_print_suppression
-    message: 'do not suppress avoid_print'
-    match:
-      kind: comment_substring
-      contains: 'ignore: avoid_print'
-  - id: strict_raw_types
-    message: 'no raw generic core types'
-    match:
-      kind: raw_named_type
-      type_names:
-        - List
-        - Map
-        - Set
-        - Iterable
-        - Future
-        - Stream
-  - id: widget_build_method_too_long
-    message: 'widget build body too long'
-    match:
-      kind: method_body_line_span
-      function_name: build
-      max_body_line_span: 3
-      require_widget_class_extends: true
-  - id: sea_zone_local_id_extraction
-    message: 'do not strip sea-zone ids to local'
-    match:
-      kind: sea_zone_local_id_extraction
-  - id: sea_zone_bucket_lookup_without_canonical_key
-    message: 'sea-zone bucket lookup requires canonical key'
-    match:
-      kind: sea_zone_bucket_lookup_without_canonical_key
-  - id: province_lookup_unprefixed_literal
-    message: 'prefixed province id literals required for lookup'
-    match:
-      kind: unprefixed_province_id_string_literal_argument
-      method_names:
-        - getProvince
-        - tryGetProvince
-        - resolveToFullProvinceId
-      argument_index: 1
-  - id: province_world_state_lookup_unprefixed_literal
-    message: 'prefixed province id literals required for WorldState lookup'
-    match:
-      kind: unprefixed_province_id_string_literal_argument
-      method_names:
-        - tryGetProvince
-        - getProvince
-        - resolveToFullProvinceId
-      argument_index: 0
-  - id: province_local_id_from_unprefixed_literal
-    message: 'prefixed province id literals required for localIdFrom'
-    match:
-      kind: unprefixed_province_id_string_literal_argument
-      method_names:
-        - localIdFrom
-      argument_index: 0
-  - id: province_local_segment_boundary_only
-    message: 'localSegmentFromStoredGameState is boundary-only'
-    match:
-      kind: province_local_segment_boundary_only
-  - id: debug_console_logic_contract_boundary
-    message: 'debug console must use logic contract imports only'
-    match:
-      kind: scoped_package_import_contract
-      scoped_relative_path_prefixes:
-        - packages/colonizethis_debug_console/lib/
-      package_name: colonizethis_logic
-      allowed_imports:
-        - package:colonizethis_logic/debug_console_api.dart
-  - id: logic_lib_list_queue_remove_at_zero
-    message: >-
-      Do not use a List named queue as a FIFO frontier (queue.removeAt(0)).
-    match:
-      kind: simple_receiver_remove_at_zero
-      receiver_identifier: queue
-      relative_path_prefix: packages/colonizethis_logic/lib/src/
-  - id: prohibited_linear_province_lookup
-    message: >-
-      Do not chain .provinces.where(...).firstOrNull under
-      packages/colonizethis_logic/lib/src/.
-    match:
-      kind: linear_collection_where_first_or_null
-      collection_names:
-        - provinces
-      relative_path_prefix: packages/colonizethis_logic/lib/src/
-''';
+import 'disallowed_ast_patterns_test_yaml_fixture.dart';
 
 void main() {
   late List<DisallowedPatternRule> rules;
 
   setUp(() {
-    rules = loadDisallowedAstRulesForTest(_testYaml);
+    rules = loadDisallowedAstRulesForTest(disallowedAstPatternsTestYaml);
   });
 
   group('findDisallowedAstViolations', () {
@@ -715,7 +617,9 @@ void f(List<String> queue) {
         rules,
       );
       expect(
-        violations.where((e) => e.ruleId == 'logic_lib_list_queue_remove_at_zero'),
+        violations.where(
+          (e) => e.ruleId == 'logic_lib_list_queue_remove_at_zero',
+        ),
         isNotEmpty,
       );
     });
@@ -732,7 +636,9 @@ void f(List<String> queue) {
         rules,
       );
       expect(
-        violations.where((e) => e.ruleId == 'logic_lib_list_queue_remove_at_zero'),
+        violations.where(
+          (e) => e.ruleId == 'logic_lib_list_queue_remove_at_zero',
+        ),
         isEmpty,
       );
     });
@@ -842,24 +748,26 @@ Province? ok(world, String id) {
       );
     });
 
-    test('allows .provinces.where(...) without .firstOrNull (iterable use)',
-        () {
-      const src = r'''
+    test(
+      'allows .provinces.where(...) without .firstOrNull (iterable use)',
+      () {
+        const src = r'''
 class Province { final String id = ''; final String ownerId = ''; }
 class Region { List<Province> get provinces => const []; }
 int countOwned(Region region, String ownerId) {
   return region.provinces.where((p) => p.ownerId == ownerId).length;
 }
 ''';
-      expect(
-        findDisallowedAstViolations(
-          'packages/colonizethis_logic/lib/src/x.dart',
-          src,
-          rules,
-        ).where((e) => e.ruleId == 'prohibited_linear_province_lookup'),
-        isEmpty,
-      );
-    });
+        expect(
+          findDisallowedAstViolations(
+            'packages/colonizethis_logic/lib/src/x.dart',
+            src,
+            rules,
+          ).where((e) => e.ruleId == 'prohibited_linear_province_lookup'),
+          isEmpty,
+        );
+      },
+    );
 
     test(
       'ignores .provinces.where(...).firstOrNull outside scoped path prefix',

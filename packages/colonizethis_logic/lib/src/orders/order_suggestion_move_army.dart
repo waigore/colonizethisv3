@@ -5,6 +5,7 @@ import '../diplomacy/diplomacy_resolver.dart';
 import '../world/movement.dart';
 import '../world/player_view.dart';
 import '../world/province_lookup.dart';
+import '../world/unit_lookup.dart';
 import '../world/civilian_tile_occupancy.dart';
 import 'draft_orders_mutations.dart';
 import 'incremental_candidate_validator.dart';
@@ -75,6 +76,8 @@ List<MoveOrder> suggestMoveOrders(
         playerId: playerId,
         basePrefix: currentOrders,
         factionMembership: DiplomacyFactionMembership.from(game),
+        view: view,
+        unitsById: unitsByIdFromWorld(game.worldState),
       );
 
   for (final unit in view.ownUnits) {
@@ -224,6 +227,13 @@ bool _armyMoveNeedsDeclareWarTrial(
 /// When [playerOwnedFullProvinceIds] is provided by the caller, the picker
 /// skips the fallback owned-province [allProvinces] scan and reuses the
 /// provided set (Refs #2394).
+///
+/// When [playerView] / [unitsById] are provided (same contract as
+/// [IncrementalCandidateValidator.forPlayer]), each internal validator reuses
+/// them instead of embedding `buildPlayerView` / `unitsByIdFromWorld` scans.
+/// Callers such as the Flutter shell may supply these when they already hold a
+/// [PlayerView] for [playerId]; when omitted, behavior matches the historical
+/// path.
 List<ArmyMovePickerDestination> armyMovePickerDestinations({
   required Game game,
   required MapTopology topology,
@@ -231,6 +241,8 @@ List<ArmyMovePickerDestination> armyMovePickerDestinations({
   required Army army,
   required Orders currentOrders,
   Set<String>? playerOwnedFullProvinceIds,
+  PlayerView? playerView,
+  Map<String, Unit>? unitsById,
 }) {
   final diplo =
       currentOrders.diplomaticOrdersByPlayerId[playerId] ??
@@ -255,6 +267,8 @@ List<ArmyMovePickerDestination> armyMovePickerDestinations({
     playerId: playerId,
     basePrefix: currentOrders,
     factionMembership: factionMembership,
+    view: playerView,
+    unitsById: unitsById,
   );
   final declareWarTrialValidatorsByTargetFaction =
       <String, IncrementalCandidateValidator>{};
@@ -297,6 +311,8 @@ List<ArmyMovePickerDestination> armyMovePickerDestinations({
           playerId: playerId,
           basePrefix: trialOrders,
           factionMembership: factionMembership,
+          view: playerView,
+          unitsById: unitsById,
         );
       });
       if (!trialValidator.isArmyMoveAccepted(move)) {
@@ -375,6 +391,8 @@ List<ArmyMoveOrder> suggestArmyMoveOrders(
         playerId: playerId,
         basePrefix: currentOrders,
         factionMembership: DiplomacyFactionMembership.from(game),
+        view: view,
+        unitsById: unitsByIdFromWorld(game.worldState),
       );
 
   final playerOwnedFullProvinceIds = <String>{
