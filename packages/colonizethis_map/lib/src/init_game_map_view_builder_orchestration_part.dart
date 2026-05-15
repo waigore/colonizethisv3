@@ -236,14 +236,10 @@ _buildFactionColorData({
   required Map<String, (int r, int g, int b)>? greatPowerColorOverride,
 }) {
   final greatPowerIds = [for (final player in game.players) player.id];
-  final minorNationIds = [for (final nation in game.minorNations) nation.id];
-  final tribeIds = [for (final tribe in game.tribes) tribe.id];
   return (
     greatPowerFactionIds: greatPowerIds.toSet(),
-    factionColors: factionOwnershipColorMap(
-      greatPowerIds: greatPowerIds,
-      minorNationIds: minorNationIds,
-      tribeIds: tribeIds,
+    factionColors: factionOwnershipColorMapForGame(
+      game,
       greatPowerColorOverride: greatPowerColorOverride,
     ),
   );

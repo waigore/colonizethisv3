@@ -13,6 +13,7 @@ import 'port_icon_placement.dart';
 import 'region_constants.dart';
 import 'sea_zone_centroid_tile.dart';
 import 'tile_key_util.dart';
+import 'tile_map_capital_markers.dart';
 import 'tile_map_topology_helpers.dart';
 import 'tile_map_visualization_shared.dart';
 
