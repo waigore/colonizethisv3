@@ -22,6 +22,7 @@ class WorkTargetSelectionSnapshot {
     required this.currentOrders,
     required this.tileMapByRegion,
     this.sharedCandidateValidator,
+    this.playerOwnedProvinceIds,
   });
 
   final Game game;
@@ -30,6 +31,11 @@ class WorkTargetSelectionSnapshot {
   final MapTopology topology;
   final Orders currentOrders;
   final Map<String, TileMapResult>? tileMapByRegion;
+
+  /// Prefixed province ids owned by [playerId]. When set on a snapshot passed to
+  /// [PerPlayerWorkTargetSelectionCache.refresh], population reuses this set
+  /// instead of rescanning [allProvinces] per unit × work target (Refs #2394).
+  final Set<String>? playerOwnedProvinceIds;
 
   /// When non-null on the **output** snapshot passed to population strategies,
   /// all default population paths reuse this instance instead of rebuilding
@@ -100,6 +106,12 @@ class PerPlayerWorkTargetSelectionCache {
 
   void refresh(WorkTargetSelectionSnapshot snapshot) {
     final sharedValidator = _sharedOrBuildValidator(snapshot);
+    final playerOwnedProvinceIds =
+        snapshot.playerOwnedProvinceIds ??
+        <String>{
+          for (final e in snapshot.playerView.provincesById.entries)
+            if (e.value.ownerId == snapshot.playerId) e.key,
+        };
     final snapshotForPopulation = WorkTargetSelectionSnapshot(
       game: snapshot.game,
       playerId: snapshot.playerId,
@@ -108,6 +120,7 @@ class PerPlayerWorkTargetSelectionCache {
       currentOrders: snapshot.currentOrders,
       tileMapByRegion: snapshot.tileMapByRegion,
       sharedCandidateValidator: sharedValidator,
+      playerOwnedProvinceIds: playerOwnedProvinceIds,
     );
     final nextByTarget = <String, Set<String>>{};
     for (final entry in _strategies.entries) {
@@ -178,6 +191,7 @@ class PerPlayerWorkTargetSelectionCache {
         currentOrders: s.currentOrders,
         tileMapByRegion: s.tileMapByRegion,
         sharedCandidateValidator: sharedValidator,
+        playerOwnedProvinceIds: s.playerOwnedProvinceIds,
       );
       merged.addAll(valid);
     }
@@ -250,6 +264,7 @@ class PerPlayerWorkTargetSelectionCache {
         currentOrders: s.currentOrders,
         tileMapByRegion: s.tileMapByRegion,
         sharedCandidateValidator: sharedValidator,
+        playerOwnedProvinceIds: s.playerOwnedProvinceIds,
       );
       merged.addAll(valid);
     }

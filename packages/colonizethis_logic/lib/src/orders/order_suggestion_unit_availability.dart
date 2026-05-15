@@ -98,14 +98,17 @@ AvailableWorkTargetsForUnit getAvailableWorkTargetsForUnit({
     );
   }
 
-  final factionMembership = DiplomacyFactionMembership.from(game);
+  final playerOwnedProvinceIds = <String>{
+    for (final e in view.provincesById.entries)
+      if (e.value.ownerId == playerId) e.key,
+  };
   final sharedValidator = buildIncrementalCandidateValidator(
     game: game,
     topology: topology,
     playerId: playerId,
     baseOrders: currentOrders,
     tileMapByRegion: tileMapByRegion,
-    factionMembership: factionMembership,
+    factionMembership: DiplomacyFactionMembership.from(game),
   );
   final byTarget = <String, Set<String>>{};
   for (final target in allowed) {
@@ -119,6 +122,7 @@ AvailableWorkTargetsForUnit getAvailableWorkTargetsForUnit({
       currentOrders: currentOrders,
       tileMapByRegion: tileMapByRegion,
       sharedCandidateValidator: sharedValidator,
+      playerOwnedProvinceIds: playerOwnedProvinceIds,
     );
     if (tiles.isNotEmpty) {
       byTarget[target] = tiles;

@@ -95,6 +95,11 @@ Set<String> getValidWorkOrderTileKeysWithVisibility({
   required Orders currentOrders,
   Map<String, TileMapResult>? tileMapByRegion,
   IncrementalCandidateValidator? sharedCandidateValidator,
+
+  /// When non-null, must match ids from [view.provincesById] owned by the player.
+  /// Callers that invoke this many times per pass should supply a shared set to
+  /// avoid O(calls × provinces) [allProvinces] rescans (Refs #2394).
+  Set<String>? playerOwnedProvinceIds,
 }) {
   assert(
     sharedCandidateValidator == null ||
@@ -125,6 +130,11 @@ Set<String> getValidWorkOrderTileKeysWithVisibility({
 
   final factionMembership = sharedCandidateValidator?.factionMembershipSnapshot ??
       DiplomacyFactionMembership.from(game);
+  final ownedProvinceIds = playerOwnedProvinceIds ??
+      <String>{
+        for (final e in view.provincesById.entries)
+          if (e.value.ownerId == playerId) e.key,
+      };
   final raw = rawCandidateTilesForWorkTarget(
     game: game,
     playerId: playerId,
@@ -133,6 +143,7 @@ Set<String> getValidWorkOrderTileKeysWithVisibility({
         ? partiallyRevealedPrefixedProvinceIdsForPlayer(game: game, view: view)
         : null,
     tileMapByRegion: tileMapByRegion,
+    playerOwnedProvinceIds: ownedProvinceIds,
     factionMembership: factionMembership,
   );
   final sortedVisible = sortedVisibleWorkTargetCandidates(view, raw);
