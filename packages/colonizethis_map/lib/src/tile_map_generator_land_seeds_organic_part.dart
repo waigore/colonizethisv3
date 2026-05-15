@@ -171,8 +171,8 @@ int _minManhattanDistToOtherContinentCells(
   );
   entries.sort((a, b) => a.$1.compareTo(b.$1));
 
-  final next = grid.map((row) => row.toList()).toList();
-  final nextContinent = continentGrid.map((row) => row.toList()).toList();
+  final next = copyTileMapGrid(grid);
+  final nextContinent = copyTileMapGrid(continentGrid);
   final used = List<int>.filled(numContinents, 0);
   final buffer = params.continentBufferTiles == 0
       ? 1
@@ -256,7 +256,7 @@ _placeLandSeedsOrganicImpl(
 
   final landSeeds = <(int x, int y)>[];
   final continentBySeedIndex = <int>[];
-  var g = grid.map((row) => row.toList()).toList();
+  var g = copyTileMapGrid(grid);
   final continentGrid = List.generate(
     params.height,
     (_) => List.filled(params.width, -1),

@@ -207,8 +207,8 @@ bool _tryGrowOneCoastalCellForContinent(
   }
   final totalProvinces = provinceToContinent.length;
 
-  var g = grid.map((row) => row.toList()).toList();
-  var cg = continentGrid.map((row) => row.toList()).toList();
+  var g = copyTileMapGrid(grid);
+  var cg = copyTileMapGrid(continentGrid);
   final coastalByContinent = <int, List<(int x, int y)>>{};
   for (var c = 0; c < numContinents; c++) {
     coastalByContinent[c] = [];

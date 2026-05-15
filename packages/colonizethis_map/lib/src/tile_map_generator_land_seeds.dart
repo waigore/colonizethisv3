@@ -16,6 +16,7 @@ import 'grid_voronoi.dart';
 import 'tile_map_directions.dart';
 import 'tile_map_distance_sentinels.dart';
 import 'tile_map_land_seed_contract.dart';
+import 'tile_map_grid_copy.dart';
 import 'tile_map_land_sentinel.dart';
 
 part 'tile_map_generator_land_seeds_shared_part.dart';

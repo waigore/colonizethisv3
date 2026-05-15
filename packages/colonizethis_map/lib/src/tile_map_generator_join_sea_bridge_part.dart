@@ -20,9 +20,9 @@ extension _TileMapGenJoinSeaBridgePart on _TileMapGenJoinSea {
     }
     final numContinents = provinceToContinent.values.toSet().length;
     var didJoin = false;
-    var g = grid.map((row) => row.toList()).toList();
-    var tg = terrainGrid?.map((row) => row.toList()).toList();
-    var rg = resourceGrid?.map((row) => row.toList()).toList();
+    var g = copyTileMapGrid(grid);
+    var tg = terrainGrid != null ? copyTileMapGrid(terrainGrid) : null;
+    var rg = resourceGrid != null ? copyTileMapGrid(resourceGrid) : null;
     final ocean = _graph.oceanCells(
       g,
       seaZoneId,
@@ -257,34 +257,16 @@ extension _TileMapGenJoinSeaBridgePart on _TileMapGenJoinSea {
     final landTerrains = allowedTerrainsForRegion(mapRegionId);
     if (landTerrains.isEmpty) return;
     terrainGrid[y][x] = landTerrains[rnd.nextInt(landTerrains.length)];
-    final terrain = terrainGrid[y][x]!;
-    var allowed = Resource.values
-        .where(
-          (r) =>
-              rules.isAllowedInRegion(r, mapRegionId) &&
-              rules.isAllowedOnTerrain(r, terrain),
-        )
-        .toList();
-    if (allowed.isEmpty) return;
-    if (capState != null &&
-        (mapRegionId == 'oldWorld' || mapRegionId == 'newWorld') &&
-        capState.shouldRestrictToRegionOnly(allowed)) {
-      allowed = capState.filterToRegionOnly(allowed);
-      if (allowed.isEmpty) return;
-    }
-    if (rnd.nextDouble() > 0.4) return;
-    final weights = allowed.map((r) => rules.spawnWeight(r)).toList();
-    final sum = weights.reduce((a, b) => a + b);
-    var roll = rnd.nextDouble() * sum;
-    for (var i = 0; i < allowed.length; i++) {
-      roll -= weights[i];
-      if (roll <= 0) {
-        final placed = allowed[i];
-        resourceGrid[y][x] = placed;
-        capState?.record(placed);
-        break;
-      }
-    }
+    tryPlaceWeightedResourceAtCell(
+      resourceGrid: resourceGrid,
+      x: x,
+      y: y,
+      terrain: terrainGrid[y][x]!,
+      mapRegionId: mapRegionId,
+      rules: rules,
+      rnd: rnd,
+      capState: capState,
+    );
   }
 
   void preserveSeaFraction(
