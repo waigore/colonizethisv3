@@ -6,6 +6,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import '../constants.dart';
 import '../diplomacy/diplomacy_resolver.dart';
 import '../world/player_view.dart';
+import '../world/unit_lookup.dart';
 import 'incremental_candidate_validator.dart';
 import 'order_suggestion_context.dart';
 import 'order_suggestion_work_tile_keys.dart';
@@ -100,6 +101,7 @@ class PerPlayerWorkTargetSelectionCache {
       baseOrders: s.currentOrders,
       tileMapByRegion: s.tileMapByRegion,
       view: s.playerView,
+      unitsById: unitsByIdFromWorld(s.game.worldState),
       factionMembership: DiplomacyFactionMembership.from(s.game),
     );
   }

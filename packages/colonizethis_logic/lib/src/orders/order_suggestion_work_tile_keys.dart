@@ -194,6 +194,8 @@ Set<String> getValidWorkOrderTileKeysWithVisibility({
         playerId: playerId,
         baseOrders: currentOrders,
         tileMapByRegion: tileMapByRegion,
+        view: view,
+        unitsById: unitsByIdFromWorld(game.worldState),
         factionMembership: factionMembership,
       );
 

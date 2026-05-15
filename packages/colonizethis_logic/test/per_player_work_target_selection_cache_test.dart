@@ -186,6 +186,24 @@ void main() {
     );
 
     test(
+      'refresh built validator reuses snapshot playerView (Refs #2394)',
+      () {
+        final base = snapshotForPlayer('gp1');
+        Object? validatorView;
+        final cache = PerPlayerWorkTargetSelectionCache(
+          strategies: {
+            kWorkTargetExplore: (snapshot) {
+              validatorView = snapshot.sharedCandidateValidator?.view;
+              return const {'t1'};
+            },
+          },
+        );
+        cache.refresh(base);
+        expect(validatorView, same(base.playerView));
+      },
+    );
+
+    test(
       'refresh reuses caller-supplied sharedCandidateValidator when set (Refs #2394)',
       () {
         final base = snapshotForPlayer('gp1');
