@@ -148,6 +148,26 @@ class _TileMapGenTerrainResource {
     );
   }
 
+  void _addMountainAdjacentLandFrontierNeighbors(
+    Set<(int x, int y)> frontier,
+    List<List<TerrainType?>> terrainGrid,
+    List<List<String>> grid,
+    int x,
+    int y,
+    List<(int dx, int dy)> directions,
+  ) {
+    for (final (dx, dy) in directions) {
+      final nx = x + dx;
+      final ny = y + dy;
+      if (nx < 0 || nx >= params.width || ny < 0 || ny >= params.height) {
+        continue;
+      }
+      if (grid[ny][nx] != _landSentinel) continue;
+      if (terrainGrid[ny][nx] == TerrainType.mountain) continue;
+      frontier.add((nx, ny));
+    }
+  }
+
   /// One full-grid pass for mountain ridge top-up: cells eligible for frontier
   /// growth and the list of all non-mountain land (for final random fill).
   /// Refs #2489 P3.
@@ -164,16 +184,14 @@ class _TileMapGenTerrainResource {
         if (grid[y][x] != _landSentinel) continue;
         final t = terrainGrid[y][x];
         if (t == TerrainType.mountain) {
-          for (final (dx, dy) in directions) {
-            final nx = x + dx;
-            final ny = y + dy;
-            if (nx < 0 || nx >= params.width || ny < 0 || ny >= params.height) {
-              continue;
-            }
-            if (grid[ny][nx] != _landSentinel) continue;
-            if (terrainGrid[ny][nx] == TerrainType.mountain) continue;
-            frontier.add((nx, ny));
-          }
+          _addMountainAdjacentLandFrontierNeighbors(
+            frontier,
+            terrainGrid,
+            grid,
+            x,
+            y,
+            directions,
+          );
           continue;
         }
         remaining.add((x, y));
@@ -298,7 +316,8 @@ class _TileMapGenTerrainResource {
     if (currentMountain < targetMountain) {
       remainingNonMountain.shuffle(rnd);
       var i = 0;
-      while (currentMountain < targetMountain && i < remainingNonMountain.length) {
+      while (currentMountain < targetMountain &&
+          i < remainingNonMountain.length) {
         final (lx, ly) = remainingNonMountain[i++];
         if (terrainGrid[ly][lx] == TerrainType.mountain) continue;
         terrainGrid[ly][lx] = TerrainType.mountain;
