@@ -171,6 +171,7 @@ Future<void> _openProductionPanel(WidgetTester tester) async {
   final productionPanel = find.byKey(kCtE2EProductionPanelRootKey);
   final productionButton = find.byKey(kEmpireProductionButtonKey);
   final sw = Stopwatch()..start();
+  var idlePollMs = 25;
   while (sw.elapsed < const Duration(seconds: 20)) {
     if (productionPanel.evaluate().isNotEmpty) {
       return;
@@ -185,6 +186,7 @@ Future<void> _openProductionPanel(WidgetTester tester) async {
         timeout: const Duration(milliseconds: 600),
         phaseName: 'pump_until_sheet_cleared_production_open',
       );
+      idlePollMs = 25;
       continue;
     }
 
@@ -196,6 +198,7 @@ Future<void> _openProductionPanel(WidgetTester tester) async {
         timeout: const Duration(seconds: 2),
         phaseName: 'pump_until_production_path_shell_cleared',
       );
+      idlePollMs = 25;
       continue;
     }
 
@@ -210,6 +213,7 @@ Future<void> _openProductionPanel(WidgetTester tester) async {
       if (productionPanel.evaluate().isNotEmpty) {
         return;
       }
+      idlePollMs = 25;
       await tester.pump();
       if (productionPanel.evaluate().isNotEmpty) {
         return;
@@ -231,11 +235,13 @@ Future<void> _openProductionPanel(WidgetTester tester) async {
       )) {
         return;
       }
+      idlePollMs = 25;
       continue;
     }
     // Dismiss transient overlays/dialogs and retry opening from the rail.
     await e2eDismissTransientUi(tester);
-    continue;
+    await tester.pump(Duration(milliseconds: idlePollMs));
+    idlePollMs = e2eAdaptivePollRampAfterIdle(idlePollMs);
   }
 
   fail(
