@@ -18,18 +18,38 @@ List<List<List<int>>> manhattanDistToOtherContinentsMaps({
     final dist = maps[c];
     for (var y = 0; y < height; y++) {
       for (var x = 0; x < width; x++) {
-        var minDist = unreachable;
-        for (var ny = 0; ny < height; ny++) {
-          for (var nx = 0; nx < width; nx++) {
-            final cell = continentGrid[ny][nx];
-            if (cell < 0 || cell == c) continue;
-            final d = (x - nx).abs() + (y - ny).abs();
-            if (d < minDist) minDist = d;
-          }
-        }
-        dist[y][x] = minDist;
+        dist[y][x] = _minManhattanDistToForeignContinent(
+          continentGrid: continentGrid,
+          width: width,
+          height: height,
+          continentIndex: c,
+          x: x,
+          y: y,
+          unreachable: unreachable,
+        );
       }
     }
   }
   return maps;
+}
+
+int _minManhattanDistToForeignContinent({
+  required List<List<int>> continentGrid,
+  required int width,
+  required int height,
+  required int continentIndex,
+  required int x,
+  required int y,
+  required int unreachable,
+}) {
+  var minDist = unreachable;
+  for (var ny = 0; ny < height; ny++) {
+    for (var nx = 0; nx < width; nx++) {
+      final cell = continentGrid[ny][nx];
+      if (cell < 0 || cell == continentIndex) continue;
+      final d = (x - nx).abs() + (y - ny).abs();
+      if (d < minDist) minDist = d;
+    }
+  }
+  return minDist;
 }
