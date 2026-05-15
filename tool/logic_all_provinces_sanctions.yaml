@@ -50,7 +50,7 @@ sanctions:
     issue: https://github.com/waigore/colonizethisv3/issues/2278
 
   - path: packages/colonizethis_logic/lib/src/orders/order_suggestion_move_army.dart
-    line: 259
+    line: 263
     rationale: Army move picker fallback builds owned-province ids across regions when PlayerView is absent.
     spec: SPEC/program/logic-dual-region-province-access.md
     issue: https://github.com/waigore/colonizethisv3/issues/2394
