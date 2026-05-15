@@ -531,6 +531,10 @@ List<DiplomaticOrder> suggestDiplomaticOrders(
     }
 
     workingOrders = trialOrders;
+    // Keep [passValidator] aligned with accumulated **workingOrders** before the
+    // next target (including economic-only accepts that did not update
+    // [passValidator] in the primary/economic split above). Refs #2394.
+    passValidator = passValidator.forBasePrefix(workingOrders);
   }
 
   suggestions.sort((a, b) {
