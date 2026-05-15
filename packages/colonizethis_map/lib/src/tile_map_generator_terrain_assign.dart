@@ -176,15 +176,7 @@ class _TileMapGenTerrainResource {
     List<List<String>> grid,
     List<List<TerrainType?>> terrainGrid,
   ) {
-    final remainingLand = <(int x, int y)>[];
-    for (var y = 0; y < params.height; y++) {
-      for (var x = 0; x < params.width; x++) {
-        if (grid[y][x] != _landSentinel) continue;
-        if (terrainGrid[y][x] == TerrainType.mountain) continue;
-        remainingLand.add((x, y));
-      }
-    }
-    return remainingLand;
+    return _collectRemainingNonMountainLand(terrainGrid, grid);
   }
 
   /// Pass 6a: generate mountain ridges via random walks over land cells.
