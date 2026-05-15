@@ -142,13 +142,15 @@ int _mergeHomeFleetShipsForPlayer({
   required String localProvinceId,
   required int shipCount,
   required List<Fleet> fleets,
+  required Map<String, int> fleetIndexById,
   required int nextSeq,
 }) {
   if (shipCount <= 0 || regionId != kRegionOldWorld) return nextSeq;
   final fullProvinceId = '$regionId|$localProvinceId';
   final homeFleetId = homeFleetIdFor(player.id);
-  final existingIndex = fleets.indexWhere((f) => f.id == homeFleetId);
-  final existingFleet = existingIndex >= 0 ? fleets[existingIndex] : null;
+  final existingIndex = fleetIndexById[homeFleetId];
+  final existingFleet =
+      existingIndex != null ? fleets[existingIndex] : null;
   final existingShips = existingFleet?.ships ?? const <ShipInstance>[];
   final shipTypeId = startingShipTypeForPlayer(player);
   final (seqAfter, newInstances) = mintShipInstances(
@@ -166,8 +168,9 @@ int _mergeHomeFleetShipsForPlayer({
   );
   if (existingFleet == null) {
     fleets.add(homeFleet);
+    fleetIndexById[homeFleetId] = fleets.length - 1;
   } else {
-    fleets[existingIndex] = homeFleet;
+    fleets[existingIndex!] = homeFleet;
   }
   return seqAfter;
 }
@@ -187,6 +190,9 @@ Game addStartingMilitaryAndNaval({
   var oldWorldUnits = List<Unit>.from(game.worldState.oldWorld.units);
   var newWorldUnits = List<Unit>.from(game.worldState.newWorld.units);
   var fleets = List<Fleet>.from(game.worldState.fleets);
+  final fleetIndexById = <String, int>{
+    for (var i = 0; i < fleets.length; i++) fleets[i].id: i,
+  };
   var nextSeq = game.worldState.nextShipInstanceSeq;
   final inferredStart = inferNextShipInstanceSeqFromFleets(fleets);
   if (nextSeq < inferredStart) nextSeq = inferredStart;
@@ -213,6 +219,7 @@ Game addStartingMilitaryAndNaval({
       localProvinceId: localProvinceId,
       shipCount: shipCount,
       fleets: fleets,
+      fleetIndexById: fleetIndexById,
       nextSeq: nextSeq,
     );
   }
