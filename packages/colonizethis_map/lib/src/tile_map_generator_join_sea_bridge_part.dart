@@ -92,9 +92,9 @@ extension _TileMapGenJoinSeaBridgePart on _TileMapGenJoinSea {
         }
       }
       if (joinIterations >= maxJoinIterationsPerContinent) {
-        final stillSplit = _graph.connectedComponentsOfLand(
-          _landCellsForContinent(g, provinceToContinent, c, seaZoneId),
-        );
+        // [landCells] is kept in sync with the grid across bridge / sea-restore;
+        // avoid a redundant O(W×H) rescan for the diagnostic path (Refs #2489 P4).
+        final stillSplit = _graph.connectedComponentsOfLand(landCells);
         if (stillSplit.length > 1) {
           _log.w(
             'join continents hit iteration cap with >1 land component for '
