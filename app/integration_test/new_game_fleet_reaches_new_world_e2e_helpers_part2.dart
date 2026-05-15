@@ -300,12 +300,12 @@ Future<void> _awaitNwCoastalOrVisibleLandForBundledExploreE2e({
       await closeBottomSheet(tester, overallTimeout: _kMaxUiResponseWait);
       return;
     }
-    await closeBottomSheet(tester, overallTimeout: _kMaxUiResponseWait);
     await _tryNavalMoveSegment(
       tester,
       l10n,
       useNewWorldMapTabFirst: true,
       allowWarpDestinations: false,
+      navalPanelAlreadyOpen: true,
     );
     await closeBottomSheet(tester, overallTimeout: _kMaxUiResponseWait);
     await _advanceOneHumanTurn(tester, l10n);

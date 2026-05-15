@@ -102,9 +102,13 @@ void main() {
         );
         return;
       }
-      await closeBottomSheet(tester, perf: perf, overallTimeout: _kMaxUiResponseWait);
 
-      await _tryNavalMoveSegment(tester, l10n, perf: perf);
+      await _tryNavalMoveSegment(
+        tester,
+        l10n,
+        perf: perf,
+        navalPanelAlreadyOpen: true,
+      );
       await closeBottomSheet(tester, perf: perf, overallTimeout: _kMaxUiResponseWait);
 
       if (_harnessDetectsNonHomeFleetInNewWorld(tester)) {
@@ -210,9 +214,13 @@ void main() {
           await closeBottomSheet(tester, perf: perf, overallTimeout: _kMaxUiResponseWait);
           break;
         }
-        await closeBottomSheet(tester, perf: perf, overallTimeout: _kMaxUiResponseWait);
 
-        await _tryNavalMoveSegment(tester, l10n, perf: perf);
+        await _tryNavalMoveSegment(
+          tester,
+          l10n,
+          perf: perf,
+          navalPanelAlreadyOpen: true,
+        );
         await closeBottomSheet(tester, perf: perf, overallTimeout: _kMaxUiResponseWait);
 
         if (_harnessDetectsNonHomeFleetInNewWorld(tester)) {

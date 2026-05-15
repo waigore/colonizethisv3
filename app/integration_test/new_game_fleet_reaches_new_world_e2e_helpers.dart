@@ -186,6 +186,9 @@ Future<void> _tryNavalMoveSegment(
   AppLocalizations l10n, {
   bool useNewWorldMapTabFirst = false,
   bool allowWarpDestinations = true,
+  /// When true, the naval panel is already open from a prior [openNavalPanel]
+  /// in the same turn iteration — skip close/reopen (Refs #2336 Bottleneck 4).
+  bool navalPanelAlreadyOpen = false,
   E2ePerfLog? perf,
 }) async {
   final phaseSw = Stopwatch()..start();
@@ -194,12 +197,14 @@ Future<void> _tryNavalMoveSegment(
   } else {
     await _tapOldWorldRegionTab(tester, l10n);
   }
-  await openNavalPanel(
-    tester,
-    perf: perf,
-    timeout: _kMaxUiResponseWait,
-    bottomSheetCloseTimeout: _kMaxUiResponseWait,
-  );
+  if (!navalPanelAlreadyOpen) {
+    await openNavalPanel(
+      tester,
+      perf: perf,
+      timeout: _kMaxUiResponseWait,
+      bottomSheetCloseTimeout: _kMaxUiResponseWait,
+    );
+  }
   final tappedMove = await _tapMoveOnFirstNonHomeFleet(tester);
   if (!tappedMove) {
     perf?.timing(
