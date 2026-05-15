@@ -35,25 +35,6 @@ List<(int x, int y)> _organicSeedCloseSeaCandidates(
   return candidates;
 }
 
-int _minManhattanDistToOtherContinentCells(
-  List<List<int>> continentGrid,
-  TileMapLandSeedParams params,
-  int x,
-  int y,
-  int ownContinent,
-) {
-  var minDistToOther = params.width + params.height;
-  for (var ny = 0; ny < params.height; ny++) {
-    for (var nx = 0; nx < params.width; nx++) {
-      final cell = continentGrid[ny][nx];
-      if (cell < 0 || cell == ownContinent) continue;
-      final d = (x - nx).abs() + (y - ny).abs();
-      if (d < minDistToOther) minDistToOther = d;
-    }
-  }
-  return minDistToOther;
-}
-
 (int, int) _pickBestOrganicSeaCandidate(
   List<(int x, int y)> candidates,
   List<(int x, int y)> ownLandOrSeed,
@@ -63,17 +44,21 @@ int _minManhattanDistToOtherContinentCells(
   double awayPenalty,
   Random rnd,
 ) {
+  final unreachableOther = params.width + params.height;
+  final distToOtherContinent = manhattanDistToNearestSourceXY(
+    params.width,
+    params.height,
+    (x, y) {
+      final cell = continentGrid[y][x];
+      return cell >= 0 && cell != continentIndex;
+    },
+    distanceWhenNoSources: unreachableOther,
+  );
   var bestScore = -1e100;
   final bestCandidates = <(int x, int y)>[];
   for (final (x, y) in candidates) {
     final minDistToOwn = _minManhattanDistToPoints(x, y, ownLandOrSeed);
-    final minDistToOther = _minManhattanDistToOtherContinentCells(
-      continentGrid,
-      params,
-      x,
-      y,
-      continentIndex,
-    );
+    final minDistToOther = distToOtherContinent[y][x];
     final score = -minDistToOwn + awayPenalty * minDistToOther;
     if (score > bestScore) {
       bestScore = score;
