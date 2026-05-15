@@ -127,6 +127,110 @@ Future<void> e2eCloseBottomSheet(
   );
 }
 
+/// Opens the civilian units panel from the empire rail or the first civilian
+/// marker, closing a conflicting naval/civilian sheet first when needed.
+///
+/// Single canonical implementation for full-turn and fleet E2E (GitHub #2336
+/// / AC2). Uses adaptive waits for rail/marker readiness instead of blind
+/// idle pumps.
+Future<void> e2eOpenCivilianPanel(
+  WidgetTester tester, {
+  Duration timeout = const Duration(seconds: 20),
+  E2ePerfLog? perf,
+  Duration bottomSheetCloseTimeout = kE2eDefaultBottomSheetCloseTimeout,
+  String afterSheetPanelsClearPhase =
+      'pump_until_panels_cleared_after_close_sheet_civilian_open',
+}) async {
+  final sw = Stopwatch()..start();
+  final empireRailButton = find.byKey(kEmpireCivilianUnitsButtonKey);
+  final markerButton = find.byKey(kCtE2EOpenFirstCivilianMarkerPanelKey);
+  final civilianPanel = find.byKey(kCtE2ECivilianPanelRootKey);
+  final navalPanel = find.byKey(kCtE2ENavalPanelRootKey);
+  Future<bool> tryOpen(Finder trigger) async {
+    if (civilianPanel.evaluate().isNotEmpty) {
+      return true;
+    }
+    final tappable = trigger.hitTestable();
+    if (tappable.evaluate().isEmpty) {
+      await e2eDismissTransientUi(tester, perf: perf);
+      return false;
+    }
+    await tester.tap(tappable.first, warnIfMissed: false);
+    if (civilianPanel.evaluate().isNotEmpty) {
+      return true;
+    }
+    await tester.pump();
+    if (civilianPanel.evaluate().isNotEmpty) {
+      return true;
+    }
+    return e2ePumpUntilConditionOrIdle(
+      tester,
+      () => civilianPanel.evaluate().isNotEmpty,
+      timeout: const Duration(seconds: 3),
+      perf: perf,
+      phaseName: 'pump_until_civilian_panel_after_trigger_tap',
+    );
+  }
+
+  var panelPollMs = 25;
+  while (sw.elapsed < timeout) {
+    if (civilianPanel.evaluate().isNotEmpty ||
+        navalPanel.evaluate().isNotEmpty) {
+      await e2eCloseBottomSheet(
+        tester,
+        perf: perf,
+        overallTimeout: bottomSheetCloseTimeout,
+      );
+      await e2ePumpUntilConditionOrIdle(
+        tester,
+        () =>
+            civilianPanel.evaluate().isEmpty &&
+            navalPanel.evaluate().isEmpty &&
+            find.byType(BottomSheet).evaluate().isEmpty,
+        timeout: const Duration(milliseconds: 600),
+        perf: perf,
+        phaseName: afterSheetPanelsClearPhase,
+      );
+      panelPollMs = 25;
+      continue;
+    }
+    if (empireRailButton.evaluate().isNotEmpty) {
+      if (await tryOpen(empireRailButton)) {
+        perf?.timing('open_panel_civilian', sw.elapsed);
+        return;
+      }
+      panelPollMs = 25;
+      continue;
+    }
+    if (markerButton.evaluate().isNotEmpty) {
+      if (await tryOpen(markerButton)) {
+        perf?.timing('open_panel_civilian', sw.elapsed);
+        return;
+      }
+      panelPollMs = 25;
+      continue;
+    }
+    if (await e2ePumpUntilConditionOrIdle(
+      tester,
+      () =>
+          empireRailButton.hitTestable().evaluate().isNotEmpty ||
+          markerButton.hitTestable().evaluate().isNotEmpty,
+      timeout: Duration(milliseconds: panelPollMs),
+      perf: perf,
+      phaseName: 'pump_until_civilian_rail_or_marker_hit_testable',
+    )) {
+      panelPollMs = 25;
+      continue;
+    }
+    panelPollMs = e2eAdaptivePollRampAfterIdle(panelPollMs);
+  }
+  fail(
+    'Timed out after ${timeout.inSeconds}s waiting for a civilian panel opener. '
+    'empire=$empireRailButton marker=$markerButton '
+    'Last exception: ${tester.takeException()}',
+  );
+}
+
 /// Dismisses snackbars, generic OK dialogs, [AlertDialog] actions, bottom sheets,
 /// and [CtDialogShell] overlays (union of fleet + full-turn E2E paths).
 Future<void> e2eDismissTransientUi(
@@ -267,6 +371,11 @@ Future<void> e2eWaitUntilFound(
   E2ePerfLog? perf,
   String phaseName = 'wait_until_found',
 }) async {
+  if (finder.evaluate().isNotEmpty) {
+    perf?.bumpCounter('wait_until_found_calls', meta: 'phase=$phaseName');
+    perf?.timing(phaseName, Duration.zero, meta: 'result=found_immediate');
+    return;
+  }
   final sw = Stopwatch()..start();
   perf?.bumpCounter('wait_until_found_calls', meta: 'phase=$phaseName');
   var stepMs = 25;
@@ -408,6 +517,13 @@ Future<void> e2eWaitUntilAnyFinderHitTestable(
 }) async {
   if (finders.isEmpty) {
     return;
+  }
+  for (final finder in finders) {
+    if (finder.hitTestable().evaluate().isNotEmpty) {
+      perf?.bumpCounter('wait_until_any_calls', meta: 'phase=$phaseName');
+      perf?.timing(phaseName, Duration.zero, meta: 'result=found_immediate');
+      return;
+    }
   }
   final sw = Stopwatch()..start();
   perf?.bumpCounter('wait_until_any_calls', meta: 'phase=$phaseName');

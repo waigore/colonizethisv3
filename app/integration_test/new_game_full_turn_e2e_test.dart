@@ -16,75 +16,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
 
-Future<void> _openCivilianPanel(
-  WidgetTester tester, {
-  Duration timeout = const Duration(seconds: 20),
-  E2ePerfLog? perf,
-}) async {
-  final sw = Stopwatch()..start();
-  final empireRailButton = find.byKey(kEmpireCivilianUnitsButtonKey);
-  final markerButton = find.byKey(kCtE2EOpenFirstCivilianMarkerPanelKey);
-  final civilianPanel = find.byKey(kCtE2ECivilianPanelRootKey);
-  final navalPanel = find.byKey(kCtE2ENavalPanelRootKey);
-  Future<bool> tryOpen(Finder trigger) async {
-    if (civilianPanel.evaluate().isNotEmpty) {
-      return true;
-    }
-    final tappable = trigger.hitTestable();
-    if (tappable.evaluate().isEmpty) {
-      // Dismiss blocking overlays/dialogs before retrying.
-      await e2eDismissTransientUi(tester, perf: perf);
-      return false;
-    }
-    await tester.tap(tappable.first, warnIfMissed: false);
-    await tester.pump();
-    final openDeadline = DateTime.now().add(const Duration(seconds: 3));
-    var openPollMs = 25;
-    while (DateTime.now().isBefore(openDeadline)) {
-      if (civilianPanel.evaluate().isNotEmpty) {
-        return true;
-      }
-      await tester.pump(Duration(milliseconds: openPollMs));
-      openPollMs = e2eAdaptivePollRampAfterIdle(openPollMs);
-    }
-    return false;
-  }
-
-  var panelPollMs = 25;
-  while (sw.elapsed < timeout) {
-    if (civilianPanel.evaluate().isNotEmpty ||
-        navalPanel.evaluate().isNotEmpty) {
-      await e2eCloseBottomSheet(tester, perf: perf);
-      await tester.pump(Duration(milliseconds: panelPollMs));
-      panelPollMs = e2eAdaptivePollRampAfterIdle(panelPollMs);
-      continue;
-    }
-    if (empireRailButton.evaluate().isNotEmpty) {
-      if (await tryOpen(empireRailButton)) {
-        perf?.timing('open_panel_civilian', sw.elapsed);
-        return;
-      }
-      panelPollMs = 25;
-      continue;
-    }
-    if (markerButton.evaluate().isNotEmpty) {
-      if (await tryOpen(markerButton)) {
-        perf?.timing('open_panel_civilian', sw.elapsed);
-        return;
-      }
-      panelPollMs = 25;
-      continue;
-    }
-    await tester.pump(Duration(milliseconds: panelPollMs));
-    panelPollMs = e2eAdaptivePollRampAfterIdle(panelPollMs);
-  }
-  fail(
-    'Timed out after ${timeout.inSeconds}s waiting for a civilian panel opener. '
-    'empire=$empireRailButton marker=$markerButton '
-    'Last exception: ${tester.takeException()}',
-  );
-}
-
 Future<void> _openPanelFromMarker(
   WidgetTester tester, {
   required Finder markerButton,
@@ -103,20 +34,42 @@ Future<void> _openPanelFromMarker(
     if (tappable.evaluate().isEmpty) {
       // Clear transient overlays/dialogs that can block marker taps.
       await e2eDismissTransientUi(tester, perf: perf);
-      await tester.pump(Duration(milliseconds: panelPollMs));
-      panelPollMs = e2eAdaptivePollRampAfterIdle(panelPollMs);
-      continue;
-    }
-    await tester.tap(tappable.first, warnIfMissed: false);
-    final openDeadline = DateTime.now().add(const Duration(seconds: 3));
-    var openPollMs = 25;
-    while (DateTime.now().isBefore(openDeadline)) {
       if (panelRoot.evaluate().isNotEmpty) {
         perf?.timing('open_panel_from_marker', sw.elapsed);
         return;
       }
-      await tester.pump(Duration(milliseconds: openPollMs));
-      openPollMs = e2eAdaptivePollRampAfterIdle(openPollMs);
+      if (await e2ePumpUntilConditionOrIdle(
+        tester,
+        () => markerButton.hitTestable().evaluate().isNotEmpty,
+        timeout: Duration(milliseconds: panelPollMs),
+        perf: perf,
+        phaseName: 'pump_until_marker_hit_testable_after_dismiss',
+      )) {
+        panelPollMs = 25;
+      } else {
+        panelPollMs = e2eAdaptivePollRampAfterIdle(panelPollMs);
+      }
+      continue;
+    }
+    await tester.tap(tappable.first, warnIfMissed: false);
+    if (panelRoot.evaluate().isNotEmpty) {
+      perf?.timing('open_panel_from_marker', sw.elapsed);
+      return;
+    }
+    await tester.pump();
+    if (panelRoot.evaluate().isNotEmpty) {
+      perf?.timing('open_panel_from_marker', sw.elapsed);
+      return;
+    }
+    if (await e2ePumpUntilConditionOrIdle(
+      tester,
+      () => panelRoot.evaluate().isNotEmpty,
+      timeout: const Duration(seconds: 3),
+      perf: perf,
+      phaseName: 'pump_until_marker_panel_root_after_tap',
+    )) {
+      perf?.timing('open_panel_from_marker', sw.elapsed);
+      return;
     }
     panelPollMs = 25;
     await tester.pump(Duration(milliseconds: panelPollMs));
@@ -132,7 +85,7 @@ Future<void> _openProductionPanel(WidgetTester tester) async {
   final productionPanel = find.byKey(kCtE2EProductionPanelRootKey);
   final productionButton = find.byKey(kEmpireProductionButtonKey);
   final sw = Stopwatch()..start();
-  var prodPollMs = 25;
+  var idlePollMs = 25;
   while (sw.elapsed < const Duration(seconds: 20)) {
     if (productionPanel.evaluate().isNotEmpty) {
       return;
@@ -140,7 +93,14 @@ Future<void> _openProductionPanel(WidgetTester tester) async {
 
     if (find.byType(BottomSheet).evaluate().isNotEmpty) {
       await e2eCloseBottomSheet(tester);
-      prodPollMs = 25;
+      // Exit the spin loop as soon as the sheet is gone (Refs #2336 H7).
+      await e2ePumpUntilConditionOrIdle(
+        tester,
+        () => find.byType(BottomSheet).evaluate().isEmpty,
+        timeout: const Duration(milliseconds: 600),
+        phaseName: 'pump_until_sheet_cleared_production_open',
+      );
+      idlePollMs = 25;
       continue;
     }
 
@@ -152,7 +112,7 @@ Future<void> _openProductionPanel(WidgetTester tester) async {
         timeout: const Duration(seconds: 2),
         phaseName: 'pump_until_production_path_shell_cleared',
       );
-      prodPollMs = 25;
+      idlePollMs = 25;
       continue;
     }
 
@@ -162,6 +122,16 @@ Future<void> _openProductionPanel(WidgetTester tester) async {
           ? productionButtonHit
           : productionButton;
       await tester.tap(target.first, warnIfMissed: false);
+      // Match civilian/naval open: skip the first poll wait when the panel
+      // subtree mounts synchronously (Refs #2336 adaptive polling / H7).
+      if (productionPanel.evaluate().isNotEmpty) {
+        return;
+      }
+      idlePollMs = 25;
+      await tester.pump();
+      if (productionPanel.evaluate().isNotEmpty) {
+        return;
+      }
       await e2eWaitUntilFound(
         tester,
         productionPanel,
@@ -171,15 +141,31 @@ Future<void> _openProductionPanel(WidgetTester tester) async {
       if (productionPanel.evaluate().isNotEmpty) {
         return;
       }
-      prodPollMs = 25;
-    } else {
-      // Dismiss transient overlays/dialogs and retry opening from the rail.
-      await e2eDismissTransientUi(tester);
-      prodPollMs = 25;
+      if (await e2ePumpUntilConditionOrIdle(
+        tester,
+        () => productionPanel.evaluate().isNotEmpty,
+        timeout: const Duration(milliseconds: 600),
+        phaseName: 'pump_until_production_panel_after_rail_tap_miss',
+      )) {
+        return;
+      }
+      idlePollMs = 25;
       continue;
     }
-    await tester.pump(Duration(milliseconds: prodPollMs));
-    prodPollMs = e2eAdaptivePollRampAfterIdle(prodPollMs);
+    // Dismiss transient overlays/dialogs and retry opening from the rail.
+    await e2eDismissTransientUi(tester);
+    if (await e2ePumpUntilConditionOrIdle(
+      tester,
+      () =>
+          productionPanel.evaluate().isNotEmpty ||
+          productionButton.hitTestable().evaluate().isNotEmpty,
+      timeout: Duration(milliseconds: idlePollMs),
+      phaseName: 'pump_until_production_entry_after_dismiss_transient',
+    )) {
+      idlePollMs = 25;
+    } else {
+      idlePollMs = e2eAdaptivePollRampAfterIdle(idlePollMs);
+    }
   }
 
   fail(
@@ -400,12 +386,12 @@ void main() {
       }
 
       // --- Civilian (empire rail): baseline ---
-      await _openCivilianPanel(tester, perf: perf);
+      await e2eOpenCivilianPanel(tester, perf: perf);
       await expectCivilianPanelTexts();
       await e2eCloseBottomSheet(tester, perf: perf);
 
       // --- Builder: build improvement + first legal tile (e2e tap target) ---
-      await _openCivilianPanel(tester, perf: perf);
+      await e2eOpenCivilianPanel(tester, perf: perf);
       await _tapFirstAssignInCivilianPanel(tester);
       await tester.tap(find.text('Build improvement'));
       await e2eWaitUntilFound(
@@ -426,7 +412,7 @@ void main() {
       await e2eCloseBottomSheet(tester, perf: perf);
 
       // --- Explorer: prospect + first legal tile ---
-      await _openCivilianPanel(tester, perf: perf);
+      await e2eOpenCivilianPanel(tester, perf: perf);
       await _tapAssignOnCivilianRowWithTitle(tester, kUnitTypeExplorer);
       await tester.tap(find.text('Prospect'));
       await e2eWaitUntilFound(
@@ -605,8 +591,7 @@ void main() {
           if (turnAfterFinder.evaluate().isEmpty) {
             return false;
           }
-          final turnAfter =
-              turnAfterFinder.evaluate().single.widget as Text;
+          final turnAfter = turnAfterFinder.evaluate().single.widget as Text;
           return turnAfter.data != turnLabelBefore;
         },
         timeout: const Duration(seconds: 2),

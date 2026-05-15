@@ -30,7 +30,10 @@ Future<bool> _pollUntilNavalPanelVisible(
       return true;
     }
     await tester.pump(Duration(milliseconds: stepMs));
-    stepMs = e2eAdaptivePollRampAfterIdle(stepMs);
+    // Doubling backoff capped at 500ms (same as [e2eWaitForMapHudAfterNewGameStart];
+    // Refs #2336 AC5) — fewer idle frames than 25→100ms-only ramp when the panel
+    // mounts after a marker/rail tap under headless Linux load.
+    stepMs = e2eNextIdlePollStepMs(stepMs);
   }
   return false;
 }
@@ -77,9 +80,19 @@ Future<void> _openNavalPanel(WidgetTester tester, {E2ePerfLog? perf}) async {
         perf?.timing('open_panel_naval', phaseSw.elapsed);
         return;
       }
+      // Bounded condition pumps instead of a single blind idle frame (Refs
+      // #2336 H6 / adaptive polling).
+      if (await e2ePumpUntilConditionOrIdle(
+        tester,
+        () => navalPanel.evaluate().isNotEmpty,
+        timeout: const Duration(milliseconds: 600),
+        perf: perf,
+        phaseName: 'pump_until_naval_visible_after_marker_tap',
+      )) {
+        perf?.timing('open_panel_naval', phaseSw.elapsed);
+        return;
+      }
       navalPollMs = 25;
-      await tester.pump(Duration(milliseconds: navalPollMs));
-      navalPollMs = e2eAdaptivePollRampAfterIdle(navalPollMs);
       continue;
     }
     final railHit = btn.hitTestable();
@@ -89,6 +102,16 @@ Future<void> _openNavalPanel(WidgetTester tester, {E2ePerfLog? perf}) async {
         tester,
         navalPanel,
         const Duration(seconds: 3),
+      )) {
+        perf?.timing('open_panel_naval', phaseSw.elapsed);
+        return;
+      }
+      if (await e2ePumpUntilConditionOrIdle(
+        tester,
+        () => navalPanel.evaluate().isNotEmpty,
+        timeout: const Duration(milliseconds: 600),
+        perf: perf,
+        phaseName: 'pump_until_naval_visible_after_rail_tap',
       )) {
         perf?.timing('open_panel_naval', phaseSw.elapsed);
         return;
@@ -218,7 +241,14 @@ Future<void> _pickMoveDestinationAndConfirm(
       for (var i = 0; i < 20 && warp.hitTestable().evaluate().isEmpty; i++) {
         ensureBudget('warp drag $i');
         await tester.drag(sc, const Offset(0, -120));
-        await tester.pump();
+        // Short-circuit as soon as the warp row becomes hit-testable instead of
+        // a single frame pump per drag (Refs #2336 H4 / adaptive polling).
+        await e2ePumpUntilConditionOrIdle(
+          tester,
+          () => warp.hitTestable().evaluate().isNotEmpty,
+          timeout: const Duration(milliseconds: 400),
+          phaseName: 'pump_until_warp_row_visible_after_move_dialog_drag',
+        );
       }
       if (warp.hitTestable().evaluate().isEmpty) {
         fail(
