@@ -267,6 +267,11 @@ Future<void> e2eWaitUntilFound(
   E2ePerfLog? perf,
   String phaseName = 'wait_until_found',
 }) async {
+  if (finder.evaluate().isNotEmpty) {
+    perf?.bumpCounter('wait_until_found_calls', meta: 'phase=$phaseName');
+    perf?.timing(phaseName, Duration.zero, meta: 'result=found_immediate');
+    return;
+  }
   final sw = Stopwatch()..start();
   perf?.bumpCounter('wait_until_found_calls', meta: 'phase=$phaseName');
   var stepMs = 25;
