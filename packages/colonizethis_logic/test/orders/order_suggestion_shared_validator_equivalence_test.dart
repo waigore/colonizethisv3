@@ -113,6 +113,17 @@ void main() {
       expect(sharedPath, equals(defaultPath));
     });
 
+    test('suggestDiplomaticOrders is deterministic across repeated calls', () {
+      final game = buildGame();
+      final topology = buildTopology();
+      final view = buildPlayerView(game, topology, gp);
+      const orders = Orders();
+
+      final first = suggestDiplomaticOrders(view, game, topology, orders);
+      final second = suggestDiplomaticOrders(view, game, topology, orders);
+      expect(second, equals(first));
+    });
+
     test(
       'shared validator built with externally provided view/unitsById produces '
       'identical suggestions to forPlayer default path (no internal rebuild)',

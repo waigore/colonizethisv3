@@ -450,6 +450,9 @@ List<DiplomaticOrder> suggestDiplomaticOrders(
 
   final sortedTargetIds = unionTargets.toList()..sort();
   var workingOrders = currentOrders;
+  // Rebind [basePrefix] per target via [forBasePrefix]; pay view/units/membership
+  // setup once for the whole suggestion pass (Refs #2394).
+  IncrementalCandidateValidator? passValidator;
   for (final targetId in sortedTargetIds) {
     if (targetId == playerId) continue;
 
@@ -467,16 +470,19 @@ List<DiplomaticOrder> suggestDiplomaticOrders(
 
     // One incremental validator per trial prefix: amortizes validator setup
     // across all candidates in the pass (Refs #2394).
-    final prefixPassValidator = buildIncrementalCandidateValidator(
-      game: game,
-      topology: topology,
-      playerId: playerId,
-      baseOrders: trialOrders,
-      tileMapByRegion: tileMapByRegion,
-      view: view,
-      unitsById: unitsByIdForDiplomatic,
-      factionMembership: factionMembership,
-    );
+    final prefixPassValidator = passValidator == null
+        ? buildIncrementalCandidateValidator(
+            game: game,
+            topology: topology,
+            playerId: playerId,
+            baseOrders: trialOrders,
+            tileMapByRegion: tileMapByRegion,
+            view: view,
+            unitsById: unitsByIdForDiplomatic,
+            factionMembership: factionMembership,
+          )
+        : passValidator.forBasePrefix(trialOrders);
+    passValidator = prefixPassValidator;
     var prefixPassAcceptedOrder = false;
     for (final candidate in candidates) {
       if (candidate.type == DiplomaticOrderType.grantAid ||
@@ -499,20 +505,14 @@ List<DiplomaticOrder> suggestDiplomaticOrders(
       break;
     }
 
-    // Rebuild only when the non-economic pass changed the trial prefix; when
+    // Rebind only when the non-economic pass changed the trial prefix; when
     // it did not accept anything, economic probes share [prefixPassValidator].
     final economicPassValidator = prefixPassAcceptedOrder
-        ? buildIncrementalCandidateValidator(
-            game: game,
-            topology: topology,
-            playerId: playerId,
-            baseOrders: trialOrders,
-            tileMapByRegion: tileMapByRegion,
-            view: view,
-            unitsById: unitsByIdForDiplomatic,
-            factionMembership: factionMembership,
-          )
+        ? prefixPassValidator.forBasePrefix(trialOrders)
         : prefixPassValidator;
+    if (prefixPassAcceptedOrder) {
+      passValidator = economicPassValidator;
+    }
     for (final candidate in candidates) {
       if (candidate.type != DiplomaticOrderType.grantAid &&
           candidate.type != DiplomaticOrderType.setSubsidy) {
