@@ -6,6 +6,7 @@ import 'package:image/image.dart' as img;
 
 import 'init_game_map_view_data.dart';
 import 'tile_map_colors.dart';
+import 'tile_map_resource_legend.dart';
 
 export 'tile_map_colors.dart';
 export 'tile_map_resource_legend.dart';
@@ -282,6 +283,60 @@ int drawLegendLine(img.Image image, int y, int r, int g, int b, String label) {
     color: black,
   );
   return y + legendLineHeight;
+}
+
+/// Layout variant for [drawResourceLegendRows] (Refs #2489 D7/D9 legend dedup).
+enum ResourceLegendRowsStyle {
+  /// `"<letter>  <label>"` at [legendPadding] (game-world geographic PNG).
+  compactInline,
+
+  /// Letter at [legendPadding]; label column aligned with color-swatch legends.
+  tileMapColumns,
+}
+
+/// Draws resource legend rows. Returns y after the last row.
+int drawResourceLegendRows(
+  img.Image image, {
+  required int legendY,
+  required img.Color textColor,
+  required Iterable<Resource> resources,
+  ResourceLegendRowsStyle style = ResourceLegendRowsStyle.tileMapColumns,
+}) {
+  var y = legendY;
+  for (final r in resources) {
+    final letter = resourceToLegendLetter(r);
+    final label = resourceToLegendLabel(r);
+    switch (style) {
+      case ResourceLegendRowsStyle.compactInline:
+        img.drawString(
+          image,
+          '$letter  $label',
+          font: img.arial14,
+          x: legendPadding,
+          y: y,
+          color: textColor,
+        );
+      case ResourceLegendRowsStyle.tileMapColumns:
+        img.drawString(
+          image,
+          letter,
+          font: img.arial14,
+          x: legendPadding,
+          y: y,
+          color: textColor,
+        );
+        img.drawString(
+          image,
+          '  $label',
+          font: img.arial14,
+          x: legendPadding + swatchSize + swatchGap,
+          y: y,
+          color: textColor,
+        );
+    }
+    y += legendLineHeight;
+  }
+  return y;
 }
 
 /// Draws the "Ports marked with teal square." legend line at [y]. Returns y + legendLineHeight.
