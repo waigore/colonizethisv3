@@ -45,20 +45,16 @@ extension _TileMapGenJoinSeaBridgePart on _TileMapGenJoinSea {
           )
         : null;
 
-    // Single row-major pass buckets land tiles per continent; avoids numContinents
-    // redundant full-grid rescans at join entry (Refs #2489 P4).
-    final landCellsByContinentIndex = _landCellsGroupedByContinentIndex(
-      g,
-      provinceToContinent,
-      seaZoneId,
-    );
-
     for (var c = 0; c < numContinents; c++) {
-      final seeded = landCellsByContinentIndex[c];
-      var landCells = seeded != null ? seeded : <(int x, int y)>{};
       var joinIterations = 0;
       while (joinIterations < maxJoinIterationsPerContinent) {
         joinIterations++;
+        final landCells = _landCellsForContinent(
+          g,
+          provinceToContinent,
+          c,
+          seaZoneId,
+        );
         final components = _graph.connectedComponentsOfLand(landCells);
         if (components.length <= 1) break;
         didJoin = true;
@@ -79,10 +75,7 @@ extension _TileMapGenJoinSeaBridgePart on _TileMapGenJoinSea {
           rnd,
           capState,
         );
-        for (final p in path) {
-          landCells.add(p);
-        }
-        final restoredToSea = preserveSeaFraction(
+        preserveSeaFraction(
           g,
           tg,
           rg,
@@ -91,14 +84,11 @@ extension _TileMapGenJoinSeaBridgePart on _TileMapGenJoinSea {
           path.length,
           landCellsExcludedFromSeaRestore: bridgeCells,
         );
-        for (final p in restoredToSea) {
-          landCells.remove(p);
-        }
       }
       if (joinIterations >= maxJoinIterationsPerContinent) {
-        // [landCells] is kept in sync with the grid across bridge / sea-restore;
-        // avoid a redundant O(W×H) rescan for the diagnostic path (Refs #2489 P4).
-        final stillSplit = _graph.connectedComponentsOfLand(landCells);
+        final stillSplit = _graph.connectedComponentsOfLand(
+          _landCellsForContinent(g, provinceToContinent, c, seaZoneId),
+        );
         if (stillSplit.length > 1) {
           _log.w(
             'join continents hit iteration cap with >1 land component for '
@@ -144,21 +134,18 @@ extension _TileMapGenJoinSeaBridgePart on _TileMapGenJoinSea {
     }
   }
 
-  Map<int, Set<(int x, int y)>> _landCellsGroupedByContinentIndex(
+  Set<(int x, int y)> _landCellsForContinent(
     List<List<String>> grid,
     Map<String, int> membership,
+    int continentIndex,
     String seaZoneId,
   ) {
-    final out = <int, Set<(int x, int y)>>{};
+    final out = <(int x, int y)>{};
     for (var y = 0; y < params.height; y++) {
       for (var x = 0; x < params.width; x++) {
         final id = grid[y][x];
         if (id == seaZoneId) continue;
-        final continentIndex = membership[id];
-        if (continentIndex == null) continue;
-        out
-            .putIfAbsent(continentIndex, () => <(int x, int y)>{})
-            .add((x, y));
+        if (membership[id] == continentIndex) out.add((x, y));
       }
     }
     return out;
