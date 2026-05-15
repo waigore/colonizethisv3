@@ -136,93 +136,69 @@ class _TileMapGenTerrainResource {
     if (grid[y][x] != _landSentinel) return;
     final terrain = terrainGrid[y][x];
     if (terrain == null) return;
-    tryPlaceWeightedResourceAtCell(
-      resourceGrid: resourceGrid,
-      x: x,
-      y: y,
-      terrain: terrain,
-      mapRegionId: mapRegionId,
-      rules: rules,
-      rnd: rnd,
-      capState: capState,
-    );
-  }
-
-  bool _isNonMountainLandNeighbor(
-    int nx,
-    int ny,
-    List<List<TerrainType?>> terrainGrid,
-    List<List<String>> grid,
-  ) {
-    if (nx < 0 || nx >= params.width || ny < 0 || ny >= params.height) {
-      return false;
+    var allowed = Resource.values
+        .where(
+          (r) =>
+              rules.isAllowedInRegion(r, mapRegionId) &&
+              rules.isAllowedOnTerrain(r, terrain),
+        )
+        .toList();
+    if (allowed.isEmpty) return;
+    if (capState != null && capState.shouldRestrictToRegionOnly(allowed)) {
+      allowed = capState.filterToRegionOnly(allowed);
+      if (allowed.isEmpty) return;
     }
-    if (grid[ny][nx] != _landSentinel) return false;
-    if (terrainGrid[ny][nx] == TerrainType.mountain) return false;
-    return true;
-  }
-
-  void _collectMountainAdjacentFrontier(
-    int x,
-    int y,
-    List<List<TerrainType?>> terrainGrid,
-    List<List<String>> grid,
-    List<(int dx, int dy)> directions,
-    Set<(int x, int y)> mountainAdjacentFrontier,
-  ) {
-    for (final (dx, dy) in directions) {
-      final nx = x + dx;
-      final ny = y + dy;
-      if (!_isNonMountainLandNeighbor(nx, ny, terrainGrid, grid)) continue;
-      mountainAdjacentFrontier.add((nx, ny));
+    if (rnd.nextDouble() > 0.4) return;
+    final weights = allowed.map((r) => rules.spawnWeight(r)).toList();
+    final sum = weights.reduce((a, b) => a + b);
+    var roll = rnd.nextDouble() * sum;
+    for (var i = 0; i < allowed.length; i++) {
+      roll -= weights[i];
+      if (roll > 0) continue;
+      final placed = allowed[i];
+      resourceGrid[y][x] = placed;
+      capState?.record(placed);
+      return;
     }
   }
 
-  /// One grid pass: non-mountain land cells and mountain-adjacent frontier (P3).
-  ({
-    List<(int x, int y)> nonMountainLand,
-    Set<(int x, int y)> mountainAdjacentFrontier,
-  })
-  _scanNonMountainLandAndMountainFrontier(
+  Set<(int x, int y)> _mountainAdjacentNonMountainLandFrontier(
     List<List<TerrainType?>> terrainGrid,
     List<List<String>> grid,
     List<(int dx, int dy)> directions,
   ) {
-    final nonMountainLand = <(int x, int y)>[];
-    final mountainAdjacentFrontier = <(int x, int y)>{};
+    final frontier = <(int x, int y)>{};
     for (var y = 0; y < params.height; y++) {
       for (var x = 0; x < params.width; x++) {
-        if (grid[y][x] != _landSentinel) continue;
-        final terrain = terrainGrid[y][x];
-        if (terrain == TerrainType.mountain) {
-          _collectMountainAdjacentFrontier(
-            x,
-            y,
-            terrainGrid,
-            grid,
-            directions,
-            mountainAdjacentFrontier,
-          );
-          continue;
+        if (terrainGrid[y][x] != TerrainType.mountain) continue;
+        for (final (dx, dy) in directions) {
+          final nx = x + dx;
+          final ny = y + dy;
+          if (nx < 0 || nx >= params.width || ny < 0 || ny >= params.height) {
+            continue;
+          }
+          if (grid[ny][nx] != _landSentinel) continue;
+          if (terrainGrid[ny][nx] == TerrainType.mountain) continue;
+          frontier.add((nx, ny));
         }
-        nonMountainLand.add((x, y));
       }
     }
-    return (
-      nonMountainLand: nonMountainLand,
-      mountainAdjacentFrontier: mountainAdjacentFrontier,
-    );
+    return frontier;
   }
 
   List<(int x, int y)> _nonMountainLandCells(
     List<List<String>> grid,
     List<List<TerrainType?>> terrainGrid,
   ) {
-    return _scanNonMountainLandAndMountainFrontier(
-      terrainGrid,
-      grid,
-      kTileMapDirections4,
-    ).nonMountainLand;
+    final remainingLand = <(int x, int y)>[];
+    for (var y = 0; y < params.height; y++) {
+      for (var x = 0; x < params.width; x++) {
+        if (grid[y][x] != _landSentinel) continue;
+        if (terrainGrid[y][x] == TerrainType.mountain) continue;
+        remainingLand.add((x, y));
+      }
+    }
+    return remainingLand;
   }
 
   /// Pass 6a: generate mountain ridges via random walks over land cells.
@@ -322,13 +298,13 @@ class _TileMapGenTerrainResource {
       return;
     }
 
-    final landScan = _scanNonMountainLandAndMountainFrontier(
+    final frontier = _mountainAdjacentNonMountainLandFrontier(
       terrainGrid,
       grid,
       directions,
     );
 
-    final frontierList = landScan.mountainAdjacentFrontier.toList();
+    final frontierList = frontier.toList();
     frontierList.shuffle(rnd);
     var idx = 0;
     while (currentMountain < targetMountain && idx < frontierList.length) {
@@ -342,7 +318,7 @@ class _TileMapGenTerrainResource {
     // fragmented land), convert random remaining land cells until we reach
     // the target. This should be rare and only adjusts a handful of tiles.
     if (currentMountain < targetMountain) {
-      final remainingLand = landScan.nonMountainLand;
+      final remainingLand = _nonMountainLandCells(grid, terrainGrid);
       remainingLand.shuffle(rnd);
       var i = 0;
       while (currentMountain < targetMountain && i < remainingLand.length) {
@@ -367,7 +343,7 @@ class _TileMapGenTerrainResource {
     ).where((t) => t != TerrainType.mountain).toList();
     if (allowed.isEmpty) return;
 
-    final remainingLand = _nonMountainLandCells(grid, terrainGrid);
+    final remainingLand = _collectRemainingNonMountainLand(terrainGrid, grid);
     if (remainingLand.isEmpty) return;
     final components = _graph.connectedComponentsOfLand(remainingLand.toSet());
     if (components.isEmpty) return;
@@ -383,6 +359,21 @@ class _TileMapGenTerrainResource {
         rnd,
       );
     }
+  }
+
+  List<(int x, int y)> _collectRemainingNonMountainLand(
+    List<List<TerrainType?>> terrainGrid,
+    List<List<String>> grid,
+  ) {
+    final remainingLand = <(int x, int y)>[];
+    for (var y = 0; y < params.height; y++) {
+      for (var x = 0; x < params.width; x++) {
+        if (grid[y][x] != _landSentinel) continue;
+        if (terrainGrid[y][x] == TerrainType.mountain) continue;
+        remainingLand.add((x, y));
+      }
+    }
+    return remainingLand;
   }
 
   void _assignNonMountainInComponent(

@@ -198,6 +198,27 @@ void main() {
     );
 
     test(
+      'freeform sim_scenarios diplomacy_initial_relations config completes',
+      () {
+        final config = GameSetupConfig(
+          seed: 12345,
+          selectedGreatPowerIds: ['england', 'france', 'spain'],
+          continentCount: 4,
+          minorNationCount: 4,
+          tribeCount: 6,
+          numProvincesOldWorld: 60,
+          numProvincesNewWorld: 80,
+        );
+        final result = runInitGame(
+          config: config,
+          options: const InitGameOptions(renderPng: false),
+        );
+        expect(result.game.players.length, greaterThan(0));
+      },
+      timeout: const Timeout(Duration(minutes: 4)),
+    );
+
+    test(
       'AC-12 locked full-init profile: same seed yields identical OW owners',
       () {
         // Must match one of the AC-11 regression seeds (#1861 / #1822).

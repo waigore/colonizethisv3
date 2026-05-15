@@ -33,5 +33,19 @@ void main() {
       );
       expect(maps[0][0][0], w + h);
     });
+
+    test('unassigned cell uses geometric Manhattan to assigned other continent', () {
+      const w = 5;
+      const h = 3;
+      final grid = List.generate(h, (_) => List.filled(w, -1));
+      grid[1][0] = 1;
+      final maps = manhattanDistToOtherContinentsMaps(
+        continentGrid: grid,
+        width: w,
+        height: h,
+        numContinents: 2,
+      );
+      expect(maps[0][1][4], 4);
+    });
   });
 }
