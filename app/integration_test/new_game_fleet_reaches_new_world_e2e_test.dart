@@ -4,14 +4,6 @@ import 'package:colonizethis_app/config/ct_e2e.dart';
 import 'package:colonizethis_app/config/ct_e2e_last_panel_snapshot.dart';
 import 'package:colonizethis_app/features/game/widgets/units/shared/units_panel_region_label.dart';
 import 'e2e_helpers.dart';
-import 'e2e_test_shared.dart'
-    show
-        e2eAdaptivePollRampAfterIdle,
-        e2eNewWorldRegionChipAppearsSelected,
-        e2eOldWorldRegionChipAppearsSelected,
-        e2ePumpUntil,
-        e2ePumpUntilConditionOrIdle,
-        e2eWaitForNewGameEntry;
 import 'package:colonizethis_logic/colonizethis_logic.dart'
     show
         OrderEngine,

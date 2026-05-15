@@ -9,7 +9,18 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'e2e_test_shared.dart';
 
-export 'e2e_test_shared.dart' show E2ePerfLog;
+/// Re-export shared polling / settle entrypoints so scenarios depend on this
+/// barrel only (GitHub #2336 AC2).
+export 'e2e_test_shared.dart' show
+    E2ePerfLog,
+    e2eAdaptivePollRampAfterIdle,
+    e2eNewWorldRegionChipAppearsSelected,
+    e2eOldWorldRegionChipAppearsSelected,
+    e2ePumpUntil,
+    e2ePumpUntilConditionOrIdle,
+    e2eWaitForNewGameEntry,
+    e2eWaitForNextTurnLabelAdvance,
+    e2eWaitUntilAnyFinderHitTestable;
 
 Future<void> pumpFor(WidgetTester tester, Duration total) =>
     e2ePumpFor(tester, total);

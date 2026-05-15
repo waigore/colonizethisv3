@@ -3,14 +3,6 @@ import 'package:colonizethis_app/config/ct_e2e.dart';
 import 'package:colonizethis_app/config/ct_e2e_last_panel_snapshot.dart';
 import 'package:colonizethis_app/features/game/flame/game_screen_shared.dart';
 import 'e2e_helpers.dart';
-import 'e2e_test_shared.dart'
-    show
-        e2eAdaptivePollRampAfterIdle,
-        e2ePumpUntil,
-        e2ePumpUntilConditionOrIdle,
-        e2eWaitForNewGameEntry,
-        e2eWaitForNextTurnLabelAdvance,
-        e2eWaitUntilAnyFinderHitTestable;
 import 'package:colonizethis_app/l10n/l10n.dart';
 import 'package:colonizethis_app/main.dart' show bootstrapForIntegrationTest;
 import 'package:colonizethis_app/test_support/civilian_units_panel_e2e_expected_lines.dart';
