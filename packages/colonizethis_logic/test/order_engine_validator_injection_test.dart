@@ -1,7 +1,6 @@
 import 'package:colonizethis_test/test.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/src/orders/order_engine.dart';
-import 'package:colonizethis_logic/src/orders/validator_bundle.dart';
 import 'package:colonizethis_logic/src/orders/validators/army_move_validator.dart';
 import 'package:colonizethis_logic/src/orders/validators/build_order_validator.dart';
 import 'package:colonizethis_logic/src/orders/validators/diplomatic_order_validator.dart';
@@ -107,5 +106,53 @@ void main() {
     expect(results, hasLength(1));
     expect(results.single.isAccepted, isFalse);
     expect(results.single.reason, 'Injected move validator rejection');
+  });
+
+  test(
+    'validatePlayerOrdersWithContext builds five validator bundles '
+    '(shared move+army, then fresh per later category; Refs #2391 AC7)',
+    () {
+    var factoryCalls = 0;
+    final game = TestFixtures.minimalGame();
+    final topology = MapTopology(nodes: const [], edges: const []);
+    final engine = OrderEngine(
+      initialOrders: const Orders(),
+      validatorFactory:
+          (
+            Game game,
+            Player player,
+            String playerId,
+            PlayerView view,
+            MapTopology topology,
+            Map<String, Unit> unitsById,
+            List<DiplomaticOrder> diplomaticOrders,
+            Map<String, TileMapResult>? tileMapByRegion,
+            Set<String> civilianDraftMoveUnitIds,
+            Set<String> devExclusiveTiles,
+            Stockpile stockpile,
+            int treasury,
+            DiplomacyFactionMembership factionMembership,
+          ) {
+            factoryCalls++;
+            return createOrderValidators(
+              game: game,
+              player: player,
+              playerId: playerId,
+              view: view,
+              topology: topology,
+              unitsById: unitsById,
+              diplomaticOrders: diplomaticOrders,
+              tileMapByRegion: tileMapByRegion,
+              civilianDraftMoveUnitIds: civilianDraftMoveUnitIds,
+              devExclusiveTiles: devExclusiveTiles,
+              stockpile: stockpile,
+              treasury: treasury,
+              factionMembership: factionMembership,
+            );
+          },
+    );
+
+    engine.validatePlayerOrdersWithContext(game, topology, 'h1');
+    expect(factoryCalls, 5);
   });
 }
