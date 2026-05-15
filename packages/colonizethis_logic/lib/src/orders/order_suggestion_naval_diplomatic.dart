@@ -467,7 +467,7 @@ List<DiplomaticOrder> suggestDiplomaticOrders(
 
     // One incremental validator per trial prefix: amortizes validator setup
     // across all candidates in the pass (Refs #2394).
-    final primaryPassValidator = buildIncrementalCandidateValidator(
+    final prefixPassValidator = buildIncrementalCandidateValidator(
       game: game,
       topology: topology,
       playerId: playerId,
@@ -477,13 +477,14 @@ List<DiplomaticOrder> suggestDiplomaticOrders(
       unitsById: unitsByIdForDiplomatic,
       factionMembership: factionMembership,
     );
+    var prefixPassAcceptedOrder = false;
     for (final candidate in candidates) {
       if (candidate.type == DiplomaticOrderType.grantAid ||
           candidate.type == DiplomaticOrderType.setSubsidy) {
         continue;
       }
       if (!isDiplomaticOrderAcceptedWithValidator(
-        primaryPassValidator,
+        prefixPassValidator,
         candidate,
       )) {
         continue;
@@ -494,19 +495,24 @@ List<DiplomaticOrder> suggestDiplomaticOrders(
         playerId,
         candidate,
       );
+      prefixPassAcceptedOrder = true;
       break;
     }
 
-    final economicPassValidator = buildIncrementalCandidateValidator(
-      game: game,
-      topology: topology,
-      playerId: playerId,
-      baseOrders: trialOrders,
-      tileMapByRegion: tileMapByRegion,
-      view: view,
-      unitsById: unitsByIdForDiplomatic,
-      factionMembership: factionMembership,
-    );
+    // Rebuild only when the non-economic pass changed the trial prefix; when
+    // it did not accept anything, economic probes share [prefixPassValidator].
+    final economicPassValidator = prefixPassAcceptedOrder
+        ? buildIncrementalCandidateValidator(
+            game: game,
+            topology: topology,
+            playerId: playerId,
+            baseOrders: trialOrders,
+            tileMapByRegion: tileMapByRegion,
+            view: view,
+            unitsById: unitsByIdForDiplomatic,
+            factionMembership: factionMembership,
+          )
+        : prefixPassValidator;
     for (final candidate in candidates) {
       if (candidate.type != DiplomaticOrderType.grantAid &&
           candidate.type != DiplomaticOrderType.setSubsidy) {
