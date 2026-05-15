@@ -222,7 +222,12 @@ void main() {
       await _tapNewWorldRegionTabIfPresent(tester);
       Future<bool> checkExploreEnabledFromCivilianPanel() async {
         final phaseSw = Stopwatch()..start();
-        await _openCivilianPanelFleetE2e(tester);
+        await e2eOpenCivilianPanel(
+          tester,
+          afterSheetPanelsClearPhase:
+              'pump_until_panels_cleared_after_close_sheet_fleet_civilian_open',
+          bottomSheetCloseTimeout: _kMaxUiResponseWait,
+        );
         await e2eWaitUntilFound(
           tester,
           find.byKey(kCtE2ECivilianPanelRootKey),

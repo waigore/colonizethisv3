@@ -127,6 +127,116 @@ Future<void> e2eCloseBottomSheet(
   );
 }
 
+/// Opens the civilian units panel from the empire rail or the first civilian
+/// marker, closing a conflicting naval/civilian sheet first when needed.
+///
+/// Single canonical implementation for full-turn and fleet E2E (GitHub #2336
+/// / AC2). Uses adaptive waits for rail/marker readiness instead of blind
+/// idle pumps.
+Future<void> e2eOpenCivilianPanel(
+  WidgetTester tester, {
+  Duration timeout = const Duration(seconds: 20),
+  E2ePerfLog? perf,
+  Duration bottomSheetCloseTimeout = kE2eDefaultBottomSheetCloseTimeout,
+  String afterSheetPanelsClearPhase =
+      'pump_until_panels_cleared_after_close_sheet_civilian_open',
+}) async {
+  final sw = Stopwatch()..start();
+  final empireRailButton = find.byKey(kEmpireCivilianUnitsButtonKey);
+  final markerButton = find.byKey(kCtE2EOpenFirstCivilianMarkerPanelKey);
+  final civilianPanel = find.byKey(kCtE2ECivilianPanelRootKey);
+  final navalPanel = find.byKey(kCtE2ENavalPanelRootKey);
+  Future<bool> tryOpen(Finder trigger) async {
+    if (civilianPanel.evaluate().isNotEmpty) {
+      return true;
+    }
+    final tappable = trigger.hitTestable();
+    if (tappable.evaluate().isEmpty) {
+      await e2eDismissTransientUi(tester, perf: perf);
+      return false;
+    }
+    await tester.tap(tappable.first, warnIfMissed: false);
+    if (civilianPanel.evaluate().isNotEmpty) {
+      return true;
+    }
+    await tester.pump();
+    if (civilianPanel.evaluate().isNotEmpty) {
+      return true;
+    }
+    final openDeadline = DateTime.now().add(const Duration(seconds: 3));
+    var openPollMs = 25;
+    while (DateTime.now().isBefore(openDeadline)) {
+      if (civilianPanel.evaluate().isNotEmpty) {
+        return true;
+      }
+      await tester.pump(Duration(milliseconds: openPollMs));
+      openPollMs = e2eAdaptivePollRampAfterIdle(openPollMs);
+    }
+    if (civilianPanel.evaluate().isNotEmpty) {
+      return true;
+    }
+    return false;
+  }
+
+  var panelPollMs = 25;
+  while (sw.elapsed < timeout) {
+    if (civilianPanel.evaluate().isNotEmpty ||
+        navalPanel.evaluate().isNotEmpty) {
+      await e2eCloseBottomSheet(
+        tester,
+        perf: perf,
+        overallTimeout: bottomSheetCloseTimeout,
+      );
+      await e2ePumpUntilConditionOrIdle(
+        tester,
+        () =>
+            civilianPanel.evaluate().isEmpty &&
+            navalPanel.evaluate().isEmpty &&
+            find.byType(BottomSheet).evaluate().isEmpty,
+        timeout: const Duration(milliseconds: 600),
+        perf: perf,
+        phaseName: afterSheetPanelsClearPhase,
+      );
+      panelPollMs = 25;
+      continue;
+    }
+    if (empireRailButton.evaluate().isNotEmpty) {
+      if (await tryOpen(empireRailButton)) {
+        perf?.timing('open_panel_civilian', sw.elapsed);
+        return;
+      }
+      panelPollMs = 25;
+      continue;
+    }
+    if (markerButton.evaluate().isNotEmpty) {
+      if (await tryOpen(markerButton)) {
+        perf?.timing('open_panel_civilian', sw.elapsed);
+        return;
+      }
+      panelPollMs = 25;
+      continue;
+    }
+    if (await e2ePumpUntilConditionOrIdle(
+      tester,
+      () =>
+          empireRailButton.hitTestable().evaluate().isNotEmpty ||
+          markerButton.hitTestable().evaluate().isNotEmpty,
+      timeout: Duration(milliseconds: panelPollMs),
+      perf: perf,
+      phaseName: 'pump_until_civilian_rail_or_marker_hit_testable',
+    )) {
+      panelPollMs = 25;
+      continue;
+    }
+    panelPollMs = e2eAdaptivePollRampAfterIdle(panelPollMs);
+  }
+  fail(
+    'Timed out after ${timeout.inSeconds}s waiting for a civilian panel opener. '
+    'empire=$empireRailButton marker=$markerButton '
+    'Last exception: ${tester.takeException()}',
+  );
+}
+
 /// Dismisses snackbars, generic OK dialogs, [AlertDialog] actions, bottom sheets,
 /// and [CtDialogShell] overlays (union of fleet + full-turn E2E paths).
 Future<void> e2eDismissTransientUi(

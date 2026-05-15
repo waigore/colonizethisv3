@@ -16,108 +16,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
 
-Future<void> _openCivilianPanel(
-  WidgetTester tester, {
-  Duration timeout = const Duration(seconds: 20),
-  E2ePerfLog? perf,
-}) async {
-  final sw = Stopwatch()..start();
-  final empireRailButton = find.byKey(kEmpireCivilianUnitsButtonKey);
-  final markerButton = find.byKey(kCtE2EOpenFirstCivilianMarkerPanelKey);
-  final civilianPanel = find.byKey(kCtE2ECivilianPanelRootKey);
-  final navalPanel = find.byKey(kCtE2ENavalPanelRootKey);
-  Future<bool> tryOpen(Finder trigger) async {
-    if (civilianPanel.evaluate().isNotEmpty) {
-      return true;
-    }
-    final tappable = trigger.hitTestable();
-    if (tappable.evaluate().isEmpty) {
-      // Dismiss blocking overlays/dialogs before retrying.
-      await e2eDismissTransientUi(tester, perf: perf);
-      return false;
-    }
-    await tester.tap(tappable.first, warnIfMissed: false);
-    // Match fleet E2E: short-circuit when the panel mounts synchronously so we
-    // skip the first poll pump (Refs #2336 adaptive polling / bottleneck 2).
-    if (civilianPanel.evaluate().isNotEmpty) {
-      return true;
-    }
-    await tester.pump();
-    if (civilianPanel.evaluate().isNotEmpty) {
-      return true;
-    }
-    final openDeadline = DateTime.now().add(const Duration(seconds: 3));
-    var openPollMs = 25;
-    while (DateTime.now().isBefore(openDeadline)) {
-      if (civilianPanel.evaluate().isNotEmpty) {
-        return true;
-      }
-      await tester.pump(Duration(milliseconds: openPollMs));
-      openPollMs = e2eAdaptivePollRampAfterIdle(openPollMs);
-    }
-    if (civilianPanel.evaluate().isNotEmpty) {
-      return true;
-    }
-    return false;
-  }
-
-  var panelPollMs = 25;
-  while (sw.elapsed < timeout) {
-    if (civilianPanel.evaluate().isNotEmpty ||
-        navalPanel.evaluate().isNotEmpty) {
-      await e2eCloseBottomSheet(tester, perf: perf);
-      // Exit as soon as panels + sheet clear instead of a blind idle pump
-      // (Refs #2336 adaptive polling / bottleneck 2).
-      await e2ePumpUntilConditionOrIdle(
-        tester,
-        () =>
-            civilianPanel.evaluate().isEmpty &&
-            navalPanel.evaluate().isEmpty &&
-            find.byType(BottomSheet).evaluate().isEmpty,
-        timeout: const Duration(milliseconds: 600),
-        perf: perf,
-        phaseName: 'pump_until_panels_cleared_after_close_sheet_civilian_open',
-      );
-      panelPollMs = 25;
-      continue;
-    }
-    if (empireRailButton.evaluate().isNotEmpty) {
-      if (await tryOpen(empireRailButton)) {
-        perf?.timing('open_panel_civilian', sw.elapsed);
-        return;
-      }
-      panelPollMs = 25;
-      continue;
-    }
-    if (markerButton.evaluate().isNotEmpty) {
-      if (await tryOpen(markerButton)) {
-        perf?.timing('open_panel_civilian', sw.elapsed);
-        return;
-      }
-      panelPollMs = 25;
-      continue;
-    }
-    if (await e2ePumpUntilConditionOrIdle(
-      tester,
-      () =>
-          empireRailButton.hitTestable().evaluate().isNotEmpty ||
-          markerButton.hitTestable().evaluate().isNotEmpty,
-      timeout: Duration(milliseconds: panelPollMs),
-      perf: perf,
-      phaseName: 'pump_until_civilian_rail_or_marker_hit_testable',
-    )) {
-      panelPollMs = 25;
-      continue;
-    }
-    panelPollMs = e2eAdaptivePollRampAfterIdle(panelPollMs);
-  }
-  fail(
-    'Timed out after ${timeout.inSeconds}s waiting for a civilian panel opener. '
-    'empire=$empireRailButton marker=$markerButton '
-    'Last exception: ${tester.takeException()}',
-  );
-}
-
 Future<void> _openPanelFromMarker(
   WidgetTester tester, {
   required Finder markerButton,
@@ -492,12 +390,12 @@ void main() {
       }
 
       // --- Civilian (empire rail): baseline ---
-      await _openCivilianPanel(tester, perf: perf);
+      await e2eOpenCivilianPanel(tester, perf: perf);
       await expectCivilianPanelTexts();
       await e2eCloseBottomSheet(tester, perf: perf);
 
       // --- Builder: build improvement + first legal tile (e2e tap target) ---
-      await _openCivilianPanel(tester, perf: perf);
+      await e2eOpenCivilianPanel(tester, perf: perf);
       await _tapFirstAssignInCivilianPanel(tester);
       await tester.tap(find.text('Build improvement'));
       await e2eWaitUntilFound(
@@ -518,7 +416,7 @@ void main() {
       await e2eCloseBottomSheet(tester, perf: perf);
 
       // --- Explorer: prospect + first legal tile ---
-      await _openCivilianPanel(tester, perf: perf);
+      await e2eOpenCivilianPanel(tester, perf: perf);
       await _tapAssignOnCivilianRowWithTitle(tester, kUnitTypeExplorer);
       await tester.tap(find.text('Prospect'));
       await e2eWaitUntilFound(
