@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 
+import '../../../../config/ct_e2e_turn_snapshot_refresh.dart';
 import '../../../../providers/games_provider.dart';
 
 void applyTurnResolutionResult(WidgetRef ref, TurnResolutionResult result) {
@@ -22,4 +23,5 @@ void applyTurnResolutionResult(WidgetRef ref, TurnResolutionResult result) {
       gameN.setGame(result.game);
       dipN.setCallToArms(result.pendingCallToArms);
   }
+  refreshCtE2eNavalPanelSnapshotAfterTurnIfEnabled(ref);
 }

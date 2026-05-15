@@ -87,6 +87,14 @@ void main() {
       perf.bumpCounter('turn_loop_iterations');
       await dismissTransientUi(tester, perf: perf);
       await _tapNewWorldRegionTabIfPresent(tester);
+      if (_fleetReachDoneFromCtSnapshotOnly()) {
+        perf.timing(
+          'test_total',
+          testSw.elapsed,
+          meta: 'result=reached_snapshot_precheck',
+        );
+        return;
+      }
       await openNavalPanel(
         tester,
         perf: perf,
@@ -128,12 +136,14 @@ void main() {
     ensureUnderWallClock('before final naval check');
     await dismissTransientUi(tester, perf: perf);
     await _tapNewWorldRegionTabIfPresent(tester);
-    await openNavalPanel(
-      tester,
-      perf: perf,
-      timeout: _kMaxUiResponseWait,
-      bottomSheetCloseTimeout: _kMaxUiResponseWait,
-    );
+    if (!_fleetReachDoneFromCtSnapshotOnly()) {
+      await openNavalPanel(
+        tester,
+        perf: perf,
+        timeout: _kMaxUiResponseWait,
+        bottomSheetCloseTimeout: _kMaxUiResponseWait,
+      );
+    }
     if (!_harnessDetectsNonHomeFleetInNewWorld(tester)) {
       fail(
         'After $_kMaxNextTurnTapsForNwFleetReach Next turn resolutions, no non-home human fleet in region '
@@ -201,6 +211,9 @@ void main() {
         perf.bumpCounter('turn_loop_iterations');
         await dismissTransientUi(tester, perf: perf);
         await _tapNewWorldRegionTabIfPresent(tester);
+        if (_fleetReachDoneFromCtSnapshotOnly()) {
+          break;
+        }
         await openNavalPanel(
           tester,
           perf: perf,
@@ -234,12 +247,14 @@ void main() {
 
       await dismissTransientUi(tester, perf: perf);
       await _tapNewWorldRegionTabIfPresent(tester);
-      await openNavalPanel(
-        tester,
-        perf: perf,
-        timeout: _kMaxUiResponseWait,
-        bottomSheetCloseTimeout: _kMaxUiResponseWait,
-      );
+      if (!_fleetReachDoneFromCtSnapshotOnly()) {
+        await openNavalPanel(
+          tester,
+          perf: perf,
+          timeout: _kMaxUiResponseWait,
+          bottomSheetCloseTimeout: _kMaxUiResponseWait,
+        );
+      }
       if (ctE2eNavalPanelSnapshot != null) {
         lastKnownNavalSnapshot = ctE2eNavalPanelSnapshot;
       }

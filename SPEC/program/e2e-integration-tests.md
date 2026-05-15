@@ -26,6 +26,7 @@
 | `kCtE2EMoveFleetDialogScrollRootKey` | `MoveFleetDialog` scroll body (`SingleChildScrollView` child); fleet e2e uses bounded drags within a strict UI-response time cap (see Determinism). |
 | `kGameMapNextTurnButtonKey` | Next-turn control on the map HUD (`game_screen_shared.dart`). |
 | `ctE2eLastPanelSnapshot` | Province overlay: updated while open with valid `selectedTileKey`; cleared when closed. Separate **civilian / naval / production** snapshot updaters in `ct_e2e_last_panel_snapshot.dart` for those panels. |
+| Post–next-turn naval snapshot | When `CT_E2E=true`, `refreshCtE2eNavalPanelSnapshotAfterTurnIfEnabled` (in `ct_e2e_turn_snapshot_refresh.dart`, called from `applyTurnResolutionResult`) repopulates `ctE2eNavalPanelSnapshot` from current game providers after each resolved turn so fleet E2E loops can skip `openNavalPanel` when world state already shows NW arrival. The naval bottom sheet no longer clears this snapshot on close. |
 
 **Code:** `app/lib/config/ct_e2e.dart`, `app/lib/config/ct_e2e_last_panel_snapshot.dart`, `app/lib/features/game/flame/game_screen_shared.dart` (next-turn key), `app/lib/features/game/flame/game_map_controls.dart` (region tab keys), `app/lib/features/game/widgets/move_fleet_dialog.dart` (move dialog scroll root).
 

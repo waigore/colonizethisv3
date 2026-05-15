@@ -278,6 +278,12 @@ bool _harnessDetectsNonHomeFleetInNewWorld(WidgetTester tester) =>
     (ctE2eNavalPanelSnapshot == null &&
         _navalPanelShowsNonHomeFleetInNewWorld(tester));
 
+/// Post–next-turn [ctE2eNavalPanelSnapshot] refresh (see
+/// [refreshCtE2eNavalPanelSnapshotAfterTurnIfEnabled]) lets fleet loops skip
+/// [openNavalPanel] when world state already shows arrival (Refs #2336).
+bool _fleetReachDoneFromCtSnapshotOnly() =>
+    _nonHomeHumanFleetInNewWorldFromCtSnapshot();
+
 /// Post–#1869 only: fleet may sit in open-ocean New World first; ship reveal needs
 /// a P–S coastal sea zone (or visibility already updated). Sail / advance until then.
 Future<void> _awaitNwCoastalOrVisibleLandForBundledExploreE2e({
@@ -290,6 +296,10 @@ Future<void> _awaitNwCoastalOrVisibleLandForBundledExploreE2e({
     ensureUnderWallClock('NW bundled-explore readiness i=$i');
     await dismissTransientUi(tester);
     await _tapNewWorldRegionTabIfPresent(tester);
+    if (_nonHomeHumanFleetInCoastalNewWorldSeaFromCtSnapshot() ||
+        _playerHasAnyNewWorldFoggedOrBetterFromCtSnapshot()) {
+      return;
+    }
     await openNavalPanel(
       tester,
       timeout: _kMaxUiResponseWait,
