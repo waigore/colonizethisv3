@@ -124,7 +124,10 @@ Future<void> _pickMoveDestinationAndConfirm(
           // Row may not be built yet; fall back to drag probing below.
         }
       }
-      for (var i = 0; i < 20 && warp.hitTestable().evaluate().isEmpty; i++) {
+      const maxWarpDragProbes = 12;
+      for (var i = 0;
+          i < maxWarpDragProbes && warp.hitTestable().evaluate().isEmpty;
+          i++) {
         ensureBudget('warp drag $i');
         await tester.drag(sc, const Offset(0, -120));
         // Short-circuit as soon as the warp row becomes hit-testable instead of

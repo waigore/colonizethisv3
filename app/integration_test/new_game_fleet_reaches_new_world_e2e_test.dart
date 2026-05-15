@@ -129,6 +129,14 @@ void main() {
       }
 
       await _advanceOneHumanTurn(tester, l10n, perf: perf);
+      if (_fleetReachDoneFromCtSnapshotOnly()) {
+        perf.timing(
+          'test_total',
+          testSw.elapsed,
+          meta: 'result=reached_snapshot_after_turn',
+        );
+        return;
+      }
       await dismissTransientUi(tester, perf: perf);
       ensureUnderWallClock('after turn advance turnIdx=$turnIdx');
     }
@@ -241,6 +249,9 @@ void main() {
         }
 
         await _advanceOneHumanTurn(tester, l10n, perf: perf);
+        if (_fleetReachDoneFromCtSnapshotOnly()) {
+          break;
+        }
         await dismissTransientUi(tester, perf: perf);
         ensureUnderWallClock('after turn advance turnIdx=$turnIdx');
       }

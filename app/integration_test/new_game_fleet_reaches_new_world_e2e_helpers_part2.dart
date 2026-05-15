@@ -319,6 +319,10 @@ Future<void> _awaitNwCoastalOrVisibleLandForBundledExploreE2e({
     );
     await closeBottomSheet(tester, overallTimeout: _kMaxUiResponseWait);
     await _advanceOneHumanTurn(tester, l10n);
+    if (_nonHomeHumanFleetInCoastalNewWorldSeaFromCtSnapshot() ||
+        _playerHasAnyNewWorldFoggedOrBetterFromCtSnapshot()) {
+      return;
+    }
   }
   // Some generated maps can keep the non-home fleet in open-ocean NW sea lanes
   // for long bounded stretches; in that case bundled Explore has no visible NW
