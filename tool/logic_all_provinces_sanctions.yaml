@@ -37,26 +37,26 @@ sanctions:
     issue: https://github.com/waigore/colonizethisv3/issues/2278
 
   - path: packages/colonizethis_logic/lib/src/orders/order_suggestion_work_tile_prefilter.dart
-    line: 61
+    line: 68
     rationale: Work tile prefilter collects owned province ids via all provinces when
       callers do not supply a shared owned-province set.
     spec: SPEC/program/logic-dual-region-province-access.md
     issue: https://github.com/waigore/colonizethisv3/issues/2394
 
   - path: packages/colonizethis_logic/lib/src/orders/order_suggestion_work_tile_prefilter.dart
-    line: 116
+    line: 124
     rationale: Town work targets enumerate town tiles across owned provinces in both regions.
     spec: SPEC/program/logic-dual-region-province-access.md
     issue: https://github.com/waigore/colonizethisv3/issues/2278
 
   - path: packages/colonizethis_logic/lib/src/orders/order_suggestion_move_army.dart
-    line: 163
+    line: 162
     rationale: Army move suggestions need global province ownership snapshot when per-pass player-owned province ids are not supplied.
     spec: SPEC/program/logic-dual-region-province-access.md
     issue: https://github.com/waigore/colonizethisv3/issues/2278
 
   - path: packages/colonizethis_logic/lib/src/orders/order_suggestion_move_army.dart
-    line: 243
+    line: 242
     rationale: Army move picker fallback builds owned-province ids across regions.
     spec: SPEC/program/logic-dual-region-province-access.md
     issue: https://github.com/waigore/colonizethisv3/issues/2394

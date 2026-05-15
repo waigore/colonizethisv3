@@ -19,6 +19,7 @@ Set<String> _preFilterWorkTargetTiles({
   required Set<String> ownedProvinceIds,
   Set<String>? exploreProvinceScope,
   Map<String, TileMapResult>? tileMapByRegion,
+  DiplomacyFactionMembership? factionMembership,
 }) {
   final result = <String>{};
   final ctx = _WorkTilePrefilterCtx(
@@ -30,6 +31,7 @@ Set<String> _preFilterWorkTargetTiles({
     ownedProvinceIds: ownedProvinceIds,
     exploreProvinceScope: exploreProvinceScope,
     tileMapByRegion: tileMapByRegion,
+    factionMembership: factionMembership,
     result: result,
   );
   final op = _workTargetPrefilters[workTarget];
@@ -53,6 +55,11 @@ Set<String> rawCandidateTilesForWorkTarget({
   /// invoke this repeatedly in one suggestion pass should supply a shared set
   /// to avoid O(targets × provinces) rescans (Refs #2394).
   Set<String>? playerOwnedProvinceIds,
+
+  /// When non-null, [kWorkTargetPurchaseLand] prefilter reuses this snapshot
+  /// instead of calling [DiplomacyFactionMembership.from] again (Refs #2394 —
+  /// same pass often already built membership for incremental validation).
+  DiplomacyFactionMembership? factionMembership,
 }) {
   final world = game.worldState;
   final ownedProvinceIds =
@@ -71,6 +78,7 @@ Set<String> rawCandidateTilesForWorkTarget({
     ownedProvinceIds: ownedProvinceIds,
     exploreProvinceScope: exploreProvinceScope,
     tileMapByRegion: tileMapByRegion,
+    factionMembership: factionMembership,
   );
 }
 
@@ -153,6 +161,7 @@ class _WorkTilePrefilterCtx {
     required this.ownedProvinceIds,
     required this.exploreProvinceScope,
     required this.tileMapByRegion,
+    this.factionMembership,
     required this.result,
   });
 
@@ -164,6 +173,7 @@ class _WorkTilePrefilterCtx {
   final Set<String> ownedProvinceIds;
   final Set<String>? exploreProvinceScope;
   final Map<String, TileMapResult>? tileMapByRegion;
+  final DiplomacyFactionMembership? factionMembership;
   final Set<String> result;
 }
 
@@ -247,7 +257,8 @@ void _prefilterWtStealTech(_WorkTilePrefilterCtx c) {
 }
 
 void _prefilterWtPurchaseLand(_WorkTilePrefilterCtx c) {
-  final factionMembership = DiplomacyFactionMembership.from(c.game);
+  final factionMembership =
+      c.factionMembership ?? DiplomacyFactionMembership.from(c.game);
   _forEachPrefixedProvinceTile(
     tileKeysByRegion: c.tileKeysByRegion,
     onTile: (provinceId, tileKey) {

@@ -39,13 +39,14 @@ Set<String> getValidWorkOrderTileKeys(
     ignorePendingWorkOrderUnitId: unitId,
   );
 
+  final factionMembership = DiplomacyFactionMembership.from(game);
   final raw = rawCandidateTilesForWorkTarget(
     game: game,
     playerId: playerId,
     workTarget: workTarget,
     tileMapByRegion: tileMapByRegion,
+    factionMembership: factionMembership,
   );
-  final factionMembership = DiplomacyFactionMembership.from(game);
   final candidateValidator = buildIncrementalCandidateValidator(
     game: game,
     topology: topology,
@@ -122,6 +123,8 @@ Set<String> getValidWorkOrderTileKeysWithVisibility({
     ignorePendingWorkOrderUnitId: unitId,
   );
 
+  final factionMembership = sharedCandidateValidator?.factionMembershipSnapshot ??
+      DiplomacyFactionMembership.from(game);
   final raw = rawCandidateTilesForWorkTarget(
     game: game,
     playerId: playerId,
@@ -130,6 +133,7 @@ Set<String> getValidWorkOrderTileKeysWithVisibility({
         ? partiallyRevealedPrefixedProvinceIdsForPlayer(game: game, view: view)
         : null,
     tileMapByRegion: tileMapByRegion,
+    factionMembership: factionMembership,
   );
   final sortedVisible = sortedVisibleWorkTargetCandidates(view, raw);
   final candidateValidator =
@@ -140,7 +144,7 @@ Set<String> getValidWorkOrderTileKeysWithVisibility({
         playerId: playerId,
         baseOrders: currentOrders,
         tileMapByRegion: tileMapByRegion,
-        factionMembership: DiplomacyFactionMembership.from(game),
+        factionMembership: factionMembership,
       );
 
   final valid = <String>{};

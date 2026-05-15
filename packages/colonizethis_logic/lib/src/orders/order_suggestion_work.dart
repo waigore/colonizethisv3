@@ -166,6 +166,7 @@ List<WorkOrder> suggestWorkOrders(
       merchantPurchaseLandTileKeys: merchantPurchaseLandTileKeys,
       suggestions: suggestions,
       candidateValidator: candidateValidator,
+      factionMembership: factionMembership,
     );
   }
 
@@ -208,6 +209,7 @@ void _addWorkSuggestionsForUnit({
   required List<String> merchantPurchaseLandTileKeys,
   required List<WorkOrder> suggestions,
   required IncrementalCandidateValidator candidateValidator,
+  required DiplomacyFactionMembership factionMembership,
   Map<String, TileMapResult>? tileMapByRegion,
 }) {
   if (unit.currentWork != null) return;
@@ -263,6 +265,7 @@ void _addWorkSuggestionsForUnit({
       suggestions: suggestions,
       candidateValidator: candidateValidator,
       tileMapByRegion: tileMapByRegion,
+      factionMembership: factionMembership,
     );
   }
 

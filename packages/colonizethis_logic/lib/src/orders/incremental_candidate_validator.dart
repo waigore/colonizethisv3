@@ -130,6 +130,14 @@ class IncrementalCandidateValidator {
     return built;
   }
 
+  /// Faction GP/minor/tribe snapshot aligned with this validator (Refs #2394).
+  ///
+  /// Callers that run work-target tile prefilters before incremental probes may
+  /// reuse this so [rawCandidateTilesForWorkTarget] does not rebuild membership
+  /// separately from the same [game] state.
+  DiplomacyFactionMembership get factionMembershipSnapshot =>
+      _factionMembership();
+
   bool isMoveAccepted(MoveOrder candidate) {
     const validator = MoveValidator();
     final standalone = validator
