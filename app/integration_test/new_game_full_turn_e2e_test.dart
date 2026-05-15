@@ -2,7 +2,16 @@ import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:colonizethis_app/config/ct_e2e.dart';
 import 'package:colonizethis_app/config/ct_e2e_last_panel_snapshot.dart';
 import 'package:colonizethis_app/features/game/flame/game_screen_shared.dart';
-import 'e2e_test_shared.dart';
+import 'e2e_helpers.dart';
+import 'e2e_test_shared.dart'
+    show
+        e2eAdaptivePollRampAfterIdle,
+        e2eOpenCivilianPanel,
+        e2ePumpUntil,
+        e2ePumpUntilConditionOrIdle,
+        e2eWaitForNewGameEntry,
+        e2eWaitForNextTurnLabelAdvance,
+        e2eWaitUntilAnyFinderHitTestable;
 import 'package:colonizethis_app/l10n/l10n.dart';
 import 'package:colonizethis_app/main.dart' show bootstrapForIntegrationTest;
 import 'package:colonizethis_app/test_support/civilian_units_panel_e2e_expected_lines.dart';
@@ -33,7 +42,7 @@ Future<void> _openPanelFromMarker(
     final tappable = markerButton.hitTestable();
     if (tappable.evaluate().isEmpty) {
       // Clear transient overlays/dialogs that can block marker taps.
-      await e2eDismissTransientUi(tester, perf: perf);
+      await dismissTransientUi(tester, perf: perf);
       if (panelRoot.evaluate().isNotEmpty) {
         perf?.timing('open_panel_from_marker', sw.elapsed);
         return;
@@ -92,7 +101,7 @@ Future<void> _openProductionPanel(WidgetTester tester) async {
     }
 
     if (find.byType(BottomSheet).evaluate().isNotEmpty) {
-      await e2eCloseBottomSheet(tester);
+      await closeBottomSheet(tester);
       // Exit the spin loop as soon as the sheet is gone (Refs #2336 H7).
       await e2ePumpUntilConditionOrIdle(
         tester,
@@ -132,7 +141,7 @@ Future<void> _openProductionPanel(WidgetTester tester) async {
       if (productionPanel.evaluate().isNotEmpty) {
         return;
       }
-      await e2eWaitUntilFound(
+      await waitUntilFound(
         tester,
         productionPanel,
         timeout: const Duration(seconds: 5),
@@ -153,7 +162,7 @@ Future<void> _openProductionPanel(WidgetTester tester) async {
       continue;
     }
     // Dismiss transient overlays/dialogs and retry opening from the rail.
-    await e2eDismissTransientUi(tester);
+    await dismissTransientUi(tester);
     if (await e2ePumpUntilConditionOrIdle(
       tester,
       () =>
@@ -303,17 +312,17 @@ void main() {
       await e2eWaitForNewGameEntry(tester, perf: perf);
       perf.timing('bootstrap_for_integration_test', bootstrapSw.elapsed);
       final preloadSw = Stopwatch()..start();
-      await e2eEnsureAllRelocated64pxPngsLoadSuiteOnce();
+      await ensureAllRelocated64pxPngsLoadSuiteOnce();
       perf.timing('asset_preload', preloadSw.elapsed);
 
       final newGameSw = Stopwatch()..start();
-      await e2eBootstrapNewGameToMap(tester, perf: perf);
+      await bootstrapNewGameToMap(tester, perf: perf);
       perf.timing('new_game_to_map', newGameSw.elapsed);
 
       final l10n = lookupAppLocalizations(const Locale('en'));
 
       Future<void> expectCivilianPanelTexts() async {
-        await e2eWaitUntilFound(
+        await waitUntilFound(
           tester,
           find.byKey(kCtE2ECivilianPanelRootKey),
           timeout: const Duration(seconds: 20),
@@ -324,7 +333,7 @@ void main() {
         expect(snap, isNotNull);
         final expected = civilianUnitsPanelExpectedTexts(snap!, l10n);
         final actual = <String>[];
-        e2eCollectTextPreorder(
+        collectTextPreorder(
           tester.element(find.byKey(kCtE2ECivilianPanelRootKey)),
           actual,
         );
@@ -332,7 +341,7 @@ void main() {
       }
 
       Future<void> expectNavalPanelTexts({required bool expanded}) async {
-        await e2eWaitUntilFound(
+        await waitUntilFound(
           tester,
           find.byKey(kCtE2ENavalPanelRootKey),
           timeout: const Duration(seconds: 20),
@@ -347,7 +356,7 @@ void main() {
           fleetTilesExpanded: expanded,
         );
         final actual = <String>[];
-        e2eCollectTextPreorder(
+        collectTextPreorder(
           tester.element(find.byKey(kCtE2ENavalPanelRootKey)),
           actual,
         );
@@ -367,7 +376,7 @@ void main() {
       }
 
       Future<void> expectProductionPanelTexts() async {
-        await e2eWaitUntilFound(
+        await waitUntilFound(
           tester,
           find.byKey(kCtE2EProductionPanelRootKey),
           timeout: const Duration(seconds: 20),
@@ -378,7 +387,7 @@ void main() {
         expect(snap, isNotNull);
         final expected = productionPanelWideExpectedTexts(snap!, l10n);
         final actual = <String>[];
-        e2eCollectTextPreorder(
+        collectTextPreorder(
           tester.element(find.byKey(kCtE2EProductionPanelRootKey)),
           actual,
         );
@@ -388,13 +397,13 @@ void main() {
       // --- Civilian (empire rail): baseline ---
       await e2eOpenCivilianPanel(tester, perf: perf);
       await expectCivilianPanelTexts();
-      await e2eCloseBottomSheet(tester, perf: perf);
+      await closeBottomSheet(tester, perf: perf);
 
       // --- Builder: build improvement + first legal tile (e2e tap target) ---
       await e2eOpenCivilianPanel(tester, perf: perf);
       await _tapFirstAssignInCivilianPanel(tester);
       await tester.tap(find.text('Build improvement'));
-      await e2eWaitUntilFound(
+      await waitUntilFound(
         tester,
         find.byKey(kCtE2ESelectFirstValidWorkTileKey).hitTestable(),
         timeout: const Duration(seconds: 5),
@@ -409,13 +418,13 @@ void main() {
         perf: perf,
         phaseName: 'pump_until_work_tile_overlay_cleared_build',
       );
-      await e2eCloseBottomSheet(tester, perf: perf);
+      await closeBottomSheet(tester, perf: perf);
 
       // --- Explorer: prospect + first legal tile ---
       await e2eOpenCivilianPanel(tester, perf: perf);
       await _tapAssignOnCivilianRowWithTitle(tester, kUnitTypeExplorer);
       await tester.tap(find.text('Prospect'));
-      await e2eWaitUntilFound(
+      await waitUntilFound(
         tester,
         find.byKey(kCtE2ESelectFirstValidWorkTileKey).hitTestable(),
         timeout: const Duration(seconds: 5),
@@ -430,17 +439,17 @@ void main() {
         perf: perf,
         phaseName: 'pump_until_work_tile_overlay_cleared_prospect',
       );
-      await e2eCloseBottomSheet(tester, perf: perf);
+      await closeBottomSheet(tester, perf: perf);
 
       // --- Civilian rail: after draft orders ---
       await tester.tap(find.byKey(kEmpireCivilianUnitsButtonKey));
       await expectCivilianPanelTexts();
-      await e2eCloseBottomSheet(tester, perf: perf);
+      await closeBottomSheet(tester, perf: perf);
 
       // --- Naval rail: collapsed ---
       await tester.tap(find.byKey(kEmpireNavalUnitsButtonKey));
       await expectNavalPanelTexts(expanded: false);
-      await e2eExpandEachExpansionTileOnce(tester);
+      await expandEachExpansionTileOnce(tester);
       final navalPanelRoot = find.byKey(kCtE2ENavalPanelRootKey);
       final split = find.descendant(
         of: navalPanelRoot,
@@ -452,7 +461,7 @@ void main() {
         matching: find.widgetWithText(CtNinePatchButton, '>'),
       );
       await tester.tap(split.first);
-      await e2eWaitUntilFound(
+      await waitUntilFound(
         tester,
         moveOneRight.hitTestable(),
         timeout: const Duration(seconds: 5),
@@ -460,7 +469,7 @@ void main() {
         phaseName: 'wait_until_split_stepper_visible',
       );
       await tester.tap(moveOneRight.first);
-      await e2eWaitUntilFound(
+      await waitUntilFound(
         tester,
         find.text('Confirm Split').hitTestable(),
         timeout: const Duration(seconds: 5),
@@ -477,7 +486,7 @@ void main() {
       );
 
       // Split triggers a panel refresh; ensure fleet tiles are expanded again.
-      await e2eExpandEachExpansionTileOnce(tester);
+      await expandEachExpansionTileOnce(tester);
       final moveButtons = find.descendant(
         of: navalPanelRoot,
         matching: find.text('Move'),
@@ -498,7 +507,7 @@ void main() {
         final seaRadio = find.byType(RadioListTile<dynamic>);
         if (seaRadio.evaluate().isNotEmpty) {
           await tester.tap(seaRadio.first);
-          await e2eWaitUntilFound(
+          await waitUntilFound(
             tester,
             find.text('Confirm').hitTestable(),
             timeout: const Duration(seconds: 5),
@@ -540,9 +549,9 @@ void main() {
         }
       }
 
-      await e2eExpandEachExpansionTileOnce(tester);
+      await expandEachExpansionTileOnce(tester);
       await expectNavalPanelTexts(expanded: true);
-      await e2eCloseBottomSheet(tester, perf: perf);
+      await closeBottomSheet(tester, perf: perf);
 
       // --- Civilian + naval from first map markers (tile scope) ---
       await _openPanelFromMarker(
@@ -552,7 +561,7 @@ void main() {
         perf: perf,
       );
       await expectCivilianPanelTexts();
-      await e2eCloseBottomSheet(tester, perf: perf);
+      await closeBottomSheet(tester, perf: perf);
 
       await _openPanelFromMarker(
         tester,
@@ -561,7 +570,7 @@ void main() {
         perf: perf,
       );
       await expectNavalPanelTexts(expanded: false);
-      await e2eCloseBottomSheet(tester, perf: perf);
+      await closeBottomSheet(tester, perf: perf);
 
       // --- Next turn ---
       final turnBefore =
@@ -621,7 +630,7 @@ void main() {
       await expectProductionPanelTexts();
 
       await tester.tap(find.byIcon(Icons.arrow_back));
-      await e2eWaitUntilFound(
+      await waitUntilFound(
         tester,
         find.byKey(kHomeToCapitalButtonKey),
         timeout: const Duration(seconds: 10),

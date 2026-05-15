@@ -63,3 +63,6 @@ Future<void> expandEachExpansionTileOnce(WidgetTester tester) =>
 
 Future<void> ensureAllRelocated64pxPngsLoad() =>
     e2eEnsureAllRelocated64pxPngsLoad();
+
+Future<void> ensureAllRelocated64pxPngsLoadSuiteOnce() =>
+    e2eEnsureAllRelocated64pxPngsLoadSuiteOnce();

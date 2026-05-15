@@ -57,7 +57,7 @@ Future<bool> _tapMoveOnFirstNonHomeFleet(WidgetTester tester) async {
           final iconHit = expandIcon.first;
           await tester.ensureVisible(iconHit);
           await tester.tap(iconHit, warnIfMissed: false);
-          await e2eWaitUntilFound(
+          await waitUntilFound(
             tester,
             find.descendant(of: sub, matching: find.text('Move')),
             timeout: const Duration(seconds: 3),
@@ -81,7 +81,7 @@ Future<bool> _tapMoveOnFirstNonHomeFleet(WidgetTester tester) async {
       }
       if (loc.evaluate().isNotEmpty) {
         await tester.tap(hit.first, warnIfMissed: false);
-        await e2eWaitUntilFound(
+        await waitUntilFound(
           tester,
           find.byType(AlertDialog),
           timeout: const Duration(seconds: 3),
@@ -93,7 +93,7 @@ Future<bool> _tapMoveOnFirstNonHomeFleet(WidgetTester tester) async {
     }
     if (fallbackMove != null) {
       await tester.tap(fallbackMove, warnIfMissed: false);
-      await e2eWaitUntilFound(
+      await waitUntilFound(
         tester,
         find.byType(AlertDialog),
         timeout: const Duration(seconds: 3),
@@ -102,7 +102,7 @@ Future<bool> _tapMoveOnFirstNonHomeFleet(WidgetTester tester) async {
       return true;
     }
     if (allowExpandAllFallback) {
-      await e2eExpandEachExpansionTileOnce(tester);
+      await expandEachExpansionTileOnce(tester);
       return false;
     }
     return false;
@@ -288,22 +288,22 @@ Future<void> _awaitNwCoastalOrVisibleLandForBundledExploreE2e({
   const maxTurns = 35;
   for (var i = 0; i < maxTurns; i++) {
     ensureUnderWallClock('NW bundled-explore readiness i=$i');
-    await e2eDismissTransientUi(tester);
+    await dismissTransientUi(tester);
     await _tapNewWorldRegionTabIfPresent(tester);
     await _openNavalPanel(tester);
     if (_nonHomeHumanFleetInCoastalNewWorldSeaFromCtSnapshot() ||
         _playerHasAnyNewWorldFoggedOrBetterFromCtSnapshot()) {
-      await e2eCloseBottomSheet(tester, overallTimeout: _kMaxUiResponseWait);
+      await closeBottomSheet(tester, overallTimeout: _kMaxUiResponseWait);
       return;
     }
-    await e2eCloseBottomSheet(tester, overallTimeout: _kMaxUiResponseWait);
+    await closeBottomSheet(tester, overallTimeout: _kMaxUiResponseWait);
     await _tryNavalMoveSegment(
       tester,
       l10n,
       useNewWorldMapTabFirst: true,
       allowWarpDestinations: false,
     );
-    await e2eCloseBottomSheet(tester, overallTimeout: _kMaxUiResponseWait);
+    await closeBottomSheet(tester, overallTimeout: _kMaxUiResponseWait);
     await _advanceOneHumanTurn(tester, l10n);
   }
   // Some generated maps can keep the non-home fleet in open-ocean NW sea lanes
@@ -418,14 +418,14 @@ Future<void> _splitHomeFleetOnce(
 }) async {
   final phaseSw = Stopwatch()..start();
   await tester.tap(find.byKey(kEmpireNavalUnitsButtonKey));
-  await e2eWaitUntilFound(
+  await waitUntilFound(
     tester,
     find.byKey(kCtE2ENavalPanelRootKey),
     timeout: _kMaxUiResponseWait,
     perf: perf,
     phaseName: 'wait_until_found_naval_panel',
   );
-  await e2eExpandEachExpansionTileOnce(tester);
+  await expandEachExpansionTileOnce(tester);
   final navalPanelRoot = find.byKey(kCtE2ENavalPanelRootKey);
   final split = find.descendant(
     of: navalPanelRoot,
@@ -433,7 +433,7 @@ Future<void> _splitHomeFleetOnce(
   );
   expect(split, findsWidgets);
   await tester.tap(split.first, warnIfMissed: false);
-  await e2eWaitUntilFound(
+  await waitUntilFound(
     tester,
     find.descendant(
       of: find.byType(CtDialogShell),
@@ -449,7 +449,7 @@ Future<void> _splitHomeFleetOnce(
   );
   expect(moveOneRight, findsWidgets);
   await tester.tap(moveOneRight.first);
-  await e2eWaitUntilFound(
+  await waitUntilFound(
     tester,
     find.text(l10n.splitFleet_confirm),
     timeout: const Duration(seconds: 4),
@@ -465,7 +465,7 @@ Future<void> _splitHomeFleetOnce(
     perf: perf,
     phaseName: 'pump_until_split_dialog_shell_cleared',
   );
-  await e2eExpandEachExpansionTileOnce(tester);
+  await expandEachExpansionTileOnce(tester);
   perf?.timing('fleet_split', phaseSw.elapsed);
 }
 
