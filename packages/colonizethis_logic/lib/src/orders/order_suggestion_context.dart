@@ -65,23 +65,71 @@ IncrementalCandidateValidator buildIncrementalCandidateValidator({
   );
 }
 
+/// Resolves the [IncrementalCandidateValidator] for a stateless candidate probe.
+///
+/// When [sharedCandidateValidator] is supplied for the same suggestion pass,
+/// rebinds via [IncrementalCandidateValidator.forBasePrefix] when [baseOrders]
+/// differs from the embedded prefix; otherwise reuses the instance without
+/// incrementing [incrementalCandidateValidatorBuildCountForTests]. Refs #2394.
+IncrementalCandidateValidator incrementalValidatorForCandidateProbe({
+  required Game game,
+  required MapTopology topology,
+  required String playerId,
+  required Orders baseOrders,
+  Map<String, TileMapResult>? tileMapByRegion,
+  PlayerView? view,
+  Map<String, Unit>? unitsById,
+  DiplomacyFactionMembership? factionMembership,
+  IncrementalCandidateValidator? sharedCandidateValidator,
+}) {
+  assert(
+    sharedCandidateValidator == null ||
+        sharedCandidateValidator.playerId == playerId,
+    'sharedCandidateValidator playerId must match playerId',
+  );
+  final shared = sharedCandidateValidator;
+  if (shared != null) {
+    return shared.basePrefix == baseOrders
+        ? shared
+        : shared.forBasePrefix(baseOrders);
+  }
+  return buildIncrementalCandidateValidator(
+    game: game,
+    topology: topology,
+    playerId: playerId,
+    baseOrders: baseOrders,
+    tileMapByRegion: tileMapByRegion,
+    view: view,
+    unitsById: unitsById,
+    factionMembership: factionMembership,
+  );
+}
+
 bool isMoveOrderAccepted(
   Game game,
   MapTopology topology,
   String playerId,
   Orders baseOrders,
-  MoveOrder candidate,
-) {
+  MoveOrder candidate, {
+  IncrementalCandidateValidator? sharedCandidateValidator,
+  PlayerView? view,
+  Map<String, Unit>? unitsById,
+  DiplomacyFactionMembership? factionMembership,
+}) {
   // Stateless candidate-probe path: validate the candidate against an
   // already-accepted [baseOrders] without re-running full-pass
   // [validatePlayerOrdersWithContext]. SPEC/program/order-suggestions.md
   // § Incremental candidate validation; SPEC/program/order-engine.md
   // § Validation (candidate-probe context). Refs #2237.
-  final validator = buildIncrementalCandidateValidator(
+  final validator = incrementalValidatorForCandidateProbe(
     game: game,
     topology: topology,
     playerId: playerId,
     baseOrders: baseOrders,
+    view: view,
+    unitsById: unitsById,
+    factionMembership: factionMembership,
+    sharedCandidateValidator: sharedCandidateValidator,
   );
   return validator.isMoveAccepted(candidate);
 }
@@ -91,17 +139,25 @@ bool isArmyMoveOrderAccepted(
   MapTopology topology,
   String playerId,
   Orders baseOrders,
-  ArmyMoveOrder candidate,
-) {
+  ArmyMoveOrder candidate, {
+  IncrementalCandidateValidator? sharedCandidateValidator,
+  PlayerView? view,
+  Map<String, Unit>? unitsById,
+  DiplomacyFactionMembership? factionMembership,
+}) {
   // Stateless candidate-probe path: validate the candidate against
   // [baseOrders]'s diplomatic context without re-running full-pass
   // [validatePlayerOrdersWithContext]. SPEC/program/order-suggestions.md
   // § Incremental candidate validation. Refs #2237.
-  final validator = buildIncrementalCandidateValidator(
+  final validator = incrementalValidatorForCandidateProbe(
     game: game,
     topology: topology,
     playerId: playerId,
     baseOrders: baseOrders,
+    view: view,
+    unitsById: unitsById,
+    factionMembership: factionMembership,
+    sharedCandidateValidator: sharedCandidateValidator,
   );
   return validator.isArmyMoveAccepted(candidate);
 }
@@ -113,13 +169,21 @@ bool isWorkOrderAccepted(
   Orders baseOrders,
   WorkOrder candidate, {
   Map<String, TileMapResult>? tileMapByRegion,
+  IncrementalCandidateValidator? sharedCandidateValidator,
+  PlayerView? view,
+  Map<String, Unit>? unitsById,
+  DiplomacyFactionMembership? factionMembership,
 }) {
-  final validator = buildIncrementalCandidateValidator(
+  final validator = incrementalValidatorForCandidateProbe(
     game: game,
     topology: topology,
     playerId: playerId,
     baseOrders: baseOrders,
     tileMapByRegion: tileMapByRegion,
+    view: view,
+    unitsById: unitsById,
+    factionMembership: factionMembership,
+    sharedCandidateValidator: sharedCandidateValidator,
   );
   return isWorkOrderAcceptedWithValidator(validator, candidate);
 }
@@ -129,13 +193,21 @@ bool isBuildOrderAccepted(
   MapTopology topology,
   String playerId,
   Orders baseOrders,
-  BuildUnitOrder candidate,
-) {
-  final validator = buildIncrementalCandidateValidator(
+  BuildUnitOrder candidate, {
+  IncrementalCandidateValidator? sharedCandidateValidator,
+  PlayerView? view,
+  Map<String, Unit>? unitsById,
+  DiplomacyFactionMembership? factionMembership,
+}) {
+  final validator = incrementalValidatorForCandidateProbe(
     game: game,
     topology: topology,
     playerId: playerId,
     baseOrders: baseOrders,
+    view: view,
+    unitsById: unitsById,
+    factionMembership: factionMembership,
+    sharedCandidateValidator: sharedCandidateValidator,
   );
   return isBuildOrderAcceptedWithValidator(validator, candidate);
 }
@@ -145,15 +217,23 @@ bool isNavalMoveOrderAccepted(
   MapTopology topology,
   String playerId,
   Orders baseOrders,
-  NavalMoveOrder candidate,
-) {
+  NavalMoveOrder candidate, {
+  IncrementalCandidateValidator? sharedCandidateValidator,
+  PlayerView? view,
+  Map<String, Unit>? unitsById,
+  DiplomacyFactionMembership? factionMembership,
+}) {
   // Stateless candidate-probe path. SPEC/program/order-suggestions.md
   // § Incremental candidate validation. Refs #2237.
-  final validator = buildIncrementalCandidateValidator(
+  final validator = incrementalValidatorForCandidateProbe(
     game: game,
     topology: topology,
     playerId: playerId,
     baseOrders: baseOrders,
+    view: view,
+    unitsById: unitsById,
+    factionMembership: factionMembership,
+    sharedCandidateValidator: sharedCandidateValidator,
   );
   return validator.isNavalMoveAccepted(candidate);
 }
@@ -163,15 +243,23 @@ bool isNavalMissionOrderAccepted(
   MapTopology topology,
   String playerId,
   Orders baseOrders,
-  NavalMissionOrder candidate,
-) {
+  NavalMissionOrder candidate, {
+  IncrementalCandidateValidator? sharedCandidateValidator,
+  PlayerView? view,
+  Map<String, Unit>? unitsById,
+  DiplomacyFactionMembership? factionMembership,
+}) {
   // Stateless candidate-probe path. SPEC/program/order-suggestions.md
   // § Incremental candidate validation. Refs #2237.
-  final validator = buildIncrementalCandidateValidator(
+  final validator = incrementalValidatorForCandidateProbe(
     game: game,
     topology: topology,
     playerId: playerId,
     baseOrders: baseOrders,
+    view: view,
+    unitsById: unitsById,
+    factionMembership: factionMembership,
+    sharedCandidateValidator: sharedCandidateValidator,
   );
   return validator.isNavalMissionAccepted(candidate);
 }
@@ -190,8 +278,10 @@ bool isDiplomaticOrderAccepted(
   /// § Throughput bounds.
   PlayerView? view,
   Map<String, Unit>? unitsById,
+  DiplomacyFactionMembership? factionMembership,
+  IncrementalCandidateValidator? sharedCandidateValidator,
 }) {
-  final validator = buildIncrementalCandidateValidator(
+  final validator = incrementalValidatorForCandidateProbe(
     game: game,
     topology: topology,
     playerId: playerId,
@@ -199,6 +289,8 @@ bool isDiplomaticOrderAccepted(
     tileMapByRegion: tileMapByRegion,
     view: view,
     unitsById: unitsById,
+    factionMembership: factionMembership,
+    sharedCandidateValidator: sharedCandidateValidator,
   );
   return validator.isDiplomaticAccepted(candidate);
 }
