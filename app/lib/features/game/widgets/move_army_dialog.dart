@@ -38,6 +38,7 @@ class MoveArmyDialog extends StatefulWidget {
     required this.bus,
     required this.topology,
     required this.draftOrders,
+    this.playerView,
   });
 
   final Army army;
@@ -47,14 +48,68 @@ class MoveArmyDialog extends StatefulWidget {
   final MapTopology topology;
   final Orders draftOrders;
 
+  /// When supplied, destination probing reuses this [PlayerView] and a single
+  /// per-dialog [IncrementalCandidateValidator] instead of rebuilding them on
+  /// every picker call (Refs #2394, SPEC/program/order-suggestions.md).
+  final PlayerView? playerView;
+
   @override
   State<MoveArmyDialog> createState() => _MoveArmyDialogState();
 }
 
 class _MoveArmyDialogState extends State<MoveArmyDialog> {
   String? _selected;
+  IncrementalCandidateValidator? _sharedCandidateValidator;
+  List<ArmyMovePickerDestination>? _cachedDestinations;
+  Orders? _cachedDestinationsOrders;
+  String? _cachedDestinationsArmyId;
+
+  void _syncSharedValidatorAndDestinations({bool rebuildValidator = false}) {
+    final view = widget.playerView;
+    if (view == null) {
+      _sharedCandidateValidator = null;
+      _cachedDestinations = null;
+      _cachedDestinationsOrders = null;
+      _cachedDestinationsArmyId = null;
+      return;
+    }
+    final orders = widget.draftOrders;
+    if (rebuildValidator || _sharedCandidateValidator == null) {
+      _sharedCandidateValidator = IncrementalCandidateValidator.forPlayer(
+        game: widget.game,
+        topology: widget.topology,
+        playerId: widget.humanPlayerId,
+        basePrefix: orders,
+        view: view,
+        unitsById: unitsByIdFromWorld(widget.game.worldState),
+      );
+    } else {
+      _sharedCandidateValidator =
+          _sharedCandidateValidator!.forBasePrefix(orders);
+    }
+    final armyId = widget.army.id;
+    if (_cachedDestinationsOrders != orders ||
+        _cachedDestinationsArmyId != armyId) {
+      _cachedDestinations = armyMovePickerDestinations(
+        game: widget.game,
+        topology: widget.topology,
+        playerId: widget.humanPlayerId,
+        army: widget.army,
+        currentOrders: orders,
+        playerView: view,
+        sharedCandidateValidator: _sharedCandidateValidator,
+      );
+      _cachedDestinationsOrders = orders;
+      _cachedDestinationsArmyId = armyId;
+    }
+  }
 
   List<ArmyMovePickerDestination> _destinationEntries() {
+    final view = widget.playerView;
+    if (view != null) {
+      _syncSharedValidatorAndDestinations();
+      return _cachedDestinations!;
+    }
     return armyMovePickerDestinations(
       game: widget.game,
       topology: widget.topology,
@@ -166,6 +221,7 @@ class _MoveArmyDialogState extends State<MoveArmyDialog> {
   @override
   void initState() {
     super.initState();
+    _syncSharedValidatorAndDestinations();
     final entries = _destinationEntries();
     if (entries.isNotEmpty) {
       _selected = entries.first.fullProvinceId;
@@ -177,7 +233,13 @@ class _MoveArmyDialogState extends State<MoveArmyDialog> {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.draftOrders != widget.draftOrders ||
         oldWidget.game != widget.game ||
-        oldWidget.army != widget.army) {
+        oldWidget.army != widget.army ||
+        oldWidget.playerView != widget.playerView) {
+      _syncSharedValidatorAndDestinations(
+        rebuildValidator:
+            oldWidget.game != widget.game ||
+            oldWidget.playerView != widget.playerView,
+      );
       final entries = _destinationEntries();
       if (_selected == null ||
           !entries.any((e) => e.fullProvinceId == _selected)) {
