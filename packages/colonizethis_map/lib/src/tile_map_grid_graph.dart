@@ -99,7 +99,9 @@ class TileMapGridGraph {
     }
     while (queue.isNotEmpty) {
       final (x, y) = queue.removeLast();
-      for (final (nx, ny) in [(x - 1, y), (x + 1, y), (x, y - 1), (x, y + 1)]) {
+      for (final (dx, dy) in kTileMapDirections4WestEastNorthSouth) {
+        final nx = x + dx;
+        final ny = y + dy;
         if (nx >= 0 &&
             nx < params.width &&
             ny >= 0 &&

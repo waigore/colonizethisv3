@@ -22,6 +22,17 @@ const kTileMapDirections4NorthSouthWestEast = <(int dx, int dy)>[
   (1, 0),
 ];
 
+/// West, East, North, South deltas (orthogonal).
+///
+/// Matches legacy `(x±1,y)` / `(x,y±1)` tuple order where iteration order affects
+/// deterministic outcomes (for example `_tryBorderNoiseSwapAtCell`). Refs #2489.
+const kTileMapDirections4WestEastNorthSouth = <(int dx, int dy)>[
+  (-1, 0),
+  (1, 0),
+  (0, -1),
+  (0, 1),
+];
+
 /// Eight-neighborhood deltas (4 orthogonal + 4 diagonal). Refs #2489.
 const kTileMapDirections8 = <(int dx, int dy)>[
   ...kTileMapDirections4,

@@ -42,8 +42,9 @@ class _TileMapGenLakesProvinces {
   ) {
     if (rnd.nextDouble() >= params.borderNoise) return;
     final id = grid[y][x];
-    final neighbors = [(x - 1, y), (x + 1, y), (x, y - 1), (x, y + 1)];
-    for (final (nx, ny) in neighbors) {
+    for (final (dx, dy) in kTileMapDirections4WestEastNorthSouth) {
+      final nx = x + dx;
+      final ny = y + dy;
       final nid = grid[ny][nx];
       final atBoundary =
           (id == _landSentinel && nid == seaZoneId) ||
