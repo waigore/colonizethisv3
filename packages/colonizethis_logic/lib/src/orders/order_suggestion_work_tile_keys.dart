@@ -39,21 +39,19 @@ Set<String> getValidWorkOrderTileKeys(
     ignorePendingWorkOrderUnitId: unitId,
   );
 
-  final factionMembership = DiplomacyFactionMembership.from(game);
-  final raw = rawCandidateTilesForWorkTarget(
-    game: game,
-    playerId: playerId,
-    workTarget: workTarget,
-    tileMapByRegion: tileMapByRegion,
-    factionMembership: factionMembership,
-  );
   final candidateValidator = buildIncrementalCandidateValidator(
     game: game,
     topology: topology,
     playerId: playerId,
     baseOrders: currentOrders,
     tileMapByRegion: tileMapByRegion,
-    factionMembership: factionMembership,
+  );
+  final raw = rawCandidateTilesForWorkTarget(
+    game: game,
+    playerId: playerId,
+    workTarget: workTarget,
+    tileMapByRegion: tileMapByRegion,
+    factionMembership: candidateValidator.factionMembershipSnapshot,
   );
   final valid = <String>{};
   for (final tileKey in raw) {

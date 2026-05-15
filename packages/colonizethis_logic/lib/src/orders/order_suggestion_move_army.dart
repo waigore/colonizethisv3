@@ -250,10 +250,15 @@ List<ArmyMovePickerDestination> armyMovePickerDestinations({
   final factionMembership = DiplomacyFactionMembership.from(game);
   final ownedProvinceIds =
       playerOwnedFullProvinceIds ??
-      <String>{
-        for (final p in allProvinces(game.worldState))
-          if (p.ownerId == playerId) toFullProvinceId(p.regionId, p.id),
-      };
+      (playerView != null
+          ? <String>{
+              for (final e in playerView.provincesById.entries)
+                if (e.value.ownerId == playerId) e.key,
+            }
+          : <String>{
+              for (final p in allProvinces(game.worldState))
+                if (p.ownerId == playerId) toFullProvinceId(p.regionId, p.id),
+            });
   final raw = armyMoveCandidateDestinationProvinceIds(
     game: game,
     topology: topology,
