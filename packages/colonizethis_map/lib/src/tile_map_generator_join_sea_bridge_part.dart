@@ -45,13 +45,17 @@ extension _TileMapGenJoinSeaBridgePart on _TileMapGenJoinSea {
           )
         : null;
 
+    // Single row-major pass buckets land tiles per continent; avoids numContinents
+    // redundant full-grid rescans at join entry (Refs #2489 P4).
+    final landCellsByContinentIndex = _landCellsGroupedByContinentIndex(
+      g,
+      provinceToContinent,
+      seaZoneId,
+    );
+
     for (var c = 0; c < numContinents; c++) {
-      var landCells = _landCellsForContinent(
-        g,
-        provinceToContinent,
-        c,
-        seaZoneId,
-      );
+      final seeded = landCellsByContinentIndex[c];
+      var landCells = seeded != null ? seeded : <(int x, int y)>{};
       var joinIterations = 0;
       while (joinIterations < maxJoinIterationsPerContinent) {
         joinIterations++;
@@ -140,18 +144,21 @@ extension _TileMapGenJoinSeaBridgePart on _TileMapGenJoinSea {
     }
   }
 
-  Set<(int x, int y)> _landCellsForContinent(
+  Map<int, Set<(int x, int y)>> _landCellsGroupedByContinentIndex(
     List<List<String>> grid,
     Map<String, int> membership,
-    int continentIndex,
     String seaZoneId,
   ) {
-    final out = <(int x, int y)>{};
+    final out = <int, Set<(int x, int y)>>{};
     for (var y = 0; y < params.height; y++) {
       for (var x = 0; x < params.width; x++) {
         final id = grid[y][x];
         if (id == seaZoneId) continue;
-        if (membership[id] == continentIndex) out.add((x, y));
+        final continentIndex = membership[id];
+        if (continentIndex == null) continue;
+        out
+            .putIfAbsent(continentIndex, () => <(int x, int y)>{})
+            .add((x, y));
       }
     }
     return out;
