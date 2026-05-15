@@ -6,7 +6,6 @@ import 'e2e_helpers.dart';
 import 'e2e_test_shared.dart'
     show
         e2eAdaptivePollRampAfterIdle,
-        e2eOpenCivilianPanel,
         e2ePumpUntil,
         e2ePumpUntilConditionOrIdle,
         e2eWaitForNewGameEntry,
@@ -395,12 +394,12 @@ void main() {
       }
 
       // --- Civilian (empire rail): baseline ---
-      await e2eOpenCivilianPanel(tester, perf: perf);
+      await openCivilianPanel(tester, perf: perf);
       await expectCivilianPanelTexts();
       await closeBottomSheet(tester, perf: perf);
 
       // --- Builder: build improvement + first legal tile (e2e tap target) ---
-      await e2eOpenCivilianPanel(tester, perf: perf);
+      await openCivilianPanel(tester, perf: perf);
       await _tapFirstAssignInCivilianPanel(tester);
       await tester.tap(find.text('Build improvement'));
       await waitUntilFound(
@@ -421,7 +420,7 @@ void main() {
       await closeBottomSheet(tester, perf: perf);
 
       // --- Explorer: prospect + first legal tile ---
-      await e2eOpenCivilianPanel(tester, perf: perf);
+      await openCivilianPanel(tester, perf: perf);
       await _tapAssignOnCivilianRowWithTitle(tester, kUnitTypeExplorer);
       await tester.tap(find.text('Prospect'));
       await waitUntilFound(

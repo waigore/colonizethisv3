@@ -37,6 +37,22 @@ Future<void> dismissTransientUi(
 }) =>
     e2eDismissTransientUi(tester, perf: perf);
 
+Future<void> openCivilianPanel(
+  WidgetTester tester, {
+  Duration timeout = const Duration(seconds: 20),
+  E2ePerfLog? perf,
+  Duration bottomSheetCloseTimeout = kE2eDefaultBottomSheetCloseTimeout,
+  String afterSheetPanelsClearPhase =
+      'pump_until_panels_cleared_after_close_sheet_civilian_open',
+}) =>
+    e2eOpenCivilianPanel(
+      tester,
+      timeout: timeout,
+      perf: perf,
+      bottomSheetCloseTimeout: bottomSheetCloseTimeout,
+      afterSheetPanelsClearPhase: afterSheetPanelsClearPhase,
+    );
+
 Future<void> openNavalPanel(
   WidgetTester tester, {
   E2ePerfLog? perf,

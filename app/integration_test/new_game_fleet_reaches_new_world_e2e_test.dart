@@ -9,7 +9,6 @@ import 'e2e_test_shared.dart'
         e2eAdaptivePollRampAfterIdle,
         e2eNewWorldRegionChipAppearsSelected,
         e2eOldWorldRegionChipAppearsSelected,
-        e2eOpenCivilianPanel,
         e2ePumpUntil,
         e2ePumpUntilConditionOrIdle,
         e2eWaitForNewGameEntry;
@@ -251,7 +250,7 @@ void main() {
       await _tapNewWorldRegionTabIfPresent(tester);
       Future<bool> checkExploreEnabledFromCivilianPanel() async {
         final phaseSw = Stopwatch()..start();
-        await e2eOpenCivilianPanel(
+        await openCivilianPanel(
           tester,
           afterSheetPanelsClearPhase:
               'pump_until_panels_cleared_after_close_sheet_fleet_civilian_open',
