@@ -18,7 +18,7 @@ class _TileMapGenLakesProvinces {
     Set<(int x, int y)> ocean,
     Set<(int x, int y)> coastalLandCandidates,
   ) {
-    for (final (dx, dy) in kTileMapDirections4) {
+    for (final (dx, dy) in kTileMapDirections4NorthSouthWestEast) {
       final nx = x + dx;
       final ny = y + dy;
       if (nx >= 0 &&
@@ -153,7 +153,7 @@ class _TileMapGenLakesProvinces {
         final neighbouringContinents = <int>{};
         final sameContinentDirectionCounts = <int, int>{};
 
-        for (final (dx, dy) in kTileMapDirections4) {
+        for (final (dx, dy) in kTileMapDirections4NorthSouthWestEast) {
           final nx = x + dx;
           final ny = y + dy;
           if (nx < 0 || nx >= params.width || ny < 0 || ny >= params.height) {

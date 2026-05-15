@@ -14,7 +14,7 @@ void _appendOrthogonalSeaNeighborsToCoastalList(
   int sy,
   List<(int x, int y)> coastalList,
 ) {
-  for (final (dx, dy) in kTileMapDirections4) {
+  for (final (dx, dy) in kTileMapDirections4NorthSouthWestEast) {
     final nx = sx + dx;
     final ny = sy + dy;
     if (nx >= 0 &&
@@ -36,7 +36,7 @@ void _registerFirstOrthogonalSeaTouchingLand(
   int y,
   void Function(int nx, int ny) onSea,
 ) {
-  for (final (dx, dy) in kTileMapDirections4) {
+  for (final (dx, dy) in kTileMapDirections4NorthSouthWestEast) {
     final nx = x + dx;
     final ny = y + dy;
     if (nx < 0 || nx >= params.width || ny < 0 || ny >= params.height) {

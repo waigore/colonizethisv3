@@ -212,7 +212,7 @@ class TileMapGridGraph {
   ) {
     final continentSet = <int>{};
     for (final (x, y) in component) {
-      for (final (dx, dy) in kTileMapDirections4) {
+      for (final (dx, dy) in kTileMapDirections4NorthSouthWestEast) {
         final nx = x + dx;
         final ny = y + dy;
         if (nx < 0 || nx >= params.width || ny < 0 || ny >= params.height) {
@@ -268,7 +268,7 @@ class TileMapGridGraph {
     Set<(int x, int y)> ocean,
   ) {
     var n = 0;
-    for (final (dx, dy) in kTileMapDirections4) {
+    for (final (dx, dy) in kTileMapDirections4NorthSouthWestEast) {
       final nx = x + dx;
       final ny = y + dy;
       if (nx >= 0 &&
@@ -290,7 +290,7 @@ class TileMapGridGraph {
     Set<(int x, int y)> component,
     List<(int x, int y)> queue,
   ) {
-    for (final (dx, dy) in kTileMapDirections4) {
+    for (final (dx, dy) in kTileMapDirections4NorthSouthWestEast) {
       final n = (x + dx, y + dy);
       if (!remaining.remove(n)) continue;
       component.add(n);

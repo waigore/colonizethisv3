@@ -30,7 +30,7 @@ List<List<List<int>>> manhattanDistToOtherContinentsMaps({
     while (qi < queue.length) {
       final (x, y) = queue[qi++];
       final d = dist[y][x];
-      for (final (dx, dy) in kTileMapDirections4) {
+      for (final (dx, dy) in kTileMapDirections4NorthSouthWestEast) {
         final nx = x + dx;
         final ny = y + dy;
         if (nx < 0 || nx >= width || ny < 0 || ny >= height) continue;

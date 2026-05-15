@@ -17,4 +17,15 @@ void main() {
       expect(kTileMapDirections8, hasLength(8));
     });
   });
+
+  group('kTileMapDirections4NorthSouthWestEast', () {
+    test('has four orthogonal neighbors in N,S,W,E order', () {
+      expect(kTileMapDirections4NorthSouthWestEast, [
+        (0, -1),
+        (0, 1),
+        (-1, 0),
+        (1, 0),
+      ]);
+    });
+  });
 }
