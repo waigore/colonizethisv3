@@ -273,6 +273,111 @@ void main() {
         expect(withShared, baseline);
       },
     );
+
+    test(
+      'sharedCandidateValidator matches default and skips forPlayer rebuild',
+      () {
+        const gp = 'gp1';
+        const cap = 'oldWorld|cap';
+        const p1 = 'oldWorld|p1';
+        const p2 = 'oldWorld|p2';
+        final game = Game(
+          id: 'g_army_picker_shared_validator',
+          worldState: WorldState(
+            turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+            oldWorld: RegionData(
+              provinces: [
+                Province(
+                  id: cap,
+                  regionId: 'oldWorld',
+                  ownerId: gp,
+                  townTileKey: 'oldWorld|cap|0|0',
+                ),
+                Province(id: p1, regionId: 'oldWorld', ownerId: gp),
+                Province(id: p2, regionId: 'oldWorld', ownerId: gp),
+              ],
+              units: const [],
+            ),
+            newWorld: const RegionData(),
+            armies: [
+              Army(
+                id: 'field_a',
+                ownerId: gp,
+                regionId: 'oldWorld',
+                stationedProvinceId: p1,
+                regimentUnitIds: const [],
+                isHomeArmy: false,
+              ),
+            ],
+            tileKeysByRegionAndProvince: const {},
+          ),
+          players: [
+            Player(
+              id: gp,
+              displayName: 'T',
+              isHuman: true,
+              capitalProvinceId: cap,
+            ),
+          ],
+        );
+        final topology = MapTopology(
+          nodes: const [
+            TopologyNode(
+              id: 'oldWorld|cap',
+              regionId: 'oldWorld',
+              type: TopologyNodeType.province,
+            ),
+            TopologyNode(
+              id: 'oldWorld|p1',
+              regionId: 'oldWorld',
+              type: TopologyNodeType.province,
+            ),
+            TopologyNode(
+              id: 'oldWorld|p2',
+              regionId: 'oldWorld',
+              type: TopologyNodeType.province,
+            ),
+          ],
+          edges: const [
+            TopologyEdge(id1: 'oldWorld|p1', id2: 'oldWorld|p2'),
+          ],
+        );
+        const orders = Orders();
+        final army = game.worldState.armies.first;
+        final baseline = armyMovePickerDestinations(
+          game: game,
+          topology: topology,
+          playerId: gp,
+          army: army,
+          currentOrders: orders,
+        );
+        final view = buildPlayerView(game, topology, gp);
+        final shared = IncrementalCandidateValidator.forPlayer(
+          game: game,
+          topology: topology,
+          playerId: gp,
+          basePrefix: orders,
+          view: view,
+          unitsById: unitsByIdFromWorld(game.worldState),
+        );
+        resetIncrementalCandidateValidatorBuildCountForTests();
+        final withSharedValidator = armyMovePickerDestinations(
+          game: game,
+          topology: topology,
+          playerId: gp,
+          army: army,
+          currentOrders: orders,
+          sharedCandidateValidator: shared,
+        );
+        expect(withSharedValidator, baseline);
+        expect(
+          incrementalCandidateValidatorBuildCountForTests,
+          0,
+          reason:
+              'army picker must reuse supplied pass validator (Refs #2394)',
+        );
+      },
+    );
   });
 
   group('generateOrdersWithSimpleHeuristics army moves', () {
