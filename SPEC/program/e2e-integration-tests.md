@@ -67,6 +67,8 @@ flutter test integration_test/new_game_fleet_reaches_new_world_e2e_test.dart \
 
 Headed runs: **`-d macos`** or **`-d linux`** in a graphical session.
 
+**Baseline / post-refactor timing (GitHub #2336 AC8):** From repo root, `tool/run_e2e_timing.sh [runs_per_test]` runs each of the three integration tests above **N** times (default 3), records wall-clock per run, and writes a markdown summary under `.cursor/e2e-timing/` (or `E2E_TIMING_OUT`). Capture once on `dev` tip (baseline) and once on the PR branch (after); include per-test medians and the sum of medians in the PR description.
+
 ## CI
 
 - **`app_build_linux`** (`quality.yml`, parallel to **`app_tests_shard`**, shared **`app_tests_cache`**): Ubuntu deps, **`flutter build linux --release --no-pub`**, then **`git`** check that tracked **`app/lib/l10n/*.dart`** match gen output (Refs #2074).
