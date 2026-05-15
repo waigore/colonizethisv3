@@ -16,6 +16,7 @@ void _addWorkerSuggestionsForUnit({
   required Set<String> devExclusiveReservedTiles,
   required List<WorkOrder> suggestions,
   required IncrementalCandidateValidator candidateValidator,
+  required DiplomacyFactionMembership factionMembership,
   Map<String, TileMapResult>? tileMapByRegion,
 }) {
   final allowedTargets = workOrderTargetsByUnitType[type];
@@ -31,6 +32,7 @@ void _addWorkerSuggestionsForUnit({
           workTarget: target,
           tileMapByRegion: tileMapByRegion,
           playerOwnedProvinceIds: playerOwnedProvinceIds,
+          factionMembership: factionMembership,
         );
         return sortedVisibleWorkTargetCandidates(view, raw);
       },

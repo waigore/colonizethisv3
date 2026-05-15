@@ -77,19 +77,29 @@ class PerPlayerWorkTargetSelectionCache {
     return out;
   }
 
+  /// Reuses [WorkTargetSelectionSnapshot.sharedCandidateValidator] when set;
+  /// otherwise builds one and pays [DiplomacyFactionMembership.from] only on
+  /// that path (Refs #2394 — avoid redundant membership scans per strategy).
+  static IncrementalCandidateValidator _sharedOrBuildValidator(
+    WorkTargetSelectionSnapshot s,
+  ) {
+    final existing = s.sharedCandidateValidator;
+    if (existing != null) {
+      return existing;
+    }
+    return buildIncrementalCandidateValidator(
+      game: s.game,
+      topology: s.topology,
+      playerId: s.playerId,
+      baseOrders: s.currentOrders,
+      tileMapByRegion: s.tileMapByRegion,
+      view: s.playerView,
+      factionMembership: DiplomacyFactionMembership.from(s.game),
+    );
+  }
+
   void refresh(WorkTargetSelectionSnapshot snapshot) {
-    final factionMembership = DiplomacyFactionMembership.from(snapshot.game);
-    final sharedValidator =
-        snapshot.sharedCandidateValidator ??
-        buildIncrementalCandidateValidator(
-          game: snapshot.game,
-          topology: snapshot.topology,
-          playerId: snapshot.playerId,
-          baseOrders: snapshot.currentOrders,
-          tileMapByRegion: snapshot.tileMapByRegion,
-          view: snapshot.playerView,
-          factionMembership: factionMembership,
-        );
+    final sharedValidator = _sharedOrBuildValidator(snapshot);
     final snapshotForPopulation = WorkTargetSelectionSnapshot(
       game: snapshot.game,
       playerId: snapshot.playerId,
@@ -151,18 +161,7 @@ class PerPlayerWorkTargetSelectionCache {
     WorkTargetSelectionSnapshot s,
     String workTarget,
   ) {
-    final factionMembership = DiplomacyFactionMembership.from(s.game);
-    final sharedValidator =
-        s.sharedCandidateValidator ??
-        buildIncrementalCandidateValidator(
-          game: s.game,
-          topology: s.topology,
-          playerId: s.playerId,
-          baseOrders: s.currentOrders,
-          tileMapByRegion: s.tileMapByRegion,
-          view: s.playerView,
-          factionMembership: factionMembership,
-        );
+    final sharedValidator = _sharedOrBuildValidator(s);
     final merged = <String>{};
     for (final unit in _humanCivilianUnits(s.game, s.playerId)) {
       final supportsTarget =
@@ -221,18 +220,7 @@ class PerPlayerWorkTargetSelectionCache {
     WorkTargetSelectionSnapshot s,
     String workTarget,
   ) {
-    final factionMembership = DiplomacyFactionMembership.from(s.game);
-    final sharedValidator =
-        s.sharedCandidateValidator ??
-        buildIncrementalCandidateValidator(
-          game: s.game,
-          topology: s.topology,
-          playerId: s.playerId,
-          baseOrders: s.currentOrders,
-          tileMapByRegion: s.tileMapByRegion,
-          view: s.playerView,
-          factionMembership: factionMembership,
-        );
+    final sharedValidator = _sharedOrBuildValidator(s);
     final pendingWorkUnitIds = <String>{
       for (final w
           in s.currentOrders.workOrdersByPlayerId[s.playerId] ??
