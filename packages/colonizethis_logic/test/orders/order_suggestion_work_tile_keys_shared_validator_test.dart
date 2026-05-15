@@ -138,6 +138,68 @@ void main() {
 
       expect(withOwnedIds, equals(baseline));
     });
+
+    test('optional unitsById matches default path', () {
+      const playerId = 'gp1';
+      const ow = 'oldWorld';
+      const tileA = 'oldWorld|p1|0|0';
+      const tileB = 'oldWorld|p1|1|0';
+      final player = Player(
+        id: playerId,
+        displayName: 'GP',
+        isHuman: false,
+        stockpile: Stockpile(quantities: {'lumber': 20, 'castIron': 20}),
+      );
+      final p1 = Province(id: '$ow|p1', regionId: ow, ownerId: playerId);
+      final b1 = Unit(
+        id: 'b1',
+        type: kUnitTypeBuilder,
+        ownerId: playerId,
+        locationProvinceId: '$ow|p1',
+        tileKey: tileA,
+      );
+      final world = WorldState(
+        turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+        oldWorld: RegionData(provinces: [p1], units: [b1]),
+        newWorld: const RegionData(),
+        playerVisibilityByTile: {
+          playerId: {tileA: 'fullyVisible', tileB: 'fullyVisible'},
+        },
+        tileKeysByRegionAndProvince: {
+          ow: {
+            '$ow|p1': [tileA, tileB],
+          },
+        },
+        resourceByTileKey: {tileA: 'grain', tileB: 'grain'},
+        tileState: TileMapState(improvementByTile: {tileA: 0, tileB: 0}),
+      );
+      final game = Game(id: 'g1', worldState: world, players: [player]);
+      final topology = const MapTopology(nodes: [], edges: []);
+      final view = buildPlayerView(game, topology, playerId);
+      const orders = Orders();
+      final unitsById = unitsByIdFromWorld(game.worldState);
+
+      final baseline = getValidWorkOrderTileKeysWithVisibility(
+        game: game,
+        topology: topology,
+        view: view,
+        unitId: 'b1',
+        workTarget: kWorkTargetBuildImprovement,
+        currentOrders: orders,
+      );
+
+      final withUnitsById = getValidWorkOrderTileKeysWithVisibility(
+        game: game,
+        topology: topology,
+        view: view,
+        unitId: 'b1',
+        workTarget: kWorkTargetBuildImprovement,
+        currentOrders: orders,
+        unitsById: unitsById,
+      );
+
+      expect(withUnitsById, equals(baseline));
+    });
   });
 
   group('getValidWorkOrderTileKeys PlayerView reuse', () {

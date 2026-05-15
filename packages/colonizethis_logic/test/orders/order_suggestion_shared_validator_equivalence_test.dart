@@ -213,5 +213,50 @@ void main() {
         );
       },
     );
+
+    test('forBasePrefix matches fresh forPlayer for same basePrefix', () {
+      final game = buildGame();
+      final topology = buildTopology();
+      final view = buildPlayerView(game, topology, gp);
+      final unitsById = unitsByIdFromWorld(game.worldState);
+      const orders = Orders();
+
+      final initial = IncrementalCandidateValidator.forPlayer(
+        game: game,
+        topology: topology,
+        playerId: gp,
+        basePrefix: orders,
+        view: view,
+        unitsById: unitsById,
+      );
+      final rebound = initial.forBasePrefix(orders);
+      final fresh = IncrementalCandidateValidator.forPlayer(
+        game: game,
+        topology: topology,
+        playerId: gp,
+        basePrefix: orders,
+        view: view,
+        unitsById: unitsById,
+      );
+
+      expect(
+        suggestMoveOrders(
+          view,
+          game,
+          topology,
+          orders,
+          sharedCandidateValidator: rebound,
+        ),
+        equals(
+          suggestMoveOrders(
+            view,
+            game,
+            topology,
+            orders,
+            sharedCandidateValidator: fresh,
+          ),
+        ),
+      );
+    });
   });
 }

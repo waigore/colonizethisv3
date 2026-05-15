@@ -278,17 +278,20 @@ Orders generateOrdersWithSimpleHeuristics(
   /// Max iterations per player per turn (cap to avoid unbounded loops).
   /// Documented in SPEC/program/sim-game-default-ai.md.
   const maxIterationsPerPlayer = 32;
+  IncrementalCandidateValidator? candidateValidator;
   for (var i = 0; i < maxIterationsPerPlayer; i++) {
-    final candidateValidator = IncrementalCandidateValidator.forPlayer(
-      game: g,
-      topology: topology,
-      playerId: player.id,
-      basePrefix: current,
-      tileMapByRegion: tileMapByRegion,
-      view: view,
-      unitsById: unitsById,
-      factionMembership: factionMembership,
-    );
+    candidateValidator = candidateValidator == null
+        ? IncrementalCandidateValidator.forPlayer(
+            game: g,
+            topology: topology,
+            playerId: player.id,
+            basePrefix: current,
+            tileMapByRegion: tileMapByRegion,
+            view: view,
+            unitsById: unitsById,
+            factionMembership: factionMembership,
+          )
+        : candidateValidator!.forBasePrefix(current);
     final moveSuggestions = suggestMoveOrders(
       view,
       g,

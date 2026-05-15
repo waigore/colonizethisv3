@@ -140,6 +140,8 @@ Set<String> getValidWorkOrderTileKeysWithVisibility({
   required Orders currentOrders,
   Map<String, TileMapResult>? tileMapByRegion,
   IncrementalCandidateValidator? sharedCandidateValidator,
+  Map<String, Unit>? unitsById,
+  Set<String>? playerOwnedProvinceIds,
 });
 ```
 

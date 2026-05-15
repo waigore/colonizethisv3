@@ -135,6 +135,9 @@ Set<String> getValidWorkOrderTileKeysWithVisibility({
   Map<String, TileMapResult>? tileMapByRegion,
   IncrementalCandidateValidator? sharedCandidateValidator,
 
+  /// Optional units index; must match [game.worldState] when supplied.
+  Map<String, Unit>? unitsById,
+
   /// When non-null, must match ids from [view.provincesById] owned by the player.
   /// Callers that invoke this many times per pass should supply a shared set to
   /// avoid O(calls × provinces) [allProvinces] rescans (Refs #2394).
@@ -186,6 +189,7 @@ Set<String> getValidWorkOrderTileKeysWithVisibility({
     factionMembership: factionMembership,
   );
   final sortedVisible = sortedVisibleWorkTargetCandidates(view, raw);
+  final effectiveUnitsById = unitsById ?? unitsByIdFromWorld(game.worldState);
   final candidateValidator =
       sharedCandidateValidator ??
       buildIncrementalCandidateValidator(
@@ -195,7 +199,7 @@ Set<String> getValidWorkOrderTileKeysWithVisibility({
         baseOrders: currentOrders,
         tileMapByRegion: tileMapByRegion,
         view: view,
-        unitsById: unitsByIdFromWorld(game.worldState),
+        unitsById: effectiveUnitsById,
         factionMembership: factionMembership,
       );
 

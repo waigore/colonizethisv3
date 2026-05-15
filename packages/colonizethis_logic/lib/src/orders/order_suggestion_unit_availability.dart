@@ -129,6 +129,7 @@ AvailableWorkTargetsForUnit getAvailableWorkTargetsForUnit({
       currentOrders: currentOrders,
       tileMapByRegion: tileMapByRegion,
       sharedCandidateValidator: sharedValidator,
+      unitsById: unitsById,
       playerOwnedProvinceIds: playerOwnedProvinceIds,
     );
     if (tiles.isNotEmpty) {
