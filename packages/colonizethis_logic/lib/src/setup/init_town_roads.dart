@@ -11,9 +11,8 @@ import '../world/tile_key_coordinates.dart';
 
 const int _initTownRoadLevel = 1;
 
-/// BFS neighbor order — matches [_shortestPathOnProvinceTiles] in capital_choice.dart
-/// for deterministic shortest paths.
-const List<(int, int)> _kBfsDeltas = [(0, -1), (1, 0), (0, 1), (-1, 0)];
+/// Neighbor iteration uses [kGridNeighborsCardinal4] ordering so shortest-path
+/// scans align with [_shortestPathOnProvinceTiles] in capital_choice.dart (Refs #2391).
 
 /// After town assignment: for each faction whose capital lies in a region listed in
 /// [GameSetupConfig.initTownRoadWiringRegionIds], raise road level to at least
@@ -187,7 +186,7 @@ Map<String, String> _bfsParentsFromCapital({
     final xy = _parseTileKeyXY(cur);
     if (xy == null) continue;
     final (cx, cy) = xy;
-    for (final d in _kBfsDeltas) {
+    for (final d in kGridNeighborsCardinal4) {
       final nx = cx + d.$1;
       final ny = cy + d.$2;
       if (nx < 0 || nx >= mapWidth || ny < 0 || ny >= mapHeight) {
