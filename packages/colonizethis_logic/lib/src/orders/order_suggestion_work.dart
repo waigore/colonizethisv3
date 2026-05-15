@@ -119,7 +119,9 @@ List<WorkOrder> suggestWorkOrders(
         sharedCandidateValidator.playerId == playerId,
     'sharedCandidateValidator playerId must match view.playerId',
   );
-  final factionMembership = DiplomacyFactionMembership.from(game);
+  final factionMembership =
+      sharedCandidateValidator?.factionMembershipSnapshot ??
+      DiplomacyFactionMembership.from(game);
   final candidateValidator =
       sharedCandidateValidator ??
       buildIncrementalCandidateValidator(
@@ -128,6 +130,8 @@ List<WorkOrder> suggestWorkOrders(
         playerId: playerId,
         baseOrders: currentOrders,
         tileMapByRegion: tileMapByRegion,
+        view: view,
+        unitsById: unitsByIdFromWorld(game.worldState),
         factionMembership: factionMembership,
       );
 
