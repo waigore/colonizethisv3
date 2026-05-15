@@ -101,12 +101,19 @@ void _addAcceptedMovesFromPortFleet({
 }
 
 /// Suggests naval move orders for fleets owned by [view.playerId]. SPEC/program/naval-movement-resolution.md.
+///
+/// Throughput hook: callers that enumerate multiple suggestion families against
+/// the same `(game, view.playerId, currentOrders)` may supply
+/// [sharedCandidateValidator] to amortize `PlayerView` / units-by-id
+/// construction (Refs #2394, `SPEC/program/order-suggestions.md` § Throughput
+/// bounds).
 List<NavalMoveOrder> suggestNavalMoveOrders(
   PlayerView view,
   Game game,
   MapTopology topology,
   Orders currentOrders, {
   Map<String, Unit>? unitsById,
+  IncrementalCandidateValidator? sharedCandidateValidator,
 }) {
   orderSuggestionLog.d('suggestNavalMoveOrders player=${view.playerId}');
   final playerId = view.playerId;
@@ -127,17 +134,27 @@ List<NavalMoveOrder> suggestNavalMoveOrders(
   // SPEC/program/order-suggestions.md § Incremental candidate validation.
   // Refs #2237.
   //
+  assert(
+    sharedCandidateValidator == null ||
+        sharedCandidateValidator.playerId == playerId,
+    'sharedCandidateValidator playerId must match view.playerId',
+  );
   // Reuse the caller-supplied [view] and a one-time units index so we do not
   // pay redundant `buildPlayerView` / `unitsByIdFromWorld` scans (Refs #2394).
-  final effectiveUnits = unitsById ?? unitsByIdFromWorld(game.worldState);
-  final candidateValidator = IncrementalCandidateValidator.forPlayer(
-    game: game,
-    topology: topology,
-    playerId: playerId,
-    basePrefix: currentOrders,
-    view: view,
-    unitsById: effectiveUnits,
-  );
+  final effectiveUnits =
+      unitsById ??
+      sharedCandidateValidator?.unitsById ??
+      unitsByIdFromWorld(game.worldState);
+  final candidateValidator =
+      sharedCandidateValidator ??
+      IncrementalCandidateValidator.forPlayer(
+        game: game,
+        topology: topology,
+        playerId: playerId,
+        basePrefix: currentOrders,
+        view: view,
+        unitsById: effectiveUnits,
+      );
 
   final homeFleetId = homeFleetIdFor(playerId);
   for (final fleet in game.worldState.fleets) {
@@ -192,12 +209,15 @@ List<NavalMoveOrder> suggestNavalMoveOrders(
 }
 
 /// Suggests naval mission orders for fleets owned by [view.playerId]. Phase 6.
+///
+/// Throughput hook: see [suggestNavalMoveOrders] [sharedCandidateValidator].
 List<NavalMissionOrder> suggestNavalMissionOrders(
   PlayerView view,
   Game game,
   MapTopology topology,
   Orders currentOrders, {
   Map<String, Unit>? unitsById,
+  IncrementalCandidateValidator? sharedCandidateValidator,
 }) {
   orderSuggestionLog.d('suggestNavalMissionOrders player=${view.playerId}');
   final playerId = view.playerId;
@@ -212,16 +232,26 @@ List<NavalMissionOrder> suggestNavalMissionOrders(
   // candidate probe (mission × fleet). SPEC/program/order-suggestions.md
   // § Incremental candidate validation. Refs #2237.
   //
-  // Reuse [view] and one units snapshot (Refs #2394).
-  final effectiveUnits = unitsById ?? unitsByIdFromWorld(game.worldState);
-  final candidateValidator = IncrementalCandidateValidator.forPlayer(
-    game: game,
-    topology: topology,
-    playerId: playerId,
-    basePrefix: currentOrders,
-    view: view,
-    unitsById: effectiveUnits,
+  assert(
+    sharedCandidateValidator == null ||
+        sharedCandidateValidator.playerId == playerId,
+    'sharedCandidateValidator playerId must match view.playerId',
   );
+  // Reuse [view] and one units snapshot (Refs #2394).
+  final effectiveUnits =
+      unitsById ??
+      sharedCandidateValidator?.unitsById ??
+      unitsByIdFromWorld(game.worldState);
+  final candidateValidator =
+      sharedCandidateValidator ??
+      IncrementalCandidateValidator.forPlayer(
+        game: game,
+        topology: topology,
+        playerId: playerId,
+        basePrefix: currentOrders,
+        view: view,
+        unitsById: effectiveUnits,
+      );
 
   for (final fleet in game.worldState.fleets) {
     if (fleet.ownerId != playerId) continue;
@@ -381,12 +411,17 @@ DiplomaticOrder? _establishOvertureSuggestionOrder({
 
 /// Suggests candidate diplomatic orders that are valid and visible for [view.playerId].
 /// SPEC/program/order-suggestions.md; SPEC/program/ai-systems-impl.md.
+///
+/// Throughput hook: when [sharedCandidateValidator] is supplied for the same
+/// `(game, topology, playerId, currentOrders)` tuple, the pass-level validator
+/// setup is skipped (Refs #2394).
 List<DiplomaticOrder> suggestDiplomaticOrders(
   PlayerView view,
   Game game,
   MapTopology topology,
   Orders currentOrders, {
   Map<String, TileMapResult>? tileMapByRegion,
+  IncrementalCandidateValidator? sharedCandidateValidator,
 }) {
   orderSuggestionLog.d('suggestDiplomaticOrders player=${view.playerId}');
   final playerId = view.playerId;
@@ -438,9 +473,15 @@ List<DiplomaticOrder> suggestDiplomaticOrders(
     playerOverturesByTargetId.putIfAbsent(o.targetId, () => o);
   }
 
+  assert(
+    sharedCandidateValidator == null ||
+        sharedCandidateValidator.playerId == playerId,
+    'sharedCandidateValidator playerId must match view.playerId',
+  );
   // One world scan for the suggestion pass: every diplomatic probe shares the
   // same `(game, topology, playerId)` view/units snapshot (Refs #2394).
-  final unitsByIdForDiplomatic = unitsByIdFromWorld(game.worldState);
+  final unitsByIdForDiplomatic =
+      sharedCandidateValidator?.unitsById ?? unitsByIdFromWorld(game.worldState);
 
   final unionTargets = <String>{
     ...knownTargets,
@@ -450,6 +491,23 @@ List<DiplomaticOrder> suggestDiplomaticOrders(
 
   final sortedTargetIds = unionTargets.toList()..sort();
   var workingOrders = currentOrders;
+  // Rebind [basePrefix] per target via [forBasePrefix]; pay view/units/membership
+  // setup once for the whole suggestion pass (Refs #2394).
+  var passValidator =
+      sharedCandidateValidator != null
+      ? (sharedCandidateValidator.basePrefix == workingOrders
+            ? sharedCandidateValidator
+            : sharedCandidateValidator.forBasePrefix(workingOrders))
+      : buildIncrementalCandidateValidator(
+          game: game,
+          topology: topology,
+          playerId: playerId,
+          baseOrders: workingOrders,
+          tileMapByRegion: tileMapByRegion,
+          view: view,
+          unitsById: unitsByIdForDiplomatic,
+          factionMembership: factionMembership,
+        );
   for (final targetId in sortedTargetIds) {
     if (targetId == playerId) continue;
 
@@ -467,23 +525,16 @@ List<DiplomaticOrder> suggestDiplomaticOrders(
 
     // One incremental validator per trial prefix: amortizes validator setup
     // across all candidates in the pass (Refs #2394).
-    final primaryPassValidator = buildIncrementalCandidateValidator(
-      game: game,
-      topology: topology,
-      playerId: playerId,
-      baseOrders: trialOrders,
-      tileMapByRegion: tileMapByRegion,
-      view: view,
-      unitsById: unitsByIdForDiplomatic,
-      factionMembership: factionMembership,
-    );
+    final prefixPassValidator = passValidator.forBasePrefix(trialOrders);
+    passValidator = prefixPassValidator;
+    var prefixPassAcceptedOrder = false;
     for (final candidate in candidates) {
       if (candidate.type == DiplomaticOrderType.grantAid ||
           candidate.type == DiplomaticOrderType.setSubsidy) {
         continue;
       }
       if (!isDiplomaticOrderAcceptedWithValidator(
-        primaryPassValidator,
+        prefixPassValidator,
         candidate,
       )) {
         continue;
@@ -494,19 +545,18 @@ List<DiplomaticOrder> suggestDiplomaticOrders(
         playerId,
         candidate,
       );
+      prefixPassAcceptedOrder = true;
       break;
     }
 
-    final economicPassValidator = buildIncrementalCandidateValidator(
-      game: game,
-      topology: topology,
-      playerId: playerId,
-      baseOrders: trialOrders,
-      tileMapByRegion: tileMapByRegion,
-      view: view,
-      unitsById: unitsByIdForDiplomatic,
-      factionMembership: factionMembership,
-    );
+    // Rebind only when the non-economic pass changed the trial prefix; when
+    // it did not accept anything, economic probes share [prefixPassValidator].
+    final economicPassValidator = prefixPassAcceptedOrder
+        ? prefixPassValidator.forBasePrefix(trialOrders)
+        : prefixPassValidator;
+    if (prefixPassAcceptedOrder) {
+      passValidator = economicPassValidator;
+    }
     for (final candidate in candidates) {
       if (candidate.type != DiplomaticOrderType.grantAid &&
           candidate.type != DiplomaticOrderType.setSubsidy) {
@@ -527,6 +577,10 @@ List<DiplomaticOrder> suggestDiplomaticOrders(
     }
 
     workingOrders = trialOrders;
+    // Keep [passValidator] aligned with accumulated **workingOrders** before the
+    // next target (including economic-only accepts that did not update
+    // [passValidator] in the primary/economic split above). Refs #2394.
+    passValidator = passValidator.forBasePrefix(workingOrders);
   }
 
   suggestions.sort((a, b) {

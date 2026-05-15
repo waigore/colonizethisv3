@@ -13,6 +13,7 @@ import '../diplomacy/diplomacy_resolver.dart';
 import '../orders/draft_orders_mutations.dart';
 import '../orders/incremental_candidate_validator.dart';
 import '../orders/order_suggestion.dart';
+import '../orders/order_suggestion_context.dart';
 import '../world/army_migration.dart';
 import '../world/player_view.dart';
 import '../world/unit_lookup.dart';
@@ -278,17 +279,20 @@ Orders generateOrdersWithSimpleHeuristics(
   /// Max iterations per player per turn (cap to avoid unbounded loops).
   /// Documented in SPEC/program/sim-game-default-ai.md.
   const maxIterationsPerPlayer = 32;
+  var candidateValidator = buildIncrementalCandidateValidator(
+    game: g,
+    topology: topology,
+    playerId: player.id,
+    baseOrders: current,
+    tileMapByRegion: tileMapByRegion,
+    view: view,
+    unitsById: unitsById,
+    factionMembership: factionMembership,
+  );
   for (var i = 0; i < maxIterationsPerPlayer; i++) {
-    final candidateValidator = IncrementalCandidateValidator.forPlayer(
-      game: g,
-      topology: topology,
-      playerId: player.id,
-      basePrefix: current,
-      tileMapByRegion: tileMapByRegion,
-      view: view,
-      unitsById: unitsById,
-      factionMembership: factionMembership,
-    );
+    if (i > 0) {
+      candidateValidator = candidateValidator.forBasePrefix(current);
+    }
     final moveSuggestions = suggestMoveOrders(
       view,
       g,

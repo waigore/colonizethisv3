@@ -116,13 +116,18 @@ void _addAllTilesInOwnedPrefixedProvinces({
 }
 
 /// Adds candidate tiles for upgrade_town/build_fort: town tiles in owned provinces.
+///
+/// Iterates [ownedProvinceIds] with O(1) [WorldState.tryGetProvince] lookups
+/// instead of scanning every province in both regions (Refs #2394).
 void _addCandidateTilesForTownWork({
   required Game game,
   required Set<String> ownedProvinceIds,
   required Set<String> result,
 }) {
-  for (final province in allProvinces(game.worldState)) {
-    if (!ownedProvinceIds.contains(province.id)) continue;
+  final world = game.worldState;
+  for (final provinceId in ownedProvinceIds) {
+    final province = world.tryGetProvince(provinceId);
+    if (province == null) continue;
     final townTileKey = province.townTileKey;
     if (townTileKey == null || townTileKey.isEmpty) continue;
     result.add(townTileKey);

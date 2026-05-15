@@ -29,6 +29,17 @@ void bumpOrderSuggestionWorkOrderAcceptanceProbeIfTracking() {
   }
 }
 
+int _incrementalCandidateValidatorBuildCountForTests = 0;
+
+/// Test hook: reset [incrementalCandidateValidatorBuildCountForTests] (Refs #2394).
+void resetIncrementalCandidateValidatorBuildCountForTests() {
+  _incrementalCandidateValidatorBuildCountForTests = 0;
+}
+
+/// Test hook: [buildIncrementalCandidateValidator] invocations since last reset.
+int get incrementalCandidateValidatorBuildCountForTests =>
+    _incrementalCandidateValidatorBuildCountForTests;
+
 IncrementalCandidateValidator buildIncrementalCandidateValidator({
   required Game game,
   required MapTopology topology,
@@ -41,6 +52,7 @@ IncrementalCandidateValidator buildIncrementalCandidateValidator({
   /// second [DiplomacyFactionMembership.from] inside the validator.
   DiplomacyFactionMembership? factionMembership,
 }) {
+  _incrementalCandidateValidatorBuildCountForTests++;
   return IncrementalCandidateValidator.forPlayer(
     game: game,
     topology: topology,

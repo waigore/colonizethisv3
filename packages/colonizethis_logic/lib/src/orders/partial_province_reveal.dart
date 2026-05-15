@@ -30,19 +30,20 @@ Set<String> partiallyRevealedPrefixedProvinceIdsForPlayer({
 
 /// Province rows for [partiallyRevealedPrefixedProvinceIds], sorted by full
 /// province id. Built once per work-suggestion pass and shared across explorer
-/// units instead of rescanning [allProvinces] per unit (Refs #2394).
+/// units via O(1) [PlayerView.provincesById] lookups instead of
+/// [allProvinces] (Refs #2394).
 ///
 /// When the id set is empty, returns a constant empty list without scanning.
 List<Province> sortedProvincesForPartialRevealPrefixedIds({
-  required WorldState world,
+  required PlayerView view,
   required Set<String> partiallyRevealedPrefixedProvinceIds,
 }) {
   if (partiallyRevealedPrefixedProvinceIds.isEmpty) {
     return const [];
   }
   final out = <Province>[
-    for (final p in allProvinces(world))
-      if (partiallyRevealedPrefixedProvinceIds.contains(p.id)) p,
+    for (final id in partiallyRevealedPrefixedProvinceIds)
+      if (view.provincesById[id] != null) view.provincesById[id]!,
   ];
   out.sort((a, b) => a.id.compareTo(b.id));
   return out;

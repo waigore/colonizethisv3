@@ -406,6 +406,42 @@ bool _expressionEndsInNamedCollection(
   return false;
 }
 
+bool _isIncrementalValidatorForPlayerInLoopPattern(
+  AstNode node,
+  DisallowedPatternRule rule,
+  String relativePath,
+) {
+  final prefix = rule.linearCollectionPathPrefix;
+  if (prefix == null || prefix.isEmpty) {
+    return false;
+  }
+  final slashPath = relativePath.replaceAll('\\', '/');
+  if (!slashPath.startsWith(prefix)) {
+    return false;
+  }
+  if (node is InstanceCreationExpression) {
+    final typeName = node.constructorName.type.name.lexeme;
+    final constructorName = node.constructorName.name?.name;
+    return typeName == 'IncrementalCandidateValidator' &&
+        constructorName == 'forPlayer';
+  }
+  if (node is MethodInvocation) {
+    if (node.target == null) {
+      return node.methodName.name == 'buildIncrementalCandidateValidator';
+    }
+    final target = node.target;
+    if (node.methodName.name == 'forPlayer') {
+      if (target is SimpleIdentifier) {
+        return target.name == 'IncrementalCandidateValidator';
+      }
+      if (target is PrefixedIdentifier) {
+        return target.identifier.name == 'IncrementalCandidateValidator';
+      }
+    }
+  }
+  return false;
+}
+
 bool _isSimpleReceiverRemoveAtZeroPattern(
   MethodInvocation node,
   DisallowedPatternRule rule,
@@ -472,6 +508,7 @@ class _DisallowedAstVisitor extends RecursiveAstVisitor<void> {
   final LineInfo lineInfo;
   final List<DisallowedPatternRule> rules;
   final List<DisallowedAstViolation> violations = [];
+  int _loopDepth = 0;
 
   void _recordIfAllowed(AstNode anchor, DisallowedPatternRule rule) {
     final line = lineInfo.getLocation(anchor.offset).lineNumber;
@@ -491,8 +528,50 @@ class _DisallowedAstVisitor extends RecursiveAstVisitor<void> {
     );
   }
 
+  void _recordIncrementalValidatorInLoopIfMatched(AstNode node) {
+    if (_loopDepth == 0) {
+      return;
+    }
+    for (final rule in rules) {
+      if (rule.kind != DisallowedAstMatchKind.incrementalValidatorForPlayerInLoop) {
+        continue;
+      }
+      if (_isIncrementalValidatorForPlayerInLoopPattern(node, rule, path)) {
+        _recordIfAllowed(node, rule);
+      }
+    }
+  }
+
+  @override
+  void visitForStatement(ForStatement node) {
+    _loopDepth++;
+    super.visitForStatement(node);
+    _loopDepth--;
+  }
+
+  @override
+  void visitWhileStatement(WhileStatement node) {
+    _loopDepth++;
+    super.visitWhileStatement(node);
+    _loopDepth--;
+  }
+
+  @override
+  void visitDoStatement(DoStatement node) {
+    _loopDepth++;
+    super.visitDoStatement(node);
+    _loopDepth--;
+  }
+
+  @override
+  void visitInstanceCreationExpression(InstanceCreationExpression node) {
+    _recordIncrementalValidatorInLoopIfMatched(node);
+    super.visitInstanceCreationExpression(node);
+  }
+
   @override
   void visitMethodInvocation(MethodInvocation node) {
+    _recordIncrementalValidatorInLoopIfMatched(node);
     for (final rule in rules) {
       if (rule.kind == DisallowedAstMatchKind.streamWhereIsMapAs &&
           _isRedundantWhereIsMapAsChain(node)) {

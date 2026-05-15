@@ -1,7 +1,9 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
+import '../diplomacy/diplomacy_resolver.dart';
 import '../world/player_view.dart';
+import '../world/unit_lookup.dart';
 import 'incremental_candidate_validator.dart';
 import 'order_suggestion_context.dart';
 
@@ -36,6 +38,9 @@ List<BuildUnitOrder> suggestBuildOrders(
         topology: topology,
         playerId: playerId,
         baseOrders: currentOrders,
+        view: view,
+        unitsById: unitsByIdFromWorld(game.worldState),
+        factionMembership: DiplomacyFactionMembership.from(game),
       );
 
   final capitalId = player.capitalProvinceId;

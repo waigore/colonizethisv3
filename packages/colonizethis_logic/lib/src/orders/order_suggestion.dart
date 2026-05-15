@@ -3,8 +3,10 @@ export 'order_suggestion_helpers.dart';
 export 'order_suggestion_unit_availability.dart';
 export 'order_suggestion_context.dart'
     show
-        setOrderSuggestionWorkOrderAcceptanceProbeTrackingForTests,
-        orderSuggestionWorkOrderAcceptanceProbeCountForTests;
+        incrementalCandidateValidatorBuildCountForTests,
+        orderSuggestionWorkOrderAcceptanceProbeCountForTests,
+        resetIncrementalCandidateValidatorBuildCountForTests,
+        setOrderSuggestionWorkOrderAcceptanceProbeTrackingForTests;
 export 'order_suggestion_build.dart' show suggestBuildOrders;
 export 'order_suggestion_research.dart' show suggestResearchOrders;
 export 'order_suggestion_work_tile_keys.dart'
