@@ -3,7 +3,7 @@ import 'dart:math';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_map/src/tile_map_resource_placement.dart';
 import 'package:colonizethis_map/src/tile_map_resource_cap_state.dart';
-import 'package:test/test.dart';
+import 'package:colonizethis_test/test.dart';
 
 void main() {
   group('tryPlaceWeightedResourceAtCell', () {
