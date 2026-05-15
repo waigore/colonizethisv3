@@ -201,6 +201,15 @@ Future<void> _openProductionPanel(WidgetTester tester) async {
           ? productionButtonHit
           : productionButton;
       await tester.tap(target.first, warnIfMissed: false);
+      // Match civilian/naval open: skip the first poll wait when the panel
+      // subtree mounts synchronously (Refs #2336 adaptive polling / H7).
+      if (productionPanel.evaluate().isNotEmpty) {
+        return;
+      }
+      await tester.pump();
+      if (productionPanel.evaluate().isNotEmpty) {
+        return;
+      }
       await e2eWaitUntilFound(
         tester,
         productionPanel,
