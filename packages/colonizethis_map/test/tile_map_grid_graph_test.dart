@@ -58,6 +58,29 @@ void main() {
       expect(ocean.containsAll(seaCells), isTrue);
     });
 
+    test('nearestLandSeedIndexForCell picks closest seed by squared distance', () {
+      final params = TileMapParams(width: 10, height: 10);
+      final g = TileMapGridGraph(params);
+      final seeds = <(int, int)>[(0, 0), (9, 9), (5, 5)];
+      expect(g.nearestLandSeedIndexForCell(1, 1, seeds), 0);
+      expect(g.nearestLandSeedIndexForCell(8, 8, seeds), 1);
+      expect(g.nearestLandSeedIndexForCell(4, 4, seeds), 2);
+    });
+
+    test('nearestLandSeedIndexForCell returns 0 when seeds empty', () {
+      final g = TileMapGridGraph(TileMapParams(width: 3, height: 3));
+      expect(g.nearestLandSeedIndexForCell(1, 1, []), 0);
+    });
+
+    test('continentForLandCell maps nearest seed to continent id', () {
+      final g = TileMapGridGraph(TileMapParams(width: 10, height: 10));
+      final seeds = <(int, int)>[(0, 0), (9, 9)];
+      final continentBySeed = <int>[2, 7];
+      expect(g.continentForLandCell(1, 1, seeds, continentBySeed), 2);
+      expect(g.continentForLandCell(8, 8, seeds, continentBySeed), 7);
+      expect(g.continentForLandCell(1, 1, [], continentBySeed), 0);
+    });
+
     test('countSeaCells matches sea id cells', () {
       const sea = 's1';
       final params = TileMapParams(width: 2, height: 2);

@@ -245,7 +245,7 @@ class _TileMapGenTerrainResource {
     }
 
     // 4-connected directions: up, right, down, left.
-    const directions = <(int dx, int dy)>[(0, -1), (1, 0), (0, 1), (-1, 0)];
+    const directions = kTileMapDirections4;
 
     for (var r = 0; r < numRanges && remainingMountain > 0; r++) {
       final start = pickStart();
@@ -578,7 +578,7 @@ class _TileMapGenTerrainResource {
     Map<TerrainType, List<(int x, int y)>> queuesByTerrain,
     Random rnd,
   ) {
-    const directions = <(int dx, int dy)>[(0, -1), (1, 0), (0, 1), (-1, 0)];
+    const directions = kTileMapDirections4;
     while (true) {
       var totalRem = 0;
       var hasActive = false;
@@ -645,7 +645,7 @@ class _TileMapGenTerrainResource {
     int x,
     int y,
   ) {
-    const directions = <(int dx, int dy)>[(0, -1), (1, 0), (0, 1), (-1, 0)];
+    const directions = kTileMapDirections4;
     final counts = <TerrainType, int>{};
     for (final (dx, dy) in directions) {
       final nx = x + dx;
@@ -885,7 +885,7 @@ class _TileMapGenTerrainResource {
   ) {
     if (component.isEmpty || allowedNonMountain.isEmpty) return;
 
-    const directions = <(int dx, int dy)>[(0, -1), (1, 0), (0, 1), (-1, 0)];
+    const directions = kTileMapDirections4;
 
     for (final terrain in allowedNonMountain) {
       final cells = _componentCellsOfTerrain(terrainGrid, component, terrain);

@@ -261,8 +261,12 @@ void main() {
         generateRegion: captureSeeds,
       );
 
-      expect(seedsByRegion[kRegionOldWorld], k);
-      expect(seedsByRegion[kRegionNewWorld], k + 1);
+      final owSeed = seedsByRegion[kRegionOldWorld];
+      final nwSeed = seedsByRegion[kRegionNewWorld];
+      expect(owSeed, isNotNull);
+      expect(nwSeed, owSeed! + 1);
+      // Freeform pipeline may retry with mapSeed = effectiveSeed + attempt * 100003.
+      expect((owSeed - k) % 100003, 0);
     });
 
     test('after runInitGame worldState.turnState is orders at turn 0', () {

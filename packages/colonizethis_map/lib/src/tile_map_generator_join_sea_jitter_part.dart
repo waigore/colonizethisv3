@@ -52,17 +52,8 @@ extension _TileMapGenJoinSeaJitterPart on _TileMapGenJoinSea {
     }
     if (tilesByProvince.isEmpty) return;
 
-    const directions4 = <(int dx, int dy)>[(0, -1), (1, 0), (0, 1), (-1, 0)];
-    const directions8 = <(int dx, int dy)>[
-      (0, -1),
-      (1, 0),
-      (0, 1),
-      (-1, 0),
-      (-1, -1),
-      (1, -1),
-      (1, 1),
-      (-1, 1),
-    ];
+    const directions4 = kTileMapDirections4;
+    const directions8 = kTileMapDirections8;
 
     for (final entry in tilesByProvince.entries) {
       final tiles = entry.value;
