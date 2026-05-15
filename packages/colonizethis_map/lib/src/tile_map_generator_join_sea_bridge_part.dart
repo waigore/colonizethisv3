@@ -159,7 +159,7 @@ extension _TileMapGenJoinSeaBridgePart on _TileMapGenJoinSea {
   ) {
     final seaAdjacentToA = <(int x, int y)>{};
     for (final (x, y) in compA) {
-      for (final (dx, dy) in [(0, -1), (0, 1), (-1, 0), (1, 0)]) {
+      for (final (dx, dy) in kTileMapDirections4) {
         final nx = x + dx;
         final ny = y + dy;
         if (nx >= 0 &&
@@ -173,7 +173,7 @@ extension _TileMapGenJoinSeaBridgePart on _TileMapGenJoinSea {
     }
     final seaAdjacentToB = <(int x, int y)>{};
     for (final (x, y) in compB) {
-      for (final (dx, dy) in [(0, -1), (0, 1), (-1, 0), (1, 0)]) {
+      for (final (dx, dy) in kTileMapDirections4) {
         final nx = x + dx;
         final ny = y + dy;
         if (nx >= 0 &&
@@ -199,7 +199,7 @@ extension _TileMapGenJoinSeaBridgePart on _TileMapGenJoinSea {
         goal = (x, y);
         break;
       }
-      for (final (dx, dy) in [(0, -1), (0, 1), (-1, 0), (1, 0)]) {
+      for (final (dx, dy) in kTileMapDirections4) {
         final nx = x + dx;
         final ny = y + dy;
         if (nx < 0 || nx >= params.width || ny < 0 || ny >= params.height) {
@@ -228,7 +228,7 @@ extension _TileMapGenJoinSeaBridgePart on _TileMapGenJoinSea {
     List<(int x, int y)> path,
   ) {
     for (final (px, py) in path) {
-      for (final (dx, dy) in [(0, -1), (0, 1), (-1, 0), (1, 0)]) {
+      for (final (dx, dy) in kTileMapDirections4) {
         final nx = px + dx;
         final ny = py + dy;
         if (nx >= 0 &&

@@ -11,6 +11,7 @@ import 'tile_map_generator_land_seeds.dart';
 import 'tile_map_land_sentinel.dart';
 import 'tile_map_land_seed_contract.dart';
 import 'tile_map_distance_sentinels.dart';
+import 'tile_map_directions.dart';
 import 'tile_map_grid_graph.dart';
 import 'tile_map_resource_cap_state.dart';
 import 'topology_inference.dart';

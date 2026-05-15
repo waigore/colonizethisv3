@@ -1,6 +1,7 @@
 /// Grid and connectivity helpers shared by tile map generation passes.
 /// SPEC/program/tile-map-gen-algorithm.md
 
+import 'tile_map_directions.dart';
 import 'tile_map_distance_sentinels.dart';
 import 'tile_map_land_seed_contract.dart';
 
@@ -213,7 +214,7 @@ class TileMapGridGraph {
   ) {
     final continentSet = <int>{};
     for (final (x, y) in component) {
-      for (final (dx, dy) in [(0, -1), (0, 1), (-1, 0), (1, 0)]) {
+      for (final (dx, dy) in kTileMapDirections4) {
         final nx = x + dx;
         final ny = y + dy;
         if (nx < 0 || nx >= params.width || ny < 0 || ny >= params.height) {
@@ -257,7 +258,7 @@ class TileMapGridGraph {
     Set<(int x, int y)> ocean,
   ) {
     var n = 0;
-    for (final (dx, dy) in [(0, -1), (0, 1), (-1, 0), (1, 0)]) {
+    for (final (dx, dy) in kTileMapDirections4) {
       final nx = x + dx;
       final ny = y + dy;
       if (nx >= 0 &&
@@ -279,7 +280,7 @@ class TileMapGridGraph {
     Set<(int x, int y)> component,
     List<(int x, int y)> queue,
   ) {
-    for (final (dx, dy) in [(0, -1), (0, 1), (-1, 0), (1, 0)]) {
+    for (final (dx, dy) in kTileMapDirections4) {
       final n = (x + dx, y + dy);
       if (!remaining.remove(n)) continue;
       component.add(n);
