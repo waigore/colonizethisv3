@@ -229,12 +229,13 @@ class TileMapGridGraph {
     return continentSet;
   }
 
-  /// Continent index for a land cell from nearest land seed. Returns 0 when seeds empty.
-  int continentForLandCell(
+  /// Index of the land seed with smallest squared distance to (x, y).
+  ///
+  /// Returns 0 when [landSeeds] is empty. Refs #2489.
+  int nearestLandSeedIndexForCell(
     int x,
     int y,
     List<(int x, int y)> landSeeds,
-    List<int> continentBySeedIndex,
   ) {
     if (landSeeds.isEmpty) return 0;
     var bestSeedIndex = 0;
@@ -247,7 +248,18 @@ class TileMapGridGraph {
         bestSeedIndex = i;
       }
     }
-    return continentBySeedIndex[bestSeedIndex];
+    return bestSeedIndex;
+  }
+
+  /// Continent index for a land cell from nearest land seed. Returns 0 when seeds empty.
+  int continentForLandCell(
+    int x,
+    int y,
+    List<(int x, int y)> landSeeds,
+    List<int> continentBySeedIndex,
+  ) {
+    if (landSeeds.isEmpty) return 0;
+    return continentBySeedIndex[nearestLandSeedIndexForCell(x, y, landSeeds)];
   }
 
   int oceanNeighbourCount(

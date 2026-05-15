@@ -32,24 +32,6 @@ class _TileMapGenLakesProvinces {
     }
   }
 
-  int _nearestLandSeedIndexForCell(
-    int x,
-    int y,
-    List<(int x, int y)> landSeeds,
-  ) {
-    var bestSeedIndex = 0;
-    var bestD2 = kUnsetSquaredDistanceInt31;
-    for (var i = 0; i < landSeeds.length; i++) {
-      final (sx, sy) = landSeeds[i];
-      final d2 = (x - sx) * (x - sx) + (y - sy) * (y - sy);
-      if (d2 < bestD2) {
-        bestD2 = d2;
-        bestSeedIndex = i;
-      }
-    }
-    return bestSeedIndex;
-  }
-
   void _tryBorderNoiseSwapAtCell(
     List<List<String>> grid,
     List<List<String>> next,
@@ -237,7 +219,8 @@ class _TileMapGenLakesProvinces {
     for (var y = 0; y < params.height; y++) {
       for (var x = 0; x < params.width; x++) {
         if (grid[y][x] != _landSentinel) continue;
-        final bestSeedIndex = _nearestLandSeedIndexForCell(x, y, landSeeds);
+        final bestSeedIndex =
+            _graph.nearestLandSeedIndexForCell(x, y, landSeeds);
         final c = continentBySeedIndex[bestSeedIndex];
         byContinent[c]!.add((x, y));
       }
