@@ -46,15 +46,15 @@ extension _TileMapGenJoinSeaBridgePart on _TileMapGenJoinSea {
         : null;
 
     for (var c = 0; c < numContinents; c++) {
+      var landCells = _landCellsForContinent(
+        g,
+        provinceToContinent,
+        c,
+        seaZoneId,
+      );
       var joinIterations = 0;
       while (joinIterations < maxJoinIterationsPerContinent) {
         joinIterations++;
-        final landCells = _landCellsForContinent(
-          g,
-          provinceToContinent,
-          c,
-          seaZoneId,
-        );
         final components = _graph.connectedComponentsOfLand(landCells);
         if (components.length <= 1) break;
         didJoin = true;
@@ -75,7 +75,10 @@ extension _TileMapGenJoinSeaBridgePart on _TileMapGenJoinSea {
           rnd,
           capState,
         );
-        preserveSeaFraction(
+        for (final p in path) {
+          landCells.add(p);
+        }
+        final restoredToSea = preserveSeaFraction(
           g,
           tg,
           rg,
@@ -84,6 +87,9 @@ extension _TileMapGenJoinSeaBridgePart on _TileMapGenJoinSea {
           path.length,
           landCellsExcludedFromSeaRestore: bridgeCells,
         );
+        for (final p in restoredToSea) {
+          landCells.remove(p);
+        }
       }
       if (joinIterations >= maxJoinIterationsPerContinent) {
         final stillSplit = _graph.connectedComponentsOfLand(
