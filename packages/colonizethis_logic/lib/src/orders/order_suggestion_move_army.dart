@@ -231,9 +231,11 @@ bool _armyMoveNeedsDeclareWarTrial(
 /// When [playerView] / [unitsById] are provided (same contract as
 /// [IncrementalCandidateValidator.forPlayer]), each internal validator reuses
 /// them instead of embedding `buildPlayerView` / `unitsByIdFromWorld` scans.
-/// Callers such as the Flutter shell may supply these when they already hold a
-/// [PlayerView] for [playerId]; when omitted, behavior matches the historical
-/// path.
+/// When [sharedCandidateValidator] is provided for the same suggestion pass,
+/// it is reused (rebound via [IncrementalCandidateValidator.forBasePrefix] when
+/// [currentOrders] differs from the validator's embedded prefix). Callers such
+/// as the Flutter shell may supply these when they already hold a [PlayerView]
+/// for [playerId]; when omitted, behavior matches the historical path.
 List<ArmyMovePickerDestination> armyMovePickerDestinations({
   required Game game,
   required MapTopology topology,
@@ -246,17 +248,36 @@ List<ArmyMovePickerDestination> armyMovePickerDestinations({
   /// When callers already built membership for this [game], pass it to skip a
   /// second [DiplomacyFactionMembership.from] scan (Refs #2394).
   DiplomacyFactionMembership? factionMembership,
+  /// When non-null, must match [playerId] and be built from the same
+  /// `(game, topology, …)` tuple; amortizes validator setup across picker calls
+  /// in the same pass (Refs #2394).
+  IncrementalCandidateValidator? sharedCandidateValidator,
 }) {
+  assert(
+    sharedCandidateValidator == null ||
+        sharedCandidateValidator.playerId == playerId,
+    'sharedCandidateValidator playerId must match armyMovePickerDestinations playerId',
+  );
   final diplo =
       currentOrders.diplomaticOrdersByPlayerId[playerId] ??
       const <DiplomaticOrder>[];
   final effectiveFactionMembership =
-      factionMembership ?? DiplomacyFactionMembership.from(game);
+      factionMembership ??
+      sharedCandidateValidator?.factionMembershipSnapshot ??
+      DiplomacyFactionMembership.from(game);
+  final effectivePlayerView =
+      playerView ?? sharedCandidateValidator?.view;
+  final effectiveUnitsById =
+      unitsById ??
+      sharedCandidateValidator?.unitsById ??
+      (effectivePlayerView != null
+          ? unitsByIdFromWorld(game.worldState)
+          : null);
   final ownedProvinceIds =
       playerOwnedFullProvinceIds ??
-      (playerView != null
+      (effectivePlayerView != null
           ? <String>{
-              for (final e in playerView.provincesById.entries)
+              for (final e in effectivePlayerView.provincesById.entries)
                 if (e.value.ownerId == playerId) e.key,
             }
           : <String>{
@@ -270,15 +291,20 @@ List<ArmyMovePickerDestination> armyMovePickerDestinations({
     army: army,
     playerOwnedFullProvinceIds: ownedProvinceIds,
   );
-  final baseValidator = IncrementalCandidateValidator.forPlayer(
-    game: game,
-    topology: topology,
-    playerId: playerId,
-    basePrefix: currentOrders,
-    factionMembership: effectiveFactionMembership,
-    view: playerView,
-    unitsById: unitsById,
-  );
+  final baseValidator = switch (sharedCandidateValidator) {
+    final shared? when shared.basePrefix == currentOrders => shared,
+    final shared? => shared.forBasePrefix(currentOrders),
+    null => IncrementalCandidateValidator.forPlayer(
+      game: game,
+      topology: topology,
+      playerId: playerId,
+      basePrefix: currentOrders,
+      factionMembership: effectiveFactionMembership,
+      view: effectivePlayerView,
+      unitsById:
+          effectiveUnitsById ?? unitsByIdFromWorld(game.worldState),
+    ),
+  };
   final declareWarTrialValidatorsByTargetFaction =
       <String, IncrementalCandidateValidator>{};
   final out = <ArmyMovePickerDestination>[];

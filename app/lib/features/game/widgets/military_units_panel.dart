@@ -1,6 +1,7 @@
 // Military units panel. SPEC/ui/military-units-panel.md, SPEC/ui/military-units-army-management.md.
 
 import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:colonizethis_logic/colonizethis_logic.dart' show buildPlayerView;
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
 
@@ -100,6 +101,11 @@ class _MilitaryUnitsPanelState extends State<MilitaryUnitsPanel> {
   }
 
   void _openMoveDialog(ArmyBlock block) {
+    final playerView = buildPlayerView(
+      widget.game,
+      widget.topology,
+      widget.humanPlayerId,
+    );
     showDialog<void>(
       context: context,
       builder: (ctx) => MoveArmyDialog(
@@ -109,6 +115,7 @@ class _MilitaryUnitsPanelState extends State<MilitaryUnitsPanel> {
         bus: widget.bus,
         topology: widget.topology,
         draftOrders: widget.draftOrders,
+        playerView: playerView,
       ),
     );
   }
