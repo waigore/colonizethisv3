@@ -20,9 +20,9 @@ extension _TileMapGenJoinSeaBridgePart on _TileMapGenJoinSea {
     }
     final numContinents = provinceToContinent.values.toSet().length;
     var didJoin = false;
-    var g = grid.map((row) => row.toList()).toList();
-    var tg = terrainGrid?.map((row) => row.toList()).toList();
-    var rg = resourceGrid?.map((row) => row.toList()).toList();
+    var g = copyTileMapGrid(grid);
+    var tg = terrainGrid != null ? copyTileMapGrid(terrainGrid) : null;
+    var rg = resourceGrid != null ? copyTileMapGrid(resourceGrid) : null;
     final ocean = _graph.oceanCells(
       g,
       seaZoneId,
@@ -159,7 +159,7 @@ extension _TileMapGenJoinSeaBridgePart on _TileMapGenJoinSea {
   ) {
     final seaAdjacentToA = <(int x, int y)>{};
     for (final (x, y) in compA) {
-      for (final (dx, dy) in [(0, -1), (0, 1), (-1, 0), (1, 0)]) {
+      for (final (dx, dy) in kTileMapDirections4NorthSouthWestEast) {
         final nx = x + dx;
         final ny = y + dy;
         if (nx >= 0 &&
@@ -173,7 +173,7 @@ extension _TileMapGenJoinSeaBridgePart on _TileMapGenJoinSea {
     }
     final seaAdjacentToB = <(int x, int y)>{};
     for (final (x, y) in compB) {
-      for (final (dx, dy) in [(0, -1), (0, 1), (-1, 0), (1, 0)]) {
+      for (final (dx, dy) in kTileMapDirections4NorthSouthWestEast) {
         final nx = x + dx;
         final ny = y + dy;
         if (nx >= 0 &&
@@ -199,7 +199,7 @@ extension _TileMapGenJoinSeaBridgePart on _TileMapGenJoinSea {
         goal = (x, y);
         break;
       }
-      for (final (dx, dy) in [(0, -1), (0, 1), (-1, 0), (1, 0)]) {
+      for (final (dx, dy) in kTileMapDirections4NorthSouthWestEast) {
         final nx = x + dx;
         final ny = y + dy;
         if (nx < 0 || nx >= params.width || ny < 0 || ny >= params.height) {
@@ -228,7 +228,7 @@ extension _TileMapGenJoinSeaBridgePart on _TileMapGenJoinSea {
     List<(int x, int y)> path,
   ) {
     for (final (px, py) in path) {
-      for (final (dx, dy) in [(0, -1), (0, 1), (-1, 0), (1, 0)]) {
+      for (final (dx, dy) in kTileMapDirections4NorthSouthWestEast) {
         final nx = px + dx;
         final ny = py + dy;
         if (nx >= 0 &&
@@ -257,37 +257,19 @@ extension _TileMapGenJoinSeaBridgePart on _TileMapGenJoinSea {
     final landTerrains = allowedTerrainsForRegion(mapRegionId);
     if (landTerrains.isEmpty) return;
     terrainGrid[y][x] = landTerrains[rnd.nextInt(landTerrains.length)];
-    final terrain = terrainGrid[y][x]!;
-    var allowed = Resource.values
-        .where(
-          (r) =>
-              rules.isAllowedInRegion(r, mapRegionId) &&
-              rules.isAllowedOnTerrain(r, terrain),
-        )
-        .toList();
-    if (allowed.isEmpty) return;
-    if (capState != null &&
-        (mapRegionId == 'oldWorld' || mapRegionId == 'newWorld') &&
-        capState.shouldRestrictToRegionOnly(allowed)) {
-      allowed = capState.filterToRegionOnly(allowed);
-      if (allowed.isEmpty) return;
-    }
-    if (rnd.nextDouble() > 0.4) return;
-    final weights = allowed.map((r) => rules.spawnWeight(r)).toList();
-    final sum = weights.reduce((a, b) => a + b);
-    var roll = rnd.nextDouble() * sum;
-    for (var i = 0; i < allowed.length; i++) {
-      roll -= weights[i];
-      if (roll <= 0) {
-        final placed = allowed[i];
-        resourceGrid[y][x] = placed;
-        capState?.record(placed);
-        break;
-      }
-    }
+    tryPlaceWeightedResourceAtCell(
+      resourceGrid: resourceGrid,
+      x: x,
+      y: y,
+      terrain: terrainGrid[y][x]!,
+      mapRegionId: mapRegionId,
+      rules: rules,
+      rnd: rnd,
+      capState: capState,
+    );
   }
 
-  void preserveSeaFraction(
+  List<(int x, int y)> preserveSeaFraction(
     List<List<String>> grid,
     List<List<TerrainType?>>? terrainGrid,
     List<List<Resource?>>? resourceGrid,
@@ -303,62 +285,24 @@ extension _TileMapGenJoinSeaBridgePart on _TileMapGenJoinSea {
         if (landCellsExcludedFromSeaRestore?.contains((x, y)) ?? false) {
           continue;
         }
-        final oceanNeighbours = [(x - 1, y), (x + 1, y), (x, y - 1), (x, y + 1)]
-            .where(
-              (p) =>
-                  p.$1 >= 0 &&
-                  p.$1 < params.width &&
-                  p.$2 >= 0 &&
-                  p.$2 < params.height &&
-                  grid[p.$2][p.$1] == seaZoneId &&
-                  ocean.contains(p),
-            )
-            .length;
-        if (oceanNeighbours >= 1) coastal.add((x, y));
+        if (_graph.oceanNeighbourCount(grid, x, y, seaZoneId, ocean) >= 1) {
+          coastal.add((x, y));
+        }
       }
     }
     coastal.sort((a, b) {
-      final na =
-          [
-                (a.$1 - 1, a.$2),
-                (a.$1 + 1, a.$2),
-                (a.$1, a.$2 - 1),
-                (a.$1, a.$2 + 1),
-              ]
-              .where(
-                (p) =>
-                    p.$1 >= 0 &&
-                    p.$1 < params.width &&
-                    p.$2 >= 0 &&
-                    p.$2 < params.height &&
-                    grid[p.$2][p.$1] == seaZoneId &&
-                    ocean.contains(p),
-              )
-              .length;
-      final nb =
-          [
-                (b.$1 - 1, b.$2),
-                (b.$1 + 1, b.$2),
-                (b.$1, b.$2 - 1),
-                (b.$1, b.$2 + 1),
-              ]
-              .where(
-                (p) =>
-                    p.$1 >= 0 &&
-                    p.$1 < params.width &&
-                    p.$2 >= 0 &&
-                    p.$2 < params.height &&
-                    grid[p.$2][p.$1] == seaZoneId &&
-                    ocean.contains(p),
-              )
-              .length;
+      final na = _graph.oceanNeighbourCount(grid, a.$1, a.$2, seaZoneId, ocean);
+      final nb = _graph.oceanNeighbourCount(grid, b.$1, b.$2, seaZoneId, ocean);
       return nb.compareTo(na);
     });
+    final restoredToSea = <(int x, int y)>[];
     for (var i = 0; i < count && i < coastal.length; i++) {
       final (x, y) = coastal[i];
       grid[y][x] = seaZoneId;
       if (terrainGrid != null) terrainGrid[y][x] = null;
       if (resourceGrid != null) resourceGrid[y][x] = null;
+      restoredToSea.add((x, y));
     }
+    return restoredToSea;
   }
 }

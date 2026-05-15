@@ -7,6 +7,8 @@ import 'package:image/image.dart' as img;
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
+import 'tile_map_capital_markers.dart';
+import 'tile_map_topology_helpers.dart';
 import 'tile_map_visualization.dart';
 import 'tile_map_visualization_shared.dart';
 import 'multi_region_map_rendering.dart';
@@ -27,37 +29,12 @@ Map<String, String> _provinceIdToOwnerIdFromProvinces(
   return out;
 }
 
-typedef _CapitalMarker = ({String factionId, String displayName, int x, int y});
-
 typedef _RegionRenderInputs =
     ({
       Map<String, String> ownerByProvinceId,
-      List<_CapitalMarker> capitalTiles,
+      List<TileMapCapitalMarker> capitalTiles,
       Map<String, (int r, int g, int b)> factionColors,
     });
-
-List<_CapitalMarker> _collectCapitalsForRegion<T>({
-  required Iterable<T> factions,
-  required String regionId,
-  required String Function(T faction) factionIdOf,
-  required String Function(T faction) displayNameOf,
-  required CapitalTile? Function(T faction) capitalTileOf,
-}) {
-  final capitals = <_CapitalMarker>[];
-  for (final faction in factions) {
-    final capitalTile = capitalTileOf(faction);
-    if (capitalTile == null || capitalTile.regionId != regionId) {
-      continue;
-    }
-    capitals.add((
-      factionId: factionIdOf(faction),
-      displayName: displayNameOf(faction),
-      x: capitalTile.x,
-      y: capitalTile.y,
-    ));
-  }
-  return capitals;
-}
 
 _RegionRenderInputs _buildRegionRenderInputs({
   required Game game,
@@ -67,31 +44,12 @@ _RegionRenderInputs _buildRegionRenderInputs({
     final ownerByProvinceId = _provinceIdToOwnerIdFromProvinces(
       game.worldState.oldWorld.provinces,
     );
-    final capitals = <_CapitalMarker>[
-      ..._collectCapitalsForRegion<Player>(
-        factions: game.players,
-        regionId: regionId,
-        factionIdOf: (player) => player.id,
-        displayNameOf: (player) => player.displayName,
-        capitalTileOf: (player) => player.capitalTile,
-      ),
-      ..._collectCapitalsForRegion<MinorNation>(
-        factions: game.minorNations,
-        regionId: regionId,
-        factionIdOf: (nation) => nation.id,
-        displayNameOf: (nation) => nation.displayName ?? nation.id,
-        capitalTileOf: (nation) => nation.capitalTile,
-      ),
-    ];
-    final greatPowerIds = game.players.map((player) => player.id).toList()..sort();
-    final minorNationIds = game.minorNations
-        .map((nation) => nation.id)
-        .toList()
-      ..sort();
-    final factionColors = factionOwnershipColorMap(
-      greatPowerIds: greatPowerIds,
-      minorNationIds: minorNationIds,
+    final capitals = collectCapitalMarkersForRegion(
+      game: game,
+      regionId: regionId,
+      scope: TileMapCapitalMarkerScope.oldWorldFactions,
     );
+    final factionColors = factionOwnershipColorMapForOldWorld(game);
     return (
       ownerByProvinceId: ownerByProvinceId,
       capitalTiles: capitals,
@@ -102,15 +60,12 @@ _RegionRenderInputs _buildRegionRenderInputs({
   final ownerByProvinceId = _provinceIdToOwnerIdFromProvinces(
     game.worldState.newWorld.provinces,
   );
-  final capitals = _collectCapitalsForRegion<Tribe>(
-    factions: game.tribes,
+  final capitals = collectCapitalMarkersForRegion(
+    game: game,
     regionId: regionId,
-    factionIdOf: (tribe) => tribe.id,
-    displayNameOf: (tribe) => tribe.displayName ?? tribe.id,
-    capitalTileOf: (tribe) => tribe.capitalTile,
+    scope: TileMapCapitalMarkerScope.newWorldFactions,
   );
-  final tribeIds = game.tribes.map((tribe) => tribe.id).toList()..sort();
-  final factionColors = factionOwnershipColorMap(tribeIds: tribeIds);
+  final factionColors = factionOwnershipColorMapForNewWorld(game);
   return (
     ownerByProvinceId: ownerByProvinceId,
     capitalTiles: capitals,
@@ -162,10 +117,7 @@ Uint8List renderSingleRegionGameStateMapToPng({
   Map<String, (int r, int g, int b)>? factionColorsOverride,
   List<({int x, int y})> portTiles = const [],
 }) {
-  final seaZoneIds = {
-    for (final n in topology.nodes)
-      if (n.type == TopologyNodeType.seaZone) n.id,
-  };
+  final seaZoneIds = seaZoneIdsFromTopology(topology);
 
   final List<String> factionIds;
   final Map<String, (int r, int g, int b)> factionColors;

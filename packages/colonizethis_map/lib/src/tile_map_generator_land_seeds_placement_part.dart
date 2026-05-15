@@ -100,7 +100,7 @@ double _nextGaussian(Random rnd) {
   return sqrt(-2 * log(u1)) * cos(2 * pi * u2);
 }
 
-/// Per-continent land budget; assign to `_landSentinel` by smallest effective
+/// Per-continent land budget; assign to `kTileMapLandSentinel` by smallest effective
 /// distance (with optional Voronoi noise). Each cell at most one continent.
 List<List<String>> _assignLandByLandSeedsImpl(
   TileMapLandSeedParams params,
@@ -124,19 +124,11 @@ List<List<String>> _assignLandByLandSeedsImpl(
   final totalProvinces = provinceToContinent.length;
   if (totalProvinces == 0) return grid;
 
-  // Per-continent budget (proportional to province count)
-  final budget = List<int>.filled(numContinents, 0);
-  var allocated = 0;
-  for (var c = 0; c < numContinents; c++) {
-    final pc = provincesByContinent[c]!.length;
-    budget[c] = (landBudgetTotal * pc / totalProvinces).round();
-    allocated += budget[c];
-  }
-  if (allocated > landBudgetTotal) {
-    budget[0] -= (allocated - landBudgetTotal);
-  } else if (allocated < landBudgetTotal && numContinents > 0) {
-    budget[0] += (landBudgetTotal - allocated);
-  }
+  final budget = allocateBudgetByProvinceCount(
+    totalBudget: landBudgetTotal,
+    provincesByContinent: provincesByContinent,
+    numContinents: numContinents,
+  );
 
   // Seeds per continent (index ranges: [start, end) for each c)
   final seedStartByContinent = List<int>.filled(numContinents, 0);
@@ -158,11 +150,11 @@ List<List<String>> _assignLandByLandSeedsImpl(
   );
   entries.sort((a, b) => a.$1.compareTo(b.$1));
 
-  final next = grid.map((row) => row.toList()).toList();
+  final next = copyTileMapGrid(grid);
   final used = List<int>.filled(numContinents, 0);
   for (final (_, x, y, c) in entries) {
     if (used[c] < budget[c]) {
-      next[y][x] = _landSentinel;
+      next[y][x] = kTileMapLandSentinel;
       used[c]++;
     }
   }

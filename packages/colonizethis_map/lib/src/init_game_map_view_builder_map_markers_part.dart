@@ -4,74 +4,19 @@ List<CapitalMarkerView> _buildCapitalMarkers({
   required Game game,
   required String regionId,
 }) {
-  final capitals = <CapitalMarkerView>[];
-  _appendCapitalMarkers(
-    capitals: capitals,
-    regionId: regionId,
-    factions: game.players,
-    idOf: (player) => player.id,
-    displayNameOf: (player) => player.displayName,
-    capitalOf: (player) {
-      final capital = player.capitalTile;
-      if (capital == null) {
-        return null;
-      }
-      return (regionId: capital.regionId, x: capital.x, y: capital.y);
-    },
-  );
-  _appendCapitalMarkers(
-    capitals: capitals,
-    regionId: regionId,
-    factions: game.minorNations,
-    idOf: (nation) => nation.id,
-    displayNameOf: (nation) => nation.displayName ?? nation.id,
-    capitalOf: (nation) {
-      final capital = nation.capitalTile;
-      if (capital == null) {
-        return null;
-      }
-      return (regionId: capital.regionId, x: capital.x, y: capital.y);
-    },
-  );
-  _appendCapitalMarkers(
-    capitals: capitals,
-    regionId: regionId,
-    factions: game.tribes,
-    idOf: (tribe) => tribe.id,
-    displayNameOf: (tribe) => tribe.displayName ?? tribe.id,
-    capitalOf: (tribe) {
-      final capital = tribe.capitalTile;
-      if (capital == null) {
-        return null;
-      }
-      return (regionId: capital.regionId, x: capital.x, y: capital.y);
-    },
-  );
-  return capitals;
-}
-
-void _appendCapitalMarkers<T>({
-  required List<CapitalMarkerView> capitals,
-  required String regionId,
-  required Iterable<T> factions,
-  required String Function(T) idOf,
-  required String Function(T) displayNameOf,
-  required ({String regionId, int x, int y})? Function(T) capitalOf,
-}) {
-  for (final faction in factions) {
-    final capital = capitalOf(faction);
-    if (capital == null || capital.regionId != regionId) {
-      continue;
-    }
-    capitals.add(
+  return [
+    for (final marker in collectCapitalMarkersForRegion(
+      game: game,
+      regionId: regionId,
+      scope: TileMapCapitalMarkerScope.allFactions,
+    ))
       CapitalMarkerView(
-        factionId: idOf(faction),
-        displayName: displayNameOf(faction),
-        x: capital.x,
-        y: capital.y,
+        factionId: marker.factionId,
+        displayName: marker.displayName,
+        x: marker.x,
+        y: marker.y,
       ),
-    );
-  }
+  ];
 }
 
 List<PortMarkerView> _buildPortMarkers({

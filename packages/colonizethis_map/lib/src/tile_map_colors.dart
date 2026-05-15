@@ -2,6 +2,7 @@
 // SPEC/program/map-visualization.md § Tile map visualizers.
 
 import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:colonizethis_models/colonizethis_models.dart';
 
 /// Distinct RGB colors for region/faction assignment. Deterministic order.
 const List<(int r, int g, int b)> regionPalette = [
@@ -76,6 +77,46 @@ Map<String, (int r, int g, int b)> factionOwnershipColorMap({
     map[tribes[i]] = regionPalette[i % regionPalette.length];
   }
   return map;
+}
+
+/// Ownership colours for Old World maps (great powers + minor nations).
+Map<String, (int r, int g, int b)> factionOwnershipColorMapForOldWorld(
+  Game game, {
+  Map<String, (int r, int g, int b)>? greatPowerColorOverride,
+}) {
+  final greatPowerIds = game.players.map((player) => player.id).toList()
+    ..sort();
+  final minorNationIds = game.minorNations.map((nation) => nation.id).toList()
+    ..sort();
+  return factionOwnershipColorMap(
+    greatPowerIds: greatPowerIds,
+    minorNationIds: minorNationIds,
+    greatPowerColorOverride: greatPowerColorOverride,
+  );
+}
+
+/// Ownership colours for New World maps (tribes).
+Map<String, (int r, int g, int b)> factionOwnershipColorMapForNewWorld(
+  Game game,
+) {
+  final tribeIds = game.tribes.map((tribe) => tribe.id).toList()..sort();
+  return factionOwnershipColorMap(tribeIds: tribeIds);
+}
+
+/// Combined ownership colours for init-game views (all faction types).
+Map<String, (int r, int g, int b)> factionOwnershipColorMapForGame(
+  Game game, {
+  Map<String, (int r, int g, int b)>? greatPowerColorOverride,
+}) {
+  final greatPowerIds = game.players.map((player) => player.id).toList();
+  final minorNationIds = game.minorNations.map((nation) => nation.id).toList();
+  final tribeIds = game.tribes.map((tribe) => tribe.id).toList();
+  return factionOwnershipColorMap(
+    greatPowerIds: greatPowerIds,
+    minorNationIds: minorNationIds,
+    tribeIds: tribeIds,
+    greatPowerColorOverride: greatPowerColorOverride,
+  );
 }
 
 /// Builds a map from region/faction id to (r, g, b) using deterministic palette.
