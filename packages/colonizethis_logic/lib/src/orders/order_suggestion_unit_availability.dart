@@ -103,12 +103,18 @@ AvailableWorkTargetsForUnit getAvailableWorkTargetsForUnit({
     for (final e in view.provincesById.entries)
       if (e.value.ownerId == playerId) e.key,
   };
+  // Reuse [view] and a one-time units index: this path runs on Assign/panel
+  // open and must not pay redundant buildPlayerView / all-units scans per target
+  // (Refs #2394, SPEC/program/order-suggestions.md § Throughput bounds).
+  final unitsById = {for (final u in view.ownUnits) u.id: u};
   final sharedValidator = buildIncrementalCandidateValidator(
     game: game,
     topology: topology,
     playerId: playerId,
     baseOrders: currentOrders,
     tileMapByRegion: tileMapByRegion,
+    view: view,
+    unitsById: unitsById,
     factionMembership: factionMembership,
   );
   final byTarget = <String, Set<String>>{};
