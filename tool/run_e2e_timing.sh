@@ -14,21 +14,77 @@ RUNS="${1:-3}"
 OUT_DIR="${E2E_TIMING_OUT:-$ROOT/.cursor/e2e-timing}"
 mkdir -p "$OUT_DIR"
 
+_snap_lld_path_for_flutter_root() {
+  local flutter_root="$1"
+  if [[ -z "$flutter_root" ]]; then
+    return 1
+  fi
+  local snap_lld="${flutter_root}/usr/lib/llvm-10/bin/ld.lld"
+  if [[ -d "$(dirname "$snap_lld" 2>/dev/null || echo)" ]]; then
+    echo "$snap_lld"
+    return 0
+  fi
+  return 1
+}
+
+_ensure_user_snap_ld_lld() {
+  local snap_lld="$1"
+  if [[ -x "$snap_lld" ]]; then
+    return 0
+  fi
+  local llvm18="/usr/lib/llvm-18/bin/ld.lld"
+  if [[ ! -x "$llvm18" ]]; then
+    return 1
+  fi
+  mkdir -p "$(dirname "$snap_lld")"
+  ln -sf "$llvm18" "$snap_lld" 2>/dev/null || return 1
+  [[ -x "$snap_lld" ]]
+}
+
+_flutter_root() {
+  local flutter_bin="$1"
+  "$flutter_bin" --version --machine 2>/dev/null | python3 -c "import json,sys; print(json.load(sys.stdin).get('flutterRoot',''))" 2>/dev/null || true
+}
+
+_snap_flutter_missing_ld_lld() {
+  local flutter_bin="$1"
+  local flutter_root
+  flutter_root="$(_flutter_root "$flutter_bin")"
+  local snap_lld
+  snap_lld="$(_snap_lld_path_for_flutter_root "$flutter_root")" || return 1
+  [[ ! -x "$snap_lld" ]]
+}
+
 _resolve_flutter() {
   if [[ -n "${FLUTTER_BIN:-}" ]]; then
     echo "$FLUTTER_BIN"
     return
   fi
-  local candidates=(
-    "$HOME/development/flutter/bin/flutter"
-    "$(command -v flutter 2>/dev/null || true)"
-  )
+  local path_flutter
+  path_flutter="$(command -v flutter 2>/dev/null || true)"
+  local dev_flutter="${HOME}/development/flutter/bin/flutter"
+  local candidates=()
+  if [[ -x "$dev_flutter" ]]; then
+    candidates+=("$dev_flutter")
+  fi
+  if [[ -n "$path_flutter" && "$path_flutter" != "$dev_flutter" ]]; then
+    candidates+=("$path_flutter")
+  fi
   for c in "${candidates[@]}"; do
-    if [[ -n "$c" && -x "$c" ]]; then
-      echo "$c"
-      return
+    if _snap_flutter_missing_ld_lld "$c"; then
+      continue
     fi
+    echo "$c"
+    return
   done
+  if [[ -n "$path_flutter" && -x "$path_flutter" ]]; then
+    echo "$path_flutter"
+    return
+  fi
+  if [[ -x "$dev_flutter" ]]; then
+    echo "$dev_flutter"
+    return
+  fi
   echo "flutter" >&2
 }
 
@@ -41,19 +97,29 @@ _preflight_e2e_host() {
     "$FLUTTER" config --enable-linux-desktop >/dev/null
   fi
   if [[ -z "${DISPLAY:-}" ]] && ! command -v xvfb-run >/dev/null; then
-    echo "WARNING: DISPLAY is unset and xvfb-run is not installed." >&2
-    echo "  Integration tests need a graphical session or: sudo apt install xvfb" >&2
-    echo "  Then re-run with: xvfb-run -a tool/run_e2e_timing.sh ${RUNS}" >&2
+    echo "ERROR: DISPLAY is unset and xvfb-run is not installed." >&2
+    echo "  Linux desktop integration tests need a display." >&2
+    echo "  Install once: sudo apt install xvfb" >&2
+    echo "  Then re-run (script will wrap with xvfb-run -a when DISPLAY is unset)." >&2
+    exit 1
   fi
   local flutter_root
-  flutter_root="$("$FLUTTER" --version --machine 2>/dev/null | python3 -c "import json,sys; print(json.load(sys.stdin).get('flutterRoot',''))" 2>/dev/null || true)"
-  if [[ -n "$flutter_root" ]]; then
-    local snap_lld="${flutter_root}/usr/lib/llvm-10/bin/ld.lld"
-    if [[ -d "$(dirname "$snap_lld" 2>/dev/null || echo)" ]] && [[ ! -x "$snap_lld" ]]; then
-      echo "WARNING: Flutter expects ld.lld at ${snap_lld} but it is missing." >&2
-      echo "  Fix (once, requires sudo): sudo ln -sf /usr/lib/llvm-18/bin/ld.lld ${snap_lld}" >&2
-      echo "  Or set FLUTTER_BIN to a non-snap Flutter install that bundles its toolchain." >&2
+  flutter_root="$(_flutter_root "$FLUTTER")"
+  local snap_lld
+  if snap_lld="$(_snap_lld_path_for_flutter_root "$flutter_root")"; then
+    if [[ ! -x "$snap_lld" ]]; then
+      if _ensure_user_snap_ld_lld "$snap_lld"; then
+        echo "Linked ld.lld for snap Flutter at ${snap_lld}" >&2
+      else
+        echo "ERROR: Flutter expects ld.lld at ${snap_lld} but it is missing." >&2
+        echo "  Fix (once, requires sudo): sudo ln -sf /usr/lib/llvm-18/bin/ld.lld ${snap_lld}" >&2
+        echo "  Or set FLUTTER_BIN=~/development/flutter/bin/flutter (non-snap toolchain)." >&2
+        exit 1
+      fi
     fi
+  fi
+  if [[ -z "${DISPLAY:-}" ]] && command -v xvfb-run >/dev/null; then
+    echo "DISPLAY unset; tests will run under xvfb-run -a" >&2
   fi
 }
 
