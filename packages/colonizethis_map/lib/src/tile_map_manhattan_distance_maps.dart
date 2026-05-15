@@ -15,22 +15,39 @@ List<List<List<int>>> manhattanDistToOtherContinentsMaps({
     (_) => List.generate(height, (_) => List.filled(width, unreachable)),
   );
   for (var c = 0; c < numContinents; c++) {
-    final dist = maps[c];
-    for (var y = 0; y < height; y++) {
-      for (var x = 0; x < width; x++) {
-        dist[y][x] = _minManhattanDistToForeignContinent(
-          continentGrid: continentGrid,
-          width: width,
-          height: height,
-          continentIndex: c,
-          x: x,
-          y: y,
-          unreachable: unreachable,
-        );
-      }
-    }
+    _fillManhattanDistancesForContinent(
+      continentGrid: continentGrid,
+      width: width,
+      height: height,
+      continentIndex: c,
+      unreachable: unreachable,
+      dist: maps[c],
+    );
   }
   return maps;
+}
+
+void _fillManhattanDistancesForContinent({
+  required List<List<int>> continentGrid,
+  required int width,
+  required int height,
+  required int continentIndex,
+  required int unreachable,
+  required List<List<int>> dist,
+}) {
+  for (var y = 0; y < height; y++) {
+    for (var x = 0; x < width; x++) {
+      dist[y][x] = _minManhattanDistToForeignContinent(
+        continentGrid: continentGrid,
+        width: width,
+        height: height,
+        continentIndex: continentIndex,
+        x: x,
+        y: y,
+        unreachable: unreachable,
+      );
+    }
+  }
 }
 
 int _minManhattanDistToForeignContinent({
