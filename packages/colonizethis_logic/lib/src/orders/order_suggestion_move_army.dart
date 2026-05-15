@@ -243,11 +243,15 @@ List<ArmyMovePickerDestination> armyMovePickerDestinations({
   Set<String>? playerOwnedFullProvinceIds,
   PlayerView? playerView,
   Map<String, Unit>? unitsById,
+  /// When callers already built membership for this [game], pass it to skip a
+  /// second [DiplomacyFactionMembership.from] scan (Refs #2394).
+  DiplomacyFactionMembership? factionMembership,
 }) {
   final diplo =
       currentOrders.diplomaticOrdersByPlayerId[playerId] ??
       const <DiplomaticOrder>[];
-  final factionMembership = DiplomacyFactionMembership.from(game);
+  final effectiveFactionMembership =
+      factionMembership ?? DiplomacyFactionMembership.from(game);
   final ownedProvinceIds =
       playerOwnedFullProvinceIds ??
       (playerView != null
@@ -271,7 +275,7 @@ List<ArmyMovePickerDestination> armyMovePickerDestinations({
     topology: topology,
     playerId: playerId,
     basePrefix: currentOrders,
-    factionMembership: factionMembership,
+    factionMembership: effectiveFactionMembership,
     view: playerView,
     unitsById: unitsById,
   );
@@ -292,7 +296,7 @@ List<ArmyMovePickerDestination> armyMovePickerDestinations({
         playerId,
         ownerId,
         diplo,
-        factionMembership,
+        effectiveFactionMembership,
       )) {
         continue;
       }
@@ -315,7 +319,7 @@ List<ArmyMovePickerDestination> armyMovePickerDestinations({
           topology: topology,
           playerId: playerId,
           basePrefix: trialOrders,
-          factionMembership: factionMembership,
+          factionMembership: effectiveFactionMembership,
           view: playerView,
           unitsById: unitsById,
         );

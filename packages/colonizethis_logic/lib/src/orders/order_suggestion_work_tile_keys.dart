@@ -23,6 +23,17 @@ Set<String> getValidWorkOrderTileKeys(
   String workTarget,
   Orders currentOrders, {
   Map<String, TileMapResult>? tileMapByRegion,
+  /// When callers evaluate many tile highlights for the same player and
+  /// [currentOrders], they may pass a shared [PlayerView] (Refs #2394).
+  PlayerView? view,
+  /// Optional units index; must match [game.worldState] when supplied.
+  Map<String, Unit>? unitsById,
+  /// Optional faction snapshot; must match [game] when supplied.
+  DiplomacyFactionMembership? factionMembership,
+  /// When non-null, must match `(game, topology, playerId, currentOrders, …)`.
+  IncrementalCandidateValidator? sharedCandidateValidator,
+  /// When non-null, must match [view.provincesById] owned by [playerId].
+  Set<String>? playerOwnedProvinceIds,
 }) {
   final unit = game.worldState.tryGetUnitById(unitId);
   if (unit == null || unit.ownerId != playerId) return {};
@@ -32,6 +43,16 @@ Set<String> getValidWorkOrderTileKeys(
   }
   if (!isWorkOrderTargetAllowedForUnitType(unit.type, workTarget)) return {};
 
+  assert(
+    view == null || view.playerId == playerId,
+    'view.playerId must match playerId',
+  );
+  assert(
+    sharedCandidateValidator == null ||
+        sharedCandidateValidator.playerId == playerId,
+    'sharedCandidateValidator playerId must match playerId',
+  );
+
   final reservedForPicker = devExclusiveReservedTileKeysForPlayer(
     game,
     currentOrders,
@@ -39,32 +60,39 @@ Set<String> getValidWorkOrderTileKeys(
     ignorePendingWorkOrderUnitId: unitId,
   );
 
-  // One PlayerView + validator per call: panel highlight path must not pay
-  // redundant world scans inside buildIncrementalCandidateValidator (Refs #2394).
-  final view = buildPlayerView(game, topology, playerId);
-  final factionMembership = DiplomacyFactionMembership.from(game);
-  final unitsById = unitsByIdFromWorld(game.worldState);
-  final playerOwnedProvinceIds = <String>{
-    for (final e in view.provincesById.entries)
-      if (e.value.ownerId == playerId) e.key,
-  };
-  final candidateValidator = buildIncrementalCandidateValidator(
-    game: game,
-    topology: topology,
-    playerId: playerId,
-    baseOrders: currentOrders,
-    tileMapByRegion: tileMapByRegion,
-    view: view,
-    unitsById: unitsById,
-    factionMembership: factionMembership,
-  );
+  // One PlayerView + validator per call unless the caller supplies shared
+  // snapshots for multi-unit panel enumeration (Refs #2394).
+  final effectiveView = view ?? buildPlayerView(game, topology, playerId);
+  final effectiveFactionMembership =
+      sharedCandidateValidator?.factionMembershipSnapshot ??
+      factionMembership ??
+      DiplomacyFactionMembership.from(game);
+  final effectiveUnitsById = unitsById ?? unitsByIdFromWorld(game.worldState);
+  final effectiveOwnedProvinceIds =
+      playerOwnedProvinceIds ??
+      <String>{
+        for (final e in effectiveView.provincesById.entries)
+          if (e.value.ownerId == playerId) e.key,
+      };
+  final candidateValidator =
+      sharedCandidateValidator ??
+      buildIncrementalCandidateValidator(
+        game: game,
+        topology: topology,
+        playerId: playerId,
+        baseOrders: currentOrders,
+        tileMapByRegion: tileMapByRegion,
+        view: effectiveView,
+        unitsById: effectiveUnitsById,
+        factionMembership: effectiveFactionMembership,
+      );
   final raw = rawCandidateTilesForWorkTarget(
     game: game,
     playerId: playerId,
     workTarget: workTarget,
     tileMapByRegion: tileMapByRegion,
-    playerOwnedProvinceIds: playerOwnedProvinceIds,
-    factionMembership: factionMembership,
+    playerOwnedProvinceIds: effectiveOwnedProvinceIds,
+    factionMembership: effectiveFactionMembership,
   );
   final valid = <String>{};
   for (final tileKey in raw) {
