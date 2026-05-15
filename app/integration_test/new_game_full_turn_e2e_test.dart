@@ -125,6 +125,10 @@ Future<void> _openPanelFromMarker(
     if (tappable.evaluate().isEmpty) {
       // Clear transient overlays/dialogs that can block marker taps.
       await e2eDismissTransientUi(tester, perf: perf);
+      if (panelRoot.evaluate().isNotEmpty) {
+        perf?.timing('open_panel_from_marker', sw.elapsed);
+        return;
+      }
       await tester.pump(Duration(milliseconds: panelPollMs));
       panelPollMs = e2eAdaptivePollRampAfterIdle(panelPollMs);
       continue;
