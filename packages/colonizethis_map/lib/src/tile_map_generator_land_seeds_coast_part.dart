@@ -205,7 +205,6 @@ bool _tryGrowOneCoastalCellForContinent(
   for (final e in provinceToContinent.entries) {
     provincesByContinent.putIfAbsent(e.value, () => []).add(e.key);
   }
-  final totalProvinces = provinceToContinent.length;
 
   var g = copyTileMapGrid(grid);
   var cg = copyTileMapGrid(continentGrid);
@@ -222,17 +221,11 @@ bool _tryGrowOneCoastalCellForContinent(
     coastalByContinent,
   );
 
-  final budgetPerContinent = List<int>.filled(numContinents, 0);
-  var allocated = 0;
-  for (var c = 0; c < numContinents; c++) {
-    budgetPerContinent[c] =
-        (remaining * provincesByContinent[c]!.length / totalProvinces)
-            .round();
-    allocated += budgetPerContinent[c];
-  }
-  if (allocated < remaining && numContinents > 0) {
-    budgetPerContinent[0] += remaining - allocated;
-  }
+  final budgetPerContinent = allocateBudgetByProvinceCount(
+    totalBudget: remaining,
+    provincesByContinent: provincesByContinent,
+    numContinents: numContinents,
+  );
 
   // Radius for local land-neighbour scoring when picking coastal cells.
   const scoreRadius = 3;

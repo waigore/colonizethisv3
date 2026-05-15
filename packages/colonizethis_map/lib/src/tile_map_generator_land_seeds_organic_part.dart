@@ -255,8 +255,6 @@ _placeLandSeedsOrganicImpl(
     0,
     landBudgetTotal,
   );
-  final totalProvinces = provinceToContinent.length;
-
   final seedCountsPerContinent = List<int>.filled(numContinents, 0);
   var voronoiRemaining = voronoiBudgetTotal;
 
@@ -264,20 +262,11 @@ _placeLandSeedsOrganicImpl(
     final roundBudget = (round + 1 == totalRounds)
         ? voronoiRemaining
         : (voronoiBudgetTotal / totalRounds).round();
-    final budgetPerContinent = <int>[];
-    for (var c = 0; c < numContinents; c++) {
-      budgetPerContinent.add(
-        (roundBudget * provincesByContinent[c]!.length / totalProvinces)
-            .round(),
-      );
-    }
-    var roundUsed = 0;
-    for (var c = 0; c < numContinents; c++) {
-      roundUsed += budgetPerContinent[c];
-    }
-    if (roundUsed != roundBudget && numContinents > 0) {
-      budgetPerContinent[0] += roundBudget - roundUsed;
-    }
+    final budgetPerContinent = allocateBudgetByProvinceCount(
+      totalBudget: roundBudget,
+      provincesByContinent: provincesByContinent,
+      numContinents: numContinents,
+    );
     voronoiRemaining -= roundBudget;
     // Step 1: Place one land seed per continent (if needed)
     for (var c = 0; c < numContinents; c++) {
