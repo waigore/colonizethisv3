@@ -277,6 +277,19 @@ E2E_TIMING_OUT=./my_timing tool/run_e2e_timing.sh 3
 
 Output defaults to `.cursor/e2e-timing/` (gitignored). Paste the summary medians into the PR baseline/after table (Refs GitHub #2336 AC8–AC9).
 
+## compare_e2e_timing.sh (baseline vs after table, #2336)
+
+Reads two markdown summaries from `run_e2e_timing.sh` (capture one on `dev` tip, one on the PR branch) and prints a markdown table with per-test median deltas plus aggregate suite total and AC9 pass/fail (default **≥25%** aggregate reduction).
+
+**Invocation**
+
+```bash
+tool/compare_e2e_timing.sh .cursor/e2e-timing/summary_dev.md .cursor/e2e-timing/summary_pr.md
+tool/compare_e2e_timing.sh baseline.md after.md --min-reduction-pct 25
+```
+
+Paste the script output into the PR description for AC8–AC9 evidence.
+
 ---
 
 ## run_quality_gate_tests.sh (CI verification)
