@@ -81,111 +81,6 @@ Future<void> _openPanelFromMarker(
   );
 }
 
-Future<void> _tapFirstAssignInCivilianPanel(WidgetTester tester) async {
-  final root = find.byKey(kCtE2ECivilianPanelRootKey);
-  final listView = find.descendant(of: root, matching: find.byType(ListView));
-  expect(listView, findsOneWidget);
-  final panelScrollable = find.descendant(
-    of: listView,
-    matching: find.byType(Scrollable),
-  );
-  expect(panelScrollable, findsOneWidget);
-  final assign = find.descendant(of: root, matching: find.text('Assign'));
-  expect(assign, findsWidgets);
-  final firstAssign = assign.first;
-  await tester.scrollUntilVisible(
-    firstAssign,
-    120,
-    scrollable: panelScrollable,
-  );
-  await tester.ensureVisible(firstAssign);
-  await tester.pump();
-  await tester.tap(firstAssign);
-  await e2eWaitUntilAnyFinderHitTestable(
-    tester,
-    <Finder>[
-      find.text('Build improvement'),
-      find.text('Prospect'),
-      find.text('Explore'),
-    ],
-    timeout: const Duration(seconds: 5),
-    phaseName: 'wait_until_civilian_work_menu',
-  );
-}
-
-/// Taps Assign on a [ListTile] whose title is exactly [unitTypeTitle]
-/// (e.g. [Unit.type] like `Explorer`). Scrolls the panel [Scrollable] until the
-/// row is visible, then taps Assign.
-Future<void> _tapAssignOnCivilianRowWithTitle(
-  WidgetTester tester,
-  String unitTypeTitle,
-) async {
-  final root = find.byKey(kCtE2ECivilianPanelRootKey);
-  final listView = find.descendant(of: root, matching: find.byType(ListView));
-  expect(listView, findsOneWidget);
-  final panelScrollable = find.descendant(
-    of: listView,
-    matching: find.byType(Scrollable),
-  );
-  expect(panelScrollable, findsOneWidget);
-  // Scope titles to the list: several units share the same display title
-  // (e.g. multiple `Explorer` rows); `find.text` under the root can match
-  // unrelated widgets and break `scrollUntilVisible`.
-  final titlesInList = find.descendant(
-    of: listView,
-    matching: find.text(unitTypeTitle),
-  );
-  // ListView lazy-builds off-screen rows; taller rows (shared action row) can
-  // push unit types below the first viewport without any Text in the element tree.
-  final sw = Stopwatch()..start();
-  while (titlesInList.evaluate().isEmpty &&
-      sw.elapsed < const Duration(seconds: 20)) {
-    await tester.drag(panelScrollable, const Offset(0, -120));
-    await e2ePumpUntilConditionOrIdle(
-      tester,
-      () => titlesInList.evaluate().isNotEmpty,
-      timeout: const Duration(milliseconds: 200),
-      phaseName: 'pump_until_civilian_title_visible_after_scroll_drag',
-    );
-  }
-  expect(
-    titlesInList,
-    findsWidgets,
-    reason:
-        'Timed out scrolling civilian panel for a visible "$unitTypeTitle" row',
-  );
-  final n = titlesInList.evaluate().length;
-  for (var i = 0; i < n; i++) {
-    final titleAt = titlesInList.at(i);
-    await tester.scrollUntilVisible(titleAt, 120, scrollable: panelScrollable);
-    await tester.ensureVisible(titleAt);
-    final listTile = find.ancestor(
-      of: titleAt,
-      matching: find.byType(ListTile),
-    );
-    final assign = find.descendant(of: listTile, matching: find.text('Assign'));
-    if (assign.evaluate().isEmpty) {
-      continue;
-    }
-    final assignHit = assign.first;
-    await tester.ensureVisible(assignHit);
-    await tester.pump();
-    await tester.tap(assignHit);
-    await e2eWaitUntilAnyFinderHitTestable(
-      tester,
-      <Finder>[
-        find.text('Build improvement'),
-        find.text('Prospect'),
-        find.text('Explore'),
-      ],
-      timeout: const Duration(seconds: 5),
-      phaseName: 'wait_until_civilian_work_menu_row',
-    );
-    return;
-  }
-  fail('No idle Assign row for unit type "$unitTypeTitle" in civilian panel');
-}
-
 void main() {
   suppressLogsForTests();
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
@@ -299,7 +194,7 @@ void main() {
 
       // --- Builder: build improvement + first legal tile (e2e tap target) ---
       await openCivilianPanel(tester, perf: perf);
-      await _tapFirstAssignInCivilianPanel(tester);
+      await tapFirstAssignInCivilianPanel(tester);
       await tester.tap(find.text('Build improvement'));
       await waitUntilFound(
         tester,
@@ -320,7 +215,7 @@ void main() {
 
       // --- Explorer: prospect + first legal tile ---
       await openCivilianPanel(tester, perf: perf);
-      await _tapAssignOnCivilianRowWithTitle(tester, kUnitTypeExplorer);
+      await tapAssignOnCivilianRowWithTitle(tester, kUnitTypeExplorer);
       await tester.tap(find.text('Prospect'));
       await waitUntilFound(
         tester,

@@ -20,7 +20,6 @@ import 'package:colonizethis_app/features/game/flame/game_screen_shared.dart';
 import 'package:colonizethis_app/l10n/l10n.dart';
 import 'package:colonizethis_app/main.dart' show bootstrapForIntegrationTest;
 import 'package:colonizethis_app/widgets/ct_choice_chip.dart';
-import 'package:colonizethis_app/widgets/ct_dialog_shell.dart';
 import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -69,7 +68,13 @@ void main() {
 
     final l10n = lookupAppLocalizations(const Locale('en'));
 
-    await _splitHomeFleetOnce(tester, l10n, perf: perf);
+    await splitHomeFleetOnce(
+      tester,
+      l10n,
+      perf: perf,
+      openNavalTimeout: _kMaxUiResponseWait,
+      bottomSheetCloseTimeout: _kMaxUiResponseWait,
+    );
     await closeBottomSheet(tester, perf: perf, overallTimeout: _kMaxUiResponseWait);
     ensureUnderWallClock('after split fleet');
 
@@ -172,7 +177,13 @@ void main() {
 
       final l10n = lookupAppLocalizations(const Locale('en'));
 
-      await _splitHomeFleetOnce(tester, l10n, perf: perf);
+      await splitHomeFleetOnce(
+      tester,
+      l10n,
+      perf: perf,
+      openNavalTimeout: _kMaxUiResponseWait,
+      bottomSheetCloseTimeout: _kMaxUiResponseWait,
+    );
       await closeBottomSheet(tester, perf: perf, overallTimeout: _kMaxUiResponseWait);
       ensureUnderWallClock('after split fleet');
       CtE2eNavalPanelSnapshot? lastKnownNavalSnapshot;

@@ -5,6 +5,7 @@
 /// (`openProductionPanel`, `waitForNextTurnLabelAdvance`, etc.).
 library;
 
+import 'package:colonizethis_app/l10n/app_localizations_contract.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -122,6 +123,30 @@ void collectTextPreorder(Element element, List<String> out) =>
 
 Future<void> expandEachExpansionTileOnce(WidgetTester tester) =>
     e2eExpandEachExpansionTileOnce(tester);
+
+Future<void> splitHomeFleetOnce(
+  WidgetTester tester,
+  AppLocalizations l10n, {
+  E2ePerfLog? perf,
+  Duration openNavalTimeout = kE2eDefaultNavalOpenTimeout,
+  Duration bottomSheetCloseTimeout = kE2eDefaultBottomSheetCloseTimeout,
+}) =>
+    e2eSplitHomeFleetOnce(
+      tester,
+      l10n,
+      perf: perf,
+      openNavalTimeout: openNavalTimeout,
+      bottomSheetCloseTimeout: bottomSheetCloseTimeout,
+    );
+
+Future<void> tapFirstAssignInCivilianPanel(WidgetTester tester) =>
+    e2eTapFirstAssignInCivilianPanel(tester);
+
+Future<void> tapAssignOnCivilianRowWithTitle(
+  WidgetTester tester,
+  String unitTypeTitle,
+) =>
+    e2eTapAssignOnCivilianRowWithTitle(tester, unitTypeTitle);
 
 Future<void> ensureAllRelocated64pxPngsLoad() =>
     e2eEnsureAllRelocated64pxPngsLoad();

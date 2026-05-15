@@ -447,6 +447,164 @@ Future<void> e2eOpenProductionPanel(
   );
 }
 
+/// Splits the home fleet once via the naval panel (GitHub #2336 H8).
+Future<void> e2eSplitHomeFleetOnce(
+  WidgetTester tester,
+  AppLocalizations l10n, {
+  E2ePerfLog? perf,
+  Duration openNavalTimeout = kE2eDefaultNavalOpenTimeout,
+  Duration bottomSheetCloseTimeout = kE2eDefaultBottomSheetCloseTimeout,
+}) async {
+  final phaseSw = Stopwatch()..start();
+  await e2eOpenNavalPanel(
+    tester,
+    perf: perf,
+    timeout: openNavalTimeout,
+    bottomSheetCloseTimeout: bottomSheetCloseTimeout,
+  );
+  await e2eExpandEachExpansionTileOnce(tester);
+  final navalPanelRoot = find.byKey(kCtE2ENavalPanelRootKey);
+  final split = find.descendant(
+    of: navalPanelRoot,
+    matching: find.text('Split'),
+  );
+  expect(split, findsWidgets);
+  await tester.tap(split.first, warnIfMissed: false);
+  await e2eWaitUntilFound(
+    tester,
+    find.descendant(
+      of: find.byType(CtDialogShell),
+      matching: find.widgetWithText(CtNinePatchButton, '>'),
+    ),
+    timeout: const Duration(seconds: 4),
+    perf: perf,
+    phaseName: 'wait_until_found_split_nudge_right',
+  );
+
+  final moveOneRight = find.descendant(
+    of: find.byType(CtDialogShell),
+    matching: find.widgetWithText(CtNinePatchButton, '>'),
+  );
+  expect(moveOneRight, findsWidgets);
+  await tester.tap(moveOneRight.first);
+  await e2eWaitUntilFound(
+    tester,
+    find.text(l10n.splitFleet_confirm),
+    timeout: const Duration(seconds: 4),
+    perf: perf,
+    phaseName: 'wait_until_found_split_confirm',
+  );
+  await tester.tap(find.text(l10n.splitFleet_confirm));
+  await e2ePumpUntilConditionOrIdle(
+    tester,
+    () => find.byType(CtDialogShell).evaluate().isEmpty,
+    timeout: const Duration(milliseconds: 500),
+    perf: perf,
+    phaseName: 'pump_until_split_dialog_shell_cleared',
+  );
+  await e2eExpandEachExpansionTileOnce(tester);
+  perf?.timing('fleet_split', phaseSw.elapsed);
+}
+
+/// Taps the first visible **Assign** in the civilian panel work menu (GitHub #2336 H9).
+Future<void> e2eTapFirstAssignInCivilianPanel(WidgetTester tester) async {
+  final root = find.byKey(kCtE2ECivilianPanelRootKey);
+  final listView = find.descendant(of: root, matching: find.byType(ListView));
+  expect(listView, findsOneWidget);
+  final panelScrollable = find.descendant(
+    of: listView,
+    matching: find.byType(Scrollable),
+  );
+  expect(panelScrollable, findsOneWidget);
+  final assign = find.descendant(of: root, matching: find.text('Assign'));
+  expect(assign, findsWidgets);
+  final firstAssign = assign.first;
+  await tester.scrollUntilVisible(
+    firstAssign,
+    120,
+    scrollable: panelScrollable,
+  );
+  await tester.ensureVisible(firstAssign);
+  await tester.pump();
+  await tester.tap(firstAssign);
+  await e2eWaitUntilAnyFinderHitTestable(
+    tester,
+    <Finder>[
+      find.text('Build improvement'),
+      find.text('Prospect'),
+      find.text('Explore'),
+    ],
+    timeout: const Duration(seconds: 5),
+    phaseName: 'wait_until_civilian_work_menu',
+  );
+}
+
+/// Taps **Assign** on a [ListTile] whose title is exactly [unitTypeTitle] (GitHub #2336 H9).
+Future<void> e2eTapAssignOnCivilianRowWithTitle(
+  WidgetTester tester,
+  String unitTypeTitle,
+) async {
+  final root = find.byKey(kCtE2ECivilianPanelRootKey);
+  final listView = find.descendant(of: root, matching: find.byType(ListView));
+  expect(listView, findsOneWidget);
+  final panelScrollable = find.descendant(
+    of: listView,
+    matching: find.byType(Scrollable),
+  );
+  expect(panelScrollable, findsOneWidget);
+  final titlesInList = find.descendant(
+    of: listView,
+    matching: find.text(unitTypeTitle),
+  );
+  final sw = Stopwatch()..start();
+  while (titlesInList.evaluate().isEmpty &&
+      sw.elapsed < const Duration(seconds: 20)) {
+    await tester.drag(panelScrollable, const Offset(0, -120));
+    await e2ePumpUntilConditionOrIdle(
+      tester,
+      () => titlesInList.evaluate().isNotEmpty,
+      timeout: const Duration(milliseconds: 200),
+      phaseName: 'pump_until_civilian_title_visible_after_scroll_drag',
+    );
+  }
+  expect(
+    titlesInList,
+    findsWidgets,
+    reason:
+        'Timed out scrolling civilian panel for a visible "$unitTypeTitle" row',
+  );
+  final n = titlesInList.evaluate().length;
+  for (var i = 0; i < n; i++) {
+    final titleAt = titlesInList.at(i);
+    await tester.scrollUntilVisible(titleAt, 120, scrollable: panelScrollable);
+    await tester.ensureVisible(titleAt);
+    final listTile = find.ancestor(
+      of: titleAt,
+      matching: find.byType(ListTile),
+    );
+    final assign = find.descendant(of: listTile, matching: find.text('Assign'));
+    if (assign.evaluate().isEmpty) {
+      continue;
+    }
+    final assignHit = assign.first;
+    await tester.ensureVisible(assignHit);
+    await tester.pump();
+    await tester.tap(assignHit);
+    await e2eWaitUntilAnyFinderHitTestable(
+      tester,
+      <Finder>[
+        find.text('Build improvement'),
+        find.text('Prospect'),
+        find.text('Explore'),
+      ],
+      timeout: const Duration(seconds: 5),
+      phaseName: 'wait_until_civilian_work_menu_row',
+    );
+    return;
+  }
+  fail('No idle Assign row for unit type "$unitTypeTitle" in civilian panel');
+}
+
 /// Dismisses snackbars, generic OK dialogs, [AlertDialog] actions, bottom sheets,
 /// and [CtDialogShell] overlays (union of fleet + full-turn E2E paths).
 Future<void> e2eDismissTransientUi(

@@ -415,62 +415,6 @@ String _bundledExploreRejectionDiagnostics([
   return lines.join('\n');
 }
 
-Future<void> _splitHomeFleetOnce(
-  WidgetTester tester,
-  AppLocalizations l10n, {
-  E2ePerfLog? perf,
-}) async {
-  final phaseSw = Stopwatch()..start();
-  await openNavalPanel(
-    tester,
-    perf: perf,
-    timeout: _kMaxUiResponseWait,
-    bottomSheetCloseTimeout: _kMaxUiResponseWait,
-  );
-  await expandEachExpansionTileOnce(tester);
-  final navalPanelRoot = find.byKey(kCtE2ENavalPanelRootKey);
-  final split = find.descendant(
-    of: navalPanelRoot,
-    matching: find.text('Split'),
-  );
-  expect(split, findsWidgets);
-  await tester.tap(split.first, warnIfMissed: false);
-  await waitUntilFound(
-    tester,
-    find.descendant(
-      of: find.byType(CtDialogShell),
-      matching: find.widgetWithText(CtNinePatchButton, '>'),
-    ),
-    timeout: const Duration(seconds: 4),
-    phaseName: 'wait_until_found_split_nudge_right',
-  );
-
-  final moveOneRight = find.descendant(
-    of: find.byType(CtDialogShell),
-    matching: find.widgetWithText(CtNinePatchButton, '>'),
-  );
-  expect(moveOneRight, findsWidgets);
-  await tester.tap(moveOneRight.first);
-  await waitUntilFound(
-    tester,
-    find.text(l10n.splitFleet_confirm),
-    timeout: const Duration(seconds: 4),
-    phaseName: 'wait_until_found_split_confirm',
-  );
-  await tester.tap(find.text(l10n.splitFleet_confirm));
-  // Same bounded adaptive settle as shared helpers: exit as soon as the split
-  // shell leaves the tree instead of a hand-rolled poll loop (Refs #2336).
-  await e2ePumpUntilConditionOrIdle(
-    tester,
-    () => find.byType(CtDialogShell).evaluate().isEmpty,
-    timeout: const Duration(milliseconds: 500),
-    perf: perf,
-    phaseName: 'pump_until_split_dialog_shell_cleared',
-  );
-  await expandEachExpansionTileOnce(tester);
-  perf?.timing('fleet_split', phaseSw.elapsed);
-}
-
 /// Text inside the map HUD next-turn [CtNinePatchButton] (`game_nextTurnButton`).
 String? _readNextTurnButtonLabel(WidgetTester tester) {
   final inner = find.descendant(
