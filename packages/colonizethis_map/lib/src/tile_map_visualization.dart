@@ -15,7 +15,6 @@ import 'tile_map_visualization_shared.dart'
         drawLegendContinentSeedMarker,
         drawLegendLandSeedMarker,
         drawLegendLine,
-        drawLegendSwatch,
         drawResourceLetterAtCellCenter,
         landSeedMarkerRgb,
         legendLineHeight,
@@ -99,18 +98,10 @@ int _drawOptionalLegendSections(
         (a, b) => a > b ? a : b,
       );
       for (var c = 0; c <= maxContinent; c++) {
-        final y = legendY0 + row * legendLineHeight;
+        var y = legendY0 + row * legendLineHeight;
         final (r, g, b) = regionPalette[c % regionPalette.length];
-        drawLegendSwatch(image, y, r, g, b);
-        img.drawString(
-          image,
-          'Continent $c',
-          font: img.arial14,
-          x: legendPadding + swatchSize + swatchGap,
-          y: y,
-          color: black,
-        );
-        row++;
+        y = drawLegendLine(image, y, r, g, b, 'Continent $c');
+        row = (y - legendY0) ~/ legendLineHeight;
       }
     } else {
       final y = legendY0 + row * legendLineHeight;
