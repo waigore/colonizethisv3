@@ -231,6 +231,117 @@ Future<void> e2eOpenCivilianPanel(
   );
 }
 
+/// Default cap for naval-panel open polling (matches prior fleet E2E constant).
+const Duration kE2eDefaultNavalOpenTimeout = Duration(seconds: 5);
+
+/// Opens the naval units panel from the empire rail or the first fleet marker,
+/// dismissing transient UI and closing conflicting sheets when needed.
+///
+/// Single canonical implementation for fleet E2E (GitHub #2336); mirrors
+/// [e2eOpenCivilianPanel] structure with naval keys and adaptive polling.
+Future<void> e2eOpenNavalPanel(
+  WidgetTester tester, {
+  E2ePerfLog? perf,
+  Duration timeout = kE2eDefaultNavalOpenTimeout,
+  Duration bottomSheetCloseTimeout = kE2eDefaultBottomSheetCloseTimeout,
+}) async {
+  final phaseSw = Stopwatch()..start();
+  final navalPanel = find.byKey(kCtE2ENavalPanelRootKey);
+  final markerBtn = find.byKey(kCtE2EOpenFirstFleetMarkerPanelKey);
+  final btn = find.byKey(kEmpireNavalUnitsButtonKey);
+
+  Future<bool> pollUntilNavalVisible(Duration budget) async {
+    final poll = Stopwatch()..start();
+    if (navalPanel.evaluate().isNotEmpty) {
+      return true;
+    }
+    var stepMs = 25;
+    while (poll.elapsed < budget) {
+      if (navalPanel.evaluate().isNotEmpty) {
+        return true;
+      }
+      await tester.pump(Duration(milliseconds: stepMs));
+      stepMs = e2eNextIdlePollStepMs(stepMs);
+    }
+    return false;
+  }
+
+  final sw = Stopwatch()..start();
+  var navalPollMs = 25;
+  while (sw.elapsed < timeout) {
+    if (navalPanel.evaluate().isNotEmpty) {
+      perf?.timing('open_panel_naval', phaseSw.elapsed);
+      return;
+    }
+    if (find.byType(BottomSheet).evaluate().isNotEmpty) {
+      await e2eCloseBottomSheet(
+        tester,
+        perf: perf,
+        overallTimeout: bottomSheetCloseTimeout,
+      );
+      navalPollMs = 25;
+      continue;
+    }
+    if (find.byType(AlertDialog).evaluate().isNotEmpty) {
+      await e2eDismissTransientUi(tester, perf: perf);
+      navalPollMs = 25;
+      continue;
+    }
+    if (find.byType(CtDialogShell).evaluate().isNotEmpty) {
+      await e2eDismissTransientUi(tester, perf: perf);
+      navalPollMs = 25;
+      continue;
+    }
+    final markerHit = markerBtn.hitTestable();
+    if (markerHit.evaluate().isNotEmpty) {
+      await tester.tap(markerHit.first, warnIfMissed: false);
+      if (await pollUntilNavalVisible(const Duration(seconds: 2))) {
+        perf?.timing('open_panel_naval', phaseSw.elapsed);
+        return;
+      }
+      if (await e2ePumpUntilConditionOrIdle(
+        tester,
+        () => navalPanel.evaluate().isNotEmpty,
+        timeout: const Duration(milliseconds: 600),
+        perf: perf,
+        phaseName: 'pump_until_naval_visible_after_marker_tap',
+      )) {
+        perf?.timing('open_panel_naval', phaseSw.elapsed);
+        return;
+      }
+      navalPollMs = 25;
+      continue;
+    }
+    final railHit = btn.hitTestable();
+    if (railHit.evaluate().isNotEmpty) {
+      await tester.tap(railHit.first, warnIfMissed: false);
+      if (await pollUntilNavalVisible(const Duration(seconds: 3))) {
+        perf?.timing('open_panel_naval', phaseSw.elapsed);
+        return;
+      }
+      if (await e2ePumpUntilConditionOrIdle(
+        tester,
+        () => navalPanel.evaluate().isNotEmpty,
+        timeout: const Duration(milliseconds: 600),
+        perf: perf,
+        phaseName: 'pump_until_naval_visible_after_rail_tap',
+      )) {
+        perf?.timing('open_panel_naval', phaseSw.elapsed);
+        return;
+      }
+      navalPollMs = 25;
+      continue;
+    }
+    await e2eDismissTransientUi(tester, perf: perf);
+    await tester.pump(Duration(milliseconds: navalPollMs));
+    navalPollMs = e2eAdaptivePollRampAfterIdle(navalPollMs);
+  }
+  fail(
+    'Timed out after ${timeout.inSeconds}s opening naval panel. '
+    'Last exception: ${tester.takeException()}',
+  );
+}
+
 /// Dismisses snackbars, generic OK dialogs, [AlertDialog] actions, bottom sheets,
 /// and [CtDialogShell] overlays (union of fleet + full-turn E2E paths).
 Future<void> e2eDismissTransientUi(

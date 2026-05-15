@@ -290,7 +290,11 @@ Future<void> _awaitNwCoastalOrVisibleLandForBundledExploreE2e({
     ensureUnderWallClock('NW bundled-explore readiness i=$i');
     await dismissTransientUi(tester);
     await _tapNewWorldRegionTabIfPresent(tester);
-    await _openNavalPanel(tester);
+    await openNavalPanel(
+      tester,
+      timeout: _kMaxUiResponseWait,
+      bottomSheetCloseTimeout: _kMaxUiResponseWait,
+    );
     if (_nonHomeHumanFleetInCoastalNewWorldSeaFromCtSnapshot() ||
         _playerHasAnyNewWorldFoggedOrBetterFromCtSnapshot()) {
       await closeBottomSheet(tester, overallTimeout: _kMaxUiResponseWait);

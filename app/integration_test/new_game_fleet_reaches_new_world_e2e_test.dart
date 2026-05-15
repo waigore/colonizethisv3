@@ -8,7 +8,6 @@ import 'e2e_test_shared.dart'
     show
         e2eAdaptivePollRampAfterIdle,
         e2eNewWorldRegionChipAppearsSelected,
-        e2eNextIdlePollStepMs,
         e2eOldWorldRegionChipAppearsSelected,
         e2eOpenCivilianPanel,
         e2ePumpUntil,
@@ -92,7 +91,12 @@ void main() {
       perf.bumpCounter('turn_loop_iterations');
       await dismissTransientUi(tester, perf: perf);
       await _tapNewWorldRegionTabIfPresent(tester);
-      await _openNavalPanel(tester, perf: perf);
+      await openNavalPanel(
+        tester,
+        perf: perf,
+        timeout: _kMaxUiResponseWait,
+        bottomSheetCloseTimeout: _kMaxUiResponseWait,
+      );
       if (_harnessDetectsNonHomeFleetInNewWorld(tester)) {
         await closeBottomSheet(tester, perf: perf, overallTimeout: _kMaxUiResponseWait);
         perf.timing(
@@ -124,7 +128,12 @@ void main() {
     ensureUnderWallClock('before final naval check');
     await dismissTransientUi(tester, perf: perf);
     await _tapNewWorldRegionTabIfPresent(tester);
-    await _openNavalPanel(tester, perf: perf);
+    await openNavalPanel(
+      tester,
+      perf: perf,
+      timeout: _kMaxUiResponseWait,
+      bottomSheetCloseTimeout: _kMaxUiResponseWait,
+    );
     if (!_harnessDetectsNonHomeFleetInNewWorld(tester)) {
       fail(
         'After $_kMaxNextTurnTapsForNwFleetReach Next turn resolutions, no non-home human fleet in region '
@@ -186,7 +195,12 @@ void main() {
         perf.bumpCounter('turn_loop_iterations');
         await dismissTransientUi(tester, perf: perf);
         await _tapNewWorldRegionTabIfPresent(tester);
-        await _openNavalPanel(tester, perf: perf);
+        await openNavalPanel(
+          tester,
+          perf: perf,
+          timeout: _kMaxUiResponseWait,
+          bottomSheetCloseTimeout: _kMaxUiResponseWait,
+        );
         if (ctE2eNavalPanelSnapshot != null) {
           lastKnownNavalSnapshot = ctE2eNavalPanelSnapshot;
         }
@@ -210,7 +224,12 @@ void main() {
 
       await dismissTransientUi(tester, perf: perf);
       await _tapNewWorldRegionTabIfPresent(tester);
-      await _openNavalPanel(tester, perf: perf);
+      await openNavalPanel(
+        tester,
+        perf: perf,
+        timeout: _kMaxUiResponseWait,
+        bottomSheetCloseTimeout: _kMaxUiResponseWait,
+      );
       if (ctE2eNavalPanelSnapshot != null) {
         lastKnownNavalSnapshot = ctE2eNavalPanelSnapshot;
       }

@@ -37,6 +37,19 @@ Future<void> dismissTransientUi(
 }) =>
     e2eDismissTransientUi(tester, perf: perf);
 
+Future<void> openNavalPanel(
+  WidgetTester tester, {
+  E2ePerfLog? perf,
+  Duration timeout = kE2eDefaultNavalOpenTimeout,
+  Duration bottomSheetCloseTimeout = kE2eDefaultBottomSheetCloseTimeout,
+}) =>
+    e2eOpenNavalPanel(
+      tester,
+      perf: perf,
+      timeout: timeout,
+      bottomSheetCloseTimeout: bottomSheetCloseTimeout,
+    );
+
 Future<void> closeBottomSheet(
   WidgetTester tester, {
   E2ePerfLog? perf,

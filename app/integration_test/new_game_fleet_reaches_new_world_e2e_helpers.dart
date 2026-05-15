@@ -15,120 +15,6 @@ const Duration _kMaxUiResponseWait = Duration(seconds: 5);
 /// E2E policy caps wall-clock runtime to 5 minutes so PR feedback remains fast.
 const Duration _kFleetE2eMaxWallClock = Duration(minutes: 5);
 
-Future<bool> _pollUntilNavalPanelVisible(
-  WidgetTester tester,
-  Finder navalPanel,
-  Duration budget,
-) async {
-  final poll = Stopwatch()..start();
-  if (navalPanel.evaluate().isNotEmpty) {
-    return true;
-  }
-  var stepMs = 25;
-  while (poll.elapsed < budget) {
-    if (navalPanel.evaluate().isNotEmpty) {
-      return true;
-    }
-    await tester.pump(Duration(milliseconds: stepMs));
-    // Doubling backoff capped at 500ms (same as [e2eWaitForMapHudAfterNewGameStart];
-    // Refs #2336 AC5) — fewer idle frames than 25→100ms-only ramp when the panel
-    // mounts after a marker/rail tap under headless Linux load.
-    stepMs = e2eNextIdlePollStepMs(stepMs);
-  }
-  return false;
-}
-
-Future<void> _openNavalPanel(WidgetTester tester, {E2ePerfLog? perf}) async {
-  final phaseSw = Stopwatch()..start();
-  final navalPanel = find.byKey(kCtE2ENavalPanelRootKey);
-  final markerBtn = find.byKey(kCtE2EOpenFirstFleetMarkerPanelKey);
-  final btn = find.byKey(kEmpireNavalUnitsButtonKey);
-  final sw = Stopwatch()..start();
-  var navalPollMs = 25;
-  while (sw.elapsed < _kMaxUiResponseWait) {
-    if (navalPanel.evaluate().isNotEmpty) {
-      perf?.timing('open_panel_naval', phaseSw.elapsed);
-      return;
-    }
-    if (find.byType(BottomSheet).evaluate().isNotEmpty) {
-      await closeBottomSheet(
-        tester,
-        perf: perf,
-        overallTimeout: _kMaxUiResponseWait,
-      );
-      navalPollMs = 25;
-      continue;
-    }
-    if (find.byType(AlertDialog).evaluate().isNotEmpty) {
-      await dismissTransientUi(tester, perf: perf);
-      navalPollMs = 25;
-      continue;
-    }
-    if (find.byType(CtDialogShell).evaluate().isNotEmpty) {
-      await dismissTransientUi(tester, perf: perf);
-      navalPollMs = 25;
-      continue;
-    }
-    final markerHit = markerBtn.hitTestable();
-    if (markerHit.evaluate().isNotEmpty) {
-      await tester.tap(markerHit.first, warnIfMissed: false);
-      if (await _pollUntilNavalPanelVisible(
-        tester,
-        navalPanel,
-        const Duration(seconds: 2),
-      )) {
-        perf?.timing('open_panel_naval', phaseSw.elapsed);
-        return;
-      }
-      // Bounded condition pumps instead of a single blind idle frame (Refs
-      // #2336 H6 / adaptive polling).
-      if (await e2ePumpUntilConditionOrIdle(
-        tester,
-        () => navalPanel.evaluate().isNotEmpty,
-        timeout: const Duration(milliseconds: 600),
-        perf: perf,
-        phaseName: 'pump_until_naval_visible_after_marker_tap',
-      )) {
-        perf?.timing('open_panel_naval', phaseSw.elapsed);
-        return;
-      }
-      navalPollMs = 25;
-      continue;
-    }
-    final railHit = btn.hitTestable();
-    if (railHit.evaluate().isNotEmpty) {
-      await tester.tap(railHit.first, warnIfMissed: false);
-      if (await _pollUntilNavalPanelVisible(
-        tester,
-        navalPanel,
-        const Duration(seconds: 3),
-      )) {
-        perf?.timing('open_panel_naval', phaseSw.elapsed);
-        return;
-      }
-      if (await e2ePumpUntilConditionOrIdle(
-        tester,
-        () => navalPanel.evaluate().isNotEmpty,
-        timeout: const Duration(milliseconds: 600),
-        perf: perf,
-        phaseName: 'pump_until_naval_visible_after_rail_tap',
-      )) {
-        perf?.timing('open_panel_naval', phaseSw.elapsed);
-        return;
-      }
-      navalPollMs = 25;
-      continue;
-    }
-    await dismissTransientUi(tester, perf: perf);
-    await tester.pump(Duration(milliseconds: navalPollMs));
-    navalPollMs = e2eAdaptivePollRampAfterIdle(navalPollMs);
-  }
-  fail(
-    'Timed out after ${_kMaxUiResponseWait.inSeconds}s opening naval panel. '
-    'Last exception: ${tester.takeException()}',
-  );
-}
-
 /// Selects the New World map region via [kCtE2ERegionTabNewWorldKey] when present
 /// (reduces ambiguous "New World" text on screen; `SPEC/program/e2e-integration-tests.md`).
 ///
@@ -308,7 +194,12 @@ Future<void> _tryNavalMoveSegment(
   } else {
     await _tapOldWorldRegionTab(tester, l10n);
   }
-  await _openNavalPanel(tester, perf: perf);
+  await openNavalPanel(
+    tester,
+    perf: perf,
+    timeout: _kMaxUiResponseWait,
+    bottomSheetCloseTimeout: _kMaxUiResponseWait,
+  );
   final tappedMove = await _tapMoveOnFirstNonHomeFleet(tester);
   if (!tappedMove) {
     perf?.timing(
