@@ -45,16 +45,17 @@ extension _TileMapGenJoinSeaBridgePart on _TileMapGenJoinSea {
           )
         : null;
 
+    var landCellsByContinent = _buildLandCellsByContinentIndex(
+      g,
+      provinceToContinent,
+      seaZoneId,
+    );
+
     for (var c = 0; c < numContinents; c++) {
       var joinIterations = 0;
+      final landCells = landCellsByContinent.putIfAbsent(c, () => {});
       while (joinIterations < maxJoinIterationsPerContinent) {
         joinIterations++;
-        final landCells = _landCellsForContinent(
-          g,
-          provinceToContinent,
-          c,
-          seaZoneId,
-        );
         final components = _graph.connectedComponentsOfLand(landCells);
         if (components.length <= 1) break;
         didJoin = true;
@@ -75,7 +76,8 @@ extension _TileMapGenJoinSeaBridgePart on _TileMapGenJoinSea {
           rnd,
           capState,
         );
-        preserveSeaFraction(
+        landCells.addAll(path);
+        final restoredToSea = preserveSeaFraction(
           g,
           tg,
           rg,
@@ -84,11 +86,12 @@ extension _TileMapGenJoinSeaBridgePart on _TileMapGenJoinSea {
           path.length,
           landCellsExcludedFromSeaRestore: bridgeCells,
         );
+        for (final cell in restoredToSea) {
+          landCells.remove(cell);
+        }
       }
       if (joinIterations >= maxJoinIterationsPerContinent) {
-        final stillSplit = _graph.connectedComponentsOfLand(
-          _landCellsForContinent(g, provinceToContinent, c, seaZoneId),
-        );
+        final stillSplit = _graph.connectedComponentsOfLand(landCells);
         if (stillSplit.length > 1) {
           _log.w(
             'join continents hit iteration cap with >1 land component for '
@@ -134,21 +137,23 @@ extension _TileMapGenJoinSeaBridgePart on _TileMapGenJoinSea {
     }
   }
 
-  Set<(int x, int y)> _landCellsForContinent(
+  /// One grid pass: land cells grouped by continent index (P4).
+  Map<int, Set<(int x, int y)>> _buildLandCellsByContinentIndex(
     List<List<String>> grid,
     Map<String, int> membership,
-    int continentIndex,
     String seaZoneId,
   ) {
-    final out = <(int x, int y)>{};
+    final byContinent = <int, Set<(int x, int y)>>{};
     for (var y = 0; y < params.height; y++) {
       for (var x = 0; x < params.width; x++) {
         final id = grid[y][x];
         if (id == seaZoneId) continue;
-        if (membership[id] == continentIndex) out.add((x, y));
+        final continentIndex = membership[id];
+        if (continentIndex == null) continue;
+        (byContinent[continentIndex] ??= {}).add((x, y));
       }
     }
-    return out;
+    return byContinent;
   }
 
   List<(int x, int y)> _shortestSeaPath(
@@ -269,7 +274,7 @@ extension _TileMapGenJoinSeaBridgePart on _TileMapGenJoinSea {
     );
   }
 
-  void preserveSeaFraction(
+  List<(int x, int y)> preserveSeaFraction(
     List<List<String>> grid,
     List<List<TerrainType?>>? terrainGrid,
     List<List<Resource?>>? resourceGrid,
@@ -295,11 +300,14 @@ extension _TileMapGenJoinSeaBridgePart on _TileMapGenJoinSea {
       final nb = _graph.oceanNeighbourCount(grid, b.$1, b.$2, seaZoneId, ocean);
       return nb.compareTo(na);
     });
+    final restoredToSea = <(int x, int y)>[];
     for (var i = 0; i < count && i < coastal.length; i++) {
       final (x, y) = coastal[i];
       grid[y][x] = seaZoneId;
       if (terrainGrid != null) terrainGrid[y][x] = null;
       if (resourceGrid != null) resourceGrid[y][x] = null;
+      restoredToSea.add((x, y));
     }
+    return restoredToSea;
   }
 }
