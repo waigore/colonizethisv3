@@ -207,6 +207,72 @@ void main() {
         expect(withShared, baseline);
       },
     );
+
+    test(
+      'shared factionMembership matches default armyMovePickerDestinations',
+      () {
+        const gp = 'gp1';
+        const cap = 'oldWorld|cap';
+        const p1 = 'oldWorld|p1';
+        final game = Game(
+          id: 'g_army_picker_shared_membership',
+          worldState: WorldState(
+            turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+            oldWorld: RegionData(
+              provinces: [
+                Province(
+                  id: cap,
+                  regionId: 'oldWorld',
+                  ownerId: gp,
+                  townTileKey: 'oldWorld|cap|0|0',
+                ),
+                Province(id: p1, regionId: 'oldWorld', ownerId: gp),
+              ],
+              units: const [],
+            ),
+            newWorld: const RegionData(),
+            armies: [
+              Army(
+                id: 'field_a',
+                ownerId: gp,
+                regionId: 'oldWorld',
+                stationedProvinceId: p1,
+                regimentUnitIds: const [],
+                isHomeArmy: false,
+              ),
+            ],
+            tileKeysByRegionAndProvince: const {},
+          ),
+          players: [
+            Player(
+              id: gp,
+              displayName: 'T',
+              isHuman: true,
+              capitalProvinceId: cap,
+            ),
+          ],
+        );
+        final topology = const MapTopology(nodes: [], edges: []);
+        final army = game.worldState.armies.first;
+        final baseline = armyMovePickerDestinations(
+          game: game,
+          topology: topology,
+          playerId: gp,
+          army: army,
+          currentOrders: const Orders(),
+        );
+        final membership = DiplomacyFactionMembership.from(game);
+        final withShared = armyMovePickerDestinations(
+          game: game,
+          topology: topology,
+          playerId: gp,
+          army: army,
+          currentOrders: const Orders(),
+          factionMembership: membership,
+        );
+        expect(withShared, baseline);
+      },
+    );
   });
 
   group('generateOrdersWithSimpleHeuristics army moves', () {

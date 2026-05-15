@@ -82,6 +82,22 @@ class IncrementalCandidateValidator {
     );
   }
 
+  /// Rebinds this validator to a new [basePrefix] while reusing [view],
+  /// [unitsById], and [prefetchedFactionMembership] from the same suggestion
+  /// pass (Refs #2394 — simple-heuristic iteration loops).
+  IncrementalCandidateValidator forBasePrefix(Orders basePrefix) {
+    return IncrementalCandidateValidator.forPlayer(
+      game: game,
+      topology: topology,
+      playerId: playerId,
+      basePrefix: basePrefix,
+      tileMapByRegion: tileMapByRegion,
+      view: view,
+      unitsById: unitsById,
+      factionMembership: prefetchedFactionMembership,
+    );
+  }
+
   final Game game;
   final MapTopology topology;
   final String playerId;

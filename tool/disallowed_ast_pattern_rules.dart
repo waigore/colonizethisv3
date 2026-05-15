@@ -14,6 +14,7 @@ enum DisallowedAstMatchKind {
   scopedPackageImportContract,
   simpleReceiverRemoveAtZero,
   linearCollectionWhereFirstOrNull,
+  incrementalValidatorForPlayerInLoop,
 }
 
 class DisallowedPatternRule {
@@ -425,6 +426,32 @@ List<DisallowedPatternRule> parseDisallowedAstRulesFromYaml(Object? yamlRoot) {
           packageName: null,
           allowedPackageImports: const {},
           linearCollectionNames: names,
+          linearCollectionPathPrefix: prefix,
+        ),
+      );
+    } else if (kind == 'incremental_validator_for_player_in_loop') {
+      final prefix =
+          match['relative_path_prefix']?.toString().replaceAll('\\', '/');
+      if (prefix == null || prefix.isEmpty) {
+        continue;
+      }
+      out.add(
+        DisallowedPatternRule(
+          id: id,
+          message: message,
+          kind: DisallowedAstMatchKind.incrementalValidatorForPlayerInLoop,
+          cascadedMethodNames: const {},
+          commentSubstring: null,
+          rawNamedTypeNames: const {},
+          functionName: null,
+          maxBodyLineSpan: null,
+          requireWidgetClassExtends: false,
+          argumentIndex: null,
+          invocationMethodNames: const {},
+          allowedRelativePaths: const {},
+          scopedRelativePathPrefixes: const {},
+          packageName: null,
+          allowedPackageImports: const {},
           linearCollectionPathPrefix: prefix,
         ),
       );

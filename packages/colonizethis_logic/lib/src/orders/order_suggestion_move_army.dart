@@ -243,17 +243,26 @@ List<ArmyMovePickerDestination> armyMovePickerDestinations({
   Set<String>? playerOwnedFullProvinceIds,
   PlayerView? playerView,
   Map<String, Unit>? unitsById,
+  /// When callers already built membership for this [game], pass it to skip a
+  /// second [DiplomacyFactionMembership.from] scan (Refs #2394).
+  DiplomacyFactionMembership? factionMembership,
 }) {
   final diplo =
       currentOrders.diplomaticOrdersByPlayerId[playerId] ??
       const <DiplomaticOrder>[];
-  final factionMembership = DiplomacyFactionMembership.from(game);
+  final effectiveFactionMembership =
+      factionMembership ?? DiplomacyFactionMembership.from(game);
   final ownedProvinceIds =
       playerOwnedFullProvinceIds ??
-      <String>{
-        for (final p in allProvinces(game.worldState))
-          if (p.ownerId == playerId) toFullProvinceId(p.regionId, p.id),
-      };
+      (playerView != null
+          ? <String>{
+              for (final e in playerView.provincesById.entries)
+                if (e.value.ownerId == playerId) e.key,
+            }
+          : <String>{
+              for (final p in allProvinces(game.worldState))
+                if (p.ownerId == playerId) toFullProvinceId(p.regionId, p.id),
+            });
   final raw = armyMoveCandidateDestinationProvinceIds(
     game: game,
     topology: topology,
@@ -266,7 +275,7 @@ List<ArmyMovePickerDestination> armyMovePickerDestinations({
     topology: topology,
     playerId: playerId,
     basePrefix: currentOrders,
-    factionMembership: factionMembership,
+    factionMembership: effectiveFactionMembership,
     view: playerView,
     unitsById: unitsById,
   );
@@ -287,7 +296,7 @@ List<ArmyMovePickerDestination> armyMovePickerDestinations({
         playerId,
         ownerId,
         diplo,
-        factionMembership,
+        effectiveFactionMembership,
       )) {
         continue;
       }
@@ -305,15 +314,7 @@ List<ArmyMovePickerDestination> armyMovePickerDestinations({
             targetFactionId: ownerId,
           ),
         );
-        return IncrementalCandidateValidator.forPlayer(
-          game: game,
-          topology: topology,
-          playerId: playerId,
-          basePrefix: trialOrders,
-          factionMembership: factionMembership,
-          view: playerView,
-          unitsById: unitsById,
-        );
+        return baseValidator.forBasePrefix(trialOrders);
       });
       if (!trialValidator.isArmyMoveAccepted(move)) {
         continue;

@@ -113,6 +113,17 @@ void main() {
       expect(sharedPath, equals(defaultPath));
     });
 
+    test('suggestDiplomaticOrders is deterministic across repeated calls', () {
+      final game = buildGame();
+      final topology = buildTopology();
+      final view = buildPlayerView(game, topology, gp);
+      const orders = Orders();
+
+      final first = suggestDiplomaticOrders(view, game, topology, orders);
+      final second = suggestDiplomaticOrders(view, game, topology, orders);
+      expect(second, equals(first));
+    });
+
     test(
       'shared validator built with externally provided view/unitsById produces '
       'identical suggestions to forPlayer default path (no internal rebuild)',
@@ -211,7 +222,106 @@ void main() {
             ),
           ),
         );
+        expect(
+          suggestNavalMoveOrders(
+            view,
+            game,
+            topology,
+            orders,
+            sharedCandidateValidator: defaultValidator,
+          ),
+          equals(
+            suggestNavalMoveOrders(
+              view,
+              game,
+              topology,
+              orders,
+              sharedCandidateValidator: sharedValidator,
+            ),
+          ),
+        );
+        expect(
+          suggestNavalMissionOrders(
+            view,
+            game,
+            topology,
+            orders,
+            sharedCandidateValidator: defaultValidator,
+          ),
+          equals(
+            suggestNavalMissionOrders(
+              view,
+              game,
+              topology,
+              orders,
+              sharedCandidateValidator: sharedValidator,
+            ),
+          ),
+        );
+        expect(
+          suggestDiplomaticOrders(
+            view,
+            game,
+            topology,
+            orders,
+            sharedCandidateValidator: defaultValidator,
+          ),
+          equals(
+            suggestDiplomaticOrders(
+              view,
+              game,
+              topology,
+              orders,
+              sharedCandidateValidator: sharedValidator,
+            ),
+          ),
+        );
       },
     );
+
+    test('forBasePrefix matches fresh forPlayer for same basePrefix', () {
+      final game = buildGame();
+      final topology = buildTopology();
+      final view = buildPlayerView(game, topology, gp);
+      final unitsById = unitsByIdFromWorld(game.worldState);
+      const orders = Orders();
+
+      final initial = IncrementalCandidateValidator.forPlayer(
+        game: game,
+        topology: topology,
+        playerId: gp,
+        basePrefix: orders,
+        view: view,
+        unitsById: unitsById,
+      );
+      final rebound = initial.forBasePrefix(orders);
+      final fresh = IncrementalCandidateValidator.forPlayer(
+        game: game,
+        topology: topology,
+        playerId: gp,
+        basePrefix: orders,
+        view: view,
+        unitsById: unitsById,
+      );
+
+      expect(
+        suggestMoveOrders(
+          view,
+          game,
+          topology,
+          orders,
+          sharedCandidateValidator: rebound,
+        ),
+        equals(
+          suggestMoveOrders(
+            view,
+            game,
+            topology,
+            orders,
+            sharedCandidateValidator: fresh,
+          ),
+        ),
+      );
+    });
   });
 }

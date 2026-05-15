@@ -153,3 +153,13 @@ rules:
         - armies
         - fleets
       relative_path_prefix: packages/colonizethis_logic/lib/src/
+  - id: prohibited_incremental_validator_per_item
+    message: >-
+      Do not call `IncrementalCandidateValidator.forPlayer` or
+      `buildIncrementalCandidateValidator` inside a loop body in
+      packages/colonizethis_logic/lib/src/. Build one validator per suggestion
+      pass (or hoist before the loop) and rebind with `forBasePrefix` when the
+      trial `Orders` prefix changes. Refs #2394, SPEC/program/order-suggestions.md.
+    match:
+      kind: incremental_validator_for_player_in_loop
+      relative_path_prefix: packages/colonizethis_logic/lib/src/

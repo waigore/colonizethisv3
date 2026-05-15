@@ -220,6 +220,23 @@ Rule id: `prohibited_linear_units_armies_fleets_lookup` (`match.kind`:
 `armies`, `fleets`, `match.relative_path_prefix`:
 `packages/colonizethis_logic/lib/src/`).
 
+### Incremental validator construction inside loops (`colonizethis_logic`)
+
+In `packages/colonizethis_logic/lib/src/**`, calling
+`IncrementalCandidateValidator.forPlayer(...)` or
+`buildIncrementalCandidateValidator(...)` inside a `for` / `for-in` / `while` /
+`do-while` loop body is disallowed.
+
+Rationale: each construction pays a full `buildPlayerView` / units index /
+membership setup. Hot suggestion paths must build **one** validator per pass
+(or hoist before the loop) and rebind with `forBasePrefix` when the trial
+`Orders` prefix changes. See `SPEC/program/order-suggestions.md` § Throughput
+bounds (Refs #2394).
+
+Rule id: `prohibited_incremental_validator_per_item` (`match.kind`:
+`incremental_validator_for_player_in_loop`, `match.relative_path_prefix`:
+`packages/colonizethis_logic/lib/src/`).
+
 ### Coverage
 
 Enforcement walks the same domain trees via `tool/ct_repo_lint_scan_contract.dart` (`collectRepoLintDomainDartFiles`), aligned with `SPEC/program/exception-enforcement.md` coverage:

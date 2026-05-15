@@ -29,7 +29,9 @@ For every suggested order `o`, appending it to the current list and validating v
 
 **Shared unit index (naval, Refs #2394):** `OrderSuggestionAPI.suggestNavalMoveOrders` and `suggestNavalMissionOrders` accept an optional `unitsById` argument: a read-only map of every unit in `Game.worldState` keyed by unit id (the same shape as `unitsByIdFromWorld` in logic). When the caller supplies it, the implementation uses that map for incremental naval validation instead of rebuilding it inside the call. When omitted, the implementation builds the map as before. Observable candidate lists and accept/reject decisions for a fixed `(Game, topology, PlayerView, Orders)` tuple must not depend on whether the caller passed a map or omitted it, provided the supplied map matches the current world state.
 
-**Army Move picker shared projection (Refs #2394):** `armyMovePickerDestinations` accepts optional `playerView` and `unitsById` with the same contract as `IncrementalCandidateValidator.forPlayer`: when supplied and consistent with current `Game` / `MapTopology` / `playerId`, internal validators reuse them instead of embedding `buildPlayerView` / `unitsByIdFromWorld` scans. Observable destination lists for a fixed tuple must not depend on whether these optional arguments were passed.
+**Army Move picker shared projection (Refs #2394):** `armyMovePickerDestinations` accepts optional `playerView`, `unitsById`, and `factionMembership` with the same contract as `IncrementalCandidateValidator.forPlayer`: when supplied and consistent with current `Game` / `MapTopology` / `playerId`, internal validators reuse them instead of embedding `buildPlayerView` / `unitsByIdFromWorld` / `DiplomacyFactionMembership.from` scans. Observable destination lists for a fixed tuple must not depend on whether these optional arguments were passed.
+
+**Civilian tile highlight shared projection (Refs #2394):** `getValidWorkOrderTileKeys` accepts optional `view`, `unitsById`, `factionMembership`, `sharedCandidateValidator`, and `playerOwnedProvinceIds` with the same contracts as `getValidWorkOrderTileKeysWithVisibility`. Callers that enumerate valid tiles for multiple units in one panel pass should supply shared snapshots so the panel path does not rebuild `PlayerView` / validator / owned-province sets per unit.
 
 **Civilian work alignment:** Suggestions never assume instant primary effects for `prospect` or `purchase_land`; those targets follow the same **assign → tick → complete** invariant as validation and resolution (prospected set, treasury debit, and `purchasedTilesByTileKey` only when work completes in Build/Work). Authoritative rules: [orders.md](orders.md) (Civilian deferred primary effects) and [development-resolution.md](development-resolution.md).
 
@@ -79,7 +81,7 @@ For every suggested order `o`, appending it to the current list and validating v
   - **GP↔Tribe:** Only if discovered (diplomatic relation exists or province visibility).
 - **Primary vs economic suggestions per target:** For each known target **T**, candidates follow `_diplomaticCandidatesForTargetOrdered` (`offerPeace`, `alliance`, `establishOverture`, `grantAid`, `setSubsidy`, `declareWar`). The implementation uses **two passes**: (1) consider **only** non-economic types in that order; append the **first** that passes the order engine against a **trial** list (see below) and **stop** the primary pass. (2) Consider **only** `grantAid` and `setSubsidy` in candidate order; append each that passes against the trial list after step (1), updating the trial after each acceptance. **Grant before subsidy** when both are valid: `grantAid` precedes `setSubsidy` in the template. Multiple entries toward the same **T** in **L** are only as allowed by [orders.md](orders.md) (e.g. one `grantAid` + one `setSubsidy` when no non-economic suggestion was accepted for **T**).
 - **Working list:** Initialize **workingOrders** from `currentOrders`. For each **T**, set **trialOrders** = **workingOrders**; run the two passes; then assign **workingOrders** = **trialOrders** so treasury and caps reflect suggestions accepted earlier in the same invocation. Pending orders in `currentOrders` constrain what can be suggested; removing a pending order restores eligibility per engine validation.
-- **Throughput (Refs #2394):** For each target **T**, the system builds one `IncrementalCandidateValidator` per fixed **trialOrders** prefix for the non-economic pass and one for the economic pass (after the primary pass may update **trialOrders**), reusing that instance for every candidate in the pass. Observable suggestions and acceptance decisions remain identical to per-candidate `isDiplomaticOrderAccepted` probes against the same prefix.
+- **Throughput (Refs #2394):** For each target **T**, the system binds one `IncrementalCandidateValidator` per fixed **trialOrders** prefix for the non-economic pass and rebinds via `forBasePrefix` when the primary pass updates **trialOrders** before the economic pass; when the primary pass accepts nothing, economic probes reuse the same instance. Across targets, the pass reuses the same view/units/membership snapshot and only rebinds `basePrefix` to the accumulated **workingOrders**. Observable suggestions and acceptance decisions remain identical to per-candidate `isDiplomaticOrderAccepted` probes against the same prefix.
 
 **Acceptance criteria (diplomatic suggestions)**
 
@@ -138,6 +140,8 @@ Set<String> getValidWorkOrderTileKeysWithVisibility({
   required Orders currentOrders,
   Map<String, TileMapResult>? tileMapByRegion,
   IncrementalCandidateValidator? sharedCandidateValidator,
+  Map<String, Unit>? unitsById,
+  Set<String>? playerOwnedProvinceIds,
 });
 ```
 
