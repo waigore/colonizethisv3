@@ -428,9 +428,30 @@ String? _readNextTurnButtonLabel(WidgetTester tester) {
   return w is Text ? w.data : null;
 }
 
+/// When the civilian panel is open, [ctE2eCivilianPanelSnapshot] mirrors
+/// [availableWorkTargetIdsForUnitProvider] — the same work-target ids that
+/// drive enabled Assign rows. Returns `null` when no snapshot is available.
+bool? _exploreAssignEnabledFromCivilianSnapshot() {
+  final snap = ctE2eCivilianPanelSnapshot;
+  if (snap == null) {
+    return null;
+  }
+  for (final targets in snap.availableWorkTargets.values) {
+    if (targets.contains(kWorkTargetExplore)) {
+      return true;
+    }
+  }
+  return false;
+}
+
 Future<bool> _anyExplorerHasEnabledExploreAssignFleetE2e(
   WidgetTester tester,
 ) async {
+  final snapshotHint = _exploreAssignEnabledFromCivilianSnapshot();
+  if (snapshotHint != null) {
+    return snapshotHint;
+  }
+
   final root = find.byKey(kCtE2ECivilianPanelRootKey);
   final listView = find.descendant(of: root, matching: find.byType(ListView));
   expect(listView, findsOneWidget);
