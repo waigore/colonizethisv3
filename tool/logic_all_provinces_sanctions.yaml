@@ -4,7 +4,7 @@
 version: 1
 sanctions:
   - path: packages/colonizethis_logic/lib/src/world/connectivity_resolver.dart
-    line: 176
+    line: 177
     rationale: Single dual-region pass buckets owned provinces and town-tile keys
       by playerId so per-player connectivity loops below run O(1) lookups
       instead of repeating O(provinces) scans (consolidates the legacy line-229

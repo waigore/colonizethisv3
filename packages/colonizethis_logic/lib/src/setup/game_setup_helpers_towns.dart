@@ -4,6 +4,7 @@ import 'dart:collection';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
+import '../constants.dart';
 import '../world/province_lookup.dart';
 import '../world/tile_key_coordinates.dart';
 import 'game_setup_context.dart';
@@ -313,7 +314,7 @@ bool _tileKeyAdjacentToProvinceSeaZone({
       .where((node) => node.type == TopologyNodeType.province)
       .map((node) => node.id)
       .toSet();
-  for (final delta in const [(0, -1), (1, 0), (0, 1), (-1, 0)]) {
+  for (final delta in kGridNeighborsCardinal4) {
     final nx = x + delta.$1;
     final ny = y + delta.$2;
     if (nx < 0 || nx >= map.width || ny < 0 || ny >= map.height) {

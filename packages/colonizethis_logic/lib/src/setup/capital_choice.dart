@@ -3,6 +3,7 @@ import 'dart:collection';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
+import '../constants.dart';
 import '../world/province_lookup.dart';
 import '../world/player_state_pipeline.dart';
 import 'setup_exceptions.dart';
@@ -436,7 +437,7 @@ bool _isTileAdjacentToSea(
       .toSet();
   final w = map.width;
   final h = map.height;
-  for (final d in [(0, -1), (1, 0), (0, 1), (-1, 0)]) {
+  for (final d in kGridNeighborsCardinal4) {
     final nx = x + d.$1;
     final ny = y + d.$2;
     if (nx < 0 || nx >= w || ny < 0 || ny >= h) continue;
@@ -455,7 +456,7 @@ bool _isTileAdjacentToOtherProvince(
 ) {
   final w = map.width;
   final h = map.height;
-  for (final d in [(0, -1), (1, 0), (0, 1), (-1, 0)]) {
+  for (final d in kGridNeighborsCardinal4) {
     final nx = x + d.$1;
     final ny = y + d.$2;
     if (nx < 0 || nx >= w || ny < 0 || ny >= h) continue;
@@ -509,7 +510,7 @@ bool _isTileAdjacentToSeaZone(
       : seaZoneId;
   final w = map.width;
   final h = map.height;
-  for (final d in [(0, -1), (1, 0), (0, 1), (-1, 0)]) {
+  for (final d in kGridNeighborsCardinal4) {
     final nx = x + d.$1;
     final ny = y + d.$2;
     if (nx < 0 || nx >= w || ny < 0 || ny >= h) continue;
@@ -553,7 +554,7 @@ List<(int, int)> _shortestPathOnProvinceTiles(
       }
       return path;
     }
-    for (final d in [(0, -1), (1, 0), (0, 1), (-1, 0)]) {
+    for (final d in kGridNeighborsCardinal4) {
       final nx = cx + d.$1;
       final ny = cy + d.$2;
       if (nx < 0 || nx >= w || ny < 0 || ny >= h) continue;

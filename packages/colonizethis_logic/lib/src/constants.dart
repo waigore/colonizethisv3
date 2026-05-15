@@ -16,6 +16,16 @@ export 'package:colonizethis_models/colonizethis_models.dart'
 const String kRegionOldWorld = 'oldWorld';
 const String kRegionNewWorld = 'newWorld';
 
+/// Cardinal (4-neighbor) grid deltas on row-major tile maps (north/up-first).
+/// Canonical ordering shared across connectivity scans, setup shortest-path BFS,
+/// capital-choice routing, and naval coastal adjacency (Refs #2391).
+const List<(int, int)> kGridNeighborsCardinal4 = [
+  (0, -1),
+  (1, 0),
+  (0, 1),
+  (-1, 0),
+];
+
 /// Default sea fraction for map generation (0.6 = 60% sea, 40% land).
 const double kDefaultSeaFraction = 0.6;
 
