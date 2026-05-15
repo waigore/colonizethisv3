@@ -138,3 +138,18 @@ rules:
       collection_names:
         - provinces
       relative_path_prefix: packages/colonizethis_logic/lib/src/
+  - id: prohibited_linear_units_armies_fleets_lookup
+    message: >-
+      Do not perform linear scans on `.units`, `.armies`, or `.fleets` via
+      `.where(...).firstOrNull` inside packages/colonizethis_logic/lib/src/.
+      Build or reuse a `Map<String, Unit>` / `Map<String, Army>` / keyed fleet
+      lookup (for example `unitsByIdFromWorld`, army maps on validators, or
+      a one-shot index) so hot paths stay O(1) per id. Refs #2394,
+      SPEC/program/order-suggestions.md.
+    match:
+      kind: linear_collection_where_first_or_null
+      collection_names:
+        - units
+        - armies
+        - fleets
+      relative_path_prefix: packages/colonizethis_logic/lib/src/

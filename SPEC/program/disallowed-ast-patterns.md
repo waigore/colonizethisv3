@@ -204,6 +204,22 @@ Rule id: `prohibited_linear_province_lookup` (`match.kind`:
 `provinces`, `match.relative_path_prefix`:
 `packages/colonizethis_logic/lib/src/`).
 
+### Linear unit/army/fleet lookups via `.units`/`.armies`/`.fleets` + `.where(...).firstOrNull`
+
+In `packages/colonizethis_logic/lib/src/**`, chaining a `.where(...)` filter on
+a `.units`, `.armies`, or `.fleets` collection followed by the `.firstOrNull`
+getter is disallowed (same structural match as province linear scans).
+
+Rationale: id-keyed lookups on world-state entity lists belong in **O(1) maps**
+built once per outward scope (see `SPEC/program/order-suggestions.md` throughput
+bounds and issue #2394 Category C). Reintroducing `.where(...).firstOrNull` on
+those collections in hot paths risks **O(n)** per probe inside nested loops.
+
+Rule id: `prohibited_linear_units_armies_fleets_lookup` (`match.kind`:
+`linear_collection_where_first_or_null`, `match.collection_names`: `units`,
+`armies`, `fleets`, `match.relative_path_prefix`:
+`packages/colonizethis_logic/lib/src/`).
+
 ### Coverage
 
 Enforcement walks the same domain trees via `tool/ct_repo_lint_scan_contract.dart` (`collectRepoLintDomainDartFiles`), aligned with `SPEC/program/exception-enforcement.md` coverage:
@@ -367,3 +383,19 @@ Generated files (`*.g.dart`, `*.freezed.dart`, `*.mocks.dart`) and tests (`**/te
   `.firstOrNull`), **when** the disallowed AST checker runs, **then** it does
   not report a `prohibited_linear_province_lookup` violation for that
   expression.
+
+- **Given** runtime Dart source under
+  `packages/colonizethis_logic/lib/src/` that chains
+  `<receiver>.units.where((u) => ...).firstOrNull`,
+  `<receiver>.armies.where((a) => ...).firstOrNull`, or
+  `<receiver>.fleets.where((f) => ...).firstOrNull`, **when** the disallowed
+  AST checker runs, **then** it reports at least one violation for
+  `prohibited_linear_units_armies_fleets_lookup` with the correct file and
+  line.
+
+- **Given** runtime Dart source under
+  `packages/colonizethis_logic/lib/src/` that resolves a unit, army, or fleet
+  by id via a map or other O(1) structure (not `.where(...).firstOrNull` on
+  `.units`/`.armies`/`.fleets`), **when** the disallowed AST checker runs,
+  **then** it does not report a
+  `prohibited_linear_units_armies_fleets_lookup` violation for that lookup.

@@ -106,6 +106,107 @@ void main() {
       );
       expect(cached, uncached);
     });
+
+    test(
+      'shared playerView and unitsById matches default armyMovePickerDestinations',
+      () {
+        const gp = 'gp1';
+        const cap = 'oldWorld|cap';
+        const p1 = 'oldWorld|p1';
+        const p2 = 'oldWorld|p2';
+        const nw = 'newWorld|col';
+        final game = Game(
+          id: 'g_army_picker_shared_view',
+          worldState: WorldState(
+            turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+            oldWorld: RegionData(
+              provinces: [
+                Province(
+                  id: cap,
+                  regionId: 'oldWorld',
+                  ownerId: gp,
+                  townTileKey: 'oldWorld|cap|0|0',
+                ),
+                Province(id: p1, regionId: 'oldWorld', ownerId: gp),
+                Province(id: p2, regionId: 'oldWorld', ownerId: gp),
+              ],
+              units: const [],
+            ),
+            newWorld: RegionData(
+              provinces: [
+                Province(id: nw, regionId: 'newWorld', ownerId: gp),
+              ],
+            ),
+            armies: [
+              Army(
+                id: 'field_a',
+                ownerId: gp,
+                regionId: 'oldWorld',
+                stationedProvinceId: p1,
+                regimentUnitIds: const [],
+                isHomeArmy: false,
+              ),
+            ],
+            tileKeysByRegionAndProvince: const {},
+          ),
+          players: [
+            Player(
+              id: gp,
+              displayName: 'T',
+              isHuman: true,
+              capitalProvinceId: cap,
+            ),
+          ],
+        );
+        final topology = MapTopology(
+          nodes: const [
+            TopologyNode(
+              id: 'oldWorld|cap',
+              regionId: 'oldWorld',
+              type: TopologyNodeType.province,
+            ),
+            TopologyNode(
+              id: 'oldWorld|p1',
+              regionId: 'oldWorld',
+              type: TopologyNodeType.province,
+            ),
+            TopologyNode(
+              id: 'oldWorld|p2',
+              regionId: 'oldWorld',
+              type: TopologyNodeType.province,
+            ),
+            TopologyNode(
+              id: 'newWorld|col',
+              regionId: 'newWorld',
+              type: TopologyNodeType.province,
+            ),
+          ],
+          edges: const [
+            TopologyEdge(id1: 'oldWorld|p1', id2: 'oldWorld|p2'),
+          ],
+        );
+        final army = game.worldState.armies.first;
+        final baseline = armyMovePickerDestinations(
+          game: game,
+          topology: topology,
+          playerId: gp,
+          army: army,
+          currentOrders: const Orders(),
+        );
+        final view = buildPlayerView(game, topology, gp);
+        final unitsById = unitsByIdFromWorld(game.worldState);
+        final withShared = armyMovePickerDestinations(
+          game: game,
+          topology: topology,
+          playerId: gp,
+          army: army,
+          currentOrders: const Orders(),
+          playerView: view,
+          unitsById: unitsById,
+        );
+        expect(withShared, baseline);
+      },
+    );
   });
 
   group('generateOrdersWithSimpleHeuristics army moves', () {
