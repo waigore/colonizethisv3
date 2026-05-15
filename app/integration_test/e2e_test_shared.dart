@@ -333,6 +333,73 @@ Future<void> e2eOpenNavalPanel(
   );
 }
 
+/// Opens a map-marker panel when [markerButton] is tappable and [panelRoot] mounts.
+///
+/// Shared full-turn path for tile-scoped civilian/naval markers (GitHub #2336 AC2).
+Future<void> e2eOpenPanelFromMarker(
+  WidgetTester tester, {
+  required Finder markerButton,
+  required Finder panelRoot,
+  Duration timeout = const Duration(seconds: 20),
+  E2ePerfLog? perf,
+}) async {
+  final sw = Stopwatch()..start();
+  var panelPollMs = 25;
+  while (sw.elapsed < timeout) {
+    if (panelRoot.evaluate().isNotEmpty) {
+      perf?.timing('open_panel_from_marker', sw.elapsed);
+      return;
+    }
+    final tappable = markerButton.hitTestable();
+    if (tappable.evaluate().isEmpty) {
+      await e2eDismissTransientUi(tester, perf: perf);
+      if (panelRoot.evaluate().isNotEmpty) {
+        perf?.timing('open_panel_from_marker', sw.elapsed);
+        return;
+      }
+      if (await e2ePumpUntilConditionOrIdle(
+        tester,
+        () => markerButton.hitTestable().evaluate().isNotEmpty,
+        timeout: Duration(milliseconds: panelPollMs),
+        perf: perf,
+        phaseName: 'pump_until_marker_hit_testable_after_dismiss',
+      )) {
+        panelPollMs = 25;
+      } else {
+        panelPollMs = e2eAdaptivePollRampAfterIdle(panelPollMs);
+      }
+      continue;
+    }
+    await tester.tap(tappable.first, warnIfMissed: false);
+    if (panelRoot.evaluate().isNotEmpty) {
+      perf?.timing('open_panel_from_marker', sw.elapsed);
+      return;
+    }
+    await tester.pump();
+    if (panelRoot.evaluate().isNotEmpty) {
+      perf?.timing('open_panel_from_marker', sw.elapsed);
+      return;
+    }
+    if (await e2ePumpUntilConditionOrIdle(
+      tester,
+      () => panelRoot.evaluate().isNotEmpty,
+      timeout: const Duration(seconds: 3),
+      perf: perf,
+      phaseName: 'pump_until_marker_panel_root_after_tap',
+    )) {
+      perf?.timing('open_panel_from_marker', sw.elapsed);
+      return;
+    }
+    panelPollMs = 25;
+    await tester.pump(Duration(milliseconds: panelPollMs));
+    panelPollMs = e2eAdaptivePollRampAfterIdle(panelPollMs);
+  }
+  fail(
+    'Timed out after ${timeout.inSeconds}s opening marker panel. '
+    'marker=$markerButton panel=$panelRoot Last exception: ${tester.takeException()}',
+  );
+}
+
 /// Opens the production screen from the empire rail, closing conflicting sheets
 /// and dialogs first (GitHub #2336 H7 / shared full-turn path).
 Future<void> e2eOpenProductionPanel(

@@ -16,71 +16,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
 
-Future<void> _openPanelFromMarker(
-  WidgetTester tester, {
-  required Finder markerButton,
-  required Finder panelRoot,
-  Duration timeout = const Duration(seconds: 20),
-  E2ePerfLog? perf,
-}) async {
-  final sw = Stopwatch()..start();
-  var panelPollMs = 25;
-  while (sw.elapsed < timeout) {
-    if (panelRoot.evaluate().isNotEmpty) {
-      perf?.timing('open_panel_from_marker', sw.elapsed);
-      return;
-    }
-    final tappable = markerButton.hitTestable();
-    if (tappable.evaluate().isEmpty) {
-      // Clear transient overlays/dialogs that can block marker taps.
-      await dismissTransientUi(tester, perf: perf);
-      if (panelRoot.evaluate().isNotEmpty) {
-        perf?.timing('open_panel_from_marker', sw.elapsed);
-        return;
-      }
-      if (await e2ePumpUntilConditionOrIdle(
-        tester,
-        () => markerButton.hitTestable().evaluate().isNotEmpty,
-        timeout: Duration(milliseconds: panelPollMs),
-        perf: perf,
-        phaseName: 'pump_until_marker_hit_testable_after_dismiss',
-      )) {
-        panelPollMs = 25;
-      } else {
-        panelPollMs = e2eAdaptivePollRampAfterIdle(panelPollMs);
-      }
-      continue;
-    }
-    await tester.tap(tappable.first, warnIfMissed: false);
-    if (panelRoot.evaluate().isNotEmpty) {
-      perf?.timing('open_panel_from_marker', sw.elapsed);
-      return;
-    }
-    await tester.pump();
-    if (panelRoot.evaluate().isNotEmpty) {
-      perf?.timing('open_panel_from_marker', sw.elapsed);
-      return;
-    }
-    if (await e2ePumpUntilConditionOrIdle(
-      tester,
-      () => panelRoot.evaluate().isNotEmpty,
-      timeout: const Duration(seconds: 3),
-      perf: perf,
-      phaseName: 'pump_until_marker_panel_root_after_tap',
-    )) {
-      perf?.timing('open_panel_from_marker', sw.elapsed);
-      return;
-    }
-    panelPollMs = 25;
-    await tester.pump(Duration(milliseconds: panelPollMs));
-    panelPollMs = e2eAdaptivePollRampAfterIdle(panelPollMs);
-  }
-  fail(
-    'Timed out after ${timeout.inSeconds}s opening marker panel. '
-    'marker=$markerButton panel=$panelRoot Last exception: ${tester.takeException()}',
-  );
-}
-
 void main() {
   suppressLogsForTests();
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
@@ -347,7 +282,7 @@ void main() {
       await closeBottomSheet(tester, perf: perf);
 
       // --- Civilian + naval from first map markers (tile scope) ---
-      await _openPanelFromMarker(
+      await openPanelFromMarker(
         tester,
         markerButton: find.byKey(kCtE2EOpenFirstCivilianMarkerPanelKey),
         panelRoot: find.byKey(kCtE2ECivilianPanelRootKey),
@@ -356,7 +291,7 @@ void main() {
       await expectCivilianPanelTexts();
       await closeBottomSheet(tester, perf: perf);
 
-      await _openPanelFromMarker(
+      await openPanelFromMarker(
         tester,
         markerButton: find.byKey(kCtE2EOpenFirstFleetMarkerPanelKey),
         panelRoot: find.byKey(kCtE2ENavalPanelRootKey),

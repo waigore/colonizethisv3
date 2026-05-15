@@ -24,7 +24,8 @@ export 'e2e_test_shared.dart' show
     e2eWaitForNewGameEntry,
     e2eWaitForNextTurnLabelAdvance,
     e2eWaitUntilAnyFinderHitTestable,
-    e2eOpenProductionPanel;
+    e2eOpenProductionPanel,
+    e2eOpenPanelFromMarker;
 
 Future<void> pumpFor(WidgetTester tester, Duration total) =>
     e2ePumpFor(tester, total);
@@ -87,6 +88,21 @@ Future<void> openProductionPanel(
   Duration timeout = const Duration(seconds: 20),
 }) =>
     e2eOpenProductionPanel(tester, perf: perf, timeout: timeout);
+
+Future<void> openPanelFromMarker(
+  WidgetTester tester, {
+  required Finder markerButton,
+  required Finder panelRoot,
+  Duration timeout = const Duration(seconds: 20),
+  E2ePerfLog? perf,
+}) =>
+    e2eOpenPanelFromMarker(
+      tester,
+      markerButton: markerButton,
+      panelRoot: panelRoot,
+      timeout: timeout,
+      perf: perf,
+    );
 
 Future<Duration> waitForNextTurnLabelAdvance(
   WidgetTester tester, {
