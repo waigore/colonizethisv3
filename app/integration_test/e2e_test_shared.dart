@@ -342,6 +342,111 @@ Future<void> e2eOpenNavalPanel(
   );
 }
 
+/// Opens the production screen from the empire rail, closing conflicting sheets
+/// and dialogs first (GitHub #2336 H7 / shared full-turn path).
+Future<void> e2eOpenProductionPanel(
+  WidgetTester tester, {
+  E2ePerfLog? perf,
+  Duration timeout = const Duration(seconds: 20),
+}) async {
+  final productionPanel = find.byKey(kCtE2EProductionPanelRootKey);
+  final productionButton = find.byKey(kEmpireProductionButtonKey);
+  final sw = Stopwatch()..start();
+  var idlePollMs = 25;
+  while (sw.elapsed < timeout) {
+    if (productionPanel.evaluate().isNotEmpty) {
+      perf?.timing('open_panel_production', sw.elapsed);
+      return;
+    }
+
+    if (find.byType(BottomSheet).evaluate().isNotEmpty) {
+      await e2eCloseBottomSheet(tester, perf: perf);
+      await e2ePumpUntilConditionOrIdle(
+        tester,
+        () => find.byType(BottomSheet).evaluate().isEmpty,
+        timeout: const Duration(milliseconds: 600),
+        perf: perf,
+        phaseName: 'pump_until_sheet_cleared_production_open',
+      );
+      idlePollMs = 25;
+      continue;
+    }
+
+    if (find.byType(CtDialogShell).evaluate().isNotEmpty) {
+      await tester.binding.handlePopRoute();
+      await e2ePumpUntil(
+        tester,
+        () => find.byType(CtDialogShell).evaluate().isEmpty,
+        timeout: const Duration(seconds: 2),
+        perf: perf,
+        phaseName: 'pump_until_production_path_shell_cleared',
+      );
+      idlePollMs = 25;
+      continue;
+    }
+
+    if (productionButton.evaluate().isNotEmpty) {
+      final productionButtonHit = productionButton.hitTestable();
+      final target = productionButtonHit.evaluate().isNotEmpty
+          ? productionButtonHit
+          : productionButton;
+      await tester.tap(target.first, warnIfMissed: false);
+      if (productionPanel.evaluate().isNotEmpty) {
+        perf?.timing('open_panel_production', sw.elapsed);
+        return;
+      }
+      idlePollMs = 25;
+      await tester.pump();
+      if (productionPanel.evaluate().isNotEmpty) {
+        perf?.timing('open_panel_production', sw.elapsed);
+        return;
+      }
+      await e2eWaitUntilFound(
+        tester,
+        productionPanel,
+        timeout: const Duration(seconds: 5),
+        perf: perf,
+        phaseName: 'wait_until_production_panel_after_rail_tap',
+      );
+      if (productionPanel.evaluate().isNotEmpty) {
+        perf?.timing('open_panel_production', sw.elapsed);
+        return;
+      }
+      if (await e2ePumpUntilConditionOrIdle(
+        tester,
+        () => productionPanel.evaluate().isNotEmpty,
+        timeout: const Duration(milliseconds: 600),
+        perf: perf,
+        phaseName: 'pump_until_production_panel_after_rail_tap_miss',
+      )) {
+        perf?.timing('open_panel_production', sw.elapsed);
+        return;
+      }
+      idlePollMs = 25;
+      continue;
+    }
+    await e2eDismissTransientUi(tester, perf: perf);
+    if (await e2ePumpUntilConditionOrIdle(
+      tester,
+      () =>
+          productionPanel.evaluate().isNotEmpty ||
+          productionButton.hitTestable().evaluate().isNotEmpty,
+      timeout: Duration(milliseconds: idlePollMs),
+      perf: perf,
+      phaseName: 'pump_until_production_entry_after_dismiss_transient',
+    )) {
+      idlePollMs = 25;
+    } else {
+      idlePollMs = e2eAdaptivePollRampAfterIdle(idlePollMs);
+    }
+  }
+
+  fail(
+    'Timed out opening production panel; '
+    'button=$productionButton panel=$productionPanel',
+  );
+}
+
 /// Dismisses snackbars, generic OK dialogs, [AlertDialog] actions, bottom sheets,
 /// and [CtDialogShell] overlays (union of fleet + full-turn E2E paths).
 Future<void> e2eDismissTransientUi(

@@ -1,7 +1,8 @@
 /// Stable public names for ColonizeThis integration/E2E helpers (GitHub #2336 AC1).
 ///
 /// Implementations live in [e2e_test_shared.dart]; this library delegates to the
-/// `e2e*` entrypoints so new scenarios can depend on the AC1 checklist names.
+/// `e2e*` entrypoints so new scenarios can depend on the AC1 checklist names
+/// (`openProductionPanel`, `waitForNextTurnLabelAdvance`, etc.).
 library;
 
 import 'package:flutter/widgets.dart';
@@ -20,7 +21,8 @@ export 'e2e_test_shared.dart' show
     e2ePumpUntilConditionOrIdle,
     e2eWaitForNewGameEntry,
     e2eWaitForNextTurnLabelAdvance,
-    e2eWaitUntilAnyFinderHitTestable;
+    e2eWaitUntilAnyFinderHitTestable,
+    e2eOpenProductionPanel;
 
 Future<void> pumpFor(WidgetTester tester, Duration total) =>
     e2ePumpFor(tester, total);
@@ -75,6 +77,26 @@ Future<void> openNavalPanel(
       perf: perf,
       timeout: timeout,
       bottomSheetCloseTimeout: bottomSheetCloseTimeout,
+    );
+
+Future<void> openProductionPanel(
+  WidgetTester tester, {
+  E2ePerfLog? perf,
+  Duration timeout = const Duration(seconds: 20),
+}) =>
+    e2eOpenProductionPanel(tester, perf: perf, timeout: timeout);
+
+Future<Duration> waitForNextTurnLabelAdvance(
+  WidgetTester tester, {
+  required String turnLabelBefore,
+  required Duration timeout,
+  E2ePerfLog? perf,
+}) =>
+    e2eWaitForNextTurnLabelAdvance(
+      tester,
+      turnLabelBefore: turnLabelBefore,
+      timeout: timeout,
+      perf: perf,
     );
 
 Future<void> closeBottomSheet(

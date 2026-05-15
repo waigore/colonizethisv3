@@ -81,99 +81,6 @@ Future<void> _openPanelFromMarker(
   );
 }
 
-Future<void> _openProductionPanel(WidgetTester tester) async {
-  final productionPanel = find.byKey(kCtE2EProductionPanelRootKey);
-  final productionButton = find.byKey(kEmpireProductionButtonKey);
-  final sw = Stopwatch()..start();
-  var idlePollMs = 25;
-  while (sw.elapsed < const Duration(seconds: 20)) {
-    if (productionPanel.evaluate().isNotEmpty) {
-      return;
-    }
-
-    if (find.byType(BottomSheet).evaluate().isNotEmpty) {
-      await closeBottomSheet(tester);
-      // Exit the spin loop as soon as the sheet is gone (Refs #2336 H7).
-      await e2ePumpUntilConditionOrIdle(
-        tester,
-        () => find.byType(BottomSheet).evaluate().isEmpty,
-        timeout: const Duration(milliseconds: 600),
-        phaseName: 'pump_until_sheet_cleared_production_open',
-      );
-      idlePollMs = 25;
-      continue;
-    }
-
-    if (find.byType(CtDialogShell).evaluate().isNotEmpty) {
-      await tester.binding.handlePopRoute();
-      await e2ePumpUntil(
-        tester,
-        () => find.byType(CtDialogShell).evaluate().isEmpty,
-        timeout: const Duration(seconds: 2),
-        phaseName: 'pump_until_production_path_shell_cleared',
-      );
-      idlePollMs = 25;
-      continue;
-    }
-
-    if (productionButton.evaluate().isNotEmpty) {
-      final productionButtonHit = productionButton.hitTestable();
-      final target = productionButtonHit.evaluate().isNotEmpty
-          ? productionButtonHit
-          : productionButton;
-      await tester.tap(target.first, warnIfMissed: false);
-      // Match civilian/naval open: skip the first poll wait when the panel
-      // subtree mounts synchronously (Refs #2336 adaptive polling / H7).
-      if (productionPanel.evaluate().isNotEmpty) {
-        return;
-      }
-      idlePollMs = 25;
-      await tester.pump();
-      if (productionPanel.evaluate().isNotEmpty) {
-        return;
-      }
-      await waitUntilFound(
-        tester,
-        productionPanel,
-        timeout: const Duration(seconds: 5),
-        phaseName: 'wait_until_production_panel_after_rail_tap',
-      );
-      if (productionPanel.evaluate().isNotEmpty) {
-        return;
-      }
-      if (await e2ePumpUntilConditionOrIdle(
-        tester,
-        () => productionPanel.evaluate().isNotEmpty,
-        timeout: const Duration(milliseconds: 600),
-        phaseName: 'pump_until_production_panel_after_rail_tap_miss',
-      )) {
-        return;
-      }
-      idlePollMs = 25;
-      continue;
-    }
-    // Dismiss transient overlays/dialogs and retry opening from the rail.
-    await dismissTransientUi(tester);
-    if (await e2ePumpUntilConditionOrIdle(
-      tester,
-      () =>
-          productionPanel.evaluate().isNotEmpty ||
-          productionButton.hitTestable().evaluate().isNotEmpty,
-      timeout: Duration(milliseconds: idlePollMs),
-      phaseName: 'pump_until_production_entry_after_dismiss_transient',
-    )) {
-      idlePollMs = 25;
-    } else {
-      idlePollMs = e2eAdaptivePollRampAfterIdle(idlePollMs);
-    }
-  }
-
-  fail(
-    'Timed out opening production panel; '
-    'button=$productionButton panel=$productionPanel',
-  );
-}
-
 Future<void> _tapFirstAssignInCivilianPanel(WidgetTester tester) async {
   final root = find.byKey(kCtE2ECivilianPanelRootKey);
   final listView = find.descendant(of: root, matching: find.byType(ListView));
@@ -617,7 +524,7 @@ void main() {
       );
 
       // --- Production (post-resolution stockpiles) ---
-      await _openProductionPanel(tester);
+      await openProductionPanel(tester, perf: perf);
       await expectProductionPanelTexts();
 
       await tester.tap(find.byIcon(Icons.arrow_back));

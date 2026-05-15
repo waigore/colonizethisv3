@@ -421,13 +421,11 @@ Future<void> _splitHomeFleetOnce(
   E2ePerfLog? perf,
 }) async {
   final phaseSw = Stopwatch()..start();
-  await tester.tap(find.byKey(kEmpireNavalUnitsButtonKey));
-  await waitUntilFound(
+  await openNavalPanel(
     tester,
-    find.byKey(kCtE2ENavalPanelRootKey),
-    timeout: _kMaxUiResponseWait,
     perf: perf,
-    phaseName: 'wait_until_found_naval_panel',
+    timeout: _kMaxUiResponseWait,
+    bottomSheetCloseTimeout: _kMaxUiResponseWait,
   );
   await expandEachExpansionTileOnce(tester);
   final navalPanelRoot = find.byKey(kCtE2ENavalPanelRootKey);
