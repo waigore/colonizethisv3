@@ -97,7 +97,18 @@ Future<void> _openCivilianPanel(
       panelPollMs = 25;
       continue;
     }
-    await tester.pump(Duration(milliseconds: panelPollMs));
+    if (await e2ePumpUntilConditionOrIdle(
+      tester,
+      () =>
+          empireRailButton.hitTestable().evaluate().isNotEmpty ||
+          markerButton.hitTestable().evaluate().isNotEmpty,
+      timeout: Duration(milliseconds: panelPollMs),
+      perf: perf,
+      phaseName: 'pump_until_civilian_rail_or_marker_hit_testable',
+    )) {
+      panelPollMs = 25;
+      continue;
+    }
     panelPollMs = e2eAdaptivePollRampAfterIdle(panelPollMs);
   }
   fail(
@@ -129,8 +140,17 @@ Future<void> _openPanelFromMarker(
         perf?.timing('open_panel_from_marker', sw.elapsed);
         return;
       }
-      await tester.pump(Duration(milliseconds: panelPollMs));
-      panelPollMs = e2eAdaptivePollRampAfterIdle(panelPollMs);
+      if (await e2ePumpUntilConditionOrIdle(
+        tester,
+        () => markerButton.hitTestable().evaluate().isNotEmpty,
+        timeout: Duration(milliseconds: panelPollMs),
+        perf: perf,
+        phaseName: 'pump_until_marker_hit_testable_after_dismiss',
+      )) {
+        panelPollMs = 25;
+      } else {
+        panelPollMs = e2eAdaptivePollRampAfterIdle(panelPollMs);
+      }
       continue;
     }
     await tester.tap(tappable.first, warnIfMissed: false);
@@ -240,8 +260,18 @@ Future<void> _openProductionPanel(WidgetTester tester) async {
     }
     // Dismiss transient overlays/dialogs and retry opening from the rail.
     await e2eDismissTransientUi(tester);
-    await tester.pump(Duration(milliseconds: idlePollMs));
-    idlePollMs = e2eAdaptivePollRampAfterIdle(idlePollMs);
+    if (await e2ePumpUntilConditionOrIdle(
+      tester,
+      () =>
+          productionPanel.evaluate().isNotEmpty ||
+          productionButton.hitTestable().evaluate().isNotEmpty,
+      timeout: Duration(milliseconds: idlePollMs),
+      phaseName: 'pump_until_production_entry_after_dismiss_transient',
+    )) {
+      idlePollMs = 25;
+    } else {
+      idlePollMs = e2eAdaptivePollRampAfterIdle(idlePollMs);
+    }
   }
 
   fail(
