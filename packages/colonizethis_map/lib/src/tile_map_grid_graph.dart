@@ -145,15 +145,22 @@ class TileMapGridGraph {
     final legacyOcean = _legacyBoundaryReachableSea(grid, seaZoneId);
     final components = connectedComponentsOfSea(grid, seaZoneId);
     final totalSea = countSeaCells(grid, seaZoneId);
-    final touchLegacyFillable = <Set<(int x, int y)>>[];
-    for (final component in components) {
-      final continentSet = _continentSetForSeaComponent(
+    // One continent-set computation per sea component (Refs #2489 P1); both passes
+    // below reuse this cache instead of calling [_continentSetForSeaComponent]
+    // twice per component.
+    final continentSets = List<Set<int>>.generate(components.length, (i) {
+      return _continentSetForSeaComponent(
         grid,
         seaZoneId,
-        component,
+        components[i],
         landSeeds,
         continentBySeedIndex,
       );
+    });
+    final touchLegacyFillable = <Set<(int x, int y)>>[];
+    for (var i = 0; i < components.length; i++) {
+      final component = components[i];
+      final continentSet = continentSets[i];
       if (continentSet.length != 1) continue;
       if (!component.any((p) => legacyOcean.contains(p))) continue;
       touchLegacyFillable.add(component);
@@ -178,14 +185,9 @@ class TileMapGridGraph {
     }
 
     final fillableLake = <(int x, int y)>{};
-    for (final component in components) {
-      final continentSet = _continentSetForSeaComponent(
-        grid,
-        seaZoneId,
-        component,
-        landSeeds,
-        continentBySeedIndex,
-      );
+    for (var i = 0; i < components.length; i++) {
+      final component = components[i];
+      final continentSet = continentSets[i];
       if (continentSet.length != 1) continue;
       if (excludedMainOcean != null &&
           component.length == excludedMainOcean.length &&
