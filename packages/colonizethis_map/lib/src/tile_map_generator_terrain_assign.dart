@@ -274,12 +274,9 @@ class _TileMapGenTerrainResource {
     // termination of ranges, top up mountain tiles by growing existing ridges
     // along their edges. This keeps the overall pattern ridge-like while
     // nudging the global count closer to the configured fraction.
-    var currentMountain = 0;
-    for (var y = 0; y < params.height; y++) {
-      for (var x = 0; x < params.width; x++) {
-        if (terrainGrid[y][x] == TerrainType.mountain) currentMountain++;
-      }
-    }
+    // Each ridge placement decrements [remainingMountain]; avoid an extra O(W×H)
+    // count pass (Refs #2489 P3).
+    var currentMountain = targetMountain - remainingMountain;
     if (currentMountain >= targetMountain) {
       return;
     }
