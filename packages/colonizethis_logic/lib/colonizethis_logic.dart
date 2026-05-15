@@ -74,7 +74,9 @@ export 'src/orders/order_suggestion.dart'
         getAvailableWorkTargetsForUnit,
         getValidWorkOrderTileKeys,
         getValidWorkOrderTileKeysWithVisibility,
+        incrementalCandidateValidatorBuildCountForTests,
         orderSuggestionWorkOrderAcceptanceProbeCountForTests,
+        resetIncrementalCandidateValidatorBuildCountForTests,
         setOrderSuggestionWorkOrderAcceptanceProbeTrackingForTests;
 export 'src/orders/per_player_work_target_selection_cache.dart';
 export 'src/orders/unit_type_helpers.dart'
