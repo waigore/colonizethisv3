@@ -39,19 +39,32 @@ Set<String> getValidWorkOrderTileKeys(
     ignorePendingWorkOrderUnitId: unitId,
   );
 
+  // One PlayerView + validator per call: panel highlight path must not pay
+  // redundant world scans inside buildIncrementalCandidateValidator (Refs #2394).
+  final view = buildPlayerView(game, topology, playerId);
+  final factionMembership = DiplomacyFactionMembership.from(game);
+  final unitsById = unitsByIdFromWorld(game.worldState);
+  final playerOwnedProvinceIds = <String>{
+    for (final e in view.provincesById.entries)
+      if (e.value.ownerId == playerId) e.key,
+  };
   final candidateValidator = buildIncrementalCandidateValidator(
     game: game,
     topology: topology,
     playerId: playerId,
     baseOrders: currentOrders,
     tileMapByRegion: tileMapByRegion,
+    view: view,
+    unitsById: unitsById,
+    factionMembership: factionMembership,
   );
   final raw = rawCandidateTilesForWorkTarget(
     game: game,
     playerId: playerId,
     workTarget: workTarget,
     tileMapByRegion: tileMapByRegion,
-    factionMembership: candidateValidator.factionMembershipSnapshot,
+    playerOwnedProvinceIds: playerOwnedProvinceIds,
+    factionMembership: factionMembership,
   );
   final valid = <String>{};
   for (final tileKey in raw) {
