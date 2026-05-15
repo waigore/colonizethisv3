@@ -124,19 +124,11 @@ List<List<String>> _assignLandByLandSeedsImpl(
   final totalProvinces = provinceToContinent.length;
   if (totalProvinces == 0) return grid;
 
-  // Per-continent budget (proportional to province count)
-  final budget = List<int>.filled(numContinents, 0);
-  var allocated = 0;
-  for (var c = 0; c < numContinents; c++) {
-    final pc = provincesByContinent[c]!.length;
-    budget[c] = (landBudgetTotal * pc / totalProvinces).round();
-    allocated += budget[c];
-  }
-  if (allocated > landBudgetTotal) {
-    budget[0] -= (allocated - landBudgetTotal);
-  } else if (allocated < landBudgetTotal && numContinents > 0) {
-    budget[0] += (landBudgetTotal - allocated);
-  }
+  final budget = allocateBudgetByProvinceCount(
+    totalBudget: landBudgetTotal,
+    provincesByContinent: provincesByContinent,
+    numContinents: numContinents,
+  );
 
   // Seeds per continent (index ranges: [start, end) for each c)
   final seedStartByContinent = List<int>.filled(numContinents, 0);

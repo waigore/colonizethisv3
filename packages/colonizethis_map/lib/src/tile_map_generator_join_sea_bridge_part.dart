@@ -285,55 +285,14 @@ extension _TileMapGenJoinSeaBridgePart on _TileMapGenJoinSea {
         if (landCellsExcludedFromSeaRestore?.contains((x, y)) ?? false) {
           continue;
         }
-        final oceanNeighbours = [(x - 1, y), (x + 1, y), (x, y - 1), (x, y + 1)]
-            .where(
-              (p) =>
-                  p.$1 >= 0 &&
-                  p.$1 < params.width &&
-                  p.$2 >= 0 &&
-                  p.$2 < params.height &&
-                  grid[p.$2][p.$1] == seaZoneId &&
-                  ocean.contains(p),
-            )
-            .length;
-        if (oceanNeighbours >= 1) coastal.add((x, y));
+        if (_graph.oceanNeighbourCount(grid, x, y, seaZoneId, ocean) >= 1) {
+          coastal.add((x, y));
+        }
       }
     }
     coastal.sort((a, b) {
-      final na =
-          [
-                (a.$1 - 1, a.$2),
-                (a.$1 + 1, a.$2),
-                (a.$1, a.$2 - 1),
-                (a.$1, a.$2 + 1),
-              ]
-              .where(
-                (p) =>
-                    p.$1 >= 0 &&
-                    p.$1 < params.width &&
-                    p.$2 >= 0 &&
-                    p.$2 < params.height &&
-                    grid[p.$2][p.$1] == seaZoneId &&
-                    ocean.contains(p),
-              )
-              .length;
-      final nb =
-          [
-                (b.$1 - 1, b.$2),
-                (b.$1 + 1, b.$2),
-                (b.$1, b.$2 - 1),
-                (b.$1, b.$2 + 1),
-              ]
-              .where(
-                (p) =>
-                    p.$1 >= 0 &&
-                    p.$1 < params.width &&
-                    p.$2 >= 0 &&
-                    p.$2 < params.height &&
-                    grid[p.$2][p.$1] == seaZoneId &&
-                    ocean.contains(p),
-              )
-              .length;
+      final na = _graph.oceanNeighbourCount(grid, a.$1, a.$2, seaZoneId, ocean);
+      final nb = _graph.oceanNeighbourCount(grid, b.$1, b.$2, seaZoneId, ocean);
       return nb.compareTo(na);
     });
     for (var i = 0; i < count && i < coastal.length; i++) {
