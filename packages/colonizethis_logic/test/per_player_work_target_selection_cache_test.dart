@@ -154,6 +154,38 @@ void main() {
     );
 
     test(
+      'refresh reuses caller-supplied playerOwnedProvinceIds when set (Refs #2394)',
+      () {
+        final base = snapshotForPlayer('gp1');
+        final ownedIds = <String>{
+          for (final e in base.playerView.provincesById.entries)
+            if (e.value.ownerId == base.playerId) e.key,
+        };
+        Object? seenOwned;
+        final cache = PerPlayerWorkTargetSelectionCache(
+          strategies: {
+            kWorkTargetExplore: (snapshot) {
+              seenOwned = snapshot.playerOwnedProvinceIds;
+              return const {'t1'};
+            },
+          },
+        );
+        cache.refresh(
+          WorkTargetSelectionSnapshot(
+            game: base.game,
+            playerId: base.playerId,
+            playerView: base.playerView,
+            topology: base.topology,
+            currentOrders: base.currentOrders,
+            tileMapByRegion: base.tileMapByRegion,
+            playerOwnedProvinceIds: ownedIds,
+          ),
+        );
+        expect(seenOwned, same(ownedIds));
+      },
+    );
+
+    test(
       'refresh reuses caller-supplied sharedCandidateValidator when set (Refs #2394)',
       () {
         final base = snapshotForPlayer('gp1');

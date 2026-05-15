@@ -98,6 +98,7 @@ AvailableWorkTargetsForUnit getAvailableWorkTargetsForUnit({
     );
   }
 
+  final factionMembership = DiplomacyFactionMembership.from(game);
   final playerOwnedProvinceIds = <String>{
     for (final e in view.provincesById.entries)
       if (e.value.ownerId == playerId) e.key,
@@ -108,7 +109,7 @@ AvailableWorkTargetsForUnit getAvailableWorkTargetsForUnit({
     playerId: playerId,
     baseOrders: currentOrders,
     tileMapByRegion: tileMapByRegion,
-    factionMembership: DiplomacyFactionMembership.from(game),
+    factionMembership: factionMembership,
   );
   final byTarget = <String, Set<String>>{};
   for (final target in allowed) {
