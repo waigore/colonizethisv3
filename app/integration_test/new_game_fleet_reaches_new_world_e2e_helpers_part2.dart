@@ -494,6 +494,9 @@ Future<void> _openCivilianPanelFleetE2e(WidgetTester tester) async {
   // success is evaluated before the first pump, and pump intervals ramp via
   // [e2eAdaptivePollRampAfterIdle] (25→50→75→100 ms cap).
   Future<bool> tryOpen(Finder trigger) async {
+    if (civilianPanel.evaluate().isNotEmpty) {
+      return true;
+    }
     final tappable = trigger.hitTestable();
     if (tappable.evaluate().isEmpty) {
       await e2eDismissTransientUi(tester);

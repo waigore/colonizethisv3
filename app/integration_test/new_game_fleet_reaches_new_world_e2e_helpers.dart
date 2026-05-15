@@ -241,7 +241,14 @@ Future<void> _pickMoveDestinationAndConfirm(
       for (var i = 0; i < 20 && warp.hitTestable().evaluate().isEmpty; i++) {
         ensureBudget('warp drag $i');
         await tester.drag(sc, const Offset(0, -120));
-        await tester.pump();
+        // Short-circuit as soon as the warp row becomes hit-testable instead of
+        // a single frame pump per drag (Refs #2336 H4 / adaptive polling).
+        await e2ePumpUntilConditionOrIdle(
+          tester,
+          () => warp.hitTestable().evaluate().isNotEmpty,
+          timeout: const Duration(milliseconds: 400),
+          phaseName: 'pump_until_warp_row_visible_after_move_dialog_drag',
+        );
       }
       if (warp.hitTestable().evaluate().isEmpty) {
         fail(
