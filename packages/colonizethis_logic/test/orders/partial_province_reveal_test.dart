@@ -166,9 +166,10 @@ void main() {
           units: const [],
         ),
       );
+      final view = buildPlayerView(game, const MapTopology(), 'p1');
       expect(
         sortedProvincesForPartialRevealPrefixedIds(
-          world: game.worldState,
+          view: view,
           partiallyRevealedPrefixedProvinceIds: const {},
         ),
         isEmpty,
@@ -204,8 +205,9 @@ void main() {
           units: const [],
         ),
       );
+      final view = buildPlayerView(game, const MapTopology(), 'p1');
       final sorted = sortedProvincesForPartialRevealPrefixedIds(
-        world: game.worldState,
+        view: view,
         partiallyRevealedPrefixedProvinceIds: {'$ow|z', '$ow|m'},
       );
       expect(sorted.map((p) => p.id).toList(), ['$ow|m', '$ow|z']);

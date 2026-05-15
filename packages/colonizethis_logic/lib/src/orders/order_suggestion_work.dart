@@ -92,7 +92,7 @@ List<WorkOrder> suggestWorkOrders(
       partiallyRevealedPrefixedProvinceIdsForPlayer(game: game, view: view);
   final partiallyRevealedProvincesSorted =
       sortedProvincesForPartialRevealPrefixedIds(
-        world: game.worldState,
+        view: view,
         partiallyRevealedPrefixedProvinceIds: partiallyRevealedProvinceCache,
       );
 
