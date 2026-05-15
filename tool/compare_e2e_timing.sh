@@ -34,15 +34,14 @@ for f in "$BASELINE" "$AFTER"; do
   fi
 done
 
-python3 - <<PY
+python3 - "$BASELINE" "$AFTER" "$MIN_REDUCTION_PCT" <<'PY'
 import re
-import statistics
 import sys
 from pathlib import Path
 
-baseline_path = Path("$BASELINE")
-after_path = Path("$AFTER")
-min_reduction_pct = float("$MIN_REDUCTION_PCT")
+baseline_path = Path(sys.argv[1])
+after_path = Path(sys.argv[2])
+min_reduction_pct = float(sys.argv[3])
 
 
 def parse_medians(path: Path) -> dict[str, float]:
@@ -90,8 +89,8 @@ ac9_pass = suite_delta_pct >= min_reduction_pct
 
 print("# E2E timing comparison (Refs #2336 AC8–AC9)")
 print()
-print(f"- Baseline: `{baseline_path}`")
-print(f"- After: `{after_path}`")
+print(f"- Baseline: `{baseline_path.resolve()}`")
+print(f"- After: `{after_path.resolve()}`")
 print()
 print("| Test | Baseline median (s) | After median (s) | Delta % |")
 print("|------|---------------------|------------------|---------|")
