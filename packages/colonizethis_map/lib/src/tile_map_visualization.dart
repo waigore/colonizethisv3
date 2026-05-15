@@ -40,6 +40,34 @@ const (int, int, int) regionIdLabelRgb = (220, 0, 0);
 
 const int _titleLines = 2;
 
+/// Legend rows after the fixed title + primary swatch block (Refs #2489 D7).
+int _optionalLegendSectionLineCount({
+  required bool showContinentSeeds,
+  required bool showLandSeeds,
+  required bool useLandSeedByContinent,
+  List<int>? landSeedContinentIndices,
+  required bool hasResourceGrid,
+}) {
+  var rows = 0;
+  if (showContinentSeeds) {
+    rows++;
+  }
+  if (showLandSeeds) {
+    if (useLandSeedByContinent && landSeedContinentIndices != null) {
+      final maxContinent = landSeedContinentIndices.reduce(
+        (a, b) => a > b ? a : b,
+      );
+      rows += maxContinent + 1;
+    } else {
+      rows++;
+    }
+  }
+  if (hasResourceGrid) {
+    rows += Resource.values.length;
+  }
+  return rows;
+}
+
 /// Draws optional legend sections (continent seeds, land seeds, resources). Returns updated row.
 int _drawOptionalLegendSections(
   img.Image image,
@@ -140,26 +168,17 @@ int _legendLineCount({
   required List<int>? landSeedContinentIndices,
   required bool hasResourceGrid,
 }) {
-  var lines = useTerrain
+  final primaryLines = useTerrain
       ? _titleLines + 1 + TerrainType.values.length
       : _titleLines + topology.nodes.length;
-  if (showContinentSeeds) {
-    lines += 1;
-  }
-  if (showLandSeeds) {
-    if (useLandSeedByContinent) {
-      final maxContinent = landSeedContinentIndices!.reduce(
-        (a, b) => a > b ? a : b,
+  return primaryLines +
+      _optionalLegendSectionLineCount(
+        showContinentSeeds: showContinentSeeds,
+        showLandSeeds: showLandSeeds,
+        useLandSeedByContinent: useLandSeedByContinent,
+        landSeedContinentIndices: landSeedContinentIndices,
+        hasResourceGrid: hasResourceGrid,
       );
-      lines += maxContinent + 1;
-    } else {
-      lines += 1;
-    }
-  }
-  if (hasResourceGrid) {
-    lines += Resource.values.length;
-  }
-  return lines;
 }
 
 void _drawMapCells({
