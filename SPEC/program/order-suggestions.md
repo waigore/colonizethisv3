@@ -29,6 +29,8 @@ For every suggested order `o`, appending it to the current list and validating v
 
 **Shared unit index (naval, Refs #2394):** `OrderSuggestionAPI.suggestNavalMoveOrders` and `suggestNavalMissionOrders` accept an optional `unitsById` argument: a read-only map of every unit in `Game.worldState` keyed by unit id (the same shape as `unitsByIdFromWorld` in logic). When the caller supplies it, the implementation uses that map for incremental naval validation instead of rebuilding it inside the call. When omitted, the implementation builds the map as before. Observable candidate lists and accept/reject decisions for a fixed `(Game, topology, PlayerView, Orders)` tuple must not depend on whether the caller passed a map or omitted it, provided the supplied map matches the current world state.
 
+**Army Move picker shared projection (Refs #2394):** `armyMovePickerDestinations` accepts optional `playerView` and `unitsById` with the same contract as `IncrementalCandidateValidator.forPlayer`: when supplied and consistent with current `Game` / `MapTopology` / `playerId`, internal validators reuse them instead of embedding `buildPlayerView` / `unitsByIdFromWorld` scans. Observable destination lists for a fixed tuple must not depend on whether these optional arguments were passed.
+
 **Civilian work alignment:** Suggestions never assume instant primary effects for `prospect` or `purchase_land`; those targets follow the same **assign → tick → complete** invariant as validation and resolution (prospected set, treasury debit, and `purchasedTilesByTileKey` only when work completes in Build/Work). Authoritative rules: [orders.md](orders.md) (Civilian deferred primary effects) and [development-resolution.md](development-resolution.md).
 
 ---

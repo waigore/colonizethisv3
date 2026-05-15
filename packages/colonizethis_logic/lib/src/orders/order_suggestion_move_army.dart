@@ -224,6 +224,13 @@ bool _armyMoveNeedsDeclareWarTrial(
 /// When [playerOwnedFullProvinceIds] is provided by the caller, the picker
 /// skips the fallback owned-province [allProvinces] scan and reuses the
 /// provided set (Refs #2394).
+///
+/// When [playerView] / [unitsById] are provided (same contract as
+/// [IncrementalCandidateValidator.forPlayer]), each internal validator reuses
+/// them instead of embedding `buildPlayerView` / `unitsByIdFromWorld` scans.
+/// Callers such as the Flutter shell may supply these when they already hold a
+/// [PlayerView] for [playerId]; when omitted, behavior matches the historical
+/// path.
 List<ArmyMovePickerDestination> armyMovePickerDestinations({
   required Game game,
   required MapTopology topology,
@@ -231,6 +238,8 @@ List<ArmyMovePickerDestination> armyMovePickerDestinations({
   required Army army,
   required Orders currentOrders,
   Set<String>? playerOwnedFullProvinceIds,
+  PlayerView? playerView,
+  Map<String, Unit>? unitsById,
 }) {
   final diplo =
       currentOrders.diplomaticOrdersByPlayerId[playerId] ??
@@ -255,6 +264,8 @@ List<ArmyMovePickerDestination> armyMovePickerDestinations({
     playerId: playerId,
     basePrefix: currentOrders,
     factionMembership: factionMembership,
+    view: playerView,
+    unitsById: unitsById,
   );
   final declareWarTrialValidatorsByTargetFaction =
       <String, IncrementalCandidateValidator>{};
@@ -297,6 +308,8 @@ List<ArmyMovePickerDestination> armyMovePickerDestinations({
           playerId: playerId,
           basePrefix: trialOrders,
           factionMembership: factionMembership,
+          view: playerView,
+          unitsById: unitsById,
         );
       });
       if (!trialValidator.isArmyMoveAccepted(move)) {
