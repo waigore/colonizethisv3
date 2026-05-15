@@ -1,6 +1,7 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
+import '../constants.dart';
 import 'naval.dart';
 import 'player_view.dart';
 import 'province_lookup.dart' show toFullProvinceId;
@@ -55,11 +56,10 @@ Set<String> _coastalTileKeysAdjacentToSeaZone({
   }
   if (seaCoords.isEmpty) return const {};
   final coastal = <String>{};
-  const deltas = [(0, -1), (1, 0), (0, 1), (-1, 0)];
   for (final provinceTileKey in provinceTileKeys) {
     final xy = _xyFromTileKey(provinceTileKey);
     if (xy == null) continue;
-    final isCoastal = deltas.any(
+    final isCoastal = kGridNeighborsCardinal4.any(
       (delta) => seaCoords.contains('${xy.x + delta.$1}|${xy.y + delta.$2}'),
     );
     if (isCoastal) coastal.add(provinceTileKey);

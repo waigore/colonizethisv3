@@ -4,6 +4,7 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/src/logging.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
+import '../constants.dart';
 import '../utils/graph_traversal.dart';
 import '../diplomacy/diplomacy_relation_lookup.dart';
 import 'connectivity_blockade_target.dart';
@@ -249,7 +250,7 @@ bool _isCapitalTileOnSeaboard(
   if (map == null) return false;
   final w = map.width;
   final h = map.height;
-  for (final d in [(0, -1), (1, 0), (0, 1), (-1, 0)]) {
+  for (final d in kGridNeighborsCardinal4) {
     final nx = capital.x + d.$1;
     final ny = capital.y + d.$2;
     if (nx < 0 || nx >= w || ny < 0 || ny >= h) return true;
@@ -602,7 +603,7 @@ void _applyTownRuleConnectivityClosure({
     final map = tileMapByRegion[coords.regionId];
     if (map == null) continue;
 
-    for (final d in [(0, -1), (1, 0), (0, 1), (-1, 0)]) {
+    for (final d in kGridNeighborsCardinal4) {
       final nx = coords.x + d.$1;
       final ny = coords.y + d.$2;
       if (nx < 0 || nx >= map.width || ny < 0 || ny >= map.height) continue;
@@ -646,7 +647,7 @@ List<String> _adjacentTileKeys(
   final out = <String>[];
   final w = map.width;
   final h = map.height;
-  for (final d in [(0, -1), (1, 0), (0, 1), (-1, 0)]) {
+  for (final d in kGridNeighborsCardinal4) {
     final nx = x + d.$1;
     final ny = y + d.$2;
     if (nx < 0 || nx >= w || ny < 0 || ny >= h) continue;
