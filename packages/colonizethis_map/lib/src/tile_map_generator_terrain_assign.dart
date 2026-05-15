@@ -148,6 +148,36 @@ class _TileMapGenTerrainResource {
     );
   }
 
+  bool _isNonMountainLandNeighbor(
+    int nx,
+    int ny,
+    List<List<TerrainType?>> terrainGrid,
+    List<List<String>> grid,
+  ) {
+    if (nx < 0 || nx >= params.width || ny < 0 || ny >= params.height) {
+      return false;
+    }
+    if (grid[ny][nx] != _landSentinel) return false;
+    if (terrainGrid[ny][nx] == TerrainType.mountain) return false;
+    return true;
+  }
+
+  void _collectMountainAdjacentFrontier(
+    int x,
+    int y,
+    List<List<TerrainType?>> terrainGrid,
+    List<List<String>> grid,
+    List<(int dx, int dy)> directions,
+    Set<(int x, int y)> mountainAdjacentFrontier,
+  ) {
+    for (final (dx, dy) in directions) {
+      final nx = x + dx;
+      final ny = y + dy;
+      if (!_isNonMountainLandNeighbor(nx, ny, terrainGrid, grid)) continue;
+      mountainAdjacentFrontier.add((nx, ny));
+    }
+  }
+
   /// One grid pass: non-mountain land cells and mountain-adjacent frontier (P3).
   ({
     List<(int x, int y)> nonMountainLand,
@@ -165,16 +195,14 @@ class _TileMapGenTerrainResource {
         if (grid[y][x] != _landSentinel) continue;
         final terrain = terrainGrid[y][x];
         if (terrain == TerrainType.mountain) {
-          for (final (dx, dy) in directions) {
-            final nx = x + dx;
-            final ny = y + dy;
-            if (nx < 0 || nx >= params.width || ny < 0 || ny >= params.height) {
-              continue;
-            }
-            if (grid[ny][nx] != _landSentinel) continue;
-            if (terrainGrid[ny][nx] == TerrainType.mountain) continue;
-            mountainAdjacentFrontier.add((nx, ny));
-          }
+          _collectMountainAdjacentFrontier(
+            x,
+            y,
+            terrainGrid,
+            grid,
+            directions,
+            mountainAdjacentFrontier,
+          );
           continue;
         }
         nonMountainLand.add((x, y));
