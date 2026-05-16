@@ -33,7 +33,7 @@ int countOldWorldProvincesOwned(
   }
   var count = 0;
   for (final row in rows) {
-    if (row is! Map) {
+    if (row is! Map<String, Object?>) {
       continue;
     }
     final id = row['id']?.toString() ?? '';
