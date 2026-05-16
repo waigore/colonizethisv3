@@ -96,20 +96,28 @@ void main() {
         );
         return;
       }
-      await openNavalPanel(
-        tester,
-        perf: perf,
-        timeout: _kMaxUiResponseWait,
-        bottomSheetCloseTimeout: _kMaxUiResponseWait,
-      );
-      if (_harnessDetectsNonHomeFleetInNewWorld(tester)) {
-        await closeBottomSheet(tester, perf: perf, overallTimeout: _kMaxUiResponseWait);
-        perf.timing(
-          'test_total',
-          testSw.elapsed,
-          meta: 'result=reached_in_loop',
+      // When [ctE2eNavalPanelSnapshot] is live, world-state arrival does not
+      // require opening the naval sheet (Refs #2336 Bottleneck 4).
+      if (ctE2eNavalPanelSnapshot == null) {
+        await openNavalPanel(
+          tester,
+          perf: perf,
+          timeout: _kMaxUiResponseWait,
+          bottomSheetCloseTimeout: _kMaxUiResponseWait,
         );
-        return;
+        if (_navalPanelShowsNonHomeFleetInNewWorld(tester)) {
+          await closeBottomSheet(
+            tester,
+            perf: perf,
+            overallTimeout: _kMaxUiResponseWait,
+          );
+          perf.timing(
+            'test_total',
+            testSw.elapsed,
+            meta: 'result=reached_in_loop',
+          );
+          return;
+        }
       }
 
       await _tryNavalMoveSegment(

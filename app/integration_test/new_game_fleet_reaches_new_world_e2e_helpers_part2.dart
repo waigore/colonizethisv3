@@ -300,15 +300,18 @@ Future<void> _awaitNwCoastalOrVisibleLandForBundledExploreE2e({
         _playerHasAnyNewWorldFoggedOrBetterFromCtSnapshot()) {
       return;
     }
-    await openNavalPanel(
-      tester,
-      timeout: _kMaxUiResponseWait,
-      bottomSheetCloseTimeout: _kMaxUiResponseWait,
-    );
-    if (_nonHomeHumanFleetInCoastalNewWorldSeaFromCtSnapshot() ||
-        _playerHasAnyNewWorldFoggedOrBetterFromCtSnapshot()) {
-      await closeBottomSheet(tester, overallTimeout: _kMaxUiResponseWait);
-      return;
+    // Snapshot-backed paths skip redundant naval sheet open/close (Refs #2336).
+    if (ctE2eNavalPanelSnapshot == null) {
+      await openNavalPanel(
+        tester,
+        timeout: _kMaxUiResponseWait,
+        bottomSheetCloseTimeout: _kMaxUiResponseWait,
+      );
+      if (_nonHomeHumanFleetInCoastalNewWorldSeaFromCtSnapshot() ||
+          _playerHasAnyNewWorldFoggedOrBetterFromCtSnapshot()) {
+        await closeBottomSheet(tester, overallTimeout: _kMaxUiResponseWait);
+        return;
+      }
     }
     await _tryNavalMoveSegment(
       tester,
