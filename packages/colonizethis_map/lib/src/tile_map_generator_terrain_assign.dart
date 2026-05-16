@@ -40,7 +40,13 @@ class _TileMapGenTerrainResource {
     final distribution = terrainDistributionForRegion(mapRegionId);
 
     // Pass 6a: mountain ridges (random-walk ranges).
-    _assignMountainRidges(terrainGrid, grid, landCells, distribution, rnd);
+    final remainingNonMountainLand = _assignMountainRidges(
+      terrainGrid,
+      grid,
+      landCells,
+      distribution,
+      rnd,
+    );
 
     // Pass 6b: region-growing for non-mountain terrains.
     _assignNonMountainTerrainsRegionGrowing(
@@ -49,6 +55,7 @@ class _TileMapGenTerrainResource {
       mapRegionId,
       distribution,
       rnd,
+      remainingNonMountainLand: remainingNonMountainLand,
     );
 
     // Pass 7: resources, using final terrainGrid and existing rules.
@@ -148,47 +155,69 @@ class _TileMapGenTerrainResource {
     );
   }
 
-  Set<(int x, int y)> _mountainAdjacentNonMountainLandFrontier(
+  void _addMountainAdjacentFrontierFromCell(
+    int x,
+    int y,
+    List<List<TerrainType?>> terrainGrid,
+    List<List<String>> grid,
+    List<(int dx, int dy)> directions,
+    Set<(int x, int y)> frontier,
+  ) {
+    for (final (dx, dy) in directions) {
+      final nx = x + dx;
+      final ny = y + dy;
+      if (nx < 0 || nx >= params.width || ny < 0 || ny >= params.height) {
+        continue;
+      }
+      if (grid[ny][nx] != _landSentinel) continue;
+      if (terrainGrid[ny][nx] == TerrainType.mountain) continue;
+      frontier.add((nx, ny));
+    }
+  }
+
+  /// One full-grid pass after mountain placement: count, ridge-adjacent frontier,
+  /// and remaining non-mountain land (Refs #2489 P3).
+  ({
+    int mountainCount,
+    Set<(int x, int y)> mountainAdjacentFrontier,
+    List<(int x, int y)> remainingNonMountainLand,
+  }) _scanPostMountainLand(
     List<List<TerrainType?>> terrainGrid,
     List<List<String>> grid,
     List<(int dx, int dy)> directions,
   ) {
+    var mountainCount = 0;
     final frontier = <(int x, int y)>{};
-    for (var y = 0; y < params.height; y++) {
-      for (var x = 0; x < params.width; x++) {
-        if (terrainGrid[y][x] != TerrainType.mountain) continue;
-        for (final (dx, dy) in directions) {
-          final nx = x + dx;
-          final ny = y + dy;
-          if (nx < 0 || nx >= params.width || ny < 0 || ny >= params.height) {
-            continue;
-          }
-          if (grid[ny][nx] != _landSentinel) continue;
-          if (terrainGrid[ny][nx] == TerrainType.mountain) continue;
-          frontier.add((nx, ny));
-        }
-      }
-    }
-    return frontier;
-  }
-
-  List<(int x, int y)> _nonMountainLandCells(
-    List<List<String>> grid,
-    List<List<TerrainType?>> terrainGrid,
-  ) {
-    final remainingLand = <(int x, int y)>[];
+    final remaining = <(int x, int y)>[];
     for (var y = 0; y < params.height; y++) {
       for (var x = 0; x < params.width; x++) {
         if (grid[y][x] != _landSentinel) continue;
-        if (terrainGrid[y][x] == TerrainType.mountain) continue;
-        remainingLand.add((x, y));
+        final terrain = terrainGrid[y][x];
+        if (terrain == TerrainType.mountain) {
+          mountainCount++;
+          _addMountainAdjacentFrontierFromCell(
+            x,
+            y,
+            terrainGrid,
+            grid,
+            directions,
+            frontier,
+          );
+        } else {
+          remaining.add((x, y));
+        }
       }
     }
-    return remainingLand;
+    return (
+      mountainCount: mountainCount,
+      mountainAdjacentFrontier: frontier,
+      remainingNonMountainLand: remaining,
+    );
   }
 
   /// Pass 6a: generate mountain ridges via random walks over land cells.
-  void _assignMountainRidges(
+  /// Returns non-mountain land cells for pass 6b (one scan shared with top-up).
+  List<(int x, int y)> _assignMountainRidges(
     List<List<TerrainType?>> terrainGrid,
     List<List<String>> grid,
     List<(int x, int y)> landCells,
@@ -196,18 +225,22 @@ class _TileMapGenTerrainResource {
     Random rnd,
   ) {
     final totalLand = landCells.length;
-    if (totalLand == 0) return;
+    if (totalLand == 0) return const [];
     final targetMountain = (distribution.mountainFraction * totalLand)
         .round()
         .clamp(0, totalLand);
-    if (targetMountain <= 0) return;
+    if (targetMountain <= 0) {
+      return _collectRemainingNonMountainLand(terrainGrid, grid);
+    }
 
     // Determine number of ranges based on target mountain tiles.
     final suggestedRanges = (params.mountainRangesFactor * sqrt(targetMountain))
         .round()
         .clamp(params.mountainRangesMin, params.mountainRangesMax);
     final numRanges = suggestedRanges.clamp(1, targetMountain);
-    if (numRanges <= 0) return;
+    if (numRanges <= 0) {
+      return _collectRemainingNonMountainLand(terrainGrid, grid);
+    }
 
     var remainingMountain = targetMountain;
 
@@ -274,24 +307,13 @@ class _TileMapGenTerrainResource {
     // termination of ranges, top up mountain tiles by growing existing ridges
     // along their edges. This keeps the overall pattern ridge-like while
     // nudging the global count closer to the configured fraction.
-    var currentMountain = 0;
-    for (var y = 0; y < params.height; y++) {
-      for (var x = 0; x < params.width; x++) {
-        if (terrainGrid[y][x] == TerrainType.mountain) currentMountain++;
-      }
-    }
+    var scan = _scanPostMountainLand(terrainGrid, grid, directions);
+    var currentMountain = scan.mountainCount;
     if (currentMountain >= targetMountain) {
-      return;
+      return scan.remainingNonMountainLand;
     }
 
-    final frontier = _mountainAdjacentNonMountainLandFrontier(
-      terrainGrid,
-      grid,
-      directions,
-    );
-
-    final frontierList = frontier.toList();
-    frontierList.shuffle(rnd);
+    final frontierList = scan.mountainAdjacentFrontier.toList()..shuffle(rnd);
     var idx = 0;
     while (currentMountain < targetMountain && idx < frontierList.length) {
       final (fx, fy) = frontierList[idx++];
@@ -304,7 +326,8 @@ class _TileMapGenTerrainResource {
     // fragmented land), convert random remaining land cells until we reach
     // the target. This should be rare and only adjusts a handful of tiles.
     if (currentMountain < targetMountain) {
-      final remainingLand = _nonMountainLandCells(grid, terrainGrid);
+      final remainingLand = scan.remainingNonMountainLand
+        ..removeWhere((c) => terrainGrid[c.$2][c.$1] == TerrainType.mountain);
       remainingLand.shuffle(rnd);
       var i = 0;
       while (currentMountain < targetMountain && i < remainingLand.length) {
@@ -314,6 +337,13 @@ class _TileMapGenTerrainResource {
         currentMountain++;
       }
     }
+
+    if (currentMountain > scan.mountainCount) {
+      scan.remainingNonMountainLand.removeWhere(
+        (c) => terrainGrid[c.$2][c.$1] == TerrainType.mountain,
+      );
+    }
+    return scan.remainingNonMountainLand;
   }
 
   /// Pass 6b: region-growing assignment for non-mountain terrains.
@@ -322,14 +352,15 @@ class _TileMapGenTerrainResource {
     List<List<String>> grid,
     String mapRegionId,
     TerrainDistribution distribution,
-    Random rnd,
-  ) {
+    Random rnd, {
+    required List<(int x, int y)> remainingNonMountainLand,
+  }) {
     final allowed = allowedTerrainsForRegion(
       mapRegionId,
     ).where((t) => t != TerrainType.mountain).toList();
     if (allowed.isEmpty) return;
 
-    final remainingLand = _collectRemainingNonMountainLand(terrainGrid, grid);
+    final remainingLand = remainingNonMountainLand;
     if (remainingLand.isEmpty) return;
     final components = _graph.connectedComponentsOfLand(remainingLand.toSet());
     if (components.isEmpty) return;
