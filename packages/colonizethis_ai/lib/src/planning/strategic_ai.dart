@@ -86,7 +86,7 @@ StrategicOrderTraceResult generateStrategicOrdersWithTrace({
     config: config,
     seeds: seeds,
   );
-  final orders = runDomainPlanners(
+  final plannerOutcome = runDomainPlannersWithOutcome(
     game: game,
     topology: topology,
     nationId: nationId,
@@ -100,6 +100,7 @@ StrategicOrderTraceResult generateStrategicOrdersWithTrace({
     tileMapByRegion: tileMapByRegion,
     onStagedPlannerProgress: onStagedPlannerProgress,
   );
+  final orders = plannerOutcome.orders;
   final moveCount = orders.moveOrdersByPlayerId[nationId]?.length ?? 0;
   final armyMoveCount = orders.armyMoveOrdersByPlayerId[nationId]?.length ?? 0;
   final buildCount = orders.buildUnitOrdersByPlayerId[nationId]?.length ?? 0;
@@ -131,6 +132,8 @@ StrategicOrderTraceResult generateStrategicOrdersWithTrace({
       orders: orders,
       ordersByDomain: ordersByDomain,
       finalOrders: finalOrders,
+      declaredWarTargetFactionId: plannerOutcome.declaredWarTargetFactionId,
+      conquestArmyMoveCount: plannerOutcome.conquestArmyMoveCount,
     ),
   );
 }

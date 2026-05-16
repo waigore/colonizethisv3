@@ -10,6 +10,7 @@ import '../util/orders_extensions.dart';
 import 'build_planner.dart';
 import 'conquest_planner.dart';
 import 'diplomacy_planner.dart';
+import 'domain_planner_outcome.dart';
 import 'move_planner.dart';
 import 'naval_planner.dart';
 import 'research_planner.dart';
@@ -25,6 +26,36 @@ final _log = packageLogger();
 /// When [onStagedPlannerProgress] is set, emits coarse phase ids aligned with
 /// staged planners A–G (Refs #2277): `suggestionPools`, `aiStageA` … `aiStageG`.
 Orders runDomainPlanners({
+  required Game game,
+  required MapTopology topology,
+  required String nationId,
+  required PlayerView view,
+  required AIWorldSnapshot snapshot,
+  required AIConfig config,
+  required StrategicGoal primaryGoal,
+  required AISeedBundle seeds,
+  required OrderSuggestionAPI suggestionAPI,
+  required EconomyPlan economyPlan,
+  Map<String, TileMapResult>? tileMapByRegion,
+  void Function(String phaseId)? onStagedPlannerProgress,
+}) {
+  return runDomainPlannersWithOutcome(
+    game: game,
+    topology: topology,
+    nationId: nationId,
+    view: view,
+    snapshot: snapshot,
+    config: config,
+    primaryGoal: primaryGoal,
+    seeds: seeds,
+    suggestionAPI: suggestionAPI,
+    economyPlan: economyPlan,
+    tileMapByRegion: tileMapByRegion,
+    onStagedPlannerProgress: onStagedPlannerProgress,
+  ).orders;
+}
+
+DomainPlannerOutcome runDomainPlannersWithOutcome({
   required Game game,
   required MapTopology topology,
   required String nationId,
@@ -153,6 +184,8 @@ Orders runDomainPlanners({
     pass: DiplomacyPlannerPass.declareWarOnly,
   );
   orders = declareWarResult.orders;
+  final armyMovesBeforeConquest =
+      orders.armyMoveOrdersByPlayerId[nationId]?.length ?? 0;
   orders = runConquestArmyMovePlanner(
     nationId: nationId,
     view: view,
@@ -166,6 +199,9 @@ Orders runDomainPlanners({
     suggestionAPI: suggestionAPI,
     declaredWarTargetFactionId: declareWarResult.declaredWarTargetFactionId,
   );
+  final conquestArmyMoveCount =
+      (orders.armyMoveOrdersByPlayerId[nationId]?.length ?? 0) -
+      armyMovesBeforeConquest;
   orders = runArmyMovePlanner(
     nationId: nationId,
     view: view,
@@ -223,5 +259,9 @@ Orders runDomainPlanners({
   );
   emit('aiStageG');
 
-  return orders;
+  return DomainPlannerOutcome(
+    orders: orders,
+    declaredWarTargetFactionId: declareWarResult.declaredWarTargetFactionId,
+    conquestArmyMoveCount: conquestArmyMoveCount,
+  );
 }
