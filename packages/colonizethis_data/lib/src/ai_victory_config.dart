@@ -80,10 +80,14 @@ const int kDeclareWarNonAdjacentSuppressedScore = 0;
 const int kDeclareWarAdjacentGpBonusWhenFarFromVictory = 35;
 
 /// Extra declare-war bonus toward an adjacent **minor/tribe** when far from victory.
-const int kDeclareWarAdjacentMinorBonusWhenFarFromVictory = 45;
+const int kDeclareWarAdjacentMinorBonusWhenFarFromVictory = 55;
 
 /// When far from victory, defend goal bonus while Old World holdings are small.
 const int kDefendBonusWhenFewOldWorldProvinces = 35;
+
+/// Extra defend weight when at war and Old World holdings are at or below
+/// [kFewOldWorldProvincesDefendThreshold] (trade-focused GPs avoid collapse).
+const int kDefendBonusWhenAtWarAndFewHoldings = 45;
 
 /// Old World province count at or below which [kDefendBonusWhenFewOldWorldProvinces] applies.
 const int kFewOldWorldProvincesDefendThreshold = 6;

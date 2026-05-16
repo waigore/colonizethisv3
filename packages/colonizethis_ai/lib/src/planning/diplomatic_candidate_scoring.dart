@@ -79,17 +79,9 @@ List<int> computeDiplomaticCandidateScores({
               snapshot.opportunities.weakNeighbors.contains(o.targetFactionId);
           final isAdjacentGp =
               isAdjacentOwner && game.playerById(o.targetFactionId) != null;
-          if (behindVictoryPace &&
-              isAdjacentGp &&
-              !isWeakGpNeighbor) {
-            final warDesireProbe = warDesireForTarget(
-              o.targetFactionId,
-              relationScore,
-            );
-            if (warDesireProbe < kDeclareWarGpWeakNeighborMinWarDesire) {
-              s = kDeclareWarNonAdjacentSuppressedScore;
-              break;
-            }
+          if (behindVictoryPace && isAdjacentGp && !isWeakGpNeighbor) {
+            s = kDeclareWarNonAdjacentSuppressedScore;
+            break;
           }
           final effectiveMaxRelation = behindVictoryPace && isMinorTarget
               ? kDeclareWarMinorMaxRelationWhenFarFromVictory

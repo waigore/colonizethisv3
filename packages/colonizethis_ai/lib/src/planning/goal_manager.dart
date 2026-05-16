@@ -38,6 +38,12 @@ Map<StrategicGoal, int> evaluateStrategicGoalScores(
 
   if (snapshot.threats.atWarWith.isNotEmpty) {
     defend += 30;
+    if (snapshot.conquest.oldWorldProvincesOwned <=
+            kFewOldWorldProvincesDefendThreshold &&
+        snapshot.conquest.provincesToVictory >
+            kConquerScoreFloorProvincesToVictoryThreshold) {
+      defend += kDefendBonusWhenAtWarAndFewHoldings;
+    }
   }
   if (snapshot.threats.capitalThreatened) {
     defend += 50;
