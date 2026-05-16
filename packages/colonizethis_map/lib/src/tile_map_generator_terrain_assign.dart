@@ -155,6 +155,26 @@ class _TileMapGenTerrainResource {
     );
   }
 
+  void _addMountainAdjacentFrontierFromCell(
+    int x,
+    int y,
+    List<List<TerrainType?>> terrainGrid,
+    List<List<String>> grid,
+    List<(int dx, int dy)> directions,
+    Set<(int x, int y)> frontier,
+  ) {
+    for (final (dx, dy) in directions) {
+      final nx = x + dx;
+      final ny = y + dy;
+      if (nx < 0 || nx >= params.width || ny < 0 || ny >= params.height) {
+        continue;
+      }
+      if (grid[ny][nx] != _landSentinel) continue;
+      if (terrainGrid[ny][nx] == TerrainType.mountain) continue;
+      frontier.add((nx, ny));
+    }
+  }
+
   /// One full-grid pass after mountain placement: count, ridge-adjacent frontier,
   /// and remaining non-mountain land (Refs #2489 P3).
   ({
@@ -175,19 +195,14 @@ class _TileMapGenTerrainResource {
         final terrain = terrainGrid[y][x];
         if (terrain == TerrainType.mountain) {
           mountainCount++;
-          for (final (dx, dy) in directions) {
-            final nx = x + dx;
-            final ny = y + dy;
-            if (nx < 0 ||
-                nx >= params.width ||
-                ny < 0 ||
-                ny >= params.height) {
-              continue;
-            }
-            if (grid[ny][nx] != _landSentinel) continue;
-            if (terrainGrid[ny][nx] == TerrainType.mountain) continue;
-            frontier.add((nx, ny));
-          }
+          _addMountainAdjacentFrontierFromCell(
+            x,
+            y,
+            terrainGrid,
+            grid,
+            directions,
+            frontier,
+          );
         } else {
           remaining.add((x, y));
         }
