@@ -5,6 +5,7 @@ import 'package:colonizethis_logic/ai_api.dart'
 import 'package:colonizethis_logic/order_suggestion_api.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
+import 'army_conquest_prep.dart';
 import 'domain_planner_orchestrator.dart';
 import 'economy_planner.dart';
 import 'goal_manager.dart';
@@ -49,10 +50,14 @@ class StrategicOrderTraceResult {
   const StrategicOrderTraceResult({
     required this.result,
     required this.aiTraceSection,
+    required this.game,
   });
 
   final StrategicOrderResult result;
   final TurnTraceAiSection aiTraceSection;
+
+  /// [Game] after any in-turn army prep (e.g. Home Army split for conquest).
+  final Game game;
 }
 
 StrategicOrderTraceResult generateStrategicOrdersWithTrace({
@@ -80,14 +85,20 @@ StrategicOrderTraceResult generateStrategicOrdersWithTrace({
     turn: turn,
   );
   _log.d('primaryGoal=$primaryGoal');
-  final economyPlan = runEconomyPlanner(
+  final planningGame = prepareConquestFieldArmy(
     game: game,
+    nationId: nationId,
+    provincesToVictory: snapshot.conquest.provincesToVictory,
+    primaryGoal: primaryGoal,
+  );
+  final economyPlan = runEconomyPlanner(
+    game: planningGame,
     view: view,
     config: config,
     seeds: seeds,
   );
   final plannerOutcome = runDomainPlannersWithOutcome(
-    game: game,
+    game: planningGame,
     topology: topology,
     nationId: nationId,
     view: view,
@@ -120,6 +131,7 @@ StrategicOrderTraceResult generateStrategicOrdersWithTrace({
   final finalOrders = finalAggregatedOrders(nationId, orders);
   return StrategicOrderTraceResult(
     result: result,
+    game: planningGame,
     aiTraceSection: buildAiTraceSection(
       nationId: nationId,
       turn: turn,

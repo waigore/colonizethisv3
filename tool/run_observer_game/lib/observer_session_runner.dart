@@ -72,6 +72,7 @@ Future<int> runObserverSession({
         init.combinedTopology,
         tileMapByRegion: init.tileMapByRegion,
       );
+      final gameForResolution = fullAi.game;
 
       final mergedOrders = mergeOrderLists(
         humanOrders: const Orders(),
@@ -86,7 +87,7 @@ Future<int> runObserverSession({
       final traceRuntime = TurnTraceRuntime();
 
       final result = validateOrdersAndResolveTurnFromTrustedOrders(
-        game: before,
+        game: gameForResolution,
         topology: init.combinedTopology,
         orders: mergedOrders,
         tileMapByRegion: init.tileMapByRegion,

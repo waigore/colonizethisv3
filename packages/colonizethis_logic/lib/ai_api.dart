@@ -28,6 +28,8 @@ export 'src/orders/order_suggestion_helpers.dart'
         filterMoveOrdersByDiplomacy,
         getProvinceOwnerMap;
 export 'src/turn/trace/turn_trace_contracts.dart' show TurnTraceAiSection;
+export 'src/world/army_commands.dart' show applyArmySplit;
+export 'src/world/army_ids.dart' show homeArmyIdFor;
 export 'src/world/player_view.dart'
     show PlayerView, VisibilityLevel, buildPlayerView;
 export 'src/world/province_lookup.dart' show allProvinces;
