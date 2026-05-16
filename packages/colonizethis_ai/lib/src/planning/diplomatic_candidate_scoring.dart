@@ -76,12 +76,12 @@ List<int> computeDiplomaticCandidateScores({
           final isWeakGpNeighbor = game.playerById(o.targetFactionId) !=
                   null &&
               snapshot.opportunities.weakNeighbors.contains(o.targetFactionId);
+          final isAdjacentGp =
+              isAdjacentOwner && game.playerById(o.targetFactionId) != null;
           final effectiveMaxRelation = behindVictoryPace &&
                   _isMinorOrTribeFaction(game, o.targetFactionId)
               ? kDeclareWarMinorMaxRelationWhenFarFromVictory
-              : behindVictoryPace &&
-                    isAdjacentOwner &&
-                    isWeakGpNeighbor
+              : behindVictoryPace && isAdjacentGp
               ? kDeclareWarGpMaxRelationWhenFarFromVictory
               : maxRelationForDeclareWar;
           if (relationScore > effectiveMaxRelation) {
@@ -128,6 +128,9 @@ List<int> computeDiplomaticCandidateScores({
             }
             if (isAdjacentOwner) {
               s += kDeclareWarAdjacentOwnerBonus;
+              if (behindVictoryPace && isAdjacentGp) {
+                s += kDeclareWarAdjacentGpBonusWhenFarFromVictory;
+              }
               if (thresholds.warLikelihood <=
                   kDeclareWarLowWarLikelihoodThreshold) {
                 s += kDeclareWarLowWarLikelihoodAdjacentBonus;

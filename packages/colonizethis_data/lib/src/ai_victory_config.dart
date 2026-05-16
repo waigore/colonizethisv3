@@ -75,3 +75,6 @@ const int kTradeGoalPenaltyCapWhenFarFromVictory = 30;
 /// When far from victory, suppress declare-war on factions that do not own a
 /// topologically adjacent Old World province (distant minors are useless).
 const int kDeclareWarNonAdjacentSuppressedScore = 0;
+
+/// Declare-war bonus toward an adjacent **Great Power** when far from victory.
+const int kDeclareWarAdjacentGpBonusWhenFarFromVictory = 35;

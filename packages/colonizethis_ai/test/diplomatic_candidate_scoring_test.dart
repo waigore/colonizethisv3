@@ -512,5 +512,71 @@ void main() {
         expect(distantScore, kDeclareWarNonAdjacentSuppressedScore);
       },
     );
+
+    test(
+      'behind pace suppresses declareWar on non-adjacent minor when adjacent GP exists',
+      () {
+        const snap = AIWorldSnapshot(
+          playerId: 'gp1',
+          threats: ThreatSummary(),
+          opportunities: OpportunitySummary(weakNeighbors: ['gp2']),
+          conquest: ConquestSummary(
+            provincesToVictory: 24,
+            adjacentOwnerFactionIdsSorted: ['gp2'],
+          ),
+          economy: EconomySummary(),
+          relations: {},
+        );
+        final game = Game(
+          id: 'g-suppress',
+          worldState: WorldState(
+            turnState: const TurnState(
+              phase: TurnPhase.orders,
+              turnNumber: 1,
+            ),
+            oldWorld: const RegionData(),
+            newWorld: const RegionData(),
+          ),
+          players: const [
+            Player(id: 'gp1', displayName: 'A', isHuman: false),
+            Player(id: 'gp2', displayName: 'B', isHuman: false),
+          ],
+          minorNations: const [
+            MinorNation(id: 'minor1', displayName: 'M1'),
+          ],
+        );
+        const config = AIConfig(
+          leaderId: 'henry',
+          personalityId: 'henry',
+          hiddenAgendaId: 'merchant',
+        );
+        final minorScore = computeDiplomaticCandidateScores(
+          candidates: const [
+            DiplomaticOrder(
+              type: DiplomaticOrderType.declareWar,
+              targetFactionId: 'minor1',
+            ),
+          ],
+          nationId: 'gp1',
+          game: game,
+          snapshot: snap,
+          config: config,
+        ).single;
+        final gpScore = computeDiplomaticCandidateScores(
+          candidates: const [
+            DiplomaticOrder(
+              type: DiplomaticOrderType.declareWar,
+              targetFactionId: 'gp2',
+            ),
+          ],
+          nationId: 'gp1',
+          game: game,
+          snapshot: snap,
+          config: config,
+        ).single;
+        expect(minorScore, kDeclareWarNonAdjacentSuppressedScore);
+        expect(gpScore, greaterThan(0));
+      },
+    );
   });
 }
