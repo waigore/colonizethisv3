@@ -160,6 +160,7 @@ class SimGameController {
   /// Generates orders for the next Great Power that does not yet have orders
   /// for the current turn (player-by-player mode). All GPs use the selected AI.
   void generateOrdersForNextPlayer() {
+    if (_campaignTerminal) return;
     final nextPlayer = _nextPlayerWithoutPendingOrders();
     if (nextPlayer == null) return;
 
@@ -209,9 +210,18 @@ class SimGameController {
     return null;
   }
 
+  bool get _campaignTerminal =>
+      _game.victory != null || _game.calendarCampaignHalted;
+
   /// Resolves one full turn from the currently accumulated per-player orders.
   void resolveFromPendingOrders() {
     if (!allPlayersHaveOrders) return;
+    if (_campaignTerminal) {
+      _pendingOrdersByPlayerId.clear();
+      _pendingEconomyPlansByPlayerId.clear();
+      _pendingAiTraceSectionsByPlayerId.clear();
+      return;
+    }
     clearUiLog();
     final combined = _combineOrders(_pendingOrdersByPlayerId.values.toList());
     final defaultAssignmentsByPlayerId = _pendingEconomyPlansByPlayerId.isEmpty
@@ -235,6 +245,7 @@ class SimGameController {
   /// Generates orders for all Great Powers and advances one full turn.
   /// All GPs use the selected AI (Sim Game AI or AI Planner).
   void stepFullTurn() {
+    if (_campaignTerminal) return;
     clearUiLog();
     if (useSimGameAi) {
       final ordersList = [
@@ -279,6 +290,7 @@ class SimGameController {
   /// Advances the game by [turns] full turns using the default AI.
   void fastForward({required int turns}) {
     for (var i = 0; i < turns; i++) {
+      if (_campaignTerminal) break;
       stepFullTurn();
     }
   }
@@ -286,6 +298,7 @@ class SimGameController {
   /// Resolves one turn from explicit [orders] (tests and scripted runs).
   @visibleForTesting
   void advanceTurnForTesting(Orders orders) {
+    if (_campaignTerminal) return;
     _advanceOneTurnFromOrders(orders);
   }
 
@@ -396,7 +409,10 @@ class SimGameController {
         phases: List<TurnTracePhaseTrace>.unmodifiable(phases),
       ),
     );
-    TurnTraceFileExporter(rootDirectory: turnTraceRootDirectory)
+    TurnTraceFileExporter(
+      rootDirectory: turnTraceRootDirectory,
+      pruningEnabled: false,
+    )
         .export(document)
         .then((file) {
           _ctdevSimLog.d(
