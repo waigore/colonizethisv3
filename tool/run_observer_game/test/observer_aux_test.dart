@@ -43,6 +43,32 @@ void main() {
         throwsA(isA<FileSystemException>()),
       );
     });
+
+    test('invalid JSON in config file throws FormatException', () {
+      final tmp = Directory.systemTemp.createTempSync('observer_cfg_badjson_');
+      addTearDown(() => tmp.deleteSync(recursive: true));
+      final path = '${tmp.path}/bad.json';
+      File(path).writeAsStringSync('{');
+
+      expect(
+        () => gameSetupFromObserverCli(configJsonPath: path),
+        throwsA(isA<FormatException>()),
+      );
+    });
+
+    test('loads initTownRoadWiringRegionIds from JSON file', () {
+      final tmp = Directory.systemTemp.createTempSync('observer_cfg_wiring_');
+      addTearDown(() => tmp.deleteSync(recursive: true));
+      final path = '${tmp.path}/cfg.json';
+      File(path).writeAsStringSync(
+        '{"selectedGreatPowerIds":["england"],"initTownRoadWiringRegionIds":'
+        '["oldWorld","newWorld"],"seed":3}',
+      );
+
+      final c = gameSetupFromObserverCli(configJsonPath: path);
+      expect(c.initTownRoadWiringRegionIds, {'oldWorld', 'newWorld'});
+      expect(c.seed, 3);
+    });
   });
 
   group('observer snapshot helpers', () {
