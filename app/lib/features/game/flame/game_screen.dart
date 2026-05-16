@@ -28,6 +28,7 @@ import '../dialogue/intervention_dialogue_overlay.dart';
 import '../dialogue/overture_dialogue_overlay.dart';
 import 'game_canvas.dart';
 import 'game_map_area.dart';
+import 'game_map_area_state_logic.dart';
 import 'next_turn_confirmation_dialog.dart';
 import 'turn_resolution_processing_dialog.dart';
 import 'turn_resolution_progress_labels.dart';
@@ -86,6 +87,9 @@ Future<void> _runFlameCanvasNextTurn(
   WidgetRef ref,
   Game game,
 ) async {
+  if (!GameMapAreaStateLogic.allowsFullTurnResolution(game)) {
+    return;
+  }
   final currentTurn = game.worldState.turnState.turnNumber;
   final ok = await showNextTurnConfirmationDialog(
     context,
@@ -276,7 +280,8 @@ class GameScreen extends ConsumerWidget {
             right: 16,
             top: 16,
             child: CtNinePatchButton(
-              onPressed: turnResolutionBlocking
+              onPressed: turnResolutionBlocking ||
+                      !GameMapAreaStateLogic.allowsFullTurnResolution(game)
                   ? null
                   : () async {
                       await _runFlameCanvasNextTurn(context, ref, game);

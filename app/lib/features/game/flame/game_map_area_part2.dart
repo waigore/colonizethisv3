@@ -53,7 +53,9 @@ mixin _GameMapAreaStatePart2
           onToggleSideMenu: () =>
               setState(() => _sideMenuOpen = !_sideMenuOpen),
           onNextTurn: _onNextTurn,
-          nextTurnEnabled: !_isTurnResolving,
+          nextTurnEnabled:
+              !_isTurnResolving &&
+              GameMapAreaStateLogic.allowsFullTurnResolution(widget.game),
           regionIndex: _regionIndex,
           onRegionIndexChanged: (i) =>
               setState(() => _regionIndex = i == 0 ? 0 : 1),
