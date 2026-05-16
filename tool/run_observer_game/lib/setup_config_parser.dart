@@ -17,15 +17,15 @@ GameSetupConfig gameSetupFromObserverCli({
     final json = jsonDecode(f.readAsStringSync()) as Map<String, dynamic>;
     List<String> selectedIds = config.selectedGreatPowerIds;
     final jsonSelected = json['selectedGreatPowerIds'];
-    if (jsonSelected is List) {
+    if (jsonSelected is List<dynamic>) {
       selectedIds = jsonSelected.map((e) => e.toString()).toList();
     }
     Map<String, String> leaderVariantByGpId = config.leaderVariantByGpId;
     final jsonLeader = json['leaderVariantByGpId'];
-    if (jsonLeader is Map) {
+    if (jsonLeader is Map<String, dynamic>) {
       leaderVariantByGpId = Map<String, String>.from(
         jsonLeader.map(
-          (dynamic k, dynamic v) => MapEntry(k.toString(), v.toString()),
+          (String k, dynamic v) => MapEntry(k, v.toString()),
         ),
       );
     }
