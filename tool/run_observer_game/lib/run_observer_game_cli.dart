@@ -3,11 +3,15 @@ import 'dart:io';
 import 'package:args/args.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 
+import 'observer_conquest_verify.dart';
 import 'observer_session_runner.dart';
 import 'setup_config_parser.dart';
 
 /// Exit code for usage / argument errors (sysexits.h EX_USAGE).
 const int kExitUsage = 64;
+
+/// Exit code when `--verify-conquest` fails (Refs #2504).
+const int kExitConquestVerifyFailed = 5;
 
 String _usage(ArgParser parser) {
   final buf = StringBuffer()
@@ -55,6 +59,14 @@ Future<int> runObserverGameCli(
     ..addOption(
       'config',
       help: 'Optional JSON GameSetupConfig path (init_game-compatible).',
+    )
+    ..addFlag(
+      'verify-conquest',
+      help:
+          'After a successful run, verify each GP gained >=3 net Old World '
+          'provinces between turn 1 and turn '
+          '$kObserverConquestCanonicalTurns snapshots (requires '
+          '--max-turns >= $kObserverConquestCanonicalTurns or omit cap).',
     );
 
   late final ArgResults results;
@@ -125,9 +137,59 @@ Future<int> runObserverGameCli(
     return 2;
   }
 
-  return runObserverSession(
+  final verifyConquest = results['verify-conquest'] == true;
+  if (verifyConquest &&
+      maxTurnsCap != null &&
+      maxTurnsCap < kObserverConquestCanonicalTurns) {
+    emitStderr(
+      'Error: --verify-conquest requires --max-turns >= '
+      '$kObserverConquestCanonicalTurns (got $maxTurnsCap).',
+    );
+    return kExitUsage;
+  }
+
+  final sessionCode = await runObserverSession(
     outputRoot: outputRoot,
     setupConfig: setup,
     maxTurnsCap: maxTurnsCap,
   );
+  if (sessionCode != 0) {
+    return sessionCode;
+  }
+
+  if (!verifyConquest) {
+    return 0;
+  }
+
+  final traceRoot = Directory('$outputRoot/observer-traces');
+  if (!traceRoot.existsSync()) {
+    emitStderr('Error: observer traces missing under $outputRoot');
+    return 2;
+  }
+  final gameDirs = traceRoot.listSync().whereType<Directory>().toList();
+  if (gameDirs.length != 1) {
+    emitStderr(
+      'Error: expected exactly one game trace directory, found '
+      '${gameDirs.length}',
+    );
+    return 2;
+  }
+
+  final failures = verifyObserverConquestFromTraceDir(
+    gameDirs.first.path,
+    endTurn: kObserverConquestCanonicalTurns,
+  );
+  if (failures.isEmpty) {
+    emitStdout(
+      'Conquest verification passed (seed=${setup.seed ?? "default"}, '
+      '$kObserverConquestCanonicalTurns turns, '
+      '>=$kObserverConquestMinOwGainPerGp OW provinces per GP).',
+    );
+    return 0;
+  }
+
+  for (final line in failures) {
+    emitStderr('conquest_verify: $line');
+  }
+  return kExitConquestVerifyFailed;
 }
