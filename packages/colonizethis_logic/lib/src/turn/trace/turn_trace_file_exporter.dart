@@ -4,11 +4,28 @@ import 'dart:io';
 import 'package:colonizethis_logic/src/turn/trace/turn_trace_contracts.dart';
 
 class TurnTraceFileExporter {
-  TurnTraceFileExporter({this.rootDirectory = 'tmp', this.maxFilesPerGame = 10})
-    : assert(maxFilesPerGame > 0, 'maxFilesPerGame must be positive');
+  TurnTraceFileExporter({
+    this.rootDirectory = 'tmp',
+    this.maxFilesPerGame = 10,
+    this.traceDirectorySegment = 'turn-traces',
+    this.pruningEnabled = true,
+  }) : assert(maxFilesPerGame > 0, 'maxFilesPerGame must be positive');
 
+  /// Root folder for exporter output (e.g. app trace root or `<output>/observer-traces`).
   final String rootDirectory;
+
+  /// When [pruningEnabled] is true, at most [maxFilesPerGame] `.json` files are
+  /// retained per resolved `gameId` directory.
   final int maxFilesPerGame;
+
+  /// Intermediate path segment between [rootDirectory] and `/<gameId>/`.
+  ///
+  /// Default `turn-traces` preserves historical app paths. Pass an empty string
+  /// so files land in `rootDirectory/<gameId>/` (observer tool § artifact layout).
+  final String traceDirectorySegment;
+
+  /// When false (observer runs / long captures), skips `_pruneOlderTraces`.
+  final bool pruningEnabled;
 
   Future<File> export(TurnTraceMergedDocument document) async {
     final gameId = document.meta.gameId;
@@ -16,7 +33,9 @@ class TurnTraceFileExporter {
     final exportedAt =
         DateTime.tryParse(document.meta.exportedAt)?.toUtc() ??
         DateTime.now().toUtc();
-    final directoryPath = '$rootDirectory/turn-traces/$gameId';
+    final directoryPath = traceDirectorySegment.isEmpty
+        ? '$rootDirectory/$gameId'
+        : '$rootDirectory/$traceDirectorySegment/$gameId';
     final directory = Directory(directoryPath);
     if (!await directory.exists()) {
       await directory.create(recursive: true);
@@ -28,7 +47,9 @@ class TurnTraceFileExporter {
       '  ',
     ).convert(document.toJson());
     await file.writeAsString('$jsonContent\n');
-    await _pruneOlderTraces(directory: directory, keep: maxFilesPerGame);
+    if (pruningEnabled) {
+      await _pruneOlderTraces(directory: directory, keep: maxFilesPerGame);
+    }
     return file;
   }
 
@@ -38,9 +59,20 @@ class TurnTraceFileExporter {
   }) async {
     final files = <File>[];
     await for (final entity in directory.list(followLinks: false)) {
-      if (entity is File && entity.path.endsWith('.json')) {
-        files.add(entity);
+      if (entity is! File || !entity.path.endsWith('.json')) {
+        continue;
       }
+      final name = entity.uri.pathSegments.isEmpty
+          ? entity.path
+          : entity.uri.pathSegments.last;
+      // Observer/layout writers may coexist in the same directory; only prune merged trace exports.
+      if (name.endsWith('.snapshot.json') || name == 'run-summary.json') {
+        continue;
+      }
+      if (!name.startsWith('turn-')) {
+        continue;
+      }
+      files.add(entity);
     }
     if (files.length <= keep) {
       return;

@@ -7,8 +7,8 @@ import 'package:run_observer_game/run_observer_game_cli.dart';
 
 final _log = packageLogger('cli');
 
-void main(List<String> arguments) {
-  final code = runObserverGameCli(
+Future<void> main(List<String> arguments) async {
+  final code = await runObserverGameCli(
     arguments,
     emitStdout: stdout.writeln,
     emitStderr: (line) {

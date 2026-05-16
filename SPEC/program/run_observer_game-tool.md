@@ -30,7 +30,24 @@ Under `<output>/observer-traces/<gameId>/`:
 - Per turn (post-resolution): `turn-<zero-padded>.snapshot.json` and `turn-<zero-padded>.html` — **same canonical** `ObserverSnapshot` data; HTML is a render only.
 - End: `run-summary.json` — `termination_reason` (`military_victory` \| `calendar_1800` \| `max_turns_override` \| …), `declared_winner_player_id` or none per `SPEC/game/victory.md` / calendar-cap winner rules (`greatPowerPowerScore`, tie → **no-one** where specified), final turn, seed, paths to artifacts.
 
-**Snapshot schema:** Versioned `ObserverSnapshot` type; field catalog lands in this doc in the same PR series as `S4` (loop + writers). `S3` adds package + documented contract above.
+## ObserverSnapshot (`ObserverSnapshot` v1)
+
+Versioned map written to `turn-<nnnnnn>.snapshot.json` and embedded (escaped) in paired `turn-<nnnnnn>.html`. **`observerSnapshotSchemaVersion` is `1`.**
+
+| Field | Meaning |
+|-------|---------|
+| `observerSnapshotSchemaVersion` | Always `1` for this shape. |
+| `gameId` | Game id string. |
+| `turnNumber` | Post-resolution turn index (`Game.worldState.turnState.turnNumber`). |
+| `calendarYearAtTurnStart` | `yearAtTurn(turnNumber)` using the game's active `TurnTimeMapping` (if `turnNumber` is below 1, the lookup uses 1). |
+| `calendarCampaignHalted` | Mirrors `Game.calendarCampaignHalted`. |
+| `players` | One object per `game.players`: ids, display name, human flag, GP power score, treasury, military strength / fleet hints, sorted tech unlock ids. |
+| `provinceOwnershipSorted` | Sorted list of `{ id, ownerId }` for every province (`allProvinces`), ids prefixed per world model. |
+| `diplomacyRelationSummariesSorted` | Stable string lines summarizing each `diplomacyRelations` row (pair, score, level, war/peace). |
+| `militaryArmySummariesSorted` | One string per land army (id, owner, region, regiment count). |
+| `militaryFleetSummariesSorted` | One string per fleet (id, owner, ship count). |
+
+HTML is a render-only wrapper: the `<pre>` body uses the **same** pretty-printed JSON bytes as the `.snapshot.json` file (after `HtmlEscape`).
 
 ## Relationship to app / ctdev
 

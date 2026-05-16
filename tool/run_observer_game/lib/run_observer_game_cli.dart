@@ -1,12 +1,13 @@
+import 'dart:io';
+
 import 'package:args/args.dart';
+import 'package:colonizethis_data/colonizethis_data.dart';
+
+import 'observer_session_runner.dart';
+import 'setup_config_parser.dart';
 
 /// Exit code for usage / argument errors (sysexits.h EX_USAGE).
 const int kExitUsage = 64;
-
-/// Package slice [S3]: CLI parsing and help only; observer loop is **S4** (#2498).
-const String kNotImplementedS4 =
-    'run_observer_game: full observer run (init, Full AI loop, artifacts) '
-    'is not implemented in this slice; see GitHub #2498 subtask S4.';
 
 String _usage(ArgParser parser) {
   final buf = StringBuffer()
@@ -14,8 +15,9 @@ String _usage(ArgParser parser) {
     ..writeln('  melos run run_observer_game -- [options]')
     ..writeln('')
     ..writeln(
-      'Run an all-Great-Power Full AI campaign with merged turn traces and '
-      'observer snapshots (SPEC/program/run_observer_game-tool.md).',
+      'Full-AI observer campaign: init default GPs, merged turn traces every turn, '
+      'HTML + JSON ObserverSnapshot per turn, run-summary.json '
+      '(SPEC/program/run_observer_game-tool.md). Traces are not pruned.',
     )
     ..writeln('')
     ..writeln('Options:')
@@ -25,13 +27,18 @@ String _usage(ArgParser parser) {
 
 /// Parses CLI arguments; writes help to [emitStdout], errors to [emitStderr].
 /// Returns a process exit code.
-int runObserverGameCli(
+Future<int> runObserverGameCli(
   List<String> arguments, {
   required void Function(String line) emitStdout,
   required void Function(String line) emitStderr,
-}) {
+}) async {
   final parser = ArgParser(usageLineLength: 100)
-    ..addFlag('help', abbr: 'h', negatable: false, help: 'Print usage and exit.')
+    ..addFlag(
+      'help',
+      abbr: 'h',
+      negatable: false,
+      help: 'Print usage and exit.',
+    )
     ..addOption(
       'output',
       abbr: 'o',
@@ -40,7 +47,8 @@ int runObserverGameCli(
     ..addOption('seed', help: 'Optional RNG seed (init_game semantics).')
     ..addOption(
       'max-turns',
-      help: 'Optional cap; default = calendar-1800 turn T for the game mapping.',
+      help:
+          'Cap full turns resolved; omit to run until victory or calendar halt.',
     )
     ..addOption(
       'config',
@@ -60,7 +68,64 @@ int runObserverGameCli(
     return 0;
   }
 
-  emitStderr(kNotImplementedS4);
-  emitStderr('Use --help for usage.');
-  return 2;
+  final outputRaw = results['output'] as String?;
+  if (outputRaw == null || outputRaw.trim().isEmpty) {
+    emitStderr('Error: --output is required.');
+    emitStderr('Use --help for usage.');
+    return kExitUsage;
+  }
+
+  final outputRoot = Directory(outputRaw).absolute.path;
+
+  int? seedParsed;
+  final seedStr = results['seed'] as String?;
+  if (seedStr != null && seedStr.trim().isNotEmpty) {
+    seedParsed = int.tryParse(seedStr.trim());
+    if (seedParsed == null) {
+      emitStderr('Error: --seed must be an integer.');
+      return kExitUsage;
+    }
+  }
+
+  int? maxTurnsCap;
+  final maxTurnsStr = results['max-turns'] as String?;
+  if (maxTurnsStr != null && maxTurnsStr.trim().isNotEmpty) {
+    maxTurnsCap = int.tryParse(maxTurnsStr.trim());
+    if (maxTurnsCap == null || maxTurnsCap < 0) {
+      emitStderr('Error: --max-turns must be a non-negative integer.');
+      return kExitUsage;
+    }
+  }
+
+  final configPathRaw = results['config'] as String?;
+  final configPath = configPathRaw == null || configPathRaw.isEmpty
+      ? null
+      : configPathRaw;
+
+  GameSetupConfig setup;
+  try {
+    setup = gameSetupFromObserverCli(
+      configJsonPath: configPath,
+      seedOverride: seedParsed,
+    );
+  } on FileSystemException catch (e) {
+    emitStderr('Error: ${e.message} (${e.path})');
+    return kExitUsage;
+  } on Object catch (e) {
+    emitStderr('Error: failed to load config: $e');
+    return kExitUsage;
+  }
+
+  try {
+    await Directory(outputRoot).create(recursive: true);
+  } on Object catch (e) {
+    emitStderr('Error: cannot create output root: $e');
+    return 2;
+  }
+
+  return runObserverSession(
+    outputRoot: outputRoot,
+    setupConfig: setup,
+    maxTurnsCap: maxTurnsCap,
+  );
 }
