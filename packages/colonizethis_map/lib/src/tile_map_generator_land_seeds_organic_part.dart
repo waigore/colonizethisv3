@@ -239,7 +239,7 @@ _placeLandSeedsOrganicImpl(
   final landSeeds = <(int x, int y)>[];
   final continentBySeedIndex = <int>[];
   var g = copyTileMapGrid(grid);
-  final continentGrid = List.generate(
+  var continentGrid = List.generate(
     params.height,
     (_) => List.filled(params.width, -1),
   );
@@ -302,11 +302,9 @@ _placeLandSeedsOrganicImpl(
       budgetPerContinent,
     );
     g = voronoiResult.$1;
-    for (var y = 0; y < params.height; y++) {
-      for (var x = 0; x < params.width; x++) {
-        continentGrid[y][x] = voronoiResult.$2[y][x];
-      }
-    }
+    // [_assignLandByLandSeedsWithNoJoin] already returns a fresh continent grid;
+    // adopt it instead of copying cell-by-cell into the prior buffer (Refs #2489).
+    continentGrid = voronoiResult.$2;
   }
 
   // Step 3: Coastline growth if budget remains
