@@ -496,16 +496,12 @@ Future<bool> _anyExplorerHasEnabledExploreAssignFleetE2e(
   // the tree. Replace the prior fixed 200ms pump with a bounded adaptive
   // poll that returns as soon as the sheet finishes dismissing.
   Future<void> waitForAssignSheetDismissed() async {
-    final wait = Stopwatch()..start();
-    var dismissPollMs = 25;
-    const dismissCap = Duration(milliseconds: 400);
-    while (wait.elapsed < dismissCap) {
-      if (exploreTile.evaluate().isEmpty) {
-        return;
-      }
-      await tester.pump(Duration(milliseconds: dismissPollMs));
-      dismissPollMs = e2eAdaptivePollRampAfterIdle(dismissPollMs);
-    }
+    await e2ePumpUntilConditionOrIdle(
+      tester,
+      () => exploreTile.evaluate().isEmpty,
+      timeout: const Duration(milliseconds: 400),
+      phaseName: 'pump_until_assign_sheet_dismissed',
+    );
   }
 
   final visitedAssignWidgets = <int>{};
@@ -571,20 +567,23 @@ Future<void> _advanceOneHumanTurn(
   // resolving immediately. Poll adaptively for whichever lands first so we
   // never pay a worst-case fixed settle here.
   final confirmFinder = find.text(l10n.common_yes);
-  final confirmSw = Stopwatch()..start();
-  var confirmPollMs = 25;
-  const confirmCap = Duration(milliseconds: 400);
-  while (confirmSw.elapsed < confirmCap) {
-    if (confirmFinder.hitTestable().evaluate().isNotEmpty) {
-      break;
-    }
-    final maybeAfter = _readNextTurnButtonLabel(tester);
-    if (maybeAfter != null && maybeAfter != before) {
-      perf?.timing('next_turn_advance', phaseSw.elapsed);
-      return;
-    }
-    await tester.pump(Duration(milliseconds: confirmPollMs));
-    confirmPollMs = e2eAdaptivePollRampAfterIdle(confirmPollMs);
+  await e2ePumpUntilConditionOrIdle(
+    tester,
+    () {
+      if (confirmFinder.hitTestable().evaluate().isNotEmpty) {
+        return true;
+      }
+      final maybeAfter = _readNextTurnButtonLabel(tester);
+      return maybeAfter != null && maybeAfter != before;
+    },
+    timeout: const Duration(milliseconds: 400),
+    perf: perf,
+    phaseName: 'pump_until_next_turn_confirm_or_label_advanced',
+  );
+  final earlyAfter = _readNextTurnButtonLabel(tester);
+  if (earlyAfter != null && earlyAfter != before) {
+    perf?.timing('next_turn_advance', phaseSw.elapsed);
+    return;
   }
 
   final confirmNextTurn = confirmFinder.hitTestable();
