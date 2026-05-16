@@ -124,7 +124,8 @@ void main() {
         tester,
         l10n,
         perf: perf,
-        navalPanelAlreadyOpen: true,
+        // Panel was opened above only when snapshot plumbing is unavailable.
+        navalPanelAlreadyOpen: ctE2eNavalPanelSnapshot == null,
       );
       await closeBottomSheet(tester, perf: perf, overallTimeout: _kMaxUiResponseWait);
 

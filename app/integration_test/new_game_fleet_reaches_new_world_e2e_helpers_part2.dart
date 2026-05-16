@@ -318,7 +318,7 @@ Future<void> _awaitNwCoastalOrVisibleLandForBundledExploreE2e({
       l10n,
       useNewWorldMapTabFirst: true,
       allowWarpDestinations: false,
-      navalPanelAlreadyOpen: true,
+      navalPanelAlreadyOpen: ctE2eNavalPanelSnapshot == null,
     );
     await closeBottomSheet(tester, overallTimeout: _kMaxUiResponseWait);
     await _advanceOneHumanTurn(tester, l10n);
