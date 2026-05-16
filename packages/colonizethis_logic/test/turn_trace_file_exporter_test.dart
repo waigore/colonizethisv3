@@ -68,6 +68,71 @@ void main() {
       expect(files.contains('turn-12-20260508T070012000Z.json'), isTrue);
     },
   );
+
+  test(
+    'empty traceDirectorySegment drops turn-traces parent directory',
+    () async {
+      final exporter = TurnTraceFileExporter(
+        rootDirectory: tempRoot.path,
+        traceDirectorySegment: '',
+      );
+      final document = _document(
+        gameId: 'flat-path',
+        turnNumber: 3,
+        exportedAt: '2026-05-08T07:10:11.123Z',
+      );
+      final file = await exporter.export(document);
+      expect(file.path.startsWith('${tempRoot.path}/flat-path/'), isTrue);
+    },
+  );
+
+  test(
+    'pruning skips snapshot and run-summary artifacts in the same folder',
+    () async {
+      final exporter = TurnTraceFileExporter(rootDirectory: tempRoot.path);
+      final gameId = 'mixed-artifacts';
+      final baseDir = Directory('${tempRoot.path}/turn-traces/$gameId');
+      await baseDir.create(recursive: true);
+
+      for (var turn = 1; turn <= 12; turn++) {
+        final timestamp = DateTime.utc(2026, 5, 8, 8, 0, turn);
+        final document = _document(
+          gameId: gameId,
+          turnNumber: turn + 100,
+          exportedAt: timestamp.toIso8601String(),
+        );
+        await exporter.export(document);
+      }
+      await File(
+        '${baseDir.path}/turn-000001.snapshot.json',
+      ).writeAsString('{}');
+      await File('${baseDir.path}/run-summary.json').writeAsString('{}');
+
+      await exporter.export(
+        _document(
+          gameId: gameId,
+          turnNumber: 999,
+          exportedAt: DateTime.utc(2026, 5, 8, 9, 0, 0).toIso8601String(),
+        ),
+      );
+
+      final files =
+          baseDir
+              .listSync()
+              .whereType<File>()
+              .map((file) => file.uri.pathSegments.last)
+              .toList()
+            ..sort();
+      expect(files.contains('run-summary.json'), isTrue);
+      expect(files.contains('turn-000001.snapshot.json'), isTrue);
+      expect(
+        files
+            .where((n) => n.startsWith('turn-') && !n.contains('.snapshot'))
+            .length,
+        10,
+      );
+    },
+  );
 }
 
 TurnTraceMergedDocument _document({

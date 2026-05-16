@@ -85,6 +85,7 @@ class Game {
     this.globalGameSeed,
     this.greatPowerColorOverride,
     this.victory,
+    this.calendarCampaignHalted = false,
     this.richesCashMultiplier = 1.0,
     this.capitalTileGrainBonusPerTurn = 5,
     this.politicalGlyphByPlayerId = const {},
@@ -143,6 +144,10 @@ class Game {
 
   /// Victory state when game has been won. Null when game is ongoing.
   final VictoryState? victory;
+
+  /// When true, the campaign calendar cap has been reached without military victory;
+  /// no further full-turn resolution mutates state. SPEC/game/turn-time-mapping.md.
+  final bool calendarCampaignHalted;
 
   /// Multiplier for riches-to-treasury conversion. Default 1.0. Scenario/ruleset
   /// may override (e.g. El Dorado 1.5). Per SPEC/program/turn-resolution-phase-details.md.
@@ -203,6 +208,7 @@ class Game {
         (k, v) => MapEntry(k, v),
       ),
     if (victory != null) 'victory': victory!.toJson(),
+    if (calendarCampaignHalted) 'calendarCampaignHalted': true,
     if (richesCashMultiplier != 1.0)
       'richesCashMultiplier': richesCashMultiplier,
     if (capitalTileGrainBonusPerTurn != 5)
@@ -393,6 +399,8 @@ class Game {
       lastHumanResearchCategoryCompletionTurn:
           (json['lastHumanResearchCategoryCompletionTurn'] as num?)?.toInt(),
       mapViewState: mapViewState,
+      calendarCampaignHalted:
+          json['calendarCampaignHalted'] as bool? ?? false,
     );
   }
 
@@ -417,6 +425,7 @@ class Game {
     int? globalGameSeed,
     Map<String, List<int>>? greatPowerColorOverride,
     VictoryState? victory,
+    bool? calendarCampaignHalted,
     double? richesCashMultiplier,
     int? capitalTileGrainBonusPerTurn,
     Map<String, String>? politicalGlyphByPlayerId,
@@ -449,6 +458,8 @@ class Game {
       greatPowerColorOverride:
           greatPowerColorOverride ?? this.greatPowerColorOverride,
       victory: victory ?? this.victory,
+      calendarCampaignHalted:
+          calendarCampaignHalted ?? this.calendarCampaignHalted,
       richesCashMultiplier: richesCashMultiplier ?? this.richesCashMultiplier,
       capitalTileGrainBonusPerTurn:
           capitalTileGrainBonusPerTurn ?? this.capitalTileGrainBonusPerTurn,
@@ -492,6 +503,7 @@ class Game {
             other.greatPowerColorOverride,
           ) &&
           victory == other.victory &&
+          calendarCampaignHalted == other.calendarCampaignHalted &&
           richesCashMultiplier == other.richesCashMultiplier &&
           capitalTileGrainBonusPerTurn == other.capitalTileGrainBonusPerTurn &&
           _mapEquals(
@@ -529,8 +541,9 @@ class Game {
     greatPowerColorOverride != null
         ? Object.hashAll(greatPowerColorOverride!.entries)
         : null,
-    victory,
     Object.hash(
+      victory,
+      calendarCampaignHalted,
       richesCashMultiplier,
       capitalTileGrainBonusPerTurn,
       Object.hashAll(politicalGlyphByPlayerId.entries),

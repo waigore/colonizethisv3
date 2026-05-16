@@ -289,6 +289,7 @@ An **absolute power score** is computed for each Great Power for display on the 
 - **Definitions:** `provinceCount` = number of provinces owned by that GP (Old + New World). `regimentStrength` = same aggregation as [military-strength](../program/military-strength.md) (FPN+FPM, era downgrade, medal multiplier). `shipCount` = total number of ships (sum of `shipTypeIds.length` over all fleets owned by that GP).
 - **Default weights:** W_province = 10, W_regiment = 1, W_ship = 5. So one province = 10, one point of army strength = 1, one ship = 5.
 - **Display:** The diplomacy panel shows this score for each GP. If the GP’s score is **higher** than the human player’s score, the value is shown in **red**; otherwise in **green**.
+- **Calendar campaign end:** When summarizing a finished campaign without military victory, the same formula ranks GPs for a **declared winner**; ties yield **no-one** per [victory.md](victory.md) § Calendar campaign end.
 
 ### Where defined (current product)
 

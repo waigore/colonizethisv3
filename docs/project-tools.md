@@ -41,6 +41,28 @@ melos run init_game -- --minor-nation-count 0 --tribe-count 3 --output-map=./map
 
 ---
 
+## run_observer_game
+
+Full-AI observer campaign loop with merged turn traces, per-turn HTML + snapshot JSON, and `run-summary.json` under `<output>/observer-traces/<gameId>/`. Global calendar cap (year **1800**) uses the same game rules as the app. Spec: [SPEC/program/run_observer_game-tool.md](../SPEC/program/run_observer_game-tool.md). Tracked by [GitHub #2498](https://github.com/waigore/colonizethisv3/issues/2498).
+
+**Invocation**
+
+```bash
+melos run run_observer_game -- [options]
+```
+
+**Options (see spec for semantics)**
+
+- `--help` / `-h` — usage
+- `--output <dir>` — artifact root (required for a full run when implemented)
+- `--seed <n>` — optional RNG seed
+- `--max-turns <n>` — optional turn cap (default = calendar-1800 turn for the mapping)
+- `--config <path>` — optional `GameSetupConfig` JSON (`init_game`-compatible)
+
+Full observer loop (Full AI + traces + snapshots + `run-summary.json`) is implemented per GitHub **#2498**; use `--max-turns` for short CI-style runs.
+
+---
+
 ## generate_map
 
 End-to-end map generation: generate tile map from province and continent count, infer topology from the grid, output graph description, map summary, tile map PNG, and topology graph (DOT + PNG when Graphviz installed). Spec: [SPEC/program/map-data.md](../SPEC/program/map-data.md).

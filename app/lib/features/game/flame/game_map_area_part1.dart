@@ -469,6 +469,9 @@ mixin _GameMapAreaStatePart1 on ConsumerState<GameMapArea> {
     }
     final game = ref.read(currentGameProvider);
     if (game == null) return;
+    if (!GameMapAreaStateLogic.allowsFullTurnResolution(game)) {
+      return;
+    }
 
     final currentTurn = game.worldState.turnState.turnNumber;
     final ok = await showNextTurnConfirmationDialog(

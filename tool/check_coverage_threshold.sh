@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # Check per-target line coverage against a threshold (default 90%).
-# Checks app, ctdev, and packages only (not tool/ packages). Run after tool/test_coverage.py. Requires lcov.
+# Default targets: app, ctdev, and packages. Pass explicit dirs to include tool packages
+# (e.g. tool/run_observer_game) after generating coverage/lcov.info under each. Requires lcov.
 # Usage: tool/check_coverage_threshold.sh [threshold] [dir1 [dir2 ...]]
 # Example: tool/check_coverage_threshold.sh 90
 # Example: tool/check_coverage_threshold.sh 90 packages/colonizethis_logic

@@ -7,6 +7,13 @@ import 'per_player_work_target_selection_cache.dart';
 
 /// Pure-ish helpers for `GameMapArea` state translation.
 class GameMapAreaStateLogic {
+  /// Full turn resolution is a no-op once military [Game.victory] is set or the
+  /// campaign calendar cap has been reached ([Game.calendarCampaignHalted]).
+  /// SPEC/game/victory.md § UI blocking.
+  static bool allowsFullTurnResolution(ct_models.Game game) {
+    return !game.calendarCampaignHalted && game.victory == null;
+  }
+
   static const ({bool showIcon, bool enabled, bool hasExplorerUnits})
   kHiddenExplorerInlineActionState = (
     showIcon: false,
