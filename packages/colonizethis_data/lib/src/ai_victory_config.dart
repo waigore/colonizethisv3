@@ -31,3 +31,15 @@ const int kExpandBonusWhenInvadableProvinces = 15;
 
 /// When behind victory pace by more than this many provinces, conquer score is floored at 0.
 const int kConquerScoreFloorProvincesToVictoryThreshold = 20;
+
+/// Bonus to declare-war scoring toward a weak-neighbor Great Power when war desire is high.
+const int kDeclareWarGpWeakNeighborBonus = 12;
+
+/// Minimum war-desire score (0..100) for [kDeclareWarGpWeakNeighborBonus].
+const int kDeclareWarGpWeakNeighborMinWarDesire = 55;
+
+/// Extra build weight for regiments when behind military victory pace.
+const double kBuildRegimentBonusWhenBehindVictoryPace = 1.5;
+
+/// Provinces-to-victory threshold for [kBuildRegimentBonusWhenBehindVictoryPace].
+const int kBuildRegimentVictoryPaceThreshold = 10;

@@ -145,6 +145,7 @@ DomainPlannerOutcome runDomainPlannersWithOutcome({
       config: config,
       seed: seeds.economySeed + 1,
       nationId: nationId,
+      provincesToVictory: snapshot.conquest.provincesToVictory,
     );
     if (chosen != null) {
       _log.i('build chosen nationId=$nationId unitType=${chosen.unitType}');

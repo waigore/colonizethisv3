@@ -96,6 +96,10 @@ List<int> computeDiplomaticCandidateScores({
               o.targetFactionId,
             )) {
               s += getDeclareWarTargetBonusWeakerNeighbor(agendaId);
+              if (game.playerById(o.targetFactionId) != null &&
+                  warDesire >= kDeclareWarGpWeakNeighborMinWarDesire) {
+                s += kDeclareWarGpWeakNeighborBonus;
+              }
             }
             if (snapshot.conquest.preferredConquestTargetFactionIdsSorted
                 .contains(o.targetFactionId)) {
