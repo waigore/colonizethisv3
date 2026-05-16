@@ -20,6 +20,7 @@ export 'order_suggestion_move_army.dart'
         suggestMoveOrders;
 export 'order_suggestion_naval_diplomatic.dart'
     show
+        suggestDeclareWarOrders,
         suggestDiplomaticOrders,
         suggestNavalMissionOrders,
         suggestNavalMoveOrders;

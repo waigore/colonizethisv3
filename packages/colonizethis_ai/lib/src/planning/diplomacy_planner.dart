@@ -74,12 +74,19 @@ DiplomacyPlannerResult runDiplomacyPlannerWithResult({
     return DiplomacyPlannerResult(orders: orders);
   }
 
-  var diploCandidates = suggestionAPI.suggestDiplomaticOrders(
-    view,
-    game,
-    topology,
-    orders,
-  );
+  var diploCandidates = pass == DiplomacyPlannerPass.declareWarOnly
+      ? suggestionAPI.suggestDeclareWarOrders(
+          view,
+          game,
+          topology,
+          orders,
+        )
+      : suggestionAPI.suggestDiplomaticOrders(
+          view,
+          game,
+          topology,
+          orders,
+        );
   if (diploCandidates.isEmpty) {
     return DiplomacyPlannerResult(orders: orders);
   }
@@ -91,9 +98,6 @@ DiplomacyPlannerResult runDiplomacyPlannerWithResult({
 
   switch (pass) {
     case DiplomacyPlannerPass.declareWarOnly:
-      diploCandidates = diploCandidates
-          .where((o) => o.type == DiplomaticOrderType.declareWar)
-          .toList();
       break;
     case DiplomacyPlannerPass.nonDeclareWarOnly:
       diploCandidates = diploCandidates
