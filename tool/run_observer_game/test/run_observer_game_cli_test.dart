@@ -8,6 +8,21 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:run_observer_game/observer_session_runner.dart';
 import 'package:run_observer_game/run_observer_game_cli.dart';
 
+/// Decodes `<pre>` text produced by `HtmlEscape` (snapshot HTML wrapper).
+String _decodedPreBodyFromObserverHtml(String html) {
+  final m = RegExp(r'<pre>([\s\S]*?)</pre>').firstMatch(html);
+  expect(m, isNotNull);
+  var s = m!.group(1)!;
+  s = s
+      .replaceAll('&amp;', '&')
+      .replaceAll('&lt;', '<')
+      .replaceAll('&gt;', '>')
+      .replaceAll('&quot;', '"')
+      .replaceAll('&#39;', "'")
+      .replaceAll('&#x27;', "'");
+  return s;
+}
+
 void main() {
   group('runObserverGameCli', () {
     test('help exits 0 and mentions melos', () async {
@@ -193,6 +208,20 @@ void main() {
             jsonDecode(summaryFile.readAsStringSync()) as Map<String, Object?>;
         expect(sum['termination_reason'], 'max_turns_override');
         expect(sum['resolved_full_turns'], 1);
+
+        final snapshotPath = names.firstWhere(
+          (n) => n.endsWith('.snapshot.json'),
+        );
+        final htmlPath = names.firstWhere((n) => n.endsWith('.html'));
+        final snapshotText = File('${gameDir.path}/$snapshotPath')
+            .readAsStringSync();
+        final htmlText = File('${gameDir.path}/$htmlPath').readAsStringSync();
+        final fromHtml = _decodedPreBodyFromObserverHtml(htmlText).trimRight();
+        expect(
+          jsonDecode(fromHtml),
+          jsonDecode(snapshotText.trimRight()),
+          reason: 'HTML <pre> must render the same canonical JSON as the snapshot file',
+        );
       },
       timeout: const Timeout(Duration(minutes: 15)),
     );

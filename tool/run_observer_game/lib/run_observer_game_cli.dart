@@ -48,7 +48,9 @@ Future<int> runObserverGameCli(
     ..addOption(
       'max-turns',
       help:
-          'Cap full turns resolved; omit to run until victory or calendar halt.',
+          'Cap full turns resolved. Omit to stop at military victory or when the '
+          'campaign reaches the calendar year-1800 boundary for the game mapping '
+          '(TurnTimeMapping.gdd01 => turn 201). Pass a lower value for short runs.',
     )
     ..addOption(
       'config',
