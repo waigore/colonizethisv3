@@ -20,6 +20,21 @@ void main() {
       expect(game2.worldState.turnState.turnNumber, 1);
     });
 
+    test('calendarCampaignHalted round-trip JSON', () {
+      final game = Game(
+        id: 'g1',
+        calendarCampaignHalted: true,
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 201),
+          oldWorld: const RegionData(),
+          newWorld: const RegionData(),
+        ),
+        players: const [Player(id: 'p1', displayName: 'Spain', isHuman: true)],
+      );
+      final restored = Game.fromJson(game.toJson());
+      expect(restored.calendarCampaignHalted, isTrue);
+    });
+
     test(
       'fromJson accepts turnTimeMapping as Map<dynamic,dynamic> (Hive typing)',
       () {
@@ -72,6 +87,7 @@ void main() {
       );
       expect(game2.worldState.turnState.turnNumber, 1);
     });
+
     test('equality and hashCode', () {
       final game = Game(
         id: 'g1',

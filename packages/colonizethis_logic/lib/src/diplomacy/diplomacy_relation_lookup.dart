@@ -68,6 +68,26 @@ int greatPowerPowerScore(Game game, String factionId) {
       ships * powerScoreShipWeight;
 }
 
+/// Great Power with strictly highest [greatPowerPowerScore], or `null` when tied
+/// or there are no players. SPEC/game/victory.md § Calendar campaign end.
+String? pickUniqueGreatPowerLeaderByPowerScore(Game game) {
+  if (game.players.isEmpty) return null;
+  final scores = <String, int>{
+    for (final p in game.players) p.id: greatPowerPowerScore(game, p.id),
+  };
+  var bestScore = -1;
+  for (final s in scores.values) {
+    if (s > bestScore) bestScore = s;
+  }
+  final leaders = scores.entries
+      .where((e) => e.value == bestScore)
+      .map((e) => e.key)
+      .toList()
+    ..sort();
+  if (leaders.length != 1) return null;
+  return leaders.single;
+}
+
 /// Join Empire cost in pounds for absorbing [targetId] (Minor or Tribe).
 int joinEmpireCostForMinorOrTribe(Game game, String targetId) {
   final n = provinceCountOwnedBy(game, targetId);

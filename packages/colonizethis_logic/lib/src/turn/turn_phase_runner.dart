@@ -18,6 +18,25 @@ TurnResolutionResult runTurnResolutionPipeline({
   required Game gameAtResolutionStart,
   required TurnResolverConfig config,
 }) {
+  if (gameAtResolutionStart.calendarCampaignHalted) {
+    final turn = gameAtResolutionStart.worldState.turnState.turnNumber;
+    logicLog.i('turn $turn resolve skipped (calendar halted)');
+    emitPlayerDiscoveryEvents(
+      gameAtResolutionStart,
+      gameAtResolutionStart,
+      turn,
+      config.eventBus,
+      config.onGameEvent,
+    );
+    final news = buildTurnNewsDigestForComplete(
+      start: gameAtResolutionStart,
+      end: gameAtResolutionStart,
+    );
+    return TurnResolutionComplete(
+      news.game,
+      turnNewsDigest: news.digest,
+    );
+  }
   var acc = TurnPipelineState(game: gameAtResolutionStart);
   final turn = acc.game.worldState.turnState.turnNumber;
   final phaseIndex = config.startFromPhase != null

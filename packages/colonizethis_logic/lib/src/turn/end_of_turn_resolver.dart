@@ -33,7 +33,17 @@ Game runEndOfTurnPhase(
     );
   }
 
-  _emitEraChangeDialogue(game, onDialogue);
+  final mapping = game.turnTimeMapping ?? TurnTimeMapping.gdd01;
+  final currentTurn = game.worldState.turnState.turnNumber;
+  final tStop = mapping.turnNumberForStartCalendarYear(
+    TurnTimeMapping.campaignCalendarStopStartYear,
+  );
+  final haltAfterCalendar =
+      tStop != null && currentTurn == tStop;
+
+  if (!haltAfterCalendar) {
+    _emitEraChangeDialogue(game, onDialogue);
+  }
 
   final (visibilityByTile, nextSpyTimers) = applySpyRevealTimerDecay(game);
   var stateForFog = game.copyWith(
@@ -58,6 +68,23 @@ Game runEndOfTurnPhase(
     topology,
     topologyByRegion: topologyByRegion,
   );
+
+  if (haltAfterCalendar) {
+    logicLog.i(
+      'calendar campaign halt at turn=$currentTurn '
+      '(year ${mapping.yearAtTurn(currentTurn)})',
+    );
+    return game.copyWith(
+      calendarCampaignHalted: true,
+      worldState: game.worldState.copyWith(
+        turnState: game.worldState.turnState.copyWith(
+          phase: TurnPhase.orders,
+        ),
+        playerVisibilityByTile: nextVisibility,
+        spyRevealTurnsByPlayer: nextSpyTimers,
+      ),
+    );
+  }
 
   return game.copyWith(
     worldState: game.worldState.copyWith(

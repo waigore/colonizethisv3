@@ -69,3 +69,7 @@ Map data required for resolution (`tileMapByRegion`, `topologyByRegion`, and com
 - Given a playable loaded game with required map data present
 - When TurnResolver runs the next turn
 - Then extraction, movement, combat, and AI order generation execute with map topology provided by the loaded map data
+
+## Campaign-complete guard
+
+When `Game.calendarCampaignHalted` is true, `runTurnResolutionPipeline` returns a completed result without re-entering phase handlers (see [turn-time-mapping.md](../game/turn-time-mapping.md) § Campaign calendar cap and [turn-resolution-phase-details.md](turn-resolution-phase-details.md) § End-of-turn).
