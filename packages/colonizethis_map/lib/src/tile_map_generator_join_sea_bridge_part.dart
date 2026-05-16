@@ -278,26 +278,24 @@ extension _TileMapGenJoinSeaBridgePart on _TileMapGenJoinSea {
     int count, {
     Set<(int x, int y)>? landCellsExcludedFromSeaRestore,
   }) {
-    final coastal = <(int x, int y)>[];
+    // One ocean-neighbour count per candidate; reuse for sort keys (Refs #2489).
+    final coastal = <(int x, int y, int oceanNeighbours)>[];
     for (var y = 0; y < params.height; y++) {
       for (var x = 0; x < params.width; x++) {
         if (grid[y][x] == seaZoneId) continue;
         if (landCellsExcludedFromSeaRestore?.contains((x, y)) ?? false) {
           continue;
         }
-        if (_graph.oceanNeighbourCount(grid, x, y, seaZoneId, ocean) >= 1) {
-          coastal.add((x, y));
+        final n = _graph.oceanNeighbourCount(grid, x, y, seaZoneId, ocean);
+        if (n >= 1) {
+          coastal.add((x, y, n));
         }
       }
     }
-    coastal.sort((a, b) {
-      final na = _graph.oceanNeighbourCount(grid, a.$1, a.$2, seaZoneId, ocean);
-      final nb = _graph.oceanNeighbourCount(grid, b.$1, b.$2, seaZoneId, ocean);
-      return nb.compareTo(na);
-    });
+    coastal.sort((a, b) => b.$3.compareTo(a.$3));
     final restoredToSea = <(int x, int y)>[];
     for (var i = 0; i < count && i < coastal.length; i++) {
-      final (x, y) = coastal[i];
+      final (x, y, _) = coastal[i];
       grid[y][x] = seaZoneId;
       if (terrainGrid != null) terrainGrid[y][x] = null;
       if (resourceGrid != null) resourceGrid[y][x] = null;
