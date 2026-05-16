@@ -40,12 +40,16 @@ class ConquestSummary {
     this.provincesToVictory = kMilitaryVictoryOldWorldProvinceThreshold,
     this.invadableProvinceIdsSorted = const [],
     this.preferredConquestTargetFactionIdsSorted = const [],
+    this.adjacentOwnerFactionIdsSorted = const [],
   });
 
   final int oldWorldProvincesOwned;
   final int provincesToVictory;
   final List<String> invadableProvinceIdsSorted;
   final List<String> preferredConquestTargetFactionIdsSorted;
+
+  /// Faction ids owning Old World provinces adjacent to owned territory (topology).
+  final List<String> adjacentOwnerFactionIdsSorted;
 }
 
 /// Economy summary from view (stockpile, workers, treasury).
@@ -249,9 +253,13 @@ class AIWorldSnapshot {
     final invadable = topology == null
         ? <String>[]
         : _invadableOldWorldProvinceIds(view, topology);
+    final adjacentOwners = topology == null
+        ? <String>[]
+        : _adjacentOwnerFactionIdsSorted(view, topology);
     final preferredTargets = <String>{
       ...threats.atWarWith,
       ...opportunities.weakNeighbors,
+      ...adjacentOwners,
     }.toList()
       ..sort();
     return ConquestSummary(
@@ -259,7 +267,38 @@ class AIWorldSnapshot {
       provincesToVictory: provincesToVictory,
       invadableProvinceIdsSorted: invadable,
       preferredConquestTargetFactionIdsSorted: preferredTargets,
+      adjacentOwnerFactionIdsSorted: adjacentOwners,
     );
+  }
+
+  static List<String> _adjacentOwnerFactionIdsSorted(
+    PlayerView view,
+    MapTopology topology,
+  ) {
+    final anchorProvinces = <String>{};
+    for (final p in view.provincesById.entries) {
+      if (p.value.ownerId == view.playerId) {
+        anchorProvinces.add(p.key);
+      }
+    }
+    final neighbors = neighborProvinceIdsFromTopology(
+      topology,
+      anchorProvinces,
+      view,
+    );
+    final owners = <String>{};
+    for (final fullId in neighbors) {
+      if (ProvinceId.regionIdFrom(fullId) != kOldWorldRegionId) continue;
+      final ownerId = view.provincesById[fullId]?.ownerId;
+      if (ownerId == null ||
+          ownerId.isEmpty ||
+          ownerId == view.playerId) {
+        continue;
+      }
+      owners.add(ownerId);
+    }
+    final sorted = owners.toList()..sort();
+    return sorted;
   }
 
   static List<String> _invadableOldWorldProvinceIds(

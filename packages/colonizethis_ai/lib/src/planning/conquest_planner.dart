@@ -81,6 +81,9 @@ Orders runConquestArmyMovePlanner({
     if (invadable.contains(m.destinationProvinceId)) {
       score += 10;
     }
+    if (snapshot.conquest.adjacentOwnerFactionIdsSorted.contains(destOwner)) {
+      score += 8;
+    }
     return score;
   }).toList();
   final idx = pickWeightedIndex(scores, seeds.militarySeed + 4000);

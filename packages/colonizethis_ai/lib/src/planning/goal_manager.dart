@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_ai/package_logger.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
@@ -56,6 +58,19 @@ Map<StrategicGoal, int> evaluateStrategicGoalScores(
   if (provincesToVictory > kConquerScoreFloorProvincesToVictoryThreshold &&
       conquer < kMinimumConquerScoreWhenFarFromVictory) {
     conquer = kMinimumConquerScoreWhenFarFromVictory;
+  }
+  if (provincesToVictory > kConquerScoreFloorProvincesToVictoryThreshold) {
+    final tradePenalty = math.min(
+      kTradeGoalPenaltyCapWhenFarFromVictory,
+      trade - 40,
+    );
+    if (tradePenalty > 0) {
+      trade -= tradePenalty;
+    }
+    if (snapshot.conquest.adjacentOwnerFactionIdsSorted.isNotEmpty &&
+        expand < kMinimumConquerScoreWhenFarFromVictory) {
+      expand = kMinimumConquerScoreWhenFarFromVictory;
+    }
   }
 
   return <StrategicGoal, int>{

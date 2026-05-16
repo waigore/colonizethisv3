@@ -51,3 +51,23 @@ const double kBuildRegimentBonusWhenBehindVictoryPace = 1.5;
 
 /// Provinces-to-victory threshold for [kBuildRegimentBonusWhenBehindVictoryPace].
 const int kBuildRegimentVictoryPaceThreshold = 10;
+
+/// Declare-war relation cap for **Great Power** targets that own provinces
+/// topologically adjacent to the attacker when far from military victory.
+const int kDeclareWarGpMaxRelationWhenFarFromVictory = 85;
+
+/// Score bonus for `declareWar` toward a faction that owns an adjacent Old
+/// World province (topology), so AI does not declare on distant minors only.
+const int kDeclareWarAdjacentOwnerBonus = 28;
+
+/// Extra declare-war bonus for low-[warLikelihood] personalities when far from
+/// victory and the target owns adjacent Old World provinces.
+const int kDeclareWarLowWarLikelihoodAdjacentBonus = 20;
+
+/// Personality [warLikelihood] at or below this uses
+/// [kDeclareWarLowWarLikelihoodAdjacentBonus].
+const int kDeclareWarLowWarLikelihoodThreshold = 35;
+
+/// When far from victory, reduce trade goal weight by at most this amount so
+/// conquer/expand can compete for trade-focused leaders.
+const int kTradeGoalPenaltyCapWhenFarFromVictory = 30;
