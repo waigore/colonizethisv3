@@ -21,6 +21,7 @@ workspace:
   - packages/colonizethis_test
   - tool/generate_map
   - tool/init_game
+  - tool/run_observer_game
   - tool/sim_economy
   - tool/sim_combat
   - tool/sim_combat_montecarlo
@@ -49,6 +50,9 @@ melos:
     init_game:
       description: Game creation (map gen, province/capital assignment). SPEC/program/init-game-tool.md.
       run: dart run init_game
+    run_observer_game:
+      description: Full-AI observer runner; traces and snapshots. SPEC/program/run_observer_game-tool.md.
+      run: dart run run_observer_game
     sim_economy:
       description: Standalone Phase 2 economy simulation CLI. SPEC/program/sim-economy.md.
       run: dart run sim_economy
