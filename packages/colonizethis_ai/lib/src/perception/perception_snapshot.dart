@@ -33,6 +33,21 @@ class OpportunitySummary {
   final int unclaimedProvinces;
 }
 
+/// Victory-pace and invasion targets from PlayerView. SPEC/ai/ai-architecture.md.
+class ConquestSummary {
+  const ConquestSummary({
+    this.oldWorldProvincesOwned = 0,
+    this.provincesToVictory = kMilitaryVictoryOldWorldProvinceThreshold,
+    this.invadableProvinceIdsSorted = const [],
+    this.preferredConquestTargetFactionIdsSorted = const [],
+  });
+
+  final int oldWorldProvincesOwned;
+  final int provincesToVictory;
+  final List<String> invadableProvinceIdsSorted;
+  final List<String> preferredConquestTargetFactionIdsSorted;
+}
+
 /// Economy summary from view (stockpile, workers, treasury).
 class EconomySummary {
   const EconomySummary({
@@ -53,6 +68,7 @@ class AIWorldSnapshot {
     required this.playerId,
     required this.threats,
     required this.opportunities,
+    required this.conquest,
     required this.economy,
     required this.relations,
   });
@@ -60,6 +76,7 @@ class AIWorldSnapshot {
   final String playerId;
   final ThreatSummary threats;
   final OpportunitySummary opportunities;
+  final ConquestSummary conquest;
   final EconomySummary economy;
 
   /// Relation state keyed by other faction id (war, peace, etc.).
@@ -72,11 +89,13 @@ class AIWorldSnapshot {
   }) {
     final threats = _buildThreatSummary(view, topology);
     final opportunities = _buildOpportunitySummary(view, topology);
+    final conquest = _buildConquestSummary(view, topology, threats, opportunities);
     final economy = _buildEconomySummary(view);
     final snapshot = AIWorldSnapshot(
       playerId: view.playerId,
       threats: threats,
       opportunities: opportunities,
+      conquest: conquest,
       economy: economy,
       relations: Map<String, DiplomacyRelation>.from(view.diplomacyByOtherId),
     );
@@ -88,6 +107,9 @@ class AIWorldSnapshot {
       'weakNeighbors=${snapshot.opportunities.weakNeighbors} '
       'richUnexploitedProvinces=${snapshot.opportunities.richUnexploitedProvinces} '
       'unclaimedProvinces=${snapshot.opportunities.unclaimedProvinces} '
+      'oldWorldProvincesOwned=${snapshot.conquest.oldWorldProvincesOwned} '
+      'provincesToVictory=${snapshot.conquest.provincesToVictory} '
+      'invadableCount=${snapshot.conquest.invadableProvinceIdsSorted.length} '
       'workerCount=${snapshot.economy.workerCount} '
       'treasury=${snapshot.economy.treasury} '
       'ownProvinceCount=${snapshot.economy.ownProvinceCount} '
@@ -208,6 +230,70 @@ class AIWorldSnapshot {
       if (!weakNeighbors.contains(ownerId)) weakNeighbors.add(ownerId);
     }
     return weakNeighbors;
+  }
+
+  static ConquestSummary _buildConquestSummary(
+    PlayerView view,
+    MapTopology? topology,
+    ThreatSummary threats,
+    OpportunitySummary opportunities,
+  ) {
+    var oldWorldOwned = 0;
+    for (final p in view.provincesById.entries) {
+      if (p.value.ownerId != view.playerId) continue;
+      if (ProvinceId.regionIdFrom(p.key) != kOldWorldRegionId) continue;
+      oldWorldOwned++;
+    }
+    final provincesToVictory =
+        provincesToVictoryFromOldWorldOwned(oldWorldOwned);
+    final invadable = topology == null
+        ? <String>[]
+        : _invadableOldWorldProvinceIds(view, topology);
+    final preferredTargets = <String>{
+      ...threats.atWarWith,
+      ...opportunities.weakNeighbors,
+    }.toList()
+      ..sort();
+    return ConquestSummary(
+      oldWorldProvincesOwned: oldWorldOwned,
+      provincesToVictory: provincesToVictory,
+      invadableProvinceIdsSorted: invadable,
+      preferredConquestTargetFactionIdsSorted: preferredTargets,
+    );
+  }
+
+  static List<String> _invadableOldWorldProvinceIds(
+    PlayerView view,
+    MapTopology topology,
+  ) {
+    final anchorProvinces = <String>{};
+    for (final p in view.provincesById.entries) {
+      if (p.value.ownerId == view.playerId) {
+        anchorProvinces.add(p.key);
+      }
+    }
+    for (final u in view.ownUnits) {
+      final loc = u.locationProvinceId;
+      if (loc.isNotEmpty) anchorProvinces.add(loc);
+    }
+    final neighbors = neighborProvinceIdsFromTopology(
+      topology,
+      anchorProvinces,
+      view,
+    );
+    final invadable = <String>[];
+    for (final fullId in neighbors) {
+      if (ProvinceId.regionIdFrom(fullId) != kOldWorldRegionId) continue;
+      final prov = view.provincesById[fullId];
+      if (prov == null) continue;
+      final ownerId = prov.ownerId;
+      if (ownerId == null || ownerId.isEmpty || ownerId == view.playerId) {
+        continue;
+      }
+      invadable.add(fullId);
+    }
+    invadable.sort();
+    return invadable;
   }
 
   static EconomySummary _buildEconomySummary(PlayerView view) {

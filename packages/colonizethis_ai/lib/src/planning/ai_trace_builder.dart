@@ -17,6 +17,8 @@ TurnTraceAiSection buildAiTraceSection({
   required Orders orders,
   required Map<String, Object?> ordersByDomain,
   required List<Map<String, Object?>> finalOrders,
+  String? declaredWarTargetFactionId,
+  int conquestArmyMoveCount = 0,
 }) {
   final domainWeights = getDomainWeightsForLeader(config.personalityId);
   final goalWeights = getGoalWeightsForLeader(config.personalityId);
@@ -59,6 +61,11 @@ TurnTraceAiSection buildAiTraceSection({
           'workerCount': snapshot.economy.workerCount,
           'treasury': snapshot.economy.treasury,
           'ownProvinceCount': snapshot.economy.ownProvinceCount,
+          'provincesToVictory': snapshot.conquest.provincesToVictory,
+          'invadableCount':
+              snapshot.conquest.invadableProvinceIdsSorted.length,
+          'declaredWarTarget': declaredWarTargetFactionId,
+          'conquestArmyMoveCount': conquestArmyMoveCount,
         },
       },
       'decisionContext': <String, Object?>{
@@ -120,7 +127,10 @@ TurnTraceAiSection buildAiTraceSection({
       'gates': <Object?>[...goalSelectionGates(goalScores, primaryGoal)],
     },
     outcome: <String, Object?>{
-      'domainOutputs': ordersByDomain,
+      'domainOutputs': <String, Object?>{
+        ...ordersByDomain,
+        'conquestArmyMove': conquestArmyMoveCount,
+      },
       'finalAggregatedOrders': finalOrders,
       'emittedOrderCount': finalOrders.length,
     },

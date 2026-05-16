@@ -47,6 +47,17 @@ Map<StrategicGoal, int> evaluateStrategicGoalScores(
     expand += 15;
   }
 
+  final provincesToVictory = snapshot.conquest.provincesToVictory;
+  conquer += conquerScoreBonusForProvincesToVictory(provincesToVictory);
+  conquer += endgameConquerScoreBonus(provincesToVictory);
+  if (snapshot.conquest.invadableProvinceIdsSorted.isNotEmpty) {
+    expand += kExpandBonusWhenInvadableProvinces;
+  }
+  if (provincesToVictory > kConquerScoreFloorProvincesToVictoryThreshold &&
+      conquer < 0) {
+    conquer = 0;
+  }
+
   return <StrategicGoal, int>{
     StrategicGoal.defend: defend,
     StrategicGoal.expand: expand,
@@ -77,7 +88,9 @@ String majorConstraintForStrategicGoal(
           ? 'lowWorkerCount'
           : 'none',
     StrategicGoal.conquer =>
-      getAgendaConquerModifier(config.hiddenAgendaId) != 0
+      snapshot.conquest.provincesToVictory > 0
+          ? 'provincesToVictory'
+          : getAgendaConquerModifier(config.hiddenAgendaId) != 0
           ? 'hiddenAgendaConquerModifier'
           : (thresholds.warLikelihood - 50) != 0
           ? 'warLikelihoodThreshold'

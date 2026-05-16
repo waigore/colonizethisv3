@@ -39,12 +39,27 @@ Map<String, String> getProvinceOwnerMap(Game game) {
 ///
 /// [destinationProvinceId] returns the destination province id for each order
 /// (full id: regionId|localId).
+bool _hasPendingDeclareWarToward(
+  Orders draftOrders,
+  String playerId,
+  String targetFactionId,
+) {
+  for (final o in draftOrders.diplomaticOrdersByPlayerId[playerId] ?? const []) {
+    if (o.type == DiplomaticOrderType.declareWar &&
+        o.targetFactionId == targetFactionId) {
+      return true;
+    }
+  }
+  return false;
+}
+
 List<T> filterOrdersByDiplomacy<T>(
   Game game,
   String playerId,
   List<T> orders,
-  String Function(T order) destinationProvinceId,
-) {
+  String Function(T order) destinationProvinceId, {
+  Orders? draftOrders,
+}) {
   final provinceOwner = getProvinceOwnerMap(game);
   // Single-pass minor ids (Refs #2394): avoid O(orders × minors) scans per row.
   final minorNationIds = <String>{
@@ -54,6 +69,11 @@ List<T> filterOrdersByDiplomacy<T>(
   for (final m in orders) {
     final destOwner = provinceOwner[destinationProvinceId(m)];
     if (destOwner == null || destOwner == playerId) {
+      filtered.add(m);
+      continue;
+    }
+    if (draftOrders != null &&
+        _hasPendingDeclareWarToward(draftOrders, playerId, destOwner)) {
       filtered.add(m);
       continue;
     }
@@ -82,10 +102,12 @@ List<MoveOrder> filterMoveOrdersByDiplomacy(
 List<ArmyMoveOrder> filterArmyMoveOrdersByDiplomacy(
   Game game,
   String playerId,
-  List<ArmyMoveOrder> orders,
-) => filterOrdersByDiplomacy(
+  List<ArmyMoveOrder> orders, {
+  Orders? draftOrders,
+}) => filterOrdersByDiplomacy(
   game,
   playerId,
   orders,
   (ArmyMoveOrder o) => o.destinationProvinceId,
+  draftOrders: draftOrders,
 );
