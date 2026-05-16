@@ -11,7 +11,6 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import '../constants.dart';
 import '../diplomacy/diplomacy_resolver.dart';
 import '../orders/draft_orders_mutations.dart';
-import '../orders/incremental_candidate_validator.dart';
 import '../orders/order_suggestion.dart';
 import '../orders/order_suggestion_context.dart';
 import '../world/army_migration.dart';
