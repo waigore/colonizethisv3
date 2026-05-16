@@ -1,5 +1,6 @@
+import 'package:colonizethis_test/test.dart';
+
 import 'package:run_observer_game/run_observer_game_cli.dart';
-import 'package:test/test.dart';
 
 void main() {
   test('help exits 0 and mentions melos', () {
