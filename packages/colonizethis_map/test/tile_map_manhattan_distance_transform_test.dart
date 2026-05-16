@@ -23,6 +23,83 @@ int _bruteManhattanMin(
 }
 
 void main() {
+  group('manhattanDistToNearestPoints', () {
+    test('matches manhattanDistToNearestSourceXY for the same source set', () {
+      const w = 5;
+      const h = 4;
+      const emptySentinel = w + h;
+      final points = [(2, 1), (0, 3), (4, 0)];
+      bool isSource(int x, int y) =>
+          points.any((p) => p.$1 == x && p.$2 == y);
+
+      final fromPredicate = manhattanDistToNearestSourceXY(
+        w,
+        h,
+        isSource,
+        distanceWhenNoSources: emptySentinel,
+      );
+      final fromPoints = manhattanDistToNearestPoints(
+        w,
+        h,
+        points,
+        distanceWhenNoSources: emptySentinel,
+      );
+
+      for (var y = 0; y < h; y++) {
+        for (var x = 0; x < w; x++) {
+          expect(fromPoints[y][x], fromPredicate[y][x], reason: 'cell=($x,$y)');
+        }
+      }
+    });
+
+    test('deduplicates duplicate source coordinates', () {
+      const w = 3;
+      const h = 3;
+      const emptySentinel = 99;
+      final a = manhattanDistToNearestPoints(
+        w,
+        h,
+        [(1, 1), (1, 1), (1, 1)],
+        distanceWhenNoSources: emptySentinel,
+      );
+      final b = manhattanDistToNearestPoints(
+        w,
+        h,
+        [(1, 1)],
+        distanceWhenNoSources: emptySentinel,
+      );
+      expect(a, b);
+    });
+
+    test('empty sources yields filled distanceWhenNoSources grid', () {
+      const w = 2;
+      const h = 3;
+      const emptySentinel = 42;
+      final dist = manhattanDistToNearestPoints(
+        w,
+        h,
+        const <(int, int)>[],
+        distanceWhenNoSources: emptySentinel,
+      );
+      expect(dist.length, h);
+      for (final row in dist) {
+        expect(row, everyElement(emptySentinel));
+      }
+    });
+
+    test('empty sources returns empty for non-positive dimensions', () {
+      expect(
+        manhattanDistToNearestPoints(
+          0,
+          2,
+          const <(int, int)>[],
+          distanceWhenNoSources: 0,
+        ),
+        isEmpty,
+      );
+    });
+  });
+
   group('manhattanDistToNearestSourceXY', () {
     test('matches brute force on a small grid with sparse sources', () {
       const w = 6;

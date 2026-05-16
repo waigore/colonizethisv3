@@ -1,5 +1,41 @@
 import 'dart:math' show min;
 
+/// Exact grid Manhattan (L1) distance from each cell to the nearest coordinate
+/// in [sources].
+///
+/// Duplicate coordinates in [sources] are ignored. When [sources] is empty,
+/// every cell receives [distanceWhenNoSources] (same contract as
+/// [manhattanDistToNearestSourceXY] when no cell satisfies [isSource]).
+///
+/// Refs #2489 (organic land-seed close-sea scoring: one transform per placement
+/// instead of per-cell scans over growing seed lists).
+List<List<int>> manhattanDistToNearestPoints(
+  int width,
+  int height,
+  Iterable<(int x, int y)> sources, {
+  required int distanceWhenNoSources,
+}) {
+  final sourceCells = <(int, int)>{};
+  for (final p in sources) {
+    sourceCells.add((p.$1, p.$2));
+  }
+  if (sourceCells.isEmpty) {
+    if (width <= 0 || height <= 0) {
+      return [];
+    }
+    return List.generate(
+      height,
+      (_) => List.filled(width, distanceWhenNoSources),
+    );
+  }
+  return manhattanDistToNearestSourceXY(
+    width,
+    height,
+    (x, y) => sourceCells.contains((x, y)),
+    distanceWhenNoSources: distanceWhenNoSources,
+  );
+}
+
 /// Exact grid Manhattan (L1) distance from each cell to the nearest cell where
 /// [isSource] is true.
 ///
