@@ -114,9 +114,14 @@ List<int> computeDiplomaticCandidateScores({
             if (primaryGoal == StrategicGoal.conquer) {
               s += 20;
             }
-            s += conquerScoreBonusForProvincesToVictory(
-              snapshot.conquest.provincesToVictory,
-            ) ~/ 4;
+            s += behindVictoryPace
+                ? conquerScoreBonusForProvincesToVictory(
+                    snapshot.conquest.provincesToVictory,
+                  )
+                : conquerScoreBonusForProvincesToVictory(
+                        snapshot.conquest.provincesToVictory,
+                      ) ~/
+                    4;
             if (rel?.level == RelationLevel.allied) {
               s += getDeclareWarTargetBonusAlly(agendaId);
             }
