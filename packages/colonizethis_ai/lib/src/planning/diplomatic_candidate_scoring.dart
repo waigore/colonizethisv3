@@ -6,6 +6,7 @@ import 'package:colonizethis_logic/ai_api.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../perception/perception_snapshot.dart';
+import 'goal_manager.dart';
 import 'war_desire_calculator.dart';
 
 final _log = packageLogger();
@@ -18,6 +19,7 @@ List<int> computeDiplomaticCandidateScores({
   required Game game,
   required AIWorldSnapshot snapshot,
   required AIConfig config,
+  StrategicGoal? primaryGoal,
 }) {
   final agendaId = config.hiddenAgendaId;
   final thresholds = getThresholdsForLeader(config.personalityId);
@@ -95,6 +97,16 @@ List<int> computeDiplomaticCandidateScores({
             )) {
               s += getDeclareWarTargetBonusWeakerNeighbor(agendaId);
             }
+            if (snapshot.conquest.preferredConquestTargetFactionIdsSorted
+                .contains(o.targetFactionId)) {
+              s += 15;
+            }
+            if (primaryGoal == StrategicGoal.conquer) {
+              s += 20;
+            }
+            s += conquerScoreBonusForProvincesToVictory(
+              snapshot.conquest.provincesToVictory,
+            ) ~/ 4;
             if (rel?.level == RelationLevel.allied) {
               s += getDeclareWarTargetBonusAlly(agendaId);
             }

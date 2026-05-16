@@ -3,12 +3,53 @@ import 'package:colonizethis_ai/colonizethis_ai.dart';
 import 'package:logger/logger.dart';
 
 void main() {
+  group('evaluateStrategicGoalScores', () {
+    test('raises conquer above default when far from military victory', () {
+      const snapshot = AIWorldSnapshot(
+        playerId: 'gp1',
+        threats: ThreatSummary(),
+        opportunities: OpportunitySummary(),
+        conquest: ConquestSummary(
+          oldWorldProvincesOwned: 7,
+          provincesToVictory: 24,
+        ),
+        economy: EconomySummary(),
+        relations: {},
+      );
+      const config = AIConfig(
+        leaderId: 'victoria',
+        personalityId: 'victoria',
+        hiddenAgendaId: 'peacemaker',
+      );
+      final scores = evaluateStrategicGoalScores(snapshot, config);
+      final baseline = evaluateStrategicGoalScores(
+        const AIWorldSnapshot(
+          playerId: 'gp1',
+          threats: ThreatSummary(),
+          opportunities: OpportunitySummary(),
+          conquest: ConquestSummary(
+            oldWorldProvincesOwned: 31,
+            provincesToVictory: 0,
+          ),
+          economy: EconomySummary(),
+          relations: {},
+        ),
+        config,
+      );
+      expect(
+        scores[StrategicGoal.conquer]!,
+        greaterThan(baseline[StrategicGoal.conquer]!),
+      );
+    });
+  });
+
   group('selectPrimaryGoal', () {
     test('returns expand when snapshot has no threats and default weights', () {
       const snapshot = AIWorldSnapshot(
         playerId: 'gp1',
         threats: ThreatSummary(),
         opportunities: OpportunitySummary(),
+        conquest: ConquestSummary(),
         economy: EconomySummary(),
         relations: {},
       );
@@ -33,6 +74,7 @@ void main() {
         playerId: 'gp1',
         threats: ThreatSummary(atWarWith: ['gp2']),
         opportunities: OpportunitySummary(),
+        conquest: ConquestSummary(),
         economy: EconomySummary(),
         relations: {},
       );
@@ -56,6 +98,7 @@ void main() {
         playerId: 'gp1',
         threats: ThreatSummary(capitalThreatened: true),
         opportunities: OpportunitySummary(),
+        conquest: ConquestSummary(),
         economy: EconomySummary(),
         relations: {},
       );
@@ -79,6 +122,7 @@ void main() {
         playerId: 'gp1',
         threats: ThreatSummary(),
         opportunities: OpportunitySummary(unclaimedProvinces: 5),
+        conquest: ConquestSummary(),
         economy: EconomySummary(),
         relations: {},
       );
@@ -102,6 +146,7 @@ void main() {
         playerId: 'gp1',
         threats: ThreatSummary(),
         opportunities: OpportunitySummary(),
+        conquest: ConquestSummary(),
         economy: EconomySummary(workerCount: 1),
         relations: {},
       );
@@ -140,6 +185,7 @@ void main() {
             capitalThreatened: true,
           ),
           opportunities: OpportunitySummary(unclaimedProvinces: 0),
+          conquest: ConquestSummary(),
           economy: EconomySummary(workerCount: 10),
           relations: {},
         );

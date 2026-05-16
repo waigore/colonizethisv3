@@ -74,6 +74,18 @@ Per-turn seed: `turnSeed[P, T] = hash(globalGameSeed, aiSeed[P], T)`. Sub-seeds:
 - Program: [ai-planner.md](../program/ai-planner.md) — control rules, order merge
 - Program: [ai-systems-impl.md](../program/ai-systems-impl.md) — module boundaries, APIs
 
+### Victory-aware military planning (Full AI)
+
+Military victory requires a Great Power to control **≥31 Old World provinces** per [victory.md](../game/victory.md). Full AI must plan toward that threshold, not only declare war without follow-up invasion.
+
+**Perception (`ConquestSummary` on `AIWorldSnapshot`):** From `PlayerView` only: `oldWorldProvincesOwned`, `provincesToVictory` (= max(0, 31 − owned)), `invadableProvinceIdsSorted` (adjacent enemy/minor/tribe Old World provinces reachable from owned territory or army positions), `preferredConquestTargetFactionIdsSorted` (weak neighbors and current war targets, stable sort).
+
+**Goal selection:** Deterministic bonuses to `conquer` and military `expand` from `provincesToVictory` and non-empty `invadableProvinceIds` (weights in `colonizethis_data` `ai_victory_config.dart`). When `provincesToVictory > 20`, `conquer` score is floored at **0** so agenda penalties cannot suppress all conquest intent for GPs far from victory.
+
+**Domain planner order (Full AI military):** After civilian move planning, **diplomacy (declare-war pass)** runs before invasion army moves so merged orders can include same-turn `declareWar` + `ArmyMoveOrder` (human parity per [app-ui-wiring.md](../program/app-ui-wiring.md)). Sequence: declare-war diplomacy → **conquest army-move pass** (suggestions against orders that already contain declare war) → relocation/at-war army-move pass → naval → diplomacy (non–declare-war pass; no duplicate declare war to the same target) → research. Staged progress id `aiStageD` covers the military block (declare war, conquest invasion, army relocation).
+
+**Conquest army-move pass:** Uses `suggestArmyMoveOrders` with draft orders including any declare war chosen this turn; diplomacy filtering treats pending same-turn `declareWar` toward the destination owner as sufficient for invasion (logic `filterArmyMoveOrdersByDiplomacy` with `draftOrders`). Prefer destinations owned by the declare-war target, then other at-war owners, then provinces in `invadableProvinceIdsSorted`.
+
 ### Implementation (turn pipeline)
 AI order generation runs so that orders are available for the **Orders** phase of turn resolution. Merge (human + AI) and application order are defined in [turn-resolution-phases.md](../program/turn-resolution-phases.md) (phase 1 Orders) and [turn-resolution-phase-details.md](../program/turn-resolution-phase-details.md) § Orders. Control rules and merge semantics: [ai-planner.md](../program/ai-planner.md); module boundaries and APIs: [ai-systems-impl.md](../program/ai-systems-impl.md).
 
@@ -86,3 +98,4 @@ AI order generation runs so that orders are available for the **Orders** phase o
 - **Movement (filter and prefer):** Move orders are filtered by diplomacy (no move to at-peace or minor-without-war). Among valid moves, selection prefers moves into enemy/contested territory via configurable score bonus.
 - **Army movement parity:** AI-generated `ArmyMoveOrder` uses the same destination legality as human orders, including cross-region moves to any AI-owned province in prefixed province-id form.
 - **Difficulty:** Difficulty affects starting parameters and ruleset modifiers only, not AI logic or personality.
+- **Victory-aware conquest (Full AI):** Given the AI agent selects `declareWar` on faction T and valid army-move candidates into T’s provinces exist in `PlayerView`, when domain planning completes for that turn, then merged orders include both `declareWar` toward T and at least one `ArmyMoveOrder` into T’s territory (deterministic for fixed seed). Given a GP owns fewer than 20 Old World provinces, when goal scores are evaluated, then `conquer` or expand-with-hostile-opportunity receives a deterministic bonus from `provincesToVictory` (trace fields `provincesToVictory`, `invadableCount` on AI trace export).

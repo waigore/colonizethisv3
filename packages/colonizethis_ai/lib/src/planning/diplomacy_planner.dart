@@ -9,9 +9,12 @@ import '../perception/perception_snapshot.dart';
 import '../util/ai_random_utils.dart';
 import '../util/orders_extensions.dart';
 import 'diplomatic_candidate_scoring.dart';
+import 'diplomacy_planner_result.dart';
 
 export 'diplomatic_candidate_scoring.dart' show computeDiplomaticCandidateScores;
 export 'war_desire_calculator.dart' show computeWarDesireScore;
+export 'diplomacy_planner_result.dart'
+    show DiplomacyPlannerPass, DiplomacyPlannerResult;
 
 final _log = packageLogger();
 
@@ -26,6 +29,32 @@ Orders runDiplomacyPlanner({
   required StrategicGoal primaryGoal,
   required AISeedBundle seeds,
   required OrderSuggestionAPI suggestionAPI,
+}) =>
+    runDiplomacyPlannerWithResult(
+      nationId: nationId,
+      view: view,
+      game: game,
+      topology: topology,
+      orders: orders,
+      snapshot: snapshot,
+      config: config,
+      primaryGoal: primaryGoal,
+      seeds: seeds,
+      suggestionAPI: suggestionAPI,
+    ).orders;
+
+DiplomacyPlannerResult runDiplomacyPlannerWithResult({
+  required String nationId,
+  required PlayerView view,
+  required Game game,
+  required MapTopology topology,
+  required Orders orders,
+  required AIWorldSnapshot snapshot,
+  required AIConfig config,
+  required StrategicGoal primaryGoal,
+  required AISeedBundle seeds,
+  required OrderSuggestionAPI suggestionAPI,
+  DiplomacyPlannerPass pass = DiplomacyPlannerPass.all,
 }) {
   final domainWeights = getDomainWeightsForLeader(config.personalityId);
   final weight =
@@ -36,16 +65,45 @@ Orders runDiplomacyPlanner({
       : 40;
   if (weight < 25) {
     _log.d('diplomacy skipped nationId=$nationId weight=$weight < 25');
-    return orders;
+    return DiplomacyPlannerResult(orders: orders);
   }
 
-  final diploCandidates = suggestionAPI.suggestDiplomaticOrders(
+  var diploCandidates = suggestionAPI.suggestDiplomaticOrders(
     view,
     game,
     topology,
     orders,
   );
-  if (diploCandidates.isEmpty) return orders;
+  if (diploCandidates.isEmpty) {
+    return DiplomacyPlannerResult(orders: orders);
+  }
+
+  final declaredThisTurn = <String>{
+    for (final o in orders.diplomaticOrdersByPlayerId[nationId] ?? const [])
+      if (o.type == DiplomaticOrderType.declareWar) o.targetFactionId,
+  };
+
+  switch (pass) {
+    case DiplomacyPlannerPass.declareWarOnly:
+      diploCandidates = diploCandidates
+          .where((o) => o.type == DiplomaticOrderType.declareWar)
+          .toList();
+      break;
+    case DiplomacyPlannerPass.nonDeclareWarOnly:
+      diploCandidates = diploCandidates
+          .where(
+            (o) =>
+                o.type != DiplomaticOrderType.declareWar &&
+                !declaredThisTurn.contains(o.targetFactionId),
+          )
+          .toList();
+      break;
+    case DiplomacyPlannerPass.all:
+      break;
+  }
+  if (diploCandidates.isEmpty) {
+    return DiplomacyPlannerResult(orders: orders);
+  }
 
   final scores = computeDiplomaticCandidateScores(
     candidates: diploCandidates,
@@ -53,6 +111,7 @@ Orders runDiplomacyPlanner({
     game: game,
     snapshot: snapshot,
     config: config,
+    primaryGoal: primaryGoal,
   );
 
   final candidateDesc = diploCandidates
@@ -67,11 +126,18 @@ Orders runDiplomacyPlanner({
   );
 
   final idx = pickWeightedIndex(scores, seeds.diplomacySeed);
-  if (idx == null) return orders;
+  if (idx == null) return DiplomacyPlannerResult(orders: orders);
   final chosen = diploCandidates[idx];
   _log.i(
     'diplomacy chosen nationId=$nationId '
     'type=${chosen.type}${chosen.type == DiplomaticOrderType.declareWar ? " targetFactionId=${chosen.targetFactionId}" : ""} score=${scores[idx]}',
   );
-  return orders.appendDiplomaticOrders(nationId, [chosen]);
+  final nextOrders = orders.appendDiplomaticOrders(nationId, [chosen]);
+  final declaredTarget = chosen.type == DiplomaticOrderType.declareWar
+      ? chosen.targetFactionId
+      : null;
+  return DiplomacyPlannerResult(
+    orders: nextOrders,
+    declaredWarTargetFactionId: declaredTarget,
+  );
 }

@@ -8,6 +8,7 @@ import 'goal_manager.dart';
 import '../perception/perception_snapshot.dart';
 import '../util/orders_extensions.dart';
 import 'build_planner.dart';
+import 'conquest_planner.dart';
 import 'diplomacy_planner.dart';
 import 'move_planner.dart';
 import 'naval_planner.dart';
@@ -137,6 +138,34 @@ Orders runDomainPlanners({
   );
   emit('aiStageC');
 
+  // Military: declare war before invasion army moves (SPEC/ai/ai-architecture.md).
+  final declareWarResult = runDiplomacyPlannerWithResult(
+    nationId: nationId,
+    view: view,
+    game: game,
+    topology: topology,
+    orders: orders,
+    snapshot: snapshot,
+    config: config,
+    primaryGoal: primaryGoal,
+    seeds: seeds,
+    suggestionAPI: suggestionAPI,
+    pass: DiplomacyPlannerPass.declareWarOnly,
+  );
+  orders = declareWarResult.orders;
+  orders = runConquestArmyMovePlanner(
+    nationId: nationId,
+    view: view,
+    game: game,
+    topology: topology,
+    orders: orders,
+    snapshot: snapshot,
+    config: config,
+    primaryGoal: primaryGoal,
+    seeds: seeds,
+    suggestionAPI: suggestionAPI,
+    declaredWarTargetFactionId: declareWarResult.declaredWarTargetFactionId,
+  );
   orders = runArmyMovePlanner(
     nationId: nationId,
     view: view,
@@ -147,6 +176,7 @@ Orders runDomainPlanners({
     primaryGoal: primaryGoal,
     seeds: seeds,
     suggestionAPI: suggestionAPI,
+    provincesToVictory: snapshot.conquest.provincesToVictory,
   );
   emit('aiStageD');
 
@@ -164,8 +194,8 @@ Orders runDomainPlanners({
   );
   emit('aiStageE');
 
-  // Diplomacy: suggest diplomatic orders; weight by diplomacy domain and goal.
-  orders = runDiplomacyPlanner(
+  // Diplomacy follow-up (peace, alliance, overture — no duplicate declare war).
+  orders = runDiplomacyPlannerWithResult(
     nationId: nationId,
     view: view,
     game: game,
@@ -176,7 +206,8 @@ Orders runDomainPlanners({
     primaryGoal: primaryGoal,
     seeds: seeds,
     suggestionAPI: suggestionAPI,
-  );
+    pass: DiplomacyPlannerPass.nonDeclareWarOnly,
+  ).orders;
   emit('aiStageF');
 
   orders = runResearchPlanner(
