@@ -7,27 +7,18 @@
 //   (`_placeLandSeedsOrganicImpl`).
 part of 'tile_map_generator_land_seeds.dart';
 
-int _minManhattanDistToPoints(int x, int y, List<(int x, int y)> points) {
-  var minD = 1 << 30;
-  for (final (ox, oy) in points) {
-    final d = (x - ox).abs() + (y - oy).abs();
-    if (d < minD) minD = d;
-  }
-  return minD;
-}
-
 List<(int x, int y)> _organicSeedCloseSeaCandidates(
   TileMapLandSeedParams params,
   List<List<String>> grid,
   String seaZoneId,
-  List<(int x, int y)> ownLandOrSeed,
   int closeRadius,
+  List<List<int>> minDistToOwnLand,
 ) {
   final candidates = <(int x, int y)>[];
   for (var y = 0; y < params.height; y++) {
     for (var x = 0; x < params.width; x++) {
       if (grid[y][x] != seaZoneId) continue;
-      final minDistToOwn = _minManhattanDistToPoints(x, y, ownLandOrSeed);
+      final minDistToOwn = minDistToOwnLand[y][x];
       if (minDistToOwn > closeRadius) continue;
       candidates.add((x, y));
     }
@@ -37,7 +28,7 @@ List<(int x, int y)> _organicSeedCloseSeaCandidates(
 
 (int, int) _pickBestOrganicSeaCandidate(
   List<(int x, int y)> candidates,
-  List<(int x, int y)> ownLandOrSeed,
+  List<List<int>> minDistToOwnLand,
   List<List<int>> continentGrid,
   TileMapLandSeedParams params,
   int continentIndex,
@@ -57,7 +48,7 @@ List<(int x, int y)> _organicSeedCloseSeaCandidates(
   var bestScore = -1e100;
   final bestCandidates = <(int x, int y)>[];
   for (final (x, y) in candidates) {
-    final minDistToOwn = _minManhattanDistToPoints(x, y, ownLandOrSeed);
+    final minDistToOwn = minDistToOwnLand[y][x];
     final minDistToOther = distToOtherContinent[y][x];
     final score = -minDistToOwn + awayPenalty * minDistToOther;
     if (score > bestScore) {
@@ -93,12 +84,18 @@ List<(int x, int y)> _organicSeedCloseSeaCandidates(
       ownLandOrSeed.add(existingLandSeeds[i]);
     }
   }
+  final minDistToOwnLand = manhattanDistToNearestPoints(
+    params.width,
+    params.height,
+    ownLandOrSeed,
+    distanceWhenNoSources: 1 << 30,
+  );
   final candidates = _organicSeedCloseSeaCandidates(
     params,
     grid,
     seaZoneId,
-    ownLandOrSeed,
     closeRadius,
+    minDistToOwnLand,
   );
   if (candidates.isEmpty) {
     final (cx, cy) = continentSeed;
@@ -115,7 +112,7 @@ List<(int x, int y)> _organicSeedCloseSeaCandidates(
   }
   return _pickBestOrganicSeaCandidate(
     candidates,
-    ownLandOrSeed,
+    minDistToOwnLand,
     continentGrid,
     params,
     c,
@@ -242,7 +239,7 @@ _placeLandSeedsOrganicImpl(
   final landSeeds = <(int x, int y)>[];
   final continentBySeedIndex = <int>[];
   var g = copyTileMapGrid(grid);
-  final continentGrid = List.generate(
+  var continentGrid = List.generate(
     params.height,
     (_) => List.filled(params.width, -1),
   );
@@ -305,11 +302,9 @@ _placeLandSeedsOrganicImpl(
       budgetPerContinent,
     );
     g = voronoiResult.$1;
-    for (var y = 0; y < params.height; y++) {
-      for (var x = 0; x < params.width; x++) {
-        continentGrid[y][x] = voronoiResult.$2[y][x];
-      }
-    }
+    // [_assignLandByLandSeedsWithNoJoin] already returns a fresh continent grid;
+    // adopt it instead of copying cell-by-cell into the prior buffer (Refs #2489).
+    continentGrid = voronoiResult.$2;
   }
 
   // Step 3: Coastline growth if budget remains

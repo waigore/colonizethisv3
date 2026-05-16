@@ -567,44 +567,55 @@ void main() {
       'tapping non-civilian tile clears civilian selection and still opens tile detail',
       (WidgetTester tester) async {
         final base = ctRegionMapTestOldWorldRegion();
-        final selectedMarkerCell = base.cells.firstWhere((c) => !c.isSea);
-        final otherCell = base.cells.firstWhere(
-          (c) =>
-              !c.isSea &&
-              (c.x != selectedMarkerCell.x || c.y != selectedMarkerCell.y),
-        );
-        final selectedMarkerTileKey =
-            '${base.regionId}|${selectedMarkerCell.regionCellId}|${selectedMarkerCell.x}|${selectedMarkerCell.y}';
+        final landTemplate = base.cells.firstWhere((c) => !c.isSea);
+        const cellSize = 32;
+        const selectedMarkerTileKey = 'oldWorld|p1|0|0';
+        const otherTileKey = 'oldWorld|p1|1|0';
         final region = RegionMapViewData(
-          regionId: base.regionId,
-          width: base.width,
-          height: base.height,
-          cellSize: base.cellSize,
-          cells: base.cells,
-          capitalMarkers: base.capitalMarkers,
-          portMarkers: base.portMarkers,
-          townMarkers: base.townMarkers,
+          regionId: 'oldWorld',
+          width: 2,
+          height: 1,
+          cellSize: cellSize,
+          cells: [
+            CellViewData(
+              x: 0,
+              y: 0,
+              regionCellId: 'p1',
+              isSea: false,
+              terrainTypeId: landTemplate.terrainTypeId,
+              terrainType: landTemplate.terrainType,
+              ownerFactionId: landTemplate.ownerFactionId,
+            ),
+            CellViewData(
+              x: 1,
+              y: 0,
+              regionCellId: 'p1',
+              isSea: false,
+              terrainTypeId: landTemplate.terrainTypeId,
+              terrainType: landTemplate.terrainType,
+              ownerFactionId: landTemplate.ownerFactionId,
+            ),
+          ],
+          capitalMarkers: const [],
+          portMarkers: const [],
+          townMarkers: const [],
           factionColors: base.factionColors,
           greatPowerFactionIds: base.greatPowerFactionIds,
           terrainColors: base.terrainColors,
-          unitMarkers: base.unitMarkers,
+          unitMarkers: const [],
           civilianTileMarkers: [
             CivilianTileMarkerView(
               tileKey: selectedMarkerTileKey,
-              x: selectedMarkerCell.x,
-              y: selectedMarkerCell.y,
-              localProvinceId: selectedMarkerCell.regionCellId,
+              x: 0,
+              y: 0,
+              localProvinceId: 'p1',
               unitIds: const ['u_builder'],
               unitTypes: const {'u_builder': kUnitTypeBuilder},
               representativeUnitType: kUnitTypeBuilder,
               stackCount: 1,
             ),
           ],
-          warpMarkers: base.warpMarkers,
-          provinceUnitPresenceByProvinceId:
-              base.provinceUnitPresenceByProvinceId,
-          provincePoliticalOwnerByPrefixedProvinceId:
-              base.provincePoliticalOwnerByPrefixedProvinceId,
+          warpMarkers: const [],
         );
         var clearCount = 0;
         String? detailTileKey;
@@ -612,7 +623,9 @@ void main() {
         await tester.pumpWidget(
           ctRegionMapTestHarness(
             region: region,
-            cellSizePx: region.cellSize.toDouble(),
+            width: 96,
+            height: 64,
+            cellSizePx: cellSize.toDouble(),
             selectedCivilianTileKey: selectedMarkerTileKey,
             onCivilianTileSelectionCleared: () => clearCount++,
             onMapTileTappedForDetail: (tileKey) => detailTileKey = tileKey,
@@ -622,18 +635,13 @@ void main() {
 
         final mapFinder = find.byType(CtRegionMap);
         final topLeft = tester.getTopLeft(mapFinder);
-        final tapOffset =
-            topLeft +
-            Offset(
-              (otherCell.x + 0.5) * region.cellSize.toDouble(),
-              (otherCell.y + 0.5) * region.cellSize.toDouble(),
-            );
-        await tester.tapAt(tapOffset);
+        await tester.tapAt(
+          topLeft + const Offset(cellSize * 1.5, cellSize * 0.5),
+        );
         await tester.pump();
 
         expect(clearCount, equals(1));
-        expect(detailTileKey, isNotNull);
-        expect(detailTileKey, isNot(equals(selectedMarkerTileKey)));
+        expect(detailTileKey, otherTileKey);
       },
       timeout: const Timeout(Duration(seconds: 5)),
     );

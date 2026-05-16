@@ -30,6 +30,12 @@ extension _TileMapGenJoinSeaBridgePart on _TileMapGenJoinSea {
       continentBySeedIndex,
     );
     final maxJoinIterationsPerContinent = params.width * params.height;
+    var landCellsByContinent = _buildLandCellsByContinentIndex(
+      g,
+      provinceToContinent,
+      seaZoneId,
+      numContinents,
+    );
 
     final capState =
         (tg != null &&
@@ -49,12 +55,7 @@ extension _TileMapGenJoinSeaBridgePart on _TileMapGenJoinSea {
       var joinIterations = 0;
       while (joinIterations < maxJoinIterationsPerContinent) {
         joinIterations++;
-        final landCells = _landCellsForContinent(
-          g,
-          provinceToContinent,
-          c,
-          seaZoneId,
-        );
+        final landCells = landCellsByContinent[c];
         final components = _graph.connectedComponentsOfLand(landCells);
         if (components.length <= 1) break;
         didJoin = true;
@@ -75,7 +76,8 @@ extension _TileMapGenJoinSeaBridgePart on _TileMapGenJoinSea {
           rnd,
           capState,
         );
-        preserveSeaFraction(
+        landCellsByContinent[c].addAll(path);
+        final restoredToSea = preserveSeaFraction(
           g,
           tg,
           rg,
@@ -84,10 +86,15 @@ extension _TileMapGenJoinSeaBridgePart on _TileMapGenJoinSea {
           path.length,
           landCellsExcludedFromSeaRestore: bridgeCells,
         );
+        for (final (x, y) in restoredToSea) {
+          for (var ci = 0; ci < numContinents; ci++) {
+            landCellsByContinent[ci].remove((x, y));
+          }
+        }
       }
       if (joinIterations >= maxJoinIterationsPerContinent) {
         final stillSplit = _graph.connectedComponentsOfLand(
-          _landCellsForContinent(g, provinceToContinent, c, seaZoneId),
+          landCellsByContinent[c],
         );
         if (stillSplit.length > 1) {
           _log.w(
@@ -134,18 +141,29 @@ extension _TileMapGenJoinSeaBridgePart on _TileMapGenJoinSea {
     }
   }
 
-  Set<(int x, int y)> _landCellsForContinent(
+  /// One O(W×H) scan; [joinContinents] reuses and incrementally updates these sets
+  /// (Refs #2489 P4).
+  List<Set<(int x, int y)>> _buildLandCellsByContinentIndex(
     List<List<String>> grid,
     Map<String, int> membership,
-    int continentIndex,
     String seaZoneId,
+    int numContinents,
   ) {
-    final out = <(int x, int y)>{};
+    final out = List<Set<(int x, int y)>>.generate(
+      numContinents,
+      (_) => <(int x, int y)>{},
+    );
     for (var y = 0; y < params.height; y++) {
       for (var x = 0; x < params.width; x++) {
         final id = grid[y][x];
         if (id == seaZoneId) continue;
-        if (membership[id] == continentIndex) out.add((x, y));
+        final continentIndex = membership[id];
+        if (continentIndex == null ||
+            continentIndex < 0 ||
+            continentIndex >= numContinents) {
+          continue;
+        }
+        out[continentIndex].add((x, y));
       }
     }
     return out;
@@ -278,26 +296,24 @@ extension _TileMapGenJoinSeaBridgePart on _TileMapGenJoinSea {
     int count, {
     Set<(int x, int y)>? landCellsExcludedFromSeaRestore,
   }) {
-    final coastal = <(int x, int y)>[];
+    // One ocean-neighbour count per candidate; reuse for sort keys (Refs #2489).
+    final coastal = <(int x, int y, int oceanNeighbours)>[];
     for (var y = 0; y < params.height; y++) {
       for (var x = 0; x < params.width; x++) {
         if (grid[y][x] == seaZoneId) continue;
         if (landCellsExcludedFromSeaRestore?.contains((x, y)) ?? false) {
           continue;
         }
-        if (_graph.oceanNeighbourCount(grid, x, y, seaZoneId, ocean) >= 1) {
-          coastal.add((x, y));
+        final n = _graph.oceanNeighbourCount(grid, x, y, seaZoneId, ocean);
+        if (n >= 1) {
+          coastal.add((x, y, n));
         }
       }
     }
-    coastal.sort((a, b) {
-      final na = _graph.oceanNeighbourCount(grid, a.$1, a.$2, seaZoneId, ocean);
-      final nb = _graph.oceanNeighbourCount(grid, b.$1, b.$2, seaZoneId, ocean);
-      return nb.compareTo(na);
-    });
+    coastal.sort((a, b) => b.$3.compareTo(a.$3));
     final restoredToSea = <(int x, int y)>[];
     for (var i = 0; i < count && i < coastal.length; i++) {
-      final (x, y) = coastal[i];
+      final (x, y, _) = coastal[i];
       grid[y][x] = seaZoneId;
       if (terrainGrid != null) terrainGrid[y][x] = null;
       if (resourceGrid != null) resourceGrid[y][x] = null;
