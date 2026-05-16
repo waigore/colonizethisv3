@@ -1,3 +1,5 @@
+import 'tile_map_manhattan_distance_transform.dart';
+
 /// Per-continent Manhattan distance to the nearest cell assigned to another
 /// continent ([continentGrid] value >= 0 and != c). Unassigned cells (-1) are
 /// not targets; distance is geometric |dx|+|dy| to the nearest target, not
@@ -10,63 +12,11 @@ List<List<List<int>>> manhattanDistToOtherContinentsMaps({
 }) {
   if (numContinents <= 0) return const [];
   final unreachable = width + height;
-  final maps = List.generate(
+  return List.generate(
     numContinents,
-    (_) => List.generate(height, (_) => List.filled(width, unreachable)),
+    (c) => manhattanDistToNearestSourceXY(width, height, (x, y) {
+      final cell = continentGrid[y][x];
+      return cell >= 0 && cell != c;
+    }, distanceWhenNoSources: unreachable),
   );
-  for (var c = 0; c < numContinents; c++) {
-    _fillManhattanDistancesForContinent(
-      continentGrid: continentGrid,
-      width: width,
-      height: height,
-      continentIndex: c,
-      unreachable: unreachable,
-      dist: maps[c],
-    );
-  }
-  return maps;
-}
-
-void _fillManhattanDistancesForContinent({
-  required List<List<int>> continentGrid,
-  required int width,
-  required int height,
-  required int continentIndex,
-  required int unreachable,
-  required List<List<int>> dist,
-}) {
-  for (var y = 0; y < height; y++) {
-    for (var x = 0; x < width; x++) {
-      dist[y][x] = _minManhattanDistToForeignContinent(
-        continentGrid: continentGrid,
-        width: width,
-        height: height,
-        continentIndex: continentIndex,
-        x: x,
-        y: y,
-        unreachable: unreachable,
-      );
-    }
-  }
-}
-
-int _minManhattanDistToForeignContinent({
-  required List<List<int>> continentGrid,
-  required int width,
-  required int height,
-  required int continentIndex,
-  required int x,
-  required int y,
-  required int unreachable,
-}) {
-  var minDist = unreachable;
-  for (var ny = 0; ny < height; ny++) {
-    for (var nx = 0; nx < width; nx++) {
-      final cell = continentGrid[ny][nx];
-      if (cell < 0 || cell == continentIndex) continue;
-      final d = (x - nx).abs() + (y - ny).abs();
-      if (d < minDist) minDist = d;
-    }
-  }
-  return minDist;
 }

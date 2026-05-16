@@ -19,8 +19,10 @@ export 'src/tile_map_visualization_shared.dart'
         geographicGameWorldLegendResources,
         geographicGameWorldResourceGlyphLetter,
         geographicGameWorldResourceGlyphs,
+        kGameWorldMapOwnershipLegendBlurb,
         landSeedMarkerRgb,
         resourceIdToLegendLetter,
+        seaZoneLocalIdsFromRegionCells,
         tileMapResourceGlyphs;
 export 'src/init_game_map_view_data.dart';
 export 'src/sea_zone_centroid_tile.dart';

@@ -29,12 +29,11 @@ Map<String, String> _provinceIdToOwnerIdFromProvinces(
   return out;
 }
 
-typedef _RegionRenderInputs =
-    ({
-      Map<String, String> ownerByProvinceId,
-      List<TileMapCapitalMarker> capitalTiles,
-      Map<String, (int r, int g, int b)> factionColors,
-    });
+typedef _RegionRenderInputs = ({
+  Map<String, String> ownerByProvinceId,
+  List<TileMapCapitalMarker> capitalTiles,
+  Map<String, (int r, int g, int b)> factionColors,
+});
 
 _RegionRenderInputs _buildRegionRenderInputs({
   required Game game,
@@ -186,7 +185,7 @@ Uint8List renderSingleRegionGameStateMapToPng({
   var legendY = legendY0;
   img.drawString(
     image,
-    'Ownership by faction. Black = land borders; light blue = sea borders.',
+    kGameWorldMapOwnershipLegendBlurb,
     font: img.arial14,
     x: legendPadding,
     y: legendY,
@@ -314,13 +313,7 @@ Uint8List renderInitGameMapToPngFromViewData({
     final mapW = region.width * region.cellSize;
     final mapH = region.height * region.cellSize;
 
-    // Determine sea zone ids from cells marked as sea.
-    final seaZoneIds = <String>{};
-    for (final cell in region.cells) {
-      if (cell.isSea) {
-        seaZoneIds.add(cell.regionCellId);
-      }
-    }
+    final seaZoneIds = seaZoneLocalIdsFromRegionCells(region.cells);
 
     // Legend height: geographic = title + Sea + terrains + "Resources:" + g/t/i + ports; else title + factions + ports.
     final legendLines = geographicMode
@@ -449,23 +442,17 @@ Uint8List renderInitGameMapToPngFromViewData({
         color: black,
       );
       legendY += legendLineHeight;
-      for (final r in geographicGameWorldLegendResources) {
-        final letter = resourceToLegendLetter(r);
-        final label = resourceToLegendLabel(r);
-        img.drawString(
-          image,
-          '$letter  $label',
-          font: img.arial14,
-          x: legendPadding,
-          y: legendY,
-          color: black,
-        );
-        legendY += legendLineHeight;
-      }
+      legendY = drawResourceLegendRows(
+        image,
+        legendY: legendY,
+        textColor: black,
+        resources: geographicGameWorldLegendResources,
+        style: ResourceLegendRowsStyle.compactInline,
+      );
     } else {
       img.drawString(
         image,
-        'Ownership by faction. Black = land borders; light blue = sea borders.',
+        kGameWorldMapOwnershipLegendBlurb,
         font: img.arial14,
         x: legendPadding,
         y: legendY,

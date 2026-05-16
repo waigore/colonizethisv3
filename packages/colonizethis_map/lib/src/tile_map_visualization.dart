@@ -15,14 +15,12 @@ import 'tile_map_visualization_shared.dart'
         drawLegendContinentSeedMarker,
         drawLegendLandSeedMarker,
         drawLegendLine,
-        drawLegendSwatch,
+        drawResourceLegendRows,
         drawResourceLetterAtCellCenter,
         landSeedMarkerRgb,
         legendLineHeight,
         legendPadding,
         regionPalette,
-        resourceToLegendLabel,
-        resourceToLegendLetter,
         swatchGap,
         swatchSize,
         terrainColorRgb,
@@ -99,18 +97,10 @@ int _drawOptionalLegendSections(
         (a, b) => a > b ? a : b,
       );
       for (var c = 0; c <= maxContinent; c++) {
-        final y = legendY0 + row * legendLineHeight;
+        var y = legendY0 + row * legendLineHeight;
         final (r, g, b) = regionPalette[c % regionPalette.length];
-        drawLegendSwatch(image, y, r, g, b);
-        img.drawString(
-          image,
-          'Continent $c',
-          font: img.arial14,
-          x: legendPadding + swatchSize + swatchGap,
-          y: y,
-          color: black,
-        );
-        row++;
+        y = drawLegendLine(image, y, r, g, b, 'Continent $c');
+        row = (y - legendY0) ~/ legendLineHeight;
       }
     } else {
       final y = legendY0 + row * legendLineHeight;
@@ -127,26 +117,13 @@ int _drawOptionalLegendSections(
     }
   }
   if (hasResourceGrid) {
-    for (final r in Resource.values) {
-      final y = legendY0 + row * legendLineHeight;
-      img.drawString(
-        image,
-        resourceToLegendLetter(r),
-        font: img.arial14,
-        x: legendPadding,
-        y: y,
-        color: black,
-      );
-      img.drawString(
-        image,
-        '  ${resourceToLegendLabel(r)}',
-        font: img.arial14,
-        x: legendPadding + swatchSize + swatchGap,
-        y: y,
-        color: black,
-      );
-      row++;
-    }
+    final yAfter = drawResourceLegendRows(
+      image,
+      legendY: legendY0 + row * legendLineHeight,
+      textColor: black,
+      resources: Resource.values,
+    );
+    row += (yAfter - (legendY0 + row * legendLineHeight)) ~/ legendLineHeight;
   }
   return row;
 }

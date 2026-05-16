@@ -99,7 +99,9 @@ class TileMapGridGraph {
     }
     while (queue.isNotEmpty) {
       final (x, y) = queue.removeLast();
-      for (final (nx, ny) in [(x - 1, y), (x + 1, y), (x, y - 1), (x, y + 1)]) {
+      for (final (dx, dy) in kTileMapDirections4WestEastNorthSouth) {
+        final nx = x + dx;
+        final ny = y + dy;
         if (nx >= 0 &&
             nx < params.width &&
             ny >= 0 &&
@@ -144,16 +146,25 @@ class TileMapGridGraph {
     const dominantOceanPercentNumerator = 80;
     final legacyOcean = _legacyBoundaryReachableSea(grid, seaZoneId);
     final components = connectedComponentsOfSea(grid, seaZoneId);
-    final totalSea = countSeaCells(grid, seaZoneId);
-    final touchLegacyFillable = <Set<(int x, int y)>>[];
-    for (final component in components) {
-      final continentSet = _continentSetForSeaComponent(
+    // One full-grid sea pass via [connectedComponentsOfSea]; avoid a second
+    // [countSeaCells] scan (Refs #2489).
+    final totalSea = components.fold<int>(0, (sum, c) => sum + c.length);
+    // One continent-set computation per sea component (Refs #2489 P1); both passes
+    // below reuse this cache instead of calling [_continentSetForSeaComponent]
+    // twice per component.
+    final continentSets = List<Set<int>>.generate(components.length, (i) {
+      return _continentSetForSeaComponent(
         grid,
         seaZoneId,
-        component,
+        components[i],
         landSeeds,
         continentBySeedIndex,
       );
+    });
+    final touchLegacyFillable = <Set<(int x, int y)>>[];
+    for (var i = 0; i < components.length; i++) {
+      final component = components[i];
+      final continentSet = continentSets[i];
       if (continentSet.length != 1) continue;
       if (!component.any((p) => legacyOcean.contains(p))) continue;
       touchLegacyFillable.add(component);
@@ -178,14 +189,9 @@ class TileMapGridGraph {
     }
 
     final fillableLake = <(int x, int y)>{};
-    for (final component in components) {
-      final continentSet = _continentSetForSeaComponent(
-        grid,
-        seaZoneId,
-        component,
-        landSeeds,
-        continentBySeedIndex,
-      );
+    for (var i = 0; i < components.length; i++) {
+      final component = components[i];
+      final continentSet = continentSets[i];
       if (continentSet.length != 1) continue;
       if (excludedMainOcean != null &&
           component.length == excludedMainOcean.length &&

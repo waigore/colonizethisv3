@@ -136,30 +136,16 @@ class _TileMapGenTerrainResource {
     if (grid[y][x] != _landSentinel) return;
     final terrain = terrainGrid[y][x];
     if (terrain == null) return;
-    var allowed = Resource.values
-        .where(
-          (r) =>
-              rules.isAllowedInRegion(r, mapRegionId) &&
-              rules.isAllowedOnTerrain(r, terrain),
-        )
-        .toList();
-    if (allowed.isEmpty) return;
-    if (capState != null && capState.shouldRestrictToRegionOnly(allowed)) {
-      allowed = capState.filterToRegionOnly(allowed);
-      if (allowed.isEmpty) return;
-    }
-    if (rnd.nextDouble() > 0.4) return;
-    final weights = allowed.map((r) => rules.spawnWeight(r)).toList();
-    final sum = weights.reduce((a, b) => a + b);
-    var roll = rnd.nextDouble() * sum;
-    for (var i = 0; i < allowed.length; i++) {
-      roll -= weights[i];
-      if (roll > 0) continue;
-      final placed = allowed[i];
-      resourceGrid[y][x] = placed;
-      capState?.record(placed);
-      return;
-    }
+    tryPlaceWeightedResourceAtCell(
+      resourceGrid: resourceGrid,
+      x: x,
+      y: y,
+      terrain: terrain,
+      mapRegionId: mapRegionId,
+      rules: rules,
+      rnd: rnd,
+      capState: capState,
+    );
   }
 
   Set<(int x, int y)> _mountainAdjacentNonMountainLandFrontier(

@@ -35,25 +35,6 @@ List<(int x, int y)> _organicSeedCloseSeaCandidates(
   return candidates;
 }
 
-int _minManhattanDistToOtherContinentCells(
-  List<List<int>> continentGrid,
-  TileMapLandSeedParams params,
-  int x,
-  int y,
-  int ownContinent,
-) {
-  var minDistToOther = params.width + params.height;
-  for (var ny = 0; ny < params.height; ny++) {
-    for (var nx = 0; nx < params.width; nx++) {
-      final cell = continentGrid[ny][nx];
-      if (cell < 0 || cell == ownContinent) continue;
-      final d = (x - nx).abs() + (y - ny).abs();
-      if (d < minDistToOther) minDistToOther = d;
-    }
-  }
-  return minDistToOther;
-}
-
 (int, int) _pickBestOrganicSeaCandidate(
   List<(int x, int y)> candidates,
   List<(int x, int y)> ownLandOrSeed,
@@ -63,17 +44,21 @@ int _minManhattanDistToOtherContinentCells(
   double awayPenalty,
   Random rnd,
 ) {
+  final unreachableOther = params.width + params.height;
+  final distToOtherContinent = manhattanDistToNearestSourceXY(
+    params.width,
+    params.height,
+    (x, y) {
+      final cell = continentGrid[y][x];
+      return cell >= 0 && cell != continentIndex;
+    },
+    distanceWhenNoSources: unreachableOther,
+  );
   var bestScore = -1e100;
   final bestCandidates = <(int x, int y)>[];
   for (final (x, y) in candidates) {
     final minDistToOwn = _minManhattanDistToPoints(x, y, ownLandOrSeed);
-    final minDistToOther = _minManhattanDistToOtherContinentCells(
-      continentGrid,
-      params,
-      x,
-      y,
-      continentIndex,
-    );
+    final minDistToOther = distToOtherContinent[y][x];
     final score = -minDistToOwn + awayPenalty * minDistToOther;
     if (score > bestScore) {
       bestScore = score;
@@ -171,8 +156,8 @@ int _minManhattanDistToOtherContinentCells(
   );
   entries.sort((a, b) => a.$1.compareTo(b.$1));
 
-  final next = grid.map((row) => row.toList()).toList();
-  final nextContinent = continentGrid.map((row) => row.toList()).toList();
+  final next = copyTileMapGrid(grid);
+  final nextContinent = copyTileMapGrid(continentGrid);
   final used = List<int>.filled(numContinents, 0);
   final buffer = params.continentBufferTiles == 0
       ? 1
@@ -256,7 +241,7 @@ _placeLandSeedsOrganicImpl(
 
   final landSeeds = <(int x, int y)>[];
   final continentBySeedIndex = <int>[];
-  var g = grid.map((row) => row.toList()).toList();
+  var g = copyTileMapGrid(grid);
   final continentGrid = List.generate(
     params.height,
     (_) => List.filled(params.width, -1),
@@ -270,8 +255,6 @@ _placeLandSeedsOrganicImpl(
     0,
     landBudgetTotal,
   );
-  final totalProvinces = provinceToContinent.length;
-
   final seedCountsPerContinent = List<int>.filled(numContinents, 0);
   var voronoiRemaining = voronoiBudgetTotal;
 
@@ -279,20 +262,11 @@ _placeLandSeedsOrganicImpl(
     final roundBudget = (round + 1 == totalRounds)
         ? voronoiRemaining
         : (voronoiBudgetTotal / totalRounds).round();
-    final budgetPerContinent = <int>[];
-    for (var c = 0; c < numContinents; c++) {
-      budgetPerContinent.add(
-        (roundBudget * provincesByContinent[c]!.length / totalProvinces)
-            .round(),
-      );
-    }
-    var roundUsed = 0;
-    for (var c = 0; c < numContinents; c++) {
-      roundUsed += budgetPerContinent[c];
-    }
-    if (roundUsed != roundBudget && numContinents > 0) {
-      budgetPerContinent[0] += roundBudget - roundUsed;
-    }
+    final budgetPerContinent = allocateBudgetByProvinceCount(
+      totalBudget: roundBudget,
+      provincesByContinent: provincesByContinent,
+      numContinents: numContinents,
+    );
     voronoiRemaining -= roundBudget;
     // Step 1: Place one land seed per continent (if needed)
     for (var c = 0; c < numContinents; c++) {

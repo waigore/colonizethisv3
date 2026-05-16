@@ -1,5 +1,6 @@
 import 'package:colonizethis_test/test.dart';
 import 'package:colonizethis_map/colonizethis_map.dart';
+import 'package:colonizethis_map/src/tile_map_directions.dart';
 
 void main() {
   group('Pass 4 lake fill (issue 1864)', () {
@@ -81,7 +82,7 @@ void main() {
         final reachable = queue.toSet();
         while (queue.isNotEmpty) {
           final (x, y) = queue.removeLast();
-          for (final (dx, dy) in [(0, -1), (0, 1), (-1, 0), (1, 0)]) {
+          for (final (dx, dy) in kTileMapDirections4NorthSouthWestEast) {
             final nx = x + dx;
             final ny = y + dy;
             if (nx >= 0 && nx < result.width && ny >= 0 && ny < result.height) {
