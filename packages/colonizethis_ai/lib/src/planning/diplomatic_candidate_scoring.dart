@@ -65,10 +65,14 @@ List<int> computeDiplomaticCandidateScores({
         {
           final rel = snapshot.relations[o.targetFactionId];
           final relationScore = rel?.score ?? 50;
-          final isAdjacentOwner = snapshot
-              .conquest
-              .adjacentOwnerFactionIdsSorted
-              .contains(o.targetFactionId);
+          final adjacentOwners = snapshot.conquest.adjacentOwnerFactionIdsSorted;
+          final isAdjacentOwner = adjacentOwners.contains(o.targetFactionId);
+          if (behindVictoryPace &&
+              adjacentOwners.isNotEmpty &&
+              !isAdjacentOwner) {
+            s = kDeclareWarNonAdjacentSuppressedScore;
+            break;
+          }
           final isWeakGpNeighbor = game.playerById(o.targetFactionId) !=
                   null &&
               snapshot.opportunities.weakNeighbors.contains(o.targetFactionId);

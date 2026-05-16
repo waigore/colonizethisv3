@@ -71,3 +71,7 @@ const int kDeclareWarLowWarLikelihoodThreshold = 35;
 /// When far from victory, reduce trade goal weight by at most this amount so
 /// conquer/expand can compete for trade-focused leaders.
 const int kTradeGoalPenaltyCapWhenFarFromVictory = 30;
+
+/// When far from victory, suppress declare-war on factions that do not own a
+/// topologically adjacent Old World province (distant minors are useless).
+const int kDeclareWarNonAdjacentSuppressedScore = 0;

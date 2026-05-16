@@ -509,6 +509,7 @@ void main() {
           adjacentScore - distantScore,
           greaterThanOrEqualTo(kDeclareWarAdjacentOwnerBonus),
         );
+        expect(distantScore, kDeclareWarNonAdjacentSuppressedScore);
       },
     );
   });
