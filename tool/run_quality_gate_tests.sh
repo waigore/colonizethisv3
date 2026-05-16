@@ -67,6 +67,15 @@ for dir in tool/sim_scenarios tool/sim_combat_montecarlo tool/sim_combat tool/ge
 done
 
 echo ""
+echo "=== Test run_observer_game (Dart, coverage) ==="
+(cd tool/run_observer_game && dart test --coverage=coverage -j 4 --reporter=compact)
+(cd tool/run_observer_game && dart run coverage:format_coverage --lcov -i coverage -o coverage/lcov.info --report-on=lib --package=.)
+
+echo ""
+echo "=== Coverage gate (run_observer_game lib >= 80%) ==="
+"$ROOT/tool/check_coverage_threshold.sh" 80 tool/run_observer_game
+
+echo ""
 echo "=== Coverage gate (logic/map/ai >= 90%) ==="
 "$ROOT/tool/check_coverage_threshold.sh" 90 packages/colonizethis_logic packages/colonizethis_map packages/colonizethis_ai
 

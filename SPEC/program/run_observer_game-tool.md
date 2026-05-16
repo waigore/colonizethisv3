@@ -52,11 +52,12 @@ HTML is a render-only wrapper: the `<pre>` body uses the **same** pretty-printed
 ## Relationship to app / ctdev
 
 - **App:** Merged trace file export when **`CT_DEBUG_CONSOLE=true`** (`--dart-define`); see logging/env TDD notes in **#2498**.
-- **Tool:** Traces always on for `run_observer_game`.
+- **Ctdev:** `SimGameController.turnTraceEnabled` defaults from the same compile-time flag **`CT_DEBUG_CONSOLE`** (`ctdev/lib/ct_debug_console.dart`), so long sim sessions can emit merged trace files without a code change.
+- **Tool:** Traces are always on for `run_observer_game`.
 
 ## Coverage
 
-CI: **≥ 80% line coverage on `tool/run_observer_game/lib/` only** once the package implements `lib/` beyond the CLI stub (`S5`).
+CI: **≥ 80% line coverage on `tool/run_observer_game/lib/`** (`quality` workflow: `tool/check_coverage_threshold.sh 80 tool/run_observer_game` after `dart test --coverage` for that package).
 
 ## Acceptance (tool-specific)
 

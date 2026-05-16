@@ -59,7 +59,7 @@ melos run run_observer_game -- [options]
 - `--max-turns <n>` — optional turn cap (default = calendar-1800 turn for the mapping)
 - `--config <path>` — optional `GameSetupConfig` JSON (`init_game`-compatible)
 
-**Note:** The runnable observer loop and artifact writers land in follow-up slices on the same issue; the package entrypoint and SPEC are established first.
+Full observer loop (Full AI + traces + snapshots + `run-summary.json`) is implemented per GitHub **#2498**; use `--max-turns` for short CI-style runs.
 
 ---
 

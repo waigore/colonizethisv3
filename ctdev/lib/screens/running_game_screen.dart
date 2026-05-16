@@ -8,6 +8,7 @@ import 'package:ctdev/package_logger.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
 
+import '../ct_debug_console.dart';
 import '../ctdev_log.dart';
 import '../debug_map_painter.dart';
 import '../player_view_map_painter.dart';
@@ -63,6 +64,7 @@ class _RunningGameScreenState extends State<RunningGameScreen>
       baseSeed: widget.baseSeed,
       useSimGameAi: widget.useSimGameAi,
       useFullAI: widget.useFullAI,
+      turnTraceEnabled: kCtDebugConsoleEnabled,
     );
     _viewData = buildInitGameMapViewData(
       game: _controller.game,
