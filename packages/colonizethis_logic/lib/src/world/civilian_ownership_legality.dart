@@ -7,6 +7,24 @@ import '../diplomacy/diplomacy_resolver.dart';
 import 'civilian_tile_occupancy.dart';
 import 'province_lookup.dart';
 
+CapitalTile? capitalTileForFaction(Game game, String factionId) {
+  final player = game.playerById(factionId);
+  if (player?.capitalTile != null) {
+    return player!.capitalTile;
+  }
+  for (final minor in game.minorNations) {
+    if (minor.id == factionId) {
+      return minor.capitalTile;
+    }
+  }
+  for (final tribe in game.tribes) {
+    if (tribe.id == factionId) {
+      return tribe.capitalTile;
+    }
+  }
+  return null;
+}
+
 /// Runs ownership-change civilian legality normalization for [changedProvinceIds].
 ///
 /// For civilians in changed provinces:
@@ -39,8 +57,7 @@ Game relocateIllegalCiviliansInChangedProvinces(
       return unit;
     }
 
-    final owner = game.playerById(unit.ownerId);
-    final capitalTileKey = owner?.capitalTile?.toTileKey();
+    final capitalTileKey = capitalTileForFaction(game, unit.ownerId)?.toTileKey();
     if (capitalTileKey == null || capitalTileKey.isEmpty) {
       throw StateError(
         'Cannot relocate illegal civilian ${unit.id}: missing capital tile for owner ${unit.ownerId}',

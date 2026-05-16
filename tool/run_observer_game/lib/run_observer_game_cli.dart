@@ -167,16 +167,17 @@ Future<int> runObserverGameCli(
     return 2;
   }
   final gameDirs = traceRoot.listSync().whereType<Directory>().toList();
-  if (gameDirs.length != 1) {
-    emitStderr(
-      'Error: expected exactly one game trace directory, found '
-      '${gameDirs.length}',
-    );
+  if (gameDirs.isEmpty) {
+    emitStderr('Error: no game trace directory under $outputRoot');
     return 2;
   }
+  gameDirs.sort(
+    (a, b) => b.statSync().modified.compareTo(a.statSync().modified),
+  );
+  final gameDir = gameDirs.first;
 
   final failures = verifyObserverConquestFromTraceDir(
-    gameDirs.first.path,
+    gameDir.path,
     endTurn: kObserverConquestCanonicalTurns,
   );
   if (failures.isEmpty) {

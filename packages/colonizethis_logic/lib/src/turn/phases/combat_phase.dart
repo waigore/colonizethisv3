@@ -5,6 +5,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import '../../combat/battle_general_assignment.dart';
 import '../../combat/combat_mode_selection.dart';
 import '../../combat/conflict_detection.dart';
+import '../../combat/unopposed_province_capture.dart';
 import '../../dossier/event_dialogue.dart';
 import '../../game_events.dart';
 import '../combat_phase_helpers.dart';
@@ -66,6 +67,7 @@ Game runCombatPhase(
   final turn = state.worldState.turnState.turnNumber;
   final preBattleDialogueSeed =
       (game.globalGameSeed ?? 0) ^ (turn * kTurnResolutionSeedMix);
+  state = applyUnopposedProvinceCaptures(state, orders);
   logicLog.i('combat conflict_detection start turn=$turn');
   final battles = detectConflicts(state, orders);
   if (onDialogue != null && battles.isNotEmpty) {
