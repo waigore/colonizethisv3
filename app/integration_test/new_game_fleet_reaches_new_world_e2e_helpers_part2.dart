@@ -300,22 +300,25 @@ Future<void> _awaitNwCoastalOrVisibleLandForBundledExploreE2e({
         _playerHasAnyNewWorldFoggedOrBetterFromCtSnapshot()) {
       return;
     }
-    await openNavalPanel(
-      tester,
-      timeout: _kMaxUiResponseWait,
-      bottomSheetCloseTimeout: _kMaxUiResponseWait,
-    );
-    if (_nonHomeHumanFleetInCoastalNewWorldSeaFromCtSnapshot() ||
-        _playerHasAnyNewWorldFoggedOrBetterFromCtSnapshot()) {
-      await closeBottomSheet(tester, overallTimeout: _kMaxUiResponseWait);
-      return;
+    // Snapshot-backed paths skip redundant naval sheet open/close (Refs #2336).
+    if (ctE2eNavalPanelSnapshot == null) {
+      await openNavalPanel(
+        tester,
+        timeout: _kMaxUiResponseWait,
+        bottomSheetCloseTimeout: _kMaxUiResponseWait,
+      );
+      if (_nonHomeHumanFleetInCoastalNewWorldSeaFromCtSnapshot() ||
+          _playerHasAnyNewWorldFoggedOrBetterFromCtSnapshot()) {
+        await closeBottomSheet(tester, overallTimeout: _kMaxUiResponseWait);
+        return;
+      }
     }
     await _tryNavalMoveSegment(
       tester,
       l10n,
       useNewWorldMapTabFirst: true,
       allowWarpDestinations: false,
-      navalPanelAlreadyOpen: true,
+      navalPanelAlreadyOpen: ctE2eNavalPanelSnapshot == null,
     );
     await closeBottomSheet(tester, overallTimeout: _kMaxUiResponseWait);
     await _advanceOneHumanTurn(tester, l10n);
@@ -496,16 +499,12 @@ Future<bool> _anyExplorerHasEnabledExploreAssignFleetE2e(
   // the tree. Replace the prior fixed 200ms pump with a bounded adaptive
   // poll that returns as soon as the sheet finishes dismissing.
   Future<void> waitForAssignSheetDismissed() async {
-    final wait = Stopwatch()..start();
-    var dismissPollMs = 25;
-    const dismissCap = Duration(milliseconds: 400);
-    while (wait.elapsed < dismissCap) {
-      if (exploreTile.evaluate().isEmpty) {
-        return;
-      }
-      await tester.pump(Duration(milliseconds: dismissPollMs));
-      dismissPollMs = e2eAdaptivePollRampAfterIdle(dismissPollMs);
-    }
+    await e2ePumpUntilConditionOrIdle(
+      tester,
+      () => exploreTile.evaluate().isEmpty,
+      timeout: const Duration(milliseconds: 400),
+      phaseName: 'pump_until_assign_sheet_dismissed',
+    );
   }
 
   final visitedAssignWidgets = <int>{};
@@ -571,52 +570,43 @@ Future<void> _advanceOneHumanTurn(
   // resolving immediately. Poll adaptively for whichever lands first so we
   // never pay a worst-case fixed settle here.
   final confirmFinder = find.text(l10n.common_yes);
-  final confirmSw = Stopwatch()..start();
-  var confirmPollMs = 25;
-  const confirmCap = Duration(milliseconds: 400);
-  while (confirmSw.elapsed < confirmCap) {
-    if (confirmFinder.hitTestable().evaluate().isNotEmpty) {
-      break;
-    }
-    final maybeAfter = _readNextTurnButtonLabel(tester);
-    if (maybeAfter != null && maybeAfter != before) {
-      perf?.timing('next_turn_advance', phaseSw.elapsed);
-      return;
-    }
-    await tester.pump(Duration(milliseconds: confirmPollMs));
-    confirmPollMs = e2eAdaptivePollRampAfterIdle(confirmPollMs);
+  await e2ePumpUntilConditionOrIdle(
+    tester,
+    () {
+      if (confirmFinder.hitTestable().evaluate().isNotEmpty) {
+        return true;
+      }
+      final maybeAfter = _readNextTurnButtonLabel(tester);
+      return maybeAfter != null && maybeAfter != before;
+    },
+    timeout: const Duration(milliseconds: 400),
+    perf: perf,
+    phaseName: 'pump_until_next_turn_confirm_or_label_advanced',
+  );
+  final earlyAfter = _readNextTurnButtonLabel(tester);
+  if (earlyAfter != null && earlyAfter != before) {
+    perf?.timing('next_turn_advance', phaseSw.elapsed);
+    return;
   }
 
   final confirmNextTurn = confirmFinder.hitTestable();
   if (confirmNextTurn.evaluate().isNotEmpty) {
     await tester.tap(confirmNextTurn.first, warnIfMissed: false);
-    // Adaptive replacement for the prior fixed 150ms settle (#2336 AC5):
-    // briefly pump to flush the confirm tap so the next-turn label poll
-    // below evaluates a fresh widget tree, then fall through to the
-    // condition-first poll loop.
+    // Flush the confirm tap so the shared label poll evaluates a fresh tree.
     await tester.pump();
   }
 
-  final sw = Stopwatch()..start();
-  // Check before the first pump so already-advanced labels short-circuit
-  // (same ordering as [e2eWaitForNextTurnLabelAdvance] in e2e_test_shared).
-  final immediateAfter = _readNextTurnButtonLabel(tester);
-  if (immediateAfter != null && immediateAfter != before) {
-    perf?.timing('next_turn_advance', phaseSw.elapsed);
-    return;
+  if (before == null) {
+    fail(
+      'Next turn button label missing before advance. '
+      'Last exception: ${tester.takeException()}',
+    );
   }
-  var labelPollMs = 25;
-  while (sw.elapsed < _kMaxUiResponseWait) {
-    final after = _readNextTurnButtonLabel(tester);
-    if (after != null && after != before) {
-      perf?.timing('next_turn_advance', phaseSw.elapsed);
-      return;
-    }
-    await tester.pump(Duration(milliseconds: labelPollMs));
-    labelPollMs = e2eAdaptivePollRampAfterIdle(labelPollMs);
-  }
-  fail(
-    'Next turn label did not change within ${_kMaxUiResponseWait.inSeconds}s '
-    '(before=${before ?? '(null)'}). Last exception: ${tester.takeException()}',
+  await e2eWaitForNextTurnLabelAdvance(
+    tester,
+    turnLabelBefore: before,
+    timeout: _kMaxUiResponseWait,
+    perf: perf,
   );
+  perf?.timing('next_turn_advance', phaseSw.elapsed);
 }

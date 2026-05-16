@@ -52,6 +52,7 @@ void main() {
     await tester.pump();
     await e2eWaitForNewGameEntry(tester, perf: perf);
     perf.timing('bootstrap_for_integration_test', bootstrapSw.elapsed);
+    await ensureAllRelocated64pxPngsLoadSuiteOnce();
 
     final wallClock = Stopwatch()..start();
     void ensureUnderWallClock(String step) {
@@ -95,27 +96,36 @@ void main() {
         );
         return;
       }
-      await openNavalPanel(
-        tester,
-        perf: perf,
-        timeout: _kMaxUiResponseWait,
-        bottomSheetCloseTimeout: _kMaxUiResponseWait,
-      );
-      if (_harnessDetectsNonHomeFleetInNewWorld(tester)) {
-        await closeBottomSheet(tester, perf: perf, overallTimeout: _kMaxUiResponseWait);
-        perf.timing(
-          'test_total',
-          testSw.elapsed,
-          meta: 'result=reached_in_loop',
+      // When [ctE2eNavalPanelSnapshot] is live, world-state arrival does not
+      // require opening the naval sheet (Refs #2336 Bottleneck 4).
+      if (ctE2eNavalPanelSnapshot == null) {
+        await openNavalPanel(
+          tester,
+          perf: perf,
+          timeout: _kMaxUiResponseWait,
+          bottomSheetCloseTimeout: _kMaxUiResponseWait,
         );
-        return;
+        if (_navalPanelShowsNonHomeFleetInNewWorld(tester)) {
+          await closeBottomSheet(
+            tester,
+            perf: perf,
+            overallTimeout: _kMaxUiResponseWait,
+          );
+          perf.timing(
+            'test_total',
+            testSw.elapsed,
+            meta: 'result=reached_in_loop',
+          );
+          return;
+        }
       }
 
       await _tryNavalMoveSegment(
         tester,
         l10n,
         perf: perf,
-        navalPanelAlreadyOpen: true,
+        // Panel was opened above only when snapshot plumbing is unavailable.
+        navalPanelAlreadyOpen: ctE2eNavalPanelSnapshot == null,
       );
       await closeBottomSheet(tester, perf: perf, overallTimeout: _kMaxUiResponseWait);
 
@@ -183,6 +193,7 @@ void main() {
       await tester.pump();
       await e2eWaitForNewGameEntry(tester, perf: perf);
       perf.timing('bootstrap_for_integration_test', bootstrapSw.elapsed);
+      await ensureAllRelocated64pxPngsLoadSuiteOnce();
 
       final wallClock = Stopwatch()..start();
       void ensureUnderWallClock(String step) {
@@ -200,12 +211,12 @@ void main() {
       final l10n = lookupAppLocalizations(const Locale('en'));
 
       await splitHomeFleetOnce(
-      tester,
-      l10n,
-      perf: perf,
-      openNavalTimeout: _kMaxUiResponseWait,
-      bottomSheetCloseTimeout: _kMaxUiResponseWait,
-    );
+        tester,
+        l10n,
+        perf: perf,
+        openNavalTimeout: _kMaxUiResponseWait,
+        bottomSheetCloseTimeout: _kMaxUiResponseWait,
+      );
       await closeBottomSheet(tester, perf: perf, overallTimeout: _kMaxUiResponseWait);
       ensureUnderWallClock('after split fleet');
       CtE2eNavalPanelSnapshot? lastKnownNavalSnapshot;
@@ -222,25 +233,31 @@ void main() {
         if (_fleetReachDoneFromCtSnapshotOnly()) {
           break;
         }
-        await openNavalPanel(
-          tester,
-          perf: perf,
-          timeout: _kMaxUiResponseWait,
-          bottomSheetCloseTimeout: _kMaxUiResponseWait,
-        );
+        if (ctE2eNavalPanelSnapshot == null) {
+          await openNavalPanel(
+            tester,
+            perf: perf,
+            timeout: _kMaxUiResponseWait,
+            bottomSheetCloseTimeout: _kMaxUiResponseWait,
+          );
+          if (_navalPanelShowsNonHomeFleetInNewWorld(tester)) {
+            await closeBottomSheet(
+              tester,
+              perf: perf,
+              overallTimeout: _kMaxUiResponseWait,
+            );
+            break;
+          }
+        }
         if (ctE2eNavalPanelSnapshot != null) {
           lastKnownNavalSnapshot = ctE2eNavalPanelSnapshot;
-        }
-        if (_harnessDetectsNonHomeFleetInNewWorld(tester)) {
-          await closeBottomSheet(tester, perf: perf, overallTimeout: _kMaxUiResponseWait);
-          break;
         }
 
         await _tryNavalMoveSegment(
           tester,
           l10n,
           perf: perf,
-          navalPanelAlreadyOpen: true,
+          navalPanelAlreadyOpen: ctE2eNavalPanelSnapshot == null,
         );
         await closeBottomSheet(tester, perf: perf, overallTimeout: _kMaxUiResponseWait);
 
