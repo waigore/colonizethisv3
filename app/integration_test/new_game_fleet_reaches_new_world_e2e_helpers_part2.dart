@@ -592,33 +592,21 @@ Future<void> _advanceOneHumanTurn(
   final confirmNextTurn = confirmFinder.hitTestable();
   if (confirmNextTurn.evaluate().isNotEmpty) {
     await tester.tap(confirmNextTurn.first, warnIfMissed: false);
-    // Adaptive replacement for the prior fixed 150ms settle (#2336 AC5):
-    // briefly pump to flush the confirm tap so the next-turn label poll
-    // below evaluates a fresh widget tree, then fall through to the
-    // condition-first poll loop.
+    // Flush the confirm tap so the shared label poll evaluates a fresh tree.
     await tester.pump();
   }
 
-  final sw = Stopwatch()..start();
-  // Check before the first pump so already-advanced labels short-circuit
-  // (same ordering as [e2eWaitForNextTurnLabelAdvance] in e2e_test_shared).
-  final immediateAfter = _readNextTurnButtonLabel(tester);
-  if (immediateAfter != null && immediateAfter != before) {
-    perf?.timing('next_turn_advance', phaseSw.elapsed);
-    return;
+  if (before == null) {
+    fail(
+      'Next turn button label missing before advance. '
+      'Last exception: ${tester.takeException()}',
+    );
   }
-  var labelPollMs = 25;
-  while (sw.elapsed < _kMaxUiResponseWait) {
-    final after = _readNextTurnButtonLabel(tester);
-    if (after != null && after != before) {
-      perf?.timing('next_turn_advance', phaseSw.elapsed);
-      return;
-    }
-    await tester.pump(Duration(milliseconds: labelPollMs));
-    labelPollMs = e2eAdaptivePollRampAfterIdle(labelPollMs);
-  }
-  fail(
-    'Next turn label did not change within ${_kMaxUiResponseWait.inSeconds}s '
-    '(before=${before ?? '(null)'}). Last exception: ${tester.takeException()}',
+  await e2eWaitForNextTurnLabelAdvance(
+    tester,
+    turnLabelBefore: before,
+    timeout: _kMaxUiResponseWait,
+    perf: perf,
   );
+  perf?.timing('next_turn_advance', phaseSw.elapsed);
 }
