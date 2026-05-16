@@ -33,6 +33,7 @@ void main() {
     await tester.pump();
     await e2eWaitForNewGameEntry(tester, perf: perf);
     perf.timing('bootstrap_for_integration_test', bootstrapSw.elapsed);
+    await ensureAllRelocated64pxPngsLoadSuiteOnce();
 
     final newGameToMapSw = Stopwatch()..start();
     await bootstrapNewGameToMap(tester, perf: perf);
