@@ -76,6 +76,7 @@ Orders runArmyMovePlanner({
   required StrategicGoal primaryGoal,
   required AISeedBundle seeds,
   required OrderSuggestionAPI suggestionAPI,
+  int provincesToVictory = 0,
 }) {
   final armyMoveCandidates = suggestionAPI.suggestArmyMoveOrders(
     view,
@@ -104,8 +105,12 @@ Orders runArmyMovePlanner({
       : primaryGoal == StrategicGoal.expand
       ? domainWeights.economy
       : 50;
-  if (weight < 20) {
-    _log.d('army move skipped nationId=$nationId weight=$weight < 20');
+  final minWeight =
+      primaryGoal == StrategicGoal.conquer || provincesToVictory > 10 ? 10 : 20;
+  if (weight < minWeight) {
+    _log.d(
+      'army move skipped nationId=$nationId weight=$weight < $minWeight',
+    );
     return orders;
   }
   _log.d(

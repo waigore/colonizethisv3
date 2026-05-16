@@ -8,7 +8,9 @@ import 'goal_manager.dart';
 import '../perception/perception_snapshot.dart';
 import '../util/orders_extensions.dart';
 import 'build_planner.dart';
+import 'conquest_planner.dart';
 import 'diplomacy_planner.dart';
+import 'domain_planner_outcome.dart';
 import 'move_planner.dart';
 import 'naval_planner.dart';
 import 'research_planner.dart';
@@ -24,6 +26,36 @@ final _log = packageLogger();
 /// When [onStagedPlannerProgress] is set, emits coarse phase ids aligned with
 /// staged planners A–G (Refs #2277): `suggestionPools`, `aiStageA` … `aiStageG`.
 Orders runDomainPlanners({
+  required Game game,
+  required MapTopology topology,
+  required String nationId,
+  required PlayerView view,
+  required AIWorldSnapshot snapshot,
+  required AIConfig config,
+  required StrategicGoal primaryGoal,
+  required AISeedBundle seeds,
+  required OrderSuggestionAPI suggestionAPI,
+  required EconomyPlan economyPlan,
+  Map<String, TileMapResult>? tileMapByRegion,
+  void Function(String phaseId)? onStagedPlannerProgress,
+}) {
+  return runDomainPlannersWithOutcome(
+    game: game,
+    topology: topology,
+    nationId: nationId,
+    view: view,
+    snapshot: snapshot,
+    config: config,
+    primaryGoal: primaryGoal,
+    seeds: seeds,
+    suggestionAPI: suggestionAPI,
+    economyPlan: economyPlan,
+    tileMapByRegion: tileMapByRegion,
+    onStagedPlannerProgress: onStagedPlannerProgress,
+  ).orders;
+}
+
+DomainPlannerOutcome runDomainPlannersWithOutcome({
   required Game game,
   required MapTopology topology,
   required String nationId,
@@ -113,6 +145,7 @@ Orders runDomainPlanners({
       config: config,
       seed: seeds.economySeed + 1,
       nationId: nationId,
+      provincesToVictory: snapshot.conquest.provincesToVictory,
     );
     if (chosen != null) {
       _log.i('build chosen nationId=$nationId unitType=${chosen.unitType}');
@@ -137,6 +170,39 @@ Orders runDomainPlanners({
   );
   emit('aiStageC');
 
+  // Military: declare war before invasion army moves (SPEC/ai/ai-architecture.md).
+  final declareWarResult = runDiplomacyPlannerWithResult(
+    nationId: nationId,
+    view: view,
+    game: game,
+    topology: topology,
+    orders: orders,
+    snapshot: snapshot,
+    config: config,
+    primaryGoal: primaryGoal,
+    seeds: seeds,
+    suggestionAPI: suggestionAPI,
+    pass: DiplomacyPlannerPass.declareWarOnly,
+  );
+  orders = declareWarResult.orders;
+  final armyMovesBeforeConquest =
+      orders.armyMoveOrdersByPlayerId[nationId]?.length ?? 0;
+  orders = runConquestArmyMovePlanner(
+    nationId: nationId,
+    view: view,
+    game: game,
+    topology: topology,
+    orders: orders,
+    snapshot: snapshot,
+    config: config,
+    primaryGoal: primaryGoal,
+    seeds: seeds,
+    suggestionAPI: suggestionAPI,
+    declaredWarTargetFactionId: declareWarResult.declaredWarTargetFactionId,
+  );
+  final conquestArmyMoveCount =
+      (orders.armyMoveOrdersByPlayerId[nationId]?.length ?? 0) -
+      armyMovesBeforeConquest;
   orders = runArmyMovePlanner(
     nationId: nationId,
     view: view,
@@ -147,6 +213,7 @@ Orders runDomainPlanners({
     primaryGoal: primaryGoal,
     seeds: seeds,
     suggestionAPI: suggestionAPI,
+    provincesToVictory: snapshot.conquest.provincesToVictory,
   );
   emit('aiStageD');
 
@@ -164,8 +231,8 @@ Orders runDomainPlanners({
   );
   emit('aiStageE');
 
-  // Diplomacy: suggest diplomatic orders; weight by diplomacy domain and goal.
-  orders = runDiplomacyPlanner(
+  // Diplomacy follow-up (peace, alliance, overture — no duplicate declare war).
+  orders = runDiplomacyPlannerWithResult(
     nationId: nationId,
     view: view,
     game: game,
@@ -176,7 +243,8 @@ Orders runDomainPlanners({
     primaryGoal: primaryGoal,
     seeds: seeds,
     suggestionAPI: suggestionAPI,
-  );
+    pass: DiplomacyPlannerPass.nonDeclareWarOnly,
+  ).orders;
   emit('aiStageF');
 
   orders = runResearchPlanner(
@@ -192,5 +260,9 @@ Orders runDomainPlanners({
   );
   emit('aiStageG');
 
-  return orders;
+  return DomainPlannerOutcome(
+    orders: orders,
+    declaredWarTargetFactionId: declareWarResult.declaredWarTargetFactionId,
+    conquestArmyMoveCount: conquestArmyMoveCount,
+  );
 }

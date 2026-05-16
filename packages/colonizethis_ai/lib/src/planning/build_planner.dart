@@ -16,6 +16,7 @@ BuildUnitOrder? pickBuildOrder({
   required AIConfig config,
   required int seed,
   required String nationId,
+  int provincesToVictory = 0,
 }) {
   if (buildCandidates.isEmpty) return null;
   final thresholds = getThresholdsForLeader(config.personalityId);
@@ -44,6 +45,9 @@ BuildUnitOrder? pickBuildOrder({
         primaryGoal == StrategicGoal.defend) {
       if (isRegiment) {
         militaryBonus = 1.0;
+        if (provincesToVictory > kBuildRegimentVictoryPaceThreshold) {
+          militaryBonus += kBuildRegimentBonusWhenBehindVictoryPace;
+        }
       } else if (isShip && cargoHold == 0) {
         militaryBonus = 1.0;
       }

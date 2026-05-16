@@ -96,5 +96,37 @@ void main() {
       final out = filterArmyMoveOrdersByDiplomacy(game, gpId, orders);
       expect(out, orders);
     });
+
+    test('keeps move into minor at peace when draft orders declare war', () {
+      final game = gameWithMinorProvince(
+        diplomacyRelations: [
+          DiplomacyRelation(
+            factionId1: gpId,
+            factionId2: minorId,
+            state: RelationState.atPeace,
+          ),
+        ],
+      );
+      const armyOrders = [
+        ArmyMoveOrder(armyId: 'a1', destinationProvinceId: '$ow|P_minor'),
+      ];
+      final draftOrders = Orders(
+        diplomaticOrdersByPlayerId: {
+          gpId: [
+            DiplomaticOrder(
+              type: DiplomaticOrderType.declareWar,
+              targetFactionId: minorId,
+            ),
+          ],
+        },
+      );
+      final out = filterArmyMoveOrdersByDiplomacy(
+        game,
+        gpId,
+        armyOrders,
+        draftOrders: draftOrders,
+      );
+      expect(out, armyOrders);
+    });
   });
 }
