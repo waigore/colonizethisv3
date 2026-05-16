@@ -172,21 +172,6 @@ class _TileMapGenTerrainResource {
     return frontier;
   }
 
-  List<(int x, int y)> _nonMountainLandCells(
-    List<List<String>> grid,
-    List<List<TerrainType?>> terrainGrid,
-  ) {
-    final remainingLand = <(int x, int y)>[];
-    for (var y = 0; y < params.height; y++) {
-      for (var x = 0; x < params.width; x++) {
-        if (grid[y][x] != _landSentinel) continue;
-        if (terrainGrid[y][x] == TerrainType.mountain) continue;
-        remainingLand.add((x, y));
-      }
-    }
-    return remainingLand;
-  }
-
   /// Pass 6a: generate mountain ridges via random walks over land cells.
   void _assignMountainRidges(
     List<List<TerrainType?>> terrainGrid,
@@ -304,7 +289,7 @@ class _TileMapGenTerrainResource {
     // fragmented land), convert random remaining land cells until we reach
     // the target. This should be rare and only adjusts a handful of tiles.
     if (currentMountain < targetMountain) {
-      final remainingLand = _nonMountainLandCells(grid, terrainGrid);
+      final remainingLand = _collectRemainingNonMountainLand(terrainGrid, grid);
       remainingLand.shuffle(rnd);
       var i = 0;
       while (currentMountain < targetMountain && i < remainingLand.length) {
