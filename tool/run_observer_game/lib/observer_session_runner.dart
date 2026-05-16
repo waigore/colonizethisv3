@@ -151,6 +151,8 @@ Future<int> runObserverSession({
     }
   } on Object catch (e, st) {
     _sessionLog.e('observer:run_loop_failed', error: e, stackTrace: st);
+    stderr.writeln('observer:run_loop_failed: $e');
+    stderr.writeln(st);
     return 2;
   }
 

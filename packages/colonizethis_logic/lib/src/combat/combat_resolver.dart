@@ -38,9 +38,11 @@ Game resolveBattleContext(
   }
 
   final unitsById = unitsByIdFromRegion(region);
+  final provinceOwnerAtBattleStart =
+      _provinceOwnerIdAtBattleStart(game, ctx) ?? ctx.defenderFactionId;
   var defenderUnitIds = ctx.defenderUnitIds.toList();
   var defenderFactionId = ctx.defenderFactionId;
-  var provinceOwnerId = ctx.defenderFactionId;
+  var provinceOwnerId = provinceOwnerAtBattleStart;
   var generalsById = {for (final g in game.generals) g.id: g};
   final battleRng = battleAssignmentRng(game, ctx);
   final attackerSidesWithMedals = ctx.attackers.map((att) {
@@ -198,6 +200,7 @@ Game resolveBattleContext(
     survivingAttackerFactionId: survivingAttackerFactionId,
     generalsById: generalsById,
     ledger: ledger,
+    provinceOwnerAtBattleStart: provinceOwnerAtBattleStart,
   );
 
   var ownerAfter = '';
@@ -361,6 +364,14 @@ List<String> _recoverDefenderGarrisonIfNeeded({
   return updatedDefenderIds;
 }
 
+String? _provinceOwnerIdAtBattleStart(Game game, BattleContext ctx) {
+  final row = resolveProvinceRowForOwnershipTransfer(
+    game.worldState,
+    ctx.provinceId,
+  );
+  return row?.province.ownerId;
+}
+
 Game _buildResolvedBattleGame({
   required Game game,
   required BattleContext ctx,
@@ -368,6 +379,7 @@ Game _buildResolvedBattleGame({
   required String? survivingAttackerFactionId,
   required Map<String, General> generalsById,
   required CombatPhaseGeneralLedger ledger,
+  required String provinceOwnerAtBattleStart,
 }) {
   var newWorldState = game.worldState.updateRegionById(
     ctx.regionId,
@@ -386,7 +398,7 @@ Game _buildResolvedBattleGame({
     result = applyCanonicalSingleProvinceOwnershipTransfer(
       result,
       targetProvinceId: ctx.provinceId,
-      oldOwnerId: ctx.defenderFactionId,
+      oldOwnerId: provinceOwnerAtBattleStart,
       newOwnerId: survivingAttackerFactionId,
     );
   } else {

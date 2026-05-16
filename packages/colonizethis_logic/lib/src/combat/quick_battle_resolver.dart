@@ -325,10 +325,15 @@ Game applyQuickBattleResultToGame(
       result.winner == QuickBattleWinner.attacker &&
       ctx.attackers.isNotEmpty) {
     final attackerFactionId = ctx.attackers.first.factionId;
+    final row = resolveProvinceRowForOwnershipTransfer(
+      game.worldState,
+      ctx.provinceId,
+    );
+    final oldOwnerId = row?.province.ownerId ?? ctx.defenderFactionId;
     updatedGame = applyCanonicalSingleProvinceOwnershipTransfer(
       updatedGame,
       targetProvinceId: ctx.provinceId,
-      oldOwnerId: ctx.defenderFactionId,
+      oldOwnerId: oldOwnerId,
       newOwnerId: attackerFactionId,
     );
   }
