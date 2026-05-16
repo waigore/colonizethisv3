@@ -190,7 +190,10 @@ void main() {
             capitalThreatened: true,
           ),
           opportunities: OpportunitySummary(unclaimedProvinces: 0),
-          conquest: ConquestSummary(),
+          conquest: ConquestSummary(
+            oldWorldProvincesOwned: 8,
+            provincesToVictory: 23,
+          ),
           economy: EconomySummary(workerCount: 10),
           relations: {},
         );

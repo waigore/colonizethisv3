@@ -78,3 +78,12 @@ const int kDeclareWarNonAdjacentSuppressedScore = 0;
 
 /// Declare-war bonus toward an adjacent **Great Power** when far from victory.
 const int kDeclareWarAdjacentGpBonusWhenFarFromVictory = 35;
+
+/// Extra declare-war bonus toward an adjacent **minor/tribe** when far from victory.
+const int kDeclareWarAdjacentMinorBonusWhenFarFromVictory = 45;
+
+/// When far from victory, defend goal bonus while Old World holdings are small.
+const int kDefendBonusWhenFewOldWorldProvinces = 35;
+
+/// Old World province count at or below which [kDefendBonusWhenFewOldWorldProvinces] applies.
+const int kFewOldWorldProvincesDefendThreshold = 6;

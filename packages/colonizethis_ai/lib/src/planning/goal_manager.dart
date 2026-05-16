@@ -50,6 +50,11 @@ Map<StrategicGoal, int> evaluateStrategicGoalScores(
   }
 
   final provincesToVictory = snapshot.conquest.provincesToVictory;
+  if (snapshot.conquest.oldWorldProvincesOwned <=
+          kFewOldWorldProvincesDefendThreshold &&
+      provincesToVictory > kConquerScoreFloorProvincesToVictoryThreshold) {
+    defend += kDefendBonusWhenFewOldWorldProvinces;
+  }
   conquer += conquerScoreBonusForProvincesToVictory(provincesToVictory);
   conquer += endgameConquerScoreBonus(provincesToVictory);
   if (snapshot.conquest.invadableProvinceIdsSorted.isNotEmpty) {

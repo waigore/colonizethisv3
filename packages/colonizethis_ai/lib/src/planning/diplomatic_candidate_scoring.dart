@@ -73,13 +73,25 @@ List<int> computeDiplomaticCandidateScores({
             s = kDeclareWarNonAdjacentSuppressedScore;
             break;
           }
+          final isMinorTarget = _isMinorOrTribeFaction(game, o.targetFactionId);
           final isWeakGpNeighbor = game.playerById(o.targetFactionId) !=
                   null &&
               snapshot.opportunities.weakNeighbors.contains(o.targetFactionId);
           final isAdjacentGp =
               isAdjacentOwner && game.playerById(o.targetFactionId) != null;
-          final effectiveMaxRelation = behindVictoryPace &&
-                  _isMinorOrTribeFaction(game, o.targetFactionId)
+          if (behindVictoryPace &&
+              isAdjacentGp &&
+              !isWeakGpNeighbor) {
+            final warDesireProbe = warDesireForTarget(
+              o.targetFactionId,
+              relationScore,
+            );
+            if (warDesireProbe < kDeclareWarGpWeakNeighborMinWarDesire) {
+              s = kDeclareWarNonAdjacentSuppressedScore;
+              break;
+            }
+          }
+          final effectiveMaxRelation = behindVictoryPace && isMinorTarget
               ? kDeclareWarMinorMaxRelationWhenFarFromVictory
               : behindVictoryPace && isAdjacentGp
               ? kDeclareWarGpMaxRelationWhenFarFromVictory
@@ -128,6 +140,9 @@ List<int> computeDiplomaticCandidateScores({
             }
             if (isAdjacentOwner) {
               s += kDeclareWarAdjacentOwnerBonus;
+              if (behindVictoryPace && isMinorTarget) {
+                s += kDeclareWarAdjacentMinorBonusWhenFarFromVictory;
+              }
               if (behindVictoryPace && isAdjacentGp) {
                 s += kDeclareWarAdjacentGpBonusWhenFarFromVictory;
               }
