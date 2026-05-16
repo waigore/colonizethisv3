@@ -328,5 +328,80 @@ void main() {
         greaterThanOrEqualTo(kDeclareWarGpWeakNeighborBonus),
       );
     });
+
+    test(
+      'peacemaker scores declareWar on minor when behind victory pace despite neutral relation',
+      () {
+        final game = Game(
+          id: 'g-minor-war-pace',
+          worldState: WorldState(
+            turnState: const TurnState(
+              phase: TurnPhase.orders,
+              turnNumber: 1,
+            ),
+            oldWorld: const RegionData(),
+            newWorld: const RegionData(),
+          ),
+          players: const [
+            Player(id: 'gp1', displayName: 'A', isHuman: false),
+          ],
+          minorNations: const [
+            MinorNation(id: 'minor1', displayName: 'Minor 1'),
+          ],
+          diplomacyRelations: const [
+            DiplomacyRelation(
+              factionId1: 'gp1',
+              factionId2: 'minor1',
+              score: 50,
+              level: RelationLevel.neutral,
+              state: RelationState.atPeace,
+            ),
+          ],
+        );
+        const candidate = [
+          DiplomaticOrder(
+            type: DiplomaticOrderType.declareWar,
+            targetFactionId: 'minor1',
+          ),
+        ];
+        const config = AIConfig(
+          leaderId: 'victoria',
+          personalityId: 'victoria',
+          hiddenAgendaId: 'peacemaker',
+        );
+        const behindPaceSnapshot = AIWorldSnapshot(
+          playerId: 'gp1',
+          threats: ThreatSummary(),
+          opportunities: OpportunitySummary(),
+          conquest: ConquestSummary(provincesToVictory: 24),
+          economy: EconomySummary(),
+          relations: {},
+        );
+        const nearVictorySnapshot = AIWorldSnapshot(
+          playerId: 'gp1',
+          threats: ThreatSummary(),
+          opportunities: OpportunitySummary(),
+          conquest: ConquestSummary(provincesToVictory: 5),
+          economy: EconomySummary(),
+          relations: {},
+        );
+        final behindScore = computeDiplomaticCandidateScores(
+          candidates: candidate,
+          nationId: 'gp1',
+          game: game,
+          snapshot: behindPaceSnapshot,
+          config: config,
+        ).single;
+        final nearVictoryScore = computeDiplomaticCandidateScores(
+          candidates: candidate,
+          nationId: 'gp1',
+          game: game,
+          snapshot: nearVictorySnapshot,
+          config: config,
+        ).single;
+        expect(behindScore, greaterThan(0));
+        expect(nearVictoryScore, 0);
+      },
+    );
   });
 }

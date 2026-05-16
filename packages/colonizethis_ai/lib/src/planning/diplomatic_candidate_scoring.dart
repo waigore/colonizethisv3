@@ -23,7 +23,9 @@ List<int> computeDiplomaticCandidateScores({
 }) {
   final agendaId = config.hiddenAgendaId;
   final thresholds = getThresholdsForLeader(config.personalityId);
-  final maxRelationForDeclareWar = getDeclareWarMaxRelationScore(agendaId);
+  var maxRelationForDeclareWar = getDeclareWarMaxRelationScore(agendaId);
+  final behindVictoryPace = snapshot.conquest.provincesToVictory >
+      kConquerScoreFloorProvincesToVictoryThreshold;
   const warCooldownTurns = 4;
   const improveRelationsCooldownTurns = 2;
   final currentTurn = game.worldState.turnState.turnNumber;
@@ -63,7 +65,11 @@ List<int> computeDiplomaticCandidateScores({
         {
           final rel = snapshot.relations[o.targetFactionId];
           final relationScore = rel?.score ?? 50;
-          if (relationScore > maxRelationForDeclareWar) {
+          final effectiveMaxRelation = behindVictoryPace &&
+                  _isMinorOrTribeFaction(game, o.targetFactionId)
+              ? kDeclareWarMinorMaxRelationWhenFarFromVictory
+              : maxRelationForDeclareWar;
+          if (relationScore > effectiveMaxRelation) {
             s = 0;
           } else {
             if (_isDecisionOnCooldown(
@@ -151,6 +157,11 @@ List<int> computeDiplomaticCandidateScores({
     }
     return s == 0 ? 0 : math.max(1, s);
   }).toList();
+}
+
+bool _isMinorOrTribeFaction(Game game, String factionId) {
+  return game.minorNations.any((m) => m.id == factionId) ||
+      game.tribes.any((t) => t.id == factionId);
 }
 
 bool _isDecisionOnCooldown({

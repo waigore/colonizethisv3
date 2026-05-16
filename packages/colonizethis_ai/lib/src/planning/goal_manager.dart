@@ -54,8 +54,8 @@ Map<StrategicGoal, int> evaluateStrategicGoalScores(
     expand += kExpandBonusWhenInvadableProvinces;
   }
   if (provincesToVictory > kConquerScoreFloorProvincesToVictoryThreshold &&
-      conquer < 0) {
-    conquer = 0;
+      conquer < kMinimumConquerScoreWhenFarFromVictory) {
+    conquer = kMinimumConquerScoreWhenFarFromVictory;
   }
 
   return <StrategicGoal, int>{

@@ -29,8 +29,16 @@ int endgameConquerScoreBonus(int provincesToVictory) {
 /// Expand-goal bonus when invadable Old World targets exist.
 const int kExpandBonusWhenInvadableProvinces = 15;
 
-/// When behind victory pace by more than this many provinces, conquer score is floored at 0.
+/// When behind victory pace by more than this many provinces, conquer score is floored.
 const int kConquerScoreFloorProvincesToVictoryThreshold = 20;
+
+/// Minimum `conquer` goal score when [provincesToVictory] exceeds
+/// [kConquerScoreFloorProvincesToVictoryThreshold] (after agenda modifiers).
+const int kMinimumConquerScoreWhenFarFromVictory = 35;
+
+/// Declare-war relation cap for minor/tribe targets when far from military victory
+/// (peacemaker agenda caps do not block minor conquest).
+const int kDeclareWarMinorMaxRelationWhenFarFromVictory = 100;
 
 /// Bonus to declare-war scoring toward a weak-neighbor Great Power when war desire is high.
 const int kDeclareWarGpWeakNeighborBonus = 12;

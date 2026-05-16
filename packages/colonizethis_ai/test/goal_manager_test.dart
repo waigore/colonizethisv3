@@ -1,5 +1,6 @@
 import 'package:colonizethis_test/test.dart';
 import 'package:colonizethis_ai/colonizethis_ai.dart';
+import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:logger/logger.dart';
 
 void main() {
@@ -39,6 +40,10 @@ void main() {
       expect(
         scores[StrategicGoal.conquer]!,
         greaterThan(baseline[StrategicGoal.conquer]!),
+      );
+      expect(
+        scores[StrategicGoal.conquer]!,
+        greaterThanOrEqualTo(kMinimumConquerScoreWhenFarFromVictory),
       );
     });
   });

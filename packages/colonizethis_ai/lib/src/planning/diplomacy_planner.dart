@@ -57,12 +57,18 @@ DiplomacyPlannerResult runDiplomacyPlannerWithResult({
   DiplomacyPlannerPass pass = DiplomacyPlannerPass.all,
 }) {
   final domainWeights = getDomainWeightsForLeader(config.personalityId);
-  final weight =
+  var weight =
       primaryGoal == StrategicGoal.diplomacy ||
           primaryGoal == StrategicGoal.conquer ||
           primaryGoal == StrategicGoal.trade
       ? domainWeights.diplomacy
       : 40;
+  if (pass == DiplomacyPlannerPass.declareWarOnly &&
+      snapshot.conquest.provincesToVictory >
+          kConquerScoreFloorProvincesToVictoryThreshold &&
+      weight < 25) {
+    weight = 25;
+  }
   if (weight < 25) {
     _log.d('diplomacy skipped nationId=$nationId weight=$weight < 25');
     return DiplomacyPlannerResult(orders: orders);

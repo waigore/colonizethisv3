@@ -56,6 +56,10 @@ Orders runConquestArmyMovePlanner({
   if (primaryGoal == StrategicGoal.conquer || provincesToVictory > 10) {
     weight = weight < 10 ? 10 : weight;
   }
+  if (provincesToVictory > kConquerScoreFloorProvincesToVictoryThreshold &&
+      weight < 10) {
+    weight = 10;
+  }
   if (weight < 10) {
     _log.d('conquest army move skipped nationId=$nationId weight=$weight');
     return orders;
