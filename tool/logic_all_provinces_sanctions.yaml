@@ -85,13 +85,13 @@ sanctions:
     issue: https://github.com/waigore/colonizethisv3/issues/2278
 
   - path: packages/colonizethis_logic/lib/src/orders/order_suggestion_work.dart
-    line: 42
+    line: 43
     rationale: merchantPurchaseLandCandidateTileKeys walks all provinces once per suggestWorkOrders pass when merchants are present (foreign-owned resource tiles).
     spec: SPEC/program/logic-dual-region-province-access.md
     issue: https://github.com/waigore/colonizethisv3/issues/2394
 
   - path: packages/colonizethis_logic/lib/src/orders/order_suggestion_helpers.dart
-    line: 89
+    line: 114
     rationale: getProvinceOwnerMap walks all provinces once per diplomacy filter pass.
     spec: SPEC/program/logic-dual-region-province-access.md
     issue: https://github.com/waigore/colonizethisv3/issues/2509
