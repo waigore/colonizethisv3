@@ -1,13 +1,10 @@
-import 'package:colonizethis_ai/package_logger.dart';
-import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:colonizethis_logic/ai_api.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
-import 'package:colonizethis_logic/order_suggestion_api.dart';
-import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'goal_manager.dart';
+import 'planning_imports.dart';
 import '../perception/perception_snapshot.dart';
 import 'colonial_pressure.dart';
+import 'planner_context.dart';
 import '../util/ai_random_utils.dart';
 
 final _log = packageLogger();
@@ -47,73 +44,50 @@ String? stalledConquestDeclaredWarTarget({
 
 /// Invasion army moves after same-turn declare war. SPEC/ai/ai-architecture.md.
 Orders runConquestArmyMovePlanner({
-  required String nationId,
-  required PlayerView view,
-  required Game game,
-  required MapTopology topology,
-  required Orders orders,
+  required PlannerContext ctx,
   required AIWorldSnapshot snapshot,
-  required AIConfig config,
-  required StrategicGoal primaryGoal,
-  required AISeedBundle seeds,
-  required OrderSuggestionAPI suggestionAPI,
   String? declaredWarTargetFactionId,
 }) {
   final stalledExpansion = isStalledOldWorldExpansion(
     snapshot.conquest.oldWorldProvincesOwned,
   );
-  final armyMoveCandidates = suggestionAPI.suggestArmyMoveOrders(
-    view,
-    game,
-    topology,
-    orders,
+  final armyMoveCandidates = ctx.suggestionAPI.suggestArmyMoveOrders(
+    ctx.view,
+    ctx.game,
+    ctx.topology,
+    ctx.orders,
   );
   if (armyMoveCandidates.isEmpty) {
-    _log.d('conquest army move nationId=$nationId candidatesCount=0');
+    _log.d('conquest army move nationId=${ctx.nationId} candidatesCount=0');
     if (stalledExpansion) {
       return _runStalledFrontierArmyMoveFallback(
-        nationId: nationId,
-        view: view,
-        game: game,
-        topology: topology,
-        orders: orders,
+        ctx: ctx,
         snapshot: snapshot,
         declaredWarTargetFactionId: declaredWarTargetFactionId,
       );
     }
-    return orders;
+    return ctx.orders;
   }
   final filtered = filterArmyMoveOrdersByDiplomacy(
-    game,
-    nationId,
+    ctx.game,
+    ctx.nationId,
     armyMoveCandidates,
-    draftOrders: orders,
+    draftOrders: ctx.orders,
   );
   if (filtered.isEmpty) {
-    _log.d('conquest army move filtered empty nationId=$nationId');
+    _log.d('conquest army move filtered empty nationId=${ctx.nationId}');
     if (stalledExpansion) {
       return _runStalledFrontierArmyMoveFallback(
-        nationId: nationId,
-        view: view,
-        game: game,
-        topology: topology,
-        orders: orders,
+        ctx: ctx,
         snapshot: snapshot,
         declaredWarTargetFactionId: declaredWarTargetFactionId,
       );
     }
-    return orders;
+    return ctx.orders;
   }
-  final domainWeights = getDomainWeightsForLeader(config.personalityId);
-  var weight =
-      primaryGoal == StrategicGoal.conquer ||
-          primaryGoal == StrategicGoal.defend
-      ? domainWeights.military
-      : primaryGoal == StrategicGoal.expand
-      ? domainWeights.economy
-      : 50;
+  var weight = ctx.resolveMilitaryEconomyWeight();
   final provincesToVictory = snapshot.conquest.provincesToVictory;
-  if (primaryGoal == StrategicGoal.conquer || provincesToVictory > 10) {
+  if (ctx.primaryGoal == StrategicGoal.conquer || provincesToVictory > 10) {
     weight = weight < 10 ? 10 : weight;
   }
   if (provincesToVictory > kConquerScoreFloorProvincesToVictoryThreshold &&
@@ -123,7 +97,11 @@ Orders runConquestArmyMovePlanner({
   final atWarWithInvadableTarget = snapshot.conquest.invadableProvinceIdsSorted
       .isNotEmpty &&
       snapshot.threats.atWarWith.isNotEmpty;
-  if (stalledExpansion && atWarWithInvadableTarget && weight < 80) {
+  if (stalledExpansion &&
+      snapshot.conquest.invadableProvinceIdsSorted.isNotEmpty &&
+      weight < 90) {
+    weight = 90;
+  } else if (stalledExpansion && atWarWithInvadableTarget && weight < 80) {
     weight = 80;
   }
   if (stalledExpansion && weight < kConquestArmyMoveMinWeightWhenStalled) {
@@ -134,66 +112,55 @@ Orders runConquestArmyMovePlanner({
     weight = kConquestArmyMoveMinWeightWhenColonialPressure;
   }
   if (weight < 10) {
-    _log.d('conquest army move skipped nationId=$nationId weight=$weight');
-    return orders;
+    _log.d('conquest army move skipped nationId=${ctx.nationId} weight=$weight');
+    return ctx.orders;
   }
-  final provinceOwner = getProvinceOwnerMap(game);
   final invadable = {
     ...snapshot.conquest.invadableProvinceIdsSorted,
     ...snapshot.colonial.invadableNewWorldProvinceIdsSorted,
   };
   if (stalledExpansion) {
     return _applyStalledArmyMovesForAllFieldArmies(
-      nationId: nationId,
-      game: game,
-      topology: topology,
-      orders: orders,
+      ctx: ctx,
       snapshot: snapshot,
-      provinceOwner: provinceOwner,
       invadable: invadable,
       filtered: filtered,
       declaredWarTargetFactionId: declaredWarTargetFactionId,
     );
   }
-  final scores = filtered
-      .map(
-        (m) => _scoreArmyMoveDestination(
-          move: m,
-          nationId: nationId,
-          game: game,
-          topology: topology,
-          snapshot: snapshot,
-          provinceOwner: provinceOwner,
-          invadable: invadable,
-          stalledExpansion: false,
-          declaredWarTargetFactionId: declaredWarTargetFactionId,
-        ),
-      )
-      .toList();
-  final idx = pickWeightedIndex(scores, seeds.militarySeed + 4000);
-  if (idx == null) return orders;
-  final selected = filtered[idx];
+  final selected = selectWeightedCandidate(
+    candidates: filtered,
+    seed: ctx.seeds.militarySeed + 4000,
+    score: (m) => _scoreArmyMoveDestination(
+      move: m,
+      nationId: ctx.nationId,
+      game: ctx.game,
+      topology: ctx.topology,
+      snapshot: snapshot,
+      provinceOwner: ctx.provinceOwner,
+      invadable: invadable,
+      stalledExpansion: false,
+      declaredWarTargetFactionId: declaredWarTargetFactionId,
+    ),
+  );
+  if (selected == null) return ctx.orders;
   _log.i(
-    'conquest army move chosen nationId=$nationId '
+    'conquest army move chosen nationId=${ctx.nationId} '
     'armyId=${selected.armyId} destinationProvinceId=${selected.destinationProvinceId} '
     'declaredWarTarget=$declaredWarTargetFactionId',
   );
-  return applyArmyMoveOrderForPlayer(orders, nationId, selected);
+  return applyArmyMoveOrderForPlayer(ctx.orders, ctx.nationId, selected);
 }
 
 Orders _applyStalledArmyMovesForAllFieldArmies({
-  required String nationId,
-  required Game game,
-  required MapTopology topology,
-  required Orders orders,
+  required PlannerContext ctx,
   required AIWorldSnapshot snapshot,
-  required Map<String, String> provinceOwner,
   required Set<String> invadable,
   required List<ArmyMoveOrder> filtered,
   required String? declaredWarTargetFactionId,
 }) {
   final armiesWithOrders = <String>{
-    for (final m in orders.armyMoveOrdersByPlayerId[nationId] ?? const [])
+    for (final m in ctx.orders.armyMoveOrdersByPlayerId[ctx.nationId] ?? const [])
       m.armyId,
   };
   final byArmy = <String, List<ArmyMoveOrder>>{};
@@ -201,7 +168,7 @@ Orders _applyStalledArmyMovesForAllFieldArmies({
     if (armiesWithOrders.contains(move.armyId)) continue;
     (byArmy[move.armyId] ??= []).add(move);
   }
-  var result = orders;
+  var result = ctx.orders;
   for (final armyId in byArmy.keys.toList()..sort()) {
     final candidates = byArmy[armyId]!;
     ArmyMoveOrder? best;
@@ -209,11 +176,11 @@ Orders _applyStalledArmyMovesForAllFieldArmies({
     for (final move in candidates) {
       final score = _scoreArmyMoveDestination(
         move: move,
-        nationId: nationId,
-        game: game,
-        topology: topology,
+        nationId: ctx.nationId,
+        game: ctx.game,
+        topology: ctx.topology,
         snapshot: snapshot,
-        provinceOwner: provinceOwner,
+        provinceOwner: ctx.provinceOwner,
         invadable: invadable,
         stalledExpansion: true,
         declaredWarTargetFactionId: declaredWarTargetFactionId,
@@ -225,55 +192,50 @@ Orders _applyStalledArmyMovesForAllFieldArmies({
     }
     if (best == null) continue;
     _log.i(
-      'conquest army move stalled multi nationId=$nationId '
+      'conquest army move stalled multi nationId=${ctx.nationId} '
       'armyId=${best.armyId} destinationProvinceId=${best.destinationProvinceId}',
     );
-    result = applyArmyMoveOrderForPlayer(result, nationId, best);
+    result = applyArmyMoveOrderForPlayer(result, ctx.nationId, best);
     armiesWithOrders.add(best.armyId);
   }
   return result;
 }
 
 Orders _runStalledFrontierArmyMoveFallback({
-  required String nationId,
-  required PlayerView view,
-  required Game game,
-  required MapTopology topology,
-  required Orders orders,
+  required PlannerContext ctx,
   required AIWorldSnapshot snapshot,
   required String? declaredWarTargetFactionId,
 }) {
-  final provinceOwner = getProvinceOwnerMap(game);
   final invadable = {
     ...snapshot.conquest.invadableProvinceIdsSorted,
     ...snapshot.colonial.invadableNewWorldProvinceIdsSorted,
   };
   final playerOwnedFullProvinceIds = <String>{
-    for (final e in view.provincesById.entries)
-      if (e.value.ownerId == nationId) e.key,
+    for (final e in ctx.view.provincesById.entries)
+      if (e.value.ownerId == ctx.nationId) e.key,
   };
   final validator = IncrementalCandidateValidator.forPlayer(
-    game: game,
-    topology: topology,
-    playerId: nationId,
-    basePrefix: orders,
-    factionMembership: DiplomacyFactionMembership.from(game),
-    view: view,
-    unitsById: unitsByIdFromWorld(game.worldState),
+    game: ctx.game,
+    topology: ctx.topology,
+    playerId: ctx.nationId,
+    basePrefix: ctx.orders,
+    factionMembership: DiplomacyFactionMembership.from(ctx.game),
+    view: ctx.view,
+    unitsById: unitsByIdFromWorld(ctx.game.worldState),
   );
   final armiesWithOrders = <String>{
-    for (final m in orders.armyMoveOrdersByPlayerId[nationId] ?? const [])
+    for (final m in ctx.orders.armyMoveOrdersByPlayerId[ctx.nationId] ?? const [])
       m.armyId,
   };
   ArmyMoveOrder? best;
   var bestScore = -1.0;
-  for (final army in game.worldState.armies) {
-    if (army.ownerId != nationId || army.isHomeArmy) continue;
+  for (final army in ctx.game.worldState.armies) {
+    if (army.ownerId != ctx.nationId || army.isHomeArmy) continue;
     if (armiesWithOrders.contains(army.id)) continue;
     final destIds = armyMoveCandidateDestinationProvinceIds(
-      game: game,
-      topology: topology,
-      playerId: nationId,
+      game: ctx.game,
+      topology: ctx.topology,
+      playerId: ctx.nationId,
       army: army,
       playerOwnedFullProvinceIds: playerOwnedFullProvinceIds,
     );
@@ -285,11 +247,11 @@ Orders _runStalledFrontierArmyMoveFallback({
       if (!validator.isArmyMoveAccepted(candidate)) continue;
       final score = _scoreArmyMoveDestination(
         move: candidate,
-        nationId: nationId,
-        game: game,
-        topology: topology,
+        nationId: ctx.nationId,
+        game: ctx.game,
+        topology: ctx.topology,
         snapshot: snapshot,
-        provinceOwner: provinceOwner,
+        provinceOwner: ctx.provinceOwner,
         invadable: invadable,
         stalledExpansion: true,
         declaredWarTargetFactionId: declaredWarTargetFactionId,
@@ -301,13 +263,13 @@ Orders _runStalledFrontierArmyMoveFallback({
     }
   }
   if (best == null) {
-    return orders;
+    return ctx.orders;
   }
   _log.i(
-    'conquest army move stalled fallback nationId=$nationId '
+    'conquest army move stalled fallback nationId=${ctx.nationId} '
     'armyId=${best.armyId} destinationProvinceId=${best.destinationProvinceId}',
   );
-  return applyArmyMoveOrderForPlayer(orders, nationId, best);
+  return applyArmyMoveOrderForPlayer(ctx.orders, ctx.nationId, best);
 }
 
 double _scoreArmyMoveDestination({
@@ -316,7 +278,7 @@ double _scoreArmyMoveDestination({
   required Game game,
   required MapTopology topology,
   required AIWorldSnapshot snapshot,
-  required Map<String, String> provinceOwner,
+  required Map<String, String?> provinceOwner,
   required Set<String> invadable,
   required bool stalledExpansion,
   required String? declaredWarTargetFactionId,

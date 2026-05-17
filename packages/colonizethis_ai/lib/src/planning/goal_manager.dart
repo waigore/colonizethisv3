@@ -1,8 +1,6 @@
 import 'dart:math' as math;
 
-import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:colonizethis_ai/package_logger.dart';
-import 'package:colonizethis_models/colonizethis_models.dart';
+import 'planning_imports.dart';
 
 import '../util/ai_random_utils.dart';
 import '../perception/perception_snapshot.dart';
@@ -78,6 +76,13 @@ Map<StrategicGoal, int> evaluateStrategicGoalScores(
     diplomacy -= kStalledDiplomacyGoalPenalty;
     trade -= kStalledTradeGoalPenalty;
     conquer += kStalledConquerGoalBonus;
+    if (snapshot.conquest.invadableProvinceIdsSorted.isNotEmpty) {
+      conquer += kDeclareWarStalledExpansionMinorBonus;
+      conquer = math.max(conquer, 120);
+      diplomacy = math.min(diplomacy, 35);
+      trade = math.min(trade, 35);
+      tech = math.min(tech, 45);
+    }
   }
   if (hasColonialAcquisitionTargets(snapshot.colonial)) {
     diplomacy -= kColonialDiplomacyGoalPenaltyWhenPressure;

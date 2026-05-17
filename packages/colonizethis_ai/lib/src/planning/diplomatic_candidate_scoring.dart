@@ -1,11 +1,7 @@
 import 'dart:math' as math;
 
-import 'package:colonizethis_ai/package_logger.dart';
-import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:colonizethis_logic/ai_api.dart';
-import 'package:colonizethis_models/colonizethis_models.dart';
-
 import '../perception/perception_snapshot.dart';
+import 'planning_imports.dart';
 import 'colonial_pressure.dart';
 import 'goal_manager.dart';
 import 'war_desire_calculator.dart';
@@ -40,6 +36,12 @@ List<int> computeDiplomaticCandidateScores({
   const warCooldownTurns = 4;
   const improveRelationsCooldownTurns = 2;
   final currentTurn = game.worldState.turnState.turnNumber;
+  final anyMinorOwnsOldWorld = game.worldState.oldWorld.provinces.any(
+    (p) =>
+        p.ownerId != null &&
+        p.ownerId!.isNotEmpty &&
+        game.minorNations.any((m) => m.id == p.ownerId),
+  );
   final warDesireByTarget = <String, int>{};
   int warDesireForTarget(String targetFactionId, int relationScore) {
     return warDesireByTarget.putIfAbsent(
@@ -92,6 +94,7 @@ List<int> computeDiplomaticCandidateScores({
           provinceOwner: provinceOwner,
           warCooldownTurns: warCooldownTurns,
           currentTurn: currentTurn,
+          anyMinorOwnsOldWorld: anyMinorOwnsOldWorld,
           primaryGoal: primaryGoal,
           warDesireForTarget: warDesireForTarget,
         );
@@ -153,6 +156,7 @@ int _scoreDeclareWarDiplomaticOrder({
   required Map<String, String> provinceOwner,
   required int warCooldownTurns,
   required int currentTurn,
+  required bool anyMinorOwnsOldWorld,
   required StrategicGoal? primaryGoal,
   required int Function(String targetFactionId, int relationScore)
   warDesireForTarget,
@@ -329,6 +333,39 @@ int _scoreDeclareWarDiplomaticOrder({
         !hasInvadableMinorOwner &&
         !atWarInvadableOwMinor) {
       s += kDeclareWarColonialNwTribePriorityOverOwMinorBonus;
+    }
+  }
+  final stalledOldWorldExpansion =
+      snapshot.conquest.oldWorldProvincesOwned <=
+      kStalledOldWorldProvinceThreshold;
+  final hasInvadableOldWorld =
+      snapshot.conquest.invadableProvinceIdsSorted.isNotEmpty;
+  if (stalledOldWorldExpansion && hasInvadableOldWorld) {
+    if (isMinorTarget &&
+        !isTribeTarget &&
+        isAdjacentOwner &&
+        invadableOwners.contains(order.targetFactionId)) {
+      s += kDeclareWarStalledOwMinorPriorityBonus;
+      if (thresholds.warLikelihood <= kDeclareWarLowWarLikelihoodThreshold) {
+        s += kDeclareWarLowWarLikelihoodAdjacentBonus;
+      }
+    }
+    if (isTribeTarget && !ownsInvadableNw) {
+      s -= kDeclareWarStalledExpansionTribePenalty;
+    }
+  }
+  if (currentTurn <= kDeclareWarEarlyExpansionMaxTurn &&
+      anyMinorOwnsOldWorld &&
+      stalledOldWorldExpansion &&
+      hasInvadableOldWorld) {
+    if (isMinorTarget &&
+        !isTribeTarget &&
+        isAdjacentOwner &&
+        invadableOwners.contains(order.targetFactionId)) {
+      s += kDeclareWarEarlyExpansionMinorBonus;
+    }
+    if (isTribeTarget && !ownsInvadableNw) {
+      s -= kDeclareWarEarlyExpansionTribePenalty;
     }
   }
   if (colonialPressure &&

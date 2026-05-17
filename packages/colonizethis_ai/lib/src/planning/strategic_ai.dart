@@ -49,15 +49,15 @@ StrategicOrderResult generateStrategicOrders({
 class StrategicOrderTraceResult {
   const StrategicOrderTraceResult({
     required this.result,
-    required this.aiTraceSection,
     required this.game,
+    this.aiTraceSection,
   });
 
   final StrategicOrderResult result;
-  final TurnTraceAiSection aiTraceSection;
 
   /// [Game] after any in-turn army prep (e.g. Home Army split for conquest).
   final Game game;
+  final TurnTraceAiSection? aiTraceSection;
 }
 
 StrategicOrderTraceResult generateStrategicOrdersWithTrace({

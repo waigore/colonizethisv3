@@ -21,11 +21,19 @@ If `dart pub get` or `flutter pub get` fails while resolving hosted packages wit
 
 `dart pub outdated` and `flutter pub outdated` compare the lockfile to **pub.dev “Latest”**; several rows often stay behind even on a healthy workspace. Common reasons in this repo:
 
-- **`test` / `test_api` / `test_core`:** Flutter’s **`flutter_test`** (from the SDK) pins **`test_api`** to the version shipped with that Flutter release. The standalone **`test`** package may therefore sit **below** pub.dev “Latest” (for example when Latest needs a newer `test_api`) until a **newer Flutter stable** relaxes that pin. This is expected; do not “fix” it by forcing `dependency_overrides` on `test_api` for normal work.
-- **`analyzer` / `analyzer_plugin` / `_fe_analyzer_shared`:** **`colonizethis_exception_lint`** and **`custom_lint_builder`** must agree on an **`analyzer`** major. **`analyzer_plugin` 0.14.x** depends on **`analyzer` 13**, while today’s **`custom_lint_builder`** line stays on **`analyzer` ^8.x**—so the workspace intentionally holds **`analyzer` ^8** and **`analyzer_plugin` ^0.13.x`** until upstream `custom_lint` packages publish a compatible analyzer-13 stack. Treat that gap as an **intentional cap**, not a stale lockfile.
-- **Other transitives (`xml`, `inspector`, …):** May lag “Latest” until a **direct** dependency raises its constraints; the solver picks the **newest jointly resolvable** graph across all workspace members.
+- **`test` / `test_api` / `test_core`:** Flutter’s **`flutter_test`** (from the SDK) pins **`test_api`** to the version shipped with that Flutter release. The standalone **`test`** package may therefore sit **below** pub.dev “Latest” (for example when Latest needs a newer `test_api`) until a **newer Flutter stable** relaxes that pin. This is expected; do not “fix” it by forcing `dependency_overrides` on `test_api` for normal work. **Follow-up:** [#2541](https://github.com/waigore/colonizethisv3/issues/2541).
+- **`analyzer` / `analyzer_plugin` / `_fe_analyzer_shared` / `custom_lint_visitor`:** **`colonizethis_exception_lint`** and **`custom_lint_builder`** must agree on an **`analyzer`** major. **`analyzer_plugin` 0.14.x** depends on **`analyzer` 13**, while today’s **`custom_lint_builder`** line stays on **`analyzer` 8.x**—so the workspace intentionally holds **`analyzer` 8.4.0** and **`analyzer_plugin` 0.13.10** until upstream `custom_lint` packages publish a compatible analyzer-13 stack. Treat that gap as an **intentional cap**, not a stale lockfile. **Follow-up:** [#2539](https://github.com/waigore/colonizethisv3/issues/2539).
+- **`hardcoded_strings_lint`:** **1.0.4** stays on the analyzer-8 stack; **2.x** requires analyzer 13 and conflicts with **`custom_lint`** Latest until **#2539** lands. **Follow-up:** [#2540](https://github.com/waigore/colonizethisv3/issues/2540).
+- **`meta`:** Direct **`meta` 1.17.0** in **`colonizethis_data`** matches the version pinned by SDK **`flutter_test`**; **1.18.x** is not jointly resolvable with Flutter workspace members until the Flutter pin moves.
+- **Other transitives (`xml`, `vector_math`, `matcher`, `custom_lint_core`, …):** May lag “Latest” until a **direct** dependency raises its constraints; the solver picks the **newest jointly resolvable** graph across all workspace members.
 
 When bumping dependencies, prefer **`dart pub upgrade`** / **`flutter pub upgrade`** (and coordinated `pubspec.yaml` edits) over overrides; if a row cannot move yet, note the **blocker** (SDK pin or shared dev-tool stack) in the PR or issue.
+
+### Toolchain dependency pinning (GitHub #2532)
+
+**Policy:** Toolchain-related **direct** and **dev** dependencies (`analyzer`, `test`, `custom_lint`, `custom_lint_builder`, `analyzer_plugin`, `hardcoded_strings_lint`, `meta` where declared) use **explicit pinned versions** in `pubspec.yaml` (exact `x.y.z`, not floating `^`). Deliberate upgrades happen via PR that refreshes pins and lockfiles together—routine `pub get` must not silently drift those versions.
+
+**Predecessor:** [#2073](https://github.com/waigore/colonizethisv3/issues/2073) (Flutter pin, advisories path, `repo.workspace_outdated_*` rules). **Phase 1 (#2532):** pin at jointly resolvable Latest; **Phase 2:** [#2539](https://github.com/waigore/colonizethisv3/issues/2539), [#2540](https://github.com/waigore/colonizethisv3/issues/2540), [#2541](https://github.com/waigore/colonizethisv3/issues/2541).
 
 ### Workspace outdated audit command set (GitHub #2073)
 

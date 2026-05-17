@@ -109,7 +109,25 @@ const int kStalledTradeGoalPenalty = 40;
 const int kStalledConquerGoalBonus = 30;
 
 /// Extra declare-war weight toward adjacent minors when stalled.
-const int kDeclareWarStalledExpansionMinorBonus = 50;
+const int kDeclareWarStalledExpansionMinorBonus = 75;
+
+/// When OW expansion is stalled but invadable OW minors exist, prioritize
+/// declaring on those minors over distant tribe wars (observer turn-100 gate).
+const int kDeclareWarStalledOwMinorPriorityBonus = 200;
+
+/// Penalize tribe declare-war while OW holdings are stalled and invadable OW
+/// minors remain (tribes without sea-reachable NW provinces for this GP).
+const int kDeclareWarStalledExpansionTribePenalty = 100;
+
+/// Extra declare-war weight on adjacent OW minors while minors still exist on
+/// the map and the campaign is in the early expansion window (turn ≤ 30).
+const int kDeclareWarEarlyExpansionMinorBonus = 180;
+
+/// Penalize tribe declare-war in that early window while any OW minor remains.
+const int kDeclareWarEarlyExpansionTribePenalty = 160;
+
+/// Last turn (inclusive) for [kDeclareWarEarlyExpansionMinorBonus].
+const int kDeclareWarEarlyExpansionMaxTurn = 30;
 
 /// Penalty on adjacent minor declare-war when the GP already holds many OW provinces.
 const int kDeclareWarSatedExpansionMinorPenalty = 100;
@@ -172,7 +190,10 @@ const int kColonialCargoPreferenceEconomyBoost = 40;
 const int kColonialCargoPreferenceNoNwColoniesBoost = 28;
 
 /// Naval planner weight boost when New World invasion/colonization is viable.
-const int kColonialNavalWeightBonus = 55;
+const int kColonialNavalWeightBonus = 65;
+
+/// Minimum naval planner domain weight under active colonial pressure.
+const int kColonialNavalMinWeightWhenPressure = 85;
 
 /// Naval move score when docking at a New World port under colonial pressure.
 const int kColonialNavalMoveDockNewWorldPortScore = 180;
@@ -218,7 +239,7 @@ const int kConquestArmyMoveMinWeightWhenColonialPressure = 45;
 const int kExploreWorkScoreBonusNewWorld = 80;
 
 /// Full AI build-improvement score for an unimproved extractable resource tile.
-const int kBuildImprovementExtractableResourceScore = 450;
+const int kBuildImprovementExtractableResourceScore = 580;
 
 /// Extra build-improvement score on unimproved extractable tiles in the NW region.
 const int kBuildImprovementNewWorldResourceBonus = 120;
@@ -234,7 +255,7 @@ const int kPurchaseLandNewWorldTribeWorkScore = 320;
 const int kPurchaseLandNewWorldOtherWorkScore = 160;
 
 /// Civilian work economy threshold cap when colonial targets are visible.
-const int kColonialCivilianWorkThresholdCap = 22;
+const int kColonialCivilianWorkThresholdCap = 12;
 
 /// Build-order economy threshold cap when the GP owns any NW provinces.
 const int kColonialBuildOrderThresholdWhenOwnedNw = 18;
