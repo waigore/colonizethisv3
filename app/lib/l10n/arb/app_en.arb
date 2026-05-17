@@ -1857,14 +1857,11 @@
       }
     }
   },
-  "provinceOverlay_unitTarget": "{type} ({id}): {target}",
+  "provinceOverlay_unitTarget": "{type}: {target}",
   "@provinceOverlay_unitTarget": {
-    "description": "Civilian section line for unit target or status.",
+    "description": "Civilian section line for unit target or status (no internal unit id).",
     "placeholders": {
       "type": {
-        "type": "String"
-      },
-      "id": {
         "type": "String"
       },
       "target": {
@@ -1872,17 +1869,14 @@
       }
     }
   },
-  "provinceOverlay_foreignUnitStatus": "{owner} — {type} ({id}): {status}",
+  "provinceOverlay_foreignUnitStatus": "{owner} — {type}: {status}",
   "@provinceOverlay_foreignUnitStatus": {
-    "description": "Civilian section line for foreign-unit status.",
+    "description": "Civilian section line for foreign-unit status (no internal unit id).",
     "placeholders": {
       "owner": {
         "type": "String"
       },
       "type": {
-        "type": "String"
-      },
-      "id": {
         "type": "String"
       },
       "status": {

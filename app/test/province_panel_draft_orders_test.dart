@@ -134,6 +134,116 @@ void main() {
 
       expect(find.textContaining('build improvement'), findsOneWidget);
       expect(find.textContaining(': idle'), findsNothing);
+      expect(find.textContaining('u_builder'), findsNothing);
+      expect(find.text('Builder: build improvement'), findsOneWidget);
+    });
+
+    testWidgets('Civilian section omits internal unit id from display lines', (
+      WidgetTester tester,
+    ) async {
+      final tk = _tileKey(0, 0);
+      final game = Game(
+        id: 'civilian_id_hidden_test',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+          oldWorld: RegionData(
+            provinces: [
+              Province(
+                id: _fullProvinceId,
+                regionId: _regionId,
+                displayName: 'DraftProv',
+              ),
+            ],
+            units: [
+              Unit(
+                id: 'gp1_explorer_1',
+                type: kUnitTypeExplorer,
+                ownerId: 'gp1',
+                locationProvinceId: _fullProvinceId,
+                tileKey: tk,
+                status: UnitStatus.idle,
+              ),
+              Unit(
+                id: 'gp2_explorer_9',
+                type: kUnitTypeExplorer,
+                ownerId: 'gp2',
+                locationProvinceId: _fullProvinceId,
+                tileKey: tk,
+                status: UnitStatus.idle,
+              ),
+            ],
+          ),
+          newWorld: const RegionData(),
+          tileKeysByRegionAndProvince: {
+            _regionId: {
+              _fullProvinceId: [tk],
+            },
+          },
+        ),
+        players: const [
+          Player(id: 'gp1', displayName: 'Human', isHuman: true, treasury: 0),
+          Player(id: 'gp2', displayName: 'France', isHuman: false, treasury: 0),
+        ],
+      );
+      final region = RegionMapViewData(
+        regionId: _regionId,
+        width: 1,
+        height: 1,
+        cellSize: 32,
+        cells: const [
+          CellViewData(
+            x: 0,
+            y: 0,
+            regionCellId: _localProvinceId,
+            isSea: false,
+            terrainTypeId: 'plains',
+            visibility: TileVisibility.visible,
+          ),
+        ],
+        capitalMarkers: const [],
+        portMarkers: const [],
+        factionColors: const {},
+        greatPowerFactionIds: const {'gp1', 'gp2'},
+        terrainColors: const {},
+      );
+      final view = PlayerView(
+        playerId: 'gp1',
+        player: const Player(
+          id: 'gp1',
+          displayName: 'Human',
+          isHuman: true,
+          treasury: 0,
+        ),
+        ownUnitsById: const {},
+        provincesById: const {},
+        visibilityByTile: {tk: VisibilityLevel.fullyVisible},
+        prospectedTiles: const {},
+        diplomacyByOtherId: const {},
+      );
+
+      await tester.pumpWidget(
+        MaterialApp(
+          localizationsDelegates: AppLocalizationsBinding.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          locale: const Locale('en'),
+          home: Scaffold(
+            body: ProvinceSeaZoneDetailOverlay(
+              game: game,
+              region: region,
+              displayId: _fullProvinceId,
+              selectedTileKey: tk,
+              humanPlayerId: 'gp1',
+              playerView: view,
+            ),
+          ),
+        ),
+      );
+      await _pumpOverlayLayout(tester);
+
+      expect(find.text('Explorer: idle'), findsOneWidget);
+      expect(find.text('France — Explorer: idle'), findsOneWidget);
+      expect(find.textContaining('gp1_explorer_1'), findsNothing);
+      expect(find.textContaining('gp2_explorer_9'), findsNothing);
     });
 
     testWidgets('Military section uses localized regiment name', (
