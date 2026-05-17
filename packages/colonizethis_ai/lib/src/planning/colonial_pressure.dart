@@ -12,3 +12,15 @@ bool hasColonialAcquisitionTargets(ColonialSummary colonial) =>
 bool isEarlyColonialExpansion(ColonialSummary colonial) =>
     hasColonialAcquisitionTargets(colonial) &&
     colonial.newWorldProvincesOwned < kColonialFewNwProvincesThreshold;
+
+/// When non-null, build-order pass uses `min(buildThreshold, value)`.
+int? colonialBuildOrderThresholdCap(ColonialSummary colonial) {
+  if (hasColonialAcquisitionTargets(colonial) &&
+      colonial.newWorldProvincesOwned > 0) {
+    return kColonialBuildOrderThresholdWhenOwnedNwUnderPressure;
+  }
+  if (colonial.newWorldProvincesOwned > 0) {
+    return kColonialBuildOrderThresholdWhenOwnedNw;
+  }
+  return null;
+}

@@ -25,6 +25,34 @@ void main() {
     });
   });
 
+  group('colonialBuildOrderThresholdCap', () {
+    test('null when no NW provinces owned', () {
+      const colonial = ColonialSummary(
+        invadableNewWorldProvinceIdsSorted: ['newWorld|p1'],
+      );
+      expect(colonialBuildOrderThresholdCap(colonial), isNull);
+    });
+
+    test('owned NW cap when holdings exist without acquisition targets', () {
+      const colonial = ColonialSummary(newWorldProvincesOwned: 10);
+      expect(
+        colonialBuildOrderThresholdCap(colonial),
+        kColonialBuildOrderThresholdWhenOwnedNw,
+      );
+    });
+
+    test('lower cap when owned NW and acquisition targets remain', () {
+      const colonial = ColonialSummary(
+        newWorldProvincesOwned: kColonialFewNwProvincesThreshold,
+        invadableNewWorldProvinceIdsSorted: ['newWorld|p1'],
+      );
+      expect(
+        colonialBuildOrderThresholdCap(colonial),
+        kColonialBuildOrderThresholdWhenOwnedNwUnderPressure,
+      );
+    });
+  });
+
   group('isEarlyColonialExpansion', () {
     test('false when many NW provinces owned despite invadable targets', () {
       const colonial = ColonialSummary(

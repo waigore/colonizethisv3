@@ -200,7 +200,7 @@ const int kBuildImprovementNewWorldResourceBonus = 120;
 
 /// Additional build-improvement score when the tile is in a GP-owned NW province
 /// (observer turn-150 improvement gate; Refs #2509).
-const int kBuildImprovementOwnedNewWorldResourceBonus = 100;
+const int kBuildImprovementOwnedNewWorldResourceBonus = 120;
 
 /// Merchant purchase_land score for NW tribe/minor tiles (colonial acquisition).
 const int kPurchaseLandNewWorldTribeWorkScore = 320;
@@ -210,6 +210,13 @@ const int kPurchaseLandNewWorldOtherWorkScore = 160;
 
 /// Civilian work economy threshold cap when colonial targets are visible.
 const int kColonialCivilianWorkThresholdCap = 22;
+
+/// Build-order economy threshold cap when the GP owns any NW provinces.
+const int kColonialBuildOrderThresholdWhenOwnedNw = 18;
+
+/// Lower build threshold when the GP owns NW provinces and acquisition targets
+/// remain (late-game improvement pacing for observer turn-150 gate; Refs #2509).
+const int kColonialBuildOrderThresholdWhenOwnedNwUnderPressure = 15;
 
 /// Naval mission score when [NavalMissionOrder.targetPortId] is a New World port.
 const int kColonialNavalMissionNwPortScore = 160;
