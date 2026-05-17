@@ -10,6 +10,7 @@ import '../world/province_lookup.dart';
 import '../world/unit_lookup.dart';
 import 'bundled_civilian_work_order.dart';
 import 'incremental_candidate_validator.dart';
+import 'order_suggestion_helpers.dart';
 import 'order_suggestion_work_tile_keys.dart';
 import 'order_suggestion_work_tile_prefilter.dart';
 import 'order_suggestion_context.dart';
@@ -95,6 +96,16 @@ List<WorkOrder> suggestWorkOrders(
         view: view,
         partiallyRevealedPrefixedProvinceIds: partiallyRevealedProvinceCache,
       );
+  final colonialIntelExploreProvinceIds =
+      colonialIntelExploreProvinceIdsSorted(
+        view: view,
+        topology: topology,
+      ).toSet();
+  final explorerProvincesSorted = _explorerProvincesSortedForWork(
+    view: view,
+    partiallyRevealedProvincesSorted: partiallyRevealedProvincesSorted,
+    colonialIntelExploreProvinceIds: colonialIntelExploreProvinceIds,
+  );
 
   // Reuse [view.provincesById] (same full-id keys as [buildPlayerView]) instead
   // of a second [allProvinces] scan over world state (Refs #2394).
@@ -165,7 +176,8 @@ List<WorkOrder> suggestWorkOrders(
       unit: unit,
       existingTargetsByUnit: existingTargetsByUnit,
       partiallyRevealedProvinceCache: partiallyRevealedProvinceCache,
-      partiallyRevealedProvincesSorted: partiallyRevealedProvincesSorted,
+      partiallyRevealedProvincesSorted: explorerProvincesSorted,
+      colonialIntelExploreProvinceIds: colonialIntelExploreProvinceIds,
       visibleCandidatesSortedByWorkTarget: visibleCandidatesSortedByWorkTarget,
       playerOwnedProvinceIds: playerOwnedProvinceIds,
       devExclusiveReservedTiles: devExclusiveReservedTiles,
@@ -199,6 +211,28 @@ List<WorkOrder> suggestWorkOrders(
   return suggestions;
 }
 
+/// Colonial intel NW provinces first, then partially revealed (deduped).
+List<Province> _explorerProvincesSortedForWork({
+  required PlayerView view,
+  required List<Province> partiallyRevealedProvincesSorted,
+  required Set<String> colonialIntelExploreProvinceIds,
+}) {
+  if (colonialIntelExploreProvinceIds.isEmpty) {
+    return partiallyRevealedProvincesSorted;
+  }
+  final seen = <String>{};
+  final out = <Province>[];
+  for (final id in colonialIntelExploreProvinceIds.toList()..sort()) {
+    if (!seen.add(id)) continue;
+    final p = view.provincesById[id];
+    if (p != null) out.add(p);
+  }
+  for (final p in partiallyRevealedProvincesSorted) {
+    if (seen.add(p.id)) out.add(p);
+  }
+  return out;
+}
+
 void _addWorkSuggestionsForUnit({
   required PlayerView view,
   required Game game,
@@ -210,6 +244,7 @@ void _addWorkSuggestionsForUnit({
   required Map<String, Set<String>> existingTargetsByUnit,
   required Set<String> partiallyRevealedProvinceCache,
   required List<Province> partiallyRevealedProvincesSorted,
+  required Set<String> colonialIntelExploreProvinceIds,
   required Map<String, List<String>> visibleCandidatesSortedByWorkTarget,
   required Set<String> playerOwnedProvinceIds,
   required Set<String> devExclusiveReservedTiles,
@@ -246,6 +281,7 @@ void _addWorkSuggestionsForUnit({
       regionId: regionId,
       provinceId: provinceId,
       partiallyRevealedProvincesSorted: partiallyRevealedProvincesSorted,
+      colonialIntelExploreProvinceIds: colonialIntelExploreProvinceIds,
       tileKeysByRegion: tileKeysByRegion,
       existingTargetsByUnit: existingTargetsByUnit,
       suggestions: suggestions,

@@ -135,7 +135,7 @@ const int kDeclareWarColonialAdjacentTribeBonus = 70;
 const int kEstablishOvertureColonialTribeBonus = 60;
 
 /// Establish-overture bonus toward a tribe owning a sea-reachable NW province.
-const int kEstablishOvertureColonialInvadableOwnerBonus = 80;
+const int kEstablishOvertureColonialInvadableOwnerBonus = 120;
 
 /// Conquest army-move bonus for New World invadable destinations.
 const int kConquestArmyMoveNwInvadableBonus = 35;
@@ -148,6 +148,18 @@ const int kColonialCargoPreferenceNoNwColoniesBoost = 28;
 
 /// Naval planner weight boost when New World invasion/colonization is viable.
 const int kColonialNavalWeightBonus = 55;
+
+/// Naval move score when docking at a New World port under colonial pressure.
+const int kColonialNavalMoveDockNewWorldPortScore = 180;
+
+/// Naval move score for an NW sea zone bordering an invadable NW province.
+const int kColonialNavalMovePriorityNwSeaZoneScore = 200;
+
+/// Naval move score for any other New World sea zone destination.
+const int kColonialNavalMoveNwSeaZoneScore = 140;
+
+/// Naval move score for an Old World sea zone with a warp/adjacent link to NW seas.
+const int kColonialNavalMoveGatewaySeaZoneScore = 90;
 
 /// Declare-war bonus when the target owns a sea-reachable invadable NW province.
 const int kDeclareWarColonialInvadableOwnerBonus = 110;
