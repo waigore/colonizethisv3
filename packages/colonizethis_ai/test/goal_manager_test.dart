@@ -48,6 +48,46 @@ void main() {
     });
 
     test(
+      'late colonial pressure keeps conquer/expand floors after eight NW provinces',
+      () {
+        const snapshot = AIWorldSnapshot(
+          playerId: 'gp1',
+          threats: ThreatSummary(),
+          opportunities: OpportunitySummary(),
+          conquest: ConquestSummary(
+            oldWorldProvincesOwned: 7,
+            provincesToVictory: 24,
+          ),
+          colonial: ColonialSummary(
+            newWorldProvincesOwned: kColonialFewNwProvincesThreshold,
+            invadableNewWorldProvinceIdsSorted: ['newWorld|p1'],
+            adjacentNewWorldOwnerFactionIdsSorted: ['tribe1'],
+          ),
+          economy: EconomySummary(),
+          relations: {},
+        );
+        const config = AIConfig(
+          leaderId: 'victoria',
+          personalityId: 'victoria',
+          hiddenAgendaId: 'peacemaker',
+        );
+        final scores = evaluateStrategicGoalScores(snapshot, config);
+        expect(
+          scores[StrategicGoal.conquer]!,
+          greaterThanOrEqualTo(kMinimumColonialConquerScoreWhenPressure),
+        );
+        expect(
+          scores[StrategicGoal.expand]!,
+          greaterThanOrEqualTo(kMinimumColonialExpandScoreWhenPressure),
+        );
+        expect(
+          scores[StrategicGoal.conquer]!,
+          greaterThan(scores[StrategicGoal.diplomacy]!),
+        );
+      },
+    );
+
+    test(
       'colonial pressure raises conquer/expand above diplomacy for peacemaker',
       () {
         const snapshot = AIWorldSnapshot(

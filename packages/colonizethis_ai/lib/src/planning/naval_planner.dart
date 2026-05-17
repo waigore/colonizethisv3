@@ -7,6 +7,7 @@ import 'package:colonizethis_logic/order_suggestion_api.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'colonial_naval_scoring.dart';
+import 'colonial_pressure.dart';
 import 'goal_manager.dart';
 import '../perception/perception_snapshot.dart';
 import '../util/orders_extensions.dart';
@@ -32,16 +33,11 @@ Orders runNavalPlanner({
           primaryGoal == StrategicGoal.expand
       ? domainWeights.military
       : 40;
-  final hasColonialTargets =
-      colonial.invadableNewWorldProvinceIdsSorted.isNotEmpty ||
-      colonial.adjacentNewWorldOwnerFactionIdsSorted.isNotEmpty;
-  final colonialExpansionPressure =
-      hasColonialTargets &&
-      colonial.newWorldProvincesOwned < kColonialFewNwProvincesThreshold;
+  final hasColonialTargets = hasColonialAcquisitionTargets(colonial);
   if (hasColonialTargets) {
     weight += kColonialNavalWeightBonus;
   }
-  if (colonialExpansionPressure && weight < 70) {
+  if (hasColonialTargets && weight < 70) {
     weight = 70;
   }
   if (weight < 25) {
