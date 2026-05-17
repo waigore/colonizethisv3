@@ -291,13 +291,53 @@ jobs:
           path: app/coverage/lcov.shard${{ matrix.shard }}.info
           retention-days: 2
 
+  # colonizethis_* package unit tests + package coverage gates (parallel to quality / app tests).
+  package_tests:
+    name: Package tests (colonizethis)
+    needs: changes
+    if: always() && needs.changes.result == 'success'
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - name: Skip when no test-relevant paths changed
+        if: needs.changes.outputs.tests != 'true'
+        run: echo "No test-relevant paths matched; skipping package tests."
+
+      - name: Checkout
+        if: needs.changes.outputs.tests == 'true'
+        uses: actions/checkout@v6
+
+      - name: Setup Flutter
+        if: needs.changes.outputs.tests == 'true'
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: '3.41.9'
+          cache: true
+
+      - name: Install lcov
+        if: needs.changes.outputs.tests == 'true'
+        run: sudo apt-get update && sudo apt-get install -y lcov
+
+      - name: Resolve dependencies
+        if: needs.changes.outputs.tests == 'true'
+        run: dart pub get
+
+      - name: Package tests and coverage gates
+        if: needs.changes.outputs.tests == 'true'
+        env:
+          SUPPRESS_IMAGE_VIEWER: "1"
+          PACKAGE_TEST_JOBS: "2"
+        run: bash tool/run_package_tests.sh
+
   quality:
+    name: Quality (lint, analyze, observer)
     needs: changes
     runs-on: ubuntu-latest
-    # Dart coverage + package matrix; Flutter app tests run in parallel shards (app_tests_shard).
+    # Lint, analyze, checker tests, run_observer_game; package tests run in package_tests.
     # Workspace analyzer runs flutter/dart analyze per member (many packages); allow enough time
     # so the job is not cancelled mid-analyze when the workspace grows (Refs #2036).
-    timeout-minutes: 150
+    timeout-minutes: 45
     steps:
       - name: Checkout
         uses: actions/checkout@v6
@@ -308,14 +348,6 @@ jobs:
           channel: stable
           flutter-version: '3.41.9'
           cache: true
-
-      - name: Install melos
-        if: needs.changes.outputs.tests == 'true'
-        run: dart pub global activate melos
-
-      - name: Check melos version
-        if: needs.changes.outputs.tests == 'true'
-        run: melos --version
 
       - name: Install lcov
         if: needs.changes.outputs.tests == 'true'
@@ -380,66 +412,6 @@ jobs:
           sudo apt-get install -y --no-install-recommends python3-pil
           cd pytool && python3 test_wang_incremental_assets_and_preview.py
 
-      - name: Test colonizethis_models (Dart)
-        if: needs.changes.outputs.tests == 'true'
-        env:
-          SUPPRESS_IMAGE_VIEWER: "1"
-        run: |
-          if [ -d packages/colonizethis_models/test ]; then
-            (cd packages/colonizethis_models && dart test --coverage=coverage -j 2 --reporter=compact)
-            (cd packages/colonizethis_models && dart run coverage:format_coverage --lcov -i coverage -o coverage/lcov.info --report-on=lib --package=.)
-          fi
-
-      - name: Test colonizethis_data (Dart)
-        if: needs.changes.outputs.tests == 'true'
-        env:
-          SUPPRESS_IMAGE_VIEWER: "1"
-        run: |
-          if [ -d packages/colonizethis_data/test ]; then
-            (cd packages/colonizethis_data && dart test --coverage=coverage -j 2 --reporter=compact)
-            (cd packages/colonizethis_data && dart run coverage:format_coverage --lcov -i coverage -o coverage/lcov.info --report-on=lib --package=.)
-          fi
-
-      - name: Test colonizethis_save (Dart)
-        if: needs.changes.outputs.tests == 'true'
-        env:
-          SUPPRESS_IMAGE_VIEWER: "1"
-        run: |
-          if [ -d packages/colonizethis_save/test ]; then
-            (cd packages/colonizethis_save && dart test --coverage=coverage -j 2 --reporter=compact)
-            (cd packages/colonizethis_save && dart run coverage:format_coverage --lcov -i coverage -o coverage/lcov.info --report-on=lib --package=.)
-          fi
-
-      - name: Test colonizethis_logic (Dart)
-        if: needs.changes.outputs.tests == 'true'
-        env:
-          SUPPRESS_IMAGE_VIEWER: "1"
-        run: |
-          if [ -d packages/colonizethis_logic/test ]; then
-            (cd packages/colonizethis_logic && dart test --coverage=coverage -j 2 --reporter=compact)
-            (cd packages/colonizethis_logic && dart run coverage:format_coverage --lcov -i coverage -o coverage/lcov.info --report-on=lib --package=.)
-          fi
-
-      - name: Test colonizethis_ai (Dart)
-        if: needs.changes.outputs.tests == 'true'
-        env:
-          SUPPRESS_IMAGE_VIEWER: "1"
-        run: |
-          if [ -d packages/colonizethis_ai/test ]; then
-            (cd packages/colonizethis_ai && dart test --coverage=coverage -j 2 --reporter=compact)
-            (cd packages/colonizethis_ai && dart run coverage:format_coverage --lcov -i coverage -o coverage/lcov.info --report-on=lib --package=.)
-          fi
-
-      - name: Test colonizethis_map (Dart)
-        if: needs.changes.outputs.tests == 'true'
-        env:
-          SUPPRESS_IMAGE_VIEWER: "1"
-        run: |
-          if [ -d packages/colonizethis_map/test ]; then
-            (cd packages/colonizethis_map && dart test --coverage=coverage -j 2 --reporter=compact)
-            (cd packages/colonizethis_map && dart run coverage:format_coverage --lcov -i coverage -o coverage/lcov.info --report-on=lib --package=.)
-          fi
-
       - name: Test run_observer_game (Dart, coverage)
         if: needs.changes.outputs.tests == 'true'
         env:
@@ -466,25 +438,16 @@ jobs:
             fi
           fi
 
-      - name: Coverage gate (logic/map/ai >= 90%)
-        if: needs.changes.outputs.tests == 'true'
-        run: tool/check_coverage_threshold.sh 90 packages/colonizethis_logic packages/colonizethis_map packages/colonizethis_ai
-
-      - name: Coverage gate (data >= 80%)
-        if: needs.changes.outputs.tests == 'true'
-        run: tool/check_coverage_threshold.sh 80 packages/colonizethis_data
-
       - name: Coverage gate (run_observer_game lib >= 80%)
         if: needs.changes.outputs.tests == 'true'
         run: tool/check_coverage_threshold.sh 80 tool/run_observer_game
 
   quality_app_coverage:
     name: App coverage (merge shards)
-    needs: [changes, quality, app_tests_shard]
+    needs: [changes, app_tests_shard]
     if: |
       always() &&
       needs.changes.result == 'success' &&
-      needs.quality.result == 'success' &&
       (
         needs.changes.outputs.tests != 'true' ||
         needs.app_tests_shard.result == 'success'
