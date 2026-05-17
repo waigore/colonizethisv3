@@ -103,6 +103,23 @@ Map<String, (int r, int g, int b)> factionOwnershipColorMapForNewWorld(
   return factionOwnershipColorMap(tribeIds: tribeIds);
 }
 
+/// Faction colour data for init-game map views (great-power ids + full palette).
+/// Refs #2489 (D9).
+({Set<String> greatPowerFactionIds, Map<String, (int r, int g, int b)> factionColors})
+initGameFactionColorData(
+  Game game, {
+  Map<String, (int r, int g, int b)>? greatPowerColorOverride,
+}) {
+  final greatPowerIds = [for (final player in game.players) player.id];
+  return (
+    greatPowerFactionIds: greatPowerIds.toSet(),
+    factionColors: factionOwnershipColorMapForGame(
+      game,
+      greatPowerColorOverride: greatPowerColorOverride,
+    ),
+  );
+}
+
 /// Combined ownership colours for init-game views (all faction types).
 Map<String, (int r, int g, int b)> factionOwnershipColorMapForGame(
   Game game, {

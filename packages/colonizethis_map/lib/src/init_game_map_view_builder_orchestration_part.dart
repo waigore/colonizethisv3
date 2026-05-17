@@ -91,8 +91,8 @@ RegionMapViewData _buildRegionViewData({
     isOldWorld: isOldWorld,
     topology: topology,
   );
-  final factionData = _buildFactionColorData(
-    game: game,
+  final factionData = initGameFactionColorData(
+    game,
     greatPowerColorOverride: greatPowerColorOverride,
   );
   final cellAndUnitData = _buildCellAndUnitData(
@@ -224,24 +224,6 @@ _buildProvinceMetadata({
     provinceDisplayNameById: provinceDisplayNameById,
     provincePoliticalOwnerByPrefixedProvinceId:
         provincePoliticalOwnerByPrefixedProvinceId,
-  );
-}
-
-({
-  Set<String> greatPowerFactionIds,
-  Map<String, (int r, int g, int b)> factionColors,
-})
-_buildFactionColorData({
-  required Game game,
-  required Map<String, (int r, int g, int b)>? greatPowerColorOverride,
-}) {
-  final greatPowerIds = [for (final player in game.players) player.id];
-  return (
-    greatPowerFactionIds: greatPowerIds.toSet(),
-    factionColors: factionOwnershipColorMapForGame(
-      game,
-      greatPowerColorOverride: greatPowerColorOverride,
-    ),
   );
 }
 

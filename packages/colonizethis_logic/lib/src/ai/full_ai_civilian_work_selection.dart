@@ -152,7 +152,13 @@ int _unknownTilesInExploreProvince(PlayerView view, Game game, WorkOrder w) {
 int _eScore(WorkOrder w, PlayerView view, Game game) {
   final unknown = _unknownTilesInExploreProvince(view, game, w);
   // Issue #2082: E_unknown = min(24, 3 × U), not min(24, unknown) on the tile count.
-  return 100 + math.min(24, 3 * unknown);
+  int score = 100 + math.min(24, 3 * unknown);
+  final provId = Unit.provinceIdFromTileKey(w.targetTileKey);
+  if (provId != null &&
+      ProvinceId.regionIdFrom(provId) == kNewWorldRegionId) {
+    score += kExploreWorkScoreBonusNewWorld;
+  }
+  return score;
 }
 
 int _prospectTerritoryPoints(
@@ -354,7 +360,7 @@ int _buildImprovementWorkScore(WorkOrder w, Game game) {
   if (level >= 1) return 1;
   final resourceId = game.worldState.resourceByTileKey[w.targetTileKey];
   if (resourceId == null || resourceId.isEmpty) return 2;
-  return 200;
+  return kBuildImprovementExtractableResourceScore;
 }
 
 WorkOrder? _bestBuildImprovementRow(List<WorkOrder> candidates, Game game) {

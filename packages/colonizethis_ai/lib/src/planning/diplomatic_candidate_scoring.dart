@@ -32,6 +32,9 @@ List<int> computeDiplomaticCandidateScores({
   final invadableOwners = <String>{
     for (final provinceId in snapshot.conquest.invadableProvinceIdsSorted)
       provinceOwner[provinceId] ?? '',
+    for (final provinceId
+        in snapshot.colonial.invadableNewWorldProvinceIdsSorted)
+      provinceOwner[provinceId] ?? '',
   }..remove('');
   const warCooldownTurns = 4;
   const improveRelationsCooldownTurns = 2;
@@ -157,6 +160,10 @@ int _scoreDeclareWarDiplomaticOrder({
   final isMinorTarget = _isMinorOrTribeFaction(game, order.targetFactionId);
   final ownsInvadableNw = snapshot.colonial.invadableNewWorldProvinceIdsSorted
       .any((pid) => provinceOwner[pid] == order.targetFactionId);
+  final colonialPressure =
+      snapshot.colonial.invadableNewWorldProvinceIdsSorted.isNotEmpty &&
+      snapshot.colonial.newWorldProvincesOwned < kColonialFewNwProvincesThreshold;
+  final isTribeTarget = _isTribeFaction(game, order.targetFactionId);
   if (behindVictoryPace &&
       adjacentOwners.isNotEmpty &&
       !isAdjacentOwner &&
@@ -218,6 +225,15 @@ int _scoreDeclareWarDiplomaticOrder({
   if (ownsInvadableNw && isMinorTarget) {
     s += kDeclareWarColonialInvadableOwnerBonus;
   }
+  if (ownsInvadableNw && isTribeTarget) {
+    s += kDeclareWarColonialNwTribeDominanceBonus;
+  }
+  if (colonialPressure &&
+      isMinorTarget &&
+      !isTribeTarget &&
+      !ownsInvadableNw) {
+    s -= kDeclareWarColonialPressureOwMinorPenalty;
+  }
   if (isColonialAdjacentOwner && isMinorTarget) {
     s += kDeclareWarColonialAdjacentTribeBonus;
   }
@@ -268,6 +284,10 @@ int _scoreDeclareWarDiplomaticOrder({
 bool _isMinorOrTribeFaction(Game game, String factionId) {
   return game.minorNations.any((m) => m.id == factionId) ||
       game.tribes.any((t) => t.id == factionId);
+}
+
+bool _isTribeFaction(Game game, String factionId) {
+  return game.tribes.any((t) => t.id == factionId);
 }
 
 bool _isDecisionOnCooldown({
