@@ -1,6 +1,6 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_map/colonizethis_map.dart';
-import 'package:test/test.dart';
+import 'package:colonizethis_test/test.dart';
 
 /// Stable fingerprint of province, terrain, and resource grids for regression
 /// guards after map-package refactors (Refs #2489).
