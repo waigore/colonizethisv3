@@ -207,13 +207,12 @@ Widget _buildCivilianSectionFiltered({
               pending.target,
             );
             return Text(
-              l10n.provinceOverlay_unitTarget(u.type, u.id, targetLabel),
+              l10n.provinceOverlay_unitTarget(u.type, targetLabel),
             );
           }
           return Text(
             l10n.provinceOverlay_unitTarget(
               u.type,
-              u.id,
               unitStatusDisplayLabel(l10n, u.status),
             ),
           );
@@ -223,7 +222,6 @@ Widget _buildCivilianSectionFiltered({
           l10n.provinceOverlay_foreignUnitStatus(
             o,
             u.type,
-            u.id,
             unitStatusDisplayLabel(l10n, u.status),
           ),
         );
