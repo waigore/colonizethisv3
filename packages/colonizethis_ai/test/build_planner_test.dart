@@ -59,7 +59,6 @@ void main() {
         buildCandidates: candidates,
         cargoPreference: CargoPreference.none,
         provincesToVictory: 20,
-        seedOverride: 1,
       );
       expect(chosen?.unitType, 'grenadiers');
     });

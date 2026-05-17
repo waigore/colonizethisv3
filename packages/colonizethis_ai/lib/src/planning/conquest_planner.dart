@@ -47,7 +47,11 @@ Orders runConquestArmyMovePlanner({
   final atWarWithInvadableTarget = snapshot.conquest.invadableProvinceIdsSorted
       .isNotEmpty &&
       snapshot.threats.atWarWith.isNotEmpty;
-  if (stalledExpansion && atWarWithInvadableTarget && weight < 80) {
+  if (stalledExpansion &&
+      snapshot.conquest.invadableProvinceIdsSorted.isNotEmpty &&
+      weight < 90) {
+    weight = 90;
+  } else if (stalledExpansion && atWarWithInvadableTarget && weight < 80) {
     weight = 80;
   }
   if (hasColonialAcquisitionTargets(snapshot.colonial) &&

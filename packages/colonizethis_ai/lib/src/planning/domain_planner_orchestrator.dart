@@ -237,7 +237,7 @@ PlannerContext _runEconomyDomainPlanners({
       cargoPreference: economyPlan.cargoPreference,
       provincesToVictory: snapshot.conquest.provincesToVictory,
       oldWorldProvincesOwned: snapshot.conquest.oldWorldProvincesOwned,
-      seedOverride: ctx.seeds.economySeed + 1,
+      colonialPressure: colonialPressure,
     );
     if (chosen != null) {
       _log.i('build chosen nationId=${ctx.nationId} unitType=${chosen.unitType}');
