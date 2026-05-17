@@ -25,7 +25,9 @@
 
 ## Intentional dependency caps
 
- Maintainer-facing detail (Flutter `test_api` pin, `analyzer` / **`custom_lint_builder`** / **`custom_lint`** stack, and related transitives) lives in **CONTRIBUTING.md** under **`dart pub outdated` / “Latest” vs what the workspace resolves**. Those caps are the **documented intentional exceptions** for **#2073** acceptance criteria until upstream publishes a compatible **`custom_lint_builder`** (or the project migrates lint integration per a future issue).
+ Maintainer-facing detail (Flutter `test_api` pin, `analyzer` / **`custom_lint_builder`** / **`custom_lint`** stack, `hardcoded_strings_lint`, `meta` / `flutter_test`, and related transitives) lives in **CONTRIBUTING.md** under **`dart pub outdated` / “Latest” vs what the workspace resolves** and **Toolchain dependency pinning (#2532)**. Those caps are the **documented intentional exceptions** until linked follow-ups land: **#2539** (analyzer-13 / `custom_lint`), **#2540** (`hardcoded_strings_lint` 2.x), **#2541** (`test` / `test_api` on Flutter pin).
+
+**Pinning (#2532):** Toolchain direct/dev deps use **exact** versions in `pubspec.yaml`; lockfiles are refreshed in the same PR as pin changes. Do not use `CT_WORKSPACE_OUTDATED_EXCLUDE` for documented blockers—cite the follow-up issue in CONTRIBUTING instead.
 
 ---
 
