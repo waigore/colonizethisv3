@@ -113,31 +113,51 @@ Set<String> reachableNonOwnedProvinceIdsViaSeas(
   while (queue.isNotEmpty) {
     final cur = queue.removeAt(0);
     for (final nb in adj[cur] ?? const <String>{}) {
-      if (visited.contains(nb)) continue;
-      final nbType = nodeType[nb];
-      if (nbType == null) continue;
-
-      if (nbType == TopologyNodeType.province) {
-        final ownerId = view.provincesById[nb]?.ownerId;
-        final isOwn = ownerId == view.playerId;
-        if (!isOwn &&
-            ownerId != null &&
-            ownerId.isNotEmpty &&
-            (regionIdFilter == null ||
-                ProvinceId.regionIdFrom(nb) == regionIdFilter)) {
-          invadable.add(nb);
-        }
-        if (isOwn) {
-          visited.add(nb);
-          queue.add(nb);
-        }
-        continue;
-      }
-      if (nbType == TopologyNodeType.seaZone) {
-        visited.add(nb);
-        queue.add(nb);
-      }
+      _visitSeaReachableNeighbor(
+        nb: nb,
+        nodeType: nodeType,
+        view: view,
+        regionIdFilter: regionIdFilter,
+        visited: visited,
+        queue: queue,
+        invadable: invadable,
+      );
     }
   }
   return invadable;
+}
+
+void _visitSeaReachableNeighbor({
+  required String nb,
+  required Map<String, TopologyNodeType> nodeType,
+  required PlayerView view,
+  required String? regionIdFilter,
+  required Set<String> visited,
+  required List<String> queue,
+  required Set<String> invadable,
+}) {
+  if (visited.contains(nb)) return;
+  final nbType = nodeType[nb];
+  if (nbType == null) return;
+
+  if (nbType == TopologyNodeType.province) {
+    final ownerId = view.provincesById[nb]?.ownerId;
+    final isOwn = ownerId == view.playerId;
+    if (!isOwn &&
+        ownerId != null &&
+        ownerId.isNotEmpty &&
+        (regionIdFilter == null ||
+            ProvinceId.regionIdFrom(nb) == regionIdFilter)) {
+      invadable.add(nb);
+    }
+    if (isOwn) {
+      visited.add(nb);
+      queue.add(nb);
+    }
+    return;
+  }
+  if (nbType == TopologyNodeType.seaZone) {
+    visited.add(nb);
+    queue.add(nb);
+  }
 }

@@ -48,6 +48,35 @@ void main() {
     });
   });
 
+  group('majorConstraintForStrategicGoal', () {
+    test('defend reports capitalThreatened when capital is threatened', () {
+      const snapshot = AIWorldSnapshot(
+        playerId: 'gp1',
+        threats: ThreatSummary(
+          atWarWith: ['gp2'],
+          capitalThreatened: true,
+        ),
+        opportunities: OpportunitySummary(),
+        conquest: ConquestSummary(),
+        economy: EconomySummary(),
+        relations: {},
+      );
+      const config = AIConfig(
+        leaderId: 'frederick',
+        personalityId: 'frederick',
+        hiddenAgendaId: 'peacemaker',
+      );
+      expect(
+        majorConstraintForStrategicGoal(
+          StrategicGoal.defend,
+          snapshot,
+          config,
+        ),
+        'capitalThreatened',
+      );
+    });
+  });
+
   group('selectPrimaryGoal', () {
     test('returns expand when snapshot has no threats and default weights', () {
       const snapshot = AIWorldSnapshot(
@@ -191,8 +220,8 @@ void main() {
           ),
           opportunities: OpportunitySummary(unclaimedProvinces: 0),
           conquest: ConquestSummary(
-            oldWorldProvincesOwned: 8,
-            provincesToVictory: 23,
+            oldWorldProvincesOwned: 31,
+            provincesToVictory: 0,
           ),
           economy: EconomySummary(workerCount: 10),
           relations: {},
@@ -220,7 +249,12 @@ void main() {
         final line = infoLines.single;
         expect(line, contains('nationId=$nationId'));
         expect(line, contains('turn=$turn'));
-        expect(line, contains('majorConstraint=capitalThreatened'));
+        expect(
+          line,
+          contains(
+            'majorConstraint=${majorConstraintForStrategicGoal(goal, snapshot, config)}',
+          ),
+        );
         expect(line, contains('selected primaryGoal=$goal'));
       } finally {
         Logger.removeLogListener(listener);
