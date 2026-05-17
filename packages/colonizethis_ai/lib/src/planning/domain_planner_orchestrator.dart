@@ -238,7 +238,6 @@ PlannerContext _runEconomyDomainPlanners({
       provincesToVictory: snapshot.conquest.provincesToVictory,
       oldWorldProvincesOwned: snapshot.conquest.oldWorldProvincesOwned,
       colonialPressure: colonialPressure,
-      seedOverride: ctx.seeds.economySeed + 1,
     );
     if (chosen != null) {
       _log.i('build chosen nationId=${ctx.nationId} unitType=${chosen.unitType}');

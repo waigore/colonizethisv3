@@ -16,12 +16,11 @@ BuildUnitOrder? pickBuildOrder({
   int provincesToVictory = 0,
   int oldWorldProvincesOwned = 0,
   bool colonialPressure = false,
-  int? seedOverride,
 }) {
   final primaryGoal = ctx.primaryGoal;
   final config = ctx.config;
   final nationId = ctx.nationId;
-  final seed = seedOverride ?? ctx.seeds.economySeed;
+  final seed = ctx.seeds.economySeed + 1;
   if (buildCandidates.isEmpty) return null;
   var candidates = buildCandidates;
   if (oldWorldProvincesOwned <= kStalledOldWorldProvinceThreshold &&
