@@ -1,11 +1,7 @@
 // Economy planner: worker allocation and cargo preference. SPEC/ai/economy-planner.md.
 
-import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:colonizethis_ai/package_logger.dart';
-import 'package:colonizethis_logic/ai_api.dart';
-import 'package:colonizethis_models/colonizethis_models.dart';
-
 import '../perception/perception_snapshot.dart';
+import 'planning_imports.dart';
 import 'recipe_scoring.dart';
 
 final _log = packageLogger('economy_planner');

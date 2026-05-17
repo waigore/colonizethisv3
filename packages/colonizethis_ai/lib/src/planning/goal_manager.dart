@@ -1,8 +1,6 @@
 import 'dart:math' as math;
 
-import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:colonizethis_ai/package_logger.dart';
-import 'package:colonizethis_models/colonizethis_models.dart';
+import 'planning_imports.dart';
 
 import '../util/ai_random_utils.dart';
 import '../perception/perception_snapshot.dart';
