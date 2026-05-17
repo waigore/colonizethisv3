@@ -20,14 +20,13 @@ BuildUnitOrder? pickBuildOrder({
   required String nationId,
   int provincesToVictory = 0,
   int oldWorldProvincesOwned = 0,
+  bool colonialPressure = false,
 }) {
   if (buildCandidates.isEmpty) return null;
   var candidates = buildCandidates;
   if (oldWorldProvincesOwned <= kStalledOldWorldProvinceThreshold &&
       provincesToVictory > kBuildRegimentVictoryPaceThreshold &&
-      cargoPreference == CargoPreference.none &&
-      (primaryGoal == StrategicGoal.conquer ||
-          primaryGoal == StrategicGoal.defend)) {
+      cargoPreference == CargoPreference.none) {
     final regimentsOnly = candidates
         .where((o) => RegimentEconomyCatalog.byId.containsKey(o.unitType))
         .toList();
@@ -76,6 +75,9 @@ BuildUnitOrder? pickBuildOrder({
     double personalityBonus = 0.0;
     if (isShip) {
       personalityBonus = thresholds.researchNaval / 100.0;
+      if (colonialPressure && cargoHold > 0) {
+        cargoBonus += 2.5;
+      }
     } else if (isRegiment) {
       personalityBonus = thresholds.researchMilitary / 100.0;
     }

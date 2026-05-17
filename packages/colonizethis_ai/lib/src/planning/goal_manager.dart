@@ -74,6 +74,15 @@ Map<StrategicGoal, int> evaluateStrategicGoalScores(
   if (isEarlyColonialExpansion(snapshot.colonial)) {
     conquer += kColonialConquerBonusWhenFewNwProvinces;
   }
+  if (snapshot.conquest.oldWorldProvincesOwned <=
+          kStalledOldWorldProvinceThreshold &&
+      snapshot.conquest.invadableProvinceIdsSorted.isNotEmpty) {
+    conquer += kDeclareWarStalledExpansionMinorBonus;
+    conquer = math.max(conquer, 120);
+    diplomacy = math.min(diplomacy, 35);
+    trade = math.min(trade, 35);
+    tech = math.min(tech, 45);
+  }
   if (hasColonialAcquisitionTargets(snapshot.colonial)) {
     diplomacy -= kColonialDiplomacyGoalPenaltyWhenPressure;
     trade -= kColonialTradeGoalPenaltyWhenPressure;

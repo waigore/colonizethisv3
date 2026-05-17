@@ -306,6 +306,7 @@ Orders _runEconomyDomainPlanners({
       nationId: nationId,
       provincesToVictory: snapshot.conquest.provincesToVictory,
       oldWorldProvincesOwned: snapshot.conquest.oldWorldProvincesOwned,
+      colonialPressure: colonialPressure,
     );
     if (chosen != null) {
       _log.i('build chosen nationId=$nationId unitType=${chosen.unitType}');

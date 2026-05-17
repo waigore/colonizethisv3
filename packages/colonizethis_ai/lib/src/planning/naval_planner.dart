@@ -37,8 +37,8 @@ Orders runNavalPlanner({
   if (hasColonialTargets) {
     weight += kColonialNavalWeightBonus;
   }
-  if (hasColonialTargets && weight < 70) {
-    weight = 70;
+  if (hasColonialTargets && weight < kColonialNavalMinWeightWhenPressure) {
+    weight = kColonialNavalMinWeightWhenPressure;
   }
   if (weight < 25) {
     _log.d('naval skipped nationId=$nationId weight=$weight < 25');

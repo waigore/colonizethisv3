@@ -1,0 +1,686 @@
+{
+  "observerSnapshotSchemaVersion": 2,
+  "gameId": "game_1779027678521",
+  "turnNumber": 23,
+  "calendarYearAtTurnStart": 1544,
+  "calendarCampaignHalted": false,
+  "players": [
+    {
+      "playerId": "gp1",
+      "displayName": "England",
+      "isHuman": true,
+      "greatPowerPowerScore": 148,
+      "treasuryPounds": -450,
+      "regimentLikeUnitCountHint": 13,
+      "fleetShipCountHint": 1,
+      "techUnlockedIds": [
+        "coal_mining",
+        "copper_and_tin_mining",
+        "crop_rotation",
+        "diplomatic_expertise",
+        "improved_iron_weapons",
+        "iron_mining",
+        "land_enclosure",
+        "merchant_companies",
+        "mine_engineering",
+        "money_lending",
+        "organised_regiments",
+        "recruit_steppe_horsemen",
+        "saw_mill"
+      ]
+    },
+    {
+      "playerId": "gp2",
+      "displayName": "France",
+      "isHuman": false,
+      "greatPowerPowerScore": 149,
+      "treasuryPounds": 100,
+      "regimentLikeUnitCountHint": 14,
+      "fleetShipCountHint": 1,
+      "techUnlockedIds": [
+        "coal_mining",
+        "crop_rotation",
+        "diplomatic_expertise",
+        "land_enclosure",
+        "merchant_companies",
+        "mine_engineering"
+      ]
+    },
+    {
+      "playerId": "gp3",
+      "displayName": "Spain",
+      "isHuman": false,
+      "greatPowerPowerScore": 119,
+      "treasuryPounds": 50,
+      "regimentLikeUnitCountHint": 14,
+      "fleetShipCountHint": 1,
+      "techUnlockedIds": [
+        "crop_rotation",
+        "diplomatic_expertise",
+        "land_enclosure"
+      ]
+    },
+    {
+      "playerId": "gp4",
+      "displayName": "Portugal",
+      "isHuman": false,
+      "greatPowerPowerScore": 89,
+      "treasuryPounds": 100,
+      "regimentLikeUnitCountHint": 14,
+      "fleetShipCountHint": 1,
+      "techUnlockedIds": [
+        "coal_mining",
+        "crop_rotation",
+        "diplomatic_expertise",
+        "land_enclosure",
+        "merchant_companies",
+        "mine_engineering"
+      ]
+    },
+    {
+      "playerId": "gp5",
+      "displayName": "Netherlands",
+      "isHuman": false,
+      "greatPowerPowerScore": 89,
+      "treasuryPounds": 100,
+      "regimentLikeUnitCountHint": 14,
+      "fleetShipCountHint": 1,
+      "techUnlockedIds": [
+        "coal_mining",
+        "crop_rotation",
+        "diplomatic_expertise",
+        "land_enclosure",
+        "merchant_companies",
+        "mine_engineering"
+      ]
+    },
+    {
+      "playerId": "gp6",
+      "displayName": "Prussia",
+      "isHuman": false,
+      "greatPowerPowerScore": 119,
+      "treasuryPounds": 100,
+      "regimentLikeUnitCountHint": 14,
+      "fleetShipCountHint": 1,
+      "techUnlockedIds": [
+        "coal_mining",
+        "crop_rotation",
+        "diplomatic_expertise",
+        "land_enclosure",
+        "merchant_companies",
+        "mine_engineering"
+      ]
+    }
+  ],
+  "provinceOwnershipSorted": [
+    {
+      "id": "newWorld|p1",
+      "ownerId": "tribe4"
+    },
+    {
+      "id": "newWorld|p10",
+      "ownerId": "tribe9"
+    },
+    {
+      "id": "newWorld|p11",
+      "ownerId": "tribe9"
+    },
+    {
+      "id": "newWorld|p12",
+      "ownerId": "tribe5"
+    },
+    {
+      "id": "newWorld|p13",
+      "ownerId": "tribe2"
+    },
+    {
+      "id": "newWorld|p14",
+      "ownerId": "tribe2"
+    },
+    {
+      "id": "newWorld|p15",
+      "ownerId": "tribe1"
+    },
+    {
+      "id": "newWorld|p16",
+      "ownerId": "tribe1"
+    },
+    {
+      "id": "newWorld|p17",
+      "ownerId": "tribe6"
+    },
+    {
+      "id": "newWorld|p18",
+      "ownerId": "tribe2"
+    },
+    {
+      "id": "newWorld|p19",
+      "ownerId": "tribe6"
+    },
+    {
+      "id": "newWorld|p2",
+      "ownerId": "tribe8"
+    },
+    {
+      "id": "newWorld|p20",
+      "ownerId": "tribe6"
+    },
+    {
+      "id": "newWorld|p21",
+      "ownerId": "tribe1"
+    },
+    {
+      "id": "newWorld|p22",
+      "ownerId": "tribe3"
+    },
+    {
+      "id": "newWorld|p23",
+      "ownerId": "tribe10"
+    },
+    {
+      "id": "newWorld|p24",
+      "ownerId": "tribe7"
+    },
+    {
+      "id": "newWorld|p25",
+      "ownerId": "tribe10"
+    },
+    {
+      "id": "newWorld|p26",
+      "ownerId": "tribe3"
+    },
+    {
+      "id": "newWorld|p27",
+      "ownerId": "tribe3"
+    },
+    {
+      "id": "newWorld|p28",
+      "ownerId": "tribe7"
+    },
+    {
+      "id": "newWorld|p29",
+      "ownerId": "tribe7"
+    },
+    {
+      "id": "newWorld|p3",
+      "ownerId": "tribe8"
+    },
+    {
+      "id": "newWorld|p30",
+      "ownerId": "tribe10"
+    },
+    {
+      "id": "newWorld|p4",
+      "ownerId": "tribe4"
+    },
+    {
+      "id": "newWorld|p5",
+      "ownerId": "tribe4"
+    },
+    {
+      "id": "newWorld|p6",
+      "ownerId": "tribe8"
+    },
+    {
+      "id": "newWorld|p7",
+      "ownerId": "tribe9"
+    },
+    {
+      "id": "newWorld|p8",
+      "ownerId": "tribe5"
+    },
+    {
+      "id": "newWorld|p9",
+      "ownerId": "tribe5"
+    },
+    {
+      "id": "oldWorld|p1",
+      "ownerId": "gp1"
+    },
+    {
+      "id": "oldWorld|p10",
+      "ownerId": "gp1"
+    },
+    {
+      "id": "oldWorld|p11",
+      "ownerId": "gp1"
+    },
+    {
+      "id": "oldWorld|p12",
+      "ownerId": "gp1"
+    },
+    {
+      "id": "oldWorld|p13",
+      "ownerId": "gp1"
+    },
+    {
+      "id": "oldWorld|p14",
+      "ownerId": "gp2"
+    },
+    {
+      "id": "oldWorld|p15",
+      "ownerId": "gp2"
+    },
+    {
+      "id": "oldWorld|p16",
+      "ownerId": "gp2"
+    },
+    {
+      "id": "oldWorld|p17",
+      "ownerId": "gp2"
+    },
+    {
+      "id": "oldWorld|p18",
+      "ownerId": "gp2"
+    },
+    {
+      "id": "oldWorld|p19",
+      "ownerId": "gp2"
+    },
+    {
+      "id": "oldWorld|p2",
+      "ownerId": "gp1"
+    },
+    {
+      "id": "oldWorld|p20",
+      "ownerId": "gp2"
+    },
+    {
+      "id": "oldWorld|p21",
+      "ownerId": "gp2"
+    },
+    {
+      "id": "oldWorld|p22",
+      "ownerId": "gp2"
+    },
+    {
+      "id": "oldWorld|p23",
+      "ownerId": "gp2"
+    },
+    {
+      "id": "oldWorld|p24",
+      "ownerId": "gp2"
+    },
+    {
+      "id": "oldWorld|p25",
+      "ownerId": "gp2"
+    },
+    {
+      "id": "oldWorld|p26",
+      "ownerId": "gp2"
+    },
+    {
+      "id": "oldWorld|p27",
+      "ownerId": "gp4"
+    },
+    {
+      "id": "oldWorld|p28",
+      "ownerId": "gp4"
+    },
+    {
+      "id": "oldWorld|p29",
+      "ownerId": "gp3"
+    },
+    {
+      "id": "oldWorld|p3",
+      "ownerId": "gp1"
+    },
+    {
+      "id": "oldWorld|p30",
+      "ownerId": "gp3"
+    },
+    {
+      "id": "oldWorld|p31",
+      "ownerId": "gp4"
+    },
+    {
+      "id": "oldWorld|p32",
+      "ownerId": "gp3"
+    },
+    {
+      "id": "oldWorld|p33",
+      "ownerId": "gp3"
+    },
+    {
+      "id": "oldWorld|p34",
+      "ownerId": "gp4"
+    },
+    {
+      "id": "oldWorld|p35",
+      "ownerId": "gp4"
+    },
+    {
+      "id": "oldWorld|p36",
+      "ownerId": "gp4"
+    },
+    {
+      "id": "oldWorld|p37",
+      "ownerId": "gp3"
+    },
+    {
+      "id": "oldWorld|p38",
+      "ownerId": "gp4"
+    },
+    {
+      "id": "oldWorld|p39",
+      "ownerId": "gp3"
+    },
+    {
+      "id": "oldWorld|p4",
+      "ownerId": "gp1"
+    },
+    {
+      "id": "oldWorld|p40",
+      "ownerId": "gp3"
+    },
+    {
+      "id": "oldWorld|p41",
+      "ownerId": "gp3"
+    },
+    {
+      "id": "oldWorld|p42",
+      "ownerId": "gp3"
+    },
+    {
+      "id": "oldWorld|p43",
+      "ownerId": "gp3"
+    },
+    {
+      "id": "oldWorld|p44",
+      "ownerId": "gp6"
+    },
+    {
+      "id": "oldWorld|p45",
+      "ownerId": "gp6"
+    },
+    {
+      "id": "oldWorld|p46",
+      "ownerId": "gp5"
+    },
+    {
+      "id": "oldWorld|p47",
+      "ownerId": "gp6"
+    },
+    {
+      "id": "oldWorld|p48",
+      "ownerId": "gp6"
+    },
+    {
+      "id": "oldWorld|p49",
+      "ownerId": "gp5"
+    },
+    {
+      "id": "oldWorld|p5",
+      "ownerId": "gp1"
+    },
+    {
+      "id": "oldWorld|p50",
+      "ownerId": "gp5"
+    },
+    {
+      "id": "oldWorld|p51",
+      "ownerId": "gp5"
+    },
+    {
+      "id": "oldWorld|p52",
+      "ownerId": "gp6"
+    },
+    {
+      "id": "oldWorld|p53",
+      "ownerId": "gp6"
+    },
+    {
+      "id": "oldWorld|p54",
+      "ownerId": "gp5"
+    },
+    {
+      "id": "oldWorld|p55",
+      "ownerId": "gp6"
+    },
+    {
+      "id": "oldWorld|p56",
+      "ownerId": "gp6"
+    },
+    {
+      "id": "oldWorld|p57",
+      "ownerId": "gp6"
+    },
+    {
+      "id": "oldWorld|p58",
+      "ownerId": "gp5"
+    },
+    {
+      "id": "oldWorld|p59",
+      "ownerId": "gp6"
+    },
+    {
+      "id": "oldWorld|p6",
+      "ownerId": "gp1"
+    },
+    {
+      "id": "oldWorld|p60",
+      "ownerId": "gp5"
+    },
+    {
+      "id": "oldWorld|p7",
+      "ownerId": "gp1"
+    },
+    {
+      "id": "oldWorld|p8",
+      "ownerId": "gp1"
+    },
+    {
+      "id": "oldWorld|p9",
+      "ownerId": "gp1"
+    }
+  ],
+  "diplomacyRelationSummariesSorted": [
+    "gp1<->gp2: score=75 lvl=friendly peace",
+    "gp1<->gp3: score=71 lvl=friendly peace",
+    "gp1<->gp4: score=74 lvl=friendly peace",
+    "gp1<->gp5: score=72 lvl=friendly peace",
+    "gp1<->gp6: score=65 lvl=friendly peace",
+    "gp1<->minor1: score=50 lvl=neutral peace",
+    "gp1<->minor2: score=50 lvl=neutral peace",
+    "gp1<->minor3: score=27 lvl=neutral peace",
+    "gp1<->minor4: score=20 lvl=hostile war",
+    "gp1<->minor5: score=50 lvl=neutral peace",
+    "gp1<->minor6: score=50 lvl=neutral peace",
+    "gp1<->tribe10: score=23 lvl=hostile peace",
+    "gp1<->tribe1: score=20 lvl=hostile war",
+    "gp1<->tribe2: score=20 lvl=hostile war",
+    "gp1<->tribe3: score=20 lvl=hostile war",
+    "gp1<->tribe4: score=20 lvl=hostile war",
+    "gp1<->tribe5: score=20 lvl=hostile war",
+    "gp1<->tribe6: score=20 lvl=hostile war",
+    "gp1<->tribe7: score=20 lvl=hostile war",
+    "gp1<->tribe8: score=20 lvl=hostile war",
+    "gp1<->tribe9: score=20 lvl=hostile war",
+    "gp2<->gp3: score=75 lvl=friendly peace",
+    "gp2<->gp4: score=75 lvl=friendly peace",
+    "gp2<->gp5: score=73 lvl=friendly peace",
+    "gp2<->gp6: score=73 lvl=friendly peace",
+    "gp2<->minor1: score=50 lvl=neutral peace",
+    "gp2<->minor2: score=50 lvl=neutral peace",
+    "gp2<->minor3: score=50 lvl=neutral peace",
+    "gp2<->minor4: score=50 lvl=neutral peace",
+    "gp2<->minor5: score=33 lvl=neutral peace",
+    "gp2<->minor6: score=27 lvl=neutral peace",
+    "gp2<->tribe10: score=20 lvl=hostile war",
+    "gp2<->tribe1: score=20 lvl=hostile war",
+    "gp2<->tribe2: score=20 lvl=hostile war",
+    "gp2<->tribe3: score=20 lvl=hostile war",
+    "gp2<->tribe4: score=20 lvl=hostile war",
+    "gp2<->tribe5: score=20 lvl=hostile war",
+    "gp2<->tribe6: score=20 lvl=hostile war",
+    "gp2<->tribe7: score=20 lvl=hostile war",
+    "gp2<->tribe8: score=20 lvl=hostile war",
+    "gp2<->tribe9: score=20 lvl=hostile war",
+    "gp3<->gp4: score=74 lvl=friendly peace",
+    "gp3<->gp5: score=75 lvl=friendly peace",
+    "gp3<->gp6: score=74 lvl=friendly peace",
+    "gp3<->minor1: score=30 lvl=neutral peace",
+    "gp3<->minor2: score=50 lvl=neutral peace",
+    "gp3<->minor3: score=50 lvl=neutral peace",
+    "gp3<->minor4: score=50 lvl=neutral peace",
+    "gp3<->minor5: score=50 lvl=neutral peace",
+    "gp3<->minor6: score=50 lvl=neutral peace",
+    "gp3<->tribe10: score=20 lvl=hostile war",
+    "gp3<->tribe1: score=20 lvl=hostile war",
+    "gp3<->tribe2: score=20 lvl=hostile war",
+    "gp3<->tribe3: score=20 lvl=hostile war",
+    "gp3<->tribe4: score=20 lvl=hostile war",
+    "gp3<->tribe5: score=20 lvl=hostile war",
+    "gp3<->tribe6: score=20 lvl=hostile war",
+    "gp3<->tribe7: score=20 lvl=hostile war",
+    "gp3<->tribe8: score=20 lvl=hostile war",
+    "gp3<->tribe9: score=20 lvl=hostile war",
+    "gp4<->gp5: score=70 lvl=friendly peace",
+    "gp4<->gp6: score=73 lvl=friendly peace",
+    "gp4<->minor1: score=28 lvl=neutral peace",
+    "gp4<->minor2: score=50 lvl=neutral peace",
+    "gp4<->minor3: score=50 lvl=neutral peace",
+    "gp4<->minor4: score=50 lvl=neutral peace",
+    "gp4<->minor5: score=50 lvl=neutral peace",
+    "gp4<->minor6: score=50 lvl=neutral peace",
+    "gp4<->tribe10: score=20 lvl=hostile war",
+    "gp4<->tribe1: score=20 lvl=hostile war",
+    "gp4<->tribe2: score=20 lvl=hostile war",
+    "gp4<->tribe3: score=20 lvl=hostile war",
+    "gp4<->tribe4: score=20 lvl=hostile war",
+    "gp4<->tribe5: score=20 lvl=hostile war",
+    "gp4<->tribe6: score=20 lvl=hostile war",
+    "gp4<->tribe7: score=20 lvl=hostile war",
+    "gp4<->tribe8: score=20 lvl=hostile war",
+    "gp4<->tribe9: score=20 lvl=hostile war",
+    "gp5<->gp6: score=74 lvl=friendly peace",
+    "gp5<->minor1: score=50 lvl=neutral peace",
+    "gp5<->minor2: score=34 lvl=neutral peace",
+    "gp5<->minor3: score=50 lvl=neutral peace",
+    "gp5<->minor4: score=50 lvl=neutral peace",
+    "gp5<->minor5: score=50 lvl=neutral peace",
+    "gp5<->minor6: score=50 lvl=neutral peace",
+    "gp5<->tribe10: score=20 lvl=hostile war",
+    "gp5<->tribe1: score=20 lvl=hostile war",
+    "gp5<->tribe2: score=20 lvl=hostile war",
+    "gp5<->tribe3: score=20 lvl=hostile war",
+    "gp5<->tribe4: score=20 lvl=hostile war",
+    "gp5<->tribe5: score=20 lvl=hostile war",
+    "gp5<->tribe6: score=20 lvl=hostile war",
+    "gp5<->tribe7: score=20 lvl=hostile war",
+    "gp5<->tribe8: score=20 lvl=hostile war",
+    "gp5<->tribe9: score=20 lvl=hostile war",
+    "gp6<->minor1: score=50 lvl=neutral peace",
+    "gp6<->minor2: score=34 lvl=neutral peace",
+    "gp6<->minor3: score=50 lvl=neutral peace",
+    "gp6<->minor4: score=50 lvl=neutral peace",
+    "gp6<->minor5: score=50 lvl=neutral peace",
+    "gp6<->minor6: score=50 lvl=neutral peace",
+    "gp6<->tribe10: score=20 lvl=hostile war",
+    "gp6<->tribe1: score=20 lvl=hostile war",
+    "gp6<->tribe2: score=20 lvl=hostile war",
+    "gp6<->tribe3: score=20 lvl=hostile war",
+    "gp6<->tribe4: score=20 lvl=hostile war",
+    "gp6<->tribe5: score=21 lvl=hostile peace",
+    "gp6<->tribe6: score=20 lvl=hostile war",
+    "gp6<->tribe7: score=20 lvl=hostile war",
+    "gp6<->tribe8: score=20 lvl=hostile war",
+    "gp6<->tribe9: score=20 lvl=hostile war",
+    "minor1<->minor2: score=50 lvl=neutral peace",
+    "minor1<->minor3: score=50 lvl=neutral peace",
+    "minor1<->minor4: score=50 lvl=neutral peace",
+    "minor1<->minor5: score=50 lvl=neutral peace",
+    "minor1<->minor6: score=50 lvl=neutral peace",
+    "minor2<->minor3: score=50 lvl=neutral peace",
+    "minor2<->minor4: score=50 lvl=neutral peace",
+    "minor2<->minor5: score=50 lvl=neutral peace",
+    "minor2<->minor6: score=50 lvl=neutral peace",
+    "minor3<->minor4: score=50 lvl=neutral peace",
+    "minor3<->minor5: score=50 lvl=neutral peace",
+    "minor3<->minor6: score=50 lvl=neutral peace",
+    "minor4<->minor5: score=50 lvl=neutral peace",
+    "minor4<->minor6: score=50 lvl=neutral peace",
+    "minor5<->minor6: score=50 lvl=neutral peace",
+    "tribe1<->tribe10: score=50 lvl=neutral peace",
+    "tribe1<->tribe2: score=50 lvl=neutral peace",
+    "tribe1<->tribe3: score=50 lvl=neutral peace",
+    "tribe1<->tribe4: score=50 lvl=neutral peace",
+    "tribe1<->tribe5: score=50 lvl=neutral peace",
+    "tribe1<->tribe6: score=50 lvl=neutral peace",
+    "tribe1<->tribe7: score=50 lvl=neutral peace",
+    "tribe1<->tribe8: score=50 lvl=neutral peace",
+    "tribe1<->tribe9: score=50 lvl=neutral peace",
+    "tribe2<->tribe10: score=50 lvl=neutral peace",
+    "tribe2<->tribe3: score=50 lvl=neutral peace",
+    "tribe2<->tribe4: score=50 lvl=neutral peace",
+    "tribe2<->tribe5: score=50 lvl=neutral peace",
+    "tribe2<->tribe6: score=50 lvl=neutral peace",
+    "tribe2<->tribe7: score=50 lvl=neutral peace",
+    "tribe2<->tribe8: score=50 lvl=neutral peace",
+    "tribe2<->tribe9: score=50 lvl=neutral peace",
+    "tribe3<->tribe10: score=50 lvl=neutral peace",
+    "tribe3<->tribe4: score=50 lvl=neutral peace",
+    "tribe3<->tribe5: score=50 lvl=neutral peace",
+    "tribe3<->tribe6: score=50 lvl=neutral peace",
+    "tribe3<->tribe7: score=50 lvl=neutral peace",
+    "tribe3<->tribe8: score=50 lvl=neutral peace",
+    "tribe3<->tribe9: score=50 lvl=neutral peace",
+    "tribe4<->tribe10: score=50 lvl=neutral peace",
+    "tribe4<->tribe5: score=50 lvl=neutral peace",
+    "tribe4<->tribe6: score=50 lvl=neutral peace",
+    "tribe4<->tribe7: score=50 lvl=neutral peace",
+    "tribe4<->tribe8: score=50 lvl=neutral peace",
+    "tribe4<->tribe9: score=50 lvl=neutral peace",
+    "tribe5<->tribe10: score=50 lvl=neutral peace",
+    "tribe5<->tribe6: score=50 lvl=neutral peace",
+    "tribe5<->tribe7: score=50 lvl=neutral peace",
+    "tribe5<->tribe8: score=50 lvl=neutral peace",
+    "tribe5<->tribe9: score=50 lvl=neutral peace",
+    "tribe6<->tribe10: score=50 lvl=neutral peace",
+    "tribe6<->tribe7: score=50 lvl=neutral peace",
+    "tribe6<->tribe8: score=50 lvl=neutral peace",
+    "tribe6<->tribe9: score=50 lvl=neutral peace",
+    "tribe7<->tribe10: score=50 lvl=neutral peace",
+    "tribe7<->tribe8: score=50 lvl=neutral peace",
+    "tribe7<->tribe9: score=50 lvl=neutral peace",
+    "tribe8<->tribe10: score=50 lvl=neutral peace",
+    "tribe8<->tribe9: score=50 lvl=neutral peace",
+    "tribe9<->tribe10: score=50 lvl=neutral peace"
+  ],
+  "militaryArmySummariesSorted": [
+    "army:army_10 owner=gp3 region=oldWorld regiments=1",
+    "army:army_11 owner=gp4 region=oldWorld regiments=1",
+    "army:army_12 owner=gp5 region=oldWorld regiments=1",
+    "army:army_13 owner=gp6 region=oldWorld regiments=1",
+    "army:army_14 owner=gp1 region=oldWorld regiments=1",
+    "army:army_15 owner=gp2 region=oldWorld regiments=1",
+    "army:army_16 owner=gp3 region=oldWorld regiments=1",
+    "army:army_17 owner=gp4 region=oldWorld regiments=1",
+    "army:army_18 owner=gp5 region=oldWorld regiments=1",
+    "army:army_19 owner=gp6 region=oldWorld regiments=1",
+    "army:army_2 owner=gp1 region=oldWorld regiments=1",
+    "army:army_3 owner=gp2 region=oldWorld regiments=1",
+    "army:army_4 owner=gp3 region=oldWorld regiments=1",
+    "army:army_5 owner=gp4 region=oldWorld regiments=1",
+    "army:army_6 owner=gp5 region=oldWorld regiments=1",
+    "army:army_7 owner=gp6 region=oldWorld regiments=1",
+    "army:army_8 owner=gp1 region=oldWorld regiments=1",
+    "army:army_9 owner=gp2 region=oldWorld regiments=1",
+    "army:army_gp1 owner=gp1 region=oldWorld regiments=1",
+    "army:army_gp2 owner=gp2 region=oldWorld regiments=1",
+    "army:army_gp3 owner=gp3 region=oldWorld regiments=1",
+    "army:army_gp4 owner=gp4 region=oldWorld regiments=1",
+    "army:army_gp5 owner=gp5 region=oldWorld regiments=1",
+    "army:army_gp6 owner=gp6 region=oldWorld regiments=1"
+  ],
+  "militaryFleetSummariesSorted": [
+    "fleet:fleet_gp1 owner=gp1 ships=1",
+    "fleet:fleet_gp2 owner=gp2 ships=1",
+    "fleet:fleet_gp3 owner=gp3 ships=1",
+    "fleet:fleet_gp4 owner=gp4 ships=1",
+    "fleet:fleet_gp5 owner=gp5 ships=1",
+    "fleet:fleet_gp6 owner=gp6 ships=1"
+  ],
+  "extractableResourceTileCount": 834,
+  "improvedExtractableResourceTileCount": 33
+}
