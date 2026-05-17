@@ -15,7 +15,12 @@ void main() {
           turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
           oldWorld: RegionData(
             provinces: [
-              Province(id: 'oldWorld|p1', regionId: 'oldWorld', ownerId: 'gp1'),
+              for (var i = 0; i < 19; i++)
+                Province(
+                  id: 'oldWorld|p1_$i',
+                  regionId: 'oldWorld',
+                  ownerId: 'gp1',
+                ),
               Province(id: 'oldWorld|p2', regionId: 'oldWorld', ownerId: 'gp2'),
               Province(id: 'oldWorld|p3', regionId: 'oldWorld', ownerId: 'gp3'),
             ],
@@ -50,26 +55,27 @@ void main() {
         ],
       );
       final topology = MapTopology(
-        nodes: const [
-          TopologyNode(
-            id: 'p1',
-            regionId: 'oldWorld',
-            type: TopologyNodeType.province,
-          ),
-          TopologyNode(
+        nodes: [
+          for (var i = 0; i < 19; i++)
+            TopologyNode(
+              id: 'p1_$i',
+              regionId: 'oldWorld',
+              type: TopologyNodeType.province,
+            ),
+          const TopologyNode(
             id: 'p2',
             regionId: 'oldWorld',
             type: TopologyNodeType.province,
           ),
-          TopologyNode(
+          const TopologyNode(
             id: 'p3',
             regionId: 'oldWorld',
             type: TopologyNodeType.province,
           ),
         ],
-        edges: const [
-          TopologyEdge(id1: 'p1', id2: 'p2'),
-          TopologyEdge(id1: 'p1', id2: 'p3'),
+        edges: [
+          const TopologyEdge(id1: 'p1_0', id2: 'p2'),
+          const TopologyEdge(id1: 'p1_0', id2: 'p3'),
         ],
       );
       final view = buildPlayerView(game, topology, 'gp1');
