@@ -118,3 +118,12 @@ const int kColonialCargoPreferenceNoNwColoniesBoost = 12;
 
 /// Naval planner weight boost when New World invasion/colonization is viable.
 const int kColonialNavalWeightBonus = 22;
+
+/// Declare-war bonus when the target owns a sea-reachable invadable NW province.
+const int kDeclareWarColonialInvadableOwnerBonus = 48;
+
+/// Goal bonuses when the GP still owns fewer than this many NW provinces.
+const int kColonialFewNwProvincesThreshold = 8;
+
+/// Extra conquer weight when below [kColonialFewNwProvincesThreshold] NW holdings.
+const int kColonialConquerBonusWhenFewNwProvinces = 20;

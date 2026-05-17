@@ -71,14 +71,20 @@ List<int> computeDiplomaticCandidateScores({
           final isAdjacentOwner = adjacentOwners.contains(o.targetFactionId);
           final isColonialAdjacentOwner =
               colonialAdjacent.contains(o.targetFactionId);
+          final isMinorTarget = _isMinorOrTribeFaction(game, o.targetFactionId);
+          final provinceOwner = getProvinceOwnerMap(game);
+          final ownsInvadableNw = snapshot
+              .colonial
+              .invadableNewWorldProvinceIdsSorted
+              .any((pid) => provinceOwner[pid] == o.targetFactionId);
           if (behindVictoryPace &&
               adjacentOwners.isNotEmpty &&
               !isAdjacentOwner &&
-              !isColonialAdjacentOwner) {
+              !isColonialAdjacentOwner &&
+              !(ownsInvadableNw && isMinorTarget)) {
             s = kDeclareWarNonAdjacentSuppressedScore;
             break;
           }
-          final isMinorTarget = _isMinorOrTribeFaction(game, o.targetFactionId);
           final isWeakGpNeighbor = game.playerById(o.targetFactionId) !=
                   null &&
               snapshot.opportunities.weakNeighbors.contains(o.targetFactionId);
@@ -134,6 +140,9 @@ List<int> computeDiplomaticCandidateScores({
             if (snapshot.conquest.preferredConquestTargetFactionIdsSorted
                 .contains(o.targetFactionId)) {
               s += 15;
+            }
+            if (ownsInvadableNw && isMinorTarget) {
+              s += kDeclareWarColonialInvadableOwnerBonus;
             }
             if (isColonialAdjacentOwner && isMinorTarget) {
               s += kDeclareWarColonialAdjacentTribeBonus;
