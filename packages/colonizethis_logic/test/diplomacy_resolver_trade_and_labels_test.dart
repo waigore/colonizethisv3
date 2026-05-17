@@ -2,6 +2,7 @@ import 'package:colonizethis_test/test.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
+import 'package:colonizethis_data/colonizethis_data.dart' show kTechIdTradeFairs;
 void main() {
   group('tradeSlotsForGp', () {
     test('returns 0 without embassy', () {
@@ -50,7 +51,7 @@ void main() {
             id: 'gp1',
             displayName: 'GP1',
             isHuman: true,
-            techUnlocked: {'trade_fairs': true},
+            techUnlocked: {kTechIdTradeFairs: true},
           ),
         ],
         overtureStates: const [

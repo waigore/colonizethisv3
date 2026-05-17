@@ -75,7 +75,7 @@ void main() {
       final orders = Orders(
         moveOrdersByPlayerId: {
           'p1': const [
-            MoveOrder(unitId: 'u1', destinationProvinceId: 'oldWorld|P2'),
+            MoveOrder(unitId: 'u1', destinationTileKey: 'oldWorld|P2|0|0'),
           ],
         },
       );

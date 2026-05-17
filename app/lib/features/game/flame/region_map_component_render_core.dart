@@ -1,3 +1,4 @@
+
 part of 'region_map_component.dart';
 
 extension _CtRegionMapRenderCore on CtRegionMapComponent {
@@ -23,6 +24,8 @@ extension _CtRegionMapRenderCore on CtRegionMapComponent {
 
     _paintTransportOverlayTiles(canvas);
 
+    _paintL1PlainsInteriorResourceVariantOverlays(canvas);
+
     for (final cell in region.cells) {
       if (!cell.isSea &&
           cell.terrainType != null &&
@@ -30,6 +33,67 @@ extension _CtRegionMapRenderCore on CtRegionMapComponent {
         _paintFeatureCell(canvas, cell);
       }
     }
+  }
+
+  /// Interior L1 plains resource decals (`tile_plains_*`) must stack above
+  /// transport (SPEC/ui/map-widget.md § Base overlay paint order). Skips
+  /// plains↔desert Wang cells — same gating as [_paintLandBaseTile].
+  void _paintL1PlainsInteriorResourceVariantOverlays(Canvas canvas) {
+    for (final cell in region.cells) {
+      if (cell.isSea) continue;
+      if (visibilityMode == CtMapVisibilityMode.playerConstrained &&
+          _visibilityForTerrain(cell) == TileVisibility.unrevealed) {
+        continue;
+      }
+      if (cell.terrainType != TerrainType.plains) continue;
+      if (_isPlainTerrainAtDesertTransitionWangCell(cell)) continue;
+
+      final plainsVariantKey = landInteriorPlainsVariantTileKey(cell);
+      if (plainsVariantKey == null) continue;
+
+      final standaloneTile = terrainTilesetCache.getStandaloneTileByKey(
+        plainsVariantKey,
+      );
+      if (standaloneTile == null) {
+        throw StateError(
+          'Missing required plains terrain variant tile: $plainsVariantKey',
+        );
+      }
+      final left = cell.x * cellSize;
+      final top = cell.y * cellSize;
+      final dstRect = Rect.fromLTWH(left, top, cellSize, cellSize);
+      final overlayPaint = Paint();
+      if (shouldApplyFogToInteriorPlainsVariantOverlay(
+        visibilityMode: visibilityMode,
+        tileVisibility: _visibilityForTerrain(cell),
+      )) {
+        overlayPaint.colorFilter = ColorFilter.mode(
+          Color.fromRGBO(0, 0, 0, _fogOverlayOpacity),
+          BlendMode.darken,
+        );
+      }
+      final srcRect = Rect.fromLTWH(
+        0,
+        0,
+        standaloneTile.image.width.toDouble(),
+        standaloneTile.image.height.toDouble(),
+      );
+      canvas.drawImageRect(
+        standaloneTile.image,
+        srcRect,
+        dstRect,
+        overlayPaint,
+      );
+    }
+  }
+
+  bool _isPlainTerrainAtDesertTransitionWangCell(CellViewData cell) {
+    final nearDesertCorner = _getCornerValues(
+      cell.x,
+      cell.y,
+      (c) => !c.isSea && c.terrainType == TerrainType.desert,
+    );
+    return !nearDesertCorner.same && nearDesertCorner.value;
   }
 
   void _paintTransportOverlayTiles(Canvas canvas) {
@@ -283,43 +347,14 @@ extension _CtRegionMapRenderCore on CtRegionMapComponent {
 
     if (terrain == TerrainType.plains) {
       final plainsVariantKey = landInteriorPlainsVariantTileKey(cell);
-      if (plainsVariantKey != null) {
-        final standaloneTile = terrainTilesetCache.getStandaloneTileByKey(
-          plainsVariantKey,
-        );
-        if (standaloneTile == null) {
-          throw StateError(
-            'Missing required plains terrain variant tile: $plainsVariantKey',
-          );
-        }
+      if (plainsVariantKey != null &&
+          !_isPlainTerrainAtDesertTransitionWangCell(cell)) {
         final dstRect = Rect.fromLTWH(left, top, cellSize, cellSize);
         _drawLandInteriorUpperBaseForTerrain(
           canvas,
           landTerrain: TerrainType.plains,
           dstRect: dstRect,
           paint: Paint(),
-        );
-        final overlayPaint = Paint();
-        if (shouldApplyFogToInteriorPlainsVariantOverlay(
-          visibilityMode: visibilityMode,
-          tileVisibility: _visibilityForTerrain(cell),
-        )) {
-          overlayPaint.colorFilter = ColorFilter.mode(
-            Color.fromRGBO(0, 0, 0, _fogOverlayOpacity),
-            BlendMode.darken,
-          );
-        }
-        final srcRect = Rect.fromLTWH(
-          0,
-          0,
-          standaloneTile.image.width.toDouble(),
-          standaloneTile.image.height.toDouble(),
-        );
-        canvas.drawImageRect(
-          standaloneTile.image,
-          srcRect,
-          dstRect,
-          overlayPaint,
         );
         return;
       }
@@ -569,21 +604,12 @@ extension _CtRegionMapRenderCore on CtRegionMapComponent {
               iconRect: dstRect,
               units: totalUnits,
             );
-            for (var i = 0; i < indicatorRects.length; i++) {
-              final indicatorPaint = _resourceOverlayPaintForCell(cell)
-                ..colorFilter = ColorFilter.mode(
-                  i < effectiveUnits
-                      ? _kExtractionIndicatorGoldTint
-                      : _kExtractionIndicatorGrayTint,
-                  BlendMode.modulate,
-                );
-              canvas.drawImageRect(
-                icon,
-                srcRect,
-                indicatorRects[i],
-                indicatorPaint,
-              );
-            }
+            paintResourceExtractionDiscIndicators(
+              canvas: canvas,
+              indicatorRects: indicatorRects,
+              effectiveCount: effectiveUnits,
+              fogCompatibleOverlayPaint: _resourceOverlayPaintForCell(cell),
+            );
           }
         }
       }

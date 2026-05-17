@@ -1,16 +1,19 @@
 import 'package:colonizethis_logic/colonizethis_logic.dart';
+import 'package:colonizethis_logic/src/diplomacy/diplomacy_resolver.dart';
 import 'package:colonizethis_logic/src/orders/validators/work_order_target_prechecks.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
+import '../../order_engine_purchase_land_test_support.dart';
+
 void main() {
   group('workOrderTargetPrechecks', () {
     test('registers expected work targets', () {
-      expect(workOrderTargetPrechecks.keys, contains('upgrade_town'));
+      expect(workOrderTargetPrechecks.keys, contains(kWorkTargetUpgradeTown));
       expect(workOrderTargetPrechecks.keys, contains(kWorkTargetStealTech));
       expect(workOrderTargetPrechecks.keys, contains(kWorkTargetCounterSpy));
       expect(workOrderTargetPrechecks.keys, contains(kWorkTargetPurchaseLand));
-      expect(workOrderTargetPrechecks.keys, contains('build_improvement'));
+      expect(workOrderTargetPrechecks.keys, contains(kWorkTargetBuildImprovement));
       expect(workOrderTargetPrechecks.length, 5);
     });
 
@@ -47,11 +50,11 @@ void main() {
       );
       final order = WorkOrder(
         unitId: 'u1',
-        target: 'build_road',
+        target: kWorkTargetBuildRoad,
         targetTileKey: tileKey,
       );
       expect(
-        runWorkOrderTargetPrecheck(ctx, order, provinceId, 'p1', 'Builder'),
+        runWorkOrderTargetPrecheck(ctx, order, provinceId, 'p1', kUnitTypeBuilder),
         isNull,
       );
     });
@@ -89,7 +92,7 @@ void main() {
       );
       final order = WorkOrder(
         unitId: 'b1',
-        target: 'upgrade_town',
+        target: kWorkTargetUpgradeTown,
         targetTileKey: '$provinceId|0|0',
       );
       final r = runWorkOrderTargetPrecheck(
@@ -97,7 +100,7 @@ void main() {
         order,
         provinceId,
         'p1',
-        'Builder',
+        kUnitTypeBuilder,
       );
       expect(r, isNotNull);
       expect(r!.status, OrderValidationStatus.rejected);
@@ -151,7 +154,7 @@ void main() {
         target: kWorkTargetStealTech,
         targetTileKey: '$p2Province|0|0',
       );
-      final r = runWorkOrderTargetPrecheck(ctx, order, p2Province, 'p2', 'Spy');
+      final r = runWorkOrderTargetPrecheck(ctx, order, p2Province, 'p2', kUnitTypeSpy);
       expect(r, isNotNull);
       expect(r!.status, OrderValidationStatus.rejected);
       expect(r.reason, contains('Great Power capital'));
@@ -166,9 +169,59 @@ void main() {
             kWorkTargetStealTech,
             kWorkTargetCounterSpy,
             kWorkTargetPurchaseLand,
-            'build_improvement',
+            kWorkTargetBuildImprovement,
           }),
         );
+      },
+    );
+
+    test(
+      'precheckPurchaseLand matches with or without DiplomacyFactionMembership '
+      '(Refs #2394)',
+      () {
+        final game = PurchaseLandTestFixture.baseGame(
+          treasury: 500,
+          overtureStates: [
+            const OvertureState(
+              gpId: 'p1',
+              targetId: 'minor1',
+              stage: OvertureStage.embassy,
+              sinceTurn: 0,
+            ),
+          ],
+        );
+        final player = game.players.single;
+        final membership = DiplomacyFactionMembership.from(game);
+        WorkOrderTargetPrecheckContext ctx({required bool withSnap}) =>
+            WorkOrderTargetPrecheckContext(
+              game: game,
+              player: player,
+              playerId: 'p1',
+              treasury: 500,
+              civilianEmbassyWorkAllowed: (_, __) => false,
+              factionMembership: withSnap ? membership : null,
+            );
+        final order = WorkOrder(
+          unitId: 'merchant1',
+          target: kWorkTargetPurchaseLand,
+          targetTileKey: PurchaseLandTestFixture.tileKey,
+        );
+        final withSnap = runWorkOrderTargetPrecheck(
+          ctx(withSnap: true),
+          order,
+          PurchaseLandTestFixture.minorProvinceId,
+          'minor1',
+          kUnitTypeMerchant,
+        );
+        final linear = runWorkOrderTargetPrecheck(
+          ctx(withSnap: false),
+          order,
+          PurchaseLandTestFixture.minorProvinceId,
+          'minor1',
+          kUnitTypeMerchant,
+        );
+        expect(withSnap, isNull);
+        expect(linear, isNull);
       },
     );
 
@@ -209,7 +262,7 @@ void main() {
       );
       final order = WorkOrder(
         unitId: 'b1',
-        target: 'build_improvement',
+        target: kWorkTargetBuildImprovement,
         targetTileKey: tileKey,
       );
       final r = runWorkOrderTargetPrecheck(
@@ -217,7 +270,7 @@ void main() {
         order,
         provinceId,
         'p1',
-        'Builder',
+        kUnitTypeBuilder,
       );
       expect(r, isNotNull);
       expect(r!.status, OrderValidationStatus.rejected);

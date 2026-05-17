@@ -1,6 +1,6 @@
 // Province overlay: draft work orders and localized military labels.
 import 'package:colonizethis_logic/colonizethis_logic.dart'
-    show PlayerView, VisibilityLevel;
+    show PlayerView, VisibilityLevel, kWorkTargetBuildImprovement;
 import 'package:colonizethis_map/colonizethis_map.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
@@ -8,7 +8,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:colonizethis_app/features/game/widgets/province_sea_zone_detail_overlay.dart';
-import 'package:colonizethis_app/l10n/app_localizations.dart';
+import 'package:colonizethis_app/l10n/l10n.dart';
 
 const _regionId = 'oldWorld';
 const _localProvinceId = 'pDraft';
@@ -46,7 +46,7 @@ void main() {
             units: [
               Unit(
                 id: 'u_builder',
-                type: 'Builder',
+                type: kUnitTypeBuilder,
                 ownerId: 'gp1',
                 locationProvinceId: _fullProvinceId,
                 tileKey: tk,
@@ -105,7 +105,7 @@ void main() {
           'gp1': [
             WorkOrder(
               unitId: 'u_builder',
-              target: 'build_improvement',
+              target: kWorkTargetBuildImprovement,
               targetTileKey: tk,
             ),
           ],
@@ -114,7 +114,7 @@ void main() {
 
       await tester.pumpWidget(
         MaterialApp(
-          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          localizationsDelegates: AppLocalizationsBinding.localizationsDelegates,
           supportedLocales: AppLocalizations.supportedLocales,
           locale: const Locale('en'),
           home: Scaffold(
@@ -211,7 +211,7 @@ void main() {
 
       await tester.pumpWidget(
         MaterialApp(
-          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          localizationsDelegates: AppLocalizationsBinding.localizationsDelegates,
           supportedLocales: AppLocalizations.supportedLocales,
           locale: const Locale('en'),
           home: Scaffold(
@@ -315,7 +315,7 @@ void main() {
             'gp1': [
               MoveOrder(
                 unitId: 'r_move',
-                destinationProvinceId: _fullDestProvinceId,
+                destinationTileKey: '$_fullDestProvinceId|0|0',
               ),
             ],
           },
@@ -323,7 +323,7 @@ void main() {
 
         await tester.pumpWidget(
           MaterialApp(
-            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            localizationsDelegates: AppLocalizationsBinding.localizationsDelegates,
             supportedLocales: AppLocalizations.supportedLocales,
             locale: const Locale('en'),
             home: Scaffold(
@@ -447,7 +447,7 @@ void main() {
 
         await tester.pumpWidget(
           MaterialApp(
-            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            localizationsDelegates: AppLocalizationsBinding.localizationsDelegates,
             supportedLocales: AppLocalizations.supportedLocales,
             locale: const Locale('en'),
             home: Scaffold(
@@ -571,7 +571,7 @@ void main() {
             'gp1': [
               MoveOrder(
                 unitId: 'r_move',
-                destinationProvinceId: _fullDestProvinceId,
+                destinationTileKey: '$_fullDestProvinceId|0|0',
               ),
             ],
           },
@@ -579,7 +579,7 @@ void main() {
 
         await tester.pumpWidget(
           MaterialApp(
-            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            localizationsDelegates: AppLocalizationsBinding.localizationsDelegates,
             supportedLocales: AppLocalizations.supportedLocales,
             locale: const Locale('en'),
             home: Scaffold(
@@ -706,7 +706,7 @@ void main() {
             'gp1': [
               MoveOrder(
                 unitId: 'r_move',
-                destinationProvinceId: _fullDestProvinceId,
+                destinationTileKey: '$_fullDestProvinceId|0|0',
               ),
             ],
           },
@@ -714,7 +714,7 @@ void main() {
 
         await tester.pumpWidget(
           MaterialApp(
-            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            localizationsDelegates: AppLocalizationsBinding.localizationsDelegates,
             supportedLocales: AppLocalizations.supportedLocales,
             locale: const Locale('en'),
             home: Scaffold(

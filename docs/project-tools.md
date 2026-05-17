@@ -41,6 +41,28 @@ melos run init_game -- --minor-nation-count 0 --tribe-count 3 --output-map=./map
 
 ---
 
+## run_observer_game
+
+Full-AI observer campaign loop with merged turn traces, per-turn HTML + snapshot JSON, and `run-summary.json` under `<output>/observer-traces/<gameId>/`. Global calendar cap (year **1800**) uses the same game rules as the app. Spec: [SPEC/program/run_observer_game-tool.md](../SPEC/program/run_observer_game-tool.md). Tracked by [GitHub #2498](https://github.com/waigore/colonizethisv3/issues/2498).
+
+**Invocation**
+
+```bash
+melos run run_observer_game -- [options]
+```
+
+**Options (see spec for semantics)**
+
+- `--help` / `-h` — usage
+- `--output <dir>` — artifact root (required for a full run when implemented)
+- `--seed <n>` — optional RNG seed
+- `--max-turns <n>` — optional turn cap (default = calendar-1800 turn for the mapping)
+- `--config <path>` — optional `GameSetupConfig` JSON (`init_game`-compatible)
+
+Full observer loop (Full AI + traces + snapshots + `run-summary.json`) is implemented per GitHub **#2498**; use `--max-turns` for short CI-style runs. Each resolved turn’s **Full AI + trusted resolve** segment shares the **15 s** wall-clock budget with the app (`kTurnProcessingWallClockBudgetMs`; enforced by `colonizethis_ai` perf test on turn 1 of `GameSetupConfig.defaultConfig`; Refs **#2507**).
+
+---
+
 ## generate_map
 
 End-to-end map generation: generate tile map from province and continent count, infer topology from the grid, output graph description, map summary, tile map PNG, and topology graph (DOT + PNG when Graphviz installed). Spec: [SPEC/program/map-data.md](../SPEC/program/map-data.md).
@@ -263,9 +285,38 @@ python3 pytool/wang_reference_legal_layout_64.py --run-dir app/assets/images/ter
 
 ---
 
+## run_e2e_timing.sh (E2E wall-clock, #2336)
+
+Runs the three Linux desktop `integration_test` scenarios from [SPEC/program/e2e-integration-tests.md](../SPEC/program/e2e-integration-tests.md) with `--dart-define=CT_E2E=true`, **N times each** (default 3), and writes per-run logs plus a markdown summary (min/median/max per test and sum of medians for AC8). CI does not run these tests; use on a maintainer machine with a working Flutter Linux desktop toolchain, a display or `xvfb-run`, and (for snap Flutter) `ld.lld` available to the bundled LLVM path. Set `FLUTTER_BIN` to override the Flutter executable (default search: `~/development/flutter/bin/flutter`, then `PATH`).
+
+**Invocation**
+
+```bash
+tool/run_e2e_timing.sh          # 3 runs per test
+tool/run_e2e_timing.sh 5        # 5 runs per test
+E2E_TIMING_OUT=./my_timing tool/run_e2e_timing.sh 3
+```
+
+Output defaults to `.cursor/e2e-timing/` (gitignored). Paste the summary medians into the PR baseline/after table (Refs GitHub #2336 AC8–AC9).
+
+## compare_e2e_timing.sh (baseline vs after table, #2336)
+
+Reads two markdown summaries from `run_e2e_timing.sh` (capture one on `dev` tip, one on the PR branch) and prints a markdown table with per-test median deltas plus aggregate suite total and AC9 pass/fail (default **≥25%** aggregate reduction).
+
+**Invocation**
+
+```bash
+tool/compare_e2e_timing.sh .cursor/e2e-timing/summary_dev.md .cursor/e2e-timing/summary_pr.md
+tool/compare_e2e_timing.sh baseline.md after.md --min-reduction-pct 25
+```
+
+Paste the script output into the PR description for AC8–AC9 evidence.
+
+---
+
 ## run_quality_gate_tests.sh (CI verification)
 
-Runs the same test and coverage steps as the GitHub Quality workflow (`.github/workflows/quality.yml`): **Wang incremental assets** (`python3 pytool/test_wang_incremental_assets_and_preview.py`; CI installs **`python3-pil`** via apt; locally install Pillow e.g. `python3 -m pip install pillow` or use your `pytool` venv), packages (Dart), app (Flutter) with **app widget coverage gate ≥ 80%** (applies to `lib/widgets/` only; see SPEC/program/test-logging.md), ctdev (Flutter), tool packages (Dart), coverage gate (logic/map/ai ≥ 90%), and sim_scenarios. Use this to verify the quality gate locally before pushing. Spec: [SPEC/program/test-logging.md](../SPEC/program/test-logging.md).
+Runs the same test and coverage steps as the GitHub Quality workflow (`.github/workflows/quality.yml`): **Wang incremental assets** (`python3 pytool/test_wang_incremental_assets_and_preview.py`; CI installs **`python3-pil`** via apt; locally install Pillow e.g. `python3 -m pip install pillow` or use your `pytool` venv), packages via **`tool/run_package_tests.sh`** (CI job **`package_tests`**), app (Flutter) with **app widget coverage gate ≥ 80%** (applies to `lib/widgets/` only; see SPEC/program/test-logging.md), ctdev (Flutter), `run_observer_game` coverage gate. **Tool packages** and **sim_scenarios** are in the nightly gate — see **`tool/run_nightly_gate_tests.sh`** and [SPEC/program/test-logging.md](../SPEC/program/test-logging.md). Use this to verify the PR quality gate locally before pushing.
 
 **Invocation**
 
@@ -274,6 +325,20 @@ tool/run_quality_gate_tests.sh
 ```
 
 Requires `dart`, `flutter`, and `lcov` (e.g. `sudo apt-get install lcov`).
+
+---
+
+## run_nightly_gate_tests.sh (nightly CI)
+
+Runs tool package `dart test` for `tool/sim_scenarios`, `tool/sim_combat_montecarlo`, `tool/sim_combat`, `tool/generate_map`, `tool/init_game`, `tool/sim_economy`, `tool/show_tech`, then **`melos run sim_scenarios`**. Same as the **integration** job in `.github/workflows/nightly.yml` (daily **23:00 Asia/Hong_Kong**). Observer campaign verify is a separate job in that workflow. Spec: [SPEC/program/test-logging.md](../SPEC/program/test-logging.md).
+
+**Invocation**
+
+```bash
+tool/run_nightly_gate_tests.sh
+```
+
+Requires `dart` only (Melos activated by the script).
 
 ---
 

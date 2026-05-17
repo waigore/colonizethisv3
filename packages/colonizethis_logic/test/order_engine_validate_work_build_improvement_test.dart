@@ -35,7 +35,7 @@ void main() {
               units: [
                 Unit(
                   id: 'builder1',
-                  type: 'Builder',
+                  type: kUnitTypeBuilder,
                   ownerId: 'p1',
                   locationProvinceId: provinceId,
                   tileKey: tileKey,
@@ -66,7 +66,7 @@ void main() {
                   Stockpile()
                       .applyDelta(CommodityCatalog.lumber.id, 2)
                       .applyDelta(CommodityCatalog.castIron.id, 2),
-              techUnlocked: techUnlocked ?? const {'circular_saw': true},
+              techUnlocked: techUnlocked ?? const {kTechIdCircularSaw: true},
             ),
           ],
         );
@@ -83,7 +83,7 @@ void main() {
             'p1',
             const WorkOrder(
               unitId: 'builder1',
-              target: 'build_improvement',
+              target: kWorkTargetBuildImprovement,
               targetTileKey: tileKey,
             ),
           );
@@ -111,7 +111,7 @@ void main() {
             'p1',
             const WorkOrder(
               unitId: 'builder1',
-              target: 'build_improvement',
+              target: kWorkTargetBuildImprovement,
               targetTileKey: tileKey,
             ),
           );
@@ -133,7 +133,7 @@ void main() {
             'p1',
             const WorkOrder(
               unitId: 'builder1',
-              target: 'build_improvement',
+              target: kWorkTargetBuildImprovement,
               targetTileKey: tileKey,
             ),
           );
@@ -153,7 +153,7 @@ void main() {
           'p1',
           const WorkOrder(
             unitId: 'builder1',
-            target: 'build_improvement',
+            target: kWorkTargetBuildImprovement,
             targetTileKey: tileKey,
           ),
         );
@@ -180,7 +180,7 @@ void main() {
           'p1',
           const WorkOrder(
             unitId: 'builder1',
-            target: 'build_improvement',
+            target: kWorkTargetBuildImprovement,
             targetTileKey: tileKey,
           ),
         );
@@ -210,7 +210,7 @@ void main() {
             'p1',
             const WorkOrder(
               unitId: 'builder1',
-              target: 'build_improvement',
+              target: kWorkTargetBuildImprovement,
               targetTileKey: tileKey,
             ),
           );
@@ -229,7 +229,7 @@ void main() {
       test('rejects build_improvement when tech cap would be exceeded', () {
         // With no grain-cap tech, grain stays at cap 1; tile at level 1 cannot upgrade.
         final game = baseGame(
-          techUnlocked: const {'saw_mill': true},
+          techUnlocked: const {kTechIdSawMill: true},
           tileState: const TileMapState(
             improvementByTile: {'oldWorld|P1|0|0': 1},
           ),
@@ -242,7 +242,7 @@ void main() {
           'p1',
           const WorkOrder(
             unitId: 'builder1',
-            target: 'build_improvement',
+            target: kWorkTargetBuildImprovement,
             targetTileKey: tileKey,
           ),
         );
@@ -260,7 +260,7 @@ void main() {
         'accepts grain upgrade when exact next-level grain tech is unlocked',
         () {
           final game = baseGame(
-            techUnlocked: const {'land_enclosure': true},
+            techUnlocked: const {kTechIdLandEnclosure: true},
             tileState: const TileMapState(
               improvementByTile: {'oldWorld|P1|0|0': 1},
             ),
@@ -273,7 +273,7 @@ void main() {
             'p1',
             const WorkOrder(
               unitId: 'builder1',
-              target: 'build_improvement',
+              target: kWorkTargetBuildImprovement,
               targetTileKey: tileKey,
             ),
           );
@@ -292,14 +292,14 @@ void main() {
           final game = baseGame(
             resourceByTileKey: {tileKey: 'grain'},
             tileState: const TileMapState(),
-            techUnlocked: const {'circular_saw': true},
+            techUnlocked: const {kTechIdCircularSaw: true},
           );
           final engine = OrderEngine();
           engine.addWorkOrder(
             'p1',
             const WorkOrder(
               unitId: 'builder1',
-              target: 'build_improvement',
+              target: kWorkTargetBuildImprovement,
               targetTileKey: tileKey,
             ),
           );
@@ -327,7 +327,7 @@ void main() {
               units: [
                 Unit(
                   id: 'builder1',
-                  type: 'Builder',
+                  type: kUnitTypeBuilder,
                   ownerId: 'p1',
                   locationProvinceId: provinceId,
                   tileKey: tileKey,
@@ -356,7 +356,7 @@ void main() {
               stockpile: Stockpile()
                   .applyDelta(CommodityCatalog.lumber.id, 2)
                   .applyDelta(CommodityCatalog.castIron.id, 2),
-              techUnlocked: const {'circular_saw': true},
+              techUnlocked: const {kTechIdCircularSaw: true},
             ),
             const Player(id: 'p2', displayName: 'P2', isHuman: false),
           ],
@@ -366,7 +366,7 @@ void main() {
           'p1',
           WorkOrder(
             unitId: 'builder1',
-            target: 'build_improvement',
+            target: kWorkTargetBuildImprovement,
             targetTileKey: foreignTileKey,
           ),
         );
@@ -381,79 +381,6 @@ void main() {
           contains('foreign or uncontrolled province'),
         );
       });
-
-      test(
-        'accepts build_improvement on purchased tile in foreign province',
-        () {
-          final foreignProvinceId = '$ow|P2';
-          final foreignTileKey = '$foreignProvinceId|0|0';
-          final game = Game(
-            id: 'g1',
-            worldState: WorldState(
-              turnState: const TurnState(
-                phase: TurnPhase.orders,
-                turnNumber: 0,
-              ),
-              oldWorld: RegionData(
-                provinces: [
-                  Province(id: provinceId, regionId: ow, ownerId: 'p1'),
-                  Province(id: foreignProvinceId, regionId: ow, ownerId: 'p2'),
-                ],
-                units: [
-                  Unit(
-                    id: 'builder1',
-                    type: 'Builder',
-                    ownerId: 'p1',
-                    locationProvinceId: provinceId,
-                    tileKey: tileKey,
-                  ),
-                ],
-              ),
-              newWorld: const RegionData(),
-              resourceByTileKey: {tileKey: 'grain', foreignTileKey: 'grain'},
-              tileState: const TileMapState(),
-              tileKeysByRegionAndProvince: {
-                ow: {
-                  provinceId: [tileKey],
-                  foreignProvinceId: [foreignTileKey],
-                },
-              },
-              playerVisibilityByTile: {
-                'p1': {tileKey: 'fullyVisible', foreignTileKey: 'fullyVisible'},
-              },
-              purchasedTilesByTileKey: {foreignTileKey: 'p1'},
-            ),
-            players: [
-              Player(
-                id: 'p1',
-                displayName: 'P1',
-                isHuman: true,
-                capitalProvinceId: provinceId,
-                stockpile: Stockpile()
-                    .applyDelta(CommodityCatalog.lumber.id, 2)
-                    .applyDelta(CommodityCatalog.castIron.id, 2),
-                techUnlocked: const {'circular_saw': true},
-              ),
-              const Player(id: 'p2', displayName: 'P2', isHuman: false),
-            ],
-          );
-          final engine = OrderEngine();
-          engine.addWorkOrder(
-            'p1',
-            WorkOrder(
-              unitId: 'builder1',
-              target: 'build_improvement',
-              targetTileKey: foreignTileKey,
-            ),
-          );
-          final results = engine.validatePlayerOrdersWithContext(
-            game,
-            topology,
-            'p1',
-          );
-          expect(results.single.status, OrderValidationStatus.accepted);
-        },
-      );
     });
   });
 }

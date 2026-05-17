@@ -8,14 +8,20 @@ enum FleetMission { none, patrol, blockade, beachhead, defend }
 int inferNextShipInstanceSeqFromFleets(Iterable<Fleet> fleets) {
   var max = 0;
   for (final f in fleets) {
-    for (final s in f.ships) {
-      if (s.id.startsWith('ship_')) {
-        final n = int.tryParse(s.id.substring(5));
-        if (n != null && n > max) max = n;
-      }
-    }
+    final fromFleet = _maxShipSeqFromFleetShips(f.ships);
+    if (fromFleet > max) max = fromFleet;
   }
   return max + 1;
+}
+
+int _maxShipSeqFromFleetShips(List<ShipInstance> ships) {
+  var max = 0;
+  for (final s in ships) {
+    if (!s.id.startsWith('ship_')) continue;
+    final n = int.tryParse(s.id.substring(5));
+    if (n != null && n > max) max = n;
+  }
+  return max;
 }
 
 /// Fleet: owner, location (at sea: seaZoneId; in port: inPortAtProvinceId), ships, mission.
@@ -100,7 +106,9 @@ class Fleet {
       final shipsRaw = json['ships'] as List<dynamic>? ?? [];
       ships = shipsRaw
           .map(
-            (e) => ShipInstance.fromJson(Map<String, dynamic>.from(e as Map)),
+            (e) => ShipInstance.fromJson(
+              Map<String, dynamic>.from(e as Map<Object?, Object?>),
+            ),
           )
           .toList();
     } else {

@@ -209,3 +209,9 @@ The naval units panel participates in the Widgetbook catalog for review and test
 
 - **Given** the Move dialog is open, **when** the user taps **Cancel**, **then** the UI layer closes the dialog without emitting **`NavalMoveFleetRequestedEvent`**.
 
+- **Given** the Naval Units panel is opened with `locationScopeKey` and currently shows at least one scoped fleet row, **when** the user confirms a fleet move from that panel and the projected scoped list becomes empty after draft-order application, **then** the UI layer emits **`ClosePanelEvent`** and the naval panel dismisses automatically.
+
+- **Given** the Naval Units panel is opened in full-list mode (no `locationScopeKey`), **when** the user confirms a fleet move, **then** the UI layer keeps the panel open and updates list content without auto-close.
+
+- **Given** the Naval Units panel is opened with `locationScopeKey`, **when** the panel list becomes empty for reasons other than a move confirmation emitted from that scoped panel, **then** the UI layer does not emit **`ClosePanelEvent`** for automatic dismissal.
+

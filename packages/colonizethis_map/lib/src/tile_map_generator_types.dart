@@ -1,10 +1,8 @@
+/// Sentinel value for "land not yet assigned to a province". Replaced in Pass 9.
+
 part of 'tile_map_generator.dart';
 
-/// Sentinel value for "land not yet assigned to a province". Replaced in Pass 9.
-const String _landSentinel = '_land';
-
-/// How land-shape seeds are placed around each continent seed. SPEC/program/tile-map-gen-algorithm.md § Pass 2.
-enum LandSeedClusterShape { gaussian, uniformDisk, uniformAnnulus }
+const String _landSentinel = kTileMapLandSentinel;
 
 /// Centralized map generation parameters. SPEC/program/tile-map-gen-config.md § Grid size derivation.
 class MapGenerationParams {
@@ -100,6 +98,24 @@ Map<String, int> buildProvinceToContinentMap(
   return result;
 }
 
+/// Maps `p1`..`pN` to continent indices `0..C-1` using explicit per-continent province
+/// counts (locked full-init OW `[13,13,17,17]`, NW `[6,6,9,9]` — GitHub #1834).
+Map<String, int> buildProvinceToContinentMapFromCounts(
+  List<int> provinceCountsPerContinent,
+) {
+  if (provinceCountsPerContinent.isEmpty) return {};
+  final result = <String, int>{};
+  var idx = 0;
+  for (var c = 0; c < provinceCountsPerContinent.length; c++) {
+    final n = provinceCountsPerContinent[c];
+    for (var i = 0; i < n; i++) {
+      result['p${idx + 1}'] = c;
+      idx++;
+    }
+  }
+  return result;
+}
+
 /// Returns continent index (0, 1, …) per province id from topology.
 /// Continents = connected components of the land subgraph (P–P edges only). Sea zone is not in the result.
 Map<String, int> computeContinentMembership(MapTopology topology) {
@@ -126,21 +142,30 @@ Map<String, int> computeContinentMembership(MapTopology topology) {
     continent[start] = idx;
     while (queue.isNotEmpty) {
       final cur = queue.removeLast();
-      for (final n in p2p[cur]!) {
-        if (!continent.containsKey(n)) {
-          continent[n] = idx;
-          queue.add(n);
-        }
-      }
+      _continentBfsEnqueueNeighbors(cur, p2p, continent, idx, queue);
     }
     idx++;
   }
   return continent;
 }
 
+void _continentBfsEnqueueNeighbors(
+  String cur,
+  Map<String, Set<String>> p2p,
+  Map<String, int> continent,
+  int idx,
+  List<String> queue,
+) {
+  for (final n in p2p[cur]!) {
+    if (continent.containsKey(n)) continue;
+    continent[n] = idx;
+    queue.add(n);
+  }
+}
+
 /// Runtime parameters for tile-based map generation (grid dimensions and generator options).
 /// Pass 6 and Pass 10b terrain/jitter parameters are tunable here; see SPEC/program/tile-map-gen-config.md.
-class TileMapParams {
+class TileMapParams implements TileMapLandSeedParams {
   const TileMapParams({
     this.width = 100,
     this.height = 100,
@@ -272,56 +297,50 @@ class TileMapParams {
   // --- Pass 7 (resources)
   /// Max fraction of placed resources that may be multi-region ("both") per map. Default 0.30.
   final double multiRegionResourceCapFraction;
-}
 
-/// Tracks both-count and total for multi-region resource cap (Pass 7). SPEC/game/resource-terrain-region-rules.md.
-class _MultiRegionCapState {
-  _MultiRegionCapState(this.capFraction, this.rules, this.regionId);
-
-  factory _MultiRegionCapState.fromExisting(
-    double capFraction,
-    ResourceRules rules,
-    String regionId,
-    List<List<Resource?>> resourceGrid,
-  ) {
-    var both = 0, total = 0;
-    for (final row in resourceGrid) {
-      for (final r in row) {
-        if (r == null) continue;
-        total++;
-        if (rules.regionRule[r] == ResourceRegionRule.both) both++;
-      }
-    }
-    final s = _MultiRegionCapState(capFraction, rules, regionId);
-    s.bothCount = both;
-    s.totalCount = total;
-    return s;
-  }
-
-  int bothCount = 0;
-  int totalCount = 0;
-  final double capFraction;
-  final ResourceRules rules;
-  final String regionId;
-
-  bool shouldRestrictToRegionOnly(List<Resource> allowed) {
-    if (totalCount == 0) return false;
-    if (bothCount / totalCount < capFraction) return false;
-    final hasBoth = allowed.any(
-      (r) => rules.regionRule[r] == ResourceRegionRule.both,
+  /// Returns a copy with selected fields overridden (e.g. bumped map seed for tests/tools).
+  TileMapParams copyWith({
+    int? seed,
+    double? seaFraction,
+    bool? skipFillLakes,
+    bool? joinContinents,
+    bool? seedBeforeAssignment,
+    double? borderNoise,
+  }) {
+    return TileMapParams(
+      width: width,
+      height: height,
+      seed: seed ?? this.seed,
+      seaFraction: seaFraction ?? this.seaFraction,
+      borderNoise: borderNoise ?? this.borderNoise,
+      maxEnforceIterations: maxEnforceIterations,
+      clusterShape: clusterShape,
+      voronoiNoiseScale: voronoiNoiseScale,
+      continentBufferTiles: continentBufferTiles,
+      skipFillLakes: skipFillLakes ?? this.skipFillLakes,
+      joinContinents: joinContinents ?? this.joinContinents,
+      seedBeforeAssignment: seedBeforeAssignment ?? this.seedBeforeAssignment,
+      maxSeaZoneFraction: maxSeaZoneFraction,
+      mountainRangesFactor: mountainRangesFactor,
+      mountainRangesMin: mountainRangesMin,
+      mountainRangesMax: mountainRangesMax,
+      mountainRangeMinLength: mountainRangeMinLength,
+      terrainSeedsFactor: terrainSeedsFactor,
+      terrainSeedsMin: terrainSeedsMin,
+      terrainSeedsMax: terrainSeedsMax,
+      terrainMacroFraction: terrainMacroFraction,
+      patternMinBlobSize: patternMinBlobSize,
+      patternMaxFractionPerBlob: patternMaxFractionPerBlob,
+      patternSeedFactor: patternSeedFactor,
+      patternMaxSeedsPerBlob: patternMaxSeedsPerBlob,
+      patternMaxChangesPerSeed: patternMaxChangesPerSeed,
+      patternMaxRadius: patternMaxRadius,
+      jitterHomogeneityThreshold: jitterHomogeneityThreshold,
+      jitterMaxFraction: jitterMaxFraction,
+      jitterProbability: jitterProbability,
+      jitterMinProvinceSize: jitterMinProvinceSize,
+      jitterNeighborSupportThreshold: jitterNeighborSupportThreshold,
+      multiRegionResourceCapFraction: multiRegionResourceCapFraction,
     );
-    final hasRegionOnly = allowed.any(
-      (r) => rules.regionRule[r] != ResourceRegionRule.both,
-    );
-    return hasBoth && hasRegionOnly;
-  }
-
-  List<Resource> filterToRegionOnly(List<Resource> allowed) => allowed
-      .where((r) => rules.regionRule[r] != ResourceRegionRule.both)
-      .toList();
-
-  void record(Resource r) {
-    totalCount++;
-    if (rules.regionRule[r] == ResourceRegionRule.both) bothCount++;
   }
 }

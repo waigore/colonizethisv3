@@ -4,3 +4,4 @@ library;
 
 export 'src/enforcement.dart';
 export 'src/no_generic_domain_throw_rule.dart' show NoGenericDomainThrowRule;
+export 'src/no_raw_home_fleet_id_rule.dart' show NoRawHomeFleetIdRule;

@@ -1,5 +1,6 @@
-import 'package:colonizethis_test/test.dart';
 import 'package:colonizethis_map/src/tile_map_visualization_shared.dart';
+import 'package:colonizethis_models/colonizethis_models.dart';
+import 'package:colonizethis_test/test.dart';
 
 void main() {
   group('factionOwnershipColorMap', () {
@@ -56,6 +57,68 @@ void main() {
       );
       expect(map['tribe1'], isNotNull);
       expect(map['tribe1'], isA<(int, int, int)>());
+    });
+  });
+
+  group('initGameFactionColorData', () {
+    test('returns great-power ids and full-game colour map', () {
+      final game = Game(
+        id: 'g',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+          oldWorld: const RegionData(provinces: [], units: []),
+          newWorld: const RegionData(provinces: [], units: []),
+        ),
+        players: const [Player(id: 'gp1', displayName: 'GP1', isHuman: false)],
+        minorNations: const [MinorNation(id: 'm1', displayName: 'M1')],
+        tribes: const [Tribe(id: 't1', displayName: 'T1')],
+      );
+      final data = initGameFactionColorData(game);
+      expect(data.greatPowerFactionIds, {'gp1'});
+      expect(data.factionColors, factionOwnershipColorMapForGame(game));
+    });
+  });
+
+  group('factionOwnershipColorMapForGame', () {
+    test('matches low-level map for all faction types', () {
+      final game = Game(
+        id: 'g',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+          oldWorld: const RegionData(provinces: [], units: []),
+          newWorld: const RegionData(provinces: [], units: []),
+        ),
+        players: const [Player(id: 'gp1', displayName: 'GP1', isHuman: false)],
+        minorNations: const [MinorNation(id: 'm1', displayName: 'M1')],
+        tribes: const [Tribe(id: 't1', displayName: 'T1')],
+      );
+      expect(
+        factionOwnershipColorMapForGame(game),
+        factionOwnershipColorMap(
+          greatPowerIds: ['gp1'],
+          minorNationIds: ['m1'],
+          tribeIds: ['t1'],
+        ),
+      );
+    });
+  });
+
+  group('factionOwnershipColorMapForOldWorld', () {
+    test('excludes tribes', () {
+      final game = Game(
+        id: 'g',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+          oldWorld: const RegionData(provinces: [], units: []),
+          newWorld: const RegionData(provinces: [], units: []),
+        ),
+        players: const [Player(id: 'gp1', displayName: 'GP1', isHuman: false)],
+        minorNations: const [],
+        tribes: const [Tribe(id: 't1', displayName: 'T1')],
+      );
+      final map = factionOwnershipColorMapForOldWorld(game);
+      expect(map.containsKey('gp1'), isTrue);
+      expect(map.containsKey('t1'), isFalse);
     });
   });
 }

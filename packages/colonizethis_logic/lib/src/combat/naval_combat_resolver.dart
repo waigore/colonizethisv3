@@ -2,12 +2,11 @@
 // Interception and retreat: SPEC/game/ships-and-naval.md.
 
 import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:colonizethis_logic/package_logger.dart';
+import 'package:colonizethis_logic/src/logging.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
+import '../diplomacy/diplomacy_relation_lookup.dart';
 import 'military_strength.dart';
-
-final _log = packageLogger();
 
 /// Mission factor for Patrol interception probability.
 const double kNavalInterceptMissionFactorPatrol = 0.50;
@@ -77,6 +76,21 @@ bool _ownerHadMovingFleetInZone(
 bool _isInterceptorMission(FleetMission m) =>
     m == FleetMission.patrol || m == FleetMission.blockade;
 
+bool _navalBattleShouldSwapAttackerSides({
+  required bool m1,
+  required bool m2,
+  required bool int1,
+  required bool int2,
+  required String s1OwnerId,
+  required String s2OwnerId,
+}) {
+  if (m1 && !m2 && int2) return true;
+  if (m2 && !m1 && int1) return false;
+  if (m1 && !m2) return false;
+  if (m2 && !m1) return true;
+  return s1OwnerId.compareTo(s2OwnerId) > 0;
+}
+
 /// Orders [battle] so [side1] is the attacker and [side2] is the defender per SPEC/program/naval-combat-resolution.md.
 ///
 /// Precedence: (1) If exactly one faction moved into the zone and the other is on Patrol or Blockade, the interceptor is the attacker. (2) Else if exactly one faction moved, the mover is the attacker. (3) Else (both moved, or neither) use lexicographically smaller `ownerId` as attacker for deterministic ordering.
@@ -102,18 +116,14 @@ BattleContextSea normalizeNavalBattleSidesForAttacker(
   final int1 = _isInterceptorMission(s1.mission);
   final int2 = _isInterceptorMission(s2.mission);
 
-  final bool swap;
-  if (m1 && !m2 && int2) {
-    swap = true;
-  } else if (m2 && !m1 && int1) {
-    swap = false;
-  } else if (m1 && !m2) {
-    swap = false;
-  } else if (m2 && !m1) {
-    swap = true;
-  } else {
-    swap = s1.ownerId.compareTo(s2.ownerId) > 0;
-  }
+  final swap = _navalBattleShouldSwapAttackerSides(
+    m1: m1,
+    m2: m2,
+    int1: int1,
+    int2: int2,
+    s1OwnerId: s1.ownerId,
+    s2OwnerId: s2.ownerId,
+  );
 
   if (!swap) {
     return battle;
@@ -124,12 +134,7 @@ BattleContextSea normalizeNavalBattleSidesForAttacker(
 /// Conflict detection: returns contested sea zones with two hostile sides.
 /// Populates mission per side from fleet state for retreat aggression.
 List<BattleContextSea> detectNavalConflicts(Game game) {
-  final atWar = <String, Set<String>>{};
-  for (final rel in game.diplomacyRelations) {
-    if (rel.state != RelationState.atWar) continue;
-    atWar.putIfAbsent(rel.factionId1, () => <String>{}).add(rel.factionId2);
-    atWar.putIfAbsent(rel.factionId2, () => <String>{}).add(rel.factionId1);
-  }
+  final atWar = hostileFactionsByFaction(game);
   final byZone = <String, Map<String, List<ShipInstance>>>{};
   final missionByZoneOwner = <String, Map<String, FleetMission>>{};
   for (final f in game.worldState.fleets) {
@@ -229,23 +234,26 @@ List<BattleContextSea> filterBattlesByInterception(
 ) {
   if (battles.isEmpty) return battles;
   final rng = _SeededRng(seed);
+
+  // Pre-index moved fleets at sea by (seaZoneId, ownerId) to avoid O(fleets)
+  // scan per battle.
+  final movedAtSeaByZoneAndOwner = <String, Set<String>>{};
+  for (final f in game.worldState.fleets) {
+    if (!f.isAtSea || f.seaZoneId == null) continue;
+    if (!movedFleetIds.contains(f.id)) continue;
+    movedAtSeaByZoneAndOwner
+        .putIfAbsent('${f.seaZoneId}|${f.ownerId}', () => {})
+        .add(f.id);
+  }
+
+  bool ownerMovedInZone(String ownerId, String zone) =>
+      movedAtSeaByZoneAndOwner.containsKey('$zone|$ownerId');
+
   final out = <BattleContextSea>[];
   for (final battle in battles) {
     final zone = battle.seaZoneId;
-    final owner1Moved = game.worldState.fleets.any(
-      (f) =>
-          f.isAtSea &&
-          f.seaZoneId == zone &&
-          f.ownerId == battle.side1.ownerId &&
-          movedFleetIds.contains(f.id),
-    );
-    final owner2Moved = game.worldState.fleets.any(
-      (f) =>
-          f.isAtSea &&
-          f.seaZoneId == zone &&
-          f.ownerId == battle.side2.ownerId &&
-          movedFleetIds.contains(f.id),
-    );
+    final owner1Moved = ownerMovedInZone(battle.side1.ownerId, zone);
+    final owner2Moved = ownerMovedInZone(battle.side2.ownerId, zone);
     final side1InterceptScore = _fleetInterceptScore(battle.side1.shipTypeIds);
     final side2InterceptScore = _fleetInterceptScore(battle.side2.shipTypeIds);
     final side1FleeScore = _fleetFleeScore(battle.side1.shipTypeIds);
@@ -399,7 +407,7 @@ NavalBattleResult resolveSeaBattle(
     outcome = NavalBattleOutcome.side1Victory;
   }
 
-  _log.d(
+  logicLog.d(
     'naval battle zone=${battle.seaZoneId} side1=${battle.side1.ownerId} side2=${battle.side2.ownerId} '
     'outcome=${outcome.name} retreat1=$side1Retreated retreat2=$side2Retreated',
   );

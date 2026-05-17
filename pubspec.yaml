@@ -2,7 +2,7 @@ name: colonizethis
 publish_to: none
 
 environment:
-  sdk: '>=3.11.0 <4.0.0'
+  sdk: '>=3.11.5 <4.0.0'
 
 workspace:
   - app
@@ -16,10 +16,12 @@ workspace:
   - packages/colonizethis_save
   - packages/colonizethis_logic
   - packages/colonizethis_ai
+  - packages/colonizethis_debug_console
   - packages/colonizethis_map
   - packages/colonizethis_test
   - tool/generate_map
   - tool/init_game
+  - tool/run_observer_game
   - tool/sim_economy
   - tool/sim_combat
   - tool/sim_combat_montecarlo
@@ -32,7 +34,7 @@ dev_dependencies:
   colonizethis_exception_lint:
     path: packages/colonizethis_exception_lint
   image: ^4.5.4
-  melos: ^7.0.0
+  melos: ^7.7.0
   path: ^1.9.1
   test: ^1.24.0
   yaml: ^3.1.3
@@ -48,6 +50,9 @@ melos:
     init_game:
       description: Game creation (map gen, province/capital assignment). SPEC/program/init-game-tool.md.
       run: dart run init_game
+    run_observer_game:
+      description: Full-AI observer runner; traces and snapshots. SPEC/program/run_observer_game-tool.md.
+      run: dart run run_observer_game
     sim_economy:
       description: Standalone Phase 2 economy simulation CLI. SPEC/program/sim-economy.md.
       run: dart run sim_economy
@@ -87,3 +92,6 @@ melos:
     ct_repo_lint:
       description: Unified manifest-driven repo convention checks. SPEC/program/repo-lint.md.
       run: dart run tool/ct_repo_lint.dart
+    workspace_analyze_errors_only:
+      description: Run dart/flutter analyze for every pub workspace member; fail on analyzer errors only (GitHub #2014).
+      run: dart run tool/run_workspace_analyze_errors_only.dart

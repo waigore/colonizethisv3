@@ -1,7 +1,78 @@
 import 'package:colonizethis_models/colonizethis_models.dart'
-    show Province, ProvinceId, RegionData, WorldState;
+    show Province, ProvinceId, RegionData, Unit, WorldState;
 
 import '../constants.dart';
+
+/// Id → first list index for one [RegionData.provinces] list instance (Refs #2394).
+/// First matching id wins, matching [List.indexWhere] semantics on duplicates.
+final Expando<Map<String, int>> _provinceFirstIndexByIdForProvinceList =
+    Expando<Map<String, int>>('provinceFirstIndexByIdForProvinceList');
+
+/// Id → province row for one [RegionData.provinces] list instance (Refs #2394).
+/// First matching id wins, matching [List.indexWhere] semantics on duplicates.
+final Expando<Map<String, Province>> _provinceByIdForProvinceList =
+    Expando<Map<String, Province>>('provinceByIdForProvinceList');
+
+Map<String, int> _provinceFirstIndexByIdForList(List<Province> provinces) {
+  final cached = _provinceFirstIndexByIdForProvinceList[provinces];
+  if (cached != null) {
+    return cached;
+  }
+  final built = <String, int>{};
+  for (var i = 0; i < provinces.length; i++) {
+    built.putIfAbsent(provinces[i].id, () => i);
+  }
+  _provinceFirstIndexByIdForProvinceList[provinces] = built;
+  return built;
+}
+
+Map<String, Province> _provinceIdIndexForList(List<Province> provinces) {
+  var index = _provinceByIdForProvinceList[provinces];
+  if (index != null) {
+    return index;
+  }
+  index = <String, Province>{};
+  for (final p in provinces) {
+    index.putIfAbsent(p.id, () => p);
+  }
+  _provinceByIdForProvinceList[provinces] = index;
+  return index;
+}
+
+/// O(1) check that [provinces] contains a row whose [Province.id] equals [provinceId].
+///
+/// Uses the same per-list index as region-scoped lookup (Refs #2394).
+bool provinceListContainsProvinceId(
+  List<Province> provinces,
+  String provinceId,
+) => _provinceIdIndexForList(provinces).containsKey(provinceId);
+
+/// First index in [provinces] whose [Province.id] equals [provinceId], or null
+/// when none match. Matches [List.indexWhere] semantics on duplicate ids
+/// (first occurrence wins). Refs #2394.
+int? provinceListIndexOfProvinceId(
+  List<Province> provinces,
+  String provinceId,
+) => _provinceFirstIndexByIdForList(provinces)[provinceId];
+
+/// When a row with [provinceId] exists, returns a new list with that row's
+/// [Province.fortLevel] decremented by one (clamped 0–3). Otherwise returns
+/// [provinces] unchanged (same reference).
+List<Province> decrementFortLevelForProvinceIdIfPresent(
+  List<Province> provinces,
+  String provinceId,
+) {
+  if (!_provinceIdIndexForList(provinces).containsKey(provinceId)) {
+    return provinces;
+  }
+  return [
+    for (final p in provinces)
+      if (p.id == provinceId)
+        p.copyWith(fortLevel: (p.fortLevel - 1).clamp(0, 3))
+      else
+        p,
+  ];
+}
 
 RegionData? _regionForId(WorldState world, String regionId) {
   return regionId == kRegionOldWorld
@@ -15,14 +86,7 @@ Province? _findProvinceInRegion(
   String localId,
 ) {
   final fullId = ProvinceId.full(regionId, localId);
-  final idx = region.provinces.indexWhere(
-    (p) =>
-        p.id == fullId ||
-        (p.regionId == regionId &&
-            (p.id == localId || ProvinceId.localIdFrom(p.id) == localId)),
-  );
-  if (idx < 0) return null;
-  return region.provinces[idx];
+  return _provinceIdIndexForList(region.provinces)[fullId];
 }
 
 /// Returns the region data for [regionId], or null if unknown.
@@ -116,6 +180,39 @@ Province? tryGetProvince(WorldState world, String fullProvinceId) {
   );
 }
 
+/// Resolves a province row for transfer paths that accept either a prefixed id
+/// or a legacy short [Province.id] (tests and some fixtures).
+///
+/// Returns the authoritative [Province.id] as [canonicalProvinceId] for bucket
+/// keys and timer maps.
+({Province province, String canonicalProvinceId})?
+resolveProvinceRowForOwnershipTransfer(WorldState world, String provinceKey) {
+  final prefixed = tryGetProvince(world, provinceKey);
+  if (prefixed != null) {
+    return (province: prefixed, canonicalProvinceId: prefixed.id);
+  }
+  for (final p in world.allProvinces()) {
+    if (p.id == provinceKey) {
+      return (province: p, canonicalProvinceId: p.id);
+    }
+  }
+  return null;
+}
+
+/// Returns land tile keys for a province bucket using canonical full province id.
+///
+/// This helper intentionally does not fall back to local-only ids. Callers must
+/// pass `regionId|localId` to keep multi-region lookups deterministic.
+List<String> landTileKeysForProvinceBucket(
+  WorldState world,
+  String regionId,
+  String fullProvinceId,
+) {
+  return List<String>.from(
+    world.tileKeysByRegionAndProvince[regionId]?[fullProvinceId] ?? const [],
+  );
+}
+
 /// Province lookup helpers on [WorldState] to avoid repeatedly passing the world state.
 extension WorldStateProvinceLookup on WorldState {
   RegionData? regionDataForId(String regionId) => _regionForId(this, regionId);
@@ -123,6 +220,20 @@ extension WorldStateProvinceLookup on WorldState {
   Iterable<Province> allProvinces() sync* {
     yield* oldWorld.provinces;
     yield* newWorld.provinces;
+  }
+
+  /// Returns [kRegionOldWorld] or [kRegionNewWorld] when a province row's `id`
+  /// equals [key] in that region (old world checked first). For canonical
+  /// lookups prefer [tryGetProvince] with a prefixed id; this exists for
+  /// legacy short ids and tests (waigore/colonizethis#2071 Phase 1).
+  String? tryGetRegionIdForLegacyProvinceKey(String key) {
+    if (_provinceIdIndexForList(oldWorld.provinces).containsKey(key)) {
+      return kRegionOldWorld;
+    }
+    if (_provinceIdIndexForList(newWorld.provinces).containsKey(key)) {
+      return kRegionNewWorld;
+    }
+    return null;
   }
 
   String resolveToFullProvinceId(String provinceId) =>
@@ -173,5 +284,46 @@ extension WorldStateProvinceLookup on WorldState {
       ProvinceId.regionIdFrom(fullProvinceId),
       ProvinceId.localIdFrom(fullProvinceId),
     );
+  }
+
+  /// Replaces [oldWorld] and [newWorld] via [update].
+  ///
+  /// [update] receives [kRegionOldWorld] or [kRegionNewWorld] and the current
+  /// [RegionData] for that region. Refactor helper (waigore/colonizethis#2071).
+  WorldState mapBothRegions(
+    RegionData Function(String regionId, RegionData region) update,
+  ) {
+    return copyWith(
+      oldWorld: update(kRegionOldWorld, oldWorld),
+      newWorld: update(kRegionNewWorld, newWorld),
+    );
+  }
+
+  /// Updates unit lists in both regions; province rows are unchanged.
+  WorldState mapBothRegionUnits(
+    List<Unit> Function(String regionId, List<Unit> units) updateUnits,
+  ) {
+    return mapBothRegions(
+      (regionId, region) => RegionData(
+        provinces: region.provinces,
+        units: updateUnits(regionId, region.units),
+      ),
+    );
+  }
+
+  /// Updates a single region by [regionId], preserving the other region.
+  ///
+  /// Throws [StateError] when [regionId] is unknown.
+  WorldState updateRegionById(
+    String regionId,
+    RegionData Function(RegionData region) update,
+  ) {
+    if (regionId == kRegionOldWorld) {
+      return copyWith(oldWorld: update(oldWorld));
+    }
+    if (regionId == kRegionNewWorld) {
+      return copyWith(newWorld: update(newWorld));
+    }
+    throw StateError('Unknown region "$regionId"');
   }
 }

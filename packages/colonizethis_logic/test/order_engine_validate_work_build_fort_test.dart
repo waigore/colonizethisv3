@@ -34,7 +34,7 @@ void main() {
               units: [
                 Unit(
                   id: 'eng1',
-                  type: 'Engineer',
+                  type: kUnitTypeEngineer,
                   ownerId: 'p1',
                   locationProvinceId: provinceId,
                   tileKey: tileKey,
@@ -69,7 +69,7 @@ void main() {
           'p1',
           const WorkOrder(
             unitId: 'eng1',
-            target: 'build_fort',
+            target: kWorkTargetBuildFort,
             targetTileKey: tileKey,
           ),
         );
@@ -99,7 +99,7 @@ void main() {
               units: [
                 Unit(
                   id: 'eng1',
-                  type: 'Engineer',
+                  type: kUnitTypeEngineer,
                   ownerId: 'p1',
                   locationProvinceId: provinceId,
                   tileKey: tileKey,
@@ -125,7 +125,7 @@ void main() {
               stockpile: Stockpile()
                   .applyDelta(CommodityCatalog.steel.id, 5)
                   .applyDelta(CommodityCatalog.lumber.id, 5),
-              techUnlocked: const {'mine_engineering': true},
+              techUnlocked: const {kTechIdMineEngineering: true},
             ),
           ],
         );
@@ -134,7 +134,7 @@ void main() {
           'p1',
           const WorkOrder(
             unitId: 'eng1',
-            target: 'build_fort',
+            target: kWorkTargetBuildFort,
             targetTileKey: tileKey,
           ),
         );

@@ -3,6 +3,7 @@ import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:logger/logger.dart';
 
+import 'package:colonizethis_data/colonizethis_data.dart' show kTechIdCropRotation;
 List<String> _researchMessages(List<LogEvent> events) => [
       for (final e in events)
         if (e.message.contains('logic: research')) e.message,
@@ -81,7 +82,7 @@ void main() {
           'p1': const [
             ResearchOrder(
               slotIndex: 0,
-              techId: 'crop_rotation',
+              techId: kTechIdCropRotation,
               funding: ResearchFundingLevel.maximum,
             ),
           ],

@@ -15,13 +15,21 @@ if [ "$SEARCH_TOOL" = "rg" ]; then
       --glob '*.dart' \
       --glob '!**/.dart_tool/**' \
       --glob '!**/build/**' \
+      --glob '!**/.plugin_symlinks/**' \
+      --glob '!**/flutter/ephemeral/**' \
       --glob '!**/package_logger.dart' \
       --glob '!**/test/**' \
       . || true
   )"
 else
   matches="$(
-    grep -RInE --include='*.dart' --exclude-dir='.dart_tool' --exclude-dir='build' --exclude='package_logger.dart' --exclude-dir='test' '(^|[^[:alnum:]_])Logger\(' . || true
+    grep -RInE --include='*.dart' \
+      --exclude-dir='.dart_tool' \
+      --exclude-dir='build' \
+      --exclude-dir='.plugin_symlinks' \
+      --exclude='package_logger.dart' \
+      --exclude-dir='test' \
+      '(^|[^[:alnum:]_])Logger\(' . || true
   )"
 fi
 

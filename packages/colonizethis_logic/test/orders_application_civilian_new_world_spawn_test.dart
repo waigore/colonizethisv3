@@ -12,7 +12,7 @@ void main() {
         const capitalProvinceId = 'oldWorld|P1';
         const otherOwnedProvinceId = 'oldWorld|P2';
         const capitalTileKey = 'oldWorld|P1|0|1';
-        final explorerEcon = CivilianEconomyCatalog.byId['Explorer']!;
+        final explorerEcon = CivilianEconomyCatalog.byId[kUnitTypeExplorer]!;
         var stockpile = const Stockpile();
         for (final e in explorerEcon.buildInputs.entries) {
           stockpile = stockpile.applyDelta(e.key, e.value + 1);
@@ -58,9 +58,9 @@ void main() {
           buildUnitOrdersByPlayerId: {
             'p1': [
               BuildUnitOrder(
-                unitType: 'Explorer',
+                unitType: kUnitTypeExplorer,
                 isMilitary:
-                    buildUnitCategoryForUnitType('Explorer') ==
+                    buildUnitCategoryForUnitType(kUnitTypeExplorer) ==
                     BuildUnitCategory.military,
                 spawnProvinceId: otherOwnedProvinceId,
               ),
@@ -83,7 +83,7 @@ void main() {
         const ow = 'oldWorld';
         const capitalProvinceId = 'oldWorld|P1';
         const capitalTileKey = 'oldWorld|P1|0|1';
-        final explorerEcon = CivilianEconomyCatalog.byId['Explorer']!;
+        final explorerEcon = CivilianEconomyCatalog.byId[kUnitTypeExplorer]!;
         var stockpile = const Stockpile();
         for (final e in explorerEcon.buildInputs.entries) {
           stockpile = stockpile.applyDelta(e.key, e.value + 1);
@@ -126,7 +126,7 @@ void main() {
           buildUnitOrdersByPlayerId: {
             'p1': [
               BuildUnitOrder(
-                unitType: 'Explorer',
+                unitType: kUnitTypeExplorer,
                 isMilitary: false,
                 spawnProvinceId: '',
               ),
@@ -147,7 +147,7 @@ void main() {
     test('civilian build with missing capital tile throws explicit error', () {
       const ow = 'oldWorld';
       const capitalProvinceId = 'oldWorld|P1';
-      final explorerEcon = CivilianEconomyCatalog.byId['Explorer']!;
+      final explorerEcon = CivilianEconomyCatalog.byId[kUnitTypeExplorer]!;
       var stockpile = const Stockpile();
       for (final e in explorerEcon.buildInputs.entries) {
         stockpile = stockpile.applyDelta(e.key, e.value + 1);
@@ -184,7 +184,7 @@ void main() {
         buildUnitOrdersByPlayerId: {
           'p1': [
             BuildUnitOrder(
-              unitType: 'Explorer',
+              unitType: kUnitTypeExplorer,
               isMilitary: false,
               spawnProvinceId: capitalProvinceId,
             ),

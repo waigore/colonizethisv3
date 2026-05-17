@@ -1,7 +1,7 @@
 // Integration tests for ProductionScreen + productionDesiredOutputProvider.
 // SPEC/ui/production-panel.md.
 
-import 'package:colonizethis_app/features/game/widgets/production_screen.dart';
+import 'package:colonizethis_app/features/game/screens/production_screen.dart';
 import 'package:colonizethis_app/providers/app_event_bus_provider.dart';
 import 'package:colonizethis_app/providers/games_provider.dart';
 import 'package:colonizethis_app/providers/production_allocation_provider.dart';
@@ -128,7 +128,7 @@ void main() {
             buildUnitOrdersByPlayerId: {
               'test_gp_full': [
                 BuildUnitOrder(
-                  unitType: 'Builder',
+                  unitType: kUnitTypeBuilder,
                   isMilitary: false,
                   spawnProvinceId: 'ow|prov-1',
                 ),

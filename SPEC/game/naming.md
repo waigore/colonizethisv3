@@ -39,10 +39,11 @@ The **default** minor nation and tribe identities and province name pools are de
 
 Order: during game setup/map creation, after province assignment and after capital auto-choice, assign province names, faction display names, and sea-zone display names. All province ids used during naming (e.g. capital province id, owned-province lists) use the **prefixed** `regionId|localId` form per [world-model-identity.md](world-model-identity.md); naming logic must never look up provinces by bare local id.
 
-- **Capital province:** Gets the faction’s capital name (`capitalCityName` for GPs; for minors and tribes, the capital province **always** receives the first entry of the province name pool).
-- **Other provinces:** Names are chosen **randomly** from the faction’s `provinceNamePool` using a RNG seeded from the game setup seed so that:
+- **Capital province:** Gets the faction’s capital name (`capitalCityName` for GPs; for minors and tribes, the capital province **always** receives the first entry of the province name pool when that string is still available; if it is already used in the same region by an earlier-assigned province, the System picks a substitute name using the same deterministic collision rules as for non-capital provinces).
+- **Other provinces:** Names are chosen from the faction’s `provinceNamePool` in a **deterministic shuffle order** (same helper and seed family as today) so that:
   - Same seed ⇒ same names (deterministic, reproducible).
   - Different seed ⇒ different names across games.
+  - **Without replacement across the region:** a pool string already assigned to any province in that region (including the assigning faction’s capital) is never assigned again to another province in the same region; the walk continues to the next shuffled pool candidate.
 - **Faction display names:** Great Powers get `countryName` (e.g. England, France); Minor Nations and Tribes get `displayName` from the naming config. These are applied to the game’s players, minorNations, and tribes so UI can show human-readable faction names.
 - **Sea-zone display names:** Every sea zone node in topology receives a non-empty display name keyed by prefixed id (`regionId|seaZoneLocalId`). **Implementation (fixed-order, no shuffle):** Sea-zone local ids are sorted, and the System walks that order while assigning names from the region preset list in declared list order (`preset[i % preset.length]`). When there are more zones than preset entries, later cycles append deterministic numeric ordinals `(2)`, `(3)`, … to preserve non-empty stable labels. Assignment does **not** use shuffle/permutation. **The same generated topology must always yield the same display string for each prefixed sea-zone id** when setup runs again. **Pairwise distinct** display names across all sea zones in a region are **not** required unless the GDD explicitly adds that requirement later.
 
@@ -72,7 +73,9 @@ When a faction has no matching entry in the naming config (e.g. tribe count > 10
   - If any computed fallback string is empty, naming switches to the procedural algorithm below for that province.
 - **No naming entry or unusable capital name (procedural fallback):**
   - When a faction has **no naming entry** at all (e.g. more tribes than configured ids) or when the chosen name for a province would be empty, the System uses a **procedural stub+suffix** algorithm: combine a **word stub** (e.g. Tan, Ver, Ash) with a **place suffix** (e.g. ton, ville, ford) using a RNG seeded from the naming seed and faction/province context so the same setup yields the same names.
-- **Uniqueness:** During naming, all **procedurally generated** names (from the stub+suffix algorithm) are added to an in-memory set; when generating a new procedural name, the implementation must ensure the name is not already in that set (re-roll or append ordinal until unique). Names from the ruleset (pool/capital) and from prefix+ordinal hybrid fallback may repeat across factions; only procedural stub+suffix names are guaranteed unique.
+- **Uniqueness (land provinces at end of setup):** After the Naming phase completes, **no two land provinces in the same region** (`oldWorld` or `newWorld`) may share the same `Province.displayName` string. **Within a single faction**, no two provinces owned by that faction at setup may share the same `Province.displayName` (this follows from global per-region uniqueness when combined with the fact that each province has exactly one display name). The in-memory set used for collision checks is **scoped per region** (Old World names do not block identical strings in the New World, and vice versa).
+- **Procedural names:** All **procedurally generated** names (from the stub+suffix algorithm) are added to that region’s in-memory set; when generating a new procedural name, the implementation must ensure the name is not already in that set (re-roll or append ordinal until unique).
+- **Ruleset strings vs procedural:** When no unused pool string remains for a province in that region, or when the capital’s configured string is already used in the region, the System assigns a non-empty name via **`generateUniqueProvinceName`** (or the hybrid prefix+ordinal path when the pool is empty), updating the same per-region set so the final name is unique in the region.
 
 ---
 
@@ -84,7 +87,7 @@ When a faction has no matching entry in the naming config (e.g. tribe count > 10
 
 - Given provinces have been assigned to factions during game setup per [game-setup.md](game-setup.md) and naming data has been loaded successfully  
   When the System assigns names in the Naming phase  
-  Then every province receives a non-null `Province.displayName`, capital provinces receive the configured capital city name for their faction or the first entry from the province name pool as specified, other provinces draw names from their faction’s pool using a RNG seeded from the setup seed so that identical seeds yield identical name assignments, and every sea zone in each region receives a non-empty display name stored by prefixed sea-zone id.
+  Then every province receives a non-null `Province.displayName`; capital provinces receive the configured capital city name for their faction or the first entry from the province name pool **when that string is still unused in the region**, otherwise a deterministic substitute; non-capital provinces draw from their faction’s pool in shuffled deterministic order skipping strings already used in the region; identical seeds and inputs yield identical name assignments; every sea zone in each region receives a non-empty display name stored by prefixed sea-zone id; and land province display names are pairwise distinct within each of `oldWorld` and `newWorld` as required elsewhere in this document.
 
 - Given a faction or province lacks a matching entry or usable name pool in the naming config (for example, when there are more tribes than configured entries or when a configured pool is empty)  
   When the System assigns names for that faction’s provinces  
@@ -97,3 +100,23 @@ When a faction has no matching entry in the naming config (e.g. tribe count > 10
 - Given a region topology includes at least one sea-zone node  
   When the System assigns sea-zone display names during setup  
   Then the System sorts local sea-zone ids, assigns display strings by cycling the region preset in declared list order (no shuffle/permutation), and applies numeric ordinal suffixes on later cycles when zone count exceeds preset length (`colonizethis_data` `sea_zone_naming_test.dart`; `colonizethis_logic` `init_game_orchestrator_test.dart`).
+
+- Given the Naming phase has completed for a game created from generated maps  
+  When a tester collects `Province.displayName` for every **Old World** land province  
+  Then the multiset of those strings has the same cardinality as the set of those strings (pairwise distinct display names across the Old World).
+
+- Given the Naming phase has completed for a game created from generated maps  
+  When a tester collects `Province.displayName` for every **New World** land province  
+  Then the multiset of those strings has the same cardinality as the set of those strings (pairwise distinct display names across the New World).
+
+- Given a single faction id `F` and a region `R` (`oldWorld` or `newWorld`)  
+  When the tester lists all land provinces in `R` whose `ownerId` equals `F` after naming  
+  Then the `displayName` values of those provinces are pairwise distinct.
+
+- Given a locked full-init profile game (`GameSetupConfig` with six default Great Powers, six minor nations, ten tribes, 60 Old World provinces, 30 New World provinces, `minProvincesPerMinor` = 3) and setup `seed` = 42 produced by `runInitGame` with default map generation  
+  When the tester counts Old World provinces owned by `minor4` whose `displayName` is exactly `Greater Poland`  
+  Then that count is at most 1.
+
+- Given a `GameSetupConfig` where at least one tribe owns more home provinces in the New World than there are distinct strings in that tribe’s configured `provinceNamePool`  
+  When the Naming phase runs  
+  Then every such province still receives a non-empty `Province.displayName`, and all New World land province display names remain pairwise distinct (procedural fallback covers the shortfall).

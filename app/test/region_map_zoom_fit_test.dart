@@ -5,8 +5,9 @@ import 'package:colonizethis_app/features/game/flame/civilian_icon_cache.dart';
 import 'package:colonizethis_app/features/game/flame/terrain_tileset.dart';
 import 'package:colonizethis_app/features/game/flame/town_icon_cache.dart';
 import 'package:colonizethis_app/features/game/flame/transport_overlay_tileset.dart';
-import 'package:colonizethis_app/widgets/ct_region_map.dart'
-    show CtMapVisibilityMode, CtRegionMap;
+import 'package:colonizethis_app/features/game/flame/region_map_component.dart'
+    show CtMapVisibilityMode;
+import 'package:colonizethis_app/widgets/ct_region_map.dart' show CtRegionMap;
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/gestures.dart';

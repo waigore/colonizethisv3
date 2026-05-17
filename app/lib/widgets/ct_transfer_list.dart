@@ -293,7 +293,6 @@ class _TransferSidePanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final sortedTypes = counts.keys.toList()..sort();
     return CtPanel(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -305,102 +304,7 @@ class _TransferSidePanel extends StatelessWidget {
           const SizedBox(height: 8),
           const Divider(height: 1),
           const SizedBox(height: 8),
-          SizedBox(
-            height: listHeight,
-            child: sortedTypes.isEmpty
-                ? Center(
-                    child: Text(
-                      emptyLabel,
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: Theme.of(context).colorScheme.onSurfaceVariant,
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                  )
-                : ListView.builder(
-                    itemCount: sortedTypes.length,
-                    itemBuilder: (context, index) {
-                      final typeId = sortedTypes[index];
-                      final count = counts[typeId] ?? 0;
-                      final label = Text(
-                        appL10n(context).transferList_rowCount(
-                          itemLabelBuilder(typeId),
-                          count,
-                        ),
-                        style: Theme.of(context).textTheme.bodyMedium,
-                      );
-                      final List<Widget> rowChildren;
-                      if (placeActionsAfterLabel) {
-                        final canMove = count > 0;
-                        rowChildren = [
-                          Expanded(child: label),
-                          const SizedBox(width: 6),
-                          CtNinePatchButton(
-                            key: CtTransferListKeys.leftMoveOne(typeId),
-                            minHeight: _rowButtonMinHeight,
-                            padding: _rowButtonPadding,
-                            enabled: canMove,
-                            onPressed: canMove
-                                ? () => onMoveOneToRight(typeId)
-                                : null,
-                            child: Text(moveOneToRightLabel),
-                          ),
-                          const SizedBox(width: 4),
-                          CtNinePatchButton(
-                            key: CtTransferListKeys.leftMoveAll(typeId),
-                            minHeight: _rowButtonMinHeight,
-                            padding: _rowButtonPadding,
-                            enabled: canMove,
-                            onPressed: canMove
-                                ? () => onMoveAllToRight(typeId)
-                                : null,
-                            child: Text(moveAllToRightLabel),
-                          ),
-                        ];
-                      } else {
-                        final canMove = count > 0;
-                        rowChildren = [
-                          CtNinePatchButton(
-                            key: CtTransferListKeys.rightMoveAll(typeId),
-                            minHeight: _rowButtonMinHeight,
-                            padding: _rowButtonPadding,
-                            enabled: canMove,
-                            onPressed: canMove
-                                ? () => onMoveAllToLeft(typeId)
-                                : null,
-                            child: Text(moveAllToLeftLabel),
-                          ),
-                          const SizedBox(width: 4),
-                          CtNinePatchButton(
-                            key: CtTransferListKeys.rightMoveOne(typeId),
-                            minHeight: _rowButtonMinHeight,
-                            padding: _rowButtonPadding,
-                            enabled: canMove,
-                            onPressed: canMove
-                                ? () => onMoveOneToLeft(typeId)
-                                : null,
-                            child: Text(moveOneToLeftLabel),
-                          ),
-                          const SizedBox(width: 6),
-                          Expanded(child: label),
-                        ];
-                      }
-                      return Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 2),
-                        child: Material(
-                          color: Colors.transparent,
-                          child: Padding(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 4,
-                              vertical: 4,
-                            ),
-                            child: Row(children: rowChildren),
-                          ),
-                        ),
-                      );
-                    },
-                  ),
-          ),
+          _buildListArea(context),
           const SizedBox(height: 8),
           const Divider(height: 1),
           const SizedBox(height: 4),
@@ -410,6 +314,114 @@ class _TransferSidePanel extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildListArea(BuildContext context) {
+    final sortedTypes = counts.keys.toList()..sort();
+    return SizedBox(
+      height: listHeight,
+      child: sortedTypes.isEmpty
+          ? _buildEmptyListBody(context)
+          : ListView.builder(
+              itemCount: sortedTypes.length,
+              itemBuilder: (context, index) =>
+                  _buildTypeRow(context, sortedTypes[index]),
+            ),
+    );
+  }
+
+  Widget _buildEmptyListBody(BuildContext context) {
+    return Center(
+      child: Text(
+        emptyLabel,
+        style: Theme.of(
+          context,
+        ).textTheme.bodyMedium?.copyWith(
+          color: Theme.of(context).colorScheme.onSurfaceVariant,
+        ),
+        textAlign: TextAlign.center,
+      ),
+    );
+  }
+
+  Widget _buildTypeRow(BuildContext context, String typeId) {
+    final count = counts[typeId] ?? 0;
+    final label = Text(
+      appL10n(context).transferList_rowCount(itemLabelBuilder(typeId), count),
+      style: Theme.of(context).textTheme.bodyMedium,
+    );
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 2),
+      child: Material(
+        color: Colors.transparent,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+          child: Row(
+            children: _rowChildrenFor(typeId: typeId, count: count, label: label),
+          ),
+        ),
+      ),
+    );
+  }
+
+  List<Widget> _rowChildrenFor({
+    required String typeId,
+    required int count,
+    required Widget label,
+  }) {
+    final canMove = count > 0;
+    if (placeActionsAfterLabel) {
+      return [
+        Expanded(child: label),
+        const SizedBox(width: 6),
+        _transferActionButton(
+          key: CtTransferListKeys.leftMoveOne(typeId),
+          enabled: canMove,
+          onPressed: canMove ? () => onMoveOneToRight(typeId) : null,
+          label: moveOneToRightLabel,
+        ),
+        const SizedBox(width: 4),
+        _transferActionButton(
+          key: CtTransferListKeys.leftMoveAll(typeId),
+          enabled: canMove,
+          onPressed: canMove ? () => onMoveAllToRight(typeId) : null,
+          label: moveAllToRightLabel,
+        ),
+      ];
+    }
+    return [
+      _transferActionButton(
+        key: CtTransferListKeys.rightMoveAll(typeId),
+        enabled: canMove,
+        onPressed: canMove ? () => onMoveAllToLeft(typeId) : null,
+        label: moveAllToLeftLabel,
+      ),
+      const SizedBox(width: 4),
+      _transferActionButton(
+        key: CtTransferListKeys.rightMoveOne(typeId),
+        enabled: canMove,
+        onPressed: canMove ? () => onMoveOneToLeft(typeId) : null,
+        label: moveOneToLeftLabel,
+      ),
+      const SizedBox(width: 6),
+      Expanded(child: label),
+    ];
+  }
+
+  CtNinePatchButton _transferActionButton({
+    required Key key,
+    required bool enabled,
+    required VoidCallback? onPressed,
+    required String label,
+  }) {
+    return CtNinePatchButton(
+      key: key,
+      minHeight: _rowButtonMinHeight,
+      padding: _rowButtonPadding,
+      enabled: enabled,
+      onPressed: onPressed,
+      child: Text(label),
     );
   }
 }

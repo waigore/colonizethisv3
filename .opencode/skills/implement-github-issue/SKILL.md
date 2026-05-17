@@ -1,0 +1,1 @@
+../../../.cursor/skills/implement-github-issue/SKILL.md

@@ -1,7 +1,8 @@
 import 'package:colonizethis_models/colonizethis_models.dart' show UnitStatus;
 import 'package:colonizethis_logic/colonizethis_logic.dart';
+import 'package:colonizethis_data/colonizethis_data.dart';
 
-import '../../../l10n/app_localizations.dart';
+import '../../../l10n/l10n.dart';
 
 /// Localized regiment type id for province / military UI. Unknown [regimentTypeId] returns [regimentTypeId].
 String regimentTypeDisplayLabel(AppLocalizations l10n, String regimentTypeId) {
@@ -19,15 +20,15 @@ String regimentTypeDisplayLabel(AppLocalizations l10n, String regimentTypeId) {
     'cossacks' => l10n.province_regiment_cossacks,
     'lancers' => l10n.province_regiment_lancers,
     'harquebusiers' => l10n.province_regiment_harquebusiers,
-    'horse_artillery' => l10n.province_regiment_horse_artillery,
+    kTechIdHorseArtillery => l10n.province_regiment_horse_artillery,
     'royal_artillery' => l10n.province_regiment_royal_artillery,
     'skirmishers' => l10n.province_regiment_skirmishers,
     'regulars' => l10n.province_regiment_regulars,
     'grenadiers' => l10n.province_regiment_grenadiers,
-    'hussars' => l10n.province_regiment_hussars,
+    kTechIdHussars => l10n.province_regiment_hussars,
     'cuirassiers' => l10n.province_regiment_cuirassiers,
     'light_artillery' => l10n.province_regiment_light_artillery,
-    'heavy_artillery' => l10n.province_regiment_heavy_artillery,
+    kTechIdHeavyArtillery => l10n.province_regiment_heavy_artillery,
     'sharpshooters' => l10n.province_regiment_sharpshooters,
     'rifle_infantry' => l10n.province_regiment_rifle_infantry,
     'guards' => l10n.province_regiment_guards,
@@ -50,7 +51,7 @@ String shipTypeDisplayLabel(AppLocalizations l10n, String shipTypeId) {
     'indiaman' => l10n.province_ship_indiaman,
     'frigate' => l10n.province_ship_frigate,
     'raider' => l10n.province_ship_raider,
-    'ship_of_the_line' => l10n.province_ship_ship_of_the_line,
+    kTechIdShipOfTheLine => l10n.province_ship_ship_of_the_line,
     'clipper' => l10n.province_ship_clipper,
     'merchant_steamship' => l10n.province_ship_merchant_steamship,
     'ironclad' => l10n.province_ship_ironclad,

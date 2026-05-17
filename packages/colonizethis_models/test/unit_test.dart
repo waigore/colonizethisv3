@@ -8,7 +8,7 @@ void main() {
         id: 'u1',
         type: 'infantry',
         ownerId: 'p1',
-        locationProvinceId: 'prov1',
+        locationProvinceId: 'oldWorld|prov1',
         status: UnitStatus.working,
         medals: 2,
         originTileKey: 'oldWorld|p1|0|0',
@@ -18,7 +18,7 @@ void main() {
       expect(u2.id, 'u1');
       expect(u2.type, 'infantry');
       expect(u2.ownerId, 'p1');
-      expect(u2.locationProvinceId, 'prov1');
+      expect(u2.locationProvinceId, 'oldWorld|prov1');
       expect(u2.status, UnitStatus.working);
       expect(u2.medals, 2);
       expect(u2.originTileKey, 'oldWorld|p1|0|0');
@@ -29,13 +29,13 @@ void main() {
         id: 'u1',
         type: 'inf',
         ownerId: 'p1',
-        locationProvinceId: 'prov1',
+        locationProvinceId: 'oldWorld|prov1',
       );
       final b = Unit(
         id: 'u1',
         type: 'inf',
         ownerId: 'p1',
-        locationProvinceId: 'prov1',
+        locationProvinceId: 'oldWorld|prov1',
       );
       expect(a, b);
       expect(a.hashCode, b.hashCode);
@@ -45,7 +45,7 @@ void main() {
         'id': 'u1',
         'type': 'infantry',
         'ownerId': 'p1',
-        'provinceId': 'prov1',
+        'provinceId': 'oldWorld|prov1',
       });
       expect(u.medals, 0);
     });
@@ -54,13 +54,13 @@ void main() {
         id: 'u1',
         type: 'inf',
         ownerId: 'p1',
-        locationProvinceId: 'prov1',
+        locationProvinceId: 'oldWorld|prov1',
       );
       final b = Unit(
         id: 'u2',
         type: 'inf',
         ownerId: 'p1',
-        locationProvinceId: 'prov1',
+        locationProvinceId: 'oldWorld|prov1',
       );
       expect(a == b, false);
       expect(a == Object(), false);
@@ -68,13 +68,32 @@ void main() {
     test('fromJson normalizes stale provinceId when tileKey present', () {
       final u = Unit.fromJson({
         'id': 'u1',
-        'type': 'Explorer',
+        'type': kUnitTypeExplorer,
         'ownerId': 'p1',
         'provinceId': 'oldWorld|wrong',
         'tileKey': 'oldWorld|right|0|0',
       });
       expect(u.locationProvinceId, 'oldWorld|right');
       expect(u.toJson()['provinceId'], 'oldWorld|right');
+    });
+
+    test('fromJson throws for unprefixed provinceId', () {
+      expect(
+        () => Unit.fromJson({
+          'id': 'u1',
+          'type': 'infantry',
+          'ownerId': 'p1',
+          'provinceId': 'prov1',
+        }),
+        throwsA(isA<ArgumentError>()),
+      );
+    });
+
+    test('provinceIdFromTileKey returns full id for 4-part key only', () {
+      expect(Unit.provinceIdFromTileKey('oldWorld|p1|0|0'), 'oldWorld|p1');
+      expect(Unit.provinceIdFromTileKey('oldWorld|p1|0'), isNull);
+      expect(Unit.provinceIdFromTileKey('p1|0|0'), isNull);
+      expect(Unit.provinceIdFromTileKey(null), isNull);
     });
   });
 }

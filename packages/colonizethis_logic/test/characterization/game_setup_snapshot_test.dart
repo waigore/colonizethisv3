@@ -15,13 +15,15 @@ void main() {
         nodes: [
           for (var i = 1; i <= 10; i++)
             TopologyNode(
-                id: 'p$i',
-                regionId: 'oldWorld',
-                type: TopologyNodeType.province),
-          const TopologyNode(
-              id: 'sea1',
+              id: 'p$i',
               regionId: 'oldWorld',
-              type: TopologyNodeType.seaZone),
+              type: TopologyNodeType.province,
+            ),
+          const TopologyNode(
+            id: 'sea1',
+            regionId: 'oldWorld',
+            type: TopologyNodeType.seaZone,
+          ),
         ],
         edges: [
           const TopologyEdge(id1: 'p1', id2: 'sea1'),
@@ -51,13 +53,15 @@ void main() {
         nodes: [
           for (final id in ['nw1', 'nw2', 'nw3'])
             TopologyNode(
-                id: id,
-                regionId: 'newWorld',
-                type: TopologyNodeType.province),
-          const TopologyNode(
-              id: 'nwSea',
+              id: id,
               regionId: 'newWorld',
-              type: TopologyNodeType.seaZone),
+              type: TopologyNodeType.province,
+            ),
+          const TopologyNode(
+            id: 'nwSea',
+            regionId: 'newWorld',
+            type: TopologyNodeType.seaZone,
+          ),
         ],
         edges: [
           const TopologyEdge(id1: 'nw1', id2: 'nwSea'),
@@ -78,7 +82,6 @@ void main() {
         numProvincesNewWorld: 3,
         minProvincesPerMinor: 2,
         seed: 42,
-        enforceFairGpOldWorldAssignment: true,
       );
 
       result = createGameFromGeneratedMaps(
@@ -109,17 +112,14 @@ void main() {
       final ownerById = {for (final p in owProvinces) p.id: p.ownerId};
 
       // GPs should own (10 - 1*2) = 8 provinces, 4 each
-      final gp1Count =
-          ownerById.values.where((o) => o == 'gp1').length;
-      final gp2Count =
-          ownerById.values.where((o) => o == 'gp2').length;
+      final gp1Count = ownerById.values.where((o) => o == 'gp1').length;
+      final gp2Count = ownerById.values.where((o) => o == 'gp2').length;
       expect(gp1Count + gp2Count, 8);
       expect(gp1Count, 4);
       expect(gp2Count, 4);
 
       // Minor should own 2 provinces
-      final minorCount =
-          ownerById.values.where((o) => o == 'minor1').length;
+      final minorCount = ownerById.values.where((o) => o == 'minor1').length;
       expect(minorCount, 2);
     });
 
@@ -134,27 +134,70 @@ void main() {
 
     test('capitals are assigned for all factions', () {
       for (final p in result.game.players) {
-        expect(p.capitalProvinceId, isNotNull,
-            reason: '${p.id} must have capital');
-        expect(p.capitalTile, isNotNull,
-            reason: '${p.id} must have capital tile');
+        expect(
+          p.capitalProvinceId,
+          isNotNull,
+          reason: '${p.id} must have capital',
+        );
+        expect(
+          p.capitalTile,
+          isNotNull,
+          reason: '${p.id} must have capital tile',
+        );
       }
       for (final m in result.game.minorNations) {
-        expect(m.capitalProvinceId, isNotNull,
-            reason: '${m.id} must have capital');
+        expect(
+          m.capitalProvinceId,
+          isNotNull,
+          reason: '${m.id} must have capital',
+        );
       }
       for (final t in result.game.tribes) {
-        expect(t.capitalProvinceId, isNotNull,
-            reason: '${t.id} must have capital');
+        expect(
+          t.capitalProvinceId,
+          isNotNull,
+          reason: '${t.id} must have capital',
+        );
       }
     });
 
     test('naming is applied to all provinces', () {
       for (final p in allProvinces(result.game.worldState)) {
-        expect(p.displayName, isNotNull,
-            reason: '${p.id} must have name');
-        expect(p.displayName, isNotEmpty,
-            reason: '${p.id} must have non-empty name');
+        expect(p.displayName, isNotNull, reason: '${p.id} must have name');
+        expect(
+          p.displayName,
+          isNotEmpty,
+          reason: '${p.id} must have non-empty name',
+        );
+      }
+    });
+
+    test('land province display names are unique within each region', () {
+      final owNames = result.game.worldState.oldWorld.provinces
+          .map((p) => p.displayName!)
+          .toList();
+      expect(owNames.length, owNames.toSet().length);
+      final nwNames = result.game.worldState.newWorld.provinces
+          .map((p) => p.displayName!)
+          .toList();
+      expect(nwNames.length, nwNames.toSet().length);
+    });
+
+    test('within-faction province names are distinct in snapshot fixture', () {
+      final ws = result.game.worldState;
+      for (final owner in ['gp1', 'gp2', 'minor1']) {
+        final names = ws.oldWorld.provinces
+            .where((p) => p.ownerId == owner)
+            .map((p) => p.displayName!)
+            .toList();
+        expect(names.length, names.toSet().length, reason: owner);
+      }
+      for (final owner in ['tribe1', 'tribe2', 'tribe3']) {
+        final names = ws.newWorld.provinces
+            .where((p) => p.ownerId == owner)
+            .map((p) => p.displayName!)
+            .toList();
+        expect(names.length, names.toSet().length, reason: owner);
       }
     });
 
@@ -168,10 +211,16 @@ void main() {
     test('initial visibility is set for all GPs', () {
       final vis = result.game.worldState.playerVisibilityByTile;
       for (final p in result.game.players) {
-        expect(vis.containsKey(p.id), isTrue,
-            reason: '${p.id} must have visibility');
-        expect(vis[p.id], isNotEmpty,
-            reason: '${p.id} must have non-empty visibility');
+        expect(
+          vis.containsKey(p.id),
+          isTrue,
+          reason: '${p.id} must have visibility',
+        );
+        expect(
+          vis[p.id],
+          isNotEmpty,
+          reason: '${p.id} must have non-empty visibility',
+        );
       }
     });
 
@@ -182,12 +231,17 @@ void main() {
       ];
       for (final p in result.game.players) {
         final playerUnits = allUnits.where((u) => u.ownerId == p.id).toList();
-        expect(playerUnits, isNotEmpty,
-            reason: '${p.id} must have starting units');
+        expect(
+          playerUnits,
+          isNotEmpty,
+          reason: '${p.id} must have starting units',
+        );
         for (final u in playerUnits) {
-          expect(u.locationProvinceId, p.capitalProvinceId,
-              reason:
-                  'Unit ${u.id} must be in capital ${p.capitalProvinceId}');
+          expect(
+            u.locationProvinceId,
+            p.capitalProvinceId,
+            reason: 'Unit ${u.id} must be in capital ${p.capitalProvinceId}',
+          );
         }
       }
     });

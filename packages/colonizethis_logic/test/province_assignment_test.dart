@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:colonizethis_test/test.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 
@@ -115,8 +117,14 @@ void main() {
       expect(owners['p1'], 'f1');
       expect(owners['p5'], 'f2');
       // Each should have grown from their seed
-      expect(owners.values.where((v) => v == 'f1').length, greaterThanOrEqualTo(2));
-      expect(owners.values.where((v) => v == 'f2').length, greaterThanOrEqualTo(2));
+      expect(
+        owners.values.where((v) => v == 'f1').length,
+        greaterThanOrEqualTo(2),
+      );
+      expect(
+        owners.values.where((v) => v == 'f2').length,
+        greaterThanOrEqualTo(2),
+      );
     });
 
     test('respects maxTotal cap', () {
@@ -221,6 +229,75 @@ void main() {
       );
 
       expect(owners.length, 3);
+    });
+
+    test(
+      'greedy leftover uses factionLandmassIds when picking claiming faction',
+      () {
+        final neighbours = <String, Set<String>>{
+          'a1': {'a2'},
+          'a2': {'a1'},
+          'b1': {'b2'},
+          'b2': {'b1'},
+        };
+        final landmass = {'a1': 1, 'a2': 1, 'b1': 2, 'b2': 2};
+        final available = {'a1', 'a2', 'b1', 'b2'};
+        final owners = assignTerritoriesByBfsGrowth(
+          neighbours: neighbours,
+          landmassIds: landmass,
+          factionLandmassIds: const {'f1': 1, 'f2': 2},
+          factionIds: const ['f1', 'f2'],
+          seeds: const {'a1': 'f1', 'b1': 'f2'},
+          targetPerFaction: const {'f1': 1, 'f2': 1},
+          available: available,
+          neighborShuffleRandom: Random(1),
+        );
+
+        expect(owners.length, 4);
+        expect(owners['a1'], 'f1');
+        expect(owners['b1'], 'f2');
+      },
+    );
+
+    test('greedy leftover falls back to lowest-count faction on landmass when '
+        'no touching owner exists', () {
+      final neighbours = <String, Set<String>>{
+        'a1': <String>{},
+        'c': <String>{},
+        'b1': {'b2'},
+        'b2': {'b1'},
+      };
+      final landmass = {'a1': 1, 'c': 1, 'b1': 2, 'b2': 2};
+      final available = {'a1', 'c', 'b1', 'b2'};
+      final owners = assignTerritoriesByBfsGrowth(
+        neighbours: neighbours,
+        landmassIds: landmass,
+        factionLandmassIds: const {'f1': 1, 'f2': 2},
+        factionIds: const ['f1', 'f2'],
+        seeds: const {'a1': 'f1', 'b1': 'f2'},
+        targetPerFaction: const {'f1': 1, 'f2': 1},
+        available: available,
+      );
+
+      expect(owners['c'], 'f1');
+    });
+
+    test('shuffles neighbor expansion order when Random is provided', () {
+      final neighbours = <String, Set<String>>{
+        'p0': {'p1', 'p2', 'p3'},
+        'p1': {'p0'},
+        'p2': {'p0'},
+        'p3': {'p0'},
+      };
+      final available = {'p0', 'p1', 'p2', 'p3'};
+      assignTerritoriesByBfsGrowth(
+        neighbours: neighbours,
+        factionIds: const ['f1'],
+        seeds: const {'p0': 'f1'},
+        targetPerFaction: const {'f1': 4},
+        available: available,
+        neighborShuffleRandom: Random(0),
+      );
     });
   });
 }

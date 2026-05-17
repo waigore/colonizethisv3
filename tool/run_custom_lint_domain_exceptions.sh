@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 # Runs `dart run custom_lint` in every package wired for colonizethis_exception_lint.
+# Analyzer context includes lib/, test/, and integration_test/ the same as a normal
+# package analyze (GitHub #2014 slice: zero error-severity custom_lint issues).
 # SPEC/program/exception-enforcement.md
 set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"

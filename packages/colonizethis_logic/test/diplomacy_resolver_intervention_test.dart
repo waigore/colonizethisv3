@@ -1,4 +1,5 @@
 import 'package:colonizethis_test/test.dart';
+import 'package:colonizethis_data/colonizethis_data.dart' show kTechIdPropaganda;
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
@@ -159,7 +160,7 @@ void main() {
           players: [
             const Player(id: 'gp1', displayName: 'Human', isHuman: true),
             const Player(id: 'gp2', displayName: 'Attacker', isHuman: false)
-                .copyWith(techUnlocked: const {'propaganda': true}),
+                .copyWith(techUnlocked: const {kTechIdPropaganda: true}),
           ],
           diplomacyRelations: const [
             DiplomacyRelation(

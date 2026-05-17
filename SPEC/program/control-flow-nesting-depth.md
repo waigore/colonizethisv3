@@ -6,8 +6,8 @@
 
 | Artifact | Role |
 |----------|------|
-| `tool/check_control_flow_nesting_depth.dart` | Analyzer visitor and CLI |
-| `tool/control_flow_nesting_depth_allowlist.yaml` | Grandfathered `file` + `symbol` pairs still at depth ≥4 (do **not** add rows; refactor instead) |
+| `tool/control_flow_nesting_depth_scan.dart` | Analyzer visitors and per-unit violation collection (test entry: `maxControlFlowNestingDepthForTestBody`) |
+| `tool/check_control_flow_nesting_depth.dart` | Repo scan + CLI (`runCheckControlFlowNestingDepth`); re-exports scan for consumers that import the checker |
 
 ## Scan scope
 
@@ -23,8 +23,11 @@ Same domain trees as other repo-lint AST rules: `collectRepoLintDomainDartFiles`
 ## Thresholds
 
 - **Warning:** max depth ≥ **3** (summary line only unless `CT_NESTING_DEPTH_VERBOSE=1`).
-- **Failure:** max depth ≥ **4** unless the `(file, symbol)` pair is listed under `allowed_depth_ge4` in the allowlist.
+- **Failure:** max depth ≥ **4** for any scanned executable body (no violation allowlists; refactor to comply).
 
 ## Acceptance criteria
 
-- Given the repository root as cwd, when CI runs `dart run tool/ct_repo_lint.dart`, then rule `repo.control_flow_nesting_depth` executes and a max depth ≥4 outside the allowlist fails the run with file, line, and symbol in the checker output.
+- Given the repository root as cwd, when CI runs `dart run tool/ct_repo_lint.dart`, then rule `repo.control_flow_nesting_depth` executes and a max depth ≥4 fails the run with file, line, and symbol in the checker output.
+- Given repository root as cwd, when rule `repo.control_flow_nesting_depth`
+  runs, then the checker does not load keyed waiver YAML or per-symbol
+  exemption tables; max depth ≥4 in any scanned executable body fails the run.

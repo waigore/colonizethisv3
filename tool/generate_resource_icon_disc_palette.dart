@@ -33,6 +33,9 @@ const Set<String> _resourceIconIds = <String>{
 };
 
 const String _iconsDirPath = 'app/assets/icons/64';
+
+/// Optional design-time output: commodity dominant hues from icons.
+/// Region-map extraction discs use fixed gold/brown (SPEC/ui/map-widget.md).
 const String _outputPath =
     'app/lib/features/game/flame/resource_icon_disc_palette.dart';
 
@@ -41,7 +44,13 @@ void main() {
     ..writeln("import 'package:flutter/material.dart';")
     ..writeln()
     ..writeln(
-      '/// Fixed extraction-disc palette generated from resource icons at build time.',
+      '/// Optional commodity hue reference generated from resource icons.',
+    )
+    ..writeln(
+      '/// Region-map extraction throughput discs use fixed gold/brown fills',
+    )
+    ..writeln(
+      '/// (`region_map_component_shared.dart`; SPEC/ui/map-widget.md).',
     )
     ..writeln('///')
     ..writeln('/// Regenerate with:')

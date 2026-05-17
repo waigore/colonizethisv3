@@ -14,16 +14,71 @@ void main() {
       expect(comps.any((c) => c.containsAll(b)), isTrue);
     });
 
-    test('oceanCells includes boundary sea and floods inward', () {
+    test(
+      'oceanCells: all-sea grid is ocean only (no fillable single-continent S)',
+      () {
+        const sea = 's1';
+        final params = TileMapParams(width: 3, height: 3);
+        final g = TileMapGridGraph(params);
+        final grid = List.generate(3, (_) => List.filled(3, sea));
+        final ocean = g.oceanCells(grid, sea, [], []);
+        expect(ocean.length, 9);
+      },
+    );
+
+    test('oceanCells: map-border bay sea is not ocean when |S| = 1', () {
       const sea = 's1';
-      final params = TileMapParams(width: 3, height: 3);
+      const land = 'p1';
+      final params = TileMapParams(width: 5, height: 3);
       final g = TileMapGridGraph(params);
-      final grid = List.generate(
-        3,
-        (_) => List.filled(3, sea),
-      );
-      final ocean = g.oceanCells(grid, sea);
-      expect(ocean.length, 9);
+      final grid = <List<String>>[
+        [land, sea, sea, sea, land],
+        [land, sea, sea, sea, land],
+        [land, land, land, land, land],
+      ];
+      final landSeeds = <(int, int)>[(2, 2)];
+      final continentBySeed = <int>[0];
+      final ocean = g.oceanCells(grid, sea, landSeeds, continentBySeed);
+      expect(ocean, isEmpty);
+    });
+
+    test('oceanCells: border strait sea remains ocean when |S| >= 2', () {
+      const sea = 's1';
+      final params = TileMapParams(width: 4, height: 3);
+      final g = TileMapGridGraph(params);
+      final grid = <List<String>>[
+        ['p1', sea, sea, 'p2'],
+        ['p1', sea, sea, 'p2'],
+        ['p1', 'p1', 'p2', 'p2'],
+      ];
+      final landSeeds = <(int, int)>[(0, 2), (3, 2)];
+      final continentBySeed = <int>[0, 1];
+      final ocean = g.oceanCells(grid, sea, landSeeds, continentBySeed);
+      final seaCells = <(int, int)>{(1, 0), (2, 0), (1, 1), (2, 1)};
+      expect(ocean.containsAll(seaCells), isTrue);
+    });
+
+    test('nearestLandSeedIndexForCell picks closest seed by squared distance', () {
+      final params = TileMapParams(width: 10, height: 10);
+      final g = TileMapGridGraph(params);
+      final seeds = <(int, int)>[(0, 0), (9, 9), (5, 5)];
+      expect(g.nearestLandSeedIndexForCell(1, 1, seeds), 0);
+      expect(g.nearestLandSeedIndexForCell(8, 8, seeds), 1);
+      expect(g.nearestLandSeedIndexForCell(4, 4, seeds), 2);
+    });
+
+    test('nearestLandSeedIndexForCell returns 0 when seeds empty', () {
+      final g = TileMapGridGraph(TileMapParams(width: 3, height: 3));
+      expect(g.nearestLandSeedIndexForCell(1, 1, []), 0);
+    });
+
+    test('continentForLandCell maps nearest seed to continent id', () {
+      final g = TileMapGridGraph(TileMapParams(width: 10, height: 10));
+      final seeds = <(int, int)>[(0, 0), (9, 9)];
+      final continentBySeed = <int>[2, 7];
+      expect(g.continentForLandCell(1, 1, seeds, continentBySeed), 2);
+      expect(g.continentForLandCell(8, 8, seeds, continentBySeed), 7);
+      expect(g.continentForLandCell(1, 1, [], continentBySeed), 0);
     });
 
     test('countSeaCells matches sea id cells', () {

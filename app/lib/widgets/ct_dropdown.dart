@@ -31,6 +31,13 @@ class CtDropdown<T> extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    return CtNinePatchButton(
+      onPressed: () => _openPicker(context),
+      child: _buttonChild(context),
+    );
+  }
+
+  Widget _buttonChild(BuildContext context) {
     final selected = value != null && items.contains(value)
         ? _labelFor(value as T)
         : (hint ?? 'Select');
@@ -66,66 +73,62 @@ class CtDropdown<T> extends StatelessWidget {
       );
     }
 
-    return CtNinePatchButton(
-      onPressed: () async {
-        final chosen = await showDialog<T>(
-          context: context,
-          builder: (ctx) => CtDialogShell(
-            maxWidth: 320,
-            maxHeight: 400,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                if (hint != null) ...[
-                  Text(hint!, style: Theme.of(ctx).textTheme.titleMedium),
-                  const SizedBox(height: 8),
-                ],
-                ListView.builder(
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  itemCount: items.length,
-                  itemBuilder: (context, index) {
-                    final v = items[index];
-                    final label = _labelFor(v);
-                    final rowLeading = itemLeading?.call(context, v);
-                    return Padding(
-                      padding: const EdgeInsets.only(bottom: 4),
-                      child: CtNinePatchButton(
-                        onPressed: () {
-                          Navigator.of(ctx).pop(v);
-                        },
-                        enabled: true,
-                        child: Align(
-                          alignment: Alignment.centerLeft,
-                          child: Row(
-                            children: [
-                              if (rowLeading != null) ...[
-                                rowLeading,
-                                const SizedBox(width: 8),
-                              ],
-                              Expanded(
-                                child: Text(
-                                  label,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              ),
-                            ],
+    return buttonChild;
+  }
+
+  Future<void> _openPicker(BuildContext context) async {
+    final chosen = await showDialog<T>(
+      context: context,
+      builder: (ctx) => CtDialogShell(
+        maxWidth: 320,
+        maxHeight: 400,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            if (hint != null) ...[
+              Text(hint!, style: Theme.of(ctx).textTheme.titleMedium),
+              const SizedBox(height: 8),
+            ],
+            ListView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount: items.length,
+              itemBuilder: (context, index) {
+                final v = items[index];
+                final label = _labelFor(v);
+                final rowLeading = itemLeading?.call(context, v);
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 4),
+                  child: CtNinePatchButton(
+                    onPressed: () {
+                      Navigator.of(ctx).pop(v);
+                    },
+                    enabled: true,
+                    child: Align(
+                      alignment: Alignment.centerLeft,
+                      child: Row(
+                        children: [
+                          if (rowLeading != null) ...[
+                            rowLeading,
+                            const SizedBox(width: 8),
+                          ],
+                          Expanded(
+                            child: Text(label, overflow: TextOverflow.ellipsis),
                           ),
-                        ),
+                        ],
                       ),
-                    );
-                  },
-                ),
-              ],
+                    ),
+                  ),
+                );
+              },
             ),
-          ),
-        );
-        if (chosen != null) {
-          onChanged(chosen);
-        }
-      },
-      child: buttonChild,
+          ],
+        ),
+      ),
     );
+    if (chosen != null) {
+      onChanged(chosen);
+    }
   }
 }

@@ -1,12 +1,61 @@
-part of 'tile_map_generator.dart';
 
 /// Pass 4–5, Pass 8–9: lakes, moats, border noise, province seeds and assignment.
+
+part of 'tile_map_generator.dart';
+
 class _TileMapGenLakesProvinces {
   _TileMapGenLakesProvinces(this.params, this._graph, this._join);
 
   final TileMapParams params;
   final TileMapGridGraph _graph;
   final _TileMapGenJoinSea _join;
+
+  void _addCoastalLandCandidatesAroundLakeCell(
+    int x,
+    int y,
+    List<List<String>> next,
+    String seaZoneId,
+    Set<(int x, int y)> ocean,
+    Set<(int x, int y)> coastalLandCandidates,
+  ) {
+    for (final (dx, dy) in kTileMapDirections4NorthSouthWestEast) {
+      final nx = x + dx;
+      final ny = y + dy;
+      if (nx >= 0 &&
+          nx < params.width &&
+          ny >= 0 &&
+          ny < params.height &&
+          next[ny][nx] == seaZoneId &&
+          _graph.oceanNeighbourCount(next, nx, ny, seaZoneId, ocean) >= 1) {
+        coastalLandCandidates.add((nx, ny));
+      }
+    }
+  }
+
+  void _tryBorderNoiseSwapAtCell(
+    List<List<String>> grid,
+    List<List<String>> next,
+    int x,
+    int y,
+    String seaZoneId,
+    Random rnd,
+  ) {
+    if (rnd.nextDouble() >= params.borderNoise) return;
+    final id = grid[y][x];
+    for (final (dx, dy) in kTileMapDirections4WestEastNorthSouth) {
+      final nx = x + dx;
+      final ny = y + dy;
+      final nid = grid[ny][nx];
+      final atBoundary =
+          (id == _landSentinel && nid == seaZoneId) ||
+          (id == seaZoneId && nid == _landSentinel);
+      if (atBoundary) {
+        next[ny][nx] = id;
+        next[y][x] = nid;
+        break;
+      }
+    }
+  }
 
   /// Fill lakes: convert lake (sea not in ocean) to land; skip lakes that border 2+ continents (straits).
   List<List<String>> fillLakes(
@@ -15,8 +64,13 @@ class _TileMapGenLakesProvinces {
     List<(int x, int y)> landSeeds,
     List<int> continentBySeedIndex,
   ) {
-    final ocean = _graph.oceanCells(grid, seaZoneId);
-    final next = grid.map((row) => row.toList()).toList();
+    final ocean = _graph.oceanCells(
+      grid,
+      seaZoneId,
+      landSeeds,
+      continentBySeedIndex,
+    );
+    final next = copyTileMapGrid(grid);
     final lakeCells = <(int x, int y)>[];
     for (var y = 0; y < params.height; y++) {
       for (var x = 0; x < params.width; x++) {
@@ -29,42 +83,17 @@ class _TileMapGenLakesProvinces {
     var lakesFilled = 0;
     final coastalLandCandidates = <(int x, int y)>{};
     for (final component in lakeComponents) {
-      final borderingLand = <(int x, int y)>{};
-      for (final (x, y) in component) {
-        for (final (dx, dy) in [(0, -1), (0, 1), (-1, 0), (1, 0)]) {
-          final nx = x + dx;
-          final ny = y + dy;
-          if (nx >= 0 &&
-              nx < params.width &&
-              ny >= 0 &&
-              ny < params.height &&
-              grid[ny][nx] != seaZoneId) {
-            borderingLand.add((nx, ny));
-          }
-        }
-      }
-      final continentsBordering = <int>{};
-      for (final (lx, ly) in borderingLand) {
-        continentsBordering.add(
-          _graph.continentForLandCell(lx, ly, landSeeds, continentBySeedIndex),
-        );
-      }
-      if (continentsBordering.length >= 2) continue;
       for (final (x, y) in component) {
         next[y][x] = _landSentinel;
         lakesFilled++;
-        for (final (dx, dy) in [(0, -1), (0, 1), (-1, 0), (1, 0)]) {
-          final nx = x + dx;
-          final ny = y + dy;
-          if (nx >= 0 &&
-              nx < params.width &&
-              ny >= 0 &&
-              ny < params.height &&
-              next[ny][nx] == seaZoneId &&
-              _graph.oceanNeighbourCount(next, nx, ny, seaZoneId, ocean) >= 1) {
-            coastalLandCandidates.add((nx, ny));
-          }
-        }
+        _addCoastalLandCandidatesAroundLakeCell(
+          x,
+          y,
+          next,
+          seaZoneId,
+          ocean,
+          coastalLandCandidates,
+        );
       }
     }
     final sorted = coastalLandCandidates.toList()
@@ -105,10 +134,15 @@ class _TileMapGenLakesProvinces {
     List<int> continentBySeedIndex,
     Random rnd,
   ) {
-    final ocean = _graph.oceanCells(grid, seaZoneId);
+    final ocean = _graph.oceanCells(
+      grid,
+      seaZoneId,
+      landSeeds,
+      continentBySeedIndex,
+    );
     if (ocean.isEmpty) return grid;
 
-    final next = grid.map((row) => row.toList()).toList();
+    final next = copyTileMapGrid(grid);
     final moatCells = <(int x, int y)>[];
 
     for (var y = 0; y < params.height; y++) {
@@ -120,12 +154,7 @@ class _TileMapGenLakesProvinces {
         final neighbouringContinents = <int>{};
         final sameContinentDirectionCounts = <int, int>{};
 
-        for (final (dx, dy) in const <(int, int)>[
-          (0, -1), // N
-          (1, 0), // E
-          (0, 1), // S
-          (-1, 0), // W
-        ]) {
+        for (final (dx, dy) in kTileMapDirections4) {
           final nx = x + dx;
           final ny = y + dy;
           if (nx < 0 || nx >= params.width || ny < 0 || ny >= params.height) {
@@ -191,16 +220,11 @@ class _TileMapGenLakesProvinces {
     for (var y = 0; y < params.height; y++) {
       for (var x = 0; x < params.width; x++) {
         if (grid[y][x] != _landSentinel) continue;
-        var bestSeedIndex = 0;
-        var bestD2 = kUnsetSquaredDistanceInt31;
-        for (var i = 0; i < landSeeds.length; i++) {
-          final (sx, sy) = landSeeds[i];
-          final d2 = (x - sx) * (x - sx) + (y - sy) * (y - sy);
-          if (d2 < bestD2) {
-            bestD2 = d2;
-            bestSeedIndex = i;
-          }
-        }
+        final bestSeedIndex = _graph.nearestLandSeedIndexForCell(
+          x,
+          y,
+          landSeeds,
+        );
         final c = continentBySeedIndex[bestSeedIndex];
         byContinent[c]!.add((x, y));
       }
@@ -277,7 +301,7 @@ class _TileMapGenLakesProvinces {
       noiseScale: 0,
       noiseSeed: params.seed,
     );
-    final next = grid.map((row) => row.toList()).toList();
+    final next = copyTileMapGrid(grid);
     for (final entry in assignment.entries) {
       final (x, y) = entry.key;
       next[y][x] = entry.value;
@@ -291,23 +315,10 @@ class _TileMapGenLakesProvinces {
     String seaZoneId,
     Random rnd,
   ) {
-    final next = grid.map((row) => row.toList()).toList();
+    final next = copyTileMapGrid(grid);
     for (var y = 1; y < params.height - 1; y++) {
       for (var x = 1; x < params.width - 1; x++) {
-        if (rnd.nextDouble() >= params.borderNoise) continue;
-        final id = grid[y][x];
-        final neighbors = [(x - 1, y), (x + 1, y), (x, y - 1), (x, y + 1)];
-        for (final (nx, ny) in neighbors) {
-          final nid = grid[ny][nx];
-          final atBoundary =
-              (id == _landSentinel && nid == seaZoneId) ||
-              (id == seaZoneId && nid == _landSentinel);
-          if (atBoundary) {
-            next[ny][nx] = id;
-            next[y][x] = nid;
-            break;
-          }
-        }
+        _tryBorderNoiseSwapAtCell(grid, next, x, y, seaZoneId, rnd);
       }
     }
     return next;

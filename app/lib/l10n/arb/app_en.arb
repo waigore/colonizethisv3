@@ -1,0 +1,3253 @@
+{
+  "@@locale": "en",
+  "app_title": "Colonize This",
+  "@app_title": {
+    "description": "Window title / application title."
+  },
+  "menu_view": "View",
+  "@menu_view": {
+    "description": "Top-level platform menu label for View menu."
+  },
+  "menu_debugLog": "Debug log",
+  "@menu_debugLog": {
+    "description": "Platform menu item label that navigates to the debug log viewer."
+  },
+  "menu_openMaximizedOnStartup": "Open maximized on startup",
+  "@menu_openMaximizedOnStartup": {
+    "description": "Platform menu item label for toggling desktop startup maximization."
+  },
+  "mainMenu_title": "ColonizeThis V3",
+  "@mainMenu_title": {
+    "description": "Main menu title text when not using the pixel-art logo."
+  },
+  "mainMenu_subtitleAfterVictory": "Congratulations, you won your last game.",
+  "@mainMenu_subtitleAfterVictory": {
+    "description": "Subtitle shown on the main menu after the player has won their last game."
+  },
+  "mainMenu_newGame": "New Game",
+  "@mainMenu_newGame": {
+    "description": "Main menu button label to start a new game."
+  },
+  "mainMenu_resumeGame": "Resume game",
+  "@mainMenu_resumeGame": {
+    "description": "Main menu button label to continue from the auto-save slot."
+  },
+  "mainMenu_loadGame": "Load Game",
+  "@mainMenu_loadGame": {
+    "description": "Main menu button label to load an existing game."
+  },
+  "mainMenu_settings": "Settings",
+  "@mainMenu_settings": {
+    "description": "Main menu button label to open settings."
+  },
+  "mainMenu_quit": "Quit",
+  "@mainMenu_quit": {
+    "description": "Main menu button label to quit the app."
+  },
+  "mainMenu_noSavesTooltip": "No saved games. Start a new game first.",
+  "@mainMenu_noSavesTooltip": {
+    "description": "Tooltip explaining why Load Game is disabled when there are no saves."
+  },
+  "game_pauseMenu_debugLog": "Debug log",
+  "@game_pauseMenu_debugLog": {
+    "description": "Pause menu option label to open the debug log screen."
+  },
+  "game_pauseMenu_resume": "Resume",
+  "@game_pauseMenu_resume": {
+    "description": "Pause menu option label to resume the game."
+  },
+  "game_pauseMenu_tooltip": "Pause menu",
+  "@game_pauseMenu_tooltip": {
+    "description": "Tooltip for the pause menu button in the in-game UI."
+  },
+  "game_screenTitle": "Game",
+  "@game_screenTitle": {
+    "description": "Title used for the main game screen shell."
+  },
+  "game_exitConfirm_title": "Exit game?",
+  "@game_exitConfirm_title": {
+    "description": "Title of the dialog asking for confirmation before leaving the in-game shell."
+  },
+  "game_exitConfirm_body": "Your current progress will be lost if not saved.",
+  "@game_exitConfirm_body": {
+    "description": "Body text warning the player before exiting to main menu from in-game shell."
+  },
+  "game_exitConfirm_exit": "Exit",
+  "@game_exitConfirm_exit": {
+    "description": "Button label that confirms leaving the in-game shell and navigating to main menu."
+  },
+  "game_nextTurnButton": "Next turn ({turn} / {year})",
+  "@game_nextTurnButton": {
+    "description": "Label for the Next Turn button showing current turn and year.",
+    "placeholders": {
+      "turn": {
+        "type": "int",
+        "description": "Current turn number."
+      },
+      "year": {
+        "type": "int",
+        "description": "Calendar year derived from the turn."
+      }
+    }
+  },
+  "game_nextTurnConfirm_title": "End turn?",
+  "@game_nextTurnConfirm_title": {
+    "description": "Title of the dialog asking the user to confirm ending the current turn."
+  },
+  "game_nextTurnConfirm_body": "Turn {turn} will end. Continue?",
+  "@game_nextTurnConfirm_body": {
+    "description": "Body text of the end-turn confirmation dialog.",
+    "placeholders": {
+      "turn": {
+        "type": "int",
+        "description": "Current turn number."
+      }
+    }
+  },
+  "game_turnResolutionFailedMessage": "Turn resolution failed.",
+  "@game_turnResolutionFailedMessage": {
+    "description": "Snackbar shown when turn resolution throws an error."
+  },
+  "game_turnResolutionProcessingTitle": "Processing Turn",
+  "@game_turnResolutionProcessingTitle": {
+    "description": "Title shown in the modal dialog while resolving the turn."
+  },
+  "common_no": "No",
+  "@common_no": {
+    "description": "Generic 'No' button label."
+  },
+  "common_yes": "Yes",
+  "@common_yes": {
+    "description": "Generic 'Yes' button label."
+  },
+  "common_on": "On",
+  "@common_on": {
+    "description": "Generic enabled state label."
+  },
+  "common_off": "Off",
+  "@common_off": {
+    "description": "Generic disabled state label."
+  },
+  "common_confirm": "Confirm",
+  "@common_confirm": {
+    "description": "Generic confirm button label."
+  },
+  "common_combine": "Combine",
+  "@common_combine": {
+    "description": "Generic combine action label."
+  },
+  "common_train": "Train",
+  "@common_train": {
+    "description": "Generic train action label."
+  },
+  "common_move": "Move",
+  "@common_move": {
+    "description": "Generic move action label."
+  },
+  "common_split": "Split",
+  "@common_split": {
+    "description": "Generic split action label."
+  },
+  "common_locate": "Locate",
+  "@common_locate": {
+    "description": "Generic locate action label."
+  },
+  "common_reset": "Reset",
+  "@common_reset": {
+    "description": "Generic reset action label."
+  },
+  "map_displayOptions_title": "Map display options",
+  "@map_displayOptions_title": {
+    "description": "Dialog title for map display options."
+  },
+  "map_displayOptions_showProvinceOverlay": "Show province overlay",
+  "@map_displayOptions_showProvinceOverlay": {
+    "description": "Toggle for province and sea-zone boundary strokes on the map (no ownership tint)."
+  },
+  "map_displayOptions_showProvinceOwnership": "Show province ownership",
+  "@map_displayOptions_showProvinceOwnership": {
+    "description": "Toggle for Great Power land ownership colour tint on the map."
+  },
+  "map_displayOptions_showProvinceNames": "Show province names",
+  "@map_displayOptions_showProvinceNames": {
+    "description": "Toggle label for showing land province names on the map."
+  },
+  "common_close": "Close",
+  "@common_close": {
+    "description": "Generic Close button label or tooltip."
+  },
+  "gameMap_menuTooltip": "Menu",
+  "@gameMap_menuTooltip": {
+    "description": "Tooltip for the side menu button in the map controls."
+  },
+  "region_oldWorld": "Old World",
+  "@region_oldWorld": {
+    "description": "Label for the Old World region tab."
+  },
+  "region_newWorld": "New World",
+  "@region_newWorld": {
+    "description": "Label for the New World region tab."
+  },
+  "debugLog_title": "Debug log",
+  "@debugLog_title": {
+    "description": "Title of the debug log viewer screen and related actions."
+  },
+  "debugLog_filter_package": "Package:",
+  "@debugLog_filter_package": {
+    "description": "Label for the package filter section in the debug log viewer."
+  },
+  "debugLog_filter_level": "Level:",
+  "@debugLog_filter_level": {
+    "description": "Label for the log level filter section in the debug log viewer."
+  },
+  "shell_leaderDialog_intro": "Assign each player slot a Great Power and leader. Default map colours appear beside each nation in the nation picker.",
+  "@shell_leaderDialog_intro": {
+    "description": "Intro text for the new-game setup dialog (nations + leaders)."
+  },
+  "shell_leaderDialog_selectLeaderHint": "Select leader",
+  "@shell_leaderDialog_selectLeaderHint": {
+    "description": "Hint text for the leader dropdown in the leader selection dialog."
+  },
+  "common_cancel": "Cancel",
+  "@common_cancel": {
+    "description": "Generic Cancel button label."
+  },
+  "map_selectionMode_prompt": "Select a tile, or click cancel",
+  "@map_selectionMode_prompt": {
+    "description": "Prompt overlay text while map work-target tile selection mode is active."
+  },
+  "map_selectionMode_cancel": "cancel",
+  "@map_selectionMode_cancel": {
+    "description": "Lowercase inline cancel action label in the map work-target selection prompt overlay."
+  },
+  "common_start": "Start",
+  "@common_start": {
+    "description": "Generic Start button label used when beginning a flow."
+  },
+  "shell_leaderDialog_title": "New game — Setup",
+  "@shell_leaderDialog_title": {
+    "description": "Title of the new-game setup dialog (nations + leaders)."
+  },
+  "shell_newGame_selectNation": "Select nation",
+  "@shell_newGame_selectNation": {
+    "description": "Hint / picker title for the Great Power nation dropdown in the new-game setup dialog."
+  },
+  "shell_newGame_playerYou": "Player {slotNumber} (You)",
+  "@shell_newGame_playerYou": {
+    "description": "Slot label for the human player in the new-game setup dialog.",
+    "placeholders": {
+      "slotNumber": {
+        "type": "int"
+      }
+    }
+  },
+  "shell_newGame_playerAi": "Player {slotNumber} (AI)",
+  "@shell_newGame_playerAi": {
+    "description": "Slot label for an AI player in the new-game setup dialog.",
+    "placeholders": {
+      "slotNumber": {
+        "type": "int"
+      }
+    }
+  },
+  "shell_leaderDialog_seedLabel": "Game / world seed",
+  "@shell_leaderDialog_seedLabel": {
+    "description": "Label for the numeric seed field in the new-game leader dialog."
+  },
+
+  "shell_leaderDialog_seedHelper": "Use 0 for a random world (a new time-based seed each time setup runs). Any other number reproduces the same world for the same settings.",
+  "@shell_leaderDialog_seedHelper": {
+    "description": "Helper text explaining 0 vs fixed seed for the new-game leader dialog."
+  },
+
+  "shell_newGameProgress_title": "Creating game",
+  "@shell_newGameProgress_title": {
+    "description": "Title of the modal shown while a new game is being generated."
+  },
+  "shell_newGameProgress_stepOldWorld": "Generating Old World map…",
+  "@shell_newGameProgress_stepOldWorld": {
+    "description": "Coarse progress step: Old World tile map."
+  },
+  "shell_newGameProgress_stepNewWorld": "Generating New World map…",
+  "@shell_newGameProgress_stepNewWorld": {
+    "description": "Coarse progress step: New World tile map."
+  },
+  "shell_newGameProgress_stepWarp": "Linking Old World and New World…",
+  "@shell_newGameProgress_stepWarp": {
+    "description": "Coarse progress step: warp zones between regions."
+  },
+  "shell_newGameProgress_stepBuildWorld": "Building world…",
+  "@shell_newGameProgress_stepBuildWorld": {
+    "description": "Coarse progress step: province assignment, capitals, units."
+  },
+  "shell_newGameProgress_stepSave": "Saving game…",
+  "@shell_newGameProgress_stepSave": {
+    "description": "Coarse progress step: persisting game and map data."
+  },
+  "shell_newGameError_title": "Could not create game",
+  "@shell_newGameError_title": {
+    "description": "Title of the error dialog when new-game setup fails."
+  },
+  "shell_newGameError_retry": "Retry",
+  "@shell_newGameError_retry": {
+    "description": "Button to retry new-game setup with a different random seed."
+  },
+  "game_callToArms_title": "Call to arms",
+  "@game_callToArms_title": {
+    "description": "Title when the human must respond to an ally's call to arms."
+  },
+  "game_callToArms_intro": "An allied power is at war. Join their war or refuse (alliance ends, relations worsen).",
+  "@game_callToArms_intro": {
+    "description": "Short explanation above the list of call-to-arms choices."
+  },
+  "game_callToArms_prompt": "{defender} is attacked by {aggressor}.",
+  "@game_callToArms_prompt": {
+    "description": "One line per pending call to arms.",
+    "placeholders": {
+      "defender": {
+        "type": "String"
+      },
+      "aggressor": {
+        "type": "String"
+      }
+    }
+  },
+  "game_callToArms_join": "Join",
+  "@game_callToArms_join": {
+    "description": "Button: accept call to arms and enter war with the aggressor."
+  },
+  "game_callToArms_refuse": "Refuse",
+  "@game_callToArms_refuse": {
+    "description": "Button: refuse call to arms."
+  },
+  "game_callToArms_submit": "Submit",
+  "@game_callToArms_submit": {
+    "description": "Submit all call-to-arms choices."
+  },
+  "game_intervention_loadError": "Could not load intervention dialogue: {error}",
+  "@game_intervention_loadError": {
+    "description": "Error banner when intervention Yarn fails to load.",
+    "placeholders": {
+      "error": {
+        "type": "String",
+        "description": "Exception or error object string."
+      }
+    }
+  },
+  "game_intervention_degradedHint": "Submit all responses as \"Do naught\" to continue.",
+  "@game_intervention_degradedHint": {
+    "description": "Explains degraded intervention flow when dialogue asset is missing."
+  },
+  "game_intervention_continue": "Continue",
+  "@game_intervention_continue": {
+    "description": "Advance intervention Yarn line or exit degraded error dialog."
+  },
+  "game_intervention_resolutionProgress": "Thy resolution ({current} of {total})",
+  "@game_intervention_resolutionProgress": {
+    "description": "Header showing which intervention prompt is active.",
+    "placeholders": {
+      "current": {
+        "type": "int",
+        "description": "1-based index of the current prompt."
+      },
+      "total": {
+        "type": "int",
+        "description": "Total number of intervention prompts."
+      }
+    }
+  },
+  "game_intervention_situation": "{aggressor} against {defender}. Thou speakest for {intervening}.",
+  "@game_intervention_situation": {
+    "description": "One-line summary of the war and which GP the player decides for.",
+    "placeholders": {
+      "aggressor": {
+        "type": "String"
+      },
+      "defender": {
+        "type": "String"
+      },
+      "intervening": {
+        "type": "String"
+      }
+    }
+  },
+  "game_intervention_intervene": "Intervene with force",
+  "@game_intervention_intervene": {
+    "description": "Button: military intervention on behalf of the defender."
+  },
+  "game_intervention_doNothing": "Do naught",
+  "@game_intervention_doNothing": {
+    "description": "Button: decline to intervene."
+  },
+  "game_intervention_protest": "Diplomatic protest",
+  "@game_intervention_protest": {
+    "description": "Button: formal protest without military action."
+  },
+  "turnNews_title": "Turn {turn}",
+  "@turnNews_title": {
+    "description": "Turn-start news dialog title; turn is the current turn after resolution.",
+    "placeholders": {
+      "turn": {
+        "type": "int"
+      }
+    }
+  },
+  "turnNews_empty": "No major events last turn.",
+  "@turnNews_empty": {
+    "description": "Shown when the prior-turn digest has no lines."
+  },
+  "turnNews_close": "Close",
+  "@turnNews_close": {
+    "description": "Button to dismiss the turn news dialog."
+  },
+  "turnNews_capture": "{province}: ownership changed from {prevOwner} to {newOwner}.",
+  "@turnNews_capture": {
+    "placeholders": {
+      "province": {
+        "type": "String"
+      },
+      "prevOwner": {
+        "type": "String"
+      },
+      "newOwner": {
+        "type": "String"
+      }
+    }
+  },
+  "turnNews_war": "{a} and {b} are now at war.",
+  "@turnNews_war": {
+    "placeholders": {
+      "a": {
+        "type": "String"
+      },
+      "b": {
+        "type": "String"
+      }
+    }
+  },
+  "turnNews_peace": "{a} and {b} are now at peace.",
+  "@turnNews_peace": {
+    "placeholders": {
+      "a": {
+        "type": "String"
+      },
+      "b": {
+        "type": "String"
+      }
+    }
+  },
+  "turnNews_overture": "{offerer} advanced relations with {target} ({stage}).",
+  "@turnNews_overture": {
+    "placeholders": {
+      "offerer": {
+        "type": "String"
+      },
+      "target": {
+        "type": "String"
+      },
+      "stage": {
+        "type": "String"
+      }
+    }
+  },
+  "turnNews_provinceDiscovered": "New reports chart {province}.",
+  "@turnNews_provinceDiscovered": {
+    "placeholders": {
+      "province": {
+        "type": "String"
+      }
+    }
+  },
+  "turnNews_seaDiscovered": "A fleet has entered {zone}.",
+  "@turnNews_seaDiscovered": {
+    "placeholders": {
+      "zone": {
+        "type": "String"
+      }
+    }
+  },
+  "turnNews_stage_tradeConsulate": "trade consulate",
+  "@turnNews_stage_tradeConsulate": {
+    "description": "Overture stage label."
+  },
+  "turnNews_stage_embassy": "embassy",
+  "@turnNews_stage_embassy": {
+    "description": "Overture stage label."
+  },
+  "turnNews_stage_nap": "non-aggression pact",
+  "@turnNews_stage_nap": {
+    "description": "Overture stage label."
+  },
+  "turnNews_stage_joinEmpire": "join empire",
+  "@turnNews_stage_joinEmpire": {
+    "description": "Overture stage label."
+  },
+  "province_unitStatus_idle": "idle",
+  "@province_unitStatus_idle": {
+    "description": "Province panel: unit has no pending orders this turn."
+  },
+  "province_unitStatus_working": "working",
+  "@province_unitStatus_working": {
+    "description": "Province panel: unit work in progress in world state."
+  },
+  "province_workOrder_explore": "explore",
+  "@province_workOrder_explore": {
+    "description": "Work order target label in province panel."
+  },
+  "province_workOrder_prospect": "prospect",
+  "@province_workOrder_prospect": {
+    "description": "Work order target label in province panel."
+  },
+  "province_workOrder_build_improvement": "build improvement",
+  "@province_workOrder_build_improvement": {
+    "description": "Work order target label in province panel."
+  },
+  "province_workOrder_upgrade_town": "upgrade town",
+  "@province_workOrder_upgrade_town": {
+    "description": "Work order target label in province panel."
+  },
+  "province_workOrder_build_road": "build road",
+  "@province_workOrder_build_road": {
+    "description": "Work order target label in province panel."
+  },
+  "province_workOrder_build_port": "build port",
+  "@province_workOrder_build_port": {
+    "description": "Work order target label in province panel."
+  },
+  "province_workOrder_build_fort": "build fort",
+  "@province_workOrder_build_fort": {
+    "description": "Work order target label in province panel."
+  },
+  "province_workOrder_build_rail": "build rail",
+  "@province_workOrder_build_rail": {
+    "description": "Work order target label in province panel."
+  },
+  "province_workOrder_steal_tech": "steal technology",
+  "@province_workOrder_steal_tech": {
+    "description": "Work order target label in province panel."
+  },
+  "province_workOrder_counter_spy": "counter-espionage",
+  "@province_workOrder_counter_spy": {
+    "description": "Work order target label in province panel."
+  },
+  "province_workOrder_purchase_land": "purchase land",
+  "@province_workOrder_purchase_land": {
+    "description": "Work order target label in province panel."
+  },
+  "province_pending_armyMove": "Ordered: move army to {destination}",
+  "@province_pending_armyMove": {
+    "placeholders": {
+      "destination": {
+        "type": "String"
+      }
+    }
+  },
+  "province_pending_regimentMove": "Ordered: move regiment to {destination}",
+  "@province_pending_regimentMove": {
+    "placeholders": {
+      "destination": {
+        "type": "String"
+      }
+    }
+  },
+  "province_pending_fleetMoveSea": "Ordered: move fleet to sea {zone}",
+  "@province_pending_fleetMoveSea": {
+    "placeholders": {
+      "zone": {
+        "type": "String"
+      }
+    }
+  },
+  "province_pending_fleetMovePort": "Ordered: dock fleet at {province}",
+  "@province_pending_fleetMovePort": {
+    "placeholders": {
+      "province": {
+        "type": "String"
+      }
+    }
+  },
+  "province_pending_fleetMission": "Ordered: fleet mission — {mission}",
+  "@province_pending_fleetMission": {
+    "placeholders": {
+      "mission": {
+        "type": "String"
+      }
+    }
+  },
+  "province_fleetMission_none": "none",
+  "@province_fleetMission_none": {
+    "description": "Naval mission label."
+  },
+  "province_fleetMission_patrol": "patrol",
+  "@province_fleetMission_patrol": {
+    "description": "Naval mission label."
+  },
+  "province_fleetMission_blockade": "blockade",
+  "@province_fleetMission_blockade": {
+    "description": "Naval mission label."
+  },
+  "province_fleetMission_beachhead": "beachhead",
+  "@province_fleetMission_beachhead": {
+    "description": "Naval mission label."
+  },
+  "province_fleetMission_defend": "defend",
+  "@province_fleetMission_defend": {
+    "description": "Naval mission label."
+  },
+  "province_economic_improvableSuffix": "(improvable)",
+  "@province_economic_improvableSuffix": {
+    "description": "Economic row suffix when tile can be improved."
+  },
+  "province_economic_withImprovement": "with {improvement}",
+  "@province_economic_withImprovement": {
+    "placeholders": {
+      "improvement": {
+        "type": "String"
+      }
+    }
+  },
+  "province_regiment_peasant_levies": "Peasant levies",
+  "@province_regiment_peasant_levies": {
+    "description": "Regiment type display name."
+  },
+  "province_regiment_pikemen": "Pikemen",
+  "@province_regiment_pikemen": {
+    "description": "Regiment type display name."
+  },
+  "province_regiment_arquebusiers": "Arquebusiers",
+  "@province_regiment_arquebusiers": {
+    "description": "Regiment type display name."
+  },
+  "province_regiment_bowmen": "Bowmen",
+  "@province_regiment_bowmen": {
+    "description": "Regiment type display name."
+  },
+  "province_regiment_squires": "Squires",
+  "@province_regiment_squires": {
+    "description": "Regiment type display name."
+  },
+  "province_regiment_knights": "Knights",
+  "@province_regiment_knights": {
+    "description": "Regiment type display name."
+  },
+  "province_regiment_culverin": "Culverin",
+  "@province_regiment_culverin": {
+    "description": "Regiment type display name."
+  },
+  "province_regiment_calivermen": "Calivermen",
+  "@province_regiment_calivermen": {
+    "description": "Regiment type display name."
+  },
+  "province_regiment_halberdiers": "Halberdiers",
+  "@province_regiment_halberdiers": {
+    "description": "Regiment type display name."
+  },
+  "province_regiment_musketeers": "Musketeers",
+  "@province_regiment_musketeers": {
+    "description": "Regiment type display name."
+  },
+  "province_regiment_cossacks": "Cossacks",
+  "@province_regiment_cossacks": {
+    "description": "Regiment type display name."
+  },
+  "province_regiment_lancers": "Lancers",
+  "@province_regiment_lancers": {
+    "description": "Regiment type display name."
+  },
+  "province_regiment_harquebusiers": "Harquebusiers",
+  "@province_regiment_harquebusiers": {
+    "description": "Regiment type display name."
+  },
+  "province_regiment_horse_artillery": "Horse artillery",
+  "@province_regiment_horse_artillery": {
+    "description": "Regiment type display name."
+  },
+  "province_regiment_royal_artillery": "Royal artillery",
+  "@province_regiment_royal_artillery": {
+    "description": "Regiment type display name."
+  },
+  "province_regiment_skirmishers": "Skirmishers",
+  "@province_regiment_skirmishers": {
+    "description": "Regiment type display name."
+  },
+  "province_regiment_regulars": "Regulars",
+  "@province_regiment_regulars": {
+    "description": "Regiment type display name."
+  },
+  "province_regiment_grenadiers": "Grenadiers",
+  "@province_regiment_grenadiers": {
+    "description": "Regiment type display name."
+  },
+  "province_regiment_hussars": "Hussars",
+  "@province_regiment_hussars": {
+    "description": "Regiment type display name."
+  },
+  "province_regiment_cuirassiers": "Cuirassiers",
+  "@province_regiment_cuirassiers": {
+    "description": "Regiment type display name."
+  },
+  "province_regiment_light_artillery": "Light artillery",
+  "@province_regiment_light_artillery": {
+    "description": "Regiment type display name."
+  },
+  "province_regiment_heavy_artillery": "Heavy artillery",
+  "@province_regiment_heavy_artillery": {
+    "description": "Regiment type display name."
+  },
+  "province_regiment_sharpshooters": "Sharpshooters",
+  "@province_regiment_sharpshooters": {
+    "description": "Regiment type display name."
+  },
+  "province_regiment_rifle_infantry": "Rifle infantry",
+  "@province_regiment_rifle_infantry": {
+    "description": "Regiment type display name."
+  },
+  "province_regiment_guards": "Guards",
+  "@province_regiment_guards": {
+    "description": "Regiment type display name."
+  },
+  "province_regiment_scouts": "Scouts",
+  "@province_regiment_scouts": {
+    "description": "Regiment type display name."
+  },
+  "province_regiment_carbine_cavalry": "Carbine cavalry",
+  "@province_regiment_carbine_cavalry": {
+    "description": "Regiment type display name."
+  },
+  "province_regiment_field_artillery": "Field artillery",
+  "@province_regiment_field_artillery": {
+    "description": "Regiment type display name."
+  },
+  "province_regiment_siege_guns": "Siege guns",
+  "@province_regiment_siege_guns": {
+    "description": "Regiment type display name."
+  },
+  "province_ship_carrack": "Carrack",
+  "@province_ship_carrack": {
+    "description": "Ship type display name."
+  },
+  "province_ship_fluyte": "Fluyte",
+  "@province_ship_fluyte": {
+    "description": "Ship type display name."
+  },
+  "province_ship_sloop": "Sloop",
+  "@province_ship_sloop": {
+    "description": "Ship type display name."
+  },
+  "province_ship_trader": "Trader",
+  "@province_ship_trader": {
+    "description": "Ship type display name."
+  },
+  "province_ship_galleon": "Galleon",
+  "@province_ship_galleon": {
+    "description": "Ship type display name."
+  },
+  "province_ship_indiaman": "Indiaman",
+  "@province_ship_indiaman": {
+    "description": "Ship type display name."
+  },
+  "province_ship_frigate": "Frigate",
+  "@province_ship_frigate": {
+    "description": "Ship type display name."
+  },
+  "province_ship_raider": "Raider",
+  "@province_ship_raider": {
+    "description": "Ship type display name."
+  },
+  "province_ship_ship_of_the_line": "Ship of the Line",
+  "@province_ship_ship_of_the_line": {
+    "description": "Ship type display name."
+  },
+  "province_ship_clipper": "Clipper",
+  "@province_ship_clipper": {
+    "description": "Ship type display name."
+  },
+  "province_ship_merchant_steamship": "Merchant Steamship",
+  "@province_ship_merchant_steamship": {
+    "description": "Ship type display name."
+  },
+  "province_ship_ironclad": "Ironclad",
+  "@province_ship_ironclad": {
+    "description": "Ship type display name."
+  },
+  "quickBattle_commandPoints": "Command Points: {cp}",
+  "@quickBattle_commandPoints": {
+    "description": "Quick battle action selector command points header.",
+    "placeholders": {
+      "cp": {
+        "type": "int"
+      }
+    }
+  },
+  "quickBattle_action_volleyFire": "Volley Fire",
+  "@quickBattle_action_volleyFire": {
+    "description": "Quick battle action label."
+  },
+  "quickBattle_action_defend": "Defend",
+  "@quickBattle_action_defend": {
+    "description": "Quick battle action label."
+  },
+  "quickBattle_action_maneuver": "Maneuver",
+  "@quickBattle_action_maneuver": {
+    "description": "Quick battle action label."
+  },
+  "quickBattle_action_fallBack": "Fall Back",
+  "@quickBattle_action_fallBack": {
+    "description": "Quick battle action label."
+  },
+  "quickBattle_action_assault": "Assault",
+  "@quickBattle_action_assault": {
+    "description": "Quick battle action label."
+  },
+  "quickBattle_actionWithCost": "{label} ({cost} CP)",
+  "@quickBattle_actionWithCost": {
+    "description": "Quick battle action button label with command point cost.",
+    "placeholders": {
+      "label": {
+        "type": "String"
+      },
+      "cost": {
+        "type": "int"
+      }
+    }
+  },
+  "quickBattle_combatAt": "Combat at {provinceName}",
+  "@quickBattle_combatAt": {
+    "description": "Combat mode dialog title for a province.",
+    "placeholders": {
+      "provinceName": {
+        "type": "String"
+      }
+    }
+  },
+  "quickBattle_capitalSiegeQuickBattleOnly": "Capital siege — Quick Battle only (no auto-resolve).",
+  "@quickBattle_capitalSiegeQuickBattleOnly": {
+    "description": "Combat mode guidance for capital sieges."
+  },
+  "quickBattle_chooseCombatMode": "Choose combat mode:",
+  "@quickBattle_chooseCombatMode": {
+    "description": "Combat mode choice prompt."
+  },
+  "quickBattle_autoResolve": "Auto-Resolve",
+  "@quickBattle_autoResolve": {
+    "description": "Combat mode button label."
+  },
+  "quickBattle_quickBattle": "Quick Battle",
+  "@quickBattle_quickBattle": {
+    "description": "Combat mode button label."
+  },
+  "quickBattle_attackerWins": "{name} wins",
+  "@quickBattle_attackerWins": {
+    "description": "Quick battle winner line when attacker wins.",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "quickBattle_defenderHolds": "{name} holds",
+  "@quickBattle_defenderHolds": {
+    "description": "Quick battle winner line when defender holds.",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "quickBattle_mutualExhaustion": "Mutual exhaustion",
+  "@quickBattle_mutualExhaustion": {
+    "description": "Quick battle winner line for tie exhaustion state."
+  },
+  "quickBattle_battleResult": "Battle Result: {winnerText}",
+  "@quickBattle_battleResult": {
+    "description": "Quick battle result heading.",
+    "placeholders": {
+      "winnerText": {
+        "type": "String"
+      }
+    }
+  },
+  "quickBattle_provinceCaptured": "Province captured.",
+  "@quickBattle_provinceCaptured": {
+    "description": "Quick battle note when province ownership flips."
+  },
+  "quickBattle_casualties": "{name} casualties: {count}",
+  "@quickBattle_casualties": {
+    "description": "Quick battle casualties summary line.",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "quickBattle_ok": "OK",
+  "@quickBattle_ok": {
+    "description": "Quick battle result dialog close button label."
+  },
+  "quickBattle_round": "Quick Battle — Round {round} / {maxRounds}",
+  "@quickBattle_round": {
+    "description": "Quick battle screen heading with current and max rounds.",
+    "placeholders": {
+      "round": {
+        "type": "int"
+      },
+      "maxRounds": {
+        "type": "int"
+      }
+    }
+  },
+  "quickBattle_resolveAuto": "Resolve (Auto)",
+  "@quickBattle_resolveAuto": {
+    "description": "Quick battle auto resolve button label."
+  },
+  "quickBattle_attackerDefaultName": "Attacker",
+  "@quickBattle_attackerDefaultName": {
+    "description": "Fallback attacker label in quick battle UI."
+  },
+  "quickBattle_defenderDefaultName": "Defender",
+  "@quickBattle_defenderDefaultName": {
+    "description": "Fallback defender label in quick battle UI."
+  },
+  "game_intro_loadError": "Could not load intro dialogue: {error}",
+  "@game_intro_loadError": {
+    "description": "Error shown when intro dialogue fails to load.",
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "game_overture_loadError": "Could not load overture dialogue: {error}",
+  "@game_overture_loadError": {
+    "description": "Error shown when overture dialogue fails to load.",
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "game_overture_title": "Diplomatic overtures",
+  "@game_overture_title": {
+    "description": "Title for overture decisions panel."
+  },
+  "game_overture_intro": "Accept or reject each offer.",
+  "@game_overture_intro": {
+    "description": "Overture panel intro text."
+  },
+  "game_overture_offerLine": "{offerer}: {stage}",
+  "@game_overture_offerLine": {
+    "description": "One-line overture offer summary.",
+    "placeholders": {
+      "offerer": {
+        "type": "String"
+      },
+      "stage": {
+        "type": "String"
+      }
+    }
+  },
+  "game_overture_accept": "Accept",
+  "@game_overture_accept": {
+    "description": "Accept overture button label."
+  },
+  "game_overture_reject": "Reject",
+  "@game_overture_reject": {
+    "description": "Reject overture button label."
+  },
+  "victory_military": "Military victory",
+  "@victory_military": {
+    "description": "Victory type label."
+  },
+  "victory_winnerOnTurn": "{winner} wins on turn {turn}.",
+  "@victory_winnerOnTurn": {
+    "description": "Victory sentence with winner and turn number.",
+    "placeholders": {
+      "winner": {
+        "type": "String"
+      },
+      "turn": {
+        "type": "int"
+      }
+    }
+  },
+  "victory_returnToMainMenu": "Return to main menu",
+  "@victory_returnToMainMenu": {
+    "description": "Victory overlay button label."
+  },
+  "victory_viewFinalState": "View final state",
+  "@victory_viewFinalState": {
+    "description": "Victory overlay button label."
+  },
+  "moveArmy_groupYourProvinces": "Your provinces",
+  "@moveArmy_groupYourProvinces": {
+    "description": "Header label for player-owned province destinations in move army dialog."
+  },
+  "moveArmy_groupUnowned": "Unowned",
+  "@moveArmy_groupUnowned": {
+    "description": "Header label for unowned province destinations in move army dialog."
+  },
+  "moveArmy_invadeProvinceTitle": "Invade province?",
+  "@moveArmy_invadeProvinceTitle": {
+    "description": "Confirm dialog title for entering hostile territory with army movement."
+  },
+  "moveArmy_invadeProvinceBody": "Moving into {ownerLabel} territory will declare war this turn and then move the army. Continue?",
+  "@moveArmy_invadeProvinceBody": {
+    "description": "Confirm dialog text for hostile army movement.",
+    "placeholders": {
+      "ownerLabel": {
+        "type": "String"
+      }
+    }
+  },
+  "moveArmy_declareWarAndMove": "Declare war and move",
+  "@moveArmy_declareWarAndMove": {
+    "description": "Confirm action label for hostile army movement."
+  },
+  "moveArmy_title": "Move army {armyId}",
+  "@moveArmy_title": {
+    "description": "Move army dialog title with army id.",
+    "placeholders": {
+      "armyId": {
+        "type": "String"
+      }
+    }
+  },
+  "moveArmy_noValidDestinations": "No valid destinations.",
+  "@moveArmy_noValidDestinations": {
+    "description": "Empty-state text for move army dialog."
+  },
+  "moveArmy_destinationProvince": "Destination province",
+  "@moveArmy_destinationProvince": {
+    "description": "Field label for destination province picker in move army dialog."
+  },
+  "moveFleet_title": "Move fleet — {fleetLabel}",
+  "@moveFleet_title": {
+    "description": "Move fleet dialog title.",
+    "placeholders": {
+      "fleetLabel": {
+        "type": "String"
+      }
+    }
+  },
+  "moveFleet_titleWithDestinations": "Move fleet — {fleetLabel} ({count} destinations)",
+  "@moveFleet_titleWithDestinations": {
+    "description": "Move fleet dialog title with destination count.",
+    "placeholders": {
+      "fleetLabel": {
+        "type": "String"
+      },
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "moveFleet_noAdjacentSeaZones": "No adjacent sea zones (check map topology).",
+  "@moveFleet_noAdjacentSeaZones": {
+    "description": "Empty-state message in move fleet dialog."
+  },
+  "moveFleet_seaZonesSection": "Sea zones",
+  "@moveFleet_seaZonesSection": {
+    "description": "Section heading for sea zone destinations in move fleet dialog."
+  },
+  "moveFleet_provincesDockSection": "Provinces (dock)",
+  "@moveFleet_provincesDockSection": {
+    "description": "Section heading for dock destinations in move fleet dialog."
+  },
+  "moveFleet_locateOnMap": "Locate on map",
+  "@moveFleet_locateOnMap": {
+    "description": "Tooltip for locate action in move fleet dialog."
+  },
+  "moveFleet_warpLink": "links",
+  "@moveFleet_warpLink": {
+    "description": "Suffix appended to same-region warp-zone sea destinations in move fleet dialog."
+  },
+  "moveFleet_warpLinkToRegion": "links to {region}",
+  "@moveFleet_warpLinkToRegion": {
+    "description": "Suffix appended to cross-region sea-zone destinations in move fleet dialog.",
+    "placeholders": {
+      "region": {
+        "type": "String"
+      }
+    }
+  },
+  "military_units_title": "Military Units",
+  "@military_units_title": {
+    "description": "Military units panel title."
+  },
+  "military_units_deselectAllArmies": "Deselect all armies",
+  "@military_units_deselectAllArmies": {
+    "description": "Tooltip for deselecting all armies in military panel."
+  },
+  "military_units_selectAllArmies": "Select all armies",
+  "@military_units_selectAllArmies": {
+    "description": "Tooltip for selecting all armies in military panel."
+  },
+  "military_units_empty": "No military units",
+  "@military_units_empty": {
+    "description": "Empty message in military units panel."
+  },
+  "military_units_homeArmy": "Home Army",
+  "@military_units_homeArmy": {
+    "description": "Label for home army."
+  },
+  "military_units_army": "Army {armyId}",
+  "@military_units_army": {
+    "description": "Label for numbered army.",
+    "placeholders": {
+      "armyId": {
+        "type": "String"
+      }
+    }
+  },
+  "military_units_armySubtitle": "{regiments} regiments · {location}",
+  "@military_units_armySubtitle": {
+    "description": "Army subtitle showing regiment count and location.",
+    "placeholders": {
+      "regiments": {
+        "type": "int"
+      },
+      "location": {
+        "type": "String"
+      }
+    }
+  },
+  "military_units_armySubtitleWithDraft": "{regiments} regiments · {location}\n{draftLine}",
+  "@military_units_armySubtitleWithDraft": {
+    "description": "Army subtitle showing regiment count, location, and a draft move line.",
+    "placeholders": {
+      "regiments": {
+        "type": "int"
+      },
+      "location": {
+        "type": "String"
+      },
+      "draftLine": {
+        "type": "String"
+      }
+    }
+  },
+  "military_units_noRegimentsAssigned": "No regiments assigned",
+  "@military_units_noRegimentsAssigned": {
+    "description": "Empty-state line for army with no regiments."
+  },
+  "military_units_typeCount": "{typeName}: {count}",
+  "@military_units_typeCount": {
+    "description": "Type/count line used in military/naval row labels.",
+    "placeholders": {
+      "typeName": {
+        "type": "String"
+      },
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "military_units_regimentSubtitle": "Medals: {medals} · Status: {status}",
+  "@military_units_regimentSubtitle": {
+    "description": "Regiment subtitle row.",
+    "placeholders": {
+      "medals": {
+        "type": "String"
+      },
+      "status": {
+        "type": "String"
+      }
+    }
+  },
+  "military_units_status": "Status: {status}",
+  "@military_units_status": {
+    "description": "Status line label.",
+    "placeholders": {
+      "status": {
+        "type": "String"
+      }
+    }
+  },
+  "naval_units_title": "Naval Units",
+  "@naval_units_title": {
+    "description": "Naval units panel title."
+  },
+  "naval_units_title_tile": "Naval Units (Tile)",
+  "@naval_units_title_tile": {
+    "description": "Tile-scoped naval units panel title."
+  },
+  "naval_units_deselectAllFleets": "Deselect all fleets",
+  "@naval_units_deselectAllFleets": {
+    "description": "Tooltip for deselecting all fleets in naval panel."
+  },
+  "naval_units_selectAllFleets": "Select all fleets",
+  "@naval_units_selectAllFleets": {
+    "description": "Tooltip for selecting all fleets in naval panel."
+  },
+  "naval_units_empty": "No naval units",
+  "@naval_units_empty": {
+    "description": "Empty message in naval units panel."
+  },
+  "naval_units_totalShips": "Total ships: {count}",
+  "@naval_units_totalShips": {
+    "description": "Fleet summary total ships.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "naval_units_strength": "Strength: {value}",
+  "@naval_units_strength": {
+    "description": "Fleet strength summary line.",
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "naval_units_warships": "{count} warships",
+  "@naval_units_warships": {
+    "description": "Fleet summary warship count.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "naval_units_merchants": "{count} merchants",
+  "@naval_units_merchants": {
+    "description": "Fleet summary merchant count.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "naval_units_locateFleet": "Locate fleet",
+  "@naval_units_locateFleet": {
+    "description": "Tooltip for fleet locate action."
+  },
+  "naval_units_mission": "Mission: {mission}",
+  "@naval_units_mission": {
+    "description": "Fleet mission label.",
+    "placeholders": {
+      "mission": {
+        "type": "String"
+      }
+    }
+  },
+  "naval_units_noShipsInFleet": "No ships in this fleet",
+  "@naval_units_noShipsInFleet": {
+    "description": "Empty-state line for fleet with no ships."
+  },
+  "naval_units_cargoCapacity": "Cargo capacity: {capacity}",
+  "@naval_units_cargoCapacity": {
+    "description": "Cargo capacity line for home fleet.",
+    "placeholders": {
+      "capacity": {
+        "type": "int"
+      }
+    }
+  },
+  "naval_units_cargoCapacityIfAssigned": "Cargo capacity (if assigned): {capacity}",
+  "@naval_units_cargoCapacityIfAssigned": {
+    "description": "Cargo capacity line for non-home fleet.",
+    "placeholders": {
+      "capacity": {
+        "type": "int"
+      }
+    }
+  },
+  "diplomacy_setSubsidy": "Set subsidy",
+  "@diplomacy_setSubsidy": {
+    "description": "Diplomacy dialog title for setting subsidy amount."
+  },
+  "diplomacy_grantAid": "Grant aid",
+  "@diplomacy_grantAid": {
+    "description": "Diplomacy dialog title for granting aid amount."
+  },
+  "diplomacy_treasuryStep": "Treasury: £{treasury}. Step: £{step}.",
+  "@diplomacy_treasuryStep": {
+    "description": "Treasury and step line in diplomacy amount dialog.",
+    "placeholders": {
+      "treasury": {
+        "type": "int"
+      },
+      "step": {
+        "type": "int"
+      }
+    }
+  },
+  "diplomacy_currencyAmount": "£{amount}",
+  "@diplomacy_currencyAmount": {
+    "description": "Currency amount display in diplomacy amount dialog.",
+    "placeholders": {
+      "amount": {
+        "type": "int"
+      }
+    }
+  },
+  "diplomacy_treasuryBelowMinimum": "Treasury is below the minimum valid amount (£{step}).",
+  "@diplomacy_treasuryBelowMinimum": {
+    "description": "Validation text when treasury is below minimum adjustable amount.",
+    "placeholders": {
+      "step": {
+        "type": "int"
+      }
+    }
+  },
+  "trainCivilians_title": "Train Civilians",
+  "@trainCivilians_title": {
+    "description": "Train civilians dialog title."
+  },
+  "trainMilitary_title": "Train Military",
+  "@trainMilitary_title": {
+    "description": "Train military dialog title."
+  },
+  "trainUnits_noCapital": "No capital set — cannot train units",
+  "@trainUnits_noCapital": {
+    "description": "Error text when player has no capital in train dialogs."
+  },
+  "trainUnits_treasury": "Treasury: {value}",
+  "@trainUnits_treasury": {
+    "description": "Treasury summary line in train dialogs.",
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "trainUnits_paper": "Paper: {value}",
+  "@trainUnits_paper": {
+    "description": "Paper summary line in civilian train dialog.",
+    "placeholders": {
+      "value": {
+        "type": "int"
+      }
+    }
+  },
+  "trainUnits_peasants": "Peasants: {value}",
+  "@trainUnits_peasants": {
+    "description": "Peasants summary line in military train dialog.",
+    "placeholders": {
+      "value": {
+        "type": "int"
+      }
+    }
+  },
+  "civilian_units_title": "Civilian Units",
+  "@civilian_units_title": {
+    "description": "Civilian units panel title."
+  },
+  "civilian_units_title_tile": "Civilian Units (Tile)",
+  "@civilian_units_title_tile": {
+    "description": "Tile-scoped civilian units panel title."
+  },
+  "civilian_units_tile": "Tile",
+  "@civilian_units_tile": {
+    "description": "Action label for opening tile details from civilian panel."
+  },
+  "civilian_units_empty": "No civilian units",
+  "@civilian_units_empty": {
+    "description": "Empty message in civilian units panel."
+  },
+  "civilian_units_status": "Status: {status}",
+  "@civilian_units_status": {
+    "description": "Unit status line in civilian unit row.",
+    "placeholders": {
+      "status": {
+        "type": "String"
+      }
+    }
+  },
+  "civilian_units_location": "Location: {location}",
+  "@civilian_units_location": {
+    "description": "Unit location line in civilian unit row.",
+    "placeholders": {
+      "location": {
+        "type": "String"
+      }
+    }
+  },
+  "civilian_units_assignedTo": "Assigned to: {target}",
+  "@civilian_units_assignedTo": {
+    "description": "Assigned-work line in civilian unit row.",
+    "placeholders": {
+      "target": {
+        "type": "String"
+      }
+    }
+  },
+  "civilian_units_turns": "{count, plural, one {{count} turn} other {{count} turns}}",
+  "@civilian_units_turns": {
+    "description": "Localized turn-count label for civilian assigned-work rows.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "civilian_units_turnProgress": "{remaining}/{total} turns",
+  "@civilian_units_turnProgress": {
+    "description": "In-progress turn counter for civilian assigned-work rows.",
+    "placeholders": {
+      "remaining": {
+        "type": "String"
+      },
+      "total": {
+        "type": "String"
+      }
+    }
+  },
+  "civilian_units_assign": "Assign",
+  "@civilian_units_assign": {
+    "description": "Assign action button in civilian units panel."
+  },
+  "production_breakdown_title": "Commodity breakdown",
+  "@production_breakdown_title": {
+    "description": "Production commodity breakdown dialog title."
+  },
+  "production_breakdown_commodity": "Commodity",
+  "@production_breakdown_commodity": {
+    "description": "Commodity column heading in breakdown table."
+  },
+  "production_breakdown_total": "Total",
+  "@production_breakdown_total": {
+    "description": "Total column heading in breakdown table."
+  },
+  "production_breakdown_phase_pendingBuildCosts": "Pending build costs",
+  "@production_breakdown_phase_pendingBuildCosts": {
+    "description": "Phase heading in production breakdown table."
+  },
+  "production_breakdown_phase_extraction": "Extraction",
+  "@production_breakdown_phase_extraction": {
+    "description": "Phase heading in production breakdown table."
+  },
+  "production_breakdown_phase_richesToTreasury": "Riches to treasury",
+  "@production_breakdown_phase_richesToTreasury": {
+    "description": "Phase heading in production breakdown table."
+  },
+  "production_breakdown_phase_consumption": "Consumption",
+  "@production_breakdown_phase_consumption": {
+    "description": "Phase heading in production breakdown table."
+  },
+  "production_breakdown_phase_production": "Production",
+  "@production_breakdown_phase_production": {
+    "description": "Phase heading in production breakdown table."
+  },
+  "production_breakdown": "Breakdown",
+  "@production_breakdown": {
+    "description": "Button label to open production commodity breakdown."
+  },
+  "production_available": "Available",
+  "@production_available": {
+    "description": "Production panel subheader for available resources."
+  },
+  "production_food": "Food",
+  "@production_food": {
+    "description": "Production panel category heading."
+  },
+  "production_rawMaterials": "Raw Materials",
+  "@production_rawMaterials": {
+    "description": "Production panel category heading."
+  },
+  "production_manufactured": "Manufactured",
+  "@production_manufactured": {
+    "description": "Production panel category heading."
+  },
+  "production_workers": "Workers",
+  "@production_workers": {
+    "description": "Production panel category heading."
+  },
+  "production_workers_peasants": "Peasants",
+  "@production_workers_peasants": {
+    "description": "Worker label in production panel."
+  },
+  "production_workers_apprentices": "Apprentices",
+  "@production_workers_apprentices": {
+    "description": "Worker label in production panel."
+  },
+  "production_workers_journeymen": "Journeymen",
+  "@production_workers_journeymen": {
+    "description": "Worker label in production panel."
+  },
+  "production_workers_masters": "Masters",
+  "@production_workers_masters": {
+    "description": "Worker label in production panel."
+  },
+  "production_allocation": "Allocation",
+  "@production_allocation": {
+    "description": "Production panel subheader for allocation controls."
+  },
+  "production_allocationDecrementRecipe": "Decrease desired output for this recipe",
+  "@production_allocationDecrementRecipe": {
+    "description": "Semantics and tooltip for production allocation minus control."
+  },
+  "production_allocationIncrementRecipe": "Increase desired output for this recipe",
+  "@production_allocationIncrementRecipe": {
+    "description": "Semantics and tooltip for production allocation plus control."
+  },
+  "production_allocationMaximizeRecipe": "Set this recipe to maximum desired output",
+  "@production_allocationMaximizeRecipe": {
+    "description": "Semantics and tooltip for production allocation maximize control."
+  },
+  "production_allocationClearRecipe": "Clear desired output for this recipe",
+  "@production_allocationClearRecipe": {
+    "description": "Semantics and tooltip for production allocation clear control."
+  },
+  "splitArmy_title": "Split Army",
+  "@splitArmy_title": {
+    "description": "Split army dialog title."
+  },
+  "technologyPanel_title": "Technology - {playerName}",
+  "@technologyPanel_title": {
+    "description": "Technology panel title with player display name.",
+    "placeholders": {
+      "playerName": {
+        "type": "String"
+      }
+    }
+  },
+  "technologyPanel_researchSlotsCount": "Research slots: {slots}",
+  "@technologyPanel_researchSlotsCount": {
+    "description": "Research slot count line in technology panel.",
+    "placeholders": {
+      "slots": {
+        "type": "int"
+      }
+    }
+  },
+  "technologyPanel_researchSlots": "Research slots",
+  "@technologyPanel_researchSlots": {
+    "description": "Technology panel section label for slot list."
+  },
+  "technologyPanel_empty": "Empty",
+  "@technologyPanel_empty": {
+    "description": "Placeholder label for an empty research slot."
+  },
+  "technologyPanel_slot": "Slot {slot}",
+  "@technologyPanel_slot": {
+    "description": "Research slot title label.",
+    "placeholders": {
+      "slot": {
+        "type": "int"
+      }
+    }
+  },
+  "technologyPanel_slotSubtitle": "{name} - {progress}/{costLabel} RP",
+  "@technologyPanel_slotSubtitle": {
+    "description": "Research slot subtitle with tech name, progress, and cost label.",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "progress": {
+        "type": "int"
+      },
+      "costLabel": {
+        "type": "String"
+      }
+    }
+  },
+  "technologyPanel_noTechAssigned": "No tech assigned",
+  "@technologyPanel_noTechAssigned": {
+    "description": "Empty-state subtitle when no tech is assigned to a slot."
+  },
+  "technologyPanel_chooseTech": "Choose tech",
+  "@technologyPanel_chooseTech": {
+    "description": "Action label to open tech selection for a research slot."
+  },
+  "technologyPanel_researched": "Researched ({count}):",
+  "@technologyPanel_researched": {
+    "description": "Technology panel heading for researched techs.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "technologyPanel_noneYet": "None yet",
+  "@technologyPanel_noneYet": {
+    "description": "Technology panel empty-state text when no techs are researched."
+  },
+  "technologyPanel_inProgress": "In progress:",
+  "@technologyPanel_inProgress": {
+    "description": "Technology panel section heading for active progress entries."
+  },
+  "technologyPanel_progressLine": "{name}: {points} RP",
+  "@technologyPanel_progressLine": {
+    "description": "Technology panel progress line for one tech.",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "points": {
+        "type": "int"
+      }
+    }
+  },
+  "technologyPanel_noTechsAvailable": "No techs available to research",
+  "@technologyPanel_noTechsAvailable": {
+    "description": "Bottom-sheet empty-state when no selectable technologies exist."
+  },
+  "technologyPanel_pickSubtitle": "Era {era} - {category} - {cost} RP",
+  "@technologyPanel_pickSubtitle": {
+    "description": "Bottom-sheet row subtitle for selectable technology.",
+    "placeholders": {
+      "era": {
+        "type": "String"
+      },
+      "category": {
+        "type": "String"
+      },
+      "cost": {
+        "type": "int"
+      }
+    }
+  },
+  "technologyPanel_slotCancelled": "Research slot cancelled",
+  "@technologyPanel_slotCancelled": {
+    "description": "Snackbar shown when a research slot assignment is removed."
+  },
+  "techTree_noTechsInCatalog": "No techs in catalog",
+  "@techTree_noTechsInCatalog": {
+    "description": "Tech tree empty-state text."
+  },
+  "techTree_eraCategory": "Era {era} - {category}",
+  "@techTree_eraCategory": {
+    "description": "Tech dialog subtitle showing era and category.",
+    "placeholders": {
+      "era": {
+        "type": "String"
+      },
+      "category": {
+        "type": "String"
+      }
+    }
+  },
+  "techTree_researchPoints": "{points} RP",
+  "@techTree_researchPoints": {
+    "description": "Tech cost display in research points.",
+    "placeholders": {
+      "points": {
+        "type": "int"
+      }
+    }
+  },
+  "techTree_prerequisites": "Prerequisites",
+  "@techTree_prerequisites": {
+    "description": "Tech dialog section heading for prerequisites."
+  },
+  "techTree_effects": "Effects",
+  "@techTree_effects": {
+    "description": "Tech dialog section heading for effects."
+  },
+  "techTree_legendTitle": "Technology tree legend",
+  "@techTree_legendTitle": {
+    "description": "Tech tree legend title."
+  },
+  "techTree_stateResearched": "Researched",
+  "@techTree_stateResearched": {
+    "description": "Legend state label for researched techs."
+  },
+  "techTree_stateInProgress": "In progress",
+  "@techTree_stateInProgress": {
+    "description": "Legend state label for in-progress techs."
+  },
+  "techTree_stateAvailable": "Available",
+  "@techTree_stateAvailable": {
+    "description": "Legend state label for available techs."
+  },
+  "techTree_stateLocked": "Locked",
+  "@techTree_stateLocked": {
+    "description": "Legend state label for locked techs."
+  },
+  "mapDebug_fullVisibility": "Full visibility",
+  "@mapDebug_fullVisibility": {
+    "description": "Map debug/story toggle label for full map visibility."
+  },
+  "mapDebug_playerConstrained": "Player-constrained",
+  "@mapDebug_playerConstrained": {
+    "description": "Map debug/story toggle label for player-constrained visibility."
+  },
+  "mapDebug_hideProvinceNames": "No province names",
+  "@mapDebug_hideProvinceNames": {
+    "description": "Map debug/story toggle label to hide province names."
+  },
+  "mapDebug_noNames": "No names",
+  "@mapDebug_noNames": {
+    "description": "Map debug/story compact toggle label to hide names."
+  },
+  "widgetbook_primaryAction": "Primary action",
+  "@widgetbook_primaryAction": {
+    "description": "Widgetbook button label for enabled primary action sample."
+  },
+  "widgetbook_disabled": "Disabled",
+  "@widgetbook_disabled": {
+    "description": "Widgetbook button label for disabled sample."
+  },
+  "widgetbook_fixedWidth": "Fixed width",
+  "@widgetbook_fixedWidth": {
+    "description": "Widgetbook button label for fixed-width sample."
+  },
+  "widgetbook_noPlayers": "No players",
+  "@widgetbook_noPlayers": {
+    "description": "Widgetbook placeholder when sample game has no players."
+  },
+  "widgetbook_techTreeTitle": "Tech Tree",
+  "@widgetbook_techTreeTitle": {
+    "description": "Widgetbook app bar title for tech tree story."
+  },
+  "widgetbook_openBreakdownDialog": "Open breakdown dialog",
+  "@widgetbook_openBreakdownDialog": {
+    "description": "Widgetbook action label to open production breakdown demo dialog."
+  },
+  "widgetbook_gameShell": "Game shell",
+  "@widgetbook_gameShell": {
+    "description": "Widgetbook placeholder text for game shell container in dialogue stories."
+  },
+  "techTree_bulletItem": "- {text}",
+  "@techTree_bulletItem": {
+    "description": "Bullet line item in tech-tree detail dialog.",
+    "placeholders": {
+      "text": {
+        "type": "String"
+      }
+    }
+  },
+  "provinceOverlay_unknown": "???",
+  "@provinceOverlay_unknown": {
+    "description": "Obfuscated placeholder text shown when section intel is unavailable."
+  },
+  "provinceOverlay_clickTileForDetails": "Click a tile to see details.",
+  "@provinceOverlay_clickTileForDetails": {
+    "description": "Tile section prompt when no map tile is selected."
+  },
+  "provinceOverlay_tileCoordinatesUnknown": "Coordinates: ???",
+  "@provinceOverlay_tileCoordinatesUnknown": {
+    "description": "Tile section obfuscated coordinates row."
+  },
+  "provinceOverlay_tileTerrainUnknown": "Terrain: ???",
+  "@provinceOverlay_tileTerrainUnknown": {
+    "description": "Tile section obfuscated terrain row."
+  },
+  "provinceOverlay_tileResourceUnknown": "Resource: ???",
+  "@provinceOverlay_tileResourceUnknown": {
+    "description": "Tile section obfuscated resource row."
+  },
+  "provinceOverlay_tileProspectedUnknown": "Prospected: ???",
+  "@provinceOverlay_tileProspectedUnknown": {
+    "description": "Tile section obfuscated prospecting row."
+  },
+  "provinceOverlay_tileImprovementUnknown": "Improvement: ???",
+  "@provinceOverlay_tileImprovementUnknown": {
+    "description": "Tile section obfuscated improvement row."
+  },
+  "provinceOverlay_tileRoadUnknown": "Road / railroad: ???",
+  "@provinceOverlay_tileRoadUnknown": {
+    "description": "Tile section obfuscated road/rail row."
+  },
+  "provinceOverlay_tileCivilianUnitsUnknown": "Civilian units (province): ???",
+  "@provinceOverlay_tileCivilianUnitsUnknown": {
+    "description": "Tile section obfuscated civilian units row."
+  },
+  "provinceOverlay_tileCoordinates": "Coordinates: ({x}, {y})",
+  "@provinceOverlay_tileCoordinates": {
+    "description": "Tile section coordinates row.",
+    "placeholders": {
+      "x": {
+        "type": "int"
+      },
+      "y": {
+        "type": "int"
+      }
+    }
+  },
+  "provinceOverlay_tileTerrain": "Terrain: {terrain}",
+  "@provinceOverlay_tileTerrain": {
+    "description": "Tile section terrain row.",
+    "placeholders": {
+      "terrain": {
+        "type": "String"
+      }
+    }
+  },
+  "provinceOverlay_tileResourcePrefix": "Resource: ",
+  "@provinceOverlay_tileResourcePrefix": {
+    "description": "Tile section resource label prefix before inline icon/name."
+  },
+  "provinceOverlay_tileProspected": "Prospected: {value}",
+  "@provinceOverlay_tileProspected": {
+    "description": "Tile section prospecting state row.",
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "provinceOverlay_tileProspectWithExplorerTooltip": "Prospect with explorer",
+  "@provinceOverlay_tileProspectWithExplorerTooltip": {
+    "description": "Tooltip and semantics label for province tile prospect shortcut action."
+  },
+  "provinceOverlay_tileExploreWithExplorerTooltip": "Explore with explorer",
+  "@provinceOverlay_tileExploreWithExplorerTooltip": {
+    "description": "Tooltip and semantics label for province tile explore shortcut action."
+  },
+  "provinceOverlay_tileBuildImprovementTooltip": "Build improvement",
+  "@provinceOverlay_tileBuildImprovementTooltip": {
+    "description": "Tooltip and semantics label for province tile build-improvement shortcut action."
+  },
+  "provinceOverlay_tileImprovement": "Improvement: {value}",
+  "@provinceOverlay_tileImprovement": {
+    "description": "Tile section improvement row.",
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "provinceOverlay_tileRoadNone": "Road / railroad: -",
+  "@provinceOverlay_tileRoadNone": {
+    "description": "Tile section road/rail row when not applicable."
+  },
+  "provinceOverlay_tileCivilianUnits": "Civilian units (province): {count}",
+  "@provinceOverlay_tileCivilianUnits": {
+    "description": "Tile section civilian unit count row.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "provinceOverlay_seaZone": "Sea zone: {name}",
+  "@provinceOverlay_seaZone": {
+    "description": "Political section row for a sea-zone overlay.",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "provinceOverlay_name": "Name: {name}",
+  "@provinceOverlay_name": {
+    "description": "Political section province name row.",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "provinceOverlay_owner": "Owner: {owner}",
+  "@provinceOverlay_owner": {
+    "description": "Political section owner row.",
+    "placeholders": {
+      "owner": {
+        "type": "String"
+      }
+    }
+  },
+  "provinceOverlay_indentedCount": "  {label}: {count}",
+  "@provinceOverlay_indentedCount": {
+    "description": "Indented count line used in military summary lists.",
+    "placeholders": {
+      "label": {
+        "type": "String"
+      },
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "provinceOverlay_unitTarget": "{type} ({id}): {target}",
+  "@provinceOverlay_unitTarget": {
+    "description": "Civilian section line for unit target or status.",
+    "placeholders": {
+      "type": {
+        "type": "String"
+      },
+      "id": {
+        "type": "String"
+      },
+      "target": {
+        "type": "String"
+      }
+    }
+  },
+  "provinceOverlay_foreignUnitStatus": "{owner} — {type} ({id}): {status}",
+  "@provinceOverlay_foreignUnitStatus": {
+    "description": "Civilian section line for foreign-unit status.",
+    "placeholders": {
+      "owner": {
+        "type": "String"
+      },
+      "type": {
+        "type": "String"
+      },
+      "id": {
+        "type": "String"
+      },
+      "status": {
+        "type": "String"
+      }
+    }
+  },
+  "provinceOverlay_fleetSummary": "{owner} — {fleetLabel}: {shipParts}",
+  "@provinceOverlay_fleetSummary": {
+    "description": "Naval section fleet summary line.",
+    "placeholders": {
+      "owner": {
+        "type": "String"
+      },
+      "fleetLabel": {
+        "type": "String"
+      },
+      "shipParts": {
+        "type": "String"
+      }
+    }
+  },
+  "provinceOverlay_sectionPolitical": "Political",
+  "@provinceOverlay_sectionPolitical": {
+    "description": "Province overlay section heading for political details."
+  },
+  "provinceOverlay_sectionTile": "Tile",
+  "@provinceOverlay_sectionTile": {
+    "description": "Province overlay section heading for tile details."
+  },
+  "provinceOverlay_sectionEconomic": "Economic",
+  "@provinceOverlay_sectionEconomic": {
+    "description": "Province overlay section heading for economic details."
+  },
+  "provinceOverlay_sectionMilitary": "Military",
+  "@provinceOverlay_sectionMilitary": {
+    "description": "Province overlay section heading for military details."
+  },
+  "provinceOverlay_sectionCivilian": "Civilian",
+  "@provinceOverlay_sectionCivilian": {
+    "description": "Province overlay section heading for civilian details."
+  },
+  "provinceOverlay_sectionNaval": "Naval",
+  "@provinceOverlay_sectionNaval": {
+    "description": "Province overlay section heading for naval details."
+  },
+  "gameSetup_title": "Game Setup",
+  "@gameSetup_title": {
+    "description": "Game setup screen title."
+  },
+  "gameSetup_starting": "Starting…",
+  "@gameSetup_starting": {
+    "description": "Loading state label while starting a game from setup."
+  },
+  "gameSetup_startGame": "Start Game",
+  "@gameSetup_startGame": {
+    "description": "Primary button to begin play from game setup."
+  },
+  "gameSetup_back": "Back",
+  "@gameSetup_back": {
+    "description": "Back button on game setup screen."
+  },
+  "gameSetup_player1You": "Player 1 (You)",
+  "@gameSetup_player1You": {
+    "description": "Label for the human player slot on game setup."
+  },
+  "gameSetup_playerAiSlot": "Player {n} (AI)",
+  "@gameSetup_playerAiSlot": {
+    "description": "Label for an AI-controlled player slot (n is 2-based index for display).",
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "gameSetup_selectNation": "Select nation",
+  "@gameSetup_selectNation": {
+    "description": "Dropdown hint when choosing a great power nation."
+  },
+  "gameSetup_selectLeader": "Select leader",
+  "@gameSetup_selectLeader": {
+    "description": "Dropdown hint when choosing a leader variant."
+  },
+  "mapCorner_tooltipBaseLayer": "Base layer: terrain / +resources / +improvements",
+  "@mapCorner_tooltipBaseLayer": {
+    "description": "Tooltip for cycling map base layer display."
+  },
+  "mapCorner_tooltipCenterCapital": "Center on capital",
+  "@mapCorner_tooltipCenterCapital": {
+    "description": "Tooltip for centering the map on the home capital."
+  },
+  "mapCorner_tooltipMapDisplayOptions": "Map display options",
+  "@mapCorner_tooltipMapDisplayOptions": {
+    "description": "Tooltip for opening map display options."
+  },
+  "mapControls_cargoHold": "{used}/{capacity}",
+  "@mapControls_cargoHold": {
+    "description": "Cargo hold usage label on map controls (used and capacity are pre-formatted numbers or em dash).",
+    "placeholders": {
+      "used": {
+        "type": "String"
+      },
+      "capacity": {
+        "type": "String"
+      }
+    }
+  },
+  "common_percent": "{value}%",
+  "@common_percent": {
+    "description": "Percentage label with no space before percent sign.",
+    "placeholders": {
+      "value": {
+        "type": "int"
+      }
+    }
+  },
+  "regionMinimap_mapZoom": "Map zoom",
+  "@regionMinimap_mapZoom": {
+    "description": "Accessibility label and tooltip for region minimap zoom slider."
+  },
+  "regionMinimap_zoomSemanticsValue": "{pct} percent",
+  "@regionMinimap_zoomSemanticsValue": {
+    "description": "Semantics value for zoom slider (spoken).",
+    "placeholders": {
+      "pct": {
+        "type": "int"
+      }
+    }
+  },
+  "province_economic_resourceRow": "{terrain}/{resourceId} {detail}",
+  "@province_economic_resourceRow": {
+    "description": "Economic row in province overlay: terrain, resource id, and localized detail suffix.",
+    "placeholders": {
+      "terrain": {
+        "type": "String"
+      },
+      "resourceId": {
+        "type": "String"
+      },
+      "detail": {
+        "type": "String"
+      }
+    }
+  },
+  "diplomacy_detail_historyTitle": "Diplomatic history",
+  "@diplomacy_detail_historyTitle": {
+    "description": "Heading for diplomatic event history on detail screen."
+  },
+  "diplomacy_detail_noEvents": "No recorded events with this faction.",
+  "@diplomacy_detail_noEvents": {
+    "description": "Empty state when there is no diplomatic history."
+  },
+  "diplomacy_detail_yearTurn": "{year} (Turn {turn})",
+  "@diplomacy_detail_yearTurn": {
+    "description": "History card subtitle with calendar year and turn number.",
+    "placeholders": {
+      "year": {
+        "type": "int"
+      },
+      "turn": {
+        "type": "int"
+      }
+    }
+  },
+  "diplomacy_detail_dossierTitle": "Dossier",
+  "@diplomacy_detail_dossierTitle": {
+    "description": "Heading for dossier section on diplomacy detail."
+  },
+  "diplomacy_detail_currentRelation": "Current relation",
+  "@diplomacy_detail_currentRelation": {
+    "description": "Label above current diplomatic relation summary."
+  },
+  "diplomacy_detail_noDossier": "No dossier evidence yet.",
+  "@diplomacy_detail_noDossier": {
+    "description": "Empty state for dossier evidence list."
+  },
+  "diplomacy_detail_turnEvidence": "Turn {turn}:",
+  "@diplomacy_detail_turnEvidence": {
+    "description": "Prefix for a dossier evidence line.",
+    "placeholders": {
+      "turn": {
+        "type": "int"
+      }
+    }
+  },
+  "diplomacy_panel_noFactions": "No other factions discovered yet.",
+  "@diplomacy_panel_noFactions": {
+    "description": "Empty diplomacy list before any factions are discovered."
+  },
+  "diplomacy_panel_powerScore": "Power: {score}",
+  "@diplomacy_panel_powerScore": {
+    "description": "Great power military/economic score label in diplomacy row.",
+    "placeholders": {
+      "score": {
+        "type": "int"
+      }
+    }
+  },
+  "diplomacy_panel_outgoingSubsidy": "Outgoing subsidy: £{amount}/turn to {target}",
+  "@diplomacy_panel_outgoingSubsidy": {
+    "description": "Line showing active subsidy to another faction.",
+    "placeholders": {
+      "amount": {
+        "type": "int"
+      },
+      "target": {
+        "type": "String"
+      }
+    }
+  },
+  "diplomacy_panel_pendingGrant": "Pending grant aid: £{amount} (resolves end of turn)",
+  "@diplomacy_panel_pendingGrant": {
+    "description": "Pending grant aid line in diplomacy row.",
+    "placeholders": {
+      "amount": {
+        "type": "int"
+      }
+    }
+  },
+  "diplomacy_panel_pendingSubsidy": "Pending subsidy: £{amount}/turn (resolves end of turn)",
+  "@diplomacy_panel_pendingSubsidy": {
+    "description": "Pending subsidy line in diplomacy row.",
+    "placeholders": {
+      "amount": {
+        "type": "int"
+      }
+    }
+  },
+  "production_commodityStock": "{name}: {qty}{change}",
+  "@production_commodityStock": {
+    "description": "Stock line for a commodity; change is empty or parenthesized delta.",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "qty": {
+        "type": "int"
+      },
+      "change": {
+        "type": "String"
+      }
+    }
+  },
+  "production_effectiveLabour": "Effective labour: {n}",
+  "@production_effectiveLabour": {
+    "description": "Shows effective labour total in production panel.",
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "production_recipeAffordance": "{max} · {limiting}",
+  "@production_recipeAffordance": {
+    "description": "Recipe affordance line (max output and limiting factor label).",
+    "placeholders": {
+      "max": {
+        "type": "int"
+      },
+      "limiting": {
+        "type": "String"
+      }
+    }
+  },
+  "production_totalLabour": "Total labour: {required} / {effective}",
+  "@production_totalLabour": {
+    "description": "Total labour required vs effective in allocation panel.",
+    "placeholders": {
+      "required": {
+        "type": "int"
+      },
+      "effective": {
+        "type": "int"
+      }
+    }
+  },
+  "production_labourInsufficient": "Insufficient labour — production will be capped next turn",
+  "@production_labourInsufficient": {
+    "description": "Warning when allocated labour exceeds effective labour."
+  },
+  "production_workerCount": "{name}: {count}",
+  "@production_workerCount": {
+    "description": "Worker type and count in production panel.",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "naval_units_shipTypeCount": "{typeName}: {count}",
+  "@naval_units_shipTypeCount": {
+    "description": "Ship type and hull count in fleet expansion tile.",
+    "placeholders": {
+      "typeName": {
+        "type": "String"
+      },
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "civilian_assignWorkTitle": "Assign work: {unitType}",
+  "@civilian_assignWorkTitle": {
+    "description": "Bottom sheet title for assigning civilian work.",
+    "placeholders": {
+      "unitType": {
+        "type": "String"
+      }
+    }
+  },
+  "trainMilitary_commodityAmount": "{name}: {qty}",
+  "@trainMilitary_commodityAmount": {
+    "description": "Commodity name and stock quantity in train military dialog.",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "qty": {
+        "type": "int"
+      }
+    }
+  },
+  "trainCivilians_costLine": "{treasury} + {paper} Paper",
+  "@trainCivilians_costLine": {
+    "description": "Treasury cost plus paper requirement for training civilians.",
+    "placeholders": {
+      "treasury": {
+        "type": "String"
+      },
+      "paper": {
+        "type": "String"
+      }
+    }
+  },
+  "techTree_prerequisiteBullet": "• {name}",
+  "@techTree_prerequisiteBullet": {
+    "description": "Bullet line for a tech prerequisite name.",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "techEffect_unlocksRegiment": "Unlocks regiment: {name}",
+  "@techEffect_unlocksRegiment": {
+    "description": "Tech tree effect line for a regiment unlock from catalog data.",
+    "placeholders": {
+      "name": {"type": "String"}
+    }
+  },
+  "techEffect_unlocksShip": "Unlocks ship: {name}",
+  "@techEffect_unlocksShip": {
+    "description": "Tech tree effect line for a ship unlock from catalog data.",
+    "placeholders": {
+      "name": {"type": "String"}
+    }
+  },
+  "techEffect_fallbackCategoryImprovement": "Improves {category} capabilities",
+  "@techEffect_fallbackCategoryImprovement": {
+    "description": "Generic tech effect when no specific summary lines exist.",
+    "placeholders": {
+      "category": {"type": "String"}
+    }
+  },
+  "techTree_categoryGathering": "Gathering",
+  "@techTree_categoryGathering": {"description": "Tech tree category label (gathering)."},
+  "techTree_categoryTransport": "Transport",
+  "@techTree_categoryTransport": {"description": "Tech tree category label (transport)."},
+  "techTree_categoryLabour": "Labour",
+  "@techTree_categoryLabour": {"description": "Tech tree category label (labour)."},
+  "techTree_categoryCivilian": "Civilian",
+  "@techTree_categoryCivilian": {"description": "Tech tree category label (civilian)."},
+  "techTree_categoryDiplomacy": "Diplomacy",
+  "@techTree_categoryDiplomacy": {"description": "Tech tree category label (diplomacy)."},
+  "techTree_categoryNaval": "Naval",
+  "@techTree_categoryNaval": {"description": "Tech tree category label (naval)."},
+  "techTree_categoryMilitary": "Military",
+  "@techTree_categoryMilitary": {"description": "Tech tree category label (military)."},
+  "techTree_categoryNewWorld": "New World",
+  "@techTree_categoryNewWorld": {"description": "Tech tree category label (new-world)."},
+  "transferList_rowCount": "{name} ({count})",
+  "@transferList_rowCount": {
+    "description": "Transfer list row showing item name and quantity.",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "widgetbook_openPanelHint": "Tap button to open panel from bottom",
+  "@widgetbook_openPanelHint": {
+    "description": "Placeholder hint in Widgetbook civilian panel story."
+  },
+  "naval_fleetLabel": "Fleet {id}",
+  "@naval_fleetLabel": {
+    "description": "Fleet row label with fleet id.",
+    "placeholders": {
+      "id": {
+        "type": "String"
+      }
+    }
+  },
+  "naval_homeFleetLabel": "Home Fleet",
+  "@naval_homeFleetLabel": {
+    "description": "Label for the player's home fleet."
+  },
+  "locationSection_headerLine": "{label} — {region}",
+  "@locationSection_headerLine": {
+    "description": "Location sub-header combining local and region labels.",
+    "placeholders": {
+      "label": {
+        "type": "String"
+      },
+      "region": {
+        "type": "String"
+      }
+    }
+  },
+  "splitFleet_dialogTitle": "Split Fleet",
+  "@splitFleet_dialogTitle": {
+    "description": "Title for split fleet dialog."
+  },
+  "splitFleet_newFleetTitle": "New Fleet",
+  "@splitFleet_newFleetTitle": {
+    "description": "Right column title in split fleet transfer list."
+  },
+  "splitFleet_noShips": "No ships",
+  "@splitFleet_noShips": {
+    "description": "Empty column label in split fleet transfer list."
+  },
+  "splitFleet_confirm": "Confirm Split",
+  "@splitFleet_confirm": {
+    "description": "Confirm button label for split fleet dialog."
+  },
+  "splitFleet_totalShips": "Total: {total} ships",
+  "@splitFleet_totalShips": {
+    "description": "Footer total ship count in split fleet transfer list.",
+    "placeholders": {
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "naval_transferToHome_dialogTitle": "Transfer Ships to Home Fleet",
+  "@naval_transferToHome_dialogTitle": {
+    "description": "Title for selected-ship transfer into Home Fleet dialog."
+  },
+  "naval_transferToHome_sourceTitle": "Fleet {id}",
+  "@naval_transferToHome_sourceTitle": {
+    "description": "Source fleet title in transfer-to-home dialog.",
+    "placeholders": {
+      "id": {
+        "type": "String"
+      }
+    }
+  },
+  "naval_transferToHome_confirm": "Confirm Transfer",
+  "@naval_transferToHome_confirm": {
+    "description": "Confirm button label for transfer-to-home dialog."
+  },
+  "diplomacy_section_greatPowers": "Great Powers",
+  "@diplomacy_section_greatPowers": {
+    "description": "Diplomacy list section heading."
+  },
+  "diplomacy_section_minorNations": "Minor Nations",
+  "@diplomacy_section_minorNations": {
+    "description": "Diplomacy list section heading."
+  },
+  "diplomacy_section_tribes": "Tribes",
+  "@diplomacy_section_tribes": {
+    "description": "Diplomacy list section heading."
+  },
+  "diplomacy_relationState_war": "War",
+  "@diplomacy_relationState_war": {
+    "description": "One-word war state in diplomacy UI."
+  },
+  "diplomacy_relationState_peace": "Peace",
+  "@diplomacy_relationState_peace": {
+    "description": "One-word peace state in diplomacy UI."
+  },
+  "techEffectSummary_advanced_hull_design_0": "Improves: Frigate — high intercept, moderate flee (patrol/blockade)",
+  "@techEffectSummary_advanced_hull_design_0": {
+    "description": "Tech tree dialog effect line (techEffectSummary_advanced_hull_design_0)."
+  },
+  "techEffectSummary_advanced_hull_design_1": "Unlocks: Clipper Ships and Paddlewheels hull paths",
+  "@techEffectSummary_advanced_hull_design_1": {
+    "description": "Tech tree dialog effect line (techEffectSummary_advanced_hull_design_1)."
+  },
+  "techEffectSummary_advanced_iron_working_0": "Improves: Ironclad armored steam combat hull",
+  "@techEffectSummary_advanced_iron_working_0": {
+    "description": "Tech tree dialog effect line (techEffectSummary_advanced_iron_working_0)."
+  },
+  "techEffectSummary_amalgamation_process_0": "Improves: Gold/silver extraction cap to 4",
+  "@techEffectSummary_amalgamation_process_0": {
+    "description": "Tech tree dialog effect line (techEffectSummary_amalgamation_process_0)."
+  },
+  "techEffectSummary_amalgamation_process_1": "Prerequisite-only: catalog leaf; extraction-cap increase is the active benefit",
+  "@techEffectSummary_amalgamation_process_1": {
+    "description": "Tech tree dialog effect line (techEffectSummary_amalgamation_process_1)."
+  },
+  "techEffectSummary_animal_husbandry_0": "Improves: Meat extraction cap to 3",
+  "@techEffectSummary_animal_husbandry_0": {
+    "description": "Tech tree dialog effect line (techEffectSummary_animal_husbandry_0)."
+  },
+  "techEffectSummary_animal_husbandry_1": "Unlocks: Scientific Cattle Breeding (with University)",
+  "@techEffectSummary_animal_husbandry_1": {
+    "description": "Tech tree dialog effect line (techEffectSummary_animal_husbandry_1)."
+  },
+  "techEffectSummary_animal_husbandry_2": "Enables: Military branches that require this tech",
+  "@techEffectSummary_animal_husbandry_2": {
+    "description": "Tech tree dialog effect line (techEffectSummary_animal_husbandry_2)."
+  },
+  "techEffectSummary_apprentice_workers_0": "Enables: Apprentice tier (4x labour; consumes refined sugar)",
+  "@techEffectSummary_apprentice_workers_0": {
+    "description": "Tech tree dialog effect line (techEffectSummary_apprentice_workers_0)."
+  },
+  "techEffectSummary_apprentice_workers_1": "Unlocks: University and Master Artisans",
+  "@techEffectSummary_apprentice_workers_1": {
+    "description": "Tech tree dialog effect line (techEffectSummary_apprentice_workers_1)."
+  },
+  "techEffectSummary_banking_0": "Unlocks: Dynamite, Empire Building, Modern Military Funding",
+  "@techEffectSummary_banking_0": {
+    "description": "Tech tree dialog effect line (techEffectSummary_banking_0)."
+  },
+  "techEffectSummary_banking_1": "With Money Lending: extends research-phase treasury floor to −£1000",
+  "@techEffectSummary_banking_1": {
+    "description": "Tech tree dialog effect line (techEffectSummary_banking_1)."
+  },
+  "techEffectSummary_bayonet_0": "Unlocks: Needle Guns (with Industrial Funding + Early Rifles)",
+  "@techEffectSummary_bayonet_0": {
+    "description": "Tech tree dialog effect line (techEffectSummary_bayonet_0)."
+  },
+  "techEffectSummary_cigar_production_0": "Enables: Cigar luxury production for Journeyman-tier worker consumption",
+  "@techEffectSummary_cigar_production_0": {
+    "description": "Tech tree dialog effect line (techEffectSummary_cigar_production_0)."
+  },
+  "techEffectSummary_cigar_production_1": "Unlocks: Trained Journeymen",
+  "@techEffectSummary_cigar_production_1": {
+    "description": "Tech tree dialog effect line (techEffectSummary_cigar_production_1)."
+  },
+  "techEffectSummary_circular_saw_0": "Improves: Timber extraction cap to 4",
+  "@techEffectSummary_circular_saw_0": {
+    "description": "Tech tree dialog effect line (techEffectSummary_circular_saw_0)."
+  },
+  "techEffectSummary_circular_saw_1": "Unlocks: Clipper Ships (with Advanced Hull Design)",
+  "@techEffectSummary_circular_saw_1": {
+    "description": "Tech tree dialog effect line (techEffectSummary_circular_saw_1)."
+  },
+  "techEffectSummary_clipper_ships_0": "Improves: Late-era fast merchant Clipper cargo line",
+  "@techEffectSummary_clipper_ships_0": {
+    "description": "Tech tree dialog effect line (techEffectSummary_clipper_ships_0)."
+  },
+  "techEffectSummary_coal_mining_0": "Enables: Coal extraction (cap 1)",
+  "@techEffectSummary_coal_mining_0": {
+    "description": "Tech tree dialog effect line (techEffectSummary_coal_mining_0)."
+  },
+  "techEffectSummary_coal_mining_1": "Unlocks: Square-set Timbering",
+  "@techEffectSummary_coal_mining_1": {
+    "description": "Tech tree dialog effect line (techEffectSummary_coal_mining_1)."
+  },
+  "techEffectSummary_convoying_0": "Unlocks: Large Hulls (with Wind Saw Mill + Navigation)",
+  "@techEffectSummary_convoying_0": {
+    "description": "Tech tree dialog effect line (techEffectSummary_convoying_0)."
+  },
+  "techEffectSummary_copper_and_tin_mining_0": "Improves: Copper/Tin extraction cap to 2",
+  "@techEffectSummary_copper_and_tin_mining_0": {
+    "description": "Tech tree dialog effect line (techEffectSummary_copper_and_tin_mining_0)."
+  },
+  "techEffectSummary_copper_and_tin_mining_1": "Unlocks: Large Copper and Tin Mines",
+  "@techEffectSummary_copper_and_tin_mining_1": {
+    "description": "Tech tree dialog effect line (techEffectSummary_copper_and_tin_mining_1)."
+  },
+  "techEffectSummary_copper_and_tin_mining_2": "Enables: Military branches that require this tech",
+  "@techEffectSummary_copper_and_tin_mining_2": {
+    "description": "Tech tree dialog effect line (techEffectSummary_copper_and_tin_mining_2)."
+  },
+  "techEffectSummary_cotton_gin_0": "Improves: Cotton extraction cap to 4",
+  "@techEffectSummary_cotton_gin_0": {
+    "description": "Tech tree dialog effect line (techEffectSummary_cotton_gin_0)."
+  },
+  "techEffectSummary_cotton_gin_1": "Prerequisite-only: catalog leaf; extraction-cap increase is the active benefit",
+  "@techEffectSummary_cotton_gin_1": {
+    "description": "Tech tree dialog effect line (techEffectSummary_cotton_gin_1)."
+  },
+  "techEffectSummary_cotton_planting_0": "Improves: Cotton extraction cap to 2",
+  "@techEffectSummary_cotton_planting_0": {
+    "description": "Tech tree dialog effect line (techEffectSummary_cotton_planting_0)."
+  },
+  "techEffectSummary_cotton_planting_1": "Unlocks: Large Cotton Plantations",
+  "@techEffectSummary_cotton_planting_1": {
+    "description": "Tech tree dialog effect line (techEffectSummary_cotton_planting_1)."
+  },
+  "techEffectSummary_cotton_weaving_0": "Enables: Cloth production from cotton",
+  "@techEffectSummary_cotton_weaving_0": {
+    "description": "Tech tree dialog effect line (techEffectSummary_cotton_weaving_0)."
+  },
+  "techEffectSummary_cotton_weaving_1": "Prerequisite-only: catalog leaf; recipe unlock is the active benefit",
+  "@techEffectSummary_cotton_weaving_1": {
+    "description": "Tech tree dialog effect line (techEffectSummary_cotton_weaving_1)."
+  },
+  "techEffectSummary_crop_rotation_0": "Unlocks: Sheep Ranching, Animal Husbandry, and Steppe Horsemen research paths",
+  "@techEffectSummary_crop_rotation_0": {
+    "description": "Tech tree dialog effect line (techEffectSummary_crop_rotation_0)."
+  },
+  "techEffectSummary_crucible_process_0": "Prerequisite-only: Steel chain for Bayonet, rifles, steam, and cannons",
+  "@techEffectSummary_crucible_process_0": {
+    "description": "Tech tree dialog effect line (techEffectSummary_crucible_process_0)."
+  },
+  "techEffectSummary_crucible_process_1": "Unlocks: No regiment from this tech alone",
+  "@techEffectSummary_crucible_process_1": {
+    "description": "Tech tree dialog effect line (techEffectSummary_crucible_process_1)."
+  },
+  "techEffectSummary_diplomatic_expertise_0": "Enables: Embassy overtures with Minor Nations",
+  "@techEffectSummary_diplomatic_expertise_0": {
+    "description": "Tech tree dialog effect line (techEffectSummary_diplomatic_expertise_0)."
+  },
+  "techEffectSummary_diplomatic_expertise_1": "Enables: civilian work in embassy-linked Minor Nations",
+  "@techEffectSummary_diplomatic_expertise_1": {
+    "description": "Tech tree dialog effect line (techEffectSummary_diplomatic_expertise_1)."
+  },
+  "techEffectSummary_diplomatic_expertise_2": "Unlocks: National Bureaucracy",
+  "@techEffectSummary_diplomatic_expertise_2": {
+    "description": "Tech tree dialog effect line (techEffectSummary_diplomatic_expertise_2)."
+  },
+  "techEffectSummary_discovery_of_cotton_0": "Enables: Research when player has revealed cotton (discovery rule)",
+  "@techEffectSummary_discovery_of_cotton_0": {
+    "description": "Tech tree dialog effect line (techEffectSummary_discovery_of_cotton_0)."
+  },
+  "techEffectSummary_discovery_of_cotton_1": "Unlocks: Cotton Planting and Cotton Weaving",
+  "@techEffectSummary_discovery_of_cotton_1": {
+    "description": "Tech tree dialog effect line (techEffectSummary_discovery_of_cotton_1)."
+  },
+  "techEffectSummary_discovery_of_furs_0": "Enables: Research when player has revealed furs (discovery rule)",
+  "@techEffectSummary_discovery_of_furs_0": {
+    "description": "Tech tree dialog effect line (techEffectSummary_discovery_of_furs_0)."
+  },
+  "techEffectSummary_discovery_of_furs_1": "Unlocks: Improved Trapping Techniques and Hat Production",
+  "@techEffectSummary_discovery_of_furs_1": {
+    "description": "Tech tree dialog effect line (techEffectSummary_discovery_of_furs_1)."
+  },
+  "techEffectSummary_discovery_of_gems_or_diamonds_0": "Enables: Research when player has revealed and prospected gems/diamonds",
+  "@techEffectSummary_discovery_of_gems_or_diamonds_0": {
+    "description": "Tech tree dialog effect line (techEffectSummary_discovery_of_gems_or_diamonds_0)."
+  },
+  "techEffectSummary_discovery_of_gems_or_diamonds_1": "Unlocks: Precious Stone Mining",
+  "@techEffectSummary_discovery_of_gems_or_diamonds_1": {
+    "description": "Tech tree dialog effect line (techEffectSummary_discovery_of_gems_or_diamonds_1)."
+  },
+  "techEffectSummary_discovery_of_gold_or_silver_0": "Enables: Research when player has revealed and prospected gold/silver",
+  "@techEffectSummary_discovery_of_gold_or_silver_0": {
+    "description": "Tech tree dialog effect line (techEffectSummary_discovery_of_gold_or_silver_0)."
+  },
+  "techEffectSummary_discovery_of_gold_or_silver_1": "Unlocks: Precious Metals Mining",
+  "@techEffectSummary_discovery_of_gold_or_silver_1": {
+    "description": "Tech tree dialog effect line (techEffectSummary_discovery_of_gold_or_silver_1)."
+  },
+  "techEffectSummary_discovery_of_spices_0": "Enables: Research when player has revealed spices (discovery rule)",
+  "@techEffectSummary_discovery_of_spices_0": {
+    "description": "Tech tree dialog effect line (techEffectSummary_discovery_of_spices_0)."
+  },
+  "techEffectSummary_discovery_of_spices_1": "Unlocks: Improved Sea Routes",
+  "@techEffectSummary_discovery_of_spices_1": {
+    "description": "Tech tree dialog effect line (techEffectSummary_discovery_of_spices_1)."
+  },
+  "techEffectSummary_discovery_of_sugar_0": "Enables: Research when player has revealed sugar cane (discovery rule)",
+  "@techEffectSummary_discovery_of_sugar_0": {
+    "description": "Tech tree dialog effect line (techEffectSummary_discovery_of_sugar_0)."
+  },
+  "techEffectSummary_discovery_of_sugar_1": "Unlocks: Sugar Planting and Sugar Refining",
+  "@techEffectSummary_discovery_of_sugar_1": {
+    "description": "Tech tree dialog effect line (techEffectSummary_discovery_of_sugar_1)."
+  },
+  "techEffectSummary_discovery_of_tobacco_0": "Enables: Research when player has revealed tobacco (discovery rule)",
+  "@techEffectSummary_discovery_of_tobacco_0": {
+    "description": "Tech tree dialog effect line (techEffectSummary_discovery_of_tobacco_0)."
+  },
+  "techEffectSummary_discovery_of_tobacco_1": "Unlocks: Tobacco Planting and Cigar Production",
+  "@techEffectSummary_discovery_of_tobacco_1": {
+    "description": "Tech tree dialog effect line (techEffectSummary_discovery_of_tobacco_1)."
+  },
+  "techEffectSummary_dynamite_0": "Enables: Railroads on mountains",
+  "@techEffectSummary_dynamite_0": {
+    "description": "Tech tree dialog effect line (techEffectSummary_dynamite_0)."
+  },
+  "techEffectSummary_dynamite_1": "Unlocks: Safety Lamp, Geological Prospecting, Amalgamation Process",
+  "@techEffectSummary_dynamite_1": {
+    "description": "Tech tree dialog effect line (techEffectSummary_dynamite_1)."
+  },
+  "techEffectSummary_early_rifles_0": "Improves: Calivermen regiment upgrade path",
+  "@techEffectSummary_early_rifles_0": {
+    "description": "Tech tree dialog effect line (techEffectSummary_early_rifles_0)."
+  },
+  "techEffectSummary_early_rifles_1": "Prerequisite for: Long Range Rifles, Scouting, and Needle Guns",
+  "@techEffectSummary_early_rifles_1": {
+    "description": "Tech tree dialog effect line (techEffectSummary_early_rifles_1)."
+  },
+  "techEffectSummary_early_steam_engine_0": "Enables: Rail Builder and railroads on flat terrain",
+  "@techEffectSummary_early_steam_engine_0": {
+    "description": "Tech tree dialog effect line (techEffectSummary_early_steam_engine_0)."
+  },
+  "techEffectSummary_early_steam_engine_1": "Unlocks: Later Steam Engine, Riverboats, Tobacco Industry",
+  "@techEffectSummary_early_steam_engine_1": {
+    "description": "Tech tree dialog effect line (techEffectSummary_early_steam_engine_1)."
+  },
+  "techEffectSummary_efficient_extraction_of_copper_and_tin_0": "Improves: Copper/Tin extraction cap to 4",
+  "@techEffectSummary_efficient_extraction_of_copper_and_tin_0": {
+    "description": "Tech tree dialog effect line (techEffectSummary_efficient_extraction_of_copper_and_tin_0)."
+  },
+  "techEffectSummary_efficient_extraction_of_copper_and_tin_1": "Prerequisite-only: catalog leaf; extraction-cap increase is the active benefit",
+  "@techEffectSummary_efficient_extraction_of_copper_and_tin_1": {
+    "description": "Tech tree dialog effect line (techEffectSummary_efficient_extraction_of_copper_and_tin_1)."
+  },
+  "techEffectSummary_elite_military_training_0": "Improves: Grenadiers regiment upgrade path",
+  "@techEffectSummary_elite_military_training_0": {
+    "description": "Tech tree dialog effect line (techEffectSummary_elite_military_training_0)."
+  },
+  "techEffectSummary_empire_building_0": "Enables: Join Empire overture toward nearly-defeated Great Powers",
+  "@techEffectSummary_empire_building_0": {
+    "description": "Tech tree dialog effect line (techEffectSummary_empire_building_0)."
+  },
+  "techEffectSummary_empire_building_1": "Requires: Target owns ≤3 provinces and lost original capital",
+  "@techEffectSummary_empire_building_1": {
+    "description": "Tech tree dialog effect line (techEffectSummary_empire_building_1)."
+  },
+  "techEffectSummary_emplaced_siege_guns_0": "Improves: defender emplaced fort batteries to Siege Gun quality (final emplaced tier)",
+  "@techEffectSummary_emplaced_siege_guns_0": {
+    "description": "Tech tree dialog effect line (techEffectSummary_emplaced_siege_guns_0)."
+  },
+  "techEffectSummary_excessive_fur_harvesting_0": "Improves: Furs extraction cap to 4",
+  "@techEffectSummary_excessive_fur_harvesting_0": {
+    "description": "Tech tree dialog effect line (techEffectSummary_excessive_fur_harvesting_0)."
+  },
+  "techEffectSummary_excessive_fur_harvesting_1": "Prerequisite-only: catalog leaf; extraction-cap increase is the active benefit",
+  "@techEffectSummary_excessive_fur_harvesting_1": {
+    "description": "Tech tree dialog effect line (techEffectSummary_excessive_fur_harvesting_1)."
+  },
+  "techEffectSummary_explosives_0": "Improves: Musketeers regiment upgrade path",
+  "@techEffectSummary_explosives_0": {
+    "description": "Tech tree dialog effect line (techEffectSummary_explosives_0)."
+  },
+  "techEffectSummary_explosives_1": "Prerequisite for: Elite Military Training",
+  "@techEffectSummary_explosives_1": {
+    "description": "Tech tree dialog effect line (techEffectSummary_explosives_1)."
+  },
+  "techEffectSummary_extraction_of_precious_metals_0": "Improves: Gold/silver extraction cap to 3",
+  "@techEffectSummary_extraction_of_precious_metals_0": {
+    "description": "Tech tree dialog effect line (techEffectSummary_extraction_of_precious_metals_0)."
+  },
+  "techEffectSummary_extraction_of_precious_metals_1": "Unlocks: Amalgamation Process (with Dynamite)",
+  "@techEffectSummary_extraction_of_precious_metals_1": {
+    "description": "Tech tree dialog effect line (techEffectSummary_extraction_of_precious_metals_1)."
+  },
+  "techEffectSummary_field_artillery_tactics_0": "Improves: Light Artillery regiment upgrade path",
+  "@techEffectSummary_field_artillery_tactics_0": {
+    "description": "Tech tree dialog effect line (techEffectSummary_field_artillery_tactics_0)."
+  },
+  "techEffectSummary_geological_prospecting_0": "Improves: Gems/diamonds extraction cap to 4",
+  "@techEffectSummary_geological_prospecting_0": {
+    "description": "Tech tree dialog effect line (techEffectSummary_geological_prospecting_0)."
+  },
+  "techEffectSummary_geological_prospecting_1": "Prerequisite-only: catalog leaf; extraction-cap increase is the active benefit",
+  "@techEffectSummary_geological_prospecting_1": {
+    "description": "Tech tree dialog effect line (techEffectSummary_geological_prospecting_1)."
+  },
+  "techEffectSummary_hat_production_0": "Enables: Fur hats luxury production for Master-tier worker consumption",
+  "@techEffectSummary_hat_production_0": {
+    "description": "Tech tree dialog effect line (techEffectSummary_hat_production_0)."
+  },
+  "techEffectSummary_hat_production_1": "Unlocks: Master Artisans",
+  "@techEffectSummary_hat_production_1": {
+    "description": "Tech tree dialog effect line (techEffectSummary_hat_production_1)."
+  },
+  "techEffectSummary_heavy_artillery_0": "Improves: Royal Artillery regiment upgrade path",
+  "@techEffectSummary_heavy_artillery_0": {
+    "description": "Tech tree dialog effect line (techEffectSummary_heavy_artillery_0)."
+  },
+  "techEffectSummary_heavy_artillery_1": "Prerequisite for: High Grade Steel and Emplaced Siege Guns",
+  "@techEffectSummary_heavy_artillery_1": {
+    "description": "Tech tree dialog effect line (techEffectSummary_heavy_artillery_1)."
+  },
+  "techEffectSummary_heavy_emplaced_artillery_0": "Improves: defender emplaced fort batteries to Heavy quality (Royal → Heavy line)",
+  "@techEffectSummary_heavy_emplaced_artillery_0": {
+    "description": "Tech tree dialog effect line (techEffectSummary_heavy_emplaced_artillery_0)."
+  },
+  "techEffectSummary_heavy_emplaced_artillery_1": "Prerequisite for: Emplaced Siege Guns",
+  "@techEffectSummary_heavy_emplaced_artillery_1": {
+    "description": "Tech tree dialog effect line (techEffectSummary_heavy_emplaced_artillery_1)."
+  },
+  "techEffectSummary_high_grade_steel_0": "Improves: Heavy Artillery regiment upgrade path",
+  "@techEffectSummary_high_grade_steel_0": {
+    "description": "Tech tree dialog effect line (techEffectSummary_high_grade_steel_0)."
+  },
+  "techEffectSummary_horse_artillery_0": "Prerequisite for: Light Artillery Tactics",
+  "@techEffectSummary_horse_artillery_0": {
+    "description": "Tech tree dialog effect line (techEffectSummary_horse_artillery_0)."
+  },
+  "techEffectSummary_hussars_0": "Improves: Cossacks regiment upgrade path",
+  "@techEffectSummary_hussars_0": {
+    "description": "Tech tree dialog effect line (techEffectSummary_hussars_0)."
+  },
+  "techEffectSummary_hussars_1": "Prerequisite for: Scouting",
+  "@techEffectSummary_hussars_1": {
+    "description": "Tech tree dialog effect line (techEffectSummary_hussars_1)."
+  },
+  "techEffectSummary_improved_cavalry_tactics_0": "Prerequisite for: Hussars and Improved Cavalry Weapons",
+  "@techEffectSummary_improved_cavalry_tactics_0": {
+    "description": "Tech tree dialog effect line (techEffectSummary_improved_cavalry_tactics_0)."
+  },
+  "techEffectSummary_improved_cavalry_weapons_0": "Improves: Harquebusiers regiment upgrade path",
+  "@techEffectSummary_improved_cavalry_weapons_0": {
+    "description": "Tech tree dialog effect line (techEffectSummary_improved_cavalry_weapons_0)."
+  },
+  "techEffectSummary_improved_cavalry_weapons_1": "Prerequisite for: Repeating Cavalry Carbine",
+  "@techEffectSummary_improved_cavalry_weapons_1": {
+    "description": "Tech tree dialog effect line (techEffectSummary_improved_cavalry_weapons_1)."
+  },
+  "techEffectSummary_improved_food_preservation_0": "Improves: Spices extraction cap to 4",
+  "@techEffectSummary_improved_food_preservation_0": {
+    "description": "Tech tree dialog effect line (techEffectSummary_improved_food_preservation_0)."
+  },
+  "techEffectSummary_improved_food_preservation_1": "Prerequisite-only: catalog leaf; extraction-cap increase is the active benefit",
+  "@techEffectSummary_improved_food_preservation_1": {
+    "description": "Tech tree dialog effect line (techEffectSummary_improved_food_preservation_1)."
+  },
+  "techEffectSummary_improved_infantry_tactics_0": "Improves: General cap floor to at least 3 (or National Bureaucracy)",
+  "@techEffectSummary_improved_infantry_tactics_0": {
+    "description": "Tech tree dialog effect line (techEffectSummary_improved_infantry_tactics_0)."
+  },
+  "techEffectSummary_improved_infantry_tactics_1": "Unlocks: Early Rifles (with Crucible Process)",
+  "@techEffectSummary_improved_infantry_tactics_1": {
+    "description": "Tech tree dialog effect line (techEffectSummary_improved_infantry_tactics_1)."
+  },
+  "techEffectSummary_improved_iron_weapons_0": "Unlocks: Bayonet (with Crucible Process)",
+  "@techEffectSummary_improved_iron_weapons_0": {
+    "description": "Tech tree dialog effect line (techEffectSummary_improved_iron_weapons_0)."
+  },
+  "techEffectSummary_improved_sail_design_0": "Unlocks: Advanced Hull Design path (University + Privateering)",
+  "@techEffectSummary_improved_sail_design_0": {
+    "description": "Tech tree dialog effect line (techEffectSummary_improved_sail_design_0)."
+  },
+  "techEffectSummary_improved_sea_routes_0": "Improves: Spices extraction cap to 2",
+  "@techEffectSummary_improved_sea_routes_0": {
+    "description": "Tech tree dialog effect line (techEffectSummary_improved_sea_routes_0)."
+  },
+  "techEffectSummary_improved_sea_routes_1": "Unlocks: Large Spice Plantations",
+  "@techEffectSummary_improved_sea_routes_1": {
+    "description": "Tech tree dialog effect line (techEffectSummary_improved_sea_routes_1)."
+  },
+  "techEffectSummary_improved_trapping_techniques_0": "Improves: Furs extraction cap to 2",
+  "@techEffectSummary_improved_trapping_techniques_0": {
+    "description": "Tech tree dialog effect line (techEffectSummary_improved_trapping_techniques_0)."
+  },
+  "techEffectSummary_improved_trapping_techniques_1": "Unlocks: Riverboats",
+  "@techEffectSummary_improved_trapping_techniques_1": {
+    "description": "Tech tree dialog effect line (techEffectSummary_improved_trapping_techniques_1)."
+  },
+  "techEffectSummary_industrial_funding_of_research_0": "Unlocks: Needle Guns, Repeating Cavalry Carbine, High Grade Steel, Advanced Iron Working (as prerequisite)",
+  "@techEffectSummary_industrial_funding_of_research_0": {
+    "description": "Tech tree dialog effect line (techEffectSummary_industrial_funding_of_research_0)."
+  },
+  "techEffectSummary_industrial_funding_of_research_1": "Improves: +20% effective RP (floor) for military and naval category research allocations",
+  "@techEffectSummary_industrial_funding_of_research_1": {
+    "description": "Tech tree dialog effect line (techEffectSummary_industrial_funding_of_research_1)."
+  },
+  "techEffectSummary_industrial_iron_mining_0": "Improves: Iron extraction cap to 4",
+  "@techEffectSummary_industrial_iron_mining_0": {
+    "description": "Tech tree dialog effect line (techEffectSummary_industrial_iron_mining_0)."
+  },
+  "techEffectSummary_industrial_iron_mining_1": "Prerequisite-only: catalog leaf; extraction-cap increase is the active benefit",
+  "@techEffectSummary_industrial_iron_mining_1": {
+    "description": "Tech tree dialog effect line (techEffectSummary_industrial_iron_mining_1)."
+  },
+  "techEffectSummary_industrial_machinery_0": "Unlocks: Explosives, Improved Cavalry Weapons, Industrial Funding of Research (as prerequisite)",
+  "@techEffectSummary_industrial_machinery_0": {
+    "description": "Tech tree dialog effect line (techEffectSummary_industrial_machinery_0)."
+  },
+  "techEffectSummary_industrial_machinery_1": "Improves: ×0.75 multiplicative on per-land-battle attack treasury cost at combat resolution",
+  "@techEffectSummary_industrial_machinery_1": {
+    "description": "Tech tree dialog effect line (techEffectSummary_industrial_machinery_1)."
+  },
+  "techEffectSummary_iron_mining_0": "Improves: Iron extraction cap to 2",
+  "@techEffectSummary_iron_mining_0": {
+    "description": "Tech tree dialog effect line (techEffectSummary_iron_mining_0)."
+  },
+  "techEffectSummary_iron_mining_1": "Unlocks: Steam in Mining",
+  "@techEffectSummary_iron_mining_1": {
+    "description": "Tech tree dialog effect line (techEffectSummary_iron_mining_1)."
+  },
+  "techEffectSummary_land_enclosure_0": "Improves: Grain extraction cap to 2",
+  "@techEffectSummary_land_enclosure_0": {
+    "description": "Tech tree dialog effect line (techEffectSummary_land_enclosure_0)."
+  },
+  "techEffectSummary_land_enclosure_1": "Unlocks: Seed Drill, Money Lending, and Organised Regiments",
+  "@techEffectSummary_land_enclosure_1": {
+    "description": "Tech tree dialog effect line (techEffectSummary_land_enclosure_1)."
+  },
+  "techEffectSummary_large_coal_mines_0": "Improves: Coal extraction cap to 3",
+  "@techEffectSummary_large_coal_mines_0": {
+    "description": "Tech tree dialog effect line (techEffectSummary_large_coal_mines_0)."
+  },
+  "techEffectSummary_large_coal_mines_1": "Unlocks: Safety Lamp (with Dynamite)",
+  "@techEffectSummary_large_coal_mines_1": {
+    "description": "Tech tree dialog effect line (techEffectSummary_large_coal_mines_1)."
+  },
+  "techEffectSummary_large_coal_mines_2": "Unlocks: Efficient Extraction of Copper & Tin",
+  "@techEffectSummary_large_coal_mines_2": {
+    "description": "Tech tree dialog effect line (techEffectSummary_large_coal_mines_2)."
+  },
+  "techEffectSummary_large_copper_and_tin_mines_0": "Improves: Copper/Tin extraction cap to 3",
+  "@techEffectSummary_large_copper_and_tin_mines_0": {
+    "description": "Tech tree dialog effect line (techEffectSummary_large_copper_and_tin_mines_0)."
+  },
+  "techEffectSummary_large_copper_and_tin_mines_1": "Unlocks: Efficient Extraction of Copper & Tin (with Large Coal Mines)",
+  "@techEffectSummary_large_copper_and_tin_mines_1": {
+    "description": "Tech tree dialog effect line (techEffectSummary_large_copper_and_tin_mines_1)."
+  },
+  "techEffectSummary_large_copper_and_tin_mines_2": "Prerequisite for: Ship of the Line",
+  "@techEffectSummary_large_copper_and_tin_mines_2": {
+    "description": "Tech tree dialog effect line (techEffectSummary_large_copper_and_tin_mines_2)."
+  },
+  "techEffectSummary_large_cotton_plantations_0": "Improves: Cotton extraction cap to 3",
+  "@techEffectSummary_large_cotton_plantations_0": {
+    "description": "Tech tree dialog effect line (techEffectSummary_large_cotton_plantations_0)."
+  },
+  "techEffectSummary_large_cotton_plantations_1": "Unlocks: Cotton Gin",
+  "@techEffectSummary_large_cotton_plantations_1": {
+    "description": "Tech tree dialog effect line (techEffectSummary_large_cotton_plantations_1)."
+  },
+  "techEffectSummary_large_hulls_0": "Unlocks: Ship of the Line (with Large Copper and Tin Mines)",
+  "@techEffectSummary_large_hulls_0": {
+    "description": "Tech tree dialog effect line (techEffectSummary_large_hulls_0)."
+  },
+  "techEffectSummary_large_precious_stone_mines_0": "Improves: Gems/diamonds extraction cap to 3",
+  "@techEffectSummary_large_precious_stone_mines_0": {
+    "description": "Tech tree dialog effect line (techEffectSummary_large_precious_stone_mines_0)."
+  },
+  "techEffectSummary_large_precious_stone_mines_1": "Unlocks: Geological Prospecting (with Dynamite); Modern Military Funding (with Banking and Modern Forts)",
+  "@techEffectSummary_large_precious_stone_mines_1": {
+    "description": "Tech tree dialog effect line (techEffectSummary_large_precious_stone_mines_1)."
+  },
+  "techEffectSummary_large_spice_plantations_0": "Improves: Spices extraction cap to 3",
+  "@techEffectSummary_large_spice_plantations_0": {
+    "description": "Tech tree dialog effect line (techEffectSummary_large_spice_plantations_0)."
+  },
+  "techEffectSummary_large_spice_plantations_1": "Unlocks: Improved Food Preservation",
+  "@techEffectSummary_large_spice_plantations_1": {
+    "description": "Tech tree dialog effect line (techEffectSummary_large_spice_plantations_1)."
+  },
+  "techEffectSummary_large_sugar_plantations_0": "Improves: Sugar cane extraction cap to 3",
+  "@techEffectSummary_large_sugar_plantations_0": {
+    "description": "Tech tree dialog effect line (techEffectSummary_large_sugar_plantations_0)."
+  },
+  "techEffectSummary_large_sugar_plantations_1": "Unlocks: Sugar Industry",
+  "@techEffectSummary_large_sugar_plantations_1": {
+    "description": "Tech tree dialog effect line (techEffectSummary_large_sugar_plantations_1)."
+  },
+  "techEffectSummary_large_tobacco_plantations_0": "Improves: Tobacco extraction cap to 3",
+  "@techEffectSummary_large_tobacco_plantations_0": {
+    "description": "Tech tree dialog effect line (techEffectSummary_large_tobacco_plantations_0)."
+  },
+  "techEffectSummary_large_tobacco_plantations_1": "Unlocks: Tobacco Industry",
+  "@techEffectSummary_large_tobacco_plantations_1": {
+    "description": "Tech tree dialog effect line (techEffectSummary_large_tobacco_plantations_1)."
+  },
+  "techEffectSummary_later_steam_engine_0": "Enables: Railroads on hills and swamps",
+  "@techEffectSummary_later_steam_engine_0": {
+    "description": "Tech tree dialog effect line (techEffectSummary_later_steam_engine_0)."
+  },
+  "techEffectSummary_later_steam_engine_1": "Unlocks: Dynamite and Excessive Fur Harvesting",
+  "@techEffectSummary_later_steam_engine_1": {
+    "description": "Tech tree dialog effect line (techEffectSummary_later_steam_engine_1)."
+  },
+  "techEffectSummary_light_artillery_tactics_0": "Improves: Horse Artillery regiment upgrade path",
+  "@techEffectSummary_light_artillery_tactics_0": {
+    "description": "Tech tree dialog effect line (techEffectSummary_light_artillery_tactics_0)."
+  },
+  "techEffectSummary_light_artillery_tactics_1": "Prerequisite for: Field Artillery Tactics",
+  "@techEffectSummary_light_artillery_tactics_1": {
+    "description": "Tech tree dialog effect line (techEffectSummary_light_artillery_tactics_1)."
+  },
+  "techEffectSummary_long_range_rifles_0": "Improves: Skirmishers regiment upgrade path",
+  "@techEffectSummary_long_range_rifles_0": {
+    "description": "Tech tree dialog effect line (techEffectSummary_long_range_rifles_0)."
+  },
+  "techEffectSummary_master_artisans_0": "Enables: Master tier (8x labour; consumes fur hats)",
+  "@techEffectSummary_master_artisans_0": {
+    "description": "Tech tree dialog effect line (techEffectSummary_master_artisans_0)."
+  },
+  "techEffectSummary_master_artisans_1": "Unlocks: Banking, Nationalism, Scientific Cattle Breeding",
+  "@techEffectSummary_master_artisans_1": {
+    "description": "Tech tree dialog effect line (techEffectSummary_master_artisans_1)."
+  },
+  "techEffectSummary_merchant_companies_0": "Enables: Merchant civilian unit construction",
+  "@techEffectSummary_merchant_companies_0": {
+    "description": "Tech tree dialog effect line (techEffectSummary_merchant_companies_0)."
+  },
+  "techEffectSummary_merchant_companies_1": "Enables: purchase_land in Minor Nations/Tribes (requires embassy, not at war)",
+  "@techEffectSummary_merchant_companies_1": {
+    "description": "Tech tree dialog effect line (techEffectSummary_merchant_companies_1)."
+  },
+  "techEffectSummary_merchant_companies_2": "Unlocks: Trade Fairs",
+  "@techEffectSummary_merchant_companies_2": {
+    "description": "Tech tree dialog effect line (techEffectSummary_merchant_companies_2)."
+  },
+  "techEffectSummary_merchant_steamships_0": "Enables: Steam-powered merchant hull for seagoing trade",
+  "@techEffectSummary_merchant_steamships_0": {
+    "description": "Tech tree dialog effect line (techEffectSummary_merchant_steamships_0)."
+  },
+  "techEffectSummary_mine_engineering_0": "Enables: Builder upgrades to Fort Level 2",
+  "@techEffectSummary_mine_engineering_0": {
+    "description": "Tech tree dialog effect line (techEffectSummary_mine_engineering_0)."
+  },
+  "techEffectSummary_mine_engineering_1": "Unlocks: Iron Mining, Copper and Tin Mining, and Coal Mining",
+  "@techEffectSummary_mine_engineering_1": {
+    "description": "Tech tree dialog effect line (techEffectSummary_mine_engineering_1)."
+  },
+  "techEffectSummary_modern_forts_0": "Enables: Builder fort upgrades to level 3 (Modern: 3 emplaced guns, strongest walls)",
+  "@techEffectSummary_modern_forts_0": {
+    "description": "Tech tree dialog effect line (techEffectSummary_modern_forts_0)."
+  },
+  "techEffectSummary_modern_forts_1": "Unlocks: Heavy Artillery and Modern Military Funding (as prerequisite)",
+  "@techEffectSummary_modern_forts_1": {
+    "description": "Tech tree dialog effect line (techEffectSummary_modern_forts_1)."
+  },
+  "techEffectSummary_modern_military_funding_0": "Unlocks: Field Artillery Tactics, High Grade Steel, Elite Military Training stack",
+  "@techEffectSummary_modern_military_funding_0": {
+    "description": "Tech tree dialog effect line (techEffectSummary_modern_military_funding_0)."
+  },
+  "techEffectSummary_modern_military_funding_1": "Improves: ×0.85 multiplicative on per-land-battle attack treasury cost (stacks with Industrial Machinery)",
+  "@techEffectSummary_modern_military_funding_1": {
+    "description": "Tech tree dialog effect line (techEffectSummary_modern_military_funding_1)."
+  },
+  "techEffectSummary_moldboard_plow_0": "Improves: Grain extraction cap to 4",
+  "@techEffectSummary_moldboard_plow_0": {
+    "description": "Tech tree dialog effect line (techEffectSummary_moldboard_plow_0)."
+  },
+  "techEffectSummary_moldboard_plow_1": "Terminal tech: nothing else in the catalog requires this",
+  "@techEffectSummary_moldboard_plow_1": {
+    "description": "Tech tree dialog effect line (techEffectSummary_moldboard_plow_1)."
+  },
+  "techEffectSummary_money_lending_0": "Enables: Research-phase treasury floor to -500",
+  "@techEffectSummary_money_lending_0": {
+    "description": "Tech tree dialog effect line (techEffectSummary_money_lending_0)."
+  },
+  "techEffectSummary_money_lending_1": "Prerequisite for: University, National Bureaucracy",
+  "@techEffectSummary_money_lending_1": {
+    "description": "Tech tree dialog effect line (techEffectSummary_money_lending_1)."
+  },
+  "techEffectSummary_money_lending_2": "Deferred: General borrowing/interest not simulated yet",
+  "@techEffectSummary_money_lending_2": {
+    "description": "Tech tree dialog effect line (techEffectSummary_money_lending_2)."
+  },
+  "techEffectSummary_national_bureaucracy_0": "Enables: Builder upgrade_town work order",
+  "@techEffectSummary_national_bureaucracy_0": {
+    "description": "Tech tree dialog effect line (techEffectSummary_national_bureaucracy_0)."
+  },
+  "techEffectSummary_national_bureaucracy_1": "Improves: General cap floor to at least 3",
+  "@techEffectSummary_national_bureaucracy_1": {
+    "description": "Tech tree dialog effect line (techEffectSummary_national_bureaucracy_1)."
+  },
+  "techEffectSummary_national_bureaucracy_2": "Unlocks: Propaganda",
+  "@techEffectSummary_national_bureaucracy_2": {
+    "description": "Tech tree dialog effect line (techEffectSummary_national_bureaucracy_2)."
+  },
+  "techEffectSummary_nationalism_0": "Improves: Battle deployment base limit to 12 regiments (vs 10)",
+  "@techEffectSummary_nationalism_0": {
+    "description": "Tech tree dialog effect line (techEffectSummary_nationalism_0)."
+  },
+  "techEffectSummary_nationalism_1": "Improves: General cap floor to at least 4",
+  "@techEffectSummary_nationalism_1": {
+    "description": "Tech tree dialog effect line (techEffectSummary_nationalism_1)."
+  },
+  "techEffectSummary_nationalism_2": "Unlocks: Empire Building (with Banking)",
+  "@techEffectSummary_nationalism_2": {
+    "description": "Tech tree dialog effect line (techEffectSummary_nationalism_2)."
+  },
+  "techEffectSummary_navigation_0": "Unlocks: Large Hulls and Privateering Companies",
+  "@techEffectSummary_navigation_0": {
+    "description": "Tech tree dialog effect line (techEffectSummary_navigation_0)."
+  },
+  "techEffectSummary_needle_guns_0": "Improves: Regulars regiment upgrade path",
+  "@techEffectSummary_needle_guns_0": {
+    "description": "Tech tree dialog effect line (techEffectSummary_needle_guns_0)."
+  },
+  "techEffectSummary_needle_guns_1": "Prerequisite for: Elite Military Training",
+  "@techEffectSummary_needle_guns_1": {
+    "description": "Tech tree dialog effect line (techEffectSummary_needle_guns_1)."
+  },
+  "techEffectSummary_organised_regiments_0": "Improves: General cap floor to at least 2",
+  "@techEffectSummary_organised_regiments_0": {
+    "description": "Tech tree dialog effect line (techEffectSummary_organised_regiments_0)."
+  },
+  "techEffectSummary_organised_regiments_1": "Unlocks: Improved Iron/Infantry/Weapon Craftsmanship doctrine paths",
+  "@techEffectSummary_organised_regiments_1": {
+    "description": "Tech tree dialog effect line (techEffectSummary_organised_regiments_1)."
+  },
+  "techEffectSummary_paddlewheels_0": "Unlocks: Merchant Steamships (with Riverboats)",
+  "@techEffectSummary_paddlewheels_0": {
+    "description": "Tech tree dialog effect line (techEffectSummary_paddlewheels_0)."
+  },
+  "techEffectSummary_precious_metals_mining_0": "Improves: Gold/silver extraction cap to 2",
+  "@techEffectSummary_precious_metals_mining_0": {
+    "description": "Tech tree dialog effect line (techEffectSummary_precious_metals_mining_0)."
+  },
+  "techEffectSummary_precious_metals_mining_1": "Unlocks: Extraction of Precious Metals",
+  "@techEffectSummary_precious_metals_mining_1": {
+    "description": "Tech tree dialog effect line (techEffectSummary_precious_metals_mining_1)."
+  },
+  "techEffectSummary_precious_stone_mining_0": "Improves: Gems/diamonds extraction cap to 2",
+  "@techEffectSummary_precious_stone_mining_0": {
+    "description": "Tech tree dialog effect line (techEffectSummary_precious_stone_mining_0)."
+  },
+  "techEffectSummary_precious_stone_mining_1": "Unlocks: Large Precious Stone Mines (with Modern Forts)",
+  "@techEffectSummary_precious_stone_mining_1": {
+    "description": "Tech tree dialog effect line (techEffectSummary_precious_stone_mining_1)."
+  },
+  "techEffectSummary_printing_press_0": "Unlocks: Trained Journeymen, University, and military doctrine paths",
+  "@techEffectSummary_printing_press_0": {
+    "description": "Tech tree dialog effect line (techEffectSummary_printing_press_0)."
+  },
+  "techEffectSummary_printing_press_1": "Prerequisite-only: unlock paths only; no direct economy modifier",
+  "@techEffectSummary_printing_press_1": {
+    "description": "Tech tree dialog effect line (techEffectSummary_printing_press_1)."
+  },
+  "techEffectSummary_privateering_companies_0": "Improves: Patrol/Blockade interception and trade-raid effectiveness",
+  "@techEffectSummary_privateering_companies_0": {
+    "description": "Tech tree dialog effect line (techEffectSummary_privateering_companies_0)."
+  },
+  "techEffectSummary_privateering_companies_1": "Unlocks: Advanced Hull Design (frigate doctrine prerequisite)",
+  "@techEffectSummary_privateering_companies_1": {
+    "description": "Tech tree dialog effect line (techEffectSummary_privateering_companies_1)."
+  },
+  "techEffectSummary_propaganda_0": "Improves: Diplomatic protest war penalty against aggressor (-10 -> -5)",
+  "@techEffectSummary_propaganda_0": {
+    "description": "Tech tree dialog effect line (techEffectSummary_propaganda_0)."
+  },
+  "techEffectSummary_propaganda_1": "Unlocks: Nationalism",
+  "@techEffectSummary_propaganda_1": {
+    "description": "Tech tree dialog effect line (techEffectSummary_propaganda_1)."
+  },
+  "techEffectSummary_recruit_steppe_horsemen_0": "Improves: Squires regiment upgrade path",
+  "@techEffectSummary_recruit_steppe_horsemen_0": {
+    "description": "Tech tree dialog effect line (techEffectSummary_recruit_steppe_horsemen_0)."
+  },
+  "techEffectSummary_recruit_steppe_horsemen_1": "Prerequisite for: Hussars",
+  "@techEffectSummary_recruit_steppe_horsemen_1": {
+    "description": "Tech tree dialog effect line (techEffectSummary_recruit_steppe_horsemen_1)."
+  },
+  "techEffectSummary_repeating_cavalry_carbine_0": "Improves: Cuirassiers regiment upgrade path",
+  "@techEffectSummary_repeating_cavalry_carbine_0": {
+    "description": "Tech tree dialog effect line (techEffectSummary_repeating_cavalry_carbine_0)."
+  },
+  "techEffectSummary_riverboats_0": "Improves: Furs extraction cap to 3",
+  "@techEffectSummary_riverboats_0": {
+    "description": "Tech tree dialog effect line (techEffectSummary_riverboats_0)."
+  },
+  "techEffectSummary_riverboats_1": "Unlocks: Excessive Fur Harvesting and Merchant Steamships research paths",
+  "@techEffectSummary_riverboats_1": {
+    "description": "Tech tree dialog effect line (techEffectSummary_riverboats_1)."
+  },
+  "techEffectSummary_road_construction_0": "Enables: Engineer road upgrades to transport level 2",
+  "@techEffectSummary_road_construction_0": {
+    "description": "Tech tree dialog effect line (techEffectSummary_road_construction_0)."
+  },
+  "techEffectSummary_road_construction_1": "Unlocks: Early Steam Engine",
+  "@techEffectSummary_road_construction_1": {
+    "description": "Tech tree dialog effect line (techEffectSummary_road_construction_1)."
+  },
+  "techEffectSummary_safety_lamp_0": "Improves: Coal extraction cap to 4",
+  "@techEffectSummary_safety_lamp_0": {
+    "description": "Tech tree dialog effect line (techEffectSummary_safety_lamp_0)."
+  },
+  "techEffectSummary_safety_lamp_1": "Terminal tech: nothing else in the catalog requires this",
+  "@techEffectSummary_safety_lamp_1": {
+    "description": "Tech tree dialog effect line (techEffectSummary_safety_lamp_1)."
+  },
+  "techEffectSummary_saw_mill_0": "Improves: Timber extraction cap to 2 (forested provinces)",
+  "@techEffectSummary_saw_mill_0": {
+    "description": "Tech tree dialog effect line (techEffectSummary_saw_mill_0)."
+  },
+  "techEffectSummary_saw_mill_1": "Unlocks: Wind Saw Mill",
+  "@techEffectSummary_saw_mill_1": {
+    "description": "Tech tree dialog effect line (techEffectSummary_saw_mill_1)."
+  },
+  "techEffectSummary_scientific_cattle_breeding_0": "Improves: Meat extraction cap to 4",
+  "@techEffectSummary_scientific_cattle_breeding_0": {
+    "description": "Tech tree dialog effect line (techEffectSummary_scientific_cattle_breeding_0)."
+  },
+  "techEffectSummary_scientific_cattle_breeding_1": "Terminal tech: nothing else in the catalog requires this",
+  "@techEffectSummary_scientific_cattle_breeding_1": {
+    "description": "Tech tree dialog effect line (techEffectSummary_scientific_cattle_breeding_1)."
+  },
+  "techEffectSummary_scientific_sheep_breeding_0": "Improves: Wool extraction cap to 3",
+  "@techEffectSummary_scientific_sheep_breeding_0": {
+    "description": "Tech tree dialog effect line (techEffectSummary_scientific_sheep_breeding_0)."
+  },
+  "techEffectSummary_scientific_sheep_breeding_1": "Terminal tech: nothing else in the catalog requires this",
+  "@techEffectSummary_scientific_sheep_breeding_1": {
+    "description": "Tech tree dialog effect line (techEffectSummary_scientific_sheep_breeding_1)."
+  },
+  "techEffectSummary_scouting_0": "Improves: Hussars regiment upgrade path",
+  "@techEffectSummary_scouting_0": {
+    "description": "Tech tree dialog effect line (techEffectSummary_scouting_0)."
+  },
+  "techEffectSummary_seed_drill_0": "Improves: Grain extraction cap to 3",
+  "@techEffectSummary_seed_drill_0": {
+    "description": "Tech tree dialog effect line (techEffectSummary_seed_drill_0)."
+  },
+  "techEffectSummary_seed_drill_1": "Unlocks: Moldboard Plow",
+  "@techEffectSummary_seed_drill_1": {
+    "description": "Tech tree dialog effect line (techEffectSummary_seed_drill_1)."
+  },
+  "techEffectSummary_sheep_ranching_0": "Improves: Wool extraction cap to 2",
+  "@techEffectSummary_sheep_ranching_0": {
+    "description": "Tech tree dialog effect line (techEffectSummary_sheep_ranching_0)."
+  },
+  "techEffectSummary_sheep_ranching_1": "Unlocks: Scientific Sheep Breeding",
+  "@techEffectSummary_sheep_ranching_1": {
+    "description": "Tech tree dialog effect line (techEffectSummary_sheep_ranching_1)."
+  },
+  "techEffectSummary_ship_of_the_line_0": "Improves: Battle-line capital ship for decisive fleet engagements",
+  "@techEffectSummary_ship_of_the_line_0": {
+    "description": "Tech tree dialog effect line (techEffectSummary_ship_of_the_line_0)."
+  },
+  "techEffectSummary_ship_of_the_line_1": "Unlocks: Advanced Iron Working (with Industrial Funding + Paddlewheels)",
+  "@techEffectSummary_ship_of_the_line_1": {
+    "description": "Tech tree dialog effect line (techEffectSummary_ship_of_the_line_1)."
+  },
+  "techEffectSummary_siege_engineering_0": "Improves: Culverin regiment upgrade path",
+  "@techEffectSummary_siege_engineering_0": {
+    "description": "Tech tree dialog effect line (techEffectSummary_siege_engineering_0)."
+  },
+  "techEffectSummary_siege_engineering_1": "Prerequisite for: Modern Forts and Heavy Emplaced Artillery",
+  "@techEffectSummary_siege_engineering_1": {
+    "description": "Tech tree dialog effect line (techEffectSummary_siege_engineering_1)."
+  },
+  "techEffectSummary_square_set_timbering_0": "Improves: Coal extraction cap to 2",
+  "@techEffectSummary_square_set_timbering_0": {
+    "description": "Tech tree dialog effect line (techEffectSummary_square_set_timbering_0)."
+  },
+  "techEffectSummary_square_set_timbering_1": "Unlocks: Large Coal Mines (requires Steam in Mining)",
+  "@techEffectSummary_square_set_timbering_1": {
+    "description": "Tech tree dialog effect line (techEffectSummary_square_set_timbering_1)."
+  },
+  "techEffectSummary_square_set_timbering_2": "Prerequisite for: Early Steam Engine and Crucible Process",
+  "@techEffectSummary_square_set_timbering_2": {
+    "description": "Tech tree dialog effect line (techEffectSummary_square_set_timbering_2)."
+  },
+  "techEffectSummary_steam_in_mining_0": "Improves: Iron extraction cap to 3",
+  "@techEffectSummary_steam_in_mining_0": {
+    "description": "Tech tree dialog effect line (techEffectSummary_steam_in_mining_0)."
+  },
+  "techEffectSummary_steam_in_mining_1": "Unlocks: Large Coal Mines (with Square-set Timbering)",
+  "@techEffectSummary_steam_in_mining_1": {
+    "description": "Tech tree dialog effect line (techEffectSummary_steam_in_mining_1)."
+  },
+  "techEffectSummary_steam_in_mining_2": "Prerequisite for: Industrial Iron Mining, Early Steam Engine, Crucible Process, Industrial Machinery",
+  "@techEffectSummary_steam_in_mining_2": {
+    "description": "Tech tree dialog effect line (techEffectSummary_steam_in_mining_2)."
+  },
+  "techEffectSummary_sugar_industry_0": "Improves: Sugar cane extraction cap to 4",
+  "@techEffectSummary_sugar_industry_0": {
+    "description": "Tech tree dialog effect line (techEffectSummary_sugar_industry_0)."
+  },
+  "techEffectSummary_sugar_industry_1": "Prerequisite-only: catalog leaf; extraction-cap increase is the active benefit",
+  "@techEffectSummary_sugar_industry_1": {
+    "description": "Tech tree dialog effect line (techEffectSummary_sugar_industry_1)."
+  },
+  "techEffectSummary_sugar_planting_0": "Improves: Sugar cane extraction cap to 2",
+  "@techEffectSummary_sugar_planting_0": {
+    "description": "Tech tree dialog effect line (techEffectSummary_sugar_planting_0)."
+  },
+  "techEffectSummary_sugar_planting_1": "Unlocks: Large Sugar Plantations",
+  "@techEffectSummary_sugar_planting_1": {
+    "description": "Tech tree dialog effect line (techEffectSummary_sugar_planting_1)."
+  },
+  "techEffectSummary_sugar_refining_0": "Enables: Refined sugar luxury for Apprentice-tier worker consumption",
+  "@techEffectSummary_sugar_refining_0": {
+    "description": "Tech tree dialog effect line (techEffectSummary_sugar_refining_0)."
+  },
+  "techEffectSummary_sugar_refining_1": "Unlocks: Apprentice Workers (with Land Enclosure); Trade Fairs (with Merchant Companies)",
+  "@techEffectSummary_sugar_refining_1": {
+    "description": "Tech tree dialog effect line (techEffectSummary_sugar_refining_1)."
+  },
+  "techEffectSummary_superior_hull_design_0": "Unlocks: Improved Sail Design and Navigation hull paths",
+  "@techEffectSummary_superior_hull_design_0": {
+    "description": "Tech tree dialog effect line (techEffectSummary_superior_hull_design_0)."
+  },
+  "techEffectSummary_tobacco_industry_0": "Improves: Tobacco extraction cap to 4",
+  "@techEffectSummary_tobacco_industry_0": {
+    "description": "Tech tree dialog effect line (techEffectSummary_tobacco_industry_0)."
+  },
+  "techEffectSummary_tobacco_industry_1": "Prerequisite-only: catalog leaf; extraction-cap increase is the active benefit",
+  "@techEffectSummary_tobacco_industry_1": {
+    "description": "Tech tree dialog effect line (techEffectSummary_tobacco_industry_1)."
+  },
+  "techEffectSummary_tobacco_planting_0": "Improves: Tobacco extraction cap to 2",
+  "@techEffectSummary_tobacco_planting_0": {
+    "description": "Tech tree dialog effect line (techEffectSummary_tobacco_planting_0)."
+  },
+  "techEffectSummary_tobacco_planting_1": "Unlocks: Large Tobacco Plantations",
+  "@techEffectSummary_tobacco_planting_1": {
+    "description": "Tech tree dialog effect line (techEffectSummary_tobacco_planting_1)."
+  },
+  "techEffectSummary_trade_fairs_0": "Enables: 6 commodity slots per embassy trade agreement (3 baseline without this tech)",
+  "@techEffectSummary_trade_fairs_0": {
+    "description": "Tech tree dialog effect line (techEffectSummary_trade_fairs_0)."
+  },
+  "techEffectSummary_trade_fairs_1": "Unlocks: Banking",
+  "@techEffectSummary_trade_fairs_1": {
+    "description": "Tech tree dialog effect line (techEffectSummary_trade_fairs_1)."
+  },
+  "techEffectSummary_trained_journeymen_0": "Enables: Journeyman tier (6x labour; consumes cigars)",
+  "@techEffectSummary_trained_journeymen_0": {
+    "description": "Tech tree dialog effect line (techEffectSummary_trained_journeymen_0)."
+  },
+  "techEffectSummary_trained_journeymen_1": "Unlocks: Cotton Gin and Recruit Steppe Horsemen",
+  "@techEffectSummary_trained_journeymen_1": {
+    "description": "Tech tree dialog effect line (techEffectSummary_trained_journeymen_1)."
+  },
+  "techEffectSummary_university_0": "Enables: Fourth active research slot (3 -> 4)",
+  "@techEffectSummary_university_0": {
+    "description": "Tech tree dialog effect line (techEffectSummary_university_0)."
+  },
+  "techEffectSummary_university_1": "Unlocks: Master Artisans, Propaganda, Scientific Cattle Breeding",
+  "@techEffectSummary_university_1": {
+    "description": "Tech tree dialog effect line (techEffectSummary_university_1)."
+  },
+  "techEffectSummary_weapon_craftsmanship_0": "Unlocks: Explosives and Grenadiers (with Industrial Machinery)",
+  "@techEffectSummary_weapon_craftsmanship_0": {
+    "description": "Tech tree dialog effect line (techEffectSummary_weapon_craftsmanship_0)."
+  },
+  "techEffectSummary_wind_saw_mill_0": "Improves: Timber extraction cap to 3",
+  "@techEffectSummary_wind_saw_mill_0": {
+    "description": "Tech tree dialog effect line (techEffectSummary_wind_saw_mill_0)."
+  },
+  "techEffectSummary_wind_saw_mill_1": "Unlocks: Circular Saw",
+  "@techEffectSummary_wind_saw_mill_1": {
+    "description": "Tech tree dialog effect line (techEffectSummary_wind_saw_mill_1)."
+  },
+  "playerTurnFeed_eventsChip": "Events ({count})",
+  "@playerTurnFeed_eventsChip": {
+    "description": "Label for narrow-layout player turn event feed chip.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "playerTurnFeed_eventsTitle": "Events",
+  "@playerTurnFeed_eventsTitle": {
+    "description": "Title for the narrow-layout player turn events dialog."
+  },
+  "debugConsole_title": "Debug Console",
+  "@debugConsole_title": {
+    "description": "Title label for the in-map debug console overlay panel."
+  },
+  "debugConsole_hintSpawnCivilian": "/spawn_civilian explorer 1",
+  "@debugConsole_hintSpawnCivilian": {
+    "description": "Input hint showing an example slash command in debug console overlay."
+  }
+}

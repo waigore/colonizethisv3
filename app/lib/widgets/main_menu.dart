@@ -60,71 +60,18 @@ class CtMainMenu extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final l10n = appL10n(context);
-    final Widget content = SafeArea(
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 24),
-        child: Center(
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 400),
-            child: SingleChildScrollView(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const SizedBox(height: 48),
-                  _buildLogo(context),
-                  if (_showAfterVictorySubtitle) ...[
-                    const SizedBox(height: 12),
-                    Text(
-                      l10n.mainMenu_subtitleAfterVictory,
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        fontStyle: FontStyle.italic,
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                  ],
-                  const SizedBox(height: 32),
-                  _MenuButton(
-                    label: l10n.mainMenu_newGame,
-                    variant: variant,
-                    onPressed: onNewGame,
-                  ),
-                  if (resumeGameVisible) ...[
-                    const SizedBox(height: 12),
-                    _MenuButton(
-                      label: l10n.mainMenu_resumeGame,
-                      variant: variant,
-                      onPressed: onResumeGame!,
-                    ),
-                  ],
-                  const SizedBox(height: 12),
-                  _LoadGameButton(
-                    enabled: _loadGameEnabled,
-                    variant: variant,
-                    onPressed: onLoadGame,
-                  ),
-                  const SizedBox(height: 12),
-                  _MenuButton(
-                    label: l10n.mainMenu_settings,
-                    variant: variant,
-                    onPressed: onSettings,
-                  ),
-                  const SizedBox(height: 32),
-                  Text(version, style: Theme.of(context).textTheme.bodySmall),
-                  const SizedBox(height: 8),
-                  _MenuButton(
-                    label: l10n.mainMenu_quit,
-                    variant: variant,
-                    onPressed: onQuit,
-                  ),
-                  const SizedBox(height: 24),
-                ],
-              ),
-            ),
-          ),
-        ),
-      ),
+    final content = _MainMenuBody(
+      variant: variant,
+      showAfterVictorySubtitle: _showAfterVictorySubtitle,
+      loadGameEnabled: _loadGameEnabled,
+      resumeGameVisible: resumeGameVisible,
+      version: version,
+      onNewGame: onNewGame,
+      onResumeGame: onResumeGame,
+      onLoadGame: onLoadGame,
+      onSettings: onSettings,
+      onQuit: onQuit,
+      logoBuilder: _buildLogo,
     );
 
     if (variant == MainMenuVariant.pixelArt) {
@@ -137,8 +84,7 @@ class CtMainMenu extends StatelessWidget {
                 kMainMenuBackgroundAsset,
                 fit: BoxFit.cover,
                 filterQuality: FilterQuality.none,
-                errorBuilder: (_, _, _) =>
-                    Container(color: const Color(0xFF5D3A1A)),
+                errorBuilder: (_, _, _) => Container(color: darkWood),
               ),
             ),
             Theme(data: AppThemes.colonialPixelArt, child: content),
@@ -170,6 +116,153 @@ class CtMainMenu extends StatelessWidget {
         },
       ),
     );
+  }
+}
+
+class _MainMenuBody extends StatelessWidget {
+  const _MainMenuBody({
+    required this.variant,
+    required this.showAfterVictorySubtitle,
+    required this.loadGameEnabled,
+    required this.resumeGameVisible,
+    required this.version,
+    required this.onNewGame,
+    required this.onResumeGame,
+    required this.onLoadGame,
+    required this.onSettings,
+    required this.onQuit,
+    required this.logoBuilder,
+  });
+
+  final MainMenuVariant variant;
+  final bool showAfterVictorySubtitle;
+  final bool loadGameEnabled;
+  final bool resumeGameVisible;
+  final String version;
+  final VoidCallback onNewGame;
+  final VoidCallback? onResumeGame;
+  final VoidCallback onLoadGame;
+  final VoidCallback onSettings;
+  final VoidCallback onQuit;
+  final Widget Function(BuildContext context) logoBuilder;
+
+  @override
+  Widget build(BuildContext context) {
+    return SafeArea(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 24),
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 400),
+            child: SingleChildScrollView(
+              child: _MainMenuBodyContent(
+                variant: variant,
+                showAfterVictorySubtitle: showAfterVictorySubtitle,
+                loadGameEnabled: loadGameEnabled,
+                resumeGameVisible: resumeGameVisible,
+                version: version,
+                onNewGame: onNewGame,
+                onResumeGame: onResumeGame,
+                onLoadGame: onLoadGame,
+                onSettings: onSettings,
+                onQuit: onQuit,
+                logoBuilder: logoBuilder,
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _MainMenuBodyContent extends StatelessWidget {
+  const _MainMenuBodyContent({
+    required this.variant,
+    required this.showAfterVictorySubtitle,
+    required this.loadGameEnabled,
+    required this.resumeGameVisible,
+    required this.version,
+    required this.onNewGame,
+    required this.onResumeGame,
+    required this.onLoadGame,
+    required this.onSettings,
+    required this.onQuit,
+    required this.logoBuilder,
+  });
+
+  final MainMenuVariant variant;
+  final bool showAfterVictorySubtitle;
+  final bool loadGameEnabled;
+  final bool resumeGameVisible;
+  final String version;
+  final VoidCallback onNewGame;
+  final VoidCallback? onResumeGame;
+  final VoidCallback onLoadGame;
+  final VoidCallback onSettings;
+  final VoidCallback onQuit;
+  final Widget Function(BuildContext context) logoBuilder;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      mainAxisSize: MainAxisSize.min,
+      children: _menuChildren(context),
+    );
+  }
+
+  List<Widget> _menuChildren(BuildContext context) {
+    final l10n = appL10n(context);
+    return [
+      const SizedBox(height: 48),
+      logoBuilder(context),
+      if (showAfterVictorySubtitle) ...[
+        const SizedBox(height: 12),
+        Text(
+          l10n.mainMenu_subtitleAfterVictory,
+          style: Theme.of(
+            context,
+          ).textTheme.bodyMedium?.copyWith(fontStyle: FontStyle.italic),
+          textAlign: TextAlign.center,
+        ),
+      ],
+      const SizedBox(height: 32),
+      _MenuButton(
+        label: l10n.mainMenu_newGame,
+        variant: variant,
+        onPressed: onNewGame,
+      ),
+      if (resumeGameVisible) ...[
+        const SizedBox(height: 12),
+        _MenuButton(
+          label: l10n.mainMenu_resumeGame,
+          variant: variant,
+          onPressed: onResumeGame!,
+        ),
+      ],
+      const SizedBox(height: 12),
+      _LoadGameButton(
+        enabled: loadGameEnabled,
+        variant: variant,
+        onPressed: onLoadGame,
+      ),
+      const SizedBox(height: 12),
+      _MenuButton(
+        label: l10n.mainMenu_settings,
+        variant: variant,
+        onPressed: onSettings,
+      ),
+      const SizedBox(height: 32),
+      Text(version, style: Theme.of(context).textTheme.bodySmall),
+      const SizedBox(height: 8),
+      _MenuButton(
+        label: l10n.mainMenu_quit,
+        variant: variant,
+        onPressed: onQuit,
+      ),
+      const SizedBox(height: 24),
+    ];
   }
 }
 

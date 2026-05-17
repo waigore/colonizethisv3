@@ -6,9 +6,11 @@ repository: https://github.com/colonizethisv3/colonizethisv3
 resolution: workspace
 
 environment:
-  sdk: '>=3.11.0 <4.0.0'
+  sdk: '>=3.11.5 <4.0.0'
 
 dev_dependencies:
+  colonizethis_data:
+    path: ../colonizethis_data
   colonizethis_exception_lint:
     path: ../colonizethis_exception_lint
   colonizethis_test:

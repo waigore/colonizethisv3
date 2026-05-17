@@ -3,7 +3,20 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../event_bus/game_event_bus.dart';
 import '../game_events.dart' show GameEvent;
+import 'trace/turn_trace_contracts.dart';
+import 'trace/turn_trace_runtime.dart';
+import 'turn_pipeline_state.dart';
 import 'turn_resolution_result.dart';
+
+/// One turn-resolution phase: advance or exit the pipeline with a result.
+typedef TurnPhaseHandler =
+    TurnPhaseStepOutcome Function(
+      TurnPipelineState pipeline,
+      TurnResolverConfig config,
+      int turn,
+    );
+
+enum TurnPhaseProgressMarker { start, end }
 
 /// Bundles inputs for [resolveTurnForGameWithConfig] / full turn resolution.
 class TurnResolverConfig {
@@ -23,7 +36,14 @@ class TurnResolverConfig {
     this.overtureDecisions,
     this.interventionDecisions,
     this.callToArmsDecisions,
-  });
+    this.phaseHandlerOverrides,
+    this.onPhaseProgress,
+    this.onTurnTracePhase,
+    this.turnTraceRuntime = null,
+  }) : assert(
+          turnTraceRuntime == null || onTurnTracePhase != null,
+          'turnTraceRuntime requires onTurnTracePhase so phase buffers flush',
+        );
 
   final MapTopology topology;
   final Orders orders;
@@ -43,4 +63,21 @@ class TurnResolverConfig {
   final List<OvertureDecision>? overtureDecisions;
   final List<InterventionDecision>? interventionDecisions;
   final List<CallToArmsDecision>? callToArmsDecisions;
+
+  /// Optional handlers merged over the default phase registry (same [TurnPhase]
+  /// key replaces the default). Used for tests and narrow customization; the
+  /// default sequence and semantics remain authoritative. Refs #1958.
+  final Map<TurnPhase, TurnPhaseHandler>? phaseHandlerOverrides;
+
+  /// Optional callback invoked at each phase start/end during pipeline execution.
+  final void Function(TurnPhase phase, TurnPhaseProgressMarker marker)?
+  onPhaseProgress;
+
+  /// Optional debug trace callback for per-phase snapshots captured during
+  /// turn resolution. This hook is observational and must not mutate state.
+  final void Function(TurnTracePhaseTrace phaseTrace)? onTurnTracePhase;
+
+  /// When non-null with [onTurnTracePhase], collects order-level events (for
+  /// example civilian move apply/ignore) for the active phase.
+  final TurnTraceRuntime? turnTraceRuntime;
 }

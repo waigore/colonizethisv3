@@ -44,6 +44,7 @@ jobs:
               - 'tool/init_game/**'
               - 'tool/sim_economy/**'
               - 'tool/show_tech/**'
+              - 'tool/run_observer_game/**'
               - 'tool/check_long_string_switches.dart'
               - 'tool/generate_tech_effect_yaml.dart'
               - 'tool/generate_tech_effect_l10n.dart'
@@ -59,8 +60,9 @@ jobs:
               - '!.vscode/**'
               - '!.idea/**'
               - '!.husky/**'
-
   # Resolved pub cache + .dart_tool + gen-l10n; flutter analyze gate; then pack for shards (--no-pub).
+  # `app_build_linux` reuses the same artifact to compile the Linux desktop target (release), catching
+  # linker/gen-l10n issues that `flutter analyze` alone can miss.
   # Jobs always run after `changes` so required branch checks get success (not skip) when the path filter
   # excludes app/packages (e.g. SPEC-only PRs); heavy steps are gated on outputs.tests.
   app_tests_cache:
@@ -85,6 +87,7 @@ jobs:
         uses: subosito/flutter-action@v2
         with:
           channel: stable
+          flutter-version: '3.41.9'
           cache: true
 
       - name: Resolve dependencies (workspace)
@@ -97,10 +100,6 @@ jobs:
           set -e
           cd app
           flutter gen-l10n
-
-      - name: Check long string switches (AST)
-        if: needs.changes.outputs.tests == 'true'
-        run: dart tool/check_long_string_switches.dart
 
       - name: Compile app entrypoints (Flutter analyze)
         if: needs.changes.outputs.tests == 'true'
@@ -140,6 +139,90 @@ jobs:
           path: app-test-cache.tar.gz
           retention-days: 2
 
+  # Linux compile gate: parallel to `app_tests_shard` (same cache).
+  # Add this job to branch protection if merges must wait on it.
+  app_build_linux:
+    name: App Linux desktop build (release)
+    needs: [changes, app_tests_cache]
+    if: |
+      always() &&
+      needs.changes.result == 'success' &&
+      (
+        needs.changes.outputs.tests != 'true' ||
+        needs.app_tests_cache.result == 'success'
+      )
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    env:
+      PUB_CACHE: ${{ github.workspace }}/.pub-cache
+    steps:
+      - name: Skip when no test-relevant paths changed
+        if: needs.changes.outputs.tests != 'true'
+        run: echo "No test-relevant paths matched; skipping Linux desktop build."
+
+      - name: Checkout
+        if: needs.changes.outputs.tests == 'true'
+        uses: actions/checkout@v6
+
+      - name: Setup Flutter
+        if: needs.changes.outputs.tests == 'true'
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: '3.41.9'
+          cache: true
+
+      - name: Install Linux desktop build dependencies
+        if: needs.changes.outputs.tests == 'true'
+        run: |
+          set -euo pipefail
+          sudo apt-get update -qq
+          sudo apt-get install -y --no-install-recommends \
+            clang cmake ninja-build pkg-config \
+            libgtk-3-dev liblzma-dev
+
+      - name: Download app test cache
+        if: needs.changes.outputs.tests == 'true'
+        uses: actions/download-artifact@v4
+        with:
+          name: app-test-cache
+          path: _app_test_cache
+
+      - name: Restore pub + Dart tool cache
+        if: needs.changes.outputs.tests == 'true'
+        run: tar xzf _app_test_cache/app-test-cache.tar.gz -C "$GITHUB_WORKSPACE"
+
+      - name: Build Linux desktop (release)
+        if: needs.changes.outputs.tests == 'true'
+        run: |
+          set -euo pipefail
+          cd app
+          # Gitignored linux/flutter/generated_plugins.cmake; workspace dart pub get does not emit it.
+          flutter pub get
+          flutter build linux --release --no-pub
+
+      # Refs #2074: full assemble must not delete or rewrite tracked hand l10n (stale gen stamp regression).
+      - name: Verify hand-maintained app l10n after Linux build
+        if: needs.changes.outputs.tests == 'true'
+        run: |
+          set -euo pipefail
+          rels=(
+            app/lib/l10n/app_localizations_en.dart
+            app/lib/l10n/app_localizations_contract.dart
+            app/lib/l10n/app_localizations_delegate.dart
+            app/lib/l10n/l10n.dart
+            app/lib/l10n/app_localizations_lookup.dart
+            app/lib/l10n/app_localizations_en_part1.dart
+            app/lib/l10n/app_localizations_en_part2.dart
+            app/lib/l10n/app_localizations_en_part3.dart
+            app/lib/l10n/app_localizations_en_part4.dart
+            app/lib/l10n/app_localizations_en_part5.dart
+          )
+          for f in "${rels[@]}"; do
+            test -f "$f" || { echo "missing tracked l10n file: $f"; exit 1; }
+          done
+          git diff --exit-code -- "${rels[@]}"
+
   app_tests_shard:
     # job.name cannot use env.* (GitHub limitation); keep "2" in sync with APP_TEST_TOTAL_SHARDS and matrix.shard.
     name: App tests (shard ${{ matrix.shard }}/2)
@@ -174,6 +257,7 @@ jobs:
         uses: subosito/flutter-action@v2
         with:
           channel: stable
+          flutter-version: '3.41.9'
           cache: true
 
       - name: Download app test cache
@@ -207,24 +291,17 @@ jobs:
           path: app/coverage/lcov.shard${{ matrix.shard }}.info
           retention-days: 2
 
-  app_e2e_linux:
-    name: App e2e (Linux desktop + xvfb)
-    needs: [changes, app_tests_shard]
-    if: |
-      always() &&
-      needs.changes.result == 'success' &&
-      (
-        needs.changes.outputs.tests != 'true' ||
-        needs.app_tests_shard.result == 'success'
-      )
+  # colonizethis_* package unit tests + package coverage gates (parallel to quality / app tests).
+  package_tests:
+    name: Package tests (colonizethis)
+    needs: changes
+    if: always() && needs.changes.result == 'success'
     runs-on: ubuntu-latest
-    timeout-minutes: 45
-    env:
-      PUB_CACHE: ${{ github.workspace }}/.pub-cache
+    timeout-minutes: 90
     steps:
       - name: Skip when no test-relevant paths changed
         if: needs.changes.outputs.tests != 'true'
-        run: echo "No test-relevant paths matched; skipping app e2e."
+        run: echo "No test-relevant paths matched; skipping package tests."
 
       - name: Checkout
         if: needs.changes.outputs.tests == 'true'
@@ -235,51 +312,31 @@ jobs:
         uses: subosito/flutter-action@v2
         with:
           channel: stable
+          flutter-version: '3.41.9'
           cache: true
 
-      - name: Download app test cache
+      - name: Install lcov
         if: needs.changes.outputs.tests == 'true'
-        uses: actions/download-artifact@v4
-        with:
-          name: app-test-cache
-          path: _app_test_cache
+        run: sudo apt-get update && sudo apt-get install -y lcov
 
-      - name: Restore pub + Dart tool cache
+      - name: Resolve dependencies
         if: needs.changes.outputs.tests == 'true'
-        run: tar xzf _app_test_cache/app-test-cache.tar.gz -C "$GITHUB_WORKSPACE"
+        run: dart pub get
 
-      - name: Install Linux desktop build dependencies
+      - name: Package tests and coverage gates
         if: needs.changes.outputs.tests == 'true'
-        run: |
-          set -euo pipefail
-          sudo apt-get update -y
-          sudo apt-get install -y --no-install-recommends \
-            clang cmake ninja-build pkg-config libgtk-3-dev liblzma-dev
-
-      - name: Enable Flutter Linux desktop
-        if: needs.changes.outputs.tests == 'true'
-        run: flutter config --enable-linux-desktop
-
-      - name: Resolve app dependencies for Linux plugin generation
-        if: needs.changes.outputs.tests == 'true'
-        run: |
-          set -euo pipefail
-          cd app
-          flutter pub get
-
-      # Headless DISPLAY for integration_test (-d linux). Same idea as community xvfb wrapper actions
-      # (e.g. GabrielBB/xvfb-action; pin here for a maintained installer + cleanup).
-      - name: Run Linux integration tests (xvfb)
-        if: needs.changes.outputs.tests == 'true'
-        uses: GabrielBB/xvfb-action@v1.7
-        with:
-          working-directory: app
-          run: bash -lc "set -euo pipefail; flutter test integration_test/new_game_capital_panel_e2e_test.dart -d linux --dart-define=CT_E2E=true --reporter=compact; flutter test integration_test/new_game_full_turn_e2e_test.dart -d linux --dart-define=CT_E2E=true --reporter=compact; flutter test integration_test/new_game_fleet_reaches_new_world_e2e_test.dart -d linux --dart-define=CT_E2E=true --reporter=compact"
+        env:
+          SUPPRESS_IMAGE_VIEWER: "1"
+          PACKAGE_TEST_JOBS: "2"
+        run: bash tool/run_package_tests.sh
 
   quality:
+    name: Quality (lint, analyze, observer)
     needs: changes
     runs-on: ubuntu-latest
-    # Dart coverage + package matrix; Flutter app tests run in parallel shards (app_tests_shard).
+    # Lint, analyze, checker tests, run_observer_game; package tests run in package_tests.
+    # Workspace analyzer runs flutter/dart analyze per member (many packages); allow enough time
+    # so the job is not cancelled mid-analyze when the workspace grows (Refs #2036).
     timeout-minutes: 45
     steps:
       - name: Checkout
@@ -289,15 +346,8 @@ jobs:
         uses: subosito/flutter-action@v2
         with:
           channel: stable
+          flutter-version: '3.41.9'
           cache: true
-
-      - name: Install melos
-        if: needs.changes.outputs.tests == 'true'
-        run: dart pub global activate melos
-
-      - name: Check melos version
-        if: needs.changes.outputs.tests == 'true'
-        run: melos --version
 
       - name: Install lcov
         if: needs.changes.outputs.tests == 'true'
@@ -306,43 +356,54 @@ jobs:
       - name: Resolve dependencies
         run: dart pub get
 
+      - name: Workspace analyzer gate (errors only; includes test/ and integration_test/)
+        run: dart run tool/run_workspace_analyze_errors_only.dart
+
       - name: Verify OrderEngine codegen (SPEC/program/order-engine.md)
         run: bash tool/verify_order_engine_codegen.sh
+
+      # Regenerate `lib/l10n/gen/` before `ct_repo_lint` / NCL so analyzer-visible gen exists (Refs #2074).
+      - name: App flutter gen-l10n (workspace parity)
+        run: |
+          set -e
+          cd app
+          flutter gen-l10n
 
       - name: Repo convention lint (unified manifest, SPEC/program/repo-lint.md)
         env:
           CT_REPO_LINT_INCLUDE_APP: ${{ needs.changes.outputs.tests }}
+          CT_REPO_LINT_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          GITHUB_BASE_REF: ${{ github.base_ref }}
         run: dart run tool/ct_repo_lint.dart
+
+      - name: Logic test file-size gate (<= 400 physical lines)
+        if: needs.changes.outputs.tests == 'true'
+        run: |
+          set -euo pipefail
+          mapfile -t changed_logic_tests < <(
+            git diff --name-only "${{ github.event.pull_request.base.sha }}"...HEAD -- \
+              ':(glob)packages/colonizethis_logic/test/**/*.dart'
+          )
+          if [ "${#changed_logic_tests[@]}" -eq 0 ]; then
+            echo "No changed colonizethis_logic tests; skipping size gate."
+            exit 0
+          fi
+          dart run tool/check_logic_test_file_size.dart "${changed_logic_tests[@]}"
 
       - name: Run domain exception custom_lint (SPEC/program/exception-enforcement.md)
         run: bash tool/run_custom_lint_domain_exceptions.sh
 
-      - name: Test colonizethis_exception_lint (SPEC/program/exception-enforcement.md)
+      - name: Test checker suites (group 1/3)
         run: dart test packages/colonizethis_exception_lint/test --reporter=compact
 
-      - name: Test disallowed AST patterns checker (SPEC/program/disallowed-ast-patterns.md)
-        run: dart test test/check_disallowed_ast_patterns_test.dart --reporter=compact
+      - name: Test checker suites (group 2/3)
+        run: dart test test/check_*_test.dart --reporter=compact
 
-      - name: Test repeated magic numbers checker (SPEC/program/repeated-magic-numbers.md)
-        run: dart test test/check_repeated_magic_numbers_test.dart --reporter=compact
+      - name: Test checker suites (group 3/3)
+        run: dart test test/ct_repo_lint*_test.dart --reporter=compact
 
       - name: Test OrderEngine slot generator (SPEC/program/order-engine.md)
         run: dart test test/generate_order_engine_slots_test.dart --reporter=compact
-
-      - name: Test app hardcoded UI string checker (SPEC/program/localization.md)
-        run: dart test test/check_app_hardcoded_ui_strings_test.dart --reporter=compact
-
-      - name: Test work target constants checker (SPEC/program/repo-and-packages.md)
-        run: dart test test/check_work_target_constants_test.dart --reporter=compact
-
-      - name: Test asset path constants checker (SPEC/program/repo-and-packages.md)
-        run: dart test test/check_asset_path_constants_test.dart --reporter=compact
-
-      - name: Test civilian unit type constants checker (SPEC/program/repo-and-packages.md)
-        run: dart test test/check_civilian_unit_type_constants_test.dart --reporter=compact
-
-      - name: Test canonical province tile-key checker (SPEC/game/world-model-identity.md)
-        run: dart test test/check_canonical_province_tile_keys_test.dart --reporter=compact
 
       - name: Wang incremental assets gate (Python)
         run: |
@@ -351,76 +412,14 @@ jobs:
           sudo apt-get install -y --no-install-recommends python3-pil
           cd pytool && python3 test_wang_incremental_assets_and_preview.py
 
-      - name: Test colonizethis_models (Dart)
-        if: needs.changes.outputs.tests == 'true'
-        env:
-          SUPPRESS_IMAGE_VIEWER: "1"
-        run: |
-          if [ -d packages/colonizethis_models/test ]; then
-            (cd packages/colonizethis_models && dart test --coverage=coverage -j 2 --reporter=compact)
-            (cd packages/colonizethis_models && dart run coverage:format_coverage --lcov -i coverage -o coverage/lcov.info --report-on=lib --package=.)
-          fi
-
-      - name: Test colonizethis_data (Dart)
-        if: needs.changes.outputs.tests == 'true'
-        env:
-          SUPPRESS_IMAGE_VIEWER: "1"
-        run: |
-          if [ -d packages/colonizethis_data/test ]; then
-            (cd packages/colonizethis_data && dart test --coverage=coverage -j 2 --reporter=compact)
-            (cd packages/colonizethis_data && dart run coverage:format_coverage --lcov -i coverage -o coverage/lcov.info --report-on=lib --package=.)
-          fi
-
-      - name: Test colonizethis_save (Dart)
-        if: needs.changes.outputs.tests == 'true'
-        env:
-          SUPPRESS_IMAGE_VIEWER: "1"
-        run: |
-          if [ -d packages/colonizethis_save/test ]; then
-            (cd packages/colonizethis_save && dart test --coverage=coverage -j 2 --reporter=compact)
-            (cd packages/colonizethis_save && dart run coverage:format_coverage --lcov -i coverage -o coverage/lcov.info --report-on=lib --package=.)
-          fi
-
-      - name: Test colonizethis_logic (Dart)
-        if: needs.changes.outputs.tests == 'true'
-        env:
-          SUPPRESS_IMAGE_VIEWER: "1"
-        run: |
-          if [ -d packages/colonizethis_logic/test ]; then
-            (cd packages/colonizethis_logic && dart test --coverage=coverage -j 2 --reporter=compact)
-            (cd packages/colonizethis_logic && dart run coverage:format_coverage --lcov -i coverage -o coverage/lcov.info --report-on=lib --package=.)
-          fi
-
-      - name: Test colonizethis_ai (Dart)
-        if: needs.changes.outputs.tests == 'true'
-        env:
-          SUPPRESS_IMAGE_VIEWER: "1"
-        run: |
-          if [ -d packages/colonizethis_ai/test ]; then
-            (cd packages/colonizethis_ai && dart test --coverage=coverage -j 2 --reporter=compact)
-            (cd packages/colonizethis_ai && dart run coverage:format_coverage --lcov -i coverage -o coverage/lcov.info --report-on=lib --package=.)
-          fi
-
-      - name: Test colonizethis_map (Dart)
-        if: needs.changes.outputs.tests == 'true'
-        env:
-          SUPPRESS_IMAGE_VIEWER: "1"
-        run: |
-          if [ -d packages/colonizethis_map/test ]; then
-            (cd packages/colonizethis_map && dart test --coverage=coverage -j 2 --reporter=compact)
-            (cd packages/colonizethis_map && dart run coverage:format_coverage --lcov -i coverage -o coverage/lcov.info --report-on=lib --package=.)
-          fi
-
-      - name: Test tool packages (Dart)
+      - name: Test run_observer_game (Dart, coverage)
         if: needs.changes.outputs.tests == 'true'
         env:
           SUPPRESS_IMAGE_VIEWER: "1"
         run: |
           set -e
-          for dir in tool/sim_scenarios tool/sim_combat_montecarlo tool/sim_combat tool/generate_map tool/init_game tool/sim_economy tool/show_tech; do
-            [ -d "$dir/test" ] || continue
-            (cd "$dir" && dart test -j 2 --reporter=compact)
-          done
+          (cd tool/run_observer_game && dart test --coverage=coverage -j 2 --reporter=compact)
+          (cd tool/run_observer_game && dart run coverage:format_coverage --lcov -i coverage -o coverage/lcov.info --report-on=lib --package=.)
 
       - name: App localization gate (flutter gen-l10n untranslated check)
         if: needs.changes.outputs.tests == 'true'
@@ -429,31 +428,26 @@ jobs:
           if [ -d app ]; then
             cd app
             flutter gen-l10n
-            if [ -f lib/l10n/untranslated.json ]; then
-              content=$(cat lib/l10n/untranslated.json | tr -d '[:space:]')
+            if [ -f lib/l10n/gen/untranslated.json ]; then
+              content=$(cat lib/l10n/gen/untranslated.json | tr -d '[:space:]')
               if [ "$content" != "{}" ] && [ "$content" != "" ]; then
                 echo "Untranslated localization messages detected:"
-                cat lib/l10n/untranslated.json
+                cat lib/l10n/gen/untranslated.json
                 exit 1
               fi
             fi
           fi
 
-      - name: Coverage gate (logic/map/ai >= 90%)
+      - name: Coverage gate (run_observer_game lib >= 80%)
         if: needs.changes.outputs.tests == 'true'
-        run: tool/check_coverage_threshold.sh 90 packages/colonizethis_logic packages/colonizethis_map packages/colonizethis_ai
-
-      - name: sim_scenarios integration gate (all scenarios must pass)
-        if: needs.changes.outputs.tests == 'true'
-        run: melos run sim_scenarios
+        run: tool/check_coverage_threshold.sh 80 tool/run_observer_game
 
   quality_app_coverage:
     name: App coverage (merge shards)
-    needs: [changes, quality, app_tests_shard]
+    needs: [changes, app_tests_shard]
     if: |
       always() &&
       needs.changes.result == 'success' &&
-      needs.quality.result == 'success' &&
       (
         needs.changes.outputs.tests != 'true' ||
         needs.app_tests_shard.result == 'success'
@@ -497,158 +491,3 @@ jobs:
         if: needs.changes.outputs.tests == 'true'
         run: tool/check_coverage_threshold.sh 80 app
 
-  # OpenCode post-e2e review: same workflow as Quality; runs only for same-repo PRs into dev after
-  # app_e2e_linux succeeds, when the PR changes paths outside dot-prefixed meta dirs (see changes.opencode_scope),
-  # and when either the PR has the `help wanted` label or more than 10 files changed (otherwise skipped).
-  # The model posts/updates a PR comment; the verdict job greps that comment for
-  # <!-- ct-opencode-verdict:PASS --> or <!-- ct-opencode-verdict:FAIL --> (see prompt).
-  opencode_review:
-    name: OpenCode review
-    needs: [changes, app_e2e_linux]
-    if: >-
-      github.base_ref == 'dev' &&
-      github.event.pull_request.head.repo.full_name == github.repository &&
-      needs.changes.result == 'success' &&
-      needs.changes.outputs.opencode_scope == 'true' &&
-      needs.app_e2e_linux.result == 'success' &&
-      (contains(github.event.pull_request.labels.*.name, 'help wanted') || github.event.pull_request.changed_files > 10)
-    runs-on: ubuntu-latest
-    timeout-minutes: 45
-    permissions:
-      pull-requests: write
-      issues: write
-      id-token: write
-      contents: read
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v6
-        with:
-          persist-credentials: false
-
-      - name: Run OpenCode (PR review)
-        uses: anomalyco/opencode/github@latest
-        env:
-          OPENCODE_API_KEY: ${{ secrets.OPENCODE_GO_API_KEY }}
-          GITHUB_TOKEN: ${{ github.token }}
-        with:
-          model: ${{ vars.OPENCODE_REVIEW_MODEL || 'opencode-go/minimax-m2.7' }}
-          use_github_token: true
-          prompt: |
-            You are the final OpenCode reviewer for this pull request after Linux app e2e tests passed.
-
-            The repository is checked out in the workspace. Read and apply these files in full:
-            - .cursor/rules/colonizethis-code-review.mdc
-            - .cursor/rules/colonizethis-component-structure.mdc
-
-            Also verify:
-            - The PR diff implements what linked closing issues and the PR description request (use GitHub context available to you).
-            - SPEC documents under SPEC/ stay aligned with code for behavior touched by this diff.
-
-            Deliverables (must all be satisfied):
-            1) Put **all** detailed review text in **one** GitHub pull request **issue comment** on this PR (the main PR conversation). Do not rely on CI or workflow logs for the long-form review; the PR comment is the source of truth for details.
-
-            2) **Single sticky comment only**: If a PR issue comment already exists whose body contains the literal HTML marker `<!-- ct-opencode-quality-review -->`, **edit that same comment** with your updated review (keep the marker in the updated body). If none exists, create **one** new PR issue comment that includes that marker exactly once. **Do not** post any **other** new issue comments on this PR for this review (no follow-up “review complete”, session recap, or duplicate summaries—optional links may appear only inside that sticky comment body).
-
-            3) **Comment body layout** (strict — CI parses line 1 and HTML markers):
-            - **Line 1** must be exactly the ASCII word `PASS` or `FAIL` (uppercase, no backticks, no markdown, no leading/trailing spaces).
-            - **Line 2** must be empty (no spaces).
-            - **Line 3** must be exactly: `<!-- ct-opencode-quality-review -->`
-            - **Line 4** must be exactly one of the following (must match line 1: use PASS line only with `PASS` on line 1, FAIL line only with `FAIL` on line 1):
-              - `<!-- ct-opencode-verdict:PASS -->`
-              - `<!-- ct-opencode-verdict:FAIL -->`
-            - **Line 5** must be empty.
-            - From **line 6** onward, use Markdown for the full human-readable review.
-
-            4) Use line 1 `FAIL` and line 4 `<!-- ct-opencode-verdict:FAIL -->` if anything material must change before merge (bugs, spec violations, missing tests for critical behavior, violations of the rule files above, or mismatch with linked issue intent). Otherwise use `PASS` and `<!-- ct-opencode-verdict:PASS -->`.
-
-  opencode_review_verdict:
-    name: OpenCode review verdict
-    needs: [opencode_review]
-    if: always()
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      pull-requests: read
-    steps:
-      - name: Skip when OpenCode review did not run
-        if: needs.opencode_review.result == 'skipped'
-        run: |
-          echo "OpenCode review did not run (skipped): not applicable for this PR run—for example wrong base branch,"
-          echo "fork PR, path-only meta changes, e2e not green, or gate scope (needs label 'help wanted' or >10 changed files per workflow)."
-          exit 0
-
-      - name: Fail when OpenCode review job failed or was cancelled
-        if: needs.opencode_review.result != 'skipped' && needs.opencode_review.result != 'success'
-        run: |
-          echo "::error::OpenCode review job ended with ${{ needs.opencode_review.result }}"
-          exit 1
-
-      - name: Enforce verdict from PR comment
-        if: needs.opencode_review.result == 'success'
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          set -euo pipefail
-          for _ in $(seq 1 36); do
-            body="$(
-              gh api "repos/${GITHUB_REPOSITORY}/issues/${{ github.event.pull_request.number }}/comments?per_page=100" \
-                --jq '
-                  [.[] | select(
-                    (.body | startswith("PASS\n"))
-                    or (.body | startswith("FAIL\n"))
-                    or (.body | startswith("<!-- ct-opencode-quality-review -->"))
-                  )]
-                  | sort_by(.id)
-                  | .[-1].body
-                  // empty
-                '
-            )"
-            if [ -n "${body}" ]; then
-              line1="$(printf '%s\n' "${body}" | sed -n '1p' | tr -d '\r' | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')"
-              line2="$(printf '%s\n' "${body}" | sed -n '2p' | tr -d '\r')"
-              line3="$(printf '%s\n' "${body}" | sed -n '3p' | tr -d '\r' | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')"
-              line4="$(printf '%s\n' "${body}" | sed -n '4p' | tr -d '\r' | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')"
-              line5="$(printf '%s\n' "${body}" | sed -n '5p' | tr -d '\r')"
-              sticky='<!-- ct-opencode-quality-review -->'
-              vpass='<!-- ct-opencode-verdict:PASS -->'
-              vfail='<!-- ct-opencode-verdict:FAIL -->'
-              line2t="$(printf '%s\n' "${line2}" | tr -d '\r' | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')"
-              if [ "${line1}" = "${sticky}" ]; then
-                if [ "${line2t}" = "${vfail}" ]; then
-                  echo "::error::OpenCode verdict is FAIL — see sticky PR comment."
-                  exit 1
-                fi
-                if [ "${line2t}" = "${vpass}" ]; then
-                  echo "OpenCode verdict: PASS (legacy sticky-first layout)"
-                  exit 0
-                fi
-                echo "::error::Legacy OpenCode sticky comment: line 2 must be ${vpass} or ${vfail}."
-                exit 1
-              fi
-              if [ "${line1}" != PASS ] && [ "${line1}" != FAIL ]; then
-                echo "::error::OpenCode sticky comment line 1 must be exactly PASS or FAIL (got: '${line1}'). Re-run review after updating the prompt format."
-                exit 1
-              fi
-              if [ -n "$(printf '%s' "${line2}" | tr -d '\n' | tr -d '[:space:]')" ] || [ -n "$(printf '%s' "${line5}" | tr -d '\n' | tr -d '[:space:]')" ]; then
-                echo "::error::OpenCode sticky comment lines 2 and 5 must be blank (see workflow prompt)."
-                exit 1
-              fi
-              if [ "${line3}" != "${sticky}" ]; then
-                echo "::error::OpenCode sticky comment line 3 must be exactly ${sticky}"
-                exit 1
-              fi
-              if [ "${line1}" = FAIL ] && [ "${line4}" = "${vfail}" ]; then
-                echo "::error::OpenCode verdict is FAIL — see sticky PR comment."
-                exit 1
-              fi
-              if [ "${line1}" = PASS ] && [ "${line4}" = "${vpass}" ]; then
-                echo "OpenCode verdict: PASS"
-                exit 0
-              fi
-              echo "::error::OpenCode line 1 (${line1}) does not match line 4 verdict marker (expected ${vpass} or ${vfail})."
-              exit 1
-            fi
-            sleep 5
-          done
-          echo "::error::Timed out waiting for a sticky OpenCode comment matching the PASS/FAIL layout (see workflow prompt)."
-          exit 1

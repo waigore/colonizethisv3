@@ -80,44 +80,125 @@ void main() {
     });
   });
 
-  group('applyMoveOrdersToRegion', () {
-    test('applies valid move orders and ignores invalid ones', () {
-      final topology = MapTopology(
-        nodes: const [
-          TopologyNode(id: 'P1', regionId: 'oldWorld', type: TopologyNodeType.province),
-          TopologyNode(id: 'P2', regionId: 'oldWorld', type: TopologyNodeType.province),
-        ],
-        edges: const [
-          TopologyEdge(id1: 'P1', id2: 'P2'),
-        ],
-      );
-
-      final region = RegionData(
-        provinces: const [
-          Province(id: 'P1', regionId: 'oldWorld', ownerId: 'player1'),
-          Province(id: 'P2', regionId: 'oldWorld', ownerId: 'player2'),
-        ],
-        units: [
-          Unit(
-            id: 'u1',
-            type: 'Regiment',
-            ownerId: 'player1',
-            locationProvinceId: 'P1',
+  group('applyCivilianTileMoveOrdersToWorldRegions', () {
+    test('moves civilian unit to destination tile within same region', () {
+      const ow = 'oldWorld';
+      final game = Game(
+        id: 'g',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+          oldWorld: RegionData(
+            provinces: const [
+              Province(id: 'oldWorld|P1', regionId: ow, ownerId: 'p1'),
+              Province(id: 'oldWorld|P2', regionId: ow, ownerId: 'p1'),
+            ],
+            units: [
+              Unit(
+                id: 'u1',
+                type: kUnitTypeMerchant,
+                ownerId: 'p1',
+                locationProvinceId: 'oldWorld|P1',
+                tileKey: 'oldWorld|P1|0|0',
+              ),
+            ],
           ),
-        ],
+          newWorld: const RegionData(),
+        ),
+        players: const [Player(id: 'p1', displayName: 'P1', isHuman: true)],
       );
-
-      final orders = {
-        'player1': [
-          const MoveOrder(unitId: 'u1', destinationProvinceId: 'P2'),
-        ],
-      };
-
-      final updated = applyMoveOrdersToRegion(region, topology, orders);
-      expect(updated.units.single.locationProvinceId, 'P2');
+      final r = applyCivilianTileMoveOrdersToWorldRegions(
+        game,
+        {
+          'p1': [
+            const MoveOrder(unitId: 'u1', destinationTileKey: 'oldWorld|P2|3|3'),
+          ],
+        },
+      );
+      expect(r.oldWorld.units.single.tileKey, 'oldWorld|P2|3|3');
+      expect(r.oldWorld.units.single.locationProvinceId, 'oldWorld|P2');
     });
 
-    test('civilian unit move sets tileKey when tileKeysByRegionAndProvince provided', () {
+    test('moves civilian unit from Old World to New World tile', () {
+      const ow = 'oldWorld';
+      const nw = 'newWorld';
+      final game = Game(
+        id: 'g',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+          oldWorld: RegionData(
+            provinces: const [
+              Province(id: 'oldWorld|P1', regionId: ow, ownerId: 'p1'),
+            ],
+            units: [
+              Unit(
+                id: 'u1',
+                type: kUnitTypeMerchant,
+                ownerId: 'p1',
+                locationProvinceId: 'oldWorld|P1',
+                tileKey: 'oldWorld|P1|0|0',
+              ),
+            ],
+          ),
+          newWorld: RegionData(
+            provinces: const [
+              Province(id: 'newWorld|P1', regionId: nw, ownerId: 'p1'),
+            ],
+            units: const [],
+          ),
+        ),
+        players: const [Player(id: 'p1', displayName: 'P1', isHuman: true)],
+      );
+      final r = applyCivilianTileMoveOrdersToWorldRegions(
+        game,
+        {
+          'p1': [
+            const MoveOrder(unitId: 'u1', destinationTileKey: 'newWorld|P1|2|2'),
+          ],
+        },
+      );
+      expect(r.oldWorld.units, isEmpty);
+      expect(r.newWorld.units.single.tileKey, 'newWorld|P1|2|2');
+      expect(r.newWorld.units.single.locationProvinceId, 'newWorld|P1');
+    });
+
+    test('ignores military MoveOrder payloads', () {
+      const ow = 'oldWorld';
+      final game = Game(
+        id: 'g',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+          oldWorld: RegionData(
+            provinces: const [
+              Province(id: 'oldWorld|P1', regionId: ow, ownerId: 'p1'),
+              Province(id: 'oldWorld|P2', regionId: ow, ownerId: 'p1'),
+            ],
+            units: [
+              Unit(
+                id: 'u1',
+                type: 'pikemen',
+                ownerId: 'p1',
+                locationProvinceId: 'oldWorld|P1',
+              ),
+            ],
+          ),
+          newWorld: const RegionData(),
+        ),
+        players: const [Player(id: 'p1', displayName: 'P1', isHuman: true)],
+      );
+      final r = applyCivilianTileMoveOrdersToWorldRegions(
+        game,
+        {
+          'p1': [
+            const MoveOrder(unitId: 'u1', destinationTileKey: 'oldWorld|P2|0|0'),
+          ],
+        },
+      );
+      expect(r.oldWorld.units.single.locationProvinceId, 'oldWorld|P1');
+    });
+  });
+
+  group('applyMoveOrdersToRegion', () {
+    test('is a no-op for civilian MoveOrder application', () {
       const regionId = 'oldWorld';
       final topology = MapTopology(
         nodes: const [
@@ -128,176 +209,32 @@ void main() {
           TopologyEdge(id1: 'P1', id2: 'P2'),
         ],
       );
-      const destTileKey = 'oldWorld|P2|0|0';
-      final destFullId = ProvinceId.full(regionId, 'P2');
       final region = RegionData(
         provinces: const [
-          Province(id: 'P1', regionId: regionId, ownerId: 'p1'),
-          Province(id: 'P2', regionId: regionId, ownerId: 'p1'),
+          Province(id: 'oldWorld|P1', regionId: regionId, ownerId: 'p1'),
+          Province(id: 'oldWorld|P2', regionId: regionId, ownerId: 'p1'),
         ],
         units: [
           Unit(
             id: 'u1',
-            type: 'Merchant',
+            type: kUnitTypeMerchant,
             ownerId: 'p1',
             locationProvinceId: 'oldWorld|P1',
             tileKey: 'oldWorld|P1|0|0',
           ),
         ],
       );
-      final orders = {
-        'p1': [
-          const MoveOrder(unitId: 'u1', destinationProvinceId: 'P2'),
-        ],
-      };
       final updated = applyMoveOrdersToRegion(
         region,
         topology,
-        orders,
-        regionId: regionId,
-        tileKeysByRegionAndProvince: {
-          regionId: {destFullId: [destTileKey]},
+        {
+          'p1': [
+            const MoveOrder(unitId: 'u1', destinationTileKey: 'oldWorld|P2|0|0'),
+          ],
         },
       );
-      expect(updated.units.single.locationProvinceId, destFullId);
-      expect(updated.units.single.tileKey, destTileKey);
-    });
-
-    test('ignores move when destination prefixed id is in a different region', () {
-      const regionId = 'oldWorld';
-      final topology = MapTopology(
-        nodes: const [
-          TopologyNode(id: 'P1', regionId: regionId, type: TopologyNodeType.province),
-          TopologyNode(id: 'P2', regionId: regionId, type: TopologyNodeType.province),
-        ],
-        edges: const [
-          TopologyEdge(id1: 'P1', id2: 'P2'),
-        ],
-      );
-      final region = RegionData(
-        provinces: const [
-          Province(id: 'P1', regionId: regionId, ownerId: 'p1'),
-          Province(id: 'P2', regionId: regionId, ownerId: 'p1'),
-        ],
-        units: [
-          Unit(
-            id: 'u1',
-            type: 'Regiment',
-            ownerId: 'p1',
-            locationProvinceId: 'oldWorld|P1',
-          ),
-        ],
-      );
-      final orders = {
-        'p1': [
-          const MoveOrder(unitId: 'u1', destinationProvinceId: 'newWorld|P2'),
-        ],
-      };
-      final updated = applyMoveOrdersToRegion(
-        region,
-        topology,
-        orders,
-        regionId: regionId,
-      );
+      expect(updated.units.single.tileKey, 'oldWorld|P1|0|0');
       expect(updated.units.single.locationProvinceId, 'oldWorld|P1');
-    });
-
-    test('uses prefixed province id and region-scoped tiles for multi-region civilian move', () {
-      const ow = 'oldWorld';
-      const nw = 'newWorld';
-      final topology = MapTopology(
-        nodes: const [
-          TopologyNode(id: 'p1', regionId: ow, type: TopologyNodeType.province),
-          TopologyNode(id: 'p2', regionId: ow, type: TopologyNodeType.province),
-          TopologyNode(id: 'p1', regionId: nw, type: TopologyNodeType.province),
-          TopologyNode(id: 'p2', regionId: nw, type: TopologyNodeType.province),
-        ],
-        edges: const [
-          TopologyEdge(id1: 'p1', id2: 'p2'),
-        ],
-      );
-      final owDestFullId = ProvinceId.full(ow, 'p2');
-      final nwDestFullId = ProvinceId.full(nw, 'p2');
-      const owDestTile = 'oldWorld|p2|0|0';
-      const nwDestTile = 'newWorld|p2|0|0';
-      final region = RegionData(
-        provinces: const [
-          Province(id: 'p1', regionId: ow, ownerId: 'p1'),
-          Province(id: 'p2', regionId: ow, ownerId: 'p1'),
-        ],
-        units: [
-          Unit(
-            id: 'u1',
-            type: 'Merchant',
-            ownerId: 'p1',
-            locationProvinceId: 'oldWorld|p1',
-            tileKey: 'oldWorld|p1|0|0',
-          ),
-        ],
-      );
-      final orders = {
-        'p1': [
-          const MoveOrder(unitId: 'u1', destinationProvinceId: 'p2'),
-        ],
-      };
-      final updated = applyMoveOrdersToRegion(
-        region,
-        topology,
-        orders,
-        regionId: ow,
-        tileKeysByRegionAndProvince: {
-          ow: {owDestFullId: [owDestTile]},
-          nw: {nwDestFullId: [nwDestTile]},
-        },
-      );
-      expect(updated.units.single.locationProvinceId, owDestFullId);
-      expect(updated.units.single.tileKey, owDestTile);
-    });
-
-    test('allows move to non-adjacent province when destination is own (isDestinationOwnedByPlayer)', () {
-      const regionId = 'oldWorld';
-      final topology = MapTopology(
-        nodes: const [
-          TopologyNode(id: 'P1', regionId: regionId, type: TopologyNodeType.province),
-          TopologyNode(id: 'P2', regionId: regionId, type: TopologyNodeType.province),
-          TopologyNode(id: 'P3', regionId: regionId, type: TopologyNodeType.province),
-        ],
-        edges: [
-          const TopologyEdge(id1: 'P1', id2: 'P2'),
-          const TopologyEdge(id1: 'P2', id2: 'P3'),
-        ],
-      );
-      final destFullId = ProvinceId.full(regionId, 'P3');
-      final region = RegionData(
-        provinces: const [
-          Province(id: 'P1', regionId: regionId, ownerId: 'p1'),
-          Province(id: 'P2', regionId: regionId, ownerId: 'p1'),
-          Province(id: 'P3', regionId: regionId, ownerId: 'p1'),
-        ],
-        units: [
-          Unit(
-            id: 'u1',
-            type: 'Regiment',
-            ownerId: 'p1',
-            locationProvinceId: 'oldWorld|P1',
-          ),
-        ],
-      );
-      final orders = {
-        'p1': [
-          MoveOrder(unitId: 'u1', destinationProvinceId: destFullId),
-        ],
-      };
-      bool isDestinationOwnedByPlayer(String playerId, String destFullProvinceId) =>
-          playerId == 'p1' && destFullProvinceId == destFullId;
-      final updated = applyMoveOrdersToRegion(
-        region,
-        topology,
-        orders,
-        regionId: regionId,
-        isDestinationOwnedByPlayer: isDestinationOwnedByPlayer,
-      );
-      expect(updated.units.single.locationProvinceId, destFullId);
     });
   });
 }

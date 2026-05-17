@@ -1,13 +1,71 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:colonizethis_logic/package_logger.dart';
+import 'package:colonizethis_logic/src/logging.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../setup/capital_choice.dart';
 import '../setup/town_capital_occupancy.dart';
-import '../world/province_lookup.dart';
+import 'player_state_pipeline.dart';
+import 'port_seaboard_registry_key.dart';
+import 'province_lookup.dart';
 import 'capital_reassignment_fatal.dart';
 
-final _log = packageLogger();
+class CapitalReassignmentEligibility {
+  const CapitalReassignmentEligibility({
+    required this.eligible,
+    required this.reasonCode,
+    required this.ownedProvinceIdsInRegion,
+    this.candidateProvinceId,
+  });
+
+  final bool eligible;
+  final String reasonCode;
+  final List<String> ownedProvinceIdsInRegion;
+  final String? candidateProvinceId;
+}
+
+CapitalReassignmentEligibility evaluateCapitalReassignmentEligibility({
+  required Game state,
+  required String playerId,
+  required String regionId,
+  required MapTopology regionTopology,
+  String? excludedProvinceId,
+}) {
+  final region = regionDataForId(state.worldState, regionId);
+  if (region == null) {
+    return const CapitalReassignmentEligibility(
+      eligible: false,
+      reasonCode: 'region_not_found',
+      ownedProvinceIdsInRegion: <String>[],
+    );
+  }
+
+  final ownedInRegion = region.provinces
+      .where(
+        (p) =>
+            p.ownerId == playerId &&
+            (excludedProvinceId == null || p.id != excludedProvinceId),
+      )
+      .map((p) => p.id)
+      .toList(growable: false);
+  if (ownedInRegion.isEmpty) {
+    return const CapitalReassignmentEligibility(
+      eligible: false,
+      reasonCode: 'no_owned_provinces_in_region',
+      ownedProvinceIdsInRegion: <String>[],
+    );
+  }
+
+  final candidateProvinceId = pickCapitalProvinceIdForReassignment(
+    ownedInRegion,
+    regionTopology,
+  );
+  return CapitalReassignmentEligibility(
+    eligible: true,
+    reasonCode: 'eligible',
+    ownedProvinceIdsInRegion: ownedInRegion,
+    candidateProvinceId: candidateProvinceId,
+  );
+}
 
 Game applyCapitalReassignmentAfterCombat(
   Game state,
@@ -21,45 +79,41 @@ Game applyCapitalReassignmentAfterCombat(
     if (capProvinceId == null || player.capitalTile == null) continue;
     final regionId = ProvinceId.regionIdFrom(capProvinceId);
     final regionTopology = topologyByRegion?[regionId] ?? topology;
-    final region = regionDataForId(state.worldState, regionId);
-    if (region == null) continue;
-    final province = region.provinces
-        .where((p) => p.id == capProvinceId)
-        .firstOrNull;
+    final province = state.worldState.tryGetProvince(capProvinceId);
     if (province == null) continue;
     if (province.ownerId == player.id) continue;
 
-    final ownedInRegion = region.provinces
-        .where((p) => p.ownerId == player.id)
-        .map((p) => p.id)
-        .toList();
-    if (ownedInRegion.isEmpty) {
-      final updatedPlayers = game.players.map((p) {
-        if (p.id != player.id) return p;
-        return p.copyWith(capitalProvinceId: null, capitalTile: null);
-      }).toList();
-      game = game.copyWith(players: updatedPlayers);
-      _log.i(
+    final eligibility = evaluateCapitalReassignmentEligibility(
+      state: game,
+      playerId: player.id,
+      regionId: regionId,
+      regionTopology: regionTopology,
+    );
+    if (!eligibility.eligible) {
+      game = game.mapPlayers(
+        (p) => p.id != player.id
+            ? p
+            : p.copyWith(capitalProvinceId: null, capitalTile: null),
+      );
+      logicLog.i(
         'player ${player.id} lost capital and has no provinces in $regionId; capital cleared',
       );
       continue;
     }
 
-    final newProvinceId = pickCapitalProvinceIdForReassignment(
-      ownedInRegion,
-      regionTopology,
-    );
-    final newProvince = region.provinces
-        .where((p) => p.id == newProvinceId)
-        .firstOrNull;
+    final newProvinceId = eligibility.candidateProvinceId;
+    if (newProvinceId == null || newProvinceId.isEmpty) {
+      final msg =
+          'capital reassignment: missing deterministic candidate in region $regionId for player ${player.id}';
+      final err = StateError(msg);
+      logicLog.e(msg, error: err, stackTrace: StackTrace.current);
+      throw CapitalReassignmentFatalError(msg, err);
+    }
+    final newProvince = game.worldState.tryGetProvince(newProvinceId);
     if (newProvince == null) {
       final msg =
           'capital reassignment: province $newProvinceId not found in region $regionId for player ${player.id}';
-      _log.e(
-        msg,
-        error: StateError(msg),
-        stackTrace: StackTrace.current,
-      );
+      logicLog.e(msg, error: StateError(msg), stackTrace: StackTrace.current);
       throw CapitalReassignmentFatalError(msg);
     }
 
@@ -68,11 +122,7 @@ Game applyCapitalReassignmentAfterCombat(
       final msg =
           'capital reassignment: missing townTileKey for province $newProvinceId player ${player.id}';
       final err = StateError(msg);
-      _log.e(
-        msg,
-        error: err,
-        stackTrace: StackTrace.current,
-      );
+      logicLog.e(msg, error: err, stackTrace: StackTrace.current);
       throw CapitalReassignmentFatalError(msg, err);
     }
 
@@ -82,11 +132,7 @@ Game applyCapitalReassignmentAfterCombat(
     } catch (e, st) {
       final msg =
           'capital reassignment: invalid townTileKey for province $newProvinceId player ${player.id} raw="$rawTown"';
-      _log.e(
-        msg,
-        error: e,
-        stackTrace: st,
-      );
+      logicLog.e(msg, error: e, stackTrace: st);
       throw CapitalReassignmentFatalError(
         'Invalid townTileKey for province $newProvinceId (player ${player.id}): $e',
         e,
@@ -120,17 +166,13 @@ Game applyCapitalReassignmentAfterCombat(
           tileMapByRegion[e.key] = e.value;
         }
       }
-      _log.i(
+      logicLog.i(
         'player ${player.id} capital reassigned to $newProvinceId ($newCapKey) after loss',
       );
     } catch (e, st) {
       final msg =
           'capital reassignment: failed to apply new capital for ${player.id}';
-      _log.e(
-        msg,
-        error: e,
-        stackTrace: st,
-      );
+      logicLog.e(msg, error: e, stackTrace: st);
       rethrow;
     }
   }
@@ -149,11 +191,9 @@ Game applyGreatPowerFall(
 
   final portsByProvince = <String, List<String>>{};
   game.worldState.portsByProvinceSeaboard.forEach((key, _) {
-    final parts = key.split('|');
-    if (parts.length >= 3) {
-      final provinceId = '${parts[0]}|${parts[1]}';
-      portsByProvince.putIfAbsent(provinceId, () => []).add(key);
-    }
+    final decoded = decodePortSeaboardRegistryKey(key);
+    if (decoded == null || !decoded.isPrefixedKey) return;
+    portsByProvince.putIfAbsent(decoded.fullProvinceId, () => []).add(key);
   });
 
   for (final player in game.players) {
@@ -188,27 +228,23 @@ Game applyGreatPowerFall(
       return RegionData(provinces: updatedProvinces, units: remainingUnits);
     }
 
-    final newOldWorld = transferRegion(game.worldState.oldWorld);
-    final newNewWorld = transferRegion(game.worldState.newWorld);
+    final updatedWorldState = game.worldState.mapBothRegions(
+      (_, region) => transferRegion(region),
+    );
 
     final remainingFleets = game.worldState.fleets
         .where((f) => f.ownerId != playerId)
         .toList();
 
-    game = game.copyWith(
-      worldState: game.worldState.copyWith(
-        oldWorld: newOldWorld,
-        newWorld: newNewWorld,
-        fleets: remainingFleets,
-      ),
-      players: game.players
-          .map(
-            (p) => p.id == playerId
-                ? p.copyWith(capitalProvinceId: null, capitalTile: null)
-                : p,
-          )
-          .toList(),
-    );
+    game = game
+        .copyWith(
+          worldState: updatedWorldState.copyWith(fleets: remainingFleets),
+        )
+        .mapPlayers(
+          (p) => p.id == playerId
+              ? p.copyWith(capitalProvinceId: null, capitalTile: null)
+              : p,
+        );
   }
 
   return game;

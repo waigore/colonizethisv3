@@ -22,6 +22,9 @@ import 'transport_overlay_mask.dart';
 import 'transport_overlay_tileset.dart';
 import 'warp_zone_edge_geometry.dart';
 
+
+
+
 part 'region_map_component_shared.dart';
 part 'region_map_component_render_orchestrator.dart';
 part 'region_map_component_render_core.dart';
@@ -143,7 +146,7 @@ class CtRegionMapComponent extends PositionComponent {
     // Fleet icon uses ui.decodeImageFromList; awaiting it here can deadlock with
     // Flutter's test/game bootstrap (decode needs frames while onLoad blocks).
     unawaited(
-      fleetIconCache.load().catchError((Object _, StackTrace __) {
+      fleetIconCache.load().catchError((Object _, StackTrace stackTrace) {
         // Errors are already logged inside FleetIconCache.load.
       }),
     );
@@ -219,11 +222,9 @@ class CtRegionMapComponent extends PositionComponent {
     final cell = region.cellAt(x, y);
     final tileKey = '${region.regionId}|${cell.regionCellId}|$x|$y';
     if (validTileKeys != null) {
-      // Work target mode: use tap handler for selection/cancellation.
+      // Work target mode: only valid tile taps commit selection.
       if (validTileKeys!.isNotEmpty && validTileKeys!.contains(tileKey)) {
         onTileTapped?.call(tileKey);
-      } else {
-        onTileTapped?.call(null);
       }
       return;
     }

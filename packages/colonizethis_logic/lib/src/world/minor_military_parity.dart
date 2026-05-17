@@ -1,6 +1,8 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
+import 'province_lookup.dart';
+
 /// Minor military parity step. SPEC/game/factions.md, SPEC/program/turn-resolution-phases.md.
 ///
 /// In the Minor Regiment Upgrade phase: compute maxGreatPowerMilitaryLevel from
@@ -29,13 +31,6 @@ Game applyMinorMilitaryParity(Game game) {
     return unit.copyWith(type: upgraded);
   }
 
-  final updatedOldWorldUnits = game.worldState.oldWorld.units
-      .map(upgradeMinorLandRegiment)
-      .toList(growable: false);
-  final updatedNewWorldUnits = game.worldState.newWorld.units
-      .map(upgradeMinorLandRegiment)
-      .toList(growable: false);
-
   const tribeEffectiveLevel = 1;
   final updatedTribes = <Tribe>[];
   for (final t in game.tribes) {
@@ -47,15 +42,8 @@ Game applyMinorMilitaryParity(Game game) {
   return game.copyWith(
     minorNations: updatedMinors.isEmpty ? game.minorNations : updatedMinors,
     tribes: updatedTribes.isEmpty ? game.tribes : updatedTribes,
-    worldState: game.worldState.copyWith(
-      oldWorld: RegionData(
-        provinces: game.worldState.oldWorld.provinces,
-        units: updatedOldWorldUnits,
-      ),
-      newWorld: RegionData(
-        provinces: game.worldState.newWorld.provinces,
-        units: updatedNewWorldUnits,
-      ),
+    worldState: game.worldState.mapBothRegionUnits(
+      (_, units) => units.map(upgradeMinorLandRegiment).toList(growable: false),
     ),
   );
 }

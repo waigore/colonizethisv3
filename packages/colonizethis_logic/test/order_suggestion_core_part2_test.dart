@@ -247,7 +247,7 @@ void main() {
       const tileKey = 'oldWorld|p1|0|0';
       final unit = Unit(
         id: 'u1',
-        type: 'Spy',
+        type: kUnitTypeSpy,
         ownerId: playerId,
         locationProvinceId: '$ow|p1',
       );
@@ -282,7 +282,7 @@ void main() {
         topology,
         const Orders(),
       );
-      expect(suggestions.where((o) => o.target == 'counter_spy'), isNotEmpty);
+      expect(suggestions.where((o) => o.target == kWorkTargetCounterSpy), isNotEmpty);
     });
 
     test(
@@ -309,7 +309,7 @@ void main() {
         const tileKey = 'oldWorld|minor1|0|0';
         final unit = Unit(
           id: 'u1',
-          type: 'Merchant',
+          type: kUnitTypeMerchant,
           ownerId: playerId,
           locationProvinceId: '$ow|p1',
         );
@@ -373,53 +373,10 @@ void main() {
           const Orders(),
         );
         expect(
-          suggestions.where((o) => o.target == 'purchase_land'),
+          suggestions.where((o) => o.target == kWorkTargetPurchaseLand),
           isNotEmpty,
         );
       },
     );
-
-    test('suggestNavalMissionOrders returns list', () {
-      const playerId = 'gp1';
-      const ow = 'oldWorld';
-      final player = const Player(
-        id: playerId,
-        displayName: 'GP',
-        isHuman: false,
-      );
-      final world = WorldState(
-        turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-        oldWorld: const RegionData(),
-        newWorld: const RegionData(),
-        fleets: [
-          Fleet(
-            id: 'fleet_gp1',
-            ownerId: playerId,
-            seaZoneId: 'sea1',
-            regionId: ow,
-            shipTypeIds: ['fluyte'],
-          ),
-        ],
-      );
-      final game = Game(id: 'g1', worldState: world, players: [player]);
-      final topology = MapTopology(
-        nodes: const [
-          TopologyNode(
-            id: 'sea1',
-            regionId: ow,
-            type: TopologyNodeType.seaZone,
-          ),
-        ],
-        edges: const [],
-      );
-      final view = buildPlayerView(game, topology, playerId);
-      final suggestions = suggestNavalMissionOrders(
-        view,
-        game,
-        topology,
-        const Orders(),
-      );
-      expect(suggestions, isA<List<NavalMissionOrder>>());
-    });
   });
 }

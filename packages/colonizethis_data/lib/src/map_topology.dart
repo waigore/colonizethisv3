@@ -21,12 +21,16 @@ class MapTopology {
     final edgesList = json[_keyEdges] as List<dynamic>? ?? [];
     final edges = edgesList.map<TopologyEdge>((e) {
       if (e is List<dynamic>) return TopologyEdge.fromJsonList(e);
-      return TopologyEdge.fromJson(Map<String, dynamic>.from(e as Map));
+      return TopologyEdge.fromJson(
+        Map<String, dynamic>.from(e as Map<Object?, Object?>),
+      );
     }).toList();
     return MapTopology(
       nodes: nodesList
           .map(
-            (e) => TopologyNode.fromJson(Map<String, dynamic>.from(e as Map)),
+            (e) => TopologyNode.fromJson(
+              Map<String, dynamic>.from(e as Map<Object?, Object?>),
+            ),
           )
           .toList(),
       edges: edges,

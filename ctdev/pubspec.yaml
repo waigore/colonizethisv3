@@ -5,12 +5,12 @@ version: 0.1.0
 resolution: workspace
 
 environment:
-  sdk: '>=3.11.0 <4.0.0'
+  sdk: '>=3.11.5 <4.0.0'
 
 dependencies:
   flutter:
     sdk: flutter
-  basic_logger_file: ^0.1.3
+  basic_logger: ^0.2.3
   colonizethis_logger: any
   logger: ^2.0.2
   path: ^1.9.0

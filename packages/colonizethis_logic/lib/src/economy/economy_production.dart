@@ -1,8 +1,6 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:colonizethis_logic/package_logger.dart';
+import 'package:colonizethis_logic/src/logging.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
-
-final _log = packageLogger();
 
 /// Production resolution helpers.
 /// SPEC/game/production-recipes.md
@@ -64,7 +62,7 @@ ProductionResult resolveProduction({
   for (final assignment in assignments) {
     final recipe = ProductionRecipesCatalog.byId[assignment.recipeId];
     if (recipe == null) {
-      _log.w('production skip unknown recipe id ${assignment.recipeId}');
+      logicLog.w('production skip unknown recipe id ${assignment.recipeId}');
       continue;
     }
     if (assignment.assignedLabour <= 0) continue;
@@ -72,7 +70,7 @@ ProductionResult resolveProduction({
 
     final labourPerOutput = recipe.labourPerOutput;
     if (labourPerOutput <= 0) {
-      _log.w(
+      logicLog.w(
         'production recipe ${recipe.id} has non-positive labourPerOutput; skipping',
       );
       continue;
@@ -122,7 +120,7 @@ ProductionResult resolveProduction({
     current = current.applyDelta(recipe.outputCommodityId, totalOutput);
   }
 
-  _log.d(
+  logicLog.d(
     'production assignments=${assignments.length} effectiveLabour=$effectiveLabour',
   );
   return ProductionResult(

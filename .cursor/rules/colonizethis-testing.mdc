@@ -12,5 +12,6 @@ alwaysApply: false
 - **E2E / integration UI tests:** For `**/integration_test/**` and other UI-heavy e2e, follow `colonizethis-e2e-ui-stability.mdc` (deterministic finders, visibility before interaction, avoid layout-coupled `tapAt`/gestures unless unavoidable).
 - **Layers:** **Unit** — pure logic, models, services (no Flutter/Flame); mock deps. **Widget** — Flutter; `flutter_test`, `pumpWidget`; mock state/providers. **Game/component** — Flame in isolation (minimal `FlameGame` + component); test `onLoad`, `update`, removal.
 - **Layout:** `test/` mirrors `lib/`; **`*_test.dart`**; group by feature or class.
+- **Static analysis on tests:** `test/` and `integration_test/` are **in scope** for the same lint/analyze policy as `lib/` where tooling supports it (exclusions for generated/fixtures per **[SPEC/program/repo-lint.md](../../SPEC/program/repo-lint.md)** *Test and `integration_test/` static analysis scope*; `custom_lint` policy in **[SPEC/program/exception-enforcement.md](../../SPEC/program/exception-enforcement.md)**). Phasing and CI semantics: **Refs #2014**.
 - **Mocks:** mockito or mocktail; for Flame use minimal game or mock `Game`.
 - **Critical paths:** Combat, economy, save/load, **ruleset loading** — prioritize coverage here.

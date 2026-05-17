@@ -10,6 +10,10 @@ Land military forces consist of **regiments** grouped into **armies**, and **gen
 
 **Regiment buildability:** A regiment type is **buildable** iff the player has researched the **tech that unlocks that regiment** (per [tech-tree-military.md](tech-tree-military.md)). There is **no era gate**: if the unlocking tech is in the player's techUnlocked set, that regiment can be built regardless of era. Build validation (order engine) and recruitment UI must consult the tech catalog.
 
+**Debug spawn exception (`/spawn_regiment`):** Debug-console regiment spawn is a debug-only path and does **not** consult normal affordability or tech unlock checks. It spawns only for the active human player at their capital, appends each spawned regiment to Home Army through `appendMilitaryRegimentToArmy`, and mints canonical regiment unit ids in global sequence form `unit_<n>` (never `debug_*`).
+
+**Debug regiment hard-fail matrix:** Debug spawn hard-fails with no mutation and deterministic error when any of these checks fails: unknown `humanPlayerId`; targeted player is not human; unknown regiment id (not in catalog); missing `capitalProvinceId`; invalid capital province id region segment; invalid requested count (`<1`).
+
 **Minor military parity:** `maxGreatPowerMilitaryLevel` is derived from the set of **land regiment** types any Great Power can build (e.g. the highest era among those types). In the turn-resolution **Minor Regiment Upgrade** phase (after Movement; before all combat phases), each **Old World Minor Nation** `effectiveMilitaryLevel` is set to this maximum and minor land regiments are upgraded in place; **Tribes** do not receive parity and remain `effectiveMilitaryLevel = 1` (see [factions.md](factions.md)).
 
 ---
@@ -105,3 +109,11 @@ Note: Horses are a raw material commodity (see [commodity-catalog.md](commodity-
 - Given a combat resolution or Quick Battle needs to compute land combat strength for a side using this regiment table and medal levels per unit  
   When the System aggregates strength per side as described in [combat.md](combat.md) and [quick-battle.md](quick-battle.md)  
   Then the System uses each regiment’s FPN and FPM values from this table, multiplies them by the appropriate medal multiplier, and never assumes or infers stats that contradict the values specified here.
+
+- Given debug console is enabled and active human state is valid for capital placement  
+  When `/spawn_regiment peasant_levies 3` is applied  
+  Then exactly three new units with `type=peasant_levies`, `tileKey=null`, `medals=0`, `status=idle`, and `currentWork=null` are persisted in the capital region `RegionData.units` list and appended to Home Army, without tech or affordability checks.
+
+- Given each hard-fail branch in the debug regiment matrix  
+  When `/spawn_regiment` is submitted in that branch  
+  Then no world mutation occurs (no new units, no army changes) and a deterministic error message is returned.

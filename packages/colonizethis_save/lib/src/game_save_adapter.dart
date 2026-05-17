@@ -119,7 +119,7 @@ class GameSaveAdapter {
       return null;
     }
     try {
-      final envelope = Map<String, dynamic>.from(raw as Map);
+      final envelope = Map<String, dynamic>.from(raw as Map<dynamic, dynamic>);
       final versionRaw = envelope[_saveFormatVersionKey];
       if (versionRaw is! int ||
           !_supportedSaveFormatVersions.contains(versionRaw)) {
@@ -128,7 +128,7 @@ class GameSaveAdapter {
         );
       }
       final gameRaw = envelope[_saveGamePayloadKey];
-      if (gameRaw is! Map) {
+      if (gameRaw is! Map<dynamic, dynamic>) {
         throw IncompatibleSaveFormatException(
           'Invalid save payload for gameId=$gameId',
         );
@@ -152,7 +152,7 @@ class GameSaveAdapter {
       _log.w('gameId=$gameId not found');
       return null;
     }
-    final envelope = Map<String, dynamic>.from(raw as Map);
+    final envelope = Map<String, dynamic>.from(raw as Map<dynamic, dynamic>);
     final versionRaw = envelope[_saveFormatVersionKey];
     if (versionRaw is! int ||
         !_supportedSaveFormatVersions.contains(versionRaw)) {
@@ -161,7 +161,7 @@ class GameSaveAdapter {
       );
     }
     final gameRaw = envelope[_saveGamePayloadKey];
-    if (gameRaw is! Map) {
+    if (gameRaw is! Map<dynamic, dynamic>) {
       throw IncompatibleSaveFormatException(
         'Invalid save payload for gameId=$gameId',
       );
@@ -255,27 +255,37 @@ class GameSaveAdapter {
       throw StateError('Required map data missing for gameId=$gameId');
     }
     try {
-      final tileMapByRegion = (tileRaw as Map).map<String, TileMapResult>(
-        (k, v) => MapEntry(
-          k as String,
-          TileMapResult.fromJson(Map<String, dynamic>.from(v as Map)),
-        ),
-      );
-      final topologyByRegion = (topoRaw as Map).map<String, MapTopology>(
-        (k, v) => MapEntry(
-          k as String,
-          MapTopology.fromJson(Map<String, dynamic>.from(v as Map)),
-        ),
-      );
+      final tileMapByRegion = (tileRaw as Map<dynamic, dynamic>)
+          .map<String, TileMapResult>(
+            (k, v) => MapEntry(
+              k as String,
+              TileMapResult.fromJson(
+                Map<String, dynamic>.from(v as Map<dynamic, dynamic>),
+              ),
+            ),
+          );
+      final topologyByRegion = (topoRaw as Map<dynamic, dynamic>)
+          .map<String, MapTopology>(
+            (k, v) => MapEntry(
+              k as String,
+              MapTopology.fromJson(
+                Map<String, dynamic>.from(v as Map<dynamic, dynamic>),
+              ),
+            ),
+          );
       final combinedTopology = MapTopology.fromJson(
-        Map<String, dynamic>.from(combinedRaw as Map),
+        Map<String, dynamic>.from(combinedRaw as Map<dynamic, dynamic>),
       );
       // Warp links are optional for backward compatibility.
       final warpRaw = box.get(gameId + _suffixWarpLinks);
       List<WarpLink>? warpLinks;
       if (warpRaw != null) {
-        warpLinks = (warpRaw as List)
-            .map((l) => WarpLink.fromJson(Map<String, dynamic>.from(l as Map)))
+        warpLinks = (warpRaw as List<dynamic>)
+            .map(
+              (l) => WarpLink.fromJson(
+                Map<String, dynamic>.from(l as Map<dynamic, dynamic>),
+              ),
+            )
             .toList();
       }
       _log.d('loaded map data gameId=$gameId');

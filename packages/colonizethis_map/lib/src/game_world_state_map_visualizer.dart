@@ -7,13 +7,86 @@ import 'package:image/image.dart' as img;
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
+import 'tile_map_capital_markers.dart';
+import 'tile_map_topology_helpers.dart';
 import 'tile_map_visualization.dart';
 import 'tile_map_visualization_shared.dart';
 import 'multi_region_map_rendering.dart';
 import 'init_game_map_view_data.dart';
+import 'region_constants.dart';
+import 'tile_key_util.dart';
 
-const String _regionOldWorld = 'oldWorld';
-const String _regionNewWorld = 'newWorld';
+Map<String, String> _provinceIdToOwnerIdFromProvinces(
+  List<Province> provinces,
+) {
+  final out = <String, String>{};
+  for (final p in provinces) {
+    final oid = p.ownerId;
+    if (oid != null && oid.isNotEmpty) {
+      out[p.id] = oid;
+    }
+  }
+  return out;
+}
+
+typedef _RegionRenderInputs = ({
+  Map<String, String> ownerByProvinceId,
+  List<TileMapCapitalMarker> capitalTiles,
+  Map<String, (int r, int g, int b)> factionColors,
+});
+
+_RegionRenderInputs _buildRegionRenderInputs({
+  required Game game,
+  required String regionId,
+}) {
+  if (regionId == kRegionOldWorld) {
+    final ownerByProvinceId = _provinceIdToOwnerIdFromProvinces(
+      game.worldState.oldWorld.provinces,
+    );
+    final capitals = collectCapitalMarkersForRegion(
+      game: game,
+      regionId: regionId,
+      scope: TileMapCapitalMarkerScope.oldWorldFactions,
+    );
+    final factionColors = factionOwnershipColorMapForOldWorld(game);
+    return (
+      ownerByProvinceId: ownerByProvinceId,
+      capitalTiles: capitals,
+      factionColors: factionColors,
+    );
+  }
+
+  final ownerByProvinceId = _provinceIdToOwnerIdFromProvinces(
+    game.worldState.newWorld.provinces,
+  );
+  final capitals = collectCapitalMarkersForRegion(
+    game: game,
+    regionId: regionId,
+    scope: TileMapCapitalMarkerScope.newWorldFactions,
+  );
+  final factionColors = factionOwnershipColorMapForNewWorld(game);
+  return (
+    ownerByProvinceId: ownerByProvinceId,
+    capitalTiles: capitals,
+    factionColors: factionColors,
+  );
+}
+
+void _appendPortTileToRegionLists(
+  String tileKey,
+  List<({int x, int y})> owPortTiles,
+  List<({int x, int y})> nwPortTiles,
+) {
+  final parsed = tryParseMapTileKey(tileKey);
+  if (parsed == null) return;
+  if (parsed.regionId == kRegionOldWorld) {
+    owPortTiles.add((x: parsed.x, y: parsed.y));
+    return;
+  }
+  if (parsed.regionId == kRegionNewWorld) {
+    nwPortTiles.add((x: parsed.x, y: parsed.y));
+  }
+}
 
 /// Resolves terrain RGB for a cell (geographic fill). Uses terrainType or parses terrainTypeId.
 (int r, int g, int b) _terrainRgbForCell(
@@ -43,10 +116,7 @@ Uint8List renderSingleRegionGameStateMapToPng({
   Map<String, (int r, int g, int b)>? factionColorsOverride,
   List<({int x, int y})> portTiles = const [],
 }) {
-  final seaZoneIds = {
-    for (final n in topology.nodes)
-      if (n.type == TopologyNodeType.seaZone) n.id,
-  };
+  final seaZoneIds = seaZoneIdsFromTopology(topology);
 
   final List<String> factionIds;
   final Map<String, (int r, int g, int b)> factionColors;
@@ -115,7 +185,7 @@ Uint8List renderSingleRegionGameStateMapToPng({
   var legendY = legendY0;
   img.drawString(
     image,
-    'Ownership by faction. Black = land borders; light blue = sea borders.',
+    kGameWorldMapOwnershipLegendBlurb,
     font: img.arial14,
     x: legendPadding,
     y: legendY,
@@ -185,107 +255,45 @@ Uint8List renderInitGameMapToPng({
   required Map<String, MapTopology> topologyByRegion,
   int cellSize = 24,
 }) {
-  final owOwnerByProvinceId = <String, String>{};
-  for (final p in game.worldState.oldWorld.provinces) {
-    if (p.ownerId != null && p.ownerId!.isNotEmpty) {
-      owOwnerByProvinceId[p.id] = p.ownerId!;
-    }
-  }
-  final nwOwnerByProvinceId = <String, String>{};
-  for (final p in game.worldState.newWorld.provinces) {
-    if (p.ownerId != null && p.ownerId!.isNotEmpty) {
-      nwOwnerByProvinceId[p.id] = p.ownerId!;
-    }
-  }
-
-  final owCapitals = <({String factionId, String displayName, int x, int y})>[];
-  for (final p in game.players) {
-    final cap = p.capitalTile;
-    if (cap != null && cap.regionId == _regionOldWorld) {
-      owCapitals.add((
-        factionId: p.id,
-        displayName: p.displayName,
-        x: cap.x,
-        y: cap.y,
-      ));
-    }
-  }
-  for (final m in game.minorNations) {
-    final cap = m.capitalTile;
-    if (cap != null && cap.regionId == _regionOldWorld) {
-      owCapitals.add((
-        factionId: m.id,
-        displayName: m.displayName ?? m.id,
-        x: cap.x,
-        y: cap.y,
-      ));
-    }
-  }
-  final nwCapitals = <({String factionId, String displayName, int x, int y})>[];
-  for (final t in game.tribes) {
-    final cap = t.capitalTile;
-    if (cap != null && cap.regionId == _regionNewWorld) {
-      nwCapitals.add((
-        factionId: t.id,
-        displayName: t.displayName ?? t.id,
-        x: cap.x,
-        y: cap.y,
-      ));
-    }
-  }
-
-  // Ownership colours by faction type (GP vibrant, minors grey, tribes vibrant)
-  final owGreatPowerIds = game.players.map((p) => p.id).toList()..sort();
-  final owMinorNationIds = game.minorNations.map((m) => m.id).toList()..sort();
-  final owFactionColors = factionOwnershipColorMap(
-    greatPowerIds: owGreatPowerIds,
-    minorNationIds: owMinorNationIds,
+  final owInputs = _buildRegionRenderInputs(
+    game: game,
+    regionId: kRegionOldWorld,
   );
-  final nwTribeIds = game.tribes.map((t) => t.id).toList()..sort();
-  final nwFactionColors = factionOwnershipColorMap(tribeIds: nwTribeIds);
+  final nwInputs = _buildRegionRenderInputs(
+    game: game,
+    regionId: kRegionNewWorld,
+  );
 
   // Port tile positions from WorldState.portsByProvinceSeaboard (value = regionId|provinceId|x|y)
   final owPortTiles = <({int x, int y})>[];
   final nwPortTiles = <({int x, int y})>[];
   for (final tileKey in game.worldState.portsByProvinceSeaboard.values) {
-    final parts = tileKey.split('|');
-    if (parts.length >= 4) {
-      final regionId = parts[0];
-      final x = int.tryParse(parts[2]);
-      final y = int.tryParse(parts[3]);
-      if (x != null && y != null) {
-        if (regionId == _regionOldWorld) {
-          owPortTiles.add((x: x, y: y));
-        } else if (regionId == _regionNewWorld) {
-          nwPortTiles.add((x: x, y: y));
-        }
-      }
-    }
+    _appendPortTileToRegionLists(tileKey, owPortTiles, nwPortTiles);
   }
 
-  final owResult = tileMapByRegion[_regionOldWorld]!;
-  final owTopo = topologyByRegion[_regionOldWorld]!;
-  final nwResult = tileMapByRegion[_regionNewWorld]!;
-  final nwTopo = topologyByRegion[_regionNewWorld]!;
+  final owResult = tileMapByRegion[kRegionOldWorld]!;
+  final owTopo = topologyByRegion[kRegionOldWorld]!;
+  final nwResult = tileMapByRegion[kRegionNewWorld]!;
+  final nwTopo = topologyByRegion[kRegionNewWorld]!;
 
   final owPng = renderSingleRegionGameStateMapToPng(
     result: owResult,
     topology: owTopo,
-    regionId: _regionOldWorld,
-    ownerByProvinceId: owOwnerByProvinceId,
-    capitalTiles: owCapitals,
+    regionId: kRegionOldWorld,
+    ownerByProvinceId: owInputs.ownerByProvinceId,
+    capitalTiles: owInputs.capitalTiles,
     cellSize: cellSize,
-    factionColorsOverride: owFactionColors,
+    factionColorsOverride: owInputs.factionColors,
     portTiles: owPortTiles,
   );
   final nwPng = renderSingleRegionGameStateMapToPng(
     result: nwResult,
     topology: nwTopo,
-    regionId: _regionNewWorld,
-    ownerByProvinceId: nwOwnerByProvinceId,
-    capitalTiles: nwCapitals,
+    regionId: kRegionNewWorld,
+    ownerByProvinceId: nwInputs.ownerByProvinceId,
+    capitalTiles: nwInputs.capitalTiles,
     cellSize: cellSize,
-    factionColorsOverride: nwFactionColors,
+    factionColorsOverride: nwInputs.factionColors,
     portTiles: nwPortTiles,
   );
 
@@ -305,13 +313,7 @@ Uint8List renderInitGameMapToPngFromViewData({
     final mapW = region.width * region.cellSize;
     final mapH = region.height * region.cellSize;
 
-    // Determine sea zone ids from cells marked as sea.
-    final seaZoneIds = <String>{};
-    for (final cell in region.cells) {
-      if (cell.isSea) {
-        seaZoneIds.add(cell.regionCellId);
-      }
-    }
+    final seaZoneIds = seaZoneLocalIdsFromRegionCells(region.cells);
 
     // Legend height: geographic = title + Sea + terrains + "Resources:" + g/t/i + ports; else title + factions + ports.
     final legendLines = geographicMode
@@ -440,23 +442,17 @@ Uint8List renderInitGameMapToPngFromViewData({
         color: black,
       );
       legendY += legendLineHeight;
-      for (final r in geographicGameWorldLegendResources) {
-        final letter = resourceToLegendLetter(r);
-        final label = resourceToLegendLabel(r);
-        img.drawString(
-          image,
-          '$letter  $label',
-          font: img.arial14,
-          x: legendPadding,
-          y: legendY,
-          color: black,
-        );
-        legendY += legendLineHeight;
-      }
+      legendY = drawResourceLegendRows(
+        image,
+        legendY: legendY,
+        textColor: black,
+        resources: geographicGameWorldLegendResources,
+        style: ResourceLegendRowsStyle.compactInline,
+      );
     } else {
       img.drawString(
         image,
-        'Ownership by faction. Black = land borders; light blue = sea borders.',
+        kGameWorldMapOwnershipLegendBlurb,
         font: img.arial14,
         x: legendPadding,
         y: legendY,

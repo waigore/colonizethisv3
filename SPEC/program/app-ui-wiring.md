@@ -4,6 +4,18 @@
 
 ---
 
+## Overlay construction and simulation cost (normative)
+
+When building or rebuilding game overlays (widget `build`, scroll/pan, selection changes), the UI layer **must not** invoke expensive simulation paths—tile pickers such as `getValidWorkOrderTileKeysWithVisibility`, full **order-engine** validation or application, or other heavy rule evaluation—**unless** there is an explicit, narrow justification (for example validating a user commit when assigning an order).
+
+Authoritative world and player-view updates happen primarily at **turn resolution** and other explicit commit boundaries. Overlays read **stable** models (`Game`, `PlayerView`, map view data, draft orders) and **cheap** pure predicates shared with the engine (for example `isMineralEligibleTile` with visibility and prospected-tile state), not re-run the engine solely to paint affordances. Province detail prospect shortcut behavior is specified in [province-sea-zone-detail-overlay.md](../ui/province-sea-zone-detail-overlay.md).
+
+### Turn resolution in progress (#2160)
+
+While **`turnResolutionBlockingProvider`** is true (background turn resolution from the map), **bus-driven** navigation, dialogs, and unit panels must not open except **`OpenPauseMenuPanelEvent`** and **`ClosePanelEvent`** as documented in [app-event-bus.md](app-event-bus.md). The map uses local **`IgnorePointer`** for gameplay taps; the **pause / hamburger** path stays available. Do not bypass this with direct **`Navigator`** calls for cross-cutting UI.
+
+---
+
 ## When to use the bus vs local Flutter APIs
 
 Use **`AppEventBus`** for **cross-cutting** actions: shell ↔ game, empire panels opening **shared** dialogs or **full-screen** empire routes, side menu opening unit sheets, platform menus, and anything that must not depend on a long **`BuildContext`** chain.
@@ -42,6 +54,7 @@ Keep **`showDialog` / `showModalBottomSheet` / `Navigator.pop`** **inside one fe
 | `OpenCivilianUnitsPanelEvent` | `GameSideMenu` | `CivilianUnitsPanel` (+ Riverpod game/orders) |
 | `OpenMilitaryUnitsPanelEvent` | `GameSideMenu` | `MilitaryUnitsPanel` |
 | `OpenNavalUnitsPanelEvent` | `GameSideMenu`, map fleet marker | `NavalUnitsPanel` (optional tile/location scope fields on event) |
+| `ToggleDebugConsolePanelEvent` | `GameMapEmpireLeftRail` (debug-gated) | `GameMapArea` in-map non-modal overlay (`DebugConsoleOverlayPanel`) |
 
 Sheet close cleanup should be emitted as a typed bus event (`UnitsPanelClosedEvent`) from the handler.
 
@@ -144,9 +157,20 @@ In **`colonizethis_app`**, widgets and services that hold **one or more** `Strea
 - Given `GameSideMenu` is mounted with a valid `currentGameProvider`, When the user chooses Civilian Units, Then the system emits `OpenCivilianUnitsPanelEvent` (not `showModalBottomSheet` from `GameSideMenu`).
 - Given `CivilianUnitsPanel` is mounted with a bus, When the user taps Train, Then the system emits `ClosePanelEvent` and then `OpenDialogEvent(trainCiviliansDialogId)` (panel does not call `showDialog` or `Navigator.maybePop` on the handler-owned sheet for that action).
 - Given `MilitaryUnitsPanel` is mounted with a bus, When the user taps Train, Then the system emits `ClosePanelEvent` and then `OpenDialogEvent(trainMilitaryDialogId)` under the same rules.
+- Given `CT_DEBUG_CONSOLE=true` and an active game map, When the user taps Debug Console in `GameMapEmpireLeftRail`, Then the system emits `ToggleDebugConsolePanelEvent` and `GameMapArea` toggles a non-modal in-map overlay without using `OpenPanelEvent` or `showModalBottomSheet`.
+- Given debug console input submits `/spawn_civilian <type> [count]`, When command parsing succeeds, Then the panel emits `SpawnDebugCivilianAtCapitalEvent` and the shell listener applies immediate civilian spawn to the active game and persists via `GameService.saveGame`.
+- Given debug console input submits `/spawn_regiment <regiment_type_id> [count]`, When command parsing succeeds, Then the panel emits `SpawnDebugRegimentAtCapitalEvent` and the shell listener applies immediate capital regiment spawn for the active human player and persists via `GameService.saveGame`.
+- Given debug console input submits `/spawn_ship <ship_type_id> [count]`, When command parsing succeeds, Then the panel emits `SpawnDebugShipAtCapitalHomeFleetEvent` and the shell listener applies immediate home-fleet ship spawn for the active human player and persists via `GameService.saveGame`.
+- Given debug console input submits `/add_money <amount>` with a valid integer amount, When command parsing succeeds, Then the panel emits `CreditDebugTreasuryEvent` and the shell listener applies immediate treasury credit to the active human player and persists via `GameService.saveGame`.
+- Given debug console input submits `/add_worker <worker_tier> <amount>` with a valid tier id and integer amount, When command parsing succeeds, Then the panel emits `CreditDebugWorkerPoolEvent` and the shell listener applies immediate worker-pool tier credit to the active human player and persists via `GameService.saveGame`.
+- Given debug console input submits `/flip_province <regionId> <province_display_name>`, When command parsing succeeds, Then the panel emits `FlipDebugProvinceOwnershipEvent` and the shell listener validates human-turn + target eligibility, applies canonical province transfer semantics, and persists via `GameService.saveGame` on success.
+- Given debug console input submits `/get_tile_basic_info`, When command parsing succeeds, Then the panel reads `mapProvincePanelProvider.selectedTileKey` at submit-time, appends read-only info output, emits no `SessionCommandEvent`, and does not trigger `GameService.saveGame`.
+- Given debug console input submits `/list_players`, When command parsing succeeds, Then the panel builds a submit-time `DebugConsoleReadOnlyContext` from current `Game.players`, appends read-only player-list output, emits no `SessionCommandEvent`, and does not trigger `GameService.saveGame`.
 - Given a units sheet should close before the map reacts, When the player triggers locate or work-target selection from that sheet, Then the system emits `ClosePanelEvent` before `LocateMapTileEvent` or `StartCivilianWorkTargetSelectionEvent`; the map widget does not call `Navigator.maybePop` for that teardown.
 - Given `DiplomacyPanel` is mounted with a bus, When the user taps Grant Aid or Set Subsidy, Then the system emits `OpenDialogEvent('grant_or_subsidy')` (panel does not call `showDialog` directly).
 - Given `DiplomacyPanel` is mounted with a bus, When the user taps a faction row, Then the system emits `NavigateToRouteEvent(Routes.diplomacyDetail)` (panel does not call `Navigator.push` directly).
+- Given `CT_DEBUG_CONSOLE=true`, When the app shell computes a localized app title for desktop or web title surfaces, Then the shell appends the exact terminal suffix ` (debug)` using the shared debug-aware title formatter.
+- Given `CT_DEBUG_CONSOLE=false` or undefined, When the app shell computes a localized app title for desktop or web title surfaces, Then the shell keeps the title unchanged and does not alter debug-console commands, routing, persistence, or game behavior.
 
 ### Coupling rules
 

@@ -23,11 +23,11 @@ Resolves fleet movement orders, triggers ship-reveal for coastal provinces, and 
 
 **Ship Reveal:**
 
-On fleet entering sea zone S: for each province P with a P↔S edge (within the **destination sea zone's region** only), set coastal tiles of P to `revealed` for fleet owner. **Coastal** means each land tile key in P’s list is revealed only if its `(x,y)` has an orthogonal neighbor `(x±1,y)` or `(x,y±1)` matching some water tile key listed for S in `tileKeysByRegionAndProvince[regionId][L]`, where `L` is S’s **local** sea id (topology may store S as `regionId|L` in the combined graph; indexing uses `L` only). Province identity for which tiles to reveal must use full province id (`regionId|localId`) via `toFullProvinceId(regionId, topologyProvinceNodeId)` and region-scoped lookup per [world-model-identity.md](../game/world-model-identity.md). Updates visibility state per [fog-and-exploration-resolution.md](fog-and-exploration-resolution.md).
+On fleet **successfully** entering sea zone S: for each province P with a P↔S edge (within the **destination sea zone's region** only), set **coastal ring** land tiles of P to **`fullyVisible`** for the fleet owner. **Coastal ring** means each land tile key in P’s list is updated only if its `(x,y)` has an orthogonal neighbor `(x±1,y)` or `(x,y±1)` matching some water tile key listed for S in `tileKeysByRegionAndProvince[regionId][L]`, where `L` is S’s **local** sea id (topology may store S as `regionId|L` in the combined graph; indexing uses `L` only). **Inland** land tiles in P are not changed by this rule. Province identity must use full province id (`regionId|localId`) via `toFullProvinceId(regionId, topologyProvinceNodeId)` and region-scoped lookup per [world-model-identity.md](../game/world-model-identity.md). Updates visibility state per [fog-and-exploration-resolution.md](fog-and-exploration-resolution.md).
 
 Also on entering S: set all **water** tile keys belonging to S in `tileKeysByRegionAndProvince[regionId][L]` to **fully visible** for the fleet owner so open-ocean hexes are visible while the fleet is present; **End-of-turn** [distant sea zone fog](fog-and-exploration-resolution.md) may fog them again when no owned coast is adjacent and no fleet of that player is at sea in S.
 
-On fleet **docking** at a port province (including merge into Home Fleet at capital): set **all** tiles of that province listed in `tileKeysByRegionAndProvince` to `revealed` for the fleet owner (same visibility field names as elsewhere), so unrevealed coastal hinterland from fog is uncovered when the player brings a fleet into port.
+On fleet **docking** at an **owned** port province (including merge into Home Fleet at capital): player-owned provinces are already **`fullyVisible`** for that owner; implementation may set tiles to `fullyVisible` for idempotency. No special reveal pass is required for visibility beyond ownership rules.
 
 **Interception Checks:**
 
@@ -73,6 +73,8 @@ For current product, trade/transport interception also uses hardcoded constants 
 **Join home fleet:**
 
 A `join_home_fleet` order is valid only when the fleet is **in port at the player's capital province**. On apply: merge that fleet's ships into the home fleet and remove the sea-going fleet.
+
+This movement-order contract is distinct from the immediate UI fleet-management transfer flow in `SPEC/ui/naval-units-fleet-management.md` (selected-ship transfer into Home Fleet). Scope B transfer behavior does not broaden `join_home_fleet` order validation unless this section is explicitly revised.
 
 **Build Ship:**
 

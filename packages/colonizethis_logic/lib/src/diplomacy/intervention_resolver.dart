@@ -1,7 +1,22 @@
-part of 'diplomacy_resolver.dart';
+import 'dart:math' show Random;
 
-class _InterventionResolutionResult {
-  _InterventionResolutionResult(this.game, {this.pendingInterventions});
+import 'package:colonizethis_models/colonizethis_models.dart';
+
+import '../ai/ai_control.dart';
+import '../combat/conflict_detection.dart';
+import '../constants.dart';
+import '../dossier/evidence_rules.dart';
+import '../turn/turn_resolution_result.dart';
+import '../world/province_lookup.dart';
+import 'diplomacy_relation_updates.dart';
+import 'diplomacy_resolver.dart';
+import 'overture_resolver.dart';
+
+part 'intervention_resolver_call_to_arms.dart';
+part 'intervention_resolver_apply.dart';
+
+class InterventionResolutionResult {
+  InterventionResolutionResult(this.game, {this.pendingInterventions});
 
   final Game game;
   final List<InterventionPrompt>? pendingInterventions;
@@ -47,9 +62,12 @@ bool _interventionsOutstanding(
   int turn,
   String aggressorGpId,
   String defenderMinorOrTribeId,
+  DiplomacyFactionMembership factionMembership,
 ) {
   for (final p in game.players) {
-    if (!isGreatPower(game, p.id) || p.id == aggressorGpId) continue;
+    if (!factionMembership.isGreatPower(p.id) || p.id == aggressorGpId) {
+      continue;
+    }
     if (!_gpHasEmbassyOrPurchasedLandInMinorTribe(
       game,
       p.id,
@@ -75,29 +93,6 @@ InterventionDecision? _findInterventionDecision(
     if (d.aggressorGpId == aggressorGpId &&
         d.defenderMinorOrTribeId == defenderMinorOrTribeId &&
         d.interveningGpId == interveningGpId) {
-      return d;
-    }
-  }
-  return null;
-}
-
-class _CallToArmsResult {
-  _CallToArmsResult(this.game, {this.pendingCallToArms});
-  final Game game;
-  final List<CallToArmsPending>? pendingCallToArms;
-}
-
-CallToArmsDecision? _findCallToArmsDecision(
-  List<CallToArmsDecision>? decisions,
-  String allyGpId,
-  String defenderGpId,
-  String aggressorGpId,
-) {
-  if (decisions == null) return null;
-  for (final d in decisions) {
-    if (d.allyGpId == allyGpId &&
-        d.defenderGpId == defenderGpId &&
-        d.aggressorGpId == aggressorGpId) {
       return d;
     }
   }
@@ -143,16 +138,19 @@ Game _clearOverturesBetweenGpAndMinorTribe(
   return game.copyWith(overtureStates: overtures);
 }
 
-_InterventionResolutionResult _processInterventionsForAggressorDefender(
+InterventionResolutionResult _processInterventionsForAggressorDefender(
   Game game, {
   required String aggressorGpId,
   required String defenderMinorOrTribeId,
   required int turn,
+  required DiplomacyFactionMembership factionMembership,
   List<InterventionDecision>? interventionDecisions,
 }) {
   final eligible = <String>[];
   for (final p in game.players) {
-    if (!isGreatPower(game, p.id) || p.id == aggressorGpId) continue;
+    if (!factionMembership.isGreatPower(p.id) || p.id == aggressorGpId) {
+      continue;
+    }
     if (!_gpHasEmbassyOrPurchasedLandInMinorTribe(
       game,
       p.id,
@@ -199,6 +197,7 @@ _InterventionResolutionResult _processInterventionsForAggressorDefender(
         defenderMinorOrTribeId: defenderMinorOrTribeId,
         interveningGpId: interveningId,
         choice: d.choice,
+        factionMembership: factionMembership,
       );
       continue;
     }
@@ -215,18 +214,20 @@ _InterventionResolutionResult _processInterventionsForAggressorDefender(
       defenderMinorOrTribeId: defenderMinorOrTribeId,
       interveningGpId: interveningId,
       choice: aiChoice,
+      factionMembership: factionMembership,
     );
   }
   if (pending.isNotEmpty) {
-    return _InterventionResolutionResult(g, pendingInterventions: pending);
+    return InterventionResolutionResult(g, pendingInterventions: pending);
   }
-  return _InterventionResolutionResult(g);
+  return InterventionResolutionResult(g);
 }
 
-_InterventionResolutionResult _resolveOutstandingInterventionsForMinorTribeWars(
+InterventionResolutionResult resolveOutstandingInterventionsForMinorTribeWars(
   Game game,
   Map<String, List<DiplomaticOrder>> diploByPlayer,
   int turn, {
+  required DiplomacyFactionMembership factionMembership,
   List<InterventionDecision>? interventionDecisions,
 }) {
   final seen = <String>{};
@@ -236,18 +237,30 @@ _InterventionResolutionResult _resolveOutstandingInterventionsForMinorTribeWars(
     for (final order in entry.value) {
       if (order.type != DiplomaticOrderType.declareWar) continue;
       final targetId = order.targetFactionId;
-      if (!isGreatPower(g, gpId) || !isMinorOrTribe(g, targetId)) continue;
+      if (!factionMembership.isGreatPower(gpId) ||
+          !factionMembership.isMinorOrTribe(targetId)) {
+        continue;
+      }
       final rel = getRelation(g, gpId, targetId);
       if (rel == null || !rel.atWar) continue;
       final key = '$gpId|$targetId';
       if (seen.contains(key)) continue;
       seen.add(key);
-      if (!_interventionsOutstanding(g, turn, gpId, targetId)) continue;
+      if (!_interventionsOutstanding(
+        g,
+        turn,
+        gpId,
+        targetId,
+        factionMembership,
+      )) {
+        continue;
+      }
       final pass = _processInterventionsForAggressorDefender(
         g,
         aggressorGpId: gpId,
         defenderMinorOrTribeId: targetId,
         turn: turn,
+        factionMembership: factionMembership,
         interventionDecisions: interventionDecisions,
       );
       g = pass.game;
@@ -257,400 +270,5 @@ _InterventionResolutionResult _resolveOutstandingInterventionsForMinorTribeWars(
       }
     }
   }
-  return _InterventionResolutionResult(g);
-}
-
-/// GP–GP war pairs from declare-war orders that are at war after step 5.
-List<({String aggressor, String defender})> _gpGpWarPairsFromOrders(
-  Game game,
-  Map<String, List<DiplomaticOrder>> diploByPlayer,
-) {
-  final seen = <String>{};
-  final out = <({String aggressor, String defender})>[];
-  for (final e in diploByPlayer.entries) {
-    final aggressor = e.key;
-    if (!isGreatPower(game, aggressor)) continue;
-    for (final o in e.value) {
-      if (o.type != DiplomaticOrderType.declareWar) continue;
-      final defender = o.targetFactionId;
-      if (!isGreatPower(game, defender)) continue;
-      if (!factionsAtWar(game, aggressor, defender)) continue;
-      final key = '$aggressor|$defender';
-      if (seen.add(key)) {
-        out.add((aggressor: aggressor, defender: defender));
-      }
-    }
-  }
-  return out;
-}
-
-Game _cancelSubsidiesBetweenGps(Game game, String id1, String id2, int turn) {
-  var subsidyStates = List<SubsidyState>.from(game.subsidyStates);
-  final cancelled = subsidyStates
-      .where(
-        (s) =>
-            (s.payerId == id1 && s.targetId == id2) ||
-            (s.payerId == id2 && s.targetId == id1),
-      )
-      .toList();
-  if (cancelled.isEmpty) return game;
-  subsidyStates = subsidyStates
-      .where(
-        (s) =>
-            !((s.payerId == id1 && s.targetId == id2) ||
-                (s.payerId == id2 && s.targetId == id1)),
-      )
-      .toList();
-  var g = game.copyWith(subsidyStates: subsidyStates);
-  for (final s in cancelled) {
-    _diploLog.i(
-      'diplomacy subsidies cancelled due to war ${s.payerId} vs ${s.targetId}',
-    );
-    g = _appendDiplomaticEvent(
-      g,
-      turn,
-      DiplomaticEventType.subsidyCancelled,
-      {s.payerId, s.targetId},
-      fromFactionId: s.payerId,
-      toFactionId: s.targetId,
-      reason: 'war',
-      wasAiInitiator: isAiControlledForEvidence(g, s.payerId),
-    );
-  }
-  return g;
-}
-
-Game _applyCallToArmsAccept(
-  Game game,
-  String allyGpId,
-  String aggressorGpId,
-  int turn,
-) {
-  var relations = List<DiplomacyRelation>.from(game.diplomacyRelations);
-  relations = setWarStateForPair(
-    relations: relations,
-    gpId: allyGpId,
-    targetId: aggressorGpId,
-    turn: turn,
-  );
-  var g = game.copyWith(diplomacyRelations: relations);
-  g = _cancelSubsidiesBetweenGps(g, allyGpId, aggressorGpId, turn);
-  g = _appendDiplomaticEvent(
-    g,
-    turn,
-    DiplomaticEventType.callToArmsAccepted,
-    {allyGpId, aggressorGpId},
-    fromFactionId: allyGpId,
-    toFactionId: aggressorGpId,
-    wasAiInitiator: isAiControlledForEvidence(g, allyGpId),
-  );
-  _diploLog.i(
-    'diplomacy call to arms accept $allyGpId joins war vs $aggressorGpId',
-  );
-  return g;
-}
-
-Game _applyCallToArmsRefuse(
-  Game game,
-  String allyGpId,
-  String defenderGpId,
-  int turn,
-) {
-  var relations = List<DiplomacyRelation>.from(game.diplomacyRelations);
-  relations = upsertRelation(relations, allyGpId, defenderGpId, (existing) {
-    final base = existing?.score ?? relationScoreNeutral;
-    var newScore = (base - callToArmsRefusalScorePenalty).clamp(
-      relationScoreMin,
-      relationScoreMax,
-    );
-    var newLevel = scoreToLevel(newScore);
-    if (newLevel == RelationLevel.allied) {
-      newScore = relationScoreLevelFriendlyMax;
-      newLevel = RelationLevel.friendly;
-    }
-    final ids = canonicalPairIds(allyGpId, defenderGpId);
-    if (existing == null) {
-      return DiplomacyRelation(
-        factionId1: ids.id1,
-        factionId2: ids.id2,
-        score: newScore,
-        level: newLevel,
-        lastInteractionTurn: turn,
-      );
-    }
-    return existing.copyWith(
-      score: newScore,
-      level: newLevel,
-      lastInteractionTurn: turn,
-    );
-  });
-  final refuseEvidence = evidenceForIsolationistCallToArmsRefuse(
-    game,
-    allyGpId,
-    defenderGpId,
-    turn,
-  );
-  var g = game.copyWith(
-    diplomacyRelations: relations,
-    dossierEvidenceEntries: [
-      ...game.dossierEvidenceEntries,
-      ...refuseEvidence,
-    ],
-  );
-  g = _appendDiplomaticEvent(
-    g,
-    turn,
-    DiplomaticEventType.callToArmsRefused,
-    {allyGpId, defenderGpId},
-    fromFactionId: allyGpId,
-    toFactionId: defenderGpId,
-    wasAiInitiator: isAiControlledForEvidence(g, allyGpId),
-  );
-  _diploLog.i(
-    'diplomacy call to arms refuse $allyGpId breaks alliance with $defenderGpId',
-  );
-  return g;
-}
-
-_CallToArmsResult _processCallToArms(
-  Game game,
-  Map<String, List<DiplomaticOrder>> diploByPlayer,
-  int turn, {
-  List<CallToArmsDecision>? callToArmsDecisions,
-}) {
-  var state = game;
-  final warPairs = _gpGpWarPairsFromOrders(state, diploByPlayer);
-  final pending = <CallToArmsPending>[];
-
-  for (final pair in warPairs) {
-    final aggressorGpId = pair.aggressor;
-    final defenderGpId = pair.defender;
-    for (final p in state.players) {
-      final allyGpId = p.id;
-      if (allyGpId == defenderGpId || allyGpId == aggressorGpId) continue;
-      if (factionsAtWar(state, allyGpId, aggressorGpId)) continue;
-      final rel = getRelation(state, allyGpId, defenderGpId);
-      if (rel == null || !rel.atPeace || rel.level != RelationLevel.allied) {
-        continue;
-      }
-
-      if (isAiControlled(state, allyGpId)) {
-        final accept = rel.score >= callToArmsAiAcceptMinRelationScore;
-        if (accept) {
-          state = _applyCallToArmsAccept(state, allyGpId, aggressorGpId, turn);
-        } else {
-          state = _applyCallToArmsRefuse(state, allyGpId, defenderGpId, turn);
-        }
-        continue;
-      }
-
-      final decision = _findCallToArmsDecision(
-        callToArmsDecisions,
-        allyGpId,
-        defenderGpId,
-        aggressorGpId,
-      );
-      if (decision == null) {
-        pending.add(
-          CallToArmsPending(
-            allyGpId: allyGpId,
-            defenderGpId: defenderGpId,
-            aggressorGpId: aggressorGpId,
-          ),
-        );
-      } else if (decision.accepted) {
-        state = _applyCallToArmsAccept(state, allyGpId, aggressorGpId, turn);
-      } else {
-        state = _applyCallToArmsRefuse(state, allyGpId, defenderGpId, turn);
-      }
-    }
-  }
-
-  pending.sort((a, b) {
-    final c1 = a.allyGpId.compareTo(b.allyGpId);
-    if (c1 != 0) return c1;
-    final c2 = a.defenderGpId.compareTo(b.defenderGpId);
-    if (c2 != 0) return c2;
-    return a.aggressorGpId.compareTo(b.aggressorGpId);
-  });
-
-  if (pending.isNotEmpty) {
-    return _CallToArmsResult(state, pendingCallToArms: pending);
-  }
-  return _CallToArmsResult(state);
-}
-
-bool _gpHasPurchasedLandInFactionProvinces(
-  Game game,
-  String gpId,
-  String factionId,
-) {
-  if (game.worldState.purchasedTilesByTileKey.isEmpty) return false;
-  final worldState = game.worldState;
-  for (final entry in worldState.purchasedTilesByTileKey.entries) {
-    if (entry.value != gpId) continue;
-    final provinceId = Unit.provinceIdFromTileKey(entry.key);
-    if (provinceId == null) continue;
-    final province = worldState.tryGetProvince(provinceId);
-    if (province != null && province.ownerId == factionId) {
-      return true;
-    }
-  }
-  return false;
-}
-
-/// Applies intervention for one aggressor GP (Diplomacy phase when a GP declares
-/// war on a Minor/Tribe; legacy combat hook may use [applyInterventionChoice]).
-/// SPEC/game/diplomacy.md § Intervention.
-Game applyInterventionAgainstAggressor(
-  Game game, {
-  required String aggressorGpId,
-  required String defenderMinorOrTribeId,
-  required String interveningGpId,
-  required InterventionChoice choice,
-}) {
-  final turn = game.worldState.turnState.turnNumber;
-  if (!isGreatPower(game, aggressorGpId)) return game;
-
-  if (choice == InterventionChoice.doNothing) {
-    var g = _clearOverturesBetweenGpAndMinorTribe(
-      game,
-      interveningGpId,
-      defenderMinorOrTribeId,
-    );
-    g = _appendDiplomaticEvent(
-      g,
-      turn,
-      DiplomaticEventType.interventionDoNothing,
-      {interveningGpId, aggressorGpId},
-      fromFactionId: interveningGpId,
-      toFactionId: aggressorGpId,
-    );
-    return g;
-  }
-
-  var relations = List<DiplomacyRelation>.from(game.diplomacyRelations);
-
-  if (choice == InterventionChoice.intervene) {
-    final ids = canonicalPairIds(interveningGpId, aggressorGpId);
-    relations = upsertRelation(relations, interveningGpId, aggressorGpId, (
-      existing,
-    ) {
-      if (existing == null) {
-        return DiplomacyRelation(
-          factionId1: ids.id1,
-          factionId2: ids.id2,
-          score: 40,
-          level: RelationLevel.neutral,
-          state: RelationState.atWar,
-          sinceTurn: turn,
-          lastInteractionTurn: turn,
-        );
-      }
-      if (!existing.atPeace) return existing;
-      final delta = warDeclarationThirdPartyPenaltyDelta(game, aggressorGpId);
-      final newScore = (existing.score - delta).clamp(
-        relationScoreMin,
-        relationScoreMax,
-      );
-      return existing.copyWith(
-        state: RelationState.atWar,
-        sinceTurn: turn,
-        lastInteractionTurn: turn,
-        score: newScore,
-        level: scoreToLevel(newScore),
-      );
-    });
-  } else if (choice == InterventionChoice.protest) {
-    final ids = canonicalPairIds(interveningGpId, aggressorGpId);
-    relations = upsertRelation(relations, interveningGpId, aggressorGpId, (
-      existing,
-    ) {
-      final delta = warDeclarationThirdPartyPenaltyDelta(game, aggressorGpId);
-      final newScore = ((existing?.score ?? relationScoreNeutral) - delta)
-          .clamp(relationScoreMin, relationScoreMax);
-      final newLevel = scoreToLevel(newScore);
-      if (existing == null) {
-        return DiplomacyRelation(
-          factionId1: ids.id1,
-          factionId2: ids.id2,
-          score: newScore,
-          level: newLevel,
-          lastInteractionTurn: turn,
-        );
-      }
-      return existing.copyWith(
-        score: newScore,
-        level: newLevel,
-        lastInteractionTurn: turn,
-      );
-    });
-  }
-
-  var g = game.copyWith(diplomacyRelations: relations);
-  final eventType = choice == InterventionChoice.intervene
-      ? DiplomaticEventType.interventionIntervene
-      : DiplomaticEventType.interventionProtest;
-  g = _appendDiplomaticEvent(
-    g,
-    turn,
-    eventType,
-    {interveningGpId, aggressorGpId},
-    fromFactionId: interveningGpId,
-    toFactionId: aggressorGpId,
-  );
-  return g;
-}
-
-/// Returns gpId of a human GP with Embassy or purchased land for the
-/// Minor/Tribe defender, or null. Used for tests and legacy combat hooks;
-/// primary intervention flow runs in the Diplomacy phase.
-String? needsInterventionChoice(Game game, BattleContext ctx) {
-  final defenderId = ctx.defenderFactionId;
-  final defenderIsMinorOrTribe = isMinorOrTribe(game, defenderId);
-  if (!defenderIsMinorOrTribe) return null;
-
-  final attackerIds = ctx.attackers.map((a) => a.factionId).toSet();
-  final attackerIsGp = attackerIds.any(
-    (id) => game.players.any((p) => p.id == id),
-  );
-  if (!attackerIsGp) return null;
-
-  for (final p in game.players) {
-    if (!p.isHuman) continue;
-    if (attackerIds.contains(p.id)) continue;
-
-    final o = getOverture(game, p.id, defenderId);
-    final hasEmbassy = o != null && o.hasEmbassy;
-    final hasInvestment = _gpHasPurchasedLandInFactionProvinces(
-      game,
-      p.id,
-      defenderId,
-    );
-    if (hasEmbassy || hasInvestment) return p.id;
-  }
-  return null;
-}
-
-/// Applies intervention for each Great Power attacker in [ctx] (legacy combat hook).
-/// Prefer [applyInterventionAgainstAggressor] for Diplomacy-phase declaration flow.
-Game applyInterventionChoice(
-  Game game,
-  BattleContext ctx,
-  String gpIdWithEmbassy,
-  InterventionChoice choice,
-) {
-  var g = game;
-  for (final a in ctx.attackers) {
-    final attackerId = a.factionId;
-    if (!isGreatPower(game, attackerId)) continue;
-    g = applyInterventionAgainstAggressor(
-      g,
-      aggressorGpId: attackerId,
-      defenderMinorOrTribeId: ctx.defenderFactionId,
-      interveningGpId: gpIdWithEmbassy,
-      choice: choice,
-    );
-  }
-  return g;
+  return InterventionResolutionResult(g);
 }

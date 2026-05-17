@@ -393,3 +393,20 @@ Per [production-panel.md](production-panel.md) § Resource and Worker Icons.
 | master | ui_icon_worker_master.png | Master craftsman |
 
 All icons verified: 32×32 PNG with RGBA transparency. Generated 2026-03-17.
+
+---
+
+## Production allocation row controls (32×32)
+
+**Panel:** Production → Allocation recipe rows (`production_panel.dart`). **Display:** `StrictAssetIcon` with `kAppIconAssetPrefix` at ~14–16 logical px in the slider row.
+
+**Generation:** PixelLab **`generate_image_pixflux`** (standalone UI icon, `no_background: true`) — same class of tool as [naval units](#ui_icon_naval_unitspng-3232) when `pixellab_create_map_object` is unavailable in the MCP toolchain. Colonial palette per § Style lock (`#3E1F1A`–`#5A332C` frame, `#A85C3A`–`#C87A5B` inner, `#E8C838`–`#FFED7F` gold accents).
+
+| Asset filename | Role | Pixflux prompt (summary) |
+|----------------|------|---------------------------|
+| `ui_icon_production_alloc_decrement.png` | **−** stepper | pixel art minus sign button, colonial UI, terracotta/gold, transparent background |
+| `ui_icon_production_alloc_increment.png` | **+** stepper | pixel art plus sign button, colonial UI, terracotta/gold, transparent background |
+| `ui_icon_production_alloc_maximize.png` | **Maximize** row | fill-to-cap / stacked bars upward, colonial UI, transparent background |
+| `ui_icon_production_alloc_clear.png` | **Clear** row | X or zero-row clear motif, colonial UI, transparent background |
+
+**Semantics / l10n:** `production_allocationDecrementRecipe`, `production_allocationIncrementRecipe`, `production_allocationMaximizeRecipe`, `production_allocationClearRecipe` in `app/lib/l10n/arb/app_en.arb`.

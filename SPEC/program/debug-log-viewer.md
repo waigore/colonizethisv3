@@ -14,7 +14,7 @@
 ## 2. Data source and buffer
 
 - **Source:** The single global `Logger` (Dart `logger` package). All packages log via `Logger()`; they do not configure outputs.
-- **Session buffer:** The app registers a **session log buffer** at startup. One `Logger.addLogListener` callback appends every `LogEvent` (debug and above) to an in-memory buffer for the lifetime of the process. Format per event: timestamp (UTC ISO8601), level name, message; when present, error and stackTrace on following lines (same convention as [ctdev-logging.md](ctdev-logging.md) `formatLogEvent`).
+- **Session buffer:** The app registers a **session log buffer** at startup. One `Logger.addLogListener` callback appends every `LogEvent` (debug and above) to an in-memory buffer for the lifetime of the process. Format per event: **local wall-clock timestamp** via `formatOperatorLogTimestamp` (`colonizethis_logger`; always `.SSS` milliseconds and explicit numeric offset or `Z` in UTC — see [colonizethis-logger.md](colonizethis-logger.md)), level name, message; when present, error and stackTrace on following lines (same convention as [ctdev-logging.md](ctdev-logging.md) `formatLogEvent`).
 - **Capacity:** Buffer is bounded (e.g. last N lines or last M bytes). When full, oldest entries are dropped. Exact cap is implementation-defined; sufficient for a typical dev session.
 - **No persistence:** Buffer is cleared on process exit. No file write, no export requirement in this spec.
 
@@ -43,7 +43,7 @@
 
 ## 5. Viewer behaviour
 
-- **Content:** Scrollable list of log lines (newest at bottom or top per platform convention). Each line shows timestamp, level, and message; error/stack lines follow their parent log line.
+- **Content:** Scrollable list of log lines (newest at bottom or top per platform convention). Each line shows **canonical operator timestamp** (local `.SSS` + offset/`Z`), level, and message; error/stack lines follow their parent log line.
 - **Filters:** UI controls for multiselect package and multiselect level; applied live to the visible list.
 - **Close:** Obvious way to close the viewer and return to the previous screen (menubar closes window/overlay; pause menu returns to pause).
 

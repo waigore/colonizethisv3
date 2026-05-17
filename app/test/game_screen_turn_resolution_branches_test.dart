@@ -1,12 +1,17 @@
 // Covers GameScreen turn / overture branches when map view is suppressed (Flame overlay).
+import 'dart:async';
+
+import 'package:colonizethis_app/config/ct_debug_console.dart';
 import 'package:colonizethis_app/config/constants.dart';
 import 'package:colonizethis_app/config/themes.dart';
 import 'package:colonizethis_app/core/services/game_service.dart';
+import 'package:colonizethis_app/core/services/turn_resolution_runner.dart';
 import 'package:colonizethis_app/features/game/flame/game_screen.dart';
 import 'package:colonizethis_app/providers/game_service_provider.dart';
 import 'package:colonizethis_app/providers/games_box_provider.dart';
 import 'package:colonizethis_app/providers/games_provider.dart';
 import 'package:colonizethis_app/providers/map_view_provider.dart';
+import 'package:colonizethis_app/providers/turn_resolution_runner_provider.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
@@ -17,54 +22,68 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hive/hive.dart';
 
-class _PendingTurnGameService extends GameService {
-  _PendingTurnGameService(super.box, super.adapter);
-
+class _FakeOvertureRunner extends TurnResolutionRunner {
   @override
-  TurnResolutionResult runTurnResolution(
-    Game current, {
-    Orders? orders,
-    Orders? aiOrders,
-    MapTopology? topology,
-    Map<String, TileMapResult>? tileMapByRegion,
-    void Function(GameEvent)? onGameEvent,
+  TurnResolutionRunnerSession startResolution({
+    required Game game,
+    required Orders orders,
+    required MapTopology topology,
+    required Map<String, TileMapResult> tileMapByRegion,
+    bool turnTraceEnabled = false,
+    String turnTraceRootDirectory = kCtTurnTraceDirectory,
   }) {
-    final humanId = current.players.firstWhere((p) => p.isHuman).id;
-    return TurnResolutionPendingOvertures(
-      game: current,
-      pendingOvertures: [
-        OvertureOffer(
-          offererGpId: 'offerer_gp',
-          targetFactionId: humanId,
-          stage: OvertureStage.tradeConsulate,
+    final humanId = game.players.firstWhere((p) => p.isHuman).id;
+    return TurnResolutionRunnerSession(
+      sessionId: 'fake-overture',
+      progress: const Stream.empty(),
+      done: Future.value(
+        TurnResolutionTerminalComplete(
+          TurnResolutionPendingOvertures(
+            game: game,
+            pendingOvertures: [
+              OvertureOffer(
+                offererGpId: 'offerer_gp',
+                targetFactionId: humanId,
+                stage: OvertureStage.tradeConsulate,
+              ),
+            ],
+          ),
         ),
-      ],
+      ),
+      dispose: () async {},
     );
   }
 }
 
-class _PendingInterventionGameService extends GameService {
-  _PendingInterventionGameService(super.box, super.adapter);
-
+class _FakeInterventionRunner extends TurnResolutionRunner {
   @override
-  TurnResolutionResult runTurnResolution(
-    Game current, {
-    Orders? orders,
-    Orders? aiOrders,
-    MapTopology? topology,
-    Map<String, TileMapResult>? tileMapByRegion,
-    void Function(GameEvent)? onGameEvent,
+  TurnResolutionRunnerSession startResolution({
+    required Game game,
+    required Orders orders,
+    required MapTopology topology,
+    required Map<String, TileMapResult> tileMapByRegion,
+    bool turnTraceEnabled = false,
+    String turnTraceRootDirectory = kCtTurnTraceDirectory,
   }) {
-    final humanId = current.players.firstWhere((p) => p.isHuman).id;
-    return TurnResolutionPendingIntervention(
-      game: current,
-      pendingInterventions: [
-        InterventionPrompt(
-          aggressorGpId: 'aggressor_gp',
-          defenderMinorOrTribeId: 'minor_1',
-          interveningGpId: humanId,
+    final humanId = game.players.firstWhere((p) => p.isHuman).id;
+    return TurnResolutionRunnerSession(
+      sessionId: 'fake-intervention',
+      progress: const Stream.empty(),
+      done: Future.value(
+        TurnResolutionTerminalComplete(
+          TurnResolutionPendingIntervention(
+            game: game,
+            pendingInterventions: [
+              InterventionPrompt(
+                aggressorGpId: 'aggressor_gp',
+                defenderMinorOrTribeId: 'minor_1',
+                interveningGpId: humanId,
+              ),
+            ],
+          ),
         ),
-      ],
+      ),
+      dispose: () async {},
     );
   }
 }
@@ -121,13 +140,14 @@ void main() {
 
       adapter.save(box, game);
       saveRequiredMapDataForGame(game.id);
-      final service = _PendingTurnGameService(box, adapter);
+      final service = GameService(box, adapter);
 
       await tester.pumpWidget(
         ProviderScope(
           overrides: [
             gamesBoxProvider.overrideWith((ref) => box),
             gameServiceProvider.overrideWith((ref) => service),
+            turnResolutionRunnerProvider.overrideWith((ref) => _FakeOvertureRunner()),
             currentGameProvider.overrideWith(() => CurrentGameNotifier(game)),
             mapViewDataProvider.overrideWith((ref) => null),
             gameIdsWithIntroShownProvider.overrideWith(
@@ -144,10 +164,14 @@ void main() {
       await tester.pump(const Duration(milliseconds: 200));
 
       await tester.tap(find.textContaining('Next turn').last);
-      await tester.pump(const Duration(milliseconds: 400));
+      await tester.pump(const Duration(milliseconds: 200));
+      await tester.tap(find.text('Yes'));
+      await tester.pump(const Duration(milliseconds: 200));
+      await tester.pump(const Duration(milliseconds: 200));
 
-      final container =
-          ProviderScope.containerOf(tester.element(find.byType(GameScreen)));
+      final container = ProviderScope.containerOf(
+        tester.element(find.byType(GameScreen)),
+      );
       final pending = container.read(pendingDiplomacyProvider);
       expect(pending, isA<PendingDiplomacyOvertures>());
       expect((pending! as PendingDiplomacyOvertures).offers, isNotEmpty);
@@ -184,13 +208,16 @@ void main() {
 
       adapter.save(box, game);
       saveRequiredMapDataForGame(game.id);
-      final service = _PendingInterventionGameService(box, adapter);
+      final service = GameService(box, adapter);
 
       await tester.pumpWidget(
         ProviderScope(
           overrides: [
             gamesBoxProvider.overrideWith((ref) => box),
             gameServiceProvider.overrideWith((ref) => service),
+            turnResolutionRunnerProvider.overrideWith(
+              (ref) => _FakeInterventionRunner(),
+            ),
             currentGameProvider.overrideWith(() => CurrentGameNotifier(game)),
             mapViewDataProvider.overrideWith((ref) => null),
             gameIdsWithIntroShownProvider.overrideWith(
@@ -207,10 +234,14 @@ void main() {
       await tester.pump(const Duration(milliseconds: 200));
 
       await tester.tap(find.textContaining('Next turn').last);
-      await tester.pump(const Duration(milliseconds: 400));
+      await tester.pump(const Duration(milliseconds: 200));
+      await tester.tap(find.text('Yes'));
+      await tester.pump(const Duration(milliseconds: 200));
+      await tester.pump(const Duration(milliseconds: 200));
 
-      final container =
-          ProviderScope.containerOf(tester.element(find.byType(GameScreen)));
+      final container = ProviderScope.containerOf(
+        tester.element(find.byType(GameScreen)),
+      );
       final pending = container.read(pendingDiplomacyProvider);
       expect(pending, isA<PendingDiplomacyIntervention>());
       expect((pending! as PendingDiplomacyIntervention).prompts, isNotEmpty);

@@ -1,5 +1,7 @@
 // Naval units panel. SPEC/ui/naval-units-panel.md.
 
+import 'dart:async';
+
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart' show homeFleetIdFor;
 import 'package:colonizethis_models/colonizethis_models.dart';
@@ -7,15 +9,15 @@ import 'package:flutter/material.dart';
 
 import '../../../config/ct_e2e.dart';
 import '../../../config/ct_e2e_last_panel_snapshot.dart';
-import '../../../l10n/app_localizations.dart';
 import '../../../l10n/l10n.dart';
 import '../../../widgets/ct_nine_patch_button.dart';
+import 'fleet_expansion_tile.dart';
 import 'utils/naval_tree_builder.dart';
 import 'move_fleet_dialog.dart';
 import 'split_fleet_dialog.dart';
+import 'transfer_to_home_fleet_dialog.dart';
 import 'units/shared/location_section_header.dart';
 import 'units/shared/region_section_header.dart';
-import 'units/shared/units_entity_action_row.dart';
 import 'units/shared/units_panel_region_label.dart';
 import 'units/shared/units_panel_shell.dart';
 
@@ -51,10 +53,13 @@ class NavalUnitsPanel extends StatefulWidget {
 
 class _NavalUnitsPanelState extends State<NavalUnitsPanel> {
   final Set<String> _selectedFleetIds = {};
+  final Set<String> _visibleScopedFleetIds = <String>{};
   static const double _desktopViewportThreshold = 1280;
   static const double _scaledWidthMin = 420;
   static const double _scaledWidthMax = 640;
   static const double _scaledViewportFactor = 0.36;
+  StreamSubscription<NavalMoveFleetRequestedEvent>? _moveRequestedSub;
+  bool _pendingScopedAutoCloseAfterMove = false;
 
   @override
   void initState() {
@@ -63,6 +68,20 @@ class _NavalUnitsPanelState extends State<NavalUnitsPanel> {
     if (id != null && id.isNotEmpty) {
       _selectedFleetIds.add(id);
     }
+    _moveRequestedSub = widget.bus.on<NavalMoveFleetRequestedEvent>().listen((
+      event,
+    ) {
+      if (widget.locationScopeKey == null) return;
+      if (_visibleScopedFleetIds.contains(event.moveOrder.fleetId)) {
+        _pendingScopedAutoCloseAfterMove = true;
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _moveRequestedSub?.cancel();
+    super.dispose();
   }
 
   /// Canonical fleet id for combine/split selection (Home Fleet uses [homeFleetIdFor]).
@@ -77,6 +96,10 @@ class _NavalUnitsPanelState extends State<NavalUnitsPanel> {
     };
     final activeIds = _selectedFleetIds.where(rowsById.containsKey).toList();
     if (activeIds.length < 2) return false;
+    final homeTransferRows = _homeTransferRows(flat, activeIds.toSet());
+    if (homeTransferRows != null) {
+      return _isEligibleHomeTransferSource(homeTransferRows.source);
+    }
     String? locationKey;
     for (final id in activeIds) {
       final row = rowsById[id]!;
@@ -162,6 +185,15 @@ class _NavalUnitsPanelState extends State<NavalUnitsPanel> {
     if (!_canCombineSelection(flat)) return;
 
     final selected = Set<String>.from(_selectedFleetIds);
+    final homeTransferRows = _homeTransferRows(flat, selected);
+    if (homeTransferRows != null &&
+        _isEligibleHomeTransferSource(homeTransferRows.source)) {
+      _openTransferToHomeDialog(
+        homeRow: homeTransferRows.home,
+        sourceRow: homeTransferRows.source,
+      );
+      return;
+    }
     final targetId = _combineTargetFleetId(flat, selected);
 
     FleetRow? targetRow;
@@ -211,11 +243,134 @@ class _NavalUnitsPanelState extends State<NavalUnitsPanel> {
     widget.bus.emit(NavalFleetsUpdatedEvent(game: newGame));
   }
 
+  ({FleetRow home, FleetRow source})? _homeTransferRows(
+    List<FleetRow> flat,
+    Set<String> selectedIds,
+  ) {
+    if (selectedIds.length != 2) return null;
+    FleetRow? home;
+    FleetRow? source;
+    for (final row in flat) {
+      final id = _selectionFleetId(row);
+      if (!selectedIds.contains(id)) continue;
+      if (row.isHomeFleet) {
+        home = row;
+      } else {
+        source = row;
+      }
+    }
+    if (home == null || source == null) return null;
+    return (home: home, source: source);
+  }
+
+  String? _humanCapitalProvinceId() {
+    for (final p in widget.game.players) {
+      if (p.id == widget.humanPlayerId) return p.capitalProvinceId;
+    }
+    return null;
+  }
+
+  bool _provinceMatchesCapital(String provinceId, String capitalProvinceId) {
+    if (provinceId == capitalProvinceId) return true;
+    final capRegionId = ProvinceId.regionIdFrom(capitalProvinceId);
+    final capLocalId = ProvinceId.localIdFrom(capitalProvinceId);
+    return provinceId == capLocalId || provinceId == '$capRegionId|$capLocalId';
+  }
+
+  bool _seaZoneAdjacentToCapital({
+    required String sourceSeaZoneId,
+    required String sourceRegionId,
+    required String capitalProvinceId,
+  }) {
+    final capRegionId = ProvinceId.regionIdFrom(capitalProvinceId);
+    final capLocalId = ProvinceId.localIdFrom(capitalProvinceId);
+    final sourceSeaLocal = sourceSeaZoneId.contains('|')
+        ? sourceSeaZoneId.split('|').last
+        : sourceSeaZoneId;
+    final sourceSeaPrefixed = sourceSeaZoneId.contains('|')
+        ? sourceSeaZoneId
+        : '$sourceRegionId|$sourceSeaZoneId';
+    final sourceSeaCandidates = <String>{
+      sourceSeaZoneId,
+      sourceSeaLocal,
+      sourceSeaPrefixed,
+    };
+    final capitalCandidates = <String>{
+      capitalProvinceId,
+      capLocalId,
+      '$capRegionId|$capLocalId',
+    };
+    for (final edge in widget.topology.edges) {
+      final a = edge.id1;
+      final b = edge.id2;
+      final aIsSea = sourceSeaCandidates.contains(a);
+      final bIsSea = sourceSeaCandidates.contains(b);
+      final aIsCap = capitalCandidates.contains(a);
+      final bIsCap = capitalCandidates.contains(b);
+      if ((aIsSea && bIsCap) || (bIsSea && aIsCap)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  bool _isEligibleHomeTransferSource(FleetRow sourceRow) {
+    final sourceFleet = _fleetForRow(sourceRow);
+    final capitalProvinceId = _humanCapitalProvinceId();
+    if (sourceFleet == null || capitalProvinceId == null) return false;
+    if (sourceFleet.ownerId != widget.humanPlayerId) return false;
+    if (!sourceFleet.isAtSea) {
+      final inPortId = sourceFleet.inPortAtProvinceId;
+      if (inPortId == null) return false;
+      return _provinceMatchesCapital(inPortId, capitalProvinceId);
+    }
+    final seaZoneId = sourceFleet.seaZoneId;
+    if (seaZoneId == null || seaZoneId.isEmpty) return false;
+    return _seaZoneAdjacentToCapital(
+      sourceSeaZoneId: seaZoneId,
+      sourceRegionId: sourceFleet.regionId,
+      capitalProvinceId: capitalProvinceId,
+    );
+  }
+
+  void _openTransferToHomeDialog({
+    required FleetRow homeRow,
+    required FleetRow sourceRow,
+  }) {
+    final homeFleet = _fleetForRow(homeRow);
+    final sourceFleet = _fleetForRow(sourceRow);
+    if (homeFleet == null || sourceFleet == null) return;
+    showDialog<void>(
+      context: context,
+      builder: (_) => TransferToHomeFleetDialog(
+        sourceFleet: sourceFleet,
+        homeFleet: homeFleet,
+        game: widget.game,
+        humanPlayerId: widget.humanPlayerId,
+        bus: widget.bus,
+      ),
+    );
+  }
+
   @override
   void didUpdateWidget(covariant NavalUnitsPanel oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.game != widget.game ||
-        oldWidget.draftOrders != widget.draftOrders) {
+    final gameOrDraftChanged =
+        oldWidget.game != widget.game ||
+        oldWidget.draftOrders != widget.draftOrders;
+    if (gameOrDraftChanged) {
+      final oldFlat = flattenNavalTree(
+        buildNavalTree(
+          oldWidget.game,
+          oldWidget.humanPlayerId,
+          oldWidget.topology,
+          oldWidget.draftOrders,
+          appL10n(context),
+          tileMapByRegion: oldWidget.tileMapByRegion,
+          topologyByRegion: oldWidget.topologyByRegion,
+          locationScopeKeyFilter: oldWidget.locationScopeKey,
+        ),
+      );
       final flat = flattenNavalTree(
         buildNavalTree(
           widget.game,
@@ -238,6 +393,18 @@ class _NavalUnitsPanelState extends State<NavalUnitsPanel> {
             _selectedFleetIds.addAll(pruned);
           });
         });
+      }
+      if (_pendingScopedAutoCloseAfterMove &&
+          widget.locationScopeKey != null &&
+          oldFlat.isNotEmpty &&
+          flat.isEmpty) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (!mounted) return;
+          widget.bus.emit(const ClosePanelEvent());
+        });
+      }
+      if (_pendingScopedAutoCloseAfterMove) {
+        _pendingScopedAutoCloseAfterMove = false;
       }
     }
   }
@@ -266,7 +433,7 @@ class _NavalUnitsPanelState extends State<NavalUnitsPanel> {
     );
   }
 
-  void _openMoveFleetDialog(FleetRow row) {
+  Future<void> _openMoveFleetDialog(FleetRow row) async {
     if (row.isHomeFleet) return;
     Fleet? fleet;
     for (final f in widget.game.worldState.fleets) {
@@ -277,7 +444,7 @@ class _NavalUnitsPanelState extends State<NavalUnitsPanel> {
     }
     final nonNullFleet = fleet;
     if (nonNullFleet == null) return;
-    showDialog<void>(
+    await showDialog<bool>(
       context: context,
       builder: (ctx) => MoveFleetDialog(
         game: widget.game,
@@ -320,6 +487,8 @@ class _NavalUnitsPanelState extends State<NavalUnitsPanel> {
       locationScopeKeyFilter: widget.locationScopeKey,
     );
     final flat = flattenNavalTree(tree);
+    _visibleScopedFleetIds.clear();
+    _visibleScopedFleetIds.addAll(flat.map((row) => row.fleetId));
     final hasAny = tree.any(
       (group) => group.homeFleet != null || group.locations.isNotEmpty,
     );
@@ -375,7 +544,7 @@ class _NavalUnitsPanelState extends State<NavalUnitsPanel> {
         for (final group in tree) ...[
           RegionSectionHeader(label: unitsPanelRegionLabel(group.regionId)),
           if (group.homeFleet != null)
-            _FleetExpansionTile(
+            FleetExpansionTile(
               row: group.homeFleet!,
               l10n: l10n,
               onTap: group.homeFleet!.tileKey != null
@@ -401,7 +570,7 @@ class _NavalUnitsPanelState extends State<NavalUnitsPanel> {
               regionLabel: unitsPanelRegionLabel(loc.regionId),
             ),
             for (final row in loc.fleets)
-              _FleetExpansionTile(
+              FleetExpansionTile(
                 row: row,
                 l10n: l10n,
                 onTap: row.tileKey != null
@@ -443,123 +612,5 @@ class _NavalUnitsPanelState extends State<NavalUnitsPanel> {
       return KeyedSubtree(key: kCtE2ENavalPanelRootKey, child: panel);
     }
     return panel;
-  }
-}
-
-class _FleetExpansionTile extends StatelessWidget {
-  const _FleetExpansionTile({
-    required this.row,
-    required this.l10n,
-    this.onTap,
-    required this.isSelectedForCombine,
-    required this.onCombineSelectionToggle,
-    this.onSplitFleet,
-    this.onMoveFleet,
-    this.isSplitAllowed = false,
-  });
-
-  final FleetRow row;
-  final AppLocalizations l10n;
-  final VoidCallback? onTap;
-  final bool isSelectedForCombine;
-  final VoidCallback onCombineSelectionToggle;
-  final VoidCallback? onSplitFleet;
-  final VoidCallback? onMoveFleet;
-  final bool isSplitAllowed;
-
-  @override
-  Widget build(BuildContext context) {
-    final missionText = l10n.naval_units_mission(row.missionLabel);
-    return Padding(
-      padding: const EdgeInsets.only(left: 8),
-      child: ExpansionTile(
-        title: UnitsEntityActionRow(
-          details: Row(
-            children: [
-              Checkbox(
-                value: isSelectedForCombine,
-                onChanged: (_) => onCombineSelectionToggle(),
-                visualDensity: VisualDensity.compact,
-                materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-              ),
-              const SizedBox(width: 4),
-              Flexible(child: Text(row.label, overflow: TextOverflow.ellipsis)),
-              if (onTap != null) ...[
-                const SizedBox(width: 4),
-                IconButton(
-                  tooltip: l10n.naval_units_locateFleet,
-                  onPressed: onTap,
-                  icon: const Icon(Icons.my_location),
-                  iconSize: 18,
-                  visualDensity: VisualDensity.compact,
-                ),
-              ],
-            ],
-          ),
-          actions: [
-            if (onMoveFleet != null)
-              UnitsEntityAction(
-                tooltip: l10n.common_move,
-                icon: Icons.route,
-                label: l10n.common_move,
-                onPressed: onMoveFleet,
-              ),
-            if (isSplitAllowed)
-              UnitsEntityAction(
-                tooltip: l10n.common_split,
-                icon: Icons.call_split,
-                label: l10n.common_split,
-                onPressed: onSplitFleet,
-              ),
-          ],
-        ),
-        subtitle: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(row.locationLabel),
-            Text(missionText),
-            if (row.draftNavalMoveLine != null) Text(row.draftNavalMoveLine!),
-          ],
-        ),
-        dense: true,
-        children: [
-          if (row.shipCountsByType.isEmpty)
-            ListTile(title: Text(l10n.naval_units_noShipsInFleet), dense: true)
-          else ...[
-            for (final entry in row.shipCountsByType.entries)
-              ListTile(
-                title: Text(
-                  l10n.naval_units_shipTypeCount(
-                    shipTypeDisplayName(entry.key),
-                    entry.value,
-                  ),
-                ),
-                dense: true,
-              ),
-          ],
-          ListTile(
-            title: Text(
-              l10n.naval_units_strength(row.strength.toStringAsFixed(1)),
-            ),
-            dense: true,
-          ),
-          ListTile(title: Text(l10n.naval_units_totalShips(row.totalShips))),
-          if (row.warshipCount > 0)
-            ListTile(title: Text(l10n.naval_units_warships(row.warshipCount))),
-          if (row.merchantCount > 0)
-            ListTile(
-              title: Text(l10n.naval_units_merchants(row.merchantCount)),
-            ),
-          ListTile(
-            title: Text(
-              row.isHomeFleet
-                  ? l10n.naval_units_cargoCapacity(row.cargoCapacity)
-                  : l10n.naval_units_cargoCapacityIfAssigned(row.cargoCapacity),
-            ),
-            dense: true,
-          ),
-        ],
-      ),
-    );
   }
 }

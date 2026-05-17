@@ -6,25 +6,23 @@ Pre-game phases that configure, generate, and populate the game world before tur
 
 ## Rules
 
-**Phase order:** Config → World Generation → GP Assignment → Minor Nation Assignment → **GP land connectivity repair (Old World)** (optional; see below) → Tribe Assignment → Faction & Initial State → Capital-Choice Phase.
+**Phase order:** Config → World Generation → **Old World ownership (Great Powers + Minor Nations; locked assigner when the locked full-init profile and OW partition/role gates pass, otherwise BFS growth per pipeline)** → **New World tribe assignment (locked assigner on NW remainders; map+setup retries on documented topology failures)** → Faction & Initial State → Capital-Choice Phase.
 
-**Config:** Great Power count, continent count, Minor Nation count, Tribe count, minimum provinces per Minor Nation, target province counts per region, map seed semantics, and **`enforceFairGpOldWorldAssignment`** (bool, default **false**) are authoritative for a run once resolved into `GameSetupConfig` (colonizethis_data). **current product:** There is no Base → Difficulty → Scenario JSON merge yet; values come from **program defaults** (`GameSetupConfig` fields) plus **CLI/API overrides** (see [init-game-tool.md](../program/init-game-tool.md) JSON keys and flags). Full ruleset-backed resolution is specified in [ruleset-config.md](ruleset-config.md) and tracked with ruleset-loader work (e.g. #57 / #58). When **`enforceFairGpOldWorldAssignment`** is **false**, the System skips GP land connectivity repair and assignment retries after Minor Nation Assignment (single assignment pass; faster). When **true**, the System runs repair and retries as specified in **GP land connectivity repair** below.
+**Config:** Great Power count, continent count, Minor Nation count, Tribe count, minimum provinces per Minor Nation, target province counts per region, and map seed semantics are authoritative for a run once resolved into `GameSetupConfig` (colonizethis_data). **current product:** There is no Base → Difficulty → Scenario JSON merge yet; values come from **program defaults** (`GameSetupConfig` fields) plus **CLI/API overrides** (see [init-game-tool.md](../program/init-game-tool.md) JSON keys). Full ruleset-backed resolution is specified in [ruleset-config.md](ruleset-config.md) and tracked with ruleset-loader work (e.g. #57 / #58). Province painting follows [locked-province-assigner.md](../program/locked-province-assigner.md) and [game-setup-pipeline.md](../program/game-setup-pipeline.md): **locked** growth where the profile and topology gates apply; **`assignTerritoriesByBfsGrowth`** remains for non-gated Old World landmasses and tests/tools that inject a custom map generator. There is **no** optional “fair assignment” flag and **no** GP Old World connectivity repair pass after assignment.
 
 **World Generation:** Generate procedural maps for Old World and New World (one per region). Procedural **continent count** shapes land layout; it does not override GP assignment rules below. When continent count is less than Great Power count, multiple GPs **share** one continent (same P–P component) for their starting territory. Map seed: if configured seed is non-zero, use it directly; if zero or missing, derive from current time in milliseconds.
 
-**GP Assignment:** Assign Old World provinces to Great Powers with a **fair split** (same or similar province count per GP), using only OW provinces not reserved for Minor Nations.
+**GP Assignment:** Assign Old World provinces to Great Powers with a **fair split** (same or similar province count per GP), using only OW provinces not reserved for Minor Nations, via the locked assigner on each OW P–P landmass.
 
-**One continent per Great Power (hard rule when fair assignment is on):** **Continent** = P–P connected land component in [map-topology.md](map-topology.md). When **`enforceFairGpOldWorldAssignment`** is **true**, each GP’s OW provinces after GP Assignment, repair, and retries lie in **one** component only and form **one** P–P connected component among provinces that GP owns. When **`enforceFairGpOldWorldAssignment`** is **false**, each GP still has provinces on **one** P–P landmass only (assignment constraint unchanged), but a GP may own **multiple disconnected** P–P components on that landmass until/unless the player enables fair assignment on a future run.
+**One P–P component per faction on its landmass:** **Continent** = P–P connected land component in [map-topology.md](map-topology.md). The locked assigner grows each faction’s territory so that, on completion, each Great Power’s and each Minor Nation’s assigned provinces on a landmass form **one** P–P connected set (and fair-ish province budgets come from `computeFairTargets` + growth order, not from a separate repair pass).
 
 - **Multiple GPs per continent:** If GP count exceeds OW continent count, several GPs share a continent; each GP still has **one** continent only.
-- **Seeds:** Each GP gets ≥1 **sea-bound** province (P–S) **on that continent** for BFS seed and capital auto-choice.
+- **Seeds:** Each GP gets ≥1 **sea-bound** province (P–S) **on that continent** for assigner seeds and capital auto-choice.
 - **Feasibility:** If targets, minor reservation, and sea-bound slots cannot be satisfied without violating the rule, setup **fails** with a clear error (no cross-continent GP fallback).
 
-**Minor Nation Assignment:** Assign remaining OW provinces to Minor Nations as contiguous clusters per minor. Per-minor count from even split of remaining OW total (within ±1); every minor receives at least one province. Capital assigned at setup (any owned province; sea-bound not required).
+**Minor Nation Assignment:** Minor nations are painted on Old World landmasses by the same locked assigner as Great Powers (growth order and targets per program TDD). Per-minor count from even split of remaining OW total (within ±1); every minor receives at least one province. Capital assigned at setup (any owned province; sea-bound not required).
 
-**GP land connectivity repair (Old World only):** When **`enforceFairGpOldWorldAssignment`** is **true**, after GP and Minor Nation assignment, each Great Power’s owned provinces must form a **single P–P connected component** using only that GP’s provinces (no “island” exclaves; every pair of GP provinces must be joined by a land path through provinces that GP owns). Connectivity uses the same province adjacency graph as movement on land ([map-topology.md](map-topology.md) P–P edges). **Repair:** Run up to **10** rounds. Each round, repeat **inner sweeps** until a full sweep performs no legal swap (cap inner sweeps at a fixed maximum to avoid infinite loops). Each sweep considers Great Powers in **sorted `gp1`, `gp2`, …** order; for each GP that is not fully connected, try **1:1 province exchanges** with a Minor Nation or another Great Power in deterministic order (sorted province ids; partner provinces sorted by id). A **single** swap is **legal** only if afterward: (1) every GP still owns provinces on **exactly one** P–P landmass (same rule as GP Assignment); (2) every GP still owns **at least one sea-bound** province; (3) every GP’s provinces remain **one** P–P component; (4) Minor Nations may become **disconnected** (allowed). If no **single** legal swap repairs that GP, the sweep may try a **compound repair** of **two** 1:1 exchanges on **four distinct** province ids (GP ↔ minor or GP ↔ GP each time), applied in sequence and **legal** only if the **final** ownership satisfies (1)–(4) after both exchanges (intermediate states may temporarily violate them). Compound pairs are enumerated in deterministic order: first exchange `(a,b)` with `a` among the disconnected GP’s provinces (sorted), `b` among all provinces sorted by id, `b`’s owner not the disconnected GP; second exchange `(c,d)` over sorted distinct `c,d` disjoint from `{a,b}`. If an outer round performs no swap at all, stop early. If after up to 10 rounds any GP is still not connected, **re-run** Old World province assignment (GP + Minor steps only) on the **same** map/topology using a **new assignment perturbation** derived from the setup seed (implementation: salted pseudo-random shuffles in assignment order); repeat until success or a **maximum attempt** count. If all attempts fail, setup is **invalid** with reason `gp_land_connectivity_exhausted`. **Determinism:** Shuffles and scan order are fully determined by the seed and attempt index. When **`enforceFairGpOldWorldAssignment`** is **false**, the System does not run this repair or the assignment retries; OW ownership is the single pass from GP Assignment and Minor Nation Assignment only.
-
-**Tribe Assignment:** Assign New World provinces to Tribes as contiguous clusters per tribe. Per-tribe count from even split of NW total (within ±1). Capital assigned at setup (any owned province; sea-bound not required).
+**Tribe Assignment:** Assign New World provinces to Tribes using the locked assigner on NW landmasses. Per-tribe count from even split of NW total (within ±1). Capital assigned at setup (any owned province; sea-bound not required).
 
 **Faction & Initial State:** Create faction records (GPs, Minor Nations, Tribes). Set province ownership. Run capital auto-choice for each faction (see [capital-choice-phase.md](capital-choice-phase.md)). Apply province and capital naming from ruleset (see [naming.md](naming.md)). Create initial WorldState and Game. Province and capital ids use the prefixed format and lookup rules in [world-model-identity.md](world-model-identity.md).
 
@@ -42,7 +40,6 @@ Pre-game phases that configure, generate, and populate the game world before tur
 | Old World province count | ~60 | current product: `GameSetupConfig` / CLI; future: ruleset merge |
 | New World province count | ~80 | current product: `GameSetupConfig` / CLI; future: ruleset merge |
 | Map seed | 0 (= time-based) | current product: `GameSetupConfig` / CLI `--seed`; future: ruleset merge |
-| Enforce fair GP OW assignment | false | current product: `GameSetupConfig` / CLI; future: ruleset / UI |
 
 ## Interactions
 
@@ -59,7 +56,7 @@ Pre-game phases that configure, generate, and populate the game world before tur
 
 - Given the setup run uses only current product configuration (a `GameSetupConfig` built from program defaults and optional CLI/API JSON per [init-game-tool.md](../program/init-game-tool.md), with no ruleset JSON merge)  
   When the System runs the Config phase of game setup  
-  Then the System treats that `GameSetupConfig` as authoritative for Great Power count, continent count, Minor Nation count, Tribe count, minimum provinces per Minor Nation, target province counts per region, map seed, and `enforceFairGpOldWorldAssignment`, validates non-negative integers and sensible bounds where applicable, and either proceeds with world generation or surfaces a clear configuration error if validation fails.
+  Then the System treats that `GameSetupConfig` as authoritative for Great Power count, continent count, Minor Nation count, Tribe count, minimum provinces per Minor Nation, target province counts per region, and map seed, validates non-negative integers and sensible bounds where applicable, and either proceeds with world generation or surfaces a clear configuration error if validation fails.
 
 - Given a future implementation supplies Base → Difficulty → Scenario merge per [ruleset-config.md](ruleset-config.md)  
   When the System runs the Config phase of game setup  
@@ -84,24 +81,4 @@ Pre-game phases that configure, generate, and populate the game world before tur
 - Given fair targets, minor reservation, and sea-bound seeds cannot all be satisfied per the one-continent-per-GP rule  
   When the System runs GP Assignment  
   Then setup **fails** with an explicit error (no silent cross-continent assignment).
-
-- Given **`enforceFairGpOldWorldAssignment`** is **true** and Old World province ownership after GP Assignment and Minor Nation Assignment includes a Great Power whose provinces are not all mutually reachable by P–P paths through provinces that Great Power owns  
-  When the System runs GP land connectivity repair  
-  Then the System performs up to 10 rounds of repair as specified above (legal single 1:1 swaps, and when needed compound two 1:1 exchanges on four provinces) until every Great Power is connected or no further legal repair exists in a full round
-
-- Given **`enforceFairGpOldWorldAssignment`** is **true** and after 10 rounds of GP land connectivity repair at least one Great Power still has disconnected owned provinces on the Old World  
-  When the System has not exceeded the maximum Old World assignment attempt count  
-  Then the System re-runs GP Assignment and Minor Nation Assignment on the same generated Old World map with a new deterministic assignment perturbation and runs repair again
-
-- Given **`enforceFairGpOldWorldAssignment`** is **true** and the maximum Old World assignment attempt count is reached and after repair a Great Power still has disconnected owned provinces  
-  When the System completes setup  
-  Then setup **fails** with an explicit error identified as `gp_land_connectivity_exhausted`
-
-- Given **`enforceFairGpOldWorldAssignment`** is **false** in config  
-  When the System runs Old World GP and Minor Nation assignment and proceeds to Tribe Assignment  
-  Then the System does not invoke GP land connectivity repair or re-run assignment with perturbation on that map
-
-- Given **`enforceFairGpOldWorldAssignment`** is **true** in config and after GP and Minor assignment at least one Great Power’s provinces are not one P–P connected component  
-  When the System runs GP land connectivity repair  
-  Then the System applies the repair and retry rules in this document until all GPs are connected, setup fails with `gp_land_connectivity_exhausted`, or a retry succeeds
 

@@ -5,14 +5,14 @@ publish_to: none
 resolution: workspace
 
 environment:
-  sdk: '>=3.11.0 <4.0.0'
+  sdk: '>=3.11.5 <4.0.0'
 
 dependencies:
   flutter:
     sdk: flutter
   flutter_localizations:
     sdk: flutter
-  flame: ^1.36.0
+  flame: ^1.37.0
   jenny: ^1.5.1
   logger: ^2.0.2
   flutter_riverpod: ^3.3.1
@@ -26,8 +26,11 @@ dependencies:
   colonizethis_save:
   colonizethis_logic:
   colonizethis_ai:
-  widgetbook: ^3.22.0
-  google_fonts: ^6.3.3
+  colonizethis_debug_console:
+  widgetbook: ^3.23.0
+  google_fonts: ^8.1.0
+  intl: ^0.20.2
+  window_manager: ^0.5.1
 
 dev_dependencies:
   colonizethis_test:

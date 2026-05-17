@@ -8,7 +8,13 @@ import 'unit_lookup.dart';
 
 /// Visibility level for a tile from a single player's perspective.
 /// Mirrors SPEC/game/fog-and-exploration.md.
-enum VisibilityLevel { unknown, revealed, fogged, fullyVisible }
+enum VisibilityLevel { unknown, fogged, fullyVisible }
+
+const _visibilityLevelByName = <String, VisibilityLevel>{
+  'unknown': VisibilityLevel.unknown,
+  'fogged': VisibilityLevel.fogged,
+  'fullyVisible': VisibilityLevel.fullyVisible,
+};
 
 /// Read-only projection of [Game] for a single player under fog-of-war.
 ///
@@ -108,11 +114,8 @@ PlayerView buildPlayerView(Game game, MapTopology _, String playerId) {
       game.worldState.playerVisibilityByTile[playerId] ?? const {};
   final visibilityByTile = <String, VisibilityLevel>{};
   rawVisibility.forEach((tileKey, levelName) {
-    final level = VisibilityLevel.values.firstWhere(
-      (e) => e.name == levelName,
-      orElse: () => VisibilityLevel.unknown,
-    );
-    visibilityByTile[tileKey] = level;
+    visibilityByTile[tileKey] =
+        _visibilityLevelByName[levelName] ?? VisibilityLevel.unknown;
   });
 
   // Spy presence reveal: while a Spy is in a non-owner province, that province is fully visible. SPEC/program/fog-and-exploration-resolution.md.
@@ -177,8 +180,6 @@ String? resourceIdVisibleToPlayer({
   switch (visibility) {
     case VisibilityLevel.unknown:
       return null;
-    case VisibilityLevel.revealed:
-      return null;
     case VisibilityLevel.fogged:
       if (kProspectRequiredResourceIds.contains(id)) {
         return tileProspectedByPlayer ? id : null;
@@ -205,8 +206,8 @@ String? resourceIdVisibleInPlayerView(
   );
 }
 
-/// True if [playerId] has at least one revealed tile containing [resourceId].
-/// Revealed = visibility fully visible, fogged, or revealed. For prospect-required
+/// True if [playerId] has at least one non-unknown tile containing [resourceId].
+/// For prospect-required
 /// resources (gold, silver, gems, diamonds, etc.), the tile must also be
 /// prospected by that player. SPEC/game/tech-tree.md Discovery prerequisites.
 bool hasRevealedResourceForPlayer(
@@ -264,7 +265,8 @@ bool provincePanelShowsFullTileDerivedIntel({
   Iterable<String>? provinceTileKeys,
 }) {
   final province =
-      view.provincesById[provinceId] ?? _findProvince(game, provinceId);
+      view.provincesById[provinceId] ??
+      tryGetProvince(game.worldState, provinceId);
   final ownerId = province?.ownerId;
   if (ownerId == humanPlayerId) {
     return true;
@@ -301,13 +303,6 @@ bool provincePanelShowsFullTileDerivedIntel({
     }
   }
   return true;
-}
-
-Province? _findProvince(Game game, String provinceId) {
-  for (final p in allProvinces(game.worldState)) {
-    if (p.id == provinceId) return p;
-  }
-  return null;
 }
 
 bool _hasOwnSpyInProvince(

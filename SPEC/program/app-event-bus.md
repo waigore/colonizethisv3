@@ -26,6 +26,15 @@ A typed event bus lets emitters publish **`AppEvent`** subclasses without depend
 
 **Local-by-design exception:** **`Navigator.pop`** / **`showDialog`** entirely **inside one widget’s local UX** (same panel subtree, confirm steps, internal pickers; see **Local by design** in app-ui-wiring) remain allowed; they must not replace the bus for cross-cutting actions.
 
+### Turn-resolution active guards (#2160)
+
+While background **turn resolution** is active from the map, **`turnResolutionBlockingProvider`** is `true`. In that window:
+
+- **`AppEventHandler`** suppresses **`UIActionEvent`** types that drive navigation/panels/dialogs (**not** **`OpenPauseMenuPanelEvent`** nor **`ClosePanelEvent`**) and logs **`logic:`** rejects for blocked actions.
+- **`AppEventHandlerScope`** session-command listeners suppress mutations (orders/game/debug session commands); **`LandArmiesUpdatedEvent`** ingestion is also guarded so routed updates cannot slip past map **`IgnorePointer`**.
+
+Locate intents (**`LocateMapTileEvent`**) remain map-local listeners; the handler ignores them regardless (unchanged routing).
+
 ---
 
 ## Architecture
@@ -141,7 +150,7 @@ When **`logicEventBus`** is set, turn resolution passes it into **`resolveTurnFo
 | Event | Opened by | Handler builds |
 |-------|-----------|----------------|
 | `OpenPauseMenuPanelEvent` | `GameScreen` (pause) | `PauseMenuPanel` |
-| `OpenCivilianUnitsPanelEvent` | `GameSideMenu` | `CivilianUnitsPanel` (+ Riverpod game/orders, `AppEventBus`) |
+| `OpenCivilianUnitsPanelEvent` | `GameSideMenu`, province Tile inline shortcuts | `CivilianUnitsPanel` (+ Riverpod game/orders, `AppEventBus`). Optional shortcut fields (at most one non-null): `exploreShortcutTargetTileKey`, `prospectShortcutTargetTileKey`, `buildImprovementShortcutTargetTileKey` — each opens the panel in the matching filtered shortcut mode for direct assign on that tile key. |
 | `OpenMilitaryUnitsPanelEvent` | `GameSideMenu` | `MilitaryUnitsPanel` |
 | `OpenNavalUnitsPanelEvent` | `GameSideMenu`, map fleet marker tap | `NavalUnitsPanel` (+ `AppEventBus`); optional `locationScopeKey`, `initialSelectedFleetId`, `tileScopeTileKey` for tile-scoped list and header |
 

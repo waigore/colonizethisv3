@@ -1,0 +1,53 @@
+name: Nightly
+
+# 23:00 Asia/Hong_Kong daily (15:00 UTC). Refs #2509.
+on:
+  schedule:
+    - cron: '0 15 * * *'
+  workflow_dispatch:
+
+jobs:
+  integration:
+    name: Tool packages + sim_scenarios
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup Dart
+        uses: dart-lang/setup-dart@v1
+        with:
+          sdk: '3.11.0'
+
+      - name: Run nightly integration gate
+        run: bash tool/run_nightly_integration_gate.sh
+
+  observer_conquest_verify:
+    name: Full-AI observer verify (seed 42, turns 150)
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup Dart
+        uses: dart-lang/setup-dart@v1
+        with:
+          sdk: '3.11.0'
+
+      - name: Resolve dependencies (workspace)
+        run: dart pub get
+
+      - name: Run observer game with conquest and colonial verification
+        run: |
+          set -e
+          out="${RUNNER_TEMP}/observer-conquest"
+          mkdir -p "$out"
+          cd tool/run_observer_game
+          dart run run_observer_game \
+            --output "$out" \
+            --seed 42 \
+            --max-turns 150 \
+            --verify-conquest \
+            --verify-colonial-expansion

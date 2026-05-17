@@ -193,8 +193,9 @@ class QuickBattleDeployment {
     return QuickBattleDeployment(
       groups: groupsList
           .map(
-            (e) =>
-                QuickBattleGroup.fromJson(Map<String, dynamic>.from(e as Map)),
+            (e) => QuickBattleGroup.fromJson(
+              Map<String, dynamic>.from(e as Map<dynamic, dynamic>),
+            ),
           )
           .toList(),
       laneTerrain: terrainRaw.map(
@@ -288,16 +289,20 @@ class QuickBattleInput {
         provinceId: json['provinceId'] as String,
         regionId: json['regionId'] as String,
         attackerDeployment: QuickBattleDeployment.fromJson(
-          Map<String, dynamic>.from(json['attackerDeployment'] as Map),
+          Map<String, dynamic>.from(
+            json['attackerDeployment'] as Map<dynamic, dynamic>,
+          ),
         ),
         defenderDeployment: QuickBattleDeployment.fromJson(
-          Map<String, dynamic>.from(json['defenderDeployment'] as Map),
+          Map<String, dynamic>.from(
+            json['defenderDeployment'] as Map<dynamic, dynamic>,
+          ),
         ),
         fortLevel: json['fortLevel'] as int? ?? 0,
         emplacedGuns: (json['emplacedGuns'] as List<dynamic>? ?? [])
             .map(
               (e) => QuickBattleEmplacedGun.fromJson(
-                Map<String, dynamic>.from(e as Map),
+                Map<String, dynamic>.from(e as Map<dynamic, dynamic>),
               ),
             )
             .toList(),
@@ -375,7 +380,7 @@ class QuickBattleResult {
             (json['emplacedGunOutcomes'] as List<dynamic>? ?? [])
                 .map(
                   (e) => QuickBattleEmplacedGunOutcome.fromJson(
-                    Map<String, dynamic>.from(e as Map),
+                    Map<String, dynamic>.from(e as Map<dynamic, dynamic>),
                   ),
                 )
                 .toList(),

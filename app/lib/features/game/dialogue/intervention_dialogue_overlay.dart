@@ -10,6 +10,7 @@ import 'package:jenny/jenny.dart';
 
 import '../../../../l10n/l10n.dart';
 import '../../../../widgets/ct_dialog_shell.dart';
+import '../../../../widgets/ct_loading_indicator.dart';
 import '../../../../widgets/ct_nine_patch_button.dart';
 import 'ct_dialogue_view.dart';
 
@@ -275,7 +276,7 @@ class _InterventionDialogueOverlayState
               child: CtDialogShell(
                 child: const Padding(
                   padding: EdgeInsets.all(24),
-                  child: CircularProgressIndicator(),
+                  child: CtLoadingIndicator(),
                 ),
               ),
             ),
@@ -317,7 +318,7 @@ class _InterventionDialogueOverlayState
                   ),
                 ),
               ] else
-                const Center(child: CircularProgressIndicator()),
+                const CtLoadingIndicator(),
             ],
           ),
         ),

@@ -9,6 +9,9 @@ import 'package:path/path.dart' as p;
 import 'package:yaml/yaml.dart';
 
 import 'ct_repo_lint_scan_contract.dart';
+import 'disallowed_ast_pattern_rules.dart';
+
+export 'disallowed_ast_pattern_rules.dart';
 
 /// PR-blocking structural AST checks driven by [tool/disallowed_ast_patterns.yaml].
 ///
@@ -17,6 +20,8 @@ import 'ct_repo_lint_scan_contract.dart';
 /// Used by `ct_repo_lint` in-process; [info] / [err] default to stdout/stderr.
 int runCheckDisallowedAstPatterns(
   String repoRoot, {
+  List<String>? incrementalRelativeDartPaths,
+  Set<String>? enabledRuleIds,
   void Function(String line)? info,
   void Function(String line)? err,
 }) {
@@ -30,7 +35,12 @@ int runCheckDisallowedAstPatterns(
     return 1;
   }
 
-  final rules = _loadRules(configFile.readAsStringSync());
+  final allRules = parseDisallowedAstRulesFromYaml(
+    loadYaml(configFile.readAsStringSync()),
+  );
+  final rules = enabledRuleIds == null
+      ? allRules
+      : allRules.where((rule) => enabledRuleIds.contains(rule.id)).toList();
   if (rules.isEmpty) {
     logE(
       'check_disallowed_ast_patterns: no rules in disallowed_ast_patterns.yaml',
@@ -40,9 +50,15 @@ int runCheckDisallowedAstPatterns(
 
   final dartFiles = collectRepoLintDomainDartFiles(repoRoot);
   final violations = <DisallowedAstViolation>[];
+  final incrementalSet = incrementalRelativeDartPaths == null
+      ? null
+      : incrementalRelativeDartPaths.toSet();
 
   for (final file in dartFiles) {
     final relativePath = p.relative(file.path, from: repoRoot);
+    if (incrementalSet != null && !incrementalSet.contains(relativePath)) {
+      continue;
+    }
     final content = file.readAsStringSync();
     violations.addAll(
       findDisallowedAstViolations(relativePath, content, rules),
@@ -63,8 +79,20 @@ int runCheckDisallowedAstPatterns(
   return 1;
 }
 
-void main() {
-  exit(runCheckDisallowedAstPatterns(Directory.current.path));
+void main(List<String> args) {
+  final parsed = repoLintParseIncrementalRelativeDartPathsFromArgs(args);
+  if (parsed.missingValueError) {
+    stderr.writeln(
+      'check_disallowed_ast_patterns: --files requires a comma-separated list',
+    );
+    exit(2);
+  }
+  exit(
+    runCheckDisallowedAstPatterns(
+      Directory.current.path,
+      incrementalRelativeDartPaths: parsed.paths,
+    ),
+  );
 }
 
 /// Exposed for unit tests (same behavior as production scan).
@@ -76,7 +104,7 @@ List<DisallowedAstViolation> findDisallowedAstViolations(
   if (rules.isEmpty) {
     return const [];
   }
-  if (repoLintPathIsExcludedTestOrGeneratedDart(relativePath)) {
+  if (repoLintPathShouldSkipAstRuleFile(relativePath)) {
     return const [];
   }
 
@@ -92,128 +120,76 @@ List<DisallowedAstViolation> findDisallowedAstViolations(
     rules,
   );
   parsed.unit.accept(visitor);
-  return visitor.violations;
+  final violations = <DisallowedAstViolation>[...visitor.violations];
+  final lines = const LineSplitter().convert(content);
+  for (final rule in rules) {
+    if (rule.kind != DisallowedAstMatchKind.commentSubstring) {
+      continue;
+    }
+    final needle = rule.commentSubstring;
+    if (needle == null || needle.isEmpty) {
+      continue;
+    }
+    for (var i = 0; i < lines.length; i++) {
+      if (!lines[i].contains(needle)) {
+        continue;
+      }
+      if (_fileIgnoresRule(content, relativePath, rule)) {
+        continue;
+      }
+      if (_isSuppressedAtLine(content, relativePath, i + 1, rule)) {
+        continue;
+      }
+      violations.add(
+        DisallowedAstViolation(
+          path: relativePath,
+          line: i + 1,
+          ruleId: rule.id,
+          message: rule.message,
+        ),
+      );
+    }
+  }
+  return violations;
 }
 
 List<DisallowedPatternRule> loadDisallowedAstRulesForTest(String yamlText) =>
-    _parseRulesYaml(loadYaml(yamlText));
+    parseDisallowedAstRulesFromYaml(loadYaml(yamlText));
 
-List<DisallowedPatternRule> _loadRules(String yamlText) =>
-    _parseRulesYaml(loadYaml(yamlText));
-
-List<DisallowedPatternRule> _parseRulesYaml(Object? yamlRoot) {
-  if (yamlRoot is! YamlMap) {
-    return const [];
-  }
-  final rulesNode = yamlRoot['rules'];
-  if (rulesNode is! YamlList) {
-    return const [];
-  }
-  final out = <DisallowedPatternRule>[];
-  for (final entry in rulesNode.nodes) {
-    final value = entry.value;
-    if (value is! YamlMap) {
-      continue;
-    }
-    final id = value['id']?.toString();
-    final message = value['message']?.toString().trim();
-    final match = value['match'];
-    if (id == null || id.isEmpty || message == null || message.isEmpty) {
-      continue;
-    }
-    if (match is! YamlMap) {
-      continue;
-    }
-    final kind = match['kind']?.toString();
-    if (kind == 'cascaded_method_invocation') {
-      final namesNode = match['method_names'];
-      if (namesNode is! YamlList) {
-        continue;
-      }
-      final names = <String>{};
-      for (final n in namesNode.nodes) {
-        final s = n.value?.toString();
-        if (s != null && s.isNotEmpty) {
-          names.add(s);
-        }
-      }
-      if (names.isEmpty) {
-        continue;
-      }
-      out.add(
-        DisallowedPatternRule(
-          id: id,
-          message: message,
-          kind: DisallowedAstMatchKind.cascadedMethodInvocation,
-          cascadedMethodNames: names,
-        ),
-      );
-    } else if (kind == 'stream_where_is_map_as') {
-      out.add(
-        DisallowedPatternRule(
-          id: id,
-          message: message,
-          kind: DisallowedAstMatchKind.streamWhereIsMapAs,
-          cascadedMethodNames: const {},
-        ),
-      );
-    }
-  }
-  return out;
+bool _fileIgnoresRule(
+  String source,
+  String _relativePath,
+  DisallowedPatternRule rule,
+) {
+  return source.contains('ignore_for_file: disallowed_ast_${rule.id}');
 }
 
-bool _fileIgnoresRule(String source, String ruleId) {
-  return source.contains('ignore_for_file: disallowed_ast_$ruleId');
+bool _lineSuppressesRule(
+  String line,
+  String _relativePath,
+  DisallowedPatternRule rule,
+) {
+  return line.contains('ignore: disallowed_ast_${rule.id}');
 }
 
-bool _lineSuppressesRule(String line, String ruleId) {
-  return line.contains('ignore: disallowed_ast_$ruleId');
-}
-
-bool _isSuppressedAtLine(String source, int lineNumber1Based, String ruleId) {
+bool _isSuppressedAtLine(
+  String source,
+  String relativePath,
+  int lineNumber1Based,
+  DisallowedPatternRule rule,
+) {
   final lines = const LineSplitter().convert(source);
   final idx = lineNumber1Based - 1;
   if (idx < 0 || idx >= lines.length) {
     return false;
   }
-  if (_lineSuppressesRule(lines[idx], ruleId)) {
+  if (_lineSuppressesRule(lines[idx], relativePath, rule)) {
     return true;
   }
-  if (idx > 0 && _lineSuppressesRule(lines[idx - 1], ruleId)) {
+  if (idx > 0 && _lineSuppressesRule(lines[idx - 1], relativePath, rule)) {
     return true;
   }
   return false;
-}
-
-/// Kinds of structural matches defined in [tool/disallowed_ast_patterns.yaml].
-enum DisallowedAstMatchKind { cascadedMethodInvocation, streamWhereIsMapAs }
-
-class DisallowedPatternRule {
-  const DisallowedPatternRule({
-    required this.id,
-    required this.message,
-    required this.kind,
-    required this.cascadedMethodNames,
-  });
-
-  final String id;
-  final String message;
-  final DisallowedAstMatchKind kind;
-  final Set<String> cascadedMethodNames;
-}
-
-class DisallowedAstViolation {
-  const DisallowedAstViolation({
-    required this.path,
-    required this.line,
-    required this.ruleId,
-    required this.message,
-  });
-
-  final String path;
-  final int line;
-  final String ruleId;
-  final String message;
 }
 
 Expression _unwrapParenthesized(Expression expr) {
@@ -324,6 +300,206 @@ bool _isRedundantWhereIsMapAsChain(MethodInvocation node) {
       _mapCallbackIsParamAsCast(mapArg);
 }
 
+bool _isProvinceLocalIdFromInvocation(MethodInvocation node) {
+  final target = node.target;
+  return target is SimpleIdentifier &&
+      target.name == 'ProvinceId' &&
+      node.methodName.name == 'localIdFrom' &&
+      node.argumentList.arguments.length == 1;
+}
+
+bool _isProvinceLocalSegmentInvocation(MethodInvocation node) {
+  final target = node.target;
+  return target is SimpleIdentifier &&
+      target.name == 'ProvinceId' &&
+      node.methodName.name == 'localSegmentFromStoredGameState' &&
+      node.argumentList.arguments.length == 1;
+}
+
+bool _expressionLooksSeaZoneRelated(Expression expression) {
+  final text = expression.toSource().toLowerCase();
+  return text.contains('seazone') ||
+      text.contains('sea_zone') ||
+      text.contains('seadest') ||
+      text.contains('seadestination') ||
+      text.contains('zoneid');
+}
+
+bool _isCanonicalSeaZoneBucketKeyExpression(Expression expression) {
+  final e = _unwrapParenthesized(expression);
+  if (e is MethodInvocation) {
+    final method = e.methodName.name;
+    return method == 'canonicalSeaZoneTileBucketKey' ||
+        method == 'canonicalizeSeaZoneId';
+  }
+  if (e is SimpleIdentifier) {
+    final name = e.name.toLowerCase();
+    if ((name.contains('seazone') || name.contains('sea_zone')) &&
+        (name.contains('bucket') || name.contains('key'))) {
+      return true;
+    }
+  }
+  if (e is StringLiteral) {
+    return e.stringValue?.contains('|') == true;
+  }
+  return false;
+}
+
+bool _looksLikeTileKeysByRegionAndProvinceLookup(IndexExpression node) {
+  final src = node.toSource();
+  return src.contains('tileKeysByRegionAndProvince[');
+}
+
+bool _isLinearCollectionWhereFirstOrNullPattern(
+  PropertyAccess node,
+  DisallowedPatternRule rule,
+  String relativePath,
+) {
+  final prefix = rule.linearCollectionPathPrefix;
+  if (prefix == null || prefix.isEmpty) {
+    return false;
+  }
+  if (rule.linearCollectionNames.isEmpty) {
+    return false;
+  }
+  final slashPath = relativePath.replaceAll('\\', '/');
+  if (!slashPath.startsWith(prefix)) {
+    return false;
+  }
+  if (node.propertyName.name != 'firstOrNull') {
+    return false;
+  }
+  final whereTarget = node.target;
+  if (whereTarget is! MethodInvocation) {
+    return false;
+  }
+  if (whereTarget.methodName.name != 'where') {
+    return false;
+  }
+  if (whereTarget.argumentList.arguments.length != 1) {
+    return false;
+  }
+  final collectionTarget = whereTarget.target;
+  if (collectionTarget == null) {
+    return false;
+  }
+  return _expressionEndsInNamedCollection(
+    collectionTarget,
+    rule.linearCollectionNames,
+  );
+}
+
+bool _expressionEndsInNamedCollection(
+  Expression target,
+  Set<String> collectionNames,
+) {
+  final expr = _unwrapParenthesized(target);
+  if (expr is PropertyAccess) {
+    return collectionNames.contains(expr.propertyName.name);
+  }
+  if (expr is PrefixedIdentifier) {
+    return collectionNames.contains(expr.identifier.name);
+  }
+  if (expr is SimpleIdentifier) {
+    return collectionNames.contains(expr.name);
+  }
+  return false;
+}
+
+bool _isIncrementalValidatorForPlayerInLoopPattern(
+  AstNode node,
+  DisallowedPatternRule rule,
+  String relativePath,
+) {
+  final prefix = rule.linearCollectionPathPrefix;
+  if (prefix == null || prefix.isEmpty) {
+    return false;
+  }
+  final slashPath = relativePath.replaceAll('\\', '/');
+  if (!slashPath.startsWith(prefix)) {
+    return false;
+  }
+  if (node is InstanceCreationExpression) {
+    final typeName = node.constructorName.type.name.lexeme;
+    final constructorName = node.constructorName.name?.name;
+    return typeName == 'IncrementalCandidateValidator' &&
+        constructorName == 'forPlayer';
+  }
+  if (node is MethodInvocation) {
+    if (node.target == null) {
+      return node.methodName.name == 'buildIncrementalCandidateValidator';
+    }
+    final target = node.target;
+    if (node.methodName.name == 'forPlayer') {
+      if (target is SimpleIdentifier) {
+        return target.name == 'IncrementalCandidateValidator';
+      }
+      if (target is PrefixedIdentifier) {
+        return target.identifier.name == 'IncrementalCandidateValidator';
+      }
+    }
+  }
+  return false;
+}
+
+bool _isSimpleReceiverRemoveAtZeroPattern(
+  MethodInvocation node,
+  DisallowedPatternRule rule,
+  String relativePath,
+) {
+  final prefix = rule.removeAtZeroReceiverPathPrefix;
+  final receiverName = rule.removeAtZeroReceiverIdentifier;
+  if (prefix == null || receiverName == null) {
+    return false;
+  }
+  final slashPath = relativePath.replaceAll('\\', '/');
+  if (!slashPath.startsWith(prefix)) {
+    return false;
+  }
+  if (node.methodName.name != 'removeAt') {
+    return false;
+  }
+  final target = node.target;
+  if (target is! SimpleIdentifier || target.name != receiverName) {
+    return false;
+  }
+  final args = node.argumentList.arguments;
+  if (args.length != 1) {
+    return false;
+  }
+  final arg0 = args.first;
+  if (arg0 is! IntegerLiteral) {
+    return false;
+  }
+  return arg0.value == 0;
+}
+
+bool _isUnprefixedProvinceIdStringLiteralInvocation(
+  MethodInvocation node,
+  DisallowedPatternRule rule,
+) {
+  if (!rule.invocationMethodNames.contains(node.methodName.name)) {
+    return false;
+  }
+  final argumentIndex = rule.argumentIndex;
+  if (argumentIndex == null) {
+    return false;
+  }
+  final args = node.argumentList.arguments;
+  if (argumentIndex >= args.length) {
+    return false;
+  }
+  final arg = args[argumentIndex];
+  if (arg is! StringLiteral) {
+    return false;
+  }
+  final value = arg.stringValue;
+  if (value == null) {
+    return false;
+  }
+  return !value.contains('|');
+}
+
 class _DisallowedAstVisitor extends RecursiveAstVisitor<void> {
   _DisallowedAstVisitor(this.path, this.source, this.lineInfo, this.rules);
 
@@ -332,13 +508,14 @@ class _DisallowedAstVisitor extends RecursiveAstVisitor<void> {
   final LineInfo lineInfo;
   final List<DisallowedPatternRule> rules;
   final List<DisallowedAstViolation> violations = [];
+  int _loopDepth = 0;
 
   void _recordIfAllowed(AstNode anchor, DisallowedPatternRule rule) {
     final line = lineInfo.getLocation(anchor.offset).lineNumber;
-    if (_fileIgnoresRule(source, rule.id)) {
+    if (_fileIgnoresRule(source, path, rule)) {
       return;
     }
-    if (_isSuppressedAtLine(source, line, rule.id)) {
+    if (_isSuppressedAtLine(source, path, line, rule)) {
       return;
     }
     violations.add(
@@ -351,11 +528,71 @@ class _DisallowedAstVisitor extends RecursiveAstVisitor<void> {
     );
   }
 
+  void _recordIncrementalValidatorInLoopIfMatched(AstNode node) {
+    if (_loopDepth == 0) {
+      return;
+    }
+    for (final rule in rules) {
+      if (rule.kind != DisallowedAstMatchKind.incrementalValidatorForPlayerInLoop) {
+        continue;
+      }
+      if (_isIncrementalValidatorForPlayerInLoopPattern(node, rule, path)) {
+        _recordIfAllowed(node, rule);
+      }
+    }
+  }
+
+  @override
+  void visitForStatement(ForStatement node) {
+    _loopDepth++;
+    super.visitForStatement(node);
+    _loopDepth--;
+  }
+
+  @override
+  void visitWhileStatement(WhileStatement node) {
+    _loopDepth++;
+    super.visitWhileStatement(node);
+    _loopDepth--;
+  }
+
+  @override
+  void visitDoStatement(DoStatement node) {
+    _loopDepth++;
+    super.visitDoStatement(node);
+    _loopDepth--;
+  }
+
+  @override
+  void visitInstanceCreationExpression(InstanceCreationExpression node) {
+    _recordIncrementalValidatorInLoopIfMatched(node);
+    super.visitInstanceCreationExpression(node);
+  }
+
   @override
   void visitMethodInvocation(MethodInvocation node) {
+    _recordIncrementalValidatorInLoopIfMatched(node);
     for (final rule in rules) {
       if (rule.kind == DisallowedAstMatchKind.streamWhereIsMapAs &&
           _isRedundantWhereIsMapAsChain(node)) {
+        _recordIfAllowed(node, rule);
+      } else if (rule.kind == DisallowedAstMatchKind.seaZoneLocalIdExtraction &&
+          _isProvinceLocalIdFromInvocation(node) &&
+          _expressionLooksSeaZoneRelated(node.argumentList.arguments.single)) {
+        _recordIfAllowed(node, rule);
+      } else if (rule.kind ==
+              DisallowedAstMatchKind.provinceLocalSegmentBoundaryOnly &&
+          _isProvinceLocalSegmentInvocation(node)) {
+        _recordIfAllowed(node, rule);
+      } else if (rule.kind ==
+              DisallowedAstMatchKind.simpleReceiverRemoveAtZero &&
+          _isSimpleReceiverRemoveAtZeroPattern(node, rule, path)) {
+        _recordIfAllowed(node, rule);
+      }
+      if (rule.kind ==
+              DisallowedAstMatchKind
+                  .unprefixedProvinceIdStringLiteralArgument &&
+          _isUnprefixedProvinceIdStringLiteralInvocation(node, rule)) {
         _recordIfAllowed(node, rule);
       }
     }
@@ -372,5 +609,135 @@ class _DisallowedAstVisitor extends RecursiveAstVisitor<void> {
       }
     }
     super.visitMethodInvocation(node);
+  }
+
+  @override
+  void visitPropertyAccess(PropertyAccess node) {
+    for (final rule in rules) {
+      if (rule.kind !=
+          DisallowedAstMatchKind.linearCollectionWhereFirstOrNull) {
+        continue;
+      }
+      if (_isLinearCollectionWhereFirstOrNullPattern(node, rule, path)) {
+        _recordIfAllowed(node, rule);
+      }
+    }
+    super.visitPropertyAccess(node);
+  }
+
+  @override
+  void visitIndexExpression(IndexExpression node) {
+    for (final rule in rules) {
+      if (rule.kind !=
+          DisallowedAstMatchKind.seaZoneBucketLookupWithoutCanonicalKey) {
+        continue;
+      }
+      if (!_looksLikeTileKeysByRegionAndProvinceLookup(node)) {
+        continue;
+      }
+      final index = node.index;
+      if (!_expressionLooksSeaZoneRelated(index)) {
+        continue;
+      }
+      if (_isCanonicalSeaZoneBucketKeyExpression(index)) {
+        continue;
+      }
+      _recordIfAllowed(node, rule);
+    }
+    super.visitIndexExpression(node);
+  }
+
+  @override
+  void visitNamedType(NamedType node) {
+    for (final rule in rules) {
+      if (rule.kind != DisallowedAstMatchKind.rawNamedType) {
+        continue;
+      }
+      if (node.typeArguments != null) {
+        continue;
+      }
+      final name = node.name2.lexeme;
+      if (!rule.rawNamedTypeNames.contains(name)) {
+        continue;
+      }
+      _recordIfAllowed(node, rule);
+    }
+    super.visitNamedType(node);
+  }
+
+  @override
+  void visitMethodDeclaration(MethodDeclaration node) {
+    for (final rule in rules) {
+      if (rule.kind != DisallowedAstMatchKind.methodBodyLineSpan) {
+        continue;
+      }
+      if (node.name.lexeme != rule.functionName) {
+        continue;
+      }
+      if (rule.requireWidgetClassExtends &&
+          !_methodBelongsToWidgetClass(node)) {
+        continue;
+      }
+      final bodyLineSpan = _lineSpan(node.body);
+      final maxBodyLineSpan = rule.maxBodyLineSpan!;
+      if (bodyLineSpan > maxBodyLineSpan) {
+        _recordIfAllowed(node, rule);
+      }
+    }
+    super.visitMethodDeclaration(node);
+  }
+
+  bool _methodBelongsToWidgetClass(MethodDeclaration node) {
+    final parent = node.parent;
+    if (parent is! ClassDeclaration) {
+      return false;
+    }
+    final extendsClause = parent.extendsClause;
+    if (extendsClause == null) {
+      return false;
+    }
+    final superName = extendsClause.superclass.name2.lexeme;
+    return superName == 'StatelessWidget' || superName == 'StatefulWidget';
+  }
+
+  int _lineSpan(AstNode node) {
+    final start = lineInfo.getLocation(node.offset).lineNumber;
+    final end = lineInfo.getLocation(node.end).lineNumber;
+    return end - start + 1;
+  }
+
+  bool _pathIsInScopedPrefix(DisallowedPatternRule rule) {
+    for (final prefix in rule.scopedRelativePathPrefixes) {
+      if (path.startsWith(prefix)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  @override
+  void visitImportDirective(ImportDirective node) {
+    for (final rule in rules) {
+      if (rule.kind != DisallowedAstMatchKind.scopedPackageImportContract) {
+        continue;
+      }
+      if (!_pathIsInScopedPrefix(rule)) {
+        continue;
+      }
+      final uri = node.uri.stringValue;
+      final packageName = rule.packageName;
+      if (uri == null || packageName == null || packageName.isEmpty) {
+        continue;
+      }
+      final packagePrefix = 'package:$packageName/';
+      if (!uri.startsWith(packagePrefix)) {
+        continue;
+      }
+      if (rule.allowedPackageImports.contains(uri)) {
+        continue;
+      }
+      _recordIfAllowed(node, rule);
+    }
+    super.visitImportDirective(node);
   }
 }

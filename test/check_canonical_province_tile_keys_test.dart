@@ -4,7 +4,7 @@ import '../tool/check_canonical_province_tile_keys.dart';
 
 void main() {
   group('findCanonicalProvinceTileKeyViolations', () {
-    test('flags non-canonical province-level work-order tile key', () {
+    test('accepts non-anchor full tile key for province-level work target', () {
       const src = r'''
 void f() {
   final o = WorkOrder(
@@ -19,10 +19,10 @@ void f() {
         relativePath: 'packages/foo/lib/example.dart',
         source: src,
       );
-      expect(violations, isNotEmpty);
+      expect(violations, isEmpty);
     });
 
-    test('accepts canonical province-level work-order tile key', () {
+    test('accepts full tile key for province-level work target', () {
       const src = r'''
 void f() {
   final o = WorkOrder(
@@ -38,6 +38,24 @@ void f() {
         source: src,
       );
       expect(violations, isEmpty);
+    });
+
+    test('flags malformed province-level work-order tile key', () {
+      const src = r'''
+void f() {
+  final o = WorkOrder(
+    unitId: 'u1',
+    target: 'explore',
+    targetTileKey: 'oldWorld|p1',
+  );
+  print(o);
+}
+''';
+      final violations = findCanonicalProvinceTileKeyViolations(
+        relativePath: 'packages/foo/lib/example.dart',
+        source: src,
+      );
+      expect(violations, isNotEmpty);
     });
 
     test('ignores non-province-level work targets', () {

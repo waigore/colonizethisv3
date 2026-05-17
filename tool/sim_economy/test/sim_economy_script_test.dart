@@ -10,7 +10,8 @@ import '../bin/sim_economy.dart' as cli;
 void main() {
   group('sim_economy script parsing', () {
     test('parses minimal script and applies one turn deterministically', () {
-      final scriptJson = jsonDecode(r'''
+      final scriptJson =
+          jsonDecode(r'''
 {
   "initialState": {
     "stockpile": {
@@ -36,7 +37,8 @@ void main() {
     }
   ]
 }
-''') as Map<String, dynamic>;
+''')
+              as Map<String, dynamic>;
 
       final parsed = cli.parseSimEconomyScript(scriptJson);
       final stockpileStart = parsed.initialStockpile;
@@ -45,11 +47,15 @@ void main() {
       final turn = parsed.turns.single;
 
       // Extraction
-      final stockpileAfterExtraction =
-          applyExtractionToStockpile(stockpileStart, turn.extraction);
+      final stockpileAfterExtraction = applyExtractionToStockpile(
+        stockpileStart,
+        turn.extraction,
+      );
 
       // Riches to treasury
-      final richesResult = resolveRichesToTreasury(stockpile: stockpileAfterExtraction);
+      final richesResult = resolveRichesToTreasury(
+        stockpile: stockpileAfterExtraction,
+      );
       final stockpileAfterRiches = richesResult.stockpile;
       final treasuryEndOfTurn = 100 + richesResult.treasuryDelta;
 
@@ -88,25 +94,27 @@ void main() {
         treasuryEndOfTurn: treasuryEndOfTurn,
       );
 
-      final start =
-          (entry['stockpileStart'] as Map).cast<String, int>();
-      final end = (entry['stockpileEnd'] as Map).cast<String, int>();
-      final dE =
-          (entry['deltaExtraction'] as Map).cast<String, int>();
-      final dR =
-          (entry['deltaRiches'] as Map).cast<String, int>();
-      final dP =
-          (entry['deltaProduction'] as Map).cast<String, int>();
-      final dC =
-          (entry['deltaConsumption'] as Map).cast<String, int>();
+      final start = (entry['stockpileStart'] as Map<dynamic, dynamic>)
+          .cast<String, int>();
+      final end = (entry['stockpileEnd'] as Map<dynamic, dynamic>)
+          .cast<String, int>();
+      final dE = (entry['deltaExtraction'] as Map<dynamic, dynamic>)
+          .cast<String, int>();
+      final dR = (entry['deltaRiches'] as Map<dynamic, dynamic>)
+          .cast<String, int>();
+      final dP = (entry['deltaProduction'] as Map<dynamic, dynamic>)
+          .cast<String, int>();
+      final dC = (entry['deltaConsumption'] as Map<dynamic, dynamic>)
+          .cast<String, int>();
 
-      for (final id in <String>{}
-        ..addAll(start.keys)
-        ..addAll(end.keys)
-        ..addAll(dE.keys)
-        ..addAll(dR.keys)
-        ..addAll(dP.keys)
-        ..addAll(dC.keys)) {
+      for (final id
+          in <String>{}
+            ..addAll(start.keys)
+            ..addAll(end.keys)
+            ..addAll(dE.keys)
+            ..addAll(dR.keys)
+            ..addAll(dP.keys)
+            ..addAll(dC.keys)) {
         final s = start[id] ?? 0;
         final e = end[id] ?? 0;
         final de = dE[id] ?? 0;
@@ -117,31 +125,29 @@ void main() {
       }
 
       // Also sanity-check total food bounds from original test.
-      final totalGrain =
-          stockpileEnd.quantityOf(CommodityCatalog.grain.id);
-      final totalMeat =
-          stockpileEnd.quantityOf(CommodityCatalog.meat.id);
+      final totalGrain = stockpileEnd.quantityOf(CommodityCatalog.grain.id);
+      final totalMeat = stockpileEnd.quantityOf(CommodityCatalog.meat.id);
       expect(totalGrain + totalMeat, lessThanOrEqualTo(18));
       expect(totalGrain + totalMeat, greaterThanOrEqualTo(3));
     });
 
     test('throws on malformed script without turns array', () {
-      final scriptJson = jsonDecode(r'''
+      final scriptJson =
+          jsonDecode(r'''
 {
   "initialState": {
     "stockpile": { "grain": 10 }
   }
 }
-''') as Map<String, dynamic>;
+''')
+              as Map<String, dynamic>;
 
-      expect(
-        () => cli.parseSimEconomyScript(scriptJson),
-        returnsNormally,
-      );
+      expect(() => cli.parseSimEconomyScript(scriptJson), returnsNormally);
     });
 
     test('builds Markdown report with expected sections', () {
-      final scriptJson = jsonDecode(r'''
+      final scriptJson =
+          jsonDecode(r'''
 {
   "initialState": {
     "stockpile": {
@@ -167,18 +173,24 @@ void main() {
     }
   ]
 }
-''') as Map<String, dynamic>;
+''')
+              as Map<String, dynamic>;
 
       final parsed = cli.parseSimEconomyScript(scriptJson);
       final stockpileStart = parsed.initialStockpile;
       final workersStart = parsed.initialWorkers;
       final turn = parsed.turns.single;
 
-      final stockpileAfterExtraction =
-          applyExtractionToStockpile(stockpileStart, turn.extraction);
-      final richesResult = resolveRichesToTreasury(stockpile: stockpileAfterExtraction);
+      final stockpileAfterExtraction = applyExtractionToStockpile(
+        stockpileStart,
+        turn.extraction,
+      );
+      final richesResult = resolveRichesToTreasury(
+        stockpile: stockpileAfterExtraction,
+      );
       final stockpileAfterRiches = richesResult.stockpile;
-      final treasuryEndOfTurn = parsed.initialTreasury + richesResult.treasuryDelta;
+      final treasuryEndOfTurn =
+          parsed.initialTreasury + richesResult.treasuryDelta;
       final consumption = resolveConsumption(
         stockpile: stockpileAfterRiches,
         workers: workersStart,
@@ -232,111 +244,116 @@ void main() {
       expect(markdown, contains('treasury'));
     });
 
-    test('Reason column explains worker vs military consumption and production',
-        () {
-      // Construct a synthetic turn entry where:
-      // - grain has E+5, C-13 (workers + military).
-      // - lumber/fabric have production effects.
-      final entry = <String, dynamic>{
-        'turn': 1,
-        'stockpileStart': {
-          'grain': 45,
-          'meat': 32,
-          'timber': 30,
-          'lumber': 8,
-          'fabric': 19,
-        },
-        'stockpileAfterRiches': {
-          'grain': 50,
-          'meat': 33,
-          'timber': 33,
-          'lumber': 8,
-          'fabric': 19,
-        },
-        'stockpileEnd': {
-          'grain': 37,
-          'meat': 33,
-          'timber': 27,
-          'lumber': 10,
-          'fabric': 22,
-        },
-        'deltaExtraction': {
-          'grain': 5,
-          'meat': 1,
-          'timber': 3,
-        },
-        'deltaRiches': <String, int>{},
-        'deltaProduction': {
-          'timber': -6,
-          'lumber': 2,
-          'fabric': 3,
-        },
-        'deltaConsumption': {
-          'grain': -13,
-        },
-        'treasuryDeltaFromRiches': 0,
-        'treasuryEndOfTurn': 100,
-        'workersStart': {
-          'peasants': 9,
-          'apprentices': 0,
-          'journeymen': 1,
-          'masters': 0,
-        },
-        'workersEnd': {
-          'peasants': 9,
-          'apprentices': 0,
-          'journeymen': 1,
-          'masters': 0,
-        },
-        'workerAssignments': <Map<String, dynamic>>[],
-      };
+    test(
+      'Reason column explains worker vs military consumption and production',
+      () {
+        // Construct a synthetic turn entry where:
+        // - grain has E+5, C-13 (workers + military).
+        // - lumber/fabric have production effects.
+        final entry = <String, dynamic>{
+          'turn': 1,
+          'stockpileStart': {
+            'grain': 45,
+            'meat': 32,
+            'timber': 30,
+            'lumber': 8,
+            'fabric': 19,
+          },
+          'stockpileAfterRiches': {
+            'grain': 50,
+            'meat': 33,
+            'timber': 33,
+            'lumber': 8,
+            'fabric': 19,
+          },
+          'stockpileEnd': {
+            'grain': 37,
+            'meat': 33,
+            'timber': 27,
+            'lumber': 10,
+            'fabric': 22,
+          },
+          'deltaExtraction': {'grain': 5, 'meat': 1, 'timber': 3},
+          'deltaRiches': <String, int>{},
+          'deltaProduction': {'timber': -6, 'lumber': 2, 'fabric': 3},
+          'deltaConsumption': {'grain': -13},
+          'treasuryDeltaFromRiches': 0,
+          'treasuryEndOfTurn': 100,
+          'workersStart': {
+            'peasants': 9,
+            'apprentices': 0,
+            'journeymen': 1,
+            'masters': 0,
+          },
+          'workersEnd': {
+            'peasants': 9,
+            'apprentices': 0,
+            'journeymen': 1,
+            'masters': 0,
+          },
+          'workerAssignments': <Map<String, dynamic>>[],
+        };
 
-      final markdownNoMilitary = cli.buildMarkdownReport(
-        turns: [entry],
-        totalTurns: 1,
-        initialStockpile: const Stockpile(),
-        initialWorkers: const WorkerPool(
-          peasants: 9,
-          apprentices: 0,
-          journeymen: 1,
-          masters: 0,
-        ),
-        seed: null,
-        scriptPath: null,
-        militaryUnits: 0,
-        treasury: null,
-      );
+        final markdownNoMilitary = cli.buildMarkdownReport(
+          turns: [entry],
+          totalTurns: 1,
+          initialStockpile: const Stockpile(),
+          initialWorkers: const WorkerPool(
+            peasants: 9,
+            apprentices: 0,
+            journeymen: 1,
+            masters: 0,
+          ),
+          seed: null,
+          scriptPath: null,
+          militaryUnits: 0,
+          treasury: null,
+        );
 
-      // With no military, grain reason should mention worker food but not military upkeep.
-      expect(markdownNoMilitary, contains('grain | 45 | 37 | -8 | E+5, C-13 | worker food'));
-      expect(markdownNoMilitary, isNot(contains('military upkeep')));
+        // With no military, grain reason should mention worker food but not military upkeep.
+        expect(
+          markdownNoMilitary,
+          contains('grain | 45 | 37 | -8 | E+5, C-13 | worker food'),
+        );
+        expect(markdownNoMilitary, isNot(contains('military upkeep')));
 
-      final markdownWithMilitary = cli.buildMarkdownReport(
-        turns: [entry],
-        totalTurns: 1,
-        initialStockpile: const Stockpile(),
-        initialWorkers: const WorkerPool(
-          peasants: 9,
-          apprentices: 0,
-          journeymen: 1,
-          masters: 0,
-        ),
-        seed: null,
-        scriptPath: null,
-        militaryUnits: 1,
-        treasury: null,
-      );
+        final markdownWithMilitary = cli.buildMarkdownReport(
+          turns: [entry],
+          totalTurns: 1,
+          initialStockpile: const Stockpile(),
+          initialWorkers: const WorkerPool(
+            peasants: 9,
+            apprentices: 0,
+            journeymen: 1,
+            masters: 0,
+          ),
+          seed: null,
+          scriptPath: null,
+          militaryUnits: 1,
+          treasury: null,
+        );
 
-      // With military, grain reason should mention both worker food and military upkeep.
-      expect(
-        markdownWithMilitary,
-        contains('grain | 45 | 37 | -8 | E+5, C-13 | worker food + military upkeep'),
-      );
+        // With military, grain reason should mention both worker food and military upkeep.
+        expect(
+          markdownWithMilitary,
+          contains(
+            'grain | 45 | 37 | -8 | E+5, C-13 | worker food + military upkeep',
+          ),
+        );
 
-      // Production reasons: lumber (manufactured, P>0) and timber (raw, P<0).
-      expect(markdownWithMilitary, contains('lumber | 8 | 10 | +2 | P+2 | production output'));
-      expect(markdownWithMilitary, contains('timber | 30 | 27 | -3 | E+3, P-6 | extraction + production inputs'));
-    });
+        // Production reasons: lumber (manufactured, P>0) and timber (raw, P<0).
+        expect(
+          markdownWithMilitary,
+          contains('lumber | 8 | 10 | +2 | P+2 | production output'),
+        );
+        expect(
+          markdownWithMilitary,
+          contains(
+            'timber | 30 | 27 | -3 | E+3, P-6 | extraction + production inputs',
+          ),
+        );
+      },
+    );
 
     test('resolveOutputConfig applies defaults and overrides correctly', () {
       // No flags: Markdown defaults to sim_economy.md, no JSON.
@@ -345,16 +362,12 @@ void main() {
       expect(cfgDefault.jsonPath, isNull);
 
       // Only --output: Markdown uses provided path, no JSON.
-      final cfgMarkdownOnly = cli.resolveOutputConfig(
-        outputPath: 'report.md',
-      );
+      final cfgMarkdownOnly = cli.resolveOutputConfig(outputPath: 'report.md');
       expect(cfgMarkdownOnly.markdownPath, equals('report.md'));
       expect(cfgMarkdownOnly.jsonPath, isNull);
 
       // Only --json-output: Markdown still defaults, JSON uses provided path.
-      final cfgJsonOnly = cli.resolveOutputConfig(
-        jsonOutputPath: 'log.json',
-      );
+      final cfgJsonOnly = cli.resolveOutputConfig(jsonOutputPath: 'log.json');
       expect(cfgJsonOnly.markdownPath, equals('sim_economy.md'));
       expect(cfgJsonOnly.jsonPath, equals('log.json'));
 
@@ -370,7 +383,8 @@ void main() {
 
   group('riches to treasury', () {
     test('treasury increases when extraction includes riches', () {
-      final scriptJson = jsonDecode(r'''
+      final scriptJson =
+          jsonDecode(r'''
 {
   "initialState": {
     "stockpile": { "grain": 20 },
@@ -385,7 +399,8 @@ void main() {
     }
   ]
 }
-''') as Map<String, dynamic>;
+''')
+              as Map<String, dynamic>;
 
       final parsed = cli.parseSimEconomyScript(scriptJson);
       var stockpile = parsed.initialStockpile;
@@ -406,4 +421,3 @@ void main() {
     });
   });
 }
-

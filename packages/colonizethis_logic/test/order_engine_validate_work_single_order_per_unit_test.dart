@@ -22,7 +22,7 @@ void main() {
             units: [
               Unit(
                 id: 'builder1',
-                type: 'Builder',
+                type: kUnitTypeBuilder,
                 ownerId: 'p1',
                 locationProvinceId: provinceId,
                 tileKey: tileA,
@@ -49,7 +49,7 @@ void main() {
             stockpile: Stockpile()
                 .applyDelta(CommodityCatalog.lumber.id, 20)
                 .applyDelta(CommodityCatalog.castIron.id, 20),
-            techUnlocked: const {'circular_saw': true},
+            techUnlocked: const {kTechIdCircularSaw: true},
           ),
         ],
       );
@@ -70,7 +70,7 @@ void main() {
         'p1',
         const WorkOrder(
           unitId: 'builder1',
-          target: 'build_improvement',
+          target: kWorkTargetBuildImprovement,
           targetTileKey: tileA,
         ),
       );
@@ -78,7 +78,7 @@ void main() {
         'p1',
         const WorkOrder(
           unitId: 'builder1',
-          target: 'build_improvement',
+          target: kWorkTargetBuildImprovement,
           targetTileKey: tileB,
         ),
       );

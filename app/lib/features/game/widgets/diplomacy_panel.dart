@@ -1,7 +1,7 @@
 // Diplomacy panel. SPEC/ui/diplomacy-panel.md.
 
-import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_ai/colonizethis_ai.dart';
+import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
@@ -13,209 +13,10 @@ import '../../../l10n/l10n.dart';
 import '../../../widgets/ct_nine_patch_button.dart';
 import '../../../widgets/ct_panel.dart';
 import 'diplomacy_order_helpers.dart';
+import 'diplomacy_panel_rows.dart';
 import 'fnv1a_hash_constants.dart';
 
-int? _outgoingSubsidyPerTurn(Game game, String payerId, String targetId) {
-  for (final s in game.subsidyStates) {
-    if (s.payerId == payerId && s.targetId == targetId) {
-      return s.amountPerTurn;
-    }
-  }
-  return null;
-}
-
-({int? grant, int? subsidy}) _pendingEconomicAmounts(
-  List<DiplomaticOrder> list,
-  String targetId,
-) {
-  int? grant;
-  int? subsidy;
-  for (final o in list) {
-    if (o.targetFactionId != targetId) continue;
-    if (o.type == DiplomaticOrderType.grantAid) {
-      grant = o.amount;
-    }
-    if (o.type == DiplomaticOrderType.setSubsidy) {
-      subsidy = o.amount;
-    }
-  }
-  return (grant: grant, subsidy: subsidy);
-}
-
-/// Faction type for display. SPEC/game/factions.md.
-enum FactionKind { greatPower, minor, tribe }
-
-/// One row of data for the diplomacy list.
-class DiplomacyRowData {
-  const DiplomacyRowData({
-    required this.factionId,
-    required this.displayName,
-    required this.kind,
-    required this.relation,
-    this.overture,
-    required this.actions,
-    this.powerScore,
-    this.playerPowerScore,
-    required this.pendingOrderTypes,
-    this.activeSubsidyPerTurn,
-    this.pendingGrantAmount,
-    this.pendingSubsidyAmount,
-  });
-
-  final String factionId;
-  final String displayName;
-  final FactionKind kind;
-  final DiplomacyRelation? relation;
-  final OvertureState? overture;
-  final List<DiplomaticOrder> actions;
-
-  /// Great Power power score (SPEC/game/diplomacy.md). Only set for GP rows.
-  final int? powerScore;
-
-  /// Human player's power score for comparison (red if GP score > this). Only set for GP rows.
-  final int? playerPowerScore;
-
-  /// Set of DiplomaticOrderType that are currently pending for this target faction.
-  final Set<DiplomaticOrderType> pendingOrderTypes;
-
-  /// Active £/turn subsidy from the human GP to this row's faction (`Game.subsidyStates`).
-  final int? activeSubsidyPerTurn;
-
-  /// Pending grant aid amount in current-turn orders (not yet resolved).
-  final int? pendingGrantAmount;
-
-  /// Pending set-subsidy amount per turn in current-turn orders.
-  final int? pendingSubsidyAmount;
-}
-
-/// Builds list of discovered factions and their available actions.
-/// Discovered = has a relation with the player. SPEC/ui/diplomacy-panel.md.
-List<DiplomacyRowData> buildDiplomacyRows(
-  Game game,
-  MapTopology topology,
-  String humanPlayerId,
-  Orders currentOrders,
-) {
-  final view = buildPlayerView(game, topology, humanPlayerId);
-  final discoveredIds = view.diplomacyByOtherId.keys.toList();
-  final suggestions = suggestDiplomaticOrders(
-    view,
-    game,
-    topology,
-    currentOrders,
-  );
-  final actionsByTarget = <String, List<DiplomaticOrder>>{};
-  for (final order in suggestions) {
-    actionsByTarget.putIfAbsent(order.targetFactionId, () => []).add(order);
-  }
-
-  final gpIds = <String>[];
-  final minorIds = <String>[];
-  final tribeIds = <String>[];
-  for (final id in discoveredIds) {
-    if (id == humanPlayerId) continue;
-    if (game.players.any((p) => p.id == id)) {
-      gpIds.add(id);
-    } else if (game.minorNations.any((m) => m.id == id)) {
-      minorIds.add(id);
-    } else if (game.tribes.any((t) => t.id == id)) {
-      tribeIds.add(id);
-    }
-  }
-
-  // GPs: sort by military power desc, then province count desc. SPEC/ui/diplomacy-panel.md.
-  gpIds.sort((a, b) {
-    final strA = aggregateMilitaryStrengthForPlayer(game, a);
-    final strB = aggregateMilitaryStrengthForPlayer(game, b);
-    final cmp = strB.compareTo(strA);
-    if (cmp != 0) return cmp;
-    final provA = provinceCountOwnedBy(game, a);
-    final provB = provinceCountOwnedBy(game, b);
-    return provB.compareTo(provA);
-  });
-
-  final pendingByTarget = <String, Set<DiplomaticOrderType>>{};
-  final pendingList =
-      currentOrders.diplomaticOrdersByPlayerId[humanPlayerId] ?? [];
-  for (final o in pendingList) {
-    pendingByTarget.putIfAbsent(o.targetFactionId, () => {}).add(o.type);
-  }
-
-  String displayNameFor(String id) {
-    final p = game.playerById(id);
-    if (p != null) return p.displayName;
-    for (final m in game.minorNations) {
-      if (m.id == id) return m.displayName ?? id;
-    }
-    for (final t in game.tribes) {
-      if (t.id == id) return t.displayName ?? id;
-    }
-    return id;
-  }
-
-  List<DiplomacyRowData> rows = [];
-  final playerPower = greatPowerPowerScore(game, humanPlayerId);
-  for (final id in gpIds) {
-    final econ = _pendingEconomicAmounts(pendingList, id);
-    rows.add(
-      DiplomacyRowData(
-        factionId: id,
-        displayName: displayNameFor(id),
-        kind: FactionKind.greatPower,
-        relation: view.diplomacyByOtherId[id],
-        overture: getOverture(game, humanPlayerId, id),
-        actions: actionsByTarget[id] ?? [],
-        powerScore: greatPowerPowerScore(game, id),
-        playerPowerScore: playerPower,
-        pendingOrderTypes: pendingByTarget[id] ?? {},
-        activeSubsidyPerTurn: _outgoingSubsidyPerTurn(game, humanPlayerId, id),
-        pendingGrantAmount: econ.grant,
-        pendingSubsidyAmount: econ.subsidy,
-      ),
-    );
-  }
-  minorIds.sort((a, b) => (displayNameFor(a)).compareTo(displayNameFor(b)));
-  for (final id in minorIds) {
-    final econ = _pendingEconomicAmounts(pendingList, id);
-    rows.add(
-      DiplomacyRowData(
-        factionId: id,
-        displayName: displayNameFor(id),
-        kind: FactionKind.minor,
-        relation: view.diplomacyByOtherId[id],
-        overture: getOverture(game, humanPlayerId, id),
-        actions: actionsByTarget[id] ?? [],
-        powerScore: null,
-        playerPowerScore: null,
-        pendingOrderTypes: pendingByTarget[id] ?? {},
-        activeSubsidyPerTurn: _outgoingSubsidyPerTurn(game, humanPlayerId, id),
-        pendingGrantAmount: econ.grant,
-        pendingSubsidyAmount: econ.subsidy,
-      ),
-    );
-  }
-  tribeIds.sort((a, b) => (displayNameFor(a)).compareTo(displayNameFor(b)));
-  for (final id in tribeIds) {
-    final econ = _pendingEconomicAmounts(pendingList, id);
-    rows.add(
-      DiplomacyRowData(
-        factionId: id,
-        displayName: displayNameFor(id),
-        kind: FactionKind.tribe,
-        relation: view.diplomacyByOtherId[id],
-        overture: getOverture(game, humanPlayerId, id),
-        actions: actionsByTarget[id] ?? [],
-        powerScore: null,
-        playerPowerScore: null,
-        pendingOrderTypes: pendingByTarget[id] ?? {},
-        activeSubsidyPerTurn: _outgoingSubsidyPerTurn(game, humanPlayerId, id),
-        pendingGrantAmount: econ.grant,
-        pendingSubsidyAmount: econ.subsidy,
-      ),
-    );
-  }
-  return rows;
-}
+export 'diplomacy_panel_rows.dart';
 
 /// Full-page diplomacy panel. SPEC/ui/diplomacy-panel.md.
 class DiplomacyPanel extends StatefulWidget {
@@ -512,6 +313,71 @@ class _DiplomacyRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: InkWell(
+        onTap: onTap,
+        child: CtPanel(
+          padding: const EdgeInsets.all(12),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(child: _buildInfoColumn(context)),
+              _buildActionButtons(),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildInfoColumn(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        _buildHeaderRow(context),
+        const SizedBox(height: 4),
+        Text(
+          _relationSummary(context),
+          style: Theme.of(context).textTheme.bodySmall,
+        ),
+        ..._buildOptionalStatusLines(context),
+      ],
+    );
+  }
+
+  Widget _buildHeaderRow(BuildContext context) {
+    final l10n = appL10n(context);
+    return Row(
+      children: [
+        Text(
+          data.displayName,
+          style: Theme.of(
+            context,
+          ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w600),
+        ),
+        const SizedBox(width: 8),
+        _kindChip(context, data.kind),
+        if (data.powerScore != null) ...[
+          const SizedBox(width: 8),
+          Text(
+            l10n.diplomacy_panel_powerScore(data.powerScore!),
+            style: Theme.of(context).textTheme.labelMedium?.copyWith(
+              color:
+                  data.playerPowerScore != null &&
+                      data.powerScore! > data.playerPowerScore!
+                  ? Colors.red
+                  : Colors.green,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ],
+      ],
+    );
+  }
+
+  String _relationSummary(BuildContext context) {
     final l10n = appL10n(context);
     final rel = data.relation;
     final stateLabel = rel == null
@@ -526,118 +392,77 @@ class _DiplomacyRow extends StatelessWidget {
     final overtureLabel = data.overture == null
         ? ''
         : ' · ${_overtureStageLabel(data.overture!.stage)}';
+    if (relationStateLabel.isEmpty) {
+      return '$stateLabel$overtureLabel';
+    }
+    return '$stateLabel · $relationStateLabel$overtureLabel';
+  }
 
-    final content = Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Row(
-                children: [
-                  Text(
-                    data.displayName,
-                    style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  _kindChip(context, data.kind),
-                  if (data.powerScore != null) ...[
-                    const SizedBox(width: 8),
-                    Text(
-                      l10n.diplomacy_panel_powerScore(data.powerScore!),
-                      style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                        color:
-                            data.playerPowerScore != null &&
-                                data.powerScore! > data.playerPowerScore!
-                            ? Colors.red
-                            : Colors.green,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ],
-                ],
-              ),
-              const SizedBox(height: 4),
-              Text(
-                relationStateLabel.isEmpty
-                    ? '$stateLabel$overtureLabel'
-                    : '$stateLabel · $relationStateLabel$overtureLabel',
-                style: Theme.of(context).textTheme.bodySmall,
-              ),
-              if (data.activeSubsidyPerTurn != null) ...[
-                const SizedBox(height: 4),
-                Text(
-                  l10n.diplomacy_panel_outgoingSubsidy(
-                    data.activeSubsidyPerTurn!,
-                    data.displayName,
-                  ),
-                  style: Theme.of(
-                    context,
-                  ).textTheme.bodySmall?.copyWith(fontStyle: FontStyle.italic),
-                ),
-              ],
-              if (data.pendingGrantAmount != null) ...[
-                const SizedBox(height: 4),
-                Text(
-                  l10n.diplomacy_panel_pendingGrant(data.pendingGrantAmount!),
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    fontStyle: FontStyle.italic,
-                    color: Theme.of(context).colorScheme.tertiary,
-                  ),
-                ),
-              ],
-              if (data.pendingSubsidyAmount != null) ...[
-                const SizedBox(height: 4),
-                Text(
-                  l10n.diplomacy_panel_pendingSubsidy(
-                    data.pendingSubsidyAmount!,
-                  ),
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    fontStyle: FontStyle.italic,
-                    color: Theme.of(context).colorScheme.tertiary,
-                  ),
-                ),
-              ],
-            ],
+  List<Widget> _buildOptionalStatusLines(BuildContext context) {
+    final l10n = appL10n(context);
+    final lines = <Widget>[];
+    if (data.activeSubsidyPerTurn != null) {
+      lines.addAll([
+        const SizedBox(height: 4),
+        Text(
+          l10n.diplomacy_panel_outgoingSubsidy(
+            data.activeSubsidyPerTurn!,
+            data.displayName,
+          ),
+          style: Theme.of(
+            context,
+          ).textTheme.bodySmall?.copyWith(fontStyle: FontStyle.italic),
+        ),
+      ]);
+    }
+    if (data.pendingGrantAmount != null) {
+      lines.addAll([
+        const SizedBox(height: 4),
+        Text(
+          l10n.diplomacy_panel_pendingGrant(data.pendingGrantAmount!),
+          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+            fontStyle: FontStyle.italic,
+            color: Theme.of(context).colorScheme.tertiary,
           ),
         ),
-        Wrap(
-          spacing: 6,
-          runSpacing: 6,
-          children: [
-            for (final order in data.actions)
-              if (!data.pendingOrderTypes.contains(order.type))
-                _ActionButton(order: order, onPressed: () => onAction(order)),
-            for (final orderType in data.pendingOrderTypes)
-              _ActionButton(
-                order: DiplomaticOrder(
-                  type: orderType,
-                  targetFactionId: data.factionId,
-                ),
-                onPressed: () {},
-                isPending: true,
-                onCancel: () => onAction(
-                  DiplomaticOrder(
-                    type: orderType,
-                    targetFactionId: data.factionId,
-                  ),
-                ),
-              ),
-          ],
+      ]);
+    }
+    if (data.pendingSubsidyAmount != null) {
+      lines.addAll([
+        const SizedBox(height: 4),
+        Text(
+          l10n.diplomacy_panel_pendingSubsidy(data.pendingSubsidyAmount!),
+          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+            fontStyle: FontStyle.italic,
+            color: Theme.of(context).colorScheme.tertiary,
+          ),
         ),
-      ],
-    );
+      ]);
+    }
+    return lines;
+  }
 
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
-      child: InkWell(
-        onTap: onTap,
-        child: CtPanel(padding: const EdgeInsets.all(12), child: content),
-      ),
+  Widget _buildActionButtons() {
+    return Wrap(
+      spacing: 6,
+      runSpacing: 6,
+      children: [
+        for (final order in data.actions)
+          if (!data.pendingOrderTypes.contains(order.type))
+            _ActionButton(order: order, onPressed: () => onAction(order)),
+        for (final orderType in data.pendingOrderTypes)
+          _ActionButton(
+            order: DiplomaticOrder(
+              type: orderType,
+              targetFactionId: data.factionId,
+            ),
+            onPressed: () {},
+            isPending: true,
+            onCancel: () => onAction(
+              DiplomaticOrder(type: orderType, targetFactionId: data.factionId),
+            ),
+          ),
+      ],
     );
   }
 

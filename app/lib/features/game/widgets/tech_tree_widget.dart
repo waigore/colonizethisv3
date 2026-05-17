@@ -8,14 +8,18 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
 
 import '../../../config/app_assets.dart';
-import '../../../l10n/app_localizations.dart';
 import '../../../l10n/l10n.dart';
+import '../utils/tech_ui_helpers.dart';
 import '../../../widgets/ct_dialog_shell.dart';
 import '../../../widgets/ct_nine_patch_button.dart';
 import '../../../widgets/strict_asset_icon.dart';
 import 'tech_effect_summary_lookup.dart';
 
 /// Node position for layout. Exposed for tests (column rule: A→B→C and A→C ⇒ gap between A and C).
+
+part 'tech_tree_widget_nodes.dart';
+part 'tech_tree_widget_legend.dart';
+
 class TechNodePosition {
   const TechNodePosition({
     required this.techId,
@@ -62,6 +66,29 @@ const double _edgeStrokeWidth = 2;
 /// Offset from source right edge for the vertical segment so it stays in the inter-column gap (never through nodes).
 const double _edgeBendOffset = (_layerGap - _nodeWidth) / 2;
 
+Set<int> _reservedRowIndicesForTechLayer({
+  required Map<String, TechDefinition> catalog,
+  required int layer,
+  required int maxLayer,
+  required Map<String, int> layerByTech,
+  required Map<int, List<TechNodePosition>> positionsByLayer,
+}) {
+  final reserved = <int>{};
+  for (var rightLayer = layer + 1; rightLayer <= maxLayer; rightLayer++) {
+    for (final pos in positionsByLayer[rightLayer]!) {
+      final tech = catalog[pos.techId];
+      if (tech == null) continue;
+      final hasPrereqLeft = tech.prerequisiteIds.any(
+        (pr) => (layerByTech[pr] ?? -1) < layer,
+      );
+      if (!hasPrereqLeft) continue;
+      final rowIndex = ((pos.y - 24) / _rowGap).round();
+      reserved.add(rowIndex);
+    }
+  }
+  return reserved;
+}
+
 /// Full-screen tech tree graph. Left-to-right layout, explicit edges, scrollable.
 /// SPEC/ui/tech-tree-widget.md.
 class TechTreeWidget extends StatelessWidget {
@@ -77,9 +104,8 @@ class TechTreeWidget extends StatelessWidget {
     if (positions.isEmpty) {
       return Center(child: Text(l10n.techTree_noTechsInCatalog));
     }
-    final width = positions.map((p) => p.x).reduce(math.max) + _nodeWidth + 48;
-    final height =
-        positions.map((p) => p.y).reduce(math.max) + _nodeHeight + 48;
+    final width = _canvasWidth(positions);
+    final height = _canvasHeight(positions);
     final unlocked = player.techUnlocked ?? {};
     final inProgress = player.researchProgressByTechId?.keys.toSet() ?? {};
     final researchable = researchableTechIds(
@@ -101,43 +127,87 @@ class TechTreeWidget extends StatelessWidget {
             scrollDirection: Axis.vertical,
             child: SingleChildScrollView(
               scrollDirection: Axis.horizontal,
-              child: SizedBox(
+              child: _buildCanvas(
+                context: context,
+                positions: positions,
+                unlocked: unlocked,
+                inProgress: inProgress,
+                researchable: researchable,
                 width: width,
                 height: height,
-                child: Stack(
-                  children: [
-                    CustomPaint(
-                      size: Size(width, height),
-                      painter: _TechTreeEdgePainter(positions: positions),
-                    ),
-                    ...positions.map((pos) {
-                      final tech = techById(pos.techId);
-                      if (tech == null) return const SizedBox.shrink();
-                      final state = _TechNodeState(
-                        researched: unlocked[pos.techId] == true,
-                        inProgress: inProgress.contains(pos.techId),
-                        available: researchable.contains(pos.techId),
-                      );
-                      return Positioned(
-                        left: pos.x,
-                        top: pos.y,
-                        width: _nodeWidth,
-                        height: _nodeHeight,
-                        child: _TechNode(
-                          tech: tech,
-                          state: state,
-                          onTap: () => _showTechDialog(context, tech),
-                        ),
-                      );
-                    }),
-                  ],
-                ),
               ),
             ),
           ),
         ),
       ],
     );
+  }
+
+  double _canvasWidth(List<TechNodePosition> positions) {
+    return positions.map((p) => p.x).reduce(math.max) + _nodeWidth + 48;
+  }
+
+  double _canvasHeight(List<TechNodePosition> positions) {
+    return positions.map((p) => p.y).reduce(math.max) + _nodeHeight + 48;
+  }
+
+  Widget _buildCanvas({
+    required BuildContext context,
+    required List<TechNodePosition> positions,
+    required Map<String, bool> unlocked,
+    required Set<String> inProgress,
+    required Set<String> researchable,
+    required double width,
+    required double height,
+  }) {
+    return SizedBox(
+      width: width,
+      height: height,
+      child: Stack(
+        children: [
+          CustomPaint(
+            size: Size(width, height),
+            painter: _TechTreeEdgePainter(positions: positions),
+          ),
+          ..._buildPositionedNodes(
+            context: context,
+            positions: positions,
+            unlocked: unlocked,
+            inProgress: inProgress,
+            researchable: researchable,
+          ),
+        ],
+      ),
+    );
+  }
+
+  List<Widget> _buildPositionedNodes({
+    required BuildContext context,
+    required List<TechNodePosition> positions,
+    required Map<String, bool> unlocked,
+    required Set<String> inProgress,
+    required Set<String> researchable,
+  }) {
+    return positions.map((pos) {
+      final tech = techById(pos.techId);
+      if (tech == null) return const SizedBox.shrink();
+      final state = _TechNodeState(
+        researched: unlocked[pos.techId] == true,
+        inProgress: inProgress.contains(pos.techId),
+        available: researchable.contains(pos.techId),
+      );
+      return Positioned(
+        left: pos.x,
+        top: pos.y,
+        width: _nodeWidth,
+        height: _nodeHeight,
+        child: _TechNode(
+          tech: tech,
+          state: state,
+          onTap: () => _showTechDialog(context, tech),
+        ),
+      );
+    }).toList();
   }
 
   /// Computes topological layout: each tech in a column strictly right of all its prerequisites.
@@ -204,20 +274,13 @@ class TechTreeWidget extends StatelessWidget {
         }
       } else {
         // Reserved row indices: rows that must be left free for connectors from left layers to right layers.
-        final reserved = <int>{};
-        for (var rightLayer = layer + 1; rightLayer <= maxLayer; rightLayer++) {
-          for (final pos in positionsByLayer[rightLayer]!) {
-            final tech = catalog[pos.techId];
-            if (tech == null) continue;
-            final hasPrereqLeft = tech.prerequisiteIds.any(
-              (pr) => (layerByTech[pr] ?? -1) < layer,
-            );
-            if (hasPrereqLeft) {
-              final rowIndex = ((pos.y - 24) / _rowGap).round();
-              reserved.add(rowIndex);
-            }
-          }
-        }
+        final reserved = _reservedRowIndicesForTechLayer(
+          catalog: catalog,
+          layer: layer,
+          maxLayer: maxLayer,
+          layerByTech: layerByTech,
+          positionsByLayer: positionsByLayer,
+        );
         final totalRows = reserved.isEmpty
             ? ids.length
             : math.max(
@@ -267,8 +330,8 @@ class TechTreeWidget extends StatelessWidget {
             const SizedBox(height: 8),
             Text(
               l10n.techTree_eraCategory(
-                _eraRoman(tech.era),
-                _categoryLabelL10n(l10n, tech.category),
+                eraRoman(tech.era),
+                techCategoryLabelL10n(l10n, tech.category),
               ),
               style: theme.textTheme.bodySmall,
             ),
@@ -287,9 +350,7 @@ class TechTreeWidget extends StatelessWidget {
                 (id) => Padding(
                   padding: const EdgeInsets.only(top: 2),
                   child: Text(
-                    l10n.techTree_prerequisiteBullet(
-                      techDisplayName(id),
-                    ),
+                    l10n.techTree_prerequisiteBullet(techDisplayName(id)),
                     style: theme.textTheme.bodySmall,
                   ),
                 ),
@@ -297,10 +358,7 @@ class TechTreeWidget extends StatelessWidget {
             ],
             if (effects.isNotEmpty) ...[
               const SizedBox(height: 8),
-              Text(
-                l10n.techTree_effects,
-                style: theme.textTheme.labelLarge,
-              ),
+              Text(l10n.techTree_effects, style: theme.textTheme.labelLarge),
               ...effects.map(
                 (e) => Padding(
                   padding: const EdgeInsets.only(top: 2),
@@ -325,25 +383,6 @@ class TechTreeWidget extends StatelessWidget {
     );
   }
 
-  static String _eraRoman(int era) {
-    const romans = ['I', 'II', 'III', 'IV'];
-    return era >= 1 && era <= romans.length ? romans[era - 1] : '$era';
-  }
-
-  static String _categoryLabelL10n(AppLocalizations l10n, String category) {
-    return switch (category) {
-      'gathering' => l10n.techTree_categoryGathering,
-      'transport' => l10n.techTree_categoryTransport,
-      'labour' => l10n.techTree_categoryLabour,
-      'civilian' => l10n.techTree_categoryCivilian,
-      'diplomacy' => l10n.techTree_categoryDiplomacy,
-      'naval' => l10n.techTree_categoryNaval,
-      'military' => l10n.techTree_categoryMilitary,
-      'new-world' => l10n.techTree_categoryNewWorld,
-      _ => category,
-    };
-  }
-
   static List<String> _effectSummaryLines(
     AppLocalizations l10n,
     TechDefinition tech,
@@ -361,7 +400,7 @@ class TechTreeWidget extends StatelessWidget {
     if (list.isEmpty) {
       list.add(
         l10n.techEffect_fallbackCategoryImprovement(
-          _categoryLabelL10n(l10n, tech.category),
+          techCategoryLabelL10n(l10n, tech.category),
         ),
       );
     }
@@ -378,285 +417,5 @@ class TechTreeWidget extends StatelessWidget {
               : '${s[0].toUpperCase()}${s.substring(1).toLowerCase()}',
         )
         .join(' ');
-  }
-}
-
-class _TechNodeState {
-  const _TechNodeState({
-    required this.researched,
-    required this.inProgress,
-    required this.available,
-  });
-  final bool researched;
-  final bool inProgress;
-  final bool available;
-}
-
-class _TechTreeEdgePainter extends CustomPainter {
-  _TechTreeEdgePainter({required this.positions});
-
-  final List<TechNodePosition> positions;
-
-  static double get _centerY => _nodeHeight / 2;
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final posByTech = {for (final p in positions) p.techId: p};
-    final paint = Paint()
-      ..color = Colors.grey.shade600
-      ..strokeWidth = _edgeStrokeWidth
-      ..style = PaintingStyle.stroke;
-
-    for (final tech in techCatalog.values) {
-      final toPos = posByTech[tech.id];
-      if (toPos == null) continue;
-      final toLeftX = toPos.x;
-      final toCenterY = toPos.y + _centerY;
-      for (final prereqId in tech.prerequisiteIds) {
-        final fromPos = posByTech[prereqId];
-        if (fromPos == null) continue;
-        final fromRightX = fromPos.x + _nodeWidth;
-        final fromCenterY = fromPos.y + _centerY;
-
-        // Right-angled connector: horizontal into gap, vertical to target row, horizontal to target.
-        // Layout reserves a row slot in intermediate columns so this segment does not pass through nodes.
-        final bendX = fromRightX + _edgeBendOffset;
-        final path = Path()
-          ..moveTo(fromRightX, fromCenterY)
-          ..lineTo(bendX, fromCenterY)
-          ..lineTo(bendX, toCenterY)
-          ..lineTo(toLeftX, toCenterY);
-        canvas.drawPath(path, paint);
-      }
-    }
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
-}
-
-class _TechNode extends StatelessWidget {
-  const _TechNode({
-    required this.tech,
-    required this.state,
-    required this.onTap,
-  });
-
-  final TechDefinition tech;
-  final _TechNodeState state;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final color = _categoryColors[tech.category] ?? Colors.grey;
-    final bool locked =
-        !state.researched && !state.inProgress && !state.available;
-
-    Color fillColor;
-    Color borderColor;
-    double borderWidth;
-    if (state.researched) {
-      fillColor = color;
-      borderColor = color.withValues(alpha: 0.8);
-      borderWidth = 2;
-    } else if (state.inProgress) {
-      fillColor = color.withValues(alpha: 0.4);
-      borderColor = color;
-      borderWidth = 3;
-    } else if (state.available) {
-      fillColor = color.withValues(alpha: 0.15);
-      borderColor = color;
-      borderWidth = 2;
-    } else {
-      fillColor = Colors.grey.shade200;
-      borderColor = Colors.grey.shade400;
-      borderWidth = 1;
-    }
-
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: onTap,
-        child: Container(
-          width: _nodeWidth,
-          height: _nodeHeight,
-          decoration: BoxDecoration(
-            color: fillColor,
-            border: Border.all(color: borderColor, width: borderWidth),
-            borderRadius: BorderRadius.circular(6),
-          ),
-          child: Center(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 4),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  if (_categoryIcons.containsKey(tech.category))
-                    Padding(
-                      padding: const EdgeInsets.only(right: 3),
-                      child: StrictAssetIcon(
-                        assetPath: _categoryIcons[tech.category]!,
-                        width: 16,
-                        height: 16,
-                      ),
-                    ),
-                  Flexible(
-                    child: Text(
-                      techDisplayName(tech.id),
-                      textAlign: TextAlign.center,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        fontSize: 10,
-                        color: locked ? Colors.grey : null,
-                        fontWeight: state.researched ? FontWeight.w600 : null,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-/// Row label for tech tree legend samples (maps to [AppLocalizations] state strings).
-enum _TechLegendStateKind { researched, inProgress, available, locked }
-
-class _TechTreeLegend extends StatelessWidget {
-  const _TechTreeLegend({required this.l10n});
-
-  final AppLocalizations l10n;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(l10n.techTree_legendTitle, style: theme.textTheme.labelLarge),
-        const SizedBox(height: 4),
-        Wrap(
-          spacing: 8,
-          runSpacing: 4,
-          children: _categoryColors.entries
-              .map(
-                (e) => _LegendChip(
-                  color: e.value,
-                  label: TechTreeWidget._categoryLabelL10n(l10n, e.key),
-                ),
-              )
-              .toList(),
-        ),
-        const SizedBox(height: 8),
-        Wrap(
-          spacing: 8,
-          runSpacing: 4,
-          children: [
-            _StateLegendSample(
-              kind: _TechLegendStateKind.researched,
-              state: _TechNodeState(
-                researched: true,
-                inProgress: false,
-                available: false,
-              ),
-            ),
-            _StateLegendSample(
-              kind: _TechLegendStateKind.inProgress,
-              state: _TechNodeState(
-                researched: false,
-                inProgress: true,
-                available: false,
-              ),
-            ),
-            _StateLegendSample(
-              kind: _TechLegendStateKind.available,
-              state: _TechNodeState(
-                researched: false,
-                inProgress: false,
-                available: true,
-              ),
-            ),
-            _StateLegendSample(
-              kind: _TechLegendStateKind.locked,
-              state: _TechNodeState(
-                researched: false,
-                inProgress: false,
-                available: false,
-              ),
-            ),
-          ],
-        ),
-      ],
-    );
-  }
-}
-
-class _LegendChip extends StatelessWidget {
-  const _LegendChip({required this.color, required this.label});
-
-  final Color color;
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    return Chip(
-      label: Text(label),
-      backgroundColor: color.withValues(alpha: 0.2),
-      side: BorderSide(color: color, width: 1.5),
-      labelStyle: Theme.of(context).textTheme.bodySmall,
-      visualDensity: VisualDensity.compact,
-      materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-    );
-  }
-}
-
-class _StateLegendSample extends StatelessWidget {
-  const _StateLegendSample({required this.kind, required this.state});
-
-  final _TechLegendStateKind kind;
-  final _TechNodeState state;
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = appL10n(context);
-    // Use a dummy tech with neutral category just to render the style.
-    const dummyTech = TechDefinition(
-      id: 'legend_dummy',
-      era: 1,
-      category: 'gathering',
-      cost: 0,
-      prerequisiteIds: <String>[],
-      regimentUnlockIds: <String>[],
-      shipUnlockIds: <String>[],
-    );
-
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        SizedBox(
-          width: 72,
-          height: 24,
-          child: _TechNode(tech: dummyTech, state: state, onTap: () {}),
-        ),
-        const SizedBox(width: 4),
-        Text(
-          _localizedLabel(l10n),
-          style: Theme.of(context).textTheme.bodySmall,
-        ),
-      ],
-    );
-  }
-
-  String _localizedLabel(AppLocalizations l10n) {
-    return switch (kind) {
-      _TechLegendStateKind.researched => l10n.techTree_stateResearched,
-      _TechLegendStateKind.inProgress => l10n.techTree_stateInProgress,
-      _TechLegendStateKind.available => l10n.techTree_stateAvailable,
-      _TechLegendStateKind.locked => l10n.techTree_stateLocked,
-    };
   }
 }

@@ -1,4 +1,23 @@
-part of 'game_setup.dart';
+import 'dart:math';
+
+import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:colonizethis_models/colonizethis_models.dart';
+
+import '../constants.dart';
+import '../diplomacy/diplomacy_relation_lookup.dart';
+import '../world/army_migration.dart';
+import 'capital_choice.dart';
+import 'game_setup_context.dart';
+import 'game_setup_helpers.dart';
+import 'game_setup_ownership.dart';
+import 'game_setup_topology.dart';
+import 'gp_old_world_resource_redistribution.dart';
+import 'gp_old_world_terrain_redistribution.dart';
+import 'gp_starting_grain.dart';
+import 'init_town_roads.dart';
+import 'initial_visibility.dart';
+import 'setup_exceptions.dart';
+import 'town_capital_occupancy.dart';
 
 /// Result of game setup: the Game and the map data needed for turn resolution.
 class GameSetupResult {
@@ -42,315 +61,51 @@ GameSetupResult createGameFromGeneratedMaps({
   int? assignmentPerturbationBase,
   List<WarpLink>? warpLinks,
 }) {
-  _log.i('game setup start gameId=$gameId');
-  final tileMapByRegion = {
+  gameSetupLog.i('game setup start gameId=$gameId');
+  final tileMapByRegion = <String, TileMapResult>{
     kRegionOldWorld: tileMapOldWorld,
     kRegionNewWorld: tileMapNewWorld,
   };
-  final topologyByRegion = {
+  final topologyByRegion = <String, MapTopology>{
     kRegionOldWorld: topologyOldWorld,
     kRegionNewWorld: topologyNewWorld,
   };
   final links = warpLinks ?? [];
-  final initialMapZoomMultiplier = _resolveInitialMapZoomMultiplier(config);
-
-  final owProvinceIds = _provinceIdsFromTopology(topologyOldWorld);
-  final nwProvinceIds = _provinceIdsFromTopology(topologyNewWorld);
-
-  if (owProvinceIds.length < config.greatPowerCount) {
-    throw SetupConfigConstraintException(
-      code: 'insufficient_old_world_provinces_for_great_powers',
-      details:
-          'Old World has ${owProvinceIds.length} provinces but ${config.greatPowerCount} Great Powers need at least one each',
-    );
-  }
-
-  final seaBoundOW =
-      owProvinceIds
-          .where((id) => isProvinceSeaBound(topologyOldWorld, id))
-          .toList()
-        ..sort();
-  if (seaBoundOW.length < config.greatPowerCount) {
-    throw NoSeaBoundCapitalProvinceException(
-      details:
-          'Old World has ${seaBoundOW.length} sea-bound provinces but ${config.greatPowerCount} Great Powers need one each',
-    );
-  }
-
-  // Province assignment: GPs get OW (one sea-bound each + fair split of rest); minors get remaining OW; tribes get NW.
-  final gpCount = config.greatPowerCount;
-  final minorCount = config.minorNationCount;
-  final tribeCount = config.tribeCount;
-
-  final gpIds = List.generate(gpCount, (i) => 'gp${i + 1}');
-  final minorIds = List.generate(minorCount, (i) => 'minor${i + 1}');
-  final tribeIds = List.generate(tribeCount, (i) => 'tribe${i + 1}');
-
-  // Province assignment per SPEC/program/game-setup-pipeline.md:
-  // - Great Powers: each GP locked to one P–P landmass (connected component); multiple
-  //   GPs may share a landmass when gpCount exceeds landmass count. Sea-bound seeds per landmass.
-  // - Minor Nations: contiguous clusters on remaining OW provinces.
-  // - GP land connectivity repair + reassignment on same map: gp_land_connectivity_repair.dart
-  // - Tribes: contiguous clusters on NW provinces.
-  final owNeighbours = _provinceNeighboursFromTopology(topologyOldWorld);
-  final owLandmassIds = _landmassIdsFromNeighbours(owNeighbours);
-  final owProvincesSorted = owProvinceIds.toList()..sort();
-  final seaBoundOwSet = seaBoundOW.toSet();
   final perturbBase = assignmentPerturbationBase ?? namingSeed ?? config.seed;
-
-  Map<String, String> owOwner = {};
-  var owAssignmentOk = false;
-  if (config.enforceFairGpOldWorldAssignment) {
-    for (var attempt = 0; attempt < kMaxOldWorldAssignmentAttempts; attempt++) {
-      final assignmentRandom = attempt == 0
-          ? null
-          : Random(Object.hash(0x47504f77, perturbBase, attempt));
-      try {
-        owOwner = _assignOldWorldOwnershipContiguous(
-          neighbours: owNeighbours,
-          provinceIds: owProvinceIds,
-          seaBoundProvinceIds: seaBoundOW,
-          gpIds: gpIds,
-          minorIds: minorIds,
-          minProvincesPerMinor: config.minProvincesPerMinor,
-          assignmentRandom: assignmentRandom,
-        );
-      } on StateError catch (e, st) {
-        _log.w('OW assignment attempt $attempt failed: $e');
-        _log.d('stack $st');
-        continue;
-      }
-      final ownersRepair = Map<String, String>.from(owOwner);
-      final repaired = repairGpLandOwnershipMutating(
-        owners: ownersRepair,
-        gpIdsSorted: gpIds,
-        neighbours: owNeighbours,
-        landmassIds: owLandmassIds,
-        seaBoundLocalIds: seaBoundOwSet,
-        allProvinceIdsSorted: owProvincesSorted,
-      );
-      if (repaired) {
-        owOwner = ownersRepair;
-        owAssignmentOk = true;
-        break;
-      }
-    }
-    if (!owAssignmentOk) {
-      throw GameSetupConnectivityFailure(
-        'Old World GP land connectivity could not be satisfied after '
-        '$kMaxOldWorldAssignmentAttempts assignment attempt(s) and up to '
-        '$kGpLandConnectivityRepairRounds repair round(s) each.',
-      );
-    }
-  } else {
-    _log.i('OW assignment fast path (no GP land connectivity repair)');
-    owOwner = _assignOldWorldOwnershipContiguous(
-      neighbours: owNeighbours,
-      provinceIds: owProvinceIds,
-      seaBoundProvinceIds: seaBoundOW,
-      gpIds: gpIds,
-      minorIds: minorIds,
-      minProvincesPerMinor: config.minProvincesPerMinor,
-      assignmentRandom: null,
-    );
-  }
-
-  final nwOwner = _assignNewWorldOwnershipContiguous(
+  final initialMapZoomMultiplier = _resolveInitialMapZoomMultiplier(config);
+  final ownership = _assignInitialOwnership(
+    config: config,
+    topologyOldWorld: topologyOldWorld,
     topologyNewWorld: topologyNewWorld,
-    provinceIds: nwProvinceIds,
+  );
+  final oldWorldProvinces = ownership.oldWorldProvinces;
+  final newWorldProvinces = ownership.newWorldProvinces;
+  final gpIds = ownership.gpIds;
+  final minorIds = ownership.minorIds;
+  final tribeIds = ownership.tribeIds;
+  var game = _buildInitialGame(
+    config: config,
+    gameId: gameId,
+    oldWorldProvinces: oldWorldProvinces,
+    newWorldProvinces: newWorldProvinces,
+    gpIds: gpIds,
+    minorIds: minorIds,
     tribeIds: tribeIds,
+    initialMapZoomMultiplier: initialMapZoomMultiplier,
   );
 
-  final oldWorldProvinces = owOwner.entries
-      .map(
-        (e) => Province(
-          id: ProvinceId.full(kRegionOldWorld, e.key),
-          regionId: kRegionOldWorld,
-          ownerId: e.value,
-        ),
-      )
-      .toList();
-  final newWorldProvinces = nwOwner.entries
-      .map(
-        (e) => Province(
-          id: ProvinceId.full(kRegionNewWorld, e.key),
-          regionId: kRegionNewWorld,
-          ownerId: e.value,
-        ),
-      )
-      .toList();
-
-  final worldState = WorldState(
-    turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
-    oldWorld: RegionData(provinces: oldWorldProvinces),
-    newWorld: RegionData(provinces: newWorldProvinces),
-  );
-
-  final startingResources = config.startingResources;
-  final initialGrainQuantity =
-      startingResources.initialPeasants * startingResources.initialGrainTurns;
-
-  // Base starting stockpile for each Great Power: grain for workers plus
-  // enough lumber and castIron to build a small number of level-1 improvements,
-  // plus starting wool and paper from config (ruleset-config / StartingResourcesConfig).
-  final baseStockpileQuantities = <CommodityId, int>{};
-  if (initialGrainQuantity > 0) {
-    baseStockpileQuantities[CommodityCatalog.grain.id] = initialGrainQuantity;
-  }
-  if (startingResources.initialImprovementSlots > 0) {
-    final slots = startingResources.initialImprovementSlots;
-    baseStockpileQuantities[CommodityCatalog.lumber.id] =
-        (baseStockpileQuantities[CommodityCatalog.lumber.id] ?? 0) + slots;
-    baseStockpileQuantities[CommodityCatalog.castIron.id] =
-        (baseStockpileQuantities[CommodityCatalog.castIron.id] ?? 0) + slots;
-  }
-  if (startingResources.initialWool > 0) {
-    baseStockpileQuantities[CommodityCatalog.wool.id] =
-        (baseStockpileQuantities[CommodityCatalog.wool.id] ?? 0) +
-        startingResources.initialWool;
-  }
-  if (startingResources.initialPaper > 0) {
-    baseStockpileQuantities[CommodityCatalog.paper.id] =
-        (baseStockpileQuantities[CommodityCatalog.paper.id] ?? 0) +
-        startingResources.initialPaper;
-  }
-
-  var players = <Player>[
-    for (var i = 0; i < gpCount; i++)
-      Player(
-        id: gpIds[i],
-        displayName: 'Power ${i + 1}',
-        isHuman: i == 0,
-        stockpile: Stockpile(
-          quantities: baseStockpileQuantities.isEmpty
-              ? const {}
-              : Map<CommodityId, int>.from(baseStockpileQuantities),
-        ),
-        workerPool: WorkerPool(peasants: startingResources.initialPeasants),
-        treasury: startingResources.initialTreasury,
-        techUnlocked: const {}, // Stub until Phase 5
-      ),
-  ];
-  var minorNations = <MinorNation>[
-    for (var i = 0; i < minorCount; i++)
-      MinorNation(id: minorIds[i], displayName: 'Minor ${i + 1}'),
-  ];
-  var tribes = <Tribe>[
-    for (var i = 0; i < tribeCount; i++)
-      Tribe(id: tribeIds[i], displayName: 'Tribe ${i + 1}'),
-  ];
-
-  // Initial diplomatic relations per SPEC/game/diplomacy.md:
-  // - All factions start at peace with neutral relations within the SAME region
-  // - Cross-region relations (Old World vs New World) are undiscovered at game start
-  // - This means: GP↔GP, GP↔Minor, Minor↔Minor (Old World); Tribe↔Tribe (New World)
-  final allOldWorldIds = [...gpIds, ...minorIds];
-  final allNewWorldIds = [...tribeIds];
-
-  final diplomacyRelations = <DiplomacyRelation>[
-    // Old World: GP ↔ GP, GP ↔ Minor, Minor ↔ Minor
-    for (var i = 0; i < allOldWorldIds.length; i++)
-      for (var j = i + 1; j < allOldWorldIds.length; j++)
-        DiplomacyRelation(
-          factionId1: allOldWorldIds[i],
-          factionId2: allOldWorldIds[j],
-          score: relationScoreNeutral,
-          level: RelationLevel.neutral,
-          state: RelationState.atPeace,
-          sinceTurn: 0,
-          lastInteractionTurn: 0,
-        ),
-    // New World: Tribe ↔ Tribe only
-    for (var i = 0; i < allNewWorldIds.length; i++)
-      for (var j = i + 1; j < allNewWorldIds.length; j++)
-        DiplomacyRelation(
-          factionId1: allNewWorldIds[i],
-          factionId2: allNewWorldIds[j],
-          score: relationScoreNeutral,
-          level: RelationLevel.neutral,
-          state: RelationState.atPeace,
-          sinceTurn: 0,
-          lastInteractionTurn: 0,
-        ),
-  ];
-
-  /// Explicit designation of which Great Power is human-controlled (respects game setup: slot 0 = human).
-  /// Used by human-facing clients for visibility and input; AI uses true, human uses false.
-  final aiControlByGpId = {for (final p in players) p.id: !p.isHuman};
-
-  var game = Game(
-    id: gameId,
-    worldState: worldState,
-    players: players,
-    minorNations: minorNations,
-    tribes: tribes,
-    turnTimeMapping: TurnTimeMapping.gdd01,
-    diplomacyRelations: diplomacyRelations,
-    aiControlByGpId: aiControlByGpId,
-    capitalTileGrainBonusPerTurn:
-        config.startingResources.capitalTileGrainBonusPerTurn,
-    mapViewState: MapViewState.defaults.copyWith(
-      zoomMultiplier: initialMapZoomMultiplier,
-    ),
-  );
-
-  // Capital auto-choice: GPs (OW), then minors (OW), then tribes (NW). Must run before naming.
-  game = _assignCapitalsForFactions(
+  game = _assignAllCapitals(
     game: game,
-    factionIds: gpIds,
-    provinces: oldWorldProvinces,
-    regionId: kRegionOldWorld,
-    topology: topologyOldWorld,
-    tileMap: tileMapOldWorld,
+    gpIds: gpIds,
+    minorIds: minorIds,
+    tribeIds: tribeIds,
+    oldWorldProvinces: oldWorldProvinces,
+    newWorldProvinces: newWorldProvinces,
+    topologyOldWorld: topologyOldWorld,
+    topologyNewWorld: topologyNewWorld,
+    tileMapOldWorld: tileMapOldWorld,
+    tileMapNewWorld: tileMapNewWorld,
     tileMapByRegion: tileMapByRegion,
-    requireSeaBound: true,
-    setCapitalFn: (g, factionId, provinceId, tile, topo, tmByRegion) =>
-        setCapital(
-          game: g,
-          playerId: factionId,
-          provinceId: provinceId,
-          tile: tile,
-          topology: topo,
-          tileMapByRegion: tmByRegion,
-        ),
-  );
-  game = _assignCapitalsForFactions(
-    game: game,
-    factionIds: minorIds,
-    provinces: oldWorldProvinces,
-    regionId: kRegionOldWorld,
-    topology: topologyOldWorld,
-    tileMap: tileMapOldWorld,
-    tileMapByRegion: tileMapByRegion,
-    requireSeaBound: false,
-    setCapitalFn: (g, factionId, provinceId, tile, topo, tmByRegion) =>
-        setCapitalForMinorNation(
-          game: g,
-          minorId: factionId,
-          provinceId: provinceId,
-          tile: tile,
-          topology: topo,
-          tileMapByRegion: tmByRegion,
-        ),
-  );
-  game = _assignCapitalsForFactions(
-    game: game,
-    factionIds: tribeIds,
-    provinces: newWorldProvinces,
-    regionId: kRegionNewWorld,
-    topology: topologyNewWorld,
-    tileMap: tileMapNewWorld,
-    tileMapByRegion: tileMapByRegion,
-    requireSeaBound: false,
-    setCapitalFn: (g, factionId, provinceId, tile, topo, tmByRegion) =>
-        setCapitalForTribe(
-          game: g,
-          tribeId: factionId,
-          provinceId: provinceId,
-          tile: tile,
-          topology: topo,
-          tileMapByRegion: tmByRegion,
-        ),
   );
 
   // Apply initial per-player visibility/prospection (knowledge state) after
@@ -362,7 +117,7 @@ GameSetupResult createGameFromGeneratedMaps({
   );
 
   // 7d. Province town assignment. SPEC/program/game-setup-pipeline.md, capital-and-connectivity.md.
-  game = _assignProvinceTowns(
+  game = assignProvinceTowns(
     game: game,
     topologyByRegion: topologyByRegion,
     tileMapByRegion: tileMapByRegion,
@@ -383,6 +138,27 @@ GameSetupResult createGameFromGeneratedMaps({
     }
   }
 
+  // §7d.terrain GP Old World terrain redistribution (always-on when OW grids exist), then §7d.redist resources.
+  // SPEC/program/game-setup-pipeline.md; SPEC/game/tile-map-and-generation.md.
+  final gpTerrainRedist = applyGreatPowerOldWorldTerrainRedistribution(
+    game: game,
+    tileMapOldWorld: tileMapByRegion[kRegionOldWorld]!,
+    setupSeedBase: perturbBase,
+  );
+  game = gpTerrainRedist.game;
+  tileMapByRegion[kRegionOldWorld] = gpTerrainRedist.tileMap;
+
+  // §7d.redist GP Old World terrain resource redistribution (always-on when OW grids exist).
+  // SPEC/program/game-setup-pipeline.md; SPEC/game/tile-map-and-generation.md.
+  final gpRedist = applyGreatPowerOldWorldResourceRedistribution(
+    game: game,
+    tileMapOldWorld: tileMapByRegion[kRegionOldWorld]!,
+    resourceRules: ResourceRules.defaultRules,
+    setupSeedBase: perturbBase,
+  );
+  game = gpRedist.game;
+  tileMapByRegion[kRegionOldWorld] = gpRedist.tileMap;
+
   // Great Power starting grain (bootstrap). SPEC/game/tile-map-and-generation.md.
   final gpGrain = applyGreatPowerStartingGrainBootstrap(
     game: game,
@@ -401,7 +177,7 @@ GameSetupResult createGameFromGeneratedMaps({
   );
 
   // Apply historically inspired naming from default ruleset (after capitals are set).
-  game = _applyNaming(
+  game = applyNaming(
     game: game,
     selectedGreatPowerIds: config.selectedGreatPowerIds,
     leaderVariantByGpId: config.leaderVariantByGpId,
@@ -410,7 +186,7 @@ GameSetupResult createGameFromGeneratedMaps({
   );
 
   // Compute 1-character political glyphs per faction for political map layer.
-  final politicalGlyphByPlayerId = _buildPoliticalGlyphByPlayerId(
+  final politicalGlyphByPlayerId = buildPoliticalGlyphByPlayerId(
     game: game,
     greatPowerIds: gpIds,
     minorNationIds: minorIds,
@@ -419,10 +195,10 @@ GameSetupResult createGameFromGeneratedMaps({
   game = game.copyWith(politicalGlyphByPlayerId: politicalGlyphByPlayerId);
 
   // Spawn starting units for each Great Power in their capital provinces.
-  game = _addStartingUnits(game: game, config: config);
+  game = addStartingUnits(game: game, config: config);
 
   // Spawn starting land regiments and home fleets for each Great Power.
-  game = _addStartingMilitaryAndNaval(
+  game = addStartingMilitaryAndNaval(
     game: game,
     config: config,
     topologyOldWorld: topologyOldWorld,
@@ -453,13 +229,356 @@ GameSetupResult createGameFromGeneratedMaps({
     warpLinks: links,
   );
 
-  _log.i('game setup end gameId=${game.id}');
+  gameSetupLog.i('game setup end gameId=${game.id}');
   return GameSetupResult(
     game: game,
     tileMapByRegion: tileMapByRegion,
     topologyByRegion: topologyByRegion,
     combinedTopology: combinedTopology,
     warpLinks: links,
+  );
+}
+
+({
+  List<String> gpIds,
+  List<String> minorIds,
+  List<String> tribeIds,
+  List<Province> oldWorldProvinces,
+  List<Province> newWorldProvinces,
+}) _assignInitialOwnership({
+  required GameSetupConfig config,
+  required MapTopology topologyOldWorld,
+  required MapTopology topologyNewWorld,
+}) {
+  final owProvinceIds = provinceIdsFromTopology(topologyOldWorld);
+  final nwProvinceIds = provinceIdsFromTopology(topologyNewWorld);
+  if (owProvinceIds.length < config.greatPowerCount) {
+    throw SetupConfigConstraintException(
+      code: 'insufficient_old_world_provinces_for_great_powers',
+      details:
+          'Old World has ${owProvinceIds.length} provinces but ${config.greatPowerCount} Great Powers need at least one each',
+    );
+  }
+  final seaBoundOW =
+      owProvinceIds.where((id) => isProvinceSeaBound(topologyOldWorld, id)).toList()
+        ..sort();
+  if (seaBoundOW.length < config.greatPowerCount) {
+    throw NoSeaBoundCapitalProvinceException(
+      details:
+          'Old World has ${seaBoundOW.length} sea-bound provinces but ${config.greatPowerCount} Great Powers need one each',
+    );
+  }
+  final gpIds = List.generate(config.greatPowerCount, (i) => 'gp${i + 1}');
+  final minorIds = List.generate(config.minorNationCount, (i) => 'minor${i + 1}');
+  final tribeIds = List.generate(config.tribeCount, (i) => 'tribe${i + 1}');
+  final owOwner = _assignOldWorldOwners(
+    config: config,
+    topologyOldWorld: topologyOldWorld,
+    provinceIds: owProvinceIds,
+    seaBoundOW: seaBoundOW,
+    gpIds: gpIds,
+    minorIds: minorIds,
+  );
+  final nwOwner = _assignNewWorldOwners(
+    config: config,
+    topologyNewWorld: topologyNewWorld,
+    provinceIds: nwProvinceIds,
+    tribeIds: tribeIds,
+  );
+  return (
+    gpIds: gpIds,
+    minorIds: minorIds,
+    tribeIds: tribeIds,
+    oldWorldProvinces: owOwner.entries
+        .map(
+          (e) => Province(
+            id: ProvinceId.full(kRegionOldWorld, e.key),
+            regionId: kRegionOldWorld,
+            ownerId: e.value,
+          ),
+        )
+        .toList(),
+    newWorldProvinces: nwOwner.entries
+        .map(
+          (e) => Province(
+            id: ProvinceId.full(kRegionNewWorld, e.key),
+            regionId: kRegionNewWorld,
+            ownerId: e.value,
+          ),
+        )
+        .toList(),
+  );
+}
+
+Map<String, String> _assignOldWorldOwners({
+  required GameSetupConfig config,
+  required MapTopology topologyOldWorld,
+  required List<String> provinceIds,
+  required List<String> seaBoundOW,
+  required List<String> gpIds,
+  required List<String> minorIds,
+}) {
+  final owNeighbours = provinceNeighboursFromTopology(topologyOldWorld);
+  final useLockedSixMinorContinentPainting = config.isLockedFullInitProfile &&
+      oldWorldPartitionMatchesLockedProfile(topologyOldWorld) &&
+      lockedOldWorldRoleFeasibilityHolds(
+        topology: topologyOldWorld,
+        neighbours: owNeighbours,
+      );
+  final owAssignmentRandom = useLockedSixMinorContinentPainting
+      ? Random(config.seed)
+      : null;
+  try {
+    return assignOldWorldOwnershipContiguous(
+      neighbours: owNeighbours,
+      provinceIds: provinceIds,
+      seaBoundProvinceIds: seaBoundOW,
+      gpIds: gpIds,
+      minorIds: minorIds,
+      minProvincesPerMinor: config.minProvincesPerMinor,
+      assignmentRandom: owAssignmentRandom,
+      useLockedSixMinorContinentPainting: useLockedSixMinorContinentPainting,
+    );
+  } on StateError catch (e, st) {
+    if (useLockedSixMinorContinentPainting) {
+      gameSetupLog.e(
+        'logic: OW locked assignment failed. '
+        '${lockedOwAssignFailureDiagnostics(config: config, topology: topologyOldWorld, seaBoundIds: seaBoundOW)} '
+        'raw=$e',
+        error: e,
+        stackTrace: st,
+      );
+    } else {
+      gameSetupLog.e('logic: OW assignment failed: $e', error: e, stackTrace: st);
+    }
+    throw SetupTopologyDataException(
+      code: 'assigner_exhausted',
+      details: 'Old World locked assigner exhausted: $e',
+    );
+  }
+}
+
+Map<String, String> _assignNewWorldOwners({
+  required GameSetupConfig config,
+  required MapTopology topologyNewWorld,
+  required List<String> provinceIds,
+  required List<String> tribeIds,
+}) {
+  try {
+    return assignNewWorldOwnershipContiguous(
+      topologyNewWorld: topologyNewWorld,
+      provinceIds: provinceIds,
+      tribeIds: tribeIds,
+    );
+  } on StateError catch (e, st) {
+    if (config.isLockedFullInitProfile) {
+      gameSetupLog.e(
+        'logic: NW locked assignment failed. '
+        '${lockedNwAssignFailureDiagnostics(config: config, topology: topologyNewWorld)} '
+        'raw=$e',
+        error: e,
+        stackTrace: st,
+      );
+    } else {
+      gameSetupLog.e('logic: NW assignment failed: $e', error: e, stackTrace: st);
+    }
+    throw SetupTopologyDataException(
+      code: 'assigner_exhausted',
+      details: 'New World locked assigner exhausted: $e',
+    );
+  }
+}
+
+Game _buildInitialGame({
+  required GameSetupConfig config,
+  required String gameId,
+  required List<Province> oldWorldProvinces,
+  required List<Province> newWorldProvinces,
+  required List<String> gpIds,
+  required List<String> minorIds,
+  required List<String> tribeIds,
+  required double initialMapZoomMultiplier,
+}) {
+  final worldState = WorldState(
+    turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
+    oldWorld: RegionData(provinces: oldWorldProvinces),
+    newWorld: RegionData(provinces: newWorldProvinces),
+  );
+  final baseStockpileQuantities = _buildInitialStockpileQuantities(config);
+  final players = <Player>[
+    for (var i = 0; i < gpIds.length; i++)
+      Player(
+        id: gpIds[i],
+        displayName: 'Power ${i + 1}',
+        isHuman: i == 0,
+        stockpile: Stockpile(
+          quantities: baseStockpileQuantities.isEmpty
+              ? const {}
+              : Map<CommodityId, int>.from(baseStockpileQuantities),
+        ),
+        workerPool: WorkerPool(
+          peasants: config.startingResources.initialPeasants,
+        ),
+        treasury: config.startingResources.initialTreasury,
+        techUnlocked: const {},
+      ),
+  ];
+  final minorNations = <MinorNation>[
+    for (var i = 0; i < minorIds.length; i++)
+      MinorNation(id: minorIds[i], displayName: 'Minor ${i + 1}'),
+  ];
+  final tribes = <Tribe>[
+    for (var i = 0; i < tribeIds.length; i++)
+      Tribe(id: tribeIds[i], displayName: 'Tribe ${i + 1}'),
+  ];
+  final diplomacyRelations = _buildInitialDiplomacyRelations(
+    gpIds: gpIds,
+    minorIds: minorIds,
+    tribeIds: tribeIds,
+  );
+  final aiControlByGpId = {for (final p in players) p.id: !p.isHuman};
+  return Game(
+    id: gameId,
+    worldState: worldState,
+    players: players,
+    minorNations: minorNations,
+    tribes: tribes,
+    turnTimeMapping: TurnTimeMapping.gdd01,
+    diplomacyRelations: diplomacyRelations,
+    aiControlByGpId: aiControlByGpId,
+    capitalTileGrainBonusPerTurn:
+        config.startingResources.capitalTileGrainBonusPerTurn,
+    mapViewState: MapViewState.defaults.copyWith(
+      zoomMultiplier: initialMapZoomMultiplier,
+    ),
+  );
+}
+
+Map<CommodityId, int> _buildInitialStockpileQuantities(GameSetupConfig config) {
+  final startingResources = config.startingResources;
+  final initialGrainQuantity =
+      startingResources.initialPeasants * startingResources.initialGrainTurns;
+  final out = <CommodityId, int>{};
+  if (initialGrainQuantity > 0) {
+    out[CommodityCatalog.grain.id] = initialGrainQuantity;
+  }
+  if (startingResources.initialImprovementSlots > 0) {
+    final slots = startingResources.initialImprovementSlots;
+    out[CommodityCatalog.lumber.id] = (out[CommodityCatalog.lumber.id] ?? 0) + slots;
+    out[CommodityCatalog.castIron.id] =
+        (out[CommodityCatalog.castIron.id] ?? 0) + slots;
+  }
+  if (startingResources.initialWool > 0) {
+    out[CommodityCatalog.wool.id] =
+        (out[CommodityCatalog.wool.id] ?? 0) + startingResources.initialWool;
+  }
+  if (startingResources.initialPaper > 0) {
+    out[CommodityCatalog.paper.id] =
+        (out[CommodityCatalog.paper.id] ?? 0) + startingResources.initialPaper;
+  }
+  return out;
+}
+
+List<DiplomacyRelation> _buildInitialDiplomacyRelations({
+  required List<String> gpIds,
+  required List<String> minorIds,
+  required List<String> tribeIds,
+}) {
+  final allOldWorldIds = [...gpIds, ...minorIds];
+  final allNewWorldIds = [...tribeIds];
+  return <DiplomacyRelation>[
+    for (var i = 0; i < allOldWorldIds.length; i++)
+      for (var j = i + 1; j < allOldWorldIds.length; j++)
+        DiplomacyRelation(
+          factionId1: allOldWorldIds[i],
+          factionId2: allOldWorldIds[j],
+          score: relationScoreNeutral,
+          level: RelationLevel.neutral,
+          state: RelationState.atPeace,
+          sinceTurn: 0,
+          lastInteractionTurn: 0,
+        ),
+    for (var i = 0; i < allNewWorldIds.length; i++)
+      for (var j = i + 1; j < allNewWorldIds.length; j++)
+        DiplomacyRelation(
+          factionId1: allNewWorldIds[i],
+          factionId2: allNewWorldIds[j],
+          score: relationScoreNeutral,
+          level: RelationLevel.neutral,
+          state: RelationState.atPeace,
+          sinceTurn: 0,
+          lastInteractionTurn: 0,
+        ),
+  ];
+}
+
+Game _assignAllCapitals({
+  required Game game,
+  required List<String> gpIds,
+  required List<String> minorIds,
+  required List<String> tribeIds,
+  required List<Province> oldWorldProvinces,
+  required List<Province> newWorldProvinces,
+  required MapTopology topologyOldWorld,
+  required MapTopology topologyNewWorld,
+  required TileMapResult tileMapOldWorld,
+  required TileMapResult tileMapNewWorld,
+  required Map<String, TileMapResult> tileMapByRegion,
+}) {
+  var out = assignCapitalsForFactions(
+    game: game,
+    factionIds: gpIds,
+    provinces: oldWorldProvinces,
+    regionId: kRegionOldWorld,
+    topology: topologyOldWorld,
+    tileMap: tileMapOldWorld,
+    tileMapByRegion: tileMapByRegion,
+    requireSeaBound: true,
+    setCapitalFn: (g, factionId, provinceId, tile, topo, tmByRegion) => setCapital(
+      game: g,
+      playerId: factionId,
+      provinceId: provinceId,
+      tile: tile,
+      topology: topo,
+      tileMapByRegion: tmByRegion,
+    ),
+  );
+  out = assignCapitalsForFactions(
+    game: out,
+    factionIds: minorIds,
+    provinces: oldWorldProvinces,
+    regionId: kRegionOldWorld,
+    topology: topologyOldWorld,
+    tileMap: tileMapOldWorld,
+    tileMapByRegion: tileMapByRegion,
+    requireSeaBound: false,
+    setCapitalFn: (g, factionId, provinceId, tile, topo, tmByRegion) =>
+        setCapitalForMinorNation(
+          game: g,
+          minorId: factionId,
+          provinceId: provinceId,
+          tile: tile,
+          topology: topo,
+          tileMapByRegion: tmByRegion,
+        ),
+  );
+  return assignCapitalsForFactions(
+    game: out,
+    factionIds: tribeIds,
+    provinces: newWorldProvinces,
+    regionId: kRegionNewWorld,
+    topology: topologyNewWorld,
+    tileMap: tileMapNewWorld,
+    tileMapByRegion: tileMapByRegion,
+    requireSeaBound: false,
+    setCapitalFn: (g, factionId, provinceId, tile, topo, tmByRegion) => setCapitalForTribe(
+      game: g,
+      tribeId: factionId,
+      provinceId: provinceId,
+      tile: tile,
+      topology: topo,
+      tileMapByRegion: tmByRegion,
+    ),
   );
 }
 

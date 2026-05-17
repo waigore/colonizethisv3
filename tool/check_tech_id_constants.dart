@@ -7,16 +7,7 @@ import 'package:path/path.dart' as p;
 
 import 'ct_repo_lint_scan_contract.dart';
 
-const _argFiles = '--files';
-
-const _excludedPaths = <String>{
-  'packages/colonizethis_data/lib/src/tech_catalog.dart',
-  'packages/colonizethis_data/lib/src/tech_extraction.dart',
-  'packages/colonizethis_data/lib/src/combat_config.dart',
-  'app/lib/features/game/widgets/tech_tree_widget.dart',
-  'app/lib/features/game/widgets/province_panel_labels.dart',
-  'tool/sim_scenarios/lib/scenario_runner.dart',
-};
+const _excludedPaths = <String>{};
 
 /// [incrementalRelativeDartPaths]: when non-null and non-empty, only those
 /// paths (repo-relative) are scanned; otherwise full scan.
@@ -32,15 +23,15 @@ int runCheckTechIdConstants(
   final logI = info ?? stdout.writeln;
   final logE = err ?? stderr.writeln;
   final root = p.normalize(repoRoot);
-  final techIds = _loadCanonicalTechIds(root);
+  final constantNameByTechId = _loadTechIdConstantNames(root);
+  final techIds = constantNameByTechId.keys.toSet();
   if (techIds.isEmpty) {
     logE(
-      'ERROR: Could not derive canonical tech IDs from '
-      'packages/colonizethis_data/lib/src/tech_catalog.dart.',
+      'ERROR: Could not load canonical tech ID strings from '
+      'packages/colonizethis_data/lib/src/tech_ids.dart.',
     );
     return 1;
   }
-  final constantNameByTechId = _loadTechIdConstantNames(root);
   final requested = incrementalRelativeDartPaths ?? const <String>[];
   final candidateFiles = _collectCandidateFiles(root, requested);
 
@@ -97,33 +88,7 @@ void main(List<String> args) {
 }
 
 _ParsedArgs _parseArgs(List<String> args) {
-  String? filesArgValue;
-  for (var i = 0; i < args.length; i++) {
-    final arg = args[i];
-    if (arg == _argFiles) {
-      if (i + 1 >= args.length) {
-        stderr.writeln('ERROR: Missing value for $_argFiles.');
-        exit(2);
-      }
-      filesArgValue = args[i + 1];
-      i++;
-      continue;
-    }
-    if (arg.startsWith('$_argFiles=')) {
-      filesArgValue = arg.substring('$_argFiles='.length);
-      continue;
-    }
-    stderr.writeln(
-      'ERROR: Unsupported argument "$arg". Supported: $_argFiles '
-      '(comma-separated or newline-separated relative paths).',
-    );
-    exit(2);
-  }
-  return _ParsedArgs(
-    files: filesArgValue == null
-        ? const []
-        : repoLintSplitRelativeDartPathsArg(filesArgValue),
-  );
+  return _ParsedArgs(files: repoLintStrictIncrementalFilesArgListOrExit(args));
 }
 
 List<File> _collectCandidateFiles(String root, List<String> requestedPaths) {
@@ -154,24 +119,6 @@ List<File> _collectCandidateFiles(String root, List<String> requestedPaths) {
   return files;
 }
 
-Set<String> _loadCanonicalTechIds(String root) {
-  final catalogRelPath = 'packages/colonizethis_data/lib/src/tech_catalog.dart';
-  final catalogAbsPath = p.join(root, catalogRelPath);
-  final file = File(catalogAbsPath);
-  if (!file.existsSync()) {
-    return const {};
-  }
-  final source = file.readAsStringSync();
-  final parsed = parseString(
-    content: source,
-    path: catalogAbsPath,
-    throwIfDiagnostics: false,
-  );
-  final collector = _TechCatalogIdCollector();
-  parsed.unit.visitChildren(collector);
-  return collector.ids;
-}
-
 Map<String, String> _loadTechIdConstantNames(String root) {
   final constantsRelPath = 'packages/colonizethis_data/lib/src/tech_ids.dart';
   final constantsAbsPath = p.join(root, constantsRelPath);
@@ -188,28 +135,6 @@ Map<String, String> _loadTechIdConstantNames(String root) {
   final collector = _TechIdConstantCollector();
   parsed.unit.visitChildren(collector);
   return collector.constantNameByTechId;
-}
-
-class _TechCatalogIdCollector extends RecursiveAstVisitor<void> {
-  final Set<String> ids = <String>{};
-
-  @override
-  void visitAssignmentExpression(AssignmentExpression node) {
-    final left = node.leftHandSide;
-    if (left is IndexExpression &&
-        _isIdentifierNamed(left.target, 'm') &&
-        left.index is SimpleStringLiteral) {
-      final index = left.index as SimpleStringLiteral;
-      if (index.value.isNotEmpty) {
-        ids.add(index.value);
-      }
-    }
-    super.visitAssignmentExpression(node);
-  }
-
-  bool _isIdentifierNamed(Expression? expression, String name) {
-    return expression is SimpleIdentifier && expression.name == name;
-  }
 }
 
 class _TechIdConstantCollector extends RecursiveAstVisitor<void> {

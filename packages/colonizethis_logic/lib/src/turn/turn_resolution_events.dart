@@ -1,12 +1,59 @@
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../constants.dart';
+import '../world/province_visibility_index.dart';
+import '../world/unit_lookup.dart';
 import '../dossier/event_dialogue.dart';
 import '../event_bus/game_event_bus.dart';
 import '../game_events.dart';
 
 /// Emits game events after turn resolution phases. SPEC/program/game-events.md.
 /// Keeps turn_resolver switch thin by moving event emission here.
+
+Set<String> _techKeysUnlockedBefore(Game stateBefore) {
+  final hadTechBefore = <String>{};
+  for (final p in stateBefore.players) {
+    final unlocked = p.techUnlocked ?? const <String, bool>{};
+    for (final e in unlocked.entries) {
+      if (e.value) hadTechBefore.add(e.key);
+    }
+  }
+  return hadTechBefore;
+}
+
+void _emitResearchDialogueForNewlyUnlockedTech({
+  required Game stateAfter,
+  required Player player,
+  required String tech,
+  required int turn,
+  required Set<String> hadTechBefore,
+  required Set<String> firstDiscoveriesThisTurn,
+  required void Function(DialogueEvent) onDialogue,
+}) {
+  final eventDialogue = dialogueEventsForTechDiscovered(
+    stateAfter,
+    discovererId: player.id,
+    techId: tech,
+    turnNumber: turn,
+    seed: turn,
+  );
+  for (final e in eventDialogue) {
+    onDialogue(e);
+  }
+  final isFirst =
+      !hadTechBefore.contains(tech) && firstDiscoveriesThisTurn.add(tech);
+  if (!isFirst) return;
+  final reactive = dialogueEventsForReactiveTechFirst(
+    stateAfter,
+    discovererId: player.id,
+    techId: tech,
+    turnNumber: turn,
+    seed: turn,
+  );
+  for (final e in reactive) {
+    onDialogue(e);
+  }
+}
 
 /// Emit research_complete for each tech newly unlocked in [stateAfter] vs [stateBefore].
 void emitResearchCompleteEvents(
@@ -17,13 +64,7 @@ void emitResearchCompleteEvents(
   void Function(GameEvent)? onGameEvent,
   void Function(DialogueEvent)? onDialogue,
 ) {
-  final hadTechBefore = <String>{};
-  for (final p in stateBefore.players) {
-    final unlocked = p.techUnlocked ?? const <String, bool>{};
-    for (final e in unlocked.entries) {
-      if (e.value) hadTechBefore.add(e.key);
-    }
-  }
+  final hadTechBefore = _techKeysUnlockedBefore(stateBefore);
   final firstDiscoveriesThisTurn = <String>{};
   final sortedPlayers = List<Player>.from(stateAfter.players)
     ..sort((a, b) => a.id.compareTo(b.id));
@@ -39,41 +80,23 @@ void emitResearchCompleteEvents(
         .map((e) => e.key)
         .toSet();
     for (final tech in current) {
-      if (!previousSet.contains(tech)) {
-        final event = ResearchCompleteEvent(
-          playerId: player.id,
-          techId: tech,
-          turnNumber: turn,
-        );
-        deliverGameEvent(event, eventBus: eventBus, onGameEvent: onGameEvent);
-        if (onDialogue != null) {
-          final eventDialogue = dialogueEventsForTechDiscovered(
-            stateAfter,
-            discovererId: player.id,
-            techId: tech,
-            turnNumber: turn,
-            seed: turn,
-          );
-          for (final e in eventDialogue) {
-            onDialogue(e);
-          }
-          final isFirst =
-              !hadTechBefore.contains(tech) &&
-              firstDiscoveriesThisTurn.add(tech);
-          if (isFirst) {
-            final reactive = dialogueEventsForReactiveTechFirst(
-              stateAfter,
-              discovererId: player.id,
-              techId: tech,
-              turnNumber: turn,
-              seed: turn,
-            );
-            for (final e in reactive) {
-              onDialogue(e);
-            }
-          }
-        }
-      }
+      if (previousSet.contains(tech)) continue;
+      final event = ResearchCompleteEvent(
+        playerId: player.id,
+        techId: tech,
+        turnNumber: turn,
+      );
+      deliverGameEvent(event, eventBus: eventBus, onGameEvent: onGameEvent);
+      if (onDialogue == null) continue;
+      _emitResearchDialogueForNewlyUnlockedTech(
+        stateAfter: stateAfter,
+        player: player,
+        tech: tech,
+        turn: turn,
+        hadTechBefore: hadTechBefore,
+        firstDiscoveriesThisTurn: firstDiscoveriesThisTurn,
+        onDialogue: onDialogue,
+      );
     }
   }
 }
@@ -105,6 +128,47 @@ void emitDiplomacyChangeEvents(
 /// Only when **both** previous and new owners are non-empty faction ids (handover to
 /// another faction). Null/empty `ownerId` is uncolonized frontier only, not a capture
 /// outcome. SPEC/game/world-model.md § Invariants.
+void _emitProvinceCapturedEventsForRegion(
+  RegionData region,
+  Map<String, String?> previousOwnership,
+  Game stateAfter,
+  int turn,
+  GameEventBus? eventBus,
+  void Function(GameEvent)? onGameEvent,
+  void Function(DialogueEvent)? onDialogue,
+) {
+  for (final prov in region.provinces) {
+    final previousOwner = previousOwnership[prov.id];
+    final newOwner = prov.ownerId;
+    if (previousOwner != null &&
+        previousOwner.isNotEmpty &&
+        newOwner != null &&
+        newOwner.isNotEmpty &&
+        previousOwner != newOwner) {
+      final event = ProvinceCapturedEvent(
+        provinceId: prov.id,
+        previousOwnerId: previousOwner,
+        newOwnerId: newOwner,
+        turnNumber: turn,
+      );
+      deliverGameEvent(event, eventBus: eventBus, onGameEvent: onGameEvent);
+    }
+    if (onDialogue == null) continue;
+    if (prov.ownerId == null || prov.ownerId!.isEmpty) continue;
+    final colonyDialogue = dialogueEventsForColonyFounded(
+      stateAfter,
+      provinceId: prov.id,
+      previousOwnerId: previousOwner,
+      newOwnerId: prov.ownerId!,
+      turnNumber: turn,
+      seed: turn,
+    );
+    for (final e in colonyDialogue) {
+      onDialogue(e);
+    }
+  }
+}
+
 void emitProvinceCapturedEvents(
   Map<String, String?> previousOwnership,
   Game stateAfter,
@@ -113,43 +177,24 @@ void emitProvinceCapturedEvents(
   void Function(GameEvent)? onGameEvent,
   void Function(DialogueEvent)? onDialogue,
 ) {
-  for (final region in [
+  _emitProvinceCapturedEventsForRegion(
     stateAfter.worldState.oldWorld,
+    previousOwnership,
+    stateAfter,
+    turn,
+    eventBus,
+    onGameEvent,
+    onDialogue,
+  );
+  _emitProvinceCapturedEventsForRegion(
     stateAfter.worldState.newWorld,
-  ]) {
-    for (final prov in region.provinces) {
-      final previousOwner = previousOwnership[prov.id];
-      final newOwner = prov.ownerId;
-      if (previousOwner != null &&
-          previousOwner.isNotEmpty &&
-          newOwner != null &&
-          newOwner.isNotEmpty &&
-          previousOwner != newOwner) {
-        final event = ProvinceCapturedEvent(
-          provinceId: prov.id,
-          previousOwnerId: previousOwner,
-          newOwnerId: newOwner,
-          turnNumber: turn,
-        );
-        deliverGameEvent(event, eventBus: eventBus, onGameEvent: onGameEvent);
-      }
-      if (onDialogue != null &&
-          prov.ownerId != null &&
-          prov.ownerId!.isNotEmpty) {
-        final colonyDialogue = dialogueEventsForColonyFounded(
-          stateAfter,
-          provinceId: prov.id,
-          previousOwnerId: previousOwner,
-          newOwnerId: prov.ownerId!,
-          turnNumber: turn,
-          seed: turn,
-        );
-        for (final e in colonyDialogue) {
-          onDialogue(e);
-        }
-      }
-    }
-  }
+    previousOwnership,
+    stateAfter,
+    turn,
+    eventBus,
+    onGameEvent,
+    onDialogue,
+  );
 }
 
 /// Emit victory_set if [state] has victory set.
@@ -169,34 +214,9 @@ void emitVictorySetEvent(
   }
 }
 
-bool _isKnownVisibility(String? raw) => raw != null && raw != 'unknown';
-
 String _prefixedProvinceId(Province province) => province.id.contains('|')
     ? province.id
     : ProvinceId.full(province.regionId, province.id);
-
-bool _provinceKnownToPlayer(Game game, String playerId, Province province) {
-  final prefixedProvinceId = _prefixedProvinceId(province);
-  final localProvinceId = ProvinceId.localIdFrom(prefixedProvinceId);
-  final tileKeys =
-      game.worldState.tileKeysByRegionAndProvince[province
-          .regionId]?[localProvinceId] ??
-      game.worldState.tileKeysByRegionAndProvince[province
-          .regionId]?[prefixedProvinceId] ??
-      const <String>[];
-  if (tileKeys.isEmpty) {
-    return false;
-  }
-  final visibility =
-      game.worldState.playerVisibilityByTile[playerId] ??
-      const <String, String>{};
-  for (final tileKey in tileKeys) {
-    if (_isKnownVisibility(visibility[tileKey])) {
-      return true;
-    }
-  }
-  return false;
-}
 
 Set<String> _seaZonesAtSeaForPlayer(Game game, String playerId) {
   final zones = <String>{};
@@ -223,14 +243,8 @@ void emitWorkOrderCompletedEvents(
   GameEventBus? eventBus,
   void Function(GameEvent)? onGameEvent,
 ) {
-  final beforeById = <String, Unit>{
-    for (final unit in stateBefore.worldState.oldWorld.units) unit.id: unit,
-    for (final unit in stateBefore.worldState.newWorld.units) unit.id: unit,
-  };
-  final afterById = <String, Unit>{
-    for (final unit in stateAfter.worldState.oldWorld.units) unit.id: unit,
-    for (final unit in stateAfter.worldState.newWorld.units) unit.id: unit,
-  };
+  final beforeById = unitsByIdFromWorld(stateBefore.worldState);
+  final afterById = unitsByIdFromWorld(stateAfter.worldState);
   final supportedTargets = <String>{
     kWorkTargetBuildImprovement,
     kWorkTargetUpgradeTown,
@@ -275,14 +289,17 @@ void emitPlayerDiscoveryEvents(
   GameEventBus? eventBus,
   void Function(GameEvent)? onGameEvent,
 ) {
+  final beforeIndex = buildProvinceVisibilityIndex(stateBefore);
+  final afterIndex = buildProvinceVisibilityIndex(stateAfter);
   final sortedPlayers = List<Player>.from(stateAfter.players)
     ..sort((a, b) => a.id.compareTo(b.id));
   for (final player in sortedPlayers) {
     _emitPlayerProvinceDiscoveryEvents(
-      stateBefore: stateBefore,
       stateAfter: stateAfter,
       playerId: player.id,
       turn: turn,
+      beforeIndex: beforeIndex,
+      afterIndex: afterIndex,
       eventBus: eventBus,
       onGameEvent: onGameEvent,
     );
@@ -301,10 +318,11 @@ void emitPlayerDiscoveryEvents(
 }
 
 void _emitPlayerProvinceDiscoveryEvents({
-  required Game stateBefore,
   required Game stateAfter,
   required String playerId,
   required int turn,
+  required ProvinceVisibilityIndex beforeIndex,
+  required ProvinceVisibilityIndex afterIndex,
   required GameEventBus? eventBus,
   required void Function(GameEvent)? onGameEvent,
 }) {
@@ -313,14 +331,15 @@ void _emitPlayerProvinceDiscoveryEvents({
     stateAfter.worldState.newWorld,
   ]) {
     for (final province in region.provinces) {
-      final wasKnown = _provinceKnownToPlayer(stateBefore, playerId, province);
-      final nowKnown = _provinceKnownToPlayer(stateAfter, playerId, province);
+      final fullProvinceId = _prefixedProvinceId(province);
+      final wasKnown = beforeIndex.isKnownToPlayer(playerId, fullProvinceId);
+      final nowKnown = afterIndex.isKnownToPlayer(playerId, fullProvinceId);
       if (wasKnown || !nowKnown) {
         continue;
       }
       final event = PlayerProvinceDiscoveredEvent(
         playerId: playerId,
-        provinceId: _prefixedProvinceId(province),
+        provinceId: fullProvinceId,
         turnNumber: turn,
       );
       deliverGameEvent(event, eventBus: eventBus, onGameEvent: onGameEvent);

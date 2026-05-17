@@ -1,3 +1,6 @@
+import 'dart:io';
+
+import 'package:path/path.dart' as p;
 import 'package:test/test.dart';
 
 import '../tool/check_repeated_magic_numbers.dart';
@@ -64,5 +67,48 @@ int e() => 12345;
       );
       expect(occ.where((o) => o.value == 12345).length, 5);
     });
+  });
+
+  group('runCheckRepeatedMagicNumbers', () {
+    test(
+      'fails on repeated magic; legacy keyed waiver YAML under tool/ is not read',
+      () {
+        final temp = Directory.systemTemp.createTempSync('magic-legacy-');
+        addTearDown(() => temp.deleteSync(recursive: true));
+
+        final libDir = Directory(p.join(temp.path, 'packages', 'p', 'lib'))
+          ..createSync(recursive: true);
+        File(p.join(libDir.path, 'm.dart')).writeAsStringSync(r'''
+int a() => 0xDECAFBAD;
+int b() => 0xDECAFBAD;
+int c() => 0xDECAFBAD;
+int d() => 0xDECAFBAD;
+int e() => 0xDECAFBAD;
+''');
+
+        final toolDir = Directory(p.join(temp.path, 'tool'))
+          ..createSync(recursive: true);
+        File(
+          p.join(toolDir.path, 'legacy_repeated_magic_waiver_table.yaml'),
+        ).writeAsStringSync('''
+# Decoy: historical repo-lint keyed waiver shape; checker must not load this.
+exempt_files:
+  - packages/p/lib/m.dart
+''');
+
+        final errors = <String>[];
+        final code = runCheckRepeatedMagicNumbers(
+          temp.path,
+          info: (_) {},
+          err: errors.add,
+          warn: (_) {},
+        );
+
+        expect(code, 1);
+        final out = errors.join('\n');
+        expect(out, contains('m.dart'));
+        expect(out, contains('3737844653'));
+      },
+    );
   });
 }

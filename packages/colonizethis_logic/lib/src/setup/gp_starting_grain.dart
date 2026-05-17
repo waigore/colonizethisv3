@@ -1,13 +1,12 @@
 // SPEC/game/tile-map-and-generation.md § Great Power starting grain (bootstrap).
 
 import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:colonizethis_logic/package_logger.dart';
+import 'package:colonizethis_logic/src/logging.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../constants.dart';
+import '../world/tile_key_coordinates.dart';
 import 'town_capital_occupancy.dart';
-
-final _log = packageLogger();
 
 /// Thrown when the capital province cannot host four bootstrap grain farms on land tiles.
 class GreatPowerGrainBootstrapError implements Exception {
@@ -27,7 +26,9 @@ List<String> selectGreatPowerBootstrapGrainTileKeysLandOnly({
   Set<String> forbiddenTileKeys = const {},
 }) {
   final regionId = capital.regionId;
-  final localId = ProvinceId.localIdFrom(capital.provinceId);
+  final localId = ProvinceId.isPrefixed(capital.provinceId)
+      ? ProvinceId.localIdFrom(capital.provinceId)
+      : capital.provinceId;
   final ranked = <(int dist, int y, int x, String key)>[];
   for (var y = 0; y < map.height; y++) {
     for (var x = 0; x < map.width; x++) {
@@ -68,7 +69,7 @@ applyGreatPowerStartingGrainBootstrap({
   final terrain = tileMapOldWorld.terrainGrid;
   final resGrid = tileMapOldWorld.resourceGrid;
   if (terrain == null || resGrid == null) {
-    _log.i(
+    logicLog.i(
       'skip Great Power grain bootstrap (missing terrain or resource grid)',
     );
     return (
@@ -106,11 +107,9 @@ applyGreatPowerStartingGrainBootstrap({
     var tileState = ws.tileState;
     final resMap = Map<String, String>.from(ws.resourceByTileKey);
     for (final key in pickedKeys) {
-      final parts = key.split('|');
-      if (parts.length != 4) continue;
-      final x = int.parse(parts[2]);
-      final y = int.parse(parts[3]);
-      final t = map.terrainAt(x, y);
+      final parsed = parseTileKeyCoordinates(key);
+      if (parsed == null) continue;
+      final t = map.terrainAt(parsed.x, parsed.y);
       final allowedRegion = resourceRules.isAllowedInRegion(
         Resource.grain,
         cap.regionId,
@@ -118,9 +117,9 @@ applyGreatPowerStartingGrainBootstrap({
       final allowedTerrain =
           t != null && resourceRules.isAllowedOnTerrain(Resource.grain, t);
       if (!allowedRegion || !allowedTerrain) {
-        map = map.withTerrainAt(x, y, TerrainType.plains);
+        map = map.withTerrainAt(parsed.x, parsed.y, TerrainType.plains);
       }
-      map = map.withResourceAt(x, y, Resource.grain);
+      map = map.withResourceAt(parsed.x, parsed.y, Resource.grain);
       tileState = tileState.setImprovement(key, 1);
       resMap[key] = Resource.grain.name;
     }

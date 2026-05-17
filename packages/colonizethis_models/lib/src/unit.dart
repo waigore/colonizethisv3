@@ -1,4 +1,5 @@
 import 'current_work.dart';
+import 'province_id.dart';
 
 /// Normalizes persisted province id: tile-derived wins when [tileKey] is set.
 String _storedProvinceIdForTileAndLocation(
@@ -60,14 +61,16 @@ class Unit {
   String? get regionIdFromTile => regionIdFromTileKey(tileKey);
 
   /// Parses province id from a tile key (format regionId|localId|x|y).
-  /// Returns full id (regionId|localId) when key has 4 parts; otherwise local id (parts[1]) for legacy. Null if invalid.
+  /// Returns full id `regionId|localId` only when the key has at least four
+  /// pipe-separated segments. Otherwise returns null (no bare-local fallback).
+  /// SPEC/game/world-model-identity.md.
   static String? provinceIdFromTileKey(String? tileKey) {
     if (tileKey == null || tileKey.isEmpty) return null;
     final parts = tileKey.split('|');
     if (parts.length >= 4) {
       return '${parts[0]}|${parts[1]}';
     }
-    return parts.length >= 2 ? parts[1] : null;
+    return null;
   }
 
   /// Parses region id from a tile key (format regionId|localId|x|y). Returns null if invalid.
@@ -114,7 +117,10 @@ class Unit {
   static Unit fromJson(Map<String, dynamic> json) {
     final cw = json['currentWork'];
     final tileKey = json['tileKey'] as String?;
-    final rawProvince = json['provinceId'] as String;
+    final rawProvince = ProvinceId.requirePrefixed(
+      json['provinceId'] as String,
+      fieldName: 'Unit.provinceId',
+    );
     final normalizedStored = _storedProvinceIdForTileAndLocation(
       tileKey,
       rawProvince,
@@ -131,7 +137,7 @@ class Unit {
       assignedTileKey: json['assignedTileKey'] as String?,
       currentWork: cw is Map<String, dynamic>
           ? CurrentWork.fromJson(cw)
-          : cw is Map
+          : cw is Map<Object?, Object?>
           ? CurrentWork.fromJson(Map<String, dynamic>.from(cw))
           : null,
     );

@@ -1,7 +1,7 @@
-import 'package:colonizethis_logic/package_logger.dart';
+import 'package:colonizethis_logic/src/logging.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
-final _log = packageLogger();
+import '../world/player_state_pipeline.dart';
 
 /// Extraction and auto-transport helpers.
 /// SPEC/game/extraction-and-improvements.md
@@ -27,7 +27,7 @@ void logExtractionAutoTransportLand(
   if (land.isEmpty) return;
   final totalUnits = land.values.fold<int>(0, (a, b) => a + b);
   final detail = land.entries.map((e) => '${e.key}=${e.value}').join(',');
-  _log.d(
+  logicLog.d(
     'extraction auto_transport land playerId=$playerId totalUnits=$totalUnits detail=$detail',
   );
 }
@@ -56,19 +56,15 @@ Game applyExtractionForPlayers(
 ) {
   if (extractedByPlayerId.isEmpty) return game;
 
-  final updatedPlayers = <Player>[];
-  for (final player in game.players) {
+  return game.mapPlayers((player) {
     final extracted = extractedByPlayerId[player.id];
     if (extracted == null || extracted.isEmpty) {
-      updatedPlayers.add(player);
-      continue;
+      return player;
     }
     final updatedStockpile = applyExtractionToStockpile(
       player.stockpile,
       extracted,
     );
-    updatedPlayers.add(player.copyWith(stockpile: updatedStockpile));
-  }
-
-  return game.copyWith(players: updatedPlayers);
+    return player.copyWith(stockpile: updatedStockpile);
+  });
 }

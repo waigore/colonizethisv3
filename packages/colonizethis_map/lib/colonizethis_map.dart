@@ -7,7 +7,11 @@ export 'src/topology_generator.dart';
 export 'src/topology_inference.dart';
 export 'src/tile_map_topology_validation.dart';
 export 'src/tile_map_generator.dart';
+export 'src/tile_map_grid_graph.dart';
+export 'src/tile_map_generator_land_seeds.dart';
 export 'src/tile_map_generation_fn.dart';
+export 'src/map_partition_gates_exhausted.dart';
+export 'src/locked_full_init_tile_map_pair.dart';
 export 'src/tile_map_visualization.dart';
 export 'src/tile_map_visualization_shared.dart'
     show
@@ -15,8 +19,10 @@ export 'src/tile_map_visualization_shared.dart'
         geographicGameWorldLegendResources,
         geographicGameWorldResourceGlyphLetter,
         geographicGameWorldResourceGlyphs,
+        kGameWorldMapOwnershipLegendBlurb,
         landSeedMarkerRgb,
         resourceIdToLegendLetter,
+        seaZoneLocalIdsFromRegionCells,
         tileMapResourceGlyphs;
 export 'src/init_game_map_view_data.dart';
 export 'src/sea_zone_centroid_tile.dart';

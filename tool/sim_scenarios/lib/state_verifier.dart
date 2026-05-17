@@ -50,7 +50,38 @@ class StateVerifier {
   VerificationResult _verifyAssertion(Game game, Assertion assertion) {
     final failures = <String>[];
 
-    // Resource-placement assertions (SPEC/game/resource-terrain-region-rules.md)
+    _collectResourcePlacementAssertionFailures(game, assertion, failures);
+    _collectFactionCountAssertionFailures(game, assertion, failures);
+
+    final provinceEarlyExit =
+        _collectProvinceAssertionFailuresOrEarlyExit(game, assertion, failures);
+    if (provinceEarlyExit != null) return provinceEarlyExit;
+
+    _collectCapitalFactionCapitalTileFailures(game, assertion, failures);
+    _collectPlayerStockpileTreasuryAndDiplomacyFailures(
+      game,
+      assertion,
+      failures,
+    );
+    _collectFogAndTileStateAssertionFailures(game, assertion, failures);
+    _collectLeaderKeyAssertionFailures(game, assertion, failures);
+    _collectTechUnlockedAssertionFailures(game, assertion, failures);
+    _collectGeneralCountAssertionFailures(game, assertion, failures);
+    _collectVictoryAssertionFailures(game, assertion, failures);
+    _collectEffectiveMilitaryLevelAssertionFailures(game, assertion, failures);
+
+    return VerificationResult(
+      passed: failures.isEmpty,
+      failures: failures,
+    );
+  }
+
+  /// Resource-placement assertions (SPEC/game/resource-terrain-region-rules.md).
+  void _collectResourcePlacementAssertionFailures(
+    Game game,
+    Assertion assertion,
+    List<String> failures,
+  ) {
     if (assertion.region != null &&
         assertion.resource != null &&
         assertion.province == null &&
@@ -66,13 +97,18 @@ class StateVerifier {
           'but found on ${bad.length} tile(s), e.g. ${bad.first}',
         );
       }
-    } else if (assertion.everyTileResourceAllowedInRegion == true) {
-      final ruleFailures = _verifyEveryTileResourceAllowedInRegion(
-        game.worldState.resourceByTileKey,
-        assertion.region,
+      return;
+    }
+    if (assertion.everyTileResourceAllowedInRegion == true) {
+      failures.addAll(
+        _verifyEveryTileResourceAllowedInRegion(
+          game.worldState.resourceByTileKey,
+          assertion.region,
+        ),
       );
-      failures.addAll(ruleFailures);
-    } else if (assertion.region != null &&
+      return;
+    }
+    if (assertion.region != null &&
         assertion.maxBothFraction != null &&
         assertion.province == null &&
         assertion.player == null) {
@@ -85,354 +121,363 @@ class StateVerifier {
         failures.add(result.message);
       }
     }
+  }
 
-    // Faction count assertions (SPEC/game/factions.md)
-    if (assertion.greatPowerCount != null ||
-        assertion.minorNationCount != null ||
-        assertion.tribeCount != null) {
-      if (assertion.greatPowerCount != null &&
-          game.players.length != assertion.greatPowerCount!) {
-        failures.add(
-          'Great Power count: expected ${assertion.greatPowerCount}, got ${game.players.length}',
-        );
-      }
-      if (assertion.minorNationCount != null &&
-          game.minorNations.length != assertion.minorNationCount!) {
-        failures.add(
-          'Minor Nation count: expected ${assertion.minorNationCount}, got ${game.minorNations.length}',
-        );
-      }
-      if (assertion.tribeCount != null &&
-          game.tribes.length != assertion.tribeCount!) {
-        failures.add(
-          'Tribe count: expected ${assertion.tribeCount}, got ${game.tribes.length}',
-        );
-      }
-    }
-
-    // Province-based assertions
-    if (assertion.province != null) {
-      final province =
-          _findProvince(game, assertion.region, assertion.province!);
-      if (province == null) {
-        final regionStr =
-            assertion.region != null ? '${assertion.region}:' : '';
-        failures.add('Province "$regionStr${assertion.province}" not found');
-        return VerificationResult(passed: false, failures: failures);
-      }
-
-      // Check owner
-      if (assertion.owner != null) {
-        if (province.ownerId != assertion.owner) {
-          failures.add(
-            'Province ${assertion.province}: expected owner "${assertion.owner}", got "${province.ownerId}"',
-          );
-        }
-      }
-
-      // Check notOwner (negative assertion)
-      if (assertion.notOwner != null) {
-        if (province.ownerId == assertion.notOwner) {
-          failures.add(
-            'Province ${assertion.province}: expected not owned by "${assertion.notOwner}", but it is',
-          );
-        }
-      }
-
-      // Province display name (SPEC/game/naming.md)
-      if (assertion.provinceDisplayName != null) {
-        final actual = province.displayName ?? '';
-        if (actual != assertion.provinceDisplayName) {
-          failures.add(
-            'Province ${assertion.province}: expected displayName "${assertion.provinceDisplayName}", got "$actual"',
-          );
-        }
-      }
-
-      // Check unit count
-      if (assertion.unitCount != null ||
-          assertion.hasUnit != null ||
-          assertion.hasPlayerUnits != null) {
-        final units =
-            _getUnitsInProvince(game, assertion.region, assertion.province!);
-
-        if (assertion.unitCount != null) {
-          final matchResult = _matchCount(
-            units.length,
-            assertion.unitCount!,
-            assertion.matchType,
-            assertion.matchMin,
-            assertion.matchMax,
-          );
-          if (!matchResult.passed) {
-            failures.add(
-              'Province ${assertion.province}: ${matchResult.message}',
-            );
-          }
-        }
-
-        // Check specific unit
-        if (assertion.hasUnit != null) {
-          final hasUnit = units.any((u) => u.id == assertion.hasUnit);
-          if (!hasUnit) {
-            failures.add(
-              'Province ${assertion.province}: expected unit "${assertion.hasUnit}" not found',
-            );
-          }
-        }
-
-        // Check player units
-        if (assertion.hasPlayerUnits != null) {
-          final hasPlayerUnits =
-              units.any((u) => u.ownerId == assertion.hasPlayerUnits);
-          if (!hasPlayerUnits) {
-            failures.add(
-              'Province ${assertion.province}: no units found for player "${assertion.hasPlayerUnits}"',
-            );
-          }
-        }
-      }
-    }
-
-    // Capital assertions (player/minor/tribe faction id + capitalProvinceId / capitalTileKey)
-    if (assertion.player != null &&
-        (assertion.capitalProvinceId != null ||
-            assertion.capitalTileKey != null)) {
-      final factionId = assertion.player!;
-      String? actualProvinceId;
-      String? actualTileKey;
-      if (game.players.any((p) => p.id == factionId)) {
-        final p = game.players.firstWhere((x) => x.id == factionId);
-        actualProvinceId = p.capitalProvinceId;
-        actualTileKey = p.capitalTile?.toTileKey();
-      } else if (game.minorNations.any((m) => m.id == factionId)) {
-        final m = game.minorNations.firstWhere((x) => x.id == factionId);
-        actualProvinceId = m.capitalProvinceId;
-        actualTileKey = m.capitalTile?.toTileKey();
-      } else if (game.tribes.any((t) => t.id == factionId)) {
-        final t = game.tribes.firstWhere((x) => x.id == factionId);
-        actualProvinceId = t.capitalProvinceId;
-        actualTileKey = t.capitalTile?.toTileKey();
-      } else {
-        failures.add(
-            'Faction "$factionId" not found (players, minorNations, tribes)');
-      }
-      if (actualProvinceId != null || actualTileKey != null) {
-        if (assertion.capitalProvinceId != null &&
-            actualProvinceId != assertion.capitalProvinceId) {
-          failures.add(
-            'Faction $factionId: expected capitalProvinceId "${assertion.capitalProvinceId}", got "$actualProvinceId"',
-          );
-        }
-        if (assertion.capitalTileKey != null &&
-            actualTileKey != assertion.capitalTileKey) {
-          failures.add(
-            'Faction $factionId: expected capitalTileKey "${assertion.capitalTileKey}", got "$actualTileKey"',
-          );
-        }
-      } else if (assertion.capitalProvinceId != null ||
-          assertion.capitalTileKey != null) {
-        failures.add(
-          'Faction $factionId: expected capital but capitalProvinceId/capitalTile are null',
-        );
-      }
-    }
-
-    // Player-based assertions (stockpile, treasury, diplomacy) — only for game.players
-    if (assertion.player != null &&
-        (assertion.stockpile != null || assertion.treasury != null)) {
-      final player = game.players.firstWhere(
-        (p) => p.id == assertion.player,
-        orElse: () => throw StateError('Player ${assertion.player} not found'),
+  /// Faction count assertions (SPEC/game/factions.md).
+  void _collectFactionCountAssertionFailures(
+    Game game,
+    Assertion assertion,
+    List<String> failures,
+  ) {
+    if (assertion.greatPowerCount != null &&
+        game.players.length != assertion.greatPowerCount!) {
+      failures.add(
+        'Great Power count: expected ${assertion.greatPowerCount}, got ${game.players.length}',
       );
+    }
+    if (assertion.minorNationCount != null &&
+        game.minorNations.length != assertion.minorNationCount!) {
+      failures.add(
+        'Minor Nation count: expected ${assertion.minorNationCount}, got ${game.minorNations.length}',
+      );
+    }
+    if (assertion.tribeCount != null &&
+        game.tribes.length != assertion.tribeCount!) {
+      failures.add(
+        'Tribe count: expected ${assertion.tribeCount}, got ${game.tribes.length}',
+      );
+    }
+  }
 
-      if (assertion.stockpile != null) {
-        // Sum all commodity quantities in stockpile
-        final totalStockpile =
-            player.stockpile.quantities.values.fold<int>(0, (a, b) => a + b);
+  /// Province-based assertions. Returns early failure when province is missing.
+  VerificationResult? _collectProvinceAssertionFailuresOrEarlyExit(
+    Game game,
+    Assertion assertion,
+    List<String> failures,
+  ) {
+    if (assertion.province == null) return null;
+
+    final province =
+        _findProvince(game, assertion.region, assertion.province!);
+    if (province == null) {
+      final regionStr =
+          assertion.region != null ? '${assertion.region}:' : '';
+      failures.add('Province "$regionStr${assertion.province}" not found');
+      return VerificationResult(passed: false, failures: failures);
+    }
+
+    if (assertion.owner != null && province.ownerId != assertion.owner) {
+      failures.add(
+        'Province ${assertion.province}: expected owner "${assertion.owner}", got "${province.ownerId}"',
+      );
+    }
+
+    if (assertion.notOwner != null && province.ownerId == assertion.notOwner) {
+      failures.add(
+        'Province ${assertion.province}: expected not owned by "${assertion.notOwner}", but it is',
+      );
+    }
+
+    if (assertion.provinceDisplayName != null) {
+      final actual = province.displayName ?? '';
+      if (actual != assertion.provinceDisplayName) {
+        failures.add(
+          'Province ${assertion.province}: expected displayName "${assertion.provinceDisplayName}", got "$actual"',
+        );
+      }
+    }
+
+    if (assertion.unitCount != null ||
+        assertion.hasUnit != null ||
+        assertion.hasPlayerUnits != null) {
+      final units =
+          _getUnitsInProvince(game, assertion.region, assertion.province!);
+
+      if (assertion.unitCount != null) {
         final matchResult = _matchCount(
-          totalStockpile,
-          assertion.stockpile!,
+          units.length,
+          assertion.unitCount!,
           assertion.matchType,
           assertion.matchMin,
           assertion.matchMax,
         );
         if (!matchResult.passed) {
           failures.add(
-            'Player ${assertion.player} stockpile: ${matchResult.message}',
+            'Province ${assertion.province}: ${matchResult.message}',
           );
         }
       }
 
-      if (assertion.commodity != null && assertion.stockpileCommodity != null) {
-        final quantity = player.stockpile.quantityOf(assertion.commodity!);
-        final matchResult = _matchCount(
-          quantity,
-          assertion.stockpileCommodity!,
-          assertion.matchType,
-          assertion.matchMin,
-          assertion.matchMax,
-        );
-        if (!matchResult.passed) {
+      if (assertion.hasUnit != null) {
+        final hasUnit = units.any((u) => u.id == assertion.hasUnit);
+        if (!hasUnit) {
           failures.add(
-            'Player ${assertion.player} commodity ${assertion.commodity}: ${matchResult.message}',
+            'Province ${assertion.province}: expected unit "${assertion.hasUnit}" not found',
           );
         }
       }
 
-      if (assertion.treasury != null) {
-        final matchResult = _matchCount(
-          player.treasury,
-          assertion.treasury!,
-          assertion.matchType,
-          assertion.matchMin,
-          assertion.matchMax,
-        );
-        if (!matchResult.passed) {
+      if (assertion.hasPlayerUnits != null) {
+        final hasPlayerUnits =
+            units.any((u) => u.ownerId == assertion.hasPlayerUnits);
+        if (!hasPlayerUnits) {
           failures.add(
-            'Player ${assertion.player} treasury: ${matchResult.message}',
+            'Province ${assertion.province}: no units found for player "${assertion.hasPlayerUnits}"',
           );
-        }
-      }
-
-      // Fleet ship count (SPEC/game/ships-and-naval.md): total ships in this player's fleets
-      if (assertion.fleetShipCount != null) {
-        final totalShips = game.worldState.fleets
-            .where((f) => f.ownerId == assertion.player)
-            .fold<int>(0, (n, f) => n + f.shipTypeIds.length);
-        final matchResult = _matchCount(
-          totalShips,
-          assertion.fleetShipCount!,
-          assertion.matchType,
-          assertion.matchMin,
-          assertion.matchMax,
-        );
-        if (!matchResult.passed) {
-          failures.add(
-            'Player ${assertion.player} fleet ship count: ${matchResult.message}',
-          );
-        }
-      }
-
-      // Worker pool assertions (SPEC/game/workers-and-population.md)
-      if (assertion.workerPeasants != null) {
-        if (player.workerPool.peasants != assertion.workerPeasants) {
-          failures.add(
-            'Player ${assertion.player} workerPeasants: expected ${assertion.workerPeasants}, got ${player.workerPool.peasants}',
-          );
-        }
-      }
-      if (assertion.workerApprentices != null) {
-        if (player.workerPool.apprentices != assertion.workerApprentices) {
-          failures.add(
-            'Player ${assertion.player} workerApprentices: expected ${assertion.workerApprentices}, got ${player.workerPool.apprentices}',
-          );
-        }
-      }
-      if (assertion.workerJourneymen != null) {
-        if (player.workerPool.journeymen != assertion.workerJourneymen) {
-          failures.add(
-            'Player ${assertion.player} workerJourneymen: expected ${assertion.workerJourneymen}, got ${player.workerPool.journeymen}',
-          );
-        }
-      }
-      if (assertion.workerMasters != null) {
-        if (player.workerPool.masters != assertion.workerMasters) {
-          failures.add(
-            'Player ${assertion.player} workerMasters: expected ${assertion.workerMasters}, got ${player.workerPool.masters}',
-          );
-        }
-      }
-
-      // Per-commodity stockpile (SPEC/game/workers-and-population.md)
-      if (assertion.commodity != null && assertion.stockpileCommodity != null) {
-        final actual = player.stockpile.quantityOf(assertion.commodity!);
-        final expected = assertion.stockpileCommodity!;
-        if (actual != expected) {
-          failures.add(
-            'Player ${assertion.player} stockpile ${assertion.commodity}: expected $expected, got $actual',
-          );
-        }
-      }
-
-      // Capital assertion (SPEC/game/capital-choice-phase.md): player's capital province
-      if (assertion.capitalProvince != null) {
-        final expected = assertion.capitalProvince!;
-        final actual = player.capitalProvinceId;
-        if (actual != expected) {
-          failures.add(
-            'Player ${assertion.player} capital: expected "$expected", got "${actual ?? "null"}"',
-          );
-        }
-      }
-
-      // Diplomacy relation assertions between [player] and [relationWith]
-      if (assertion.relationWith != null) {
-        final rel =
-            _findRelation(game, assertion.player!, assertion.relationWith!);
-        if (rel == null) {
-          failures.add(
-            'Relation between ${assertion.player} and ${assertion.relationWith} not found',
-          );
-        } else {
-          if (assertion.relationState != null &&
-              rel.state.name != assertion.relationState) {
-            failures.add(
-              'Relation ${assertion.player}-${assertion.relationWith}: '
-              'expected state "${assertion.relationState}", got "${rel.state.name}"',
-            );
-          }
-          if (assertion.relationScore != null &&
-              rel.score != assertion.relationScore) {
-            failures.add(
-              'Relation ${assertion.player}-${assertion.relationWith}: '
-              'expected score ${assertion.relationScore}, got ${rel.score}',
-            );
-          }
-          if (assertion.relationLevel != null &&
-              rel.level.name != assertion.relationLevel) {
-            failures.add(
-              'Relation ${assertion.player}-${assertion.relationWith}: '
-              'expected level "${assertion.relationLevel}", got "${rel.level.name}"',
-            );
-          }
-          if (assertion.relationSinceTurn != null &&
-              rel.sinceTurn != assertion.relationSinceTurn) {
-            failures.add(
-              'Relation ${assertion.player}-${assertion.relationWith}: '
-              'expected sinceTurn ${assertion.relationSinceTurn}, got ${rel.sinceTurn}',
-            );
-          }
-          if (assertion.relationLastInteractionTurn != null &&
-              rel.lastInteractionTurn !=
-                  assertion.relationLastInteractionTurn) {
-            failures.add(
-              'Relation ${assertion.player}-${assertion.relationWith}: '
-              'expected lastInteractionTurn ${assertion.relationLastInteractionTurn}, '
-              'got ${rel.lastInteractionTurn}',
-            );
-          }
-        }
-
-        // Overture stage (GP–Minor/Tribe) between [player] and [relationWith]
-        if (assertion.overtureStage != null) {
-          final overture =
-              _findOverture(game, assertion.player!, assertion.relationWith!);
-          if (overture == null) {
-            failures.add(
-              'Overture between ${assertion.player} and ${assertion.relationWith} not found',
-            );
-          } else if (overture.stage.name != assertion.overtureStage) {
-            failures.add(
-              'Overture ${assertion.player}-${assertion.relationWith}: '
-              'expected stage "${assertion.overtureStage}", got "${overture.stage.name}"',
-            );
-          }
         }
       }
     }
 
-    // Fog/exploration assertions (SPEC/game/fog-and-exploration.md)
+    return null;
+  }
+
+  /// Capital assertions (player/minor/tribe + capitalProvinceId / capitalTileKey).
+  void _collectCapitalFactionCapitalTileFailures(
+    Game game,
+    Assertion assertion,
+    List<String> failures,
+  ) {
+    if (assertion.player == null) return;
+    if (assertion.capitalProvinceId == null && assertion.capitalTileKey == null) {
+      return;
+    }
+    final factionId = assertion.player!;
+    String? actualProvinceId;
+    String? actualTileKey;
+    if (game.players.any((p) => p.id == factionId)) {
+      final p = game.players.firstWhere((x) => x.id == factionId);
+      actualProvinceId = p.capitalProvinceId;
+      actualTileKey = p.capitalTile?.toTileKey();
+    } else if (game.minorNations.any((m) => m.id == factionId)) {
+      final m = game.minorNations.firstWhere((x) => x.id == factionId);
+      actualProvinceId = m.capitalProvinceId;
+      actualTileKey = m.capitalTile?.toTileKey();
+    } else if (game.tribes.any((t) => t.id == factionId)) {
+      final t = game.tribes.firstWhere((x) => x.id == factionId);
+      actualProvinceId = t.capitalProvinceId;
+      actualTileKey = t.capitalTile?.toTileKey();
+    } else {
+      failures.add(
+        'Faction "$factionId" not found (players, minorNations, tribes)',
+      );
+    }
+    if (actualProvinceId != null || actualTileKey != null) {
+      if (assertion.capitalProvinceId != null &&
+          actualProvinceId != assertion.capitalProvinceId) {
+        failures.add(
+          'Faction $factionId: expected capitalProvinceId "${assertion.capitalProvinceId}", got "$actualProvinceId"',
+        );
+      }
+      if (assertion.capitalTileKey != null &&
+          actualTileKey != assertion.capitalTileKey) {
+        failures.add(
+          'Faction $factionId: expected capitalTileKey "${assertion.capitalTileKey}", got "$actualTileKey"',
+        );
+      }
+      return;
+    }
+    if (assertion.capitalProvinceId != null || assertion.capitalTileKey != null) {
+      failures.add(
+        'Faction $factionId: expected capital but capitalProvinceId/capitalTile are null',
+      );
+    }
+  }
+
+  /// Player stockpile, treasury, workers, capital province, diplomacy, overture.
+  void _collectPlayerStockpileTreasuryAndDiplomacyFailures(
+    Game game,
+    Assertion assertion,
+    List<String> failures,
+  ) {
+    if (assertion.player == null) return;
+    if (assertion.stockpile == null && assertion.treasury == null) return;
+
+    final player = game.players.firstWhere(
+      (p) => p.id == assertion.player,
+      orElse: () => throw StateError('Player ${assertion.player} not found'),
+    );
+
+    if (assertion.stockpile != null) {
+      final totalStockpile =
+          player.stockpile.quantities.values.fold<int>(0, (a, b) => a + b);
+      final matchResult = _matchCount(
+        totalStockpile,
+        assertion.stockpile!,
+        assertion.matchType,
+        assertion.matchMin,
+        assertion.matchMax,
+      );
+      if (!matchResult.passed) {
+        failures.add(
+          'Player ${assertion.player} stockpile: ${matchResult.message}',
+        );
+      }
+    }
+
+    if (assertion.commodity != null && assertion.stockpileCommodity != null) {
+      final quantity = player.stockpile.quantityOf(assertion.commodity!);
+      final matchResult = _matchCount(
+        quantity,
+        assertion.stockpileCommodity!,
+        assertion.matchType,
+        assertion.matchMin,
+        assertion.matchMax,
+      );
+      if (!matchResult.passed) {
+        failures.add(
+          'Player ${assertion.player} commodity ${assertion.commodity}: ${matchResult.message}',
+        );
+      }
+    }
+
+    if (assertion.treasury != null) {
+      final matchResult = _matchCount(
+        player.treasury,
+        assertion.treasury!,
+        assertion.matchType,
+        assertion.matchMin,
+        assertion.matchMax,
+      );
+      if (!matchResult.passed) {
+        failures.add(
+          'Player ${assertion.player} treasury: ${matchResult.message}',
+        );
+      }
+    }
+
+    if (assertion.fleetShipCount != null) {
+      final totalShips = game.worldState.fleets
+          .where((f) => f.ownerId == assertion.player)
+          .fold<int>(0, (n, f) => n + f.shipTypeIds.length);
+      final matchResult = _matchCount(
+        totalShips,
+        assertion.fleetShipCount!,
+        assertion.matchType,
+        assertion.matchMin,
+        assertion.matchMax,
+      );
+      if (!matchResult.passed) {
+        failures.add(
+          'Player ${assertion.player} fleet ship count: ${matchResult.message}',
+        );
+      }
+    }
+
+    if (assertion.workerPeasants != null &&
+        player.workerPool.peasants != assertion.workerPeasants) {
+      failures.add(
+        'Player ${assertion.player} workerPeasants: expected ${assertion.workerPeasants}, got ${player.workerPool.peasants}',
+      );
+    }
+    if (assertion.workerApprentices != null &&
+        player.workerPool.apprentices != assertion.workerApprentices) {
+      failures.add(
+        'Player ${assertion.player} workerApprentices: expected ${assertion.workerApprentices}, got ${player.workerPool.apprentices}',
+      );
+    }
+    if (assertion.workerJourneymen != null &&
+        player.workerPool.journeymen != assertion.workerJourneymen) {
+      failures.add(
+        'Player ${assertion.player} workerJourneymen: expected ${assertion.workerJourneymen}, got ${player.workerPool.journeymen}',
+      );
+    }
+    if (assertion.workerMasters != null &&
+        player.workerPool.masters != assertion.workerMasters) {
+      failures.add(
+        'Player ${assertion.player} workerMasters: expected ${assertion.workerMasters}, got ${player.workerPool.masters}',
+      );
+    }
+
+    if (assertion.commodity != null && assertion.stockpileCommodity != null) {
+      final actual = player.stockpile.quantityOf(assertion.commodity!);
+      final expected = assertion.stockpileCommodity!;
+      if (actual != expected) {
+        failures.add(
+          'Player ${assertion.player} stockpile ${assertion.commodity}: expected $expected, got $actual',
+        );
+      }
+    }
+
+    if (assertion.capitalProvince != null) {
+      final expected = assertion.capitalProvince!;
+      final actual = player.capitalProvinceId;
+      if (actual != expected) {
+        failures.add(
+          'Player ${assertion.player} capital: expected "$expected", got "${actual ?? "null"}"',
+        );
+      }
+    }
+
+    if (assertion.relationWith == null) return;
+
+    final rel =
+        _findRelation(game, assertion.player!, assertion.relationWith!);
+    if (rel == null) {
+      failures.add(
+        'Relation between ${assertion.player} and ${assertion.relationWith} not found',
+      );
+    } else {
+      if (assertion.relationState != null &&
+          rel.state.name != assertion.relationState) {
+        failures.add(
+          'Relation ${assertion.player}-${assertion.relationWith}: '
+          'expected state "${assertion.relationState}", got "${rel.state.name}"',
+        );
+      }
+      if (assertion.relationScore != null &&
+          rel.score != assertion.relationScore) {
+        failures.add(
+          'Relation ${assertion.player}-${assertion.relationWith}: '
+          'expected score ${assertion.relationScore}, got ${rel.score}',
+        );
+      }
+      if (assertion.relationLevel != null &&
+          rel.level.name != assertion.relationLevel) {
+        failures.add(
+          'Relation ${assertion.player}-${assertion.relationWith}: '
+          'expected level "${assertion.relationLevel}", got "${rel.level.name}"',
+        );
+      }
+      if (assertion.relationSinceTurn != null &&
+          rel.sinceTurn != assertion.relationSinceTurn) {
+        failures.add(
+          'Relation ${assertion.player}-${assertion.relationWith}: '
+          'expected sinceTurn ${assertion.relationSinceTurn}, got ${rel.sinceTurn}',
+        );
+      }
+      if (assertion.relationLastInteractionTurn != null &&
+          rel.lastInteractionTurn != assertion.relationLastInteractionTurn) {
+        failures.add(
+          'Relation ${assertion.player}-${assertion.relationWith}: '
+          'expected lastInteractionTurn ${assertion.relationLastInteractionTurn}, '
+          'got ${rel.lastInteractionTurn}',
+        );
+      }
+    }
+
+    if (assertion.overtureStage == null) return;
+    final overture =
+        _findOverture(game, assertion.player!, assertion.relationWith!);
+    if (overture == null) {
+      failures.add(
+        'Overture between ${assertion.player} and ${assertion.relationWith} not found',
+      );
+      return;
+    }
+    if (overture.stage.name != assertion.overtureStage) {
+      failures.add(
+        'Overture ${assertion.player}-${assertion.relationWith}: '
+        'expected stage "${assertion.overtureStage}", got "${overture.stage.name}"',
+      );
+    }
+  }
+
+  /// Fog, tile improvement name/level, road level.
+  void _collectFogAndTileStateAssertionFailures(
+    Game game,
+    Assertion assertion,
+    List<String> failures,
+  ) {
     if (assertion.player != null &&
         (assertion.tileVisibility != null ||
             assertion.tileProspected != null) &&
@@ -460,7 +505,6 @@ class StateVerifier {
       }
     }
 
-    // Improvement naming assertions (SPEC/game/extraction-and-improvements.md)
     if (assertion.tileImprovementName != null && assertion.tileKey != null) {
       final tileKey = assertion.tileKey!;
       final expectedName = assertion.tileImprovementName!;
@@ -472,7 +516,6 @@ class StateVerifier {
       }
     }
 
-    // Road / transport-level assertions (SPEC/game/capital-and-connectivity.md, SPEC/program/development-resolution.md)
     if (assertion.tileRoadLevel != null && assertion.tileKey != null) {
       final tileKey = assertion.tileKey!;
       final expectedLevel = assertion.tileRoadLevel!;
@@ -484,7 +527,6 @@ class StateVerifier {
       }
     }
 
-    // Improvement level assertion (SPEC/game/extraction-and-improvements.md). With [tileKey]: expected improvement level 0-4.
     if (assertion.tileImprovementLevel != null && assertion.tileKey != null) {
       final tileKey = assertion.tileKey!;
       final expectedLevel = assertion.tileImprovementLevel!;
@@ -495,125 +537,148 @@ class StateVerifier {
         );
       }
     }
+  }
 
-    // Leader assertion (SPEC/game/leader-bonuses.md): player's leaderKey
-    if (assertion.player != null && assertion.leaderKey != null) {
-      try {
-        final player = game.players.firstWhere((p) => p.id == assertion.player);
-        final expected = assertion.leaderKey!;
-        final actual = player.leaderKey;
-        if (actual != expected) {
-          failures.add(
-            'Player ${assertion.player} leaderKey: expected "$expected", got "${actual ?? "null"}"',
-          );
-        }
-      } on StateError {
+  void _collectLeaderKeyAssertionFailures(
+    Game game,
+    Assertion assertion,
+    List<String> failures,
+  ) {
+    if (assertion.player == null || assertion.leaderKey == null) return;
+    try {
+      final player = game.players.firstWhere((p) => p.id == assertion.player);
+      final expected = assertion.leaderKey!;
+      final actual = player.leaderKey;
+      if (actual != expected) {
         failures.add(
-            'Player ${assertion.player} not found for leaderKey assertion');
-      }
-    }
-
-    // Research-state assertion (SPEC/game/research-state.md): player's techUnlocked must contain listed tech ids
-    if (assertion.player != null &&
-        assertion.techUnlocked != null &&
-        assertion.techUnlocked!.isNotEmpty) {
-      try {
-        final player = game.players.firstWhere((p) => p.id == assertion.player);
-        final unlocked = player.techUnlocked ?? const <String, bool>{};
-        for (final techId in assertion.techUnlocked!) {
-          if (unlocked[techId] != true) {
-            failures.add(
-              'Player ${assertion.player} techUnlocked: expected "$techId" to be true, got ${unlocked[techId]}',
-            );
-          }
-        }
-      } on StateError {
-        failures.add(
-          'Player ${assertion.player} not found for techUnlocked assertion',
+          'Player ${assertion.player} leaderKey: expected "$expected", got "${actual ?? "null"}"',
         );
       }
+    } on StateError {
+      failures.add('Player ${assertion.player} not found for leaderKey assertion');
     }
+  }
 
-    // General count assertion (SPEC/game/military-generals.md): player must have expected number of generals
-    if (assertion.player != null && assertion.generalCount != null) {
-      final count = game.generals.where((g) => g.ownerId == assertion.player).length;
-      if (count != assertion.generalCount) {
-        failures.add(
-          'Player ${assertion.player} generalCount: expected ${assertion.generalCount}, got $count',
-        );
-      }
+  void _collectTechUnlockedAssertionFailures(
+    Game game,
+    Assertion assertion,
+    List<String> failures,
+  ) {
+    if (assertion.player == null) return;
+    if (assertion.techUnlocked == null || assertion.techUnlocked!.isEmpty) {
+      return;
     }
-
-    // Victory assertions (SPEC/game/victory.md)
-    if (assertion.victoryWinner != null ||
-        assertion.victoryType != null ||
-        assertion.victoryTurn != null) {
-      final v = game.victory;
-      if (v == null) {
-        failures.add(
-          'Victory: expected victory to be set (winner=${assertion.victoryWinner}, type=${assertion.victoryType}, turn=${assertion.victoryTurn}), but Game.victory is null',
-        );
-      } else {
-        if (assertion.victoryWinner != null && v.winnerPlayerId != assertion.victoryWinner) {
+    try {
+      final player = game.players.firstWhere((p) => p.id == assertion.player);
+      final unlocked = player.techUnlocked ?? const <String, bool>{};
+      for (final techId in assertion.techUnlocked!) {
+        if (unlocked[techId] != true) {
           failures.add(
-            'Victory winner: expected "${assertion.victoryWinner}", got "${v.winnerPlayerId}"',
-          );
-        }
-        if (assertion.victoryType != null && v.type.name != assertion.victoryType) {
-          failures.add(
-            'Victory type: expected "${assertion.victoryType}", got "${v.type.name}"',
-          );
-        }
-        if (assertion.victoryTurn != null && v.turnNumber != assertion.victoryTurn) {
-          failures.add(
-            'Victory turn: expected ${assertion.victoryTurn}, got ${v.turnNumber}',
+            'Player ${assertion.player} techUnlocked: expected "$techId" to be true, got ${unlocked[techId]}',
           );
         }
       }
+    } on StateError {
+      failures.add(
+        'Player ${assertion.player} not found for techUnlocked assertion',
+      );
     }
+  }
 
-    // Faction effective military level (SPEC/game/factions.md): Minor or Tribe [player] must have expected effectiveMilitaryLevel.
-    if (assertion.player != null && assertion.effectiveMilitaryLevel != null) {
-      final factionId = assertion.player!;
-      final expected = assertion.effectiveMilitaryLevel!;
-      MinorNation? minor;
-      for (final m in game.minorNations) {
-        if (m.id == factionId) {
-          minor = m;
+  void _collectGeneralCountAssertionFailures(
+    Game game,
+    Assertion assertion,
+    List<String> failures,
+  ) {
+    if (assertion.player == null || assertion.generalCount == null) return;
+    final count =
+        game.generals.where((g) => g.ownerId == assertion.player).length;
+    if (count != assertion.generalCount) {
+      failures.add(
+        'Player ${assertion.player} generalCount: expected ${assertion.generalCount}, got $count',
+      );
+    }
+  }
+
+  void _collectVictoryAssertionFailures(
+    Game game,
+    Assertion assertion,
+    List<String> failures,
+  ) {
+    if (assertion.victoryWinner == null &&
+        assertion.victoryType == null &&
+        assertion.victoryTurn == null) {
+      return;
+    }
+    final v = game.victory;
+    if (v == null) {
+      failures.add(
+        'Victory: expected victory to be set (winner=${assertion.victoryWinner}, type=${assertion.victoryType}, turn=${assertion.victoryTurn}), but Game.victory is null',
+      );
+      return;
+    }
+    if (assertion.victoryWinner != null &&
+        v.winnerPlayerId != assertion.victoryWinner) {
+      failures.add(
+        'Victory winner: expected "${assertion.victoryWinner}", got "${v.winnerPlayerId}"',
+      );
+    }
+    if (assertion.victoryType != null && v.type.name != assertion.victoryType) {
+      failures.add(
+        'Victory type: expected "${assertion.victoryType}", got "${v.type.name}"',
+      );
+    }
+    if (assertion.victoryTurn != null && v.turnNumber != assertion.victoryTurn) {
+      failures.add(
+        'Victory turn: expected ${assertion.victoryTurn}, got ${v.turnNumber}',
+      );
+    }
+  }
+
+  void _collectEffectiveMilitaryLevelAssertionFailures(
+    Game game,
+    Assertion assertion,
+    List<String> failures,
+  ) {
+    if (assertion.player == null || assertion.effectiveMilitaryLevel == null) {
+      return;
+    }
+    final factionId = assertion.player!;
+    final expected = assertion.effectiveMilitaryLevel!;
+    MinorNation? minor;
+    for (final m in game.minorNations) {
+      if (m.id == factionId) {
+        minor = m;
+        break;
+      }
+    }
+    Tribe? tribe;
+    if (minor == null) {
+      for (final t in game.tribes) {
+        if (t.id == factionId) {
+          tribe = t;
           break;
         }
       }
-      Tribe? tribe;
-      if (minor == null) {
-        for (final t in game.tribes) {
-          if (t.id == factionId) {
-            tribe = t;
-            break;
-          }
-        }
-      }
-      if (minor != null) {
-        if (minor.effectiveMilitaryLevel != expected) {
-          failures.add(
-            'Minor $factionId effectiveMilitaryLevel: expected $expected, got ${minor.effectiveMilitaryLevel}',
-          );
-        }
-      } else if (tribe != null) {
-        if (tribe.effectiveMilitaryLevel != expected) {
-          failures.add(
-            'Tribe $factionId effectiveMilitaryLevel: expected $expected, got ${tribe.effectiveMilitaryLevel}',
-          );
-        }
-      } else {
+    }
+    if (minor != null) {
+      if (minor.effectiveMilitaryLevel != expected) {
         failures.add(
-          'Faction $factionId not found (effectiveMilitaryLevel applies to Minor or Tribe only)',
+          'Minor $factionId effectiveMilitaryLevel: expected $expected, got ${minor.effectiveMilitaryLevel}',
         );
       }
+      return;
     }
-
-    return VerificationResult(
-      passed: failures.isEmpty,
-      failures: failures,
+    if (tribe != null) {
+      if (tribe.effectiveMilitaryLevel != expected) {
+        failures.add(
+          'Tribe $factionId effectiveMilitaryLevel: expected $expected, got ${tribe.effectiveMilitaryLevel}',
+        );
+      }
+      return;
+    }
+    failures.add(
+      'Faction $factionId not found (effectiveMilitaryLevel applies to Minor or Tribe only)',
     );
   }
 
@@ -736,35 +801,19 @@ class StateVerifier {
 
   List<Unit> _getUnitsInProvince(
       Game game, String? regionId, String provinceId) {
-    final units = <Unit>[];
-
-    // If region is specified, only check that region's units
     if (regionId != null) {
       final regionData = _getRegionData(game, regionId);
-      if (regionData != null) {
-        for (final unit in regionData.units) {
-          if (unit.locationProvinceId == provinceId) {
-            units.add(unit);
-          }
-        }
+      if (regionData == null) {
+        return const [];
       }
-      return units;
+      return regionData.units
+          .where((unit) => unit.locationProvinceId == provinceId)
+          .toList();
     }
-
-    // If no region, check both oldWorld and newWorld units
-    for (final unit in game.worldState.oldWorld.units) {
-      if (unit.locationProvinceId == provinceId) {
-        units.add(unit);
-      }
-    }
-
-    for (final unit in game.worldState.newWorld.units) {
-      if (unit.locationProvinceId == provinceId) {
-        units.add(unit);
-      }
-    }
-
-    return units;
+    return [
+      ...game.worldState.oldWorld.units,
+      ...game.worldState.newWorld.units,
+    ].where((unit) => unit.locationProvinceId == provinceId).toList();
   }
 
   _CountMatchResult _matchCount(

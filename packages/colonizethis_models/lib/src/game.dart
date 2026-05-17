@@ -85,6 +85,7 @@ class Game {
     this.globalGameSeed,
     this.greatPowerColorOverride,
     this.victory,
+    this.calendarCampaignHalted = false,
     this.richesCashMultiplier = 1.0,
     this.capitalTileGrainBonusPerTurn = 5,
     this.politicalGlyphByPlayerId = const {},
@@ -143,6 +144,10 @@ class Game {
 
   /// Victory state when game has been won. Null when game is ongoing.
   final VictoryState? victory;
+
+  /// When true, the campaign calendar cap has been reached without military victory;
+  /// no further full-turn resolution mutates state. SPEC/game/turn-time-mapping.md.
+  final bool calendarCampaignHalted;
 
   /// Multiplier for riches-to-treasury conversion. Default 1.0. Scenario/ruleset
   /// may override (e.g. El Dorado 1.5). Per SPEC/program/turn-resolution-phase-details.md.
@@ -203,6 +208,7 @@ class Game {
         (k, v) => MapEntry(k, v),
       ),
     if (victory != null) 'victory': victory!.toJson(),
+    if (calendarCampaignHalted) 'calendarCampaignHalted': true,
     if (richesCashMultiplier != 1.0)
       'richesCashMultiplier': richesCashMultiplier,
     if (capitalTileGrainBonusPerTurn != 5)
@@ -225,7 +231,8 @@ class Game {
     final minorNationsList = json['minorNations'] as List<dynamic>? ?? [];
     final tribesList = json['tribes'] as List<dynamic>? ?? [];
     final turnTimeMappingRaw = json['turnTimeMapping'];
-    final Map<String, dynamic>? turnTimeMappingJson = turnTimeMappingRaw is Map
+    final Map<String, dynamic>? turnTimeMappingJson =
+        turnTimeMappingRaw is Map<dynamic, dynamic>
         ? Map<String, dynamic>.from(turnTimeMappingRaw)
         : null;
     final defaultCombatModeRaw = json['defaultCombatMode'] as String?;
@@ -238,17 +245,26 @@ class Game {
     final relationsList = json['diplomacyRelations'] as List<dynamic>? ?? [];
     final diplomacyRelations = relationsList
         .map(
-          (e) =>
-              DiplomacyRelation.fromJson(Map<String, dynamic>.from(e as Map)),
+          (e) => DiplomacyRelation.fromJson(
+            Map<String, dynamic>.from(e as Map<dynamic, dynamic>),
+          ),
         )
         .toList();
     final overtureList = json['overtureStates'] as List<dynamic>? ?? [];
     final overtureStates = overtureList
-        .map((e) => OvertureState.fromJson(Map<String, dynamic>.from(e as Map)))
+        .map(
+          (e) => OvertureState.fromJson(
+            Map<String, dynamic>.from(e as Map<dynamic, dynamic>),
+          ),
+        )
         .toList();
     final subsidyList = json['subsidyStates'] as List<dynamic>? ?? [];
     final subsidyStates = subsidyList
-        .map((e) => SubsidyState.fromJson(Map<String, dynamic>.from(e as Map)))
+        .map(
+          (e) => SubsidyState.fromJson(
+            Map<String, dynamic>.from(e as Map<dynamic, dynamic>),
+          ),
+        )
         .toList();
 
     final aiControlRaw =
@@ -269,7 +285,7 @@ class Game {
     final dossierEvidenceEntries = evidenceList
         .map(
           (e) => DossierEvidenceEntry.fromJson(
-            Map<String, dynamic>.from(e as Map),
+            Map<String, dynamic>.from(e as Map<dynamic, dynamic>),
           ),
         )
         .toList();
@@ -277,7 +293,9 @@ class Game {
         json['diplomaticHistoryEvents'] as List<dynamic>? ?? [];
     final diplomaticHistoryEvents = diploHistoryList
         .map(
-          (e) => DiplomaticEvent.fromJson(Map<String, dynamic>.from(e as Map)),
+          (e) => DiplomaticEvent.fromJson(
+            Map<String, dynamic>.from(e as Map<dynamic, dynamic>),
+          ),
         )
         .toList();
     final globalGameSeed = json['globalGameSeed'] as int?;
@@ -307,7 +325,11 @@ class Game {
         (json['capitalTileGrainBonusPerTurn'] as num?)?.toInt() ?? 5;
     final generalsList = json['generals'] as List<dynamic>? ?? [];
     final generals = generalsList
-        .map((e) => General.fromJson(Map<String, dynamic>.from(e as Map)))
+        .map(
+          (e) => General.fromJson(
+            Map<String, dynamic>.from(e as Map<dynamic, dynamic>),
+          ),
+        )
         .toList();
     final politicalGlyphRaw =
         json['politicalGlyphByPlayerId'] as Map<dynamic, dynamic>? ?? {};
@@ -315,22 +337,34 @@ class Game {
       (k, v) => MapEntry(k.toString(), v.toString()),
     );
     final mapViewStateRaw = json['mapViewState'];
-    final mapViewState = mapViewStateRaw is Map
+    final mapViewState = mapViewStateRaw is Map<dynamic, dynamic>
         ? MapViewState.fromJson(Map<String, dynamic>.from(mapViewStateRaw))
         : MapViewState.defaults;
     return Game(
       id: json['id'] as String,
       worldState: WorldState.fromJson(
-        Map<String, dynamic>.from(json['worldState'] as Map),
+        Map<String, dynamic>.from(json['worldState'] as Map<dynamic, dynamic>),
       ),
       players: playersList
-          .map((e) => Player.fromJson(Map<String, dynamic>.from(e as Map)))
+          .map(
+            (e) => Player.fromJson(
+              Map<String, dynamic>.from(e as Map<dynamic, dynamic>),
+            ),
+          )
           .toList(),
       minorNations: minorNationsList
-          .map((e) => MinorNation.fromJson(Map<String, dynamic>.from(e as Map)))
+          .map(
+            (e) => MinorNation.fromJson(
+              Map<String, dynamic>.from(e as Map<dynamic, dynamic>),
+            ),
+          )
           .toList(),
       tribes: tribesList
-          .map((e) => Tribe.fromJson(Map<String, dynamic>.from(e as Map)))
+          .map(
+            (e) => Tribe.fromJson(
+              Map<String, dynamic>.from(e as Map<dynamic, dynamic>),
+            ),
+          )
           .toList(),
       generals: generals,
       turnTimeMapping: turnTimeMappingJson != null
@@ -350,9 +384,11 @@ class Game {
       greatPowerColorOverride: greatPowerColorOverride,
       victory: json['victory'] is Map<String, dynamic>
           ? VictoryState.fromJson(json['victory'] as Map<String, dynamic>)
-          : json['victory'] is Map
+          : json['victory'] is Map<dynamic, dynamic>
           ? VictoryState.fromJson(
-              Map<String, dynamic>.from(json['victory'] as Map),
+              Map<String, dynamic>.from(
+                json['victory'] as Map<dynamic, dynamic>,
+              ),
             )
           : null,
       richesCashMultiplier: richesCashMultiplier,
@@ -363,6 +399,8 @@ class Game {
       lastHumanResearchCategoryCompletionTurn:
           (json['lastHumanResearchCategoryCompletionTurn'] as num?)?.toInt(),
       mapViewState: mapViewState,
+      calendarCampaignHalted:
+          json['calendarCampaignHalted'] as bool? ?? false,
     );
   }
 
@@ -387,6 +425,7 @@ class Game {
     int? globalGameSeed,
     Map<String, List<int>>? greatPowerColorOverride,
     VictoryState? victory,
+    bool? calendarCampaignHalted,
     double? richesCashMultiplier,
     int? capitalTileGrainBonusPerTurn,
     Map<String, String>? politicalGlyphByPlayerId,
@@ -419,6 +458,8 @@ class Game {
       greatPowerColorOverride:
           greatPowerColorOverride ?? this.greatPowerColorOverride,
       victory: victory ?? this.victory,
+      calendarCampaignHalted:
+          calendarCampaignHalted ?? this.calendarCampaignHalted,
       richesCashMultiplier: richesCashMultiplier ?? this.richesCashMultiplier,
       capitalTileGrainBonusPerTurn:
           capitalTileGrainBonusPerTurn ?? this.capitalTileGrainBonusPerTurn,
@@ -462,6 +503,7 @@ class Game {
             other.greatPowerColorOverride,
           ) &&
           victory == other.victory &&
+          calendarCampaignHalted == other.calendarCampaignHalted &&
           richesCashMultiplier == other.richesCashMultiplier &&
           capitalTileGrainBonusPerTurn == other.capitalTileGrainBonusPerTurn &&
           _mapEquals(
@@ -499,8 +541,9 @@ class Game {
     greatPowerColorOverride != null
         ? Object.hashAll(greatPowerColorOverride!.entries)
         : null,
-    victory,
     Object.hash(
+      victory,
+      calendarCampaignHalted,
       richesCashMultiplier,
       capitalTileGrainBonusPerTurn,
       Object.hashAll(politicalGlyphByPlayerId.entries),

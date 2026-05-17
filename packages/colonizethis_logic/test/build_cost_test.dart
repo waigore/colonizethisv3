@@ -45,14 +45,14 @@ void main() {
     test('civilian Builder: apply matches catalog after canAfford true', () {
       const player = Player(id: 'p1', displayName: 'P', isHuman: true);
       const workers = WorkerPool(peasants: 10);
-      final econ = CivilianEconomyCatalog.byId['Builder']!;
+      final econ = CivilianEconomyCatalog.byId[kUnitTypeBuilder]!;
       var stockpile = const Stockpile();
       for (final e in econ.buildInputs.entries) {
         stockpile = stockpile.applyDelta(e.key, e.value);
       }
       const treasuryStart = 5000;
       const order = BuildUnitOrder(
-        unitType: 'Builder',
+        unitType: kUnitTypeBuilder,
         isMilitary: false,
         spawnProvinceId: 'oldWorld|p1',
       );

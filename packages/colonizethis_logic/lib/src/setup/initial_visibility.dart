@@ -9,6 +9,66 @@ import '../world/fog_resolution.dart';
 import '../world/player_view.dart';
 import '../world/province_lookup.dart';
 
+void _indexTileMapIntoProvinceBuckets({
+  required TileMapResult map,
+  required String regionId,
+  required Map<String, List<String>> bucket,
+  required Map<String, String> resourceByTileKey,
+}) {
+  for (var y = 0; y < map.height; y++) {
+    for (var x = 0; x < map.width; x++) {
+      final localId = map.cell(x, y);
+      final fullId = ProvinceId.full(regionId, localId);
+      final provinceKey = fullId;
+      final tileKey = '$regionId|$localId|$x|$y';
+      bucket.putIfAbsent(provinceKey, () => <String>[]).add(tileKey);
+      final res = map.resourceAt(x, y);
+      if (res != null) resourceByTileKey[tileKey] = res.name;
+    }
+  }
+}
+
+Map<String, String> _buildOldWorldVisibilityForPlayer({
+  required TileMapResult owMap,
+  required Set<String> owSeaZoneIds,
+  required Map<String, String?> ownerById,
+  required String playerId,
+}) {
+  final visibility = <String, String>{};
+  for (var y = 0; y < owMap.height; y++) {
+    for (var x = 0; x < owMap.width; x++) {
+      final localId = owMap.cell(x, y);
+      final fullId = ProvinceId.full(kRegionOldWorld, localId);
+      final isSea = owSeaZoneIds.contains(localId);
+      final ownerId = ownerById[fullId];
+      final tileKey = '$kRegionOldWorld|$localId|$x|$y';
+      if (isSea) {
+        visibility[tileKey] = VisibilityLevel.fogged.name;
+        continue;
+      }
+      if (ownerId != null) {
+        visibility[tileKey] = ownerId == playerId
+            ? VisibilityLevel.fullyVisible.name
+            : VisibilityLevel.fogged.name;
+      }
+    }
+  }
+  return visibility;
+}
+
+void _fillNewWorldUnknownVisibility({
+  required TileMapResult nwMap,
+  required Map<String, String> visibility,
+}) {
+  for (var y = 0; y < nwMap.height; y++) {
+    for (var x = 0; x < nwMap.width; x++) {
+      final localId = nwMap.cell(x, y);
+      final tileKey = '$kRegionNewWorld|$localId|$x|$y';
+      visibility[tileKey] = VisibilityLevel.unknown.name;
+    }
+  }
+}
+
 /// Applies initial visibility and tile metadata to [game] using [tileMapByRegion].
 /// Own provinces: fullyVisible (OW) or unknown (NW). Others: fogged (OW).
 /// Sea zones: fogged (OW), unknown (NW).
@@ -30,16 +90,11 @@ Game applyInitialVisibility({
           .map((n) => n.id)
           .toSet() ??
       {};
-  final nwSeaZoneIds =
-      topologyByRegion[kRegionNewWorld]?.nodes
-          .where((n) => n.type == TopologyNodeType.seaZone)
-          .map((n) => n.id)
-          .toSet() ??
-      {};
 
   final ownerById = <String, String?>{
     for (final p in allProvinces(game.worldState))
-      ProvinceId.full(p.regionId, ProvinceId.localIdFrom(p.id)): p.ownerId,
+      (ProvinceId.isPrefixed(p.id) ? p.id : ProvinceId.full(p.regionId, p.id)):
+          p.ownerId,
   };
 
   final playerVisibilityByTile = <String, Map<String, String>>{};
@@ -50,69 +105,28 @@ Game applyInitialVisibility({
     kRegionNewWorld: <String, List<String>>{},
   };
   final resourceByTileKey = <String, String>{};
-  for (var y = 0; y < owMap.height; y++) {
-    for (var x = 0; x < owMap.width; x++) {
-      final localId = owMap.cell(x, y);
-      final fullId = ProvinceId.full(kRegionOldWorld, localId);
-      final isSea = owSeaZoneIds.contains(localId);
-      // Include all tiles (land and sea) in tileKeysByRegionAndProvince.
-      // Land tiles: use province fullId. Sea tiles: use sea zone id.
-      final provinceKey = isSea ? localId : fullId;
-      final tileKey = '$kRegionOldWorld|$localId|$x|$y';
-      tileKeysByRegionAndProvince[kRegionOldWorld]!
-          .putIfAbsent(provinceKey, () => <String>[])
-          .add(tileKey);
-      final res = owMap.resourceAt(x, y);
-      if (res != null) resourceByTileKey[tileKey] = res.name;
-    }
-  }
-  for (var y = 0; y < nwMap.height; y++) {
-    for (var x = 0; x < nwMap.width; x++) {
-      final localId = nwMap.cell(x, y);
-      final fullId = ProvinceId.full(kRegionNewWorld, localId);
-      final isSea = nwSeaZoneIds.contains(localId);
-      final provinceKey = isSea ? localId : fullId;
-      final tileKey = '$kRegionNewWorld|$localId|$x|$y';
-      tileKeysByRegionAndProvince[kRegionNewWorld]!
-          .putIfAbsent(provinceKey, () => <String>[])
-          .add(tileKey);
-      final res = nwMap.resourceAt(x, y);
-      if (res != null) resourceByTileKey[tileKey] = res.name;
-    }
-  }
+  _indexTileMapIntoProvinceBuckets(
+    map: owMap,
+    regionId: kRegionOldWorld,
+    bucket: tileKeysByRegionAndProvince[kRegionOldWorld]!,
+    resourceByTileKey: resourceByTileKey,
+  );
+  _indexTileMapIntoProvinceBuckets(
+    map: nwMap,
+    regionId: kRegionNewWorld,
+    bucket: tileKeysByRegionAndProvince[kRegionNewWorld]!,
+    resourceByTileKey: resourceByTileKey,
+  );
 
   for (final player in game.players) {
     final playerId = player.id;
-    final visibility = <String, String>{};
-
-    // Old World: land tiles are fogged (own provinces fully visible), sea tiles are fogged.
-    for (var y = 0; y < owMap.height; y++) {
-      for (var x = 0; x < owMap.width; x++) {
-        final localId = owMap.cell(x, y);
-        final fullId = ProvinceId.full(kRegionOldWorld, localId);
-        final isSea = owSeaZoneIds.contains(localId);
-        final ownerId = ownerById[fullId];
-        final tileKey = '$kRegionOldWorld|$localId|$x|$y';
-        if (isSea) {
-          // Old World sea zones: fogged for all players.
-          visibility[tileKey] = VisibilityLevel.fogged.name;
-        } else if (ownerId != null) {
-          // Land tiles: own provinces fully visible, others fogged.
-          visibility[tileKey] = ownerId == playerId
-              ? VisibilityLevel.fullyVisible.name
-              : VisibilityLevel.fogged.name;
-        }
-      }
-    }
-
-    // New World: all tiles start unknown.
-    for (var y = 0; y < nwMap.height; y++) {
-      for (var x = 0; x < nwMap.width; x++) {
-        final localId = nwMap.cell(x, y);
-        final tileKey = '$kRegionNewWorld|$localId|$x|$y';
-        visibility[tileKey] = VisibilityLevel.unknown.name;
-      }
-    }
+    final visibility = _buildOldWorldVisibilityForPlayer(
+      owMap: owMap,
+      owSeaZoneIds: owSeaZoneIds,
+      ownerById: ownerById,
+      playerId: playerId,
+    );
+    _fillNewWorldUnknownVisibility(nwMap: nwMap, visibility: visibility);
 
     playerVisibilityByTile[playerId] = visibility;
     playerProspectedTiles[playerId] = <String>{};

@@ -165,23 +165,144 @@ List<RegimentTypeRow> rowsForArmyUnits(
   return rows;
 }
 
+List<Army> _armiesForMilitaryPanel(Game game, String humanPlayerId) {
+  return game.worldState.armies
+      .where((a) => a.ownerId == humanPlayerId)
+      .where((a) => a.isHomeArmy || a.regimentUnitIds.isNotEmpty)
+      .toList()
+    ..sort((a, b) {
+      if (a.isHomeArmy != b.isHomeArmy) {
+        return a.isHomeArmy ? -1 : 1;
+      }
+      return a.id.compareTo(b.id);
+    });
+}
+
+List<ProvinceArmiesNode> _provinceArmyNodesForRegion({
+  required Game game,
+  required String regionKey,
+  required RegionData regionData,
+  required List<Army> armies,
+  required Map<String, Unit> unitsById,
+}) {
+  final provinceById = {
+    for (final p in regionData.provinces) '${p.regionId}|${p.id}': p,
+    for (final p in regionData.provinces) p.id: p,
+  };
+
+  final armiesHere = armies.where((a) {
+    final full = ProvinceId.isPrefixed(a.stationedProvinceId)
+        ? a.stationedProvinceId
+        : ProvinceId.full(regionKey, a.stationedProvinceId);
+    final p = tryGetProvince(game.worldState, full);
+    return p != null && p.regionId == regionKey;
+  }).toList();
+
+  final byProvince = <String, List<Army>>{};
+  for (final a in armiesHere) {
+    final pid = a.stationedProvinceId;
+    final full = ProvinceId.isPrefixed(pid)
+        ? pid
+        : ProvinceId.full(regionKey, pid);
+    byProvince.putIfAbsent(full, () => []).add(a);
+  }
+
+  final provinceNodes = <ProvinceArmiesNode>[];
+  final provinceIds = byProvince.keys.toList()..sort();
+  for (final fullProvinceId in provinceIds) {
+    final province = provinceById[fullProvinceId];
+    if (province == null) continue;
+    final list = byProvince[fullProvinceId]!;
+    final blocks = <ArmyBlock>[];
+    for (final army in list) {
+      final regUnits = <Unit>[
+        for (final id in army.regimentUnitIds)
+          if (unitsById[id] != null) unitsById[id]!,
+      ];
+      blocks.add(
+        ArmyBlock(
+          army: army,
+          rows: rowsForArmyUnits(game, province, regUnits, regionKey),
+          regionKey: regionKey,
+        ),
+      );
+    }
+    provinceNodes.add(ProvinceArmiesNode(province: province, armies: blocks));
+  }
+  return provinceNodes;
+}
+
+List<MilitarySeaZoneNode> _militarySeaZoneNodesForRegion({
+  required Game game,
+  required String regionKey,
+  required String humanPlayerId,
+}) {
+  final fleetsInRegion = game.worldState.fleets
+      .where(
+        (f) =>
+            f.ownerId == humanPlayerId &&
+            f.regionId == regionKey &&
+            f.shipTypeIds.isNotEmpty &&
+            f.isAtSea &&
+            f.seaZoneId != null,
+      )
+      .toList();
+  final bySeaZone = <String, List<Fleet>>{};
+  for (final f in fleetsInRegion) {
+    final seaZoneId = f.seaZoneId!;
+    final zoneKey =
+        seaZoneId.contains('|') ? seaZoneId : '$regionKey|$seaZoneId';
+    bySeaZone.putIfAbsent(zoneKey, () => []).add(f);
+  }
+
+  final seaLocations = <MilitarySeaZoneNode>[];
+  final seaZoneKeys = bySeaZone.keys.toList()..sort();
+  for (final zoneKey in seaZoneKeys) {
+    final fleets = bySeaZone[zoneKey]!;
+    final shipTypeIds = <String, int>{};
+    FleetMission? mission;
+    for (final f in fleets) {
+      for (final typeId in f.shipTypeIds) {
+        shipTypeIds[typeId] = (shipTypeIds[typeId] ?? 0) + 1;
+      }
+      mission ??= f.mission;
+    }
+    final zoneLabel = seaZoneDisplayName(
+      game: game,
+      regionId: regionKey,
+      seaZoneId: zoneKey,
+    );
+    final tileKey = tileKeyForSeaZoneLocation(game, regionKey, zoneKey);
+    final rows = <MilitarySeaShipRow>[];
+    for (final typeId in shipTypeIds.keys.toList()..sort()) {
+      rows.add(
+        MilitarySeaShipRow(
+          typeId: typeId,
+          count: shipTypeIds[typeId]!,
+          statusLabel: fleetMissionDisplayLabel(mission ?? FleetMission.none),
+          tileKey: tileKey,
+          regionId: regionKey,
+        ),
+      );
+    }
+    seaLocations.add(
+      MilitarySeaZoneNode(
+        seaZoneLabel: zoneLabel,
+        regionId: regionKey,
+        rows: rows,
+      ),
+    );
+  }
+  return seaLocations;
+}
+
 List<RegionMilitaryGroup> buildMilitaryGroups(Game game, String humanPlayerId) {
   final unitsById = <String, Unit>{
     for (final u in game.worldState.oldWorld.units) u.id: u,
     for (final u in game.worldState.newWorld.units) u.id: u,
   };
 
-  final armies =
-      game.worldState.armies
-          .where((a) => a.ownerId == humanPlayerId)
-          .where((a) => a.isHomeArmy || a.regimentUnitIds.isNotEmpty)
-          .toList()
-        ..sort((a, b) {
-          if (a.isHomeArmy != b.isHomeArmy) {
-            return a.isHomeArmy ? -1 : 1;
-          }
-          return a.id.compareTo(b.id);
-        });
+  final armies = _armiesForMilitaryPanel(game, humanPlayerId);
 
   final result = <RegionMilitaryGroup>[];
 
@@ -192,108 +313,19 @@ List<RegionMilitaryGroup> buildMilitaryGroups(Game game, String humanPlayerId) {
     final regionKey = regionEntry.key;
     final regionData = regionEntry.value;
 
-    final provinceById = {
-      for (final p in regionData.provinces) '${p.regionId}|${p.id}': p,
-      for (final p in regionData.provinces) p.id: p,
-    };
+    final provinceNodes = _provinceArmyNodesForRegion(
+      game: game,
+      regionKey: regionKey,
+      regionData: regionData,
+      armies: armies,
+      unitsById: unitsById,
+    );
 
-    final armiesHere = armies.where((a) {
-      final full = ProvinceId.isPrefixed(a.stationedProvinceId)
-          ? a.stationedProvinceId
-          : ProvinceId.full(regionKey, a.stationedProvinceId);
-      final p = tryGetProvince(game.worldState, full);
-      return p != null && p.regionId == regionKey;
-    }).toList();
-
-    final byProvince = <String, List<Army>>{};
-    for (final a in armiesHere) {
-      final pid = a.stationedProvinceId;
-      final full = ProvinceId.isPrefixed(pid)
-          ? pid
-          : ProvinceId.full(regionKey, pid);
-      byProvince.putIfAbsent(full, () => []).add(a);
-    }
-
-    final provinceNodes = <ProvinceArmiesNode>[];
-    final provinceIds = byProvince.keys.toList()..sort();
-    for (final fullProvinceId in provinceIds) {
-      final province = provinceById[fullProvinceId];
-      if (province == null) continue;
-      final list = byProvince[fullProvinceId]!;
-      final blocks = <ArmyBlock>[];
-      for (final army in list) {
-        final regUnits = <Unit>[
-          for (final id in army.regimentUnitIds)
-            if (unitsById[id] != null) unitsById[id]!,
-        ];
-        blocks.add(
-          ArmyBlock(
-            army: army,
-            rows: rowsForArmyUnits(game, province, regUnits, regionKey),
-            regionKey: regionKey,
-          ),
-        );
-      }
-      provinceNodes.add(ProvinceArmiesNode(province: province, armies: blocks));
-    }
-
-    final fleetsInRegion = game.worldState.fleets
-        .where(
-          (f) =>
-              f.ownerId == humanPlayerId &&
-              f.regionId == regionKey &&
-              f.shipTypeIds.isNotEmpty &&
-              f.isAtSea &&
-              f.seaZoneId != null,
-        )
-        .toList();
-    final bySeaZone = <String, List<Fleet>>{};
-    for (final f in fleetsInRegion) {
-      final seaZoneId = f.seaZoneId!;
-      final zoneKey = seaZoneId.contains('|')
-          ? seaZoneId
-          : '$regionKey|$seaZoneId';
-      bySeaZone.putIfAbsent(zoneKey, () => []).add(f);
-    }
-
-    final seaLocations = <MilitarySeaZoneNode>[];
-    final seaZoneKeys = bySeaZone.keys.toList()..sort();
-    for (final zoneKey in seaZoneKeys) {
-      final fleets = bySeaZone[zoneKey]!;
-      final shipTypeIds = <String, int>{};
-      FleetMission? mission;
-      for (final f in fleets) {
-        for (final typeId in f.shipTypeIds) {
-          shipTypeIds[typeId] = (shipTypeIds[typeId] ?? 0) + 1;
-        }
-        mission ??= f.mission;
-      }
-      final zoneLabel = seaZoneDisplayName(
-        game: game,
-        regionId: regionKey,
-        seaZoneId: zoneKey,
-      );
-      final tileKey = tileKeyForSeaZoneLocation(game, regionKey, zoneKey);
-      final rows = <MilitarySeaShipRow>[];
-      for (final typeId in shipTypeIds.keys.toList()..sort()) {
-        rows.add(
-          MilitarySeaShipRow(
-            typeId: typeId,
-            count: shipTypeIds[typeId]!,
-            statusLabel: fleetMissionDisplayLabel(mission ?? FleetMission.none),
-            tileKey: tileKey,
-            regionId: regionKey,
-          ),
-        );
-      }
-      seaLocations.add(
-        MilitarySeaZoneNode(
-          seaZoneLabel: zoneLabel,
-          regionId: regionKey,
-          rows: rows,
-        ),
-      );
-    }
+    final seaLocations = _militarySeaZoneNodesForRegion(
+      game: game,
+      regionKey: regionKey,
+      humanPlayerId: humanPlayerId,
+    );
 
     if (provinceNodes.isNotEmpty || seaLocations.isNotEmpty) {
       result.add(

@@ -9,7 +9,7 @@ import 'dart:math';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
-import 'combat_resolver.dart';
+import 'combat_types.dart';
 import 'military_strength.dart';
 
 /// Maximum number of combat rounds per engagement.
@@ -102,15 +102,16 @@ ProbabilisticEngagementOutcome resolveEngagementProbabilistic({
   final roundResults = <ProbabilisticRoundResult>[];
 
   final initialAttStr = _aggregateStrength(attackerUnits, 4);
-  final initialDefStr =
-      _aggregateStrength(defenderUnits, defenderEffectiveMilitaryLevel);
+  final initialDefStr = _aggregateStrength(
+    defenderUnits,
+    defenderEffectiveMilitaryLevel,
+  );
 
   for (var round = 1; round <= maxCombatRounds; round++) {
     if (attList.isEmpty || defList.isEmpty) break;
 
     final rawAtt = _aggregateStrength(attList, 4);
-    final rawDef =
-        _aggregateStrength(defList, defenderEffectiveMilitaryLevel);
+    final rawDef = _aggregateStrength(defList, defenderEffectiveMilitaryLevel);
 
     final terrainMod = terrainModifiers[terrain] ?? (1.0, 1.0);
     var effAtt = rawAtt * terrainMod.$1 * attackerMoraleMultiplier;
@@ -119,7 +120,8 @@ ProbabilisticEngagementOutcome resolveEngagementProbabilistic({
     if (fortLevel >= 1 && fortLevel <= 3) {
       final reduction = fortDamageReduction[fortLevel];
       effAtt *= (1.0 - reduction);
-      final emplaced = fortGunCount[fortLevel] * fortEmplacedStrength[fortLevel];
+      final emplaced =
+          fortGunCount[fortLevel] * fortEmplacedStrength[fortLevel];
       effDef += emplaced;
     }
 
@@ -133,17 +135,18 @@ ProbabilisticEngagementOutcome resolveEngagementProbabilistic({
     double pAtt = 0.5;
     double pDef = 0.5;
     if (total > 0) {
-      pAtt = (effAttForRatio / total).clamp(hitProbabilityMin, hitProbabilityMax);
+      pAtt = (effAttForRatio / total).clamp(
+        hitProbabilityMin,
+        hitProbabilityMax,
+      );
       pDef = (effDef / total).clamp(hitProbabilityMin, hitProbabilityMax);
     }
 
     final lambdaDef = combatLethalityK * pAtt;
     final lambdaAtt = combatLethalityK * pDef;
 
-    final nDefCas = _poissonSample(lambdaDef, rng)
-        .clamp(0, defList.length);
-    final nAttCas = _poissonSample(lambdaAtt, rng)
-        .clamp(0, attList.length);
+    final nDefCas = _poissonSample(lambdaDef, rng).clamp(0, defList.length);
+    final nAttCas = _poissonSample(lambdaAtt, rng).clamp(0, attList.length);
 
     final defCasIds = _selectCasualtiesWeighted(
       defList,
@@ -151,12 +154,7 @@ ProbabilisticEngagementOutcome resolveEngagementProbabilistic({
       defenderEffectiveMilitaryLevel,
       rng,
     );
-    final attCasIds = _selectCasualtiesWeighted(
-      attList,
-      nAttCas,
-      4,
-      rng,
-    );
+    final attCasIds = _selectCasualtiesWeighted(attList, nAttCas, 4, rng);
 
     for (final id in defCasIds) {
       defList = defList.where((u) => u.id != id).toList();
@@ -167,21 +165,23 @@ ProbabilisticEngagementOutcome resolveEngagementProbabilistic({
       allAttackerCasualties.add(id);
     }
 
-    roundResults.add(ProbabilisticRoundResult(
-      roundNumber: round,
-      rawAttackerStrength: rawAtt,
-      rawDefenderStrength: rawDef,
-      effectiveAttackerStrength: effAtt,
-      effectiveDefenderStrength: effDef,
-      probabilityAttackerHits: pAtt,
-      probabilityDefenderHits: pDef,
-      lambdaDefender: lambdaDef,
-      lambdaAttacker: lambdaAtt,
-      defenderCasualties: defCasIds,
-      attackerCasualties: attCasIds,
-      attackersRemaining: attList.length,
-      defendersRemaining: defList.length,
-    ));
+    roundResults.add(
+      ProbabilisticRoundResult(
+        roundNumber: round,
+        rawAttackerStrength: rawAtt,
+        rawDefenderStrength: rawDef,
+        effectiveAttackerStrength: effAtt,
+        effectiveDefenderStrength: effDef,
+        probabilityAttackerHits: pAtt,
+        probabilityDefenderHits: pDef,
+        lambdaDefender: lambdaDef,
+        lambdaAttacker: lambdaAtt,
+        defenderCasualties: defCasIds,
+        attackerCasualties: attCasIds,
+        attackersRemaining: attList.length,
+        defendersRemaining: defList.length,
+      ),
+    );
 
     if (attList.isEmpty || defList.isEmpty) break;
   }

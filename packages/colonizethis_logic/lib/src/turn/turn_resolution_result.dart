@@ -197,13 +197,21 @@ class DiplomacyPhaseResult {
 }
 
 /// Sealed result of turn resolution: complete or pending human input.
+///
+/// Every variant carries the [Game] state at the point resolution finished or
+/// suspended, so callers that only need the snapshot (e.g. turn-trace exports,
+/// preview tooling) can read [game] without destructuring each variant.
 sealed class TurnResolutionResult {
   const TurnResolutionResult();
+
+  /// State at resolution completion or suspension. Every variant supplies this.
+  Game get game;
 }
 
 /// Turn resolution completed; [game] is the final state.
 class TurnResolutionComplete extends TurnResolutionResult {
   const TurnResolutionComplete(this.game, {this.turnNewsDigest});
+  @override
   final Game game;
   /// Null when [game.victory] was set this resolution (news dialog suppressed).
   final TurnNewsDigest? turnNewsDigest;
@@ -218,6 +226,7 @@ class TurnResolutionPendingOvertures extends TurnResolutionResult {
     required this.pendingOvertures,
   });
 
+  @override
   final Game game;
   final List<OvertureOffer> pendingOvertures;
 }
@@ -230,6 +239,7 @@ class TurnResolutionPendingIntervention extends TurnResolutionResult {
     required this.pendingInterventions,
   });
 
+  @override
   final Game game;
   final List<InterventionPrompt> pendingInterventions;
 }
@@ -242,6 +252,11 @@ class TurnResolutionPendingCallToArms extends TurnResolutionResult {
     required this.pendingCallToArms,
   });
 
+  @override
   final Game game;
   final List<CallToArmsPending> pendingCallToArms;
 }
+
+/// Shared read of [TurnResolutionResult.game] for turn pipeline and resolver
+/// call sites (Refs #2391 AC4).
+Game gameFromTurnResolutionResult(TurnResolutionResult result) => result.game;

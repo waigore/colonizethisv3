@@ -2,6 +2,37 @@
 
 **SPEC/program** — Single entrypoint for **repository-wide** convention checks that are not `dart analyze` / `custom_lint` (those stay IDE- and analyzer-driven).
 
+## Policy: no violation allowlists (repo lint)
+
+**Repo lint** means manifest rules (`repo.*` in `tool/ct_repo_lint_manifest.yaml`) executed by `dart run tool/ct_repo_lint.dart`.
+
+**Forbidden:** Keyed waiver data (grandfather YAML, per-path or per-symbol caps) whose purpose is to let in-scope code violate a rule’s threshold or predicate while CI still passes.
+
+**Allowed:** Scope-only wiring in `tool/ct_repo_lint_scan_contract.dart`, checker path predicates, and env such as `CT_REPO_LINT_INCLUDE_APP` that exclude whole paths—not waivers inside an analyzed file.
+
+**Do not add new violation allowlists** for any `repo.*` rule.
+
+**Implementation status (GitHub #1912, checker slice):** `repo.function_size`, `repo.control_flow_nesting_depth`, and `repo.part_unit_size` enforce universal thresholds only; they do **not** read keyed waiver YAML or other per-symbol / per-file exemption tables. Per-rule contracts: `SPEC/program/function-size.md`, `SPEC/program/control-flow-nesting-depth.md`, `SPEC/program/part-unit-size.md`.
+
+**Implementation status (GitHub #1912, checker slice):** `repo.disallowed_ast_patterns` does not use per-file suppression allowlists for sea-zone rules; in-file suppressions follow the same `ignore` / `ignore_for_file` contract as other disallowed-AST rules. The debug-console logic boundary rule uses YAML `match.kind` **`scoped_package_import_contract`** (closed URI set per scope), not the legacy identifier `package_import_allowlist`.
+
+**Implementation status (GitHub #1912, dart file size):** `repo.dart_file_non_comment_line_size` enforces a universal **1000** non-comment-line cap for scanned hand-written Dart; it skips only **generated whole paths** (suffixes `.g.dart`, `.freezed.dart`, `.mocks.dart`, `.gen.dart`, and generated Flutter l10n path prefixes under `app/lib/l10n/gen/`). Per-rule contract: `SPEC/program/dart-file-non-comment-line-size.md`.
+
+**Implementation status (GitHub #1912, game widgets file size):** `repo.game_widgets_file_size` enforces a universal **700** physical-line cap for every `.dart` file under `app/lib/features/game/widgets/**` with no keyed waivers. Per-rule contract: `SPEC/program/game-widgets-file-size.md`.
+
+**Implementation status (GitHub #1912, tech id literals):** `repo.tech_id_constants` treats the string values of every `const String kTechId*` in `packages/colonizethis_data/lib/src/tech_ids.dart` as the canonical tech-id set (replacing the prior `tech_catalog.dart` map-key scrape). `tech_catalog.dart` uses those same constants for map keys and `TechDefinition` ids so the catalog stays aligned with the checker.
+
+**Implementation status (GitHub #1912, custom exceptions):** `repo.custom_exceptions` (`tool/check_custom_exceptions.dart` + `packages/colonizethis_exception_lint`) enforces the generic-throw ban on in-scope domain files only; it does **not** read keyed waiver YAML or per-symbol / per-file exemption tables. Whole-tree scope follows `collectRepoLintDomainDartFiles` / `shouldEnforceDomainExceptions` (generated suffixes and test-path skips are scope wiring, not violation waivers). Per-rule contract: `SPEC/program/exception-enforcement.md`.
+
+**Implementation status (GitHub #1912, regression harness):** `repo.dart_file_non_comment_line_size`, `repo.game_widgets_file_size`, and `repo.repeated_magic_numbers` do not read keyed waiver YAML; repository tests place a decoy waiver-shaped file under a temporary workspace `tool/` tree and assert threshold violations still fail the run (`test/check_dart_file_non_comment_line_size_test.dart`, `test/check_game_widgets_file_size_test.dart`, `test/check_repeated_magic_numbers_test.dart`).
+
+**Implementation status (GitHub #2288, logic test file size):** `repo.logic_test_file_size` enforces the **400 physical-line** cap across every `.dart` file under `packages/colonizethis_logic/test/**` on full-tree runs and narrows to changed files when `ct_repo_lint` is invoked with an incremental baseline (`CT_REPO_LINT_BASE_SHA` in CI). The earlier #2216 deferral that skipped the rule on `incrementalCsv == null` has been removed because the `test/**` debt is cleared. The repository test `test/check_logic_test_file_size_full_tree_test.dart` asserts the full-tree scan stays green on the current repo so future regrowth fails CI.
+
+### Acceptance criteria (policy)
+
+- Given a `repo.*` rule implementation, when a maintainer audits it for waiver data, then the maintainer finds no keyed tables loaded solely to raise effective limits for specific in-scope symbols or files.
+- Given `SPEC/program/repo-lint.md`, when a contributor adds or changes a manifest rule, then the contributor does not introduce a new violation-allowlist mechanism.
+
 ## Source of truth
 
 | Artifact | Role |
@@ -9,10 +40,44 @@
 | `tool/ct_repo_lint_manifest.yaml` | Lists **rules** with stable **`rule_id`**, **group**, human title, SPEC path, and how to invoke the checker |
 | `tool/ct_repo_lint.dart` | Orchestrator: loads manifest, runs rules in order, stops on first failure |
 | `tool/ct_repo_lint_lib.dart` | Parse/execute helpers (also covered by `test/ct_repo_lint_test.dart`) |
-| `tool/ct_repo_lint_scan_contract.dart` | **Shared scan contract:** (1) `collectRepoLintDomainDartFiles` + predicates for exception / disallowed-AST **`lib/`** trees; (2) identifier-literal roots/skip helpers; (3) canonical province tile-key collection (`collectRepoLintCanonicalProvinceTileKeyDartFiles`); (4) app UI gate (`collectRepoLintAppLibDartFilesSorted`, `repoLintAppLibHardcodedUiVisitorShouldSkip`); (5) `repoLintSplitRelativeDartPathsArg` for PR incremental path lists — see `test/ct_repo_lint_scan_contract_test.dart` |
+| `tool/ct_repo_lint_scan_contract.dart` | Shared roots, skip helpers, canonical tile-key collectors, app UI path gate, PR path split — see `test/ct_repo_lint_scan_contract_test.dart` |
+| `tool/disallowed_ast_pattern_rules.dart` | Rule model + YAML parse (`parseDisallowedAstRulesFromYaml`) from `tool/disallowed_ast_patterns.yaml` (`SPEC/program/disallowed-ast-patterns.md`); consumed by `tool/check_disallowed_ast_patterns.dart` |
+| `tool/check_disallowed_ast_patterns.dart` | Config-driven AST visitor and scan CLI; rule `repo.disallowed_ast_patterns`; also invoked in-process for `repo.debug_console_logic_contract_boundary` |
 | `tool/check_repeated_magic_numbers.dart` | Repeated **hash/LCG-style** integer literals (`SPEC/program/repeated-magic-numbers.md`); rule `repo.repeated_magic_numbers` |
-| `tool/check_control_flow_nesting_depth.dart` | Control-flow nesting depth (`SPEC/program/control-flow-nesting-depth.md`); rule `repo.control_flow_nesting_depth` |
-| `tool/control_flow_nesting_depth_allowlist.yaml` | Grandfathered symbols at depth ≥4 (shrink-only; see nesting-depth SPEC) |
+| `tool/control_flow_nesting_depth_scan.dart` | Control-flow nesting visitors (`SPEC/program/control-flow-nesting-depth.md`) |
+| `tool/check_control_flow_nesting_depth.dart` | Control-flow nesting depth scan + CLI; rule `repo.control_flow_nesting_depth` |
+| `tool/check_function_size.dart` | Function measured-line threshold (`SPEC/program/function-size.md`); rule `repo.function_size` |
+| `tool/check_part_unit_size.dart` | Dart `part` fragment physical line limit (`SPEC/program/part-unit-size.md`); rule `repo.part_unit_size` |
+| `tool/check_debug_console_logic_contract_boundary.dart` | AST-enforced scoped package import contract for debug-console → logic boundary; rule `repo.debug_console_logic_contract_boundary` |
+| `tool/check_app_event_handler_scope_logic_boundary.dart` | Enforce that `app/lib/core/services/app_event_handler_scope.dart` has no direct import from `app/lib/features/game/logic/**`; rule `repo.app_event_handler_scope_logic_boundary` |
+| `tool/check_subscription_tracker.dart` | Enforce that `app/lib/features/**/*.dart` does not store subscriptions in raw `StreamSubscription` lists; use `SubscriptionTracker` for shared-lifecycle subscription cleanup; rule `repo.subscription_tracker` |
+| `tool/check_app_lib_no_suggest_work_orders.sh` | Forbid `suggestWorkOrders(` call sites under `app/lib/**` (per-unit UI uses `getAvailableWorkTargetsForUnit` / `getValidWorkOrderTileKeysWithVisibility`; Refs #2133); rule `repo.app_lib_no_broad_suggest_work_orders` |
+| `tool/check_flutter_action_pins.dart` | Enforce that every `.github/workflows/*.{yml,yaml}` step using `subosito/flutter-action@...` defines `with.flutter-version` with semantic version value **>= `3.41.9`**; rule `repo.flutter_action_pins` |
+| `tool/check_workspace_outdated_resolvable.dart` | Enforce that the #2073 outdated audit targets (repo root + every workspace member using `sdk: flutter`) are at `current == resolvable`; rule `repo.workspace_outdated_resolvable` |
+| `tool/check_workspace_outdated_latest_direct.dart` | Enforce that audited direct dependency rows are at `Latest` whenever `resolvable == latest` (repo root + every workspace member using `sdk: flutter`); rule `repo.workspace_outdated_latest_direct` |
+| `tool/check_no_flame_in_widgets.dart` | Disallow direct `package:flame/*` **import** and **export** lines (single- or double-quoted URI) under `app/lib/widgets/**`; rule `repo.no_flame_in_widgets` |
+| `tool/check_no_screen_in_game_widgets.dart` | Disallow `*_screen.dart` files under `app/lib/features/game/widgets/**`; rule `repo.no_screen_in_game_widgets` |
+| `tool/check_game_widgets_file_size.dart` | Enforce `app/lib/features/game/widgets/**` Dart files at **700 physical lines or fewer** — see `SPEC/program/game-widgets-file-size.md`; rule `repo.game_widgets_file_size` |
+| `tool/check_logic_test_file_size.dart` | Enforce `packages/colonizethis_logic/test/**` Dart files at **400 physical lines or fewer** (physical line count); rule `repo.logic_test_file_size` runs **full-tree** in `ct_repo_lint` and narrows to changed files when an incremental baseline is supplied (`CT_REPO_LINT_BASE_SHA` in CI). Originally PR-incremental only against the #2216 debt; transitioned to full-tree enforcement once the residual `test/**` violations were cleared (GitHub #2288). The dedicated `quality.yml` step for changed logic tests remains as a fast early signal on PRs. |
+| `tool/check_dart_file_non_comment_line_size.dart` | Enforce repository-wide Dart files at **1000 non-comment lines or fewer** (fail when strictly greater), excluding generated suffixes and generated l10n path prefixes — see `SPEC/program/dart-file-non-comment-line-size.md`; rule `repo.dart_file_non_comment_line_size` |
+| `tool/check_long_string_switches.dart` | Warn/fail on large string-literal switch statements/expressions (warn ≥20, fail ≥50) via manifest rule `repo.dart_long_string_switches`; uses shared repo-wide collector `collectRepoLintRepoWideDartFiles` — see `SPEC/program/show-tech-tool.md` |
+| `tool/check_land_province_bucket_keys.dart` | For guarded explore/fog/news paths, disallow local-only land-province tile-bucket lookups (`tileKeysByRegionAndProvince[region]?[localId]`); require canonical full-id buckets only; rule `repo.land_province_bucket_keys` |
+| `tool/check_logic_dual_region_province_field_access.dart` | Caps direct `oldWorld/newWorld` `provinces` / `units` references in `packages/colonizethis_logic/lib/src/**` outside canonical lookup files (`province_lookup.dart`, `unit_lookup.dart`) (GitHub #2071); rule `repo.logic_dual_region_province_field_access` — see `SPEC/program/logic-dual-region-province-access.md` |
+| `tool/check_logic_dead_files.dart` | Unreferenced `lib/src` scan for `colonizethis_logic`; rule `repo.logic_dead_files` — see subsection below |
+| `tool/check_logic_dedup_logger.dart` | Forbid private `final _log = packageLogger();` declarations under `packages/colonizethis_logic/lib/src/**` (Refs #2391, Pattern 1); files MUST consume the shared `logicLog` from `package:colonizethis_logic/package_logger.dart`; rule `repo.logic_dedup_logger` |
+| `tool/check_app_no_duplicate_helpers.dart` | AST scan that pins **canonical helper symbols** extracted for #2180 (e.g. `eraRoman`, `techCategoryLabelL10n`, `commodityDisplayName`, the `trainDialog*` set) to one canonical file under `app/lib/**` and forbids reappearance of the previous private duplicates (`_eraRoman`, `_categoryLabel`, `_categoryLabelL10n`, `_commodityDisplayName`) anywhere as top-level functions or class methods (GitHub #2180); rule `repo.app_no_duplicate_helpers` |
+
+### `repo.logic_dead_files` (colonizethis_logic `lib/src` orphans)
+
+**Goal (GitHub #2201):** Fail CI when a hand-written Dart file under `packages/colonizethis_logic/lib/src/**` is neither reachable from the package `lib/**` import graph nor reachable from any **barrel** entrypoint (`packages/colonizethis_logic/lib/*.dart`) via `export` edges.
+
+**Predicate:** A file under `lib/src` is **dead** when all are true: it is not a `part of` target; it is not imported (directly or transitively from parsed `import`/`export`/`part` directives) by any file under `packages/colonizethis_logic/lib/**`; and it is not on the export-reachability closure rooted at every `lib/*.dart` top-level barrel plus any `lib/src` file already imported by `lib/**`.
+
+**Test imports:** Imports from `packages/colonizethis_logic/test/**` do **not** make a `lib/src` file live.
+
+**Deferred paths:** `lib/src/ai/ai_planner.dart` and `lib/src/ai/sim_game_ai.dart` are temporarily exempt in `tool/check_logic_dead_files.dart` until product wiring or deletion is decided (issue #2201); the checker still lists them in the pass message when they are the only findings.
+
+**Consumer note:** The root barrel may export setup/dossier/world modules that are not referenced by `app/` or `colonizethis_ai/` today; that keeps tests on a single `package:colonizethis_logic/colonizethis_logic.dart` import. Narrowing those exports is optional maintenance, not required for the dead-file rule.
 
 ## Rule IDs and groups
 
@@ -22,12 +87,75 @@ Each rule has a stable `rule_id` (prefix `repo.`). **Groups** (non-exhaustive): 
 
 ## CI contract
 
-- **Quality workflow:** One step runs `dart run tool/ct_repo_lint.dart` after OrderEngine codegen verification. Gates that are **not** bundled repo-lint rules stay separate (e.g. `tool/verify_order_engine_codegen.sh`, coverage thresholds, `custom_lint`, package tests).
+- **Quality workflow (order):** After root `dart pub get`, **`dart run tool/run_workspace_analyze_errors_only.dart`** runs **`flutter pub get`** then **`flutter gen-l10n`** (when **`l10n.yaml`** exists) in each **Flutter** workspace package, then **`dart analyze`** or **`flutter analyze`** for **every** `dart pub workspace list` member **except the workspace host root** (`colonizethis` at repo root — skipped because `dart analyze` there would traverse nested `app/` without package context and false-fail on generated l10n). The step **fails only on analyzer `error` diagnostics** (warnings and infos do not fail), matching `tool/run_quality_gate_tests.sh`. The **repo-root** `colonizethis` package also excludes **`test/**`** in `analysis_options.yaml` (checker harness fixtures). Entrypoint: `tool/run_workspace_analyze_errors_only.dart`; Melos: `melos run workspace_analyze_errors_only`. Then **`tool/verify_order_engine_codegen.sh`**, then **`dart run tool/ct_repo_lint.dart`**. Gates that are **not** bundled repo-lint rules stay separate (e.g. coverage thresholds, `custom_lint`, package tests).
 - **App UI string gate:** Rule `repo.app_hardcoded_ui_strings` runs only when `CT_REPO_LINT_INCLUDE_APP` is exactly `true` (workflow sets this from path filters when app/package paths changed).
+- **`app_tests_cache` job:** Still runs **`flutter analyze`** under `app/` only (errors-only grep) before packing the test cache; redundant with the app slice of the workspace gate but keeps an early signal for app-only paths.
+
+## Test and `integration_test/` static analysis scope (GitHub #2014)
+
+**Goal:** `test/` and `integration_test/` Dart are **first-class** for the same categories of static gates as `lib/` where the toolchain and rule design apply. **Generated code, goldens, fixtures, and similar trees stay excluded** (see [Shared exclusions](#shared-exclusions-testintegration_test-generation-and-fixtures)).
+
+**Phasing:** Land in **at most five mergeable slices** on `dev`. Each merged slice **must keep required CI green**. Do **not** widen **fatal** enforcement under `test/` / `integration_test/` (manifest rules, `ct_repo_lint_scan_contract` collectors, binary AST checkers) unless violations are **fixed in the same PR** **or** an intermediate slice uses a **SPEC-documented** non-fatal / audit / baseline mechanism for that transition (recorded in this doc or the rule’s SPEC with an issue link).
+
+### Failure semantics (do not conflate)
+
+| Mechanism | CI interpretation |
+|-----------|---------------------|
+| **`dart analyze` / `flutter analyze`** (**when CI uses error-only parsing**) | Fail the job only on **analyzer `error` severity** lines; **warnings and infos do not fail** the gate unless project policy explicitly changes. |
+| **`dart run tool/ct_repo_lint.dart`** and manifest-driven `runner` rules | **Binary pass/fail** per rule design (`exit` non-zero on violation); not governed by “analyzer errors only.” |
+| **`custom_lint` / `dart run custom_lint`** | Treat as **analyzer diagnostics** (same severity model as `dart analyze` for the plugin); CI should match the wired script’s contract (see [exception-enforcement.md](exception-enforcement.md)). |
+| **Standalone AST scripts** | **Binary** on their own thresholds unless a SPEC says otherwise. |
+
+### Shared exclusions (test/integration_test, generation, fixtures)
+
+Across tools that intentionally share skip logic, exclude at minimum:
+
+- Suffixes: `*.g.dart`, `*.freezed.dart`, `*.mocks.dart`, `*.gen.dart` (and any other generated suffixes called out per package).
+- Path fragments (fixture / golden trees): see `repoLintFixtureDirPathMarkers` in `tool/ct_repo_lint_scan_contract.dart` (`/test_data/`, `/fixtures/`, `/golden/`, etc.) wherever that helper applies.
+
+`tool/check_long_string_switches.dart` runs as manifest rule `repo.dart_long_string_switches` and uses the shared repo-wide collector in `tool/ct_repo_lint_scan_contract.dart` (`collectRepoLintRepoWideDartFiles` + `repoLintRepoWideDartCollectorShouldSkip`) to preserve broad coverage while centralizing exclusions (`.dart_tool`, `.pub-cache`, `build`, generated suffixes, and tech embed path).
+
+### Scan contract vs lib-only checkers (GitHub #2014)
+
+**Domain collector** `collectRepoLintDomainDartFiles` in `tool/ct_repo_lint_scan_contract.dart` includes workspace **`packages/*/lib|test|integration_test`**, **`app/lib|test|integration_test`**, **`ctdev/lib|test`**, and **`tool/**`** Dart that passes `repoLintPathIsDomainLibSourceForScan` or `repoLintPathIsDomainTestOrIntegrationTestSourceForScan`: generated suffixes and `repoLintFixtureDirPathMarkers` paths are excluded; **repo-root `test/**`** (checker/tool tests) stays excluded so those files do not run production AST rules. Checkers using it include (non-exhaustive): `check_disallowed_ast_patterns`, `check_custom_exceptions`, `check_function_size`, `check_part_unit_size`, `check_control_flow_nesting_depth`; `check_debug_console_logic_contract_boundary` delegates to the disallowed-AST checker. Per-file guards in `check_disallowed_ast_patterns` use **`repoLintPathShouldSkipAstRuleFile`** (same exclusions except package `test/` is analyzed). `check_repeated_magic_numbers` remains scoped by its own SPEC (`SPEC/program/repeated-magic-numbers.md`) and excludes test trees.
+
+**Identifier-literal helpers** `repoLintIdentifierLiteralShouldSkipFile` and **canonical tile-key** `collectRepoLintCanonicalProvinceTileKeyDartFiles` / `repoLintCanonicalProvinceTileKeyShouldSkipFile` use roots **`app`**, **`packages`**, **`ctdev`**, **`tool`** and include **`lib/`**, **`test/`**, and **`integration_test/`** under those trees (still skipping generated, repo-root `test/`, and fixture markers). **App hardcoded UI strings** remain **`app/lib/**` only** via `collectRepoLintAppLibDartFilesSorted` / `repoLintAppLibHardcodedUiVisitorShouldSkip` (production UI surface).
+
+### CI workflow parity
+
+**Today:** `.github/workflows/quality.yml` is the **only** workflow (as of the #2014 documentation slice) that runs `ct_repo_lint`, domain `custom_lint`, and (in `app_tests_cache`) `flutter analyze`. Any **additional** workflow that runs the same class of checks **must** match the **scope and exclusions** documented here.
+
+**Workspace analyzer:** Implemented — see [CI contract](#ci-contract) (`quality` job, `tool/run_workspace_analyze_errors_only.dart`).
+
+### Acceptance criteria (#2014 documentation)
+
+- Given this section and CONTRIBUTING, when a maintainer widens a fatal repo rule to `test/`, then the change either **co-fixes violations** in the same PR or documents an allowed **audit/baseline** transition in SPEC with tracking reference.
+- Given `.github/workflows/quality.yml`, when a contributor adds a new job that runs `ct_repo_lint`, domain `custom_lint`, or package analyze steps, then that job follows the **failure semantics** table above and the **exclusion** rules in this section unless a narrower rule SPEC explicitly overrides.
+- Given manifest rule `repo.dart_long_string_switches`, when triaging #2014, then implementers treat long-string switch coverage as **already including tests** unless a deliberate SPEC change narrows scope.
+
+### Phased roadmap (GitHub #2014, ≤5 mergeable slices)
+
+Each slice must leave **`dev` required checks green**. Order matters: do **not** widen fatal repo-lint or scan-contract scope to `test/` / `integration_test/` until violations are fixed in the same PR or a SPEC-approved non-fatal transition exists.
+
+| Slice | Scope | Status on `dev` (authoritative: workflow + tools) |
+|-------|--------|-----------------------------------------------------|
+| **1** | SPEC, CONTRIBUTING, testing-rule cross-links: scope, exclusions, mergeability, analyzer vs binary semantics, workflow job names | **Documented** — this table + CI contract above; other workflows audited (see below). |
+| **2** | **`custom_lint`:** zero analyzer **error**-severity issues in `test/` and `integration_test/` for every package wired by `tool/run_custom_lint_domain_exceptions.sh` (same bar as `lib/`) | **CI enforced** — Quality runs the script after `ct_repo_lint`; fix violations in the same PR as any tightening. |
+| **3** | **`dart analyze` / `flutter analyze`:** every Pub workspace package analyzed with test trees; **errors-only** gate | **CI enforced** — `quality` runs `dart run tool/run_workspace_analyze_errors_only.dart` after `dart pub get` (skips the **workspace host root** package; runs **`flutter pub get`** then **`flutter gen-l10n`** for Flutter packages with **`l10n.yaml`**); `app_tests_cache` keeps an early **`flutter analyze`** under `app/` only (redundant for app but preserves cache-job signal). When test-relevant paths change, **`app_build_linux`** runs **`flutter build linux --release --no-pub`** after restoring the same cache artifact (compile gate for the Linux desktop target). Local: `tool/run_quality_gate_tests.sh` includes the same workspace step. |
+| **4** | **`ct_repo_lint` + manifest:** `collectRepoLintDomainDartFiles` includes package **`test/`** and **`integration_test/`** (and identifier-literal / canonical tile-key collectors include **`ctdev`** roots); violations fixed in the same change set | **Implemented** — see [Scan contract vs lib-only checkers](#scan-contract-vs-lib-only-checkers-github-2014). |
+| **5** | **AST checkers** using the scan contract: per-file skip uses **`repoLintPathShouldSkipAstRuleFile`**; contract tests cover inclusion/exclusion | **Implemented** — `test/ct_repo_lint_scan_contract_test.dart`. |
+
+Slices **4** and **5** may be **one PR** if scan-contract changes and checker fixes ship together, staying within the five-slice budget.
+
+### Workflow audit (parity with #2014)
+
+Only **`.github/workflows/quality.yml`** runs **`dart run tool/run_workspace_analyze_errors_only.dart`**, **`dart run tool/ct_repo_lint.dart`**, or **`bash tool/run_custom_lint_domain_exceptions.sh`**. A repository search of `.github/workflows/*.yml` for those strings finds no other matches as of the slice-1 documentation update. Any **new** workflow that runs the same class of checks must match **scope**, **exclusions**, and the **failure semantics** table in this section.
 
 ## PR incremental scans
 
 Rules marked `pr_incremental: true` in the manifest receive `--files <csv>` when `GITHUB_BASE_REF` is set and `git fetch` / `git diff origin/<base>...HEAD -- '*.dart'` succeeds and yields paths—matching the previous inline `quality.yml` behavior. Use `--force-full-scan` to disable incremental arguments locally or in scripts.
+
+Checker CLIs that accept `--files` / `--files=` should use `repoLintSplitRelativeDartPathsArg` in `tool/ct_repo_lint_scan_contract.dart` for splitting. Checkers that **ignore** unknown argv tokens use `repoLintParseIncrementalRelativeDartPathsFromArgs`; checkers that accept **only** `--files` / `--files=` use `repoLintParseStrictIncrementalFilesArgs`, or `repoLintStrictIncrementalFilesArgListOrExit` when they print the shared `ERROR:` stderr lines and exit 2 on parse failure (see `test/ct_repo_lint_scan_contract_test.dart`).
 
 ## Adding or changing rules
 
@@ -35,7 +163,7 @@ Do **not** add new top-level `tool/check_*.dart` **entrypoints** for CI without 
 
 1. Add a row under `rules:` in `tool/ct_repo_lint_manifest.yaml` with a new stable `rule_id`.
 2. Implement or extend logic in a **library** or existing checker module; expose `int runCheck…(String repoRoot, …)` for `ct_repo_lint_lib.dart` to call in-process, keep a thin `main()` that `exit(runCheck…(…))` for `dart run`, and register the manifest row. Add a `switch` arm in `_tryRunDartRuleInProcess` when introducing a new stable `rule_id`.
-3. When a new checker scans the **same domain `lib/` tree** as exception / disallowed-AST enforcement, reuse **`collectRepoLintDomainDartFiles`** (and related predicates) from **`tool/ct_repo_lint_scan_contract.dart`**. When it matches **tech / work-target / civilian** literal scans (`app`, `packages`, `tool` trees, `lib/`-gated, fixture-dir markers), reuse **`repoLintIdentifierLiteralScanRoots`** and **`repoLintIdentifierLiteralShouldSkipFile`** with a checker-local `excludedPaths` set. For **canonical province `targetTileKey`** coverage, reuse **`collectRepoLintCanonicalProvinceTileKeyDartFiles`** (tests/generated + checker excludes only — not fixture-dir markers). For **`app/lib` UI copy**, reuse **`collectRepoLintAppLibDartFilesSorted`** and **`repoLintAppLibHardcodedUiVisitorShouldSkip`**.
+3. Reuse `collectRepoLintDomainDartFiles` and related helpers from `ct_repo_lint_scan_contract.dart` when scanning the same domain trees (`lib/`, `test/`, `integration_test/` per contract); reuse identifier-literal roots/skip helpers, canonical province tile-key collectors, and app UI lib helpers where they match the checker’s domain (see contract tests).
 4. Align wording with `colonizethis_exception_lint` (and similar) when the same policy exists in the analyzer.
 
 ## CLI options
@@ -44,9 +172,8 @@ Do **not** add new top-level `tool/check_*.dart` **entrypoints** for CI without 
 
 ### SARIF (GitHub annotations / code scanning)
 
-- **`--sarif <path>`** or **`--sarif=-`** (stdout): after the run, write **SARIF 2.1.0** with one **result** per failed rule (`level: error`, `message` points to full log for file:line detail). The tool **runs all selected rules** when SARIF is requested (it does not stop at the first failure) so the report lists every failing gate. Checker **stdout** is relayed to **stderr** in this mode so the SARIF stream (file or `-`) stays valid JSON.
-- **`--list` and `--sarif` are mutually exclusive.**
-- Upload in CI (optional): e.g. `github/codeql-action/upload-sarif` with the generated file; wire paths and permissions per GitHub’s current docs.
+- **`--sarif <path>`** or **`--sarif=-`**: write **SARIF 2.1.0** (one result per failed rule); runs all selected rules; checker stdout goes to stderr so JSON stays valid. **`--list` and `--sarif` are mutually exclusive.**
+- Optional CI upload via `github/codeql-action/upload-sarif` per GitHub docs.
 
 ## Follow-ups (out of scope for initial landing)
 
@@ -57,3 +184,19 @@ Do **not** add new top-level `tool/check_*.dart` **entrypoints** for CI without 
 
 - Given the repository root as cwd, when CI runs `dart run tool/ct_repo_lint.dart` with the workflow env, then all manifest rules applicable to that job execute and failures surface with `rule_id` in the orchestrator banner.
 - Given a contributor adds a convention, when they follow CONTRIBUTING and this doc, then they register the rule in the manifest rather than adding a new standalone Quality workflow step for the same concern.
+- Given the [Policy: no violation allowlists](#policy-no-violation-allowlists-repo-lint) section, when `repo.function_size`, `repo.control_flow_nesting_depth`, or `repo.part_unit_size` runs, then that checker does not load keyed waiver data and the matching per-rule SPEC documents universal enforcement only.
+- Given the same policy section, when `repo.custom_exceptions` runs, then that checker does not load keyed waiver data and `SPEC/program/exception-enforcement.md` documents enforcement with scope-only skips (generated suffixes, test paths, and the shared domain file collector) only.
+- Given app game feature code, when `dart run tool/ct_repo_lint.dart` runs rule `repo.no_screen_in_game_widgets`, then no file matching `*_screen.dart` exists under `app/lib/features/game/widgets/**`.
+- Given app game widget Dart files under `app/lib/features/game/widgets/**`, when `dart run tool/ct_repo_lint.dart` runs rule `repo.game_widgets_file_size`, then each scanned file has at most 700 physical lines, the run fails listing each violating path when any file exceeds 700, and the checker does not load keyed waiver data.
+- Given repository Dart files excluding generated suffixes (`.g.dart`, `.freezed.dart`, `.mocks.dart`, `.gen.dart`) and generated app l10n paths under `app/lib/l10n/gen/` matching the checker’s prefix list, when `dart run tool/ct_repo_lint.dart` runs rule `repo.dart_file_non_comment_line_size`, then each remaining scanned file has at most 1000 non-comment lines and the run fails while listing every violating file when any file is strictly greater than 1000.
+- Given the [Policy: no violation allowlists](#policy-no-violation-allowlists-repo-lint) section, when `repo.repeated_magic_numbers` runs, then that checker does not load keyed waiver data; a decoy keyed-waiver-shaped YAML file under `tool/` must not suppress fail-level repeated-literal violations for in-scope domain sources (see `SPEC/program/repeated-magic-numbers.md` and `test/check_repeated_magic_numbers_test.dart`).
+- Given `packages/colonizethis_debug_console/lib/**` imports only `colonizethis_logic` URIs in the rule's closed `allowed_imports` contract set, when `dart run tool/ct_repo_lint.dart` runs rule `repo.debug_console_logic_contract_boundary`, then the rule passes without violations.
+- Given any debug-console file imports `package:colonizethis_logic/src/**` or another `package:colonizethis_logic/...` URI outside that closed contract set, when repo lint runs rule `repo.debug_console_logic_contract_boundary`, then the run fails and reports file path, line, and disallowed import context in checker output.
+- Given `app/lib/core/services/app_event_handler_scope.dart` has no direct imports from `package:colonizethis_app/features/game/logic/**`, when repo lint runs rule `repo.app_event_handler_scope_logic_boundary`, then the rule passes without violations.
+- Given `app/lib/core/services/app_event_handler_scope.dart` directly imports any `package:colonizethis_app/features/game/logic/**` path, when repo lint runs rule `repo.app_event_handler_scope_logic_boundary`, then the run fails and reports file path and line number.
+- Given app feature Dart files under `app/lib/features/**`, when repo lint runs rule `repo.subscription_tracker`, then no code line declares a raw `List<StreamSubscription<...>>` or inferred `<StreamSubscription<...>>[]` list, and the run fails with file path and line number when any such list is present.
+- Given any `.github/workflows/*.{yml,yaml}` file contains a step with `uses: subosito/flutter-action@...`, when repo lint runs rule `repo.flutter_action_pins`, then the step includes `with.flutter-version` as a valid semantic version and that value is greater than or equal to `3.41.9`; the rule fails when the pin is missing, invalid, or below the minimum.
+- Given the #2073 workspace outdated audit targets (repo root plus every workspace member whose `pubspec.yaml` declares `sdk: flutter`), when repo lint runs rule `repo.workspace_outdated_resolvable`, then each package row reports `current` equal to `resolvable` and the run fails listing package root/name/version deltas when any row is below `Resolvable`.
+- Given the #2073 workspace outdated audit targets (repo root plus every workspace member whose `pubspec.yaml` declares `sdk: flutter`), when repo lint runs rule `repo.workspace_outdated_latest_direct`, then every `kind: direct` or `kind: dev` row where `resolvable == latest` reports `current == latest`, and the run fails listing package root/name/version deltas when any direct row is below Latest despite Latest already being resolvable.
+- Given `packages/colonizethis_logic/lib/src/**` Dart sources excluding `world/province_lookup.dart` and `world/unit_lookup.dart`, when repo lint runs rule `repo.logic_dual_region_province_field_access`, then at most 28 physical lines contain `oldWorld.provinces`, `newWorld.provinces`, `oldWorld.units`, `newWorld.units`, or manual `if (regionId == kRegionOldWorld)` / `else if (regionId == kRegionOldWorld)` branching, and the checker does not use keyed waiver tables (whole-file exclusion of canonical helper files only).
+- Given `app/lib/**/*.dart` Dart sources excluding generated suffixes (`*.g.dart`, `*.freezed.dart`, `*.mocks.dart`, `*.gen.dart`), generated app l10n paths under `app/lib/l10n/gen/`, the Widgetbook entrypoint `app/lib/widgetbook.dart` and catalog stories under `app/lib/widgetbook/`, the E2E expected-line snapshots under `app/lib/test_support/`, test paths, and any path containing a fixture / golden marker (`/test_data/`, `/fixtures/`, `/golden/`, …), when `dart run tool/ct_repo_lint.dart` runs rule `repo.app_no_duplicate_helpers`, then each tracked canonical helper symbol from #2180 (`eraRoman` and `techCategoryLabelL10n` in `app/lib/features/game/utils/tech_ui_helpers.dart`; `commodityDisplayName` in `app/lib/features/game/utils/commodity_ui_helpers.dart`; the `trainDialog*` and `*TrainDialog*` set in `app/lib/features/game/widgets/train_unit_dialog_helper.dart`) is declared as a top-level function only in its canonical file, no removed private helper (`_eraRoman`, `_categoryLabel`, `_categoryLabelL10n`, `_commodityDisplayName`) appears as a top-level function or class method anywhere in the scanned tree, the run fails listing every offending file path and start line when any tracked symbol redefinition or removed-helper reappearance is found, and the checker does not load keyed waiver tables (whole-file exclusion of generated/l10n/widgetbook/test_support/fixture paths only per this section).

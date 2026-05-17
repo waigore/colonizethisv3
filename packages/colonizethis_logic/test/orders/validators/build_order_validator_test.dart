@@ -1,36 +1,21 @@
-import 'package:colonizethis_test/test.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
+import 'package:colonizethis_logic/src/orders/validators/stateful_validator.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
+import 'package:colonizethis_test/test.dart';
+
+import '../../test_fixtures.dart';
 
 void main() {
   group('BuildOrderValidator', () {
     test('validate returns rejected when previousRejected is true', () {
-      final game = Game(
-        id: 'g1',
-        worldState: WorldState(
-          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-          oldWorld: RegionData(
-            provinces: [
-              Province(id: 'oldWorld|p1', regionId: 'oldWorld', ownerId: 'gp1'),
-            ],
-          ),
-          newWorld: const RegionData(),
-        ),
-        players: [
-          Player(
-            id: 'gp1',
-            displayName: 'P',
-            isHuman: true,
-            capitalProvinceId: 'oldWorld|p1',
-          ),
-        ],
-      );
+      final game = TestFixtures.gameWithSingleOwnedProvince(id: 'g1');
       final validator = BuildOrderValidator(
         game: game,
         player: game.players.first,
       );
+      expect(validator, isA<StatefulValidator>());
       final order = BuildUnitOrder(
-        unitType: 'Builder',
+        unitType: kUnitTypeBuilder,
         isMilitary: false,
         spawnProvinceId: 'oldWorld|p1',
       );
@@ -40,33 +25,16 @@ void main() {
     });
 
     test('civilian build is rejected when capital tile cannot be resolved', () {
-      final game = Game(
+      final game = TestFixtures.gameWithSingleOwnedProvince(
         id: 'g2',
-        worldState: WorldState(
-          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-          oldWorld: RegionData(
-            provinces: [
-              Province(id: 'oldWorld|p1', regionId: 'oldWorld', ownerId: 'gp1'),
-            ],
-          ),
-          newWorld: const RegionData(),
-        ),
-        players: [
-          const Player(
-            id: 'gp1',
-            displayName: 'P',
-            isHuman: true,
-            capitalProvinceId: 'oldWorld|p1',
-            treasury: 999,
-          ),
-        ],
+        treasury: 999,
       );
       final validator = BuildOrderValidator(
         game: game,
         player: game.players.first,
       );
       final order = BuildUnitOrder(
-        unitType: 'Builder',
+        unitType: kUnitTypeBuilder,
         isMilitary: false,
         spawnProvinceId: 'oldWorld|p1',
       );

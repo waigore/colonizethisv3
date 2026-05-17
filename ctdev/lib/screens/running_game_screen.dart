@@ -1,11 +1,14 @@
 import 'dart:math' as math;
 
+import 'package:colonizethis_logic/ai_api.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
+import 'package:colonizethis_logic/src/ai/simple_ai_heuristics.dart';
 import 'package:colonizethis_map/colonizethis_map.dart';
 import 'package:ctdev/package_logger.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
 
+import '../ct_debug_console.dart';
 import '../ctdev_log.dart';
 import '../debug_map_painter.dart';
 import '../player_view_map_painter.dart';
@@ -61,6 +64,7 @@ class _RunningGameScreenState extends State<RunningGameScreen>
       baseSeed: widget.baseSeed,
       useSimGameAi: widget.useSimGameAi,
       useFullAI: widget.useFullAI,
+      turnTraceEnabled: kCtDebugConsoleEnabled,
     );
     _viewData = buildInitGameMapViewData(
       game: _controller.game,
@@ -698,7 +702,13 @@ class _RunningGameScreenState extends State<RunningGameScreen>
             final origin = unit != null
                 ? provinceLabelInRegion(regionId, unit.locationProvinceId)
                 : '?';
-            final dest = provinceLabelInRegion(regionId, o.destinationProvinceId);
+            final destTile = o.destinationTileKey;
+            final destRegion =
+                Unit.regionIdFromTileKey(destTile) ?? regionId;
+            final destProv = Unit.provinceIdFromTileKey(destTile);
+            final dest = destProv != null
+                ? provinceLabelInRegion(destRegion, destProv)
+                : destTile;
             return Padding(
               padding: const EdgeInsets.only(left: 8, top: 2),
               child: Text('$unitLabel: $origin → $dest', style: Theme.of(context).textTheme.bodySmall),
@@ -803,9 +813,9 @@ class _RunningGameScreenState extends State<RunningGameScreen>
   }
 
   static const _civilianUnitCapabilities = {
-    'Explorer': 'Prospect, explore',
-    'Builder': 'Develop tile',
-    'Engineer': 'Build road, port, fort',
+    kUnitTypeExplorer: 'Prospect, explore',
+    kUnitTypeBuilder: 'Develop tile',
+    kUnitTypeEngineer: 'Build road, port, fort',
   };
 }
 

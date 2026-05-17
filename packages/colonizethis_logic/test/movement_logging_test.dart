@@ -1,16 +1,16 @@
 import 'package:colonizethis_test/test.dart';
-import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:logger/logger.dart';
 
-List<String> _movementMessages(List<LogEvent> events) => [
+List<String> _civilianMovementMessages(List<LogEvent> events) => [
       for (final e in events)
-        if (e.message.contains('logic: movement')) e.message,
+        if (e.message.contains('logic:') && e.message.contains('civilian'))
+          e.message,
     ];
 
 void main() {
-  group('movement logging', () {
+  group('civilian tile movement logging', () {
     late List<LogEvent> capturedEvents;
     late void Function(LogEvent) listener;
 
@@ -27,52 +27,46 @@ void main() {
       Logger.level = Level.info;
     });
 
-    test('applyMoveOrdersToRegion emits movement apply summary (info)', () {
-      const regionId = 'oldWorld';
-      final topology = MapTopology(
-        nodes: const [
-          TopologyNode(id: 'P1', regionId: regionId, type: TopologyNodeType.province),
-          TopologyNode(id: 'P2', regionId: regionId, type: TopologyNodeType.province),
-        ],
-        edges: const [
-          TopologyEdge(id1: 'P1', id2: 'P2'),
-        ],
-      );
-
-      final region = RegionData(
-        provinces: const [
-          Province(id: 'P1', regionId: regionId, ownerId: 'p1'),
-          Province(id: 'P2', regionId: regionId, ownerId: 'p2'),
-        ],
-        units: [
-          Unit(
-            id: 'u1',
-            type: 'Regiment',
-            ownerId: 'p1',
-            locationProvinceId: 'P1',
+    test('applyCivilianTileMoveOrdersToWorldRegions emits apply summary (info)', () {
+      const ow = 'oldWorld';
+      final game = Game(
+        id: 'g',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+          oldWorld: RegionData(
+            provinces: const [
+              Province(id: 'oldWorld|P1', regionId: ow, ownerId: 'p1'),
+              Province(id: 'oldWorld|P2', regionId: ow, ownerId: 'p1'),
+            ],
+            units: [
+              Unit(
+                id: 'u1',
+                type: kUnitTypeMerchant,
+                ownerId: 'p1',
+                locationProvinceId: 'oldWorld|P1',
+                tileKey: 'oldWorld|P1|0|0',
+              ),
+            ],
           ),
-        ],
+          newWorld: const RegionData(),
+        ),
+        players: const [Player(id: 'p1', displayName: 'P1', isHuman: true)],
       );
 
-      final orders = {
-        'p1': [
-          const MoveOrder(unitId: 'u1', destinationProvinceId: 'P2'),
-        ],
-      };
-
-      applyMoveOrdersToRegion(
-        region,
-        topology,
-        orders,
-        regionId: regionId,
+      applyCivilianTileMoveOrdersToWorldRegions(
+        game,
+        {
+          'p1': [
+            const MoveOrder(unitId: 'u1', destinationTileKey: 'oldWorld|P2|0|0'),
+          ],
+        },
       );
 
-      final movement = _movementMessages(capturedEvents);
+      final lines = _civilianMovementMessages(capturedEvents);
       expect(
-        movement.any(
+        lines.any(
           (m) =>
-              m.contains('logic: movement apply') &&
-              m.contains('regionId=$regionId') &&
+              m.contains('civilian tile movement apply') &&
               m.contains('orders=1') &&
               m.contains('applied=1') &&
               m.contains('ignored=0'),
@@ -81,118 +75,47 @@ void main() {
       );
     });
 
-    test('applyMoveOrdersToRegion emits invalid_adjacency at debug when move rejected',
+    test('applyCivilianTileMoveOrdersToWorldRegions emits unit_not_found at debug',
         () {
-      const regionId = 'oldWorld';
-      final topology = MapTopology(
-        nodes: const [
-          TopologyNode(id: 'P1', regionId: regionId, type: TopologyNodeType.province),
-          TopologyNode(id: 'P2', regionId: regionId, type: TopologyNodeType.province),
-          TopologyNode(id: 'P3', regionId: regionId, type: TopologyNodeType.province),
-        ],
-        edges: const [
-          TopologyEdge(id1: 'P1', id2: 'P2'),
-        ],
-      );
-
-      final region = RegionData(
-        provinces: const [
-          Province(id: 'P1', regionId: regionId, ownerId: 'p1'),
-          Province(id: 'P2', regionId: regionId, ownerId: 'p2'),
-          Province(id: 'P3', regionId: regionId, ownerId: 'p2'),
-        ],
-        units: [
-          Unit(
-            id: 'u1',
-            type: 'Regiment',
-            ownerId: 'p1',
-            locationProvinceId: 'P1',
+      const ow = 'oldWorld';
+      final game = Game(
+        id: 'g',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+          oldWorld: RegionData(
+            provinces: const [
+              Province(id: 'oldWorld|P1', regionId: ow, ownerId: 'p1'),
+            ],
+            units: const [],
           ),
-        ],
-      );
-
-      final orders = {
-        'p1': [
-          const MoveOrder(unitId: 'u1', destinationProvinceId: 'P3'),
-        ],
-      };
-
-      applyMoveOrdersToRegion(
-        region,
-        topology,
-        orders,
-        regionId: regionId,
-      );
-
-      final movement = _movementMessages(capturedEvents);
-      expect(
-        movement.any(
-          (m) =>
-              m.contains('logic: movement ignored') &&
-              m.contains('reason=invalid_adjacency'),
+          newWorld: const RegionData(),
         ),
-        isTrue,
+        players: const [Player(id: 'p1', displayName: 'P1', isHuman: true)],
       );
+
+      applyCivilianTileMoveOrdersToWorldRegions(
+        game,
+        {
+          'p1': [
+            const MoveOrder(unitId: 'missing', destinationTileKey: 'oldWorld|P1|0|0'),
+          ],
+        },
+      );
+
+      final lines = _civilianMovementMessages(capturedEvents);
       expect(
-        movement.any(
+        lines.any(
           (m) =>
-              m.contains('logic: movement apply') &&
-              m.contains('orders=1') &&
-              m.contains('applied=0') &&
-              m.contains('ignored=1'),
-        ),
-        isTrue,
-      );
-    });
-
-    test('applyMoveOrdersToRegion emits unit_not_found at debug when unit absent',
-        () {
-      const regionId = 'oldWorld';
-      final topology = MapTopology(
-        nodes: const [
-          TopologyNode(id: 'P1', regionId: regionId, type: TopologyNodeType.province),
-          TopologyNode(id: 'P2', regionId: regionId, type: TopologyNodeType.province),
-        ],
-        edges: const [
-          TopologyEdge(id1: 'P1', id2: 'P2'),
-        ],
-      );
-
-      final region = RegionData(
-        provinces: const [
-          Province(id: 'P1', regionId: regionId, ownerId: 'p1'),
-          Province(id: 'P2', regionId: regionId, ownerId: 'p2'),
-        ],
-        units: const [],
-      );
-
-      final orders = {
-        'p1': [
-          const MoveOrder(unitId: 'missing', destinationProvinceId: 'P2'),
-        ],
-      };
-
-      applyMoveOrdersToRegion(
-        region,
-        topology,
-        orders,
-        regionId: regionId,
-      );
-
-      final movement = _movementMessages(capturedEvents);
-      expect(
-        movement.any(
-          (m) =>
-              m.contains('logic: movement ignored') &&
+              m.contains('civilian movement ignored') &&
               m.contains('reason=unit_not_found') &&
               m.contains('unitId=missing'),
         ),
         isTrue,
       );
       expect(
-        movement.any(
+        lines.any(
           (m) =>
-              m.contains('logic: movement apply') &&
+              m.contains('civilian tile movement apply') &&
               m.contains('orders=1') &&
               m.contains('applied=0') &&
               m.contains('ignored=1'),
@@ -200,5 +123,43 @@ void main() {
         isTrue,
       );
     });
+
+    test(
+      'applyCivilianTileMoveOrdersToWorldRegions skips per-order debug work '
+      'when Logger.level is info',
+      () {
+        Logger.level = Level.info;
+        const ow = 'oldWorld';
+        final game = Game(
+          id: 'g',
+          worldState: WorldState(
+            turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+            oldWorld: RegionData(
+              provinces: const [
+                Province(id: 'oldWorld|P1', regionId: ow, ownerId: 'p1'),
+              ],
+              units: const [],
+            ),
+            newWorld: const RegionData(),
+          ),
+          players: const [Player(id: 'p1', displayName: 'P1', isHuman: true)],
+        );
+
+        applyCivilianTileMoveOrdersToWorldRegions(
+          game,
+          {
+            'p1': [
+              const MoveOrder(unitId: 'missing', destinationTileKey: 'oldWorld|P1|0|0'),
+            ],
+          },
+        );
+
+        final lines = _civilianMovementMessages(capturedEvents);
+        expect(
+          lines.any((m) => m.contains('civilian movement ignored')),
+          isFalse,
+        );
+      },
+    );
   });
 }

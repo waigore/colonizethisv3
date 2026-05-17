@@ -138,13 +138,6 @@ List<String> neighborProvinceLocalIds(
   return neighborProvinceIdsInRegion(topology, regionId, localId).toList();
 }
 
-String? _ownerOfProvince(Game game, String fullProvinceId) {
-  for (final p in allProvinces(game.worldState)) {
-    if (p.id == fullProvinceId) return p.ownerId;
-  }
-  return null;
-}
-
 /// Reactive dialogue when a human builds a fort on a province adjacent to an AI.
 /// Emits one [DialogueEvent] per AI leader who owns a neighboring province. SPEC/ai/dialogue-and-mood.md (reactive).
 List<DialogueEvent> dialogueEventsForReactiveFortsOnBorder(
@@ -170,7 +163,7 @@ List<DialogueEvent> dialogueEventsForReactiveFortsOnBorder(
   final seenAi = <String>{};
   for (final neighborLocal in neighborLocalIds) {
     final fullId = ProvinceId.full(regionId, neighborLocal);
-    final ownerId = _ownerOfProvince(game, fullId);
+    final ownerId = tryGetProvince(game.worldState, fullId)?.ownerId;
     if (ownerId == null ||
         !isAiControlledForEvidence(game, ownerId) ||
         !seenAi.add(ownerId)) {
@@ -254,6 +247,31 @@ String _eraForTurn(Game game, int turnNumber) {
   return eraFromYear(year);
 }
 
+String? _reactiveHumanAttackSituationForSpeaker(
+  Game game,
+  String speakerId,
+  String defenderFactionId, {
+  required bool isMinor,
+  required bool isTribe,
+}) {
+  if (isMinor) {
+    final tiedToMinor =
+        _hasEmbassyWithTarget(game, speakerId, defenderFactionId) ||
+        _isAllied(game, speakerId, defenderFactionId);
+    return tiedToMinor ? 'attack_on_minor' : null;
+  }
+  if (isTribe) {
+    final tiedToTribe =
+        _hasEmbassyWithTarget(game, speakerId, defenderFactionId) ||
+        _isAllied(game, speakerId, defenderFactionId);
+    return tiedToTribe ? 'attack_on_tribe' : null;
+  }
+  if (_isAllied(game, speakerId, defenderFactionId)) {
+    return 'attack_on_ally';
+  }
+  return null;
+}
+
 /// Reactive dialogue for human-initiated attacks.
 /// Emits attack_on_ally / attack_on_minor / attack_on_tribe for affected AI leaders.
 List<DialogueEvent> dialogueEventsForReactiveHumanAttack(
@@ -275,22 +293,13 @@ List<DialogueEvent> dialogueEventsForReactiveHumanAttack(
   final isTribe = _isTribeFaction(game, defenderFactionId);
   for (final speakerId in aiSpeakers) {
     if (speakerId == attackerFactionId) continue;
-    String? situation;
-    if (isMinor) {
-      final tiedToMinor =
-          _hasEmbassyWithTarget(game, speakerId, defenderFactionId) ||
-          _isAllied(game, speakerId, defenderFactionId);
-      if (tiedToMinor) situation = 'attack_on_minor';
-    } else if (isTribe) {
-      final tiedToTribe =
-          _hasEmbassyWithTarget(game, speakerId, defenderFactionId) ||
-          _isAllied(game, speakerId, defenderFactionId);
-      if (tiedToTribe) situation = 'attack_on_tribe';
-    } else {
-      if (_isAllied(game, speakerId, defenderFactionId)) {
-        situation = 'attack_on_ally';
-      }
-    }
+    final situation = _reactiveHumanAttackSituationForSpeaker(
+      game,
+      speakerId,
+      defenderFactionId,
+      isMinor: isMinor,
+      isTribe: isTribe,
+    );
     if (situation == null) continue;
     final dedupeKey = '$speakerId|$situation|$provinceId';
     if (!seenKeys.add(dedupeKey)) continue;

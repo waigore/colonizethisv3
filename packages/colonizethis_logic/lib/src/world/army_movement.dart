@@ -1,14 +1,52 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:colonizethis_logic/package_logger.dart';
+import 'package:colonizethis_logic/src/logging.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
+import 'package:logger/logger.dart';
 
+import '../turn/trace/turn_trace_runtime.dart';
 import 'army_migration.dart';
 import 'movement.dart';
 import 'province_lookup.dart';
 
-final _log = packageLogger();
+/// Single-pass index of [WorldState.armies] by army id for O(1) lookups (Refs
+/// #2394, SPEC/program/order-suggestions.md — incremental validation throughput
+/// bounds).
+///
+/// Callers that iterate over many build/recruit orders against a stable
+/// [WorldState] snapshot should build once and reuse the resulting map instead
+/// of issuing a per-order `indexWhere`/`firstWhereOrNull` scan over
+/// [WorldState.armies].
+Map<String, Army> armiesByIdForWorld(WorldState world) {
+  return {for (final a in world.armies) a.id: a};
+}
+
+void _logArmyMoveIgnoredHomeArmyIfDebug(String armyId) {
+  if (Level.debug.value >= Logger.level.value) {
+    logicLog.d('army_move ignored reason=home_army_locked armyId=$armyId');
+  }
+}
+
+void _logArmyMoveIgnoredInvalidAdjacencyIfDebug(
+  String armyId,
+  String fromLocal,
+  String toLocal,
+) {
+  if (Level.debug.value >= Logger.level.value) {
+    logicLog.d(
+      'army_move ignored reason=invalid_adjacency armyId=$armyId '
+      'from=$fromLocal to=$toLocal',
+    );
+  }
+}
 
 /// Applies army moves in [regionId] (same-region leg). See [applyMoveOrdersToRegion].
+///
+/// When [onArmyMoveOrderTrace] is set, each order processed by this region pass
+/// emits at most one trace event with [regionId] context. Orders that belong to
+/// a different region are silently skipped without trace events to avoid
+/// double-counting across both region calls; callers should pre-trace
+/// global-decision rejections (army not found, owner mismatch, home army)
+/// before invoking this helper.
 WorldState applyArmyMoveOrdersToRegion(
   WorldState worldState,
   MapTopology topology,
@@ -16,12 +54,13 @@ WorldState applyArmyMoveOrdersToRegion(
   required String regionId,
   bool Function(String playerId, String destFullProvinceId)?
   isDestinationOwnedByPlayer,
+  ArmyMoveOrderTraceCallback? onArmyMoveOrderTrace,
 }) {
   if (ordersByPlayerId.isEmpty) {
     return worldState;
   }
 
-  final armyById = {for (final a in worldState.armies) a.id: a};
+  final armyById = armiesByIdForWorld(worldState);
   var ws = worldState;
   var applied = 0;
   var ignored = 0;
@@ -40,9 +79,7 @@ WorldState applyArmyMoveOrdersToRegion(
       }
       if (army.isHomeArmy) {
         ignored++;
-        _log.d(
-          'army_move ignored reason=home_army_locked armyId=${order.armyId}',
-        );
+        _logArmyMoveIgnoredHomeArmyIfDebug(order.armyId);
         continue;
       }
       if (ProvinceId.regionIdFrom(army.stationedProvinceId) != regionId) {
@@ -53,6 +90,13 @@ WorldState applyArmyMoveOrdersToRegion(
       if (ProvinceId.isPrefixed(destProvinceId) &&
           ProvinceId.regionIdFrom(destProvinceId) != regionId) {
         ignored++;
+        onArmyMoveOrderTrace?.call(
+          playerId: playerId,
+          order: order,
+          applied: false,
+          regionId: regionId,
+          ignoreReason: 'destination_in_other_region',
+        );
         continue;
       }
       final destFullId = !ProvinceId.isPrefixed(destProvinceId)
@@ -69,20 +113,36 @@ WorldState applyArmyMoveOrdersToRegion(
           isValidLandMoveInRegion(topology, regionId, fromLocal, toLocal);
       if (!valid) {
         ignored++;
-        _log.d(
-          'army_move ignored reason=invalid_adjacency armyId=${order.armyId} '
-          'from=$fromLocal to=$toLocal',
+        _logArmyMoveIgnoredInvalidAdjacencyIfDebug(
+          order.armyId,
+          fromLocal,
+          toLocal,
+        );
+        onArmyMoveOrderTrace?.call(
+          playerId: playerId,
+          order: order,
+          applied: false,
+          regionId: regionId,
+          destinationProvinceId: destFullId,
+          ignoreReason: 'invalid_adjacency',
         );
         continue;
       }
 
       ws = updateArmyStation(ws, army.id, destFullId);
       applied++;
+      onArmyMoveOrderTrace?.call(
+        playerId: playerId,
+        order: order,
+        applied: true,
+        regionId: regionId,
+        destinationProvinceId: destFullId,
+      );
     }
   }
 
   if (applied + ignored > 0) {
-    _log.i(
+    logicLog.i(
       'army_move apply regionId=$regionId applied=$applied ignored=$ignored',
     );
   }
@@ -90,6 +150,12 @@ WorldState applyArmyMoveOrdersToRegion(
 }
 
 /// Cross-region moves for armies between owned provinces (instant), mirroring civilians.
+///
+/// When [onArmyMoveOrderTrace] is set, this helper only emits trace events for
+/// orders it actually applies (cross-region instant move). Orders that fall
+/// through to [remainingArmyMoveOrdersByPlayerId] are intentionally not traced
+/// here so the same-region [applyArmyMoveOrdersToRegion] pass can attribute
+/// the final decision without double-counting.
 ({
   WorldState worldState,
   Map<String, List<ArmyMoveOrder>> remainingArmyMoveOrdersByPlayerId,
@@ -98,16 +164,17 @@ applyCrossRegionArmyMovesWithinOwnedProvinces({
   required Game game,
   required WorldState worldState,
   required Map<String, List<ArmyMoveOrder>> armyMoveOrdersByPlayerId,
+  ArmyMoveOrderTraceCallback? onArmyMoveOrderTrace,
 }) {
   var ws = worldState;
   final remaining = <String, List<ArmyMoveOrder>>{};
+  final armyById = armiesByIdForWorld(ws);
 
   for (final entry in armyMoveOrdersByPlayerId.entries) {
     final playerId = entry.key;
     final left = <ArmyMoveOrder>[];
     for (final order in entry.value) {
-      final armyMap = {for (final a in ws.armies) a.id: a};
-      final army = armyMap[order.armyId];
+      final army = armyById[order.armyId];
       if (army == null || army.ownerId != playerId || army.isHomeArmy) {
         left.add(order);
         continue;
@@ -125,6 +192,17 @@ applyCrossRegionArmyMovesWithinOwnedProvinces({
         continue;
       }
       ws = updateArmyStation(ws, army.id, destFull);
+      armyById[army.id] = army.copyWith(
+        regionId: destRegion,
+        stationedProvinceId: destFull,
+      );
+      onArmyMoveOrderTrace?.call(
+        playerId: playerId,
+        order: order,
+        applied: true,
+        regionId: destRegion,
+        destinationProvinceId: destFull,
+      );
     }
     if (left.isNotEmpty) {
       remaining[playerId] = left;

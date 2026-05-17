@@ -43,6 +43,7 @@ class ScenarioResult {
   final List<String> failures;
   final Game? finalState;
   final Map<int, TurnResult> turnResults;
+
   /// GitHub #1766 — null if audit did not run (e.g. init failed before context).
   final SeaboardPortAuditOutcome? seaboardPortAudit;
 }
@@ -242,247 +243,306 @@ class ScenarioRunner {
   }
 
   Future<ScenarioContext?> _initializeGame(Scenario scenario) async {
-    if (scenario.init.type == 'fresh') {
-      GameInitResult result;
-      if (scenario.init.config != null) {
-        result = await gameFactory.createFreshGameFromJson(
-          scenario.init.config!,
-        );
-      } else {
-        // Default fresh game
-        result = await gameFactory.createFreshGame(GameSetupConfig(seed: 42));
-      }
-      return ScenarioContext(
-        game: result.game,
-        topology: result.topology,
-        topologyByRegion: result.topologyByRegion,
-        tileMapByRegion: result.tileMapByRegion,
-      );
-    } else if (scenario.init.type == 'fromTopology') {
-      final result = await gameFactory.createFromTopology(scenario.init);
-      return ScenarioContext(
-        game: result.game,
-        topology: result.topology,
-        topologyByRegion: result.topologyByRegion,
-        tileMapByRegion: result.tileMapByRegion,
-      );
-    } else if (scenario.init.type == 'saved') {
-      if (scenario.init.gameId != null) {
-        final game = await gameFactory.loadSavedGame(scenario.init.gameId!);
-        if (game != null) {
-          return ScenarioContext(game: game);
-        }
-      }
+    switch (scenario.init.type) {
+      case 'fresh':
+        return _initializeFreshGame(scenario);
+      case 'fromTopology':
+        return _initializeFromTopology(scenario);
+      case 'saved':
+        return _initializeSavedGame(scenario);
+      default:
+        return null;
     }
-    return null;
+  }
+
+  Future<ScenarioContext> _initializeFreshGame(Scenario scenario) async {
+    final result = scenario.init.config != null
+        ? await gameFactory.createFreshGameFromJson(scenario.init.config!)
+        : await gameFactory.createFreshGame(GameSetupConfig(seed: 42));
+    return _toScenarioContext(result);
+  }
+
+  Future<ScenarioContext> _initializeFromTopology(Scenario scenario) async {
+    final result = await gameFactory.createFromTopology(scenario.init);
+    return _toScenarioContext(result);
+  }
+
+  Future<ScenarioContext?> _initializeSavedGame(Scenario scenario) async {
+    final gameId = scenario.init.gameId;
+    if (gameId == null) {
+      return null;
+    }
+    final game = await gameFactory.loadSavedGame(gameId);
+    if (game == null) {
+      return null;
+    }
+    return ScenarioContext(game: game);
+  }
+
+  ScenarioContext _toScenarioContext(GameInitResult result) {
+    return ScenarioContext(
+      game: result.game,
+      topology: result.topology,
+      topologyByRegion: result.topologyByRegion,
+      tileMapByRegion: result.tileMapByRegion,
+    );
   }
 
   /// Applies scenario setup (unit injection, etc.). Returns updated game.
   Game _applySetup(Game game, ScenarioSetup setup) {
-    if (setup.units != null && setup.units!.isNotEmpty) {
-      final owUnits = <Unit>[];
-      final nwUnits = <Unit>[];
-      for (final placement in setup.units!) {
-        final fullProvinceId = placement.provinceId.contains('|')
-            ? placement.provinceId
-            : 'oldWorld|${placement.provinceId}';
-        final regionId = fullProvinceId.startsWith('newWorld|')
-            ? 'newWorld'
-            : 'oldWorld';
-        final type = placement.unitType;
-        for (var k = 0; k < placement.count; k++) {
-          final unitId =
-              '${placement.playerId}_${type.toLowerCase().replaceAll(' ', '_')}_$k';
-          final unit = Unit(
-            id: unitId,
-            type: type,
-            ownerId: placement.playerId,
-            locationProvinceId: fullProvinceId,
-            status: UnitStatus.idle,
-            medals: 0,
-          );
-          if (regionId == 'oldWorld') {
-            owUnits.add(unit);
-          } else {
-            nwUnits.add(unit);
-          }
-        }
-      }
-      final newOw = RegionData(
-        provinces: game.worldState.oldWorld.provinces,
-        units: [...game.worldState.oldWorld.units, ...owUnits],
-      );
-      final newNw = RegionData(
-        provinces: game.worldState.newWorld.provinces,
-        units: [...game.worldState.newWorld.units, ...nwUnits],
-      );
-      game = game.copyWith(
-        worldState: game.worldState.copyWith(oldWorld: newOw, newWorld: newNw),
-      );
-    }
-    if (setup.initialFleets != null && setup.initialFleets!.isNotEmpty) {
-      final fleets = setup.initialFleets!
-          .map(
-            (f) => Fleet(
-              id: f.id,
-              ownerId: f.ownerId,
-              seaZoneId: f.seaZoneId,
-              inPortAtProvinceId: f.inPortAtProvinceId,
-              regionId: f.regionId,
-              shipTypeIds: f.shipTypeIds,
-              mission: FleetMission.values.firstWhere(
-                (m) => m.name == f.mission,
-                orElse: () => FleetMission.none,
-              ),
-            ),
-          )
-          .toList();
-      game = game.copyWith(
-        worldState: game.worldState.copyWith(fleets: fleets),
-      );
-    }
-    // Apply initialWorkers and initialStockpile (SPEC/game/workers-and-population.md).
-    var players = game.players;
-    if (setup.initialWorkers != null || setup.initialStockpile != null) {
-      players = [
-        for (final player in game.players)
-          _applyPlayerEconomyOverrides(player, setup),
-      ];
-    }
-    if (players != game.players) {
-      game = game.copyWith(players: players);
-    }
-    if (setup.initialStockpile != null && setup.initialStockpile!.isNotEmpty) {
-      final updatedPlayers = <Player>[];
-      for (final player in game.players) {
-        final quantities = setup.initialStockpile![player.id];
-        if (quantities == null || quantities.isEmpty) {
-          updatedPlayers.add(player);
-          continue;
-        }
-        var stockpile = const Stockpile();
-        for (final entry in quantities.entries) {
-          if (entry.value > 0) {
-            stockpile = stockpile.applyDelta(entry.key, entry.value);
-          }
-        }
-        updatedPlayers.add(player.copyWith(stockpile: stockpile));
-      }
-      game = game.copyWith(players: updatedPlayers);
-    }
-    if (setup.initialWorkers != null && setup.initialWorkers!.isNotEmpty) {
-      final updatedPlayers = <Player>[];
-      for (final player in game.players) {
-        final counts = setup.initialWorkers![player.id];
-        if (counts == null || counts.isEmpty) {
-          updatedPlayers.add(player);
-          continue;
-        }
-        final pool = WorkerPool(
-          peasants: counts['peasants'] ?? 0,
-          apprentices: counts['apprentices'] ?? 0,
-          journeymen: counts['journeymen'] ?? 0,
-          masters: counts['masters'] ?? 0,
-        );
-        updatedPlayers.add(player.copyWith(workerPool: pool));
-      }
-      game = game.copyWith(players: updatedPlayers);
-    }
-    if (setup.initialTileState != null && setup.initialTileState!.isNotEmpty) {
-      var tileState = game.worldState.tileState;
-      for (final entry in setup.initialTileState!.entries) {
-        final tileKey = entry.key;
-        final opts = entry.value;
-        final imp = opts['improvementLevel'];
-        final road = opts['roadLevel'];
-        if (imp != null) tileState = tileState.setImprovement(tileKey, imp);
-        if (road != null) tileState = tileState.setRoadLevel(tileKey, road);
-      }
-      game = game.copyWith(
-        worldState: game.worldState.copyWith(tileState: tileState),
-      );
-    }
-    if (setup.leaderKeys != null && setup.leaderKeys!.isNotEmpty) {
-      final updatedPlayers = <Player>[];
-      for (final player in game.players) {
-        final key = setup.leaderKeys![player.id];
-        if (key == null) {
-          updatedPlayers.add(player);
-          continue;
-        }
-        updatedPlayers.add(player.copyWith(leaderKey: key));
-      }
-      game = game.copyWith(players: updatedPlayers);
-    }
-    if (setup.initialTech != null && setup.initialTech!.isNotEmpty) {
-      final updatedPlayers = <Player>[];
-      for (final player in game.players) {
-        final techIds = setup.initialTech![player.id];
-        if (techIds == null || techIds.isEmpty) {
-          updatedPlayers.add(player);
-          continue;
-        }
-        final techUnlocked = Map<String, bool>.from(player.techUnlocked ?? {});
-        for (final tid in techIds) {
-          techUnlocked[tid] = true;
-        }
-        // SPEC/game/factions.md: parity uses max GP military level; set it from tech so Combat phase sees it.
-        final militaryLevel = militaryLevelForUnlocked(techUnlocked);
-        updatedPlayers.add(
-          player.copyWith(
-            techUnlocked: techUnlocked,
-            militaryLevel: militaryLevel,
-          ),
-        );
-      }
-      game = game.copyWith(players: updatedPlayers);
+    var updated = game;
+    updated = _applyUnitPlacements(updated, setup);
+    updated = _applyInitialFleets(updated, setup);
+    updated = _applyPlayerEconomyDefaults(updated, setup);
+    updated = _applyInitialStockpile(updated, setup);
+    updated = _applyInitialWorkers(updated, setup);
+    updated = _applyInitialTileState(updated, setup);
+    updated = _applyLeaderKeys(updated, setup);
+    updated = _applyInitialTech(updated, setup);
+    updated = _applyDefaultCombatMode(updated, setup);
+    updated = _applyInitialTreasury(updated, setup);
+    updated = _applyPurchasedTiles(updated, setup);
+    return updated;
+  }
 
-      // SPEC/game/military-generals.md: general cap from tech. Ensure each GP has exactly cap many generals.
-      game = _applyGeneralCapFromTech(game);
+  Game _applyUnitPlacements(Game game, ScenarioSetup setup) {
+    final placements = setup.units;
+    if (placements == null || placements.isEmpty) {
+      return game;
     }
-    if (setup.defaultCombatMode != null &&
-        setup.defaultCombatMode!.isNotEmpty) {
-      final raw = setup.defaultCombatMode!.toLowerCase();
-      final mode = (raw == 'quickbattle' || raw == 'quick_battle')
-          ? CombatMode.quickBattle
-          : CombatMode.autoResolve;
-      game = game.copyWith(defaultCombatMode: mode);
-    }
-    if (setup.initialTreasury != null && setup.initialTreasury!.isNotEmpty) {
-      final updatedPlayers = <Player>[];
-      for (final player in game.players) {
-        final treasury = setup.initialTreasury![player.id];
-        if (treasury == null) {
-          updatedPlayers.add(player);
-          continue;
+    final owUnits = <Unit>[];
+    final nwUnits = <Unit>[];
+    for (final placement in placements) {
+      final fullProvinceId = placement.provinceId.contains('|')
+          ? placement.provinceId
+          : 'oldWorld|${placement.provinceId}';
+      final isNewWorld = fullProvinceId.startsWith('newWorld|');
+      final type = placement.unitType;
+      for (var k = 0; k < placement.count; k++) {
+        final unit = Unit(
+          id: '${placement.playerId}_${type.toLowerCase().replaceAll(' ', '_')}_$k',
+          type: type,
+          ownerId: placement.playerId,
+          locationProvinceId: fullProvinceId,
+          status: UnitStatus.idle,
+          medals: 0,
+        );
+        if (isNewWorld) {
+          nwUnits.add(unit);
+        } else {
+          owUnits.add(unit);
         }
-        updatedPlayers.add(player.copyWith(treasury: treasury));
       }
-      game = game.copyWith(players: updatedPlayers);
     }
-    if (setup.purchasedTilesByTileKey != null &&
-        setup.purchasedTilesByTileKey!.isNotEmpty) {
-      final purchased = Map<String, String>.from(
-        game.worldState.purchasedTilesByTileKey,
-      )..addAll(setup.purchasedTilesByTileKey!);
-      game = game.copyWith(
-        worldState: game.worldState.copyWith(
-          purchasedTilesByTileKey: purchased,
+    final newOw = RegionData(
+      provinces: game.worldState.oldWorld.provinces,
+      units: [...game.worldState.oldWorld.units, ...owUnits],
+    );
+    final newNw = RegionData(
+      provinces: game.worldState.newWorld.provinces,
+      units: [...game.worldState.newWorld.units, ...nwUnits],
+    );
+    return game.copyWith(
+      worldState: game.worldState.copyWith(oldWorld: newOw, newWorld: newNw),
+    );
+  }
+
+  Game _applyInitialFleets(Game game, ScenarioSetup setup) {
+    final initialFleets = setup.initialFleets;
+    if (initialFleets == null || initialFleets.isEmpty) {
+      return game;
+    }
+    final fleets = initialFleets
+        .map(
+          (f) => Fleet(
+            id: f.id,
+            ownerId: f.ownerId,
+            seaZoneId: f.seaZoneId,
+            inPortAtProvinceId: f.inPortAtProvinceId,
+            regionId: f.regionId,
+            shipTypeIds: f.shipTypeIds,
+            mission: FleetMission.values.firstWhere(
+              (m) => m.name == f.mission,
+              orElse: () => FleetMission.none,
+            ),
+          ),
+        )
+        .toList();
+    return game.copyWith(worldState: game.worldState.copyWith(fleets: fleets));
+  }
+
+  Game _applyPlayerEconomyDefaults(Game game, ScenarioSetup setup) {
+    if (setup.initialWorkers == null && setup.initialStockpile == null) {
+      return game;
+    }
+    final players = [
+      for (final player in game.players)
+        _applyPlayerEconomyOverrides(player, setup),
+    ];
+    return game.copyWith(players: players);
+  }
+
+  Game _applyInitialStockpile(Game game, ScenarioSetup setup) {
+    final initialStockpile = setup.initialStockpile;
+    if (initialStockpile == null || initialStockpile.isEmpty) {
+      return game;
+    }
+    final updatedPlayers = <Player>[];
+    for (final player in game.players) {
+      final quantities = initialStockpile[player.id];
+      if (quantities == null || quantities.isEmpty) {
+        updatedPlayers.add(player);
+        continue;
+      }
+      var stockpile = const Stockpile();
+      for (final entry in quantities.entries) {
+        if (entry.value > 0) {
+          stockpile = stockpile.applyDelta(entry.key, entry.value);
+        }
+      }
+      updatedPlayers.add(player.copyWith(stockpile: stockpile));
+    }
+    return game.copyWith(players: updatedPlayers);
+  }
+
+  Game _applyInitialWorkers(Game game, ScenarioSetup setup) {
+    final initialWorkers = setup.initialWorkers;
+    if (initialWorkers == null || initialWorkers.isEmpty) {
+      return game;
+    }
+    final updatedPlayers = <Player>[];
+    for (final player in game.players) {
+      final counts = initialWorkers[player.id];
+      if (counts == null || counts.isEmpty) {
+        updatedPlayers.add(player);
+        continue;
+      }
+      final pool = WorkerPool(
+        peasants: counts['peasants'] ?? 0,
+        apprentices: counts['apprentices'] ?? 0,
+        journeymen: counts['journeymen'] ?? 0,
+        masters: counts['masters'] ?? 0,
+      );
+      updatedPlayers.add(player.copyWith(workerPool: pool));
+    }
+    return game.copyWith(players: updatedPlayers);
+  }
+
+  Game _applyInitialTileState(Game game, ScenarioSetup setup) {
+    final initialTileState = setup.initialTileState;
+    if (initialTileState == null || initialTileState.isEmpty) {
+      return game;
+    }
+    var tileState = game.worldState.tileState;
+    for (final entry in initialTileState.entries) {
+      final tileKey = entry.key;
+      final opts = entry.value;
+      final imp = opts['improvementLevel'];
+      final road = opts['roadLevel'];
+      if (imp != null) tileState = tileState.setImprovement(tileKey, imp);
+      if (road != null) tileState = tileState.setRoadLevel(tileKey, road);
+    }
+    return game.copyWith(
+      worldState: game.worldState.copyWith(tileState: tileState),
+    );
+  }
+
+  Game _applyLeaderKeys(Game game, ScenarioSetup setup) {
+    final leaderKeys = setup.leaderKeys;
+    if (leaderKeys == null || leaderKeys.isEmpty) {
+      return game;
+    }
+    final updatedPlayers = <Player>[];
+    for (final player in game.players) {
+      final key = leaderKeys[player.id];
+      if (key == null) {
+        updatedPlayers.add(player);
+        continue;
+      }
+      updatedPlayers.add(player.copyWith(leaderKey: key));
+    }
+    return game.copyWith(players: updatedPlayers);
+  }
+
+  Game _applyInitialTech(Game game, ScenarioSetup setup) {
+    final initialTech = setup.initialTech;
+    if (initialTech == null || initialTech.isEmpty) {
+      return game;
+    }
+    final updatedPlayers = <Player>[];
+    for (final player in game.players) {
+      final techIds = initialTech[player.id];
+      if (techIds == null || techIds.isEmpty) {
+        updatedPlayers.add(player);
+        continue;
+      }
+      final techUnlocked = Map<String, bool>.from(player.techUnlocked ?? {});
+      for (final tid in techIds) {
+        techUnlocked[tid] = true;
+      }
+      final militaryLevel = militaryLevelForUnlocked(techUnlocked);
+      updatedPlayers.add(
+        player.copyWith(
+          techUnlocked: techUnlocked,
+          militaryLevel: militaryLevel,
         ),
       );
     }
-    return game;
+    final updatedGame = game.copyWith(players: updatedPlayers);
+    return _applyGeneralCapFromTech(updatedGame);
+  }
+
+  Game _applyDefaultCombatMode(Game game, ScenarioSetup setup) {
+    final defaultCombatMode = setup.defaultCombatMode;
+    if (defaultCombatMode == null || defaultCombatMode.isEmpty) {
+      return game;
+    }
+    final raw = defaultCombatMode.toLowerCase();
+    final mode = (raw == 'quickbattle' || raw == 'quick_battle')
+        ? CombatMode.quickBattle
+        : CombatMode.autoResolve;
+    return game.copyWith(defaultCombatMode: mode);
+  }
+
+  Game _applyInitialTreasury(Game game, ScenarioSetup setup) {
+    final initialTreasury = setup.initialTreasury;
+    if (initialTreasury == null || initialTreasury.isEmpty) {
+      return game;
+    }
+    final updatedPlayers = <Player>[];
+    for (final player in game.players) {
+      final treasury = initialTreasury[player.id];
+      if (treasury == null) {
+        updatedPlayers.add(player);
+        continue;
+      }
+      updatedPlayers.add(player.copyWith(treasury: treasury));
+    }
+    return game.copyWith(players: updatedPlayers);
+  }
+
+  Game _applyPurchasedTiles(Game game, ScenarioSetup setup) {
+    final purchasedTilesByTileKey = setup.purchasedTilesByTileKey;
+    if (purchasedTilesByTileKey == null || purchasedTilesByTileKey.isEmpty) {
+      return game;
+    }
+    final purchased = Map<String, String>.from(
+      game.worldState.purchasedTilesByTileKey,
+    )..addAll(purchasedTilesByTileKey);
+    return game.copyWith(
+      worldState: game.worldState.copyWith(purchasedTilesByTileKey: purchased),
+    );
   }
 
   /// SPEC/game/military-generals.md: general cap from tech. Ensures each GP has exactly cap many generals.
   static int _generalCapFromTech(Map<String, bool>? techUnlocked) {
     final t = techUnlocked ?? {};
     var cap = 1;
-    if (t['organised_regiments'] == true) cap = 2;
-    if (t['national_bureaucracy'] == true ||
-        t['improved_infantry_tactics'] == true)
+    if (t[kTechIdOrganisedRegiments] == true) cap = 2;
+    if (t[kTechIdNationalBureaucracy] == true ||
+        t[kTechIdImprovedInfantryTactics] == true)
       cap = 3;
-    if (t['nationalism'] == true) cap = 4;
+    if (t[kTechIdNationalism] == true) cap = 4;
     return cap;
   }
 

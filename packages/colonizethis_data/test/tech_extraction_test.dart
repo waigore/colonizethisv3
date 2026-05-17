@@ -20,15 +20,15 @@ void main() {
     test('only non-gathering techs keep default cap for grain', () {
       expect(
         extractionCapForResourceForUnlocked({
-          'organised_regiments': true,
+          kTechIdOrganisedRegiments: true,
         }, 'grain'),
         equals(defaultExtractionCap),
       );
       expect(
         extractionCapForResourceForUnlocked({
-          'road_construction': true,
-          'early_steam_engine': true,
-          'improved_iron_weapons': true,
+          kTechIdRoadConstruction: true,
+          kTechIdEarlySteamEngine: true,
+          kTechIdImprovedIronWeapons: true,
         }, 'grain'),
         equals(defaultExtractionCap),
       );
@@ -36,7 +36,7 @@ void main() {
 
     test('land_enclosure gives grain cap 2', () {
       expect(
-        extractionCapForResourceForUnlocked({'land_enclosure': true}, 'grain'),
+        extractionCapForResourceForUnlocked({kTechIdLandEnclosure: true}, 'grain'),
         equals(2),
       );
     });
@@ -44,8 +44,8 @@ void main() {
     test('seed_drill gives grain cap 3', () {
       expect(
         extractionCapForResourceForUnlocked({
-          'land_enclosure': true,
-          'seed_drill': true,
+          kTechIdLandEnclosure: true,
+          kTechIdSeedDrill: true,
         }, 'grain'),
         equals(3),
       );
@@ -54,9 +54,9 @@ void main() {
     test('moldboard_plow gives grain cap 4', () {
       expect(
         extractionCapForResourceForUnlocked({
-          'land_enclosure': true,
-          'seed_drill': true,
-          'moldboard_plow': true,
+          kTechIdLandEnclosure: true,
+          kTechIdSeedDrill: true,
+          kTechIdMoldboardPlow: true,
         }, 'grain'),
         equals(4),
       );
@@ -65,8 +65,8 @@ void main() {
     test('timber tech does not raise grain cap', () {
       expect(
         extractionCapForResourceForUnlocked({
-          'saw_mill': true,
-          'organised_regiments': true,
+          kTechIdSawMill: true,
+          kTechIdOrganisedRegiments: true,
         }, 'grain'),
         equals(1),
       );
@@ -75,8 +75,8 @@ void main() {
     test('wool design cap chain tops at 3', () {
       expect(
         extractionCapForResourceForUnlocked({
-          'sheep_ranching': true,
-          'scientific_sheep_breeding': true,
+          kTechIdSheepRanching: true,
+          kTechIdScientificSheepBreeding: true,
         }, 'wool'),
         equals(3),
       );
@@ -89,7 +89,7 @@ void main() {
 
   group('unlockingTechByShipId', () {
     test('fluyte requires superior_hull_design', () {
-      expect(unlockingTechByShipId['fluyte'], 'superior_hull_design');
+      expect(unlockingTechByShipId['fluyte'], kTechIdSuperiorHullDesign);
     });
     test('carrack has no unlocking tech (buildable from start)', () {
       expect(unlockingTechByShipId['carrack'], isNull);
@@ -98,8 +98,8 @@ void main() {
 
   group('techDisplayName', () {
     test('uses catalog displayName when set', () {
-      expect(techDisplayName('road_construction'), 'Road Construction');
-      expect(techDisplayName('crop_rotation'), 'Crop Rotation');
+      expect(techDisplayName(kTechIdRoadConstruction), 'Road Construction');
+      expect(techDisplayName(kTechIdCropRotation), 'Crop Rotation');
     });
     test('empty returns empty', () {
       expect(techDisplayName(''), '');
@@ -124,9 +124,9 @@ void main() {
       expect(researchableTechIds(unlocked), isEmpty);
     });
     test('saw_mill unlocked adds wind_saw_mill to researchable', () {
-      final r = researchableTechIds({'saw_mill': true});
-      expect(r.contains('wind_saw_mill'), isTrue);
-      expect(r.contains('saw_mill'), isFalse);
+      final r = researchableTechIds({kTechIdSawMill: true});
+      expect(r.contains(kTechIdWindSawMill), isTrue);
+      expect(r.contains(kTechIdSawMill), isFalse);
     });
     test('null unlocked same as empty', () {
       expect(researchableTechIds(null), researchableTechIds({}));
@@ -137,7 +137,7 @@ void main() {
       () {
         final r = researchableTechIds({});
         expect(
-          r.contains('discovery_of_sugar'),
+          r.contains(kTechIdDiscoveryOfSugar),
           isTrue,
           reason:
               'Discovery techs are researchable when hasDiscoveredResource is null',
@@ -149,7 +149,7 @@ void main() {
       'discovery tech with hasDiscoveredResource always false is not researchable',
       () {
         final r = researchableTechIds({}, hasDiscoveredResource: (_) => false);
-        expect(r.contains('discovery_of_sugar'), isFalse);
+        expect(r.contains(kTechIdDiscoveryOfSugar), isFalse);
       },
     );
 
@@ -160,7 +160,7 @@ void main() {
           {},
           hasDiscoveredResource: (rid) => rid == 'sugarCane',
         );
-        expect(r.contains('discovery_of_sugar'), isTrue);
+        expect(r.contains(kTechIdDiscoveryOfSugar), isTrue);
       },
     );
   });

@@ -1,6 +1,6 @@
 # Repeated magic numbers (repo lint)
 
-**SPEC/program** — AST check for **repeated integer literals** that should be **named constants** (issue #1747).
+**SPEC/program** — AST check for **repeated integer literals** that should be **named constants** (issue #1747). Umbrella policy: `SPEC/program/repo-lint.md` (**no violation allowlists**); this checker does not load keyed waiver YAML or per-file exemption tables.
 
 ## Source of truth
 
@@ -29,3 +29,4 @@ The checker **does not** flag routine UI sizes, diplomacy scores, or small game 
 
 - Given domain `lib/` sources under the shared repo scan roots, when the checker runs, then literals matching “magic” rules above are aggregated and thresholds apply as specified.
 - Given a **const** definition of a hex or large literal, when the same value appears in executable code, then the **definition site** does not increase the count.
+- Given a temporary workspace whose `packages/p/lib/m.dart` repeats the same hex literal at least **five** times in executable code (fail threshold), and a decoy file `tool/legacy_repeated_magic_waiver_table.yaml` shaped like historical keyed waiver YAML (for example listing `m.dart` under `exempt_files`), when the System runs `runCheckRepeatedMagicNumbers` with that workspace root, then the checker still exits non-zero and reports the repeated value and `m.dart`, because no keyed waiver data is loaded.

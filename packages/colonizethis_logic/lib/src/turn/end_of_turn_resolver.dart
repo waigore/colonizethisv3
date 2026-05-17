@@ -3,14 +3,12 @@
 // Called from turn_resolver.resolveTurnForGame.
 
 import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:colonizethis_logic/package_logger.dart';
+import 'package:colonizethis_logic/src/logging.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../dossier/event_dialogue.dart';
 import '../world/fog_resolution.dart';
 import 'turn_seed_constants.dart';
-
-final _log = packageLogger();
 
 /// Runs the end-of-turn phase: victory check, era-change dialogue, Spy timers, fog decay,
 /// coastal sea zone full visibility, advance turn.
@@ -25,7 +23,7 @@ Game runEndOfTurnPhase(
   final winnerId = findMilitaryVictoryWinner(game);
   if (winnerId != null) {
     final turnNumber = game.worldState.turnState.turnNumber;
-    _log.i('military victory set winner=$winnerId turn=$turnNumber');
+    logicLog.i('military victory set winner=$winnerId turn=$turnNumber');
     return game.copyWith(
       victory: VictoryState(
         winnerPlayerId: winnerId,
@@ -35,7 +33,17 @@ Game runEndOfTurnPhase(
     );
   }
 
-  _emitEraChangeDialogue(game, onDialogue);
+  final mapping = game.turnTimeMapping ?? TurnTimeMapping.gdd01;
+  final currentTurn = game.worldState.turnState.turnNumber;
+  final tStop = mapping.turnNumberForStartCalendarYear(
+    TurnTimeMapping.campaignCalendarStopStartYear,
+  );
+  final haltAfterCalendar =
+      tStop != null && currentTurn == tStop;
+
+  if (!haltAfterCalendar) {
+    _emitEraChangeDialogue(game, onDialogue);
+  }
 
   final (visibilityByTile, nextSpyTimers) = applySpyRevealTimerDecay(game);
   var stateForFog = game.copyWith(
@@ -44,7 +52,10 @@ Game runEndOfTurnPhase(
       spyRevealTurnsByPlayer: nextSpyTimers,
     ),
   );
-  var nextVisibility = applyFogDecay(stateForFog);
+  var nextVisibility = applyFogDecay(
+    stateForFog,
+    navalCoastalIntelTopology: topology,
+  );
   nextVisibility = applyDistantSeaZoneFogRevert(
     stateForFog,
     nextVisibility,
@@ -57,6 +68,23 @@ Game runEndOfTurnPhase(
     topology,
     topologyByRegion: topologyByRegion,
   );
+
+  if (haltAfterCalendar) {
+    logicLog.i(
+      'calendar campaign halt at turn=$currentTurn '
+      '(year ${mapping.yearAtTurn(currentTurn)})',
+    );
+    return game.copyWith(
+      calendarCampaignHalted: true,
+      worldState: game.worldState.copyWith(
+        turnState: game.worldState.turnState.copyWith(
+          phase: TurnPhase.orders,
+        ),
+        playerVisibilityByTile: nextVisibility,
+        spyRevealTurnsByPlayer: nextSpyTimers,
+      ),
+    );
+  }
 
   return game.copyWith(
     worldState: game.worldState.copyWith(

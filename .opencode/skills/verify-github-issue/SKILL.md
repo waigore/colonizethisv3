@@ -1,0 +1,1 @@
+../../../.cursor/skills/verify-github-issue/SKILL.md

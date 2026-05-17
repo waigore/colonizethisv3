@@ -27,6 +27,55 @@ rules:
     runner: shell
     argv: [tool/check_logic_ai_decoupling.sh]
 
+  - rule_id: repo.logic_dead_files
+    group: architecture
+    title: colonizethis_logic dead-file detection under lib/src
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_logic_dead_files.dart
+
+  - rule_id: repo.logic_dedup_logger
+    group: architecture
+    title: colonizethis_logic must use shared logicLog (Refs #2391)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_logic_dedup_logger.dart
+
+  - rule_id: repo.dart_long_string_switches
+    group: structure
+    title: Long string-literal switch checks
+    spec: SPEC/program/show-tech-tool.md
+    runner: dart
+    script: tool/check_long_string_switches.dart
+
+  - rule_id: repo.app_lib_no_broad_suggest_work_orders
+    group: architecture
+    title: app/lib must not call broad suggestWorkOrders (Refs #2133)
+    spec: SPEC/program/order-suggestions.md
+    runner: shell
+    argv: [tool/check_app_lib_no_suggest_work_orders.sh]
+
+  - rule_id: repo.flutter_action_pins
+    group: structure
+    title: flutter-action workflow steps must pin flutter-version
+    spec: SPEC/program/pub-workspace-toolchain.md
+    runner: dart
+    script: tool/check_flutter_action_pins.dart
+
+  - rule_id: repo.workspace_outdated_resolvable
+    group: structure
+    title: workspace pub outdated current must match resolvable
+    spec: SPEC/program/pub-workspace-toolchain.md
+    runner: dart
+    script: tool/check_workspace_outdated_resolvable.dart
+
+  - rule_id: repo.workspace_outdated_latest_direct
+    group: structure
+    title: direct dependencies must be latest when latest is resolvable
+    spec: SPEC/program/pub-workspace-toolchain.md
+    runner: dart
+    script: tool/check_workspace_outdated_latest_direct.dart
+
   - rule_id: repo.asset_path_constants
     group: identifiers
     title: Asset path constants in app runtime code
@@ -78,6 +127,29 @@ rules:
     spec: SPEC/program/disallowed-ast-patterns.md
     runner: dart
     script: tool/check_disallowed_ast_patterns.dart
+    pr_incremental: true
+
+  - rule_id: repo.debug_console_logic_contract_boundary
+    group: architecture
+    title: debug console imports colonizethis_logic only via contracts
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_debug_console_logic_contract_boundary.dart
+    pr_incremental: true
+
+  - rule_id: repo.app_event_handler_scope_logic_boundary
+    group: architecture
+    title: app_event_handler_scope must not import features/game/logic directly
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_app_event_handler_scope_logic_boundary.dart
+
+  - rule_id: repo.subscription_tracker
+    group: structure
+    title: app feature subscriptions must use SubscriptionTracker
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_subscription_tracker.dart
 
   - rule_id: repo.control_flow_nesting_depth
     group: structure
@@ -93,12 +165,127 @@ rules:
     runner: dart
     script: tool/check_repeated_magic_numbers.dart
 
+  - rule_id: repo.function_size
+    group: structure
+    title: Function size threshold (measured lines)
+    spec: SPEC/program/function-size.md
+    runner: dart
+    script: tool/check_function_size.dart
+
+  - rule_id: repo.debug_handler_one_per_file
+    group: structure
+    title: Debug handler files export one applyDebug function
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_debug_handler_one_per_file.dart
+
+  - rule_id: repo.part_unit_size
+    group: structure
+    title: Dart part fragment physical line limit (repo-lint domain)
+    spec: SPEC/program/part-unit-size.md
+    runner: dart
+    script: tool/check_part_unit_size.dart
+
+  - rule_id: repo.no_flame_in_widgets
+    group: structure
+    title: app/lib/widgets must not import package:flame directly
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_no_flame_in_widgets.dart
+
+  - rule_id: repo.app_widget_imports
+    group: structure
+    title: app/lib/widgets must not import/export app/lib/features paths
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_app_widget_imports.dart
+
+  - rule_id: repo.no_screen_in_game_widgets
+    group: structure
+    title: app/lib/features/game/widgets must not contain *_screen.dart files
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_no_screen_in_game_widgets.dart
+
+  - rule_id: repo.game_widgets_file_size
+    group: structure
+    title: app/lib/features/game/widgets files must stay at or below 700 lines
+    spec: SPEC/program/game-widgets-file-size.md
+    runner: dart
+    script: tool/check_game_widgets_file_size.dart
+
+  - rule_id: repo.logic_test_file_size
+    group: structure
+    title: colonizethis_logic package tests must stay at or below 400 physical lines
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_logic_test_file_size.dart
+    pr_incremental: true
+
+  - rule_id: repo.dart_file_non_comment_line_size
+    group: structure
+    title: Dart files must stay at or below 1000 non-comment lines
+    spec: SPEC/program/dart-file-non-comment-line-size.md
+    runner: dart
+    script: tool/check_dart_file_non_comment_line_size.dart
+    pr_incremental: true
+
   - rule_id: repo.canonical_province_tile_keys
     group: game_invariants
-    title: Canonical province WorkOrder targetTileKey literals
+    title: Province WorkOrder targetTileKey literals use full tile shape
     spec: SPEC/game/world-model-identity.md
     runner: dart
     script: tool/check_canonical_province_tile_keys.dart
+
+  - rule_id: repo.colonizethis_map_lib_pipe_split
+    group: structure
+    title: colonizethis_map lib limits `.split('|')` to tile_key_util / map_pipe_string_util
+    spec: SPEC/program/map-visualization.md
+    runner: dart
+    script: tool/check_colonizethis_map_lib_pipe_split.dart
+
+  - rule_id: repo.tile_map_inline_cardinal_directions
+    group: structure
+    title: colonizethis_map lib uses kTileMapDirections4/8 instead of inline neighbor tuples
+    spec: SPEC/program/tile-map-gen-algorithm.md
+    runner: dart
+    script: tool/check_tile_map_inline_cardinal_directions.dart
+    pr_incremental: true
+
+  - rule_id: repo.map_no_partfile_classes
+    group: structure
+    title: colonizethis_map lib/src part files must not declare non-private classes
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_map_no_partfile_classes.dart
+
+  - rule_id: repo.land_province_bucket_keys
+    group: game_invariants
+    title: Canonical full-id land province bucket lookups in guarded paths
+    spec: SPEC/program/fog-and-exploration-resolution.md
+    runner: dart
+    script: tool/check_land_province_bucket_keys.dart
+
+  - rule_id: repo.app_ct_loading_indicator
+    group: ui_structure
+    title: app/lib must use CtLoadingIndicator instead of raw CircularProgressIndicator
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_app_ct_loading_indicator.dart
+
+  - rule_id: repo.logic_dual_region_province_field_access
+    group: architecture
+    title: colonizethis_logic limits direct oldWorld/newWorld province list access
+    spec: SPEC/program/logic-dual-region-province-access.md
+    runner: dart
+    script: tool/check_logic_dual_region_province_field_access.dart
+
+  - rule_id: repo.logic_all_provinces_sanctioned_calls
+    group: architecture
+    title: colonizethis_logic allProvinces( call sites must be YAML-sanctioned
+    spec: SPEC/program/logic-dual-region-province-access.md
+    runner: dart
+    script: tool/check_logic_all_provinces_sanctioned_calls.dart
 
   - rule_id: repo.app_hardcoded_ui_strings
     group: ui_i18n
@@ -109,3 +296,10 @@ rules:
     include_only_when_env:
       name: CT_REPO_LINT_INCLUDE_APP
       value: "true"
+
+  - rule_id: repo.app_no_duplicate_helpers
+    group: structure
+    title: "Canonical helpers from #2180 must not be redefined or duplicated"
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_app_no_duplicate_helpers.dart

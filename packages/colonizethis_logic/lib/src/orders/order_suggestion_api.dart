@@ -41,15 +41,24 @@ abstract class OrderSuggestionAPI {
     PlayerView view,
     Game game,
     MapTopology topology,
-    Orders currentOrders,
-  );
+    Orders currentOrders, {
+    Map<String, Unit>? unitsById,
+  });
   List<NavalMissionOrder> suggestNavalMissionOrders(
     PlayerView view,
     Game game,
     MapTopology topology,
-    Orders currentOrders,
-  );
+    Orders currentOrders, {
+    Map<String, Unit>? unitsById,
+  });
   List<DiplomaticOrder> suggestDiplomaticOrders(
+    PlayerView view,
+    Game game,
+    MapTopology topology,
+    Orders currentOrders, {
+    Map<String, TileMapResult>? tileMapByRegion,
+  });
+  List<DiplomaticOrder> suggestDeclareWarOrders(
     PlayerView view,
     Game game,
     MapTopology topology,

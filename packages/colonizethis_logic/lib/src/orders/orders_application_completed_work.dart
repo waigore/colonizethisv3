@@ -1,12 +1,16 @@
-part of 'orders_application.dart';
+import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:colonizethis_models/colonizethis_models.dart';
 
-String _buildUnitId(
-  String playerId,
-  BuildUnitOrder order,
-  String spawnProvinceId,
-) {
-  return '${playerId}_${order.unitType}_$spawnProvinceId';
-}
+import '../constants.dart';
+import '../world/province_lookup.dart';
+import 'orders_application_helpers.dart';
+import '../dossier/event_dialogue.dart';
+import '../dossier/evidence_rules.dart';
+import '../world/naval.dart';
+import 'build_rail_work_rules.dart';
+import 'orders_application_context.dart';
+import 'purchase_land_work_completion.dart';
+import 'work_updated_players.dart';
 
 /// Propagates road transport level to adjacent capital/port tiles.
 ///
@@ -16,24 +20,22 @@ String _buildUnitId(
 ///
 /// When a road is built adjacent to the player's capital or a port, the
 /// transport level is also applied to those adjacent tiles.
-void _propagateRoadToAdjacentCapitalOrPort({
+TileMapState propagateRoadToAdjacentCapitalOrPort({
   required String tileKey,
   required int nextLevel,
   Player? player,
   required WorldState worldState,
   required Map<String, TileMapResult> tileMapByRegion,
   required TileMapState tileState,
-  required void Function(TileMapState) setTileState,
 }) {
-  if (player == null) return;
+  var current = tileState;
+  if (player == null) return current;
 
-  // Parse the target tile key: regionId|provinceId|x|y
-  final parts = tileKey.split('|');
-  if (parts.length != 4) return;
-  final targetRegionId = parts[0];
-  final targetX = int.tryParse(parts[2]);
-  final targetY = int.tryParse(parts[3]);
-  if (targetX == null || targetY == null) return;
+  final parsedTile = parseTileKeyCoordinates(tileKey);
+  if (parsedTile == null) return current;
+  final targetRegionId = parsedTile.regionId;
+  final targetX = parsedTile.x;
+  final targetY = parsedTile.y;
 
   // Get player's capital tile key
   final capitalTileKey = player.capitalTile?.toTileKey();
@@ -43,7 +45,7 @@ void _propagateRoadToAdjacentCapitalOrPort({
 
   // Get the tile map for the region to check bounds
   final tileMap = tileMapByRegion[targetRegionId];
-  if (tileMap == null) return;
+  if (tileMap == null) return current;
 
   // Check 4 neighbours (north, east, south, west)
   final neighbours = [
@@ -75,194 +77,220 @@ void _propagateRoadToAdjacentCapitalOrPort({
     final isPort = portTileKeys.contains(adjacentTileKey);
 
     if (isCapital || isPort) {
-      _log.d(
+      ordersApplicationLog.d(
         'build_road propagating level $nextLevel to adjacent ${isCapital ? "capital" : "port"} tile $adjacentTileKey',
       );
-      final currentLevel = tileState.roadLevel(adjacentTileKey);
+      final roadLevel = current.roadLevel(adjacentTileKey);
       // Only upgrade, never downgrade.
-      if (nextLevel > currentLevel) {
-        setTileState(tileState.setRoadLevel(adjacentTileKey, nextLevel));
+      if (nextLevel > roadLevel) {
+        current = current.setRoadLevel(adjacentTileKey, nextLevel);
       }
     }
   }
+  return current;
 }
 
 typedef _CompletedWorkHandler =
-    void Function(
-      _BuildWorkState s,
+    BuildWorkState Function(
+      BuildWorkState s,
       Unit u,
       CurrentWork cw,
       List<Province> Function() getProvinces,
-      void Function(List<Province>) setProvinces,
-      void Function(_BuildWorkState, Unit, String) applyExploreCompletion,
+      WorkOrderState Function(WorkOrderState, List<Province>) replaceProvinces,
+      BuildWorkState Function(BuildWorkState, Unit, String)
+      applyExploreCompletion,
     );
 
-void _dispatchCompletedWorkTarget(
-  _BuildWorkState s,
+BuildWorkState dispatchCompletedWorkTarget(
+  BuildWorkState s,
   Unit u,
   CurrentWork cw,
   List<Province> Function() getProvinces,
-  void Function(List<Province>) setProvinces,
-  void Function(_BuildWorkState, Unit, String) applyExploreCompletion,
+  WorkOrderState Function(WorkOrderState, List<Province>) replaceProvinces,
+  BuildWorkState Function(BuildWorkState, Unit, String) applyExploreCompletion,
 ) {
-  _log.d(
+  ordersApplicationLog.d(
     'work completed unit=${u.id} workTarget=${cw.workTarget} tileKey=${cw.tileKey}',
   );
   final handler = _completedWorkTargetHandlers[cw.workTarget];
-  handler?.call(s, u, cw, getProvinces, setProvinces, applyExploreCompletion);
+  if (handler == null) return s;
+  return handler(
+    s,
+    u,
+    cw,
+    getProvinces,
+    replaceProvinces,
+    applyExploreCompletion,
+  );
 }
 
-void _completedWorkBuildImprovement(
-  _BuildWorkState s,
+BuildWorkState _completedWorkBuildImprovement(
+  BuildWorkState s,
   Unit u,
   CurrentWork cw,
   List<Province> Function() getProvinces,
-  void Function(List<Province>) setProvinces,
-  void Function(_BuildWorkState, Unit, String) applyExploreCompletion,
+  WorkOrderState Function(WorkOrderState, List<Province>) replaceProvinces,
+  BuildWorkState Function(BuildWorkState, Unit, String) applyExploreCompletion,
 ) {
   final level = s.work.tileState.improvementLevel(cw.tileKey);
-  s.work.tileState = s.work.tileState.setImprovement(
-    cw.tileKey,
-    (level + 1).clamp(0, 4),
+  var work = s.work.copyWith(
+    tileState: s.work.tileState.setImprovement(
+      cw.tileKey,
+      (level + 1).clamp(0, 4),
+    ),
   );
+  var game = s.game;
 
-  final resourceId = s.game.worldState.resourceByTileKey[cw.tileKey];
+  final resourceId = game.worldState.resourceByTileKey[cw.tileKey];
   final mirrorCat = envyMirrorTechCategoryForExtractionResource(resourceId);
   if (mirrorCat == null) {
-    return;
+    return s.copyWith(work: work);
   }
-  final turn = s.game.worldState.turnState.turnNumber;
-  final owner = s.game.playerById(u.ownerId);
+  final turn = game.worldState.turnState.turnNumber;
+  final owner = game.playerById(u.ownerId);
   if (owner != null && owner.isHuman) {
-    s.game = s.game.copyWith(
+    game = game.copyWith(
       lastHumanCompletedResearchCategory: mirrorCat,
       lastHumanResearchCategoryCompletionTurn: turn,
     );
-    return;
+    return s.copyWith(game: game, work: work);
   }
-  if (isAiControlledForEvidence(s.game, u.ownerId)) {
+  if (isAiControlledForEvidence(game, u.ownerId)) {
     final ev = evidenceForEnvyResearchMirror(
-      s.game,
+      game,
       u.ownerId,
       mirrorCat,
       turn,
       const [],
     );
     if (ev.isNotEmpty) {
-      s.game = s.game.copyWith(
-        dossierEvidenceEntries: [...s.game.dossierEvidenceEntries, ...ev],
+      game = game.copyWith(
+        dossierEvidenceEntries: [...game.dossierEvidenceEntries, ...ev],
       );
     }
   }
+  return s.copyWith(game: game, work: work);
 }
 
-void _completedWorkUpgradeTown(
-  _BuildWorkState s,
+BuildWorkState _completedWorkUpgradeTown(
+  BuildWorkState s,
   Unit u,
   CurrentWork cw,
   List<Province> Function() getProvinces,
-  void Function(List<Province>) setProvinces,
-  void Function(_BuildWorkState, Unit, String) applyExploreCompletion,
+  WorkOrderState Function(WorkOrderState, List<Province>) replaceProvinces,
+  BuildWorkState Function(BuildWorkState, Unit, String) applyExploreCompletion,
 ) {
   final provinces = getProvinces();
-  final idx = provinces.indexWhere((p) => p.id == u.locationProvinceId);
-  if (idx >= 0) {
-    final p = provinces[idx];
-    setProvinces(
-      List<Province>.from(provinces)
-        ..[idx] = p.copyWith(
-          townDevelopmentLevel: (p.townDevelopmentLevel + 1).clamp(0, 4),
-        ),
-    );
-  }
+  var replaced = false;
+  final next = provinces.map((p) {
+    if (!replaced && p.id == u.locationProvinceId) {
+      replaced = true;
+      return p.copyWith(
+        townDevelopmentLevel: (p.townDevelopmentLevel + 1).clamp(0, 4),
+      );
+    }
+    return p;
+  }).toList();
+  if (!replaced) return s;
+  return s.copyWith(work: replaceProvinces(s.work, next));
 }
 
-void _completedWorkExplore(
-  _BuildWorkState s,
+BuildWorkState _completedWorkExplore(
+  BuildWorkState s,
   Unit u,
   CurrentWork cw,
   List<Province> Function() getProvinces,
-  void Function(List<Province>) setProvinces,
-  void Function(_BuildWorkState, Unit, String) applyExploreCompletion,
+  WorkOrderState Function(WorkOrderState, List<Province>) replaceProvinces,
+  BuildWorkState Function(BuildWorkState, Unit, String) applyExploreCompletion,
 ) {
-  applyExploreCompletion(s, u, ProvinceId.regionIdFrom(u.locationProvinceId));
+  return applyExploreCompletion(
+    s,
+    u,
+    ProvinceId.regionIdFrom(u.locationProvinceId),
+  );
 }
 
-void _completedWorkBuildRoad(
-  _BuildWorkState s,
+BuildWorkState _completedWorkBuildRoad(
+  BuildWorkState s,
   Unit u,
   CurrentWork cw,
   List<Province> Function() getProvinces,
-  void Function(List<Province>) setProvinces,
-  void Function(_BuildWorkState, Unit, String) applyExploreCompletion,
+  WorkOrderState Function(WorkOrderState, List<Province>) replaceProvinces,
+  BuildWorkState Function(BuildWorkState, Unit, String) applyExploreCompletion,
 ) {
   final roadLevel = s.work.tileState.roadLevel(cw.tileKey);
   final player = s.game.playerById(u.ownerId);
   final hasRoadConstruction =
       player?.techUnlocked?[kTechIdRoadConstruction] == true;
   final nextLevel = (roadLevel + 1).clamp(0, hasRoadConstruction ? 2 : 1);
-  s.work.tileState = s.work.tileState.setRoadLevel(cw.tileKey, nextLevel);
+  var tileState = s.work.tileState.setRoadLevel(cw.tileKey, nextLevel);
 
   final tileMap = s.tileMapByRegion;
   if (tileMap != null) {
-    _propagateRoadToAdjacentCapitalOrPort(
+    tileState = propagateRoadToAdjacentCapitalOrPort(
       tileKey: cw.tileKey,
       nextLevel: nextLevel,
       player: player,
       worldState: s.game.worldState,
       tileMapByRegion: tileMap,
-      tileState: s.work.tileState,
-      setTileState: (newTileState) => s.work.tileState = newTileState,
+      tileState: tileState,
     );
   }
+  return s.copyWith(work: s.work.copyWith(tileState: tileState));
 }
 
-void _completedWorkBuildPort(
-  _BuildWorkState s,
+BuildWorkState _completedWorkBuildPort(
+  BuildWorkState s,
   Unit u,
   CurrentWork cw,
   List<Province> Function() getProvinces,
-  void Function(List<Province>) setProvinces,
-  void Function(_BuildWorkState, Unit, String) applyExploreCompletion,
+  WorkOrderState Function(WorkOrderState, List<Province>) replaceProvinces,
+  BuildWorkState Function(BuildWorkState, Unit, String) applyExploreCompletion,
 ) {
   if (s.topology == null) {
-    return;
+    return s;
   }
-  final parts = cw.tileKey.split('|');
-  final regionIdFromTile = parts.isNotEmpty
-      ? parts[0]
-      : ProvinceId.regionIdFrom(u.locationProvinceId);
-  final localId = parts.length > 1
-      ? parts[1]
-      : ProvinceId.localIdFrom(u.locationProvinceId);
+  final parsedTile = parseTileKeyCoordinates(cw.tileKey);
+  final regionIdFromTile =
+      parsedTile?.regionId ?? ProvinceId.regionIdFrom(u.locationProvinceId);
+  final localId =
+      parsedTile?.provinceLocalId ??
+      ProvinceId.localIdFrom(u.locationProvinceId);
   final fullProvinceId = ProvinceId.full(regionIdFromTile, localId);
   final seaZoneId = seaZoneIdForProvince(
     s.topology!,
     localId,
     regionId: regionIdFromTile,
   );
-  if (seaZoneId != null) {
-    s.work.portsByProvinceSeaboard['$fullProvinceId|$seaZoneId'] = cw.tileKey;
-    s.work.tileState = s.work.tileState.setRoadLevel(cw.tileKey, 4);
-  }
+  if (seaZoneId == null) return s;
+  final ports = Map<String, String>.from(s.work.portsByProvinceSeaboard)
+    ..['$fullProvinceId|$seaZoneId'] = cw.tileKey;
+  final tileState = s.work.tileState.setRoadLevel(cw.tileKey, 4);
+  return s.copyWith(
+    work: s.work.copyWith(portsByProvinceSeaboard: ports, tileState: tileState),
+  );
 }
 
-void _completedWorkBuildFort(
-  _BuildWorkState s,
+BuildWorkState _completedWorkBuildFort(
+  BuildWorkState s,
   Unit u,
   CurrentWork cw,
   List<Province> Function() getProvinces,
-  void Function(List<Province>) setProvinces,
-  void Function(_BuildWorkState, Unit, String) applyExploreCompletion,
+  WorkOrderState Function(WorkOrderState, List<Province>) replaceProvinces,
+  BuildWorkState Function(BuildWorkState, Unit, String) applyExploreCompletion,
 ) {
   final provinces = getProvinces();
-  final idx = provinces.indexWhere((p) => p.id == u.locationProvinceId);
-  if (idx >= 0) {
-    final p = provinces[idx];
-    setProvinces(
-      List<Province>.from(provinces)
-        ..[idx] = p.copyWith(fortLevel: (p.fortLevel + 1).clamp(0, 3)),
-    );
+  var replaced = false;
+  final nextProvinces = provinces.map((p) {
+    if (!replaced && p.id == u.locationProvinceId) {
+      replaced = true;
+      return p.copyWith(fortLevel: (p.fortLevel + 1).clamp(0, 3));
+    }
+    return p;
+  }).toList();
+  WorkOrderState work = s.work;
+  if (replaced) {
+    work = replaceProvinces(work, nextProvinces);
   }
   if (s.topology != null && s.onDialogue != null) {
     final seed =
@@ -281,15 +309,16 @@ void _completedWorkBuildFort(
       s.onDialogue!(e);
     }
   }
+  return s.copyWith(work: work);
 }
 
-void _completedWorkBuildRail(
-  _BuildWorkState s,
+BuildWorkState _completedWorkBuildRail(
+  BuildWorkState s,
   Unit u,
   CurrentWork cw,
   List<Province> Function() getProvinces,
-  void Function(List<Province>) setProvinces,
-  void Function(_BuildWorkState, Unit, String) applyExploreCompletion,
+  WorkOrderState Function(WorkOrderState, List<Province>) replaceProvinces,
+  BuildWorkState Function(BuildWorkState, Unit, String) applyExploreCompletion,
 ) {
   final player = s.game.playerById(u.ownerId);
   final roadLevel = s.work.tileState.roadLevel(cw.tileKey);
@@ -300,20 +329,90 @@ void _completedWorkBuildRail(
     terrain: terrain,
   );
   if (reason == null) {
-    s.work.tileState = s.work.tileState.setRoadLevel(cw.tileKey, 4);
-  } else {
-    _log.d('build_rail completion skipped unit=${u.id} reason=$reason');
+    return s.copyWith(
+      work: s.work.copyWith(
+        tileState: s.work.tileState.setRoadLevel(cw.tileKey, 4),
+      ),
+    );
   }
+  ordersApplicationLog.d(
+    'build_rail completion skipped unit=${u.id} reason=$reason',
+  );
+  return s;
 }
 
-void _completedWorkNoop(
-  _BuildWorkState s,
+BuildWorkState _completedWorkNoop(
+  BuildWorkState s,
   Unit u,
   CurrentWork cw,
   List<Province> Function() getProvinces,
-  void Function(List<Province>) setProvinces,
-  void Function(_BuildWorkState, Unit, String) applyExploreCompletion,
-) {}
+  WorkOrderState Function(WorkOrderState, List<Province>) replaceProvinces,
+  BuildWorkState Function(BuildWorkState, Unit, String) applyExploreCompletion,
+) => s;
+
+BuildWorkState _completedWorkProspect(
+  BuildWorkState s,
+  Unit u,
+  CurrentWork cw,
+  List<Province> Function() getProvinces,
+  WorkOrderState Function(WorkOrderState, List<Province>) replaceProvinces,
+  BuildWorkState Function(BuildWorkState, Unit, String) applyExploreCompletion,
+) {
+  if (!isMineralEligibleTile(s.game, s.tileMapByRegion, cw.tileKey)) {
+    return s;
+  }
+  final existing =
+      s.game.worldState.playerProspectedTiles[u.ownerId] ?? const <String>{};
+  if (existing.contains(cw.tileKey)) {
+    return s;
+  }
+  final newProspected = Set<String>.from(existing)..add(cw.tileKey);
+  final ws = s.game.worldState.copyWith(
+    playerProspectedTiles: {
+      ...s.game.worldState.playerProspectedTiles,
+      u.ownerId: newProspected,
+    },
+  );
+  return s.copyWith(game: s.game.copyWith(worldState: ws));
+}
+
+BuildWorkState _completedWorkPurchaseLand(
+  BuildWorkState s,
+  Unit u,
+  CurrentWork cw,
+  List<Province> Function() getProvinces,
+  WorkOrderState Function(WorkOrderState, List<Province>) replaceProvinces,
+  BuildWorkState Function(BuildWorkState, Unit, String) applyExploreCompletion,
+) {
+  final player = s.game.playerById(u.ownerId);
+  if (player == null) {
+    return s;
+  }
+  final land = applyPurchaseLandCompletion(
+    state: s,
+    player: player,
+    unit: u,
+    targetTileKey: cw.tileKey,
+    treasury: player.treasury,
+    purchasedTilesByTileKey: s.work.purchasedTilesByTileKey,
+    provinceById: (id) => s.game.worldState.tryGetProvince(id),
+  );
+  final updatedPlayer = player.copyWith(treasury: land.treasury);
+  final nextPlayers = s.game.players
+      .map((p) => p.id == u.ownerId ? updatedPlayer : p)
+      .toList();
+  return s.copyWith(
+    game: s.game.copyWith(players: nextPlayers),
+    work: s.work.copyWith(
+      purchasedTilesByTileKey: land.purchasedTilesByTileKey,
+      updatedPlayers: upsertPlayerSnapshot(
+        s.work.updatedPlayers,
+        u.ownerId,
+        updatedPlayer,
+      ),
+    ),
+  );
+}
 
 /// Map-based work completion (Refs #1531). Unknown targets no-op.
 final Map<String, _CompletedWorkHandler> _completedWorkTargetHandlers =
@@ -324,7 +423,9 @@ final Map<String, _CompletedWorkHandler> _completedWorkTargetHandlers =
       kWorkTargetBuildRoad: _completedWorkBuildRoad,
       kWorkTargetBuildPort: _completedWorkBuildPort,
       kWorkTargetBuildFort: _completedWorkBuildFort,
-      'build_rail': _completedWorkBuildRail,
+      kWorkTargetBuildRail: _completedWorkBuildRail,
+      kWorkTargetProspect: _completedWorkProspect,
+      kWorkTargetPurchaseLand: _completedWorkPurchaseLand,
       kWorkTargetStealTech: _completedWorkNoop,
       kWorkTargetCounterSpy: _completedWorkNoop,
     };

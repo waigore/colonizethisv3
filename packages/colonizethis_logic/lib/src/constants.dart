@@ -16,6 +16,16 @@ export 'package:colonizethis_models/colonizethis_models.dart'
 const String kRegionOldWorld = 'oldWorld';
 const String kRegionNewWorld = 'newWorld';
 
+/// Cardinal (4-neighbor) grid deltas on row-major tile maps (north/up-first).
+/// Canonical ordering shared across connectivity scans, setup shortest-path BFS,
+/// capital-choice routing, and naval coastal adjacency (Refs #2391).
+const List<(int, int)> kGridNeighborsCardinal4 = [
+  (0, -1),
+  (1, 0),
+  (0, 1),
+  (-1, 0),
+];
+
 /// Default sea fraction for map generation (0.6 = 60% sea, 40% land).
 const double kDefaultSeaFraction = 0.6;
 
@@ -80,12 +90,53 @@ bool isProspectableTerrainId(String? terrainTypeId) {
   return false;
 }
 
+/// Lazily built once per [Game] instance (issue #2268 AC-2); invalidated when a
+/// new [Game] replaces the previous one via [Game.copyWith].
+final Expando<Map<String, Player>> _gamePlayersById =
+    Expando<Map<String, Player>>('gamePlayersById');
+
+/// GP whose [Player.capitalProvinceId] maps to each full province id (first in
+/// [Game.players] list order wins on duplicates). Refs #2394 steal_tech paths.
+final Expando<Map<String, String>> _gameGpOwnerIdByCapitalProvinceId =
+    Expando<Map<String, String>>('gameGpOwnerIdByCapitalProvinceId');
+
 /// Safe player lookup by id. Returns null if not found.
 extension GamePlayerLookup on Game {
   Player? playerById(String id) {
-    for (final p in players) {
-      if (p.id == id) return p;
+    var byId = _gamePlayersById[this];
+    if (byId == null) {
+      byId = <String, Player>{};
+      for (final p in players) {
+        byId.putIfAbsent(p.id, () => p);
+      }
+      _gamePlayersById[this] = byId;
     }
-    return null;
+    return byId[id];
+  }
+
+  /// Great Power at [capitalProvinceId] (excluding [excludePlayerId]), or null.
+  ///
+  /// Uses a per-[Game] lazy map keyed by full capital province id so steal_tech
+  /// validation and completion avoid repeated linear scans over [players].
+  Player? otherGreatPowerAtCapitalProvince(
+    String capitalProvinceId,
+    String excludePlayerId,
+  ) {
+    var byCap = _gameGpOwnerIdByCapitalProvinceId[this];
+    if (byCap == null) {
+      byCap = <String, String>{};
+      for (final p in players) {
+        final cap = p.capitalProvinceId;
+        if (cap != null) {
+          byCap.putIfAbsent(cap, () => p.id);
+        }
+      }
+      _gameGpOwnerIdByCapitalProvinceId[this] = byCap;
+    }
+    final ownerId = byCap[capitalProvinceId];
+    if (ownerId == null || ownerId == excludePlayerId) {
+      return null;
+    }
+    return playerById(ownerId);
   }
 }

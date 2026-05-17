@@ -3,18 +3,16 @@
 import 'dart:collection';
 
 import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:colonizethis_logic/package_logger.dart';
+import 'package:colonizethis_logic/src/logging.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../constants.dart';
-
-final _log = packageLogger();
+import '../world/tile_key_coordinates.dart';
 
 const int _initTownRoadLevel = 1;
 
-/// BFS neighbor order — matches [_shortestPathOnProvinceTiles] in capital_choice.dart
-/// for deterministic shortest paths.
-const List<(int, int)> _kBfsDeltas = [(0, -1), (1, 0), (0, 1), (-1, 0)];
+/// Neighbor iteration uses [kGridNeighborsCardinal4] ordering so shortest-path
+/// scans align with [_shortestPathOnProvinceTiles] in capital_choice.dart (Refs #2391).
 
 /// After town assignment: for each faction whose capital lies in a region listed in
 /// [GameSetupConfig.initTownRoadWiringRegionIds], raise road level to at least
@@ -44,7 +42,7 @@ Game applyInitTownRoadsToCapitals({
     }
     final map = tileMapByRegion[regionId];
     if (map == null) {
-      _log.w('init town roads skip regionId=$regionId (no tile map)');
+      logicLog.w('init town roads skip regionId=$regionId (no tile map)');
       return;
     }
 
@@ -128,7 +126,7 @@ Game applyInitTownRoadsToCapitals({
     tileState = _raiseRoadAtLeast(tileState, key, _initTownRoadLevel);
   }
 
-  _log.i(
+  logicLog.i(
     'init town roads raised $_initTownRoadLevel on ${toRaise.length} tile(s)',
   );
   return game.copyWith(worldState: ws.copyWith(tileState: tileState));
@@ -140,10 +138,9 @@ Map<String, String> _coordToTileKey(WorldState ws, String regionId) {
   if (byProvince == null) return m;
   for (final list in byProvince.values) {
     for (final tk in list) {
-      final parts = tk.split('|');
-      if (parts.length >= 4) {
-        m['${parts[parts.length - 2]}|${parts[parts.length - 1]}'] = tk;
-      }
+      final coords = parseTileKeyCoordinates(tk);
+      if (coords == null || coords.regionId != regionId) continue;
+      m['${coords.x}|${coords.y}'] = tk;
     }
   }
   return m;
@@ -167,12 +164,8 @@ Set<String> _allowedTileKeysForFaction(
 }
 
 Iterable<Province> _provincesWithRegionId(WorldState ws, String regionId) {
-  if (regionId == kRegionOldWorld) {
-    return ws.oldWorld.provinces;
-  }
-  if (regionId == kRegionNewWorld) {
-    return ws.newWorld.provinces;
-  }
+  if (regionId == kRegionOldWorld) return ws.oldWorld.provinces;
+  if (regionId == kRegionNewWorld) return ws.newWorld.provinces;
   return const [];
 }
 
@@ -193,7 +186,7 @@ Map<String, String> _bfsParentsFromCapital({
     final xy = _parseTileKeyXY(cur);
     if (xy == null) continue;
     final (cx, cy) = xy;
-    for (final d in _kBfsDeltas) {
+    for (final d in kGridNeighborsCardinal4) {
       final nx = cx + d.$1;
       final ny = cy + d.$2;
       if (nx < 0 || nx >= mapWidth || ny < 0 || ny >= mapHeight) {
@@ -212,12 +205,9 @@ Map<String, String> _bfsParentsFromCapital({
 }
 
 (int, int)? _parseTileKeyXY(String tileKey) {
-  final parts = tileKey.split('|');
-  if (parts.length < 4) return null;
-  final x = int.tryParse(parts[parts.length - 2]);
-  final y = int.tryParse(parts[parts.length - 1]);
-  if (x == null || y == null) return null;
-  return (x, y);
+  final coords = parseTileKeyCoordinates(tileKey);
+  if (coords == null) return null;
+  return (coords.x, coords.y);
 }
 
 void _addPathTilesToSet({

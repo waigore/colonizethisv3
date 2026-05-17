@@ -10,7 +10,7 @@ void main() {
     });
 
     test('line ids resolve to non-placeholder English', () {
-      final ids = techEffectSummaryLineIdsFor('university');
+      final ids = techEffectSummaryLineIdsFor(kTechIdUniversity);
       expect(ids.length, greaterThanOrEqualTo(2));
       for (final id in ids) {
         final en = techEffectSummaryMessageEn(id);

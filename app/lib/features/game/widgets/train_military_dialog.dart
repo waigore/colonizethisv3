@@ -2,11 +2,11 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
 
-import '../../../l10n/app_localizations.dart';
 import '../../../l10n/l10n.dart';
 import '../../../widgets/ct_dialog_shell.dart';
 import '../../../widgets/ct_nine_patch_button.dart';
 import '../../../widgets/resource_icon.dart';
+import '../utils/commodity_ui_helpers.dart';
 import 'train_unit_dialog_helper.dart';
 
 class TrainMilitaryDialog extends StatefulWidget {
@@ -47,25 +47,27 @@ class _TrainMilitaryDialogState extends State<TrainMilitaryDialog> {
   }
 
   Player? get _player {
-    for (final p in widget.game.players) {
-      if (p.id == widget.humanPlayerId) return p;
-    }
-    return null;
+    return trainDialogPlayerById(
+      players: widget.game.players,
+      playerId: widget.humanPlayerId,
+    );
   }
 
-  bool get _hasCapital => _player?.capitalProvinceId != null;
+  bool get _hasCapital => trainDialogHasCapital(_player);
 
-  int get _treasury => _player?.treasury ?? 0;
+  int get _treasury => trainDialogTreasury(_player);
   int get _peasants => _player?.workerPool.peasants ?? 0;
-  Map<String, bool> get _techUnlocked => _player?.techUnlocked ?? const {};
+  Map<String, bool> get _techUnlocked => trainDialogTechUnlocked(_player);
 
   int _stockpileQty(String commodityId) =>
       _player?.stockpile.quantityOf(commodityId) ?? 0;
 
   bool _isLocked(String unitType) {
-    final techId = unlockingTechByRegimentId[unitType];
-    if (techId == null) return false;
-    return _techUnlocked[techId] != true;
+    return trainDialogIsLocked(
+      unitType: unitType,
+      unlockingTechByUnitType: unlockingTechByRegimentId,
+      techUnlocked: _techUnlocked,
+    );
   }
 
   int _totalTreasuryCost() {
@@ -123,7 +125,7 @@ class _TrainMilitaryDialogState extends State<TrainMilitaryDialog> {
     final totalComms = _totalCommodityCosts();
     for (final e in totalComms.entries) {
       if (e.value > _stockpileQty(e.key)) {
-        deficits.add(_commodityDisplayName(e.key));
+        deficits.add(commodityDisplayName(e.key));
       }
     }
     if (deficits.isEmpty) return null;
@@ -131,10 +133,6 @@ class _TrainMilitaryDialogState extends State<TrainMilitaryDialog> {
     if (deficits.length == 2) return '${deficits[0]} and ${deficits[1]} low';
     final head = deficits.sublist(0, deficits.length - 1).join(', ');
     return '$head and ${deficits.last} low';
-  }
-
-  String _commodityDisplayName(String commodityId) {
-    return CommodityCatalog.byId[commodityId]?.displayName ?? commodityId;
   }
 
   void _increment(String unitType) {
@@ -185,85 +183,100 @@ class _TrainMilitaryDialogState extends State<TrainMilitaryDialog> {
           _applyOrders();
         }
       },
-      child: CtDialogShell(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 16, 8, 8),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      l10n.trainMilitary_title,
-                      style: Theme.of(context).textTheme.titleMedium,
-                    ),
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.close),
-                    onPressed: () => Navigator.of(context).pop(),
-                  ),
-                ],
-              ),
+      child: CtDialogShell(child: _buildDialogContent(context, l10n)),
+    );
+  }
+
+  Widget _buildDialogContent(BuildContext context, AppLocalizations l10n) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        _buildHeader(context, l10n),
+        const Divider(height: 1),
+        if (!_hasCapital)
+          _buildNoCapitalMessage(context, l10n)
+        else
+          ..._buildBody(l10n),
+      ],
+    );
+  }
+
+  Widget _buildHeader(BuildContext context, AppLocalizations l10n) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 16, 8, 8),
+      child: Row(
+        children: [
+          Expanded(
+            child: Text(
+              l10n.trainMilitary_title,
+              style: Theme.of(context).textTheme.titleMedium,
             ),
-            const Divider(height: 1),
-            if (!_hasCapital)
-              Padding(
-                padding: const EdgeInsets.all(16),
-                child: Text(
-                  l10n.trainUnits_noCapital,
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: Theme.of(context).colorScheme.error,
-                  ),
-                ),
-              )
-            else ...[
-              _MilitaryResourceBar(
-                treasury: _treasury,
-                peasants: _peasants,
-                stockpile: _player?.stockpile ?? const Stockpile(),
-                deficitHint: _deficitHint,
-                l10n: l10n,
-              ),
-              const Divider(height: 1),
-              Padding(
-                padding: const EdgeInsets.symmetric(vertical: 8),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    for (final econ in RegimentEconomyCatalog.all)
-                      _RegimentRow(
-                        econ: econ,
-                        count: _counts[econ.id] ?? 0,
-                        isLocked: _isLocked(econ.id),
-                        techRequiredLabel: _techRequiredLabel(econ.id),
-                        canIncrement: _canAffordIncrement(econ.id),
-                        canDecrement: (_counts[econ.id] ?? 0) > 0,
-                        onIncrement: () => _increment(econ.id),
-                        onDecrement: () => _decrement(econ.id),
-                      ),
-                  ],
-                ),
-              ),
-              const Divider(height: 1),
-              Padding(
-                padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    CtNinePatchButton(
-                      onPressed: _reset,
-                      child: Text(l10n.common_reset),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ],
+          ),
+          IconButton(
+            icon: const Icon(Icons.close),
+            onPressed: () => Navigator.of(context).pop(),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildNoCapitalMessage(BuildContext context, AppLocalizations l10n) {
+    return Padding(
+      padding: const EdgeInsets.all(16),
+      child: Text(
+        l10n.trainUnits_noCapital,
+        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+          color: Theme.of(context).colorScheme.error,
         ),
       ),
     );
+  }
+
+  List<Widget> _buildBody(AppLocalizations l10n) {
+    return [
+      _MilitaryResourceBar(
+        treasury: _treasury,
+        peasants: _peasants,
+        stockpile: _player?.stockpile ?? const Stockpile(),
+        deficitHint: _deficitHint,
+        l10n: l10n,
+      ),
+      const Divider(height: 1),
+      Padding(
+        padding: const EdgeInsets.symmetric(vertical: 8),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            for (final econ in RegimentEconomyCatalog.all)
+              _RegimentRow(
+                econ: econ,
+                count: _counts[econ.id] ?? 0,
+                isLocked: _isLocked(econ.id),
+                techRequiredLabel: _techRequiredLabel(econ.id),
+                canIncrement: _canAffordIncrement(econ.id),
+                canDecrement: (_counts[econ.id] ?? 0) > 0,
+                onIncrement: () => _increment(econ.id),
+                onDecrement: () => _decrement(econ.id),
+              ),
+          ],
+        ),
+      ),
+      const Divider(height: 1),
+      Padding(
+        padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.end,
+          children: [
+            CtNinePatchButton(
+              onPressed: _reset,
+              child: Text(l10n.common_reset),
+            ),
+          ],
+        ),
+      ),
+    ];
   }
 }
 
@@ -403,78 +416,97 @@ class _RegimentRow extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    regimentTypeDisplayName(econ.id),
-                    style: theme.textTheme.bodyLarge?.copyWith(
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ),
-                Text(
-                  econ.buildTreasuryCost.toString(),
-                  style: theme.textTheme.bodyMedium,
-                ),
-              ],
-            ),
+            _buildHeader(theme),
             const SizedBox(height: 2),
-            Wrap(
-              spacing: 8,
-              runSpacing: 4,
-              children: [
-                _InlineCost(
-                  icon: const Icon(Icons.payments_outlined, size: 14),
-                  label: econ.buildTreasuryCost.toString(),
-                ),
-                _InlineCost(
-                  icon: const WorkerIcon(workerType: 'peasant', size: 14),
-                  label: 1.toString(),
-                ),
-                for (final input in econ.buildInputs.entries)
-                  _InlineCost(
-                    icon: ResourceIcon(commodityId: input.key, size: 14),
-                    label: input.value.toString(),
-                  ),
-              ],
-            ),
-            if (isLocked) ...[
-              const SizedBox(height: 2),
-              Text(
-                techRequiredLabel,
-                style: theme.textTheme.bodySmall?.copyWith(
-                  color: theme.colorScheme.error,
-                ),
-              ),
-            ],
+            _buildCostWrap(),
+            ..._buildLockedHint(theme),
             const SizedBox(height: 4),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [
-                CtNinePatchButton(
-                  onPressed: isLocked || !canDecrement ? null : onDecrement,
-                  child: const Text('−'),
-                ),
-                const SizedBox(width: 8),
-                SizedBox(
-                  width: 32,
-                  child: Text(
-                    count.toString(),
-                    textAlign: TextAlign.center,
-                    style: theme.textTheme.bodyLarge,
-                  ),
-                ),
-                const SizedBox(width: 8),
-                CtNinePatchButton(
-                  onPressed: isLocked || !canIncrement ? null : onIncrement,
-                  child: const Text('+'),
-                ),
-              ],
-            ),
+            _buildStepper(theme),
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildHeader(ThemeData theme) {
+    return Row(
+      children: [
+        Expanded(
+          child: Text(
+            regimentTypeDisplayName(econ.id),
+            style: theme.textTheme.bodyLarge?.copyWith(
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ),
+        Text(
+          econ.buildTreasuryCost.toString(),
+          style: theme.textTheme.bodyMedium,
+        ),
+      ],
+    );
+  }
+
+  Widget _buildCostWrap() {
+    return Wrap(
+      spacing: 8,
+      runSpacing: 4,
+      children: [
+        _InlineCost(
+          icon: const Icon(Icons.payments_outlined, size: 14),
+          label: econ.buildTreasuryCost.toString(),
+        ),
+        _InlineCost(
+          icon: const WorkerIcon(workerType: 'peasant', size: 14),
+          label: 1.toString(),
+        ),
+        for (final input in econ.buildInputs.entries)
+          _InlineCost(
+            icon: ResourceIcon(commodityId: input.key, size: 14),
+            label: input.value.toString(),
+          ),
+      ],
+    );
+  }
+
+  List<Widget> _buildLockedHint(ThemeData theme) {
+    if (!isLocked) {
+      return const [];
+    }
+    return [
+      const SizedBox(height: 2),
+      Text(
+        techRequiredLabel,
+        style: theme.textTheme.bodySmall?.copyWith(
+          color: theme.colorScheme.error,
+        ),
+      ),
+    ];
+  }
+
+  Widget _buildStepper(ThemeData theme) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.end,
+      children: [
+        CtNinePatchButton(
+          onPressed: isLocked || !canDecrement ? null : onDecrement,
+          child: const Text('−'),
+        ),
+        const SizedBox(width: 8),
+        SizedBox(
+          width: 32,
+          child: Text(
+            count.toString(),
+            textAlign: TextAlign.center,
+            style: theme.textTheme.bodyLarge,
+          ),
+        ),
+        const SizedBox(width: 8),
+        CtNinePatchButton(
+          onPressed: isLocked || !canIncrement ? null : onIncrement,
+          child: const Text('+'),
+        ),
+      ],
     );
   }
 }

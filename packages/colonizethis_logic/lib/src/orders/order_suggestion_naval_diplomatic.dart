@@ -1,13 +1,121 @@
-part of 'order_suggestion.dart';
+import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:colonizethis_models/colonizethis_models.dart';
+
+import '../constants.dart';
+import '../diplomacy/diplomacy_resolver.dart';
+import '../world/naval.dart';
+import '../world/player_view.dart';
+import '../world/province_lookup.dart';
+import '../world/topology_helpers.dart';
+import '../world/unit_lookup.dart';
+import 'incremental_candidate_validator.dart';
+import 'order_suggestion_context.dart';
+import 'order_suggestion_helpers.dart';
+
+void _addAcceptedSeaZoneCandidates({
+  required IncrementalCandidateValidator candidateValidator,
+  required MapTopology topology,
+  required Fleet fleet,
+  required String cur,
+  required Map<String, Set<String>> existingByFleet,
+  required List<NavalMoveOrder> suggestions,
+}) {
+  for (final node in topology.nodes) {
+    if (node.type != TopologyNodeType.seaZone) continue;
+    final destId = node.id;
+    if (cur != destId && !isAdjacentSeaSeaZone(topology, cur, destId)) {
+      continue;
+    }
+    if (existingByFleet[fleet.id]?.contains(destId) ?? false) continue;
+    final candidate = NavalMoveOrder(
+      fleetId: fleet.id,
+      destinationSeaZoneId: destId,
+    );
+    if (candidateValidator.isNavalMoveAccepted(candidate)) {
+      suggestions.add(candidate);
+    }
+  }
+}
+
+void _addAcceptedDockCandidatesForSeaFleet({
+  required IncrementalCandidateValidator candidateValidator,
+  required Game game,
+  required MapTopology topology,
+  required String playerId,
+  required Fleet fleet,
+  required String cur,
+  required Map<String, Set<String>> existingByFleet,
+  required List<NavalMoveOrder> suggestions,
+}) {
+  final zoneRegionId = regionIdForSeaZone(topology, cur);
+  if (zoneRegionId == null) return;
+  final adjacentLocalIds = provinceIdsAdjacentToSeaZone(
+    topology,
+    cur,
+    regionId: zoneRegionId,
+  );
+  for (final localId in adjacentLocalIds) {
+    final fullProvinceId = ProvinceId.isPrefixed(localId)
+        ? localId
+        : ProvinceId.full(zoneRegionId, localId);
+    if (existingByFleet[fleet.id]?.contains('port:$fullProvinceId') ?? false) {
+      continue;
+    }
+    final province = game.worldState.tryGetProvince(fullProvinceId);
+    if (province?.ownerId != playerId) continue;
+    final candidate = NavalMoveOrder(
+      fleetId: fleet.id,
+      destinationPortProvinceId: fullProvinceId,
+    );
+    if (candidateValidator.isNavalMoveAccepted(candidate)) {
+      suggestions.add(candidate);
+    }
+  }
+}
+
+void _addAcceptedMovesFromPortFleet({
+  required IncrementalCandidateValidator candidateValidator,
+  required MapTopology topology,
+  required Fleet fleet,
+  required Map<String, Set<String>> existingByFleet,
+  required List<NavalMoveOrder> suggestions,
+}) {
+  final inPortProvinceId = fleet.inPortAtProvinceId;
+  if (inPortProvinceId == null) return;
+  final rl = regionAndLocalProvinceForFleetInPort(
+    inPortProvinceId,
+    fleet.regionId,
+  );
+  final pNode = provinceTopologyNodeId(topology, rl.localId, rl.regionId);
+  if (pNode == null) return;
+  for (final destId in seaZonesAdjacentToProvince(topology, pNode)) {
+    if (existingByFleet[fleet.id]?.contains(destId) ?? false) continue;
+    final candidate = NavalMoveOrder(
+      fleetId: fleet.id,
+      destinationSeaZoneId: destId,
+    );
+    if (candidateValidator.isNavalMoveAccepted(candidate)) {
+      suggestions.add(candidate);
+    }
+  }
+}
 
 /// Suggests naval move orders for fleets owned by [view.playerId]. SPEC/program/naval-movement-resolution.md.
+///
+/// Throughput hook: callers that enumerate multiple suggestion families against
+/// the same `(game, view.playerId, currentOrders)` may supply
+/// [sharedCandidateValidator] to amortize `PlayerView` / units-by-id
+/// construction (Refs #2394, `SPEC/program/order-suggestions.md` § Throughput
+/// bounds).
 List<NavalMoveOrder> suggestNavalMoveOrders(
   PlayerView view,
   Game game,
   MapTopology topology,
-  Orders currentOrders,
-) {
-  _log.d('suggestNavalMoveOrders player=${view.playerId}');
+  Orders currentOrders, {
+  Map<String, Unit>? unitsById,
+  IncrementalCandidateValidator? sharedCandidateValidator,
+}) {
+  orderSuggestionLog.d('suggestNavalMoveOrders player=${view.playerId}');
   final playerId = view.playerId;
   final suggestions = <NavalMoveOrder>[];
   final existingByFleet = <String, Set<String>>{};
@@ -21,94 +129,65 @@ List<NavalMoveOrder> suggestNavalMoveOrders(
     }
   }
 
+  // Single per-player validator: amortizes the per-player [PlayerView] /
+  // units-by-id setup across every candidate probe in the loop.
+  // SPEC/program/order-suggestions.md § Incremental candidate validation.
+  // Refs #2237.
+  //
+  assert(
+    sharedCandidateValidator == null ||
+        sharedCandidateValidator.playerId == playerId,
+    'sharedCandidateValidator playerId must match view.playerId',
+  );
+  // Reuse the caller-supplied [view] and a one-time units index so we do not
+  // pay redundant `buildPlayerView` / `unitsByIdFromWorld` scans (Refs #2394).
+  final effectiveUnits =
+      unitsById ??
+      sharedCandidateValidator?.unitsById ??
+      unitsByIdFromWorld(game.worldState);
+  final candidateValidator =
+      sharedCandidateValidator ??
+      IncrementalCandidateValidator.forPlayer(
+        game: game,
+        topology: topology,
+        playerId: playerId,
+        basePrefix: currentOrders,
+        view: view,
+        unitsById: effectiveUnits,
+      );
+
   final homeFleetId = homeFleetIdFor(playerId);
   for (final fleet in game.worldState.fleets) {
     if (fleet.ownerId != playerId || fleet.id == homeFleetId) continue;
     if (fleet.isAtSea) {
       final cur = fleet.seaZoneId;
       if (cur == null) continue;
-
-      // Suggest S–S moves only (direct sea-zone edges).
-      for (final node in topology.nodes) {
-        if (node.type != TopologyNodeType.seaZone) continue;
-        final destId = node.id;
-        if (cur != destId && !isAdjacentSeaSeaZone(topology, cur, destId)) {
-          continue;
-        }
-        if (existingByFleet[fleet.id]?.contains(destId) ?? false) continue;
-        final candidate = NavalMoveOrder(
-          fleetId: fleet.id,
-          destinationSeaZoneId: destId,
-        );
-        if (_isNavalMoveOrderAccepted(
-          game,
-          topology,
-          playerId,
-          currentOrders,
-          candidate,
-        )) {
-          suggestions.add(candidate);
-        }
-      }
-
-      // Suggest dock at adjacent owned provinces (S–P). SPEC/game/ships-and-naval.md.
-      final zoneRegionId = regionIdForSeaZone(topology, cur);
-      if (zoneRegionId != null) {
-        final adjacentLocalIds = provinceIdsAdjacentToSeaZone(
-          topology,
-          cur,
-          regionId: zoneRegionId,
-        );
-        for (final localId in adjacentLocalIds) {
-          final fullProvinceId = ProvinceId.isPrefixed(localId)
-              ? localId
-              : ProvinceId.full(zoneRegionId, localId);
-          if (existingByFleet[fleet.id]?.contains('port:$fullProvinceId') ??
-              false) {
-            continue;
-          }
-          final province = game.worldState.tryGetProvince(fullProvinceId);
-          if (province?.ownerId != playerId) continue;
-          final candidate = NavalMoveOrder(
-            fleetId: fleet.id,
-            destinationPortProvinceId: fullProvinceId,
-          );
-          if (_isNavalMoveOrderAccepted(
-            game,
-            topology,
-            playerId,
-            currentOrders,
-            candidate,
-          )) {
-            suggestions.add(candidate);
-          }
-        }
-      }
-    } else {
-      final inPortProvinceId = fleet.inPortAtProvinceId;
-      if (inPortProvinceId == null) continue;
-      final rl = regionAndLocalProvinceForFleetInPort(
-        inPortProvinceId,
-        fleet.regionId,
+      _addAcceptedSeaZoneCandidates(
+        candidateValidator: candidateValidator,
+        topology: topology,
+        fleet: fleet,
+        cur: cur,
+        existingByFleet: existingByFleet,
+        suggestions: suggestions,
       );
-      final pNode = provinceTopologyNodeId(topology, rl.localId, rl.regionId);
-      if (pNode == null) continue;
-      for (final destId in seaZonesAdjacentToProvince(topology, pNode)) {
-        if (existingByFleet[fleet.id]?.contains(destId) ?? false) continue;
-        final candidate = NavalMoveOrder(
-          fleetId: fleet.id,
-          destinationSeaZoneId: destId,
-        );
-        if (_isNavalMoveOrderAccepted(
-          game,
-          topology,
-          playerId,
-          currentOrders,
-          candidate,
-        )) {
-          suggestions.add(candidate);
-        }
-      }
+      _addAcceptedDockCandidatesForSeaFleet(
+        candidateValidator: candidateValidator,
+        game: game,
+        topology: topology,
+        playerId: playerId,
+        fleet: fleet,
+        cur: cur,
+        existingByFleet: existingByFleet,
+        suggestions: suggestions,
+      );
+    } else {
+      _addAcceptedMovesFromPortFleet(
+        candidateValidator: candidateValidator,
+        topology: topology,
+        fleet: fleet,
+        existingByFleet: existingByFleet,
+        suggestions: suggestions,
+      );
     }
   }
 
@@ -123,23 +202,24 @@ List<NavalMoveOrder> suggestNavalMoveOrders(
         : (b.destinationSeaZoneId ?? '');
     return keyA.compareTo(keyB);
   });
-  _log.d(
+  orderSuggestionLog.d(
     'suggestNavalMoveOrders player=$playerId candidates=${suggestions.length}',
-  );
-  _log.d(
-    'suggestNavalMoveOrders full list ${suggestions.map((o) => "fleetId=${o.fleetId} destSea=${o.destinationSeaZoneId} destPort=${o.destinationPortProvinceId}").join(", ")}',
   );
   return suggestions;
 }
 
 /// Suggests naval mission orders for fleets owned by [view.playerId]. Phase 6.
+///
+/// Throughput hook: see [suggestNavalMoveOrders] [sharedCandidateValidator].
 List<NavalMissionOrder> suggestNavalMissionOrders(
   PlayerView view,
   Game game,
   MapTopology topology,
-  Orders currentOrders,
-) {
-  _log.d('suggestNavalMissionOrders player=${view.playerId}');
+  Orders currentOrders, {
+  Map<String, Unit>? unitsById,
+  IncrementalCandidateValidator? sharedCandidateValidator,
+}) {
+  orderSuggestionLog.d('suggestNavalMissionOrders player=${view.playerId}');
   final playerId = view.playerId;
   final suggestions = <NavalMissionOrder>[];
   final existingByFleet = <String>{};
@@ -147,6 +227,31 @@ List<NavalMissionOrder> suggestNavalMissionOrders(
       in currentOrders.navalMissionOrdersByPlayerId[playerId] ?? const []) {
     existingByFleet.add(o.fleetId);
   }
+
+  // Single per-player validator amortizes per-player setup across every
+  // candidate probe (mission × fleet). SPEC/program/order-suggestions.md
+  // § Incremental candidate validation. Refs #2237.
+  //
+  assert(
+    sharedCandidateValidator == null ||
+        sharedCandidateValidator.playerId == playerId,
+    'sharedCandidateValidator playerId must match view.playerId',
+  );
+  // Reuse [view] and one units snapshot (Refs #2394).
+  final effectiveUnits =
+      unitsById ??
+      sharedCandidateValidator?.unitsById ??
+      unitsByIdFromWorld(game.worldState);
+  final candidateValidator =
+      sharedCandidateValidator ??
+      IncrementalCandidateValidator.forPlayer(
+        game: game,
+        topology: topology,
+        playerId: playerId,
+        basePrefix: currentOrders,
+        view: view,
+        unitsById: effectiveUnits,
+      );
 
   for (final fleet in game.worldState.fleets) {
     if (fleet.ownerId != playerId) continue;
@@ -156,13 +261,7 @@ List<NavalMissionOrder> suggestNavalMissionOrders(
         fleetId: fleet.id,
         mission: mission.name,
       );
-      if (_isNavalMissionOrderAccepted(
-        game,
-        topology,
-        playerId,
-        currentOrders,
-        candidate,
-      )) {
+      if (candidateValidator.isNavalMissionAccepted(candidate)) {
         suggestions.add(candidate);
       }
     }
@@ -173,98 +272,10 @@ List<NavalMissionOrder> suggestNavalMissionOrders(
     if (c != 0) return c;
     return a.mission.compareTo(b.mission);
   });
-  _log.d(
+  orderSuggestionLog.d(
     'suggestNavalMissionOrders player=$playerId candidates=${suggestions.length}',
   );
-  _log.d(
-    'suggestNavalMissionOrders full list ${suggestions.map((o) => "fleetId=${o.fleetId} mission=${o.mission}").join(", ")}',
-  );
   return suggestions;
-}
-
-bool _isNavalMoveOrderAccepted(
-  Game game,
-  MapTopology topology,
-  String playerId,
-  Orders baseOrders,
-  NavalMoveOrder candidate,
-) {
-  final engine = OrderEngine(initialOrders: baseOrders);
-  final result = engine.addNavalMoveOrderWithContext(
-    game,
-    topology,
-    playerId,
-    candidate,
-  );
-  return result.isAccepted;
-}
-
-bool _isNavalMissionOrderAccepted(
-  Game game,
-  MapTopology topology,
-  String playerId,
-  Orders baseOrders,
-  NavalMissionOrder candidate,
-) {
-  final engine = OrderEngine(initialOrders: baseOrders);
-  final result = engine.addNavalMissionOrderWithContext(
-    game,
-    topology,
-    playerId,
-    candidate,
-  );
-  return result.isAccepted;
-}
-
-bool _isDiplomaticOrderAccepted(
-  Game game,
-  MapTopology topology,
-  String playerId,
-  Orders baseOrders,
-  DiplomaticOrder candidate, {
-  Map<String, TileMapResult>? tileMapByRegion,
-}) {
-  final engine = OrderEngine(initialOrders: baseOrders);
-  final result = engine.addDiplomaticOrderWithContext(
-    game,
-    topology,
-    playerId,
-    candidate,
-    tileMapByRegion: tileMapByRegion,
-  );
-  return result.isAccepted;
-}
-
-/// Trial append for suggestion enumeration. SPEC/program/order-suggestions.md.
-Orders _appendDiplomaticOrderForTrial(
-  Orders orders,
-  String playerId,
-  DiplomaticOrder order,
-) {
-  final prev =
-      orders.diplomaticOrdersByPlayerId[playerId] ?? const <DiplomaticOrder>[];
-  return orders.copyWith(
-    diplomaticOrdersByPlayerId: {
-      ...orders.diplomaticOrdersByPlayerId,
-      playerId: [...prev, order],
-    },
-  );
-}
-
-/// Next overture stage for suggestion (none→tradeConsulate→embassy→nap→joinEmpire).
-OvertureStage? _nextOvertureStage(OvertureStage current) {
-  switch (current) {
-    case OvertureStage.none:
-      return OvertureStage.tradeConsulate;
-    case OvertureStage.tradeConsulate:
-      return OvertureStage.embassy;
-    case OvertureStage.embassy:
-      return OvertureStage.nap;
-    case OvertureStage.nap:
-      return OvertureStage.joinEmpire;
-    case OvertureStage.joinEmpire:
-      return null;
-  }
 }
 
 /// Per-target suggestion order: first candidate that passes the order engine wins.
@@ -276,6 +287,8 @@ List<DiplomaticOrder> _diplomaticCandidatesForTargetOrdered({
   required String targetId,
   required Set<String> knownTargetIds,
   required Set<String> knownFactionIds,
+  required DiplomacyFactionMembership factionMembership,
+  required Map<String, OvertureState> playerOverturesByTargetId,
 }) {
   final treasury = player.treasury;
   final out = <DiplomaticOrder>[];
@@ -284,10 +297,12 @@ List<DiplomaticOrder> _diplomaticCandidatesForTargetOrdered({
   final rel = getRelation(game, playerId, targetId);
   final atWar = rel?.atWar ?? false;
   final atPeace = rel == null || rel.atPeace;
-  final isGpTarget = game.players.any((p) => p.id == targetId);
-  final isMinorOrTribe =
-      game.minorNations.any((m) => m.id == targetId) ||
-      game.tribes.any((t) => t.id == targetId);
+  final isGpTarget = game.playerById(targetId) != null;
+  final targetIsMinorOrTribe = isMinorOrTribe(
+    game,
+    targetId,
+    factionMembership: factionMembership,
+  );
 
   if (knownTargetIds.contains(targetId) && atWar) {
     out.add(
@@ -308,7 +323,7 @@ List<DiplomaticOrder> _diplomaticCandidatesForTargetOrdered({
       ),
     );
   }
-  if (isMinorOrTribe && knownFactionIds.contains(targetId)) {
+  if (targetIsMinorOrTribe && knownFactionIds.contains(targetId)) {
     final overtureOrder = _establishOvertureSuggestionOrder(
       game: game,
       playerId: playerId,
@@ -318,13 +333,7 @@ List<DiplomaticOrder> _diplomaticCandidatesForTargetOrdered({
     if (overtureOrder != null) out.add(overtureOrder);
   }
 
-  OvertureState? overtureRow;
-  for (final o in game.overtureStates) {
-    if (o.gpId == playerId && o.targetId == targetId) {
-      overtureRow = o;
-      break;
-    }
-  }
+  final overtureRow = playerOverturesByTargetId[targetId];
   if (overtureRow != null) {
     if (overtureRow.hasEmbassy && treasury >= grantAidDefaultAmount) {
       out.add(
@@ -370,7 +379,7 @@ DiplomaticOrder? _establishOvertureSuggestionOrder({
 
   final existing = getOverture(game, playerId, targetId);
   final current = existing?.stage ?? OvertureStage.none;
-  final next = _nextOvertureStage(current);
+  final next = current.next;
   if (next == null) return null;
   if (next == OvertureStage.tradeConsulate || next == OvertureStage.embassy) {
     final cost = next == OvertureStage.tradeConsulate
@@ -381,13 +390,8 @@ DiplomaticOrder? _establishOvertureSuggestionOrder({
   if (next == OvertureStage.tradeConsulate ||
       next == OvertureStage.embassy ||
       next == OvertureStage.nap) {
-    Player? submitter;
-    for (final p in game.players) {
-      if (p.id == playerId) {
-        submitter = p;
-        break;
-      }
-    }
+    // O(1) player lookup (Refs #2394); minor/tribe overture stages require tech.
+    final submitter = game.playerById(playerId);
     if (submitter?.techUnlocked?[kTechIdDiplomaticExpertise] != true) {
       return null;
     }
@@ -407,68 +411,81 @@ DiplomaticOrder? _establishOvertureSuggestionOrder({
 
 /// Suggests candidate diplomatic orders that are valid and visible for [view.playerId].
 /// SPEC/program/order-suggestions.md; SPEC/program/ai-systems-impl.md.
+///
+/// Throughput hook: when [sharedCandidateValidator] is supplied for the same
+/// `(game, topology, playerId, currentOrders)` tuple, the pass-level validator
+/// setup is skipped (Refs #2394).
 List<DiplomaticOrder> suggestDiplomaticOrders(
   PlayerView view,
   Game game,
   MapTopology topology,
   Orders currentOrders, {
   Map<String, TileMapResult>? tileMapByRegion,
+  IncrementalCandidateValidator? sharedCandidateValidator,
 }) {
-  _log.d('suggestDiplomaticOrders player=${view.playerId}');
+  orderSuggestionLog.d('suggestDiplomaticOrders player=${view.playerId}');
   final playerId = view.playerId;
   final suggestions = <DiplomaticOrder>[];
   final player = view.player;
 
-  // Determine which factions are actually "known" to this player per SPEC:
-  // - Any faction with an existing DiplomacyRelation to the player.
-  // - Any faction that owns at least one province with a tile visible to the player.
-  // Self is never a diplomatic target.
-  final knownFactionIds = <String>{};
+  final knownFactionIds = knownDiplomaticTargetFactionIds(
+    view: view,
+    game: game,
+    topology: topology,
+  );
 
-  for (final rel in game.diplomacyRelations) {
-    if (rel.factionId1 == playerId) {
-      knownFactionIds.add(rel.factionId2);
-    } else if (rel.factionId2 == playerId) {
-      knownFactionIds.add(rel.factionId1);
-    }
-  }
-
-  for (final entry in view.visibilityByTile.entries) {
-    if (entry.value == VisibilityLevel.unknown) continue;
-    final parts = entry.key.split('|');
-    if (parts.length != 4) continue;
-    final regionId = parts[0];
-    final provinceLocalId = parts[1];
-    final provinceId = ProvinceId.full(regionId, provinceLocalId);
-    final province = view.provinceByRegionAndId(regionId, provinceId);
-    final ownerId = province?.ownerId;
-    if (ownerId != null && ownerId != playerId) {
-      knownFactionIds.add(ownerId);
-    }
-  }
-
-  final otherGps = game.players
-      .where((p) => p.id != playerId)
-      .map((p) => p.id)
-      .toSet();
-  final minorIds = game.minorNations.map((m) => m.id).toSet();
-  final tribeIds = game.tribes.map((t) => t.id).toSet();
+  // One membership snapshot for this pass: O(1) minor/tribe checks per target
+  // and GP id sets without repeated list scans (Refs #2394).
+  final factionMembership = DiplomacyFactionMembership.from(game);
+  final otherGps = factionMembership.greatPowerIds.difference({playerId});
   final knownTargets = <String>{
     ...otherGps.where(knownFactionIds.contains),
-    ...minorIds.where(knownFactionIds.contains),
-    ...tribeIds.where(knownFactionIds.contains),
+    ...factionMembership.minorOrTribeIds.where(knownFactionIds.contains),
   };
   final knownTargetIds = knownTargets.toSet();
+
+  // First matching overture row per target (same order as legacy linear scan).
+  final playerOverturesByTargetId = <String, OvertureState>{};
+  for (final o in game.overtureStates) {
+    if (o.gpId != playerId) continue;
+    playerOverturesByTargetId.putIfAbsent(o.targetId, () => o);
+  }
+
+  assert(
+    sharedCandidateValidator == null ||
+        sharedCandidateValidator.playerId == playerId,
+    'sharedCandidateValidator playerId must match view.playerId',
+  );
+  // One world scan for the suggestion pass: every diplomatic probe shares the
+  // same `(game, topology, playerId)` view/units snapshot (Refs #2394).
+  final unitsByIdForDiplomatic =
+      sharedCandidateValidator?.unitsById ?? unitsByIdFromWorld(game.worldState);
 
   final unionTargets = <String>{
     ...knownTargets,
     ...otherGps,
-    for (final o in game.overtureStates)
-      if (o.gpId == playerId) o.targetId,
+    ...playerOverturesByTargetId.keys,
   };
 
   final sortedTargetIds = unionTargets.toList()..sort();
   var workingOrders = currentOrders;
+  // Rebind [basePrefix] per target via [forBasePrefix]; pay view/units/membership
+  // setup once for the whole suggestion pass (Refs #2394).
+  var passValidator =
+      sharedCandidateValidator != null
+      ? (sharedCandidateValidator.basePrefix == workingOrders
+            ? sharedCandidateValidator
+            : sharedCandidateValidator.forBasePrefix(workingOrders))
+      : buildIncrementalCandidateValidator(
+          game: game,
+          topology: topology,
+          playerId: playerId,
+          baseOrders: workingOrders,
+          tileMapByRegion: tileMapByRegion,
+          view: view,
+          unitsById: unitsByIdForDiplomatic,
+          factionMembership: factionMembership,
+        );
   for (final targetId in sortedTargetIds) {
     if (targetId == playerId) continue;
 
@@ -479,50 +496,58 @@ List<DiplomaticOrder> suggestDiplomaticOrders(
       targetId: targetId,
       knownTargetIds: knownTargetIds,
       knownFactionIds: knownFactionIds,
+      factionMembership: factionMembership,
+      playerOverturesByTargetId: playerOverturesByTargetId,
     );
     var trialOrders = workingOrders;
 
+    // One incremental validator per trial prefix: amortizes validator setup
+    // across all candidates in the pass (Refs #2394).
+    final prefixPassValidator = passValidator.forBasePrefix(trialOrders);
+    passValidator = prefixPassValidator;
+    var prefixPassAcceptedOrder = false;
     for (final candidate in candidates) {
       if (candidate.type == DiplomaticOrderType.grantAid ||
           candidate.type == DiplomaticOrderType.setSubsidy) {
         continue;
       }
-      if (!_isDiplomaticOrderAccepted(
-        game,
-        topology,
-        playerId,
-        trialOrders,
+      if (!isDiplomaticOrderAcceptedWithValidator(
+        prefixPassValidator,
         candidate,
-        tileMapByRegion: tileMapByRegion,
       )) {
         continue;
       }
       suggestions.add(candidate);
-      trialOrders = _appendDiplomaticOrderForTrial(
+      trialOrders = appendDiplomaticOrderForTrial(
         trialOrders,
         playerId,
         candidate,
       );
+      prefixPassAcceptedOrder = true;
       break;
     }
 
+    // Rebind only when the non-economic pass changed the trial prefix; when
+    // it did not accept anything, economic probes share [prefixPassValidator].
+    final economicPassValidator = prefixPassAcceptedOrder
+        ? prefixPassValidator.forBasePrefix(trialOrders)
+        : prefixPassValidator;
+    if (prefixPassAcceptedOrder) {
+      passValidator = economicPassValidator;
+    }
     for (final candidate in candidates) {
       if (candidate.type != DiplomaticOrderType.grantAid &&
           candidate.type != DiplomaticOrderType.setSubsidy) {
         continue;
       }
-      if (!_isDiplomaticOrderAccepted(
-        game,
-        topology,
-        playerId,
-        trialOrders,
+      if (!isDiplomaticOrderAcceptedWithValidator(
+        economicPassValidator,
         candidate,
-        tileMapByRegion: tileMapByRegion,
       )) {
         continue;
       }
       suggestions.add(candidate);
-      trialOrders = _appendDiplomaticOrderForTrial(
+      trialOrders = appendDiplomaticOrderForTrial(
         trialOrders,
         playerId,
         candidate,
@@ -530,6 +555,10 @@ List<DiplomaticOrder> suggestDiplomaticOrders(
     }
 
     workingOrders = trialOrders;
+    // Keep [passValidator] aligned with accumulated **workingOrders** before the
+    // next target (including economic-only accepts that did not update
+    // [passValidator] in the primary/economic split above). Refs #2394.
+    passValidator = passValidator.forBasePrefix(workingOrders);
   }
 
   suggestions.sort((a, b) {
@@ -543,183 +572,84 @@ List<DiplomaticOrder> suggestDiplomaticOrders(
     if (stageCmp != 0) return stageCmp;
     return (a.amount ?? 0).compareTo(b.amount ?? 0);
   });
-  _log.d(
+  orderSuggestionLog.d(
     'suggestDiplomaticOrders player=$playerId candidates=${suggestions.length}',
-  );
-  _log.d(
-    'suggestDiplomaticOrders full list ${suggestions.map((o) => "${o.type.name}:${o.targetFactionId}").join(", ")}',
   );
   return suggestions;
 }
 
-/// Context for [_workTargetPrefilters] map dispatch (work-target tile pre-filter).
-class _WorkTilePrefilterCtx {
-  _WorkTilePrefilterCtx({
-    required this.game,
-    required this.playerId,
-    required this.tileKeysByRegion,
-    required this.resourceByTile,
-    required this.purchasedTiles,
-    required this.ownedProvinceIds,
-    required this.tileMapByRegion,
-    required this.result,
-  });
+/// Declare-war candidates only. Used by Full AI `declareWarOnly` diplomacy pass
+/// so `establishOverture` does not block war per target (Refs #2504).
+/// SPEC/program/order-suggestions.md § Declare-war-only suggestions.
+List<DiplomaticOrder> suggestDeclareWarOrders(
+  PlayerView view,
+  Game game,
+  MapTopology topology,
+  Orders currentOrders, {
+  Map<String, TileMapResult>? tileMapByRegion,
+  IncrementalCandidateValidator? sharedCandidateValidator,
+}) {
+  orderSuggestionLog.d('suggestDeclareWarOrders player=${view.playerId}');
+  final playerId = view.playerId;
+  final suggestions = <DiplomaticOrder>[];
 
-  final Game game;
-  final String playerId;
-  final Map<String, Map<String, List<String>>> tileKeysByRegion;
-  final Map<String, String> resourceByTile;
-  final Map<String, String> purchasedTiles;
-  final Set<String> ownedProvinceIds;
-  final Map<String, TileMapResult>? tileMapByRegion;
-  final Set<String> result;
-}
-
-typedef _WorkTilePrefilterOp = void Function(_WorkTilePrefilterCtx c);
-
-void _prefilterWtBuildImprovement(_WorkTilePrefilterCtx c) {
-  _forEachPrefixedProvinceTile(
-    tileKeysByRegion: c.tileKeysByRegion,
-    onTile: (provinceId, tileKey) {
-      final isOwnedProvince = c.ownedProvinceIds.contains(provinceId);
-      final isPurchased = c.purchasedTiles[tileKey] == c.playerId;
-      if (!isOwnedProvince && !isPurchased) return;
-      final resourceId = c.resourceByTile[tileKey];
-      if (resourceId == null || resourceId.isEmpty) return;
-      c.result.add(tileKey);
-    },
+  final knownFactionIds = knownDiplomaticTargetFactionIds(
+    view: view,
+    game: game,
+    topology: topology,
   );
-}
 
-void _prefilterWtBuildRoad(_WorkTilePrefilterCtx c) {
-  _forEachPrefixedProvinceTile(
-    tileKeysByRegion: c.tileKeysByRegion,
-    onTile: (provinceId, tileKey) {
-      final isOwnedProvince = c.ownedProvinceIds.contains(provinceId);
-      final isPurchased = c.purchasedTiles[tileKey] == c.playerId;
-      if (!isOwnedProvince && !isPurchased) return;
-      c.result.add(tileKey);
-    },
+  final factionMembership = DiplomacyFactionMembership.from(game);
+  final otherGps = factionMembership.greatPowerIds.difference({playerId});
+  final knownTargets = <String>{
+    ...otherGps.where(knownFactionIds.contains),
+    ...factionMembership.minorOrTribeIds.where(knownFactionIds.contains),
+  };
+  final knownTargetIds = knownTargets.toSet();
+
+  assert(
+    sharedCandidateValidator == null ||
+        sharedCandidateValidator.playerId == playerId,
+    'sharedCandidateValidator playerId must match view.playerId',
   );
-}
+  final unitsByIdForDiplomatic =
+      sharedCandidateValidator?.unitsById ?? unitsByIdFromWorld(game.worldState);
 
-void _prefilterWtBuildRail(_WorkTilePrefilterCtx c) {
-  final player = c.game.playerById(c.playerId);
-  if (player == null) return;
-  final tech = player.techUnlocked;
-  final tileState = c.game.worldState.tileState;
-  _forEachPrefixedProvinceTile(
-    tileKeysByRegion: c.tileKeysByRegion,
-    onTile: (provinceId, tileKey) {
-      final isOwnedProvince = c.ownedProvinceIds.contains(provinceId);
-      final isPurchased = c.purchasedTiles[tileKey] == c.playerId;
-      if (!isOwnedProvince && !isPurchased) return;
-      final roadLevel = tileState.roadLevel(tileKey);
-      if (roadLevel != 1 && roadLevel != 2) return;
-      final terrain = terrainTypeForTileKey(c.tileMapByRegion, tileKey);
-      if (rejectionReasonForBuildRailOrder(
-            techUnlocked: tech,
-            roadLevel: roadLevel,
-            terrain: terrain,
-          ) !=
-          null) {
-        return;
-      }
-      c.result.add(tileKey);
-    },
-  );
-}
+  final sortedTargetIds = knownTargetIds.toList()..sort();
+  var passValidator =
+      sharedCandidateValidator != null
+      ? (sharedCandidateValidator.basePrefix == currentOrders
+            ? sharedCandidateValidator
+            : sharedCandidateValidator.forBasePrefix(currentOrders))
+      : buildIncrementalCandidateValidator(
+          game: game,
+          topology: topology,
+          playerId: playerId,
+          baseOrders: currentOrders,
+          tileMapByRegion: tileMapByRegion,
+          view: view,
+          unitsById: unitsByIdForDiplomatic,
+          factionMembership: factionMembership,
+        );
 
-void _prefilterWtTownWork(_WorkTilePrefilterCtx c) {
-  _addCandidateTilesForTownWork(
-    game: c.game,
-    ownedProvinceIds: c.ownedProvinceIds,
-    result: c.result,
-  );
-}
+  for (final targetId in sortedTargetIds) {
+    if (targetId == playerId) continue;
+    final rel = getRelation(game, playerId, targetId);
+    final atPeace = rel == null || rel.atPeace;
+    if (!atPeace) continue;
 
-void _prefilterWtOwnedProvinceTiles(_WorkTilePrefilterCtx c) {
-  _addAllTilesInOwnedPrefixedProvinces(
-    tileKeysByRegion: c.tileKeysByRegion,
-    ownedProvinceIds: c.ownedProvinceIds,
-    result: c.result,
-  );
-}
-
-void _prefilterWtStealTech(_WorkTilePrefilterCtx c) {
-  _addCandidateTilesForStealTech(
-    game: c.game,
-    playerId: c.playerId,
-    result: c.result,
-  );
-}
-
-void _prefilterWtPurchaseLand(_WorkTilePrefilterCtx c) {
-  final gpIds = c.game.players.map((p) => p.id).toSet();
-  final minorIds = c.game.minorNations.map((m) => m.id).toSet();
-  final tribeIds = c.game.tribes.map((t) => t.id).toSet();
-  _forEachPrefixedProvinceTile(
-    tileKeysByRegion: c.tileKeysByRegion,
-    onTile: (provinceId, tileKey) {
-      final province = c.game.worldState.tryGetProvince(provinceId);
-      if (province == null) return;
-      final ownerId = province.ownerId;
-      if (ownerId == null) return;
-      if (gpIds.contains(ownerId)) return;
-      if (!minorIds.contains(ownerId) && !tribeIds.contains(ownerId)) {
-        return;
-      }
-      final resourceId = c.resourceByTile[tileKey];
-      if (resourceId == null || resourceId.isEmpty) return;
-      final existingBuyer = c.game.worldState.purchasedTilesByTileKey[tileKey];
-      if (existingBuyer != null) return;
-      c.result.add(tileKey);
-    },
-  );
-}
-
-void _prefilterWtExplore(_WorkTilePrefilterCtx c) {
-  for (final regionEntry in c.tileKeysByRegion.entries) {
-    for (final provinceEntry in regionEntry.value.entries) {
-      c.result.addAll(provinceEntry.value);
+    final candidate = DiplomaticOrder(
+      type: DiplomaticOrderType.declareWar,
+      targetFactionId: targetId,
+    );
+    if (isDiplomaticOrderAcceptedWithValidator(passValidator, candidate)) {
+      suggestions.add(candidate);
     }
   }
-}
 
-void _prefilterWtProspect(_WorkTilePrefilterCtx c) {
-  final prospected =
-      c.game.worldState.playerProspectedTiles[c.playerId] ?? const <String>{};
-  _forEachPrefixedProvinceTile(
-    tileKeysByRegion: c.tileKeysByRegion,
-    onTile: (provinceId, tileKey) {
-      if (prospected.contains(tileKey)) return;
-      if (!isMineralEligibleTile(c.game, c.tileMapByRegion, tileKey)) {
-        return;
-      }
-      c.result.add(tileKey);
-    },
+  suggestions.sort((a, b) => a.targetFactionId.compareTo(b.targetFactionId));
+  orderSuggestionLog.d(
+    'suggestDeclareWarOrders player=$playerId candidates=${suggestions.length}',
   );
+  return suggestions;
 }
-
-void _prefilterWorkTargetDefault(_WorkTilePrefilterCtx c) {
-  for (final regionEntry in c.tileKeysByRegion.entries) {
-    for (final provinceEntry in regionEntry.value.entries) {
-      c.result.addAll(provinceEntry.value);
-    }
-  }
-}
-
-final Map<String, _WorkTilePrefilterOp> _workTargetPrefilters =
-    <String, _WorkTilePrefilterOp>{
-      kWorkTargetBuildImprovement: _prefilterWtBuildImprovement,
-      kWorkTargetBuildRoad: _prefilterWtBuildRoad,
-      'build_rail': _prefilterWtBuildRail,
-      kWorkTargetUpgradeTown: _prefilterWtTownWork,
-      kWorkTargetBuildFort: _prefilterWtTownWork,
-      kWorkTargetBuildPort: _prefilterWtOwnedProvinceTiles,
-      kWorkTargetCounterSpy: _prefilterWtOwnedProvinceTiles,
-      kWorkTargetStealTech: _prefilterWtStealTech,
-      kWorkTargetPurchaseLand: _prefilterWtPurchaseLand,
-      kWorkTargetExplore: _prefilterWtExplore,
-      kWorkTargetProspect: _prefilterWtProspect,
-    };

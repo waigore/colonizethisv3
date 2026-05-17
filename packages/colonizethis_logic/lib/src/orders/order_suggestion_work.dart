@@ -1,130 +1,67 @@
-part of 'order_suggestion.dart';
+library order_suggestion_work;
 
-void _addExplorerWorkSuggestionsForUnit({
-  required PlayerView view,
+import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:colonizethis_models/colonizethis_models.dart';
+
+import '../constants.dart';
+import '../diplomacy/diplomacy_resolver.dart';
+import '../world/player_view.dart';
+import '../world/province_lookup.dart';
+import '../world/unit_lookup.dart';
+import 'bundled_civilian_work_order.dart';
+import 'incremental_candidate_validator.dart';
+import 'order_suggestion_helpers.dart';
+import 'order_suggestion_work_tile_keys.dart';
+import 'order_suggestion_work_tile_prefilter.dart';
+import 'order_suggestion_context.dart';
+import 'order_visibility.dart';
+import 'work_suggestion_pipeline.dart';
+import 'partial_province_reveal.dart';
+import 'orders_application_helpers.dart';
+import 'unit_type_helpers.dart';
+
+part 'order_suggestion_work_explorer.dart';
+part 'order_suggestion_work_worker.dart';
+part 'order_suggestion_work_spy.dart';
+part 'order_suggestion_work_merchant.dart';
+
+/// Tile keys that are merchant purchase-land suggestion candidates for [game]:
+/// tiles in provinces not owned by any [Game.players] entry that carry a
+/// resource, excluding development-exclusive tiles.
+///
+/// Built once per [suggestWorkOrders] pass when any merchant unit is present so
+/// each merchant does not rescan [allProvinces] (Refs #2394,
+/// SPEC/program/order-suggestions.md).
+List<String> merchantPurchaseLandCandidateTileKeys({
   required Game game,
-  required MapTopology topology,
-  required Orders currentOrders,
-  required String playerId,
-  required Unit unit,
-  required String regionId,
-  required String provinceId,
-  required String localId,
-  required List<String> tilesInProvince,
-  required Map<String, Set<String>> existingTargetsByUnit,
-  required List<WorkOrder> suggestions,
-  Map<String, TileMapResult>? tileMapByRegion,
+  required Map<String, Map<String, List<String>>> tileKeysByRegion,
+  required Set<String> devExclusiveReservedTiles,
 }) {
-  if (provinceHasAtLeastVisibility(
-    view,
-    regionId,
-    provinceId,
-    VisibilityLevel.revealed,
-  )) {
-    final hasPartiallyHiddenTile = view.visibilityByTile.entries.any((e) {
-      final parts = e.key.split('|');
-      if (parts.length != 4) return false;
-      if (parts[0] != regionId || parts[1] != localId) return false;
-      return e.value != VisibilityLevel.fullyVisible;
-    });
-
-    if (hasPartiallyHiddenTile) {
-      final existing = existingTargetsByUnit[unit.id];
-      if (existing == null || !existing.contains(kWorkTargetExplore)) {
-        final targetTileKey = '$regionId|$localId|0|0';
-        final candidate = WorkOrder(
-          unitId: unit.id,
-          target: kWorkTargetExplore,
-          targetTileKey: targetTileKey,
-        );
-        if (_isWorkOrderAccepted(
-          game,
-          topology,
-          playerId,
-          currentOrders,
-          candidate,
-          tileMapByRegion: tileMapByRegion,
-        )) {
-          suggestions.add(candidate);
-        }
-      }
+  final resourceByTile = game.worldState.resourceByTileKey;
+  final playerIds = {for (final p in game.players) p.id};
+  final out = <String>[];
+  for (final province in allProvinces(game.worldState)) {
+    final ownerId = province.ownerId;
+    if (ownerId == null || playerIds.contains(ownerId)) continue;
+    final regionId = province.regionId;
+    final tiles = tileKeysByRegion[regionId]?[province.id] ?? const <String>[];
+    for (final tk in tiles) {
+      if (resourceByTile[tk] == null) continue;
+      if (devExclusiveReservedTiles.contains(tk)) continue;
+      out.add(tk);
     }
   }
-
-  _addProspectSuggestionIfEligible(
-    view: view,
-    game: game,
-    topology: topology,
-    currentOrders: currentOrders,
-    playerId: playerId,
-    unit: unit,
-    regionId: regionId,
-    provinceId: provinceId,
-    tilesInProvince: tilesInProvince,
-    existingTargetsByUnit: existingTargetsByUnit,
-    suggestions: suggestions,
-    tileMapByRegion: tileMapByRegion,
-  );
-}
-
-void _addProspectSuggestionIfEligible({
-  required PlayerView view,
-  required Game game,
-  required MapTopology topology,
-  required Orders currentOrders,
-  required String playerId,
-  required Unit unit,
-  required String regionId,
-  required String provinceId,
-  required List<String> tilesInProvince,
-  required Map<String, Set<String>> existingTargetsByUnit,
-  required List<WorkOrder> suggestions,
-  Map<String, TileMapResult>? tileMapByRegion,
-}) {
-  if (!provinceHasAtLeastVisibility(
-        view,
-        regionId,
-        provinceId,
-        VisibilityLevel.fogged,
-      ) ||
-      tilesInProvince.isEmpty) {
-    return;
-  }
-
-  final existingProspect = existingTargetsByUnit[unit.id];
-  if (existingProspect != null &&
-      existingProspect.contains(kWorkTargetProspect)) {
-    return;
-  }
-
-  final prospected =
-      game.worldState.playerProspectedTiles[playerId] ?? const <String>{};
-  String? prospectTileKey;
-  for (final tk in tilesInProvince) {
-    if (prospected.contains(tk)) continue;
-    if (!isMineralEligibleTile(game, null, tk)) continue;
-    prospectTileKey = tk;
-    break;
-  }
-  if (prospectTileKey == null) {
-    return;
-  }
-
-  final candidate = WorkOrder(
-    unitId: unit.id,
-    target: kWorkTargetProspect,
-    targetTileKey: prospectTileKey,
-  );
-  if (_isWorkOrderAccepted(
-    game,
-    topology,
-    playerId,
-    currentOrders,
-    candidate,
-    tileMapByRegion: tileMapByRegion,
-  )) {
-    suggestions.add(candidate);
-  }
+  out.sort((a, b) {
+    final rank = merchantPurchaseLandCandidateSortRank(
+      game: game,
+      tileKey: a,
+    ).compareTo(
+      merchantPurchaseLandCandidateSortRank(game: game, tileKey: b),
+    );
+    if (rank != 0) return rank;
+    return a.compareTo(b);
+  });
+  return out;
 }
 
 /// Suggests candidate work orders for explorers and civilian workers owned by
@@ -134,14 +71,22 @@ void _addProspectSuggestionIfEligible({
 /// scope as work-order validation, not limited to the unit’s current province.
 /// Explorers/Spies/Merchants follow type-specific rules. Visibility per
 /// SPEC/program/fog-and-exploration-resolution.md.
+/// Throughput hook: callers that enumerate multiple suggestion families against
+/// the same `(game, view.playerId, currentOrders, tileMapByRegion)` may supply
+/// [sharedCandidateValidator] to amortize `PlayerView` / units-by-id
+/// construction across families (Refs #2394,
+/// `SPEC/program/order-suggestions.md` § Throughput bounds). When omitted, this
+/// function constructs its own validator. The shared instance must be built
+/// with the same inputs; observable suggestions must match the default path.
 List<WorkOrder> suggestWorkOrders(
   PlayerView view,
   Game game,
   MapTopology topology,
   Orders currentOrders, {
   Map<String, TileMapResult>? tileMapByRegion,
+  IncrementalCandidateValidator? sharedCandidateValidator,
 }) {
-  _log.d('suggestWorkOrders player=${view.playerId}');
+  orderSuggestionLog.d('suggestWorkOrders player=${view.playerId}');
   final playerId = view.playerId;
   final suggestions = <WorkOrder>[];
 
@@ -154,6 +99,30 @@ List<WorkOrder> suggestWorkOrders(
   }
 
   final tileKeysByRegion = game.worldState.tileKeysByRegionAndProvince;
+  final partiallyRevealedProvinceCache =
+      partiallyRevealedPrefixedProvinceIdsForPlayer(game: game, view: view);
+  final partiallyRevealedProvincesSorted =
+      sortedProvincesForPartialRevealPrefixedIds(
+        view: view,
+        partiallyRevealedPrefixedProvinceIds: partiallyRevealedProvinceCache,
+      );
+  final colonialIntelExploreProvinceIds =
+      colonialIntelExploreProvinceIdsSorted(
+        view: view,
+        topology: topology,
+      ).toSet();
+  final explorerProvincesSorted = _explorerProvincesSortedForWork(
+    view: view,
+    partiallyRevealedProvincesSorted: partiallyRevealedProvincesSorted,
+    colonialIntelExploreProvinceIds: colonialIntelExploreProvinceIds,
+  );
+
+  // Reuse [view.provincesById] (same full-id keys as [buildPlayerView]) instead
+  // of a second [allProvinces] scan over world state (Refs #2394).
+  final playerOwnedProvinceIds = <String>{
+    for (final e in view.provincesById.entries)
+      if (e.value.ownerId == playerId) e.key,
+  };
 
   // Pre-filter + visibility sort per workTarget; reused across worker units.
   final visibleCandidatesSortedByWorkTarget = <String, List<String>>{};
@@ -163,6 +132,47 @@ List<WorkOrder> suggestWorkOrders(
     currentOrders,
     playerId,
   );
+
+  // One validator per suggestion pass: amortizes buildPlayerView + unit map
+  // across all units (Refs #2394, IncrementalCandidateValidator.forPlayer).
+  assert(
+    sharedCandidateValidator == null ||
+        sharedCandidateValidator.playerId == playerId,
+    'sharedCandidateValidator playerId must match view.playerId',
+  );
+  final factionMembership =
+      sharedCandidateValidator?.factionMembershipSnapshot ??
+      DiplomacyFactionMembership.from(game);
+  final candidateValidator =
+      sharedCandidateValidator ??
+      buildIncrementalCandidateValidator(
+        game: game,
+        topology: topology,
+        playerId: playerId,
+        baseOrders: currentOrders,
+        tileMapByRegion: tileMapByRegion,
+        view: view,
+        unitsById: unitsByIdFromWorld(game.worldState),
+        factionMembership: factionMembership,
+      );
+
+  var needsMerchantPurchaseLandTileIndex = false;
+  for (final unit in view.ownUnits) {
+    if (unit.currentWork != null) continue;
+    if (isMerchantUnit(unit.type)) {
+      needsMerchantPurchaseLandTileIndex = true;
+      break;
+    }
+  }
+  final merchantPurchaseLandTileKeys = needsMerchantPurchaseLandTileIndex
+      ? merchantPurchaseLandCandidateTileKeys(
+          game: game,
+          tileKeysByRegion: tileKeysByRegion,
+          devExclusiveReservedTiles: devExclusiveReservedTiles,
+        )
+      : const <String>[];
+
+  final workProbeBudget = WorkSuggestionProbeBudget();
 
   for (final unit in view.ownUnits) {
     _addWorkSuggestionsForUnit(
@@ -175,9 +185,17 @@ List<WorkOrder> suggestWorkOrders(
       playerId: playerId,
       unit: unit,
       existingTargetsByUnit: existingTargetsByUnit,
+      partiallyRevealedProvinceCache: partiallyRevealedProvinceCache,
+      partiallyRevealedProvincesSorted: explorerProvincesSorted,
+      colonialIntelExploreProvinceIds: colonialIntelExploreProvinceIds,
       visibleCandidatesSortedByWorkTarget: visibleCandidatesSortedByWorkTarget,
+      playerOwnedProvinceIds: playerOwnedProvinceIds,
       devExclusiveReservedTiles: devExclusiveReservedTiles,
+      merchantPurchaseLandTileKeys: merchantPurchaseLandTileKeys,
       suggestions: suggestions,
+      candidateValidator: candidateValidator,
+      factionMembership: factionMembership,
+      workProbeBudget: workProbeBudget,
     );
   }
 
@@ -189,14 +207,40 @@ List<WorkOrder> suggestWorkOrders(
     return a.targetTileKey.compareTo(b.targetTileKey);
   });
 
-  _log.d('suggestWorkOrders player=$playerId candidates=${suggestions.length}');
-  _log.d(
-    'suggestWorkOrders full list ${suggestions.map((o) => "${o.unitId}:${o.target}").toList()}',
+  orderSuggestionLog.d(
+    'suggestWorkOrders player=$playerId candidates=${suggestions.length}',
+  );
+  final uniqueUnits = suggestions.map((o) => o.unitId).toSet().length;
+  orderSuggestionLog.d(
+    'suggestWorkOrders summary player=$playerId '
+    'candidates=${suggestions.length} uniqueUnits=$uniqueUnits',
   );
   if (suggestions.isEmpty) {
-    _log.w('suggestWorkOrders no candidates player=$playerId');
+    orderSuggestionLog.w('suggestWorkOrders no candidates player=$playerId');
   }
   return suggestions;
+}
+
+/// Colonial intel NW provinces first, then partially revealed (deduped).
+List<Province> _explorerProvincesSortedForWork({
+  required PlayerView view,
+  required List<Province> partiallyRevealedProvincesSorted,
+  required Set<String> colonialIntelExploreProvinceIds,
+}) {
+  if (colonialIntelExploreProvinceIds.isEmpty) {
+    return partiallyRevealedProvincesSorted;
+  }
+  final seen = <String>{};
+  final out = <Province>[];
+  for (final id in colonialIntelExploreProvinceIds.toList()..sort()) {
+    if (!seen.add(id)) continue;
+    final p = view.provincesById[id];
+    if (p != null) out.add(p);
+  }
+  for (final p in partiallyRevealedProvincesSorted) {
+    if (seen.add(p.id)) out.add(p);
+  }
+  return out;
 }
 
 void _addWorkSuggestionsForUnit({
@@ -208,9 +252,17 @@ void _addWorkSuggestionsForUnit({
   required String playerId,
   required Unit unit,
   required Map<String, Set<String>> existingTargetsByUnit,
+  required Set<String> partiallyRevealedProvinceCache,
+  required List<Province> partiallyRevealedProvincesSorted,
+  required Set<String> colonialIntelExploreProvinceIds,
   required Map<String, List<String>> visibleCandidatesSortedByWorkTarget,
+  required Set<String> playerOwnedProvinceIds,
   required Set<String> devExclusiveReservedTiles,
+  required List<String> merchantPurchaseLandTileKeys,
   required List<WorkOrder> suggestions,
+  required IncrementalCandidateValidator candidateValidator,
+  required DiplomacyFactionMembership factionMembership,
+  required WorkSuggestionProbeBudget workProbeBudget,
   Map<String, TileMapResult>? tileMapByRegion,
 }) {
   if (unit.currentWork != null) return;
@@ -224,14 +276,9 @@ void _addWorkSuggestionsForUnit({
 
   final regionId = regionIdForUnit(view, unit);
   final provinceId = unit.locationProvinceId;
-  final localId = ProvinceId.localIdFrom(provinceId);
   final province = view.provinceByRegionAndId(regionId, provinceId);
   final ownerId = province?.ownerId;
   final tilesInProvince = tileKeysByRegion[regionId]?[provinceId] ?? const [];
-
-  _log.d(
-    'suggestWorkOrders unit=${unit.id} provinceId=$provinceId provinceName=${province?.displayName} ownerId=$ownerId regionId=$regionId tilesInProvince=${tilesInProvince.length}',
-  );
 
   if (isExplorer) {
     _addExplorerWorkSuggestionsForUnit(
@@ -243,11 +290,14 @@ void _addWorkSuggestionsForUnit({
       unit: unit,
       regionId: regionId,
       provinceId: provinceId,
-      localId: localId,
-      tilesInProvince: tilesInProvince,
+      partiallyRevealedProvincesSorted: partiallyRevealedProvincesSorted,
+      colonialIntelExploreProvinceIds: colonialIntelExploreProvinceIds,
+      tileKeysByRegion: tileKeysByRegion,
       existingTargetsByUnit: existingTargetsByUnit,
       suggestions: suggestions,
+      candidateValidator: candidateValidator,
       tileMapByRegion: tileMapByRegion,
+      workProbeBudget: workProbeBudget,
     );
     return;
   }
@@ -261,11 +311,17 @@ void _addWorkSuggestionsForUnit({
       playerId: playerId,
       unit: unit,
       type: type,
+      unitRegionId: regionId,
+      atProvinceId: provinceId,
       existingTargetsByUnit: existingTargetsByUnit,
       visibleCandidatesSortedByWorkTarget: visibleCandidatesSortedByWorkTarget,
+      playerOwnedProvinceIds: playerOwnedProvinceIds,
       devExclusiveReservedTiles: devExclusiveReservedTiles,
       suggestions: suggestions,
+      candidateValidator: candidateValidator,
       tileMapByRegion: tileMapByRegion,
+      factionMembership: factionMembership,
+      workProbeBudget: workProbeBudget,
     );
   }
 
@@ -274,228 +330,32 @@ void _addWorkSuggestionsForUnit({
       game: game,
       topology: topology,
       currentOrders: currentOrders,
-      tileMapByRegion: tileMapByRegion,
       tileKeysByRegion: tileKeysByRegion,
       playerId: playerId,
       unit: unit,
       type: type,
+      unitRegionId: regionId,
+      atProvinceId: provinceId,
       ownerId: ownerId,
       tilesInProvince: tilesInProvince,
+      existingTargetsByUnit: existingTargetsByUnit,
       suggestions: suggestions,
+      candidateValidator: candidateValidator,
+      workProbeBudget: workProbeBudget,
     );
   }
 
   if (isMerchant) {
     _addMerchantSuggestionsForUnit(
-      game: game,
-      topology: topology,
-      currentOrders: currentOrders,
-      tileMapByRegion: tileMapByRegion,
-      tileKeysByRegion: tileKeysByRegion,
-      playerId: playerId,
       unit: unit,
       type: type,
-      devExclusiveReservedTiles: devExclusiveReservedTiles,
+      unitRegionId: regionId,
+      atProvinceId: provinceId,
+      existingTargetsByUnit: existingTargetsByUnit,
+      purchaseLandCandidateTileKeys: merchantPurchaseLandTileKeys,
       suggestions: suggestions,
+      candidateValidator: candidateValidator,
+      workProbeBudget: workProbeBudget,
     );
-  }
-}
-
-void _addWorkerSuggestionsForUnit({
-  required PlayerView view,
-  required Game game,
-  required MapTopology topology,
-  required Orders currentOrders,
-  required String playerId,
-  required Unit unit,
-  required String type,
-  required Map<String, Set<String>> existingTargetsByUnit,
-  required Map<String, List<String>> visibleCandidatesSortedByWorkTarget,
-  required Set<String> devExclusiveReservedTiles,
-  required List<WorkOrder> suggestions,
-  Map<String, TileMapResult>? tileMapByRegion,
-}) {
-  final allowedTargets = workOrderTargetsByUnitType[type];
-  if (allowedTargets == null) return;
-
-  for (final target in allowedTargets) {
-    final existing = existingTargetsByUnit[unit.id];
-    if (existing != null && existing.contains(target)) continue;
-
-    final sortedVisible = visibleCandidatesSortedByWorkTarget.putIfAbsent(
-      target,
-      () {
-        final raw = _rawCandidateTilesForWorkTarget(
-          game: game,
-          playerId: playerId,
-          workTarget: target,
-          tileMapByRegion: tileMapByRegion,
-        );
-        return _sortedVisibleWorkTargetCandidates(view, raw);
-      },
-    );
-
-    final accepted = _firstAcceptedWorkerCandidate(
-      game: game,
-      topology: topology,
-      currentOrders: currentOrders,
-      tileMapByRegion: tileMapByRegion,
-      playerId: playerId,
-      unitId: unit.id,
-      target: target,
-      sortedVisibleTileKeys: sortedVisible,
-      devExclusiveReservedTiles: devExclusiveReservedTiles,
-    );
-    if (accepted != null) {
-      _log.d('suggestWorkOrders candidate=$accepted');
-      suggestions.add(accepted);
-      continue;
-    }
-
-    _log.d(
-      'suggestWorkOrders rejected target=$target unit=${unit.id} (no valid tile)',
-    );
-  }
-}
-
-WorkOrder? _firstAcceptedWorkerCandidate({
-  required Game game,
-  required MapTopology topology,
-  required Orders currentOrders,
-  required String playerId,
-  required String unitId,
-  required String target,
-  required List<String> sortedVisibleTileKeys,
-  required Set<String> devExclusiveReservedTiles,
-  Map<String, TileMapResult>? tileMapByRegion,
-}) {
-  for (final tk in sortedVisibleTileKeys) {
-    if (isDevExclusiveWorkTarget(target) &&
-        devExclusiveReservedTiles.contains(tk)) {
-      continue;
-    }
-    final candidate = WorkOrder(
-      unitId: unitId,
-      target: target,
-      targetTileKey: tk,
-    );
-    if (_isWorkOrderAccepted(
-      game,
-      topology,
-      playerId,
-      currentOrders,
-      candidate,
-      tileMapByRegion: tileMapByRegion,
-    )) {
-      return candidate;
-    }
-  }
-  return null;
-}
-
-void _addSpySuggestionsForUnit({
-  required Game game,
-  required MapTopology topology,
-  required Orders currentOrders,
-  required Map<String, Map<String, List<String>>> tileKeysByRegion,
-  required String playerId,
-  required Unit unit,
-  required String type,
-  required String? ownerId,
-  required List<String> tilesInProvince,
-  required List<WorkOrder> suggestions,
-  Map<String, TileMapResult>? tileMapByRegion,
-}) {
-  final allowedTargets = workOrderTargetsByUnitType[type];
-  if (allowedTargets == null) return;
-
-  if (allowedTargets.contains(kWorkTargetCounterSpy) && ownerId == playerId) {
-    final candidate = WorkOrder(
-      unitId: unit.id,
-      target: kWorkTargetCounterSpy,
-      targetTileKey: tilesInProvince.first,
-    );
-    if (_isWorkOrderAccepted(
-      game,
-      topology,
-      playerId,
-      currentOrders,
-      candidate,
-      tileMapByRegion: tileMapByRegion,
-    )) {
-      suggestions.add(candidate);
-    }
-  }
-
-  if (!allowedTargets.contains(kWorkTargetStealTech)) return;
-  for (final other in game.players) {
-    if (other.id == playerId || other.capitalProvinceId == null) continue;
-    final capProvinceId = other.capitalProvinceId!;
-    final capRegionId = ProvinceId.regionIdFrom(capProvinceId);
-    final capTiles = tileKeysByRegion[capRegionId]?[capProvinceId] ?? const [];
-    if (capTiles.isEmpty) continue;
-    final candidate = WorkOrder(
-      unitId: unit.id,
-      target: kWorkTargetStealTech,
-      targetTileKey: capTiles.first,
-    );
-    if (_isWorkOrderAccepted(
-      game,
-      topology,
-      playerId,
-      currentOrders,
-      candidate,
-      tileMapByRegion: tileMapByRegion,
-    )) {
-      suggestions.add(candidate);
-      return;
-    }
-  }
-}
-
-void _addMerchantSuggestionsForUnit({
-  required Game game,
-  required MapTopology topology,
-  required Orders currentOrders,
-  required Map<String, Map<String, List<String>>> tileKeysByRegion,
-  required String playerId,
-  required Unit unit,
-  required String type,
-  required Set<String> devExclusiveReservedTiles,
-  required List<WorkOrder> suggestions,
-  Map<String, TileMapResult>? tileMapByRegion,
-}) {
-  final allowedTargets = workOrderTargetsByUnitType[type];
-  if (allowedTargets == null ||
-      !allowedTargets.contains(kWorkTargetPurchaseLand)) {
-    return;
-  }
-
-  final resourceByTile = game.worldState.resourceByTileKey;
-  final playerIds = game.players.map((p) => p.id).toSet();
-  for (final p in allProvinces(game.worldState)) {
-    if (p.ownerId == null || playerIds.contains(p.ownerId!)) continue;
-    final regionId = p.regionId;
-    final tiles = tileKeysByRegion[regionId]?[p.id] ?? const [];
-    for (final tk in tiles) {
-      if (resourceByTile[tk] == null) continue;
-      if (devExclusiveReservedTiles.contains(tk)) continue;
-      final candidate = WorkOrder(
-        unitId: unit.id,
-        target: kWorkTargetPurchaseLand,
-        targetTileKey: tk,
-      );
-      if (_isWorkOrderAccepted(
-        game,
-        topology,
-        playerId,
-        currentOrders,
-        candidate,
-        tileMapByRegion: tileMapByRegion,
-      )) {
-        suggestions.add(candidate);
-        break;
-      }
-    }
   }
 }

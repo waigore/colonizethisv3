@@ -52,7 +52,7 @@ void main() {
       expect(map['newWorld|n2'], 'gp2');
     });
 
-    test('filterMoveOrdersByDiplomacy drops move to at-peace faction', () {
+    test('filterMoveOrdersByDiplomacy does not drop civilian moves at peace', () {
       const ow = 'oldWorld';
       final game = Game(
         id: 'g1',
@@ -81,14 +81,10 @@ void main() {
         ],
       );
       final orders = [
-        MoveOrder(unitId: 'u1', destinationProvinceId: 'oldWorld|p2'),
+        MoveOrder(unitId: 'u1', destinationTileKey: 'oldWorld|p2|0|0'),
       ];
       final filtered = filterMoveOrdersByDiplomacy(game, 'gp1', orders);
-      expect(
-        filtered,
-        isEmpty,
-        reason: 'move to gp2 at peace should be dropped',
-      );
+      expect(filtered, orders);
     });
 
     test('filterMoveOrdersByDiplomacy keeps move to at-war faction', () {
@@ -120,11 +116,11 @@ void main() {
         ],
       );
       final orders = [
-        MoveOrder(unitId: 'u1', destinationProvinceId: 'oldWorld|p2'),
+        MoveOrder(unitId: 'u1', destinationTileKey: 'oldWorld|p2|0|0'),
       ];
       final filtered = filterMoveOrdersByDiplomacy(game, 'gp1', orders);
       expect(filtered.length, 1);
-      expect(filtered.first.destinationProvinceId, 'oldWorld|p2');
+      expect(filtered.first.destinationTileKey, 'oldWorld|p2|0|0');
     });
   });
 }

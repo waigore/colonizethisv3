@@ -1,0 +1,115 @@
+# Sanctioned `allProvinces(` / `*.allProvinces(` call sites under colonizethis_logic
+# production sources. Canonical implementation lives in province_lookup.dart (excluded
+# from scan). See SPEC/program/logic-dual-region-province-access.md.
+version: 1
+sanctions:
+  - path: packages/colonizethis_logic/lib/src/world/connectivity_resolver.dart
+    line: 177
+    rationale: Single dual-region pass buckets owned provinces and town-tile keys
+      by playerId so per-player connectivity loops below run O(1) lookups
+      instead of repeating O(provinces) scans (consolidates the legacy line-229
+      owned-province scan and the legacy line-536 town-tile scan).
+    spec: SPEC/program/logic-dual-region-province-access.md
+    issue: https://github.com/waigore/colonizethisv3/issues/2394
+
+  - path: packages/colonizethis_logic/lib/src/world/player_view.dart
+    line: 89
+    rationale: Player view aggregates province-level facts across both regions.
+    spec: SPEC/program/logic-dual-region-province-access.md
+    issue: https://github.com/waigore/colonizethisv3/issues/2278
+
+  - path: packages/colonizethis_logic/lib/src/diplomacy/diplomacy_relation_lookup.dart
+    line: 30
+    rationale: Diplomatic relation scoring inspects province ownership globally.
+    spec: SPEC/program/logic-dual-region-province-access.md
+    issue: https://github.com/waigore/colonizethisv3/issues/2278
+
+  - path: packages/colonizethis_logic/lib/src/turn/phases/movement_phase.dart
+    line: 28
+    rationale: Movement phase owner map keyed by all province ids across regions.
+    spec: SPEC/program/logic-dual-region-province-access.md
+    issue: https://github.com/waigore/colonizethisv3/issues/2278
+
+  - path: packages/colonizethis_logic/lib/src/orders/order_suggestion_work_tile_prefilter.dart
+    line: 68
+    rationale: Work tile prefilter collects owned province ids via all provinces when
+      callers do not supply a shared owned-province set.
+    spec: SPEC/program/logic-dual-region-province-access.md
+    issue: https://github.com/waigore/colonizethisv3/issues/2394
+
+  - path: packages/colonizethis_logic/lib/src/orders/order_suggestion_move_army.dart
+    line: 219
+    rationale: Army move destination candidates need global province ownership snapshot when per-pass player-owned province ids are not supplied.
+    spec: SPEC/program/logic-dual-region-province-access.md
+    issue: https://github.com/waigore/colonizethisv3/issues/2278
+
+  - path: packages/colonizethis_logic/lib/src/orders/order_suggestion_move_army.dart
+    line: 338
+    rationale: Army move picker fallback builds owned-province ids across regions when PlayerView is absent.
+    spec: SPEC/program/logic-dual-region-province-access.md
+    issue: https://github.com/waigore/colonizethisv3/issues/2394
+  - path: packages/colonizethis_logic/lib/src/world/fog_resolution.dart
+    line: 31
+    rationale: Fog decay / visibility aggregates owners across all provinces.
+    spec: SPEC/program/logic-dual-region-province-access.md
+    issue: https://github.com/waigore/colonizethisv3/issues/2278
+
+  - path: packages/colonizethis_logic/lib/src/world/fog_resolution.dart
+    line: 64
+    rationale: Fog resolution builds cross-region owner maps for state updates.
+    spec: SPEC/program/logic-dual-region-province-access.md
+    issue: https://github.com/waigore/colonizethisv3/issues/2278
+
+  - path: packages/colonizethis_logic/lib/src/world/capital_and_gp_fall.dart
+    line: 189
+    rationale: Capital fall logic scans province ownership across regions.
+    spec: SPEC/program/logic-dual-region-province-access.md
+    issue: https://github.com/waigore/colonizethisv3/issues/2278
+
+  - path: packages/colonizethis_logic/lib/src/setup/town_capital_occupancy.dart
+    line: 26
+    rationale: Setup occupancy uses WorldState.allProvinces() over both regions.
+    spec: SPEC/program/logic-dual-region-province-access.md
+    issue: https://github.com/waigore/colonizethisv3/issues/2278
+
+  - path: packages/colonizethis_logic/lib/src/turn/turn_news_digest.dart
+    line: 77
+    rationale: Turn news digest summarizes changes across all provinces.
+    spec: SPEC/program/logic-dual-region-province-access.md
+    issue: https://github.com/waigore/colonizethisv3/issues/2278
+
+  - path: packages/colonizethis_logic/lib/src/turn/turn_news_digest.dart
+    line: 196
+    rationale: Turn news digest second pass over all provinces.
+    spec: SPEC/program/logic-dual-region-province-access.md
+    issue: https://github.com/waigore/colonizethisv3/issues/2278
+
+  - path: packages/colonizethis_logic/lib/src/orders/order_suggestion_work.dart
+    line: 43
+    rationale: merchantPurchaseLandCandidateTileKeys walks all provinces once per suggestWorkOrders pass when merchants are present (foreign-owned resource tiles).
+    spec: SPEC/program/logic-dual-region-province-access.md
+    issue: https://github.com/waigore/colonizethisv3/issues/2394
+
+  - path: packages/colonizethis_logic/lib/src/orders/order_suggestion_helpers.dart
+    line: 139
+    rationale: getProvinceOwnerMap walks all provinces once per diplomacy filter pass.
+    spec: SPEC/program/logic-dual-region-province-access.md
+    issue: https://github.com/waigore/colonizethisv3/issues/2509
+
+  - path: packages/colonizethis_logic/lib/src/setup/initial_visibility.dart
+    line: 95
+    rationale: Initial visibility setup walks all province rows.
+    spec: SPEC/program/logic-dual-region-province-access.md
+    issue: https://github.com/waigore/colonizethisv3/issues/2278
+
+  - path: packages/colonizethis_logic/lib/src/diplomacy/faction_absorption_engine.dart
+    line: 50
+    rationale: Faction absorption scans province state via WorldState.allProvinces().
+    spec: SPEC/program/logic-dual-region-province-access.md
+    issue: https://github.com/waigore/colonizethisv3/issues/2278
+
+  - path: packages/colonizethis_logic/lib/src/economy/resource_extractor.dart
+    line: 58
+    rationale: Extraction builds a once-per-call province id index for O(1) tile-to-province lookups across both regions.
+    spec: SPEC/program/logic-dual-region-province-access.md
+    issue: https://github.com/waigore/colonizethisv3/issues/2394

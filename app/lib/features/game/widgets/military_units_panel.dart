@@ -1,12 +1,12 @@
 // Military units panel. SPEC/ui/military-units-panel.md, SPEC/ui/military-units-army-management.md.
 
 import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:colonizethis_logic/colonizethis_logic.dart' show buildPlayerView;
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
 
 import '../../../core/services/app_event_handler_scope.dart'
     show trainMilitaryDialogId;
-import '../../../l10n/app_localizations.dart';
 import '../../../l10n/l10n.dart';
 import '../../../widgets/ct_nine_patch_button.dart';
 import 'utils/military_tree_builder.dart';
@@ -101,6 +101,11 @@ class _MilitaryUnitsPanelState extends State<MilitaryUnitsPanel> {
   }
 
   void _openMoveDialog(ArmyBlock block) {
+    final playerView = buildPlayerView(
+      widget.game,
+      widget.topology,
+      widget.humanPlayerId,
+    );
     showDialog<void>(
       context: context,
       builder: (ctx) => MoveArmyDialog(
@@ -110,6 +115,7 @@ class _MilitaryUnitsPanelState extends State<MilitaryUnitsPanel> {
         bus: widget.bus,
         topology: widget.topology,
         draftOrders: widget.draftOrders,
+        playerView: playerView,
       ),
     );
   }
@@ -125,115 +131,157 @@ class _MilitaryUnitsPanelState extends State<MilitaryUnitsPanel> {
 
     return UnitsPanelShell(
       title: l10n.military_units_title,
-      actions: [
-        if (hasAny && flat.isNotEmpty) ...[
-          Tooltip(
-            message: headerCheckbox == true
-                ? l10n.military_units_deselectAllArmies
-                : l10n.military_units_selectAllArmies,
-            child: Checkbox(
-              tristate: true,
-              value: headerCheckbox,
-              onChanged: (_) => _onHeaderSelectAllTapped(flat),
-              visualDensity: VisualDensity.compact,
-              materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-            ),
-          ),
-          const SizedBox(width: 4),
-          CtNinePatchButton(
-            onPressed: canCombine ? () => _performCombine(flat) : null,
-            enabled: canCombine,
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-            minHeight: 32,
-            child: Text(l10n.common_combine),
-          ),
-        ],
-        CtNinePatchButton(
-          onPressed: () {
-            widget.bus.emit(const ClosePanelEvent());
-            WidgetsBinding.instance.addPostFrameCallback((_) {
-              widget.bus.emit(OpenDialogEvent(trainMilitaryDialogId));
-            });
-          },
-          child: Text(l10n.common_train),
-        ),
-      ],
+      actions: _buildActions(
+        l10n: l10n,
+        hasAny: hasAny,
+        flat: flat,
+        canCombine: canCombine,
+        headerCheckbox: headerCheckbox,
+      ),
       hasContent: hasAny,
-      listChildren: [
-        for (final group in groups) ...[
-          RegionSectionHeader(label: unitsPanelRegionLabel(group.regionKey)),
-          for (final loc in group.provinces) ...[
-            LocationSectionHeader(
-              label: loc.displayLabel,
-              regionLabel: unitsPanelRegionLabel(loc.regionId),
-            ),
-            for (final block in loc.armies)
-              _ArmyExpansionTile(
-                block: block,
-                l10n: l10n,
-                stationedProvinceDisplayLabel:
-                    armyStationedProvinceDisplayLabel(widget.game, block.army),
-                draftArmyMoveLine: armyDraftMoveLineForArmy(
-                  game: widget.game,
-                  humanPlayerId: widget.humanPlayerId,
-                  armyId: block.army.id,
-                  draftOrders: widget.draftOrders,
-                ),
-                isSelectedForCombine: _selectedArmyIds.contains(block.army.id),
-                onCombineSelectionToggle: () =>
-                    _toggleArmySelection(block.army.id),
-                onLocate:
-                    block.rows.isNotEmpty && block.rows.first.tileKey != null
-                    ? () {
-                        widget.bus.emit(const ClosePanelEvent());
-                        WidgetsBinding.instance.addPostFrameCallback((_) {
-                          widget.bus.emit(
-                            LocateMapTileEvent(
-                              tileKey: block.rows.first.tileKey!,
-                              regionId: block.regionKey,
-                            ),
-                          );
-                        });
-                      }
-                    : null,
-                onSplit: block.army.regimentUnitIds.length >= 2
-                    ? () => _openSplitDialog(block)
-                    : null,
-                onMove:
-                    !block.army.isHomeArmy &&
-                        block.army.regimentUnitIds.isNotEmpty
-                    ? () => _openMoveDialog(block)
-                    : null,
-              ),
-          ],
-          for (final loc in group.seaLocations) ...[
-            LocationSectionHeader(
-              label: loc.displayLabel,
-              regionLabel: unitsPanelRegionLabel(loc.regionId),
-            ),
-            for (final row in loc.rows)
-              _ShipRow(
-                row: row,
-                l10n: l10n,
-                onTap: row.tileKey == null
-                    ? null
-                    : () {
-                        widget.bus.emit(const ClosePanelEvent());
-                        WidgetsBinding.instance.addPostFrameCallback((_) {
-                          widget.bus.emit(
-                            LocateMapTileEvent(
-                              tileKey: row.tileKey!,
-                              regionId: row.regionId,
-                            ),
-                          );
-                        });
-                      },
-              ),
-          ],
-        ],
-      ],
+      listChildren: _buildListChildren(groups, l10n),
       emptyMessage: l10n.military_units_empty,
     );
+  }
+
+  List<Widget> _buildActions({
+    required AppLocalizations l10n,
+    required bool hasAny,
+    required List<ArmyBlock> flat,
+    required bool canCombine,
+    required bool? headerCheckbox,
+  }) {
+    return [
+      if (hasAny && flat.isNotEmpty) ...[
+        Tooltip(
+          message: headerCheckbox == true
+              ? l10n.military_units_deselectAllArmies
+              : l10n.military_units_selectAllArmies,
+          child: Checkbox(
+            tristate: true,
+            value: headerCheckbox,
+            onChanged: (_) => _onHeaderSelectAllTapped(flat),
+            visualDensity: VisualDensity.compact,
+            materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+          ),
+        ),
+        const SizedBox(width: 4),
+        CtNinePatchButton(
+          onPressed: canCombine ? () => _performCombine(flat) : null,
+          enabled: canCombine,
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+          minHeight: 32,
+          child: Text(l10n.common_combine),
+        ),
+      ],
+      CtNinePatchButton(
+        onPressed: _openTrainDialog,
+        child: Text(l10n.common_train),
+      ),
+    ];
+  }
+
+  void _openTrainDialog() {
+    widget.bus.emit(const ClosePanelEvent());
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      widget.bus.emit(OpenDialogEvent(trainMilitaryDialogId));
+    });
+  }
+
+  List<Widget> _buildListChildren(
+    List<RegionMilitaryGroup> groups,
+    AppLocalizations l10n,
+  ) {
+    return [
+      for (final group in groups) ...[
+        RegionSectionHeader(label: unitsPanelRegionLabel(group.regionKey)),
+        ..._buildProvinceLocationChildren(group, l10n),
+        ..._buildSeaLocationChildren(group, l10n),
+      ],
+    ];
+  }
+
+  List<Widget> _buildProvinceLocationChildren(
+    RegionMilitaryGroup group,
+    AppLocalizations l10n,
+  ) {
+    return [
+      for (final loc in group.provinces) ...[
+        LocationSectionHeader(
+          label: loc.displayLabel,
+          regionLabel: unitsPanelRegionLabel(loc.regionId),
+        ),
+        for (final block in loc.armies) _buildArmyTile(block, l10n),
+      ],
+    ];
+  }
+
+  Widget _buildArmyTile(ArmyBlock block, AppLocalizations l10n) {
+    return _ArmyExpansionTile(
+      block: block,
+      l10n: l10n,
+      stationedProvinceDisplayLabel: armyStationedProvinceDisplayLabel(
+        widget.game,
+        block.army,
+      ),
+      draftArmyMoveLine: armyDraftMoveLineForArmy(
+        game: widget.game,
+        humanPlayerId: widget.humanPlayerId,
+        armyId: block.army.id,
+        draftOrders: widget.draftOrders,
+      ),
+      isSelectedForCombine: _selectedArmyIds.contains(block.army.id),
+      onCombineSelectionToggle: () => _toggleArmySelection(block.army.id),
+      onLocate: _armyLocateCallback(block),
+      onSplit: block.army.regimentUnitIds.length >= 2
+          ? () => _openSplitDialog(block)
+          : null,
+      onMove: !block.army.isHomeArmy && block.army.regimentUnitIds.isNotEmpty
+          ? () => _openMoveDialog(block)
+          : null,
+    );
+  }
+
+  VoidCallback? _armyLocateCallback(ArmyBlock block) {
+    if (block.rows.isEmpty || block.rows.first.tileKey == null) {
+      return null;
+    }
+    return () => _emitLocateMapTile(
+      tileKey: block.rows.first.tileKey!,
+      regionId: block.regionKey,
+    );
+  }
+
+  List<Widget> _buildSeaLocationChildren(
+    RegionMilitaryGroup group,
+    AppLocalizations l10n,
+  ) {
+    return [
+      for (final loc in group.seaLocations) ...[
+        LocationSectionHeader(
+          label: loc.displayLabel,
+          regionLabel: unitsPanelRegionLabel(loc.regionId),
+        ),
+        for (final row in loc.rows)
+          _ShipRow(
+            row: row,
+            l10n: l10n,
+            onTap: row.tileKey == null
+                ? null
+                : () => _emitLocateMapTile(
+                    tileKey: row.tileKey!,
+                    regionId: row.regionId,
+                  ),
+          ),
+      ],
+    ];
+  }
+
+  void _emitLocateMapTile({required String tileKey, required String regionId}) {
+    widget.bus.emit(const ClosePanelEvent());
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      widget.bus.emit(LocateMapTileEvent(tileKey: tileKey, regionId: regionId));
+    });
   }
 }
 
@@ -270,101 +318,107 @@ class _ArmyExpansionTile extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.only(left: 8),
       child: ExpansionTile(
-        title: UnitsEntityActionRow(
-          details: Row(
-            children: [
-              Checkbox(
-                value: isSelectedForCombine,
-                onChanged: (_) => onCombineSelectionToggle(),
-                visualDensity: VisualDensity.compact,
-                materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-              ),
-              const SizedBox(width: 4),
-              Flexible(
-                child: Text(_armyTitle(), overflow: TextOverflow.ellipsis),
-              ),
-              if (onLocate != null) ...[
-                const SizedBox(width: 4),
-                IconButton(
-                  tooltip: l10n.common_locate,
-                  onPressed: onLocate,
-                  icon: const Icon(Icons.my_location),
-                  iconSize: 18,
-                  visualDensity: VisualDensity.compact,
-                ),
-              ],
-            ],
-          ),
-          actions: [
-            if (onMove != null)
-              UnitsEntityAction(
-                tooltip: l10n.common_move,
-                icon: Icons.route,
-                label: l10n.common_move,
-                onPressed: onMove,
-              ),
-            if (onSplit != null)
-              UnitsEntityAction(
-                tooltip: l10n.common_split,
-                icon: Icons.call_split,
-                label: l10n.common_split,
-                onPressed: onSplit,
-              ),
-          ],
-        ),
-        subtitle: Text(
-          draftArmyMoveLine == null
-              ? l10n.military_units_armySubtitle(
-                  block.army.regimentUnitIds.length,
-                  stationedProvinceDisplayLabel,
-                )
-              : l10n.military_units_armySubtitleWithDraft(
-                  block.army.regimentUnitIds.length,
-                  stationedProvinceDisplayLabel,
-                  draftArmyMoveLine!,
-                ),
-        ),
+        title: _buildTitleRow(),
+        subtitle: Text(_subtitleText()),
         dense: true,
+        children: _buildChildren(),
+      ),
+    );
+  }
+
+  Widget _buildTitleRow() {
+    return UnitsEntityActionRow(
+      details: Row(
         children: [
-          if (block.rows.isEmpty)
-            ListTile(
-              title: Text(l10n.military_units_noRegimentsAssigned),
-              dense: true,
-            )
-          else ...[
-            for (final row in block.rows)
-              _RegimentRow(row: row, l10n: l10n, onTap: null),
-          ],
-          Padding(
-            padding: const EdgeInsets.all(8),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [
-                if (onMove != null) ...[
-                  CtNinePatchButton(
-                    onPressed: onMove,
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 8,
-                    ),
-                    minHeight: 36,
-                    child: Text(l10n.common_move),
-                  ),
-                  const SizedBox(width: 8),
-                ],
-                if (onSplit != null)
-                  CtNinePatchButton(
-                    onPressed: onSplit,
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 8,
-                    ),
-                    minHeight: 36,
-                    child: Text(l10n.common_split),
-                  ),
-              ],
-            ),
+          Checkbox(
+            value: isSelectedForCombine,
+            onChanged: (_) => onCombineSelectionToggle(),
+            visualDensity: VisualDensity.compact,
+            materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
           ),
+          const SizedBox(width: 4),
+          Flexible(child: Text(_armyTitle(), overflow: TextOverflow.ellipsis)),
+          if (onLocate != null) ...[
+            const SizedBox(width: 4),
+            IconButton(
+              tooltip: l10n.common_locate,
+              onPressed: onLocate,
+              icon: const Icon(Icons.my_location),
+              iconSize: 18,
+              visualDensity: VisualDensity.compact,
+            ),
+          ],
+        ],
+      ),
+      actions: [
+        if (onMove != null)
+          UnitsEntityAction(
+            tooltip: l10n.common_move,
+            icon: Icons.route,
+            label: l10n.common_move,
+            onPressed: onMove,
+          ),
+        if (onSplit != null)
+          UnitsEntityAction(
+            tooltip: l10n.common_split,
+            icon: Icons.call_split,
+            label: l10n.common_split,
+            onPressed: onSplit,
+          ),
+      ],
+    );
+  }
+
+  String _subtitleText() {
+    if (draftArmyMoveLine == null) {
+      return l10n.military_units_armySubtitle(
+        block.army.regimentUnitIds.length,
+        stationedProvinceDisplayLabel,
+      );
+    }
+    return l10n.military_units_armySubtitleWithDraft(
+      block.army.regimentUnitIds.length,
+      stationedProvinceDisplayLabel,
+      draftArmyMoveLine!,
+    );
+  }
+
+  List<Widget> _buildChildren() {
+    return [
+      if (block.rows.isEmpty)
+        ListTile(
+          title: Text(l10n.military_units_noRegimentsAssigned),
+          dense: true,
+        )
+      else
+        for (final row in block.rows)
+          _RegimentRow(row: row, l10n: l10n, onTap: null),
+      _buildFooterButtons(),
+    ];
+  }
+
+  Widget _buildFooterButtons() {
+    return Padding(
+      padding: const EdgeInsets.all(8),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.end,
+        children: [
+          if (onMove != null) ...[
+            CtNinePatchButton(
+              onPressed: onMove,
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              minHeight: 36,
+              child: Text(l10n.common_move),
+            ),
+            const SizedBox(width: 8),
+          ],
+          if (onSplit != null)
+            CtNinePatchButton(
+              onPressed: onSplit,
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              minHeight: 36,
+              child: Text(l10n.common_split),
+            ),
         ],
       ),
     );

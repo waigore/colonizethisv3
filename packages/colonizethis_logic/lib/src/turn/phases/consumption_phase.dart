@@ -1,6 +1,7 @@
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../../economy/economy_consumption.dart';
+import '../../world/player_state_pipeline.dart';
 import '../../world/unit_lookup.dart';
 import '../turn_pipeline_state.dart';
 
@@ -16,15 +17,14 @@ TurnPipelineState runConsumptionPipelinePhase(TurnPipelineState acc) {
   final idleLabour = Map<String, WorkerIdleCounts>.from(
     acc.idleLabourByPlayerId,
   );
+  final militaryCounts = militaryTypeCountsByPlayer(game.worldState);
 
-  final updatedPlayers = <Player>[];
-
-  for (final player in game.players) {
-    final regimentCounts = regimentTypeCountsForPlayer(
-      game.worldState,
-      player.id,
-    );
-    final shipCounts = shipTypeCountsForPlayer(game.worldState, player.id);
+  final mappedGame = game.mapPlayers((player) {
+    final regimentCounts =
+        militaryCounts.regimentCountsByPlayerId[player.id] ??
+        const <String, int>{};
+    final shipCounts =
+        militaryCounts.shipCountsByPlayerId[player.id] ?? const <String, int>{};
 
     final result = resolveConsumption(
       stockpile: player.stockpile,
@@ -53,16 +53,14 @@ TurnPipelineState runConsumptionPipelinePhase(TurnPipelineState acc) {
     }
     navalFeeding[player.id] = navalCoverage;
     idleLabour[player.id] = result.idleLabour;
-    updatedPlayers.add(
-      player.copyWith(
-        stockpile: result.stockpile,
-        workerPool: result.workerPool,
-      ),
+    return player.copyWith(
+      stockpile: result.stockpile,
+      workerPool: result.workerPool,
     );
-  }
+  });
 
   return acc.copyWith(
-    game: game.copyWith(players: updatedPlayers),
+    game: mappedGame,
     landFeedingCoverageByPlayerId: landFeeding,
     navalFeedingCoverageByPlayerId: navalFeeding,
     idleLabourByPlayerId: idleLabour,

@@ -16,6 +16,7 @@
 | 4 | naval_units | Naval Units | Opens Naval Units panel |
 | 5 | diplomacy | Diplomacy | Opens Diplomacy screen |
 | 6 | technology | Technology | Opens Technology screen |
+| 7 (debug only) | debug_console | Debug Console | Toggles non-modal in-map debug console overlay |
 
 Icons and assets: [game-toolbar-icons.md](game-toolbar-icons.md) — files live in `app/assets/icons/` as `ui_icon_<id>.png` (32×32; display at 20×20 in buttons). The `naval_units` button uses `ui_icon_naval_units.png` and opens the Naval Units panel defined in [naval-units-panel.md](naval-units-panel.md).
 
@@ -24,6 +25,7 @@ Icons and assets: [game-toolbar-icons.md](game-toolbar-icons.md) — files live 
 ## Display
 
 - **All viewports:** Empire actions appear as an **icon column** on the **left** of the map ([GameMapEmpireLeftRail](../../app/lib/features/game/flame/game_map_empire_left_rail.dart)), **always visible**, same order as the table below. **Tooltip** (or equivalent) shows the full label on hover; **Semantics** expose the label for accessibility.
+- **Debug gate:** `debug_console` appears only when compile-time flag `CT_DEBUG_CONSOLE=true` is supplied. Production/default builds omit this icon.
 - **Top bar:** Shows hamburger (opens **Debug log** menu only), turn counter/button, and region tabs. **No** empire buttons in the top bar.
 - **Edge swipe:** A narrow strip at the **left** edge of the map still opens the **hamburger** menu (Debug log); the empire rail begins **to the right** of that strip so both coexist.
 

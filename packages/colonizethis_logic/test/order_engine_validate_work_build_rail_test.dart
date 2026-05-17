@@ -48,7 +48,7 @@ void main() {
               units: [
                 Unit(
                   id: 'rail1',
-                  type: 'Rail Builder',
+                  type: kUnitTypeRailBuilder,
                   ownerId: 'p1',
                   locationProvinceId: provinceId,
                   tileKey: tileKey,
@@ -73,7 +73,7 @@ void main() {
               isHuman: true,
               capitalProvinceId: provinceId,
               stockpile: stockpile ?? railStockpile(),
-              techUnlocked: techUnlocked ?? const {'early_steam_engine': true},
+              techUnlocked: techUnlocked ?? const {kTechIdEarlySteamEngine: true},
             ),
           ],
         );
@@ -88,7 +88,7 @@ void main() {
           'p1',
           const WorkOrder(
             unitId: 'rail1',
-            target: 'build_rail',
+            target: kWorkTargetBuildRail,
             targetTileKey: tileKey,
           ),
         );
@@ -111,7 +111,7 @@ void main() {
           'p1',
           const WorkOrder(
             unitId: 'rail1',
-            target: 'build_rail',
+            target: kWorkTargetBuildRail,
             targetTileKey: tileKey,
           ),
         );
@@ -128,14 +128,14 @@ void main() {
       test('rejects build_rail on hills with only Early Steam', () {
         final game = gameWithRailUnit(
           tileState: TileMapState().setRoadLevel(tileKey, 1),
-          techUnlocked: const {'early_steam_engine': true},
+          techUnlocked: const {kTechIdEarlySteamEngine: true},
         );
         final engine = OrderEngine();
         engine.addWorkOrder(
           'p1',
           const WorkOrder(
             unitId: 'rail1',
-            target: 'build_rail',
+            target: kWorkTargetBuildRail,
             targetTileKey: tileKey,
           ),
         );
@@ -158,7 +158,7 @@ void main() {
           'p1',
           const WorkOrder(
             unitId: 'rail1',
-            target: 'build_rail',
+            target: kWorkTargetBuildRail,
             targetTileKey: tileKey,
           ),
         );

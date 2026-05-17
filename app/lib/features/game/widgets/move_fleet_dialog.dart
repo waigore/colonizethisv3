@@ -238,7 +238,7 @@ class _MoveFleetDialogState extends State<MoveFleetDialog> {
       ),
       actions: [
         TextButton(
-          onPressed: () => Navigator.pop(context),
+          onPressed: () => Navigator.pop(context, false),
           child: Text(l10n.common_cancel),
         ),
         TextButton(
@@ -251,7 +251,7 @@ class _MoveFleetDialogState extends State<MoveFleetDialog> {
                       moveOrder: _selected!.toOrder(widget.fleet.id),
                     ),
                   );
-                  Navigator.pop(context);
+                  Navigator.pop(context, true);
                 },
           child: Text(l10n.common_confirm),
         ),

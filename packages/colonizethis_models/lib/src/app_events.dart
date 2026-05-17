@@ -100,6 +100,11 @@ class OpenCivilianUnitsPanelEvent extends UIActionEvent {
   const OpenCivilianUnitsPanelEvent({
     this.tileScopeTileKey,
     this.initialSelectedUnitId,
+    this.explorerOnly = false,
+    this.builderOnly = false,
+    this.prospectShortcutTargetTileKey,
+    this.exploreShortcutTargetTileKey,
+    this.buildImprovementShortcutTargetTileKey,
   });
 
   /// Optional tile-scope key (`regionId|provinceId|x|y`) used to show only
@@ -108,6 +113,21 @@ class OpenCivilianUnitsPanelEvent extends UIActionEvent {
 
   /// Optional initial selected unit id when opening in tile scope.
   final String? initialSelectedUnitId;
+
+  /// Optional panel filter mode for explorer-only rows.
+  final bool explorerOnly;
+
+  /// Optional panel filter mode for builder-only rows.
+  final bool builderOnly;
+
+  /// Optional tile key used by the province prospect shortcut flow.
+  final String? prospectShortcutTargetTileKey;
+
+  /// Optional tile key used by the province explore shortcut flow.
+  final String? exploreShortcutTargetTileKey;
+
+  /// Optional tile key used by the province build-improvement shortcut flow.
+  final String? buildImprovementShortcutTargetTileKey;
 }
 
 /// Military units bottom sheet.
@@ -131,6 +151,21 @@ class OpenNavalUnitsPanelEvent extends UIActionEvent {
 
   /// Optional map tile key (`regionId|cellId|x|y`) for tile-scoped panel chrome (Locate / title).
   final String? tileScopeTileKey;
+}
+
+/// Toggle in-map debug console overlay panel.
+class ToggleDebugConsolePanelEvent extends UIActionEvent {
+  const ToggleDebugConsolePanelEvent();
+}
+
+/// Explicit open request for in-map debug console overlay panel.
+class OpenDebugConsolePanelEvent extends UIActionEvent {
+  const OpenDebugConsolePanelEvent();
+}
+
+/// Explicit close request for in-map debug console overlay panel.
+class CloseDebugConsolePanelEvent extends UIActionEvent {
+  const CloseDebugConsolePanelEvent();
 }
 
 /// Request to center/highlight a map tile. To close a units sheet first, emit [ClosePanelEvent]
@@ -287,6 +322,19 @@ class CancelInProgressCivilianWorkRequestedEvent extends SessionCommandEvent {
   final String unitId;
 }
 
+/// Upsert one pending civilian [workOrder] for [playerId] in current-turn draft.
+/// Replaces any existing pending work for the same unit and clears conflicting
+/// pending move order for that unit (work-order draft xor rule).
+class UpsertPendingCivilianWorkOrderRequestedEvent extends SessionCommandEvent {
+  UpsertPendingCivilianWorkOrderRequestedEvent({
+    required this.playerId,
+    required this.workOrder,
+  });
+
+  final String playerId;
+  final WorkOrder workOrder;
+}
+
 /// Naval panel produced an updated [game] (split/combine). Handler updates session game.
 class NavalFleetsUpdatedEvent extends SessionCommandEvent {
   NavalFleetsUpdatedEvent({required this.game});
@@ -306,6 +354,23 @@ class NavalSplitFleetRequestedEvent extends SessionCommandEvent {
   final String humanPlayerId;
   final String originalFleetId;
   final List<String> shipInstanceIdsToNewFleet;
+}
+
+/// Transfer selected ship instances from one existing fleet into another.
+/// Shell listener applies canonical fleet mutation and emits
+/// [NavalFleetsUpdatedEvent]. SPEC/program/app-ui-wiring.md.
+class NavalTransferShipsRequestedEvent extends SessionCommandEvent {
+  NavalTransferShipsRequestedEvent({
+    required this.humanPlayerId,
+    required this.sourceFleetId,
+    required this.targetFleetId,
+    required this.shipInstanceIdsToTransfer,
+  });
+
+  final String humanPlayerId;
+  final String sourceFleetId;
+  final String targetFleetId;
+  final List<String> shipInstanceIdsToTransfer;
 }
 
 /// Move fleet dialog confirm: shell merges [moveOrder] into current-turn draft orders.
@@ -383,6 +448,127 @@ class TrainMilitaryBuildOrdersCommittedEvent extends SessionCommandEvent {
   TrainMilitaryBuildOrdersCommittedEvent({required this.orders});
 
   final List<BuildUnitOrder> orders;
+}
+
+/// Immediate debug spawn at the human player's capital tile.
+class SpawnDebugCivilianAtCapitalEvent extends SessionCommandEvent {
+  const SpawnDebugCivilianAtCapitalEvent({
+    required this.humanPlayerId,
+    required this.unitType,
+    this.count = 1,
+  });
+
+  final String humanPlayerId;
+  final String unitType;
+  final int count;
+}
+
+/// Immediate debug military regiment spawn at the human player's capital.
+class SpawnDebugRegimentAtCapitalEvent extends SessionCommandEvent {
+  const SpawnDebugRegimentAtCapitalEvent({
+    required this.humanPlayerId,
+    required this.regimentTypeId,
+    this.count = 1,
+  });
+
+  final String humanPlayerId;
+  final String regimentTypeId;
+  final int count;
+}
+
+/// Immediate debug ship spawn into the human player's home fleet at capital.
+class SpawnDebugShipAtCapitalHomeFleetEvent extends SessionCommandEvent {
+  const SpawnDebugShipAtCapitalHomeFleetEvent({
+    required this.humanPlayerId,
+    required this.shipTypeId,
+    this.count = 1,
+  });
+
+  final String humanPlayerId;
+  final String shipTypeId;
+  final int count;
+}
+
+/// Immediate debug treasury credit for the human player (no economy modifiers).
+class CreditDebugTreasuryEvent extends SessionCommandEvent {
+  const CreditDebugTreasuryEvent({
+    required this.humanPlayerId,
+    required this.requestedAmount,
+    required this.creditedAmount,
+  });
+
+  final String humanPlayerId;
+  final int requestedAmount;
+  final int creditedAmount;
+}
+
+/// Immediate debug industrial worker-pool credit for the human player.
+///
+/// [workerTierId] is one of `WorkerPool` JSON field names:
+/// `peasants`, `apprentices`, `journeymen`, `masters`.
+class CreditDebugWorkerPoolEvent extends SessionCommandEvent {
+  const CreditDebugWorkerPoolEvent({
+    required this.humanPlayerId,
+    required this.workerTierId,
+    required this.requestedAmount,
+    required this.creditedAmount,
+  });
+
+  final String humanPlayerId;
+  final String workerTierId;
+  final int requestedAmount;
+  final int creditedAmount;
+}
+
+/// Immediate debug stockpile commodity credit for the human player.
+class CreditDebugStockpileCommodityEvent extends SessionCommandEvent {
+  const CreditDebugStockpileCommodityEvent({
+    required this.humanPlayerId,
+    required this.commodityId,
+    required this.requestedAmount,
+    required this.creditedAmount,
+  });
+
+  final String humanPlayerId;
+  final String commodityId;
+  final int requestedAmount;
+  final int creditedAmount;
+}
+
+/// Immediate debug province ownership transfer for the active human player.
+class FlipDebugProvinceOwnershipEvent extends SessionCommandEvent {
+  const FlipDebugProvinceOwnershipEvent({
+    required this.humanPlayerId,
+    this.fullProvinceId,
+    this.regionId,
+    this.provinceDisplayName,
+  }) : assert(
+         (fullProvinceId != null &&
+                 regionId == null &&
+                 provinceDisplayName == null) ||
+             (fullProvinceId == null &&
+                 regionId != null &&
+                 provinceDisplayName != null),
+         'FlipDebugProvinceOwnershipEvent requires fullProvinceId OR regionId+provinceDisplayName.',
+       );
+
+  final String humanPlayerId;
+  final String? fullProvinceId;
+  final String? regionId;
+  final String? provinceDisplayName;
+}
+
+/// Immediate debug province visibility reveal for the active human player.
+class RevealDebugProvinceEvent extends SessionCommandEvent {
+  const RevealDebugProvinceEvent({
+    required this.humanPlayerId,
+    required this.target,
+    required this.targetIsFullProvinceId,
+  });
+
+  final String humanPlayerId;
+  final String target;
+  final bool targetIsFullProvinceId;
 }
 
 /// Request to append one diplomatic order for [playerId] in current-turn draft.

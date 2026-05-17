@@ -1,6 +1,13 @@
-part of 'diplomacy_resolver.dart';
+import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:colonizethis_models/colonizethis_models.dart';
 
-Game _appendDiplomaticEvent(
+import '../constants.dart';
+import '../dossier/evidence_rules.dart';
+import '../turn/turn_resolution_result.dart';
+import 'diplomacy_resolver.dart';
+import 'overture_stage_helpers.dart';
+
+Game appendDiplomaticEvent(
   Game game,
   int turn,
   DiplomaticEventType type,
@@ -51,8 +58,8 @@ OvertureDecision? _findDecision(
   return null;
 }
 
-class _OverturePaymentsResult {
-  _OverturePaymentsResult(this.game, [this.pendingOvertures]);
+class OverturePaymentsResult {
+  OverturePaymentsResult(this.game, [this.pendingOvertures]);
   final Game game;
   final List<OvertureOffer>? pendingOvertures;
 }
@@ -71,10 +78,267 @@ bool _aiGpAccepts(Game game, String offererGpId, String targetGpId) {
   return score >= relationScoreNeutral;
 }
 
-_OverturePaymentsResult _processOverturePayments(
+OvertureState? _findOvertureForGpTarget(
+  List<OvertureState> overtures,
+  String gpId,
+  String targetId,
+) {
+  for (final o in overtures) {
+    if (o.gpId == gpId && o.targetId == targetId) return o;
+  }
+  return null;
+}
+
+int? _overtureCostForStage(OvertureStage stage) {
+  if (stage == OvertureStage.tradeConsulate) return overtureConsulateCost;
+  if (stage == OvertureStage.embassy) return overtureEmbassyCost;
+  if (stage == OvertureStage.nap) return 0;
+  return null;
+}
+
+/// Returns pending result when human GP must respond; otherwise acceptance flag.
+({bool accepted, OverturePaymentsResult? pending}) _resolveOvertureAcceptance({
+  required Game state,
+  required String gpId,
+  required String targetId,
+  required OvertureStage stage,
+  required bool targetIsMinorOrTribe,
+  required List<Player> players,
+  required List<OvertureState> overtures,
+  List<OvertureDecision>? overtureDecisions,
+}) {
+  if (targetIsMinorOrTribe) {
+    return (accepted: _minorOrTribeAcceptsByRule(stage), pending: null);
+  }
+  final decision = _findDecision(overtureDecisions, gpId, targetId, stage);
+  if (decision != null) {
+    return (accepted: decision.accepted, pending: null);
+  }
+  if (_isTargetHumanGp(state, targetId)) {
+    final pending = [
+      OvertureOffer(offererGpId: gpId, targetFactionId: targetId, stage: stage),
+    ];
+    final wrapped = state.copyWith(players: players, overtureStates: overtures);
+    return (accepted: false, pending: OverturePaymentsResult(wrapped, pending));
+  }
+  return (accepted: _aiGpAccepts(state, gpId, targetId), pending: null);
+}
+
+({
+  List<Player> players,
+  List<OvertureState> overtures,
+  Game state,
+  Player player,
+  OverturePaymentsResult? earlyExit,
+})
+_processEstablishOvertureOrderIfApplicable({
+  required Game state,
+  required List<Player> players,
+  required List<OvertureState> overtures,
+  required int playerIdx,
+  required Player player,
+  required String gpId,
+  required DiplomaticOrder order,
+  required int turn,
+  required DiplomacyFactionMembership factionMembership,
+  List<OvertureDecision>? overtureDecisions,
+}) {
+  if (order.type != DiplomaticOrderType.establishOverture) {
+    return (
+      players: players,
+      overtures: overtures,
+      state: state,
+      player: player,
+      earlyExit: null,
+    );
+  }
+  final stage = order.overtureStage;
+  if (stage == null || stage == OvertureStage.none) {
+    return (
+      players: players,
+      overtures: overtures,
+      state: state,
+      player: player,
+      earlyExit: null,
+    );
+  }
+
+  final targetId = order.targetFactionId;
+  final targetIsMinorOrTribe = factionMembership.isMinorOrTribe(targetId);
+  final targetIsGp = factionMembership.isGreatPower(targetId);
+  if (!targetIsMinorOrTribe && !targetIsGp) {
+    return (
+      players: players,
+      overtures: overtures,
+      state: state,
+      player: player,
+      earlyExit: null,
+    );
+  }
+
+  final rel = getRelation(state, gpId, targetId);
+  if (rel != null && rel.atWar) {
+    return (
+      players: players,
+      overtures: overtures,
+      state: state,
+      player: player,
+      earlyExit: null,
+    );
+  }
+
+  final existing = _findOvertureForGpTarget(overtures, gpId, targetId);
+  final prevStage = stage.previous;
+  final atPrevStage =
+      (existing == null && prevStage == OvertureStage.none) ||
+      (existing != null && existing.stage == prevStage);
+  if (!atPrevStage) {
+    return (
+      players: players,
+      overtures: overtures,
+      state: state,
+      player: player,
+      earlyExit: null,
+    );
+  }
+
+  if (targetIsMinorOrTribe &&
+      (stage == OvertureStage.tradeConsulate ||
+          stage == OvertureStage.embassy ||
+          stage == OvertureStage.nap) &&
+      player.techUnlocked?[kTechIdDiplomaticExpertise] != true) {
+    return (
+      players: players,
+      overtures: overtures,
+      state: state,
+      player: player,
+      earlyExit: null,
+    );
+  }
+
+  final cost = _overtureCostForStage(stage);
+  if (cost == null) {
+    return (
+      players: players,
+      overtures: overtures,
+      state: state,
+      player: player,
+      earlyExit: null,
+    );
+  }
+
+  if (player.treasury < cost && cost > 0) {
+    return (
+      players: players,
+      overtures: overtures,
+      state: state,
+      player: player,
+      earlyExit: null,
+    );
+  }
+
+  final resolution = _resolveOvertureAcceptance(
+    state: state,
+    gpId: gpId,
+    targetId: targetId,
+    stage: stage,
+    targetIsMinorOrTribe: targetIsMinorOrTribe,
+    players: players,
+    overtures: overtures,
+    overtureDecisions: overtureDecisions,
+  );
+  if (resolution.pending != null) {
+    return (
+      players: players,
+      overtures: overtures,
+      state: state,
+      player: player,
+      earlyExit: resolution.pending,
+    );
+  }
+  final accepted = resolution.accepted;
+
+  if (!accepted) {
+    var nextState = state;
+    if (targetIsGp) {
+      nextState = appendDiplomaticEvent(
+        nextState,
+        turn,
+        DiplomaticEventType.overtureRejected,
+        {gpId, targetId},
+        fromFactionId: gpId,
+        toFactionId: targetId,
+        overtureStage: stage,
+        wasAiInitiator: isAiControlledForEvidence(nextState, gpId),
+      );
+    }
+    return (
+      players: players,
+      overtures: overtures,
+      state: nextState,
+      player: player,
+      earlyExit: null,
+    );
+  }
+
+  var nextPlayer = player;
+  var nextPlayers = players;
+  if (cost > 0) {
+    nextPlayer = nextPlayer.copyWith(treasury: nextPlayer.treasury - cost);
+    nextPlayers = List<Player>.from(nextPlayers);
+    nextPlayers[playerIdx] = nextPlayer;
+  }
+
+  var nextOvertures = overtures;
+  final osIdx = nextOvertures.indexWhere(
+    (o) => o.gpId == gpId && o.targetId == targetId,
+  );
+  if (osIdx >= 0) {
+    nextOvertures = List<OvertureState>.from(nextOvertures);
+    nextOvertures[osIdx] = nextOvertures[osIdx].copyWith(
+      stage: stage,
+      sinceTurn: turn,
+    );
+  } else {
+    nextOvertures = [
+      ...nextOvertures,
+      OvertureState(
+        gpId: gpId,
+        targetId: targetId,
+        stage: stage,
+        sinceTurn: turn,
+      ),
+    ];
+  }
+  var nextState = state.copyWith(
+    players: nextPlayers,
+    overtureStates: nextOvertures,
+  );
+  nextState = appendDiplomaticEvent(
+    nextState,
+    turn,
+    DiplomaticEventType.overtureAccepted,
+    {gpId, targetId},
+    fromFactionId: gpId,
+    toFactionId: targetId,
+    overtureStage: stage,
+    wasAiInitiator: isAiControlledForEvidence(nextState, gpId),
+  );
+  diploLog.i('diplomacy overture $gpId -> $targetId $stage (accepted)');
+  return (
+    players: nextPlayers,
+    overtures: nextOvertures,
+    state: nextState,
+    player: nextPlayer,
+    earlyExit: null,
+  );
+}
+
+OverturePaymentsResult processOverturePayments(
   Game game,
   Map<String, List<DiplomaticOrder>> diploByPlayer,
   int turn, {
+  required DiplomacyFactionMembership factionMembership,
   List<OvertureDecision>? overtureDecisions,
 }) {
   var players = List<Player>.from(game.players);
@@ -88,159 +352,31 @@ _OverturePaymentsResult _processOverturePayments(
     var player = players[playerIdx];
 
     for (final order in entry.value) {
-      if (order.type != DiplomaticOrderType.establishOverture) continue;
-      final stage = order.overtureStage;
-      if (stage == null || stage == OvertureStage.none) continue;
-
-      final targetId = order.targetFactionId;
-      final targetIsMinorOrTribe = isMinorOrTribe(state, targetId);
-      final targetIsGp = isGreatPower(state, targetId);
-      if (!targetIsMinorOrTribe && !targetIsGp) continue;
-
-      // SPEC/game/diplomacy.md: While relationState is AT_WAR, no new overtures.
-      final rel = getRelation(state, gpId, targetId);
-      if (rel != null && rel.atWar) continue;
-
-      OvertureState? existing;
-      for (final o in overtures) {
-        if (o.gpId == gpId && o.targetId == targetId) {
-          existing = o;
-          break;
-        }
-      }
-      final prevStage = _previousStage(stage);
-      final atPrevStage =
-          (existing == null && prevStage == OvertureStage.none) ||
-          (existing != null && existing.stage == prevStage);
-      if (!atPrevStage) continue;
-
-      if (targetIsMinorOrTribe &&
-          (stage == OvertureStage.tradeConsulate ||
-              stage == OvertureStage.embassy ||
-              stage == OvertureStage.nap) &&
-          player.techUnlocked?[kTechIdDiplomaticExpertise] != true) {
-        continue;
-      }
-
-      int cost;
-      if (stage == OvertureStage.tradeConsulate) {
-        cost = overtureConsulateCost;
-      } else if (stage == OvertureStage.embassy) {
-        cost = overtureEmbassyCost;
-      } else if (stage == OvertureStage.nap) {
-        cost = 0;
-      } else {
-        continue; // Join Empire in step 3
-      }
-
-      if (player.treasury < cost && cost > 0) continue;
-
-      // Two-way: target accepts or rejects.
-      bool accepted;
-      if (targetIsMinorOrTribe) {
-        accepted = _minorOrTribeAcceptsByRule(stage);
-      } else {
-        // Target is GP.
-        final decision = _findDecision(
-          overtureDecisions,
-          gpId,
-          targetId,
-          stage,
-        );
-        if (decision != null) {
-          accepted = decision.accepted;
-        } else if (_isTargetHumanGp(state, targetId)) {
-          // Suspend: need human response.
-          final pending = [
-            OvertureOffer(
-              offererGpId: gpId,
-              targetFactionId: targetId,
-              stage: stage,
-            ),
-          ];
-          state = state.copyWith(players: players, overtureStates: overtures);
-          return _OverturePaymentsResult(state, pending);
-        } else {
-          accepted = _aiGpAccepts(state, gpId, targetId);
-        }
-      }
-
-      if (!accepted) {
-        if (targetIsGp) {
-          state = _appendDiplomaticEvent(
-            state,
-            turn,
-            DiplomaticEventType.overtureRejected,
-            {gpId, targetId},
-            fromFactionId: gpId,
-            toFactionId: targetId,
-            overtureStage: stage,
-            wasAiInitiator: isAiControlledForEvidence(state, gpId),
-          );
-        }
-        continue;
-      }
-
-      if (cost > 0) {
-        player = player.copyWith(treasury: player.treasury - cost);
-        players[playerIdx] = player;
-      }
-
-      final osIdx = overtures.indexWhere(
-        (o) => o.gpId == gpId && o.targetId == targetId,
+      final step = _processEstablishOvertureOrderIfApplicable(
+        state: state,
+        players: players,
+        overtures: overtures,
+        playerIdx: playerIdx,
+        player: player,
+        gpId: gpId,
+        order: order,
+        turn: turn,
+        factionMembership: factionMembership,
+        overtureDecisions: overtureDecisions,
       );
-      if (osIdx >= 0) {
-        overtures = List<OvertureState>.from(overtures);
-        overtures[osIdx] = overtures[osIdx].copyWith(
-          stage: stage,
-          sinceTurn: turn,
-        );
-      } else {
-        overtures = [
-          ...overtures,
-          OvertureState(
-            gpId: gpId,
-            targetId: targetId,
-            stage: stage,
-            sinceTurn: turn,
-          ),
-        ];
-      }
-      state = state.copyWith(players: players, overtureStates: overtures);
-      state = _appendDiplomaticEvent(
-        state,
-        turn,
-        DiplomaticEventType.overtureAccepted,
-        {gpId, targetId},
-        fromFactionId: gpId,
-        toFactionId: targetId,
-        overtureStage: stage,
-        wasAiInitiator: isAiControlledForEvidence(state, gpId),
-      );
-      _diploLog.i('diplomacy overture $gpId -> $targetId $stage (accepted)');
+      if (step.earlyExit != null) return step.earlyExit!;
+      players = step.players;
+      overtures = step.overtures;
+      state = step.state;
+      player = step.player;
     }
   }
 
   state = state.copyWith(players: players, overtureStates: overtures);
-  return _OverturePaymentsResult(state);
+  return OverturePaymentsResult(state);
 }
 
-OvertureStage _previousStage(OvertureStage stage) {
-  switch (stage) {
-    case OvertureStage.tradeConsulate:
-      return OvertureStage.none;
-    case OvertureStage.embassy:
-      return OvertureStage.tradeConsulate;
-    case OvertureStage.nap:
-      return OvertureStage.embassy;
-    case OvertureStage.joinEmpire:
-      return OvertureStage.nap;
-    case OvertureStage.none:
-      return OvertureStage.none;
-  }
-}
-
-Game _advanceOvertures(Game game, int turn) {
+Game advanceOvertures(Game game, int turn) {
   // Spec: "complete the turn after payment" - paid overtures are already advanced in step 1.
   // No additional turn delays in Phase 4 minimal implementation.
   return game;

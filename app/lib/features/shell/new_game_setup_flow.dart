@@ -20,6 +20,7 @@ import 'package:colonizethis_app/providers/game_service_provider.dart';
 import 'package:colonizethis_app/providers/games_provider.dart';
 import 'package:colonizethis_app/features/shell/new_game_setup_seed_for_attempt.dart';
 import 'package:colonizethis_app/widgets/ct_dialog_shell.dart';
+import 'package:colonizethis_app/widgets/ct_loading_indicator.dart';
 import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
 
 final _log = packageLogger('shell');
@@ -67,8 +68,6 @@ Future<void> runNewGameSetupAfterLeaderPick({
       minProvincesPerMinor: templateConfig.minProvincesPerMinor,
       seed: perAttemptSeed,
       startingResources: templateConfig.startingResources,
-      enforceFairGpOldWorldAssignment:
-          templateConfig.enforceFairGpOldWorldAssignment,
       initTownRoadWiringRegionIds: templateConfig.initTownRoadWiringRegionIds,
     );
 
@@ -246,13 +245,11 @@ class _NewGameSetupProgressDialogState
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 20),
-            SizedBox(
-              width: 40,
-              height: 40,
-              child: CircularProgressIndicator(
-                strokeWidth: 2,
-                color: theme.colorScheme.primary,
-              ),
+            CtLoadingIndicator(
+              size: 40,
+              strokeWidth: 2,
+              color: theme.colorScheme.primary,
+              center: false,
             ),
             const SizedBox(height: 16),
             Text(_stepLabel(context, _stepIndex), textAlign: TextAlign.center),

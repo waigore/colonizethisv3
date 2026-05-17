@@ -1,9 +1,9 @@
 ---
 name: verify-github-issue
-description: Verifies one open GitHub issue is fully satisfied against acceptance criteria, specs, tests, and CONTRIBUTING workflow; proposes concrete gap fixes or drafts a closing comment and close steps. Use when the user gives an issue number or issue URL and wants verification, gap analysis, or issue closure aligned with dev-branch PRs.
+description: Verifies one open GitHub issue against acceptance criteria, specs, tests, and CONTRIBUTING workflow; uses the gh CLI directly to read the issue and post a consolidated verification comment; proposes concrete gap fixes when work is incomplete. Use when the user gives an issue number or issue URL and wants verification or gap analysis aligned with dev-branch PRs.
 ---
 
-# Verify and close a GitHub issue (ColonizeThis)
+# Verify a GitHub issue (ColonizeThis)
 
 ## When this applies
 
@@ -21,13 +21,17 @@ Follow **[AGENTS.md](../../../AGENTS.md)** (Cursor rules under `.cursor/rules/`)
 
 Also respect **SPEC-first** (`colonizethis-spec-required.mdc`): no behavior that contradicts GDD/TDD; extend SPEC before implementing unauthorized scope.
 
+## GitHub CLI (`gh`) — required path
+
+Use the **`gh`** binary **directly** from the workspace repo clone. Issue **read** uses **`gh issue view`**; posting the verification uses **`gh issue comment`**.
+
 ## Workflow
 
 1. **Load the issue**  
-   Use authenticated GitHub access when available (e.g. `gh issue view <n> --json title,body,labels,state,url` or the web UI). Confirm state is **open**.
+   Run **`gh issue view <n> --json title,body,labels,state,url`** (add **`--repo owner/name`** when the issue is not on the clone’s default remote). Confirm state is **open**.
 
 2. **Extract requirements**  
-   From the issue body (and comments): goals, **acceptance criteria**, links to SPEC/files, edge cases. If ACs are missing or vague, **state that gap** and propose minimal AC text before claiming full resolution.
+   From the issue body (and comments): goals, **acceptance criteria**, links to SPEC/files, edge cases. If ACs are missing or vague, **state that gap** and propose minimal AC text before claiming full verification.
 
 3. **Trace to code and specs**  
    Search the repo for implementations, related PRs/commits, and SPEC sections. Map each AC item to: implemented / partial / missing / unknown.
@@ -38,38 +42,40 @@ Also respect **SPEC-first** (`colonizethis-spec-required.mdc`): no behavior that
 5. **Branch and PR posture**  
    Any fix must be described as a PR **into `dev`**, following CONTRIBUTING pre-PR checklist (SPEC/AC updates, logging alignment if applicable, coverage).
 
-6. **Output**
+6. **Post the verification on GitHub**  
+   **Always** publish the result as an **issue comment** on that issue (same number/repo as step 1) using **`gh issue comment`**: `gh issue comment <n> --body-file <path>` or `gh issue comment <n> --body "<markdown>"`. Use **`--repo owner/name`** when the issue is not on the clone’s default remote.
+
+7. **Comment body**
 
    **If there are gaps**  
-   - List each gap with severity (blocks closure vs follow-up).  
-   - Propose a **concrete** remedy: files to touch, SPEC updates, test cases, and PR scope.  
-   - Do **not** close the issue.
+   - List each gap with severity (blocks “verified complete” vs follow-up).  
+   - Propose a **concrete** remedy: files to touch, SPEC updates, test cases, and PR scope.
 
    **If fully addressed**  
-   - Summarize evidence: AC → implementation → tests → target branch (`dev`).  
-   - Draft a **short closing comment** for GitHub (what shipped, where, how ACs are met).  
-   - Instruct the user to **close via** `gh issue close <n> --comment "<draft>"` (or web UI) using their credentials; do not assume the agent has permission to close on their behalf.
+   - Summarize evidence: AC → implementation → tests → target branch (`dev`).
 
-## Closing comment template
+   In both cases, use a neutral, factual tone. The **only** required GitHub write for this skill is the verification **comment**—not labels, milestones, or issue state.
+
+## Verification comment template
 
 Use a neutral, factual tone:
 
 ```markdown
-Verified against the stated acceptance criteria:
+**Verification** (ACs / SPEC / tests)
 
-- [AC summary bullets tied to code/tests]
+- [AC summary bullets tied to code/tests; mark partial/missing where applicable]
 
 Implementation: [PR link or commit refs if known]. Tests: [what was run / added]. PR targets `dev` per CONTRIBUTING.
 
-Closing as complete.
+Outcome: [Complete | Gaps remain — see above].
 ```
 
-Adjust if some work landed without a merged PR yet — then **do not** recommend closure until merge criteria are met.
+If some work exists but is not merged yet, state that verification is **conditional on merge** and list what must land before a “complete” outcome.
 
 ## Tools
 
-- Prefer **`gh`** when installed and authenticated for viewing issues and closing with a comment.  
-- Use repo search and test commands as in AGENTS/CONTRIBUTING; do not invent branch or review policy.
+- **`gh`** for GitHub: `gh issue view`, **`gh issue comment`**.  
+- Repo search and test commands per AGENTS/CONTRIBUTING; do not invent branch or review policy.
 
 ## Additional resources
 

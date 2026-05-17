@@ -2,7 +2,8 @@
 
 import 'package:colonizethis_models/colonizethis_models.dart';
 
-import '../world/player_view.dart';
+import '../world/province_lookup.dart';
+import '../world/province_visibility_index.dart';
 
 /// Builds digest lines and world-state tracking updates for the completed turn.
 /// [start] is game at resolution entry (after military ensure); [end] is final
@@ -38,6 +39,8 @@ import '../world/player_view.dart';
     end: end,
     readDone: provReadDone,
     writeDone: provWriteDone,
+    startIndex: buildProvinceVisibilityIndex(start),
+    endIndex: buildProvinceVisibilityIndex(end),
   );
   final seaLines = _seaZoneFleetLines(
     end: end,
@@ -71,26 +74,24 @@ import '../world/player_view.dart';
 
 List<TurnNewsProvinceCapturedLine> _provinceCaptureLines(Game start, Game end) {
   final out = <TurnNewsProvinceCapturedLine>[];
-  for (final region in [end.worldState.oldWorld, end.worldState.newWorld]) {
-    for (final prov in region.provinces) {
-      final pid = _fullProvinceId(prov);
-      final before = _ownerForProvince(start, pid);
-      final after = _ownerForProvince(end, pid);
-      // Same predicate as emitProvinceCapturedEvents: both owners non-empty faction
-      // ids and owner changed (no null/empty "new owner" capture). See SPEC/game/world-model.md.
-      if (before != null &&
-          before.isNotEmpty &&
-          after != null &&
-          after.isNotEmpty &&
-          before != after) {
-        out.add(
-          TurnNewsProvinceCapturedLine(
-            provinceId: pid,
-            previousOwnerId: before,
-            newOwnerId: after,
-          ),
-        );
-      }
+  for (final prov in allProvinces(end.worldState)) {
+    final pid = _fullProvinceId(prov);
+    final before = _ownerForProvince(start, pid);
+    final after = _ownerForProvince(end, pid);
+    // Same predicate as emitProvinceCapturedEvents: both owners non-empty faction
+    // ids and owner changed (no null/empty "new owner" capture). See SPEC/game/world-model.md.
+    if (before != null &&
+        before.isNotEmpty &&
+        after != null &&
+        after.isNotEmpty &&
+        before != after) {
+      out.add(
+        TurnNewsProvinceCapturedLine(
+          provinceId: pid,
+          previousOwnerId: before,
+          newOwnerId: after,
+        ),
+      );
     }
   }
   out.sort((a, b) => a.provinceId.compareTo(b.provinceId));
@@ -98,14 +99,7 @@ List<TurnNewsProvinceCapturedLine> _provinceCaptureLines(Game start, Game end) {
 }
 
 String? _ownerForProvince(Game g, String fullProvinceId) {
-  for (final region in [g.worldState.oldWorld, g.worldState.newWorld]) {
-    for (final p in region.provinces) {
-      if (_fullProvinceId(p) == fullProvinceId) {
-        return p.ownerId;
-      }
-    }
-  }
-  return null;
+  return g.worldState.tryGetProvince(fullProvinceId)?.ownerId;
 }
 
 String _fullProvinceId(Province p) =>
@@ -189,54 +183,26 @@ List<TurnNewsOvertureAdvancedLine> _overtureLines(Game start, Game end) {
   return out;
 }
 
-bool _provinceKnownToAnyGp(Game g, Province p) {
-  final regionId = p.regionId;
-  final local = ProvinceId.localIdFrom(_fullProvinceId(p));
-  final keys =
-      g.worldState.tileKeysByRegionAndProvince[regionId]?[local] ??
-      const <String>[];
-  if (keys.isEmpty) {
-    return false;
-  }
-  for (final player in g.players) {
-    final vis = g.worldState.playerVisibilityByTile[player.id] ?? {};
-    for (final tk in keys) {
-      if (_parseVis(vis[tk]) != VisibilityLevel.unknown) {
-        return true;
-      }
-    }
-  }
-  return false;
-}
-
-VisibilityLevel _parseVis(String? raw) {
-  if (raw == null) return VisibilityLevel.unknown;
-  for (final v in VisibilityLevel.values) {
-    if (v.name == raw) return v;
-  }
-  return VisibilityLevel.unknown;
-}
-
 List<TurnNewsProvinceDiscoveredLine> _provinceDiscoveryLines({
   required Game start,
   required Game end,
   required Set<String> readDone,
   required Set<String> writeDone,
+  required ProvinceVisibilityIndex startIndex,
+  required ProvinceVisibilityIndex endIndex,
 }) {
   final out = <TurnNewsProvinceDiscoveredLine>[];
   final seen = <String>{};
-  for (final region in [end.worldState.oldWorld, end.worldState.newWorld]) {
-    for (final p in region.provinces) {
-      final pid = _fullProvinceId(p);
-      if (seen.contains(pid)) continue;
-      seen.add(pid);
-      if (readDone.contains(pid)) continue;
-      final was = _provinceKnownToAnyGp(start, p);
-      final now = _provinceKnownToAnyGp(end, p);
-      if (!was && now) {
-        out.add(TurnNewsProvinceDiscoveredLine(provinceId: pid));
-        writeDone.add(pid);
-      }
+  for (final p in allProvinces(end.worldState)) {
+    final pid = _fullProvinceId(p);
+    if (seen.contains(pid)) continue;
+    seen.add(pid);
+    if (readDone.contains(pid)) continue;
+    final was = startIndex.isKnownToAnyPlayer(pid);
+    final now = endIndex.isKnownToAnyPlayer(pid);
+    if (!was && now) {
+      out.add(TurnNewsProvinceDiscoveredLine(provinceId: pid));
+      writeDone.add(pid);
     }
   }
   out.sort((a, b) => a.provinceId.compareTo(b.provinceId));

@@ -50,9 +50,9 @@ void main() {
         buildUnitOrdersByPlayerId: {
           'p1': [
             BuildUnitOrder(
-              unitType: 'Builder',
+              unitType: kUnitTypeBuilder,
               isMilitary:
-                  buildUnitCategoryForUnitType('Builder') ==
+                  buildUnitCategoryForUnitType(kUnitTypeBuilder) ==
                   BuildUnitCategory.military,
               spawnProvinceId: 'oldWorld|P1',
             ),
@@ -74,9 +74,9 @@ void main() {
         buildUnitOrdersByPlayerId: {
           'p1': [
             BuildUnitOrder(
-              unitType: 'Builder',
+              unitType: kUnitTypeBuilder,
               isMilitary:
-                  buildUnitCategoryForUnitType('Builder') ==
+                  buildUnitCategoryForUnitType(kUnitTypeBuilder) ==
                   BuildUnitCategory.military,
               spawnProvinceId: 'oldWorld|P1',
             ),
@@ -96,9 +96,9 @@ void main() {
         buildUnitOrdersByPlayerId: {
           'p1': [
             BuildUnitOrder(
-              unitType: 'Builder',
+              unitType: kUnitTypeBuilder,
               isMilitary:
-                  buildUnitCategoryForUnitType('Builder') ==
+                  buildUnitCategoryForUnitType(kUnitTypeBuilder) ==
                   BuildUnitCategory.military,
               spawnProvinceId: 'oldWorld|P1',
             ),
@@ -107,7 +107,7 @@ void main() {
       );
       final next = applyBuildAndWorkOrders(game, orders);
       expect(next.worldState.oldWorld.units.length, 1);
-      expect(next.worldState.oldWorld.units.single.type, 'Builder');
+      expect(next.worldState.oldWorld.units.single.type, kUnitTypeBuilder);
       expect(next.players.single.treasury, game.players.single.treasury - cash);
       expect(
         next.players.single.stockpile.quantityOf(CommodityCatalog.paper.id),
@@ -128,9 +128,9 @@ void main() {
         buildUnitOrdersByPlayerId: {
           'p1': [
             BuildUnitOrder(
-              unitType: 'Merchant',
+              unitType: kUnitTypeMerchant,
               isMilitary:
-                  buildUnitCategoryForUnitType('Merchant') ==
+                  buildUnitCategoryForUnitType(kUnitTypeMerchant) ==
                   BuildUnitCategory.military,
               spawnProvinceId: 'oldWorld|P1',
             ),
@@ -147,11 +147,11 @@ void main() {
       final gameWithTech = civilianGame(
         treasury: cash + 100,
         paper: paperQty + 1,
-        techUnlocked: {'merchant_companies': true},
+        techUnlocked: {kTechIdMerchantCompanies: true},
       );
       final nextWithTech = applyBuildAndWorkOrders(gameWithTech, orders);
       expect(nextWithTech.worldState.oldWorld.units.length, 1);
-      expect(nextWithTech.worldState.oldWorld.units.single.type, 'Merchant');
+      expect(nextWithTech.worldState.oldWorld.units.single.type, kUnitTypeMerchant);
       expect(
         nextWithTech.players.single.treasury,
         gameWithTech.players.single.treasury - cash,

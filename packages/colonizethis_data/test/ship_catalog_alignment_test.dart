@@ -48,7 +48,7 @@ void main() {
         'sloop',
         'frigate',
         'raider',
-        'ship_of_the_line',
+        kTechIdShipOfTheLine,
         'ironclad',
       };
       const merchants = {

@@ -1,6 +1,8 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
+import '../world/unit_lookup.dart';
+
 /// Battle context for one contested province. SPEC/program/combat-resolution.md.
 class BattleContext {
   const BattleContext({
@@ -108,15 +110,14 @@ class AttackingSide {
 List<BattleContext> detectConflicts(Game game, Orders orders) {
   final contexts = <BattleContext>[];
   final armyById = {for (final a in game.worldState.armies) a.id: a};
-  final unitById = {
-    for (final u in game.worldState.oldWorld.units) u.id: u,
-    for (final u in game.worldState.newWorld.units) u.id: u,
-  };
+  final armiesByOwnerAndProvince = _indexArmiesByOwnerAndProvince(
+    game.worldState.armies,
+  );
+  final unitById = unitsByIdFromWorld(game.worldState);
+  final gpIds = {for (final p in game.players) p.id};
 
   void processRegion(RegionData region) {
     if (region.units.isEmpty) return;
-
-    final gpIds = {for (final p in game.players) p.id};
 
     final unitsByProvince = <String, List<Unit>>{};
     for (final u in region.units) {
@@ -131,11 +132,13 @@ List<BattleContext> detectConflicts(Game game, Orders orders) {
       for (final order in entry.value) {
         final unit = unitById[order.unitId];
         if (unit == null || !canUnitInitiateCombat(unit.type)) continue;
-        final currentRegion = ProvinceId.regionIdFrom(unit.locationProvinceId);
-        final dest = ProvinceId.isPrefixed(order.destinationProvinceId)
-            ? order.destinationProvinceId
-            : ProvinceId.full(currentRegion, order.destinationProvinceId);
-        movedIntoByFaction.putIfAbsent(dest, () => <String>{}).add(factionId);
+        final destProvince = Unit.provinceIdFromTileKey(
+          order.destinationTileKey,
+        );
+        if (destProvince == null) continue;
+        movedIntoByFaction
+            .putIfAbsent(destProvince, () => <String>{})
+            .add(factionId);
       }
     }
     for (final entry in orders.armyMoveOrdersByPlayerId.entries) {
@@ -168,12 +171,17 @@ List<BattleContext> detectConflicts(Game game, Orders orders) {
       final combatUnits = units
           .where((u) => canUnitInitiateCombat(u.type))
           .toList();
-
-      final factionsPresent = combatUnits.map((u) => u.ownerId).toSet();
+      final combatUnitsByFaction = <String, List<Unit>>{};
+      for (final unit in combatUnits) {
+        combatUnitsByFaction.putIfAbsent(unit.ownerId, () => []).add(unit);
+      }
+      final factionsPresent = combatUnitsByFaction.keys.toSet();
       if (factionsPresent.length < 2) continue;
 
       final province = provinceById[provinceId];
       if (province == null) continue;
+      final factionsMovedIntoProvince =
+          movedIntoByFaction[provinceId] ?? const <String>{};
       final ownerId = province.ownerId;
 
       String defenderFactionId;
@@ -182,7 +190,7 @@ List<BattleContext> detectConflicts(Game game, Orders orders) {
           factionsPresent.contains(ownerId)) {
         defenderFactionId = ownerId;
       } else {
-        final movers = movedIntoByFaction[provinceId] ?? {};
+        final movers = factionsMovedIntoProvince;
         final nonMovers = factionsPresent.difference(movers);
         if (nonMovers.isEmpty) {
           defenderFactionId = factionsPresent.reduce(
@@ -195,15 +203,15 @@ List<BattleContext> detectConflicts(Game game, Orders orders) {
         }
       }
 
-      final attackerFactionIds = (movedIntoByFaction[provinceId] ?? {})
+      final attackerFactionIds = factionsMovedIntoProvince
           .where((f) => f != defenderFactionId && gpIds.contains(f))
           .toList();
+      final attackerFactionIdSet = attackerFactionIds.toSet();
 
       if (attackerFactionIds.isEmpty) continue;
 
-      final defenderUnits = combatUnits
-          .where((u) => u.ownerId == defenderFactionId)
-          .toList();
+      final defenderUnits =
+          combatUnitsByFaction[defenderFactionId] ?? const <Unit>[];
       if (defenderUnits.isEmpty) continue;
 
       final attackers = <AttackingSide>[];
@@ -213,7 +221,7 @@ List<BattleContext> detectConflicts(Game game, Orders orders) {
         final army = armyById[armyId];
         if (army == null) continue;
         final fid = army.ownerId;
-        if (!attackerFactionIds.contains(fid)) continue;
+        if (!attackerFactionIdSet.contains(fid)) continue;
         final attackerUnits = <Unit>[];
         for (final unitId in army.regimentUnitIds) {
           final u = unitById[unitId];
@@ -234,9 +242,7 @@ List<BattleContext> detectConflicts(Game game, Orders orders) {
       }
       if (attackers.isEmpty) {
         for (final fid in attackerFactionIds) {
-          final attackerUnits = combatUnits
-              .where((u) => u.ownerId == fid)
-              .toList();
+          final attackerUnits = combatUnitsByFaction[fid] ?? const <Unit>[];
           if (attackerUnits.isEmpty) continue;
           attackers.add(
             AttackingSide(
@@ -250,26 +256,22 @@ List<BattleContext> detectConflicts(Game game, Orders orders) {
 
       if (attackers.isEmpty) continue;
 
-      final defenderArmies =
-          game.worldState.armies
-              .where((a) => a.ownerId == defenderFactionId)
-              .where((a) => a.stationedProvinceId == provinceId)
-              .where(
-                (a) => a.regimentUnitIds.any(
-                  (id) => defenderUnits.any((u) => u.id == id),
-                ),
-              )
-              .toList()
-            ..sort((a, b) => a.id.compareTo(b.id));
-      String? primaryDefenderArmyId;
-      if (defenderArmies.isNotEmpty) {
-        defenderArmies.sort((a, b) {
+      final defenderUnitIdSet = defenderUnits.map((u) => u.id).toSet();
+      final defenderArmies = [
+        ...?armiesByOwnerAndProvince[defenderFactionId]?[provinceId],
+      ]
+        ..retainWhere(
+          (army) => army.regimentUnitIds.any(defenderUnitIdSet.contains),
+        )
+        ..sort((a, b) {
           final countCmp = b.regimentUnitIds.length.compareTo(
             a.regimentUnitIds.length,
           );
           if (countCmp != 0) return countCmp;
           return a.id.compareTo(b.id);
         });
+      String? primaryDefenderArmyId;
+      if (defenderArmies.isNotEmpty) {
         primaryDefenderArmyId = defenderArmies.first.id;
       }
 
@@ -305,4 +307,18 @@ List<BattleContext> detectConflicts(Game game, Orders orders) {
   });
 
   return contexts;
+}
+
+Map<String, Map<String, List<Army>>> _indexArmiesByOwnerAndProvince(
+  List<Army> armies,
+) {
+  final armiesByOwnerAndProvince = <String, Map<String, List<Army>>>{};
+  for (final army in armies) {
+    final byProvince = armiesByOwnerAndProvince.putIfAbsent(
+      army.ownerId,
+      () => <String, List<Army>>{},
+    );
+    byProvince.putIfAbsent(army.stationedProvinceId, () => <Army>[]).add(army);
+  }
+  return armiesByOwnerAndProvince;
 }

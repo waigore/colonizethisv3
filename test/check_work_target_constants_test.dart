@@ -76,6 +76,22 @@ void f() {
       expect(violations, isEmpty);
     });
 
+    test('skips flutter gen-l10n app output paths', () {
+      const src = r'''
+void f() {
+  final target = 'explore';
+  print(target);
+}
+''';
+      final violations = findWorkTargetConstantViolations(
+        relativePath: 'app/lib/l10n/gen/app_l10n_flutter_gen_en.dart',
+        source: src,
+        canonicalWorkTargets: canonicalWorkTargets,
+        constantNameByWorkTarget: constantNameByWorkTarget,
+      );
+      expect(violations, isEmpty);
+    });
+
     test('skips test-data fixture directories', () {
       const src = r'''
 void f() {

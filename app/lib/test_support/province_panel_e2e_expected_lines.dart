@@ -6,7 +6,7 @@ import 'package:colonizethis_data/colonizethis_data.dart' show isMilitaryUnit;
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_map/colonizethis_map.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
-import 'package:colonizethis_app/l10n/app_localizations.dart';
+import 'package:colonizethis_app/l10n/l10n.dart';
 import 'package:colonizethis_app/config/ct_e2e_last_panel_snapshot.dart';
 import 'package:colonizethis_app/features/game/widgets/province_panel_labels.dart';
 import 'package:colonizethis_app/features/game/widgets/province_panel_pending_orders.dart';
@@ -445,9 +445,6 @@ String _improvementBaseNameForPlayer({
 }) {
   if (visibleResourceId != null) {
     return _improvementNameForResource(visibleResourceId);
-  }
-  if (visLevel == VisibilityLevel.revealed) {
-    return 'Improvement';
   }
   if (rawResourceId != null &&
       kProspectRequiredResourceIds.contains(rawResourceId)) {

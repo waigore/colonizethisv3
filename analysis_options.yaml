@@ -1,1 +1,10 @@
 include: package:lints/recommended.yaml
+
+analyzer:
+  # Root `colonizethis` is a workspace host only; `test/` here is checker/tool
+  # harness code that references `package:colonizethis_app` in fixture strings.
+  # The root package does not declare `app` as a dependency, so analyzing those
+  # files produces false "uri does not exist" errors. Workspace members (`app/`,
+  # `packages/*`, …) are analyzed separately by `run_workspace_analyze_errors_only.dart`.
+  exclude:
+    - test/**

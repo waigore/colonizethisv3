@@ -2,13 +2,11 @@
 // When diplomatic (or other) actions are applied, evidence rules add suspicion points per agenda type.
 // Evidence is stored per (observer, subject, agenda type); only human observers receive entries.
 
-import 'package:colonizethis_logic/package_logger.dart';
+import 'package:colonizethis_logic/src/logging.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../constants.dart';
 import '../diplomacy/diplomacy_relation_lookup.dart';
-
-final _log = packageLogger();
 
 /// Human Great Power ids (observers for whom we store evidence).
 List<String> _humanObserverIds(Game game) {
@@ -119,7 +117,7 @@ List<DossierEvidenceEntry> evidenceForDeclareWar(
     }
   }
   if (entries.isNotEmpty) {
-    _log.d(
+    logicLog.d(
       'evidence for declareWar actor=$actorGpId target=$targetFactionId entries=${entries.length}',
     );
   }
@@ -150,7 +148,7 @@ List<DossierEvidenceEntry> evidenceForOfferPeace(
       ),
     );
   }
-  _log.d(
+  logicLog.d(
     'evidence for offerPeace actor=$actorGpId target=$targetFactionId entries=${entries.length}',
   );
   return entries;
@@ -188,7 +186,7 @@ List<DossierEvidenceEntry> evidenceForLandBattleVictory(
     );
   }
   if (entries.isNotEmpty) {
-    _log.d(
+    logicLog.d(
       'evidence for land battle victory victor=$victorGpId defender=$defenderFactionId entries=${entries.length}',
     );
   }
@@ -220,7 +218,7 @@ List<DossierEvidenceEntry> evidenceForNavalBattleVictory(
     );
   }
   if (entries.isNotEmpty) {
-    _log.d(
+    logicLog.d(
       'evidence for naval battle victory victor=$victorOwnerId loser=$loserOwnerId entries=${entries.length}',
     );
   }
@@ -332,7 +330,7 @@ List<DossierEvidenceEntry> evidenceForEnvyResearchMirror(
     );
   }
   if (entries.isNotEmpty) {
-    _log.d(
+    logicLog.d(
       'evidence envy mirror ai=$aiGpId category=$completedCategory turn=$turnNumber',
     );
   }

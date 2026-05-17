@@ -1,18 +1,15 @@
-import 'package:colonizethis_test/test.dart';
-import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
+import 'package:colonizethis_models/colonizethis_models.dart';
+import 'package:colonizethis_test/test.dart';
+
+import 'test_fixtures.dart';
 
 void main() {
-  late Game minimalGame;
+  late Game baseGame;
 
   setUp(() {
-    minimalGame = Game(
+    baseGame = TestFixtures.minimalGame(
       id: 'g1',
-      worldState: WorldState(
-        turnState: TurnState(turnNumber: 1, phase: TurnPhase.orders),
-        oldWorld: const RegionData(),
-        newWorld: const RegionData(),
-      ),
       players: [Player(id: 'gp1', displayName: 'A', isHuman: true)],
     );
   });
@@ -81,10 +78,106 @@ void main() {
     });
   });
 
+  group('InterventionPrompt', () {
+    test('equality and hashCode', () {
+      const a = InterventionPrompt(
+        aggressorGpId: 'gp2',
+        defenderMinorOrTribeId: 'minor1',
+        interveningGpId: 'gp1',
+      );
+      const b = InterventionPrompt(
+        aggressorGpId: 'gp2',
+        defenderMinorOrTribeId: 'minor1',
+        interveningGpId: 'gp1',
+      );
+      const c = InterventionPrompt(
+        aggressorGpId: 'gp3',
+        defenderMinorOrTribeId: 'minor1',
+        interveningGpId: 'gp1',
+      );
+      expect(a, b);
+      expect(a.hashCode, b.hashCode);
+      expect(a, isNot(c));
+    });
+  });
+
+  group('InterventionDecision', () {
+    test('equality and hashCode', () {
+      const a = InterventionDecision(
+        aggressorGpId: 'gp2',
+        defenderMinorOrTribeId: 'minor1',
+        interveningGpId: 'gp1',
+        choice: InterventionChoice.intervene,
+      );
+      const b = InterventionDecision(
+        aggressorGpId: 'gp2',
+        defenderMinorOrTribeId: 'minor1',
+        interveningGpId: 'gp1',
+        choice: InterventionChoice.intervene,
+      );
+      const c = InterventionDecision(
+        aggressorGpId: 'gp2',
+        defenderMinorOrTribeId: 'minor1',
+        interveningGpId: 'gp1',
+        choice: InterventionChoice.protest,
+      );
+      expect(a, b);
+      expect(a.hashCode, b.hashCode);
+      expect(a, isNot(c));
+    });
+  });
+
+  group('CallToArms types', () {
+    test('CallToArmsPending equality and hashCode', () {
+      const a = CallToArmsPending(
+        allyGpId: 'gp1',
+        defenderGpId: 'gp2',
+        aggressorGpId: 'gp3',
+      );
+      const b = CallToArmsPending(
+        allyGpId: 'gp1',
+        defenderGpId: 'gp2',
+        aggressorGpId: 'gp3',
+      );
+      const c = CallToArmsPending(
+        allyGpId: 'gp9',
+        defenderGpId: 'gp2',
+        aggressorGpId: 'gp3',
+      );
+      expect(a, b);
+      expect(a.hashCode, b.hashCode);
+      expect(a, isNot(c));
+    });
+
+    test('CallToArmsDecision equality and hashCode', () {
+      const a = CallToArmsDecision(
+        allyGpId: 'gp1',
+        defenderGpId: 'gp2',
+        aggressorGpId: 'gp3',
+        accepted: true,
+      );
+      const b = CallToArmsDecision(
+        allyGpId: 'gp1',
+        defenderGpId: 'gp2',
+        aggressorGpId: 'gp3',
+        accepted: true,
+      );
+      const c = CallToArmsDecision(
+        allyGpId: 'gp1',
+        defenderGpId: 'gp2',
+        aggressorGpId: 'gp3',
+        accepted: false,
+      );
+      expect(a, b);
+      expect(a.hashCode, b.hashCode);
+      expect(a, isNot(c));
+    });
+  });
+
   group('DiplomacyPhaseResult', () {
     test('isPending true when pendingOvertures non-empty', () {
       final result = DiplomacyPhaseResult(
-        minimalGame,
+        baseGame,
         pendingOvertures: [
           OvertureOffer(
             offererGpId: 'gp1',
@@ -98,7 +191,7 @@ void main() {
 
     test('isPending true when pendingInterventions non-empty', () {
       final result = DiplomacyPhaseResult(
-        minimalGame,
+        baseGame,
         pendingInterventions: const [
           InterventionPrompt(
             aggressorGpId: 'gp2',
@@ -112,7 +205,7 @@ void main() {
 
     test('isPending true when pendingCallToArms non-empty', () {
       final result = DiplomacyPhaseResult(
-        minimalGame,
+        baseGame,
         pendingCallToArms: [
           CallToArmsPending(
             allyGpId: 'gp1',
@@ -125,68 +218,40 @@ void main() {
     });
 
     test('isPending false when pendingOvertures null', () {
-      final result = DiplomacyPhaseResult(minimalGame);
+      final result = DiplomacyPhaseResult(baseGame);
       expect(result.isPending, isFalse);
     });
 
     test('isPending false when pendingOvertures empty', () {
-      final result = DiplomacyPhaseResult(minimalGame, pendingOvertures: []);
+      final result = DiplomacyPhaseResult(baseGame, pendingOvertures: []);
       expect(result.isPending, isFalse);
     });
   });
 
-  group('TurnResolutionResult', () {
-    test('TurnResolutionComplete holds game', () {
-      final result = TurnResolutionComplete(minimalGame);
-      expect(result.game, minimalGame);
+  group('gameFromTurnResolutionResult', () {
+    test('reads carried game for TurnResolutionComplete', () {
+      final complete = TurnResolutionComplete(baseGame);
+      expect(
+        identical(gameFromTurnResolutionResult(complete), baseGame),
+        isTrue,
+      );
     });
 
-    test('TurnResolutionPendingOvertures holds game and list', () {
-      final offers = [
-        OvertureOffer(
-          offererGpId: 'gp1',
-          targetFactionId: 'gp2',
-          stage: OvertureStage.embassy,
-        ),
-      ];
-      final result = TurnResolutionPendingOvertures(
-        game: minimalGame,
-        pendingOvertures: offers,
+    test('reads carried game for TurnResolutionPendingOvertures', () {
+      final pending = TurnResolutionPendingOvertures(
+        game: baseGame,
+        pendingOvertures: [
+          OvertureOffer(
+            offererGpId: 'gp1',
+            targetFactionId: 'gp2',
+            stage: OvertureStage.tradeConsulate,
+          ),
+        ],
       );
-      expect(result.game, minimalGame);
-      expect(result.pendingOvertures, offers);
-    });
-
-    test('TurnResolutionPendingIntervention holds game and list', () {
-      final prompts = [
-        InterventionPrompt(
-          aggressorGpId: 'gp2',
-          defenderMinorOrTribeId: 'minor1',
-          interveningGpId: 'gp1',
-        ),
-      ];
-      final result = TurnResolutionPendingIntervention(
-        game: minimalGame,
-        pendingInterventions: prompts,
+      expect(
+        identical(gameFromTurnResolutionResult(pending), baseGame),
+        isTrue,
       );
-      expect(result.game, minimalGame);
-      expect(result.pendingInterventions, prompts);
-    });
-
-    test('TurnResolutionPendingCallToArms holds game and list', () {
-      final pending = [
-        CallToArmsPending(
-          allyGpId: 'gp1',
-          defenderGpId: 'gp2',
-          aggressorGpId: 'gp3',
-        ),
-      ];
-      final result = TurnResolutionPendingCallToArms(
-        game: minimalGame,
-        pendingCallToArms: pending,
-      );
-      expect(result.game, minimalGame);
-      expect(result.pendingCallToArms, pending);
     });
   });
 }

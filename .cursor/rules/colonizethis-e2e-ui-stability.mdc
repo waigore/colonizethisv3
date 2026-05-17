@@ -12,4 +12,5 @@ alwaysApply: false
 - **Use semantic dismissal paths first:** Close overlays/dialogs via explicit controls (`Cancel`, `Close`, close/back buttons) or route pop helpers before considering coordinate-based fallback.
 - **Scope interactions to panel/root containers:** Use `find.descendant(of: <panel root>, matching: <target>)` to avoid accidental matches from other overlays or hidden trees.
 - **Keep assertions resilient to intended UI variants only:** If UI can be in one of a small number of valid deterministic states, assert `anyOf` those explicit states; do not weaken assertions with broad contains/order-agnostic checks.
+- **PR runtime rule:** E2E paths in required PR checks must enforce a **5-minute wall-clock cap** per scenario path. If a path exceeds the cap, fail fast and emit timing markers (for example `E2E_TIMING` / `E2E_COUNTER`) so runtime regressions are attributable.
 

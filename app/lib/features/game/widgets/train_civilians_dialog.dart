@@ -5,7 +5,6 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
 
 import '../../../config/app_assets.dart';
-import '../../../l10n/app_localizations.dart';
 import '../../../l10n/l10n.dart';
 import '../../../widgets/ct_dialog_shell.dart';
 import '../../../widgets/ct_nine_patch_button.dart';
@@ -51,23 +50,25 @@ class _TrainCiviliansDialogState extends State<TrainCiviliansDialog> {
   }
 
   Player? get _player {
-    for (final p in widget.game.players) {
-      if (p.id == widget.humanPlayerId) return p;
-    }
-    return null;
+    return trainDialogPlayerById(
+      players: widget.game.players,
+      playerId: widget.humanPlayerId,
+    );
   }
 
-  bool get _hasCapital => _player?.capitalProvinceId != null;
+  bool get _hasCapital => trainDialogHasCapital(_player);
 
-  int get _treasury => _player?.treasury ?? 0;
+  int get _treasury => trainDialogTreasury(_player);
   int get _paperStockpile => _player?.stockpile.quantityOf('paper') ?? 0;
 
-  Map<String, bool> get _techUnlocked => _player?.techUnlocked ?? const {};
+  Map<String, bool> get _techUnlocked => trainDialogTechUnlocked(_player);
 
   bool _isLocked(String unitType) {
-    final techId = unlockingTechByCivilianId[unitType];
-    if (techId == null) return false;
-    return _techUnlocked[techId] != true;
+    return trainDialogIsLocked(
+      unitType: unitType,
+      unlockingTechByUnitType: unlockingTechByCivilianId,
+      techUnlocked: _techUnlocked,
+    );
   }
 
   int _totalTreasuryCost() {
@@ -156,84 +157,99 @@ class _TrainCiviliansDialogState extends State<TrainCiviliansDialog> {
           _applyOrders();
         }
       },
-      child: CtDialogShell(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 16, 8, 8),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      l10n.trainCivilians_title,
-                      style: Theme.of(context).textTheme.titleMedium,
-                    ),
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.close),
-                    onPressed: () => Navigator.of(context).pop(),
-                  ),
-                ],
-              ),
+      child: CtDialogShell(child: _buildDialogContent(context, l10n)),
+    );
+  }
+
+  Widget _buildDialogContent(BuildContext context, AppLocalizations l10n) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        _buildHeader(context, l10n),
+        const Divider(height: 1),
+        if (!_hasCapital)
+          _buildNoCapitalMessage(context, l10n)
+        else
+          ..._buildBody(l10n),
+      ],
+    );
+  }
+
+  Widget _buildHeader(BuildContext context, AppLocalizations l10n) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 16, 8, 8),
+      child: Row(
+        children: [
+          Expanded(
+            child: Text(
+              l10n.trainCivilians_title,
+              style: Theme.of(context).textTheme.titleMedium,
             ),
-            const Divider(height: 1),
-            if (!_hasCapital)
-              Padding(
-                padding: const EdgeInsets.all(16),
-                child: Text(
-                  l10n.trainUnits_noCapital,
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: Theme.of(context).colorScheme.error,
-                  ),
-                ),
-              )
-            else ...[
-              _ResourceBar(
-                treasury: _treasury,
-                paperStockpile: _paperStockpile,
-                deficitHint: _deficitHint,
-                l10n: l10n,
-              ),
-              const Divider(height: 1),
-              Padding(
-                padding: const EdgeInsets.symmetric(vertical: 8),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    for (final econ in CivilianEconomyCatalog.all)
-                      _UnitTypeRow(
-                        econ: econ,
-                        count: _counts[econ.id] ?? 0,
-                        isLocked: _isLocked(econ.id),
-                        techRequiredLabel: _techRequiredLabel(econ.id),
-                        canIncrement: _canAffordIncrement(econ.id),
-                        canDecrement: (_counts[econ.id] ?? 0) > 0,
-                        onIncrement: () => _increment(econ.id),
-                        onDecrement: () => _decrement(econ.id),
-                      ),
-                  ],
-                ),
-              ),
-              const Divider(height: 1),
-              Padding(
-                padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    CtNinePatchButton(
-                      onPressed: _reset,
-                      child: Text(l10n.common_reset),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ],
+          ),
+          IconButton(
+            icon: const Icon(Icons.close),
+            onPressed: () => Navigator.of(context).pop(),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildNoCapitalMessage(BuildContext context, AppLocalizations l10n) {
+    return Padding(
+      padding: const EdgeInsets.all(16),
+      child: Text(
+        l10n.trainUnits_noCapital,
+        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+          color: Theme.of(context).colorScheme.error,
         ),
       ),
     );
+  }
+
+  List<Widget> _buildBody(AppLocalizations l10n) {
+    return [
+      _ResourceBar(
+        treasury: _treasury,
+        paperStockpile: _paperStockpile,
+        deficitHint: _deficitHint,
+        l10n: l10n,
+      ),
+      const Divider(height: 1),
+      Padding(
+        padding: const EdgeInsets.symmetric(vertical: 8),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            for (final econ in CivilianEconomyCatalog.all)
+              _UnitTypeRow(
+                econ: econ,
+                count: _counts[econ.id] ?? 0,
+                isLocked: _isLocked(econ.id),
+                techRequiredLabel: _techRequiredLabel(econ.id),
+                canIncrement: _canAffordIncrement(econ.id),
+                canDecrement: (_counts[econ.id] ?? 0) > 0,
+                onIncrement: () => _increment(econ.id),
+                onDecrement: () => _decrement(econ.id),
+              ),
+          ],
+        ),
+      ),
+      const Divider(height: 1),
+      Padding(
+        padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.end,
+          children: [
+            CtNinePatchButton(
+              onPressed: _reset,
+              child: Text(l10n.common_reset),
+            ),
+          ],
+        ),
+      ),
+    ];
   }
 }
 
@@ -325,68 +341,83 @@ class _UnitTypeRow extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
-              children: [
-                if (isLocked)
-                  StrictAssetIcon(
-                    assetPath: '${kAppIconAssetPrefix}ui_icon_lock.png',
-                    width: 20,
-                    height: 20,
-                  ),
-                if (isLocked) const SizedBox(width: 4),
-                Expanded(
-                  child: Text(
-                    econ.id,
-                    style: theme.textTheme.bodyLarge?.copyWith(
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ),
-                Text(
-                  appL10n(context).trainCivilians_costLine(
-                    _formatTreasury(econ.buildTreasuryCost),
-                    paperQty.toString(),
-                  ),
-                  style: theme.textTheme.bodyMedium,
-                ),
-              ],
-            ),
-            if (isLocked) ...[
-              const SizedBox(height: 2),
-              Text(
-                techRequiredLabel,
-                style: theme.textTheme.bodySmall?.copyWith(
-                  color: theme.colorScheme.error,
-                ),
-              ),
-            ],
+            _buildHeader(context, theme, paperQty),
+            ..._buildLockedHint(theme),
             const SizedBox(height: 4),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [
-                CtNinePatchButton(
-                  onPressed: isLocked || !canDecrement ? null : onDecrement,
-                  child: const Text('−'),
-                ),
-                const SizedBox(width: 8),
-                SizedBox(
-                  width: 32,
-                  child: Text(
-                    count.toString(),
-                    textAlign: TextAlign.center,
-                    style: theme.textTheme.bodyLarge,
-                  ),
-                ),
-                const SizedBox(width: 8),
-                CtNinePatchButton(
-                  onPressed: isLocked || !canIncrement ? null : onIncrement,
-                  child: const Text('+'),
-                ),
-              ],
-            ),
+            _buildStepper(theme),
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildHeader(BuildContext context, ThemeData theme, int paperQty) {
+    return Row(
+      children: [
+        if (isLocked)
+          StrictAssetIcon(
+            assetPath: '${kAppIconAssetPrefix}ui_icon_lock.png',
+            width: 20,
+            height: 20,
+          ),
+        if (isLocked) const SizedBox(width: 4),
+        Expanded(
+          child: Text(
+            econ.id,
+            style: theme.textTheme.bodyLarge?.copyWith(
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ),
+        Text(
+          appL10n(context).trainCivilians_costLine(
+            _formatTreasury(econ.buildTreasuryCost),
+            paperQty.toString(),
+          ),
+          style: theme.textTheme.bodyMedium,
+        ),
+      ],
+    );
+  }
+
+  List<Widget> _buildLockedHint(ThemeData theme) {
+    if (!isLocked) {
+      return const [];
+    }
+    return [
+      const SizedBox(height: 2),
+      Text(
+        techRequiredLabel,
+        style: theme.textTheme.bodySmall?.copyWith(
+          color: theme.colorScheme.error,
+        ),
+      ),
+    ];
+  }
+
+  Widget _buildStepper(ThemeData theme) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.end,
+      children: [
+        CtNinePatchButton(
+          onPressed: isLocked || !canDecrement ? null : onDecrement,
+          child: const Text('−'),
+        ),
+        const SizedBox(width: 8),
+        SizedBox(
+          width: 32,
+          child: Text(
+            count.toString(),
+            textAlign: TextAlign.center,
+            style: theme.textTheme.bodyLarge,
+          ),
+        ),
+        const SizedBox(width: 8),
+        CtNinePatchButton(
+          onPressed: isLocked || !canIncrement ? null : onIncrement,
+          child: const Text('+'),
+        ),
+      ],
     );
   }
 

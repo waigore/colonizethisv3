@@ -23,14 +23,14 @@ void main() {
       final p1 = Province(id: '$ow|p1', regionId: ow, ownerId: playerId);
       final b1 = Unit(
         id: 'b1',
-        type: 'Builder',
+        type: kUnitTypeBuilder,
         ownerId: playerId,
         locationProvinceId: '$ow|p1',
         tileKey: tileA,
       );
       final b2 = Unit(
         id: 'b2',
-        type: 'Builder',
+        type: kUnitTypeBuilder,
         ownerId: playerId,
         locationProvinceId: '$ow|p1',
         tileKey: tileA,
@@ -67,7 +67,7 @@ void main() {
           playerId: [
             WorkOrder(
               unitId: 'b1',
-              target: 'build_improvement',
+              target: kWorkTargetBuildImprovement,
               targetTileKey: tileA,
             ),
           ],
@@ -75,7 +75,7 @@ void main() {
       );
       final suggestions = suggestWorkOrders(view, game, topology, orders);
       final b2Suggestions = suggestions
-          .where((o) => o.unitId == 'b2' && o.target == 'build_improvement');
+          .where((o) => o.unitId == 'b2' && o.target == kWorkTargetBuildImprovement);
       expect(b2Suggestions, isNotEmpty);
       expect(b2Suggestions.first.targetTileKey, tileB);
     });

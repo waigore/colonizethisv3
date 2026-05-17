@@ -4,3 +4,5 @@ library;
 
 export 'src/orders/order_suggestion_api.dart';
 export 'src/orders/order_suggestion_api_impl.dart' show DefaultOrderSuggestionAPI;
+export 'src/orders/order_suggestion_helpers.dart'
+    show knownDiplomaticTargetFactionIds;

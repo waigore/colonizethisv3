@@ -163,6 +163,10 @@ When a Great Power falls:
 
 This Great Power fall check runs **after** combat and capital reassignment, and **before** the next Extraction phase so that connectivity and extraction for remaining factions are computed with the updated ownership and player list.
 
+### Debug `/flip_province` capital capture parity
+
+For debug command `/flip_province` (see [debug-console-panel.md](../ui/debug-console-panel.md)), when the command captures a **non-human** faction’s current capital and no eligible reassignment capital exists in that faction’s original region, The System still applies canonical ownership transfer and then executes the same terminal fall semantics used above. This parity rule applies equally to Great Powers, Minor Nations, and Tribes in the debug command path.
+
 ---
 
 ## Acceptance Criteria

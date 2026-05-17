@@ -3,6 +3,8 @@ import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
+import 'test_fixtures.dart';
+
 void main() {
   group('Great Power fall', () {
     test(
@@ -26,16 +28,11 @@ void main() {
         '$ow|P1|sea1': '$ow|P1|0|0',
       };
 
-      final world = WorldState(
-        turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
-        oldWorld: RegionData(provinces: provinces),
-        newWorld: const RegionData(),
-        portsByProvinceSeaboard: portsByProvinceSeaboard,
-      );
-
-      final game = Game(
+      final game = TestFixtures.minimalGame(
         id: 'g1',
-        worldState: world,
+        turnNumber: 0,
+        oldWorld: RegionData(provinces: provinces),
+        portsByProvinceSeaboard: portsByProvinceSeaboard,
         players: [
           const Player(
             id: 'p1',

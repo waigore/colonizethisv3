@@ -20,6 +20,21 @@ void main() {
       expect(game2.worldState.turnState.turnNumber, 1);
     });
 
+    test('calendarCampaignHalted round-trip JSON', () {
+      final game = Game(
+        id: 'g1',
+        calendarCampaignHalted: true,
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 201),
+          oldWorld: const RegionData(),
+          newWorld: const RegionData(),
+        ),
+        players: const [Player(id: 'p1', displayName: 'Spain', isHuman: true)],
+      );
+      final restored = Game.fromJson(game.toJson());
+      expect(restored.calendarCampaignHalted, isTrue);
+    });
+
     test(
       'fromJson accepts turnTimeMapping as Map<dynamic,dynamic> (Hive typing)',
       () {
@@ -72,6 +87,7 @@ void main() {
       );
       expect(game2.worldState.turnState.turnNumber, 1);
     });
+
     test('equality and hashCode', () {
       final game = Game(
         id: 'g1',
@@ -184,7 +200,7 @@ void main() {
       final minor = MinorNation(
         id: 'min1',
         displayName: 'Portugal',
-        capitalProvinceId: 'prov1',
+        capitalProvinceId: 'oldWorld|prov1',
         capitalTile: const CapitalTile(
           regionId: 'oldWorld',
           provinceId: 'prov1',
@@ -195,7 +211,7 @@ void main() {
       final tribe = Tribe(
         id: 'tribe1',
         displayName: 'Aztec',
-        capitalProvinceId: 'nw1',
+        capitalProvinceId: 'newWorld|nw1',
         capitalTile: const CapitalTile(
           regionId: 'newWorld',
           provinceId: 'nw1',
@@ -215,13 +231,13 @@ void main() {
         tribes: [tribe],
       );
       final json = game.toJson();
-      expect(json['minorNations'], isA<List>());
-      expect((json['minorNations'] as List).length, 1);
-      expect(json['tribes'], isA<List>());
+      expect(json['minorNations'], isA<List<dynamic>>());
+      expect((json['minorNations'] as List<dynamic>).length, 1);
+      expect(json['tribes'], isA<List<dynamic>>());
       final round = Game.fromJson(json);
       expect(round.minorNations.length, 1);
       expect(round.minorNations.first.id, 'min1');
-      expect(round.minorNations.first.capitalProvinceId, 'prov1');
+      expect(round.minorNations.first.capitalProvinceId, 'oldWorld|prov1');
       expect(round.tribes.length, 1);
       expect(round.tribes.first.id, 'tribe1');
       expect(round.tribes.first.capitalTile?.x, 1);

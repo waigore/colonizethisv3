@@ -1,6 +1,6 @@
 ---
 description: Flame and Flutter component lifecycle conventions
-globs: "**/*.dart"
+globs: "app/lib/game/**/*.dart,app/lib/widgets/**/*.dart,app/lib/ui/**/*.dart,app/lib/screens/**/*.dart,app/lib/pages/**/*.dart"
 alwaysApply: false
 ---
 

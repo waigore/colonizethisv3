@@ -20,6 +20,7 @@ void main() {
           ensureMapTerrainLoaded: () async {},
           initHive: () async {},
           openHiveBoxSafely: (_) async {},
+          ensureDesktopWindowStartup: () async {},
           runAppFn: (_) {
             runAppZone = Zone.current;
           },
@@ -58,6 +59,9 @@ void main() {
         callOrder.add('box:$name');
         openedBoxes.add(name);
       },
+      ensureDesktopWindowStartup: () async {
+        callOrder.add('desktop');
+      },
       runAppFn: (Widget app) {
         callOrder.add('runApp');
       },
@@ -73,6 +77,7 @@ void main() {
         'box:${HiveBoxNames.settings}',
         'box:${HiveBoxNames.games}',
         'box:${HiveBoxNames.offlineQueue}',
+        'desktop',
         'runApp',
       ]),
     );

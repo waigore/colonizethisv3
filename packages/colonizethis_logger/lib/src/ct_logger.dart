@@ -1,10 +1,12 @@
 import 'package:logger/logger.dart';
 
+import 'ct_logger_console_printer.dart';
+
 class CtLogger {
   final Logger _log;
   final String prefix;
 
-  CtLogger(this.prefix) : _log = Logger();
+  CtLogger(this.prefix) : _log = Logger(printer: CtLoggerConsolePrinter());
 
   void d(String msg, {Object? error, StackTrace? stackTrace}) =>
       _log.d('$prefix: $msg', error: error, stackTrace: stackTrace);

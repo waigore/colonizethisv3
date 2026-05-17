@@ -26,9 +26,7 @@ void main() {
   group('generateOrdersForPlayerFullAI', () {
     test('unknown player id returns empty orders and default economy plan', () {
       final game = _minimalGame(
-        players: const [
-          Player(id: 'gp1', displayName: 'AI', isHuman: false),
-        ],
+        players: const [Player(id: 'gp1', displayName: 'AI', isHuman: false)],
       );
       const topology = MapTopology(nodes: [], edges: []);
       final r = generateOrdersForPlayerFullAI(game, topology, 'no_such_gp');
@@ -39,9 +37,7 @@ void main() {
 
     test('non-AI-controlled player returns empty', () {
       final game = _minimalGame(
-        players: const [
-          Player(id: 'gp1', displayName: 'Human', isHuman: true),
-        ],
+        players: const [Player(id: 'gp1', displayName: 'Human', isHuman: true)],
         aiControlByGpId: const {'gp1': false},
       );
       const topology = MapTopology(nodes: [], edges: []);
@@ -67,7 +63,11 @@ void main() {
       expect(r.orders.moveOrdersByPlayerId['gp1'] ?? const [], isEmpty);
       expect(
         r.economyPlan.cargoPreference,
-        isIn([CargoPreference.none, CargoPreference.preferCargo, CargoPreference.strongCargo]),
+        isIn([
+          CargoPreference.none,
+          CargoPreference.preferCargo,
+          CargoPreference.strongCargo,
+        ]),
       );
     });
 
@@ -102,9 +102,7 @@ void main() {
   group('generateOrdersForGameFullAI', () {
     test('no AI players yields empty aggregate orders and economy map', () {
       final game = _minimalGame(
-        players: const [
-          Player(id: 'gp1', displayName: 'Human', isHuman: true),
-        ],
+        players: const [Player(id: 'gp1', displayName: 'Human', isHuman: true)],
       );
       const topology = MapTopology(nodes: [], edges: []);
       final r = generateOrdersForGameFullAI(game, topology);
@@ -127,6 +125,85 @@ void main() {
       final r = generateOrdersForGameFullAI(game, topology);
       expect(r.economyPlansByPlayerId.containsKey('gp1'), isTrue);
       expect(r.orders.moveOrdersByPlayerId['gp1'] ?? const [], isEmpty);
+    });
+
+    test('onStagedPlannerProgress emits A–G sequence per AI player', () {
+      final game = _minimalGame(
+        players: const [
+          Player(
+            id: 'gp1',
+            displayName: 'England',
+            isHuman: false,
+            leaderKey: 'victoria',
+          ),
+        ],
+        hiddenAgendaByGpId: const {'gp1': 'peacemaker'},
+      );
+      const topology = MapTopology(nodes: [], edges: []);
+      final phases = <String>[];
+      generateOrdersForGameFullAI(
+        game,
+        topology,
+        onStagedPlannerProgress: phases.add,
+      );
+      const expected = <String>[
+        'suggestionPools',
+        'aiStageA',
+        'aiStageB',
+        'aiStageC',
+        'aiStageD',
+        'aiStageE',
+        'aiStageF',
+        'aiStageG',
+      ];
+      expect(phases, expected);
+    });
+
+    test('includes schema-shaped AI trace section for full AI player', () {
+      final game = _minimalGame(
+        players: const [
+          Player(
+            id: 'gp1',
+            displayName: 'England',
+            isHuman: false,
+            leaderKey: 'victoria',
+          ),
+        ],
+        aiControlByGpId: const {'gp1': true},
+        hiddenAgendaByGpId: const {'gp1': 'peacemaker'},
+      );
+      const topology = MapTopology(nodes: [], edges: []);
+
+      final r = generateOrdersForGameFullAI(game, topology);
+
+      expect(r.aiTraceSections, hasLength(1));
+      final section = r.aiTraceSections.single;
+      expect(section.factionId, 'gp1');
+      expect(section.state['winningCandidate'], isA<Map<String, Object?>>());
+      expect(section.state['topAlternates'], isA<List<Object?>>());
+      expect(section.state['aggregates'], isA<Map<String, Object?>>());
+      expect(section.thresholds['constants'], isA<Map<String, Object?>>());
+      expect(section.thresholds['derived'], isA<Map<String, Object?>>());
+      expect(section.thresholds['effective'], isA<Map<String, Object?>>());
+      expect(section.thresholds['gates'], isA<List<Object?>>());
+      expect(section.outcome['domainOutputs'], isA<Map<String, Object?>>());
+      expect(section.outcome['finalAggregatedOrders'], isA<List<Object?>>());
+      expect(section.outcome['emittedOrderCount'], isA<int>());
+
+      final constants = section.thresholds['constants'] as Map<String, Object?>;
+      expect(constants['goalWeights'], isA<Map<String, Object?>>());
+      expect(constants['agendaModifiers'], isA<Map<String, Object?>>());
+
+      final effective = section.thresholds['effective'] as Map<String, Object?>;
+      expect(effective['selectedGoalScore'], isA<int>());
+      expect(effective['adjustedGoalScores'], isA<Map<String, Object?>>());
+
+      final gates = section.thresholds['gates'] as List<Object?>;
+      expect(gates, isNotEmpty);
+      final firstGate = gates.first as Map<String, Object?>;
+      expect(firstGate['candidateGoal'], isA<String>());
+      expect(firstGate['candidateScore'], isA<int>());
+      expect(firstGate['selected'], isA<bool>());
     });
   });
 }

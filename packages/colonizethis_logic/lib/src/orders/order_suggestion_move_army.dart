@@ -1,14 +1,96 @@
-part of 'order_suggestion.dart';
+import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:colonizethis_models/colonizethis_models.dart';
+
+import '../diplomacy/diplomacy_resolver.dart';
+import '../world/movement.dart';
+import '../world/player_view.dart';
+import '../world/province_lookup.dart';
+import '../world/unit_lookup.dart';
+import 'draft_orders_mutations.dart';
+import 'incremental_candidate_validator.dart';
+import 'order_suggestion_context.dart';
+import 'order_visibility.dart';
+
+const int _kMaxMoveSuggestionsPerUnit = 24;
+const int _kMaxArmyMoveSuggestionsPerArmy = 12;
+const int _kMaxMoveProbeAttemptsPerUnit = 160;
+const int _kMaxArmyMoveProbeAttemptsPerArmy = 80;
+
+/// Land tile keys that may be valid [MoveOrder] destinations for [unit] under
+/// [SPEC/program/movement.md]: owned provinces (any region), non-owned only when
+/// adjacent in [topology]. Visibility applied. Sorted for deterministic probes
+/// (Refs #2507).
+List<String> sortedMoveDestinationCandidateTileKeys({
+  required PlayerView view,
+  required Game game,
+  required MapTopology topology,
+  required Unit unit,
+}) {
+  final playerId = view.playerId;
+  final world = game.worldState;
+  final tileKeysByRegion = world.tileKeysByRegionAndProvince;
+  final unitRegion = regionIdForUnit(view, unit);
+  final fromProvinceFull = resolveToFullProvinceId(
+    world,
+    unit.locationProvinceId,
+  );
+  final seen = <String>{};
+  final out = <String>[];
+
+  void addVisibleTiles(Iterable<String> tiles) {
+    for (final tk in tiles) {
+      if (!seen.add(tk)) continue;
+      if (moveDestinationTileVisibilityOk(view, tk)) {
+        out.add(tk);
+      }
+    }
+  }
+
+  addVisibleTiles(tileKeysByRegion[unitRegion]?[fromProvinceFull] ?? const []);
+
+  for (final entry in view.provincesById.entries) {
+    final fullId = entry.key;
+    final prov = entry.value;
+    if (prov.ownerId != playerId) continue;
+    if (fullId == fromProvinceFull) continue;
+    addVisibleTiles(tileKeysByRegion[prov.regionId]?[fullId] ?? const []);
+  }
+
+  final fromLocal = ProvinceId.localIdFrom(fromProvinceFull);
+  for (final neighborLocal in neighborProvinceIdsInRegion(
+    topology,
+    unitRegion,
+    fromLocal,
+  )) {
+    final neighborFull = ProvinceId.full(unitRegion, neighborLocal);
+    final owner = view.provincesById[neighborFull]?.ownerId;
+    if (owner == playerId) continue;
+    addVisibleTiles(tileKeysByRegion[unitRegion]?[neighborFull] ?? const []);
+  }
+
+  out.sort();
+  return out;
+}
 
 /// Suggests candidate move orders that are information-legal (per [PlayerView])
 /// and rules-legal (per [OrderEngine]) for [view.playerId].
+///
+/// Throughput hook: callers that enumerate multiple suggestion families against
+/// the same `(game, view.playerId, currentOrders)` may supply
+/// [sharedCandidateValidator] to amortize `PlayerView` / units-by-id
+/// construction across families (Refs #2394,
+/// `SPEC/program/order-suggestions.md` § Throughput bounds). When omitted,
+/// this function constructs its own validator. The shared instance must be
+/// built with the same inputs as this call; observable suggestions must match
+/// the default path.
 List<MoveOrder> suggestMoveOrders(
   PlayerView view,
   Game game,
   MapTopology topology,
-  Orders currentOrders,
-) {
-  _log.d('suggestMoveOrders player=${view.playerId}');
+  Orders currentOrders, {
+  IncrementalCandidateValidator? sharedCandidateValidator,
+}) {
+  orderSuggestionLog.d('suggestMoveOrders player=${view.playerId}');
   final playerId = view.playerId;
   final suggestions = <MoveOrder>[];
 
@@ -20,8 +102,30 @@ List<MoveOrder> suggestMoveOrders(
   for (final m in existingForPlayer) {
     existingMoves
         .putIfAbsent(m.unitId, () => <String>{})
-        .add(m.destinationProvinceId);
+        .add(m.destinationTileKey);
   }
+
+  // Build the incremental candidate validator once per suggestion pass: the
+  // per-player [PlayerView]/units-by-id work is amortized across every
+  // candidate probe in the loop, instead of being rebuilt per probe via the
+  // old [OrderEngine] full-pass path. SPEC/program/order-suggestions.md
+  // § Incremental candidate validation. Refs #2237.
+  assert(
+    sharedCandidateValidator == null ||
+        sharedCandidateValidator.playerId == playerId,
+    'sharedCandidateValidator playerId must match view.playerId',
+  );
+  final candidateValidator =
+      sharedCandidateValidator ??
+      IncrementalCandidateValidator.forPlayer(
+        game: game,
+        topology: topology,
+        playerId: playerId,
+        basePrefix: currentOrders,
+        factionMembership: DiplomacyFactionMembership.from(game),
+        view: view,
+        unitsById: unitsByIdFromWorld(game.worldState),
+      );
 
   for (final unit in view.ownUnits) {
     if (isMilitaryUnit(unit.type)) {
@@ -30,7 +134,6 @@ List<MoveOrder> suggestMoveOrders(
     }
     final unitRegion = regionIdForUnit(view, unit);
     final fromProvinceId = unit.locationProvinceId;
-    final fromLocalId = ProvinceId.localIdFrom(fromProvinceId);
 
     // Source province cannot be unknown; by definition the unit is in a known province.
     if (!moveSourceVisibilityOk(view, unitRegion, fromProvinceId)) {
@@ -39,73 +142,34 @@ List<MoveOrder> suggestMoveOrders(
       );
     }
 
-    // Enumerate neighboring provinces in unit's region (region-scoped adjacency).
-    for (final neighborLocalId in neighborProvinceIdsInRegion(
-      topology,
-      unitRegion,
-      fromLocalId,
-    )) {
-      final destinationProvinceId = ProvinceId.full(
-        unitRegion,
-        neighborLocalId,
-      );
+    final destinationCandidates = sortedMoveDestinationCandidateTileKeys(
+      view: view,
+      game: game,
+      topology: topology,
+      unit: unit,
+    );
 
-      // Skip duplicates for this unit.
+    var acceptedForUnit = 0;
+    var probeAttemptsForUnit = 0;
+    for (final destinationTileKey in destinationCandidates) {
       final already = existingMoves[unit.id];
-      if (already != null && already.contains(destinationProvinceId)) continue;
-
-      final destProvince = view.provinceByRegionAndId(
-        unitRegion,
-        neighborLocalId,
-      );
-      final destOwnerId = destProvince?.ownerId;
-
-      // Require that the destination province has at least one tile that is
-      // known (visibility != unknown). Restrict to unit's region when ids overlap.
-      final hasVisibleTileInDest = view.visibilityByTile.entries.any((e) {
-        final parts = e.key.split('|');
-        if (parts.length != 4) return false;
-        return parts[0] == unitRegion &&
-            parts[1] == neighborLocalId &&
-            e.value != VisibilityLevel.unknown;
-      });
-      if (!hasVisibleTileInDest) continue;
-
-      // Apply high-level civilian vs territory rules using only information
-      // available in PlayerView.
-      final isExplorer = isExplorerUnit(unit.type);
-      final isMerchant = isMerchantUnit(unit.type);
-
-      var allowedByInfo = true;
-      if (destOwnerId != null && destOwnerId != playerId) {
-        final isGpOwner = game.players.any((p) => p.id == destOwnerId);
-        final isMinorOrTribe =
-            game.minorNations.any((m) => m.id == destOwnerId) ||
-            game.tribes.any((t) => t.id == destOwnerId);
-
-        if (isGpOwner) {
-          // Civilians may not enter other Great Power territory at all.
-          allowedByInfo = false;
-        } else if (isMinorOrTribe && !(isExplorer || isMerchant)) {
-          // Only Explorers/Merchants may enter Minor/Tribe territory.
-          allowedByInfo = false;
-        }
-      }
-      if (!allowedByInfo) continue;
+      if (already != null && already.contains(destinationTileKey)) continue;
+      probeAttemptsForUnit++;
 
       final candidate = MoveOrder(
         unitId: unit.id,
-        destinationProvinceId: destinationProvinceId,
+        destinationTileKey: destinationTileKey,
       );
 
-      if (_isMoveOrderAccepted(
-        game,
-        topology,
-        playerId,
-        currentOrders,
-        candidate,
-      )) {
+      if (candidateValidator.isMoveAccepted(candidate)) {
         suggestions.add(candidate);
+        acceptedForUnit++;
+        if (acceptedForUnit >= _kMaxMoveSuggestionsPerUnit) {
+          break;
+        }
+      }
+      if (probeAttemptsForUnit >= _kMaxMoveProbeAttemptsPerUnit) {
+        break;
       }
     }
   }
@@ -113,15 +177,14 @@ List<MoveOrder> suggestMoveOrders(
   suggestions.sort((a, b) {
     final unitCmp = a.unitId.compareTo(b.unitId);
     if (unitCmp != 0) return unitCmp;
-    return a.destinationProvinceId.compareTo(b.destinationProvinceId);
+    return a.destinationTileKey.compareTo(b.destinationTileKey);
   });
 
-  _log.d('suggestMoveOrders player=$playerId candidates=${suggestions.length}');
-  _log.d(
-    'suggestMoveOrders full list ${suggestions.map((m) => "${m.unitId}->${m.destinationProvinceId}").toList()}',
+  orderSuggestionLog.d(
+    'suggestMoveOrders player=$playerId candidates=${suggestions.length}',
   );
   if (suggestions.isEmpty) {
-    _log.w('suggestMoveOrders no candidates player=$playerId');
+    orderSuggestionLog.w('suggestMoveOrders no candidates player=$playerId');
   }
   return suggestions;
 }
@@ -129,11 +192,18 @@ List<MoveOrder> suggestMoveOrders(
 /// Destination province ids for army moves (Military Units picker parity): adjacent
 /// land provinces in the army's region plus every province owned by [playerId]
 /// in any region; excludes the army's current province.
+///
+/// When [playerOwnedFullProvinceIds] is supplied (typically built once per
+/// [suggestArmyMoveOrders] pass from [PlayerView.provincesById] or a single
+/// [allProvinces] scan), owned-province ids are taken from that set instead of
+/// rescanning the world per army (Refs #2394, SPEC/program/order-suggestions.md,
+/// SPEC/program/logic-dual-region-province-access.md).
 List<String> armyMoveCandidateDestinationProvinceIds({
   required Game game,
   required MapTopology topology,
   required String playerId,
   required Army army,
+  Set<String>? playerOwnedFullProvinceIds,
 }) {
   final fromFull = army.stationedProvinceId;
   final regionId = ProvinceId.regionIdFrom(fromFull);
@@ -143,9 +213,13 @@ List<String> armyMoveCandidateDestinationProvinceIds({
   for (final n in neighborProvinceIdsInRegion(topology, regionId, fromLocal)) {
     out.add(ProvinceId.full(regionId, n));
   }
-  for (final p in allProvinces(game.worldState)) {
-    if (p.ownerId == playerId) {
-      out.add(toFullProvinceId(p.regionId, p.id));
+  if (playerOwnedFullProvinceIds != null) {
+    out.addAll(playerOwnedFullProvinceIds);
+  } else {
+    for (final p in allProvinces(game.worldState)) {
+      if (p.ownerId == playerId) {
+        out.add(toFullProvinceId(p.regionId, p.id));
+      }
     }
   }
   out.remove(fromFull);
@@ -184,11 +258,17 @@ bool _armyMoveNeedsDeclareWarTrial(
   String playerId,
   String? destOwnerId,
   List<DiplomaticOrder> diplo,
+  DiplomacyFactionMembership factionMembership,
 ) {
   if (destOwnerId == null || destOwnerId.isEmpty || destOwnerId == playerId) {
     return false;
   }
-  if (!isGreatPower(game, destOwnerId) && !isMinorOrTribe(game, destOwnerId)) {
+  if (!isGreatPower(game, destOwnerId, factionMembership: factionMembership) &&
+      !isMinorOrTribe(
+        game,
+        destOwnerId,
+        factionMembership: factionMembership,
+      )) {
     return false;
   }
   return !canAttackWithWarOrDeclaring(game, playerId, destOwnerId, diplo);
@@ -197,50 +277,126 @@ bool _armyMoveNeedsDeclareWarTrial(
 /// Valid, sorted destinations for the Move Army dialog: player-owned and
 /// invasion targets only if the merged draft (with optional same-turn declare
 /// war) passes [OrderEngine] validation. SPEC/ui/military-units-panel.md.
+///
+/// When [playerOwnedFullProvinceIds] is provided by the caller, the picker
+/// skips the fallback owned-province [allProvinces] scan and reuses the
+/// provided set (Refs #2394).
+///
+/// When [playerView] / [unitsById] are provided (same contract as
+/// [IncrementalCandidateValidator.forPlayer]), each internal validator reuses
+/// them instead of embedding `buildPlayerView` / `unitsByIdFromWorld` scans.
+/// When [sharedCandidateValidator] is provided for the same suggestion pass,
+/// it is reused (rebound via [IncrementalCandidateValidator.forBasePrefix] when
+/// [currentOrders] differs from the validator's embedded prefix). Callers such
+/// as the Flutter shell may supply these when they already hold a [PlayerView]
+/// for [playerId]; when omitted, behavior matches the historical path.
 List<ArmyMovePickerDestination> armyMovePickerDestinations({
   required Game game,
   required MapTopology topology,
   required String playerId,
   required Army army,
   required Orders currentOrders,
+  Set<String>? playerOwnedFullProvinceIds,
+  PlayerView? playerView,
+  Map<String, Unit>? unitsById,
+  /// When callers already built membership for this [game], pass it to skip a
+  /// second [DiplomacyFactionMembership.from] scan (Refs #2394).
+  DiplomacyFactionMembership? factionMembership,
+  /// When non-null, must match [playerId] and be built from the same
+  /// `(game, topology, …)` tuple; amortizes validator setup across picker calls
+  /// in the same pass (Refs #2394).
+  IncrementalCandidateValidator? sharedCandidateValidator,
 }) {
+  assert(
+    sharedCandidateValidator == null ||
+        sharedCandidateValidator.playerId == playerId,
+    'sharedCandidateValidator playerId must match armyMovePickerDestinations playerId',
+  );
   final diplo =
       currentOrders.diplomaticOrdersByPlayerId[playerId] ??
       const <DiplomaticOrder>[];
+  final effectiveFactionMembership =
+      factionMembership ??
+      sharedCandidateValidator?.factionMembershipSnapshot ??
+      DiplomacyFactionMembership.from(game);
+  final effectivePlayerView =
+      playerView ?? sharedCandidateValidator?.view;
+  final effectiveUnitsById =
+      unitsById ??
+      sharedCandidateValidator?.unitsById ??
+      (effectivePlayerView != null
+          ? unitsByIdFromWorld(game.worldState)
+          : null);
+  final ownedProvinceIds =
+      playerOwnedFullProvinceIds ??
+      (effectivePlayerView != null
+          ? <String>{
+              for (final e in effectivePlayerView.provincesById.entries)
+                if (e.value.ownerId == playerId) e.key,
+            }
+          : <String>{
+              for (final p in allProvinces(game.worldState))
+                if (p.ownerId == playerId) toFullProvinceId(p.regionId, p.id),
+            });
   final raw = armyMoveCandidateDestinationProvinceIds(
     game: game,
     topology: topology,
     playerId: playerId,
     army: army,
+    playerOwnedFullProvinceIds: ownedProvinceIds,
   );
+  final baseValidator = switch (sharedCandidateValidator) {
+    final shared? when shared.basePrefix == currentOrders => shared,
+    final shared? => shared.forBasePrefix(currentOrders),
+    null => IncrementalCandidateValidator.forPlayer(
+      game: game,
+      topology: topology,
+      playerId: playerId,
+      basePrefix: currentOrders,
+      factionMembership: effectiveFactionMembership,
+      view: effectivePlayerView,
+      unitsById:
+          effectiveUnitsById ?? unitsByIdFromWorld(game.worldState),
+    ),
+  };
+  final declareWarTrialValidatorsByTargetFaction =
+      <String, IncrementalCandidateValidator>{};
   final out = <ArmyMovePickerDestination>[];
   for (final fullId in raw) {
     final province = game.worldState.tryGetProvince(fullId);
     final ownerId = province?.ownerId ?? '';
     final move = ArmyMoveOrder(armyId: army.id, destinationProvinceId: fullId);
-    final acceptedBase = _isArmyMoveOrderAccepted(
-      game,
-      topology,
-      playerId,
-      currentOrders,
-      move,
-    );
+    final acceptedBase = baseValidator.isArmyMoveAccepted(move);
     var requiresDeclare = false;
     if (acceptedBase) {
       requiresDeclare = false;
     } else {
-      if (!_armyMoveNeedsDeclareWarTrial(game, playerId, ownerId, diplo)) {
+      if (!_armyMoveNeedsDeclareWarTrial(
+        game,
+        playerId,
+        ownerId,
+        diplo,
+        effectiveFactionMembership,
+      )) {
         continue;
       }
-      final trial = ordersWithAppendedDiplomaticOrder(
-        currentOrders,
-        playerId,
-        DiplomaticOrder(
-          type: DiplomaticOrderType.declareWar,
-          targetFactionId: ownerId,
-        ),
-      );
-      if (!_isArmyMoveOrderAccepted(game, topology, playerId, trial, move)) {
+      // Trial diplomatic context differs from [currentOrders] (extra declare
+      // war on [ownerId]). Reuse one validator per target faction so multiple
+      // provinces with the same owner do not each pay a full PlayerView build
+      // (Refs #2394, SPEC/program/order-suggestions.md § Throughput bounds).
+      final trialValidator =
+          declareWarTrialValidatorsByTargetFaction.putIfAbsent(ownerId, () {
+        final trialOrders = ordersWithAppendedDiplomaticOrder(
+          currentOrders,
+          playerId,
+          DiplomaticOrder(
+            type: DiplomaticOrderType.declareWar,
+            targetFactionId: ownerId,
+          ),
+        );
+        return baseValidator.forBasePrefix(trialOrders);
+      });
+      if (!trialValidator.isArmyMoveAccepted(move)) {
         continue;
       }
       requiresDeclare = true;
@@ -275,12 +431,20 @@ List<ArmyMovePickerDestination> armyMovePickerDestinations({
 }
 
 /// Suggests candidate [ArmyMoveOrder]s for non-home armies owned by [view.playerId].
+///
+/// Throughput hook: callers that enumerate multiple suggestion families against
+/// the same `(game, view.playerId, currentOrders)` may supply
+/// [sharedCandidateValidator] to amortize `PlayerView` / units-by-id
+/// construction across families (Refs #2394). The shared instance must be
+/// built with the same inputs; observable suggestions must match the default
+/// path.
 List<ArmyMoveOrder> suggestArmyMoveOrders(
   PlayerView view,
   Game game,
   MapTopology topology,
-  Orders currentOrders,
-) {
+  Orders currentOrders, {
+  IncrementalCandidateValidator? sharedCandidateValidator,
+}) {
   final playerId = view.playerId;
   final suggestions = <ArmyMoveOrder>[];
   final existingArmyMoves = <String, Set<String>>{};
@@ -291,6 +455,31 @@ List<ArmyMoveOrder> suggestArmyMoveOrders(
         .putIfAbsent(m.armyId, () => <String>{})
         .add(m.destinationProvinceId);
   }
+
+  // Single per-player validator: amortizes the per-player [PlayerView] /
+  // units-by-id setup across every candidate probe. SPEC/program/order-
+  // suggestions.md § Incremental candidate validation. Refs #2237.
+  assert(
+    sharedCandidateValidator == null ||
+        sharedCandidateValidator.playerId == playerId,
+    'sharedCandidateValidator playerId must match view.playerId',
+  );
+  final candidateValidator =
+      sharedCandidateValidator ??
+      IncrementalCandidateValidator.forPlayer(
+        game: game,
+        topology: topology,
+        playerId: playerId,
+        basePrefix: currentOrders,
+        factionMembership: DiplomacyFactionMembership.from(game),
+        view: view,
+        unitsById: unitsByIdFromWorld(game.worldState),
+      );
+
+  final playerOwnedFullProvinceIds = <String>{
+    for (final e in view.provincesById.entries)
+      if (e.value.ownerId == playerId) e.key,
+  };
 
   for (final army in game.worldState.armies) {
     if (army.ownerId != playerId) continue;
@@ -306,25 +495,30 @@ List<ArmyMoveOrder> suggestArmyMoveOrders(
       topology: topology,
       playerId: playerId,
       army: army,
+      playerOwnedFullProvinceIds: playerOwnedFullProvinceIds,
     );
 
+    var acceptedForArmy = 0;
+    var probeAttemptsForArmy = 0;
     for (final destinationProvinceId in destIds) {
       final already = existingArmyMoves[army.id];
       if (already != null && already.contains(destinationProvinceId)) continue;
+      probeAttemptsForArmy++;
 
       final candidate = ArmyMoveOrder(
         armyId: army.id,
         destinationProvinceId: destinationProvinceId,
       );
 
-      if (_isArmyMoveOrderAccepted(
-        game,
-        topology,
-        playerId,
-        currentOrders,
-        candidate,
-      )) {
+      if (candidateValidator.isArmyMoveAccepted(candidate)) {
         suggestions.add(candidate);
+        acceptedForArmy++;
+        if (acceptedForArmy >= _kMaxArmyMoveSuggestionsPerArmy) {
+          break;
+        }
+      }
+      if (probeAttemptsForArmy >= _kMaxArmyMoveProbeAttemptsPerArmy) {
+        break;
       }
     }
   }

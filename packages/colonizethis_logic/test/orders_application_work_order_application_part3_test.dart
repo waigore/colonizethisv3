@@ -12,7 +12,7 @@ void main() {
     test('build_fort with sufficient materials deducts materials', () {
       final unit = Unit(
         id: 'u1',
-        type: 'Engineer',
+        type: kUnitTypeEngineer,
         ownerId: 'p1',
         locationProvinceId: provinceId,
         tileKey: tileKey,
@@ -53,7 +53,7 @@ void main() {
           'p1': [
             WorkOrder(
               unitId: 'u1',
-              target: 'build_fort',
+              target: kWorkTargetBuildFort,
               targetTileKey: tileKey,
             ),
           ],
@@ -71,7 +71,7 @@ void main() {
     test('build_fort to level 2 is skipped without Mine Engineering', () {
       final unit = Unit(
         id: 'u1',
-        type: 'Engineer',
+        type: kUnitTypeEngineer,
         ownerId: 'p1',
         locationProvinceId: provinceId,
         tileKey: tileKey,
@@ -107,7 +107,7 @@ void main() {
           'p1': [
             WorkOrder(
               unitId: 'u1',
-              target: 'build_fort',
+              target: kWorkTargetBuildFort,
               targetTileKey: tileKey,
             ),
           ],
@@ -121,7 +121,7 @@ void main() {
     test('build_fort to level 3 is skipped without Modern Forts', () {
       final unit = Unit(
         id: 'u1',
-        type: 'Engineer',
+        type: kUnitTypeEngineer,
         ownerId: 'p1',
         locationProvinceId: provinceId,
         tileKey: tileKey,
@@ -148,7 +148,7 @@ void main() {
             id: 'p1',
             displayName: 'P1',
             isHuman: true,
-            techUnlocked: {'mine_engineering': true},
+            techUnlocked: {kTechIdMineEngineering: true},
           ),
         ],
       );
@@ -157,7 +157,7 @@ void main() {
           'p1': [
             WorkOrder(
               unitId: 'u1',
-              target: 'build_fort',
+              target: kWorkTargetBuildFort,
               targetTileKey: tileKey,
             ),
           ],
@@ -171,13 +171,13 @@ void main() {
     test('upgrade_town completion increases province townDevelopmentLevel', () {
       final unit = Unit(
         id: 'u1',
-        type: 'Builder',
+        type: kUnitTypeBuilder,
         ownerId: 'p1',
         locationProvinceId: provinceId,
         tileKey: tileKey,
         status: UnitStatus.working,
         currentWork: const CurrentWork(
-          workTarget: 'upgrade_town',
+          workTarget: kWorkTargetUpgradeTown,
           tileKey: tileKey,
           totalTurns: 1,
           remainingTurns: 1,
@@ -223,13 +223,13 @@ void main() {
         const capTileKey = 'oldWorld|P2|0|0';
         final spy = Unit(
           id: 'spy1',
-          type: 'Spy',
+          type: kUnitTypeSpy,
           ownerId: 'p1',
           locationProvinceId: p2Capital,
           tileKey: capTileKey,
           status: UnitStatus.working,
           currentWork: const CurrentWork(
-            workTarget: 'steal_tech',
+            workTarget: kWorkTargetStealTech,
             tileKey: capTileKey,
             totalTurns: 5,
             remainingTurns: 1,
@@ -287,13 +287,13 @@ void main() {
         const tileKeyP1 = 'oldWorld|P1|0|0';
         final p1Spy = Unit(
           id: 'spy1',
-          type: 'Spy',
+          type: kUnitTypeSpy,
           ownerId: 'p1',
           locationProvinceId: provId,
           tileKey: tileKeyP1,
           status: UnitStatus.working,
           currentWork: const CurrentWork(
-            workTarget: 'counter_spy',
+            workTarget: kWorkTargetCounterSpy,
             tileKey: tileKeyP1,
             totalTurns: 0,
             remainingTurns: 1,
@@ -301,7 +301,7 @@ void main() {
         );
         final p2Spy = Unit(
           id: 'spy2',
-          type: 'Spy',
+          type: kUnitTypeSpy,
           ownerId: 'p2',
           locationProvinceId: provId,
           tileKey: tileKeyP1,

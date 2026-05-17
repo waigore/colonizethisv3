@@ -90,17 +90,39 @@ class TileMapResult {
     for (var y = 0; y < height; y++) {
       for (var x = 0; x < width; x++) {
         final id = grid[y][x];
-        if (x + 1 < width) {
-          final other = grid[y][x + 1];
-          if (id != other) pairs.add(_pairKey(id, other));
-        }
-        if (y + 1 < height) {
-          final other = grid[y + 1][x];
-          if (id != other) pairs.add(_pairKey(id, other));
-        }
+        _addAdjacentPairIfDistinct(pairs, id, grid[y], x + 1, width);
       }
+      _addVerticalAdjacentPairsForRow(pairs, grid, y, width, height);
     }
     return pairs;
+  }
+
+  static void _addVerticalAdjacentPairsForRow(
+    Set<String> pairs,
+    List<List<String>> grid,
+    int y,
+    int width,
+    int height,
+  ) {
+    if (y + 1 >= height) return;
+    final rowBelow = grid[y + 1];
+    for (var x = 0; x < width; x++) {
+      final id = grid[y][x];
+      final other = rowBelow[x];
+      if (id != other) pairs.add(_pairKey(id, other));
+    }
+  }
+
+  static void _addAdjacentPairIfDistinct(
+    Set<String> pairs,
+    String id,
+    List<String> row,
+    int x,
+    int width,
+  ) {
+    if (x >= width) return;
+    final other = row[x];
+    if (id != other) pairs.add(_pairKey(id, other));
   }
 
   static String _pairKey(String a, String b) =>

@@ -1,31 +1,47 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
-import '../../economy/build_cost.dart';
+import '../../economy/projected_cost_engine.dart';
 import '../build_spawn_province.dart';
 import '../order_validation_result.dart';
+
+import 'stateful_validator.dart';
 
 /// Validates build unit orders for a single player in submission order.
 /// Mutates internal economy state (workers, stockpile, treasury) when an order
 /// is accepted. SPEC/program/orders.md § Build orders.
-class BuildOrderValidator extends OrderValidator {
+class BuildOrderValidator extends StatefulValidator {
   final Game _game;
   final Player _player;
-
-  WorkerPool _workers;
-  Stockpile _stockpile;
-  int _treasury;
 
   BuildOrderValidator({required Game game, required Player player})
     : _game = game,
       _player = player,
-      _workers = player.workerPool,
-      _stockpile = player.stockpile,
-      _treasury = player.treasury;
+      super(
+        stockpileState: player.stockpile,
+        treasuryState: player.treasury,
+        workerPoolState: player.workerPool,
+      );
 
-  WorkerPool get workers => _workers;
-  Stockpile get stockpile => _stockpile;
-  int get treasury => _treasury;
+  /// Validates further [BuildUnitOrder]s from an economy snapshot produced by
+  /// replaying accepted build orders in submission order (Refs #2394).
+  BuildOrderValidator.withProjectedEconomy({
+    required Game game,
+    required Player player,
+    required Stockpile stockpile,
+    required int treasury,
+    required WorkerPool workerPool,
+  }) : _game = game,
+       _player = player,
+       super(
+         stockpileState: stockpile,
+         treasuryState: treasury,
+         workerPoolState: workerPool,
+       );
+
+  WorkerPool get workers => workerPoolState;
+  Stockpile get stockpile => stockpileState;
+  int get treasury => treasuryState;
 
   /// Validates one [BuildUnitOrder]. When accepted, deducts cost from internal
   /// workers/stockpile/treasury. Caller should sync these back after the build loop.
@@ -58,12 +74,12 @@ class BuildOrderValidator extends OrderValidator {
           return OrderValidationResult.rejected('No capital to spawn unit');
         }
 
-        final check = canAffordBuild(
+        final check = ProjectedCostEngine.canAffordBuildOrder(
           _player,
           o,
-          _workers,
-          _stockpile,
-          _treasury,
+          workerPoolState,
+          stockpileState,
+          treasuryState,
         );
         if (!check.canAfford) {
           return OrderValidationResult.rejected(
@@ -71,16 +87,16 @@ class BuildOrderValidator extends OrderValidator {
           );
         }
 
-        final after = applyBuildCostDeduction(
+        final after = ProjectedCostEngine.applyBuildOrderCostDeduction(
           _player,
           o,
-          _workers,
-          _stockpile,
-          _treasury,
+          workerPoolState,
+          stockpileState,
+          treasuryState,
         );
-        _workers = after.workers;
-        _stockpile = after.stockpile;
-        _treasury = after.treasury;
+        workerPoolState = after.workers;
+        stockpileState = after.stockpile;
+        treasuryState = after.treasury;
         return OrderValidationResult.accepted();
       },
     );

@@ -12,11 +12,16 @@ The order engine (colonizethis_logic) maintains the **current-turn order list pe
 
 ## Validation
 
-**Trigger:** On every add/remove, re-validates the entire list for that player against world state (costs, caps, adjacency, tech per [orders.md](orders.md)).
+**Trigger:** Validation runs in **two distinct contexts**:
+
+- **Final-order-submission context (existing):** On every add/remove via `addXxxOrderWithContext` / `removeXxxOrder`, the engine re-validates the entire list for that player against world state (costs, caps, tile/province legality, tech per [orders.md](orders.md)). This is the contract for human draft edits, scenario runners, and external/manual callers.
+- **Candidate-probe context (new):** The order suggestion API exposes an **incremental candidate validation primitive** that evaluates one candidate against an already-accepted prefix without running full-list `validatePlayerOrdersWithContext`. The primitive is internal to suggestion code and does not change the public `addXxxOrderWithContext` / `validatePlayerOrdersWithContext` API surface used by the final-submission context. See [order-suggestions.md](order-suggestions.md) § Incremental candidate validation for the algorithm and equivalence guarantee.
 
 **Scope:** The engine validates **move** (civilian), **army move**, **build**, **work**, **diplomatic**, **naval move**, and **naval mission** orders. **Research** orders are validated in the research phase (TurnResolver), not in the engine. Diplomatic orders are held and validated per-player like other order types (preconditions for war/peace, alliances, overtures, grants, and subsidies) and then passed into the merge step.
 
 **Rule:** Validate in **submission order**. First failure rejects that order and all after it. Orders 1..N-1 remain.
+
+**Equivalence:** For any candidate evaluated through the incremental primitive against an already-accepted `basePrefix`, the accept/reject result is identical to running `validatePlayerOrdersWithContext` over `basePrefix ⊕ candidate` and inspecting the candidate's result. The two contexts are equivalent for accept/reject decisions; they differ only in cost (incremental skips redundant re-validation of `basePrefix`).
 
 **With context:** Uses a PlayerView for visibility rules (move/work orders). Source province = unit's location; need not be owned by player. See [fog-and-exploration-resolution.md](fog-and-exploration-resolution.md).
 
@@ -26,9 +31,12 @@ Returns validation results (accepted / rejected with reason) for UI feedback.
 
 Move and work-order validation are delegated to dedicated components for single-responsibility and reuse:
 
-- **MoveValidator** (`validators/move_validator.dart`): Validates **civilian** `MoveOrder` per [orders.md](orders.md). Checks unit ownership, region/adjacency, civilian vs Great Power (Spy allowed), civilian vs Minor/Tribe (Explorer/Merchant/Spy allowed), war declaration for GP provinces, war declaration into Minor/Tribe provinces, and visibility. **ArmyMoveOrder** validation (army ownership, Home Army capital lock, same adjacency/ownership rules as land movement) lives in the same module or a dedicated `ArmyMoveValidator` per TDD. Used by OrderEngine when validating orders.
+- **MoveValidator** (`validators/move_validator.dart`): Validates **civilian** `MoveOrder` per [orders.md](orders.md). Checks unit ownership, destination tile existence/land-ness, visibility, and shared civilian occupancy (`civilianMayOccupyLandTileKey`: tile-level control override, then province-derived GP/Minor/Tribe/unowned rules). Civilian move validation does **not** use map-topology adjacency. **ArmyMoveOrder** validation (army ownership, Home Army capital lock, adjacency/ownership/war rules) remains separate and topology-based per [movement.md](movement.md). Used by OrderEngine when validating orders.
 
 - **WorkOrderCostCalculator** (`validators/work_order_cost_calculator.dart`): Computes work order material costs for a given target and tile (improvement/fort/road level). Returns null for steal_tech, counter_spy, purchase_land. Used by OrderEngine for work-order cost validation and for projecting work-order costs in the same validation pass.
+- **WorkOrderValidator** (`validators/work_order_validator.dart`): Validates civilian work orders with per-target checks, visibility, and the **Work ⊆ Move** invariant by requiring the same shared civilian occupancy check used by `MoveValidator` for `targetTileKey`.
+
+**Validator factory (injection):** `OrderEngine` accepts an optional `OrderValidatorFactory` on construction. When omitted, the engine uses the default factory that instantiates the standard move, army move, build, work, diplomatic, and naval validators. When set, callers (including tests) may substitute fakes or wrappers for one or more validator slots while preserving submission-order validation behavior.
 
 **Build validation (naval):** Build orders for naval units are validated for treasury, stockpile, and the **unlocking tech** for that ship type when applicable (see [tech-tree-naval.md](../game/tech-tree-naval.md)); starting ships such as Carrack have no prerequisite. OrderEngine validates before accepting.
 
@@ -66,6 +74,19 @@ Supports a **dry-run**: apply orders via the resolver (which returns **new** sta
 ## Turn Resolution Integration
 
 Before applying orders, TurnResolver runs a **merge** step: combine per-player lists (human + AI) with **human over AI** precedence for conflicts. Merge includes **diplomatic** orders (human over AI per type+target), using only those diplomatic orders that passed OrderEngine validation for each player. Then resolve cross-player effects (conflict detection, diplomacy). Then apply in phase order per [turn-resolution-phases.md](turn-resolution-phases.md). The order engine does not perform merge or application.
+
+### Trusted-source resolution
+
+The resolver exposes **two public turn-entry points** so the per-player pre-apply validation pass (`filterAcceptedOrdersForAllPlayers` in `turn_order_acceptance.dart`) is **skipped only for callers that already validated their inputs**:
+
+- **Untrusted entry point — `validateOrdersAndResolveTurn`:** Runs `filterAcceptedOrdersForAllPlayers` over the merged `Orders` before applying. Required for any caller whose orders may contain invalid entries (scenario runners, ad-hoc test orders, manual JSON-loaded orders, future external/manual sources). Behavior is unchanged from prior releases.
+- **Trusted entry point — `validateOrdersAndResolveTurnFromTrustedOrders`:** Skips `filterAcceptedOrdersForAllPlayers` and dispatches straight to `resolveTurnForGame`. Caller contract: every order in the supplied `Orders` must already have been accepted by either (a) `OrderEngine.addXxxOrderWithContext` for human draft orders, or (b) the order suggestion API (which guarantees `validatePlayerOrdersWithContext` returns `accepted` when the suggestion is appended; see [order-suggestions.md](order-suggestions.md) § Guarantees) for AI-generated orders. Mixing untrusted orders into the trusted entry point breaks the contract; new callers must justify use of this entry point in code review.
+
+**Worker isolate (main app next turn):** The merged `Orders` passed to `validateOrdersAndResolveTurnFromTrustedOrders` may be assembled **on the turn-resolution worker isolate**: AI orders are produced by the staged Full AI planner, combined with human draft orders via `mergeOrderLists` in `colonizethis_logic`, then resolved without returning to the Flutter main isolate first ([turn-resolution.md](turn-resolution.md), [ai-planner.md](ai-planner.md)). The trusted-path contract is unchanged—only **where** merge and planner validation run moves off the UI thread.
+
+A separate function name (not a boolean flag on `Orders`) is the chosen mechanism so trust does not propagate silently through copies, merges, or future refactors. Each trusted-path caller is auditable by grep.
+
+**Equivalence:** Given identical merged `Orders` inputs whose every order is `accepted` by `validatePlayerOrdersWithContext`, the trusted and untrusted entry points produce identical post-merge accepted order sets and identical resulting `WorldState`.
 
 ---
 
@@ -124,8 +145,14 @@ The OrderEngine validates and stores **move (civilian), army move, build, work, 
 - **Merge:** Human + AI orders merged with human over AI for conflicts; ordering is stable for deterministic replay (player id, then conflict key / order type as specified).
 - **Projected effects:** Dry-run returns `ProjectedEffects` with worker count, treasury delta, unit locations, and stockpile deltas (all required for current product and implemented); no mutation of the passed-in game from the caller's perspective. See § ProjectedEffects fields for the full list and implementation status.
 - **No application:** Order engine does not apply orders to world state; TurnResolver applies after merge.
-- **Move validation (extracted):** Given a move order that violates civilian-into-GP or civilian-into-Minor/Tribe rules (per [orders.md](orders.md)), when validated with context, the result is rejected with reason "Civilian cannot enter other Great Power territory" or "Civilian cannot enter Minor/Tribe territory" as applicable. Military moves into GP or Minor/Tribe provinces without war (or same-turn declareWar) are rejected with the appropriate "Must declare war before attacking..." reason.
+- **Move validation (extracted):** Given a civilian move order whose `destinationTileKey` fails shared civilian occupancy rules (per [orders.md](orders.md)), when validated with context, then the result is rejected and the unit location remains unchanged. Military moves into GP or Minor/Tribe provinces without war (or same-turn declareWar) are rejected with the appropriate "Must declare war before attacking..." reason.
 - **Work order cost (single source):** Given work orders with material costs, when validated and when projecting effects in the same pass, the same cost calculation is used via WorkOrderCostCalculator (single source of truth).
+- **Work subset move:** Given a civilian work order whose `targetTileKey` the unit may not legally occupy under shared civilian occupancy rules, when validated with context, then the order engine rejects that work order before application.
+- **Validator injection seam:** Given a caller constructs `OrderEngine` with a custom validator factory, when `validatePlayerOrdersWithContext` runs, then the engine uses validators from that factory for move/army/build/work/diplomatic/naval validation without changing public order-storage APIs.
+- **Incremental candidate equivalence:** Given a `basePrefix` whose every order is `accepted` by `validatePlayerOrdersWithContext` for its player and a candidate `c` of a stateless type (move, army move, naval move, or naval mission), when the system evaluates `c` via the incremental candidate validation primitive (per [order-suggestions.md](order-suggestions.md) § Incremental candidate validation) and via the existing `OrderEngine(initialOrders: basePrefix).addXxxOrderWithContext(...)` path on the same inputs, then both paths return the same boolean accept/reject decision for `c`.
+- **Trusted-path equivalence:** Given a merged `Orders` value whose every order is `accepted` by `validatePlayerOrdersWithContext` for its player, when the system runs `validateOrdersAndResolveTurnFromTrustedOrders` and `validateOrdersAndResolveTurn` against the same inputs, then both entry points return a `TurnResolutionComplete` whose post-merge accepted order sets per player and whose resulting `WorldState` are identical.
+- **Trusted-path bypass:** Given a merged `Orders` value passed to `validateOrdersAndResolveTurnFromTrustedOrders`, when the system resolves the turn, then it does **not** invoke `filterAcceptedOrdersForAllPlayers`; orders are dispatched to the phase pipeline as-supplied.
+- **Untrusted-path preservation:** Given a merged `Orders` value containing at least one rejected order, when the system runs `validateOrdersAndResolveTurn`, then `filterAcceptedOrdersForAllPlayers` removes each rejected order from the per-player order sets before phase application; the resulting `WorldState` reflects only accepted orders.
 
 ---
 

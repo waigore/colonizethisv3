@@ -25,8 +25,9 @@
   - Validate **unit type**, **target tile** (targetTileKey: exists, tile ownership, terrain eligibility), and **tech prerequisites** (e.g. Road Construction for transport level 2, Early Steam Engine for rail, Mine Engineering / Modern Forts for higher forts, gathering techs for higher improvements).
   - For **build_improvement** specifically: reject if the tile has no resource (per [extraction-and-improvements.md](../game/extraction-and-improvements.md)); for **prospect-required minerals** (iron, copper, tin, coal, silver, gold, gems, diamonds — same set as [extraction-and-improvements.md](../game/extraction-and-improvements.md) Mineral Prospecting Gate), reject if that tile is not in the player's `playerProspectedTiles` entry (same message pattern as `purchase_land`: mineral must be prospected first); reject if the tile's improvement level is already at max (4) or if the next level would exceed the player's tech-allowed extraction cap (see [tech-and-extraction-cap.md](../game/tech-and-extraction-cap.md)).
   - Look up:
-    - `totalTurns` for this action using `totalTurnsForWork` in `packages/colonizethis_data` `work_order_costs.dart`, applied from `applyBuildAndWorkOrders` for standard material-backed targets (`build_improvement`, `build_road`, `build_port`, `build_fort`, `build_rail`, `upgrade_town`). **`explore`** uses the province-scaled turn count computed in that application path (see [fog-and-exploration-resolution.md](fog-and-exploration-resolution.md)). **`steal_tech`** uses 5 turns. **`counter_spy`** is ongoing (see loop below). **`purchase_land`** and **`prospect`** do not use this `currentWork` duration path in the build-phase application (see application code and fog spec).
-    - Material **costs** per action from `work_order_materialCost` / related helpers in the same module (and treasury rules for `purchase_land`).
+    - `totalTurns` for this action using `totalTurnsForWork` in `packages/colonizethis_data` `work_order_costs.dart`, applied from `applyBuildAndWorkOrders` for standard material-backed targets (`build_improvement`, `build_road`, `build_port`, `build_fort`, `build_rail`, `upgrade_town`), plus **`prospect`** and **`purchase_land`** (each **1** turn in current ruleset). **`explore`** uses the province-scaled turn count computed in that application path (see [fog-and-exploration-resolution.md](fog-and-exploration-resolution.md)). **`steal_tech`** uses 5 turns. **`counter_spy`** is ongoing (see loop below).
+    - For UI pending-row display, logic exposes assign-time duration preview from shared order helpers. This preview must be deterministic and uses a minimum display value of `1` turn for all pending civilian work targets.
+    - Material **costs** per action from `work_order_materialCost` / related helpers in the same module. **`purchase_land`:** validate `treasury >= cost` at assign; **debit treasury only on completion** (same module cost lookup for the amount).
   - If validation passes and the player has sufficient materials (or no material cost for that target):
     - **Deduct materials when work is assigned** (during Build/Work phase application of WorkOrder; atomic per action; no refund if later cancelled).
     - Enforce **per-player tile exclusivity** for development and purchase work: if another Builder, Engineer, or Merchant unit owned by the same player already has `currentWork` targeting that `targetTileKey`, the new work order must have been rejected earlier and is not applied here.
@@ -41,7 +42,8 @@
 During the **Build / Work** phase (see [turn-resolution-phases.md](turn-resolution-phases.md)):
 
 1. For each civilian with `status = working` and a `currentWork` record:
-   - If unit is dead or tile is no longer owned by the player, **cancel** work: clear `currentWork`, set `status = idle`; costs are not refunded.
+   - If unit is dead, **cancel** work: clear `currentWork`, set `status = idle`; costs are not refunded.
+   - Else if the work target is **not** `explore` or `purchase_land`, and the worked tile is **no longer owned by the player** where that target requires player ownership, **cancel** work: clear `currentWork`, set `status = idle`; costs are not refunded. (For `explore` and `purchase_land`, foreign or not-yet-purchased target tiles do **not** trigger this cancel by themselves.)
    - Otherwise, decrement `remainingTurns` by 1.
 2. When `remainingTurns` reaches 0, apply the action's effect:
    - `build_improvement`: set stored improvement level to `min(currentLevel + 1, 4)` (global max improvement level per [extraction-and-improvements.md](../game/extraction-and-improvements.md)). Tech-allowed extraction cap and tile eligibility are enforced **only when the work order is accepted**; completion does **not** recompute those caps. Effective extraction still uses `min(improvement level, tech cap, …)` each turn per that GDD.
@@ -52,7 +54,8 @@ During the **Build / Work** phase (see [turn-resolution-phases.md](turn-resoluti
    - `build_rail`: upgrade a tile at `tileKey` with transport level 1 or 2 to railroad (transport level 4) when terrain is known and rail tech matches terrain per [tech-tree-transport.md](../game/tech-tree-transport.md).
    - `steal_tech`: roll 8% per turn (or on final turn); on success, grant random tech from (target GP techs − player techs) and clear work; on expiry, clear work.
    - `counter_spy`: ongoing; each turn, in that province, probability to kill one enemy Spy = min(30%, 5% × number of friendly Spies with counter_spy there); resolve kills then continue (no completion).
-   - `purchase_land`: applied when order is accepted (single-turn): deduct treasury (15 × resource base price), record purchased tile for the GP; extraction/connectivity treat that tile as GP-owned for extraction.
+   - `purchase_land`: when `remainingTurns` reaches 0, deduct treasury (15 × resource base price), record purchased tile for the GP; extraction/connectivity treat that tile as GP-owned thereafter.
+   - `prospect`: when `remainingTurns` reaches 0, add the target tile to the player's prospected set (mineral-eligible rules per GDD).
 3. After applying effects (or when work is cancelled), set unit `status = idle` and clear `currentWork`.
    - On completion: clear `originTileKey` and `assignedTileKey`; keep `tileKey` at the resolved target tile.
    - On cancellation: restore `tileKey` from `originTileKey`, then clear `originTileKey` and `assignedTileKey`.
@@ -112,7 +115,11 @@ Exploration and prospecting (`explore`, `prospect`) follow [fog-and-exploration-
 
 - **Build/Work phase loop:** Given a civilian with `status = working` and `currentWork != null`  
   When the Build/Work phase runs  
-  Then if the unit is dead or the tile is no longer owned by the player, the system clears `currentWork` and sets `status = idle` with no material refund; otherwise it decrements `remainingTurns` by 1, and when `remainingTurns` reaches 0 it applies the action effect, then sets `status = idle` and clears `currentWork`.
+  Then if the unit is dead, the system clears `currentWork` and sets `status = idle` with no material refund; else if the target is not `explore` or `purchase_land` and the worked tile is no longer player-owned when required, it clears work the same way; otherwise it decrements `remainingTurns` by 1, and when `remainingTurns` reaches 0 it applies the action effect, then sets `status = idle` and clears `currentWork`.
+
+- **Pending duration preview contract:** Given a pending civilian `WorkOrder` shown in UI before turn resolution  
+  When the UI queries the shared logic duration-preview helper  
+  Then the helper returns assign-time deterministic `totalTurns` for that target using the same assignment semantics as build/work, and never returns less than `1`.
 
 - **Player-initiated cancel:** Given a unit with in-progress work  
   When the player confirms cancel  

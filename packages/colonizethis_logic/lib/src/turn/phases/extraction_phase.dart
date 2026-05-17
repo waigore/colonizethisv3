@@ -43,7 +43,9 @@ Game runExtractionPhase(
     },
   );
   var currentState = state;
+  // Not [Game.mapPlayers]: [currentState] (fleets) may change between players.
   final updatedPlayers = <Player>[];
+  final fleetsByIdStartOfPhase = fleetsByIdForWorld(state.worldState);
   var extractionSeed =
       (state.globalGameSeed ?? 0) ^
       (state.worldState.turnState.turnNumber * kTurnResolutionSeedMix);
@@ -53,7 +55,11 @@ Game runExtractionPhase(
     if (tot != null) {
       stockpile = applyExtractionToStockpile(stockpile, tot.land);
       logExtractionAutoTransportLand(player.id, tot.land);
-      final cargoHolds = cargoHoldsForHomeFleet(state, player.id);
+      final cargoHolds = cargoHoldsForHomeFleet(
+        state,
+        player.id,
+        fleetsById: fleetsByIdStartOfPhase,
+      );
       var overseasDelivered = allocateOverseasToStockpile(
         tot.overseas,
         cargoHolds: cargoHolds,

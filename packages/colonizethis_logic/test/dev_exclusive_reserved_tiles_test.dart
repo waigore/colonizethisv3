@@ -17,12 +17,12 @@ void main() {
             units: [
               Unit(
                 id: 'b1',
-                type: 'Builder',
+                type: kUnitTypeBuilder,
                 ownerId: playerId,
                 locationProvinceId: 'oldWorld|p1',
                 status: UnitStatus.working,
                 currentWork: CurrentWork(
-                  workTarget: 'build_improvement',
+                  workTarget: kWorkTargetBuildImprovement,
                   tileKey: tk,
                   totalTurns: 2,
                   remainingTurns: 1,
@@ -60,7 +60,7 @@ void main() {
           playerId: [
             WorkOrder(
               unitId: 'b1',
-              target: 'build_improvement',
+              target: kWorkTargetBuildImprovement,
               targetTileKey: tk,
             ),
           ],
@@ -92,7 +92,7 @@ void main() {
           playerId: [
             WorkOrder(
               unitId: 'b1',
-              target: 'build_improvement',
+              target: kWorkTargetBuildImprovement,
               targetTileKey: tk,
             ),
           ],

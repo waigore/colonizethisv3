@@ -1,12 +1,11 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:colonizethis_logic/package_logger.dart';
+import 'package:colonizethis_logic/src/logging.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../constants.dart';
 import '../world/connectivity_resolver.dart';
 import '../world/province_lookup.dart';
-
-final _log = packageLogger();
+import '../world/tile_key_coordinates.dart';
 
 /// Per-player extraction totals: land (same region as capital) vs overseas.
 class ExtractionTotals {
@@ -54,7 +53,10 @@ Map<String, ExtractionTotals> computeExtraction({
   /// Used by tests (e.g. Great Power bootstrap farms) without duplicating extraction rules.
   Set<String>? restrictToTileKeys,
 }) {
-  _log.d('extraction compute start players=${game.players.length}');
+  logicLog.d('extraction compute start players=${game.players.length}');
+  final provincesByFullId = <String, Province>{
+    for (final p in allProvinces(game.worldState)) p.id: p,
+  };
   final out = <String, ExtractionTotals>{};
   for (final player in game.players) {
     final cr = connectivityResult[player.id];
@@ -88,6 +90,7 @@ Map<String, ExtractionTotals> computeExtraction({
         capitalRegionId: capitalRegionId,
         techCapForPlayer: techCapForPlayer,
         techCapForPlayerAndResource: techCapForPlayerAndResource,
+        provincesByFullId: provincesByFullId,
       );
       if (contribution == null) {
         continue;
@@ -122,7 +125,7 @@ Map<String, ExtractionTotals> computeExtraction({
     0,
     (s, t) => s + t.overseas.values.fold(0, (a, b) => a + b),
   );
-  _log.d(
+  logicLog.d(
     'extraction compute end players=${out.length} landTotal=$landSum overseasTotal=$overseasSum',
   );
   return out;
@@ -146,27 +149,28 @@ TileExtractionContribution? computeTileExtractionContributionForPlayer({
   required String? capitalRegionId,
   int Function(String playerId) techCapForPlayer = _defaultTechCap,
   int Function(String playerId, String resourceId)? techCapForPlayerAndResource,
+
+  /// When non-null (typically built once per [computeExtraction] pass), province
+  /// rows are resolved by id in O(1) instead of scanning the region list per tile.
+  Map<String, Province>? provincesByFullId,
 }) {
   if (!connectedTileKeys.contains(tileKey)) {
     return null;
   }
-  final parts = tileKey.split('|');
-  if (parts.length != 4) {
+  final coords = parseTileKeyCoordinates(tileKey);
+  if (coords == null) {
     return null;
   }
-  final regionId = parts[0];
-  final x = int.tryParse(parts[2]) ?? -1;
-  final y = int.tryParse(parts[3]) ?? -1;
-  if (x < 0 || y < 0) {
+  if (coords.x < 0 || coords.y < 0) {
     return null;
   }
 
-  final map = tileMapByRegion[regionId];
+  final map = tileMapByRegion[coords.regionId];
   if (map == null) {
     return null;
   }
 
-  final resource = map.resourceAt(x, y);
+  final resource = map.resourceAt(coords.x, coords.y);
   if (resource == null) {
     return null;
   }
@@ -181,16 +185,15 @@ TileExtractionContribution? computeTileExtractionContributionForPlayer({
   }
 
   // Province lookup must be region-scoped. SPEC/game/world-model-identity.md.
-  final provinceId = '$regionId|${parts[1]}';
-  final regionData = regionDataForId(game.worldState, regionId);
-  final province = regionData?.provinces
-      .where((p) => p.id == provinceId)
-      .firstOrNull;
-  if (regionData == null || province == null) {
+  final provinceId = '${coords.regionId}|${coords.provinceLocalId}';
+  final province = provincesByFullId != null
+      ? provincesByFullId[provinceId]
+      : tryGetProvince(game.worldState, provinceId);
+  if (province == null) {
     final msg =
         'extraction province missing tileKey=$tileKey provinceId=$provinceId '
         '(region-scoped lookup failed; SPEC/game/world-model-identity.md)';
-    _log.e(msg, error: StateError(msg), stackTrace: StackTrace.current);
+    logicLog.e(msg, error: StateError(msg), stackTrace: StackTrace.current);
     return null;
   }
   final townDevelopmentCap = province.townDevelopmentLevel;
@@ -235,7 +238,7 @@ TileExtractionContribution? computeTileExtractionContributionForPlayer({
     tileKey: tileKey,
     commodityId: commodityId,
     units: effectiveCapped,
-    isLandRelativeToCapital: regionId == capitalRegionId,
+    isLandRelativeToCapital: coords.regionId == capitalRegionId,
   );
 }
 

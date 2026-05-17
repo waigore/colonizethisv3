@@ -1,0 +1,1 @@
+../../../.cursor/skills/plan-feature/SKILL.md

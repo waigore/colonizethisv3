@@ -1,16 +1,42 @@
 /// Deterministic procedural fallback for province/capital names when naming
 /// config is missing or empty. SPEC/game/naming.md § Fallback.
 library;
+
 import 'dart:math';
 
 const List<String> _stubs = [
-  'Tan', 'Ver', 'Mor', 'Ash', 'Elm', 'Oak', 'Red', 'Stone', 'Clear', 'Fair',
-  'North', 'High', 'Low', 'Briar', 'Cedar',
+  'Tan',
+  'Ver',
+  'Mor',
+  'Ash',
+  'Elm',
+  'Oak',
+  'Red',
+  'Stone',
+  'Clear',
+  'Fair',
+  'North',
+  'High',
+  'Low',
+  'Briar',
+  'Cedar',
 ];
 
 const List<String> _suffixes = [
-  'ton', 'ville', 'ford', 'burg', 'dale', 'field', 'port', 'wood', 'shire',
-  'mouth', 'gate', 'haven', 'ridge', 'vale',
+  'ton',
+  'ville',
+  'ford',
+  'burg',
+  'dale',
+  'field',
+  'port',
+  'wood',
+  'shire',
+  'mouth',
+  'gate',
+  'haven',
+  'ridge',
+  'vale',
 ];
 
 const int _maxRetries = 100;

@@ -1,8 +1,6 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:colonizethis_logic/package_logger.dart';
+import 'package:colonizethis_logic/src/logging.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
-
-final _log = packageLogger();
 
 /// Thrown when [resolveConsumption] sees a ship type id not in [ShipEconomyCatalog].
 /// SPEC/game/workers-and-population.md (invalid fleet data).
@@ -130,7 +128,7 @@ ConsumptionResult resolveConsumption({
     regimentCountsById: regimentCountsById,
     shipCountsById: shipCountsById,
   );
-  _log.d(
+  logicLog.d(
     'consumption totalRegiments=${alloc.totalRegiments} '
     'fullyFedRegiments=${alloc.fullyFedRegiments} '
     'totalShips=${alloc.totalShips} fullyFedShips=${alloc.fullyFedShips} '

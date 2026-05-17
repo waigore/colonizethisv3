@@ -477,17 +477,6 @@ const double initiativeGeneralMedalWeight = 10.0;
 const int deploymentLimitBase = 10;
 const int deploymentLimitWithNationalism = 12;
 
-/// Tech id that raises base deployment to [deploymentLimitWithNationalism]. SPEC/game/tech-tree-diplomacy-civilian.md.
-const String kTechIdNationalism = 'nationalism';
-
-/// Tech id required for Trade Consulate / Embassy / NAP overtures toward Minor Nations and Tribes. SPEC/game/tech-tree-diplomacy-civilian.md, diplomacy.md.
-const String kTechIdDiplomaticExpertise = 'diplomatic_expertise';
-
-/// Tech id required for Builder `upgrade_town` work orders. SPEC/game/tech-tree-diplomacy-civilian.md.
-const String kTechIdNationalBureaucracy = 'national_bureaucracy';
-
-/// Tech id that reduces third-party relation penalties when the aggressor declares war (e.g. intervention). SPEC/game/tech-tree-diplomacy-civilian.md.
-const String kTechIdPropaganda = 'propaganda';
-
-/// Tech id required for Join Empire toward another Great Power. SPEC/game/tech-tree-diplomacy-civilian.md, diplomacy.md.
-const String kTechIdEmpireBuilding = 'empire_building';
+/// Base deployment +2 when [kTechIdNationalism] is unlocked. SPEC/game/tech-tree-diplomacy-civilian.md.
+/// Trade Consulate / Embassy / NAP tech: [kTechIdDiplomaticExpertise]. Builder upgrade_town: [kTechIdNationalBureaucracy].
+/// War declaration optics: [kTechIdPropaganda]. Join Empire: [kTechIdEmpireBuilding].

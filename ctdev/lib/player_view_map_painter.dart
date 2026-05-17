@@ -14,7 +14,7 @@ String tileKeyForCell(RegionMapViewData region, CellViewData cell) {
   return '${region.regionId}|${cell.regionCellId}|${cell.x}|${cell.y}';
 }
 
-/// Paints OW + NW map filtered by [PlayerView]: per-tile visibility (unknown/revealed/fogged/fullyVisible),
+/// Paints OW + NW map filtered by [PlayerView]: per-tile visibility (unknown/fogged/fullyVisible),
 /// only the viewing player's units, capitals/ports only for fogged and fully visible provinces.
 /// SPEC/program/ctdev-app.md § Per-player map.
 class PlayerViewMapPainter extends CustomPainter {
@@ -41,7 +41,6 @@ class PlayerViewMapPainter extends CustomPainter {
   final List<Fleet> fleets;
 
   static const Color _unknownColor = Colors.black;
-  static const Color _revealedColor = Color(0xFF606060);
   static const Color _seaColor = Color(0xFF003366);
   static const Color _landFallbackColor = Color(0xFF808080);
   static const Color _landBorderColor = Colors.black;
@@ -73,14 +72,35 @@ class PlayerViewMapPainter extends CustomPainter {
     canvas.restore();
   }
 
-  void _paintRegion(
+  Color _fillColorForVisibleCell(RegionMapViewData region, CellViewData cell) {
+    if (cell.isSea) {
+      return _seaColor;
+    }
+    if (geographicMode) {
+      final terrain =
+          cell.terrainType ??
+          (cell.terrainTypeId != null
+              ? TerrainType.values.byName(cell.terrainTypeId!)
+              : null);
+      final terrainRgb = terrain != null
+          ? (region.terrainColors[terrain] ?? (128, 128, 128))
+          : (128, 128, 128);
+      return Color.fromARGB(255, terrainRgb.$1, terrainRgb.$2, terrainRgb.$3);
+    }
+    if (!geographicMode && showOwnership) {
+      final colorTuple =
+          region.factionColors[cell.ownerFactionId] ?? (128, 128, 128);
+      return Color.fromARGB(255, colorTuple.$1, colorTuple.$2, colorTuple.$3);
+    }
+    return _landFallbackColor;
+  }
+
+  void _paintRegionCellGrid(
     Canvas canvas,
     RegionMapViewData region,
     double cellSize,
-    Size size,
+    Paint fillPaint,
   ) {
-    final fillPaint = Paint()..style = PaintingStyle.fill;
-
     for (final cell in region.cells) {
       final tileKey = tileKeyForCell(region, cell);
       final vis = playerView.visibilityForTile(tileKey);
@@ -93,107 +113,252 @@ class PlayerViewMapPainter extends CustomPainter {
         canvas.drawRect(rect, fillPaint);
         continue;
       }
-      if (vis == VisibilityLevel.revealed) {
-        fillPaint.color = _revealedColor;
-        canvas.drawRect(rect, fillPaint);
-        continue;
-      }
-
-      // fogged or fullyVisible: draw full colours
-      if (cell.isSea) {
-        fillPaint.color = _seaColor;
-      } else if (geographicMode) {
-        final terrain = cell.terrainType ??
-            (cell.terrainTypeId != null
-                ? TerrainType.values.byName(cell.terrainTypeId!)
-                : null);
-        final terrainRgb = terrain != null
-            ? (region.terrainColors[terrain] ?? (128, 128, 128))
-            : (128, 128, 128);
-        fillPaint.color = Color.fromARGB(
-          255,
-          terrainRgb.$1,
-          terrainRgb.$2,
-          terrainRgb.$3,
-        );
-      } else if (!geographicMode && showOwnership) {
-        final colorTuple =
-            region.factionColors[cell.ownerFactionId] ?? (128, 128, 128);
-        fillPaint.color = Color.fromARGB(
-          255,
-          colorTuple.$1,
-          colorTuple.$2,
-          colorTuple.$3,
-        );
-      } else {
-        fillPaint.color = _landFallbackColor;
-      }
+      fillPaint.color = _fillColorForVisibleCell(region, cell);
       canvas.drawRect(rect, fillPaint);
 
       if (vis == VisibilityLevel.fogged) {
         _drawFogStripes(canvas, rect, cellSize);
       }
     }
+  }
 
-    // Resource glyphs (geographic) only for fogged/fullyVisible
-    if (geographicMode) {
-      for (final cell in region.cells) {
-        final vis = playerView.visibilityForTile(tileKeyForCell(region, cell));
-        if (vis != VisibilityLevel.fogged && vis != VisibilityLevel.fullyVisible) {
-          continue;
-        }
-        final visRes = resourceIdVisibleInPlayerView(
-          playerView,
-          tileKeyForCell(region, cell),
-          cell.resourceId,
-        );
-        final letter = resourceIdToLegendLetter(visRes);
-        if (letter == null) continue;
-        final cx = cell.x * cellSize + cellSize / 2;
-        final cy = cell.y * cellSize + cellSize / 2;
-        final textPainter = TextPainter(
-          text: TextSpan(
-            text: letter,
-            style: TextStyle(
-              color: Colors.black,
-              fontSize: math.max(8, cellSize * 0.6),
-              fontWeight: FontWeight.bold,
-            ),
+  void _paintRegionResourceGlyphs(
+    Canvas canvas,
+    RegionMapViewData region,
+    double cellSize,
+  ) {
+    if (!geographicMode) return;
+    for (final cell in region.cells) {
+      final vis = playerView.visibilityForTile(tileKeyForCell(region, cell));
+      if (vis != VisibilityLevel.fogged && vis != VisibilityLevel.fullyVisible) {
+        continue;
+      }
+      final visRes = resourceIdVisibleInPlayerView(
+        playerView,
+        tileKeyForCell(region, cell),
+        cell.resourceId,
+      );
+      final letter = resourceIdToLegendLetter(visRes);
+      if (letter == null) continue;
+      final cx = cell.x * cellSize + cellSize / 2;
+      final cy = cell.y * cellSize + cellSize / 2;
+      final textPainter = TextPainter(
+        text: TextSpan(
+          text: letter,
+          style: TextStyle(
+            color: Colors.black,
+            fontSize: math.max(8, cellSize * 0.6),
+            fontWeight: FontWeight.bold,
           ),
-          textDirection: TextDirection.ltr,
-        )..layout();
-        textPainter.paint(
+        ),
+        textDirection: TextDirection.ltr,
+      )..layout();
+      textPainter.paint(
+        canvas,
+        Offset(cx - textPainter.width / 2, cy - textPainter.height / 2),
+      );
+    }
+  }
+
+  void _paintRegionUnitMarkers(Canvas canvas, RegionMapViewData region, double cellSize) {
+    if (!showUnits || region.unitMarkers.isEmpty) return;
+    for (final m in region.unitMarkers) {
+      if (m.ownerFactionId != playerView.playerId) continue;
+      final cx = m.x * cellSize + cellSize / 2;
+      final cy = m.y * cellSize + cellSize / 2;
+      final colorTuple =
+          region.factionColors[m.ownerFactionId] ?? (128, 128, 128);
+      final fillPaint = Paint()
+        ..style = PaintingStyle.fill
+        ..color = Color.fromARGB(
+          255,
+          colorTuple.$1,
+          colorTuple.$2,
+          colorTuple.$3,
+        );
+      final strokePaint = Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 1
+        ..color = Colors.black;
+      const radius = 5.0;
+      canvas.drawCircle(Offset(cx, cy), radius, fillPaint);
+      canvas.drawCircle(Offset(cx, cy), radius, strokePaint);
+    }
+  }
+
+  void _paintRegionImprovementLabels(
+    Canvas canvas,
+    RegionMapViewData region,
+    double cellSize,
+  ) {
+    if (!showImprovements) return;
+    for (final cell in region.cells) {
+      if (cell.isSea) continue;
+      final vis = playerView.visibilityForTile(tileKeyForCell(region, cell));
+      if (vis != VisibilityLevel.fogged && vis != VisibilityLevel.fullyVisible) {
+        continue;
+      }
+      final imp = cell.improvementLevel ?? 0;
+      final road = cell.roadLevel ?? 0;
+      final cx = cell.x * cellSize + cellSize / 2;
+      final cy = cell.y * cellSize + cellSize / 2;
+      final fontSize = math.max(8, cellSize * 0.5);
+      final text = 'i$imp r$road';
+      final textPainter = TextPainter(
+        text: TextSpan(
+          text: text,
+          style: TextStyle(
+            color: Colors.black,
+            fontSize: fontSize.toDouble(),
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        textDirection: TextDirection.ltr,
+      )..layout();
+      textPainter.paint(
+        canvas,
+        Offset(
+          (cx - textPainter.width / 2).toDouble(),
+          (cy - textPainter.height / 2).toDouble(),
+        ),
+      );
+    }
+  }
+
+  void _drawVerticalRegionCellBorderIfNeeded(
+    Canvas canvas,
+    RegionMapViewData region,
+    int x,
+    int y,
+    double cellSize,
+    Paint borderPaint,
+  ) {
+    if (x + 1 >= region.width) return;
+    final cell = region.cellAt(x, y);
+    final rightCell = region.cellAt(x + 1, y);
+    if (cell.regionCellId == rightCell.regionCellId) return;
+    final isSeaBorder = cell.isSea && rightCell.isSea;
+    borderPaint.color = isSeaBorder ? _seaBorderColor : _landBorderColor;
+    final xEdge = (x + 1) * cellSize;
+    canvas.drawLine(
+      Offset(xEdge, y * cellSize),
+      Offset(xEdge, (y + 1) * cellSize),
+      borderPaint,
+    );
+  }
+
+  void _drawHorizontalRegionCellBorderIfNeeded(
+    Canvas canvas,
+    RegionMapViewData region,
+    int x,
+    int y,
+    double cellSize,
+    Paint borderPaint,
+  ) {
+    if (y + 1 >= region.height) return;
+    final cell = region.cellAt(x, y);
+    final bottomCell = region.cellAt(x, y + 1);
+    if (cell.regionCellId == bottomCell.regionCellId) return;
+    final isSeaBorder = cell.isSea && bottomCell.isSea;
+    borderPaint.color = isSeaBorder ? _seaBorderColor : _landBorderColor;
+    final yEdge = (y + 1) * cellSize;
+    canvas.drawLine(
+      Offset(x * cellSize, yEdge),
+      Offset((x + 1) * cellSize, yEdge),
+      borderPaint,
+    );
+  }
+
+  void _paintRegionCellBorders(Canvas canvas, RegionMapViewData region, double cellSize) {
+    final borderPaint = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = math.max(1, cellSize / 12);
+    for (var y = 0; y < region.height; y++) {
+      for (var x = 0; x < region.width; x++) {
+        _drawVerticalRegionCellBorderIfNeeded(
           canvas,
-          Offset(cx - textPainter.width / 2, cy - textPainter.height / 2),
+          region,
+          x,
+          y,
+          cellSize,
+          borderPaint,
+        );
+        _drawHorizontalRegionCellBorderIfNeeded(
+          canvas,
+          region,
+          x,
+          y,
+          cellSize,
+          borderPaint,
         );
       }
     }
+  }
 
-    // Units: only viewing player's markers
-    if (showUnits && region.unitMarkers.isNotEmpty) {
-      for (final m in region.unitMarkers) {
-        if (m.ownerFactionId != playerView.playerId) continue;
-        final cx = m.x * cellSize + cellSize / 2;
-        final cy = m.y * cellSize + cellSize / 2;
-        final colorTuple =
-            region.factionColors[m.ownerFactionId] ?? (128, 128, 128);
-        final fillPaint = Paint()
-          ..style = PaintingStyle.fill
-          ..color = Color.fromARGB(
-            255,
-            colorTuple.$1,
-            colorTuple.$2,
-            colorTuple.$3,
-          );
-        final strokePaint = Paint()
-          ..style = PaintingStyle.stroke
-          ..strokeWidth = 1
-          ..color = Colors.black;
-        const radius = 5.0;
-        canvas.drawCircle(Offset(cx, cy), radius, fillPaint);
-        canvas.drawCircle(Offset(cx, cy), radius, strokePaint);
+  void _paintRegionPorts(Canvas canvas, RegionMapViewData region, double cellSize) {
+    if (!showPorts || region.portMarkers.isEmpty) return;
+    final portPaint = Paint()
+      ..style = PaintingStyle.fill
+      ..color = const Color(0xFF00648C);
+    final portOutline = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1
+      ..color = Colors.black;
+    const halfSize = 4.0;
+    for (final port in region.portMarkers) {
+      final cell = region.cellAt(port.x, port.y);
+      final vis = playerView.visibilityForTile(tileKeyForCell(region, cell));
+      if (vis != VisibilityLevel.fogged && vis != VisibilityLevel.fullyVisible) {
+        continue;
       }
+      final cx = port.x * cellSize + cellSize / 2;
+      final cy = port.y * cellSize + cellSize / 2;
+      final rect = Rect.fromLTWH(
+        cx - halfSize,
+        cy - halfSize,
+        halfSize * 2,
+        halfSize * 2,
+      );
+      canvas.drawRect(rect, portPaint);
+      canvas.drawRect(rect, portOutline);
     }
+  }
+
+  void _paintRegionCapitals(Canvas canvas, RegionMapViewData region, double cellSize) {
+    if (!showCapitals || region.capitalMarkers.isEmpty) return;
+    final capitalPaint = Paint()
+      ..style = PaintingStyle.fill
+      ..color = const Color(0xFFFFD700);
+    final capitalOutline = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1
+      ..color = Colors.black;
+    const radius = 6.0;
+    for (final cap in region.capitalMarkers) {
+      final cell = region.cellAt(cap.x, cap.y);
+      final vis = playerView.visibilityForTile(tileKeyForCell(region, cell));
+      if (vis != VisibilityLevel.fogged && vis != VisibilityLevel.fullyVisible) {
+        continue;
+      }
+      final cx = cap.x * cellSize + cellSize / 2;
+      final cy = cap.y * cellSize + cellSize / 2;
+      final center = Offset(cx, cy);
+      canvas.drawCircle(center, radius, capitalPaint);
+      canvas.drawCircle(center, radius, capitalOutline);
+    }
+  }
+
+  void _paintRegion(
+    Canvas canvas,
+    RegionMapViewData region,
+    double cellSize,
+    Size size,
+  ) {
+    final fillPaint = Paint()..style = PaintingStyle.fill;
+
+    _paintRegionCellGrid(canvas, region, cellSize, fillPaint);
+    _paintRegionResourceGlyphs(canvas, region, cellSize);
+    _paintRegionUnitMarkers(canvas, region, cellSize);
 
     if (showUnits && fleets.isNotEmpty) {
       final mine = fleets
@@ -207,131 +372,10 @@ class PlayerViewMapPainter extends CustomPainter {
       }
     }
 
-    // Improvements only for fogged/fullyVisible
-    if (showImprovements) {
-      for (final cell in region.cells) {
-        if (cell.isSea) continue;
-        final vis = playerView.visibilityForTile(tileKeyForCell(region, cell));
-        if (vis != VisibilityLevel.fogged && vis != VisibilityLevel.fullyVisible) {
-          continue;
-        }
-        final imp = cell.improvementLevel ?? 0;
-        final road = cell.roadLevel ?? 0;
-        final cx = cell.x * cellSize + cellSize / 2;
-        final cy = cell.y * cellSize + cellSize / 2;
-        final fontSize = math.max(8, cellSize * 0.5);
-        final text = 'i$imp r$road';
-        final textPainter = TextPainter(
-          text: TextSpan(
-            text: text,
-            style: TextStyle(
-              color: Colors.black,
-              fontSize: fontSize.toDouble(),
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          textDirection: TextDirection.ltr,
-        )..layout();
-        textPainter.paint(
-          canvas,
-          Offset(
-            (cx - textPainter.width / 2).toDouble(),
-            (cy - textPainter.height / 2).toDouble(),
-          ),
-        );
-      }
-    }
-
-    // Borders between differing regionCellId neighbours
-    final borderPaint = Paint()
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = math.max(1, cellSize / 12);
-    for (var y = 0; y < region.height; y++) {
-      for (var x = 0; x < region.width; x++) {
-        final cell = region.cellAt(x, y);
-        if (x + 1 < region.width) {
-          final rightCell = region.cellAt(x + 1, y);
-          if (cell.regionCellId != rightCell.regionCellId) {
-            final isSeaBorder = cell.isSea && rightCell.isSea;
-            borderPaint.color =
-                isSeaBorder ? _seaBorderColor : _landBorderColor;
-            final xEdge = (x + 1) * cellSize;
-            canvas.drawLine(
-              Offset(xEdge, y * cellSize),
-              Offset(xEdge, (y + 1) * cellSize),
-              borderPaint,
-            );
-          }
-        }
-        if (y + 1 < region.height) {
-          final bottomCell = region.cellAt(x, y + 1);
-          if (cell.regionCellId != bottomCell.regionCellId) {
-            final isSeaBorder = cell.isSea && bottomCell.isSea;
-            borderPaint.color =
-                isSeaBorder ? _seaBorderColor : _landBorderColor;
-            final yEdge = (y + 1) * cellSize;
-            canvas.drawLine(
-              Offset(x * cellSize, yEdge),
-              Offset((x + 1) * cellSize, yEdge),
-              borderPaint,
-            );
-          }
-        }
-      }
-    }
-
-    // Ports: only when tile visibility is fogged or fullyVisible
-    if (showPorts && region.portMarkers.isNotEmpty) {
-      final portPaint = Paint()
-        ..style = PaintingStyle.fill
-        ..color = const Color(0xFF00648C);
-      final portOutline = Paint()
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 1
-        ..color = Colors.black;
-      const halfSize = 4.0;
-      for (final port in region.portMarkers) {
-        final cell = region.cellAt(port.x, port.y);
-        final vis = playerView.visibilityForTile(tileKeyForCell(region, cell));
-        if (vis != VisibilityLevel.fogged && vis != VisibilityLevel.fullyVisible) {
-          continue;
-        }
-        final cx = port.x * cellSize + cellSize / 2;
-        final cy = port.y * cellSize + cellSize / 2;
-        final rect = Rect.fromLTWH(
-          cx - halfSize,
-          cy - halfSize,
-          halfSize * 2,
-          halfSize * 2,
-        );
-        canvas.drawRect(rect, portPaint);
-        canvas.drawRect(rect, portOutline);
-      }
-    }
-
-    // Capitals: only when tile visibility is fogged or fullyVisible
-    if (showCapitals && region.capitalMarkers.isNotEmpty) {
-      final capitalPaint = Paint()
-        ..style = PaintingStyle.fill
-        ..color = const Color(0xFFFFD700);
-      final capitalOutline = Paint()
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 1
-        ..color = Colors.black;
-      const radius = 6.0;
-      for (final cap in region.capitalMarkers) {
-        final cell = region.cellAt(cap.x, cap.y);
-        final vis = playerView.visibilityForTile(tileKeyForCell(region, cell));
-        if (vis != VisibilityLevel.fogged && vis != VisibilityLevel.fullyVisible) {
-          continue;
-        }
-        final cx = cap.x * cellSize + cellSize / 2;
-        final cy = cap.y * cellSize + cellSize / 2;
-        final center = Offset(cx, cy);
-        canvas.drawCircle(center, radius, capitalPaint);
-        canvas.drawCircle(center, radius, capitalOutline);
-      }
-    }
+    _paintRegionImprovementLabels(canvas, region, cellSize);
+    _paintRegionCellBorders(canvas, region, cellSize);
+    _paintRegionPorts(canvas, region, cellSize);
+    _paintRegionCapitals(canvas, region, cellSize);
   }
 
   void _drawFogStripes(Canvas canvas, Rect rect, double cellSize) {

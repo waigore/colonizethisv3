@@ -10,6 +10,7 @@ FAIL=0
 LOGIC_PUBSPEC="packages/colonizethis_logic/pubspec.yaml"
 AI_LIB_DIR="packages/colonizethis_ai/lib"
 LOGIC_TEST_DIR="packages/colonizethis_logic/test"
+LOGIC_BARREL="packages/colonizethis_logic/lib/colonizethis_logic.dart"
 SEARCH_TOOL=rg
 
 if ! command -v rg >/dev/null 2>&1; then
@@ -73,6 +74,24 @@ if [[ -d "$LOGIC_TEST_DIR" ]]; then
     echo "ERROR: $LOGIC_TEST_DIR must not import package:colonizethis_ai/..."
     FAIL=1
   fi
+fi
+
+# 5) logic barrel must not export AI internals.
+if search_has_match "^export 'src/ai/" "$LOGIC_BARREL"; then
+  echo "ERROR: $LOGIC_BARREL must not export src/ai internals."
+  FAIL=1
+fi
+
+# 5b) Reject package: URI re-exports of logic AI src (Refs #1958).
+if search_has_match "^export 'package:colonizethis_logic/src/ai/" "$LOGIC_BARREL"; then
+  echo "ERROR: $LOGIC_BARREL must not export package:colonizethis_logic/src/ai/..."
+  FAIL=1
+fi
+
+# 5c) Keep hidden-agenda setup helper off the broad barrel (Refs #1958).
+if search_has_match "^export 'src/setup/hidden_agenda_assignment\\.dart';" "$LOGIC_BARREL"; then
+  echo "ERROR: $LOGIC_BARREL must not export src/setup/hidden_agenda_assignment.dart."
+  FAIL=1
 fi
 
 if [[ $FAIL -eq 1 ]]; then

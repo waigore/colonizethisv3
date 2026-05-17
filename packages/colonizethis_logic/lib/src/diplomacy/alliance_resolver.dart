@@ -1,341 +1,168 @@
-part of 'diplomacy_resolver.dart';
+import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:colonizethis_models/colonizethis_models.dart';
 
-Game _resolveJoinEmpireColony(
+import '../constants.dart';
+import '../dossier/evidence_rules.dart';
+import 'diplomacy_relation_updates.dart';
+import 'diplomacy_resolver.dart';
+import 'faction_absorption_engine.dart';
+import 'overture_resolver.dart';
+
+Game resolveJoinEmpireColony(
   Game game,
   Map<String, List<DiplomaticOrder>> diploByPlayer,
   int turn,
 ) {
+  var factionMembership = DiplomacyFactionMembership.from(game);
   for (final entry in diploByPlayer.entries) {
     final gpId = entry.key;
-
     for (final order in entry.value) {
-      if (order.type != DiplomaticOrderType.establishOverture) continue;
-      final stage = order.overtureStage;
-      if (stage != OvertureStage.joinEmpire) continue;
-
-      final targetId = order.targetFactionId;
-
-      final player = game.playerById(gpId);
-      if (player == null) continue;
-
-      final existing = getOverture(game, gpId, targetId);
-      if (existing == null || existing.stage != OvertureStage.nap) continue;
-
-      final rel = getRelation(game, gpId, targetId);
-      final score = rel?.score ?? relationScoreNeutral;
-      if (score < relationScoreMinFriendly) continue;
-
-      if (isMinorOrTribe(game, targetId)) {
-        final cost = joinEmpireCostForMinorOrTribe(game, targetId);
-        if (player.treasury < cost) continue;
-
-        game = _absorbMinorOrTribeIntoGp(game, gpId, targetId, turn);
-        game = _appendDiplomaticEvent(
-          game,
-          turn,
-          DiplomaticEventType.joinEmpireResolved,
-          {gpId, targetId},
-          fromFactionId: gpId,
-          toFactionId: targetId,
-          overtureStage: OvertureStage.joinEmpire,
-          amount: cost,
-          wasAiInitiator: isAiControlledForEvidence(game, gpId),
-        );
-        _diploLog.i('diplomacy join empire $gpId $targetId cost=$cost');
-      } else if (isGreatPower(game, targetId)) {
-        if (player.techUnlocked?[kTechIdEmpireBuilding] != true) continue;
-        if (!isGreatPowerNearlyDefeatedForJoinEmpire(game, targetId)) {
-          continue;
-        }
-        final cost = joinEmpireCostForMinorOrTribe(game, targetId);
-        if (player.treasury < cost) continue;
-
-        game = _absorbGreatPowerIntoGp(game, gpId, targetId);
-        game = _appendDiplomaticEvent(
-          game,
-          turn,
-          DiplomaticEventType.joinEmpireResolved,
-          {gpId, targetId},
-          fromFactionId: gpId,
-          toFactionId: targetId,
-          overtureStage: OvertureStage.joinEmpire,
-          amount: cost,
-          wasAiInitiator: isAiControlledForEvidence(game, gpId),
-        );
-        _diploLog.i(
-          'diplomacy join empire GP $gpId absorbs $targetId cost=$cost',
-        );
+      final prev = game;
+      game = _resolveJoinEmpireOrderIfApplicable(
+        game,
+        gpId,
+        order,
+        turn,
+        factionMembership,
+      );
+      if (!identical(game, prev)) {
+        factionMembership = DiplomacyFactionMembership.from(game);
       }
     }
   }
   return game;
 }
 
-List<Province> _transferProvinceOwnership(
-  List<Province> provinces,
-  String fromId,
-  String toId,
+Game _resolveJoinEmpireOrderIfApplicable(
+  Game game,
+  String gpId,
+  DiplomaticOrder order,
+  int turn,
+  DiplomacyFactionMembership factionMembership,
 ) {
-  return provinces
-      .map((p) => p.ownerId == fromId ? p.copyWith(ownerId: toId) : p)
-      .toList();
+  if (order.type != DiplomaticOrderType.establishOverture) return game;
+  if (order.overtureStage != OvertureStage.joinEmpire) return game;
+
+  final targetId = order.targetFactionId;
+  final player = game.playerById(gpId);
+  if (player == null) return game;
+
+  final existing = getOverture(game, gpId, targetId);
+  if (existing == null || existing.stage != OvertureStage.nap) return game;
+
+  final rel = getRelation(game, gpId, targetId);
+  final score = rel?.score ?? relationScoreNeutral;
+  if (score < relationScoreMinFriendly) return game;
+
+  if (factionMembership.isMinorOrTribe(targetId)) {
+    return _resolveJoinEmpireMinorOrTribe(game, gpId, targetId, player, turn);
+  }
+  if (factionMembership.isGreatPower(targetId)) {
+    return _resolveJoinEmpireGreatPower(
+      game,
+      gpId,
+      targetId,
+      player,
+      turn,
+      factionMembership,
+    );
+  }
+  return game;
 }
 
-List<Unit> _transferUnitOwnership(
-  List<Unit> units,
-  String fromId,
-  String toId,
+Game _resolveJoinEmpireMinorOrTribe(
+  Game game,
+  String gpId,
+  String targetId,
+  Player player,
+  int turn,
 ) {
-  return units
-      .map((u) => u.ownerId == fromId ? u.copyWith(ownerId: toId) : u)
-      .toList();
+  final cost = joinEmpireCostForMinorOrTribe(game, targetId);
+  if (player.treasury < cost) return game;
+
+  var next = absorbMinorOrTribeIntoGp(game, gpId, targetId, turn);
+  next = appendDiplomaticEvent(
+    next,
+    turn,
+    DiplomaticEventType.joinEmpireResolved,
+    {gpId, targetId},
+    fromFactionId: gpId,
+    toFactionId: targetId,
+    overtureStage: OvertureStage.joinEmpire,
+    amount: cost,
+    wasAiInitiator: isAiControlledForEvidence(next, gpId),
+  );
+  diploLog.i('diplomacy join empire $gpId $targetId cost=$cost');
+  return next;
+}
+
+Game _resolveJoinEmpireGreatPower(
+  Game game,
+  String gpId,
+  String targetId,
+  Player player,
+  int turn,
+  DiplomacyFactionMembership factionMembership,
+) {
+  if (player.techUnlocked?[kTechIdEmpireBuilding] != true) return game;
+  if (!isGreatPowerNearlyDefeatedForJoinEmpire(
+        game,
+        targetId,
+        factionMembership: factionMembership,
+      )) {
+    return game;
+  }
+
+  final cost = joinEmpireCostForMinorOrTribe(game, targetId);
+  if (player.treasury < cost) return game;
+
+  var next = absorbGreatPowerIntoGp(game, gpId, targetId);
+  next = appendDiplomaticEvent(
+    next,
+    turn,
+    DiplomaticEventType.joinEmpireResolved,
+    {gpId, targetId},
+    fromFactionId: gpId,
+    toFactionId: targetId,
+    overtureStage: OvertureStage.joinEmpire,
+    amount: cost,
+    wasAiInitiator: isAiControlledForEvidence(next, gpId),
+  );
+  diploLog.i('diplomacy join empire GP $gpId absorbs $targetId cost=$cost');
+  return next;
 }
 
 /// Transfers all provinces, units, and fleets owned by [targetId] to [gpId],
 /// deducts Join Empire cost from GP treasury, removes the Minor/Tribe and
 /// cleans overtures/relations. SPEC/game/diplomacy.md.
-Game _absorbMinorOrTribeIntoGp(
+Game absorbMinorOrTribeIntoGp(
   Game game,
   String gpId,
   String targetId,
   int turn,
-) {
-  final cost = joinEmpireCostForMinorOrTribe(game, targetId);
-  var players = List<Player>.from(game.players);
-  final gpIdx = players.indexWhere((p) => p.id == gpId);
-  if (gpIdx >= 0) {
-    players = List<Player>.from(players);
-    players[gpIdx] = players[gpIdx].copyWith(
-      treasury: players[gpIdx].treasury - cost,
-    );
-  }
+) => FactionAbsorptionEngine.absorbMinorOrTribeIntoGp(
+  game,
+  gpId,
+  targetId,
+  turn,
+);
 
-  // Transfer provinces: ownerId targetId -> gpId
-  final owProvinces = _transferProvinceOwnership(
-    game.worldState.oldWorld.provinces,
-    targetId,
-    gpId,
-  );
-  final nwProvinces = _transferProvinceOwnership(
-    game.worldState.newWorld.provinces,
-    targetId,
-    gpId,
-  );
+Game absorbGreatPowerIntoGp(Game game, String gpId, String targetGpId) =>
+    FactionAbsorptionEngine.absorbGreatPowerIntoGp(game, gpId, targetGpId);
 
-  // Transfer units: ownerId targetId -> gpId
-  final owUnits = _transferUnitOwnership(
-    game.worldState.oldWorld.units,
-    targetId,
-    gpId,
-  );
-  final nwUnits = _transferUnitOwnership(
-    game.worldState.newWorld.units,
-    targetId,
-    gpId,
-  );
-
-  // Transfer fleets
-  final fleets = game.worldState.fleets
-      .map((f) => f.ownerId == targetId ? f.copyWith(ownerId: gpId) : f)
-      .toList();
-
-  final oldWorld = RegionData(provinces: owProvinces, units: owUnits);
-  final newWorld = RegionData(provinces: nwProvinces, units: nwUnits);
-
-  // Clear Spy timers for (gpId, province) where gpId now owns the province,
-  // so own provinces never decay via Spy timers after absorption.
-  final ownedProvinceIds = <String>{
-    for (final p in owProvinces)
-      if (p.ownerId == gpId) p.id,
-    for (final p in nwProvinces)
-      if (p.ownerId == gpId) p.id,
-  };
-  final updatedSpyTimers = <String, Map<String, int>>{};
-  game.worldState.spyRevealTurnsByPlayer.forEach((playerId, byProv) {
-    final inner = Map<String, int>.from(byProv);
-    if (playerId == gpId) {
-      for (final provId in ownedProvinceIds) {
-        inner.remove(provId);
-      }
-    }
-    if (inner.isNotEmpty) {
-      updatedSpyTimers[playerId] = inner;
-    }
-  });
-
-  var minorNations = game.minorNations;
-  var tribes = game.tribes;
-  if (game.minorNations.any((m) => m.id == targetId)) {
-    minorNations = game.minorNations.where((m) => m.id != targetId).toList();
-  }
-  if (game.tribes.any((t) => t.id == targetId)) {
-    tribes = game.tribes.where((t) => t.id != targetId).toList();
-  }
-
-  // Remove overture state involving this target (any GP targeting it)
-  final overtures = game.overtureStates
-      .where((o) => o.targetId != targetId)
-      .toList();
-
-  // Remove diplomacy relations involving this target
-  final relations = game.diplomacyRelations
-      .where((r) => r.factionId1 != targetId && r.factionId2 != targetId)
-      .toList();
-
-  return game.copyWith(
-    players: players,
-    worldState: game.worldState.copyWith(
-      oldWorld: oldWorld,
-      newWorld: newWorld,
-      fleets: fleets,
-      spyRevealTurnsByPlayer: updatedSpyTimers,
-    ),
-    minorNations: minorNations,
-    tribes: tribes,
-    overtureStates: overtures,
-    diplomacyRelations: relations,
-  );
-}
-
-Game _absorbGreatPowerIntoGp(Game game, String gpId, String targetGpId) {
-  final cost = joinEmpireCostForMinorOrTribe(game, targetGpId);
-  var players = List<Player>.from(game.players);
-  final gpIdx = players.indexWhere((p) => p.id == gpId);
-  final targetIdx = players.indexWhere((p) => p.id == targetGpId);
-  if (gpIdx < 0 || targetIdx < 0) return game;
-
-  players[gpIdx] = players[gpIdx].copyWith(
-    treasury: players[gpIdx].treasury - cost,
-  );
-  players.removeAt(targetIdx);
-
-  final owProvinces = _transferProvinceOwnership(
-    game.worldState.oldWorld.provinces,
-    targetGpId,
-    gpId,
-  );
-  final nwProvinces = _transferProvinceOwnership(
-    game.worldState.newWorld.provinces,
-    targetGpId,
-    gpId,
-  );
-  final owUnits = _transferUnitOwnership(
-    game.worldState.oldWorld.units,
-    targetGpId,
-    gpId,
-  );
-  final nwUnits = _transferUnitOwnership(
-    game.worldState.newWorld.units,
-    targetGpId,
-    gpId,
-  );
-  final fleets = game.worldState.fleets
-      .map((f) => f.ownerId == targetGpId ? f.copyWith(ownerId: gpId) : f)
-      .toList();
-
-  final generals = game.generals
-      .map((g) => g.ownerId == targetGpId ? g.copyWith(ownerId: gpId) : g)
-      .toList();
-
-  final oldWorld = RegionData(provinces: owProvinces, units: owUnits);
-  final newWorld = RegionData(provinces: nwProvinces, units: nwUnits);
-
-  final ownedProvinceIds = <String>{
-    for (final p in owProvinces)
-      if (p.ownerId == gpId) p.id,
-    for (final p in nwProvinces)
-      if (p.ownerId == gpId) p.id,
-  };
-  final updatedSpyTimers = <String, Map<String, int>>{};
-  game.worldState.spyRevealTurnsByPlayer.forEach((playerId, byProv) {
-    if (playerId == targetGpId) return;
-    final inner = Map<String, int>.from(byProv);
-    if (playerId == gpId) {
-      for (final provId in ownedProvinceIds) {
-        inner.remove(provId);
-      }
-    }
-    if (inner.isNotEmpty) {
-      updatedSpyTimers[playerId] = inner;
-    }
-  });
-
-  final purchased = <String, String>{};
-  for (final e in game.worldState.purchasedTilesByTileKey.entries) {
-    purchased[e.key] = e.value == targetGpId ? gpId : e.value;
-  }
-
-  final prospected = <String, Set<String>>{};
-  for (final e in game.worldState.playerProspectedTiles.entries) {
-    if (e.key == targetGpId) continue;
-    prospected[e.key] = Set<String>.from(e.value);
-  }
-  final targetPros = game.worldState.playerProspectedTiles[targetGpId];
-  if (targetPros != null && targetPros.isNotEmpty) {
-    prospected.putIfAbsent(gpId, () => <String>{}).addAll(targetPros);
-  }
-
-  Map<String, bool> aiControl = Map<String, bool>.from(game.aiControlByGpId);
-  aiControl.remove(targetGpId);
-
-  Map<String, int> aiSeed = Map<String, int>.from(game.aiSeedByGpId);
-  aiSeed.remove(targetGpId);
-
-  Map<String, String> hidden = Map<String, String>.from(
-    game.hiddenAgendaByGpId,
-  );
-  hidden.remove(targetGpId);
-
-  Map<String, String> glyphs = Map<String, String>.from(
-    game.politicalGlyphByPlayerId,
-  );
-  glyphs.remove(targetGpId);
-
-  final overtures = game.overtureStates
-      .where((o) => o.gpId != targetGpId && o.targetId != targetGpId)
-      .toList();
-
-  final relations = game.diplomacyRelations
-      .where((r) => r.factionId1 != targetGpId && r.factionId2 != targetGpId)
-      .toList();
-
-  final subsidies = game.subsidyStates
-      .where((s) => s.payerId != targetGpId && s.targetId != targetGpId)
-      .toList();
-
-  return game.copyWith(
-    players: players,
-    generals: generals,
-    worldState: game.worldState.copyWith(
-      oldWorld: oldWorld,
-      newWorld: newWorld,
-      fleets: fleets,
-      spyRevealTurnsByPlayer: updatedSpyTimers,
-      purchasedTilesByTileKey: purchased,
-      playerProspectedTiles: prospected,
-    ),
-    overtureStates: overtures,
-    diplomacyRelations: relations,
-    subsidyStates: subsidies,
-    aiControlByGpId: aiControl,
-    aiSeedByGpId: aiSeed,
-    hiddenAgendaByGpId: hidden,
-    politicalGlyphByPlayerId: glyphs,
-  );
-}
-
-Game _processAlliances(
+Game processAlliances(
   Game game,
   Map<String, List<DiplomaticOrder>> diploByPlayer,
-  int turn,
-) {
+  int turn, {
+  required DiplomacyFactionMembership factionMembership,
+}) {
   for (final entry in diploByPlayer.entries) {
     final gpId = entry.key;
     for (final order in entry.value) {
       if (order.type != DiplomaticOrderType.alliance) continue;
 
       final targetId = order.targetFactionId;
-      if (!isGreatPower(game, targetId)) continue;
+      if (!factionMembership.isGreatPower(targetId)) continue;
 
       final ids = canonicalPairIds(gpId, targetId);
       final relations = upsertRelation(
@@ -362,7 +189,7 @@ Game _processAlliances(
               ),
       );
       game = game.copyWith(diplomacyRelations: relations);
-      game = _appendDiplomaticEvent(
+      game = appendDiplomaticEvent(
         game,
         turn,
         DiplomaticEventType.allianceFormed,
@@ -371,7 +198,7 @@ Game _processAlliances(
         toFactionId: targetId,
         wasAiInitiator: isAiControlledForEvidence(game, gpId),
       );
-      _diploLog.i('diplomacy alliance $gpId-$targetId');
+      diploLog.i('diplomacy alliance $gpId-$targetId');
     }
   }
   return game;

@@ -37,6 +37,7 @@
 - Ship categories:
   - **Fast interceptors:** Sloops, Frigates, Raiders — higher base intercept and flee ratings; best on Patrol/Blockade.
   - **Battle ships:** Galleons, Ships-of-the-Line, Ironclads — high FRP/ARM/HULL; stronger in decisive fleet battles but weaker at chasing fast raiders.
+- **Debug console bypass:** The debug-only `/spawn_ship` command (see [debug-console-panel.md](../../SPEC/ui/debug-console-panel.md)) may append hull instances for any canonical `ShipEconomyCatalog` type to the human home fleet at capital regardless of the player’s `techUnlocked` set. Normal ship construction and `BuildUnitOrder` validation remain governed by this unlock table and [ships-and-naval.md](ships-and-naval.md).
 
 ---
 

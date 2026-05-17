@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
-/// Fixed extraction-disc palette generated from resource icons at build time.
+/// Optional commodity hue reference generated from resource icons.
+/// Region-map extraction throughput discs use fixed gold/brown fills instead
+/// (`region_map_component_shared.dart`; SPEC/ui/map-widget.md).
 ///
 /// Regenerate with:
 /// `dart run tool/generate_resource_icon_disc_palette.dart`

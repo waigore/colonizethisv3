@@ -1,0 +1,1 @@
+../../../.cursor/skills/fix-pr/SKILL.md

@@ -38,6 +38,7 @@ TOOL_PACKAGES = [
     "tool/init_game",
     "tool/sim_economy",
     "tool/show_tech",
+    "tool/run_observer_game",
 ]
 
 

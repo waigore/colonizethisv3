@@ -2,13 +2,16 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../constants.dart';
 import '../world/player_view.dart';
+import '../world/province_lookup.dart';
+import 'orders_application_helpers.dart';
+import 'partial_province_reveal.dart';
 
 /// Order visibility rules. SPEC/program/fog-and-exploration-resolution.md.
 ///
 /// Shared helpers used by the order engine and order suggestion API so both
 /// enforce the same visibility rules using the same data (PlayerView).
 
-/// Visibility level ordering: unknown < revealed < fogged < fullyVisible.
+/// Visibility level ordering: unknown < fogged < fullyVisible.
 bool _visibilityAtLeast(VisibilityLevel actual, VisibilityLevel min) {
   return actual.index >= min.index;
 }
@@ -21,12 +24,14 @@ bool provinceHasAtLeastVisibility(
   String provinceId,
   VisibilityLevel min,
 ) {
-  final localId = ProvinceId.localIdFrom(provinceId);
+  final localId = ProvinceId.isPrefixed(provinceId)
+      ? ProvinceId.localIdFrom(provinceId)
+      : provinceId;
   return view.visibilityByTile.entries.any((e) {
-    final parts = e.key.split('|');
-    if (parts.length != 4) return false;
-    return parts[0] == regionId &&
-        parts[1] == localId &&
+    final parsed = parseTileKeyCoordinates(e.key);
+    if (parsed == null) return false;
+    return parsed.regionId == regionId &&
+        parsed.provinceLocalId == localId &&
         _visibilityAtLeast(e.value, min);
   });
 }
@@ -50,21 +55,33 @@ bool moveSourceVisibilityOk(
     view,
     regionId,
     provinceId,
-    VisibilityLevel.revealed,
+    VisibilityLevel.fogged,
   );
 }
 
 /// Move order: destination province must be known (not unknown).
 /// Optional refinement: non-explorer civilians could require fogged+; for now
-/// we require at least revealed (same as source).
+/// we require at least fogged (same as source).
 bool moveDestVisibilityOk(
   PlayerView view,
   String regionId,
   String provinceId,
   String unitType,
 ) {
-  final min = VisibilityLevel.revealed;
+  final min = VisibilityLevel.fogged;
   return provinceHasAtLeastVisibility(view, regionId, provinceId, min);
+}
+
+/// Civilian move order: destination **tile** must be at least fogged.
+bool moveDestinationTileVisibilityOk(
+  PlayerView view,
+  String destinationTileKey,
+) {
+  return tileHasAtLeastVisibility(
+    view,
+    destinationTileKey,
+    VisibilityLevel.fogged,
+  );
 }
 
 /// Resolves regionId for [unit]: from tileKey, compound provinceId, [view].provincesById, or visibility tile keys.
@@ -83,10 +100,16 @@ String regionIdForUnit(PlayerView view, Unit unit) {
     }
   }
   for (final tileKey in view.visibilityByTile.keys) {
-    final parts = tileKey.split('|');
-    if (parts.length == 4 && parts[1] == unit.locationProvinceId) {
-      return parts[0];
+    final parsed = parseTileKeyCoordinates(tileKey);
+    if (parsed != null && parsed.provinceLocalId == unit.locationProvinceId) {
+      return parsed.regionId;
     }
+  }
+  if (!ProvinceId.isPrefixed(unit.locationProvinceId)) {
+    throw StateError(
+      'regionIdForUnit: cannot resolve region for non-prefixed '
+      'locationProvinceId "${unit.locationProvinceId}" (unit ${unit.id})',
+    );
   }
   return ProvinceId.regionIdFrom(unit.locationProvinceId);
 }
@@ -97,19 +120,43 @@ typedef _WorkTargetVisibilityFn =
       String regionId,
       String provinceId,
       bool isOwned,
+      WorldState? worldState,
     );
 
-bool _workVisRevealedProvince(
+bool _workVisExplorePartialReveal(
   PlayerView view,
   String regionId,
   String provinceId,
   bool isOwned,
+  WorldState? worldState,
+) {
+  final ws = worldState;
+  if (ws == null) {
+    return false;
+  }
+  final fullProvinceId = ProvinceId.isPrefixed(provinceId)
+      ? provinceId
+      : ProvinceId.full(regionId, provinceId);
+  final landKeys = landTileKeysForProvinceBucket(
+    ws,
+    regionId,
+    fullProvinceId,
+  );
+  return isPartiallyRevealedProvinceLandTilesForPlayer(view, landKeys);
+}
+
+bool _workVisFoggedOrBetterProvince(
+  PlayerView view,
+  String regionId,
+  String provinceId,
+  bool isOwned,
+  WorldState? _,
 ) {
   return provinceHasAtLeastVisibility(
     view,
     regionId,
     provinceId,
-    VisibilityLevel.revealed,
+    VisibilityLevel.fogged,
   );
 }
 
@@ -118,6 +165,7 @@ bool _workVisFoggedProvince(
   String regionId,
   String provinceId,
   bool isOwned,
+  WorldState? _,
 ) {
   return provinceHasAtLeastVisibility(
     view,
@@ -132,6 +180,7 @@ bool _workVisOwnedOrFoggedProvince(
   String regionId,
   String provinceId,
   bool isOwned,
+  WorldState? _,
 ) {
   return isOwned ||
       provinceHasAtLeastVisibility(
@@ -145,7 +194,7 @@ bool _workVisOwnedOrFoggedProvince(
 /// Map dispatch for work-target visibility (Refs #1531); unknown targets use default.
 final Map<String, _WorkTargetVisibilityFn> _workOrderVisibilityByTarget =
     <String, _WorkTargetVisibilityFn>{
-      kWorkTargetExplore: _workVisRevealedProvince,
+      kWorkTargetExplore: _workVisExplorePartialReveal,
       kWorkTargetProspect: _workVisFoggedProvince,
       kWorkTargetBuildImprovement: _workVisOwnedOrFoggedProvince,
       kWorkTargetUpgradeTown: _workVisOwnedOrFoggedProvince,
@@ -153,19 +202,22 @@ final Map<String, _WorkTargetVisibilityFn> _workOrderVisibilityByTarget =
       kWorkTargetBuildPort: _workVisOwnedOrFoggedProvince,
       kWorkTargetBuildFort: _workVisOwnedOrFoggedProvince,
       'build_rail': _workVisOwnedOrFoggedProvince,
-      kWorkTargetPurchaseLand: _workVisRevealedProvince,
-      kWorkTargetStealTech: _workVisRevealedProvince,
+      kWorkTargetPurchaseLand: _workVisFoggedOrBetterProvince,
+      kWorkTargetStealTech: _workVisFoggedOrBetterProvince,
       kWorkTargetCounterSpy: _workVisOwnedOrFoggedProvince,
     };
 
 /// Work order: true iff the unit's province (and [targetTileKey] when applicable) meets
 /// the minimum visibility for [workTarget]. SPEC/program/fog-and-exploration-resolution.md.
+///
+/// [worldState] is required for [kWorkTargetExplore] (partial-reveal land bucket).
 bool workOrderVisibilityOk(
   PlayerView view,
   Unit unit,
-  String workTarget, [
+  String workTarget, {
   String? targetTileKey,
-]) {
+  WorldState? worldState,
+}) {
   final regionId = targetTileKey != null && targetTileKey.isNotEmpty
       ? Unit.requireRegionIdFromTileKey(targetTileKey)
       : regionIdForUnit(view, unit);
@@ -177,7 +229,7 @@ bool workOrderVisibilityOk(
 
   final fn = _workOrderVisibilityByTarget[workTarget];
   if (fn != null) {
-    return fn(view, regionId, provinceId, isOwned);
+    return fn(view, regionId, provinceId, isOwned, worldState);
   }
   return false;
 }

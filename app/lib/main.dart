@@ -12,6 +12,7 @@ import 'config/constants.dart';
 import 'config/ct_e2e.dart';
 import 'config/map_terrain_config.dart';
 import 'core/services/app_event_handler_scope.dart';
+import 'core/services/desktop_window_startup_service.dart';
 
 /// Opens one Hive box; failures are isolated so another box (e.g. games) still opens.
 Future<void> _openHiveBoxSafely(String name) async {
@@ -32,6 +33,7 @@ Future<void> bootstrapApp({
   required Future<void> Function() ensureMapTerrainLoaded,
   required Future<void> Function() initHive,
   required Future<void> Function(String name) openHiveBoxSafely,
+  required Future<void> Function() ensureDesktopWindowStartup,
   required void Function(Widget app) runAppFn,
 }) async {
   ensureBindingInitialized();
@@ -41,6 +43,7 @@ Future<void> bootstrapApp({
   await openHiveBoxSafely(HiveBoxNames.settings);
   await openHiveBoxSafely(HiveBoxNames.games);
   await openHiveBoxSafely(HiveBoxNames.offlineQueue);
+  await ensureDesktopWindowStartup();
   runAppFn(const ProviderScope(child: AppEventHandlerScope(child: App())));
 }
 
@@ -52,7 +55,10 @@ Future<void> bootstrapApp({
 Future<void> bootstrapForIntegrationTest() async {
   await bootstrapApp(
     ensureBindingInitialized: () {},
-    initSessionLogBuffer: SessionLogBuffer.init,
+    // Skip SessionLogBuffer.init: it sets Logger.level to debug and replaces
+    // Logger.defaultFilter, undoing suppressLogsForTests() and adding listener
+    // overhead — Linux e2e then misses fleet NW wall-clock (Quality workflow).
+    initSessionLogBuffer: kCtE2EEnabled ? () {} : SessionLogBuffer.init,
     ensureMapTerrainLoaded: MapTerrainConfig.ensureLoaded,
     initHive: () async {
       if (kCtE2EEnabled) {
@@ -63,6 +69,7 @@ Future<void> bootstrapForIntegrationTest() async {
       await Hive.initFlutter();
     },
     openHiveBoxSafely: _openHiveBoxSafely,
+    ensureDesktopWindowStartup: () async {},
     runAppFn: runApp,
   );
 }
@@ -76,6 +83,8 @@ void main() {
         ensureMapTerrainLoaded: MapTerrainConfig.ensureLoaded,
         initHive: Hive.initFlutter,
         openHiveBoxSafely: _openHiveBoxSafely,
+        ensureDesktopWindowStartup:
+            DesktopWindowStartupService.initializeIfSupported,
         runAppFn: runApp,
       );
     },

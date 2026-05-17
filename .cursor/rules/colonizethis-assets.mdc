@@ -1,6 +1,6 @@
 ---
 description: Asset directory layout, naming, and loading conventions
-globs: "**/*.dart,**/pubspec.yaml,**/assets/**"
+globs: "**/pubspec.yaml,**/assets/**,app/lib/**/asset*.dart,app/lib/**/assets*.dart,app/lib/**/sprite*.dart,packages/*/lib/**/asset*.dart,packages/*/lib/**/assets*.dart,packages/*/lib/**/sprite*.dart"
 alwaysApply: false
 ---
 

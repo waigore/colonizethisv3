@@ -4,18 +4,19 @@
 
 Per-player tile visibility governing what each Great Power knows about the map. Exploration and prospecting reveal tiles and mineral deposits.
 
+**Program alignment:** `explore` assignment visibility (partial reveal on **land** tiles) and deferred completion for `prospect` / `purchase_land` primary effects are specified in [orders.md](../program/orders.md) and [fog-and-exploration-resolution.md](../program/fog-and-exploration-resolution.md).
+
 ---
 
 ## Rules
 
 ### Visibility Levels
 
-Four levels per player per tile. Visibility state is keyed by player and by province (prefixed province id) or tile (tile key); see [world-model-identity.md](world-model-identity.md).
+Three levels per player per tile (`unknown` < `fogged` < `fullyVisible`). Visibility state is keyed by player and by province (prefixed province id) or tile (tile key); see [world-model-identity.md](world-model-identity.md).
 
-- **Unknown:** No knowledge; exploration/prospecting impossible. New World tiles start here for all GPs.
-- **Revealed:** Province boundary and owner known; terrain and resources unknown.
-- **Fogged:** Terrain, non-prospect resources, and last-known improvements visible. Applies to other-faction provinces only when no Explorer/Spy is working there. Decay: immediate when the last Explorer leaves; for Spy, a timer (Spy fog decay turns, default 5) applies (see Fog Decay).
-- **Fully Visible:** Everything known except unprospected minerals. Own provinces are always fully visible.
+- **Unknown:** No knowledge; exploration/prospecting impossible. New World land and sea start here for all GPs until a positive reveal rule applies. No rule may promote `unknown` to `fogged` or higher without such a reveal (including end-of-turn fog decay).
+- **Fogged:** Terrain, non-prospect resources, and last-known improvements visible for other-faction provinces when no Explorer/Spy grants higher intel. Old World other-faction land and sea start here (before coastal sea passes). End-of-turn decay may downgrade **only** stored `fullyVisible` → `fogged` for applicable other-faction tiles; `unknown` and `fogged` are never decay targets.
+- **Fully Visible:** Everything known except unprospected minerals. Own provinces are always fully visible. Successful fleet entry into a sea zone sets **coastal ring** land tiles (orthogonal to that zone’s water) and **water** in that zone to `fullyVisible`; **inland** land in the same province stays `unknown` until exploration (or another explicit rule) completes.
 
 ### Own vs Other Provinces
 
@@ -52,9 +53,11 @@ While a fleet **enters** S during Movement, that player’s water tiles in S are
 
 Explorer with work order target `explore` reveals all tiles in a province. **Turns required:** `ceil(3 * tilesInProvince / maxTilesInAnyProvinceInRegion)` (up to 3 turns), where the scale is the maximum tile count in any province **in that region** (so exploration time is comparable within the same region). On completion, all tiles set to fully visible for that player.
 
+For explore target selection, a province is **partially revealed** for a player when that player has at least one tile in the province at `fogged` or `fullyVisible` and at least one tile at `unknown`.
+
 ### Prospecting (Tile-Level)
 
-Explorer with work order target `prospect` prospects the tile under the unit. One turn per tile. Per-player; minerals must be prospected before extraction.
+Explorer with work order target `prospect` prospects the target tile. **One** `currentWork` turn; the tile is added to the player's prospected set when that work **completes** in the Build/Work phase (not merely when the order is accepted). Per-player; minerals must be prospected before extraction.
 
 ### Prospect-Required Resources
 
@@ -62,12 +65,14 @@ Explorer with work order target `prospect` prospects the tile under the unit. On
 
 **Known from terrain when visible:** grain, meat, wool, horses, timber, sugarCane, tobacco, cotton, furs, spices.
 
+Tiles with a **known** non-prospect (terrain-known) resource are not mineral-eligible for `prospect`, even when the underlying terrain type is normally prospectable.
+
 Mineral-eligible terrain: swamp, hills, mountain, desert (for diamonds). See [resource-terrain-region-rules.md](resource-terrain-region-rules.md).
 
 ### Fog Decay
 
-- **Explorer:** When the last Explorer leaves an other-faction province, tiles in that province immediately revert to fogged (retaining last-known state).
-- **Spy:** When a Spy leaves an other-faction province, a timer (Spy fog decay turns, default 5; see Configurable Values) starts for (player, province); at end of each turn the timer is decremented; when it reaches 0, that province's tiles are set to fogged. Until then, the player retains full visibility of that province. Spy timers are **per-player, per-province counters** (playerId, fullProvinceId) and **MUST NEVER be started for, or cause visibility changes in, the Spy owner's own provinces.**
+- **Explorer / end-of-turn pass:** When no Explorer or Spy of the viewer remains in an other-faction province and no Spy decay timer applies for that province, **only** tiles currently stored as `fullyVisible` are set to `fogged`. Tiles that are `unknown` or `fogged` are unchanged (no `unknown` → `fogged` from this rule).
+- **Spy timer expiry:** When the Spy fog-decay timer for (player, province) reaches 0, apply the same rule as Explorer decay: **only** `fullyVisible` → `fogged`; `unknown` and `fogged` unchanged. When a Spy leaves an other-faction province, a timer (Spy fog decay turns, default 5; see Configurable Values) starts for (player, province). Spy timers are **per-player, per-province counters** (playerId, fullProvinceId) and **MUST NEVER be started for, or cause visibility changes in, the Spy owner's own provinces.
 
 Own provinces never decay (they remain fully visible regardless of Explorer/Spy presence or timers). When a player gains ownership of a province for which they previously had an active Spy timer, that timer is cleared immediately and can no longer cause decay in that province.
 
@@ -81,14 +86,14 @@ Own provinces never decay (they remain fully visible regardless of Explorer/Spy 
 
 **Move orders:**
 
-- Source province: at least one tile with visibility ≠ unknown.
-- Destination province: at least one tile with visibility ≠ unknown.
+- Source province: at least one tile at `fogged` or `fullyVisible`.
+- Destination province: at least one tile at `fogged` or `fullyVisible`.
 
 **Work orders** (unit must be in the province):
 
 | Unit type | Work target | Minimum visibility |
 |---|---|---|
-| Explorer | explore | Province at least revealed |
+| Explorer | explore | Province at least fogged |
 | Explorer | prospect | Tile at least fogged |
 | Builder | build_improvement, upgrade_town | At least fogged (own = fully visible) |
 | Engineer | build_road, build_port, build_fort | Same as Builder |
@@ -126,7 +131,7 @@ Per [world-model-identity.md](world-model-identity.md):
 
 ## Interactions
 
-- **App map (Flutter):** Province and sea-zone topology strokes and political border strokes are drawn only along edges where at least one adjacent tile is not **unknown** from the player’s view, except in the map widget’s **full visibility** mode (debug/tooling), which draws all boundaries. Mapping: game **unknown** → `CellViewData.visibility` **`unrevealed`**; **revealed** / **fogged** / **fully visible** → non-`unrevealed` in the view model. See [map-widget.md](../ui/map-widget.md) § Layer model and Visibility modes.
+- **App map (Flutter):** Province and sea-zone topology strokes and political border strokes are drawn only along edges where at least one adjacent tile is not **unknown** from the player’s view, except in the map widget’s **full visibility** mode (debug/tooling), which draws all boundaries. Mapping: game **unknown** → `CellViewData.visibility` **`unrevealed`**; **fogged** / **fully visible** → non-`unrevealed` in the view model. See [map-widget.md](../ui/map-widget.md) § Layer model and Visibility modes.
 - **App map province labels:** Unit-presence label icons (civilian/regiment/ship) use player-constrained intel; when PlayerView for a province does not expose class-presence knowledge, the map renders no presence icons for that province even if hidden world state contains units there. See [map-widget.md](../ui/map-widget.md) and [player-view.md](../program/player-view.md).
 
 - Civilian units: [civilian-units.md](civilian-units.md)
@@ -140,12 +145,12 @@ Per [world-model-identity.md](world-model-identity.md):
 
 ## Acceptance criteria
 
-- **Visibility levels:** Four levels per player per tile (unknown, revealed, fogged, fully visible). Own provinces are always fully visible and never decay; fogged applies only to other factions' provinces.
+- **Visibility levels:** Three levels per player per tile (`unknown`, `fogged`, `fullyVisible`). Ordering: `unknown` < `fogged` < `fullyVisible`. Own provinces are always fully visible and never decay; fog decay never promotes `unknown` and only downgrades `fullyVisible` → `fogged` where rules apply.
 - **Initial visibility:** Old World starts fogged (own fully visible); New World starts unknown; coastal tiles reveal when ships enter adjacent sea zones per ships-and-naval.
 - **Exploration:** Explorer work `explore` uses region-scoped formula: turns = `ceil(3 * tilesInProvince / maxTilesInAnyProvinceInRegion)` (max 3). On completion, all tiles in the province become fully visible for that player only.
 - **Prospecting:** Explorer work `prospect` is one turn per tile; minerals require prospecting before extraction; mineral-eligible terrain and prospect-required vs terrain-known resources are as listed in Rules.
-- **Fog decay:** Explorer: when the last Explorer leaves an other-faction province, tiles there immediately revert to fogged. Spy: when a Spy leaves an other-faction province, a timer (Spy fog decay turns, default 5) starts for (player, province); at timer 0, that province's tiles set to fogged for that player. Spy timers are never started for a player's own provinces and can never cause tiles in own provinces to decay. Own provinces never decay.
-- **Order visibility:** Move orders require source and destination each with at least one tile not unknown. Work orders require minimum visibility per unit type and target (e.g. explore ≥ revealed, prospect ≥ fogged, build_* ≥ fogged); province and tile identity use prefixed form per world-model-identity.
+- **Fog decay:** Explorer/Spy end-of-turn pass and Spy timer expiry: for other-faction provinces, **only** tiles stored as `fullyVisible` become `fogged`; `unknown` and `fogged` tiles are unchanged. Spy timers are never started for a player's own provinces and can never cause tiles in own provinces to decay. Own provinces never decay.
+- **Order visibility:** Move orders require source and destination each with at least one tile at `fogged` or `fullyVisible`. Work orders require minimum visibility per unit type and target (e.g. explore ≥ fogged, prospect ≥ fogged, build_* ≥ fogged); province and tile identity use prefixed form per world-model-identity.
 - **Extraction gating:** Minerals extractable only from connected, prospected tiles for that player; non-minerals unchanged.
 - **Implementation:** Visibility resolution, Spy timer, and PlayerView construction: [fog-and-exploration-resolution.md](../program/fog-and-exploration-resolution.md).
 - **Coastal sea zone visibility:** For each Great Power, all tiles in sea zones adjacent (P–S) to provinces they fully own are fully visible; recalculated every turn in End-of-turn after fog decay; only direct ownership; overrides unknown/fogged for those tiles.
@@ -180,3 +185,7 @@ Per [world-model-identity.md](world-model-identity.md):
 - Given a Great Power no longer owns any province adjacent to sea zone S (e.g. lost the only coastal province next to S)  
   When the system has run the End-of-turn phase including the coastal sea zone visibility step  
   Then coastal sea zone visibility does not force S's tiles to fully visible for that player; their visibility remains whatever they were from other sources (e.g. ship reveal, or they may become fogged/unrevealed over time per other rules).
+
+- Given a fresh game where a Great Power player owns only Old World provinces and has no units in the New World, and every New World **land** tile for that player is `unknown` after setup  
+  When the system completes `runEndOfTurnPhase` advancing from turn 0 to turn 1  
+  Then every such New World **land** tile remains `unknown` in `WorldState.playerVisibilityByTile` unless a positive reveal rule fired during that turn.

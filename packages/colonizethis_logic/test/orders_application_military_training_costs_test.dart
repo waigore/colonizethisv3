@@ -19,7 +19,11 @@ void main() {
         turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
         oldWorld: const RegionData(
           provinces: [
-            Province(id: 'P1', regionId: 'oldWorld', ownerId: playerId),
+            Province(
+              id: 'oldWorld|P1',
+              regionId: 'oldWorld',
+              ownerId: playerId,
+            ),
           ],
           units: [],
         ),
@@ -99,7 +103,9 @@ void main() {
       final world = WorldState(
         turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
         oldWorld: const RegionData(
-          provinces: [Province(id: 'P1', regionId: 'oldWorld', ownerId: 'p1')],
+          provinces: [
+            Province(id: 'oldWorld|P1', regionId: 'oldWorld', ownerId: 'p1'),
+          ],
           units: [],
         ),
         newWorld: const RegionData(),
@@ -168,7 +174,7 @@ void main() {
           stockpile: const Stockpile(),
           workerPool: const WorkerPool(peasants: 2),
           treasury: 100,
-          techUnlocked: {'superior_hull_design': true},
+          techUnlocked: {kTechIdSuperiorHullDesign: true},
         );
         final world = WorldState(
           turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
@@ -252,7 +258,7 @@ void main() {
         stockpile: stockpile,
         workerPool: const WorkerPool(peasants: 0),
         treasury: shipEcon.buildTreasuryCost + 10,
-        techUnlocked: {'superior_hull_design': true},
+        techUnlocked: {kTechIdSuperiorHullDesign: true},
       );
       final world = WorldState(
         turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
@@ -310,7 +316,7 @@ void main() {
         stockpile: stockpile,
         workerPool: const WorkerPool(peasants: 2),
         treasury: shipEcon.buildTreasuryCost * 2 + 10,
-        techUnlocked: {'superior_hull_design': true},
+        techUnlocked: {kTechIdSuperiorHullDesign: true},
       );
       final world = WorldState(
         turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),

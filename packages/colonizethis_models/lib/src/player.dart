@@ -1,4 +1,5 @@
 import 'capital_tile.dart';
+import 'province_id.dart';
 import 'stockpile.dart';
 import 'worker_pool.dart';
 
@@ -84,7 +85,7 @@ class Player {
       if (raw is Map<String, dynamic>) {
         return Stockpile.fromJson(raw);
       }
-      if (raw is Map) {
+      if (raw is Map<Object?, Object?>) {
         return Stockpile.fromJson(Map<String, dynamic>.from(raw));
       }
       return Stockpile.empty;
@@ -95,7 +96,7 @@ class Player {
       if (raw is Map<String, dynamic>) {
         return WorkerPool.fromJson(raw);
       }
-      if (raw is Map) {
+      if (raw is Map<Object?, Object?>) {
         return WorkerPool.fromJson(Map<String, dynamic>.from(raw));
       }
       return WorkerPool.empty;
@@ -110,14 +111,14 @@ class Player {
     CapitalTile? _readCapitalTile() {
       final raw = json['capitalTile'];
       if (raw is Map<String, dynamic>) return CapitalTile.fromJson(raw);
-      if (raw is Map)
+      if (raw is Map<Object?, Object?>)
         return CapitalTile.fromJson(Map<String, dynamic>.from(raw));
       return null;
     }
 
     Map<String, bool>? _readTechUnlocked() {
       final raw = json['techUnlocked'];
-      if (raw is! Map) return null;
+      if (raw is! Map<Object?, Object?>) return null;
       return Map<String, bool>.from(
         raw.map((k, v) => MapEntry(k.toString(), v == true)),
       );
@@ -125,7 +126,7 @@ class Player {
 
     Map<String, int>? _readResearchProgress() {
       final raw = json['researchProgressByTechId'];
-      if (raw is! Map) return null;
+      if (raw is! Map<Object?, Object?>) return null;
       return Map<String, int>.from(
         raw.map((k, v) => MapEntry(k.toString(), (v as num?)?.toInt() ?? 0)),
       );
@@ -138,7 +139,10 @@ class Player {
       stockpile: _readStockpile(),
       workerPool: _readWorkerPool(),
       treasury: _readTreasury(),
-      capitalProvinceId: json['capitalProvinceId'] as String?,
+      capitalProvinceId: ProvinceId.requirePrefixedOrNull(
+        json['capitalProvinceId'] as String?,
+        fieldName: 'Player.capitalProvinceId',
+      ),
       capitalTile: _readCapitalTile(),
       techUnlocked: _readTechUnlocked(),
       militaryLevel: (json['militaryLevel'] as int?),

@@ -1,7 +1,9 @@
-import 'package:colonizethis_test/test.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
+import 'package:colonizethis_test/test.dart';
+
+import 'test_fixtures.dart';
 
 void main() {
   group('effectiveLabourForWorkers', () {
@@ -30,13 +32,9 @@ void main() {
 
   group('applyExtractionForPlayers', () {
     test('applies per-player extraction to stockpiles', () {
-      final game = Game(
+      final game = TestFixtures.minimalGame(
         id: 'g1',
-        worldState: WorldState(
-          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
-          oldWorld: const RegionData(),
-          newWorld: const RegionData(),
-        ),
+        turnNumber: 0,
         players: const [
           Player(id: 'p1', displayName: 'A', isHuman: true),
           Player(id: 'p2', displayName: 'B', isHuman: false),

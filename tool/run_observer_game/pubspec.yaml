@@ -1,0 +1,29 @@
+name: run_observer_game
+description: >
+  Full-AI observer game runner with turn traces and HTML snapshots.
+  SPEC/program/run_observer_game-tool.md. GitHub #2498.
+version: 0.0.1
+publish_to: none
+resolution: workspace
+
+environment:
+  sdk: '>=3.11.5 <4.0.0'
+
+dependencies:
+  args: ^2.6.0
+  colonizethis_ai:
+  colonizethis_data:
+  colonizethis_logger:
+  colonizethis_logic:
+  colonizethis_models:
+
+dev_dependencies:
+  colonizethis_exception_lint:
+    path: ../../packages/colonizethis_exception_lint
+  colonizethis_test:
+  custom_lint: ^0.8.1
+  path: ^1.9.0
+  test: ^1.24.0
+
+executables:
+  run_observer_game: bin/run_observer_game.dart

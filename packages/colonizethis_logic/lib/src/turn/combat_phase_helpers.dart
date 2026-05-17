@@ -1,7 +1,7 @@
 // Helpers for the combat phase: apply one land battle (quick or auto-resolve), evidence, dialogue.
 // SPEC/program/turn-resolution-phase-details.md § Combat. Called from turn_resolver._runCombatPhase.
 
-import 'package:colonizethis_logic/package_logger.dart';
+import 'package:colonizethis_logic/src/logging.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../combat/battle_general_assignment.dart';
@@ -10,14 +10,12 @@ import '../combat/conflict_detection.dart';
 import '../combat/military_attack_economy.dart';
 import '../combat/quick_battle_input_builder.dart';
 import '../combat/quick_battle_resolver.dart';
-import '../constants.dart';
 import '../dossier/evidence_rules.dart';
 import '../dossier/event_dialogue.dart';
 import '../event_bus/game_event_bus.dart';
 import '../game_events.dart';
+import '../world/province_lookup.dart';
 import 'turn_seed_constants.dart';
-
-final _combatPhaseLog = packageLogger();
 
 /// Runs one land battle: applies result (quick battle or auto-resolve), evidence, and dialogue.
 Game runOneLandBattle(
@@ -38,7 +36,7 @@ Game runOneLandBattle(
     0,
     (s, a) => s + a.unitIds.length,
   );
-  _combatPhaseLog.i(
+  logicLog.i(
     'combat battle_start turn=$turn battleIndex=$battleIndex '
     'regionId=${ctx.regionId} provinceId=${ctx.provinceId} '
     'defenderFactionId=${ctx.defenderFactionId} attackerSides=${ctx.attackers.length} '
@@ -61,7 +59,7 @@ Game runOneLandBattle(
         qbResult.provinceFlips &&
         qbResult.winner == QuickBattleWinner.attacker &&
         ctx.attackers.isNotEmpty;
-    _combatPhaseLog.i(
+    logicLog.i(
       'combat battle_apply regionId=${ctx.regionId} provinceId=${ctx.provinceId} '
       'mode=quickBattle winner=${qbResult.winner.name} provinceFlipped=$qbFlipped '
       'attCasualties=${qbResult.attackerCasualties.length} '
@@ -142,12 +140,13 @@ Game runOneLandBattle(
       feedingCoverageByPlayerId: feedingCoverageByPlayerId,
       combatGeneralLedger: combatGeneralLedger,
     );
-    final region = ctx.regionId == kRegionOldWorld
-        ? state.worldState.oldWorld
-        : state.worldState.newWorld;
-    final province = region.provinces
-        .where((p) => p.id == ctx.provinceId)
-        .firstOrNull;
+    final province = ProvinceId.isPrefixed(ctx.provinceId)
+        ? tryGetProvince(state.worldState, ctx.provinceId)
+        : tryGetProvinceByRegion(
+            state.worldState,
+            ctx.regionId,
+            ctx.provinceId,
+          );
     final victorId = province?.ownerId;
 
     // Determine winner and casualties for auto-resolve

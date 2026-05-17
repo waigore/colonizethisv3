@@ -14,7 +14,9 @@ In a multi-region world, **province lookup must always use regionId + provinceId
 
 All province ids stored in game state (e.g. Province id, Unit province location, Player capital, order fields) use a **prefixed** form: `regionId|localId` (e.g. `oldWorld|p1`, `newWorld|nw1`). This makes every province id globally unique and prevents a province from being resolved in the wrong region.
 
-**Unit placement in code:** The [Unit](world-model.md) model’s public canonical field is `locationProvinceId` (tile-derived when `tileKey` is set). Saves use the JSON property `provinceId` as the serialized canonical value, not a second competing concept; `fromJson` may repair legacy drift between `tileKey` and an old `provinceId` on load.
+**Unit placement in code:** The [Unit](world-model.md) model’s public canonical field is `locationProvinceId` (tile-derived when `tileKey` is set). Saves use the JSON property `provinceId` as the serialized canonical value, not a second competing concept; `fromJson` may repair drift between `tileKey` and `provinceId` only when both values are canonical prefixed province ids.
+
+**Load strictness for province-referencing fields:** Save/load must hard-fail when any province-referencing field carries an unprefixed local id. This includes persisted province ids in `Province.id`, `Unit.provinceId`, `Army.stationedProvinceId`, and capital or order province-id fields such as `Player.capitalProvinceId`, `MinorNation.capitalProvinceId`, `Tribe.capitalProvinceId`, `ArmyMoveOrder.destinationProvinceId`, and `BuildCivilianOrder.spawnProvinceId`.
 
 ---
 
@@ -64,6 +66,10 @@ Province lookup **MUST** be by **full disambiguated id** (`regionId|localId`). R
   When the System attempts to perform the lookup  
   Then the System treats the request as a logic error and does not fall back to a default region, does not guess a region by name pattern, and does not silently resolve the identifier to a different region’s province.
 
+- Given a save payload where any province-referencing field stores an unprefixed local id (for example `p1` instead of `oldWorld|p1`)  
+  When the System deserializes game-state models  
+  Then the System fails load with an explicit validation error and does not auto-repair or infer a region prefix.
+
 
 ---
 
@@ -72,3 +78,7 @@ Province lookup **MUST** be by **full disambiguated id** (`regionId|localId`). R
 **Modules:** colonizethis_models (Game, WorldState, Province, Unit, Player, ProvinceId); colonizethis_logic province_lookup (getProvince, tryGetProvince, getProvinceByRegion, tryGetProvinceByRegion, resolveToFullProvinceId). Map and province identity in program layer: [map-data.md](../program/map-data.md).
 
 **Contract:** Lookup requires full disambiguated id or explicit (regionId, localId). No short-id resolution: `getProvince`, `tryGetProvince`, and `resolveToFullProvinceId` accept only prefixed ids (non-prefixed: getProvince/resolveToFullProvinceId throw, tryGetProvince returns null). Use prefixed id (`regionId|localId`) or `getProvinceByRegion`/`tryGetProvinceByRegion`. Resolution is region-scoped within the given region; the implementation does not search other regions.
+
+**ProvinceId helper strictness:** `ProvinceId.regionIdFrom` and `ProvinceId.localIdFrom` both require a prefixed province id (`regionId|localId`) and throw for non-prefixed input. Boundary adapters that legitimately start from local ids must derive full ids explicitly (for example with `ProvinceId.full`) before game-state lookup.
+
+**Save/load and topology alignment:** `ProvinceId.localSegmentFromStoredGameState` returns the local province id segment whether the stored value is prefixed or still a bare local id (legacy saves, topology node ids). Use it only in those boundary contexts—not for ambiguous runtime resolution.

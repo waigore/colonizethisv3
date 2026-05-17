@@ -5,21 +5,13 @@ import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
+import 'military_strength_test_support.dart';
+
 void main() {
   group('aggregateMilitaryStrengthForPlayer', () {
     test('returns 0 for empty army', () {
-      final game = Game(
-        id: 'g1',
-        worldState: WorldState(
-          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-          oldWorld: const RegionData(units: []),
-          newWorld: const RegionData(units: []),
-        ),
-        players: const [
-          Player(id: 'france', displayName: 'France', isHuman: true),
-        ],
-        minorNations: const [],
-        tribes: const [],
+      final game = militaryStrengthGame(
+        players: const [franceGreatPower],
       );
 
       final strength = aggregateMilitaryStrengthForPlayer(game, 'france');
@@ -27,40 +19,16 @@ void main() {
     });
 
     test('calculates strength for Great Power units with medals', () {
-      // Create a game with a Great Power (France) that has units
-      final game = Game(
-        id: 'g1',
-        worldState: WorldState(
-          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-          oldWorld: RegionData(
-            units: [
-              // Grenadiers: FPN=10, FPM=8, era=3, medals=2 -> multiplier=1.2
-              // Strength = (10+8) * 1.2 = 21.6
-              Unit(
-                id: 'u1',
-                type: 'grenadiers',
-                ownerId: 'france',
-                locationProvinceId: 'paris',
-                medals: 2,
-              ),
-              // Musketeers: FPN=7, FPM=2, era=2, medals=0 -> multiplier=1.0
-              // Strength = (7+2) * 1.0 = 9.0
-              Unit(
-                id: 'u2',
-                type: 'musketeers',
-                ownerId: 'france',
-                locationProvinceId: 'paris',
-                medals: 0,
-              ),
-            ],
-          ),
-          newWorld: const RegionData(units: []),
-        ),
-        players: const [
-          Player(id: 'france', displayName: 'France', isHuman: true),
+      // Grenadiers: FPN=10, FPM=8, era=3, medals=2 -> multiplier=1.2
+      // Strength = (10+8) * 1.2 = 21.6
+      // Musketeers: FPN=7, FPM=2, era=2, medals=0 -> multiplier=1.0
+      // Strength = (7+2) * 1.0 = 9.0
+      final game = militaryStrengthGame(
+        oldWorldUnits: [
+          testUnit(id: 'u1', type: 'grenadiers', medals: 2),
+          testUnit(id: 'u2', type: 'musketeers'),
         ],
-        minorNations: const [],
-        tribes: const [],
+        players: const [franceGreatPower],
       );
 
       final strength = aggregateMilitaryStrengthForPlayer(game, 'france');
@@ -69,26 +37,16 @@ void main() {
     });
 
     test('uses effective military level for Minor Nation', () {
-      // Minor Nations use their effectiveMilitaryLevel, not era 4
-      final game = Game(
-        id: 'g1',
-        worldState: WorldState(
-          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-          oldWorld: RegionData(
-            units: [
-              // Peasant levies: era=1, effectiveEra=1 (minor level) -> no downgrade
-              Unit(
-                id: 'u1',
-                type: 'peasant_levies',
-                ownerId: 'minor1',
-                locationProvinceId: 'p1',
-                medals: 0,
-              ),
-            ],
+      // Peasant levies: era=1, effectiveEra=1 (minor level) -> no downgrade
+      final game = militaryStrengthGame(
+        oldWorldUnits: [
+          testUnit(
+            id: 'u1',
+            type: 'peasant_levies',
+            ownerId: 'minor1',
+            locationProvinceId: 'p1',
           ),
-          newWorld: const RegionData(units: []),
-        ),
-        players: const [],
+        ],
         minorNations: const [
           MinorNation(
             id: 'minor1',
@@ -96,7 +54,6 @@ void main() {
             effectiveMilitaryLevel: 1,
           ),
         ],
-        tribes: const [],
       );
 
       final strength = aggregateMilitaryStrengthForPlayer(game, 'minor1');
@@ -106,26 +63,16 @@ void main() {
     });
 
     test('uses effective military level for Tribe', () {
-      final game = Game(
-        id: 'g1',
-        worldState: WorldState(
-          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-          oldWorld: RegionData(
-            units: [
-              // Cossacks: era=2, effectiveEra=1 (tribe level) -> should downgrade
-              Unit(
-                id: 'u1',
-                type: 'cossacks',
-                ownerId: 'tribe1',
-                locationProvinceId: 'p1',
-                medals: 0,
-              ),
-            ],
+      // Cossacks: era=2, effectiveEra=1 (tribe level) -> should downgrade
+      final game = militaryStrengthGame(
+        oldWorldUnits: [
+          testUnit(
+            id: 'u1',
+            type: 'cossacks',
+            ownerId: 'tribe1',
+            locationProvinceId: 'p1',
           ),
-          newWorld: const RegionData(units: []),
-        ),
-        players: const [],
-        minorNations: const [],
+        ],
         tribes: const [
           Tribe(
             id: 'tribe1',
@@ -142,69 +89,27 @@ void main() {
     });
 
     test('Great Power uses era 4 (does not downgrade era 3 units)', () {
-      final game = Game(
-        id: 'g1',
-        worldState: WorldState(
-          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-          oldWorld: RegionData(
-            units: [
-              // Grenadiers: era=3, GP uses era 4 so no downgrade
-              Unit(
-                id: 'u1',
-                type: 'grenadiers',
-                ownerId: 'france',
-                locationProvinceId: 'paris',
-                medals: 0,
-              ),
-            ],
-          ),
-          newWorld: const RegionData(units: []),
-        ),
-        players: const [
-          Player(id: 'france', displayName: 'France', isHuman: true),
+      // Grenadiers: era=3, GP uses era 4 so no downgrade
+      final game = militaryStrengthGame(
+        oldWorldUnits: [
+          testUnit(id: 'u1', type: 'grenadiers'),
         ],
-        minorNations: const [],
-        tribes: const [],
+        players: const [franceGreatPower],
       );
 
       final strength = aggregateMilitaryStrengthForPlayer(game, 'france');
-      // Grenadiers: FPN=10, FPM=8, era=3, era 4 effective -> no downgrade needed
-      // (since unit era < effective era)
+      // Grenadiers: FPN=10, FPM=8, era=3, era 4 effective -> no downgrade
       // Strength = (10+8) * 1.0 = 18.0
       expect(strength, equals(18.0));
     });
 
     test('skips units with unknown regiment types', () {
-      final game = Game(
-        id: 'g1',
-        worldState: WorldState(
-          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-          oldWorld: RegionData(
-            units: [
-              // Unknown type should be skipped
-              Unit(
-                id: 'u1',
-                type: 'unknown_unit_type',
-                ownerId: 'france',
-                locationProvinceId: 'paris',
-                medals: 0,
-              ),
-              Unit(
-                id: 'u2',
-                type: 'musketeers',
-                ownerId: 'france',
-                locationProvinceId: 'paris',
-                medals: 0,
-              ),
-            ],
-          ),
-          newWorld: const RegionData(units: []),
-        ),
-        players: const [
-          Player(id: 'france', displayName: 'France', isHuman: true),
+      final game = militaryStrengthGame(
+        oldWorldUnits: [
+          testUnit(id: 'u1', type: 'unknown_unit_type'),
+          testUnit(id: 'u2', type: 'musketeers'),
         ],
-        minorNations: const [],
-        tribes: const [],
+        players: const [franceGreatPower],
       );
 
       final strength = aggregateMilitaryStrengthForPlayer(game, 'france');
@@ -213,38 +118,18 @@ void main() {
     });
 
     test('aggregates units from both Old World and New World', () {
-      final game = Game(
-        id: 'g1',
-        worldState: WorldState(
-          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-          oldWorld: RegionData(
-            units: [
-              Unit(
-                id: 'u1',
-                type: 'musketeers',
-                ownerId: 'france',
-                locationProvinceId: 'paris',
-                medals: 0,
-              ),
-            ],
-          ),
-          newWorld: RegionData(
-            units: [
-              Unit(
-                id: 'u2',
-                type: 'musketeers',
-                ownerId: 'france',
-                locationProvinceId: 'new_york',
-                medals: 0,
-              ),
-            ],
-          ),
-        ),
-        players: const [
-          Player(id: 'france', displayName: 'France', isHuman: true),
+      final game = militaryStrengthGame(
+        oldWorldUnits: [
+          testUnit(id: 'u1', type: 'musketeers'),
         ],
-        minorNations: const [],
-        tribes: const [],
+        newWorldUnits: [
+          testUnit(
+            id: 'u2',
+            type: 'musketeers',
+            locationProvinceId: 'new_york',
+          ),
+        ],
+        players: const [franceGreatPower],
       );
 
       // 9.0 (OW: 7+2) + 9.0 (NW: 7+2) = 18.0
@@ -253,36 +138,20 @@ void main() {
     });
 
     test('only includes units owned by the specified player', () {
-      final game = Game(
-        id: 'g1',
-        worldState: WorldState(
-          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-          oldWorld: RegionData(
-            units: [
-              Unit(
-                id: 'u1',
-                type: 'musketeers',
-                ownerId: 'france',
-                locationProvinceId: 'paris',
-                medals: 0,
-              ),
-              Unit(
-                id: 'u2',
-                type: 'musketeers',
-                ownerId: 'prussia',
-                locationProvinceId: 'berlin',
-                medals: 0,
-              ),
-            ],
+      final game = militaryStrengthGame(
+        oldWorldUnits: [
+          testUnit(id: 'u1', type: 'musketeers'),
+          testUnit(
+            id: 'u2',
+            type: 'musketeers',
+            ownerId: 'prussia',
+            locationProvinceId: 'berlin',
           ),
-          newWorld: const RegionData(units: []),
-        ),
+        ],
         players: const [
-          Player(id: 'france', displayName: 'France', isHuman: true),
+          franceGreatPower,
           Player(id: 'prussia', displayName: 'Prussia', isHuman: false),
         ],
-        minorNations: const [],
-        tribes: const [],
       );
 
       // France's strength should only include their own units
@@ -296,69 +165,47 @@ void main() {
     });
 
     test('applies medal multiplier correctly (0-4 medals)', () {
-      final game = Game(
-        id: 'g1',
-        worldState: WorldState(
-          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-          oldWorld: RegionData(
-            units: [
-              // 0 medals: multiplier 1.0
-              Unit(
-                id: 'u0',
-                type: 'musketeers',
-                ownerId: 'france',
-                locationProvinceId: 'p0',
-                medals: 0,
-              ),
-              // 1 medal: multiplier 1.1
-              Unit(
-                id: 'u1',
-                type: 'musketeers',
-                ownerId: 'france',
-                locationProvinceId: 'p1',
-                medals: 1,
-              ),
-              // 2 medals: multiplier 1.2
-              Unit(
-                id: 'u2',
-                type: 'musketeers',
-                ownerId: 'france',
-                locationProvinceId: 'p2',
-                medals: 2,
-              ),
-              // 3 medals: multiplier 1.3
-              Unit(
-                id: 'u3',
-                type: 'musketeers',
-                ownerId: 'france',
-                locationProvinceId: 'p3',
-                medals: 3,
-              ),
-              // 4 medals: multiplier 1.4
-              Unit(
-                id: 'u4',
-                type: 'musketeers',
-                ownerId: 'france',
-                locationProvinceId: 'p4',
-                medals: 4,
-              ),
-              // 5+ medals: clamped to 4, multiplier 1.4
-              Unit(
-                id: 'u5',
-                type: 'musketeers',
-                ownerId: 'france',
-                locationProvinceId: 'p5',
-                medals: 10,
-              ),
-            ],
+      final game = militaryStrengthGame(
+        oldWorldUnits: [
+          // 0 medals: multiplier 1.0
+          testUnit(id: 'u0', type: 'musketeers', locationProvinceId: 'p0'),
+          // 1 medal: multiplier 1.1
+          testUnit(
+            id: 'u1',
+            type: 'musketeers',
+            locationProvinceId: 'p1',
+            medals: 1,
           ),
-          newWorld: const RegionData(units: []),
-        ),
-        players: const [
-          Player(id: 'france', displayName: 'France', isHuman: true),
+          // 2 medals: multiplier 1.2
+          testUnit(
+            id: 'u2',
+            type: 'musketeers',
+            locationProvinceId: 'p2',
+            medals: 2,
+          ),
+          // 3 medals: multiplier 1.3
+          testUnit(
+            id: 'u3',
+            type: 'musketeers',
+            locationProvinceId: 'p3',
+            medals: 3,
+          ),
+          // 4 medals: multiplier 1.4
+          testUnit(
+            id: 'u4',
+            type: 'musketeers',
+            locationProvinceId: 'p4',
+            medals: 4,
+          ),
+          // 5+ medals: clamped to 4, multiplier 1.4
+          testUnit(
+            id: 'u5',
+            type: 'musketeers',
+            locationProvinceId: 'p5',
+            medals: 10,
+          ),
         ],
-        minorNations: const [],
-        tribes: const [],
+        players: const [franceGreatPower],
       );
 
       final strength = aggregateMilitaryStrengthForPlayer(game, 'france');
@@ -374,28 +221,11 @@ void main() {
     });
 
     test('is deterministic - same inputs produce same output', () {
-      final game = Game(
-        id: 'g1',
-        worldState: WorldState(
-          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-          oldWorld: RegionData(
-            units: [
-              Unit(
-                id: 'u1',
-                type: 'grenadiers',
-                ownerId: 'france',
-                locationProvinceId: 'paris',
-                medals: 3,
-              ),
-            ],
-          ),
-          newWorld: const RegionData(units: []),
-        ),
-        players: const [
-          Player(id: 'france', displayName: 'France', isHuman: true),
+      final game = militaryStrengthGame(
+        oldWorldUnits: [
+          testUnit(id: 'u1', type: 'grenadiers', medals: 3),
         ],
-        minorNations: const [],
-        tribes: const [],
+        players: const [franceGreatPower],
       );
 
       final strength1 = aggregateMilitaryStrengthForPlayer(game, 'france');
@@ -407,18 +237,8 @@ void main() {
     });
 
     test('returns non-negative value', () {
-      final game = Game(
-        id: 'g1',
-        worldState: WorldState(
-          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-          oldWorld: const RegionData(units: []),
-          newWorld: const RegionData(units: []),
-        ),
-        players: const [
-          Player(id: 'france', displayName: 'France', isHuman: true),
-        ],
-        minorNations: const [],
-        tribes: const [],
+      final game = militaryStrengthGame(
+        players: const [franceGreatPower],
       );
 
       final strength = aggregateMilitaryStrengthForPlayer(game, 'france');
@@ -429,20 +249,8 @@ void main() {
   group('aggregateStrength', () {
     test('aggregates strength for a list of units', () {
       final units = [
-        Unit(
-          id: 'u1',
-          type: 'musketeers',
-          ownerId: 'france',
-          locationProvinceId: 'p1',
-          medals: 0,
-        ),
-        Unit(
-          id: 'u2',
-          type: 'grenadiers',
-          ownerId: 'france',
-          locationProvinceId: 'p2',
-          medals: 0,
-        ),
+        testUnit(id: 'u1', type: 'musketeers', locationProvinceId: 'p1'),
+        testUnit(id: 'u2', type: 'grenadiers', locationProvinceId: 'p2'),
       ];
 
       // Musketeers: (7+2) * 1.0 = 9.0
@@ -455,13 +263,7 @@ void main() {
     test('downgrades units when era exceeds effective era', () {
       final units = [
         // Grenadiers era=3, effectiveEra=1 -> should downgrade to era 1 equivalent
-        Unit(
-          id: 'u1',
-          type: 'grenadiers',
-          ownerId: 'france',
-          locationProvinceId: 'p1',
-          medals: 0,
-        ),
+        testUnit(id: 'u1', type: 'grenadiers', locationProvinceId: 'p1'),
       ];
 
       // With effectiveEra=1, grenadiers (era 3) should downgrade to era 1 in same category
@@ -474,32 +276,15 @@ void main() {
 
   group('effectiveEraForFaction', () {
     test('returns 4 for Great Power', () {
-      final game = Game(
-        id: 'g1',
-        worldState: WorldState(
-          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-          oldWorld: const RegionData(),
-          newWorld: const RegionData(),
-        ),
-        players: const [
-          Player(id: 'france', displayName: 'France', isHuman: true),
-        ],
-        minorNations: const [],
-        tribes: const [],
+      final game = militaryStrengthGame(
+        players: const [franceGreatPower],
       );
 
       expect(effectiveEraForFaction(game, 'france'), equals(4));
     });
 
     test('returns effectiveMilitaryLevel for Minor Nation', () {
-      final game = Game(
-        id: 'g1',
-        worldState: WorldState(
-          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-          oldWorld: const RegionData(),
-          newWorld: const RegionData(),
-        ),
-        players: const [],
+      final game = militaryStrengthGame(
         minorNations: const [
           MinorNation(
             id: 'minor1',
@@ -507,22 +292,13 @@ void main() {
             effectiveMilitaryLevel: 2,
           ),
         ],
-        tribes: const [],
       );
 
       expect(effectiveEraForFaction(game, 'minor1'), equals(2));
     });
 
     test('returns effectiveMilitaryLevel for Tribe (capped at 1 in-game)', () {
-      final game = Game(
-        id: 'g1',
-        worldState: WorldState(
-          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-          oldWorld: const RegionData(),
-          newWorld: const RegionData(),
-        ),
-        players: const [],
-        minorNations: const [],
+      final game = militaryStrengthGame(
         tribes: const [
           Tribe(
             id: 'tribe1',
@@ -536,17 +312,7 @@ void main() {
     });
 
     test('returns 4 for unknown faction', () {
-      final game = Game(
-        id: 'g1',
-        worldState: WorldState(
-          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-          oldWorld: const RegionData(),
-          newWorld: const RegionData(),
-        ),
-        players: const [],
-        minorNations: const [],
-        tribes: const [],
-      );
+      final game = militaryStrengthGame();
 
       expect(effectiveEraForFaction(game, 'unknown'), equals(4));
     });

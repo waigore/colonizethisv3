@@ -87,21 +87,15 @@ void main() {
         ],
       );
 
-      ws = applyArmyMoveOrdersToRegion(
-        ws,
-        topology,
-        {
-          playerId: [
-            const ArmyMoveOrder(
-              armyId: 'afield',
-              destinationProvinceId: p2,
-            ),
-          ],
-        },
-        regionId: 'oldWorld',
-      );
+      ws = applyArmyMoveOrdersToRegion(ws, topology, {
+        playerId: [
+          const ArmyMoveOrder(armyId: 'afield', destinationProvinceId: p2),
+        ],
+      }, regionId: 'oldWorld');
 
-      final moved = ws.oldWorld.units.where((u) => u.id == 'r1' || u.id == 'r2').toList();
+      final moved = ws.oldWorld.units
+          .where((u) => u.id == 'r1' || u.id == 'r2')
+          .toList();
       expect(moved.every((u) => u.locationProvinceId == p2), isTrue);
       final army = ws.armies.where((a) => a.id == 'afield').single;
       expect(army.stationedProvinceId, p2);
@@ -155,288 +149,92 @@ void main() {
         ],
       );
 
-      ws = applyArmyMoveOrdersToRegion(
-        ws,
-        topology,
-        {
-          playerId: [
-            ArmyMoveOrder(
-              armyId: hid,
-              destinationProvinceId: p2,
-            ),
-          ],
-        },
-        regionId: 'oldWorld',
-      );
+      ws = applyArmyMoveOrdersToRegion(ws, topology, {
+        playerId: [ArmyMoveOrder(armyId: hid, destinationProvinceId: p2)],
+      }, regionId: 'oldWorld');
 
       expect(ws.oldWorld.units.single.locationProvinceId, cap);
       expect(ws.armies.single.stationedProvinceId, cap);
     });
-  });
 
-  group('applyArmyCombine and applyArmySplit', () {
-    test('combine merges two armies in same province', () {
-      const p = 'oldWorld|p1';
-      const playerId = 'gp1';
-      var game = Game(
-        id: 'g',
-        worldState: WorldState(
-          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-          oldWorld: RegionData(
-            provinces: [Province(id: p, regionId: 'oldWorld', ownerId: playerId)],
-            units: const [],
-          ),
-          newWorld: const RegionData(),
-          armies: [
-            Army(
-              id: 'a1',
-              ownerId: playerId,
-              regionId: 'oldWorld',
-              stationedProvinceId: p,
-              regimentUnitIds: const ['u1'],
-              isHomeArmy: false,
+    test(
+      'cross-region army moves reuse updated army location between orders',
+      () {
+        const playerId = 'gp1';
+        const oldProvince = 'oldWorld|p1';
+        const newProvince = 'newWorld|n1';
+        final game = Game(
+          id: 'g',
+          worldState: WorldState(
+            turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+            oldWorld: RegionData(
+              provinces: const [
+                Province(
+                  id: oldProvince,
+                  regionId: 'oldWorld',
+                  ownerId: playerId,
+                ),
+              ],
+              units: [
+                Unit(
+                  id: 'r1',
+                  type: 'musketeers',
+                  ownerId: playerId,
+                  locationProvinceId: oldProvince,
+                ),
+              ],
             ),
-            Army(
-              id: 'a2',
-              ownerId: playerId,
-              regionId: 'oldWorld',
-              stationedProvinceId: p,
-              regimentUnitIds: const ['u2'],
-              isHomeArmy: false,
+            newWorld: const RegionData(
+              provinces: [
+                Province(
+                  id: newProvince,
+                  regionId: 'newWorld',
+                  ownerId: playerId,
+                ),
+              ],
             ),
-          ],
-        ),
-        players: [
-          Player(
-            id: playerId,
-            displayName: 'P',
-            capitalProvinceId: p,
-            isHuman: true,
-          ),
-        ],
-      );
-
-      game = applyArmyCombine(
-        game: game,
-        playerId: playerId,
-        armyIds: const ['a1', 'a2'],
-      );
-
-      expect(game.worldState.armies.length, 1);
-      expect(
-        game.worldState.armies.single.regimentUnitIds,
-        ['u1', 'u2'],
-      );
-    });
-
-    test('split moves subset to new army', () {
-      const p = 'oldWorld|p1';
-      const playerId = 'gp1';
-      var game = Game(
-        id: 'g',
-        worldState: WorldState(
-          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-          oldWorld: const RegionData(),
-          newWorld: const RegionData(),
-          armies: [
-            Army(
-              id: 'src',
-              ownerId: playerId,
-              regionId: 'oldWorld',
-              stationedProvinceId: p,
-              regimentUnitIds: const ['u1', 'u2', 'u3'],
-              isHomeArmy: false,
-            ),
-          ],
-          nextArmySeq: 5,
-        ),
-        players: [
-          Player(
-            id: playerId,
-            displayName: 'P',
-            capitalProvinceId: p,
-            isHuman: true,
-          ),
-        ],
-      );
-
-      game = applyArmySplit(
-        game: game,
-        playerId: playerId,
-        sourceArmyId: 'src',
-        unitIdsToMove: const ['u2'],
-      );
-
-      expect(game.worldState.armies.length, 2);
-      final src =
-          game.worldState.armies.where((a) => a.id == 'src').single;
-      final spun =
-          game.worldState.armies.where((a) => a.id != 'src').single;
-      expect(src.regimentUnitIds, ['u1', 'u3']);
-      expect(spun.regimentUnitIds, ['u2']);
-      expect(spun.stationedProvinceId, p);
-    });
-
-    test('split from home army moves all regiments to new army', () {
-      const p = 'oldWorld|p1';
-      const playerId = 'gp1';
-      var game = Game(
-        id: 'g',
-        worldState: WorldState(
-          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-          oldWorld: const RegionData(),
-          newWorld: const RegionData(),
-          armies: [
-            Army(
-              id: 'home_army',
-              ownerId: playerId,
-              regionId: 'oldWorld',
-              stationedProvinceId: p,
-              regimentUnitIds: const ['u1', 'u2'],
-              isHomeArmy: true,
-            ),
-          ],
-          nextArmySeq: 5,
-        ),
-        players: [
-          Player(
-            id: playerId,
-            displayName: 'P',
-            capitalProvinceId: p,
-            isHuman: true,
-          ),
-        ],
-      );
-
-      game = applyArmySplit(
-        game: game,
-        playerId: playerId,
-        sourceArmyId: 'home_army',
-        unitIdsToMove: const ['u1', 'u2'],
-      );
-
-      expect(game.worldState.armies.length, 2);
-      final home =
-          game.worldState.armies.where((a) => a.isHomeArmy).single;
-      final spun =
-          game.worldState.armies.where((a) => !a.isHomeArmy).single;
-      expect(home.regimentUnitIds, isEmpty);
-      expect(spun.regimentUnitIds, ['u1', 'u2']);
-      expect(spun.id, 'army_5');
-      expect(spun.stationedProvinceId, p);
-    });
-
-    test('split non-home with all regiments leaves state unchanged', () {
-      const p = 'oldWorld|p1';
-      const playerId = 'gp1';
-      var game = Game(
-        id: 'g',
-        worldState: WorldState(
-          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-          oldWorld: const RegionData(),
-          newWorld: const RegionData(),
-          armies: [
-            Army(
-              id: 'src',
-              ownerId: playerId,
-              regionId: 'oldWorld',
-              stationedProvinceId: p,
-              regimentUnitIds: const ['u1', 'u2'],
-              isHomeArmy: false,
-            ),
-          ],
-          nextArmySeq: 5,
-        ),
-        players: [
-          Player(
-            id: playerId,
-            displayName: 'P',
-            capitalProvinceId: p,
-            isHuman: true,
-          ),
-        ],
-      );
-
-      game = applyArmySplit(
-        game: game,
-        playerId: playerId,
-        sourceArmyId: 'src',
-        unitIdsToMove: const ['u1', 'u2'],
-      );
-
-      expect(game.worldState.armies.length, 1);
-      expect(game.worldState.armies.single.regimentUnitIds, ['u1', 'u2']);
-    });
-  });
-
-  group('ensureMilitaryArmiesForGame', () {
-    test('creates home army for player with capital', () {
-      const cap = 'oldWorld|cap';
-      const playerId = 'gp1';
-      final game = Game(
-        id: 'g',
-        worldState: WorldState(
-          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
-          oldWorld: RegionData(
-            provinces: [
-              Province(id: cap, regionId: 'oldWorld', ownerId: playerId),
+            armies: const [
+              Army(
+                id: 'field',
+                ownerId: playerId,
+                regionId: 'oldWorld',
+                stationedProvinceId: oldProvince,
+                regimentUnitIds: ['r1'],
+              ),
             ],
           ),
-          newWorld: const RegionData(),
-          armies: const [],
-        ),
-        players: [
-          Player(
-            id: playerId,
-            displayName: 'P',
-            capitalProvinceId: cap,
-            isHuman: true,
-          ),
-        ],
-      );
-
-      final next = ensureMilitaryArmiesForGame(game);
-      final hid = homeArmyIdFor(playerId);
-      expect(
-        next.worldState.armies.any((a) => a.id == hid && a.isHomeArmy),
-        isTrue,
-      );
-    });
-  });
-
-  group('reconcileArmiesAfterUnitsChanged', () {
-    test('drops dead regiment ids from armies', () {
-      const p = 'oldWorld|p1';
-      const playerId = 'gp1';
-      final game = Game(
-        id: 'g',
-        worldState: WorldState(
-          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-          oldWorld: const RegionData(units: []),
-          newWorld: const RegionData(),
-          armies: [
-            Army(
-              id: 'src',
-              ownerId: playerId,
-              regionId: 'oldWorld',
-              stationedProvinceId: p,
-              regimentUnitIds: const ['gone'],
-              isHomeArmy: false,
-            ),
+          players: const [
+            Player(id: playerId, displayName: 'P', isHuman: true),
           ],
-        ),
-        players: [
-          Player(
-            id: playerId,
-            displayName: 'P',
-            capitalProvinceId: p,
-            isHuman: true,
-          ),
-        ],
-      );
+        );
 
-      final ws = reconcileArmiesAfterUnitsChanged(game.worldState, game);
-      expect(ws.armies.where((a) => a.id == 'src'), isEmpty);
-    });
+        final result = applyCrossRegionArmyMovesWithinOwnedProvinces(
+          game: game,
+          worldState: game.worldState,
+          armyMoveOrdersByPlayerId: const {
+            playerId: [
+              ArmyMoveOrder(
+                armyId: 'field',
+                destinationProvinceId: newProvince,
+              ),
+              ArmyMoveOrder(
+                armyId: 'field',
+                destinationProvinceId: oldProvince,
+              ),
+            ],
+          },
+        );
+
+        expect(result.remainingArmyMoveOrdersByPlayerId, isEmpty);
+        expect(
+          result.worldState.armies.single.stationedProvinceId,
+          oldProvince,
+        );
+        expect(
+          result.worldState.oldWorld.units.single.locationProvinceId,
+          oldProvince,
+        );
+      },
+    );
   });
 }

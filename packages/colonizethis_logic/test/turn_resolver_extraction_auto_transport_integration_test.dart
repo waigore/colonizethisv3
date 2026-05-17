@@ -83,7 +83,7 @@ void main() {
           nwResourceGrid: nwGrid,
           nwImprovementLevel: 2,
           globalGameSeed: globalSeed,
-          techUnlocked: const {'cotton_planting': true, 'sugar_planting': true},
+          techUnlocked: const {kTechIdCottonPlanting: true, kTechIdSugarPlanting: true},
         );
         final topology = crossRegionSeaTopologyForExtractionTests();
 

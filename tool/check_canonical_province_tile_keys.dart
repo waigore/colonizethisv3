@@ -42,8 +42,8 @@ int runCheckCanonicalProvinceTileKeys(
   }
 
   logE(
-    'ERROR: Found non-canonical province-level WorkOrder targetTileKey values. '
-    'Use region|province|0|0 for explore/steal_tech/counter_spy.',
+    'ERROR: Found invalid province-level WorkOrder targetTileKey literals. '
+    'Use full tile keys (region|province|x|y) for explore/steal_tech/counter_spy.',
   );
   for (final v in violations) {
     logE('${v.path}:${v.line}:${v.column} ${v.message}');
@@ -131,8 +131,8 @@ class _CanonicalProvinceTileKeyVisitor extends RecursiveAstVisitor<void> {
     }
 
     final parts = targetTileKey.split('|');
-    final isCanonical = parts.length == 4 && parts[2] == '0' && parts[3] == '0';
-    if (!isCanonical) {
+    final hasValidShape = parts.length == 4;
+    if (!hasValidShape) {
       final location = unit.lineInfo.getLocation(anchor.offset);
       violations.add(
         CanonicalProvinceTileKeyViolation(
@@ -140,7 +140,7 @@ class _CanonicalProvinceTileKeyVisitor extends RecursiveAstVisitor<void> {
           line: location.lineNumber,
           column: location.columnNumber,
           message:
-              'Non-canonical targetTileKey "$targetTileKey" for province-level target "$target".',
+              'Invalid targetTileKey "$targetTileKey" for province-level target "$target"; expected region|province|x|y.',
         ),
       );
     }

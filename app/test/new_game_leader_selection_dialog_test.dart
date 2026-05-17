@@ -5,7 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:colonizethis_app/config/themes.dart';
 import 'package:colonizethis_app/features/shell/new_game_leader_selection_dialog.dart';
-import 'package:colonizethis_app/l10n/app_localizations.dart';
+import 'package:colonizethis_app/l10n/l10n.dart';
 import 'package:colonizethis_app/widgets/ct_dialog_shell.dart';
 import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
 import 'package:colonizethis_app/widgets/gp_default_map_color_swatch.dart';
@@ -28,7 +28,7 @@ void main() {
   });
 
   group('NewGameLeaderSelectionDialog', () {
-    Future<void> _ensureTapStart(WidgetTester tester) async {
+    Future<void> ensureTapStart(WidgetTester tester) async {
       final startButton = find.ancestor(
         of: find.text('Start'),
         matching: find.byType(CtNinePatchButton),
@@ -39,7 +39,7 @@ void main() {
       await tester.pumpAndSettle();
     }
 
-    Future<void> _ensureTapCancel(WidgetTester tester) async {
+    Future<void> ensureTapCancel(WidgetTester tester) async {
       final cancelButton = find.ancestor(
         of: find.text('Cancel'),
         matching: find.byType(CtNinePatchButton),
@@ -56,7 +56,6 @@ void main() {
       required void Function(
         List<String> orderedGreatPowerIds,
         Map<String, String> leaderVariantByGpId,
-        bool enforceFairGpOldWorldAssignment,
         int seed,
       )
       onConfirmed,
@@ -67,7 +66,7 @@ void main() {
       await tester.pumpWidget(
         MaterialApp(
           theme: AppThemes.colonial,
-          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          localizationsDelegates: AppLocalizationsBinding.localizationsDelegates,
           supportedLocales: AppLocalizations.supportedLocales,
           locale: const Locale('en'),
           home: Scaffold(
@@ -110,7 +109,7 @@ void main() {
     testWidgets('shows six GP colour swatches and default nation labels', (
       WidgetTester tester,
     ) async {
-      await pumpDialog(tester, onConfirmed: (_, _, _, _) {});
+      await pumpDialog(tester, onConfirmed: (_, _, _) {});
 
       expect(find.byType(GpDefaultMapColorSwatch), findsNWidgets(6));
       expect(find.text('England'), findsWidgets);
@@ -129,7 +128,7 @@ void main() {
         await pumpDialog(
           tester,
           surfaceSize: const Size(900, 1600),
-          onConfirmed: (_, _, _, _) {},
+          onConfirmed: (_, _, _) {},
         );
         await tester.pumpAndSettle();
 
@@ -158,7 +157,7 @@ void main() {
       await pumpDialog(
         tester,
         surfaceSize: const Size(520, 420),
-        onConfirmed: (_, _, _, _) {},
+        onConfirmed: (_, _, _) {},
       );
       await tester.pumpAndSettle();
 
@@ -181,26 +180,23 @@ void main() {
     ) async {
       List<String>? gotIds;
       Map<String, String>? gotLeaders;
-      bool? gotFair;
       int? gotSeed;
 
       await pumpDialog(
         tester,
-        onConfirmed: (ids, leaders, fair, seed) {
+        onConfirmed: (ids, leaders, seed) {
           gotIds = ids;
           gotLeaders = leaders;
-          gotFair = fair;
           gotSeed = seed;
         },
       );
 
-      await _ensureTapStart(tester);
+      await ensureTapStart(tester);
 
       expect(gotIds, GameSetupConfig.defaultConfig.selectedGreatPowerIds);
       expect(gotLeaders, isNotNull);
       expect(gotLeaders!.length, 6);
       expect(gotLeaders!['england'], 'queen_victoria');
-      expect(gotFair, isFalse);
       expect(gotSeed, 42);
     });
 
@@ -210,39 +206,16 @@ void main() {
       var confirmed = false;
       await pumpDialog(
         tester,
-        onConfirmed: (_, _, _, _) {
+        onConfirmed: (_, _, _) {
           confirmed = true;
         },
       );
 
-      await _ensureTapCancel(tester);
+      await ensureTapCancel(tester);
 
       expect(confirmed, isFalse);
       expect(find.text('New game — Setup'), findsNothing);
     });
-
-    testWidgets(
-      'Start passes enforceFairGpOldWorldAssignment when checkbox toggled',
-      (WidgetTester tester) async {
-        bool? gotFair;
-        await pumpDialog(
-          tester,
-          onConfirmed: (_, _, fair, _) {
-            gotFair = fair;
-          },
-        );
-
-        final checkbox = find.byType(Checkbox);
-        await tester.ensureVisible(checkbox);
-        await tester.pumpAndSettle();
-        await tester.tap(checkbox);
-        await tester.pumpAndSettle();
-
-        await _ensureTapStart(tester);
-
-        expect(gotFair, isTrue);
-      },
-    );
 
     testWidgets('changing slot 1 nation to Sweden updates order and leader', (
       WidgetTester tester,
@@ -252,7 +225,7 @@ void main() {
 
       await pumpDialog(
         tester,
-        onConfirmed: (ids, leaders, _, _) {
+        onConfirmed: (ids, leaders, _) {
           gotIds = ids;
           gotLeaders = leaders;
         },
@@ -263,7 +236,7 @@ void main() {
       await tester.tap(find.text('Sweden'));
       await tester.pumpAndSettle();
 
-      await _ensureTapStart(tester);
+      await ensureTapStart(tester);
 
       expect(gotIds, isNotNull);
       expect(gotIds!.first, 'sweden');
@@ -275,13 +248,13 @@ void main() {
       WidgetTester tester,
     ) async {
       int? gotSeed;
-      await pumpDialog(tester, onConfirmed: (_, _, _, s) => gotSeed = s);
+      await pumpDialog(tester, onConfirmed: (_, _, s) => gotSeed = s);
       final field = find.byType(TextField);
       await tester.ensureVisible(field);
       await tester.pumpAndSettle();
       await tester.enterText(field, '0');
       await tester.pump();
-      await _ensureTapStart(tester);
+      await ensureTapStart(tester);
       expect(gotSeed, 0);
     });
 
@@ -289,13 +262,13 @@ void main() {
       WidgetTester tester,
     ) async {
       int? gotSeed;
-      await pumpDialog(tester, onConfirmed: (_, _, _, s) => gotSeed = s);
+      await pumpDialog(tester, onConfirmed: (_, _, s) => gotSeed = s);
       final field = find.byType(TextField);
       await tester.ensureVisible(field);
       await tester.pumpAndSettle();
       await tester.enterText(field, '');
       await tester.pump();
-      await _ensureTapStart(tester);
+      await ensureTapStart(tester);
       expect(gotSeed, 42);
     });
   });

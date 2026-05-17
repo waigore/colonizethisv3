@@ -85,7 +85,6 @@ final mapViewDataProvider = Provider<InitGameMapViewData?>((ref) {
               visibility = TileVisibility.visible;
               break;
             case VisibilityLevel.fogged:
-            case VisibilityLevel.revealed:
               visibility = TileVisibility.fogged;
               break;
             case VisibilityLevel.unknown:
@@ -112,6 +111,10 @@ final mapViewDataProvider = Provider<InitGameMapViewData?>((ref) {
       final prospected =
           game.worldState.playerProspectedTiles[humanPlayer.id] ??
           const <String>{};
+      final provincesByFullId = {
+        for (final p in game.worldState.oldWorld.provinces) p.id: p,
+        for (final p in game.worldState.newWorld.provinces) p.id: p,
+      };
       for (final tileKey in connectivityForHuman.connected) {
         final parts = tileKey.split('|');
         if (parts.length != 4) {
@@ -146,6 +149,7 @@ final mapViewDataProvider = Provider<InitGameMapViewData?>((ref) {
             final player = game.playerById(id);
             return extractionCapForUnlocked(player?.techUnlocked);
           },
+          provincesByFullId: provincesByFullId,
         );
         if (contribution == null) {
           continue;

@@ -1,17 +1,71 @@
 // Tests for ProductionPanel. SPEC/ui/production-panel.md.
 
 import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'package:colonizethis_app/features/game/production_recipe_affordance.dart';
 import 'package:colonizethis_app/features/game/widgets/production_panel.dart';
+import 'package:colonizethis_app/l10n/l10n.dart';
 import 'package:colonizethis_app/widgets/ct_slider.dart';
 import 'package:colonizethis_app/widgets/resource_icon.dart';
 import 'package:colonizethis_app/widgets/strict_asset_icon.dart';
 import 'widget_test_pumps.dart';
 import 'production_panel_test_fixtures.dart';
+
+/// Holds allocation map in state so [ProductionPanel] rebuilds after each change
+/// (matches Riverpod-driven app behaviour; required for long-press repeat tests).
+class _ProductionPanelTestWrapper extends StatefulWidget {
+  const _ProductionPanelTestWrapper({
+    required this.displayGame,
+    required this.player,
+    required this.initialDesiredOutput,
+    required this.netDeltasByCommodity,
+    required this.onDesiredOutputChanged,
+    this.onOpenCommodityBreakdown,
+  });
+
+  final Game displayGame;
+  final Player player;
+  final Map<String, int> initialDesiredOutput;
+  final Map<String, int> netDeltasByCommodity;
+  final ValueChanged<Map<String, int>> onDesiredOutputChanged;
+  final VoidCallback? onOpenCommodityBreakdown;
+
+  @override
+  State<_ProductionPanelTestWrapper> createState() =>
+      _ProductionPanelTestWrapperState();
+}
+
+class _ProductionPanelTestWrapperState extends State<_ProductionPanelTestWrapper> {
+  late Map<String, int> _desiredOutput;
+
+  @override
+  void initState() {
+    super.initState();
+    _desiredOutput = Map<String, int>.from(widget.initialDesiredOutput);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return ProductionPanel(
+      game: widget.displayGame,
+      player: widget.player,
+      desiredOutputByRecipe: _desiredOutput,
+      netDeltasByCommodity: widget.netDeltasByCommodity,
+      onDesiredOutputChanged: (next) {
+        setState(() {
+          _desiredOutput = Map<String, int>.from(next);
+        });
+        widget.onDesiredOutputChanged(next);
+      },
+      onOpenCommodityBreakdown: widget.onOpenCommodityBreakdown,
+    );
+  }
+}
 
 void main() {
   suppressLogsForTests();
@@ -52,10 +106,10 @@ void main() {
         body: SizedBox(
           width: width,
           height: height,
-          child: ProductionPanel(
-            game: displayGame,
+          child: _ProductionPanelTestWrapper(
+            displayGame: displayGame,
             player: player,
-            desiredOutputByRecipe: desiredOutputByRecipe,
+            initialDesiredOutput: desiredOutputByRecipe,
             netDeltasByCommodity: netDeltasByCommodity,
             onDesiredOutputChanged: onDesiredOutputChanged ?? (_) {},
             onOpenCommodityBreakdown: onOpenCommodityBreakdown,
@@ -171,6 +225,172 @@ void main() {
       expect(lastOutput, isNotNull);
       expect(lastOutput!.isEmpty, isTrue);
     });
+
+    testWidgets('allocation increment tap adds one to first recipe', (
+      WidgetTester tester,
+    ) async {
+      Map<String, int>? lastOutput;
+      final firstId = ProductionRecipesCatalog.all.first.id;
+      await tester.pumpWidget(
+        buildPanel(
+          player: fullPlayer,
+          onDesiredOutputChanged: (next) => lastOutput = Map<String, int>.from(
+            next,
+          ),
+        ),
+      );
+      await pumpSettleCapped(tester);
+      final l10n = lookupAppLocalizations(const Locale('en'));
+      await tester.tap(
+        find
+            .bySemanticsLabel(l10n.production_allocationIncrementRecipe)
+            .first,
+      );
+      await pumpSyncFrames(tester);
+      expect(lastOutput, isNotNull);
+      expect(lastOutput![firstId], 1);
+    });
+
+    testWidgets('allocation decrement subtracts one for lumber recipe', (
+      WidgetTester tester,
+    ) async {
+      Map<String, int>? lastOutput;
+      const lumberId = 'lumber_from_timber';
+      final lumberIndex = ProductionRecipesCatalog.all.indexWhere(
+        (r) => r.id == lumberId,
+      );
+      expect(lumberIndex, greaterThanOrEqualTo(0));
+      final l10n = lookupAppLocalizations(const Locale('en'));
+      await tester.pumpWidget(
+        buildPanel(
+          player: fullPlayer,
+          desiredOutputByRecipe: const {lumberId: 3},
+          onDesiredOutputChanged: (next) => lastOutput = Map<String, int>.from(
+            next,
+          ),
+        ),
+      );
+      await pumpSettleCapped(tester);
+      await tester.tap(
+        find
+            .bySemanticsLabel(l10n.production_allocationDecrementRecipe)
+            .at(lumberIndex),
+      );
+      await pumpSyncFrames(tester);
+      expect(lastOutput, isNotNull);
+      expect(lastOutput![lumberId], 2);
+    });
+
+    testWidgets('allocation clear removes recipe key', (
+      WidgetTester tester,
+    ) async {
+      Map<String, int>? lastOutput;
+      const lumberId = 'lumber_from_timber';
+      final lumberIndex = ProductionRecipesCatalog.all.indexWhere(
+        (r) => r.id == lumberId,
+      );
+      final l10n = lookupAppLocalizations(const Locale('en'));
+      await tester.pumpWidget(
+        buildPanel(
+          player: fullPlayer,
+          desiredOutputByRecipe: const {lumberId: 4},
+          onDesiredOutputChanged: (next) => lastOutput = Map<String, int>.from(
+            next,
+          ),
+        ),
+      );
+      await pumpSettleCapped(tester);
+      await tester.tap(
+        find
+            .bySemanticsLabel(l10n.production_allocationClearRecipe)
+            .at(lumberIndex),
+      );
+      await pumpSyncFrames(tester);
+      expect(lastOutput, isNotNull);
+      expect(lastOutput!.containsKey(lumberId), isFalse);
+    });
+
+    testWidgets('allocation maximize sets lumber to current max', (
+      WidgetTester tester,
+    ) async {
+      Map<String, int>? lastOutput;
+      const lumberId = 'lumber_from_timber';
+      final lumberIndex = ProductionRecipesCatalog.all.indexWhere(
+        (r) => r.id == lumberId,
+      );
+      final l10n = lookupAppLocalizations(const Locale('en'));
+      await tester.pumpWidget(
+        buildPanel(
+          player: fullPlayer,
+          desiredOutputByRecipe: const {lumberId: 1},
+          onDesiredOutputChanged: (next) => lastOutput = Map<String, int>.from(
+            next,
+          ),
+        ),
+      );
+      await pumpSettleCapped(tester);
+      final displayGame = productionPanelTestGameFor(fullPlayer);
+      final regimentCounts = regimentTypeCountsForPlayer(
+        displayGame.worldState,
+        fullPlayer.id,
+      );
+      final shipCounts = shipTypeCountsForPlayer(
+        displayGame.worldState,
+        fullPlayer.id,
+      );
+      final effectiveLabour = effectiveLabourForWorkers(
+        workers: fullPlayer.workerPool,
+        stockpile: fullPlayer.stockpile,
+        regimentCountsById: regimentCounts,
+        shipCountsById: shipCounts,
+      );
+      final expectedMax = computeRecipeAffordance(
+        recipe: ProductionRecipesCatalog.byId[lumberId]!,
+        stockpile: fullPlayer.stockpile,
+        desiredOutputByRecipe: const {lumberId: 1},
+        effectiveLabour: effectiveLabour,
+      ).maxDesiredOutput;
+      await tester.tap(
+        find
+            .bySemanticsLabel(l10n.production_allocationMaximizeRecipe)
+            .at(lumberIndex),
+      );
+      await pumpSyncFrames(tester);
+      expect(lastOutput, isNotNull);
+      expect(lastOutput![lumberId], expectedMax);
+    });
+
+    testWidgets(
+      'allocation cross-row: lumber maxed disables cast iron increment',
+      (WidgetTester tester) async {
+        const castIronId = 'castIron_from_timber_iron_coal';
+        final castIronIndex = ProductionRecipesCatalog.all.indexWhere(
+          (r) => r.id == castIronId,
+        );
+        expect(castIronIndex, greaterThanOrEqualTo(0));
+        final l10n = lookupAppLocalizations(const Locale('en'));
+        await tester.pumpWidget(
+          buildPanel(
+            player: fullPlayer,
+            desiredOutputByRecipe: const {'lumber_from_timber': 50},
+          ),
+        );
+        await pumpSettleCapped(tester);
+        final before = tester
+            .widget<CtSlider>(find.byType(CtSlider).at(castIronIndex))
+            .value;
+        await tester.tap(
+          find
+              .bySemanticsLabel(l10n.production_allocationIncrementRecipe)
+              .at(castIronIndex),
+        );
+        await pumpSyncFrames(tester);
+        final after = tester
+            .widget<CtSlider>(find.byType(CtSlider).at(castIronIndex))
+            .value;
+        expect(after, before);
+      },
+    );
 
     testWidgets('Moving slider calls onDesiredOutputChanged', (
       WidgetTester tester,

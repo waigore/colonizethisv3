@@ -2,7 +2,7 @@
 // Run: dart tool/generate_tech_effect_l10n.dart
 // Then: cd app && flutter gen-l10n
 
-import 'package:colonizethis_app/l10n/app_localizations.dart';
+import 'package:colonizethis_app/l10n/l10n.dart';
 
 /// Resolves a tech effect line id from [tech_effect_summary.yaml] via [AppLocalizations].
 String lookupTechEffectSummaryLine(AppLocalizations l10n, String lineId) {

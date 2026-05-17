@@ -219,7 +219,7 @@ void main() {
         WorkOrderCompletedEvent(
           playerId: 'gp1',
           unitId: 'u1',
-          workTarget: 'build_road',
+          workTarget: kWorkTargetBuildRoad,
           targetTileKey: 'oldWorld|p1|3|4',
           provinceId: 'oldWorld|p1',
           turnNumber: 2,
@@ -231,7 +231,7 @@ void main() {
       final evt = received.first;
       expect(evt.playerId, 'gp1');
       expect(evt.unitId, 'u1');
-      expect(evt.workTarget, 'build_road');
+      expect(evt.workTarget, kWorkTargetBuildRoad);
       expect(evt.targetTileKey, 'oldWorld|p1|3|4');
       expect(evt.provinceId, 'oldWorld|p1');
       expect(evt.turnNumber, 2);

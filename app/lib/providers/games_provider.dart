@@ -69,46 +69,40 @@ final currentOrdersProvider = NotifierProvider<CurrentOrdersNotifier, Orders>(
   CurrentOrdersNotifier.new,
 );
 
-/// Available work targets per civilian unit (unitId → allowed target ids).
+/// Sorted work target ids for one civilian unit that have ≥1 valid tile
+/// (selected-unit availability). SPEC/program/order-suggestions.md (Refs #2133).
 ///
-/// **SPEC/program/order-suggestions.md** and **orders.md**: derived entirely from
-/// [suggestWorkOrders] in `colonizethis_logic` (including dev-exclusive tile
-/// reservations). The app does not compute exclusivity itself.
-final availableWorkTargetsProvider = Provider<Map<String, List<String>>>((ref) {
-  final game = ref.watch(currentGameProvider);
-  if (game == null) return {};
+/// The app must not use broad [suggestWorkOrders] for per-unit Assign hot paths.
+final availableWorkTargetIdsForUnitProvider =
+    Provider.family<List<String>, String>((ref, unitId) {
+      final game = ref.watch(currentGameProvider);
+      if (game == null) return const [];
 
-  final orders = ref.watch(currentOrdersProvider);
-  final service = ref.watch(gameServiceProvider);
-  final mapData = service.getMapData(game.id);
-  final topology = mapData?.combinedTopology ?? const MapTopology();
+      final orders = ref.watch(currentOrdersProvider);
+      final service = ref.watch(gameServiceProvider);
+      final mapData = service.getMapData(game.id);
+      final topology = mapData?.combinedTopology ?? const MapTopology();
 
-  final humanPlayerId = game.players.firstWhere((p) => p.isHuman).id;
-  final view = buildPlayerView(game, topology, humanPlayerId);
+      final humanPlayerId = game.players.firstWhere((p) => p.isHuman).id;
+      final view = buildPlayerView(game, topology, humanPlayerId);
 
-  final suggestions = suggestWorkOrders(
-    view,
-    game,
-    topology,
-    orders,
-    tileMapByRegion: mapData?.tileMapByRegion,
-  );
-
-  final byUnitId = <String, List<String>>{};
-  for (final order in suggestions) {
-    byUnitId.putIfAbsent(order.unitId, () => []).add(order.target);
-  }
-  return {
-    for (final e in byUnitId.entries) e.key: e.value.toSet().toList(),
-  };
-});
+      return getAvailableWorkTargetsForUnit(
+        view: view,
+        game: game,
+        topology: topology,
+        currentOrders: orders,
+        unitId: unitId,
+        tileMapByRegion: mapData?.tileMapByRegion,
+      ).availableWorkTargetIdsSorted();
+    });
 
 /// Tile keys reserved for the human player’s Builder/Engineer/Merchant
 /// exclusivity (in-progress work + pending dev-exclusive work orders).
 ///
 /// **SPEC/program/order-suggestions.md** § Dev-exclusive tile reservations.
 /// Exposed for UI/diagnostics; availability for assignment still flows from
-/// [availableWorkTargetsProvider] and [getValidWorkOrderTileKeysWithVisibility].
+/// [availableWorkTargetIdsForUnitProvider] and
+/// [getValidWorkOrderTileKeysWithVisibility].
 final devExclusiveReservedWorkTileKeysProvider = Provider<Set<String>>((ref) {
   final game = ref.watch(currentGameProvider);
   if (game == null) return {};
