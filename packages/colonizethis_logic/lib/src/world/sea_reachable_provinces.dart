@@ -1,3 +1,5 @@
+import 'dart:collection';
+
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
@@ -28,12 +30,12 @@ Set<String> reachableNonOwnedProvinceIdsViaSeas(
     }
   }
 
-  final queue = List<String>.from(owned);
+  final queue = Queue<String>.from(owned);
   final visited = Set<String>.from(owned);
   final invadable = <String>{};
 
   while (queue.isNotEmpty) {
-    final cur = queue.removeAt(0);
+    final cur = queue.removeFirst();
     for (final nb in adj[cur] ?? const <String>{}) {
       _visitSeaReachableNeighbor(
         nb: nb,
@@ -55,7 +57,7 @@ void _visitSeaReachableNeighbor({
   required PlayerView view,
   required String? regionIdFilter,
   required Set<String> visited,
-  required List<String> queue,
+  required Queue<String> queue,
   required Set<String> invadable,
 }) {
   if (visited.contains(nb)) return;
