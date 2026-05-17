@@ -18,6 +18,7 @@ import 'tile_map_distance_sentinels.dart';
 import 'tile_map_land_seed_contract.dart';
 import 'tile_map_grid_copy.dart';
 import 'tile_map_land_sentinel.dart';
+import 'tile_map_manhattan_distance_maps.dart';
 import 'tile_map_manhattan_distance_transform.dart';
 import 'tile_map_province_budget.dart';
 
