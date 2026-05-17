@@ -316,7 +316,7 @@ Paste the script output into the PR description for AC8–AC9 evidence.
 
 ## run_quality_gate_tests.sh (CI verification)
 
-Runs the same test and coverage steps as the GitHub Quality workflow (`.github/workflows/quality.yml`): **Wang incremental assets** (`python3 pytool/test_wang_incremental_assets_and_preview.py`; CI installs **`python3-pil`** via apt; locally install Pillow e.g. `python3 -m pip install pillow` or use your `pytool` venv), packages (Dart), app (Flutter) with **app widget coverage gate ≥ 80%** (applies to `lib/widgets/` only; see SPEC/program/test-logging.md), ctdev (Flutter), `run_observer_game` coverage gate, and logic/map/ai coverage. **Tool packages** and **sim_scenarios** are in the nightly gate — see **`tool/run_nightly_gate_tests.sh`** and [SPEC/program/test-logging.md](../SPEC/program/test-logging.md). Use this to verify the PR quality gate locally before pushing.
+Runs the same test and coverage steps as the GitHub Quality workflow (`.github/workflows/quality.yml`): **Wang incremental assets** (`python3 pytool/test_wang_incremental_assets_and_preview.py`; CI installs **`python3-pil`** via apt; locally install Pillow e.g. `python3 -m pip install pillow` or use your `pytool` venv), packages via **`tool/run_package_tests.sh`** (CI job **`package_tests`**), app (Flutter) with **app widget coverage gate ≥ 80%** (applies to `lib/widgets/` only; see SPEC/program/test-logging.md), ctdev (Flutter), `run_observer_game` coverage gate. **Tool packages** and **sim_scenarios** are in the nightly gate — see **`tool/run_nightly_gate_tests.sh`** and [SPEC/program/test-logging.md](../SPEC/program/test-logging.md). Use this to verify the PR quality gate locally before pushing.
 
 **Invocation**
 

@@ -22,12 +22,8 @@ fi
 (cd pytool && python3 test_wang_incremental_assets_and_preview.py)
 
 echo ""
-echo "=== Test packages (Dart) ==="
-for dir in packages/colonizethis_models packages/colonizethis_data packages/colonizethis_save packages/colonizethis_logic packages/colonizethis_ai packages/colonizethis_map; do
-  [ -d "$dir/test" ] || continue
-  (cd "$dir" && dart test --coverage=coverage -j 4 --reporter=compact)
-  (cd "$dir" && dart run coverage:format_coverage --lcov -i coverage -o coverage/lcov.info --report-on=lib --package=.)
-done
+echo "=== Package tests (colonizethis; CI: package_tests job) ==="
+PACKAGE_TEST_JOBS=4 tool/run_package_tests.sh
 
 echo ""
 echo "=== Workspace analyze (errors only; includes test/ + integration_test/; CI: quality job) ==="
@@ -66,10 +62,6 @@ echo "=== Test run_observer_game (Dart, coverage) ==="
 echo ""
 echo "=== Coverage gate (run_observer_game lib >= 80%) ==="
 "$ROOT/tool/check_coverage_threshold.sh" 80 tool/run_observer_game
-
-echo ""
-echo "=== Coverage gate (logic/map/ai >= 90%) ==="
-"$ROOT/tool/check_coverage_threshold.sh" 90 packages/colonizethis_logic packages/colonizethis_map packages/colonizethis_ai
 
 echo ""
 echo "=== Nightly-only gates (skipped) ==="

@@ -47,11 +47,11 @@ Any package or app that has tests adds **colonizethis_test** as a **dev_dependen
 
 ## Verifying the quality gate
 
-The GitHub workflow **.github/workflows/quality.yml** runs PR checks (packages, app, ctdev, `run_observer_game` unit tests and coverage, repo lint, etc.) with `--reporter=compact` (pass/fail only). **Tool package tests** and **`melos run sim_scenarios`** run in **`.github/workflows/nightly.yml`** (daily **23:00 Asia/Hong_Kong**, `workflow_dispatch`); local parity: **`tool/run_nightly_gate_tests.sh`**. Refs #2509.
+The GitHub workflow **.github/workflows/quality.yml** runs PR checks in parallel jobs: **`package_tests`** (six `colonizethis_*` packages + package coverage gates via **`tool/run_package_tests.sh`**), **`quality`** (lint, analyze, checker tests, `run_observer_game` + observer coverage), and app test shards + **`quality_app_coverage`**. All use `--reporter=compact` (pass/fail only). **Tool package tests** and **`melos run sim_scenarios`** run in **`.github/workflows/nightly.yml`** (daily **23:00 Asia/Hong_Kong**, `workflow_dispatch`); local parity: **`tool/run_nightly_gate_tests.sh`**. Refs #2509.
 
 You can verify locally in either of these ways:
 
-1. **PR quality gate:** From the repo root, run **`tool/run_quality_gate_tests.sh`** (same scope as `quality.yml`; does not run tool packages or sim_scenarios). Requires `dart`, `flutter`, and `lcov`.
+1. **PR quality gate:** From the repo root, run **`tool/run_quality_gate_tests.sh`** (same scope as `quality.yml`; does not run tool packages or sim_scenarios). Package-only slice: **`tool/run_package_tests.sh`**. Requires `dart`, `flutter`, and `lcov`.
 2. **Nightly integration:** Run **`tool/run_nightly_gate_tests.sh`** (tool packages + sim_scenarios; observer campaign verify is a separate nightly job in the same workflow).
 3. **Run the workflow with act:** If [act](https://github.com/nektos/act) is installed, run `act pull_request -n` (dry run) or `act pull_request` to execute the Quality job locally.
 4. **Trigger CI:** Push to a branch and open a PR against `main` or `dev`; the Quality job runs on the push.
