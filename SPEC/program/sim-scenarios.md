@@ -15,7 +15,7 @@ Province ids in scenario JSON (setup units, order targets, assertion `province` 
 
 ## Responsibility
 
-Run composite integration tests that verify game systems work correctly together. Unlike unit tests, scenarios test the full pipeline: game initialization → turn resolution → state verification. Provides a tool for CI/testing workflows via `melos run sim_scenarios`.
+Run composite integration tests that verify game systems work correctly together. Unlike unit tests, scenarios test the full pipeline: game initialization → turn resolution → state verification. Provides a tool for CI/testing workflows via `melos run sim_scenarios`. **CI:** batch driver runs in **`.github/workflows/nightly.yml`** (not the PR `quality` workflow); local parity: **`tool/run_nightly_gate_tests.sh`**.
 
 ---
 

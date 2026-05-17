@@ -348,6 +348,127 @@ WorkOrder? _pickExplorerCandidateSet(
   return bestE;
 }
 
+int _buildImprovementWorkScore(WorkOrder w, Game game) {
+  if (w.target != kWorkTargetBuildImprovement) return 0;
+  final level = game.worldState.tileState.improvementLevel(w.targetTileKey);
+  if (level >= 1) return 1;
+  final resourceId = game.worldState.resourceByTileKey[w.targetTileKey];
+  if (resourceId == null || resourceId.isEmpty) return 2;
+  return 200;
+}
+
+WorkOrder? _bestBuildImprovementRow(List<WorkOrder> candidates, Game game) {
+  final improvements = candidates
+      .where((w) => w.target == kWorkTargetBuildImprovement)
+      .toList();
+  if (improvements.isEmpty) return null;
+  var best = improvements.first;
+  var bestScore = _buildImprovementWorkScore(best, game);
+  for (var i = 1; i < improvements.length; i++) {
+    final w = improvements[i];
+    final s = _buildImprovementWorkScore(w, game);
+    if (s > bestScore) {
+      bestScore = s;
+      best = w;
+      continue;
+    }
+    if (s == bestScore && _compareWorkOrderLex(w, best) < 0) {
+      best = w;
+    }
+  }
+  return best;
+}
+
+int _purchaseLandWorkScore(
+  WorkOrder w,
+  Game game,
+  DiplomacyFactionMembership factionMembership,
+) {
+  if (w.target != kWorkTargetPurchaseLand) return 0;
+  final provId = Unit.provinceIdFromTileKey(w.targetTileKey);
+  if (provId == null || provId.isEmpty) return 1;
+  if (ProvinceId.regionIdFrom(provId) == kNewWorldRegionId) {
+    final ownerId = tryGetProvince(game.worldState, provId)?.ownerId;
+    if (ownerId != null &&
+        isMinorOrTribe(game, ownerId, factionMembership: factionMembership)) {
+      return 240;
+    }
+    return 120;
+  }
+  return 60;
+}
+
+WorkOrder? _bestPurchaseLandRow(
+  List<WorkOrder> candidates,
+  Game game,
+  DiplomacyFactionMembership factionMembership,
+) {
+  final purchases =
+      candidates.where((w) => w.target == kWorkTargetPurchaseLand).toList();
+  if (purchases.isEmpty) return null;
+  var best = purchases.first;
+  var bestScore = _purchaseLandWorkScore(best, game, factionMembership);
+  for (var i = 1; i < purchases.length; i++) {
+    final w = purchases[i];
+    final s = _purchaseLandWorkScore(w, game, factionMembership);
+    if (s > bestScore) {
+      bestScore = s;
+      best = w;
+      continue;
+    }
+    if (s == bestScore && _compareWorkOrderLex(w, best) < 0) {
+      best = w;
+    }
+  }
+  return best;
+}
+
+void _appendBuilderPathResult({
+  required Unit? unit,
+  required List<WorkOrder> w,
+  required Game game,
+  required List<WorkOrder> workOrders,
+  required List<FullAiCivilianWorkIdle> idleEvents,
+}) {
+  final chosen = _bestBuildImprovementRow(w, game) ?? _pickLexicographic(w);
+  if (chosen != null) {
+    workOrders.add(chosen);
+    return;
+  }
+  if (unit == null) return;
+  idleEvents.add(
+    FullAiCivilianWorkIdle(
+      unitId: unit.id,
+      unitType: unit.type,
+      reason: 'no_suggestions',
+    ),
+  );
+}
+
+void _appendMerchantPathResult({
+  required Unit? unit,
+  required List<WorkOrder> w,
+  required Game game,
+  required DiplomacyFactionMembership factionMembership,
+  required List<WorkOrder> workOrders,
+  required List<FullAiCivilianWorkIdle> idleEvents,
+}) {
+  final chosen =
+      _bestPurchaseLandRow(w, game, factionMembership) ?? _pickLexicographic(w);
+  if (chosen != null) {
+    workOrders.add(chosen);
+    return;
+  }
+  if (unit == null) return;
+  idleEvents.add(
+    FullAiCivilianWorkIdle(
+      unitId: unit.id,
+      unitType: unit.type,
+      reason: 'no_suggestions',
+    ),
+  );
+}
+
 WorkOrder? _pickLexicographic(List<WorkOrder> w) {
   if (w.isEmpty) return null;
   final copy = List<WorkOrder>.from(w)..sort(_compareWorkOrderLex);
@@ -464,6 +585,29 @@ void _appendSelectionForUnitId({
       view: view,
       playerId: view.playerId,
       tileMapByRegion: tileMapByRegion,
+      factionMembership: factionMembership,
+      workOrders: workOrders,
+      idleEvents: idleEvents,
+    );
+    return;
+  }
+
+  if (unit != null && unit.type == kUnitTypeBuilder) {
+    _appendBuilderPathResult(
+      unit: unit,
+      w: W,
+      game: game,
+      workOrders: workOrders,
+      idleEvents: idleEvents,
+    );
+    return;
+  }
+
+  if (unit != null && isMerchantUnit(unit.type)) {
+    _appendMerchantPathResult(
+      unit: unit,
+      w: W,
+      game: game,
       factionMembership: factionMembership,
       workOrders: workOrders,
       idleEvents: idleEvents,

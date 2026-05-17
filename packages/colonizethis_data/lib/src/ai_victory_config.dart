@@ -7,6 +7,9 @@ const int kMilitaryVictoryOldWorldProvinceThreshold = 31;
 /// Region id for Old World provinces (prefixed `oldWorld|…`).
 const String kOldWorldRegionId = 'oldWorld';
 
+/// Region id for New World provinces (prefixed `newWorld|…`).
+const String kNewWorldRegionId = 'newWorld';
+
 /// Provinces still needed to reach military victory from [oldWorldOwned].
 int provincesToVictoryFromOldWorldOwned(int oldWorldOwned) {
   final gap =
@@ -118,3 +121,27 @@ const int kDefendBonusWhenAtWarAndFewHoldings = 45;
 
 /// Old World province count at or below which [kDefendBonusWhenFewOldWorldProvinces] applies.
 const int kFewOldWorldProvincesDefendThreshold = 6;
+
+/// Expand-goal bonus when invadable New World tribe/minor provinces exist.
+const int kColonialExpandBonusWhenInvadableNw = 18;
+
+/// Conquer-goal bonus for colonial pressure (below OW victory floors).
+const int kColonialConquerBonusWhenInvadableNw = 14;
+
+/// Declare-war bonus toward a tribe/minor that owns adjacent New World provinces.
+const int kDeclareWarColonialAdjacentTribeBonus = 40;
+
+/// Establish-overture bonus toward a preferred colonial tribe target.
+const int kEstablishOvertureColonialTribeBonus = 35;
+
+/// Conquest army-move bonus for New World invadable destinations.
+const int kConquestArmyMoveNwInvadableBonus = 18;
+
+/// Economy-domain weight boost for cargo preference when colonial targets exist.
+const int kColonialCargoPreferenceEconomyBoost = 28;
+
+/// Extra cargo boost when the GP owns no New World provinces yet.
+const int kColonialCargoPreferenceNoNwColoniesBoost = 12;
+
+/// Naval planner weight boost when New World invasion/colonization is viable.
+const int kColonialNavalWeightBonus = 22;

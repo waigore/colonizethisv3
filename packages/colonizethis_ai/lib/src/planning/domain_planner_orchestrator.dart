@@ -99,7 +99,9 @@ DomainPlannerOutcome runDomainPlannersWithOutcome({
       40 - (hasSpyWork ? getAgendaSpyOrderModifier(config.hiddenAgendaId) : 0);
   final runFullAiCivilianWork =
       primaryGoal == StrategicGoal.expand ||
-      domainWeights.economy >= workThreshold;
+      domainWeights.economy >= workThreshold ||
+      snapshot.colonial.invadableNewWorldProvinceIdsSorted.isNotEmpty ||
+      snapshot.colonial.adjacentNewWorldOwnerFactionIdsSorted.isNotEmpty;
   _log.d(
     'work eval nationId=$nationId workThreshold=$workThreshold '
     'domainWeights.economy=${domainWeights.economy} primaryGoal=$primaryGoal '
@@ -234,6 +236,7 @@ DomainPlannerOutcome runDomainPlannersWithOutcome({
     primaryGoal: primaryGoal,
     seeds: seeds,
     suggestionAPI: suggestionAPI,
+    colonial: snapshot.colonial,
   );
   emit('aiStageE');
 

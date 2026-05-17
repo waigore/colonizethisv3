@@ -66,6 +66,10 @@ Map<StrategicGoal, int> evaluateStrategicGoalScores(
   if (snapshot.conquest.invadableProvinceIdsSorted.isNotEmpty) {
     expand += kExpandBonusWhenInvadableProvinces;
   }
+  if (snapshot.colonial.invadableNewWorldProvinceIdsSorted.isNotEmpty) {
+    expand += kColonialExpandBonusWhenInvadableNw;
+    conquer += kColonialConquerBonusWhenInvadableNw;
+  }
   if (provincesToVictory > kConquerScoreFloorProvincesToVictoryThreshold &&
       conquer < kMinimumConquerScoreWhenFarFromVictory) {
     conquer = kMinimumConquerScoreWhenFarFromVictory;

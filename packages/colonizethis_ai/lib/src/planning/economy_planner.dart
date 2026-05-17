@@ -5,6 +5,7 @@ import 'package:colonizethis_ai/package_logger.dart';
 import 'package:colonizethis_logic/ai_api.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
+import '../perception/perception_snapshot.dart';
 import 'recipe_scoring.dart';
 
 final _log = packageLogger('economy_planner');
@@ -17,6 +18,7 @@ EconomyPlan runEconomyPlanner({
   required PlayerView view,
   required AIConfig config,
   required AISeedBundle seeds,
+  ColonialSummary colonial = const ColonialSummary(),
 }) {
   final player = game.playerById(view.playerId);
   if (player == null) {
@@ -44,7 +46,12 @@ EconomyPlan runEconomyPlanner({
   if (effectiveLabour <= 0) {
     return EconomyPlan(
       productionAssignments: [],
-      cargoPreference: _cargoPreference(game, view.playerId, config),
+      cargoPreference: _cargoPreference(
+        game,
+        view.playerId,
+        config,
+        colonial: colonial,
+      ),
     );
   }
 
@@ -56,7 +63,12 @@ EconomyPlan runEconomyPlanner({
     seeds: seeds,
   );
 
-  final cargoPref = _cargoPreference(game, view.playerId, config);
+  final cargoPref = _cargoPreference(
+    game,
+    view.playerId,
+    config,
+    colonial: colonial,
+  );
   _log.i(
     'economy plan playerId=${view.playerId} '
     'cargoPreference=$cargoPref productionAssignmentsCount=${assignments.length}',
@@ -67,11 +79,24 @@ EconomyPlan runEconomyPlanner({
   );
 }
 
-CargoPreference _cargoPreference(Game game, String playerId, AIConfig config) {
+CargoPreference _cargoPreference(
+  Game game,
+  String playerId,
+  AIConfig config, {
+  ColonialSummary colonial = const ColonialSummary(),
+}) {
   final domainWeights = getDomainWeightsForLeader(config.personalityId);
   final agendaId = config.hiddenAgendaId;
   // Trade-oriented agendas/personalities favour cargo.
-  final economyWeight = domainWeights.economy;
+  var economyWeight = domainWeights.economy;
+  if (colonial.invadableNewWorldProvinceIdsSorted.isNotEmpty ||
+      colonial.adjacentNewWorldOwnerFactionIdsSorted.isNotEmpty) {
+    economyWeight += kColonialCargoPreferenceEconomyBoost;
+  }
+  if (colonial.newWorldProvincesOwned == 0 &&
+      colonial.adjacentNewWorldOwnerFactionIdsSorted.isNotEmpty) {
+    economyWeight += kColonialCargoPreferenceNoNwColoniesBoost;
+  }
   if (economyWeight < 30) {
     _log.d('cargoPreference none economyWeight=$economyWeight');
     return CargoPreference.none;

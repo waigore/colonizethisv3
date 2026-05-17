@@ -7,6 +7,7 @@ import 'package:colonizethis_logic/order_suggestion_api.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'goal_manager.dart';
+import '../perception/perception_snapshot.dart';
 import '../util/orders_extensions.dart';
 
 final _log = packageLogger();
@@ -21,14 +22,19 @@ Orders runNavalPlanner({
   required StrategicGoal primaryGoal,
   required AISeedBundle seeds,
   required OrderSuggestionAPI suggestionAPI,
+  ColonialSummary colonial = const ColonialSummary(),
 }) {
   final domainWeights = getDomainWeightsForLeader(config.personalityId);
-  final weight =
+  var weight =
       primaryGoal == StrategicGoal.conquer ||
           primaryGoal == StrategicGoal.defend ||
           primaryGoal == StrategicGoal.expand
       ? domainWeights.military
       : 40;
+  if (colonial.invadableNewWorldProvinceIdsSorted.isNotEmpty ||
+      colonial.adjacentNewWorldOwnerFactionIdsSorted.isNotEmpty) {
+    weight += kColonialNavalWeightBonus;
+  }
   if (weight < 25) {
     _log.d('naval skipped nationId=$nationId weight=$weight < 25');
     return orders;
