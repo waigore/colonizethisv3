@@ -1,136 +1,111 @@
-import 'package:colonizethis_ai/package_logger.dart';
-import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:colonizethis_logic/ai_api.dart';
 import 'package:colonizethis_logic/order_suggestion_api.dart';
-import 'package:colonizethis_models/colonizethis_models.dart';
 
+import 'candidate_selector.dart';
 import 'goal_manager.dart';
-import '../util/ai_random_utils.dart';
+import 'planner_context.dart';
+import 'planning_imports.dart';
 import '../util/orders_extensions.dart';
 
 final _log = packageLogger();
 
-Orders runMovePlanner({
-  required String nationId,
-  required PlayerView view,
-  required Game game,
-  required MapTopology topology,
-  required Orders orders,
-  required AIConfig config,
-  required StrategicGoal primaryGoal,
-  required AISeedBundle seeds,
-  required OrderSuggestionAPI suggestionAPI,
-}) {
-  final moveCandidates = suggestionAPI.suggestMoveOrders(
-    view,
-    game,
-    topology,
-    orders,
+Orders runMovePlanner({required PlannerContext ctx}) {
+  final moveCandidates = ctx.suggestionAPI.suggestMoveOrders(
+    ctx.view,
+    ctx.game,
+    ctx.topology,
+    ctx.orders,
   );
-  if (moveCandidates.isEmpty) return orders;
-  final filtered = filterMoveOrdersByDiplomacy(game, nationId, moveCandidates);
-  if (filtered.isEmpty) return orders;
-  final domainWeights = getDomainWeightsForLeader(config.personalityId);
-  final weight =
-      primaryGoal == StrategicGoal.conquer ||
-          primaryGoal == StrategicGoal.defend
-      ? domainWeights.military
-      : primaryGoal == StrategicGoal.expand
-      ? domainWeights.economy
-      : 50;
+  if (moveCandidates.isEmpty) return ctx.orders;
+  final filtered = filterMoveOrdersByDiplomacy(
+    ctx.game,
+    ctx.nationId,
+    moveCandidates,
+  );
+  if (filtered.isEmpty) return ctx.orders;
+  final weight = ctx.resolveWeightForDomain();
   _log.d(
-    'move eval nationId=$nationId weight=$weight '
+    'move eval nationId=${ctx.nationId} weight=$weight '
     'filteredCount=${filtered.length}',
   );
   if (weight < 20) {
-    _log.d('move skipped nationId=$nationId weight < 20');
-    return orders;
+    _log.d('move skipped nationId=${ctx.nationId} weight < 20');
+    return ctx.orders;
   }
-  final provinceOwner = getProvinceOwnerMap(game);
-  final scores = filtered.map((m) {
-    final destProv = Unit.provinceIdFromTileKey(m.destinationTileKey);
-    final destOwner = destProv != null ? provinceOwner[destProv] : null;
-    if (destOwner == null || destOwner == nationId) return 1.0;
-    final rel = getRelation(game, nationId, destOwner);
-    final atWar = rel != null && rel.atWar;
-    return 1.0 + (atWar ? kMovePreferEnemyTerritoryBonus.toDouble() : 0);
-  }).toList();
-  _log.d('move scores nationId=$nationId scores=$scores');
-  final idx = pickWeightedIndex(scores, seeds.militarySeed);
-  if (idx == null) return orders;
-  final selected = [filtered[idx]];
-  _log.i(
-    'move chosen nationId=$nationId '
-    'unitId=${selected.first.unitId} destinationTileKey=${selected.first.destinationTileKey}',
+  final provinceOwner = ctx.provinceOwner;
+  final selected = selectWeightedCandidate<MoveOrder>(
+    candidates: filtered,
+    scorer: (list) => list.map((m) {
+      final destProv = Unit.provinceIdFromTileKey(m.destinationTileKey);
+      final destOwner = destProv != null ? provinceOwner[destProv] : null;
+      if (destOwner == null || destOwner == ctx.nationId) return 1.0;
+      final rel = getRelation(ctx.game, ctx.nationId, destOwner);
+      final atWar = rel != null && rel.atWar;
+      return 1.0 + (atWar ? kMovePreferEnemyTerritoryBonus.toDouble() : 0);
+    }).toList(),
+    seed: ctx.seeds.militarySeed,
   );
-  return orders.appendMoveOrders(nationId, selected);
+  if (selected == null) return ctx.orders;
+  _log.i(
+    'move chosen nationId=${ctx.nationId} '
+    'unitId=${selected.unitId} destinationTileKey=${selected.destinationTileKey}',
+  );
+  return ctx.orders.appendMoveOrders(ctx.nationId, [selected]);
 }
 
 Orders runArmyMovePlanner({
-  required String nationId,
-  required PlayerView view,
-  required Game game,
-  required MapTopology topology,
-  required Orders orders,
-  required AIConfig config,
-  required StrategicGoal primaryGoal,
-  required AISeedBundle seeds,
-  required OrderSuggestionAPI suggestionAPI,
+  required PlannerContext ctx,
   int provincesToVictory = 0,
 }) {
-  final armyMoveCandidates = suggestionAPI.suggestArmyMoveOrders(
-    view,
-    game,
-    topology,
-    orders,
+  final armyMoveCandidates = ctx.suggestionAPI.suggestArmyMoveOrders(
+    ctx.view,
+    ctx.game,
+    ctx.topology,
+    ctx.orders,
   );
   if (armyMoveCandidates.isEmpty) {
-    _log.d('army move eval nationId=$nationId candidatesCount=0');
-    return orders;
+    _log.d('army move eval nationId=${ctx.nationId} candidatesCount=0');
+    return ctx.orders;
   }
   final filtered = filterArmyMoveOrdersByDiplomacy(
-    game,
-    nationId,
+    ctx.game,
+    ctx.nationId,
     armyMoveCandidates,
   );
   if (filtered.isEmpty) {
-    _log.d('army move filtered empty nationId=$nationId');
-    return orders;
+    _log.d('army move filtered empty nationId=${ctx.nationId}');
+    return ctx.orders;
   }
-  final domainWeights = getDomainWeightsForLeader(config.personalityId);
-  final weight =
-      primaryGoal == StrategicGoal.conquer ||
-          primaryGoal == StrategicGoal.defend
-      ? domainWeights.military
-      : primaryGoal == StrategicGoal.expand
-      ? domainWeights.economy
-      : 50;
+  final weight = ctx.resolveWeightForDomain();
   final minWeight =
-      primaryGoal == StrategicGoal.conquer || provincesToVictory > 10 ? 10 : 20;
+      ctx.primaryGoal == StrategicGoal.conquer || provincesToVictory > 10
+      ? 10
+      : 20;
   if (weight < minWeight) {
     _log.d(
-      'army move skipped nationId=$nationId weight=$weight < $minWeight',
+      'army move skipped nationId=${ctx.nationId} weight=$weight < $minWeight',
     );
-    return orders;
+    return ctx.orders;
   }
   _log.d(
-    'army move eval nationId=$nationId weight=$weight '
+    'army move eval nationId=${ctx.nationId} weight=$weight '
     'filteredCount=${filtered.length}',
   );
-  final provinceOwner = getProvinceOwnerMap(game);
-  final scores = filtered.map((m) {
-    final destOwner = provinceOwner[m.destinationProvinceId];
-    if (destOwner == null || destOwner == nationId) return 1.0;
-    final rel = getRelation(game, nationId, destOwner);
-    final atWar = rel != null && rel.atWar;
-    return 1.0 + (atWar ? kMovePreferEnemyTerritoryBonus.toDouble() : 0);
-  }).toList();
-  final idx = pickWeightedIndex(scores, seeds.militarySeed + 2000);
-  if (idx == null) return orders;
-  final selected = filtered[idx];
+  final provinceOwner = ctx.provinceOwner;
+  final selected = selectWeightedCandidate<ArmyMoveOrder>(
+    candidates: filtered,
+    scorer: (list) => list.map((m) {
+      final destOwner = provinceOwner[m.destinationProvinceId];
+      if (destOwner == null || destOwner == ctx.nationId) return 1.0;
+      final rel = getRelation(ctx.game, ctx.nationId, destOwner);
+      final atWar = rel != null && rel.atWar;
+      return 1.0 + (atWar ? kMovePreferEnemyTerritoryBonus.toDouble() : 0);
+    }).toList(),
+    seed: ctx.seeds.militarySeed + 2000,
+  );
+  if (selected == null) return ctx.orders;
   _log.i(
-    'army move chosen nationId=$nationId '
+    'army move chosen nationId=${ctx.nationId} '
     'armyId=${selected.armyId} destinationProvinceId=${selected.destinationProvinceId}',
   );
-  return applyArmyMoveOrderForPlayer(orders, nationId, selected);
+  return applyArmyMoveOrderForPlayer(ctx.orders, ctx.nationId, selected);
 }

@@ -26,6 +26,7 @@ import 'check_game_widgets_file_size.dart';
 import 'check_land_province_bucket_keys.dart';
 import 'check_logic_test_file_size.dart';
 import 'check_logic_dead_files.dart';
+import 'check_ai_planner_context.dart';
 import 'check_logic_dedup_logger.dart';
 import 'check_logic_all_provinces_sanctioned_calls.dart';
 import 'check_logic_dual_region_province_field_access.dart';
@@ -788,6 +789,8 @@ int? _tryRunDartRuleInProcess({
       return runCheckLogicDeadFiles(repoRoot);
     case 'repo.logic_dedup_logger':
       return runCheckLogicDedupLogger(repoRoot);
+    case 'repo.ai_planner_context':
+      return runCheckAiPlannerContext(repoRoot);
     case 'repo.app_hardcoded_ui_strings':
       return runCheckAppHardcodedUiStrings(repoRoot);
     case 'repo.app_no_duplicate_helpers':

@@ -40,6 +40,15 @@ class FullAIPlayerTraceResult {
     this.aiTraceSection,
   });
 
+  /// Wraps [StrategicOrderTraceResult] to avoid duplicating result/game/trace fields.
+  factory FullAIPlayerTraceResult.fromStrategicTrace(
+    StrategicOrderTraceResult traced,
+  ) => FullAIPlayerTraceResult(
+    result: traced.result,
+    game: traced.game,
+    aiTraceSection: traced.aiTraceSection,
+  );
+
   final StrategicOrderResult result;
   final Game game;
   final TurnTraceAiSection? aiTraceSection;
@@ -99,11 +108,7 @@ FullAIPlayerTraceResult generateOrdersForPlayerFullAIWithTrace(
     onMood: onMood,
     onStagedPlannerProgress: onStagedPlannerProgress,
   );
-  return FullAIPlayerTraceResult(
-    result: traced.result,
-    game: traced.game,
-    aiTraceSection: traced.aiTraceSection,
-  );
+  return FullAIPlayerTraceResult.fromStrategicTrace(traced);
 }
 
 /// Result of full-AI order generation for all AI GPs: merged orders and per-player economy plans.

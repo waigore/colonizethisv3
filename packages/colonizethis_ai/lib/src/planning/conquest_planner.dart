@@ -1,60 +1,46 @@
-import 'package:colonizethis_ai/package_logger.dart';
-import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:colonizethis_logic/ai_api.dart';
 import 'package:colonizethis_logic/order_suggestion_api.dart';
-import 'package:colonizethis_models/colonizethis_models.dart';
 
-import 'goal_manager.dart';
-import '../perception/perception_snapshot.dart';
+import 'candidate_selector.dart';
 import 'colonial_pressure.dart';
-import '../util/ai_random_utils.dart';
+import 'goal_manager.dart';
+import 'planner_context.dart';
+import 'planning_imports.dart';
 
 final _log = packageLogger();
 
 /// Invasion army moves after same-turn declare war. SPEC/ai/ai-architecture.md.
 Orders runConquestArmyMovePlanner({
-  required String nationId,
-  required PlayerView view,
-  required Game game,
-  required MapTopology topology,
-  required Orders orders,
-  required AIWorldSnapshot snapshot,
-  required AIConfig config,
-  required StrategicGoal primaryGoal,
-  required AISeedBundle seeds,
-  required OrderSuggestionAPI suggestionAPI,
+  required PlannerContext ctx,
   String? declaredWarTargetFactionId,
 }) {
-  final armyMoveCandidates = suggestionAPI.suggestArmyMoveOrders(
-    view,
-    game,
-    topology,
-    orders,
+  final snapshot = ctx.snapshot;
+  if (snapshot == null) {
+    _log.d('conquest army move nationId=${ctx.nationId} missing snapshot');
+    return ctx.orders;
+  }
+  final armyMoveCandidates = ctx.suggestionAPI.suggestArmyMoveOrders(
+    ctx.view,
+    ctx.game,
+    ctx.topology,
+    ctx.orders,
   );
   if (armyMoveCandidates.isEmpty) {
-    _log.d('conquest army move nationId=$nationId candidatesCount=0');
-    return orders;
+    _log.d('conquest army move nationId=${ctx.nationId} candidatesCount=0');
+    return ctx.orders;
   }
   final filtered = filterArmyMoveOrdersByDiplomacy(
-    game,
-    nationId,
+    ctx.game,
+    ctx.nationId,
     armyMoveCandidates,
-    draftOrders: orders,
+    draftOrders: ctx.orders,
   );
   if (filtered.isEmpty) {
-    _log.d('conquest army move filtered empty nationId=$nationId');
-    return orders;
+    _log.d('conquest army move filtered empty nationId=${ctx.nationId}');
+    return ctx.orders;
   }
-  final domainWeights = getDomainWeightsForLeader(config.personalityId);
-  var weight =
-      primaryGoal == StrategicGoal.conquer ||
-          primaryGoal == StrategicGoal.defend
-      ? domainWeights.military
-      : primaryGoal == StrategicGoal.expand
-      ? domainWeights.economy
-      : 50;
+  var weight = ctx.resolveWeightForDomain();
   final provincesToVictory = snapshot.conquest.provincesToVictory;
-  if (primaryGoal == StrategicGoal.conquer || provincesToVictory > 10) {
+  if (ctx.primaryGoal == StrategicGoal.conquer || provincesToVictory > 10) {
     weight = weight < 10 ? 10 : weight;
   }
   if (provincesToVictory > kConquerScoreFloorProvincesToVictoryThreshold &&
@@ -74,45 +60,47 @@ Orders runConquestArmyMovePlanner({
     weight = kConquestArmyMoveMinWeightWhenColonialPressure;
   }
   if (weight < 10) {
-    _log.d('conquest army move skipped nationId=$nationId weight=$weight');
-    return orders;
+    _log.d('conquest army move skipped nationId=${ctx.nationId} weight=$weight');
+    return ctx.orders;
   }
-  final provinceOwner = getProvinceOwnerMap(game);
+  final provinceOwner = ctx.provinceOwner;
   final invadable = {
     ...snapshot.conquest.invadableProvinceIdsSorted,
     ...snapshot.colonial.invadableNewWorldProvinceIdsSorted,
   };
-  final scores = filtered.map((m) {
-    final destOwner = provinceOwner[m.destinationProvinceId] ?? '';
-    var score = 1.0;
-    if (declaredWarTargetFactionId != null &&
-        destOwner == declaredWarTargetFactionId) {
-      score += 50;
-    } else {
-      final rel = getRelation(game, nationId, destOwner);
-      if (rel != null && rel.atWar) {
-        score += kMovePreferEnemyTerritoryBonus.toDouble();
+  final selected = selectWeightedCandidate<ArmyMoveOrder>(
+    candidates: filtered,
+    scorer: (list) => list.map((m) {
+      final destOwner = provinceOwner[m.destinationProvinceId] ?? '';
+      var score = 1.0;
+      if (declaredWarTargetFactionId != null &&
+          destOwner == declaredWarTargetFactionId) {
+        score += 50;
+      } else {
+        final rel = getRelation(ctx.game, ctx.nationId, destOwner);
+        if (rel != null && rel.atWar) {
+          score += kMovePreferEnemyTerritoryBonus.toDouble();
+        }
       }
-    }
-    if (invadable.contains(m.destinationProvinceId)) {
-      score += 10;
-    }
-    if (snapshot.colonial.invadableNewWorldProvinceIdsSorted
-        .contains(m.destinationProvinceId)) {
-      score += kConquestArmyMoveNwInvadableBonus;
-    }
-    if (snapshot.conquest.adjacentOwnerFactionIdsSorted.contains(destOwner)) {
-      score += 8;
-    }
-    return score;
-  }).toList();
-  final idx = pickWeightedIndex(scores, seeds.militarySeed + 4000);
-  if (idx == null) return orders;
-  final selected = filtered[idx];
+      if (invadable.contains(m.destinationProvinceId)) {
+        score += 10;
+      }
+      if (snapshot.colonial.invadableNewWorldProvinceIdsSorted
+          .contains(m.destinationProvinceId)) {
+        score += kConquestArmyMoveNwInvadableBonus;
+      }
+      if (snapshot.conquest.adjacentOwnerFactionIdsSorted.contains(destOwner)) {
+        score += 8;
+      }
+      return score;
+    }).toList(),
+    seed: ctx.seeds.militarySeed + 4000,
+  );
+  if (selected == null) return ctx.orders;
   _log.i(
-    'conquest army move chosen nationId=$nationId '
+    'conquest army move chosen nationId=${ctx.nationId} '
     'armyId=${selected.armyId} destinationProvinceId=${selected.destinationProvinceId} '
     'declaredWarTarget=$declaredWarTargetFactionId',
   );
-  return applyArmyMoveOrderForPlayer(orders, nationId, selected);
+  return applyArmyMoveOrderForPlayer(ctx.orders, ctx.nationId, selected);
 }

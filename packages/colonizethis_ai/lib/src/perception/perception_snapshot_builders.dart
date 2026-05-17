@@ -1,0 +1,315 @@
+import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:colonizethis_logic/ai_api.dart';
+import 'package:colonizethis_models/colonizethis_models.dart';
+
+import 'perception_topology.dart';
+import 'summary_models.dart';
+
+ThreatSummary buildThreatSummary(
+  PlayerView view,
+  MapTopology? topology,
+) {
+  final atWarWith = <String>[];
+  for (final e in view.diplomacyByOtherId.entries) {
+    final rel = e.value;
+    if (rel.state == RelationState.atWar) {
+      atWarWith.add(e.key);
+    }
+  }
+  if (topology == null) {
+    return ThreatSummary(atWarWith: atWarWith);
+  }
+  final ownedIds = <String>{};
+  for (final p in view.provincesById.entries) {
+    if (p.value.ownerId == view.playerId) ownedIds.add(p.key);
+  }
+  var neighborProvincesHostile = 0;
+  final neighborProvinceIds = neighborProvinceIdsFromTopology(
+    topology,
+    ownedIds,
+    view,
+  );
+  for (final neighborFullId in neighborProvinceIds) {
+    final prov = view.provincesById[neighborFullId];
+    if (prov == null) continue;
+    final ownerId = prov.ownerId;
+    if (ownerId == null || ownerId.isEmpty || ownerId == view.playerId) {
+      continue;
+    }
+    final rel = view.diplomacyByOtherId[ownerId];
+    if (rel != null && rel.state == RelationState.atWar) {
+      neighborProvincesHostile++;
+    }
+  }
+  var capitalThreatened = false;
+  final capitalId = view.player.capitalProvinceId;
+  if (capitalId != null &&
+      capitalId.isNotEmpty &&
+      ownedIds.contains(capitalId)) {
+    final capitalNeighbors = neighborProvinceIdsFromTopology(topology, {
+      capitalId,
+    }, view);
+    for (final neighborFullId in capitalNeighbors) {
+      final prov = view.provincesById[neighborFullId];
+      if (prov == null) continue;
+      final ownerId = prov.ownerId;
+      if (ownerId == null || ownerId.isEmpty || ownerId == view.playerId) {
+        continue;
+      }
+      final rel = view.diplomacyByOtherId[ownerId];
+      if (rel != null && rel.state == RelationState.atWar) {
+        capitalThreatened = true;
+        break;
+      }
+    }
+  }
+  return ThreatSummary(
+    atWarWith: atWarWith,
+    neighborProvincesHostile: neighborProvincesHostile,
+    capitalThreatened: capitalThreatened,
+  );
+}
+
+OpportunitySummary buildOpportunitySummary(
+  PlayerView view,
+  MapTopology? topology,
+) {
+  var unclaimed = 0;
+  var richUnexploited = 0;
+  for (final p in view.provincesById.values) {
+    if (p.ownerId == null || p.ownerId!.isEmpty) {
+      unclaimed++;
+      richUnexploited++;
+    } else if (p.ownerId != view.playerId && p.townDevelopmentLevel > 0) {
+      richUnexploited++;
+    }
+  }
+  final weakNeighbors = topology == null
+      ? <String>[]
+      : weakNeighborOwnerIds(view, topology);
+  return OpportunitySummary(
+    weakNeighbors: weakNeighbors,
+    richUnexploitedProvinces: richUnexploited,
+    unclaimedProvinces: unclaimed,
+  );
+}
+
+List<String> weakNeighborOwnerIds(
+  PlayerView view,
+  MapTopology topology,
+) {
+  final ownedIds = <String>{};
+  for (final p in view.provincesById.entries) {
+    if (p.value.ownerId == view.playerId) ownedIds.add(p.key);
+  }
+  final neighborIds = neighborProvinceIdsFromTopology(
+    topology,
+    ownedIds,
+    view,
+  );
+  final weakNeighbors = <String>[];
+  for (final fid in neighborIds) {
+    final prov = view.provincesById[fid];
+    if (prov == null) continue;
+    final ownerId = prov.ownerId;
+    if (ownerId == null || ownerId.isEmpty || ownerId == view.playerId) {
+      continue;
+    }
+    if (!weakNeighbors.contains(ownerId)) weakNeighbors.add(ownerId);
+  }
+  return weakNeighbors;
+}
+
+ConquestSummary buildConquestSummary(
+  PlayerView view,
+  MapTopology? topology,
+  ThreatSummary threats,
+  OpportunitySummary opportunities,
+) {
+  var oldWorldOwned = 0;
+  for (final p in view.provincesById.entries) {
+    if (p.value.ownerId != view.playerId) continue;
+    if (ProvinceId.regionIdFrom(p.key) != kOldWorldRegionId) continue;
+    oldWorldOwned++;
+  }
+  final provincesToVictory = provincesToVictoryFromOldWorldOwned(oldWorldOwned);
+  final invadable = topology == null
+      ? <String>[]
+      : invadableOldWorldProvinceIds(view, topology);
+  final adjacentOwners = topology == null
+      ? <String>[]
+      : adjacentOwnerFactionIdsSorted(view, topology);
+  final preferredTargets = <String>{
+    ...threats.atWarWith,
+    ...opportunities.weakNeighbors,
+    ...adjacentOwners,
+  }.toList()
+    ..sort();
+  return ConquestSummary(
+    oldWorldProvincesOwned: oldWorldOwned,
+    provincesToVictory: provincesToVictory,
+    invadableProvinceIdsSorted: invadable,
+    preferredConquestTargetFactionIdsSorted: preferredTargets,
+    adjacentOwnerFactionIdsSorted: adjacentOwners,
+  );
+}
+
+ColonialSummary buildColonialSummary(
+  PlayerView view,
+  MapTopology? topology,
+  ThreatSummary threats,
+  OpportunitySummary opportunities,
+) {
+  var nwOwned = 0;
+  for (final p in view.provincesById.entries) {
+    if (p.value.ownerId != view.playerId) continue;
+    if (ProvinceId.regionIdFrom(p.key) != kNewWorldRegionId) continue;
+    nwOwned++;
+  }
+  final invadable = topology == null
+      ? <String>[]
+      : invadableNewWorldProvinceIds(view, topology);
+  final adjacentOwners = <String>{};
+  for (final provId in invadable) {
+    final ownerId = view.provincesById[provId]?.ownerId;
+    if (ownerId == null || ownerId.isEmpty || ownerId == view.playerId) {
+      continue;
+    }
+    adjacentOwners.add(ownerId);
+  }
+  final adjacentOwnersSorted = adjacentOwners.toList()..sort();
+  final preferredTargets = <String>{
+    ...threats.atWarWith,
+    ...opportunities.weakNeighbors,
+    ...adjacentOwners,
+  }.toList()
+    ..sort();
+  return ColonialSummary(
+    newWorldProvincesOwned: nwOwned,
+    invadableNewWorldProvinceIdsSorted: invadable,
+    adjacentNewWorldOwnerFactionIdsSorted: adjacentOwnersSorted,
+    preferredColonialTargetFactionIdsSorted: preferredTargets,
+  );
+}
+
+List<String> adjacentOwnerFactionIdsSorted(
+  PlayerView view,
+  MapTopology topology,
+) {
+  return adjacentOwnerFactionIdsForRegion(
+    view,
+    topology,
+    kOldWorldRegionId,
+  );
+}
+
+List<String> adjacentOwnerFactionIdsForRegion(
+  PlayerView view,
+  MapTopology topology,
+  String regionId,
+) {
+  final anchorProvinces = <String>{};
+  for (final p in view.provincesById.entries) {
+    if (p.value.ownerId == view.playerId) {
+      anchorProvinces.add(p.key);
+    }
+  }
+  final neighbors = neighborProvinceIdsFromTopology(
+    topology,
+    anchorProvinces,
+    view,
+  );
+  final owners = <String>{};
+  for (final fullId in neighbors) {
+    if (ProvinceId.regionIdFrom(fullId) != regionId) continue;
+    final ownerId = view.provincesById[fullId]?.ownerId;
+    if (ownerId == null || ownerId.isEmpty || ownerId == view.playerId) {
+      continue;
+    }
+    owners.add(ownerId);
+  }
+  final sorted = owners.toList()..sort();
+  return sorted;
+}
+
+List<String> invadableOldWorldProvinceIds(
+  PlayerView view,
+  MapTopology topology,
+) {
+  return invadableProvinceIdsForRegion(view, topology, kOldWorldRegionId);
+}
+
+/// New World targets reachable via coastal seas and warp zones (not P–P only).
+List<String> invadableNewWorldProvinceIds(
+  PlayerView view,
+  MapTopology topology,
+) {
+  final anchorProvinces = <String>{};
+  for (final p in view.provincesById.entries) {
+    if (p.value.ownerId == view.playerId) {
+      anchorProvinces.add(p.key);
+    }
+  }
+  for (final u in view.ownUnits) {
+    final loc = u.locationProvinceId;
+    if (loc.isNotEmpty) anchorProvinces.add(loc);
+  }
+  final reachable = reachableNonOwnedProvinceIdsViaSeas(
+    topology,
+    anchorProvinces,
+    view,
+    regionIdFilter: kNewWorldRegionId,
+  );
+  final sorted = reachable.toList()..sort();
+  return sorted;
+}
+
+List<String> invadableProvinceIdsForRegion(
+  PlayerView view,
+  MapTopology topology,
+  String regionId,
+) {
+  final anchorProvinces = <String>{};
+  for (final p in view.provincesById.entries) {
+    if (p.value.ownerId == view.playerId) {
+      anchorProvinces.add(p.key);
+    }
+  }
+  for (final u in view.ownUnits) {
+    final loc = u.locationProvinceId;
+    if (loc.isNotEmpty) anchorProvinces.add(loc);
+  }
+  final neighbors = neighborProvinceIdsFromTopology(
+    topology,
+    anchorProvinces,
+    view,
+  );
+  final invadable = <String>[];
+  for (final fullId in neighbors) {
+    if (ProvinceId.regionIdFrom(fullId) != regionId) continue;
+    final prov = view.provincesById[fullId];
+    if (prov == null) continue;
+    final ownerId = prov.ownerId;
+    if (ownerId == null || ownerId.isEmpty || ownerId == view.playerId) {
+      continue;
+    }
+    invadable.add(fullId);
+  }
+  invadable.sort();
+  return invadable;
+}
+
+EconomySummary buildEconomySummary(PlayerView view) {
+  final p = view.player;
+  final workerCount = p.workerPool.totalWorkers;
+  final treasury = p.treasury;
+  var ownCount = 0;
+  for (final prov in view.provincesById.values) {
+    if (prov.ownerId == view.playerId) ownCount++;
+  }
+  return EconomySummary(
+    workerCount: workerCount,
+    treasury: treasury,
+    ownProvinceCount: ownCount,
+  );
+}

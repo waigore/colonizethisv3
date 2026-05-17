@@ -1,8 +1,9 @@
 import 'package:colonizethis_ai/src/planning/build_planner.dart';
 import 'package:colonizethis_ai/src/planning/goal_manager.dart';
-import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
+
+import 'planner_context_test_helper.dart';
 
 void main() {
   group('pickBuildOrder', () {
@@ -24,13 +25,16 @@ void main() {
         personalityId: 'napoleon',
         hiddenAgendaId: 'warmonger',
       );
+      final ctx = buildTestPlannerContext(
+        nationId: 'gp1',
+        config: config,
+        primaryGoal: StrategicGoal.conquer,
+      );
       final chosen = pickBuildOrder(
+        ctx: ctx,
         buildCandidates: candidates,
         cargoPreference: CargoPreference.none,
-        primaryGoal: StrategicGoal.conquer,
-        config: config,
         seed: 1,
-        nationId: 'gp1',
         provincesToVictory: 20,
       );
       expect(chosen?.unitType, 'grenadiers');
