@@ -100,7 +100,11 @@ New World province acquisition is a **supporting strategy** for the Old World mi
 
 **Military:** Conquest army-move pass scores destinations in `invadableNewWorldProvinceIdsSorted` with `kConquestArmyMoveNwInvadableBonus` in addition to OW invadable bonuses.
 
-**Economy / civilian:** Full AI Builder work selection prefers `build_improvement` on unimproved resource tiles (higher score when `improvementLevel` is 0 and the tile has a resource) before lexicographic fallback among other work targets.
+**Economy / civilian:** Full AI Builder work selection prefers `build_improvement` on unimproved resource tiles (higher score when `improvementLevel` is 0 and the tile has a resource) before lexicographic fallback among other work targets. Merchant units prefer `purchase_land` in `newWorld|` tribe/minor provinces via scored selection. Civilian work runs when colonial invadable or adjacent NW owners exist even if economy weight is below the default threshold.
+
+**Economy (cargo):** `runEconomyPlanner` boosts effective economy weight for `cargoPreference` when colonial targets exist (`kColonialCargoPreferenceEconomyBoost`; extra when the GP owns zero NW provinces).
+
+**Naval:** `runNavalPlanner` adds `kColonialNavalWeightBonus` to naval domain weight when colonial invasion/colonization targets are visible, favouring fleets that enable overseas access.
 
 **Observer gates (nightly):** Seed **42**, turn **150**: all `newWorld|` provinces GP-owned; **≥70%** of extractable GP resource tiles improved (level ≥ 1). See [run_observer_game-tool.md](../program/run_observer_game-tool.md). Turn **100** OW per-GP conquest gate unchanged.
 

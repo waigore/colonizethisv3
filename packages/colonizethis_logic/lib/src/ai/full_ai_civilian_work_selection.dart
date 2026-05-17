@@ -379,6 +379,50 @@ WorkOrder? _bestBuildImprovementRow(List<WorkOrder> candidates, Game game) {
   return best;
 }
 
+int _purchaseLandWorkScore(
+  WorkOrder w,
+  Game game,
+  DiplomacyFactionMembership factionMembership,
+) {
+  if (w.target != kWorkTargetPurchaseLand) return 0;
+  final provId = Unit.provinceIdFromTileKey(w.targetTileKey);
+  if (provId == null || provId.isEmpty) return 1;
+  if (ProvinceId.regionIdFrom(provId) == kNewWorldRegionId) {
+    final ownerId = tryGetProvince(game.worldState, provId)?.ownerId;
+    if (ownerId != null &&
+        isMinorOrTribe(game, ownerId, factionMembership: factionMembership)) {
+      return 240;
+    }
+    return 120;
+  }
+  return 60;
+}
+
+WorkOrder? _bestPurchaseLandRow(
+  List<WorkOrder> candidates,
+  Game game,
+  DiplomacyFactionMembership factionMembership,
+) {
+  final purchases =
+      candidates.where((w) => w.target == kWorkTargetPurchaseLand).toList();
+  if (purchases.isEmpty) return null;
+  var best = purchases.first;
+  var bestScore = _purchaseLandWorkScore(best, game, factionMembership);
+  for (var i = 1; i < purchases.length; i++) {
+    final w = purchases[i];
+    final s = _purchaseLandWorkScore(w, game, factionMembership);
+    if (s > bestScore) {
+      bestScore = s;
+      best = w;
+      continue;
+    }
+    if (s == bestScore && _compareWorkOrderLex(w, best) < 0) {
+      best = w;
+    }
+  }
+  return best;
+}
+
 void _appendBuilderPathResult({
   required Unit? unit,
   required List<WorkOrder> w,
@@ -387,6 +431,30 @@ void _appendBuilderPathResult({
   required List<FullAiCivilianWorkIdle> idleEvents,
 }) {
   final chosen = _bestBuildImprovementRow(w, game) ?? _pickLexicographic(w);
+  if (chosen != null) {
+    workOrders.add(chosen);
+    return;
+  }
+  if (unit == null) return;
+  idleEvents.add(
+    FullAiCivilianWorkIdle(
+      unitId: unit.id,
+      unitType: unit.type,
+      reason: 'no_suggestions',
+    ),
+  );
+}
+
+void _appendMerchantPathResult({
+  required Unit? unit,
+  required List<WorkOrder> w,
+  required Game game,
+  required DiplomacyFactionMembership factionMembership,
+  required List<WorkOrder> workOrders,
+  required List<FullAiCivilianWorkIdle> idleEvents,
+}) {
+  final chosen =
+      _bestPurchaseLandRow(w, game, factionMembership) ?? _pickLexicographic(w);
   if (chosen != null) {
     workOrders.add(chosen);
     return;
@@ -529,6 +597,18 @@ void _appendSelectionForUnitId({
       unit: unit,
       w: W,
       game: game,
+      workOrders: workOrders,
+      idleEvents: idleEvents,
+    );
+    return;
+  }
+
+  if (unit != null && isMerchantUnit(unit.type)) {
+    _appendMerchantPathResult(
+      unit: unit,
+      w: W,
+      game: game,
+      factionMembership: factionMembership,
       workOrders: workOrders,
       idleEvents: idleEvents,
     );
