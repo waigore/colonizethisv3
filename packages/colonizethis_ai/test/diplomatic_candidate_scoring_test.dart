@@ -738,5 +738,87 @@ void main() {
         expect(score, greaterThanOrEqualTo(kDeclareWarColonialAdjacentTribeBonus));
       },
     );
+
+    test(
+      'tribe owning sea-reachable NW outscores adjacent OW minor under colonial pressure',
+      () {
+        const snap = AIWorldSnapshot(
+          playerId: 'gp1',
+          threats: ThreatSummary(),
+          opportunities: OpportunitySummary(),
+          conquest: ConquestSummary(
+            oldWorldProvincesOwned: 7,
+            provincesToVictory: 24,
+            invadableProvinceIdsSorted: ['oldWorld|minor1'],
+            adjacentOwnerFactionIdsSorted: ['minor1'],
+          ),
+          colonial: ColonialSummary(
+            newWorldProvincesOwned: 0,
+            invadableNewWorldProvinceIdsSorted: ['newWorld|nw1'],
+            adjacentNewWorldOwnerFactionIdsSorted: ['tribe1'],
+          ),
+          economy: EconomySummary(),
+          relations: {},
+        );
+        final game = Game(
+          id: 'g-colonial-nw-tribe',
+          worldState: WorldState(
+            turnState: const TurnState(
+              phase: TurnPhase.orders,
+              turnNumber: 1,
+            ),
+            oldWorld: const RegionData(
+              provinces: [
+                Province(
+                  id: 'oldWorld|minor1',
+                  regionId: 'oldWorld',
+                  ownerId: 'minor1',
+                ),
+              ],
+            ),
+            newWorld: const RegionData(
+              provinces: [
+                Province(
+                  id: 'newWorld|nw1',
+                  regionId: 'newWorld',
+                  ownerId: 'tribe1',
+                ),
+              ],
+            ),
+          ),
+          players: const [
+            Player(id: 'gp1', displayName: 'A', isHuman: false),
+          ],
+          minorNations: const [
+            MinorNation(id: 'minor1', displayName: 'M1'),
+          ],
+          tribes: const [
+            Tribe(id: 'tribe1', displayName: 'T1'),
+          ],
+        );
+        const config = AIConfig(
+          leaderId: 'henry',
+          personalityId: 'henry',
+          hiddenAgendaId: 'merchant',
+        );
+        final scores = computeDiplomaticCandidateScores(
+          candidates: const [
+            DiplomaticOrder(
+              type: DiplomaticOrderType.declareWar,
+              targetFactionId: 'tribe1',
+            ),
+            DiplomaticOrder(
+              type: DiplomaticOrderType.declareWar,
+              targetFactionId: 'minor1',
+            ),
+          ],
+          nationId: 'gp1',
+          game: game,
+          snapshot: snap,
+          config: config,
+        );
+        expect(scores[0], greaterThan(scores[1]));
+      },
+    );
   });
 }
