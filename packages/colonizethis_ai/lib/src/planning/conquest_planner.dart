@@ -1,9 +1,5 @@
-import 'package:colonizethis_ai/package_logger.dart';
-import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:colonizethis_logic/ai_api.dart';
-import 'package:colonizethis_models/colonizethis_models.dart';
-
 import 'goal_manager.dart';
+import 'planning_imports.dart';
 import '../perception/perception_snapshot.dart';
 import 'colonial_pressure.dart';
 import 'planner_context.dart';

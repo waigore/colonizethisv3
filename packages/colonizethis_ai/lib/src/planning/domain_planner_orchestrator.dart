@@ -1,12 +1,9 @@
 import 'dart:math' as math;
 
-import 'package:colonizethis_ai/package_logger.dart';
-import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:colonizethis_logic/ai_api.dart';
 import 'package:colonizethis_logic/order_suggestion_api.dart';
-import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'colonial_pressure.dart';
+import 'planning_imports.dart';
 import 'goal_manager.dart';
 import '../perception/perception_snapshot.dart';
 import '../util/orders_extensions.dart';

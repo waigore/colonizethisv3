@@ -1,11 +1,8 @@
 /// Full Phase 6 AI order orchestration (delegates to strategic planners). SPEC/program/ai-planner.md.
 
-import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:colonizethis_logic/ai_api.dart';
 import 'package:colonizethis_logic/order_suggestion_api.dart';
-import 'package:colonizethis_models/colonizethis_models.dart';
 
-import 'package:colonizethis_ai/package_logger.dart';
+import 'planning_imports.dart';
 import 'strategic_ai.dart';
 
 final _log = packageLogger();
@@ -33,19 +30,9 @@ StrategicOrderResult generateOrdersForPlayerFullAI(
   ).result;
 }
 
-class FullAIPlayerTraceResult {
-  const FullAIPlayerTraceResult({
-    required this.result,
-    required this.game,
-    this.aiTraceSection,
-  });
+typedef FullAIPlayerTraceResult = StrategicOrderTraceResult;
 
-  final StrategicOrderResult result;
-  final Game game;
-  final TurnTraceAiSection? aiTraceSection;
-}
-
-FullAIPlayerTraceResult generateOrdersForPlayerFullAIWithTrace(
+StrategicOrderTraceResult generateOrdersForPlayerFullAIWithTrace(
   Game game,
   MapTopology topology,
   String playerId, {
@@ -57,7 +44,7 @@ FullAIPlayerTraceResult generateOrdersForPlayerFullAIWithTrace(
 }) {
   final player = game.playerById(playerId);
   if (player == null || !isAiControlled(game, player.id)) {
-    return FullAIPlayerTraceResult(
+    return StrategicOrderTraceResult(
       result: const StrategicOrderResult(
         orders: Orders(),
         economyPlan: EconomyPlan(
@@ -66,7 +53,6 @@ FullAIPlayerTraceResult generateOrdersForPlayerFullAIWithTrace(
         ),
       ),
       game: game,
-      aiTraceSection: null,
     );
   }
   final view = buildPlayerView(game, topology, playerId);
@@ -99,11 +85,7 @@ FullAIPlayerTraceResult generateOrdersForPlayerFullAIWithTrace(
     onMood: onMood,
     onStagedPlannerProgress: onStagedPlannerProgress,
   );
-  return FullAIPlayerTraceResult(
-    result: traced.result,
-    game: traced.game,
-    aiTraceSection: traced.aiTraceSection,
-  );
+  return traced;
 }
 
 /// Result of full-AI order generation for all AI GPs: merged orders and per-player economy plans.
