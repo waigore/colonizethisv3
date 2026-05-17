@@ -1,13 +1,30 @@
-name: Observer conquest nightly
+name: Nightly
 
+# 23:00 Asia/Hong_Kong daily (15:00 UTC). Refs #2509.
 on:
   schedule:
-    - cron: '0 4 * * 0'
+    - cron: '0 15 * * *'
   workflow_dispatch:
 
 jobs:
+  integration:
+    name: Tool packages + sim_scenarios
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup Dart
+        uses: dart-lang/setup-dart@v1
+        with:
+          sdk: '3.11.0'
+
+      - name: Run nightly integration gate
+        run: bash tool/run_nightly_integration_gate.sh
+
   observer_conquest_verify:
-    name: Full-AI 100-turn conquest verify (seed 42)
+    name: Full-AI conquest verify (seed 42)
     runs-on: ubuntu-latest
     timeout-minutes: 180
     steps:
@@ -33,3 +50,4 @@ jobs:
             --seed 42 \
             --max-turns 100 \
             --verify-conquest
+          # When --verify-colonial-expansion lands (#2509): --max-turns 150 and both flags.
