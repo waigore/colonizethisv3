@@ -44,9 +44,23 @@ The Flutter app may run **Full AI order generation**, **`mergeOrderLists`**, and
 
 ### Next-turn latency budget (usability)
 
-End-to-end **next turn** (confirm through worker completion and terminal result ready for UI apply) must meet the **hard 10-second** ceiling for good usability. Normative policy lives in the Cursor rule **`.cursor/rules/colonizethis-turn-resolution-budget.mdc`** (also listed in **`AGENTS.md`** and **`.cursor/rules/routing-index.md`**). That budget governs **performance and AI suggestion throughput** only: **TurnResolver phase outcomes, order legality, and merged resolution semantics** remain authoritative per this document and [order-engine.md](order-engine.md). Heuristic caps or caching inside **suggestion enumeration** (for example move/army-move probe limits) do not change validated turn resolution; any further work to stay under budget should prefer incremental validation, memoization, and bounded search while preserving determinism. Refs **#2277**.
+End-to-end **next turn** (confirm through worker completion and terminal result ready for UI apply) must meet the **hard 15-second** ceiling (`kTurnProcessingWallClockBudgetMs` in **colonizethis_data**) for good usability. Normative policy lives in the Cursor rule **`.cursor/rules/colonizethis-turn-resolution-budget.mdc`** (also listed in **`AGENTS.md`** and **`.cursor/rules/routing-index.md`**). That budget governs **performance and AI suggestion throughput** only: **TurnResolver phase outcomes, order legality, and merged resolution semantics** remain authoritative per this document and [order-engine.md](order-engine.md). Heuristic caps or caching inside **suggestion enumeration** (for example move/army-move probe limits) do not change validated turn resolution; any further work to stay under budget should prefer incremental validation, memoization, and bounded search while preserving determinism. Refs **#2277**, **#2507**.
 
-**Throughput regression smoke (Refs #2394):** `packages/colonizethis_logic/test/perf/resolve_turn_for_game_perf_test.dart` runs `resolveTurnForGame` on a minimal two-AI fixture with empty human orders, and `packages/colonizethis_logic/test/perf/generate_orders_for_game_perf_test.dart` runs `generateOrdersForGame` on the same fixture shape (batch AI order generation). Each test records sampled durations and asserts the median stays below a generous fixed ceiling so catastrophic suggestion or resolver regressions fail in `dart test` / package CI. They do not assert tight latency targets; profiling and phase budgets remain governed by [logging/turn-resolution.md](logging/turn-resolution.md).
+### Turn processing wall-clock budget (Refs #2507)
+
+**Ceiling:** **15 000 ms** wall clock per measured segment on the project target environment (same class of machine as the `quality` workflow). Symbol: **`kTurnProcessingWallClockBudgetMs`** (`packages/colonizethis_data/lib/src/turn_processing_wall_clock_budget.dart`).
+
+**Measured segment (in scope):** From immediately before **`generateOrdersForGameFullAI`** through completion of **`validateOrdersAndResolveTurnFromTrustedOrders`** returning **`TurnResolutionComplete`** — the same path as one observer turn body (`tool/run_observer_game/lib/observer_session_runner.dart`) and the app worker’s AI + trusted resolve block. **Single aggregate** ceiling for all CPU work in that segment (all GPs’ Full AI, merge, resolver phases affecting any faction).
+
+**Excluded (out of scope):** Game **init** (`runInitGame`), isolate spawn/handoff overhead outside the measured block, **`mergeOrderLists`** when run outside the worker path under test, trace export, **`ObserverSnapshot`** / HTML, disk I/O, and main-isolate decode/apply after the worker terminal.
+
+**Turn index:** Quality-gate perf test asserts the budget on **turn 1 only** (first resolved full turn after init) using **`GameSetupConfig.defaultConfig`** with every **`game.players`** entry marked AI-controlled (`aiControlByGpId`).
+
+**On breach:** Treat as **release-blocking**. Emit phase splits at minimum **`full_ai_ms`** and **`resolve_ms`** (see [logging/turn-resolution.md](logging/turn-resolution.md)). Fix via perf work only — no semantic drift.
+
+**Enforcement:** `packages/colonizethis_ai/test/perf/full_ai_first_turn_wall_clock_budget_test.dart` runs in **`tool/run_quality_gate_tests.sh`** / **`quality.yml`** package test loop for **colonizethis_ai**; hard-fails when over budget.
+
+**Throughput regression smoke (Refs #2394):** `packages/colonizethis_logic/test/perf/resolve_turn_for_game_perf_test.dart` and `generate_orders_for_game_perf_test.dart` use a minimal two-AI fixture with generous **30 s** median ceilings — coarse guards only; the **15 s** first-turn Full AI test above is the normative gate.
 
 ---
 

@@ -5,9 +5,9 @@ alwaysApply: true
 
 # Turn Resolution Budget
 
-- **Hard usability limit:** End-to-end next-turn resolution (from user confirm to terminal result ready for UI apply) must complete in **<= 10,000 ms** on the project target environment. Treat this as a release-blocking requirement, not a best-effort goal.
+- **Hard usability limit:** End-to-end next-turn resolution (from user confirm to terminal result ready for UI apply) must complete in **<= 15,000 ms** on the project target environment. Treat this as a release-blocking requirement, not a best-effort goal.
 - **No functional drift:** Performance work must preserve turn-resolution semantics and accepted-order contracts defined by `SPEC/program/turn-resolution.md`, `SPEC/program/turn-resolution-phases.md`, and `SPEC/program/order-suggestions.md`.
-- **Budget overflows are defects:** Any change or baseline showing sustained turn-resolution latency above 10 seconds must be treated as a bug and fixed before merge.
+- **Budget overflows are defects:** Any change or baseline showing sustained turn-resolution latency above 15 seconds must be treated as a bug and fixed before merge.
 
 ## Required profiling signals
 

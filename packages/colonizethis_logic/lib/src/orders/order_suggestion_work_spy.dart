@@ -15,6 +15,7 @@ void _addSpySuggestionsForUnit({
   required Map<String, Set<String>> existingTargetsByUnit,
   required List<WorkOrder> suggestions,
   required IncrementalCandidateValidator candidateValidator,
+  required WorkSuggestionProbeBudget workProbeBudget,
 }) {
   final allowedTargets = workOrderTargetsByUnitType[type];
   if (allowedTargets == null) return;
@@ -34,6 +35,7 @@ void _addSpySuggestionsForUnit({
     existingTargetsByUnit: existingTargetsByUnit,
     suggestions: suggestions,
     candidateValidator: candidateValidator,
+    workProbeBudget: workProbeBudget,
   );
 
   if (!allowedTargets.contains(kWorkTargetStealTech)) return;
@@ -63,6 +65,7 @@ void _addSpySuggestionsForUnit({
     },
     candidateAcceptor: (candidate) =>
         isWorkOrderAcceptedWithValidator(candidateValidator, candidate),
+    probeBudget: workProbeBudget,
   );
 }
 
@@ -81,6 +84,7 @@ void _addCounterSpySuggestionIfEligible({
   required Map<String, Set<String>> existingTargetsByUnit,
   required List<WorkOrder> suggestions,
   required IncrementalCandidateValidator candidateValidator,
+  required WorkSuggestionProbeBudget workProbeBudget,
 }) {
   if (!allowedTargets.contains(kWorkTargetCounterSpy)) return;
   if (ownerId != playerId) {
@@ -115,5 +119,6 @@ void _addCounterSpySuggestionIfEligible({
     },
     candidateAcceptor: (candidate) =>
         isWorkOrderAcceptedWithValidator(candidateValidator, candidate),
+    probeBudget: workProbeBudget,
   );
 }

@@ -16,7 +16,7 @@ Cursor rules are the source of truth for implementation and review behavior.
 | `colonizethis-core-principles.mdc` | Dart/Flutter/Flame coding principles and architecture boundaries |
 | `colonizethis-logging-file.mdc` | Required file logging approach (`basic_logger_file`) |
 | `colonizethis-logic-ai-decoupling.mdc` | Enforces one-way architecture boundary between `colonizethis_logic` and `colonizethis_ai` |
-| `colonizethis-turn-resolution-budget.mdc` | Hard 10-second next-turn resolution usability budget |
+| `colonizethis-turn-resolution-budget.mdc` | Hard 15-second next-turn resolution usability budget |
 
 ## Context-specific rules
 

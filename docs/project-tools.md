@@ -59,7 +59,7 @@ melos run run_observer_game -- [options]
 - `--max-turns <n>` — optional turn cap (default = calendar-1800 turn for the mapping)
 - `--config <path>` — optional `GameSetupConfig` JSON (`init_game`-compatible)
 
-Full observer loop (Full AI + traces + snapshots + `run-summary.json`) is implemented per GitHub **#2498**; use `--max-turns` for short CI-style runs.
+Full observer loop (Full AI + traces + snapshots + `run-summary.json`) is implemented per GitHub **#2498**; use `--max-turns` for short CI-style runs. Each resolved turn’s **Full AI + trusted resolve** segment shares the **15 s** wall-clock budget with the app (`kTurnProcessingWallClockBudgetMs`; enforced by `colonizethis_ai` perf test on turn 1 of `GameSetupConfig.defaultConfig`; Refs **#2507**).
 
 ---
 
