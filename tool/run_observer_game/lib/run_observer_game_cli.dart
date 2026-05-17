@@ -23,9 +23,9 @@ String _usage(ArgParser parser) {
     ..writeln('  melos run run_observer_game -- [options]')
     ..writeln('')
     ..writeln(
-      'Full-AI observer campaign: init default GPs, merged turn traces every turn, '
-      'HTML + JSON ObserverSnapshot per turn, run-summary.json '
-      '(SPEC/program/run_observer_game-tool.md). Traces are not pruned.',
+      'Full-AI observer campaign: init default GPs, turn artifacts, run-summary.json '
+      '(SPEC/program/run_observer_game-tool.md). With --verify-* flags, minimal trace '
+      'mode emits only verification snapshots (no merged traces or HTML).',
     )
     ..writeln('')
     ..writeln('Options:')
@@ -191,6 +191,8 @@ Future<int> runObserverGameCli(
     outputRoot: outputRoot,
     setupConfig: setup,
     maxTurnsCap: maxTurnsCap,
+    verifyConquest: verifyConquest,
+    verifyColonialExpansion: verifyColonial,
   );
   if (sessionCode != 0) {
     return sessionCode;

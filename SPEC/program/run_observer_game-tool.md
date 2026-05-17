@@ -28,9 +28,25 @@ melos run run_observer_game -- [options]
 
 Under `<output>/observer-traces/<gameId>/`:
 
+### Full trace mode (default)
+
+Active when **no** `--verify-*` flag is set.
+
 - Merged turn-trace JSON per resolved turn (no pruning of prior turns for the run; exporter must not apply the default 10-file cap — see `SPEC/program/turn-resolution-json-trace.md`).
 - Per turn (post-resolution): `turn-<zero-padded>.snapshot.json` and `turn-<zero-padded>.html` — **same canonical** `ObserverSnapshot` data; HTML is a render only.
 - End: `run-summary.json` — `termination_reason` (`military_victory` \| `calendar_1800` \| `max_turns_override` \| …), `declared_winner_player_id` or none per `SPEC/game/victory.md` / calendar-cap winner rules (`greatPowerPowerScore`, tie → **no-one** where specified), final turn, seed, paths to artifacts.
+
+### Minimal trace mode (auto when `--verify-*` is set)
+
+Active when **`--verify-conquest` and/or `--verify-colonial-expansion`** is passed (no separate nightly flag). Refs **#2534**.
+
+- **No** merged turn-trace JSON, **no** `.html`, **no** in-memory phase tracing (`onTurnTracePhase` / `turnTraceRuntime` off).
+- **ObserverSnapshot** JSON only on turns required by the active verify flags (union):
+  - `--verify-conquest` → `turn-000001.snapshot.json`, `turn-000100.snapshot.json`
+  - `--verify-colonial-expansion` → `turn-000150.snapshot.json`
+  - Both (nightly) → those **three** snapshots plus `run-summary.json` only.
+- **`run-summary.json`** always written at end (`minimal_trace_mode: true` in summary when minimal mode ran).
+- **Artifact size cap:** cumulative bytes under the game trace directory must stay **strictly below 300 MB** (`300 * 1024 * 1024`); if a write would exceed the cap, the run aborts with exit **7** (`artifact_size_cap_exceeded`). Canonical nightly verify inputs are expected to be far below the cap; the cap guards regressions that reintroduce large artifacts.
 
 ## ObserverSnapshot (`ObserverSnapshot` v2)
 
@@ -61,7 +77,7 @@ Each **resolved turn** in the session loop measures the same segment as the app 
 
 - **App:** Merged trace file export when **`CT_DEBUG_CONSOLE=true`** (`--dart-define`); see logging/env TDD notes in **#2498**.
 - **Ctdev:** `SimGameController.turnTraceEnabled` defaults from the same compile-time flag **`CT_DEBUG_CONSOLE`** (`ctdev/lib/ct_debug_console.dart`), so long sim sessions can emit merged trace files without a code change.
-- **Tool:** Traces are always on for `run_observer_game`.
+- **Tool:** Full trace mode always emits merged traces; minimal mode (verify flags) skips them.
 
 ## Conquest regression verification (Refs #2504)
 
