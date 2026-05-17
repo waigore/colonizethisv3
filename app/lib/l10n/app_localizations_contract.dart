@@ -1026,11 +1026,11 @@ abstract class AppLocalizations {
   /// Indented count line used in military summary lists.
   String provinceOverlay_indentedCount(String label, int count);
 
-  /// Civilian section line for unit target or status.
-  String provinceOverlay_unitTarget(String type, String id, String target);
+  /// Civilian section line for unit target or status (no internal unit id).
+  String provinceOverlay_unitTarget(String type, String target);
 
-  /// Civilian section line for foreign-unit status.
-  String provinceOverlay_foreignUnitStatus(String owner, String type, String id, String status);
+  /// Civilian section line for foreign-unit status (no internal unit id).
+  String provinceOverlay_foreignUnitStatus(String owner, String type, String status);
 
   /// Naval section fleet summary line.
   String provinceOverlay_fleetSummary(String owner, String fleetLabel, String shipParts);

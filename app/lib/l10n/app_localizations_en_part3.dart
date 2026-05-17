@@ -307,18 +307,17 @@ mixin _AppLocalizationsEnStrings3 on AppLocalizations {
   }
 
   @override
-  String provinceOverlay_unitTarget(String type, String id, String target) {
-    return '$type ($id): $target';
+  String provinceOverlay_unitTarget(String type, String target) {
+    return '$type: $target';
   }
 
   @override
   String provinceOverlay_foreignUnitStatus(
     String owner,
     String type,
-    String id,
     String status,
   ) {
-    return '$owner — $type ($id): $status';
+    return '$owner — $type: $status';
   }
 
   @override

@@ -304,16 +304,16 @@ List<String> provincePanelWideLayoutExpectedTexts(
         }
         if (pending != null) {
           final targetLabel = workOrderTargetDisplayLabel(l10n, pending.target);
-          out.add('${u.type} (${u.id}): $targetLabel');
+          out.add('${u.type}: $targetLabel');
         } else {
           out.add(
-            '${u.type} (${u.id}): ${unitStatusDisplayLabel(l10n, u.status)}',
+            '${u.type}: ${unitStatusDisplayLabel(l10n, u.status)}',
           );
         }
       } else {
         final o = _ownerName(game, u.ownerId);
         out.add(
-          '$o — ${u.type} (${u.id}): ${unitStatusDisplayLabel(l10n, u.status)}',
+          '$o — ${u.type}: ${unitStatusDisplayLabel(l10n, u.status)}',
         );
       }
     }
