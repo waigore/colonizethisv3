@@ -7,9 +7,11 @@
 #   tool/run_e2e_timing.sh [runs_per_test]
 #   E2E_TIMING_OUT=./timing_logs tool/run_e2e_timing.sh 3
 #   FLUTTER_BIN=~/development/flutter/bin/flutter tool/run_e2e_timing.sh 3
+# Baseline checkout (e.g. git worktree) without copying this script:
+#   CT_REPO_ROOT=/path/to/checkout tool/run_e2e_timing.sh 3
 set -euo pipefail
 
-ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+ROOT="${CT_REPO_ROOT:-$(cd "$(dirname "$0")/.." && pwd)}"
 RUNS="${1:-3}"
 OUT_DIR="${E2E_TIMING_OUT:-$ROOT/.cursor/e2e-timing}"
 mkdir -p "$OUT_DIR"
