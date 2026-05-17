@@ -24,7 +24,7 @@ jobs:
         run: bash tool/run_nightly_integration_gate.sh
 
   observer_conquest_verify:
-    name: Full-AI conquest verify (seed 42)
+    name: Full-AI observer verify (seed 42, turns 150)
     runs-on: ubuntu-latest
     timeout-minutes: 180
     steps:
@@ -39,7 +39,7 @@ jobs:
       - name: Resolve dependencies (workspace)
         run: dart pub get
 
-      - name: Run observer game with conquest verification
+      - name: Run observer game with conquest and colonial verification
         run: |
           set -e
           out="${RUNNER_TEMP}/observer-conquest"
@@ -48,6 +48,6 @@ jobs:
           dart run run_observer_game \
             --output "$out" \
             --seed 42 \
-            --max-turns 100 \
-            --verify-conquest
-          # When --verify-colonial-expansion lands (#2509): --max-turns 150 and both flags.
+            --max-turns 150 \
+            --verify-conquest \
+            --verify-colonial-expansion

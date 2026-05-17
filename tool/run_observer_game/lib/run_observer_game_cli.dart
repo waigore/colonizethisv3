@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:args/args.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 
+import 'observer_colonial_verify.dart';
 import 'observer_conquest_verify.dart';
 import 'observer_session_runner.dart';
 import 'setup_config_parser.dart';
@@ -12,6 +13,9 @@ const int kExitUsage = 64;
 
 /// Exit code when `--verify-conquest` fails (Refs #2504).
 const int kExitConquestVerifyFailed = 5;
+
+/// Exit code when `--verify-colonial-expansion` fails (Refs #2509).
+const int kExitColonialVerifyFailed = 6;
 
 String _usage(ArgParser parser) {
   final buf = StringBuffer()
@@ -27,6 +31,22 @@ String _usage(ArgParser parser) {
     ..writeln('Options:')
     ..writeln(parser.usage);
   return buf.toString();
+}
+
+/// Resolves the most recently modified game trace directory under [outputRoot].
+String? findLatestObserverGameTraceDir(String outputRoot) {
+  final traceRoot = Directory('$outputRoot/observer-traces');
+  if (!traceRoot.existsSync()) {
+    return null;
+  }
+  final gameDirs = traceRoot.listSync().whereType<Directory>().toList();
+  if (gameDirs.isEmpty) {
+    return null;
+  }
+  gameDirs.sort(
+    (a, b) => b.statSync().modified.compareTo(a.statSync().modified),
+  );
+  return gameDirs.first.path;
 }
 
 /// Parses CLI arguments; writes help to [emitStdout], errors to [emitStderr].
@@ -67,6 +87,14 @@ Future<int> runObserverGameCli(
           'provinces between turn 1 and turn '
           '$kObserverConquestCanonicalTurns snapshots (requires '
           '--max-turns >= $kObserverConquestCanonicalTurns or omit cap).',
+    )
+    ..addFlag(
+      'verify-colonial-expansion',
+      help:
+          'After a successful run, verify turn-$kObserverColonialCanonicalTurn '
+          'snapshot: all newWorld| provinces owned by gp1–gp6 and >=70% of '
+          'extractable GP resource tiles improved (requires --max-turns >= '
+          '$kObserverColonialCanonicalTurn or omit cap).',
     );
 
   late final ArgResults results;
@@ -138,12 +166,23 @@ Future<int> runObserverGameCli(
   }
 
   final verifyConquest = results['verify-conquest'] == true;
+  final verifyColonial = results['verify-colonial-expansion'] == true;
+
   if (verifyConquest &&
       maxTurnsCap != null &&
       maxTurnsCap < kObserverConquestCanonicalTurns) {
     emitStderr(
       'Error: --verify-conquest requires --max-turns >= '
       '$kObserverConquestCanonicalTurns (got $maxTurnsCap).',
+    );
+    return kExitUsage;
+  }
+  if (verifyColonial &&
+      maxTurnsCap != null &&
+      maxTurnsCap < kObserverColonialCanonicalTurn) {
+    emitStderr(
+      'Error: --verify-colonial-expansion requires --max-turns >= '
+      '$kObserverColonialCanonicalTurn (got $maxTurnsCap).',
     );
     return kExitUsage;
   }
@@ -157,40 +196,52 @@ Future<int> runObserverGameCli(
     return sessionCode;
   }
 
-  if (!verifyConquest) {
+  if (!verifyConquest && !verifyColonial) {
     return 0;
   }
 
-  final traceRoot = Directory('$outputRoot/observer-traces');
-  if (!traceRoot.existsSync()) {
-    emitStderr('Error: observer traces missing under $outputRoot');
-    return 2;
-  }
-  final gameDirs = traceRoot.listSync().whereType<Directory>().toList();
-  if (gameDirs.isEmpty) {
+  final gameDir = findLatestObserverGameTraceDir(outputRoot);
+  if (gameDir == null) {
     emitStderr('Error: no game trace directory under $outputRoot');
     return 2;
   }
-  gameDirs.sort(
-    (a, b) => b.statSync().modified.compareTo(a.statSync().modified),
-  );
-  final gameDir = gameDirs.first;
 
-  final failures = verifyObserverConquestFromTraceDir(
-    gameDir.path,
-    endTurn: kObserverConquestCanonicalTurns,
-  );
-  if (failures.isEmpty) {
+  if (verifyConquest) {
+    final failures = verifyObserverConquestFromTraceDir(
+      gameDir,
+      endTurn: kObserverConquestCanonicalTurns,
+    );
+    if (failures.isNotEmpty) {
+      for (final line in failures) {
+        emitStderr('conquest_verify: $line');
+      }
+      return kExitConquestVerifyFailed;
+    }
     emitStdout(
-      'Conquest verification passed (seed=${setup.seed ?? "default"}, '
+      'Conquest verification passed (seed=${setup.seed}, '
       '$kObserverConquestCanonicalTurns turns, '
       '>=$kObserverConquestMinOwGainPerGp OW provinces per GP).',
     );
-    return 0;
   }
 
-  for (final line in failures) {
-    emitStderr('conquest_verify: $line');
+  if (verifyColonial) {
+    final failures = verifyObserverColonialExpansionFromTraceDir(
+      gameDir,
+      endTurn: kObserverColonialCanonicalTurn,
+    );
+    if (failures.isNotEmpty) {
+      for (final line in failures) {
+        emitStderr('colonial_verify: $line');
+      }
+      return kExitColonialVerifyFailed;
+    }
+    emitStdout(
+      'Colonial expansion verification passed (seed=${setup.seed}, '
+      'turn $kObserverColonialCanonicalTurn, all newWorld| GP-owned, '
+      'extractable improvement >= '
+      '${(kObserverColonialMinImprovementRatio * 100).round()}%).',
+    );
   }
-  return kExitConquestVerifyFailed;
+
+  return 0;
 }

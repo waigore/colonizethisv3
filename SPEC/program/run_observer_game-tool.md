@@ -19,6 +19,8 @@ melos run run_observer_game -- [options]
 | `--seed <int>` | Optional; matches `init_game` / `GameSetupConfig` semantics when omitted vs set. |
 | `--max-turns <int>` | Optional; default = campaign calendar cap turn **T** (`yearAtTurn(T)==1800` under game mapping; **201** for `gdd01`). Lower values shorten runs. |
 | `--config <path>` | Optional JSON `GameSetupConfig` consistent with **`init_game`**. |
+| `--verify-conquest` | After success: turn-1 vs turn-100 OW per-GP net +3 provinces (exit **5** on failure; requires `--max-turns >= 100` or no cap). |
+| `--verify-colonial-expansion` | After success: turn-150 snapshot checks NW GP ownership and extractable improvement ratio (exit **6** on failure; requires `--max-turns >= 150` or no cap). |
 
 **Errors:** Diagnostics via `logger`; user-facing failures → **stderr** and non-zero exit; no raw stack traces by default (match `init_game`).
 
@@ -30,13 +32,13 @@ Under `<output>/observer-traces/<gameId>/`:
 - Per turn (post-resolution): `turn-<zero-padded>.snapshot.json` and `turn-<zero-padded>.html` — **same canonical** `ObserverSnapshot` data; HTML is a render only.
 - End: `run-summary.json` — `termination_reason` (`military_victory` \| `calendar_1800` \| `max_turns_override` \| …), `declared_winner_player_id` or none per `SPEC/game/victory.md` / calendar-cap winner rules (`greatPowerPowerScore`, tie → **no-one** where specified), final turn, seed, paths to artifacts.
 
-## ObserverSnapshot (`ObserverSnapshot` v1)
+## ObserverSnapshot (`ObserverSnapshot` v2)
 
-Versioned map written to `turn-<nnnnnn>.snapshot.json` and embedded (escaped) in paired `turn-<nnnnnn>.html`. **`observerSnapshotSchemaVersion` is `1`.**
+Versioned map written to `turn-<nnnnnn>.snapshot.json` and embedded (escaped) in paired `turn-<nnnnnn>.html`. **`observerSnapshotSchemaVersion` is `2`.**
 
 | Field | Meaning |
 |-------|---------|
-| `observerSnapshotSchemaVersion` | Always `1` for this shape. |
+| `observerSnapshotSchemaVersion` | Always `2` for this shape (v1 lacked extraction rollups). |
 | `gameId` | Game id string. |
 | `turnNumber` | Post-resolution turn index (`Game.worldState.turnState.turnNumber`). |
 | `calendarYearAtTurnStart` | `yearAtTurn(turnNumber)` using the game's active `TurnTimeMapping` (if `turnNumber` is below 1, the lookup uses 1). |
@@ -46,6 +48,8 @@ Versioned map written to `turn-<nnnnnn>.snapshot.json` and embedded (escaped) in
 | `diplomacyRelationSummariesSorted` | Stable string lines summarizing each `diplomacyRelations` row (pair, score, level, war/peace). |
 | `militaryArmySummariesSorted` | One string per land army (id, owner, region, regiment count). |
 | `militaryFleetSummariesSorted` | One string per fleet (id, owner, ship count). |
+| `extractableResourceTileCount` | Count of extractable resource tiles on GP-owned land at snapshot time (see § Extractable tile definition). |
+| `improvedExtractableResourceTileCount` | Subset of the above with `improvementLevel >= 1`. |
 
 HTML is a render-only wrapper: the `<pre>` body uses the **same** pretty-printed JSON bytes as the `.snapshot.json` file (after `HtmlEscape`).
 
@@ -57,7 +61,18 @@ HTML is a render-only wrapper: the `<pre>` body uses the **same** pretty-printed
 
 ## Conquest regression verification (Refs #2504)
 
-`lib/observer_conquest_verify.dart` compares `turn-000001.snapshot.json` vs `turn-000100.snapshot.json` under a game trace directory: each Great Power `gp1`–`gp6` must gain **≥3** net **Old World** provinces (`oldWorld|…` ids only). Canonical seed **42**, **100** resolved turns. Pass **`--verify-conquest`** after a successful run to execute this check (exit **5** on failure; requires `--max-turns >= 100` or no turn cap). Unit tests cover the parser; a full observer run is slow (~minutes) and is not part of the default quality gate. **Nightly:** `.github/workflows/nightly.yml` job `observer_conquest_verify` runs seed **42**, **100** turns, and `--verify-conquest` daily at **23:00 Asia/Hong_Kong** (`workflow_dispatch` supported). When `--verify-colonial-expansion` lands (#2509), extend that job to **150** turns and both verify flags.
+`lib/observer_conquest_verify.dart` compares `turn-000001.snapshot.json` vs `turn-000100.snapshot.json` under a game trace directory: each Great Power `gp1`–`gp6` must gain **≥3** net **Old World** provinces (`oldWorld|…` ids only). Canonical seed **42**, **100** resolved turns. Pass **`--verify-conquest`** after a successful run (exit **5** on failure).
+
+## Colonial expansion verification (Refs #2509)
+
+`lib/observer_colonial_verify.dart` reads `turn-000150.snapshot.json`:
+
+- **Global NW ownership:** every `provinceOwnershipSorted` row with id prefix `newWorld|` has `ownerId` ∈ `{gp1,…,gp6}`.
+- **Improvement coverage:** `improvedExtractableResourceTileCount / extractableResourceTileCount >= 0.70` (if denominator is **0**, pass only when both counts are zero).
+
+Pass **`--verify-colonial-expansion`** after a successful run (exit **6** on failure; requires `--max-turns >= 150` or no turn cap). Rollup computation: `lib/observer_extractable_rollup.dart` (init static resource grid ∩ GP-owned provinces at verify turn; excludes capital and province town tiles per [extraction-and-improvements.md](../game/extraction-and-improvements.md)).
+
+Unit tests cover parsers; full observer runs are slow and are **not** in the default `quality` gate. **Nightly:** `.github/workflows/nightly.yml` job `observer_conquest_verify` runs seed **42**, **150** turns, **`--verify-conquest`**, and **`--verify-colonial-expansion`** daily at **23:00 Asia/Hong_Kong** (`0 15 * * *` UTC; `workflow_dispatch` supported).
 
 ## Coverage
 

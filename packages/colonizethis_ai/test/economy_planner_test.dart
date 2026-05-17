@@ -214,5 +214,61 @@ void main() {
         reason: 'high economy leader should prefer cargo at least as much as warmonger',
       );
     });
+
+    test('colonial summary boosts cargo preference for overseas expansion', () {
+      final game = Game(
+        id: 'g1',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
+          oldWorld: const RegionData(),
+          newWorld: const RegionData(),
+        ),
+        players: const [
+          Player(
+            id: 'gp1',
+            displayName: 'France',
+            isHuman: false,
+            stockpile: Stockpile(),
+            workerPool: WorkerPool(peasants: 0),
+          ),
+        ],
+      );
+      const topology = MapTopology(nodes: [], edges: []);
+      final view = buildPlayerView(game, topology, 'gp1');
+      const config = AIConfig(
+        leaderId: 'napoleon',
+        personalityId: 'napoleon',
+        hiddenAgendaId: 'warmonger',
+      );
+      final seeds = AISeedBundle.fromTurnSeed(7);
+
+      int cargoLevel(CargoPreference p) => p == CargoPreference.strongCargo
+          ? 2
+          : p == CargoPreference.preferCargo
+          ? 1
+          : 0;
+
+      final baseline = runEconomyPlanner(
+        game: game,
+        view: view,
+        config: config,
+        seeds: seeds,
+      );
+      final colonial = runEconomyPlanner(
+        game: game,
+        view: view,
+        config: config,
+        seeds: seeds,
+        colonial: const ColonialSummary(
+          invadableNewWorldProvinceIdsSorted: ['newWorld|colony'],
+          adjacentNewWorldOwnerFactionIdsSorted: ['tribe1'],
+        ),
+      );
+
+      expect(
+        cargoLevel(colonial.cargoPreference),
+        greaterThan(cargoLevel(baseline.cargoPreference)),
+      );
+    });
   });
 }
