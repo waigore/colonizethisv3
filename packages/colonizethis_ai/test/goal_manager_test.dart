@@ -46,6 +46,42 @@ void main() {
         greaterThanOrEqualTo(kMinimumConquerScoreWhenFarFromVictory),
       );
     });
+
+    test(
+      'colonial pressure raises conquer/expand above diplomacy for peacemaker',
+      () {
+        const snapshot = AIWorldSnapshot(
+          playerId: 'gp1',
+          threats: ThreatSummary(),
+          opportunities: OpportunitySummary(),
+          conquest: ConquestSummary(
+            oldWorldProvincesOwned: 7,
+            provincesToVictory: 24,
+          ),
+          colonial: ColonialSummary(
+            newWorldProvincesOwned: 0,
+            invadableNewWorldProvinceIdsSorted: ['newWorld|p1'],
+            adjacentNewWorldOwnerFactionIdsSorted: ['tribe1'],
+          ),
+          economy: EconomySummary(),
+          relations: {},
+        );
+        const config = AIConfig(
+          leaderId: 'victoria',
+          personalityId: 'victoria',
+          hiddenAgendaId: 'peacemaker',
+        );
+        final scores = evaluateStrategicGoalScores(snapshot, config);
+        expect(
+          scores[StrategicGoal.conquer]!,
+          greaterThan(scores[StrategicGoal.diplomacy]!),
+        );
+        expect(
+          scores[StrategicGoal.expand]!,
+          greaterThan(scores[StrategicGoal.diplomacy]!),
+        );
+      },
+    );
   });
 
   group('majorConstraintForStrategicGoal', () {

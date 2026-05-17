@@ -74,6 +74,19 @@ Map<StrategicGoal, int> evaluateStrategicGoalScores(
       kColonialFewNwProvincesThreshold) {
     conquer += kColonialConquerBonusWhenFewNwProvinces;
   }
+  final colonialPressure =
+      snapshot.colonial.invadableNewWorldProvinceIdsSorted.isNotEmpty &&
+      snapshot.colonial.newWorldProvincesOwned < kColonialFewNwProvincesThreshold;
+  if (colonialPressure) {
+    diplomacy -= kColonialDiplomacyGoalPenaltyWhenPressure;
+    trade -= kColonialTradeGoalPenaltyWhenPressure;
+    if (expand < kMinimumColonialExpandScoreWhenPressure) {
+      expand = kMinimumColonialExpandScoreWhenPressure;
+    }
+    if (conquer < kMinimumColonialConquerScoreWhenPressure) {
+      conquer = kMinimumColonialConquerScoreWhenPressure;
+    }
+  }
   if (provincesToVictory > kConquerScoreFloorProvincesToVictoryThreshold &&
       conquer < kMinimumConquerScoreWhenFarFromVictory) {
     conquer = kMinimumConquerScoreWhenFarFromVictory;
