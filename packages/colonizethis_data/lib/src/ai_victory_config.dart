@@ -195,8 +195,21 @@ const int kExploreWorkScoreBonusNewWorld = 80;
 /// Full AI build-improvement score for an unimproved extractable resource tile.
 const int kBuildImprovementExtractableResourceScore = 450;
 
-/// Extra build-improvement score on unimproved extractable tiles in owned NW land.
+/// Extra build-improvement score on unimproved extractable tiles in the NW region.
 const int kBuildImprovementNewWorldResourceBonus = 120;
+
+/// Additional build-improvement score when the tile is in a GP-owned NW province
+/// (observer turn-150 improvement gate; Refs #2509).
+const int kBuildImprovementOwnedNewWorldResourceBonus = 100;
+
+/// Merchant purchase_land score for NW tribe/minor tiles (colonial acquisition).
+const int kPurchaseLandNewWorldTribeWorkScore = 320;
+
+/// Merchant purchase_land score for other NW tiles.
+const int kPurchaseLandNewWorldOtherWorkScore = 160;
+
+/// Civilian work economy threshold cap when colonial targets are visible.
+const int kColonialCivilianWorkThresholdCap = 22;
 
 /// Naval mission score when [NavalMissionOrder.targetPortId] is a New World port.
 const int kColonialNavalMissionNwPortScore = 160;

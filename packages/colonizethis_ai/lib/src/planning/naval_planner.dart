@@ -32,14 +32,16 @@ Orders runNavalPlanner({
           primaryGoal == StrategicGoal.expand
       ? domainWeights.military
       : 40;
-  final colonialPressure =
-      colonial.invadableNewWorldProvinceIdsSorted.isNotEmpty &&
+  final hasColonialTargets =
+      colonial.invadableNewWorldProvinceIdsSorted.isNotEmpty ||
+      colonial.adjacentNewWorldOwnerFactionIdsSorted.isNotEmpty;
+  final colonialExpansionPressure =
+      hasColonialTargets &&
       colonial.newWorldProvincesOwned < kColonialFewNwProvincesThreshold;
-  if (colonialPressure ||
-      colonial.adjacentNewWorldOwnerFactionIdsSorted.isNotEmpty) {
+  if (hasColonialTargets) {
     weight += kColonialNavalWeightBonus;
   }
-  if (colonialPressure && weight < 70) {
+  if (colonialExpansionPressure && weight < 70) {
     weight = 70;
   }
   if (weight < 25) {
@@ -64,11 +66,11 @@ Orders runNavalPlanner({
   if (navalMoveCandidates.isNotEmpty) {
     final rng = math.Random(seeds.militarySeed + 1000);
     final cap = navalMoveCandidates.length.clamp(0, 3);
-    final take = colonialPressure
+    final take = hasColonialTargets
         ? cap
         : (cap > 0 ? 1 + rng.nextInt(cap) : 0);
     if (take > 0) {
-      final ranked = colonialPressure
+      final ranked = hasColonialTargets
           ? sortNavalMovesForColonialPressure(
               navalMoveCandidates,
               topology,
@@ -96,11 +98,11 @@ Orders runNavalPlanner({
     'candidatesCount=${navalMissionCandidates.length}',
   );
   if (navalMissionCandidates.isNotEmpty) {
-    final ranked = colonialPressure
+    final ranked = hasColonialTargets
         ? sortNavalMissionsForColonialPressure(navalMissionCandidates)
         : navalMissionCandidates;
     final rng = math.Random(seeds.militarySeed + 1001);
-    final idx = colonialPressure
+    final idx = hasColonialTargets
         ? 0
         : rng.nextInt(ranked.length);
     final chosen = ranked[idx];

@@ -238,8 +238,13 @@ Orders _runEconomyDomainPlanners({
     (o) =>
         o.target == kWorkTargetStealTech || o.target == kWorkTargetCounterSpy,
   );
-  final workThreshold =
+  var workThreshold =
       40 - (hasSpyWork ? getAgendaSpyOrderModifier(config.hiddenAgendaId) : 0);
+  if (snapshot.colonial.invadableNewWorldProvinceIdsSorted.isNotEmpty ||
+      snapshot.colonial.adjacentNewWorldOwnerFactionIdsSorted.isNotEmpty ||
+      snapshot.colonial.newWorldProvincesOwned > 0) {
+    workThreshold = math.min(workThreshold, kColonialCivilianWorkThresholdCap);
+  }
   final runFullAiCivilianWork =
       primaryGoal == StrategicGoal.expand ||
       domainWeights.economy >= workThreshold ||
@@ -283,6 +288,9 @@ Orders _runEconomyDomainPlanners({
   if (snapshot.conquest.oldWorldProvincesOwned <=
       kStalledOldWorldProvinceThreshold) {
     buildThreshold = math.min(buildThreshold, 15);
+  }
+  if (snapshot.colonial.newWorldProvincesOwned > 0) {
+    buildThreshold = math.min(buildThreshold, 18);
   }
   _log.d(
     'build eval nationId=$nationId buildThreshold=$buildThreshold '

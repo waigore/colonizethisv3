@@ -226,6 +226,74 @@ void main() {
     );
 
     test(
+      'Builder prefers owned NW unimproved resource over tribe NW resource',
+      () {
+        const playerId = 'gp1';
+        const tileTribe = 'newWorld|tribeProv|0|0';
+        const tileOwned = 'newWorld|gpProv|1|0';
+        final game = Game(
+          id: 'g',
+          worldState: WorldState(
+            turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+            oldWorld: const RegionData(),
+            newWorld: RegionData(
+              provinces: [
+                Province(
+                  id: 'newWorld|tribeProv',
+                  regionId: 'newWorld',
+                  ownerId: 'tribe1',
+                ),
+                Province(
+                  id: 'newWorld|gpProv',
+                  regionId: 'newWorld',
+                  ownerId: playerId,
+                ),
+              ],
+            ),
+            resourceByTileKey: {tileTribe: 'grain', tileOwned: 'grain'},
+          ),
+          players: const [
+            Player(id: playerId, displayName: 'GP', isHuman: false),
+          ],
+          tribes: const [Tribe(id: 'tribe1', displayName: 'T')],
+        );
+        final view = PlayerView(
+          playerId: playerId,
+          player: game.players.single,
+          ownUnitsById: {
+            'b1': Unit(
+              id: 'b1',
+              type: kUnitTypeBuilder,
+              ownerId: playerId,
+              locationProvinceId: 'newWorld|gpProv',
+            ),
+          },
+          provincesById: const {},
+          visibilityByTile: const {},
+          prospectedTiles: const {},
+          diplomacyByOtherId: const {},
+        );
+        final r = selectFullAiCivilianWorkOrders(
+          workSuggestions: [
+            const WorkOrder(
+              unitId: 'b1',
+              target: kWorkTargetBuildImprovement,
+              targetTileKey: tileTribe,
+            ),
+            const WorkOrder(
+              unitId: 'b1',
+              target: kWorkTargetBuildImprovement,
+              targetTileKey: tileOwned,
+            ),
+          ],
+          view: view,
+          game: game,
+        );
+        expect(r.workOrders.single.targetTileKey, tileOwned);
+      },
+    );
+
+    test(
       'Explorer with two equal E_score explores picks lexicographically smaller tile',
       () {
         const playerId = 'gp1';
