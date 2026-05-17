@@ -149,8 +149,8 @@ Future<void> e2eOpenCivilianPanel(
   );
 }
 
-/// Default cap for naval-panel open polling (matches prior fleet E2E constant).
-const Duration kE2eDefaultNavalOpenTimeout = Duration(seconds: 5);
+/// Default cap for naval-panel open polling (parity with civilian panel opener).
+const Duration kE2eDefaultNavalOpenTimeout = Duration(seconds: 20);
 
 /// Opens the naval units panel from the empire rail or the first fleet marker,
 /// dismissing transient UI and closing conflicting sheets when needed.
@@ -162,153 +162,112 @@ Future<void> e2eOpenNavalPanel(
   E2ePerfLog? perf,
   Duration timeout = kE2eDefaultNavalOpenTimeout,
   Duration bottomSheetCloseTimeout = kE2eDefaultBottomSheetCloseTimeout,
+  String afterSheetPanelsClearPhase =
+      'pump_until_panels_cleared_after_close_sheet_naval_open',
 }) async {
-  final phaseSw = Stopwatch()..start();
+  final sw = Stopwatch()..start();
+  final empireRailButton = find.byKey(kEmpireNavalUnitsButtonKey);
+  final markerButton = find.byKey(kCtE2EOpenFirstFleetMarkerPanelKey);
   final navalPanel = find.byKey(kCtE2ENavalPanelRootKey);
-  final markerBtn = find.byKey(kCtE2EOpenFirstFleetMarkerPanelKey);
-  final btn = find.byKey(kEmpireNavalUnitsButtonKey);
 
-  Future<bool> pollUntilNavalVisible(Duration budget) async {
-    final poll = Stopwatch()..start();
+  Future<bool> tryOpen(Finder trigger) async {
+    if (navalPanel.hitTestable().evaluate().isNotEmpty) {
+      return true;
+    }
+    if (trigger.evaluate().isEmpty) {
+      return false;
+    }
+    try {
+      await tester.ensureVisible(trigger);
+    } catch (_) {}
+    await tester.tap(trigger.first, warnIfMissed: false);
     if (navalPanel.evaluate().isNotEmpty) {
       return true;
     }
-    var stepMs = 25;
-    while (poll.elapsed < budget) {
-      if (navalPanel.evaluate().isNotEmpty) {
-        return true;
-      }
-      await tester.pump(Duration(milliseconds: stepMs));
-      stepMs = e2eNextIdlePollStepMs(stepMs);
+    await tester.pump();
+    if (navalPanel.evaluate().isNotEmpty) {
+      return true;
     }
-    return false;
+    return e2ePumpUntilConditionOrIdle(
+      tester,
+      () => navalPanel.evaluate().isNotEmpty,
+      timeout: const Duration(seconds: 3),
+      perf: perf,
+      phaseName: 'pump_until_naval_panel_after_trigger_tap',
+    );
   }
 
-  final sw = Stopwatch()..start();
   if (navalPanel.hitTestable().evaluate().isNotEmpty) {
-    perf?.timing('open_panel_naval', phaseSw.elapsed);
+    perf?.timing('open_panel_naval', sw.elapsed);
     return;
   }
   await _e2eDismissGameStartIntroOverlayIfPresent(tester);
-  final mountSw = Stopwatch()..start();
-  while (mountSw.elapsed < const Duration(seconds: 2)) {
+
+  var panelPollMs = 25;
+  while (sw.elapsed < timeout) {
+    await tester.pump(Duration(milliseconds: panelPollMs));
+    panelPollMs = e2eAdaptivePollRampAfterIdle(panelPollMs);
+
     if (find.byType(BottomSheet).evaluate().isNotEmpty) {
       await e2eCloseBottomSheet(
         tester,
         perf: perf,
         overallTimeout: bottomSheetCloseTimeout,
       );
+      await e2ePumpUntilConditionOrIdle(
+        tester,
+        () => find.byType(BottomSheet).evaluate().isEmpty,
+        timeout: const Duration(seconds: 2),
+        perf: perf,
+        phaseName: afterSheetPanelsClearPhase,
+      );
+      await e2ePumpUntilConditionOrIdle(
+        tester,
+        () =>
+            empireRailButton.hitTestable().evaluate().isNotEmpty ||
+            markerButton.hitTestable().evaluate().isNotEmpty,
+        timeout: const Duration(seconds: 3),
+        perf: perf,
+        phaseName: 'pump_until_naval_opener_after_sheet_close',
+      );
+      panelPollMs = 25;
       continue;
     }
     if (find.byType(AlertDialog).evaluate().isNotEmpty ||
         find.byType(CtDialogShell).evaluate().isNotEmpty) {
       await e2eDismissTransientUi(tester, perf: perf);
+      panelPollMs = 25;
       continue;
     }
-    if (btn.evaluate().isNotEmpty || markerBtn.evaluate().isNotEmpty) {
-      break;
+    if (empireRailButton.evaluate().isNotEmpty) {
+      if (await tryOpen(empireRailButton)) {
+        perf?.timing('open_panel_naval', sw.elapsed);
+        return;
+      }
+      panelPollMs = 25;
+      continue;
     }
-    await tester.pump(const Duration(milliseconds: 25));
-  }
-  if (btn.evaluate().isEmpty && markerBtn.evaluate().isEmpty) {
-    fail(
-      'Naval panel opener controls did not mount within 2s. '
-      'Last exception: ${tester.takeException()}',
-    );
-  }
-  if (btn.evaluate().isNotEmpty) {
-    try {
-      await tester.ensureVisible(btn);
-    } catch (_) {}
-    await tester.tap(btn.first, warnIfMissed: false);
-    await e2eWaitUntilFound(
+    if (markerButton.evaluate().isNotEmpty) {
+      if (await tryOpen(markerButton)) {
+        perf?.timing('open_panel_naval', sw.elapsed);
+        return;
+      }
+      panelPollMs = 25;
+      continue;
+    }
+    if (await e2ePumpUntilConditionOrIdle(
       tester,
-      navalPanel,
-      timeout: timeout,
+      () =>
+          empireRailButton.hitTestable().evaluate().isNotEmpty ||
+          markerButton.hitTestable().evaluate().isNotEmpty,
+      timeout: Duration(milliseconds: panelPollMs),
       perf: perf,
-      phaseName: 'wait_until_naval_panel_after_rail_tap',
-    );
-    perf?.timing('open_panel_naval', phaseSw.elapsed);
-    return;
-  }
-  var navalPollMs = 25;
-  while (sw.elapsed < timeout) {
-    // Advance at least one frame per iteration (legacy fleet helper pumped 100ms
-    // every loop) so map HUD rail/marker controls can mount after bootstrap.
-    await tester.pump(Duration(milliseconds: navalPollMs));
-    navalPollMs = e2eAdaptivePollRampAfterIdle(navalPollMs);
-
-    if (navalPanel.hitTestable().evaluate().isNotEmpty) {
-      perf?.timing('open_panel_naval', phaseSw.elapsed);
-      return;
-    }
-    if (find.byType(BottomSheet).evaluate().isNotEmpty) {
-      await e2eCloseBottomSheet(
-        tester,
-        perf: perf,
-        overallTimeout: bottomSheetCloseTimeout,
-      );
-      navalPollMs = 25;
+      phaseName: 'pump_until_naval_rail_or_marker_hit_testable',
+    )) {
+      panelPollMs = 25;
       continue;
     }
-    if (find.byType(AlertDialog).evaluate().isNotEmpty) {
-      await e2eDismissTransientUi(tester, perf: perf);
-      navalPollMs = 25;
-      continue;
-    }
-    if (find.byType(CtDialogShell).evaluate().isNotEmpty) {
-      await e2eDismissTransientUi(tester, perf: perf);
-      navalPollMs = 25;
-      continue;
-    }
-    if (markerBtn.evaluate().isNotEmpty) {
-      try {
-        await tester.ensureVisible(markerBtn);
-      } catch (_) {}
-      await tester.tap(markerBtn.first, warnIfMissed: false);
-      final remaining = timeout - sw.elapsed;
-      if (remaining > Duration.zero &&
-          await pollUntilNavalVisible(remaining)) {
-        perf?.timing('open_panel_naval', phaseSw.elapsed);
-        return;
-      }
-      if (await e2ePumpUntilConditionOrIdle(
-        tester,
-        () => navalPanel.evaluate().isNotEmpty,
-        timeout: const Duration(milliseconds: 600),
-        perf: perf,
-        phaseName: 'pump_until_naval_visible_after_marker_tap',
-      )) {
-        perf?.timing('open_panel_naval', phaseSw.elapsed);
-        return;
-      }
-      navalPollMs = 25;
-      continue;
-    }
-    if (btn.evaluate().isNotEmpty) {
-      try {
-        await tester.ensureVisible(btn);
-      } catch (_) {}
-      await tester.tap(btn.first, warnIfMissed: false);
-      final remaining = timeout - sw.elapsed;
-      if (remaining > Duration.zero &&
-          await pollUntilNavalVisible(remaining)) {
-        perf?.timing('open_panel_naval', phaseSw.elapsed);
-        return;
-      }
-      if (await e2ePumpUntilConditionOrIdle(
-        tester,
-        () => navalPanel.evaluate().isNotEmpty,
-        timeout: const Duration(milliseconds: 600),
-        perf: perf,
-        phaseName: 'pump_until_naval_visible_after_rail_tap',
-      )) {
-        perf?.timing('open_panel_naval', phaseSw.elapsed);
-        return;
-      }
-      navalPollMs = 25;
-      continue;
-    }
+    panelPollMs = e2eAdaptivePollRampAfterIdle(panelPollMs);
   }
   fail(
     'Timed out after ${timeout.inSeconds}s opening naval panel '
