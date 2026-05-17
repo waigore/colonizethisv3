@@ -76,4 +76,24 @@ void main() {
       kColonialNavalMoveGatewaySeaZoneScore,
     );
   });
+
+  test('prioritizes NW port naval missions under colonial pressure', () {
+    final ranked = sortNavalMissionsForColonialPressure([
+      const NavalMissionOrder(
+        fleetId: 'f-ow',
+        mission: 'patrol',
+        targetPortId: 'oldWorld|port1',
+      ),
+      const NavalMissionOrder(
+        fleetId: 'f-nw',
+        mission: 'patrol',
+        targetPortId: 'newWorld|port2',
+      ),
+    ]);
+    expect(ranked.first.targetPortId, 'newWorld|port2');
+    expect(
+      colonialNavalMissionScore(ranked.first),
+      kColonialNavalMissionNwPortScore,
+    );
+  });
 }

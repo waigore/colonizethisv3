@@ -113,3 +113,48 @@ List<NavalMoveOrder> sortNavalMovesForColonialPressure(
   });
   return scored.map((e) => e.move).toList();
 }
+
+/// Deterministic score for naval missions under colonial pressure.
+int colonialNavalMissionScore(NavalMissionOrder mission) {
+  final portId = mission.targetPortId;
+  if (portId != null &&
+      portId.isNotEmpty &&
+      ProvinceId.regionIdFrom(portId) == kNewWorldRegionId) {
+    return kColonialNavalMissionNwPortScore;
+  }
+  final provId = mission.targetProvinceId;
+  if (provId != null &&
+      provId.isNotEmpty &&
+      ProvinceId.regionIdFrom(provId) == kNewWorldRegionId) {
+    return kColonialNavalMissionNwProvinceScore;
+  }
+  if (mission.mission == FleetMission.beachhead.name) {
+    return kColonialNavalMissionBeachheadScore;
+  }
+  return 0;
+}
+
+/// Sort [candidates] by [colonialNavalMissionScore] descending, then stable id order.
+List<NavalMissionOrder> sortNavalMissionsForColonialPressure(
+  List<NavalMissionOrder> candidates,
+) {
+  final scored = candidates
+      .map((m) => (mission: m, score: colonialNavalMissionScore(m)))
+      .toList();
+  scored.sort((a, b) {
+    final s = b.score.compareTo(a.score);
+    if (s != 0) return s;
+    final fleet = a.mission.fleetId.compareTo(b.mission.fleetId);
+    if (fleet != 0) return fleet;
+    final missionCmp = a.mission.mission.compareTo(b.mission.mission);
+    if (missionCmp != 0) return missionCmp;
+    final portA = a.mission.targetPortId ?? '';
+    final portB = b.mission.targetPortId ?? '';
+    final portCmp = portA.compareTo(portB);
+    if (portCmp != 0) return portCmp;
+    return (a.mission.targetProvinceId ?? '').compareTo(
+      b.mission.targetProvinceId ?? '',
+    );
+  });
+  return scored.map((e) => e.mission).toList();
+}

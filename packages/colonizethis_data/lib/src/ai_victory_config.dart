@@ -195,6 +195,18 @@ const int kExploreWorkScoreBonusNewWorld = 80;
 /// Full AI build-improvement score for an unimproved extractable resource tile.
 const int kBuildImprovementExtractableResourceScore = 450;
 
+/// Extra build-improvement score on unimproved extractable tiles in owned NW land.
+const int kBuildImprovementNewWorldResourceBonus = 120;
+
+/// Naval mission score when [NavalMissionOrder.targetPortId] is a New World port.
+const int kColonialNavalMissionNwPortScore = 160;
+
+/// Naval mission score when [NavalMissionOrder.targetProvinceId] is in the NW.
+const int kColonialNavalMissionNwProvinceScore = 130;
+
+/// Naval mission score for beachhead missions under colonial pressure.
+const int kColonialNavalMissionBeachheadScore = 100;
+
 /// Extra declare-war weight for **tribes** owning sea-reachable NW provinces so
 /// they outrank adjacent Old World minor targets under colonial pressure.
 const int kDeclareWarColonialNwTribeDominanceBonus = 100;

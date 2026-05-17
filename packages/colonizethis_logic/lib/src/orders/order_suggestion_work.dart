@@ -51,6 +51,16 @@ List<String> merchantPurchaseLandCandidateTileKeys({
       out.add(tk);
     }
   }
+  out.sort((a, b) {
+    final rank = merchantPurchaseLandCandidateSortRank(
+      game: game,
+      tileKey: a,
+    ).compareTo(
+      merchantPurchaseLandCandidateSortRank(game: game, tileKey: b),
+    );
+    if (rank != 0) return rank;
+    return a.compareTo(b);
+  });
   return out;
 }
 

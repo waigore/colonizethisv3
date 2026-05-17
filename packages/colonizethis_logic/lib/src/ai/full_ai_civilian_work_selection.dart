@@ -360,7 +360,11 @@ int _buildImprovementWorkScore(WorkOrder w, Game game) {
   if (level >= 1) return 1;
   final resourceId = game.worldState.resourceByTileKey[w.targetTileKey];
   if (resourceId == null || resourceId.isEmpty) return 2;
-  return kBuildImprovementExtractableResourceScore;
+  var score = kBuildImprovementExtractableResourceScore;
+  if (Unit.regionIdFromTileKey(w.targetTileKey) == kNewWorldRegionId) {
+    score += kBuildImprovementNewWorldResourceBonus;
+  }
+  return score;
 }
 
 WorkOrder? _bestBuildImprovementRow(List<WorkOrder> candidates, Game game) {
