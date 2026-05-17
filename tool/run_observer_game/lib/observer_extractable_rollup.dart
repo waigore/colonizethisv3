@@ -94,6 +94,34 @@ String? _resourceIdForExtractableTile(
   return fromState;
 }
 
+({int extractable, int improved}) _countProvinceExtractableTiles(
+  Iterable<String> tileKeys,
+  Set<String> excludedTiles,
+  Game game,
+  Map<String, TileMapResult>? tileMapByRegion,
+) {
+  var extractable = 0;
+  var improved = 0;
+  for (final tileKey in tileKeys) {
+    if (excludedTiles.contains(tileKey)) continue;
+    final resourceId = _resourceIdForExtractableTile(
+      tileKey,
+      game,
+      tileMapByRegion,
+    );
+    if (resourceId == null || resourceId.isEmpty) continue;
+    extractable++;
+    if (game.worldState.tileState.improvementLevel(tileKey) >= 1) {
+      improved++;
+    }
+  }
+  return (extractable: extractable, improved: improved);
+}
+
+bool _isGpOwnedPrefixedProvince(String provinceId, Set<String> ownedProvinces) {
+  return ProvinceId.isPrefixed(provinceId) && ownedProvinces.contains(provinceId);
+}
+
 /// Computes global GP-land extractable/improved counts for observer snapshots.
 ExtractableImprovementRollup computeExtractableImprovementRollup(
   Game game, {
@@ -107,23 +135,17 @@ ExtractableImprovementRollup computeExtractableImprovementRollup(
   for (final regionEntry
       in game.worldState.tileKeysByRegionAndProvince.entries) {
     for (final provEntry in regionEntry.value.entries) {
-      final provinceId = provEntry.key;
-      if (!ProvinceId.isPrefixed(provinceId)) continue;
-      if (!ownedProvinces.contains(provinceId)) continue;
-
-      for (final tileKey in provEntry.value) {
-        if (excludedTiles.contains(tileKey)) continue;
-        final resourceId = _resourceIdForExtractableTile(
-          tileKey,
-          game,
-          tileMapByRegion,
-        );
-        if (resourceId == null || resourceId.isEmpty) continue;
-        extractable++;
-        if (game.worldState.tileState.improvementLevel(tileKey) >= 1) {
-          improved++;
-        }
+      if (!_isGpOwnedPrefixedProvince(provEntry.key, ownedProvinces)) {
+        continue;
       }
+      final counts = _countProvinceExtractableTiles(
+        provEntry.value,
+        excludedTiles,
+        game,
+        tileMapByRegion,
+      );
+      extractable += counts.extractable;
+      improved += counts.improved;
     }
   }
 
