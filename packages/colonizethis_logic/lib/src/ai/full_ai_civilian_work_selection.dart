@@ -354,7 +354,11 @@ WorkOrder? _pickExplorerCandidateSet(
   return bestE;
 }
 
-int _buildImprovementWorkScore(WorkOrder w, Game game) {
+int _buildImprovementWorkScore(
+  WorkOrder w,
+  Game game, {
+  required String playerId,
+}) {
   if (w.target != kWorkTargetBuildImprovement) return 0;
   final level = game.worldState.tileState.improvementLevel(w.targetTileKey);
   if (level >= 1) return 1;
@@ -363,20 +367,29 @@ int _buildImprovementWorkScore(WorkOrder w, Game game) {
   var score = kBuildImprovementExtractableResourceScore;
   if (Unit.regionIdFromTileKey(w.targetTileKey) == kNewWorldRegionId) {
     score += kBuildImprovementNewWorldResourceBonus;
+    final provId = Unit.provinceIdFromTileKey(w.targetTileKey);
+    if (provId != null &&
+        tryGetProvince(game.worldState, provId)?.ownerId == playerId) {
+      score += kBuildImprovementOwnedNewWorldResourceBonus;
+    }
   }
   return score;
 }
 
-WorkOrder? _bestBuildImprovementRow(List<WorkOrder> candidates, Game game) {
+WorkOrder? _bestBuildImprovementRow(
+  List<WorkOrder> candidates,
+  Game game, {
+  required String playerId,
+}) {
   final improvements = candidates
       .where((w) => w.target == kWorkTargetBuildImprovement)
       .toList();
   if (improvements.isEmpty) return null;
   var best = improvements.first;
-  var bestScore = _buildImprovementWorkScore(best, game);
+  var bestScore = _buildImprovementWorkScore(best, game, playerId: playerId);
   for (var i = 1; i < improvements.length; i++) {
     final w = improvements[i];
-    final s = _buildImprovementWorkScore(w, game);
+    final s = _buildImprovementWorkScore(w, game, playerId: playerId);
     if (s > bestScore) {
       bestScore = s;
       best = w;
@@ -401,9 +414,9 @@ int _purchaseLandWorkScore(
     final ownerId = tryGetProvince(game.worldState, provId)?.ownerId;
     if (ownerId != null &&
         isMinorOrTribe(game, ownerId, factionMembership: factionMembership)) {
-      return 240;
+      return kPurchaseLandNewWorldTribeWorkScore;
     }
-    return 120;
+    return kPurchaseLandNewWorldOtherWorkScore;
   }
   return 60;
 }
@@ -437,10 +450,13 @@ void _appendBuilderPathResult({
   required Unit? unit,
   required List<WorkOrder> w,
   required Game game,
+  required String playerId,
   required List<WorkOrder> workOrders,
   required List<FullAiCivilianWorkIdle> idleEvents,
 }) {
-  final chosen = _bestBuildImprovementRow(w, game) ?? _pickLexicographic(w);
+  final chosen =
+      _bestBuildImprovementRow(w, game, playerId: playerId) ??
+      _pickLexicographic(w);
   if (chosen != null) {
     workOrders.add(chosen);
     return;
@@ -607,6 +623,7 @@ void _appendSelectionForUnitId({
       unit: unit,
       w: W,
       game: game,
+      playerId: view.playerId,
       workOrders: workOrders,
       idleEvents: idleEvents,
     );

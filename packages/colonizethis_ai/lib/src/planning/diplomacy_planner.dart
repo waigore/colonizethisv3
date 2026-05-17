@@ -6,6 +6,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'goal_manager.dart';
 import '../perception/perception_snapshot.dart';
+import 'colonial_pressure.dart';
 import '../util/ai_random_utils.dart';
 import '../util/orders_extensions.dart';
 import 'diplomatic_candidate_scoring.dart';
@@ -76,9 +77,7 @@ DiplomacyPlannerResult runDiplomacyPlannerWithResult({
     weight = kDiplomacyDeclareWarMinWeightWhenStalled;
   }
   if (pass == DiplomacyPlannerPass.declareWarOnly &&
-      snapshot.colonial.invadableNewWorldProvinceIdsSorted.isNotEmpty &&
-      snapshot.colonial.newWorldProvincesOwned <
-          kColonialFewNwProvincesThreshold &&
+      hasColonialAcquisitionTargets(snapshot.colonial) &&
       weight < kDiplomacyDeclareWarMinWeightWhenColonialPressure) {
     weight = kDiplomacyDeclareWarMinWeightWhenColonialPressure;
   }

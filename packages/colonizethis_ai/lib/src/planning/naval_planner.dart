@@ -7,6 +7,7 @@ import 'package:colonizethis_logic/order_suggestion_api.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'colonial_naval_scoring.dart';
+import 'colonial_pressure.dart';
 import 'goal_manager.dart';
 import '../perception/perception_snapshot.dart';
 import '../util/orders_extensions.dart';
@@ -32,14 +33,11 @@ Orders runNavalPlanner({
           primaryGoal == StrategicGoal.expand
       ? domainWeights.military
       : 40;
-  final colonialPressure =
-      colonial.invadableNewWorldProvinceIdsSorted.isNotEmpty &&
-      colonial.newWorldProvincesOwned < kColonialFewNwProvincesThreshold;
-  if (colonialPressure ||
-      colonial.adjacentNewWorldOwnerFactionIdsSorted.isNotEmpty) {
+  final hasColonialTargets = hasColonialAcquisitionTargets(colonial);
+  if (hasColonialTargets) {
     weight += kColonialNavalWeightBonus;
   }
-  if (colonialPressure && weight < 70) {
+  if (hasColonialTargets && weight < 70) {
     weight = 70;
   }
   if (weight < 25) {
@@ -64,11 +62,11 @@ Orders runNavalPlanner({
   if (navalMoveCandidates.isNotEmpty) {
     final rng = math.Random(seeds.militarySeed + 1000);
     final cap = navalMoveCandidates.length.clamp(0, 3);
-    final take = colonialPressure
+    final take = hasColonialTargets
         ? cap
         : (cap > 0 ? 1 + rng.nextInt(cap) : 0);
     if (take > 0) {
-      final ranked = colonialPressure
+      final ranked = hasColonialTargets
           ? sortNavalMovesForColonialPressure(
               navalMoveCandidates,
               topology,
@@ -96,11 +94,11 @@ Orders runNavalPlanner({
     'candidatesCount=${navalMissionCandidates.length}',
   );
   if (navalMissionCandidates.isNotEmpty) {
-    final ranked = colonialPressure
+    final ranked = hasColonialTargets
         ? sortNavalMissionsForColonialPressure(navalMissionCandidates)
         : navalMissionCandidates;
     final rng = math.Random(seeds.militarySeed + 1001);
-    final idx = colonialPressure
+    final idx = hasColonialTargets
         ? 0
         : rng.nextInt(ranked.length);
     final chosen = ranked[idx];

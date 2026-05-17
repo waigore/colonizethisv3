@@ -6,6 +6,7 @@ import 'package:colonizethis_logic/ai_api.dart';
 import 'package:colonizethis_logic/order_suggestion_api.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
+import 'colonial_pressure.dart';
 import 'goal_manager.dart';
 import '../perception/perception_snapshot.dart';
 import '../util/orders_extensions.dart';
@@ -238,13 +239,16 @@ Orders _runEconomyDomainPlanners({
     (o) =>
         o.target == kWorkTargetStealTech || o.target == kWorkTargetCounterSpy,
   );
-  final workThreshold =
+  var workThreshold =
       40 - (hasSpyWork ? getAgendaSpyOrderModifier(config.hiddenAgendaId) : 0);
+  final colonialPressure = hasColonialAcquisitionTargets(snapshot.colonial);
+  if (colonialPressure || snapshot.colonial.newWorldProvincesOwned > 0) {
+    workThreshold = math.min(workThreshold, kColonialCivilianWorkThresholdCap);
+  }
   final runFullAiCivilianWork =
       primaryGoal == StrategicGoal.expand ||
       domainWeights.economy >= workThreshold ||
-      snapshot.colonial.invadableNewWorldProvinceIdsSorted.isNotEmpty ||
-      snapshot.colonial.adjacentNewWorldOwnerFactionIdsSorted.isNotEmpty ||
+      colonialPressure ||
       snapshot.colonial.newWorldProvincesOwned > 0;
   _log.d(
     'work eval nationId=$nationId workThreshold=$workThreshold '
@@ -283,6 +287,10 @@ Orders _runEconomyDomainPlanners({
   if (snapshot.conquest.oldWorldProvincesOwned <=
       kStalledOldWorldProvinceThreshold) {
     buildThreshold = math.min(buildThreshold, 15);
+  }
+  final colonialBuildCap = colonialBuildOrderThresholdCap(snapshot.colonial);
+  if (colonialBuildCap != null) {
+    buildThreshold = math.min(buildThreshold, colonialBuildCap);
   }
   _log.d(
     'build eval nationId=$nationId buildThreshold=$buildThreshold '
