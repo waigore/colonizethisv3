@@ -134,6 +134,9 @@ const int kDeclareWarColonialAdjacentTribeBonus = 70;
 /// Establish-overture bonus toward a preferred colonial tribe target.
 const int kEstablishOvertureColonialTribeBonus = 60;
 
+/// Establish-overture bonus toward a tribe owning a sea-reachable NW province.
+const int kEstablishOvertureColonialInvadableOwnerBonus = 80;
+
 /// Conquest army-move bonus for New World invadable destinations.
 const int kConquestArmyMoveNwInvadableBonus = 35;
 
@@ -144,10 +147,10 @@ const int kColonialCargoPreferenceEconomyBoost = 40;
 const int kColonialCargoPreferenceNoNwColoniesBoost = 28;
 
 /// Naval planner weight boost when New World invasion/colonization is viable.
-const int kColonialNavalWeightBonus = 40;
+const int kColonialNavalWeightBonus = 55;
 
 /// Declare-war bonus when the target owns a sea-reachable invadable NW province.
-const int kDeclareWarColonialInvadableOwnerBonus = 95;
+const int kDeclareWarColonialInvadableOwnerBonus = 110;
 
 /// Goal bonuses when the GP still owns fewer than this many NW provinces.
 const int kColonialFewNwProvincesThreshold = 8;
@@ -169,7 +172,7 @@ const int kMinimumColonialExpandScoreWhenPressure = 90;
 const int kMinimumColonialConquerScoreWhenPressure = 95;
 
 /// Minimum declare-war diplomacy pass weight under colonial pressure.
-const int kDiplomacyDeclareWarMinWeightWhenColonialPressure = 45;
+const int kDiplomacyDeclareWarMinWeightWhenColonialPressure = 55;
 
 /// Minimum conquest army-move pass weight under colonial pressure.
 const int kConquestArmyMoveMinWeightWhenColonialPressure = 45;

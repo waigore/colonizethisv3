@@ -122,6 +122,13 @@ List<int> computeDiplomaticCandidateScores({
               .contains(o.targetFactionId)) {
             s += kEstablishOvertureColonialTribeBonus;
           }
+          final ownsInvadableNw = snapshot
+              .colonial
+              .invadableNewWorldProvinceIdsSorted
+              .any((pid) => provinceOwner[pid] == o.targetFactionId);
+          if (ownsInvadableNw && _isTribeFaction(game, o.targetFactionId)) {
+            s += kEstablishOvertureColonialInvadableOwnerBonus;
+          }
           break;
         }
       default:

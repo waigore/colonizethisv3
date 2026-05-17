@@ -91,10 +91,10 @@ sanctions:
     issue: https://github.com/waigore/colonizethisv3/issues/2394
 
   - path: packages/colonizethis_logic/lib/src/orders/order_suggestion_helpers.dart
-    line: 26
-    rationale: Shared order-suggestion helpers iterate all provinces.
+    line: 89
+    rationale: getProvinceOwnerMap walks all provinces once per diplomacy filter pass.
     spec: SPEC/program/logic-dual-region-province-access.md
-    issue: https://github.com/waigore/colonizethisv3/issues/2278
+    issue: https://github.com/waigore/colonizethisv3/issues/2509
 
   - path: packages/colonizethis_logic/lib/src/setup/initial_visibility.dart
     line: 95

@@ -31,9 +31,15 @@ Orders runNavalPlanner({
           primaryGoal == StrategicGoal.expand
       ? domainWeights.military
       : 40;
-  if (colonial.invadableNewWorldProvinceIdsSorted.isNotEmpty ||
+  final colonialPressure =
+      colonial.invadableNewWorldProvinceIdsSorted.isNotEmpty &&
+      colonial.newWorldProvincesOwned < kColonialFewNwProvincesThreshold;
+  if (colonialPressure ||
       colonial.adjacentNewWorldOwnerFactionIdsSorted.isNotEmpty) {
     weight += kColonialNavalWeightBonus;
+  }
+  if (colonialPressure && weight < 70) {
+    weight = 70;
   }
   if (weight < 25) {
     _log.d('naval skipped nationId=$nationId weight=$weight < 25');
@@ -56,8 +62,10 @@ Orders runNavalPlanner({
   );
   if (navalMoveCandidates.isNotEmpty) {
     final rng = math.Random(seeds.militarySeed + 1000);
-    final cap = (navalMoveCandidates.length.clamp(0, 3));
-    final take = cap > 0 ? 1 + rng.nextInt(cap) : 0;
+    final cap = navalMoveCandidates.length.clamp(0, 3);
+    final take = colonialPressure
+        ? cap
+        : (cap > 0 ? 1 + rng.nextInt(cap) : 0);
     if (take > 0) {
       final selected = navalMoveCandidates.take(take).toList();
       _log.i(

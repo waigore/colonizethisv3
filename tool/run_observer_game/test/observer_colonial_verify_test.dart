@@ -1,7 +1,6 @@
 import 'package:colonizethis_test/test.dart';
 
 import 'package:run_observer_game/observer_colonial_verify.dart';
-import 'package:run_observer_game/observer_conquest_verify.dart';
 
 Map<String, Object?> _snapshot({
   required List<Map<String, String?>> provinces,
