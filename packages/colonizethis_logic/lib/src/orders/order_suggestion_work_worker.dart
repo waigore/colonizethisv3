@@ -17,6 +17,7 @@ void _addWorkerSuggestionsForUnit({
   required List<WorkOrder> suggestions,
   required IncrementalCandidateValidator candidateValidator,
   required DiplomacyFactionMembership factionMembership,
+  required WorkSuggestionProbeBudget workProbeBudget,
   Map<String, TileMapResult>? tileMapByRegion,
 }) {
   final allowedTargets = workOrderTargetsByUnitType[type];
@@ -59,6 +60,7 @@ void _addWorkerSuggestionsForUnit({
       candidateAcceptor: (candidate) {
         return isWorkOrderAcceptedWithValidator(candidateValidator, candidate);
       },
+      probeBudget: workProbeBudget,
     );
   }
 }

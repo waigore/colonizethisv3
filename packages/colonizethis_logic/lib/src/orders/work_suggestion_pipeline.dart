@@ -2,6 +2,29 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'order_suggestion_context.dart';
 
+/// Max engine validation probes per unit per work target in one pass (Refs #2507).
+const int kMaxWorkProbeAttemptsPerUnitPerTarget = 4;
+
+/// Max partially-revealed provinces probed per Explorer explore pass (Refs #2507).
+const int kMaxExploreProvinceProbesPerUnit = 4;
+
+/// Max total work validation probes per [suggestWorkOrders] player pass (Refs #2507).
+const int kMaxWorkProbeAttemptsPerPlayerPass = 64;
+
+/// Shared decrementing budget for one [suggestWorkOrders] invocation.
+class WorkSuggestionProbeBudget {
+  WorkSuggestionProbeBudget([int? max])
+    : remaining = max ?? kMaxWorkProbeAttemptsPerPlayerPass;
+
+  int remaining;
+
+  bool consume() {
+    if (remaining <= 0) return false;
+    remaining--;
+    return true;
+  }
+}
+
 /// Emits one structured line per work-order suggestion decision (Refs #2277,
 /// SPEC/program/order-suggestions.md suggestion observability).
 void logWorkOrderSuggestion({
@@ -49,6 +72,7 @@ class WorkSuggestionPipeline {
     required WorkSuggestionCandidatesProvider candidatesProvider,
     required WorkSuggestionCandidateAcceptor candidateAcceptor,
     required String noCandidateReason,
+    WorkSuggestionProbeBudget? probeBudget,
     String engineRejectedReason = 'engine_rejected',
     bool includeAllAccepted = false,
 
@@ -75,7 +99,15 @@ class WorkSuggestionPipeline {
     var sawCandidate = false;
     var acceptedCount = 0;
     var firstIncludedTile = '-';
+    var probeAttempts = 0;
     for (final candidate in candidatesProvider()) {
+      probeAttempts++;
+      if (probeAttempts > kMaxWorkProbeAttemptsPerUnitPerTarget) {
+        break;
+      }
+      if (probeBudget != null && !probeBudget.consume()) {
+        break;
+      }
       sawCandidate = true;
       if (!candidateAcceptor(candidate)) continue;
       acceptedCount++;

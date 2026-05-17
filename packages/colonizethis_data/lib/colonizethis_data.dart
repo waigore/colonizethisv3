@@ -34,6 +34,7 @@ export 'src/civilian_economy.dart';
 export 'src/work_order_costs.dart';
 export 'src/naval_stats.dart';
 export 'src/starting_resources_config.dart';
+export 'src/turn_processing_wall_clock_budget.dart';
 export 'src/unit_roles.dart';
 export 'src/leader_bonuses.dart';
 export 'src/ai_personality_config.dart';

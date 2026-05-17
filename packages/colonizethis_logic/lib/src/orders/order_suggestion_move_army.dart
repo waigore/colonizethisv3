@@ -6,7 +6,6 @@ import '../world/movement.dart';
 import '../world/player_view.dart';
 import '../world/province_lookup.dart';
 import '../world/unit_lookup.dart';
-import '../world/civilian_tile_occupancy.dart';
 import 'draft_orders_mutations.dart';
 import 'incremental_candidate_validator.dart';
 import 'order_suggestion_context.dart';
@@ -16,6 +15,62 @@ const int _kMaxMoveSuggestionsPerUnit = 24;
 const int _kMaxArmyMoveSuggestionsPerArmy = 12;
 const int _kMaxMoveProbeAttemptsPerUnit = 160;
 const int _kMaxArmyMoveProbeAttemptsPerArmy = 80;
+
+/// Land tile keys that may be valid [MoveOrder] destinations for [unit] under
+/// [SPEC/program/movement.md]: owned provinces (any region), non-owned only when
+/// adjacent in [topology]. Visibility applied. Sorted for deterministic probes
+/// (Refs #2507).
+List<String> sortedMoveDestinationCandidateTileKeys({
+  required PlayerView view,
+  required Game game,
+  required MapTopology topology,
+  required Unit unit,
+}) {
+  final playerId = view.playerId;
+  final world = game.worldState;
+  final tileKeysByRegion = world.tileKeysByRegionAndProvince;
+  final unitRegion = regionIdForUnit(view, unit);
+  final fromProvinceFull = resolveToFullProvinceId(
+    world,
+    unit.locationProvinceId,
+  );
+  final seen = <String>{};
+  final out = <String>[];
+
+  void addVisibleTiles(Iterable<String> tiles) {
+    for (final tk in tiles) {
+      if (!seen.add(tk)) continue;
+      if (moveDestinationTileVisibilityOk(view, tk)) {
+        out.add(tk);
+      }
+    }
+  }
+
+  addVisibleTiles(tileKeysByRegion[unitRegion]?[fromProvinceFull] ?? const []);
+
+  for (final entry in view.provincesById.entries) {
+    final fullId = entry.key;
+    final prov = entry.value;
+    if (prov.ownerId != playerId) continue;
+    if (fullId == fromProvinceFull) continue;
+    addVisibleTiles(tileKeysByRegion[prov.regionId]?[fullId] ?? const []);
+  }
+
+  final fromLocal = ProvinceId.localIdFrom(fromProvinceFull);
+  for (final neighborLocal in neighborProvinceIdsInRegion(
+    topology,
+    unitRegion,
+    fromLocal,
+  )) {
+    final neighborFull = ProvinceId.full(unitRegion, neighborLocal);
+    final owner = view.provincesById[neighborFull]?.ownerId;
+    if (owner == playerId) continue;
+    addVisibleTiles(tileKeysByRegion[unitRegion]?[neighborFull] ?? const []);
+  }
+
+  out.sort();
+  return out;
+}
 
 /// Suggests candidate move orders that are information-legal (per [PlayerView])
 /// and rules-legal (per [OrderEngine]) for [view.playerId].
@@ -48,14 +103,6 @@ List<MoveOrder> suggestMoveOrders(
     existingMoves
         .putIfAbsent(m.unitId, () => <String>{})
         .add(m.destinationTileKey);
-  }
-
-  final landTiles = sortedLandTileKeys(game.worldState);
-  final visibleLandTiles = <String>[];
-  for (final tileKey in landTiles) {
-    if (moveDestinationTileVisibilityOk(view, tileKey)) {
-      visibleLandTiles.add(tileKey);
-    }
   }
 
   // Build the incremental candidate validator once per suggestion pass: the
@@ -95,9 +142,16 @@ List<MoveOrder> suggestMoveOrders(
       );
     }
 
+    final destinationCandidates = sortedMoveDestinationCandidateTileKeys(
+      view: view,
+      game: game,
+      topology: topology,
+      unit: unit,
+    );
+
     var acceptedForUnit = 0;
     var probeAttemptsForUnit = 0;
-    for (final destinationTileKey in visibleLandTiles) {
+    for (final destinationTileKey in destinationCandidates) {
       final already = existingMoves[unit.id];
       if (already != null && already.contains(destinationTileKey)) continue;
       probeAttemptsForUnit++;

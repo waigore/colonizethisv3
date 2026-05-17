@@ -9,6 +9,7 @@ void _addMerchantSuggestionsForUnit({
   required List<String> purchaseLandCandidateTileKeys,
   required List<WorkOrder> suggestions,
   required IncrementalCandidateValidator candidateValidator,
+  required WorkSuggestionProbeBudget workProbeBudget,
 }) {
   final allowedTargets = workOrderTargetsByUnitType[type];
   if (allowedTargets == null ||
@@ -36,5 +37,6 @@ void _addMerchantSuggestionsForUnit({
     },
     candidateAcceptor: (candidate) =>
         isWorkOrderAcceptedWithValidator(candidateValidator, candidate),
+    probeBudget: workProbeBudget,
   );
 }

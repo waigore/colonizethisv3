@@ -151,6 +151,8 @@ List<WorkOrder> suggestWorkOrders(
         )
       : const <String>[];
 
+  final workProbeBudget = WorkSuggestionProbeBudget();
+
   for (final unit in view.ownUnits) {
     _addWorkSuggestionsForUnit(
       view: view,
@@ -171,6 +173,7 @@ List<WorkOrder> suggestWorkOrders(
       suggestions: suggestions,
       candidateValidator: candidateValidator,
       factionMembership: factionMembership,
+      workProbeBudget: workProbeBudget,
     );
   }
 
@@ -214,6 +217,7 @@ void _addWorkSuggestionsForUnit({
   required List<WorkOrder> suggestions,
   required IncrementalCandidateValidator candidateValidator,
   required DiplomacyFactionMembership factionMembership,
+  required WorkSuggestionProbeBudget workProbeBudget,
   Map<String, TileMapResult>? tileMapByRegion,
 }) {
   if (unit.currentWork != null) return;
@@ -247,6 +251,7 @@ void _addWorkSuggestionsForUnit({
       suggestions: suggestions,
       candidateValidator: candidateValidator,
       tileMapByRegion: tileMapByRegion,
+      workProbeBudget: workProbeBudget,
     );
     return;
   }
@@ -270,6 +275,7 @@ void _addWorkSuggestionsForUnit({
       candidateValidator: candidateValidator,
       tileMapByRegion: tileMapByRegion,
       factionMembership: factionMembership,
+      workProbeBudget: workProbeBudget,
     );
   }
 
@@ -289,6 +295,7 @@ void _addWorkSuggestionsForUnit({
       existingTargetsByUnit: existingTargetsByUnit,
       suggestions: suggestions,
       candidateValidator: candidateValidator,
+      workProbeBudget: workProbeBudget,
     );
   }
 
@@ -302,6 +309,7 @@ void _addWorkSuggestionsForUnit({
       purchaseLandCandidateTileKeys: merchantPurchaseLandTileKeys,
       suggestions: suggestions,
       candidateValidator: candidateValidator,
+      workProbeBudget: workProbeBudget,
     );
   }
 }

@@ -92,6 +92,7 @@ void _addExplorerWorkSuggestionsForUnit({
   required Map<String, Set<String>> existingTargetsByUnit,
   required List<WorkOrder> suggestions,
   required IncrementalCandidateValidator candidateValidator,
+  required WorkSuggestionProbeBudget workProbeBudget,
   Map<String, TileMapResult>? tileMapByRegion,
 }) {
   final unitsById = Map<String, Unit>.from(unitsByIdFromWorld(game.worldState));
@@ -125,7 +126,12 @@ void _addExplorerWorkSuggestionsForUnit({
     existingTargetsByUnit: existingTargetsByUnit,
     suggestions: suggestions,
     candidatesProvider: () sync* {
+      var provinceProbes = 0;
       for (final prov in provinces) {
+        provinceProbes++;
+        if (provinceProbes > kMaxExploreProvinceProbesPerUnit) {
+          break;
+        }
         final attempt = _tryExploreWorkOrderForProvince(
           view: view,
           game: game,
@@ -151,6 +157,7 @@ void _addExplorerWorkSuggestionsForUnit({
     noCandidateReason: 'no_valid_tile',
     resolveNoCandidateReason: () => lastReason,
     includeAllAccepted: true,
+    probeBudget: workProbeBudget,
   );
 
   _addProspectSuggestionIfEligible(
@@ -166,6 +173,7 @@ void _addExplorerWorkSuggestionsForUnit({
     existingTargetsByUnit: existingTargetsByUnit,
     suggestions: suggestions,
     candidateValidator: candidateValidator,
+    workProbeBudget: workProbeBudget,
     tileMapByRegion: tileMapByRegion,
   );
 }
@@ -184,6 +192,7 @@ void _addExplorerWorkSuggestionsForUnit({
   required Map<String, Unit> unitsById,
   required List<DiplomaticOrder> diplomaticOrders,
   required IncrementalCandidateValidator candidateValidator,
+  required WorkSuggestionProbeBudget workProbeBudget,
   Map<String, TileMapResult>? tileMapByRegion,
 }) {
   var lastReason = 'no_valid_tile';
@@ -222,7 +231,12 @@ void _addExplorerWorkSuggestionsForUnit({
       );
     }
   }
+  var probeAttempts = 0;
   for (final tk in sortedTiles) {
+    probeAttempts++;
+    if (probeAttempts > kMaxWorkProbeAttemptsPerUnitPerTarget) {
+      break;
+    }
     if (prospected.contains(tk)) continue;
     if (!isMineralEligibleTile(game, tileMapByRegion, tk)) continue;
     final candidate = WorkOrder(
@@ -230,6 +244,9 @@ void _addExplorerWorkSuggestionsForUnit({
       target: kWorkTargetProspect,
       targetTileKey: tk,
     );
+    if (!workProbeBudget.consume()) {
+      break;
+    }
     if (isWorkOrderAcceptedWithValidator(candidateValidator, candidate)) {
       accepted.add(tk);
     } else {
@@ -252,6 +269,7 @@ void _addProspectSuggestionIfEligible({
   required Map<String, Set<String>> existingTargetsByUnit,
   required List<WorkOrder> suggestions,
   required IncrementalCandidateValidator candidateValidator,
+  required WorkSuggestionProbeBudget workProbeBudget,
   Map<String, TileMapResult>? tileMapByRegion,
 }) {
   final existingProspect = existingTargetsByUnit[unit.id];
@@ -284,7 +302,12 @@ void _addProspectSuggestionIfEligible({
 
   var lastReason = 'no_valid_tile';
   final prospectRows = <WorkOrder>[];
+  var provinceProbes = 0;
   for (final prov in provinces) {
+    provinceProbes++;
+    if (provinceProbes > kMaxExploreProvinceProbesPerUnit) {
+      break;
+    }
     final regionIdP = prov.regionId;
     final provinceIdFull = prov.id;
     if (!provinceHasAtLeastVisibility(
@@ -314,6 +337,7 @@ void _addProspectSuggestionIfEligible({
       unitsById: unitsById,
       diplomaticOrders: diplomatic,
       candidateValidator: candidateValidator,
+      workProbeBudget: workProbeBudget,
       tileMapByRegion: tileMapByRegion,
     );
     lastReason = scan.lastReason;

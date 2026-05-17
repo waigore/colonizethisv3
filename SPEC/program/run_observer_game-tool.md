@@ -53,6 +53,10 @@ Versioned map written to `turn-<nnnnnn>.snapshot.json` and embedded (escaped) in
 
 HTML is a render-only wrapper: the `<pre>` body uses the **same** pretty-printed JSON bytes as the `.snapshot.json` file (after `HtmlEscape`).
 
+## Turn processing wall-clock budget (Refs #2507)
+
+Each **resolved turn** in the session loop measures the same segment as the app next-turn worker: **`generateOrdersForGameFullAI`** through **`validateOrdersAndResolveTurnFromTrustedOrders`** returning **`TurnResolutionComplete`**. That segment shares the **15 000 ms** ceiling **`kTurnProcessingWallClockBudgetMs`** ([turn-resolution.md](turn-resolution.md) § Turn processing wall-clock budget). **Excluded:** `runInitGame`, trace export, snapshot/HTML writes, and `run-summary.json` I/O. Nightly observer runs are integration targets; the **quality** gate enforces the budget via `colonizethis_ai` perf test on **turn 1** of **`GameSetupConfig.defaultConfig`**.
+
 ## Relationship to app / ctdev
 
 - **App:** Merged trace file export when **`CT_DEBUG_CONSOLE=true`** (`--dart-define`); see logging/env TDD notes in **#2498**.
