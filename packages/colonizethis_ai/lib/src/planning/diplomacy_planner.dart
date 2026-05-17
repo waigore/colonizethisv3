@@ -303,10 +303,10 @@ Orders runDiplomacyPlanner({
 }) =>
     runDiplomacyPlannerWithResult(ctx: ctx, snapshot: snapshot).orders;
 
-DiplomacyPlannerResult runDiplomacyPlannerWithResult({
+int _resolveDiplomacyPlannerWeight({
   required PlannerContext ctx,
   required AIWorldSnapshot snapshot,
-  DiplomacyPlannerPass pass = DiplomacyPlannerPass.all,
+  required DiplomacyPlannerPass pass,
 }) {
   var weight = ctx.resolveDiplomacyBaseWeight();
   if (pass == DiplomacyPlannerPass.declareWarOnly &&
@@ -337,34 +337,40 @@ DiplomacyPlannerResult runDiplomacyPlannerWithResult({
       weight < 25) {
     weight = 25;
   }
-  if (weight < 25) {
-    _log.d('diplomacy skipped nationId=${ctx.nationId} weight=$weight < 25');
-    return DiplomacyPlannerResult(orders: ctx.orders);
-  }
+  return weight;
+}
 
-  var diploCandidates = pass == DiplomacyPlannerPass.declareWarOnly
-      ? ctx.suggestionAPI.suggestDeclareWarOrders(
-          ctx.view,
-          ctx.game,
-          ctx.topology,
-          ctx.orders,
-        )
-      : ctx.suggestionAPI.suggestDiplomaticOrders(
-          ctx.view,
-          ctx.game,
-          ctx.topology,
-          ctx.orders,
-        );
-  if (diploCandidates.isEmpty) {
-    return DiplomacyPlannerResult(orders: ctx.orders);
-  }
+List<DiplomaticOrder> _suggestDiplomacyCandidates({
+  required PlannerContext ctx,
+  required DiplomacyPlannerPass pass,
+}) =>
+    pass == DiplomacyPlannerPass.declareWarOnly
+        ? ctx.suggestionAPI.suggestDeclareWarOrders(
+            ctx.view,
+            ctx.game,
+            ctx.topology,
+            ctx.orders,
+          )
+        : ctx.suggestionAPI.suggestDiplomaticOrders(
+            ctx.view,
+            ctx.game,
+            ctx.topology,
+            ctx.orders,
+          );
 
+List<DiplomaticOrder> _filterDiplomacyCandidatesForPass({
+  required PlannerContext ctx,
+  required AIWorldSnapshot snapshot,
+  required DiplomacyPlannerPass pass,
+  required List<DiplomaticOrder> candidates,
+}) {
+  var filtered = candidates;
   if (pass == DiplomacyPlannerPass.declareWarOnly) {
     final atWarWithGp = snapshot.threats.atWarWith.any(
       (id) => ctx.game.playerById(id) != null,
     );
     if (atWarWithGp) {
-      diploCandidates = diploCandidates
+      filtered = filtered
           .where(
             (o) =>
                 o.type != DiplomaticOrderType.declareWar ||
@@ -383,7 +389,7 @@ DiplomacyPlannerResult runDiplomacyPlannerWithResult({
           ctx.game.minorNations.any((m) => m.id == owner);
     });
     if (minorsOwnInvadable) {
-      diploCandidates = diploCandidates
+      filtered = filtered
           .where(
             (o) =>
                 o.type != DiplomaticOrderType.declareWar ||
@@ -392,79 +398,141 @@ DiplomacyPlannerResult runDiplomacyPlannerWithResult({
           .toList();
     }
   }
-  if (diploCandidates.isEmpty) {
-    return DiplomacyPlannerResult(orders: ctx.orders);
-  }
-
   final declaredThisTurn = <String>{
     for (final o
         in ctx.orders.diplomaticOrdersByPlayerId[ctx.nationId] ?? const [])
       if (o.type == DiplomaticOrderType.declareWar) o.targetFactionId,
   };
-
   switch (pass) {
     case DiplomacyPlannerPass.declareWarOnly:
-      break;
+    case DiplomacyPlannerPass.all:
+      return filtered;
     case DiplomacyPlannerPass.nonDeclareWarOnly:
-      diploCandidates = diploCandidates
+      return filtered
           .where(
             (o) =>
                 o.type != DiplomaticOrderType.declareWar &&
                 !declaredThisTurn.contains(o.targetFactionId),
           )
           .toList();
-      break;
-    case DiplomacyPlannerPass.all:
-      break;
   }
-  if (diploCandidates.isEmpty) {
+}
+
+DiplomacyPlannerResult? _stalledPeacePlannerResultIfNeeded({
+  required PlannerContext ctx,
+  required AIWorldSnapshot snapshot,
+  required DiplomacyPlannerPass pass,
+}) {
+  if (pass == DiplomacyPlannerPass.declareWarOnly) {
+    return null;
+  }
+  final peaceTargets = <String>{
+    if (stalledStrongerGpBlockerPeaceTarget(
+          game: ctx.game,
+          snapshot: snapshot,
+        ) !=
+        null)
+      stalledStrongerGpBlockerPeaceTarget(
+        game: ctx.game,
+        snapshot: snapshot,
+      )!,
+    ...stalledFutileGpPeaceTargets(game: ctx.game, snapshot: snapshot),
+    ...stalledGpBlockerFocusPeaceTargets(game: ctx.game, snapshot: snapshot),
+    ...stalledExpansionDistractionPeaceTargets(
+      game: ctx.game,
+      snapshot: snapshot,
+    ),
+    ...atWarGpDistractionTribePeaceTargets(
+      game: ctx.game,
+      snapshot: snapshot,
+    ),
+  };
+  if (peaceTargets.isEmpty) {
+    return null;
+  }
+  final peaceOrders = [
+    for (final peaceTarget in peaceTargets)
+      DiplomaticOrder(
+        type: DiplomaticOrderType.offerPeace,
+        targetFactionId: peaceTarget,
+      ),
+  ];
+  _log.i(
+    'diplomacy forced offerPeace nationId=${ctx.nationId} '
+    'targets=${peaceOrders.map((o) => o.targetFactionId).toList()}',
+  );
+  return DiplomacyPlannerResult(
+    orders: ctx.orders.appendDiplomaticOrders(ctx.nationId, peaceOrders),
+  );
+}
+
+DiplomaticOrder? _chooseDiplomaticOrder({
+  required PlannerContext ctx,
+  required AIWorldSnapshot snapshot,
+  required DiplomacyPlannerPass pass,
+  required List<DiplomaticOrder> candidates,
+  required List<int> scores,
+}) {
+  if (pass == DiplomacyPlannerPass.declareWarOnly &&
+      isStalledOldWorldExpansion(snapshot.conquest.oldWorldProvincesOwned) &&
+      snapshot.conquest.provincesToVictory >
+          kConquerScoreFloorProvincesToVictoryThreshold) {
+    final forcedBlocker = stalledGpBlockerDeclareWarTarget(
+      game: ctx.game,
+      snapshot: snapshot,
+    );
+    if (forcedBlocker != null) {
+      return DiplomaticOrder(
+        type: DiplomaticOrderType.declareWar,
+        targetFactionId: forcedBlocker,
+      );
+    }
+    final idx = _pickHighestScoreIndex(scores);
+    return idx == null ? null : candidates[idx];
+  }
+  return selectWeightedCandidate(
+    candidates: candidates,
+    scores: scores,
+    seed: ctx.seeds.diplomacySeed,
+  );
+}
+
+DiplomacyPlannerResult runDiplomacyPlannerWithResult({
+  required PlannerContext ctx,
+  required AIWorldSnapshot snapshot,
+  DiplomacyPlannerPass pass = DiplomacyPlannerPass.all,
+}) {
+  final weight = _resolveDiplomacyPlannerWeight(
+    ctx: ctx,
+    snapshot: snapshot,
+    pass: pass,
+  );
+  if (weight < 25) {
+    _log.d('diplomacy skipped nationId=${ctx.nationId} weight=$weight < 25');
     return DiplomacyPlannerResult(orders: ctx.orders);
   }
 
-  if (pass != DiplomacyPlannerPass.declareWarOnly) {
-    final peaceOrders = <DiplomaticOrder>[];
-    final peaceTargets = <String>{
-      if (stalledStrongerGpBlockerPeaceTarget(
-            game: ctx.game,
-            snapshot: snapshot,
-          ) !=
-          null)
-        stalledStrongerGpBlockerPeaceTarget(
-          game: ctx.game,
-          snapshot: snapshot,
-        )!,
-      ...stalledFutileGpPeaceTargets(game: ctx.game, snapshot: snapshot),
-      ...stalledGpBlockerFocusPeaceTargets(game: ctx.game, snapshot: snapshot),
-      ...stalledExpansionDistractionPeaceTargets(
-        game: ctx.game,
-        snapshot: snapshot,
-      ),
-      ...atWarGpDistractionTribePeaceTargets(
-        game: ctx.game,
-        snapshot: snapshot,
-      ),
-    };
-    for (final peaceTarget in peaceTargets) {
-      peaceOrders.add(
-        DiplomaticOrder(
-          type: DiplomaticOrderType.offerPeace,
-          targetFactionId: peaceTarget,
-        ),
-      );
-    }
-    if (peaceOrders.isNotEmpty) {
-      _log.i(
-        'diplomacy forced offerPeace nationId=${ctx.nationId} '
-        'targets=${peaceOrders.map((o) => o.targetFactionId).toList()}',
-      );
-      return DiplomacyPlannerResult(
-        orders: ctx.orders.appendDiplomaticOrders(ctx.nationId, peaceOrders),
-      );
-    }
+  final filtered = _filterDiplomacyCandidatesForPass(
+    ctx: ctx,
+    snapshot: snapshot,
+    pass: pass,
+    candidates: _suggestDiplomacyCandidates(ctx: ctx, pass: pass),
+  );
+  if (filtered.isEmpty) {
+    return DiplomacyPlannerResult(orders: ctx.orders);
+  }
+
+  final peaceResult = _stalledPeacePlannerResultIfNeeded(
+    ctx: ctx,
+    snapshot: snapshot,
+    pass: pass,
+  );
+  if (peaceResult != null) {
+    return peaceResult;
   }
 
   final scores = computeDiplomaticCandidateScores(
-    candidates: diploCandidates,
+    candidates: filtered,
     nationId: ctx.nationId,
     game: ctx.game,
     snapshot: snapshot,
@@ -472,7 +540,7 @@ DiplomacyPlannerResult runDiplomacyPlannerWithResult({
     primaryGoal: ctx.primaryGoal,
   );
 
-  final candidateDesc = diploCandidates
+  final candidateDesc = filtered
       .map(
         (o) =>
             '${o.type.name}${o.type == DiplomaticOrderType.declareWar ? ":${o.targetFactionId}" : ""}',
@@ -483,31 +551,13 @@ DiplomacyPlannerResult runDiplomacyPlannerWithResult({
     'candidates=$candidateDesc scores=$scores',
   );
 
-  final DiplomaticOrder? chosen;
-  if (pass == DiplomacyPlannerPass.declareWarOnly &&
-      isStalledOldWorldExpansion(snapshot.conquest.oldWorldProvincesOwned) &&
-      snapshot.conquest.provincesToVictory >
-          kConquerScoreFloorProvincesToVictoryThreshold) {
-    final forcedBlocker = stalledGpBlockerDeclareWarTarget(
-      game: ctx.game,
-      snapshot: snapshot,
-    );
-    if (forcedBlocker != null) {
-      chosen = DiplomaticOrder(
-        type: DiplomaticOrderType.declareWar,
-        targetFactionId: forcedBlocker,
-      );
-    } else {
-      final idx = _pickHighestScoreIndex(scores);
-      chosen = idx == null ? null : diploCandidates[idx];
-    }
-  } else {
-    chosen = selectWeightedCandidate(
-      candidates: diploCandidates,
-      scores: scores,
-      seed: ctx.seeds.diplomacySeed,
-    );
-  }
+  final chosen = _chooseDiplomaticOrder(
+    ctx: ctx,
+    snapshot: snapshot,
+    pass: pass,
+    candidates: filtered,
+    scores: scores,
+  );
   if (chosen == null) return DiplomacyPlannerResult(orders: ctx.orders);
   _log.i(
     'diplomacy chosen nationId=${ctx.nationId} '
