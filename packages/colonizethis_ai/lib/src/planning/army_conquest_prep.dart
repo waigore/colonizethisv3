@@ -4,6 +4,14 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'goal_manager.dart';
 
+Army? _homeArmyForPlayer(Game game, String nationId) {
+  final homeId = homeArmyIdFor(nationId);
+  for (final a in game.worldState.armies) {
+    if (a.id == homeId && a.ownerId == nationId) return a;
+  }
+  return null;
+}
+
 /// Splits regiments from the Home Army into a field army at the capital when
 /// the AI is pursuing conquest and all regiments are stuck in the Home Army
 /// (which cannot march). SPEC/game/military-armies.md; SPEC/ai/ai-architecture.md.
@@ -23,13 +31,7 @@ Game prepareConquestFieldArmy({
       stalled;
   if (!shouldPrep) return game;
 
-  Army? homeArmy;
-  for (final a in game.worldState.armies) {
-    if (a.id == homeArmyIdFor(nationId) && a.ownerId == nationId) {
-      homeArmy = a;
-      break;
-    }
-  }
+  final homeArmy = _homeArmyForPlayer(game, nationId);
   if (homeArmy == null || homeArmy.regimentUnitIds.isEmpty) {
     return game;
   }
@@ -56,13 +58,7 @@ Game prepareConquestFieldArmy({
     for (var i = fieldArmiesAtCapital;
         i < kStalledConquestFieldArmySplitCap;
         i++) {
-      Army? currentHome;
-      for (final a in planningGame.worldState.armies) {
-        if (a.id == homeArmyIdFor(nationId) && a.ownerId == nationId) {
-          currentHome = a;
-          break;
-        }
-      }
+      final currentHome = _homeArmyForPlayer(planningGame, nationId);
       if (currentHome == null || currentHome.regimentUnitIds.length < 2) {
         break;
       }

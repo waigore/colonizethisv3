@@ -1,5 +1,3 @@
-import 'package:colonizethis_logic/colonizethis_logic.dart';
-
 import 'goal_manager.dart';
 import 'planning_imports.dart';
 import '../perception/perception_snapshot.dart';
@@ -272,6 +270,62 @@ Orders _runStalledFrontierArmyMoveFallback({
   return applyArmyMoveOrderForPlayer(ctx.orders, ctx.nationId, best);
 }
 
+bool _isOnAtWarMinorOrTribeFrontier({
+  required Game game,
+  required Map<String, String?> provinceOwner,
+  required String destRegion,
+  required Iterable<String> destNeighborLocals,
+  required Iterable<String> atWarWith,
+}) {
+  for (final n in destNeighborLocals) {
+    final nOwner = provinceOwner[ProvinceId.full(destRegion, n)] ?? '';
+    if (!atWarWith.contains(nOwner)) continue;
+    if (_isMinorOrTribeFaction(game, nOwner)) return true;
+  }
+  return false;
+}
+
+double _stalledExpansionArmyMoveScoreDelta({
+  required ArmyMoveOrder move,
+  required String nationId,
+  required Game game,
+  required AIWorldSnapshot snapshot,
+  required Map<String, String?> provinceOwner,
+  required Set<String> invadable,
+  required String destOwner,
+  required String destRegion,
+  required Iterable<String> destNeighborLocals,
+  required String? declaredWarTargetFactionId,
+}) {
+  final atWarMinorOrTribe =
+      destOwner.isNotEmpty &&
+      destOwner != nationId &&
+      snapshot.threats.atWarWith.contains(destOwner) &&
+      _isMinorOrTribeFaction(game, destOwner);
+  final targetsDeclaredOrAtWarMinor =
+      (declaredWarTargetFactionId != null &&
+          destOwner == declaredWarTargetFactionId) ||
+      atWarMinorOrTribe;
+  if (targetsDeclaredOrAtWarMinor) {
+    var delta = kConquestArmyMoveStalledDeclaredTargetBonus;
+    if (invadable.contains(move.destinationProvinceId)) {
+      delta += kConquestArmyMoveStalledDeclaredTargetInvadableBonus;
+    }
+    return delta;
+  }
+  if (destOwner != nationId) return 0;
+  if (_isOnAtWarMinorOrTribeFrontier(
+    game: game,
+    provinceOwner: provinceOwner,
+    destRegion: destRegion,
+    destNeighborLocals: destNeighborLocals,
+    atWarWith: snapshot.threats.atWarWith,
+  )) {
+    return kConquestArmyMoveAdjacentAtWarFrontierBonus;
+  }
+  return -0.95;
+}
+
 double _scoreArmyMoveDestination({
   required ArmyMoveOrder move,
   required String nationId,
@@ -293,33 +347,22 @@ double _scoreArmyMoveDestination({
   );
   var score = 1.0;
   if (stalledExpansion) {
-    final atWarMinorOrTribe =
-        destOwner.isNotEmpty &&
-        destOwner != nationId &&
-        snapshot.threats.atWarWith.contains(destOwner) &&
-        _isMinorOrTribeFaction(game, destOwner);
-    if ((declaredWarTargetFactionId != null &&
-            destOwner == declaredWarTargetFactionId) ||
-        atWarMinorOrTribe) {
-      score += kConquestArmyMoveStalledDeclaredTargetBonus;
-      if (invadable.contains(move.destinationProvinceId)) {
-        score += kConquestArmyMoveStalledDeclaredTargetInvadableBonus;
-      }
-    } else if (destOwner == nationId) {
-      var onAtWarFrontier = false;
-      for (final n in destNeighborLocals) {
-        final nOwner = provinceOwner[ProvinceId.full(destRegion, n)] ?? '';
-        if (snapshot.threats.atWarWith.contains(nOwner) &&
-            _isMinorOrTribeFaction(game, nOwner)) {
-          onAtWarFrontier = true;
-          break;
-        }
-      }
-      if (onAtWarFrontier) {
-        score += kConquestArmyMoveAdjacentAtWarFrontierBonus;
-      } else {
-        score *= 0.05;
-      }
+    final delta = _stalledExpansionArmyMoveScoreDelta(
+      move: move,
+      nationId: nationId,
+      game: game,
+      snapshot: snapshot,
+      provinceOwner: provinceOwner,
+      invadable: invadable,
+      destOwner: destOwner,
+      destRegion: destRegion,
+      destNeighborLocals: destNeighborLocals,
+      declaredWarTargetFactionId: declaredWarTargetFactionId,
+    );
+    if (delta < 0) {
+      score *= 0.05;
+    } else {
+      score += delta;
     }
   } else if (declaredWarTargetFactionId != null &&
       destOwner == declaredWarTargetFactionId) {
