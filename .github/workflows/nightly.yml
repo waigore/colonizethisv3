@@ -18,7 +18,7 @@ jobs:
       - name: Setup Dart
         uses: dart-lang/setup-dart@v1
         with:
-          sdk: '3.11.0'
+          sdk: '3.11.5'
 
       - name: Run nightly integration gate
         run: bash tool/run_nightly_integration_gate.sh
@@ -34,7 +34,7 @@ jobs:
       - name: Setup Dart
         uses: dart-lang/setup-dart@v1
         with:
-          sdk: '3.11.0'
+          sdk: '3.11.5'
 
       - name: Resolve dependencies (workspace)
         run: dart pub get
