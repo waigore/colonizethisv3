@@ -41,6 +41,13 @@ rules:
     runner: dart
     script: tool/check_logic_dedup_logger.dart
 
+  - rule_id: repo.ai_planner_context
+    group: architecture
+    title: colonizethis_ai domain planners must use PlannerContext (Refs #2521)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_ai_planner_context.dart
+
   - rule_id: repo.dart_long_string_switches
     group: structure
     title: Long string-literal switch checks

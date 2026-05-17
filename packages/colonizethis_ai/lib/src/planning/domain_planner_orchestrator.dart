@@ -1,12 +1,9 @@
 import 'dart:math' as math;
 
-import 'package:colonizethis_ai/package_logger.dart';
-import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:colonizethis_logic/ai_api.dart';
 import 'package:colonizethis_logic/order_suggestion_api.dart';
-import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'colonial_pressure.dart';
+import 'planning_imports.dart';
 import 'goal_manager.dart';
 import '../perception/perception_snapshot.dart';
 import '../util/orders_extensions.dart';
@@ -16,6 +13,7 @@ import 'diplomacy_planner.dart';
 import 'domain_planner_outcome.dart';
 import 'move_planner.dart';
 import 'naval_planner.dart';
+import 'planner_context.dart';
 import 'research_planner.dart';
 
 final _log = packageLogger();
@@ -74,165 +72,101 @@ DomainPlannerOutcome runDomainPlannersWithOutcome({
 }) {
   void emit(String phaseId) => onStagedPlannerProgress?.call(phaseId);
 
-  var orders = const Orders();
-  orders = _runEconomyDomainPlanners(
-    orders: orders,
+  var ctx = PlannerContext(
     nationId: nationId,
     view: view,
     game: game,
     topology: topology,
-    snapshot: snapshot,
+    orders: const Orders(),
     config: config,
     primaryGoal: primaryGoal,
     seeds: seeds,
     suggestionAPI: suggestionAPI,
+  );
+
+  ctx = _runEconomyDomainPlanners(
+    ctx: ctx,
+    snapshot: snapshot,
     economyPlan: economyPlan,
     tileMapByRegion: tileMapByRegion,
     emit: emit,
   );
 
-  // Movement: suggest moves; weight by military/expand.
-  orders = runMovePlanner(
-    nationId: nationId,
-    view: view,
-    game: game,
-    topology: topology,
-    orders: orders,
-    config: config,
-    primaryGoal: primaryGoal,
-    seeds: seeds,
-    suggestionAPI: suggestionAPI,
-  );
+  ctx = ctx.withOrders(runMovePlanner(ctx: ctx));
   emit('aiStageC');
 
-  // Military: declare war before invasion army moves (SPEC/ai/ai-architecture.md).
   final declareWarResult = runDiplomacyPlannerWithResult(
-    nationId: nationId,
-    view: view,
-    game: game,
-    topology: topology,
-    orders: orders,
+    ctx: ctx,
     snapshot: snapshot,
-    config: config,
-    primaryGoal: primaryGoal,
-    seeds: seeds,
-    suggestionAPI: suggestionAPI,
     pass: DiplomacyPlannerPass.declareWarOnly,
   );
-  orders = declareWarResult.orders;
+  ctx = ctx.withOrders(declareWarResult.orders);
   final armyMovesBeforeConquest =
-      orders.armyMoveOrdersByPlayerId[nationId]?.length ?? 0;
-  orders = runConquestArmyMovePlanner(
-    nationId: nationId,
-    view: view,
-    game: game,
-    topology: topology,
-    orders: orders,
-    snapshot: snapshot,
-    config: config,
-    primaryGoal: primaryGoal,
-    seeds: seeds,
-    suggestionAPI: suggestionAPI,
-    declaredWarTargetFactionId: declareWarResult.declaredWarTargetFactionId,
+      ctx.orders.armyMoveOrdersByPlayerId[nationId]?.length ?? 0;
+  ctx = ctx.withOrders(
+    runConquestArmyMovePlanner(
+      ctx: ctx,
+      snapshot: snapshot,
+      declaredWarTargetFactionId: declareWarResult.declaredWarTargetFactionId,
+    ),
   );
   final conquestArmyMoveCount =
-      (orders.armyMoveOrdersByPlayerId[nationId]?.length ?? 0) -
+      (ctx.orders.armyMoveOrdersByPlayerId[nationId]?.length ?? 0) -
       armyMovesBeforeConquest;
-  orders = runArmyMovePlanner(
-    nationId: nationId,
-    view: view,
-    game: game,
-    topology: topology,
-    orders: orders,
-    config: config,
-    primaryGoal: primaryGoal,
-    seeds: seeds,
-    suggestionAPI: suggestionAPI,
-    provincesToVictory: snapshot.conquest.provincesToVictory,
+  ctx = ctx.withOrders(
+    runArmyMovePlanner(
+      ctx: ctx,
+      provincesToVictory: snapshot.conquest.provincesToVictory,
+    ),
   );
   emit('aiStageD');
 
-  // Naval: suggest naval moves and missions; weight by military/expand.
-  orders = runNavalPlanner(
-    nationId: nationId,
-    view: view,
-    game: game,
-    topology: topology,
-    orders: orders,
-    config: config,
-    primaryGoal: primaryGoal,
-    seeds: seeds,
-    suggestionAPI: suggestionAPI,
-    colonial: snapshot.colonial,
+  ctx = ctx.withOrders(
+    runNavalPlanner(ctx: ctx, colonial: snapshot.colonial),
   );
   emit('aiStageE');
 
-  // Diplomacy follow-up (peace, alliance, overture — no duplicate declare war).
-  orders = runDiplomacyPlannerWithResult(
-    nationId: nationId,
-    view: view,
-    game: game,
-    topology: topology,
-    orders: orders,
-    snapshot: snapshot,
-    config: config,
-    primaryGoal: primaryGoal,
-    seeds: seeds,
-    suggestionAPI: suggestionAPI,
-    pass: DiplomacyPlannerPass.nonDeclareWarOnly,
-  ).orders;
+  ctx = ctx.withOrders(
+    runDiplomacyPlannerWithResult(
+      ctx: ctx,
+      snapshot: snapshot,
+      pass: DiplomacyPlannerPass.nonDeclareWarOnly,
+    ).orders,
+  );
   emit('aiStageF');
 
-  orders = runResearchPlanner(
-    nationId: nationId,
-    view: view,
-    game: game,
-    topology: topology,
-    orders: orders,
-    config: config,
-    primaryGoal: primaryGoal,
-    suggestionAPI: suggestionAPI,
-    researchSeed: seeds.researchSeed,
-  );
+  ctx = ctx.withOrders(runResearchPlanner(ctx: ctx));
   emit('aiStageG');
 
   return DomainPlannerOutcome(
-    orders: orders,
+    orders: ctx.orders,
     declaredWarTargetFactionId: declareWarResult.declaredWarTargetFactionId,
     conquestArmyMoveCount: conquestArmyMoveCount,
   );
 }
 
-Orders _runEconomyDomainPlanners({
-  required Orders orders,
-  required String nationId,
-  required PlayerView view,
-  required Game game,
-  required MapTopology topology,
+PlannerContext _runEconomyDomainPlanners({
+  required PlannerContext ctx,
   required AIWorldSnapshot snapshot,
-  required AIConfig config,
-  required StrategicGoal primaryGoal,
-  required AISeedBundle seeds,
-  required OrderSuggestionAPI suggestionAPI,
   required EconomyPlan economyPlan,
   Map<String, TileMapResult>? tileMapByRegion,
   required void Function(String phaseId) emit,
 }) {
-  var result = orders;
-  final domainWeights = getDomainWeightsForLeader(config.personalityId);
+  var result = ctx.orders;
+  final domainWeights = ctx.domainWeights;
 
   emit('suggestionPools');
-  final workCandidates = suggestionAPI.suggestWorkOrders(
-    view,
-    game,
-    topology,
+  final workCandidates = ctx.suggestionAPI.suggestWorkOrders(
+    ctx.view,
+    ctx.game,
+    ctx.topology,
     result,
     tileMapByRegion: tileMapByRegion,
   );
-  final buildCandidates = suggestionAPI.suggestBuildOrders(
-    view,
-    game,
-    topology,
+  final buildCandidates = ctx.suggestionAPI.suggestBuildOrders(
+    ctx.view,
+    ctx.game,
+    ctx.topology,
     result,
   );
   final hasSpyWork = workCandidates.any(
@@ -240,50 +174,50 @@ Orders _runEconomyDomainPlanners({
         o.target == kWorkTargetStealTech || o.target == kWorkTargetCounterSpy,
   );
   var workThreshold =
-      40 - (hasSpyWork ? getAgendaSpyOrderModifier(config.hiddenAgendaId) : 0);
+      40 - (hasSpyWork ? getAgendaSpyOrderModifier(ctx.config.hiddenAgendaId) : 0);
   final colonialPressure = hasColonialAcquisitionTargets(snapshot.colonial);
   if (colonialPressure || snapshot.colonial.newWorldProvincesOwned > 0) {
     workThreshold = math.min(workThreshold, kColonialCivilianWorkThresholdCap);
   }
   final runFullAiCivilianWork =
-      primaryGoal == StrategicGoal.expand ||
+      ctx.primaryGoal == StrategicGoal.expand ||
       domainWeights.economy >= workThreshold ||
       colonialPressure ||
       snapshot.colonial.newWorldProvincesOwned > 0;
   _log.d(
-    'work eval nationId=$nationId workThreshold=$workThreshold '
-    'domainWeights.economy=${domainWeights.economy} primaryGoal=$primaryGoal '
+    'work eval nationId=${ctx.nationId} workThreshold=$workThreshold '
+    'domainWeights.economy=${domainWeights.economy} primaryGoal=${ctx.primaryGoal} '
     'workCandidatesCount=${workCandidates.length}',
   );
   if (runFullAiCivilianWork) {
     final selection = selectFullAiCivilianWorkOrders(
       workSuggestions: workCandidates,
-      view: view,
-      game: game,
+      view: ctx.view,
+      game: ctx.game,
       tileMapByRegion: tileMapByRegion,
     );
     for (final w in selection.workOrders) {
-      final unitType = view.ownUnitsById[w.unitId]?.type ?? 'unknown';
+      final unitType = ctx.view.ownUnitsById[w.unitId]?.type ?? 'unknown';
       _log.i(
-        'civilian_work_assigned nationId=$nationId unitId=${w.unitId} '
+        'civilian_work_assigned nationId=${ctx.nationId} unitId=${w.unitId} '
         'unitType=$unitType target=${w.target} targetTileKey=${w.targetTileKey}',
       );
     }
     for (final idle in selection.idleEvents) {
       _log.i(
-        'civilian_work_idle nationId=$nationId unitId=${idle.unitId} '
+        'civilian_work_idle nationId=${ctx.nationId} unitId=${idle.unitId} '
         'unitType=${idle.unitType} reason=${idle.reason}',
       );
     }
     if (selection.workOrders.isNotEmpty) {
-      result = result.appendWorkOrders(nationId, selection.workOrders);
+      result = result.appendWorkOrders(ctx.nationId, selection.workOrders);
     }
   } else if (workCandidates.isNotEmpty) {
-    _log.d('work skipped nationId=$nationId weight below threshold');
+    _log.d('work skipped nationId=${ctx.nationId} weight below threshold');
   }
   emit('aiStageA');
 
-  var buildThreshold = 30 - getAgendaBuildOrderModifier(config.hiddenAgendaId);
+  var buildThreshold = 30 - getAgendaBuildOrderModifier(ctx.config.hiddenAgendaId);
   if (snapshot.conquest.oldWorldProvincesOwned <=
       kStalledOldWorldProvinceThreshold) {
     buildThreshold = math.min(buildThreshold, 15);
@@ -293,27 +227,25 @@ Orders _runEconomyDomainPlanners({
     buildThreshold = math.min(buildThreshold, colonialBuildCap);
   }
   _log.d(
-    'build eval nationId=$nationId buildThreshold=$buildThreshold '
+    'build eval nationId=${ctx.nationId} buildThreshold=$buildThreshold '
     'buildCandidatesCount=${buildCandidates.length}',
   );
   if (buildCandidates.isNotEmpty && domainWeights.economy >= buildThreshold) {
     final chosen = pickBuildOrder(
+      ctx: ctx,
       buildCandidates: buildCandidates,
       cargoPreference: economyPlan.cargoPreference,
-      primaryGoal: primaryGoal,
-      config: config,
-      seed: seeds.economySeed + 1,
-      nationId: nationId,
       provincesToVictory: snapshot.conquest.provincesToVictory,
       oldWorldProvincesOwned: snapshot.conquest.oldWorldProvincesOwned,
+      seedOverride: ctx.seeds.economySeed + 1,
     );
     if (chosen != null) {
-      _log.i('build chosen nationId=$nationId unitType=${chosen.unitType}');
-      result = result.appendBuildOrders(nationId, [chosen]);
+      _log.i('build chosen nationId=${ctx.nationId} unitType=${chosen.unitType}');
+      result = result.appendBuildOrders(ctx.nationId, [chosen]);
     }
   } else if (buildCandidates.isNotEmpty) {
-    _log.d('build skipped nationId=$nationId weight below threshold');
+    _log.d('build skipped nationId=${ctx.nationId} weight below threshold');
   }
   emit('aiStageB');
-  return result;
+  return ctx.withOrders(result);
 }
