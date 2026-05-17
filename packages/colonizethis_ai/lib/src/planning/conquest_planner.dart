@@ -6,6 +6,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'goal_manager.dart';
 import '../perception/perception_snapshot.dart';
+import 'colonial_pressure.dart';
 import '../util/ai_random_utils.dart';
 
 final _log = packageLogger();
@@ -68,9 +69,7 @@ Orders runConquestArmyMovePlanner({
   if (stalledExpansion && atWarWithInvadableTarget && weight < 80) {
     weight = 80;
   }
-  if (snapshot.colonial.invadableNewWorldProvinceIdsSorted.isNotEmpty &&
-      snapshot.colonial.newWorldProvincesOwned <
-          kColonialFewNwProvincesThreshold &&
+  if (hasColonialAcquisitionTargets(snapshot.colonial) &&
       weight < kConquestArmyMoveMinWeightWhenColonialPressure) {
     weight = kConquestArmyMoveMinWeightWhenColonialPressure;
   }

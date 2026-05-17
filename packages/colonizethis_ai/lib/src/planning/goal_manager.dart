@@ -6,6 +6,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../util/ai_random_utils.dart';
 import '../perception/perception_snapshot.dart';
+import 'colonial_pressure.dart';
 
 final _log = packageLogger();
 
@@ -70,14 +71,10 @@ Map<StrategicGoal, int> evaluateStrategicGoalScores(
     expand += kColonialExpandBonusWhenInvadableNw;
     conquer += kColonialConquerBonusWhenInvadableNw;
   }
-  if (snapshot.colonial.newWorldProvincesOwned <
-      kColonialFewNwProvincesThreshold) {
+  if (isEarlyColonialExpansion(snapshot.colonial)) {
     conquer += kColonialConquerBonusWhenFewNwProvinces;
   }
-  final colonialPressure =
-      snapshot.colonial.invadableNewWorldProvinceIdsSorted.isNotEmpty &&
-      snapshot.colonial.newWorldProvincesOwned < kColonialFewNwProvincesThreshold;
-  if (colonialPressure) {
+  if (hasColonialAcquisitionTargets(snapshot.colonial)) {
     diplomacy -= kColonialDiplomacyGoalPenaltyWhenPressure;
     trade -= kColonialTradeGoalPenaltyWhenPressure;
     if (expand < kMinimumColonialExpandScoreWhenPressure) {

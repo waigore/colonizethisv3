@@ -6,6 +6,7 @@ import 'package:colonizethis_logic/ai_api.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../perception/perception_snapshot.dart';
+import 'colonial_pressure.dart';
 import 'goal_manager.dart';
 import 'war_desire_calculator.dart';
 
@@ -167,9 +168,7 @@ int _scoreDeclareWarDiplomaticOrder({
   final isMinorTarget = _isMinorOrTribeFaction(game, order.targetFactionId);
   final ownsInvadableNw = snapshot.colonial.invadableNewWorldProvinceIdsSorted
       .any((pid) => provinceOwner[pid] == order.targetFactionId);
-  final colonialPressure =
-      snapshot.colonial.invadableNewWorldProvinceIdsSorted.isNotEmpty &&
-      snapshot.colonial.newWorldProvincesOwned < kColonialFewNwProvincesThreshold;
+  final colonialPressure = hasColonialAcquisitionTargets(snapshot.colonial);
   final isTribeTarget = _isTribeFaction(game, order.targetFactionId);
   if (behindVictoryPace &&
       adjacentOwners.isNotEmpty &&
