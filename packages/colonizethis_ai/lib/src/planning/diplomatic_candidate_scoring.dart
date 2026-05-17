@@ -91,7 +91,9 @@ List<int> computeDiplomaticCandidateScores({
             break;
           }
           final isMinorTarget = _isMinorOrTribeFaction(game, o.targetFactionId);
-          if (isMinorTarget && !invadableOwners.contains(o.targetFactionId)) {
+          if (isMinorTarget &&
+              !invadableOwners.contains(o.targetFactionId) &&
+              !isColonialAdjacentOwner) {
             s = kDeclareWarNonAdjacentSuppressedScore;
             break;
           }
