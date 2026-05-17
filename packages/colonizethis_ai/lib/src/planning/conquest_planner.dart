@@ -68,6 +68,12 @@ Orders runConquestArmyMovePlanner({
   if (stalledExpansion && atWarWithInvadableTarget && weight < 80) {
     weight = 80;
   }
+  if (snapshot.colonial.invadableNewWorldProvinceIdsSorted.isNotEmpty &&
+      snapshot.colonial.newWorldProvincesOwned <
+          kColonialFewNwProvincesThreshold &&
+      weight < kConquestArmyMoveMinWeightWhenColonialPressure) {
+    weight = kConquestArmyMoveMinWeightWhenColonialPressure;
+  }
   if (weight < 10) {
     _log.d('conquest army move skipped nationId=$nationId weight=$weight');
     return orders;

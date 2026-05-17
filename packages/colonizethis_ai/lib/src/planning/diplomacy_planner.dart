@@ -75,6 +75,13 @@ DiplomacyPlannerResult runDiplomacyPlannerWithResult({
       weight < kDiplomacyDeclareWarMinWeightWhenStalled) {
     weight = kDiplomacyDeclareWarMinWeightWhenStalled;
   }
+  if (pass == DiplomacyPlannerPass.declareWarOnly &&
+      snapshot.colonial.invadableNewWorldProvinceIdsSorted.isNotEmpty &&
+      snapshot.colonial.newWorldProvincesOwned <
+          kColonialFewNwProvincesThreshold &&
+      weight < kDiplomacyDeclareWarMinWeightWhenColonialPressure) {
+    weight = kDiplomacyDeclareWarMinWeightWhenColonialPressure;
+  }
   if (weight < 25) {
     _log.d('diplomacy skipped nationId=$nationId weight=$weight < 25');
     return DiplomacyPlannerResult(orders: orders);

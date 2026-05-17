@@ -123,34 +123,67 @@ const int kDefendBonusWhenAtWarAndFewHoldings = 45;
 const int kFewOldWorldProvincesDefendThreshold = 6;
 
 /// Expand-goal bonus when invadable New World tribe/minor provinces exist.
-const int kColonialExpandBonusWhenInvadableNw = 18;
+const int kColonialExpandBonusWhenInvadableNw = 45;
 
 /// Conquer-goal bonus for colonial pressure (below OW victory floors).
-const int kColonialConquerBonusWhenInvadableNw = 14;
+const int kColonialConquerBonusWhenInvadableNw = 40;
 
 /// Declare-war bonus toward a tribe/minor that owns adjacent New World provinces.
-const int kDeclareWarColonialAdjacentTribeBonus = 40;
+const int kDeclareWarColonialAdjacentTribeBonus = 70;
 
 /// Establish-overture bonus toward a preferred colonial tribe target.
-const int kEstablishOvertureColonialTribeBonus = 35;
+const int kEstablishOvertureColonialTribeBonus = 60;
 
 /// Conquest army-move bonus for New World invadable destinations.
-const int kConquestArmyMoveNwInvadableBonus = 18;
+const int kConquestArmyMoveNwInvadableBonus = 35;
 
 /// Economy-domain weight boost for cargo preference when colonial targets exist.
-const int kColonialCargoPreferenceEconomyBoost = 28;
+const int kColonialCargoPreferenceEconomyBoost = 40;
 
 /// Extra cargo boost when the GP owns no New World provinces yet.
-const int kColonialCargoPreferenceNoNwColoniesBoost = 12;
+const int kColonialCargoPreferenceNoNwColoniesBoost = 28;
 
 /// Naval planner weight boost when New World invasion/colonization is viable.
-const int kColonialNavalWeightBonus = 22;
+const int kColonialNavalWeightBonus = 40;
 
 /// Declare-war bonus when the target owns a sea-reachable invadable NW province.
-const int kDeclareWarColonialInvadableOwnerBonus = 48;
+const int kDeclareWarColonialInvadableOwnerBonus = 95;
 
 /// Goal bonuses when the GP still owns fewer than this many NW provinces.
 const int kColonialFewNwProvincesThreshold = 8;
 
 /// Extra conquer weight when below [kColonialFewNwProvincesThreshold] NW holdings.
-const int kColonialConquerBonusWhenFewNwProvinces = 20;
+const int kColonialConquerBonusWhenFewNwProvinces = 55;
+
+/// Penalty to diplomacy goal weight while sea-reachable NW targets exist and
+/// holdings are below [kColonialFewNwProvincesThreshold].
+const int kColonialDiplomacyGoalPenaltyWhenPressure = 45;
+
+/// Penalty to trade goal weight under the same colonial pressure.
+const int kColonialTradeGoalPenaltyWhenPressure = 25;
+
+/// Floor for `expand` under colonial pressure (does not reduce OW floors).
+const int kMinimumColonialExpandScoreWhenPressure = 90;
+
+/// Floor for `conquer` under colonial pressure (does not reduce OW floors).
+const int kMinimumColonialConquerScoreWhenPressure = 95;
+
+/// Minimum declare-war diplomacy pass weight under colonial pressure.
+const int kDiplomacyDeclareWarMinWeightWhenColonialPressure = 45;
+
+/// Minimum conquest army-move pass weight under colonial pressure.
+const int kConquestArmyMoveMinWeightWhenColonialPressure = 45;
+
+/// Full AI explore-work score bonus when the target tile is in the New World.
+const int kExploreWorkScoreBonusNewWorld = 80;
+
+/// Full AI build-improvement score for an unimproved extractable resource tile.
+const int kBuildImprovementExtractableResourceScore = 450;
+
+/// Extra declare-war weight for **tribes** owning sea-reachable NW provinces so
+/// they outrank adjacent Old World minor targets under colonial pressure.
+const int kDeclareWarColonialNwTribeDominanceBonus = 100;
+
+/// Declare-war penalty toward Old World minors with no sea-reachable NW
+/// provinces while colonial pressure is active.
+const int kDeclareWarColonialPressureOwMinorPenalty = 50;
