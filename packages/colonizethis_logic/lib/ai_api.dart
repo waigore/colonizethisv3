@@ -26,12 +26,15 @@ export 'src/orders/order_suggestion_helpers.dart'
     show
         filterArmyMoveOrdersByDiplomacy,
         filterMoveOrdersByDiplomacy,
-        getProvinceOwnerMap;
+        getProvinceOwnerMap,
+        knownDiplomaticTargetFactionIds;
 export 'src/turn/trace/turn_trace_contracts.dart' show TurnTraceAiSection;
 export 'src/world/army_commands.dart' show applyArmySplit;
 export 'src/world/army_ids.dart' show homeArmyIdFor;
 export 'src/world/player_view.dart'
     show PlayerView, VisibilityLevel, buildPlayerView;
+export 'src/world/sea_reachable_provinces.dart'
+    show reachableNonOwnedProvinceIdsViaSeas;
 export 'src/world/province_lookup.dart' show allProvinces;
 export 'src/world/unit_lookup.dart'
     show

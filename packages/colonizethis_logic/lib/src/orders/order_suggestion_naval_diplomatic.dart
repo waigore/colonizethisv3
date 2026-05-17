@@ -10,7 +10,7 @@ import '../world/topology_helpers.dart';
 import '../world/unit_lookup.dart';
 import 'incremental_candidate_validator.dart';
 import 'order_suggestion_context.dart';
-import 'orders_application_helpers.dart';
+import 'order_suggestion_helpers.dart';
 
 void _addAcceptedSeaZoneCandidates({
   required IncrementalCandidateValidator candidateValidator,
@@ -428,33 +428,11 @@ List<DiplomaticOrder> suggestDiplomaticOrders(
   final suggestions = <DiplomaticOrder>[];
   final player = view.player;
 
-  // Determine which factions are actually "known" to this player per SPEC:
-  // - Any faction with an existing DiplomacyRelation to the player.
-  // - Any faction that owns at least one province with a tile visible to the player.
-  // Self is never a diplomatic target.
-  final knownFactionIds = <String>{};
-
-  for (final rel in game.diplomacyRelations) {
-    if (rel.factionId1 == playerId) {
-      knownFactionIds.add(rel.factionId2);
-    } else if (rel.factionId2 == playerId) {
-      knownFactionIds.add(rel.factionId1);
-    }
-  }
-
-  for (final entry in view.visibilityByTile.entries) {
-    if (entry.value == VisibilityLevel.unknown) continue;
-    final parsed = parseTileKeyCoordinates(entry.key);
-    if (parsed == null) continue;
-    final regionId = parsed.regionId;
-    final provinceLocalId = parsed.provinceLocalId;
-    final provinceId = ProvinceId.full(regionId, provinceLocalId);
-    final province = view.provinceByRegionAndId(regionId, provinceId);
-    final ownerId = province?.ownerId;
-    if (ownerId != null && ownerId != playerId) {
-      knownFactionIds.add(ownerId);
-    }
-  }
+  final knownFactionIds = knownDiplomaticTargetFactionIds(
+    view: view,
+    game: game,
+    topology: topology,
+  );
 
   // One membership snapshot for this pass: O(1) minor/tribe checks per target
   // and GP id sets without repeated list scans (Refs #2394).
@@ -615,27 +593,11 @@ List<DiplomaticOrder> suggestDeclareWarOrders(
   final playerId = view.playerId;
   final suggestions = <DiplomaticOrder>[];
 
-  final knownFactionIds = <String>{};
-  for (final rel in game.diplomacyRelations) {
-    if (rel.factionId1 == playerId) {
-      knownFactionIds.add(rel.factionId2);
-    } else if (rel.factionId2 == playerId) {
-      knownFactionIds.add(rel.factionId1);
-    }
-  }
-  for (final entry in view.visibilityByTile.entries) {
-    if (entry.value == VisibilityLevel.unknown) continue;
-    final parsed = parseTileKeyCoordinates(entry.key);
-    if (parsed == null) continue;
-    final regionId = parsed.regionId;
-    final provinceLocalId = parsed.provinceLocalId;
-    final provinceId = ProvinceId.full(regionId, provinceLocalId);
-    final province = view.provinceByRegionAndId(regionId, provinceId);
-    final ownerId = province?.ownerId;
-    if (ownerId != null && ownerId != playerId) {
-      knownFactionIds.add(ownerId);
-    }
-  }
+  final knownFactionIds = knownDiplomaticTargetFactionIds(
+    view: view,
+    game: game,
+    topology: topology,
+  );
 
   final factionMembership = DiplomacyFactionMembership.from(game);
   final otherGps = factionMembership.greatPowerIds.difference({playerId});
