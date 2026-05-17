@@ -14,7 +14,7 @@ dependencies:
 dev_dependencies:
   colonizethis_exception_lint:
     path: ../../packages/colonizethis_exception_lint
-  custom_lint: ^0.8.1
+  custom_lint: 0.8.1
 
 executables:
   check_gdd_coverage: bin/check_gdd_coverage.dart
