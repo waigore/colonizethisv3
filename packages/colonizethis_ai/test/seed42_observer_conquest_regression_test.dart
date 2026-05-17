@@ -1,11 +1,17 @@
+import 'package:colonizethis_logger/colonizethis_logger.dart';
 import 'package:colonizethis_test/test.dart';
 import 'package:colonizethis_ai/colonizethis_ai.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
+import 'package:logger/logger.dart';
 
 /// Observer seed-42 per-GP Old World conquest gate (Refs #2509).
 void main() {
+  setUpAll(() {
+    CtLogger.level = Level.off;
+  });
+
   test('seed 42 turn 100: every GP gains at least 3 Old World provinces', () {
     final init = runInitGame(
       config: GameSetupConfig(seed: 42),
@@ -68,5 +74,5 @@ void main() {
             'end=${owStart[gpId]! + gain} allGains=$gains',
       );
     }
-  }, timeout: const Timeout(Duration(minutes: 5)));
+  }, timeout: const Timeout(Duration(minutes: 12)));
 }

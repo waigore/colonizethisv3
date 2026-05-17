@@ -522,5 +522,176 @@ void main() {
         expect(score, greaterThanOrEqualTo(kEstablishOvertureColonialInvadableOwnerBonus));
       },
     );
+
+    test(
+      'stalled OW suppresses tribe declareWar when invadable OW is GP-owned',
+      () {
+        const snap = AIWorldSnapshot(
+          playerId: 'gp4',
+          threats: ThreatSummary(),
+          opportunities: OpportunitySummary(),
+          conquest: ConquestSummary(
+            oldWorldProvincesOwned: 7,
+            provincesToVictory: 24,
+            invadableProvinceIdsSorted: ['oldWorld|p30'],
+            adjacentOwnerFactionIdsSorted: ['gp3'],
+          ),
+          colonial: ColonialSummary(
+            invadableNewWorldProvinceIdsSorted: ['newWorld|nw1'],
+          ),
+          economy: EconomySummary(),
+          relations: {},
+        );
+        final game = Game(
+          id: 'g-stalled-gp-blocker-tribe',
+          worldState: WorldState(
+            turnState: const TurnState(
+              phase: TurnPhase.orders,
+              turnNumber: 40,
+            ),
+            oldWorld: const RegionData(
+              provinces: [
+                Province(
+                  id: 'oldWorld|p30',
+                  regionId: 'oldWorld',
+                  ownerId: 'gp3',
+                ),
+              ],
+            ),
+            newWorld: const RegionData(),
+          ),
+          players: const [
+            Player(id: 'gp3', displayName: 'C', isHuman: false),
+            Player(id: 'gp4', displayName: 'D', isHuman: false),
+          ],
+        );
+        const config = AIConfig(
+          leaderId: 'henry',
+          personalityId: 'henry',
+          hiddenAgendaId: 'merchant',
+        );
+        final score = computeDiplomaticCandidateScores(
+          candidates: const [
+            DiplomaticOrder(
+              type: DiplomaticOrderType.declareWar,
+              targetFactionId: 'tribe1',
+            ),
+          ],
+          nationId: 'gp4',
+          game: game,
+          snapshot: snap,
+          config: config,
+        ).single;
+        expect(score, 0);
+      },
+    );
+
+    test(
+      'stalled OW scores declareWar on adjacent GP invadable blocker',
+      () {
+        const snap = AIWorldSnapshot(
+          playerId: 'gp4',
+          threats: ThreatSummary(),
+          opportunities: OpportunitySummary(),
+          conquest: ConquestSummary(
+            oldWorldProvincesOwned: 7,
+            provincesToVictory: 24,
+            invadableProvinceIdsSorted: ['oldWorld|p30'],
+            adjacentOwnerFactionIdsSorted: ['gp3'],
+          ),
+          colonial: ColonialSummary(),
+          economy: EconomySummary(),
+          relations: {},
+        );
+        final game = Game(
+          id: 'g-stalled-gp-blocker-declare',
+          worldState: WorldState(
+            turnState: const TurnState(
+              phase: TurnPhase.orders,
+              turnNumber: 40,
+            ),
+            oldWorld: const RegionData(
+              provinces: [
+                Province(
+                  id: 'oldWorld|p30',
+                  regionId: 'oldWorld',
+                  ownerId: 'gp3',
+                ),
+                Province(
+                  id: 'oldWorld|p31',
+                  regionId: 'oldWorld',
+                  ownerId: 'gp3',
+                ),
+                Province(
+                  id: 'oldWorld|p32',
+                  regionId: 'oldWorld',
+                  ownerId: 'gp3',
+                ),
+                Province(
+                  id: 'oldWorld|p33',
+                  regionId: 'oldWorld',
+                  ownerId: 'gp3',
+                ),
+                Province(
+                  id: 'oldWorld|p34',
+                  regionId: 'oldWorld',
+                  ownerId: 'gp3',
+                ),
+                Province(
+                  id: 'oldWorld|p35',
+                  regionId: 'oldWorld',
+                  ownerId: 'gp3',
+                ),
+                Province(
+                  id: 'oldWorld|p36',
+                  regionId: 'oldWorld',
+                  ownerId: 'gp4',
+                ),
+                Province(
+                  id: 'oldWorld|p37',
+                  regionId: 'oldWorld',
+                  ownerId: 'gp4',
+                ),
+                Province(
+                  id: 'oldWorld|p38',
+                  regionId: 'oldWorld',
+                  ownerId: 'gp4',
+                ),
+                Province(
+                  id: 'oldWorld|p39',
+                  regionId: 'oldWorld',
+                  ownerId: 'gp4',
+                ),
+              ],
+            ),
+            newWorld: const RegionData(),
+          ),
+          players: const [
+            Player(id: 'gp3', displayName: 'C', isHuman: false),
+            Player(id: 'gp4', displayName: 'D', isHuman: false),
+          ],
+        );
+        const config = AIConfig(
+          leaderId: 'henry',
+          personalityId: 'henry',
+          hiddenAgendaId: 'merchant',
+        );
+        final score = computeDiplomaticCandidateScores(
+          candidates: const [
+            DiplomaticOrder(
+              type: DiplomaticOrderType.declareWar,
+              targetFactionId: 'gp3',
+            ),
+          ],
+          nationId: 'gp4',
+          game: game,
+          snapshot: snap,
+          config: config,
+          primaryGoal: StrategicGoal.conquer,
+        ).single;
+        expect(score, greaterThan(0));
+        expect(score, greaterThanOrEqualTo(kDeclareWarStalledInvadableGpBlockerBonus));
+      },
+    );
   });
 }

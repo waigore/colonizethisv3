@@ -14,6 +14,34 @@ export 'diplomacy_planner_result.dart'
 
 final _log = packageLogger();
 
+/// Strongest at-war GP that owns invadable OW provinces while this GP is stalled.
+String? stalledStrongerGpBlockerPeaceTarget({
+  required Game game,
+  required AIWorldSnapshot snapshot,
+}) {
+  if (!isStalledOldWorldExpansion(snapshot.conquest.oldWorldProvincesOwned)) {
+    return null;
+  }
+  final provinceOwner = getProvinceOwnerMap(game);
+  String? bestFactionId;
+  var bestLead = 0;
+  for (final factionId in snapshot.threats.atWarWith) {
+    if (game.playerById(factionId) == null) continue;
+    final ownsInvadable = snapshot.conquest.invadableProvinceIdsSorted.any(
+      (pid) => provinceOwner[pid] == factionId,
+    );
+    if (!ownsInvadable) continue;
+    final lead = provinceCountOwnedBy(game, factionId) -
+        snapshot.conquest.oldWorldProvincesOwned;
+    if (lead <= 0) continue;
+    if (lead > bestLead) {
+      bestLead = lead;
+      bestFactionId = factionId;
+    }
+  }
+  return bestFactionId;
+}
+
 Orders runDiplomacyPlanner({
   required PlannerContext ctx,
   required AIWorldSnapshot snapshot,
@@ -48,6 +76,12 @@ DiplomacyPlannerResult runDiplomacyPlannerWithResult({
       hasColonialAcquisitionTargets(snapshot.colonial) &&
       weight < kDiplomacyDeclareWarMinWeightWhenColonialPressure) {
     weight = kDiplomacyDeclareWarMinWeightWhenColonialPressure;
+  }
+  if (pass != DiplomacyPlannerPass.declareWarOnly &&
+      stalledStrongerGpBlockerPeaceTarget(game: ctx.game, snapshot: snapshot) !=
+          null &&
+      weight < 25) {
+    weight = 25;
   }
   if (weight < 25) {
     _log.d('diplomacy skipped nationId=${ctx.nationId} weight=$weight < 25');
@@ -94,6 +128,30 @@ DiplomacyPlannerResult runDiplomacyPlannerWithResult({
   }
   if (diploCandidates.isEmpty) {
     return DiplomacyPlannerResult(orders: ctx.orders);
+  }
+
+  if (pass != DiplomacyPlannerPass.declareWarOnly) {
+    final peaceTarget = stalledStrongerGpBlockerPeaceTarget(
+      game: ctx.game,
+      snapshot: snapshot,
+    );
+    if (peaceTarget != null) {
+      final peaceIdx = diploCandidates.indexWhere(
+        (o) =>
+            o.type == DiplomaticOrderType.offerPeace &&
+            o.targetFactionId == peaceTarget,
+      );
+      if (peaceIdx >= 0) {
+        final peace = diploCandidates[peaceIdx];
+        _log.i(
+          'diplomacy forced offerPeace nationId=${ctx.nationId} '
+          'targetFactionId=$peaceTarget',
+        );
+        return DiplomacyPlannerResult(
+          orders: ctx.orders.appendDiplomaticOrders(ctx.nationId, [peace]),
+        );
+      }
+    }
   }
 
   final scores = computeDiplomaticCandidateScores(
