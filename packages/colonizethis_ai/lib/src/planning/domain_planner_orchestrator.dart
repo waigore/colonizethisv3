@@ -122,34 +122,59 @@ DomainPlannerOutcome runDomainPlannersWithOutcome({
   orders = declareWarResult.orders;
   final armyMovesBeforeConquest =
       orders.armyMoveOrdersByPlayerId[nationId]?.length ?? 0;
-  orders = runConquestArmyMovePlanner(
-    nationId: nationId,
-    view: view,
-    game: game,
-    topology: topology,
-    orders: orders,
-    snapshot: snapshot,
-    config: config,
-    primaryGoal: primaryGoal,
-    seeds: seeds,
-    suggestionAPI: suggestionAPI,
-    declaredWarTargetFactionId: declareWarResult.declaredWarTargetFactionId,
+  final stalledOldWorldExpansion = isStalledOldWorldExpansion(
+    snapshot.conquest.oldWorldProvincesOwned,
   );
+  final conquestDeclaredWarTarget = stalledConquestDeclaredWarTarget(
+    game: game,
+    nationId: nationId,
+    snapshot: snapshot,
+    declaredThisTurn: declareWarResult.declaredWarTargetFactionId,
+  );
+  final conquestPasses = stalledOldWorldExpansion
+      ? kStalledConquestArmyMovePasses
+      : 1;
+  for (var pass = 0; pass < conquestPasses; pass++) {
+    final movesBeforePass =
+        orders.armyMoveOrdersByPlayerId[nationId]?.length ?? 0;
+    orders = runConquestArmyMovePlanner(
+      nationId: nationId,
+      view: view,
+      game: game,
+      topology: topology,
+      orders: orders,
+      snapshot: snapshot,
+      config: config,
+      primaryGoal: primaryGoal,
+      seeds: seeds,
+      suggestionAPI: suggestionAPI,
+      declaredWarTargetFactionId: conquestDeclaredWarTarget,
+    );
+    final movesAfterPass =
+        orders.armyMoveOrdersByPlayerId[nationId]?.length ?? 0;
+    if (movesAfterPass == movesBeforePass) {
+      break;
+    }
+  }
   final conquestArmyMoveCount =
       (orders.armyMoveOrdersByPlayerId[nationId]?.length ?? 0) -
       armyMovesBeforeConquest;
-  orders = runArmyMovePlanner(
-    nationId: nationId,
-    view: view,
-    game: game,
-    topology: topology,
-    orders: orders,
-    config: config,
-    primaryGoal: primaryGoal,
-    seeds: seeds,
-    suggestionAPI: suggestionAPI,
-    provincesToVictory: snapshot.conquest.provincesToVictory,
-  );
+  // Stalled GPs must not run the relocation pass: it picks random own provinces
+  // and undoes conquest frontier marches (Refs #2509).
+  if (!stalledOldWorldExpansion) {
+    orders = runArmyMovePlanner(
+      nationId: nationId,
+      view: view,
+      game: game,
+      topology: topology,
+      orders: orders,
+      config: config,
+      primaryGoal: primaryGoal,
+      seeds: seeds,
+      suggestionAPI: suggestionAPI,
+      provincesToVictory: snapshot.conquest.provincesToVictory,
+    );
+  }
   emit('aiStageD');
 
   // Naval: suggest naval moves and missions; weight by military/expand.
@@ -284,8 +309,7 @@ Orders _runEconomyDomainPlanners({
   emit('aiStageA');
 
   var buildThreshold = 30 - getAgendaBuildOrderModifier(config.hiddenAgendaId);
-  if (snapshot.conquest.oldWorldProvincesOwned <=
-      kStalledOldWorldProvinceThreshold) {
+  if (isStalledOldWorldExpansion(snapshot.conquest.oldWorldProvincesOwned)) {
     buildThreshold = math.min(buildThreshold, 15);
   }
   final colonialBuildCap = colonialBuildOrderThresholdCap(snapshot.colonial);

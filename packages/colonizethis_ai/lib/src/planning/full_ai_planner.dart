@@ -144,14 +144,27 @@ FullAIResult generateOrdersForGameFullAI(
   final economyPlansByPlayerId = <String, EconomyPlan>{};
   final aiTraceSections = <TurnTraceAiSection>[];
 
-  for (final player in game.players) {
-    if (!isAiControlled(game, player.id)) continue;
+  final aiPlayerIds = [
+    for (final p in game.players)
+      if (isAiControlled(game, p.id)) p.id,
+  ];
+  final turn = game.worldState.turnState.turnNumber;
+  // Offset rotation so mid-map GPs (gp4–gp6) plan before gp1–gp2 on early turns
+  // when minors are still available (observer seed-42 conquest gate; Refs #2509).
+  final rotateStart = aiPlayerIds.isEmpty
+      ? 0
+      : (turn + 3) % aiPlayerIds.length;
+  final orderedAiPlayerIds = [
+    ...aiPlayerIds.sublist(rotateStart),
+    ...aiPlayerIds.sublist(0, rotateStart),
+  ];
+  for (final playerId in orderedAiPlayerIds) {
     final playerStopwatch = Stopwatch()..start();
-    _log.i('full_ai player_start gameId=${game.id} playerId=${player.id}');
+    _log.i('full_ai player_start gameId=${game.id} playerId=$playerId');
     final traced = generateOrdersForPlayerFullAIWithTrace(
       planningGame,
       topology,
-      player.id,
+      playerId,
       tileMapByRegion: tileMapByRegion,
       orderSuggestionApi: orderSuggestionApi,
       onDialogue: onDialogue,
@@ -159,55 +172,55 @@ FullAIResult generateOrdersForGameFullAI(
       onStagedPlannerProgress: onStagedPlannerProgress,
     );
     _log.i(
-      'full_ai player_complete gameId=${game.id} playerId=${player.id} '
+      'full_ai player_complete gameId=${game.id} playerId=$playerId '
       'elapsedMs=${playerStopwatch.elapsedMilliseconds}',
     );
     planningGame = traced.game;
     final result = traced.result;
-    economyPlansByPlayerId[player.id] = result.economyPlan;
+    economyPlansByPlayerId[playerId] = result.economyPlan;
     final aiTraceSection = traced.aiTraceSection;
     if (aiTraceSection != null) {
       aiTraceSections.add(aiTraceSection);
     }
     _addOrdersIfNonEmpty(
       moveByPlayer,
-      player.id,
-      result.orders.moveOrdersByPlayerId[player.id],
+      playerId,
+      result.orders.moveOrdersByPlayerId[playerId],
     );
     _addOrdersIfNonEmpty(
       armyMoveByPlayer,
-      player.id,
-      result.orders.armyMoveOrdersByPlayerId[player.id],
+      playerId,
+      result.orders.armyMoveOrdersByPlayerId[playerId],
     );
     _addOrdersIfNonEmpty(
       buildByPlayer,
-      player.id,
-      result.orders.buildUnitOrdersByPlayerId[player.id],
+      playerId,
+      result.orders.buildUnitOrdersByPlayerId[playerId],
     );
     _addOrdersIfNonEmpty(
       workByPlayer,
-      player.id,
-      result.orders.workOrdersByPlayerId[player.id],
+      playerId,
+      result.orders.workOrdersByPlayerId[playerId],
     );
     _addOrdersIfNonEmpty(
       researchByPlayer,
-      player.id,
-      result.orders.researchOrdersByPlayerId[player.id],
+      playerId,
+      result.orders.researchOrdersByPlayerId[playerId],
     );
     _addOrdersIfNonEmpty(
       diploByPlayer,
-      player.id,
-      result.orders.diplomaticOrdersByPlayerId[player.id],
+      playerId,
+      result.orders.diplomaticOrdersByPlayerId[playerId],
     );
     _addOrdersIfNonEmpty(
       navalByPlayer,
-      player.id,
-      result.orders.navalMoveOrdersByPlayerId[player.id],
+      playerId,
+      result.orders.navalMoveOrdersByPlayerId[playerId],
     );
     _addOrdersIfNonEmpty(
       missionByPlayer,
-      player.id,
-      result.orders.navalMissionOrdersByPlayerId[player.id],
+      playerId,
+      result.orders.navalMissionOrdersByPlayerId[playerId],
     );
   }
 

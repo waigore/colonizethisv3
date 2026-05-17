@@ -747,8 +747,8 @@ void main() {
           threats: ThreatSummary(),
           opportunities: OpportunitySummary(),
           conquest: ConquestSummary(
-            oldWorldProvincesOwned: 7,
-            provincesToVictory: 24,
+            oldWorldProvincesOwned: 9,
+            provincesToVictory: 22,
             invadableProvinceIdsSorted: ['oldWorld|minor1'],
             adjacentOwnerFactionIdsSorted: ['minor1'],
           ),
@@ -818,6 +818,242 @@ void main() {
           config: config,
         );
         expect(scores[0], greaterThan(scores[1]));
+      },
+    );
+
+    test(
+      'stalled OW expansion scores weaker distant minor when invadable border is GP-owned',
+      () {
+        const snap = AIWorldSnapshot(
+          playerId: 'gp4',
+          threats: ThreatSummary(),
+          opportunities: OpportunitySummary(),
+          conquest: ConquestSummary(
+            oldWorldProvincesOwned: 7,
+            provincesToVictory: 24,
+            invadableProvinceIdsSorted: ['oldWorld|p30'],
+            adjacentOwnerFactionIdsSorted: ['gp3'],
+          ),
+          colonial: ColonialSummary(),
+          economy: EconomySummary(),
+          relations: {},
+        );
+        final game = Game(
+          id: 'g-stalled-weaker-distant-minor',
+          worldState: WorldState(
+            turnState: const TurnState(
+              phase: TurnPhase.orders,
+              turnNumber: 100,
+            ),
+            oldWorld: const RegionData(
+              provinces: [
+                Province(
+                  id: 'oldWorld|p30',
+                  regionId: 'oldWorld',
+                  ownerId: 'gp3',
+                ),
+                Province(
+                  id: 'oldWorld|m1',
+                  regionId: 'oldWorld',
+                  ownerId: 'minor2',
+                ),
+                Province(
+                  id: 'oldWorld|m2',
+                  regionId: 'oldWorld',
+                  ownerId: 'minor2',
+                ),
+              ],
+            ),
+            newWorld: const RegionData(),
+          ),
+          players: const [
+            Player(id: 'gp4', displayName: 'P', isHuman: false),
+            Player(id: 'gp3', displayName: 'Q', isHuman: false),
+          ],
+          minorNations: const [
+            MinorNation(id: 'minor2', displayName: 'M2'),
+          ],
+        );
+        const config = AIConfig(
+          leaderId: 'henry',
+          personalityId: 'henry',
+          hiddenAgendaId: 'merchant',
+        );
+        final score = computeDiplomaticCandidateScores(
+          candidates: const [
+            DiplomaticOrder(
+              type: DiplomaticOrderType.declareWar,
+              targetFactionId: 'minor2',
+            ),
+          ],
+          nationId: 'gp4',
+          game: game,
+          snapshot: snap,
+          config: config,
+        ).single;
+        expect(score, greaterThan(0));
+      },
+    );
+
+    test(
+      'stalled OW expansion scores distant invadable minor when only adjacent owners are GPs',
+      () {
+        const snap = AIWorldSnapshot(
+          playerId: 'gp1',
+          threats: ThreatSummary(),
+          opportunities: OpportunitySummary(),
+          conquest: ConquestSummary(
+            oldWorldProvincesOwned: 7,
+            provincesToVictory: 24,
+            invadableProvinceIdsSorted: ['oldWorld|minor1'],
+            adjacentOwnerFactionIdsSorted: ['gp2'],
+          ),
+          colonial: ColonialSummary(
+            invadableNewWorldProvinceIdsSorted: ['newWorld|nw1'],
+          ),
+          economy: EconomySummary(),
+          relations: {},
+        );
+        final game = Game(
+          id: 'g-colonial-stalled-distant',
+          worldState: WorldState(
+            turnState: const TurnState(
+              phase: TurnPhase.orders,
+              turnNumber: 1,
+            ),
+            oldWorld: const RegionData(
+              provinces: [
+                Province(
+                  id: 'oldWorld|minor1',
+                  regionId: 'oldWorld',
+                  ownerId: 'minor1',
+                ),
+              ],
+            ),
+            newWorld: const RegionData(
+              provinces: [
+                Province(
+                  id: 'newWorld|nw1',
+                  regionId: 'newWorld',
+                  ownerId: 'tribe1',
+                ),
+              ],
+            ),
+          ),
+          players: const [
+            Player(id: 'gp1', displayName: 'A', isHuman: false),
+            Player(id: 'gp2', displayName: 'B', isHuman: false),
+          ],
+          minorNations: const [
+            MinorNation(id: 'minor1', displayName: 'M1'),
+          ],
+          tribes: const [
+            Tribe(id: 'tribe1', displayName: 'T1'),
+          ],
+        );
+        const config = AIConfig(
+          leaderId: 'henry',
+          personalityId: 'henry',
+          hiddenAgendaId: 'merchant',
+        );
+        final score = computeDiplomaticCandidateScores(
+          candidates: const [
+            DiplomaticOrder(
+              type: DiplomaticOrderType.declareWar,
+              targetFactionId: 'minor1',
+            ),
+          ],
+          nationId: 'gp1',
+          game: game,
+          snapshot: snap,
+          config: config,
+        ).single;
+        expect(score, greaterThan(0));
+      },
+    );
+
+    test(
+      'stalled OW expansion keeps adjacent minor declareWar score under colonial pressure',
+      () {
+        const snap = AIWorldSnapshot(
+          playerId: 'gp1',
+          threats: ThreatSummary(),
+          opportunities: OpportunitySummary(),
+          conquest: ConquestSummary(
+            oldWorldProvincesOwned: 7,
+            provincesToVictory: 24,
+            invadableProvinceIdsSorted: ['oldWorld|minor1'],
+            adjacentOwnerFactionIdsSorted: ['minor1'],
+          ),
+          colonial: ColonialSummary(
+            newWorldProvincesOwned: 0,
+            invadableNewWorldProvinceIdsSorted: ['newWorld|nw1'],
+            adjacentNewWorldOwnerFactionIdsSorted: ['tribe1'],
+          ),
+          economy: EconomySummary(),
+          relations: {},
+        );
+        final game = Game(
+          id: 'g-colonial-stalled-ow',
+          worldState: WorldState(
+            turnState: const TurnState(
+              phase: TurnPhase.orders,
+              turnNumber: 1,
+            ),
+            oldWorld: const RegionData(
+              provinces: [
+                Province(
+                  id: 'oldWorld|minor1',
+                  regionId: 'oldWorld',
+                  ownerId: 'minor1',
+                ),
+              ],
+            ),
+            newWorld: const RegionData(
+              provinces: [
+                Province(
+                  id: 'newWorld|nw1',
+                  regionId: 'newWorld',
+                  ownerId: 'tribe1',
+                ),
+              ],
+            ),
+          ),
+          players: const [
+            Player(id: 'gp1', displayName: 'A', isHuman: false),
+          ],
+          minorNations: const [
+            MinorNation(id: 'minor1', displayName: 'M1'),
+          ],
+          tribes: const [
+            Tribe(id: 'tribe1', displayName: 'T1'),
+          ],
+        );
+        const config = AIConfig(
+          leaderId: 'henry',
+          personalityId: 'henry',
+          hiddenAgendaId: 'merchant',
+        );
+        final score = computeDiplomaticCandidateScores(
+          candidates: const [
+            DiplomaticOrder(
+              type: DiplomaticOrderType.declareWar,
+              targetFactionId: 'minor1',
+            ),
+          ],
+          nationId: 'gp1',
+          game: game,
+          snapshot: snap,
+          config: config,
+        ).single;
+        expect(score, greaterThan(0));
+        expect(
+          score,
+          greaterThanOrEqualTo(
+            kDeclareWarStalledExpansionMinorBonus +
+                kDeclareWarAdjacentMinorBonusWhenFarFromVictory,
+          ),
+        );
       },
     );
 

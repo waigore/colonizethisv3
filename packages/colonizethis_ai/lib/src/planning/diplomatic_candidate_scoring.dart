@@ -170,22 +170,114 @@ int _scoreDeclareWarDiplomaticOrder({
       .any((pid) => provinceOwner[pid] == order.targetFactionId);
   final colonialPressure = hasColonialAcquisitionTargets(snapshot.colonial);
   final isTribeTarget = _isTribeFaction(game, order.targetFactionId);
+  final stalledOwExpansion = isStalledOldWorldExpansion(
+    snapshot.conquest.oldWorldProvincesOwned,
+  );
+  final ownsInvadableOwMinor = isMinorTarget &&
+      !isTribeTarget &&
+      invadableOwners.contains(order.targetFactionId);
+  final minorProvinces = isMinorTarget && !isTribeTarget
+      ? provinceCountOwnedBy(game, order.targetFactionId)
+      : 0;
+  final weakerDistantMinor = stalledOwExpansion &&
+      behindVictoryPace &&
+      isMinorTarget &&
+      !isTribeTarget &&
+      !isAdjacentOwner &&
+      !invadableOwners.contains(order.targetFactionId) &&
+      !isColonialAdjacentOwner &&
+      !ownsInvadableNw &&
+      minorProvinces > 0 &&
+      minorProvinces < snapshot.conquest.oldWorldProvincesOwned;
+  final hasInvadableMinorOwner = invadableOwners.any(
+    (id) => game.minorNations.any((m) => m.id == id),
+  );
+  final minorsHoldOldWorldProvinces = game.minorNations.any(
+    (m) => game.worldState.oldWorld.provinces.any((p) => p.ownerId == m.id),
+  );
+  final atWarInvadableOwMinor = snapshot.threats.atWarWith.any(
+    (factionId) =>
+        game.minorNations.any((m) => m.id == factionId) &&
+        invadableOwners.contains(factionId),
+  );
+  final activeMinorConflicts = _activeOldWorldMinorConflictIds(
+    game: game,
+    nationId: nationId,
+    currentTurn: currentTurn,
+    warCooldownTurns: warCooldownTurns,
+  );
+  if (isTribeTarget &&
+      stalledOwExpansion &&
+      (minorsHoldOldWorldProvinces || activeMinorConflicts.isNotEmpty)) {
+    return 0;
+  }
+  final hasAdjacentInvadableMinorOwner = adjacentOwners.any(
+    (id) =>
+        game.minorNations.any((m) => m.id == id) &&
+        invadableOwners.contains(id),
+  );
+  if (stalledOwExpansion && isMinorTarget && !isTribeTarget) {
+    final continuingMinorConflict =
+        activeMinorConflicts.contains(order.targetFactionId);
+    final adjacentInvadableMinor = isAdjacentOwner &&
+        invadableOwners.contains(order.targetFactionId);
+    final distantInvadableMinorOwner =
+        invadableOwners.contains(order.targetFactionId);
+    if (activeMinorConflicts.isNotEmpty) {
+      if (!continuingMinorConflict) {
+        return 0;
+      }
+    } else if (hasAdjacentInvadableMinorOwner) {
+      if (!adjacentInvadableMinor) {
+        return 0;
+      }
+    } else if (!adjacentInvadableMinor &&
+        !weakerDistantMinor &&
+        !distantInvadableMinorOwner) {
+      return 0;
+    }
+  }
   if (behindVictoryPace &&
       adjacentOwners.isNotEmpty &&
       !isAdjacentOwner &&
       !isColonialAdjacentOwner &&
-      !(ownsInvadableNw && isMinorTarget)) {
-    return kDeclareWarNonAdjacentSuppressedScore;
-  }
-  if (isMinorTarget &&
-      !invadableOwners.contains(order.targetFactionId) &&
-      !isColonialAdjacentOwner &&
-      !ownsInvadableNw) {
+      !(ownsInvadableNw && isMinorTarget) &&
+      !(stalledOwExpansion && ownsInvadableOwMinor) &&
+      !weakerDistantMinor) {
     return kDeclareWarNonAdjacentSuppressedScore;
   }
   final isAdjacentGp =
       isAdjacentOwner && game.playerById(order.targetFactionId) != null;
-  if (suppressGpDeclareWar && isAdjacentGp) {
+  final invadableGpBlockerWeaker = isAdjacentGp &&
+      invadableOwners.contains(order.targetFactionId) &&
+      provinceCountOwnedBy(game, order.targetFactionId) <=
+          snapshot.conquest.oldWorldProvincesOwned;
+  if (stalledOwExpansion && isAdjacentGp) {
+    return 0;
+  }
+  final tribeOwnsOwInvadable = isTribeTarget &&
+      snapshot.conquest.invadableProvinceIdsSorted.any(
+        (pid) => provinceOwner[pid] == order.targetFactionId,
+      );
+  if (stalledOwExpansion &&
+      isTribeTarget &&
+      !tribeOwnsOwInvadable &&
+      !(colonialPressure && ownsInvadableNw) &&
+      (behindVictoryPace || hasInvadableMinorOwner || atWarInvadableOwMinor)) {
+    return kDeclareWarNonAdjacentSuppressedScore;
+  }
+  if (suppressGpDeclareWar &&
+      isAdjacentGp &&
+      !(stalledOwExpansion && invadableGpBlockerWeaker)) {
+    return kDeclareWarNonAdjacentSuppressedScore;
+  }
+  if (suppressGpDeclareWar &&
+      isAdjacentGp &&
+      stalledOwExpansion &&
+      behindVictoryPace &&
+      hasInvadableMinorOwner &&
+      !invadableGpBlockerWeaker &&
+      thresholds.warLikelihood <= kDeclareWarLowWarLikelihoodThreshold) {
     return kDeclareWarNonAdjacentSuppressedScore;
   }
   final effectiveMaxRelation = behindVictoryPace && isMinorTarget
@@ -228,19 +320,27 @@ int _scoreDeclareWarDiplomaticOrder({
       .contains(order.targetFactionId)) {
     s += 15;
   }
-  if (ownsInvadableNw && isMinorTarget) {
+  if (ownsInvadableNw && isMinorTarget && !stalledOwExpansion) {
     s += kDeclareWarColonialInvadableOwnerBonus;
   }
-  if (ownsInvadableNw && isTribeTarget) {
+  if (colonialPressure && ownsInvadableNw && isTribeTarget) {
     s += kDeclareWarColonialNwTribeDominanceBonus;
+    if (stalledOwExpansion &&
+        !hasInvadableMinorOwner &&
+        !atWarInvadableOwMinor) {
+      s += kDeclareWarColonialNwTribePriorityOverOwMinorBonus;
+    }
   }
   if (colonialPressure &&
       isMinorTarget &&
       !isTribeTarget &&
       !ownsInvadableNw) {
     s -= kDeclareWarColonialPressureOwMinorPenalty;
+    if (stalledOwExpansion && ownsInvadableOwMinor) {
+      s -= kDeclareWarColonialPressureOwMinorPenalty;
+    }
   }
-  if (isColonialAdjacentOwner && isMinorTarget) {
+  if (isColonialAdjacentOwner && isTribeTarget) {
     s += kDeclareWarColonialAdjacentTribeBonus;
   }
   if (isAdjacentOwner) {
@@ -251,12 +351,20 @@ int _scoreDeclareWarDiplomaticOrder({
     if (isMinorTarget && invadableOwners.contains(order.targetFactionId)) {
       s += kDeclareWarMinorWithInvadableProvinceBonus;
     }
-    if (isMinorTarget &&
-        snapshot.conquest.oldWorldProvincesOwned <=
-            kStalledOldWorldProvinceThreshold) {
+    if (isMinorTarget && stalledOwExpansion) {
       s += kDeclareWarStalledExpansionMinorBonus;
     }
-    if (isMinorTarget && snapshot.conquest.oldWorldProvincesOwned >= 10) {
+    if (stalledOwExpansion &&
+        isMinorTarget &&
+        !isTribeTarget &&
+        isAdjacentOwner &&
+        invadableOwners.contains(order.targetFactionId) &&
+        thresholds.warLikelihood <= kDeclareWarLowWarLikelihoodThreshold) {
+      s += kDeclareWarStalledLowWarLikelihoodMinorBonus;
+    }
+    if (isMinorTarget &&
+        snapshot.conquest.oldWorldProvincesOwned >=
+            kDeclareWarSatedExpansionMinorThreshold) {
       s -= kDeclareWarSatedExpansionMinorPenalty;
     }
     if (!suppressGpDeclareWar && behindVictoryPace && isAdjacentGp) {
@@ -265,6 +373,42 @@ int _scoreDeclareWarDiplomaticOrder({
     if (thresholds.warLikelihood <= kDeclareWarLowWarLikelihoodThreshold) {
       s += kDeclareWarLowWarLikelihoodAdjacentBonus;
     }
+  }
+  if (!isAdjacentOwner && stalledOwExpansion && ownsInvadableOwMinor) {
+    s += kDeclareWarAdjacentMinorBonusWhenFarFromVictory;
+    s += kDeclareWarMinorWithInvadableProvinceBonus;
+    s += kDeclareWarStalledExpansionMinorBonus;
+    if (thresholds.warLikelihood <= kDeclareWarLowWarLikelihoodThreshold) {
+      s += kDeclareWarLowWarLikelihoodAdjacentBonus;
+    }
+  }
+  if (stalledOwExpansion && isMinorTarget && !isTribeTarget) {
+    final targetMinorProvinces = provinceCountOwnedBy(game, order.targetFactionId);
+    if (targetMinorProvinces > 0 &&
+        targetMinorProvinces < snapshot.conquest.oldWorldProvincesOwned) {
+      s += kDeclareWarStalledWeakerMinorBonus;
+    }
+    if (behindVictoryPace && targetMinorProvinces > 0) {
+      s += kDeclareWarStalledActiveOwMinorBonus;
+    }
+  }
+  if (weakerDistantMinor && activeMinorConflicts.isEmpty) {
+    s += kDeclareWarStalledWeakerMinorBonus;
+    s += kDeclareWarStalledActiveOwMinorBonus;
+  }
+  if (stalledOwExpansion && invadableGpBlockerWeaker) {
+    s += kDeclareWarStalledWeakestInvadableGpBonus;
+    if (behindVictoryPace) {
+      s += kDeclareWarAdjacentGpBonusWhenFarFromVictory;
+    }
+  }
+  if (suppressGpDeclareWar &&
+      isAdjacentGp &&
+      stalledOwExpansion &&
+      behindVictoryPace &&
+      hasInvadableMinorOwner &&
+      !invadableGpBlockerWeaker) {
+    s -= kDeclareWarStalledGpWhenMinorsRemainPenalty;
   }
   if (primaryGoal == StrategicGoal.conquer) {
     s += 20;
@@ -280,6 +424,43 @@ int _scoreDeclareWarDiplomaticOrder({
   if (rel?.level == RelationLevel.allied) {
     s += getDeclareWarTargetBonusAlly(agendaId);
   }
+  final adjacentWeakMinor = isMinorTarget &&
+      !isTribeTarget &&
+      isAdjacentOwner &&
+      snapshot.opportunities.weakNeighbors.contains(order.targetFactionId);
+  if (stalledOwExpansion &&
+      isMinorTarget &&
+      !isTribeTarget &&
+      isAdjacentOwner &&
+      invadableOwners.contains(order.targetFactionId)) {
+    s = math.max(s, kDeclareWarStalledAdjacentInvadableMinorFloor);
+  }
+  if (stalledOwExpansion &&
+      behindVictoryPace &&
+      adjacentWeakMinor &&
+      (invadableOwners.contains(order.targetFactionId) ||
+          game.minorNations.any((m) => m.id == order.targetFactionId))) {
+    s = math.max(s, kDeclareWarStalledAdjacentInvadableMinorFloor);
+  }
+  if (stalledOwExpansion && isTribeTarget && hasInvadableMinorOwner) {
+    s = math.min(s, kDeclareWarStalledTribeWhenOwMinorCap);
+  }
+  if (stalledOwExpansion &&
+      behindVictoryPace &&
+      isTribeTarget &&
+      thresholds.warLikelihood <= kDeclareWarLowWarLikelihoodThreshold &&
+      invadableOwners.any((id) => game.minorNations.any((m) => m.id == id))) {
+    s = math.min(s, kDeclareWarStalledLowWarLikelihoodTribeCap);
+  }
+  if (stalledOwExpansion &&
+      behindVictoryPace &&
+      isMinorTarget &&
+      !isTribeTarget &&
+      isAdjacentOwner &&
+      invadableOwners.contains(order.targetFactionId) &&
+      thresholds.warLikelihood <= kDeclareWarLowWarLikelihoodThreshold) {
+    s = math.max(s, kDeclareWarStalledLowWarLikelihoodMinorFloor);
+  }
   _log.d(
     'diplomacy warDesire nationId=$nationId targetFactionId=${order.targetFactionId} '
     'warDesire=$warDesire desiredTerritory=$desiredTerritory',
@@ -294,6 +475,33 @@ bool _isMinorOrTribeFaction(Game game, String factionId) {
 
 bool _isTribeFaction(Game game, String factionId) {
   return game.tribes.any((t) => t.id == factionId);
+}
+
+Set<String> _activeOldWorldMinorConflictIds({
+  required Game game,
+  required String nationId,
+  required int currentTurn,
+  required int warCooldownTurns,
+}) {
+  final conflicts = <String>{};
+  for (final minor in game.minorNations) {
+    final rel = getRelation(game, nationId, minor.id);
+    if (rel?.state == RelationState.atWar) {
+      conflicts.add(minor.id);
+      continue;
+    }
+    if (_isDecisionOnCooldown(
+      game: game,
+      actorFactionId: nationId,
+      targetFactionId: minor.id,
+      eventTypes: const [DiplomaticEventType.declareWar],
+      cooldownTurns: warCooldownTurns,
+      currentTurn: currentTurn,
+    )) {
+      conflicts.add(minor.id);
+    }
+  }
+  return conflicts;
 }
 
 bool _isDecisionOnCooldown({

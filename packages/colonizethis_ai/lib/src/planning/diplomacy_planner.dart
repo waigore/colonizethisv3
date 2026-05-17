@@ -71,8 +71,7 @@ DiplomacyPlannerResult runDiplomacyPlannerWithResult({
     weight = 25;
   }
   if (pass == DiplomacyPlannerPass.declareWarOnly &&
-      snapshot.conquest.oldWorldProvincesOwned <=
-          kStalledOldWorldProvinceThreshold &&
+      isStalledOldWorldExpansion(snapshot.conquest.oldWorldProvincesOwned) &&
       weight < kDiplomacyDeclareWarMinWeightWhenStalled) {
     weight = kDiplomacyDeclareWarMinWeightWhenStalled;
   }
@@ -147,7 +146,15 @@ DiplomacyPlannerResult runDiplomacyPlannerWithResult({
     'candidates=$candidateDesc scores=$scores',
   );
 
-  final idx = pickWeightedIndex(scores, seeds.diplomacySeed);
+  final int? idx;
+  if (pass == DiplomacyPlannerPass.declareWarOnly &&
+      isStalledOldWorldExpansion(snapshot.conquest.oldWorldProvincesOwned) &&
+      snapshot.conquest.provincesToVictory >
+          kConquerScoreFloorProvincesToVictoryThreshold) {
+    idx = _pickHighestScoreIndex(scores);
+  } else {
+    idx = pickWeightedIndex(scores, seeds.diplomacySeed);
+  }
   if (idx == null) return DiplomacyPlannerResult(orders: orders);
   final chosen = diploCandidates[idx];
   _log.i(
@@ -162,4 +169,19 @@ DiplomacyPlannerResult runDiplomacyPlannerWithResult({
     orders: nextOrders,
     declaredWarTargetFactionId: declaredTarget,
   );
+}
+
+/// Deterministic tie-break: lowest candidate index wins equal scores.
+int? _pickHighestScoreIndex(List<int> scores) {
+  var bestIdx = -1;
+  var bestScore = 0;
+  for (var i = 0; i < scores.length; i++) {
+    final score = scores[i];
+    if (score <= 0) continue;
+    if (score > bestScore || bestIdx < 0) {
+      bestScore = score;
+      bestIdx = i;
+    }
+  }
+  return bestIdx < 0 ? null : bestIdx;
 }

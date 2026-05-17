@@ -23,11 +23,8 @@ BuildUnitOrder? pickBuildOrder({
 }) {
   if (buildCandidates.isEmpty) return null;
   var candidates = buildCandidates;
-  if (oldWorldProvincesOwned <= kStalledOldWorldProvinceThreshold &&
-      provincesToVictory > kBuildRegimentVictoryPaceThreshold &&
-      cargoPreference == CargoPreference.none &&
-      (primaryGoal == StrategicGoal.conquer ||
-          primaryGoal == StrategicGoal.defend)) {
+  if (isStalledOldWorldExpansion(oldWorldProvincesOwned) &&
+      provincesToVictory > kBuildRegimentVictoryPaceThreshold) {
     final regimentsOnly = candidates
         .where((o) => RegimentEconomyCatalog.byId.containsKey(o.unitType))
         .toList();
@@ -58,7 +55,7 @@ BuildUnitOrder? pickBuildOrder({
 
     double militaryBonus = 0.0;
     if (isRegiment &&
-        oldWorldProvincesOwned <= kStalledOldWorldProvinceThreshold) {
+        isStalledOldWorldExpansion(oldWorldProvincesOwned)) {
       militaryBonus += kBuildRegimentBonusWhenStalledExpansion;
     }
     if (primaryGoal == StrategicGoal.conquer ||

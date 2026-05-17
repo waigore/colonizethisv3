@@ -17,31 +17,64 @@ Game prepareConquestFieldArmy({
   required int oldWorldProvincesOwned,
   required StrategicGoal primaryGoal,
 }) {
+  final stalled = isStalledOldWorldExpansion(oldWorldProvincesOwned);
   final shouldPrep = primaryGoal == StrategicGoal.conquer ||
       provincesToVictory > kBuildRegimentVictoryPaceThreshold ||
-      oldWorldProvincesOwned <= kStalledOldWorldProvinceThreshold;
+      stalled;
   if (!shouldPrep) return game;
 
-  final homeId = homeArmyIdFor(nationId);
   Army? homeArmy;
   for (final a in game.worldState.armies) {
-    if (a.id == homeId && a.ownerId == nationId) {
+    if (a.id == homeArmyIdFor(nationId) && a.ownerId == nationId) {
       homeArmy = a;
       break;
     }
   }
-  if (homeArmy == null || homeArmy.regimentUnitIds.length < 2) {
+  if (homeArmy == null || homeArmy.regimentUnitIds.isEmpty) {
+    return game;
+  }
+  if (!stalled && homeArmy.regimentUnitIds.length < 2) {
     return game;
   }
 
   final capital = homeArmy.stationedProvinceId;
+  var fieldArmiesAtCapital = 0;
   for (final a in game.worldState.armies) {
     if (a.ownerId == nationId &&
         !a.isHomeArmy &&
         a.stationedProvinceId == capital &&
         a.regimentUnitIds.isNotEmpty) {
-      return game;
+      fieldArmiesAtCapital++;
     }
+  }
+  if (!stalled && fieldArmiesAtCapital > 0) {
+    return game;
+  }
+
+  if (stalled) {
+    var planningGame = game;
+    for (var i = fieldArmiesAtCapital;
+        i < kStalledConquestFieldArmySplitCap;
+        i++) {
+      Army? currentHome;
+      for (final a in planningGame.worldState.armies) {
+        if (a.id == homeArmyIdFor(nationId) && a.ownerId == nationId) {
+          currentHome = a;
+          break;
+        }
+      }
+      if (currentHome == null || currentHome.regimentUnitIds.length < 2) {
+        break;
+      }
+      final sortedRegs = [...currentHome.regimentUnitIds]..sort();
+      planningGame = applyArmySplit(
+        game: planningGame,
+        playerId: nationId,
+        sourceArmyId: currentHome.id,
+        unitIdsToMove: [sortedRegs.first],
+      );
+    }
+    return planningGame;
   }
 
   final sortedRegs = [...homeArmy.regimentUnitIds]..sort();
@@ -52,7 +85,7 @@ Game prepareConquestFieldArmy({
   return applyArmySplit(
     game: game,
     playerId: nationId,
-    sourceArmyId: homeId,
+    sourceArmyId: homeArmy.id,
     unitIdsToMove: unitIds,
   );
 }

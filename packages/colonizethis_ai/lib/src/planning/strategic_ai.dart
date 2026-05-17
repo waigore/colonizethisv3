@@ -1,7 +1,7 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_ai/package_logger.dart';
 import 'package:colonizethis_logic/ai_api.dart'
-    show PlayerView, TurnTraceAiSection;
+    show PlayerView, TurnTraceAiSection, buildPlayerView;
 import 'package:colonizethis_logic/order_suggestion_api.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
@@ -92,9 +92,15 @@ StrategicOrderTraceResult generateStrategicOrdersWithTrace({
     oldWorldProvincesOwned: snapshot.conquest.oldWorldProvincesOwned,
     primaryGoal: primaryGoal,
   );
+  final planningView = planningGame == game
+      ? view
+      : buildPlayerView(planningGame, topology, nationId);
+  final planningSnapshot = planningView == view
+      ? snapshot
+      : AIWorldSnapshot.fromPlayerView(planningView, topology: topology);
   final economyPlan = runEconomyPlanner(
     game: planningGame,
-    view: view,
+    view: planningView,
     config: config,
     seeds: seeds,
     colonial: snapshot.colonial,
@@ -103,8 +109,8 @@ StrategicOrderTraceResult generateStrategicOrdersWithTrace({
     game: planningGame,
     topology: topology,
     nationId: nationId,
-    view: view,
-    snapshot: snapshot,
+    view: planningView,
+    snapshot: planningSnapshot,
     config: config,
     primaryGoal: primaryGoal,
     seeds: seeds,
