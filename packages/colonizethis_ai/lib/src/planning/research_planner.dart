@@ -2,48 +2,36 @@ import 'dart:math' as math;
 
 import 'package:colonizethis_ai/package_logger.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:colonizethis_logic/ai_api.dart';
-import 'package:colonizethis_logic/order_suggestion_api.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'goal_manager.dart';
+import 'planner_context.dart';
 import '../util/ai_random_utils.dart';
 import '../util/orders_extensions.dart';
 
 final _log = packageLogger();
 
-Orders runResearchPlanner({
-  required String nationId,
-  required PlayerView view,
-  required Game game,
-  required MapTopology topology,
-  required Orders orders,
-  required AIConfig config,
-  required StrategicGoal primaryGoal,
-  required OrderSuggestionAPI suggestionAPI,
-  required int researchSeed,
-}) {
-  final domainWeights = getDomainWeightsForLeader(config.personalityId);
-  final researchCandidates = suggestionAPI.suggestResearchOrders(
-    view,
-    game,
-    topology,
-    orders,
+Orders runResearchPlanner({required PlannerContext ctx}) {
+  final researchCandidates = ctx.suggestionAPI.suggestResearchOrders(
+    ctx.view,
+    ctx.game,
+    ctx.topology,
+    ctx.orders,
   );
   final researchThreshold =
-      40 - getAgendaResearchModifier(config.hiddenAgendaId);
+      40 - getAgendaResearchModifier(ctx.config.hiddenAgendaId);
   if (researchCandidates.isEmpty ||
-      (primaryGoal != StrategicGoal.tech &&
-          domainWeights.research < researchThreshold)) {
+      (ctx.primaryGoal != StrategicGoal.tech &&
+          ctx.domainWeights.research < researchThreshold)) {
     if (researchCandidates.isNotEmpty) {
       _log.d(
-        'research skipped nationId=$nationId threshold not met or no candidates',
+        'research skipped nationId=${ctx.nationId} threshold not met or no candidates',
       );
     }
-    return orders;
+    return ctx.orders;
   }
 
-  final thresholds = getThresholdsForLeader(config.personalityId);
+  final thresholds = getThresholdsForLeader(ctx.config.personalityId);
   final scores = researchCandidates.map((o) {
     final tech = techById(o.techId);
     final category = tech?.category ?? '';
@@ -57,15 +45,19 @@ Orders runResearchPlanner({
     return math.max(1, w);
   }).toList();
   _log.d(
-    'research eval nationId=$nationId researchThreshold=$researchThreshold '
+    'research eval nationId=${ctx.nationId} researchThreshold=$researchThreshold '
     'candidateCount=${researchCandidates.length} scores=$scores',
   );
-  final idx = pickWeightedIndex(scores, researchSeed, useIntRoll: true);
-  if (idx == null) return orders;
+  final idx = pickWeightedIndex(
+    scores,
+    ctx.seeds.researchSeed,
+    useIntRoll: true,
+  );
+  if (idx == null) return ctx.orders;
 
   final chosen = researchCandidates[idx];
   _log.i(
-    'research chosen nationId=$nationId techId=${chosen.techId} score=${scores[idx]}',
+    'research chosen nationId=${ctx.nationId} techId=${chosen.techId} score=${scores[idx]}',
   );
-  return orders.appendResearchOrders(nationId, [chosen]);
+  return ctx.orders.appendResearchOrders(ctx.nationId, [chosen]);
 }

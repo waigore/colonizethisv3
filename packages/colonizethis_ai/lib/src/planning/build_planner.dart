@@ -5,6 +5,7 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'goal_manager.dart';
+import 'planner_context.dart';
 import '../util/ai_random_utils.dart';
 
 final _log = packageLogger();
@@ -12,15 +13,17 @@ final _log = packageLogger();
 /// Scores build candidates (ships vs regiments) by cargo preference, goal, and personality.
 /// Returns one build order via weighted random, or null if list empty. SPEC/ai/economy-planner.md.
 BuildUnitOrder? pickBuildOrder({
+  required PlannerContext ctx,
   required List<BuildUnitOrder> buildCandidates,
   required CargoPreference cargoPreference,
-  required StrategicGoal primaryGoal,
-  required AIConfig config,
-  required int seed,
-  required String nationId,
   int provincesToVictory = 0,
   int oldWorldProvincesOwned = 0,
+  int? seedOverride,
 }) {
+  final primaryGoal = ctx.primaryGoal;
+  final config = ctx.config;
+  final nationId = ctx.nationId;
+  final seed = seedOverride ?? ctx.seeds.economySeed;
   if (buildCandidates.isEmpty) return null;
   var candidates = buildCandidates;
   if (oldWorldProvincesOwned <= kStalledOldWorldProvinceThreshold &&
