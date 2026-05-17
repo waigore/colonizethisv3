@@ -5,6 +5,7 @@ import 'package:colonizethis_test/test.dart';
 
 import 'package:colonizethis_data/colonizethis_data.dart';
 
+import 'package:run_observer_game/observer_minimal_trace.dart';
 import 'package:run_observer_game/observer_session_runner.dart';
 import 'package:run_observer_game/run_observer_game_cli.dart';
 
@@ -250,6 +251,97 @@ void main() {
           jsonDecode(snapshotText.trimRight()),
           reason: 'HTML <pre> must render the same canonical JSON as the snapshot file',
         );
+      },
+      timeout: const Timeout(Duration(minutes: 15)),
+    );
+
+    test(
+      'minimal trace mode skips merged traces and html',
+      () async {
+        final tmp = Directory.systemTemp.createTempSync('run_observer_min_');
+        addTearDown(() => tmp.deleteSync(recursive: true));
+
+        final setup = GameSetupConfig(
+          selectedGreatPowerIds: const ['england', 'france'],
+          continentCount: 4,
+          minorNationCount: 2,
+          tribeCount: 2,
+          numProvincesOldWorld: 14,
+          numProvincesNewWorld: 6,
+          minProvincesPerMinor: 2,
+          seed: 11,
+        );
+
+        final code = await runObserverSession(
+          outputRoot: tmp.path,
+          setupConfig: setup,
+          maxTurnsCap: 1,
+          verifyConquest: true,
+          verifyColonialExpansion: true,
+        );
+
+        expect(code, 0);
+
+        final gameDir = Directory('${tmp.path}/observer-traces')
+            .listSync()
+            .whereType<Directory>()
+            .single;
+        final names =
+            gameDir.listSync().whereType<File>().map((f) => f.uri.pathSegments.last).toList()
+              ..sort();
+
+        expect(names, ['run-summary.json', 'turn-000001.snapshot.json']);
+        expect(names.where((n) => n.endsWith('.html')), isEmpty);
+        expect(
+          names.where(
+            (n) =>
+                n.endsWith('.json') &&
+                !n.endsWith('.snapshot.json') &&
+                n != 'run-summary.json',
+          ),
+          isEmpty,
+        );
+
+        final summary =
+            jsonDecode(File('${gameDir.path}/run-summary.json').readAsStringSync())
+                as Map<String, Object?>;
+        expect(summary['minimal_trace_mode'], isTrue);
+
+        var totalBytes = 0;
+        for (final f in gameDir.listSync().whereType<File>()) {
+          totalBytes += f.lengthSync();
+        }
+        expect(totalBytes, lessThan(kObserverVerifyArtifactSizeCapBytes));
+      },
+      timeout: const Timeout(Duration(minutes: 15)),
+    );
+
+    test(
+      'minimal trace mode exits 7 when artifact cap exceeded',
+      () async {
+        final tmp = Directory.systemTemp.createTempSync('run_observer_cap_');
+        addTearDown(() => tmp.deleteSync(recursive: true));
+
+        final setup = GameSetupConfig(
+          selectedGreatPowerIds: const ['england', 'france'],
+          continentCount: 4,
+          minorNationCount: 2,
+          tribeCount: 2,
+          numProvincesOldWorld: 14,
+          numProvincesNewWorld: 6,
+          minProvincesPerMinor: 2,
+          seed: 11,
+        );
+
+        final code = await runObserverSession(
+          outputRoot: tmp.path,
+          setupConfig: setup,
+          maxTurnsCap: 1,
+          verifyConquest: true,
+          verifyArtifactCapBytes: 1,
+        );
+
+        expect(code, kExitArtifactSizeCapExceeded);
       },
       timeout: const Timeout(Duration(minutes: 15)),
     );
