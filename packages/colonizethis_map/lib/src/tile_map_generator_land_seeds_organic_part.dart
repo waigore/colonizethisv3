@@ -29,22 +29,10 @@ List<(int x, int y)> _organicSeedCloseSeaCandidates(
 (int, int) _pickBestOrganicSeaCandidate(
   List<(int x, int y)> candidates,
   List<List<int>> minDistToOwnLand,
-  List<List<int>> continentGrid,
-  TileMapLandSeedParams params,
-  int continentIndex,
+  List<List<int>> distToOtherContinent,
   double awayPenalty,
   Random rnd,
 ) {
-  final unreachableOther = params.width + params.height;
-  final distToOtherContinent = manhattanDistToNearestSourceXY(
-    params.width,
-    params.height,
-    (x, y) {
-      final cell = continentGrid[y][x];
-      return cell >= 0 && cell != continentIndex;
-    },
-    distanceWhenNoSources: unreachableOther,
-  );
   var bestScore = -1e100;
   final bestCandidates = <(int x, int y)>[];
   for (final (x, y) in candidates) {
@@ -67,14 +55,13 @@ List<(int x, int y)> _organicSeedCloseSeaCandidates(
 (int, int) _placeOneOrganicSeed(
   TileMapLandSeedParams params,
   List<List<String>> grid,
-  List<List<int>> continentGrid,
+  List<List<int>> distToOtherContinent,
   (int x, int y) continentSeed,
   List<(int x, int y)> existingLandSeeds,
   List<int> continentBySeedIndex,
   int c,
   int closeRadius,
   double awayPenalty,
-  int numContinents,
   String seaZoneId,
   Random rnd,
 ) {
@@ -113,9 +100,7 @@ List<(int x, int y)> _organicSeedCloseSeaCandidates(
   return _pickBestOrganicSeaCandidate(
     candidates,
     minDistToOwnLand,
-    continentGrid,
-    params,
-    c,
+    distToOtherContinent,
     awayPenalty,
     rnd,
   );
@@ -265,20 +250,25 @@ _placeLandSeedsOrganicImpl(
       numContinents: numContinents,
     );
     voronoiRemaining -= roundBudget;
+    final distToOtherByContinent = manhattanDistToOtherContinentsMaps(
+      continentGrid: continentGrid,
+      width: params.width,
+      height: params.height,
+      numContinents: numContinents,
+    );
     // Step 1: Place one land seed per continent (if needed)
     for (var c = 0; c < numContinents; c++) {
       if (seedCountsPerContinent[c] >= seedsPerContinent[c]) continue;
       final (sx, sy) = _placeOneOrganicSeed(
         params,
         g,
-        continentGrid,
+        distToOtherByContinent[c],
         continentSeeds[c],
         landSeeds,
         continentBySeedIndex,
         c,
         closeRadius,
         awayPenalty,
-        numContinents,
         seaZoneId,
         rnd,
       );
