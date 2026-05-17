@@ -58,4 +58,11 @@ abstract class OrderSuggestionAPI {
     Orders currentOrders, {
     Map<String, TileMapResult>? tileMapByRegion,
   });
+  List<DiplomaticOrder> suggestDeclareWarOrders(
+    PlayerView view,
+    Game game,
+    MapTopology topology,
+    Orders currentOrders, {
+    Map<String, TileMapResult>? tileMapByRegion,
+  });
 }

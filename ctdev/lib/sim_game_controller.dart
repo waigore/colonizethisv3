@@ -270,6 +270,7 @@ class SimGameController {
       final defaultAssignmentsByPlayerId = result.economyPlansByPlayerId.map(
         (pid, plan) => MapEntry(pid, plan.productionAssignments),
       );
+      _game = result.game;
       _pendingOrdersByPlayerId.clear();
       _advanceOneTurnFromOrders(
         result.orders,

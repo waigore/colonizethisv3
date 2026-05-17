@@ -36,10 +36,12 @@ StrategicOrderResult generateOrdersForPlayerFullAI(
 class FullAIPlayerTraceResult {
   const FullAIPlayerTraceResult({
     required this.result,
-    required this.aiTraceSection,
+    required this.game,
+    this.aiTraceSection,
   });
 
   final StrategicOrderResult result;
+  final Game game;
   final TurnTraceAiSection? aiTraceSection;
 }
 
@@ -55,14 +57,15 @@ FullAIPlayerTraceResult generateOrdersForPlayerFullAIWithTrace(
 }) {
   final player = game.playerById(playerId);
   if (player == null || !isAiControlled(game, player.id)) {
-    return const FullAIPlayerTraceResult(
-      result: StrategicOrderResult(
+    return FullAIPlayerTraceResult(
+      result: const StrategicOrderResult(
         orders: Orders(),
         economyPlan: EconomyPlan(
           productionAssignments: [],
           cargoPreference: CargoPreference.none,
         ),
       ),
+      game: game,
       aiTraceSection: null,
     );
   }
@@ -98,6 +101,7 @@ FullAIPlayerTraceResult generateOrdersForPlayerFullAIWithTrace(
   );
   return FullAIPlayerTraceResult(
     result: traced.result,
+    game: traced.game,
     aiTraceSection: traced.aiTraceSection,
   );
 }
@@ -108,10 +112,12 @@ class FullAIResult {
   const FullAIResult({
     required this.orders,
     required this.economyPlansByPlayerId,
+    required this.game,
     this.aiTraceSections = const <TurnTraceAiSection>[],
   });
   final Orders orders;
   final Map<String, EconomyPlan> economyPlansByPlayerId;
+  final Game game;
   final List<TurnTraceAiSection> aiTraceSections;
 }
 
@@ -126,6 +132,7 @@ FullAIResult generateOrdersForGameFullAI(
   void Function(String phaseId)? onStagedPlannerProgress,
 }) {
   final totalStopwatch = Stopwatch()..start();
+  var planningGame = game;
   final moveByPlayer = <String, List<MoveOrder>>{};
   final armyMoveByPlayer = <String, List<ArmyMoveOrder>>{};
   final buildByPlayer = <String, List<BuildUnitOrder>>{};
@@ -142,7 +149,7 @@ FullAIResult generateOrdersForGameFullAI(
     final playerStopwatch = Stopwatch()..start();
     _log.i('full_ai player_start gameId=${game.id} playerId=${player.id}');
     final traced = generateOrdersForPlayerFullAIWithTrace(
-      game,
+      planningGame,
       topology,
       player.id,
       tileMapByRegion: tileMapByRegion,
@@ -155,6 +162,7 @@ FullAIResult generateOrdersForGameFullAI(
       'full_ai player_complete gameId=${game.id} playerId=${player.id} '
       'elapsedMs=${playerStopwatch.elapsedMilliseconds}',
     );
+    planningGame = traced.game;
     final result = traced.result;
     economyPlansByPlayerId[player.id] = result.economyPlan;
     final aiTraceSection = traced.aiTraceSection;
@@ -221,6 +229,7 @@ FullAIResult generateOrdersForGameFullAI(
       navalMissionOrdersByPlayerId: missionByPlayer,
     ),
     economyPlansByPlayerId: economyPlansByPlayerId,
+    game: planningGame,
     aiTraceSections: List<TurnTraceAiSection>.unmodifiable(aiTraceSections),
   );
 }

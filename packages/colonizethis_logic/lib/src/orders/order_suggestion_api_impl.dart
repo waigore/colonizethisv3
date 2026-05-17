@@ -151,4 +151,24 @@ class DefaultOrderSuggestionAPI implements OrderSuggestionAPI {
       tileMapByRegion: tileMapByRegion,
     );
   }
+
+  @override
+  List<DiplomaticOrder> suggestDeclareWarOrders(
+    PlayerView view,
+    Game game,
+    MapTopology topology,
+    Orders currentOrders, {
+    Map<String, TileMapResult>? tileMapByRegion,
+  }) {
+    logicLog.i(
+      'order suggestion API suggestDeclareWarOrders player=${view.playerId}',
+    );
+    return suggestion.suggestDeclareWarOrders(
+      view,
+      game,
+      topology,
+      currentOrders,
+      tileMapByRegion: tileMapByRegion,
+    );
+  }
 }

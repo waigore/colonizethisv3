@@ -56,6 +56,10 @@ Orders runConquestArmyMovePlanner({
   if (primaryGoal == StrategicGoal.conquer || provincesToVictory > 10) {
     weight = weight < 10 ? 10 : weight;
   }
+  if (provincesToVictory > kConquerScoreFloorProvincesToVictoryThreshold &&
+      weight < 10) {
+    weight = 10;
+  }
   if (weight < 10) {
     _log.d('conquest army move skipped nationId=$nationId weight=$weight');
     return orders;
@@ -76,6 +80,9 @@ Orders runConquestArmyMovePlanner({
     }
     if (invadable.contains(m.destinationProvinceId)) {
       score += 10;
+    }
+    if (snapshot.conquest.adjacentOwnerFactionIdsSorted.contains(destOwner)) {
+      score += 8;
     }
     return score;
   }).toList();

@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_ai/package_logger.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
@@ -36,6 +38,12 @@ Map<StrategicGoal, int> evaluateStrategicGoalScores(
 
   if (snapshot.threats.atWarWith.isNotEmpty) {
     defend += 30;
+    if (snapshot.conquest.oldWorldProvincesOwned <=
+            kFewOldWorldProvincesDefendThreshold &&
+        snapshot.conquest.provincesToVictory >
+            kConquerScoreFloorProvincesToVictoryThreshold) {
+      defend += kDefendBonusWhenAtWarAndFewHoldings;
+    }
   }
   if (snapshot.threats.capitalThreatened) {
     defend += 50;
@@ -48,14 +56,32 @@ Map<StrategicGoal, int> evaluateStrategicGoalScores(
   }
 
   final provincesToVictory = snapshot.conquest.provincesToVictory;
+  if (snapshot.conquest.oldWorldProvincesOwned <=
+          kFewOldWorldProvincesDefendThreshold &&
+      provincesToVictory > kConquerScoreFloorProvincesToVictoryThreshold) {
+    defend += kDefendBonusWhenFewOldWorldProvinces;
+  }
   conquer += conquerScoreBonusForProvincesToVictory(provincesToVictory);
   conquer += endgameConquerScoreBonus(provincesToVictory);
   if (snapshot.conquest.invadableProvinceIdsSorted.isNotEmpty) {
     expand += kExpandBonusWhenInvadableProvinces;
   }
   if (provincesToVictory > kConquerScoreFloorProvincesToVictoryThreshold &&
-      conquer < 0) {
-    conquer = 0;
+      conquer < kMinimumConquerScoreWhenFarFromVictory) {
+    conquer = kMinimumConquerScoreWhenFarFromVictory;
+  }
+  if (provincesToVictory > kConquerScoreFloorProvincesToVictoryThreshold) {
+    final tradePenalty = math.min(
+      kTradeGoalPenaltyCapWhenFarFromVictory,
+      trade - 40,
+    );
+    if (tradePenalty > 0) {
+      trade -= tradePenalty;
+    }
+    if (snapshot.conquest.adjacentOwnerFactionIdsSorted.isNotEmpty &&
+        expand < kMinimumConquerScoreWhenFarFromVictory) {
+      expand = kMinimumConquerScoreWhenFarFromVictory;
+    }
   }
 
   return <StrategicGoal, int>{

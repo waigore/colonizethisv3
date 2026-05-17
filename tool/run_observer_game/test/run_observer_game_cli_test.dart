@@ -79,6 +79,20 @@ void main() {
       expect(err.join('\n'), contains('integer'));
     });
 
+    test('verify-conquest with low max-turns yields EX_USAGE', () async {
+      final out = <String>[];
+      final err = <String>[];
+      final tmp = Directory.systemTemp.createTempSync('roc_verify_');
+      addTearDown(() => tmp.deleteSync(recursive: true));
+      final code = await runObserverGameCli(
+        ['--output', tmp.path, '--max-turns', '30', '--verify-conquest'],
+        emitStdout: out.add,
+        emitStderr: err.add,
+      );
+      expect(code, kExitUsage);
+      expect(err.join('\n'), contains('verify-conquest'));
+    });
+
     test('negative --max-turns yields EX_USAGE', () async {
       final out = <String>[];
       final err = <String>[];

@@ -8,29 +8,51 @@ Set<String> neighborProvinceIdsFromTopology(
   Set<String> ownedFullIds,
   PlayerView view,
 ) {
+  final nodesByFullId = <String, TopologyNode>{
+    for (final n in topology.nodes) n.id: n,
+  };
   final nodesByRegion = topologyNodesByRegionId(topology);
   final out = <String>{};
   for (final fullId in ownedFullIds) {
     final regionId = ProvinceId.regionIdFrom(fullId);
     final localId = ProvinceId.localIdFrom(fullId);
-    final nodesInRegion = nodesByRegion[regionId];
-    if (nodesInRegion == null) continue;
     for (final edge in topology.edges) {
-      final neighborLocalId = otherEndOfEdge(edge, localId);
-      if (neighborLocalId == null) continue;
-      final neighborNode = nodesInRegion[neighborLocalId];
+      final otherEnd = otherEndOfEdgeForAnchor(
+        edge,
+        fullId: fullId,
+        localId: localId,
+      );
+      if (otherEnd == null) continue;
+      final neighborNode = _topologyNodeForRef(
+        nodeRef: otherEnd,
+        regionId: regionId,
+        nodesByFullId: nodesByFullId,
+        nodesByRegion: nodesByRegion,
+      );
       if (neighborNode == null ||
           neighborNode.type != TopologyNodeType.province) {
         continue;
       }
-      final neighborFullId = ProvinceId.full(
-        neighborNode.regionId,
-        neighborNode.id,
-      );
-      if (!ownedFullIds.contains(neighborFullId)) out.add(neighborFullId);
+      final neighborFullId = ProvinceId.isPrefixed(neighborNode.id)
+          ? neighborNode.id
+          : ProvinceId.full(neighborNode.regionId, neighborNode.id);
+      if (!ownedFullIds.contains(neighborFullId)) {
+        out.add(neighborFullId);
+      }
     }
   }
   return out;
+}
+
+TopologyNode? _topologyNodeForRef({
+  required String nodeRef,
+  required String regionId,
+  required Map<String, TopologyNode> nodesByFullId,
+  required Map<String, Map<String, TopologyNode>> nodesByRegion,
+}) {
+  return nodesByFullId[nodeRef] ??
+      nodesByFullId[ProvinceId.full(regionId, nodeRef)] ??
+      nodesByRegion[regionId]?[nodeRef];
 }
 
 Map<String, Map<String, TopologyNode>> topologyNodesByRegionId(
@@ -43,8 +65,18 @@ Map<String, Map<String, TopologyNode>> topologyNodesByRegionId(
   return byRegion;
 }
 
-String? otherEndOfEdge(TopologyEdge edge, String localId) {
-  if (edge.id1 == localId) return edge.id2;
-  if (edge.id2 == localId) return edge.id1;
+/// Matches [anchor] as full province id (`region|local`) or local id only.
+String? otherEndOfEdgeForAnchor(
+  TopologyEdge edge, {
+  required String fullId,
+  required String localId,
+}) {
+  if (edge.id1 == fullId || edge.id1 == localId) return edge.id2;
+  if (edge.id2 == fullId || edge.id2 == localId) return edge.id1;
   return null;
+}
+
+/// Legacy helper for unprefixed topology edges in unit tests.
+String? otherEndOfEdge(TopologyEdge edge, String localId) {
+  return otherEndOfEdgeForAnchor(edge, fullId: localId, localId: localId);
 }

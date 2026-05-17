@@ -447,7 +447,7 @@ Future<void> _turnResolutionIsolateBody(Map<String, Object?> args) async {
     final traceRuntime = turnTraceEnabled ? TurnTraceRuntime() : null;
     final resolveStopwatch = Stopwatch()..start();
     final result = validateOrdersAndResolveTurnFromTrustedOrders(
-      game: game,
+      game: fullAi.game,
       topology: topology,
       orders: mergedOrders,
       tileMapByRegion: tileMapByRegion,

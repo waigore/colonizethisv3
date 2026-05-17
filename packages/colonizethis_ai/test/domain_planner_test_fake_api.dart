@@ -91,5 +91,17 @@ class FakeOrderSuggestionAPIForDomainPlannerTests implements OrderSuggestionAPI 
     Orders currentOrders, {
     Map<String, TileMapResult>? tileMapByRegion,
   }) => diplomatic;
+
+  @override
+  List<DiplomaticOrder> suggestDeclareWarOrders(
+    PlayerView view,
+    Game game,
+    MapTopology topology,
+    Orders currentOrders, {
+    Map<String, TileMapResult>? tileMapByRegion,
+  }) =>
+      diplomatic
+          .where((o) => o.type == DiplomaticOrderType.declareWar)
+          .toList();
 }
 

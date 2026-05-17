@@ -599,3 +599,95 @@ List<DiplomaticOrder> suggestDiplomaticOrders(
   );
   return suggestions;
 }
+
+/// Declare-war candidates only. Used by Full AI `declareWarOnly` diplomacy pass
+/// so `establishOverture` does not block war per target (Refs #2504).
+/// SPEC/program/order-suggestions.md § Declare-war-only suggestions.
+List<DiplomaticOrder> suggestDeclareWarOrders(
+  PlayerView view,
+  Game game,
+  MapTopology topology,
+  Orders currentOrders, {
+  Map<String, TileMapResult>? tileMapByRegion,
+  IncrementalCandidateValidator? sharedCandidateValidator,
+}) {
+  orderSuggestionLog.d('suggestDeclareWarOrders player=${view.playerId}');
+  final playerId = view.playerId;
+  final suggestions = <DiplomaticOrder>[];
+
+  final knownFactionIds = <String>{};
+  for (final rel in game.diplomacyRelations) {
+    if (rel.factionId1 == playerId) {
+      knownFactionIds.add(rel.factionId2);
+    } else if (rel.factionId2 == playerId) {
+      knownFactionIds.add(rel.factionId1);
+    }
+  }
+  for (final entry in view.visibilityByTile.entries) {
+    if (entry.value == VisibilityLevel.unknown) continue;
+    final parsed = parseTileKeyCoordinates(entry.key);
+    if (parsed == null) continue;
+    final regionId = parsed.regionId;
+    final provinceLocalId = parsed.provinceLocalId;
+    final provinceId = ProvinceId.full(regionId, provinceLocalId);
+    final province = view.provinceByRegionAndId(regionId, provinceId);
+    final ownerId = province?.ownerId;
+    if (ownerId != null && ownerId != playerId) {
+      knownFactionIds.add(ownerId);
+    }
+  }
+
+  final factionMembership = DiplomacyFactionMembership.from(game);
+  final otherGps = factionMembership.greatPowerIds.difference({playerId});
+  final knownTargets = <String>{
+    ...otherGps.where(knownFactionIds.contains),
+    ...factionMembership.minorOrTribeIds.where(knownFactionIds.contains),
+  };
+  final knownTargetIds = knownTargets.toSet();
+
+  assert(
+    sharedCandidateValidator == null ||
+        sharedCandidateValidator.playerId == playerId,
+    'sharedCandidateValidator playerId must match view.playerId',
+  );
+  final unitsByIdForDiplomatic =
+      sharedCandidateValidator?.unitsById ?? unitsByIdFromWorld(game.worldState);
+
+  final sortedTargetIds = knownTargetIds.toList()..sort();
+  var passValidator =
+      sharedCandidateValidator != null
+      ? (sharedCandidateValidator.basePrefix == currentOrders
+            ? sharedCandidateValidator
+            : sharedCandidateValidator.forBasePrefix(currentOrders))
+      : buildIncrementalCandidateValidator(
+          game: game,
+          topology: topology,
+          playerId: playerId,
+          baseOrders: currentOrders,
+          tileMapByRegion: tileMapByRegion,
+          view: view,
+          unitsById: unitsByIdForDiplomatic,
+          factionMembership: factionMembership,
+        );
+
+  for (final targetId in sortedTargetIds) {
+    if (targetId == playerId) continue;
+    final rel = getRelation(game, playerId, targetId);
+    final atPeace = rel == null || rel.atPeace;
+    if (!atPeace) continue;
+
+    final candidate = DiplomaticOrder(
+      type: DiplomaticOrderType.declareWar,
+      targetFactionId: targetId,
+    );
+    if (isDiplomaticOrderAcceptedWithValidator(passValidator, candidate)) {
+      suggestions.add(candidate);
+    }
+  }
+
+  suggestions.sort((a, b) => a.targetFactionId.compareTo(b.targetFactionId));
+  orderSuggestionLog.d(
+    'suggestDeclareWarOrders player=$playerId candidates=${suggestions.length}',
+  );
+  return suggestions;
+}
