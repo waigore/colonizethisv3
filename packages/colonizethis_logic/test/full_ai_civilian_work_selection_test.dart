@@ -61,6 +61,116 @@ void main() {
       },
     );
 
+    test('Merchant prefers purchase_land in newWorld tribe province', () {
+      const playerId = 'gp1';
+      const nwTile = 'newWorld|tribeProv|2|3';
+      final game = Game(
+        id: 'g',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+          oldWorld: const RegionData(),
+          newWorld: RegionData(
+            provinces: [
+              Province(
+                id: 'newWorld|tribeProv',
+                regionId: 'newWorld',
+                ownerId: 'tribe1',
+              ),
+            ],
+          ),
+        ),
+        players: const [
+          Player(id: playerId, displayName: 'GP', isHuman: false),
+        ],
+        tribes: const [Tribe(id: 'tribe1', displayName: 'T')],
+      );
+      final view = PlayerView(
+        playerId: playerId,
+        player: game.players.single,
+        ownUnitsById: {
+          'm1': Unit(
+            id: 'm1',
+            type: kUnitTypeMerchant,
+            ownerId: playerId,
+            locationProvinceId: 'newWorld|tribeProv',
+          ),
+        },
+        provincesById: const {},
+        visibilityByTile: const {},
+        prospectedTiles: const {},
+        diplomacyByOtherId: const {},
+      );
+      final r = selectFullAiCivilianWorkOrders(
+        workSuggestions: [
+          const WorkOrder(
+            unitId: 'm1',
+            target: kWorkTargetExplore,
+            targetTileKey: 'newWorld|tribeProv|0|0',
+          ),
+          const WorkOrder(
+            unitId: 'm1',
+            target: kWorkTargetPurchaseLand,
+            targetTileKey: nwTile,
+          ),
+        ],
+        view: view,
+        game: game,
+      );
+      expect(r.workOrders.single.target, kWorkTargetPurchaseLand);
+      expect(r.workOrders.single.targetTileKey, nwTile);
+    });
+
+    test('Builder prefers unimproved resource tile over lexicographically smaller road', () {
+      const playerId = 'gp1';
+      const tileRoad = 'oldWorld|p1|0|0';
+      const tileResource = 'oldWorld|p1|1|0';
+      final game = Game(
+        id: 'g',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+          oldWorld: const RegionData(),
+          newWorld: const RegionData(),
+          resourceByTileKey: {tileResource: 'grain'},
+        ),
+        players: const [
+          Player(id: playerId, displayName: 'GP', isHuman: false),
+        ],
+      );
+      final view = PlayerView(
+        playerId: playerId,
+        player: game.players.single,
+        ownUnitsById: {
+          'b1': Unit(
+            id: 'b1',
+            type: kUnitTypeBuilder,
+            ownerId: playerId,
+            locationProvinceId: 'oldWorld|p1',
+          ),
+        },
+        provincesById: const {},
+        visibilityByTile: const {},
+        prospectedTiles: const {},
+        diplomacyByOtherId: const {},
+      );
+      final r = selectFullAiCivilianWorkOrders(
+        workSuggestions: [
+          const WorkOrder(
+            unitId: 'b1',
+            target: kWorkTargetBuildRoad,
+            targetTileKey: tileRoad,
+          ),
+          const WorkOrder(
+            unitId: 'b1',
+            target: kWorkTargetBuildImprovement,
+            targetTileKey: tileResource,
+          ),
+        ],
+        view: view,
+        game: game,
+      );
+      expect(r.workOrders.single.targetTileKey, tileResource);
+    });
+
     test(
       'Explorer with two equal E_score explores picks lexicographically smaller tile',
       () {

@@ -7,6 +7,9 @@ const int kMilitaryVictoryOldWorldProvinceThreshold = 31;
 /// Region id for Old World provinces (prefixed `oldWorld|…`).
 const String kOldWorldRegionId = 'oldWorld';
 
+/// Region id for New World provinces (prefixed `newWorld|…`).
+const String kNewWorldRegionId = 'newWorld';
+
 /// Provinces still needed to reach military victory from [oldWorldOwned].
 int provincesToVictoryFromOldWorldOwned(int oldWorldOwned) {
   final gap =
@@ -82,6 +85,33 @@ const int kDeclareWarAdjacentGpBonusWhenFarFromVictory = 35;
 /// Extra declare-war bonus toward an adjacent **minor/tribe** when far from victory.
 const int kDeclareWarAdjacentMinorBonusWhenFarFromVictory = 55;
 
+/// While `provincesToVictory` is **greater than** this value, declare-war on other
+/// Great Powers is suppressed so each GP expands from minors/tribes first (observer
+/// per-GP conquest AC; only 18 non-GP Old World provinces at default setup).
+const int kSuppressGpDeclareWarMinProvincesToVictory = 12;
+
+/// Old World holdings at or below this count are treated as stalled expansion
+/// (observer default start is 7 provinces per GP).
+const int kStalledOldWorldProvinceThreshold = 8;
+
+/// Extra declare-war weight toward adjacent minors when stalled.
+const int kDeclareWarStalledExpansionMinorBonus = 50;
+
+/// Penalty on adjacent minor declare-war when the GP already holds many OW provinces.
+const int kDeclareWarSatedExpansionMinorPenalty = 40;
+
+/// Minimum diplomacy domain weight for the declare-war pass when stalled.
+const int kDiplomacyDeclareWarMinWeightWhenStalled = 35;
+
+/// Extra regiment build weight when OW holdings are stalled (any primary goal).
+const double kBuildRegimentBonusWhenStalledExpansion = 2.5;
+
+/// Declare-war bonus when the target still owns an adjacent invadable province.
+const int kDeclareWarMinorWithInvadableProvinceBonus = 45;
+
+/// Offer-peace bonus toward a minor/tribe at war that no longer owns invadable land.
+const int kOfferPeaceFutileMinorWarBonus = 80;
+
 /// When far from victory, defend goal bonus while Old World holdings are small.
 const int kDefendBonusWhenFewOldWorldProvinces = 35;
 
@@ -91,3 +121,36 @@ const int kDefendBonusWhenAtWarAndFewHoldings = 45;
 
 /// Old World province count at or below which [kDefendBonusWhenFewOldWorldProvinces] applies.
 const int kFewOldWorldProvincesDefendThreshold = 6;
+
+/// Expand-goal bonus when invadable New World tribe/minor provinces exist.
+const int kColonialExpandBonusWhenInvadableNw = 18;
+
+/// Conquer-goal bonus for colonial pressure (below OW victory floors).
+const int kColonialConquerBonusWhenInvadableNw = 14;
+
+/// Declare-war bonus toward a tribe/minor that owns adjacent New World provinces.
+const int kDeclareWarColonialAdjacentTribeBonus = 40;
+
+/// Establish-overture bonus toward a preferred colonial tribe target.
+const int kEstablishOvertureColonialTribeBonus = 35;
+
+/// Conquest army-move bonus for New World invadable destinations.
+const int kConquestArmyMoveNwInvadableBonus = 18;
+
+/// Economy-domain weight boost for cargo preference when colonial targets exist.
+const int kColonialCargoPreferenceEconomyBoost = 28;
+
+/// Extra cargo boost when the GP owns no New World provinces yet.
+const int kColonialCargoPreferenceNoNwColoniesBoost = 12;
+
+/// Naval planner weight boost when New World invasion/colonization is viable.
+const int kColonialNavalWeightBonus = 22;
+
+/// Declare-war bonus when the target owns a sea-reachable invadable NW province.
+const int kDeclareWarColonialInvadableOwnerBonus = 48;
+
+/// Goal bonuses when the GP still owns fewer than this many NW provinces.
+const int kColonialFewNwProvincesThreshold = 8;
+
+/// Extra conquer weight when below [kColonialFewNwProvincesThreshold] NW holdings.
+const int kColonialConquerBonusWhenFewNwProvinces = 20;

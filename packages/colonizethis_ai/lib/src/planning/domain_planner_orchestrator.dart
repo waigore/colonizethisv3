@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:colonizethis_ai/package_logger.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/ai_api.dart';
@@ -72,89 +74,21 @@ DomainPlannerOutcome runDomainPlannersWithOutcome({
   void emit(String phaseId) => onStagedPlannerProgress?.call(phaseId);
 
   var orders = const Orders();
-  final domainWeights = getDomainWeightsForLeader(config.personalityId);
-
-  // Economy: build/work suggestions weighted by economy domain.
-  emit('suggestionPools');
-  final workCandidates = suggestionAPI.suggestWorkOrders(
-    view,
-    game,
-    topology,
-    orders,
+  orders = _runEconomyDomainPlanners(
+    orders: orders,
+    nationId: nationId,
+    view: view,
+    game: game,
+    topology: topology,
+    snapshot: snapshot,
+    config: config,
+    primaryGoal: primaryGoal,
+    seeds: seeds,
+    suggestionAPI: suggestionAPI,
+    economyPlan: economyPlan,
     tileMapByRegion: tileMapByRegion,
+    emit: emit,
   );
-  final buildCandidates = suggestionAPI.suggestBuildOrders(
-    view,
-    game,
-    topology,
-    orders,
-  );
-  final hasSpyWork = workCandidates.any(
-    (o) =>
-        o.target == kWorkTargetStealTech || o.target == kWorkTargetCounterSpy,
-  );
-  final workThreshold =
-      40 - (hasSpyWork ? getAgendaSpyOrderModifier(config.hiddenAgendaId) : 0);
-  final runFullAiCivilianWork =
-      primaryGoal == StrategicGoal.expand ||
-      domainWeights.economy >= workThreshold;
-  _log.d(
-    'work eval nationId=$nationId workThreshold=$workThreshold '
-    'domainWeights.economy=${domainWeights.economy} primaryGoal=$primaryGoal '
-    'workCandidatesCount=${workCandidates.length}',
-  );
-  if (runFullAiCivilianWork) {
-    final selection = selectFullAiCivilianWorkOrders(
-      workSuggestions: workCandidates,
-      view: view,
-      game: game,
-      tileMapByRegion: tileMapByRegion,
-    );
-    for (final w in selection.workOrders) {
-      final unitType = view.ownUnitsById[w.unitId]?.type ?? 'unknown';
-      _log.i(
-        'civilian_work_assigned nationId=$nationId unitId=${w.unitId} '
-        'unitType=$unitType target=${w.target} targetTileKey=${w.targetTileKey}',
-      );
-    }
-    for (final idle in selection.idleEvents) {
-      _log.i(
-        'civilian_work_idle nationId=$nationId unitId=${idle.unitId} '
-        'unitType=${idle.unitType} reason=${idle.reason}',
-      );
-    }
-    if (selection.workOrders.isNotEmpty) {
-      orders = orders.appendWorkOrders(nationId, selection.workOrders);
-    }
-  } else if (workCandidates.isNotEmpty) {
-    _log.d('work skipped nationId=$nationId weight below threshold');
-  }
-  emit('aiStageA');
-
-  final buildThreshold =
-      30 - getAgendaBuildOrderModifier(config.hiddenAgendaId);
-  _log.d(
-    'build eval nationId=$nationId buildThreshold=$buildThreshold '
-    'buildCandidatesCount=${buildCandidates.length}',
-  );
-  if (buildCandidates.isNotEmpty && domainWeights.economy >= buildThreshold) {
-    final chosen = pickBuildOrder(
-      buildCandidates: buildCandidates,
-      cargoPreference: economyPlan.cargoPreference,
-      primaryGoal: primaryGoal,
-      config: config,
-      seed: seeds.economySeed + 1,
-      nationId: nationId,
-      provincesToVictory: snapshot.conquest.provincesToVictory,
-    );
-    if (chosen != null) {
-      _log.i('build chosen nationId=$nationId unitType=${chosen.unitType}');
-      orders = orders.appendBuildOrders(nationId, [chosen]);
-    }
-  } else if (buildCandidates.isNotEmpty) {
-    _log.d('build skipped nationId=$nationId weight below threshold');
-  }
-  emit('aiStageB');
 
   // Movement: suggest moves; weight by military/expand.
   orders = runMovePlanner(
@@ -228,6 +162,7 @@ DomainPlannerOutcome runDomainPlannersWithOutcome({
     primaryGoal: primaryGoal,
     seeds: seeds,
     suggestionAPI: suggestionAPI,
+    colonial: snapshot.colonial,
   );
   emit('aiStageE');
 
@@ -265,4 +200,111 @@ DomainPlannerOutcome runDomainPlannersWithOutcome({
     declaredWarTargetFactionId: declareWarResult.declaredWarTargetFactionId,
     conquestArmyMoveCount: conquestArmyMoveCount,
   );
+}
+
+Orders _runEconomyDomainPlanners({
+  required Orders orders,
+  required String nationId,
+  required PlayerView view,
+  required Game game,
+  required MapTopology topology,
+  required AIWorldSnapshot snapshot,
+  required AIConfig config,
+  required StrategicGoal primaryGoal,
+  required AISeedBundle seeds,
+  required OrderSuggestionAPI suggestionAPI,
+  required EconomyPlan economyPlan,
+  Map<String, TileMapResult>? tileMapByRegion,
+  required void Function(String phaseId) emit,
+}) {
+  var result = orders;
+  final domainWeights = getDomainWeightsForLeader(config.personalityId);
+
+  emit('suggestionPools');
+  final workCandidates = suggestionAPI.suggestWorkOrders(
+    view,
+    game,
+    topology,
+    result,
+    tileMapByRegion: tileMapByRegion,
+  );
+  final buildCandidates = suggestionAPI.suggestBuildOrders(
+    view,
+    game,
+    topology,
+    result,
+  );
+  final hasSpyWork = workCandidates.any(
+    (o) =>
+        o.target == kWorkTargetStealTech || o.target == kWorkTargetCounterSpy,
+  );
+  final workThreshold =
+      40 - (hasSpyWork ? getAgendaSpyOrderModifier(config.hiddenAgendaId) : 0);
+  final runFullAiCivilianWork =
+      primaryGoal == StrategicGoal.expand ||
+      domainWeights.economy >= workThreshold ||
+      snapshot.colonial.invadableNewWorldProvinceIdsSorted.isNotEmpty ||
+      snapshot.colonial.adjacentNewWorldOwnerFactionIdsSorted.isNotEmpty;
+  _log.d(
+    'work eval nationId=$nationId workThreshold=$workThreshold '
+    'domainWeights.economy=${domainWeights.economy} primaryGoal=$primaryGoal '
+    'workCandidatesCount=${workCandidates.length}',
+  );
+  if (runFullAiCivilianWork) {
+    final selection = selectFullAiCivilianWorkOrders(
+      workSuggestions: workCandidates,
+      view: view,
+      game: game,
+      tileMapByRegion: tileMapByRegion,
+    );
+    for (final w in selection.workOrders) {
+      final unitType = view.ownUnitsById[w.unitId]?.type ?? 'unknown';
+      _log.i(
+        'civilian_work_assigned nationId=$nationId unitId=${w.unitId} '
+        'unitType=$unitType target=${w.target} targetTileKey=${w.targetTileKey}',
+      );
+    }
+    for (final idle in selection.idleEvents) {
+      _log.i(
+        'civilian_work_idle nationId=$nationId unitId=${idle.unitId} '
+        'unitType=${idle.unitType} reason=${idle.reason}',
+      );
+    }
+    if (selection.workOrders.isNotEmpty) {
+      result = result.appendWorkOrders(nationId, selection.workOrders);
+    }
+  } else if (workCandidates.isNotEmpty) {
+    _log.d('work skipped nationId=$nationId weight below threshold');
+  }
+  emit('aiStageA');
+
+  var buildThreshold = 30 - getAgendaBuildOrderModifier(config.hiddenAgendaId);
+  if (snapshot.conquest.oldWorldProvincesOwned <=
+      kStalledOldWorldProvinceThreshold) {
+    buildThreshold = math.min(buildThreshold, 15);
+  }
+  _log.d(
+    'build eval nationId=$nationId buildThreshold=$buildThreshold '
+    'buildCandidatesCount=${buildCandidates.length}',
+  );
+  if (buildCandidates.isNotEmpty && domainWeights.economy >= buildThreshold) {
+    final chosen = pickBuildOrder(
+      buildCandidates: buildCandidates,
+      cargoPreference: economyPlan.cargoPreference,
+      primaryGoal: primaryGoal,
+      config: config,
+      seed: seeds.economySeed + 1,
+      nationId: nationId,
+      provincesToVictory: snapshot.conquest.provincesToVictory,
+      oldWorldProvincesOwned: snapshot.conquest.oldWorldProvincesOwned,
+    );
+    if (chosen != null) {
+      _log.i('build chosen nationId=$nationId unitType=${chosen.unitType}');
+      result = result.appendBuildOrders(nationId, [chosen]);
+    }
+  } else if (buildCandidates.isNotEmpty) {
+    _log.d('build skipped nationId=$nationId weight below threshold');
+  }
+  emit('aiStageB');
+  return result;
 }

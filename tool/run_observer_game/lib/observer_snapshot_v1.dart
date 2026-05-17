@@ -1,15 +1,19 @@
 import 'dart:convert';
 
+import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 
+import 'observer_extractable_rollup.dart';
+
 /// Observer canonical snapshot (SPEC/program/run_observer_game-tool.md).
-const int observerSnapshotSchemaVersion = 1;
+const int observerSnapshotSchemaVersion = 2;
 
 Map<String, Object?> buildObserverSnapshotJson(
   Game game, {
   required int postResolutionTurnNumber,
+  Map<String, TileMapResult>? tileMapByRegion,
 }) {
   final mapping = game.turnTimeMapping ?? TurnTimeMapping.gdd01;
 
@@ -59,6 +63,11 @@ Map<String, Object?> buildObserverSnapshotJson(
     ),
   ]..sort();
 
+  final extractableRollup = computeExtractableImprovementRollup(
+    game,
+    tileMapByRegion: tileMapByRegion,
+  );
+
   return <String, Object?>{
     'observerSnapshotSchemaVersion': observerSnapshotSchemaVersion,
     'gameId': game.id,
@@ -72,6 +81,10 @@ Map<String, Object?> buildObserverSnapshotJson(
     'diplomacyRelationSummariesSorted': diplomacyBrief,
     'militaryArmySummariesSorted': armiesBrief,
     'militaryFleetSummariesSorted': fleetsBrief,
+    'extractableResourceTileCount':
+        extractableRollup.extractableResourceTileCount,
+    'improvedExtractableResourceTileCount':
+        extractableRollup.improvedExtractableResourceTileCount,
   };
 }
 

@@ -316,7 +316,7 @@ Paste the script output into the PR description for AC8–AC9 evidence.
 
 ## run_quality_gate_tests.sh (CI verification)
 
-Runs the same test and coverage steps as the GitHub Quality workflow (`.github/workflows/quality.yml`): **Wang incremental assets** (`python3 pytool/test_wang_incremental_assets_and_preview.py`; CI installs **`python3-pil`** via apt; locally install Pillow e.g. `python3 -m pip install pillow` or use your `pytool` venv), packages (Dart), app (Flutter) with **app widget coverage gate ≥ 80%** (applies to `lib/widgets/` only; see SPEC/program/test-logging.md), ctdev (Flutter), tool packages (Dart), coverage gate (logic/map/ai ≥ 90%), and sim_scenarios. Use this to verify the quality gate locally before pushing. Spec: [SPEC/program/test-logging.md](../SPEC/program/test-logging.md).
+Runs the same test and coverage steps as the GitHub Quality workflow (`.github/workflows/quality.yml`): **Wang incremental assets** (`python3 pytool/test_wang_incremental_assets_and_preview.py`; CI installs **`python3-pil`** via apt; locally install Pillow e.g. `python3 -m pip install pillow` or use your `pytool` venv), packages via **`tool/run_package_tests.sh`** (CI job **`package_tests`**), app (Flutter) with **app widget coverage gate ≥ 80%** (applies to `lib/widgets/` only; see SPEC/program/test-logging.md), ctdev (Flutter), `run_observer_game` coverage gate. **Tool packages** and **sim_scenarios** are in the nightly gate — see **`tool/run_nightly_gate_tests.sh`** and [SPEC/program/test-logging.md](../SPEC/program/test-logging.md). Use this to verify the PR quality gate locally before pushing.
 
 **Invocation**
 
@@ -325,6 +325,20 @@ tool/run_quality_gate_tests.sh
 ```
 
 Requires `dart`, `flutter`, and `lcov` (e.g. `sudo apt-get install lcov`).
+
+---
+
+## run_nightly_gate_tests.sh (nightly CI)
+
+Runs tool package `dart test` for `tool/sim_scenarios`, `tool/sim_combat_montecarlo`, `tool/sim_combat`, `tool/generate_map`, `tool/init_game`, `tool/sim_economy`, `tool/show_tech`, then **`melos run sim_scenarios`**. Same as the **integration** job in `.github/workflows/nightly.yml` (daily **23:00 Asia/Hong_Kong**). Observer campaign verify is a separate job in that workflow. Spec: [SPEC/program/test-logging.md](../SPEC/program/test-logging.md).
+
+**Invocation**
+
+```bash
+tool/run_nightly_gate_tests.sh
+```
+
+Requires `dart` only (Melos activated by the script).
 
 ---
 

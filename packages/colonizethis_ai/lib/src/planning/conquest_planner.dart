@@ -60,12 +60,23 @@ Orders runConquestArmyMovePlanner({
       weight < 10) {
     weight = 10;
   }
+  final stalledExpansion = snapshot.conquest.oldWorldProvincesOwned <=
+      kStalledOldWorldProvinceThreshold;
+  final atWarWithInvadableTarget = snapshot.conquest.invadableProvinceIdsSorted
+      .isNotEmpty &&
+      snapshot.threats.atWarWith.isNotEmpty;
+  if (stalledExpansion && atWarWithInvadableTarget && weight < 80) {
+    weight = 80;
+  }
   if (weight < 10) {
     _log.d('conquest army move skipped nationId=$nationId weight=$weight');
     return orders;
   }
   final provinceOwner = getProvinceOwnerMap(game);
-  final invadable = snapshot.conquest.invadableProvinceIdsSorted.toSet();
+  final invadable = {
+    ...snapshot.conquest.invadableProvinceIdsSorted,
+    ...snapshot.colonial.invadableNewWorldProvinceIdsSorted,
+  };
   final scores = filtered.map((m) {
     final destOwner = provinceOwner[m.destinationProvinceId] ?? '';
     var score = 1.0;
@@ -80,6 +91,10 @@ Orders runConquestArmyMovePlanner({
     }
     if (invadable.contains(m.destinationProvinceId)) {
       score += 10;
+    }
+    if (snapshot.colonial.invadableNewWorldProvinceIdsSorted
+        .contains(m.destinationProvinceId)) {
+      score += kConquestArmyMoveNwInvadableBonus;
     }
     if (snapshot.conquest.adjacentOwnerFactionIdsSorted.contains(destOwner)) {
       score += 8;

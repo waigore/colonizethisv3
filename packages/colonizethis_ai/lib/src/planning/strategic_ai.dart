@@ -89,6 +89,7 @@ StrategicOrderTraceResult generateStrategicOrdersWithTrace({
     game: game,
     nationId: nationId,
     provincesToVictory: snapshot.conquest.provincesToVictory,
+    oldWorldProvincesOwned: snapshot.conquest.oldWorldProvincesOwned,
     primaryGoal: primaryGoal,
   );
   final economyPlan = runEconomyPlanner(
@@ -96,6 +97,7 @@ StrategicOrderTraceResult generateStrategicOrdersWithTrace({
     view: view,
     config: config,
     seeds: seeds,
+    colonial: snapshot.colonial,
   );
   final plannerOutcome = runDomainPlannersWithOutcome(
     game: planningGame,

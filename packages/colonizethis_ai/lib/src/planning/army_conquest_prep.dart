@@ -14,10 +14,12 @@ Game prepareConquestFieldArmy({
   required Game game,
   required String nationId,
   required int provincesToVictory,
+  required int oldWorldProvincesOwned,
   required StrategicGoal primaryGoal,
 }) {
   final shouldPrep = primaryGoal == StrategicGoal.conquer ||
-      provincesToVictory > kBuildRegimentVictoryPaceThreshold;
+      provincesToVictory > kBuildRegimentVictoryPaceThreshold ||
+      oldWorldProvincesOwned <= kStalledOldWorldProvinceThreshold;
   if (!shouldPrep) return game;
 
   final homeId = homeArmyIdFor(nationId);
