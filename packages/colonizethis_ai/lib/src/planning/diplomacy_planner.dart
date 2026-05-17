@@ -77,6 +77,13 @@ DiplomacyPlannerResult runDiplomacyPlannerWithResult({
     weight = kDiplomacyDeclareWarMinWeightWhenStalled;
   }
   if (pass == DiplomacyPlannerPass.declareWarOnly &&
+      snapshot.conquest.oldWorldProvincesOwned <=
+          kStalledOldWorldProvinceThreshold &&
+      snapshot.conquest.invadableProvinceIdsSorted.isNotEmpty &&
+      weight < kDiplomacyDeclareWarMinWeightWhenStalled + 15) {
+    weight = kDiplomacyDeclareWarMinWeightWhenStalled + 15;
+  }
+  if (pass == DiplomacyPlannerPass.declareWarOnly &&
       hasColonialAcquisitionTargets(snapshot.colonial) &&
       weight < kDiplomacyDeclareWarMinWeightWhenColonialPressure) {
     weight = kDiplomacyDeclareWarMinWeightWhenColonialPressure;
