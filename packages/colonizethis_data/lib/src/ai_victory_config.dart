@@ -85,6 +85,33 @@ const int kDeclareWarAdjacentGpBonusWhenFarFromVictory = 35;
 /// Extra declare-war bonus toward an adjacent **minor/tribe** when far from victory.
 const int kDeclareWarAdjacentMinorBonusWhenFarFromVictory = 55;
 
+/// While `provincesToVictory` is **greater than** this value, declare-war on other
+/// Great Powers is suppressed so each GP expands from minors/tribes first (observer
+/// per-GP conquest AC; only 18 non-GP Old World provinces at default setup).
+const int kSuppressGpDeclareWarMinProvincesToVictory = 12;
+
+/// Old World holdings at or below this count are treated as stalled expansion
+/// (observer default start is 7 provinces per GP).
+const int kStalledOldWorldProvinceThreshold = 8;
+
+/// Extra declare-war weight toward adjacent minors when stalled.
+const int kDeclareWarStalledExpansionMinorBonus = 50;
+
+/// Penalty on adjacent minor declare-war when the GP already holds many OW provinces.
+const int kDeclareWarSatedExpansionMinorPenalty = 40;
+
+/// Minimum diplomacy domain weight for the declare-war pass when stalled.
+const int kDiplomacyDeclareWarMinWeightWhenStalled = 35;
+
+/// Extra regiment build weight when OW holdings are stalled (any primary goal).
+const double kBuildRegimentBonusWhenStalledExpansion = 2.5;
+
+/// Declare-war bonus when the target still owns an adjacent invadable province.
+const int kDeclareWarMinorWithInvadableProvinceBonus = 45;
+
+/// Offer-peace bonus toward a minor/tribe at war that no longer owns invadable land.
+const int kOfferPeaceFutileMinorWarBonus = 80;
+
 /// When far from victory, defend goal bonus while Old World holdings are small.
 const int kDefendBonusWhenFewOldWorldProvinces = 35;
 

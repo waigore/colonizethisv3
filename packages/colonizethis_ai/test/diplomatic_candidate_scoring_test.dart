@@ -300,7 +300,7 @@ void main() {
           playerId: 'gp1',
           threats: ThreatSummary(),
           opportunities: OpportunitySummary(weakNeighbors: ['gp2']),
-          conquest: ConquestSummary(provincesToVictory: 23),
+          conquest: ConquestSummary(provincesToVictory: 10),
           economy: EconomySummary(),
           relations: {},
         ),
@@ -315,7 +315,7 @@ void main() {
           playerId: 'gp1',
           threats: ThreatSummary(),
           opportunities: OpportunitySummary(),
-          conquest: ConquestSummary(provincesToVictory: 23),
+          conquest: ConquestSummary(provincesToVictory: 10),
           economy: EconomySummary(),
           relations: {},
         ),
@@ -339,7 +339,20 @@ void main() {
               phase: TurnPhase.orders,
               turnNumber: 1,
             ),
-            oldWorld: const RegionData(),
+            oldWorld: RegionData(
+              provinces: const [
+                Province(
+                  id: 'oldWorld|p1',
+                  regionId: 'oldWorld',
+                  ownerId: 'gp1',
+                ),
+                Province(
+                  id: 'oldWorld|p2',
+                  regionId: 'oldWorld',
+                  ownerId: 'minor1',
+                ),
+              ],
+            ),
             newWorld: const RegionData(),
           ),
           players: const [
@@ -373,7 +386,10 @@ void main() {
           playerId: 'gp1',
           threats: ThreatSummary(),
           opportunities: OpportunitySummary(),
-          conquest: ConquestSummary(provincesToVictory: 24),
+          conquest: ConquestSummary(
+            provincesToVictory: 24,
+            invadableProvinceIdsSorted: ['oldWorld|p2'],
+          ),
           economy: EconomySummary(),
           relations: {},
         );
@@ -575,12 +591,12 @@ void main() {
           config: config,
         ).single;
         expect(minorScore, kDeclareWarNonAdjacentSuppressedScore);
-        expect(gpScore, greaterThan(0));
+        expect(gpScore, kDeclareWarNonAdjacentSuppressedScore);
       },
     );
 
     test(
-      'behind pace suppresses declareWar on non-weak adjacent GP even with high war desire',
+      'behind pace suppresses declareWar on adjacent GP even with high war desire',
       () {
         const snap = AIWorldSnapshot(
           playerId: 'gp1',

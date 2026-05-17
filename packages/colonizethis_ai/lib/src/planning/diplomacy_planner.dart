@@ -69,6 +69,12 @@ DiplomacyPlannerResult runDiplomacyPlannerWithResult({
       weight < 25) {
     weight = 25;
   }
+  if (pass == DiplomacyPlannerPass.declareWarOnly &&
+      snapshot.conquest.oldWorldProvincesOwned <=
+          kStalledOldWorldProvinceThreshold &&
+      weight < kDiplomacyDeclareWarMinWeightWhenStalled) {
+    weight = kDiplomacyDeclareWarMinWeightWhenStalled;
+  }
   if (weight < 25) {
     _log.d('diplomacy skipped nationId=$nationId weight=$weight < 25');
     return DiplomacyPlannerResult(orders: orders);
