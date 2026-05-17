@@ -17,6 +17,7 @@ Cursor rules are the source of truth for implementation and review behavior.
 | `colonizethis-logging-file.mdc` | Required file logging approach (`basic_logger_file`) |
 | `colonizethis-logic-ai-decoupling.mdc` | Enforces one-way architecture boundary between `colonizethis_logic` and `colonizethis_ai` |
 | `colonizethis-turn-resolution-budget.mdc` | Hard 15-second next-turn resolution usability budget |
+| `colonizethis-agent-run-cleanup.mdc` | Delete logs/coverage/CLI artifacts after agent-run verbose commands |
 
 ## Context-specific rules
 
