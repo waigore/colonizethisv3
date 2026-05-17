@@ -33,23 +33,24 @@ Orders runMovePlanner({required PlannerContext ctx}) {
     _log.d('move skipped nationId=${ctx.nationId} weight < 20');
     return ctx.orders;
   }
-  final scores = filtered.map((m) {
-    final destProv = Unit.provinceIdFromTileKey(m.destinationTileKey);
-    final destOwner = destProv != null ? ctx.provinceOwner[destProv] : null;
-    if (destOwner == null || destOwner == ctx.nationId) return 1.0;
-    final rel = getRelation(ctx.game, ctx.nationId, destOwner);
-    final atWar = rel != null && rel.atWar;
-    return 1.0 + (atWar ? kMovePreferEnemyTerritoryBonus.toDouble() : 0);
-  }).toList();
-  _log.d('move scores nationId=${ctx.nationId} scores=$scores');
-  final idx = pickWeightedIndex(scores, ctx.seeds.militarySeed);
-  if (idx == null) return ctx.orders;
-  final selected = [filtered[idx]];
+  final selected = selectWeightedCandidate(
+    candidates: filtered,
+    seed: ctx.seeds.militarySeed,
+    score: (m) {
+      final destProv = Unit.provinceIdFromTileKey(m.destinationTileKey);
+      final destOwner = destProv != null ? ctx.provinceOwner[destProv] : null;
+      if (destOwner == null || destOwner == ctx.nationId) return 1.0;
+      final rel = getRelation(ctx.game, ctx.nationId, destOwner);
+      final atWar = rel != null && rel.atWar;
+      return 1.0 + (atWar ? kMovePreferEnemyTerritoryBonus.toDouble() : 0);
+    },
+  );
+  if (selected == null) return ctx.orders;
   _log.i(
     'move chosen nationId=${ctx.nationId} '
-    'unitId=${selected.first.unitId} destinationTileKey=${selected.first.destinationTileKey}',
+    'unitId=${selected.unitId} destinationTileKey=${selected.destinationTileKey}',
   );
-  return ctx.orders.appendMoveOrders(ctx.nationId, selected);
+  return ctx.orders.appendMoveOrders(ctx.nationId, [selected]);
 }
 
 Orders runArmyMovePlanner({
@@ -90,16 +91,18 @@ Orders runArmyMovePlanner({
     'army move eval nationId=${ctx.nationId} weight=$weight '
     'filteredCount=${filtered.length}',
   );
-  final scores = filtered.map((m) {
-    final destOwner = ctx.provinceOwner[m.destinationProvinceId];
-    if (destOwner == null || destOwner == ctx.nationId) return 1.0;
-    final rel = getRelation(ctx.game, ctx.nationId, destOwner);
-    final atWar = rel != null && rel.atWar;
-    return 1.0 + (atWar ? kMovePreferEnemyTerritoryBonus.toDouble() : 0);
-  }).toList();
-  final idx = pickWeightedIndex(scores, ctx.seeds.militarySeed + 2000);
-  if (idx == null) return ctx.orders;
-  final selected = filtered[idx];
+  final selected = selectWeightedCandidate(
+    candidates: filtered,
+    seed: ctx.seeds.militarySeed + 2000,
+    score: (m) {
+      final destOwner = ctx.provinceOwner[m.destinationProvinceId];
+      if (destOwner == null || destOwner == ctx.nationId) return 1.0;
+      final rel = getRelation(ctx.game, ctx.nationId, destOwner);
+      final atWar = rel != null && rel.atWar;
+      return 1.0 + (atWar ? kMovePreferEnemyTerritoryBonus.toDouble() : 0);
+    },
+  );
+  if (selected == null) return ctx.orders;
   _log.i(
     'army move chosen nationId=${ctx.nationId} '
     'armyId=${selected.armyId} destinationProvinceId=${selected.destinationProvinceId}',

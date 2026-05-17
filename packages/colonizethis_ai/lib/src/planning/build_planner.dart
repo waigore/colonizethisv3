@@ -92,7 +92,10 @@ BuildUnitOrder? pickBuildOrder({
     'scores=$scores',
   );
 
-  final idx = pickWeightedIndex(scores, seed);
-  if (idx == null) return candidates.first;
-  return candidates[idx];
+  return selectWeightedCandidate(
+        candidates: candidates,
+        scores: scores,
+        seed: seed,
+      ) ??
+      candidates.first;
 }

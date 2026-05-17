@@ -21,4 +21,41 @@ void main() {
       expect(first, inInclusiveRange(0, 2));
     });
   });
+
+  group('selectWeightedCandidate', () {
+    test('returns null for empty candidates', () {
+      expect(
+        selectWeightedCandidate<String>(
+          candidates: const [],
+          seed: 1,
+          score: (_) => 1,
+        ),
+        isNull,
+      );
+    });
+
+    test('is deterministic via score callback', () {
+      final candidates = ['a', 'b', 'c'];
+      final first = selectWeightedCandidate(
+        candidates: candidates,
+        seed: 1001,
+        score: (c) => c == 'b' ? 10.0 : 1.0,
+      );
+      final second = selectWeightedCandidate(
+        candidates: candidates,
+        seed: 1001,
+        score: (c) => c == 'b' ? 10.0 : 1.0,
+      );
+      expect(first, equals(second));
+    });
+
+    test('accepts parallel scores list', () {
+      final chosen = selectWeightedCandidate(
+        candidates: const ['x', 'y'],
+        scores: const [0, 5],
+        seed: 42,
+      );
+      expect(chosen, 'y');
+    });
+  });
 }

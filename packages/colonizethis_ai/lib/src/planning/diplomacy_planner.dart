@@ -113,12 +113,15 @@ DiplomacyPlannerResult runDiplomacyPlannerWithResult({
     'candidates=$candidateDesc scores=$scores',
   );
 
-  final idx = pickWeightedIndex(scores, ctx.seeds.diplomacySeed);
-  if (idx == null) return DiplomacyPlannerResult(orders: ctx.orders);
-  final chosen = diploCandidates[idx];
+  final chosen = selectWeightedCandidate(
+    candidates: diploCandidates,
+    scores: scores,
+    seed: ctx.seeds.diplomacySeed,
+  );
+  if (chosen == null) return DiplomacyPlannerResult(orders: ctx.orders);
   _log.i(
     'diplomacy chosen nationId=${ctx.nationId} '
-    'type=${chosen.type}${chosen.type == DiplomaticOrderType.declareWar ? " targetFactionId=${chosen.targetFactionId}" : ""} score=${scores[idx]}',
+    'type=${chosen.type}${chosen.type == DiplomaticOrderType.declareWar ? " targetFactionId=${chosen.targetFactionId}" : ""}',
   );
   final nextOrders = ctx.orders.appendDiplomaticOrders(ctx.nationId, [chosen]);
   final declaredTarget = chosen.type == DiplomaticOrderType.declareWar

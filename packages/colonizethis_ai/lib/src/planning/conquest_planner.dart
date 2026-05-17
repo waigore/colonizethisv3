@@ -66,33 +66,35 @@ Orders runConquestArmyMovePlanner({
     ...snapshot.conquest.invadableProvinceIdsSorted,
     ...snapshot.colonial.invadableNewWorldProvinceIdsSorted,
   };
-  final scores = filtered.map((m) {
-    final destOwner = ctx.provinceOwner[m.destinationProvinceId] ?? '';
-    var score = 1.0;
-    if (declaredWarTargetFactionId != null &&
-        destOwner == declaredWarTargetFactionId) {
-      score += 50;
-    } else {
-      final rel = getRelation(ctx.game, ctx.nationId, destOwner);
-      if (rel != null && rel.atWar) {
-        score += kMovePreferEnemyTerritoryBonus.toDouble();
+  final selected = selectWeightedCandidate(
+    candidates: filtered,
+    seed: ctx.seeds.militarySeed + 4000,
+    score: (m) {
+      final destOwner = ctx.provinceOwner[m.destinationProvinceId] ?? '';
+      var score = 1.0;
+      if (declaredWarTargetFactionId != null &&
+          destOwner == declaredWarTargetFactionId) {
+        score += 50;
+      } else {
+        final rel = getRelation(ctx.game, ctx.nationId, destOwner);
+        if (rel != null && rel.atWar) {
+          score += kMovePreferEnemyTerritoryBonus.toDouble();
+        }
       }
-    }
-    if (invadable.contains(m.destinationProvinceId)) {
-      score += 10;
-    }
-    if (snapshot.colonial.invadableNewWorldProvinceIdsSorted
-        .contains(m.destinationProvinceId)) {
-      score += kConquestArmyMoveNwInvadableBonus;
-    }
-    if (snapshot.conquest.adjacentOwnerFactionIdsSorted.contains(destOwner)) {
-      score += 8;
-    }
-    return score;
-  }).toList();
-  final idx = pickWeightedIndex(scores, ctx.seeds.militarySeed + 4000);
-  if (idx == null) return ctx.orders;
-  final selected = filtered[idx];
+      if (invadable.contains(m.destinationProvinceId)) {
+        score += 10;
+      }
+      if (snapshot.colonial.invadableNewWorldProvinceIdsSorted
+          .contains(m.destinationProvinceId)) {
+        score += kConquestArmyMoveNwInvadableBonus;
+      }
+      if (snapshot.conquest.adjacentOwnerFactionIdsSorted.contains(destOwner)) {
+        score += 8;
+      }
+      return score;
+    },
+  );
+  if (selected == null) return ctx.orders;
   _log.i(
     'conquest army move chosen nationId=${ctx.nationId} '
     'armyId=${selected.armyId} destinationProvinceId=${selected.destinationProvinceId} '

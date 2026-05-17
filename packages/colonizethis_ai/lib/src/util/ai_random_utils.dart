@@ -31,3 +31,26 @@ int? pickWeightedIndex(
   }
   return normalized.length - 1;
 }
+
+/// Picks one [candidates] entry by weighted score, using [seed] (Refs #2521 AC6).
+///
+/// Provide either [score] per candidate or a parallel [scores] list.
+T? selectWeightedCandidate<T>({
+  required List<T> candidates,
+  required int seed,
+  num Function(T)? score,
+  List<num>? scores,
+  bool useIntRoll = false,
+}) {
+  if (candidates.isEmpty) return null;
+  final resolvedScores =
+      scores ?? candidates.map(score!).toList(growable: false);
+  if (resolvedScores.length != candidates.length) return null;
+  final idx = pickWeightedIndex(
+    resolvedScores,
+    seed,
+    useIntRoll: useIntRoll,
+  );
+  if (idx == null) return null;
+  return candidates[idx];
+}
