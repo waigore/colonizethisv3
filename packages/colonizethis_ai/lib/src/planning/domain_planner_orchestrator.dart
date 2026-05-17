@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:colonizethis_ai/package_logger.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/ai_api.dart';
@@ -131,8 +133,11 @@ DomainPlannerOutcome runDomainPlannersWithOutcome({
   }
   emit('aiStageA');
 
-  final buildThreshold =
-      30 - getAgendaBuildOrderModifier(config.hiddenAgendaId);
+  var buildThreshold = 30 - getAgendaBuildOrderModifier(config.hiddenAgendaId);
+  if (snapshot.conquest.oldWorldProvincesOwned <=
+      kStalledOldWorldProvinceThreshold) {
+    buildThreshold = math.min(buildThreshold, 15);
+  }
   _log.d(
     'build eval nationId=$nationId buildThreshold=$buildThreshold '
     'buildCandidatesCount=${buildCandidates.length}',
@@ -146,6 +151,7 @@ DomainPlannerOutcome runDomainPlannersWithOutcome({
       seed: seeds.economySeed + 1,
       nationId: nationId,
       provincesToVictory: snapshot.conquest.provincesToVictory,
+      oldWorldProvincesOwned: snapshot.conquest.oldWorldProvincesOwned,
     );
     if (chosen != null) {
       _log.i('build chosen nationId=$nationId unitType=${chosen.unitType}');

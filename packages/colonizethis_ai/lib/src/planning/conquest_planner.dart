@@ -60,6 +60,14 @@ Orders runConquestArmyMovePlanner({
       weight < 10) {
     weight = 10;
   }
+  final stalledExpansion = snapshot.conquest.oldWorldProvincesOwned <=
+      kStalledOldWorldProvinceThreshold;
+  final atWarWithInvadableTarget = snapshot.conquest.invadableProvinceIdsSorted
+      .isNotEmpty &&
+      snapshot.threats.atWarWith.isNotEmpty;
+  if (stalledExpansion && atWarWithInvadableTarget && weight < 80) {
+    weight = 80;
+  }
   if (weight < 10) {
     _log.d('conquest army move skipped nationId=$nationId weight=$weight');
     return orders;

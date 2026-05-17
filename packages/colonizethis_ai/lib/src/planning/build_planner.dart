@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:colonizethis_ai/package_logger.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
@@ -17,10 +19,24 @@ BuildUnitOrder? pickBuildOrder({
   required int seed,
   required String nationId,
   int provincesToVictory = 0,
+  int oldWorldProvincesOwned = 0,
 }) {
   if (buildCandidates.isEmpty) return null;
+  var candidates = buildCandidates;
+  if (oldWorldProvincesOwned <= kStalledOldWorldProvinceThreshold &&
+      provincesToVictory > kBuildRegimentVictoryPaceThreshold &&
+      cargoPreference == CargoPreference.none &&
+      (primaryGoal == StrategicGoal.conquer ||
+          primaryGoal == StrategicGoal.defend)) {
+    final regimentsOnly = candidates
+        .where((o) => RegimentEconomyCatalog.byId.containsKey(o.unitType))
+        .toList();
+    if (regimentsOnly.isNotEmpty) {
+      candidates = regimentsOnly;
+    }
+  }
   final thresholds = getThresholdsForLeader(config.personalityId);
-  final scores = buildCandidates.map((o) {
+  final scores = candidates.map((o) {
     final unitType = o.unitType;
     final isShip = ShipEconomyCatalog.byId.containsKey(unitType);
     final cargoHold = isShip ? NavalStatsCatalog.get(unitType).cargoHold : 0;
@@ -41,10 +57,14 @@ BuildUnitOrder? pickBuildOrder({
     }
 
     double militaryBonus = 0.0;
+    if (isRegiment &&
+        oldWorldProvincesOwned <= kStalledOldWorldProvinceThreshold) {
+      militaryBonus += kBuildRegimentBonusWhenStalledExpansion;
+    }
     if (primaryGoal == StrategicGoal.conquer ||
         primaryGoal == StrategicGoal.defend) {
       if (isRegiment) {
-        militaryBonus = 1.0;
+        militaryBonus = math.max(militaryBonus, 1.0);
         if (provincesToVictory > kBuildRegimentVictoryPaceThreshold) {
           militaryBonus += kBuildRegimentBonusWhenBehindVictoryPace;
         }
@@ -70,6 +90,6 @@ BuildUnitOrder? pickBuildOrder({
   );
 
   final idx = pickWeightedIndex(scores, seed);
-  if (idx == null) return buildCandidates.first;
-  return buildCandidates[idx];
+  if (idx == null) return candidates.first;
+  return candidates[idx];
 }
