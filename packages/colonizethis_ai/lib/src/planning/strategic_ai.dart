@@ -6,6 +6,7 @@ import 'package:colonizethis_logic/order_suggestion_api.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'army_conquest_prep.dart';
+import 'colonial_pressure.dart';
 import 'domain_planner_orchestrator.dart';
 import 'economy_planner.dart';
 import 'goal_manager.dart';
@@ -76,14 +77,28 @@ StrategicOrderTraceResult generateStrategicOrdersWithTrace({
   final turn = game.worldState.turnState.turnNumber;
   _log.i('generateStrategicOrders nationId=$nationId turn=$turn');
   final snapshot = AIWorldSnapshot.fromPlayerView(view, topology: topology);
-  final goalScores = evaluateStrategicGoalScores(snapshot, config);
-  final primaryGoal = selectPrimaryGoal(
+  final suppressColonialPressure = isStalledOldWorldGpBlockerFocus(
+    game: game,
+    snapshot: snapshot,
+  );
+  final goalScores = evaluateStrategicGoalScores(
+    snapshot,
+    config,
+    suppressColonialPressure: suppressColonialPressure,
+  );
+  var primaryGoal = selectPrimaryGoal(
     snapshot,
     config,
     seeds.goalSeed,
     nationId: nationId,
     turn: turn,
+    suppressColonialPressure: suppressColonialPressure,
   );
+  if (suppressColonialPressure &&
+      snapshot.conquest.provincesToVictory >
+          kConquerScoreFloorProvincesToVictoryThreshold) {
+    primaryGoal = StrategicGoal.conquer;
+  }
   _log.d('primaryGoal=$primaryGoal');
   final planningGame = prepareConquestFieldArmy(
     game: game,

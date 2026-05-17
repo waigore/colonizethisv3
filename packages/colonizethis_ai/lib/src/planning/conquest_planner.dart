@@ -1,3 +1,4 @@
+import 'diplomacy_planner.dart' show primaryInvadableOldWorldGpBlocker;
 import 'goal_manager.dart';
 import 'planning_imports.dart';
 import '../perception/perception_snapshot.dart';
@@ -24,6 +25,17 @@ String? stalledConquestDeclaredWarTarget({
     return declaredThisTurn;
   }
   final provinceOwner = getProvinceOwnerMap(game);
+  final gpBlocker = primaryInvadableOldWorldGpBlocker(
+    game: game,
+    snapshot: snapshot,
+  );
+  if (gpBlocker != null &&
+      snapshot.threats.atWarWith.contains(gpBlocker) &&
+      snapshot.conquest.invadableProvinceIdsSorted.any(
+        (pid) => provinceOwner[pid] == gpBlocker,
+      )) {
+    return gpBlocker;
+  }
   String? bestMinorId;
   var bestInvadableCount = 0;
   for (final minor in game.minorNations) {
@@ -302,12 +314,22 @@ double _stalledExpansionArmyMoveScoreDelta({
       destOwner != nationId &&
       snapshot.threats.atWarWith.contains(destOwner) &&
       _isMinorOrTribeFaction(game, destOwner);
-  final targetsDeclaredOrAtWarMinor =
+  final atWarGpInvadableBlocker = destOwner.isNotEmpty &&
+      destOwner != nationId &&
+      snapshot.threats.atWarWith.contains(destOwner) &&
+      game.playerById(destOwner) != null &&
+      snapshot.conquest.invadableProvinceIdsSorted.any(
+        (pid) => provinceOwner[pid] == destOwner,
+      );
+  final targetsDeclaredOrAtWarEnemy =
       (declaredWarTargetFactionId != null &&
           destOwner == declaredWarTargetFactionId) ||
-      atWarMinorOrTribe;
-  if (targetsDeclaredOrAtWarMinor) {
-    var delta = kConquestArmyMoveStalledDeclaredTargetBonus;
+      atWarMinorOrTribe ||
+      atWarGpInvadableBlocker;
+  if (targetsDeclaredOrAtWarEnemy) {
+    var delta = atWarGpInvadableBlocker
+        ? kConquestArmyMoveStalledGpInvadableBlockerBonus
+        : kConquestArmyMoveStalledDeclaredTargetBonus;
     if (invadable.contains(move.destinationProvinceId)) {
       delta += kConquestArmyMoveStalledDeclaredTargetInvadableBonus;
     }

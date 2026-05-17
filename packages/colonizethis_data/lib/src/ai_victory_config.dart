@@ -146,11 +146,11 @@ const int kDeclareWarMinorWithInvadableProvinceBonus = 45;
 
 /// Conquest army-move passes per turn while Old World holdings are stalled
 /// (one order per pass so each field army can march toward the frontier).
-const int kStalledConquestArmyMovePasses = 6;
+const int kStalledConquestArmyMovePasses = 10;
 
 /// Max field armies created from Home Army splits when Old World expansion is
 /// stalled (parallel marches toward invasion frontiers; Refs #2509).
-const int kStalledConquestFieldArmySplitCap = 4;
+const int kStalledConquestFieldArmySplitCap = 6;
 
 /// Offer-peace bonus toward a minor/tribe at war that no longer owns invadable land.
 const int kOfferPeaceFutileMinorWarBonus = 80;
@@ -158,6 +158,11 @@ const int kOfferPeaceFutileMinorWarBonus = 80;
 /// Offer-peace bonus toward a stronger adjacent GP while Old World expansion is
 /// stalled and that GP owns the invadable frontier (exit unwinnable wars; #2509).
 const int kOfferPeaceStalledStrongerGpBlockerBonus = 240;
+
+/// Offer-peace bonus toward a Great Power at war that owns none of this GP's
+/// invadable Old World provinces while minors still hold invadable land
+/// (exit distracting GP wars; observer seed-42 gp4/gp6; Refs #2509).
+const int kOfferPeaceStalledFutileGpWarBonus = 230;
 
 /// When far from victory, defend goal bonus while Old World holdings are small.
 const int kDefendBonusWhenFewOldWorldProvinces = 35;
@@ -337,6 +342,10 @@ const double kConquestArmyMoveStalledDeclaredTargetBonus = 250;
 /// invadable Old World province (march toward the invasion frontier).
 const double kConquestArmyMoveAdjacentInvadableBonus = 450;
 
+/// Army-move score bonus for invadable provinces owned by a Great Power the
+/// attacker is already at war with (seed-42 gp3/gp5 blockers; Refs #2509).
+const double kConquestArmyMoveStalledGpInvadableBlockerBonus = 1400;
+
 /// Army-move score bonus for own provinces bordering a faction already at war
 /// (march to frontier when invadable tiles are not yet visible).
 const double kConquestArmyMoveAdjacentAtWarFrontierBonus = 650;
@@ -347,6 +356,10 @@ const int kDeclareWarStalledWeakestInvadableGpBonus = 75;
 /// Declare-war bonus toward a weaker adjacent GP that owns invadable OW land
 /// while expansion is stalled and far from victory (Refs #2509).
 const int kDeclareWarStalledInvadableGpBlockerBonus = 220;
+
+/// Minimum declare-war score toward the GP that owns invadable OW frontier when
+/// no minors hold invadable land (seed-42 mid-map blockers; Refs #2509).
+const int kDeclareWarStalledGpInvadableBlockerFloor = 500;
 
 /// Declare-war bonus toward a non-adjacent minor while invadable OW land is
 /// blocked by Great Powers (seed-42 mid-map geography; Refs #2509).

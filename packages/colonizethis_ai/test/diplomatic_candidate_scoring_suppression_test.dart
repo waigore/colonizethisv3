@@ -693,5 +693,68 @@ void main() {
         expect(score, greaterThanOrEqualTo(kDeclareWarStalledInvadableGpBlockerBonus));
       },
     );
+
+    test(
+      'stalled OW boosts offerPeace toward GP at war that does not own invadable minors',
+      () {
+        const snap = AIWorldSnapshot(
+          playerId: 'gp4',
+          threats: ThreatSummary(atWarWith: ['gp5']),
+          opportunities: OpportunitySummary(),
+          conquest: ConquestSummary(
+            oldWorldProvincesOwned: 7,
+            provincesToVictory: 24,
+            invadableProvinceIdsSorted: ['oldWorld|p30'],
+          ),
+          colonial: ColonialSummary(),
+          economy: EconomySummary(),
+          relations: {},
+        );
+        final game = Game(
+          id: 'g-stalled-futile-gp-peace',
+          worldState: WorldState(
+            turnState: const TurnState(
+              phase: TurnPhase.orders,
+              turnNumber: 100,
+            ),
+            oldWorld: const RegionData(
+              provinces: [
+                Province(
+                  id: 'oldWorld|p30',
+                  regionId: 'oldWorld',
+                  ownerId: 'minor1',
+                ),
+              ],
+            ),
+            newWorld: const RegionData(),
+          ),
+          players: const [
+            Player(id: 'gp4', displayName: 'P', isHuman: false),
+            Player(id: 'gp5', displayName: 'Q', isHuman: false),
+          ],
+          minorNations: const [
+            MinorNation(id: 'minor1', displayName: 'M1'),
+          ],
+        );
+        const config = AIConfig(
+          leaderId: 'henry',
+          personalityId: 'henry',
+          hiddenAgendaId: 'merchant',
+        );
+        final score = computeDiplomaticCandidateScores(
+          candidates: const [
+            DiplomaticOrder(
+              type: DiplomaticOrderType.offerPeace,
+              targetFactionId: 'gp5',
+            ),
+          ],
+          nationId: 'gp4',
+          game: game,
+          snapshot: snap,
+          config: config,
+        ).single;
+        expect(score, greaterThanOrEqualTo(50 + kOfferPeaceStalledFutileGpWarBonus));
+      },
+    );
   });
 }

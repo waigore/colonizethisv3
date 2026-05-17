@@ -1,6 +1,35 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:colonizethis_logic/colonizethis_logic.dart';
+import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../perception/perception_snapshot.dart';
+
+/// Stalled OW expansion with every invadable province owned by one Great Power
+/// (focus Old World blocker war; suppress NW colonial pressure; Refs #2509).
+bool isStalledOldWorldGpBlockerFocus({
+  required Game game,
+  required AIWorldSnapshot snapshot,
+}) {
+  if (!isStalledOldWorldExpansion(snapshot.conquest.oldWorldProvincesOwned)) {
+    return false;
+  }
+  if (snapshot.conquest.invadableProvinceIdsSorted.isEmpty) {
+    return false;
+  }
+  final provinceOwner = getProvinceOwnerMap(game);
+  final minorsOwnInvadable = snapshot.conquest.invadableProvinceIdsSorted.any(
+    (pid) {
+      final owner = provinceOwner[pid];
+      return owner != null && game.minorNations.any((m) => m.id == owner);
+    },
+  );
+  if (minorsOwnInvadable) {
+    return false;
+  }
+  return snapshot.conquest.invadableProvinceIdsSorted.any(
+    (pid) => game.playerById(provinceOwner[pid] ?? '') != null,
+  );
+}
 
 /// Sea-reachable unowned NW provinces or tribe/minor owners still to clear.
 bool hasColonialAcquisitionTargets(ColonialSummary colonial) =>

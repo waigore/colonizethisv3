@@ -85,6 +85,22 @@ List<int> computeDiplomaticCandidateScores({
               )) {
             s += kOfferPeaceStalledStrongerGpBlockerBonus;
           }
+          if (targetGp != null &&
+              snapshot.threats.atWarWith.contains(o.targetFactionId) &&
+              isStalledOldWorldExpansion(
+                snapshot.conquest.oldWorldProvincesOwned,
+              ) &&
+              !snapshot.conquest.invadableProvinceIdsSorted.any(
+                (pid) => provinceOwner[pid] == o.targetFactionId,
+              ) &&
+              snapshot.conquest.invadableProvinceIdsSorted.any((pid) {
+                final owner = provinceOwner[pid];
+                return owner != null &&
+                    (game.minorNations.any((m) => m.id == owner) ||
+                        game.playerById(owner) != null);
+              })) {
+            s += kOfferPeaceStalledFutileGpWarBonus;
+          }
         }
         s += getAgendaPeaceAcceptanceModifier(agendaId);
         s += (thresholds.peaceTendency - 50);
@@ -311,7 +327,8 @@ final class _DeclareWarTargetContext {
     final isMinorTarget = _isMinorOrTribeFaction(game, order.targetFactionId);
     final ownsInvadableNw = snapshot.colonial.invadableNewWorldProvinceIdsSorted
         .any((pid) => provinceOwner[pid] == order.targetFactionId);
-    final colonialPressure = hasColonialAcquisitionTargets(snapshot.colonial);
+    final colonialPressure = hasColonialAcquisitionTargets(snapshot.colonial) &&
+        !isStalledOldWorldGpBlockerFocus(game: game, snapshot: snapshot);
     final isTribeTarget = _isTribeFaction(game, order.targetFactionId);
     final stalledOwExpansion = isStalledOldWorldExpansion(
       snapshot.conquest.oldWorldProvincesOwned,
@@ -356,7 +373,7 @@ final class _DeclareWarTargetContext {
     );
     final isAdjacentGp =
         isAdjacentOwner && game.playerById(order.targetFactionId) != null;
-    final invadableGpBlocker = isAdjacentGp &&
+    final invadableGpBlocker = game.playerById(order.targetFactionId) != null &&
         snapshot.conquest.invadableProvinceIdsSorted.any(
           (pid) => provinceOwner[pid] == order.targetFactionId,
         );
@@ -423,6 +440,15 @@ int? _declareWarSuppressedScore(_DeclareWarTargetContext ctx) {
           ctx.invadableOwOwnedByGp)) {
     return 0;
   }
+  if (ctx.stalledOwExpansion &&
+      ctx.invadableOwOwnedByGp &&
+      !ctx.hasInvadableMinorOwner &&
+      (ctx.isTribeTarget ||
+          (ctx.game.playerById(ctx.order.targetFactionId) != null &&
+              !ctx.invadableGpBlocker) ||
+          (ctx.isMinorTarget && !ctx.isTribeTarget && !ctx.weakerDistantMinor))) {
+    return 0;
+  }
   if (ctx.stalledOwExpansion && ctx.isMinorTarget && !ctx.isTribeTarget) {
     final continuingMinorConflict =
         ctx.activeMinorConflicts.contains(ctx.order.targetFactionId);
@@ -461,13 +487,15 @@ int? _declareWarSuppressedScore(_DeclareWarTargetContext ctx) {
   }
   if (ctx.stalledOwExpansion &&
       ctx.isAdjacentGp &&
-      !ctx.invadableGpBlockerWeaker) {
+      !ctx.invadableGpBlockerWeaker &&
+      !ctx.invadableGpBlocker) {
     return 0;
   }
   if (ctx.stalledOwExpansion &&
       ctx.invadableGpBlocker &&
       provinceCountOwnedBy(ctx.game, ctx.order.targetFactionId) >
-          ctx.snapshot.conquest.oldWorldProvincesOwned) {
+          ctx.snapshot.conquest.oldWorldProvincesOwned &&
+      ctx.hasInvadableMinorOwner) {
     return 0;
   }
   if (ctx.stalledOwExpansion &&
@@ -707,6 +735,14 @@ int _declareWarAdjacencyAndStalledBonuses(
       ctx.invadableGpBlockerWeaker) {
     s += kDeclareWarStalledInvadableGpBlockerBonus;
     s += kDeclareWarStalledWeakestInvadableGpBonus;
+  }
+  if (ctx.stalledOwExpansion &&
+      ctx.behindVictoryPace &&
+      ctx.invadableGpBlocker &&
+      ctx.invadableOwOwnedByGp &&
+      !ctx.hasInvadableMinorOwner) {
+    s += kDeclareWarStalledInvadableGpBlockerBonus;
+    s = math.max(s, kDeclareWarStalledGpInvadableBlockerFloor);
   }
   if (ctx.suppressGpDeclareWar &&
       ctx.isAdjacentGp &&

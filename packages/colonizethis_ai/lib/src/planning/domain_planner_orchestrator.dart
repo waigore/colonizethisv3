@@ -199,7 +199,8 @@ PlannerContext _runEconomyDomainPlanners({
   );
   var workThreshold =
       40 - (hasSpyWork ? getAgendaSpyOrderModifier(ctx.config.hiddenAgendaId) : 0);
-  final colonialPressure = hasColonialAcquisitionTargets(snapshot.colonial);
+  final colonialPressure = hasColonialAcquisitionTargets(snapshot.colonial) &&
+      !isStalledOldWorldGpBlockerFocus(game: ctx.game, snapshot: snapshot);
   if (colonialPressure || snapshot.colonial.newWorldProvincesOwned > 0) {
     workThreshold = math.min(workThreshold, kColonialCivilianWorkThresholdCap);
   }
@@ -244,6 +245,9 @@ PlannerContext _runEconomyDomainPlanners({
   var buildThreshold = 30 - getAgendaBuildOrderModifier(ctx.config.hiddenAgendaId);
   if (isStalledOldWorldExpansion(snapshot.conquest.oldWorldProvincesOwned)) {
     buildThreshold = math.min(buildThreshold, 15);
+  }
+  if (isStalledOldWorldGpBlockerFocus(game: ctx.game, snapshot: snapshot)) {
+    buildThreshold = math.min(buildThreshold, 8);
   }
   final colonialBuildCap = colonialBuildOrderThresholdCap(snapshot.colonial);
   if (colonialBuildCap != null) {

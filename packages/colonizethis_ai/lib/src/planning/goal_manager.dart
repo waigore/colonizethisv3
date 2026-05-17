@@ -17,8 +17,9 @@ enum StrategicGoal { defend, expand, conquer, trade, tech, diplomacy }
 /// random selection. Used by both the planner and trace export.
 Map<StrategicGoal, int> evaluateStrategicGoalScores(
   AIWorldSnapshot snapshot,
-  AIConfig config,
-) {
+  AIConfig config, {
+  bool suppressColonialPressure = false,
+}) {
   final weights = getGoalWeightsForLeader(config.personalityId);
   final thresholds = getThresholdsForLeader(config.personalityId);
 
@@ -84,7 +85,8 @@ Map<StrategicGoal, int> evaluateStrategicGoalScores(
       tech = math.min(tech, 45);
     }
   }
-  if (hasColonialAcquisitionTargets(snapshot.colonial)) {
+  if (!suppressColonialPressure &&
+      hasColonialAcquisitionTargets(snapshot.colonial)) {
     diplomacy -= kColonialDiplomacyGoalPenaltyWhenPressure;
     trade -= kColonialTradeGoalPenaltyWhenPressure;
     if (expand < kMinimumColonialExpandScoreWhenPressure) {
@@ -168,8 +170,13 @@ StrategicGoal selectPrimaryGoal(
   int goalSeed, {
   required String nationId,
   required int turn,
+  bool suppressColonialPressure = false,
 }) {
-  final candidates = evaluateStrategicGoalScores(snapshot, config);
+  final candidates = evaluateStrategicGoalScores(
+    snapshot,
+    config,
+    suppressColonialPressure: suppressColonialPressure,
+  );
 
   _log.d(
     'eval leaderId=${config.leaderId} hiddenAgendaId=${config.hiddenAgendaId} goalSeed=$goalSeed '

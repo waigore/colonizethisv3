@@ -63,11 +63,13 @@ Game prepareConquestFieldArmy({
         break;
       }
       final sortedRegs = [...currentHome.regimentUnitIds]..sort();
+      final maxToMove = sortedRegs.length - 1;
+      final moveCount = (sortedRegs.length ~/ 2).clamp(1, maxToMove);
       planningGame = applyArmySplit(
         game: planningGame,
         playerId: nationId,
         sourceArmyId: currentHome.id,
-        unitIdsToMove: [sortedRegs.first],
+        unitIdsToMove: sortedRegs.take(moveCount).toList(),
       );
     }
     return planningGame;

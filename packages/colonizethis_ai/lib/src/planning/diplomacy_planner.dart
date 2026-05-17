@@ -23,6 +23,15 @@ String? stalledStrongerGpBlockerPeaceTarget({
     return null;
   }
   final provinceOwner = getProvinceOwnerMap(game);
+  final minorsOwnInvadable = snapshot.conquest.invadableProvinceIdsSorted.any(
+    (pid) {
+      final owner = provinceOwner[pid];
+      return owner != null && game.minorNations.any((m) => m.id == owner);
+    },
+  );
+  if (!minorsOwnInvadable) {
+    return null;
+  }
   String? bestFactionId;
   var bestLead = 0;
   for (final factionId in snapshot.threats.atWarWith) {
@@ -40,6 +49,142 @@ String? stalledStrongerGpBlockerPeaceTarget({
     }
   }
   return bestFactionId;
+}
+
+/// Factions at war with this GP to peace while a single GP owns the invadable OW
+/// frontier (minors, tribes, and other GPs are distractions; Refs #2509).
+List<String> stalledGpBlockerFocusPeaceTargets({
+  required Game game,
+  required AIWorldSnapshot snapshot,
+}) {
+  if (!isStalledOldWorldExpansion(snapshot.conquest.oldWorldProvincesOwned)) {
+    return const [];
+  }
+  if (snapshot.conquest.invadableProvinceIdsSorted.isEmpty) {
+    return const [];
+  }
+  final provinceOwner = getProvinceOwnerMap(game);
+  final minorsOwnInvadable = snapshot.conquest.invadableProvinceIdsSorted.any(
+    (pid) {
+      final owner = provinceOwner[pid];
+      return owner != null && game.minorNations.any((m) => m.id == owner);
+    },
+  );
+  if (minorsOwnInvadable) {
+    return const [];
+  }
+  final blocker = primaryInvadableOldWorldGpBlocker(
+    game: game,
+    snapshot: snapshot,
+  );
+  if (blocker == null) {
+    return const [];
+  }
+  final targets = <String>[
+    for (final factionId in snapshot.threats.atWarWith)
+      if (factionId != blocker) factionId,
+  ]..sort();
+  return targets;
+}
+
+/// At-war Great Powers that own none of this GP's invadable Old World provinces
+/// while minors still hold invadable land (distracting GP wars; Refs #2509).
+List<String> stalledFutileGpPeaceTargets({
+  required Game game,
+  required AIWorldSnapshot snapshot,
+}) {
+  if (!isStalledOldWorldExpansion(snapshot.conquest.oldWorldProvincesOwned)) {
+    return const [];
+  }
+  if (snapshot.conquest.invadableProvinceIdsSorted.isEmpty) {
+    return const [];
+  }
+  final provinceOwner = getProvinceOwnerMap(game);
+  final minorsOwnInvadable = snapshot.conquest.invadableProvinceIdsSorted.any(
+    (pid) {
+      final owner = provinceOwner[pid];
+      return owner != null && game.minorNations.any((m) => m.id == owner);
+    },
+  );
+  if (!minorsOwnInvadable) {
+    return const [];
+  }
+  final targets = <String>[];
+  for (final factionId in snapshot.threats.atWarWith) {
+    if (game.playerById(factionId) == null) continue;
+    final ownsInvadable = snapshot.conquest.invadableProvinceIdsSorted.any(
+      (pid) => provinceOwner[pid] == factionId,
+    );
+    if (ownsInvadable) continue;
+    targets.add(factionId);
+  }
+  targets.sort();
+  return targets;
+}
+
+bool stalledOwExpansionNeedsPeacePass({
+  required Game game,
+  required AIWorldSnapshot snapshot,
+}) =>
+    stalledStrongerGpBlockerPeaceTarget(game: game, snapshot: snapshot) !=
+        null ||
+    stalledFutileGpPeaceTargets(game: game, snapshot: snapshot).isNotEmpty ||
+    stalledGpBlockerFocusPeaceTargets(game: game, snapshot: snapshot).isNotEmpty;
+
+/// GP owning the most invadable Old World provinces (frontier blocker).
+String? primaryInvadableOldWorldGpBlocker({
+  required Game game,
+  required AIWorldSnapshot snapshot,
+}) {
+  final provinceOwner = getProvinceOwnerMap(game);
+  String? bestGpId;
+  var bestCount = 0;
+  for (final provinceId in snapshot.conquest.invadableProvinceIdsSorted) {
+    final owner = provinceOwner[provinceId];
+    if (owner == null || game.playerById(owner) == null) continue;
+    var count = 0;
+    for (final pid in snapshot.conquest.invadableProvinceIdsSorted) {
+      if (provinceOwner[pid] == owner) count++;
+    }
+    if (count > bestCount) {
+      bestCount = count;
+      bestGpId = owner;
+    }
+  }
+  return bestGpId;
+}
+
+/// Declare war on the GP frontier blocker when invadable OW is GP-held only.
+String? stalledGpBlockerDeclareWarTarget({
+  required Game game,
+  required AIWorldSnapshot snapshot,
+}) {
+  if (!isStalledOldWorldExpansion(snapshot.conquest.oldWorldProvincesOwned)) {
+    return null;
+  }
+  if (snapshot.conquest.invadableProvinceIdsSorted.isEmpty) {
+    return null;
+  }
+  final provinceOwner = getProvinceOwnerMap(game);
+  final minorsOwnInvadable = snapshot.conquest.invadableProvinceIdsSorted.any(
+    (pid) {
+      final owner = provinceOwner[pid];
+      return owner != null && game.minorNations.any((m) => m.id == owner);
+    },
+  );
+  if (minorsOwnInvadable) {
+    return null;
+  }
+  final blocker = primaryInvadableOldWorldGpBlocker(
+    game: game,
+    snapshot: snapshot,
+  );
+  if (blocker == null ||
+      snapshot.threats.atWarWith.contains(blocker) ||
+      snapshot.relations[blocker]?.atWar == true) {
+    return null;
+  }
+  return blocker;
 }
 
 Orders runDiplomacyPlanner({
@@ -78,8 +223,7 @@ DiplomacyPlannerResult runDiplomacyPlannerWithResult({
     weight = kDiplomacyDeclareWarMinWeightWhenColonialPressure;
   }
   if (pass != DiplomacyPlannerPass.declareWarOnly &&
-      stalledStrongerGpBlockerPeaceTarget(game: ctx.game, snapshot: snapshot) !=
-          null &&
+      stalledOwExpansionNeedsPeacePass(game: ctx.game, snapshot: snapshot) &&
       weight < 25) {
     weight = 25;
   }
@@ -131,26 +275,36 @@ DiplomacyPlannerResult runDiplomacyPlannerWithResult({
   }
 
   if (pass != DiplomacyPlannerPass.declareWarOnly) {
-    final peaceTarget = stalledStrongerGpBlockerPeaceTarget(
-      game: ctx.game,
-      snapshot: snapshot,
-    );
-    if (peaceTarget != null) {
-      final peaceIdx = diploCandidates.indexWhere(
-        (o) =>
-            o.type == DiplomaticOrderType.offerPeace &&
-            o.targetFactionId == peaceTarget,
+    final peaceOrders = <DiplomaticOrder>[];
+    final peaceTargets = <String>{
+      if (stalledStrongerGpBlockerPeaceTarget(
+            game: ctx.game,
+            snapshot: snapshot,
+          ) !=
+          null)
+        stalledStrongerGpBlockerPeaceTarget(
+          game: ctx.game,
+          snapshot: snapshot,
+        )!,
+      ...stalledFutileGpPeaceTargets(game: ctx.game, snapshot: snapshot),
+      ...stalledGpBlockerFocusPeaceTargets(game: ctx.game, snapshot: snapshot),
+    };
+    for (final peaceTarget in peaceTargets) {
+      peaceOrders.add(
+        DiplomaticOrder(
+          type: DiplomaticOrderType.offerPeace,
+          targetFactionId: peaceTarget,
+        ),
       );
-      if (peaceIdx >= 0) {
-        final peace = diploCandidates[peaceIdx];
-        _log.i(
-          'diplomacy forced offerPeace nationId=${ctx.nationId} '
-          'targetFactionId=$peaceTarget',
-        );
-        return DiplomacyPlannerResult(
-          orders: ctx.orders.appendDiplomaticOrders(ctx.nationId, [peace]),
-        );
-      }
+    }
+    if (peaceOrders.isNotEmpty) {
+      _log.i(
+        'diplomacy forced offerPeace nationId=${ctx.nationId} '
+        'targets=${peaceOrders.map((o) => o.targetFactionId).toList()}',
+      );
+      return DiplomacyPlannerResult(
+        orders: ctx.orders.appendDiplomaticOrders(ctx.nationId, peaceOrders),
+      );
     }
   }
 
@@ -179,8 +333,19 @@ DiplomacyPlannerResult runDiplomacyPlannerWithResult({
       isStalledOldWorldExpansion(snapshot.conquest.oldWorldProvincesOwned) &&
       snapshot.conquest.provincesToVictory >
           kConquerScoreFloorProvincesToVictoryThreshold) {
-    final idx = _pickHighestScoreIndex(scores);
-    chosen = idx == null ? null : diploCandidates[idx];
+    final forcedBlocker = stalledGpBlockerDeclareWarTarget(
+      game: ctx.game,
+      snapshot: snapshot,
+    );
+    if (forcedBlocker != null) {
+      chosen = DiplomaticOrder(
+        type: DiplomaticOrderType.declareWar,
+        targetFactionId: forcedBlocker,
+      );
+    } else {
+      final idx = _pickHighestScoreIndex(scores);
+      chosen = idx == null ? null : diploCandidates[idx];
+    }
   } else {
     chosen = selectWeightedCandidate(
       candidates: diploCandidates,
