@@ -154,7 +154,10 @@ const int kStalledConquestFieldArmySplitCap = 8;
 
 /// While stalled and at war, build regiments until at least this many exist in
 /// all armies (Home + field) so splits and invasions can proceed (Refs #2509).
-const int kStalledMinRegimentCountWhenAtWar = 4;
+const int kStalledMinRegimentCountWhenAtWar = 5;
+
+/// Higher floor when fighting the sole GP that owns the invadable OW frontier.
+const int kStalledMinRegimentCountWhenGpBlockerAtWar = 6;
 
 /// Offer-peace bonus toward a minor/tribe at war that no longer owns invadable land.
 const int kOfferPeaceFutileMinorWarBonus = 80;

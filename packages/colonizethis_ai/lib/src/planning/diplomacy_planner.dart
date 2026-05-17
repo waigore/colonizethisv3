@@ -22,6 +22,9 @@ String? stalledStrongerGpBlockerPeaceTarget({
   if (!isStalledOldWorldExpansion(snapshot.conquest.oldWorldProvincesOwned)) {
     return null;
   }
+  if (snapshot.conquest.invadableProvinceIdsSorted.isEmpty) {
+    return null;
+  }
   final provinceOwner = getProvinceOwnerMap(game);
   final minorsOwnInvadable = snapshot.conquest.invadableProvinceIdsSorted.any(
     (pid) {
@@ -29,8 +32,23 @@ String? stalledStrongerGpBlockerPeaceTarget({
       return owner != null && game.minorNations.any((m) => m.id == owner);
     },
   );
-  if (!minorsOwnInvadable) {
+  final gpBlockerFocus = isStalledOldWorldGpBlockerFocus(
+    game: game,
+    snapshot: snapshot,
+  );
+  if (!minorsOwnInvadable && !gpBlockerFocus) {
     return null;
+  }
+  if (gpBlockerFocus) {
+    final anyMinorOwnsOw = game.worldState.oldWorld.provinces.any(
+      (p) =>
+          p.ownerId != null &&
+          p.ownerId!.isNotEmpty &&
+          game.minorNations.any((m) => m.id == p.ownerId),
+    );
+    if (!anyMinorOwnsOw) {
+      return null;
+    }
   }
   String? bestFactionId;
   var bestLead = 0;
@@ -148,6 +166,27 @@ String? stalledFocusMinorTarget({
   return bestMinorId;
 }
 
+/// Peace tribe wars while fighting a Great Power (OW consolidation; Refs #2509).
+List<String> atWarGpDistractionTribePeaceTargets({
+  required Game game,
+  required AIWorldSnapshot snapshot,
+}) {
+  if (!isStalledOldWorldExpansion(snapshot.conquest.oldWorldProvincesOwned)) {
+    return const [];
+  }
+  final atWarWithGp = snapshot.threats.atWarWith.any(
+    (id) => game.playerById(id) != null,
+  );
+  if (!atWarWithGp) {
+    return const [];
+  }
+  final targets = <String>[
+    for (final factionId in snapshot.threats.atWarWith)
+      if (game.tribes.any((t) => t.id == factionId)) factionId,
+  ]..sort();
+  return targets;
+}
+
 /// Peace every at-war minor/tribe except the focused minor or GP blocker war.
 List<String> stalledExpansionDistractionPeaceTargets({
   required Game game,
@@ -198,6 +237,8 @@ bool stalledOwExpansionNeedsPeacePass({
     stalledFutileGpPeaceTargets(game: game, snapshot: snapshot).isNotEmpty ||
     stalledGpBlockerFocusPeaceTargets(game: game, snapshot: snapshot).isNotEmpty ||
     stalledExpansionDistractionPeaceTargets(game: game, snapshot: snapshot)
+        .isNotEmpty ||
+    atWarGpDistractionTribePeaceTargets(game: game, snapshot: snapshot)
         .isNotEmpty;
 
 /// GP owning the most invadable Old World provinces (frontier blocker).
@@ -318,6 +359,20 @@ DiplomacyPlannerResult runDiplomacyPlannerWithResult({
     return DiplomacyPlannerResult(orders: ctx.orders);
   }
 
+  if (pass == DiplomacyPlannerPass.declareWarOnly) {
+    final atWarWithGp = snapshot.threats.atWarWith.any(
+      (id) => ctx.game.playerById(id) != null,
+    );
+    if (atWarWithGp) {
+      diploCandidates = diploCandidates
+          .where(
+            (o) =>
+                o.type != DiplomaticOrderType.declareWar ||
+                !ctx.game.tribes.any((t) => t.id == o.targetFactionId),
+          )
+          .toList();
+    }
+  }
   if (pass == DiplomacyPlannerPass.declareWarOnly &&
       isStalledOldWorldExpansion(snapshot.conquest.oldWorldProvincesOwned)) {
     final provinceOwner = getProvinceOwnerMap(ctx.game);
@@ -381,6 +436,10 @@ DiplomacyPlannerResult runDiplomacyPlannerWithResult({
       ...stalledFutileGpPeaceTargets(game: ctx.game, snapshot: snapshot),
       ...stalledGpBlockerFocusPeaceTargets(game: ctx.game, snapshot: snapshot),
       ...stalledExpansionDistractionPeaceTargets(
+        game: ctx.game,
+        snapshot: snapshot,
+      ),
+      ...atWarGpDistractionTribePeaceTargets(
         game: ctx.game,
         snapshot: snapshot,
       ),

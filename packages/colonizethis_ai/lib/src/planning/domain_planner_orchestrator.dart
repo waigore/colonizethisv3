@@ -255,10 +255,21 @@ PlannerContext _runEconomyDomainPlanners({
     buildThreshold = math.min(buildThreshold, colonialBuildCap);
   }
   final regimentCount = regimentCountForPlayer(ctx.game, ctx.nationId);
+  final gpBlocker = isStalledOldWorldGpBlockerFocus(
+        game: ctx.game,
+        snapshot: snapshot,
+      )
+      ? primaryInvadableOldWorldGpBlocker(game: ctx.game, snapshot: snapshot)
+      : null;
+  final atWarWithGpBlocker = gpBlocker != null &&
+      snapshot.threats.atWarWith.contains(gpBlocker);
+  final minRegimentFloor = atWarWithGpBlocker
+      ? kStalledMinRegimentCountWhenGpBlockerAtWar
+      : kStalledMinRegimentCountWhenAtWar;
   final forceRegimentRebuild =
       isStalledOldWorldExpansion(snapshot.conquest.oldWorldProvincesOwned) &&
           snapshot.threats.atWarWith.isNotEmpty &&
-          regimentCount < kStalledMinRegimentCountWhenAtWar;
+          regimentCount < minRegimentFloor;
   if (forceRegimentRebuild) {
     buildThreshold = 0;
   }
