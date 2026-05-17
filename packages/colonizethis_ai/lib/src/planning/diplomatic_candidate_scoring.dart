@@ -74,133 +74,23 @@ List<int> computeDiplomaticCandidateScores({
         s += (thresholds.allianceTendency - 50);
         break;
       case DiplomaticOrderType.declareWar:
-        {
-          final rel = snapshot.relations[o.targetFactionId];
-          final relationScore = rel?.score ?? 50;
-          final adjacentOwners = snapshot.conquest.adjacentOwnerFactionIdsSorted;
-          final colonialAdjacent =
-              snapshot.colonial.adjacentNewWorldOwnerFactionIdsSorted;
-          final isAdjacentOwner = adjacentOwners.contains(o.targetFactionId);
-          final isColonialAdjacentOwner =
-              colonialAdjacent.contains(o.targetFactionId);
-          if (behindVictoryPace &&
-              adjacentOwners.isNotEmpty &&
-              !isAdjacentOwner &&
-              !isColonialAdjacentOwner) {
-            s = kDeclareWarNonAdjacentSuppressedScore;
-            break;
-          }
-          final isMinorTarget = _isMinorOrTribeFaction(game, o.targetFactionId);
-          if (isMinorTarget &&
-              !invadableOwners.contains(o.targetFactionId) &&
-              !isColonialAdjacentOwner) {
-            s = kDeclareWarNonAdjacentSuppressedScore;
-            break;
-          }
-          final isAdjacentGp =
-              isAdjacentOwner && game.playerById(o.targetFactionId) != null;
-          if (suppressGpDeclareWar && isAdjacentGp) {
-            s = kDeclareWarNonAdjacentSuppressedScore;
-            break;
-          }
-          final effectiveMaxRelation = behindVictoryPace && isMinorTarget
-              ? kDeclareWarMinorMaxRelationWhenFarFromVictory
-              : behindVictoryPace && isAdjacentGp
-              ? kDeclareWarGpMaxRelationWhenFarFromVictory
-              : maxRelationForDeclareWar;
-          if (relationScore > effectiveMaxRelation) {
-            s = 0;
-          } else {
-            if (_isDecisionOnCooldown(
-              game: game,
-              actorFactionId: nationId,
-              targetFactionId: o.targetFactionId,
-              eventTypes: const [DiplomaticEventType.declareWar],
-              cooldownTurns: warCooldownTurns,
-              currentTurn: currentTurn,
-            )) {
-              s = 0;
-              break;
-            }
-            final warDesire = warDesireForTarget(
-              o.targetFactionId,
-              relationScore,
-            );
-            final targetProvinceCount = provinceCountOwnedBy(
-              game,
-              o.targetFactionId,
-            );
-            final desiredTerritory = targetProvinceCount <= 0
-                ? 1
-                : ((warDesire / 25).round()).clamp(1, targetProvinceCount);
-            s += getAgendaConquerModifier(agendaId);
-            s += getAgendaTreatyBreakingModifier(agendaId);
-            s += (thresholds.warLikelihood - 50);
-            s += (warDesire - 50);
-            if (!suppressGpDeclareWar &&
-                snapshot.opportunities.weakNeighbors.contains(
-                  o.targetFactionId,
-                )) {
-              s += getDeclareWarTargetBonusWeakerNeighbor(agendaId);
-              if (game.playerById(o.targetFactionId) != null &&
-                  warDesire >= kDeclareWarGpWeakNeighborMinWarDesire) {
-                s += kDeclareWarGpWeakNeighborBonus;
-              }
-            }
-            if (snapshot.conquest.preferredConquestTargetFactionIdsSorted
-                .contains(o.targetFactionId)) {
-              s += 15;
-            }
-            if (isColonialAdjacentOwner && isMinorTarget) {
-              s += kDeclareWarColonialAdjacentTribeBonus;
-            }
-            if (isAdjacentOwner) {
-              s += kDeclareWarAdjacentOwnerBonus;
-              if (behindVictoryPace && isMinorTarget) {
-                s += kDeclareWarAdjacentMinorBonusWhenFarFromVictory;
-              }
-              if (isMinorTarget &&
-                  invadableOwners.contains(o.targetFactionId)) {
-                s += kDeclareWarMinorWithInvadableProvinceBonus;
-              }
-              if (isMinorTarget &&
-                  snapshot.conquest.oldWorldProvincesOwned <=
-                      kStalledOldWorldProvinceThreshold) {
-                s += kDeclareWarStalledExpansionMinorBonus;
-              }
-              if (isMinorTarget &&
-                  snapshot.conquest.oldWorldProvincesOwned >= 10) {
-                s -= kDeclareWarSatedExpansionMinorPenalty;
-              }
-              if (!suppressGpDeclareWar && behindVictoryPace && isAdjacentGp) {
-                s += kDeclareWarAdjacentGpBonusWhenFarFromVictory;
-              }
-              if (thresholds.warLikelihood <=
-                  kDeclareWarLowWarLikelihoodThreshold) {
-                s += kDeclareWarLowWarLikelihoodAdjacentBonus;
-              }
-            }
-            if (primaryGoal == StrategicGoal.conquer) {
-              s += 20;
-            }
-            s += behindVictoryPace
-                ? conquerScoreBonusForProvincesToVictory(
-                    snapshot.conquest.provincesToVictory,
-                  )
-                : conquerScoreBonusForProvincesToVictory(
-                        snapshot.conquest.provincesToVictory,
-                      ) ~/
-                    4;
-            if (rel?.level == RelationLevel.allied) {
-              s += getDeclareWarTargetBonusAlly(agendaId);
-            }
-            _log.d(
-              'diplomacy warDesire nationId=$nationId targetFactionId=${o.targetFactionId} '
-              'warDesire=$warDesire desiredTerritory=$desiredTerritory',
-            );
-          }
-          break;
-        }
+        s = _scoreDeclareWarDiplomaticOrder(
+          order: o,
+          nationId: nationId,
+          game: game,
+          snapshot: snapshot,
+          agendaId: agendaId,
+          thresholds: thresholds,
+          maxRelationForDeclareWar: maxRelationForDeclareWar,
+          behindVictoryPace: behindVictoryPace,
+          suppressGpDeclareWar: suppressGpDeclareWar,
+          invadableOwners: invadableOwners,
+          warCooldownTurns: warCooldownTurns,
+          currentTurn: currentTurn,
+          primaryGoal: primaryGoal,
+          warDesireForTarget: warDesireForTarget,
+        );
+        break;
       case DiplomaticOrderType.establishOverture:
         {
           if (_isDecisionOnCooldown(
@@ -235,6 +125,135 @@ List<int> computeDiplomaticCandidateScores({
     }
     return s == 0 ? 0 : math.max(1, s);
   }).toList();
+}
+
+int _scoreDeclareWarDiplomaticOrder({
+  required DiplomaticOrder order,
+  required String nationId,
+  required Game game,
+  required AIWorldSnapshot snapshot,
+  required String agendaId,
+  required PersonalityThresholds thresholds,
+  required int maxRelationForDeclareWar,
+  required bool behindVictoryPace,
+  required bool suppressGpDeclareWar,
+  required Set<String> invadableOwners,
+  required int warCooldownTurns,
+  required int currentTurn,
+  required StrategicGoal? primaryGoal,
+  required int Function(String targetFactionId, int relationScore)
+  warDesireForTarget,
+}) {
+  final rel = snapshot.relations[order.targetFactionId];
+  final relationScore = rel?.score ?? 50;
+  final adjacentOwners = snapshot.conquest.adjacentOwnerFactionIdsSorted;
+  final colonialAdjacent =
+      snapshot.colonial.adjacentNewWorldOwnerFactionIdsSorted;
+  final isAdjacentOwner = adjacentOwners.contains(order.targetFactionId);
+  final isColonialAdjacentOwner =
+      colonialAdjacent.contains(order.targetFactionId);
+  if (behindVictoryPace &&
+      adjacentOwners.isNotEmpty &&
+      !isAdjacentOwner &&
+      !isColonialAdjacentOwner) {
+    return kDeclareWarNonAdjacentSuppressedScore;
+  }
+  final isMinorTarget = _isMinorOrTribeFaction(game, order.targetFactionId);
+  if (isMinorTarget &&
+      !invadableOwners.contains(order.targetFactionId) &&
+      !isColonialAdjacentOwner) {
+    return kDeclareWarNonAdjacentSuppressedScore;
+  }
+  final isAdjacentGp =
+      isAdjacentOwner && game.playerById(order.targetFactionId) != null;
+  if (suppressGpDeclareWar && isAdjacentGp) {
+    return kDeclareWarNonAdjacentSuppressedScore;
+  }
+  final effectiveMaxRelation = behindVictoryPace && isMinorTarget
+      ? kDeclareWarMinorMaxRelationWhenFarFromVictory
+      : behindVictoryPace && isAdjacentGp
+      ? kDeclareWarGpMaxRelationWhenFarFromVictory
+      : maxRelationForDeclareWar;
+  if (relationScore > effectiveMaxRelation) {
+    return 0;
+  }
+  if (_isDecisionOnCooldown(
+    game: game,
+    actorFactionId: nationId,
+    targetFactionId: order.targetFactionId,
+    eventTypes: const [DiplomaticEventType.declareWar],
+    cooldownTurns: warCooldownTurns,
+    currentTurn: currentTurn,
+  )) {
+    return 0;
+  }
+  var s = 50;
+  final warDesire = warDesireForTarget(order.targetFactionId, relationScore);
+  final targetProvinceCount = provinceCountOwnedBy(game, order.targetFactionId);
+  final desiredTerritory = targetProvinceCount <= 0
+      ? 1
+      : ((warDesire / 25).round()).clamp(1, targetProvinceCount);
+  s += getAgendaConquerModifier(agendaId);
+  s += getAgendaTreatyBreakingModifier(agendaId);
+  s += (thresholds.warLikelihood - 50);
+  s += (warDesire - 50);
+  if (!suppressGpDeclareWar &&
+      snapshot.opportunities.weakNeighbors.contains(order.targetFactionId)) {
+    s += getDeclareWarTargetBonusWeakerNeighbor(agendaId);
+    if (game.playerById(order.targetFactionId) != null &&
+        warDesire >= kDeclareWarGpWeakNeighborMinWarDesire) {
+      s += kDeclareWarGpWeakNeighborBonus;
+    }
+  }
+  if (snapshot.conquest.preferredConquestTargetFactionIdsSorted
+      .contains(order.targetFactionId)) {
+    s += 15;
+  }
+  if (isColonialAdjacentOwner && isMinorTarget) {
+    s += kDeclareWarColonialAdjacentTribeBonus;
+  }
+  if (isAdjacentOwner) {
+    s += kDeclareWarAdjacentOwnerBonus;
+    if (behindVictoryPace && isMinorTarget) {
+      s += kDeclareWarAdjacentMinorBonusWhenFarFromVictory;
+    }
+    if (isMinorTarget && invadableOwners.contains(order.targetFactionId)) {
+      s += kDeclareWarMinorWithInvadableProvinceBonus;
+    }
+    if (isMinorTarget &&
+        snapshot.conquest.oldWorldProvincesOwned <=
+            kStalledOldWorldProvinceThreshold) {
+      s += kDeclareWarStalledExpansionMinorBonus;
+    }
+    if (isMinorTarget && snapshot.conquest.oldWorldProvincesOwned >= 10) {
+      s -= kDeclareWarSatedExpansionMinorPenalty;
+    }
+    if (!suppressGpDeclareWar && behindVictoryPace && isAdjacentGp) {
+      s += kDeclareWarAdjacentGpBonusWhenFarFromVictory;
+    }
+    if (thresholds.warLikelihood <= kDeclareWarLowWarLikelihoodThreshold) {
+      s += kDeclareWarLowWarLikelihoodAdjacentBonus;
+    }
+  }
+  if (primaryGoal == StrategicGoal.conquer) {
+    s += 20;
+  }
+  s += behindVictoryPace
+      ? conquerScoreBonusForProvincesToVictory(
+          snapshot.conquest.provincesToVictory,
+        )
+      : conquerScoreBonusForProvincesToVictory(
+              snapshot.conquest.provincesToVictory,
+            ) ~/
+          4;
+  if (rel?.level == RelationLevel.allied) {
+    s += getDeclareWarTargetBonusAlly(agendaId);
+  }
+  _log.d(
+    'diplomacy warDesire nationId=$nationId targetFactionId=${order.targetFactionId} '
+    'warDesire=$warDesire desiredTerritory=$desiredTerritory',
+  );
+  return s;
 }
 
 bool _isMinorOrTribeFaction(Game game, String factionId) {
