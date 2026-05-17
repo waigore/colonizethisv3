@@ -88,6 +88,22 @@ Military victory requires a Great Power to control **≥31 Old World provinces**
 
 **Conquest army-move pass:** Uses `suggestArmyMoveOrders` with draft orders including any declare war chosen this turn; diplomacy filtering treats pending same-turn `declareWar` toward the destination owner as sufficient for invasion (logic `filterArmyMoveOrdersByDiplomacy` with `draftOrders`). Prefer destinations owned by the declare-war target, then other at-war owners, then provinces in `invadableProvinceIdsSorted`.
 
+### Colonial expansion (Full AI)
+
+New World province acquisition is a **supporting strategy** for the Old World military victory path (31 provinces per [victory.md](../game/victory.md)). Full AI pursues colonies and overseas extraction to fuel OW conquest; NW goals must **not** weaken OW victory-aware floors in `ai_victory_config.dart`.
+
+**Perception (`ColonialSummary` on `AIWorldSnapshot`):** From `PlayerView` only: `newWorldProvincesOwned`, `invadableNewWorldProvinceIdsSorted` (adjacent non-owned `newWorld|` provinces reachable from owned territory or army positions), `adjacentNewWorldOwnerFactionIdsSorted`, `preferredColonialTargetFactionIdsSorted` (war targets, weak neighbors, adjacent NW owners — stable sort). Topology walks use **`combinedTopology`** with `kNewWorldRegionId` (`newWorld`) the same way as Old World conquest lists.
+
+**Goal selection:** When `invadableNewWorldProvinceIdsSorted` is non-empty, deterministic bonuses to `expand` and `conquer` (`kColonialExpandBonusWhenInvadableNw`, `kColonialConquerBonusWhenInvadableNw`) without reducing `kMinimumConquerScoreWhenFarFromVictory` or other OW conquest floors.
+
+**Diplomacy:** Declare-war scoring adds `kDeclareWarColonialAdjacentTribeBonus` toward tribe/minor factions in `adjacentNewWorldOwnerFactionIdsSorted`. Colonial-adjacent targets are **not** suppressed by the OW-only non-adjacent declare-war guard when far from victory. `establishOverture` toward `preferredColonialTargetFactionIdsSorted` receives `kEstablishOvertureColonialTribeBonus`. Weight tuning only — no hard skip that removes all tribe declare-war candidates for intervention risk.
+
+**Military:** Conquest army-move pass scores destinations in `invadableNewWorldProvinceIdsSorted` with `kConquestArmyMoveNwInvadableBonus` in addition to OW invadable bonuses.
+
+**Economy / civilian:** Full AI Builder work selection prefers `build_improvement` on unimproved resource tiles (higher score when `improvementLevel` is 0 and the tile has a resource) before lexicographic fallback among other work targets.
+
+**Observer gates (nightly):** Seed **42**, turn **150**: all `newWorld|` provinces GP-owned; **≥70%** of extractable GP resource tiles improved (level ≥ 1). See [run_observer_game-tool.md](../program/run_observer_game-tool.md). Turn **100** OW per-GP conquest gate unchanged.
+
 **Diplomacy targeting:** Declare-war scoring adds a bonus toward weak-neighbor **Great Powers** when war desire is high (`ai_victory_config.dart`), so minors are not the only targets when GP neighbors are favorable. When `provincesToVictory > 20`, declare-war candidates also receive the full `conquerScoreBonusForProvincesToVictory` (not the quarter-scale used when nearer victory). Targets in `adjacentOwnerFactionIdsSorted` receive `kDeclareWarAdjacentOwnerBonus` (and an extra bonus for low-`warLikelihood` personalities) so trade-focused leaders declare on **reachable** minors/GPs instead of distant factions. When far from victory and `adjacentOwnerFactionIdsSorted` is non-empty, declare-war toward any other faction is suppressed. When far from victory, declare-war on **non-weak adjacent Great Powers** is suppressed (score 0) so trade-focused leaders prosecute adjacent **minors/tribes** instead of wars they cannot win. Weak adjacent GPs use `kDeclareWarGpMaxRelationWhenFarFromVictory` under the same victory-pace condition. Goal selection caps trade weight when far from victory and adds extra defend weight when at war with few Old World holdings. Build selection adds a regiment weight bonus when `provincesToVictory` exceeds the configured pace threshold and the primary goal is military.
 
 ### Implementation (turn pipeline)

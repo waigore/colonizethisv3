@@ -79,6 +79,20 @@ void main() {
       expect(err.join('\n'), contains('integer'));
     });
 
+    test('verify-colonial-expansion with low max-turns yields EX_USAGE', () async {
+      final out = <String>[];
+      final err = <String>[];
+      final tmp = Directory.systemTemp.createTempSync('roc_colonial_');
+      addTearDown(() => tmp.deleteSync(recursive: true));
+      final code = await runObserverGameCli(
+        ['--output', tmp.path, '--max-turns', '100', '--verify-colonial-expansion'],
+        emitStdout: out.add,
+        emitStderr: err.add,
+      );
+      expect(code, kExitUsage);
+      expect(err.join('\n'), contains('verify-colonial-expansion'));
+    });
+
     test('verify-conquest with low max-turns yields EX_USAGE', () async {
       final out = <String>[];
       final err = <String>[];

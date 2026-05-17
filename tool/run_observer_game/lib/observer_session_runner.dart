@@ -133,6 +133,7 @@ Future<int> runObserverSession({
       final snap = buildObserverSnapshotJson(
         game,
         postResolutionTurnNumber: postTurn,
+        tileMapByRegion: init.tileMapByRegion,
       );
       final snapshotText = encodeObserverSnapshotJson(snap);
       await File(

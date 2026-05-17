@@ -65,7 +65,10 @@ Orders runConquestArmyMovePlanner({
     return orders;
   }
   final provinceOwner = getProvinceOwnerMap(game);
-  final invadable = snapshot.conquest.invadableProvinceIdsSorted.toSet();
+  final invadable = {
+    ...snapshot.conquest.invadableProvinceIdsSorted,
+    ...snapshot.colonial.invadableNewWorldProvinceIdsSorted,
+  };
   final scores = filtered.map((m) {
     final destOwner = provinceOwner[m.destinationProvinceId] ?? '';
     var score = 1.0;
@@ -80,6 +83,10 @@ Orders runConquestArmyMovePlanner({
     }
     if (invadable.contains(m.destinationProvinceId)) {
       score += 10;
+    }
+    if (snapshot.colonial.invadableNewWorldProvinceIdsSorted
+        .contains(m.destinationProvinceId)) {
+      score += kConquestArmyMoveNwInvadableBonus;
     }
     if (snapshot.conquest.adjacentOwnerFactionIdsSorted.contains(destOwner)) {
       score += 8;

@@ -348,6 +348,59 @@ WorkOrder? _pickExplorerCandidateSet(
   return bestE;
 }
 
+int _buildImprovementWorkScore(WorkOrder w, Game game) {
+  if (w.target != kWorkTargetBuildImprovement) return 0;
+  final level = game.worldState.tileState.improvementLevel(w.targetTileKey);
+  if (level >= 1) return 1;
+  final resourceId = game.worldState.resourceByTileKey[w.targetTileKey];
+  if (resourceId == null || resourceId.isEmpty) return 2;
+  return 200;
+}
+
+WorkOrder? _bestBuildImprovementRow(List<WorkOrder> candidates, Game game) {
+  final improvements = candidates
+      .where((w) => w.target == kWorkTargetBuildImprovement)
+      .toList();
+  if (improvements.isEmpty) return null;
+  var best = improvements.first;
+  var bestScore = _buildImprovementWorkScore(best, game);
+  for (var i = 1; i < improvements.length; i++) {
+    final w = improvements[i];
+    final s = _buildImprovementWorkScore(w, game);
+    if (s > bestScore) {
+      bestScore = s;
+      best = w;
+      continue;
+    }
+    if (s == bestScore && _compareWorkOrderLex(w, best) < 0) {
+      best = w;
+    }
+  }
+  return best;
+}
+
+void _appendBuilderPathResult({
+  required Unit? unit,
+  required List<WorkOrder> w,
+  required Game game,
+  required List<WorkOrder> workOrders,
+  required List<FullAiCivilianWorkIdle> idleEvents,
+}) {
+  final chosen = _bestBuildImprovementRow(w, game) ?? _pickLexicographic(w);
+  if (chosen != null) {
+    workOrders.add(chosen);
+    return;
+  }
+  if (unit == null) return;
+  idleEvents.add(
+    FullAiCivilianWorkIdle(
+      unitId: unit.id,
+      unitType: unit.type,
+      reason: 'no_suggestions',
+    ),
+  );
+}
+
 WorkOrder? _pickLexicographic(List<WorkOrder> w) {
   if (w.isEmpty) return null;
   final copy = List<WorkOrder>.from(w)..sort(_compareWorkOrderLex);
@@ -465,6 +518,17 @@ void _appendSelectionForUnitId({
       playerId: view.playerId,
       tileMapByRegion: tileMapByRegion,
       factionMembership: factionMembership,
+      workOrders: workOrders,
+      idleEvents: idleEvents,
+    );
+    return;
+  }
+
+  if (unit != null && unit.type == kUnitTypeBuilder) {
+    _appendBuilderPathResult(
+      unit: unit,
+      w: W,
+      game: game,
       workOrders: workOrders,
       idleEvents: idleEvents,
     );

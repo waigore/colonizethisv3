@@ -666,5 +666,61 @@ void main() {
         expect(gpScore, kDeclareWarNonAdjacentSuppressedScore);
       },
     );
+
+    test(
+      'colonial-adjacent tribe declareWar is not suppressed when only OW-adjacent list is empty',
+      () {
+        const snap = AIWorldSnapshot(
+          playerId: 'gp1',
+          threats: ThreatSummary(),
+          opportunities: OpportunitySummary(),
+          conquest: ConquestSummary(
+            provincesToVictory: 24,
+            adjacentOwnerFactionIdsSorted: [],
+          ),
+          colonial: ColonialSummary(
+            adjacentNewWorldOwnerFactionIdsSorted: ['tribe1'],
+          ),
+          economy: EconomySummary(),
+          relations: {},
+        );
+        final game = Game(
+          id: 'g-colonial-tribe',
+          worldState: WorldState(
+            turnState: const TurnState(
+              phase: TurnPhase.orders,
+              turnNumber: 1,
+            ),
+            oldWorld: const RegionData(),
+            newWorld: const RegionData(),
+          ),
+          players: const [
+            Player(id: 'gp1', displayName: 'A', isHuman: false),
+          ],
+          tribes: const [
+            Tribe(id: 'tribe1', displayName: 'T1'),
+          ],
+        );
+        const config = AIConfig(
+          leaderId: 'henry',
+          personalityId: 'henry',
+          hiddenAgendaId: 'merchant',
+        );
+        final score = computeDiplomaticCandidateScores(
+          candidates: const [
+            DiplomaticOrder(
+              type: DiplomaticOrderType.declareWar,
+              targetFactionId: 'tribe1',
+            ),
+          ],
+          nationId: 'gp1',
+          game: game,
+          snapshot: snap,
+          config: config,
+        ).single;
+        expect(score, greaterThan(0));
+        expect(score, greaterThanOrEqualTo(kDeclareWarColonialAdjacentTribeBonus));
+      },
+    );
   });
 }

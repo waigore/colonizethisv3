@@ -66,10 +66,15 @@ List<int> computeDiplomaticCandidateScores({
           final rel = snapshot.relations[o.targetFactionId];
           final relationScore = rel?.score ?? 50;
           final adjacentOwners = snapshot.conquest.adjacentOwnerFactionIdsSorted;
+          final colonialAdjacent =
+              snapshot.colonial.adjacentNewWorldOwnerFactionIdsSorted;
           final isAdjacentOwner = adjacentOwners.contains(o.targetFactionId);
+          final isColonialAdjacentOwner =
+              colonialAdjacent.contains(o.targetFactionId);
           if (behindVictoryPace &&
               adjacentOwners.isNotEmpty &&
-              !isAdjacentOwner) {
+              !isAdjacentOwner &&
+              !isColonialAdjacentOwner) {
             s = kDeclareWarNonAdjacentSuppressedScore;
             break;
           }
@@ -130,6 +135,9 @@ List<int> computeDiplomaticCandidateScores({
                 .contains(o.targetFactionId)) {
               s += 15;
             }
+            if (isColonialAdjacentOwner && isMinorTarget) {
+              s += kDeclareWarColonialAdjacentTribeBonus;
+            }
             if (isAdjacentOwner) {
               s += kDeclareWarAdjacentOwnerBonus;
               if (behindVictoryPace && isMinorTarget) {
@@ -187,6 +195,10 @@ List<int> computeDiplomaticCandidateScores({
           );
           final improveRelationsDesire = 100 - warDesire;
           s += (improveRelationsDesire - 50);
+          if (snapshot.colonial.preferredColonialTargetFactionIdsSorted
+              .contains(o.targetFactionId)) {
+            s += kEstablishOvertureColonialTribeBonus;
+          }
           break;
         }
       default:

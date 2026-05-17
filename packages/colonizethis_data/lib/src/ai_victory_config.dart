@@ -7,6 +7,9 @@ const int kMilitaryVictoryOldWorldProvinceThreshold = 31;
 /// Region id for Old World provinces (prefixed `oldWorld|…`).
 const String kOldWorldRegionId = 'oldWorld';
 
+/// Region id for New World provinces (prefixed `newWorld|…`).
+const String kNewWorldRegionId = 'newWorld';
+
 /// Provinces still needed to reach military victory from [oldWorldOwned].
 int provincesToVictoryFromOldWorldOwned(int oldWorldOwned) {
   final gap =
@@ -91,3 +94,18 @@ const int kDefendBonusWhenAtWarAndFewHoldings = 45;
 
 /// Old World province count at or below which [kDefendBonusWhenFewOldWorldProvinces] applies.
 const int kFewOldWorldProvincesDefendThreshold = 6;
+
+/// Expand-goal bonus when invadable New World tribe/minor provinces exist.
+const int kColonialExpandBonusWhenInvadableNw = 12;
+
+/// Conquer-goal bonus for colonial pressure (below OW victory floors).
+const int kColonialConquerBonusWhenInvadableNw = 8;
+
+/// Declare-war bonus toward a tribe/minor that owns adjacent New World provinces.
+const int kDeclareWarColonialAdjacentTribeBonus = 32;
+
+/// Establish-overture bonus toward a preferred colonial tribe target.
+const int kEstablishOvertureColonialTribeBonus = 28;
+
+/// Conquest army-move bonus for New World invadable destinations.
+const int kConquestArmyMoveNwInvadableBonus = 12;
