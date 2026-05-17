@@ -305,18 +305,16 @@ class AIWorldSnapshot {
     }
     final invadable = topology == null
         ? <String>[]
-        : _invadableProvinceIdsForRegion(
-            view,
-            topology,
-            kNewWorldRegionId,
-          );
-    final adjacentOwners = topology == null
-        ? <String>[]
-        : _adjacentOwnerFactionIdsForRegion(
-            view,
-            topology,
-            kNewWorldRegionId,
-          );
+        : _invadableNewWorldProvinceIds(view, topology);
+    final adjacentOwners = <String>{};
+    for (final provId in invadable) {
+      final ownerId = view.provincesById[provId]?.ownerId;
+      if (ownerId == null || ownerId.isEmpty || ownerId == view.playerId) {
+        continue;
+      }
+      adjacentOwners.add(ownerId);
+    }
+    final adjacentOwnersSorted = adjacentOwners.toList()..sort();
     final preferredTargets = <String>{
       ...threats.atWarWith,
       ...opportunities.weakNeighbors,
@@ -326,7 +324,7 @@ class AIWorldSnapshot {
     return ColonialSummary(
       newWorldProvincesOwned: nwOwned,
       invadableNewWorldProvinceIdsSorted: invadable,
-      adjacentNewWorldOwnerFactionIdsSorted: adjacentOwners,
+      adjacentNewWorldOwnerFactionIdsSorted: adjacentOwnersSorted,
       preferredColonialTargetFactionIdsSorted: preferredTargets,
     );
   }
@@ -378,6 +376,31 @@ class AIWorldSnapshot {
     MapTopology topology,
   ) {
     return _invadableProvinceIdsForRegion(view, topology, kOldWorldRegionId);
+  }
+
+  /// New World targets reachable via coastal seas and warp zones (not P–P only).
+  static List<String> _invadableNewWorldProvinceIds(
+    PlayerView view,
+    MapTopology topology,
+  ) {
+    final anchorProvinces = <String>{};
+    for (final p in view.provincesById.entries) {
+      if (p.value.ownerId == view.playerId) {
+        anchorProvinces.add(p.key);
+      }
+    }
+    for (final u in view.ownUnits) {
+      final loc = u.locationProvinceId;
+      if (loc.isNotEmpty) anchorProvinces.add(loc);
+    }
+    final reachable = reachableNonOwnedProvinceIdsViaSeas(
+      topology,
+      anchorProvinces,
+      view,
+      regionIdFilter: kNewWorldRegionId,
+    );
+    final sorted = reachable.toList()..sort();
+    return sorted;
   }
 
   static List<String> _invadableProvinceIdsForRegion(

@@ -1,11 +1,11 @@
-import 'package:colonizethis_ai/colonizethis_ai.dart';
+import 'package:colonizethis_ai/src/perception/perception_topology.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
 void main() {
-  test('fromPlayerView lists NW provinces reachable via sea and warp', () {
+  test('reachableNonOwnedProvinceIdsViaSeas crosses sea and warp', () {
     const topology = MapTopology(
       nodes: [
         TopologyNode(
@@ -28,11 +28,17 @@ void main() {
           regionId: 'newWorld',
           type: TopologyNodeType.province,
         ),
+        TopologyNode(
+          id: 'newWorld|far',
+          regionId: 'newWorld',
+          type: TopologyNodeType.province,
+        ),
       ],
       edges: [
         TopologyEdge(id1: 'oldWorld|home', id2: 'oldWorld|owSea'),
         TopologyEdge(id1: 'oldWorld|owSea', id2: 'newWorld|nwSea'),
         TopologyEdge(id1: 'newWorld|nwSea', id2: 'newWorld|colony'),
+        TopologyEdge(id1: 'newWorld|colony', id2: 'newWorld|far'),
       ],
     );
     final game = Game(
@@ -58,6 +64,11 @@ void main() {
               regionId: 'newWorld',
               ownerId: 'tribe1',
             ),
+            Province(
+              id: 'newWorld|far',
+              regionId: 'newWorld',
+              ownerId: 'tribe2',
+            ),
           ],
         ),
       ),
@@ -65,20 +76,19 @@ void main() {
         Player(id: 'gp1', displayName: 'GP1', isHuman: false),
       ],
       tribes: const [
-        Tribe(id: 'tribe1', displayName: 'Tribe'),
+        Tribe(id: 'tribe1', displayName: 'T1'),
+        Tribe(id: 'tribe2', displayName: 'T2'),
       ],
     );
     final view = buildPlayerView(game, topology, 'gp1');
-    final snapshot = AIWorldSnapshot.fromPlayerView(view, topology: topology);
+    final reachable = reachableNonOwnedProvinceIdsViaSeas(
+      topology,
+      {'oldWorld|home'},
+      view,
+      regionIdFilter: kNewWorldRegionId,
+    );
 
-    expect(snapshot.colonial.newWorldProvincesOwned, 0);
-    expect(
-      snapshot.colonial.invadableNewWorldProvinceIdsSorted,
-      ['newWorld|colony'],
-    );
-    expect(
-      snapshot.colonial.adjacentNewWorldOwnerFactionIdsSorted,
-      ['tribe1'],
-    );
+    expect(reachable, {'newWorld|colony'});
+    expect(reachable.contains('newWorld|far'), isFalse);
   });
 }

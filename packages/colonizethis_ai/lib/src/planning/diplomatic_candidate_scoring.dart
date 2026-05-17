@@ -85,6 +85,7 @@ List<int> computeDiplomaticCandidateScores({
           behindVictoryPace: behindVictoryPace,
           suppressGpDeclareWar: suppressGpDeclareWar,
           invadableOwners: invadableOwners,
+          provinceOwner: provinceOwner,
           warCooldownTurns: warCooldownTurns,
           currentTurn: currentTurn,
           primaryGoal: primaryGoal,
@@ -138,6 +139,7 @@ int _scoreDeclareWarDiplomaticOrder({
   required bool behindVictoryPace,
   required bool suppressGpDeclareWar,
   required Set<String> invadableOwners,
+  required Map<String, String> provinceOwner,
   required int warCooldownTurns,
   required int currentTurn,
   required StrategicGoal? primaryGoal,
@@ -152,16 +154,20 @@ int _scoreDeclareWarDiplomaticOrder({
   final isAdjacentOwner = adjacentOwners.contains(order.targetFactionId);
   final isColonialAdjacentOwner =
       colonialAdjacent.contains(order.targetFactionId);
+  final isMinorTarget = _isMinorOrTribeFaction(game, order.targetFactionId);
+  final ownsInvadableNw = snapshot.colonial.invadableNewWorldProvinceIdsSorted
+      .any((pid) => provinceOwner[pid] == order.targetFactionId);
   if (behindVictoryPace &&
       adjacentOwners.isNotEmpty &&
       !isAdjacentOwner &&
-      !isColonialAdjacentOwner) {
+      !isColonialAdjacentOwner &&
+      !(ownsInvadableNw && isMinorTarget)) {
     return kDeclareWarNonAdjacentSuppressedScore;
   }
-  final isMinorTarget = _isMinorOrTribeFaction(game, order.targetFactionId);
   if (isMinorTarget &&
       !invadableOwners.contains(order.targetFactionId) &&
-      !isColonialAdjacentOwner) {
+      !isColonialAdjacentOwner &&
+      !ownsInvadableNw) {
     return kDeclareWarNonAdjacentSuppressedScore;
   }
   final isAdjacentGp =
@@ -208,6 +214,9 @@ int _scoreDeclareWarDiplomaticOrder({
   if (snapshot.conquest.preferredConquestTargetFactionIdsSorted
       .contains(order.targetFactionId)) {
     s += 15;
+  }
+  if (ownsInvadableNw && isMinorTarget) {
+    s += kDeclareWarColonialInvadableOwnerBonus;
   }
   if (isColonialAdjacentOwner && isMinorTarget) {
     s += kDeclareWarColonialAdjacentTribeBonus;
