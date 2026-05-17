@@ -69,6 +69,56 @@ Set<String> knownDiplomaticTargetFactionIds({
   return knownFactionIds;
 }
 
+/// Sea-reachable unowned New World provinces for colonial explore targeting.
+/// SPEC/program/order-suggestions.md § GP↔Tribe colonial intel (Refs #2509).
+List<String> colonialIntelExploreProvinceIdsSorted({
+  required PlayerView view,
+  required MapTopology topology,
+}) {
+  final anchorProvinces = <String>{};
+  for (final p in view.provincesById.entries) {
+    if (p.value.ownerId == view.playerId) anchorProvinces.add(p.key);
+  }
+  for (final u in view.ownUnits) {
+    if (u.locationProvinceId.isNotEmpty) {
+      anchorProvinces.add(u.locationProvinceId);
+    }
+  }
+  final reachable = reachableNonOwnedProvinceIdsViaSeas(
+    topology,
+    anchorProvinces,
+    view,
+    regionIdFilter: kRegionNewWorld,
+  );
+  final sorted = reachable.toList()..sort();
+  return sorted;
+}
+
+/// Deterministic sort rank for merchant [purchase_land] tile probes (lower = earlier).
+/// NW tribe/minor tiles first to accelerate colonial acquisition (Refs #2509).
+int merchantPurchaseLandCandidateSortRank({
+  required Game game,
+  required String tileKey,
+}) {
+  final provId = Unit.provinceIdFromTileKey(tileKey);
+  if (provId == null || provId.isEmpty) return 90;
+  final regionId = ProvinceId.regionIdFrom(provId);
+  final ownerId = tryGetProvince(game.worldState, provId)?.ownerId;
+  if (ownerId == null || ownerId.isEmpty) return 80;
+  final playerIds = {for (final p in game.players) p.id};
+  if (playerIds.contains(ownerId)) return 70;
+  final isTribe = game.tribes.any((t) => t.id == ownerId);
+  final isMinor = game.minorNations.any((m) => m.id == ownerId);
+  if (regionId == kNewWorldRegionId) {
+    if (isTribe) return 0;
+    if (isMinor) return 1;
+    return 2;
+  }
+  if (isTribe) return 3;
+  if (isMinor) return 4;
+  return 5;
+}
+
 /// True when [orders] contains a draft [WorkOrder] for [unitId] for [playerId].
 /// SPEC/program/order-suggestions.md § Pre-assign gating (Refs #2133).
 bool playerHasPendingWorkOrderForUnit(

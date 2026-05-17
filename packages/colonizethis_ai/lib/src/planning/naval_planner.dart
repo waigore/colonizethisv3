@@ -6,6 +6,7 @@ import 'package:colonizethis_logic/ai_api.dart';
 import 'package:colonizethis_logic/order_suggestion_api.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
+import 'colonial_naval_scoring.dart';
 import 'goal_manager.dart';
 import '../perception/perception_snapshot.dart';
 import '../util/orders_extensions.dart';
@@ -67,7 +68,14 @@ Orders runNavalPlanner({
         ? cap
         : (cap > 0 ? 1 + rng.nextInt(cap) : 0);
     if (take > 0) {
-      final selected = navalMoveCandidates.take(take).toList();
+      final ranked = colonialPressure
+          ? sortNavalMovesForColonialPressure(
+              navalMoveCandidates,
+              topology,
+              colonial,
+            )
+          : navalMoveCandidates;
+      final selected = ranked.take(take).toList();
       _log.i(
         'naval move chosen nationId=$nationId '
         'take=$take selectedCount=${selected.length}',
@@ -88,9 +96,14 @@ Orders runNavalPlanner({
     'candidatesCount=${navalMissionCandidates.length}',
   );
   if (navalMissionCandidates.isNotEmpty) {
+    final ranked = colonialPressure
+        ? sortNavalMissionsForColonialPressure(navalMissionCandidates)
+        : navalMissionCandidates;
     final rng = math.Random(seeds.militarySeed + 1001);
-    final idx = rng.nextInt(navalMissionCandidates.length);
-    final chosen = navalMissionCandidates[idx];
+    final idx = colonialPressure
+        ? 0
+        : rng.nextInt(ranked.length);
+    final chosen = ranked[idx];
     _log.i(
       'naval mission chosen nationId=$nationId '
       'mission=${chosen.mission} fleetId=${chosen.fleetId}',

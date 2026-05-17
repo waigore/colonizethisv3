@@ -244,7 +244,8 @@ Orders _runEconomyDomainPlanners({
       primaryGoal == StrategicGoal.expand ||
       domainWeights.economy >= workThreshold ||
       snapshot.colonial.invadableNewWorldProvinceIdsSorted.isNotEmpty ||
-      snapshot.colonial.adjacentNewWorldOwnerFactionIdsSorted.isNotEmpty;
+      snapshot.colonial.adjacentNewWorldOwnerFactionIdsSorted.isNotEmpty ||
+      snapshot.colonial.newWorldProvincesOwned > 0;
   _log.d(
     'work eval nationId=$nationId workThreshold=$workThreshold '
     'domainWeights.economy=${domainWeights.economy} primaryGoal=$primaryGoal '

@@ -88,6 +88,7 @@ void _addExplorerWorkSuggestionsForUnit({
   required String regionId,
   required String provinceId,
   required List<Province> partiallyRevealedProvincesSorted,
+  required Set<String> colonialIntelExploreProvinceIds,
   required Map<String, Map<String, List<String>>> tileKeysByRegion,
   required Map<String, Set<String>> existingTargetsByUnit,
   required List<WorkOrder> suggestions,

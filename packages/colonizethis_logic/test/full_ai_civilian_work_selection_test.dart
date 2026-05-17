@@ -172,6 +172,60 @@ void main() {
     });
 
     test(
+      'Builder prefers NW unimproved resource over OW unimproved resource',
+      () {
+        const playerId = 'gp1';
+        const tileOw = 'oldWorld|p1|0|0';
+        const tileNw = 'newWorld|p2|1|0';
+        final game = Game(
+          id: 'g',
+          worldState: WorldState(
+            turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+            oldWorld: const RegionData(),
+            newWorld: const RegionData(),
+            resourceByTileKey: {tileOw: 'grain', tileNw: 'grain'},
+          ),
+          players: const [
+            Player(id: playerId, displayName: 'GP', isHuman: false),
+          ],
+        );
+        final view = PlayerView(
+          playerId: playerId,
+          player: game.players.single,
+          ownUnitsById: {
+            'b1': Unit(
+              id: 'b1',
+              type: kUnitTypeBuilder,
+              ownerId: playerId,
+              locationProvinceId: 'oldWorld|p1',
+            ),
+          },
+          provincesById: const {},
+          visibilityByTile: const {},
+          prospectedTiles: const {},
+          diplomacyByOtherId: const {},
+        );
+        final r = selectFullAiCivilianWorkOrders(
+          workSuggestions: [
+            const WorkOrder(
+              unitId: 'b1',
+              target: kWorkTargetBuildImprovement,
+              targetTileKey: tileOw,
+            ),
+            const WorkOrder(
+              unitId: 'b1',
+              target: kWorkTargetBuildImprovement,
+              targetTileKey: tileNw,
+            ),
+          ],
+          view: view,
+          game: game,
+        );
+        expect(r.workOrders.single.targetTileKey, tileNw);
+      },
+    );
+
+    test(
       'Explorer with two equal E_score explores picks lexicographically smaller tile',
       () {
         const playerId = 'gp1';
