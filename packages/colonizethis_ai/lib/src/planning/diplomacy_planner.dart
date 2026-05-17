@@ -122,6 +122,73 @@ List<String> stalledFutileGpPeaceTargets({
   return targets;
 }
 
+bool _isMinorOrTribeFaction(Game game, String factionId) =>
+    game.minorNations.any((m) => m.id == factionId) ||
+    game.tribes.any((t) => t.id == factionId);
+
+/// At-war minor with the most invadable Old World provinces (single-front focus).
+String? stalledFocusMinorTarget({
+  required Game game,
+  required AIWorldSnapshot snapshot,
+}) {
+  final provinceOwner = getProvinceOwnerMap(game);
+  String? bestMinorId;
+  var bestInvadableCount = 0;
+  for (final minor in game.minorNations) {
+    final rel = getRelation(game, snapshot.playerId, minor.id);
+    if (rel?.state != RelationState.atWar) continue;
+    final invadableCount = snapshot.conquest.invadableProvinceIdsSorted
+        .where((pid) => provinceOwner[pid] == minor.id)
+        .length;
+    if (invadableCount > bestInvadableCount) {
+      bestInvadableCount = invadableCount;
+      bestMinorId = minor.id;
+    }
+  }
+  return bestMinorId;
+}
+
+/// Peace every at-war minor/tribe except the focused minor or GP blocker war.
+List<String> stalledExpansionDistractionPeaceTargets({
+  required Game game,
+  required AIWorldSnapshot snapshot,
+}) {
+  if (!isStalledOldWorldExpansion(snapshot.conquest.oldWorldProvincesOwned)) {
+    return const [];
+  }
+  if (snapshot.threats.atWarWith.isEmpty) {
+    return const [];
+  }
+  final provinceOwner = getProvinceOwnerMap(game);
+  final minorsOwnInvadable = snapshot.conquest.invadableProvinceIdsSorted.any(
+    (pid) {
+      final owner = provinceOwner[pid];
+      return owner != null && game.minorNations.any((m) => m.id == owner);
+    },
+  );
+  final gpBlockerFocus = isStalledOldWorldGpBlockerFocus(
+    game: game,
+    snapshot: snapshot,
+  );
+  if (!minorsOwnInvadable && !gpBlockerFocus) {
+    return const [];
+  }
+  final keepMinor = minorsOwnInvadable
+      ? stalledFocusMinorTarget(game: game, snapshot: snapshot)
+      : null;
+  final keepGp = gpBlockerFocus
+      ? primaryInvadableOldWorldGpBlocker(game: game, snapshot: snapshot)
+      : null;
+  final targets = <String>[
+    for (final factionId in snapshot.threats.atWarWith)
+      if (factionId != keepMinor &&
+          factionId != keepGp &&
+          _isMinorOrTribeFaction(game, factionId))
+        factionId,
+  ]..sort();
+  return targets;
+}
+
 bool stalledOwExpansionNeedsPeacePass({
   required Game game,
   required AIWorldSnapshot snapshot,
@@ -129,7 +196,9 @@ bool stalledOwExpansionNeedsPeacePass({
     stalledStrongerGpBlockerPeaceTarget(game: game, snapshot: snapshot) !=
         null ||
     stalledFutileGpPeaceTargets(game: game, snapshot: snapshot).isNotEmpty ||
-    stalledGpBlockerFocusPeaceTargets(game: game, snapshot: snapshot).isNotEmpty;
+    stalledGpBlockerFocusPeaceTargets(game: game, snapshot: snapshot).isNotEmpty ||
+    stalledExpansionDistractionPeaceTargets(game: game, snapshot: snapshot)
+        .isNotEmpty;
 
 /// GP owning the most invadable Old World provinces (frontier blocker).
 String? primaryInvadableOldWorldGpBlocker({
@@ -249,6 +318,29 @@ DiplomacyPlannerResult runDiplomacyPlannerWithResult({
     return DiplomacyPlannerResult(orders: ctx.orders);
   }
 
+  if (pass == DiplomacyPlannerPass.declareWarOnly &&
+      isStalledOldWorldExpansion(snapshot.conquest.oldWorldProvincesOwned)) {
+    final provinceOwner = getProvinceOwnerMap(ctx.game);
+    final minorsOwnInvadable =
+        snapshot.conquest.invadableProvinceIdsSorted.any((pid) {
+      final owner = provinceOwner[pid];
+      return owner != null &&
+          ctx.game.minorNations.any((m) => m.id == owner);
+    });
+    if (minorsOwnInvadable) {
+      diploCandidates = diploCandidates
+          .where(
+            (o) =>
+                o.type != DiplomaticOrderType.declareWar ||
+                !ctx.game.tribes.any((t) => t.id == o.targetFactionId),
+          )
+          .toList();
+    }
+  }
+  if (diploCandidates.isEmpty) {
+    return DiplomacyPlannerResult(orders: ctx.orders);
+  }
+
   final declaredThisTurn = <String>{
     for (final o
         in ctx.orders.diplomaticOrdersByPlayerId[ctx.nationId] ?? const [])
@@ -288,6 +380,10 @@ DiplomacyPlannerResult runDiplomacyPlannerWithResult({
         )!,
       ...stalledFutileGpPeaceTargets(game: ctx.game, snapshot: snapshot),
       ...stalledGpBlockerFocusPeaceTargets(game: ctx.game, snapshot: snapshot),
+      ...stalledExpansionDistractionPeaceTargets(
+        game: ctx.game,
+        snapshot: snapshot,
+      ),
     };
     for (final peaceTarget in peaceTargets) {
       peaceOrders.add(

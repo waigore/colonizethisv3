@@ -4,6 +4,17 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'goal_manager.dart';
 
+/// Total regiment slots across Home and field armies for [playerId].
+int regimentCountForPlayer(Game game, String playerId) {
+  var count = 0;
+  for (final army in game.worldState.armies) {
+    if (army.ownerId == playerId) {
+      count += army.regimentUnitIds.length;
+    }
+  }
+  return count;
+}
+
 Army? _homeArmyForPlayer(Game game, String nationId) {
   final homeId = homeArmyIdFor(nationId);
   for (final a in game.worldState.armies) {

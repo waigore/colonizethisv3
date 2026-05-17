@@ -2,6 +2,7 @@ import 'dart:math' as math;
 
 import 'package:colonizethis_logic/order_suggestion_api.dart';
 
+import 'army_conquest_prep.dart';
 import 'colonial_pressure.dart';
 import 'planning_imports.dart';
 import 'goal_manager.dart';
@@ -253,14 +254,33 @@ PlannerContext _runEconomyDomainPlanners({
   if (colonialBuildCap != null) {
     buildThreshold = math.min(buildThreshold, colonialBuildCap);
   }
+  final regimentCount = regimentCountForPlayer(ctx.game, ctx.nationId);
+  final forceRegimentRebuild =
+      isStalledOldWorldExpansion(snapshot.conquest.oldWorldProvincesOwned) &&
+          snapshot.threats.atWarWith.isNotEmpty &&
+          regimentCount < kStalledMinRegimentCountWhenAtWar;
+  if (forceRegimentRebuild) {
+    buildThreshold = 0;
+  }
   _log.d(
     'build eval nationId=${ctx.nationId} buildThreshold=$buildThreshold '
-    'buildCandidatesCount=${buildCandidates.length}',
+    'buildCandidatesCount=${buildCandidates.length} '
+    'regimentCount=$regimentCount forceRegimentRebuild=$forceRegimentRebuild',
   );
-  if (buildCandidates.isNotEmpty && domainWeights.economy >= buildThreshold) {
+  if (buildCandidates.isNotEmpty &&
+      (domainWeights.economy >= buildThreshold || forceRegimentRebuild)) {
+    var candidatesForBuild = buildCandidates;
+    if (forceRegimentRebuild) {
+      final regimentsOnly = buildCandidates
+          .where((o) => RegimentEconomyCatalog.byId.containsKey(o.unitType))
+          .toList();
+      if (regimentsOnly.isNotEmpty) {
+        candidatesForBuild = regimentsOnly;
+      }
+    }
     final chosen = pickBuildOrder(
       ctx: ctx,
-      buildCandidates: buildCandidates,
+      buildCandidates: candidatesForBuild,
       cargoPreference: economyPlan.cargoPreference,
       provincesToVictory: snapshot.conquest.provincesToVictory,
       oldWorldProvincesOwned: snapshot.conquest.oldWorldProvincesOwned,

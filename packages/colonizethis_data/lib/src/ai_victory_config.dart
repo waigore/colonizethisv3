@@ -139,7 +139,7 @@ const int kDeclareWarSatedExpansionMinorThreshold = 9;
 const int kDiplomacyDeclareWarMinWeightWhenStalled = 50;
 
 /// Extra regiment build weight when OW holdings are stalled (any primary goal).
-const double kBuildRegimentBonusWhenStalledExpansion = 2.5;
+const double kBuildRegimentBonusWhenStalledExpansion = 4.0;
 
 /// Declare-war bonus when the target still owns an adjacent invadable province.
 const int kDeclareWarMinorWithInvadableProvinceBonus = 45;
@@ -150,7 +150,11 @@ const int kStalledConquestArmyMovePasses = 10;
 
 /// Max field armies created from Home Army splits when Old World expansion is
 /// stalled (parallel marches toward invasion frontiers; Refs #2509).
-const int kStalledConquestFieldArmySplitCap = 6;
+const int kStalledConquestFieldArmySplitCap = 8;
+
+/// While stalled and at war, build regiments until at least this many exist in
+/// all armies (Home + field) so splits and invasions can proceed (Refs #2509).
+const int kStalledMinRegimentCountWhenAtWar = 4;
 
 /// Offer-peace bonus toward a minor/tribe at war that no longer owns invadable land.
 const int kOfferPeaceFutileMinorWarBonus = 80;
