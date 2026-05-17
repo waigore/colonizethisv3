@@ -230,7 +230,7 @@ class _TileMapGenTerrainResource {
         .round()
         .clamp(0, totalLand);
     if (targetMountain <= 0) {
-      return _collectRemainingNonMountainLand(terrainGrid, grid);
+      return _nonMountainLandFromCells(landCells, terrainGrid);
     }
 
     // Determine number of ranges based on target mountain tiles.
@@ -239,7 +239,7 @@ class _TileMapGenTerrainResource {
         .clamp(params.mountainRangesMin, params.mountainRangesMax);
     final numRanges = suggestedRanges.clamp(1, targetMountain);
     if (numRanges <= 0) {
-      return _collectRemainingNonMountainLand(terrainGrid, grid);
+      return _nonMountainLandFromCells(landCells, terrainGrid);
     }
 
     var remainingMountain = targetMountain;
@@ -378,19 +378,16 @@ class _TileMapGenTerrainResource {
     }
   }
 
-  List<(int x, int y)> _collectRemainingNonMountainLand(
+  /// Non-mountain subset of [landCells] (O(|land|); avoids full-grid scan when
+  /// mountain ridges are skipped). Refs #2489 (P3).
+  List<(int x, int y)> _nonMountainLandFromCells(
+    List<(int x, int y)> landCells,
     List<List<TerrainType?>> terrainGrid,
-    List<List<String>> grid,
   ) {
-    final remainingLand = <(int x, int y)>[];
-    for (var y = 0; y < params.height; y++) {
-      for (var x = 0; x < params.width; x++) {
-        if (grid[y][x] != _landSentinel) continue;
-        if (terrainGrid[y][x] == TerrainType.mountain) continue;
-        remainingLand.add((x, y));
-      }
-    }
-    return remainingLand;
+    return [
+      for (final (x, y) in landCells)
+        if (terrainGrid[y][x] != TerrainType.mountain) (x, y),
+    ];
   }
 
   void _assignNonMountainInComponent(

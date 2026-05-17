@@ -60,6 +60,25 @@ void main() {
     });
   });
 
+  group('initGameFactionColorData', () {
+    test('returns great-power ids and full-game colour map', () {
+      final game = Game(
+        id: 'g',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+          oldWorld: const RegionData(provinces: [], units: []),
+          newWorld: const RegionData(provinces: [], units: []),
+        ),
+        players: const [Player(id: 'gp1', displayName: 'GP1', isHuman: false)],
+        minorNations: const [MinorNation(id: 'm1', displayName: 'M1')],
+        tribes: const [Tribe(id: 't1', displayName: 'T1')],
+      );
+      final data = initGameFactionColorData(game);
+      expect(data.greatPowerFactionIds, {'gp1'});
+      expect(data.factionColors, factionOwnershipColorMapForGame(game));
+    });
+  });
+
   group('factionOwnershipColorMapForGame', () {
     test('matches low-level map for all faction types', () {
       final game = Game(
