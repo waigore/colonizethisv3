@@ -113,6 +113,35 @@ void main() {
     });
   });
 
+  group('majorConstraintForStrategicGoal', () {
+    test('defend reports capitalThreatened when capital is threatened', () {
+      const snapshot = AIWorldSnapshot(
+        playerId: 'gp1',
+        threats: ThreatSummary(
+          atWarWith: ['gp2'],
+          capitalThreatened: true,
+        ),
+        opportunities: OpportunitySummary(),
+        conquest: ConquestSummary(),
+        economy: EconomySummary(),
+        relations: {},
+      );
+      const config = AIConfig(
+        leaderId: 'frederick',
+        personalityId: 'frederick',
+        hiddenAgendaId: 'peacemaker',
+      );
+      expect(
+        majorConstraintForStrategicGoal(
+          StrategicGoal.defend,
+          snapshot,
+          config,
+        ),
+        'capitalThreatened',
+      );
+    });
+  });
+
   group('selectPrimaryGoal', () {
     test('returns expand when snapshot has no threats and default weights', () {
       const snapshot = AIWorldSnapshot(
