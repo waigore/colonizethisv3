@@ -1,20 +1,14 @@
 import 'dart:math' as math;
 
-import 'package:colonizethis_logic/order_suggestion_api.dart';
-
-import 'candidate_selector.dart';
 import 'goal_manager.dart';
 import 'planner_context.dart';
 import 'planning_imports.dart';
+import '../util/ai_random_utils.dart';
 import '../util/orders_extensions.dart';
 
 final _log = packageLogger();
 
-Orders runResearchPlanner({
-  required PlannerContext ctx,
-  required int researchSeed,
-}) {
-  final domainWeights = ctx.domainWeights;
+Orders runResearchPlanner({required PlannerContext ctx}) {
   final researchCandidates = ctx.suggestionAPI.suggestResearchOrders(
     ctx.view,
     ctx.game,
@@ -25,7 +19,7 @@ Orders runResearchPlanner({
       40 - getAgendaResearchModifier(ctx.config.hiddenAgendaId);
   if (researchCandidates.isEmpty ||
       (ctx.primaryGoal != StrategicGoal.tech &&
-          domainWeights.research < researchThreshold)) {
+          ctx.domainWeights.research < researchThreshold)) {
     if (researchCandidates.isNotEmpty) {
       _log.d(
         'research skipped nationId=${ctx.nationId} threshold not met or no candidates',
@@ -35,9 +29,11 @@ Orders runResearchPlanner({
   }
 
   final thresholds = getThresholdsForLeader(ctx.config.personalityId);
-  final chosen = selectWeightedCandidate<ResearchOrder>(
+  final chosen = selectWeightedCandidate(
     candidates: researchCandidates,
-    scorer: (list) => list.map((o) {
+    seed: ctx.seeds.researchSeed,
+    useIntRoll: true,
+    score: (o) {
       final tech = techById(o.techId);
       final category = tech?.category ?? '';
       final w = category == 'transport'
@@ -48,9 +44,11 @@ Orders runResearchPlanner({
           ? thresholds.researchEconomic
           : thresholds.researchExploration;
       return math.max(1, w);
-    }).toList(),
-    seed: researchSeed,
-    useIntRoll: true,
+    },
+  );
+  _log.d(
+    'research eval nationId=${ctx.nationId} researchThreshold=$researchThreshold '
+    'candidateCount=${researchCandidates.length}',
   );
   if (chosen == null) return ctx.orders;
 

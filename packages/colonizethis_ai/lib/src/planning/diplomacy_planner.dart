@@ -1,10 +1,11 @@
-import 'candidate_selector.dart';
+import '../perception/perception_snapshot.dart';
+import 'planning_imports.dart';
 import 'colonial_pressure.dart';
+import 'planner_context.dart';
+import '../util/ai_random_utils.dart';
+import '../util/orders_extensions.dart';
 import 'diplomatic_candidate_scoring.dart';
 import 'diplomacy_planner_result.dart';
-import 'planner_context.dart';
-import 'planning_imports.dart';
-import '../util/orders_extensions.dart';
 
 export 'diplomatic_candidate_scoring.dart' show computeDiplomaticCandidateScores;
 export 'war_desire_calculator.dart' show computeWarDesireScore;
@@ -13,21 +14,18 @@ export 'diplomacy_planner_result.dart'
 
 final _log = packageLogger();
 
-Orders runDiplomacyPlanner({required PlannerContext ctx}) =>
-    runDiplomacyPlannerWithResult(ctx: ctx).orders;
+Orders runDiplomacyPlanner({
+  required PlannerContext ctx,
+  required AIWorldSnapshot snapshot,
+}) =>
+    runDiplomacyPlannerWithResult(ctx: ctx, snapshot: snapshot).orders;
 
 DiplomacyPlannerResult runDiplomacyPlannerWithResult({
   required PlannerContext ctx,
+  required AIWorldSnapshot snapshot,
   DiplomacyPlannerPass pass = DiplomacyPlannerPass.all,
 }) {
-  final snapshot = ctx.snapshot;
-  if (snapshot == null) {
-    return DiplomacyPlannerResult(orders: ctx.orders);
-  }
-  var weight = ctx.resolveWeightForDomain(
-    kind: DomainWeightKind.diplomacyOrBase,
-    base: 40,
-  );
+  var weight = ctx.resolveDiplomacyBaseWeight();
   if (pass == DiplomacyPlannerPass.declareWarOnly &&
       snapshot.conquest.provincesToVictory >
           kConquerScoreFloorProvincesToVictoryThreshold &&
@@ -68,8 +66,8 @@ DiplomacyPlannerResult runDiplomacyPlannerWithResult({
   }
 
   final declaredThisTurn = <String>{
-    for (final o in ctx.orders.diplomaticOrdersByPlayerId[ctx.nationId] ??
-        const [])
+    for (final o
+        in ctx.orders.diplomaticOrdersByPlayerId[ctx.nationId] ?? const [])
       if (o.type == DiplomaticOrderType.declareWar) o.targetFactionId,
   };
 
@@ -112,9 +110,9 @@ DiplomacyPlannerResult runDiplomacyPlannerWithResult({
     'candidates=$candidateDesc scores=$scores',
   );
 
-  final chosen = selectWeightedCandidate<DiplomaticOrder>(
+  final chosen = selectWeightedCandidate(
     candidates: diploCandidates,
-    scorer: (_) => scores,
+    scores: scores,
     seed: ctx.seeds.diplomacySeed,
   );
   if (chosen == null) return DiplomacyPlannerResult(orders: ctx.orders);

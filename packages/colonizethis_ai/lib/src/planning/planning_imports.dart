@@ -1,9 +1,4 @@
-/// Common imports for planning-layer modules.
-///
-/// Re-exports only the four packages repeated across planners; does not widen
-/// the logic import surface beyond [ai_api] and [order_suggestion_api].
-library;
-
+// Shared planning-layer imports (Refs #2521). Only re-exports narrow logic contracts.
 export 'package:colonizethis_ai/package_logger.dart';
 export 'package:colonizethis_data/colonizethis_data.dart';
 export 'package:colonizethis_logic/ai_api.dart';

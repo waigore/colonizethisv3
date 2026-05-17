@@ -2,17 +2,16 @@ import 'dart:io';
 
 import 'package:analyzer/dart/analysis/utilities.dart';
 import 'package:analyzer/dart/ast/ast.dart';
-import 'package:analyzer/source/line_info.dart';
 import 'package:path/path.dart' as p;
 
-/// SPEC: SPEC/program/repo-lint.md (Refs #2521).
+/// SPEC: SPEC/program/repo-lint.md (Refs #2521, AC12).
 ///
-/// Flags top-level planner functions under `colonizethis_ai/lib/src/planning/`
-/// that still take more than six parameters instead of [PlannerContext].
+/// Flags top-level domain planner entrypoints under
+/// `packages/colonizethis_ai/lib/src/planning/` with more than six parameters,
+/// signalling failure to bundle shared inputs in [PlannerContext].
+const _planningSrcRelative = 'packages/colonizethis_ai/lib/src/planning';
 
-const _aiPlanningRelative = 'packages/colonizethis_ai/lib/src/planning';
-
-const _plannerFunctionNames = <String>{
+const _plannerEntrypointNames = <String>{
   'runMovePlanner',
   'runArmyMovePlanner',
   'runNavalPlanner',
@@ -23,6 +22,8 @@ const _plannerFunctionNames = <String>{
   '_runEconomyDomainPlanners',
   'pickBuildOrder',
 };
+
+const _maxParameters = 6;
 
 void main(List<String> args) {
   exit(runCheckAiPlannerContext(Directory.current.path));
@@ -37,29 +38,32 @@ int runCheckAiPlannerContext(
   final logE = err ?? stderr.writeln;
 
   final root = p.normalize(repoRoot);
-  final planningDir = Directory(p.join(root, _aiPlanningRelative));
+  final planningDir = Directory(p.join(root, _planningSrcRelative));
   if (!planningDir.existsSync()) {
-    logE('ERROR: Missing AI planning directory: $_aiPlanningRelative');
+    logE('ERROR: Missing AI planning directory: $_planningSrcRelative');
     return 1;
   }
 
   final violations = <String>[];
   for (final entity in planningDir.listSync(recursive: false, followLinks: false)) {
     if (entity is! File || !entity.path.endsWith('.dart')) continue;
+    if (p.basename(entity.path) == 'planning_imports.dart') continue;
     final relative = p.relative(entity.path, from: root);
     final content = entity.readAsStringSync();
-    final parseResult = parseString(path: relative, content: content);
-    final lineInfo = parseResult.lineInfo;
-    for (final decl in parseResult.unit.declarations) {
+    final parsed = parseString(content: content, path: relative);
+    for (final decl in parsed.unit.declarations) {
       if (decl is! FunctionDeclaration) continue;
       final name = decl.name.lexeme;
-      if (!_plannerFunctionNames.contains(name)) continue;
-      final params = decl.functionExpression.parameters;
-      if (params == null) continue;
-      final count = params.parameters.length;
-      if (count > 6) {
-        final line = lineInfo?.getLocation(decl.name.offset).lineNumber ?? 0;
-        violations.add('$relative:$line:$name has $count parameters');
+      if (!_plannerEntrypointNames.contains(name)) continue;
+      final paramCount = _parameterCount(decl.functionExpression.parameters);
+      if (paramCount > _maxParameters) {
+        final line = decl.name.offset;
+        final lineNumber =
+            '\n'.allMatches(content.substring(0, line)).length + 1;
+        violations.add(
+          '$relative:$lineNumber $name has $paramCount parameters '
+          '(max $_maxParameters; use PlannerContext)',
+        );
       }
     }
   }
@@ -70,11 +74,17 @@ int runCheckAiPlannerContext(
   }
 
   logE(
-    'check_ai_planner_context: found ${violations.length} planner function(s) '
-    'with >6 parameters. Use PlannerContext instead.',
+    'check_ai_planner_context: found ${violations.length} planner entrypoint(s) '
+    'with more than $_maxParameters parameters. Bundle shared inputs in '
+    'PlannerContext instead.',
   );
   for (final v in violations) {
     logE(' - $v');
   }
   return 1;
+}
+
+int _parameterCount(FormalParameterList? parameters) {
+  if (parameters == null) return 0;
+  return parameters.parameters.length;
 }

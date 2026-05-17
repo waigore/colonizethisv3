@@ -1,10 +1,10 @@
 import 'dart:math' as math;
 
 import 'colonial_naval_scoring.dart';
-import 'colonial_pressure.dart';
-import 'planner_context.dart';
 import 'planning_imports.dart';
-import '../perception/summary_models.dart';
+import 'colonial_pressure.dart';
+import '../perception/perception_snapshot.dart';
+import 'planner_context.dart';
 import '../util/orders_extensions.dart';
 
 final _log = packageLogger();
@@ -13,10 +13,7 @@ Orders runNavalPlanner({
   required PlannerContext ctx,
   ColonialSummary colonial = const ColonialSummary(),
 }) {
-  var weight = ctx.resolveWeightForDomain(
-    kind: DomainWeightKind.militaryOrBase,
-    base: 40,
-  );
+  var weight = ctx.resolveNavalBaseWeight();
   final hasColonialTargets = hasColonialAcquisitionTargets(colonial);
   if (hasColonialTargets) {
     weight += kColonialNavalWeightBonus;

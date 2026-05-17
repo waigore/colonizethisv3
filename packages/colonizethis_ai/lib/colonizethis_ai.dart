@@ -14,8 +14,6 @@ export 'src/perception/dossier_builder.dart';
 export 'src/perception/dossier_models.dart';
 export 'src/perception/perception_snapshot.dart';
 export 'src/planning/domain_planner_orchestrator.dart';
-export 'src/planning/planner_context.dart';
-export 'src/planning/candidate_selector.dart';
 export 'src/planning/diplomacy_planner.dart';
 export 'src/planning/economy_planner.dart';
 export 'src/planning/full_ai_planner.dart';

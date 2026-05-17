@@ -1,9 +1,7 @@
-import 'package:colonizethis_logic/order_suggestion_api.dart';
-
-import 'candidate_selector.dart';
 import 'goal_manager.dart';
-import 'planner_context.dart';
 import 'planning_imports.dart';
+import 'planner_context.dart';
+import '../util/ai_random_utils.dart';
 import '../util/orders_extensions.dart';
 
 final _log = packageLogger();
@@ -22,7 +20,7 @@ Orders runMovePlanner({required PlannerContext ctx}) {
     moveCandidates,
   );
   if (filtered.isEmpty) return ctx.orders;
-  final weight = ctx.resolveWeightForDomain();
+  final weight = ctx.resolveMilitaryEconomyWeight();
   _log.d(
     'move eval nationId=${ctx.nationId} weight=$weight '
     'filteredCount=${filtered.length}',
@@ -31,18 +29,17 @@ Orders runMovePlanner({required PlannerContext ctx}) {
     _log.d('move skipped nationId=${ctx.nationId} weight < 20');
     return ctx.orders;
   }
-  final provinceOwner = ctx.provinceOwner;
-  final selected = selectWeightedCandidate<MoveOrder>(
+  final selected = selectWeightedCandidate(
     candidates: filtered,
-    scorer: (list) => list.map((m) {
+    seed: ctx.seeds.militarySeed,
+    score: (m) {
       final destProv = Unit.provinceIdFromTileKey(m.destinationTileKey);
-      final destOwner = destProv != null ? provinceOwner[destProv] : null;
+      final destOwner = destProv != null ? ctx.provinceOwner[destProv] : null;
       if (destOwner == null || destOwner == ctx.nationId) return 1.0;
       final rel = getRelation(ctx.game, ctx.nationId, destOwner);
       final atWar = rel != null && rel.atWar;
       return 1.0 + (atWar ? kMovePreferEnemyTerritoryBonus.toDouble() : 0);
-    }).toList(),
-    seed: ctx.seeds.militarySeed,
+    },
   );
   if (selected == null) return ctx.orders;
   _log.i(
@@ -75,7 +72,7 @@ Orders runArmyMovePlanner({
     _log.d('army move filtered empty nationId=${ctx.nationId}');
     return ctx.orders;
   }
-  final weight = ctx.resolveWeightForDomain();
+  final weight = ctx.resolveMilitaryEconomyWeight();
   final minWeight =
       ctx.primaryGoal == StrategicGoal.conquer || provincesToVictory > 10
       ? 10
@@ -90,17 +87,16 @@ Orders runArmyMovePlanner({
     'army move eval nationId=${ctx.nationId} weight=$weight '
     'filteredCount=${filtered.length}',
   );
-  final provinceOwner = ctx.provinceOwner;
-  final selected = selectWeightedCandidate<ArmyMoveOrder>(
+  final selected = selectWeightedCandidate(
     candidates: filtered,
-    scorer: (list) => list.map((m) {
-      final destOwner = provinceOwner[m.destinationProvinceId];
+    seed: ctx.seeds.militarySeed + 2000,
+    score: (m) {
+      final destOwner = ctx.provinceOwner[m.destinationProvinceId];
       if (destOwner == null || destOwner == ctx.nationId) return 1.0;
       final rel = getRelation(ctx.game, ctx.nationId, destOwner);
       final atWar = rel != null && rel.atWar;
       return 1.0 + (atWar ? kMovePreferEnemyTerritoryBonus.toDouble() : 0);
-    }).toList(),
-    seed: ctx.seeds.militarySeed + 2000,
+    },
   );
   if (selected == null) return ctx.orders;
   _log.i(

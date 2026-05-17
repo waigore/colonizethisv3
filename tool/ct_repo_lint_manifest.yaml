@@ -43,7 +43,7 @@ rules:
 
   - rule_id: repo.ai_planner_context
     group: architecture
-    title: colonizethis_ai planners must use PlannerContext (Refs #2521)
+    title: colonizethis_ai domain planners must use PlannerContext (Refs #2521)
     spec: SPEC/program/repo-lint.md
     runner: dart
     script: tool/check_ai_planner_context.dart

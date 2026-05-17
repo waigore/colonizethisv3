@@ -3,6 +3,7 @@ import 'dart:math' as math;
 import 'package:colonizethis_logic/order_suggestion_api.dart';
 
 import 'colonial_pressure.dart';
+import 'planning_imports.dart';
 import 'goal_manager.dart';
 import '../perception/perception_snapshot.dart';
 import '../util/orders_extensions.dart';
@@ -13,7 +14,6 @@ import 'domain_planner_outcome.dart';
 import 'move_planner.dart';
 import 'naval_planner.dart';
 import 'planner_context.dart';
-import 'planning_imports.dart';
 import 'research_planner.dart';
 
 final _log = packageLogger();
@@ -72,87 +72,88 @@ DomainPlannerOutcome runDomainPlannersWithOutcome({
 }) {
   void emit(String phaseId) => onStagedPlannerProgress?.call(phaseId);
 
-  var orders = const Orders();
   var ctx = PlannerContext(
     nationId: nationId,
     view: view,
     game: game,
     topology: topology,
-    orders: orders,
+    orders: const Orders(),
     config: config,
     primaryGoal: primaryGoal,
     seeds: seeds,
     suggestionAPI: suggestionAPI,
-    snapshot: snapshot,
-    provinceOwnerCache: getProvinceOwnerMap(game),
-    currentTurn: game.worldState.turnState.turnNumber,
   );
 
-  orders = _runEconomyDomainPlanners(
+  ctx = _runEconomyDomainPlanners(
     ctx: ctx,
+    snapshot: snapshot,
     economyPlan: economyPlan,
     tileMapByRegion: tileMapByRegion,
     emit: emit,
   );
-  ctx = ctx.withOrders(orders);
 
-  orders = runMovePlanner(ctx: ctx);
-  ctx = ctx.withOrders(orders);
+  ctx = ctx.withOrders(runMovePlanner(ctx: ctx));
   emit('aiStageC');
 
   final declareWarResult = runDiplomacyPlannerWithResult(
     ctx: ctx,
+    snapshot: snapshot,
     pass: DiplomacyPlannerPass.declareWarOnly,
   );
-  orders = declareWarResult.orders;
-  ctx = ctx.withOrders(orders);
+  ctx = ctx.withOrders(declareWarResult.orders);
   final armyMovesBeforeConquest =
-      orders.armyMoveOrdersByPlayerId[nationId]?.length ?? 0;
-  orders = runConquestArmyMovePlanner(
-    ctx: ctx,
-    declaredWarTargetFactionId: declareWarResult.declaredWarTargetFactionId,
+      ctx.orders.armyMoveOrdersByPlayerId[nationId]?.length ?? 0;
+  ctx = ctx.withOrders(
+    runConquestArmyMovePlanner(
+      ctx: ctx,
+      snapshot: snapshot,
+      declaredWarTargetFactionId: declareWarResult.declaredWarTargetFactionId,
+    ),
   );
-  ctx = ctx.withOrders(orders);
   final conquestArmyMoveCount =
-      (orders.armyMoveOrdersByPlayerId[nationId]?.length ?? 0) -
+      (ctx.orders.armyMoveOrdersByPlayerId[nationId]?.length ?? 0) -
       armyMovesBeforeConquest;
-  orders = runArmyMovePlanner(
-    ctx: ctx,
-    provincesToVictory: snapshot.conquest.provincesToVictory,
+  ctx = ctx.withOrders(
+    runArmyMovePlanner(
+      ctx: ctx,
+      provincesToVictory: snapshot.conquest.provincesToVictory,
+    ),
   );
-  ctx = ctx.withOrders(orders);
   emit('aiStageD');
 
-  orders = runNavalPlanner(ctx: ctx, colonial: snapshot.colonial);
-  ctx = ctx.withOrders(orders);
+  ctx = ctx.withOrders(
+    runNavalPlanner(ctx: ctx, colonial: snapshot.colonial),
+  );
   emit('aiStageE');
 
-  orders = runDiplomacyPlannerWithResult(
-    ctx: ctx,
-    pass: DiplomacyPlannerPass.nonDeclareWarOnly,
-  ).orders;
-  ctx = ctx.withOrders(orders);
+  ctx = ctx.withOrders(
+    runDiplomacyPlannerWithResult(
+      ctx: ctx,
+      snapshot: snapshot,
+      pass: DiplomacyPlannerPass.nonDeclareWarOnly,
+    ).orders,
+  );
   emit('aiStageF');
 
-  orders = runResearchPlanner(ctx: ctx, researchSeed: seeds.researchSeed);
+  ctx = ctx.withOrders(runResearchPlanner(ctx: ctx));
   emit('aiStageG');
 
   return DomainPlannerOutcome(
-    orders: orders,
+    orders: ctx.orders,
     declaredWarTargetFactionId: declareWarResult.declaredWarTargetFactionId,
     conquestArmyMoveCount: conquestArmyMoveCount,
   );
 }
 
-Orders _runEconomyDomainPlanners({
+PlannerContext _runEconomyDomainPlanners({
   required PlannerContext ctx,
+  required AIWorldSnapshot snapshot,
   required EconomyPlan economyPlan,
   Map<String, TileMapResult>? tileMapByRegion,
   required void Function(String phaseId) emit,
 }) {
   var result = ctx.orders;
   final domainWeights = ctx.domainWeights;
-  final snapshot = ctx.snapshot!;
 
   emit('suggestionPools');
   final workCandidates = ctx.suggestionAPI.suggestWorkOrders(
@@ -234,9 +235,9 @@ Orders _runEconomyDomainPlanners({
       ctx: ctx,
       buildCandidates: buildCandidates,
       cargoPreference: economyPlan.cargoPreference,
-      seed: ctx.seeds.economySeed + 1,
       provincesToVictory: snapshot.conquest.provincesToVictory,
       oldWorldProvincesOwned: snapshot.conquest.oldWorldProvincesOwned,
+      seedOverride: ctx.seeds.economySeed + 1,
     );
     if (chosen != null) {
       _log.i('build chosen nationId=${ctx.nationId} unitType=${chosen.unitType}');
@@ -246,5 +247,5 @@ Orders _runEconomyDomainPlanners({
     _log.d('build skipped nationId=${ctx.nationId} weight below threshold');
   }
   emit('aiStageB');
-  return result;
+  return ctx.withOrders(result);
 }

@@ -1,4 +1,3 @@
-import 'package:colonizethis_ai/src/planning/build_planner.dart';
 import 'package:colonizethis_ai/src/planning/goal_manager.dart';
 import 'package:colonizethis_ai/src/planning/planner_context.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
@@ -7,20 +6,10 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
 void main() {
-  group('pickBuildOrder', () {
-    test('prefers regiment when behind victory pace and conquer goal', () {
-      const candidates = [
-        BuildUnitOrder(
-          unitType: 'sloop',
-          isMilitary: false,
-          spawnProvinceId: 'oldWorld|p1',
-        ),
-        BuildUnitOrder(
-          unitType: 'grenadiers',
-          isMilitary: true,
-          spawnProvinceId: 'oldWorld|p1',
-        ),
-      ];
+  group('PlannerContext weight resolution (Refs #2521)', () {
+    late PlannerContext ctx;
+
+    setUp(() {
       const config = AIConfig(
         leaderId: 'napoleon',
         personalityId: 'napoleon',
@@ -29,7 +18,7 @@ void main() {
       final game = Game(
         id: 'g1',
         worldState: WorldState(
-          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 3),
           oldWorld: RegionData(provinces: [], units: []),
           newWorld: RegionData(provinces: [], units: []),
         ),
@@ -43,7 +32,7 @@ void main() {
         ],
       );
       const topology = MapTopology(nodes: [], edges: []);
-      final ctx = PlannerContext(
+      ctx = PlannerContext(
         nationId: 'gp1',
         view: buildPlayerView(game, topology, 'gp1'),
         game: game,
@@ -54,14 +43,27 @@ void main() {
         seeds: AISeedBundle.fromTurnSeed(1),
         suggestionAPI: const DefaultOrderSuggestionAPI(),
       );
-      final chosen = pickBuildOrder(
-        ctx: ctx,
-        buildCandidates: candidates,
-        cargoPreference: CargoPreference.none,
-        provincesToVictory: 20,
-        seedOverride: 1,
+    });
+
+    test('resolveMilitaryEconomyWeight uses military for conquer', () {
+      expect(ctx.resolveMilitaryEconomyWeight(), ctx.domainWeights.military);
+    });
+
+    test('resolveNavalBaseWeight uses military for conquer', () {
+      expect(ctx.resolveNavalBaseWeight(), ctx.domainWeights.military);
+    });
+
+    test('resolveDiplomacyBaseWeight uses diplomacy for conquer', () {
+      expect(ctx.resolveDiplomacyBaseWeight(), ctx.domainWeights.diplomacy);
+    });
+
+    test('withOrders preserves other fields', () {
+      final next = ctx.withOrders(
+        const Orders(moveOrdersByPlayerId: {'gp1': []}),
       );
-      expect(chosen?.unitType, 'grenadiers');
+      expect(next.orders.moveOrdersByPlayerId['gp1'], isEmpty);
+      expect(next.nationId, ctx.nationId);
+      expect(next.currentTurn, 3);
     });
   });
 }

@@ -1,11 +1,6 @@
-import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:colonizethis_logic/ai_api.dart';
-import 'package:colonizethis_models/colonizethis_models.dart';
+part of 'perception_snapshot.dart';
 
-import 'perception_topology.dart';
-import 'summary_models.dart';
-
-ThreatSummary buildThreatSummary(
+ThreatSummary _buildThreatSummary(
   PlayerView view,
   MapTopology? topology,
 ) {
@@ -33,9 +28,7 @@ ThreatSummary buildThreatSummary(
     final prov = view.provincesById[neighborFullId];
     if (prov == null) continue;
     final ownerId = prov.ownerId;
-    if (ownerId == null || ownerId.isEmpty || ownerId == view.playerId) {
-      continue;
-    }
+    if (ownerId == null || ownerId.isEmpty || ownerId == view.playerId) continue;
     final rel = view.diplomacyByOtherId[ownerId];
     if (rel != null && rel.state == RelationState.atWar) {
       neighborProvincesHostile++;
@@ -70,7 +63,7 @@ ThreatSummary buildThreatSummary(
   );
 }
 
-OpportunitySummary buildOpportunitySummary(
+OpportunitySummary _buildOpportunitySummary(
   PlayerView view,
   MapTopology? topology,
 ) {
@@ -86,7 +79,7 @@ OpportunitySummary buildOpportunitySummary(
   }
   final weakNeighbors = topology == null
       ? <String>[]
-      : weakNeighborOwnerIds(view, topology);
+      : _weakNeighborOwnerIds(view, topology);
   return OpportunitySummary(
     weakNeighbors: weakNeighbors,
     richUnexploitedProvinces: richUnexploited,
@@ -94,7 +87,7 @@ OpportunitySummary buildOpportunitySummary(
   );
 }
 
-List<String> weakNeighborOwnerIds(
+List<String> _weakNeighborOwnerIds(
   PlayerView view,
   MapTopology topology,
 ) {
@@ -120,7 +113,7 @@ List<String> weakNeighborOwnerIds(
   return weakNeighbors;
 }
 
-ConquestSummary buildConquestSummary(
+ConquestSummary _buildConquestSummary(
   PlayerView view,
   MapTopology? topology,
   ThreatSummary threats,
@@ -135,10 +128,10 @@ ConquestSummary buildConquestSummary(
   final provincesToVictory = provincesToVictoryFromOldWorldOwned(oldWorldOwned);
   final invadable = topology == null
       ? <String>[]
-      : invadableOldWorldProvinceIds(view, topology);
+      : _invadableOldWorldProvinceIds(view, topology);
   final adjacentOwners = topology == null
       ? <String>[]
-      : adjacentOwnerFactionIdsSorted(view, topology);
+      : _adjacentOwnerFactionIdsSorted(view, topology);
   final preferredTargets = <String>{
     ...threats.atWarWith,
     ...opportunities.weakNeighbors,
@@ -154,7 +147,7 @@ ConquestSummary buildConquestSummary(
   );
 }
 
-ColonialSummary buildColonialSummary(
+ColonialSummary _buildColonialSummary(
   PlayerView view,
   MapTopology? topology,
   ThreatSummary threats,
@@ -168,7 +161,7 @@ ColonialSummary buildColonialSummary(
   }
   final invadable = topology == null
       ? <String>[]
-      : invadableNewWorldProvinceIds(view, topology);
+      : _invadableNewWorldProvinceIds(view, topology);
   final adjacentOwners = <String>{};
   for (final provId in invadable) {
     final ownerId = view.provincesById[provId]?.ownerId;
@@ -192,18 +185,18 @@ ColonialSummary buildColonialSummary(
   );
 }
 
-List<String> adjacentOwnerFactionIdsSorted(
+List<String> _adjacentOwnerFactionIdsSorted(
   PlayerView view,
   MapTopology topology,
 ) {
-  return adjacentOwnerFactionIdsForRegion(
+  return _adjacentOwnerFactionIdsForRegion(
     view,
     topology,
     kOldWorldRegionId,
   );
 }
 
-List<String> adjacentOwnerFactionIdsForRegion(
+List<String> _adjacentOwnerFactionIdsForRegion(
   PlayerView view,
   MapTopology topology,
   String regionId,
@@ -232,15 +225,15 @@ List<String> adjacentOwnerFactionIdsForRegion(
   return sorted;
 }
 
-List<String> invadableOldWorldProvinceIds(
+List<String> _invadableOldWorldProvinceIds(
   PlayerView view,
   MapTopology topology,
 ) {
-  return invadableProvinceIdsForRegion(view, topology, kOldWorldRegionId);
+  return _invadableProvinceIdsForRegion(view, topology, kOldWorldRegionId);
 }
 
 /// New World targets reachable via coastal seas and warp zones (not P–P only).
-List<String> invadableNewWorldProvinceIds(
+List<String> _invadableNewWorldProvinceIds(
   PlayerView view,
   MapTopology topology,
 ) {
@@ -264,7 +257,7 @@ List<String> invadableNewWorldProvinceIds(
   return sorted;
 }
 
-List<String> invadableProvinceIdsForRegion(
+List<String> _invadableProvinceIdsForRegion(
   PlayerView view,
   MapTopology topology,
   String regionId,
@@ -299,7 +292,7 @@ List<String> invadableProvinceIdsForRegion(
   return invadable;
 }
 
-EconomySummary buildEconomySummary(PlayerView view) {
+EconomySummary _buildEconomySummary(PlayerView view) {
   final p = view.player;
   final workerCount = p.workerPool.totalWorkers;
   final treasury = p.treasury;
