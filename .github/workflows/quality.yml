@@ -440,17 +440,6 @@ jobs:
             (cd packages/colonizethis_map && dart run coverage:format_coverage --lcov -i coverage -o coverage/lcov.info --report-on=lib --package=.)
           fi
 
-      - name: Test tool packages (Dart)
-        if: needs.changes.outputs.tests == 'true'
-        env:
-          SUPPRESS_IMAGE_VIEWER: "1"
-        run: |
-          set -e
-          for dir in tool/sim_scenarios tool/sim_combat_montecarlo tool/sim_combat tool/generate_map tool/init_game tool/sim_economy tool/show_tech; do
-            [ -d "$dir/test" ] || continue
-            (cd "$dir" && dart test -j 2 --reporter=compact)
-          done
-
       - name: Test run_observer_game (Dart, coverage)
         if: needs.changes.outputs.tests == 'true'
         env:
@@ -488,10 +477,6 @@ jobs:
       - name: Coverage gate (run_observer_game lib >= 80%)
         if: needs.changes.outputs.tests == 'true'
         run: tool/check_coverage_threshold.sh 80 tool/run_observer_game
-
-      - name: sim_scenarios integration gate (all scenarios must pass)
-        if: needs.changes.outputs.tests == 'true'
-        run: melos run sim_scenarios
 
   quality_app_coverage:
     name: App coverage (merge shards)

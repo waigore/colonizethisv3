@@ -57,7 +57,7 @@ HTML is a render-only wrapper: the `<pre>` body uses the **same** pretty-printed
 
 ## Conquest regression verification (Refs #2504)
 
-`lib/observer_conquest_verify.dart` compares `turn-000001.snapshot.json` vs `turn-000100.snapshot.json` under a game trace directory: each Great Power `gp1`–`gp6` must gain **≥3** net **Old World** provinces (`oldWorld|…` ids only). Canonical seed **42**, **100** resolved turns. Pass **`--verify-conquest`** after a successful run to execute this check (exit **5** on failure; requires `--max-turns >= 100` or no turn cap). Unit tests cover the parser; a full observer run is slow (~minutes) and is not part of the default quality gate. **Nightly:** `.github/workflows/observer-conquest-nightly.yml` runs seed **42**, **100** turns, and `--verify-conquest` on schedule and `workflow_dispatch`.
+`lib/observer_conquest_verify.dart` compares `turn-000001.snapshot.json` vs `turn-000100.snapshot.json` under a game trace directory: each Great Power `gp1`–`gp6` must gain **≥3** net **Old World** provinces (`oldWorld|…` ids only). Canonical seed **42**, **100** resolved turns. Pass **`--verify-conquest`** after a successful run to execute this check (exit **5** on failure; requires `--max-turns >= 100` or no turn cap). Unit tests cover the parser; a full observer run is slow (~minutes) and is not part of the default quality gate. **Nightly:** `.github/workflows/nightly.yml` job `observer_conquest_verify` runs seed **42**, **100** turns, and `--verify-conquest` daily at **23:00 Asia/Hong_Kong** (`workflow_dispatch` supported). When `--verify-colonial-expansion` lands (#2509), extend that job to **150** turns and both verify flags.
 
 ## Coverage
 
