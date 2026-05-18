@@ -107,13 +107,16 @@ DomainPlannerOutcome runDomainPlannersWithOutcome({
   final stalledOldWorldExpansion = isStalledOldWorldExpansion(
     snapshot.conquest.oldWorldProvincesOwned,
   );
+  final observerQuotaPressure = isBelowObserverConquestQuota(
+    snapshot.conquest.oldWorldProvincesOwned,
+  );
   final conquestDeclaredWarTarget = stalledConquestDeclaredWarTarget(
     game: ctx.game,
     nationId: nationId,
     snapshot: snapshot,
     declaredThisTurn: declareWarResult.declaredWarTargetFactionId,
   );
-  final conquestPasses = stalledOldWorldExpansion
+  final conquestPasses = stalledOldWorldExpansion || observerQuotaPressure
       ? kStalledConquestArmyMovePasses
       : 1;
   for (var pass = 0; pass < conquestPasses; pass++) {
@@ -136,7 +139,7 @@ DomainPlannerOutcome runDomainPlannersWithOutcome({
       (ctx.orders.armyMoveOrdersByPlayerId[nationId]?.length ?? 0) -
       armyMovesBeforeConquest;
   // Stalled GPs must not run the relocation pass: it undoes frontier marches.
-  if (!stalledOldWorldExpansion) {
+  if (!stalledOldWorldExpansion && !observerQuotaPressure) {
     ctx = ctx.withOrders(
       runArmyMovePlanner(
         ctx: ctx,

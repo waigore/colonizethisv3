@@ -69,6 +69,113 @@ bool isEarlyColonialExpansion(ColonialSummary colonial) =>
     hasColonialAcquisitionTargets(colonial) &&
     colonial.newWorldProvincesOwned < kColonialFewNwProvincesThreshold;
 
+/// Sole at-war Great Power, if any.
+String? soleAtWarGreatPowerId({
+  required Game game,
+  required AIWorldSnapshot snapshot,
+}) {
+  final gpWars = <String>[
+    for (final factionId in snapshot.threats.atWarWith)
+      if (game.playerById(factionId) != null) factionId,
+  ];
+  if (gpWars.length != 1) {
+    return null;
+  }
+  return gpWars.single;
+}
+
+bool canPivotFromSoleGpWarAfterPeace({
+  required Game game,
+  required AIWorldSnapshot snapshot,
+}) {
+  if (snapshot.conquest.oldWorldProvincesOwned >=
+      kObserverConquestMinOwProvincesPerGp) {
+    return true;
+  }
+  final minorsOnMap = game.worldState.oldWorld.provinces.any(
+    (p) =>
+        p.ownerId != null &&
+        p.ownerId!.isNotEmpty &&
+        game.minorNations.any((m) => m.id == p.ownerId),
+  );
+  if (minorsOnMap) {
+    return true;
+  }
+  return snapshot.conquest.invadableProvinceIdsSorted.any((pid) {
+    final owner = getProvinceOwnerMap(game)[pid];
+    return owner != null && game.minorNations.any((m) => m.id == owner);
+  });
+}
+
+/// Peace the sole GP enemy when below the observer OW quota and clearly outgunned.
+String? unwinnableSoleGpFrontierPeaceTarget({
+  required Game game,
+  required AIWorldSnapshot snapshot,
+}) {
+  final enemy = soleAtWarGreatPowerId(game: game, snapshot: snapshot);
+  if (enemy == null) {
+    return null;
+  }
+  if (!isBelowObserverConquestQuota(snapshot.conquest.oldWorldProvincesOwned)) {
+    return null;
+  }
+  if (!canPivotFromSoleGpWarAfterPeace(game: game, snapshot: snapshot)) {
+    return null;
+  }
+  final own = snapshot.conquest.oldWorldProvincesOwned;
+  final enemyOw = provinceCountOwnedBy(game, enemy);
+  if (enemyOw <= own) {
+    return null;
+  }
+  return enemy;
+}
+
+/// Peace every at-war Great Power when OW holdings are critically low and minors
+/// remain on the map (avoid OW elimination; Refs #2509).
+List<String> criticalOwHoldPeaceTargets({
+  required Game game,
+  required AIWorldSnapshot snapshot,
+}) {
+  if (snapshot.conquest.oldWorldProvincesOwned >
+      kFewOldWorldProvincesDefendThreshold) {
+    return const [];
+  }
+  final minorsExist = game.worldState.oldWorld.provinces.any(
+    (p) =>
+        p.ownerId != null &&
+        p.ownerId!.isNotEmpty &&
+        game.minorNations.any((m) => m.id == p.ownerId),
+  );
+  if (!minorsExist) {
+    return const [];
+  }
+  final targets = <String>[
+    for (final factionId in snapshot.threats.atWarWith)
+      if (game.playerById(factionId) != null) factionId,
+  ]..sort();
+  return targets;
+}
+
+/// Peace the sole GP enemy when the observer OW quota is met and this GP leads.
+String? consolidateGainsSoleGpPeaceTarget({
+  required Game game,
+  required AIWorldSnapshot snapshot,
+}) {
+  final enemy = soleAtWarGreatPowerId(game: game, snapshot: snapshot);
+  if (enemy == null) {
+    return null;
+  }
+  final own = snapshot.conquest.oldWorldProvincesOwned;
+  if (own < kObserverConquestMinOwProvincesPerGp) {
+    return null;
+  }
+  final enemyOw = provinceCountOwnedBy(game, enemy);
+  if (own < enemyOw + kConsolidateGainsSoleGpProvinceLead) {
+    return null;
+  }
+  return enemy;
+}
+
 /// When non-null, build-order pass uses `min(buildThreshold, value)`.
 int? colonialBuildOrderThresholdCap(ColonialSummary colonial) {
   if (hasColonialAcquisitionTargets(colonial) &&

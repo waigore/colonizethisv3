@@ -4,9 +4,11 @@ import 'planning_imports.dart';
 import 'colonial_pressure.dart';
 export 'colonial_pressure.dart'
     show
+        consolidateGainsSoleGpPeaceTarget,
         isOldWorldGpOnlyInvadableFrontier,
         isStalledOldWorldGpBlockerFocus,
-        primaryInvadableOldWorldGpBlocker;
+        primaryInvadableOldWorldGpBlocker,
+        unwinnableSoleGpFrontierPeaceTarget;
 import 'planner_context.dart';
 import '../util/ai_random_utils.dart';
 import '../util/orders_extensions.dart';
@@ -308,7 +310,11 @@ bool stalledOwExpansionNeedsPeacePass({
         .isNotEmpty ||
     criticalMultiFrontGpPeaceTargets(game: game, snapshot: snapshot).isNotEmpty ||
     mutualZeroRegimentGpStalematePeaceTargets(game: game, snapshot: snapshot)
-        .isNotEmpty;
+        .isNotEmpty ||
+    criticalOwHoldPeaceTargets(game: game, snapshot: snapshot).isNotEmpty ||
+    unwinnableSoleGpFrontierPeaceTarget(game: game, snapshot: snapshot) !=
+        null ||
+    consolidateGainsSoleGpPeaceTarget(game: game, snapshot: snapshot) != null;
 
 /// When fighting 2+ Great Powers, peace every non-blocker GP (Refs #2509).
 List<String> multiFrontNonBlockerGpPeaceTargets({
@@ -367,6 +373,13 @@ Set<String> collectStalledGreatPowerPeaceTargets({
     if (stalledStrongerGpBlockerPeaceTarget(game: game, snapshot: snapshot) !=
         null)
       stalledStrongerGpBlockerPeaceTarget(game: game, snapshot: snapshot)!,
+    ...criticalOwHoldPeaceTargets(game: game, snapshot: snapshot),
+    if (unwinnableSoleGpFrontierPeaceTarget(game: game, snapshot: snapshot)
+        case final enemy?)
+      enemy,
+    if (consolidateGainsSoleGpPeaceTarget(game: game, snapshot: snapshot)
+        case final enemy?)
+      enemy,
   };
   return targets.where((id) => game.playerById(id) != null).toSet();
 }
@@ -399,7 +412,11 @@ Orders supplementMutualStalledGreatPowerPeaceOrders({
         game: game,
         snapshot: fromSnapshot,
       );
-      if (toGp == invadableBlocker) {
+      final stalledPeaceTargets = collectStalledGreatPowerPeaceTargets(
+        game: game,
+        snapshot: fromSnapshot,
+      );
+      if (toGp == invadableBlocker && !stalledPeaceTargets.contains(toGp)) {
         continue;
       }
       final before = diplo[toGp]?.length ?? 0;
@@ -625,36 +642,10 @@ DiplomacyPlannerResult? _stalledPeacePlannerResultIfNeeded({
   if (pass == DiplomacyPlannerPass.declareWarOnly) {
     return null;
   }
-  final peaceTargets = <String>{
-    if (stalledStrongerGpBlockerPeaceTarget(
-          game: ctx.game,
-          snapshot: snapshot,
-        ) !=
-        null)
-      stalledStrongerGpBlockerPeaceTarget(
-        game: ctx.game,
-        snapshot: snapshot,
-      )!,
-    ...stalledFutileGpPeaceTargets(game: ctx.game, snapshot: snapshot),
-    ...stalledGpBlockerFocusPeaceTargets(game: ctx.game, snapshot: snapshot),
-    ...stalledExpansionDistractionPeaceTargets(
-      game: ctx.game,
-      snapshot: snapshot,
-    ),
-    ...atWarGpDistractionTribePeaceTargets(
-      game: ctx.game,
-      snapshot: snapshot,
-    ),
-    ...multiFrontNonBlockerGpPeaceTargets(
-      game: ctx.game,
-      snapshot: snapshot,
-    ),
-    ...criticalMultiFrontGpPeaceTargets(game: ctx.game, snapshot: snapshot),
-    ...mutualZeroRegimentGpStalematePeaceTargets(
-      game: ctx.game,
-      snapshot: snapshot,
-    ),
-  };
+  final peaceTargets = collectStalledGreatPowerPeaceTargets(
+    game: ctx.game,
+    snapshot: snapshot,
+  );
   if (peaceTargets.isEmpty) {
     return null;
   }

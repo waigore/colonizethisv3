@@ -52,7 +52,7 @@ BuildUnitOrder? pickBuildOrder({
     }
   }
   var candidates = buildCandidates;
-  if (isStalledOldWorldExpansion(oldWorldProvincesOwned) &&
+  if (isObserverConquestExpansionPressure(oldWorldProvincesOwned) &&
       provincesToVictory > kBuildRegimentVictoryPaceThreshold &&
       cargoPreference == CargoPreference.none) {
     final regimentsOnly = candidates
@@ -85,7 +85,7 @@ BuildUnitOrder? pickBuildOrder({
 
     double militaryBonus = 0.0;
     if (isRegiment &&
-        isStalledOldWorldExpansion(oldWorldProvincesOwned)) {
+        isObserverConquestExpansionPressure(oldWorldProvincesOwned)) {
       militaryBonus += kBuildRegimentBonusWhenStalledExpansion;
       if (militaryRebuildCrisis) {
         militaryBonus += kBuildRegimentBonusWhenZeroRegimentsAtWar;

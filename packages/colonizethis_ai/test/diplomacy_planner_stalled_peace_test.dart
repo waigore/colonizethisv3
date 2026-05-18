@@ -278,4 +278,224 @@ void main() {
       contains('gp2'),
     );
   });
+
+  test('unwinnableSoleGpFrontierPeaceTarget returns stronger sole GP enemy', () {
+    final game = Game(
+      id: 'g-unwinnable',
+      worldState: WorldState(
+        turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 20),
+        oldWorld: RegionData(
+          provinces: [
+            for (var i = 1; i <= 5; i++)
+              Province(
+                id: 'oldWorld|gp6_$i',
+                regionId: 'oldWorld',
+                ownerId: 'gp6',
+              ),
+            for (var i = 1; i <= 12; i++)
+              Province(
+                id: 'oldWorld|gp5_$i',
+                regionId: 'oldWorld',
+                ownerId: 'gp5',
+              ),
+            const Province(
+              id: 'oldWorld|minor1',
+              regionId: 'oldWorld',
+              ownerId: 'minor1',
+            ),
+          ],
+          units: [],
+        ),
+        newWorld: const RegionData(provinces: [], units: []),
+      ),
+      players: const [
+        Player(
+          id: 'gp6',
+          displayName: 'GP6',
+          isHuman: false,
+          leaderKey: 'victoria',
+        ),
+        Player(
+          id: 'gp5',
+          displayName: 'GP5',
+          isHuman: false,
+          leaderKey: 'napoleon',
+        ),
+      ],
+      minorNations: const [MinorNation(id: 'minor1', displayName: 'Minor')],
+      diplomacyRelations: [
+        const DiplomacyRelation(
+          factionId1: 'gp6',
+          factionId2: 'gp5',
+          state: RelationState.atWar,
+          score: 30,
+        ),
+      ],
+    );
+    const snapshot = AIWorldSnapshot(
+      playerId: 'gp6',
+      threats: ThreatSummary(atWarWith: ['gp5']),
+      opportunities: OpportunitySummary(),
+      conquest: ConquestSummary(
+        oldWorldProvincesOwned: 5,
+        invadableProvinceIdsSorted: ['oldWorld|minor1'],
+      ),
+      economy: EconomySummary(),
+      relations: {},
+    );
+
+    expect(
+      unwinnableSoleGpFrontierPeaceTarget(game: game, snapshot: snapshot),
+      'gp5',
+    );
+  });
+
+  test('consolidateGainsSoleGpPeaceTarget returns weaker sole GP enemy', () {
+    final game = Game(
+      id: 'g-consolidate',
+      worldState: WorldState(
+        turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 90),
+        oldWorld: RegionData(
+          provinces: [
+            for (var i = 1; i <= 11; i++)
+              Province(
+                id: 'oldWorld|gp4_$i',
+                regionId: 'oldWorld',
+                ownerId: 'gp4',
+              ),
+            for (var i = 1; i <= 5; i++)
+              Province(
+                id: 'oldWorld|gp3_$i',
+                regionId: 'oldWorld',
+                ownerId: 'gp3',
+              ),
+          ],
+          units: [],
+        ),
+        newWorld: const RegionData(provinces: [], units: []),
+      ),
+      players: const [
+        Player(
+          id: 'gp4',
+          displayName: 'GP4',
+          isHuman: false,
+          leaderKey: 'victoria',
+        ),
+        Player(
+          id: 'gp3',
+          displayName: 'GP3',
+          isHuman: false,
+          leaderKey: 'napoleon',
+        ),
+      ],
+      diplomacyRelations: [
+        const DiplomacyRelation(
+          factionId1: 'gp4',
+          factionId2: 'gp3',
+          state: RelationState.atWar,
+          score: 30,
+        ),
+      ],
+    );
+    const snapshot = AIWorldSnapshot(
+      playerId: 'gp4',
+      threats: ThreatSummary(atWarWith: ['gp3']),
+      opportunities: OpportunitySummary(),
+      conquest: ConquestSummary(oldWorldProvincesOwned: 11),
+      economy: EconomySummary(),
+      relations: {},
+    );
+
+    expect(
+      consolidateGainsSoleGpPeaceTarget(game: game, snapshot: snapshot),
+      'gp3',
+    );
+  });
+
+  test(
+    'supplementMutualStalledGreatPowerPeaceOrders mirrors sole-GP blocker peace',
+    () {
+      final game = Game(
+        id: 'g-mutual-blocker',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 20),
+          oldWorld: RegionData(
+            provinces: [
+              for (var i = 1; i <= 5; i++)
+                Province(
+                  id: 'oldWorld|gp6_$i',
+                  regionId: 'oldWorld',
+                  ownerId: 'gp6',
+                ),
+              for (var i = 1; i <= 12; i++)
+                Province(
+                  id: 'oldWorld|gp5_$i',
+                  regionId: 'oldWorld',
+                  ownerId: 'gp5',
+                ),
+              const Province(
+                id: 'oldWorld|minor1',
+                regionId: 'oldWorld',
+                ownerId: 'minor1',
+              ),
+            ],
+            units: [],
+          ),
+          newWorld: const RegionData(provinces: [], units: []),
+        ),
+        players: const [
+          Player(
+            id: 'gp6',
+            displayName: 'GP6',
+            isHuman: false,
+            leaderKey: 'victoria',
+          ),
+          Player(
+            id: 'gp5',
+            displayName: 'GP5',
+            isHuman: false,
+            leaderKey: 'napoleon',
+          ),
+        ],
+        minorNations: const [MinorNation(id: 'minor1', displayName: 'Minor')],
+        diplomacyRelations: [
+          const DiplomacyRelation(
+            factionId1: 'gp6',
+            factionId2: 'gp5',
+            state: RelationState.atWar,
+            score: 30,
+          ),
+        ],
+        aiControlByGpId: const {'gp6': true, 'gp5': true},
+      );
+      const topology = MapTopology();
+      final orders = Orders(
+        diplomaticOrdersByPlayerId: {
+          'gp6': [
+            const DiplomaticOrder(
+              type: DiplomaticOrderType.offerPeace,
+              targetFactionId: 'gp5',
+            ),
+          ],
+        },
+      );
+
+      final supplemented = supplementMutualStalledGreatPowerPeaceOrders(
+        game: game,
+        topology: topology,
+        orders: orders,
+      );
+
+      expect(
+        supplemented.diplomaticOrdersByPlayerId['gp5'],
+        contains(
+          isA<DiplomaticOrder>().having(
+            (o) => o.type,
+            'type',
+            DiplomaticOrderType.offerPeace,
+          ).having((o) => o.targetFactionId, 'target', 'gp6'),
+        ),
+      );
+    },
+  );
 }

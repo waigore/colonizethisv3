@@ -127,7 +127,7 @@ const int kDeclareWarEarlyExpansionMinorBonus = 180;
 const int kDeclareWarEarlyExpansionTribePenalty = 160;
 
 /// Last turn (inclusive) for [kDeclareWarEarlyExpansionMinorBonus].
-const int kDeclareWarEarlyExpansionMaxTurn = 30;
+const int kDeclareWarEarlyExpansionMaxTurn = 50;
 
 /// Penalty on adjacent minor declare-war when the GP already holds many OW provinces.
 const int kDeclareWarSatedExpansionMinorPenalty = 100;
@@ -157,10 +157,10 @@ const int kStalledConquestFieldArmySplitCap = 8;
 
 /// While stalled and at war, build regiments until at least this many exist in
 /// all armies (Home + field) so splits and invasions can proceed (Refs #2509).
-const int kStalledMinRegimentCountWhenAtWar = 8;
+const int kStalledMinRegimentCountWhenAtWar = 10;
 
 /// Higher floor when fighting the sole GP that owns the invadable OW frontier.
-const int kStalledMinRegimentCountWhenGpBlockerAtWar = 10;
+const int kStalledMinRegimentCountWhenGpBlockerAtWar = 12;
 
 /// Extra regiment build floor per Old World province the frontier blocker leads by.
 const int kStalledMinRegimentCountPerProvinceDeficitVsBlocker = 2;
@@ -176,6 +176,33 @@ const int kOfferPeaceStalledStrongerGpBlockerBonus = 240;
 /// invadable Old World provinces while minors still hold invadable land
 /// (exit distracting GP wars; observer seed-42 gp4/gp6; Refs #2509).
 const int kOfferPeaceStalledFutileGpWarBonus = 230;
+
+/// Default observer start OW provinces per GP plus the turn-100 conquest gate (+3).
+const int kObserverConquestMinOwProvincesPerGp = 10;
+
+/// True when OW holdings have not yet met the observer per-GP conquest quota.
+bool isBelowObserverConquestQuota(int oldWorldProvincesOwned) =>
+    oldWorldProvincesOwned > 0 &&
+    oldWorldProvincesOwned < kObserverConquestMinOwProvincesPerGp;
+
+/// Stalled band or still below the turn-100 observer per-GP conquest quota.
+bool isObserverConquestExpansionPressure(int oldWorldProvincesOwned) =>
+    isStalledOldWorldExpansion(oldWorldProvincesOwned) ||
+    isBelowObserverConquestQuota(oldWorldProvincesOwned);
+
+/// Offer-peace toward the sole GP enemy when this GP is below the observer quota
+/// and that enemy leads by at least this many OW provinces (Refs #2509).
+const int kUnwinnableSoleGpWarProvinceLead = 2;
+
+/// Offer-peace toward the sole GP enemy when this GP meets the observer quota and
+/// leads that enemy by at least this many OW provinces (lock gains; Refs #2509).
+const int kConsolidateGainsSoleGpProvinceLead = 3;
+
+/// Offer-peace bonus for [unwinnableSoleGpFrontierPeaceTarget] (Refs #2509).
+const int kOfferPeaceUnwinnableSoleGpWarBonus = 250;
+
+/// Offer-peace bonus for [consolidateGainsSoleGpPeaceTarget] (Refs #2509).
+const int kOfferPeaceConsolidateGainsSoleGpWarBonus = 260;
 
 /// When far from victory, defend goal bonus while Old World holdings are small.
 const int kDefendBonusWhenFewOldWorldProvinces = 35;

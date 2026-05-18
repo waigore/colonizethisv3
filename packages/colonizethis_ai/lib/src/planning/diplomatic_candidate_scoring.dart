@@ -112,6 +112,24 @@ List<int> computeDiplomaticCandidateScores({
               isOldWorldGpOnlyInvadableFrontier(game: game, snapshot: snapshot)) {
             s += kOfferPeaceStalledFutileGpWarBonus;
           }
+          if (targetGp != null &&
+              snapshot.threats.atWarWith.contains(o.targetFactionId) &&
+              unwinnableSoleGpFrontierPeaceTarget(
+                    game: game,
+                    snapshot: snapshot,
+                  ) ==
+                  o.targetFactionId) {
+            s += kOfferPeaceUnwinnableSoleGpWarBonus;
+          }
+          if (targetGp != null &&
+              snapshot.threats.atWarWith.contains(o.targetFactionId) &&
+              consolidateGainsSoleGpPeaceTarget(
+                    game: game,
+                    snapshot: snapshot,
+                  ) ==
+                  o.targetFactionId) {
+            s += kOfferPeaceConsolidateGainsSoleGpWarBonus;
+          }
         }
         s += getAgendaPeaceAcceptanceModifier(agendaId);
         s += (thresholds.peaceTendency - 50);
@@ -341,7 +359,7 @@ final class _DeclareWarTargetContext {
     final colonialPressure = hasColonialAcquisitionTargets(snapshot.colonial) &&
         !isStalledOldWorldGpBlockerFocus(game: game, snapshot: snapshot);
     final isTribeTarget = _isTribeFaction(game, order.targetFactionId);
-    final stalledOwExpansion = isStalledOldWorldExpansion(
+    final stalledOwExpansion = isObserverConquestExpansionPressure(
       snapshot.conquest.oldWorldProvincesOwned,
     );
     final ownsInvadableOwMinor = isMinorTarget &&
