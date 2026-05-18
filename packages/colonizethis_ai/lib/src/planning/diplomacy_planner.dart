@@ -247,6 +247,25 @@ List<String> stalledExpansionDistractionPeaceTargets({
   return targets;
 }
 
+/// When OW holdings are collapsed (≤4), peace every stronger at-war GP (Refs #2509).
+List<String> criticalWeakGpSurvivalPeaceTargets({
+  required Game game,
+  required AIWorldSnapshot snapshot,
+}) {
+  if (snapshot.conquest.oldWorldProvincesOwned >
+      kCollapsedOldWorldProvincesSurvivalPeace) {
+    return const [];
+  }
+  final ownOw = snapshot.conquest.oldWorldProvincesOwned;
+  final targets = <String>[
+    for (final factionId in snapshot.threats.atWarWith)
+      if (game.playerById(factionId) != null &&
+          provinceCountOwnedBy(game, factionId) >= ownOw + 4)
+        factionId,
+  ]..sort();
+  return targets;
+}
+
 /// When OW holdings are critically low, peace non-blocker Great Power fronts only
 /// (avoid total collapse from multi-front GP wars; Refs #2509).
 List<String> criticalMultiFrontGpPeaceTargets({

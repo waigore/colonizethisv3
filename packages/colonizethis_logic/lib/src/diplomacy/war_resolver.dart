@@ -1,3 +1,4 @@
+import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../dossier/evidence_rules.dart';
@@ -181,17 +182,25 @@ Map<String, Set<String>> _peaceOfferPairKeysForGreatPowers(
   final bothGreatPowers =
       factionMembership.isGreatPower(gpId) &&
       factionMembership.isGreatPower(targetId);
+  final offerers = peaceOffersByPairKey[key] ?? const <String>{};
+  final collapsedSurvivalPeace = bothGreatPowers &&
+      offerers.length == 1 &&
+      offerers.any(
+        (id) =>
+            provinceCountOwnedBy(game, id) <=
+            kCollapsedOldWorldProvincesSurvivalPeace,
+      );
   final hasMutualOffer =
-      bothGreatPowers ? (peaceOffersByPairKey[key]?.length ?? 0) >= 2 : true;
+      !bothGreatPowers || offerers.length >= 2 || collapsedSurvivalPeace;
   if (rel == null || !rel.atWar) {
     return (game: game, relations: relations);
   }
   var bothSidesAgreed = true;
   if (factionMembership.isGreatPower(targetId) &&
       factionMembership.isGreatPower(gpId)) {
-    final offerers = peaceOffersByPairKey[key] ?? const <String>{};
     bothSidesAgreed =
-        offerers.contains(gpId) && offerers.contains(targetId);
+        (offerers.contains(gpId) && offerers.contains(targetId)) ||
+        collapsedSurvivalPeace;
   }
   if (!bothSidesAgreed) {
     return (game: game, relations: relations);

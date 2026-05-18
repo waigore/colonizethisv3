@@ -502,6 +502,14 @@ int? _declareWarSuppressedScore(_DeclareWarTargetContext ctx) {
       !ctx.invadableGpBlocker) {
     return 0;
   }
+  if (ctx.order.type == DiplomaticOrderType.declareWar &&
+      ctx.isAdjacentGp &&
+      ctx.snapshot.conquest.oldWorldProvincesOwned <=
+          kFewOldWorldProvincesDefendThreshold &&
+      provinceCountOwnedBy(ctx.game, ctx.order.targetFactionId) >
+          ctx.snapshot.conquest.oldWorldProvincesOwned) {
+    return 0;
+  }
   final atWarWithGp = ctx.snapshot.threats.atWarWith.any(
     (id) => ctx.game.playerById(id) != null,
   );

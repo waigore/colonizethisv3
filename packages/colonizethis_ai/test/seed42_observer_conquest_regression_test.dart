@@ -78,8 +78,8 @@ void main() {
     }
     },
     skip:
-        'Partial AC #2509: seed-42 turn-100 OW gains still vary for gp3/gp4/gp6; '
-        'tracked via nightly observer job',
+        'Partial AC #2509: gp4/gp6 OW collapse from GP wars; declare-war guard and '
+        'collapsed survival peace landed — turn-100 gate still open for gp4/gp6',
     timeout: const Timeout(Duration(minutes: 12)),
   );
 }
