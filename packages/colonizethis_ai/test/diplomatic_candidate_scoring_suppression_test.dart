@@ -695,6 +695,80 @@ void main() {
     );
 
     test(
+      'suppresses declareWar on critically weak adjacent GP when attacker leads by 4+',
+      () {
+        const snap = AIWorldSnapshot(
+          playerId: 'gp4',
+          threats: ThreatSummary(),
+          opportunities: OpportunitySummary(),
+          conquest: ConquestSummary(
+            oldWorldProvincesOwned: 11,
+            provincesToVictory: 20,
+            invadableProvinceIdsSorted: ['oldWorld|p30'],
+            adjacentOwnerFactionIdsSorted: ['gp3'],
+          ),
+          colonial: ColonialSummary(),
+          economy: EconomySummary(),
+          relations: {},
+        );
+        final game = Game(
+          id: 'g-suppress-weak-gp-declare',
+          worldState: WorldState(
+            turnState: const TurnState(
+              phase: TurnPhase.orders,
+              turnNumber: 40,
+            ),
+            oldWorld: RegionData(
+              provinces: [
+                for (var i = 0; i < 4; i++)
+                  Province(
+                    id: 'oldWorld|gp3_$i',
+                    regionId: 'oldWorld',
+                    ownerId: 'gp3',
+                  ),
+                for (var i = 0; i < 11; i++)
+                  Province(
+                    id: 'oldWorld|gp4_$i',
+                    regionId: 'oldWorld',
+                    ownerId: 'gp4',
+                  ),
+                const Province(
+                  id: 'oldWorld|p30',
+                  regionId: 'oldWorld',
+                  ownerId: 'gp3',
+                ),
+              ],
+            ),
+            newWorld: const RegionData(),
+          ),
+          players: const [
+            Player(id: 'gp3', displayName: 'C', isHuman: false),
+            Player(id: 'gp4', displayName: 'D', isHuman: false),
+          ],
+        );
+        const config = AIConfig(
+          leaderId: 'henry',
+          personalityId: 'henry',
+          hiddenAgendaId: 'merchant',
+        );
+        final score = computeDiplomaticCandidateScores(
+          candidates: const [
+            DiplomaticOrder(
+              type: DiplomaticOrderType.declareWar,
+              targetFactionId: 'gp3',
+            ),
+          ],
+          nationId: 'gp4',
+          game: game,
+          snapshot: snap,
+          config: config,
+          primaryGoal: StrategicGoal.conquer,
+        ).single;
+        expect(score, 0);
+      },
+    );
+
+    test(
       'stalled OW boosts offerPeace toward GP at war that does not own invadable minors',
       () {
         const snap = AIWorldSnapshot(

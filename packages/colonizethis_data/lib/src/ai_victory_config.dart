@@ -108,12 +108,20 @@ const int kStalledTradeGoalPenalty = 40;
 /// Extra conquer goal weight while Old World expansion is stalled.
 const int kStalledConquerGoalBonus = 30;
 
+/// Extra conquer / reduced defend while critically weak but invadable OW minors
+/// remain (recover after survival peace; Refs #2509).
+const int kWeakGpRecoveryConquerBonus = 60;
+const int kWeakGpRecoveryDefendPenalty = 30;
+
 /// Extra declare-war weight toward adjacent minors when stalled.
 const int kDeclareWarStalledExpansionMinorBonus = 75;
 
 /// When OW expansion is stalled but invadable OW minors exist, prioritize
 /// declaring on those minors over distant tribe wars (observer turn-100 gate).
 const int kDeclareWarStalledOwMinorPriorityBonus = 200;
+
+/// Extra declare-war weight toward OW minors while holdings are critically low.
+const int kDeclareWarWeakGpOwMinorRecoveryBonus = 120;
 
 /// Penalize tribe declare-war while OW holdings are stalled and invadable OW
 /// minors remain (tribes without sea-reachable NW provinces for this GP).
@@ -188,8 +196,10 @@ const int kDefendBonusWhenAtWarAndFewHoldings = 45;
 const int kFewOldWorldProvincesDefendThreshold = 6;
 
 /// OW holdings at or below which a lone GP [offerPeace] may end a GP war without
-/// a reciprocal offer (survival peace; Refs #2509).
-const int kCollapsedOldWorldProvincesSurvivalPeace = 4;
+/// a reciprocal offer (survival peace; matches
+/// [kFewOldWorldProvincesDefendThreshold]; Refs #2509).
+const int kCollapsedOldWorldProvincesSurvivalPeace =
+    kFewOldWorldProvincesDefendThreshold;
 
 /// Expand-goal bonus when invadable New World tribe/minor provinces exist.
 const int kColonialExpandBonusWhenInvadableNw = 45;
@@ -323,12 +333,25 @@ const int kDeclareWarStalledLowWarLikelihoodTribeCap = 150;
 /// while Old World expansion is stalled and far from military victory.
 const int kDeclareWarStalledAdjacentInvadableMinorFloor = 400;
 
+/// Higher floor for critically weak GPs toward adjacent invadable OW minors.
+const int kDeclareWarWeakGpAdjacentInvadableMinorFloor = 580;
+
 /// Declare-war penalty toward adjacent GPs while invadable Old World minors
 /// remain and expansion is stalled (reduces GP dogpiles on seed-42).
 const int kDeclareWarStalledGpWhenMinorsRemainPenalty = 280;
 
 /// Declare-war penalty toward a stalled weaker neighbor GP (mid-map deadlocks).
 const int kDeclareWarOnStalledWeakerNeighborPenalty = 200;
+
+/// Suppress declare-war on adjacent GPs at or below
+/// [kFewOldWorldProvincesDefendThreshold] when the attacker leads by at least
+/// this many Old World provinces (observer seed-42 gp3/gp6; Refs #2509).
+const int kDeclareWarAggressorSuppressWeakGpLeadThreshold = 4;
+
+/// Offer-peace bonus toward the invadable OW frontier GP while holdings are
+/// critically low and that GP leads by
+/// [kDeclareWarAggressorSuppressWeakGpLeadThreshold] or more (Refs #2509).
+const int kOfferPeaceWeakVsInvadableBlockerBonus = 260;
 
 /// Cap NW tribe declare-war scores while invadable Old World minors remain.
 const int kDeclareWarStalledTribeWhenOwMinorCap = 250;

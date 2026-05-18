@@ -247,23 +247,51 @@ List<String> stalledExpansionDistractionPeaceTargets({
   return targets;
 }
 
-/// When OW holdings are collapsed (≤4), peace every stronger at-war GP (Refs #2509).
+/// When OW holdings are critically low (≤6), peace every stronger at-war GP (Refs #2509).
 List<String> criticalWeakGpSurvivalPeaceTargets({
   required Game game,
   required AIWorldSnapshot snapshot,
 }) {
   if (snapshot.conquest.oldWorldProvincesOwned >
-      kCollapsedOldWorldProvincesSurvivalPeace) {
+      kFewOldWorldProvincesDefendThreshold) {
     return const [];
   }
   final ownOw = snapshot.conquest.oldWorldProvincesOwned;
   final targets = <String>[
     for (final factionId in snapshot.threats.atWarWith)
       if (game.playerById(factionId) != null &&
-          provinceCountOwnedBy(game, factionId) >= ownOw + 4)
+          provinceCountOwnedBy(game, factionId) >=
+              ownOw + kDeclareWarAggressorSuppressWeakGpLeadThreshold)
         factionId,
   ]..sort();
   return targets;
+}
+
+/// Peace the invadable OW frontier GP while critically weak and outmatched
+/// (pivot to minors/tribes instead of unwinnable GP wars; Refs #2509).
+List<String> weakHoldingsInvadableBlockerPeaceTargets({
+  required Game game,
+  required AIWorldSnapshot snapshot,
+}) {
+  if (snapshot.conquest.oldWorldProvincesOwned >
+      kFewOldWorldProvincesDefendThreshold) {
+    return const [];
+  }
+  final blocker = primaryInvadableOldWorldGpBlocker(
+    game: game,
+    snapshot: snapshot,
+  );
+  if (blocker == null ||
+      !snapshot.threats.atWarWith.contains(blocker) ||
+      game.playerById(blocker) == null) {
+    return const [];
+  }
+  final lead = provinceCountOwnedBy(game, blocker) -
+      snapshot.conquest.oldWorldProvincesOwned;
+  if (lead < kDeclareWarAggressorSuppressWeakGpLeadThreshold) {
+    return const [];
+  }
+  return [blocker];
 }
 
 /// When OW holdings are critically low, peace non-blocker Great Power fronts only
@@ -328,6 +356,8 @@ bool stalledOwExpansionNeedsPeacePass({
     criticalMultiFrontGpPeaceTargets(game: game, snapshot: snapshot).isNotEmpty ||
     criticalWeakGpSurvivalPeaceTargets(game: game, snapshot: snapshot)
         .isNotEmpty ||
+    weakHoldingsInvadableBlockerPeaceTargets(game: game, snapshot: snapshot)
+        .isNotEmpty ||
     mutualZeroRegimentGpStalematePeaceTargets(game: game, snapshot: snapshot)
         .isNotEmpty;
 
@@ -386,6 +416,7 @@ Set<String> collectStalledGreatPowerPeaceTargets({
     ...atWarGpDistractionTribePeaceTargets(game: game, snapshot: snapshot),
     ...multiFrontNonBlockerGpPeaceTargets(game: game, snapshot: snapshot),
     ...criticalWeakGpSurvivalPeaceTargets(game: game, snapshot: snapshot),
+    ...weakHoldingsInvadableBlockerPeaceTargets(game: game, snapshot: snapshot),
     if (stalledStrongerGpBlockerPeaceTarget(game: game, snapshot: snapshot) !=
         null)
       stalledStrongerGpBlockerPeaceTarget(game: game, snapshot: snapshot)!,
@@ -507,6 +538,13 @@ int _resolveDiplomacyPlannerWeight({
       isStalledOldWorldExpansion(snapshot.conquest.oldWorldProvincesOwned) &&
       weight < kDiplomacyDeclareWarMinWeightWhenStalled) {
     weight = kDiplomacyDeclareWarMinWeightWhenStalled;
+  }
+  if (pass == DiplomacyPlannerPass.declareWarOnly &&
+      snapshot.conquest.oldWorldProvincesOwned <=
+          kFewOldWorldProvincesDefendThreshold &&
+      snapshot.conquest.invadableProvinceIdsSorted.isNotEmpty &&
+      weight < kDiplomacyDeclareWarMinWeightWhenStalled + 20) {
+    weight = kDiplomacyDeclareWarMinWeightWhenStalled + 20;
   }
   if (pass == DiplomacyPlannerPass.declareWarOnly &&
       snapshot.conquest.oldWorldProvincesOwned <=
@@ -673,6 +711,10 @@ DiplomacyPlannerResult? _stalledPeacePlannerResultIfNeeded({
     ),
     ...criticalMultiFrontGpPeaceTargets(game: ctx.game, snapshot: snapshot),
     ...criticalWeakGpSurvivalPeaceTargets(game: ctx.game, snapshot: snapshot),
+    ...weakHoldingsInvadableBlockerPeaceTargets(
+      game: ctx.game,
+      snapshot: snapshot,
+    ),
     ...mutualZeroRegimentGpStalematePeaceTargets(
       game: ctx.game,
       snapshot: snapshot,

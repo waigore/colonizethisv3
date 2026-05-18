@@ -78,8 +78,8 @@ void main() {
     }
     },
     skip:
-        'Partial AC #2509: gp4/gp6 OW collapse from GP wars; declare-war guard and '
-        'collapsed survival peace landed — turn-100 gate still open for gp4/gp6',
+        'Partial AC #2509: gp3/gp6 OW collapse from GP wars; weak-GP guards and '
+        'survival peace landed — turn-100 gate still open for gp3/gp6',
     timeout: const Timeout(Duration(minutes: 12)),
   );
 }
