@@ -258,6 +258,9 @@ PlannerContext _runEconomyDomainPlanners({
     buildThreshold = math.min(buildThreshold, colonialBuildCap);
   }
   final regimentCount = regimentCountForPlayer(ctx.game, ctx.nationId);
+  final observerQuotaPressure = isBelowObserverConquestQuota(
+    snapshot.conquest.oldWorldProvincesOwned,
+  );
   final criticallyWeakNoGpWar =
       snapshot.conquest.oldWorldProvincesOwned <=
           kFewOldWorldProvincesDefendThreshold &&
@@ -287,10 +290,16 @@ PlannerContext _runEconomyDomainPlanners({
       minRegimentFloor < kStalledMinRegimentCountWhenCriticallyWeakNoGpWar) {
     minRegimentFloor = kStalledMinRegimentCountWhenCriticallyWeakNoGpWar;
   }
+  if (observerQuotaPressure &&
+      snapshot.threats.atWarWith.isNotEmpty &&
+      minRegimentFloor < kStalledMinRegimentCountWhenBelowObserverQuota) {
+    minRegimentFloor = kStalledMinRegimentCountWhenBelowObserverQuota;
+  }
   final forceRegimentRebuild =
-      isStalledOldWorldExpansion(snapshot.conquest.oldWorldProvincesOwned) &&
-          snapshot.threats.atWarWith.isNotEmpty &&
-          regimentCount < minRegimentFloor;
+      (isStalledOldWorldExpansion(snapshot.conquest.oldWorldProvincesOwned) ||
+          observerQuotaPressure) &&
+      snapshot.threats.atWarWith.isNotEmpty &&
+      regimentCount < minRegimentFloor;
   if (forceRegimentRebuild) {
     buildThreshold = 0;
   }
