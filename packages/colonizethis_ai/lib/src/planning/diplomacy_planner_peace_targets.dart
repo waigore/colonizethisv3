@@ -386,6 +386,8 @@ bool stalledOwExpansionNeedsPeacePass({
         .isNotEmpty ||
     weakHoldingsInvadableBlockerPeaceTargets(game: game, snapshot: snapshot)
         .isNotEmpty ||
+    plateauMutualInvadableBlockerPeaceTargets(game: game, snapshot: snapshot)
+        .isNotEmpty ||
     mutualZeroRegimentGpStalematePeaceTargets(game: game, snapshot: snapshot)
         .isNotEmpty ||
     stalledZeroRegimentGpPeaceTargets(game: game, snapshot: snapshot)
@@ -463,6 +465,7 @@ Set<String> collectStalledGreatPowerPeaceTargets({
     ...criticalMultiFrontGpPeaceTargets(game: game, snapshot: snapshot),
     ...criticalWeakGpSurvivalPeaceTargets(game: game, snapshot: snapshot),
     ...weakHoldingsInvadableBlockerPeaceTargets(game: game, snapshot: snapshot),
+    ...plateauMutualInvadableBlockerPeaceTargets(game: game, snapshot: snapshot),
     ...mutualZeroRegimentGpStalematePeaceTargets(game: game, snapshot: snapshot),
     ...stalledZeroRegimentGpPeaceTargets(game: game, snapshot: snapshot),
     if (stalledStrongerGpBlockerPeaceTarget(game: game, snapshot: snapshot) !=
@@ -483,8 +486,23 @@ Set<String> collectStalledGreatPowerPeaceTargets({
           isOldWorldGpOnlyInvadableFrontier(game: game, snapshot: snapshot)
       ? primaryInvadableOldWorldGpBlocker(game: game, snapshot: snapshot)
       : null;
+  final preserveBlockerPeace = <String>{
+    if (!isOldWorldGpOnlyInvadableFrontier(game: game, snapshot: snapshot))
+      ...weakHoldingsInvadableBlockerPeaceTargets(
+        game: game,
+        snapshot: snapshot,
+      ),
+    ...plateauMutualInvadableBlockerPeaceTargets(
+      game: game,
+      snapshot: snapshot,
+    ),
+  };
   return targets
-      .where((id) => game.playerById(id) != null && id != invadableBlocker)
+      .where(
+        (id) =>
+            game.playerById(id) != null &&
+            (id != invadableBlocker || preserveBlockerPeace.contains(id)),
+      )
       .toSet();
 }
 

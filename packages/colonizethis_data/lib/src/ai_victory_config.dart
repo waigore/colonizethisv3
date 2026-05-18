@@ -132,11 +132,11 @@ const int kDeclareWarBelowQuotaOwMinorRecoveryBonus = 280;
 
 /// Extra declare-war toward adjacent invadable OW minors at 8–9 OW with no GP war
 /// (observer seed-42 gp5/gp6 plateau; Refs #2509).
-const int kDeclareWarPlateauOwMinorBonus = 220;
+const int kDeclareWarPlateauOwMinorBonus = 300;
 
 /// Extra declare-war weight toward invadable minors when 8–9 OW (one province
 /// short of the turn-100 observer gate from default start; Refs #2509).
-const int kDeclareWarNearObserverQuotaMinorBonus = 120;
+const int kDeclareWarNearObserverQuotaMinorBonus = 180;
 
 /// Penalize tribe declare-war while OW holdings are stalled and invadable OW
 /// minors remain (tribes without sea-reachable NW provinces for this GP).
@@ -411,7 +411,7 @@ const int kDeclareWarWeakGpAdjacentInvadableMinorFloor = 580;
 
 /// Declare-war bonus toward OW minors when critically weak, invadable land
 /// remains, and the GP is not at war with any other Great Power (Refs #2509).
-const int kDeclareWarCriticalWeakNoGpWarMinorBonus = 150;
+const int kDeclareWarCriticalWeakNoGpWarMinorBonus = 220;
 
 /// Declare-war penalty toward adjacent GPs while invadable Old World minors
 /// remain and expansion is stalled (reduces GP dogpiles on seed-42).
@@ -448,7 +448,7 @@ const int kDeclareWarStalledActiveOwMinorBonus = 200;
 const int kConquestArmyMoveMinWeightWhenStalled = 75;
 
 /// Army-move weight floor when critically weak and not at war with any GP.
-const int kConquestArmyMoveMinWeightWhenCriticallyWeakNoGpWar = 95;
+const int kConquestArmyMoveMinWeightWhenCriticallyWeakNoGpWar = 100;
 
 /// Army-move score bonus for invadable provinces owned by the same-turn
 /// declare-war target while Old World expansion is stalled.
@@ -470,8 +470,12 @@ const double kConquestArmyMoveStalledGpInvadableBlockerBonus = 1900;
 const double kConquestArmyMoveStalledBehindGpBlockerBonusPerProvince = 300;
 
 /// Penalize offer-peace toward the invadable OW frontier GP while still below
-/// the turn-100 observer quota (avoid gp5/gp6 stalemate peace; Refs #2509).
+/// the turn-100 observer quota (avoid premature blocker peace; Refs #2509).
 const int kOfferPeaceBelowQuotaInvadableBlockerPenalty = 420;
+
+/// Offer-peace bonus when both sides are below the observer quota, stalled, and
+/// each other's sole invadable OW frontier GP (seed-42 gp5/gp6; Refs #2509).
+const int kOfferPeacePlateauMutualBlockerBonus = 520;
 
 /// Army-move score bonus for own provinces bordering a faction already at war
 /// (march to frontier when invadable tiles are not yet visible).

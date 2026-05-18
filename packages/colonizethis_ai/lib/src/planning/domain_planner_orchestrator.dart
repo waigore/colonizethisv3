@@ -163,13 +163,21 @@ DomainPlannerOutcome runDomainPlannersWithOutcome({
   );
   emit('aiStageE');
 
-  ctx = ctx.withOrders(
-    runDiplomacyPlannerWithResult(
-      ctx: ctx,
-      snapshot: snapshot,
-      pass: DiplomacyPlannerPass.nonDeclareWarOnly,
-    ).orders,
-  );
+  // Late peace pass undoes same-turn declare-war on the OW frontier blocker
+  // (observer seed-42 gp5/gp6; Refs #2509).
+  if (!(observerQuotaPressure &&
+      isOldWorldGpOnlyInvadableFrontier(
+        game: ctx.game,
+        snapshot: snapshot,
+      ))) {
+    ctx = ctx.withOrders(
+      runDiplomacyPlannerWithResult(
+        ctx: ctx,
+        snapshot: snapshot,
+        pass: DiplomacyPlannerPass.nonDeclareWarOnly,
+      ).orders,
+    );
+  }
   emit('aiStageF');
 
   ctx = ctx.withOrders(runResearchPlanner(ctx: ctx));

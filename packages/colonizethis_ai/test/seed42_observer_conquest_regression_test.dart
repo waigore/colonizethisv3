@@ -79,8 +79,7 @@ void main() {
     },
     skip:
         'Partial AC #2509 S10: seed-42 turn-100 — gp1/gp2/gp4 pass; '
-        'gp3 net -1, gp5 +1, gp6 +2 (gp5/gp6 GP-blocker stalemate; '
-        'regiment buildup still insufficient)',
+        'gp3 net -1, gp5 +1, gp6 +2 (late diplomacy peace pass fix pending)',
     timeout: const Timeout(Duration(minutes: 15)),
   );
 }

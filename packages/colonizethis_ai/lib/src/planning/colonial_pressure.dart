@@ -285,6 +285,55 @@ List<String> quotaMetFutileBelowQuotaGpPeaceTargets({
   return targets;
 }
 
+/// Peace the sole invadable OW frontier GP when both sides are below the
+/// observer quota with similar holdings (mutual blocker stalemate; Refs #2509).
+List<String> plateauMutualInvadableBlockerPeaceTargets({
+  required Game game,
+  required AIWorldSnapshot snapshot,
+}) {
+  if (!isBelowObserverConquestQuota(snapshot.conquest.oldWorldProvincesOwned)) {
+    return const [];
+  }
+  if (!isStalledOldWorldExpansion(snapshot.conquest.oldWorldProvincesOwned)) {
+    return const [];
+  }
+  final provinceOwner = getProvinceOwnerMap(game);
+  final minorsOwnInvadable = snapshot.conquest.invadableProvinceIdsSorted.any(
+    (pid) {
+      final owner = provinceOwner[pid];
+      return owner != null && game.minorNations.any((m) => m.id == owner);
+    },
+  );
+  if (!minorsOwnInvadable) {
+    return const [];
+  }
+  final blocker = primaryInvadableOldWorldGpBlocker(
+    game: game,
+    snapshot: snapshot,
+  );
+  if (blocker == null ||
+      !snapshot.threats.atWarWith.contains(blocker) ||
+      game.playerById(blocker) == null) {
+    return const [];
+  }
+  final gpWars = <String>[
+    for (final factionId in snapshot.threats.atWarWith)
+      if (game.playerById(factionId) != null) factionId,
+  ];
+  if (gpWars.length != 1 || gpWars.single != blocker) {
+    return const [];
+  }
+  final blockerOw = provinceCountOwnedBy(game, blocker);
+  if (!isBelowObserverConquestQuota(blockerOw)) {
+    return const [];
+  }
+  final ownOw = snapshot.conquest.oldWorldProvincesOwned;
+  if ((blockerOw - ownOw).abs() > 2) {
+    return const [];
+  }
+  return [blocker];
+}
+
 /// Peace every at-war Great Power when OW holdings are critically low and minors
 /// remain on the map (avoid OW elimination; Refs #2509).
 ///

@@ -8,6 +8,7 @@ export 'colonial_pressure.dart'
         isOldWorldGpOnlyInvadableFrontier,
         isStalledOldWorldGpBlockerFocus,
         primaryInvadableOldWorldGpBlocker,
+        plateauMutualInvadableBlockerPeaceTargets,
         quotaMetFutileBelowQuotaGpPeaceTargets,
         stalledBelowQuotaGpLeadPeaceTargets,
         unwinnableSoleGpFrontierPeaceTarget;
@@ -256,12 +257,18 @@ List<DiplomaticOrder> _filterDiplomacyCandidatesForPass({
       game: ctx.game,
       snapshot: snapshot,
     );
+    final allowBlockerPeace = blocker != null &&
+        plateauMutualInvadableBlockerPeaceTargets(
+          game: ctx.game,
+          snapshot: snapshot,
+        ).contains(blocker);
     filtered = filtered
         .where(
           (o) =>
               o.type != DiplomaticOrderType.alliance &&
               !(o.type == DiplomaticOrderType.offerPeace &&
-                  o.targetFactionId == blocker),
+                  o.targetFactionId == blocker &&
+                  !allowBlockerPeace),
         )
         .toList();
   }
@@ -338,9 +345,6 @@ DiplomacyPlannerResult? _criticalWeakMinorDeclarePlannerResultIfNeeded({
   required DiplomacyPlannerPass pass,
 }) {
   if (pass != DiplomacyPlannerPass.declareWarOnly) {
-    return null;
-  }
-  if (isOldWorldGpOnlyInvadableFrontier(game: ctx.game, snapshot: snapshot)) {
     return null;
   }
   final minorTarget = criticalWeakUninvadedMinorDeclareTarget(

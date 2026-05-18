@@ -367,6 +367,77 @@ void main() {
   );
 
   test(
+    'plateauMutualInvadableBlockerPeaceTargets peace mutual below-quota blockers',
+    () {
+      final game = Game(
+        id: 'g-plateau-mutual-blocker',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 60),
+          oldWorld: RegionData(
+            provinces: [
+              for (var i = 1; i <= 8; i++)
+                Province(
+                  id: 'oldWorld|gp5_$i',
+                  regionId: 'oldWorld',
+                  ownerId: 'gp5',
+                ),
+              for (var i = 1; i <= 8; i++)
+                Province(
+                  id: 'oldWorld|gp6_$i',
+                  regionId: 'oldWorld',
+                  ownerId: 'gp6',
+                ),
+              const Province(
+                id: 'oldWorld|inv1',
+                regionId: 'oldWorld',
+                ownerId: 'gp6',
+              ),
+              const Province(
+                id: 'oldWorld|inv2',
+                regionId: 'oldWorld',
+                ownerId: 'minor1',
+              ),
+            ],
+          ),
+          newWorld: const RegionData(),
+        ),
+        players: const [
+          Player(id: 'gp5', displayName: 'P5', isHuman: false),
+          Player(id: 'gp6', displayName: 'P6', isHuman: false),
+        ],
+        minorNations: const [MinorNation(id: 'minor1', displayName: 'M1')],
+        diplomacyRelations: [
+          const DiplomacyRelation(
+            factionId1: 'gp5',
+            factionId2: 'gp6',
+            state: RelationState.atWar,
+            score: 30,
+          ),
+        ],
+      );
+      const snapshot = AIWorldSnapshot(
+        playerId: 'gp5',
+        threats: ThreatSummary(atWarWith: ['gp6']),
+        opportunities: OpportunitySummary(),
+        conquest: ConquestSummary(
+          oldWorldProvincesOwned: 8,
+          invadableProvinceIdsSorted: ['oldWorld|inv1', 'oldWorld|inv2'],
+        ),
+        economy: EconomySummary(),
+        relations: {},
+      );
+      expect(
+        plateauMutualInvadableBlockerPeaceTargets(game: game, snapshot: snapshot),
+        ['gp6'],
+      );
+      expect(
+        collectStalledGreatPowerPeaceTargets(game: game, snapshot: snapshot),
+        contains('gp6'),
+      );
+    },
+  );
+
+  test(
     'weakHoldingsInvadableBlockerPeaceTargets peace frontier GP when outmatched',
     () {
       final game = Game(

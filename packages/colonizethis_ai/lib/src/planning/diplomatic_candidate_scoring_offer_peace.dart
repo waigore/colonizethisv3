@@ -149,6 +149,16 @@ int _scoreOfferPeaceDiplomaticOrder({
       invadableBlocker != null &&
       order.targetFactionId == invadableBlocker &&
       snapshot.threats.atWarWith.contains(invadableBlocker) &&
+      plateauMutualInvadableBlockerPeaceTargets(
+            game: game,
+            snapshot: snapshot,
+          )
+          .contains(invadableBlocker)) {
+    s += kOfferPeacePlateauMutualBlockerBonus;
+  } else if (targetGp != null &&
+      invadableBlocker != null &&
+      order.targetFactionId == invadableBlocker &&
+      snapshot.threats.atWarWith.contains(invadableBlocker) &&
       isBelowObserverConquestQuota(
         snapshot.conquest.oldWorldProvincesOwned,
       ) &&
