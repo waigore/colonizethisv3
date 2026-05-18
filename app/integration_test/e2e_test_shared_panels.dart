@@ -190,22 +190,14 @@ Future<void> e2eOpenNavalPanel(
     if (navalPanel.evaluate().isNotEmpty) {
       return true;
     }
-    await e2eWaitUntilFound(
-      tester,
-      navalPanel,
-      timeout: const Duration(seconds: 5),
-      perf: perf,
-      phaseName: 'wait_until_naval_panel_after_trigger_tap',
-    );
-    if (navalPanel.evaluate().isNotEmpty) {
-      return true;
-    }
+    // Match [e2eOpenCivilianPanel] tryOpen: bounded poll without fail() so the
+    // outer opener loop can dismiss sheets and retry rail/marker (Refs #2336).
     return e2ePumpUntilConditionOrIdle(
       tester,
       () => navalPanel.evaluate().isNotEmpty,
-      timeout: const Duration(seconds: 2),
+      timeout: const Duration(seconds: 3),
       perf: perf,
-      phaseName: 'pump_until_naval_panel_after_trigger_tap_miss',
+      phaseName: 'pump_until_naval_panel_after_trigger_tap',
     );
   }
 
