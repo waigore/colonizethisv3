@@ -741,9 +741,10 @@ List<DiplomaticOrder> _filterDiplomacyCandidatesForPass({
           .toList();
     }
   }
+  final existingThisTurn =
+      ctx.orders.diplomaticOrdersByPlayerId[ctx.nationId] ?? const [];
   final declaredThisTurn = <String>{
-    for (final o
-        in ctx.orders.diplomaticOrdersByPlayerId[ctx.nationId] ?? const [])
+    for (final o in existingThisTurn)
       if (o.type == DiplomaticOrderType.declareWar) o.targetFactionId,
   };
   switch (pass) {
@@ -755,7 +756,12 @@ List<DiplomaticOrder> _filterDiplomacyCandidatesForPass({
           .where(
             (o) =>
                 o.type != DiplomaticOrderType.declareWar &&
-                !declaredThisTurn.contains(o.targetFactionId),
+                !declaredThisTurn.contains(o.targetFactionId) &&
+                !existingThisTurn.any(
+                  (existing) =>
+                      existing.type == o.type &&
+                      existing.targetFactionId == o.targetFactionId,
+                ),
           )
           .toList();
   }
