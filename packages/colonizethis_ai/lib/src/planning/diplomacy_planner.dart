@@ -1,5 +1,4 @@
 import '../perception/perception_snapshot.dart';
-import 'army_conquest_prep.dart';
 import 'planning_imports.dart';
 import 'colonial_pressure.dart';
 export 'colonial_pressure.dart'
@@ -76,7 +75,6 @@ String? stalledGpBlockerDeclareWarTarget({
       !isStalledOldWorldExpansion(snapshot.conquest.oldWorldProvincesOwned)) {
     return null;
   }
-  final provinceOwner = getProvinceOwnerMap(game);
   final blocker = primaryInvadableOldWorldGpBlocker(
     game: game,
     snapshot: snapshot,
