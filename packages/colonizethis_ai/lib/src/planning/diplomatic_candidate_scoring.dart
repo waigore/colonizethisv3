@@ -550,7 +550,10 @@ int? _declareWarSuppressedScore(_DeclareWarTargetContext ctx) {
   }
   if (ctx.order.type == DiplomaticOrderType.declareWar &&
       ctx.isAdjacentGp &&
-      ctx.game.playerById(ctx.order.targetFactionId) != null) {
+      ctx.game.playerById(ctx.order.targetFactionId) != null &&
+      isObserverConquestExpansionPressure(
+        ctx.snapshot.conquest.oldWorldProvincesOwned,
+      )) {
     final targetOw = provinceCountOwnedBy(ctx.game, ctx.order.targetFactionId);
     if (targetOw <= kFewOldWorldProvincesDefendThreshold &&
         ctx.snapshot.conquest.oldWorldProvincesOwned >=
