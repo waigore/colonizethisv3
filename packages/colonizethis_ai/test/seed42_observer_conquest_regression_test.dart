@@ -78,8 +78,8 @@ void main() {
     }
     },
     skip:
-        'Partial AC #2509: seed-42 turn-100 gate — gp1/gp2 meet +3 by turn 10; '
-        'gp3/gp5/gp6 still short (S10: below-quota peace/dogpile/minor-declare)',
+        'Partial AC #2509 S10: seed-42 turn-100 — gp1/gp2/gp4 pass; '
+        'gp3 net -2 (collapse turns 5–15), gp5 +1, gp6 +2 (plateau 8–9 OW)',
     timeout: const Timeout(Duration(minutes: 15)),
   );
 }
