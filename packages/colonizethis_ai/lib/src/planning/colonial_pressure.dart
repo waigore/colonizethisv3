@@ -83,12 +83,18 @@ List<String> belowQuotaPeerGpPeaceTargets({
   if (!minorsOnMap) {
     return const [];
   }
+  final gpOnlyFrontier = isOldWorldGpOnlyInvadableFrontier(
+    game: game,
+    snapshot: snapshot,
+  );
+  final soleGpWar = soleAtWarGreatPowerId(game: game, snapshot: snapshot);
   final targets = <String>[
     for (final factionId in snapshot.threats.atWarWith)
       if (game.playerById(factionId) != null &&
           isBelowObserverConquestQuota(provinceCountOwnedBy(game, factionId)) &&
           ownOw <= provinceCountOwnedBy(game, factionId) &&
-          (provinceCountOwnedBy(game, factionId) - ownOw).abs() <= 2)
+          (provinceCountOwnedBy(game, factionId) - ownOw).abs() <= 2 &&
+          !(gpOnlyFrontier && soleGpWar == factionId))
         factionId,
   ]..sort();
   return targets;
@@ -109,7 +115,7 @@ List<String> nearQuotaHoldPeaceTargets({
     for (final factionId in snapshot.threats.atWarWith)
       if (game.playerById(factionId) != null) factionId,
   ];
-  if (gpWars.isEmpty) {
+  if (gpWars.length < 2) {
     return const [];
   }
   final blocker = primaryInvadableOldWorldGpBlocker(
@@ -460,7 +466,7 @@ List<String> criticalOwHoldPeaceTargets({
     return const [];
   }
   if (isBelowObserverConquestQuota(ownOw) &&
-      ownOw <= kFewOldWorldProvincesDefendThreshold) {
+      ownOw < kFewOldWorldProvincesDefendThreshold) {
     return targets;
   }
   if (ownOw > kStalledOldWorldProvinceThreshold) {

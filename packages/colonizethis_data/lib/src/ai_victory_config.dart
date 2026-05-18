@@ -181,14 +181,14 @@ const int kStalledConquestArmyMovePasses = 22;
 
 /// Max field armies created from Home Army splits when Old World expansion is
 /// stalled (parallel marches toward invasion frontiers; Refs #2509).
-const int kStalledConquestFieldArmySplitCap = 8;
+const int kStalledConquestFieldArmySplitCap = 12;
 
 /// While stalled and at war, build regiments until at least this many exist in
 /// all armies (Home + field) so splits and invasions can proceed (Refs #2509).
 const int kStalledMinRegimentCountWhenAtWar = 10;
 
 /// Higher floor when fighting the sole GP that owns the invadable OW frontier.
-const int kStalledMinRegimentCountWhenGpBlockerAtWar = 16;
+const int kStalledMinRegimentCountWhenGpBlockerAtWar = 22;
 
 /// Regiment build floor when critically weak with minor wars only (Refs #2509).
 const int kStalledMinRegimentCountWhenCriticallyWeakNoGpWar = 12;

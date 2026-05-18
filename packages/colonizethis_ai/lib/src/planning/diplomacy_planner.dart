@@ -50,13 +50,6 @@ String? criticalWeakUninvadedMinorDeclareTarget({
   if (atWarWithGp.length > 1) {
     return null;
   }
-  if (atWarWithGp.length == 1 &&
-      unwinnableSoleGpFrontierPeaceTarget(game: game, snapshot: snapshot) ==
-          null &&
-      snapshot.conquest.oldWorldProvincesOwned >
-          kFewOldWorldProvincesDefendThreshold) {
-    return null;
-  }
   if (snapshot.conquest.invadableProvinceIdsSorted.isEmpty) {
     return null;
   }

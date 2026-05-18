@@ -85,6 +85,73 @@ void main() {
   );
 
   test(
+    'belowQuotaPeerGpPeaceTargets skips sole GP blocker on GP-only frontier',
+    () {
+      final game = Game(
+        id: 'g-peer-gp-only-blocker',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 80),
+          oldWorld: RegionData(
+            provinces: [
+              for (var i = 1; i <= 8; i++)
+                Province(
+                  id: 'oldWorld|gp6_$i',
+                  regionId: 'oldWorld',
+                  ownerId: 'gp6',
+                ),
+              for (var i = 1; i <= 9; i++)
+                Province(
+                  id: 'oldWorld|gp5_$i',
+                  regionId: 'oldWorld',
+                  ownerId: 'gp5',
+                ),
+              const Province(
+                id: 'oldWorld|frontier',
+                regionId: 'oldWorld',
+                ownerId: 'gp6',
+              ),
+              const Province(
+                id: 'oldWorld|minor2',
+                regionId: 'oldWorld',
+                ownerId: 'minor2',
+              ),
+            ],
+          ),
+          newWorld: const RegionData(),
+        ),
+        players: const [
+          Player(id: 'gp5', displayName: 'P5', isHuman: false),
+          Player(id: 'gp6', displayName: 'P6', isHuman: false),
+        ],
+        minorNations: const [MinorNation(id: 'minor2', displayName: 'M2')],
+        diplomacyRelations: [
+          const DiplomacyRelation(
+            factionId1: 'gp5',
+            factionId2: 'gp6',
+            state: RelationState.atWar,
+            score: 30,
+          ),
+        ],
+      );
+      const snapshot = AIWorldSnapshot(
+        playerId: 'gp6',
+        threats: ThreatSummary(atWarWith: ['gp5']),
+        opportunities: OpportunitySummary(),
+        conquest: ConquestSummary(
+          oldWorldProvincesOwned: 8,
+          invadableProvinceIdsSorted: ['oldWorld|frontier'],
+        ),
+        economy: EconomySummary(),
+        relations: {},
+      );
+      expect(
+        belowQuotaPeerGpPeaceTargets(game: game, snapshot: snapshot),
+        isEmpty,
+      );
+    },
+  );
+
+  test(
     'nearQuotaHoldPeaceTargets peace non-blocker GP wars at 9 OW',
     () {
       final game = Game(
@@ -154,6 +221,67 @@ void main() {
       expect(
         nearQuotaHoldPeaceTargets(game: game, snapshot: snapshot),
         ['gp5'],
+      );
+    },
+  );
+
+  test(
+    'nearQuotaHoldPeaceTargets skips sole GP war at 9 OW',
+    () {
+      final game = Game(
+        id: 'g-near-quota-sole-gp-war',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 25),
+          oldWorld: RegionData(
+            provinces: [
+              for (var i = 1; i <= 9; i++)
+                Province(
+                  id: 'oldWorld|gp6_$i',
+                  regionId: 'oldWorld',
+                  ownerId: 'gp6',
+                ),
+              for (var i = 1; i <= 8; i++)
+                Province(
+                  id: 'oldWorld|gp5_$i',
+                  regionId: 'oldWorld',
+                  ownerId: 'gp5',
+                ),
+              const Province(
+                id: 'oldWorld|frontier',
+                regionId: 'oldWorld',
+                ownerId: 'gp5',
+              ),
+            ],
+          ),
+          newWorld: const RegionData(),
+        ),
+        players: const [
+          Player(id: 'gp5', displayName: 'P5', isHuman: false),
+          Player(id: 'gp6', displayName: 'P6', isHuman: false),
+        ],
+        diplomacyRelations: [
+          const DiplomacyRelation(
+            factionId1: 'gp5',
+            factionId2: 'gp6',
+            state: RelationState.atWar,
+            score: 30,
+          ),
+        ],
+      );
+      const snapshot = AIWorldSnapshot(
+        playerId: 'gp6',
+        threats: ThreatSummary(atWarWith: ['gp5']),
+        opportunities: OpportunitySummary(),
+        conquest: ConquestSummary(
+          oldWorldProvincesOwned: 9,
+          invadableProvinceIdsSorted: ['oldWorld|frontier'],
+        ),
+        economy: EconomySummary(),
+        relations: {},
+      );
+      expect(
+        nearQuotaHoldPeaceTargets(game: game, snapshot: snapshot),
+        isEmpty,
       );
     },
   );
@@ -531,6 +659,68 @@ void main() {
       expect(
         criticalWeakUninvadedMinorDeclareTarget(game: game, snapshot: snapshot),
         'minor2',
+      );
+    },
+  );
+
+  test(
+    'criticalWeakUninvadedMinorDeclareTarget fires at 8 OW with sole GP war',
+    () {
+      final game = Game(
+        id: 'g-critical-minor-with-gp-war',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 40),
+          oldWorld: RegionData(
+            provinces: [
+              for (var i = 1; i <= 8; i++)
+                Province(
+                  id: 'oldWorld|gp5_$i',
+                  regionId: 'oldWorld',
+                  ownerId: 'gp5',
+                ),
+              for (var i = 1; i <= 8; i++)
+                Province(
+                  id: 'oldWorld|gp6_$i',
+                  regionId: 'oldWorld',
+                  ownerId: 'gp6',
+                ),
+              const Province(
+                id: 'oldWorld|m1',
+                regionId: 'oldWorld',
+                ownerId: 'minor1',
+              ),
+            ],
+          ),
+          newWorld: const RegionData(),
+        ),
+        players: const [
+          Player(id: 'gp5', displayName: 'P5', isHuman: false),
+          Player(id: 'gp6', displayName: 'P6', isHuman: false),
+        ],
+        minorNations: const [MinorNation(id: 'minor1', displayName: 'M1')],
+        diplomacyRelations: [
+          const DiplomacyRelation(
+            factionId1: 'gp5',
+            factionId2: 'gp6',
+            state: RelationState.atWar,
+            score: 30,
+          ),
+        ],
+      );
+      const snapshot = AIWorldSnapshot(
+        playerId: 'gp5',
+        threats: ThreatSummary(atWarWith: ['gp6']),
+        opportunities: OpportunitySummary(),
+        conquest: ConquestSummary(
+          oldWorldProvincesOwned: 8,
+          invadableProvinceIdsSorted: ['oldWorld|m1'],
+        ),
+        economy: EconomySummary(),
+        relations: {},
+      );
+      expect(
+        criticalWeakUninvadedMinorDeclareTarget(game: game, snapshot: snapshot),
+        'minor1',
       );
     },
   );

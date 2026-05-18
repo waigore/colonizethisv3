@@ -79,9 +79,8 @@ void main() {
     },
     skip:
         'Partial AC #2509 S10: seed-42 turn-100 — gp1/gp2/gp4 pass; '
-        'gp3 net -1 (early OW peak then loss), gp5 +2, gp6 +1 '
-        '(peer declare suppress + weak-target suppress help gp5 vs dev; '
-        'asymmetric peer peace + near-quota hold pending gp3/gp6)',
+        'gp3 net -2 (peak by turn 20 then loss), gp5 +2, gp6 +1 '
+        '(gp5/gp6 GP-only blocker stalemate; survival peace narrowed to <6 OW)',
     timeout: const Timeout(Duration(minutes: 15)),
   );
 }

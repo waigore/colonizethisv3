@@ -79,9 +79,12 @@ StrategicOrderTraceResult generateStrategicOrdersWithTrace({
   _log.i('generateStrategicOrders nationId=$nationId turn=$turn');
   final snapshot = AIWorldSnapshot.fromPlayerView(view, topology: topology);
   final suppressColonialPressure = isStalledOldWorldGpBlockerFocus(
-    game: game,
-    snapshot: snapshot,
-  );
+        game: game,
+        snapshot: snapshot,
+      ) ||
+      isBelowObserverConquestQuota(
+        snapshot.conquest.oldWorldProvincesOwned,
+      );
   final goalScores = evaluateStrategicGoalScores(
     snapshot,
     config,
