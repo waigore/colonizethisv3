@@ -43,6 +43,13 @@ int provinceCountOwnedBy(Game game, String factionId) {
   return _provinceCountsByOwner(game)[factionId] ?? 0;
 }
 
+/// Old World provinces owned by [factionId] (observer conquest / survival peace).
+int oldWorldProvinceCountOwnedBy(Game game, String factionId) {
+  return game.worldState.oldWorld.provinces
+      .where((p) => p.ownerId == factionId)
+      .length;
+}
+
 /// Default weights for Great Power power score. SPEC/game/diplomacy.md § Great Power power score.
 const int powerScoreProvinceWeight = 10;
 const int powerScoreRegimentWeight = 1;

@@ -123,6 +123,10 @@ const int kDeclareWarStalledOwMinorPriorityBonus = 200;
 /// Extra declare-war weight toward OW minors while holdings are critically low.
 const int kDeclareWarWeakGpOwMinorRecoveryBonus = 120;
 
+/// Extra declare-war weight toward OW minors while below the observer quota
+/// (7–9 OW holdings; Refs #2509).
+const int kDeclareWarBelowQuotaOwMinorRecoveryBonus = 110;
+
 /// Penalize tribe declare-war while OW holdings are stalled and invadable OW
 /// minors remain (tribes without sea-reachable NW provinces for this GP).
 const int kDeclareWarStalledExpansionTribePenalty = 100;
@@ -218,7 +222,11 @@ const int kObserverConquestConsolidateMinOwProvinces =
 const int kUnwinnableSoleGpMinProvinceDeficit = 2;
 
 /// Declare-war bonus on adjacent invadable OW minors while below the observer quota.
-const int kDeclareWarBelowObserverQuotaMinorBonus = 110;
+const int kDeclareWarBelowObserverQuotaMinorBonus = 165;
+
+/// Offer-peace bonus toward any at-war Great Power when stalled with zero regiments
+/// (exit unwinnable GP wars before elimination; observer seed-42 gp3; Refs #2509).
+const int kOfferPeaceStalledZeroRegimentGpWarBonus = 270;
 
 /// Regiment build floor when critically weak, below the observer quota, and at war.
 const int kStalledMinRegimentCountWhenCriticallyWeakBelowQuota = 8;

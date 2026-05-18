@@ -22,7 +22,12 @@ void main() {
                   regionId: 'oldWorld',
                   ownerId: 'gp1',
                 ),
-              Province(id: 'oldWorld|p2', regionId: 'oldWorld', ownerId: 'gp2'),
+              for (var i = 0; i < 10; i++)
+                Province(
+                  id: 'oldWorld|p2_$i',
+                  regionId: 'oldWorld',
+                  ownerId: 'gp2',
+                ),
               Province(id: 'oldWorld|p3', regionId: 'oldWorld', ownerId: 'gp3'),
             ],
             units: [],
@@ -63,11 +68,12 @@ void main() {
               regionId: 'oldWorld',
               type: TopologyNodeType.province,
             ),
-          const TopologyNode(
-            id: 'p2',
-            regionId: 'oldWorld',
-            type: TopologyNodeType.province,
-          ),
+          for (var i = 0; i < 10; i++)
+            TopologyNode(
+              id: 'p2_$i',
+              regionId: 'oldWorld',
+              type: TopologyNodeType.province,
+            ),
           const TopologyNode(
             id: 'p3',
             regionId: 'oldWorld',
@@ -75,7 +81,7 @@ void main() {
           ),
         ],
         edges: [
-          const TopologyEdge(id1: 'p1_0', id2: 'p2'),
+          const TopologyEdge(id1: 'p1_0', id2: 'p2_0'),
           const TopologyEdge(id1: 'p1_0', id2: 'p3'),
         ],
       );
