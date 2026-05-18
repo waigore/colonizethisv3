@@ -27,12 +27,12 @@ bool isOldWorldGpOnlyInvadableFrontier({
   );
 }
 
-/// Stalled OW expansion with a GP-only invadable frontier (colonial suppression).
+/// Below-quota OW expansion with a GP-only invadable frontier (seed-42 gp5/gp6).
 bool isStalledOldWorldGpBlockerFocus({
   required Game game,
   required AIWorldSnapshot snapshot,
 }) =>
-    isStalledOldWorldExpansion(snapshot.conquest.oldWorldProvincesOwned) &&
+    isBelowObserverConquestQuota(snapshot.conquest.oldWorldProvincesOwned) &&
     isOldWorldGpOnlyInvadableFrontier(game: game, snapshot: snapshot);
 
 /// GP owning the most invadable Old World provinces (frontier blocker).
@@ -236,9 +236,16 @@ List<String> stalledBelowQuotaGpLeadPeaceTargets({
   }
   final own = snapshot.conquest.oldWorldProvincesOwned;
   final minLeadDeficit = 1;
+  final invadableBlocker = isOldWorldGpOnlyInvadableFrontier(
+        game: game,
+        snapshot: snapshot,
+      )
+      ? primaryInvadableOldWorldGpBlocker(game: game, snapshot: snapshot)
+      : null;
   final targets = <String>[
     for (final factionId in snapshot.threats.atWarWith)
       if (game.playerById(factionId) != null &&
+          factionId != invadableBlocker &&
           provinceCountOwnedBy(game, factionId) >= own + minLeadDeficit)
         factionId,
   ]..sort();

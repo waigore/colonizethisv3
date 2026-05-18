@@ -94,8 +94,8 @@ const int kSuppressGpDeclareWarMinProvincesToVictory = 12;
 const int kObserverDefaultStartOldWorldProvincesPerGp = 7;
 
 /// Old World holdings at or below this count are treated as stalled expansion
-/// (observer default start is 7 provinces per GP).
-const int kStalledOldWorldProvinceThreshold = 8;
+/// (observer default start is 7 provinces per GP; 9 includes seed-42 gp6 plateau).
+const int kStalledOldWorldProvinceThreshold = 9;
 
 /// True when [oldWorldProvincesOwned] matches the observer start-size stall band.
 bool isStalledOldWorldExpansion(int oldWorldProvincesOwned) =>
@@ -464,10 +464,14 @@ const double kConquestArmyMoveAdjacentInvadableBonus = 450;
 
 /// Army-move score bonus for invadable provinces owned by a Great Power the
 /// attacker is already at war with (seed-42 gp3/gp5 blockers; Refs #2509).
-const double kConquestArmyMoveStalledGpInvadableBlockerBonus = 1400;
+const double kConquestArmyMoveStalledGpInvadableBlockerBonus = 1900;
 
 /// Extra army-move score per OW province the invadable-blocker GP leads by.
-const double kConquestArmyMoveStalledBehindGpBlockerBonusPerProvince = 220;
+const double kConquestArmyMoveStalledBehindGpBlockerBonusPerProvince = 300;
+
+/// Penalize offer-peace toward the invadable OW frontier GP while still below
+/// the turn-100 observer quota (avoid gp5/gp6 stalemate peace; Refs #2509).
+const int kOfferPeaceBelowQuotaInvadableBlockerPenalty = 420;
 
 /// Army-move score bonus for own provinces bordering a faction already at war
 /// (march to frontier when invadable tiles are not yet visible).

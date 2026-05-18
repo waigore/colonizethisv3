@@ -311,7 +311,10 @@ List<String> weakHoldingsInvadableBlockerPeaceTargets({
   final lead = provinceCountOwnedBy(game, blocker) -
       snapshot.conquest.oldWorldProvincesOwned;
   final minLead = belowQuota
-      ? kUnwinnableSoleGpMinProvinceDeficit
+      ? (snapshot.conquest.oldWorldProvincesOwned <=
+                kObserverDefaultStartOldWorldProvincesPerGp + 2
+            ? 1
+            : kUnwinnableSoleGpMinProvinceDeficit)
       : kDeclareWarAggressorSuppressWeakGpLeadThreshold;
   if (lead < minLead) {
     return const [];
@@ -532,7 +535,14 @@ Set<String> collectStalledGreatPowerPeaceTargets({
         case final enemy?)
       enemy,
   };
-  return targets.where((id) => game.playerById(id) != null).toSet();
+  final invadableBlocker =
+      isBelowObserverConquestQuota(snapshot.conquest.oldWorldProvincesOwned) &&
+          isOldWorldGpOnlyInvadableFrontier(game: game, snapshot: snapshot)
+      ? primaryInvadableOldWorldGpBlocker(game: game, snapshot: snapshot)
+      : null;
+  return targets
+      .where((id) => game.playerById(id) != null && id != invadableBlocker)
+      .toSet();
 }
 
 /// GP–GP peace requires both sides to [offerPeace] in the same phase; mirror existing offers.
@@ -613,9 +623,10 @@ String? stalledGpBlockerDeclareWarTarget({
   if (!isOldWorldGpOnlyInvadableFrontier(game: game, snapshot: snapshot)) {
     return null;
   }
-  if (!isStalledOldWorldExpansion(snapshot.conquest.oldWorldProvincesOwned) &&
-      snapshot.conquest.oldWorldProvincesOwned >
-          kStalledOldWorldProvinceThreshold + 3) {
+  if (!isBelowObserverConquestQuota(
+        snapshot.conquest.oldWorldProvincesOwned,
+      ) &&
+      !isStalledOldWorldExpansion(snapshot.conquest.oldWorldProvincesOwned)) {
     return null;
   }
   final provinceOwner = getProvinceOwnerMap(game);
@@ -772,7 +783,15 @@ List<DiplomaticOrder> _filterDiplomacyCandidatesForPass({
       game: ctx.game,
       snapshot: snapshot,
     );
-    if (blocker != null && (consolidateGpFronts || gpOnlyFrontier)) {
+    if (blocker != null && gpOnlyFrontier) {
+      filtered = filtered
+          .where(
+            (o) =>
+                o.type != DiplomaticOrderType.declareWar ||
+                o.targetFactionId == blocker,
+          )
+          .toList();
+    } else if (blocker != null && consolidateGpFronts) {
       filtered = filtered
           .where(
             (o) =>
@@ -782,6 +801,24 @@ List<DiplomaticOrder> _filterDiplomacyCandidatesForPass({
           )
           .toList();
     }
+  }
+  if (pass == DiplomacyPlannerPass.nonDeclareWarOnly &&
+      isBelowObserverConquestQuota(
+        snapshot.conquest.oldWorldProvincesOwned,
+      ) &&
+      isOldWorldGpOnlyInvadableFrontier(game: ctx.game, snapshot: snapshot)) {
+    final blocker = primaryInvadableOldWorldGpBlocker(
+      game: ctx.game,
+      snapshot: snapshot,
+    );
+    filtered = filtered
+        .where(
+          (o) =>
+              o.type != DiplomaticOrderType.alliance &&
+              !(o.type == DiplomaticOrderType.offerPeace &&
+                  o.targetFactionId == blocker),
+        )
+        .toList();
   }
   final existingThisTurn =
       ctx.orders.diplomaticOrdersByPlayerId[ctx.nationId] ?? const [];
@@ -809,12 +846,56 @@ List<DiplomaticOrder> _filterDiplomacyCandidatesForPass({
   }
 }
 
+DiplomacyPlannerResult? _plateauGpBlockerDeclarePlannerResultIfNeeded({
+  required PlannerContext ctx,
+  required AIWorldSnapshot snapshot,
+  required DiplomacyPlannerPass pass,
+}) {
+  if (pass != DiplomacyPlannerPass.declareWarOnly) {
+    return null;
+  }
+  if (!isBelowObserverConquestQuota(
+    snapshot.conquest.oldWorldProvincesOwned,
+  )) {
+    return null;
+  }
+  if (!isOldWorldGpOnlyInvadableFrontier(game: ctx.game, snapshot: snapshot)) {
+    return null;
+  }
+  final blocker = stalledGpBlockerDeclareWarTarget(
+    game: ctx.game,
+    snapshot: snapshot,
+  );
+  if (blocker == null) {
+    return null;
+  }
+  _log.i(
+    'diplomacy forced declareWar nationId=${ctx.nationId} '
+    'gpBlocker=$blocker',
+  );
+  return DiplomacyPlannerResult(
+    orders: ctx.orders.appendDiplomaticOrders(
+      ctx.nationId,
+      [
+        DiplomaticOrder(
+          type: DiplomaticOrderType.declareWar,
+          targetFactionId: blocker,
+        ),
+      ],
+    ),
+    declaredWarTargetFactionId: blocker,
+  );
+}
+
 DiplomacyPlannerResult? _criticalWeakMinorDeclarePlannerResultIfNeeded({
   required PlannerContext ctx,
   required AIWorldSnapshot snapshot,
   required DiplomacyPlannerPass pass,
 }) {
   if (pass != DiplomacyPlannerPass.declareWarOnly) {
+    return null;
+  }
+  if (isOldWorldGpOnlyInvadableFrontier(game: ctx.game, snapshot: snapshot)) {
     return null;
   }
   final minorTarget = criticalWeakUninvadedMinorDeclareTarget(
@@ -922,6 +1003,14 @@ DiplomacyPlannerResult runDiplomacyPlannerWithResult({
     }
   }
   if (pass == DiplomacyPlannerPass.declareWarOnly) {
+    final blockerDeclareResult = _plateauGpBlockerDeclarePlannerResultIfNeeded(
+      ctx: ctx,
+      snapshot: snapshot,
+      pass: pass,
+    );
+    if (blockerDeclareResult != null) {
+      return blockerDeclareResult;
+    }
     final minorWarResult = _criticalWeakMinorDeclarePlannerResultIfNeeded(
       ctx: ctx,
       snapshot: snapshot,

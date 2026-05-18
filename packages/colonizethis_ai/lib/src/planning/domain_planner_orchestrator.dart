@@ -319,7 +319,7 @@ PlannerContext _runEconomyDomainPlanners({
           criticallyWeakBelowQuota) &&
       (snapshot.threats.atWarWith.isNotEmpty || needRegimentsToExpand) &&
       regimentCount < minRegimentFloor;
-  if (forceRegimentRebuild) {
+  if (forceRegimentRebuild || atWarWithGpBlocker) {
     buildThreshold = 0;
   }
   _log.d(
@@ -347,10 +347,11 @@ PlannerContext _runEconomyDomainPlanners({
         oldWorldProvincesOwned: snapshot.conquest.oldWorldProvincesOwned,
         colonialPressure: colonialPressure,
         militaryRebuildCrisis: forceRegimentRebuild &&
-            regimentCount <= kStalledMilitaryRebuildCrisisRegimentCap &&
-            !(observerQuotaPressure &&
-                snapshot.conquest.oldWorldProvincesOwned >
-                    kFewOldWorldProvincesDefendThreshold),
+            (atWarWithGpBlocker ||
+                (regimentCount <= kStalledMilitaryRebuildCrisisRegimentCap &&
+                    !(observerQuotaPressure &&
+                        snapshot.conquest.oldWorldProvincesOwned >
+                            kFewOldWorldProvincesDefendThreshold))),
       ),
     );
     if (chosen != null) {

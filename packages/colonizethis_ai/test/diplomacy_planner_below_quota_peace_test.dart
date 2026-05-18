@@ -8,6 +8,67 @@ import 'planner_test_helpers.dart';
 
 void main() {
   test(
+    'stalledBelowQuotaGpLeadPeaceTargets skips invadable GP blocker on GP-only frontier',
+    () {
+      final game = Game(
+        id: 'g-below-quota-skip-blocker',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 40),
+          oldWorld: RegionData(
+            provinces: [
+              for (var i = 1; i <= 8; i++)
+                Province(
+                  id: 'oldWorld|gp5_$i',
+                  regionId: 'oldWorld',
+                  ownerId: 'gp5',
+                ),
+              for (var i = 1; i <= 9; i++)
+                Province(
+                  id: 'oldWorld|gp6_$i',
+                  regionId: 'oldWorld',
+                  ownerId: 'gp6',
+                ),
+              const Province(
+                id: 'oldWorld|frontier',
+                regionId: 'oldWorld',
+                ownerId: 'gp6',
+              ),
+            ],
+          ),
+          newWorld: const RegionData(),
+        ),
+        players: const [
+          Player(id: 'gp5', displayName: 'P5', isHuman: false),
+          Player(id: 'gp6', displayName: 'P6', isHuman: false),
+        ],
+        diplomacyRelations: [
+          const DiplomacyRelation(
+            factionId1: 'gp5',
+            factionId2: 'gp6',
+            state: RelationState.atWar,
+            score: 30,
+          ),
+        ],
+      );
+      const snapshot = AIWorldSnapshot(
+        playerId: 'gp5',
+        threats: ThreatSummary(atWarWith: ['gp6']),
+        opportunities: OpportunitySummary(),
+        conquest: ConquestSummary(
+          oldWorldProvincesOwned: 8,
+          invadableProvinceIdsSorted: ['oldWorld|frontier'],
+        ),
+        economy: EconomySummary(),
+        relations: {},
+      );
+      expect(
+        stalledBelowQuotaGpLeadPeaceTargets(game: game, snapshot: snapshot),
+        isEmpty,
+      );
+    },
+  );
+
+  test(
     'stalledBelowQuotaGpLeadPeaceTargets peace stronger GP while below quota',
     () {
       final game = Game(
@@ -506,7 +567,8 @@ void main() {
               o.type == DiplomaticOrderType.offerPeace &&
               o.targetFactionId == 'gp4',
         ),
-        isTrue,
+        isFalse,
+        reason: 'below-quota GP-only frontier keeps war on invadable blocker',
       );
     },
   );
