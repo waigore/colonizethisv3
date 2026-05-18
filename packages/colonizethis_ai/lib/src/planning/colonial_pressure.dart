@@ -130,6 +130,29 @@ String? unwinnableSoleGpFrontierPeaceTarget({
   return enemy;
 }
 
+/// Peace at-war Great Powers that lead by [kUnwinnableSoleGpMinProvinceDeficit]
+/// or more while below the observer quota (even with minor wars; Refs #2509).
+List<String> stalledBelowQuotaGpLeadPeaceTargets({
+  required Game game,
+  required AIWorldSnapshot snapshot,
+}) {
+  if (!isBelowObserverConquestQuota(snapshot.conquest.oldWorldProvincesOwned)) {
+    return const [];
+  }
+  if (!isStalledOldWorldExpansion(snapshot.conquest.oldWorldProvincesOwned)) {
+    return const [];
+  }
+  final own = snapshot.conquest.oldWorldProvincesOwned;
+  final targets = <String>[
+    for (final factionId in snapshot.threats.atWarWith)
+      if (game.playerById(factionId) != null &&
+          provinceCountOwnedBy(game, factionId) >=
+              own + kUnwinnableSoleGpMinProvinceDeficit)
+        factionId,
+  ]..sort();
+  return targets;
+}
+
 /// Peace every at-war Great Power when OW holdings are critically low and minors
 /// remain on the map (avoid OW elimination; Refs #2509).
 List<String> criticalOwHoldPeaceTargets({
@@ -137,7 +160,7 @@ List<String> criticalOwHoldPeaceTargets({
   required AIWorldSnapshot snapshot,
 }) {
   if (snapshot.conquest.oldWorldProvincesOwned >
-      kFewOldWorldProvincesDefendThreshold) {
+      kStalledOldWorldProvinceThreshold) {
     return const [];
   }
   final minorsExist = game.worldState.oldWorld.provinces.any(

@@ -187,11 +187,21 @@ Map<String, Set<String>> _peaceOfferPairKeysForGreatPowers(
       offerers.length == 1 &&
       offerers.any(
         (id) =>
-            provinceCountOwnedBy(game, id) <=
+            oldWorldProvinceCountOwnedBy(game, id) <=
             kCollapsedOldWorldProvincesSurvivalPeace,
       );
+  final belowQuotaOutmatchedGpPeace = bothGreatPowers &&
+      offerers.length == 1 &&
+      offerers.any((id) {
+        final own = oldWorldProvinceCountOwnedBy(game, id);
+        final enemyOw = oldWorldProvinceCountOwnedBy(game, targetId);
+        return isBelowObserverConquestQuota(own) &&
+            enemyOw >= own + kUnwinnableSoleGpMinProvinceDeficit;
+      });
+  final oneSidedGpPeace =
+      collapsedSurvivalPeace || belowQuotaOutmatchedGpPeace;
   final hasMutualOffer =
-      !bothGreatPowers || offerers.length >= 2 || collapsedSurvivalPeace;
+      !bothGreatPowers || offerers.length >= 2 || oneSidedGpPeace;
   if (rel == null || !rel.atWar) {
     return (game: game, relations: relations);
   }
@@ -200,7 +210,7 @@ Map<String, Set<String>> _peaceOfferPairKeysForGreatPowers(
       factionMembership.isGreatPower(gpId)) {
     bothSidesAgreed =
         (offerers.contains(gpId) && offerers.contains(targetId)) ||
-        collapsedSurvivalPeace;
+        oneSidedGpPeace;
   }
   if (!bothSidesAgreed) {
     return (game: game, relations: relations);

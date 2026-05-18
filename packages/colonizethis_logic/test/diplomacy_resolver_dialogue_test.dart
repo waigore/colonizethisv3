@@ -1,3 +1,4 @@
+import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_test/test.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
@@ -125,6 +126,66 @@ void main() {
               state: RelationState.atWar,
             ),
           ],
+        );
+        final orders = Orders(
+          diplomaticOrdersByPlayerId: {
+            'gp2': const [
+              DiplomaticOrder(
+                type: DiplomaticOrderType.offerPeace,
+                targetFactionId: 'gp3',
+              ),
+            ],
+          },
+        );
+        final after = resolveDiplomacyPhase(game, orders).game;
+        expect(getRelation(after, 'gp2', 'gp3')!.atPeace, isTrue);
+      },
+    );
+
+    test(
+      'below-quota GP at eight OW provinces offerPeace ends war when outmatched',
+      () {
+        final game = Game(
+          id: 'g-below-quota-peace',
+          worldState: WorldState(
+            turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 70),
+            oldWorld: RegionData(
+              provinces: [
+                for (var i = 1; i <= 8; i++)
+                  Province(
+                    id: 'oldWorld|gp2_$i',
+                    regionId: 'oldWorld',
+                    ownerId: 'gp2',
+                  ),
+                for (var i = 1; i <= 12; i++)
+                  Province(
+                    id: 'oldWorld|gp3_$i',
+                    regionId: 'oldWorld',
+                    ownerId: 'gp3',
+                  ),
+              ],
+            ),
+            newWorld: const RegionData(),
+          ),
+          players: const [
+            Player(id: 'gp2', displayName: 'Weak', isHuman: false),
+            Player(id: 'gp3', displayName: 'Strong', isHuman: false),
+          ],
+          diplomacyRelations: [
+            DiplomacyRelation(
+              factionId1: 'gp2',
+              factionId2: 'gp3',
+              score: 40,
+              level: RelationLevel.neutral,
+              state: RelationState.atWar,
+            ),
+          ],
+        );
+        expect(
+          isBelowObserverConquestQuota(
+            oldWorldProvinceCountOwnedBy(game, 'gp2'),
+          ),
+          isTrue,
         );
         final orders = Orders(
           diplomaticOrdersByPlayerId: {

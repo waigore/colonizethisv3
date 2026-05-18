@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 
 import '../perception/perception_snapshot.dart';
+import 'army_conquest_prep.dart';
 import 'planning_imports.dart';
 import 'colonial_pressure.dart';
 import 'goal_manager.dart';
@@ -123,6 +124,15 @@ List<int> computeDiplomaticCandidateScores({
           }
           if (targetGp != null &&
               snapshot.threats.atWarWith.contains(o.targetFactionId) &&
+              stalledBelowQuotaGpLeadPeaceTargets(
+                    game: game,
+                    snapshot: snapshot,
+                  )
+                  .contains(o.targetFactionId)) {
+            s += kOfferPeaceUnwinnableSoleGpWarBonus;
+          }
+          if (targetGp != null &&
+              snapshot.threats.atWarWith.contains(o.targetFactionId) &&
               consolidateGainsSoleGpPeaceTarget(
                     game: game,
                     snapshot: snapshot,
@@ -134,12 +144,24 @@ List<int> computeDiplomaticCandidateScores({
               gpBlocker != null &&
               o.targetFactionId == gpBlocker &&
               snapshot.threats.atWarWith.contains(gpBlocker) &&
-              snapshot.conquest.oldWorldProvincesOwned <=
-                  kFewOldWorldProvincesDefendThreshold &&
+              (snapshot.conquest.oldWorldProvincesOwned <=
+                      kFewOldWorldProvincesDefendThreshold ||
+                  (regimentCountForPlayer(game, nationId) == 0 &&
+                      isStalledOldWorldExpansion(
+                        snapshot.conquest.oldWorldProvincesOwned,
+                      ))) &&
               provinceCountOwnedBy(game, gpBlocker) >=
                   snapshot.conquest.oldWorldProvincesOwned +
                       kDeclareWarAggressorSuppressWeakGpLeadThreshold) {
             s += kOfferPeaceWeakVsInvadableBlockerBonus;
+          }
+          if (targetGp != null &&
+              snapshot.threats.atWarWith.contains(o.targetFactionId) &&
+              isStalledOldWorldExpansion(
+                snapshot.conquest.oldWorldProvincesOwned,
+              ) &&
+              regimentCountForPlayer(game, nationId) == 0) {
+            s += kOfferPeaceStalledZeroRegimentGpWarBonus;
           }
         }
         s += getAgendaPeaceAcceptanceModifier(agendaId);
@@ -531,22 +553,28 @@ int? _declareWarSuppressedScore(_DeclareWarTargetContext ctx) {
       !ctx.invadableGpBlocker) {
     return 0;
   }
-  if (ctx.order.type == DiplomaticOrderType.declareWar &&
-      ctx.isAdjacentGp &&
-      ctx.snapshot.conquest.oldWorldProvincesOwned <=
-          kFewOldWorldProvincesDefendThreshold &&
-      provinceCountOwnedBy(ctx.game, ctx.order.targetFactionId) >
-          ctx.snapshot.conquest.oldWorldProvincesOwned) {
-    return 0;
-  }
-  if (ctx.order.type == DiplomaticOrderType.declareWar &&
-      ctx.isAdjacentGp &&
-      ctx.game.playerById(ctx.order.targetFactionId) != null &&
-      ctx.snapshot.conquest.oldWorldProvincesOwned <=
-          kFewOldWorldProvincesDefendThreshold &&
-      ctx.snapshot.conquest.invadableProvinceIdsSorted.isNotEmpty &&
-      !ctx.snapshot.threats.atWarWith.contains(ctx.order.targetFactionId)) {
-    return 0;
+  if (ctx.order.type == DiplomaticOrderType.declareWar && ctx.isAdjacentGp) {
+    final attackerOw = ctx.snapshot.conquest.oldWorldProvincesOwned;
+    final targetOw = provinceCountOwnedBy(ctx.game, ctx.order.targetFactionId);
+    if (ctx.game.playerById(ctx.order.targetFactionId) != null) {
+      if (isBelowObserverConquestQuota(targetOw) &&
+          attackerOw >= targetOw + kUnwinnableSoleGpMinProvinceDeficit) {
+        return 0;
+      }
+      if (isBelowObserverConquestQuota(attackerOw) &&
+          targetOw >= attackerOw + kUnwinnableSoleGpMinProvinceDeficit) {
+        return 0;
+      }
+    }
+    if (attackerOw <= kFewOldWorldProvincesDefendThreshold &&
+        targetOw > attackerOw) {
+      return 0;
+    }
+    if (attackerOw <= kFewOldWorldProvincesDefendThreshold &&
+        ctx.snapshot.conquest.invadableProvinceIdsSorted.isNotEmpty &&
+        !ctx.snapshot.threats.atWarWith.contains(ctx.order.targetFactionId)) {
+      return 0;
+    }
   }
   if (ctx.order.type == DiplomaticOrderType.declareWar &&
       ctx.isAdjacentGp &&
@@ -693,6 +721,10 @@ int _declareWarExpansionAndColonialBonuses(
       if (ctx.snapshot.conquest.oldWorldProvincesOwned <=
           kFewOldWorldProvincesDefendThreshold) {
         s += kDeclareWarWeakGpOwMinorRecoveryBonus;
+      } else if (isBelowObserverConquestQuota(
+        ctx.snapshot.conquest.oldWorldProvincesOwned,
+      )) {
+        s += kDeclareWarBelowQuotaOwMinorRecoveryBonus;
       }
       if (ctx.thresholds.warLikelihood <= kDeclareWarLowWarLikelihoodThreshold) {
         s += kDeclareWarLowWarLikelihoodAdjacentBonus;

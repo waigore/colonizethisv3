@@ -561,12 +561,12 @@ void main() {
         criticalWeakGpSurvivalPeaceTargets(game: game, snapshot: snapshot),
         ['gp3'],
       );
-      const aboveWeakThreshold = AIWorldSnapshot(
+      const aboveStalledThreshold = AIWorldSnapshot(
         playerId: 'gp4',
         threats: ThreatSummary(atWarWith: ['gp3']),
         opportunities: OpportunitySummary(),
         conquest: ConquestSummary(
-          oldWorldProvincesOwned: 7,
+          oldWorldProvincesOwned: 9,
           invadableProvinceIdsSorted: ['oldWorld|inv1'],
         ),
         economy: EconomySummary(),
@@ -575,9 +575,121 @@ void main() {
       expect(
         criticalWeakGpSurvivalPeaceTargets(
           game: game,
-          snapshot: aboveWeakThreshold,
+          snapshot: aboveStalledThreshold,
         ),
         isEmpty,
+      );
+    },
+  );
+
+  test(
+    'stalledBelowQuotaGpLeadPeaceTargets peace stronger GP while below quota',
+    () {
+      final game = Game(
+        id: 'g-below-quota-gp-lead',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 70),
+          oldWorld: RegionData(
+            provinces: [
+              for (var i = 1; i <= 8; i++)
+                Province(
+                  id: 'oldWorld|gp3_$i',
+                  regionId: 'oldWorld',
+                  ownerId: 'gp3',
+                ),
+              for (var i = 1; i <= 12; i++)
+                Province(
+                  id: 'oldWorld|gp4_$i',
+                  regionId: 'oldWorld',
+                  ownerId: 'gp4',
+                ),
+            ],
+          ),
+          newWorld: const RegionData(),
+        ),
+        players: const [
+          Player(id: 'gp3', displayName: 'P3', isHuman: false),
+          Player(id: 'gp4', displayName: 'P4', isHuman: false),
+        ],
+        diplomacyRelations: [
+          const DiplomacyRelation(
+            factionId1: 'gp3',
+            factionId2: 'gp4',
+            state: RelationState.atWar,
+            score: 30,
+          ),
+        ],
+      );
+      const snapshot = AIWorldSnapshot(
+        playerId: 'gp3',
+        threats: ThreatSummary(atWarWith: ['gp4', 'minor1']),
+        opportunities: OpportunitySummary(),
+        conquest: ConquestSummary(
+          oldWorldProvincesOwned: 8,
+          invadableProvinceIdsSorted: ['oldWorld|inv1'],
+        ),
+        economy: EconomySummary(),
+        relations: {},
+      );
+      expect(
+        stalledBelowQuotaGpLeadPeaceTargets(game: game, snapshot: snapshot),
+        ['gp4'],
+      );
+    },
+  );
+
+  test(
+    'stalledZeroRegimentGpPeaceTargets includes all GP wars when stalled',
+    () {
+      final game = Game(
+        id: 'g-zero-reg-gp-peace',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 80),
+          oldWorld: RegionData(
+            provinces: [
+              for (var i = 1; i <= 8; i++)
+                Province(
+                  id: 'oldWorld|gp3_$i',
+                  regionId: 'oldWorld',
+                  ownerId: 'gp3',
+                ),
+              for (var i = 1; i <= 12; i++)
+                Province(
+                  id: 'oldWorld|gp4_$i',
+                  regionId: 'oldWorld',
+                  ownerId: 'gp4',
+                ),
+            ],
+          ),
+          newWorld: const RegionData(),
+        ),
+        players: const [
+          Player(id: 'gp3', displayName: 'P3', isHuman: false),
+          Player(id: 'gp4', displayName: 'P4', isHuman: false),
+        ],
+        diplomacyRelations: [
+          const DiplomacyRelation(
+            factionId1: 'gp3',
+            factionId2: 'gp4',
+            state: RelationState.atWar,
+            score: 30,
+          ),
+        ],
+      );
+      const snapshot = AIWorldSnapshot(
+        playerId: 'gp3',
+        threats: ThreatSummary(atWarWith: ['gp4', 'minor1']),
+        opportunities: OpportunitySummary(),
+        conquest: ConquestSummary(
+          oldWorldProvincesOwned: 8,
+          invadableProvinceIdsSorted: ['oldWorld|inv1'],
+        ),
+        economy: EconomySummary(),
+        relations: {},
+      );
+      expect(
+        stalledZeroRegimentGpPeaceTargets(game: game, snapshot: snapshot),
+        ['gp4'],
       );
     },
   );

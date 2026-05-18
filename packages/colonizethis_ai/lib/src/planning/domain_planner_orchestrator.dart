@@ -96,6 +96,13 @@ DomainPlannerOutcome runDomainPlannersWithOutcome({
   ctx = ctx.withOrders(runMovePlanner(ctx: ctx));
   emit('aiStageC');
 
+  final peaceBeforeConquestResult = runDiplomacyPlannerWithResult(
+    ctx: ctx,
+    snapshot: snapshot,
+    pass: DiplomacyPlannerPass.nonDeclareWarOnly,
+  );
+  ctx = ctx.withOrders(peaceBeforeConquestResult.orders);
+
   final declareWarResult = runDiplomacyPlannerWithResult(
     ctx: ctx,
     snapshot: snapshot,
@@ -261,9 +268,12 @@ PlannerContext _runEconomyDomainPlanners({
   final observerQuotaPressure = isBelowObserverConquestQuota(
     snapshot.conquest.oldWorldProvincesOwned,
   );
+  final zeroRegimentsAtWar = regimentCount == 0 &&
+      snapshot.threats.atWarWith.isNotEmpty;
   final criticallyWeakBelowQuota = observerQuotaPressure &&
-      snapshot.conquest.oldWorldProvincesOwned <=
-          kFewOldWorldProvincesDefendThreshold;
+      (snapshot.conquest.oldWorldProvincesOwned <=
+              kFewOldWorldProvincesDefendThreshold ||
+          zeroRegimentsAtWar);
   final criticallyWeakNoGpWar =
       snapshot.conquest.oldWorldProvincesOwned <=
           kFewOldWorldProvincesDefendThreshold &&

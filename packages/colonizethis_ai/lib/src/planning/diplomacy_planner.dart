@@ -8,6 +8,7 @@ export 'colonial_pressure.dart'
         isOldWorldGpOnlyInvadableFrontier,
         isStalledOldWorldGpBlockerFocus,
         primaryInvadableOldWorldGpBlocker,
+        stalledBelowQuotaGpLeadPeaceTargets,
         unwinnableSoleGpFrontierPeaceTarget;
 import 'planner_context.dart';
 import '../util/ai_random_utils.dart';
@@ -255,7 +256,7 @@ List<String> criticalWeakGpSurvivalPeaceTargets({
   required AIWorldSnapshot snapshot,
 }) {
   if (snapshot.conquest.oldWorldProvincesOwned >
-      kFewOldWorldProvincesDefendThreshold) {
+      kStalledOldWorldProvinceThreshold) {
     return const [];
   }
   final ownOw = snapshot.conquest.oldWorldProvincesOwned;
@@ -275,8 +276,14 @@ List<String> weakHoldingsInvadableBlockerPeaceTargets({
   required Game game,
   required AIWorldSnapshot snapshot,
 }) {
+  final zeroRegiments =
+      regimentCountForPlayer(game, snapshot.playerId) == 0;
   if (snapshot.conquest.oldWorldProvincesOwned >
-      kFewOldWorldProvincesDefendThreshold) {
+          kFewOldWorldProvincesDefendThreshold &&
+      !(zeroRegiments &&
+          isStalledOldWorldExpansion(
+            snapshot.conquest.oldWorldProvincesOwned,
+          ))) {
     return const [];
   }
   final blocker = primaryInvadableOldWorldGpBlocker(
@@ -314,6 +321,24 @@ List<String> criticalMultiFrontGpPeaceTargets({
     return const [];
   }
   return multiFrontNonBlockerGpPeaceTargets(game: game, snapshot: snapshot);
+}
+
+/// Peace every at-war Great Power when stalled with zero regiments (Refs #2509).
+List<String> stalledZeroRegimentGpPeaceTargets({
+  required Game game,
+  required AIWorldSnapshot snapshot,
+}) {
+  if (!isStalledOldWorldExpansion(snapshot.conquest.oldWorldProvincesOwned)) {
+    return const [];
+  }
+  if (regimentCountForPlayer(game, snapshot.playerId) > 0) {
+    return const [];
+  }
+  final targets = <String>[
+    for (final factionId in snapshot.threats.atWarWith)
+      if (game.playerById(factionId) != null) factionId,
+  ]..sort();
+  return targets;
 }
 
 /// Peace a sole GP enemy when both sides have zero regiments (stalemate reset).
@@ -396,7 +421,11 @@ bool stalledOwExpansionNeedsPeacePass({
         .isNotEmpty ||
     mutualZeroRegimentGpStalematePeaceTargets(game: game, snapshot: snapshot)
         .isNotEmpty ||
+    stalledZeroRegimentGpPeaceTargets(game: game, snapshot: snapshot)
+        .isNotEmpty ||
     criticalOwHoldPeaceTargets(game: game, snapshot: snapshot).isNotEmpty ||
+    stalledBelowQuotaGpLeadPeaceTargets(game: game, snapshot: snapshot)
+        .isNotEmpty ||
     unwinnableSoleGpFrontierPeaceTarget(game: game, snapshot: snapshot) !=
         null ||
     consolidateGainsSoleGpPeaceTarget(game: game, snapshot: snapshot) != null;
@@ -459,10 +488,12 @@ Set<String> collectStalledGreatPowerPeaceTargets({
     ...criticalWeakGpSurvivalPeaceTargets(game: game, snapshot: snapshot),
     ...weakHoldingsInvadableBlockerPeaceTargets(game: game, snapshot: snapshot),
     ...mutualZeroRegimentGpStalematePeaceTargets(game: game, snapshot: snapshot),
+    ...stalledZeroRegimentGpPeaceTargets(game: game, snapshot: snapshot),
     if (stalledStrongerGpBlockerPeaceTarget(game: game, snapshot: snapshot) !=
         null)
       stalledStrongerGpBlockerPeaceTarget(game: game, snapshot: snapshot)!,
     ...criticalOwHoldPeaceTargets(game: game, snapshot: snapshot),
+    ...stalledBelowQuotaGpLeadPeaceTargets(game: game, snapshot: snapshot),
     if (unwinnableSoleGpFrontierPeaceTarget(game: game, snapshot: snapshot)
         case final enemy?)
       enemy,
