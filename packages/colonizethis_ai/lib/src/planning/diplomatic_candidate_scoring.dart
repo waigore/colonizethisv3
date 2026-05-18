@@ -502,6 +502,16 @@ int? _declareWarSuppressedScore(_DeclareWarTargetContext ctx) {
       !ctx.invadableGpBlocker) {
     return 0;
   }
+  final atWarWithGp = ctx.snapshot.threats.atWarWith.any(
+    (id) => ctx.game.playerById(id) != null,
+  );
+  if (ctx.stalledOwExpansion &&
+      atWarWithGp &&
+      ctx.isAdjacentGp &&
+      ctx.game.playerById(ctx.order.targetFactionId) != null &&
+      !ctx.snapshot.threats.atWarWith.contains(ctx.order.targetFactionId)) {
+    return 0;
+  }
   if (ctx.stalledOwExpansion &&
       ctx.invadableGpBlocker &&
       provinceCountOwnedBy(ctx.game, ctx.order.targetFactionId) >

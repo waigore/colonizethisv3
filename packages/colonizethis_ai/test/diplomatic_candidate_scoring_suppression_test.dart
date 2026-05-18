@@ -756,5 +756,67 @@ void main() {
         expect(score, greaterThanOrEqualTo(50 + kOfferPeaceStalledFutileGpWarBonus));
       },
     );
+
+    test(
+      'stalled GP at war suppresses declareWar on a second Great Power',
+      () {
+        const snap = AIWorldSnapshot(
+          playerId: 'gp6',
+          threats: ThreatSummary(atWarWith: ['gp3']),
+          opportunities: OpportunitySummary(),
+          conquest: ConquestSummary(
+            oldWorldProvincesOwned: 7,
+            provincesToVictory: 24,
+            invadableProvinceIdsSorted: ['oldWorld|p1'],
+            adjacentOwnerFactionIdsSorted: ['gp5'],
+          ),
+          colonial: ColonialSummary(),
+          economy: EconomySummary(),
+          relations: {},
+        );
+        final game = Game(
+          id: 'g-stalled-second-gp-front',
+          worldState: WorldState(
+            turnState: const TurnState(
+              phase: TurnPhase.orders,
+              turnNumber: 20,
+            ),
+            oldWorld: const RegionData(
+              provinces: [
+                Province(
+                  id: 'oldWorld|p1',
+                  regionId: 'oldWorld',
+                  ownerId: 'gp5',
+                ),
+              ],
+            ),
+            newWorld: const RegionData(),
+          ),
+          players: const [
+            Player(id: 'gp3', displayName: 'A', isHuman: false),
+            Player(id: 'gp5', displayName: 'B', isHuman: false),
+            Player(id: 'gp6', displayName: 'C', isHuman: false),
+          ],
+        );
+        const config = AIConfig(
+          leaderId: 'henry',
+          personalityId: 'henry',
+          hiddenAgendaId: 'merchant',
+        );
+        final score = computeDiplomaticCandidateScores(
+          candidates: const [
+            DiplomaticOrder(
+              type: DiplomaticOrderType.declareWar,
+              targetFactionId: 'gp5',
+            ),
+          ],
+          nationId: 'gp6',
+          game: game,
+          snapshot: snap,
+          config: config,
+        ).single;
+        expect(score, 0);
+      },
+    );
   });
 }

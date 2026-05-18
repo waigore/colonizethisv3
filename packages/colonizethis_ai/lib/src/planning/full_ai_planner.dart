@@ -136,7 +136,7 @@ FullAIResult generateOrdersForGameFullAI(
   // when minors are still available (observer seed-42 conquest gate; Refs #2509).
   final rotateStart = aiPlayerIds.isEmpty
       ? 0
-      : (turn + 2) % aiPlayerIds.length;
+      : (turn + 3) % aiPlayerIds.length;
   final orderedAiPlayerIds = [
     ...aiPlayerIds.sublist(rotateStart),
     ...aiPlayerIds.sublist(0, rotateStart),

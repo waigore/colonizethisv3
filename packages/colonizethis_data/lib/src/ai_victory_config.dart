@@ -141,6 +141,9 @@ const int kDiplomacyDeclareWarMinWeightWhenStalled = 50;
 /// Extra regiment build weight when OW holdings are stalled (any primary goal).
 const double kBuildRegimentBonusWhenStalledExpansion = 4.0;
 
+/// Extra regiment build weight when at war with no regiments in any army.
+const double kBuildRegimentBonusWhenZeroRegimentsAtWar = 12.0;
+
 /// Declare-war bonus when the target still owns an adjacent invadable province.
 const int kDeclareWarMinorWithInvadableProvinceBonus = 45;
 
@@ -154,10 +157,13 @@ const int kStalledConquestFieldArmySplitCap = 8;
 
 /// While stalled and at war, build regiments until at least this many exist in
 /// all armies (Home + field) so splits and invasions can proceed (Refs #2509).
-const int kStalledMinRegimentCountWhenAtWar = 5;
+const int kStalledMinRegimentCountWhenAtWar = 8;
 
 /// Higher floor when fighting the sole GP that owns the invadable OW frontier.
-const int kStalledMinRegimentCountWhenGpBlockerAtWar = 6;
+const int kStalledMinRegimentCountWhenGpBlockerAtWar = 10;
+
+/// Extra regiment build floor per Old World province the frontier blocker leads by.
+const int kStalledMinRegimentCountPerProvinceDeficitVsBlocker = 2;
 
 /// Offer-peace bonus toward a minor/tribe at war that no longer owns invadable land.
 const int kOfferPeaceFutileMinorWarBonus = 80;
@@ -352,6 +358,9 @@ const double kConquestArmyMoveAdjacentInvadableBonus = 450;
 /// Army-move score bonus for invadable provinces owned by a Great Power the
 /// attacker is already at war with (seed-42 gp3/gp5 blockers; Refs #2509).
 const double kConquestArmyMoveStalledGpInvadableBlockerBonus = 1400;
+
+/// Extra army-move score per OW province the invadable-blocker GP leads by.
+const double kConquestArmyMoveStalledBehindGpBlockerBonusPerProvince = 220;
 
 /// Army-move score bonus for own provinces bordering a faction already at war
 /// (march to frontier when invadable tiles are not yet visible).

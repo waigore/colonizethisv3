@@ -1,4 +1,5 @@
 import '../perception/perception_snapshot.dart';
+import 'army_conquest_prep.dart';
 import 'planning_imports.dart';
 import 'colonial_pressure.dart';
 export 'colonial_pressure.dart'
@@ -246,6 +247,51 @@ List<String> stalledExpansionDistractionPeaceTargets({
   return targets;
 }
 
+/// When OW holdings are critically low, peace non-blocker Great Power fronts only
+/// (avoid total collapse from multi-front GP wars; Refs #2509).
+List<String> criticalMultiFrontGpPeaceTargets({
+  required Game game,
+  required AIWorldSnapshot snapshot,
+}) {
+  if (snapshot.conquest.oldWorldProvincesOwned >
+      kFewOldWorldProvincesDefendThreshold) {
+    return const [];
+  }
+  final gpWars = <String>[
+    for (final factionId in snapshot.threats.atWarWith)
+      if (game.playerById(factionId) != null) factionId,
+  ];
+  if (gpWars.length < 2) {
+    return const [];
+  }
+  return multiFrontNonBlockerGpPeaceTargets(game: game, snapshot: snapshot);
+}
+
+/// Peace a sole GP enemy when both sides have zero regiments (stalemate reset).
+List<String> mutualZeroRegimentGpStalematePeaceTargets({
+  required Game game,
+  required AIWorldSnapshot snapshot,
+}) {
+  if (!isStalledOldWorldExpansion(snapshot.conquest.oldWorldProvincesOwned)) {
+    return const [];
+  }
+  if (regimentCountForPlayer(game, snapshot.playerId) > 0) {
+    return const [];
+  }
+  final gpWars = <String>[
+    for (final factionId in snapshot.threats.atWarWith)
+      if (game.playerById(factionId) != null) factionId,
+  ];
+  if (gpWars.length != 1) {
+    return const [];
+  }
+  final enemy = gpWars.single;
+  if (regimentCountForPlayer(game, enemy) > 0) {
+    return const [];
+  }
+  return [enemy];
+}
+
 bool stalledOwExpansionNeedsPeacePass({
   required Game game,
   required AIWorldSnapshot snapshot,
@@ -259,6 +305,9 @@ bool stalledOwExpansionNeedsPeacePass({
     atWarGpDistractionTribePeaceTargets(game: game, snapshot: snapshot)
         .isNotEmpty ||
     multiFrontNonBlockerGpPeaceTargets(game: game, snapshot: snapshot)
+        .isNotEmpty ||
+    criticalMultiFrontGpPeaceTargets(game: game, snapshot: snapshot).isNotEmpty ||
+    mutualZeroRegimentGpStalematePeaceTargets(game: game, snapshot: snapshot)
         .isNotEmpty;
 
 /// When fighting 2+ Great Powers, peace every non-blocker GP (Refs #2509).
@@ -266,21 +315,32 @@ List<String> multiFrontNonBlockerGpPeaceTargets({
   required Game game,
   required AIWorldSnapshot snapshot,
 }) {
-  if (snapshot.conquest.invadableProvinceIdsSorted.isEmpty) {
-    return const [];
-  }
-  final blocker = primaryInvadableOldWorldGpBlocker(
-    game: game,
-    snapshot: snapshot,
-  );
-  if (blocker == null) {
-    return const [];
-  }
   final gpWars = <String>[
     for (final factionId in snapshot.threats.atWarWith)
       if (game.playerById(factionId) != null) factionId,
   ];
   if (gpWars.length <= 1) {
+    return const [];
+  }
+  if (!isStalledOldWorldExpansion(snapshot.conquest.oldWorldProvincesOwned) &&
+      snapshot.conquest.invadableProvinceIdsSorted.isEmpty) {
+    return const [];
+  }
+  var blocker = primaryInvadableOldWorldGpBlocker(
+    game: game,
+    snapshot: snapshot,
+  );
+  if (blocker == null) {
+    var bestOw = 0;
+    for (final factionId in gpWars) {
+      final ow = provinceCountOwnedBy(game, factionId);
+      if (ow > bestOw) {
+        bestOw = ow;
+        blocker = factionId;
+      }
+    }
+  }
+  if (blocker == null) {
     return const [];
   }
   final targets = <String>[
@@ -586,6 +646,11 @@ DiplomacyPlannerResult? _stalledPeacePlannerResultIfNeeded({
       snapshot: snapshot,
     ),
     ...multiFrontNonBlockerGpPeaceTargets(
+      game: ctx.game,
+      snapshot: snapshot,
+    ),
+    ...criticalMultiFrontGpPeaceTargets(game: ctx.game, snapshot: snapshot),
+    ...mutualZeroRegimentGpStalematePeaceTargets(
       game: ctx.game,
       snapshot: snapshot,
     ),

@@ -329,6 +329,14 @@ double _stalledExpansionArmyMoveScoreDelta({
     var delta = atWarGpInvadableBlocker
         ? kConquestArmyMoveStalledGpInvadableBlockerBonus
         : kConquestArmyMoveStalledDeclaredTargetBonus;
+    if (atWarGpInvadableBlocker) {
+      final blockerOw = provinceCountOwnedBy(game, destOwner);
+      final deficit = blockerOw - snapshot.conquest.oldWorldProvincesOwned;
+      if (deficit > 0) {
+        delta +=
+            deficit * kConquestArmyMoveStalledBehindGpBlockerBonusPerProvince;
+      }
+    }
     if (invadable.contains(move.destinationProvinceId)) {
       delta += kConquestArmyMoveStalledDeclaredTargetInvadableBonus;
     }

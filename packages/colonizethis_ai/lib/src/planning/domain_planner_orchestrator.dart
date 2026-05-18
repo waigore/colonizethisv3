@@ -263,9 +263,16 @@ PlannerContext _runEconomyDomainPlanners({
       : null;
   final atWarWithGpBlocker = gpBlocker != null &&
       snapshot.threats.atWarWith.contains(gpBlocker);
-  final minRegimentFloor = atWarWithGpBlocker
+  var minRegimentFloor = atWarWithGpBlocker
       ? kStalledMinRegimentCountWhenGpBlockerAtWar
       : kStalledMinRegimentCountWhenAtWar;
+  if (atWarWithGpBlocker && gpBlocker != null) {
+    final deficit = provinceCountOwnedBy(ctx.game, gpBlocker) -
+        snapshot.conquest.oldWorldProvincesOwned;
+    if (deficit > 0) {
+      minRegimentFloor += deficit * kStalledMinRegimentCountPerProvinceDeficitVsBlocker;
+    }
+  }
   final forceRegimentRebuild =
       isStalledOldWorldExpansion(snapshot.conquest.oldWorldProvincesOwned) &&
           snapshot.threats.atWarWith.isNotEmpty &&
@@ -296,6 +303,7 @@ PlannerContext _runEconomyDomainPlanners({
       provincesToVictory: snapshot.conquest.provincesToVictory,
       oldWorldProvincesOwned: snapshot.conquest.oldWorldProvincesOwned,
       colonialPressure: colonialPressure,
+      militaryRebuildCrisis: forceRegimentRebuild && regimentCount == 0,
     );
     if (chosen != null) {
       _log.i('build chosen nationId=${ctx.nationId} unitType=${chosen.unitType}');

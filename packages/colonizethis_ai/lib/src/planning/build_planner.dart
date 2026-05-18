@@ -16,12 +16,21 @@ BuildUnitOrder? pickBuildOrder({
   int provincesToVictory = 0,
   int oldWorldProvincesOwned = 0,
   bool colonialPressure = false,
+  bool militaryRebuildCrisis = false,
 }) {
   final primaryGoal = ctx.primaryGoal;
   final config = ctx.config;
   final nationId = ctx.nationId;
   final seed = ctx.seeds.economySeed + 1;
   if (buildCandidates.isEmpty) return null;
+  if (militaryRebuildCrisis) {
+    final regimentsOnly = buildCandidates
+        .where((o) => RegimentEconomyCatalog.byId.containsKey(o.unitType))
+        .toList();
+    if (regimentsOnly.isNotEmpty) {
+      return regimentsOnly.first;
+    }
+  }
   var candidates = buildCandidates;
   if (isStalledOldWorldExpansion(oldWorldProvincesOwned) &&
       provincesToVictory > kBuildRegimentVictoryPaceThreshold &&
@@ -58,6 +67,9 @@ BuildUnitOrder? pickBuildOrder({
     if (isRegiment &&
         isStalledOldWorldExpansion(oldWorldProvincesOwned)) {
       militaryBonus += kBuildRegimentBonusWhenStalledExpansion;
+      if (militaryRebuildCrisis) {
+        militaryBonus += kBuildRegimentBonusWhenZeroRegimentsAtWar;
+      }
     }
     if (primaryGoal == StrategicGoal.conquer ||
         primaryGoal == StrategicGoal.defend) {

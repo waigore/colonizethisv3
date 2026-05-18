@@ -119,6 +119,7 @@ StrategicOrderTraceResult generateStrategicOrdersWithTrace({
     config: config,
     seeds: seeds,
     colonial: snapshot.colonial,
+    snapshot: planningSnapshot,
   );
   final plannerOutcome = runDomainPlannersWithOutcome(
     game: planningGame,
