@@ -78,8 +78,8 @@ void main() {
     }
     },
     skip:
-        'Partial AC #2509: gp3/gp6 OW collapse from GP wars; weak-GP guards and '
-        'survival peace landed — turn-100 gate still open for gp3/gp6',
+        'Partial AC #2509: seed-42 turn-100 gate passes gp3/gp6 (+4/+10) but '
+        'regresses gp4/gp5 with regiment-rebuild crisis cap; per-GP tuning follow-up',
     timeout: const Timeout(Duration(minutes: 12)),
   );
 }

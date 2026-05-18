@@ -255,6 +255,12 @@ PlannerContext _runEconomyDomainPlanners({
     buildThreshold = math.min(buildThreshold, colonialBuildCap);
   }
   final regimentCount = regimentCountForPlayer(ctx.game, ctx.nationId);
+  final criticallyWeakNoGpWar =
+      snapshot.conquest.oldWorldProvincesOwned <=
+          kFewOldWorldProvincesDefendThreshold &&
+      !snapshot.threats.atWarWith.any(
+        (id) => ctx.game.playerById(id) != null,
+      );
   final gpBlocker = isStalledOldWorldGpBlockerFocus(
         game: ctx.game,
         snapshot: snapshot,
@@ -272,6 +278,11 @@ PlannerContext _runEconomyDomainPlanners({
     if (deficit > 0) {
       minRegimentFloor += deficit * kStalledMinRegimentCountPerProvinceDeficitVsBlocker;
     }
+  }
+  if (criticallyWeakNoGpWar &&
+      snapshot.threats.atWarWith.isNotEmpty &&
+      minRegimentFloor < kStalledMinRegimentCountWhenCriticallyWeakNoGpWar) {
+    minRegimentFloor = kStalledMinRegimentCountWhenCriticallyWeakNoGpWar;
   }
   final forceRegimentRebuild =
       isStalledOldWorldExpansion(snapshot.conquest.oldWorldProvincesOwned) &&
@@ -304,7 +315,8 @@ PlannerContext _runEconomyDomainPlanners({
         provincesToVictory: snapshot.conquest.provincesToVictory,
         oldWorldProvincesOwned: snapshot.conquest.oldWorldProvincesOwned,
         colonialPressure: colonialPressure,
-        militaryRebuildCrisis: forceRegimentRebuild && regimentCount == 0,
+        militaryRebuildCrisis: forceRegimentRebuild &&
+            regimentCount <= kStalledMilitaryRebuildCrisisRegimentCap,
       ),
     );
     if (chosen != null) {

@@ -170,6 +170,13 @@ const int kStalledMinRegimentCountWhenAtWar = 8;
 /// Higher floor when fighting the sole GP that owns the invadable OW frontier.
 const int kStalledMinRegimentCountWhenGpBlockerAtWar = 10;
 
+/// Regiment build floor when critically weak with minor wars only (Refs #2509).
+const int kStalledMinRegimentCountWhenCriticallyWeakNoGpWar = 12;
+
+/// When stalled and below the regiment floor, prioritize regiment builds only if
+/// current count is at or below this cap (avoids starving mid-tier GPs; #2509).
+const int kStalledMilitaryRebuildCrisisRegimentCap = 4;
+
 /// Extra regiment build floor per Old World province the frontier blocker leads by.
 const int kStalledMinRegimentCountPerProvinceDeficitVsBlocker = 2;
 
@@ -336,6 +343,10 @@ const int kDeclareWarStalledAdjacentInvadableMinorFloor = 400;
 /// Higher floor for critically weak GPs toward adjacent invadable OW minors.
 const int kDeclareWarWeakGpAdjacentInvadableMinorFloor = 580;
 
+/// Declare-war bonus toward OW minors when critically weak, invadable land
+/// remains, and the GP is not at war with any other Great Power (Refs #2509).
+const int kDeclareWarCriticalWeakNoGpWarMinorBonus = 150;
+
 /// Declare-war penalty toward adjacent GPs while invadable Old World minors
 /// remain and expansion is stalled (reduces GP dogpiles on seed-42).
 const int kDeclareWarStalledGpWhenMinorsRemainPenalty = 280;
@@ -369,6 +380,9 @@ const int kDeclareWarStalledActiveOwMinorBonus = 200;
 
 /// Minimum conquest army-move pass weight when Old World expansion is stalled.
 const int kConquestArmyMoveMinWeightWhenStalled = 75;
+
+/// Army-move weight floor when critically weak and not at war with any GP.
+const int kConquestArmyMoveMinWeightWhenCriticallyWeakNoGpWar = 95;
 
 /// Army-move score bonus for invadable provinces owned by the same-turn
 /// declare-war target while Old World expansion is stalled.

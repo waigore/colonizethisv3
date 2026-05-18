@@ -339,6 +339,40 @@ List<String> mutualZeroRegimentGpStalematePeaceTargets({
   return [enemy];
 }
 
+/// First minor nation that owns invadable OW land but is not yet at war, while
+/// this GP is critically weak and not fighting any Great Power (Refs #2509).
+String? criticalWeakUninvadedMinorDeclareTarget({
+  required Game game,
+  required AIWorldSnapshot snapshot,
+}) {
+  if (snapshot.conquest.oldWorldProvincesOwned >
+      kFewOldWorldProvincesDefendThreshold) {
+    return null;
+  }
+  if (snapshot.threats.atWarWith.any((id) => game.playerById(id) != null)) {
+    return null;
+  }
+  if (snapshot.conquest.invadableProvinceIdsSorted.isEmpty) {
+    return null;
+  }
+  final provinceOwner = getProvinceOwnerMap(game);
+  final candidates = <String>{};
+  for (final pid in snapshot.conquest.invadableProvinceIdsSorted) {
+    final owner = provinceOwner[pid];
+    if (owner == null ||
+        !game.minorNations.any((m) => m.id == owner) ||
+        snapshot.threats.atWarWith.contains(owner)) {
+      continue;
+    }
+    candidates.add(owner);
+  }
+  if (candidates.isEmpty) {
+    return null;
+  }
+  final sorted = candidates.toList()..sort();
+  return sorted.first;
+}
+
 bool stalledOwExpansionNeedsPeacePass({
   required Game game,
   required AIWorldSnapshot snapshot,
@@ -677,6 +711,38 @@ List<DiplomaticOrder> _filterDiplomacyCandidatesForPass({
   }
 }
 
+DiplomacyPlannerResult? _criticalWeakMinorDeclarePlannerResultIfNeeded({
+  required PlannerContext ctx,
+  required AIWorldSnapshot snapshot,
+  required DiplomacyPlannerPass pass,
+}) {
+  if (pass != DiplomacyPlannerPass.declareWarOnly) {
+    return null;
+  }
+  final minorTarget = criticalWeakUninvadedMinorDeclareTarget(
+    game: ctx.game,
+    snapshot: snapshot,
+  );
+  if (minorTarget == null) {
+    return null;
+  }
+  _log.i(
+    'diplomacy forced declareWar nationId=${ctx.nationId} target=$minorTarget',
+  );
+  return DiplomacyPlannerResult(
+    orders: ctx.orders.appendDiplomaticOrders(
+      ctx.nationId,
+      [
+        DiplomaticOrder(
+          type: DiplomaticOrderType.declareWar,
+          targetFactionId: minorTarget,
+        ),
+      ],
+    ),
+    declaredWarTargetFactionId: minorTarget,
+  );
+}
+
 DiplomacyPlannerResult? _stalledPeacePlannerResultIfNeeded({
   required PlannerContext ctx,
   required AIWorldSnapshot snapshot,
@@ -776,6 +842,28 @@ DiplomacyPlannerResult runDiplomacyPlannerWithResult({
   required AIWorldSnapshot snapshot,
   DiplomacyPlannerPass pass = DiplomacyPlannerPass.all,
 }) {
+  // Survival peace must run even when diplomacy weight is low or suggestion
+  // APIs return no candidates (observer seed-42 gp3/gp6; Refs #2509).
+  if (pass != DiplomacyPlannerPass.declareWarOnly) {
+    final peaceResult = _stalledPeacePlannerResultIfNeeded(
+      ctx: ctx,
+      snapshot: snapshot,
+      pass: pass,
+    );
+    if (peaceResult != null) {
+      return peaceResult;
+    }
+  }
+  if (pass == DiplomacyPlannerPass.declareWarOnly) {
+    final minorWarResult = _criticalWeakMinorDeclarePlannerResultIfNeeded(
+      ctx: ctx,
+      snapshot: snapshot,
+      pass: pass,
+    );
+    if (minorWarResult != null) {
+      return minorWarResult;
+    }
+  }
   final weight = _resolveDiplomacyPlannerWeight(
     ctx: ctx,
     snapshot: snapshot,
@@ -794,15 +882,6 @@ DiplomacyPlannerResult runDiplomacyPlannerWithResult({
   );
   if (filtered.isEmpty) {
     return DiplomacyPlannerResult(orders: ctx.orders);
-  }
-
-  final peaceResult = _stalledPeacePlannerResultIfNeeded(
-    ctx: ctx,
-    snapshot: snapshot,
-    pass: pass,
-  );
-  if (peaceResult != null) {
-    return peaceResult;
   }
 
   final scores = computeDiplomaticCandidateScores(
