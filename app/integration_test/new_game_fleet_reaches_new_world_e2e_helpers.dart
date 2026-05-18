@@ -124,7 +124,7 @@ Future<void> _pickMoveDestinationAndConfirm(
           // Row may not be built yet; fall back to drag probing below.
         }
       }
-      const maxWarpDragProbes = 12;
+      const maxWarpDragProbes = 8;
       for (var i = 0;
           i < maxWarpDragProbes && warp.hitTestable().evaluate().isEmpty;
           i++) {

@@ -170,12 +170,12 @@ void main() {
       await closeBottomSheet(tester, perf: perf);
 
       // --- Civilian rail: after draft orders ---
-      await tester.tap(find.byKey(kEmpireCivilianUnitsButtonKey));
+      await openCivilianPanel(tester, perf: perf);
       await expectCivilianPanelTexts();
       await closeBottomSheet(tester, perf: perf);
 
       // --- Naval rail: collapsed ---
-      await tester.tap(find.byKey(kEmpireNavalUnitsButtonKey));
+      await openNavalPanel(tester, perf: perf);
       await expectNavalPanelTexts(expanded: false);
       await expandEachExpansionTileOnce(tester);
       final navalPanelRoot = find.byKey(kCtE2ENavalPanelRootKey);

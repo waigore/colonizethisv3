@@ -86,7 +86,23 @@ void main() {
     ) {
       ensureUnderWallClock('turn loop start turnIdx=$turnIdx');
       perf.bumpCounter('turn_loop_iterations');
+      if (_fleetReachDoneFromCtSnapshotOnly()) {
+        perf.timing(
+          'test_total',
+          testSw.elapsed,
+          meta: 'result=reached_snapshot_precheck',
+        );
+        return;
+      }
       await dismissTransientUi(tester, perf: perf);
+      if (_fleetReachDoneFromCtSnapshotOnly()) {
+        perf.timing(
+          'test_total',
+          testSw.elapsed,
+          meta: 'result=reached_snapshot_after_dismiss',
+        );
+        return;
+      }
       await _tapNewWorldRegionTabIfPresent(tester);
       if (_fleetReachDoneFromCtSnapshotOnly()) {
         perf.timing(
@@ -228,7 +244,13 @@ void main() {
       ) {
         ensureUnderWallClock('turn loop start turnIdx=$turnIdx');
         perf.bumpCounter('turn_loop_iterations');
+        if (_fleetReachDoneFromCtSnapshotOnly()) {
+          break;
+        }
         await dismissTransientUi(tester, perf: perf);
+        if (_fleetReachDoneFromCtSnapshotOnly()) {
+          break;
+        }
         await _tapNewWorldRegionTabIfPresent(tester);
         if (_fleetReachDoneFromCtSnapshotOnly()) {
           break;
