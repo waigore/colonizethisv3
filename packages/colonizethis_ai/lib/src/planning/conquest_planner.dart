@@ -1,4 +1,3 @@
-import 'diplomacy_planner.dart' show primaryInvadableOldWorldGpBlocker;
 import 'goal_manager.dart';
 import 'planning_imports.dart';
 import '../perception/perception_snapshot.dart';
@@ -21,9 +20,6 @@ String? stalledConquestDeclaredWarTarget({
   required AIWorldSnapshot snapshot,
   required String? declaredThisTurn,
 }) {
-  if (!isStalledOldWorldExpansion(snapshot.conquest.oldWorldProvincesOwned)) {
-    return declaredThisTurn;
-  }
   final provinceOwner = getProvinceOwnerMap(game);
   final gpBlocker = primaryInvadableOldWorldGpBlocker(
     game: game,
@@ -35,6 +31,9 @@ String? stalledConquestDeclaredWarTarget({
         (pid) => provinceOwner[pid] == gpBlocker,
       )) {
     return gpBlocker;
+  }
+  if (!isStalledOldWorldExpansion(snapshot.conquest.oldWorldProvincesOwned)) {
+    return declaredThisTurn;
   }
   String? bestMinorId;
   var bestInvadableCount = 0;

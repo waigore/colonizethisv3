@@ -101,6 +101,17 @@ List<int> computeDiplomaticCandidateScores({
               })) {
             s += kOfferPeaceStalledFutileGpWarBonus;
           }
+          final gpBlocker = primaryInvadableOldWorldGpBlocker(
+            game: game,
+            snapshot: snapshot,
+          );
+          if (targetGp != null &&
+              gpBlocker != null &&
+              o.targetFactionId != gpBlocker &&
+              snapshot.threats.atWarWith.contains(o.targetFactionId) &&
+              isOldWorldGpOnlyInvadableFrontier(game: game, snapshot: snapshot)) {
+            s += kOfferPeaceStalledFutileGpWarBonus;
+          }
         }
         s += getAgendaPeaceAcceptanceModifier(agendaId);
         s += (thresholds.peaceTendency - 50);

@@ -1,6 +1,11 @@
 import '../perception/perception_snapshot.dart';
 import 'planning_imports.dart';
 import 'colonial_pressure.dart';
+export 'colonial_pressure.dart'
+    show
+        isOldWorldGpOnlyInvadableFrontier,
+        isStalledOldWorldGpBlockerFocus,
+        primaryInvadableOldWorldGpBlocker;
 import 'planner_context.dart';
 import '../util/ai_random_utils.dart';
 import '../util/orders_extensions.dart';
@@ -80,10 +85,7 @@ List<String> stalledGpBlockerFocusPeaceTargets({
   required Game game,
   required AIWorldSnapshot snapshot,
 }) {
-  if (!isStalledOldWorldExpansion(snapshot.conquest.oldWorldProvincesOwned)) {
-    return const [];
-  }
-  if (snapshot.conquest.invadableProvinceIdsSorted.isEmpty) {
+  if (!isOldWorldGpOnlyInvadableFrontier(game: game, snapshot: snapshot)) {
     return const [];
   }
   final provinceOwner = getProvinceOwnerMap(game);
@@ -259,29 +261,6 @@ bool stalledOwExpansionNeedsPeacePass({
     multiFrontNonBlockerGpPeaceTargets(game: game, snapshot: snapshot)
         .isNotEmpty;
 
-/// GP owning the most invadable Old World provinces (frontier blocker).
-String? primaryInvadableOldWorldGpBlocker({
-  required Game game,
-  required AIWorldSnapshot snapshot,
-}) {
-  final provinceOwner = getProvinceOwnerMap(game);
-  String? bestGpId;
-  var bestCount = 0;
-  for (final provinceId in snapshot.conquest.invadableProvinceIdsSorted) {
-    final owner = provinceOwner[provinceId];
-    if (owner == null || game.playerById(owner) == null) continue;
-    var count = 0;
-    for (final pid in snapshot.conquest.invadableProvinceIdsSorted) {
-      if (provinceOwner[pid] == owner) count++;
-    }
-    if (count > bestCount) {
-      bestCount = count;
-      bestGpId = owner;
-    }
-  }
-  return bestGpId;
-}
-
 /// When fighting 2+ Great Powers, peace every non-blocker GP (Refs #2509).
 List<String> multiFrontNonBlockerGpPeaceTargets({
   required Game game,
@@ -403,22 +382,15 @@ String? stalledGpBlockerDeclareWarTarget({
   required Game game,
   required AIWorldSnapshot snapshot,
 }) {
-  if (!isStalledOldWorldExpansion(snapshot.conquest.oldWorldProvincesOwned)) {
+  if (!isOldWorldGpOnlyInvadableFrontier(game: game, snapshot: snapshot)) {
     return null;
   }
-  if (snapshot.conquest.invadableProvinceIdsSorted.isEmpty) {
+  if (!isStalledOldWorldExpansion(snapshot.conquest.oldWorldProvincesOwned) &&
+      snapshot.conquest.oldWorldProvincesOwned >
+          kStalledOldWorldProvinceThreshold + 3) {
     return null;
   }
   final provinceOwner = getProvinceOwnerMap(game);
-  final minorsOwnInvadable = snapshot.conquest.invadableProvinceIdsSorted.any(
-    (pid) {
-      final owner = provinceOwner[pid];
-      return owner != null && game.minorNations.any((m) => m.id == owner);
-    },
-  );
-  if (minorsOwnInvadable) {
-    return null;
-  }
   final blocker = primaryInvadableOldWorldGpBlocker(
     game: game,
     snapshot: snapshot,
@@ -550,7 +522,11 @@ List<DiplomaticOrder> _filterDiplomacyCandidatesForPass({
               snapshot.conquest.oldWorldProvincesOwned,
             ) &&
             gpWars.isNotEmpty);
-    if (consolidateGpFronts && blocker != null) {
+    final gpOnlyFrontier = isOldWorldGpOnlyInvadableFrontier(
+      game: ctx.game,
+      snapshot: snapshot,
+    );
+    if (blocker != null && (consolidateGpFronts || gpOnlyFrontier)) {
       filtered = filtered
           .where(
             (o) =>
@@ -640,10 +616,7 @@ DiplomaticOrder? _chooseDiplomaticOrder({
   required List<DiplomaticOrder> candidates,
   required List<int> scores,
 }) {
-  if (pass == DiplomacyPlannerPass.declareWarOnly &&
-      isStalledOldWorldExpansion(snapshot.conquest.oldWorldProvincesOwned) &&
-      snapshot.conquest.provincesToVictory >
-          kConquerScoreFloorProvincesToVictoryThreshold) {
+  if (pass == DiplomacyPlannerPass.declareWarOnly) {
     final forcedBlocker = stalledGpBlockerDeclareWarTarget(
       game: ctx.game,
       snapshot: snapshot,
@@ -654,8 +627,12 @@ DiplomaticOrder? _chooseDiplomaticOrder({
         targetFactionId: forcedBlocker,
       );
     }
-    final idx = _pickHighestScoreIndex(scores);
-    return idx == null ? null : candidates[idx];
+    if (isStalledOldWorldExpansion(snapshot.conquest.oldWorldProvincesOwned) &&
+        snapshot.conquest.provincesToVictory >
+            kConquerScoreFloorProvincesToVictoryThreshold) {
+      final idx = _pickHighestScoreIndex(scores);
+      return idx == null ? null : candidates[idx];
+    }
   }
   return selectWeightedCandidate(
     candidates: candidates,
