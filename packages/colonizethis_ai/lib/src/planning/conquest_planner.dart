@@ -32,7 +32,9 @@ String? stalledConquestDeclaredWarTarget({
       )) {
     return gpBlocker;
   }
-  if (!isStalledOldWorldExpansion(snapshot.conquest.oldWorldProvincesOwned)) {
+  if (!isObserverConquestExpansionPressure(
+    snapshot.conquest.oldWorldProvincesOwned,
+  )) {
     return declaredThisTurn;
   }
   String? bestMinorId;
@@ -57,7 +59,7 @@ Orders runConquestArmyMovePlanner({
   required AIWorldSnapshot snapshot,
   String? declaredWarTargetFactionId,
 }) {
-  final stalledExpansion = isStalledOldWorldExpansion(
+  final stalledExpansion = isObserverConquestExpansionPressure(
     snapshot.conquest.oldWorldProvincesOwned,
   );
   final armyMoveCandidates = ctx.suggestionAPI.suggestArmyMoveOrders(

@@ -90,6 +90,9 @@ const int kDeclareWarAdjacentMinorBonusWhenFarFromVictory = 55;
 /// per-GP conquest AC; only 18 non-GP Old World provinces at default setup).
 const int kSuppressGpDeclareWarMinProvincesToVictory = 12;
 
+/// Observer default start OW provinces per GP (Refs #2509).
+const int kObserverDefaultStartOldWorldProvincesPerGp = 7;
+
 /// Old World holdings at or below this count are treated as stalled expansion
 /// (observer default start is 7 provinces per GP).
 const int kStalledOldWorldProvinceThreshold = 8;
@@ -125,7 +128,7 @@ const int kDeclareWarWeakGpOwMinorRecoveryBonus = 120;
 
 /// Extra declare-war weight toward OW minors while below the observer quota
 /// (7–9 OW holdings; Refs #2509).
-const int kDeclareWarBelowQuotaOwMinorRecoveryBonus = 110;
+const int kDeclareWarBelowQuotaOwMinorRecoveryBonus = 150;
 
 /// Penalize tribe declare-war while OW holdings are stalled and invadable OW
 /// minors remain (tribes without sea-reachable NW provinces for this GP).
@@ -222,14 +225,14 @@ const int kObserverConquestConsolidateMinOwProvinces =
 const int kUnwinnableSoleGpMinProvinceDeficit = 2;
 
 /// Declare-war bonus on adjacent invadable OW minors while below the observer quota.
-const int kDeclareWarBelowObserverQuotaMinorBonus = 165;
+const int kDeclareWarBelowObserverQuotaMinorBonus = 195;
 
 /// Offer-peace bonus toward any at-war Great Power when stalled with zero regiments
 /// (exit unwinnable GP wars before elimination; observer seed-42 gp3; Refs #2509).
 const int kOfferPeaceStalledZeroRegimentGpWarBonus = 270;
 
 /// Regiment build floor when critically weak, below the observer quota, and at war.
-const int kStalledMinRegimentCountWhenCriticallyWeakBelowQuota = 8;
+const int kStalledMinRegimentCountWhenCriticallyWeakBelowQuota = 12;
 
 /// Offer-peace bonus for [unwinnableSoleGpFrontierPeaceTarget] (Refs #2509).
 const int kOfferPeaceUnwinnableSoleGpWarBonus = 250;
