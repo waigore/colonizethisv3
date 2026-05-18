@@ -310,6 +310,75 @@ void main() {
       },
     );
 
+    test(
+      'GP at war with two GPs offerPeace ends one front without reciprocal offer (Refs #2509)',
+      () {
+        final game = Game(
+          id: 'g-multi-front-peace',
+          worldState: WorldState(
+            turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 50),
+            oldWorld: RegionData(
+              provinces: [
+                for (var i = 1; i <= 11; i++)
+                  Province(
+                    id: 'oldWorld|gp2_$i',
+                    regionId: 'oldWorld',
+                    ownerId: 'gp2',
+                  ),
+                for (var i = 1; i <= 12; i++)
+                  Province(
+                    id: 'oldWorld|gp3_$i',
+                    regionId: 'oldWorld',
+                    ownerId: 'gp3',
+                  ),
+                for (var i = 1; i <= 10; i++)
+                  Province(
+                    id: 'oldWorld|gp4_$i',
+                    regionId: 'oldWorld',
+                    ownerId: 'gp4',
+                  ),
+              ],
+            ),
+            newWorld: const RegionData(),
+          ),
+          players: const [
+            Player(id: 'gp2', displayName: 'Multi', isHuman: false),
+            Player(id: 'gp3', displayName: 'FrontA', isHuman: false),
+            Player(id: 'gp4', displayName: 'FrontB', isHuman: false),
+          ],
+          diplomacyRelations: [
+            DiplomacyRelation(
+              factionId1: 'gp2',
+              factionId2: 'gp3',
+              score: 40,
+              level: RelationLevel.neutral,
+              state: RelationState.atWar,
+            ),
+            DiplomacyRelation(
+              factionId1: 'gp2',
+              factionId2: 'gp4',
+              score: 40,
+              level: RelationLevel.neutral,
+              state: RelationState.atWar,
+            ),
+          ],
+        );
+        final orders = Orders(
+          diplomaticOrdersByPlayerId: {
+            'gp2': const [
+              DiplomaticOrder(
+                type: DiplomaticOrderType.offerPeace,
+                targetFactionId: 'gp3',
+              ),
+            ],
+          },
+        );
+        final after = resolveDiplomacyPhase(game, orders).game;
+        expect(getRelation(after, 'gp2', 'gp3')!.atPeace, isTrue);
+        expect(getRelation(after, 'gp2', 'gp4')!.atWar, isTrue);
+      },
+    );
+
     test('human declare war does not invoke onDialogue', () {
       final game = Game(
         id: 'g1',

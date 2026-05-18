@@ -19,7 +19,7 @@ void main() {
     );
     final topo = init.combinedTopology;
     final tileMap = init.tileMapByRegion;
-    for (var t = 0; t < 50; t++) {
+    void resolveTurn() {
       final fullAi = generateOrdersForGameFullAI(
         game,
         topo,
@@ -41,6 +41,12 @@ void main() {
       );
       game = (result as TurnResolutionComplete).game;
     }
+
+    for (var t = 0; t < 50; t++) {
+      resolveTurn();
+    }
+    // Turn-50 diplomacy must consolidate multi-front GP wars raised on turn 49.
+    resolveTurn();
     final view = buildPlayerView(game, topo, 'gp4');
     final snap = AIWorldSnapshot.fromPlayerView(view, topology: topo);
     final gpWars = snap.threats.atWarWith

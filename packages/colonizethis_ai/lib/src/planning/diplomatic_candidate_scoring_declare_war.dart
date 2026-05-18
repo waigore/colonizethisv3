@@ -380,6 +380,36 @@ int? _declareWarSuppressedScore(_DeclareWarTargetContext ctx) {
       !ctx.snapshot.threats.atWarWith.contains(ctx.order.targetFactionId)) {
     return 0;
   }
+  if (ctx.isAdjacentGp &&
+      ctx.game.playerById(ctx.order.targetFactionId) != null &&
+      !ctx.snapshot.threats.atWarWith.contains(ctx.order.targetFactionId)) {
+    final targetGpId = ctx.order.targetFactionId;
+    final targetGpWarCount = ctx.game.diplomacyRelations
+        .where(
+          (r) =>
+              r.state == RelationState.atWar &&
+              (r.factionId1 == targetGpId || r.factionId2 == targetGpId),
+        )
+        .map(
+          (r) => r.factionId1 == targetGpId ? r.factionId2 : r.factionId1,
+        )
+        .where((id) => ctx.game.playerById(id) != null)
+        .length;
+    if (targetGpWarCount >= 2) {
+      return 0;
+    }
+  }
+  // While an invadable OW frontier has a GP blocker, do not open (or stack)
+  // wars on other adjacent GPs — applies above the stalled OW band (seed-42 gp4).
+  if (atWarWithGp &&
+      ctx.isAdjacentGp &&
+      ctx.game.playerById(ctx.order.targetFactionId) != null &&
+      !ctx.snapshot.threats.atWarWith.contains(ctx.order.targetFactionId) &&
+      ctx.snapshot.conquest.invadableProvinceIdsSorted.isNotEmpty &&
+      ctx.invadableGpBlocker != null &&
+      ctx.order.targetFactionId != ctx.invadableGpBlocker) {
+    return 0;
+  }
   if (ctx.stalledOwExpansion &&
       ctx.invadableGpBlocker &&
       provinceCountOwnedBy(ctx.game, ctx.order.targetFactionId) >
