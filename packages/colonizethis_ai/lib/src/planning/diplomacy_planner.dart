@@ -326,6 +326,8 @@ bool stalledOwExpansionNeedsPeacePass({
     multiFrontNonBlockerGpPeaceTargets(game: game, snapshot: snapshot)
         .isNotEmpty ||
     criticalMultiFrontGpPeaceTargets(game: game, snapshot: snapshot).isNotEmpty ||
+    criticalWeakGpSurvivalPeaceTargets(game: game, snapshot: snapshot)
+        .isNotEmpty ||
     mutualZeroRegimentGpStalematePeaceTargets(game: game, snapshot: snapshot)
         .isNotEmpty;
 
@@ -383,6 +385,7 @@ Set<String> collectStalledGreatPowerPeaceTargets({
     ),
     ...atWarGpDistractionTribePeaceTargets(game: game, snapshot: snapshot),
     ...multiFrontNonBlockerGpPeaceTargets(game: game, snapshot: snapshot),
+    ...criticalWeakGpSurvivalPeaceTargets(game: game, snapshot: snapshot),
     if (stalledStrongerGpBlockerPeaceTarget(game: game, snapshot: snapshot) !=
         null)
       stalledStrongerGpBlockerPeaceTarget(game: game, snapshot: snapshot)!,
@@ -669,6 +672,7 @@ DiplomacyPlannerResult? _stalledPeacePlannerResultIfNeeded({
       snapshot: snapshot,
     ),
     ...criticalMultiFrontGpPeaceTargets(game: ctx.game, snapshot: snapshot),
+    ...criticalWeakGpSurvivalPeaceTargets(game: ctx.game, snapshot: snapshot),
     ...mutualZeroRegimentGpStalematePeaceTargets(
       game: ctx.game,
       snapshot: snapshot,
