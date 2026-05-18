@@ -389,6 +389,17 @@ int? _declareWarSuppressedAdjacentGpScore(
           attackerOw >= targetOw + belowQuotaSuppressLead) {
         return 0;
       }
+      if (targetOw <= kObserverDefaultStartOldWorldProvincesPerGp &&
+          attackerOw > targetOw &&
+          !ctx.invadableGpBlocker &&
+          !ctx.snapshot.threats.atWarWith.contains(ctx.order.targetFactionId)) {
+        return 0;
+      }
+      if (targetOw <= kObserverDefaultStartOldWorldProvincesPerGp &&
+          attackerOw >= kObserverConquestMinOwProvincesPerGp - 1 &&
+          !ctx.invadableGpBlocker) {
+        return 0;
+      }
       if (isBelowObserverConquestQuota(attackerOw) &&
           targetOw >= attackerOw + kUnwinnableSoleGpMinProvinceDeficit) {
         return 0;
@@ -457,10 +468,12 @@ int? _declareWarSuppressedWarConcentrationScore(
       return 0;
     }
     final attackerOw = ctx.snapshot.conquest.oldWorldProvincesOwned;
+    if (isBelowObserverConquestQuota(targetOw) && targetGpWarCount >= 1) {
+      return 0;
+    }
     if (isBelowObserverConquestQuota(targetOw) &&
-        targetGpWarCount >= 1 &&
-        (ctx.currentTurn <= kDeclareWarEarlyAntiDogpileMaxTurn ||
-            !isBelowObserverConquestQuota(attackerOw))) {
+        attackerOw >= targetOw + 2 &&
+        !ctx.invadableGpBlocker) {
       return 0;
     }
   }
@@ -712,11 +725,22 @@ int _declareWarAdjacencyAndStalledBonuses(
         !ctx.isTribeTarget &&
         ctx.isAdjacentOwner &&
         ctx.invadableOwners.contains(ctx.order.targetFactionId) &&
-        (ownedOw == 8 || ownedOw == 9) &&
+        isBelowObserverConquestQuota(ownedOw) &&
         !ctx.snapshot.threats.atWarWith.any(
           (id) => ctx.game.playerById(id) != null,
         )) {
       s += kDeclareWarPlateauOwMinorBonus;
+    }
+    if (ctx.isMinorTarget &&
+        !ctx.isTribeTarget &&
+        ctx.isAdjacentOwner &&
+        ctx.invadableOwners.contains(ctx.order.targetFactionId) &&
+        ownedOw >= kObserverDefaultStartOldWorldProvincesPerGp + 1 &&
+        ownedOw < kObserverConquestMinOwProvincesPerGp &&
+        !ctx.snapshot.threats.atWarWith.any(
+          (id) => ctx.game.playerById(id) != null,
+        )) {
+      s += kDeclareWarNearObserverQuotaMinorBonus;
     }
     if (ctx.isMinorTarget && ctx.stalledOwExpansion) {
       s += kDeclareWarStalledExpansionMinorBonus;

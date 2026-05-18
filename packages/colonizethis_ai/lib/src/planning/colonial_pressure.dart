@@ -281,16 +281,12 @@ List<String> quotaMetFutileBelowQuotaGpPeaceTargets({
 /// Peace every at-war Great Power when OW holdings are critically low and minors
 /// remain on the map (avoid OW elimination; Refs #2509).
 ///
-/// When below the observer conquest quota, peace all GP wars even if minors were
-/// eliminated from the map (seed-42 gp3 late-game collapse).
+/// Peace all GP wars when critically weak (≤6 OW) or stalled with minors left.
 List<String> criticalOwHoldPeaceTargets({
   required Game game,
   required AIWorldSnapshot snapshot,
 }) {
-  if (snapshot.conquest.oldWorldProvincesOwned >
-      kStalledOldWorldProvinceThreshold) {
-    return const [];
-  }
+  final ownOw = snapshot.conquest.oldWorldProvincesOwned;
   final targets = <String>[
     for (final factionId in snapshot.threats.atWarWith)
       if (game.playerById(factionId) != null) factionId,
@@ -298,10 +294,12 @@ List<String> criticalOwHoldPeaceTargets({
   if (targets.isEmpty) {
     return const [];
   }
-  if (isBelowObserverConquestQuota(snapshot.conquest.oldWorldProvincesOwned) &&
-      snapshot.conquest.oldWorldProvincesOwned <=
-          kStalledOldWorldProvinceThreshold) {
+  if (isBelowObserverConquestQuota(ownOw) &&
+      ownOw <= kFewOldWorldProvincesDefendThreshold) {
     return targets;
+  }
+  if (ownOw > kStalledOldWorldProvinceThreshold) {
+    return const [];
   }
   final minorsExist = game.worldState.oldWorld.provinces.any(
     (p) =>

@@ -387,13 +387,14 @@ List<String> mutualZeroRegimentGpStalematePeaceTargets({
 }
 
 /// First minor nation that owns invadable OW land but is not yet at war, while
-/// this GP is critically weak and not fighting any Great Power (Refs #2509).
+/// this GP is below the observer quota and not fighting any Great Power (Refs #2509).
 String? criticalWeakUninvadedMinorDeclareTarget({
   required Game game,
   required AIWorldSnapshot snapshot,
 }) {
-  if (snapshot.conquest.oldWorldProvincesOwned >
-      kFewOldWorldProvincesDefendThreshold) {
+  if (!isBelowObserverConquestQuota(
+    snapshot.conquest.oldWorldProvincesOwned,
+  )) {
     return null;
   }
   if (snapshot.threats.atWarWith.any((id) => game.playerById(id) != null)) {

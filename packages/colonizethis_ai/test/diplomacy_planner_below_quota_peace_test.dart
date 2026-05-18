@@ -133,7 +133,7 @@ void main() {
   );
 
   test(
-    'criticalOwHoldPeaceTargets peace sole GP war at 7 OW below quota when minors gone',
+    'criticalOwHoldPeaceTargets skips sole GP war at 7 OW (uses other peace paths)',
     () {
       final game = Game(
         id: 'g-critical-below-quota-seven-ow',
@@ -183,7 +183,7 @@ void main() {
       );
       expect(
         criticalOwHoldPeaceTargets(game: game, snapshot: snapshot),
-        ['gp4'],
+        isEmpty,
       );
     },
   );

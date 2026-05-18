@@ -132,7 +132,11 @@ const int kDeclareWarBelowQuotaOwMinorRecoveryBonus = 280;
 
 /// Extra declare-war toward adjacent invadable OW minors at 8–9 OW with no GP war
 /// (observer seed-42 gp5/gp6 plateau; Refs #2509).
-const int kDeclareWarPlateauOwMinorBonus = 160;
+const int kDeclareWarPlateauOwMinorBonus = 220;
+
+/// Extra declare-war weight toward invadable minors when 8–9 OW (one province
+/// short of the turn-100 observer gate from default start; Refs #2509).
+const int kDeclareWarNearObserverQuotaMinorBonus = 120;
 
 /// Penalize tribe declare-war while OW holdings are stalled and invadable OW
 /// minors remain (tribes without sea-reachable NW provinces for this GP).
@@ -140,16 +144,17 @@ const int kDeclareWarStalledExpansionTribePenalty = 100;
 
 /// Extra declare-war weight on adjacent OW minors while minors still exist on
 /// the map and the campaign is in the early expansion window (turn ≤ 30).
-const int kDeclareWarEarlyExpansionMinorBonus = 180;
+const int kDeclareWarEarlyExpansionMinorBonus = 260;
 
 /// Penalize tribe declare-war in that early window while any OW minor remains.
 const int kDeclareWarEarlyExpansionTribePenalty = 160;
 
 /// Last turn (inclusive) for [kDeclareWarEarlyExpansionMinorBonus].
-const int kDeclareWarEarlyExpansionMaxTurn = 80;
+const int kDeclareWarEarlyExpansionMaxTurn = 100;
 
 /// Through this turn, quota-meeting GPs must not open new wars on weaker
-/// below-quota neighbors (observer seed-42 gp3 turns 4–8; Refs #2509).
+/// below-quota neighbors when the target is not already in a GP war (Refs #2509).
+/// Pile-ons on below-quota victims already at war are suppressed at all turns.
 const int kDeclareWarEarlyAntiDogpileMaxTurn = 20;
 
 /// Penalty on adjacent minor declare-war when the GP already holds many OW provinces.
@@ -238,7 +243,7 @@ const int kObserverConquestConsolidateMinOwProvinces =
 const int kUnwinnableSoleGpMinProvinceDeficit = 2;
 
 /// Declare-war bonus on adjacent invadable OW minors while below the observer quota.
-const int kDeclareWarBelowObserverQuotaMinorBonus = 240;
+const int kDeclareWarBelowObserverQuotaMinorBonus = 300;
 
 /// Offer-peace bonus toward any at-war Great Power when stalled with zero regiments
 /// (exit unwinnable GP wars before elimination; observer seed-42 gp3; Refs #2509).
