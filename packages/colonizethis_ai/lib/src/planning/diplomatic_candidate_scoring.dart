@@ -744,6 +744,15 @@ int _declareWarAdjacencyAndStalledBonuses(
         ctx.invadableOwners.contains(ctx.order.targetFactionId)) {
       s += kDeclareWarMinorWithInvadableProvinceBonus;
     }
+    if (ctx.isMinorTarget &&
+        !ctx.isTribeTarget &&
+        ctx.isAdjacentOwner &&
+        ctx.invadableOwners.contains(ctx.order.targetFactionId) &&
+        isBelowObserverConquestQuota(
+          ctx.snapshot.conquest.oldWorldProvincesOwned,
+        )) {
+      s += kDeclareWarBelowObserverQuotaMinorBonus;
+    }
     if (ctx.isMinorTarget && ctx.stalledOwExpansion) {
       s += kDeclareWarStalledExpansionMinorBonus;
     }

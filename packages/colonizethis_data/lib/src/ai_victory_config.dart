@@ -209,6 +209,17 @@ bool isObserverConquestExpansionPressure(int oldWorldProvincesOwned) =>
 /// leads that enemy by at least this many OW provinces (lock gains; Refs #2509).
 const int kConsolidateGainsSoleGpProvinceLead = 3;
 
+/// Minimum OW holdings before [consolidateGainsSoleGpPeaceTarget] may fire (quota + buffer).
+const int kObserverConquestConsolidateMinOwProvinces =
+    kObserverConquestMinOwProvincesPerGp + 2;
+
+/// Enemy must lead by at least this many OW provinces for
+/// [unwinnableSoleGpFrontierPeaceTarget] (avoid premature sole-GP peace).
+const int kUnwinnableSoleGpMinProvinceDeficit = 2;
+
+/// Declare-war bonus on adjacent invadable OW minors while below the observer quota.
+const int kDeclareWarBelowObserverQuotaMinorBonus = 95;
+
 /// Offer-peace bonus for [unwinnableSoleGpFrontierPeaceTarget] (Refs #2509).
 const int kOfferPeaceUnwinnableSoleGpWarBonus = 250;
 

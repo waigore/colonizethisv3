@@ -124,7 +124,7 @@ String? unwinnableSoleGpFrontierPeaceTarget({
   }
   final own = snapshot.conquest.oldWorldProvincesOwned;
   final enemyOw = provinceCountOwnedBy(game, enemy);
-  if (enemyOw <= own) {
+  if (enemyOw < own + kUnwinnableSoleGpMinProvinceDeficit) {
     return null;
   }
   return enemy;
@@ -166,7 +166,7 @@ String? consolidateGainsSoleGpPeaceTarget({
     return null;
   }
   final own = snapshot.conquest.oldWorldProvincesOwned;
-  if (own < kObserverConquestMinOwProvincesPerGp) {
+  if (own < kObserverConquestConsolidateMinOwProvinces) {
     return null;
   }
   final enemyOw = provinceCountOwnedBy(game, enemy);
