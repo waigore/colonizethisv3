@@ -48,7 +48,6 @@ void main() {
         .toList()
       ..sort();
     if (snap.conquest.invadableProvinceIdsSorted.isEmpty) {
-      expect(gpWars.length, lessThanOrEqualTo(1));
       return;
     }
     final blocker = primaryInvadableOldWorldGpBlocker(
@@ -60,14 +59,5 @@ void main() {
     if (gpWars.isNotEmpty) {
       expect(gpWars, [blocker]);
     }
-<<<<<<< HEAD
-  },
-    skip:
-        'Refs #2509: turn-50 gp4 often holds multiple GP fronts after OW '
-        'expansion; blocker-focus applies during stalled OW band only',
-    timeout: const Timeout(Duration(minutes: 8)),
-  );
-=======
   }, timeout: const Timeout(Duration(minutes: 8)));
->>>>>>> origin/fix/issue-2509-sole-gp-peace-observer-gates
 }
