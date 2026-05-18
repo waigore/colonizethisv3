@@ -5,6 +5,7 @@ import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'domain_planner_test_fake_api.dart';
+import 'planner_test_helpers.dart';
 
 void main() {
   group('move planner diplomacy filter', () {
@@ -52,13 +53,6 @@ void main() {
       );
       const topology = MapTopology(nodes: [], edges: []);
       final view = buildPlayerView(game, topology, 'gp1');
-      final snapshot = AIWorldSnapshot.fromPlayerView(view);
-      const config = AIConfig(
-        leaderId: 'napoleon',
-        personalityId: 'napoleon',
-        hiddenAgendaId: 'warmonger',
-      );
-      final seeds = AISeedBundle.fromTurnSeed(444);
       const fakeApi = FakeOrderSuggestionAPIForDomainPlannerTests(
         work: [],
         build: [],
@@ -71,22 +65,18 @@ void main() {
         navalMission: [],
         diplomatic: [],
       );
-      const economyPlan = EconomyPlan(
-        productionAssignments: [],
-        cargoPreference: CargoPreference.none,
-      );
-
-      final orders = runDomainPlanners(
+      final orders = runDomainPlannersInTest(
         game: game,
         topology: topology,
-        nationId: 'gp1',
         view: view,
-        snapshot: snapshot,
-        config: config,
+        turnSeed: 444,
         primaryGoal: StrategicGoal.conquer,
-        seeds: seeds,
+        config: const AIConfig(
+          leaderId: 'napoleon',
+          personalityId: 'napoleon',
+          hiddenAgendaId: 'warmonger',
+        ),
         suggestionAPI: fakeApi,
-        economyPlan: economyPlan,
       );
 
       final moves = orders.moveOrdersByPlayerId['gp1'] ?? [];

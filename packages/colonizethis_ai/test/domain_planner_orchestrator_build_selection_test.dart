@@ -5,6 +5,7 @@ import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'domain_planner_test_fake_api.dart';
+import 'planner_test_helpers.dart';
 
 void main() {
   group('runDomainPlanners', () {
@@ -52,23 +53,17 @@ void main() {
         );
         const topology = MapTopology(nodes: [], edges: []);
         final view = buildPlayerView(game, topology, 'gp1');
-        final snapshot = AIWorldSnapshot.fromPlayerView(view);
-        const config = AIConfig(
-          leaderId: 'henry',
-          personalityId: 'henry',
-          hiddenAgendaId: 'peacemaker',
-        );
-        final seeds = AISeedBundle.fromTurnSeed(42);
-
-        final orders = runDomainPlanners(
+        final orders = runDomainPlannersInTest(
           game: game,
           topology: topology,
-          nationId: 'gp1',
           view: view,
-          snapshot: snapshot,
-          config: config,
+          turnSeed: 42,
           primaryGoal: StrategicGoal.expand,
-          seeds: seeds,
+          config: const AIConfig(
+            leaderId: 'henry',
+            personalityId: 'henry',
+            hiddenAgendaId: 'peacemaker',
+          ),
           suggestionAPI: fakeApi,
           economyPlan: economyPlanStrongCargo,
         );
@@ -126,36 +121,17 @@ void main() {
           ],
         );
         const topology = MapTopology(nodes: [], edges: []);
-        final view = buildPlayerView(game, topology, 'gp1');
-        final snapshot = AIWorldSnapshot.fromPlayerView(view);
-        const config = AIConfig(
-          leaderId: 'victoria',
-          personalityId: 'victoria',
-          hiddenAgendaId: 'peacemaker',
-        );
-        final seeds = AISeedBundle.fromTurnSeed(999);
-
-        final orders1 = runDomainPlanners(
+        final orders1 = runDomainPlannersInTest(
           game: game,
           topology: topology,
-          nationId: 'gp1',
-          view: view,
-          snapshot: snapshot,
-          config: config,
-          primaryGoal: StrategicGoal.expand,
-          seeds: seeds,
+          turnSeed: 999,
           suggestionAPI: fakeApi,
           economyPlan: economyPlan,
         );
-        final orders2 = runDomainPlanners(
+        final orders2 = runDomainPlannersInTest(
           game: game,
           topology: topology,
-          nationId: 'gp1',
-          view: view,
-          snapshot: snapshot,
-          config: config,
-          primaryGoal: StrategicGoal.expand,
-          seeds: seeds,
+          turnSeed: 999,
           suggestionAPI: fakeApi,
           economyPlan: economyPlan,
         );

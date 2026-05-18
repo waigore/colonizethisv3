@@ -5,6 +5,7 @@ import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'domain_planner_test_fake_api.dart';
+import 'planner_test_helpers.dart';
 
 void main() {
   group('diplomacy planner cooldowns', () {
@@ -166,14 +167,6 @@ void main() {
         ],
       );
       const topology = MapTopology(nodes: [], edges: []);
-      final view = buildPlayerView(game, topology, 'gp1');
-      final snapshot = AIWorldSnapshot.fromPlayerView(view);
-      const config = AIConfig(
-        leaderId: 'napoleon',
-        personalityId: 'napoleon',
-        hiddenAgendaId: 'warmonger',
-      );
-      final seeds = AISeedBundle.fromTurnSeed(202);
       const fakeApi = FakeOrderSuggestionAPIForDomainPlannerTests(
         work: [],
         build: [],
@@ -181,28 +174,24 @@ void main() {
         research: [],
         navalMove: [],
         navalMission: [],
-        diplomatic: [
+        diplomatic: const [
           DiplomaticOrder(
             type: DiplomaticOrderType.declareWar,
             targetFactionId: 'gp2',
           ),
         ],
       );
-      const economyPlan = EconomyPlan(
-        productionAssignments: [],
-        cargoPreference: CargoPreference.none,
-      );
-      final orders = runDomainPlanners(
+      final orders = runDomainPlannersInTest(
         game: game,
         topology: topology,
-        nationId: 'gp1',
-        view: view,
-        snapshot: snapshot,
-        config: config,
+        turnSeed: 202,
         primaryGoal: StrategicGoal.conquer,
-        seeds: seeds,
+        config: const AIConfig(
+          leaderId: 'napoleon',
+          personalityId: 'napoleon',
+          hiddenAgendaId: 'warmonger',
+        ),
         suggestionAPI: fakeApi,
-        economyPlan: economyPlan,
       );
       expect(orders.diplomaticOrdersByPlayerId['gp1'], isNull);
     });
@@ -245,14 +234,6 @@ void main() {
         ],
       );
       const topology = MapTopology(nodes: [], edges: []);
-      final view = buildPlayerView(game, topology, 'gp1');
-      final snapshot = AIWorldSnapshot.fromPlayerView(view);
-      const config = AIConfig(
-        leaderId: 'victoria',
-        personalityId: 'victoria',
-        hiddenAgendaId: 'peacemaker',
-      );
-      final seeds = AISeedBundle.fromTurnSeed(77);
       const diplo = DiplomaticOrder(
         type: DiplomaticOrderType.establishOverture,
         targetFactionId: 'gp2',
@@ -266,33 +247,19 @@ void main() {
         navalMission: [],
         diplomatic: [diplo],
       );
-      const economyPlan = EconomyPlan(
-        productionAssignments: [],
-        cargoPreference: CargoPreference.none,
-      );
-      final orders1 = runDomainPlanners(
+      final orders1 = runDomainPlannersInTest(
         game: game,
         topology: topology,
-        nationId: 'gp1',
-        view: view,
-        snapshot: snapshot,
-        config: config,
+        turnSeed: 77,
         primaryGoal: StrategicGoal.diplomacy,
-        seeds: seeds,
         suggestionAPI: fakeApi,
-        economyPlan: economyPlan,
       );
-      final orders2 = runDomainPlanners(
+      final orders2 = runDomainPlannersInTest(
         game: game,
         topology: topology,
-        nationId: 'gp1',
-        view: view,
-        snapshot: snapshot,
-        config: config,
+        turnSeed: 77,
         primaryGoal: StrategicGoal.diplomacy,
-        seeds: seeds,
         suggestionAPI: fakeApi,
-        economyPlan: economyPlan,
       );
       expect(orders1.diplomaticOrdersByPlayerId['gp1'], isNotNull);
       expect(orders1.diplomaticOrdersByPlayerId['gp1']!.single, diplo);
