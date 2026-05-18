@@ -35,6 +35,29 @@ bool isStalledOldWorldGpBlockerFocus({
     isBelowObserverConquestQuota(snapshot.conquest.oldWorldProvincesOwned) &&
     isOldWorldGpOnlyInvadableFrontier(game: game, snapshot: snapshot);
 
+/// Skip forced peace when below quota on a GP-only frontier with a sole GP war
+/// on the invadable blocker (keep fighting; observer seed-42; Refs #2509).
+bool shouldSkipBelowQuotaGpOnlyBlockerPeacePass({
+  required Game game,
+  required AIWorldSnapshot snapshot,
+}) {
+  if (!isStalledOldWorldGpBlockerFocus(game: game, snapshot: snapshot)) {
+    return false;
+  }
+  final blocker = primaryInvadableOldWorldGpBlocker(
+    game: game,
+    snapshot: snapshot,
+  );
+  if (blocker == null) {
+    return false;
+  }
+  final gpWars = <String>[
+    for (final factionId in snapshot.threats.atWarWith)
+      if (game.playerById(factionId) != null) factionId,
+  ];
+  return gpWars.length == 1 && gpWars.single == blocker;
+}
+
 /// GP owning the most invadable Old World provinces (frontier blocker).
 String? primaryInvadableOldWorldGpBlocker({
   required Game game,
@@ -331,7 +354,8 @@ List<String> plateauMutualInvadableBlockerPeaceTargets({
   if ((blockerOw - ownOw).abs() > 2) {
     return const [];
   }
-  return [blocker];
+  // Mutual below-quota peace on the sole GP blocker stalls turn-100 conquest.
+  return const [];
 }
 
 /// Peace every at-war Great Power when OW holdings are critically low and minors
@@ -350,8 +374,7 @@ List<String> criticalOwHoldPeaceTargets({
   if (targets.isEmpty) {
     return const [];
   }
-  if (isBelowObserverConquestQuota(ownOw) &&
-      ownOw <= kFewOldWorldProvincesDefendThreshold) {
+  if (isBelowObserverConquestQuota(ownOw) && ownOw <= 5) {
     return targets;
   }
   if (ownOw > kStalledOldWorldProvinceThreshold) {

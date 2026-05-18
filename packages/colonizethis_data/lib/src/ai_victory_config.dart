@@ -128,11 +128,11 @@ const int kDeclareWarWeakGpOwMinorRecoveryBonus = 120;
 
 /// Extra declare-war weight toward OW minors while below the observer quota
 /// (7–9 OW holdings; Refs #2509).
-const int kDeclareWarBelowQuotaOwMinorRecoveryBonus = 280;
+const int kDeclareWarBelowQuotaOwMinorRecoveryBonus = 380;
 
 /// Extra declare-war toward adjacent invadable OW minors at 8–9 OW with no GP war
 /// (observer seed-42 gp5/gp6 plateau; Refs #2509).
-const int kDeclareWarPlateauOwMinorBonus = 300;
+const int kDeclareWarPlateauOwMinorBonus = 400;
 
 /// Extra declare-war weight toward invadable minors when 8–9 OW (one province
 /// short of the turn-100 observer gate from default start; Refs #2509).
@@ -177,7 +177,7 @@ const int kDeclareWarMinorWithInvadableProvinceBonus = 45;
 
 /// Conquest army-move passes per turn while Old World holdings are stalled
 /// (one order per pass so each field army can march toward the frontier).
-const int kStalledConquestArmyMovePasses = 10;
+const int kStalledConquestArmyMovePasses = 14;
 
 /// Max field armies created from Home Army splits when Old World expansion is
 /// stalled (parallel marches toward invasion frontiers; Refs #2509).
@@ -188,7 +188,7 @@ const int kStalledConquestFieldArmySplitCap = 8;
 const int kStalledMinRegimentCountWhenAtWar = 10;
 
 /// Higher floor when fighting the sole GP that owns the invadable OW frontier.
-const int kStalledMinRegimentCountWhenGpBlockerAtWar = 12;
+const int kStalledMinRegimentCountWhenGpBlockerAtWar = 14;
 
 /// Regiment build floor when critically weak with minor wars only (Refs #2509).
 const int kStalledMinRegimentCountWhenCriticallyWeakNoGpWar = 12;

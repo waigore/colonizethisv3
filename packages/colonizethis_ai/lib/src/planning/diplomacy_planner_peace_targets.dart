@@ -277,6 +277,9 @@ List<String> weakHoldingsInvadableBlockerPeaceTargets({
           ))) {
     return const [];
   }
+  if (isOldWorldGpOnlyInvadableFrontier(game: game, snapshot: snapshot)) {
+    return const [];
+  }
   final blocker = primaryInvadableOldWorldGpBlocker(
     game: game,
     snapshot: snapshot,
