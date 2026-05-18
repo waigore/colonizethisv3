@@ -79,7 +79,8 @@ void main() {
     },
     skip:
         'Partial AC #2509 S10: seed-42 turn-100 — gp1/gp2/gp4 pass; '
-        'gp3 net -2 (collapse turns 5–15), gp5 +1, gp6 +2 (plateau 8–9 OW)',
+        'gp3 net -1, gp5 +1, gp6 +2 (GP-blocker conquest still short after '
+        'GP-only peace-pass skip + plateau mutual peace off)',
     timeout: const Timeout(Duration(minutes: 15)),
   );
 }

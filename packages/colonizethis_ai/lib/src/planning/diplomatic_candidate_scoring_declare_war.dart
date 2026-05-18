@@ -404,6 +404,14 @@ int? _declareWarSuppressedAdjacentGpScore(
           targetOw >= attackerOw + kUnwinnableSoleGpMinProvinceDeficit) {
         return 0;
       }
+      if (isBelowObserverConquestQuota(attackerOw) &&
+          attackerOw <= kObserverDefaultStartOldWorldProvincesPerGp + 1 &&
+          ctx.isAdjacentGp &&
+          !ctx.invadableGpBlocker &&
+          ctx.invadableOwners.contains(ctx.order.targetFactionId) &&
+          targetOw > attackerOw) {
+        return 0;
+      }
     }
     if (!ctx.invadableGpBlocker &&
         attackerOw <= kFewOldWorldProvincesDefendThreshold &&

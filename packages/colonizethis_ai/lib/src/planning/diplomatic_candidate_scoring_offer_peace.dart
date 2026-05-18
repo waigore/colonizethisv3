@@ -27,7 +27,12 @@ int _scoreOfferPeaceDiplomaticOrder({
     s += kOfferPeaceFutileMinorWarBonus;
   }
   final targetGp = game.playerById(order.targetFactionId);
+  final gpBlockerFocus = isStalledOldWorldGpBlockerFocus(
+    game: game,
+    snapshot: snapshot,
+  );
   if (targetGp != null &&
+      !gpBlockerFocus &&
       snapshot.threats.atWarWith.contains(order.targetFactionId) &&
       isStalledOldWorldExpansion(
         snapshot.conquest.oldWorldProvincesOwned,
@@ -135,6 +140,31 @@ int _scoreOfferPeaceDiplomaticOrder({
       ) &&
       regimentCountForPlayer(game, nationId) == 0) {
     s += kOfferPeaceStalledZeroRegimentGpWarBonus;
+  }
+  final invadableBlocker = primaryInvadableOldWorldGpBlocker(
+    game: game,
+    snapshot: snapshot,
+  );
+  if (targetGp != null &&
+      invadableBlocker != null &&
+      order.targetFactionId == invadableBlocker &&
+      snapshot.threats.atWarWith.contains(invadableBlocker) &&
+      plateauMutualInvadableBlockerPeaceTargets(
+            game: game,
+            snapshot: snapshot,
+          )
+          .contains(invadableBlocker)) {
+    s += kOfferPeacePlateauMutualBlockerBonus;
+  } else if (targetGp != null &&
+      invadableBlocker != null &&
+      order.targetFactionId == invadableBlocker &&
+      snapshot.threats.atWarWith.contains(invadableBlocker) &&
+      isBelowObserverConquestQuota(
+        snapshot.conquest.oldWorldProvincesOwned,
+      ) &&
+      snapshot.conquest.oldWorldProvincesOwned >
+          kFewOldWorldProvincesDefendThreshold) {
+    s -= kOfferPeaceBelowQuotaInvadableBlockerPenalty;
   }
   s += getAgendaPeaceAcceptanceModifier(agendaId);
   s += (thresholds.peaceTendency - 50);

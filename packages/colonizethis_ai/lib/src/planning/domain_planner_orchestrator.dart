@@ -98,12 +98,18 @@ DomainPlannerOutcome runDomainPlannersWithOutcome({
   ctx = ctx.withOrders(runMovePlanner(ctx: ctx));
   emit('aiStageC');
 
-  final peaceBeforeConquestResult = runDiplomacyPlannerWithResult(
-    ctx: ctx,
+  final skipGpOnlyBlockerPeace = shouldSkipBelowQuotaGpOnlyBlockerPeacePass(
+    game: ctx.game,
     snapshot: snapshot,
-    pass: DiplomacyPlannerPass.nonDeclareWarOnly,
   );
-  ctx = ctx.withOrders(peaceBeforeConquestResult.orders);
+  if (!skipGpOnlyBlockerPeace) {
+    final peaceBeforeConquestResult = runDiplomacyPlannerWithResult(
+      ctx: ctx,
+      snapshot: snapshot,
+      pass: DiplomacyPlannerPass.nonDeclareWarOnly,
+    );
+    ctx = ctx.withOrders(peaceBeforeConquestResult.orders);
+  }
 
   final declareWarResult = runDiplomacyPlannerWithResult(
     ctx: ctx,
@@ -163,13 +169,17 @@ DomainPlannerOutcome runDomainPlannersWithOutcome({
   );
   emit('aiStageE');
 
-  ctx = ctx.withOrders(
-    runDiplomacyPlannerWithResult(
-      ctx: ctx,
-      snapshot: snapshot,
-      pass: DiplomacyPlannerPass.nonDeclareWarOnly,
-    ).orders,
-  );
+  // Late peace pass undoes same-turn declare-war on the OW frontier blocker
+  // (observer seed-42 gp5/gp6; Refs #2509).
+  if (!skipGpOnlyBlockerPeace) {
+    ctx = ctx.withOrders(
+      runDiplomacyPlannerWithResult(
+        ctx: ctx,
+        snapshot: snapshot,
+        pass: DiplomacyPlannerPass.nonDeclareWarOnly,
+      ).orders,
+    );
+  }
   emit('aiStageF');
 
   ctx = ctx.withOrders(runResearchPlanner(ctx: ctx));
@@ -319,7 +329,7 @@ PlannerContext _runEconomyDomainPlanners({
           criticallyWeakBelowQuota) &&
       (snapshot.threats.atWarWith.isNotEmpty || needRegimentsToExpand) &&
       regimentCount < minRegimentFloor;
-  if (forceRegimentRebuild) {
+  if (forceRegimentRebuild || atWarWithGpBlocker) {
     buildThreshold = 0;
   }
   _log.d(
@@ -347,10 +357,11 @@ PlannerContext _runEconomyDomainPlanners({
         oldWorldProvincesOwned: snapshot.conquest.oldWorldProvincesOwned,
         colonialPressure: colonialPressure,
         militaryRebuildCrisis: forceRegimentRebuild &&
-            regimentCount <= kStalledMilitaryRebuildCrisisRegimentCap &&
-            !(observerQuotaPressure &&
-                snapshot.conquest.oldWorldProvincesOwned >
-                    kFewOldWorldProvincesDefendThreshold),
+            (atWarWithGpBlocker ||
+                (regimentCount <= kStalledMilitaryRebuildCrisisRegimentCap &&
+                    !(observerQuotaPressure &&
+                        snapshot.conquest.oldWorldProvincesOwned >
+                            kFewOldWorldProvincesDefendThreshold))),
       ),
     );
     if (chosen != null) {
