@@ -189,6 +189,67 @@ void main() {
   );
 
   test(
+    'weakHoldingsInvadableBlockerPeaceTargets peace blocker at 7 OW below quota',
+    () {
+      final game = Game(
+        id: 'g-weak-blocker-below-quota-seven',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 70),
+          oldWorld: RegionData(
+            provinces: [
+              for (var i = 1; i <= 7; i++)
+                Province(
+                  id: 'oldWorld|gp3_$i',
+                  regionId: 'oldWorld',
+                  ownerId: 'gp3',
+                ),
+              for (var i = 1; i <= 10; i++)
+                Province(
+                  id: 'oldWorld|gp4_$i',
+                  regionId: 'oldWorld',
+                  ownerId: 'gp4',
+                ),
+              const Province(
+                id: 'oldWorld|inv1',
+                regionId: 'oldWorld',
+                ownerId: 'gp4',
+              ),
+            ],
+          ),
+          newWorld: const RegionData(),
+        ),
+        players: const [
+          Player(id: 'gp3', displayName: 'P3', isHuman: false),
+          Player(id: 'gp4', displayName: 'P4', isHuman: false),
+        ],
+        diplomacyRelations: [
+          const DiplomacyRelation(
+            factionId1: 'gp3',
+            factionId2: 'gp4',
+            state: RelationState.atWar,
+            score: 30,
+          ),
+        ],
+      );
+      const snapshot = AIWorldSnapshot(
+        playerId: 'gp3',
+        threats: ThreatSummary(atWarWith: ['gp4']),
+        opportunities: OpportunitySummary(),
+        conquest: ConquestSummary(
+          oldWorldProvincesOwned: 7,
+          invadableProvinceIdsSorted: ['oldWorld|inv1'],
+        ),
+        economy: EconomySummary(),
+        relations: {},
+      );
+      expect(
+        weakHoldingsInvadableBlockerPeaceTargets(game: game, snapshot: snapshot),
+        ['gp4'],
+      );
+    },
+  );
+
+  test(
     'stalledZeroRegimentGpPeaceTargets includes all GP wars when stalled',
     () {
       final game = Game(

@@ -79,7 +79,7 @@ void main() {
     },
     skip:
         'Partial AC #2509: seed-42 turn-100 gate passes gp1/gp2/gp4; '
-        'gp3 -2, gp5 +1, gp6 +2; observer-quota expansion pressure aligned (S10)',
+        'gp3 -2, gp5 +1, gp6 +2 (early collapse turn 2–8; S10 follow-up)',
     timeout: const Timeout(Duration(minutes: 15)),
   );
 }

@@ -261,11 +261,13 @@ List<String> criticalWeakGpSurvivalPeaceTargets({
     return const [];
   }
   final ownOw = snapshot.conquest.oldWorldProvincesOwned;
+  final minLead = isBelowObserverConquestQuota(ownOw)
+      ? kUnwinnableSoleGpMinProvinceDeficit
+      : kDeclareWarAggressorSuppressWeakGpLeadThreshold;
   final targets = <String>[
     for (final factionId in snapshot.threats.atWarWith)
       if (game.playerById(factionId) != null &&
-          provinceCountOwnedBy(game, factionId) >=
-              ownOw + kDeclareWarAggressorSuppressWeakGpLeadThreshold)
+          provinceCountOwnedBy(game, factionId) >= ownOw + minLead)
         factionId,
   ]..sort();
   return targets;
@@ -279,8 +281,12 @@ List<String> weakHoldingsInvadableBlockerPeaceTargets({
 }) {
   final zeroRegiments =
       regimentCountForPlayer(game, snapshot.playerId) == 0;
+  final belowQuota = isBelowObserverConquestQuota(
+    snapshot.conquest.oldWorldProvincesOwned,
+  );
   if (snapshot.conquest.oldWorldProvincesOwned >
           kFewOldWorldProvincesDefendThreshold &&
+      !belowQuota &&
       !(zeroRegiments &&
           isStalledOldWorldExpansion(
             snapshot.conquest.oldWorldProvincesOwned,
@@ -298,7 +304,10 @@ List<String> weakHoldingsInvadableBlockerPeaceTargets({
   }
   final lead = provinceCountOwnedBy(game, blocker) -
       snapshot.conquest.oldWorldProvincesOwned;
-  if (lead < kDeclareWarAggressorSuppressWeakGpLeadThreshold) {
+  final minLead = belowQuota
+      ? kUnwinnableSoleGpMinProvinceDeficit
+      : kDeclareWarAggressorSuppressWeakGpLeadThreshold;
+  if (lead < minLead) {
     return const [];
   }
   return [blocker];
@@ -310,8 +319,9 @@ List<String> criticalMultiFrontGpPeaceTargets({
   required Game game,
   required AIWorldSnapshot snapshot,
 }) {
-  if (snapshot.conquest.oldWorldProvincesOwned >
-      kFewOldWorldProvincesDefendThreshold) {
+  if (!isObserverConquestExpansionPressure(
+    snapshot.conquest.oldWorldProvincesOwned,
+  )) {
     return const [];
   }
   final gpWars = <String>[
@@ -373,8 +383,11 @@ String? criticalWeakUninvadedMinorDeclareTarget({
   required Game game,
   required AIWorldSnapshot snapshot,
 }) {
-  if (snapshot.conquest.oldWorldProvincesOwned >
-      kFewOldWorldProvincesDefendThreshold) {
+  if (!isObserverConquestExpansionPressure(
+        snapshot.conquest.oldWorldProvincesOwned,
+      ) &&
+      snapshot.conquest.oldWorldProvincesOwned >
+          kFewOldWorldProvincesDefendThreshold) {
     return null;
   }
   if (snapshot.threats.atWarWith.any((id) => game.playerById(id) != null)) {
@@ -443,7 +456,9 @@ List<String> multiFrontNonBlockerGpPeaceTargets({
   if (gpWars.length <= 1) {
     return const [];
   }
-  if (!isStalledOldWorldExpansion(snapshot.conquest.oldWorldProvincesOwned) &&
+  if (!isObserverConquestExpansionPressure(
+        snapshot.conquest.oldWorldProvincesOwned,
+      ) &&
       snapshot.conquest.invadableProvinceIdsSorted.isEmpty) {
     return const [];
   }
