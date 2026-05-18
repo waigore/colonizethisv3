@@ -130,6 +130,61 @@ String? unwinnableSoleGpFrontierPeaceTarget({
   return enemy;
 }
 
+/// Great Power wars already targeting [targetGpId] (resolved relations plus
+/// same-turn declare-war orders from earlier Full AI players).
+int greatPowerWarCountOnTarget({
+  required Game game,
+  required String targetGpId,
+  Orders? sameTurnPriorDiplomaticOrders,
+}) {
+  final atWarGpIds = <String>{
+    for (final rel in game.diplomacyRelations)
+      if (rel.state == RelationState.atWar)
+        if (rel.factionId1 == targetGpId &&
+            game.playerById(rel.factionId2) != null)
+          rel.factionId2
+        else if (rel.factionId2 == targetGpId &&
+            game.playerById(rel.factionId1) != null)
+          rel.factionId1,
+  };
+  if (sameTurnPriorDiplomaticOrders != null) {
+    for (final entry
+        in sameTurnPriorDiplomaticOrders.diplomaticOrdersByPlayerId.entries) {
+      final declarerId = entry.key;
+      if (game.playerById(declarerId) == null) continue;
+      for (final order in entry.value) {
+        if (order.type == DiplomaticOrderType.declareWar &&
+            order.targetFactionId == targetGpId) {
+          atWarGpIds.add(declarerId);
+        }
+      }
+    }
+  }
+  return atWarGpIds.length;
+}
+
+/// True when [declarerFactionId] has a same-turn declare-war on [targetFactionId]
+/// in [sameTurnPriorDiplomaticOrders] (earlier Full AI players).
+bool pendingDeclareWarFrom({
+  required Orders? sameTurnPriorDiplomaticOrders,
+  required String declarerFactionId,
+  required String targetFactionId,
+}) {
+  if (sameTurnPriorDiplomaticOrders == null) {
+    return false;
+  }
+  for (final order
+      in sameTurnPriorDiplomaticOrders
+              .diplomaticOrdersByPlayerId[declarerFactionId] ??
+          const []) {
+    if (order.type == DiplomaticOrderType.declareWar &&
+        order.targetFactionId == targetFactionId) {
+      return true;
+    }
+  }
+  return false;
+}
+
 /// Peace at-war Great Powers that lead by [kUnwinnableSoleGpMinProvinceDeficit]
 /// or more while below the observer quota (even with minor wars; Refs #2509).
 List<String> stalledBelowQuotaGpLeadPeaceTargets({

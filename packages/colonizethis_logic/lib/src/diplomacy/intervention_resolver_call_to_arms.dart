@@ -192,6 +192,13 @@ Game _processCallToArmsForWarPair(
     }
 
     if (isAiControlled(state, allyGpId)) {
+      final aggressorOw = provinceCountOwnedBy(state, aggressorGpId);
+      final turn = state.worldState.turnState.turnNumber;
+      if (turn <= kDeclareWarEarlyAntiDogpileMaxTurn &&
+          isBelowObserverConquestQuota(aggressorOw)) {
+        state = _applyCallToArmsRefuse(state, allyGpId, defenderGpId, turn);
+        continue;
+      }
       final accept = rel.score >= callToArmsAiAcceptMinRelationScore;
       if (accept) {
         state = _applyCallToArmsAccept(state, allyGpId, aggressorGpId, turn);

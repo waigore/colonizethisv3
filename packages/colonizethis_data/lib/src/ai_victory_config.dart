@@ -130,6 +130,10 @@ const int kDeclareWarWeakGpOwMinorRecoveryBonus = 120;
 /// (7–9 OW holdings; Refs #2509).
 const int kDeclareWarBelowQuotaOwMinorRecoveryBonus = 280;
 
+/// Extra declare-war toward adjacent invadable OW minors at 8–9 OW with no GP war
+/// (observer seed-42 gp5/gp6 plateau; Refs #2509).
+const int kDeclareWarPlateauOwMinorBonus = 160;
+
 /// Penalize tribe declare-war while OW holdings are stalled and invadable OW
 /// minors remain (tribes without sea-reachable NW provinces for this GP).
 const int kDeclareWarStalledExpansionTribePenalty = 100;

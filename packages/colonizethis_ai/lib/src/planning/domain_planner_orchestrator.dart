@@ -70,6 +70,7 @@ DomainPlannerOutcome runDomainPlannersWithOutcome({
   required EconomyPlan economyPlan,
   Map<String, TileMapResult>? tileMapByRegion,
   void Function(String phaseId)? onStagedPlannerProgress,
+  Orders? sameTurnPriorDiplomaticOrders,
 }) {
   void emit(String phaseId) => onStagedPlannerProgress?.call(phaseId);
 
@@ -83,6 +84,7 @@ DomainPlannerOutcome runDomainPlannersWithOutcome({
     primaryGoal: primaryGoal,
     seeds: seeds,
     suggestionAPI: suggestionAPI,
+    sameTurnPriorDiplomaticOrders: sameTurnPriorDiplomaticOrders,
   );
 
   ctx = _runEconomyDomainPlanners(
@@ -268,12 +270,16 @@ PlannerContext _runEconomyDomainPlanners({
   final observerQuotaPressure = isBelowObserverConquestQuota(
     snapshot.conquest.oldWorldProvincesOwned,
   );
+  final needRegimentsToExpand = observerQuotaPressure &&
+      regimentCount == 0 &&
+      snapshot.conquest.invadableProvinceIdsSorted.isNotEmpty;
   final zeroRegimentsAtWar = regimentCount == 0 &&
       snapshot.threats.atWarWith.isNotEmpty;
   final criticallyWeakBelowQuota = observerQuotaPressure &&
       (snapshot.conquest.oldWorldProvincesOwned <=
               kFewOldWorldProvincesDefendThreshold ||
-          zeroRegimentsAtWar);
+          zeroRegimentsAtWar ||
+          needRegimentsToExpand);
   final criticallyWeakNoGpWar =
       snapshot.conquest.oldWorldProvincesOwned <=
           kFewOldWorldProvincesDefendThreshold &&
@@ -304,14 +310,14 @@ PlannerContext _runEconomyDomainPlanners({
     minRegimentFloor = kStalledMinRegimentCountWhenCriticallyWeakNoGpWar;
   }
   if (criticallyWeakBelowQuota &&
-      snapshot.threats.atWarWith.isNotEmpty &&
+      (snapshot.threats.atWarWith.isNotEmpty || needRegimentsToExpand) &&
       minRegimentFloor < kStalledMinRegimentCountWhenCriticallyWeakBelowQuota) {
     minRegimentFloor = kStalledMinRegimentCountWhenCriticallyWeakBelowQuota;
   }
   final forceRegimentRebuild =
       (isStalledOldWorldExpansion(snapshot.conquest.oldWorldProvincesOwned) ||
           criticallyWeakBelowQuota) &&
-      snapshot.threats.atWarWith.isNotEmpty &&
+      (snapshot.threats.atWarWith.isNotEmpty || needRegimentsToExpand) &&
       regimentCount < minRegimentFloor;
   if (forceRegimentRebuild) {
     buildThreshold = 0;

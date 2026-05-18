@@ -620,6 +620,11 @@ String? stalledGpBlockerDeclareWarTarget({
       snapshot.relations[blocker]?.atWar == true) {
     return null;
   }
+  final turn = game.worldState.turnState.turnNumber;
+  if (turn <= kDeclareWarEarlyAntiDogpileMaxTurn &&
+      isBelowObserverConquestQuota(provinceCountOwnedBy(game, blocker))) {
+    return null;
+  }
   return blocker;
 }
 
@@ -945,6 +950,7 @@ DiplomacyPlannerResult runDiplomacyPlannerWithResult({
     snapshot: snapshot,
     config: ctx.config,
     primaryGoal: ctx.primaryGoal,
+    sameTurnPriorDiplomaticOrders: ctx.sameTurnPriorDiplomaticOrders,
   );
 
   final candidateDesc = filtered

@@ -1,8 +1,10 @@
 import 'dart:math' show Random;
 
+import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../ai/ai_control.dart';
+import 'diplomacy_relation_lookup.dart';
 import '../combat/conflict_detection.dart';
 import '../constants.dart';
 import '../dossier/evidence_rules.dart';

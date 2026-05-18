@@ -18,6 +18,7 @@ int _scoreDeclareWarDiplomaticOrder({
   required StrategicGoal? primaryGoal,
   required int Function(String targetFactionId, int relationScore)
   warDesireForTarget,
+  Orders? sameTurnPriorDiplomaticOrders,
 }) {
   final ctx = _DeclareWarTargetContext.build(
     order: order,
@@ -37,7 +38,10 @@ int _scoreDeclareWarDiplomaticOrder({
     warDesireForTarget: warDesireForTarget,
     agendaId: agendaId,
   );
-  final suppressed = _declareWarSuppressedScore(ctx);
+  final suppressed = _declareWarSuppressedScore(
+    ctx,
+    sameTurnPriorDiplomaticOrders: sameTurnPriorDiplomaticOrders,
+  );
   if (suppressed != null) {
     return suppressed;
   }
@@ -263,7 +267,10 @@ final class _DeclareWarTargetContext {
 }
 
 /// Returns a suppressed score when declare-war should not proceed; null = score.
-int? _declareWarSuppressedScore(_DeclareWarTargetContext ctx) {
+int? _declareWarSuppressedScore(
+  _DeclareWarTargetContext ctx, {
+  Orders? sameTurnPriorDiplomaticOrders,
+}) {
   if (ctx.isTribeTarget &&
       ctx.stalledOwExpansion &&
       (ctx.minorsHoldOldWorldProvinces ||
@@ -326,6 +333,25 @@ int? _declareWarSuppressedScore(_DeclareWarTargetContext ctx) {
     final attackerOw = ctx.snapshot.conquest.oldWorldProvincesOwned;
     final targetOw = provinceCountOwnedBy(ctx.game, ctx.order.targetFactionId);
     if (ctx.game.playerById(ctx.order.targetFactionId) != null) {
+      if (isBelowObserverConquestQuota(attackerOw) &&
+          pendingDeclareWarFrom(
+            sameTurnPriorDiplomaticOrders: sameTurnPriorDiplomaticOrders,
+            declarerFactionId: ctx.order.targetFactionId,
+            targetFactionId: ctx.nationId,
+          )) {
+        return 0;
+      }
+      if (isBelowObserverConquestQuota(targetOw) &&
+          targetOw <= kFewOldWorldProvincesDefendThreshold &&
+          !isBelowObserverConquestQuota(attackerOw) &&
+          !ctx.snapshot.threats.atWarWith.contains(ctx.order.targetFactionId)) {
+        return 0;
+      }
+      if (isBelowObserverConquestQuota(targetOw) &&
+          regimentCountForPlayer(ctx.game, ctx.order.targetFactionId) == 0 &&
+          !ctx.snapshot.threats.atWarWith.contains(ctx.order.targetFactionId)) {
+        return 0;
+      }
       if (isBelowObserverConquestQuota(targetOw) &&
           !ctx.invadableGpBlocker &&
           !ctx.snapshot.threats.atWarWith.contains(ctx.order.targetFactionId) &&
@@ -384,18 +410,18 @@ int? _declareWarSuppressedScore(_DeclareWarTargetContext ctx) {
       ctx.game.playerById(ctx.order.targetFactionId) != null &&
       !ctx.snapshot.threats.atWarWith.contains(ctx.order.targetFactionId)) {
     final targetGpId = ctx.order.targetFactionId;
-    final targetGpWarCount = ctx.game.diplomacyRelations
-        .where(
-          (r) =>
-              r.state == RelationState.atWar &&
-              (r.factionId1 == targetGpId || r.factionId2 == targetGpId),
-        )
-        .map(
-          (r) => r.factionId1 == targetGpId ? r.factionId2 : r.factionId1,
-        )
-        .where((id) => ctx.game.playerById(id) != null)
-        .length;
+    final targetOw = provinceCountOwnedBy(ctx.game, targetGpId);
+    final targetGpWarCount = greatPowerWarCountOnTarget(
+      game: ctx.game,
+      targetGpId: targetGpId,
+      sameTurnPriorDiplomaticOrders: sameTurnPriorDiplomaticOrders,
+    );
     if (targetGpWarCount >= 2) {
+      return 0;
+    }
+    if (isBelowObserverConquestQuota(targetOw) &&
+        targetGpWarCount >= 1 &&
+        ctx.currentTurn <= kDeclareWarEarlyAntiDogpileMaxTurn) {
       return 0;
     }
   }
@@ -634,6 +660,17 @@ int _declareWarAdjacencyAndStalledBonuses(
           ctx.snapshot.conquest.oldWorldProvincesOwned,
         )) {
       s += kDeclareWarBelowObserverQuotaMinorBonus;
+    }
+    final ownedOw = ctx.snapshot.conquest.oldWorldProvincesOwned;
+    if (ctx.isMinorTarget &&
+        !ctx.isTribeTarget &&
+        ctx.isAdjacentOwner &&
+        ctx.invadableOwners.contains(ctx.order.targetFactionId) &&
+        (ownedOw == 8 || ownedOw == 9) &&
+        !ctx.snapshot.threats.atWarWith.any(
+          (id) => ctx.game.playerById(id) != null,
+        )) {
+      s += kDeclareWarPlateauOwMinorBonus;
     }
     if (ctx.isMinorTarget && ctx.stalledOwExpansion) {
       s += kDeclareWarStalledExpansionMinorBonus;

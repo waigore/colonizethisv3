@@ -78,8 +78,8 @@ void main() {
     }
     },
     skip:
-        'Partial AC #2509: seed-42 turn-100 gate — re-verify after '
-        'anti-dogpile / below-quota survival peace (S10 follow-up)',
+        'Partial AC #2509: seed-42 turn-100 gate — gp1/gp2 pass at turn 10; '
+        'gp3/gp5/gp6 still short after dogpile/call-to-arms fixes (S10)',
     timeout: const Timeout(Duration(minutes: 15)),
   );
 }

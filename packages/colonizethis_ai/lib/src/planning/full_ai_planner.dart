@@ -42,6 +42,7 @@ StrategicOrderTraceResult generateOrdersForPlayerFullAIWithTrace(
   void Function(DialogueEvent)? onDialogue,
   void Function(PortraitMoodEvent)? onMood,
   void Function(String phaseId)? onStagedPlannerProgress,
+  Orders? sameTurnPriorDiplomaticOrders,
 }) {
   final player = game.playerById(playerId);
   if (player == null || !isAiControlled(game, player.id)) {
@@ -85,6 +86,7 @@ StrategicOrderTraceResult generateOrdersForPlayerFullAIWithTrace(
     onDialogue: onDialogue,
     onMood: onMood,
     onStagedPlannerProgress: onStagedPlannerProgress,
+    sameTurnPriorDiplomaticOrders: sameTurnPriorDiplomaticOrders,
   );
   return traced;
 }
@@ -144,6 +146,9 @@ FullAIResult generateOrdersForGameFullAI(
   for (final playerId in orderedAiPlayerIds) {
     final playerStopwatch = Stopwatch()..start();
     _log.i('full_ai player_start gameId=${game.id} playerId=$playerId');
+    final sameTurnPriorDiplomaticOrders = diploByPlayer.isEmpty
+        ? null
+        : Orders(diplomaticOrdersByPlayerId: Map.from(diploByPlayer));
     final traced = generateOrdersForPlayerFullAIWithTrace(
       planningGame,
       topology,
@@ -153,6 +158,7 @@ FullAIResult generateOrdersForGameFullAI(
       onDialogue: onDialogue,
       onMood: onMood,
       onStagedPlannerProgress: onStagedPlannerProgress,
+      sameTurnPriorDiplomaticOrders: sameTurnPriorDiplomaticOrders,
     );
     _log.i(
       'full_ai player_complete gameId=${game.id} playerId=$playerId '

@@ -192,6 +192,166 @@ void main() {
     );
 
     test(
+      'suppresses early declareWar on below-quota GP already in one GP war',
+      () {
+        const snap = AIWorldSnapshot(
+          playerId: 'gp4',
+          threats: ThreatSummary(),
+          opportunities: OpportunitySummary(),
+          conquest: ConquestSummary(
+            oldWorldProvincesOwned: 11,
+            provincesToVictory: 20,
+            invadableProvinceIdsSorted: ['oldWorld|p30'],
+            adjacentOwnerFactionIdsSorted: ['gp3'],
+          ),
+          colonial: ColonialSummary(),
+          economy: EconomySummary(),
+          relations: {},
+        );
+        final game = Game(
+          id: 'g-second-attacker',
+          worldState: WorldState(
+            turnState: const TurnState(
+              phase: TurnPhase.orders,
+              turnNumber: 2,
+            ),
+            oldWorld: RegionData(
+              provinces: [
+                for (var i = 0; i < 8; i++)
+                  Province(
+                    id: 'oldWorld|gp3_$i',
+                    regionId: 'oldWorld',
+                    ownerId: 'gp3',
+                  ),
+                for (var i = 0; i < 11; i++)
+                  Province(
+                    id: 'oldWorld|gp4_$i',
+                    regionId: 'oldWorld',
+                    ownerId: 'gp4',
+                  ),
+                const Province(
+                  id: 'oldWorld|p30',
+                  regionId: 'oldWorld',
+                  ownerId: 'minor1',
+                ),
+              ],
+            ),
+            newWorld: const RegionData(),
+          ),
+          players: const [
+            Player(id: 'gp3', displayName: 'C', isHuman: false),
+            Player(id: 'gp4', displayName: 'D', isHuman: false),
+          ],
+          minorNations: const [MinorNation(id: 'minor1', displayName: 'M1')],
+        );
+        const config = AIConfig(
+          leaderId: 'henry',
+          personalityId: 'henry',
+          hiddenAgendaId: 'merchant',
+        );
+        final score = computeDiplomaticCandidateScores(
+          candidates: const [
+            DiplomaticOrder(
+              type: DiplomaticOrderType.declareWar,
+              targetFactionId: 'gp3',
+            ),
+          ],
+          nationId: 'gp4',
+          game: game,
+          snapshot: snap,
+          config: config,
+          primaryGoal: StrategicGoal.conquer,
+          sameTurnPriorDiplomaticOrders: Orders(
+            diplomaticOrdersByPlayerId: {
+              'gp1': [
+                const DiplomaticOrder(
+                  type: DiplomaticOrderType.declareWar,
+                  targetFactionId: 'gp3',
+                ),
+              ],
+            },
+          ),
+        ).single;
+        expect(score, 0);
+      },
+    );
+
+    test(
+      'suppresses new declareWar on below-quota GP with zero regiments',
+      () {
+        const snap = AIWorldSnapshot(
+          playerId: 'gp4',
+          threats: ThreatSummary(),
+          opportunities: OpportunitySummary(),
+          conquest: ConquestSummary(
+            oldWorldProvincesOwned: 11,
+            provincesToVictory: 20,
+            invadableProvinceIdsSorted: ['oldWorld|p30'],
+            adjacentOwnerFactionIdsSorted: ['gp3'],
+          ),
+          colonial: ColonialSummary(),
+          economy: EconomySummary(),
+          relations: {},
+        );
+        final game = Game(
+          id: 'g-zero-regiment-victim',
+          worldState: WorldState(
+            turnState: const TurnState(
+              phase: TurnPhase.orders,
+              turnNumber: 2,
+            ),
+            oldWorld: RegionData(
+              provinces: [
+                for (var i = 0; i < 8; i++)
+                  Province(
+                    id: 'oldWorld|gp3_$i',
+                    regionId: 'oldWorld',
+                    ownerId: 'gp3',
+                  ),
+                for (var i = 0; i < 11; i++)
+                  Province(
+                    id: 'oldWorld|gp4_$i',
+                    regionId: 'oldWorld',
+                    ownerId: 'gp4',
+                  ),
+                const Province(
+                  id: 'oldWorld|p30',
+                  regionId: 'oldWorld',
+                  ownerId: 'minor1',
+                ),
+              ],
+            ),
+            newWorld: const RegionData(),
+          ),
+          players: const [
+            Player(id: 'gp3', displayName: 'C', isHuman: false),
+            Player(id: 'gp4', displayName: 'D', isHuman: false),
+          ],
+          minorNations: const [MinorNation(id: 'minor1', displayName: 'M1')],
+        );
+        const config = AIConfig(
+          leaderId: 'henry',
+          personalityId: 'henry',
+          hiddenAgendaId: 'merchant',
+        );
+        final score = computeDiplomaticCandidateScores(
+          candidates: const [
+            DiplomaticOrder(
+              type: DiplomaticOrderType.declareWar,
+              targetFactionId: 'gp3',
+            ),
+          ],
+          nationId: 'gp4',
+          game: game,
+          snapshot: snap,
+          config: config,
+          primaryGoal: StrategicGoal.conquer,
+        ).single;
+        expect(score, 0);
+      },
+    );
+
+    test(
       'suppresses new declareWar on below-quota adjacent GP when attacker meets quota',
       () {
         const snap = AIWorldSnapshot(
