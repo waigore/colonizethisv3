@@ -59,113 +59,17 @@ List<int> computeDiplomaticCandidateScores({
     var s = 50;
     switch (o.type) {
       case DiplomaticOrderType.offerPeace:
-        {
-          final rel = snapshot.relations[o.targetFactionId];
-          final warDesire = warDesireForTarget(
-            o.targetFactionId,
-            rel?.score ?? 50,
-          );
-          // Lower peace desire when current war desire remains high.
-          s -= (warDesire - 50);
-          if (_isMinorOrTribeFaction(game, o.targetFactionId) &&
-              snapshot.threats.atWarWith.contains(o.targetFactionId) &&
-              (!_minorOwnsOldWorldProvinces(game, o.targetFactionId) ||
-                  !invadableOwners.contains(o.targetFactionId))) {
-            s += kOfferPeaceFutileMinorWarBonus;
-          }
-          final targetGp = game.playerById(o.targetFactionId);
-          if (targetGp != null &&
-              snapshot.threats.atWarWith.contains(o.targetFactionId) &&
-              isStalledOldWorldExpansion(
-                snapshot.conquest.oldWorldProvincesOwned,
-              ) &&
-              provinceCountOwnedBy(game, o.targetFactionId) >
-                  snapshot.conquest.oldWorldProvincesOwned &&
-              snapshot.conquest.invadableProvinceIdsSorted.any(
-                (pid) => provinceOwner[pid] == o.targetFactionId,
-              )) {
-            s += kOfferPeaceStalledStrongerGpBlockerBonus;
-          }
-          if (targetGp != null &&
-              snapshot.threats.atWarWith.contains(o.targetFactionId) &&
-              isStalledOldWorldExpansion(
-                snapshot.conquest.oldWorldProvincesOwned,
-              ) &&
-              !snapshot.conquest.invadableProvinceIdsSorted.any(
-                (pid) => provinceOwner[pid] == o.targetFactionId,
-              ) &&
-              snapshot.conquest.invadableProvinceIdsSorted.any((pid) {
-                final owner = provinceOwner[pid];
-                return owner != null &&
-                    (game.minorNations.any((m) => m.id == owner) ||
-                        game.playerById(owner) != null);
-              })) {
-            s += kOfferPeaceStalledFutileGpWarBonus;
-          }
-          final gpBlocker = primaryInvadableOldWorldGpBlocker(
-            game: game,
-            snapshot: snapshot,
-          );
-          if (targetGp != null &&
-              gpBlocker != null &&
-              o.targetFactionId != gpBlocker &&
-              snapshot.threats.atWarWith.contains(o.targetFactionId) &&
-              isOldWorldGpOnlyInvadableFrontier(game: game, snapshot: snapshot)) {
-            s += kOfferPeaceStalledFutileGpWarBonus;
-          }
-          if (targetGp != null &&
-              snapshot.threats.atWarWith.contains(o.targetFactionId) &&
-              unwinnableSoleGpFrontierPeaceTarget(
-                    game: game,
-                    snapshot: snapshot,
-                  ) ==
-                  o.targetFactionId) {
-            s += kOfferPeaceUnwinnableSoleGpWarBonus;
-          }
-          if (targetGp != null &&
-              snapshot.threats.atWarWith.contains(o.targetFactionId) &&
-              stalledBelowQuotaGpLeadPeaceTargets(
-                    game: game,
-                    snapshot: snapshot,
-                  )
-                  .contains(o.targetFactionId)) {
-            s += kOfferPeaceUnwinnableSoleGpWarBonus;
-          }
-          if (targetGp != null &&
-              snapshot.threats.atWarWith.contains(o.targetFactionId) &&
-              consolidateGainsSoleGpPeaceTarget(
-                    game: game,
-                    snapshot: snapshot,
-                  ) ==
-                  o.targetFactionId) {
-            s += kOfferPeaceConsolidateGainsSoleGpWarBonus;
-          }
-          if (targetGp != null &&
-              gpBlocker != null &&
-              o.targetFactionId == gpBlocker &&
-              snapshot.threats.atWarWith.contains(gpBlocker) &&
-              (snapshot.conquest.oldWorldProvincesOwned <=
-                      kFewOldWorldProvincesDefendThreshold ||
-                  (regimentCountForPlayer(game, nationId) == 0 &&
-                      isStalledOldWorldExpansion(
-                        snapshot.conquest.oldWorldProvincesOwned,
-                      ))) &&
-              provinceCountOwnedBy(game, gpBlocker) >=
-                  snapshot.conquest.oldWorldProvincesOwned +
-                      kDeclareWarAggressorSuppressWeakGpLeadThreshold) {
-            s += kOfferPeaceWeakVsInvadableBlockerBonus;
-          }
-          if (targetGp != null &&
-              snapshot.threats.atWarWith.contains(o.targetFactionId) &&
-              isStalledOldWorldExpansion(
-                snapshot.conquest.oldWorldProvincesOwned,
-              ) &&
-              regimentCountForPlayer(game, nationId) == 0) {
-            s += kOfferPeaceStalledZeroRegimentGpWarBonus;
-          }
-        }
-        s += getAgendaPeaceAcceptanceModifier(agendaId);
-        s += (thresholds.peaceTendency - 50);
+        s = _scoreOfferPeaceDiplomaticOrder(
+          order: o,
+          nationId: nationId,
+          game: game,
+          snapshot: snapshot,
+          agendaId: agendaId,
+          thresholds: thresholds,
+          provinceOwner: provinceOwner,
+          invadableOwners: invadableOwners,
+          warDesireForTarget: warDesireForTarget,
+        );
         break;
       case DiplomaticOrderType.alliance:
         s += getAgendaAllianceAcceptanceModifier(agendaId);
@@ -232,6 +136,127 @@ List<int> computeDiplomaticCandidateScores({
     }
     return s == 0 ? 0 : math.max(1, s);
   }).toList();
+}
+
+int _scoreOfferPeaceDiplomaticOrder({
+  required DiplomaticOrder order,
+  required String nationId,
+  required Game game,
+  required AIWorldSnapshot snapshot,
+  required String agendaId,
+  required PersonalityThresholds thresholds,
+  required Map<String, String> provinceOwner,
+  required Set<String> invadableOwners,
+  required int Function(String targetFactionId, int relationScore)
+  warDesireForTarget,
+}) {
+  var s = 50;
+  final rel = snapshot.relations[order.targetFactionId];
+  final warDesire = warDesireForTarget(
+    order.targetFactionId,
+    rel?.score ?? 50,
+  );
+  // Lower peace desire when current war desire remains high.
+  s -= (warDesire - 50);
+  if (_isMinorOrTribeFaction(game, order.targetFactionId) &&
+      snapshot.threats.atWarWith.contains(order.targetFactionId) &&
+      (!_minorOwnsOldWorldProvinces(game, order.targetFactionId) ||
+          !invadableOwners.contains(order.targetFactionId))) {
+    s += kOfferPeaceFutileMinorWarBonus;
+  }
+  final targetGp = game.playerById(order.targetFactionId);
+  if (targetGp != null &&
+      snapshot.threats.atWarWith.contains(order.targetFactionId) &&
+      isStalledOldWorldExpansion(
+        snapshot.conquest.oldWorldProvincesOwned,
+      ) &&
+      provinceCountOwnedBy(game, order.targetFactionId) >
+          snapshot.conquest.oldWorldProvincesOwned &&
+      snapshot.conquest.invadableProvinceIdsSorted.any(
+        (pid) => provinceOwner[pid] == order.targetFactionId,
+      )) {
+    s += kOfferPeaceStalledStrongerGpBlockerBonus;
+  }
+  if (targetGp != null &&
+      snapshot.threats.atWarWith.contains(order.targetFactionId) &&
+      isStalledOldWorldExpansion(
+        snapshot.conquest.oldWorldProvincesOwned,
+      ) &&
+      !snapshot.conquest.invadableProvinceIdsSorted.any(
+        (pid) => provinceOwner[pid] == order.targetFactionId,
+      ) &&
+      snapshot.conquest.invadableProvinceIdsSorted.any((pid) {
+        final owner = provinceOwner[pid];
+        return owner != null &&
+            (game.minorNations.any((m) => m.id == owner) ||
+                game.playerById(owner) != null);
+      })) {
+    s += kOfferPeaceStalledFutileGpWarBonus;
+  }
+  final gpBlocker = primaryInvadableOldWorldGpBlocker(
+    game: game,
+    snapshot: snapshot,
+  );
+  if (targetGp != null &&
+      gpBlocker != null &&
+      order.targetFactionId != gpBlocker &&
+      snapshot.threats.atWarWith.contains(order.targetFactionId) &&
+      isOldWorldGpOnlyInvadableFrontier(game: game, snapshot: snapshot)) {
+    s += kOfferPeaceStalledFutileGpWarBonus;
+  }
+  if (targetGp != null &&
+      snapshot.threats.atWarWith.contains(order.targetFactionId) &&
+      unwinnableSoleGpFrontierPeaceTarget(
+            game: game,
+            snapshot: snapshot,
+          ) ==
+          order.targetFactionId) {
+    s += kOfferPeaceUnwinnableSoleGpWarBonus;
+  }
+  if (targetGp != null &&
+      snapshot.threats.atWarWith.contains(order.targetFactionId) &&
+      stalledBelowQuotaGpLeadPeaceTargets(
+            game: game,
+            snapshot: snapshot,
+          )
+          .contains(order.targetFactionId)) {
+    s += kOfferPeaceUnwinnableSoleGpWarBonus;
+  }
+  if (targetGp != null &&
+      snapshot.threats.atWarWith.contains(order.targetFactionId) &&
+      consolidateGainsSoleGpPeaceTarget(
+            game: game,
+            snapshot: snapshot,
+          ) ==
+          order.targetFactionId) {
+    s += kOfferPeaceConsolidateGainsSoleGpWarBonus;
+  }
+  if (targetGp != null &&
+      gpBlocker != null &&
+      order.targetFactionId == gpBlocker &&
+      snapshot.threats.atWarWith.contains(gpBlocker) &&
+      (snapshot.conquest.oldWorldProvincesOwned <=
+              kFewOldWorldProvincesDefendThreshold ||
+          (regimentCountForPlayer(game, nationId) == 0 &&
+              isStalledOldWorldExpansion(
+                snapshot.conquest.oldWorldProvincesOwned,
+              ))) &&
+      provinceCountOwnedBy(game, gpBlocker) >=
+          snapshot.conquest.oldWorldProvincesOwned +
+              kDeclareWarAggressorSuppressWeakGpLeadThreshold) {
+    s += kOfferPeaceWeakVsInvadableBlockerBonus;
+  }
+  if (targetGp != null &&
+      snapshot.threats.atWarWith.contains(order.targetFactionId) &&
+      isStalledOldWorldExpansion(
+        snapshot.conquest.oldWorldProvincesOwned,
+      ) &&
+      regimentCountForPlayer(game, nationId) == 0) {
+    s += kOfferPeaceStalledZeroRegimentGpWarBonus;
+  }
+  s += getAgendaPeaceAcceptanceModifier(agendaId);
+  s += (thresholds.peaceTendency - 50);
+  return s;
 }
 
 int _scoreDeclareWarDiplomaticOrder({
