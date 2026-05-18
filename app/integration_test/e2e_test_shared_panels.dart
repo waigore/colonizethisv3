@@ -180,7 +180,9 @@ Future<void> e2eOpenNavalPanel(
     try {
       await tester.ensureVisible(trigger);
     } catch (_) {}
-    await tester.tap(trigger.first, warnIfMissed: false);
+    final hit = trigger.hitTestable();
+    final target = hit.evaluate().isNotEmpty ? hit : trigger;
+    await tester.tap(target.first, warnIfMissed: false);
     if (navalPanel.evaluate().isNotEmpty) {
       return true;
     }
@@ -188,12 +190,22 @@ Future<void> e2eOpenNavalPanel(
     if (navalPanel.evaluate().isNotEmpty) {
       return true;
     }
+    await e2eWaitUntilFound(
+      tester,
+      navalPanel,
+      timeout: const Duration(seconds: 5),
+      perf: perf,
+      phaseName: 'wait_until_naval_panel_after_trigger_tap',
+    );
+    if (navalPanel.evaluate().isNotEmpty) {
+      return true;
+    }
     return e2ePumpUntilConditionOrIdle(
       tester,
       () => navalPanel.evaluate().isNotEmpty,
-      timeout: const Duration(seconds: 3),
+      timeout: const Duration(seconds: 2),
       perf: perf,
-      phaseName: 'pump_until_naval_panel_after_trigger_tap',
+      phaseName: 'pump_until_naval_panel_after_trigger_tap_miss',
     );
   }
 
@@ -240,6 +252,15 @@ Future<void> e2eOpenNavalPanel(
       continue;
     }
     if (empireRailButton.evaluate().isNotEmpty) {
+      if (empireRailButton.hitTestable().evaluate().isEmpty) {
+        await e2eWaitUntilAnyFinderHitTestable(
+          tester,
+          [empireRailButton, markerButton],
+          timeout: const Duration(seconds: 5),
+          perf: perf,
+          phaseName: 'wait_until_naval_rail_hit_testable',
+        );
+      }
       if (await tryOpen(empireRailButton)) {
         perf?.timing('open_panel_naval', sw.elapsed);
         return;
@@ -248,6 +269,15 @@ Future<void> e2eOpenNavalPanel(
       continue;
     }
     if (markerButton.evaluate().isNotEmpty) {
+      if (markerButton.hitTestable().evaluate().isEmpty) {
+        await e2eWaitUntilAnyFinderHitTestable(
+          tester,
+          [markerButton, empireRailButton],
+          timeout: const Duration(seconds: 5),
+          perf: perf,
+          phaseName: 'wait_until_naval_marker_hit_testable',
+        );
+      }
       if (await tryOpen(markerButton)) {
         perf?.timing('open_panel_naval', sw.elapsed);
         return;
