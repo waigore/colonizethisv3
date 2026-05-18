@@ -107,13 +107,16 @@ DomainPlannerOutcome runDomainPlannersWithOutcome({
   final stalledOldWorldExpansion = isStalledOldWorldExpansion(
     snapshot.conquest.oldWorldProvincesOwned,
   );
+  final observerQuotaPressure = isBelowObserverConquestQuota(
+    snapshot.conquest.oldWorldProvincesOwned,
+  );
   final conquestDeclaredWarTarget = stalledConquestDeclaredWarTarget(
     game: ctx.game,
     nationId: nationId,
     snapshot: snapshot,
     declaredThisTurn: declareWarResult.declaredWarTargetFactionId,
   );
-  final conquestPasses = stalledOldWorldExpansion
+  final conquestPasses = stalledOldWorldExpansion || observerQuotaPressure
       ? kStalledConquestArmyMovePasses
       : 1;
   for (var pass = 0; pass < conquestPasses; pass++) {
@@ -136,7 +139,7 @@ DomainPlannerOutcome runDomainPlannersWithOutcome({
       (ctx.orders.armyMoveOrdersByPlayerId[nationId]?.length ?? 0) -
       armyMovesBeforeConquest;
   // Stalled GPs must not run the relocation pass: it undoes frontier marches.
-  if (!stalledOldWorldExpansion) {
+  if (!stalledOldWorldExpansion && !observerQuotaPressure) {
     ctx = ctx.withOrders(
       runArmyMovePlanner(
         ctx: ctx,
@@ -255,6 +258,18 @@ PlannerContext _runEconomyDomainPlanners({
     buildThreshold = math.min(buildThreshold, colonialBuildCap);
   }
   final regimentCount = regimentCountForPlayer(ctx.game, ctx.nationId);
+  final observerQuotaPressure = isBelowObserverConquestQuota(
+    snapshot.conquest.oldWorldProvincesOwned,
+  );
+  final criticallyWeakBelowQuota = observerQuotaPressure &&
+      snapshot.conquest.oldWorldProvincesOwned <=
+          kFewOldWorldProvincesDefendThreshold;
+  final criticallyWeakNoGpWar =
+      snapshot.conquest.oldWorldProvincesOwned <=
+          kFewOldWorldProvincesDefendThreshold &&
+      !snapshot.threats.atWarWith.any(
+        (id) => ctx.game.playerById(id) != null,
+      );
   final gpBlocker = isStalledOldWorldGpBlockerFocus(
         game: ctx.game,
         snapshot: snapshot,
@@ -273,10 +288,21 @@ PlannerContext _runEconomyDomainPlanners({
       minRegimentFloor += deficit * kStalledMinRegimentCountPerProvinceDeficitVsBlocker;
     }
   }
+  if (criticallyWeakNoGpWar &&
+      snapshot.threats.atWarWith.isNotEmpty &&
+      minRegimentFloor < kStalledMinRegimentCountWhenCriticallyWeakNoGpWar) {
+    minRegimentFloor = kStalledMinRegimentCountWhenCriticallyWeakNoGpWar;
+  }
+  if (criticallyWeakBelowQuota &&
+      snapshot.threats.atWarWith.isNotEmpty &&
+      minRegimentFloor < kStalledMinRegimentCountWhenCriticallyWeakBelowQuota) {
+    minRegimentFloor = kStalledMinRegimentCountWhenCriticallyWeakBelowQuota;
+  }
   final forceRegimentRebuild =
-      isStalledOldWorldExpansion(snapshot.conquest.oldWorldProvincesOwned) &&
-          snapshot.threats.atWarWith.isNotEmpty &&
-          regimentCount < minRegimentFloor;
+      (isStalledOldWorldExpansion(snapshot.conquest.oldWorldProvincesOwned) ||
+          criticallyWeakBelowQuota) &&
+      snapshot.threats.atWarWith.isNotEmpty &&
+      regimentCount < minRegimentFloor;
   if (forceRegimentRebuild) {
     buildThreshold = 0;
   }
@@ -304,7 +330,8 @@ PlannerContext _runEconomyDomainPlanners({
         provincesToVictory: snapshot.conquest.provincesToVictory,
         oldWorldProvincesOwned: snapshot.conquest.oldWorldProvincesOwned,
         colonialPressure: colonialPressure,
-        militaryRebuildCrisis: forceRegimentRebuild && regimentCount == 0,
+        militaryRebuildCrisis: forceRegimentRebuild &&
+            regimentCount <= kStalledMilitaryRebuildCrisisRegimentCap,
       ),
     );
     if (chosen != null) {

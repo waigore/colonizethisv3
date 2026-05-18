@@ -4,9 +4,11 @@ import 'planning_imports.dart';
 import 'colonial_pressure.dart';
 export 'colonial_pressure.dart'
     show
+        consolidateGainsSoleGpPeaceTarget,
         isOldWorldGpOnlyInvadableFrontier,
         isStalledOldWorldGpBlockerFocus,
-        primaryInvadableOldWorldGpBlocker;
+        primaryInvadableOldWorldGpBlocker,
+        unwinnableSoleGpFrontierPeaceTarget;
 import 'planner_context.dart';
 import '../util/ai_random_utils.dart';
 import '../util/orders_extensions.dart';
@@ -247,6 +249,53 @@ List<String> stalledExpansionDistractionPeaceTargets({
   return targets;
 }
 
+/// When OW holdings are critically low (≤6), peace every stronger at-war GP (Refs #2509).
+List<String> criticalWeakGpSurvivalPeaceTargets({
+  required Game game,
+  required AIWorldSnapshot snapshot,
+}) {
+  if (snapshot.conquest.oldWorldProvincesOwned >
+      kFewOldWorldProvincesDefendThreshold) {
+    return const [];
+  }
+  final ownOw = snapshot.conquest.oldWorldProvincesOwned;
+  final targets = <String>[
+    for (final factionId in snapshot.threats.atWarWith)
+      if (game.playerById(factionId) != null &&
+          provinceCountOwnedBy(game, factionId) >=
+              ownOw + kDeclareWarAggressorSuppressWeakGpLeadThreshold)
+        factionId,
+  ]..sort();
+  return targets;
+}
+
+/// Peace the invadable OW frontier GP while critically weak and outmatched
+/// (pivot to minors/tribes instead of unwinnable GP wars; Refs #2509).
+List<String> weakHoldingsInvadableBlockerPeaceTargets({
+  required Game game,
+  required AIWorldSnapshot snapshot,
+}) {
+  if (snapshot.conquest.oldWorldProvincesOwned >
+      kFewOldWorldProvincesDefendThreshold) {
+    return const [];
+  }
+  final blocker = primaryInvadableOldWorldGpBlocker(
+    game: game,
+    snapshot: snapshot,
+  );
+  if (blocker == null ||
+      !snapshot.threats.atWarWith.contains(blocker) ||
+      game.playerById(blocker) == null) {
+    return const [];
+  }
+  final lead = provinceCountOwnedBy(game, blocker) -
+      snapshot.conquest.oldWorldProvincesOwned;
+  if (lead < kDeclareWarAggressorSuppressWeakGpLeadThreshold) {
+    return const [];
+  }
+  return [blocker];
+}
+
 /// When OW holdings are critically low, peace non-blocker Great Power fronts only
 /// (avoid total collapse from multi-front GP wars; Refs #2509).
 List<String> criticalMultiFrontGpPeaceTargets({
@@ -292,6 +341,40 @@ List<String> mutualZeroRegimentGpStalematePeaceTargets({
   return [enemy];
 }
 
+/// First minor nation that owns invadable OW land but is not yet at war, while
+/// this GP is critically weak and not fighting any Great Power (Refs #2509).
+String? criticalWeakUninvadedMinorDeclareTarget({
+  required Game game,
+  required AIWorldSnapshot snapshot,
+}) {
+  if (snapshot.conquest.oldWorldProvincesOwned >
+      kFewOldWorldProvincesDefendThreshold) {
+    return null;
+  }
+  if (snapshot.threats.atWarWith.any((id) => game.playerById(id) != null)) {
+    return null;
+  }
+  if (snapshot.conquest.invadableProvinceIdsSorted.isEmpty) {
+    return null;
+  }
+  final provinceOwner = getProvinceOwnerMap(game);
+  final candidates = <String>{};
+  for (final pid in snapshot.conquest.invadableProvinceIdsSorted) {
+    final owner = provinceOwner[pid];
+    if (owner == null ||
+        !game.minorNations.any((m) => m.id == owner) ||
+        snapshot.threats.atWarWith.contains(owner)) {
+      continue;
+    }
+    candidates.add(owner);
+  }
+  if (candidates.isEmpty) {
+    return null;
+  }
+  final sorted = candidates.toList()..sort();
+  return sorted.first;
+}
+
 bool stalledOwExpansionNeedsPeacePass({
   required Game game,
   required AIWorldSnapshot snapshot,
@@ -307,8 +390,16 @@ bool stalledOwExpansionNeedsPeacePass({
     multiFrontNonBlockerGpPeaceTargets(game: game, snapshot: snapshot)
         .isNotEmpty ||
     criticalMultiFrontGpPeaceTargets(game: game, snapshot: snapshot).isNotEmpty ||
+    criticalWeakGpSurvivalPeaceTargets(game: game, snapshot: snapshot)
+        .isNotEmpty ||
+    weakHoldingsInvadableBlockerPeaceTargets(game: game, snapshot: snapshot)
+        .isNotEmpty ||
     mutualZeroRegimentGpStalematePeaceTargets(game: game, snapshot: snapshot)
-        .isNotEmpty;
+        .isNotEmpty ||
+    criticalOwHoldPeaceTargets(game: game, snapshot: snapshot).isNotEmpty ||
+    unwinnableSoleGpFrontierPeaceTarget(game: game, snapshot: snapshot) !=
+        null ||
+    consolidateGainsSoleGpPeaceTarget(game: game, snapshot: snapshot) != null;
 
 /// When fighting 2+ Great Powers, peace every non-blocker GP (Refs #2509).
 List<String> multiFrontNonBlockerGpPeaceTargets({
@@ -364,9 +455,20 @@ Set<String> collectStalledGreatPowerPeaceTargets({
     ),
     ...atWarGpDistractionTribePeaceTargets(game: game, snapshot: snapshot),
     ...multiFrontNonBlockerGpPeaceTargets(game: game, snapshot: snapshot),
+    ...criticalMultiFrontGpPeaceTargets(game: game, snapshot: snapshot),
+    ...criticalWeakGpSurvivalPeaceTargets(game: game, snapshot: snapshot),
+    ...weakHoldingsInvadableBlockerPeaceTargets(game: game, snapshot: snapshot),
+    ...mutualZeroRegimentGpStalematePeaceTargets(game: game, snapshot: snapshot),
     if (stalledStrongerGpBlockerPeaceTarget(game: game, snapshot: snapshot) !=
         null)
       stalledStrongerGpBlockerPeaceTarget(game: game, snapshot: snapshot)!,
+    ...criticalOwHoldPeaceTargets(game: game, snapshot: snapshot),
+    if (unwinnableSoleGpFrontierPeaceTarget(game: game, snapshot: snapshot)
+        case final enemy?)
+      enemy,
+    if (consolidateGainsSoleGpPeaceTarget(game: game, snapshot: snapshot)
+        case final enemy?)
+      enemy,
   };
   return targets.where((id) => game.playerById(id) != null).toSet();
 }
@@ -399,7 +501,11 @@ Orders supplementMutualStalledGreatPowerPeaceOrders({
         game: game,
         snapshot: fromSnapshot,
       );
-      if (toGp == invadableBlocker) {
+      final stalledPeaceTargets = collectStalledGreatPowerPeaceTargets(
+        game: game,
+        snapshot: fromSnapshot,
+      );
+      if (toGp == invadableBlocker && !stalledPeaceTargets.contains(toGp)) {
         continue;
       }
       final before = diplo[toGp]?.length ?? 0;
@@ -485,6 +591,13 @@ int _resolveDiplomacyPlannerWeight({
       isStalledOldWorldExpansion(snapshot.conquest.oldWorldProvincesOwned) &&
       weight < kDiplomacyDeclareWarMinWeightWhenStalled) {
     weight = kDiplomacyDeclareWarMinWeightWhenStalled;
+  }
+  if (pass == DiplomacyPlannerPass.declareWarOnly &&
+      snapshot.conquest.oldWorldProvincesOwned <=
+          kFewOldWorldProvincesDefendThreshold &&
+      snapshot.conquest.invadableProvinceIdsSorted.isNotEmpty &&
+      weight < kDiplomacyDeclareWarMinWeightWhenStalled + 20) {
+    weight = kDiplomacyDeclareWarMinWeightWhenStalled + 20;
   }
   if (pass == DiplomacyPlannerPass.declareWarOnly &&
       snapshot.conquest.oldWorldProvincesOwned <=
@@ -617,6 +730,38 @@ List<DiplomaticOrder> _filterDiplomacyCandidatesForPass({
   }
 }
 
+DiplomacyPlannerResult? _criticalWeakMinorDeclarePlannerResultIfNeeded({
+  required PlannerContext ctx,
+  required AIWorldSnapshot snapshot,
+  required DiplomacyPlannerPass pass,
+}) {
+  if (pass != DiplomacyPlannerPass.declareWarOnly) {
+    return null;
+  }
+  final minorTarget = criticalWeakUninvadedMinorDeclareTarget(
+    game: ctx.game,
+    snapshot: snapshot,
+  );
+  if (minorTarget == null) {
+    return null;
+  }
+  _log.i(
+    'diplomacy forced declareWar nationId=${ctx.nationId} target=$minorTarget',
+  );
+  return DiplomacyPlannerResult(
+    orders: ctx.orders.appendDiplomaticOrders(
+      ctx.nationId,
+      [
+        DiplomaticOrder(
+          type: DiplomaticOrderType.declareWar,
+          targetFactionId: minorTarget,
+        ),
+      ],
+    ),
+    declaredWarTargetFactionId: minorTarget,
+  );
+}
+
 DiplomacyPlannerResult? _stalledPeacePlannerResultIfNeeded({
   required PlannerContext ctx,
   required AIWorldSnapshot snapshot,
@@ -625,36 +770,10 @@ DiplomacyPlannerResult? _stalledPeacePlannerResultIfNeeded({
   if (pass == DiplomacyPlannerPass.declareWarOnly) {
     return null;
   }
-  final peaceTargets = <String>{
-    if (stalledStrongerGpBlockerPeaceTarget(
-          game: ctx.game,
-          snapshot: snapshot,
-        ) !=
-        null)
-      stalledStrongerGpBlockerPeaceTarget(
-        game: ctx.game,
-        snapshot: snapshot,
-      )!,
-    ...stalledFutileGpPeaceTargets(game: ctx.game, snapshot: snapshot),
-    ...stalledGpBlockerFocusPeaceTargets(game: ctx.game, snapshot: snapshot),
-    ...stalledExpansionDistractionPeaceTargets(
-      game: ctx.game,
-      snapshot: snapshot,
-    ),
-    ...atWarGpDistractionTribePeaceTargets(
-      game: ctx.game,
-      snapshot: snapshot,
-    ),
-    ...multiFrontNonBlockerGpPeaceTargets(
-      game: ctx.game,
-      snapshot: snapshot,
-    ),
-    ...criticalMultiFrontGpPeaceTargets(game: ctx.game, snapshot: snapshot),
-    ...mutualZeroRegimentGpStalematePeaceTargets(
-      game: ctx.game,
-      snapshot: snapshot,
-    ),
-  };
+  final peaceTargets = collectStalledGreatPowerPeaceTargets(
+    game: ctx.game,
+    snapshot: snapshot,
+  );
   if (peaceTargets.isEmpty) {
     return null;
   }
@@ -711,6 +830,28 @@ DiplomacyPlannerResult runDiplomacyPlannerWithResult({
   required AIWorldSnapshot snapshot,
   DiplomacyPlannerPass pass = DiplomacyPlannerPass.all,
 }) {
+  // Survival peace must run even when diplomacy weight is low or suggestion
+  // APIs return no candidates (observer seed-42 gp3/gp6; Refs #2509).
+  if (pass != DiplomacyPlannerPass.declareWarOnly) {
+    final peaceResult = _stalledPeacePlannerResultIfNeeded(
+      ctx: ctx,
+      snapshot: snapshot,
+      pass: pass,
+    );
+    if (peaceResult != null) {
+      return peaceResult;
+    }
+  }
+  if (pass == DiplomacyPlannerPass.declareWarOnly) {
+    final minorWarResult = _criticalWeakMinorDeclarePlannerResultIfNeeded(
+      ctx: ctx,
+      snapshot: snapshot,
+      pass: pass,
+    );
+    if (minorWarResult != null) {
+      return minorWarResult;
+    }
+  }
   final weight = _resolveDiplomacyPlannerWeight(
     ctx: ctx,
     snapshot: snapshot,
@@ -729,15 +870,6 @@ DiplomacyPlannerResult runDiplomacyPlannerWithResult({
   );
   if (filtered.isEmpty) {
     return DiplomacyPlannerResult(orders: ctx.orders);
-  }
-
-  final peaceResult = _stalledPeacePlannerResultIfNeeded(
-    ctx: ctx,
-    snapshot: snapshot,
-    pass: pass,
-  );
-  if (peaceResult != null) {
-    return peaceResult;
   }
 
   final scores = computeDiplomaticCandidateScores(

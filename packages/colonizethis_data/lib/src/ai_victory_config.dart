@@ -108,12 +108,20 @@ const int kStalledTradeGoalPenalty = 40;
 /// Extra conquer goal weight while Old World expansion is stalled.
 const int kStalledConquerGoalBonus = 30;
 
+/// Extra conquer / reduced defend while critically weak but invadable OW minors
+/// remain (recover after survival peace; Refs #2509).
+const int kWeakGpRecoveryConquerBonus = 60;
+const int kWeakGpRecoveryDefendPenalty = 30;
+
 /// Extra declare-war weight toward adjacent minors when stalled.
 const int kDeclareWarStalledExpansionMinorBonus = 75;
 
 /// When OW expansion is stalled but invadable OW minors exist, prioritize
 /// declaring on those minors over distant tribe wars (observer turn-100 gate).
 const int kDeclareWarStalledOwMinorPriorityBonus = 200;
+
+/// Extra declare-war weight toward OW minors while holdings are critically low.
+const int kDeclareWarWeakGpOwMinorRecoveryBonus = 120;
 
 /// Penalize tribe declare-war while OW holdings are stalled and invadable OW
 /// minors remain (tribes without sea-reachable NW provinces for this GP).
@@ -127,7 +135,7 @@ const int kDeclareWarEarlyExpansionMinorBonus = 180;
 const int kDeclareWarEarlyExpansionTribePenalty = 160;
 
 /// Last turn (inclusive) for [kDeclareWarEarlyExpansionMinorBonus].
-const int kDeclareWarEarlyExpansionMaxTurn = 30;
+const int kDeclareWarEarlyExpansionMaxTurn = 50;
 
 /// Penalty on adjacent minor declare-war when the GP already holds many OW provinces.
 const int kDeclareWarSatedExpansionMinorPenalty = 100;
@@ -157,10 +165,17 @@ const int kStalledConquestFieldArmySplitCap = 8;
 
 /// While stalled and at war, build regiments until at least this many exist in
 /// all armies (Home + field) so splits and invasions can proceed (Refs #2509).
-const int kStalledMinRegimentCountWhenAtWar = 8;
+const int kStalledMinRegimentCountWhenAtWar = 10;
 
 /// Higher floor when fighting the sole GP that owns the invadable OW frontier.
-const int kStalledMinRegimentCountWhenGpBlockerAtWar = 10;
+const int kStalledMinRegimentCountWhenGpBlockerAtWar = 12;
+
+/// Regiment build floor when critically weak with minor wars only (Refs #2509).
+const int kStalledMinRegimentCountWhenCriticallyWeakNoGpWar = 12;
+
+/// When stalled and below the regiment floor, prioritize regiment builds only if
+/// current count is at or below this cap (avoids starving mid-tier GPs; #2509).
+const int kStalledMilitaryRebuildCrisisRegimentCap = 4;
 
 /// Extra regiment build floor per Old World province the frontier blocker leads by.
 const int kStalledMinRegimentCountPerProvinceDeficitVsBlocker = 2;
@@ -177,6 +192,43 @@ const int kOfferPeaceStalledStrongerGpBlockerBonus = 240;
 /// (exit distracting GP wars; observer seed-42 gp4/gp6; Refs #2509).
 const int kOfferPeaceStalledFutileGpWarBonus = 230;
 
+/// Default observer start OW provinces per GP plus the turn-100 conquest gate (+3).
+const int kObserverConquestMinOwProvincesPerGp = 10;
+
+/// True when OW holdings have not yet met the observer per-GP conquest quota.
+bool isBelowObserverConquestQuota(int oldWorldProvincesOwned) =>
+    oldWorldProvincesOwned > 0 &&
+    oldWorldProvincesOwned < kObserverConquestMinOwProvincesPerGp;
+
+/// Stalled band or still below the turn-100 observer per-GP conquest quota.
+bool isObserverConquestExpansionPressure(int oldWorldProvincesOwned) =>
+    isStalledOldWorldExpansion(oldWorldProvincesOwned) ||
+    isBelowObserverConquestQuota(oldWorldProvincesOwned);
+
+/// Offer-peace toward the sole GP enemy when this GP meets the observer quota and
+/// leads that enemy by at least this many OW provinces (lock gains; Refs #2509).
+const int kConsolidateGainsSoleGpProvinceLead = 3;
+
+/// Minimum OW holdings before [consolidateGainsSoleGpPeaceTarget] may fire (quota + buffer).
+const int kObserverConquestConsolidateMinOwProvinces =
+    kObserverConquestMinOwProvincesPerGp + 2;
+
+/// Enemy must lead by at least this many OW provinces for
+/// [unwinnableSoleGpFrontierPeaceTarget] (avoid premature sole-GP peace).
+const int kUnwinnableSoleGpMinProvinceDeficit = 2;
+
+/// Declare-war bonus on adjacent invadable OW minors while below the observer quota.
+const int kDeclareWarBelowObserverQuotaMinorBonus = 110;
+
+/// Regiment build floor when critically weak, below the observer quota, and at war.
+const int kStalledMinRegimentCountWhenCriticallyWeakBelowQuota = 8;
+
+/// Offer-peace bonus for [unwinnableSoleGpFrontierPeaceTarget] (Refs #2509).
+const int kOfferPeaceUnwinnableSoleGpWarBonus = 250;
+
+/// Offer-peace bonus for [consolidateGainsSoleGpPeaceTarget] (Refs #2509).
+const int kOfferPeaceConsolidateGainsSoleGpWarBonus = 260;
+
 /// When far from victory, defend goal bonus while Old World holdings are small.
 const int kDefendBonusWhenFewOldWorldProvinces = 35;
 
@@ -186,6 +238,12 @@ const int kDefendBonusWhenAtWarAndFewHoldings = 45;
 
 /// Old World province count at or below which [kDefendBonusWhenFewOldWorldProvinces] applies.
 const int kFewOldWorldProvincesDefendThreshold = 6;
+
+/// OW holdings at or below which a lone GP [offerPeace] may end a GP war without
+/// a reciprocal offer (survival peace; matches
+/// [kFewOldWorldProvincesDefendThreshold]; Refs #2509).
+const int kCollapsedOldWorldProvincesSurvivalPeace =
+    kFewOldWorldProvincesDefendThreshold;
 
 /// Expand-goal bonus when invadable New World tribe/minor provinces exist.
 const int kColonialExpandBonusWhenInvadableNw = 45;
@@ -319,12 +377,29 @@ const int kDeclareWarStalledLowWarLikelihoodTribeCap = 150;
 /// while Old World expansion is stalled and far from military victory.
 const int kDeclareWarStalledAdjacentInvadableMinorFloor = 400;
 
+/// Higher floor for critically weak GPs toward adjacent invadable OW minors.
+const int kDeclareWarWeakGpAdjacentInvadableMinorFloor = 580;
+
+/// Declare-war bonus toward OW minors when critically weak, invadable land
+/// remains, and the GP is not at war with any other Great Power (Refs #2509).
+const int kDeclareWarCriticalWeakNoGpWarMinorBonus = 150;
+
 /// Declare-war penalty toward adjacent GPs while invadable Old World minors
 /// remain and expansion is stalled (reduces GP dogpiles on seed-42).
 const int kDeclareWarStalledGpWhenMinorsRemainPenalty = 280;
 
 /// Declare-war penalty toward a stalled weaker neighbor GP (mid-map deadlocks).
 const int kDeclareWarOnStalledWeakerNeighborPenalty = 200;
+
+/// Suppress declare-war on adjacent GPs at or below
+/// [kFewOldWorldProvincesDefendThreshold] when the attacker leads by at least
+/// this many Old World provinces (observer seed-42 gp3/gp6; Refs #2509).
+const int kDeclareWarAggressorSuppressWeakGpLeadThreshold = 4;
+
+/// Offer-peace bonus toward the invadable OW frontier GP while holdings are
+/// critically low and that GP leads by
+/// [kDeclareWarAggressorSuppressWeakGpLeadThreshold] or more (Refs #2509).
+const int kOfferPeaceWeakVsInvadableBlockerBonus = 260;
 
 /// Cap NW tribe declare-war scores while invadable Old World minors remain.
 const int kDeclareWarStalledTribeWhenOwMinorCap = 250;
@@ -342,6 +417,9 @@ const int kDeclareWarStalledActiveOwMinorBonus = 200;
 
 /// Minimum conquest army-move pass weight when Old World expansion is stalled.
 const int kConquestArmyMoveMinWeightWhenStalled = 75;
+
+/// Army-move weight floor when critically weak and not at war with any GP.
+const int kConquestArmyMoveMinWeightWhenCriticallyWeakNoGpWar = 95;
 
 /// Army-move score bonus for invadable provinces owned by the same-turn
 /// declare-war target while Old World expansion is stalled.

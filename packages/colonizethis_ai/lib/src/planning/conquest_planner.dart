@@ -116,6 +116,14 @@ Orders runConquestArmyMovePlanner({
   if (stalledExpansion && weight < kConquestArmyMoveMinWeightWhenStalled) {
     weight = kConquestArmyMoveMinWeightWhenStalled;
   }
+  if (snapshot.conquest.oldWorldProvincesOwned <=
+          kFewOldWorldProvincesDefendThreshold &&
+      !snapshot.threats.atWarWith.any(
+        (id) => ctx.game.playerById(id) != null,
+      ) &&
+      weight < kConquestArmyMoveMinWeightWhenCriticallyWeakNoGpWar) {
+    weight = kConquestArmyMoveMinWeightWhenCriticallyWeakNoGpWar;
+  }
   if (hasColonialAcquisitionTargets(snapshot.colonial) &&
       weight < kConquestArmyMoveMinWeightWhenColonialPressure) {
     weight = kConquestArmyMoveMinWeightWhenColonialPressure;

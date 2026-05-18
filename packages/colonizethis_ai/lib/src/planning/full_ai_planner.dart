@@ -132,11 +132,11 @@ FullAIResult generateOrdersForGameFullAI(
       if (isAiControlled(game, p.id)) p.id,
   ];
   final turn = game.worldState.turnState.turnNumber;
-  // Offset rotation so mid-map GPs (gp4–gp6) plan before gp1–gp2 on early turns
-  // when minors are still available (observer seed-42 conquest gate; Refs #2509).
+  // Offset rotation so gp3–gp6 plan before gp1–gp2 on early turns when minors
+  // are still available (observer seed-42 conquest gate; Refs #2509).
   final rotateStart = aiPlayerIds.isEmpty
       ? 0
-      : (turn + 3) % aiPlayerIds.length;
+      : (turn + 2) % aiPlayerIds.length;
   final orderedAiPlayerIds = [
     ...aiPlayerIds.sublist(rotateStart),
     ...aiPlayerIds.sublist(0, rotateStart),

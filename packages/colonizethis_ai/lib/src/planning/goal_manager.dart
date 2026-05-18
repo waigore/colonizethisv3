@@ -60,6 +60,10 @@ Map<StrategicGoal, int> evaluateStrategicGoalScores(
           kFewOldWorldProvincesDefendThreshold &&
       provincesToVictory > kConquerScoreFloorProvincesToVictoryThreshold) {
     defend += kDefendBonusWhenFewOldWorldProvinces;
+    if (snapshot.conquest.invadableProvinceIdsSorted.isNotEmpty) {
+      conquer += kWeakGpRecoveryConquerBonus;
+      defend -= kWeakGpRecoveryDefendPenalty;
+    }
   }
   conquer += conquerScoreBonusForProvincesToVictory(provincesToVictory);
   conquer += endgameConquerScoreBonus(provincesToVictory);
