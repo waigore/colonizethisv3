@@ -21,6 +21,7 @@ List<int> computeDiplomaticCandidateScores({
   required AIWorldSnapshot snapshot,
   required AIConfig config,
   StrategicGoal? primaryGoal,
+  Orders? sameTurnPriorDiplomaticOrders,
 }) {
   final agendaId = config.hiddenAgendaId;
   final thresholds = getThresholdsForLeader(config.personalityId);
@@ -96,6 +97,7 @@ List<int> computeDiplomaticCandidateScores({
           anyMinorOwnsOldWorld: anyMinorOwnsOldWorld,
           primaryGoal: primaryGoal,
           warDesireForTarget: warDesireForTarget,
+          sameTurnPriorDiplomaticOrders: sameTurnPriorDiplomaticOrders,
         );
         break;
       case DiplomaticOrderType.establishOverture:

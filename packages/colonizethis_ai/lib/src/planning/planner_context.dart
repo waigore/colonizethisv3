@@ -17,6 +17,7 @@ class PlannerContext {
     required this.primaryGoal,
     required this.seeds,
     required this.suggestionAPI,
+    this.sameTurnPriorDiplomaticOrders,
     int? currentTurn,
   }) : currentTurn = currentTurn ?? game.worldState.turnState.turnNumber;
 
@@ -29,6 +30,9 @@ class PlannerContext {
   final StrategicGoal primaryGoal;
   final AISeedBundle seeds;
   final OrderSuggestionAPI suggestionAPI;
+
+  /// Declare-war orders from earlier Full AI players this turn (Refs #2509).
+  final Orders? sameTurnPriorDiplomaticOrders;
   final int currentTurn;
 
   late final Map<String, String?> provinceOwner = getProvinceOwnerMap(game);
@@ -78,6 +82,7 @@ class PlannerContext {
     primaryGoal: primaryGoal,
     seeds: seeds,
     suggestionAPI: suggestionAPI,
+    sameTurnPriorDiplomaticOrders: sameTurnPriorDiplomaticOrders,
     currentTurn: currentTurn,
   );
 }

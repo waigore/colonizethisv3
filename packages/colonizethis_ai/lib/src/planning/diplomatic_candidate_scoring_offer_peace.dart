@@ -66,6 +66,17 @@ int _scoreOfferPeaceDiplomaticOrder({
       isOldWorldGpOnlyInvadableFrontier(game: game, snapshot: snapshot)) {
     s += kOfferPeaceStalledFutileGpWarBonus;
   }
+  final gpWarCount = snapshot.threats.atWarWith
+      .where((id) => game.playerById(id) != null)
+      .length;
+  if (targetGp != null &&
+      gpBlocker != null &&
+      gpWarCount > 1 &&
+      order.targetFactionId != gpBlocker &&
+      snapshot.threats.atWarWith.contains(order.targetFactionId) &&
+      snapshot.conquest.invadableProvinceIdsSorted.isNotEmpty) {
+    s += kOfferPeaceStalledFutileGpWarBonus;
+  }
   if (targetGp != null &&
       snapshot.threats.atWarWith.contains(order.targetFactionId) &&
       unwinnableSoleGpFrontierPeaceTarget(
@@ -83,6 +94,15 @@ int _scoreOfferPeaceDiplomaticOrder({
           )
           .contains(order.targetFactionId)) {
     s += kOfferPeaceUnwinnableSoleGpWarBonus;
+  }
+  if (targetGp != null &&
+      snapshot.threats.atWarWith.contains(order.targetFactionId) &&
+      quotaMetFutileBelowQuotaGpPeaceTargets(
+            game: game,
+            snapshot: snapshot,
+          )
+          .contains(order.targetFactionId)) {
+    s += kOfferPeaceStalledFutileGpWarBonus;
   }
   if (targetGp != null &&
       snapshot.threats.atWarWith.contains(order.targetFactionId) &&

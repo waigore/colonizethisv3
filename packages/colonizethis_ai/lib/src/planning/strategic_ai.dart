@@ -73,6 +73,7 @@ StrategicOrderTraceResult generateStrategicOrdersWithTrace({
   void Function(DialogueEvent)? onDialogue,
   void Function(PortraitMoodEvent)? onMood,
   void Function(String phaseId)? onStagedPlannerProgress,
+  Orders? sameTurnPriorDiplomaticOrders,
 }) {
   final turn = game.worldState.turnState.turnNumber;
   _log.i('generateStrategicOrders nationId=$nationId turn=$turn');
@@ -134,6 +135,7 @@ StrategicOrderTraceResult generateStrategicOrdersWithTrace({
     economyPlan: economyPlan,
     tileMapByRegion: tileMapByRegion,
     onStagedPlannerProgress: onStagedPlannerProgress,
+    sameTurnPriorDiplomaticOrders: sameTurnPriorDiplomaticOrders,
   );
   final orders = plannerOutcome.orders;
   final moveCount = orders.moveOrdersByPlayerId[nationId]?.length ?? 0;

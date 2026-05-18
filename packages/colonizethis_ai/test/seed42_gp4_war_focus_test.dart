@@ -19,7 +19,7 @@ void main() {
     );
     final topo = init.combinedTopology;
     final tileMap = init.tileMapByRegion;
-    for (var t = 0; t < 50; t++) {
+    void resolveTurn() {
       final fullAi = generateOrdersForGameFullAI(
         game,
         topo,
@@ -40,6 +40,13 @@ void main() {
         defaultAssignmentsByPlayerId: assignments,
       );
       game = (result as TurnResolutionComplete).game;
+    }
+
+    // Run through turn 49 resolution: multi-front GP wars consolidate in the
+    // same diplomacy phase (declare blocker, peace non-blocker). An extra turn
+    // can re-open fronts via alliance call-to-arms (seed-42 gp4/gp5).
+    for (var t = 0; t < 50; t++) {
+      resolveTurn();
     }
     final view = buildPlayerView(game, topo, 'gp4');
     final snap = AIWorldSnapshot.fromPlayerView(view, topology: topo);

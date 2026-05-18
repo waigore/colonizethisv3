@@ -9,6 +9,7 @@ export 'colonial_pressure.dart'
         isOldWorldGpOnlyInvadableFrontier,
         isStalledOldWorldGpBlockerFocus,
         primaryInvadableOldWorldGpBlocker,
+        quotaMetFutileBelowQuotaGpPeaceTargets,
         stalledBelowQuotaGpLeadPeaceTargets,
         unwinnableSoleGpFrontierPeaceTarget;
 import 'planner_context.dart';
@@ -112,6 +113,11 @@ List<String> stalledGpBlockerFocusPeaceTargets({
     return const [];
   }
   if (minorsOwnInvadable && gpWars.length <= 1) {
+    // Sole GP war on a mixed frontier must still drop non-blocker fronts
+    // (seed-42 gp4/gp5 vs gp3 blocker; Refs #2509).
+    if (gpWars.length == 1 && gpWars.single != blocker) {
+      return [gpWars.single];
+    }
     return const [];
   }
   if (minorsOwnInvadable) {
@@ -261,11 +267,13 @@ List<String> criticalWeakGpSurvivalPeaceTargets({
     return const [];
   }
   final ownOw = snapshot.conquest.oldWorldProvincesOwned;
+  final minLead = isBelowObserverConquestQuota(ownOw)
+      ? kUnwinnableSoleGpMinProvinceDeficit
+      : kDeclareWarAggressorSuppressWeakGpLeadThreshold;
   final targets = <String>[
     for (final factionId in snapshot.threats.atWarWith)
       if (game.playerById(factionId) != null &&
-          provinceCountOwnedBy(game, factionId) >=
-              ownOw + kDeclareWarAggressorSuppressWeakGpLeadThreshold)
+          provinceCountOwnedBy(game, factionId) >= ownOw + minLead)
         factionId,
   ]..sort();
   return targets;
@@ -279,8 +287,12 @@ List<String> weakHoldingsInvadableBlockerPeaceTargets({
 }) {
   final zeroRegiments =
       regimentCountForPlayer(game, snapshot.playerId) == 0;
+  final belowQuota = isBelowObserverConquestQuota(
+    snapshot.conquest.oldWorldProvincesOwned,
+  );
   if (snapshot.conquest.oldWorldProvincesOwned >
           kFewOldWorldProvincesDefendThreshold &&
+      !belowQuota &&
       !(zeroRegiments &&
           isStalledOldWorldExpansion(
             snapshot.conquest.oldWorldProvincesOwned,
@@ -298,7 +310,10 @@ List<String> weakHoldingsInvadableBlockerPeaceTargets({
   }
   final lead = provinceCountOwnedBy(game, blocker) -
       snapshot.conquest.oldWorldProvincesOwned;
-  if (lead < kDeclareWarAggressorSuppressWeakGpLeadThreshold) {
+  final minLead = belowQuota
+      ? kUnwinnableSoleGpMinProvinceDeficit
+      : kDeclareWarAggressorSuppressWeakGpLeadThreshold;
+  if (lead < minLead) {
     return const [];
   }
   return [blocker];
@@ -310,8 +325,12 @@ List<String> criticalMultiFrontGpPeaceTargets({
   required Game game,
   required AIWorldSnapshot snapshot,
 }) {
-  if (snapshot.conquest.oldWorldProvincesOwned >
-      kFewOldWorldProvincesDefendThreshold) {
+  if (!isObserverConquestExpansionPressure(
+        snapshot.conquest.oldWorldProvincesOwned,
+      ) &&
+      !isAtObserverConquestQuotaBand(
+        snapshot.conquest.oldWorldProvincesOwned,
+      )) {
     return const [];
   }
   final gpWars = <String>[
@@ -427,11 +446,14 @@ bool stalledOwExpansionNeedsPeacePass({
     criticalOwHoldPeaceTargets(game: game, snapshot: snapshot).isNotEmpty ||
     stalledBelowQuotaGpLeadPeaceTargets(game: game, snapshot: snapshot)
         .isNotEmpty ||
+    quotaMetFutileBelowQuotaGpPeaceTargets(game: game, snapshot: snapshot)
+        .isNotEmpty ||
     unwinnableSoleGpFrontierPeaceTarget(game: game, snapshot: snapshot) !=
         null ||
     consolidateGainsSoleGpPeaceTarget(game: game, snapshot: snapshot) != null;
 
-/// When fighting 2+ Great Powers, peace every non-blocker GP (Refs #2509).
+/// When fighting 2+ Great Powers, peace every non-blocker GP. Also peace a sole
+/// non-blocker GP war while invadable OW remains (Refs #2509).
 List<String> multiFrontNonBlockerGpPeaceTargets({
   required Game game,
   required AIWorldSnapshot snapshot,
@@ -440,7 +462,7 @@ List<String> multiFrontNonBlockerGpPeaceTargets({
     for (final factionId in snapshot.threats.atWarWith)
       if (game.playerById(factionId) != null) factionId,
   ];
-  if (gpWars.length <= 1) {
+  if (gpWars.isEmpty) {
     return const [];
   }
   if (!isStalledOldWorldExpansion(snapshot.conquest.oldWorldProvincesOwned) &&
@@ -462,6 +484,12 @@ List<String> multiFrontNonBlockerGpPeaceTargets({
     }
   }
   if (blocker == null) {
+    return const [];
+  }
+  if (gpWars.length == 1 && gpWars.single != blocker) {
+    return gpWars;
+  }
+  if (gpWars.length <= 1) {
     return const [];
   }
   final targets = <String>[
@@ -495,6 +523,7 @@ Set<String> collectStalledGreatPowerPeaceTargets({
       stalledStrongerGpBlockerPeaceTarget(game: game, snapshot: snapshot)!,
     ...criticalOwHoldPeaceTargets(game: game, snapshot: snapshot),
     ...stalledBelowQuotaGpLeadPeaceTargets(game: game, snapshot: snapshot),
+    ...quotaMetFutileBelowQuotaGpPeaceTargets(game: game, snapshot: snapshot),
     if (unwinnableSoleGpFrontierPeaceTarget(game: game, snapshot: snapshot)
         case final enemy?)
       enemy,
@@ -598,6 +627,11 @@ String? stalledGpBlockerDeclareWarTarget({
       snapshot.relations[blocker]?.atWar == true) {
     return null;
   }
+  final turn = game.worldState.turnState.turnNumber;
+  if (turn <= kDeclareWarEarlyAntiDogpileMaxTurn &&
+      isBelowObserverConquestQuota(provinceCountOwnedBy(game, blocker))) {
+    return null;
+  }
   return blocker;
 }
 
@@ -637,6 +671,12 @@ int _resolveDiplomacyPlannerWeight({
       snapshot.conquest.invadableProvinceIdsSorted.isNotEmpty &&
       weight < kDiplomacyDeclareWarMinWeightWhenStalled + 15) {
     weight = kDiplomacyDeclareWarMinWeightWhenStalled + 15;
+  }
+  if (pass == DiplomacyPlannerPass.declareWarOnly &&
+      isBelowObserverConquestQuota(snapshot.conquest.oldWorldProvincesOwned) &&
+      snapshot.conquest.invadableProvinceIdsSorted.isNotEmpty &&
+      weight < kDiplomacyDeclareWarMinWeightWhenStalled + 20) {
+    weight = kDiplomacyDeclareWarMinWeightWhenStalled + 20;
   }
   if (pass == DiplomacyPlannerPass.declareWarOnly &&
       hasColonialAcquisitionTargets(snapshot.colonial) &&
@@ -917,6 +957,7 @@ DiplomacyPlannerResult runDiplomacyPlannerWithResult({
     snapshot: snapshot,
     config: ctx.config,
     primaryGoal: ctx.primaryGoal,
+    sameTurnPriorDiplomaticOrders: ctx.sameTurnPriorDiplomaticOrders,
   );
 
   final candidateDesc = filtered
