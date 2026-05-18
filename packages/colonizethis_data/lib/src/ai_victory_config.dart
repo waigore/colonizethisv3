@@ -215,6 +215,11 @@ bool isBelowObserverConquestQuota(int oldWorldProvincesOwned) =>
     oldWorldProvincesOwned > 0 &&
     oldWorldProvincesOwned < kObserverConquestMinOwProvincesPerGp;
 
+/// At or below the turn-100 observer per-GP conquest quota (stalled band + quota).
+bool isAtObserverConquestQuotaBand(int oldWorldProvincesOwned) =>
+    oldWorldProvincesOwned > 0 &&
+    oldWorldProvincesOwned <= kObserverConquestMinOwProvincesPerGp;
+
 /// Stalled band or still below the turn-100 observer per-GP conquest quota.
 bool isObserverConquestExpansionPressure(int oldWorldProvincesOwned) =>
     isStalledOldWorldExpansion(oldWorldProvincesOwned) ||

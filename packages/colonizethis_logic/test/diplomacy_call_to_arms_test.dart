@@ -87,6 +87,68 @@ void main() {
       expect(result.pendingCallToArms!.first.aggressorGpId, 'gp3');
     });
 
+    test(
+      'AI ally refuses call to arms when already at war with another GP',
+      () {
+        final game = Game(
+          id: 'g-multi',
+          worldState: WorldState(
+            turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 25),
+            oldWorld: const RegionData(),
+            newWorld: const RegionData(),
+          ),
+          players: [
+            const Player(id: 'gp1', displayName: 'GP1', isHuman: false),
+            const Player(id: 'gp2', displayName: 'GP2', isHuman: false),
+            const Player(id: 'gp3', displayName: 'GP3', isHuman: false),
+            const Player(id: 'gp4', displayName: 'GP4', isHuman: false),
+          ],
+          diplomacyRelations: [
+            DiplomacyRelation(
+              factionId1: 'gp1',
+              factionId2: 'gp2',
+              score: 80,
+              level: RelationLevel.allied,
+              state: RelationState.atPeace,
+              sinceTurn: 0,
+              lastInteractionTurn: 0,
+            ),
+            DiplomacyRelation(
+              factionId1: 'gp1',
+              factionId2: 'gp3',
+              score: 0,
+              level: RelationLevel.hostile,
+              state: RelationState.atWar,
+              sinceTurn: 1,
+              lastInteractionTurn: 1,
+            ),
+            DiplomacyRelation(
+              factionId1: 'gp2',
+              factionId2: 'gp4',
+              score: 50,
+              level: RelationLevel.neutral,
+              state: RelationState.atPeace,
+              sinceTurn: 0,
+              lastInteractionTurn: 0,
+            ),
+          ],
+        );
+        final orders = Orders(
+          diplomaticOrdersByPlayerId: {
+            'gp4': const [
+              DiplomaticOrder(
+                type: DiplomaticOrderType.declareWar,
+                targetFactionId: 'gp2',
+              ),
+            ],
+          },
+        );
+        final result = resolveDiplomacyPhase(game, orders);
+        expect(result.isPending, isFalse);
+        expect(factionsAtWar(result.game, 'gp1', 'gp4'), isFalse);
+      },
+    );
+
     test('AI ally accepts when B–A score >= 50: enters war with aggressor', () {
       final game = threePowerGame(gp1Human: false, gp2Human: true, gp1gp2Score: 80);
       final orders = Orders(

@@ -325,8 +325,11 @@ List<String> criticalMultiFrontGpPeaceTargets({
   required AIWorldSnapshot snapshot,
 }) {
   if (!isObserverConquestExpansionPressure(
-    snapshot.conquest.oldWorldProvincesOwned,
-  )) {
+        snapshot.conquest.oldWorldProvincesOwned,
+      ) &&
+      !isAtObserverConquestQuotaBand(
+        snapshot.conquest.oldWorldProvincesOwned,
+      )) {
     return const [];
   }
   final gpWars = <String>[

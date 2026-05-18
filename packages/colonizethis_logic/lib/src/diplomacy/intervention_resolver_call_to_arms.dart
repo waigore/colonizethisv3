@@ -23,6 +23,19 @@ CallToArmsDecision? _findCallToArmsDecision(
   return null;
 }
 
+int _atWarGreatPowerCount(Game game, String gpId) {
+  var count = 0;
+  for (final rel in game.diplomacyRelations) {
+    if (rel.state != RelationState.atWar) continue;
+    if (rel.factionId1 != gpId && rel.factionId2 != gpId) continue;
+    final other = rel.factionId1 == gpId ? rel.factionId2 : rel.factionId1;
+    if (game.playerById(other) != null) {
+      count++;
+    }
+  }
+  return count;
+}
+
 /// GP–GP war pairs from declare-war orders that are at war after step 5.
 List<({String aggressor, String defender})> _gpGpWarPairsFromOrders(
   Game game,
@@ -196,6 +209,10 @@ Game _processCallToArmsForWarPair(
       final turn = state.worldState.turnState.turnNumber;
       if (turn <= kDeclareWarEarlyAntiDogpileMaxTurn &&
           isBelowObserverConquestQuota(aggressorOw)) {
+        state = _applyCallToArmsRefuse(state, allyGpId, defenderGpId, turn);
+        continue;
+      }
+      if (_atWarGreatPowerCount(state, allyGpId) >= 1) {
         state = _applyCallToArmsRefuse(state, allyGpId, defenderGpId, turn);
         continue;
       }
