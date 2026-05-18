@@ -102,10 +102,22 @@ int _scoreOfferPeaceDiplomaticOrder({
   }
   if (targetGp != null &&
       snapshot.threats.atWarWith.contains(order.targetFactionId) &&
+      belowQuotaPeerGpPeaceTargets(game: game, snapshot: snapshot)
+          .contains(order.targetFactionId)) {
+    s += kOfferPeaceStalledFutileGpWarBonus;
+  }
+  if (targetGp != null &&
+      snapshot.threats.atWarWith.contains(order.targetFactionId) &&
       quotaMetFutileBelowQuotaGpPeaceTargets(
             game: game,
             snapshot: snapshot,
           )
+          .contains(order.targetFactionId)) {
+    s += kOfferPeaceStalledFutileGpWarBonus;
+  }
+  if (targetGp != null &&
+      snapshot.threats.atWarWith.contains(order.targetFactionId) &&
+      quotaMetBelowQuotaAtWarPeaceTargets(game: game, snapshot: snapshot)
           .contains(order.targetFactionId)) {
     s += kOfferPeaceStalledFutileGpWarBonus;
   }
@@ -165,6 +177,14 @@ int _scoreOfferPeaceDiplomaticOrder({
       snapshot.conquest.oldWorldProvincesOwned >
           kFewOldWorldProvincesDefendThreshold) {
     s -= kOfferPeaceBelowQuotaInvadableBlockerPenalty;
+  }
+  if (targetGp != null &&
+      isBelowObserverConquestQuota(
+        snapshot.conquest.oldWorldProvincesOwned,
+      ) &&
+      snapshot.conquest.oldWorldProvincesOwned <=
+          kObserverDefaultStartOldWorldProvincesPerGp) {
+    s -= kOfferPeaceBelowQuotaStartSizeGpWarPenalty;
   }
   s += getAgendaPeaceAcceptanceModifier(agendaId);
   s += (thresholds.peaceTendency - 50);

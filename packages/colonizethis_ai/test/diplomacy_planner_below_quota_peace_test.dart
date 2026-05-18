@@ -69,6 +69,62 @@ void main() {
   );
 
   test(
+    'stalledBelowQuotaGpLeadPeaceTargets skips 1-province lead at default start OW',
+    () {
+      final game = Game(
+        id: 'g-below-quota-no-1-lead',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 70),
+          oldWorld: RegionData(
+            provinces: [
+              for (var i = 1; i <= 7; i++)
+                Province(
+                  id: 'oldWorld|gp3_$i',
+                  regionId: 'oldWorld',
+                  ownerId: 'gp3',
+                ),
+              for (var i = 1; i <= 8; i++)
+                Province(
+                  id: 'oldWorld|gp4_$i',
+                  regionId: 'oldWorld',
+                  ownerId: 'gp4',
+                ),
+            ],
+          ),
+          newWorld: const RegionData(),
+        ),
+        players: const [
+          Player(id: 'gp3', displayName: 'P3', isHuman: false),
+          Player(id: 'gp4', displayName: 'P4', isHuman: false),
+        ],
+        diplomacyRelations: [
+          const DiplomacyRelation(
+            factionId1: 'gp3',
+            factionId2: 'gp4',
+            state: RelationState.atWar,
+            score: 30,
+          ),
+        ],
+      );
+      const snapshot = AIWorldSnapshot(
+        playerId: 'gp3',
+        threats: ThreatSummary(atWarWith: ['gp4']),
+        opportunities: OpportunitySummary(),
+        conquest: ConquestSummary(
+          oldWorldProvincesOwned: 7,
+          invadableProvinceIdsSorted: ['oldWorld|inv1'],
+        ),
+        economy: EconomySummary(),
+        relations: {},
+      );
+      expect(
+        stalledBelowQuotaGpLeadPeaceTargets(game: game, snapshot: snapshot),
+        isEmpty,
+      );
+    },
+  );
+
+  test(
     'stalledBelowQuotaGpLeadPeaceTargets peace stronger GP while below quota',
     () {
       final game = Game(
@@ -373,6 +429,204 @@ void main() {
       expect(
         weakHoldingsInvadableBlockerPeaceTargets(game: game, snapshot: snapshot),
         isEmpty,
+      );
+    },
+  );
+
+  test(
+    'shouldSkipBelowQuotaGpOnlyBlockerPeacePass false when sole blocker unwinnable',
+    () {
+      final game = Game(
+        id: 'g-skip-unwinnable-blocker',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 80),
+          oldWorld: RegionData(
+            provinces: [
+              for (var i = 1; i <= 6; i++)
+                Province(
+                  id: 'oldWorld|gp3_$i',
+                  regionId: 'oldWorld',
+                  ownerId: 'gp3',
+                ),
+              for (var i = 1; i <= 10; i++)
+                Province(
+                  id: 'oldWorld|gp4_$i',
+                  regionId: 'oldWorld',
+                  ownerId: 'gp4',
+                ),
+              const Province(
+                id: 'oldWorld|frontier',
+                regionId: 'oldWorld',
+                ownerId: 'gp4',
+              ),
+              const Province(
+                id: 'oldWorld|minor1',
+                regionId: 'oldWorld',
+                ownerId: 'minor1',
+              ),
+            ],
+          ),
+          newWorld: const RegionData(),
+        ),
+        players: const [
+          Player(id: 'gp3', displayName: 'P3', isHuman: false),
+          Player(id: 'gp4', displayName: 'P4', isHuman: false),
+        ],
+        minorNations: const [MinorNation(id: 'minor1', displayName: 'M1')],
+        diplomacyRelations: [
+          const DiplomacyRelation(
+            factionId1: 'gp3',
+            factionId2: 'gp4',
+            state: RelationState.atWar,
+            score: 30,
+          ),
+        ],
+      );
+      const snapshot = AIWorldSnapshot(
+        playerId: 'gp3',
+        threats: ThreatSummary(atWarWith: ['gp4']),
+        opportunities: OpportunitySummary(),
+        conquest: ConquestSummary(
+          oldWorldProvincesOwned: 6,
+          invadableProvinceIdsSorted: ['oldWorld|frontier', 'oldWorld|minor1'],
+        ),
+        economy: EconomySummary(),
+        relations: {},
+      );
+      expect(
+        shouldSkipBelowQuotaGpOnlyBlockerPeacePass(
+          game: game,
+          snapshot: snapshot,
+        ),
+        isFalse,
+        reason: 'outgunned sole-blocker war should run peace pass',
+      );
+      expect(
+        unwinnableSoleGpFrontierPeaceTarget(game: game, snapshot: snapshot),
+        'gp4',
+      );
+    },
+  );
+
+  test(
+    'belowQuotaPeerGpPeaceTargets peace peer below-quota GP when minors remain',
+    () {
+      final game = Game(
+        id: 'g-peer-below-quota-peace',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 80),
+          oldWorld: RegionData(
+            provinces: [
+              for (var i = 1; i <= 8; i++)
+                Province(
+                  id: 'oldWorld|gp5_$i',
+                  regionId: 'oldWorld',
+                  ownerId: 'gp5',
+                ),
+              for (var i = 1; i <= 9; i++)
+                Province(
+                  id: 'oldWorld|gp6_$i',
+                  regionId: 'oldWorld',
+                  ownerId: 'gp6',
+                ),
+              const Province(
+                id: 'oldWorld|minor2',
+                regionId: 'oldWorld',
+                ownerId: 'minor2',
+              ),
+            ],
+          ),
+          newWorld: const RegionData(),
+        ),
+        players: const [
+          Player(id: 'gp5', displayName: 'P5', isHuman: false),
+          Player(id: 'gp6', displayName: 'P6', isHuman: false),
+        ],
+        minorNations: const [MinorNation(id: 'minor2', displayName: 'M2')],
+        diplomacyRelations: [
+          const DiplomacyRelation(
+            factionId1: 'gp5',
+            factionId2: 'gp6',
+            state: RelationState.atWar,
+            score: 30,
+          ),
+        ],
+      );
+      const snapshot = AIWorldSnapshot(
+        playerId: 'gp5',
+        threats: ThreatSummary(atWarWith: ['gp6']),
+        opportunities: OpportunitySummary(),
+        conquest: ConquestSummary(
+          oldWorldProvincesOwned: 8,
+          invadableProvinceIdsSorted: ['oldWorld|minor2'],
+        ),
+        economy: EconomySummary(),
+        relations: {},
+      );
+      expect(
+        belowQuotaPeerGpPeaceTargets(game: game, snapshot: snapshot),
+        ['gp6'],
+      );
+    },
+  );
+
+  test(
+    'collectStalledGreatPowerPeaceTargets keeps quota-met mop-up vs blocker',
+    () {
+      final game = Game(
+        id: 'g-quota-met-mopup',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 80),
+          oldWorld: RegionData(
+            provinces: [
+              for (var i = 1; i <= 10; i++)
+                Province(
+                  id: 'oldWorld|gp4_$i',
+                  regionId: 'oldWorld',
+                  ownerId: 'gp4',
+                ),
+              for (var i = 1; i <= 6; i++)
+                Province(
+                  id: 'oldWorld|gp3_$i',
+                  regionId: 'oldWorld',
+                  ownerId: 'gp3',
+                ),
+              const Province(
+                id: 'oldWorld|frontier',
+                regionId: 'oldWorld',
+                ownerId: 'gp3',
+              ),
+            ],
+          ),
+          newWorld: const RegionData(),
+        ),
+        players: const [
+          Player(id: 'gp3', displayName: 'P3', isHuman: false),
+          Player(id: 'gp4', displayName: 'P4', isHuman: false),
+        ],
+        diplomacyRelations: [
+          const DiplomacyRelation(
+            factionId1: 'gp3',
+            factionId2: 'gp4',
+            state: RelationState.atWar,
+            score: 30,
+          ),
+        ],
+      );
+      const snapshot = AIWorldSnapshot(
+        playerId: 'gp4',
+        threats: ThreatSummary(atWarWith: ['gp3']),
+        opportunities: OpportunitySummary(),
+        conquest: ConquestSummary(
+          oldWorldProvincesOwned: 10,
+          invadableProvinceIdsSorted: ['oldWorld|frontier'],
+        ),
+        economy: EconomySummary(),
+        relations: {},
+      );
+      expect(
+        collectStalledGreatPowerPeaceTargets(game: game, snapshot: snapshot),
+        contains('gp3'),
       );
     },
   );

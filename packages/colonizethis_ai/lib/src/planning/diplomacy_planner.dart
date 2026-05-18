@@ -10,8 +10,10 @@ export 'colonial_pressure.dart'
         primaryInvadableOldWorldGpBlocker,
         plateauMutualInvadableBlockerPeaceTargets,
         shouldSkipBelowQuotaGpOnlyBlockerPeacePass,
+        quotaMetBelowQuotaAtWarPeaceTargets,
         quotaMetFutileBelowQuotaGpPeaceTargets,
         stalledBelowQuotaGpLeadPeaceTargets,
+        belowQuotaPeerGpPeaceTargets,
         unwinnableSoleGpFrontierPeaceTarget;
 import 'planner_context.dart';
 import '../util/ai_random_utils.dart';
@@ -30,6 +32,8 @@ final _log = packageLogger();
 
 /// First minor nation that owns invadable OW land but is not yet at war, while
 /// this GP is below the observer quota and not fighting any Great Power (Refs #2509).
+///
+/// Also fires during an unwinnable sole-GP war so the GP can pivot to minors.
 String? criticalWeakUninvadedMinorDeclareTarget({
   required Game game,
   required AIWorldSnapshot snapshot,
@@ -39,7 +43,17 @@ String? criticalWeakUninvadedMinorDeclareTarget({
   )) {
     return null;
   }
-  if (snapshot.threats.atWarWith.any((id) => game.playerById(id) != null)) {
+  final atWarWithGp = snapshot.threats.atWarWith
+      .where((id) => game.playerById(id) != null)
+      .toList();
+  if (atWarWithGp.length > 1) {
+    return null;
+  }
+  if (atWarWithGp.length == 1 &&
+      unwinnableSoleGpFrontierPeaceTarget(game: game, snapshot: snapshot) ==
+          null &&
+      snapshot.conquest.oldWorldProvincesOwned >
+          kFewOldWorldProvincesDefendThreshold) {
     return null;
   }
   if (snapshot.conquest.invadableProvinceIdsSorted.isEmpty) {
@@ -84,6 +98,10 @@ String? stalledGpBlockerDeclareWarTarget({
   if (blocker == null ||
       snapshot.threats.atWarWith.contains(blocker) ||
       snapshot.relations[blocker]?.atWar == true) {
+    return null;
+  }
+  if (unwinnableSoleGpFrontierPeaceTarget(game: game, snapshot: snapshot) ==
+      blocker) {
     return null;
   }
   final turn = game.worldState.turnState.turnNumber;
@@ -259,10 +277,15 @@ List<DiplomaticOrder> _filterDiplomacyCandidatesForPass({
       snapshot: snapshot,
     );
     final allowBlockerPeace = blocker != null &&
-        plateauMutualInvadableBlockerPeaceTargets(
-          game: ctx.game,
-          snapshot: snapshot,
-        ).contains(blocker);
+        (plateauMutualInvadableBlockerPeaceTargets(
+              game: ctx.game,
+              snapshot: snapshot,
+            ).contains(blocker) ||
+            unwinnableSoleGpFrontierPeaceTarget(
+                  game: ctx.game,
+                  snapshot: snapshot,
+                ) ==
+                blocker);
     filtered = filtered
         .where(
           (o) =>

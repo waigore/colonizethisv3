@@ -353,6 +353,25 @@ int? _declareWarSuppressedAdjacentGpScore(
     final attackerOw = ctx.snapshot.conquest.oldWorldProvincesOwned;
     final targetOw = provinceCountOwnedBy(ctx.game, ctx.order.targetFactionId);
     if (ctx.game.playerById(ctx.order.targetFactionId) != null) {
+      final minorsOwnInvadable =
+          ctx.snapshot.conquest.invadableProvinceIdsSorted.any((pid) {
+        final owner = ctx.provinceOwner[pid];
+        return owner != null &&
+            ctx.game.minorNations.any((m) => m.id == owner);
+      });
+      if (minorsOwnInvadable &&
+          isBelowObserverConquestQuota(attackerOw) &&
+          isBelowObserverConquestQuota(targetOw) &&
+          (targetOw - attackerOw).abs() <= 2 &&
+          !ctx.invadableGpBlocker &&
+          !ctx.snapshot.threats.atWarWith.contains(ctx.order.targetFactionId)) {
+        return 0;
+      }
+      if (attackerOw >= kObserverDefaultStartOldWorldProvincesPerGp &&
+          isBelowObserverConquestQuota(targetOw) &&
+          targetOw <= kObserverDefaultStartOldWorldProvincesPerGp + 1) {
+        return 0;
+      }
       if (isBelowObserverConquestQuota(attackerOw) &&
           pendingDeclareWarFrom(
             sameTurnPriorDiplomaticOrders: sameTurnPriorDiplomaticOrders,
@@ -734,9 +753,7 @@ int _declareWarAdjacencyAndStalledBonuses(
         ctx.isAdjacentOwner &&
         ctx.invadableOwners.contains(ctx.order.targetFactionId) &&
         isBelowObserverConquestQuota(ownedOw) &&
-        !ctx.snapshot.threats.atWarWith.any(
-          (id) => ctx.game.playerById(id) != null,
-        )) {
+        !_gpWarBlocksPlateauMinorDeclare(ctx)) {
       s += kDeclareWarPlateauOwMinorBonus;
     }
     if (ctx.isMinorTarget &&
@@ -745,9 +762,7 @@ int _declareWarAdjacencyAndStalledBonuses(
         ctx.invadableOwners.contains(ctx.order.targetFactionId) &&
         ownedOw >= kObserverDefaultStartOldWorldProvincesPerGp + 1 &&
         ownedOw < kObserverConquestMinOwProvincesPerGp &&
-        !ctx.snapshot.threats.atWarWith.any(
-          (id) => ctx.game.playerById(id) != null,
-        )) {
+        !_gpWarBlocksPlateauMinorDeclare(ctx)) {
       s += kDeclareWarNearObserverQuotaMinorBonus;
     }
     if (ctx.isMinorTarget && ctx.stalledOwExpansion) {
@@ -929,4 +944,34 @@ int _declareWarFinalizeBonuses(_DeclareWarTargetContext ctx, int s) {
     s = math.max(s, kDeclareWarStalledLowWarLikelihoodMinorFloor);
   }
   return s;
+}
+
+/// Plateau minor declare is blocked only by distracting multi-front GP wars.
+bool _gpWarBlocksPlateauMinorDeclare(_DeclareWarTargetContext ctx) {
+  final gpWars = ctx.snapshot.threats.atWarWith
+      .where((id) => ctx.game.playerById(id) != null)
+      .toList();
+  if (gpWars.isEmpty) {
+    return false;
+  }
+  if (unwinnableSoleGpFrontierPeaceTarget(
+        game: ctx.game,
+        snapshot: ctx.snapshot,
+      ) !=
+      null) {
+    return false;
+  }
+  if (gpWars.length == 1 &&
+      isStalledOldWorldGpBlockerFocus(
+        game: ctx.game,
+        snapshot: ctx.snapshot,
+      ) &&
+      gpWars.single ==
+          primaryInvadableOldWorldGpBlocker(
+            game: ctx.game,
+            snapshot: ctx.snapshot,
+          )) {
+    return false;
+  }
+  return true;
 }

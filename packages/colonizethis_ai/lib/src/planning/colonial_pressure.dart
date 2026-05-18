@@ -55,7 +55,42 @@ bool shouldSkipBelowQuotaGpOnlyBlockerPeacePass({
     for (final factionId in snapshot.threats.atWarWith)
       if (game.playerById(factionId) != null) factionId,
   ];
-  return gpWars.length == 1 && gpWars.single == blocker;
+  if (gpWars.length != 1 || gpWars.single != blocker) {
+    return false;
+  }
+  // Keep fighting a winnable sole-blocker war; pivot when clearly outgunned.
+  return unwinnableSoleGpFrontierPeaceTarget(game: game, snapshot: snapshot) ==
+      null;
+}
+
+/// Peace other below-quota Great Powers in peer-stalled wars while minors remain
+/// (exit mutual gp5/gp6 distraction; Refs #2509).
+List<String> belowQuotaPeerGpPeaceTargets({
+  required Game game,
+  required AIWorldSnapshot snapshot,
+}) {
+  final ownOw = snapshot.conquest.oldWorldProvincesOwned;
+  if (!isBelowObserverConquestQuota(ownOw)) {
+    return const [];
+  }
+  final provinceOwner = getProvinceOwnerMap(game);
+  final minorsOnMap = game.worldState.oldWorld.provinces.any(
+    (p) =>
+        p.ownerId != null &&
+        p.ownerId!.isNotEmpty &&
+        game.minorNations.any((m) => m.id == p.ownerId),
+  );
+  if (!minorsOnMap) {
+    return const [];
+  }
+  final targets = <String>[
+    for (final factionId in snapshot.threats.atWarWith)
+      if (game.playerById(factionId) != null &&
+          isBelowObserverConquestQuota(provinceCountOwnedBy(game, factionId)) &&
+          (provinceCountOwnedBy(game, factionId) - ownOw).abs() <= 2)
+        factionId,
+  ]..sort();
+  return targets;
 }
 
 /// GP owning the most invadable Old World provinces (frontier blocker).
@@ -258,7 +293,9 @@ List<String> stalledBelowQuotaGpLeadPeaceTargets({
     return const [];
   }
   final own = snapshot.conquest.oldWorldProvincesOwned;
-  final minLeadDeficit = 1;
+  final minLeadDeficit = own <= kObserverDefaultStartOldWorldProvincesPerGp
+      ? kUnwinnableSoleGpMinProvinceDeficit
+      : 1;
   final invadableBlocker = isOldWorldGpOnlyInvadableFrontier(
         game: game,
         snapshot: snapshot,
@@ -270,6 +307,24 @@ List<String> stalledBelowQuotaGpLeadPeaceTargets({
       if (game.playerById(factionId) != null &&
           factionId != invadableBlocker &&
           provinceCountOwnedBy(game, factionId) >= own + minLeadDeficit)
+        factionId,
+  ]..sort();
+  return targets;
+}
+
+/// Peace every below-quota Great Power at war once this GP meets the observer
+/// quota (stop mop-up wars after the frontier is cleared; Refs #2509).
+List<String> quotaMetBelowQuotaAtWarPeaceTargets({
+  required Game game,
+  required AIWorldSnapshot snapshot,
+}) {
+  if (isBelowObserverConquestQuota(snapshot.conquest.oldWorldProvincesOwned)) {
+    return const [];
+  }
+  final targets = <String>[
+    for (final factionId in snapshot.threats.atWarWith)
+      if (game.playerById(factionId) != null &&
+          isBelowObserverConquestQuota(provinceCountOwnedBy(game, factionId)))
         factionId,
   ]..sort();
   return targets;
@@ -374,7 +429,8 @@ List<String> criticalOwHoldPeaceTargets({
   if (targets.isEmpty) {
     return const [];
   }
-  if (isBelowObserverConquestQuota(ownOw) && ownOw <= 5) {
+  if (isBelowObserverConquestQuota(ownOw) &&
+      ownOw <= kFewOldWorldProvincesDefendThreshold) {
     return targets;
   }
   if (ownOw > kStalledOldWorldProvinceThreshold) {
