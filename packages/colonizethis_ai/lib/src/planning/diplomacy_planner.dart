@@ -14,6 +14,7 @@ export 'colonial_pressure.dart'
         quotaMetFutileBelowQuotaGpPeaceTargets,
         stalledBelowQuotaGpLeadPeaceTargets,
         belowQuotaPeerGpPeaceTargets,
+        nearQuotaHoldPeaceTargets,
         unwinnableSoleGpFrontierPeaceTarget;
 import 'planner_context.dart';
 import '../util/ai_random_utils.dart';

@@ -399,6 +399,7 @@ bool stalledOwExpansionNeedsPeacePass({
     stalledBelowQuotaGpLeadPeaceTargets(game: game, snapshot: snapshot)
         .isNotEmpty ||
     belowQuotaPeerGpPeaceTargets(game: game, snapshot: snapshot).isNotEmpty ||
+    nearQuotaHoldPeaceTargets(game: game, snapshot: snapshot).isNotEmpty ||
     quotaMetBelowQuotaAtWarPeaceTargets(game: game, snapshot: snapshot)
         .isNotEmpty ||
     quotaMetFutileBelowQuotaGpPeaceTargets(game: game, snapshot: snapshot)
@@ -480,6 +481,7 @@ Set<String> collectStalledGreatPowerPeaceTargets({
     ...criticalOwHoldPeaceTargets(game: game, snapshot: snapshot),
     ...stalledBelowQuotaGpLeadPeaceTargets(game: game, snapshot: snapshot),
     ...belowQuotaPeerGpPeaceTargets(game: game, snapshot: snapshot),
+    ...nearQuotaHoldPeaceTargets(game: game, snapshot: snapshot),
     ...quotaMetBelowQuotaAtWarPeaceTargets(game: game, snapshot: snapshot),
     ...quotaMetFutileBelowQuotaGpPeaceTargets(game: game, snapshot: snapshot),
     if (unwinnableSoleGpFrontierPeaceTarget(game: game, snapshot: snapshot)
@@ -511,6 +513,7 @@ Set<String> collectStalledGreatPowerPeaceTargets({
     if (unwinnableBlockerPeace != null) unwinnableBlockerPeace,
     ...quotaMetBelowQuotaAtWarPeaceTargets(game: game, snapshot: snapshot),
     ...belowQuotaPeerGpPeaceTargets(game: game, snapshot: snapshot),
+    ...nearQuotaHoldPeaceTargets(game: game, snapshot: snapshot),
   };
   return targets
       .where(

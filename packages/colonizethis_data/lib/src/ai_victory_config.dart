@@ -132,7 +132,7 @@ const int kDeclareWarBelowQuotaOwMinorRecoveryBonus = 380;
 
 /// Extra declare-war toward adjacent invadable OW minors at 8–9 OW with no GP war
 /// (observer seed-42 gp5/gp6 plateau; Refs #2509).
-const int kDeclareWarPlateauOwMinorBonus = 480;
+const int kDeclareWarPlateauOwMinorBonus = 600;
 
 /// Extra declare-war weight toward invadable minors when 8–9 OW (one province
 /// short of the turn-100 observer gate from default start; Refs #2509).
@@ -177,7 +177,7 @@ const int kDeclareWarMinorWithInvadableProvinceBonus = 45;
 
 /// Conquest army-move passes per turn while Old World holdings are stalled
 /// (one order per pass so each field army can march toward the frontier).
-const int kStalledConquestArmyMovePasses = 16;
+const int kStalledConquestArmyMovePasses = 22;
 
 /// Max field armies created from Home Army splits when Old World expansion is
 /// stalled (parallel marches toward invasion frontiers; Refs #2509).

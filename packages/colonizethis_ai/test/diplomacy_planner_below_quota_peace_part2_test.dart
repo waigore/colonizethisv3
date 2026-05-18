@@ -66,6 +66,95 @@ void main() {
         belowQuotaPeerGpPeaceTargets(game: game, snapshot: snapshot),
         ['gp6'],
       );
+      const snapshotGp6 = AIWorldSnapshot(
+        playerId: 'gp6',
+        threats: ThreatSummary(atWarWith: ['gp5']),
+        opportunities: OpportunitySummary(),
+        conquest: ConquestSummary(
+          oldWorldProvincesOwned: 9,
+          invadableProvinceIdsSorted: ['oldWorld|minor2'],
+        ),
+        economy: EconomySummary(),
+        relations: {},
+      );
+      expect(
+        belowQuotaPeerGpPeaceTargets(game: game, snapshot: snapshotGp6),
+        isEmpty,
+      );
+    },
+  );
+
+  test(
+    'nearQuotaHoldPeaceTargets peace non-blocker GP wars at 9 OW',
+    () {
+      final game = Game(
+        id: 'g-near-quota-multi-front',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 25),
+          oldWorld: RegionData(
+            provinces: [
+              for (var i = 1; i <= 9; i++)
+                Province(
+                  id: 'oldWorld|gp3_$i',
+                  regionId: 'oldWorld',
+                  ownerId: 'gp3',
+                ),
+              for (var i = 1; i <= 8; i++)
+                Province(
+                  id: 'oldWorld|gp4_$i',
+                  regionId: 'oldWorld',
+                  ownerId: 'gp4',
+                ),
+              for (var i = 1; i <= 7; i++)
+                Province(
+                  id: 'oldWorld|gp5_$i',
+                  regionId: 'oldWorld',
+                  ownerId: 'gp5',
+                ),
+              const Province(
+                id: 'oldWorld|frontier',
+                regionId: 'oldWorld',
+                ownerId: 'gp4',
+              ),
+            ],
+          ),
+          newWorld: const RegionData(),
+        ),
+        players: const [
+          Player(id: 'gp3', displayName: 'P3', isHuman: false),
+          Player(id: 'gp4', displayName: 'P4', isHuman: false),
+          Player(id: 'gp5', displayName: 'P5', isHuman: false),
+        ],
+        diplomacyRelations: [
+          const DiplomacyRelation(
+            factionId1: 'gp3',
+            factionId2: 'gp4',
+            state: RelationState.atWar,
+            score: 30,
+          ),
+          const DiplomacyRelation(
+            factionId1: 'gp3',
+            factionId2: 'gp5',
+            state: RelationState.atWar,
+            score: 30,
+          ),
+        ],
+      );
+      const snapshot = AIWorldSnapshot(
+        playerId: 'gp3',
+        threats: ThreatSummary(atWarWith: ['gp4', 'gp5']),
+        opportunities: OpportunitySummary(),
+        conquest: ConquestSummary(
+          oldWorldProvincesOwned: 9,
+          invadableProvinceIdsSorted: ['oldWorld|frontier'],
+        ),
+        economy: EconomySummary(),
+        relations: {},
+      );
+      expect(
+        nearQuotaHoldPeaceTargets(game: game, snapshot: snapshot),
+        ['gp5'],
+      );
     },
   );
 

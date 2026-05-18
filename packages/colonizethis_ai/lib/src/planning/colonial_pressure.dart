@@ -87,8 +87,38 @@ List<String> belowQuotaPeerGpPeaceTargets({
     for (final factionId in snapshot.threats.atWarWith)
       if (game.playerById(factionId) != null &&
           isBelowObserverConquestQuota(provinceCountOwnedBy(game, factionId)) &&
+          ownOw <= provinceCountOwnedBy(game, factionId) &&
           (provinceCountOwnedBy(game, factionId) - ownOw).abs() <= 2)
         factionId,
+  ]..sort();
+  return targets;
+}
+
+/// Peace non-blocker Great Power wars when one province short of the observer
+/// quota (hold early gains; seed-42 gp3; Refs #2509).
+List<String> nearQuotaHoldPeaceTargets({
+  required Game game,
+  required AIWorldSnapshot snapshot,
+}) {
+  final ownOw = snapshot.conquest.oldWorldProvincesOwned;
+  if (ownOw < kObserverConquestMinOwProvincesPerGp - 1 ||
+      !isBelowObserverConquestQuota(ownOw)) {
+    return const [];
+  }
+  final gpWars = <String>[
+    for (final factionId in snapshot.threats.atWarWith)
+      if (game.playerById(factionId) != null) factionId,
+  ];
+  if (gpWars.isEmpty) {
+    return const [];
+  }
+  final blocker = primaryInvadableOldWorldGpBlocker(
+    game: game,
+    snapshot: snapshot,
+  );
+  final targets = <String>[
+    for (final factionId in gpWars)
+      if (factionId != blocker) factionId,
   ]..sort();
   return targets;
 }
