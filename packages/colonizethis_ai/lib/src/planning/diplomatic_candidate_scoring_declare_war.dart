@@ -271,6 +271,19 @@ int? _declareWarSuppressedScore(
   _DeclareWarTargetContext ctx, {
   Orders? sameTurnPriorDiplomaticOrders,
 }) {
+  return _declareWarSuppressedStalledOwFrontierScore(ctx) ??
+      _declareWarSuppressedAdjacentGpScore(
+        ctx,
+        sameTurnPriorDiplomaticOrders: sameTurnPriorDiplomaticOrders,
+      ) ??
+      _declareWarSuppressedWarConcentrationScore(
+        ctx,
+        sameTurnPriorDiplomaticOrders: sameTurnPriorDiplomaticOrders,
+      ) ??
+      _declareWarSuppressedRelationAndCooldownScore(ctx);
+}
+
+int? _declareWarSuppressedStalledOwFrontierScore(_DeclareWarTargetContext ctx) {
   if (ctx.isTribeTarget &&
       ctx.stalledOwExpansion &&
       (ctx.minorsHoldOldWorldProvinces ||
@@ -329,6 +342,13 @@ int? _declareWarSuppressedScore(
       !ctx.invadableGpBlocker) {
     return 0;
   }
+  return null;
+}
+
+int? _declareWarSuppressedAdjacentGpScore(
+  _DeclareWarTargetContext ctx, {
+  Orders? sameTurnPriorDiplomaticOrders,
+}) {
   if (ctx.order.type == DiplomaticOrderType.declareWar && ctx.isAdjacentGp) {
     final attackerOw = ctx.snapshot.conquest.oldWorldProvincesOwned;
     final targetOw = provinceCountOwnedBy(ctx.game, ctx.order.targetFactionId);
@@ -400,6 +420,13 @@ int? _declareWarSuppressedScore(
       return 0;
     }
   }
+  return null;
+}
+
+int? _declareWarSuppressedWarConcentrationScore(
+  _DeclareWarTargetContext ctx, {
+  Orders? sameTurnPriorDiplomaticOrders,
+}) {
   final atWarWithGp = ctx.snapshot.threats.atWarWith.any(
     (id) => ctx.game.playerById(id) != null,
   );
@@ -478,6 +505,12 @@ int? _declareWarSuppressedScore(
       ctx.thresholds.warLikelihood <= kDeclareWarLowWarLikelihoodThreshold) {
     return kDeclareWarNonAdjacentSuppressedScore;
   }
+  return null;
+}
+
+int? _declareWarSuppressedRelationAndCooldownScore(
+  _DeclareWarTargetContext ctx,
+) {
   final effectiveMaxRelation = ctx.behindVictoryPace && ctx.isMinorTarget
       ? kDeclareWarMinorMaxRelationWhenFarFromVictory
       : ctx.behindVictoryPace && ctx.isAdjacentGp
