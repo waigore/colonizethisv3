@@ -692,6 +692,99 @@ int _declareWarCoreBonuses(_DeclareWarTargetContext ctx) {
   return s;
 }
 
+bool _isStalledOwMinorInvadableTarget(_DeclareWarTargetContext ctx) =>
+    ctx.isMinorTarget &&
+    !ctx.isTribeTarget &&
+    ctx.isAdjacentOwner &&
+    ctx.invadableOwners.contains(ctx.order.targetFactionId);
+
+int _stalledOwMinorRecoveryBonus(_DeclareWarTargetContext ctx) {
+  final owned = ctx.snapshot.conquest.oldWorldProvincesOwned;
+  if (owned <= kFewOldWorldProvincesDefendThreshold) {
+    return kDeclareWarWeakGpOwMinorRecoveryBonus;
+  }
+  if (isBelowObserverConquestQuota(owned)) {
+    return kDeclareWarBelowQuotaOwMinorRecoveryBonus;
+  }
+  return 0;
+}
+
+int _declareWarColonialNwTribeBonuses(_DeclareWarTargetContext ctx, int s) {
+  if (!ctx.colonialPressure || !ctx.ownsInvadableNw || !ctx.isTribeTarget) {
+    return s;
+  }
+  s += kDeclareWarColonialNwTribeDominanceBonus;
+  if (ctx.stalledOwExpansion &&
+      !ctx.hasInvadableMinorOwner &&
+      !ctx.atWarInvadableOwMinor) {
+    s += kDeclareWarColonialNwTribePriorityOverOwMinorBonus;
+  }
+  return s;
+}
+
+int _declareWarStalledOldWorldExpansionBonuses(
+  _DeclareWarTargetContext ctx,
+  int s,
+) {
+  final stalledOldWorldExpansion =
+      ctx.snapshot.conquest.oldWorldProvincesOwned <=
+      kStalledOldWorldProvinceThreshold;
+  final hasInvadableOldWorld =
+      ctx.snapshot.conquest.invadableProvinceIdsSorted.isNotEmpty;
+  if (!stalledOldWorldExpansion || !hasInvadableOldWorld) {
+    return s;
+  }
+  if (_isStalledOwMinorInvadableTarget(ctx)) {
+    s += kDeclareWarStalledOwMinorPriorityBonus;
+    s += _stalledOwMinorRecoveryBonus(ctx);
+    if (ctx.thresholds.warLikelihood <= kDeclareWarLowWarLikelihoodThreshold) {
+      s += kDeclareWarLowWarLikelihoodAdjacentBonus;
+    }
+  }
+  if (ctx.isTribeTarget && !ctx.ownsInvadableNw) {
+    s -= kDeclareWarStalledExpansionTribePenalty;
+  }
+  return s;
+}
+
+int _declareWarEarlyExpansionBonuses(_DeclareWarTargetContext ctx, int s) {
+  final stalledOldWorldExpansion =
+      ctx.snapshot.conquest.oldWorldProvincesOwned <=
+      kStalledOldWorldProvinceThreshold;
+  final hasInvadableOldWorld =
+      ctx.snapshot.conquest.invadableProvinceIdsSorted.isNotEmpty;
+  if (ctx.currentTurn > kDeclareWarEarlyExpansionMaxTurn ||
+      !ctx.anyMinorOwnsOldWorld ||
+      !stalledOldWorldExpansion ||
+      !hasInvadableOldWorld) {
+    return s;
+  }
+  if (_isStalledOwMinorInvadableTarget(ctx)) {
+    s += kDeclareWarEarlyExpansionMinorBonus;
+  }
+  if (ctx.isTribeTarget && !ctx.ownsInvadableNw) {
+    s -= kDeclareWarEarlyExpansionTribePenalty;
+  }
+  return s;
+}
+
+int _declareWarColonialPressureOwMinorPenalty(
+  _DeclareWarTargetContext ctx,
+  int s,
+) {
+  if (!ctx.colonialPressure ||
+      !ctx.isMinorTarget ||
+      ctx.isTribeTarget ||
+      ctx.ownsInvadableNw) {
+    return s;
+  }
+  s -= kDeclareWarColonialPressureOwMinorPenalty;
+  if (ctx.stalledOwExpansion && ctx.ownsInvadableOwMinor) {
+    s -= kDeclareWarColonialPressureOwMinorPenalty;
+  }
+  return s;
+}
+
 int _declareWarExpansionAndColonialBonuses(
   _DeclareWarTargetContext ctx,
   int s,
@@ -699,64 +792,10 @@ int _declareWarExpansionAndColonialBonuses(
   if (ctx.ownsInvadableNw && ctx.isMinorTarget && !ctx.stalledOwExpansion) {
     s += kDeclareWarColonialInvadableOwnerBonus;
   }
-  if (ctx.colonialPressure && ctx.ownsInvadableNw && ctx.isTribeTarget) {
-    s += kDeclareWarColonialNwTribeDominanceBonus;
-    if (ctx.stalledOwExpansion &&
-        !ctx.hasInvadableMinorOwner &&
-        !ctx.atWarInvadableOwMinor) {
-      s += kDeclareWarColonialNwTribePriorityOverOwMinorBonus;
-    }
-  }
-  final stalledOldWorldExpansion =
-      ctx.snapshot.conquest.oldWorldProvincesOwned <=
-      kStalledOldWorldProvinceThreshold;
-  final hasInvadableOldWorld =
-      ctx.snapshot.conquest.invadableProvinceIdsSorted.isNotEmpty;
-  if (stalledOldWorldExpansion && hasInvadableOldWorld) {
-    if (ctx.isMinorTarget &&
-        !ctx.isTribeTarget &&
-        ctx.isAdjacentOwner &&
-        ctx.invadableOwners.contains(ctx.order.targetFactionId)) {
-      s += kDeclareWarStalledOwMinorPriorityBonus;
-      if (ctx.snapshot.conquest.oldWorldProvincesOwned <=
-          kFewOldWorldProvincesDefendThreshold) {
-        s += kDeclareWarWeakGpOwMinorRecoveryBonus;
-      } else if (isBelowObserverConquestQuota(
-        ctx.snapshot.conquest.oldWorldProvincesOwned,
-      )) {
-        s += kDeclareWarBelowQuotaOwMinorRecoveryBonus;
-      }
-      if (ctx.thresholds.warLikelihood <= kDeclareWarLowWarLikelihoodThreshold) {
-        s += kDeclareWarLowWarLikelihoodAdjacentBonus;
-      }
-    }
-    if (ctx.isTribeTarget && !ctx.ownsInvadableNw) {
-      s -= kDeclareWarStalledExpansionTribePenalty;
-    }
-  }
-  if (ctx.currentTurn <= kDeclareWarEarlyExpansionMaxTurn &&
-      ctx.anyMinorOwnsOldWorld &&
-      stalledOldWorldExpansion &&
-      hasInvadableOldWorld) {
-    if (ctx.isMinorTarget &&
-        !ctx.isTribeTarget &&
-        ctx.isAdjacentOwner &&
-        ctx.invadableOwners.contains(ctx.order.targetFactionId)) {
-      s += kDeclareWarEarlyExpansionMinorBonus;
-    }
-    if (ctx.isTribeTarget && !ctx.ownsInvadableNw) {
-      s -= kDeclareWarEarlyExpansionTribePenalty;
-    }
-  }
-  if (ctx.colonialPressure &&
-      ctx.isMinorTarget &&
-      !ctx.isTribeTarget &&
-      !ctx.ownsInvadableNw) {
-    s -= kDeclareWarColonialPressureOwMinorPenalty;
-    if (ctx.stalledOwExpansion && ctx.ownsInvadableOwMinor) {
-      s -= kDeclareWarColonialPressureOwMinorPenalty;
-    }
-  }
+  s = _declareWarColonialNwTribeBonuses(ctx, s);
+  s = _declareWarStalledOldWorldExpansionBonuses(ctx, s);
+  s = _declareWarEarlyExpansionBonuses(ctx, s);
+  s = _declareWarColonialPressureOwMinorPenalty(ctx, s);
   if (ctx.isColonialAdjacentOwner && ctx.isTribeTarget) {
     s += kDeclareWarColonialAdjacentTribeBonus;
   }
