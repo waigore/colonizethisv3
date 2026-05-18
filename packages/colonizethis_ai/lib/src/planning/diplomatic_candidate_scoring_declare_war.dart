@@ -495,12 +495,12 @@ int _declareWarStalledOldWorldExpansionBonuses(
   _DeclareWarTargetContext ctx,
   int s,
 ) {
-  final stalledOldWorldExpansion =
-      ctx.snapshot.conquest.oldWorldProvincesOwned <=
-      kStalledOldWorldProvinceThreshold;
+  final observerExpansionPressure = isObserverConquestExpansionPressure(
+    ctx.snapshot.conquest.oldWorldProvincesOwned,
+  );
   final hasInvadableOldWorld =
       ctx.snapshot.conquest.invadableProvinceIdsSorted.isNotEmpty;
-  if (!stalledOldWorldExpansion || !hasInvadableOldWorld) {
+  if (!observerExpansionPressure || !hasInvadableOldWorld) {
     return s;
   }
   if (_isStalledOwMinorInvadableTarget(ctx)) {
@@ -517,14 +517,14 @@ int _declareWarStalledOldWorldExpansionBonuses(
 }
 
 int _declareWarEarlyExpansionBonuses(_DeclareWarTargetContext ctx, int s) {
-  final stalledOldWorldExpansion =
-      ctx.snapshot.conquest.oldWorldProvincesOwned <=
-      kStalledOldWorldProvinceThreshold;
+  final observerExpansionPressure = isObserverConquestExpansionPressure(
+    ctx.snapshot.conquest.oldWorldProvincesOwned,
+  );
   final hasInvadableOldWorld =
       ctx.snapshot.conquest.invadableProvinceIdsSorted.isNotEmpty;
   if (ctx.currentTurn > kDeclareWarEarlyExpansionMaxTurn ||
       !ctx.anyMinorOwnsOldWorld ||
-      !stalledOldWorldExpansion ||
+      !observerExpansionPressure ||
       !hasInvadableOldWorld) {
     return s;
   }

@@ -139,15 +139,14 @@ List<String> stalledBelowQuotaGpLeadPeaceTargets({
   if (!isBelowObserverConquestQuota(snapshot.conquest.oldWorldProvincesOwned)) {
     return const [];
   }
-  if (!isStalledOldWorldExpansion(snapshot.conquest.oldWorldProvincesOwned)) {
-    return const [];
-  }
   final own = snapshot.conquest.oldWorldProvincesOwned;
+  final minLeadDeficit = own <= kFewOldWorldProvincesDefendThreshold
+      ? 1
+      : kUnwinnableSoleGpMinProvinceDeficit;
   final targets = <String>[
     for (final factionId in snapshot.threats.atWarWith)
       if (game.playerById(factionId) != null &&
-          provinceCountOwnedBy(game, factionId) >=
-              own + kUnwinnableSoleGpMinProvinceDeficit)
+          provinceCountOwnedBy(game, factionId) >= own + minLeadDeficit)
         factionId,
   ]..sort();
   return targets;

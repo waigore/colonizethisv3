@@ -79,7 +79,7 @@ void main() {
     },
     skip:
         'Partial AC #2509: seed-42 turn-100 gate passes gp1/gp2/gp4; '
-        'gp3 survives (-2 net, was -7), gp5 +1, gp6 +2; nightly S10 follow-up',
+        'gp3 -2, gp5 +1, gp6 +2; observer-quota expansion pressure aligned (S10)',
     timeout: const Timeout(Duration(minutes: 15)),
   );
 }
