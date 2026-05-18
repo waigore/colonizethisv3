@@ -128,7 +128,7 @@ const int kDeclareWarWeakGpOwMinorRecoveryBonus = 120;
 
 /// Extra declare-war weight toward OW minors while below the observer quota
 /// (7–9 OW holdings; Refs #2509).
-const int kDeclareWarBelowQuotaOwMinorRecoveryBonus = 220;
+const int kDeclareWarBelowQuotaOwMinorRecoveryBonus = 280;
 
 /// Penalize tribe declare-war while OW holdings are stalled and invadable OW
 /// minors remain (tribes without sea-reachable NW provinces for this GP).
@@ -143,6 +143,10 @@ const int kDeclareWarEarlyExpansionTribePenalty = 160;
 
 /// Last turn (inclusive) for [kDeclareWarEarlyExpansionMinorBonus].
 const int kDeclareWarEarlyExpansionMaxTurn = 80;
+
+/// Through this turn, quota-meeting GPs must not open new wars on weaker
+/// below-quota neighbors (observer seed-42 gp3 turns 4–8; Refs #2509).
+const int kDeclareWarEarlyAntiDogpileMaxTurn = 20;
 
 /// Penalty on adjacent minor declare-war when the GP already holds many OW provinces.
 const int kDeclareWarSatedExpansionMinorPenalty = 100;

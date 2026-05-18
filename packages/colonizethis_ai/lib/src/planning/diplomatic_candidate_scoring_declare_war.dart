@@ -327,7 +327,19 @@ int? _declareWarSuppressedScore(_DeclareWarTargetContext ctx) {
     final targetOw = provinceCountOwnedBy(ctx.game, ctx.order.targetFactionId);
     if (ctx.game.playerById(ctx.order.targetFactionId) != null) {
       if (isBelowObserverConquestQuota(targetOw) &&
-          attackerOw >= targetOw + kUnwinnableSoleGpMinProvinceDeficit) {
+          !ctx.invadableGpBlocker &&
+          !ctx.snapshot.threats.atWarWith.contains(ctx.order.targetFactionId) &&
+          ((!isBelowObserverConquestQuota(attackerOw)) ||
+              (ctx.currentTurn <= kDeclareWarEarlyAntiDogpileMaxTurn &&
+                  attackerOw > targetOw))) {
+        return 0;
+      }
+      final belowQuotaSuppressLead = targetOw <= kFewOldWorldProvincesDefendThreshold
+          ? 1
+          : kUnwinnableSoleGpMinProvinceDeficit;
+      if (isBelowObserverConquestQuota(targetOw) &&
+          !ctx.invadableGpBlocker &&
+          attackerOw >= targetOw + belowQuotaSuppressLead) {
         return 0;
       }
       if (isBelowObserverConquestQuota(attackerOw) &&

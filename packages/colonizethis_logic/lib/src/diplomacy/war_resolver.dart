@@ -188,15 +188,18 @@ Map<String, Set<String>> _peaceOfferPairKeysForGreatPowers(
       offerers.any(
         (id) =>
             oldWorldProvinceCountOwnedBy(game, id) <=
-            kCollapsedOldWorldProvincesSurvivalPeace,
+            kStalledOldWorldProvinceThreshold,
       );
   final belowQuotaOutmatchedGpPeace = bothGreatPowers &&
       offerers.length == 1 &&
       offerers.any((id) {
         final own = oldWorldProvinceCountOwnedBy(game, id);
         final enemyOw = oldWorldProvinceCountOwnedBy(game, targetId);
+        final minLead = own <= kStalledOldWorldProvinceThreshold
+            ? 1
+            : kUnwinnableSoleGpMinProvinceDeficit;
         return isBelowObserverConquestQuota(own) &&
-            enemyOw >= own + kUnwinnableSoleGpMinProvinceDeficit;
+            enemyOw >= own + minLead;
       });
   final oneSidedGpPeace =
       collapsedSurvivalPeace || belowQuotaOutmatchedGpPeace;

@@ -172,7 +172,7 @@ List<String> criticalOwHoldPeaceTargets({
   }
   if (isBelowObserverConquestQuota(snapshot.conquest.oldWorldProvincesOwned) &&
       snapshot.conquest.oldWorldProvincesOwned <=
-          kFewOldWorldProvincesDefendThreshold) {
+          kStalledOldWorldProvinceThreshold) {
     return targets;
   }
   final minorsExist = game.worldState.oldWorld.provinces.any(
