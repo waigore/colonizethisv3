@@ -78,8 +78,8 @@ void main() {
     }
     },
     skip:
-        'Partial AC #2509: seed-42 turn-100 gate passes gp3/gp6 (+4/+10) but '
-        'regresses gp4/gp5 with regiment-rebuild crisis cap; per-GP tuning follow-up',
-    timeout: const Timeout(Duration(minutes: 12)),
+        'Partial AC #2509: seed-42 turn-100 gate passes gp1/gp2/gp4; '
+        'gp3 survives (-2 net, was -7), gp5 +1, gp6 +2; nightly S10 follow-up',
+    timeout: const Timeout(Duration(minutes: 15)),
   );
 }

@@ -341,7 +341,10 @@ PlannerContext _runEconomyDomainPlanners({
         oldWorldProvincesOwned: snapshot.conquest.oldWorldProvincesOwned,
         colonialPressure: colonialPressure,
         militaryRebuildCrisis: forceRegimentRebuild &&
-            regimentCount <= kStalledMilitaryRebuildCrisisRegimentCap,
+            regimentCount <= kStalledMilitaryRebuildCrisisRegimentCap &&
+            !(observerQuotaPressure &&
+                snapshot.conquest.oldWorldProvincesOwned >
+                    kFewOldWorldProvincesDefendThreshold),
       ),
     );
     if (chosen != null) {

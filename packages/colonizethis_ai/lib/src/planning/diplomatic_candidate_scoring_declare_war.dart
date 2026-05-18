@@ -156,7 +156,10 @@ final class _DeclareWarTargetContext {
     final ownsInvadableNw = snapshot.colonial.invadableNewWorldProvinceIdsSorted
         .any((pid) => provinceOwner[pid] == order.targetFactionId);
     final colonialPressure = hasColonialAcquisitionTargets(snapshot.colonial) &&
-        !isStalledOldWorldGpBlockerFocus(game: game, snapshot: snapshot);
+        !isStalledOldWorldGpBlockerFocus(game: game, snapshot: snapshot) &&
+        !isBelowObserverConquestQuota(
+          snapshot.conquest.oldWorldProvincesOwned,
+        );
     final isTribeTarget = _isTribeFaction(game, order.targetFactionId);
     final stalledOwExpansion = isObserverConquestExpansionPressure(
       snapshot.conquest.oldWorldProvincesOwned,

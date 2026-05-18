@@ -5,6 +5,7 @@ import 'colonial_pressure.dart';
 export 'colonial_pressure.dart'
     show
         consolidateGainsSoleGpPeaceTarget,
+        criticalOwHoldPeaceTargets,
         isOldWorldGpOnlyInvadableFrontier,
         isStalledOldWorldGpBlockerFocus,
         primaryInvadableOldWorldGpBlocker,
