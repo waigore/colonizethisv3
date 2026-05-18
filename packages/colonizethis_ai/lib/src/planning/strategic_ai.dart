@@ -1,11 +1,12 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_ai/package_logger.dart';
 import 'package:colonizethis_logic/ai_api.dart'
-    show PlayerView, TurnTraceAiSection;
+    show PlayerView, TurnTraceAiSection, buildPlayerView;
 import 'package:colonizethis_logic/order_suggestion_api.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'army_conquest_prep.dart';
+import 'colonial_pressure.dart';
 import 'domain_planner_orchestrator.dart';
 import 'economy_planner.dart';
 import 'goal_manager.dart';
@@ -76,14 +77,28 @@ StrategicOrderTraceResult generateStrategicOrdersWithTrace({
   final turn = game.worldState.turnState.turnNumber;
   _log.i('generateStrategicOrders nationId=$nationId turn=$turn');
   final snapshot = AIWorldSnapshot.fromPlayerView(view, topology: topology);
-  final goalScores = evaluateStrategicGoalScores(snapshot, config);
-  final primaryGoal = selectPrimaryGoal(
+  final suppressColonialPressure = isStalledOldWorldGpBlockerFocus(
+    game: game,
+    snapshot: snapshot,
+  );
+  final goalScores = evaluateStrategicGoalScores(
+    snapshot,
+    config,
+    suppressColonialPressure: suppressColonialPressure,
+  );
+  var primaryGoal = selectPrimaryGoal(
     snapshot,
     config,
     seeds.goalSeed,
     nationId: nationId,
     turn: turn,
+    suppressColonialPressure: suppressColonialPressure,
   );
+  if (suppressColonialPressure &&
+      snapshot.conquest.provincesToVictory >
+          kConquerScoreFloorProvincesToVictoryThreshold) {
+    primaryGoal = StrategicGoal.conquer;
+  }
   _log.d('primaryGoal=$primaryGoal');
   final planningGame = prepareConquestFieldArmy(
     game: game,
@@ -92,19 +107,26 @@ StrategicOrderTraceResult generateStrategicOrdersWithTrace({
     oldWorldProvincesOwned: snapshot.conquest.oldWorldProvincesOwned,
     primaryGoal: primaryGoal,
   );
+  final planningView = planningGame == game
+      ? view
+      : buildPlayerView(planningGame, topology, nationId);
+  final planningSnapshot = planningView == view
+      ? snapshot
+      : AIWorldSnapshot.fromPlayerView(planningView, topology: topology);
   final economyPlan = runEconomyPlanner(
     game: planningGame,
-    view: view,
+    view: planningView,
     config: config,
     seeds: seeds,
     colonial: snapshot.colonial,
+    snapshot: planningSnapshot,
   );
   final plannerOutcome = runDomainPlannersWithOutcome(
     game: planningGame,
     topology: topology,
     nationId: nationId,
-    view: view,
-    snapshot: snapshot,
+    view: planningView,
+    snapshot: planningSnapshot,
     config: config,
     primaryGoal: primaryGoal,
     seeds: seeds,

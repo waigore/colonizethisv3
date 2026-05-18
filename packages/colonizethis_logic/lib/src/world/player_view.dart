@@ -137,6 +137,33 @@ PlayerView buildPlayerView(Game game, MapTopology _, String playerId) {
     }
   }
 
+  // At-war Old World provinces are at least fogged so army invasion orders can
+  // target neighboring enemy territory (trade/colonial GPs may not have explored
+  // every border minor). SPEC/ai/ai-architecture.md victory-aware military.
+  for (final entry in provincesById.entries) {
+    final fullId = entry.key;
+    if (ProvinceId.regionIdFrom(fullId) != kOldWorldRegionId) {
+      continue;
+    }
+    final ownerId = entry.value.ownerId;
+    if (ownerId == null || ownerId.isEmpty || ownerId == playerId) {
+      continue;
+    }
+    final rel = diplomacyByOtherId[ownerId];
+    if (rel == null || rel.atPeace) {
+      continue;
+    }
+    final localId = ProvinceId.localIdFrom(fullId);
+    final tileKeys =
+        game.worldState.tileKeysByRegionAndProvince[kOldWorldRegionId]?[localId] ??
+        const [];
+    for (final tk in tileKeys) {
+      if (visibilityByTile[tk] == VisibilityLevel.unknown) {
+        visibilityByTile[tk] = VisibilityLevel.fogged;
+      }
+    }
+  }
+
   final prospectedTiles =
       game.worldState.playerProspectedTiles[playerId] ?? const <String>{};
 

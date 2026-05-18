@@ -2,6 +2,7 @@ import 'dart:math' as math;
 
 import 'package:colonizethis_logic/order_suggestion_api.dart';
 
+import 'army_conquest_prep.dart';
 import 'colonial_pressure.dart';
 import 'planning_imports.dart';
 import 'goal_manager.dart';
@@ -103,22 +104,46 @@ DomainPlannerOutcome runDomainPlannersWithOutcome({
   ctx = ctx.withOrders(declareWarResult.orders);
   final armyMovesBeforeConquest =
       ctx.orders.armyMoveOrdersByPlayerId[nationId]?.length ?? 0;
-  ctx = ctx.withOrders(
-    runConquestArmyMovePlanner(
-      ctx: ctx,
-      snapshot: snapshot,
-      declaredWarTargetFactionId: declareWarResult.declaredWarTargetFactionId,
-    ),
+  final stalledOldWorldExpansion = isStalledOldWorldExpansion(
+    snapshot.conquest.oldWorldProvincesOwned,
   );
+  final conquestDeclaredWarTarget = stalledConquestDeclaredWarTarget(
+    game: ctx.game,
+    nationId: nationId,
+    snapshot: snapshot,
+    declaredThisTurn: declareWarResult.declaredWarTargetFactionId,
+  );
+  final conquestPasses = stalledOldWorldExpansion
+      ? kStalledConquestArmyMovePasses
+      : 1;
+  for (var pass = 0; pass < conquestPasses; pass++) {
+    final movesBeforePass =
+        ctx.orders.armyMoveOrdersByPlayerId[nationId]?.length ?? 0;
+    ctx = ctx.withOrders(
+      runConquestArmyMovePlanner(
+        ctx: ctx,
+        snapshot: snapshot,
+        declaredWarTargetFactionId: conquestDeclaredWarTarget,
+      ),
+    );
+    final movesAfterPass =
+        ctx.orders.armyMoveOrdersByPlayerId[nationId]?.length ?? 0;
+    if (movesAfterPass == movesBeforePass) {
+      break;
+    }
+  }
   final conquestArmyMoveCount =
       (ctx.orders.armyMoveOrdersByPlayerId[nationId]?.length ?? 0) -
       armyMovesBeforeConquest;
-  ctx = ctx.withOrders(
-    runArmyMovePlanner(
-      ctx: ctx,
-      provincesToVictory: snapshot.conquest.provincesToVictory,
-    ),
-  );
+  // Stalled GPs must not run the relocation pass: it undoes frontier marches.
+  if (!stalledOldWorldExpansion) {
+    ctx = ctx.withOrders(
+      runArmyMovePlanner(
+        ctx: ctx,
+        provincesToVictory: snapshot.conquest.provincesToVictory,
+      ),
+    );
+  }
   emit('aiStageD');
 
   ctx = ctx.withOrders(
@@ -175,7 +200,8 @@ PlannerContext _runEconomyDomainPlanners({
   );
   var workThreshold =
       40 - (hasSpyWork ? getAgendaSpyOrderModifier(ctx.config.hiddenAgendaId) : 0);
-  final colonialPressure = hasColonialAcquisitionTargets(snapshot.colonial);
+  final colonialPressure = hasColonialAcquisitionTargets(snapshot.colonial) &&
+      !isStalledOldWorldGpBlockerFocus(game: ctx.game, snapshot: snapshot);
   if (colonialPressure || snapshot.colonial.newWorldProvincesOwned > 0) {
     workThreshold = math.min(workThreshold, kColonialCivilianWorkThresholdCap);
   }
@@ -218,26 +244,68 @@ PlannerContext _runEconomyDomainPlanners({
   emit('aiStageA');
 
   var buildThreshold = 30 - getAgendaBuildOrderModifier(ctx.config.hiddenAgendaId);
-  if (snapshot.conquest.oldWorldProvincesOwned <=
-      kStalledOldWorldProvinceThreshold) {
+  if (isStalledOldWorldExpansion(snapshot.conquest.oldWorldProvincesOwned)) {
     buildThreshold = math.min(buildThreshold, 15);
+  }
+  if (isStalledOldWorldGpBlockerFocus(game: ctx.game, snapshot: snapshot)) {
+    buildThreshold = math.min(buildThreshold, 8);
   }
   final colonialBuildCap = colonialBuildOrderThresholdCap(snapshot.colonial);
   if (colonialBuildCap != null) {
     buildThreshold = math.min(buildThreshold, colonialBuildCap);
   }
+  final regimentCount = regimentCountForPlayer(ctx.game, ctx.nationId);
+  final gpBlocker = isStalledOldWorldGpBlockerFocus(
+        game: ctx.game,
+        snapshot: snapshot,
+      )
+      ? primaryInvadableOldWorldGpBlocker(game: ctx.game, snapshot: snapshot)
+      : null;
+  final atWarWithGpBlocker = gpBlocker != null &&
+      snapshot.threats.atWarWith.contains(gpBlocker);
+  var minRegimentFloor = atWarWithGpBlocker
+      ? kStalledMinRegimentCountWhenGpBlockerAtWar
+      : kStalledMinRegimentCountWhenAtWar;
+  if (atWarWithGpBlocker && gpBlocker != null) {
+    final deficit = provinceCountOwnedBy(ctx.game, gpBlocker) -
+        snapshot.conquest.oldWorldProvincesOwned;
+    if (deficit > 0) {
+      minRegimentFloor += deficit * kStalledMinRegimentCountPerProvinceDeficitVsBlocker;
+    }
+  }
+  final forceRegimentRebuild =
+      isStalledOldWorldExpansion(snapshot.conquest.oldWorldProvincesOwned) &&
+          snapshot.threats.atWarWith.isNotEmpty &&
+          regimentCount < minRegimentFloor;
+  if (forceRegimentRebuild) {
+    buildThreshold = 0;
+  }
   _log.d(
     'build eval nationId=${ctx.nationId} buildThreshold=$buildThreshold '
-    'buildCandidatesCount=${buildCandidates.length}',
+    'buildCandidatesCount=${buildCandidates.length} '
+    'regimentCount=$regimentCount forceRegimentRebuild=$forceRegimentRebuild',
   );
-  if (buildCandidates.isNotEmpty && domainWeights.economy >= buildThreshold) {
+  if (buildCandidates.isNotEmpty &&
+      (domainWeights.economy >= buildThreshold || forceRegimentRebuild)) {
+    var candidatesForBuild = buildCandidates;
+    if (forceRegimentRebuild) {
+      final regimentsOnly = buildCandidates
+          .where((o) => RegimentEconomyCatalog.byId.containsKey(o.unitType))
+          .toList();
+      if (regimentsOnly.isNotEmpty) {
+        candidatesForBuild = regimentsOnly;
+      }
+    }
     final chosen = pickBuildOrder(
       ctx: ctx,
-      buildCandidates: buildCandidates,
-      cargoPreference: economyPlan.cargoPreference,
-      provincesToVictory: snapshot.conquest.provincesToVictory,
-      oldWorldProvincesOwned: snapshot.conquest.oldWorldProvincesOwned,
-      seedOverride: ctx.seeds.economySeed + 1,
+      input: BuildPickInput(
+        buildCandidates: candidatesForBuild,
+        cargoPreference: economyPlan.cargoPreference,
+        provincesToVictory: snapshot.conquest.provincesToVictory,
+        oldWorldProvincesOwned: snapshot.conquest.oldWorldProvincesOwned,
+        colonialPressure: colonialPressure,
+        militaryRebuildCrisis: forceRegimentRebuild && regimentCount == 0,
+      ),
     );
     if (chosen != null) {
       _log.i('build chosen nationId=${ctx.nationId} unitType=${chosen.unitType}');

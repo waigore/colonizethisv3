@@ -51,7 +51,7 @@ void main() {
         game: game,
         nationId: 'gp1',
         provincesToVictory: 24,
-        oldWorldProvincesOwned: 7,
+        oldWorldProvincesOwned: 9,
         primaryGoal: StrategicGoal.conquer,
       );
 
@@ -117,7 +117,7 @@ void main() {
         game: game,
         nationId: 'gp1',
         provincesToVictory: 24,
-        oldWorldProvincesOwned: 7,
+        oldWorldProvincesOwned: 9,
         primaryGoal: StrategicGoal.conquer,
       );
 
