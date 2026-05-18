@@ -87,6 +87,114 @@ void main() {
       expect(captured!.variables['otherNation'], 'gp3');
     });
 
+    test(
+      'collapsed GP offerPeace ends GP war without reciprocal offer (Refs #2509)',
+      () {
+        final game = Game(
+          id: 'g-collapsed-peace',
+          worldState: WorldState(
+            turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 10),
+            oldWorld: RegionData(
+              provinces: [
+                for (var i = 1; i <= 3; i++)
+                  Province(
+                    id: 'oldWorld|gp2_$i',
+                    regionId: 'oldWorld',
+                    ownerId: 'gp2',
+                  ),
+                for (var i = 1; i <= 10; i++)
+                  Province(
+                    id: 'oldWorld|gp3_$i',
+                    regionId: 'oldWorld',
+                    ownerId: 'gp3',
+                  ),
+              ],
+            ),
+            newWorld: const RegionData(),
+          ),
+          players: const [
+            Player(id: 'gp2', displayName: 'Collapsed', isHuman: false),
+            Player(id: 'gp3', displayName: 'Strong', isHuman: false),
+          ],
+          diplomacyRelations: [
+            DiplomacyRelation(
+              factionId1: 'gp2',
+              factionId2: 'gp3',
+              score: 40,
+              level: RelationLevel.neutral,
+              state: RelationState.atWar,
+            ),
+          ],
+        );
+        final orders = Orders(
+          diplomaticOrdersByPlayerId: {
+            'gp2': const [
+              DiplomaticOrder(
+                type: DiplomaticOrderType.offerPeace,
+                targetFactionId: 'gp3',
+              ),
+            ],
+          },
+        );
+        final after = resolveDiplomacyPhase(game, orders).game;
+        expect(getRelation(after, 'gp2', 'gp3')!.atPeace, isTrue);
+      },
+    );
+
+    test(
+      'weak GP at six OW provinces offerPeace ends GP war without reciprocal offer',
+      () {
+        final game = Game(
+          id: 'g-weak-six-peace',
+          worldState: WorldState(
+            turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 10),
+            oldWorld: RegionData(
+              provinces: [
+                for (var i = 1; i <= 6; i++)
+                  Province(
+                    id: 'oldWorld|gp2_$i',
+                    regionId: 'oldWorld',
+                    ownerId: 'gp2',
+                  ),
+                for (var i = 1; i <= 10; i++)
+                  Province(
+                    id: 'oldWorld|gp3_$i',
+                    regionId: 'oldWorld',
+                    ownerId: 'gp3',
+                  ),
+              ],
+            ),
+            newWorld: const RegionData(),
+          ),
+          players: const [
+            Player(id: 'gp2', displayName: 'Weak', isHuman: false),
+            Player(id: 'gp3', displayName: 'Strong', isHuman: false),
+          ],
+          diplomacyRelations: [
+            DiplomacyRelation(
+              factionId1: 'gp2',
+              factionId2: 'gp3',
+              score: 40,
+              level: RelationLevel.neutral,
+              state: RelationState.atWar,
+            ),
+          ],
+        );
+        final orders = Orders(
+          diplomaticOrdersByPlayerId: {
+            'gp2': const [
+              DiplomaticOrder(
+                type: DiplomaticOrderType.offerPeace,
+                targetFactionId: 'gp3',
+              ),
+            ],
+          },
+        );
+        final after = resolveDiplomacyPhase(game, orders).game;
+        expect(getRelation(after, 'gp2', 'gp3')!.atPeace, isTrue);
+      },
+    );
+
     test('human declare war does not invoke onDialogue', () {
       final game = Game(
         id: 'g1',
