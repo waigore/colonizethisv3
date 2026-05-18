@@ -360,7 +360,7 @@ void main() {
         turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 90),
         oldWorld: RegionData(
           provinces: [
-            for (var i = 1; i <= 11; i++)
+            for (var i = 1; i <= 12; i++)
               Province(
                 id: 'oldWorld|gp4_$i',
                 regionId: 'oldWorld',
@@ -404,7 +404,7 @@ void main() {
       playerId: 'gp4',
       threats: ThreatSummary(atWarWith: ['gp3']),
       opportunities: OpportunitySummary(),
-      conquest: ConquestSummary(oldWorldProvincesOwned: 11),
+      conquest: ConquestSummary(oldWorldProvincesOwned: 12),
       economy: EconomySummary(),
       relations: {},
     );
