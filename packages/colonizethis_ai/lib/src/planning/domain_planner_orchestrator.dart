@@ -298,12 +298,14 @@ PlannerContext _runEconomyDomainPlanners({
     }
     final chosen = pickBuildOrder(
       ctx: ctx,
-      buildCandidates: candidatesForBuild,
-      cargoPreference: economyPlan.cargoPreference,
-      provincesToVictory: snapshot.conquest.provincesToVictory,
-      oldWorldProvincesOwned: snapshot.conquest.oldWorldProvincesOwned,
-      colonialPressure: colonialPressure,
-      militaryRebuildCrisis: forceRegimentRebuild && regimentCount == 0,
+      input: BuildPickInput(
+        buildCandidates: candidatesForBuild,
+        cargoPreference: economyPlan.cargoPreference,
+        provincesToVictory: snapshot.conquest.provincesToVictory,
+        oldWorldProvincesOwned: snapshot.conquest.oldWorldProvincesOwned,
+        colonialPressure: colonialPressure,
+        militaryRebuildCrisis: forceRegimentRebuild && regimentCount == 0,
+      ),
     );
     if (chosen != null) {
       _log.i('build chosen nationId=${ctx.nationId} unitType=${chosen.unitType}');

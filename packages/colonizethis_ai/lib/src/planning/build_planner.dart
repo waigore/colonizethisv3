@@ -7,21 +7,41 @@ import '../util/ai_random_utils.dart';
 
 final _log = packageLogger();
 
+/// Per-invocation inputs for [pickBuildOrder] (Refs #2521 planner parameter cap).
+class BuildPickInput {
+  const BuildPickInput({
+    required this.buildCandidates,
+    required this.cargoPreference,
+    this.provincesToVictory = 0,
+    this.oldWorldProvincesOwned = 0,
+    this.colonialPressure = false,
+    this.militaryRebuildCrisis = false,
+  });
+
+  final List<BuildUnitOrder> buildCandidates;
+  final CargoPreference cargoPreference;
+  final int provincesToVictory;
+  final int oldWorldProvincesOwned;
+  final bool colonialPressure;
+  final bool militaryRebuildCrisis;
+}
+
 /// Scores build candidates (ships vs regiments) by cargo preference, goal, and personality.
 /// Returns one build order via weighted random, or null if list empty. SPEC/ai/economy-planner.md.
 BuildUnitOrder? pickBuildOrder({
   required PlannerContext ctx,
-  required List<BuildUnitOrder> buildCandidates,
-  required CargoPreference cargoPreference,
-  int provincesToVictory = 0,
-  int oldWorldProvincesOwned = 0,
-  bool colonialPressure = false,
-  bool militaryRebuildCrisis = false,
+  required BuildPickInput input,
 }) {
   final primaryGoal = ctx.primaryGoal;
   final config = ctx.config;
   final nationId = ctx.nationId;
   final seed = ctx.seeds.economySeed + 1;
+  final buildCandidates = input.buildCandidates;
+  final cargoPreference = input.cargoPreference;
+  final provincesToVictory = input.provincesToVictory;
+  final oldWorldProvincesOwned = input.oldWorldProvincesOwned;
+  final colonialPressure = input.colonialPressure;
+  final militaryRebuildCrisis = input.militaryRebuildCrisis;
   if (buildCandidates.isEmpty) return null;
   if (militaryRebuildCrisis) {
     final regimentsOnly = buildCandidates
