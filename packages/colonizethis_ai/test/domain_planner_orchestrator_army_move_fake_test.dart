@@ -5,6 +5,7 @@ import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'domain_planner_test_fake_api.dart';
+import 'planner_test_helpers.dart';
 
 void main() {
   group('runDomainPlanners', () {
@@ -50,29 +51,13 @@ void main() {
         prospectedTiles: const {},
         diplomacyByOtherId: const {},
       );
-      final snapshot = AIWorldSnapshot.fromPlayerView(view);
-      const config = AIConfig(
-        leaderId: 'victoria',
-        personalityId: 'victoria',
-        hiddenAgendaId: 'peacemaker',
-      );
-      final seeds = AISeedBundle.fromTurnSeed(1);
-      const economyPlan = EconomyPlan(
-        productionAssignments: [],
-        cargoPreference: CargoPreference.none,
-      );
 
-      final orders = runDomainPlanners(
+      final orders = runDomainPlannersInTest(
         game: game,
         topology: topology,
-        nationId: 'gp1',
         view: view,
-        snapshot: snapshot,
-        config: config,
         primaryGoal: StrategicGoal.conquer,
-        seeds: seeds,
         suggestionAPI: fakeApi,
-        economyPlan: economyPlan,
       );
 
       expect(orders.armyMoveOrdersByPlayerId['gp1']?.single.destinationProvinceId,

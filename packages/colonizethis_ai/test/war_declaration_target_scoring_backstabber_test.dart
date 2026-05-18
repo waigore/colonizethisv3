@@ -5,6 +5,7 @@ import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'domain_planner_test_fake_api.dart';
+import 'planner_test_helpers.dart';
 
 void main() {
   group('war declaration target scoring (backstabber)', () {
@@ -47,13 +48,6 @@ void main() {
         );
         const topology = MapTopology(nodes: [], edges: []);
         final view = buildPlayerView(game, topology, 'gp1');
-        final snapshot = AIWorldSnapshot.fromPlayerView(view);
-        const config = AIConfig(
-          leaderId: 'napoleon',
-          personalityId: 'napoleon',
-          hiddenAgendaId: 'backstabber',
-        );
-        final seeds = AISeedBundle.fromTurnSeed(333);
         const fakeApi = FakeOrderSuggestionAPIForDomainPlannerTests(
           work: [],
           build: [],
@@ -61,29 +55,25 @@ void main() {
           research: [],
           navalMove: [],
           navalMission: [],
-          diplomatic: [
+          diplomatic: const [
             DiplomaticOrder(
               type: DiplomaticOrderType.declareWar,
               targetFactionId: 'gp2',
             ),
           ],
         );
-        const economyPlan = EconomyPlan(
-          productionAssignments: [],
-          cargoPreference: CargoPreference.none,
-        );
-
-        final orders = runDomainPlanners(
+        final orders = runDomainPlannersInTest(
           game: game,
           topology: topology,
-          nationId: 'gp1',
           view: view,
-          snapshot: snapshot,
-          config: config,
+          turnSeed: 333,
           primaryGoal: StrategicGoal.conquer,
-          seeds: seeds,
+          config: const AIConfig(
+            leaderId: 'napoleon',
+            personalityId: 'napoleon',
+            hiddenAgendaId: 'backstabber',
+          ),
           suggestionAPI: fakeApi,
-          economyPlan: economyPlan,
         );
 
         final diplo = orders.diplomaticOrdersByPlayerId['gp1'];

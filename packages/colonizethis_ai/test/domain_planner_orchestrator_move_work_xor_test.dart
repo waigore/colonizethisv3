@@ -4,6 +4,8 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
+import 'planner_test_helpers.dart';
+
 /// [DefaultOrderSuggestionAPI] with fixed civilian work rows so Full AI assigns
 /// work first; move suggestions still use production [suggestMoveOrders] (draft
 /// work excludes same-unit moves).
@@ -95,13 +97,6 @@ void main() {
       );
 
       final view = buildPlayerView(game, topology, playerId);
-      final snapshot = AIWorldSnapshot.fromPlayerView(view);
-      const config = AIConfig(
-        leaderId: 'victoria',
-        personalityId: 'victoria',
-        hiddenAgendaId: 'peacemaker',
-      );
-      final seeds = AISeedBundle.fromTurnSeed(902104);
       const injectedWork = <WorkOrder>[
         WorkOrder(
           unitId: 'u1',
@@ -124,20 +119,13 @@ void main() {
             'draft orders omit work so XOR behavior is meaningful',
       );
 
-      final orders = runDomainPlanners(
+      final orders = runDomainPlannersInTest(
         game: game,
         topology: topology,
         nationId: playerId,
         view: view,
-        snapshot: snapshot,
-        config: config,
-        primaryGoal: StrategicGoal.expand,
-        seeds: seeds,
+        turnSeed: 902104,
         suggestionAPI: api,
-        economyPlan: const EconomyPlan(
-          productionAssignments: [],
-          cargoPreference: CargoPreference.none,
-        ),
       );
 
       final workList = orders.workOrdersByPlayerId[playerId] ?? const [];

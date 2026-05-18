@@ -6,6 +6,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:logger/logger.dart';
 
 import 'domain_planner_test_fake_api.dart';
+import 'planner_test_helpers.dart';
 
 void main() {
   group('runDomainPlanners civilian work logging — basic', () {
@@ -53,13 +54,6 @@ void main() {
       );
       const topology = MapTopology(nodes: [], edges: []);
       final view = buildPlayerView(game, topology, nationId);
-      final snapshot = AIWorldSnapshot.fromPlayerView(view);
-      const config = AIConfig(
-        leaderId: 'victoria',
-        personalityId: 'victoria',
-        hiddenAgendaId: 'peacemaker',
-      );
-      final seeds = AISeedBundle.fromTurnSeed(20821);
       const workOrder = WorkOrder(
         unitId: 'e1',
         target: kWorkTargetExplore,
@@ -73,27 +67,17 @@ void main() {
         navalMove: const [],
         navalMission: const [],
       );
-      const economyPlan = EconomyPlan(
-        productionAssignments: [],
-        cargoPreference: CargoPreference.none,
-      );
-
       final captured = <LogEvent>[];
       void listener(LogEvent e) => captured.add(e);
       Logger.addLogListener(listener);
       Logger.level = Level.info;
       try {
-        runDomainPlanners(
+        runDomainPlannersInTest(
           game: game,
           topology: topology,
           nationId: nationId,
-          view: view,
-          snapshot: snapshot,
-          config: config,
-          primaryGoal: StrategicGoal.expand,
-          seeds: seeds,
+          turnSeed: 20821,
           suggestionAPI: fakeApi,
-          economyPlan: economyPlan,
         );
       } finally {
         Logger.removeLogListener(listener);
@@ -159,14 +143,6 @@ void main() {
         ],
       );
       const topology = MapTopology(nodes: [], edges: []);
-      final view = buildPlayerView(game, topology, nationId);
-      final snapshot = AIWorldSnapshot.fromPlayerView(view);
-      const config = AIConfig(
-        leaderId: 'victoria',
-        personalityId: 'victoria',
-        hiddenAgendaId: 'peacemaker',
-      );
-      final seeds = AISeedBundle.fromTurnSeed(20822);
       const workOrder = WorkOrder(
         unitId: 'e1',
         target: kWorkTargetExplore,
@@ -180,27 +156,17 @@ void main() {
         navalMove: const [],
         navalMission: const [],
       );
-      const economyPlan = EconomyPlan(
-        productionAssignments: [],
-        cargoPreference: CargoPreference.none,
-      );
-
       final captured = <LogEvent>[];
       void listener(LogEvent e) => captured.add(e);
       Logger.addLogListener(listener);
       Logger.level = Level.info;
       try {
-        runDomainPlanners(
+        runDomainPlannersInTest(
           game: game,
           topology: topology,
           nationId: nationId,
-          view: view,
-          snapshot: snapshot,
-          config: config,
-          primaryGoal: StrategicGoal.expand,
-          seeds: seeds,
+          turnSeed: 20822,
           suggestionAPI: fakeApi,
-          economyPlan: economyPlan,
         );
       } finally {
         Logger.removeLogListener(listener);
