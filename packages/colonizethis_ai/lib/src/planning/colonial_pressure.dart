@@ -245,6 +245,39 @@ List<String> stalledBelowQuotaGpLeadPeaceTargets({
   return targets;
 }
 
+/// Peace below-quota Great Powers while this GP meets the observer quota and the
+/// victim does not own this GP's invadable OW frontier (Refs #2509).
+List<String> quotaMetFutileBelowQuotaGpPeaceTargets({
+  required Game game,
+  required AIWorldSnapshot snapshot,
+}) {
+  if (isBelowObserverConquestQuota(snapshot.conquest.oldWorldProvincesOwned)) {
+    return const [];
+  }
+  if (snapshot.conquest.invadableProvinceIdsSorted.isEmpty) {
+    return const [];
+  }
+  final provinceOwner = getProvinceOwnerMap(game);
+  final blocker = primaryInvadableOldWorldGpBlocker(
+    game: game,
+    snapshot: snapshot,
+  );
+  final targets = <String>[];
+  for (final factionId in snapshot.threats.atWarWith) {
+    if (game.playerById(factionId) == null) continue;
+    if (!isBelowObserverConquestQuota(provinceCountOwnedBy(game, factionId))) {
+      continue;
+    }
+    final ownsInvadable = snapshot.conquest.invadableProvinceIdsSorted.any(
+      (pid) => provinceOwner[pid] == factionId,
+    );
+    if (ownsInvadable || factionId == blocker) continue;
+    targets.add(factionId);
+  }
+  targets.sort();
+  return targets;
+}
+
 /// Peace every at-war Great Power when OW holdings are critically low and minors
 /// remain on the map (avoid OW elimination; Refs #2509).
 ///

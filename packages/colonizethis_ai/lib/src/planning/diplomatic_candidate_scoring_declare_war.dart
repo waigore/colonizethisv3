@@ -456,9 +456,11 @@ int? _declareWarSuppressedWarConcentrationScore(
     if (targetGpWarCount >= 2) {
       return 0;
     }
+    final attackerOw = ctx.snapshot.conquest.oldWorldProvincesOwned;
     if (isBelowObserverConquestQuota(targetOw) &&
         targetGpWarCount >= 1 &&
-        ctx.currentTurn <= kDeclareWarEarlyAntiDogpileMaxTurn) {
+        (ctx.currentTurn <= kDeclareWarEarlyAntiDogpileMaxTurn ||
+            !isBelowObserverConquestQuota(attackerOw))) {
       return 0;
     }
   }

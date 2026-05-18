@@ -9,6 +9,7 @@ export 'colonial_pressure.dart'
         isOldWorldGpOnlyInvadableFrontier,
         isStalledOldWorldGpBlockerFocus,
         primaryInvadableOldWorldGpBlocker,
+        quotaMetFutileBelowQuotaGpPeaceTargets,
         stalledBelowQuotaGpLeadPeaceTargets,
         unwinnableSoleGpFrontierPeaceTarget;
 import 'planner_context.dart';
@@ -445,6 +446,8 @@ bool stalledOwExpansionNeedsPeacePass({
     criticalOwHoldPeaceTargets(game: game, snapshot: snapshot).isNotEmpty ||
     stalledBelowQuotaGpLeadPeaceTargets(game: game, snapshot: snapshot)
         .isNotEmpty ||
+    quotaMetFutileBelowQuotaGpPeaceTargets(game: game, snapshot: snapshot)
+        .isNotEmpty ||
     unwinnableSoleGpFrontierPeaceTarget(game: game, snapshot: snapshot) !=
         null ||
     consolidateGainsSoleGpPeaceTarget(game: game, snapshot: snapshot) != null;
@@ -520,6 +523,7 @@ Set<String> collectStalledGreatPowerPeaceTargets({
       stalledStrongerGpBlockerPeaceTarget(game: game, snapshot: snapshot)!,
     ...criticalOwHoldPeaceTargets(game: game, snapshot: snapshot),
     ...stalledBelowQuotaGpLeadPeaceTargets(game: game, snapshot: snapshot),
+    ...quotaMetFutileBelowQuotaGpPeaceTargets(game: game, snapshot: snapshot),
     if (unwinnableSoleGpFrontierPeaceTarget(game: game, snapshot: snapshot)
         case final enemy?)
       enemy,

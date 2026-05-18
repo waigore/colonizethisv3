@@ -97,6 +97,15 @@ int _scoreOfferPeaceDiplomaticOrder({
   }
   if (targetGp != null &&
       snapshot.threats.atWarWith.contains(order.targetFactionId) &&
+      quotaMetFutileBelowQuotaGpPeaceTargets(
+            game: game,
+            snapshot: snapshot,
+          )
+          .contains(order.targetFactionId)) {
+    s += kOfferPeaceStalledFutileGpWarBonus;
+  }
+  if (targetGp != null &&
+      snapshot.threats.atWarWith.contains(order.targetFactionId) &&
       consolidateGainsSoleGpPeaceTarget(
             game: game,
             snapshot: snapshot,

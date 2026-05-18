@@ -192,6 +192,89 @@ void main() {
     );
 
     test(
+      'suppresses declareWar on below-quota GP in GP war when attacker meets quota',
+      () {
+        const snap = AIWorldSnapshot(
+          playerId: 'gp4',
+          threats: ThreatSummary(),
+          opportunities: OpportunitySummary(),
+          conquest: ConquestSummary(
+            oldWorldProvincesOwned: 12,
+            provincesToVictory: 19,
+            invadableProvinceIdsSorted: ['oldWorld|p30'],
+            adjacentOwnerFactionIdsSorted: ['gp3'],
+          ),
+          colonial: ColonialSummary(),
+          economy: EconomySummary(),
+          relations: {},
+        );
+        final game = Game(
+          id: 'g-quota-dogpile',
+          worldState: WorldState(
+            turnState: const TurnState(
+              phase: TurnPhase.orders,
+              turnNumber: 50,
+            ),
+            oldWorld: RegionData(
+              provinces: [
+                for (var i = 0; i < 8; i++)
+                  Province(
+                    id: 'oldWorld|gp3_$i',
+                    regionId: 'oldWorld',
+                    ownerId: 'gp3',
+                  ),
+                for (var i = 0; i < 12; i++)
+                  Province(
+                    id: 'oldWorld|gp4_$i',
+                    regionId: 'oldWorld',
+                    ownerId: 'gp4',
+                  ),
+                const Province(
+                  id: 'oldWorld|p30',
+                  regionId: 'oldWorld',
+                  ownerId: 'minor1',
+                ),
+              ],
+            ),
+            newWorld: const RegionData(),
+          ),
+          players: const [
+            Player(id: 'gp3', displayName: 'C', isHuman: false),
+            Player(id: 'gp4', displayName: 'D', isHuman: false),
+          ],
+          minorNations: const [MinorNation(id: 'minor1', displayName: 'M1')],
+          diplomacyRelations: const [
+            DiplomacyRelation(
+              factionId1: 'gp1',
+              factionId2: 'gp3',
+              state: RelationState.atWar,
+              score: 0,
+            ),
+          ],
+        );
+        const config = AIConfig(
+          leaderId: 'henry',
+          personalityId: 'henry',
+          hiddenAgendaId: 'merchant',
+        );
+        final score = computeDiplomaticCandidateScores(
+          candidates: const [
+            DiplomaticOrder(
+              type: DiplomaticOrderType.declareWar,
+              targetFactionId: 'gp3',
+            ),
+          ],
+          nationId: 'gp4',
+          game: game,
+          snapshot: snap,
+          config: config,
+          primaryGoal: StrategicGoal.conquer,
+        ).single;
+        expect(score, 0);
+      },
+    );
+
+    test(
       'suppresses early declareWar on below-quota GP already in one GP war',
       () {
         const snap = AIWorldSnapshot(
