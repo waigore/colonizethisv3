@@ -189,6 +189,62 @@ void main() {
   );
 
   test(
+    'criticalOwHoldPeaceTargets peace GP wars at 9 OW below quota (plateau band)',
+    () {
+      final game = Game(
+        id: 'g-critical-below-quota-nine-ow',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 90),
+          oldWorld: RegionData(
+            provinces: [
+              for (var i = 1; i <= 9; i++)
+                Province(
+                  id: 'oldWorld|gp5_$i',
+                  regionId: 'oldWorld',
+                  ownerId: 'gp5',
+                ),
+              for (var i = 1; i <= 12; i++)
+                Province(
+                  id: 'oldWorld|gp4_$i',
+                  regionId: 'oldWorld',
+                  ownerId: 'gp4',
+                ),
+            ],
+          ),
+          newWorld: const RegionData(),
+        ),
+        players: const [
+          Player(id: 'gp5', displayName: 'P5', isHuman: false),
+          Player(id: 'gp4', displayName: 'P4', isHuman: false),
+        ],
+        diplomacyRelations: [
+          const DiplomacyRelation(
+            factionId1: 'gp5',
+            factionId2: 'gp4',
+            state: RelationState.atWar,
+            score: 30,
+          ),
+        ],
+      );
+      const snapshot = AIWorldSnapshot(
+        playerId: 'gp5',
+        threats: ThreatSummary(atWarWith: ['gp4']),
+        opportunities: OpportunitySummary(),
+        conquest: ConquestSummary(
+          oldWorldProvincesOwned: 9,
+          invadableProvinceIdsSorted: ['oldWorld|inv1'],
+        ),
+        economy: EconomySummary(),
+        relations: {},
+      );
+      expect(
+        criticalOwHoldPeaceTargets(game: game, snapshot: snapshot),
+        ['gp4'],
+      );
+    },
+  );
+
+  test(
     'weakHoldingsInvadableBlockerPeaceTargets peace blocker at 7 OW below quota',
     () {
       final game = Game(
@@ -423,6 +479,51 @@ void main() {
       expect(
         criticalWeakUninvadedMinorDeclareTarget(game: game, snapshot: snapshot),
         'minor2',
+      );
+    },
+  );
+
+  test(
+    'criticalWeakUninvadedMinorDeclareTarget picks minor at 8 OW below quota',
+    () {
+      final game = Game(
+        id: 'g-plateau-minor-declare',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 40),
+          oldWorld: RegionData(
+            provinces: [
+              for (var i = 1; i <= 8; i++)
+                Province(
+                  id: 'oldWorld|gp5_$i',
+                  regionId: 'oldWorld',
+                  ownerId: 'gp5',
+                ),
+              const Province(
+                id: 'oldWorld|m1',
+                regionId: 'oldWorld',
+                ownerId: 'minor1',
+              ),
+            ],
+          ),
+          newWorld: const RegionData(),
+        ),
+        players: const [Player(id: 'gp5', displayName: 'P5', isHuman: false)],
+        minorNations: const [MinorNation(id: 'minor1', displayName: 'M1')],
+      );
+      const snapshot = AIWorldSnapshot(
+        playerId: 'gp5',
+        threats: ThreatSummary(),
+        opportunities: OpportunitySummary(),
+        conquest: ConquestSummary(
+          oldWorldProvincesOwned: 8,
+          invadableProvinceIdsSorted: ['oldWorld|m1'],
+        ),
+        economy: EconomySummary(),
+        relations: {},
+      );
+      expect(
+        criticalWeakUninvadedMinorDeclareTarget(game: game, snapshot: snapshot),
+        'minor1',
       );
     },
   );

@@ -392,8 +392,9 @@ String? criticalWeakUninvadedMinorDeclareTarget({
   required Game game,
   required AIWorldSnapshot snapshot,
 }) {
-  if (snapshot.conquest.oldWorldProvincesOwned >
-      kFewOldWorldProvincesDefendThreshold) {
+  if (!isBelowObserverConquestQuota(
+    snapshot.conquest.oldWorldProvincesOwned,
+  )) {
     return null;
   }
   if (snapshot.threats.atWarWith.any((id) => game.playerById(id) != null)) {

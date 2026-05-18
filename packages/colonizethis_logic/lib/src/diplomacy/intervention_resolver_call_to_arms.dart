@@ -207,8 +207,7 @@ Game _processCallToArmsForWarPair(
     if (isAiControlled(state, allyGpId)) {
       final aggressorOw = provinceCountOwnedBy(state, aggressorGpId);
       final turn = state.worldState.turnState.turnNumber;
-      if (turn <= kDeclareWarEarlyAntiDogpileMaxTurn &&
-          isBelowObserverConquestQuota(aggressorOw)) {
+      if (isBelowObserverConquestQuota(aggressorOw)) {
         state = _applyCallToArmsRefuse(state, allyGpId, defenderGpId, turn);
         continue;
       }

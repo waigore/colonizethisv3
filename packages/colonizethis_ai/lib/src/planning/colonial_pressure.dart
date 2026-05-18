@@ -287,10 +287,7 @@ List<String> criticalOwHoldPeaceTargets({
   required Game game,
   required AIWorldSnapshot snapshot,
 }) {
-  if (snapshot.conquest.oldWorldProvincesOwned >
-      kStalledOldWorldProvinceThreshold) {
-    return const [];
-  }
+  final ownOw = snapshot.conquest.oldWorldProvincesOwned;
   final targets = <String>[
     for (final factionId in snapshot.threats.atWarWith)
       if (game.playerById(factionId) != null) factionId,
@@ -298,10 +295,11 @@ List<String> criticalOwHoldPeaceTargets({
   if (targets.isEmpty) {
     return const [];
   }
-  if (isBelowObserverConquestQuota(snapshot.conquest.oldWorldProvincesOwned) &&
-      snapshot.conquest.oldWorldProvincesOwned <=
-          kStalledOldWorldProvinceThreshold) {
+  if (isBelowObserverConquestQuota(ownOw)) {
     return targets;
+  }
+  if (ownOw > kStalledOldWorldProvinceThreshold) {
+    return const [];
   }
   final minorsExist = game.worldState.oldWorld.provinces.any(
     (p) =>

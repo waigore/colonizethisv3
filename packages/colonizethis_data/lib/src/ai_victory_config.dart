@@ -149,7 +149,8 @@ const int kDeclareWarEarlyExpansionTribePenalty = 160;
 const int kDeclareWarEarlyExpansionMaxTurn = 80;
 
 /// Through this turn, quota-meeting GPs must not open new wars on weaker
-/// below-quota neighbors (observer seed-42 gp3 turns 4–8; Refs #2509).
+/// below-quota neighbors when the target is not already in a GP war (Refs #2509).
+/// Pile-ons on below-quota victims already at war are suppressed at all turns.
 const int kDeclareWarEarlyAntiDogpileMaxTurn = 20;
 
 /// Penalty on adjacent minor declare-war when the GP already holds many OW provinces.
