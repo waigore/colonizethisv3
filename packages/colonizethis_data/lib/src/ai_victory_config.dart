@@ -218,10 +218,7 @@ const int kObserverConquestConsolidateMinOwProvinces =
 const int kUnwinnableSoleGpMinProvinceDeficit = 2;
 
 /// Declare-war bonus on adjacent invadable OW minors while below the observer quota.
-const int kDeclareWarBelowObserverQuotaMinorBonus = 120;
-
-/// Regiment build floor when below the observer quota and at war (avoid 0-regiment collapse).
-const int kStalledMinRegimentCountWhenBelowObserverQuota = 8;
+const int kDeclareWarBelowObserverQuotaMinorBonus = 95;
 
 /// Offer-peace bonus for [unwinnableSoleGpFrontierPeaceTarget] (Refs #2509).
 const int kOfferPeaceUnwinnableSoleGpWarBonus = 250;
