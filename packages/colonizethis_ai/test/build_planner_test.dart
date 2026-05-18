@@ -56,10 +56,11 @@ void main() {
       );
       final chosen = pickBuildOrder(
         ctx: ctx,
-        buildCandidates: candidates,
-        cargoPreference: CargoPreference.none,
-        provincesToVictory: 20,
-        seedOverride: 1,
+        input: const BuildPickInput(
+          buildCandidates: candidates,
+          cargoPreference: CargoPreference.none,
+          provincesToVictory: 20,
+        ),
       );
       expect(chosen?.unitType, 'grenadiers');
     });

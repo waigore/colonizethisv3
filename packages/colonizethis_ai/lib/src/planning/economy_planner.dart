@@ -1,6 +1,7 @@
 // Economy planner: worker allocation and cargo preference. SPEC/ai/economy-planner.md.
 
 import '../perception/perception_snapshot.dart';
+import 'army_conquest_prep.dart';
 import 'planning_imports.dart';
 import 'recipe_scoring.dart';
 
@@ -15,6 +16,7 @@ EconomyPlan runEconomyPlanner({
   required AIConfig config,
   required AISeedBundle seeds,
   ColonialSummary colonial = const ColonialSummary(),
+  AIWorldSnapshot? snapshot,
 }) {
   final player = game.playerById(view.playerId);
   if (player == null) {
@@ -51,12 +53,19 @@ EconomyPlan runEconomyPlanner({
     );
   }
 
+  final militaryRebuildCrisis = snapshot != null &&
+      isStalledOldWorldExpansion(snapshot.conquest.oldWorldProvincesOwned) &&
+      snapshot.threats.atWarWith.isNotEmpty &&
+      regimentCountForPlayer(game, view.playerId) <
+          kStalledMinRegimentCountWhenAtWar;
+
   final assignments = _allocateLabour(
     stockpile: stockpile,
     workers: workers,
     effectiveLabour: effectiveLabour,
     config: config,
     seeds: seeds,
+    militaryRebuildCrisis: militaryRebuildCrisis,
   );
 
   final cargoPref = _cargoPreference(
@@ -121,6 +130,7 @@ List<AssignedRecipe> _allocateLabour({
   required int effectiveLabour,
   required AIConfig config,
   required AISeedBundle seeds,
+  bool militaryRebuildCrisis = false,
 }) {
   final recipes = ProductionRecipesCatalog.all;
   final agendaId = config.hiddenAgendaId;
@@ -140,12 +150,15 @@ List<AssignedRecipe> _allocateLabour({
     );
     if (runs <= 0) continue;
 
-    final score = scoreRecipe(
+    var score = scoreRecipe(
       recipe: recipe,
       stockpile: virtual,
       workers: workers,
       agendaId: agendaId,
     );
+    if (militaryRebuildCrisis && _isMilitaryInputRecipe(recipe)) {
+      score += 40;
+    }
     candidates.add(ScoredRecipe(recipe: recipe, score: score));
   }
 
@@ -200,4 +213,17 @@ List<AssignedRecipe> _allocateLabour({
     'labourByRecipe=$labourByRecipe assignmentsCount=${result.length}',
   );
   return result;
+}
+
+bool _isMilitaryInputRecipe(ProductionRecipe recipe) {
+  const militaryOutputIds = {
+    'castIron',
+    'steel',
+    'bronze',
+    'lumber',
+    'fabric',
+    'iron',
+    'timber',
+  };
+  return militaryOutputIds.contains(recipe.outputCommodityId);
 }

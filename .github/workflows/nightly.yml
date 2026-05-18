@@ -45,13 +45,9 @@ jobs:
 
       - name: Run observer game with conquest and colonial verification
         run: |
-          set -e
-          out="${RUNNER_TEMP}/observer-conquest"
-          mkdir -p "$out"
-          cd tool/run_observer_game
-          dart run run_observer_game \
-            --output "$out" \
+          dart run tool/run_observer_game/bin/run_observer_game.dart \
             --seed 42 \
             --max-turns 150 \
             --verify-conquest \
-            --verify-colonial-expansion
+            --verify-colonial-expansion \
+            --output /tmp/observer_nightly

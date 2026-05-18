@@ -17,8 +17,9 @@ enum StrategicGoal { defend, expand, conquer, trade, tech, diplomacy }
 /// random selection. Used by both the planner and trace export.
 Map<StrategicGoal, int> evaluateStrategicGoalScores(
   AIWorldSnapshot snapshot,
-  AIConfig config,
-) {
+  AIConfig config, {
+  bool suppressColonialPressure = false,
+}) {
   final weights = getGoalWeightsForLeader(config.personalityId);
   final thresholds = getThresholdsForLeader(config.personalityId);
 
@@ -72,7 +73,20 @@ Map<StrategicGoal, int> evaluateStrategicGoalScores(
   if (isEarlyColonialExpansion(snapshot.colonial)) {
     conquer += kColonialConquerBonusWhenFewNwProvinces;
   }
-  if (hasColonialAcquisitionTargets(snapshot.colonial)) {
+  if (isStalledOldWorldExpansion(snapshot.conquest.oldWorldProvincesOwned)) {
+    diplomacy -= kStalledDiplomacyGoalPenalty;
+    trade -= kStalledTradeGoalPenalty;
+    conquer += kStalledConquerGoalBonus;
+    if (snapshot.conquest.invadableProvinceIdsSorted.isNotEmpty) {
+      conquer += kDeclareWarStalledExpansionMinorBonus;
+      conquer = math.max(conquer, 120);
+      diplomacy = math.min(diplomacy, 35);
+      trade = math.min(trade, 35);
+      tech = math.min(tech, 45);
+    }
+  }
+  if (!suppressColonialPressure &&
+      hasColonialAcquisitionTargets(snapshot.colonial)) {
     diplomacy -= kColonialDiplomacyGoalPenaltyWhenPressure;
     trade -= kColonialTradeGoalPenaltyWhenPressure;
     if (expand < kMinimumColonialExpandScoreWhenPressure) {
@@ -156,8 +170,13 @@ StrategicGoal selectPrimaryGoal(
   int goalSeed, {
   required String nationId,
   required int turn,
+  bool suppressColonialPressure = false,
 }) {
-  final candidates = evaluateStrategicGoalScores(snapshot, config);
+  final candidates = evaluateStrategicGoalScores(
+    snapshot,
+    config,
+    suppressColonialPressure: suppressColonialPressure,
+  );
 
   _log.d(
     'eval leaderId=${config.leaderId} hiddenAgendaId=${config.hiddenAgendaId} goalSeed=$goalSeed '
