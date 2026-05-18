@@ -832,6 +832,93 @@ void main() {
     );
 
     test(
+      'below observer quota skips sated minor declare-war penalty at 9 OW provinces',
+      () {
+        const snapBelowQuota = AIWorldSnapshot(
+          playerId: 'gp5',
+          threats: ThreatSummary(),
+          opportunities: OpportunitySummary(),
+          conquest: ConquestSummary(
+            oldWorldProvincesOwned: 9,
+            provincesToVictory: 22,
+            invadableProvinceIdsSorted: ['oldWorld|minor1'],
+            adjacentOwnerFactionIdsSorted: ['minor1'],
+          ),
+          colonial: ColonialSummary(),
+          economy: EconomySummary(),
+          relations: {},
+        );
+        const snapAtQuota = AIWorldSnapshot(
+          playerId: 'gp5',
+          threats: ThreatSummary(),
+          opportunities: OpportunitySummary(),
+          conquest: ConquestSummary(
+            oldWorldProvincesOwned: 10,
+            provincesToVictory: 21,
+            invadableProvinceIdsSorted: ['oldWorld|minor1'],
+            adjacentOwnerFactionIdsSorted: ['minor1'],
+          ),
+          colonial: ColonialSummary(),
+          economy: EconomySummary(),
+          relations: {},
+        );
+        final game = Game(
+          id: 'g-below-quota-sated',
+          worldState: WorldState(
+            turnState: const TurnState(
+              phase: TurnPhase.orders,
+              turnNumber: 40,
+            ),
+            oldWorld: const RegionData(
+              provinces: [
+                Province(
+                  id: 'oldWorld|minor1',
+                  regionId: 'oldWorld',
+                  ownerId: 'minor1',
+                ),
+              ],
+            ),
+            newWorld: const RegionData(),
+          ),
+          players: const [
+            Player(id: 'gp5', displayName: 'P', isHuman: false),
+          ],
+          minorNations: const [
+            MinorNation(id: 'minor1', displayName: 'M1'),
+          ],
+        );
+        const config = AIConfig(
+          leaderId: 'henry',
+          personalityId: 'henry',
+          hiddenAgendaId: 'merchant',
+        );
+        const order = DiplomaticOrder(
+          type: DiplomaticOrderType.declareWar,
+          targetFactionId: 'minor1',
+        );
+        final belowQuota = computeDiplomaticCandidateScores(
+          candidates: const [order],
+          nationId: 'gp5',
+          game: game,
+          snapshot: snapBelowQuota,
+          config: config,
+        ).single;
+        final atQuota = computeDiplomaticCandidateScores(
+          candidates: const [order],
+          nationId: 'gp5',
+          game: game,
+          snapshot: snapAtQuota,
+          config: config,
+        ).single;
+        expect(belowQuota, greaterThan(atQuota));
+        expect(
+          belowQuota - atQuota,
+          greaterThanOrEqualTo(kDeclareWarSatedExpansionMinorPenalty),
+        );
+      },
+    );
+
+    test(
       'stalled GP at war suppresses declareWar on a second Great Power',
       () {
         const snap = AIWorldSnapshot(

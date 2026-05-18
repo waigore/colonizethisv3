@@ -766,6 +766,9 @@ int _declareWarAdjacencyAndStalledBonuses(
     }
     if (ctx.isMinorTarget &&
         !ctx.stalledOwExpansion &&
+        !isBelowObserverConquestQuota(
+          ctx.snapshot.conquest.oldWorldProvincesOwned,
+        ) &&
         ctx.snapshot.conquest.oldWorldProvincesOwned >=
             kDeclareWarSatedExpansionMinorThreshold) {
       s -= kDeclareWarSatedExpansionMinorPenalty;
