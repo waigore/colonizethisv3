@@ -6,6 +6,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:logger/logger.dart';
 
 import 'domain_planner_test_fake_api.dart';
+import 'planner_test_helpers.dart';
 
 void main() {
   group('runDomainPlanners civilian work logging — empty workCandidates', () {
@@ -62,14 +63,6 @@ void main() {
           ],
         );
         const topology = MapTopology(nodes: [], edges: []);
-        final view = buildPlayerView(game, topology, nationId);
-        final snapshot = AIWorldSnapshot.fromPlayerView(view);
-        const config = AIConfig(
-          leaderId: 'victoria',
-          personalityId: 'victoria',
-          hiddenAgendaId: 'peacemaker',
-        );
-        final seeds = AISeedBundle.fromTurnSeed(20825);
         const fakeApi = FakeOrderSuggestionAPIForDomainPlannerTests(
           work: const [],
           build: const [],
@@ -78,27 +71,18 @@ void main() {
           navalMove: const [],
           navalMission: const [],
         );
-        const economyPlan = EconomyPlan(
-          productionAssignments: [],
-          cargoPreference: CargoPreference.none,
-        );
 
         final captured = <LogEvent>[];
         void listener(LogEvent e) => captured.add(e);
         Logger.addLogListener(listener);
         Logger.level = Level.info;
         try {
-          runDomainPlanners(
+          runDomainPlannersInTest(
             game: game,
             topology: topology,
             nationId: nationId,
-            view: view,
-            snapshot: snapshot,
-            config: config,
-            primaryGoal: StrategicGoal.expand,
-            seeds: seeds,
+            turnSeed: 20825,
             suggestionAPI: fakeApi,
-            economyPlan: economyPlan,
           );
         } finally {
           Logger.removeLogListener(listener);

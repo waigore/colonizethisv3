@@ -1,9 +1,10 @@
 import 'package:colonizethis_ai/src/planning/goal_manager.dart';
 import 'package:colonizethis_ai/src/planning/planner_context.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
+
+import 'planner_test_helpers.dart';
 
 void main() {
   group('PlannerContext weight resolution (Refs #2521)', () {
@@ -32,16 +33,11 @@ void main() {
         ],
       );
       const topology = MapTopology(nodes: [], edges: []);
-      ctx = PlannerContext(
-        nationId: 'gp1',
-        view: buildPlayerView(game, topology, 'gp1'),
+      ctx = buildTestPlannerContext(
         game: game,
         topology: topology,
-        orders: const Orders(),
         config: config,
         primaryGoal: StrategicGoal.conquer,
-        seeds: AISeedBundle.fromTurnSeed(1),
-        suggestionAPI: const DefaultOrderSuggestionAPI(),
       );
     });
 
