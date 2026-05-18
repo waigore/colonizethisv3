@@ -383,11 +383,8 @@ String? criticalWeakUninvadedMinorDeclareTarget({
   required Game game,
   required AIWorldSnapshot snapshot,
 }) {
-  if (!isObserverConquestExpansionPressure(
-        snapshot.conquest.oldWorldProvincesOwned,
-      ) &&
-      snapshot.conquest.oldWorldProvincesOwned >
-          kFewOldWorldProvincesDefendThreshold) {
+  if (snapshot.conquest.oldWorldProvincesOwned >
+      kFewOldWorldProvincesDefendThreshold) {
     return null;
   }
   if (snapshot.threats.atWarWith.any((id) => game.playerById(id) != null)) {
@@ -456,9 +453,7 @@ List<String> multiFrontNonBlockerGpPeaceTargets({
   if (gpWars.length <= 1) {
     return const [];
   }
-  if (!isObserverConquestExpansionPressure(
-        snapshot.conquest.oldWorldProvincesOwned,
-      ) &&
+  if (!isStalledOldWorldExpansion(snapshot.conquest.oldWorldProvincesOwned) &&
       snapshot.conquest.invadableProvinceIdsSorted.isEmpty) {
     return const [];
   }
