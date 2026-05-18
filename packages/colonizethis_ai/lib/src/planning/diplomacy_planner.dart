@@ -112,6 +112,11 @@ List<String> stalledGpBlockerFocusPeaceTargets({
     return const [];
   }
   if (minorsOwnInvadable && gpWars.length <= 1) {
+    // Sole GP war on a mixed frontier must still drop non-blocker fronts
+    // (seed-42 gp4/gp5 vs gp3 blocker; Refs #2509).
+    if (gpWars.length == 1 && gpWars.single != blocker) {
+      return [gpWars.single];
+    }
     return const [];
   }
   if (minorsOwnInvadable) {
@@ -441,7 +446,8 @@ bool stalledOwExpansionNeedsPeacePass({
         null ||
     consolidateGainsSoleGpPeaceTarget(game: game, snapshot: snapshot) != null;
 
-/// When fighting 2+ Great Powers, peace every non-blocker GP (Refs #2509).
+/// When fighting 2+ Great Powers, peace every non-blocker GP. Also peace a sole
+/// non-blocker GP war while invadable OW remains (Refs #2509).
 List<String> multiFrontNonBlockerGpPeaceTargets({
   required Game game,
   required AIWorldSnapshot snapshot,
@@ -450,7 +456,7 @@ List<String> multiFrontNonBlockerGpPeaceTargets({
     for (final factionId in snapshot.threats.atWarWith)
       if (game.playerById(factionId) != null) factionId,
   ];
-  if (gpWars.length <= 1) {
+  if (gpWars.isEmpty) {
     return const [];
   }
   if (!isStalledOldWorldExpansion(snapshot.conquest.oldWorldProvincesOwned) &&
@@ -472,6 +478,12 @@ List<String> multiFrontNonBlockerGpPeaceTargets({
     }
   }
   if (blocker == null) {
+    return const [];
+  }
+  if (gpWars.length == 1 && gpWars.single != blocker) {
+    return gpWars;
+  }
+  if (gpWars.length <= 1) {
     return const [];
   }
   final targets = <String>[

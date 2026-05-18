@@ -42,11 +42,12 @@ void main() {
       game = (result as TurnResolutionComplete).game;
     }
 
+    // Run through turn 49 resolution: multi-front GP wars consolidate in the
+    // same diplomacy phase (declare blocker, peace non-blocker). An extra turn
+    // can re-open fronts via alliance call-to-arms (seed-42 gp4/gp5).
     for (var t = 0; t < 50; t++) {
       resolveTurn();
     }
-    // Turn-50 diplomacy must consolidate multi-front GP wars raised on turn 49.
-    resolveTurn();
     final view = buildPlayerView(game, topo, 'gp4');
     final snap = AIWorldSnapshot.fromPlayerView(view, topology: topo);
     final gpWars = snap.threats.atWarWith

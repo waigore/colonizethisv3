@@ -295,5 +295,66 @@ void main() {
         expect(getRelation(after, 'gp2', 'gp4')!.atWar, isTrue);
       },
     );
+
+    test(
+      'sole GP war offerPeace ends front without reciprocal offer',
+      () {
+        final game = Game(
+          id: 'g-sole-gp-peace',
+          worldState: WorldState(
+            turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 50),
+            oldWorld: RegionData(
+              provinces: [
+                for (var i = 1; i <= 11; i++)
+                  Province(
+                    id: 'oldWorld|gp4_$i',
+                    regionId: 'oldWorld',
+                    ownerId: 'gp4',
+                  ),
+                for (var i = 1; i <= 12; i++)
+                  Province(
+                    id: 'oldWorld|gp3_$i',
+                    regionId: 'oldWorld',
+                    ownerId: 'gp3',
+                  ),
+                for (var i = 1; i <= 10; i++)
+                  Province(
+                    id: 'oldWorld|gp5_$i',
+                    regionId: 'oldWorld',
+                    ownerId: 'gp5',
+                  ),
+              ],
+            ),
+            newWorld: const RegionData(),
+          ),
+          players: const [
+            Player(id: 'gp4', displayName: 'Sole', isHuman: false),
+            Player(id: 'gp3', displayName: 'Blocker', isHuman: false),
+            Player(id: 'gp5', displayName: 'Front', isHuman: false),
+          ],
+          diplomacyRelations: [
+            DiplomacyRelation(
+              factionId1: 'gp4',
+              factionId2: 'gp5',
+              score: 40,
+              level: RelationLevel.neutral,
+              state: RelationState.atWar,
+            ),
+          ],
+        );
+        final orders = Orders(
+          diplomaticOrdersByPlayerId: {
+            'gp4': const [
+              DiplomaticOrder(
+                type: DiplomaticOrderType.offerPeace,
+                targetFactionId: 'gp5',
+              ),
+            ],
+          },
+        );
+        final after = resolveDiplomacyPhase(game, orders).game;
+        expect(getRelation(after, 'gp4', 'gp5')!.atPeace, isTrue);
+      },
+    );
   });
 }

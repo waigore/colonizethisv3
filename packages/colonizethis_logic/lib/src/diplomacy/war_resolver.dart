@@ -246,9 +246,15 @@ Map<String, Set<String>> _peaceOfferPairKeysForGreatPowers(
       offerers.any(
         (id) => _atWarGreatPowerCount(game, id, factionMembership) >= 2,
       );
+  final soleGpWarConsolidationPeace = bothGreatPowers &&
+      offerers.length == 1 &&
+      offerers.any(
+        (id) => _atWarGreatPowerCount(game, id, factionMembership) == 1,
+      );
   final oneSidedGpPeace = collapsedSurvivalPeace ||
       belowQuotaOutmatchedGpPeace ||
-      multiFrontConsolidationPeace;
+      multiFrontConsolidationPeace ||
+      soleGpWarConsolidationPeace;
   final hasMutualOffer =
       !bothGreatPowers || offerers.length >= 2 || oneSidedGpPeace;
   if (rel == null || !rel.atWar) {
