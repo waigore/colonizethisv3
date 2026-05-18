@@ -2,6 +2,7 @@
 
 import 'package:colonizethis_logic/order_suggestion_api.dart';
 
+import 'diplomacy_planner.dart';
 import 'planning_imports.dart';
 import 'strategic_ai.dart';
 
@@ -212,7 +213,9 @@ FullAIResult generateOrdersForGameFullAI(
     'elapsedMs=${totalStopwatch.elapsedMilliseconds}',
   );
 
-  return FullAIResult(
+  final mergedOrders = supplementMutualStalledGreatPowerPeaceOrders(
+    game: game,
+    topology: topology,
     orders: Orders(
       moveOrdersByPlayerId: moveByPlayer,
       armyMoveOrdersByPlayerId: armyMoveByPlayer,
@@ -223,6 +226,10 @@ FullAIResult generateOrdersForGameFullAI(
       navalMoveOrdersByPlayerId: navalByPlayer,
       navalMissionOrdersByPlayerId: missionByPlayer,
     ),
+  );
+
+  return FullAIResult(
+    orders: mergedOrders,
     economyPlansByPlayerId: economyPlansByPlayerId,
     game: planningGame,
     aiTraceSections: List<TurnTraceAiSection>.unmodifiable(aiTraceSections),

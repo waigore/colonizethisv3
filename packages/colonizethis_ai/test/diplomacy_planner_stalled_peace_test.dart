@@ -147,7 +147,7 @@ void main() {
 
       expect(
         stalledStrongerGpBlockerPeaceTarget(game: game, snapshot: snapshot),
-        'gp3',
+        isNull,
       );
     },
   );
@@ -214,4 +214,68 @@ void main() {
       );
     },
   );
+
+  test('stalledFutileGpPeaceTargets includes non-invadable GP while at war', () {
+    final game = Game(
+      id: 'g-futile-gp',
+      worldState: WorldState(
+        turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 50),
+        oldWorld: RegionData(
+          provinces: [
+            for (var i = 1; i <= 7; i++)
+              Province(
+                id: 'oldWorld|gp4_$i',
+                regionId: 'oldWorld',
+                ownerId: 'gp4',
+              ),
+            const Province(
+              id: 'oldWorld|inv1',
+              regionId: 'oldWorld',
+              ownerId: 'minor1',
+            ),
+            for (var i = 1; i <= 7; i++)
+              Province(
+                id: 'oldWorld|gp2_$i',
+                regionId: 'oldWorld',
+                ownerId: 'gp2',
+              ),
+          ],
+        ),
+        newWorld: const RegionData(),
+      ),
+      players: const [
+        Player(id: 'gp4', displayName: 'P4', isHuman: false),
+        Player(id: 'gp2', displayName: 'P2', isHuman: false),
+      ],
+      minorNations: const [MinorNation(id: 'minor1', displayName: 'M1')],
+      diplomacyRelations: [
+        const DiplomacyRelation(
+          factionId1: 'gp4',
+          factionId2: 'gp2',
+          state: RelationState.atWar,
+          score: 30,
+        ),
+      ],
+    );
+    const snapshot = AIWorldSnapshot(
+      playerId: 'gp4',
+      threats: ThreatSummary(atWarWith: ['gp2']),
+      opportunities: OpportunitySummary(),
+      conquest: ConquestSummary(
+        oldWorldProvincesOwned: 7,
+        invadableProvinceIdsSorted: ['oldWorld|inv1'],
+      ),
+      economy: EconomySummary(),
+      relations: {},
+    );
+
+    expect(
+      stalledFutileGpPeaceTargets(game: game, snapshot: snapshot),
+      ['gp2'],
+    );
+    expect(
+      collectStalledGreatPowerPeaceTargets(game: game, snapshot: snapshot),
+      contains('gp2'),
+    );
+  });
 }
