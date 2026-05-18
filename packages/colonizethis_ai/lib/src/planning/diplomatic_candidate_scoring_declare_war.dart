@@ -369,7 +369,8 @@ int? _declareWarSuppressedAdjacentGpScore(
       }
       if (attackerOw >= kObserverDefaultStartOldWorldProvincesPerGp &&
           isBelowObserverConquestQuota(targetOw) &&
-          targetOw <= kObserverDefaultStartOldWorldProvincesPerGp + 1) {
+          targetOw <= kObserverDefaultStartOldWorldProvincesPerGp + 1 &&
+          !ctx.invadableGpBlocker) {
         return 0;
       }
       if (isBelowObserverConquestQuota(attackerOw) &&
