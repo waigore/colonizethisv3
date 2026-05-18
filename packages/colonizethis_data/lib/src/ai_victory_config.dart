@@ -190,10 +190,6 @@ bool isObserverConquestExpansionPressure(int oldWorldProvincesOwned) =>
     isStalledOldWorldExpansion(oldWorldProvincesOwned) ||
     isBelowObserverConquestQuota(oldWorldProvincesOwned);
 
-/// Offer-peace toward the sole GP enemy when this GP is below the observer quota
-/// and that enemy leads by at least this many OW provinces (Refs #2509).
-const int kUnwinnableSoleGpWarProvinceLead = 2;
-
 /// Offer-peace toward the sole GP enemy when this GP meets the observer quota and
 /// leads that enemy by at least this many OW provinces (lock gains; Refs #2509).
 const int kConsolidateGainsSoleGpProvinceLead = 3;
