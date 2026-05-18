@@ -130,6 +130,54 @@ String? unwinnableSoleGpFrontierPeaceTarget({
   return enemy;
 }
 
+String? _gpWarPartnerAgainstTarget(
+  DiplomacyRelation rel,
+  String targetGpId,
+  Game game,
+) {
+  if (rel.state != RelationState.atWar) {
+    return null;
+  }
+  if (rel.factionId1 == targetGpId && game.playerById(rel.factionId2) != null) {
+    return rel.factionId2;
+  }
+  if (rel.factionId2 == targetGpId && game.playerById(rel.factionId1) != null) {
+    return rel.factionId1;
+  }
+  return null;
+}
+
+bool _hasDeclareWarOnTarget(
+  Iterable<DiplomaticOrder> orders,
+  String targetGpId,
+) {
+  for (final order in orders) {
+    if (order.type == DiplomaticOrderType.declareWar &&
+        order.targetFactionId == targetGpId) {
+      return true;
+    }
+  }
+  return false;
+}
+
+void _addSameTurnDeclareWarGpTargets({
+  required Game game,
+  required String targetGpId,
+  required Orders orders,
+  required Set<String> atWarGpIds,
+}) {
+  for (final entry in orders.diplomaticOrdersByPlayerId.entries) {
+    final declarerId = entry.key;
+    if (game.playerById(declarerId) == null) {
+      continue;
+    }
+    if (!_hasDeclareWarOnTarget(entry.value, targetGpId)) {
+      continue;
+    }
+    atWarGpIds.add(declarerId);
+  }
+}
+
 /// Great Power wars already targeting [targetGpId] (resolved relations plus
 /// same-turn declare-war orders from earlier Full AI players).
 int greatPowerWarCountOnTarget({
@@ -137,28 +185,20 @@ int greatPowerWarCountOnTarget({
   required String targetGpId,
   Orders? sameTurnPriorDiplomaticOrders,
 }) {
-  final atWarGpIds = <String>{
-    for (final rel in game.diplomacyRelations)
-      if (rel.state == RelationState.atWar)
-        if (rel.factionId1 == targetGpId &&
-            game.playerById(rel.factionId2) != null)
-          rel.factionId2
-        else if (rel.factionId2 == targetGpId &&
-            game.playerById(rel.factionId1) != null)
-          rel.factionId1,
-  };
-  if (sameTurnPriorDiplomaticOrders != null) {
-    for (final entry
-        in sameTurnPriorDiplomaticOrders.diplomaticOrdersByPlayerId.entries) {
-      final declarerId = entry.key;
-      if (game.playerById(declarerId) == null) continue;
-      for (final order in entry.value) {
-        if (order.type == DiplomaticOrderType.declareWar &&
-            order.targetFactionId == targetGpId) {
-          atWarGpIds.add(declarerId);
-        }
-      }
+  final atWarGpIds = <String>{};
+  for (final rel in game.diplomacyRelations) {
+    final partner = _gpWarPartnerAgainstTarget(rel, targetGpId, game);
+    if (partner != null) {
+      atWarGpIds.add(partner);
     }
+  }
+  if (sameTurnPriorDiplomaticOrders != null) {
+    _addSameTurnDeclareWarGpTargets(
+      game: game,
+      targetGpId: targetGpId,
+      orders: sameTurnPriorDiplomaticOrders,
+      atWarGpIds: atWarGpIds,
+    );
   }
   return atWarGpIds.length;
 }
