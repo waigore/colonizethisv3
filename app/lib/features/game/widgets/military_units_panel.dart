@@ -26,6 +26,7 @@ class MilitaryUnitsPanel extends StatefulWidget {
     required this.bus,
     required this.topology,
     required this.draftOrders,
+    this.readOnly = false,
   });
 
   final Game game;
@@ -33,6 +34,7 @@ class MilitaryUnitsPanel extends StatefulWidget {
   final AppEventBus bus;
   final MapTopology topology;
   final Orders draftOrders;
+  final bool readOnly;
 
   @override
   State<MilitaryUnitsPanel> createState() => _MilitaryUnitsPanelState();
@@ -126,8 +128,10 @@ class _MilitaryUnitsPanelState extends State<MilitaryUnitsPanel> {
     final groups = buildMilitaryGroups(widget.game, widget.humanPlayerId);
     final flat = flattenMilitaryArmyBlocks(groups);
     final hasAny = groups.isNotEmpty;
-    final canCombine = canCombineArmySelection(flat, _selectedArmyIds);
+    final canCombine = !widget.readOnly &&
+        canCombineArmySelection(flat, _selectedArmyIds);
     final headerCheckbox = _headerSelectAllValue(flat);
+    final readOnly = widget.readOnly;
 
     return UnitsPanelShell(
       title: l10n.military_units_title,
@@ -137,6 +141,7 @@ class _MilitaryUnitsPanelState extends State<MilitaryUnitsPanel> {
         flat: flat,
         canCombine: canCombine,
         headerCheckbox: headerCheckbox,
+        readOnly: readOnly,
       ),
       hasContent: hasAny,
       listChildren: _buildListChildren(groups, l10n),
@@ -150,9 +155,10 @@ class _MilitaryUnitsPanelState extends State<MilitaryUnitsPanel> {
     required List<ArmyBlock> flat,
     required bool canCombine,
     required bool? headerCheckbox,
+    required bool readOnly,
   }) {
     return [
-      if (hasAny && flat.isNotEmpty) ...[
+      if (hasAny && flat.isNotEmpty && !readOnly) ...[
         Tooltip(
           message: headerCheckbox == true
               ? l10n.military_units_deselectAllArmies
@@ -175,7 +181,8 @@ class _MilitaryUnitsPanelState extends State<MilitaryUnitsPanel> {
         ),
       ],
       CtNinePatchButton(
-        onPressed: _openTrainDialog,
+        onPressed: readOnly ? null : _openTrainDialog,
+        enabled: !readOnly,
         child: Text(l10n.common_train),
       ),
     ];
@@ -231,14 +238,17 @@ class _MilitaryUnitsPanelState extends State<MilitaryUnitsPanel> {
         draftOrders: widget.draftOrders,
       ),
       isSelectedForCombine: _selectedArmyIds.contains(block.army.id),
+      combineSelectionEnabled: !widget.readOnly,
       onCombineSelectionToggle: () => _toggleArmySelection(block.army.id),
       onLocate: _armyLocateCallback(block),
-      onSplit: block.army.regimentUnitIds.length >= 2
-          ? () => _openSplitDialog(block)
-          : null,
-      onMove: !block.army.isHomeArmy && block.army.regimentUnitIds.isNotEmpty
-          ? () => _openMoveDialog(block)
-          : null,
+      onSplit: widget.readOnly || block.army.regimentUnitIds.length < 2
+          ? null
+          : () => _openSplitDialog(block),
+      onMove: widget.readOnly ||
+              block.army.isHomeArmy ||
+              block.army.regimentUnitIds.isEmpty
+          ? null
+          : () => _openMoveDialog(block),
     );
   }
 
@@ -292,6 +302,7 @@ class _ArmyExpansionTile extends StatelessWidget {
     required this.stationedProvinceDisplayLabel,
     this.draftArmyMoveLine,
     required this.isSelectedForCombine,
+    required this.combineSelectionEnabled,
     required this.onCombineSelectionToggle,
     this.onLocate,
     this.onSplit,
@@ -303,6 +314,7 @@ class _ArmyExpansionTile extends StatelessWidget {
   final String stationedProvinceDisplayLabel;
   final String? draftArmyMoveLine;
   final bool isSelectedForCombine;
+  final bool combineSelectionEnabled;
   final VoidCallback onCombineSelectionToggle;
   final VoidCallback? onLocate;
   final VoidCallback? onSplit;
@@ -332,7 +344,9 @@ class _ArmyExpansionTile extends StatelessWidget {
         children: [
           Checkbox(
             value: isSelectedForCombine,
-            onChanged: (_) => onCombineSelectionToggle(),
+            onChanged: combineSelectionEnabled
+                ? (_) => onCombineSelectionToggle()
+                : null,
             visualDensity: VisualDensity.compact,
             materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
           ),

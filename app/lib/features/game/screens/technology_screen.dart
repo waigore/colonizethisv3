@@ -6,6 +6,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../providers/games_provider.dart';
 import '../../../widgets/ct_game_feature_screen_shell.dart';
+import '../shell_player_context.dart';
+import '../widgets/observe_mode_not_defined_panel.dart';
 import '../widgets/tech_tree_widget.dart';
 import '../widgets/technology_panel.dart';
 
@@ -24,9 +26,13 @@ class TechnologyScreen extends ConsumerWidget {
       game: game,
       title: 'Technology',
       bodyBuilder: (context, shellRef, displayGame) {
+        if (shellPanelsNotDefined(shellRef)) {
+          return const ObserveModeNotDefinedPanel(title: 'Technology');
+        }
         final displayPlayer = displayGame.players.firstWhere(
           (p) => p.id == player.id,
         );
+        final canEdit = shellRef.read(shellPlayerContextProvider).canMutateViaUi;
         return DefaultTabController(
           length: 2,
           child: Column(
@@ -46,11 +52,13 @@ class TechnologyScreen extends ConsumerWidget {
                       game: displayGame,
                       player: displayPlayer,
                       currentOrders: currentOrders,
-                      onOrdersChanged: (next) {
-                        shellRef
-                            .read(currentOrdersProvider.notifier)
-                            .replaceAll(next);
-                      },
+                      onOrdersChanged: canEdit
+                          ? (next) {
+                              shellRef
+                                  .read(currentOrdersProvider.notifier)
+                                  .replaceAll(next);
+                            }
+                          : null,
                     ),
                     _TreeTab(game: displayGame, player: displayPlayer),
                   ],

@@ -11,6 +11,8 @@ import '../../../config/ct_e2e_last_panel_snapshot.dart';
 import '../../../providers/game_service_provider.dart';
 import '../../../providers/games_provider.dart';
 import '../../../providers/production_allocation_provider.dart';
+import '../shell_player_context.dart';
+import '../widgets/observe_mode_not_defined_panel.dart';
 import '../../../widgets/ct_game_feature_screen_shell.dart';
 import '../widgets/production_commodity_breakdown_dialog.dart';
 import '../widgets/production_panel.dart';
@@ -46,6 +48,9 @@ class ProductionScreen extends ConsumerWidget {
       title: 'Production',
       attachGameToUiListener: attachGameToUiListener,
       bodyBuilder: (context, shellRef, displayGame) {
+        if (shellPanelsNotDefined(shellRef)) {
+          return const ObserveModeNotDefinedPanel(title: 'Production');
+        }
         final desiredOutputByRecipe = shellRef.watch(
           productionDesiredOutputProvider,
         );
@@ -87,29 +92,36 @@ class ProductionScreen extends ConsumerWidget {
                 ),
               },
             );
+        final canEdit = shellRef.read(shellPlayerContextProvider).canMutateViaUi;
         final productionPanel = ProductionPanel(
           game: displayGame,
           player: displayPlayer,
           desiredOutputByRecipe: desiredOutputByRecipe,
           netDeltasByCommodity: netDeltasByCommodity,
-          onOpenCommodityBreakdown: () {
-            showDialog<void>(
-              context: context,
-              builder: (_) => ProductionCommodityBreakdownDialog(
-                game: displayGame,
-                player: displayPlayer,
-                topology: panelTopology,
-                tileMapByRegion: panelTileMaps,
-                currentOrders: currentOrders,
-              ),
-            );
-          },
+          onOpenCommodityBreakdown: canEdit
+              ? () {
+                  showDialog<void>(
+                    context: context,
+                    builder: (_) => ProductionCommodityBreakdownDialog(
+                      game: displayGame,
+                      player: displayPlayer,
+                      topology: panelTopology,
+                      tileMapByRegion: panelTileMaps,
+                      currentOrders: currentOrders,
+                    ),
+                  );
+                }
+              : null,
           onDesiredOutputChanged: (next) {
+            if (!canEdit) return;
             shellRef
                 .read(productionDesiredOutputProvider.notifier)
                 .replaceAll(next);
           },
         );
+        final panel = canEdit
+            ? productionPanel
+            : IgnorePointer(child: productionPanel);
         if (kCtE2EEnabled) {
           updateCtE2eProductionPanelSnapshotIfEnabled(
             CtE2eProductionPanelSnapshot(
@@ -123,10 +135,10 @@ class ProductionScreen extends ConsumerWidget {
           );
           return KeyedSubtree(
             key: kCtE2EProductionPanelRootKey,
-            child: productionPanel,
+            child: panel,
           );
         }
-        return productionPanel;
+        return panel;
       },
     );
   }

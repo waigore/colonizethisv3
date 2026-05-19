@@ -75,7 +75,10 @@ extension _DialogBuilders on _AppEventHandlerScopeState {
     }
     return TrainCiviliansDialog(
       game: game,
-      humanPlayerId: _AppEventHandlerScopeState._humanPlayerId(game),
+      humanPlayerId: resolveShellPanelPlayerId(
+        container.read(shellPlayerContextProvider),
+        game,
+      ),
       currentOrders: container.read(currentOrdersProvider),
       bus: container.read(appEventBusProvider),
     );
@@ -89,7 +92,10 @@ extension _DialogBuilders on _AppEventHandlerScopeState {
     }
     return TrainMilitaryDialog(
       game: game,
-      humanPlayerId: _AppEventHandlerScopeState._humanPlayerId(game),
+      humanPlayerId: resolveShellPanelPlayerId(
+        container.read(shellPlayerContextProvider),
+        game,
+      ),
       currentOrders: container.read(currentOrdersProvider),
       bus: container.read(appEventBusProvider),
     );
@@ -106,7 +112,10 @@ extension _DialogBuilders on _AppEventHandlerScopeState {
     }
     return GrantOrSubsidyDialog(
       game: game,
-      humanPlayerId: _AppEventHandlerScopeState._humanPlayerId(game),
+      humanPlayerId: resolveShellPanelPlayerId(
+        container.read(shellPlayerContextProvider),
+        game,
+      ),
       targetFactionId: params?['targetFactionId'] as String? ?? '',
       isSubsidy: params?['isSubsidy'] == true,
       bus: container.read(appEventBusProvider),

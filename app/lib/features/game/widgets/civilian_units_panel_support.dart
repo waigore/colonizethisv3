@@ -179,6 +179,7 @@ class _UnitRow extends ConsumerWidget {
     required this.prospectShortcutTargetTileKey,
     required this.exploreShortcutTargetTileKey,
     required this.buildImprovementShortcutTargetTileKey,
+    this.readOnly = false,
   });
 
   final Game game;
@@ -194,6 +195,7 @@ class _UnitRow extends ConsumerWidget {
   final String? prospectShortcutTargetTileKey;
   final String? exploreShortcutTargetTileKey;
   final String? buildImprovementShortcutTargetTileKey;
+  final bool readOnly;
 
   List<WorkOrder> get _pendingForPlayer =>
       currentOrders.workOrdersByPlayerId[humanPlayerId] ?? const [];
@@ -440,7 +442,7 @@ class _UnitRow extends ConsumerWidget {
     required bool inExplorerShortcutMode,
     required List<String> availableWorkTargetIds,
   }) {
-    if (!showActions) {
+    if (!showActions || readOnly) {
       return const <UnitsEntityAction>[];
     }
     return [

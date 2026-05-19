@@ -38,6 +38,7 @@ class CivilianUnitsPanel extends ConsumerStatefulWidget {
     this.prospectShortcutTargetTileKey,
     this.exploreShortcutTargetTileKey,
     this.buildImprovementShortcutTargetTileKey,
+    this.readOnly = false,
   });
 
   final Game game;
@@ -67,6 +68,9 @@ class CivilianUnitsPanel extends ConsumerStatefulWidget {
 
   /// Optional selected tile key for immediate builder build-improvement assign flow.
   final String? buildImprovementShortcutTargetTileKey;
+
+  /// When true, work assign/cancel and train are disabled (observe mode).
+  final bool readOnly;
 
   @override
   ConsumerState<CivilianUnitsPanel> createState() => _CivilianUnitsPanelState();
@@ -201,12 +205,15 @@ class _CivilianUnitsPanelState extends ConsumerState<CivilianUnitsPanel> {
             child: Text(l10n.civilian_units_tile),
           ),
         CtNinePatchButton(
-          onPressed: () {
-            widget.bus.emit(const ClosePanelEvent());
-            WidgetsBinding.instance.addPostFrameCallback((_) {
-              widget.bus.emit(OpenDialogEvent(trainCiviliansDialogId));
-            });
-          },
+          onPressed: widget.readOnly
+              ? null
+              : () {
+                  widget.bus.emit(const ClosePanelEvent());
+                  WidgetsBinding.instance.addPostFrameCallback((_) {
+                    widget.bus.emit(OpenDialogEvent(trainCiviliansDialogId));
+                  });
+                },
+          enabled: !widget.readOnly,
           child: Text(l10n.common_train),
         ),
       ],
@@ -222,6 +229,7 @@ class _CivilianUnitsPanelState extends ConsumerState<CivilianUnitsPanel> {
               currentOrders: widget.currentOrders,
               humanPlayerId: widget.humanPlayerId,
               bus: widget.bus,
+              readOnly: widget.readOnly,
               isTileScope: tileScopeActive,
               isSelectedInTileScope: resolvedSelectedUnitId == u.id,
               onSelectInTileScope: () => setState(() => _selectedUnitId = u.id),
@@ -248,6 +256,7 @@ class _CivilianUnitsPanelState extends ConsumerState<CivilianUnitsPanel> {
               currentOrders: widget.currentOrders,
               humanPlayerId: widget.humanPlayerId,
               bus: widget.bus,
+              readOnly: widget.readOnly,
               isTileScope: tileScopeActive,
               isSelectedInTileScope: resolvedSelectedUnitId == u.id,
               onSelectInTileScope: () => setState(() => _selectedUnitId = u.id),

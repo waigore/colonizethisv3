@@ -318,5 +318,64 @@ void main() {
       expect(result.message, 'Player list is unavailable.');
       expect(result.events, isEmpty);
     });
+
+    test('observe global emits SetObserveModeGlobalEvent', () {
+      final result = executor.executeRaw(
+        rawInput: '/observe',
+        humanPlayerId: 'p1',
+      );
+      expect(result.isError, isFalse);
+      expect(result.events.single, isA<SetObserveModeGlobalEvent>());
+    });
+
+    test('observe player resolves display name', () {
+      final result = executor.executeRaw(
+        rawInput: '/observe France',
+        humanPlayerId: 'p1',
+        readOnlyContext: DebugConsoleReadOnlyContext(
+          players: [
+            const DebugConsolePlayerSnapshot(
+              id: 'gp2',
+              displayName: 'France',
+              isHuman: false,
+              capitalProvinceId: 'oldWorld|P1',
+            ),
+          ],
+        ),
+      );
+      expect(result.isError, isFalse);
+      final event = result.events.single as SetObserveModePlayerEvent;
+      expect(event.targetPlayerId, 'gp2');
+    });
+
+    test('observe player rejects eliminated gp', () {
+      final result = executor.executeRaw(
+        rawInput: '/observe gp3',
+        humanPlayerId: 'p1',
+        readOnlyContext: DebugConsoleReadOnlyContext(
+          players: [
+            const DebugConsolePlayerSnapshot(
+              id: 'gp3',
+              displayName: 'Eliminated',
+              isHuman: false,
+              capitalProvinceId: null,
+            ),
+          ],
+        ),
+      );
+      expect(result.isError, isTrue);
+      expect(result.message, contains('eliminated'));
+      expect(result.events, isEmpty);
+    });
+
+    test('observe player rejects unknown target', () {
+      final result = executor.executeRaw(
+        rawInput: '/observe missing',
+        humanPlayerId: 'p1',
+        readOnlyContext: const DebugConsoleReadOnlyContext(players: []),
+      );
+      expect(result.isError, isTrue);
+      expect(result.events, isEmpty);
+    });
   });
 }

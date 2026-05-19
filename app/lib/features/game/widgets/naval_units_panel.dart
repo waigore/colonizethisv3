@@ -34,6 +34,7 @@ class NavalUnitsPanel extends StatefulWidget {
     this.locationScopeKey,
     this.initialSelectedFleetId,
     this.tileScopeTileKey,
+    this.readOnly = false,
   });
 
   final Game game;
@@ -46,6 +47,7 @@ class NavalUnitsPanel extends StatefulWidget {
   final String? locationScopeKey;
   final String? initialSelectedFleetId;
   final String? tileScopeTileKey;
+  final bool readOnly;
 
   @override
   State<NavalUnitsPanel> createState() => _NavalUnitsPanelState();
@@ -492,8 +494,10 @@ class _NavalUnitsPanelState extends State<NavalUnitsPanel> {
     final hasAny = tree.any(
       (group) => group.homeFleet != null || group.locations.isNotEmpty,
     );
-    final canCombine = _canCombineSelection(flat);
+    final canCombine =
+        !widget.readOnly && _canCombineSelection(flat);
     final headerCheckbox = _headerSelectAllValue(flat);
+    final readOnly = widget.readOnly;
 
     final panel = UnitsPanelShell(
       title: tileScopeActive
@@ -516,7 +520,7 @@ class _NavalUnitsPanelState extends State<NavalUnitsPanel> {
           ),
         if (tileScopeActive && hasAny && flat.isNotEmpty)
           const SizedBox(width: 4),
-        if (hasAny && flat.isNotEmpty) ...[
+        if (hasAny && flat.isNotEmpty && !readOnly) ...[
           Tooltip(
             message: headerCheckbox == true
                 ? l10n.naval_units_deselectAllFleets
@@ -558,11 +562,12 @@ class _NavalUnitsPanelState extends State<NavalUnitsPanel> {
               isSelectedForCombine: _selectedFleetIds.contains(
                 _selectionFleetId(group.homeFleet!),
               ),
+              combineSelectionEnabled: !readOnly,
               onCombineSelectionToggle: () =>
                   _toggleFleetSelection(group.homeFleet!),
-              onSplitFleet: () => _openSplitDialog(group.homeFleet!),
+              onSplitFleet: readOnly ? null : () => _openSplitDialog(group.homeFleet!),
               onMoveFleet: null,
-              isSplitAllowed: true,
+              isSplitAllowed: !readOnly,
             ),
           for (final loc in group.locations) ...[
             LocationSectionHeader(
@@ -584,9 +589,12 @@ class _NavalUnitsPanelState extends State<NavalUnitsPanel> {
                 isSelectedForCombine: _selectedFleetIds.contains(
                   _selectionFleetId(row),
                 ),
+                combineSelectionEnabled: !readOnly,
                 onCombineSelectionToggle: () => _toggleFleetSelection(row),
-                onSplitFleet: () => _openSplitDialog(row),
-                onMoveFleet: () => _openMoveFleetDialog(row),
+                onSplitFleet:
+                    readOnly ? null : () => _openSplitDialog(row),
+                onMoveFleet:
+                    readOnly ? null : () => _openMoveFleetDialog(row),
                 isSplitAllowed: true,
               ),
           ],
