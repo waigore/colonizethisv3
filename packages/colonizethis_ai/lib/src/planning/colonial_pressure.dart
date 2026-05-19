@@ -27,6 +27,22 @@ bool isOldWorldGpOnlyInvadableFrontier({
   );
 }
 
+/// Any OW minor not yet at war that still holds provinces (EXPAND minor-first).
+bool hasUninvadedOldWorldMinor({
+  required Game game,
+  required AIWorldSnapshot snapshot,
+}) {
+  for (final minor in game.minorNations) {
+    if (snapshot.threats.atWarWith.contains(minor.id)) {
+      continue;
+    }
+    if (game.worldState.oldWorld.provinces.any((p) => p.ownerId == minor.id)) {
+      return true;
+    }
+  }
+  return false;
+}
+
 /// Below-quota OW expansion with a GP-only invadable frontier (seed-42 gp5/gp6).
 bool isStalledOldWorldGpBlockerFocus({
   required Game game,

@@ -78,8 +78,8 @@ void main() {
     }
     },
     skip:
-        'Partial AC #2509 S10: seed-42 turn-100 — gp3/gp4/gp5 below +3 OW gate; '
-        'gp3 at +2 OW after below-quota minor army-move bonus',
+        'Partial AC #2509 S10: seed-42 turn-100 — gp3–gp6 below +3 OW gate; '
+        'post-minor idle plateau peers skip invadable GP declare',
     timeout: const Timeout(Duration(minutes: 15)),
   );
 }

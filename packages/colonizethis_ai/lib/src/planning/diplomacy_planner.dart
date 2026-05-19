@@ -5,6 +5,7 @@ export 'colonial_pressure.dart'
     show
         consolidateGainsSoleGpPeaceTarget,
         criticalOwHoldPeaceTargets,
+        hasUninvadedOldWorldMinor,
         isOldWorldGpOnlyInvadableFrontier,
         isStalledOldWorldGpBlockerFocus,
         primaryInvadableOldWorldGpBlocker,
@@ -88,9 +89,6 @@ String? belowQuotaUninvadedMinorDeclareTarget({
   if (belowQuotaActiveMinorWarTarget(game: game, snapshot: snapshot) != null) {
     return null;
   }
-  if (isOldWorldGpOnlyInvadableFrontier(game: game, snapshot: snapshot)) {
-    return null;
-  }
   final candidates = <String>{
     for (final minor in game.minorNations)
       if (!snapshot.threats.atWarWith.contains(minor.id) &&
@@ -165,9 +163,6 @@ String? defaultStartOwMinorDeclareTarget({
       ownOw > kObserverDefaultStartOldWorldProvincesPerGp + 1) {
     return null;
   }
-  if (isOldWorldGpOnlyInvadableFrontier(game: game, snapshot: snapshot)) {
-    return null;
-  }
   final gpWars = <String>[
     for (final factionId in snapshot.threats.atWarWith)
       if (game.playerById(factionId) != null) factionId,
@@ -179,7 +174,8 @@ String? defaultStartOwMinorDeclareTarget({
       !isMutualBelowQuotaPlateauPeer(
         ownOw: ownOw,
         partnerOw: provinceCountOwnedBy(game, gpWars.single),
-      )) {
+      ) &&
+      !hasUninvadedOldWorldMinor(game: game, snapshot: snapshot)) {
     return null;
   }
   final candidates = <String>{};
@@ -797,23 +793,7 @@ DiplomacyPlannerResult runDiplomacyPlannerWithResult({
     }
   }
   if (pass == DiplomacyPlannerPass.declareWarOnly) {
-    final blockerDeclareResult = _plateauGpBlockerDeclarePlannerResultIfNeeded(
-      ctx: ctx,
-      snapshot: snapshot,
-      pass: pass,
-    );
-    if (blockerDeclareResult != null) {
-      return blockerDeclareResult;
-    }
-    final stalledGpDeclareResult =
-        _stalledInvadableGpOwnerDeclarePlannerResultIfNeeded(
-      ctx: ctx,
-      snapshot: snapshot,
-      pass: pass,
-    );
-    if (stalledGpDeclareResult != null) {
-      return stalledGpDeclareResult;
-    }
+    // EXPAND phase: minors before GP blocker / invadable-GP declare (Refs #2509).
     final defaultStartMinorResult =
         _defaultStartOwMinorDeclarePlannerResultIfNeeded(
       ctx: ctx,
@@ -847,6 +827,23 @@ DiplomacyPlannerResult runDiplomacyPlannerWithResult({
     );
     if (minorWarResult != null) {
       return minorWarResult;
+    }
+    final blockerDeclareResult = _plateauGpBlockerDeclarePlannerResultIfNeeded(
+      ctx: ctx,
+      snapshot: snapshot,
+      pass: pass,
+    );
+    if (blockerDeclareResult != null) {
+      return blockerDeclareResult;
+    }
+    final stalledGpDeclareResult =
+        _stalledInvadableGpOwnerDeclarePlannerResultIfNeeded(
+      ctx: ctx,
+      snapshot: snapshot,
+      pass: pass,
+    );
+    if (stalledGpDeclareResult != null) {
+      return stalledGpDeclareResult;
     }
   }
   final weight = _resolveDiplomacyPlannerWeight(
