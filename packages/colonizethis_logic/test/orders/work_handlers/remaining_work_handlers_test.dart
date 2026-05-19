@@ -3,6 +3,7 @@ import 'package:colonizethis_logic/src/orders/orders_application_context.dart';
 import 'package:colonizethis_logic/src/orders/work_handlers/simple_work_order_handler.dart';
 import 'package:colonizethis_logic/src/orders/work_handlers/standard_work_handler.dart';
 import 'package:colonizethis_logic/src/orders/work_handlers/work_order_handler.dart';
+import 'package:colonizethis_logic/src/orders/work_handlers/work_order_handler_registry.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
@@ -245,20 +246,42 @@ void main() {
     });
   });
 
-  group('RemainingStandardBuildTargetsWorkOrderHandler', () {
-    test('supports build_road and build_fort among others', () {
-      const h = RemainingStandardBuildTargetsWorkOrderHandler();
-      expect(h.supports(kWorkTargetBuildRoad), isTrue);
-      expect(h.supports(kWorkTargetBuildFort), isTrue);
-      expect(h.supports(kWorkTargetBuildImprovement), isFalse);
+  group('StandardBuildWorkOrderHandler', () {
+    test('each standard build handler supports only its target', () {
+      expect(standardBuildRoadWorkOrderHandler.supports(kWorkTargetBuildRoad), isTrue);
+      expect(standardBuildRoadWorkOrderHandler.supports(kWorkTargetBuildFort), isFalse);
+      expect(standardBuildFortWorkOrderHandler.supports(kWorkTargetBuildFort), isTrue);
+      expect(
+        standardBuildImprovementWorkOrderHandler.supports(
+          kWorkTargetBuildImprovement,
+        ),
+        isTrue,
+      );
+      expect(
+        standardBuildImprovementWorkOrderHandler.supports(kWorkTargetBuildRoad),
+        isFalse,
+      );
     });
   });
 
-  group('BuildImprovementWorkOrderHandler', () {
-    test('supports only build_improvement', () {
-      const h = BuildImprovementWorkOrderHandler();
-      expect(h.supports(kWorkTargetBuildImprovement), isTrue);
-      expect(h.supports(kWorkTargetBuildRoad), isFalse);
+  group('workOrderHandlersByTarget', () {
+    test('maps every standard and simple work target to a handler', () {
+      expect(
+        workOrderHandlersByTarget.keys,
+        containsAll(<String>[
+          kWorkTargetPurchaseLand,
+          kWorkTargetStealTech,
+          kWorkTargetCounterSpy,
+          kWorkTargetProspect,
+          kWorkTargetExplore,
+          kWorkTargetBuildImprovement,
+          kWorkTargetBuildRoad,
+          kWorkTargetBuildPort,
+          kWorkTargetUpgradeTown,
+          kWorkTargetBuildFort,
+          kWorkTargetBuildRail,
+        ]),
+      );
     });
   });
 

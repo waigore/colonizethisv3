@@ -4,6 +4,12 @@
 
 ---
 
+## Phase handler registry
+
+Turn resolution uses a fixed phase sequence ([turn-resolution-phases.md](turn-resolution-phases.md)). Each phase is implemented by a **`TurnPhaseHandler`** (`turn_resolver_config.dart`): `(TurnPipelineState, TurnResolverConfig, turn) → TurnPhaseStepOutcome`. The canonical map is **`TurnPhaseHandlerRegistry.defaults`** (`turn_phase_handler_registry.dart`): one handler per `TurnPhase` in `turnResolutionSequence`. Thin pipeline adapters live in `turn/phases/*.dart`; orchestration handlers (orders noop, research/diplomacy/combat/build-work/end-of-turn event emission) live in the registry module. Tests and callers may override individual phases via `TurnResolverConfig.phaseHandlerOverrides` (merged over defaults). Refs #2560.
+
+---
+
 ## Orders
 
 Phase 1. Gather and validate orders; Great Powers only submit. Merge human and AI orders; resolve cross-player effects before application. Order types, validation, and application are defined in [order-engine.md](order-engine.md) and [orders.md](orders.md). Phase-details below follow the fixed sequence in [turn-resolution-phases.md](turn-resolution-phases.md).

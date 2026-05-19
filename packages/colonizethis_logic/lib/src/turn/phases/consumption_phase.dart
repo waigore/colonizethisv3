@@ -4,6 +4,7 @@ import '../../economy/economy_consumption.dart';
 import '../../world/player_state_pipeline.dart';
 import '../../world/unit_lookup.dart';
 import '../turn_pipeline_state.dart';
+import '../turn_resolver_config.dart';
 
 /// Consumption phase; returns new pipeline state with updated feeding maps.
 TurnPipelineState runConsumptionPipelinePhase(TurnPipelineState acc) {
@@ -66,3 +67,9 @@ TurnPipelineState runConsumptionPipelinePhase(TurnPipelineState acc) {
     idleLabourByPlayerId: idleLabour,
   );
 }
+
+TurnPhaseStepOutcome consumptionTurnPhaseHandler(
+  TurnPipelineState acc,
+  TurnResolverConfig config,
+  int turn,
+) => TurnPhaseStepContinue(runConsumptionPipelinePhase(acc));

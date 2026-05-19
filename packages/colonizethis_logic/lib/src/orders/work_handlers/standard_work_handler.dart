@@ -18,6 +18,83 @@ class _StandardWorkTargetConfig {
   final int Function() totalTurnsFn;
 }
 
+typedef _StandardWorkTargetConfigBuilder =
+    _StandardWorkTargetConfig Function({
+      required String targetTileKey,
+      required Unit unit,
+      required TileMapState tileState,
+      required Province? Function(String) provinceById,
+    });
+
+_StandardWorkTargetConfig _fixedMaterialWorkTargetConfig(String target) =>
+    _StandardWorkTargetConfig(
+      allowedForUnitType: (t) => isWorkOrderTargetAllowedForUnitType(t, target),
+      costFn: () => workOrderMaterialCost(target),
+      totalTurnsFn: () => totalTurnsForWork(target),
+    );
+
+final Map<String, _StandardWorkTargetConfigBuilder>
+_standardWorkTargetConfigBuilders = {
+  kWorkTargetBuildImprovement:
+      ({
+        required targetTileKey,
+        required unit,
+        required tileState,
+        required provinceById,
+      }) => _StandardWorkTargetConfig(
+        allowedForUnitType: (t) =>
+            isWorkOrderTargetAllowedForUnitType(t, kWorkTargetBuildImprovement),
+        costFn: () => workOrderMaterialCost(
+          kWorkTargetBuildImprovement,
+          improvementLevel: tileState.improvementLevel(targetTileKey),
+        ),
+        totalTurnsFn: () => totalTurnsForWork(
+          kWorkTargetBuildImprovement,
+          improvementLevel: tileState.improvementLevel(targetTileKey),
+        ),
+      ),
+  kWorkTargetBuildFort:
+      ({
+        required targetTileKey,
+        required unit,
+        required tileState,
+        required provinceById,
+      }) {
+        final prov = provinceById(unit.locationProvinceId);
+        final fortLevel = prov?.fortLevel ?? 0;
+        return _StandardWorkTargetConfig(
+          allowedForUnitType: (t) =>
+              isWorkOrderTargetAllowedForUnitType(t, kWorkTargetBuildFort),
+          costFn: () =>
+              workOrderMaterialCost(kWorkTargetBuildFort, fortLevel: fortLevel),
+          totalTurnsFn: () =>
+              totalTurnsForWork(kWorkTargetBuildFort, fortLevel: fortLevel),
+        );
+      },
+  kWorkTargetBuildRoad: _fixedMaterialWorkTargetConfigBuilder(kWorkTargetBuildRoad),
+  kWorkTargetBuildPort: _fixedMaterialWorkTargetConfigBuilder(kWorkTargetBuildPort),
+  kWorkTargetBuildRail: _fixedMaterialWorkTargetConfigBuilder(kWorkTargetBuildRail),
+  kWorkTargetUpgradeTown:
+      _fixedMaterialWorkTargetConfigBuilder(kWorkTargetUpgradeTown),
+};
+
+_StandardWorkTargetConfigBuilder _fixedMaterialWorkTargetConfigBuilder(
+  String target,
+) =>
+    ({
+      required targetTileKey,
+      required unit,
+      required tileState,
+      required provinceById,
+    }) => _fixedMaterialWorkTargetConfig(target);
+
+const _StandardWorkTargetConfig _unsupportedStandardWorkTargetConfig =
+    _StandardWorkTargetConfig(
+      allowedForUnitType: _alwaysFalseForWorkTarget,
+      costFn: _nullWorkOrderCost,
+      totalTurnsFn: _singleTurnWorkDuration,
+    );
+
 _StandardWorkTargetConfig _buildStandardWorkTargetConfig({
   required String target,
   required String targetTileKey,
@@ -25,52 +102,14 @@ _StandardWorkTargetConfig _buildStandardWorkTargetConfig({
   required TileMapState tileState,
   required Province? Function(String) provinceById,
 }) {
-  switch (target) {
-    case kWorkTargetBuildImprovement:
-      return _StandardWorkTargetConfig(
-        allowedForUnitType: (t) =>
-            isWorkOrderTargetAllowedForUnitType(t, target),
-        costFn: () => workOrderMaterialCost(
-          target,
-          improvementLevel: tileState.improvementLevel(targetTileKey),
-        ),
-        totalTurnsFn: () => totalTurnsForWork(
-          target,
-          improvementLevel: tileState.improvementLevel(targetTileKey),
-        ),
-      );
-    case kWorkTargetBuildFort:
-      return _StandardWorkTargetConfig(
-        allowedForUnitType: (t) =>
-            isWorkOrderTargetAllowedForUnitType(t, target),
-        costFn: () {
-          final prov = provinceById(unit.locationProvinceId);
-          final fortLevel = prov?.fortLevel ?? 0;
-          return workOrderMaterialCost(target, fortLevel: fortLevel);
-        },
-        totalTurnsFn: () {
-          final prov = provinceById(unit.locationProvinceId);
-          final fortLevel = prov?.fortLevel ?? 0;
-          return totalTurnsForWork(target, fortLevel: fortLevel);
-        },
-      );
-    case kWorkTargetBuildRoad:
-    case kWorkTargetBuildPort:
-    case kWorkTargetBuildRail:
-    case kWorkTargetUpgradeTown:
-      return _StandardWorkTargetConfig(
-        allowedForUnitType: (t) =>
-            isWorkOrderTargetAllowedForUnitType(t, target),
-        costFn: () => workOrderMaterialCost(target),
-        totalTurnsFn: () => totalTurnsForWork(target),
-      );
-    default:
-      return const _StandardWorkTargetConfig(
-        allowedForUnitType: _alwaysFalseForWorkTarget,
-        costFn: _nullWorkOrderCost,
-        totalTurnsFn: _singleTurnWorkDuration,
-      );
-  }
+  final builder = _standardWorkTargetConfigBuilders[target];
+  if (builder == null) return _unsupportedStandardWorkTargetConfig;
+  return builder(
+    targetTileKey: targetTileKey,
+    unit: unit,
+    tileState: tileState,
+    provinceById: provinceById,
+  );
 }
 
 bool _alwaysFalseForWorkTarget(String _) => false;
@@ -157,42 +196,49 @@ bool shouldSkipBuildRailForInvalidTerrainOrTech({
   return true;
 }
 
-bool tryApplyRemainingStandardBuildTargets({
-  required String workTarget,
-  required WorkOrder order,
-  required Player player,
-  required Unit unit,
-  required String targetTileKey,
-  required bool hasValidTarget,
-  required TileMapState tileState,
-  required Province? Function(String) provinceById,
-  required bool Function(WorkOrderCost) canAffordMaterialCost,
-  required void Function(WorkOrderCost) deductMaterialCost,
-  required void Function(String, Unit) updateUnit,
-  required TerrainType? terrain,
-}) {
-  if (workTarget == kWorkTargetBuildRoad ||
-      workTarget == kWorkTargetBuildPort ||
-      workTarget == kWorkTargetUpgradeTown) {
-    return applyStandardWorkOrder(
-      order: order,
-      unit: unit,
-      targetTileKey: targetTileKey,
-      hasValidTarget: hasValidTarget,
-      orderTarget: workTarget,
-      tileState: tileState,
-      provinceById: provinceById,
-      canAffordMaterialCost: canAffordMaterialCost,
-      deductMaterialCost: deductMaterialCost,
-      updateUnit: updateUnit,
-    );
-  }
-  if (workTarget == kWorkTargetBuildFort) {
-    final prov = provinceById(unit.locationProvinceId);
-    if (shouldSkipBuildFortForMissingTech(
-      province: prov,
-      techUnlocked: player.techUnlocked,
-    )) {
+typedef StandardBuildPreApplyGate =
+    bool Function({
+      required Player player,
+      required Unit unit,
+      required String targetTileKey,
+      required TileMapState tileState,
+      required Province? Function(String) provinceById,
+      required TerrainType? terrain,
+    });
+
+/// Applies multi-turn standard build work for a single [target] string.
+class StandardBuildWorkOrderHandler implements WorkOrderHandler {
+  const StandardBuildWorkOrderHandler(
+    this.target, {
+    this.preApplyGate,
+  });
+
+  final String target;
+  final StandardBuildPreApplyGate? preApplyGate;
+
+  @override
+  bool supports(String workTarget) => workTarget == target;
+
+  @override
+  bool tryApply(
+    WorkOrderExecutionContext context,
+    WorkOrder order,
+    Unit unit,
+    String targetTileKey,
+    bool hasValidTarget,
+  ) {
+    if (preApplyGate != null &&
+        preApplyGate!(
+          player: context.player,
+          unit: unit,
+          targetTileKey: targetTileKey,
+          tileState: context.state.work.tileState,
+          provinceById: context.provinceById,
+          terrain: terrainTypeForTileKey(
+            context.state.tileMapByRegion,
+            targetTileKey,
+          ),
+        )) {
       return true;
     }
     return applyStandardWorkOrder(
@@ -200,102 +246,65 @@ bool tryApplyRemainingStandardBuildTargets({
       unit: unit,
       targetTileKey: targetTileKey,
       hasValidTarget: hasValidTarget,
-      orderTarget: kWorkTargetBuildFort,
-      tileState: tileState,
-      provinceById: provinceById,
-      canAffordMaterialCost: canAffordMaterialCost,
-      deductMaterialCost: deductMaterialCost,
-      updateUnit: updateUnit,
+      orderTarget: target,
+      tileState: context.state.work.tileState,
+      provinceById: context.provinceById,
+      canAffordMaterialCost: context.canAffordMaterialCost,
+      deductMaterialCost: context.deductMaterialCost,
+      updateUnit: context.updateUnit,
     );
   }
-  if (workTarget != kWorkTargetBuildRail) return false;
-  if (shouldSkipBuildRailForInvalidTerrainOrTech(
+}
+
+bool _skipBuildFortPreApply({
+  required Player player,
+  required Unit unit,
+  required String targetTileKey,
+  required TileMapState tileState,
+  required Province? Function(String) provinceById,
+  required TerrainType? terrain,
+}) {
+  return shouldSkipBuildFortForMissingTech(
+    province: provinceById(unit.locationProvinceId),
     techUnlocked: player.techUnlocked,
-    roadLevel: tileState.roadLevel(targetTileKey),
-    terrain: terrain,
-  )) {
-    return true;
-  }
-  return applyStandardWorkOrder(
-    order: order,
-    unit: unit,
-    targetTileKey: targetTileKey,
-    hasValidTarget: hasValidTarget,
-    orderTarget: kWorkTargetBuildRail,
-    tileState: tileState,
-    provinceById: provinceById,
-    canAffordMaterialCost: canAffordMaterialCost,
-    deductMaterialCost: deductMaterialCost,
-    updateUnit: updateUnit,
   );
 }
 
-class BuildImprovementWorkOrderHandler implements WorkOrderHandler {
-  const BuildImprovementWorkOrderHandler();
-
-  @override
-  bool supports(String target) => target == kWorkTargetBuildImprovement;
-
-  @override
-  bool tryApply(
-    WorkOrderExecutionContext context,
-    WorkOrder order,
-    Unit unit,
-    String targetTileKey,
-    bool hasValidTarget,
-  ) {
-    return applyStandardWorkOrder(
-      order: order,
-      unit: unit,
-      targetTileKey: targetTileKey,
-      hasValidTarget: hasValidTarget,
-      orderTarget: kWorkTargetBuildImprovement,
-      tileState: context.state.work.tileState,
-      provinceById: context.provinceById,
-      canAffordMaterialCost: context.canAffordMaterialCost,
-      deductMaterialCost: context.deductMaterialCost,
-      updateUnit: context.updateUnit,
-    );
-  }
+bool _skipBuildRailPreApply({
+  required Player player,
+  required Unit unit,
+  required String targetTileKey,
+  required TileMapState tileState,
+  required Province? Function(String) provinceById,
+  required TerrainType? terrain,
+}) {
+  return shouldSkipBuildRailForInvalidTerrainOrTech(
+    techUnlocked: player.techUnlocked,
+    roadLevel: tileState.roadLevel(targetTileKey),
+    terrain: terrain,
+  );
 }
 
-class RemainingStandardBuildTargetsWorkOrderHandler
-    implements WorkOrderHandler {
-  const RemainingStandardBuildTargetsWorkOrderHandler();
+const StandardBuildWorkOrderHandler standardBuildImprovementWorkOrderHandler =
+    StandardBuildWorkOrderHandler(kWorkTargetBuildImprovement);
 
-  @override
-  bool supports(String target) {
-    return target == kWorkTargetBuildRoad ||
-        target == kWorkTargetBuildPort ||
-        target == kWorkTargetUpgradeTown ||
-        target == kWorkTargetBuildFort ||
-        target == kWorkTargetBuildRail;
-  }
+const StandardBuildWorkOrderHandler standardBuildRoadWorkOrderHandler =
+    StandardBuildWorkOrderHandler(kWorkTargetBuildRoad);
 
-  @override
-  bool tryApply(
-    WorkOrderExecutionContext context,
-    WorkOrder order,
-    Unit unit,
-    String targetTileKey,
-    bool hasValidTarget,
-  ) {
-    return tryApplyRemainingStandardBuildTargets(
-      workTarget: order.target,
-      order: order,
-      player: context.player,
-      unit: unit,
-      targetTileKey: targetTileKey,
-      hasValidTarget: hasValidTarget,
-      tileState: context.state.work.tileState,
-      provinceById: context.provinceById,
-      canAffordMaterialCost: context.canAffordMaterialCost,
-      deductMaterialCost: context.deductMaterialCost,
-      updateUnit: context.updateUnit,
-      terrain: terrainTypeForTileKey(
-        context.state.tileMapByRegion,
-        targetTileKey,
-      ),
+const StandardBuildWorkOrderHandler standardBuildPortWorkOrderHandler =
+    StandardBuildWorkOrderHandler(kWorkTargetBuildPort);
+
+const StandardBuildWorkOrderHandler standardBuildUpgradeTownWorkOrderHandler =
+    StandardBuildWorkOrderHandler(kWorkTargetUpgradeTown);
+
+const StandardBuildWorkOrderHandler standardBuildFortWorkOrderHandler =
+    StandardBuildWorkOrderHandler(
+      kWorkTargetBuildFort,
+      preApplyGate: _skipBuildFortPreApply,
     );
-  }
-}
+
+const StandardBuildWorkOrderHandler standardBuildRailWorkOrderHandler =
+    StandardBuildWorkOrderHandler(
+      kWorkTargetBuildRail,
+      preApplyGate: _skipBuildRailPreApply,
+    );

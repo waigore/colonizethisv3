@@ -5,6 +5,7 @@ import '../../event_bus/game_event_bus.dart';
 import '../../game_events.dart';
 import '../../world/naval_resolution.dart';
 import '../turn_pipeline_state.dart';
+import '../turn_resolver_config.dart';
 
 TurnPipelineState runNavalInterceptionTurnPhase(
   TurnPipelineState acc,
@@ -25,3 +26,18 @@ TurnPipelineState runNavalInterceptionTurnPhase(
   );
   return acc.copyWith(game: game);
 }
+
+TurnPhaseStepOutcome navalInterceptionCombatTurnPhaseHandler(
+  TurnPipelineState acc,
+  TurnResolverConfig config,
+  int turn,
+) => TurnPhaseStepContinue(
+  runNavalInterceptionTurnPhase(
+    acc,
+    config.topology,
+    config.orders.navalMoveOrdersByPlayerId,
+    config.eventBus,
+    config.onDialogue,
+    config.onGameEvent,
+  ),
+);
