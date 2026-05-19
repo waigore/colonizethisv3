@@ -92,7 +92,7 @@ Map<StrategicGoal, int> evaluateStrategicGoalScores(
   }
   if (!suppressColonialPressure &&
       hasColonialAcquisitionTargets(snapshot.colonial) &&
-      !shouldSuppressNewWorldColonialOrders(snapshot)) {
+      !shouldSuppressNewWorldColonialOrders(snapshot: snapshot)) {
     diplomacy -= kColonialDiplomacyGoalPenaltyWhenPressure;
     trade -= kColonialTradeGoalPenaltyWhenPressure;
     if (expand < kMinimumColonialExpandScoreWhenPressure) {

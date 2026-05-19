@@ -17,7 +17,10 @@ Orders runNavalPlanner({
   final colonial = snapshot.colonial;
   var weight = ctx.resolveNavalBaseWeight();
   final hasColonialTargets = hasColonialAcquisitionTargets(colonial) &&
-      !shouldSuppressNewWorldColonialOrders(snapshot);
+      !shouldSuppressNewWorldColonialOrders(
+        snapshot: snapshot,
+        game: ctx.game,
+      );
   if (hasColonialTargets) {
     weight += kColonialNavalWeightBonus;
   }

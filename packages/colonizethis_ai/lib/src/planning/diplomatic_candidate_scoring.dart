@@ -104,7 +104,10 @@ List<int> computeDiplomaticCandidateScores({
         break;
       case DiplomaticOrderType.establishOverture:
         {
-          if (shouldSuppressNewWorldColonialOrders(snapshot) &&
+          if (shouldSuppressNewWorldColonialOrders(
+                snapshot: snapshot,
+                game: game,
+              ) &&
               (_isTribeFaction(game, o.targetFactionId) ||
                   snapshot.colonial.preferredColonialTargetFactionIdsSorted
                       .contains(o.targetFactionId) ||

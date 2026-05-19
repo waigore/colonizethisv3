@@ -211,11 +211,15 @@ PlannerContext _runEconomyDomainPlanners({
     result,
     tileMapByRegion: tileMapByRegion,
   );
-  if (shouldSuppressNewWorldColonialOrders(snapshot)) {
-    workCandidates = workCandidates
-        .where((w) => !isNewWorldColonialWorkOrder(w))
-        .toList();
-  }
+  workCandidates = workCandidates
+      .where(
+        (w) => !shouldFilterObserverPhaseWorkOrder(
+          w,
+          snapshot: snapshot,
+          game: ctx.game,
+        ),
+      )
+      .toList();
   final buildCandidates = ctx.suggestionAPI.suggestBuildOrders(
     ctx.view,
     ctx.game,
@@ -228,13 +232,23 @@ PlannerContext _runEconomyDomainPlanners({
   );
   var workThreshold =
       40 - (hasSpyWork ? getAgendaSpyOrderModifier(ctx.config.hiddenAgendaId) : 0);
+  final developPhase = isObserverDevelopPhase(
+    snapshot: snapshot,
+    game: ctx.game,
+  );
   final colonialPressure = hasColonialAcquisitionTargets(snapshot.colonial) &&
       !isStalledOldWorldGpBlockerFocus(game: ctx.game, snapshot: snapshot) &&
-      !shouldSuppressNewWorldColonialOrders(snapshot);
-  if (colonialPressure || snapshot.colonial.newWorldProvincesOwned > 0) {
+      !shouldSuppressNewWorldColonialOrders(
+        snapshot: snapshot,
+        game: ctx.game,
+      );
+  if (developPhase) {
+    workThreshold = math.min(workThreshold, kDevelopCivilianWorkThresholdCap);
+  } else if (colonialPressure || snapshot.colonial.newWorldProvincesOwned > 0) {
     workThreshold = math.min(workThreshold, kColonialCivilianWorkThresholdCap);
   }
   final runFullAiCivilianWork =
+      developPhase ||
       ctx.primaryGoal == StrategicGoal.expand ||
       domainWeights.economy >= workThreshold ||
       colonialPressure ||

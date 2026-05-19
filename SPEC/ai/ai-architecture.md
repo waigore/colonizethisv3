@@ -120,7 +120,11 @@ Deterministic phases from `PlayerView` → `AIWorldSnapshot` (`observer_goal_pha
 | **COLONIAL** | OW quota met and `hasColonialAcquisitionTargets` | NW acquisition |
 | **DEVELOP** | OW quota met and no visible colonial targets | Improve extractable tiles |
 
-**EXPAND suppressions:** No NW `declareWar` / `establishOverture` toward colonial targets, NW conquest army moves, colonial naval ranking/caps, `purchase_land` / NW `build_improvement` civilian work, or colonial-pressure goal/diplomacy floors. OW declare-war, OW army moves, OW improvements, economy, and research remain allowed. **COLONIAL-lite** (turn ≥120 global NW safeguard) is follow-up work.
+**EXPAND suppressions:** No NW `declareWar` / `establishOverture` toward colonial targets, NW conquest army moves, colonial naval ranking/caps, `purchase_land` / NW `build_improvement` civilian work, or colonial-pressure goal/diplomacy floors. OW declare-war, OW army moves, OW improvements, economy, and research remain allowed.
+
+**COLONIAL-lite** (turn ≥`kObserverColonialLiteMinTurn`, OW ≥`kObserverColonialLiteNearQuotaOw` and below quota, global `newWorld|` not all GP-owned): allows `establishOverture`, colonial naval/cargo; suppresses NW `declareWar`, invasion army moves, and `purchase_land` only.
+
+**DEVELOP:** Suppresses all new `declareWar` and NW acquisition; forces civilian work selection with improvement-first threshold (`kDevelopCivilianWorkThresholdCap`); `offerPeace` toward all at-war Great Powers.
 
 ### Implementation (turn pipeline)
 AI order generation runs so that orders are available for the **Orders** phase of turn resolution. Merge (human + AI) and application order are defined in [turn-resolution-phases.md](../program/turn-resolution-phases.md) (phase 1 Orders) and [turn-resolution-phase-details.md](../program/turn-resolution-phase-details.md) § Orders. Control rules and merge semantics: [ai-planner.md](../program/ai-planner.md); module boundaries and APIs: [ai-systems-impl.md](../program/ai-systems-impl.md).

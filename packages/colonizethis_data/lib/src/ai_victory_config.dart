@@ -219,6 +219,15 @@ const int kOfferPeaceStalledFutileGpWarBonus = 230;
 /// Default observer start OW provinces per GP plus the turn-100 conquest gate (+3).
 const int kObserverConquestMinOwProvincesPerGp = 10;
 
+/// Turn when near-quota GPs in EXPAND may enter COLONIAL-lite (Refs #2509 S10).
+const int kObserverColonialLiteMinTurn = 120;
+
+/// OW holdings at or above this while still below quota enables COLONIAL-lite.
+const int kObserverColonialLiteNearQuotaOw = 9;
+
+/// Civilian work threshold cap in DEVELOP phase (improvement-first; Refs #2509 S10).
+const int kDevelopCivilianWorkThresholdCap = 5;
+
 /// True when OW holdings have not yet met the observer per-GP conquest quota.
 bool isBelowObserverConquestQuota(int oldWorldProvincesOwned) =>
     oldWorldProvincesOwned > 0 &&

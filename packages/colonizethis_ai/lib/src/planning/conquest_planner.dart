@@ -161,7 +161,10 @@ Orders runConquestArmyMovePlanner({
   }
   final invadable = {
     ...snapshot.conquest.invadableProvinceIdsSorted,
-    if (!shouldSuppressNewWorldColonialOrders(snapshot))
+    if (!shouldSuppressNewWorldDeclareWarInvasionAndPurchase(
+      snapshot: snapshot,
+      game: ctx.game,
+    ))
       ...snapshot.colonial.invadableNewWorldProvinceIdsSorted,
   };
   if (stalledExpansion) {
@@ -253,7 +256,10 @@ Orders _runStalledFrontierArmyMoveFallback({
 }) {
   final invadable = {
     ...snapshot.conquest.invadableProvinceIdsSorted,
-    if (!shouldSuppressNewWorldColonialOrders(snapshot))
+    if (!shouldSuppressNewWorldDeclareWarInvasionAndPurchase(
+      snapshot: snapshot,
+      game: ctx.game,
+    ))
       ...snapshot.colonial.invadableNewWorldProvinceIdsSorted,
   };
   final playerOwnedFullProvinceIds = <String>{
@@ -450,7 +456,10 @@ double _scoreArmyMoveDestination({
   }
   if (snapshot.colonial.invadableNewWorldProvinceIdsSorted
       .contains(move.destinationProvinceId)) {
-    if (shouldSuppressNewWorldColonialOrders(snapshot)) {
+    if (shouldSuppressNewWorldDeclareWarInvasionAndPurchase(
+      snapshot: snapshot,
+      game: game,
+    )) {
       return 0;
     }
     if (isBelowObserverConquestQuota(
