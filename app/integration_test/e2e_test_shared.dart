@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 
 import 'package:colonizethis_app/config/ct_e2e.dart';
+import 'package:colonizethis_app/features/game/dialogue/game_start_intro_overlay.dart';
 import 'package:colonizethis_app/features/game/flame/game_screen_shared.dart';
 import 'package:colonizethis_app/l10n/app_localizations_contract.dart';
 import 'package:colonizethis_app/widgets/ct_choice_chip.dart';
@@ -37,6 +38,73 @@ class E2ePerfLog {
     final metaPart = meta == null ? '' : '|meta=$meta';
     debugPrint(
       'E2E_TIMING|test=$testName|phase=$phase|ms=${elapsed.inMilliseconds}$metaPart',
+    );
+  }
+}
+
+/// True while the game-start intro still shows its blocking shell or spinner.
+///
+/// [GameStartIntroOverlay] stays mounted after dismissal; only the blocking
+/// [CtDialogShell] / [GameStartIntroLoadingIndicator] indicate UI capture.
+bool e2eGameStartIntroBlocksUi(WidgetTester tester) {
+  if (find.byType(GameStartIntroLoadingIndicator).evaluate().isNotEmpty) {
+    return true;
+  }
+  if (find.byType(GameStartIntroOverlay).evaluate().isEmpty) {
+    return false;
+  }
+  return find
+      .descendant(
+        of: find.byType(GameStartIntroOverlay),
+        matching: find.byType(CtDialogShell),
+      )
+      .evaluate()
+      .isNotEmpty;
+}
+
+/// Advances yarn intro lines/choices until the overlay no longer blocks taps.
+Future<void> e2eAdvanceGameStartIntroUntilDismissed(
+  WidgetTester tester, {
+  E2ePerfLog? perf,
+  Duration timeout = const Duration(seconds: 15),
+}) async {
+  final deadline = DateTime.now().add(timeout);
+  while (DateTime.now().isBefore(deadline)) {
+    if (!e2eGameStartIntroBlocksUi(tester)) {
+      return;
+    }
+    if (find.byType(GameStartIntroLoadingIndicator).evaluate().isNotEmpty) {
+      await tester.pump(const Duration(milliseconds: 50));
+      continue;
+    }
+    final overlay = find.byType(GameStartIntroOverlay);
+    var tapped = false;
+    for (final label in ['Continue', 'I shall.']) {
+      final control = find
+          .descendant(of: overlay, matching: find.text(label))
+          .hitTestable();
+      if (control.evaluate().isEmpty) {
+        continue;
+      }
+      await tester.tap(control.first, warnIfMissed: false);
+      await e2ePumpUntilConditionOrIdle(
+        tester,
+        () => !e2eGameStartIntroBlocksUi(tester),
+        timeout: const Duration(seconds: 2),
+        perf: perf,
+        phaseName: 'pump_until_intro_advance_after_$label',
+      );
+      tapped = true;
+      break;
+    }
+    if (!tapped) {
+      await tester.pump(const Duration(milliseconds: 50));
+    }
+  }
+  if (e2eGameStartIntroBlocksUi(tester)) {
+    fail(
+      'Timed out after ${timeout.inSeconds}s advancing game start intro. '
+      'Last exception: ${tester.takeException()}',
     );
   }
 }
@@ -225,6 +293,10 @@ Future<void> e2eDismissTransientUi(
   E2ePerfLog? perf,
 }) async {
   perf?.bumpCounter('dismiss_transient_ui_calls');
+  if (e2eGameStartIntroBlocksUi(tester)) {
+    await e2eAdvanceGameStartIntroUntilDismissed(tester, perf: perf);
+    return;
+  }
   if (find.byType(SnackBar).evaluate().isNotEmpty) {
     final snackAction = find.descendant(
       of: find.byType(SnackBar),

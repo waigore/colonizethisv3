@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'dart:ui' as ui;
 
-import 'package:colonizethis_app/features/game/dialogue/game_start_intro_overlay.dart';
 import 'package:colonizethis_app/features/game/flame/civilian_icon_cache.dart';
 import 'package:colonizethis_app/features/game/flame/fleet_icon_cache.dart';
 import 'package:colonizethis_app/features/game/flame/game_screen_shared.dart';
@@ -52,30 +51,6 @@ Future<List<String>> e2eDecodePngAssetPathsParallel(
   return failures;
 }
 
-Future<void> _e2eTapGameStartIntroOverlayContinueIfPresent(
-  WidgetTester tester,
-) async {
-  if (find.text('Continue').evaluate().isNotEmpty) {
-    await tester.tap(find.text('Continue').first);
-    await e2ePumpUntilConditionOrIdle(
-      tester,
-      () => find.byType(GameStartIntroOverlay).evaluate().isEmpty,
-      timeout: const Duration(milliseconds: 800),
-      phaseName: 'pump_until_intro_dismissed_after_continue',
-    );
-    return;
-  }
-  if (find.text('I shall.').evaluate().isNotEmpty) {
-    await tester.tap(find.text('I shall.').first);
-    await e2ePumpUntilConditionOrIdle(
-      tester,
-      () => find.byType(GameStartIntroOverlay).evaluate().isEmpty,
-      timeout: const Duration(milliseconds: 800),
-      phaseName: 'pump_until_intro_dismissed_after_i_shall',
-    );
-  }
-}
-
 /// After [Start] is tapped, polls until the in-game map HUD is visible.
 ///
 /// Evaluates success before the first pump; uses exponential backoff on pump
@@ -95,10 +70,11 @@ Future<void> e2eWaitForMapHudAfterNewGameStart(
       );
     }
     if (find.byKey(kHomeToCapitalButtonKey).evaluate().isNotEmpty) {
+      await e2eAdvanceGameStartIntroUntilDismissed(tester);
       return;
     }
-    if (find.byType(GameStartIntroOverlay).evaluate().isNotEmpty) {
-      await _e2eTapGameStartIntroOverlayContinueIfPresent(tester);
+    if (e2eGameStartIntroBlocksUi(tester)) {
+      await e2eAdvanceGameStartIntroUntilDismissed(tester);
       stepMs = 25;
       continue;
     }
@@ -169,6 +145,7 @@ Future<void> e2eBootstrapNewGameToMap(
     perf: perf,
     phaseName: 'pump_until_home_capital_tappable_after_map',
   );
+  await e2eAdvanceGameStartIntroUntilDismissed(tester, perf: perf);
   perf?.timing('new_game_to_map', phaseSw.elapsed);
 }
 
