@@ -89,6 +89,22 @@ void main() {
       expect(shell.debugCommandTargetPlayerId, 'gp1');
     });
 
+    test('reset clears observe mode after global observe', () {
+      final game = _minimalGame(
+        players: [
+          const Player(id: 'gp1', displayName: 'Human', isHuman: true),
+        ],
+      );
+      notifier.applyObserveHandoffIfNeeded(game);
+      notifier.setModeGlobal();
+      expect(notifier.state.mode, ObserveMode.global);
+
+      notifier.reset();
+
+      expect(notifier.state.mode, ObserveMode.off);
+      expect(notifier.state.observedPlayerId, isNull);
+    });
+
     test('shell context player observe binds panel player', () {
       final game = _minimalGame(
         players: [
