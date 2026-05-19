@@ -203,6 +203,10 @@ const int kStalledMinRegimentCountPerProvinceDeficitVsBlocker = 2;
 /// Offer-peace bonus toward a minor/tribe at war that no longer owns invadable land.
 const int kOfferPeaceFutileMinorWarBonus = 80;
 
+/// Penalty for offering peace to a minor that still owns invadable OW land while
+/// below the observer quota at default start size (seed-42 gp4; Refs #2509).
+const int kOfferPeaceBelowQuotaActiveMinorWarPenalty = 500;
+
 /// Offer-peace bonus toward a stronger adjacent GP while Old World expansion is
 /// stalled and that GP owns the invadable frontier (exit unwinnable wars; #2509).
 const int kOfferPeaceStalledStrongerGpBlockerBonus = 240;

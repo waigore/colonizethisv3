@@ -26,6 +26,16 @@ int _scoreOfferPeaceDiplomaticOrder({
           !invadableOwners.contains(order.targetFactionId))) {
     s += kOfferPeaceFutileMinorWarBonus;
   }
+  if (game.minorNations.any((m) => m.id == order.targetFactionId) &&
+      snapshot.threats.atWarWith.contains(order.targetFactionId) &&
+      invadableOwners.contains(order.targetFactionId) &&
+      isBelowObserverConquestQuota(
+        snapshot.conquest.oldWorldProvincesOwned,
+      ) &&
+      snapshot.conquest.oldWorldProvincesOwned <=
+          kObserverDefaultStartOldWorldProvincesPerGp + 1) {
+    s -= kOfferPeaceBelowQuotaActiveMinorWarPenalty;
+  }
   final targetGp = game.playerById(order.targetFactionId);
   final gpBlockerFocus = isStalledOldWorldGpBlockerFocus(
     game: game,

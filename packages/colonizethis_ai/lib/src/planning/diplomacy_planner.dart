@@ -15,6 +15,7 @@ export 'colonial_pressure.dart'
         stalledBelowQuotaGpLeadPeaceTargets,
         belowQuotaPeerGpPeaceTargets,
         defaultStartGpPeaceTargets,
+        defaultStartFutileMinorPeaceTargets,
         nearQuotaHoldPeaceTargets,
         unwinnableSoleGpFrontierPeaceTarget;
 import 'planner_context.dart';
@@ -85,6 +86,9 @@ String? belowQuotaUninvadedMinorDeclareTarget({
     return null;
   }
   if (belowQuotaActiveMinorWarTarget(game: game, snapshot: snapshot) != null) {
+    return null;
+  }
+  if (isOldWorldGpOnlyInvadableFrontier(game: game, snapshot: snapshot)) {
     return null;
   }
   final candidates = <String>{
@@ -161,6 +165,9 @@ String? defaultStartOwMinorDeclareTarget({
       ownOw > kObserverDefaultStartOldWorldProvincesPerGp + 1) {
     return null;
   }
+  if (isOldWorldGpOnlyInvadableFrontier(game: game, snapshot: snapshot)) {
+    return null;
+  }
   final gpWars = <String>[
     for (final factionId in snapshot.threats.atWarWith)
       if (game.playerById(factionId) != null) factionId,
@@ -176,8 +183,8 @@ String? defaultStartOwMinorDeclareTarget({
     return null;
   }
   final candidates = <String>{};
+  final provinceOwner = getProvinceOwnerMap(game);
   if (snapshot.conquest.invadableProvinceIdsSorted.isNotEmpty) {
-    final provinceOwner = getProvinceOwnerMap(game);
     for (final pid in snapshot.conquest.invadableProvinceIdsSorted) {
       final owner = provinceOwner[pid];
       if (owner == null ||
@@ -188,15 +195,17 @@ String? defaultStartOwMinorDeclareTarget({
       candidates.add(owner);
     }
   }
-  for (final minor in game.minorNations) {
-    if (snapshot.threats.atWarWith.contains(minor.id)) {
-      continue;
-    }
-    final ownsOw = game.worldState.oldWorld.provinces.any(
-      (p) => p.ownerId == minor.id,
-    );
-    if (ownsOw) {
-      candidates.add(minor.id);
+  if (candidates.isEmpty) {
+    for (final minor in game.minorNations) {
+      if (snapshot.threats.atWarWith.contains(minor.id)) {
+        continue;
+      }
+      final ownsOw = game.worldState.oldWorld.provinces.any(
+        (p) => p.ownerId == minor.id,
+      );
+      if (ownsOw) {
+        candidates.add(minor.id);
+      }
     }
   }
   if (candidates.isEmpty) {
@@ -279,7 +288,8 @@ String? stalledGpBlockerDeclareWarTarget({
   }
   final turn = game.worldState.turnState.turnNumber;
   if (turn <= kDeclareWarEarlyAntiDogpileMaxTurn &&
-      isBelowObserverConquestQuota(provinceCountOwnedBy(game, blocker))) {
+      isBelowObserverConquestQuota(provinceCountOwnedBy(game, blocker)) &&
+      !isOldWorldGpOnlyInvadableFrontier(game: game, snapshot: snapshot)) {
     return null;
   }
   return blocker;

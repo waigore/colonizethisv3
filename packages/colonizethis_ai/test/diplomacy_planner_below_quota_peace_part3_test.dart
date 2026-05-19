@@ -511,8 +511,8 @@ void main() {
         opportunities: OpportunitySummary(),
         conquest: ConquestSummary(
           oldWorldProvincesOwned: 7,
-          invadableProvinceIdsSorted: ['oldWorld|p99'],
-          adjacentOwnerFactionIdsSorted: ['gp3'],
+          invadableProvinceIdsSorted: ['oldWorld|minor3'],
+          adjacentOwnerFactionIdsSorted: ['minor3'],
         ),
         colonial: ColonialSummary(),
         economy: EconomySummary(),

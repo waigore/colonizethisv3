@@ -54,7 +54,7 @@ bool isMutualBelowQuotaPlateauPeer({
     isStalledOldWorldExpansion(partnerOw) &&
     isBelowObserverConquestQuota(ownOw) &&
     isBelowObserverConquestQuota(partnerOw) &&
-    (partnerOw - ownOw).abs() <= 2;
+    (partnerOw - ownOw).abs() <= 1;
 
 /// Peace other below-quota Great Powers in peer-stalled wars while minors remain
 /// (exit mutual gp5/gp6 distraction; Refs #2509).
@@ -93,7 +93,7 @@ List<String> belowQuotaPeerGpPeaceTargets({
     if (!minorsOnMap && !mutualPlateau) {
       continue;
     }
-    if ((partnerOw - ownOw).abs() > 2) {
+    if ((partnerOw - ownOw).abs() > 1) {
       continue;
     }
     if (!mutualPlateau && ownOw > partnerOw) {
@@ -110,6 +110,37 @@ List<String> belowQuotaPeerGpPeaceTargets({
   return targets;
 }
 
+/// Peace at-war minors that own no invadable OW provinces while still at default
+/// start size (exit futile minor fronts before GP-blocker wars; seed-42 gp4).
+List<String> defaultStartFutileMinorPeaceTargets({
+  required Game game,
+  required AIWorldSnapshot snapshot,
+}) {
+  final ownOw = snapshot.conquest.oldWorldProvincesOwned;
+  if (!isBelowObserverConquestQuota(ownOw) ||
+      ownOw > kObserverDefaultStartOldWorldProvincesPerGp + 1 ||
+      snapshot.conquest.invadableProvinceIdsSorted.isEmpty) {
+    return const [];
+  }
+  if (isOldWorldGpOnlyInvadableFrontier(game: game, snapshot: snapshot)) {
+    final targets = <String>[
+      for (final factionId in snapshot.threats.atWarWith)
+        if (game.minorNations.any((m) => m.id == factionId)) factionId,
+    ]..sort();
+    return targets;
+  }
+  final provinceOwner = getProvinceOwnerMap(game);
+  final targets = <String>[
+    for (final factionId in snapshot.threats.atWarWith)
+      if (game.minorNations.any((m) => m.id == factionId) &&
+          !snapshot.conquest.invadableProvinceIdsSorted.any(
+            (pid) => provinceOwner[pid] == factionId,
+          ))
+        factionId,
+  ]..sort();
+  return targets;
+}
+
 /// At default observer start size (7 OW), peace every Great Power war so the GP
 /// can open a minor frontier (seed-42 gp4 zero-gain stall; Refs #2509).
 List<String> defaultStartGpPeaceTargets({
@@ -121,9 +152,18 @@ List<String> defaultStartGpPeaceTargets({
       ownOw > kObserverDefaultStartOldWorldProvincesPerGp + 1) {
     return const [];
   }
+  final gpOnlyFrontier = isOldWorldGpOnlyInvadableFrontier(
+    game: game,
+    snapshot: snapshot,
+  );
+  final invadableBlocker = gpOnlyFrontier
+      ? primaryInvadableOldWorldGpBlocker(game: game, snapshot: snapshot)
+      : null;
   final targets = <String>[
     for (final factionId in snapshot.threats.atWarWith)
-      if (game.playerById(factionId) != null) factionId,
+      if (game.playerById(factionId) != null &&
+          factionId != invadableBlocker)
+        factionId,
   ]..sort();
   return targets;
 }
