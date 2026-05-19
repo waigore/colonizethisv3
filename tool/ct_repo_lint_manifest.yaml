@@ -144,6 +144,13 @@ rules:
     script: tool/check_debug_console_logic_contract_boundary.dart
     pr_incremental: true
 
+  - rule_id: repo.debug_console_shared_helpers
+    group: structure
+    title: debug console shared parse and executor helpers
+    spec: SPEC/program/debug-console-internals.md
+    runner: dart
+    script: tool/check_debug_console_shared_helpers.dart
+
   - rule_id: repo.app_event_handler_scope_logic_boundary
     group: architecture
     title: app_event_handler_scope must not import features/game/logic directly

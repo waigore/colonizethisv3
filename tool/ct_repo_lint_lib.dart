@@ -18,6 +18,7 @@ import 'check_custom_exceptions.dart';
 import 'check_dart_file_non_comment_line_size.dart';
 import 'check_debug_handler_one_per_file.dart';
 import 'check_debug_console_logic_contract_boundary.dart';
+import 'check_debug_console_shared_helpers.dart';
 import 'check_disallowed_ast_patterns.dart';
 import 'check_long_string_switches.dart';
 import 'check_flutter_action_pins.dart';
@@ -722,6 +723,8 @@ int? _tryRunDartRuleInProcess({
         repoRoot,
         incrementalRelativeDartPaths: incrementalPaths,
       );
+    case 'repo.debug_console_shared_helpers':
+      return runCheckDebugConsoleSharedHelpers(repoRoot);
     case 'repo.app_event_handler_scope_logic_boundary':
       return runCheckAppEventHandlerScopeLogicBoundary(repoRoot);
     case 'repo.control_flow_nesting_depth':
