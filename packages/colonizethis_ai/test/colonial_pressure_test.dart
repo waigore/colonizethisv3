@@ -123,11 +123,6 @@ void main() {
         economy: EconomySummary(),
         relations: {},
       );
-      expect(
-        belowQuotaPeerGpPeaceTargets(game: game, snapshot: snapshot),
-        ['gp6'],
-        reason: 'weaker GP may peace to avoid mutual-plateau elimination',
-      );
       const snapshotGp6 = AIWorldSnapshot(
         playerId: 'gp6',
         threats: ThreatSummary(atWarWith: ['gp5']),
@@ -141,13 +136,18 @@ void main() {
         relations: {},
       );
       expect(
+        belowQuotaPeerGpPeaceTargets(game: game, snapshot: snapshot),
+        isEmpty,
+        reason: 'sole GP blocker war held for mutual-plateau peers',
+      );
+      expect(
         belowQuotaPeerGpPeaceTargets(game: game, snapshot: snapshotGp6),
         isEmpty,
-        reason: 'stronger GP keeps war pressure on GP-only cleared frontier',
+        reason: 'sole GP blocker war held for mutual-plateau peers',
       );
     });
 
-    test('peace mutual plateau peer on GP-only frontier while minors remain', () {
+    test('holds mutual plateau sole GP blocker war while minors remain', () {
       final game = Game(
         id: 'g-below-quota-peer-gp-only-minors',
         worldState: WorldState(
@@ -208,7 +208,7 @@ void main() {
       );
       expect(
         belowQuotaPeerGpPeaceTargets(game: game, snapshot: snapshot),
-        ['gp5'],
+        isEmpty,
       );
     });
   });

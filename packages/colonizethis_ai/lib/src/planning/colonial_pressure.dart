@@ -121,9 +121,9 @@ List<String> belowQuotaPeerGpPeaceTargets({
     if (!mutualPlateau && ownOw > partnerOw) {
       continue;
     }
-    // Keep fighting a winnable sole GP blocker; mutual plateau peers may peace
-    // to pivot toward minors (seed-42 gp5/gp6 stalemate; Refs #2509).
-    if (gpOnlyFrontier && soleGpWar == factionId && !mutualPlateau) {
+    // Keep fighting the sole invadable OW GP blocker, including mutual-plateau
+    // peers, so seed-42 mid-map fronts stay active through turn 100 (Refs #2509).
+    if (gpOnlyFrontier && soleGpWar == factionId) {
       continue;
     }
     targets.add(factionId);

@@ -272,11 +272,25 @@ String? stalledGpBlockerDeclareWarTarget({
       snapshot.relations[blocker]?.atWar == true) {
     return null;
   }
+  final ownOw = snapshot.conquest.oldWorldProvincesOwned;
+  final blockerOw = provinceCountOwnedBy(game, blocker);
   if (isMutualBelowQuotaPlateauPeer(
-    ownOw: snapshot.conquest.oldWorldProvincesOwned,
-    partnerOw: provinceCountOwnedBy(game, blocker),
+    ownOw: ownOw,
+    partnerOw: blockerOw,
   )) {
-    return null;
+    if (hasUninvadedOldWorldMinor(game: game, snapshot: snapshot)) {
+      return null;
+    }
+    // Already at war with the mutual plateau blocker (gp3/gp4 seed-42 fronts).
+    if (snapshot.threats.atWarWith.contains(blocker) ||
+        snapshot.relations[blocker]?.atWar == true) {
+      return null;
+    }
+    // Open the front from the weaker peer only (gp5 vs gp6 at peace).
+    if (ownOw > blockerOw ||
+        (ownOw == blockerOw && snapshot.playerId.compareTo(blocker) > 0)) {
+      return null;
+    }
   }
   if (unwinnableSoleGpFrontierPeaceTarget(game: game, snapshot: snapshot) ==
       blocker) {

@@ -202,7 +202,8 @@ void main() {
       );
       expect(
         belowQuotaPeerGpPeaceTargets(game: game, snapshot: snapshot),
-        ['gp5'],
+        isEmpty,
+        reason: 'sole GP blocker war held on GP-only mutual-plateau frontier',
       );
     },
   );

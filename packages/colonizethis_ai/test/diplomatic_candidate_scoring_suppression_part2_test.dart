@@ -133,6 +133,136 @@ void main() {
     );
 
     test(
+      'stalledGpBlockerDeclareWarTarget weaker opens mutual plateau when at peace',
+      () {
+        final game = Game(
+          id: 'g-mutual-plateau-peace-declare',
+          worldState: WorldState(
+            turnState: const TurnState(
+              phase: TurnPhase.orders,
+              turnNumber: 60,
+            ),
+            oldWorld: RegionData(
+              provinces: [
+                for (var i = 0; i < 9; i++)
+                  Province(
+                    id: 'oldWorld|gp6_$i',
+                    regionId: 'oldWorld',
+                    ownerId: 'gp6',
+                  ),
+                for (var i = 0; i < 8; i++)
+                  Province(
+                    id: 'oldWorld|gp5_$i',
+                    regionId: 'oldWorld',
+                    ownerId: 'gp5',
+                  ),
+              ],
+            ),
+            newWorld: const RegionData(),
+          ),
+          players: const [
+            Player(id: 'gp5', displayName: 'P5', isHuman: false),
+            Player(id: 'gp6', displayName: 'P6', isHuman: false),
+          ],
+        );
+        const weakerSnap = AIWorldSnapshot(
+          playerId: 'gp5',
+          threats: ThreatSummary(),
+          opportunities: OpportunitySummary(),
+          conquest: ConquestSummary(
+            oldWorldProvincesOwned: 8,
+            invadableProvinceIdsSorted: ['oldWorld|gp6_8'],
+            adjacentOwnerFactionIdsSorted: ['gp6'],
+          ),
+          colonial: ColonialSummary(),
+          economy: EconomySummary(),
+          relations: {},
+        );
+        const strongerSnap = AIWorldSnapshot(
+          playerId: 'gp6',
+          threats: ThreatSummary(),
+          opportunities: OpportunitySummary(),
+          conquest: ConquestSummary(
+            oldWorldProvincesOwned: 9,
+            invadableProvinceIdsSorted: ['oldWorld|gp5_7'],
+            adjacentOwnerFactionIdsSorted: ['gp5'],
+          ),
+          colonial: ColonialSummary(),
+          economy: EconomySummary(),
+          relations: {},
+        );
+        expect(
+          stalledGpBlockerDeclareWarTarget(game: game, snapshot: weakerSnap),
+          'gp6',
+        );
+        expect(
+          stalledGpBlockerDeclareWarTarget(game: game, snapshot: strongerSnap),
+          isNull,
+        );
+      },
+    );
+
+    test(
+      'stalledGpBlockerDeclareWarTarget skips mutual plateau when already at war',
+      () {
+        final game = Game(
+          id: 'g-mutual-plateau-at-war',
+          worldState: WorldState(
+            turnState: const TurnState(
+              phase: TurnPhase.orders,
+              turnNumber: 60,
+            ),
+            oldWorld: RegionData(
+              provinces: [
+                for (var i = 0; i < 8; i++)
+                  Province(
+                    id: 'oldWorld|gp3_$i',
+                    regionId: 'oldWorld',
+                    ownerId: 'gp3',
+                  ),
+                for (var i = 0; i < 9; i++)
+                  Province(
+                    id: 'oldWorld|gp4_$i',
+                    regionId: 'oldWorld',
+                    ownerId: 'gp4',
+                  ),
+              ],
+            ),
+            newWorld: const RegionData(),
+          ),
+          players: const [
+            Player(id: 'gp3', displayName: 'C', isHuman: false),
+            Player(id: 'gp4', displayName: 'D', isHuman: false),
+          ],
+          diplomacyRelations: [
+            const DiplomacyRelation(
+              factionId1: 'gp3',
+              factionId2: 'gp4',
+              state: RelationState.atWar,
+            ),
+          ],
+        );
+        const snap = AIWorldSnapshot(
+          playerId: 'gp3',
+          threats: ThreatSummary(atWarWith: ['gp4']),
+          opportunities: OpportunitySummary(),
+          conquest: ConquestSummary(
+            oldWorldProvincesOwned: 8,
+            invadableProvinceIdsSorted: ['oldWorld|gp4_8'],
+            adjacentOwnerFactionIdsSorted: ['gp4'],
+          ),
+          colonial: ColonialSummary(),
+          economy: EconomySummary(),
+          relations: {},
+        );
+        expect(
+          stalledGpBlockerDeclareWarTarget(game: game, snapshot: snap),
+          isNull,
+        );
+      },
+    );
+
+    test(
       'suppresses early declareWar on below-quota GP when attacker leads by 1+',
       () {
         const snap = AIWorldSnapshot(
