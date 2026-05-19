@@ -54,6 +54,16 @@ sealed class DebugConsoleParsedInvocation {
 
   const factory DebugConsoleParsedInvocation.listPlayers() =
       DebugConsoleListPlayers;
+
+  const factory DebugConsoleParsedInvocation.setObserveOff() =
+      DebugConsoleSetObserveOff;
+
+  const factory DebugConsoleParsedInvocation.setObserveGlobal() =
+      DebugConsoleSetObserveGlobal;
+
+  const factory DebugConsoleParsedInvocation.setObservePlayer({
+    required String target,
+  }) = DebugConsoleSetObservePlayer;
 }
 
 final class DebugConsoleSpawnCivilianAtCapital
@@ -171,4 +181,18 @@ final class DebugConsoleGetTileBasicInfo extends DebugConsoleParsedInvocation {
 
 final class DebugConsoleListPlayers extends DebugConsoleParsedInvocation {
   const DebugConsoleListPlayers();
+}
+
+final class DebugConsoleSetObserveOff extends DebugConsoleParsedInvocation {
+  const DebugConsoleSetObserveOff();
+}
+
+final class DebugConsoleSetObserveGlobal extends DebugConsoleParsedInvocation {
+  const DebugConsoleSetObserveGlobal();
+}
+
+final class DebugConsoleSetObservePlayer extends DebugConsoleParsedInvocation {
+  const DebugConsoleSetObservePlayer({required this.target});
+
+  final String target;
 }

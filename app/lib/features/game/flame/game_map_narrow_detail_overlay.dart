@@ -21,6 +21,8 @@ class GameMapNarrowDetailOverlaySlot extends ConsumerWidget {
     required this.humanPlayerId,
     required this.playerView,
     required this.workTargetSelectionCache,
+    this.omniscientDetail = false,
+    this.canMutateViaUi = true,
     super.key,
   });
 
@@ -29,6 +31,8 @@ class GameMapNarrowDetailOverlaySlot extends ConsumerWidget {
   final String humanPlayerId;
   final PlayerView playerView;
   final PerPlayerWorkTargetSelectionCache workTargetSelectionCache;
+  final bool omniscientDetail;
+  final bool canMutateViaUi;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -104,12 +108,15 @@ class GameMapNarrowDetailOverlaySlot extends ConsumerWidget {
             .setSecondaryHighlight(k),
         onClose: () =>
             ref.read(mapProvincePanelProvider.notifier).closeOverlay(),
-        showProspectActionIcon: prospectState.showIcon,
-        prospectActionEnabled: prospectState.enabled,
-        showExploreActionIcon: exploreState.showIcon,
-        exploreActionEnabled: exploreState.enabled,
-        showBuildImprovementActionIcon: buildImprovementState.showIcon,
-        buildImprovementActionEnabled: buildImprovementState.enabled,
+      showProspectActionIcon: canMutateViaUi && prospectState.showIcon,
+      prospectActionEnabled: canMutateViaUi && prospectState.enabled,
+      showExploreActionIcon: canMutateViaUi && exploreState.showIcon,
+      exploreActionEnabled: canMutateViaUi && exploreState.enabled,
+      showBuildImprovementActionIcon:
+          canMutateViaUi && buildImprovementState.showIcon,
+      buildImprovementActionEnabled:
+          canMutateViaUi && buildImprovementState.enabled,
+      omniscientDetail: omniscientDetail,
         onExploreWithExplorerTap:
             exploreState.enabled && panel.selectedTileKey != null
             ? () {

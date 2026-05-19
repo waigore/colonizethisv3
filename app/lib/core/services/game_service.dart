@@ -145,8 +145,14 @@ class GameService {
     );
   }
 
+  /// Optional strip for session-only observe control overrides before persist.
+  Game Function(Game)? prepareGameForPersistence;
+
   /// Saves game to storage.
-  void saveGame(Game game) => _adapter.save(_box, game);
+  void saveGame(Game game) {
+    final toSave = prepareGameForPersistence?.call(game) ?? game;
+    _adapter.save(_box, toSave);
+  }
 
   /// Lists all saved game ids.
   List<String> listGameIds() => _adapter.listGameIds(_box);

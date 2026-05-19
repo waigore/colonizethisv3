@@ -55,8 +55,11 @@ Keep **`showDialog` / `showModalBottomSheet` / `Navigator.pop`** **inside one fe
 | `OpenMilitaryUnitsPanelEvent` | `GameSideMenu` | `MilitaryUnitsPanel` |
 | `OpenNavalUnitsPanelEvent` | `GameSideMenu`, map fleet marker | `NavalUnitsPanel` (optional tile/location scope fields on event) |
 | `ToggleDebugConsolePanelEvent` | `GameMapEmpireLeftRail` (debug-gated) | `GameMapArea` in-map non-modal overlay (`DebugConsoleOverlayPanel`) |
+| `SetObserveModeOffEvent` / `SetObserveModeGlobalEvent` / `SetObserveModePlayerEvent` | `/observe` debug console | `AppEventHandlerScope` updates `observeSessionProvider` + in-memory `Game` control handoff |
 
 Sheet close cleanup should be emitted as a typed bus event (`UnitsPanelClosedEvent`) from the handler.
+
+**Observe mode:** While `observeSessionProvider.mode != off`, UI mutation via bus `SessionCommandEvent`s (work, naval, army, diplomacy draft) is rejected when `shellPlayerContextProvider.canMutateViaUi` is false. Debug spawn/credit commands use `debugCommandTargetPlayerId` (see [observe-mode.md](../ui/observe-mode.md)).
 
 ---
 

@@ -316,5 +316,32 @@ void main() {
       final matches = RegExp(r'/list_players').allMatches(message).length;
       expect(matches, 1);
     });
+
+    test('parses /observe as global mode', () {
+      final result = parser.parse('/observe');
+      expect(result.isError, isFalse);
+      expect(result.invocation, isA<DebugConsoleSetObserveGlobal>());
+    });
+
+    test('parses /observe off', () {
+      final result = parser.parse('/observe off');
+      expect(result.isError, isFalse);
+      expect(result.invocation, isA<DebugConsoleSetObserveOff>());
+    });
+
+    test('parses /observe with display name target', () {
+      final result = parser.parse('/observe France');
+      expect(result.isError, isFalse);
+      final inv = result.invocation! as DebugConsoleSetObservePlayer;
+      expect(inv.target, 'France');
+    });
+
+    test('help includes observe forms', () {
+      final result = parser.parse('/help');
+      final message = result.message ?? '';
+      expect(message, contains('/observe\n'));
+      expect(message, contains('/observe off'));
+      expect(message, contains('/observe <player_id | display_name>'));
+    });
   });
 }

@@ -6,6 +6,7 @@ import '../../../config/ct_e2e.dart';
 import '../../../widgets/ct_choice_chip.dart';
 import '../../../widgets/ct_nine_patch_button.dart';
 import '../../../widgets/strict_asset_icon.dart';
+import '../../../providers/observe_session_provider.dart';
 import '../widgets/player_turn_event_feed.dart';
 import 'game_screen_shared.dart'
     show
@@ -31,6 +32,10 @@ class GameMapControls extends StatefulWidget {
     required this.showPlayerTurnEventsFeed,
     required this.onTogglePlayerTurnEventsFeed,
     this.isCargoUsedReliable = true,
+    this.observeBannerLabel,
+    this.treasuryNotDefined = false,
+    this.cargoNotDefined = false,
+    this.playerTurnEventsFeedNotDefined = false,
     super.key,
   });
 
@@ -49,6 +54,10 @@ class GameMapControls extends StatefulWidget {
   final bool showPlayerTurnEventsFeed;
   final VoidCallback onTogglePlayerTurnEventsFeed;
   final bool isCargoUsedReliable;
+  final String? observeBannerLabel;
+  final bool treasuryNotDefined;
+  final bool cargoNotDefined;
+  final bool playerTurnEventsFeedNotDefined;
 
   @override
   State<GameMapControls> createState() => _GameMapControlsState();
@@ -94,9 +103,13 @@ class _GameMapControlsState extends State<GameMapControls> {
   @override
   Widget build(BuildContext context) {
     final l10n = appL10n(context);
-    final treasuryLabel = _formatTreasury(widget.treasury);
-    final deltaLabel = _treasuryDeltaLabel(widget.treasuryDelta);
-    final deltaColor = _treasuryDeltaColor(widget.treasuryDelta);
+    final treasuryLabel = widget.treasuryNotDefined
+        ? kObserveNotDefinedLabel
+        : _formatTreasury(widget.treasury);
+    final deltaLabel = widget.treasuryNotDefined
+        ? null
+        : _treasuryDeltaLabel(widget.treasuryDelta);
+    final deltaColor = _treasuryDeltaColor(deltaLabel == null ? null : widget.treasuryDelta);
     return Column(
       children: [
         Padding(
@@ -108,6 +121,17 @@ class _GameMapControlsState extends State<GameMapControls> {
                 onPressed: widget.onToggleSideMenu,
                 tooltip: l10n.gameMap_menuTooltip,
               ),
+              if (widget.observeBannerLabel != null)
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                  child: Text(
+                    widget.observeBannerLabel!,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w600,
+                      fontSize: 13,
+                    ),
+                  ),
+                ),
               Expanded(
                 child: CtNinePatchButton(
                   key: kGameMapNextTurnButtonKey,
@@ -216,12 +240,14 @@ class _GameMapControlsState extends State<GameMapControls> {
                                   ),
                                   const SizedBox(width: 4),
                                   Text(
-                                    l10n.mapControls_cargoHold(
-                                      widget.isCargoUsedReliable
-                                          ? '${widget.cargoUsed}'
-                                          : '—',
-                                      '${widget.cargoCapacity}',
-                                    ),
+                                    widget.cargoNotDefined
+                                        ? kObserveNotDefinedLabel
+                                        : l10n.mapControls_cargoHold(
+                                            widget.isCargoUsedReliable
+                                                ? '${widget.cargoUsed}'
+                                                : '—',
+                                            '${widget.cargoCapacity}',
+                                          ),
                                   ),
                                 ],
                               ),
@@ -233,14 +259,23 @@ class _GameMapControlsState extends State<GameMapControls> {
                   },
                 ),
               ),
-              PlayerTurnEventsFeedToggleButton(
-                eventCount: widget.playerTurnEventsFeedCount,
-                tooltip: l10n.playerTurnFeed_eventsChip(
-                  widget.playerTurnEventsFeedCount,
+              if (widget.playerTurnEventsFeedNotDefined)
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 4),
+                  child: Text(
+                    kObserveNotDefinedLabel,
+                    style: Theme.of(context).textTheme.bodySmall,
+                  ),
+                )
+              else
+                PlayerTurnEventsFeedToggleButton(
+                  eventCount: widget.playerTurnEventsFeedCount,
+                  tooltip: l10n.playerTurnFeed_eventsChip(
+                    widget.playerTurnEventsFeedCount,
+                  ),
+                  showFeed: widget.showPlayerTurnEventsFeed,
+                  onPressed: widget.onTogglePlayerTurnEventsFeed,
                 ),
-                showFeed: widget.showPlayerTurnEventsFeed,
-                onPressed: widget.onTogglePlayerTurnEventsFeed,
-              ),
             ],
           ),
         ),

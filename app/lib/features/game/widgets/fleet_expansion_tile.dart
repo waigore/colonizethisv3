@@ -12,6 +12,7 @@ class FleetExpansionTile extends StatelessWidget {
     required this.l10n,
     this.onTap,
     required this.isSelectedForCombine,
+    this.combineSelectionEnabled = true,
     required this.onCombineSelectionToggle,
     this.onSplitFleet,
     this.onMoveFleet,
@@ -22,6 +23,7 @@ class FleetExpansionTile extends StatelessWidget {
   final AppLocalizations l10n;
   final VoidCallback? onTap;
   final bool isSelectedForCombine;
+  final bool combineSelectionEnabled;
   final VoidCallback onCombineSelectionToggle;
   final VoidCallback? onSplitFleet;
   final VoidCallback? onMoveFleet;
@@ -52,7 +54,9 @@ class FleetExpansionTile extends StatelessWidget {
       children: [
         Checkbox(
           value: isSelectedForCombine,
-          onChanged: (_) => onCombineSelectionToggle(),
+          onChanged: combineSelectionEnabled
+              ? (_) => onCombineSelectionToggle()
+              : null,
           visualDensity: VisualDensity.compact,
           materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
         ),

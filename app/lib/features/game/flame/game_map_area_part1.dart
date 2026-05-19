@@ -94,6 +94,16 @@ mixin _GameMapAreaStatePart1 on ConsumerState<GameMapArea> {
     ]) {
       _busSubscriptions.track(subscription);
     }
+    ref.listenManual(observeSessionProvider, (previous, next) {
+      if (!mounted) return;
+      final enteredObserve =
+          next.isObserving && !(previous?.isObserving ?? false);
+      final switchedMode =
+          next.isObserving && previous?.mode != next.mode;
+      if (enteredObserve || switchedMode) {
+        _cancelWorkTargetSelection();
+      }
+    });
   }
 
   void _onTurnResolutionCompleteEvent(
@@ -115,13 +125,13 @@ mixin _GameMapAreaStatePart1 on ConsumerState<GameMapArea> {
     final view = buildPlayerView(
       game,
       widget.mapViewData.combinedTopology,
-      _humanPlayerId,
+      _mapPlayerId,
     );
     final mapData = ref.read(gameServiceProvider).getMapData(game.id);
     _workTargetSelectionCache.refresh(
       WorkTargetSelectionSnapshot(
         game: game,
-        playerId: _humanPlayerId,
+        playerId: _mapPlayerId,
         playerView: view,
         topology: widget.mapViewData.combinedTopology,
         currentOrders: const ct_models.Orders(),
@@ -131,45 +141,45 @@ mixin _GameMapAreaStatePart1 on ConsumerState<GameMapArea> {
   }
 
   void _onAppCombatResultEvent(ct_models.AppCombatResultEvent event) {
-    if (event.attackerId != _humanPlayerId &&
-        event.defenderId != _humanPlayerId) {
+    if (event.attackerId != _mapPlayerId &&
+        event.defenderId != _mapPlayerId) {
       return;
     }
     _pendingPlayerTurnEvents.add(event);
   }
 
   void _onAppNavalCombatResultEvent(ct_models.AppNavalCombatResultEvent event) {
-    if (event.side1OwnerId != _humanPlayerId &&
-        event.side2OwnerId != _humanPlayerId) {
+    if (event.side1OwnerId != _mapPlayerId &&
+        event.side2OwnerId != _mapPlayerId) {
       return;
     }
     _pendingPlayerTurnEvents.add(event);
   }
 
   void _onAppProvinceCapturedEvent(ct_models.AppProvinceCapturedEvent event) {
-    if (event.previousOwnerId != _humanPlayerId &&
-        event.newOwnerId != _humanPlayerId) {
+    if (event.previousOwnerId != _mapPlayerId &&
+        event.newOwnerId != _mapPlayerId) {
       return;
     }
     _pendingPlayerTurnEvents.add(event);
   }
 
   void _onAppDiplomacyChangeEvent(ct_models.AppDiplomacyChangeEvent event) {
-    if (event.actorId != _humanPlayerId && event.targetId != _humanPlayerId) {
+    if (event.actorId != _mapPlayerId && event.targetId != _mapPlayerId) {
       return;
     }
     _pendingPlayerTurnEvents.add(event);
   }
 
   void _onAppResearchCompleteEvent(ct_models.AppResearchCompleteEvent event) {
-    if (event.playerId != _humanPlayerId) {
+    if (event.playerId != _mapPlayerId) {
       return;
     }
     _pendingPlayerTurnEvents.add(event);
   }
 
   void _onAppOrderRejectedEvent(ct_models.AppOrderRejectedEvent event) {
-    if (event.playerId != _humanPlayerId) {
+    if (event.playerId != _mapPlayerId) {
       return;
     }
     _pendingPlayerTurnEvents.add(event);
@@ -178,7 +188,7 @@ mixin _GameMapAreaStatePart1 on ConsumerState<GameMapArea> {
   void _onAppWorkOrderCompletedEvent(
     ct_models.AppWorkOrderCompletedEvent event,
   ) {
-    if (event.playerId != _humanPlayerId) {
+    if (event.playerId != _mapPlayerId) {
       return;
     }
     _pendingPlayerTurnEvents.add(event);
@@ -187,7 +197,7 @@ mixin _GameMapAreaStatePart1 on ConsumerState<GameMapArea> {
   void _onAppPlayerProvinceDiscoveredEvent(
     ct_models.AppPlayerProvinceDiscoveredEvent event,
   ) {
-    if (event.playerId != _humanPlayerId) {
+    if (event.playerId != _mapPlayerId) {
       return;
     }
     _pendingPlayerTurnEvents.add(event);
@@ -196,15 +206,15 @@ mixin _GameMapAreaStatePart1 on ConsumerState<GameMapArea> {
   void _onAppPlayerSeaZoneDiscoveredEvent(
     ct_models.AppPlayerSeaZoneDiscoveredEvent event,
   ) {
-    if (event.playerId != _humanPlayerId) {
+    if (event.playerId != _mapPlayerId) {
       return;
     }
     _pendingPlayerTurnEvents.add(event);
   }
 
   void _onAppOvertureAdvancedEvent(ct_models.AppOvertureAdvancedEvent event) {
-    if (event.offererGpId != _humanPlayerId &&
-        event.targetFactionId != _humanPlayerId) {
+    if (event.offererGpId != _mapPlayerId &&
+        event.targetFactionId != _mapPlayerId) {
       return;
     }
     _pendingPlayerTurnEvents.add(event);
@@ -218,12 +228,12 @@ mixin _GameMapAreaStatePart1 on ConsumerState<GameMapArea> {
     super.dispose();
   }
 
-  String get _humanPlayerId =>
-      widget.game.players
-          .where((p) => p.isHuman)
-          .map((p) => p.id)
-          .firstOrNull ??
-      widget.game.players.first.id;
+  String get _mapPlayerId =>
+      ref.read(shellPlayerContextProvider).mapPlayerIdFor(widget.game);
+
+  String? get _debugConsolePlayerId =>
+      ref.read(shellPlayerContextProvider).debugCommandTargetPlayerId ??
+      _mapPlayerId;
 
   RegionMapViewData get _currentRegion => _regionIndex == 0
       ? widget.mapViewData.oldWorld
@@ -270,13 +280,13 @@ mixin _GameMapAreaStatePart1 on ConsumerState<GameMapArea> {
     final orders = ref.read(currentOrdersProvider);
     final mapData = ref.read(gameServiceProvider).getMapData(game.id);
     final topology = mapData?.combinedTopology ?? const MapTopology();
-    final view = buildPlayerView(game, topology, _humanPlayerId);
+    final view = buildPlayerView(game, topology, _mapPlayerId);
     final workTarget = _workTargetSelection!.workTarget;
     _cachedValidTileKeys =
         GameMapAreaStateLogic.resolveValidTileKeysForCivilianWorkSelection(
           workTarget: workTarget,
           workTargetSelectionCache: _workTargetSelectionCache,
-          humanPlayerId: _humanPlayerId,
+          humanPlayerId: _mapPlayerId,
           selectedUnitId: _workTargetSelection!.unit.id,
           game: game,
           currentOrders: orders,
@@ -325,8 +335,11 @@ mixin _GameMapAreaStatePart1 on ConsumerState<GameMapArea> {
   }
 
   void _centerOnHumanCapital() {
+    final shell = ref.read(shellPlayerContextProvider);
+    final playerId =
+        shell.debugCommandTargetPlayerId ?? _mapPlayerId;
     final player =
-        widget.game.players.where((p) => p.isHuman).firstOrNull ??
+        widget.game.players.where((p) => p.id == playerId).firstOrNull ??
         widget.game.players.first;
     final capital = player.capitalTile;
     if (capital == null) {
@@ -381,8 +394,11 @@ mixin _GameMapAreaStatePart1 on ConsumerState<GameMapArea> {
 
   /// Integration tests only ([kCtE2EEnabled]). Same effect as tapping the capital map cell.
   void _e2eOpenHumanCapitalTileDetail() {
+    final shell = ref.read(shellPlayerContextProvider);
+    final playerId =
+        shell.debugCommandTargetPlayerId ?? _mapPlayerId;
     final player =
-        widget.game.players.where((p) => p.isHuman).firstOrNull ??
+        widget.game.players.where((p) => p.id == playerId).firstOrNull ??
         widget.game.players.first;
     final capital = player.capitalTile;
     if (capital == null) {
@@ -430,6 +446,9 @@ mixin _GameMapAreaStatePart1 on ConsumerState<GameMapArea> {
   }
 
   void _onTileSelectedForWork(String tileKey) {
+    if (!ref.read(shellPlayerContextProvider).canMutateViaUi) {
+      return;
+    }
     final sel = _workTargetSelection;
     if (sel == null) return;
     final target = sel.workTarget;
@@ -448,7 +467,7 @@ mixin _GameMapAreaStatePart1 on ConsumerState<GameMapArea> {
         .replaceAll(
           GameMapAreaStateLogic.addHumanWorkOrder(
             orders: orders,
-            humanPlayerId: _humanPlayerId,
+            humanPlayerId: _mapPlayerId,
             workOrder: workOrder,
           ),
         );
@@ -649,7 +668,7 @@ mixin _GameMapAreaStatePart1 on ConsumerState<GameMapArea> {
       region: _currentRegion,
       game: widget.game,
       orders: currentOrders,
-      humanPlayerId: _humanPlayerId,
+      humanPlayerId: _mapPlayerId,
     );
     final mapData = ref.read(gameServiceProvider).getMapData(widget.game.id);
     final tm = mapData?.tileMapByRegion;
@@ -660,7 +679,7 @@ mixin _GameMapAreaStatePart1 on ConsumerState<GameMapArea> {
         region: projected,
         game: widget.game,
         orders: currentOrders,
-        humanPlayerId: _humanPlayerId,
+        humanPlayerId: _mapPlayerId,
         tileMapByRegion: tm,
         topologyByRegion: tr,
         combinedTopology: ct,
@@ -689,7 +708,7 @@ mixin _GameMapAreaStatePart1 on ConsumerState<GameMapArea> {
       region: _currentRegion,
       game: widget.game,
       orders: currentOrders,
-      humanPlayerId: _humanPlayerId,
+      humanPlayerId: _mapPlayerId,
     );
     final mapData = ref.read(gameServiceProvider).getMapData(widget.game.id);
     final tm = mapData?.tileMapByRegion;
@@ -700,7 +719,7 @@ mixin _GameMapAreaStatePart1 on ConsumerState<GameMapArea> {
         region: projected,
         game: widget.game,
         orders: currentOrders,
-        humanPlayerId: _humanPlayerId,
+        humanPlayerId: _mapPlayerId,
         tileMapByRegion: tm,
         topologyByRegion: tr,
         combinedTopology: ct,

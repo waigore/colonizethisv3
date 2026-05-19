@@ -9,6 +9,8 @@ import '../../../providers/app_event_bus_provider.dart';
 import '../../../providers/game_service_provider.dart';
 import '../../../providers/games_provider.dart';
 import '../../../widgets/ct_game_feature_screen_shell.dart';
+import '../shell_player_context.dart' show shellPanelsNotDefined, shellPlayerContextProvider;
+import '../widgets/observe_mode_not_defined_panel.dart';
 import '../widgets/diplomacy_panel.dart';
 import '../widgets/grant_or_subsidy_listener.dart';
 
@@ -29,6 +31,9 @@ class DiplomacyScreen extends ConsumerWidget {
       game: game,
       title: 'Diplomacy',
       bodyBuilder: (context, shellRef, displayGame) {
+        if (shellPanelsNotDefined(shellRef)) {
+          return const ObserveModeNotDefinedPanel(title: 'Diplomacy');
+        }
         final orders = shellRef.watch(currentOrdersProvider);
         MapTopology topology = const MapTopology();
         try {
@@ -40,16 +45,20 @@ class DiplomacyScreen extends ConsumerWidget {
         } on Object {
           // Widget tests may not initialize Hive-backed game service providers.
         }
+        final readOnly =
+            !shellRef.read(shellPlayerContextProvider).canMutateViaUi;
         return GrantOrSubsidyListener(
           bus: bus,
           game: displayGame,
           humanPlayerId: humanPlayerId,
+          readOnly: readOnly,
           child: DiplomacyPanel(
             game: displayGame,
             humanPlayerId: humanPlayerId,
             topology: topology,
             currentOrders: orders,
             bus: bus,
+            readOnly: readOnly,
           ),
         );
       },

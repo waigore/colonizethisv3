@@ -7,11 +7,10 @@ mixin _GameMapAreaStatePart2
     final currentOrders = ref.watch(currentOrdersProvider);
     final isNarrow = MediaQuery.sizeOf(context).width < kNarrowBreakpoint;
     final mapTopology = widget.mapViewData.combinedTopology;
-    final humanPlayerView = buildPlayerView(
-      widget.game,
-      mapTopology,
-      _humanPlayerId,
-    );
+    final shell = ref.watch(shellPlayerContextProvider);
+    final mapPlayerId = shell.mapPlayerIdFor(widget.game);
+    final mapPlayerView =
+        shell.playerView ?? buildPlayerView(widget.game, mapTopology, mapPlayerId);
     final l10n = appL10n(context);
     final mapData = ref.watch(gameServiceProvider).getMapData(widget.game.id);
     var projectedRegion =
@@ -19,7 +18,7 @@ mixin _GameMapAreaStatePart2
           region: _currentRegion,
           game: widget.game,
           orders: currentOrders,
-          humanPlayerId: _humanPlayerId,
+          humanPlayerId: mapPlayerId,
         );
     final tm = mapData?.tileMapByRegion;
     final tr = mapData?.topologyByRegion;
@@ -29,19 +28,17 @@ mixin _GameMapAreaStatePart2
         region: projectedRegion,
         game: widget.game,
         orders: currentOrders,
-        humanPlayerId: _humanPlayerId,
+        humanPlayerId: mapPlayerId,
         tileMapByRegion: tm,
         topologyByRegion: tr,
         combinedTopology: ct,
       );
     }
-    final nextTurnText = l10n.game_nextTurnButton(
-      widget.game.worldState.turnState.turnNumber,
-      turnToYear(
-        widget.game.worldState.turnState.turnNumber,
-        widget.game.turnTimeMapping,
-      ),
-    );
+    final turnNumber = widget.game.worldState.turnState.turnNumber;
+    final year = turnToYear(turnNumber, widget.game.turnTimeMapping);
+    final nextTurnText = shell.inObservePhase
+        ? 'Observe — Turn $turnNumber ($year)'
+        : l10n.game_nextTurnButton(turnNumber, year);
     final cargoSummary = ref.watch(homeFleetCargoSummaryProvider);
     final treasurySummary = ref.watch(treasurySummaryProvider);
     final feedEntries = (this as _GameMapAreaState)._feedEntries();
@@ -63,9 +60,13 @@ mixin _GameMapAreaStatePart2
           cargoUsed: cargoSummary.used,
           cargoCapacity: cargoSummary.capacity,
           isCargoUsedReliable: cargoSummary.isCargoUsedReliable,
+          cargoNotDefined: cargoSummary.notDefined,
           treasury: treasurySummary.treasury,
           treasuryDelta: treasurySummary.projectedDelta,
+          treasuryNotDefined: treasurySummary.notDefined,
+          observeBannerLabel: shell.observeBannerLabel,
           playerTurnEventsFeedCount: feedEntries.length,
+          playerTurnEventsFeedNotDefined: !shell.showPlayerChrome,
           showPlayerTurnEventsFeed: _mapViewState.showPlayerTurnEventsFeed,
           onTogglePlayerTurnEventsFeed: _togglePlayerTurnEventsFeedVisibility,
         ),
@@ -106,8 +107,11 @@ mixin _GameMapAreaStatePart2
                               _mapViewState.showProvinceOwnershipTint,
                           showProvinceNamesLayer:
                               _mapViewState.showProvinceNamesLayer,
-                          humanPlayerId: _humanPlayerId,
-                          playerView: humanPlayerView,
+                          humanPlayerId: mapPlayerId,
+                          playerView: mapPlayerView,
+                          visibilityMode: shell.mapVisibilityMode,
+                          omniscientDetail: shell.omniscientDetail,
+                          canMutateViaUi: shell.canMutateViaUi,
                           workTargetSelectionCache: _workTargetSelectionCache,
                           centerOnTileKey: _centerOnTileKey,
                           validTileKeysForSelection: _validTileKeysForSelection,
@@ -154,7 +158,7 @@ mixin _GameMapAreaStatePart2
                           top: 0,
                           child: GameMapEmpireLeftRail(
                             game: widget.game,
-                            humanPlayerId: _humanPlayerId,
+                            humanPlayerId: mapPlayerId,
                             onIconTappedWhileSelectionMode:
                                 _workTargetSelection != null
                                 ? _cancelWorkTargetSelection
@@ -168,6 +172,8 @@ mixin _GameMapAreaStatePart2
                             onCycleBaseLayerDisplayMode:
                                 _cycleBaseLayerDisplayMode,
                             onCenterOnHomeCapital: _centerOnHumanCapital,
+                            homeToCapitalEnabled:
+                                shell.effectiveHumanPlayerId != null,
                             onOpenMapDisplayOptions: () {
                               showDialog<void>(
                                 context: context,
@@ -353,7 +359,8 @@ mixin _GameMapAreaStatePart2
                               final rightInset = gameMapWideOverlayRightInset(
                                 provincePanelOpen: panelOpen,
                               );
-                              if (!_mapViewState.showPlayerTurnEventsFeed) {
+                              if (!shell.showPlayerChrome ||
+                                  !_mapViewState.showPlayerTurnEventsFeed) {
                                 return const SizedBox.shrink();
                               }
                               return Positioned(
@@ -366,7 +373,9 @@ mixin _GameMapAreaStatePart2
                               );
                             },
                           ),
-                        if (isNarrow && _mapViewState.showPlayerTurnEventsFeed)
+                        if (isNarrow &&
+                            shell.showPlayerChrome &&
+                            _mapViewState.showPlayerTurnEventsFeed)
                           Positioned(
                             right: kMapOverlayEdgeInset,
                             top: 56,
@@ -386,7 +395,7 @@ mixin _GameMapAreaStatePart2
                   top: 56,
                   child: DebugConsoleOverlayPanel(
                     bus: ref.read(appEventBusProvider),
-                    humanPlayerId: _humanPlayerId,
+                    humanPlayerId: _debugConsolePlayerId ?? mapPlayerId,
                     readOnlyContextProvider: () {
                       final selectedTileKey =
                           ref.read(mapProvincePanelProvider).selectedTileKey;
@@ -417,8 +426,10 @@ mixin _GameMapAreaStatePart2
                       GameMapNarrowDetailOverlaySlot(
                         game: widget.game,
                         region: projectedRegion,
-                        humanPlayerId: _humanPlayerId,
-                        playerView: humanPlayerView,
+                        humanPlayerId: mapPlayerId,
+                        playerView: mapPlayerView,
+                        omniscientDetail: shell.omniscientDetail,
+                        canMutateViaUi: shell.canMutateViaUi,
                         workTargetSelectionCache: _workTargetSelectionCache,
                       ),
                     ],
