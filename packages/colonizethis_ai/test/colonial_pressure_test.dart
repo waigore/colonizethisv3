@@ -68,7 +68,9 @@ void main() {
   });
 
   group('belowQuotaPeerGpPeaceTargets', () {
-    test('includes mutual plateau peer when no minors remain on the map', () {
+    test(
+        'skips mutual plateau peace when stronger on GP-only cleared frontier',
+        () {
       final game = Game(
         id: 'g-below-quota-peer-no-minors',
         worldState: WorldState(
@@ -81,12 +83,17 @@ void main() {
                   regionId: 'oldWorld',
                   ownerId: 'gp5',
                 ),
-              for (var i = 0; i < 9; i++)
+              for (var i = 0; i < 8; i++)
                 Province(
                   id: 'oldWorld|gp6_$i',
                   regionId: 'oldWorld',
                   ownerId: 'gp6',
                 ),
+              const Province(
+                id: 'oldWorld|gp6_frontier',
+                regionId: 'oldWorld',
+                ownerId: 'gp6',
+              ),
             ],
           ),
           newWorld: const RegionData(),
@@ -108,7 +115,10 @@ void main() {
         playerId: 'gp5',
         threats: ThreatSummary(atWarWith: ['gp6']),
         opportunities: OpportunitySummary(),
-        conquest: ConquestSummary(oldWorldProvincesOwned: 8),
+        conquest: ConquestSummary(
+          oldWorldProvincesOwned: 8,
+          invadableProvinceIdsSorted: ['oldWorld|gp6_frontier'],
+        ),
         colonial: ColonialSummary(),
         economy: EconomySummary(),
         relations: {},
@@ -116,6 +126,89 @@ void main() {
       expect(
         belowQuotaPeerGpPeaceTargets(game: game, snapshot: snapshot),
         ['gp6'],
+        reason: 'weaker GP may peace to avoid mutual-plateau elimination',
+      );
+      const snapshotGp6 = AIWorldSnapshot(
+        playerId: 'gp6',
+        threats: ThreatSummary(atWarWith: ['gp5']),
+        opportunities: OpportunitySummary(),
+        conquest: ConquestSummary(
+          oldWorldProvincesOwned: 9,
+          invadableProvinceIdsSorted: ['oldWorld|gp6_frontier'],
+        ),
+        colonial: ColonialSummary(),
+        economy: EconomySummary(),
+        relations: {},
+      );
+      expect(
+        belowQuotaPeerGpPeaceTargets(game: game, snapshot: snapshotGp6),
+        isEmpty,
+        reason: 'stronger GP keeps war pressure on GP-only cleared frontier',
+      );
+    });
+
+    test('peace mutual plateau peer on GP-only frontier while minors remain', () {
+      final game = Game(
+        id: 'g-below-quota-peer-gp-only-minors',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 80),
+          oldWorld: RegionData(
+            provinces: [
+              for (var i = 0; i < 8; i++)
+                Province(
+                  id: 'oldWorld|gp6_$i',
+                  regionId: 'oldWorld',
+                  ownerId: 'gp6',
+                ),
+              for (var i = 0; i < 9; i++)
+                Province(
+                  id: 'oldWorld|gp5_$i',
+                  regionId: 'oldWorld',
+                  ownerId: 'gp5',
+                ),
+              const Province(
+                id: 'oldWorld|frontier',
+                regionId: 'oldWorld',
+                ownerId: 'gp6',
+              ),
+              const Province(
+                id: 'oldWorld|minor2',
+                regionId: 'oldWorld',
+                ownerId: 'minor2',
+              ),
+            ],
+          ),
+          newWorld: const RegionData(),
+        ),
+        players: const [
+          Player(id: 'gp5', displayName: 'P5', isHuman: false),
+          Player(id: 'gp6', displayName: 'P6', isHuman: false),
+        ],
+        minorNations: const [MinorNation(id: 'minor2', displayName: 'M2')],
+        diplomacyRelations: [
+          const DiplomacyRelation(
+            factionId1: 'gp5',
+            factionId2: 'gp6',
+            state: RelationState.atWar,
+            score: 30,
+          ),
+        ],
+      );
+      const snapshot = AIWorldSnapshot(
+        playerId: 'gp6',
+        threats: ThreatSummary(atWarWith: ['gp5']),
+        opportunities: OpportunitySummary(),
+        conquest: ConquestSummary(
+          oldWorldProvincesOwned: 8,
+          invadableProvinceIdsSorted: ['oldWorld|frontier'],
+        ),
+        colonial: ColonialSummary(),
+        economy: EconomySummary(),
+        relations: {},
+      );
+      expect(
+        belowQuotaPeerGpPeaceTargets(game: game, snapshot: snapshot),
+        ['gp5'],
       );
     });
   });

@@ -109,6 +109,12 @@ List<String> belowQuotaPeerGpPeaceTargets({
     if (!minorsOnMap && !mutualPlateau) {
       continue;
     }
+    if (mutualPlateau &&
+        gpOnlyFrontier &&
+        !hasUninvadedOldWorldMinor(game: game, snapshot: snapshot) &&
+        ownOw > partnerOw) {
+      continue;
+    }
     if ((partnerOw - ownOw).abs() > 1) {
       continue;
     }

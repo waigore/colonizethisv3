@@ -85,7 +85,7 @@ void main() {
   );
 
   test(
-    'belowQuotaPeerGpPeaceTargets peace mutual plateau peer without minors on map',
+    'belowQuotaPeerGpPeaceTargets peace mutual plateau peer without invadable frontier',
     () {
       final game = Game(
         id: 'g-peer-plateau-no-minors',
