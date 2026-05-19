@@ -1,19 +1,8 @@
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'orders_application_context.dart';
-import 'work_handlers/simple_work_order_handler.dart';
-import 'work_handlers/standard_work_handler.dart';
 import 'work_handlers/work_order_handler.dart';
-
-final List<WorkOrderHandler> _workOrderHandlers = [
-  purchaseLandWorkOrderHandler,
-  stealTechWorkOrderHandler,
-  counterSpyWorkOrderHandler,
-  prospectWorkOrderHandler,
-  BuildImprovementWorkOrderHandler(),
-  exploreWorkOrderHandler,
-  RemainingStandardBuildTargetsWorkOrderHandler(),
-];
+import 'work_handlers/work_order_handler_registry.dart';
 
 BuildWorkState runWorkPhase(
   BuildWorkState state,
@@ -48,8 +37,8 @@ BuildWorkState runWorkPhase(
       final hasValidTarget = targetTileKey.isNotEmpty;
       var handled = false;
       var applied = false;
-      for (final handler in _workOrderHandlers) {
-        if (!handler.supports(order.target)) continue;
+      final handler = workOrderHandlerForTarget(order.target);
+      if (handler != null) {
         handled = handler.tryApply(
           context,
           order,
@@ -57,11 +46,11 @@ BuildWorkState runWorkPhase(
           targetTileKey,
           hasValidTarget,
         );
-        if (!handled) continue;
-        final nextUnit = context.lookupUnit(order.unitId);
-        final nextWork = nextUnit?.currentWork;
-        applied = nextWork != null && nextWork.workTarget == order.target;
-        break;
+        if (handled) {
+          final nextUnit = context.lookupUnit(order.unitId);
+          final nextWork = nextUnit?.currentWork;
+          applied = nextWork != null && nextWork.workTarget == order.target;
+        }
       }
       current.onWorkOrderTrace?.call(
         playerId: player.id,
