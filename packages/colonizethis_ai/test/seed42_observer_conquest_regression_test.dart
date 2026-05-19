@@ -79,8 +79,8 @@ void main() {
     },
     skip:
         'Partial AC #2509 S10: seed-42 turn-100 — gp1/gp2/gp4 pass; '
-        'gp3 net -1, gp5 +1, gp6 +2 (GP-blocker conquest still short after '
-        'GP-only peace-pass skip + plateau mutual peace off)',
+        'gp3 net -2 (peak by turn 20 then loss), gp5 +2, gp6 +1 '
+        '(gp5/gp6 GP-only blocker stalemate; survival peace narrowed to <6 OW)',
     timeout: const Timeout(Duration(minutes: 15)),
   );
 }

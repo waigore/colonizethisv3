@@ -398,6 +398,10 @@ bool stalledOwExpansionNeedsPeacePass({
     criticalOwHoldPeaceTargets(game: game, snapshot: snapshot).isNotEmpty ||
     stalledBelowQuotaGpLeadPeaceTargets(game: game, snapshot: snapshot)
         .isNotEmpty ||
+    belowQuotaPeerGpPeaceTargets(game: game, snapshot: snapshot).isNotEmpty ||
+    nearQuotaHoldPeaceTargets(game: game, snapshot: snapshot).isNotEmpty ||
+    quotaMetBelowQuotaAtWarPeaceTargets(game: game, snapshot: snapshot)
+        .isNotEmpty ||
     quotaMetFutileBelowQuotaGpPeaceTargets(game: game, snapshot: snapshot)
         .isNotEmpty ||
     unwinnableSoleGpFrontierPeaceTarget(game: game, snapshot: snapshot) !=
@@ -476,6 +480,9 @@ Set<String> collectStalledGreatPowerPeaceTargets({
       stalledStrongerGpBlockerPeaceTarget(game: game, snapshot: snapshot)!,
     ...criticalOwHoldPeaceTargets(game: game, snapshot: snapshot),
     ...stalledBelowQuotaGpLeadPeaceTargets(game: game, snapshot: snapshot),
+    ...belowQuotaPeerGpPeaceTargets(game: game, snapshot: snapshot),
+    ...nearQuotaHoldPeaceTargets(game: game, snapshot: snapshot),
+    ...quotaMetBelowQuotaAtWarPeaceTargets(game: game, snapshot: snapshot),
     ...quotaMetFutileBelowQuotaGpPeaceTargets(game: game, snapshot: snapshot),
     if (unwinnableSoleGpFrontierPeaceTarget(game: game, snapshot: snapshot)
         case final enemy?)
@@ -489,6 +496,10 @@ Set<String> collectStalledGreatPowerPeaceTargets({
           isOldWorldGpOnlyInvadableFrontier(game: game, snapshot: snapshot)
       ? primaryInvadableOldWorldGpBlocker(game: game, snapshot: snapshot)
       : null;
+  final unwinnableBlockerPeace = unwinnableSoleGpFrontierPeaceTarget(
+    game: game,
+    snapshot: snapshot,
+  );
   final preserveBlockerPeace = <String>{
     if (!isOldWorldGpOnlyInvadableFrontier(game: game, snapshot: snapshot))
       ...weakHoldingsInvadableBlockerPeaceTargets(
@@ -499,6 +510,10 @@ Set<String> collectStalledGreatPowerPeaceTargets({
       game: game,
       snapshot: snapshot,
     ),
+    if (unwinnableBlockerPeace != null) unwinnableBlockerPeace,
+    ...quotaMetBelowQuotaAtWarPeaceTargets(game: game, snapshot: snapshot),
+    ...belowQuotaPeerGpPeaceTargets(game: game, snapshot: snapshot),
+    ...nearQuotaHoldPeaceTargets(game: game, snapshot: snapshot),
   };
   return targets
       .where(
