@@ -254,6 +254,13 @@ int _declareWarAdjacencyAndStalledBonuses(
       !ctx.invadableOwners.contains(ctx.order.targetFactionId)) {
     s += kDeclareWarStalledGpBlockerDistantMinorBonus;
   }
+  if (ctx.snapshot.conquest.oldWorldProvincesOwned ==
+          kObserverDefaultStartOldWorldProvincesPerGp &&
+      ctx.isMinorTarget &&
+      !ctx.isTribeTarget &&
+      ctx.invadableOwOwnedByGp) {
+    s += kDeclareWarDefaultStartOwMinorBonus;
+  }
   if (ctx.stalledOwExpansion &&
       ctx.behindVictoryPace &&
       ctx.invadableOwOwnedByGp &&

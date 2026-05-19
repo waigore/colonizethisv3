@@ -136,7 +136,7 @@ const int kDeclareWarPlateauOwMinorBonus = 1050;
 
 /// Extra declare-war weight toward invadable minors when 8–9 OW (one province
 /// short of the turn-100 observer gate from default start; Refs #2509).
-const int kDeclareWarNearObserverQuotaMinorBonus = 260;
+const int kDeclareWarNearObserverQuotaMinorBonus = 340;
 
 /// Penalize tribe declare-war while OW holdings are stalled and invadable OW
 /// minors remain (tribes without sea-reachable NW provinces for this GP).
@@ -499,6 +499,9 @@ const int kDeclareWarStalledGpInvadableBlockerFloor = 500;
 /// Declare-war bonus toward a non-adjacent minor while invadable OW land is
 /// blocked by Great Powers (seed-42 mid-map geography; Refs #2509).
 const int kDeclareWarStalledGpBlockerDistantMinorBonus = 160;
+
+/// Declare-war bonus on any OW minor while still at default observer start size.
+const int kDeclareWarDefaultStartOwMinorBonus = 240;
 
 /// Declare-war bonus toward any minor that still holds OW provinces when this
 /// GP is stalled, far from victory, and frontier invadable land is GP-owned.

@@ -121,6 +121,63 @@ String? plateauOwMinorDeclareTarget({
   return sorted.first;
 }
 
+/// Any OW minor not yet at war while still at default observer start size (seed-42
+/// gp4 minor-frontier starvation; Refs #2509).
+String? defaultStartOwMinorDeclareTarget({
+  required Game game,
+  required AIWorldSnapshot snapshot,
+}) {
+  final ownOw = snapshot.conquest.oldWorldProvincesOwned;
+  if (ownOw != kObserverDefaultStartOldWorldProvincesPerGp ||
+      !isBelowObserverConquestQuota(ownOw) ||
+      !isOldWorldGpOnlyInvadableFrontier(game: game, snapshot: snapshot)) {
+    return null;
+  }
+  final gpWars = <String>[
+    for (final factionId in snapshot.threats.atWarWith)
+      if (game.playerById(factionId) != null) factionId,
+  ];
+  if (gpWars.length > 1) {
+    return null;
+  }
+  if (gpWars.length == 1 &&
+      !isMutualBelowQuotaPlateauPeer(
+        ownOw: ownOw,
+        partnerOw: provinceCountOwnedBy(game, gpWars.single),
+      )) {
+    return null;
+  }
+  final candidates = <String>{};
+  if (snapshot.conquest.invadableProvinceIdsSorted.isNotEmpty) {
+    final provinceOwner = getProvinceOwnerMap(game);
+    for (final pid in snapshot.conquest.invadableProvinceIdsSorted) {
+      final owner = provinceOwner[pid];
+      if (owner == null ||
+          !game.minorNations.any((m) => m.id == owner) ||
+          snapshot.threats.atWarWith.contains(owner)) {
+        continue;
+      }
+      candidates.add(owner);
+    }
+  }
+  for (final minor in game.minorNations) {
+    if (snapshot.threats.atWarWith.contains(minor.id)) {
+      continue;
+    }
+    final ownsOw = game.worldState.oldWorld.provinces.any(
+      (p) => p.ownerId == minor.id,
+    );
+    if (ownsOw) {
+      candidates.add(minor.id);
+    }
+  }
+  if (candidates.isEmpty) {
+    return null;
+  }
+  final sorted = candidates.toList()..sort();
+  return sorted.first;
+}
+
 /// Declare on an invadable OW Great Power while stalled below the observer quota.
 String? stalledInvadableGpOwnerDeclareTarget({
   required Game game,
@@ -337,13 +394,19 @@ List<DiplomaticOrder> _filterDiplomacyCandidatesForPass({
       snapshot: snapshot,
     );
     if (blocker != null && gpOnlyFrontier) {
-      filtered = filtered
-          .where(
-            (o) =>
-                o.type != DiplomaticOrderType.declareWar ||
-                o.targetFactionId == blocker,
-          )
-          .toList();
+      final mutualPlateauBlocker = isMutualBelowQuotaPlateauPeer(
+        ownOw: snapshot.conquest.oldWorldProvincesOwned,
+        partnerOw: provinceCountOwnedBy(ctx.game, blocker),
+      );
+      if (!mutualPlateauBlocker) {
+        filtered = filtered
+            .where(
+              (o) =>
+                  o.type != DiplomaticOrderType.declareWar ||
+                  o.targetFactionId == blocker,
+            )
+            .toList();
+      }
     } else if (blocker != null && consolidateGpFronts) {
       filtered = filtered
           .where(
@@ -479,6 +542,39 @@ DiplomacyPlannerResult? _stalledInvadableGpOwnerDeclarePlannerResultIfNeeded({
       targetFor: stalledInvadableGpOwnerDeclareTarget,
       logLabel: 'stalledInvadableGp',
     );
+
+DiplomacyPlannerResult? _defaultStartOwMinorDeclarePlannerResultIfNeeded({
+  required PlannerContext ctx,
+  required AIWorldSnapshot snapshot,
+  required DiplomacyPlannerPass pass,
+}) {
+  if (pass != DiplomacyPlannerPass.declareWarOnly) {
+    return null;
+  }
+  final minorTarget = defaultStartOwMinorDeclareTarget(
+    game: ctx.game,
+    snapshot: snapshot,
+  );
+  if (minorTarget == null) {
+    return null;
+  }
+  _log.i(
+    'diplomacy forced declareWar nationId=${ctx.nationId} '
+    'defaultStartMinor=$minorTarget',
+  );
+  return DiplomacyPlannerResult(
+    orders: ctx.orders.appendDiplomaticOrders(
+      ctx.nationId,
+      [
+        DiplomaticOrder(
+          type: DiplomaticOrderType.declareWar,
+          targetFactionId: minorTarget,
+        ),
+      ],
+    ),
+    declaredWarTargetFactionId: minorTarget,
+  );
+}
 
 DiplomacyPlannerResult? _plateauOwMinorDeclarePlannerResultIfNeeded({
   required PlannerContext ctx,
@@ -646,6 +742,15 @@ DiplomacyPlannerResult runDiplomacyPlannerWithResult({
     );
     if (stalledGpDeclareResult != null) {
       return stalledGpDeclareResult;
+    }
+    final defaultStartMinorResult =
+        _defaultStartOwMinorDeclarePlannerResultIfNeeded(
+      ctx: ctx,
+      snapshot: snapshot,
+      pass: pass,
+    );
+    if (defaultStartMinorResult != null) {
+      return defaultStartMinorResult;
     }
     final plateauMinorResult = _plateauOwMinorDeclarePlannerResultIfNeeded(
       ctx: ctx,

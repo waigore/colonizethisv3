@@ -471,6 +471,61 @@ void main() {
   );
 
   test(
+    'defaultStartOwMinorDeclareTarget picks distant minor at 7 OW',
+    () {
+      final game = Game(
+        id: 'g-default-start-minor',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 50),
+          oldWorld: RegionData(
+            provinces: [
+              for (var i = 1; i <= 7; i++)
+                Province(
+                  id: 'oldWorld|gp4_$i',
+                  regionId: 'oldWorld',
+                  ownerId: 'gp4',
+                ),
+              const Province(
+                id: 'oldWorld|minor3',
+                regionId: 'oldWorld',
+                ownerId: 'minor3',
+              ),
+              const Province(
+                id: 'oldWorld|p99',
+                regionId: 'oldWorld',
+                ownerId: 'gp3',
+              ),
+            ],
+          ),
+          newWorld: const RegionData(),
+        ),
+        players: const [
+          Player(id: 'gp3', displayName: 'P3', isHuman: false),
+          Player(id: 'gp4', displayName: 'P4', isHuman: false),
+        ],
+        minorNations: const [MinorNation(id: 'minor3', displayName: 'M3')],
+      );
+      const snapshot = AIWorldSnapshot(
+        playerId: 'gp4',
+        threats: ThreatSummary(),
+        opportunities: OpportunitySummary(),
+        conquest: ConquestSummary(
+          oldWorldProvincesOwned: 7,
+          invadableProvinceIdsSorted: ['oldWorld|p99'],
+          adjacentOwnerFactionIdsSorted: ['gp3'],
+        ),
+        colonial: ColonialSummary(),
+        economy: EconomySummary(),
+        relations: {},
+      );
+      expect(
+        defaultStartOwMinorDeclareTarget(game: game, snapshot: snapshot),
+        'minor3',
+      );
+    },
+  );
+
+  test(
     'plateauOwMinorDeclareTarget allows mutual plateau war on mixed frontier',
     () {
       final game = Game(
