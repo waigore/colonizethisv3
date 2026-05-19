@@ -81,8 +81,20 @@ String? plateauOwMinorDeclareTarget({
       !isBelowObserverConquestQuota(ownOw)) {
     return null;
   }
-  if (snapshot.threats.atWarWith.any((id) => game.playerById(id) != null)) {
-    return null;
+  final gpWars = <String>[
+    for (final factionId in snapshot.threats.atWarWith)
+      if (game.playerById(factionId) != null) factionId,
+  ];
+  if (gpWars.isNotEmpty) {
+    final allowMutualPlateauPivot = gpWars.length == 1 &&
+        isOldWorldGpOnlyInvadableFrontier(game: game, snapshot: snapshot) &&
+        isMutualBelowQuotaPlateauPeer(
+          ownOw: ownOw,
+          partnerOw: provinceCountOwnedBy(game, gpWars.single),
+        );
+    if (!allowMutualPlateauPivot) {
+      return null;
+    }
   }
   final candidates = <String>{
     for (final factionId in snapshot.conquest.adjacentOwnerFactionIdsSorted)
@@ -102,6 +114,44 @@ String? plateauOwMinorDeclareTarget({
       }
       candidates.add(owner);
     }
+  }
+  if (candidates.isEmpty) {
+    return null;
+  }
+  final sorted = candidates.toList()..sort();
+  return sorted.first;
+}
+
+/// Declare on an invadable OW Great Power while stalled below the observer quota.
+String? stalledInvadableGpOwnerDeclareTarget({
+  required Game game,
+  required AIWorldSnapshot snapshot,
+}) {
+  final ownOw = snapshot.conquest.oldWorldProvincesOwned;
+  if (!isStalledOldWorldExpansion(ownOw) ||
+      !isBelowObserverConquestQuota(ownOw)) {
+    return null;
+  }
+  if (snapshot.conquest.invadableProvinceIdsSorted.isEmpty) {
+    return null;
+  }
+  final provinceOwner = getProvinceOwnerMap(game);
+  final candidates = <String>{};
+  for (final pid in snapshot.conquest.invadableProvinceIdsSorted) {
+    final owner = provinceOwner[pid];
+    if (owner == null || game.playerById(owner) == null) {
+      continue;
+    }
+    if (snapshot.threats.atWarWith.contains(owner)) {
+      continue;
+    }
+    if (isMutualBelowQuotaPlateauPeer(
+      ownOw: ownOw,
+      partnerOw: provinceCountOwnedBy(game, owner),
+    )) {
+      continue;
+    }
+    candidates.add(owner);
   }
   if (candidates.isEmpty) {
     return null;
@@ -361,14 +411,46 @@ List<DiplomaticOrder> _filterDiplomacyCandidatesForPass({
   }
 }
 
+DiplomacyPlannerResult? _forcedInvadableGpDeclarePlannerResultIfNeeded({
+  required PlannerContext ctx,
+  required AIWorldSnapshot snapshot,
+  required DiplomacyPlannerPass pass,
+  required String? Function({
+    required Game game,
+    required AIWorldSnapshot snapshot,
+  }) targetFor,
+  required String logLabel,
+}) {
+  if (pass != DiplomacyPlannerPass.declareWarOnly) {
+    return null;
+  }
+  final target = targetFor(game: ctx.game, snapshot: snapshot);
+  if (target == null) {
+    return null;
+  }
+  _log.i(
+    'diplomacy forced declareWar nationId=${ctx.nationId} '
+    '$logLabel=$target',
+  );
+  return DiplomacyPlannerResult(
+    orders: ctx.orders.appendDiplomaticOrders(
+      ctx.nationId,
+      [
+        DiplomaticOrder(
+          type: DiplomaticOrderType.declareWar,
+          targetFactionId: target,
+        ),
+      ],
+    ),
+    declaredWarTargetFactionId: target,
+  );
+}
+
 DiplomacyPlannerResult? _plateauGpBlockerDeclarePlannerResultIfNeeded({
   required PlannerContext ctx,
   required AIWorldSnapshot snapshot,
   required DiplomacyPlannerPass pass,
 }) {
-  if (pass != DiplomacyPlannerPass.declareWarOnly) {
-    return null;
-  }
   if (!isBelowObserverConquestQuota(
     snapshot.conquest.oldWorldProvincesOwned,
   )) {
@@ -377,30 +459,27 @@ DiplomacyPlannerResult? _plateauGpBlockerDeclarePlannerResultIfNeeded({
   if (!isOldWorldGpOnlyInvadableFrontier(game: ctx.game, snapshot: snapshot)) {
     return null;
   }
-  final blocker = stalledGpBlockerDeclareWarTarget(
-    game: ctx.game,
+  return _forcedInvadableGpDeclarePlannerResultIfNeeded(
+    ctx: ctx,
     snapshot: snapshot,
-  );
-  if (blocker == null) {
-    return null;
-  }
-  _log.i(
-    'diplomacy forced declareWar nationId=${ctx.nationId} '
-    'gpBlocker=$blocker',
-  );
-  return DiplomacyPlannerResult(
-    orders: ctx.orders.appendDiplomaticOrders(
-      ctx.nationId,
-      [
-        DiplomaticOrder(
-          type: DiplomaticOrderType.declareWar,
-          targetFactionId: blocker,
-        ),
-      ],
-    ),
-    declaredWarTargetFactionId: blocker,
+    pass: pass,
+    targetFor: stalledGpBlockerDeclareWarTarget,
+    logLabel: 'gpBlocker',
   );
 }
+
+DiplomacyPlannerResult? _stalledInvadableGpOwnerDeclarePlannerResultIfNeeded({
+  required PlannerContext ctx,
+  required AIWorldSnapshot snapshot,
+  required DiplomacyPlannerPass pass,
+}) =>
+    _forcedInvadableGpDeclarePlannerResultIfNeeded(
+      ctx: ctx,
+      snapshot: snapshot,
+      pass: pass,
+      targetFor: stalledInvadableGpOwnerDeclareTarget,
+      logLabel: 'stalledInvadableGp',
+    );
 
 DiplomacyPlannerResult? _plateauOwMinorDeclarePlannerResultIfNeeded({
   required PlannerContext ctx,
@@ -559,6 +638,15 @@ DiplomacyPlannerResult runDiplomacyPlannerWithResult({
     );
     if (blockerDeclareResult != null) {
       return blockerDeclareResult;
+    }
+    final stalledGpDeclareResult =
+        _stalledInvadableGpOwnerDeclarePlannerResultIfNeeded(
+      ctx: ctx,
+      snapshot: snapshot,
+      pass: pass,
+    );
+    if (stalledGpDeclareResult != null) {
+      return stalledGpDeclareResult;
     }
     final plateauMinorResult = _plateauOwMinorDeclarePlannerResultIfNeeded(
       ctx: ctx,

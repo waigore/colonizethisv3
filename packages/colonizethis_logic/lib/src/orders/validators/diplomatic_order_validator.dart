@@ -56,37 +56,31 @@ class DiplomaticOrderValidator extends StatefulValidator {
        _playerId = playerId,
        _factionMembership = factionMembership,
        super(
-         stockpileState: game.playerById(playerId)?.stockpile ?? Stockpile.empty,
+         stockpileState:
+             game.playerById(playerId)?.stockpile ?? Stockpile.empty,
          treasuryState: initialTreasury,
          workerPoolState:
              game.playerById(playerId)?.workerPool ?? WorkerPool.empty,
        ) {
+    final subValidatorContext = DiplomaticSubValidatorContext(
+      game: _game,
+      playerId: _playerId,
+      factionMembership: _factionMembership,
+    );
     _subValidators = <DiplomaticOrderType, DiplomaticSubValidator>{
-      DiplomaticOrderType.declareWar: DeclareWarSubValidator(
-        game: _game,
-        playerId: _playerId,
+      DiplomaticOrderType.declareWar: declareWarSubValidator(
+        subValidatorContext,
       ),
-      DiplomaticOrderType.offerPeace: OfferPeaceSubValidator(
-        game: _game,
-        playerId: _playerId,
+      DiplomaticOrderType.offerPeace: offerPeaceSubValidator(
+        subValidatorContext,
       ),
-      DiplomaticOrderType.alliance: AllianceSubValidator(
-        game: _game,
-        playerId: _playerId,
-        factionMembership: _factionMembership,
-      ),
+      DiplomaticOrderType.alliance: allianceSubValidator(subValidatorContext),
       DiplomaticOrderType.establishOverture: EstablishOvertureSubValidator(
-        game: _game,
-        playerId: _playerId,
-        factionMembership: _factionMembership,
+        context: subValidatorContext,
       ),
-      DiplomaticOrderType.grantAid: GrantAidSubValidator(
-        game: _game,
-        playerId: _playerId,
-      ),
-      DiplomaticOrderType.setSubsidy: SetSubsidySubValidator(
-        game: _game,
-        playerId: _playerId,
+      DiplomaticOrderType.grantAid: grantAidSubValidator(subValidatorContext),
+      DiplomaticOrderType.setSubsidy: setSubsidySubValidator(
+        subValidatorContext,
       ),
     };
   }

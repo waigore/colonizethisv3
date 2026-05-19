@@ -57,10 +57,8 @@ class JoinEmpireOvertureValidator {
     return acceptDiplomaticSub(treasury);
   }
 
-  ({OrderValidationResult result, int treasury}) _validateJoinEmpireTowardGreatPower(
-    String targetId,
-    int treasury,
-  ) {
+  ({OrderValidationResult result, int treasury})
+  _validateJoinEmpireTowardGreatPower(String targetId, int treasury) {
     final submitter = game.playerById(playerId);
     if (submitter?.techUnlocked?[kTechIdEmpireBuilding] != true) {
       return rejectDiplomaticSub(
