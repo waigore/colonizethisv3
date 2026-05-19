@@ -1,5 +1,6 @@
 import 'package:colonizethis_models/colonizethis_models.dart';
 
+import '../world/game_world_mutations.dart';
 import 'turn_resolution_result.dart';
 
 /// Immutable carry-over between economy and combat phases (feeding coverage,
@@ -40,6 +41,11 @@ class TurnPipelineState {
       idleLabourByPlayerId: idleLabourByPlayerId ?? this.idleLabourByPlayerId,
     );
   }
+
+  /// Returns a copy whose [game.worldState] is updated via [update] (Refs #2560).
+  TurnPipelineState updateWorldState(
+    WorldState Function(WorldState current) update,
+  ) => copyWith(game: game.updateWorldState(update));
 }
 
 /// Result of stepping one turn phase: continue the pipeline or exit with a
