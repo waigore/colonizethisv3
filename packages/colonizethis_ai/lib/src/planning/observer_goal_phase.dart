@@ -78,6 +78,65 @@ bool isObserverDevelopPhase({
     observerGoalPhaseFor(snapshot: snapshot, game: game) ==
     ObserverGoalPhase.develop;
 
+bool isObserverColonialPhase({
+  required AIWorldSnapshot snapshot,
+  Game? game,
+}) =>
+    observerGoalPhaseFor(snapshot: snapshot, game: game) ==
+    ObserverGoalPhase.colonial;
+
+/// GP owning the most invadable New World provinces (colonial frontier blocker).
+String? primaryColonialGpBlocker({
+  required Game game,
+  required AIWorldSnapshot snapshot,
+}) {
+  final provinceOwner = getProvinceOwnerMap(game);
+  String? bestGpId;
+  var bestCount = 0;
+  for (final provinceId in snapshot.colonial.invadableNewWorldProvinceIdsSorted) {
+    final owner = provinceOwner[provinceId];
+    if (owner == null || game.playerById(owner) == null) {
+      continue;
+    }
+    var count = 0;
+    for (final pid in snapshot.colonial.invadableNewWorldProvinceIdsSorted) {
+      if (provinceOwner[pid] == owner) {
+        count++;
+      }
+    }
+    if (count > bestCount) {
+      bestCount = count;
+      bestGpId = owner;
+    }
+  }
+  return bestGpId;
+}
+
+/// COLONIAL: peace non-blocker Great Power fronts when fighting 2+ GPs (Refs #2509 S10).
+List<String> colonialPhaseGpPeaceTargets({
+  required Game game,
+  required AIWorldSnapshot snapshot,
+}) {
+  if (!isObserverColonialPhase(snapshot: snapshot, game: game)) {
+    return const [];
+  }
+  final gpWars = <String>[
+    for (final factionId in snapshot.threats.atWarWith)
+      if (game.playerById(factionId) != null) factionId,
+  ];
+  if (gpWars.length <= 1) {
+    return const [];
+  }
+  final blocker = primaryColonialGpBlocker(game: game, snapshot: snapshot);
+  if (blocker == null || !gpWars.contains(blocker)) {
+    return const [];
+  }
+  return <String>[
+    for (final factionId in gpWars)
+      if (factionId != blocker) factionId,
+  ]..sort();
+}
+
 /// EXPAND phase: suppress NW colonial diplomacy, military, civilian, and naval work.
 bool shouldSuppressNewWorldColonialOrders({
   required AIWorldSnapshot snapshot,

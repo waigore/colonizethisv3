@@ -3,6 +3,7 @@ import 'army_conquest_prep.dart';
 import 'planning_imports.dart';
 import 'colonial_pressure.dart';
 import 'observer_goal_phase.dart';
+import 'observer_goal_phase.dart';
 
 /// Strongest at-war GP that owns invadable OW provinces while this GP is stalled.
 String? stalledStrongerGpBlockerPeaceTarget({
@@ -481,6 +482,7 @@ Set<String> collectStalledGreatPowerPeaceTargets({
 }) {
   final targets = <String>{
     ...developPhaseGpPeaceTargets(game: game, snapshot: snapshot),
+    ...colonialPhaseGpPeaceTargets(game: game, snapshot: snapshot),
     ...stalledFutileGpPeaceTargets(game: game, snapshot: snapshot),
     ...stalledGpBlockerFocusPeaceTargets(game: game, snapshot: snapshot),
     ...stalledExpansionDistractionPeaceTargets(

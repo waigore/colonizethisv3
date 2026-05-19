@@ -341,6 +341,118 @@ void main() {
     });
   });
 
+  group('colonialPhaseGpPeaceTargets', () {
+    test('peaces non-blocker GP when two GPs at war in colonial phase', () {
+      final game = Game(
+        id: 'g-colonial-peace',
+        worldState: WorldState(
+          turnState: const TurnState(turnNumber: 110, phase: TurnPhase.orders),
+          oldWorld: const RegionData(),
+          newWorld: RegionData(
+            provinces: [
+              const Province(
+                id: 'newWorld|nw1',
+                regionId: 'newWorld',
+                ownerId: 'gp2',
+              ),
+              const Province(
+                id: 'newWorld|nw2',
+                regionId: 'newWorld',
+                ownerId: 'tribe1',
+              ),
+            ],
+          ),
+        ),
+        players: const [
+          Player(id: 'gp1', displayName: 'P1', isHuman: false),
+          Player(id: 'gp2', displayName: 'P2', isHuman: false),
+        ],
+        tribes: const [Tribe(id: 'tribe1', displayName: 'T1')],
+        minorNations: const [],
+      );
+      const snapshot = AIWorldSnapshot(
+        playerId: 'gp1',
+        threats: const ThreatSummary(atWarWith: ['gp2', 'gp3']),
+        opportunities: OpportunitySummary(),
+        conquest: ConquestSummary(oldWorldProvincesOwned: 11),
+        colonial: ColonialSummary(
+          invadableNewWorldProvinceIdsSorted: ['newWorld|nw1', 'newWorld|nw2'],
+          adjacentNewWorldOwnerFactionIdsSorted: ['gp2', 'tribe1'],
+        ),
+        economy: EconomySummary(),
+        relations: {},
+      );
+      expect(
+        colonialPhaseGpPeaceTargets(game: game, snapshot: snapshot),
+        isEmpty,
+      );
+      final gameWithGp3 = game.copyWith(
+        players: [
+          ...game.players,
+          const Player(id: 'gp3', displayName: 'P3', isHuman: false),
+        ],
+      );
+      expect(
+        colonialPhaseGpPeaceTargets(game: gameWithGp3, snapshot: snapshot),
+        ['gp3'],
+      );
+    });
+  });
+
+  group('COLONIAL allows NW tribe declareWar scoring', () {
+    test('tribe declare-war is not suppressed at OW quota', () {
+      final game = Game(
+        id: 'g-colonial-declare',
+        worldState: WorldState(
+          turnState: const TurnState(turnNumber: 110, phase: TurnPhase.orders),
+          oldWorld: const RegionData(),
+          newWorld: RegionData(
+            provinces: [
+              const Province(
+                id: 'newWorld|nw1',
+                regionId: 'newWorld',
+                ownerId: 'tribe1',
+              ),
+            ],
+          ),
+        ),
+        players: const [Player(id: 'gp1', displayName: 'P1', isHuman: false)],
+        tribes: const [Tribe(id: 'tribe1', displayName: 'T1')],
+        minorNations: const [],
+      );
+      const snapshot = AIWorldSnapshot(
+        playerId: 'gp1',
+        threats: ThreatSummary(),
+        opportunities: OpportunitySummary(),
+        conquest: ConquestSummary(oldWorldProvincesOwned: 11),
+        colonial: ColonialSummary(
+          invadableNewWorldProvinceIdsSorted: ['newWorld|nw1'],
+          adjacentNewWorldOwnerFactionIdsSorted: ['tribe1'],
+        ),
+        economy: EconomySummary(),
+        relations: {},
+      );
+      final scores = computeDiplomaticCandidateScores(
+        game: game,
+        snapshot: snapshot,
+        nationId: 'gp1',
+        config: const AIConfig(
+          leaderId: 'henry',
+          personalityId: 'henry',
+          hiddenAgendaId: 'merchant',
+        ),
+        candidates: const [
+          DiplomaticOrder(
+            type: DiplomaticOrderType.declareWar,
+            targetFactionId: 'tribe1',
+          ),
+        ],
+        primaryGoal: StrategicGoal.conquer,
+      );
+      expect(scores.single, greaterThan(0));
+    });
+  });
+
   group('developPhaseGpPeaceTargets', () {
     test('lists all at-war GPs in develop phase', () {
       final game = Game(

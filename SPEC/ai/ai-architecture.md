@@ -124,6 +124,8 @@ Deterministic phases from `PlayerView` → `AIWorldSnapshot` (`observer_goal_pha
 
 **COLONIAL-lite** (turn ≥`kObserverColonialLiteMinTurn`, OW ≥`kObserverColonialLiteNearQuotaOw` and below quota, global `newWorld|` not all GP-owned): allows `establishOverture`, colonial naval/cargo; suppresses NW `declareWar`, invasion army moves, and `purchase_land` only.
 
+**COLONIAL:** `offerPeace` toward at-war Great Powers that do not own the primary colonial NW frontier blocker when fighting two or more GPs; tribe/minor colonial wars continue until objectives clear.
+
 **DEVELOP:** Suppresses all new `declareWar` and NW acquisition; forces civilian work selection with improvement-first threshold (`kDevelopCivilianWorkThresholdCap`); `offerPeace` toward all at-war Great Powers.
 
 ### Implementation (turn pipeline)
