@@ -39,6 +39,9 @@ class GameMapCanvasStack extends ConsumerWidget {
     required this.onCivilianTileSelectionCleared,
     required this.onRegionViewportSnapshot,
     required this.zoomMultiplier,
+    this.visibilityMode = CtMapVisibilityMode.playerConstrained,
+    this.omniscientDetail = false,
+    this.canMutateViaUi = true,
     this.bus,
     super.key,
   });
@@ -64,6 +67,9 @@ class GameMapCanvasStack extends ConsumerWidget {
   final void Function(RegionMapViewportSnapshot snapshot)
   onRegionViewportSnapshot;
   final double zoomMultiplier;
+  final CtMapVisibilityMode visibilityMode;
+  final bool omniscientDetail;
+  final bool canMutateViaUi;
   final ct_models.AppEventBus? bus;
 
   @override
@@ -83,8 +89,11 @@ class GameMapCanvasStack extends ConsumerWidget {
                   showProvinceOverlay: showProvinceOverlay,
                   showProvinceOwnershipTint: showProvinceOwnershipTint,
                   showProvinceNamesLayer: showProvinceNamesLayer,
-                  visibilityMode: CtMapVisibilityMode.playerConstrained,
-                  playerViewForResources: playerView,
+                  visibilityMode: visibilityMode,
+                  playerViewForResources:
+                      visibilityMode == CtMapVisibilityMode.playerConstrained
+                      ? playerView
+                      : null,
                   baseLayerDisplayMode: baseLayerDisplayMode,
                   onProvinceSelected: null,
                   onMapTileTappedForDetail: inWorkTargetSelectionMode
@@ -119,6 +128,8 @@ class GameMapCanvasStack extends ConsumerWidget {
                   region: region,
                   humanPlayerId: humanPlayerId,
                   playerView: playerView,
+                  omniscientDetail: omniscientDetail,
+                  canMutateViaUi: canMutateViaUi,
                   workTargetSelectionCache: workTargetSelectionCache,
                 ),
             ],

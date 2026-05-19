@@ -37,6 +37,7 @@ class DebugConsoleCommandParser {
       '/reveal_province' => _parseRevealProvince(tokens),
       '/get_tile_basic_info' => _parseGetTileBasicInfo(tokens),
       '/list_players' => _parseListPlayers(tokens),
+      '/observe' => _parseObserve(tokens),
       '/help' => DebugConsoleParseResult.error(_buildHelpMessage()),
       _ => DebugConsoleParseResult.error(
         'Unknown command: $command. Try /help.',
@@ -308,6 +309,28 @@ class DebugConsoleCommandParser {
       DebugConsoleParsedInvocation.listPlayers(),
     );
   }
+
+  DebugConsoleParseResult _parseObserve(List<String> tokens) {
+    if (tokens.length == 1) {
+      return const DebugConsoleParseResult.success(
+        DebugConsoleParsedInvocation.setObserveGlobal(),
+      );
+    }
+    if (tokens.length == 2 && tokens[1].toLowerCase() == 'off') {
+      return const DebugConsoleParseResult.success(
+        DebugConsoleParsedInvocation.setObserveOff(),
+      );
+    }
+    if (tokens.length >= 2) {
+      final target = tokens.sublist(1).join(' ');
+      return DebugConsoleParseResult.success(
+        DebugConsoleParsedInvocation.setObservePlayer(target: target),
+      );
+    }
+    return const DebugConsoleParseResult.error(
+      'Usage: /observe | /observe off | /observe <player_id | display_name>',
+    );
+  }
 }
 
 String? _canonicalCommodityIdForInput(String normalizedInput) {
@@ -355,7 +378,10 @@ String _buildHelpMessage() {
       '- /reveal_province <regionId|localId | province_display_name>\n'
       '- /get_tile_basic_info\n'
       '  if name is ambiguous, retry with full province id.\n'
-      '- /list_players';
+      '- /list_players\n'
+      '- /observe\n'
+      '- /observe off\n'
+      '- /observe <player_id | display_name>';
 }
 
 bool _looksLikePrefixedProvinceId(String value) {

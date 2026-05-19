@@ -571,6 +571,23 @@ class RevealDebugProvinceEvent extends SessionCommandEvent {
   final bool targetIsFullProvinceId;
 }
 
+/// Exit in-app observe mode. SPEC/ui/observe-mode.md.
+class SetObserveModeOffEvent extends SessionCommandEvent {
+  const SetObserveModeOffEvent();
+}
+
+/// Enter global (omniscient) in-app observe mode. SPEC/ui/observe-mode.md.
+class SetObserveModeGlobalEvent extends SessionCommandEvent {
+  const SetObserveModeGlobalEvent();
+}
+
+/// Enter player-scoped in-app observe mode for [targetPlayerId].
+class SetObserveModePlayerEvent extends SessionCommandEvent {
+  const SetObserveModePlayerEvent({required this.targetPlayerId});
+
+  final String targetPlayerId;
+}
+
 /// Request to append one diplomatic order for [playerId] in current-turn draft.
 class AppendDiplomaticOrderRequestedEvent extends SessionCommandEvent {
   AppendDiplomaticOrderRequestedEvent({

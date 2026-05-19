@@ -1,6 +1,7 @@
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'debug_console_command_parser.dart';
+import 'debug_console_gp_target_resolver.dart';
 import 'debug_console_parsed_invocation.dart';
 
 /// Narrow read-only projection for `/list_players` (see SPEC/ui/debug-console-panel).
@@ -29,9 +30,13 @@ class DebugConsoleReadOnlyContext {
 class DebugConsoleCommandExecutor {
   const DebugConsoleCommandExecutor({
     DebugConsoleCommandParser parser = const DebugConsoleCommandParser(),
-  }) : _parser = parser;
+    DebugConsoleGpTargetResolver gpTargetResolver =
+        const DebugConsoleGpTargetResolver(),
+  }) : _parser = parser,
+       _gpTargetResolver = gpTargetResolver;
 
   final DebugConsoleCommandParser _parser;
+  final DebugConsoleGpTargetResolver _gpTargetResolver;
 
   DebugConsoleExecutionResult executeRaw({
     required String rawInput,
@@ -194,7 +199,40 @@ class DebugConsoleCommandExecutor {
         readOnlyContext,
       ),
       DebugConsoleListPlayers() => _executeListPlayers(readOnlyContext),
+      DebugConsoleSetObserveOff() => DebugConsoleExecutionResult.success(
+        events: const [SetObserveModeOffEvent()],
+        message: 'Queued observe mode: off.',
+      ),
+      DebugConsoleSetObserveGlobal() => DebugConsoleExecutionResult.success(
+        events: const [SetObserveModeGlobalEvent()],
+        message: 'Queued observe mode: global.',
+      ),
+      DebugConsoleSetObservePlayer(:final target) => _executeSetObservePlayer(
+        target,
+        readOnlyContext,
+      ),
     };
+  }
+
+  DebugConsoleExecutionResult _executeSetObservePlayer(
+    String target,
+    DebugConsoleReadOnlyContext? readOnlyContext,
+  ) {
+    final players = readOnlyContext?.players;
+    if (players == null) {
+      return const DebugConsoleExecutionResult.error(
+        'Player list is unavailable.',
+      );
+    }
+    final resolved = _gpTargetResolver.resolve(target: target, players: players);
+    if (!resolved.isSuccess) {
+      return DebugConsoleExecutionResult.error(resolved.errorMessage!);
+    }
+    final playerId = resolved.playerId!;
+    return DebugConsoleExecutionResult.success(
+      events: [SetObserveModePlayerEvent(targetPlayerId: playerId)],
+      message: 'Queued observe mode: player $playerId.',
+    );
   }
 }
 

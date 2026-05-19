@@ -40,6 +40,7 @@ import '../../features/game/widgets/pause_menu_panel.dart';
 import '../../providers/app_event_bus_provider.dart';
 import '../../providers/game_service_provider.dart';
 import '../../providers/games_provider.dart';
+import '../../providers/observe_session_provider.dart';
 import '../../providers/turn_resolution_blocking_provider.dart';
 
 typedef DialogBuilder =
@@ -224,6 +225,7 @@ class AppEventHandler {
         final container = ProviderScope.containerOf(ctx, listen: false);
         container.read(currentGameProvider.notifier).clear();
         container.read(currentOrdersProvider.notifier).clear();
+        container.read(observeSessionProvider.notifier).reset();
       } catch (e, st) {
         _log.d(
           'navigateToShell: skipped in-memory game clear (no ProviderScope)',
