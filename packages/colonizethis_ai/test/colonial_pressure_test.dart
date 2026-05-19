@@ -2,6 +2,8 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 import 'package:colonizethis_ai/src/perception/perception_snapshot.dart';
 import 'package:colonizethis_ai/src/planning/colonial_pressure.dart';
+import 'package:colonizethis_ai/src/planning/conquest_planner.dart';
+import 'package:colonizethis_ai/src/planning/diplomacy_planner_peace_targets.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 
 void main() {
@@ -235,6 +237,121 @@ void main() {
       expect(
         criticalOwHoldPeaceTargets(game: game, snapshot: snapshot),
         ['gp3'],
+      );
+    });
+  });
+
+  group('belowQuotaActiveMinorWarTarget', () {
+    test('returns at-war minor owning invadable provinces', () {
+      final game = Game(
+        id: 'g-active-minor',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 5),
+          oldWorld: RegionData(
+            provinces: [
+              const Province(
+                id: 'oldWorld|p1',
+                regionId: 'oldWorld',
+                ownerId: 'gp4',
+              ),
+              const Province(
+                id: 'oldWorld|p2',
+                regionId: 'oldWorld',
+                ownerId: 'minor1',
+              ),
+            ],
+          ),
+          newWorld: const RegionData(),
+        ),
+        players: const [
+          Player(id: 'gp4', displayName: 'P4', isHuman: false),
+        ],
+        minorNations: const [MinorNation(id: 'minor1', displayName: 'M1')],
+        diplomacyRelations: const [
+          DiplomacyRelation(
+            factionId1: 'gp4',
+            factionId2: 'minor1',
+            state: RelationState.atWar,
+            score: 10,
+          ),
+        ],
+      );
+      const snapshot = AIWorldSnapshot(
+        playerId: 'gp4',
+        threats: ThreatSummary(atWarWith: ['minor1']),
+        opportunities: OpportunitySummary(),
+        conquest: ConquestSummary(
+          oldWorldProvincesOwned: 7,
+          invadableProvinceIdsSorted: ['oldWorld|p2'],
+        ),
+        colonial: ColonialSummary(),
+        economy: EconomySummary(),
+        relations: {},
+      );
+      expect(
+        belowQuotaActiveMinorWarTarget(game: game, snapshot: snapshot),
+        'minor1',
+      );
+    });
+  });
+
+  group('stalledConquestDeclaredWarTarget', () {
+    test('prefers active below-quota minor war over null declare target', () {
+      final game = Game(
+        id: 'g-conquest-active-minor',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 3),
+          oldWorld: RegionData(
+            provinces: [
+              for (var i = 0; i < 7; i++)
+                Province(
+                  id: 'oldWorld|gp4_$i',
+                  regionId: 'oldWorld',
+                  ownerId: 'gp4',
+                ),
+              const Province(
+                id: 'oldWorld|minor1_cap',
+                regionId: 'oldWorld',
+                ownerId: 'minor1',
+              ),
+            ],
+          ),
+          newWorld: const RegionData(),
+        ),
+        players: const [
+          Player(id: 'gp4', displayName: 'P4', isHuman: false),
+        ],
+        minorNations: const [MinorNation(id: 'minor1', displayName: 'M1')],
+        diplomacyRelations: const [
+          DiplomacyRelation(
+            factionId1: 'gp4',
+            factionId2: 'minor1',
+            state: RelationState.atWar,
+            score: 10,
+          ),
+        ],
+      );
+      const snapshot = AIWorldSnapshot(
+        playerId: 'gp4',
+        threats: ThreatSummary(atWarWith: ['minor1']),
+        opportunities: OpportunitySummary(),
+        conquest: ConquestSummary(
+          oldWorldProvincesOwned: 7,
+          invadableProvinceIdsSorted: ['oldWorld|p_gp3_only'],
+        ),
+        colonial: ColonialSummary(),
+        economy: EconomySummary(),
+        relations: {},
+      );
+      expect(
+        stalledConquestDeclaredWarTarget(
+          game: game,
+          nationId: 'gp4',
+          snapshot: snapshot,
+          declaredThisTurn: null,
+        ),
+        'minor1',
+        reason: 'single at-war minor front while stalled below quota',
       );
     });
   });

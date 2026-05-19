@@ -2,6 +2,8 @@ import 'goal_manager.dart';
 import 'planning_imports.dart';
 import '../perception/perception_snapshot.dart';
 import 'colonial_pressure.dart';
+import 'diplomacy_planner_peace_targets.dart'
+    show belowQuotaActiveMinorWarTarget;
 import 'planner_context.dart';
 import '../util/ai_random_utils.dart';
 
@@ -20,6 +22,28 @@ String? stalledConquestDeclaredWarTarget({
   required AIWorldSnapshot snapshot,
   required String? declaredThisTurn,
 }) {
+  var activeMinor = belowQuotaActiveMinorWarTarget(
+    game: game,
+    snapshot: snapshot,
+  );
+  if (activeMinor == null &&
+      isBelowObserverConquestQuota(
+        snapshot.conquest.oldWorldProvincesOwned,
+      )) {
+    final atWarMinors = <String>[
+      for (final factionId in snapshot.threats.atWarWith)
+        if (game.minorNations.any((m) => m.id == factionId)) factionId,
+    ]..sort();
+    if (atWarMinors.length == 1 &&
+        snapshot.conquest.oldWorldProvincesOwned <=
+            kStalledOldWorldProvinceThreshold) {
+      activeMinor = atWarMinors.single;
+    }
+  }
+  if (activeMinor != null &&
+      snapshot.threats.atWarWith.contains(activeMinor)) {
+    return activeMinor;
+  }
   final provinceOwner = getProvinceOwnerMap(game);
   final gpBlocker = primaryInvadableOldWorldGpBlocker(
     game: game,

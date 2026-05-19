@@ -173,6 +173,19 @@ String? stalledFocusMinorTarget({
   return bestMinorId;
 }
 
+/// Active at-war minor front while below the observer quota (seed-42 gp4).
+String? belowQuotaActiveMinorWarTarget({
+  required Game game,
+  required AIWorldSnapshot snapshot,
+}) {
+  if (!isBelowObserverConquestQuota(
+    snapshot.conquest.oldWorldProvincesOwned,
+  )) {
+    return null;
+  }
+  return stalledFocusMinorTarget(game: game, snapshot: snapshot);
+}
+
 /// Peace tribe wars while fighting a Great Power (OW consolidation; Refs #2509).
 List<String> atWarGpDistractionTribePeaceTargets({
   required Game game,
