@@ -364,8 +364,9 @@ double _stalledExpansionArmyMoveScoreDelta({
         ? kConquestArmyMoveStalledGpInvadableBlockerBonus
         : kConquestArmyMoveStalledDeclaredTargetBonus;
     if (atWarMinorOrTribe &&
-        snapshot.conquest.oldWorldProvincesOwned ==
-            kObserverDefaultStartOldWorldProvincesPerGp) {
+        isBelowObserverConquestQuota(
+          snapshot.conquest.oldWorldProvincesOwned,
+        )) {
       delta += kConquestArmyMoveStalledDeclaredTargetBonus;
     }
     if (atWarGpInvadableBlocker) {

@@ -526,6 +526,125 @@ void main() {
   );
 
   test(
+    'defaultStartOwMinorDeclareTarget picks minor on GP-only invadable frontier',
+    () {
+      final game = Game(
+        id: 'g-default-start-minor-gp-frontier',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 50),
+          oldWorld: RegionData(
+            provinces: [
+              for (var i = 1; i <= 7; i++)
+                Province(
+                  id: 'oldWorld|gp4_$i',
+                  regionId: 'oldWorld',
+                  ownerId: 'gp4',
+                ),
+              const Province(
+                id: 'oldWorld|minor2',
+                regionId: 'oldWorld',
+                ownerId: 'minor2',
+              ),
+              const Province(
+                id: 'oldWorld|gp3_block',
+                regionId: 'oldWorld',
+                ownerId: 'gp3',
+              ),
+            ],
+          ),
+          newWorld: const RegionData(),
+        ),
+        players: const [
+          Player(id: 'gp3', displayName: 'P3', isHuman: false),
+          Player(id: 'gp4', displayName: 'P4', isHuman: false),
+        ],
+        minorNations: const [MinorNation(id: 'minor2', displayName: 'M2')],
+      );
+      const snapshot = AIWorldSnapshot(
+        playerId: 'gp4',
+        threats: ThreatSummary(),
+        opportunities: OpportunitySummary(),
+        conquest: ConquestSummary(
+          oldWorldProvincesOwned: 7,
+          invadableProvinceIdsSorted: ['oldWorld|gp3_block'],
+          adjacentOwnerFactionIdsSorted: ['gp3'],
+        ),
+        colonial: ColonialSummary(),
+        economy: EconomySummary(),
+        relations: {},
+      );
+      expect(
+        defaultStartOwMinorDeclareTarget(game: game, snapshot: snapshot),
+        'minor2',
+      );
+    },
+  );
+
+  test(
+    'runDiplomacyPlannerWithResult prefers minor declare before GP blocker',
+    () {
+      final game = Game(
+        id: 'g-minor-before-gp-blocker',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 50),
+          oldWorld: RegionData(
+            provinces: [
+              for (var i = 1; i <= 7; i++)
+                Province(
+                  id: 'oldWorld|gp4_$i',
+                  regionId: 'oldWorld',
+                  ownerId: 'gp4',
+                ),
+              const Province(
+                id: 'oldWorld|minor1',
+                regionId: 'oldWorld',
+                ownerId: 'minor1',
+              ),
+              const Province(
+                id: 'oldWorld|gp3_block',
+                regionId: 'oldWorld',
+                ownerId: 'gp3',
+              ),
+            ],
+          ),
+          newWorld: const RegionData(),
+        ),
+        players: const [
+          Player(id: 'gp3', displayName: 'P3', isHuman: false),
+          Player(id: 'gp4', displayName: 'P4', isHuman: false),
+        ],
+        minorNations: const [MinorNation(id: 'minor1', displayName: 'M1')],
+      );
+      const snapshot = AIWorldSnapshot(
+        playerId: 'gp4',
+        threats: ThreatSummary(),
+        opportunities: OpportunitySummary(),
+        conquest: ConquestSummary(
+          oldWorldProvincesOwned: 7,
+          invadableProvinceIdsSorted: ['oldWorld|gp3_block'],
+          adjacentOwnerFactionIdsSorted: ['gp3'],
+        ),
+        colonial: ColonialSummary(),
+        economy: EconomySummary(),
+        relations: {},
+      );
+      const topology = MapTopology(nodes: [], edges: []);
+      final ctx = buildTestPlannerContext(
+        game: game,
+        topology: topology,
+        nationId: 'gp4',
+        primaryGoal: StrategicGoal.conquer,
+      );
+      final result = runDiplomacyPlannerWithResult(
+        ctx: ctx,
+        snapshot: snapshot,
+        pass: DiplomacyPlannerPass.declareWarOnly,
+      );
+      expect(result.declaredWarTargetFactionId, 'minor1');
+    },
+  );
+
+  test(
     'plateauOwMinorDeclareTarget allows mutual plateau war on mixed frontier',
     () {
       final game = Game(
