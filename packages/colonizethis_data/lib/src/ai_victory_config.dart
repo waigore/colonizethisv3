@@ -121,7 +121,7 @@ const int kDeclareWarStalledExpansionMinorBonus = 75;
 
 /// When OW expansion is stalled but invadable OW minors exist, prioritize
 /// declaring on those minors over distant tribe wars (observer turn-100 gate).
-const int kDeclareWarStalledOwMinorPriorityBonus = 200;
+const int kDeclareWarStalledOwMinorPriorityBonus = 280;
 
 /// Extra declare-war weight toward OW minors while holdings are critically low.
 const int kDeclareWarWeakGpOwMinorRecoveryBonus = 220;
@@ -155,7 +155,7 @@ const int kDeclareWarEarlyExpansionMaxTurn = 100;
 /// Through this turn, quota-meeting GPs must not open new wars on weaker
 /// below-quota neighbors when the target is not already in a GP war (Refs #2509).
 /// Pile-ons on below-quota victims already at war are suppressed at all turns.
-const int kDeclareWarEarlyAntiDogpileMaxTurn = 20;
+const int kDeclareWarEarlyAntiDogpileMaxTurn = 50;
 
 /// Penalty on adjacent minor declare-war when the GP already holds many OW provinces.
 const int kDeclareWarSatedExpansionMinorPenalty = 100;
@@ -243,7 +243,7 @@ const int kObserverConquestConsolidateMinOwProvinces =
 const int kUnwinnableSoleGpMinProvinceDeficit = 2;
 
 /// Declare-war bonus on adjacent invadable OW minors while below the observer quota.
-const int kDeclareWarBelowObserverQuotaMinorBonus = 360;
+const int kDeclareWarBelowObserverQuotaMinorBonus = 480;
 
 /// Offer-peace bonus toward any at-war Great Power when stalled with zero regiments
 /// (exit unwinnable GP wars before elimination; observer seed-42 gp3; Refs #2509).

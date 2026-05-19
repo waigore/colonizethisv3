@@ -87,7 +87,6 @@ String? plateauOwMinorDeclareTarget({
   ];
   if (gpWars.isNotEmpty) {
     final allowMutualPlateauPivot = gpWars.length == 1 &&
-        isOldWorldGpOnlyInvadableFrontier(game: game, snapshot: snapshot) &&
         isMutualBelowQuotaPlateauPeer(
           ownOw: ownOw,
           partnerOw: provinceCountOwnedBy(game, gpWars.single),

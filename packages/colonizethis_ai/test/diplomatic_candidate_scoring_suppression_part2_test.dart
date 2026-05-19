@@ -9,15 +9,15 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 void main() {
   group('computeDiplomaticCandidateScores suppression (part 2)', () {
     test(
-      'stalled OW scores declareWar on adjacent GP invadable blocker',
+      'suppresses mutual plateau declareWar on peer within one OW province',
       () {
         const snap = AIWorldSnapshot(
           playerId: 'gp4',
           threats: ThreatSummary(),
           opportunities: OpportunitySummary(),
           conquest: ConquestSummary(
-            oldWorldProvincesOwned: 7,
-            provincesToVictory: 24,
+            oldWorldProvincesOwned: 8,
+            provincesToVictory: 10,
             invadableProvinceIdsSorted: ['oldWorld|p30'],
             adjacentOwnerFactionIdsSorted: ['gp3'],
           ),
@@ -26,63 +26,30 @@ void main() {
           relations: {},
         );
         final game = Game(
-          id: 'g-stalled-gp-blocker-declare',
+          id: 'g-mutual-plateau-suppress',
           worldState: WorldState(
             turnState: const TurnState(
               phase: TurnPhase.orders,
               turnNumber: 40,
             ),
-            oldWorld: const RegionData(
+            oldWorld: RegionData(
               provinces: [
-                Province(
+                for (var i = 0; i < 8; i++)
+                  Province(
+                    id: 'oldWorld|gp3_$i',
+                    regionId: 'oldWorld',
+                    ownerId: 'gp3',
+                  ),
+                for (var i = 0; i < 8; i++)
+                  Province(
+                    id: 'oldWorld|gp4_$i',
+                    regionId: 'oldWorld',
+                    ownerId: 'gp4',
+                  ),
+                const Province(
                   id: 'oldWorld|p30',
                   regionId: 'oldWorld',
                   ownerId: 'gp3',
-                ),
-                Province(
-                  id: 'oldWorld|p31',
-                  regionId: 'oldWorld',
-                  ownerId: 'gp3',
-                ),
-                Province(
-                  id: 'oldWorld|p32',
-                  regionId: 'oldWorld',
-                  ownerId: 'gp3',
-                ),
-                Province(
-                  id: 'oldWorld|p33',
-                  regionId: 'oldWorld',
-                  ownerId: 'gp3',
-                ),
-                Province(
-                  id: 'oldWorld|p34',
-                  regionId: 'oldWorld',
-                  ownerId: 'gp3',
-                ),
-                Province(
-                  id: 'oldWorld|p35',
-                  regionId: 'oldWorld',
-                  ownerId: 'gp3',
-                ),
-                Province(
-                  id: 'oldWorld|p36',
-                  regionId: 'oldWorld',
-                  ownerId: 'gp4',
-                ),
-                Province(
-                  id: 'oldWorld|p37',
-                  regionId: 'oldWorld',
-                  ownerId: 'gp4',
-                ),
-                Province(
-                  id: 'oldWorld|p38',
-                  regionId: 'oldWorld',
-                  ownerId: 'gp4',
-                ),
-                Province(
-                  id: 'oldWorld|p39',
-                  regionId: 'oldWorld',
-                  ownerId: 'gp4',
                 ),
               ],
             ),
@@ -92,11 +59,6 @@ void main() {
             Player(id: 'gp3', displayName: 'C', isHuman: false),
             Player(id: 'gp4', displayName: 'D', isHuman: false),
           ],
-        );
-        const config = AIConfig(
-          leaderId: 'henry',
-          personalityId: 'henry',
-          hiddenAgendaId: 'merchant',
         );
         final score = computeDiplomaticCandidateScores(
           candidates: const [
@@ -108,11 +70,65 @@ void main() {
           nationId: 'gp4',
           game: game,
           snapshot: snap,
-          config: config,
+          config: const AIConfig(
+            leaderId: 'henry',
+            personalityId: 'henry',
+            hiddenAgendaId: 'merchant',
+          ),
           primaryGoal: StrategicGoal.conquer,
         ).single;
-        expect(score, greaterThan(0));
-        expect(score, greaterThanOrEqualTo(kDeclareWarStalledInvadableGpBlockerBonus));
+        expect(score, 0);
+      },
+    );
+
+    test(
+      'stalledGpBlockerDeclareWarTarget returns GP-only invadable blocker',
+      () {
+        final game = Game(
+          id: 'g-stalled-gp-blocker-declare',
+          worldState: WorldState(
+            turnState: const TurnState(
+              phase: TurnPhase.orders,
+              turnNumber: 60,
+            ),
+            oldWorld: RegionData(
+              provinces: [
+                const Province(
+                  id: 'oldWorld|p30',
+                  regionId: 'oldWorld',
+                  ownerId: 'gp3',
+                ),
+                for (final id in ['p36', 'p37', 'p38', 'p39'])
+                  Province(
+                    id: 'oldWorld|$id',
+                    regionId: 'oldWorld',
+                    ownerId: 'gp4',
+                  ),
+              ],
+            ),
+            newWorld: const RegionData(),
+          ),
+          players: const [
+            Player(id: 'gp3', displayName: 'C', isHuman: false),
+            Player(id: 'gp4', displayName: 'D', isHuman: false),
+          ],
+        );
+        const snap = AIWorldSnapshot(
+          playerId: 'gp4',
+          threats: ThreatSummary(),
+          opportunities: OpportunitySummary(),
+          conquest: ConquestSummary(
+            oldWorldProvincesOwned: 4,
+            invadableProvinceIdsSorted: ['oldWorld|p30'],
+          ),
+          colonial: ColonialSummary(),
+          economy: EconomySummary(),
+          relations: {},
+        );
+        expect(
+          stalledGpBlockerDeclareWarTarget(game: game, snapshot: snap),
+          'gp3',
+        );
       },
     );
 

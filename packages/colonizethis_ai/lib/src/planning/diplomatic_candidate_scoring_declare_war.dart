@@ -353,6 +353,22 @@ int? _declareWarSuppressedAdjacentGpScore(
     final attackerOw = ctx.snapshot.conquest.oldWorldProvincesOwned;
     final targetOw = provinceCountOwnedBy(ctx.game, ctx.order.targetFactionId);
     if (ctx.game.playerById(ctx.order.targetFactionId) != null) {
+      if (!ctx.snapshot.threats.atWarWith.contains(ctx.order.targetFactionId) &&
+          isMutualBelowQuotaPlateauPeer(
+            ownOw: attackerOw,
+            partnerOw: targetOw,
+          ) &&
+          targetOw <= attackerOw + 1) {
+        return 0;
+      }
+      if (isBelowObserverConquestQuota(targetOw) &&
+          isBelowObserverConquestQuota(attackerOw) &&
+          !ctx.invadableGpBlocker &&
+          !ctx.snapshot.threats.atWarWith.contains(ctx.order.targetFactionId) &&
+          attackerOw >= kObserverDefaultStartOldWorldProvincesPerGp &&
+          targetOw <= attackerOw) {
+        return 0;
+      }
       final minorsOwnInvadable =
           ctx.snapshot.conquest.invadableProvinceIdsSorted.any((pid) {
         final owner = ctx.provinceOwner[pid];
@@ -805,7 +821,10 @@ int _declareWarAdjacencyAndStalledBonuses(
         ) &&
         ctx.snapshot.conquest.oldWorldProvincesOwned >=
             kDeclareWarSatedExpansionMinorThreshold) {
-      s -= kDeclareWarSatedExpansionMinorPenalty;
+      final ownedOw = ctx.snapshot.conquest.oldWorldProvincesOwned;
+      s -= ownedOw >= kObserverConquestMinOwProvincesPerGp + 2
+          ? kDeclareWarSatedExpansionMinorPenalty * 3
+          : kDeclareWarSatedExpansionMinorPenalty;
     }
     if (!ctx.suppressGpDeclareWar &&
         ctx.behindVictoryPace &&

@@ -78,8 +78,8 @@ void main() {
     }
     },
     skip:
-        'Partial AC #2509 S10: seed-42 turn-100 — gp1/gp2 +6, gp4 +3; '
-        'gp3 -1 (gp4 early war), gp5 +1, gp6 +2 (plateau band stalemate)',
+        'Partial AC #2509 S10: seed-42 turn-100 — gp1/gp2 +6, gp3 +2; '
+        'gp4 +0, gp5 +1, gp6 +2 (gp4 minor frontier starved; plateau peers)',
     timeout: const Timeout(Duration(minutes: 15)),
   );
 }
