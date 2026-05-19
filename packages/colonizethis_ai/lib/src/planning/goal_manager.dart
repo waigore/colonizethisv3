@@ -5,6 +5,7 @@ import 'planning_imports.dart';
 import '../util/ai_random_utils.dart';
 import '../perception/perception_snapshot.dart';
 import 'colonial_pressure.dart';
+import 'observer_goal_phase.dart';
 
 final _log = packageLogger();
 
@@ -90,7 +91,8 @@ Map<StrategicGoal, int> evaluateStrategicGoalScores(
     }
   }
   if (!suppressColonialPressure &&
-      hasColonialAcquisitionTargets(snapshot.colonial)) {
+      hasColonialAcquisitionTargets(snapshot.colonial) &&
+      !shouldSuppressNewWorldColonialOrders(snapshot)) {
     diplomacy -= kColonialDiplomacyGoalPenaltyWhenPressure;
     trade -= kColonialTradeGoalPenaltyWhenPressure;
     if (expand < kMinimumColonialExpandScoreWhenPressure) {

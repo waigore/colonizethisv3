@@ -2,6 +2,7 @@ import 'goal_manager.dart';
 import 'planning_imports.dart';
 import '../perception/perception_snapshot.dart';
 import 'colonial_pressure.dart';
+import 'observer_goal_phase.dart';
 import 'diplomacy_planner_peace_targets.dart'
     show belowQuotaActiveMinorWarTarget;
 import 'planner_context.dart';
@@ -160,7 +161,8 @@ Orders runConquestArmyMovePlanner({
   }
   final invadable = {
     ...snapshot.conquest.invadableProvinceIdsSorted,
-    ...snapshot.colonial.invadableNewWorldProvinceIdsSorted,
+    if (!shouldSuppressNewWorldColonialOrders(snapshot))
+      ...snapshot.colonial.invadableNewWorldProvinceIdsSorted,
   };
   if (stalledExpansion) {
     return _applyStalledArmyMovesForAllFieldArmies(
@@ -251,7 +253,8 @@ Orders _runStalledFrontierArmyMoveFallback({
 }) {
   final invadable = {
     ...snapshot.conquest.invadableProvinceIdsSorted,
-    ...snapshot.colonial.invadableNewWorldProvinceIdsSorted,
+    if (!shouldSuppressNewWorldColonialOrders(snapshot))
+      ...snapshot.colonial.invadableNewWorldProvinceIdsSorted,
   };
   final playerOwnedFullProvinceIds = <String>{
     for (final e in ctx.view.provincesById.entries)
@@ -447,6 +450,9 @@ double _scoreArmyMoveDestination({
   }
   if (snapshot.colonial.invadableNewWorldProvinceIdsSorted
       .contains(move.destinationProvinceId)) {
+    if (shouldSuppressNewWorldColonialOrders(snapshot)) {
+      return 0;
+    }
     if (isBelowObserverConquestQuota(
       snapshot.conquest.oldWorldProvincesOwned,
     )) {

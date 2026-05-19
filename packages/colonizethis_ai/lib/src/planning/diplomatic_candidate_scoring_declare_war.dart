@@ -161,9 +161,7 @@ final class _DeclareWarTargetContext {
         .any((pid) => provinceOwner[pid] == order.targetFactionId);
     final colonialPressure = hasColonialAcquisitionTargets(snapshot.colonial) &&
         !isStalledOldWorldGpBlockerFocus(game: game, snapshot: snapshot) &&
-        !isBelowObserverConquestQuota(
-          snapshot.conquest.oldWorldProvincesOwned,
-        );
+        !shouldSuppressNewWorldColonialOrders(snapshot);
     final isTribeTarget = _isTribeFaction(game, order.targetFactionId);
     final stalledOwExpansion = isObserverConquestExpansionPressure(
       snapshot.conquest.oldWorldProvincesOwned,
@@ -271,7 +269,8 @@ int? _declareWarSuppressedScore(
   _DeclareWarTargetContext ctx, {
   Orders? sameTurnPriorDiplomaticOrders,
 }) {
-  return _declareWarSuppressedStalledOwFrontierScore(ctx) ??
+  return _declareWarSuppressedExpandColonialScore(ctx) ??
+      _declareWarSuppressedStalledOwFrontierScore(ctx) ??
       _declareWarSuppressedAdjacentGpScore(
         ctx,
         sameTurnPriorDiplomaticOrders: sameTurnPriorDiplomaticOrders,
@@ -281,6 +280,18 @@ int? _declareWarSuppressedScore(
         sameTurnPriorDiplomaticOrders: sameTurnPriorDiplomaticOrders,
       ) ??
       _declareWarSuppressedRelationAndCooldownScore(ctx);
+}
+
+int? _declareWarSuppressedExpandColonialScore(_DeclareWarTargetContext ctx) {
+  if (!shouldSuppressNewWorldColonialOrders(ctx.snapshot)) {
+    return null;
+  }
+  if (ctx.isTribeTarget ||
+      ctx.ownsInvadableNw ||
+      ctx.isColonialAdjacentOwner) {
+    return kDeclareWarNonAdjacentSuppressedScore;
+  }
+  return null;
 }
 
 int? _declareWarSuppressedStalledOwFrontierScore(_DeclareWarTargetContext ctx) {

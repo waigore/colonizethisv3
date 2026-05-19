@@ -110,6 +110,18 @@ New World province acquisition is a **supporting strategy** for the Old World mi
 
 **Observer gates (nightly):** Seed **42**, turn **150**: all `newWorld|` provinces GP-owned; **≥70%** of extractable GP resource tiles improved (level ≥ 1). See [run_observer_game-tool.md](../program/run_observer_game-tool.md). Turn **100** OW per-GP conquest gate unchanged.
 
+### Observer goal phases (Full AI)
+
+Deterministic phases from `PlayerView` → `AIWorldSnapshot` (`observer_goal_phase.dart`; Refs #2509 S10):
+
+| Phase | When | Imperative |
+|-------|------|------------|
+| **EXPAND** | `oldWorldProvincesOwned < kObserverConquestMinOwProvincesPerGp` (10) | OW conquest first |
+| **COLONIAL** | OW quota met and `hasColonialAcquisitionTargets` | NW acquisition |
+| **DEVELOP** | OW quota met and no visible colonial targets | Improve extractable tiles |
+
+**EXPAND suppressions:** No NW `declareWar` / `establishOverture` toward colonial targets, NW conquest army moves, colonial naval ranking/caps, `purchase_land` / NW `build_improvement` civilian work, or colonial-pressure goal/diplomacy floors. OW declare-war, OW army moves, OW improvements, economy, and research remain allowed. **COLONIAL-lite** (turn ≥120 global NW safeguard) is follow-up work.
+
 ### Implementation (turn pipeline)
 AI order generation runs so that orders are available for the **Orders** phase of turn resolution. Merge (human + AI) and application order are defined in [turn-resolution-phases.md](../program/turn-resolution-phases.md) (phase 1 Orders) and [turn-resolution-phase-details.md](../program/turn-resolution-phase-details.md) § Orders. Control rules and merge semantics: [ai-planner.md](../program/ai-planner.md); module boundaries and APIs: [ai-systems-impl.md](../program/ai-systems-impl.md).
 

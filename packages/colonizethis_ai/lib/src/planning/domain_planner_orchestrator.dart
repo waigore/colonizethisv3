@@ -4,6 +4,7 @@ import 'package:colonizethis_logic/order_suggestion_api.dart';
 
 import 'army_conquest_prep.dart';
 import 'colonial_pressure.dart';
+import 'observer_goal_phase.dart';
 import 'planning_imports.dart';
 import 'goal_manager.dart';
 import '../perception/perception_snapshot.dart';
@@ -165,7 +166,7 @@ DomainPlannerOutcome runDomainPlannersWithOutcome({
   emit('aiStageD');
 
   ctx = ctx.withOrders(
-    runNavalPlanner(ctx: ctx, colonial: snapshot.colonial),
+    runNavalPlanner(ctx: ctx, snapshot: snapshot),
   );
   emit('aiStageE');
 
@@ -203,13 +204,18 @@ PlannerContext _runEconomyDomainPlanners({
   final domainWeights = ctx.domainWeights;
 
   emit('suggestionPools');
-  final workCandidates = ctx.suggestionAPI.suggestWorkOrders(
+  var workCandidates = ctx.suggestionAPI.suggestWorkOrders(
     ctx.view,
     ctx.game,
     ctx.topology,
     result,
     tileMapByRegion: tileMapByRegion,
   );
+  if (shouldSuppressNewWorldColonialOrders(snapshot)) {
+    workCandidates = workCandidates
+        .where((w) => !isNewWorldColonialWorkOrder(w))
+        .toList();
+  }
   final buildCandidates = ctx.suggestionAPI.suggestBuildOrders(
     ctx.view,
     ctx.game,
@@ -223,7 +229,8 @@ PlannerContext _runEconomyDomainPlanners({
   var workThreshold =
       40 - (hasSpyWork ? getAgendaSpyOrderModifier(ctx.config.hiddenAgendaId) : 0);
   final colonialPressure = hasColonialAcquisitionTargets(snapshot.colonial) &&
-      !isStalledOldWorldGpBlockerFocus(game: ctx.game, snapshot: snapshot);
+      !isStalledOldWorldGpBlockerFocus(game: ctx.game, snapshot: snapshot) &&
+      !shouldSuppressNewWorldColonialOrders(snapshot);
   if (colonialPressure || snapshot.colonial.newWorldProvincesOwned > 0) {
     workThreshold = math.min(workThreshold, kColonialCivilianWorkThresholdCap);
   }
