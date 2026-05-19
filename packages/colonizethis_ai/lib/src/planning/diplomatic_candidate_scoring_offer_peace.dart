@@ -1,42 +1,13 @@
 part of 'diplomatic_candidate_scoring.dart';
 
-int _scoreOfferPeaceDiplomaticOrder({
+int _offerPeaceStalledGpWarAdjustments({
   required DiplomaticOrder order,
-  required String nationId,
   required Game game,
   required AIWorldSnapshot snapshot,
-  required String agendaId,
-  required PersonalityThresholds thresholds,
   required Map<String, String> provinceOwner,
-  required Set<String> invadableOwners,
-  required int Function(String targetFactionId, int relationScore)
-  warDesireForTarget,
+  required Player? targetGp,
 }) {
-  var s = 50;
-  final rel = snapshot.relations[order.targetFactionId];
-  final warDesire = warDesireForTarget(
-    order.targetFactionId,
-    rel?.score ?? 50,
-  );
-  // Lower peace desire when current war desire remains high.
-  s -= (warDesire - 50);
-  if (_isMinorOrTribeFaction(game, order.targetFactionId) &&
-      snapshot.threats.atWarWith.contains(order.targetFactionId) &&
-      (!_minorOwnsOldWorldProvinces(game, order.targetFactionId) ||
-          !invadableOwners.contains(order.targetFactionId))) {
-    s += kOfferPeaceFutileMinorWarBonus;
-  }
-  if (game.minorNations.any((m) => m.id == order.targetFactionId) &&
-      snapshot.threats.atWarWith.contains(order.targetFactionId) &&
-      invadableOwners.contains(order.targetFactionId) &&
-      isBelowObserverConquestQuota(
-        snapshot.conquest.oldWorldProvincesOwned,
-      ) &&
-      snapshot.conquest.oldWorldProvincesOwned <=
-          kObserverDefaultStartOldWorldProvincesPerGp + 1) {
-    s -= kOfferPeaceBelowQuotaActiveMinorWarPenalty;
-  }
-  final targetGp = game.playerById(order.targetFactionId);
+  var s = 0;
   final gpBlockerFocus = isStalledOldWorldGpBlockerFocus(
     game: game,
     snapshot: snapshot,
@@ -92,6 +63,16 @@ int _scoreOfferPeaceDiplomaticOrder({
       snapshot.conquest.invadableProvinceIdsSorted.isNotEmpty) {
     s += kOfferPeaceStalledFutileGpWarBonus;
   }
+  return s;
+}
+
+int _offerPeacePeaceTargetListAdjustments({
+  required DiplomaticOrder order,
+  required Game game,
+  required AIWorldSnapshot snapshot,
+  required Player? targetGp,
+}) {
+  var s = 0;
   if (targetGp != null &&
       snapshot.threats.atWarWith.contains(order.targetFactionId) &&
       unwinnableSoleGpFrontierPeaceTarget(
@@ -146,6 +127,63 @@ int _scoreOfferPeaceDiplomaticOrder({
           order.targetFactionId) {
     s += kOfferPeaceConsolidateGainsSoleGpWarBonus;
   }
+  return s;
+}
+
+int _scoreOfferPeaceDiplomaticOrder({
+  required DiplomaticOrder order,
+  required String nationId,
+  required Game game,
+  required AIWorldSnapshot snapshot,
+  required String agendaId,
+  required PersonalityThresholds thresholds,
+  required Map<String, String> provinceOwner,
+  required Set<String> invadableOwners,
+  required int Function(String targetFactionId, int relationScore)
+  warDesireForTarget,
+}) {
+  var s = 50;
+  final rel = snapshot.relations[order.targetFactionId];
+  final warDesire = warDesireForTarget(
+    order.targetFactionId,
+    rel?.score ?? 50,
+  );
+  // Lower peace desire when current war desire remains high.
+  s -= (warDesire - 50);
+  if (_isMinorOrTribeFaction(game, order.targetFactionId) &&
+      snapshot.threats.atWarWith.contains(order.targetFactionId) &&
+      (!_minorOwnsOldWorldProvinces(game, order.targetFactionId) ||
+          !invadableOwners.contains(order.targetFactionId))) {
+    s += kOfferPeaceFutileMinorWarBonus;
+  }
+  if (game.minorNations.any((m) => m.id == order.targetFactionId) &&
+      snapshot.threats.atWarWith.contains(order.targetFactionId) &&
+      invadableOwners.contains(order.targetFactionId) &&
+      isBelowObserverConquestQuota(
+        snapshot.conquest.oldWorldProvincesOwned,
+      ) &&
+      snapshot.conquest.oldWorldProvincesOwned <=
+          kObserverDefaultStartOldWorldProvincesPerGp + 1) {
+    s -= kOfferPeaceBelowQuotaActiveMinorWarPenalty;
+  }
+  final targetGp = game.playerById(order.targetFactionId);
+  s += _offerPeaceStalledGpWarAdjustments(
+    order: order,
+    game: game,
+    snapshot: snapshot,
+    provinceOwner: provinceOwner,
+    targetGp: targetGp,
+  );
+  s += _offerPeacePeaceTargetListAdjustments(
+    order: order,
+    game: game,
+    snapshot: snapshot,
+    targetGp: targetGp,
+  );
+  final gpBlocker = primaryInvadableOldWorldGpBlocker(
+    game: game,
+    snapshot: snapshot,
+  );
   if (targetGp != null &&
       gpBlocker != null &&
       order.targetFactionId == gpBlocker &&
