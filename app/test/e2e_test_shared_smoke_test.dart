@@ -1,4 +1,5 @@
 import 'package:colonizethis_app/config/ct_e2e.dart';
+import 'package:colonizethis_app/features/game/dialogue/game_start_intro_overlay.dart';
 import 'package:colonizethis_app/l10n/app_localizations_lookup.dart';
 import 'package:colonizethis_app/widgets/ct_choice_chip.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
@@ -218,6 +219,31 @@ void main() {
             'Condition must be evaluated at least once per polling step until '
             'it returns true (#2336 AC5).',
       );
+    },
+  );
+
+  testWidgets(
+    'e2eGameStartIntroBlocksUi is false when overlay only wraps map child',
+    (WidgetTester tester) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          home: GameStartIntroOverlay(
+            onDismissed: () {},
+            child: const SizedBox(key: Key('map_child')),
+          ),
+        ),
+      );
+      expect(e2eGameStartIntroBlocksUi(tester), isFalse);
+    },
+  );
+
+  testWidgets(
+    'e2eGameStartIntroBlocksUi is true while intro spinner is visible',
+    (WidgetTester tester) async {
+      await tester.pumpWidget(
+        const MaterialApp(home: GameStartIntroLoadingIndicator()),
+      );
+      expect(e2eGameStartIntroBlocksUi(tester), isTrue);
     },
   );
 }
