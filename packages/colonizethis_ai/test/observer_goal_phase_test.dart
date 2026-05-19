@@ -2,6 +2,7 @@ import 'package:colonizethis_ai/colonizethis_ai.dart';
 import 'package:colonizethis_ai/src/planning/diplomatic_candidate_scoring.dart';
 import 'package:colonizethis_ai/src/planning/observer_goal_phase.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:colonizethis_logic/ai_api.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
@@ -59,7 +60,7 @@ void main() {
         isNewWorldColonialWorkOrder(
           const WorkOrder(
             unitId: 'u1',
-            target: 'purchase_land',
+            target: kWorkTargetPurchaseLand,
             targetTileKey: 'newWorld|p1|0|0',
           ),
         ),
@@ -69,7 +70,7 @@ void main() {
         isNewWorldColonialWorkOrder(
           const WorkOrder(
             unitId: 'u1',
-            target: 'build_improvement',
+            target: kWorkTargetBuildImprovement,
             targetTileKey: 'newWorld|p1|1|1',
           ),
         ),
@@ -79,7 +80,7 @@ void main() {
         isNewWorldColonialWorkOrder(
           const WorkOrder(
             unitId: 'u1',
-            target: 'build_improvement',
+            target: kWorkTargetBuildImprovement,
             targetTileKey: 'oldWorld|p1|1|1',
           ),
         ),

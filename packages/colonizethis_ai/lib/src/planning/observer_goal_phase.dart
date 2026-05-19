@@ -1,4 +1,5 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:colonizethis_logic/ai_api.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../perception/perception_snapshot.dart';
@@ -65,7 +66,8 @@ bool isExpandPhaseColonialDiplomacyTarget({
 bool isNewWorldColonialWorkOrder(WorkOrder order) {
   final regionId = ProvinceId.regionIdFrom(order.targetTileKey);
   if (regionId == kNewWorldRegionId) {
-    return order.target == 'purchase_land' || order.target == 'build_improvement';
+    return order.target == kWorkTargetPurchaseLand ||
+        order.target == kWorkTargetBuildImprovement;
   }
   return false;
 }
