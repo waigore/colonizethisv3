@@ -138,6 +138,7 @@ List<int> computeDiplomaticCandidateScores({
           );
           final improveRelationsDesire = 100 - warDesire;
           s += (improveRelationsDesire - 50);
+          s += (thresholds.allianceTendency - 50);
           if (snapshot.colonial.preferredColonialTargetFactionIdsSorted
               .contains(o.targetFactionId)) {
             s += kEstablishOvertureColonialTribeBonus;

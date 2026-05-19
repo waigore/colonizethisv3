@@ -85,6 +85,41 @@ bool isObserverColonialPhase({
     observerGoalPhaseFor(snapshot: snapshot, game: game) ==
     ObserverGoalPhase.colonial;
 
+bool isObserverExpandPhase({
+  required AIWorldSnapshot snapshot,
+  Game? game,
+}) =>
+    observerGoalPhaseFor(snapshot: snapshot, game: game) ==
+    ObserverGoalPhase.expand;
+
+/// EXPAND: peace non-blocker Great Power fronts when fighting 2+ GPs (Refs #2509 S10).
+List<String> expandPhaseGpPeaceTargets({
+  required Game game,
+  required AIWorldSnapshot snapshot,
+}) {
+  if (!isObserverExpandPhase(snapshot: snapshot, game: game)) {
+    return const [];
+  }
+  final gpWars = <String>[
+    for (final factionId in snapshot.threats.atWarWith)
+      if (game.playerById(factionId) != null) factionId,
+  ];
+  if (gpWars.length <= 1) {
+    return const [];
+  }
+  final blocker = primaryInvadableOldWorldGpBlocker(
+    game: game,
+    snapshot: snapshot,
+  );
+  if (blocker == null || !gpWars.contains(blocker)) {
+    return const [];
+  }
+  return <String>[
+    for (final factionId in gpWars)
+      if (factionId != blocker) factionId,
+  ]..sort();
+}
+
 /// GP owning the most invadable New World provinces (colonial frontier blocker).
 String? primaryColonialGpBlocker({
   required Game game,

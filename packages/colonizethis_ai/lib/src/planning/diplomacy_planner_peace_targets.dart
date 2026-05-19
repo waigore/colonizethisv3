@@ -482,6 +482,7 @@ Set<String> collectStalledGreatPowerPeaceTargets({
   final targets = <String>{
     ...developPhaseGpPeaceTargets(game: game, snapshot: snapshot),
     ...colonialPhaseGpPeaceTargets(game: game, snapshot: snapshot),
+    ...expandPhaseGpPeaceTargets(game: game, snapshot: snapshot),
     ...stalledFutileGpPeaceTargets(game: game, snapshot: snapshot),
     ...stalledGpBlockerFocusPeaceTargets(game: game, snapshot: snapshot),
     ...stalledExpansionDistractionPeaceTargets(
