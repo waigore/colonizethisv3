@@ -12,12 +12,14 @@ class GameMapCornerControls extends StatelessWidget {
     required this.onCycleBaseLayerDisplayMode,
     required this.onCenterOnHomeCapital,
     required this.onOpenMapDisplayOptions,
+    this.homeToCapitalEnabled = true,
     super.key,
   });
 
   final VoidCallback onCycleBaseLayerDisplayMode;
   final VoidCallback onCenterOnHomeCapital;
   final VoidCallback onOpenMapDisplayOptions;
+  final bool homeToCapitalEnabled;
 
   @override
   Widget build(BuildContext context) {
@@ -35,7 +37,7 @@ class GameMapCornerControls extends StatelessWidget {
         _MapCornerIconButton(
           key: kHomeToCapitalButtonKey,
           tooltip: l10n.mapCorner_tooltipCenterCapital,
-          onTap: onCenterOnHomeCapital,
+          onTap: homeToCapitalEnabled ? onCenterOnHomeCapital : null,
           assetPath: '${kAppIconAssetPrefix}ui_icon_home_capital.png',
         ),
         const SizedBox(width: 4),
@@ -59,7 +61,7 @@ class _MapCornerIconButton extends StatelessWidget {
   });
 
   final String tooltip;
-  final VoidCallback onTap;
+  final VoidCallback? onTap;
   final String assetPath;
 
   @override

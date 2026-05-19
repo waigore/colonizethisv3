@@ -172,6 +172,8 @@ mixin _GameMapAreaStatePart2
                             onCycleBaseLayerDisplayMode:
                                 _cycleBaseLayerDisplayMode,
                             onCenterOnHomeCapital: _centerOnHumanCapital,
+                            homeToCapitalEnabled:
+                                shell.effectiveHumanPlayerId != null,
                             onOpenMapDisplayOptions: () {
                               showDialog<void>(
                                 context: context,
