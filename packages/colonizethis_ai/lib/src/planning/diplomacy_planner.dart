@@ -10,8 +10,11 @@ export 'colonial_pressure.dart'
         primaryInvadableOldWorldGpBlocker,
         plateauMutualInvadableBlockerPeaceTargets,
         shouldSkipBelowQuotaGpOnlyBlockerPeacePass,
+        quotaMetBelowQuotaAtWarPeaceTargets,
         quotaMetFutileBelowQuotaGpPeaceTargets,
         stalledBelowQuotaGpLeadPeaceTargets,
+        belowQuotaPeerGpPeaceTargets,
+        nearQuotaHoldPeaceTargets,
         unwinnableSoleGpFrontierPeaceTarget;
 import 'planner_context.dart';
 import '../util/ai_random_utils.dart';
@@ -30,6 +33,8 @@ final _log = packageLogger();
 
 /// First minor nation that owns invadable OW land but is not yet at war, while
 /// this GP is below the observer quota and not fighting any Great Power (Refs #2509).
+///
+/// Also fires during an unwinnable sole-GP war so the GP can pivot to minors.
 String? criticalWeakUninvadedMinorDeclareTarget({
   required Game game,
   required AIWorldSnapshot snapshot,
@@ -39,7 +44,10 @@ String? criticalWeakUninvadedMinorDeclareTarget({
   )) {
     return null;
   }
-  if (snapshot.threats.atWarWith.any((id) => game.playerById(id) != null)) {
+  final atWarWithGp = snapshot.threats.atWarWith
+      .where((id) => game.playerById(id) != null)
+      .toList();
+  if (atWarWithGp.length > 1) {
     return null;
   }
   if (snapshot.conquest.invadableProvinceIdsSorted.isEmpty) {
@@ -55,6 +63,45 @@ String? criticalWeakUninvadedMinorDeclareTarget({
       continue;
     }
     candidates.add(owner);
+  }
+  if (candidates.isEmpty) {
+    return null;
+  }
+  final sorted = candidates.toList()..sort();
+  return sorted.first;
+}
+
+/// Adjacent minor not yet at war while at 8–9 OW with no GP fronts (Refs #2509).
+String? plateauOwMinorDeclareTarget({
+  required Game game,
+  required AIWorldSnapshot snapshot,
+}) {
+  final ownOw = snapshot.conquest.oldWorldProvincesOwned;
+  if (!isStalledOldWorldExpansion(ownOw) ||
+      !isBelowObserverConquestQuota(ownOw)) {
+    return null;
+  }
+  if (snapshot.threats.atWarWith.any((id) => game.playerById(id) != null)) {
+    return null;
+  }
+  final candidates = <String>{
+    for (final factionId in snapshot.conquest.adjacentOwnerFactionIdsSorted)
+      if (game.minorNations.any((m) => m.id == factionId) &&
+          !snapshot.threats.atWarWith.contains(factionId))
+        factionId,
+  };
+  if (candidates.isEmpty &&
+      snapshot.conquest.invadableProvinceIdsSorted.isNotEmpty) {
+    final provinceOwner = getProvinceOwnerMap(game);
+    for (final pid in snapshot.conquest.invadableProvinceIdsSorted) {
+      final owner = provinceOwner[pid];
+      if (owner == null ||
+          !game.minorNations.any((m) => m.id == owner) ||
+          snapshot.threats.atWarWith.contains(owner)) {
+        continue;
+      }
+      candidates.add(owner);
+    }
   }
   if (candidates.isEmpty) {
     return null;
@@ -84,6 +131,16 @@ String? stalledGpBlockerDeclareWarTarget({
   if (blocker == null ||
       snapshot.threats.atWarWith.contains(blocker) ||
       snapshot.relations[blocker]?.atWar == true) {
+    return null;
+  }
+  if (isMutualBelowQuotaPlateauPeer(
+    ownOw: snapshot.conquest.oldWorldProvincesOwned,
+    partnerOw: provinceCountOwnedBy(game, blocker),
+  )) {
+    return null;
+  }
+  if (unwinnableSoleGpFrontierPeaceTarget(game: game, snapshot: snapshot) ==
+      blocker) {
     return null;
   }
   final turn = game.worldState.turnState.turnNumber;
@@ -259,10 +316,15 @@ List<DiplomaticOrder> _filterDiplomacyCandidatesForPass({
       snapshot: snapshot,
     );
     final allowBlockerPeace = blocker != null &&
-        plateauMutualInvadableBlockerPeaceTargets(
-          game: ctx.game,
-          snapshot: snapshot,
-        ).contains(blocker);
+        (plateauMutualInvadableBlockerPeaceTargets(
+              game: ctx.game,
+              snapshot: snapshot,
+            ).contains(blocker) ||
+            unwinnableSoleGpFrontierPeaceTarget(
+                  game: ctx.game,
+                  snapshot: snapshot,
+                ) ==
+                blocker);
     filtered = filtered
         .where(
           (o) =>
@@ -337,6 +399,39 @@ DiplomacyPlannerResult? _plateauGpBlockerDeclarePlannerResultIfNeeded({
       ],
     ),
     declaredWarTargetFactionId: blocker,
+  );
+}
+
+DiplomacyPlannerResult? _plateauOwMinorDeclarePlannerResultIfNeeded({
+  required PlannerContext ctx,
+  required AIWorldSnapshot snapshot,
+  required DiplomacyPlannerPass pass,
+}) {
+  if (pass != DiplomacyPlannerPass.declareWarOnly) {
+    return null;
+  }
+  final minorTarget = plateauOwMinorDeclareTarget(
+    game: ctx.game,
+    snapshot: snapshot,
+  );
+  if (minorTarget == null) {
+    return null;
+  }
+  _log.i(
+    'diplomacy forced declareWar nationId=${ctx.nationId} '
+    'plateauMinor=$minorTarget',
+  );
+  return DiplomacyPlannerResult(
+    orders: ctx.orders.appendDiplomaticOrders(
+      ctx.nationId,
+      [
+        DiplomaticOrder(
+          type: DiplomaticOrderType.declareWar,
+          targetFactionId: minorTarget,
+        ),
+      ],
+    ),
+    declaredWarTargetFactionId: minorTarget,
   );
 }
 
@@ -464,6 +559,14 @@ DiplomacyPlannerResult runDiplomacyPlannerWithResult({
     );
     if (blockerDeclareResult != null) {
       return blockerDeclareResult;
+    }
+    final plateauMinorResult = _plateauOwMinorDeclarePlannerResultIfNeeded(
+      ctx: ctx,
+      snapshot: snapshot,
+      pass: pass,
+    );
+    if (plateauMinorResult != null) {
+      return plateauMinorResult;
     }
     final minorWarResult = _criticalWeakMinorDeclarePlannerResultIfNeeded(
       ctx: ctx,

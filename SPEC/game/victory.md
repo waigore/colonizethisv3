@@ -15,7 +15,7 @@
 
 ## Calendar campaign end (no military victory)
 
-When the campaign reaches the **calendar cap** (`Game.calendarCampaignHalted == true`) per [turn-time-mapping.md](turn-time-mapping.md) § Campaign calendar cap, **`Game.victory` remains null**; the session is finished for turn-advance purposes but there is no military `VictoryState`.
+When the campaign reaches the **calendar cap** (`Game.calendarCampaignHalted == true`) per [turn-time-mapping.md](turn-time-mapping.md) § Campaign calendar cap, **`Game.victory` remains null**; the session is finished for turn-advance purposes but there is no military `VictoryState`. Calendar halt is **not** a victory type and does not set `Game.victory`. Campaigns with `Game.infiniteMode == true` skip the calendar halt and end only via military victory (or player exit).
 
 - **Declared winner (observers / summaries):** Among Great Powers in `Game.players`, the winner is the player id with the **strictly highest** `greatPowerPowerScore` (see [diplomacy.md](diplomacy.md) § Great Power power score). If two or more GPs tie for the highest score, or there are no eligible scorers, the declared winner is **no-one** (represented as a null/absent winner id in summary JSON).
 - **UI:** The app must not allow further full-turn resolution when `calendarCampaignHalted` is true (same blocking category as military victory for “Next turn”); presentation of a non-military campaign-complete screen is deferred to UI spec.

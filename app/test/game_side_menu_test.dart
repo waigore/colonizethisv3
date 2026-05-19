@@ -73,6 +73,7 @@ void main() {
 
       await tester.pumpAndSettle();
 
+      expect(find.text('Game Parameters'), findsOneWidget);
       expect(find.text('Debug log'), findsOneWidget);
       expect(find.text('×'), findsOneWidget);
 
@@ -82,6 +83,55 @@ void main() {
       expect(closed, isTrue);
     },
   );
+
+  testWidgets('GameSideMenu Game Parameters shows read-only infinite mode', (
+    WidgetTester tester,
+  ) async {
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          gamesBoxProvider.overrideWith((ref) => gamesBox),
+          gameServiceProvider.overrideWith(
+            (ref) => GameService(gamesBox, GameSaveAdapter()),
+          ),
+          currentGameProvider.overrideWith(
+            () => CurrentGameNotifier(game.copyWith(infiniteMode: true)),
+          ),
+          currentOrdersProvider.overrideWith(
+            () => CurrentOrdersNotifier(const Orders()),
+          ),
+          appEventBusProvider.overrideWith((ref) {
+            final bus = AppEventBus.create();
+            ref.onDispose(bus.dispose);
+            return bus;
+          }),
+        ],
+        child: AppEventHandlerScope(
+          child: MaterialApp(
+            navigatorKey: appNavigatorKey,
+            home: Scaffold(
+              body: Stack(
+                children: [
+                  GameSideMenu(
+                    sideMenuOpen: true,
+                    onClose: () {},
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Game Parameters'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Game Parameters'), findsWidgets);
+    expect(find.text('Infinite mode: On'), findsOneWidget);
+    expect(find.byType(CheckboxListTile), findsNothing);
+  });
 
   testWidgets('GameSideMenu Debug log navigates to named route', (
     WidgetTester tester,

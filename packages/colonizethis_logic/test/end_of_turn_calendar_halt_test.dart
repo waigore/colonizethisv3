@@ -61,6 +61,19 @@ void main() {
       expect(after.victory, isNull);
     });
 
+    test('turn 201 advances when infiniteMode is true', () {
+      final after = runEndOfTurnPhase(
+        _gameAtTurn(201, explicitGdd01: true).copyWith(infiniteMode: true),
+        topology: _minimalTopology(),
+      );
+      expect(after.calendarCampaignHalted, isFalse);
+      expect(after.worldState.turnState.turnNumber, 202);
+      expect(
+        TurnTimeMapping.gdd01.yearAtTurn(202),
+        1801,
+      );
+    });
+
     test('runTurnResolutionPipeline skips phases when calendar halted', () {
       final game = _gameAtTurn(201, explicitGdd01: true).copyWith(
         calendarCampaignHalted: true,

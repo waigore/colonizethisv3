@@ -57,6 +57,7 @@ void main() {
         List<String> orderedGreatPowerIds,
         Map<String, String> leaderVariantByGpId,
         int seed,
+        bool infiniteMode,
       )
       onConfirmed,
     }) async {
@@ -109,7 +110,7 @@ void main() {
     testWidgets('shows six GP colour swatches and default nation labels', (
       WidgetTester tester,
     ) async {
-      await pumpDialog(tester, onConfirmed: (_, _, _) {});
+      await pumpDialog(tester, onConfirmed: (_, _, _, _) {});
 
       expect(find.byType(GpDefaultMapColorSwatch), findsNWidgets(6));
       expect(find.text('England'), findsWidgets);
@@ -120,6 +121,11 @@ void main() {
       expect(find.textContaining('Default map colours'), findsOneWidget);
       expect(find.text('Game / world seed'), findsOneWidget);
       expect(find.textContaining('Use 0 for a random world'), findsOneWidget);
+      expect(
+        find.text('Infinite mode (turns progress past 1800)'),
+        findsOneWidget,
+      );
+      expect(find.byType(CheckboxListTile), findsOneWidget);
     });
 
     testWidgets(
@@ -128,7 +134,7 @@ void main() {
         await pumpDialog(
           tester,
           surfaceSize: const Size(900, 1600),
-          onConfirmed: (_, _, _) {},
+          onConfirmed: (_, _, _, _) {},
         );
         await tester.pumpAndSettle();
 
@@ -157,7 +163,7 @@ void main() {
       await pumpDialog(
         tester,
         surfaceSize: const Size(520, 420),
-        onConfirmed: (_, _, _) {},
+        onConfirmed: (_, _, _, _) {},
       );
       await tester.pumpAndSettle();
 
@@ -181,13 +187,15 @@ void main() {
       List<String>? gotIds;
       Map<String, String>? gotLeaders;
       int? gotSeed;
+      bool? gotInfiniteMode;
 
       await pumpDialog(
         tester,
-        onConfirmed: (ids, leaders, seed) {
+        onConfirmed: (ids, leaders, seed, infiniteMode) {
           gotIds = ids;
           gotLeaders = leaders;
           gotSeed = seed;
+          gotInfiniteMode = infiniteMode;
         },
       );
 
@@ -198,6 +206,7 @@ void main() {
       expect(gotLeaders!.length, 6);
       expect(gotLeaders!['england'], 'queen_victoria');
       expect(gotSeed, 42);
+      expect(gotInfiniteMode, isFalse);
     });
 
     testWidgets('Cancel closes dialog without calling onConfirmed', (
@@ -206,7 +215,7 @@ void main() {
       var confirmed = false;
       await pumpDialog(
         tester,
-        onConfirmed: (_, _, _) {
+        onConfirmed: (_, _, _, _) {
           confirmed = true;
         },
       );
@@ -225,7 +234,7 @@ void main() {
 
       await pumpDialog(
         tester,
-        onConfirmed: (ids, leaders, _) {
+        onConfirmed: (ids, leaders, _, _) {
           gotIds = ids;
           gotLeaders = leaders;
         },
@@ -248,7 +257,7 @@ void main() {
       WidgetTester tester,
     ) async {
       int? gotSeed;
-      await pumpDialog(tester, onConfirmed: (_, _, s) => gotSeed = s);
+      await pumpDialog(tester, onConfirmed: (_, _, s, _) => gotSeed = s);
       final field = find.byType(TextField);
       await tester.ensureVisible(field);
       await tester.pumpAndSettle();
@@ -262,7 +271,7 @@ void main() {
       WidgetTester tester,
     ) async {
       int? gotSeed;
-      await pumpDialog(tester, onConfirmed: (_, _, s) => gotSeed = s);
+      await pumpDialog(tester, onConfirmed: (_, _, s, _) => gotSeed = s);
       final field = find.byType(TextField);
       await tester.ensureVisible(field);
       await tester.pumpAndSettle();
@@ -270,6 +279,23 @@ void main() {
       await tester.pump();
       await ensureTapStart(tester);
       expect(gotSeed, 42);
+    });
+
+    testWidgets('Start passes infiniteMode true when checkbox checked', (
+      WidgetTester tester,
+    ) async {
+      bool? gotInfiniteMode;
+      await pumpDialog(
+        tester,
+        onConfirmed: (_, _, _, infiniteMode) => gotInfiniteMode = infiniteMode,
+      );
+      final checkbox = find.byType(Checkbox);
+      await tester.ensureVisible(checkbox);
+      await tester.pumpAndSettle();
+      await tester.tap(checkbox);
+      await tester.pumpAndSettle();
+      await ensureTapStart(tester);
+      expect(gotInfiniteMode, isTrue);
     });
   });
 }

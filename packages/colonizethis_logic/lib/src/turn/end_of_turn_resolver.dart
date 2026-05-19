@@ -39,7 +39,7 @@ Game runEndOfTurnPhase(
     TurnTimeMapping.campaignCalendarStopStartYear,
   );
   final haltAfterCalendar =
-      tStop != null && currentTurn == tStop;
+      !game.infiniteMode && tStop != null && currentTurn == tStop;
 
   if (!haltAfterCalendar) {
     _emitEraChangeDialogue(game, onDialogue);

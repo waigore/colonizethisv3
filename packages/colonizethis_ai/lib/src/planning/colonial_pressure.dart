@@ -55,7 +55,124 @@ bool shouldSkipBelowQuotaGpOnlyBlockerPeacePass({
     for (final factionId in snapshot.threats.atWarWith)
       if (game.playerById(factionId) != null) factionId,
   ];
-  return gpWars.length == 1 && gpWars.single == blocker;
+  if (gpWars.length != 1 || gpWars.single != blocker) {
+    return false;
+  }
+  final partnerOw = provinceCountOwnedBy(game, blocker);
+  if (isMutualBelowQuotaPlateauPeer(
+    ownOw: snapshot.conquest.oldWorldProvincesOwned,
+    partnerOw: partnerOw,
+  )) {
+    return false;
+  }
+  // Keep fighting a winnable sole-blocker war; pivot when clearly outgunned.
+  return unwinnableSoleGpFrontierPeaceTarget(game: game, snapshot: snapshot) ==
+      null;
+}
+
+/// Both GPs in the 8–9 OW stalled band, below the observer quota, with similar holdings.
+bool isMutualBelowQuotaPlateauPeer({
+  required int ownOw,
+  required int partnerOw,
+}) =>
+    isStalledOldWorldExpansion(ownOw) &&
+    isStalledOldWorldExpansion(partnerOw) &&
+    isBelowObserverConquestQuota(ownOw) &&
+    isBelowObserverConquestQuota(partnerOw) &&
+    (partnerOw - ownOw).abs() <= 2;
+
+/// Peace other below-quota Great Powers in peer-stalled wars while minors remain
+/// (exit mutual gp5/gp6 distraction; Refs #2509).
+List<String> belowQuotaPeerGpPeaceTargets({
+  required Game game,
+  required AIWorldSnapshot snapshot,
+}) {
+  final ownOw = snapshot.conquest.oldWorldProvincesOwned;
+  if (!isBelowObserverConquestQuota(ownOw)) {
+    return const [];
+  }
+  final minorsOnMap = game.worldState.oldWorld.provinces.any(
+    (p) =>
+        p.ownerId != null &&
+        p.ownerId!.isNotEmpty &&
+        game.minorNations.any((m) => m.id == p.ownerId),
+  );
+  if (!minorsOnMap) {
+    return const [];
+  }
+  final gpOnlyFrontier = isOldWorldGpOnlyInvadableFrontier(
+    game: game,
+    snapshot: snapshot,
+  );
+  final soleGpWar = soleAtWarGreatPowerId(game: game, snapshot: snapshot);
+  final targets = <String>[];
+  for (final factionId in snapshot.threats.atWarWith) {
+    if (game.playerById(factionId) == null) {
+      continue;
+    }
+    final partnerOw = provinceCountOwnedBy(game, factionId);
+    if (!isBelowObserverConquestQuota(partnerOw)) {
+      continue;
+    }
+    final mutualPlateau = isMutualBelowQuotaPlateauPeer(
+      ownOw: ownOw,
+      partnerOw: partnerOw,
+    );
+    if ((partnerOw - ownOw).abs() > 2) {
+      continue;
+    }
+    if (!mutualPlateau && ownOw > partnerOw) {
+      continue;
+    }
+    if (gpOnlyFrontier && soleGpWar == factionId && !mutualPlateau) {
+      continue;
+    }
+    targets.add(factionId);
+  }
+  targets.sort();
+  return targets;
+}
+
+/// Peace distracting GP wars at 8–9 OW while below the observer quota (hold gains;
+/// seed-42 gp3; Refs #2509).
+List<String> nearQuotaHoldPeaceTargets({
+  required Game game,
+  required AIWorldSnapshot snapshot,
+}) {
+  final ownOw = snapshot.conquest.oldWorldProvincesOwned;
+  if (!isBelowObserverConquestQuota(ownOw) ||
+      ownOw < kObserverConquestMinOwProvincesPerGp - 2) {
+    return const [];
+  }
+  final gpWars = <String>[
+    for (final factionId in snapshot.threats.atWarWith)
+      if (game.playerById(factionId) != null) factionId,
+  ];
+  if (gpWars.isEmpty) {
+    return const [];
+  }
+  final blocker = primaryInvadableOldWorldGpBlocker(
+    game: game,
+    snapshot: snapshot,
+  );
+  final gpOnlyFrontier = isOldWorldGpOnlyInvadableFrontier(
+    game: game,
+    snapshot: snapshot,
+  );
+  if (gpWars.length == 1 &&
+      gpOnlyFrontier &&
+      blocker != null &&
+      gpWars.single == blocker) {
+    return const [];
+  }
+  if (gpWars.length >= 2) {
+    final targets = <String>[
+      for (final factionId in gpWars)
+        if (factionId != blocker) factionId,
+    ]..sort();
+    return targets;
+  }
+  return gpWars;
 }
 
 /// GP owning the most invadable Old World provinces (frontier blocker).
@@ -147,7 +264,12 @@ String? unwinnableSoleGpFrontierPeaceTarget({
   }
   final own = snapshot.conquest.oldWorldProvincesOwned;
   final enemyOw = provinceCountOwnedBy(game, enemy);
-  if (enemyOw < own + kUnwinnableSoleGpMinProvinceDeficit) {
+  final minDeficit =
+      own >= kObserverConquestMinOwProvincesPerGp - 2 &&
+              !isOldWorldGpOnlyInvadableFrontier(game: game, snapshot: snapshot)
+          ? 1
+          : kUnwinnableSoleGpMinProvinceDeficit;
+  if (enemyOw < own + minDeficit) {
     return null;
   }
   return enemy;
@@ -258,7 +380,9 @@ List<String> stalledBelowQuotaGpLeadPeaceTargets({
     return const [];
   }
   final own = snapshot.conquest.oldWorldProvincesOwned;
-  final minLeadDeficit = 1;
+  final minLeadDeficit = own <= kObserverDefaultStartOldWorldProvincesPerGp
+      ? kUnwinnableSoleGpMinProvinceDeficit
+      : 1;
   final invadableBlocker = isOldWorldGpOnlyInvadableFrontier(
         game: game,
         snapshot: snapshot,
@@ -270,6 +394,24 @@ List<String> stalledBelowQuotaGpLeadPeaceTargets({
       if (game.playerById(factionId) != null &&
           factionId != invadableBlocker &&
           provinceCountOwnedBy(game, factionId) >= own + minLeadDeficit)
+        factionId,
+  ]..sort();
+  return targets;
+}
+
+/// Peace every below-quota Great Power at war once this GP meets the observer
+/// quota (stop mop-up wars after the frontier is cleared; Refs #2509).
+List<String> quotaMetBelowQuotaAtWarPeaceTargets({
+  required Game game,
+  required AIWorldSnapshot snapshot,
+}) {
+  if (isBelowObserverConquestQuota(snapshot.conquest.oldWorldProvincesOwned)) {
+    return const [];
+  }
+  final targets = <String>[
+    for (final factionId in snapshot.threats.atWarWith)
+      if (game.playerById(factionId) != null &&
+          isBelowObserverConquestQuota(provinceCountOwnedBy(game, factionId)))
         factionId,
   ]..sort();
   return targets;
@@ -374,7 +516,8 @@ List<String> criticalOwHoldPeaceTargets({
   if (targets.isEmpty) {
     return const [];
   }
-  if (isBelowObserverConquestQuota(ownOw) && ownOw <= 5) {
+  if (isBelowObserverConquestQuota(ownOw) &&
+      ownOw < kFewOldWorldProvincesDefendThreshold) {
     return targets;
   }
   if (ownOw > kStalledOldWorldProvinceThreshold) {

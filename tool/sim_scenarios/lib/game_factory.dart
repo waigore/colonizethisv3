@@ -132,6 +132,7 @@ class GameFactory {
       numProvincesNewWorld: numNW >= 1 ? numNW : 1,
       minProvincesPerMinor: 0, // fromTopology: no reservation for minors
       seed: baseConfig.seed,
+      infiniteMode: baseConfig.infiniteMode,
       startingResources: baseConfig.startingResources,
       initTownRoadWiringRegionIds: baseConfig.initTownRoadWiringRegionIds,
     );
@@ -280,6 +281,7 @@ class GameFactory {
       numProvincesNewWorld: json['numProvincesNewWorld'] as int? ?? 80,
       minProvincesPerMinor: json['minProvincesPerMinor'] as int? ?? 3,
       seed: json['seed'] as int? ?? 42,
+      infiniteMode: json['infiniteMode'] as bool? ?? false,
       startingResources: startingResources,
       initTownRoadWiringRegionIds: _parseInitTownRoadWiringRegionIds(
         json['initTownRoadWiringRegionIds'],

@@ -417,7 +417,13 @@ double _scoreArmyMoveDestination({
   }
   if (snapshot.colonial.invadableNewWorldProvinceIdsSorted
       .contains(move.destinationProvinceId)) {
-    score += kConquestArmyMoveNwInvadableBonus;
+    if (isBelowObserverConquestQuota(
+      snapshot.conquest.oldWorldProvincesOwned,
+    )) {
+      score -= kConquestArmyMoveNwInvadableBonus;
+    } else {
+      score += kConquestArmyMoveNwInvadableBonus;
+    }
   }
   if (snapshot.conquest.adjacentOwnerFactionIdsSorted.contains(destOwner)) {
     score += 8;

@@ -192,6 +192,34 @@ mixin _AppLocalizationsEnStrings1 on AppLocalizations {
       'Use 0 for a random world (a new time-based seed each time setup runs). Any other number reproduces the same world for the same settings.';
 
   @override
+  String get shell_leaderDialog_infiniteModeLabel =>
+      'Infinite mode (turns progress past 1800)';
+
+  @override
+  String get shell_leaderDialog_infiniteModeHelper =>
+      'When enabled, the campaign continues past calendar year 1800 until a military victory.';
+
+  @override
+  String get gameParameters_title => 'Game Parameters';
+
+  @override
+  String get gameParameters_menuEntry => 'Game Parameters';
+
+  @override
+  String get gameParameters_infiniteModeHeading => 'Infinite mode';
+
+  @override
+  String get gameParameters_infiniteModeOn => 'On';
+
+  @override
+  String get gameParameters_infiniteModeOff => 'Off';
+
+  @override
+  String gameParameters_infiniteModeLine(String value) {
+    return 'Infinite mode: $value';
+  }
+
+  @override
   String get shell_newGameProgress_title => 'Creating game';
 
   @override
