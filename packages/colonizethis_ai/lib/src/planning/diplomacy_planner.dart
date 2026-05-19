@@ -71,6 +71,45 @@ String? criticalWeakUninvadedMinorDeclareTarget({
   return sorted.first;
 }
 
+/// Adjacent minor not yet at war while at 8–9 OW with no GP fronts (Refs #2509).
+String? plateauOwMinorDeclareTarget({
+  required Game game,
+  required AIWorldSnapshot snapshot,
+}) {
+  final ownOw = snapshot.conquest.oldWorldProvincesOwned;
+  if (!isStalledOldWorldExpansion(ownOw) ||
+      !isBelowObserverConquestQuota(ownOw)) {
+    return null;
+  }
+  if (snapshot.threats.atWarWith.any((id) => game.playerById(id) != null)) {
+    return null;
+  }
+  final candidates = <String>{
+    for (final factionId in snapshot.conquest.adjacentOwnerFactionIdsSorted)
+      if (game.minorNations.any((m) => m.id == factionId) &&
+          !snapshot.threats.atWarWith.contains(factionId))
+        factionId,
+  };
+  if (candidates.isEmpty &&
+      snapshot.conquest.invadableProvinceIdsSorted.isNotEmpty) {
+    final provinceOwner = getProvinceOwnerMap(game);
+    for (final pid in snapshot.conquest.invadableProvinceIdsSorted) {
+      final owner = provinceOwner[pid];
+      if (owner == null ||
+          !game.minorNations.any((m) => m.id == owner) ||
+          snapshot.threats.atWarWith.contains(owner)) {
+        continue;
+      }
+      candidates.add(owner);
+    }
+  }
+  if (candidates.isEmpty) {
+    return null;
+  }
+  final sorted = candidates.toList()..sort();
+  return sorted.first;
+}
+
 /// Declare war on the GP frontier blocker when invadable OW is GP-held only.
 String? stalledGpBlockerDeclareWarTarget({
   required Game game,
@@ -92,6 +131,12 @@ String? stalledGpBlockerDeclareWarTarget({
   if (blocker == null ||
       snapshot.threats.atWarWith.contains(blocker) ||
       snapshot.relations[blocker]?.atWar == true) {
+    return null;
+  }
+  if (isMutualBelowQuotaPlateauPeer(
+    ownOw: snapshot.conquest.oldWorldProvincesOwned,
+    partnerOw: provinceCountOwnedBy(game, blocker),
+  )) {
     return null;
   }
   if (unwinnableSoleGpFrontierPeaceTarget(game: game, snapshot: snapshot) ==
@@ -357,6 +402,39 @@ DiplomacyPlannerResult? _plateauGpBlockerDeclarePlannerResultIfNeeded({
   );
 }
 
+DiplomacyPlannerResult? _plateauOwMinorDeclarePlannerResultIfNeeded({
+  required PlannerContext ctx,
+  required AIWorldSnapshot snapshot,
+  required DiplomacyPlannerPass pass,
+}) {
+  if (pass != DiplomacyPlannerPass.declareWarOnly) {
+    return null;
+  }
+  final minorTarget = plateauOwMinorDeclareTarget(
+    game: ctx.game,
+    snapshot: snapshot,
+  );
+  if (minorTarget == null) {
+    return null;
+  }
+  _log.i(
+    'diplomacy forced declareWar nationId=${ctx.nationId} '
+    'plateauMinor=$minorTarget',
+  );
+  return DiplomacyPlannerResult(
+    orders: ctx.orders.appendDiplomaticOrders(
+      ctx.nationId,
+      [
+        DiplomaticOrder(
+          type: DiplomaticOrderType.declareWar,
+          targetFactionId: minorTarget,
+        ),
+      ],
+    ),
+    declaredWarTargetFactionId: minorTarget,
+  );
+}
+
 DiplomacyPlannerResult? _criticalWeakMinorDeclarePlannerResultIfNeeded({
   required PlannerContext ctx,
   required AIWorldSnapshot snapshot,
@@ -481,6 +559,14 @@ DiplomacyPlannerResult runDiplomacyPlannerWithResult({
     );
     if (blockerDeclareResult != null) {
       return blockerDeclareResult;
+    }
+    final plateauMinorResult = _plateauOwMinorDeclarePlannerResultIfNeeded(
+      ctx: ctx,
+      snapshot: snapshot,
+      pass: pass,
+    );
+    if (plateauMinorResult != null) {
+      return plateauMinorResult;
     }
     final minorWarResult = _criticalWeakMinorDeclarePlannerResultIfNeeded(
       ctx: ctx,

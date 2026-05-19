@@ -58,10 +58,28 @@ bool shouldSkipBelowQuotaGpOnlyBlockerPeacePass({
   if (gpWars.length != 1 || gpWars.single != blocker) {
     return false;
   }
+  final partnerOw = provinceCountOwnedBy(game, blocker);
+  if (isMutualBelowQuotaPlateauPeer(
+    ownOw: snapshot.conquest.oldWorldProvincesOwned,
+    partnerOw: partnerOw,
+  )) {
+    return false;
+  }
   // Keep fighting a winnable sole-blocker war; pivot when clearly outgunned.
   return unwinnableSoleGpFrontierPeaceTarget(game: game, snapshot: snapshot) ==
       null;
 }
+
+/// Both GPs in the 8–9 OW stalled band, below the observer quota, with similar holdings.
+bool isMutualBelowQuotaPlateauPeer({
+  required int ownOw,
+  required int partnerOw,
+}) =>
+    isStalledOldWorldExpansion(ownOw) &&
+    isStalledOldWorldExpansion(partnerOw) &&
+    isBelowObserverConquestQuota(ownOw) &&
+    isBelowObserverConquestQuota(partnerOw) &&
+    (partnerOw - ownOw).abs() <= 2;
 
 /// Peace other below-quota Great Powers in peer-stalled wars while minors remain
 /// (exit mutual gp5/gp6 distraction; Refs #2509).
@@ -87,15 +105,31 @@ List<String> belowQuotaPeerGpPeaceTargets({
     snapshot: snapshot,
   );
   final soleGpWar = soleAtWarGreatPowerId(game: game, snapshot: snapshot);
-  final targets = <String>[
-    for (final factionId in snapshot.threats.atWarWith)
-      if (game.playerById(factionId) != null &&
-          isBelowObserverConquestQuota(provinceCountOwnedBy(game, factionId)) &&
-          ownOw <= provinceCountOwnedBy(game, factionId) &&
-          (provinceCountOwnedBy(game, factionId) - ownOw).abs() <= 2 &&
-          !(gpOnlyFrontier && soleGpWar == factionId))
-        factionId,
-  ]..sort();
+  final targets = <String>[];
+  for (final factionId in snapshot.threats.atWarWith) {
+    if (game.playerById(factionId) == null) {
+      continue;
+    }
+    final partnerOw = provinceCountOwnedBy(game, factionId);
+    if (!isBelowObserverConquestQuota(partnerOw)) {
+      continue;
+    }
+    final mutualPlateau = isMutualBelowQuotaPlateauPeer(
+      ownOw: ownOw,
+      partnerOw: partnerOw,
+    );
+    if ((partnerOw - ownOw).abs() > 2) {
+      continue;
+    }
+    if (!mutualPlateau && ownOw > partnerOw) {
+      continue;
+    }
+    if (gpOnlyFrontier && soleGpWar == factionId && !mutualPlateau) {
+      continue;
+    }
+    targets.add(factionId);
+  }
+  targets.sort();
   return targets;
 }
 

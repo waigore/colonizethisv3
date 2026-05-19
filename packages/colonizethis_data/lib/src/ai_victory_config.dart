@@ -132,7 +132,7 @@ const int kDeclareWarBelowQuotaOwMinorRecoveryBonus = 380;
 
 /// Extra declare-war toward adjacent invadable OW minors at 8–9 OW with no GP war
 /// (observer seed-42 gp5/gp6 plateau; Refs #2509).
-const int kDeclareWarPlateauOwMinorBonus = 600;
+const int kDeclareWarPlateauOwMinorBonus = 850;
 
 /// Extra declare-war weight toward invadable minors when 8–9 OW (one province
 /// short of the turn-100 observer gate from default start; Refs #2509).

@@ -245,9 +245,11 @@ List<String> criticalWeakGpSurvivalPeaceTargets({
     return const [];
   }
   final ownOw = snapshot.conquest.oldWorldProvincesOwned;
-  final minLead = isBelowObserverConquestQuota(ownOw)
-      ? kUnwinnableSoleGpMinProvinceDeficit
-      : kDeclareWarAggressorSuppressWeakGpLeadThreshold;
+  final minLead = ownOw <= kObserverDefaultStartOldWorldProvincesPerGp + 1
+      ? 1
+      : isBelowObserverConquestQuota(ownOw)
+          ? kUnwinnableSoleGpMinProvinceDeficit
+          : kDeclareWarAggressorSuppressWeakGpLeadThreshold;
   final targets = <String>[
     for (final factionId in snapshot.threats.atWarWith)
       if (game.playerById(factionId) != null &&
