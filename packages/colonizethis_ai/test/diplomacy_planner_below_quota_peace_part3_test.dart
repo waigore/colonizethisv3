@@ -664,6 +664,116 @@ void main() {
   );
 
   test(
+    'runDiplomacyPlannerWithResult scoring path prefers minor over GP blocker on GP-only frontier',
+    () {
+      final game = Game(
+        id: 'g-scoring-minor-before-gp',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 80),
+          oldWorld: RegionData(
+            provinces: [
+              for (var i = 1; i <= 9; i++)
+                Province(
+                  id: 'oldWorld|gp5_$i',
+                  regionId: 'oldWorld',
+                  ownerId: 'gp5',
+                ),
+              for (var i = 1; i <= 9; i++)
+                Province(
+                  id: 'oldWorld|gp6_$i',
+                  regionId: 'oldWorld',
+                  ownerId: 'gp6',
+                ),
+              const Province(
+                id: 'oldWorld|gp6_frontier',
+                regionId: 'oldWorld',
+                ownerId: 'gp6',
+              ),
+              const Province(
+                id: 'oldWorld|minor1_hold',
+                regionId: 'oldWorld',
+                ownerId: 'minor1',
+              ),
+              const Province(
+                id: 'oldWorld|minor2_hold',
+                regionId: 'oldWorld',
+                ownerId: 'minor2',
+              ),
+            ],
+          ),
+          newWorld: const RegionData(),
+        ),
+        players: const [
+          Player(id: 'gp5', displayName: 'P5', isHuman: false),
+          Player(id: 'gp6', displayName: 'P6', isHuman: false),
+        ],
+        minorNations: const [
+          MinorNation(id: 'minor1', displayName: 'M1'),
+          MinorNation(id: 'minor2', displayName: 'M2'),
+        ],
+        diplomacyRelations: [
+          const DiplomacyRelation(
+            factionId1: 'gp5',
+            factionId2: 'gp6',
+            state: RelationState.atWar,
+            score: 30,
+          ),
+          const DiplomacyRelation(
+            factionId1: 'gp5',
+            factionId2: 'minor1',
+            state: RelationState.atWar,
+            score: 30,
+          ),
+        ],
+      );
+      const snapshot = AIWorldSnapshot(
+        playerId: 'gp5',
+        threats: ThreatSummary(atWarWith: ['gp6', 'minor1']),
+        opportunities: OpportunitySummary(),
+        conquest: ConquestSummary(
+          oldWorldProvincesOwned: 9,
+          invadableProvinceIdsSorted: ['oldWorld|gp6_frontier'],
+          adjacentOwnerFactionIdsSorted: ['gp6'],
+        ),
+        colonial: ColonialSummary(),
+        economy: EconomySummary(),
+        relations: {},
+      );
+      const topology = MapTopology(nodes: [], edges: []);
+      final ctx = buildTestPlannerContext(
+        game: game,
+        topology: topology,
+        nationId: 'gp5',
+        primaryGoal: StrategicGoal.conquer,
+        suggestionAPI: FakeOrderSuggestionAPIForDomainPlannerTests(
+          work: const [],
+          build: const [],
+          move: const [],
+          research: const [],
+          navalMove: const [],
+          navalMission: const [],
+          diplomatic: const [
+            DiplomaticOrder(
+              type: DiplomaticOrderType.declareWar,
+              targetFactionId: 'minor2',
+            ),
+            DiplomaticOrder(
+              type: DiplomaticOrderType.declareWar,
+              targetFactionId: 'gp6',
+            ),
+          ],
+        ),
+      );
+      final result = runDiplomacyPlannerWithResult(
+        ctx: ctx,
+        snapshot: snapshot,
+        pass: DiplomacyPlannerPass.declareWarOnly,
+      );
+      expect(result.declaredWarTargetFactionId, 'minor2');
+    },
+  );
+
+  test(
     'runDiplomacyPlannerWithResult prefers minor declare before GP blocker on GP-only frontier',
     () {
       final game = Game(

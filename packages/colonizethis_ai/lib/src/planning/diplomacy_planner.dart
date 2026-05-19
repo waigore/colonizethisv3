@@ -799,6 +799,47 @@ DiplomacyPlannerResult? _stalledPeacePlannerResultIfNeeded({
   );
 }
 
+/// Best declare-war candidate targeting an OW minor (EXPAND minor-first).
+///
+/// Prefers positive scores; when all minor scores are zero, picks the stable
+/// lowest [DiplomaticOrder.targetFactionId] among minor targets.
+int? _pickMinorDeclareCandidateIndex({
+  required PlannerContext ctx,
+  required List<DiplomaticOrder> candidates,
+  required List<int> scores,
+}) {
+  var bestPositiveIdx = -1;
+  var bestPositiveScore = 0;
+  var bestZeroIdx = -1;
+  String? bestZeroFactionId;
+  for (var i = 0; i < candidates.length; i++) {
+    final order = candidates[i];
+    if (order.type != DiplomaticOrderType.declareWar) {
+      continue;
+    }
+    if (!ctx.game.minorNations.any((m) => m.id == order.targetFactionId)) {
+      continue;
+    }
+    final score = scores[i];
+    if (score > 0) {
+      if (score > bestPositiveScore || bestPositiveIdx < 0) {
+        bestPositiveScore = score;
+        bestPositiveIdx = i;
+      }
+      continue;
+    }
+    final factionId = order.targetFactionId;
+    if (bestZeroFactionId == null || factionId.compareTo(bestZeroFactionId) < 0) {
+      bestZeroFactionId = factionId;
+      bestZeroIdx = i;
+    }
+  }
+  if (bestPositiveIdx >= 0) {
+    return bestPositiveIdx;
+  }
+  return bestZeroIdx < 0 ? null : bestZeroIdx;
+}
+
 DiplomaticOrder? _chooseDiplomaticOrder({
   required PlannerContext ctx,
   required AIWorldSnapshot snapshot,
@@ -807,6 +848,17 @@ DiplomaticOrder? _chooseDiplomaticOrder({
   required List<int> scores,
 }) {
   if (pass == DiplomacyPlannerPass.declareWarOnly) {
+    if (isOldWorldGpOnlyInvadableFrontier(game: ctx.game, snapshot: snapshot) &&
+        hasUninvadedOldWorldMinor(game: ctx.game, snapshot: snapshot)) {
+      final minorIdx = _pickMinorDeclareCandidateIndex(
+        ctx: ctx,
+        candidates: candidates,
+        scores: scores,
+      );
+      if (minorIdx != null) {
+        return candidates[minorIdx];
+      }
+    }
     final forcedBlocker = stalledGpBlockerDeclareWarTarget(
       game: ctx.game,
       snapshot: snapshot,
