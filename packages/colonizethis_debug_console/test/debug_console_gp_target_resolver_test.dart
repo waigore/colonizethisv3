@@ -1,6 +1,5 @@
 import 'package:colonizethis_debug_console/colonizethis_debug_console.dart';
-import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
-import 'package:test/test.dart';
+import 'package:colonizethis_test/test.dart';
 
 void main() {
   suppressLogsForTests();

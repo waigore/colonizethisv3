@@ -45,6 +45,15 @@ class ShellPlayerContext {
       game.players.first.id;
 }
 
+MapTopology _topologyForGame(Ref ref, Game game) {
+  try {
+    final mapData = ref.watch(gameServiceProvider).getMapData(game.id);
+    return mapData?.combinedTopology ?? const MapTopology();
+  } catch (_) {
+    return const MapTopology();
+  }
+}
+
 final shellPlayerContextProvider = Provider<ShellPlayerContext>((ref) {
   final game = ref.watch(currentGameProvider);
   final observe = ref.watch(observeSessionProvider);
@@ -71,8 +80,7 @@ final shellPlayerContextProvider = Provider<ShellPlayerContext>((ref) {
 
   if (!observe.isObserving) {
     final id = humanId ?? game.players.first.id;
-    final mapData = ref.watch(gameServiceProvider).getMapData(game.id);
-    final topology = mapData?.combinedTopology ?? const MapTopology();
+    final topology = _topologyForGame(ref, game);
     final view = buildPlayerView(game, topology, id);
     return ShellPlayerContext(
       effectiveHumanPlayerId: humanId,
@@ -90,8 +98,7 @@ final shellPlayerContextProvider = Provider<ShellPlayerContext>((ref) {
     );
   }
 
-  final mapData = ref.watch(gameServiceProvider).getMapData(game.id);
-  final topology = mapData?.combinedTopology ?? const MapTopology();
+  final topology = _topologyForGame(ref, game);
 
   switch (observe.mode) {
     case ObserveMode.global:
