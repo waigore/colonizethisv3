@@ -173,6 +173,19 @@ String? stalledFocusMinorTarget({
   return bestMinorId;
 }
 
+/// Active at-war minor front while below the observer quota (seed-42 gp4).
+String? belowQuotaActiveMinorWarTarget({
+  required Game game,
+  required AIWorldSnapshot snapshot,
+}) {
+  if (!isBelowObserverConquestQuota(
+    snapshot.conquest.oldWorldProvincesOwned,
+  )) {
+    return null;
+  }
+  return stalledFocusMinorTarget(game: game, snapshot: snapshot);
+}
+
 /// Peace tribe wars while fighting a Great Power (OW consolidation; Refs #2509).
 List<String> atWarGpDistractionTribePeaceTargets({
   required Game game,
@@ -401,6 +414,9 @@ bool stalledOwExpansionNeedsPeacePass({
     stalledBelowQuotaGpLeadPeaceTargets(game: game, snapshot: snapshot)
         .isNotEmpty ||
     belowQuotaPeerGpPeaceTargets(game: game, snapshot: snapshot).isNotEmpty ||
+    defaultStartGpPeaceTargets(game: game, snapshot: snapshot).isNotEmpty ||
+    defaultStartFutileMinorPeaceTargets(game: game, snapshot: snapshot)
+        .isNotEmpty ||
     nearQuotaHoldPeaceTargets(game: game, snapshot: snapshot).isNotEmpty ||
     quotaMetBelowQuotaAtWarPeaceTargets(game: game, snapshot: snapshot)
         .isNotEmpty ||
@@ -483,6 +499,8 @@ Set<String> collectStalledGreatPowerPeaceTargets({
     ...criticalOwHoldPeaceTargets(game: game, snapshot: snapshot),
     ...stalledBelowQuotaGpLeadPeaceTargets(game: game, snapshot: snapshot),
     ...belowQuotaPeerGpPeaceTargets(game: game, snapshot: snapshot),
+    ...defaultStartGpPeaceTargets(game: game, snapshot: snapshot),
+    ...defaultStartFutileMinorPeaceTargets(game: game, snapshot: snapshot),
     ...nearQuotaHoldPeaceTargets(game: game, snapshot: snapshot),
     ...quotaMetBelowQuotaAtWarPeaceTargets(game: game, snapshot: snapshot),
     ...quotaMetFutileBelowQuotaGpPeaceTargets(game: game, snapshot: snapshot),
@@ -515,6 +533,9 @@ Set<String> collectStalledGreatPowerPeaceTargets({
     if (unwinnableBlockerPeace != null) unwinnableBlockerPeace,
     ...quotaMetBelowQuotaAtWarPeaceTargets(game: game, snapshot: snapshot),
     ...belowQuotaPeerGpPeaceTargets(game: game, snapshot: snapshot),
+    if (snapshot.conquest.oldWorldProvincesOwned >=
+        kObserverDefaultStartOldWorldProvincesPerGp)
+      ...defaultStartGpPeaceTargets(game: game, snapshot: snapshot),
     ...nearQuotaHoldPeaceTargets(game: game, snapshot: snapshot),
   };
   return targets

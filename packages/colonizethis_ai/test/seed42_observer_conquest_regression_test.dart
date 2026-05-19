@@ -78,8 +78,8 @@ void main() {
     }
     },
     skip:
-        'Partial AC #2509 S10: seed-42 turn-100 — gp1/gp2 +6, gp4 +3; '
-        'gp3 -1 (gp4 early war), gp5 +1, gp6 +2 (plateau band stalemate)',
+        'Partial AC #2509 S10: seed-42 turn-100 — gp3/gp4/gp5 below +3 OW gate; '
+        'gp6 meets +3 after default-start minor pivot tuning',
     timeout: const Timeout(Duration(minutes: 15)),
   );
 }
