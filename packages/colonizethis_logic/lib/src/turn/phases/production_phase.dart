@@ -3,6 +3,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import '../../economy/economy_production.dart';
 import '../../world/player_state_pipeline.dart';
 import '../turn_pipeline_state.dart';
+import '../turn_resolver_config.dart';
 
 /// Production phase using idle labour from [acc].
 TurnPipelineState runProductionPipelinePhase(
@@ -40,3 +41,16 @@ TurnPipelineState runProductionPipelinePhase(
   onProductionComplete?.call(productionByRecipeByPlayerId);
   return acc.copyWith(game: mappedGame);
 }
+
+TurnPhaseStepOutcome productionTurnPhaseHandler(
+  TurnPipelineState acc,
+  TurnResolverConfig config,
+  int turn,
+) => TurnPhaseStepContinue(
+  runProductionPipelinePhase(
+    acc,
+    config.defaultAssignments,
+    config.defaultAssignmentsByPlayerId,
+    config.onProductionComplete,
+  ),
+);

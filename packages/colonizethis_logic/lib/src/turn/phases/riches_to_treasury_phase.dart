@@ -2,6 +2,8 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../../economy/economy_riches_to_treasury.dart';
 import '../../world/player_state_pipeline.dart';
+import '../turn_pipeline_state.dart';
+import '../turn_resolver_config.dart';
 
 Game runRichesToTreasuryPhase(Game game) {
   final multiplier = game.richesCashMultiplier;
@@ -17,3 +19,11 @@ Game runRichesToTreasuryPhase(Game game) {
     );
   });
 }
+
+TurnPhaseStepOutcome richesToTreasuryTurnPhaseHandler(
+  TurnPipelineState acc,
+  TurnResolverConfig config,
+  int turn,
+) => TurnPhaseStepContinue(
+  acc.copyWith(game: runRichesToTreasuryPhase(acc.game)),
+);

@@ -6,6 +6,8 @@ import '../../world/connectivity_resolver.dart';
 import '../../economy/economy_extraction.dart';
 import '../../economy/resource_extractor.dart';
 import '../../economy/sea_transport.dart';
+import '../turn_pipeline_state.dart';
+import '../turn_resolver_config.dart';
 import '../turn_seed_constants.dart';
 
 /// Extraction phase: connectivity, land/overseas extraction, interception.
@@ -94,3 +96,18 @@ Game runExtractionPhase(
   }
   return currentState.copyWith(players: updatedPlayers);
 }
+
+TurnPhaseStepOutcome extractionTurnPhaseHandler(
+  TurnPipelineState acc,
+  TurnResolverConfig config,
+  int turn,
+) => TurnPhaseStepContinue(
+  acc.copyWith(
+    game: runExtractionPhase(
+      acc.game,
+      config.topology,
+      config.tileMapByRegion,
+      config.extractedByPlayerId,
+    ),
+  ),
+);
