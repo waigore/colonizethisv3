@@ -90,6 +90,9 @@ String? belowQuotaUninvadedMinorDeclareTarget({
   if (belowQuotaActiveMinorWarTarget(game: game, snapshot: snapshot) != null) {
     return null;
   }
+  if (isOldWorldGpOnlyInvadableFrontier(game: game, snapshot: snapshot)) {
+    return null;
+  }
   final candidates = <String>{
     for (final minor in game.minorNations)
       if (!snapshot.threats.atWarWith.contains(minor.id) &&
@@ -111,6 +114,9 @@ String? plateauOwMinorDeclareTarget({
   final ownOw = snapshot.conquest.oldWorldProvincesOwned;
   if (!isStalledOldWorldExpansion(ownOw) ||
       !isBelowObserverConquestQuota(ownOw)) {
+    return null;
+  }
+  if (isOldWorldGpOnlyInvadableFrontier(game: game, snapshot: snapshot)) {
     return null;
   }
   final gpWars = <String>[
@@ -179,6 +185,9 @@ String? defaultStartOwMinorDeclareTarget({
       !hasUninvadedOldWorldMinor(game: game, snapshot: snapshot)) {
     return null;
   }
+  if (isOldWorldGpOnlyInvadableFrontier(game: game, snapshot: snapshot)) {
+    return null;
+  }
   final candidates = <String>{};
   final provinceOwner = getProvinceOwnerMap(game);
   if (snapshot.conquest.invadableProvinceIdsSorted.isNotEmpty) {
@@ -239,7 +248,13 @@ String? stalledInvadableGpOwnerDeclareTarget({
       ownOw: ownOw,
       partnerOw: provinceCountOwnedBy(game, owner),
     )) {
-      continue;
+      final blocker = primaryInvadableOldWorldGpBlocker(
+        game: game,
+        snapshot: snapshot,
+      );
+      if (owner != blocker) {
+        continue;
+      }
     }
     candidates.add(owner);
   }
@@ -283,9 +298,6 @@ String? stalledGpBlockerDeclareWarTarget({
     partnerOw: blockerOw,
   )) {
     if (regimentCountForPlayer(game, blocker) == 0) {
-      return null;
-    }
-    if (hasUninvadedOldWorldMinor(game: game, snapshot: snapshot)) {
       return null;
     }
     // Already at war with the mutual plateau blocker (gp3/gp4 seed-42 fronts).
@@ -814,7 +826,18 @@ DiplomacyPlannerResult runDiplomacyPlannerWithResult({
     }
   }
   if (pass == DiplomacyPlannerPass.declareWarOnly) {
-    // EXPAND phase: minors before GP blocker / invadable-GP declare (Refs #2509).
+    // GP-only invadable frontier: declare on the blocker before minor pivots.
+    if (isOldWorldGpOnlyInvadableFrontier(game: ctx.game, snapshot: snapshot)) {
+      final blockerDeclareResult = _plateauGpBlockerDeclarePlannerResultIfNeeded(
+        ctx: ctx,
+        snapshot: snapshot,
+        pass: pass,
+      );
+      if (blockerDeclareResult != null) {
+        return blockerDeclareResult;
+      }
+    }
+    // EXPAND phase: minors before other invadable-GP declare (Refs #2509).
     final defaultStartMinorResult =
         _defaultStartOwMinorDeclarePlannerResultIfNeeded(
       ctx: ctx,
@@ -832,6 +855,14 @@ DiplomacyPlannerResult runDiplomacyPlannerWithResult({
     if (plateauMinorResult != null) {
       return plateauMinorResult;
     }
+    final blockerDeclareResult = _plateauGpBlockerDeclarePlannerResultIfNeeded(
+      ctx: ctx,
+      snapshot: snapshot,
+      pass: pass,
+    );
+    if (blockerDeclareResult != null) {
+      return blockerDeclareResult;
+    }
     final belowQuotaMinorResult =
         _belowQuotaUninvadedMinorDeclarePlannerResultIfNeeded(
       ctx: ctx,
@@ -848,14 +879,6 @@ DiplomacyPlannerResult runDiplomacyPlannerWithResult({
     );
     if (minorWarResult != null) {
       return minorWarResult;
-    }
-    final blockerDeclareResult = _plateauGpBlockerDeclarePlannerResultIfNeeded(
-      ctx: ctx,
-      snapshot: snapshot,
-      pass: pass,
-    );
-    if (blockerDeclareResult != null) {
-      return blockerDeclareResult;
     }
     final stalledGpDeclareResult =
         _stalledInvadableGpOwnerDeclarePlannerResultIfNeeded(
