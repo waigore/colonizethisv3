@@ -1,3 +1,5 @@
+import 'package:colonizethis_app/features/game/flame/region_map_component.dart'
+    show CtMapVisibilityMode;
 import 'package:colonizethis_app/features/game/shell_player_context.dart';
 import 'package:colonizethis_app/providers/games_provider.dart';
 import 'package:colonizethis_app/providers/observe_session_provider.dart';
@@ -80,6 +82,10 @@ void main() {
       expect(shell.panelPlayerId, isNull);
       expect(shell.treasuryNotDefined, isTrue);
       expect(shell.showPlayerChrome, isFalse);
+      expect(shell.mapVisibilityMode, CtMapVisibilityMode.full);
+      expect(shell.omniscientDetail, isTrue);
+      expect(shell.inObservePhase, isTrue);
+      expect(shell.observeBannerLabel, 'Observing: global');
     });
 
     test('shell context player observe binds panel player', () {
