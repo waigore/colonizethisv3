@@ -3,7 +3,6 @@ import 'army_conquest_prep.dart';
 import 'planning_imports.dart';
 import 'colonial_pressure.dart';
 import 'observer_goal_phase.dart';
-import 'observer_goal_phase.dart';
 
 /// Strongest at-war GP that owns invadable OW provinces while this GP is stalled.
 String? stalledStrongerGpBlockerPeaceTarget({
