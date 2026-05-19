@@ -120,6 +120,42 @@ void main() {
     });
   });
 
+  group('defaultStartGpPeaceTargets', () {
+    test('peaces all GP wars at 7–8 OW below observer quota', () {
+      final game = Game(
+        id: 'g',
+        players: [
+          Player(id: 'gp1', displayName: 'GP1', isHuman: false),
+          Player(id: 'gp2', displayName: 'GP2', isHuman: false),
+        ],
+        minorNations: const [],
+        tribes: const [],
+        worldState: WorldState(
+          turnState: const TurnState(turnNumber: 50, phase: TurnPhase.orders),
+          oldWorld: RegionData(
+            provinces: [
+              Province(id: 'oldWorld|p1', regionId: 'oldWorld', ownerId: 'gp1'),
+            ],
+          ),
+          newWorld: const RegionData(provinces: []),
+        ),
+      );
+      const snapshot = AIWorldSnapshot(
+        playerId: 'gp1',
+        threats: ThreatSummary(atWarWith: ['gp2']),
+        opportunities: OpportunitySummary(),
+        conquest: ConquestSummary(oldWorldProvincesOwned: 8),
+        colonial: ColonialSummary(),
+        economy: EconomySummary(),
+        relations: {},
+      );
+      expect(
+        defaultStartGpPeaceTargets(game: game, snapshot: snapshot),
+        ['gp2'],
+      );
+    });
+  });
+
   group('nearQuotaHoldPeaceTargets', () {
     test('peaces non-blocker GP wars when stalled at 8 OW', () {
       final game = Game(

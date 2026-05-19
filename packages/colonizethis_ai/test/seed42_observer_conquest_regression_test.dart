@@ -79,7 +79,7 @@ void main() {
     },
     skip:
         'Partial AC #2509 S10: seed-42 turn-100 — gp3/gp4/gp5 below +3 OW gate; '
-        'gp6 meets quota after mutual-plateau pivot tuning',
+        'gp6 meets +3 after default-start minor pivot tuning',
     timeout: const Timeout(Duration(minutes: 15)),
   );
 }

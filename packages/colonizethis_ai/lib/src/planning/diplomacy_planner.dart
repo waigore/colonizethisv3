@@ -14,6 +14,7 @@ export 'colonial_pressure.dart'
         quotaMetFutileBelowQuotaGpPeaceTargets,
         stalledBelowQuotaGpLeadPeaceTargets,
         belowQuotaPeerGpPeaceTargets,
+        defaultStartGpPeaceTargets,
         nearQuotaHoldPeaceTargets,
         unwinnableSoleGpFrontierPeaceTarget;
 import 'planner_context.dart';
@@ -47,7 +48,9 @@ String? criticalWeakUninvadedMinorDeclareTarget({
   final atWarWithGp = snapshot.threats.atWarWith
       .where((id) => game.playerById(id) != null)
       .toList();
-  if (atWarWithGp.length > 1) {
+  if (atWarWithGp.length > 1 &&
+      snapshot.conquest.oldWorldProvincesOwned >
+          kObserverDefaultStartOldWorldProvincesPerGp) {
     return null;
   }
   if (snapshot.conquest.invadableProvinceIdsSorted.isEmpty) {
@@ -64,6 +67,32 @@ String? criticalWeakUninvadedMinorDeclareTarget({
     }
     candidates.add(owner);
   }
+  if (candidates.isEmpty) {
+    return null;
+  }
+  final sorted = candidates.toList()..sort();
+  return sorted.first;
+}
+
+/// Any OW minor not yet at war while stalled below the observer quota (Refs #2509).
+String? belowQuotaUninvadedMinorDeclareTarget({
+  required Game game,
+  required AIWorldSnapshot snapshot,
+}) {
+  final ownOw = snapshot.conquest.oldWorldProvincesOwned;
+  if (!isBelowObserverConquestQuota(ownOw) ||
+      ownOw > kStalledOldWorldProvinceThreshold) {
+    return null;
+  }
+  if (belowQuotaActiveMinorWarTarget(game: game, snapshot: snapshot) != null) {
+    return null;
+  }
+  final candidates = <String>{
+    for (final minor in game.minorNations)
+      if (!snapshot.threats.atWarWith.contains(minor.id) &&
+          game.worldState.oldWorld.provinces.any((p) => p.ownerId == minor.id))
+        minor.id,
+  };
   if (candidates.isEmpty) {
     return null;
   }
@@ -128,9 +157,8 @@ String? defaultStartOwMinorDeclareTarget({
   required AIWorldSnapshot snapshot,
 }) {
   final ownOw = snapshot.conquest.oldWorldProvincesOwned;
-  if (ownOw != kObserverDefaultStartOldWorldProvincesPerGp ||
-      !isBelowObserverConquestQuota(ownOw) ||
-      !isOldWorldGpOnlyInvadableFrontier(game: game, snapshot: snapshot)) {
+  if (!isBelowObserverConquestQuota(ownOw) ||
+      ownOw > kObserverDefaultStartOldWorldProvincesPerGp + 1) {
     return null;
   }
   final gpWars = <String>[
@@ -576,6 +604,39 @@ DiplomacyPlannerResult? _defaultStartOwMinorDeclarePlannerResultIfNeeded({
   );
 }
 
+DiplomacyPlannerResult? _belowQuotaUninvadedMinorDeclarePlannerResultIfNeeded({
+  required PlannerContext ctx,
+  required AIWorldSnapshot snapshot,
+  required DiplomacyPlannerPass pass,
+}) {
+  if (pass != DiplomacyPlannerPass.declareWarOnly) {
+    return null;
+  }
+  final minorTarget = belowQuotaUninvadedMinorDeclareTarget(
+    game: ctx.game,
+    snapshot: snapshot,
+  );
+  if (minorTarget == null) {
+    return null;
+  }
+  _log.i(
+    'diplomacy forced declareWar nationId=${ctx.nationId} '
+    'belowQuotaMinor=$minorTarget',
+  );
+  return DiplomacyPlannerResult(
+    orders: ctx.orders.appendDiplomaticOrders(
+      ctx.nationId,
+      [
+        DiplomaticOrder(
+          type: DiplomaticOrderType.declareWar,
+          targetFactionId: minorTarget,
+        ),
+      ],
+    ),
+    declaredWarTargetFactionId: minorTarget,
+  );
+}
+
 DiplomacyPlannerResult? _plateauOwMinorDeclarePlannerResultIfNeeded({
   required PlannerContext ctx,
   required AIWorldSnapshot snapshot,
@@ -759,6 +820,15 @@ DiplomacyPlannerResult runDiplomacyPlannerWithResult({
     );
     if (plateauMinorResult != null) {
       return plateauMinorResult;
+    }
+    final belowQuotaMinorResult =
+        _belowQuotaUninvadedMinorDeclarePlannerResultIfNeeded(
+      ctx: ctx,
+      snapshot: snapshot,
+      pass: pass,
+    );
+    if (belowQuotaMinorResult != null) {
+      return belowQuotaMinorResult;
     }
     final minorWarResult = _criticalWeakMinorDeclarePlannerResultIfNeeded(
       ctx: ctx,

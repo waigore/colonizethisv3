@@ -471,7 +471,7 @@ void main() {
   );
 
   test(
-    'defaultStartOwMinorDeclareTarget picks distant minor at 7 OW',
+    'defaultStartOwMinorDeclareTarget picks minor at 7 OW without GP-only frontier',
     () {
       final game = Game(
         id: 'g-default-start-minor',

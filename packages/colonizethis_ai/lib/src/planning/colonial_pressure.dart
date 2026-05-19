@@ -110,6 +110,24 @@ List<String> belowQuotaPeerGpPeaceTargets({
   return targets;
 }
 
+/// At default observer start size (7 OW), peace every Great Power war so the GP
+/// can open a minor frontier (seed-42 gp4 zero-gain stall; Refs #2509).
+List<String> defaultStartGpPeaceTargets({
+  required Game game,
+  required AIWorldSnapshot snapshot,
+}) {
+  final ownOw = snapshot.conquest.oldWorldProvincesOwned;
+  if (!isBelowObserverConquestQuota(ownOw) ||
+      ownOw > kObserverDefaultStartOldWorldProvincesPerGp + 1) {
+    return const [];
+  }
+  final targets = <String>[
+    for (final factionId in snapshot.threats.atWarWith)
+      if (game.playerById(factionId) != null) factionId,
+  ]..sort();
+  return targets;
+}
+
 /// Peace distracting GP wars at 8–9 OW while below the observer quota (hold gains;
 /// seed-42 gp3; Refs #2509).
 List<String> nearQuotaHoldPeaceTargets({

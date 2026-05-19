@@ -414,6 +414,7 @@ bool stalledOwExpansionNeedsPeacePass({
     stalledBelowQuotaGpLeadPeaceTargets(game: game, snapshot: snapshot)
         .isNotEmpty ||
     belowQuotaPeerGpPeaceTargets(game: game, snapshot: snapshot).isNotEmpty ||
+    defaultStartGpPeaceTargets(game: game, snapshot: snapshot).isNotEmpty ||
     nearQuotaHoldPeaceTargets(game: game, snapshot: snapshot).isNotEmpty ||
     quotaMetBelowQuotaAtWarPeaceTargets(game: game, snapshot: snapshot)
         .isNotEmpty ||
@@ -496,6 +497,7 @@ Set<String> collectStalledGreatPowerPeaceTargets({
     ...criticalOwHoldPeaceTargets(game: game, snapshot: snapshot),
     ...stalledBelowQuotaGpLeadPeaceTargets(game: game, snapshot: snapshot),
     ...belowQuotaPeerGpPeaceTargets(game: game, snapshot: snapshot),
+    ...defaultStartGpPeaceTargets(game: game, snapshot: snapshot),
     ...nearQuotaHoldPeaceTargets(game: game, snapshot: snapshot),
     ...quotaMetBelowQuotaAtWarPeaceTargets(game: game, snapshot: snapshot),
     ...quotaMetFutileBelowQuotaGpPeaceTargets(game: game, snapshot: snapshot),
