@@ -1,7 +1,7 @@
 import 'package:colonizethis_logic/src/turn/turn_phase_handler_registry.dart';
 import 'package:colonizethis_logic/src/turn/turn_resolution_sequence.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
-import 'package:test/test.dart';
+import 'package:colonizethis_test/test.dart';
 
 void main() {
   group('TurnPhaseHandlerRegistry', () {
