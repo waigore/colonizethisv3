@@ -416,8 +416,29 @@ int? _declareWarSuppressedAdjacentGpScore(
         return 0;
       }
       if (targetOw <= kObserverDefaultStartOldWorldProvincesPerGp &&
-          attackerOw >= kObserverConquestMinOwProvincesPerGp - 1 &&
+          attackerOw >= kObserverDefaultStartOldWorldProvincesPerGp + 1 &&
           !ctx.invadableGpBlocker) {
+        return 0;
+      }
+      if (isBelowObserverConquestQuota(targetOw) &&
+          targetOw <= kObserverDefaultStartOldWorldProvincesPerGp &&
+          !isBelowObserverConquestQuota(attackerOw) &&
+          !ctx.invadableGpBlocker &&
+          !ctx.snapshot.threats.atWarWith.contains(ctx.order.targetFactionId)) {
+        return 0;
+      }
+      if (isBelowObserverConquestQuota(targetOw) &&
+          targetOw <= kObserverDefaultStartOldWorldProvincesPerGp &&
+          attackerOw > targetOw &&
+          !ctx.invadableGpBlocker &&
+          !ctx.snapshot.threats.atWarWith.contains(ctx.order.targetFactionId)) {
+        return 0;
+      }
+      if (!isBelowObserverConquestQuota(attackerOw) &&
+          isBelowObserverConquestQuota(targetOw) &&
+          targetOw <= kStalledOldWorldProvinceThreshold &&
+          !ctx.invadableGpBlocker &&
+          !ctx.snapshot.threats.atWarWith.contains(ctx.order.targetFactionId)) {
         return 0;
       }
       if (isBelowObserverConquestQuota(attackerOw) &&

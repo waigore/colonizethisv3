@@ -70,6 +70,8 @@
 - Given P’s list contains no diplomatic order toward T, when P appends a single valid `DiplomaticOrder` toward T, then the system accepts that order under the normal type-specific rules.
 - Given P submits `grantAid` with `amount` not divisible by 1000, or `setSubsidy` with `amount` not divisible by 100, then the system rejects that order with a reason that references the required step.
 
+**Diplomatic sub-validators (implementation):** Type-specific diplomatic rules live in per-type sub-validators under `colonizethis_logic` `lib/src/orders/validators/diplomatic/`. Each implements the `DiplomaticSubValidator` interface: `validate(order, treasury)` returns an `OrderValidationResult` and the post-validation treasury (unchanged on reject; debited on accept for economic types). The parent `DiplomaticOrderValidator` runs cross-cutting checks (target existence, self-target, per-target cap) before dispatch. Shared helpers in `diplomatic_sub_validator.dart` supply `DiplomaticSubValidatorContext`, `relationDiplomaticSubValidator` (relation fetch + check), and `delegatedDiplomaticSubValidator` (custom check). Thin per-type modules are factory functions; `EstablishOvertureSubValidator` remains a class for multi-stage overture logic.
+
 ---
 
 ## Validation and Resolution

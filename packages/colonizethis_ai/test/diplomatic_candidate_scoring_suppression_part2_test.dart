@@ -591,7 +591,7 @@ void main() {
           threats: ThreatSummary(atWarWith: ['gp5']),
           opportunities: OpportunitySummary(),
           conquest: ConquestSummary(
-            oldWorldProvincesOwned: 7,
+            oldWorldProvincesOwned: 8,
             provincesToVictory: 24,
             invadableProvinceIdsSorted: ['oldWorld|p30'],
           ),

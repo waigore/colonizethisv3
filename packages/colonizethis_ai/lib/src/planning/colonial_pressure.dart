@@ -124,6 +124,8 @@ List<String> belowQuotaPeerGpPeaceTargets({
     if (!mutualPlateau && ownOw > partnerOw) {
       continue;
     }
+    // Keep fighting a winnable sole GP blocker; mutual plateau peers may peace
+    // to pivot toward minors (seed-42 gp5/gp6 stalemate; Refs #2509).
     if (gpOnlyFrontier && soleGpWar == factionId && !mutualPlateau) {
       continue;
     }
@@ -520,19 +522,7 @@ List<String> criticalOwHoldPeaceTargets({
       ownOw < kFewOldWorldProvincesDefendThreshold) {
     return targets;
   }
-  if (ownOw > kStalledOldWorldProvinceThreshold) {
-    return const [];
-  }
-  final minorsExist = game.worldState.oldWorld.provinces.any(
-    (p) =>
-        p.ownerId != null &&
-        p.ownerId!.isNotEmpty &&
-        game.minorNations.any((m) => m.id == p.ownerId),
-  );
-  if (!minorsExist) {
-    return const [];
-  }
-  return targets;
+  return const [];
 }
 
 /// Peace the sole GP enemy when the observer OW quota is met and this GP leads.
