@@ -144,7 +144,7 @@ void main() {
     );
 
     test(
-      'stalledGpBlockerDeclareWarTarget weaker opens mutual plateau when at peace',
+      'stalledGpBlockerDeclareWarTarget skips mutual plateau within one OW on GP-only',
       () {
         final game = Game(
           id: 'g-mutual-plateau-peace-declare',
@@ -222,10 +222,81 @@ void main() {
         );
         expect(
           stalledGpBlockerDeclareWarTarget(game: game, snapshot: weakerSnap),
-          'gp6',
+          isNull,
         );
         expect(
           stalledGpBlockerDeclareWarTarget(game: game, snapshot: strongerSnap),
+          isNull,
+        );
+      },
+    );
+
+    test(
+      'stalledGpBlockerDeclareWarTarget skips mutual plateau when no minor pivot',
+      () {
+        final game = Game(
+          id: 'g-mutual-plateau-no-minor-pivot',
+          worldState: WorldState(
+            turnState: const TurnState(
+              phase: TurnPhase.orders,
+              turnNumber: 60,
+            ),
+            oldWorld: RegionData(
+              provinces: [
+                for (var i = 0; i < 9; i++)
+                  Province(
+                    id: 'oldWorld|gp6_$i',
+                    regionId: 'oldWorld',
+                    ownerId: 'gp6',
+                  ),
+                for (var i = 0; i < 8; i++)
+                  Province(
+                    id: 'oldWorld|gp5_$i',
+                    regionId: 'oldWorld',
+                    ownerId: 'gp5',
+                  ),
+              ],
+            ),
+            newWorld: const RegionData(),
+            armies: [
+              Army(
+                id: homeArmyIdFor('gp5'),
+                ownerId: 'gp5',
+                regionId: 'oldWorld',
+                stationedProvinceId: 'oldWorld|gp5_0',
+                regimentUnitIds: const ['u_gp5'],
+                isHomeArmy: true,
+              ),
+              Army(
+                id: homeArmyIdFor('gp6'),
+                ownerId: 'gp6',
+                regionId: 'oldWorld',
+                stationedProvinceId: 'oldWorld|gp6_0',
+                regimentUnitIds: const ['u_gp6'],
+                isHomeArmy: true,
+              ),
+            ],
+          ),
+          players: const [
+            Player(id: 'gp5', displayName: 'P5', isHuman: false),
+            Player(id: 'gp6', displayName: 'P6', isHuman: false),
+          ],
+        );
+        const snap = AIWorldSnapshot(
+          playerId: 'gp5',
+          threats: ThreatSummary(),
+          opportunities: OpportunitySummary(),
+          conquest: ConquestSummary(
+            oldWorldProvincesOwned: 8,
+            invadableProvinceIdsSorted: ['oldWorld|gp6_8'],
+            adjacentOwnerFactionIdsSorted: ['gp6'],
+          ),
+          colonial: ColonialSummary(),
+          economy: EconomySummary(),
+          relations: {},
+        );
+        expect(
+          stalledGpBlockerDeclareWarTarget(game: game, snapshot: snap),
           isNull,
         );
       },
