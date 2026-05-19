@@ -94,6 +94,16 @@ mixin _GameMapAreaStatePart1 on ConsumerState<GameMapArea> {
     ]) {
       _busSubscriptions.track(subscription);
     }
+    ref.listenManual(observeSessionProvider, (previous, next) {
+      if (!mounted) return;
+      final enteredObserve =
+          next.isObserving && !(previous?.isObserving ?? false);
+      final switchedMode =
+          next.isObserving && previous?.mode != next.mode;
+      if (enteredObserve || switchedMode) {
+        _cancelWorkTargetSelection();
+      }
+    });
   }
 
   void _onTurnResolutionCompleteEvent(
@@ -325,8 +335,11 @@ mixin _GameMapAreaStatePart1 on ConsumerState<GameMapArea> {
   }
 
   void _centerOnHumanCapital() {
+    final shell = ref.read(shellPlayerContextProvider);
+    final playerId =
+        shell.debugCommandTargetPlayerId ?? _mapPlayerId;
     final player =
-        widget.game.players.where((p) => p.isHuman).firstOrNull ??
+        widget.game.players.where((p) => p.id == playerId).firstOrNull ??
         widget.game.players.first;
     final capital = player.capitalTile;
     if (capital == null) {
@@ -381,8 +394,11 @@ mixin _GameMapAreaStatePart1 on ConsumerState<GameMapArea> {
 
   /// Integration tests only ([kCtE2EEnabled]). Same effect as tapping the capital map cell.
   void _e2eOpenHumanCapitalTileDetail() {
+    final shell = ref.read(shellPlayerContextProvider);
+    final playerId =
+        shell.debugCommandTargetPlayerId ?? _mapPlayerId;
     final player =
-        widget.game.players.where((p) => p.isHuman).firstOrNull ??
+        widget.game.players.where((p) => p.id == playerId).firstOrNull ??
         widget.game.players.first;
     final capital = player.capitalTile;
     if (capital == null) {

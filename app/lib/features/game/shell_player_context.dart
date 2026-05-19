@@ -43,7 +43,19 @@ class ShellPlayerContext {
       viewingPlayerId ??
       effectiveHumanPlayerId ??
       game.players.first.id;
+
+  /// GP id for P4–P17 panels; null in global observe (show [kObserveNotDefinedLabel]).
+  String? get panelPlayerId => viewingPlayerId ?? effectiveHumanPlayerId;
 }
+
+/// Resolves the GP id for player-scoped panels and unit sheets.
+String shellPanelPlayerId(WidgetRef ref, Game game) =>
+    resolveShellPanelPlayerId(ref.read(shellPlayerContextProvider), game);
+
+String resolveShellPanelPlayerId(ShellPlayerContext shell, Game game) =>
+    shell.panelPlayerId ??
+    shell.debugCommandTargetPlayerId ??
+    shell.mapPlayerIdFor(game);
 
 MapTopology _topologyForGame(Ref ref, Game game) {
   try {
@@ -53,6 +65,10 @@ MapTopology _topologyForGame(Ref ref, Game game) {
     return const MapTopology();
   }
 }
+
+/// True when P4–P17 should show the global-observe sentinel instead of GP data.
+bool shellPanelsNotDefined(WidgetRef ref) =>
+    !ref.read(shellPlayerContextProvider).showPlayerChrome;
 
 final shellPlayerContextProvider = Provider<ShellPlayerContext>((ref) {
   final game = ref.watch(currentGameProvider);

@@ -1,3 +1,5 @@
+import 'package:colonizethis_app/features/game/shell_player_context.dart';
+import 'package:colonizethis_app/providers/games_provider.dart';
 import 'package:colonizethis_app/providers/observe_session_provider.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
@@ -61,6 +63,40 @@ void main() {
 
       final persisted = notifier.prepareGameForPersistence(handedOff);
       expect(persisted.players.single.isHuman, isTrue);
+    });
+
+    test('shell context global observe uses not-defined panels', () {
+      final game = _minimalGame(
+        players: [
+          const Player(id: 'gp1', displayName: 'Human', isHuman: true),
+          const Player(id: 'gp2', displayName: 'France', isHuman: false),
+        ],
+      );
+      final handedOff = notifier.applyObserveHandoffIfNeeded(game);
+      container.read(currentGameProvider.notifier).setGame(handedOff);
+      notifier.setModeGlobal();
+
+      final shell = container.read(shellPlayerContextProvider);
+      expect(shell.panelPlayerId, isNull);
+      expect(shell.treasuryNotDefined, isTrue);
+      expect(shell.showPlayerChrome, isFalse);
+    });
+
+    test('shell context player observe binds panel player', () {
+      final game = _minimalGame(
+        players: [
+          const Player(id: 'gp1', displayName: 'Human', isHuman: true),
+          const Player(id: 'gp2', displayName: 'France', isHuman: false),
+        ],
+      );
+      final handedOff = notifier.applyObserveHandoffIfNeeded(game);
+      container.read(currentGameProvider.notifier).setGame(handedOff);
+      notifier.setModePlayer('gp2');
+
+      final shell = container.read(shellPlayerContextProvider);
+      expect(shell.panelPlayerId, 'gp2');
+      expect(shell.showPlayerChrome, isTrue);
+      expect(shell.canMutateViaUi, isFalse);
     });
 
     test('applyObserveOff restores prior human', () {

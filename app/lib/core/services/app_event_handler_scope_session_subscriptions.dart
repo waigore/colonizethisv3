@@ -325,7 +325,7 @@ extension _SessionCommands on _AppEventHandlerScopeState {
             if (_rejectUiMutationIfObserving()) return;
             final g = ref.read(currentGameProvider);
             if (g == null) return;
-            final pid = _AppEventHandlerScopeState._humanPlayerId(g);
+            final pid = shellPanelPlayerId(ref, g);
             final o = ref.read(currentOrdersProvider);
             ref
                 .read(currentOrdersProvider.notifier)
@@ -348,7 +348,7 @@ extension _SessionCommands on _AppEventHandlerScopeState {
             if (_rejectUiMutationIfObserving()) return;
             final g = ref.read(currentGameProvider);
             if (g == null) return;
-            final pid = _AppEventHandlerScopeState._humanPlayerId(g);
+            final pid = shellPanelPlayerId(ref, g);
             final o = ref.read(currentOrdersProvider);
             ref
                 .read(currentOrdersProvider.notifier)

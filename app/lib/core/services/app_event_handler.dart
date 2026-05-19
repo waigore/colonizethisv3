@@ -28,6 +28,9 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../features/game/shell_player_context.dart';
+import '../../features/game/widgets/observe_mode_not_defined_panel.dart';
+
 import '../../config/routes.dart';
 import '../../config/constants.dart';
 import '../../config/ct_e2e.dart';
@@ -261,7 +264,10 @@ class AppEventHandler {
           if (game == null) {
             return const SizedBox.shrink();
           }
-          final humanPlayerId = _humanPlayerId(game);
+          if (shellPanelsNotDefined(ref)) {
+            return const ObserveModeNotDefinedPanel(title: 'Civilian Units');
+          }
+          final humanPlayerId = shellPanelPlayerId(ref, game);
           final currentOrders = ref.watch(currentOrdersProvider);
           final bus = ref.watch(appEventBusProvider);
           final isNarrow = MediaQuery.sizeOf(context).width < kNarrowBreakpoint;
@@ -308,7 +314,10 @@ class AppEventHandler {
           if (game == null) {
             return const SizedBox.shrink();
           }
-          final humanPlayerId = _humanPlayerId(game);
+          if (shellPanelsNotDefined(ref)) {
+            return const ObserveModeNotDefinedPanel(title: 'Military Units');
+          }
+          final humanPlayerId = shellPanelPlayerId(ref, game);
           final bus = ref.watch(appEventBusProvider);
           final mapData = ref.watch(gameServiceProvider).getMapData(game.id);
           final draftOrders = ref.watch(currentOrdersProvider);
@@ -337,7 +346,10 @@ class AppEventHandler {
           if (game == null) {
             return const SizedBox.shrink();
           }
-          final humanPlayerId = _humanPlayerId(game);
+          if (shellPanelsNotDefined(ref)) {
+            return const ObserveModeNotDefinedPanel(title: 'Naval Units');
+          }
+          final humanPlayerId = shellPanelPlayerId(ref, game);
           final bus = ref.watch(appEventBusProvider);
           final mapData = ref.watch(gameServiceProvider).getMapData(game.id);
           final draftOrders = ref.watch(currentOrdersProvider);
@@ -360,13 +372,6 @@ class AppEventHandler {
       // updates it post–next-turn so fleet E2E can skip reopening the panel (Refs #2336).
       _bus.emit(const UnitsPanelClosedEvent('naval'));
     });
-  }
-
-  String _humanPlayerId(Game game) {
-    for (final p in game.players) {
-      if (p.isHuman) return p.id;
-    }
-    return game.players.first.id;
   }
 
   /// While turn resolution blocks UI bus actions, pause menu remains reachable (#2160).
