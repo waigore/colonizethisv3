@@ -5,6 +5,7 @@ import '../../constants.dart';
 import '../../orders/bundled_civilian_work_order.dart';
 import '../../orders/draft_orders_mutations.dart';
 import '../../world/army_movement.dart';
+import '../../world/game_world_mutations.dart';
 import '../../world/movement.dart';
 import '../trace/turn_trace_runtime.dart';
 import '../turn_pipeline_state.dart';
@@ -79,8 +80,8 @@ Game runMovementPhase(
 
     recordSpyProvinceChanges(originalOldWorld, oldWorld);
     recordSpyProvinceChanges(originalNewWorld, newWorld);
-    state = state.copyWith(
-      worldState: state.worldState.copyWith(
+    state = state.updateWorldState(
+      (ws) => ws.copyWith(
         oldWorld: oldWorld,
         newWorld: newWorld,
         spyRevealTurnsByPlayer: mutableSpyTimers ?? originalSpyTimers,

@@ -8,6 +8,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../dossier/event_dialogue.dart';
 import '../world/fog_resolution.dart';
+import '../world/game_world_mutations.dart';
 import 'turn_seed_constants.dart';
 
 /// Runs the end-of-turn phase: victory check, era-change dialogue, Spy timers, fog decay,
@@ -46,8 +47,8 @@ Game runEndOfTurnPhase(
   }
 
   final (visibilityByTile, nextSpyTimers) = applySpyRevealTimerDecay(game);
-  var stateForFog = game.copyWith(
-    worldState: game.worldState.copyWith(
+  var stateForFog = game.updateWorldState(
+    (ws) => ws.copyWith(
       playerVisibilityByTile: visibilityByTile,
       spyRevealTurnsByPlayer: nextSpyTimers,
     ),
@@ -74,27 +75,30 @@ Game runEndOfTurnPhase(
       'calendar campaign halt at turn=$currentTurn '
       '(year ${mapping.yearAtTurn(currentTurn)})',
     );
-    return game.copyWith(
-      calendarCampaignHalted: true,
-      worldState: game.worldState.copyWith(
-        turnState: game.worldState.turnState.copyWith(
-          phase: TurnPhase.orders,
-        ),
-        playerVisibilityByTile: nextVisibility,
-        spyRevealTurnsByPlayer: nextSpyTimers,
-      ),
-    );
+    return game
+        .copyWith(calendarCampaignHalted: true)
+        .updateWorldState(
+          (ws) => ws
+              .updateTurnState((ts) => ts.copyWith(phase: TurnPhase.orders))
+              .copyWith(
+                playerVisibilityByTile: nextVisibility,
+                spyRevealTurnsByPlayer: nextSpyTimers,
+              ),
+        );
   }
 
-  return game.copyWith(
-    worldState: game.worldState.copyWith(
-      turnState: game.worldState.turnState.copyWith(
-        turnNumber: game.worldState.turnState.turnNumber + 1,
-        phase: TurnPhase.orders,
-      ),
-      playerVisibilityByTile: nextVisibility,
-      spyRevealTurnsByPlayer: nextSpyTimers,
-    ),
+  return game.updateWorldState(
+    (ws) => ws
+        .updateTurnState(
+          (ts) => ts.copyWith(
+            turnNumber: ts.turnNumber + 1,
+            phase: TurnPhase.orders,
+          ),
+        )
+        .copyWith(
+          playerVisibilityByTile: nextVisibility,
+          spyRevealTurnsByPlayer: nextSpyTimers,
+        ),
   );
 }
 

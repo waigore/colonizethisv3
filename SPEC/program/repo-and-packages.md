@@ -34,6 +34,10 @@ Five shared Dart packages under `packages/`. TDD 15 allows merging _models and _
 
 **Rule:** No UI in shared packages. Game logic lives only in shared packages; app is shell, routing, and integration.
 
+### `colonizethis_logic` internal mutation helpers
+
+Turn pipelines and order application mutate nested `Game` → `WorldState` → `TurnState` fields frequently. Call sites use **`Game.updateWorldState`**, **`WorldState.updateTurnState`**, and **`TurnPipelineState.updateWorldState`** (`game_world_mutations.dart`, `turn_pipeline_state.dart`) instead of three-level `copyWith` chains. Refs #2560.
+
 **Riverpod in packages:** Canonical `Provider`s for logic/map/AI seams live in optional `di.dart` libraries; see [dependency-injection.md](dependency-injection.md).
 
 ---
