@@ -6,6 +6,7 @@ import 'package:colonizethis_logic/src/logging.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../diplomacy/diplomacy_relation_lookup.dart';
+import '../world/game_world_mutations.dart';
 import 'military_strength.dart';
 
 /// Mission factor for Patrol interception probability.
@@ -491,5 +492,5 @@ Game applyNavalBattleResults(
       ),
     );
   }
-  return game.copyWith(worldState: game.worldState.copyWith(fleets: fleets));
+  return game.updateWorldState((ws) => ws.copyWith(fleets: fleets));
 }
