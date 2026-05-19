@@ -7,6 +7,8 @@ import '../../orders/draft_orders_mutations.dart';
 import '../../world/army_movement.dart';
 import '../../world/movement.dart';
 import '../trace/turn_trace_runtime.dart';
+import '../turn_pipeline_state.dart';
+import '../turn_resolver_config.dart';
 import '../../world/naval_resolution.dart';
 import '../../world/player_view.dart';
 import '../../world/province_lookup.dart';
@@ -339,3 +341,22 @@ Map<String, List<ArmyMoveOrder>> _preTraceArmyMoveGlobalRejections(
   }
   return filtered;
 }
+
+TurnPhaseStepOutcome movementTurnPhaseHandler(
+  TurnPipelineState acc,
+  TurnResolverConfig config,
+  int turn,
+) => TurnPhaseStepContinue(
+  acc.copyWith(
+    game: runMovementPhase(
+      acc.game,
+      config.topology,
+      config.orders,
+      onCivilianMoveOrderTrace:
+          config.turnTraceRuntime?.handleCivilianMoveOrderTrace,
+      onBundledWorkMoveTrace:
+          config.turnTraceRuntime?.handleBundledWorkMoveTrace,
+      onArmyMoveOrderTrace: config.turnTraceRuntime?.handleArmyMoveOrderTrace,
+    ),
+  ),
+);
