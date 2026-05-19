@@ -494,6 +494,178 @@ void main() {
     });
   });
 
+  group('greatPowerWarCountOnTarget', () {
+    test('counts GPs at war via diplomacy relations', () {
+      final game = Game(
+        id: 'g-gp-war-count',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 10),
+          oldWorld: const RegionData(),
+          newWorld: const RegionData(),
+        ),
+        players: const [
+          Player(id: 'gp1', displayName: 'P1', isHuman: false),
+          Player(id: 'gp2', displayName: 'P2', isHuman: false),
+          Player(id: 'gp3', displayName: 'P3', isHuman: false),
+        ],
+        diplomacyRelations: const [
+          DiplomacyRelation(
+            factionId1: 'gp1',
+            factionId2: 'gp3',
+            state: RelationState.atWar,
+            score: 10,
+          ),
+          DiplomacyRelation(
+            factionId1: 'gp2',
+            factionId2: 'gp3',
+            state: RelationState.atWar,
+            score: 20,
+          ),
+        ],
+      );
+      expect(
+        greatPowerWarCountOnTarget(game: game, targetGpId: 'gp3'),
+        2,
+      );
+    });
+
+    test('includes same-turn declare-war orders from earlier players', () {
+      final game = Game(
+        id: 'g-gp-war-pending',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 10),
+          oldWorld: const RegionData(),
+          newWorld: const RegionData(),
+        ),
+        players: const [
+          Player(id: 'gp1', displayName: 'P1', isHuman: false),
+          Player(id: 'gp2', displayName: 'P2', isHuman: false),
+          Player(id: 'gp3', displayName: 'P3', isHuman: false),
+        ],
+      );
+      const priorOrders = Orders(
+        diplomaticOrdersByPlayerId: {
+          'gp2': [
+            DiplomaticOrder(
+              type: DiplomaticOrderType.declareWar,
+              targetFactionId: 'gp3',
+            ),
+          ],
+        },
+      );
+      expect(
+        greatPowerWarCountOnTarget(
+          game: game,
+          targetGpId: 'gp3',
+          sameTurnPriorDiplomaticOrders: priorOrders,
+        ),
+        1,
+      );
+    });
+  });
+
+  group('pendingDeclareWarFrom', () {
+    test('true when earlier player declared war on target', () {
+      const priorOrders = Orders(
+        diplomaticOrdersByPlayerId: {
+          'gp2': [
+            DiplomaticOrder(
+              type: DiplomaticOrderType.declareWar,
+              targetFactionId: 'gp4',
+            ),
+          ],
+        },
+      );
+      expect(
+        pendingDeclareWarFrom(
+          sameTurnPriorDiplomaticOrders: priorOrders,
+          declarerFactionId: 'gp2',
+          targetFactionId: 'gp4',
+        ),
+        isTrue,
+      );
+    });
+
+    test('false when no prior diplomatic orders', () {
+      expect(
+        pendingDeclareWarFrom(
+          sameTurnPriorDiplomaticOrders: null,
+          declarerFactionId: 'gp2',
+          targetFactionId: 'gp4',
+        ),
+        isFalse,
+      );
+    });
+  });
+
+  group('stalledGpBlockerFocusPeaceTargets', () {
+    test('returns non-blocker GP wars on GP-only invadable frontier', () {
+      final game = Game(
+        id: 'g-gp-blocker-focus',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 50),
+          oldWorld: RegionData(
+            provinces: [
+              for (var i = 0; i < 7; i++)
+                Province(
+                  id: 'oldWorld|gp4_$i',
+                  regionId: 'oldWorld',
+                  ownerId: 'gp4',
+                ),
+              for (var i = 0; i < 10; i++)
+                Province(
+                  id: 'oldWorld|gp3_$i',
+                  regionId: 'oldWorld',
+                  ownerId: 'gp3',
+                ),
+              const Province(
+                id: 'oldWorld|inv1',
+                regionId: 'oldWorld',
+                ownerId: 'gp3',
+              ),
+            ],
+          ),
+          newWorld: const RegionData(),
+        ),
+        players: const [
+          Player(id: 'gp4', displayName: 'P4', isHuman: false),
+          Player(id: 'gp3', displayName: 'P3', isHuman: false),
+          Player(id: 'gp5', displayName: 'P5', isHuman: false),
+        ],
+        diplomacyRelations: const [
+          DiplomacyRelation(
+            factionId1: 'gp4',
+            factionId2: 'gp3',
+            state: RelationState.atWar,
+            score: 10,
+          ),
+          DiplomacyRelation(
+            factionId1: 'gp4',
+            factionId2: 'gp5',
+            state: RelationState.atWar,
+            score: 10,
+          ),
+        ],
+      );
+      const snapshot = AIWorldSnapshot(
+        playerId: 'gp4',
+        threats: ThreatSummary(atWarWith: ['gp3', 'gp5']),
+        opportunities: OpportunitySummary(),
+        conquest: ConquestSummary(
+          oldWorldProvincesOwned: 7,
+          invadableProvinceIdsSorted: ['oldWorld|inv1'],
+        ),
+        colonial: ColonialSummary(),
+        economy: EconomySummary(),
+        relations: {},
+      );
+      expect(
+        stalledGpBlockerFocusPeaceTargets(game: game, snapshot: snapshot),
+        ['gp5'],
+      );
+    });
+  });
+
   group('stalledConquestDeclaredWarTarget', () {
     test('prefers active below-quota minor war over null declare target', () {
       final game = Game(

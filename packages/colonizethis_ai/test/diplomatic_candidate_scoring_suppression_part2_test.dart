@@ -600,6 +600,165 @@ void main() {
     );
 
     test(
+      'offerPeace boosts quota-met futile below-quota GP victim',
+      () {
+        final game = Game(
+          id: 'g-offer-peace-quota-victim',
+          worldState: WorldState(
+            turnState: const TurnState(
+              phase: TurnPhase.orders,
+              turnNumber: 50,
+            ),
+            oldWorld: RegionData(
+              provinces: [
+                for (var i = 1; i <= 12; i++)
+                  Province(
+                    id: 'oldWorld|gp4_$i',
+                    regionId: 'oldWorld',
+                    ownerId: 'gp4',
+                  ),
+                for (var i = 1; i <= 8; i++)
+                  Province(
+                    id: 'oldWorld|gp3_$i',
+                    regionId: 'oldWorld',
+                    ownerId: 'gp3',
+                  ),
+                const Province(
+                  id: 'oldWorld|inv1',
+                  regionId: 'oldWorld',
+                  ownerId: 'minor1',
+                ),
+              ],
+            ),
+            newWorld: const RegionData(),
+          ),
+          players: const [
+            Player(id: 'gp4', displayName: 'P4', isHuman: false),
+            Player(id: 'gp3', displayName: 'P3', isHuman: false),
+          ],
+          minorNations: const [MinorNation(id: 'minor1', displayName: 'M1')],
+          diplomacyRelations: const [
+            DiplomacyRelation(
+              factionId1: 'gp4',
+              factionId2: 'gp3',
+              state: RelationState.atWar,
+              score: 30,
+            ),
+          ],
+        );
+        const snap = AIWorldSnapshot(
+          playerId: 'gp4',
+          threats: ThreatSummary(atWarWith: ['gp3']),
+          opportunities: OpportunitySummary(),
+          conquest: ConquestSummary(
+            oldWorldProvincesOwned: 12,
+            provincesToVictory: 20,
+            invadableProvinceIdsSorted: ['oldWorld|inv1'],
+          ),
+          colonial: ColonialSummary(),
+          economy: EconomySummary(),
+          relations: {},
+        );
+        const config = AIConfig(
+          leaderId: 'henry',
+          personalityId: 'henry',
+          hiddenAgendaId: 'merchant',
+        );
+        final score = computeDiplomaticCandidateScores(
+          candidates: const [
+            DiplomaticOrder(
+              type: DiplomaticOrderType.offerPeace,
+              targetFactionId: 'gp3',
+            ),
+          ],
+          nationId: 'gp4',
+          game: game,
+          snapshot: snap,
+          config: config,
+        ).single;
+        expect(score, greaterThanOrEqualTo(50 + kOfferPeaceStalledFutileGpWarBonus));
+      },
+    );
+
+    test(
+      'offerPeace boosts consolidate-gains sole GP war victim',
+      () {
+        final game = Game(
+          id: 'g-offer-peace-consolidate',
+          worldState: WorldState(
+            turnState: const TurnState(
+              phase: TurnPhase.orders,
+              turnNumber: 60,
+            ),
+            oldWorld: RegionData(
+              provinces: [
+                for (var i = 0; i < 12; i++)
+                  Province(
+                    id: 'oldWorld|gp4_$i',
+                    regionId: 'oldWorld',
+                    ownerId: 'gp4',
+                  ),
+                for (var i = 0; i < 8; i++)
+                  Province(
+                    id: 'oldWorld|gp3_$i',
+                    regionId: 'oldWorld',
+                    ownerId: 'gp3',
+                  ),
+              ],
+            ),
+            newWorld: const RegionData(),
+          ),
+          players: const [
+            Player(id: 'gp4', displayName: 'P4', isHuman: false),
+            Player(id: 'gp3', displayName: 'P3', isHuman: false),
+          ],
+          diplomacyRelations: const [
+            DiplomacyRelation(
+              factionId1: 'gp4',
+              factionId2: 'gp3',
+              state: RelationState.atWar,
+              score: 30,
+            ),
+          ],
+        );
+        const snap = AIWorldSnapshot(
+          playerId: 'gp4',
+          threats: ThreatSummary(atWarWith: ['gp3']),
+          opportunities: OpportunitySummary(),
+          conquest: ConquestSummary(
+            oldWorldProvincesOwned: 12,
+            provincesToVictory: 18,
+            invadableProvinceIdsSorted: const [],
+          ),
+          colonial: ColonialSummary(),
+          economy: EconomySummary(),
+          relations: {},
+        );
+        const config = AIConfig(
+          leaderId: 'henry',
+          personalityId: 'henry',
+          hiddenAgendaId: 'merchant',
+        );
+        final score = computeDiplomaticCandidateScores(
+          candidates: const [
+            DiplomaticOrder(
+              type: DiplomaticOrderType.offerPeace,
+              targetFactionId: 'gp3',
+            ),
+          ],
+          nationId: 'gp4',
+          game: game,
+          snapshot: snap,
+          config: config,
+        ).single;
+        expect(
+          score,
+          greaterThanOrEqualTo(50 + kOfferPeaceConsolidateGainsSoleGpWarBonus),
+        );
+      },
+    );
+
+    test(
       'stalled OW boosts offerPeace toward GP at war that does not own invadable minors',
       () {
         const snap = AIWorldSnapshot(
