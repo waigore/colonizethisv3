@@ -24,7 +24,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'diplomatic_sub_validators_test_support.dart';
 
 void main() {
-  group('AllianceSubValidator factionMembership', () {
+  group('allianceSubValidator factionMembership', () {
     test('accepts known GP target identically with and without snapshot', () {
       final game = twoGpGame();
       final membership = DiplomacyFactionMembership.from(game);
@@ -33,14 +33,15 @@ void main() {
         targetFactionId: 'gp2',
       );
 
-      final withoutSnapshot = AllianceSubValidator(
-        game: game,
-        playerId: 'gp1',
+      final withoutSnapshot = allianceSubValidator(
+        diplomaticSubValidatorContext(game, 'gp1'),
       ).validate(order: order, treasury: 0);
-      final withSnapshot = AllianceSubValidator(
-        game: game,
-        playerId: 'gp1',
-        factionMembership: membership,
+      final withSnapshot = allianceSubValidator(
+        diplomaticSubValidatorContext(
+          game,
+          'gp1',
+          factionMembership: membership,
+        ),
       ).validate(order: order, treasury: 0);
 
       expect(withoutSnapshot.result.status, OrderValidationStatus.accepted);
@@ -58,14 +59,15 @@ void main() {
           targetFactionId: 'minor1',
         );
 
-        final withoutSnapshot = AllianceSubValidator(
-          game: game,
-          playerId: 'gp1',
+        final withoutSnapshot = allianceSubValidator(
+          diplomaticSubValidatorContext(game, 'gp1'),
         ).validate(order: order, treasury: 0);
-        final withSnapshot = AllianceSubValidator(
-          game: game,
-          playerId: 'gp1',
-          factionMembership: membership,
+        final withSnapshot = allianceSubValidator(
+          diplomaticSubValidatorContext(
+            game,
+            'gp1',
+            factionMembership: membership,
+          ),
         ).validate(order: order, treasury: 0);
 
         expect(withoutSnapshot.result.status, OrderValidationStatus.rejected);
@@ -93,17 +95,20 @@ void main() {
           ),
         );
 
-        final r = AllianceSubValidator(
-          game: game,
-          playerId: 'gp1',
-          factionMembership: emptyMembership,
-        ).validate(
-          order: const DiplomaticOrder(
-            type: DiplomaticOrderType.alliance,
-            targetFactionId: 'gp2',
-          ),
-          treasury: 0,
-        );
+        final r =
+            allianceSubValidator(
+              diplomaticSubValidatorContext(
+                game,
+                'gp1',
+                factionMembership: emptyMembership,
+              ),
+            ).validate(
+              order: const DiplomaticOrder(
+                type: DiplomaticOrderType.alliance,
+                targetFactionId: 'gp2',
+              ),
+              treasury: 0,
+            );
 
         expect(r.result.status, OrderValidationStatus.rejected);
         expect(r.result.reason, contains('Great Power'));
@@ -112,33 +117,31 @@ void main() {
   });
 
   group('EstablishOvertureSubValidator factionMembership', () {
-    test(
-      'accepts Trade Consulate toward Minor identically with snapshot',
-      () {
-        final game = gpMinorGame(overtureStage: OvertureStage.none);
-        final membership = DiplomacyFactionMembership.from(game);
-        const order = DiplomaticOrder(
-          type: DiplomaticOrderType.establishOverture,
-          targetFactionId: 'minor1',
-          overtureStage: OvertureStage.tradeConsulate,
-        );
-        final initialTreasury = overtureConsulateCost + 5;
+    test('accepts Trade Consulate toward Minor identically with snapshot', () {
+      final game = gpMinorGame(overtureStage: OvertureStage.none);
+      final membership = DiplomacyFactionMembership.from(game);
+      const order = DiplomaticOrder(
+        type: DiplomaticOrderType.establishOverture,
+        targetFactionId: 'minor1',
+        overtureStage: OvertureStage.tradeConsulate,
+      );
+      final initialTreasury = overtureConsulateCost + 5;
 
-        final withoutSnapshot = EstablishOvertureSubValidator(
-          game: game,
-          playerId: 'gp1',
-        ).validate(order: order, treasury: initialTreasury);
-        final withSnapshot = EstablishOvertureSubValidator(
-          game: game,
-          playerId: 'gp1',
+      final withoutSnapshot = EstablishOvertureSubValidator(
+        context: diplomaticSubValidatorContext(game, 'gp1'),
+      ).validate(order: order, treasury: initialTreasury);
+      final withSnapshot = EstablishOvertureSubValidator(
+        context: diplomaticSubValidatorContext(
+          game,
+          'gp1',
           factionMembership: membership,
-        ).validate(order: order, treasury: initialTreasury);
+        ),
+      ).validate(order: order, treasury: initialTreasury);
 
-        expect(withoutSnapshot.result.status, OrderValidationStatus.accepted);
-        expect(withSnapshot.result.status, OrderValidationStatus.accepted);
-        expect(withSnapshot.treasury, withoutSnapshot.treasury);
-      },
-    );
+      expect(withoutSnapshot.result.status, OrderValidationStatus.accepted);
+      expect(withSnapshot.result.status, OrderValidationStatus.accepted);
+      expect(withSnapshot.treasury, withoutSnapshot.treasury);
+    });
 
     test(
       'snapshot is consulted: rejects overture toward target absent from snapshot',
@@ -159,18 +162,21 @@ void main() {
           ),
         );
 
-        final r = EstablishOvertureSubValidator(
-          game: game,
-          playerId: 'gp1',
-          factionMembership: emptyMembership,
-        ).validate(
-          order: const DiplomaticOrder(
-            type: DiplomaticOrderType.establishOverture,
-            targetFactionId: 'minor1',
-            overtureStage: OvertureStage.tradeConsulate,
-          ),
-          treasury: overtureConsulateCost + 5,
-        );
+        final r =
+            EstablishOvertureSubValidator(
+              context: diplomaticSubValidatorContext(
+                game,
+                'gp1',
+                factionMembership: emptyMembership,
+              ),
+            ).validate(
+              order: const DiplomaticOrder(
+                type: DiplomaticOrderType.establishOverture,
+                targetFactionId: 'minor1',
+                overtureStage: OvertureStage.tradeConsulate,
+              ),
+              treasury: overtureConsulateCost + 5,
+            );
 
         expect(r.result.status, OrderValidationStatus.rejected);
         expect(
@@ -183,69 +189,66 @@ void main() {
   });
 
   group('DiplomaticOrderValidator factionMembership', () {
-    test('accepts equivalent classification with snapshot snapshot present', () {
-      final game = gpMinorGame();
-      final membership = DiplomacyFactionMembership.from(game);
-      final withoutSnapshot = DiplomaticOrderValidator(
-        game: game,
-        playerId: 'gp1',
-        initialTreasury: overtureConsulateCost + 1000,
-      );
-      final withSnapshot = DiplomaticOrderValidator(
-        game: game,
-        playerId: 'gp1',
-        initialTreasury: overtureConsulateCost + 1000,
-        factionMembership: membership,
-      );
-
-      final order = DiplomaticOrder(
-        type: DiplomaticOrderType.establishOverture,
-        targetFactionId: 'minor1',
-        overtureStage: OvertureStage.tradeConsulate,
-      );
-
-      final a = withoutSnapshot.validate(order, previousRejected: false);
-      final b = withSnapshot.validate(order, previousRejected: false);
-      expect(b.result.status, a.result.status);
-      expect(b.treasury, a.treasury);
-    });
-
     test(
-      'snapshot is consulted on active path: rejects unknown target id',
+      'accepts equivalent classification with snapshot snapshot present',
       () {
         final game = gpMinorGame();
-        final emptyMembership = DiplomacyFactionMembership.from(
-          Game(
-            id: 'empty',
-            worldState: WorldState(
-              turnState: const TurnState(
-                phase: TurnPhase.orders,
-                turnNumber: 0,
-              ),
-              oldWorld: const RegionData(),
-              newWorld: const RegionData(),
-            ),
-            players: const [],
-          ),
-        );
-        final validator = DiplomaticOrderValidator(
+        final membership = DiplomacyFactionMembership.from(game);
+        final withoutSnapshot = DiplomaticOrderValidator(
           game: game,
           playerId: 'gp1',
           initialTreasury: overtureConsulateCost + 1000,
-          factionMembership: emptyMembership,
+        );
+        final withSnapshot = DiplomaticOrderValidator(
+          game: game,
+          playerId: 'gp1',
+          initialTreasury: overtureConsulateCost + 1000,
+          factionMembership: membership,
         );
 
-        final r = validator.validate(
-          const DiplomaticOrder(
-            type: DiplomaticOrderType.establishOverture,
-            targetFactionId: 'minor1',
-            overtureStage: OvertureStage.tradeConsulate,
-          ),
-          previousRejected: false,
+        final order = DiplomaticOrder(
+          type: DiplomaticOrderType.establishOverture,
+          targetFactionId: 'minor1',
+          overtureStage: OvertureStage.tradeConsulate,
         );
-        expect(r.result.status, OrderValidationStatus.rejected);
-        expect(r.result.reason, contains('Target faction not found'));
+
+        final a = withoutSnapshot.validate(order, previousRejected: false);
+        final b = withSnapshot.validate(order, previousRejected: false);
+        expect(b.result.status, a.result.status);
+        expect(b.treasury, a.treasury);
       },
     );
+
+    test('snapshot is consulted on active path: rejects unknown target id', () {
+      final game = gpMinorGame();
+      final emptyMembership = DiplomacyFactionMembership.from(
+        Game(
+          id: 'empty',
+          worldState: WorldState(
+            turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
+            oldWorld: const RegionData(),
+            newWorld: const RegionData(),
+          ),
+          players: const [],
+        ),
+      );
+      final validator = DiplomaticOrderValidator(
+        game: game,
+        playerId: 'gp1',
+        initialTreasury: overtureConsulateCost + 1000,
+        factionMembership: emptyMembership,
+      );
+
+      final r = validator.validate(
+        const DiplomaticOrder(
+          type: DiplomaticOrderType.establishOverture,
+          targetFactionId: 'minor1',
+          overtureStage: OvertureStage.tradeConsulate,
+        ),
+        previousRejected: false,
+      );
+      expect(r.result.status, OrderValidationStatus.rejected);
+      expect(r.result.reason, contains('Target faction not found'));
+    });
   });
 }

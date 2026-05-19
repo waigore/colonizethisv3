@@ -14,11 +14,13 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'diplomatic_sub_validators_test_support.dart';
 
 void main() {
-  group('GrantAidSubValidator', () {
+  group('grantAidSubValidator', () {
     test('rejects non-positive amount', () {
-      final v = GrantAidSubValidator(
-        game: gpMinorGame(overtureStage: OvertureStage.embassy),
-        playerId: 'gp1',
+      final v = grantAidSubValidator(
+        diplomaticSubValidatorContext(
+          gpMinorGame(overtureStage: OvertureStage.embassy),
+          'gp1',
+        ),
       );
       final r = v.validate(
         order: const DiplomaticOrder(
@@ -34,9 +36,11 @@ void main() {
     });
 
     test('rejects when amount is below the step', () {
-      final v = GrantAidSubValidator(
-        game: gpMinorGame(overtureStage: OvertureStage.embassy),
-        playerId: 'gp1',
+      final v = grantAidSubValidator(
+        diplomaticSubValidatorContext(
+          gpMinorGame(overtureStage: OvertureStage.embassy),
+          'gp1',
+        ),
       );
       final r = v.validate(
         order: DiplomaticOrder(
@@ -51,9 +55,11 @@ void main() {
     });
 
     test('rejects amount that is not a multiple of the step', () {
-      final v = GrantAidSubValidator(
-        game: gpMinorGame(overtureStage: OvertureStage.embassy),
-        playerId: 'gp1',
+      final v = grantAidSubValidator(
+        diplomaticSubValidatorContext(
+          gpMinorGame(overtureStage: OvertureStage.embassy),
+          'gp1',
+        ),
       );
       final r = v.validate(
         order: DiplomaticOrder(
@@ -68,9 +74,11 @@ void main() {
     });
 
     test('rejects without embassy', () {
-      final v = GrantAidSubValidator(
-        game: gpMinorGame(overtureStage: OvertureStage.tradeConsulate),
-        playerId: 'gp1',
+      final v = grantAidSubValidator(
+        diplomaticSubValidatorContext(
+          gpMinorGame(overtureStage: OvertureStage.tradeConsulate),
+          'gp1',
+        ),
       );
       final r = v.validate(
         order: const DiplomaticOrder(
@@ -85,9 +93,11 @@ void main() {
     });
 
     test('rejects when treasury below amount and preserves treasury', () {
-      final v = GrantAidSubValidator(
-        game: gpMinorGame(overtureStage: OvertureStage.embassy),
-        playerId: 'gp1',
+      final v = grantAidSubValidator(
+        diplomaticSubValidatorContext(
+          gpMinorGame(overtureStage: OvertureStage.embassy),
+          'gp1',
+        ),
       );
       final r = v.validate(
         order: const DiplomaticOrder(
@@ -103,9 +113,11 @@ void main() {
     });
 
     test('accepts and debits treasury by the amount', () {
-      final v = GrantAidSubValidator(
-        game: gpMinorGame(overtureStage: OvertureStage.embassy),
-        playerId: 'gp1',
+      final v = grantAidSubValidator(
+        diplomaticSubValidatorContext(
+          gpMinorGame(overtureStage: OvertureStage.embassy),
+          'gp1',
+        ),
       );
       final r = v.validate(
         order: const DiplomaticOrder(
@@ -120,11 +132,13 @@ void main() {
     });
   });
 
-  group('SetSubsidySubValidator', () {
+  group('setSubsidySubValidator', () {
     test('rejects non-positive amount', () {
-      final v = SetSubsidySubValidator(
-        game: gpMinorGame(overtureStage: OvertureStage.tradeConsulate),
-        playerId: 'gp1',
+      final v = setSubsidySubValidator(
+        diplomaticSubValidatorContext(
+          gpMinorGame(overtureStage: OvertureStage.tradeConsulate),
+          'gp1',
+        ),
       );
       final r = v.validate(
         order: const DiplomaticOrder(
@@ -139,9 +153,11 @@ void main() {
     });
 
     test('rejects amount not a multiple of the step', () {
-      final v = SetSubsidySubValidator(
-        game: gpMinorGame(overtureStage: OvertureStage.tradeConsulate),
-        playerId: 'gp1',
+      final v = setSubsidySubValidator(
+        diplomaticSubValidatorContext(
+          gpMinorGame(overtureStage: OvertureStage.tradeConsulate),
+          'gp1',
+        ),
       );
       final r = v.validate(
         order: DiplomaticOrder(
@@ -156,9 +172,11 @@ void main() {
     });
 
     test('rejects without consulate or embassy', () {
-      final v = SetSubsidySubValidator(
-        game: gpMinorGame(overtureStage: OvertureStage.none),
-        playerId: 'gp1',
+      final v = setSubsidySubValidator(
+        diplomaticSubValidatorContext(
+          gpMinorGame(overtureStage: OvertureStage.none),
+          'gp1',
+        ),
       );
       final r = v.validate(
         order: const DiplomaticOrder(
@@ -173,9 +191,11 @@ void main() {
     });
 
     test('accepts with consulate and debits treasury', () {
-      final v = SetSubsidySubValidator(
-        game: gpMinorGame(overtureStage: OvertureStage.tradeConsulate),
-        playerId: 'gp1',
+      final v = setSubsidySubValidator(
+        diplomaticSubValidatorContext(
+          gpMinorGame(overtureStage: OvertureStage.tradeConsulate),
+          'gp1',
+        ),
       );
       final r = v.validate(
         order: const DiplomaticOrder(
@@ -190,9 +210,11 @@ void main() {
     });
 
     test('rejects when treasury is below subsidy amount', () {
-      final v = SetSubsidySubValidator(
-        game: gpMinorGame(overtureStage: OvertureStage.embassy),
-        playerId: 'gp1',
+      final v = setSubsidySubValidator(
+        diplomaticSubValidatorContext(
+          gpMinorGame(overtureStage: OvertureStage.embassy),
+          'gp1',
+        ),
       );
       final r = v.validate(
         order: const DiplomaticOrder(
