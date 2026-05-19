@@ -85,7 +85,7 @@ void main() {
   );
 
   test(
-    'belowQuotaPeerGpPeaceTargets skips sole GP blocker on GP-only frontier',
+    'belowQuotaPeerGpPeaceTargets peace mutual plateau peer on GP-only frontier',
     () {
       final game = Game(
         id: 'g-peer-gp-only-blocker',
@@ -146,7 +146,7 @@ void main() {
       );
       expect(
         belowQuotaPeerGpPeaceTargets(game: game, snapshot: snapshot),
-        isEmpty,
+        ['gp5'],
       );
     },
   );

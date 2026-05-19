@@ -113,7 +113,7 @@ const int kStalledConquerGoalBonus = 30;
 
 /// Extra conquer / reduced defend while critically weak but invadable OW minors
 /// remain (recover after survival peace; Refs #2509).
-const int kWeakGpRecoveryConquerBonus = 60;
+const int kWeakGpRecoveryConquerBonus = 90;
 const int kWeakGpRecoveryDefendPenalty = 30;
 
 /// Extra declare-war weight toward adjacent minors when stalled.
@@ -124,7 +124,7 @@ const int kDeclareWarStalledExpansionMinorBonus = 75;
 const int kDeclareWarStalledOwMinorPriorityBonus = 200;
 
 /// Extra declare-war weight toward OW minors while holdings are critically low.
-const int kDeclareWarWeakGpOwMinorRecoveryBonus = 120;
+const int kDeclareWarWeakGpOwMinorRecoveryBonus = 220;
 
 /// Extra declare-war weight toward OW minors while below the observer quota
 /// (7–9 OW holdings; Refs #2509).
