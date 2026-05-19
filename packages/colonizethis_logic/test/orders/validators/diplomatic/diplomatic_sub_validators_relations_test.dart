@@ -13,11 +13,13 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'diplomatic_sub_validators_test_support.dart';
 
 void main() {
-  group('DeclareWarSubValidator', () {
+  group('declareWarSubValidator', () {
     test('accepts when at peace and leaves treasury unchanged', () {
-      final v = DeclareWarSubValidator(
-        game: twoGpGame(state: RelationState.atPeace),
-        playerId: 'gp1',
+      final v = declareWarSubValidator(
+        diplomaticSubValidatorContext(
+          twoGpGame(state: RelationState.atPeace),
+          'gp1',
+        ),
       );
       final r = v.validate(
         order: const DiplomaticOrder(
@@ -31,9 +33,11 @@ void main() {
     });
 
     test('rejects when already at war and preserves treasury', () {
-      final v = DeclareWarSubValidator(
-        game: twoGpGame(state: RelationState.atWar),
-        playerId: 'gp1',
+      final v = declareWarSubValidator(
+        diplomaticSubValidatorContext(
+          twoGpGame(state: RelationState.atWar),
+          'gp1',
+        ),
       );
       final r = v.validate(
         order: const DiplomaticOrder(
@@ -48,11 +52,13 @@ void main() {
     });
   });
 
-  group('OfferPeaceSubValidator', () {
+  group('offerPeaceSubValidator', () {
     test('accepts when at war and leaves treasury unchanged', () {
-      final v = OfferPeaceSubValidator(
-        game: twoGpGame(state: RelationState.atWar),
-        playerId: 'gp1',
+      final v = offerPeaceSubValidator(
+        diplomaticSubValidatorContext(
+          twoGpGame(state: RelationState.atWar),
+          'gp1',
+        ),
       );
       final r = v.validate(
         order: const DiplomaticOrder(
@@ -66,9 +72,11 @@ void main() {
     });
 
     test('rejects when not at war', () {
-      final v = OfferPeaceSubValidator(
-        game: twoGpGame(state: RelationState.atPeace),
-        playerId: 'gp1',
+      final v = offerPeaceSubValidator(
+        diplomaticSubValidatorContext(
+          twoGpGame(state: RelationState.atPeace),
+          'gp1',
+        ),
       );
       final r = v.validate(
         order: const DiplomaticOrder(
@@ -83,11 +91,10 @@ void main() {
     });
   });
 
-  group('AllianceSubValidator', () {
+  group('allianceSubValidator', () {
     test('rejects when target is not a Great Power', () {
-      final v = AllianceSubValidator(
-        game: gpMinorGame(),
-        playerId: 'gp1',
+      final v = allianceSubValidator(
+        diplomaticSubValidatorContext(gpMinorGame(), 'gp1'),
       );
       final r = v.validate(
         order: const DiplomaticOrder(
@@ -102,9 +109,11 @@ void main() {
     });
 
     test('rejects when at war with the target Great Power', () {
-      final v = AllianceSubValidator(
-        game: twoGpGame(state: RelationState.atWar),
-        playerId: 'gp1',
+      final v = allianceSubValidator(
+        diplomaticSubValidatorContext(
+          twoGpGame(state: RelationState.atWar),
+          'gp1',
+        ),
       );
       final r = v.validate(
         order: const DiplomaticOrder(
@@ -118,9 +127,11 @@ void main() {
     });
 
     test('accepts when target is a Great Power and at peace', () {
-      final v = AllianceSubValidator(
-        game: twoGpGame(state: RelationState.atPeace),
-        playerId: 'gp1',
+      final v = allianceSubValidator(
+        diplomaticSubValidatorContext(
+          twoGpGame(state: RelationState.atPeace),
+          'gp1',
+        ),
       );
       final r = v.validate(
         order: const DiplomaticOrder(

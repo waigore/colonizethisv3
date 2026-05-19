@@ -11,18 +11,14 @@ import 'join_empire_validator.dart';
 /// [OvertureStage.joinEmpire] to [JoinEmpireOvertureValidator].
 /// SPEC/program/orders.md § Diplomatic orders / overtures.
 class EstablishOvertureSubValidator implements DiplomaticSubValidator {
-  const EstablishOvertureSubValidator({
-    required this.game,
-    required this.playerId,
-    this.factionMembership,
-  });
+  EstablishOvertureSubValidator({
+    required DiplomaticSubValidatorContext context,
+  }) : game = context.game,
+       playerId = context.playerId,
+       factionMembership = context.factionMembership;
 
   final Game game;
   final String playerId;
-
-  /// Optional precomputed faction classification snapshot reused across
-  /// per-candidate probes to avoid linear `game.players` /
-  /// `game.minorNations` / `game.tribes` scans (Refs #2394).
   final DiplomacyFactionMembership? factionMembership;
 
   @override
@@ -69,16 +65,17 @@ class EstablishOvertureSubValidator implements DiplomaticSubValidator {
         treasury,
       ),
       OvertureStage.nap => _validateNap(targetId, currentStage, treasury),
-      OvertureStage.joinEmpire => JoinEmpireOvertureValidator(
-        game: game,
-        playerId: playerId,
-        factionMembership: factionMembership,
-      ).validate(
-        targetId: targetId,
-        rel: rel,
-        currentStage: currentStage,
-        treasury: treasury,
-      ),
+      OvertureStage.joinEmpire =>
+        JoinEmpireOvertureValidator(
+          game: game,
+          playerId: playerId,
+          factionMembership: factionMembership,
+        ).validate(
+          targetId: targetId,
+          rel: rel,
+          currentStage: currentStage,
+          treasury: treasury,
+        ),
       OvertureStage.none => rejectDiplomaticSub(
         'Overture stage is required for establishOverture',
         treasury,
