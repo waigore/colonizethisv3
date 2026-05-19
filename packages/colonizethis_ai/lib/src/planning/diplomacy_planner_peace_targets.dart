@@ -474,46 +474,81 @@ List<String> multiFrontNonBlockerGpPeaceTargets({
   return targets;
 }
 
-/// Great Power peace targets from stalled expansion helpers (Refs #2509).
+/// Critical collapse / zero-regiment peace (all observer phases).
+Iterable<String> _survivalGreatPowerPeaceTargets({
+  required Game game,
+  required AIWorldSnapshot snapshot,
+}) sync* {
+  yield* criticalWeakGpSurvivalPeaceTargets(game: game, snapshot: snapshot);
+  yield* mutualZeroRegimentGpStalematePeaceTargets(game: game, snapshot: snapshot);
+  yield* stalledZeroRegimentGpPeaceTargets(game: game, snapshot: snapshot);
+}
+
+/// Legacy OW-expansion scoring ratchet peace (EXPAND / COLONIAL-lite only; Refs #2509 S10).
+Iterable<String> _expandRatchetGreatPowerPeaceTargets({
+  required Game game,
+  required AIWorldSnapshot snapshot,
+}) sync* {
+  yield* stalledFutileGpPeaceTargets(game: game, snapshot: snapshot);
+  yield* stalledGpBlockerFocusPeaceTargets(game: game, snapshot: snapshot);
+  yield* stalledExpansionDistractionPeaceTargets(game: game, snapshot: snapshot);
+  yield* multiFrontNonBlockerGpPeaceTargets(game: game, snapshot: snapshot);
+  yield* criticalMultiFrontGpPeaceTargets(game: game, snapshot: snapshot);
+  yield* weakHoldingsInvadableBlockerPeaceTargets(game: game, snapshot: snapshot);
+  yield* plateauMutualInvadableBlockerPeaceTargets(game: game, snapshot: snapshot);
+  final strongerBlocker = stalledStrongerGpBlockerPeaceTarget(
+    game: game,
+    snapshot: snapshot,
+  );
+  if (strongerBlocker != null) {
+    yield strongerBlocker;
+  }
+  yield* criticalOwHoldPeaceTargets(game: game, snapshot: snapshot);
+  yield* stalledBelowQuotaGpLeadPeaceTargets(game: game, snapshot: snapshot);
+  yield* belowQuotaPeerGpPeaceTargets(game: game, snapshot: snapshot);
+  yield* defaultStartGpPeaceTargets(game: game, snapshot: snapshot);
+  yield* defaultStartFutileMinorPeaceTargets(game: game, snapshot: snapshot);
+  yield* nearQuotaHoldPeaceTargets(game: game, snapshot: snapshot);
+  yield* quotaMetBelowQuotaAtWarPeaceTargets(game: game, snapshot: snapshot);
+  yield* quotaMetFutileBelowQuotaGpPeaceTargets(game: game, snapshot: snapshot);
+  final unwinnable = unwinnableSoleGpFrontierPeaceTarget(
+    game: game,
+    snapshot: snapshot,
+  );
+  if (unwinnable != null) {
+    yield unwinnable;
+  }
+  final consolidate = consolidateGainsSoleGpPeaceTarget(
+    game: game,
+    snapshot: snapshot,
+  );
+  if (consolidate != null) {
+    yield consolidate;
+  }
+}
+
+/// Great Power peace targets from observer phase rules and stalled expansion helpers.
 Set<String> collectStalledGreatPowerPeaceTargets({
   required Game game,
   required AIWorldSnapshot snapshot,
 }) {
+  final phase = observerGoalPhaseFor(snapshot: snapshot, game: game);
+  final phaseRatchetPeace = switch (phase) {
+    ObserverGoalPhase.develop => const <String>[],
+    ObserverGoalPhase.colonial => atWarGpDistractionTribePeaceTargets(
+        game: game,
+        snapshot: snapshot,
+      ),
+    ObserverGoalPhase.expand || ObserverGoalPhase.colonialLite =>
+      _expandRatchetGreatPowerPeaceTargets(game: game, snapshot: snapshot)
+          .toList(),
+  };
   final targets = <String>{
     ...developPhaseGpPeaceTargets(game: game, snapshot: snapshot),
     ...colonialPhaseGpPeaceTargets(game: game, snapshot: snapshot),
     ...expandPhaseGpPeaceTargets(game: game, snapshot: snapshot),
-    ...stalledFutileGpPeaceTargets(game: game, snapshot: snapshot),
-    ...stalledGpBlockerFocusPeaceTargets(game: game, snapshot: snapshot),
-    ...stalledExpansionDistractionPeaceTargets(
-      game: game,
-      snapshot: snapshot,
-    ),
-    ...atWarGpDistractionTribePeaceTargets(game: game, snapshot: snapshot),
-    ...multiFrontNonBlockerGpPeaceTargets(game: game, snapshot: snapshot),
-    ...criticalMultiFrontGpPeaceTargets(game: game, snapshot: snapshot),
-    ...criticalWeakGpSurvivalPeaceTargets(game: game, snapshot: snapshot),
-    ...weakHoldingsInvadableBlockerPeaceTargets(game: game, snapshot: snapshot),
-    ...plateauMutualInvadableBlockerPeaceTargets(game: game, snapshot: snapshot),
-    ...mutualZeroRegimentGpStalematePeaceTargets(game: game, snapshot: snapshot),
-    ...stalledZeroRegimentGpPeaceTargets(game: game, snapshot: snapshot),
-    if (stalledStrongerGpBlockerPeaceTarget(game: game, snapshot: snapshot) !=
-        null)
-      stalledStrongerGpBlockerPeaceTarget(game: game, snapshot: snapshot)!,
-    ...criticalOwHoldPeaceTargets(game: game, snapshot: snapshot),
-    ...stalledBelowQuotaGpLeadPeaceTargets(game: game, snapshot: snapshot),
-    ...belowQuotaPeerGpPeaceTargets(game: game, snapshot: snapshot),
-    ...defaultStartGpPeaceTargets(game: game, snapshot: snapshot),
-    ...defaultStartFutileMinorPeaceTargets(game: game, snapshot: snapshot),
-    ...nearQuotaHoldPeaceTargets(game: game, snapshot: snapshot),
-    ...quotaMetBelowQuotaAtWarPeaceTargets(game: game, snapshot: snapshot),
-    ...quotaMetFutileBelowQuotaGpPeaceTargets(game: game, snapshot: snapshot),
-    if (unwinnableSoleGpFrontierPeaceTarget(game: game, snapshot: snapshot)
-        case final enemy?)
-      enemy,
-    if (consolidateGainsSoleGpPeaceTarget(game: game, snapshot: snapshot)
-        case final enemy?)
-      enemy,
+    ..._survivalGreatPowerPeaceTargets(game: game, snapshot: snapshot),
+    ...phaseRatchetPeace,
   };
   final invadableBlocker =
       isBelowObserverConquestQuota(snapshot.conquest.oldWorldProvincesOwned) &&

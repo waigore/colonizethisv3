@@ -1,5 +1,7 @@
 import 'package:colonizethis_ai/colonizethis_ai.dart';
+import 'package:colonizethis_ai/src/planning/colonial_pressure.dart';
 import 'package:colonizethis_ai/src/planning/diplomatic_candidate_scoring.dart';
+import 'package:colonizethis_ai/src/planning/diplomacy_planner_peace_targets.dart';
 import 'package:colonizethis_ai/src/planning/observer_goal_phase.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/ai_api.dart';
@@ -613,6 +615,124 @@ void main() {
       expect(
         topTypeFor('henry'),
         DiplomaticOrderType.establishOverture,
+      );
+    });
+  });
+
+  group('collectStalledGreatPowerPeaceTargets phase gating', () {
+    test('develop phase uses develop peace only, not expand ratchet', () {
+      final game = Game(
+        id: 'g-develop-collect',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 140),
+          oldWorld: RegionData(
+            provinces: [
+              for (var i = 1; i <= 10; i++)
+                Province(
+                  id: 'oldWorld|gp4_$i',
+                  regionId: 'oldWorld',
+                  ownerId: 'gp4',
+                ),
+              for (var i = 1; i <= 6; i++)
+                Province(
+                  id: 'oldWorld|gp3_$i',
+                  regionId: 'oldWorld',
+                  ownerId: 'gp3',
+                ),
+            ],
+          ),
+          newWorld: const RegionData(),
+        ),
+        players: const [
+          Player(id: 'gp3', displayName: 'P3', isHuman: false),
+          Player(id: 'gp4', displayName: 'P4', isHuman: false),
+        ],
+        diplomacyRelations: [
+          const DiplomacyRelation(
+            factionId1: 'gp3',
+            factionId2: 'gp4',
+            state: RelationState.atWar,
+            score: 30,
+          ),
+        ],
+      );
+      const snapshot = AIWorldSnapshot(
+        playerId: 'gp4',
+        threats: ThreatSummary(atWarWith: ['gp3']),
+        opportunities: OpportunitySummary(),
+        conquest: ConquestSummary(oldWorldProvincesOwned: 10),
+        colonial: ColonialSummary(),
+        economy: EconomySummary(),
+        relations: {},
+      );
+      expect(observerGoalPhaseFor(snapshot: snapshot, game: game),
+          ObserverGoalPhase.develop);
+      expect(
+        belowQuotaPeerGpPeaceTargets(game: game, snapshot: snapshot),
+        isEmpty,
+      );
+      expect(
+        collectStalledGreatPowerPeaceTargets(game: game, snapshot: snapshot),
+        developPhaseGpPeaceTargets(game: game, snapshot: snapshot).toSet(),
+      );
+    });
+
+    test('expand phase still applies below-quota peer ratchet', () {
+      final game = Game(
+        id: 'g-expand-collect',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 50),
+          oldWorld: RegionData(
+            provinces: [
+              for (var i = 1; i <= 8; i++)
+                Province(
+                  id: 'oldWorld|gp5_$i',
+                  regionId: 'oldWorld',
+                  ownerId: 'gp5',
+                ),
+              for (var i = 1; i <= 8; i++)
+                Province(
+                  id: 'oldWorld|gp6_$i',
+                  regionId: 'oldWorld',
+                  ownerId: 'gp6',
+                ),
+              const Province(
+                id: 'oldWorld|minor1',
+                regionId: 'oldWorld',
+                ownerId: 'minor1',
+              ),
+            ],
+          ),
+          newWorld: const RegionData(),
+        ),
+        players: const [
+          Player(id: 'gp5', displayName: 'P5', isHuman: false),
+          Player(id: 'gp6', displayName: 'P6', isHuman: false),
+        ],
+        minorNations: const [MinorNation(id: 'minor1', displayName: 'M1')],
+        diplomacyRelations: [
+          const DiplomacyRelation(
+            factionId1: 'gp5',
+            factionId2: 'gp6',
+            state: RelationState.atWar,
+            score: 30,
+          ),
+        ],
+      );
+      const snapshot = AIWorldSnapshot(
+        playerId: 'gp5',
+        threats: ThreatSummary(atWarWith: ['gp6']),
+        opportunities: OpportunitySummary(),
+        conquest: ConquestSummary(oldWorldProvincesOwned: 8),
+        colonial: ColonialSummary(),
+        economy: EconomySummary(),
+        relations: {},
+      );
+      expect(observerGoalPhaseFor(snapshot: snapshot, game: game),
+          ObserverGoalPhase.expand);
+      expect(
+        collectStalledGreatPowerPeaceTargets(game: game, snapshot: snapshot),
+        contains('gp6'),
       );
     });
   });

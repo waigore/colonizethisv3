@@ -130,6 +130,8 @@ Deterministic phases from `PlayerView` → `AIWorldSnapshot` (`observer_goal_pha
 
 **DEVELOP:** Suppresses all new `declareWar` and NW acquisition; forces civilian work selection with improvement-first threshold (`kDevelopCivilianWorkThresholdCap`); `offerPeace` toward all at-war Great Powers.
 
+**Peace collection (S10):** `collectStalledGreatPowerPeaceTargets` applies phase peace targets first. Legacy `colonial_pressure` OW-expansion ratchet helpers run only in **EXPAND** and **COLONIAL-lite**; **COLONIAL** uses phase peace plus tribe-distraction peace and survival helpers; **DEVELOP** uses phase peace plus survival helpers only.
+
 ### Implementation (turn pipeline)
 AI order generation runs so that orders are available for the **Orders** phase of turn resolution. Merge (human + AI) and application order are defined in [turn-resolution-phases.md](../program/turn-resolution-phases.md) (phase 1 Orders) and [turn-resolution-phase-details.md](../program/turn-resolution-phase-details.md) § Orders. Control rules and merge semantics: [ai-planner.md](../program/ai-planner.md); module boundaries and APIs: [ai-systems-impl.md](../program/ai-systems-impl.md).
 
