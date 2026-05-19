@@ -73,7 +73,6 @@ List<String> belowQuotaPeerGpPeaceTargets({
   if (!isBelowObserverConquestQuota(ownOw)) {
     return const [];
   }
-  final provinceOwner = getProvinceOwnerMap(game);
   final minorsOnMap = game.worldState.oldWorld.provinces.any(
     (p) =>
         p.ownerId != null &&
@@ -100,33 +99,46 @@ List<String> belowQuotaPeerGpPeaceTargets({
   return targets;
 }
 
-/// Peace non-blocker Great Power wars when one province short of the observer
-/// quota (hold early gains; seed-42 gp3; Refs #2509).
+/// Peace distracting GP wars at 8–9 OW while below the observer quota (hold gains;
+/// seed-42 gp3; Refs #2509).
 List<String> nearQuotaHoldPeaceTargets({
   required Game game,
   required AIWorldSnapshot snapshot,
 }) {
   final ownOw = snapshot.conquest.oldWorldProvincesOwned;
-  if (ownOw < kObserverConquestMinOwProvincesPerGp - 1 ||
-      !isBelowObserverConquestQuota(ownOw)) {
+  if (!isBelowObserverConquestQuota(ownOw) ||
+      ownOw < kObserverConquestMinOwProvincesPerGp - 2) {
     return const [];
   }
   final gpWars = <String>[
     for (final factionId in snapshot.threats.atWarWith)
       if (game.playerById(factionId) != null) factionId,
   ];
-  if (gpWars.length < 2) {
+  if (gpWars.isEmpty) {
     return const [];
   }
   final blocker = primaryInvadableOldWorldGpBlocker(
     game: game,
     snapshot: snapshot,
   );
-  final targets = <String>[
-    for (final factionId in gpWars)
-      if (factionId != blocker) factionId,
-  ]..sort();
-  return targets;
+  final gpOnlyFrontier = isOldWorldGpOnlyInvadableFrontier(
+    game: game,
+    snapshot: snapshot,
+  );
+  if (gpWars.length == 1 &&
+      gpOnlyFrontier &&
+      blocker != null &&
+      gpWars.single == blocker) {
+    return const [];
+  }
+  if (gpWars.length >= 2) {
+    final targets = <String>[
+      for (final factionId in gpWars)
+        if (factionId != blocker) factionId,
+    ]..sort();
+    return targets;
+  }
+  return gpWars;
 }
 
 /// GP owning the most invadable Old World provinces (frontier blocker).
@@ -218,7 +230,12 @@ String? unwinnableSoleGpFrontierPeaceTarget({
   }
   final own = snapshot.conquest.oldWorldProvincesOwned;
   final enemyOw = provinceCountOwnedBy(game, enemy);
-  if (enemyOw < own + kUnwinnableSoleGpMinProvinceDeficit) {
+  final minDeficit =
+      own >= kObserverConquestMinOwProvincesPerGp - 2 &&
+              !isOldWorldGpOnlyInvadableFrontier(game: game, snapshot: snapshot)
+          ? 1
+          : kUnwinnableSoleGpMinProvinceDeficit;
+  if (enemyOw < own + minDeficit) {
     return null;
   }
   return enemy;
