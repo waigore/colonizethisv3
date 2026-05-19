@@ -1,4 +1,5 @@
 import '../perception/perception_snapshot.dart';
+import 'army_conquest_prep.dart';
 import 'planning_imports.dart';
 import 'colonial_pressure.dart';
 export 'colonial_pressure.dart'
@@ -254,6 +255,9 @@ String? stalledGpBlockerDeclareWarTarget({
   required Game game,
   required AIWorldSnapshot snapshot,
 }) {
+  if (regimentCountForPlayer(game, snapshot.playerId) == 0) {
+    return null;
+  }
   if (!isOldWorldGpOnlyInvadableFrontier(game: game, snapshot: snapshot)) {
     return null;
   }
@@ -272,11 +276,28 @@ String? stalledGpBlockerDeclareWarTarget({
       snapshot.relations[blocker]?.atWar == true) {
     return null;
   }
+  final ownOw = snapshot.conquest.oldWorldProvincesOwned;
+  final blockerOw = provinceCountOwnedBy(game, blocker);
   if (isMutualBelowQuotaPlateauPeer(
-    ownOw: snapshot.conquest.oldWorldProvincesOwned,
-    partnerOw: provinceCountOwnedBy(game, blocker),
+    ownOw: ownOw,
+    partnerOw: blockerOw,
   )) {
-    return null;
+    if (regimentCountForPlayer(game, blocker) == 0) {
+      return null;
+    }
+    if (hasUninvadedOldWorldMinor(game: game, snapshot: snapshot)) {
+      return null;
+    }
+    // Already at war with the mutual plateau blocker (gp3/gp4 seed-42 fronts).
+    if (snapshot.threats.atWarWith.contains(blocker) ||
+        snapshot.relations[blocker]?.atWar == true) {
+      return null;
+    }
+    // Open the front from the weaker peer only (gp5 vs gp6 at peace).
+    if (ownOw > blockerOw ||
+        (ownOw == blockerOw && snapshot.playerId.compareTo(blocker) > 0)) {
+      return null;
+    }
   }
   if (unwinnableSoleGpFrontierPeaceTarget(game: game, snapshot: snapshot) ==
       blocker) {

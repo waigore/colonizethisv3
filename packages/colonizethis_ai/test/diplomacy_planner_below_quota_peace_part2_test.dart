@@ -85,7 +85,7 @@ void main() {
   );
 
   test(
-    'belowQuotaPeerGpPeaceTargets peace mutual plateau peer without minors on map',
+    'belowQuotaPeerGpPeaceTargets peace mutual plateau peer without invadable frontier',
     () {
       final game = Game(
         id: 'g-peer-plateau-no-minors',
@@ -202,7 +202,8 @@ void main() {
       );
       expect(
         belowQuotaPeerGpPeaceTargets(game: game, snapshot: snapshot),
-        ['gp5'],
+        isEmpty,
+        reason: 'sole GP blocker war held on GP-only mutual-plateau frontier',
       );
     },
   );

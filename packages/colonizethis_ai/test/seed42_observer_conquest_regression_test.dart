@@ -79,7 +79,7 @@ void main() {
     },
     skip:
         'Partial AC #2509 S10: seed-42 turn-100 — gp3–gp6 below +3 OW gate; '
-        'post-minor idle plateau peers skip invadable GP declare',
+        'gp4 zero-gain at default start; mutual-plateau GP-blocker declare pending',
     timeout: const Timeout(Duration(minutes: 15)),
   );
 }
