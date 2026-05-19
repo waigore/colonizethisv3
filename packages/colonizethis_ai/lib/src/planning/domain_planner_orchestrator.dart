@@ -286,6 +286,28 @@ PlannerContext _runEconomyDomainPlanners({
   }
   emit('aiStageA');
 
+  result = _appendEconomyBuildOrders(
+    ctx: ctx,
+    snapshot: snapshot,
+    economyPlan: economyPlan,
+    orders: result,
+    colonialPressure: colonialPressure,
+    buildCandidates: buildCandidates,
+    domainEconomyWeight: domainWeights.economy,
+  );
+  emit('aiStageB');
+  return ctx.withOrders(result);
+}
+
+Orders _appendEconomyBuildOrders({
+  required PlannerContext ctx,
+  required AIWorldSnapshot snapshot,
+  required EconomyPlan economyPlan,
+  required Orders orders,
+  required bool colonialPressure,
+  required List<BuildUnitOrder> buildCandidates,
+  required int domainEconomyWeight,
+}) {
   var buildThreshold = 30 - getAgendaBuildOrderModifier(ctx.config.hiddenAgendaId);
   if (isStalledOldWorldExpansion(snapshot.conquest.oldWorldProvincesOwned)) {
     buildThreshold = math.min(buildThreshold, 15);
@@ -365,41 +387,42 @@ PlannerContext _runEconomyDomainPlanners({
     'buildCandidatesCount=${buildCandidates.length} '
     'regimentCount=$regimentCount forceRegimentRebuild=$forceRegimentRebuild',
   );
-  if (buildCandidates.isNotEmpty &&
-      (domainWeights.economy >= buildThreshold || forceRegimentRebuild)) {
-    var candidatesForBuild = buildCandidates;
-    if (forceRegimentRebuild) {
-      final regimentsOnly = buildCandidates
-          .where((o) => RegimentEconomyCatalog.byId.containsKey(o.unitType))
-          .toList();
-      if (regimentsOnly.isNotEmpty) {
-        candidatesForBuild = regimentsOnly;
-      }
+  if (buildCandidates.isEmpty ||
+      (domainEconomyWeight < buildThreshold && !forceRegimentRebuild)) {
+    if (buildCandidates.isNotEmpty) {
+      _log.d('build skipped nationId=${ctx.nationId} weight below threshold');
     }
-    final chosen = pickBuildOrder(
-      ctx: ctx,
-      input: BuildPickInput(
-        buildCandidates: candidatesForBuild,
-        cargoPreference: economyPlan.cargoPreference,
-        provincesToVictory: snapshot.conquest.provincesToVictory,
-        oldWorldProvincesOwned: snapshot.conquest.oldWorldProvincesOwned,
-        colonialPressure: colonialPressure,
-        militaryRebuildCrisis: forceRegimentRebuild &&
-            (atWarWithGpBlocker ||
-                brokeBelowQuotaAtPeace ||
-                (regimentCount <= kStalledMilitaryRebuildCrisisRegimentCap &&
-                    !(observerQuotaPressure &&
-                        snapshot.conquest.oldWorldProvincesOwned >
-                            kFewOldWorldProvincesDefendThreshold))),
-      ),
-    );
-    if (chosen != null) {
-      _log.i('build chosen nationId=${ctx.nationId} unitType=${chosen.unitType}');
-      result = result.appendBuildOrders(ctx.nationId, [chosen]);
-    }
-  } else if (buildCandidates.isNotEmpty) {
-    _log.d('build skipped nationId=${ctx.nationId} weight below threshold');
+    return orders;
   }
-  emit('aiStageB');
-  return ctx.withOrders(result);
+  var candidatesForBuild = buildCandidates;
+  if (forceRegimentRebuild) {
+    final regimentsOnly = buildCandidates
+        .where((o) => RegimentEconomyCatalog.byId.containsKey(o.unitType))
+        .toList();
+    if (regimentsOnly.isNotEmpty) {
+      candidatesForBuild = regimentsOnly;
+    }
+  }
+  final chosen = pickBuildOrder(
+    ctx: ctx,
+    input: BuildPickInput(
+      buildCandidates: candidatesForBuild,
+      cargoPreference: economyPlan.cargoPreference,
+      provincesToVictory: snapshot.conquest.provincesToVictory,
+      oldWorldProvincesOwned: snapshot.conquest.oldWorldProvincesOwned,
+      colonialPressure: colonialPressure,
+      militaryRebuildCrisis: forceRegimentRebuild &&
+          (atWarWithGpBlocker ||
+              brokeBelowQuotaAtPeace ||
+              (regimentCount <= kStalledMilitaryRebuildCrisisRegimentCap &&
+                  !(observerQuotaPressure &&
+                      snapshot.conquest.oldWorldProvincesOwned >
+                          kFewOldWorldProvincesDefendThreshold))),
+    ),
+  );
+  if (chosen == null) {
+    return orders;
+  }
+  _log.i('build chosen nationId=${ctx.nationId} unitType=${chosen.unitType}');
+  return orders.appendBuildOrders(ctx.nationId, [chosen]);
 }
