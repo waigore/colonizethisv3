@@ -9,6 +9,7 @@ import 'war_desire_calculator.dart';
 
 part 'diplomatic_candidate_scoring_offer_peace.dart';
 part 'diplomatic_candidate_scoring_declare_war.dart';
+part 'diplomatic_candidate_scoring_declare_war_bonuses.dart';
 
 final _log = packageLogger();
 
