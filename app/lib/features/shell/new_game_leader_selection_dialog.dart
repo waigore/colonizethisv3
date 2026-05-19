@@ -32,6 +32,7 @@ class NewGameLeaderSelectionDialog extends StatefulWidget {
     List<String> orderedGreatPowerIds,
     Map<String, String> leaderVariantByGpId,
     int seed,
+    bool infiniteMode,
   )
   onConfirmed;
 
@@ -58,6 +59,7 @@ class _NewGameLeaderSelectionDialogState
   late List<String> _orderedGpIdsBySlot;
   late Map<String, String> _leaderByGpId;
   late final TextEditingController _seedController;
+  bool _infiniteMode = false;
 
   List<String> get _allGpIds =>
       widget.naming.greatPowers.map((g) => g.id).toList();
@@ -195,6 +197,26 @@ class _NewGameLeaderSelectionDialogState
               color: Theme.of(context).colorScheme.onSurfaceVariant,
             ),
           ),
+          const SizedBox(height: 12),
+          CheckboxListTile(
+            contentPadding: EdgeInsets.zero,
+            controlAffinity: ListTileControlAffinity.leading,
+            value: _infiniteMode,
+            onChanged: (value) {
+              setState(() => _infiniteMode = value ?? false);
+            },
+            title: Text(
+              l10n.shell_leaderDialog_infiniteModeLabel,
+              style: Theme.of(context).textTheme.bodyMedium,
+            ),
+            subtitle: Text(
+              l10n.shell_leaderDialog_infiniteModeHelper,
+              style: TextStyle(
+                fontSize: 12,
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
+            ),
+          ),
           const SizedBox(height: 16),
           Row(
             mainAxisAlignment: MainAxisAlignment.end,
@@ -216,6 +238,7 @@ class _NewGameLeaderSelectionDialogState
                           List<String>.from(_orderedGpIdsBySlot),
                           Map<String, String>.from(_leaderByGpId),
                           seed,
+                          _infiniteMode,
                         );
                       }
                     : null,

@@ -70,6 +70,7 @@ GameSetupConfig _ctE2eNewGameLeaderTemplateConfig() {
     numProvincesNewWorld: 12,
     minProvincesPerMinor: 2,
     seed: d.seed,
+    infiniteMode: d.infiniteMode,
     startingResources: d.startingResources,
     preferredInitialMapZoomMultiplier: d.preferredInitialMapZoomMultiplier,
     initTownRoadWiringRegionIds: d.initTownRoadWiringRegionIds,

@@ -20,6 +20,7 @@ class GameSetupConfig {
     this.numProvincesNewWorld = 30,
     this.minProvincesPerMinor = 3,
     this.seed = 42,
+    this.infiniteMode = false,
     this.startingResources = const StartingResourcesConfig(),
     this.preferredInitialMapZoomMultiplier,
     Set<String>? initTownRoadWiringRegionIds,
@@ -67,6 +68,11 @@ class GameSetupConfig {
   /// Minimum provinces the ruleset attempts to reserve per Minor Nation on the Old World map.
   final int minProvincesPerMinor;
   final int seed;
+
+  /// When true, the campaign does not halt at the calendar year-1800 cap.
+  /// Chosen at new-game setup only; immutable after game creation.
+  final bool infiniteMode;
+
   final StartingResourcesConfig startingResources;
 
   /// Optional explicit fit-relative map zoom multiplier (`m`) for fresh campaign

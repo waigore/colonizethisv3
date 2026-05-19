@@ -1,6 +1,6 @@
 # In-game shell: hamburger menu and layout
 
-**SPEC/ui** — The in-game screen has a **hamburger** slide-out that contains **Debug log** only. **Empire actions** live on the map **left rail** ([empire-buttons.md](empire-buttons.md)). Available at all viewport sizes. Authority: [empire-overview.md](empire-overview.md).
+**SPEC/ui** — The in-game screen has a **hamburger** slide-out with **Game Parameters** (read-only) and **Debug log**. **Empire actions** live on the map **left rail** ([empire-buttons.md](empire-buttons.md)). Available at all viewport sizes. Authority: [empire-overview.md](empire-overview.md).
 
 ---
 
@@ -16,14 +16,20 @@ The top bar shows:
 
 ---
 
-## Hamburger side menu (Debug log)
+## Hamburger side menu
 
 - **Availability:** Available at all viewport sizes (both narrow and wide).
 - **Open:** Swipe in from the **left** edge of the **map** (narrow strip), or tap the **hamburger** in the top bar.
 - **Close:** Swipe the menu to the **left** (drag to close), tap a **close (×)** button in the menu, tap outside the menu (on scrim), or press **Escape**.
-- **Content:** **Debug log** only (plus close). Does **not** list empire actions.
-- **Layout:** Pixel-art **CtPanel** with **CtNinePatchButton** for Debug log; bug icon + label.
+- **Content:** **Game Parameters** (read-only dialog) and **Debug log** (plus close). Does **not** list empire actions.
+- **Layout:** Pixel-art **CtPanel** with **CtNinePatchButton** entries; tune icon + label for Game Parameters; bug icon + label for Debug log.
 - **Width:** Fixed width (~240 dp) so the map remains partially visible when open; drawer-like overlay.
+
+### Game Parameters (read-only)
+
+- **Entry:** Hamburger menu item **Game Parameters**.
+- **Dialog:** `CtDialogShell` with title **Game Parameters** and a read-only row **Infinite mode: On** or **Off** matching `Game.infiniteMode`. No edit controls. **Close** dismisses.
+- **Not on load list:** Infinite mode is not shown on the load-game list screen.
 
 ---
 

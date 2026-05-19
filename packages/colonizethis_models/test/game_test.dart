@@ -35,6 +35,35 @@ void main() {
       expect(restored.calendarCampaignHalted, isTrue);
     });
 
+    test('infiniteMode round-trip JSON', () {
+      final game = Game(
+        id: 'g1',
+        infiniteMode: true,
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+          oldWorld: const RegionData(),
+          newWorld: const RegionData(),
+        ),
+        players: const [Player(id: 'p1', displayName: 'Spain', isHuman: true)],
+      );
+      final restored = Game.fromJson(game.toJson());
+      expect(restored.infiniteMode, isTrue);
+    });
+
+    test('infiniteMode defaults false when missing from JSON', () {
+      final game = Game(
+        id: 'g1',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+          oldWorld: const RegionData(),
+          newWorld: const RegionData(),
+        ),
+        players: const [Player(id: 'p1', displayName: 'Spain', isHuman: true)],
+      );
+      final json = game.toJson()..remove('infiniteMode');
+      expect(Game.fromJson(json).infiniteMode, isFalse);
+    });
+
     test(
       'fromJson accepts turnTimeMapping as Map<dynamic,dynamic> (Hive typing)',
       () {
