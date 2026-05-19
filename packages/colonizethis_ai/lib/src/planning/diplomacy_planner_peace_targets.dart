@@ -241,7 +241,7 @@ List<String> criticalWeakGpSurvivalPeaceTargets({
   required AIWorldSnapshot snapshot,
 }) {
   if (snapshot.conquest.oldWorldProvincesOwned >
-      kStalledOldWorldProvinceThreshold) {
+      kFewOldWorldProvincesDefendThreshold) {
     return const [];
   }
   final ownOw = snapshot.conquest.oldWorldProvincesOwned;

@@ -132,7 +132,7 @@ const int kDeclareWarBelowQuotaOwMinorRecoveryBonus = 380;
 
 /// Extra declare-war toward adjacent invadable OW minors at 8–9 OW with no GP war
 /// (observer seed-42 gp5/gp6 plateau; Refs #2509).
-const int kDeclareWarPlateauOwMinorBonus = 850;
+const int kDeclareWarPlateauOwMinorBonus = 1050;
 
 /// Extra declare-war weight toward invadable minors when 8–9 OW (one province
 /// short of the turn-100 observer gate from default start; Refs #2509).
@@ -475,7 +475,7 @@ const int kOfferPeaceBelowQuotaInvadableBlockerPenalty = 420;
 
 /// Penalize offer-peace toward any Great Power while at default start OW size
 /// and below the observer quota (avoid net OW loss; seed-42 gp3; Refs #2509).
-const int kOfferPeaceBelowQuotaStartSizeGpWarPenalty = 180;
+const int kOfferPeaceBelowQuotaStartSizeGpWarPenalty = 420;
 
 /// Offer-peace bonus when both sides are below the observer quota, stalled, and
 /// each other's sole invadable OW frontier GP (seed-42 gp5/gp6; Refs #2509).

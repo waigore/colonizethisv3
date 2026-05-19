@@ -124,7 +124,9 @@ List<String> belowQuotaPeerGpPeaceTargets({
     if (!mutualPlateau && ownOw > partnerOw) {
       continue;
     }
-    if (gpOnlyFrontier && soleGpWar == factionId && !mutualPlateau) {
+    // Keep fighting the sole GP blocker on a GP-only frontier (mutual plateau
+    // peer peace stalled seed-42 gp5/gp6; pivot via minors instead).
+    if (gpOnlyFrontier && soleGpWar == factionId) {
       continue;
     }
     targets.add(factionId);

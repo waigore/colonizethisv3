@@ -78,8 +78,8 @@ void main() {
     }
     },
     skip:
-        'Partial AC #2509 S10: seed-42 turn-100 — gp1/gp2/gp4 pass; '
-        'gp3 -1, gp5 +1, gp6 +2 (mutual plateau peace; plateau minor declare)',
+        'Partial AC #2509 S10: seed-42 turn-100 — gp1/gp2 +6, gp4 +3; '
+        'gp3 -1, gp5 +1, gp6 +2 (sole-blocker peace hold; start-size GP war)',
     timeout: const Timeout(Duration(minutes: 15)),
   );
 }
