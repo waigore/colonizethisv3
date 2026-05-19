@@ -192,6 +192,27 @@ abstract class AppLocalizations {
   /// Helper text explaining 0 vs fixed seed for the new-game leader dialog.
   String get shell_leaderDialog_seedHelper;
 
+  /// Checkbox label for infinite campaign mode in the new-game leader dialog.
+  String get shell_leaderDialog_infiniteModeLabel;
+
+  /// Helper text for infinite mode in the new-game leader dialog.
+  String get shell_leaderDialog_infiniteModeHelper;
+
+  /// Title of the read-only in-game game parameters dialog.
+  String get gameParameters_title;
+
+  /// Hamburger menu entry that opens the game parameters dialog.
+  String get gameParameters_menuEntry;
+
+  /// Row label prefix for infinite mode in the game parameters dialog.
+  String get gameParameters_infiniteModeHeading;
+
+  /// Infinite mode enabled value in the game parameters dialog.
+  String get gameParameters_infiniteModeOn;
+
+  /// Infinite mode disabled value in the game parameters dialog.
+  String get gameParameters_infiniteModeOff;
+
   /// Title of the modal shown while a new game is being generated.
   String get shell_newGameProgress_title;
 

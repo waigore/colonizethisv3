@@ -260,6 +260,36 @@
     "description": "Helper text explaining 0 vs fixed seed for the new-game leader dialog."
   },
 
+  "shell_leaderDialog_infiniteModeLabel": "Infinite mode (turns progress past 1800)",
+  "@shell_leaderDialog_infiniteModeLabel": {
+    "description": "Checkbox label for infinite campaign mode in the new-game leader dialog."
+  },
+  "shell_leaderDialog_infiniteModeHelper": "When enabled, the campaign continues past calendar year 1800 until a military victory.",
+  "@shell_leaderDialog_infiniteModeHelper": {
+    "description": "Helper text for infinite mode in the new-game leader dialog."
+  },
+
+  "gameParameters_title": "Game Parameters",
+  "@gameParameters_title": {
+    "description": "Title of the read-only in-game game parameters dialog."
+  },
+  "gameParameters_menuEntry": "Game Parameters",
+  "@gameParameters_menuEntry": {
+    "description": "Hamburger menu entry that opens the game parameters dialog."
+  },
+  "gameParameters_infiniteModeHeading": "Infinite mode",
+  "@gameParameters_infiniteModeHeading": {
+    "description": "Row label prefix for infinite mode in the game parameters dialog."
+  },
+  "gameParameters_infiniteModeOn": "On",
+  "@gameParameters_infiniteModeOn": {
+    "description": "Infinite mode enabled value in the game parameters dialog."
+  },
+  "gameParameters_infiniteModeOff": "Off",
+  "@gameParameters_infiniteModeOff": {
+    "description": "Infinite mode disabled value in the game parameters dialog."
+  },
+
   "shell_newGameProgress_title": "Creating game",
   "@shell_newGameProgress_title": {
     "description": "Title of the modal shown while a new game is being generated."

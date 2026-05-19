@@ -34,7 +34,7 @@ extension _DialogBuilders on _AppEventHandlerScopeState {
       naming: naming,
       initialLeaderByGpId: initialSelections,
       onCancel: () => Navigator.of(ctx).pop(),
-      onConfirmed: (orderedGreatPowerIds, leaderVariantByGpId, seed) {
+      onConfirmed: (orderedGreatPowerIds, leaderVariantByGpId, seed, infiniteMode) {
         final navCtx = appNavigatorKey.currentContext;
         if (navCtx == null) {
           _logShell.w(
@@ -53,6 +53,7 @@ extension _DialogBuilders on _AppEventHandlerScopeState {
           numProvincesNewWorld: baseConfig.numProvincesNewWorld,
           minProvincesPerMinor: baseConfig.minProvincesPerMinor,
           seed: seed,
+          infiniteMode: infiniteMode,
           startingResources: baseConfig.startingResources,
           initTownRoadWiringRegionIds: baseConfig.initTownRoadWiringRegionIds,
         );

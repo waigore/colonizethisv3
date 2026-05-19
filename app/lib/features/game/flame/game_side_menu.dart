@@ -5,11 +5,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../config/routes.dart';
 import '../../../l10n/l10n.dart';
 import '../../../providers/app_event_bus_provider.dart';
+import '../../../providers/games_provider.dart';
+import '../widgets/game_parameters_dialog.dart';
 import '../../../widgets/ct_nine_patch_button.dart';
 import '../../../widgets/ct_panel.dart';
 
-/// Slide-out menu for **Debug log** only (hamburger). Empire actions use [GameMapEmpireLeftRail].
-/// SPEC/ui/in-game-shell-narrow.md, empire-overview.md.
+/// Slide-out hamburger menu: **Game Parameters** (read-only) and **Debug log**.
+/// Empire actions use [GameMapEmpireLeftRail]. SPEC/ui/in-game-shell-narrow.md.
 class GameSideMenu extends ConsumerWidget {
   const GameSideMenu({
     required this.sideMenuOpen,
@@ -21,6 +23,18 @@ class GameSideMenu extends ConsumerWidget {
   final VoidCallback onClose;
 
   static const double _kSideMenuWidth = 240;
+
+  void _openGameParameters(BuildContext context, WidgetRef ref) {
+    final game = ref.read(currentGameProvider);
+    if (game == null) {
+      return;
+    }
+    onClose();
+    showDialog<void>(
+      context: context,
+      builder: (ctx) => GameParametersDialog(infiniteMode: game.infiniteMode),
+    );
+  }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -58,6 +72,22 @@ class GameSideMenu extends ConsumerWidget {
               ),
               const SizedBox(height: 8),
               CtNinePatchButton(
+                onPressed: () => _openGameParameters(context, ref),
+                child: Row(
+                  children: [
+                    const Icon(Icons.tune, size: 20),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        l10n.gameParameters_menuEntry,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 8),
+              CtNinePatchButton(
                 onPressed: () {
                   onClose();
                   ref
@@ -67,11 +97,15 @@ class GameSideMenu extends ConsumerWidget {
                       );
                 },
                 child: Row(
-                  mainAxisSize: MainAxisSize.min,
                   children: [
                     const Icon(Icons.bug_report, size: 20),
                     const SizedBox(width: 8),
-                    Text(l10n.debugLog_title),
+                    Expanded(
+                      child: Text(
+                        l10n.debugLog_title,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
                   ],
                 ),
               ),

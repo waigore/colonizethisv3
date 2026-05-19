@@ -67,6 +67,7 @@ Future<void> runNewGameSetupAfterLeaderPick({
       numProvincesNewWorld: templateConfig.numProvincesNewWorld,
       minProvincesPerMinor: templateConfig.minProvincesPerMinor,
       seed: perAttemptSeed,
+      infiniteMode: templateConfig.infiniteMode,
       startingResources: templateConfig.startingResources,
       initTownRoadWiringRegionIds: templateConfig.initTownRoadWiringRegionIds,
     );

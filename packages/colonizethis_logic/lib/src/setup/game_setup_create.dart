@@ -451,6 +451,7 @@ Game _buildInitialGame({
     mapViewState: MapViewState.defaults.copyWith(
       zoomMultiplier: initialMapZoomMultiplier,
     ),
+    infiniteMode: config.infiniteMode,
   );
 }
 
