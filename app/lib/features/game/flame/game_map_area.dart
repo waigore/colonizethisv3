@@ -14,15 +14,16 @@ import 'package:colonizethis_map/colonizethis_map.dart'
 import 'package:colonizethis_app/l10n/l10n.dart';
 
 import '../../../config/ct_e2e.dart';
-import 'region_map_component.dart' show BaseLayerDisplayMode;
-
 import '../../../../providers/app_event_bus_provider.dart';
 import '../../../../providers/debug_console_provider.dart';
 import '../../../../providers/game_service_provider.dart';
 import '../../../../providers/games_provider.dart';
+import '../../../../providers/observe_session_provider.dart';
 import '../../../../providers/map_province_panel_provider.dart';
 import '../../../../providers/region_minimap_provider.dart';
 import '../../../../providers/treasury_summary_provider.dart';
+import '../shell_player_context.dart';
+import 'region_map_component.dart' show BaseLayerDisplayMode;
 import '../../../../providers/turn_resolution_blocking_provider.dart';
 import '../../../../providers/turn_resolution_runner_provider.dart';
 import '../../../core/services/subscription_tracker.dart';

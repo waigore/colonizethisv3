@@ -55,6 +55,7 @@ class ProvinceSeaZoneDetailOverlay extends StatelessWidget {
     this.showBuildImprovementActionIcon = false,
     this.buildImprovementActionEnabled = false,
     this.onBuildImprovementTap,
+    this.omniscientDetail = false,
   });
 
   final Game game;
@@ -79,6 +80,9 @@ class ProvinceSeaZoneDetailOverlay extends StatelessWidget {
   final bool showBuildImprovementActionIcon;
   final bool buildImprovementActionEnabled;
   final VoidCallback? onBuildImprovementTap;
+
+  /// When true, show full tile/province intel from raw [Game] (global observe).
+  final bool omniscientDetail;
 
   bool _isSeaZone(String id) {
     final parts = id.split('|');
@@ -133,6 +137,7 @@ class ProvinceSeaZoneDetailOverlay extends StatelessWidget {
       showBuildImprovementActionIcon: showBuildImprovementActionIcon,
       buildImprovementActionEnabled: buildImprovementActionEnabled,
       onBuildImprovementTap: onBuildImprovementTap,
+      omniscientDetail: omniscientDetail,
     );
   }
 
@@ -278,11 +283,12 @@ _OverlayContent _provinceContent({
   required bool showBuildImprovementActionIcon,
   required bool buildImprovementActionEnabled,
   VoidCallback? onBuildImprovementTap,
+  bool omniscientDetail = false,
 }) {
   final parts = provinceId.split('|');
   final regionId = parts.isNotEmpty ? parts[0] : region.regionId;
   final localProvinceId = parts.length >= 2 ? parts[1] : provinceId;
-  final isFullyUnrevealed =
+  final isFullyUnrevealed = !omniscientDetail &&
       region.regionId == regionId &&
       !region.cells.any(
         (c) =>
@@ -390,13 +396,14 @@ _OverlayContent _provinceContent({
       game.worldState.tileKeysByRegionAndProvince[region
           .regionId]?[provinceId] ??
       [];
-  final showsFullIntel = provincePanelShowsFullTileDerivedIntel(
-    game: game,
-    view: playerView,
-    humanPlayerId: humanPlayerId,
-    provinceId: provinceId,
-    provinceTileKeys: tileKeys,
-  );
+  final showsFullIntel = omniscientDetail ||
+      provincePanelShowsFullTileDerivedIntel(
+        game: game,
+        view: playerView,
+        humanPlayerId: humanPlayerId,
+        provinceId: provinceId,
+        provinceTileKeys: tileKeys,
+      );
   final resourceByTile = game.worldState.resourceByTileKey;
   final tileState = game.worldState.tileState;
   final prospected = game.worldState.playerProspectedTiles[humanPlayerId] ?? {};
@@ -408,10 +415,15 @@ _OverlayContent _provinceContent({
     final res = resourceByTile[tk];
     final parts = tk.split('|');
     if (parts.length < 4) continue;
-    if (!prospected.contains(tk)) continue;
+    if (!omniscientDetail && !prospected.contains(tk)) continue;
     final imp = tileState.improvementLevel(tk);
-    final visLevel = playerView.visibilityForTile(tk);
-    final visibleRes = resourceIdVisibleInPlayerView(playerView, tk, res);
+    final visLevel = omniscientDetail
+        ? VisibilityLevel.fullyVisible
+        : playerView.visibilityForTile(tk);
+    if (!omniscientDetail && visLevel == VisibilityLevel.unknown) continue;
+    final visibleRes = omniscientDetail
+        ? res
+        : resourceIdVisibleInPlayerView(playerView, tk, res);
 
     if (visibleRes == null) continue;
 

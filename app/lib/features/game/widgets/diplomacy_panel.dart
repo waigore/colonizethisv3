@@ -28,6 +28,7 @@ class DiplomacyPanel extends StatefulWidget {
     required this.currentOrders,
     required this.bus,
     this.onClose,
+    this.readOnly = false,
   });
 
   final Game game;
@@ -36,6 +37,7 @@ class DiplomacyPanel extends StatefulWidget {
   final Orders currentOrders;
   final AppEventBus bus;
   final VoidCallback? onClose;
+  final bool readOnly;
 
   @override
   State<DiplomacyPanel> createState() => _DiplomacyPanelState();
@@ -84,6 +86,7 @@ class _DiplomacyPanelState extends State<DiplomacyPanel> {
               data: r,
               onAction: _submitOrDialog,
               onTap: () => _openDetail(r),
+              readOnly: widget.readOnly,
             ),
           ),
         ],
@@ -94,6 +97,7 @@ class _DiplomacyPanelState extends State<DiplomacyPanel> {
               data: r,
               onAction: _submitOrDialog,
               onTap: () => _openDetail(r),
+              readOnly: widget.readOnly,
             ),
           ),
         ],
@@ -104,6 +108,7 @@ class _DiplomacyPanelState extends State<DiplomacyPanel> {
               data: r,
               onAction: _submitOrDialog,
               onTap: () => _openDetail(r),
+              readOnly: widget.readOnly,
             ),
           ),
         ],
@@ -305,11 +310,17 @@ class _DiplomacyPanelState extends State<DiplomacyPanel> {
 }
 
 class _DiplomacyRow extends StatelessWidget {
-  const _DiplomacyRow({required this.data, required this.onAction, this.onTap});
+  const _DiplomacyRow({
+    required this.data,
+    required this.onAction,
+    this.onTap,
+    this.readOnly = false,
+  });
 
   final DiplomacyRowData data;
   final void Function(DiplomaticOrder) onAction;
   final VoidCallback? onTap;
+  final bool readOnly;
 
   @override
   Widget build(BuildContext context) {
@@ -443,6 +454,9 @@ class _DiplomacyRow extends StatelessWidget {
   }
 
   Widget _buildActionButtons() {
+    if (readOnly) {
+      return const SizedBox.shrink();
+    }
     return Wrap(
       spacing: 6,
       runSpacing: 6,

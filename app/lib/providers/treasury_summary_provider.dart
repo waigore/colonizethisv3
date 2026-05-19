@@ -3,16 +3,22 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../features/game/shell_player_context.dart';
 import 'game_service_provider.dart';
 import 'games_provider.dart';
 
 final _treasurySummaryLog = packageLogger('treasury_summary');
 
 class TreasurySummary {
-  const TreasurySummary({required this.treasury, this.projectedDelta});
+  const TreasurySummary({
+    required this.treasury,
+    this.projectedDelta,
+    this.notDefined = false,
+  });
 
   final int treasury;
   final int? projectedDelta;
+  final bool notDefined;
 }
 
 final treasurySummaryProvider = Provider<TreasurySummary>((ref) {
@@ -21,9 +27,16 @@ final treasurySummaryProvider = Provider<TreasurySummary>((ref) {
     return const TreasurySummary(treasury: 0);
   }
 
-  final humanPlayer =
-      game.players.where((p) => p.isHuman).firstOrNull ?? game.players.first;
-  final treasury = humanPlayer.treasury;
+  final shell = ref.watch(shellPlayerContextProvider);
+  if (shell.treasuryNotDefined) {
+    return const TreasurySummary(treasury: 0, notDefined: true);
+  }
+
+  final playerId = shell.viewingPlayerId ?? shell.mapPlayerIdFor(game);
+  final player =
+      game.players.where((p) => p.id == playerId).firstOrNull ??
+      game.players.first;
+  final treasury = player.treasury;
   final orders = ref.watch(currentOrdersProvider);
 
   try {
@@ -39,7 +52,7 @@ final treasurySummaryProvider = Provider<TreasurySummary>((ref) {
       orders: orders,
       topology: topology,
       tileMapByRegion: tileMaps,
-      playerId: humanPlayer.id,
+      playerId: player.id,
     );
     return TreasurySummary(
       treasury: treasury,
