@@ -31,9 +31,11 @@ Spawn parsers (`_parseSpawnCivilian`, `_parseSpawnRegiment`, `_parseSpawnShip`) 
 
 ## File organization
 
-- `debug_console_command_parser.dart` — verb dispatch and per-command arg extraction only.
-- `debug_console_parser_helpers.dart` — shared parse helpers (package-private top-level).
-- `debug_console_command_executor.dart` — parse → execute orchestration and read-only commands.
+- `debug_console_command_parser.dart` — verb dispatch and spawn/credit arg extraction (≤ 270 lines).
+- `debug_console_parser_helpers.dart` — shared parse helpers and credit/spawn caps (package-private top-level).
+- `debug_console_parser_province_commands.dart` — flip, reveal, and observe parse functions.
+- `debug_console_parse_result.dart` — `DebugConsoleParseResult` type.
+- `debug_console_command_executor.dart` — parse → execute orchestration and read-only commands (≤ 220 lines).
 - `debug_console_executor_helpers.dart` — event dispatch and credit message formatting.
 
 ## Acceptance criteria
