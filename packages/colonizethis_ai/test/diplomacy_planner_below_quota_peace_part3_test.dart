@@ -609,7 +609,7 @@ void main() {
   );
 
   test(
-    'defaultStartOwMinorDeclareTarget skips distant minor on GP-only invadable frontier',
+    'defaultStartOwMinorDeclareTarget picks uninvaded minor on GP-only invadable frontier',
     () {
       final game = Game(
         id: 'g-default-start-minor-gp-frontier',
@@ -658,13 +658,13 @@ void main() {
       );
       expect(
         defaultStartOwMinorDeclareTarget(game: game, snapshot: snapshot),
-        isNull,
+        'minor2',
       );
     },
   );
 
   test(
-    'runDiplomacyPlannerWithResult prefers GP blocker declare on GP-only frontier',
+    'runDiplomacyPlannerWithResult prefers minor declare before GP blocker on GP-only frontier',
     () {
       final game = Game(
         id: 'g-minor-before-gp-blocker',
@@ -723,7 +723,7 @@ void main() {
         snapshot: snapshot,
         pass: DiplomacyPlannerPass.declareWarOnly,
       );
-      expect(result.declaredWarTargetFactionId, 'gp3');
+      expect(result.declaredWarTargetFactionId, 'minor1');
     },
   );
 
