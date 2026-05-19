@@ -66,6 +66,7 @@ mixin _GameMapAreaStatePart2
           treasuryNotDefined: treasurySummary.notDefined,
           observeBannerLabel: shell.observeBannerLabel,
           playerTurnEventsFeedCount: feedEntries.length,
+          playerTurnEventsFeedNotDefined: !shell.showPlayerChrome,
           showPlayerTurnEventsFeed: _mapViewState.showPlayerTurnEventsFeed,
           onTogglePlayerTurnEventsFeed: _togglePlayerTurnEventsFeedVisibility,
         ),
@@ -356,7 +357,8 @@ mixin _GameMapAreaStatePart2
                               final rightInset = gameMapWideOverlayRightInset(
                                 provincePanelOpen: panelOpen,
                               );
-                              if (!_mapViewState.showPlayerTurnEventsFeed) {
+                              if (!shell.showPlayerChrome ||
+                                  !_mapViewState.showPlayerTurnEventsFeed) {
                                 return const SizedBox.shrink();
                               }
                               return Positioned(
@@ -369,7 +371,9 @@ mixin _GameMapAreaStatePart2
                               );
                             },
                           ),
-                        if (isNarrow && _mapViewState.showPlayerTurnEventsFeed)
+                        if (isNarrow &&
+                            shell.showPlayerChrome &&
+                            _mapViewState.showPlayerTurnEventsFeed)
                           Positioned(
                             right: kMapOverlayEdgeInset,
                             top: 56,

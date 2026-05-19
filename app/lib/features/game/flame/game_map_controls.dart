@@ -35,6 +35,7 @@ class GameMapControls extends StatefulWidget {
     this.observeBannerLabel,
     this.treasuryNotDefined = false,
     this.cargoNotDefined = false,
+    this.playerTurnEventsFeedNotDefined = false,
     super.key,
   });
 
@@ -56,6 +57,7 @@ class GameMapControls extends StatefulWidget {
   final String? observeBannerLabel;
   final bool treasuryNotDefined;
   final bool cargoNotDefined;
+  final bool playerTurnEventsFeedNotDefined;
 
   @override
   State<GameMapControls> createState() => _GameMapControlsState();
@@ -257,14 +259,23 @@ class _GameMapControlsState extends State<GameMapControls> {
                   },
                 ),
               ),
-              PlayerTurnEventsFeedToggleButton(
-                eventCount: widget.playerTurnEventsFeedCount,
-                tooltip: l10n.playerTurnFeed_eventsChip(
-                  widget.playerTurnEventsFeedCount,
+              if (widget.playerTurnEventsFeedNotDefined)
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 4),
+                  child: Text(
+                    kObserveNotDefinedLabel,
+                    style: Theme.of(context).textTheme.bodySmall,
+                  ),
+                )
+              else
+                PlayerTurnEventsFeedToggleButton(
+                  eventCount: widget.playerTurnEventsFeedCount,
+                  tooltip: l10n.playerTurnFeed_eventsChip(
+                    widget.playerTurnEventsFeedCount,
+                  ),
+                  showFeed: widget.showPlayerTurnEventsFeed,
+                  onPressed: widget.onTogglePlayerTurnEventsFeed,
                 ),
-                showFeed: widget.showPlayerTurnEventsFeed,
-                onPressed: widget.onTogglePlayerTurnEventsFeed,
-              ),
             ],
           ),
         ),

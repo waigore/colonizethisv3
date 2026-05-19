@@ -24,7 +24,7 @@
 
 ## Player-scoped surfaces (P1–P17)
 
-See issue #2556 table. **Global:** P12+P11 omniscient; others `not defined`. **Player:** bind to `viewingPlayerId`.
+See issue #2556 table. **Global:** P12+P11 omniscient; others `not defined` (P10 turn-event feed toggle shows the sentinel and hides the feed card). **Player:** bind to `viewingPlayerId`.
 
 ---
 
