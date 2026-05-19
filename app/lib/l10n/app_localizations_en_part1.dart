@@ -215,6 +215,11 @@ mixin _AppLocalizationsEnStrings1 on AppLocalizations {
   String get gameParameters_infiniteModeOff => 'Off';
 
   @override
+  String gameParameters_infiniteModeLine(String value) {
+    return 'Infinite mode: $value';
+  }
+
+  @override
   String get shell_newGameProgress_title => 'Creating game';
 
   @override

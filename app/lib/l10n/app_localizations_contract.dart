@@ -213,6 +213,9 @@ abstract class AppLocalizations {
   /// Infinite mode disabled value in the game parameters dialog.
   String get gameParameters_infiniteModeOff;
 
+  /// Infinite mode row in the game parameters dialog.
+  String gameParameters_infiniteModeLine(String value);
+
   /// Title of the modal shown while a new game is being generated.
   String get shell_newGameProgress_title;
 

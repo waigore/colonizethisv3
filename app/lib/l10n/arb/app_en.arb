@@ -289,6 +289,15 @@
   "@gameParameters_infiniteModeOff": {
     "description": "Infinite mode disabled value in the game parameters dialog."
   },
+  "gameParameters_infiniteModeLine": "Infinite mode: {value}",
+  "@gameParameters_infiniteModeLine": {
+    "description": "Infinite mode row in the game parameters dialog.",
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
 
   "shell_newGameProgress_title": "Creating game",
   "@shell_newGameProgress_title": {

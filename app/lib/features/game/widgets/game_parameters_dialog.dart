@@ -34,7 +34,7 @@ class GameParametersDialog extends StatelessWidget {
           ),
           const SizedBox(height: 12),
           Text(
-            '${l10n.gameParameters_infiniteModeHeading}: $infiniteValue',
+            l10n.gameParameters_infiniteModeLine(infiniteValue),
             style: Theme.of(context).textTheme.bodyMedium,
           ),
           const SizedBox(height: 16),
