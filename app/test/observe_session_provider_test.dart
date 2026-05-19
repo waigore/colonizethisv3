@@ -86,6 +86,7 @@ void main() {
       expect(shell.omniscientDetail, isTrue);
       expect(shell.inObservePhase, isTrue);
       expect(shell.observeBannerLabel, 'Observing: global');
+      expect(shell.debugCommandTargetPlayerId, 'gp1');
     });
 
     test('shell context player observe binds panel player', () {
