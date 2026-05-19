@@ -232,6 +232,83 @@ void main() {
     );
 
     test(
+      'stalledGpBlockerDeclareWarTarget weaker opens mutual plateau despite distant minors',
+      () {
+        final game = Game(
+          id: 'g-mutual-plateau-distant-minors',
+          worldState: WorldState(
+            turnState: const TurnState(
+              phase: TurnPhase.orders,
+              turnNumber: 30,
+            ),
+            oldWorld: RegionData(
+              provinces: [
+                for (var i = 0; i < 9; i++)
+                  Province(
+                    id: 'oldWorld|gp4_$i',
+                    regionId: 'oldWorld',
+                    ownerId: 'gp4',
+                  ),
+                for (var i = 0; i < 8; i++)
+                  Province(
+                    id: 'oldWorld|gp3_$i',
+                    regionId: 'oldWorld',
+                    ownerId: 'gp3',
+                  ),
+                const Province(
+                  id: 'oldWorld|minor1',
+                  regionId: 'oldWorld',
+                  ownerId: 'minor1',
+                ),
+              ],
+            ),
+            newWorld: const RegionData(),
+            armies: [
+              Army(
+                id: homeArmyIdFor('gp3'),
+                ownerId: 'gp3',
+                regionId: 'oldWorld',
+                stationedProvinceId: 'oldWorld|gp3_0',
+                regimentUnitIds: const ['u_gp3'],
+                isHomeArmy: true,
+              ),
+              Army(
+                id: homeArmyIdFor('gp4'),
+                ownerId: 'gp4',
+                regionId: 'oldWorld',
+                stationedProvinceId: 'oldWorld|gp4_0',
+                regimentUnitIds: const ['u_gp4'],
+                isHomeArmy: true,
+              ),
+            ],
+          ),
+          players: const [
+            Player(id: 'gp3', displayName: 'P3', isHuman: false),
+            Player(id: 'gp4', displayName: 'P4', isHuman: false),
+          ],
+          minorNations: const [MinorNation(id: 'minor1', displayName: 'M1')],
+        );
+        const snap = AIWorldSnapshot(
+          playerId: 'gp3',
+          threats: ThreatSummary(),
+          opportunities: OpportunitySummary(),
+          conquest: ConquestSummary(
+            oldWorldProvincesOwned: 8,
+            invadableProvinceIdsSorted: ['oldWorld|gp4_8'],
+            adjacentOwnerFactionIdsSorted: ['gp4'],
+          ),
+          colonial: ColonialSummary(),
+          economy: EconomySummary(),
+          relations: {},
+        );
+        expect(
+          stalledGpBlockerDeclareWarTarget(game: game, snapshot: snap),
+          'gp4',
+        );
+      },
+    );
+
+    test(
       'stalledGpBlockerDeclareWarTarget skips declare when attacker has zero regiments',
       () {
         final game = Game(
