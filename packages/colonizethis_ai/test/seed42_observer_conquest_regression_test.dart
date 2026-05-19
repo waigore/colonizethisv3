@@ -79,7 +79,7 @@ void main() {
     },
     skip:
         'Partial AC #2509 S10: seed-42 turn-100 — gp3/gp4/gp5 below +3 OW gate; '
-        'gp6 meets +3 after default-start minor pivot tuning',
+        'gp3 at +2 OW after below-quota minor army-move bonus',
     timeout: const Timeout(Duration(minutes: 15)),
   );
 }
