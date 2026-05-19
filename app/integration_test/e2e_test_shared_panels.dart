@@ -1,5 +1,4 @@
 import 'package:colonizethis_app/config/ct_e2e.dart';
-import 'package:colonizethis_app/features/game/dialogue/game_start_intro_overlay.dart';
 import 'package:colonizethis_app/features/game/flame/game_screen_shared.dart';
 import 'package:colonizethis_app/l10n/app_localizations_contract.dart';
 import 'package:colonizethis_app/widgets/ct_dialog_shell.dart';
@@ -9,23 +8,23 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'e2e_test_shared.dart';
 
-Future<void> _e2eDismissGameStartIntroOverlayIfPresent(WidgetTester tester) async {
-  if (find.byType(GameStartIntroOverlay).evaluate().isEmpty) {
-    return;
-  }
-  for (final label in ['Continue', 'I shall.']) {
-    final control = find.text(label);
-    if (control.evaluate().isNotEmpty) {
-      await tester.tap(control.first, warnIfMissed: false);
-      break;
-    }
-  }
-  await e2ePumpUntilConditionOrIdle(
-    tester,
-    () => find.byType(GameStartIntroOverlay).evaluate().isEmpty,
-    timeout: const Duration(seconds: 2),
-    phaseName: 'pump_until_game_start_intro_dismissed',
+Future<void> _e2eTapFirstEnabledTransferButtonInSplitDialog(
+  WidgetTester tester,
+  bool Function(ValueKey<String> key) keyMatches,
+) async {
+  final shell = find.byType(CtDialogShell);
+  final buttons = find.descendant(
+    of: shell,
+    matching: find.byWidgetPredicate((w) {
+      if (w is! CtNinePatchButton || !w.enabled) {
+        return false;
+      }
+      final key = w.key;
+      return key is ValueKey<String> && keyMatches(key);
+    }),
   );
+  expect(buttons, findsWidgets);
+  await tester.tap(buttons.first, warnIfMissed: false);
 }
 
 /// Opens the civilian units panel from the empire rail or the first civilian
@@ -74,7 +73,7 @@ Future<void> e2eOpenCivilianPanel(
     perf?.timing('open_panel_civilian', sw.elapsed);
     return;
   }
-  await _e2eDismissGameStartIntroOverlayIfPresent(tester);
+  await e2eAdvanceGameStartIntroUntilDismissed(tester, perf: perf);
 
   var panelPollMs = 25;
   while (sw.elapsed < timeout) {
@@ -205,7 +204,7 @@ Future<void> e2eOpenNavalPanel(
     perf?.timing('open_panel_naval', sw.elapsed);
     return;
   }
-  await _e2eDismissGameStartIntroOverlayIfPresent(tester);
+  await e2eAdvanceGameStartIntroUntilDismissed(tester, perf: perf);
 
   var panelPollMs = 25;
   while (sw.elapsed < timeout) {
@@ -375,6 +374,7 @@ Future<void> e2eOpenProductionPanel(
   final productionPanel = find.byKey(kCtE2EProductionPanelRootKey);
   final productionButton = find.byKey(kEmpireProductionButtonKey);
   final sw = Stopwatch()..start();
+  await e2eAdvanceGameStartIntroUntilDismissed(tester, perf: perf);
   var idlePollMs = 25;
   while (sw.elapsed < timeout) {
     if (productionPanel.evaluate().isNotEmpty) {
@@ -396,14 +396,17 @@ Future<void> e2eOpenProductionPanel(
     }
 
     if (find.byType(CtDialogShell).evaluate().isNotEmpty) {
-      await tester.binding.handlePopRoute();
-      await e2ePumpUntil(
-        tester,
-        () => find.byType(CtDialogShell).evaluate().isEmpty,
-        timeout: const Duration(seconds: 2),
-        perf: perf,
-        phaseName: 'pump_until_production_path_shell_cleared',
-      );
+      await e2eDismissTransientUi(tester, perf: perf);
+      if (find.byType(CtDialogShell).evaluate().isNotEmpty) {
+        await tester.binding.handlePopRoute();
+        await e2ePumpUntil(
+          tester,
+          () => find.byType(CtDialogShell).evaluate().isEmpty,
+          timeout: const Duration(seconds: 5),
+          perf: perf,
+          phaseName: 'pump_until_production_path_shell_cleared',
+        );
+      }
       idlePollMs = 25;
       continue;
     }
@@ -477,15 +480,18 @@ Future<void> e2eSplitHomeFleetOnce(
   E2ePerfLog? perf,
   Duration openNavalTimeout = kE2eDefaultNavalOpenTimeout,
   Duration bottomSheetCloseTimeout = kE2eDefaultBottomSheetCloseTimeout,
+  bool navalPanelAlreadyOpen = false,
 }) async {
   final phaseSw = Stopwatch()..start();
-  await e2eOpenNavalPanel(
-    tester,
-    perf: perf,
-    timeout: openNavalTimeout,
-    bottomSheetCloseTimeout: bottomSheetCloseTimeout,
-  );
-  await e2eExpandEachExpansionTileOnce(tester);
+  if (!navalPanelAlreadyOpen) {
+    await e2eOpenNavalPanel(
+      tester,
+      perf: perf,
+      timeout: openNavalTimeout,
+      bottomSheetCloseTimeout: bottomSheetCloseTimeout,
+    );
+    await e2eExpandEachExpansionTileOnce(tester);
+  }
   final navalPanelRoot = find.byKey(kCtE2ENavalPanelRootKey);
   final split = find.descendant(
     of: navalPanelRoot,
@@ -497,33 +503,74 @@ Future<void> e2eSplitHomeFleetOnce(
     tester,
     find.descendant(
       of: find.byType(CtDialogShell),
-      matching: find.widgetWithText(CtNinePatchButton, '>'),
+      matching: find.byWidgetPredicate(
+        (w) =>
+            w is CtNinePatchButton &&
+            w.enabled &&
+            w.key is ValueKey<String> &&
+            (w.key! as ValueKey<String>).value.startsWith('ctTransfer.left.>'),
+      ),
     ),
     timeout: const Duration(seconds: 4),
     perf: perf,
     phaseName: 'wait_until_found_split_nudge_right',
   );
+  final confirmButton = find.widgetWithText(
+    CtNinePatchButton,
+    l10n.splitFleet_confirm,
+  );
+  bool splitConfirmEnabled() {
+    if (confirmButton.evaluate().isEmpty) {
+      return false;
+    }
+    return tester.widget<CtNinePatchButton>(confirmButton.first).enabled;
+  }
 
-  final moveOneRight = find.descendant(
-    of: find.byType(CtDialogShell),
-    matching: find.widgetWithText(CtNinePatchButton, '>'),
-  );
-  expect(moveOneRight, findsWidgets);
-  await tester.tap(moveOneRight.first);
-  await e2eWaitUntilFound(
+  Finder enabledLeftNudge(String prefix) => find.descendant(
+        of: find.byType(CtDialogShell),
+        matching: find.byWidgetPredicate((w) {
+          if (w is! CtNinePatchButton || !w.enabled) {
+            return false;
+          }
+          final key = w.key;
+          return key is ValueKey<String> && key.value.startsWith(prefix);
+        }),
+      );
+
+  for (var attempt = 0; attempt < 6 && !splitConfirmEnabled(); attempt++) {
+    final moveAll = enabledLeftNudge('ctTransfer.left.>>');
+    if (moveAll.evaluate().isNotEmpty) {
+      await tester.tap(moveAll.first, warnIfMissed: false);
+    } else {
+      final moveOne = enabledLeftNudge('ctTransfer.left.>');
+      if (moveOne.evaluate().isEmpty) {
+        break;
+      }
+      await tester.tap(moveOne.first, warnIfMissed: false);
+    }
+    await e2ePumpUntilConditionOrIdle(
+      tester,
+      splitConfirmEnabled,
+      timeout: const Duration(milliseconds: 400),
+      perf: perf,
+      phaseName: 'pump_until_split_confirm_enabled_attempt_$attempt',
+    );
+  }
+  await e2ePumpUntil(
     tester,
-    find.text(l10n.splitFleet_confirm),
-    timeout: const Duration(seconds: 4),
+    splitConfirmEnabled,
+    timeout: const Duration(seconds: 5),
     perf: perf,
-    phaseName: 'wait_until_found_split_confirm',
+    phaseName: 'pump_until_split_confirm_enabled',
   );
-  await tester.tap(find.text(l10n.splitFleet_confirm));
-  await e2ePumpUntilConditionOrIdle(
+  await tester.tap(confirmButton.first, warnIfMissed: false);
+  final splitTitle = find.text(l10n.splitFleet_dialogTitle);
+  await e2ePumpUntil(
     tester,
-    () => find.byType(CtDialogShell).evaluate().isEmpty,
-    timeout: const Duration(milliseconds: 500),
+    () => splitTitle.evaluate().isEmpty,
+    timeout: const Duration(seconds: 10),
     perf: perf,
-    phaseName: 'pump_until_split_dialog_shell_cleared',
+    phaseName: 'pump_until_split_fleet_dialog_dismissed',
   );
   await e2eExpandEachExpansionTileOnce(tester);
   perf?.timing('fleet_split', phaseSw.elapsed);

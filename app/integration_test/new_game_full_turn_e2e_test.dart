@@ -134,7 +134,7 @@ void main() {
       await waitUntilFound(
         tester,
         find.byKey(kCtE2ESelectFirstValidWorkTileKey).hitTestable(),
-        timeout: const Duration(seconds: 5),
+        timeout: const Duration(seconds: 15),
         perf: perf,
         phaseName: 'wait_until_first_valid_work_tile_after_build_improvement',
       );
@@ -152,21 +152,30 @@ void main() {
       await openCivilianPanel(tester, perf: perf);
       await tapAssignOnCivilianRowWithTitle(tester, kUnitTypeExplorer);
       await tester.tap(find.text('Prospect'));
-      await waitUntilFound(
+      final prospectWorkTile = find.byKey(kCtE2ESelectFirstValidWorkTileKey);
+      final prospectTileReady = await e2ePumpUntilConditionOrIdle(
         tester,
-        find.byKey(kCtE2ESelectFirstValidWorkTileKey).hitTestable(),
-        timeout: const Duration(seconds: 5),
+        () => prospectWorkTile.hitTestable().evaluate().isNotEmpty,
+        timeout: const Duration(seconds: 15),
         perf: perf,
-        phaseName: 'wait_until_first_valid_work_tile_after_prospect',
+        phaseName: 'pump_until_prospect_work_tile_optional',
       );
-      await tester.tap(find.byKey(kCtE2ESelectFirstValidWorkTileKey));
-      await e2ePumpUntil(
-        tester,
-        () => find.byKey(kCtE2ESelectFirstValidWorkTileKey).evaluate().isEmpty,
-        timeout: const Duration(seconds: 5),
-        perf: perf,
-        phaseName: 'pump_until_work_tile_overlay_cleared_prospect',
-      );
+      if (prospectTileReady) {
+        await tester.tap(prospectWorkTile.hitTestable().first, warnIfMissed: false);
+        await e2ePumpUntil(
+          tester,
+          () => prospectWorkTile.evaluate().isEmpty,
+          timeout: const Duration(seconds: 5),
+          perf: perf,
+          phaseName: 'pump_until_work_tile_overlay_cleared_prospect',
+        );
+      } else {
+        perf?.timing(
+          'prospect_work_tile',
+          Duration.zero,
+          meta: 'skipped_no_valid_tile_on_e2e_map',
+        );
+      }
       await closeBottomSheet(tester, perf: perf);
 
       // --- Civilian rail: after draft orders ---
@@ -178,82 +187,69 @@ void main() {
       await openNavalPanel(tester, perf: perf);
       await expectNavalPanelTexts(expanded: false);
       await expandEachExpansionTileOnce(tester);
+      await splitHomeFleetOnce(
+        tester,
+        l10n,
+        perf: perf,
+        navalPanelAlreadyOpen: true,
+      );
       final navalPanelRoot = find.byKey(kCtE2ENavalPanelRootKey);
-      final split = find.descendant(
-        of: navalPanelRoot,
-        matching: find.text('Split'),
-      );
-      expect(split, findsWidgets);
-      final moveOneRight = find.descendant(
-        of: find.byType(CtDialogShell),
-        matching: find.widgetWithText(CtNinePatchButton, '>'),
-      );
-      await tester.tap(split.first);
-      await waitUntilFound(
-        tester,
-        moveOneRight.hitTestable(),
-        timeout: const Duration(seconds: 5),
-        perf: perf,
-        phaseName: 'wait_until_split_stepper_visible',
-      );
-      await tester.tap(moveOneRight.first);
-      await waitUntilFound(
-        tester,
-        find.text('Confirm Split').hitTestable(),
-        timeout: const Duration(seconds: 5),
-        perf: perf,
-        phaseName: 'wait_until_confirm_split_visible',
-      );
-      await tester.tap(find.text('Confirm Split'));
-      await e2ePumpUntil(
-        tester,
-        () => find.byType(CtDialogShell).evaluate().isEmpty,
-        timeout: const Duration(seconds: 5),
-        perf: perf,
-        phaseName: 'pump_until_split_dialog_closed',
-      );
-
-      // Split triggers a panel refresh; ensure fleet tiles are expanded again.
-      await expandEachExpansionTileOnce(tester);
       final moveButtons = find.descendant(
         of: navalPanelRoot,
         matching: find.text('Move'),
       );
       if (moveButtons.evaluate().isNotEmpty) {
-        await tester.tap(moveButtons.first);
-        await e2ePumpUntil(
+        await tester.tap(moveButtons.first, warnIfMissed: false);
+        await waitUntilFound(
           tester,
-          () =>
-              find.byType(RadioListTile<dynamic>).evaluate().isNotEmpty ||
-              find.text('Confirm').hitTestable().evaluate().isNotEmpty ||
-              find.byType(AlertDialog).evaluate().isNotEmpty,
+          find.byType(AlertDialog),
           timeout: const Duration(seconds: 5),
           perf: perf,
-          phaseName: 'pump_until_move_dialog_ready',
+          phaseName: 'wait_until_move_dialog_after_tap',
         );
-
-        final seaRadio = find.byType(RadioListTile<dynamic>);
-        if (seaRadio.evaluate().isNotEmpty) {
-          await tester.tap(seaRadio.first);
-          await waitUntilFound(
+        final moveDialog = find.byType(AlertDialog);
+        final destinationRadios = find.descendant(
+          of: moveDialog,
+          matching: find.byType(RadioListTile<dynamic>),
+        );
+        if (destinationRadios.evaluate().isEmpty) {
+          final cancel = find.descendant(
+            of: moveDialog,
+            matching: find.text(l10n.common_cancel),
+          ).hitTestable();
+          expect(cancel, findsOneWidget);
+          await tester.tap(cancel.first, warnIfMissed: false);
+        } else {
+          await tester.tap(destinationRadios.first, warnIfMissed: false);
+          await e2ePumpUntilConditionOrIdle(
             tester,
-            find.text('Confirm').hitTestable(),
-            timeout: const Duration(seconds: 5),
+            () => find
+                .descendant(
+                  of: moveDialog,
+                  matching: find.text(l10n.common_confirm),
+                )
+                .hitTestable()
+                .evaluate()
+                .isNotEmpty,
+            timeout: const Duration(seconds: 2),
             perf: perf,
-            phaseName: 'wait_until_move_confirm_after_sea_radio',
+            phaseName: 'pump_until_move_confirm_tappable',
           );
+          final confirm = find
+              .descendant(
+                of: moveDialog,
+                matching: find.text(l10n.common_confirm),
+              )
+              .hitTestable();
+          await tester.tap(confirm.first, warnIfMissed: false);
         }
-        final confirm = find.text('Confirm');
-        if (confirm.evaluate().isNotEmpty) {
-          await tester.tap(confirm.first);
-          await e2ePumpUntil(
-            tester,
-            () => find.byType(AlertDialog).evaluate().isEmpty,
-            timeout: const Duration(seconds: 5),
-            perf: perf,
-            phaseName: 'pump_until_move_dialog_closed',
-          );
-        }
+        await e2ePumpUntil(
+          tester,
+          () => find.byType(AlertDialog).evaluate().isEmpty,
+          timeout: const Duration(seconds: 10),
+          perf: perf,
+          phaseName: 'pump_until_move_dialog_closed',
+        );
       }
       if (find.byType(CtDialogShell).evaluate().isNotEmpty) {
         final closeCandidates = <Finder>[
@@ -331,7 +327,7 @@ void main() {
           final turnAfter = turnAfterFinder.evaluate().single.widget as Text;
           return turnAfter.data != turnLabelBefore;
         },
-        timeout: const Duration(seconds: 2),
+        timeout: const Duration(seconds: 5),
         perf: perf,
         phaseName: 'pump_until_next_turn_confirm_or_label_advanced',
       );

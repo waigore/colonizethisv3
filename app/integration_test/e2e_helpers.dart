@@ -147,6 +147,7 @@ Future<void> splitHomeFleetOnce(
   E2ePerfLog? perf,
   Duration openNavalTimeout = kE2eDefaultNavalOpenTimeout,
   Duration bottomSheetCloseTimeout = kE2eDefaultBottomSheetCloseTimeout,
+  bool navalPanelAlreadyOpen = false,
 }) =>
     e2eSplitHomeFleetOnce(
       tester,
@@ -154,6 +155,7 @@ Future<void> splitHomeFleetOnce(
       perf: perf,
       openNavalTimeout: openNavalTimeout,
       bottomSheetCloseTimeout: bottomSheetCloseTimeout,
+      navalPanelAlreadyOpen: navalPanelAlreadyOpen,
     );
 
 Future<void> tapFirstAssignInCivilianPanel(WidgetTester tester) =>
