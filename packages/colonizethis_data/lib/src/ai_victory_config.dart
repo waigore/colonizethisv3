@@ -121,7 +121,7 @@ const int kDeclareWarStalledExpansionMinorBonus = 75;
 
 /// When OW expansion is stalled but invadable OW minors exist, prioritize
 /// declaring on those minors over distant tribe wars (observer turn-100 gate).
-const int kDeclareWarStalledOwMinorPriorityBonus = 200;
+const int kDeclareWarStalledOwMinorPriorityBonus = 280;
 
 /// Extra declare-war weight toward OW minors while holdings are critically low.
 const int kDeclareWarWeakGpOwMinorRecoveryBonus = 220;
@@ -136,7 +136,7 @@ const int kDeclareWarPlateauOwMinorBonus = 1050;
 
 /// Extra declare-war weight toward invadable minors when 8–9 OW (one province
 /// short of the turn-100 observer gate from default start; Refs #2509).
-const int kDeclareWarNearObserverQuotaMinorBonus = 260;
+const int kDeclareWarNearObserverQuotaMinorBonus = 340;
 
 /// Penalize tribe declare-war while OW holdings are stalled and invadable OW
 /// minors remain (tribes without sea-reachable NW provinces for this GP).
@@ -155,7 +155,7 @@ const int kDeclareWarEarlyExpansionMaxTurn = 100;
 /// Through this turn, quota-meeting GPs must not open new wars on weaker
 /// below-quota neighbors when the target is not already in a GP war (Refs #2509).
 /// Pile-ons on below-quota victims already at war are suppressed at all turns.
-const int kDeclareWarEarlyAntiDogpileMaxTurn = 20;
+const int kDeclareWarEarlyAntiDogpileMaxTurn = 50;
 
 /// Penalty on adjacent minor declare-war when the GP already holds many OW provinces.
 const int kDeclareWarSatedExpansionMinorPenalty = 100;
@@ -203,6 +203,10 @@ const int kStalledMinRegimentCountPerProvinceDeficitVsBlocker = 2;
 /// Offer-peace bonus toward a minor/tribe at war that no longer owns invadable land.
 const int kOfferPeaceFutileMinorWarBonus = 80;
 
+/// Penalty for offering peace to a minor that still owns invadable OW land while
+/// below the observer quota at default start size (seed-42 gp4; Refs #2509).
+const int kOfferPeaceBelowQuotaActiveMinorWarPenalty = 500;
+
 /// Offer-peace bonus toward a stronger adjacent GP while Old World expansion is
 /// stalled and that GP owns the invadable frontier (exit unwinnable wars; #2509).
 const int kOfferPeaceStalledStrongerGpBlockerBonus = 240;
@@ -243,7 +247,7 @@ const int kObserverConquestConsolidateMinOwProvinces =
 const int kUnwinnableSoleGpMinProvinceDeficit = 2;
 
 /// Declare-war bonus on adjacent invadable OW minors while below the observer quota.
-const int kDeclareWarBelowObserverQuotaMinorBonus = 360;
+const int kDeclareWarBelowObserverQuotaMinorBonus = 480;
 
 /// Offer-peace bonus toward any at-war Great Power when stalled with zero regiments
 /// (exit unwinnable GP wars before elimination; observer seed-42 gp3; Refs #2509).
@@ -499,6 +503,9 @@ const int kDeclareWarStalledGpInvadableBlockerFloor = 500;
 /// Declare-war bonus toward a non-adjacent minor while invadable OW land is
 /// blocked by Great Powers (seed-42 mid-map geography; Refs #2509).
 const int kDeclareWarStalledGpBlockerDistantMinorBonus = 160;
+
+/// Declare-war bonus on any OW minor while still at default observer start size.
+const int kDeclareWarDefaultStartOwMinorBonus = 240;
 
 /// Declare-war bonus toward any minor that still holds OW provinces when this
 /// GP is stalled, far from victory, and frontier invadable land is GP-owned.
