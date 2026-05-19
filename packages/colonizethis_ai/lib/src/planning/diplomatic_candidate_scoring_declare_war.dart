@@ -353,6 +353,10 @@ int? _declareWarSuppressedAdjacentGpScore(
     final attackerOw = ctx.snapshot.conquest.oldWorldProvincesOwned;
     final targetOw = provinceCountOwnedBy(ctx.game, ctx.order.targetFactionId);
     if (ctx.game.playerById(ctx.order.targetFactionId) != null) {
+      if (regimentCountForPlayer(ctx.game, ctx.nationId) == 0 &&
+          isBelowObserverConquestQuota(attackerOw)) {
+        return 0;
+      }
       if (!ctx.snapshot.threats.atWarWith.contains(ctx.order.targetFactionId) &&
           isMutualBelowQuotaPlateauPeer(
             ownOw: attackerOw,

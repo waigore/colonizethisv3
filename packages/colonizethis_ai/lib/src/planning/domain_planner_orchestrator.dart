@@ -283,6 +283,11 @@ PlannerContext _runEconomyDomainPlanners({
   final needRegimentsToExpand = observerQuotaPressure &&
       regimentCount == 0 &&
       snapshot.conquest.invadableProvinceIdsSorted.isNotEmpty;
+  final brokeBelowQuotaAtPeace = observerQuotaPressure &&
+      regimentCount == 0 &&
+      !snapshot.threats.atWarWith.any(
+        (id) => ctx.game.playerById(id) != null,
+      );
   final zeroRegimentsAtWar = regimentCount == 0 &&
       snapshot.threats.atWarWith.isNotEmpty;
   final criticallyWeakBelowQuota = observerQuotaPressure &&
@@ -327,7 +332,9 @@ PlannerContext _runEconomyDomainPlanners({
   final forceRegimentRebuild =
       (isStalledOldWorldExpansion(snapshot.conquest.oldWorldProvincesOwned) ||
           criticallyWeakBelowQuota) &&
-      (snapshot.threats.atWarWith.isNotEmpty || needRegimentsToExpand) &&
+      (snapshot.threats.atWarWith.isNotEmpty ||
+          needRegimentsToExpand ||
+          brokeBelowQuotaAtPeace) &&
       regimentCount < minRegimentFloor;
   if (forceRegimentRebuild || atWarWithGpBlocker) {
     buildThreshold = 0;
@@ -358,6 +365,7 @@ PlannerContext _runEconomyDomainPlanners({
         colonialPressure: colonialPressure,
         militaryRebuildCrisis: forceRegimentRebuild &&
             (atWarWithGpBlocker ||
+                brokeBelowQuotaAtPeace ||
                 (regimentCount <= kStalledMilitaryRebuildCrisisRegimentCap &&
                     !(observerQuotaPressure &&
                         snapshot.conquest.oldWorldProvincesOwned >

@@ -538,11 +538,20 @@ Set<String> collectStalledGreatPowerPeaceTargets({
       ...defaultStartGpPeaceTargets(game: game, snapshot: snapshot),
     ...nearQuotaHoldPeaceTargets(game: game, snapshot: snapshot),
   };
+  // Zero-regiment stalemates must peace the sole GP blocker even on a GP-only
+  // frontier; otherwise broke mutual-plateau pairs stay at war with no armies
+  // (observer seed-42 gp3/gp4; Refs #2509).
+  final zeroRegimentBlockerPeace = <String>{
+    ...mutualZeroRegimentGpStalematePeaceTargets(game: game, snapshot: snapshot),
+    ...stalledZeroRegimentGpPeaceTargets(game: game, snapshot: snapshot),
+  };
   return targets
       .where(
         (id) =>
             game.playerById(id) != null &&
-            (id != invadableBlocker || preserveBlockerPeace.contains(id)),
+            (id != invadableBlocker ||
+                preserveBlockerPeace.contains(id) ||
+                zeroRegimentBlockerPeace.contains(id)),
       )
       .toSet();
 }

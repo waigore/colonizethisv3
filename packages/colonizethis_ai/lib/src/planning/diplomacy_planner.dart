@@ -1,4 +1,5 @@
 import '../perception/perception_snapshot.dart';
+import 'army_conquest_prep.dart';
 import 'planning_imports.dart';
 import 'colonial_pressure.dart';
 export 'colonial_pressure.dart'
@@ -254,6 +255,9 @@ String? stalledGpBlockerDeclareWarTarget({
   required Game game,
   required AIWorldSnapshot snapshot,
 }) {
+  if (regimentCountForPlayer(game, snapshot.playerId) == 0) {
+    return null;
+  }
   if (!isOldWorldGpOnlyInvadableFrontier(game: game, snapshot: snapshot)) {
     return null;
   }
@@ -278,6 +282,9 @@ String? stalledGpBlockerDeclareWarTarget({
     ownOw: ownOw,
     partnerOw: blockerOw,
   )) {
+    if (regimentCountForPlayer(game, blocker) == 0) {
+      return null;
+    }
     if (hasUninvadedOldWorldMinor(game: game, snapshot: snapshot)) {
       return null;
     }

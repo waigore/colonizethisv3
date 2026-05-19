@@ -1,5 +1,6 @@
 import 'package:colonizethis_ai/colonizethis_ai.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:colonizethis_logic/ai_api.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
@@ -123,6 +124,70 @@ void main() {
       expect(
         stalledZeroRegimentGpPeaceTargets(game: game, snapshot: snapshot),
         ['gp4'],
+      );
+    },
+  );
+
+  test(
+    'collectStalledGreatPowerPeaceTargets peace sole GP blocker on zero-regiment stalemate',
+    () {
+      final game = Game(
+        id: 'g-zero-reg-gp-only-blocker-peace',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 50),
+          oldWorld: RegionData(
+            provinces: [
+              for (var i = 1; i <= 8; i++)
+                Province(
+                  id: 'oldWorld|gp3_$i',
+                  regionId: 'oldWorld',
+                  ownerId: 'gp3',
+                ),
+              for (var i = 1; i <= 9; i++)
+                Province(
+                  id: 'oldWorld|gp4_$i',
+                  regionId: 'oldWorld',
+                  ownerId: 'gp4',
+                ),
+              for (var i = 1; i <= 5; i++)
+                Province(
+                  id: 'oldWorld|gp4_inv_$i',
+                  regionId: 'oldWorld',
+                  ownerId: 'gp4',
+                ),
+            ],
+          ),
+          newWorld: const RegionData(),
+        ),
+        players: const [
+          Player(id: 'gp3', displayName: 'P3', isHuman: false),
+          Player(id: 'gp4', displayName: 'P4', isHuman: false),
+        ],
+        diplomacyRelations: [
+          const DiplomacyRelation(
+            factionId1: 'gp3',
+            factionId2: 'gp4',
+            state: RelationState.atWar,
+            score: 30,
+          ),
+        ],
+      );
+      final snapshot = AIWorldSnapshot(
+        playerId: 'gp3',
+        threats: const ThreatSummary(atWarWith: ['gp4']),
+        opportunities: const OpportunitySummary(),
+        conquest: ConquestSummary(
+          oldWorldProvincesOwned: 8,
+          invadableProvinceIdsSorted: [
+            for (var i = 1; i <= 5; i++) 'oldWorld|gp4_inv_$i',
+          ],
+        ),
+        economy: const EconomySummary(),
+        relations: const {},
+      );
+      expect(
+        collectStalledGreatPowerPeaceTargets(game: game, snapshot: snapshot),
+        contains('gp4'),
       );
     },
   );
@@ -409,6 +474,24 @@ void main() {
             ],
           ),
           newWorld: const RegionData(),
+          armies: [
+            Army(
+              id: homeArmyIdFor('gp3'),
+              ownerId: 'gp3',
+              regionId: 'oldWorld',
+              stationedProvinceId: 'oldWorld|gp3_1',
+              regimentUnitIds: const ['u_gp3_1'],
+              isHomeArmy: true,
+            ),
+            Army(
+              id: homeArmyIdFor('gp4'),
+              ownerId: 'gp4',
+              regionId: 'oldWorld',
+              stationedProvinceId: 'oldWorld|gp4_1',
+              regimentUnitIds: const ['u_gp4_1'],
+              isHomeArmy: true,
+            ),
+          ],
         ),
         players: const [
           Player(id: 'gp3', displayName: 'P3', isHuman: false),
