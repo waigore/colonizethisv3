@@ -91,7 +91,10 @@ String? belowQuotaUninvadedMinorDeclareTarget({
     return null;
   }
   if (isOldWorldGpOnlyInvadableFrontier(game: game, snapshot: snapshot)) {
-    return null;
+    if (ownOw <= kObserverDefaultStartOldWorldProvincesPerGp + 1 ||
+        !hasUninvadedOldWorldMinor(game: game, snapshot: snapshot)) {
+      return null;
+    }
   }
   final candidates = <String>{
     for (final minor in game.minorNations)
@@ -244,15 +247,23 @@ String? stalledInvadableGpOwnerDeclareTarget({
     if (snapshot.threats.atWarWith.contains(owner)) {
       continue;
     }
+    final partnerOw = provinceCountOwnedBy(game, owner);
     if (isMutualBelowQuotaPlateauPeer(
       ownOw: ownOw,
-      partnerOw: provinceCountOwnedBy(game, owner),
+      partnerOw: partnerOw,
     )) {
       final blocker = primaryInvadableOldWorldGpBlocker(
         game: game,
         snapshot: snapshot,
       );
       if (owner != blocker) {
+        continue;
+      }
+      if (isOldWorldGpOnlyInvadableFrontier(game: game, snapshot: snapshot) &&
+          (partnerOw - ownOw).abs() <= 1 &&
+          regimentCountForPlayer(game, snapshot.playerId) > 0 &&
+          regimentCountForPlayer(game, owner) > 0 &&
+          !hasUninvadedOldWorldMinor(game: game, snapshot: snapshot)) {
         continue;
       }
     }
@@ -297,15 +308,22 @@ String? stalledGpBlockerDeclareWarTarget({
     ownOw: ownOw,
     partnerOw: blockerOw,
   )) {
+    // GP-only mutual plateau at similar holdings: peace when no minor pivot
+    // remains (avoids seed-42 gp5/gp6 wipeouts; Refs #2509).
+    if (isOldWorldGpOnlyInvadableFrontier(game: game, snapshot: snapshot) &&
+        (blockerOw - ownOw).abs() <= 1 &&
+        regimentCountForPlayer(game, snapshot.playerId) > 0 &&
+        regimentCountForPlayer(game, blocker) > 0 &&
+        !hasUninvadedOldWorldMinor(game: game, snapshot: snapshot)) {
+      return null;
+    }
     if (regimentCountForPlayer(game, blocker) == 0) {
       return null;
     }
-    // Already at war with the mutual plateau blocker (gp3/gp4 seed-42 fronts).
     if (snapshot.threats.atWarWith.contains(blocker) ||
         snapshot.relations[blocker]?.atWar == true) {
       return null;
     }
-    // Open the front from the weaker peer only (gp5 vs gp6 at peace).
     if (ownOw > blockerOw ||
         (ownOw == blockerOw && snapshot.playerId.compareTo(blocker) > 0)) {
       return null;
