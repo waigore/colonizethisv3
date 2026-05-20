@@ -2,6 +2,7 @@
 
 import 'package:colonizethis_models/colonizethis_models.dart';
 
+import '../world/game_world_mutations.dart';
 import '../world/province_lookup.dart';
 import '../world/province_visibility_index.dart';
 
@@ -59,8 +60,8 @@ import '../world/province_visibility_index.dart';
   final sortedProv = provWriteDone.toList()..sort();
   final sortedSea = seaWriteDone.toList()..sort();
 
-  final patched = end.copyWith(
-    worldState: end.worldState.copyWith(
+  final patched = end.updateWorldState(
+    (ws) => ws.copyWith(
       newsDigestProvinceRevealDoneIds: sortedProv,
       newsDigestSeaZoneFleetDoneIds: sortedSea,
     ),

@@ -3,6 +3,7 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
+import '../world/game_world_mutations.dart';
 import '../world/province_lookup.dart';
 import '../world/tile_key_coordinates.dart';
 
@@ -62,8 +63,8 @@ stripResourcesAndExtractionImprovementsOnTileKeys(
     tileState = tileState.setImprovement(key, 0);
   }
 
-  final nextGame = game.copyWith(
-    worldState: ws.copyWith(tileState: tileState, resourceByTileKey: resMap),
+  final nextGame = game.updateWorldState(
+    (ws) => ws.copyWith(tileState: tileState, resourceByTileKey: resMap),
   );
   return (nextGame, maps);
 }
