@@ -11,7 +11,6 @@ import 'package:colonizethis_app/test_support/production_panel_e2e_expected_line
 import 'package:colonizethis_models/colonizethis_models.dart'
     show kUnitTypeExplorer;
 import 'package:colonizethis_app/widgets/ct_dialog_shell.dart';
-import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
@@ -170,7 +169,7 @@ void main() {
           phaseName: 'pump_until_work_tile_overlay_cleared_prospect',
         );
       } else {
-        perf?.timing(
+        perf.timing(
           'prospect_work_tile',
           Duration.zero,
           meta: 'skipped_no_valid_tile_on_e2e_map',
@@ -297,56 +296,18 @@ void main() {
       await closeBottomSheet(tester, perf: perf);
 
       // --- Next turn ---
-      final turnBefore =
-          find
-                  .descendant(
-                    of: find.byKey(kGameMapNextTurnButtonKey),
-                    matching: find.byType(Text),
-                  )
-                  .evaluate()
-                  .single
-                  .widget
-              as Text;
-      final turnLabelBefore = turnBefore.data!;
-
-      await tester.tap(find.byKey(kGameMapNextTurnButtonKey));
-      perf.bumpCounter('next_turn_taps');
-      await e2ePumpUntil(
+      await dismissTransientUi(tester, perf: perf);
+      await closeBottomSheet(tester, perf: perf);
+      final nextTurnElapsed = await advanceOneHumanTurn(
         tester,
-        () {
-          if (find.text(l10n.common_yes).hitTestable().evaluate().isNotEmpty) {
-            return true;
-          }
-          final turnAfterFinder = find.descendant(
-            of: find.byKey(kGameMapNextTurnButtonKey),
-            matching: find.byType(Text),
-          );
-          if (turnAfterFinder.evaluate().isEmpty) {
-            return false;
-          }
-          final turnAfter = turnAfterFinder.evaluate().single.widget as Text;
-          return turnAfter.data != turnLabelBefore;
-        },
-        timeout: const Duration(seconds: 5),
-        perf: perf,
-        phaseName: 'pump_until_next_turn_confirm_or_label_advanced',
-      );
-      final confirmNextTurn = find.text(l10n.common_yes).hitTestable();
-      if (confirmNextTurn.evaluate().isNotEmpty) {
-        await tester.tap(confirmNextTurn.first, warnIfMissed: false);
-      }
-      final nextTurnElapsed = await e2eWaitForNextTurnLabelAdvance(
-        tester,
-        turnLabelBefore: turnLabelBefore,
-        timeout: const Duration(seconds: 10),
+        l10n: l10n,
         perf: perf,
       );
-      // Refs #2237 AC1 benchmark budget on CI baseline.
       expect(
         nextTurnElapsed,
-        lessThan(const Duration(seconds: 10)),
+        lessThan(kE2eNextTurnResolutionTimeout),
         reason:
-            'Next turn should resolve under 10s for new-game benchmark path.',
+            'Next turn should resolve within the turn-resolution usability budget.',
       );
 
       // --- Production (post-resolution stockpiles) ---

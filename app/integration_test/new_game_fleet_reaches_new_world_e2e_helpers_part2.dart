@@ -321,7 +321,7 @@ Future<void> _awaitNwCoastalOrVisibleLandForBundledExploreE2e({
       navalPanelAlreadyOpen: ctE2eNavalPanelSnapshot == null,
     );
     await closeBottomSheet(tester, overallTimeout: _kMaxUiResponseWait);
-    await _advanceOneHumanTurn(tester, l10n);
+    await advanceOneHumanTurn(tester, l10n: l10n);
     if (_nonHomeHumanFleetInCoastalNewWorldSeaFromCtSnapshot() ||
         _playerHasAnyNewWorldFoggedOrBetterFromCtSnapshot()) {
       return;
@@ -432,19 +432,6 @@ String _bundledExploreRejectionDiagnostics([
   return lines.join('\n');
 }
 
-/// Text inside the map HUD next-turn [CtNinePatchButton] (`game_nextTurnButton`).
-String? _readNextTurnButtonLabel(WidgetTester tester) {
-  final inner = find.descendant(
-    of: find.byKey(kGameMapNextTurnButtonKey),
-    matching: find.byType(Text),
-  );
-  if (inner.evaluate().length != 1) {
-    return null;
-  }
-  final w = inner.evaluate().single.widget;
-  return w is Text ? w.data : null;
-}
-
 /// When the civilian panel is open, [ctE2eCivilianPanelSnapshot] mirrors
 /// [availableWorkTargetIdsForUnitProvider] — the same work-target ids that
 /// drive enabled Assign rows. Returns `null` when no snapshot is available.
@@ -551,62 +538,3 @@ Future<bool> _anyExplorerHasEnabledExploreAssignFleetE2e(
 
 /// Taps the map HUD next-turn button, handles the optional confirm dialog,
 /// and waits for the next-turn label to advance. This is the fleet e2e's
-/// `waitForNextTurnLabelAdvance` helper referenced by #2336 AC5: success is
-/// checked before each pump and intervals ramp via
-/// [e2eAdaptivePollRampAfterIdle] (25→50→75→100 ms cap), while the
-/// [_kMaxUiResponseWait] post-tap budget is preserved. The final label poll
-/// evaluates the label before each idle pump, matching [e2eWaitForNextTurnLabelAdvance].
-Future<void> _advanceOneHumanTurn(
-  WidgetTester tester,
-  AppLocalizations l10n, {
-  E2ePerfLog? perf,
-}) async {
-  final phaseSw = Stopwatch()..start();
-  final before = _readNextTurnButtonLabel(tester);
-  await tester.tap(find.byKey(kGameMapNextTurnButtonKey));
-  perf?.bumpCounter('next_turn_taps');
-
-  // After tapping Next Turn the app either pops a confirm dialog or starts
-  // resolving immediately. Poll adaptively for whichever lands first so we
-  // never pay a worst-case fixed settle here.
-  final confirmFinder = find.text(l10n.common_yes);
-  await e2ePumpUntilConditionOrIdle(
-    tester,
-    () {
-      if (confirmFinder.hitTestable().evaluate().isNotEmpty) {
-        return true;
-      }
-      final maybeAfter = _readNextTurnButtonLabel(tester);
-      return maybeAfter != null && maybeAfter != before;
-    },
-    timeout: const Duration(milliseconds: 400),
-    perf: perf,
-    phaseName: 'pump_until_next_turn_confirm_or_label_advanced',
-  );
-  final earlyAfter = _readNextTurnButtonLabel(tester);
-  if (earlyAfter != null && earlyAfter != before) {
-    perf?.timing('next_turn_advance', phaseSw.elapsed);
-    return;
-  }
-
-  final confirmNextTurn = confirmFinder.hitTestable();
-  if (confirmNextTurn.evaluate().isNotEmpty) {
-    await tester.tap(confirmNextTurn.first, warnIfMissed: false);
-    // Flush the confirm tap so the shared label poll evaluates a fresh tree.
-    await tester.pump();
-  }
-
-  if (before == null) {
-    fail(
-      'Next turn button label missing before advance. '
-      'Last exception: ${tester.takeException()}',
-    );
-  }
-  await e2eWaitForNextTurnLabelAdvance(
-    tester,
-    turnLabelBefore: before,
-    timeout: _kMaxUiResponseWait,
-    perf: perf,
-  );
-  perf?.timing('next_turn_advance', phaseSw.elapsed);
-}
