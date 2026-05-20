@@ -26,6 +26,7 @@ import 'check_function_size.dart';
 import 'check_game_widgets_file_size.dart';
 import 'check_land_province_bucket_keys.dart';
 import 'check_logic_diplomatic_sub_validator_size.dart';
+import 'check_logic_work_target_switch.dart';
 import 'check_logic_test_file_size.dart';
 import 'check_logic_dead_files.dart';
 import 'check_logic_dedup_logger.dart';
@@ -742,6 +743,8 @@ int? _tryRunDartRuleInProcess({
       return runCheckGameWidgetsFileSize(repoRoot);
     case 'repo.logic_diplomatic_sub_validator_size':
       return runCheckLogicDiplomaticSubValidatorSize(repoRoot);
+    case 'repo.logic_work_target_switch':
+      return runCheckLogicWorkTargetSwitch(repoRoot);
     case 'repo.logic_test_file_size':
       // Full-tree enforcement (GitHub #2288): the #2216 file-size debt is now
       // cleared across `packages/colonizethis_logic/test/**`, so the rule
