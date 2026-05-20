@@ -64,18 +64,28 @@ bool e2eGameStartIntroBlocksUi(WidgetTester tester) {
 }
 
 /// Advances yarn intro lines/choices until the overlay no longer blocks taps.
+///
+/// The spinner / no-tap-target branches previously each paid a fixed 50 ms
+/// pump per loop iteration. Both now share an [e2eAdaptivePollRampAfterIdle]
+/// idle pump (25 → 50 → 75 → 100 ms cap) so a long spinner stretch settles
+/// with adaptive backoff instead of constant 50 ms frames. The poll cadence
+/// is reset to 25 ms whenever a tap advances the overlay or the loading
+/// indicator clears, mirroring the prepump-free panel openers landed in this
+/// PR. Refs GitHub #2336 AC5 / pump-reduction.
 Future<void> e2eAdvanceGameStartIntroUntilDismissed(
   WidgetTester tester, {
   E2ePerfLog? perf,
   Duration timeout = const Duration(seconds: 15),
 }) async {
   final deadline = DateTime.now().add(timeout);
+  var idlePollMs = 25;
   while (DateTime.now().isBefore(deadline)) {
     if (!e2eGameStartIntroBlocksUi(tester)) {
       return;
     }
     if (find.byType(GameStartIntroLoadingIndicator).evaluate().isNotEmpty) {
-      await tester.pump(const Duration(milliseconds: 50));
+      await tester.pump(Duration(milliseconds: idlePollMs));
+      idlePollMs = e2eAdaptivePollRampAfterIdle(idlePollMs);
       continue;
     }
     final overlay = find.byType(GameStartIntroOverlay);
@@ -96,10 +106,12 @@ Future<void> e2eAdvanceGameStartIntroUntilDismissed(
         phaseName: 'pump_until_intro_advance_after_$label',
       );
       tapped = true;
+      idlePollMs = 25;
       break;
     }
     if (!tapped) {
-      await tester.pump(const Duration(milliseconds: 50));
+      await tester.pump(Duration(milliseconds: idlePollMs));
+      idlePollMs = e2eAdaptivePollRampAfterIdle(idlePollMs);
     }
   }
   if (e2eGameStartIntroBlocksUi(tester)) {
