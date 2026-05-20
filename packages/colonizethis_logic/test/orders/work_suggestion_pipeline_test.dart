@@ -231,6 +231,97 @@ void main() {
       },
     );
 
+    test(
+      'maxProbeAttempts override allows more than default cap of accepted rows',
+      () {
+        const playerId = 'gp1';
+        final unit = Unit(
+          id: 'u1',
+          type: kUnitTypeExplorer,
+          ownerId: playerId,
+          locationProvinceId: 'ow|p1',
+          tileKey: 'ow|p1|0|0',
+          status: UnitStatus.idle,
+        );
+        final suggestions = <WorkOrder>[];
+        final existing = <String, Set<String>>{};
+
+        WorkSuggestionPipeline.run(
+          unit: unit,
+          unitType: unit.type,
+          unitRegionId: 'ow',
+          atProvinceId: 'ow|p1',
+          workTarget: kWorkTargetProspect,
+          existingTargetsByUnit: existing,
+          suggestions: suggestions,
+          candidatesProvider: () sync* {
+            for (var i = 0; i < 6; i++) {
+              yield WorkOrder(
+                unitId: unit.id,
+                target: kWorkTargetProspect,
+                targetTileKey: 'ow|p1|$i|0',
+              );
+            }
+          },
+          candidateAcceptor: (_) => true,
+          noCandidateReason: 'no_valid_tile',
+          includeAllAccepted: true,
+          maxProbeAttempts: 6,
+        );
+
+        expect(suggestions, hasLength(6));
+        final lines = _suggestWorkLines(capturedEvents);
+        expect(lines.last, contains('includedCount=6'));
+      },
+    );
+
+    test(
+      'default cap of kMaxWorkProbeAttemptsPerUnitPerTarget caps accepted rows',
+      () {
+        const playerId = 'gp1';
+        final unit = Unit(
+          id: 'u1',
+          type: kUnitTypeExplorer,
+          ownerId: playerId,
+          locationProvinceId: 'ow|p1',
+          tileKey: 'ow|p1|0|0',
+          status: UnitStatus.idle,
+        );
+        final suggestions = <WorkOrder>[];
+        final existing = <String, Set<String>>{};
+
+        WorkSuggestionPipeline.run(
+          unit: unit,
+          unitType: unit.type,
+          unitRegionId: 'ow',
+          atProvinceId: 'ow|p1',
+          workTarget: kWorkTargetProspect,
+          existingTargetsByUnit: existing,
+          suggestions: suggestions,
+          candidatesProvider: () sync* {
+            for (var i = 0; i < 6; i++) {
+              yield WorkOrder(
+                unitId: unit.id,
+                target: kWorkTargetProspect,
+                targetTileKey: 'ow|p1|$i|0',
+              );
+            }
+          },
+          candidateAcceptor: (_) => true,
+          noCandidateReason: 'no_valid_tile',
+          includeAllAccepted: true,
+        );
+
+        expect(
+          suggestions,
+          hasLength(kMaxWorkProbeAttemptsPerUnitPerTarget),
+          reason:
+              'default cap should match SPEC § Throughput bounds '
+              'kMaxWorkProbeAttemptsPerUnitPerTarget',
+        );
+      },
+    );
+
     test('rejected candidates log engineRejectedReason', () {
       const playerId = 'gp1';
       final unit = Unit(
