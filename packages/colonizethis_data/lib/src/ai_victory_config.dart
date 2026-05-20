@@ -230,7 +230,6 @@ const int kDevelopCivilianWorkThresholdCap = 5;
 
 /// True when OW holdings have not yet met the observer per-GP conquest quota.
 bool isBelowObserverConquestQuota(int oldWorldProvincesOwned) =>
-    oldWorldProvincesOwned > 0 &&
     oldWorldProvincesOwned < kObserverConquestMinOwProvincesPerGp;
 
 /// At or below the turn-100 observer per-GP conquest quota (stalled band + quota).

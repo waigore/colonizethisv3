@@ -16,13 +16,13 @@ void main() {
           turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
           oldWorld: RegionData(
             provinces: [
-              for (var i = 0; i < 19; i++)
+              for (var i = 0; i < 8; i++)
                 Province(
                   id: 'oldWorld|p1_$i',
                   regionId: 'oldWorld',
                   ownerId: 'gp1',
                 ),
-              for (var i = 0; i < 10; i++)
+              for (var i = 0; i < 3; i++)
                 Province(
                   id: 'oldWorld|p2_$i',
                   regionId: 'oldWorld',
@@ -62,13 +62,13 @@ void main() {
       );
       final topology = MapTopology(
         nodes: [
-          for (var i = 0; i < 19; i++)
+          for (var i = 0; i < 8; i++)
             TopologyNode(
               id: 'p1_$i',
               regionId: 'oldWorld',
               type: TopologyNodeType.province,
             ),
-          for (var i = 0; i < 10; i++)
+          for (var i = 0; i < 3; i++)
             TopologyNode(
               id: 'p2_$i',
               regionId: 'oldWorld',

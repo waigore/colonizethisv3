@@ -53,10 +53,21 @@ void main() {
         );
         const topology = MapTopology(nodes: [], edges: []);
         final view = buildPlayerView(game, topology, 'gp1');
+        const postQuotaSnapshot = AIWorldSnapshot(
+          playerId: 'gp1',
+          threats: ThreatSummary(),
+          opportunities: OpportunitySummary(),
+          conquest: ConquestSummary(
+            oldWorldProvincesOwned: kObserverConquestMinOwProvincesPerGp + 2,
+          ),
+          economy: EconomySummary(),
+          relations: {},
+        );
         final orders = runDomainPlannersInTest(
           game: game,
           topology: topology,
           view: view,
+          snapshot: postQuotaSnapshot,
           turnSeed: 42,
           primaryGoal: StrategicGoal.expand,
           config: const AIConfig(

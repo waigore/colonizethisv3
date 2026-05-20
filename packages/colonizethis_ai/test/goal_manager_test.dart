@@ -55,7 +55,7 @@ void main() {
           threats: ThreatSummary(),
           opportunities: OpportunitySummary(),
           conquest: ConquestSummary(
-            oldWorldProvincesOwned: 7,
+            oldWorldProvincesOwned: kObserverConquestMinOwProvincesPerGp,
             provincesToVictory: 24,
           ),
           colonial: ColonialSummary(
