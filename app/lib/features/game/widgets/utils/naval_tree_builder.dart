@@ -186,9 +186,16 @@ List<FleetRow> flattenNavalTree(
 ({String? regionId, String? localId}) _capitalTileRegionParts(CapitalTile? tile) {
   if (tile == null) return (regionId: null, localId: null);
   final tileKey = tile.toTileKey();
-  final parts = tileKey.split('|');
-  if (parts.length < 2) return (regionId: null, localId: null);
-  return (regionId: parts[0], localId: parts[1]);
+  final parsed = tryParseTileKey(tileKey);
+  if (parsed != null) {
+    return (regionId: parsed.regionId, localId: parsed.provinceLocalId);
+  }
+  final regionPart = prefixedIdRegionSegment(tileKey);
+  if (regionPart == null) return (regionId: null, localId: null);
+  final localTail = prefixedIdLocalSegment(tileKey);
+  final i = localTail.indexOf('|');
+  final localProv = i < 0 ? localTail : localTail.substring(0, i);
+  return (regionId: regionPart, localId: localProv);
 }
 
 String _navalNormalizedPortScopeForProvince(Province province) {
