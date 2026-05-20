@@ -31,6 +31,7 @@ import '../../../core/services/subscription_tracker.dart';
 import '../../../core/services/turn_resolution_runner.dart';
 import 'region_map_viewport_snapshot.dart';
 import '../../../../providers/home_fleet_cargo_provider.dart';
+import '../../../../providers/human_draft_projected_region_provider.dart';
 
 import '../../../config/constants.dart';
 import 'game_screen_shared.dart';

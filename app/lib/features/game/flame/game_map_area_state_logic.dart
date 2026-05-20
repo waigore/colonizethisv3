@@ -671,6 +671,38 @@ class GameMapAreaStateLogic {
     );
   }
 
+  /// Civilian and fleet draft marker projection for one [RegionMapViewData].
+  static RegionMapViewData projectHumanDraftMarkersForRegion({
+    required RegionMapViewData baseRegion,
+    required ct_models.Game game,
+    required ct_models.Orders orders,
+    required String humanPlayerId,
+    Map<String, TileMapResult>? tileMapByRegion,
+    Map<String, MapTopology>? topologyByRegion,
+    MapTopology? combinedTopology,
+  }) {
+    var projected = projectCivilianMarkersForHumanDraft(
+      region: baseRegion,
+      game: game,
+      orders: orders,
+      humanPlayerId: humanPlayerId,
+    );
+    if (tileMapByRegion != null &&
+        topologyByRegion != null &&
+        combinedTopology != null) {
+      projected = projectFleetMarkersForHumanDraft(
+        region: projected,
+        game: game,
+        orders: orders,
+        humanPlayerId: humanPlayerId,
+        tileMapByRegion: tileMapByRegion,
+        topologyByRegion: topologyByRegion,
+        combinedTopology: combinedTopology,
+      );
+    }
+    return projected;
+  }
+
   static bool _isCivilianUnitType(String unitType) {
     final role = unitRoleForType(unitType);
     if (role == null) return false;

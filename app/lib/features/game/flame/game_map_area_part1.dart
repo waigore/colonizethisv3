@@ -661,28 +661,10 @@ mixin _GameMapAreaStatePart1 on ConsumerState<GameMapArea> {
 
   void _e2eOpenFirstCivilianMarkerPanel() {
     if (!mounted) return;
-    final currentOrders = ref.read(currentOrdersProvider);
-    var projected = GameMapAreaStateLogic.projectCivilianMarkersForHumanDraft(
-      region: _currentRegion,
-      game: widget.game,
-      orders: currentOrders,
-      humanPlayerId: _mapPlayerId,
-    );
-    final mapData = ref.read(gameServiceProvider).getMapData(widget.game.id);
-    final tm = mapData?.tileMapByRegion;
-    final tr = mapData?.topologyByRegion;
-    final ct = mapData?.combinedTopology;
-    if (tm != null && tr != null && ct != null) {
-      projected = GameMapAreaStateLogic.projectFleetMarkersForHumanDraft(
-        region: projected,
-        game: widget.game,
-        orders: currentOrders,
-        humanPlayerId: _mapPlayerId,
-        tileMapByRegion: tm,
-        topologyByRegion: tr,
-        combinedTopology: ct,
-      );
-    }
+    final projected = ref.read(
+          humanDraftProjectedRegionProvider(_currentRegion.regionId),
+        ) ??
+        _currentRegion;
     final markers = [...projected.civilianTileMarkers]
       ..sort((a, b) => a.tileKey.compareTo(b.tileKey));
     if (markers.isEmpty) return;
@@ -701,28 +683,10 @@ mixin _GameMapAreaStatePart1 on ConsumerState<GameMapArea> {
 
   void _e2eOpenFirstFleetMarkerPanel() {
     if (!mounted) return;
-    final currentOrders = ref.read(currentOrdersProvider);
-    var projected = GameMapAreaStateLogic.projectCivilianMarkersForHumanDraft(
-      region: _currentRegion,
-      game: widget.game,
-      orders: currentOrders,
-      humanPlayerId: _mapPlayerId,
-    );
-    final mapData = ref.read(gameServiceProvider).getMapData(widget.game.id);
-    final tm = mapData?.tileMapByRegion;
-    final tr = mapData?.topologyByRegion;
-    final ct = mapData?.combinedTopology;
-    if (tm != null && tr != null && ct != null) {
-      projected = GameMapAreaStateLogic.projectFleetMarkersForHumanDraft(
-        region: projected,
-        game: widget.game,
-        orders: currentOrders,
-        humanPlayerId: _mapPlayerId,
-        tileMapByRegion: tm,
-        topologyByRegion: tr,
-        combinedTopology: ct,
-      );
-    }
+    final projected = ref.read(
+          humanDraftProjectedRegionProvider(_currentRegion.regionId),
+        ) ??
+        _currentRegion;
     final markers = [...projected.fleetTileMarkers]
       ..sort((a, b) => a.tileKey.compareTo(b.tileKey));
     if (markers.isEmpty) return;
