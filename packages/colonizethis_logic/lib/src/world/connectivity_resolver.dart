@@ -9,7 +9,6 @@ import '../utils/graph_traversal.dart';
 import '../diplomacy/diplomacy_relation_lookup.dart';
 import 'connectivity_blockade_target.dart';
 import 'port_seaboard_registry_key.dart';
-import 'province_lookup.dart';
 import 'province_traversal.dart';
 import 'tile_key_coordinates.dart';
 import 'topology_helpers.dart';
@@ -119,7 +118,7 @@ Map<String, ConnectivityResult> resolveConnectivity({
     'connectivity resolve start players=${game.players.length} regions=${tileMapByRegion.keys.join(",")}',
   );
   final provinceIdsByType = provinceNodeIds(topology);
-  final seaZoneNodeIds = _topologySeaZoneNodeIds(topology);
+  final topologySeaZones = seaZoneNodeIds(topology);
   final blockadedByPlayer =
       blockadedPortProvincesByPlayerId ??
       computeBlockadedPortProvincesByPlayer(game, topology);
@@ -148,7 +147,7 @@ Map<String, ConnectivityResult> resolveConnectivity({
       tileMapByRegion: tileMapByRegion,
       topology: topology,
       provinceIdsByType: provinceIdsByType,
-      seaZoneNodeIds: seaZoneNodeIds,
+      seaZoneNodeIds: topologySeaZones,
       portInfo: portInfo,
       owned: ownedByPlayer[player.id] ?? const <String>{},
       townByTileKey:
@@ -190,56 +189,6 @@ _buildPerPlayerProvinceCaches(Game game) {
     ownedByPlayer: ownedByPlayer,
     townByTileKeyByPlayer: townByTileKeyByPlayer,
   );
-}
-
-bool _topologyUsesPrefixedIds(MapTopology topology) {
-  return topology.nodes.any((n) => n.id.contains('|'));
-}
-
-/// Topology sea-zone node ids, built once per connectivity resolve (Refs #2394).
-Set<String> _topologySeaZoneNodeIds(MapTopology topology) {
-  return {
-    for (final n in topology.nodes)
-      if (n.type == TopologyNodeType.seaZone) n.id,
-  };
-}
-
-/// Sea zones reachable from [startSeaZoneIds] by following S–S edges in [topology]. SPEC/game/map-topology, capital-and-connectivity § Sea paths.
-Set<String> _seaZonesReachableBySeaPath(
-  MapTopology topology,
-  Set<String> startSeaZoneIds, {
-  required Set<String> seaZoneNodeIds,
-}) {
-  final neighbours = <String, Set<String>>{};
-  for (final e in topology.edges) {
-    final a = e.id1;
-    final b = e.id2;
-    if (seaZoneNodeIds.contains(a) && seaZoneNodeIds.contains(b)) {
-      neighbours.putIfAbsent(a, () => {}).add(b);
-      neighbours.putIfAbsent(b, () => {}).add(a);
-    }
-  }
-  return breadthFirstReachableInSubgraph(
-    startSeaZoneIds,
-    neighbours,
-    seaZoneNodeIds,
-    onDequeue: _recordSeaZoneBfsDequeue,
-  );
-}
-
-/// Sea zone ids adjacent to province [localProvinceId] in topology (P–S edges).
-Set<String> _seaZonesAdjacentToProvince(
-  MapTopology topology,
-  String localProvinceId, {
-  required Set<String> seaZoneNodeIds,
-}) {
-  final out = <String>{};
-  for (final edge in topology.edges) {
-    if (edge.id1 != localProvinceId && edge.id2 != localProvinceId) continue;
-    final other = edge.id1 == localProvinceId ? edge.id2 : edge.id1;
-    if (seaZoneNodeIds.contains(other)) out.add(other);
-  }
-  return out;
 }
 
 /// True if the capital tile is adjacent to sea (seaboard). SPEC/game/capital-and-connectivity § Port connection to capital.
@@ -509,21 +458,20 @@ Set<String> _seaConnectedPortKeysForCapital({
     provinceIdsByType,
   );
   if (capitalOnSeaboard && !capitalProvinceBlockaded) {
-    final prefixedTopology = _topologyUsesPrefixedIds(topology);
+    final prefixedTopology = topologyUsesPrefixedIds(topology);
     final provinceIdForLookup = prefixedTopology
         ? capital.provinceId
         : (ProvinceId.isPrefixed(capital.provinceId)
               ? ProvinceId.localIdFrom(capital.provinceId)
               : capital.provinceId);
-    final capitalSeaZones = _seaZonesAdjacentToProvince(
+    final capitalSeaZones = seaZonesAdjacentToProvince(
       topology,
       provinceIdForLookup,
-      seaZoneNodeIds: seaZoneNodeIds,
     );
-    final seaReachable = _seaZonesReachableBySeaPath(
+    final seaReachable = seaZonesReachableBySeaPath(
       topology,
       capitalSeaZones,
-      seaZoneNodeIds: seaZoneNodeIds,
+      onDequeue: _recordSeaZoneBfsDequeue,
     );
     for (final entry in worldState.portsByProvinceSeaboard.entries) {
       final portMeta = decodePortSeaboardRegistryKey(entry.key);

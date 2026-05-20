@@ -13,6 +13,7 @@ import '../turn_resolver_config.dart';
 import '../../world/naval_resolution.dart';
 import '../../world/player_view.dart';
 import '../../world/province_lookup.dart';
+import '../../world/province_traversal.dart';
 import '../../world/unit_lookup.dart';
 
 Game runMovementPhase(
@@ -27,9 +28,7 @@ Game runMovementPhase(
 
   final moveOrders = orders.moveOrdersByPlayerId;
   if (moveOrders.isNotEmpty) {
-    final ownerByProvinceId = <String, String?>{
-      for (final p in allProvinces(state.worldState)) p.id: p.ownerId,
-    };
+    final ownerByProvinceId = ownerByProvinceIdMap(state.worldState);
 
     final originalOldWorld = state.worldState.oldWorld;
     final originalNewWorld = state.worldState.newWorld;
