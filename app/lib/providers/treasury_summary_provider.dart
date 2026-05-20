@@ -34,7 +34,7 @@ final treasurySummaryProvider = Provider<TreasurySummary>((ref) {
 
   final playerId = shell.viewingPlayerId ?? shell.mapPlayerIdFor(game);
   final player =
-      game.players.where((p) => p.id == playerId).firstOrNull ??
+      game.playerById(playerId) ??
       game.players.first;
   final treasury = player.treasury;
   final orders = ref.watch(currentOrdersProvider);

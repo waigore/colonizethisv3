@@ -1,3 +1,4 @@
+import 'package:colonizethis_app/core/utils/prefixed_id.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
@@ -36,9 +37,7 @@ class SplitFleetDialog extends StatelessWidget {
     final fleet = originalFleet;
     if (fleet.isAtSea) {
       final seaZoneId = fleet.seaZoneId!;
-      final localId = seaZoneId.contains('|')
-          ? seaZoneId.split('|').last
-          : seaZoneId;
+      final localId = prefixedIdLocalSegment(seaZoneId);
       final zoneName = seaZoneDisplayName(
         game: game,
         regionId: fleet.regionId,

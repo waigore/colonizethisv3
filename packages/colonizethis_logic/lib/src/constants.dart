@@ -100,6 +100,21 @@ final Expando<Map<String, Player>> _gamePlayersById =
 final Expando<Map<String, String>> _gameGpOwnerIdByCapitalProvinceId =
     Expando<Map<String, String>>('gameGpOwnerIdByCapitalProvinceId');
 
+/// Faction id → display name for any [Game.players], [Game.minorNations], or
+/// [Game.tribes] row. Built once per [Game] instance for app-side label
+/// rendering (Refs #2575 Phase 3). Falls back to faction id when display name
+/// is null (mirrors prior linear-scan fallback). First-match-wins on id
+/// collisions across the three faction lists.
+final Expando<Map<String, String>> _gameFactionDisplayNameById =
+    Expando<Map<String, String>>('gameFactionDisplayNameById');
+
+/// Fleet id → [Fleet] for any [WorldState.fleets] row. Built once per [Game]
+/// instance for app-side and dialog/panel lookups (Refs #2575 Phase 4).
+/// First-match-wins on id collisions; mirrors the inline `<String, Fleet>` map
+/// previously constructed in `projectFleetMarkersForHumanDraft`.
+final Expando<Map<String, Fleet>> _gameFleetsById =
+    Expando<Map<String, Fleet>>('gameFleetsById');
+
 /// Safe player lookup by id. Returns null if not found.
 extension GamePlayerLookup on Game {
   Player? playerById(String id) {
@@ -138,5 +153,46 @@ extension GamePlayerLookup on Game {
       return null;
     }
     return playerById(ownerId);
+  }
+
+  /// Display name for a faction id (player, minor nation, or tribe), or null
+  /// when no faction matches. Uses a per-[Game] Expando-cached index so
+  /// repeated calls during a single resolved game state are O(1) (Refs #2575
+  /// Phase 3). Minor nation / tribe rows fall back to id when display name is
+  /// null, mirroring prior `_factionLabel` behavior.
+  String? factionDisplayNameById(String factionId) {
+    var byId = _gameFactionDisplayNameById[this];
+    if (byId == null) {
+      byId = <String, String>{};
+      for (final p in players) {
+        byId.putIfAbsent(p.id, () => p.displayName);
+      }
+      for (final m in minorNations) {
+        byId.putIfAbsent(m.id, () => m.displayName ?? m.id);
+      }
+      for (final t in tribes) {
+        byId.putIfAbsent(t.id, () => t.displayName ?? t.id);
+      }
+      _gameFactionDisplayNameById[this] = byId;
+    }
+    return byId[factionId];
+  }
+
+  /// Safe fleet lookup by id over [WorldState.fleets]. Returns null when no
+  /// fleet matches. Uses a per-[Game] Expando-cached index so repeated calls
+  /// during a single resolved game state are O(1) (Refs #2575 Phase 4). The
+  /// cache invalidates implicitly on the next [Game.copyWith] because callers
+  /// always replace [worldState] via `game.copyWith(worldState: ...)` when
+  /// fleets change, yielding a new [Game] instance.
+  Fleet? fleetById(String id) {
+    var byId = _gameFleetsById[this];
+    if (byId == null) {
+      byId = <String, Fleet>{};
+      for (final f in worldState.fleets) {
+        byId.putIfAbsent(f.id, () => f);
+      }
+      _gameFleetsById[this] = byId;
+    }
+    return byId[id];
   }
 }

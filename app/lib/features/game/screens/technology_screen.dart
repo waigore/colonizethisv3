@@ -1,5 +1,6 @@
 // Full-screen Technology view with Slots and Tech Tree tabs. SPEC/ui/tech-tree-widget.md.
 
+import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -29,9 +30,7 @@ class TechnologyScreen extends ConsumerWidget {
         if (shellPanelsNotDefined(shellRef)) {
           return const ObserveModeNotDefinedPanel(title: 'Technology');
         }
-        final displayPlayer = displayGame.players.firstWhere(
-          (p) => p.id == player.id,
-        );
+        final displayPlayer = displayGame.playerById(player.id)!;
         final canEdit = shellRef.read(shellPlayerContextProvider).canMutateViaUi;
         return DefaultTabController(
           length: 2,

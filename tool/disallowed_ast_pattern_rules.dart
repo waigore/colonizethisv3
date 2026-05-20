@@ -15,6 +15,7 @@ enum DisallowedAstMatchKind {
   simpleReceiverRemoveAtZero,
   linearCollectionWhereFirstOrNull,
   incrementalValidatorForPlayerInLoop,
+  redundantWhereToListWhereChain,
 }
 
 class DisallowedPatternRule {
@@ -427,6 +428,26 @@ List<DisallowedPatternRule> parseDisallowedAstRulesFromYaml(Object? yamlRoot) {
           allowedPackageImports: const {},
           linearCollectionNames: names,
           linearCollectionPathPrefix: prefix,
+        ),
+      );
+    } else if (kind == 'redundant_where_to_list_where_chain') {
+      out.add(
+        DisallowedPatternRule(
+          id: id,
+          message: message,
+          kind: DisallowedAstMatchKind.redundantWhereToListWhereChain,
+          cascadedMethodNames: const {},
+          commentSubstring: null,
+          rawNamedTypeNames: const {},
+          functionName: null,
+          maxBodyLineSpan: null,
+          requireWidgetClassExtends: false,
+          argumentIndex: null,
+          invocationMethodNames: const {},
+          allowedRelativePaths: const {},
+          scopedRelativePathPrefixes: const {},
+          packageName: null,
+          allowedPackageImports: const {},
         ),
       );
     } else if (kind == 'incremental_validator_for_player_in_loop') {

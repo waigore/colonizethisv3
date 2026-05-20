@@ -6,7 +6,7 @@
 
 ## Phase handler registry
 
-Turn resolution uses a fixed phase sequence ([turn-resolution-phases.md](turn-resolution-phases.md)). Each phase is implemented by a **`TurnPhaseHandler`** (`turn_resolver_config.dart`): `(TurnPipelineState, TurnResolverConfig, turn) → TurnPhaseStepOutcome`. The canonical map is **`TurnPhaseHandlerRegistry.defaults`** (`turn_phase_handler_registry.dart`): one handler per `TurnPhase` in `turnResolutionSequence`. Thin pipeline adapters live in `turn/phases/*.dart`; orchestration handlers (orders noop, research/diplomacy/combat/build-work/end-of-turn event emission) live in the registry module. Tests and callers may override individual phases via `TurnResolverConfig.phaseHandlerOverrides` (merged over defaults). Refs #2560.
+Turn resolution uses a fixed phase sequence ([turn-resolution-phases.md](turn-resolution-phases.md)). Each phase is implemented by a **`TurnPhaseHandler`** (`turn_resolver_config.dart`): `(TurnPipelineState, TurnResolverConfig, turn) → TurnPhaseStepOutcome`. The canonical map is **`TurnPhaseHandlerRegistry.defaults`** (`turn_phase_handler_registry.dart`): one handler per `TurnPhase` in `turnResolutionSequence`. Every `TurnPhaseHandler` implementation — including the Orders noop and the research/diplomacy/combat/build-work/end-of-turn handlers that emit events — lives in **`turn/phases/*.dart`** (one phase per file, re-exported by `turn/phases.dart`); the registry module only maps each `TurnPhase` to its handler. Tests and callers may override individual phases via `TurnResolverConfig.phaseHandlerOverrides` (merged over defaults). Refs #2560.
 
 ---
 

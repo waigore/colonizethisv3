@@ -72,9 +72,19 @@ class _DiplomacyPanelState extends State<DiplomacyPanel> {
       widget.humanPlayerId,
       widget.currentOrders,
     );
-    final gps = rows.where((r) => r.kind == FactionKind.greatPower).toList();
-    final minors = rows.where((r) => r.kind == FactionKind.minor).toList();
-    final tribes = rows.where((r) => r.kind == FactionKind.tribe).toList();
+    final gps = <DiplomacyRowData>[];
+    final minors = <DiplomacyRowData>[];
+    final tribes = <DiplomacyRowData>[];
+    for (final r in rows) {
+      switch (r.kind) {
+        case FactionKind.greatPower:
+          gps.add(r);
+        case FactionKind.minor:
+          minors.add(r);
+        case FactionKind.tribe:
+          tribes.add(r);
+      }
+    }
 
     return ListView(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),

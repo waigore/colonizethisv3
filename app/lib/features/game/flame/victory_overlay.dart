@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart' as ct_models;
 
 import '../../../l10n/l10n.dart';
@@ -62,10 +63,8 @@ class VictoryPanel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = appL10n(context);
-    final winner = game.players.firstWhere(
-      (p) => p.id == victory.winnerPlayerId,
-      orElse: () => game.players.first,
-    );
+    final winner =
+        game.playerById(victory.winnerPlayerId) ?? game.players.first;
     final victoryLabel = switch (victory.type) {
       ct_models.VictoryType.military => l10n.victory_military,
     };

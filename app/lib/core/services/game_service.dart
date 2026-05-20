@@ -24,6 +24,16 @@ class _GameMapCache {
   final List<WarpLink>? warpLinks;
 }
 
+/// Public record type for [GameService.getMapData] (Refs #2575 Phase 4).
+/// Lets callers replace `dynamic` with an explicit type while still using
+/// record-style access (`mapData.combinedTopology`, etc.).
+typedef GameMapData = ({
+  MapTopology combinedTopology,
+  Map<String, TileMapResult> tileMapByRegion,
+  Map<String, MapTopology> topologyByRegion,
+  List<WarpLink>? warpLinks,
+});
+
 /// Pass milestones for in-app tile map generation (SPEC/program/logging/map-generation.md).
 final _mapGenPassLog = packageLogger('tile_map');
 
@@ -102,13 +112,7 @@ class GameService {
   ///
   /// Returns null only when no game exists for [gameId]. For existing games, map data
   /// is required and missing/invalid map data raises [StateError].
-  ({
-    MapTopology combinedTopology,
-    Map<String, TileMapResult> tileMapByRegion,
-    Map<String, MapTopology> topologyByRegion,
-    List<WarpLink>? warpLinks,
-  })?
-  getMapData(String gameId) {
+  GameMapData? getMapData(String gameId) {
     final cached = _mapCache[gameId];
     if (cached != null) {
       return (

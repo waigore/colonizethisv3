@@ -4,7 +4,6 @@ mixin _GameMapAreaStatePart2
     on _GameMapAreaStatePart1, ConsumerState<GameMapArea> {
   @override
   Widget build(BuildContext context) {
-    final currentOrders = ref.watch(currentOrdersProvider);
     final isNarrow = MediaQuery.sizeOf(context).width < kNarrowBreakpoint;
     final mapTopology = widget.mapViewData.combinedTopology;
     final shell = ref.watch(shellPlayerContextProvider);
@@ -12,28 +11,10 @@ mixin _GameMapAreaStatePart2
     final mapPlayerView =
         shell.playerView ?? buildPlayerView(widget.game, mapTopology, mapPlayerId);
     final l10n = appL10n(context);
-    final mapData = ref.watch(gameServiceProvider).getMapData(widget.game.id);
-    var projectedRegion =
-        GameMapAreaStateLogic.projectCivilianMarkersForHumanDraft(
-          region: _currentRegion,
-          game: widget.game,
-          orders: currentOrders,
-          humanPlayerId: mapPlayerId,
-        );
-    final tm = mapData?.tileMapByRegion;
-    final tr = mapData?.topologyByRegion;
-    final ct = mapData?.combinedTopology;
-    if (tm != null && tr != null && ct != null) {
-      projectedRegion = GameMapAreaStateLogic.projectFleetMarkersForHumanDraft(
-        region: projectedRegion,
-        game: widget.game,
-        orders: currentOrders,
-        humanPlayerId: mapPlayerId,
-        tileMapByRegion: tm,
-        topologyByRegion: tr,
-        combinedTopology: ct,
-      );
-    }
+    final projectedRegion = ref.watch(
+          humanDraftProjectedRegionProvider(_currentRegion.regionId),
+        ) ??
+        _currentRegion;
     final turnNumber = widget.game.worldState.turnState.turnNumber;
     final year = turnToYear(turnNumber, widget.game.turnTimeMapping);
     final nextTurnText = shell.inObservePhase
