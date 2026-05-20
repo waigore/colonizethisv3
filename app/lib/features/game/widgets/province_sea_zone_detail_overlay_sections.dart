@@ -50,10 +50,24 @@ List<String> roadRailTileDetailLinesForTests({required int? transportLevel}) {
   required int regionHeight,
   required String selectedTileKey,
 }) {
-  final parts = selectedTileKey.split('|');
-  if (parts.length < 4 || parts[0] != regionId) return null;
-  final x = int.tryParse(parts[parts.length - 2]);
-  final y = int.tryParse(parts[parts.length - 1]);
+  // Defensive parse: last two `|`-separated segments are x|y. Some legacy
+  // overlay call sites construct 5-part keys where the local id itself
+  // contains a `|`; preserve compatibility while still avoiding the
+  // List<String> allocation from `split('|')`.
+  final firstPipe = selectedTileKey.indexOf('|');
+  if (firstPipe <= 0) return null;
+  final keyRegion = selectedTileKey.substring(0, firstPipe);
+  if (keyRegion != regionId) return null;
+  final lastPipe = selectedTileKey.lastIndexOf('|');
+  if (lastPipe <= firstPipe || lastPipe + 1 >= selectedTileKey.length) {
+    return null;
+  }
+  final secondLastPipe = selectedTileKey.lastIndexOf('|', lastPipe - 1);
+  if (secondLastPipe <= firstPipe) return null;
+  final x = int.tryParse(
+    selectedTileKey.substring(secondLastPipe + 1, lastPipe),
+  );
+  final y = int.tryParse(selectedTileKey.substring(lastPipe + 1));
   if (x == null || y == null) {
     return null;
   }
@@ -139,10 +153,10 @@ class _OverlayContent {
 }
 
 String? _economicTerrainTitleForTile(RegionMapViewData region, String tk) {
-  final parts = tk.split('|');
-  if (parts.length < 4 || parts[0] != region.regionId) return null;
-  final x = int.tryParse(parts[2]) ?? -1;
-  final y = int.tryParse(parts[3]) ?? -1;
+  final parsed = tryParseTileKey(tk);
+  if (parsed == null || parsed.regionId != region.regionId) return null;
+  final x = parsed.x;
+  final y = parsed.y;
   if (x < 0 || y < 0 || x >= region.width || y >= region.height) {
     return null;
   }

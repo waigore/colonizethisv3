@@ -37,10 +37,12 @@ String? tileKeyForSeaZoneLocation(
 ) {
   final localSeaZone = prefixedIdLocalSegment(seaZoneId);
   for (final e in game.worldState.portsByProvinceSeaboard.entries) {
-    final parts = e.key.split('|');
-    if (parts.length < 2) continue;
-    final keyRegion = parts[0];
-    final keySeaZone = parts.last;
+    final key = e.key;
+    final firstPipe = key.indexOf('|');
+    if (firstPipe <= 0 || firstPipe + 1 >= key.length) continue;
+    final lastPipe = key.lastIndexOf('|');
+    final keyRegion = key.substring(0, firstPipe);
+    final keySeaZone = key.substring(lastPipe + 1);
     if (keyRegion == regionId && keySeaZone == localSeaZone) {
       return e.value;
     }
