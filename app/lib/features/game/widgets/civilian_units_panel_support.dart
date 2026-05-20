@@ -16,80 +16,11 @@ const Map<String, String> _workTargetLabels = {
   kWorkTargetPurchaseLand: 'Purchase land',
 };
 
-/// Builds prefixed province id -> province display name from [game].
-Map<String, String> _provinceNamesByPrefixedId(Game game) {
-  final out = <String, String>{};
-  for (final p in game.worldState.oldWorld.provinces) {
-    out['${p.regionId}|${p.id}'] = p.displayName ?? p.id;
-  }
-  for (final p in game.worldState.newWorld.provinces) {
-    out['${p.regionId}|${p.id}'] = p.displayName ?? p.id;
-  }
-  return out;
-}
-
-/// Returns true if [unit] is a civilian (not military, not naval). SPEC/game/civilian-units.md.
-bool _isCivilianUnit(Unit unit) {
-  final role = unitRoleForType(unit.type);
-  if (role == null) return false;
-  return role != UnitRole.military && role != UnitRole.naval;
-}
-
-/// Civilian units for one region, sorted by province name then type then id.
-List<Unit> _civilianUnitsInRegion(
-  List<Unit> units,
-  String humanPlayerId,
-  Map<String, String> provinceNames,
-  Orders currentOrders,
-) {
-  final list = units
-      .where(
-        (u) =>
-            u.ownerId == humanPlayerId &&
-            u.tileKey != null &&
-            _isCivilianUnit(u),
-      )
-      .toList();
-  final keyed = <({Unit unit, String provinceName, String type, String id})>[
-    for (final u in list)
-      (
-        unit: u,
-        provinceName: _civilianSortProvinceName(
-          u,
-          humanPlayerId: humanPlayerId,
-          currentOrders: currentOrders,
-          provinceNames: provinceNames,
-        ),
-        type: u.type,
-        id: u.id,
-      ),
-  ];
-  keyed.sort((a, b) {
-    final nameCmp = a.provinceName.compareTo(b.provinceName);
-    if (nameCmp != 0) return nameCmp;
-    final typeCmp = a.type.compareTo(b.type);
-    if (typeCmp != 0) return typeCmp;
-    return a.id.compareTo(b.id);
-  });
-  return [for (final e in keyed) e.unit];
-}
-
-String _civilianSortProvinceName(
-  Unit unit, {
-  required String humanPlayerId,
-  required Orders currentOrders,
-  required Map<String, String> provinceNames,
-}) {
-  final tileKey = projectedCivilianTileKey(
-    unit: unit,
-    playerId: humanPlayerId,
-    orders: currentOrders,
-  );
-  final prov = Unit.provinceIdFromTileKey(tileKey);
-  final region = Unit.regionIdFromTileKey(tileKey) ?? '';
-  final prefixed = '$region|$prov';
-  return provinceNames[prefixed] ?? prefixed;
-}
+// Sort/partition helpers live in `civilian_units_sort.dart` (public surface):
+// `provinceNamesByPrefixedId`, `isCivilianUnit`, `civilianUnitsInRegion`, and
+// `civilianSortProvinceName`. They are imported by the panel library root
+// (`civilian_units_panel.dart`) and visible here through the shared library
+// scope. Refs #2575 (Phase 4 testability).
 
 /// Pending assigned-to line plus optional cost strip. SPEC/ui/civilian-units-panel.md.
 class _PendingAssignedResolution {

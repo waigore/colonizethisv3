@@ -7,6 +7,7 @@ import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'package:colonizethis_app/config/ct_e2e_last_panel_snapshot.dart';
+import 'package:colonizethis_app/features/game/widgets/civilian_units_sort.dart';
 import 'package:colonizethis_app/features/game/widgets/units/shared/units_panel_region_label.dart';
 import 'package:colonizethis_app/l10n/l10n.dart';
 
@@ -24,64 +25,9 @@ const Map<String, String> _workTargetLabels = {
   kWorkTargetPurchaseLand: 'Purchase land',
 };
 
-Map<String, String> _provinceNamesByPrefixedId(Game game) {
-  final out = <String, String>{};
-  for (final p in game.worldState.oldWorld.provinces) {
-    out['${p.regionId}|${p.id}'] = p.displayName ?? p.id;
-  }
-  for (final p in game.worldState.newWorld.provinces) {
-    out['${p.regionId}|${p.id}'] = p.displayName ?? p.id;
-  }
-  return out;
-}
-
-bool _isCivilianUnit(Unit unit) {
-  final role = unitRoleForType(unit.type);
-  if (role == null) return false;
-  return role != UnitRole.military && role != UnitRole.naval;
-}
-
-List<Unit> _civilianUnitsInRegion(
-  List<Unit> units,
-  String humanPlayerId,
-  Map<String, String> provinceNames,
-  Orders currentOrders,
-) {
-  final list = units
-      .where(
-        (u) =>
-            u.ownerId == humanPlayerId &&
-            u.tileKey != null &&
-            _isCivilianUnit(u),
-      )
-      .toList();
-  list.sort((a, b) {
-    final tileA = projectedCivilianTileKey(
-      unit: a,
-      playerId: humanPlayerId,
-      orders: currentOrders,
-    );
-    final tileB = projectedCivilianTileKey(
-      unit: b,
-      playerId: humanPlayerId,
-      orders: currentOrders,
-    );
-    final provA = Unit.provinceIdFromTileKey(tileA);
-    final provB = Unit.provinceIdFromTileKey(tileB);
-    final regionA = Unit.regionIdFromTileKey(tileA) ?? '';
-    final regionB = Unit.regionIdFromTileKey(tileB) ?? '';
-    final prefixedA = '$regionA|$provA';
-    final prefixedB = '$regionB|$provB';
-    final nameA = provinceNames[prefixedA] ?? prefixedA;
-    final nameB = provinceNames[prefixedB] ?? prefixedB;
-    final nameCmp = nameA.compareTo(nameB);
-    if (nameCmp != 0) return nameCmp;
-    final typeCmp = a.type.compareTo(b.type);
-    if (typeCmp != 0) return typeCmp;
-    return a.id.compareTo(b.id);
-  });
-  return list;
-}
+// Sort/partition helpers live in `civilian_units_sort.dart` (public). This
+// file delegates to them to keep e2e expectations aligned with the panel
+// rendering. Refs #2575.
 
 class _PendingAssignedResolution {
   const _PendingAssignedResolution({
@@ -315,14 +261,14 @@ List<String> civilianUnitsPanelExpectedTexts(
 ) {
   final game = snap.game;
   final humanPlayerId = snap.humanPlayerId;
-  final provinceNames = _provinceNamesByPrefixedId(game);
-  final ow = _civilianUnitsInRegion(
+  final provinceNames = provinceNamesByPrefixedId(game);
+  final ow = civilianUnitsInRegion(
     game.worldState.oldWorld.units,
     humanPlayerId,
     provinceNames,
     snap.currentOrders,
   );
-  final nw = _civilianUnitsInRegion(
+  final nw = civilianUnitsInRegion(
     game.worldState.newWorld.units,
     humanPlayerId,
     provinceNames,
