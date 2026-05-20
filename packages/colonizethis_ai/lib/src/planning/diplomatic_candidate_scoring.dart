@@ -5,6 +5,7 @@ import 'army_conquest_prep.dart';
 import 'planning_imports.dart';
 import 'colonial_pressure.dart';
 import 'goal_manager.dart';
+import 'observer_goal_phase.dart';
 import 'war_desire_calculator.dart';
 
 part 'diplomatic_candidate_scoring_offer_peace.dart';
@@ -103,6 +104,19 @@ List<int> computeDiplomaticCandidateScores({
         break;
       case DiplomaticOrderType.establishOverture:
         {
+          if (shouldSuppressNewWorldColonialOrders(
+                snapshot: snapshot,
+                game: game,
+              ) &&
+              (_isTribeFaction(game, o.targetFactionId) ||
+                  snapshot.colonial.preferredColonialTargetFactionIdsSorted
+                      .contains(o.targetFactionId) ||
+                  snapshot.colonial.invadableNewWorldProvinceIdsSorted.any(
+                    (pid) => provinceOwner[pid] == o.targetFactionId,
+                  ))) {
+            s = 0;
+            break;
+          }
           if (_isDecisionOnCooldown(
             game: game,
             actorFactionId: nationId,
@@ -124,6 +138,7 @@ List<int> computeDiplomaticCandidateScores({
           );
           final improveRelationsDesire = 100 - warDesire;
           s += (improveRelationsDesire - 50);
+          s += (thresholds.allianceTendency - 50);
           if (snapshot.colonial.preferredColonialTargetFactionIdsSorted
               .contains(o.targetFactionId)) {
             s += kEstablishOvertureColonialTribeBonus;

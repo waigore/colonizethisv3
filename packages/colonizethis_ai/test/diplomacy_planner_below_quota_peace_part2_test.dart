@@ -202,8 +202,8 @@ void main() {
       );
       expect(
         belowQuotaPeerGpPeaceTargets(game: game, snapshot: snapshot),
-        isEmpty,
-        reason: 'sole GP blocker war held on GP-only mutual-plateau frontier',
+        ['gp5'],
+        reason: 'uninvaded minor remains — peace peer to pivot off GP-only front',
       );
     },
   );

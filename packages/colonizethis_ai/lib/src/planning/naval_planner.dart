@@ -3,6 +3,7 @@ import 'dart:math' as math;
 import 'colonial_naval_scoring.dart';
 import 'planning_imports.dart';
 import 'colonial_pressure.dart';
+import 'observer_goal_phase.dart';
 import '../perception/perception_snapshot.dart';
 import 'planner_context.dart';
 import '../util/orders_extensions.dart';
@@ -11,10 +12,15 @@ final _log = packageLogger();
 
 Orders runNavalPlanner({
   required PlannerContext ctx,
-  ColonialSummary colonial = const ColonialSummary(),
+  required AIWorldSnapshot snapshot,
 }) {
+  final colonial = snapshot.colonial;
   var weight = ctx.resolveNavalBaseWeight();
-  final hasColonialTargets = hasColonialAcquisitionTargets(colonial);
+  final hasColonialTargets = hasColonialAcquisitionTargets(colonial) &&
+      !shouldSuppressNewWorldColonialOrders(
+        snapshot: snapshot,
+        game: ctx.game,
+      );
   if (hasColonialTargets) {
     weight += kColonialNavalWeightBonus;
   }
