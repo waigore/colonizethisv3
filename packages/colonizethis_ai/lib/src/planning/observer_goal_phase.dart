@@ -104,19 +104,11 @@ List<String> expandPhaseGpPeaceTargets({
     for (final factionId in snapshot.threats.atWarWith)
       if (game.playerById(factionId) != null) factionId,
   ];
+  // Minor-first: exit every GP front while uninvaded minors remain (Refs #2509).
   if (gpWars.isNotEmpty &&
       hasUninvadedOldWorldMinor(game: game, snapshot: snapshot) &&
       isBelowObserverConquestQuota(snapshot.conquest.oldWorldProvincesOwned)) {
-    final ownOw = snapshot.conquest.oldWorldProvincesOwned;
-    final distraction = <String>[
-      for (final factionId in gpWars)
-        if (isBelowObserverConquestQuota(provinceCountOwnedBy(game, factionId)) &&
-            (provinceCountOwnedBy(game, factionId) - ownOw).abs() <= 3)
-          factionId,
-    ]..sort();
-    if (distraction.isNotEmpty) {
-      return distraction;
-    }
+    return gpWars..sort();
   }
   if (gpWars.length <= 1) {
     return const [];
