@@ -34,9 +34,18 @@ Five shared Dart packages under `packages/`. TDD 15 allows merging _models and _
 
 **Rule:** No UI in shared packages. Game logic lives only in shared packages; app is shell, routing, and integration.
 
-### `colonizethis_logic` internal mutation helpers
+### `colonizethis_logic` internal architecture
 
-Turn pipelines and order application mutate nested `Game` → `WorldState` → `TurnState` fields frequently. Call sites use **`Game.updateWorldState`**, **`WorldState.updateTurnState`**, and **`TurnPipelineState.updateWorldState`** (`game_world_mutations.dart`, `turn_pipeline_state.dart`) instead of three-level `copyWith` chains. Dual-region province scans use **`forEachWorldRegion`** / **`traverseProvinces`** (`province_traversal.dart`) instead of duplicating old-world/new-world iteration in connectivity, fog, and similar resolvers. Refs #2560.
+`colonizethis_logic` is organized around a small set of canonical abstractions that keep validation, suggestion, and resolution code thin and consistent across order types and phases. Refs #2560.
+
+- **Mutation helpers (`world/game_world_mutations.dart`, `turn/turn_pipeline_state.dart`).** Turn pipelines and order application mutate nested `Game` → `WorldState` → `TurnState` fields frequently. Call sites use **`Game.updateWorldState`**, **`WorldState.updateTurnState`**, and **`TurnPipelineState.updateWorldState`** instead of three-level `copyWith` chains.
+- **Province traversal (`world/province_traversal.dart`).** Dual-region province scans use **`forEachWorldRegion`** / **`traverseProvinces`** instead of duplicating old-world/new-world iteration in connectivity, fog, naval, and similar resolvers (see `SPEC/program/logic-dual-region-province-access.md` for the broader sanctioned dual-region access policy).
+- **Diplomatic sub-validators (`orders/validators/diplomatic/`).** Type-specific diplomatic rules live in per-type factory functions backed by `DiplomaticSubValidator` helpers (`relationDiplomaticSubValidator`, `delegatedDiplomaticSubValidator`). The parent `DiplomaticOrderValidator` runs cross-cutting checks before dispatch. See [orders.md](orders.md) § Diplomatic sub-validators (implementation).
+- **Work-order handler registry (`orders/work_handlers/work_order_handler_registry.dart`).** Work-order application uses a single `workOrderHandlersByTarget` map keyed by work target string (one `WorkOrderHandler` per target; standard multi-turn build targets share `StandardBuildWorkOrderHandler`). `orders_application_work_phase.dart` resolves handlers by target lookup only. See [orders.md](orders.md) § Implementation (structure, not extra rules).
+- **Work suggestion pipeline (`orders/work_suggestion_pipeline.dart`).** Civilian work suggestion for Explorer, Worker, Spy, and Merchant unit types uses the shared `WorkSuggestionPipeline.run()` loop with per-type `candidatesProvider` callbacks. See [order-suggestions.md](order-suggestions.md) § Work suggestion pipeline (`WorkSuggestionPipeline`).
+- **Turn-phase handler registry (`turn/phases/`, `turn/turn_phase_handler_registry.dart`).** Each turn phase is implemented by a `TurnPhaseHandler` in `turn/phases/*.dart` (one phase per file, re-exported by `turn/phases.dart`). The canonical map is `TurnPhaseHandlerRegistry.defaults`; tests and callers may override individual phases via `TurnResolverConfig.phaseHandlerOverrides`. See [turn-resolution-phase-details.md](turn-resolution-phase-details.md) § Phase handler registry.
+
+The shared abstractions above are the canonical extension points: new validators, handlers, suggestion paths, and phases plug into these registries and helpers rather than introducing parallel `switch` dispatch or new copy-paste structures. Repo-lint rules (for example `repo.logic_diplomatic_sub_validator_size`) keep adapters bounded so the canonical shapes do not silently regress.
 
 **Riverpod in packages:** Canonical `Provider`s for logic/map/AI seams live in optional `di.dart` libraries; see [dependency-injection.md](dependency-injection.md).
 
