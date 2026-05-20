@@ -75,8 +75,8 @@ class DiplomaticOrderValidator extends StatefulValidator {
         subValidatorContext,
       ),
       DiplomaticOrderType.alliance: allianceSubValidator(subValidatorContext),
-      DiplomaticOrderType.establishOverture: EstablishOvertureSubValidator(
-        context: subValidatorContext,
+      DiplomaticOrderType.establishOverture: establishOvertureSubValidator(
+        subValidatorContext,
       ),
       DiplomaticOrderType.grantAid: grantAidSubValidator(subValidatorContext),
       DiplomaticOrderType.setSubsidy: setSubsidySubValidator(
