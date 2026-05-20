@@ -8,9 +8,12 @@ import '../../combat/conflict_detection.dart';
 import '../../combat/unopposed_province_capture.dart';
 import '../../dossier/event_dialogue.dart';
 import '../../game_events.dart';
-import '../combat_phase_helpers.dart';
-import '../turn_seed_constants.dart';
 import '../../world/capital_and_gp_fall.dart';
+import '../combat_phase_helpers.dart';
+import '../turn_pipeline_state.dart';
+import '../turn_resolution_events.dart';
+import '../turn_resolver_config.dart';
+import '../turn_seed_constants.dart';
 
 void _emitPreBattleDialogueForConflicts(
   Game state,
@@ -21,8 +24,7 @@ void _emitPreBattleDialogueForConflicts(
 ) {
   if (battles.isEmpty) return;
   for (final ctx in battles) {
-    final attackerIds = ctx.attackers.map((a) => a.factionId).toList()
-      ..sort();
+    final attackerIds = ctx.attackers.map((a) => a.factionId).toList()..sort();
     final capitalThreatened = dialogueEventsForCapitalThreatened(
       state,
       capitalOwnerId: ctx.defenderFactionId,
@@ -125,4 +127,41 @@ Game runCombatPhase(
   );
   state = applyGreatPowerFall(state, previousCapitalByPlayer);
   return state;
+}
+
+/// Combat phase handler — captures pre-combat ownership, runs combat, emits
+/// province-captured events, and updates the pipeline. Refs #2560.
+TurnPhaseStepOutcome combatTurnPhaseHandler(
+  TurnPipelineState acc,
+  TurnResolverConfig config,
+  int turn,
+) {
+  final previousOwnership = <String, String?>{};
+  for (final region in [
+    acc.game.worldState.oldWorld,
+    acc.game.worldState.newWorld,
+  ]) {
+    for (final prov in region.provinces) {
+      previousOwnership[prov.id] = prov.ownerId;
+    }
+  }
+  final afterCombat = runCombatPhase(
+    acc.game,
+    config.orders,
+    acc.landFeedingCoverageByPlayerId,
+    config.topology,
+    config.tileMapByRegion,
+    topologyByRegion: config.topologyByRegion,
+    onDialogue: config.onDialogue,
+    onGameEvent: config.onGameEvent,
+  );
+  emitProvinceCapturedEvents(
+    previousOwnership,
+    afterCombat,
+    turn,
+    config.eventBus,
+    config.onGameEvent,
+    config.onDialogue,
+  );
+  return TurnPhaseStepContinue(acc.copyWith(game: afterCombat));
 }
