@@ -14,7 +14,7 @@ RegionMapViewData _baseRegionForId(InitGameMapViewData mapView, String regionId)
   if (mapView.newWorld.regionId == regionId) {
     return mapView.newWorld;
   }
-  throw ArgumentError.value(regionId, 'regionId', 'unknown map region');
+  throw StateError('Unknown map region for regionId=$regionId');
 }
 
 /// Human draft civilian/fleet marker projection for one map region.
