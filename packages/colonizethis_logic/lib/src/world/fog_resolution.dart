@@ -256,6 +256,27 @@ class ProvinceOwnershipVisibilitySummary {
   final int tilesDowngradedForFormerOwner;
 }
 
+Map<String, Map<String, String>> _mutableGpVisibilityCopy(
+  Map<String, Map<String, String>> visibility,
+) => {
+  for (final entry in visibility.entries)
+    entry.key: Map<String, String>.from(entry.value),
+};
+
+void _forEachGpPlayerVisibility({
+  required Game game,
+  required Set<String> gpIds,
+  required Map<String, Map<String, String>> result,
+  required void Function(String playerId, Map<String, String> vis) action,
+}) {
+  for (final player in game.players) {
+    if (!gpIds.contains(player.id)) continue;
+    final vis = result[player.id];
+    if (vis == null) continue;
+    action(player.id, vis);
+  }
+}
+
 void _fullyVisibleAllTilesInSeaZoneBuckets(
   Map<String, String> vis,
   Map<String, List<String>> regionTileKeys,
@@ -307,35 +328,29 @@ Map<String, Map<String, String>> applyCoastalSeaZoneFullVisibility(
 }) {
   final gpIds = game.players.map((p) => p.id).toSet();
   final tileKeysByRegion = game.worldState.tileKeysByRegionAndProvince;
-  final result = <String, Map<String, String>>{};
-  for (final entry in visibilityAfterFogDecay.entries) {
-    result[entry.key] = Map<String, String>.from(entry.value);
-  }
+  final result = _mutableGpVisibilityCopy(visibilityAfterFogDecay);
 
   forEachWorldRegion(game.worldState, (regionId, regionData) {
+    final regionTileKeys = tileKeysByRegion[regionId];
+    if (regionTileKeys == null) return;
     final regionTopology = topologyForRegion(
       topology,
       regionId,
       topologyByRegion: topologyByRegion,
     );
-    final regionTileKeys = tileKeysByRegion[regionId];
-    if (regionTileKeys == null) return;
-
-    for (final player in game.players) {
-      if (!gpIds.contains(player.id)) continue;
-      final playerId = player.id;
-      final vis = result[playerId];
-      if (vis == null) continue;
-
-      _applyCoastalFullVisibilityForGpPlayerInRegion(
+    _forEachGpPlayerVisibility(
+      game: game,
+      gpIds: gpIds,
+      result: result,
+      action: (playerId, vis) => _applyCoastalFullVisibilityForGpPlayerInRegion(
         playerId: playerId,
         regionId: regionId,
         regionData: regionData,
         regionTopology: regionTopology,
         regionTileKeys: regionTileKeys,
         vis: vis,
-      );
-    }
+      ),
+    );
   });
 
   return result;
@@ -494,34 +509,26 @@ Map<String, Map<String, String>> applyDistantSeaZoneFogRevert(
 }) {
   final gpIds = game.players.map((p) => p.id).toSet();
   final tileKeysByRegion = game.worldState.tileKeysByRegionAndProvince;
-  final result = <String, Map<String, String>>{};
-  for (final entry in visibility.entries) {
-    result[entry.key] = Map<String, String>.from(entry.value);
-  }
+  final result = _mutableGpVisibilityCopy(visibility);
 
   forEachWorldRegion(game.worldState, (regionId, _) {
+    final regionTileKeys = tileKeysByRegion[regionId];
+    if (regionTileKeys == null) return;
     final regionTopology = topologyForRegion(
       topology,
       regionId,
       topologyByRegion: topologyByRegion,
     );
-    final seaZoneIds = regionTopology.nodes
-        .where((n) => n.type == TopologyNodeType.seaZone)
-        .map((n) => n.id);
-    final regionTileKeys = tileKeysByRegion[regionId];
-    if (regionTileKeys == null) return;
+    final seaZoneIds = seaZoneNodeIds(regionTopology);
     final fleetAtSeaZoneKeysByPlayer = _fleetAtSeaZoneKeysByPlayerInRegion(
       game,
       regionId,
     );
-
-    for (final player in game.players) {
-      if (!gpIds.contains(player.id)) continue;
-      final playerId = player.id;
-      final vis = result[playerId];
-      if (vis == null) continue;
-
-      _applyDistantSeaFogForGpPlayerInRegion(
+    _forEachGpPlayerVisibility(
+      game: game,
+      gpIds: gpIds,
+      result: result,
+      action: (playerId, vis) => _applyDistantSeaFogForGpPlayerInRegion(
         game: game,
         playerId: playerId,
         regionId: regionId,
@@ -530,8 +537,8 @@ Map<String, Map<String, String>> applyDistantSeaZoneFogRevert(
         regionTileKeys: regionTileKeys,
         fleetAtSeaZoneKeysByPlayer: fleetAtSeaZoneKeysByPlayer,
         vis: vis,
-      );
-    }
+      ),
+    );
   });
 
   return result;
