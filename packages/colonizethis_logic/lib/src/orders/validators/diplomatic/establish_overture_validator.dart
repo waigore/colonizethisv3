@@ -8,7 +8,7 @@ import 'join_empire_validator.dart';
 
 /// Type-specific validator for [DiplomaticOrderType.establishOverture] orders.
 /// Owns the per-stage rules (`tradeConsulate`, `embassy`, `nap`) and delegates
-/// [OvertureStage.joinEmpire] to [JoinEmpireOvertureValidator].
+/// [OvertureStage.joinEmpire] to [validateJoinEmpireOverture].
 /// SPEC/program/orders.md § Diplomatic orders / overtures.
 DiplomaticSubValidator establishOvertureSubValidator(
   DiplomaticSubValidatorContext ctx,
@@ -55,11 +55,8 @@ DiplomaticSubValidator establishOvertureSubValidator(
       treasury,
     ),
     OvertureStage.nap => _validateNap(ctx, targetId, currentStage, treasury),
-    OvertureStage.joinEmpire => JoinEmpireOvertureValidator(
-      game: ctx.game,
-      playerId: ctx.playerId,
-      factionMembership: ctx.factionMembership,
-    ).validate(
+    OvertureStage.joinEmpire => validateJoinEmpireOverture(
+      ctx: ctx,
       targetId: targetId,
       rel: relation,
       currentStage: currentStage,
