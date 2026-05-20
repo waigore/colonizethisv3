@@ -138,13 +138,19 @@ String? plateauOwMinorDeclareTarget({
     for (final factionId in snapshot.threats.atWarWith)
       if (game.playerById(factionId) != null) factionId,
   ];
-  if (gpWars.isNotEmpty) {
-    final allowMutualPlateauPivot = gpWars.length == 1 &&
-        isMutualBelowQuotaPlateauPeer(
-          ownOw: ownOw,
-          partnerOw: provinceCountOwnedBy(game, gpWars.single),
-        );
-    if (!allowMutualPlateauPivot) {
+  if (gpWars.length > 1) {
+    for (final factionId in gpWars) {
+      if (!isMutualBelowQuotaPlateauPeer(
+        ownOw: ownOw,
+        partnerOw: provinceCountOwnedBy(game, factionId),
+      )) {
+        return null;
+      }
+    }
+  } else if (gpWars.length == 1) {
+    final partnerOw = provinceCountOwnedBy(game, gpWars.single);
+    if (!isMutualBelowQuotaPlateauPeer(ownOw: ownOw, partnerOw: partnerOw) &&
+        !hasUninvadedOldWorldMinor(game: game, snapshot: snapshot)) {
       return null;
     }
   }
