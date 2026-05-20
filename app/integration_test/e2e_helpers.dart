@@ -2,7 +2,7 @@
 ///
 /// Implementations live in [e2e_test_shared.dart]; this library delegates to the
 /// `e2e*` entrypoints so new scenarios can depend on the AC1 checklist names
-/// (`openProductionPanel`, `waitForNextTurnLabelAdvance`, etc.).
+/// (`openProductionPanel`, `advanceOneHumanTurn`, `waitForNextTurnLabelAdvance`, etc.).
 library;
 
 import 'package:colonizethis_app/l10n/app_localizations_contract.dart';
@@ -25,7 +25,8 @@ export 'e2e_test_shared.dart' show
     e2eWaitForNextTurnLabelAdvance,
     e2eWaitUntilAnyFinderHitTestable,
     e2eOpenProductionPanel,
-    e2eOpenPanelFromMarker;
+    e2eOpenPanelFromMarker,
+    kE2eNextTurnResolutionTimeout;
 
 Future<void> pumpFor(WidgetTester tester, Duration total) =>
     e2ePumpFor(tester, total);
@@ -115,6 +116,19 @@ Future<Duration> waitForNextTurnLabelAdvance(
       turnLabelBefore: turnLabelBefore,
       timeout: timeout,
       perf: perf,
+    );
+
+Future<Duration> advanceOneHumanTurn(
+  WidgetTester tester, {
+  required AppLocalizations l10n,
+  E2ePerfLog? perf,
+  Duration timeout = kE2eNextTurnResolutionTimeout,
+}) =>
+    e2eAdvanceOneHumanTurn(
+      tester,
+      l10n: l10n,
+      perf: perf,
+      timeout: timeout,
     );
 
 Future<void> closeBottomSheet(
