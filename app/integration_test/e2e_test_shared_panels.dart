@@ -76,10 +76,11 @@ Future<void> e2eOpenCivilianPanel(
   await e2eAdvanceGameStartIntroUntilDismissed(tester, perf: perf);
 
   var panelPollMs = 25;
+  // The loop checks ready conditions **before** the first pump so a panel
+  // opener that is already on-screen (typical after bootstrap) short-circuits
+  // without paying a leading 25ms frame. Idle pumps happen at the bottom of
+  // the loop with adaptive backoff. Refs GitHub #2336 AC5 / pump-reduction.
   while (sw.elapsed < timeout) {
-    await tester.pump(Duration(milliseconds: panelPollMs));
-    panelPollMs = e2eAdaptivePollRampAfterIdle(panelPollMs);
-
     if (find.byType(BottomSheet).evaluate().isNotEmpty) {
       await e2eCloseBottomSheet(
         tester,
@@ -139,6 +140,7 @@ Future<void> e2eOpenCivilianPanel(
       panelPollMs = 25;
       continue;
     }
+    await tester.pump(Duration(milliseconds: panelPollMs));
     panelPollMs = e2eAdaptivePollRampAfterIdle(panelPollMs);
   }
   fail(
@@ -207,10 +209,11 @@ Future<void> e2eOpenNavalPanel(
   await e2eAdvanceGameStartIntroUntilDismissed(tester, perf: perf);
 
   var panelPollMs = 25;
+  // The loop checks ready conditions **before** the first pump so a naval
+  // opener that is already on-screen (typical after bootstrap) short-circuits
+  // without paying a leading 25ms frame. Idle pumps happen at the bottom of
+  // the loop with adaptive backoff. Refs GitHub #2336 AC5 / pump-reduction.
   while (sw.elapsed < timeout) {
-    await tester.pump(Duration(milliseconds: panelPollMs));
-    panelPollMs = e2eAdaptivePollRampAfterIdle(panelPollMs);
-
     if (find.byType(BottomSheet).evaluate().isNotEmpty) {
       await e2eCloseBottomSheet(
         tester,
@@ -288,6 +291,7 @@ Future<void> e2eOpenNavalPanel(
       panelPollMs = 25;
       continue;
     }
+    await tester.pump(Duration(milliseconds: panelPollMs));
     panelPollMs = e2eAdaptivePollRampAfterIdle(panelPollMs);
   }
   fail(
