@@ -36,7 +36,7 @@ Five shared Dart packages under `packages/`. TDD 15 allows merging _models and _
 
 ### `colonizethis_logic` internal mutation helpers
 
-Turn pipelines and order application mutate nested `Game` → `WorldState` → `TurnState` fields frequently. Call sites use **`Game.updateWorldState`**, **`WorldState.updateTurnState`**, and **`TurnPipelineState.updateWorldState`** (`game_world_mutations.dart`, `turn_pipeline_state.dart`) instead of three-level `copyWith` chains. Refs #2560.
+Turn pipelines and order application mutate nested `Game` → `WorldState` → `TurnState` fields frequently. Call sites use **`Game.updateWorldState`**, **`WorldState.updateTurnState`**, and **`TurnPipelineState.updateWorldState`** (`game_world_mutations.dart`, `turn_pipeline_state.dart`) instead of three-level `copyWith` chains. Dual-region province scans use **`forEachWorldRegion`** / **`traverseProvinces`** (`province_traversal.dart`) instead of duplicating old-world/new-world iteration in connectivity, fog, and similar resolvers. Refs #2560.
 
 **Riverpod in packages:** Canonical `Provider`s for logic/map/AI seams live in optional `di.dart` libraries; see [dependency-injection.md](dependency-injection.md).
 
