@@ -244,7 +244,7 @@ rules:
 
   - rule_id: repo.logic_diplomatic_sub_validator_size
     group: architecture
-    title: colonizethis_logic diplomatic sub-validator classes stay thin (Refs #2560)
+    title: colonizethis_logic diplomatic sub-validators are factory functions, not bespoke `implements DiplomaticSubValidator` classes (Refs #2560)
     spec: SPEC/program/orders.md
     runner: dart
     script: tool/check_logic_diplomatic_sub_validator_size.dart
