@@ -67,6 +67,7 @@
 | `tool/check_logic_dead_files.dart` | Unreferenced `lib/src` scan for `colonizethis_logic`; rule `repo.logic_dead_files` — see subsection below |
 | `tool/check_logic_dedup_logger.dart` | Forbid private `final _log = packageLogger();` declarations under `packages/colonizethis_logic/lib/src/**` (Refs #2391, Pattern 1); files MUST consume the shared `logicLog` from `package:colonizethis_logic/package_logger.dart`; rule `repo.logic_dedup_logger` |
 | `tool/check_app_no_duplicate_helpers.dart` | AST scan that pins **canonical helper symbols** extracted for #2180 (e.g. `eraRoman`, `techCategoryLabelL10n`, `commodityDisplayName`, the `trainDialog*` set) to one canonical file under `app/lib/**` and forbids reappearance of the previous private duplicates (`_eraRoman`, `_categoryLabel`, `_categoryLabelL10n`, `_commodityDisplayName`) anywhere as top-level functions or class methods (GitHub #2180); rule `repo.app_no_duplicate_helpers` |
+| `tool/check_logic_work_target_switch.dart` | AST scan that forbids enumerated `switch` dispatch on three or more `kWorkTarget*` constants in `packages/colonizethis_logic/lib/src/orders/work_handlers/` and `packages/colonizethis_logic/lib/src/orders/order_visibility.dart` so new work-target branches extend the canonical `workOrderHandlersByTarget` / `_workOrderVisibilityByTarget` registry maps instead (Refs #2560); rule `repo.logic_work_target_switch` |
 
 ### `repo.logic_dead_files` (colonizethis_logic `lib/src` orphans)
 
