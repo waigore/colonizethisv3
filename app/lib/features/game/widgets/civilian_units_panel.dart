@@ -15,6 +15,7 @@ import '../../../l10n/l10n.dart';
 import '../../../providers/games_provider.dart';
 import '../../../widgets/ct_nine_patch_button.dart';
 import '../../../widgets/resource_icon.dart';
+import 'civilian_units_sort.dart';
 import 'units/shared/region_section_header.dart';
 import 'units/shared/units_entity_action_row.dart';
 import 'units/shared/units_panel_region_label.dart';
@@ -136,14 +137,14 @@ class _CivilianUnitsPanelState extends ConsumerState<CivilianUnitsPanel> {
   @override
   Widget build(BuildContext context) {
     final l10n = appL10n(context);
-    final provinceNames = _provinceNamesByPrefixedId(widget.game);
-    final ow = _civilianUnitsInRegion(
+    final provinceNames = provinceNamesByPrefixedId(widget.game);
+    final ow = civilianUnitsInRegion(
       widget.game.worldState.oldWorld.units,
       widget.humanPlayerId,
       provinceNames,
       widget.currentOrders,
     );
-    final nw = _civilianUnitsInRegion(
+    final nw = civilianUnitsInRegion(
       widget.game.worldState.newWorld.units,
       widget.humanPlayerId,
       provinceNames,
