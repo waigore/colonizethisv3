@@ -1,4 +1,16 @@
-// Enforces thin DiplomaticSubValidator class bodies (Refs #2560).
+// Enforces the SPEC/program/orders.md § Diplomatic sub-validators contract:
+// every per-type module under `lib/src/orders/validators/diplomatic/` must be
+// expressed as a factory function backed by `delegatedDiplomaticSubValidator` /
+// `relationDiplomaticSubValidator` — *no* bespoke `implements
+// DiplomaticSubValidator` class. The shared contract file
+// `diplomatic_sub_validator.dart` is the only sanctioned location for an
+// `implements DiplomaticSubValidator` declaration (the private
+// `_DelegatedDiplomaticSubValidator` adapter); that file is exempt below.
+//
+// As a defense-in-depth safety net, any sanctioned class (today only the
+// adapter in the contract file) is also bounded to [_maxClassBodyLines] of
+// non-empty body so the helper itself cannot drift into bespoke type-specific
+// logic (Refs #2560).
 import 'dart:convert';
 import 'dart:io';
 
@@ -6,10 +18,14 @@ import 'package:path/path.dart' as p;
 
 const _maxClassBodyLines = 30;
 
-/// Classes allowed to exceed [_maxClassBodyLines]. Currently empty: all
-/// type-specific sub-validators use factory functions backed by
-/// `delegatedDiplomaticSubValidator` / `relationDiplomaticSubValidator`.
-const _allowedLargeClasses = <String>{};
+/// Files in `lib/src/orders/validators/diplomatic/` allowed to declare a
+/// class that implements `DiplomaticSubValidator`. Currently only the
+/// shared contract file (which hosts the private `_DelegatedDiplomaticSubValidator`
+/// adapter) is sanctioned; every per-type module must be a free factory
+/// function (SPEC/program/orders.md § Diplomatic sub-validators).
+const _sanctionedClassFiles = <String>{
+  'diplomatic_sub_validator.dart',
+};
 
 int runCheckLogicDiplomaticSubValidatorSize(
   String repoRoot, {
@@ -44,10 +60,19 @@ int runCheckLogicDiplomaticSubValidatorSize(
     if (!content.contains('implements DiplomaticSubValidator')) {
       continue;
     }
+    final fileName = p.basename(file.path);
     final relativePath = p.relative(file.path, from: repoRoot);
+    final sanctioned = _sanctionedClassFiles.contains(fileName);
     for (final match in _classDeclPattern.allMatches(content)) {
       final className = match.group(1)!;
-      if (_allowedLargeClasses.contains(className)) {
+      if (!sanctioned) {
+        violations.add(
+          '$relativePath ($className): bespoke `implements DiplomaticSubValidator` '
+          'classes are forbidden outside ${_sanctionedClassFiles.join(', ')}; '
+          'use a factory function backed by delegatedDiplomaticSubValidator / '
+          'relationDiplomaticSubValidator (SPEC/program/orders.md § Diplomatic '
+          'sub-validators).',
+        );
         continue;
       }
       final bodyStart = match.end;
