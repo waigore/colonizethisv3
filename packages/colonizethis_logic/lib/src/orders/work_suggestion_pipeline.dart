@@ -81,6 +81,13 @@ class WorkSuggestionPipeline {
     /// [noCandidateReason] — for example after a [sync*] generator updated a
     /// mutable `lastReason` while probing provinces (Refs #2391 AC8).
     String Function()? resolveNoCandidateReason,
+
+    /// Optional override for the per-call probe cap; defaults to
+    /// [kMaxWorkProbeAttemptsPerUnitPerTarget]. Multi-province sweeps that
+    /// pre-validate candidates inside [candidatesProvider] (e.g. Explorer
+    /// `prospect`) may raise the cap to honor per-province × per-tile bounds
+    /// from `SPEC/program/order-suggestions.md` § Throughput bounds.
+    int? maxProbeAttempts,
   }) {
     final existing = existingTargetsByUnit[unit.id];
     if (existing != null && existing.contains(workTarget)) {
@@ -96,13 +103,14 @@ class WorkSuggestionPipeline {
       return;
     }
 
+    final probeCap = maxProbeAttempts ?? kMaxWorkProbeAttemptsPerUnitPerTarget;
     var sawCandidate = false;
     var acceptedCount = 0;
     var firstIncludedTile = '-';
     var probeAttempts = 0;
     for (final candidate in candidatesProvider()) {
       probeAttempts++;
-      if (probeAttempts > kMaxWorkProbeAttemptsPerUnitPerTarget) {
+      if (probeAttempts > probeCap) {
         break;
       }
       if (probeBudget != null && !probeBudget.consume()) {
