@@ -11,6 +11,7 @@ import 'naval_resolution.dart'
 import 'fog_spy_reveal_decay.dart';
 import 'player_view.dart';
 import 'province_lookup.dart' hide landTileKeysForProvinceBucket;
+import 'province_traversal.dart';
 import 'tile_key_coordinates.dart';
 import 'unit_lookup.dart';
 
@@ -28,7 +29,7 @@ applySpyRevealTimerDecay(Game game) {
 
   // Province ownership lookup so we can ensure timers only affect other-faction provinces.
   final ownerByProvinceId = <String, String?>{
-    for (final p in allProvinces(world)) p.id: p.ownerId,
+    for (final e in traverseProvinces(world)) e.provinceId: e.ownerId,
   };
 
   final nextSpyTimers = <String, Map<String, int>>{};
@@ -61,7 +62,8 @@ Map<String, Map<String, String>> applyFogDecay(
 }) {
   const explorerTypes = {'explorer', 'spy'};
   final ownerByProvince = <String, String?>{
-    for (final p in allProvinces(game.worldState)) p.id: p.ownerId,
+    for (final e in traverseProvinces(game.worldState))
+      e.provinceId: e.ownerId,
   };
 
   final navalCoastalIntelByPlayer = <String, Set<String>>{};
@@ -341,17 +343,14 @@ Map<String, Map<String, String>> applyCoastalSeaZoneFullVisibility(
     result[entry.key] = Map<String, String>.from(entry.value);
   }
 
-  for (final regionId in [kRegionOldWorld, kRegionNewWorld]) {
-    final regionData = regionId == kRegionOldWorld
-        ? game.worldState.oldWorld
-        : game.worldState.newWorld;
+  forEachWorldRegion(game.worldState, (regionId, regionData) {
     final regionTopology = _topologyForRegion(
       topology,
       topologyByRegion,
       regionId,
     );
     final regionTileKeys = tileKeysByRegion[regionId];
-    if (regionTileKeys == null) continue;
+    if (regionTileKeys == null) return;
 
     for (final player in game.players) {
       if (!gpIds.contains(player.id)) continue;
@@ -368,7 +367,7 @@ Map<String, Map<String, String>> applyCoastalSeaZoneFullVisibility(
         vis: vis,
       );
     }
-  }
+  });
 
   return result;
 }
@@ -531,7 +530,7 @@ Map<String, Map<String, String>> applyDistantSeaZoneFogRevert(
     result[entry.key] = Map<String, String>.from(entry.value);
   }
 
-  for (final regionId in [kRegionOldWorld, kRegionNewWorld]) {
+  forEachWorldRegion(game.worldState, (regionId, _) {
     final regionTopology = _topologyForRegion(
       topology,
       topologyByRegion,
@@ -541,7 +540,7 @@ Map<String, Map<String, String>> applyDistantSeaZoneFogRevert(
         .where((n) => n.type == TopologyNodeType.seaZone)
         .map((n) => n.id);
     final regionTileKeys = tileKeysByRegion[regionId];
-    if (regionTileKeys == null) continue;
+    if (regionTileKeys == null) return;
     final fleetAtSeaZoneKeysByPlayer = _fleetAtSeaZoneKeysByPlayerInRegion(
       game,
       regionId,
@@ -564,7 +563,7 @@ Map<String, Map<String, String>> applyDistantSeaZoneFogRevert(
         vis: vis,
       );
     }
-  }
+  });
 
   return result;
 }
