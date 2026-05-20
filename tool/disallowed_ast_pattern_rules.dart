@@ -16,6 +16,7 @@ enum DisallowedAstMatchKind {
   linearCollectionWhereFirstOrNull,
   incrementalValidatorForPlayerInLoop,
   redundantWhereToListWhereChain,
+  nestedWorldStateCopyWith,
 }
 
 class DisallowedPatternRule {
@@ -39,6 +40,7 @@ class DisallowedPatternRule {
     this.removeAtZeroReceiverIdentifier,
     this.linearCollectionNames = const {},
     this.linearCollectionPathPrefix,
+    this.nestedCopyWithOuterArgumentName,
   });
 
   final String id;
@@ -70,10 +72,17 @@ class DisallowedPatternRule {
   /// are linear-scan anti-patterns (for example `provinces`).
   final Set<String> linearCollectionNames;
 
-  /// When [kind] is [DisallowedAstMatchKind.linearCollectionWhereFirstOrNull]:
+  /// When [kind] is [DisallowedAstMatchKind.linearCollectionWhereFirstOrNull]
+  /// or other path-scoped rules (e.g. [DisallowedAstMatchKind.nestedWorldStateCopyWith]):
   /// path prefix (POSIX slashes) limiting matches, for example
   /// `packages/colonizethis_logic/lib/src/`.
   final String? linearCollectionPathPrefix;
+
+  /// When [kind] is [DisallowedAstMatchKind.nestedWorldStateCopyWith]: the
+  /// outer `copyWith(<arg>:`) named-argument label that anchors the chain
+  /// (defaults to `worldState`). Only chains whose outermost `copyWith` passes
+  /// that named argument are scanned for deeper nesting.
+  final String? nestedCopyWithOuterArgumentName;
 }
 
 class DisallowedAstViolation {
@@ -474,6 +483,37 @@ List<DisallowedPatternRule> parseDisallowedAstRulesFromYaml(Object? yamlRoot) {
           packageName: null,
           allowedPackageImports: const {},
           linearCollectionPathPrefix: prefix,
+        ),
+      );
+    } else if (kind == 'nested_world_state_copywith') {
+      final prefix =
+          match['relative_path_prefix']?.toString().replaceAll('\\', '/');
+      if (prefix == null || prefix.isEmpty) {
+        continue;
+      }
+      final outerArgumentName = match['outer_argument_name']?.toString();
+      out.add(
+        DisallowedPatternRule(
+          id: id,
+          message: message,
+          kind: DisallowedAstMatchKind.nestedWorldStateCopyWith,
+          cascadedMethodNames: const {},
+          commentSubstring: null,
+          rawNamedTypeNames: const {},
+          functionName: null,
+          maxBodyLineSpan: null,
+          requireWidgetClassExtends: false,
+          argumentIndex: null,
+          invocationMethodNames: const {},
+          allowedRelativePaths: const {},
+          scopedRelativePathPrefixes: const {},
+          packageName: null,
+          allowedPackageImports: const {},
+          linearCollectionPathPrefix: prefix,
+          nestedCopyWithOuterArgumentName:
+              outerArgumentName != null && outerArgumentName.isNotEmpty
+                  ? outerArgumentName
+                  : 'worldState',
         ),
       );
     } else if (kind == 'scoped_package_import_contract') {
