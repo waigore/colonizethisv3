@@ -263,9 +263,8 @@ void _removeBlockadedPortTilesExceptCapital({
   required String capitalProvinceId,
 }) {
   for (final key in connected.toList()) {
-    final coords = parseTileKeyCoordinates(key);
-    if (coords == null) continue;
-    final fullProvinceId = '${coords.regionId}|${coords.provinceLocalId}';
+    final fullProvinceId = _fullProvinceIdFromTileKey(key);
+    if (fullProvinceId == null) continue;
     if (!blockadedPortProvinces.contains(fullProvinceId)) continue;
     if (fullProvinceId == capitalProvinceId) continue;
     connected.remove(key);
@@ -316,14 +315,12 @@ ConnectivityResult _connectedTilesForPlayer({
   );
 
   // Port connection rule: (1) capital on seaboard → ports reachable via sea-path (BFS S–S); (2) else only ports reachable by road/rail from capital. SPEC/game/capital-and-connectivity § Port connection to capital, Sea paths.
-  final capitalRegionPortKeys = <String>{};
-  for (final k in connected) {
-    final info = portInfo[k];
-    if (info == null) continue;
-    final coords = parseTileKeyCoordinates(k);
-    if (coords == null) continue;
-    if (coords.regionId == capitalRegionId) capitalRegionPortKeys.add(k);
-  }
+  final capitalRegionPortKeys = <String>{
+    for (final k in connected)
+      if (portInfo[k] != null &&
+          parseTileKeyCoordinates(k)?.regionId == capitalRegionId)
+        k,
+  };
 
   final seaConnectedPortKeys = _seaConnectedPortKeysForCapital(
     capital: capital,
