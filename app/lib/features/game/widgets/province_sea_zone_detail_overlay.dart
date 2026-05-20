@@ -21,6 +21,8 @@ import 'package:colonizethis_app/widgets/ct_tab_strip.dart';
 import 'package:colonizethis_app/widgets/resource_icon.dart';
 import 'package:flutter/material.dart';
 
+import 'package:colonizethis_app/core/utils/prefixed_id.dart';
+
 import '../../../config/constants.dart';
 import 'province_panel_labels.dart';
 import 'province_panel_pending_orders.dart';
@@ -85,10 +87,9 @@ class ProvinceSeaZoneDetailOverlay extends StatelessWidget {
   final bool omniscientDetail;
 
   bool _isSeaZone(String id) {
-    final parts = id.split('|');
-    if (parts.length < 2) return false;
-    if (parts[0] != region.regionId) return false;
-    final localId = parts.skip(1).join('|');
+    final regionPart = prefixedIdRegionSegment(id);
+    if (regionPart == null || regionPart != region.regionId) return false;
+    final localId = prefixedIdLocalSegment(id);
     for (final cell in region.cells) {
       if (cell.regionCellId == localId) return cell.isSea;
     }
@@ -285,9 +286,8 @@ _OverlayContent _provinceContent({
   VoidCallback? onBuildImprovementTap,
   bool omniscientDetail = false,
 }) {
-  final parts = provinceId.split('|');
-  final regionId = parts.isNotEmpty ? parts[0] : region.regionId;
-  final localProvinceId = parts.length >= 2 ? parts[1] : provinceId;
+  final regionId = prefixedIdRegionSegment(provinceId) ?? region.regionId;
+  final localProvinceId = prefixedIdLocalSegment(provinceId);
   final isFullyUnrevealed = !omniscientDetail &&
       region.regionId == regionId &&
       !region.cells.any(
@@ -408,8 +408,7 @@ _OverlayContent _provinceContent({
   final byResImprovable = <String, List<({String tileKey, String terrain})>>{};
   for (final tk in tileKeys) {
     final res = resourceByTile[tk];
-    final parts = tk.split('|');
-    if (parts.length < 4) continue;
+    if (tryParseTileKey(tk) == null) continue;
     if (!omniscientDetail && !prospected.contains(tk)) continue;
     final imp = tileState.improvementLevel(tk);
     final visLevel = omniscientDetail
@@ -574,9 +573,8 @@ _OverlayContent _seaZoneContent({
   required String humanPlayerId,
   required Orders draftOrders,
 }) {
-  final parts = seaZoneId.split('|');
-  final regionId = parts.isNotEmpty ? parts[0] : 'oldWorld';
-  final localSeaZoneId = parts.length >= 2 ? parts[1] : seaZoneId;
+  final regionId = prefixedIdRegionSegment(seaZoneId) ?? 'oldWorld';
+  final localSeaZoneId = prefixedIdLocalSegment(seaZoneId);
   final fleets = game.worldState.fleets
       .where((f) => f.regionId == regionId && f.seaZoneId == localSeaZoneId)
       .toList();

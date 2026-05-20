@@ -1,3 +1,4 @@
+import 'package:colonizethis_app/core/utils/prefixed_id.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -21,9 +22,7 @@ class MapProvincePanelUiState {
 /// Province / sea-zone id (`regionId|localId`) derived from a full tile key.
 String? displayProvinceOrSeaIdFromTileKey(String? tileKey) {
   if (tileKey == null) return null;
-  final parts = tileKey.split('|');
-  if (parts.length < 4) return null;
-  return '${parts[0]}|${parts[1]}';
+  return tryParseTileKey(tileKey)?.prefixedProvinceId;
 }
 
 class MapProvincePanelNotifier extends Notifier<MapProvincePanelUiState> {
