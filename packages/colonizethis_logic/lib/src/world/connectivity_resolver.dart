@@ -10,6 +10,7 @@ import '../diplomacy/diplomacy_relation_lookup.dart';
 import 'connectivity_blockade_target.dart';
 import 'port_seaboard_registry_key.dart';
 import 'province_lookup.dart';
+import 'province_traversal.dart';
 import 'tile_key_coordinates.dart';
 import 'topology_helpers.dart';
 
@@ -174,9 +175,10 @@ Map<String, ConnectivityResult> resolveConnectivity({
 _buildPerPlayerProvinceCaches(Game game) {
   final ownedByPlayer = <String, Set<String>>{};
   final townByTileKeyByPlayer = <String, Map<String, Province>>{};
-  for (final province in allProvinces(game.worldState)) {
-    final ownerId = province.ownerId;
+  for (final entry in traverseProvinces(game.worldState)) {
+    final ownerId = entry.ownerId;
     if (ownerId == null) continue;
+    final province = entry.province;
     ownedByPlayer.putIfAbsent(ownerId, () => <String>{}).add(province.id);
     final tk = province.townTileKey;
     if (tk != null) {
