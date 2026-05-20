@@ -1,7 +1,7 @@
 import 'package:colonizethis_logic/src/constants.dart';
 import 'package:colonizethis_logic/src/world/province_traversal.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
-import 'package:test/test.dart';
+import 'package:colonizethis_test/test.dart';
 
 void main() {
   group('traverseProvinces', () {
