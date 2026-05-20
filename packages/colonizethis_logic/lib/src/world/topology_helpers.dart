@@ -133,6 +133,23 @@ Set<String> seaZonesAdjacentToProvince(
   return out;
 }
 
+/// All node ids directly adjacent to [nodeId] in [topology] regardless of node
+/// type. Order matches a single forward pass over `topology.edges`, mirroring
+/// the inline first-match / single-pass scans previously duplicated across
+/// world resolvers (naval retreat lookup, single-shot adjacency probes).
+/// Refs #2560.
+List<String> nodesAdjacentTo(MapTopology topology, String nodeId) {
+  final out = <String>[];
+  for (final e in topology.edges) {
+    if (e.id1 == nodeId) {
+      out.add(e.id2);
+    } else if (e.id2 == nodeId) {
+      out.add(e.id1);
+    }
+  }
+  return out;
+}
+
 /// Region-scoped topology for [regionId]. Returns [topologyByRegion]`[regionId]`
 /// when provided and non-null; otherwise computes a subgraph of [base] limited
 /// to nodes (and their connecting edges) tagged with that region. The subgraph
