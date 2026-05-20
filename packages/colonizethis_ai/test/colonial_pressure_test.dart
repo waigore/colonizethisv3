@@ -211,6 +211,217 @@ void main() {
         ['gp5'],
       );
     });
+
+    // SPEC/ai/ai-architecture.md § Observer goal phases (Full AI), EXPAND:
+    // "While uninvaded OW minors remain, also peace below-quota GP peers within
+    // three provinces". Boundary tests pin the 3-province gap rule (Refs #2509).
+    test(
+      'peaces partner at 3-province gap when uninvaded minor remains',
+      () {
+        final game = Game(
+          id: 'g-peer-gap-three-with-minors',
+          worldState: WorldState(
+            turnState: const TurnState(
+              phase: TurnPhase.orders,
+              turnNumber: 70,
+            ),
+            oldWorld: RegionData(
+              provinces: [
+                for (var i = 1; i <= 6; i++)
+                  Province(
+                    id: 'oldWorld|gp6_$i',
+                    regionId: 'oldWorld',
+                    ownerId: 'gp6',
+                  ),
+                for (var i = 1; i <= 9; i++)
+                  Province(
+                    id: 'oldWorld|gp5_$i',
+                    regionId: 'oldWorld',
+                    ownerId: 'gp5',
+                  ),
+                const Province(
+                  id: 'oldWorld|minor1',
+                  regionId: 'oldWorld',
+                  ownerId: 'minor1',
+                ),
+              ],
+            ),
+            newWorld: const RegionData(),
+          ),
+          players: const [
+            Player(id: 'gp5', displayName: 'P5', isHuman: false),
+            Player(id: 'gp6', displayName: 'P6', isHuman: false),
+          ],
+          minorNations: const [MinorNation(id: 'minor1', displayName: 'M1')],
+          diplomacyRelations: [
+            const DiplomacyRelation(
+              factionId1: 'gp5',
+              factionId2: 'gp6',
+              state: RelationState.atWar,
+              score: 30,
+            ),
+          ],
+        );
+        const snapshot = AIWorldSnapshot(
+          playerId: 'gp6',
+          threats: ThreatSummary(atWarWith: ['gp5']),
+          opportunities: OpportunitySummary(),
+          conquest: ConquestSummary(
+            oldWorldProvincesOwned: 6,
+            invadableProvinceIdsSorted: ['oldWorld|minor1'],
+          ),
+          colonial: ColonialSummary(),
+          economy: EconomySummary(),
+          relations: {},
+        );
+        expect(
+          belowQuotaPeerGpPeaceTargets(game: game, snapshot: snapshot),
+          ['gp5'],
+          reason:
+              'minor pivot remains and gap=3 is within kMaxPeerOwGapWithMinors',
+        );
+      },
+    );
+
+    test(
+      'skips partner at 4-province gap even when uninvaded minor remains',
+      () {
+        final game = Game(
+          id: 'g-peer-gap-four-with-minors',
+          worldState: WorldState(
+            turnState: const TurnState(
+              phase: TurnPhase.orders,
+              turnNumber: 70,
+            ),
+            oldWorld: RegionData(
+              provinces: [
+                for (var i = 1; i <= 5; i++)
+                  Province(
+                    id: 'oldWorld|gp6_$i',
+                    regionId: 'oldWorld',
+                    ownerId: 'gp6',
+                  ),
+                for (var i = 1; i <= 9; i++)
+                  Province(
+                    id: 'oldWorld|gp5_$i',
+                    regionId: 'oldWorld',
+                    ownerId: 'gp5',
+                  ),
+                const Province(
+                  id: 'oldWorld|minor1',
+                  regionId: 'oldWorld',
+                  ownerId: 'minor1',
+                ),
+              ],
+            ),
+            newWorld: const RegionData(),
+          ),
+          players: const [
+            Player(id: 'gp5', displayName: 'P5', isHuman: false),
+            Player(id: 'gp6', displayName: 'P6', isHuman: false),
+          ],
+          minorNations: const [MinorNation(id: 'minor1', displayName: 'M1')],
+          diplomacyRelations: [
+            const DiplomacyRelation(
+              factionId1: 'gp5',
+              factionId2: 'gp6',
+              state: RelationState.atWar,
+              score: 30,
+            ),
+          ],
+        );
+        const snapshot = AIWorldSnapshot(
+          playerId: 'gp6',
+          threats: ThreatSummary(atWarWith: ['gp5']),
+          opportunities: OpportunitySummary(),
+          conquest: ConquestSummary(
+            oldWorldProvincesOwned: 5,
+            invadableProvinceIdsSorted: ['oldWorld|minor1'],
+          ),
+          colonial: ColonialSummary(),
+          economy: EconomySummary(),
+          relations: {},
+        );
+        expect(
+          belowQuotaPeerGpPeaceTargets(game: game, snapshot: snapshot),
+          isEmpty,
+          reason:
+              'gap=4 exceeds kMaxPeerOwGapWithMinors; partner stays at war '
+              'so the weaker peer cannot dump GP wars at arbitrary OW gaps',
+        );
+      },
+    );
+
+    test(
+      'skips stronger self at 3-province gap even when minor pivot remains',
+      () {
+        // Symmetry guard for the !mutualPlateau && ownOw > partnerOw branch:
+        // a stronger self is not peaced into a one-sided distraction exit.
+        final game = Game(
+          id: 'g-peer-gap-three-stronger-self',
+          worldState: WorldState(
+            turnState: const TurnState(
+              phase: TurnPhase.orders,
+              turnNumber: 70,
+            ),
+            oldWorld: RegionData(
+              provinces: [
+                for (var i = 1; i <= 9; i++)
+                  Province(
+                    id: 'oldWorld|gp6_$i',
+                    regionId: 'oldWorld',
+                    ownerId: 'gp6',
+                  ),
+                for (var i = 1; i <= 6; i++)
+                  Province(
+                    id: 'oldWorld|gp5_$i',
+                    regionId: 'oldWorld',
+                    ownerId: 'gp5',
+                  ),
+                const Province(
+                  id: 'oldWorld|minor1',
+                  regionId: 'oldWorld',
+                  ownerId: 'minor1',
+                ),
+              ],
+            ),
+            newWorld: const RegionData(),
+          ),
+          players: const [
+            Player(id: 'gp5', displayName: 'P5', isHuman: false),
+            Player(id: 'gp6', displayName: 'P6', isHuman: false),
+          ],
+          minorNations: const [MinorNation(id: 'minor1', displayName: 'M1')],
+          diplomacyRelations: [
+            const DiplomacyRelation(
+              factionId1: 'gp5',
+              factionId2: 'gp6',
+              state: RelationState.atWar,
+              score: 30,
+            ),
+          ],
+        );
+        const snapshot = AIWorldSnapshot(
+          playerId: 'gp6',
+          threats: ThreatSummary(atWarWith: ['gp5']),
+          opportunities: OpportunitySummary(),
+          conquest: ConquestSummary(
+            oldWorldProvincesOwned: 9,
+            invadableProvinceIdsSorted: ['oldWorld|minor1'],
+          ),
+          colonial: ColonialSummary(),
+          economy: EconomySummary(),
+          relations: {},
+        );
+        expect(
+          belowQuotaPeerGpPeaceTargets(game: game, snapshot: snapshot),
+          isEmpty,
+          reason:
+              'stronger self with !mutualPlateau is not peaced; only the '
+              'weaker peer pivots off the distraction war',
+        );
+      },
+    );
   });
 
   group('defaultStartFutileMinorPeaceTargets', () {
