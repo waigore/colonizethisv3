@@ -10,181 +10,195 @@ import 'join_empire_validator.dart';
 /// Owns the per-stage rules (`tradeConsulate`, `embassy`, `nap`) and delegates
 /// [OvertureStage.joinEmpire] to [JoinEmpireOvertureValidator].
 /// SPEC/program/orders.md § Diplomatic orders / overtures.
-class EstablishOvertureSubValidator implements DiplomaticSubValidator {
-  EstablishOvertureSubValidator({
-    required DiplomaticSubValidatorContext context,
-  }) : game = context.game,
-       playerId = context.playerId,
-       factionMembership = context.factionMembership;
+DiplomaticSubValidator establishOvertureSubValidator(
+  DiplomaticSubValidatorContext ctx,
+) => relationDiplomaticSubValidator(ctx, ({
+  required order,
+  required relation,
+  required treasury,
+}) {
+  final stage = order.overtureStage;
+  if (stage == null || stage == OvertureStage.none) {
+    return rejectDiplomaticSub(
+      'Overture stage is required for establishOverture',
+      treasury,
+    );
+  }
+  final targetId = order.targetFactionId;
+  if (!_isMinorTribeOrGreatPower(ctx, targetId)) {
+    return rejectDiplomaticSub(
+      'Overtures are only valid toward Minor Nations, Tribes, or Great Powers',
+      treasury,
+    );
+  }
+  if (relation?.atWar == true) {
+    return rejectDiplomaticSub(
+      'Cannot establish overture while at war with that faction',
+      treasury,
+    );
+  }
 
-  final Game game;
-  final String playerId;
-  final DiplomacyFactionMembership? factionMembership;
+  final currentStage =
+      getOverture(ctx.game, ctx.playerId, targetId)?.stage ?? OvertureStage.none;
 
-  @override
-  ({OrderValidationResult result, int treasury}) validate({
-    required DiplomaticOrder order,
-    required int treasury,
-  }) {
-    final stage = order.overtureStage;
-    if (stage == null || stage == OvertureStage.none) {
-      return rejectDiplomaticSub(
-        'Overture stage is required for establishOverture',
-        treasury,
-      );
-    }
-    final targetId = order.targetFactionId;
-    if (!isMinorOrTribe(game, targetId, factionMembership: factionMembership) &&
-        !isGreatPower(game, targetId, factionMembership: factionMembership)) {
-      return rejectDiplomaticSub(
-        'Overtures are only valid toward Minor Nations, Tribes, or Great Powers',
-        treasury,
-      );
-    }
-    final rel = getRelation(game, playerId, targetId);
-    final atWar = rel?.atWar ?? false;
-    if (atWar) {
-      return rejectDiplomaticSub(
-        'Cannot establish overture while at war with that faction',
-        treasury,
-      );
-    }
+  return switch (stage) {
+    OvertureStage.tradeConsulate => _validateTradeConsulate(
+      ctx,
+      targetId,
+      currentStage,
+      treasury,
+    ),
+    OvertureStage.embassy => _validateEmbassy(
+      ctx,
+      targetId,
+      currentStage,
+      treasury,
+    ),
+    OvertureStage.nap => _validateNap(ctx, targetId, currentStage, treasury),
+    OvertureStage.joinEmpire => JoinEmpireOvertureValidator(
+      game: ctx.game,
+      playerId: ctx.playerId,
+      factionMembership: ctx.factionMembership,
+    ).validate(
+      targetId: targetId,
+      rel: relation,
+      currentStage: currentStage,
+      treasury: treasury,
+    ),
+    OvertureStage.none => rejectDiplomaticSub(
+      'Overture stage is required for establishOverture',
+      treasury,
+    ),
+  };
+});
 
-    final overture = getOverture(game, playerId, targetId);
-    final currentStage = overture?.stage ?? OvertureStage.none;
+bool _isMinorTribeOrGreatPower(
+  DiplomaticSubValidatorContext ctx,
+  String targetId,
+) =>
+    isMinorOrTribe(
+      ctx.game,
+      targetId,
+      factionMembership: ctx.factionMembership,
+    ) ||
+    isGreatPower(
+      ctx.game,
+      targetId,
+      factionMembership: ctx.factionMembership,
+    );
 
-    return switch (stage) {
-      OvertureStage.tradeConsulate => _validateTradeConsulate(
+({OrderValidationResult result, int treasury}) _validateTradeConsulate(
+  DiplomaticSubValidatorContext ctx,
+  String targetId,
+  OvertureStage currentStage,
+  int treasury,
+) {
+  if (currentStage != OvertureStage.none) {
+    return rejectDiplomaticSub(
+      'Trade Consulate requires no existing overture',
+      treasury,
+    );
+  }
+  if (_minorTribeStageRequiresDiplomaticExpertise(
+        ctx,
         targetId,
-        currentStage,
-        treasury,
-      ),
-      OvertureStage.embassy => _validateEmbassy(
+        OvertureStage.tradeConsulate,
+      ) &&
+      !_playerHasDiplomaticExpertise(ctx)) {
+    return rejectDiplomaticSub(
+      'Diplomatic Expertise tech required for overtures with Minor Nations and Tribes',
+      treasury,
+    );
+  }
+  if (treasury < overtureConsulateCost) {
+    return rejectDiplomaticSub(
+      'Insufficient treasury for Trade Consulate (need $overtureConsulateCost)',
+      treasury,
+    );
+  }
+  return acceptDiplomaticSub(treasury - overtureConsulateCost);
+}
+
+({OrderValidationResult result, int treasury}) _validateEmbassy(
+  DiplomaticSubValidatorContext ctx,
+  String targetId,
+  OvertureStage currentStage,
+  int treasury,
+) {
+  if (currentStage != OvertureStage.tradeConsulate) {
+    return rejectDiplomaticSub(
+      'Embassy requires existing Trade Consulate with that faction',
+      treasury,
+    );
+  }
+  if (_minorTribeStageRequiresDiplomaticExpertise(
+        ctx,
         targetId,
-        currentStage,
-        treasury,
-      ),
-      OvertureStage.nap => _validateNap(targetId, currentStage, treasury),
-      OvertureStage.joinEmpire =>
-        JoinEmpireOvertureValidator(
-          game: game,
-          playerId: playerId,
-          factionMembership: factionMembership,
-        ).validate(
-          targetId: targetId,
-          rel: rel,
-          currentStage: currentStage,
-          treasury: treasury,
-        ),
-      OvertureStage.none => rejectDiplomaticSub(
-        'Overture stage is required for establishOverture',
-        treasury,
-      ),
-    };
+        OvertureStage.embassy,
+      ) &&
+      !_playerHasDiplomaticExpertise(ctx)) {
+    return rejectDiplomaticSub(
+      'Diplomatic Expertise tech required for overtures with Minor Nations and Tribes',
+      treasury,
+    );
   }
-
-  ({OrderValidationResult result, int treasury}) _validateTradeConsulate(
-    String targetId,
-    OvertureStage currentStage,
-    int treasury,
-  ) {
-    if (currentStage != OvertureStage.none) {
-      return rejectDiplomaticSub(
-        'Trade Consulate requires no existing overture',
-        treasury,
-      );
-    }
-    if (_minorTribeOvertureRequiresDiplomaticExpertise(
-          targetId,
-          OvertureStage.tradeConsulate,
-        ) &&
-        !_playerHasDiplomaticExpertise()) {
-      return rejectDiplomaticSub(
-        'Diplomatic Expertise tech required for overtures with Minor Nations and Tribes',
-        treasury,
-      );
-    }
-    if (treasury < overtureConsulateCost) {
-      return rejectDiplomaticSub(
-        'Insufficient treasury for Trade Consulate (need $overtureConsulateCost)',
-        treasury,
-      );
-    }
-    return acceptDiplomaticSub(treasury - overtureConsulateCost);
+  if (treasury < overtureEmbassyCost) {
+    return rejectDiplomaticSub(
+      'Insufficient treasury for Embassy (need $overtureEmbassyCost)',
+      treasury,
+    );
   }
+  return acceptDiplomaticSub(treasury - overtureEmbassyCost);
+}
 
-  ({OrderValidationResult result, int treasury}) _validateEmbassy(
-    String targetId,
-    OvertureStage currentStage,
-    int treasury,
-  ) {
-    if (currentStage != OvertureStage.tradeConsulate) {
-      return rejectDiplomaticSub(
-        'Embassy requires existing Trade Consulate with that faction',
-        treasury,
-      );
-    }
-    if (_minorTribeOvertureRequiresDiplomaticExpertise(
-          targetId,
-          OvertureStage.embassy,
-        ) &&
-        !_playerHasDiplomaticExpertise()) {
-      return rejectDiplomaticSub(
-        'Diplomatic Expertise tech required for overtures with Minor Nations and Tribes',
-        treasury,
-      );
-    }
-    if (treasury < overtureEmbassyCost) {
-      return rejectDiplomaticSub(
-        'Insufficient treasury for Embassy (need $overtureEmbassyCost)',
-        treasury,
-      );
-    }
-    return acceptDiplomaticSub(treasury - overtureEmbassyCost);
+({OrderValidationResult result, int treasury}) _validateNap(
+  DiplomaticSubValidatorContext ctx,
+  String targetId,
+  OvertureStage currentStage,
+  int treasury,
+) {
+  if (currentStage != OvertureStage.embassy) {
+    return rejectDiplomaticSub(
+      'Non-Aggression Pact requires existing Embassy with that faction',
+      treasury,
+    );
   }
-
-  ({OrderValidationResult result, int treasury}) _validateNap(
-    String targetId,
-    OvertureStage currentStage,
-    int treasury,
-  ) {
-    if (currentStage != OvertureStage.embassy) {
-      return rejectDiplomaticSub(
-        'Non-Aggression Pact requires existing Embassy with that faction',
-        treasury,
-      );
-    }
-    if (_minorTribeOvertureRequiresDiplomaticExpertise(
-          targetId,
-          OvertureStage.nap,
-        ) &&
-        !_playerHasDiplomaticExpertise()) {
-      return rejectDiplomaticSub(
-        'Diplomatic Expertise tech required for overtures with Minor Nations and Tribes',
-        treasury,
-      );
-    }
-    return acceptDiplomaticSub(treasury);
+  if (_minorTribeStageRequiresDiplomaticExpertise(
+        ctx,
+        targetId,
+        OvertureStage.nap,
+      ) &&
+      !_playerHasDiplomaticExpertise(ctx)) {
+    return rejectDiplomaticSub(
+      'Diplomatic Expertise tech required for overtures with Minor Nations and Tribes',
+      treasury,
+    );
   }
+  return acceptDiplomaticSub(treasury);
+}
 
-  bool _minorTribeOvertureRequiresDiplomaticExpertise(
-    String targetId,
-    OvertureStage stage,
-  ) {
-    if (!isMinorOrTribe(game, targetId, factionMembership: factionMembership)) {
-      return false;
-    }
-    return stage == OvertureStage.tradeConsulate ||
-        stage == OvertureStage.embassy ||
-        stage == OvertureStage.nap;
-  }
-
-  bool _playerHasDiplomaticExpertise() {
-    for (final p in game.players) {
-      if (p.id == playerId) {
-        return p.techUnlocked?[kTechIdDiplomaticExpertise] == true;
-      }
-    }
+bool _minorTribeStageRequiresDiplomaticExpertise(
+  DiplomaticSubValidatorContext ctx,
+  String targetId,
+  OvertureStage stage,
+) {
+  if (!isMinorOrTribe(
+    ctx.game,
+    targetId,
+    factionMembership: ctx.factionMembership,
+  )) {
     return false;
   }
+  return stage == OvertureStage.tradeConsulate ||
+      stage == OvertureStage.embassy ||
+      stage == OvertureStage.nap;
+}
+
+bool _playerHasDiplomaticExpertise(DiplomaticSubValidatorContext ctx) {
+  for (final p in ctx.game.players) {
+    if (p.id == ctx.playerId) {
+      return p.techUnlocked?[kTechIdDiplomaticExpertise] == true;
+    }
+  }
+  return false;
 }

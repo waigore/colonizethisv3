@@ -1,6 +1,7 @@
-/// Direct unit tests for `EstablishOvertureSubValidator` extracted under
-/// #2391 AC10. Covers each per-stage rule and the treasury-debit/preserve
-/// contract on accept and reject.
+/// Direct unit tests for `establishOvertureSubValidator` factory extracted
+/// under #2391 AC10 and refactored to a `delegatedDiplomaticSubValidator`
+/// factory under #2560. Covers each per-stage rule and the
+/// treasury-debit/preserve contract on accept and reject.
 /// SPEC/program/orders.md § Diplomatic orders / overtures.
 library;
 
@@ -12,10 +13,10 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'diplomatic_sub_validators_test_support.dart';
 
 void main() {
-  group('EstablishOvertureSubValidator', () {
+  group('establishOvertureSubValidator', () {
     test('rejects when stage is missing', () {
-      final v = EstablishOvertureSubValidator(
-        context: diplomaticSubValidatorContext(gpMinorGame(), 'gp1'),
+      final v = establishOvertureSubValidator(
+        diplomaticSubValidatorContext(gpMinorGame(), 'gp1'),
       );
       final r = v.validate(
         order: const DiplomaticOrder(
@@ -29,8 +30,8 @@ void main() {
     });
 
     test('trade consulate debits treasury on accept', () {
-      final v = EstablishOvertureSubValidator(
-        context: diplomaticSubValidatorContext(
+      final v = establishOvertureSubValidator(
+        diplomaticSubValidatorContext(
           gpMinorGame(overtureStage: OvertureStage.none),
           'gp1',
         ),
@@ -48,8 +49,8 @@ void main() {
     });
 
     test('trade consulate rejects without diplomatic_expertise', () {
-      final v = EstablishOvertureSubValidator(
-        context: diplomaticSubValidatorContext(
+      final v = establishOvertureSubValidator(
+        diplomaticSubValidatorContext(
           gpMinorGame(techUnlocked: const {}),
           'gp1',
         ),
@@ -68,8 +69,8 @@ void main() {
     });
 
     test('trade consulate rejects when treasury too low (no debit)', () {
-      final v = EstablishOvertureSubValidator(
-        context: diplomaticSubValidatorContext(gpMinorGame(), 'gp1'),
+      final v = establishOvertureSubValidator(
+        diplomaticSubValidatorContext(gpMinorGame(), 'gp1'),
       );
       final r = v.validate(
         order: const DiplomaticOrder(
@@ -85,8 +86,8 @@ void main() {
     });
 
     test('embassy requires existing trade consulate', () {
-      final v = EstablishOvertureSubValidator(
-        context: diplomaticSubValidatorContext(
+      final v = establishOvertureSubValidator(
+        diplomaticSubValidatorContext(
           gpMinorGame(overtureStage: OvertureStage.none),
           'gp1',
         ),
@@ -104,8 +105,8 @@ void main() {
     });
 
     test('embassy accepts and debits treasury when consulate exists', () {
-      final v = EstablishOvertureSubValidator(
-        context: diplomaticSubValidatorContext(
+      final v = establishOvertureSubValidator(
+        diplomaticSubValidatorContext(
           gpMinorGame(overtureStage: OvertureStage.tradeConsulate),
           'gp1',
         ),
@@ -123,8 +124,8 @@ void main() {
     });
 
     test('nap requires existing embassy and does not debit treasury', () {
-      final v = EstablishOvertureSubValidator(
-        context: diplomaticSubValidatorContext(
+      final v = establishOvertureSubValidator(
+        diplomaticSubValidatorContext(
           gpMinorGame(overtureStage: OvertureStage.embassy),
           'gp1',
         ),
@@ -142,8 +143,8 @@ void main() {
     });
 
     test('joinEmpire rejects when relations below friendly threshold', () {
-      final v = EstablishOvertureSubValidator(
-        context: diplomaticSubValidatorContext(
+      final v = establishOvertureSubValidator(
+        diplomaticSubValidatorContext(
           gpMinorGame(
             overtureStage: OvertureStage.nap,
             relationScore: relationScoreNeutral,
