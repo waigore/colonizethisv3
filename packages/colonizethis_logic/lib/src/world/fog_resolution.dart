@@ -1,7 +1,6 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
-import '../constants.dart';
 import 'game_world_mutations.dart';
 import 'naval.dart';
 import 'naval_resolution.dart'
@@ -14,6 +13,7 @@ import 'player_view.dart';
 import 'province_lookup.dart' hide landTileKeysForProvinceBucket;
 import 'province_traversal.dart';
 import 'tile_key_coordinates.dart';
+import 'topology_helpers.dart';
 import 'unit_lookup.dart';
 
 /// Spy 5-turn fog decay: decrement timers; when they expire, set other-faction
@@ -29,9 +29,7 @@ applySpyRevealTimerDecay(Game game) {
   );
 
   // Province ownership lookup so we can ensure timers only affect other-faction provinces.
-  final ownerByProvinceId = <String, String?>{
-    for (final e in traverseProvinces(world)) e.provinceId: e.ownerId,
-  };
+  final ownerByProvinceId = ownerByProvinceIdMap(world);
 
   final nextSpyTimers = <String, Map<String, int>>{};
   for (final entry in world.spyRevealTurnsByPlayer.entries) {
@@ -62,10 +60,7 @@ Map<String, Map<String, String>> applyFogDecay(
   MapTopology? navalCoastalIntelTopology,
 }) {
   const explorerTypes = {'explorer', 'spy'};
-  final ownerByProvince = <String, String?>{
-    for (final e in traverseProvinces(game.worldState))
-      e.provinceId: e.ownerId,
-  };
+  final ownerByProvince = ownerByProvinceIdMap(game.worldState);
 
   final navalCoastalIntelByPlayer = <String, Set<String>>{};
   if (navalCoastalIntelTopology != null) {
@@ -261,33 +256,6 @@ class ProvinceOwnershipVisibilitySummary {
   final int tilesDowngradedForFormerOwner;
 }
 
-/// Returns topology for [regionId]: [topologyByRegion][regionId] if set, otherwise
-/// subgraph of [topology] with nodes and edges in that region.
-MapTopology _topologyForRegion(
-  MapTopology topology,
-  Map<String, MapTopology>? topologyByRegion,
-  String regionId,
-) {
-  final regionTopology = topologyByRegion?[regionId];
-  if (regionTopology != null) return regionTopology;
-  final regionNodeIds = topology.nodes
-      .where((n) => n.regionId == regionId)
-      .map((n) => n.id)
-      .toSet();
-  if (regionNodeIds.isEmpty) {
-    return const MapTopology(nodes: [], edges: []);
-  }
-  final regionNodes = topology.nodes
-      .where((n) => n.regionId == regionId)
-      .toList();
-  final regionEdges = topology.edges
-      .where(
-        (e) => regionNodeIds.contains(e.id1) && regionNodeIds.contains(e.id2),
-      )
-      .toList();
-  return MapTopology(nodes: regionNodes, edges: regionEdges);
-}
-
 void _fullyVisibleAllTilesInSeaZoneBuckets(
   Map<String, String> vis,
   Map<String, List<String>> regionTileKeys,
@@ -345,10 +313,10 @@ Map<String, Map<String, String>> applyCoastalSeaZoneFullVisibility(
   }
 
   forEachWorldRegion(game.worldState, (regionId, regionData) {
-    final regionTopology = _topologyForRegion(
+    final regionTopology = topologyForRegion(
       topology,
-      topologyByRegion,
       regionId,
+      topologyByRegion: topologyByRegion,
     );
     final regionTileKeys = tileKeysByRegion[regionId];
     if (regionTileKeys == null) return;
@@ -393,10 +361,10 @@ Map<String, String> applyCoastalSeaZoneFullVisibilityForProvinceTargets({
     final regionId = ProvinceId.regionIdFrom(provinceId);
     final regionTileKeys = tileKeysByRegion[regionId];
     if (regionTileKeys == null) continue;
-    final regionTopology = _topologyForRegion(
+    final regionTopology = topologyForRegion(
       topology,
-      topologyByRegion,
       regionId,
+      topologyByRegion: topologyByRegion,
     );
     final adjacentSeaZones = seaZoneIdsAdjacentToProvince(
       regionTopology,
@@ -532,10 +500,10 @@ Map<String, Map<String, String>> applyDistantSeaZoneFogRevert(
   }
 
   forEachWorldRegion(game.worldState, (regionId, _) {
-    final regionTopology = _topologyForRegion(
+    final regionTopology = topologyForRegion(
       topology,
-      topologyByRegion,
       regionId,
+      topologyByRegion: topologyByRegion,
     );
     final seaZoneIds = regionTopology.nodes
         .where((n) => n.type == TopologyNodeType.seaZone)
