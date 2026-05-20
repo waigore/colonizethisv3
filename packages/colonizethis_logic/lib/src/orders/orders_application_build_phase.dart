@@ -5,6 +5,7 @@ import '../constants.dart';
 import '../economy/projected_cost_engine.dart';
 import '../economy/sea_transport.dart';
 import '../world/army_movement.dart';
+import '../world/game_world_mutations.dart';
 import '../world/naval.dart';
 import '../world/ship_instance_allocate.dart';
 import 'build_spawn_province.dart';
@@ -81,8 +82,11 @@ class _NavalBuildSession {
       nextFleets = [...ws.fleets, newFleet];
       _fleetById[homeFleetId] = newFleet;
     }
-    _game = _game.copyWith(
-      worldState: ws.copyWith(fleets: nextFleets, nextShipInstanceSeq: nextSeq),
+    _game = _game.updateWorldState(
+      (ws) => ws.copyWith(
+        fleets: nextFleets,
+        nextShipInstanceSeq: nextSeq,
+      ),
     );
   }
 

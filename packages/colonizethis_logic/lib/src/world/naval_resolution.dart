@@ -10,6 +10,7 @@ import '../dossier/event_dialogue.dart';
 import '../event_bus/game_event_bus.dart';
 import '../game_events.dart';
 import '../turn/turn_seed_constants.dart';
+import 'game_world_mutations.dart';
 import 'naval.dart';
 import 'naval_coastal_visibility.dart';
 import 'province_lookup.dart' hide landTileKeysForProvinceBucket;
@@ -397,8 +398,8 @@ Game applyNavalMovesAndShipReveal(
     }
   }
 
-  return game.copyWith(
-    worldState: game.worldState.copyWith(
+  return game.updateWorldState(
+    (ws) => ws.copyWith(
       fleets: fleets,
       playerVisibilityByTile: visibilityByTile,
     ),

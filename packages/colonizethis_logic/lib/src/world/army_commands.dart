@@ -1,5 +1,7 @@
 import 'package:colonizethis_models/colonizethis_models.dart';
 
+import 'game_world_mutations.dart';
+
 /// Merges [armyIds] into one army at the same province. Home army wins as target.
 /// SPEC/ui/military-units-army-management.md.
 Game applyArmyCombine({
@@ -51,9 +53,7 @@ Game applyArmyCombine({
     target.copyWith(regimentUnitIds: unique),
   ]..sort((a, b) => a.id.compareTo(b.id));
 
-  return game.copyWith(
-    worldState: game.worldState.copyWith(armies: nextArmies),
-  );
+  return game.updateWorldState((ws) => ws.copyWith(armies: nextArmies));
 }
 
 /// Splits [unitIdsToMove] from [sourceArmyId] into a new army in the same province.
@@ -103,10 +103,10 @@ Game applyArmySplit({
       .toList();
   armies = [...armies, newArmy]..sort((a, b) => a.id.compareTo(b.id));
 
-  return game.copyWith(
-    worldState: game.worldState.copyWith(
+  return game.updateWorldState(
+    (ws) => ws.copyWith(
       armies: armies,
-      nextArmySeq: game.worldState.nextArmySeq + 1,
+      nextArmySeq: ws.nextArmySeq + 1,
     ),
   );
 }

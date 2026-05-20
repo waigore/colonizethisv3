@@ -236,15 +236,12 @@ Game applyGreatPowerFall(
         .where((f) => f.ownerId != playerId)
         .toList();
 
-    game = game
-        .copyWith(
-          worldState: updatedWorldState.copyWith(fleets: remainingFleets),
-        )
-        .mapPlayers(
-          (p) => p.id == playerId
-              ? p.copyWith(capitalProvinceId: null, capitalTile: null)
-              : p,
-        );
+    final nextWorldState = updatedWorldState.copyWith(fleets: remainingFleets);
+    game = game.copyWith(worldState: nextWorldState).mapPlayers(
+      (p) => p.id == playerId
+          ? p.copyWith(capitalProvinceId: null, capitalTile: null)
+          : p,
+    );
   }
 
   return game;
