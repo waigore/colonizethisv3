@@ -425,26 +425,74 @@ Future<void> e2eDismissTransientUi(
   }
 }
 
-/// Expands one collapsed [ExpansionTile] per outer iteration (panel rebuild safe).
+/// True when [tileElement] (an [ExpansionTile] element) hosts a
+/// [RotationTransition] whose `turns.value` is past the expanded threshold.
+///
+/// Material's default [ExpansionTile] keeps the [Icons.expand_more] icon
+/// mounted whether collapsed or expanded — only its [RotationTransition]
+/// flips from `0.0` (collapsed) to `0.5` (expanded). The previous
+/// `find.byIcon(Icons.expand_more).isEmpty` heuristic therefore never
+/// detected expansion: the loop tapped the same tile up to 32 times,
+/// burning the full 800 ms post-tap budget per outer iteration (~26 s
+/// per call) without leaving the tile expanded. Reading the rotation
+/// state directly is robust against future Material changes that swap the
+/// icon for an `expand_less` variant — at 0.5 turns either icon counts as
+/// expanded. Refs GitHub #2336 H10 / Bottleneck 6.
+bool e2eExpansionTileIsExpanded(Element tileElement) {
+  var expanded = false;
+  void visit(Element e) {
+    if (expanded) return;
+    final w = e.widget;
+    if (w is RotationTransition && w.turns.value > 0.4) {
+      expanded = true;
+      return;
+    }
+    e.visitChildren(visit);
+  }
+
+  tileElement.visitChildren(visit);
+  return expanded;
+}
+
+/// Expands every currently collapsed [ExpansionTile] in the widget tree.
+///
+/// Reads each tile's [RotationTransition] state via
+/// [e2eExpansionTileIsExpanded] so the helper:
+/// 1. **Skips already-expanded tiles** (the previous icon-based check
+///    misidentified all tiles as collapsed because [Icons.expand_more]
+///    stays mounted under [RotationTransition]).
+/// 2. **Taps exactly once per collapsed tile**, then polls until the
+///    rotation crosses the expanded threshold (or the bounded budget
+///    elapses) — no more 26 s no-op cycles per call.
+/// 3. **Exits early** once no collapsed tile remains, mirroring the
+///    documented "expand each once" contract.
+///
+/// Panel-rebuild safe: each outer iteration re-enumerates tiles after a
+/// successful expand, so a list-view rebuild that shifts tile order does
+/// not cause repeated taps on the same tile. Refs GitHub #2336.
 Future<void> e2eExpandEachExpansionTileOnce(WidgetTester tester) async {
   for (var safety = 0; safety < 32; safety++) {
     final tiles = find.byType(ExpansionTile);
-    final n = tiles.evaluate().length;
-    if (n == 0) {
+    final tileElements = tiles.evaluate().toList();
+    if (tileElements.isEmpty) {
       return;
     }
 
     var expandedOne = false;
-    for (var j = 0; j < n; j++) {
+    for (var j = 0; j < tileElements.length; j++) {
+      final tileElement = tileElements[j];
+      if (e2eExpansionTileIsExpanded(tileElement)) {
+        continue;
+      }
+      final tileAt = tiles.at(j);
       final expandIcon = find.descendant(
-        of: tiles.at(j),
+        of: tileAt,
         matching: find.byIcon(Icons.expand_more),
       );
       if (expandIcon.evaluate().isEmpty) {
         continue;
       }
       final iconHit = expandIcon.first;
-      final tileAt = tiles.at(j);
       await tester.ensureVisible(iconHit);
       await e2ePumpUntilConditionOrIdle(
         tester,
@@ -455,10 +503,11 @@ Future<void> e2eExpandEachExpansionTileOnce(WidgetTester tester) async {
       await tester.tap(iconHit, warnIfMissed: false);
       await e2ePumpUntilConditionOrIdle(
         tester,
-        () => find
-            .descendant(of: tileAt, matching: find.byIcon(Icons.expand_more))
-            .evaluate()
-            .isEmpty,
+        () {
+          final elements = tileAt.evaluate();
+          if (elements.isEmpty) return false;
+          return e2eExpansionTileIsExpanded(elements.single);
+        },
         timeout: const Duration(milliseconds: 800),
         phaseName: 'pump_until_expansion_tile_open',
       );
