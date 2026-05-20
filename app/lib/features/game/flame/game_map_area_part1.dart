@@ -703,35 +703,12 @@ mixin _GameMapAreaStatePart1 on ConsumerState<GameMapArea> {
         );
   }
 
-  String _factionLabel(String id) {
-    for (final p in widget.game.players) {
-      if (p.id == id) return p.displayName;
-    }
-    for (final m in widget.game.minorNations) {
-      if (m.id == id) return m.displayName ?? m.id;
-    }
-    for (final t in widget.game.tribes) {
-      if (t.id == id) return t.displayName ?? t.id;
-    }
-    return id;
-  }
+  String _factionLabel(String id) =>
+      widget.game.factionDisplayNameById(id) ?? id;
 
-  String _provinceLabel(String fullProvinceId) {
-    for (final region in [
-      widget.game.worldState.oldWorld,
-      widget.game.worldState.newWorld,
-    ]) {
-      for (final province in region.provinces) {
-        final prefixed = ct_models.ProvinceId.isPrefixed(province.id)
-            ? province.id
-            : ct_models.ProvinceId.full(province.regionId, province.id);
-        if (prefixed == fullProvinceId) {
-          return province.displayName ?? prefixed;
-        }
-      }
-    }
-    return fullProvinceId;
-  }
+  String _provinceLabel(String fullProvinceId) =>
+      widget.game.worldState.tryGetProvince(fullProvinceId)?.displayName ??
+      fullProvinceId;
 
   String _seaZoneLabel(String seaZoneId) {
     return widget.game.worldState.seaZoneDisplayNameById[seaZoneId] ??
@@ -803,22 +780,8 @@ mixin _GameMapAreaStatePart1 on ConsumerState<GameMapArea> {
     );
   }
 
-  ct_models.Province? _provinceByPrefixedId(String prefixedProvinceId) {
-    for (final region in [
-      widget.game.worldState.oldWorld,
-      widget.game.worldState.newWorld,
-    ]) {
-      for (final province in region.provinces) {
-        final prefixed = ct_models.ProvinceId.isPrefixed(province.id)
-            ? province.id
-            : ct_models.ProvinceId.full(province.regionId, province.id);
-        if (prefixed == prefixedProvinceId) {
-          return province;
-        }
-      }
-    }
-    return null;
-  }
+  ct_models.Province? _provinceByPrefixedId(String prefixedProvinceId) =>
+      widget.game.worldState.tryGetProvince(prefixedProvinceId);
 
   @override
   void didUpdateWidget(covariant GameMapArea oldWidget) {

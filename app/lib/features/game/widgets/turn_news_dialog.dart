@@ -1,5 +1,6 @@
 // Turn-start news modal. SPEC/ui/turn-news-dialog.md.
 
+import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
 
@@ -50,32 +51,10 @@ class TurnNewsDialog extends StatelessWidget {
   }
 }
 
-String _factionLabel(Game g, String id) {
-  for (final p in g.players) {
-    if (p.id == id) return p.displayName;
-  }
-  for (final m in g.minorNations) {
-    if (m.id == id) return m.displayName ?? m.id;
-  }
-  for (final t in g.tribes) {
-    if (t.id == id) return t.displayName ?? t.id;
-  }
-  return id;
-}
+String _factionLabel(Game g, String id) => g.factionDisplayNameById(id) ?? id;
 
-String _provinceLabel(Game g, String fullProvinceId) {
-  for (final r in [g.worldState.oldWorld, g.worldState.newWorld]) {
-    for (final p in r.provinces) {
-      final full = ProvinceId.isPrefixed(p.id)
-          ? p.id
-          : ProvinceId.full(p.regionId, p.id);
-      if (full == fullProvinceId) {
-        return p.displayName ?? fullProvinceId;
-      }
-    }
-  }
-  return fullProvinceId;
-}
+String _provinceLabel(Game g, String fullProvinceId) =>
+    g.worldState.tryGetProvince(fullProvinceId)?.displayName ?? fullProvinceId;
 
 String _seaZoneLabel(Game g, String seaZoneId) {
   return g.worldState.seaZoneDisplayNameById[seaZoneId] ?? seaZoneId;

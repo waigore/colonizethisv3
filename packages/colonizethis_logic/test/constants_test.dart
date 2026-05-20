@@ -181,4 +181,106 @@ void main() {
       expect(dupCap.otherGreatPowerAtCapitalProvince(cap, 'x')?.id, 'a');
     });
   });
+
+  group('GamePlayerLookup.factionDisplayNameById', () {
+    // Mixed-faction game with player, minor nation, and tribe rows so the
+    // extension's combined index (Refs #2575 Phase 3) can be exercised in one
+    // place without relying on app-side scans.
+    final mixedGame = Game(
+      id: 'g-factions',
+      worldState: WorldState(
+        turnState: TurnState(phase: TurnPhase.orders, turnNumber: 1),
+        oldWorld: const RegionData(),
+        newWorld: const RegionData(),
+      ),
+      players: const [
+        Player(id: 'gp1', displayName: 'France', isHuman: true),
+        Player(id: 'gp2', displayName: 'England', isHuman: false),
+      ],
+      minorNations: const [
+        MinorNation(id: 'mn1', displayName: 'Florence'),
+        MinorNation(id: 'mn2'),
+      ],
+      tribes: const [
+        Tribe(id: 'tribe1', displayName: 'Iroquois'),
+        Tribe(id: 'tribe2'),
+      ],
+    );
+
+    test('returns player display name for player id', () {
+      expect(mixedGame.factionDisplayNameById('gp1'), 'France');
+      expect(mixedGame.factionDisplayNameById('gp2'), 'England');
+    });
+
+    test('returns minor nation display name when set', () {
+      expect(mixedGame.factionDisplayNameById('mn1'), 'Florence');
+    });
+
+    test('falls back to minor nation id when display name is null', () {
+      expect(mixedGame.factionDisplayNameById('mn2'), 'mn2');
+    });
+
+    test('returns tribe display name when set', () {
+      expect(mixedGame.factionDisplayNameById('tribe1'), 'Iroquois');
+    });
+
+    test('falls back to tribe id when display name is null', () {
+      expect(mixedGame.factionDisplayNameById('tribe2'), 'tribe2');
+    });
+
+    test('returns null for unknown faction id', () {
+      expect(mixedGame.factionDisplayNameById('missing'), isNull);
+    });
+
+    test('copyWith new minorNations invalidates cache for new instance', () {
+      final updated = mixedGame.copyWith(
+        minorNations: [
+          ...mixedGame.minorNations,
+          const MinorNation(id: 'mn3', displayName: 'Genoa'),
+        ],
+      );
+      expect(mixedGame.factionDisplayNameById('mn3'), isNull);
+      expect(updated.factionDisplayNameById('mn3'), 'Genoa');
+    });
+
+    test('player id wins on id collision with minor nation or tribe', () {
+      final collisionGame = Game(
+        id: 'g-collision',
+        worldState: WorldState(
+          turnState: TurnState(phase: TurnPhase.orders, turnNumber: 1),
+          oldWorld: const RegionData(),
+          newWorld: const RegionData(),
+        ),
+        players: const [
+          Player(id: 'dup', displayName: 'PlayerWins', isHuman: true),
+        ],
+        minorNations: const [MinorNation(id: 'dup', displayName: 'MinorLoses')],
+        tribes: const [Tribe(id: 'dup', displayName: 'TribeLoses')],
+      );
+      expect(collisionGame.factionDisplayNameById('dup'), 'PlayerWins');
+    });
+
+    test('empty faction lists return null for any id', () {
+      final emptyGame = Game(
+        id: 'g-empty',
+        worldState: WorldState(
+          turnState: TurnState(phase: TurnPhase.orders, turnNumber: 1),
+          oldWorld: const RegionData(),
+          newWorld: const RegionData(),
+        ),
+        players: const [],
+      );
+      expect(emptyGame.factionDisplayNameById('anything'), isNull);
+    });
+
+    test('repeated lookups reuse cached map (same Game instance)', () {
+      // Two consecutive lookups should both succeed; the second uses the
+      // Expando-cached map seeded by the first. This exercises the
+      // putIfAbsent path without observing internal state directly.
+      expect(mixedGame.factionDisplayNameById('gp1'), 'France');
+      expect(mixedGame.factionDisplayNameById('mn1'), 'Florence');
+      expect(mixedGame.factionDisplayNameById('tribe1'), 'Iroquois');
+      expect(mixedGame.factionDisplayNameById('missing'), isNull);
+    });
+  });
 }
