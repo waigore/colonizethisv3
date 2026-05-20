@@ -1,7 +1,9 @@
+import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:colonizethis_app/core/utils/prefixed_id.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
+  suppressLogsForTests();
   group('prefixedIdLocalSegment', () {
     test('returns suffix after first pipe', () {
       expect(prefixedIdLocalSegment('oldWorld|p1'), 'p1');
