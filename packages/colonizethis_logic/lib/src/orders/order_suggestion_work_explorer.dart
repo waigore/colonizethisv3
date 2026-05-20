@@ -273,6 +273,10 @@ void _addProspectSuggestionIfEligible({
   required WorkSuggestionProbeBudget workProbeBudget,
   Map<String, TileMapResult>? tileMapByRegion,
 }) {
+  // Early bail mirrors [WorkSuggestionPipeline]'s duplicate-pending check so we
+  // skip the per-unit `unitsByIdFromWorld` / province snapshot setup below
+  // when this explorer already has a pending `prospect` order this turn.
+  // The pipeline would log the same `duplicate_pending` line if reached.
   final existingProspect = existingTargetsByUnit[unit.id];
   if (existingProspect != null &&
       existingProspect.contains(kWorkTargetProspect)) {
@@ -302,83 +306,68 @@ void _addProspectSuggestionIfEligible({
     ..sort((a, b) => a.id.compareTo(b.id));
 
   var lastReason = 'no_valid_tile';
-  final prospectRows = <WorkOrder>[];
-  var provinceProbes = 0;
-  for (final prov in provinces) {
-    provinceProbes++;
-    if (provinceProbes > kMaxExploreProvinceProbesPerUnit) {
-      break;
-    }
-    final regionIdP = prov.regionId;
-    final provinceIdFull = prov.id;
-    if (!provinceHasAtLeastVisibility(
-      view,
-      regionIdP,
-      provinceIdFull,
-      VisibilityLevel.fogged,
-    )) {
-      lastReason = 'visibility';
-      continue;
-    }
-    final tilesInP =
-        tileKeysByRegion[regionIdP]?[provinceIdFull] ?? const <String>[];
-    if (tilesInP.isEmpty) {
-      lastReason = 'no_valid_tile';
-      continue;
-    }
-    final scan = _allAcceptedProspectTilesInProvince(
-      view: view,
-      game: game,
-      topology: topology,
-      currentOrders: currentOrders,
-      playerId: playerId,
-      unit: unit,
-      tilesInProvince: tilesInP,
-      prospected: prospected,
-      unitsById: unitsById,
-      diplomaticOrders: diplomatic,
-      candidateValidator: candidateValidator,
-      workProbeBudget: workProbeBudget,
-      tileMapByRegion: tileMapByRegion,
-    );
-    lastReason = scan.lastReason;
-    for (final tk in scan.tiles) {
-      prospectRows.add(
-        WorkOrder(
-          unitId: unit.id,
-          target: kWorkTargetProspect,
-          targetTileKey: tk,
-        ),
-      );
-    }
-  }
-  if (prospectRows.isEmpty) {
-    logWorkOrderSuggestion(
-      unitId: unit.id,
-      unitType: unit.type,
-      unitRegionId: regionId,
-      atProvinceId: provinceId,
-      workTarget: kWorkTargetProspect,
-      outcome: 'excluded',
-      reason: lastReason,
-    );
-    return;
-  }
-
-  existingTargetsByUnit
-      .putIfAbsent(unit.id, () => <String>{})
-      .add(kWorkTargetProspect);
-  for (final candidate in prospectRows) {
-    suggestions.add(candidate);
-  }
-  logWorkOrderSuggestion(
-    unitId: unit.id,
+  WorkSuggestionPipeline.run(
+    unit: unit,
     unitType: unit.type,
     unitRegionId: regionId,
     atProvinceId: provinceId,
     workTarget: kWorkTargetProspect,
-    outcome: 'included',
-    tile: prospectRows.first.targetTileKey,
-    includedRowCount: prospectRows.length,
+    existingTargetsByUnit: existingTargetsByUnit,
+    suggestions: suggestions,
+    candidatesProvider: () sync* {
+      var provinceProbes = 0;
+      for (final prov in provinces) {
+        provinceProbes++;
+        if (provinceProbes > kMaxExploreProvinceProbesPerUnit) {
+          break;
+        }
+        final regionIdP = prov.regionId;
+        final provinceIdFull = prov.id;
+        if (!provinceHasAtLeastVisibility(
+          view,
+          regionIdP,
+          provinceIdFull,
+          VisibilityLevel.fogged,
+        )) {
+          lastReason = 'visibility';
+          continue;
+        }
+        final tilesInP =
+            tileKeysByRegion[regionIdP]?[provinceIdFull] ?? const <String>[];
+        if (tilesInP.isEmpty) {
+          lastReason = 'no_valid_tile';
+          continue;
+        }
+        final scan = _allAcceptedProspectTilesInProvince(
+          view: view,
+          game: game,
+          topology: topology,
+          currentOrders: currentOrders,
+          playerId: playerId,
+          unit: unit,
+          tilesInProvince: tilesInP,
+          prospected: prospected,
+          unitsById: unitsById,
+          diplomaticOrders: diplomatic,
+          candidateValidator: candidateValidator,
+          workProbeBudget: workProbeBudget,
+          tileMapByRegion: tileMapByRegion,
+        );
+        lastReason = scan.lastReason;
+        for (final tk in scan.tiles) {
+          yield WorkOrder(
+            unitId: unit.id,
+            target: kWorkTargetProspect,
+            targetTileKey: tk,
+          );
+        }
+      }
+    },
+    candidateAcceptor: (_) => true,
+    noCandidateReason: 'no_valid_tile',
+    resolveNoCandidateReason: () => lastReason,
+    includeAllAccepted: true,
+    maxProbeAttempts:
+        kMaxExploreProvinceProbesPerUnit * kMaxWorkProbeAttemptsPerUnitPerTarget,
   );
 }

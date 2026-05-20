@@ -6,8 +6,10 @@ import 'package:path/path.dart' as p;
 
 const _maxClassBodyLines = 30;
 
-/// Classes allowed to exceed [_maxClassBodyLines] (multi-stage overture logic).
-const _allowedLargeClasses = {'EstablishOvertureSubValidator'};
+/// Classes allowed to exceed [_maxClassBodyLines]. Currently empty: all
+/// type-specific sub-validators use factory functions backed by
+/// `delegatedDiplomaticSubValidator` / `relationDiplomaticSubValidator`.
+const _allowedLargeClasses = <String>{};
 
 int runCheckLogicDiplomaticSubValidatorSize(
   String repoRoot, {

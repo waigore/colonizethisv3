@@ -116,7 +116,7 @@ void main() {
     );
   });
 
-  group('EstablishOvertureSubValidator factionMembership', () {
+  group('establishOvertureSubValidator factionMembership', () {
     test('accepts Trade Consulate toward Minor identically with snapshot', () {
       final game = gpMinorGame(overtureStage: OvertureStage.none);
       final membership = DiplomacyFactionMembership.from(game);
@@ -127,11 +127,11 @@ void main() {
       );
       final initialTreasury = overtureConsulateCost + 5;
 
-      final withoutSnapshot = EstablishOvertureSubValidator(
-        context: diplomaticSubValidatorContext(game, 'gp1'),
+      final withoutSnapshot = establishOvertureSubValidator(
+        diplomaticSubValidatorContext(game, 'gp1'),
       ).validate(order: order, treasury: initialTreasury);
-      final withSnapshot = EstablishOvertureSubValidator(
-        context: diplomaticSubValidatorContext(
+      final withSnapshot = establishOvertureSubValidator(
+        diplomaticSubValidatorContext(
           game,
           'gp1',
           factionMembership: membership,
@@ -163,8 +163,8 @@ void main() {
         );
 
         final r =
-            EstablishOvertureSubValidator(
-              context: diplomaticSubValidatorContext(
+            establishOvertureSubValidator(
+              diplomaticSubValidatorContext(
                 game,
                 'gp1',
                 factionMembership: emptyMembership,
