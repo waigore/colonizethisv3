@@ -1,12 +1,19 @@
-import 'package:colonizethis_app/core/utils/prefixed_id.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart' as ct_models;
 import 'package:colonizethis_map/colonizethis_map.dart';
 
-import 'per_player_work_target_selection_cache.dart';
+import 'game_map_area_civilian_draft_projection.dart';
+import 'game_map_area_fleet_draft_projection.dart';
+import 'game_map_area_province_action_states.dart';
 
 /// Pure-ish helpers for `GameMapArea` state translation.
+///
+/// Splits per `SPEC/program/dart-file-non-comment-line-size.md` and #2575
+/// work item 11. Detailed projection and province-action pipelines live in
+/// dedicated modules; this class keeps the public entry points used by the
+/// `GameMapArea` widget, tests, and the order-suggestions SPEC pointer
+/// (`SPEC/program/order-suggestions.md` § Authoritative pipeline).
 class GameMapAreaStateLogic {
   /// Full turn resolution is a no-op once military [Game.victory] is set or the
   /// campaign calendar cap has been reached ([Game.calendarCampaignHalted]).
@@ -16,17 +23,11 @@ class GameMapAreaStateLogic {
   }
 
   static const ({bool showIcon, bool enabled, bool hasExplorerUnits})
-  kHiddenExplorerInlineActionState = (
-    showIcon: false,
-    enabled: false,
-    hasExplorerUnits: false,
-  );
+  kHiddenExplorerInlineActionState =
+      GameMapAreaProvinceActionStates.kHiddenExplorerInlineActionState;
   static const ({bool showIcon, bool enabled, bool hasBuilderUnits})
-  kHiddenBuilderInlineActionState = (
-    showIcon: false,
-    enabled: false,
-    hasBuilderUnits: false,
-  );
+  kHiddenBuilderInlineActionState =
+      GameMapAreaProvinceActionStates.kHiddenBuilderInlineActionState;
 
   static int regionIndexFromWorldRegionId(String regionId) {
     if (regionId == 'newWorld') return 1;
@@ -201,171 +202,24 @@ class GameMapAreaStateLogic {
   }
 
   /// Projects player-owned civilian markers using current-turn pending orders.
-  /// This keeps map feedback in sync with assign flows before turn resolution.
+  ///
+  /// Thin forwarder to [GameMapAreaCivilianDraftProjection.project] (#2575).
   static RegionMapViewData projectCivilianMarkersForHumanDraft({
     required RegionMapViewData region,
     required ct_models.Game game,
     required ct_models.Orders orders,
     required String humanPlayerId,
-  }) {
-    final pendingByUnitId = <String, String>{};
-    final pending = orders.workOrdersByPlayerId[humanPlayerId] ?? const [];
-    for (final order in pending) {
-      final target = order.targetTileKey;
-      if (target.isEmpty) continue;
-      pendingByUnitId[order.unitId] = target;
-    }
-
-    final civilianUnitIdsToProject = <String>{
-      ...pendingByUnitId.keys,
-      for (final marker in region.civilianTileMarkers)
-        for (final unitId in marker.unitIds) unitId,
-    };
-    if (civilianUnitIdsToProject.isEmpty) {
-      return region;
-    }
-
-    final unitsById = <String, ct_models.Unit>{
-      for (final u in game.worldState.oldWorld.units)
-        if (u.ownerId == humanPlayerId && _isCivilianUnitType(u.type)) u.id: u,
-      for (final u in game.worldState.newWorld.units)
-        if (u.ownerId == humanPlayerId && _isCivilianUnitType(u.type)) u.id: u,
-    };
-    if (unitsById.isEmpty) {
-      return region;
-    }
-    final visibilityByTile =
-        game.worldState.playerVisibilityByTile[humanPlayerId] ??
-        const <String, String>{};
-
-    final projectedByTile = <String, List<_ProjectedCivilianUnit>>{};
-    for (final unitId in civilianUnitIdsToProject) {
-      final unit = unitsById[unitId];
-      if (unit == null) continue;
-      final projectedTile =
-          projectedCivilianTileKey(
-            unit: unit,
-            playerId: humanPlayerId,
-            orders: orders,
-          ) ??
-          unit.tileKey;
-      if (projectedTile == null || projectedTile.isEmpty) continue;
-      final parts = projectedTile.split('|');
-      if (parts.length < 4 || parts[0] != region.regionId) continue;
-      projectedByTile
-          .putIfAbsent(projectedTile, () => <_ProjectedCivilianUnit>[])
-          .add(
-            _ProjectedCivilianUnit(
-              unitId: unitId,
-              unitType: unit.type,
-              pendingTargetTileKey: pendingByUnitId[unitId],
-              assignedTileKey: unit.assignedTileKey,
-              status: unit.status,
-            ),
-          );
-    }
-    if (projectedByTile.isEmpty) {
-      return RegionMapViewData(
-        regionId: region.regionId,
-        width: region.width,
-        height: region.height,
-        cellSize: region.cellSize,
-        cells: region.cells,
-        capitalMarkers: region.capitalMarkers,
-        portMarkers: region.portMarkers,
-        factionColors: region.factionColors,
-        greatPowerFactionIds: region.greatPowerFactionIds,
-        terrainColors: region.terrainColors,
-        unitMarkers: region.unitMarkers,
-        civilianTileMarkers: const [],
-        fleetTileMarkers: region.fleetTileMarkers,
-        warpMarkers: region.warpMarkers,
-        townMarkers: region.townMarkers,
-        provinceUnitPresenceByProvinceId:
-            region.provinceUnitPresenceByProvinceId,
-        provincePoliticalOwnerByPrefixedProvinceId:
-            region.provincePoliticalOwnerByPrefixedProvinceId,
-        seaZoneDisplayNameByPrefixedId: region.seaZoneDisplayNameByPrefixedId,
+  }) =>
+      GameMapAreaCivilianDraftProjection.project(
+        region: region,
+        game: game,
+        orders: orders,
+        humanPlayerId: humanPlayerId,
       );
-    }
 
-    final projectedMarkers = <CivilianTileMarkerView>[];
-    for (final entry in projectedByTile.entries) {
-      final tileKey = entry.key;
-      final units = entry.value.toList()
-        ..sort((a, b) {
-          final p = _civilianIconPriorityForType(
-            a.unitType,
-          ).compareTo(_civilianIconPriorityForType(b.unitType));
-          if (p != 0) return p;
-          return a.unitId.compareTo(b.unitId);
-        });
-      final parts = tileKey.split('|');
-      final x = int.tryParse(parts[2]);
-      final y = int.tryParse(parts[3]);
-      if (x == null || y == null) continue;
-      final representative = units.first;
-      final representativeIsAssigned =
-          representative.pendingTargetTileKey == tileKey ||
-          (representative.assignedTileKey == tileKey &&
-              representative.status == ct_models.UnitStatus.working);
-      final applyCivilianRevealHalo = units.any((u) {
-        final isAssignedToTile =
-            u.pendingTargetTileKey == tileKey ||
-            (u.assignedTileKey == tileKey &&
-                u.status == ct_models.UnitStatus.working);
-        if (!isAssignedToTile) return false;
-        return visibilityByTile[tileKey] == VisibilityLevel.fogged.name;
-      });
-      projectedMarkers.add(
-        CivilianTileMarkerView(
-          tileKey: tileKey,
-          x: x,
-          y: y,
-          localProvinceId: parts[1],
-          unitIds: units.map((u) => u.unitId).toList(),
-          unitTypes: {for (final u in units) u.unitId: u.unitType},
-          representativeUnitType: representative.unitType,
-          stackCount: units.length,
-          representativeIsAssigned: representativeIsAssigned,
-          applyCivilianRevealHalo: applyCivilianRevealHalo,
-        ),
-      );
-    }
-
-    projectedMarkers.sort((a, b) {
-      final yc = a.y.compareTo(b.y);
-      if (yc != 0) return yc;
-      final xc = a.x.compareTo(b.x);
-      if (xc != 0) return xc;
-      return a.tileKey.compareTo(b.tileKey);
-    });
-
-    return RegionMapViewData(
-      regionId: region.regionId,
-      width: region.width,
-      height: region.height,
-      cellSize: region.cellSize,
-      cells: region.cells,
-      capitalMarkers: region.capitalMarkers,
-      portMarkers: region.portMarkers,
-      factionColors: region.factionColors,
-      greatPowerFactionIds: region.greatPowerFactionIds,
-      terrainColors: region.terrainColors,
-      unitMarkers: region.unitMarkers,
-      civilianTileMarkers: projectedMarkers,
-      fleetTileMarkers: region.fleetTileMarkers,
-      warpMarkers: region.warpMarkers,
-      townMarkers: region.townMarkers,
-      provinceUnitPresenceByProvinceId: region.provinceUnitPresenceByProvinceId,
-      provincePoliticalOwnerByPrefixedProvinceId:
-          region.provincePoliticalOwnerByPrefixedProvinceId,
-      seaZoneDisplayNameByPrefixedId: region.seaZoneDisplayNameByPrefixedId,
-    );
-  }
-
-  /// Projects fleet marker tiles using human naval move drafts; grayscale and
-  /// halo flags follow issue #1745 / SPEC/ui/map-widget.md.
+  /// Projects fleet marker tiles using human naval move drafts.
+  ///
+  /// Thin forwarder to [GameMapAreaFleetDraftProjection.project] (#2575).
   static RegionMapViewData projectFleetMarkersForHumanDraft({
     required RegionMapViewData region,
     required ct_models.Game game,
@@ -374,300 +228,16 @@ class GameMapAreaStateLogic {
     required Map<String, TileMapResult> tileMapByRegion,
     required Map<String, MapTopology> topologyByRegion,
     required MapTopology combinedTopology,
-  }) {
-    final moves = orders.navalMoveOrdersByPlayerId[humanPlayerId] ?? const [];
-    final missions =
-        orders.navalMissionOrdersByPlayerId[humanPlayerId] ?? const [];
-    final moveByFleetId = <String, ct_models.NavalMoveOrder>{
-      for (final m in moves) m.fleetId: m,
-    };
-    final missionFleetIds = <String>{for (final m in missions) m.fleetId};
-
-    bool hasDraftNaval(String fleetId) =>
-        moveByFleetId.containsKey(fleetId) || missionFleetIds.contains(fleetId);
-
-    ct_models.Fleet? lookupFleet(String fleetId) => game.fleetById(fleetId);
-
-    String seaZoneLocalId(String seaZoneId) => prefixedIdLocalSegment(seaZoneId);
-
-    String destinationRegionForSeaZone({
-      required String seaZoneId,
-      required String fallbackRegionId,
-    }) {
-      final fromCombined = regionIdForSeaZone(combinedTopology, seaZoneId);
-      if (fromCombined != null) {
-        return fromCombined;
-      }
-      final localSeaZoneId = seaZoneLocalId(seaZoneId);
-      for (final entry in topologyByRegion.entries) {
-        final hasZone = entry.value.nodes.any(
-          (n) => n.type == TopologyNodeType.seaZone && n.id == localSeaZoneId,
-        );
-        if (hasZone) {
-          return entry.key;
-        }
-      }
-      return fallbackRegionId;
-    }
-
-    String? destinationTileForMove({
-      required ct_models.NavalMoveOrder move,
-      required String fleetRegionId,
-    }) {
-      if (move.isDock) {
-        final pid = move.destinationPortProvinceId!;
-        final p = tryGetProvince(game.worldState, pid);
-        if (p == null) {
-          return null;
-        }
-        final destReg = p.regionId;
-        final tmDock = tileMapByRegion[destReg];
-        final tpDock = topologyByRegion[destReg];
-        if (tmDock == null || tpDock == null) {
-          return null;
-        }
-        final seaIdsDock = {
-          for (final n in tpDock.nodes)
-            if (n.type == TopologyNodeType.seaZone) n.id,
-        };
-        return harborDrawableSeaTileKeyForPortProvince(
-          game: game,
-          regionId: destReg,
-          localProvinceId: ct_models.ProvinceId.localIdFrom(p.id),
-          tileMap: tmDock,
-          seaZoneIds: seaIdsDock,
-          contextLabel: 'dock draft destination',
-        );
-      }
-      final seaId = move.destinationSeaZoneId!;
-      final destReg = destinationRegionForSeaZone(
-        seaZoneId: seaId,
-        fallbackRegionId: fleetRegionId,
+  }) =>
+      GameMapAreaFleetDraftProjection.project(
+        region: region,
+        game: game,
+        orders: orders,
+        humanPlayerId: humanPlayerId,
+        tileMapByRegion: tileMapByRegion,
+        topologyByRegion: topologyByRegion,
+        combinedTopology: combinedTopology,
       );
-      final tm = tileMapByRegion[destReg];
-      final tp = topologyByRegion[destReg];
-      if (tm == null || tp == null) {
-        return null;
-      }
-      final seaIds = {
-        for (final n in tp.nodes)
-          if (n.type == TopologyNodeType.seaZone) n.id,
-      };
-      final local = seaZoneLocalId(seaId);
-      return seaZoneCentroidTileKey(
-        tileMap: tm,
-        regionId: destReg,
-        localSeaZoneId: local,
-        seaZoneNodeIds: seaIds,
-      );
-    }
-
-    String normalizedSeaScope({
-      required String seaZoneId,
-      required String fallbackRegionId,
-    }) {
-      final regionId = destinationRegionForSeaZone(
-        seaZoneId: seaZoneId,
-        fallbackRegionId: fallbackRegionId,
-      );
-      final local = seaZoneLocalId(seaZoneId);
-      return 'sea:$regionId|$local';
-    }
-
-    String locationScopeForMove({
-      required ct_models.NavalMoveOrder move,
-      required String fleetRegionId,
-    }) {
-      if (move.isDock) {
-        final pid = move.destinationPortProvinceId!;
-        final p = tryGetProvince(game.worldState, pid);
-        if (p != null) {
-          final localProvinceId = ct_models.ProvinceId.localIdFrom(p.id);
-          return 'port:${p.regionId}|$localProvinceId';
-        }
-        return 'port:$pid';
-      }
-      return normalizedSeaScope(
-        seaZoneId: move.destinationSeaZoneId!,
-        fallbackRegionId: fleetRegionId,
-      );
-    }
-
-    String? currentLocationScopeForFleet(ct_models.Fleet f) {
-      if (f.isAtSea && f.seaZoneId != null) {
-        return normalizedSeaScope(
-          seaZoneId: f.seaZoneId!,
-          fallbackRegionId: f.regionId,
-        );
-      }
-      if (f.inPortAtProvinceId != null) {
-        final p = tryGetProvince(game.worldState, f.inPortAtProvinceId!);
-        if (p != null) {
-          final localProvinceId = ct_models.ProvinceId.localIdFrom(p.id);
-          return 'port:${p.regionId}|$localProvinceId';
-        }
-        return 'port:${f.inPortAtProvinceId!}';
-      }
-      return null;
-    }
-
-    String? currentTileForFleet(ct_models.Fleet f) {
-      final tm = tileMapByRegion[f.regionId];
-      final tp = topologyByRegion[f.regionId];
-      if (tm == null || tp == null) {
-        return null;
-      }
-      final seaIds = {
-        for (final n in tp.nodes)
-          if (n.type == TopologyNodeType.seaZone) n.id,
-      };
-      if (f.isAtSea && f.seaZoneId != null) {
-        final z = f.seaZoneId!;
-        final zoneKey = prefixedIdHasDelimiter(z) ? z : '${f.regionId}|$z';
-        final local = prefixedIdLocalSegment(zoneKey);
-        return seaZoneCentroidTileKey(
-          tileMap: tm,
-          regionId: f.regionId,
-          localSeaZoneId: local,
-          seaZoneNodeIds: seaIds,
-        );
-      }
-      if (f.inPortAtProvinceId != null) {
-        final p = tryGetProvince(game.worldState, f.inPortAtProvinceId!);
-        if (p == null) {
-          return null;
-        }
-        final reg = p.regionId;
-        final tmPort = tileMapByRegion[reg];
-        final tpPort = topologyByRegion[reg];
-        if (tmPort == null || tpPort == null) {
-          return null;
-        }
-        final seaIdsPort = {
-          for (final n in tpPort.nodes)
-            if (n.type == TopologyNodeType.seaZone) n.id,
-        };
-        return harborDrawableSeaTileKeyForPortProvince(
-          game: game,
-          regionId: reg,
-          localProvinceId: ct_models.ProvinceId.localIdFrom(p.id),
-          tileMap: tmPort,
-          seaZoneIds: seaIdsPort,
-          contextLabel: 'in-port fleet current',
-        );
-      }
-      return null;
-    }
-
-    final fleetIdsToProject = <String>{for (final m in moves) m.fleetId};
-    for (final marker in region.fleetTileMarkers) {
-      for (final fleetId in marker.fleetIds) {
-        fleetIdsToProject.add(fleetId);
-      }
-    }
-    if (fleetIdsToProject.isEmpty) {
-      return region;
-    }
-
-    final groups = <String, _FleetTileProj>{};
-    for (final fleetId in fleetIdsToProject) {
-      final fleet = lookupFleet(fleetId);
-      final mv = moveByFleetId[fleetId];
-      if (fleet == null) {
-        continue;
-      }
-      String? tileKey;
-      String? locationScopeKey;
-      if (mv != null) {
-        tileKey = destinationTileForMove(
-          move: mv,
-          fleetRegionId: fleet.regionId,
-        );
-        tileKey ??= currentTileForFleet(fleet);
-        locationScopeKey = locationScopeForMove(
-          move: mv,
-          fleetRegionId: fleet.regionId,
-        );
-      } else {
-        tileKey = currentTileForFleet(fleet);
-        locationScopeKey = currentLocationScopeForFleet(fleet);
-      }
-      if (tileKey == null) {
-        continue;
-      }
-      final parts = tileKey.split('|');
-      if (parts.length < 4 || parts[0] != region.regionId) {
-        continue;
-      }
-
-      final g = groups.putIfAbsent(tileKey, _FleetTileProj.new);
-      g.fleetIds.add(fleetId);
-      g.locationScopeKeys.add(locationScopeKey ?? '');
-      if (mv != null) {
-        g.anyNavalMoveDraft = true;
-      }
-    }
-
-    final out = <FleetTileMarkerView>[];
-    for (final e in groups.entries) {
-      final tk = e.key;
-      final g = e.value;
-      final sortedIds = g.fleetIds.toList()..sort();
-      final parts = tk.split('|');
-      final x = int.tryParse(parts[parts.length - 2]);
-      final y = int.tryParse(parts[parts.length - 1]);
-      if (x == null || y == null) {
-        continue;
-      }
-      final scopeCandidates = g.locationScopeKeys.toList()..sort();
-      final scope = scopeCandidates.isEmpty ? '' : scopeCandidates.first;
-      out.add(
-        FleetTileMarkerView(
-          tileKey: tk,
-          x: x,
-          y: y,
-          locationScopeKey: scope,
-          fleetIds: sortedIds,
-          stackCount: sortedIds.length,
-          renderGrayscale: sortedIds.every(hasDraftNaval),
-          applyFleetRevealHalo: g.anyNavalMoveDraft,
-        ),
-      );
-    }
-    out.sort((a, b) {
-      final yc = a.y.compareTo(b.y);
-      if (yc != 0) {
-        return yc;
-      }
-      final xc = a.x.compareTo(b.x);
-      if (xc != 0) {
-        return xc;
-      }
-      return a.tileKey.compareTo(b.tileKey);
-    });
-
-    return RegionMapViewData(
-      regionId: region.regionId,
-      width: region.width,
-      height: region.height,
-      cellSize: region.cellSize,
-      cells: region.cells,
-      capitalMarkers: region.capitalMarkers,
-      portMarkers: region.portMarkers,
-      factionColors: region.factionColors,
-      greatPowerFactionIds: region.greatPowerFactionIds,
-      terrainColors: region.terrainColors,
-      unitMarkers: region.unitMarkers,
-      civilianTileMarkers: region.civilianTileMarkers,
-      fleetTileMarkers: out,
-      warpMarkers: region.warpMarkers,
-      townMarkers: region.townMarkers,
-      provinceUnitPresenceByProvinceId: region.provinceUnitPresenceByProvinceId,
-      provincePoliticalOwnerByPrefixedProvinceId:
-          region.provincePoliticalOwnerByPrefixedProvinceId,
-      seaZoneDisplayNameByPrefixedId: region.seaZoneDisplayNameByPrefixedId,
-    );
-  }
 
   /// Civilian and fleet draft marker projection for one [RegionMapViewData].
   static RegionMapViewData projectHumanDraftMarkersForRegion({
@@ -679,7 +249,7 @@ class GameMapAreaStateLogic {
     Map<String, MapTopology>? topologyByRegion,
     MapTopology? combinedTopology,
   }) {
-    var projected = projectCivilianMarkersForHumanDraft(
+    var projected = GameMapAreaCivilianDraftProjection.project(
       region: baseRegion,
       game: game,
       orders: orders,
@@ -688,7 +258,7 @@ class GameMapAreaStateLogic {
     if (tileMapByRegion != null &&
         topologyByRegion != null &&
         combinedTopology != null) {
-      projected = projectFleetMarkersForHumanDraft(
+      projected = GameMapAreaFleetDraftProjection.project(
         region: projected,
         game: game,
         orders: orders,
@@ -701,40 +271,9 @@ class GameMapAreaStateLogic {
     return projected;
   }
 
-  static bool _isCivilianUnitType(String unitType) {
-    final role = unitRoleForType(unitType);
-    if (role == null) return false;
-    return role != UnitRole.military && role != UnitRole.naval;
-  }
-
-  static String _normalizeCivilianTypeForPriority(String type) {
-    return type.toLowerCase().replaceAll(RegExp(r'[\s_\-]'), '');
-  }
-
-  static int _civilianIconPriorityForType(String type) {
-    final normalized = _normalizeCivilianTypeForPriority(type);
-    switch (normalized) {
-      case 'builder':
-        return 0;
-      case 'engineer':
-        return 1;
-      case 'railbuilder':
-        return 2;
-      case 'explorer':
-        return 3;
-      case 'merchant':
-        return 4;
-      case 'spy':
-        return 5;
-      default:
-        return 999;
-    }
-  }
-
   /// Returns province-overlay prospect action visibility + enablement.
   ///
-  /// The panel must read stable world/player tile state only so map scrolling
-  /// and rebuild churn do not trigger expensive order-engine validation.
+  /// Thin forwarder to [GameMapAreaProvinceActionStates.prospect] (#2575).
   static ({bool showIcon, bool enabled, bool hasExplorerUnits})
   provinceProspectActionState({
     required ct_models.Game game,
@@ -744,59 +283,16 @@ class GameMapAreaStateLogic {
     required MapTopology? topology,
     required ct_models.Orders currentOrders,
     required Map<String, TileMapResult>? tileMapByRegion,
-  }) {
-    final tileParts = selectedTileKey.split('|');
-    if (tileParts.length < 4) {
-      return (showIcon: false, enabled: false, hasExplorerUnits: false);
-    }
-    final tileVisibility = playerView.visibilityForTile(selectedTileKey);
-    if (tileVisibility == VisibilityLevel.unknown) {
-      return (showIcon: false, enabled: false, hasExplorerUnits: false);
-    }
-    final tileRegionId = tileParts[0];
-    final tileProvinceId = tileParts[1];
-    final prefixedProvinceId = '$tileRegionId|$tileProvinceId';
-    final isProvinceTile =
-        tryGetProvince(game.worldState, prefixedProvinceId) != null;
-    if (!isProvinceTile) {
-      return (showIcon: false, enabled: false, hasExplorerUnits: false);
-    }
-
-    final isMineralEligible = isMineralEligibleTile(
-      game,
-      tileMapByRegion,
-      selectedTileKey,
-    );
-    if (!isMineralEligible) {
-      return (showIcon: false, enabled: false, hasExplorerUnits: false);
-    }
-
-    final playerProspectedTiles =
-        game.worldState.playerProspectedTiles[humanPlayerId] ??
-        const <String>{};
-    if (playerProspectedTiles.contains(selectedTileKey)) {
-      return (showIcon: false, enabled: false, hasExplorerUnits: false);
-    }
-
-    final allUnits = <ct_models.Unit>[
-      ...game.worldState.oldWorld.units,
-      ...game.worldState.newWorld.units,
-    ];
-    final explorerUnits = allUnits
-        .where((unit) => unit.ownerId == humanPlayerId)
-        .where(
-          (unit) =>
-              workOrderTargetsByUnitType[unit.type]?.contains(
-                kWorkTargetProspect,
-              ) ??
-              false,
-        )
-        .toList();
-    if (explorerUnits.isEmpty) {
-      return (showIcon: true, enabled: false, hasExplorerUnits: false);
-    }
-    return (showIcon: true, enabled: true, hasExplorerUnits: true);
-  }
+  }) =>
+      GameMapAreaProvinceActionStates.prospect(
+        game: game,
+        humanPlayerId: humanPlayerId,
+        selectedTileKey: selectedTileKey,
+        playerView: playerView,
+        topology: topology,
+        currentOrders: currentOrders,
+        tileMapByRegion: tileMapByRegion,
+      );
 
   static Set<String> buildExploreEligibleTileKeyCache({
     required ct_models.Game game,
@@ -805,20 +301,15 @@ class GameMapAreaStateLogic {
     required MapTopology topology,
     required Map<String, TileMapResult>? tileMapByRegion,
     required ct_models.Orders currentOrders,
-  }) {
-    final cache = PerPlayerWorkTargetSelectionCache();
-    cache.refresh(
-      WorkTargetSelectionSnapshot(
+  }) =>
+      GameMapAreaProvinceActionStates.buildExploreEligibleTileKeyCache(
         game: game,
-        playerId: humanPlayerId,
+        humanPlayerId: humanPlayerId,
         playerView: playerView,
         topology: topology,
-        currentOrders: currentOrders,
         tileMapByRegion: tileMapByRegion,
-      ),
-    );
-    return cache.get(humanPlayerId, kWorkTargetExplore);
-  }
+        currentOrders: currentOrders,
+      );
 
   static ({bool showIcon, bool enabled, bool hasExplorerUnits})
   provinceExploreActionState({
@@ -828,83 +319,19 @@ class GameMapAreaStateLogic {
     required RegionMapViewData selectedRegion,
     PerPlayerWorkTargetSelectionCache? workTargetSelectionCache,
     Set<String>? cachedExploreEligibleTileKeys,
-  }) {
-    final tileParts = selectedTileKey.split('|');
-    if (tileParts.length < 4 || tileParts[0] != selectedRegion.regionId) {
-      return kHiddenExplorerInlineActionState;
-    }
-    final tileProvinceId = tileParts[1];
-    final prefixedProvinceId = '${selectedRegion.regionId}|$tileProvinceId';
-    final province = tryGetProvince(game.worldState, prefixedProvinceId);
-    if (province == null) {
-      return kHiddenExplorerInlineActionState;
-    }
+  }) =>
+      GameMapAreaProvinceActionStates.explore(
+        game: game,
+        humanPlayerId: humanPlayerId,
+        selectedTileKey: selectedTileKey,
+        selectedRegion: selectedRegion,
+        workTargetSelectionCache: workTargetSelectionCache,
+        cachedExploreEligibleTileKeys: cachedExploreEligibleTileKeys,
+      );
 
-    final x = int.tryParse(tileParts[2]);
-    final y = int.tryParse(tileParts[3]);
-    if (x == null ||
-        y == null ||
-        x < 0 ||
-        y < 0 ||
-        x >= selectedRegion.width ||
-        y >= selectedRegion.height) {
-      return kHiddenExplorerInlineActionState;
-    }
-    final selectedCell = selectedRegion.cellAt(x, y);
-    if (selectedCell.visibility == TileVisibility.unrevealed) {
-      return kHiddenExplorerInlineActionState;
-    }
-
-    final provinceCells = selectedRegion.cells
-        .where((cell) => !cell.isSea && cell.regionCellId == tileProvinceId)
-        .toList();
-    if (provinceCells.isEmpty) {
-      return kHiddenExplorerInlineActionState;
-    }
-    final hasUnrevealed = provinceCells.any(
-      (cell) => cell.visibility == TileVisibility.unrevealed,
-    );
-    final hasRevealed = provinceCells.any(
-      (cell) => cell.visibility != TileVisibility.unrevealed,
-    );
-    if (!hasUnrevealed || !hasRevealed) {
-      return kHiddenExplorerInlineActionState;
-    }
-
-    final eligibleTileKeys =
-        cachedExploreEligibleTileKeys ??
-        workTargetSelectionCache?.get(humanPlayerId, kWorkTargetExplore) ??
-        const <String>{};
-    final hasEligibleExploreTarget = eligibleTileKeys.any((tileKey) {
-      final parts = tileKey.split('|');
-      return parts.length >= 4 &&
-          parts[0] == selectedRegion.regionId &&
-          parts[1] == tileProvinceId;
-    });
-    if (!hasEligibleExploreTarget) {
-      return kHiddenExplorerInlineActionState;
-    }
-
-    final allUnits = <ct_models.Unit>[
-      ...game.worldState.oldWorld.units,
-      ...game.worldState.newWorld.units,
-    ];
-    final hasExplorerUnits = allUnits
-        .where((unit) => unit.ownerId == humanPlayerId)
-        .any(
-          (unit) =>
-              workOrderTargetsByUnitType[unit.type]?.contains(
-                kWorkTargetExplore,
-              ) ??
-              false,
-        );
-    return (
-      showIcon: true,
-      enabled: hasExplorerUnits,
-      hasExplorerUnits: hasExplorerUnits,
-    );
-  }
-
+  /// SPEC anchor: `SPEC/program/order-suggestions.md` § Authoritative pipeline
+  /// references this method by name; the forwarder keeps that reference valid
+  /// after the #2575 module split.
   static ({bool showIcon, bool enabled, bool hasBuilderUnits})
   provinceBuildImprovementActionState({
     required ct_models.Game game,
@@ -915,110 +342,15 @@ class GameMapAreaStateLogic {
     MapTopology? topology,
     ct_models.Orders currentOrders = const ct_models.Orders(),
     Map<String, TileMapResult>? tileMapByRegion,
-  }) {
-    final tileParts = selectedTileKey.split('|');
-    if (tileParts.length < 4) {
-      return kHiddenBuilderInlineActionState;
-    }
-    final tileVisibility = playerView.visibilityForTile(selectedTileKey);
-    if (tileVisibility == VisibilityLevel.unknown) {
-      return kHiddenBuilderInlineActionState;
-    }
-    final tileRegionId = tileParts[0];
-    final tileProvinceId = tileParts[1];
-    final prefixedProvinceId = '$tileRegionId|$tileProvinceId';
-    final isProvinceTile =
-        tryGetProvince(game.worldState, prefixedProvinceId) != null;
-    if (!isProvinceTile) {
-      return kHiddenBuilderInlineActionState;
-    }
-    ct_models.Player? player;
-    for (final p in game.players) {
-      if (p.id == humanPlayerId) {
-        player = p;
-        break;
-      }
-    }
-    if (player == null) {
-      return kHiddenBuilderInlineActionState;
-    }
-
-    final resourceId = game.worldState.resourceByTileKey[selectedTileKey];
-    if (resourceId == null || resourceId.isEmpty) {
-      return kHiddenBuilderInlineActionState;
-    }
-    final currentLevel = game.worldState.tileState.improvementLevel(
-      selectedTileKey,
-    );
-    final techCap = extractionCapForResourceForUnlocked(
-      player.techUnlocked,
-      resourceId,
-    );
-    if (currentLevel >= techCap) {
-      return kHiddenBuilderInlineActionState;
-    }
-
-    final allUnits = <ct_models.Unit>[
-      ...game.worldState.oldWorld.units,
-      ...game.worldState.newWorld.units,
-    ];
-    final builderUnits = allUnits
-        .where((unit) => unit.ownerId == humanPlayerId)
-        .where(
-          (unit) =>
-              workOrderTargetsByUnitType[unit.type]?.contains(
-                kWorkTargetBuildImprovement,
-              ) ??
-              false,
-        )
-        .toList();
-    if (builderUnits.isEmpty) {
-      return (showIcon: true, enabled: false, hasBuilderUnits: false);
-    }
-    final anyAssignable =
-        workTargetSelectionCache?.contains(
-          humanPlayerId,
-          kWorkTargetBuildImprovement,
-          selectedTileKey,
-        ) ??
-        (topology == null
-            ? false
-            : builderUnits.any((builder) {
-                final valid = getValidWorkOrderTileKeysWithVisibility(
-                  game: game,
-                  topology: topology,
-                  view: playerView,
-                  unitId: builder.id,
-                  workTarget: kWorkTargetBuildImprovement,
-                  currentOrders: currentOrders,
-                  tileMapByRegion: tileMapByRegion,
-                );
-                return valid.contains(selectedTileKey);
-              }));
-    return (showIcon: true, enabled: anyAssignable, hasBuilderUnits: true);
-  }
-}
-
-class _FleetTileProj {
-  _FleetTileProj();
-
-  final Set<String> fleetIds = {};
-  final Set<String> locationScopeKeys = {};
-  bool anyNavalMoveDraft = false;
-}
-
-class _ProjectedCivilianUnit {
-  const _ProjectedCivilianUnit({
-    required this.unitId,
-    required this.unitType,
-    required this.pendingTargetTileKey,
-    required this.assignedTileKey,
-    required this.status,
-  });
-
-  final String unitId;
-  final String unitType;
-  final String? pendingTargetTileKey;
-  final String? assignedTileKey;
-  final ct_models.UnitStatus status;
+  }) =>
+      GameMapAreaProvinceActionStates.buildImprovement(
+        game: game,
+        humanPlayerId: humanPlayerId,
+        selectedTileKey: selectedTileKey,
+        playerView: playerView,
+        workTargetSelectionCache: workTargetSelectionCache,
+        topology: topology,
+        currentOrders: currentOrders,
+        tileMapByRegion: tileMapByRegion,
+      );
 }
