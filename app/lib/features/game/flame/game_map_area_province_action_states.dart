@@ -1,3 +1,4 @@
+import 'package:colonizethis_app/core/utils/prefixed_id.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart' as ct_models;
@@ -41,17 +42,15 @@ class GameMapAreaProvinceActionStates {
     required ct_models.Orders currentOrders,
     required Map<String, TileMapResult>? tileMapByRegion,
   }) {
-    final tileParts = selectedTileKey.split('|');
-    if (tileParts.length < 4) {
+    final parsed = tryParseTileKey(selectedTileKey);
+    if (parsed == null) {
       return (showIcon: false, enabled: false, hasExplorerUnits: false);
     }
     final tileVisibility = playerView.visibilityForTile(selectedTileKey);
     if (tileVisibility == VisibilityLevel.unknown) {
       return (showIcon: false, enabled: false, hasExplorerUnits: false);
     }
-    final tileRegionId = tileParts[0];
-    final tileProvinceId = tileParts[1];
-    final prefixedProvinceId = '$tileRegionId|$tileProvinceId';
+    final prefixedProvinceId = parsed.prefixedProvinceId;
     final isProvinceTile =
         tryGetProvince(game.worldState, prefixedProvinceId) != null;
     if (!isProvinceTile) {
@@ -124,22 +123,20 @@ class GameMapAreaProvinceActionStates {
     PerPlayerWorkTargetSelectionCache? workTargetSelectionCache,
     Set<String>? cachedExploreEligibleTileKeys,
   }) {
-    final tileParts = selectedTileKey.split('|');
-    if (tileParts.length < 4 || tileParts[0] != selectedRegion.regionId) {
+    final parsed = tryParseTileKey(selectedTileKey);
+    if (parsed == null || parsed.regionId != selectedRegion.regionId) {
       return kHiddenExplorerInlineActionState;
     }
-    final tileProvinceId = tileParts[1];
-    final prefixedProvinceId = '${selectedRegion.regionId}|$tileProvinceId';
+    final tileProvinceId = parsed.provinceLocalId;
+    final prefixedProvinceId = parsed.prefixedProvinceId;
     final province = tryGetProvince(game.worldState, prefixedProvinceId);
     if (province == null) {
       return kHiddenExplorerInlineActionState;
     }
 
-    final x = int.tryParse(tileParts[2]);
-    final y = int.tryParse(tileParts[3]);
-    if (x == null ||
-        y == null ||
-        x < 0 ||
+    final x = parsed.x;
+    final y = parsed.y;
+    if (x < 0 ||
         y < 0 ||
         x >= selectedRegion.width ||
         y >= selectedRegion.height) {
@@ -171,10 +168,10 @@ class GameMapAreaProvinceActionStates {
         workTargetSelectionCache?.get(humanPlayerId, kWorkTargetExplore) ??
         const <String>{};
     final hasEligibleExploreTarget = eligibleTileKeys.any((tileKey) {
-      final parts = tileKey.split('|');
-      return parts.length >= 4 &&
-          parts[0] == selectedRegion.regionId &&
-          parts[1] == tileProvinceId;
+      final p = tryParseTileKey(tileKey);
+      return p != null &&
+          p.regionId == selectedRegion.regionId &&
+          p.provinceLocalId == tileProvinceId;
     });
     if (!hasEligibleExploreTarget) {
       return kHiddenExplorerInlineActionState;
@@ -211,17 +208,15 @@ class GameMapAreaProvinceActionStates {
     ct_models.Orders currentOrders = const ct_models.Orders(),
     Map<String, TileMapResult>? tileMapByRegion,
   }) {
-    final tileParts = selectedTileKey.split('|');
-    if (tileParts.length < 4) {
+    final parsed = tryParseTileKey(selectedTileKey);
+    if (parsed == null) {
       return kHiddenBuilderInlineActionState;
     }
     final tileVisibility = playerView.visibilityForTile(selectedTileKey);
     if (tileVisibility == VisibilityLevel.unknown) {
       return kHiddenBuilderInlineActionState;
     }
-    final tileRegionId = tileParts[0];
-    final tileProvinceId = tileParts[1];
-    final prefixedProvinceId = '$tileRegionId|$tileProvinceId';
+    final prefixedProvinceId = parsed.prefixedProvinceId;
     final isProvinceTile =
         tryGetProvince(game.worldState, prefixedProvinceId) != null;
     if (!isProvinceTile) {

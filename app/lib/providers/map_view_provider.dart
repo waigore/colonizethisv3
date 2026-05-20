@@ -1,3 +1,4 @@
+import 'package:colonizethis_app/core/utils/prefixed_id.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_map/colonizethis_map.dart';
@@ -124,12 +125,12 @@ final mapViewDataProvider = Provider<InitGameMapViewData?>((ref) {
         for (final p in game.worldState.newWorld.provinces) p.id: p,
       };
       for (final tileKey in connectivityForHuman.connected) {
-        final parts = tileKey.split('|');
-        if (parts.length != 4) {
+        final parsed = tryParseTileKey(tileKey);
+        if (parsed == null) {
           continue;
         }
-        final regionId = parts[0];
-        final localProvinceId = parts[1];
+        final regionId = parsed.regionId;
+        final localProvinceId = parsed.provinceLocalId;
         final ownedByHuman =
             (regionId == 'oldWorld'
                     ? game.worldState.oldWorld.provinces

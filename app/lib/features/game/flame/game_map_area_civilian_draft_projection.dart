@@ -1,3 +1,4 @@
+import 'package:colonizethis_app/core/utils/prefixed_id.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart' as ct_models;
@@ -63,8 +64,8 @@ class GameMapAreaCivilianDraftProjection {
           ) ??
           unit.tileKey;
       if (projectedTile == null || projectedTile.isEmpty) continue;
-      final parts = projectedTile.split('|');
-      if (parts.length < 4 || parts[0] != region.regionId) continue;
+      final parsed = tryParseTileKey(projectedTile);
+      if (parsed == null || parsed.regionId != region.regionId) continue;
       projectedByTile
           .putIfAbsent(projectedTile, () => <_ProjectedCivilianUnit>[])
           .add(
@@ -113,10 +114,10 @@ class GameMapAreaCivilianDraftProjection {
           if (p != 0) return p;
           return a.unitId.compareTo(b.unitId);
         });
-      final parts = tileKey.split('|');
-      final x = int.tryParse(parts[2]);
-      final y = int.tryParse(parts[3]);
-      if (x == null || y == null) continue;
+      final parsed = tryParseTileKey(tileKey);
+      if (parsed == null) continue;
+      final x = parsed.x;
+      final y = parsed.y;
       final representative = units.first;
       final representativeIsAssigned =
           representative.pendingTargetTileKey == tileKey ||
@@ -135,7 +136,7 @@ class GameMapAreaCivilianDraftProjection {
           tileKey: tileKey,
           x: x,
           y: y,
-          localProvinceId: parts[1],
+          localProvinceId: parsed.provinceLocalId,
           unitIds: units.map((u) => u.unitId).toList(),
           unitTypes: {for (final u in units) u.unitId: u.unitType},
           representativeUnitType: representative.unitType,

@@ -244,8 +244,7 @@ class GameMapAreaFleetDraftProjection {
       if (tileKey == null) {
         continue;
       }
-      final parts = tileKey.split('|');
-      if (parts.length < 4 || parts[0] != region.regionId) {
+      if (!isTileKeyInRegion(tileKey, region.regionId)) {
         continue;
       }
 
@@ -262,12 +261,12 @@ class GameMapAreaFleetDraftProjection {
       final tk = e.key;
       final g = e.value;
       final sortedIds = g.fleetIds.toList()..sort();
-      final parts = tk.split('|');
-      final x = int.tryParse(parts[parts.length - 2]);
-      final y = int.tryParse(parts[parts.length - 1]);
-      if (x == null || y == null) {
+      final parsed = tryParseTileKey(tk);
+      if (parsed == null) {
         continue;
       }
+      final x = parsed.x;
+      final y = parsed.y;
       final scopeCandidates = g.locationScopeKeys.toList()..sort();
       final scope = scopeCandidates.isEmpty ? '' : scopeCandidates.first;
       out.add(

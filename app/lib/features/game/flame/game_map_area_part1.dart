@@ -740,12 +740,15 @@ mixin _GameMapAreaStatePart1 on ConsumerState<GameMapArea> {
     final localSeaZoneId = prefixedIdLocalSegment(seaZoneId);
     final fromPorts = <String>{};
     for (final key in widget.game.worldState.portsByProvinceSeaboard.keys) {
-      final parts = key.split('|');
-      if (parts.length < 2) {
+      final firstPipe = key.indexOf('|');
+      if (firstPipe <= 0 || firstPipe + 1 >= key.length) {
         continue;
       }
-      if (parts.last == localSeaZoneId && parts.first.isNotEmpty) {
-        fromPorts.add(parts.first);
+      final lastPipe = key.lastIndexOf('|');
+      final keyRegion = key.substring(0, firstPipe);
+      final keySeaZone = key.substring(lastPipe + 1);
+      if (keySeaZone == localSeaZoneId && keyRegion.isNotEmpty) {
+        fromPorts.add(keyRegion);
       }
     }
     final mapData = ref.read(gameServiceProvider).getMapData(widget.game.id);

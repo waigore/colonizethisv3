@@ -235,9 +235,12 @@ class _CivilianPanelWithMapStoryState
     if (target == kWorkTargetExplore ||
         target == kWorkTargetStealTech ||
         target == kWorkTargetCounterSpy) {
-      final parts = tileKey.split('|');
-      if (parts.length >= 2) {
-        targetTileKey = '${parts[0]}|${parts[1]}|0|0';
+      final region = prefixedIdRegionSegment(tileKey);
+      if (region != null) {
+        final local = prefixedIdLocalSegment(tileKey);
+        final i = local.indexOf('|');
+        final localProvinceId = i < 0 ? local : local.substring(0, i);
+        targetTileKey = '$region|$localProvinceId|0|0';
       }
     }
     final workOrder = WorkOrder(
