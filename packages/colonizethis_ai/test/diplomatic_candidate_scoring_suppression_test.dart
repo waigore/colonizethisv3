@@ -527,6 +527,77 @@ void main() {
       },
     );
 
+    // EXPAND companion to the COLONIAL invadable-bonus case above. Pins
+    // `SPEC/ai/ai-architecture.md` § Observer goal phases (Full AI) EXPAND
+    // rule: "Suppress: NW declareWar/establishOverture..." while
+    // `oldWorldProvincesOwned < kObserverConquestMinOwProvincesPerGp` (Refs
+    // #2509). Same game/snapshot shape, but below-quota OW puts the GP in
+    // EXPAND so the establishOverture suppression branch in
+    // `computeDiplomaticCandidateScores` must collapse the score to 0 instead
+    // of returning the COLONIAL invadable-owner bonus.
+    test(
+      'EXPAND below quota suppresses establishOverture toward tribe owning NW',
+      () {
+        const snap = AIWorldSnapshot(
+          playerId: 'gp1',
+          threats: ThreatSummary(),
+          opportunities: OpportunitySummary(),
+          conquest: ConquestSummary(
+            oldWorldProvincesOwned: kObserverConquestMinOwProvincesPerGp - 2,
+            provincesToVictory: 26,
+          ),
+          colonial: ColonialSummary(
+            invadableNewWorldProvinceIdsSorted: ['newWorld|nw1'],
+          ),
+          economy: EconomySummary(),
+          relations: {},
+        );
+        final game = Game(
+          id: 'g-expand-overture-suppress',
+          worldState: WorldState(
+            turnState: const TurnState(
+              phase: TurnPhase.orders,
+              turnNumber: 1,
+            ),
+            oldWorld: const RegionData(),
+            newWorld: const RegionData(
+              provinces: [
+                Province(
+                  id: 'newWorld|nw1',
+                  regionId: 'newWorld',
+                  ownerId: 'tribe1',
+                ),
+              ],
+            ),
+          ),
+          players: const [
+            Player(id: 'gp1', displayName: 'A', isHuman: false),
+          ],
+          tribes: const [
+            Tribe(id: 'tribe1', displayName: 'T1'),
+          ],
+        );
+        const config = AIConfig(
+          leaderId: 'henry',
+          personalityId: 'henry',
+          hiddenAgendaId: 'merchant',
+        );
+        final score = computeDiplomaticCandidateScores(
+          candidates: const [
+            DiplomaticOrder(
+              type: DiplomaticOrderType.establishOverture,
+              targetFactionId: 'tribe1',
+            ),
+          ],
+          nationId: 'gp1',
+          game: game,
+          snapshot: snap,
+          config: config,
+        ).single;
+        expect(score, 0);
+      },
+    );
+
     test(
       'stalled OW suppresses tribe declareWar when invadable OW is GP-owned',
       () {
