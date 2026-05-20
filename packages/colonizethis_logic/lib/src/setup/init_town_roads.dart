@@ -7,6 +7,7 @@ import 'package:colonizethis_logic/src/logging.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../constants.dart';
+import '../world/game_world_mutations.dart';
 import '../world/tile_key_coordinates.dart';
 
 const int _initTownRoadLevel = 1;
@@ -129,7 +130,7 @@ Game applyInitTownRoadsToCapitals({
   logicLog.i(
     'init town roads raised $_initTownRoadLevel on ${toRaise.length} tile(s)',
   );
-  return game.copyWith(worldState: ws.copyWith(tileState: tileState));
+  return game.updateWorldState((ws) => ws.copyWith(tileState: tileState));
 }
 
 Map<String, String> _coordToTileKey(WorldState ws, String regionId) {

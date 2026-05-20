@@ -144,15 +144,15 @@ Game applyBuildAndWorkOrders(
     ),
   );
 
-  final withWorld = state.game.copyWith(worldState: nextWorldState);
+  final nextWorldStateForWork = nextWorldState
+      .copyWith(purchasedTilesByTileKey: state.work.purchasedTilesByTileKey)
+      .mapBothRegionUnits(
+        (regionId, _) => unitsByRegion[regionId] ?? const <Unit>[],
+      );
 
-  return withWorld.copyWith(
+  return state.game.copyWith(
     players: state.work.updatedPlayers,
-    worldState: withWorld.worldState
-        .copyWith(purchasedTilesByTileKey: state.work.purchasedTilesByTileKey)
-        .mapBothRegionUnits(
-          (regionId, _) => unitsByRegion[regionId] ?? const <Unit>[],
-        ),
+    worldState: nextWorldStateForWork,
   );
 }
 

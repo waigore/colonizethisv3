@@ -6,6 +6,7 @@ import '../../world/connectivity_resolver.dart';
 import '../../economy/economy_extraction.dart';
 import '../../economy/resource_extractor.dart';
 import '../../economy/sea_transport.dart';
+import '../../world/game_world_mutations.dart';
 import '../turn_pipeline_state.dart';
 import '../turn_resolver_config.dart';
 import '../turn_seed_constants.dart';
@@ -84,10 +85,8 @@ Game runExtractionPhase(
           seed: extractionSeed ^ player.id.hashCode,
         );
         overseasDelivered = interception.reducedDelivered;
-        currentState = currentState.copyWith(
-          worldState: currentState.worldState.copyWith(
-            fleets: interception.updatedFleets,
-          ),
+        currentState = currentState.updateWorldState(
+          (ws) => ws.copyWith(fleets: interception.updatedFleets),
         );
       }
       stockpile = applyExtractionToStockpile(stockpile, overseasDelivered);

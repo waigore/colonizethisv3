@@ -3,6 +3,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../constants.dart';
 import 'army_ids.dart';
+import 'game_world_mutations.dart';
 import 'province_lookup.dart';
 import 'unit_lookup.dart';
 
@@ -82,7 +83,7 @@ Game _ensureHomeArmiesExist(Game game) {
     changed = _ensureHomeArmyForPlayer(ws, armies, player) || changed;
   }
   if (!changed) return game;
-  return game.copyWith(worldState: ws.copyWith(armies: armies));
+  return game.updateWorldState((ws) => ws.copyWith(armies: armies));
 }
 
 bool _ensureHomeArmyForPlayer(WorldState ws, List<Army> armies, Player player) {
@@ -118,8 +119,8 @@ Game _rebuildArmiesFromMilitaryUnits(Game game) {
   _appendFieldArmies(ws, byArmyKey, militaryUnits, armies);
   armies.sort((a, b) => a.id.compareTo(b.id));
   final nextSeq = _nextArmySequence(armies);
-  return game.copyWith(
-    worldState: ws.copyWith(
+  return game.updateWorldState(
+    (ws) => ws.copyWith(
       armies: armies,
       nextArmySeq: nextSeq < 2 ? 2 : nextSeq,
     ),

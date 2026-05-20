@@ -5,6 +5,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import '../turn/trace/turn_trace_runtime.dart';
 import '../world/army_ids.dart';
 import '../world/army_movement.dart';
+import '../world/game_world_mutations.dart';
 
 final ordersApplicationLog = logicLog;
 
@@ -168,7 +169,7 @@ Game appendMilitaryRegimentToArmy(
         if (a.id == armyId && a.ownerId == player.id) updated else a,
     ];
     armiesById?[armyId] = updated;
-    return game.copyWith(worldState: ws.copyWith(armies: next));
+    return game.updateWorldState((ws) => ws.copyWith(armies: next));
   }
   final stationed = atHome ? cap : spawnProvinceId;
   final newArmy = Army(
@@ -181,7 +182,7 @@ Game appendMilitaryRegimentToArmy(
   );
   final next = [...ws.armies, newArmy]..sort((a, b) => a.id.compareTo(b.id));
   armiesById?[newArmy.id] = newArmy;
-  return game.copyWith(worldState: ws.copyWith(armies: next));
+  return game.updateWorldState((ws) => ws.copyWith(armies: next));
 }
 
 Army? _firstArmyByIdAndOwner(List<Army> armies, String armyId, String ownerId) {
