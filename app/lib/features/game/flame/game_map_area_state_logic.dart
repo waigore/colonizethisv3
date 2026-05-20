@@ -1,3 +1,4 @@
+import 'package:colonizethis_app/core/utils/prefixed_id.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart' as ct_models;
@@ -385,18 +386,11 @@ class GameMapAreaStateLogic {
     bool hasDraftNaval(String fleetId) =>
         moveByFleetId.containsKey(fleetId) || missionFleetIds.contains(fleetId);
 
-    ct_models.Fleet? findFleet(String id) {
-      for (final f in game.worldState.fleets) {
-        if (f.id == id) {
-          return f;
-        }
-      }
-      return null;
-    }
+    final fleetsById = <String, ct_models.Fleet>{
+      for (final f in game.worldState.fleets) f.id: f,
+    };
 
-    String seaZoneLocalId(String seaZoneId) {
-      return seaZoneId.contains('|') ? seaZoneId.split('|').last : seaZoneId;
-    }
+    String seaZoneLocalId(String seaZoneId) => prefixedIdLocalSegment(seaZoneId);
 
     String destinationRegionForSeaZone({
       required String seaZoneId,
@@ -531,8 +525,8 @@ class GameMapAreaStateLogic {
       };
       if (f.isAtSea && f.seaZoneId != null) {
         final z = f.seaZoneId!;
-        final zoneKey = z.contains('|') ? z : '${f.regionId}|$z';
-        final local = zoneKey.contains('|') ? zoneKey.split('|').last : zoneKey;
+        final zoneKey = prefixedIdHasDelimiter(z) ? z : '${f.regionId}|$z';
+        final local = prefixedIdLocalSegment(zoneKey);
         return seaZoneCentroidTileKey(
           tileMap: tm,
           regionId: f.regionId,
@@ -579,7 +573,7 @@ class GameMapAreaStateLogic {
 
     final groups = <String, _FleetTileProj>{};
     for (final fleetId in fleetIdsToProject) {
-      final fleet = findFleet(fleetId);
+      final fleet = fleetsById[fleetId];
       final mv = moveByFleetId[fleetId];
       if (fleet == null) {
         continue;

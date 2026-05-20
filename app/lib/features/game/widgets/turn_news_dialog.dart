@@ -66,7 +66,7 @@ String _factionLabel(Game g, String id) {
 String _provinceLabel(Game g, String fullProvinceId) {
   for (final r in [g.worldState.oldWorld, g.worldState.newWorld]) {
     for (final p in r.provinces) {
-      final full = p.id.contains('|')
+      final full = ProvinceId.isPrefixed(p.id)
           ? p.id
           : ProvinceId.full(p.regionId, p.id);
       if (full == fullProvinceId) {

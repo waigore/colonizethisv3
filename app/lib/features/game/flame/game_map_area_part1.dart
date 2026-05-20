@@ -339,8 +339,7 @@ mixin _GameMapAreaStatePart1 on ConsumerState<GameMapArea> {
     final playerId =
         shell.debugCommandTargetPlayerId ?? _mapPlayerId;
     final player =
-        widget.game.players.where((p) => p.id == playerId).firstOrNull ??
-        widget.game.players.first;
+        widget.game.playerById(playerId) ?? widget.game.players.first;
     final capital = player.capitalTile;
     if (capital == null) {
       return;
@@ -398,8 +397,7 @@ mixin _GameMapAreaStatePart1 on ConsumerState<GameMapArea> {
     final playerId =
         shell.debugCommandTargetPlayerId ?? _mapPlayerId;
     final player =
-        widget.game.players.where((p) => p.id == playerId).firstOrNull ??
-        widget.game.players.first;
+        widget.game.playerById(playerId) ?? widget.game.players.first;
     final capital = player.capitalTile;
     if (capital == null) {
       return;
@@ -760,9 +758,9 @@ mixin _GameMapAreaStatePart1 on ConsumerState<GameMapArea> {
       widget.game.worldState.newWorld,
     ]) {
       for (final province in region.provinces) {
-        final prefixed = province.id.contains('|')
+        final prefixed = ct_models.ProvinceId.isPrefixed(province.id)
             ? province.id
-            : '${province.regionId}|${province.id}';
+            : ct_models.ProvinceId.full(province.regionId, province.id);
         if (prefixed == fullProvinceId) {
           return province.displayName ?? prefixed;
         }
@@ -794,15 +792,11 @@ mixin _GameMapAreaStatePart1 on ConsumerState<GameMapArea> {
   }
 
   Set<String> _seaZoneRegionCandidates(String seaZoneId) {
-    if (seaZoneId.contains('|')) {
-      final parts = seaZoneId.split('|');
-      if (parts.length >= 2 && parts.first.isNotEmpty) {
-        return {parts.first};
-      }
+    final regionFromPrefix = prefixedIdRegionSegment(seaZoneId);
+    if (regionFromPrefix != null && regionFromPrefix.isNotEmpty) {
+      return {regionFromPrefix};
     }
-    final localSeaZoneId = seaZoneId.contains('|')
-        ? seaZoneId.split('|').last
-        : seaZoneId;
+    final localSeaZoneId = prefixedIdLocalSegment(seaZoneId);
     final fromPorts = <String>{};
     for (final key in widget.game.worldState.portsByProvinceSeaboard.keys) {
       final parts = key.split('|');
@@ -851,9 +845,9 @@ mixin _GameMapAreaStatePart1 on ConsumerState<GameMapArea> {
       widget.game.worldState.newWorld,
     ]) {
       for (final province in region.provinces) {
-        final prefixed = province.id.contains('|')
+        final prefixed = ct_models.ProvinceId.isPrefixed(province.id)
             ? province.id
-            : '${province.regionId}|${province.id}';
+            : ct_models.ProvinceId.full(province.regionId, province.id);
         if (prefixed == prefixedProvinceId) {
           return province;
         }

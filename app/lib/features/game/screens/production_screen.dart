@@ -67,9 +67,7 @@ class ProductionScreen extends ConsumerWidget {
         } on Object {
           // Widget tests may not initialize Hive-backed game service providers.
         }
-        final displayPlayer = displayGame.players.firstWhere(
-          (p) => p.id == player.id,
-        );
+        final displayPlayer = displayGame.playerById(player.id)!;
         final MapTopology panelTopology;
         final Map<String, TileMapResult>? panelTileMaps;
         if (panelTopologyOverride != null) {

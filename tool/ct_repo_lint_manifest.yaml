@@ -62,6 +62,13 @@ rules:
     runner: shell
     argv: [tool/check_app_lib_no_suggest_work_orders.sh]
 
+  - rule_id: repo.app_lib_player_by_id_lookup
+    group: architecture
+    title: app/lib must use game.playerById for id lookups (Refs #2575)
+    spec: SPEC/program/repo-lint.md
+    runner: shell
+    argv: [tool/check_app_lib_player_by_id_lookup.sh]
+
   - rule_id: repo.flutter_action_pins
     group: structure
     title: flutter-action workflow steps must pin flutter-version

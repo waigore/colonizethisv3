@@ -73,7 +73,7 @@ final mapViewDataProvider = Provider<InitGameMapViewData?>((ref) {
     final view = shell.playerView ??
         buildPlayerView(game, topology, mapPlayerId);
     final mapPlayer =
-        game.players.where((p) => p.id == mapPlayerId).firstOrNull ??
+        game.playerById(mapPlayerId) ??
         game.players.first;
 
     final visibilityByTile = <String, TileVisibility>{};

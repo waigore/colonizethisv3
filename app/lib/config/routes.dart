@@ -9,6 +9,7 @@ import '../features/game/screens/diplomacy_screen.dart';
 import '../features/game/screens/production_screen.dart';
 import '../features/game/screens/technology_screen.dart';
 import '../features/shell/shell_screen.dart';
+import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 class Routes {
@@ -58,7 +59,7 @@ class Routes {
 
     switch (settings.name) {
       case RoutePaths.production:
-        final player = game.players.firstWhere((p) => p.id == humanPlayerId);
+        final player = game.playerById(humanPlayerId)!;
         return MaterialPageRoute<void>(
           settings: settings,
           builder: (_) => ProductionScreen(game: game, player: player),
@@ -82,7 +83,7 @@ class Routes {
           ),
         );
       case RoutePaths.technology:
-        final player = game.players.firstWhere((p) => p.id == humanPlayerId);
+        final player = game.playerById(humanPlayerId)!;
         return MaterialPageRoute<void>(
           settings: settings,
           builder: (_) => TechnologyScreen(game: game, player: player),

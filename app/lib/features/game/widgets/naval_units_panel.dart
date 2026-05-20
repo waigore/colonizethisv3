@@ -2,6 +2,7 @@
 
 import 'dart:async';
 
+import 'package:colonizethis_app/core/utils/prefixed_id.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart' show homeFleetIdFor;
 import 'package:colonizethis_models/colonizethis_models.dart';
@@ -286,10 +287,8 @@ class _NavalUnitsPanelState extends State<NavalUnitsPanel> {
   }) {
     final capRegionId = ProvinceId.regionIdFrom(capitalProvinceId);
     final capLocalId = ProvinceId.localIdFrom(capitalProvinceId);
-    final sourceSeaLocal = sourceSeaZoneId.contains('|')
-        ? sourceSeaZoneId.split('|').last
-        : sourceSeaZoneId;
-    final sourceSeaPrefixed = sourceSeaZoneId.contains('|')
+    final sourceSeaLocal = prefixedIdLocalSegment(sourceSeaZoneId);
+    final sourceSeaPrefixed = prefixedIdHasDelimiter(sourceSeaZoneId)
         ? sourceSeaZoneId
         : '$sourceRegionId|$sourceSeaZoneId';
     final sourceSeaCandidates = <String>{

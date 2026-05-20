@@ -454,7 +454,7 @@ List<WidgetbookNode> get trainCiviliansDialogDirectories => [
           final humanPlayerId = game.players.isNotEmpty
               ? game.players.firstWhere((p) => p.isHuman).id
               : game.players.first.id;
-          final player = game.players.firstWhere((p) => p.id == humanPlayerId);
+          final player = game.playerById(humanPlayerId) ?? game.players.first;
           final richGame = game.copyWith(
             players: [
               player.copyWith(
@@ -488,7 +488,7 @@ List<WidgetbookNode> get trainCiviliansDialogDirectories => [
           final humanPlayerId = game.players.isNotEmpty
               ? game.players.firstWhere((p) => p.isHuman).id
               : game.players.first.id;
-          final player = game.players.firstWhere((p) => p.id == humanPlayerId);
+          final player = game.playerById(humanPlayerId) ?? game.players.first;
           final noTechGame = game.copyWith(
             players: [
               player.copyWith(
@@ -523,7 +523,7 @@ List<WidgetbookNode> get trainCiviliansDialogDirectories => [
           final humanPlayerId = game.players.isNotEmpty
               ? game.players.firstWhere((p) => p.isHuman).id
               : game.players.first.id;
-          final player = game.players.firstWhere((p) => p.id == humanPlayerId);
+          final player = game.playerById(humanPlayerId) ?? game.players.first;
           final poorGame = game.copyWith(
             players: [
               player.copyWith(

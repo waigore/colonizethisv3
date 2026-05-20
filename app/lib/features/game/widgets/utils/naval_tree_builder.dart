@@ -1,8 +1,9 @@
 // Pure data for Naval Units panel tree. SPEC/ui/naval-units-panel.md.
 
 import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:colonizethis_app/core/utils/prefixed_id.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart'
-    show homeFleetIdFor, regionIdForSeaZone, tryGetProvince;
+    show GamePlayerLookup, homeFleetIdFor, regionIdForSeaZone, tryGetProvince;
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../../../../l10n/l10n.dart';
@@ -31,7 +32,7 @@ String? navalDraftMoveLineForFleet({
     }
     final z = o.destinationSeaZoneId!;
     final zReg = regionIdForSeaZone(topology, z) ?? fleetRegionId;
-    final zoneKey = z.contains('|') ? z : '$zReg|$z';
+    final zoneKey = prefixedIdHasDelimiter(z) ? z : '$zReg|$z';
     final label = seaZoneDisplayName(
       game: game,
       regionId: zReg,
@@ -204,12 +205,10 @@ String _navalResolveSeaZoneRegionId(
 ) {
   final byTopology = regionIdForSeaZone(topology, seaZoneId);
   if (byTopology != null) return byTopology;
-  final localSeaZoneId =
-      seaZoneId.contains('|') ? seaZoneId.split('|').last : seaZoneId;
+  final localSeaZoneId = prefixedIdLocalSegment(seaZoneId);
   for (final node in topology.nodes) {
     if (node.type != TopologyNodeType.seaZone) continue;
-    final nodeLocal =
-        node.id.contains('|') ? node.id.split('|').last : node.id;
+    final nodeLocal = prefixedIdLocalSegment(node.id);
     if (nodeLocal == localSeaZoneId) {
       return node.regionId;
     }
@@ -227,8 +226,7 @@ String _navalNormalizedSeaScope(
     seaZoneId,
     fallbackRegionId,
   );
-  final local =
-      seaZoneId.contains('|') ? seaZoneId.split('|').last : seaZoneId;
+  final local = prefixedIdLocalSegment(seaZoneId);
   return 'sea:$regionId|$local';
 }
 
@@ -237,8 +235,7 @@ String? _navalRegionIdFromScopeKey(String? scopeKey) {
   final colon = scopeKey.indexOf(':');
   if (colon == -1 || colon >= scopeKey.length - 1) return null;
   final payload = scopeKey.substring(colon + 1);
-  if (!payload.contains('|')) return null;
-  return payload.split('|').first;
+  return prefixedIdRegionSegment(payload);
 }
 
 String? _navalProjectedLocationScopeForFleet({
@@ -312,8 +309,9 @@ void _appendNavalAtSeaFleetRow({
           projectedScope.startsWith('sea:')
       ? projectedScope.substring(4)
       : fleet.seaZoneId!;
-  final zoneKey =
-      seaZoneId.contains('|') ? seaZoneId : '$rowRegionId|$seaZoneId';
+  final zoneKey = prefixedIdHasDelimiter(seaZoneId)
+      ? seaZoneId
+      : '$rowRegionId|$seaZoneId';
   final locationKey = 'sea:$zoneKey';
   final zoneLabel = seaZoneDisplayName(
     game: game,
@@ -614,10 +612,7 @@ buildNavalTree(
   Map<String, MapTopology>? topologyByRegion,
   String? locationScopeKeyFilter,
 }) {
-  final player = game.players.firstWhere(
-    (p) => p.id == humanPlayerId,
-    orElse: () => game.players.first,
-  );
+  final player = game.playerById(humanPlayerId) ?? game.players.first;
   final capParts = _capitalTileRegionParts(player.capitalTile);
   final capitalRegionId = capParts.regionId;
   final capitalProvinceLocalId = capParts.localId;
