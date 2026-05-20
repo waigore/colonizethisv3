@@ -86,10 +86,14 @@ Set<String> seaZoneNodeIds(MapTopology topology) {
 
 /// Sea zones reachable from [startSeaZoneIds] by following S–S edges in [topology].
 /// SPEC/game/map-topology.md, capital-and-connectivity § Sea paths.
+///
+/// When [onDequeue] is set, it is invoked once per BFS dequeue (connectivity hot-path
+/// metrics in `connectivity_resolver.dart`).
 Set<String> seaZonesReachableBySeaPath(
   MapTopology topology,
-  Set<String> startSeaZoneIds,
-) {
+  Set<String> startSeaZoneIds, {
+  void Function()? onDequeue,
+}) {
   final seaZoneIds = seaZoneNodeIds(topology);
   final neighbours = <String, Set<String>>{};
   for (final e in topology.edges) {
@@ -104,6 +108,7 @@ Set<String> seaZonesReachableBySeaPath(
   final queue = Queue<String>()..addAll(startSeaZoneIds);
   while (queue.isNotEmpty) {
     final z = queue.removeFirst();
+    onDequeue?.call();
     for (final n in neighbours[z] ?? {}) {
       if (reachable.contains(n)) continue;
       reachable.add(n);
