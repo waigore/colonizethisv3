@@ -164,8 +164,13 @@ List<String> defaultStartGpPeaceTargets({
   required AIWorldSnapshot snapshot,
 }) {
   final ownOw = snapshot.conquest.oldWorldProvincesOwned;
-  if (!isBelowObserverConquestQuota(ownOw) ||
-      ownOw > kObserverDefaultStartOldWorldProvincesPerGp + 1) {
+  if (!isBelowObserverConquestQuota(ownOw)) {
+    return const [];
+  }
+  final maxOwForGpPeace = hasUninvadedOldWorldMinor(game: game, snapshot: snapshot)
+      ? kStalledOldWorldProvinceThreshold
+      : kObserverDefaultStartOldWorldProvincesPerGp + 1;
+  if (ownOw > maxOwForGpPeace) {
     return const [];
   }
   final gpOnlyFrontier = isOldWorldGpOnlyInvadableFrontier(
@@ -213,7 +218,8 @@ List<String> nearQuotaHoldPeaceTargets({
   if (gpWars.length == 1 &&
       gpOnlyFrontier &&
       blocker != null &&
-      gpWars.single == blocker) {
+      gpWars.single == blocker &&
+      !hasUninvadedOldWorldMinor(game: game, snapshot: snapshot)) {
     return const [];
   }
   if (gpWars.length >= 2) {

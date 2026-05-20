@@ -815,6 +815,65 @@ void main() {
     );
 
     test(
+      'belowQuotaUninvadedMinorDeclareTarget pivots at 7 OW on GP-only with minors',
+      () {
+        final game = Game(
+          id: 'g-gp-only-minor-pivot-7ow',
+          worldState: WorldState(
+            turnState: const TurnState(
+              phase: TurnPhase.orders,
+              turnNumber: 40,
+            ),
+            oldWorld: RegionData(
+              provinces: [
+                for (var i = 0; i < 7; i++)
+                  Province(
+                    id: 'oldWorld|gp4_$i',
+                    regionId: 'oldWorld',
+                    ownerId: 'gp4',
+                  ),
+                for (var i = 0; i < 8; i++)
+                  Province(
+                    id: 'oldWorld|gp3_$i',
+                    regionId: 'oldWorld',
+                    ownerId: 'gp3',
+                  ),
+                const Province(
+                  id: 'oldWorld|minor2',
+                  regionId: 'oldWorld',
+                  ownerId: 'minor2',
+                ),
+              ],
+            ),
+            newWorld: const RegionData(),
+          ),
+          players: const [
+            Player(id: 'gp3', displayName: 'P3', isHuman: false),
+            Player(id: 'gp4', displayName: 'P4', isHuman: false),
+          ],
+          minorNations: const [MinorNation(id: 'minor2', displayName: 'M2')],
+        );
+        const snap = AIWorldSnapshot(
+          playerId: 'gp4',
+          threats: ThreatSummary(),
+          opportunities: OpportunitySummary(),
+          conquest: ConquestSummary(
+            oldWorldProvincesOwned: 7,
+            invadableProvinceIdsSorted: ['oldWorld|gp3_7'],
+            adjacentOwnerFactionIdsSorted: ['gp3'],
+          ),
+          colonial: ColonialSummary(),
+          economy: EconomySummary(),
+          relations: {},
+        );
+        expect(
+          belowQuotaUninvadedMinorDeclareTarget(game: game, snapshot: snap),
+          'minor2',
+        );
+      },
+    );
+
+    test(
       'belowQuotaUninvadedMinorDeclareTarget pivots at 8 OW on GP-only with minors',
       () {
         final game = Game(
