@@ -237,6 +237,31 @@ Rule id: `prohibited_incremental_validator_per_item` (`match.kind`:
 `incremental_validator_for_player_in_loop`, `match.relative_path_prefix`:
 `packages/colonizethis_logic/lib/src/`).
 
+### Redundant `.where(...).toList().where(...)` chains
+
+In runtime domain code, chaining `.where(...).toList().where(...)` is
+disallowed. The intermediate `.toList()` allocates a `List` that the trailing
+`.where(...)` only re-iterates lazily; collapsing into one combined predicate
+(`.where((x) => predA(x) && predB(x))`) or a single-pass accumulator
+eliminates the wasted allocation **and** the duplicate scan.
+
+The check matches the direct chained form only: a `MethodInvocation` whose
+`methodName` is `where` and whose target is `<expr>.where(...).toList()`.
+Statement-level reassignment (`ys = ys.where(...).toList(); ys = ys.where(...).toList();`)
+and lazy `.where(...).where(...)` chains without an intermediate `.toList()`
+are intentionally **not** flagged by this rule.
+
+Rationale: an Expando-style audit of `app/lib/` hot paths (Refs #2575
+Phase 5) found that direct `.where(...).toList().where(...)` chains were the
+worst case for `build()`-time wasted iteration — the consolidation work in
+#2575 Phases 1–4 removed every then-extant chain, and this rule prevents
+silent regression. Statement-level reassignment patterns remain on the
+follow-up list because they require flow-sensitive analysis to distinguish
+legitimate “narrow then partition” patterns from genuine redundant filtering.
+
+Rule id: `redundant_where_to_list_where_chain` (`match.kind`:
+`redundant_where_to_list_where_chain`).
+
 ### Coverage
 
 Enforcement walks the same domain trees via `tool/ct_repo_lint_scan_contract.dart` (`collectRepoLintDomainDartFiles`), aligned with `SPEC/program/exception-enforcement.md` coverage:
@@ -416,3 +441,26 @@ Generated files (`*.g.dart`, `*.freezed.dart`, `*.mocks.dart`) and tests (`**/te
   `.units`/`.armies`/`.fleets`), **when** the disallowed AST checker runs,
   **then** it does not report a
   `prohibited_linear_units_armies_fleets_lookup` violation for that lookup.
+
+- **Given** runtime Dart source that chains
+  `<expr>.where(...).toList().where(...)` (the trailing `.where(...)` is the
+  receiver call after the intermediate `.toList()`), **when** the disallowed
+  AST checker runs, **then** it reports at least one violation for
+  `redundant_where_to_list_where_chain` with the correct file and line.
+
+- **Given** runtime Dart source that chains `<expr>.where(...).where(...)`
+  with **no** intermediate `.toList()` between the two `.where(...)` calls,
+  **when** the disallowed AST checker runs, **then** it does not report a
+  `redundant_where_to_list_where_chain` violation for that chain.
+
+- **Given** runtime Dart source that reassigns a list across statements via
+  `ys = ys.where(...).toList();` followed by `ys = ys.where(...).toList();`,
+  **when** the disallowed AST checker runs, **then** it does not report a
+  `redundant_where_to_list_where_chain` violation (this rule targets the
+  direct expression chain only).
+
+- **Given** runtime Dart source that includes
+  `// ignore: disallowed_ast_redundant_where_to_list_where_chain` on the
+  violating line or the line above, **when** the disallowed AST checker
+  runs, **then** it does not report that violation for
+  `redundant_where_to_list_where_chain`.

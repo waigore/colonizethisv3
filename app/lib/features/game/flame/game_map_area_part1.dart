@@ -339,8 +339,7 @@ mixin _GameMapAreaStatePart1 on ConsumerState<GameMapArea> {
     final playerId =
         shell.debugCommandTargetPlayerId ?? _mapPlayerId;
     final player =
-        widget.game.players.where((p) => p.id == playerId).firstOrNull ??
-        widget.game.players.first;
+        widget.game.playerById(playerId) ?? widget.game.players.first;
     final capital = player.capitalTile;
     if (capital == null) {
       return;
@@ -398,8 +397,7 @@ mixin _GameMapAreaStatePart1 on ConsumerState<GameMapArea> {
     final playerId =
         shell.debugCommandTargetPlayerId ?? _mapPlayerId;
     final player =
-        widget.game.players.where((p) => p.id == playerId).firstOrNull ??
-        widget.game.players.first;
+        widget.game.playerById(playerId) ?? widget.game.players.first;
     final capital = player.capitalTile;
     if (capital == null) {
       return;
@@ -663,28 +661,10 @@ mixin _GameMapAreaStatePart1 on ConsumerState<GameMapArea> {
 
   void _e2eOpenFirstCivilianMarkerPanel() {
     if (!mounted) return;
-    final currentOrders = ref.read(currentOrdersProvider);
-    var projected = GameMapAreaStateLogic.projectCivilianMarkersForHumanDraft(
-      region: _currentRegion,
-      game: widget.game,
-      orders: currentOrders,
-      humanPlayerId: _mapPlayerId,
-    );
-    final mapData = ref.read(gameServiceProvider).getMapData(widget.game.id);
-    final tm = mapData?.tileMapByRegion;
-    final tr = mapData?.topologyByRegion;
-    final ct = mapData?.combinedTopology;
-    if (tm != null && tr != null && ct != null) {
-      projected = GameMapAreaStateLogic.projectFleetMarkersForHumanDraft(
-        region: projected,
-        game: widget.game,
-        orders: currentOrders,
-        humanPlayerId: _mapPlayerId,
-        tileMapByRegion: tm,
-        topologyByRegion: tr,
-        combinedTopology: ct,
-      );
-    }
+    final projected = ref.read(
+          humanDraftProjectedRegionProvider(_currentRegion.regionId),
+        ) ??
+        _currentRegion;
     final markers = [...projected.civilianTileMarkers]
       ..sort((a, b) => a.tileKey.compareTo(b.tileKey));
     if (markers.isEmpty) return;
@@ -703,28 +683,10 @@ mixin _GameMapAreaStatePart1 on ConsumerState<GameMapArea> {
 
   void _e2eOpenFirstFleetMarkerPanel() {
     if (!mounted) return;
-    final currentOrders = ref.read(currentOrdersProvider);
-    var projected = GameMapAreaStateLogic.projectCivilianMarkersForHumanDraft(
-      region: _currentRegion,
-      game: widget.game,
-      orders: currentOrders,
-      humanPlayerId: _mapPlayerId,
-    );
-    final mapData = ref.read(gameServiceProvider).getMapData(widget.game.id);
-    final tm = mapData?.tileMapByRegion;
-    final tr = mapData?.topologyByRegion;
-    final ct = mapData?.combinedTopology;
-    if (tm != null && tr != null && ct != null) {
-      projected = GameMapAreaStateLogic.projectFleetMarkersForHumanDraft(
-        region: projected,
-        game: widget.game,
-        orders: currentOrders,
-        humanPlayerId: _mapPlayerId,
-        tileMapByRegion: tm,
-        topologyByRegion: tr,
-        combinedTopology: ct,
-      );
-    }
+    final projected = ref.read(
+          humanDraftProjectedRegionProvider(_currentRegion.regionId),
+        ) ??
+        _currentRegion;
     final markers = [...projected.fleetTileMarkers]
       ..sort((a, b) => a.tileKey.compareTo(b.tileKey));
     if (markers.isEmpty) return;
@@ -741,35 +703,12 @@ mixin _GameMapAreaStatePart1 on ConsumerState<GameMapArea> {
         );
   }
 
-  String _factionLabel(String id) {
-    for (final p in widget.game.players) {
-      if (p.id == id) return p.displayName;
-    }
-    for (final m in widget.game.minorNations) {
-      if (m.id == id) return m.displayName ?? m.id;
-    }
-    for (final t in widget.game.tribes) {
-      if (t.id == id) return t.displayName ?? t.id;
-    }
-    return id;
-  }
+  String _factionLabel(String id) =>
+      widget.game.factionDisplayNameById(id) ?? id;
 
-  String _provinceLabel(String fullProvinceId) {
-    for (final region in [
-      widget.game.worldState.oldWorld,
-      widget.game.worldState.newWorld,
-    ]) {
-      for (final province in region.provinces) {
-        final prefixed = province.id.contains('|')
-            ? province.id
-            : '${province.regionId}|${province.id}';
-        if (prefixed == fullProvinceId) {
-          return province.displayName ?? prefixed;
-        }
-      }
-    }
-    return fullProvinceId;
-  }
+  String _provinceLabel(String fullProvinceId) =>
+      widget.game.worldState.tryGetProvince(fullProvinceId)?.displayName ??
+      fullProvinceId;
 
   String _seaZoneLabel(String seaZoneId) {
     return widget.game.worldState.seaZoneDisplayNameById[seaZoneId] ??
@@ -794,15 +733,11 @@ mixin _GameMapAreaStatePart1 on ConsumerState<GameMapArea> {
   }
 
   Set<String> _seaZoneRegionCandidates(String seaZoneId) {
-    if (seaZoneId.contains('|')) {
-      final parts = seaZoneId.split('|');
-      if (parts.length >= 2 && parts.first.isNotEmpty) {
-        return {parts.first};
-      }
+    final regionFromPrefix = prefixedIdRegionSegment(seaZoneId);
+    if (regionFromPrefix != null && regionFromPrefix.isNotEmpty) {
+      return {regionFromPrefix};
     }
-    final localSeaZoneId = seaZoneId.contains('|')
-        ? seaZoneId.split('|').last
-        : seaZoneId;
+    final localSeaZoneId = prefixedIdLocalSegment(seaZoneId);
     final fromPorts = <String>{};
     for (final key in widget.game.worldState.portsByProvinceSeaboard.keys) {
       final parts = key.split('|');
@@ -845,22 +780,8 @@ mixin _GameMapAreaStatePart1 on ConsumerState<GameMapArea> {
     );
   }
 
-  ct_models.Province? _provinceByPrefixedId(String prefixedProvinceId) {
-    for (final region in [
-      widget.game.worldState.oldWorld,
-      widget.game.worldState.newWorld,
-    ]) {
-      for (final province in region.provinces) {
-        final prefixed = province.id.contains('|')
-            ? province.id
-            : '${province.regionId}|${province.id}';
-        if (prefixed == prefixedProvinceId) {
-          return province;
-        }
-      }
-    }
-    return null;
-  }
+  ct_models.Province? _provinceByPrefixedId(String prefixedProvinceId) =>
+      widget.game.worldState.tryGetProvince(prefixedProvinceId);
 
   @override
   void didUpdateWidget(covariant GameMapArea oldWidget) {

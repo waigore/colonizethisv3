@@ -25,7 +25,7 @@ import '../../../config/constants.dart';
 import 'province_panel_labels.dart';
 import 'province_panel_pending_orders.dart';
 import '../utils/sea_zone_name_resolver.dart';
-
+import 'province_overlay_unit_partition.dart';
 
 /// Overlay showing province or sea zone details. Toggleable; responsive; max 1/3 screen.
 /// [displayId] is the province or sea-zone id (`regionId|localId`) for tab content;
@@ -377,20 +377,15 @@ _OverlayContent _provinceContent({
   final regionData = provinceId.startsWith('newWorld')
       ? game.worldState.newWorld
       : game.worldState.oldWorld;
-  final units = regionData.units
-      .where((u) => u.locationProvinceId == provinceId)
-      .toList();
-  final military = units.where((u) => isMilitaryUnit(u.type)).toList();
-  final civilian = units.where((u) => !isMilitaryUnit(u.type)).toList();
-  final visibleCivilianCount = civilian
-      .where(
-        (u) => foreignCivilianVisibleToPlayer(
-          unit: u,
-          viewerPlayerId: humanPlayerId,
-          view: playerView,
-        ),
-      )
-      .length;
+  final partitioned = partitionProvinceOverlayUnits(
+    regionUnits: regionData.units,
+    provinceId: provinceId,
+    humanPlayerId: humanPlayerId,
+    playerView: playerView,
+  );
+  final military = partitioned.military;
+  final civilian = partitioned.civilian;
+  final visibleCivilianCount = partitioned.visibleCivilianCount;
   final fleetsInPort = fleetsInPortAtProvince(game.worldState, provinceId);
   final tileKeys =
       game.worldState.tileKeysByRegionAndProvince[region

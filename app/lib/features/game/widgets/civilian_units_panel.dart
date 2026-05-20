@@ -107,6 +107,32 @@ class _CivilianUnitsPanelState extends ConsumerState<CivilianUnitsPanel> {
         false;
   }
 
+  List<Unit> _scopedCivilianUnits(
+    List<Unit> units, {
+    required String? tileScopeTileKey,
+    required bool explorerOnly,
+    required bool builderOnly,
+  }) {
+    final tileScopeActive =
+        tileScopeTileKey != null && tileScopeTileKey.isNotEmpty;
+    if (!tileScopeActive && !explorerOnly && !builderOnly) {
+      return units;
+    }
+    return [
+      for (final u in units)
+        if ((!tileScopeActive ||
+                projectedCivilianTileKey(
+                      unit: u,
+                      playerId: widget.humanPlayerId,
+                      orders: widget.currentOrders,
+                    ) ==
+                    tileScopeTileKey) &&
+            (!explorerOnly || _isExplorerUnit(u)) &&
+            (!builderOnly || _isBuilderUnit(u)))
+          u,
+    ];
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = appL10n(context);
@@ -123,42 +149,20 @@ class _CivilianUnitsPanelState extends ConsumerState<CivilianUnitsPanel> {
       provinceNames,
       widget.currentOrders,
     );
-    List<Unit> scopedOw = ow;
-    List<Unit> scopedNw = nw;
     final scopeTileKey = widget.tileScopeTileKey;
     final tileScopeActive = scopeTileKey != null && scopeTileKey.isNotEmpty;
-    if (tileScopeActive) {
-      scopedOw = ow
-          .where(
-            (u) =>
-                projectedCivilianTileKey(
-                  unit: u,
-                  playerId: widget.humanPlayerId,
-                  orders: widget.currentOrders,
-                ) ==
-                scopeTileKey,
-          )
-          .toList();
-      scopedNw = nw
-          .where(
-            (u) =>
-                projectedCivilianTileKey(
-                  unit: u,
-                  playerId: widget.humanPlayerId,
-                  orders: widget.currentOrders,
-                ) ==
-                scopeTileKey,
-          )
-          .toList();
-    }
-    if (widget.explorerOnly) {
-      scopedOw = scopedOw.where((Unit u) => _isExplorerUnit(u)).toList();
-      scopedNw = scopedNw.where((Unit u) => _isExplorerUnit(u)).toList();
-    }
-    if (widget.builderOnly) {
-      scopedOw = scopedOw.where((Unit u) => _isBuilderUnit(u)).toList();
-      scopedNw = scopedNw.where((Unit u) => _isBuilderUnit(u)).toList();
-    }
+    final scopedOw = _scopedCivilianUnits(
+      ow,
+      tileScopeTileKey: scopeTileKey,
+      explorerOnly: widget.explorerOnly,
+      builderOnly: widget.builderOnly,
+    );
+    final scopedNw = _scopedCivilianUnits(
+      nw,
+      tileScopeTileKey: scopeTileKey,
+      explorerOnly: widget.explorerOnly,
+      builderOnly: widget.builderOnly,
+    );
     final hasAny = scopedOw.isNotEmpty || scopedNw.isNotEmpty;
     final allScopedUnits = <Unit>[...scopedOw, ...scopedNw];
     final selectedUnitId = _selectedUnitId;

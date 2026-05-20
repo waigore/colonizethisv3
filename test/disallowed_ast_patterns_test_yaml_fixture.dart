@@ -107,4 +107,9 @@ rules:
         - armies
         - fleets
       relative_path_prefix: packages/colonizethis_logic/lib/src/
+  - id: redundant_where_to_list_where_chain
+    message: >-
+      Do not chain .where(...).toList().where(...).
+    match:
+      kind: redundant_where_to_list_where_chain
 ''';

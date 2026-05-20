@@ -2,8 +2,10 @@
 
 import 'dart:async';
 
+import 'package:colonizethis_app/core/utils/prefixed_id.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:colonizethis_logic/colonizethis_logic.dart' show homeFleetIdFor;
+import 'package:colonizethis_logic/colonizethis_logic.dart'
+    show GamePlayerLookup, homeFleetIdFor;
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
 
@@ -126,9 +128,8 @@ class _NavalUnitsPanelState extends State<NavalUnitsPanel> {
 
   Fleet? _fleetForRow(FleetRow row) {
     final id = _selectionFleetId(row);
-    for (final f in widget.game.worldState.fleets) {
-      if (f.id == id) return f;
-    }
+    final found = widget.game.fleetById(id);
+    if (found != null) return found;
     if (row.isHomeFleet) {
       final portId = row.inPortAtProvinceId;
       if (portId == null) return null;
@@ -286,10 +287,8 @@ class _NavalUnitsPanelState extends State<NavalUnitsPanel> {
   }) {
     final capRegionId = ProvinceId.regionIdFrom(capitalProvinceId);
     final capLocalId = ProvinceId.localIdFrom(capitalProvinceId);
-    final sourceSeaLocal = sourceSeaZoneId.contains('|')
-        ? sourceSeaZoneId.split('|').last
-        : sourceSeaZoneId;
-    final sourceSeaPrefixed = sourceSeaZoneId.contains('|')
+    final sourceSeaLocal = prefixedIdLocalSegment(sourceSeaZoneId);
+    final sourceSeaPrefixed = prefixedIdHasDelimiter(sourceSeaZoneId)
         ? sourceSeaZoneId
         : '$sourceRegionId|$sourceSeaZoneId';
     final sourceSeaCandidates = <String>{
@@ -413,13 +412,7 @@ class _NavalUnitsPanelState extends State<NavalUnitsPanel> {
 
   void _openSplitDialog(FleetRow row) {
     final id = _selectionFleetId(row);
-    Fleet? fleet;
-    for (final f in widget.game.worldState.fleets) {
-      if (f.id == id) {
-        fleet = f;
-        break;
-      }
-    }
+    final fleet = widget.game.fleetById(id);
     if (fleet == null) return;
 
     final original = fleet;
@@ -437,13 +430,7 @@ class _NavalUnitsPanelState extends State<NavalUnitsPanel> {
 
   Future<void> _openMoveFleetDialog(FleetRow row) async {
     if (row.isHomeFleet) return;
-    Fleet? fleet;
-    for (final f in widget.game.worldState.fleets) {
-      if (f.id == row.fleetId) {
-        fleet = f;
-        break;
-      }
-    }
+    final fleet = widget.game.fleetById(row.fleetId);
     final nonNullFleet = fleet;
     if (nonNullFleet == null) return;
     await showDialog<bool>(
