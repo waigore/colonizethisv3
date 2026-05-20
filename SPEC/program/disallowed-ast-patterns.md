@@ -262,6 +262,39 @@ legitimate “narrow then partition” patterns from genuine redundant filtering
 Rule id: `redundant_where_to_list_where_chain` (`match.kind`:
 `redundant_where_to_list_where_chain`).
 
+### Nested `Game.copyWith(worldState: ...)` chains in `colonizethis_logic`
+
+In `packages/colonizethis_logic/lib/**`, a `copyWith(worldState: …)`
+invocation that anchors a chain **three or more `copyWith` levels deep** is
+disallowed:
+
+- Level 1 is the outer `<expr>.copyWith(worldState: <inner>)`.
+- Level 2 is `<inner>` resolving to `<expr2>.copyWith(<named-args>)`.
+- Level 3 is any named-argument value inside the level-2 call that itself
+  resolves to a `<expr3>.copyWith(…)` invocation.
+
+Two-level chains
+(`game.copyWith(worldState: world.copyWith(oldWorld: ow))`) remain allowed so
+straight-line single-field updates do not pay an indirection cost. Deeper
+chains must funnel through the shallow mutation helpers in
+`packages/colonizethis_logic/lib/src/world/game_world_mutations.dart`
+(`Game.updateWorldState(...)`, `WorldState.updateTurnState(...)`) so each call
+site stays at one mutation level. The level-3 detection only fires when the
+inner-argument value is **directly** a `.copyWith(...)` invocation, not when
+a `.copyWith(...)` call appears inside a container (for example a list
+literal or function call argument).
+
+Rationale: deep `Game.copyWith(worldState: ws.copyWith(turnState: ts.copyWith(...)))`
+nesting hides which fields are mutated, encourages partial / inconsistent
+state copies, and was the dominant smell flagged by **Refs #2560**. The
+established mutation helpers express the same update one level at a time
+and read top-to-bottom at the call site.
+
+Rule id: `nested_world_state_copywith` (`match.kind`:
+`nested_world_state_copywith`, `match.relative_path_prefix`:
+`packages/colonizethis_logic/lib/`, `match.outer_argument_name`:
+`worldState`).
+
 ### Coverage
 
 Enforcement walks the same domain trees via `tool/ct_repo_lint_scan_contract.dart` (`collectRepoLintDomainDartFiles`), aligned with `SPEC/program/exception-enforcement.md` coverage:
@@ -464,3 +497,35 @@ Generated files (`*.g.dart`, `*.freezed.dart`, `*.mocks.dart`) and tests (`**/te
   violating line or the line above, **when** the disallowed AST checker
   runs, **then** it does not report that violation for
   `redundant_where_to_list_where_chain`.
+
+- **Given** runtime Dart source under `packages/colonizethis_logic/lib/`
+  that chains
+  `game.copyWith(worldState: ws.copyWith(oldWorld: ow.copyWith(...)))`
+  (three nested `copyWith` levels through the outer `worldState:` named
+  argument), **when** the disallowed AST checker runs, **then** it reports
+  at least one violation for `nested_world_state_copywith` with the correct
+  file and line.
+
+- **Given** runtime Dart source under `packages/colonizethis_logic/lib/`
+  that chains a two-level `game.copyWith(worldState: ws.copyWith(turn: 1))`
+  update only, **when** the disallowed AST checker runs, **then** it does
+  not report a `nested_world_state_copywith` violation for that call.
+
+- **Given** runtime Dart source under `packages/colonizethis_logic/lib/`
+  that calls `game.copyWith(worldState: updateWorldState(ws))` (outer
+  `copyWith` argument is a function-call result, not a `copyWith`
+  invocation), **when** the disallowed AST checker runs, **then** it does
+  not report a `nested_world_state_copywith` violation for that call.
+
+- **Given** runtime Dart source outside `packages/colonizethis_logic/lib/`
+  that chains
+  `game.copyWith(worldState: ws.copyWith(oldWorld: ow.copyWith(...)))`,
+  **when** the disallowed AST checker runs, **then** it does not report a
+  `nested_world_state_copywith` violation for that chain.
+
+- **Given** runtime Dart source that includes
+  `// ignore: disallowed_ast_nested_world_state_copywith` on the violating
+  line or the line above, or a file-level
+  `// ignore_for_file: disallowed_ast_nested_world_state_copywith` marker,
+  **when** the disallowed AST checker runs, **then** it does not report
+  that violation for `nested_world_state_copywith`.

@@ -475,6 +475,72 @@ bool _isIncrementalValidatorForPlayerInLoopPattern(
   return false;
 }
 
+/// True when [node] is a `copyWith(...)` invocation that anchors a chain
+/// **three or more** `copyWith` levels deep through the configured outer
+/// named argument (default `worldState`). The detection is structural and
+/// path-scoped to [DisallowedPatternRule.linearCollectionPathPrefix]:
+///
+/// * Level 1: `<expr>.copyWith(<outerArgName>: <inner>)`.
+/// * Level 2: `<inner>` is a `<expr2>.copyWith(<args2>)` invocation.
+/// * Level 3: any named-argument value in `<args2>` is itself a
+///   `<expr3>.copyWith(...)` invocation.
+///
+/// Two-level chains (`game.copyWith(worldState: world.copyWith(oldWorld: ow))`)
+/// are **not** flagged so callers retain a thin escape hatch; deeper chains
+/// must funnel through `updateWorldState` / `updateTurnState` helpers.
+bool _isNestedWorldStateCopyWithChain(
+  MethodInvocation node,
+  DisallowedPatternRule rule,
+  String relativePath,
+) {
+  final prefix = rule.linearCollectionPathPrefix;
+  if (prefix == null || prefix.isEmpty) {
+    return false;
+  }
+  final slashPath = relativePath.replaceAll('\\', '/');
+  if (!slashPath.startsWith(prefix)) {
+    return false;
+  }
+  if (node.methodName.name != 'copyWith') {
+    return false;
+  }
+  final outerArgumentName = rule.nestedCopyWithOuterArgumentName;
+  if (outerArgumentName == null || outerArgumentName.isEmpty) {
+    return false;
+  }
+  Expression? innerExpression;
+  for (final arg in node.argumentList.arguments) {
+    if (arg is! NamedExpression) {
+      continue;
+    }
+    if (arg.name.label.name != outerArgumentName) {
+      continue;
+    }
+    innerExpression = arg.expression;
+    break;
+  }
+  if (innerExpression == null) {
+    return false;
+  }
+  final inner = _unwrapParenthesized(innerExpression);
+  if (inner is! MethodInvocation) {
+    return false;
+  }
+  if (inner.methodName.name != 'copyWith') {
+    return false;
+  }
+  for (final arg in inner.argumentList.arguments) {
+    if (arg is! NamedExpression) {
+      continue;
+    }
+    final value = _unwrapParenthesized(arg.expression);
+    if (value is MethodInvocation && value.methodName.name == 'copyWith') {
+      return true;
+    }
+  }
+  return false;
+}
+
 bool _isSimpleReceiverRemoveAtZeroPattern(
   MethodInvocation node,
   DisallowedPatternRule rule,
@@ -624,6 +690,10 @@ class _DisallowedAstVisitor extends RecursiveAstVisitor<void> {
       } else if (rule.kind ==
               DisallowedAstMatchKind.redundantWhereToListWhereChain &&
           _isRedundantWhereToListWhereChainPattern(node)) {
+        _recordIfAllowed(node, rule);
+      } else if (rule.kind ==
+              DisallowedAstMatchKind.nestedWorldStateCopyWith &&
+          _isNestedWorldStateCopyWithChain(node, rule, path)) {
         _recordIfAllowed(node, rule);
       }
       if (rule.kind ==
