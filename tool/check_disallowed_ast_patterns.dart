@@ -350,6 +350,39 @@ bool _looksLikeTileKeysByRegionAndProvinceLookup(IndexExpression node) {
   return src.contains('tileKeysByRegionAndProvince[');
 }
 
+/// True when [node] is a `.where(...)` invocation whose receiver chain is
+/// `<expr>.where(...).toList()` (i.e. a `.where(...).toList().where(...)`
+/// chain), allocating an intermediate `List` before the next filter.
+bool _isRedundantWhereToListWhereChainPattern(MethodInvocation node) {
+  if (node.methodName.name != 'where') {
+    return false;
+  }
+  if (node.argumentList.arguments.length != 1) {
+    return false;
+  }
+  final outerTarget = node.target;
+  if (outerTarget is! MethodInvocation) {
+    return false;
+  }
+  if (outerTarget.methodName.name != 'toList') {
+    return false;
+  }
+  if (outerTarget.argumentList.arguments.isNotEmpty) {
+    return false;
+  }
+  final innerTarget = outerTarget.target;
+  if (innerTarget is! MethodInvocation) {
+    return false;
+  }
+  if (innerTarget.methodName.name != 'where') {
+    return false;
+  }
+  if (innerTarget.argumentList.arguments.length != 1) {
+    return false;
+  }
+  return true;
+}
+
 bool _isLinearCollectionWhereFirstOrNullPattern(
   PropertyAccess node,
   DisallowedPatternRule rule,
@@ -587,6 +620,10 @@ class _DisallowedAstVisitor extends RecursiveAstVisitor<void> {
       } else if (rule.kind ==
               DisallowedAstMatchKind.simpleReceiverRemoveAtZero &&
           _isSimpleReceiverRemoveAtZeroPattern(node, rule, path)) {
+        _recordIfAllowed(node, rule);
+      } else if (rule.kind ==
+              DisallowedAstMatchKind.redundantWhereToListWhereChain &&
+          _isRedundantWhereToListWhereChainPattern(node)) {
         _recordIfAllowed(node, rule);
       }
       if (rule.kind ==

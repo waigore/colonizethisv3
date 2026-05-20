@@ -1,5 +1,6 @@
 // Pure data for Military Units panel tree. SPEC/ui/military-units-panel.md.
 
+import 'package:colonizethis_app/core/utils/prefixed_id.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart'
     show resolveToFullProvinceId, tryGetProvince;
 import 'package:colonizethis_models/colonizethis_models.dart';
@@ -250,8 +251,9 @@ List<MilitarySeaZoneNode> _militarySeaZoneNodesForRegion({
   final bySeaZone = <String, List<Fleet>>{};
   for (final f in fleetsInRegion) {
     final seaZoneId = f.seaZoneId!;
-    final zoneKey =
-        seaZoneId.contains('|') ? seaZoneId : '$regionKey|$seaZoneId';
+    final zoneKey = prefixedIdHasDelimiter(seaZoneId)
+        ? seaZoneId
+        : '$regionKey|$seaZoneId';
     bySeaZone.putIfAbsent(zoneKey, () => []).add(f);
   }
 

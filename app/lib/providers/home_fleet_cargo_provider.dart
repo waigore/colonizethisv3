@@ -87,9 +87,10 @@ final homeFleetCargoSummaryProvider = Provider<HomeFleetCargoSummary>((ref) {
 
 int _homeFleetCapacity(Game game, String playerId) {
   final homeFleetId = homeFleetIdFor(playerId);
-  final homeFleet = game.worldState.fleets
-      .where((f) => f.id == homeFleetId && f.ownerId == playerId)
-      .firstOrNull;
+  final candidate = game.fleetById(homeFleetId);
+  final homeFleet = candidate != null && candidate.ownerId == playerId
+      ? candidate
+      : null;
   if (homeFleet == null) {
     return 0;
   }

@@ -50,32 +50,45 @@ List<Unit> _civilianUnitsInRegion(
             _isCivilianUnit(u),
       )
       .toList();
-  list.sort((a, b) {
-    final tileA = projectedCivilianTileKey(
-      unit: a,
-      playerId: humanPlayerId,
-      orders: currentOrders,
-    );
-    final tileB = projectedCivilianTileKey(
-      unit: b,
-      playerId: humanPlayerId,
-      orders: currentOrders,
-    );
-    final provA = Unit.provinceIdFromTileKey(tileA);
-    final provB = Unit.provinceIdFromTileKey(tileB);
-    final regionA = Unit.regionIdFromTileKey(tileA) ?? '';
-    final regionB = Unit.regionIdFromTileKey(tileB) ?? '';
-    final prefixedA = '$regionA|$provA';
-    final prefixedB = '$regionB|$provB';
-    final nameA = provinceNames[prefixedA] ?? prefixedA;
-    final nameB = provinceNames[prefixedB] ?? prefixedB;
-    final nameCmp = nameA.compareTo(nameB);
+  final keyed = <({Unit unit, String provinceName, String type, String id})>[
+    for (final u in list)
+      (
+        unit: u,
+        provinceName: _civilianSortProvinceName(
+          u,
+          humanPlayerId: humanPlayerId,
+          currentOrders: currentOrders,
+          provinceNames: provinceNames,
+        ),
+        type: u.type,
+        id: u.id,
+      ),
+  ];
+  keyed.sort((a, b) {
+    final nameCmp = a.provinceName.compareTo(b.provinceName);
     if (nameCmp != 0) return nameCmp;
     final typeCmp = a.type.compareTo(b.type);
     if (typeCmp != 0) return typeCmp;
     return a.id.compareTo(b.id);
   });
-  return list;
+  return [for (final e in keyed) e.unit];
+}
+
+String _civilianSortProvinceName(
+  Unit unit, {
+  required String humanPlayerId,
+  required Orders currentOrders,
+  required Map<String, String> provinceNames,
+}) {
+  final tileKey = projectedCivilianTileKey(
+    unit: unit,
+    playerId: humanPlayerId,
+    orders: currentOrders,
+  );
+  final prov = Unit.provinceIdFromTileKey(tileKey);
+  final region = Unit.regionIdFromTileKey(tileKey) ?? '';
+  final prefixed = '$region|$prov';
+  return provinceNames[prefixed] ?? prefixed;
 }
 
 /// Pending assigned-to line plus optional cost strip. SPEC/ui/civilian-units-panel.md.
