@@ -110,6 +110,28 @@ New World province acquisition is a **supporting strategy** for the Old World mi
 
 **Observer gates (nightly):** Seed **42**, turn **150**: all `newWorld|` provinces GP-owned; **≥70%** of extractable GP resource tiles improved (level ≥ 1). See [run_observer_game-tool.md](../program/run_observer_game-tool.md). Turn **100** OW per-GP conquest gate unchanged.
 
+### Observer goal phases (Full AI)
+
+Deterministic phases from `PlayerView` → `AIWorldSnapshot` (`observer_goal_phase.dart`; Refs #2509 S10):
+
+| Phase | When | Imperative |
+|-------|------|------------|
+| **EXPAND** | `oldWorldProvincesOwned < kObserverConquestMinOwProvincesPerGp` (10) | OW conquest first |
+| **COLONIAL** | OW quota met and `hasColonialAcquisitionTargets` | NW acquisition |
+| **DEVELOP** | OW quota met and no visible colonial targets | Improve extractable tiles |
+
+**EXPAND suppressions:** No NW `declareWar` / `establishOverture` toward colonial targets, NW conquest army moves, colonial naval ranking/caps, `purchase_land` / NW `build_improvement` civilian work, or colonial-pressure goal/diplomacy floors. OW declare-war, OW army moves, OW improvements, economy, and research remain allowed.
+
+**EXPAND:** `offerPeace` toward at-war Great Powers that do not own the primary invadable Old World frontier blocker when fighting two or more GPs. While uninvaded OW minors remain, also peace below-quota GP peers within three provinces (pivot off mutual-plateau distraction wars). On GP-only frontiers with no minor pivot, the weaker mutual-plateau peer may `declareWar` on the stronger peer.
+
+**COLONIAL-lite** (turn ≥`kObserverColonialLiteMinTurn`, OW ≥`kObserverColonialLiteNearQuotaOw` and below quota, global `newWorld|` not all GP-owned): allows `establishOverture`, colonial naval/cargo; suppresses NW `declareWar`, invasion army moves, and `purchase_land` only.
+
+**COLONIAL:** `offerPeace` toward at-war Great Powers that do not own the primary colonial NW frontier blocker when fighting two or more GPs; tribe/minor colonial wars continue until objectives clear.
+
+**DEVELOP:** Suppresses all new `declareWar` and NW acquisition; forces civilian work selection with improvement-first threshold (`kDevelopCivilianWorkThresholdCap`); `offerPeace` toward all at-war Great Powers.
+
+**Peace collection (S10):** `collectStalledGreatPowerPeaceTargets` applies phase peace targets first. Legacy `colonial_pressure` OW-expansion ratchet helpers run only in **EXPAND** and **COLONIAL-lite**; **COLONIAL** uses phase peace plus tribe-distraction peace and survival helpers; **DEVELOP** uses phase peace plus survival helpers only.
+
 ### Implementation (turn pipeline)
 AI order generation runs so that orders are available for the **Orders** phase of turn resolution. Merge (human + AI) and application order are defined in [turn-resolution-phases.md](../program/turn-resolution-phases.md) (phase 1 Orders) and [turn-resolution-phase-details.md](../program/turn-resolution-phase-details.md) § Orders. Control rules and merge semantics: [ai-planner.md](../program/ai-planner.md); module boundaries and APIs: [ai-systems-impl.md](../program/ai-systems-impl.md).
 

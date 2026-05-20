@@ -115,15 +115,19 @@ List<String> belowQuotaPeerGpPeaceTargets({
         ownOw > partnerOw) {
       continue;
     }
-    if ((partnerOw - ownOw).abs() > 1) {
+    final maxPeerOwGap = hasUninvadedOldWorldMinor(game: game, snapshot: snapshot)
+        ? 3
+        : 1;
+    if ((partnerOw - ownOw).abs() > maxPeerOwGap) {
       continue;
     }
     if (!mutualPlateau && ownOw > partnerOw) {
       continue;
     }
-    // Keep fighting the sole invadable OW GP blocker, including mutual-plateau
-    // peers, so seed-42 mid-map fronts stay active through turn 100 (Refs #2509).
-    if (gpOnlyFrontier && soleGpWar == factionId) {
+    // Hold sole GP-blocker wars only when no minor pivot remains (Refs #2509).
+    if (gpOnlyFrontier &&
+        soleGpWar == factionId &&
+        !hasUninvadedOldWorldMinor(game: game, snapshot: snapshot)) {
       continue;
     }
     targets.add(factionId);
