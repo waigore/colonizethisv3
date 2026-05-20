@@ -122,7 +122,7 @@ Deterministic phases from `PlayerView` → `AIWorldSnapshot` (`observer_goal_pha
 
 **EXPAND suppressions:** No NW `declareWar` / `establishOverture` toward colonial targets, NW conquest army moves, colonial naval ranking/caps, `purchase_land` / NW `build_improvement` civilian work, or colonial-pressure goal/diplomacy floors. OW declare-war, OW army moves, OW improvements, economy, and research remain allowed.
 
-**EXPAND:** `offerPeace` toward at-war Great Powers that do not own the primary invadable Old World frontier blocker when fighting two or more GPs.
+**EXPAND:** `offerPeace` toward at-war Great Powers that do not own the primary invadable Old World frontier blocker when fighting two or more GPs. While uninvaded OW minors remain, also peace below-quota GP peers within three provinces (pivot off mutual-plateau distraction wars). On GP-only frontiers with no minor pivot, the weaker mutual-plateau peer may `declareWar` on the stronger peer.
 
 **COLONIAL-lite** (turn ≥`kObserverColonialLiteMinTurn`, OW ≥`kObserverColonialLiteNearQuotaOw` and below quota, global `newWorld|` not all GP-owned): allows `establishOverture`, colonial naval/cargo; suppresses NW `declareWar`, invasion army moves, and `purchase_land` only.
 

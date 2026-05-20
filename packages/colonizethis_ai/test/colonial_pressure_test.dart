@@ -147,7 +147,7 @@ void main() {
       );
     });
 
-    test('holds mutual plateau sole GP blocker war while minors remain', () {
+    test('peaces mutual plateau peer when uninvaded minors remain on GP-only', () {
       final game = Game(
         id: 'g-below-quota-peer-gp-only-minors',
         worldState: WorldState(
@@ -208,7 +208,7 @@ void main() {
       );
       expect(
         belowQuotaPeerGpPeaceTargets(game: game, snapshot: snapshot),
-        isEmpty,
+        ['gp5'],
       );
     });
   });

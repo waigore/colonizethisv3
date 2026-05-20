@@ -104,6 +104,20 @@ List<String> expandPhaseGpPeaceTargets({
     for (final factionId in snapshot.threats.atWarWith)
       if (game.playerById(factionId) != null) factionId,
   ];
+  if (gpWars.isNotEmpty &&
+      hasUninvadedOldWorldMinor(game: game, snapshot: snapshot) &&
+      isBelowObserverConquestQuota(snapshot.conquest.oldWorldProvincesOwned)) {
+    final ownOw = snapshot.conquest.oldWorldProvincesOwned;
+    final distraction = <String>[
+      for (final factionId in gpWars)
+        if (isBelowObserverConquestQuota(provinceCountOwnedBy(game, factionId)) &&
+            (provinceCountOwnedBy(game, factionId) - ownOw).abs() <= 3)
+          factionId,
+    ]..sort();
+    if (distraction.isNotEmpty) {
+      return distraction;
+    }
+  }
   if (gpWars.length <= 1) {
     return const [];
   }

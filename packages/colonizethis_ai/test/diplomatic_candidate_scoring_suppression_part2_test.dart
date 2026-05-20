@@ -222,7 +222,7 @@ void main() {
         );
         expect(
           stalledGpBlockerDeclareWarTarget(game: game, snapshot: weakerSnap),
-          isNull,
+          'gp6',
         );
         expect(
           stalledGpBlockerDeclareWarTarget(game: game, snapshot: strongerSnap),
@@ -297,7 +297,7 @@ void main() {
         );
         expect(
           stalledGpBlockerDeclareWarTarget(game: game, snapshot: snap),
-          isNull,
+          'gp6',
         );
       },
     );

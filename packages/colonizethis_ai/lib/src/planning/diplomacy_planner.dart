@@ -317,15 +317,6 @@ String? stalledGpBlockerDeclareWarTarget({
     ownOw: ownOw,
     partnerOw: blockerOw,
   )) {
-    // GP-only mutual plateau at similar holdings: peace when no minor pivot
-    // remains (avoids seed-42 gp5/gp6 wipeouts; Refs #2509).
-    if (isOldWorldGpOnlyInvadableFrontier(game: game, snapshot: snapshot) &&
-        (blockerOw - ownOw).abs() <= 1 &&
-        regimentCountForPlayer(game, snapshot.playerId) > 0 &&
-        regimentCountForPlayer(game, blocker) > 0 &&
-        !hasUninvadedOldWorldMinor(game: game, snapshot: snapshot)) {
-      return null;
-    }
     if (regimentCountForPlayer(game, blocker) == 0) {
       return null;
     }
