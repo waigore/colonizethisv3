@@ -25,17 +25,16 @@ export 'naval_coastal_visibility.dart'
         revealTilesAfterMoveToSeaZone;
 export 'naval_mission_orders.dart' show applyNavalMissionOrders;
 
-List<String> _adjacentSeaZones(MapTopology topology, String seaZoneId) {
-  final out = <String>[];
-  for (final e in topology.edges) {
-    if (e.id1 == seaZoneId) {
-      out.add(e.id2);
-    } else if (e.id2 == seaZoneId) {
-      out.add(e.id1);
-    }
-  }
-  return out;
-}
+/// Outcome of a single naval-move order application. Returned by both the
+/// dock and at-sea move handlers and consumed by [applyNavalMovesAndShipReveal]
+/// to thread the mutating fleet/visibility state across each player's orders.
+/// Refs #2560.
+typedef _NavalMoveOutcome = ({
+  List<Fleet> fleets,
+  Map<String, Fleet> fleetById,
+  Map<String, int> fleetIndexById,
+  Map<String, Map<String, String>> visibilityByTile,
+});
 
 /// Single-pass index: sea zone id → fleets whose [Fleet.seaZoneId] equals that
 /// zone. Preserves world fleet list order within each bucket (Refs #2394).
@@ -56,7 +55,7 @@ String? _firstFriendlyOrNeutralRetreatZone(
   Map<String, Set<String>> hostileByOwner,
   Map<String, List<Fleet>> fleetsBySeaZoneId,
 ) {
-  for (final adj in _adjacentSeaZones(topology, fromSeaZoneId)) {
+  for (final adj in nodesAdjacentTo(topology, fromSeaZoneId)) {
     var hostileOwnersPresent = false;
     for (final fleet in fleetsBySeaZoneId[adj] ?? const <Fleet>[]) {
       if (!fleet.isAtSea) continue;
@@ -69,15 +68,6 @@ String? _firstFriendlyOrNeutralRetreatZone(
     if (!hostileOwnersPresent) return adj;
   }
   return null;
-}
-
-String? _firstFleetRegionIdForSeaZone(
-  String seaZoneId,
-  Map<String, List<Fleet>> fleetsBySeaZoneId,
-) {
-  final inZone = fleetsBySeaZoneId[seaZoneId];
-  if (inZone == null || inZone.isEmpty) return null;
-  return inZone.first.regionId;
 }
 
 Map<String, int> _fleetIndexById(List<Fleet> fleets) => {
@@ -113,13 +103,7 @@ bool _navalMoveDestinationIsReachable({
   ).contains(destZoneId);
 }
 
-({
-  List<Fleet> fleets,
-  Map<String, Fleet> fleetById,
-  Map<String, int> fleetIndexById,
-  Map<String, Map<String, String>> visibilityByTile,
-})
-_applyDockNavalMoveOrder({
+_NavalMoveOutcome _applyDockNavalMoveOrder({
   required Game game,
   required MapTopology topology,
   required List<Fleet> fleets,
@@ -247,13 +231,7 @@ _applyDockNavalMoveOrder({
   );
 }
 
-({
-  List<Fleet> fleets,
-  Map<String, Fleet> fleetById,
-  Map<String, int> fleetIndexById,
-  Map<String, Map<String, String>> visibilityByTile,
-})
-_applySeaNavalMoveOrder({
+_NavalMoveOutcome _applySeaNavalMoveOrder({
   required Game game,
   required MapTopology topology,
   required List<Fleet> fleets,
@@ -525,15 +503,13 @@ Game runNavalInterceptionCombatPhase(
     seed =
         (seed * kTurnResolutionLcgMultiplier + kTurnResolutionLcgIncrement) &
         kTurnResolutionLcgMask;
-    final zoneRegionId = regionIdForSeaZone(topology, battle.seaZoneId);
-    // Single-pass first-match over fleets (Refs #2394): avoids the
-    // `.where(...)` lazy chain plus `isEmpty`/`first` re-iteration and bounds
-    // the per-battle scan cost regardless of fleet count when the topology
-    // resolves the zone region directly. Lookup is extracted to keep nesting
-    // within repo.control_flow_nesting_depth limits.
+    // Single-pass first-match (Refs #2394): topology lookup first; otherwise
+    // fall back to the first fleet bucketed under `battle.seaZoneId` via the
+    // pre-built fleets-by-sea-zone index (still single-pass; no `.where` or
+    // `.first` re-iteration on the global fleet list).
     final regionId =
-        zoneRegionId ??
-        _firstFleetRegionIdForSeaZone(battle.seaZoneId, fleetsBySeaZoneId) ??
+        regionIdForSeaZone(topology, battle.seaZoneId) ??
+        fleetsBySeaZoneId[battle.seaZoneId]?.firstOrNull?.regionId ??
         kRegionOldWorld;
     state = applyNavalBattleResults(
       state,

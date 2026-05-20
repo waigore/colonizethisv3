@@ -57,6 +57,16 @@ Iterable<ProvinceTraversalEntry> traverseProvinces(
   }
 }
 
+/// Single dual-region pass yielding `{ provinceId: ownerId }` across both
+/// regions. Mirrors the inline `{ for (... in traverseProvinces(world))
+/// e.provinceId: e.ownerId }` idiom several scanners had repeated; centralizing
+/// it keeps fog/movement/spy decay readers semantically aligned with the same
+/// canonical ordering used by [traverseProvinces]. Refs #2560.
+Map<String, String?> ownerByProvinceIdMap(WorldState world) => {
+  for (final entry in traverseProvinces(world))
+    entry.provinceId: entry.ownerId,
+};
+
 List<String>? _tileKeysForProvince(
   Map<String, List<String>>? tilesByProvince,
   String provinceId,
