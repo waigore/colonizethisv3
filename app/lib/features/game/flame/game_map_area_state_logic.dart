@@ -386,9 +386,7 @@ class GameMapAreaStateLogic {
     bool hasDraftNaval(String fleetId) =>
         moveByFleetId.containsKey(fleetId) || missionFleetIds.contains(fleetId);
 
-    final fleetsById = <String, ct_models.Fleet>{
-      for (final f in game.worldState.fleets) f.id: f,
-    };
+    ct_models.Fleet? lookupFleet(String fleetId) => game.fleetById(fleetId);
 
     String seaZoneLocalId(String seaZoneId) => prefixedIdLocalSegment(seaZoneId);
 
@@ -573,7 +571,7 @@ class GameMapAreaStateLogic {
 
     final groups = <String, _FleetTileProj>{};
     for (final fleetId in fleetIdsToProject) {
-      final fleet = fleetsById[fleetId];
+      final fleet = lookupFleet(fleetId);
       final mv = moveByFleetId[fleetId];
       if (fleet == null) {
         continue;

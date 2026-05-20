@@ -108,6 +108,13 @@ final Expando<Map<String, String>> _gameGpOwnerIdByCapitalProvinceId =
 final Expando<Map<String, String>> _gameFactionDisplayNameById =
     Expando<Map<String, String>>('gameFactionDisplayNameById');
 
+/// Fleet id → [Fleet] for any [WorldState.fleets] row. Built once per [Game]
+/// instance for app-side and dialog/panel lookups (Refs #2575 Phase 4).
+/// First-match-wins on id collisions; mirrors the inline `<String, Fleet>` map
+/// previously constructed in `projectFleetMarkersForHumanDraft`.
+final Expando<Map<String, Fleet>> _gameFleetsById =
+    Expando<Map<String, Fleet>>('gameFleetsById');
+
 /// Safe player lookup by id. Returns null if not found.
 extension GamePlayerLookup on Game {
   Player? playerById(String id) {
@@ -169,5 +176,23 @@ extension GamePlayerLookup on Game {
       _gameFactionDisplayNameById[this] = byId;
     }
     return byId[factionId];
+  }
+
+  /// Safe fleet lookup by id over [WorldState.fleets]. Returns null when no
+  /// fleet matches. Uses a per-[Game] Expando-cached index so repeated calls
+  /// during a single resolved game state are O(1) (Refs #2575 Phase 4). The
+  /// cache invalidates implicitly on the next [Game.copyWith] because callers
+  /// always replace [worldState] via `game.copyWith(worldState: ...)` when
+  /// fleets change, yielding a new [Game] instance.
+  Fleet? fleetById(String id) {
+    var byId = _gameFleetsById[this];
+    if (byId == null) {
+      byId = <String, Fleet>{};
+      for (final f in worldState.fleets) {
+        byId.putIfAbsent(f.id, () => f);
+      }
+      _gameFleetsById[this] = byId;
+    }
+    return byId[id];
   }
 }
