@@ -51,16 +51,6 @@ bool isStalledOldWorldGpBlockerFocus({
     isBelowObserverConquestQuota(snapshot.conquest.oldWorldProvincesOwned) &&
     isOldWorldGpOnlyInvadableFrontier(game: game, snapshot: snapshot);
 
-/// Never skip the pre-conquest peace pass (observer seed-42; Refs #2509).
-///
-/// Forced peace targets in [collectStalledGreatPowerPeaceTargets] already
-/// preserve winnable sole-blocker wars; skipping the whole pass prevented
-/// quota-met GPs from offering peace to below-quota victims.
-bool shouldSkipBelowQuotaGpOnlyBlockerPeacePass({
-  required Game game,
-  required AIWorldSnapshot snapshot,
-}) => false;
-
 /// Both GPs in the 8–9 OW stalled band, below the observer quota, with similar holdings.
 bool isMutualBelowQuotaPlateauPeer({
   required int ownOw,
@@ -510,56 +500,6 @@ List<String> quotaMetFutileBelowQuotaGpPeaceTargets({
   }
   targets.sort();
   return targets;
-}
-
-/// Peace the sole invadable OW frontier GP when both sides are below the
-/// observer quota with similar holdings (mutual blocker stalemate; Refs #2509).
-List<String> plateauMutualInvadableBlockerPeaceTargets({
-  required Game game,
-  required AIWorldSnapshot snapshot,
-}) {
-  if (!isBelowObserverConquestQuota(snapshot.conquest.oldWorldProvincesOwned)) {
-    return const [];
-  }
-  if (!isStalledOldWorldExpansion(snapshot.conquest.oldWorldProvincesOwned)) {
-    return const [];
-  }
-  final provinceOwner = getProvinceOwnerMap(game);
-  final minorsOwnInvadable = snapshot.conquest.invadableProvinceIdsSorted.any(
-    (pid) {
-      final owner = provinceOwner[pid];
-      return owner != null && game.minorNations.any((m) => m.id == owner);
-    },
-  );
-  if (!minorsOwnInvadable) {
-    return const [];
-  }
-  final blocker = primaryInvadableOldWorldGpBlocker(
-    game: game,
-    snapshot: snapshot,
-  );
-  if (blocker == null ||
-      !snapshot.threats.atWarWith.contains(blocker) ||
-      game.playerById(blocker) == null) {
-    return const [];
-  }
-  final gpWars = <String>[
-    for (final factionId in snapshot.threats.atWarWith)
-      if (game.playerById(factionId) != null) factionId,
-  ];
-  if (gpWars.length != 1 || gpWars.single != blocker) {
-    return const [];
-  }
-  final blockerOw = provinceCountOwnedBy(game, blocker);
-  if (!isBelowObserverConquestQuota(blockerOw)) {
-    return const [];
-  }
-  final ownOw = snapshot.conquest.oldWorldProvincesOwned;
-  if ((blockerOw - ownOw).abs() > 2) {
-    return const [];
-  }
-  // Mutual below-quota peace on the sole GP blocker stalls turn-100 conquest.
-  return const [];
 }
 
 /// Peace every at-war Great Power when OW holdings are critically low and minors

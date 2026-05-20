@@ -10,8 +10,6 @@ export 'colonial_pressure.dart'
         isOldWorldGpOnlyInvadableFrontier,
         isStalledOldWorldGpBlockerFocus,
         primaryInvadableOldWorldGpBlocker,
-        plateauMutualInvadableBlockerPeaceTargets,
-        shouldSkipBelowQuotaGpOnlyBlockerPeacePass,
         quotaMetBelowQuotaAtWarPeaceTargets,
         quotaMetFutileBelowQuotaGpPeaceTargets,
         stalledBelowQuotaGpLeadPeaceTargets,
@@ -513,15 +511,11 @@ List<DiplomaticOrder> _filterDiplomacyCandidatesForPass({
       snapshot: snapshot,
     );
     final allowBlockerPeace = blocker != null &&
-        (plateauMutualInvadableBlockerPeaceTargets(
+        unwinnableSoleGpFrontierPeaceTarget(
               game: ctx.game,
               snapshot: snapshot,
-            ).contains(blocker) ||
-            unwinnableSoleGpFrontierPeaceTarget(
-                  game: ctx.game,
-                  snapshot: snapshot,
-                ) ==
-                blocker);
+            ) ==
+            blocker;
     filtered = filtered
         .where(
           (o) =>
@@ -881,11 +875,7 @@ DiplomacyPlannerResult runDiplomacyPlannerWithResult({
 }) {
   // Survival peace must run even when diplomacy weight is low or suggestion
   // APIs return no candidates (observer seed-42 gp3/gp6; Refs #2509).
-  if (pass != DiplomacyPlannerPass.declareWarOnly &&
-      !shouldSkipBelowQuotaGpOnlyBlockerPeacePass(
-        game: ctx.game,
-        snapshot: snapshot,
-      )) {
+  if (pass != DiplomacyPlannerPass.declareWarOnly) {
     final peaceResult = _stalledPeacePlannerResultIfNeeded(
       ctx: ctx,
       snapshot: snapshot,

@@ -489,10 +489,6 @@ const int kOfferPeaceBelowQuotaInvadableBlockerPenalty = 420;
 /// and below the observer quota (avoid net OW loss; seed-42 gp3; Refs #2509).
 const int kOfferPeaceBelowQuotaStartSizeGpWarPenalty = 420;
 
-/// Offer-peace bonus when both sides are below the observer quota, stalled, and
-/// each other's sole invadable OW frontier GP (seed-42 gp5/gp6; Refs #2509).
-const int kOfferPeacePlateauMutualBlockerBonus = 520;
-
 /// Army-move score bonus for own provinces bordering a faction already at war
 /// (march to frontier when invadable tiles are not yet visible).
 const double kConquestArmyMoveAdjacentAtWarFrontierBonus = 650;

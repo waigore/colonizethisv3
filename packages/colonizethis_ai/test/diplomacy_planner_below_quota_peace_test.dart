@@ -490,10 +490,10 @@ void main() {
   );
 
   test(
-    'shouldSkipBelowQuotaGpOnlyBlockerPeacePass false when sole blocker unwinnable',
+    'unwinnableSoleGpFrontierPeaceTarget identifies outgunned sole blocker',
     () {
       final game = Game(
-        id: 'g-skip-unwinnable-blocker',
+        id: 'g-unwinnable-sole-blocker',
         worldState: WorldState(
           turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 80),
           oldWorld: RegionData(
@@ -548,14 +548,6 @@ void main() {
         ),
         economy: EconomySummary(),
         relations: {},
-      );
-      expect(
-        shouldSkipBelowQuotaGpOnlyBlockerPeacePass(
-          game: game,
-          snapshot: snapshot,
-        ),
-        isFalse,
-        reason: 'outgunned sole-blocker war should run peace pass',
       );
       expect(
         unwinnableSoleGpFrontierPeaceTarget(game: game, snapshot: snapshot),
