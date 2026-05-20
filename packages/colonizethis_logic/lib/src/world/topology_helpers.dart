@@ -23,6 +23,9 @@ final Expando<Set<String>> _seaZoneNodeIdsCache =
 final Expando<bool> _topologyUsesPrefixedIdsCache =
     Expando<bool>('topology.usesPrefixedIds');
 
+final Expando<Map<String, MapTopology>> _topologyByRegionSubgraphCache =
+    Expando<Map<String, MapTopology>>('topology.byRegionSubgraph');
+
 Set<String> _computeProvinceNodeIds(MapTopology topology) {
   final out = <String>{};
   for (final n in topology.nodes) {
@@ -83,10 +86,14 @@ Set<String> seaZoneNodeIds(MapTopology topology) {
 
 /// Sea zones reachable from [startSeaZoneIds] by following S–S edges in [topology].
 /// SPEC/game/map-topology.md, capital-and-connectivity § Sea paths.
+///
+/// When [onDequeue] is set, it is invoked once per BFS dequeue (connectivity hot-path
+/// metrics in `connectivity_resolver.dart`).
 Set<String> seaZonesReachableBySeaPath(
   MapTopology topology,
-  Set<String> startSeaZoneIds,
-) {
+  Set<String> startSeaZoneIds, {
+  void Function()? onDequeue,
+}) {
   final seaZoneIds = seaZoneNodeIds(topology);
   final neighbours = <String, Set<String>>{};
   for (final e in topology.edges) {
@@ -101,6 +108,7 @@ Set<String> seaZonesReachableBySeaPath(
   final queue = Queue<String>()..addAll(startSeaZoneIds);
   while (queue.isNotEmpty) {
     final z = queue.removeFirst();
+    onDequeue?.call();
     for (final n in neighbours[z] ?? {}) {
       if (reachable.contains(n)) continue;
       reachable.add(n);
@@ -123,5 +131,60 @@ Set<String> seaZonesAdjacentToProvince(
     if (seaZoneIds.contains(other)) out.add(other);
   }
   return out;
+}
+
+/// All node ids directly adjacent to [nodeId] in [topology] regardless of node
+/// type. Order matches a single forward pass over `topology.edges`, mirroring
+/// the inline first-match / single-pass scans previously duplicated across
+/// world resolvers (naval retreat lookup, single-shot adjacency probes).
+/// Refs #2560.
+List<String> nodesAdjacentTo(MapTopology topology, String nodeId) {
+  final out = <String>[];
+  for (final e in topology.edges) {
+    if (e.id1 == nodeId) {
+      out.add(e.id2);
+    } else if (e.id2 == nodeId) {
+      out.add(e.id1);
+    }
+  }
+  return out;
+}
+
+/// Region-scoped topology for [regionId]. Returns [topologyByRegion]`[regionId]`
+/// when provided and non-null; otherwise computes a subgraph of [base] limited
+/// to nodes (and their connecting edges) tagged with that region. The subgraph
+/// result is cached per `(base, regionId)` so repeated callers do not re-scan
+/// `base.nodes`/`base.edges`. Returns an empty topology when the base contains
+/// no nodes for [regionId]. Refs #2560.
+MapTopology topologyForRegion(
+  MapTopology base,
+  String regionId, {
+  Map<String, MapTopology>? topologyByRegion,
+}) {
+  final override = topologyByRegion?[regionId];
+  if (override != null) return override;
+  final cached = _topologyByRegionSubgraphCache[base];
+  if (cached != null) {
+    final hit = cached[regionId];
+    if (hit != null) return hit;
+  }
+  final regionNodes = <TopologyNode>[];
+  final regionNodeIds = <String>{};
+  for (final n in base.nodes) {
+    if (n.regionId != regionId) continue;
+    regionNodes.add(n);
+    regionNodeIds.add(n.id);
+  }
+  if (regionNodes.isEmpty) {
+    return const MapTopology(nodes: [], edges: []);
+  }
+  final regionEdges = [
+    for (final e in base.edges)
+      if (regionNodeIds.contains(e.id1) && regionNodeIds.contains(e.id2)) e,
+  ];
+  final subgraph = MapTopology(nodes: regionNodes, edges: regionEdges);
+  (cached ?? (_topologyByRegionSubgraphCache[base] = <String, MapTopology>{}))
+      .putIfAbsent(regionId, () => subgraph);
+  return subgraph;
 }
 
