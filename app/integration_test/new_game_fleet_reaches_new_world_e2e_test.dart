@@ -16,11 +16,9 @@ import 'package:colonizethis_logic/colonizethis_logic.dart'
         suggestWorkOrders;
 import 'package:colonizethis_models/colonizethis_models.dart'
     show MoveOrder, ProvinceId, Unit, WorkOrder, kUnitTypeExplorer;
-import 'package:colonizethis_app/features/game/flame/game_screen_shared.dart';
 import 'package:colonizethis_app/l10n/l10n.dart';
 import 'package:colonizethis_app/main.dart' show bootstrapForIntegrationTest;
 import 'package:colonizethis_app/widgets/ct_choice_chip.dart';
-import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
@@ -154,7 +152,7 @@ void main() {
         return;
       }
 
-      await _advanceOneHumanTurn(tester, l10n, perf: perf);
+      await advanceOneHumanTurn(tester, l10n: l10n, perf: perf);
       if (_fleetReachDoneFromCtSnapshotOnly()) {
         perf.timing(
           'test_total',
@@ -287,7 +285,7 @@ void main() {
           break;
         }
 
-        await _advanceOneHumanTurn(tester, l10n, perf: perf);
+        await advanceOneHumanTurn(tester, l10n: l10n, perf: perf);
         if (_fleetReachDoneFromCtSnapshotOnly()) {
           break;
         }
@@ -364,7 +362,7 @@ void main() {
         // CI can lag reveal/suggestion propagation by a few turns.
         // Keep assertion strict, but retry with a small bounded loop.
         perf.bumpCounter('bundled_explore_retry_iterations');
-        await _advanceOneHumanTurn(tester, l10n, perf: perf);
+        await advanceOneHumanTurn(tester, l10n: l10n, perf: perf);
         await dismissTransientUi(tester, perf: perf);
         await _tapNewWorldRegionTabIfPresent(tester);
         exploreEnabled = await checkExploreEnabledFromCivilianPanel();

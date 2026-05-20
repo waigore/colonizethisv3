@@ -3,6 +3,7 @@ import 'dart:math' as math;
 import 'package:colonizethis_app/config/ct_e2e.dart';
 import 'package:colonizethis_app/features/game/dialogue/game_start_intro_overlay.dart';
 import 'package:colonizethis_app/features/game/flame/game_screen_shared.dart';
+import 'package:colonizethis_app/features/game/flame/turn_resolution_processing_dialog.dart';
 import 'package:colonizethis_app/l10n/app_localizations_contract.dart';
 import 'package:colonizethis_app/widgets/ct_choice_chip.dart';
 import 'package:colonizethis_app/widgets/ct_dialog_shell.dart';
@@ -90,7 +91,7 @@ Future<void> e2eAdvanceGameStartIntroUntilDismissed(
       await e2ePumpUntilConditionOrIdle(
         tester,
         () => !e2eGameStartIntroBlocksUi(tester),
-        timeout: const Duration(seconds: 2),
+        timeout: const Duration(seconds: 5),
         perf: perf,
         phaseName: 'pump_until_intro_advance_after_$label',
       );
@@ -604,10 +605,29 @@ Future<void> e2eWaitUntilAnyFinderHitTestable(
   );
 }
 
+/// Post-confirm turn resolution wait aligned with the 15s usability budget
+/// (`colonizethis-turn-resolution-budget.mdc`).
+const Duration kE2eNextTurnResolutionTimeout = Duration(seconds: 15);
+
+/// Text inside the map HUD next-turn [CtNinePatchButton] (`game_nextTurnButton`).
+String? e2eReadNextTurnButtonLabel(WidgetTester tester) {
+  final inner = find.descendant(
+    of: find.byKey(kGameMapNextTurnButtonKey),
+    matching: find.byType(Text),
+  );
+  if (inner.evaluate().length != 1) {
+    return null;
+  }
+  final w = inner.evaluate().single.widget;
+  return w is Text ? w.data : null;
+}
+
 /// Polls until the next-turn map chip label changes from [turnLabelBefore].
 ///
 /// Evaluates the label **before** the first pump; uses [e2eAdaptivePollRampAfterIdle]
-/// on idle pumps (GitHub #2336 / AC5).
+/// on idle pumps (GitHub #2336 / AC5). When a
+/// [TurnResolutionProcessingDialog] appears, completion also requires that dialog
+/// to clear before accepting a label change (avoids racing mid-resolution UI).
 Future<Duration> e2eWaitForNextTurnLabelAdvance(
   WidgetTester tester, {
   required String turnLabelBefore,
@@ -616,14 +636,15 @@ Future<Duration> e2eWaitForNextTurnLabelAdvance(
 }) async {
   final sw = Stopwatch()..start();
   var nextTurnPollMs = 25;
+  var sawProcessingDialog = false;
   while (sw.elapsed < timeout) {
-    final turnAfterFinder = find.descendant(
-      of: find.byKey(kGameMapNextTurnButtonKey),
-      matching: find.byType(Text),
-    );
-    if (turnAfterFinder.evaluate().isNotEmpty) {
-      final turnAfter = turnAfterFinder.evaluate().single.widget as Text;
-      if (turnAfter.data != turnLabelBefore) {
+    if (find.byType(TurnResolutionProcessingDialog).evaluate().isNotEmpty) {
+      sawProcessingDialog = true;
+    }
+    final label = e2eReadNextTurnButtonLabel(tester);
+    if (label != null && label != turnLabelBefore) {
+      if (!sawProcessingDialog ||
+          find.byType(TurnResolutionProcessingDialog).evaluate().isEmpty) {
         perf?.timing(
           'next_turn_wall_clock',
           sw.elapsed,
@@ -640,5 +661,63 @@ Future<Duration> e2eWaitForNextTurnLabelAdvance(
     'Next turn label did not advance within ${timeout.inSeconds}s. '
     'Last exception: ${tester.takeException()}',
   );
+}
+
+/// Taps Next turn, confirms when prompted, and waits for resolution to finish.
+///
+/// Shared by full-turn and fleet E2E (GitHub #2336 AC5). Uses adaptive polls for
+/// the confirm-or-advanced gate and [kE2eNextTurnResolutionTimeout] for the label
+/// poll after confirm.
+Future<Duration> e2eAdvanceOneHumanTurn(
+  WidgetTester tester, {
+  required AppLocalizations l10n,
+  E2ePerfLog? perf,
+  Duration timeout = kE2eNextTurnResolutionTimeout,
+}) async {
+  final phaseSw = Stopwatch()..start();
+  final before = e2eReadNextTurnButtonLabel(tester);
+  await tester.tap(find.byKey(kGameMapNextTurnButtonKey));
+  perf?.bumpCounter('next_turn_taps');
+
+  final confirmFinder = find.text(l10n.common_yes);
+  await e2ePumpUntilConditionOrIdle(
+    tester,
+    () {
+      if (confirmFinder.hitTestable().evaluate().isNotEmpty) {
+        return true;
+      }
+      final maybeAfter = e2eReadNextTurnButtonLabel(tester);
+      return maybeAfter != null && maybeAfter != before;
+    },
+    timeout: const Duration(seconds: 5),
+    perf: perf,
+    phaseName: 'pump_until_next_turn_confirm_or_label_advanced',
+  );
+  final earlyAfter = e2eReadNextTurnButtonLabel(tester);
+  if (earlyAfter != null && earlyAfter != before) {
+    perf?.timing('next_turn_advance', phaseSw.elapsed);
+    return phaseSw.elapsed;
+  }
+
+  final confirmNextTurn = confirmFinder.hitTestable();
+  if (confirmNextTurn.evaluate().isNotEmpty) {
+    await tester.tap(confirmNextTurn.first, warnIfMissed: false);
+    await tester.pump();
+  }
+
+  if (before == null) {
+    fail(
+      'Next turn button label missing before advance. '
+      'Last exception: ${tester.takeException()}',
+    );
+  }
+  final labelWait = await e2eWaitForNextTurnLabelAdvance(
+    tester,
+    turnLabelBefore: before,
+    timeout: timeout,
+    perf: perf,
+  );
+  perf?.timing('next_turn_advance', phaseSw.elapsed);
+  return labelWait;
 }
 
