@@ -99,18 +99,12 @@ DomainPlannerOutcome runDomainPlannersWithOutcome({
   ctx = ctx.withOrders(runMovePlanner(ctx: ctx));
   emit('aiStageC');
 
-  final skipGpOnlyBlockerPeace = shouldSkipBelowQuotaGpOnlyBlockerPeacePass(
-    game: ctx.game,
+  final peaceBeforeConquestResult = runDiplomacyPlannerWithResult(
+    ctx: ctx,
     snapshot: snapshot,
+    pass: DiplomacyPlannerPass.nonDeclareWarOnly,
   );
-  if (!skipGpOnlyBlockerPeace) {
-    final peaceBeforeConquestResult = runDiplomacyPlannerWithResult(
-      ctx: ctx,
-      snapshot: snapshot,
-      pass: DiplomacyPlannerPass.nonDeclareWarOnly,
-    );
-    ctx = ctx.withOrders(peaceBeforeConquestResult.orders);
-  }
+  ctx = ctx.withOrders(peaceBeforeConquestResult.orders);
 
   final declareWarResult = runDiplomacyPlannerWithResult(
     ctx: ctx,
@@ -172,15 +166,13 @@ DomainPlannerOutcome runDomainPlannersWithOutcome({
 
   // Late peace pass undoes same-turn declare-war on the OW frontier blocker
   // (observer seed-42 gp5/gp6; Refs #2509).
-  if (!skipGpOnlyBlockerPeace) {
-    ctx = ctx.withOrders(
-      runDiplomacyPlannerWithResult(
-        ctx: ctx,
-        snapshot: snapshot,
-        pass: DiplomacyPlannerPass.nonDeclareWarOnly,
-      ).orders,
-    );
-  }
+  ctx = ctx.withOrders(
+    runDiplomacyPlannerWithResult(
+      ctx: ctx,
+      snapshot: snapshot,
+      pass: DiplomacyPlannerPass.nonDeclareWarOnly,
+    ).orders,
+  );
   emit('aiStageF');
 
   ctx = ctx.withOrders(runResearchPlanner(ctx: ctx));

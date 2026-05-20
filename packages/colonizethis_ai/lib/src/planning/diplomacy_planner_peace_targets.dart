@@ -405,8 +405,6 @@ bool stalledOwExpansionNeedsPeacePass({
         .isNotEmpty ||
     weakHoldingsInvadableBlockerPeaceTargets(game: game, snapshot: snapshot)
         .isNotEmpty ||
-    plateauMutualInvadableBlockerPeaceTargets(game: game, snapshot: snapshot)
-        .isNotEmpty ||
     mutualZeroRegimentGpStalematePeaceTargets(game: game, snapshot: snapshot)
         .isNotEmpty ||
     stalledZeroRegimentGpPeaceTargets(game: game, snapshot: snapshot)
@@ -495,7 +493,6 @@ Iterable<String> _expandRatchetGreatPowerPeaceTargets({
   yield* multiFrontNonBlockerGpPeaceTargets(game: game, snapshot: snapshot);
   yield* criticalMultiFrontGpPeaceTargets(game: game, snapshot: snapshot);
   yield* weakHoldingsInvadableBlockerPeaceTargets(game: game, snapshot: snapshot);
-  yield* plateauMutualInvadableBlockerPeaceTargets(game: game, snapshot: snapshot);
   final strongerBlocker = stalledStrongerGpBlockerPeaceTarget(
     game: game,
     snapshot: snapshot,
@@ -565,10 +562,6 @@ Set<String> collectStalledGreatPowerPeaceTargets({
         game: game,
         snapshot: snapshot,
       ),
-    ...plateauMutualInvadableBlockerPeaceTargets(
-      game: game,
-      snapshot: snapshot,
-    ),
     if (unwinnableBlockerPeace != null) unwinnableBlockerPeace,
     ...quotaMetBelowQuotaAtWarPeaceTargets(game: game, snapshot: snapshot),
     ...belowQuotaPeerGpPeaceTargets(game: game, snapshot: snapshot),
