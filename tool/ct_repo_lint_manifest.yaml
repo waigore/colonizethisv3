@@ -235,6 +235,13 @@ rules:
     runner: dart
     script: tool/check_game_widgets_file_size.dart
 
+  - rule_id: repo.logic_diplomatic_sub_validator_size
+    group: architecture
+    title: colonizethis_logic diplomatic sub-validator classes stay thin (Refs #2560)
+    spec: SPEC/program/orders.md
+    runner: dart
+    script: tool/check_logic_diplomatic_sub_validator_size.dart
+
   - rule_id: repo.logic_test_file_size
     group: structure
     title: colonizethis_logic package tests must stay at or below 400 physical lines

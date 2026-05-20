@@ -3,15 +3,6 @@
 # from scan). See SPEC/program/logic-dual-region-province-access.md.
 version: 1
 sanctions:
-  - path: packages/colonizethis_logic/lib/src/world/connectivity_resolver.dart
-    line: 177
-    rationale: Single dual-region pass buckets owned provinces and town-tile keys
-      by playerId so per-player connectivity loops below run O(1) lookups
-      instead of repeating O(provinces) scans (consolidates the legacy line-229
-      owned-province scan and the legacy line-536 town-tile scan).
-    spec: SPEC/program/logic-dual-region-province-access.md
-    issue: https://github.com/waigore/colonizethisv3/issues/2394
-
   - path: packages/colonizethis_logic/lib/src/world/player_view.dart
     line: 89
     rationale: Player view aggregates province-level facts across both regions.
@@ -48,18 +39,6 @@ sanctions:
     rationale: Army move picker fallback builds owned-province ids across regions when PlayerView is absent.
     spec: SPEC/program/logic-dual-region-province-access.md
     issue: https://github.com/waigore/colonizethisv3/issues/2394
-  - path: packages/colonizethis_logic/lib/src/world/fog_resolution.dart
-    line: 31
-    rationale: Fog decay / visibility aggregates owners across all provinces.
-    spec: SPEC/program/logic-dual-region-province-access.md
-    issue: https://github.com/waigore/colonizethisv3/issues/2278
-
-  - path: packages/colonizethis_logic/lib/src/world/fog_resolution.dart
-    line: 64
-    rationale: Fog resolution builds cross-region owner maps for state updates.
-    spec: SPEC/program/logic-dual-region-province-access.md
-    issue: https://github.com/waigore/colonizethisv3/issues/2278
-
   - path: packages/colonizethis_logic/lib/src/world/capital_and_gp_fall.dart
     line: 189
     rationale: Capital fall logic scans province ownership across regions.
