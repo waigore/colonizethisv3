@@ -1,3 +1,4 @@
+import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_test/test.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
@@ -14,7 +15,16 @@ void main() {
         id: 'g1',
         worldState: WorldState(
           turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-          oldWorld: const RegionData(),
+          oldWorld: RegionData(
+            provinces: [
+              for (var i = 0; i < kObserverConquestMinOwProvincesPerGp; i++)
+                Province(
+                  id: 'oldWorld|gp3_$i',
+                  regionId: 'oldWorld',
+                  ownerId: 'gp3',
+                ),
+            ],
+          ),
           newWorld: const RegionData(),
         ),
         players: [

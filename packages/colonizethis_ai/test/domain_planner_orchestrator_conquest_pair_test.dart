@@ -32,7 +32,21 @@ void main() {
         id: 'g_conquest_pair',
         worldState: WorldState(
           turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
-          oldWorld: RegionData(provinces: [], units: []),
+          oldWorld: RegionData(
+            provinces: const [
+              Province(
+                id: 'oldWorld|p_gp',
+                regionId: 'oldWorld',
+                ownerId: 'gp1',
+              ),
+              Province(
+                id: 'oldWorld|p_minor',
+                regionId: 'oldWorld',
+                ownerId: 'minor1',
+              ),
+            ],
+            units: [],
+          ),
           newWorld: RegionData(provinces: [], units: []),
         ),
         players: const [
@@ -43,17 +57,26 @@ void main() {
             leaderKey: 'napoleon',
           ),
         ],
+        minorNations: const [
+          MinorNation(id: 'minor1', displayName: 'Minor 1'),
+        ],
       );
-      const topology = MapTopology(nodes: [], edges: []);
-      final view = PlayerView(
-        playerId: 'gp1',
-        player: game.players.single,
-        ownUnitsById: const {},
-        provincesById: const {},
-        visibilityByTile: const {},
-        prospectedTiles: const {},
-        diplomacyByOtherId: const {},
+      const topology = MapTopology(
+        nodes: [
+          TopologyNode(
+            id: 'p_gp',
+            regionId: 'oldWorld',
+            type: TopologyNodeType.province,
+          ),
+          TopologyNode(
+            id: 'p_minor',
+            regionId: 'oldWorld',
+            type: TopologyNodeType.province,
+          ),
+        ],
+        edges: [TopologyEdge(id1: 'p_gp', id2: 'p_minor')],
       );
+      final view = buildPlayerView(game, topology, 'gp1');
       final orders = runDomainPlannersInTest(
         game: game,
         topology: topology,

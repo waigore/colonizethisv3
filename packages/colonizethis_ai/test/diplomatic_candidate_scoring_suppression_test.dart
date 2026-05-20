@@ -15,6 +15,7 @@ void main() {
           threats: ThreatSummary(),
           opportunities: OpportunitySummary(),
           conquest: ConquestSummary(
+            oldWorldProvincesOwned: kObserverConquestMinOwProvincesPerGp,
             provincesToVictory: 24,
             adjacentOwnerFactionIdsSorted: [],
           ),
@@ -470,7 +471,10 @@ void main() {
           playerId: 'gp1',
           threats: ThreatSummary(),
           opportunities: OpportunitySummary(),
-          conquest: ConquestSummary(provincesToVictory: 24),
+          conquest: ConquestSummary(
+            oldWorldProvincesOwned: kObserverConquestMinOwProvincesPerGp,
+            provincesToVictory: 24,
+          ),
           colonial: ColonialSummary(
             invadableNewWorldProvinceIdsSorted: ['newWorld|nw1'],
           ),

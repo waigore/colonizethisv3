@@ -12,7 +12,12 @@ export 'src/ai/full_ai_civilian_work_selection.dart'
         selectFullAiCivilianWorkOrders;
 export 'src/ai/simple_ai_heuristics.dart' show turnSeedForPlayer;
 export 'src/constants.dart'
-    show GamePlayerLookup, kWorkTargetCounterSpy, kWorkTargetStealTech;
+    show
+        GamePlayerLookup,
+        kWorkTargetBuildImprovement,
+        kWorkTargetCounterSpy,
+        kWorkTargetPurchaseLand,
+        kWorkTargetStealTech;
 export 'src/diplomacy/diplomacy_relation_lookup.dart'
     show
         getRelation,

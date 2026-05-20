@@ -4,6 +4,7 @@ import 'package:colonizethis_logic/order_suggestion_api.dart';
 
 import 'army_conquest_prep.dart';
 import 'colonial_pressure.dart';
+import 'observer_goal_phase.dart';
 import 'planning_imports.dart';
 import 'goal_manager.dart';
 import '../perception/perception_snapshot.dart';
@@ -165,7 +166,7 @@ DomainPlannerOutcome runDomainPlannersWithOutcome({
   emit('aiStageD');
 
   ctx = ctx.withOrders(
-    runNavalPlanner(ctx: ctx, colonial: snapshot.colonial),
+    runNavalPlanner(ctx: ctx, snapshot: snapshot),
   );
   emit('aiStageE');
 
@@ -203,13 +204,22 @@ PlannerContext _runEconomyDomainPlanners({
   final domainWeights = ctx.domainWeights;
 
   emit('suggestionPools');
-  final workCandidates = ctx.suggestionAPI.suggestWorkOrders(
+  var workCandidates = ctx.suggestionAPI.suggestWorkOrders(
     ctx.view,
     ctx.game,
     ctx.topology,
     result,
     tileMapByRegion: tileMapByRegion,
   );
+  workCandidates = workCandidates
+      .where(
+        (w) => !shouldFilterObserverPhaseWorkOrder(
+          w,
+          snapshot: snapshot,
+          game: ctx.game,
+        ),
+      )
+      .toList();
   final buildCandidates = ctx.suggestionAPI.suggestBuildOrders(
     ctx.view,
     ctx.game,
@@ -222,12 +232,23 @@ PlannerContext _runEconomyDomainPlanners({
   );
   var workThreshold =
       40 - (hasSpyWork ? getAgendaSpyOrderModifier(ctx.config.hiddenAgendaId) : 0);
+  final developPhase = isObserverDevelopPhase(
+    snapshot: snapshot,
+    game: ctx.game,
+  );
   final colonialPressure = hasColonialAcquisitionTargets(snapshot.colonial) &&
-      !isStalledOldWorldGpBlockerFocus(game: ctx.game, snapshot: snapshot);
-  if (colonialPressure || snapshot.colonial.newWorldProvincesOwned > 0) {
+      !isStalledOldWorldGpBlockerFocus(game: ctx.game, snapshot: snapshot) &&
+      !shouldSuppressNewWorldColonialOrders(
+        snapshot: snapshot,
+        game: ctx.game,
+      );
+  if (developPhase) {
+    workThreshold = math.min(workThreshold, kDevelopCivilianWorkThresholdCap);
+  } else if (colonialPressure || snapshot.colonial.newWorldProvincesOwned > 0) {
     workThreshold = math.min(workThreshold, kColonialCivilianWorkThresholdCap);
   }
   final runFullAiCivilianWork =
+      developPhase ||
       ctx.primaryGoal == StrategicGoal.expand ||
       domainWeights.economy >= workThreshold ||
       colonialPressure ||
@@ -265,6 +286,28 @@ PlannerContext _runEconomyDomainPlanners({
   }
   emit('aiStageA');
 
+  result = _appendEconomyBuildOrders(
+    ctx: ctx,
+    snapshot: snapshot,
+    economyPlan: economyPlan,
+    orders: result,
+    colonialPressure: colonialPressure,
+    buildCandidates: buildCandidates,
+    domainEconomyWeight: domainWeights.economy,
+  );
+  emit('aiStageB');
+  return ctx.withOrders(result);
+}
+
+Orders _appendEconomyBuildOrders({
+  required PlannerContext ctx,
+  required AIWorldSnapshot snapshot,
+  required EconomyPlan economyPlan,
+  required Orders orders,
+  required bool colonialPressure,
+  required List<BuildUnitOrder> buildCandidates,
+  required int domainEconomyWeight,
+}) {
   var buildThreshold = 30 - getAgendaBuildOrderModifier(ctx.config.hiddenAgendaId);
   if (isStalledOldWorldExpansion(snapshot.conquest.oldWorldProvincesOwned)) {
     buildThreshold = math.min(buildThreshold, 15);
@@ -344,41 +387,42 @@ PlannerContext _runEconomyDomainPlanners({
     'buildCandidatesCount=${buildCandidates.length} '
     'regimentCount=$regimentCount forceRegimentRebuild=$forceRegimentRebuild',
   );
-  if (buildCandidates.isNotEmpty &&
-      (domainWeights.economy >= buildThreshold || forceRegimentRebuild)) {
-    var candidatesForBuild = buildCandidates;
-    if (forceRegimentRebuild) {
-      final regimentsOnly = buildCandidates
-          .where((o) => RegimentEconomyCatalog.byId.containsKey(o.unitType))
-          .toList();
-      if (regimentsOnly.isNotEmpty) {
-        candidatesForBuild = regimentsOnly;
-      }
+  if (buildCandidates.isEmpty ||
+      (domainEconomyWeight < buildThreshold && !forceRegimentRebuild)) {
+    if (buildCandidates.isNotEmpty) {
+      _log.d('build skipped nationId=${ctx.nationId} weight below threshold');
     }
-    final chosen = pickBuildOrder(
-      ctx: ctx,
-      input: BuildPickInput(
-        buildCandidates: candidatesForBuild,
-        cargoPreference: economyPlan.cargoPreference,
-        provincesToVictory: snapshot.conquest.provincesToVictory,
-        oldWorldProvincesOwned: snapshot.conquest.oldWorldProvincesOwned,
-        colonialPressure: colonialPressure,
-        militaryRebuildCrisis: forceRegimentRebuild &&
-            (atWarWithGpBlocker ||
-                brokeBelowQuotaAtPeace ||
-                (regimentCount <= kStalledMilitaryRebuildCrisisRegimentCap &&
-                    !(observerQuotaPressure &&
-                        snapshot.conquest.oldWorldProvincesOwned >
-                            kFewOldWorldProvincesDefendThreshold))),
-      ),
-    );
-    if (chosen != null) {
-      _log.i('build chosen nationId=${ctx.nationId} unitType=${chosen.unitType}');
-      result = result.appendBuildOrders(ctx.nationId, [chosen]);
-    }
-  } else if (buildCandidates.isNotEmpty) {
-    _log.d('build skipped nationId=${ctx.nationId} weight below threshold');
+    return orders;
   }
-  emit('aiStageB');
-  return ctx.withOrders(result);
+  var candidatesForBuild = buildCandidates;
+  if (forceRegimentRebuild) {
+    final regimentsOnly = buildCandidates
+        .where((o) => RegimentEconomyCatalog.byId.containsKey(o.unitType))
+        .toList();
+    if (regimentsOnly.isNotEmpty) {
+      candidatesForBuild = regimentsOnly;
+    }
+  }
+  final chosen = pickBuildOrder(
+    ctx: ctx,
+    input: BuildPickInput(
+      buildCandidates: candidatesForBuild,
+      cargoPreference: economyPlan.cargoPreference,
+      provincesToVictory: snapshot.conquest.provincesToVictory,
+      oldWorldProvincesOwned: snapshot.conquest.oldWorldProvincesOwned,
+      colonialPressure: colonialPressure,
+      militaryRebuildCrisis: forceRegimentRebuild &&
+          (atWarWithGpBlocker ||
+              brokeBelowQuotaAtPeace ||
+              (regimentCount <= kStalledMilitaryRebuildCrisisRegimentCap &&
+                  !(observerQuotaPressure &&
+                      snapshot.conquest.oldWorldProvincesOwned >
+                          kFewOldWorldProvincesDefendThreshold))),
+    ),
+  );
+  if (chosen == null) {
+    return orders;
+  }
+  _log.i('build chosen nationId=${ctx.nationId} unitType=${chosen.unitType}');
+  return orders.appendBuildOrders(ctx.nationId, [chosen]);
 }
