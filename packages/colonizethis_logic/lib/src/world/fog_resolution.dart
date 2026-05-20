@@ -2,6 +2,7 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../constants.dart';
+import 'game_world_mutations.dart';
 import 'naval.dart';
 import 'naval_resolution.dart'
     show
@@ -236,8 +237,8 @@ applyProvinceOwnershipChangeVisibility(
   }
   visMaps[oldOwnerId] = oldVis;
 
-  final nextGame = game.copyWith(
-    worldState: game.worldState.copyWith(playerVisibilityByTile: visMaps),
+  final nextGame = game.updateWorldState(
+    (ws) => ws.copyWith(playerVisibilityByTile: visMaps),
   );
 
   return (
