@@ -17,10 +17,20 @@ import 'e2e_test_shared.dart';
 
 /// Loads and decodes each path with bounded concurrency (overlapping I/O +
 /// image decode completion) instead of strictly serial awaits.
+///
+/// Larger batches reduce the number of synchronization points where the loop
+/// awaits *all* in-flight decodes before scheduling the next group, so a slow
+/// decode no longer blocks every other decode in the same batch. The default
+/// is sized to comfortably cover the relocated 64px icon manifest (~60 assets)
+/// in a single batch, while still allowing callers on memory-constrained CI
+/// runners to opt back into smaller chunks. Refs GitHub #2336 AC3.
 Future<List<String>> e2eDecodePngAssetPathsParallel(
   List<String> assetPaths, {
-  int batchSize = 8,
+  int batchSize = 64,
 }) async {
+  if (batchSize <= 0) {
+    throw ArgumentError.value(batchSize, 'batchSize', 'must be positive');
+  }
   final failures = <String>[];
   for (var i = 0; i < assetPaths.length; i += batchSize) {
     final end = i + batchSize > assetPaths.length
