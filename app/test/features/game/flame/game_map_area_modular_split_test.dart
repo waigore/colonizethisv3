@@ -1,3 +1,6 @@
+import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
+import 'package:flutter_test/flutter_test.dart';
+
 import 'package:colonizethis_app/features/game/flame/game_map_area_civilian_draft_projection.dart';
 import 'package:colonizethis_app/features/game/flame/game_map_area_fleet_draft_projection.dart';
 import 'package:colonizethis_app/features/game/flame/game_map_area_province_action_states.dart';
@@ -7,7 +10,6 @@ import 'package:colonizethis_logic/colonizethis_logic.dart'
     show PlayerView, VisibilityLevel;
 import 'package:colonizethis_map/colonizethis_map.dart';
 import 'package:colonizethis_models/colonizethis_models.dart' as ct_models;
-import 'package:flutter_test/flutter_test.dart';
 
 /// #2575 work item 11 — module split sanity checks.
 ///
@@ -18,6 +20,8 @@ import 'package:flutter_test/flutter_test.dart';
 /// drive the public `GameMapAreaStateLogic.*` API and exercise the
 /// forwarder path end-to-end.
 void main() {
+  suppressLogsForTests();
+
   group('GameMapAreaCivilianDraftProjection (Refs #2575)', () {
     test('project on empty draft returns the input region unchanged', () {
       final region = _emptyRegion('oldWorld');
