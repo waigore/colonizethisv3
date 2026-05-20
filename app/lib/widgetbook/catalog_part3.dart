@@ -201,9 +201,7 @@ class _MapWithOverlayStoryState extends State<_MapWithOverlayStory> {
 
   String? _displayIdFromTile(String? tileKey) {
     if (tileKey == null) return null;
-    final parts = tileKey.split('|');
-    if (parts.length < 4) return null;
-    return '${parts[0]}|${parts[1]}';
+    return tryParseTileKey(tileKey)?.prefixedProvinceId;
   }
 
   @override

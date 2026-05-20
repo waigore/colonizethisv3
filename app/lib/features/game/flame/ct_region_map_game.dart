@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:colonizethis_app/core/utils/prefixed_id.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart' show PlayerView;
 import 'package:colonizethis_map/colonizethis_map.dart';
 import 'package:flame/events.dart';
@@ -335,12 +336,10 @@ class CtRegionMapGame extends FlameGame with TapDetector {
 
   /// Centers the camera on the given tile key, if valid.
   void centerOnTileKey(String tileKey) {
-    final parts = tileKey.split('|');
-    if (parts.length < 4) return;
-    if (parts[0] != region.regionId) return;
-    final x = int.tryParse(parts[2]);
-    final y = int.tryParse(parts[3]);
-    if (x == null || y == null) return;
+    final parsed = tryParseTileKey(tileKey);
+    if (parsed == null || parsed.regionId != region.regionId) return;
+    final x = parsed.x;
+    final y = parsed.y;
     if (x < 0 || x >= region.width || y < 0 || y >= region.height) return;
     final worldX = x * cellSizePx + cellSizePx / 2;
     final worldY = y * cellSizePx + cellSizePx / 2;

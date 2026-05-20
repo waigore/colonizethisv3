@@ -250,8 +250,8 @@ class GameMapAreaStateLogic {
           ) ??
           unit.tileKey;
       if (projectedTile == null || projectedTile.isEmpty) continue;
-      final parts = projectedTile.split('|');
-      if (parts.length < 4 || parts[0] != region.regionId) continue;
+      final parsed = tryParseTileKey(projectedTile);
+      if (parsed == null || parsed.regionId != region.regionId) continue;
       projectedByTile
           .putIfAbsent(projectedTile, () => <_ProjectedCivilianUnit>[])
           .add(
@@ -300,10 +300,10 @@ class GameMapAreaStateLogic {
           if (p != 0) return p;
           return a.unitId.compareTo(b.unitId);
         });
-      final parts = tileKey.split('|');
-      final x = int.tryParse(parts[2]);
-      final y = int.tryParse(parts[3]);
-      if (x == null || y == null) continue;
+      final parsed = tryParseTileKey(tileKey);
+      if (parsed == null) continue;
+      final x = parsed.x;
+      final y = parsed.y;
       final representative = units.first;
       final representativeIsAssigned =
           representative.pendingTargetTileKey == tileKey ||
@@ -322,7 +322,7 @@ class GameMapAreaStateLogic {
           tileKey: tileKey,
           x: x,
           y: y,
-          localProvinceId: parts[1],
+          localProvinceId: parsed.provinceLocalId,
           unitIds: units.map((u) => u.unitId).toList(),
           unitTypes: {for (final u in units) u.unitId: u.unitType},
           representativeUnitType: representative.unitType,
@@ -595,8 +595,7 @@ class GameMapAreaStateLogic {
       if (tileKey == null) {
         continue;
       }
-      final parts = tileKey.split('|');
-      if (parts.length < 4 || parts[0] != region.regionId) {
+      if (!isTileKeyInRegion(tileKey, region.regionId)) {
         continue;
       }
 
@@ -613,12 +612,12 @@ class GameMapAreaStateLogic {
       final tk = e.key;
       final g = e.value;
       final sortedIds = g.fleetIds.toList()..sort();
-      final parts = tk.split('|');
-      final x = int.tryParse(parts[parts.length - 2]);
-      final y = int.tryParse(parts[parts.length - 1]);
-      if (x == null || y == null) {
+      final parsed = tryParseTileKey(tk);
+      if (parsed == null) {
         continue;
       }
+      final x = parsed.x;
+      final y = parsed.y;
       final scopeCandidates = g.locationScopeKeys.toList()..sort();
       final scope = scopeCandidates.isEmpty ? '' : scopeCandidates.first;
       out.add(
@@ -745,17 +744,15 @@ class GameMapAreaStateLogic {
     required ct_models.Orders currentOrders,
     required Map<String, TileMapResult>? tileMapByRegion,
   }) {
-    final tileParts = selectedTileKey.split('|');
-    if (tileParts.length < 4) {
+    final parsed = tryParseTileKey(selectedTileKey);
+    if (parsed == null) {
       return (showIcon: false, enabled: false, hasExplorerUnits: false);
     }
     final tileVisibility = playerView.visibilityForTile(selectedTileKey);
     if (tileVisibility == VisibilityLevel.unknown) {
       return (showIcon: false, enabled: false, hasExplorerUnits: false);
     }
-    final tileRegionId = tileParts[0];
-    final tileProvinceId = tileParts[1];
-    final prefixedProvinceId = '$tileRegionId|$tileProvinceId';
+    final prefixedProvinceId = parsed.prefixedProvinceId;
     final isProvinceTile =
         tryGetProvince(game.worldState, prefixedProvinceId) != null;
     if (!isProvinceTile) {
@@ -829,22 +826,20 @@ class GameMapAreaStateLogic {
     PerPlayerWorkTargetSelectionCache? workTargetSelectionCache,
     Set<String>? cachedExploreEligibleTileKeys,
   }) {
-    final tileParts = selectedTileKey.split('|');
-    if (tileParts.length < 4 || tileParts[0] != selectedRegion.regionId) {
+    final parsed = tryParseTileKey(selectedTileKey);
+    if (parsed == null || parsed.regionId != selectedRegion.regionId) {
       return kHiddenExplorerInlineActionState;
     }
-    final tileProvinceId = tileParts[1];
-    final prefixedProvinceId = '${selectedRegion.regionId}|$tileProvinceId';
+    final tileProvinceId = parsed.provinceLocalId;
+    final prefixedProvinceId = parsed.prefixedProvinceId;
     final province = tryGetProvince(game.worldState, prefixedProvinceId);
     if (province == null) {
       return kHiddenExplorerInlineActionState;
     }
 
-    final x = int.tryParse(tileParts[2]);
-    final y = int.tryParse(tileParts[3]);
-    if (x == null ||
-        y == null ||
-        x < 0 ||
+    final x = parsed.x;
+    final y = parsed.y;
+    if (x < 0 ||
         y < 0 ||
         x >= selectedRegion.width ||
         y >= selectedRegion.height) {
@@ -876,10 +871,10 @@ class GameMapAreaStateLogic {
         workTargetSelectionCache?.get(humanPlayerId, kWorkTargetExplore) ??
         const <String>{};
     final hasEligibleExploreTarget = eligibleTileKeys.any((tileKey) {
-      final parts = tileKey.split('|');
-      return parts.length >= 4 &&
-          parts[0] == selectedRegion.regionId &&
-          parts[1] == tileProvinceId;
+      final p = tryParseTileKey(tileKey);
+      return p != null &&
+          p.regionId == selectedRegion.regionId &&
+          p.provinceLocalId == tileProvinceId;
     });
     if (!hasEligibleExploreTarget) {
       return kHiddenExplorerInlineActionState;
@@ -916,17 +911,16 @@ class GameMapAreaStateLogic {
     ct_models.Orders currentOrders = const ct_models.Orders(),
     Map<String, TileMapResult>? tileMapByRegion,
   }) {
-    final tileParts = selectedTileKey.split('|');
-    if (tileParts.length < 4) {
+    final parsed = tryParseTileKey(selectedTileKey);
+    if (parsed == null) {
       return kHiddenBuilderInlineActionState;
     }
     final tileVisibility = playerView.visibilityForTile(selectedTileKey);
     if (tileVisibility == VisibilityLevel.unknown) {
       return kHiddenBuilderInlineActionState;
     }
-    final tileRegionId = tileParts[0];
-    final tileProvinceId = tileParts[1];
-    final prefixedProvinceId = '$tileRegionId|$tileProvinceId';
+    final tileProvinceId = parsed.provinceLocalId;
+    final prefixedProvinceId = parsed.prefixedProvinceId;
     final isProvinceTile =
         tryGetProvince(game.worldState, prefixedProvinceId) != null;
     if (!isProvinceTile) {

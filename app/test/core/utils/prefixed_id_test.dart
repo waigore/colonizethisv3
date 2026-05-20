@@ -36,4 +36,69 @@ void main() {
       expect(prefixedIdHasDelimiter('ab'), isFalse);
     });
   });
+
+  group('tryParseTileKey', () {
+    test('parses a well-formed tile key', () {
+      final parsed = tryParseTileKey('oldWorld|p1|3|7');
+      expect(parsed, isNotNull);
+      expect(parsed!.regionId, 'oldWorld');
+      expect(parsed.provinceLocalId, 'p1');
+      expect(parsed.x, 3);
+      expect(parsed.y, 7);
+      expect(parsed.prefixedProvinceId, 'oldWorld|p1');
+    });
+
+    test('parses x=0,y=0 coords', () {
+      final parsed = tryParseTileKey('newWorld|p9|0|0');
+      expect(parsed, isNotNull);
+      expect(parsed!.x, 0);
+      expect(parsed.y, 0);
+    });
+
+    test('returns null for null and empty inputs', () {
+      expect(tryParseTileKey(null), isNull);
+      expect(tryParseTileKey(''), isNull);
+    });
+
+    test('returns null when fewer than four segments', () {
+      expect(tryParseTileKey('p1'), isNull);
+      expect(tryParseTileKey('oldWorld|p1'), isNull);
+      expect(tryParseTileKey('oldWorld|p1|3'), isNull);
+    });
+
+    test('returns null for empty regionId or empty provinceLocalId', () {
+      expect(tryParseTileKey('|p1|3|7'), isNull);
+      expect(tryParseTileKey('oldWorld||3|7'), isNull);
+    });
+
+    test('returns null when coords are non-integer', () {
+      expect(tryParseTileKey('oldWorld|p1|x|7'), isNull);
+      expect(tryParseTileKey('oldWorld|p1|3|y'), isNull);
+      expect(tryParseTileKey('oldWorld|p1|3|'), isNull);
+    });
+
+    test('rejects negative coords as non-integer parse only when garbage', () {
+      // int.tryParse('-3') returns -3, so this should parse successfully.
+      // SPEC/game/world-model-identity.md does not constrain sign here; callers
+      // separately validate that x/y fall inside region.width/height.
+      final parsed = tryParseTileKey('oldWorld|p1|-3|7');
+      expect(parsed, isNotNull);
+      expect(parsed!.x, -3);
+    });
+  });
+
+  group('isTileKeyInRegion', () {
+    test('returns true when tile key region matches', () {
+      expect(isTileKeyInRegion('oldWorld|p1|3|7', 'oldWorld'), isTrue);
+    });
+
+    test('returns false when tile key region does not match', () {
+      expect(isTileKeyInRegion('oldWorld|p1|3|7', 'newWorld'), isFalse);
+    });
+
+    test('returns false on malformed tile key', () {
+      expect(isTileKeyInRegion('oldWorld|p1', 'oldWorld'), isFalse);
+      expect(isTileKeyInRegion('', 'oldWorld'), isFalse);
+    });
+  });
 }
