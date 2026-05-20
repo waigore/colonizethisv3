@@ -404,6 +404,61 @@ void main() {
         ['gp3'],
       );
     });
+
+    test(
+      'peaces every GP front when uninvaded minors remain below quota',
+      () {
+        final game = Game(
+          id: 'g-expand-peace-all-gp-minors',
+          worldState: WorldState(
+            turnState: const TurnState(turnNumber: 50, phase: TurnPhase.orders),
+            oldWorld: RegionData(
+              provinces: [
+                for (var i = 0; i < 8; i++)
+                  Province(
+                    id: 'oldWorld|gp4_$i',
+                    regionId: 'oldWorld',
+                    ownerId: 'gp4',
+                  ),
+                for (var i = 0; i < 11; i++)
+                  Province(
+                    id: 'oldWorld|gp3_$i',
+                    regionId: 'oldWorld',
+                    ownerId: 'gp3',
+                  ),
+                const Province(
+                  id: 'oldWorld|minor1',
+                  regionId: 'oldWorld',
+                  ownerId: 'minor1',
+                ),
+              ],
+            ),
+            newWorld: const RegionData(),
+          ),
+          players: const [
+            Player(id: 'gp4', displayName: 'P4', isHuman: false),
+            Player(id: 'gp3', displayName: 'P3', isHuman: false),
+          ],
+          minorNations: const [MinorNation(id: 'minor1', displayName: 'M1')],
+        );
+        const snapshot = AIWorldSnapshot(
+          playerId: 'gp4',
+          threats: ThreatSummary(atWarWith: ['gp3']),
+          opportunities: OpportunitySummary(),
+          conquest: ConquestSummary(
+            oldWorldProvincesOwned: 8,
+            invadableProvinceIdsSorted: ['oldWorld|gp3_8'],
+          ),
+          colonial: ColonialSummary(),
+          economy: EconomySummary(),
+          relations: {},
+        );
+        expect(
+          expandPhaseGpPeaceTargets(game: game, snapshot: snapshot),
+          ['gp3'],
+        );
+      },
+    );
   });
 
   group('colonialPhaseGpPeaceTargets', () {

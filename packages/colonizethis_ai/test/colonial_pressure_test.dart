@@ -211,6 +211,10 @@ void main() {
         ['gp5'],
       );
     });
+
+    // 3-province gap boundary tests (Refs #2509) live in
+    // `colonial_pressure_peer_gap_boundary_test.dart` so this file stays under
+    // repo.dart_file_non_comment_line_size (1000 NCL).
   });
 
   group('defaultStartFutileMinorPeaceTargets', () {

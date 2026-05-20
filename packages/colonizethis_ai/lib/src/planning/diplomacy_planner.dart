@@ -49,10 +49,21 @@ String? criticalWeakUninvadedMinorDeclareTarget({
   final atWarWithGp = snapshot.threats.atWarWith
       .where((id) => game.playerById(id) != null)
       .toList();
-  if (atWarWithGp.length > 1 &&
-      snapshot.conquest.oldWorldProvincesOwned >
-          kObserverDefaultStartOldWorldProvincesPerGp) {
+  if (atWarWithGp.length > 2) {
     return null;
+  }
+  if (atWarWithGp.length == 2) {
+    if (!hasUninvadedOldWorldMinor(game: game, snapshot: snapshot)) {
+      return null;
+    }
+    for (final factionId in atWarWithGp) {
+      if (!isMutualBelowQuotaPlateauPeer(
+        ownOw: snapshot.conquest.oldWorldProvincesOwned,
+        partnerOw: provinceCountOwnedBy(game, factionId),
+      )) {
+        return null;
+      }
+    }
   }
   if (snapshot.conquest.invadableProvinceIdsSorted.isEmpty) {
     return null;
@@ -88,14 +99,9 @@ String? belowQuotaUninvadedMinorDeclareTarget({
   if (belowQuotaActiveMinorWarTarget(game: game, snapshot: snapshot) != null) {
     return null;
   }
-  if (isOldWorldGpOnlyInvadableFrontier(game: game, snapshot: snapshot)) {
-    if (!hasUninvadedOldWorldMinor(game: game, snapshot: snapshot)) {
-      return null;
-    }
-    // At default start size, defer to GP-blocker declare on GP-only frontiers.
-    if (ownOw <= kObserverDefaultStartOldWorldProvincesPerGp) {
-      return null;
-    }
+  if (isOldWorldGpOnlyInvadableFrontier(game: game, snapshot: snapshot) &&
+      !hasUninvadedOldWorldMinor(game: game, snapshot: snapshot)) {
+    return null;
   }
   final candidates = <String>{
     for (final minor in game.minorNations)
@@ -132,13 +138,19 @@ String? plateauOwMinorDeclareTarget({
     for (final factionId in snapshot.threats.atWarWith)
       if (game.playerById(factionId) != null) factionId,
   ];
-  if (gpWars.isNotEmpty) {
-    final allowMutualPlateauPivot = gpWars.length == 1 &&
-        isMutualBelowQuotaPlateauPeer(
-          ownOw: ownOw,
-          partnerOw: provinceCountOwnedBy(game, gpWars.single),
-        );
-    if (!allowMutualPlateauPivot) {
+  if (gpWars.length > 1) {
+    for (final factionId in gpWars) {
+      if (!isMutualBelowQuotaPlateauPeer(
+        ownOw: ownOw,
+        partnerOw: provinceCountOwnedBy(game, factionId),
+      )) {
+        return null;
+      }
+    }
+  } else if (gpWars.length == 1) {
+    final partnerOw = provinceCountOwnedBy(game, gpWars.single);
+    if (!isMutualBelowQuotaPlateauPeer(ownOw: ownOw, partnerOw: partnerOw) &&
+        !hasUninvadedOldWorldMinor(game: game, snapshot: snapshot)) {
       return null;
     }
   }
@@ -239,6 +251,9 @@ String? stalledInvadableGpOwnerDeclareTarget({
   final ownOw = snapshot.conquest.oldWorldProvincesOwned;
   if (!isStalledOldWorldExpansion(ownOw) ||
       !isBelowObserverConquestQuota(ownOw)) {
+    return null;
+  }
+  if (hasUninvadedOldWorldMinor(game: game, snapshot: snapshot)) {
     return null;
   }
   if (snapshot.conquest.invadableProvinceIdsSorted.isEmpty) {
@@ -595,6 +610,9 @@ DiplomacyPlannerResult? _plateauGpBlockerDeclarePlannerResultIfNeeded({
   if (!isBelowObserverConquestQuota(
     snapshot.conquest.oldWorldProvincesOwned,
   )) {
+    return null;
+  }
+  if (hasUninvadedOldWorldMinor(game: ctx.game, snapshot: snapshot)) {
     return null;
   }
   if (!isOldWorldGpOnlyInvadableFrontier(game: ctx.game, snapshot: snapshot)) {
