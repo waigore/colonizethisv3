@@ -1,5 +1,57 @@
 part of 'diplomatic_candidate_scoring.dart';
 
+/// True when [order] proposes offerPeace toward the sole at-war Great Power and
+/// the mutual-exhausted plateau conditions hold for both sides. Mirrors
+/// [mutualExhaustedBelowQuotaGpStalematePeaceTargets] inline (the peace-target
+/// helper lives in `diplomacy_planner_peace_targets.dart`, which is not part of
+/// this scoring library; the same SPEC-authorized conditions apply here to keep
+/// the offer-peace bonus aligned with the collector). Refs #2509.
+bool _mutualExhaustedBelowQuotaSoleGpStalemate({
+  required DiplomaticOrder order,
+  required Game game,
+  required AIWorldSnapshot snapshot,
+  required String nationId,
+}) {
+  if (!snapshot.threats.atWarWith.contains(order.targetFactionId)) {
+    return false;
+  }
+  final ownOw = snapshot.conquest.oldWorldProvincesOwned;
+  if (ownOw < kMutualExhaustedGpStalemateMinOw ||
+      !isBelowObserverConquestQuota(ownOw) ||
+      !isStalledOldWorldExpansion(ownOw)) {
+    return false;
+  }
+  final ownPlayer = game.playerById(nationId);
+  if (ownPlayer == null ||
+      ownPlayer.treasury > kMutualExhaustedGpTreasuryMax ||
+      regimentCountForPlayer(game, nationId) >
+          kMutualExhaustedGpRegimentMax) {
+    return false;
+  }
+  final gpWars = <String>[
+    for (final factionId in snapshot.threats.atWarWith)
+      if (game.playerById(factionId) != null) factionId,
+  ];
+  if (gpWars.length != 1 || gpWars.single != order.targetFactionId) {
+    return false;
+  }
+  final enemyPlayer = game.playerById(order.targetFactionId);
+  if (enemyPlayer == null ||
+      enemyPlayer.treasury > kMutualExhaustedGpTreasuryMax ||
+      regimentCountForPlayer(game, order.targetFactionId) >
+          kMutualExhaustedGpRegimentMax) {
+    return false;
+  }
+  final enemyOw = provinceCountOwnedBy(game, order.targetFactionId);
+  if (enemyOw < kMutualExhaustedGpStalemateMinOw ||
+      !isBelowObserverConquestQuota(enemyOw) ||
+      !isStalledOldWorldExpansion(enemyOw) ||
+      (enemyOw - ownOw).abs() > 1) {
+    return false;
+  }
+  return true;
+}
+
 int _offerPeaceStalledGpWarAdjustments({
   required DiplomaticOrder order,
   required Game game,
@@ -206,6 +258,15 @@ int _scoreOfferPeaceDiplomaticOrder({
       ) &&
       regimentCountForPlayer(game, nationId) == 0) {
     s += kOfferPeaceStalledZeroRegimentGpWarBonus;
+  }
+  if (targetGp != null &&
+      _mutualExhaustedBelowQuotaSoleGpStalemate(
+        order: order,
+        game: game,
+        snapshot: snapshot,
+        nationId: nationId,
+      )) {
+    s += kOfferPeaceMutualExhaustedGpStalemateBonus;
   }
   final invadableBlocker = primaryInvadableOldWorldGpBlocker(
     game: game,
