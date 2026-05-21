@@ -151,6 +151,14 @@ In **`colonizethis_app`**, widgets and services that hold **one or more** `Strea
 - **Cross-cutting UI** must not use **`Ref` / `BuildContext` / `Navigator` chains** between unrelated widgets; use **`AppEventBus`** and **`AppEventHandler`**. **Panel-to-panel `onXxx` orchestration is disallowed.**
 - **Dialog builders** and route handling: one place at shell init — see [app-event-bus.md](app-event-bus.md) constraints for package boundaries and event payload rules.
 
+### CI gate — `repo.app_event_bus_decoupling` (Refs #2626)
+
+`tool/check_app_event_bus_decoupling.dart` (wired through `tool/ct_repo_lint_manifest.yaml`) enforces three invariants against `app/lib/**`:
+
+- **No `AppEventBus()` singleton** in production code (under `app/lib/**`, excluding `app/lib/widgetbook/**`). Use `appEventBusProvider` (or an `AppEventBus.create()` instance held by the owning widget/service).
+- **`appNavigatorKey.currentContext` / `.currentState` / equivalent property access** is restricted to `app/lib/core/services/**` and `app/lib/app.dart`. Other layers must thread an explicit `GlobalKey<NavigatorState>` parameter or use the bus.
+- **`showDialog` / `showModalBottomSheet` calls under `app/lib/features/**`** are restricted to the documented "Local by design" allow-list above (plus the per-panel carve-outs for split/move fleet, move army, train at-capital). New call sites outside the allow-list must use a typed `AppEvent` instead. Adding a new local-by-design dialog requires extending **both** this SPEC section **and** the lint allow-list.
+
 ---
 
 ## Acceptance Criteria (Given–When–Then)
