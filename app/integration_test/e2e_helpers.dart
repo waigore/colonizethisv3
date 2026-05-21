@@ -17,6 +17,7 @@ import 'e2e_test_shared_bootstrap.dart';
 export 'e2e_test_shared.dart' show
     E2ePerfLog,
     e2eAdaptivePollRampAfterIdle,
+    e2eMakeWallClockGuard,
     e2eNewWorldRegionChipAppearsSelected,
     e2eOldWorldRegionChipAppearsSelected,
     e2ePumpUntil,
@@ -26,6 +27,7 @@ export 'e2e_test_shared.dart' show
     e2eWaitUntilAnyFinderHitTestable,
     e2eOpenProductionPanel,
     e2eOpenPanelFromMarker,
+    kE2eMaxWallClock,
     kE2eNextTurnResolutionTimeout;
 
 Future<void> pumpFor(WidgetTester tester, Duration total) =>

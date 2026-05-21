@@ -706,6 +706,49 @@ Future<void> e2eWaitUntilAnyFinderHitTestable(
 /// (`colonizethis-turn-resolution-budget.mdc`).
 const Duration kE2eNextTurnResolutionTimeout = Duration(seconds: 15);
 
+/// Default 5-minute wall-clock cap per E2E scenario path.
+///
+/// Matches the **PR runtime rule** in `SPEC/program/e2e-integration-tests.md`
+/// § Determinism and the `colonizethis-e2e-ui-stability.mdc` 5-minute rule:
+/// any single integration-test scenario that exceeds this cap must fail fast
+/// and emit timing markers so the regression is attributable.
+const Duration kE2eMaxWallClock = Duration(minutes: 5);
+
+/// Returns a callable wall-clock guard for the start of an E2E scenario.
+///
+/// Pattern:
+///
+/// ```dart
+/// final wallClock = Stopwatch()..start();
+/// final ensureUnderWallClock = e2eMakeWallClockGuard(
+///   testName: 'new_game_full_turn',
+///   stopwatch: wallClock,
+/// );
+/// // ... checkpoint after each major phase ...
+/// ensureUnderWallClock('after bootstrap');
+/// ```
+///
+/// The returned function fails the surrounding test (via `fail`) when the
+/// elapsed wall-clock time exceeds [cap]. [testName] and the per-call `step`
+/// label are emitted in the failure message so a regression is attributable
+/// to a specific checkpoint and scenario, matching the fail-fast contract
+/// documented in `SPEC/program/e2e-integration-tests.md` § Determinism
+/// (Refs GitHub #2336 / `colonizethis-e2e-ui-stability.mdc`).
+void Function(String step) e2eMakeWallClockGuard({
+  required String testName,
+  required Stopwatch stopwatch,
+  Duration cap = kE2eMaxWallClock,
+}) {
+  return (String step) {
+    if (stopwatch.elapsed > cap) {
+      fail(
+        '$testName exceeded ${cap.inMinutes} minute wall clock '
+        'at $step (elapsed=${stopwatch.elapsed.inSeconds}s).',
+      );
+    }
+  };
+}
+
 /// Text inside the map HUD next-turn [CtNinePatchButton] (`game_nextTurnButton`).
 String? e2eReadNextTurnButtonLabel(WidgetTester tester) {
   final inner = find.descendant(
