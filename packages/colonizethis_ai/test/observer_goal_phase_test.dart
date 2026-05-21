@@ -297,6 +297,101 @@ void main() {
     });
   });
 
+  // EXPAND companion to the COLONIAL "tribe declare-war is not suppressed at
+  // OW quota" pin below. Pins the first S10 AC from issue #2509:
+  //   Given a GP with `oldWorldProvincesOwned < 10` and an adjacent minor
+  //   owning a province in `invadableProvinceIdsSorted`, when the declare-war
+  //   pass runs in EXPAND phase, then `declareWar` toward that minor is among
+  //   suggested orders (deterministic for fixed seed).
+  // SPEC clause (`SPEC/ai/ai-architecture.md` § Observer goal phases (Full
+  // AI), EXPAND): "Acquire OW provinces by the simplest legal path ...
+  // Candidates: factions owning at least one province in
+  // `invadableProvinceIdsSorted` (OW only). Priority order: (a) adjacent
+  // minor owners of invadable provinces ...".
+  group('EXPAND allows OW minor declareWar scoring', () {
+    test('adjacent invadable minor scores positive while below OW quota', () {
+      final game = Game(
+        id: 'g-expand-minor-allow',
+        worldState: WorldState(
+          turnState: const TurnState(turnNumber: 20, phase: TurnPhase.orders),
+          oldWorld: RegionData(
+            provinces: [
+              const Province(
+                id: 'oldWorld|minor1',
+                regionId: 'oldWorld',
+                ownerId: 'minor1',
+              ),
+              for (var i = 1; i <= 7; i++)
+                Province(
+                  id: 'oldWorld|gp1_$i',
+                  regionId: 'oldWorld',
+                  ownerId: 'gp1',
+                ),
+            ],
+          ),
+          newWorld: const RegionData(),
+        ),
+        players: const [Player(id: 'gp1', displayName: 'P1', isHuman: false)],
+        minorNations: const [MinorNation(id: 'minor1', displayName: 'M1')],
+        tribes: const [],
+      );
+      const snapshot = AIWorldSnapshot(
+        playerId: 'gp1',
+        threats: ThreatSummary(),
+        opportunities: OpportunitySummary(),
+        conquest: ConquestSummary(
+          oldWorldProvincesOwned: 7,
+          provincesToVictory: 24,
+          invadableProvinceIdsSorted: ['oldWorld|minor1'],
+          adjacentOwnerFactionIdsSorted: ['minor1'],
+        ),
+        colonial: ColonialSummary(),
+        economy: EconomySummary(),
+        relations: {},
+      );
+      expect(
+        observerGoalPhaseFor(snapshot: snapshot, game: game),
+        ObserverGoalPhase.expand,
+      );
+      const candidate = DiplomaticOrder(
+        type: DiplomaticOrderType.declareWar,
+        targetFactionId: 'minor1',
+      );
+      const config = AIConfig(
+        leaderId: 'henry',
+        personalityId: 'henry',
+        hiddenAgendaId: 'merchant',
+      );
+      final scores = computeDiplomaticCandidateScores(
+        game: game,
+        snapshot: snapshot,
+        nationId: 'gp1',
+        config: config,
+        candidates: const [candidate],
+        primaryGoal: StrategicGoal.expand,
+      );
+      expect(
+        scores.single,
+        greaterThan(0),
+        reason:
+            'EXPAND phase must keep adjacent invadable OW minor as a '
+            'declareWar candidate per SPEC EXPAND priority order (a).',
+      );
+      // Determinism guard: same inputs -> same score. Pins the
+      // "deterministic for fixed seed" clause of AC #1 without coupling to
+      // the broader Full AI determinism harness.
+      final repeat = computeDiplomaticCandidateScores(
+        game: game,
+        snapshot: snapshot,
+        nationId: 'gp1',
+        config: config,
+        candidates: const [candidate],
+        primaryGoal: StrategicGoal.expand,
+      );
+      expect(repeat.single, scores.single);
+    });
+  });
+
   group('DEVELOP suppresses declareWar', () {
     test('all declare-war candidates score zero in develop phase', () {
       final game = Game(
