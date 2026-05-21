@@ -261,6 +261,33 @@ const int kDeclareWarBelowObserverQuotaMinorBonus = 480;
 /// (exit unwinnable GP wars before elimination; observer seed-42 gp3; Refs #2509).
 const int kOfferPeaceStalledZeroRegimentGpWarBonus = 270;
 
+/// OW province floor for `mutualExhaustedBelowQuotaGpStalematePeaceTargets`
+/// (Refs #2509). Excludes early-game / collapsed-survival GPs whose stalemate
+/// is already handled by [criticalWeakGpSurvivalPeaceTargets]; targets the
+/// late-stalled "8-9 plateau" band specifically.
+const int kMutualExhaustedGpStalemateMinOw =
+    kObserverDefaultStartOldWorldProvincesPerGp + 1;
+
+/// Regiment ceiling under which a Great Power is treated as militarily exhausted
+/// for the mutual-stalemate peace check (Refs #2509; observer seed-42 gp3/gp4
+/// 3-regiment plateau). Above this threshold, the GP can still field meaningful
+/// force and the war is not considered terminally exhausted.
+const int kMutualExhaustedGpRegimentMax = 4;
+
+/// Treasury ceiling (pounds) under which a Great Power is treated as economically
+/// exhausted for the mutual-stalemate peace check (Refs #2509). Combined with the
+/// regiment ceiling, this targets GPs that cannot rebuild offensive force while
+/// the war continues.
+const int kMutualExhaustedGpTreasuryMax = 30;
+
+/// Offer-peace bonus toward the sole at-war Great Power when both sides are
+/// mutual-plateau peers below the observer quota AND both are exhausted in
+/// regiments and treasury (Refs #2509; observer seed-42 gp3/gp4 stalemate). Sized
+/// above [kOfferPeaceStalledZeroRegimentGpWarBonus] so a mutually-exhausted
+/// stalemate outranks single-side zero-regiment exits but stays below the strong
+/// blocker survival bonus.
+const int kOfferPeaceMutualExhaustedGpStalemateBonus = 280;
+
 /// Regiment build floor when critically weak, below the observer quota, and at war.
 const int kStalledMinRegimentCountWhenCriticallyWeakBelowQuota = 12;
 
