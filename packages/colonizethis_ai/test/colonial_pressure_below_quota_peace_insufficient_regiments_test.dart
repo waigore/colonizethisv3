@@ -1,6 +1,7 @@
 import 'package:colonizethis_test/test.dart';
 import 'package:colonizethis_ai/src/planning/colonial_pressure.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:colonizethis_models/colonizethis_models.dart';
 
 // Pins observer-EXPAND below-quota peace insufficient-regiments predicate
 // (seed-42 gp3 turn-100 trap; Refs #2509 § Observer goal phases (Full AI)
@@ -116,5 +117,41 @@ void main() {
         );
       },
     );
+  });
+
+  group('isBelowQuotaPeaceTreasuryRecovery', () {
+    test('false when pending riches cover cheapest regiment build', () {
+      final stockpile = Stockpile().applyDelta(
+        CommodityCatalog.gold.id,
+        (cheapestRegimentBuildTreasuryCost() /
+                richesBasePrice(CommodityCatalog.gold.id))
+            .ceil(),
+      );
+      expect(
+        isBelowQuotaPeaceTreasuryRecovery(
+          oldWorldProvincesOwned: 8,
+          regimentCount: 3,
+          atWarWithAnyGreatPower: false,
+          hasInvadableProvinces: true,
+          treasury: 0,
+          stockpile: stockpile,
+        ),
+        isFalse,
+      );
+    });
+
+    test('true for seed-42 trap shape with zero treasury and empty stockpile', () {
+      expect(
+        isBelowQuotaPeaceTreasuryRecovery(
+          oldWorldProvincesOwned: 8,
+          regimentCount: 3,
+          atWarWithAnyGreatPower: false,
+          hasInvadableProvinces: true,
+          treasury: 0,
+          stockpile: const Stockpile(),
+        ),
+        isTrue,
+      );
+    });
   });
 }

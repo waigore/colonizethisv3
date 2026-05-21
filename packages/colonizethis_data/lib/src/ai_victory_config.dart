@@ -208,6 +208,11 @@ const int kStalledMinRegimentCountPerProvinceDeficitVsBlocker = 2;
 /// armies rebuild before EXPAND declare-war scoring picks a new target.
 const int kBelowQuotaPeaceMinRegimentsBeforeDeclareWar = 6;
 
+/// Economy-weight boost for [CargoPreference] when a below-quota GP at peace
+/// cannot afford the cheapest regiment build even after pending riches treasury
+/// (Refs #2509 EXPAND treasury-recovery).
+const int kBelowQuotaPeaceTreasuryRecoveryCargoBoost = 50;
+
 /// Offer-peace bonus toward a minor/tribe at war that no longer owns invadable land.
 const int kOfferPeaceFutileMinorWarBonus = 80;
 

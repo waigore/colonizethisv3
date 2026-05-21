@@ -85,6 +85,43 @@ bool isBelowQuotaPeaceInsufficientRegiments({
   return hasInvadableProvinces;
 }
 
+/// Minimum [RegimentEconomyCatalog] build treasury cost (deterministic catalog scan).
+int cheapestRegimentBuildTreasuryCost() {
+  var min = 999999999;
+  for (final econ in RegimentEconomyCatalog.byId.values) {
+    if (econ.buildTreasuryCost < min) {
+      min = econ.buildTreasuryCost;
+    }
+  }
+  return min;
+}
+
+/// Below-quota EXPAND GP at peace with insufficient regiments and effective
+/// treasury (cash plus same-turn pending riches) below cheapest regiment build.
+///
+/// Triggers overseas cargo preference so auto-transport can deliver riches to
+/// stockpile before the next build pass (Refs #2509).
+bool isBelowQuotaPeaceTreasuryRecovery({
+  required int oldWorldProvincesOwned,
+  required int regimentCount,
+  required bool atWarWithAnyGreatPower,
+  required bool hasInvadableProvinces,
+  required int treasury,
+  required Stockpile stockpile,
+}) {
+  if (!isBelowQuotaPeaceInsufficientRegiments(
+    oldWorldProvincesOwned: oldWorldProvincesOwned,
+    regimentCount: regimentCount,
+    atWarWithAnyGreatPower: atWarWithAnyGreatPower,
+    hasInvadableProvinces: hasInvadableProvinces,
+  )) {
+    return false;
+  }
+  final effectiveTreasury =
+      treasury + pendingRichesTreasuryDelta(stockpile: stockpile);
+  return effectiveTreasury < cheapestRegimentBuildTreasuryCost();
+}
+
 /// Both GPs in the 8–9 OW stalled band, below the observer quota, with similar holdings.
 bool isMutualBelowQuotaPlateauPeer({
   required int ownOw,
