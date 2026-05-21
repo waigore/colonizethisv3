@@ -59,5 +59,62 @@ void main() {
       );
       expect(chosen?.unitType, 'grenadiers');
     });
+
+    test('militaryRebuildCrisis picks cheapest regiment type', () {
+      const candidates = [
+        BuildUnitOrder(
+          unitType: 'pikemen',
+          isMilitary: true,
+          spawnProvinceId: 'oldWorld|p1',
+        ),
+        BuildUnitOrder(
+          unitType: 'peasant_levies',
+          isMilitary: true,
+          spawnProvinceId: 'oldWorld|p1',
+        ),
+        BuildUnitOrder(
+          unitType: 'arquebusiers',
+          isMilitary: true,
+          spawnProvinceId: 'oldWorld|p1',
+        ),
+      ];
+      const config = AIConfig(
+        leaderId: 'napoleon',
+        personalityId: 'napoleon',
+        hiddenAgendaId: 'warmonger',
+      );
+      final game = Game(
+        id: 'g1',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
+          oldWorld: const RegionData(),
+          newWorld: const RegionData(),
+        ),
+        players: const [
+          Player(
+            id: 'gp1',
+            displayName: 'France',
+            isHuman: false,
+            leaderKey: 'napoleon',
+          ),
+        ],
+      );
+      const topology = MapTopology(nodes: [], edges: []);
+      final ctx = buildTestPlannerContext(
+        game: game,
+        topology: topology,
+        config: config,
+        primaryGoal: StrategicGoal.conquer,
+      );
+      final chosen = pickBuildOrder(
+        ctx: ctx,
+        input: const BuildPickInput(
+          buildCandidates: candidates,
+          cargoPreference: CargoPreference.none,
+          militaryRebuildCrisis: true,
+        ),
+      );
+      expect(chosen?.unitType, 'peasant_levies');
+    });
   });
 }

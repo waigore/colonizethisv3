@@ -48,6 +48,15 @@ BuildUnitOrder? pickBuildOrder({
         .where((o) => RegimentEconomyCatalog.byId.containsKey(o.unitType))
         .toList();
     if (regimentsOnly.isNotEmpty) {
+      regimentsOnly.sort((a, b) {
+        final costA =
+            RegimentEconomyCatalog.byId[a.unitType]!.buildTreasuryCost;
+        final costB =
+            RegimentEconomyCatalog.byId[b.unitType]!.buildTreasuryCost;
+        final costCompare = costA.compareTo(costB);
+        if (costCompare != 0) return costCompare;
+        return a.unitType.compareTo(b.unitType);
+      });
       return regimentsOnly.first;
     }
   }

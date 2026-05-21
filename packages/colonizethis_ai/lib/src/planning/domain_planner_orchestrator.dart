@@ -416,6 +416,7 @@ Orders _appendEconomyBuildOrders({
       militaryRebuildCrisis: forceRegimentRebuild &&
           (atWarWithGpBlocker ||
               brokeBelowQuotaAtPeace ||
+              belowQuotaPeaceInsufficientRegiments ||
               (regimentCount <= kStalledMilitaryRebuildCrisisRegimentCap &&
                   !(observerQuotaPressure &&
                       snapshot.conquest.oldWorldProvincesOwned >
