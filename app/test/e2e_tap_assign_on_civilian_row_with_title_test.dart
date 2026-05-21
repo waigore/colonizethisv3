@@ -36,6 +36,8 @@
 library;
 
 import 'package:colonizethis_app/config/ct_e2e.dart';
+import 'package:colonizethis_models/colonizethis_models.dart'
+    show kUnitTypeBuilder, kUnitTypeMerchant;
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -124,13 +126,13 @@ void main() {
       await tester.pumpWidget(
         const _CivilianPanelHost(
           rows: [
-            _RowSpec(title: 'Builder', hasAssign: true),
-            _RowSpec(title: 'Merchant', hasAssign: true),
+            _RowSpec(title: kUnitTypeBuilder, hasAssign: true),
+            _RowSpec(title: kUnitTypeMerchant, hasAssign: true),
           ],
         ),
       );
 
-      await e2eTapAssignOnCivilianRowWithTitle(tester, 'Builder');
+      await e2eTapAssignOnCivilianRowWithTitle(tester, kUnitTypeBuilder);
 
       expect(
         _tappedRowIndexOf(tester),
@@ -149,17 +151,17 @@ void main() {
         const _CivilianPanelHost(
           rows: [
             // First Builder is already assigned (no Assign button).
-            _RowSpec(title: 'Builder', hasAssign: false),
+            _RowSpec(title: kUnitTypeBuilder, hasAssign: false),
             // Second Builder is still idle and must be picked.
-            _RowSpec(title: 'Builder', hasAssign: true),
+            _RowSpec(title: kUnitTypeBuilder, hasAssign: true),
             // Trailing rows guard against helpers that accidentally tap an
             // off-title row when the matching rows look exhausted.
-            _RowSpec(title: 'Merchant', hasAssign: true),
+            _RowSpec(title: kUnitTypeMerchant, hasAssign: true),
           ],
         ),
       );
 
-      await e2eTapAssignOnCivilianRowWithTitle(tester, 'Builder');
+      await e2eTapAssignOnCivilianRowWithTitle(tester, kUnitTypeBuilder);
 
       expect(
         _tappedRowIndexOf(tester),
@@ -178,18 +180,18 @@ void main() {
       await tester.pumpWidget(
         const _CivilianPanelHost(
           rows: [
-            _RowSpec(title: 'Builder', hasAssign: false),
-            _RowSpec(title: 'Builder', hasAssign: false),
+            _RowSpec(title: kUnitTypeBuilder, hasAssign: false),
+            _RowSpec(title: kUnitTypeBuilder, hasAssign: false),
             // Off-title row with Assign present to verify the helper does
             // not lower its title filter when matching rows look exhausted.
-            _RowSpec(title: 'Merchant', hasAssign: true),
+            _RowSpec(title: kUnitTypeMerchant, hasAssign: true),
           ],
         ),
       );
 
       Object? caught;
       try {
-        await e2eTapAssignOnCivilianRowWithTitle(tester, 'Builder');
+        await e2eTapAssignOnCivilianRowWithTitle(tester, kUnitTypeBuilder);
       } catch (e) {
         caught = e;
       }
@@ -220,8 +222,8 @@ void main() {
           rows: [
             // First row deliberately uses a non-Builder title to confirm
             // the helper picks Assign by position, not by title match.
-            _RowSpec(title: 'Merchant', hasAssign: true),
-            _RowSpec(title: 'Builder', hasAssign: true),
+            _RowSpec(title: kUnitTypeMerchant, hasAssign: true),
+            _RowSpec(title: kUnitTypeBuilder, hasAssign: true),
           ],
         ),
       );
