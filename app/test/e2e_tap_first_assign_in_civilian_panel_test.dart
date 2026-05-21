@@ -32,6 +32,8 @@
 library;
 
 import 'package:colonizethis_app/config/ct_e2e.dart';
+import 'package:colonizethis_models/colonizethis_models.dart'
+    show kUnitTypeBuilder, kUnitTypeMerchant;
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -119,7 +121,7 @@ void main() {
           bodyBuilder: (onAssign) => ListView(
             children: <Widget>[
               ListTile(
-                title: const Text('Builder'),
+                title: const Text(kUnitTypeBuilder),
                 trailing: TextButton(
                   onPressed: onAssign,
                   child: const Text('Assign'),
@@ -208,8 +210,8 @@ void main() {
         _CustomCivilianPanelHost(
           bodyBuilder: (_) => ListView(
             children: const <Widget>[
-              ListTile(title: Text('Builder'), trailing: Text('Busy')),
-              ListTile(title: Text('Merchant'), trailing: Text('Busy')),
+              ListTile(title: Text(kUnitTypeBuilder), trailing: Text('Busy')),
+              ListTile(title: Text(kUnitTypeMerchant), trailing: Text('Busy')),
             ],
           ),
         ),
@@ -254,7 +256,7 @@ void main() {
           bodyBuilder: (onAssign) => ListView(
             children: <Widget>[
               ListTile(
-                title: const Text('Builder'),
+                title: const Text(kUnitTypeBuilder),
                 trailing: TextButton(
                   onPressed: onAssign,
                   child: const Text('Assign'),
@@ -301,7 +303,7 @@ void main() {
           bodyBuilder: (onAssign) => ListView(
             children: <Widget>[
               ListTile(
-                title: const Text('Builder'),
+                title: const Text(kUnitTypeBuilder),
                 trailing: TextButton(
                   onPressed: onAssign,
                   child: const Text('Assign'),
