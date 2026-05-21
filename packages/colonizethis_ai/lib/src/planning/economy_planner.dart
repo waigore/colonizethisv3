@@ -2,6 +2,7 @@
 
 import '../perception/perception_snapshot.dart';
 import 'army_conquest_prep.dart';
+import 'colonial_pressure.dart';
 import 'planning_imports.dart';
 import 'recipe_scoring.dart';
 
@@ -41,6 +42,19 @@ EconomyPlan runEconomyPlanner({
     shipCountsById: shipCounts,
   );
 
+  final belowQuotaPeaceTreasuryRecovery = snapshot != null &&
+      isBelowQuotaPeaceTreasuryRecovery(
+        oldWorldProvincesOwned: snapshot.conquest.oldWorldProvincesOwned,
+        regimentCount: regimentCountForPlayer(game, view.playerId),
+        atWarWithAnyGreatPower: snapshot.threats.atWarWith.any(
+          (id) => game.playerById(id) != null,
+        ),
+        hasInvadableProvinces:
+            snapshot.conquest.invadableProvinceIdsSorted.isNotEmpty,
+        treasury: player.treasury,
+        stockpile: stockpile,
+      );
+
   if (effectiveLabour <= 0) {
     return EconomyPlan(
       productionAssignments: [],
@@ -49,6 +63,7 @@ EconomyPlan runEconomyPlanner({
         view.playerId,
         config,
         colonial: colonial,
+        belowQuotaPeaceTreasuryRecovery: belowQuotaPeaceTreasuryRecovery,
       ),
     );
   }
@@ -73,6 +88,7 @@ EconomyPlan runEconomyPlanner({
     view.playerId,
     config,
     colonial: colonial,
+    belowQuotaPeaceTreasuryRecovery: belowQuotaPeaceTreasuryRecovery,
   );
   _log.i(
     'economy plan playerId=${view.playerId} '
@@ -89,11 +105,15 @@ CargoPreference _cargoPreference(
   String playerId,
   AIConfig config, {
   ColonialSummary colonial = const ColonialSummary(),
+  bool belowQuotaPeaceTreasuryRecovery = false,
 }) {
   final domainWeights = getDomainWeightsForLeader(config.personalityId);
   final agendaId = config.hiddenAgendaId;
   // Trade-oriented agendas/personalities favour cargo.
   var economyWeight = domainWeights.economy;
+  if (belowQuotaPeaceTreasuryRecovery) {
+    economyWeight += kBelowQuotaPeaceTreasuryRecoveryCargoBoost;
+  }
   if (colonial.invadableNewWorldProvinceIdsSorted.isNotEmpty ||
       colonial.adjacentNewWorldOwnerFactionIdsSorted.isNotEmpty) {
     economyWeight += kColonialCargoPreferenceEconomyBoost;
