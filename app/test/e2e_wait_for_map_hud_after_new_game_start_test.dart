@@ -200,10 +200,15 @@ void main() {
       );
       expect(
         caught.toString(),
-        contains('New game setup failed'),
+        allOf(
+          contains('New game setup failed'),
+          contains('error dialog'),
+        ),
         reason:
             'Failure message must attribute the failure to the new-game '
-            'setup branch so the call site is unambiguous in CI logs.',
+            'setup branch ("New game setup failed") and the originating '
+            'control ("error dialog") so the call site is unambiguous in '
+            'CI logs (#2336 bootstrap contract).',
       );
     },
   );
@@ -397,10 +402,10 @@ void main() {
       );
       expect(
         message,
-        contains('home→capital'),
+        contains('map (home→capital)'),
         reason:
-            'Failure message must reference the home→capital wait so the '
-            'failure is unambiguously attributed to '
+            'Failure message must reference the map (home→capital) wait so '
+            'the failure is unambiguously attributed to '
             '`e2eWaitForMapHudAfterNewGameStart` (and not a sibling poll '
             'helper).',
       );
