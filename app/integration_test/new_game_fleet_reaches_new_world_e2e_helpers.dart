@@ -12,8 +12,11 @@ const Duration _kMaxUiResponseWait = Duration(seconds: 5);
 
 /// Entire fleet e2e must finish within this wall clock (success or guarded fail).
 ///
-/// E2E policy caps wall-clock runtime to 5 minutes so PR feedback remains fast.
-const Duration _kFleetE2eMaxWallClock = Duration(minutes: 5);
+/// Aliases the shared [kE2eMaxWallClock] (`e2e_test_shared.dart`) so all three
+/// E2E scenarios use the same 5-minute cap from
+/// `SPEC/program/e2e-integration-tests.md` § Determinism PR runtime rule
+/// (Refs GitHub #2336).
+const Duration _kFleetE2eMaxWallClock = kE2eMaxWallClock;
 
 /// Selects the New World map region via [kCtE2ERegionTabNewWorldKey] when present
 /// (reduces ambiguous "New World" text on screen; `SPEC/program/e2e-integration-tests.md`).

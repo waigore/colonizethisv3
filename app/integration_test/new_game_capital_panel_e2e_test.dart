@@ -27,17 +27,29 @@ void main() {
           'Run with: flutter test integration_test/... --dart-define=CT_E2E=true',
     );
 
+    // 5-minute PR wall-clock cap per scenario path per
+    // `SPEC/program/e2e-integration-tests.md` § Determinism PR runtime rule
+    // (`colonizethis-e2e-ui-stability.mdc`). Mirrors the fleet E2E pattern;
+    // Refs GitHub #2336.
+    final ensureUnderWallClock = e2eMakeWallClockGuard(
+      testName: testName,
+      stopwatch: testSw,
+    );
+
     await tester.binding.setSurfaceSize(const Size(1280, 720));
     final bootstrapSw = Stopwatch()..start();
     await bootstrapForIntegrationTest();
     await tester.pump();
     await e2eWaitForNewGameEntry(tester, perf: perf);
     perf.timing('bootstrap_for_integration_test', bootstrapSw.elapsed);
+    ensureUnderWallClock('after bootstrap_for_integration_test');
     await ensureAllRelocated64pxPngsLoadSuiteOnce();
+    ensureUnderWallClock('after asset_preload');
 
     final newGameToMapSw = Stopwatch()..start();
     await bootstrapNewGameToMap(tester, perf: perf);
     perf.timing('new_game_to_map', newGameToMapSw.elapsed);
+    ensureUnderWallClock('after new_game_to_map');
 
     await tester.tap(find.byKey(kHomeToCapitalButtonKey));
     await waitUntilFound(
@@ -72,6 +84,7 @@ void main() {
       actual,
     );
     expect(actual, orderedEquals(expected));
+    ensureUnderWallClock('test complete');
     perf.timing('test_total', testSw.elapsed);
   });
 }
