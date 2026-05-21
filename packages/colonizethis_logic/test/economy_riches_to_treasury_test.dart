@@ -70,4 +70,23 @@ void main() {
       expect(result.treasuryDelta, 0);
     });
   });
+
+  group('pendingRichesTreasuryDelta', () {
+    test('matches resolveRichesToTreasury treasuryDelta', () {
+      final stockpile = const Stockpile()
+          .applyDelta(CommodityCatalog.spices.id, 3)
+          .applyDelta(CommodityCatalog.gold.id, 1);
+
+      expect(
+        pendingRichesTreasuryDelta(stockpile: stockpile),
+        resolveRichesToTreasury(stockpile: stockpile).treasuryDelta,
+      );
+    });
+
+    test('returns zero when stockpile has no riches', () {
+      final stockpile = const Stockpile().applyDelta(CommodityCatalog.grain.id, 5);
+
+      expect(pendingRichesTreasuryDelta(stockpile: stockpile), 0);
+    });
+  });
 }

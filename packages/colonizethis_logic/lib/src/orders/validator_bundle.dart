@@ -2,6 +2,7 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../diplomacy/diplomacy_resolver.dart';
+import '../economy/economy_riches_to_treasury.dart';
 import '../world/player_view.dart';
 import 'order_validators.dart';
 
@@ -113,10 +114,21 @@ OrderValidators createOrderValidators({
   required int treasury,
   required DiplomacyFactionMembership factionMembership,
 }) {
+  final treasuryForBuildValidation = treasury +
+      pendingRichesTreasuryDelta(
+        stockpile: stockpile,
+        richesCashMultiplier: game.richesCashMultiplier,
+      );
   return OrderValidators(
     moveValidator: const MoveValidator(),
     armyMoveValidator: const ArmyMoveValidator(),
-    buildValidator: BuildOrderValidator(game: game, player: player),
+    buildValidator: BuildOrderValidator.withProjectedEconomy(
+      game: game,
+      player: player,
+      stockpile: stockpile,
+      treasury: treasuryForBuildValidation,
+      workerPool: player.workerPool,
+    ),
     workValidator: createWorkOrderValidator(
       game: game,
       player: player,
