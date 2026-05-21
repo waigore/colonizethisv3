@@ -59,6 +59,7 @@ extension _DialogBuilders on _AppEventHandlerScopeState {
         );
         unawaited(
           runNewGameSetupAfterLeaderPick(
+            navigatorKey: appNavigatorKey,
             container: rootContainer,
             templateConfig: templateConfig,
           ),
