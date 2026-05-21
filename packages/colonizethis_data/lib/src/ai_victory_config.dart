@@ -200,6 +200,19 @@ const int kStalledMilitaryRebuildCrisisRegimentCap = 4;
 /// Extra regiment build floor per Old World province the frontier blocker leads by.
 const int kStalledMinRegimentCountPerProvinceDeficitVsBlocker = 2;
 
+/// Below this many standing regiments, a below-quota GP at peace with all
+/// other Great Powers and an invadable Old World frontier is treated as
+/// "insufficient to declare war" and forced to rebuild regiments via the
+/// economy build pass (seed-42 gp3 turn-100 trap; Refs #2509). Sized just
+/// below the at-war regiment floor so GPs that have exited a war with low
+/// armies rebuild before EXPAND declare-war scoring picks a new target.
+const int kBelowQuotaPeaceMinRegimentsBeforeDeclareWar = 6;
+
+/// Economy-weight boost for [CargoPreference] when a below-quota GP at peace
+/// cannot afford the cheapest regiment build even after pending riches treasury
+/// (Refs #2509 EXPAND treasury-recovery).
+const int kBelowQuotaPeaceTreasuryRecoveryCargoBoost = 50;
+
 /// Offer-peace bonus toward a minor/tribe at war that no longer owns invadable land.
 const int kOfferPeaceFutileMinorWarBonus = 80;
 

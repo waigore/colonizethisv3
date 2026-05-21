@@ -30,6 +30,8 @@ export 'src/orders/incremental_candidate_validator.dart'
 export 'src/orders/order_suggestion_move_army.dart'
     show armyMoveCandidateDestinationProvinceIds;
 export 'src/world/movement.dart' show neighborProvinceIdsInRegion;
+export 'src/economy/economy_riches_to_treasury.dart'
+    show pendingRichesTreasuryDelta;
 export 'src/economy/worker_economy.dart' show effectiveLabourForWorkers;
 export 'src/orders/draft_orders_mutations.dart'
     show applyArmyMoveOrderForPlayer;

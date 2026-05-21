@@ -315,14 +315,23 @@ Orders _appendEconomyBuildOrders({
   final observerQuotaPressure = isBelowObserverConquestQuota(
     snapshot.conquest.oldWorldProvincesOwned,
   );
+  final atWarWithAnyGreatPower = snapshot.threats.atWarWith.any(
+    (id) => ctx.game.playerById(id) != null,
+  );
   final needRegimentsToExpand = observerQuotaPressure &&
       regimentCount == 0 &&
       snapshot.conquest.invadableProvinceIdsSorted.isNotEmpty;
   final brokeBelowQuotaAtPeace = observerQuotaPressure &&
       regimentCount == 0 &&
-      !snapshot.threats.atWarWith.any(
-        (id) => ctx.game.playerById(id) != null,
-      );
+      !atWarWithAnyGreatPower;
+  final belowQuotaPeaceInsufficientRegiments =
+      isBelowQuotaPeaceInsufficientRegiments(
+    oldWorldProvincesOwned: snapshot.conquest.oldWorldProvincesOwned,
+    regimentCount: regimentCount,
+    atWarWithAnyGreatPower: atWarWithAnyGreatPower,
+    hasInvadableProvinces:
+        snapshot.conquest.invadableProvinceIdsSorted.isNotEmpty,
+  );
   final zeroRegimentsAtWar = regimentCount == 0 &&
       snapshot.threats.atWarWith.isNotEmpty;
   final criticallyWeakBelowQuota = observerQuotaPressure &&
@@ -369,7 +378,8 @@ Orders _appendEconomyBuildOrders({
           criticallyWeakBelowQuota) &&
       (snapshot.threats.atWarWith.isNotEmpty ||
           needRegimentsToExpand ||
-          brokeBelowQuotaAtPeace) &&
+          brokeBelowQuotaAtPeace ||
+          belowQuotaPeaceInsufficientRegiments) &&
       regimentCount < minRegimentFloor;
   if (forceRegimentRebuild || atWarWithGpBlocker) {
     buildThreshold = 0;
@@ -406,6 +416,7 @@ Orders _appendEconomyBuildOrders({
       militaryRebuildCrisis: forceRegimentRebuild &&
           (atWarWithGpBlocker ||
               brokeBelowQuotaAtPeace ||
+              belowQuotaPeaceInsufficientRegiments ||
               (regimentCount <= kStalledMilitaryRebuildCrisisRegimentCap &&
                   !(observerQuotaPressure &&
                       snapshot.conquest.oldWorldProvincesOwned >

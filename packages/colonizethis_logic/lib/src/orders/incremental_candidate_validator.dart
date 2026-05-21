@@ -3,6 +3,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../constants.dart';
 import '../diplomacy/diplomacy_resolver.dart';
+import '../economy/economy_riches_to_treasury.dart';
 import '../world/player_view.dart';
 import '../world/unit_lookup.dart';
 import 'order_validators.dart';
@@ -262,7 +263,17 @@ class IncrementalCandidateValidator {
         basePrefix.buildUnitOrdersByPlayerId[playerId] ??
         const <BuildUnitOrder>[];
     if (_cachedPostBuildPrefixEconomy == null) {
-      final prefixValidator = BuildOrderValidator(game: game, player: player);
+      final prefixValidator = BuildOrderValidator.withProjectedEconomy(
+        game: game,
+        player: player,
+        stockpile: player.stockpile,
+        treasury: player.treasury +
+            pendingRichesTreasuryDelta(
+              stockpile: player.stockpile,
+              richesCashMultiplier: game.richesCashMultiplier,
+            ),
+        workerPool: player.workerPool,
+      );
       for (final existing in builds) {
         final result = prefixValidator.validate(
           existing,
@@ -281,13 +292,18 @@ class IncrementalCandidateValidator {
       );
     }
     final snap = _cachedPostBuildPrefixEconomy!;
+    final candidateStockpile = Stockpile(
+      quantities: Map<String, int>.from(snap.stockpile.quantities),
+    );
     final candidateValidator = BuildOrderValidator.withProjectedEconomy(
       game: game,
       player: player,
-      stockpile: Stockpile(
-        quantities: Map<String, int>.from(snap.stockpile.quantities),
-      ),
-      treasury: snap.treasury,
+      stockpile: candidateStockpile,
+      treasury: snap.treasury +
+          pendingRichesTreasuryDelta(
+            stockpile: candidateStockpile,
+            richesCashMultiplier: game.richesCashMultiplier,
+          ),
       workerPool: snap.workers,
     );
     return candidateValidator
@@ -379,7 +395,17 @@ class IncrementalCandidateValidator {
     if (cached != null) {
       return cached;
     }
-    final buildValidator = BuildOrderValidator(game: game, player: player);
+    final buildValidator = BuildOrderValidator.withProjectedEconomy(
+      game: game,
+      player: player,
+      stockpile: player.stockpile,
+      treasury: player.treasury +
+          pendingRichesTreasuryDelta(
+            stockpile: player.stockpile,
+            richesCashMultiplier: game.richesCashMultiplier,
+          ),
+      workerPool: player.workerPool,
+    );
     final builds =
         basePrefix.buildUnitOrdersByPlayerId[playerId] ??
         const <BuildUnitOrder>[];
