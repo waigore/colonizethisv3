@@ -273,6 +273,7 @@ int? _declareWarSuppressedScore(
   Orders? sameTurnPriorDiplomaticOrders,
 }) {
   return _declareWarSuppressedDevelopPhaseScore(ctx) ??
+      _declareWarSuppressedColonialLiteScore(ctx) ??
       _declareWarSuppressedExpandColonialScore(ctx) ??
       _declareWarSuppressedStalledOwFrontierScore(ctx) ??
       _declareWarSuppressedAdjacentGpScore(
@@ -301,6 +302,39 @@ int? _declareWarSuppressedExpandColonialScore(_DeclareWarTargetContext ctx) {
     snapshot: ctx.snapshot,
     game: ctx.game,
   )) {
+    return null;
+  }
+  if (ctx.isTribeTarget ||
+      ctx.ownsInvadableNw ||
+      ctx.isColonialAdjacentOwner) {
+    return kDeclareWarNonAdjacentSuppressedScore;
+  }
+  return null;
+}
+
+// COLONIAL-lite NW `declareWar` suppression (Refs #2509 S10).
+//
+// SPEC/ai/ai-architecture.md § Observer goal phases (Full AI),
+// COLONIAL-lite: "suppresses NW declareWar, invasion army moves, and
+// purchase_land only". `shouldSuppressNewWorldDeclareWarInvasionAndPurchase`
+// already returns true for COLONIAL-lite, and `conquest_planner.dart` uses
+// it to gate army moves and `purchase_land`. The diplomatic declare-war
+// scoring path previously only consulted `shouldSuppressNewWorldColonialOrders`
+// (EXPAND-only) and so left NW `declareWar` reachable in COLONIAL-lite,
+// allowing near-quota GPs at turn >= `kObserverColonialLiteMinTurn` to
+// burn turns declaring on NW tribes before reaching the OW quota and
+// regressing the canonical seed-42 `--verify-conquest` per-GP +3 OW gain
+// gate at turn 100.
+//
+// The function mirrors `_declareWarSuppressedExpandColonialScore`: suppress
+// only NW colonial targets (tribe, NW owner, colonial-adjacent owner) — not
+// every declare-war candidate — so the COLONIAL-lite allow list
+// ("establishOverture, colonial naval/cargo") is unaffected and the rule
+// stays distinct from the broader DEVELOP suppression
+// (`_declareWarSuppressedDevelopPhaseScore`).
+int? _declareWarSuppressedColonialLiteScore(_DeclareWarTargetContext ctx) {
+  if (observerGoalPhaseFor(snapshot: ctx.snapshot, game: ctx.game) !=
+      ObserverGoalPhase.colonialLite) {
     return null;
   }
   if (ctx.isTribeTarget ||
