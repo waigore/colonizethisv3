@@ -172,6 +172,13 @@ rules:
     runner: dart
     script: tool/check_app_event_handler_scope_logic_boundary.dart
 
+  - rule_id: repo.app_event_bus_decoupling
+    group: architecture
+    title: app/lib must decouple via AppEventBus / appNavigatorKey choke point (Refs #2626)
+    spec: SPEC/program/app-ui-wiring.md
+    runner: dart
+    script: tool/check_app_event_bus_decoupling.dart
+
   - rule_id: repo.subscription_tracker
     group: structure
     title: app feature subscriptions must use SubscriptionTracker

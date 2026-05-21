@@ -4,8 +4,9 @@ import 'dart:io';
 import 'package:path/path.dart' as p;
 import 'package:yaml/yaml.dart';
 
-import 'check_app_hardcoded_ui_strings.dart';
+import 'check_app_event_bus_decoupling.dart';
 import 'check_app_event_handler_scope_logic_boundary.dart';
+import 'check_app_hardcoded_ui_strings.dart';
 import 'check_app_no_duplicate_helpers.dart';
 import 'check_app_widget_imports.dart';
 import 'check_asset_path_constants.dart';
@@ -729,6 +730,8 @@ int? _tryRunDartRuleInProcess({
       return runCheckDebugConsoleSharedHelpers(repoRoot);
     case 'repo.app_event_handler_scope_logic_boundary':
       return runCheckAppEventHandlerScopeLogicBoundary(repoRoot);
+    case 'repo.app_event_bus_decoupling':
+      return runCheckAppEventBusDecoupling(repoRoot);
     case 'repo.control_flow_nesting_depth':
       return runCheckControlFlowNestingDepth(repoRoot);
     case 'repo.repeated_magic_numbers':

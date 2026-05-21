@@ -10,7 +10,6 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'package:colonizethis_app/app.dart';
 import 'package:colonizethis_app/config/routes.dart';
 import 'package:colonizethis_app/perf/app_perf_trace.dart';
 import 'package:colonizethis_app/core/services/game_service.dart';
@@ -39,7 +38,13 @@ class _NewGameOutcomeFailure extends _NewGameOutcome {
 
 /// Runs phased new-game creation after leader selection: progress dialog, navigate on success,
 /// error dialog with retry. SPEC/ui/game-initializing.md.
+///
+/// [navigatorKey] is the long-lived root navigator handle used to show the
+/// progress and error dialogs after the leader-selection dialog has popped
+/// itself. Inject explicitly (do not read a global) so the dependency is
+/// visible at the call site and testable: SPEC/program/app-ui-wiring.md.
 Future<void> runNewGameSetupAfterLeaderPick({
+  required GlobalKey<NavigatorState> navigatorKey,
   required ProviderContainer container,
   required GameSetupConfig templateConfig,
 }) async {
@@ -73,6 +78,7 @@ Future<void> runNewGameSetupAfterLeaderPick({
     );
 
     final outcome = await _showNewGameProgressDialog(
+      navigatorKey: navigatorKey,
       config: config,
       service: service,
     );
@@ -88,7 +94,10 @@ Future<void> runNewGameSetupAfterLeaderPick({
         bus.emit(const NavigateToRouteEvent(Routes.game));
         return;
       case _NewGameOutcomeFailure(:final error):
-        final retry = await _showNewGameErrorDialog(error);
+        final retry = await _showNewGameErrorDialog(
+          navigatorKey: navigatorKey,
+          error: error,
+        );
         if (retry) {
           attemptIndex++;
           continue;
@@ -99,10 +108,11 @@ Future<void> runNewGameSetupAfterLeaderPick({
 }
 
 Future<_NewGameOutcome?> _showNewGameProgressDialog({
+  required GlobalKey<NavigatorState> navigatorKey,
   required GameSetupConfig config,
   required GameService service,
 }) async {
-  final ctx = appNavigatorKey.currentContext;
+  final ctx = navigatorKey.currentContext;
   if (ctx == null) {
     return null;
   }
@@ -115,8 +125,11 @@ Future<_NewGameOutcome?> _showNewGameProgressDialog({
   );
 }
 
-Future<bool> _showNewGameErrorDialog(Object error) async {
-  final ctx = appNavigatorKey.currentContext;
+Future<bool> _showNewGameErrorDialog({
+  required GlobalKey<NavigatorState> navigatorKey,
+  required Object error,
+}) async {
+  final ctx = navigatorKey.currentContext;
   if (ctx == null) {
     return false;
   }

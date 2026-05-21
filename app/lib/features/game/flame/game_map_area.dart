@@ -28,6 +28,7 @@ import 'region_map_component.dart' show BaseLayerDisplayMode;
 import '../../../../providers/turn_resolution_blocking_provider.dart';
 import '../../../../providers/turn_resolution_runner_provider.dart';
 import '../../../core/services/subscription_tracker.dart';
+import '../../../core/services/turn_resolution_blocking_service.dart';
 import '../../../core/services/turn_resolution_runner.dart';
 import 'region_map_viewport_snapshot.dart';
 import '../../../../providers/home_fleet_cargo_provider.dart';
