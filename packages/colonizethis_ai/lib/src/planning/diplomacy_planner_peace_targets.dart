@@ -386,6 +386,83 @@ List<String> mutualZeroRegimentGpStalematePeaceTargets({
   return [enemy];
 }
 
+/// Peace the sole at-war Great Power when both sides are mutual-plateau peers
+/// below the observer quota AND both are exhausted in regiments and treasury.
+///
+/// Enables rebuild after a deadlocked GP-vs-GP war when no minor pivot remains
+/// (observer seed-42 gp3/gp4 turn-100 stalemate; Refs #2509). Authorized by
+/// `SPEC/ai/ai-architecture.md` § Observer goal phases (Full AI) — late-game
+/// survival peace clause extended to mutually-exhausted stalemates.
+///
+/// Trigger conditions (all must hold):
+/// - Both sides own at least [kMutualExhaustedGpStalemateMinOw] OW provinces
+///   (the "8-9 plateau" — excludes early-game / collapsed-survival GPs that
+///   are handled by `criticalWeakGpSurvivalPeaceTargets`).
+/// - This GP is below the observer quota and within the stalled OW band.
+/// - This GP is at war with exactly one Great Power (sole GP war).
+/// - The enemy GP is also below the quota and within the stalled OW band.
+/// - The mutual plateau gap is at most one OW province (|ownOw - enemyOw| <= 1).
+/// - Both GPs have at most [kMutualExhaustedGpRegimentMax] regiments.
+/// - Both GPs have at most [kMutualExhaustedGpTreasuryMax] treasury.
+List<String> mutualExhaustedBelowQuotaGpStalematePeaceTargets({
+  required Game game,
+  required AIWorldSnapshot snapshot,
+}) {
+  final ownOw = snapshot.conquest.oldWorldProvincesOwned;
+  if (ownOw < kMutualExhaustedGpStalemateMinOw) {
+    return const [];
+  }
+  if (!isBelowObserverConquestQuota(ownOw)) {
+    return const [];
+  }
+  if (!isStalledOldWorldExpansion(ownOw)) {
+    return const [];
+  }
+  final ownPlayer = game.playerById(snapshot.playerId);
+  if (ownPlayer == null) {
+    return const [];
+  }
+  if (regimentCountForPlayer(game, snapshot.playerId) >
+      kMutualExhaustedGpRegimentMax) {
+    return const [];
+  }
+  if (ownPlayer.treasury > kMutualExhaustedGpTreasuryMax) {
+    return const [];
+  }
+  final gpWars = <String>[
+    for (final factionId in snapshot.threats.atWarWith)
+      if (game.playerById(factionId) != null) factionId,
+  ];
+  if (gpWars.length != 1) {
+    return const [];
+  }
+  final enemy = gpWars.single;
+  final enemyPlayer = game.playerById(enemy);
+  if (enemyPlayer == null) {
+    return const [];
+  }
+  final enemyOw = provinceCountOwnedBy(game, enemy);
+  if (enemyOw < kMutualExhaustedGpStalemateMinOw) {
+    return const [];
+  }
+  if (!isBelowObserverConquestQuota(enemyOw)) {
+    return const [];
+  }
+  if (!isStalledOldWorldExpansion(enemyOw)) {
+    return const [];
+  }
+  if ((enemyOw - ownOw).abs() > 1) {
+    return const [];
+  }
+  if (regimentCountForPlayer(game, enemy) > kMutualExhaustedGpRegimentMax) {
+    return const [];
+  }
+  if (enemyPlayer.treasury > kMutualExhaustedGpTreasuryMax) {
+    return const [];
+  }
+  return [enemy];
+}
+
 bool stalledOwExpansionNeedsPeacePass({
   required Game game,
   required AIWorldSnapshot snapshot,
@@ -409,6 +486,10 @@ bool stalledOwExpansionNeedsPeacePass({
         .isNotEmpty ||
     stalledZeroRegimentGpPeaceTargets(game: game, snapshot: snapshot)
         .isNotEmpty ||
+    mutualExhaustedBelowQuotaGpStalematePeaceTargets(
+      game: game,
+      snapshot: snapshot,
+    ).isNotEmpty ||
     criticalOwHoldPeaceTargets(game: game, snapshot: snapshot).isNotEmpty ||
     stalledBelowQuotaGpLeadPeaceTargets(game: game, snapshot: snapshot)
         .isNotEmpty ||
@@ -480,6 +561,10 @@ Iterable<String> _survivalGreatPowerPeaceTargets({
   yield* criticalWeakGpSurvivalPeaceTargets(game: game, snapshot: snapshot);
   yield* mutualZeroRegimentGpStalematePeaceTargets(game: game, snapshot: snapshot);
   yield* stalledZeroRegimentGpPeaceTargets(game: game, snapshot: snapshot);
+  yield* mutualExhaustedBelowQuotaGpStalematePeaceTargets(
+    game: game,
+    snapshot: snapshot,
+  );
 }
 
 /// Legacy OW-expansion scoring ratchet peace (EXPAND / COLONIAL-lite only; Refs #2509 S10).
@@ -572,10 +657,16 @@ Set<String> collectStalledGreatPowerPeaceTargets({
   };
   // Zero-regiment stalemates must peace the sole GP blocker even on a GP-only
   // frontier; otherwise broke mutual-plateau pairs stay at war with no armies
-  // (observer seed-42 gp3/gp4; Refs #2509).
+  // (observer seed-42 gp3/gp4; Refs #2509). The mutually-exhausted variant
+  // covers the same stalemate at non-zero but critically low regiment counts
+  // (3-regiment 0-treasury plateau) when no minor pivot remains.
   final zeroRegimentBlockerPeace = <String>{
     ...mutualZeroRegimentGpStalematePeaceTargets(game: game, snapshot: snapshot),
     ...stalledZeroRegimentGpPeaceTargets(game: game, snapshot: snapshot),
+    ...mutualExhaustedBelowQuotaGpStalematePeaceTargets(
+      game: game,
+      snapshot: snapshot,
+    ),
   };
   return targets
       .where(
