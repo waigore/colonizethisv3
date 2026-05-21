@@ -51,6 +51,40 @@ bool isStalledOldWorldGpBlockerFocus({
     isBelowObserverConquestQuota(snapshot.conquest.oldWorldProvincesOwned) &&
     isOldWorldGpOnlyInvadableFrontier(game: game, snapshot: snapshot);
 
+/// Below-quota EXPAND GP at peace with all other Great Powers, with an invadable
+/// Old World frontier and a positive but small standing regiment count.
+///
+/// Captures the seed-42 turn-100 trap where a GP that exited an early war with
+/// few standing regiments and zero treasury is no longer "broke"
+/// (`regimentCount > 0`) and so neither `needRegimentsToExpand` nor
+/// `brokeBelowQuotaAtPeace` triggers force regiment rebuild — yet the GP also
+/// has too few regiments to mount a credible EXPAND declare-war on the
+/// remaining GP-only frontier (Refs #2509 § Observer goal phases (Full AI)
+/// "EXPAND regiment-rebuild trap").
+///
+/// Returns true only while OW holdings are below
+/// [kObserverConquestMinOwProvincesPerGp], no Great Power is in the at-war set,
+/// `invadableProvinceIdsSorted` is non-empty, and the standing regiment count
+/// is in the range `[1, kBelowQuotaPeaceMinRegimentsBeforeDeclareWar)`.
+bool isBelowQuotaPeaceInsufficientRegiments({
+  required int oldWorldProvincesOwned,
+  required int regimentCount,
+  required bool atWarWithAnyGreatPower,
+  required bool hasInvadableProvinces,
+}) {
+  if (!isBelowObserverConquestQuota(oldWorldProvincesOwned)) {
+    return false;
+  }
+  if (atWarWithAnyGreatPower) {
+    return false;
+  }
+  if (regimentCount <= 0 ||
+      regimentCount >= kBelowQuotaPeaceMinRegimentsBeforeDeclareWar) {
+    return false;
+  }
+  return hasInvadableProvinces;
+}
+
 /// Both GPs in the 8–9 OW stalled band, below the observer quota, with similar holdings.
 bool isMutualBelowQuotaPlateauPeer({
   required int ownOw,
