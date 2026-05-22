@@ -15,6 +15,7 @@ import 'orders_application_completed_work.dart';
 import 'orders_application_context.dart';
 import 'orders_application_helpers.dart';
 import 'orders_application_work_phase.dart';
+import 'orders_application_worker_phase.dart';
 import '../turn/trace/turn_trace_runtime.dart';
 
 /// Order application helpers for build and work phases.
@@ -58,7 +59,10 @@ Game applyBuildAndWorkOrders(
 }) {
   final buildOrders = orders.buildUnitOrdersByPlayerId;
   final workOrders = orders.workOrdersByPlayerId;
-  if (buildOrders.isEmpty && workOrders.isEmpty) {
+  final recruitWorkerOrders = orders.recruitWorkerOrdersByPlayerId;
+  if (buildOrders.isEmpty &&
+      workOrders.isEmpty &&
+      recruitWorkerOrders.isEmpty) {
     return game;
   }
 
@@ -88,6 +92,7 @@ Game applyBuildAndWorkOrders(
     game: game,
     buildOrders: buildOrders,
     workOrders: workOrders,
+    recruitWorkerOrders: recruitWorkerOrders,
     topology: topology,
     tileMapByRegion: tileMapByRegion,
     onDialogue: onDialogue,
@@ -95,6 +100,7 @@ Game applyBuildAndWorkOrders(
     work: work,
   );
 
+  state = runWorkerPoolPhase(state);
   state = runBuildPhase(state);
   state = runWorkPhase(
     state,
