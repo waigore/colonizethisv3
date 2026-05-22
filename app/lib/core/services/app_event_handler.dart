@@ -282,12 +282,10 @@ class AppEventHandler {
           if (game == null) {
             return const SizedBox.shrink();
           }
-          if (shellPanelsNotDefined(ref)) {
-            return const ObserveModeNotDefinedPanel(title: 'Civilian Units');
-          }
-          final humanPlayerId = shellPanelPlayerId(ref, game);
-          final readOnly =
-              !ref.read(shellPlayerContextProvider).canMutateViaUi;
+          final shell = ref.read(shellPlayerContextProvider);
+          final civilianOwnerIds = resolveCivilianMarkerOwnerIds(shell, game);
+          final panelPlayerId = shellPanelPlayerId(ref, game);
+          final readOnly = !shell.canMutateViaUi;
           final currentOrders = ref.watch(currentOrdersProvider);
           final bus = ref.watch(appEventBusProvider);
           final isNarrow = MediaQuery.sizeOf(context).width < kNarrowBreakpoint;
@@ -297,7 +295,12 @@ class AppEventHandler {
             constraints: BoxConstraints(maxHeight: maxHeight),
             child: CivilianUnitsPanel(
               game: game,
-              humanPlayerId: humanPlayerId,
+              humanPlayerId:
+                  panelPlayerId ??
+                  (civilianOwnerIds.isNotEmpty
+                      ? civilianOwnerIds.first
+                      : game.players.first.id),
+              civilianOwnerIds: civilianOwnerIds,
               bus: bus,
               readOnly: readOnly,
               currentOrders: currentOrders,

@@ -32,6 +32,7 @@ final humanDraftProjectedRegionProvider =
       final orders = ref.watch(currentOrdersProvider);
       final shell = ref.watch(shellPlayerContextProvider);
       final humanPlayerId = shell.mapPlayerIdFor(game);
+      final civilianOwnerIds = resolveCivilianMarkerOwnerIds(shell, game);
       final mapData = ref.watch(gameServiceProvider).getMapData(game.id);
 
       return GameMapAreaStateLogic.projectHumanDraftMarkersForRegion(
@@ -39,6 +40,7 @@ final humanDraftProjectedRegionProvider =
         game: game,
         orders: orders,
         humanPlayerId: humanPlayerId,
+        civilianOwnerIds: civilianOwnerIds,
         tileMapByRegion: mapData?.tileMapByRegion,
         topologyByRegion: mapData?.topologyByRegion,
         combinedTopology: mapData?.combinedTopology,

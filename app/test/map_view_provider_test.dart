@@ -308,4 +308,72 @@ void main() {
       }
     },
   );
+
+  test(
+    'mapViewDataProvider includes non-human civilian markers in global observe',
+    () {
+      final game = Game(
+        id: 'g_map',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+          oldWorld: RegionData(
+            provinces: const [
+              Province(
+                id: 'oldWorld|p1',
+                regionId: 'oldWorld',
+                ownerId: 'gp1',
+              ),
+              Province(
+                id: 'oldWorld|p2',
+                regionId: 'oldWorld',
+                ownerId: 'gp2',
+              ),
+            ],
+            units: [
+              Unit(
+                id: 'u_gp2',
+                type: kUnitTypeBuilder,
+                ownerId: 'gp2',
+                locationProvinceId: 'oldWorld|p2',
+                tileKey: 'oldWorld|p2|1|0',
+                status: UnitStatus.idle,
+              ),
+            ],
+          ),
+          newWorld: const RegionData(),
+        ),
+        players: const [
+          Player(id: 'gp1', displayName: 'Human', isHuman: true),
+          Player(id: 'gp2', displayName: 'France', isHuman: false),
+        ],
+      );
+
+      final container = ProviderContainer(
+        overrides: [
+          currentGameProvider.overrideWith(CurrentGameNotifier.new),
+          gamesBoxProvider.overrideWith((ref) => gamesBox),
+          gameServiceProvider.overrideWith(
+            (ref) => _GameServiceWithMinimalMap(gamesBox, GameSaveAdapter()),
+          ),
+        ],
+      );
+      addTearDown(container.dispose);
+      container.read(currentGameProvider.notifier).setGame(game);
+
+      expect(
+        container.read(mapViewDataProvider)!.oldWorld.civilianTileMarkers,
+        isEmpty,
+      );
+
+      final observe = container.read(observeSessionProvider.notifier);
+      final handedOff = observe.applyObserveHandoffIfNeeded(game);
+      container.read(currentGameProvider.notifier).setGame(handedOff);
+      observe.setModeGlobal();
+
+      final markers =
+          container.read(mapViewDataProvider)!.oldWorld.civilianTileMarkers;
+      expect(markers, hasLength(1));
+      expect(markers.single.tileKey, 'oldWorld|p2|1|0');
+    },
+  );
 }

@@ -96,14 +96,16 @@ _buildUnitAndCivilianMarkerData({
   required List<Province> provinces,
   required List<CellViewData> cells,
   required Map<String, (int x, int y)> provinceToTile,
+  Set<String>? civilianMarkerOwnerIds,
 }) {
   final unitMarkers = <UnitMarkerView>[];
   final civilianUnitsByTileKey = <String, List<Unit>>{};
   final playerOwnedCivilianTileMarkers = <CivilianTileMarkerView>[];
-  final humanPlayerIds = game.players
-      .where((player) => player.isHuman)
-      .map((player) => player.id)
-      .toSet();
+  final markerOwnerIds = civilianMarkerOwnerIds ??
+      game.players
+          .where((player) => player.isHuman)
+          .map((player) => player.id)
+          .toSet();
   final provincePresenceById = <String, ProvinceUnitPresenceView>{};
   for (final p in provinces) {
     provincePresenceById[p.id] = const ProvinceUnitPresenceView(
@@ -136,7 +138,7 @@ _buildUnitAndCivilianMarkerData({
       : game.worldState.newWorld.units;
   for (final u in regionUnits) {
     final isPlayerOwnedCivilian =
-        humanPlayerIds.contains(u.ownerId) && _isCivilianUnitType(u.type);
+        markerOwnerIds.contains(u.ownerId) && _isCivilianUnitType(u.type);
     if (isPlayerOwnedCivilian) {
       _addCivilianUnitToTileKeyBucket(
         unit: u,

@@ -200,6 +200,8 @@ When resource icons are visible, the map may render extraction throughput indica
 
 ## Civilian Marker Icons
 
+**Ownership (view build):** `RegionMapViewData.civilianTileMarkers` includes tile-scoped civilian stacks for units whose `ownerId` is in the `civilianMarkerOwnerIds` set passed to `buildInitGameMapViewData` (see [observe-mode.md](observe-mode.md) when the shell is observing). When the parameter is omitted, only great powers with `Player.isHuman == true` are included (legacy). Units must be civilian per game model and have a non-empty `tileKey` in the active region.
+
 Interactive civilian tile markers use per-type color icon assets in `assets/icons/64/`:
 
 - `ui_icon_civ_builder.png`

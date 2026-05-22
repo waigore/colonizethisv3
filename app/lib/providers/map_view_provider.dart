@@ -183,6 +183,9 @@ final mapViewDataProvider = Provider<InitGameMapViewData?>((ref) {
       }
     }
 
+    final civilianMarkerOwnerIds =
+        resolveCivilianMarkerOwnerIds(shell, game);
+
     return buildInitGameMapViewData(
       game: game,
       tileMapByRegion: mapData.tileMapByRegion,
@@ -196,6 +199,7 @@ final mapViewDataProvider = Provider<InitGameMapViewData?>((ref) {
           resourceExtractionEffectiveUnitsByTile,
       resourceExtractionBlockedUnitsByTile:
           resourceExtractionBlockedUnitsByTile,
+      civilianMarkerOwnerIds: civilianMarkerOwnerIds,
     );
   });
 });

@@ -26,6 +26,10 @@ InitGameMapViewData buildInitGameMapViewData({
 
   /// Optional per-tile transport-blocked extraction units for map overlays.
   Map<String, int>? resourceExtractionBlockedUnitsByTile,
+
+  /// Faction ids eligible for [RegionMapViewData.civilianTileMarkers].
+  /// When omitted, only [Player.isHuman] great powers are included (legacy).
+  Set<String>? civilianMarkerOwnerIds,
 }) {
   _log.i('buildInitGameMapViewData start gameId=${game.id}');
   RegionMapViewData? oldWorld;
@@ -50,6 +54,7 @@ InitGameMapViewData buildInitGameMapViewData({
           resourceExtractionEffectiveUnitsByTile,
       resourceExtractionBlockedUnitsByTile:
           resourceExtractionBlockedUnitsByTile,
+      civilianMarkerOwnerIds: civilianMarkerOwnerIds,
     );
     if (region.isOldWorld) {
       oldWorld = regionView;
@@ -85,6 +90,7 @@ RegionMapViewData _buildRegionViewData({
   Map<String, int>? resourceExtractionUnitsByTile,
   Map<String, int>? resourceExtractionEffectiveUnitsByTile,
   Map<String, int>? resourceExtractionBlockedUnitsByTile,
+  Set<String>? civilianMarkerOwnerIds,
 }) {
   final provinceMeta = _buildProvinceMetadata(
     game: game,
@@ -109,6 +115,7 @@ RegionMapViewData _buildRegionViewData({
     resourceExtractionEffectiveUnitsByTile:
         resourceExtractionEffectiveUnitsByTile,
     resourceExtractionBlockedUnitsByTile: resourceExtractionBlockedUnitsByTile,
+    civilianMarkerOwnerIds: civilianMarkerOwnerIds,
   );
   final markerData = _buildMarkerData(
     game: game,
@@ -262,7 +269,8 @@ _buildCellAndUnitData({
   required Map<String, TileVisibility>? visibilityByTile,
   required Map<String, int>? resourceExtractionUnitsByTile,
   required Map<String, int>? resourceExtractionEffectiveUnitsByTile,
-  required Map<String, int>? resourceExtractionBlockedUnitsByTile,
+  required   Map<String, int>? resourceExtractionBlockedUnitsByTile,
+  Set<String>? civilianMarkerOwnerIds,
 }) {
   final cells = _buildCellViewDataList(
     regionId: regionId,
@@ -289,6 +297,7 @@ _buildCellAndUnitData({
     provinces: provinces,
     cells: cells,
     provinceToTile: provinceToTile,
+    civilianMarkerOwnerIds: civilianMarkerOwnerIds,
   );
   return (
     cells: cells,

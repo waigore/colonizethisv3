@@ -52,27 +52,25 @@ String civilianSortProvinceName(
   return provinceNames[prefixed] ?? prefixed;
 }
 
-/// Civilian units owned by [humanPlayerId] in the supplied region list,
-/// sorted by **province name → type → id**. Pre-computes the sort keys once
-/// per unit (Schwartzian transform) to avoid O(n log n × k) work in the
-/// comparator. SPEC/ui/civilian-units-panel.md; Refs #2575 AC #4 / #6.
-List<Unit> civilianUnitsInRegion(
+/// Civilian units owned by one of [ownerIds] in the supplied region list,
+/// sorted by **province name → type → id**.
+List<Unit> civilianUnitsInRegionForOwners(
   List<Unit> units,
-  String humanPlayerId,
+  Set<String> ownerIds,
   Map<String, String> provinceNames,
   Orders currentOrders,
 ) {
   final keyed =
       <({Unit unit, String provinceName, String type, String id})>[];
   for (final u in units) {
-    if (u.ownerId != humanPlayerId) continue;
+    if (!ownerIds.contains(u.ownerId)) continue;
     if (u.tileKey == null) continue;
     if (!isCivilianUnit(u)) continue;
     keyed.add((
       unit: u,
       provinceName: civilianSortProvinceName(
         u,
-        humanPlayerId: humanPlayerId,
+        humanPlayerId: u.ownerId,
         currentOrders: currentOrders,
         provinceNames: provinceNames,
       ),
@@ -89,3 +87,20 @@ List<Unit> civilianUnitsInRegion(
   });
   return [for (final e in keyed) e.unit];
 }
+
+/// Civilian units owned by [humanPlayerId] in the supplied region list,
+/// sorted by **province name → type → id**. Pre-computes the sort keys once
+/// per unit (Schwartzian transform) to avoid O(n log n × k) work in the
+/// comparator. SPEC/ui/civilian-units-panel.md; Refs #2575 AC #4 / #6.
+List<Unit> civilianUnitsInRegion(
+  List<Unit> units,
+  String humanPlayerId,
+  Map<String, String> provinceNames,
+  Orders currentOrders,
+) =>
+    civilianUnitsInRegionForOwners(
+      units,
+      {humanPlayerId},
+      provinceNames,
+      currentOrders,
+    );

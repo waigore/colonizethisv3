@@ -21,13 +21,17 @@ class GameMapAreaCivilianDraftProjection {
     required ct_models.Game game,
     required ct_models.Orders orders,
     required String humanPlayerId,
+    Set<String>? civilianOwnerIds,
   }) {
+    final ownerIds = civilianOwnerIds ?? {humanPlayerId};
     final pendingByUnitId = <String, String>{};
-    final pending = orders.workOrdersByPlayerId[humanPlayerId] ?? const [];
-    for (final order in pending) {
-      final target = order.targetTileKey;
-      if (target.isEmpty) continue;
-      pendingByUnitId[order.unitId] = target;
+    for (final ownerId in ownerIds) {
+      final pending = orders.workOrdersByPlayerId[ownerId] ?? const [];
+      for (final order in pending) {
+        final target = order.targetTileKey;
+        if (target.isEmpty) continue;
+        pendingByUnitId[order.unitId] = target;
+      }
     }
 
     final civilianUnitIdsToProject = <String>{
@@ -36,21 +40,38 @@ class GameMapAreaCivilianDraftProjection {
         for (final unitId in marker.unitIds) unitId,
     };
     if (civilianUnitIdsToProject.isEmpty) {
+      for (final u in game.worldState.oldWorld.units) {
+        if (!ownerIds.contains(u.ownerId) || !_isCivilianUnitType(u.type)) {
+          continue;
+        }
+        if (u.tileKey == null || u.tileKey!.isEmpty) continue;
+        civilianUnitIdsToProject.add(u.id);
+      }
+      for (final u in game.worldState.newWorld.units) {
+        if (!ownerIds.contains(u.ownerId) || !_isCivilianUnitType(u.type)) {
+          continue;
+        }
+        if (u.tileKey == null || u.tileKey!.isEmpty) continue;
+        civilianUnitIdsToProject.add(u.id);
+      }
+    }
+    if (civilianUnitIdsToProject.isEmpty) {
       return region;
     }
 
     final unitsById = <String, ct_models.Unit>{
       for (final u in game.worldState.oldWorld.units)
-        if (u.ownerId == humanPlayerId && _isCivilianUnitType(u.type)) u.id: u,
+        if (ownerIds.contains(u.ownerId) && _isCivilianUnitType(u.type)) u.id: u,
       for (final u in game.worldState.newWorld.units)
-        if (u.ownerId == humanPlayerId && _isCivilianUnitType(u.type)) u.id: u,
+        if (ownerIds.contains(u.ownerId) && _isCivilianUnitType(u.type)) u.id: u,
     };
     if (unitsById.isEmpty) {
       return region;
     }
-    final visibilityByTile =
-        game.worldState.playerVisibilityByTile[humanPlayerId] ??
-        const <String, String>{};
+    final visibilityByTile = ownerIds.length == 1
+        ? game.worldState.playerVisibilityByTile[ownerIds.single] ??
+            const <String, String>{}
+        : const <String, String>{};
 
     final projectedByTile = <String, List<_ProjectedCivilianUnit>>{};
     for (final unitId in civilianUnitIdsToProject) {
@@ -59,7 +80,7 @@ class GameMapAreaCivilianDraftProjection {
       final projectedTile =
           projectedCivilianTileKey(
             unit: unit,
-            playerId: humanPlayerId,
+            playerId: unit.ownerId,
             orders: orders,
           ) ??
           unit.tileKey;

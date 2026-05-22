@@ -26,6 +26,20 @@
 
 See issue #2556 table. **Global:** P12+P11 omniscient; others `not defined` (P10 turn-event feed toggle shows the sentinel and hides the feed card). **Player:** bind to `viewingPlayerId`.
 
+**P6 carve-out (civilian inspection):** Global observe still shows **`not defined`** for treasury, production, diplomacy, and other GP-scoped chrome panels, but the **Civilian Units** panel and map **civilian tile markers** remain available read-only for **all factions** (great powers, minor nations, tribes) that own civilians with a `tileKey`. Mutating controls (Assign, Cancel, Train, work-target selection) are disabled while observe is active.
+
+## Map civilian markers (ownership)
+
+`buildInitGameMapViewData` accepts optional `civilianMarkerOwnerIds`. The app shell resolves the set from `ShellPlayerContext`:
+
+| Shell mode | `civilianMarkerOwnerIds` |
+|------------|--------------------------|
+| Normal play | Current human great-power id only |
+| Player observe | `viewingPlayerId` (observed GP) |
+| Global observe | Every `Player.id`, `MinorNation.id`, and `Tribe.id` in the session `Game` |
+
+Markers must not depend on `Player.isHuman` (observe handoff clears human flags). Draft projection enumerates world-state civilians for the same owner set when base markers are empty.
+
 ---
 
 ## Save / load
@@ -44,3 +58,8 @@ See issue #2556 table. **Global:** P12+P11 omniscient; others `not defined` (P10
 - Given `/observe off` after `gp1`, when off, then `gp1.isHuman == true` in session.
 - Given observe active, when save+reload, then observe off and `isHuman` matches file baseline.
 - Given observe + `lastControlledPlayerId == gp1`, when `/add_money 100`, then `gp1` treasury increases.
+- Given global observe and civilians owned by at least two factions, when the Empire map renders, then civilian tile markers appear for every owning faction on visible tiles (no fog).
+- Given player observe for `gp2` with civilians on the map, when the Empire map renders, then civilian tile markers appear for `gp2` only and respect `gp2` player-view fog.
+- Given global observe, when the user opens the Civilian Units panel, then the UI lists all factions' civilians read-only (grouped by owner) and does not show the `not defined` sentinel.
+- Given observe is active, when the Civilian Units panel is open, then Assign, Cancel, Train, and work-target selection are disabled; Locate remains available.
+- Given `/observe off` after global observe and the human GP controls the session again, when the Civilian Units panel is open, then Assign/Cancel/Train behave as in normal play and map markers follow the human-player-only rule.

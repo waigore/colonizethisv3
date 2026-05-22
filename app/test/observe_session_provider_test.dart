@@ -105,6 +105,39 @@ void main() {
       expect(notifier.state.observedPlayerId, isNull);
     });
 
+    test('resolveCivilianMarkerOwnerIds for observe modes', () {
+      final game = _minimalGame(
+        players: [
+          const Player(id: 'gp1', displayName: 'Human', isHuman: true),
+          const Player(id: 'gp2', displayName: 'France', isHuman: false),
+        ],
+      );
+      final handedOff = notifier.applyObserveHandoffIfNeeded(game);
+      container.read(currentGameProvider.notifier).setGame(handedOff);
+      notifier.setModeGlobal();
+
+      final globalShell = container.read(shellPlayerContextProvider);
+      expect(
+        resolveCivilianMarkerOwnerIds(globalShell, handedOff),
+        {'gp1', 'gp2'},
+      );
+
+      notifier.setModePlayer('gp2');
+      final playerShell = container.read(shellPlayerContextProvider);
+      expect(
+        resolveCivilianMarkerOwnerIds(playerShell, handedOff),
+        {'gp2'},
+      );
+
+      notifier.reset();
+      container.read(currentGameProvider.notifier).setGame(game);
+      final normalShell = container.read(shellPlayerContextProvider);
+      expect(
+        resolveCivilianMarkerOwnerIds(normalShell, game),
+        {'gp1'},
+      );
+    });
+
     test('shell context player observe binds panel player', () {
       final game = _minimalGame(
         players: [

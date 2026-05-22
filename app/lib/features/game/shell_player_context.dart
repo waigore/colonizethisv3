@@ -70,6 +70,30 @@ MapTopology _topologyForGame(Ref ref, Game game) {
 bool shellPanelsNotDefined(WidgetRef ref) =>
     !ref.read(shellPlayerContextProvider).showPlayerChrome;
 
+/// Faction ids whose map civilians and panel rows are visible for the current shell.
+/// SPEC/ui/observe-mode.md, SPEC/ui/map-widget.md.
+Set<String> resolveCivilianMarkerOwnerIds(ShellPlayerContext shell, Game game) {
+  if (!shell.inObservePhase) {
+    final humanId = shell.effectiveHumanPlayerId;
+    if (humanId != null && humanId.isNotEmpty) {
+      return {humanId};
+    }
+    return game.players
+        .where((player) => player.isHuman)
+        .map((player) => player.id)
+        .toSet();
+  }
+  final viewingId = shell.viewingPlayerId;
+  if (viewingId != null && viewingId.isNotEmpty) {
+    return {viewingId};
+  }
+  return {
+    for (final player in game.players) player.id,
+    for (final minor in game.minorNations) minor.id,
+    for (final tribe in game.tribes) tribe.id,
+  };
+}
+
 final shellPlayerContextProvider = Provider<ShellPlayerContext>((ref) {
   final game = ref.watch(currentGameProvider);
   final observe = ref.watch(observeSessionProvider);
