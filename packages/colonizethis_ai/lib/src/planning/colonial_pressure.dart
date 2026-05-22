@@ -308,16 +308,33 @@ String? primaryInvadableOldWorldGpBlocker({
   required Game game,
   required AIWorldSnapshot snapshot,
 }) {
+  final invadable = snapshot.conquest.invadableProvinceIdsSorted;
+  if (invadable.isEmpty) {
+    return null;
+  }
   final provinceOwner = getProvinceOwnerMap(game);
-  String? bestGpId;
-  var bestCount = 0;
-  for (final provinceId in snapshot.conquest.invadableProvinceIdsSorted) {
+  // Linear plurality scan: tally GP ownership in one pass, then resolve the
+  // plurality winner with a second linear pass that preserves the prior
+  // first-iterated-province tiebreak. Behaviorally identical to the previous
+  // nested-loop implementation; linear in the invadable-OW set rather than
+  // quadratic on hot peace-target collection paths (Refs
+  // `colonizethis-turn-resolution-budget.mdc`).
+  final counts = <String, int>{};
+  for (final provinceId in invadable) {
     final owner = provinceOwner[provinceId];
     if (owner == null || game.playerById(owner) == null) continue;
-    var count = 0;
-    for (final pid in snapshot.conquest.invadableProvinceIdsSorted) {
-      if (provinceOwner[pid] == owner) count++;
-    }
+    counts[owner] = (counts[owner] ?? 0) + 1;
+  }
+  if (counts.isEmpty) {
+    return null;
+  }
+  String? bestGpId;
+  var bestCount = 0;
+  for (final provinceId in invadable) {
+    final owner = provinceOwner[provinceId];
+    if (owner == null) continue;
+    final count = counts[owner];
+    if (count == null) continue;
     if (count > bestCount) {
       bestCount = count;
       bestGpId = owner;
