@@ -27,7 +27,7 @@
 /// rewrite reconciles them, so this slice carries **zero behavior change**
 /// and **zero regression risk** for live AI play.
 ///
-/// In-module contracts shipped in this slice (see issue #2509 § EXPAND phase
+/// In-module contracts shipped to date (see issue #2509 § EXPAND phase
 /// planner for the full set):
 ///
 ///   `planExpandPeace(game, snapshot) → List<String>`
@@ -40,9 +40,20 @@
 ///     minors remaining (Refs #2509 § EXPAND phase planner § planExpandPeace
 ///     "peace to exit stalemate").
 ///
+///   `planExpandDeclareWar(game, snapshot) → String?`
+///     Returns the deterministic factionId of the next declare-war target
+///     for the active EXPAND player, scanning [ConquestSummary]
+///     `invadableProvinceIdsSorted` in priority order: (1) adjacent
+///     minor not yet at war, (2) already-at-war minor (formalize war so
+///     conquest army-move pass fires), (3) sole GP frontier blocker on a
+///     GP-only mutual-plateau frontier when our regiment count and
+///     treasury cover engagement. Returns `null` when no priority arm
+///     applies (Refs #2509 § EXPAND phase planner § planExpandDeclareWar).
+///     The "suggestDeclareWarOrders rejects" runtime gate noted in the
+///     spec is enforced at the orchestrator layer (#2509 S5) so this
+///     module remains a pure-function planner.
+///
 /// Functions left for follow-up slices on this issue:
-///   - `planExpandDeclareWar` — adjacent / already-at-war minor priority
-///     scan, then sole-GP frontier blocker fallback (#2509 S2).
 ///   - `planExpandEconomy` — force-regiment-rebuild trap and treasury-
 ///     recovery cargo boost (#2509 S2).
 ///   - `planExpandMilitary` — OW-only conquest army moves toward the
@@ -54,6 +65,7 @@ import 'package:colonizethis_logic/ai_api.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../perception/perception_snapshot.dart';
+import 'army_conquest_prep.dart' show regimentCountForPlayer;
 
 /// Returns the deterministic list of at-war Great Powers the active player
 /// should `offerPeace` toward this turn while in EXPAND phase.
@@ -199,12 +211,12 @@ bool _isOldWorldGpOnlyInvadableFrontier({
     return false;
   }
   final provinceOwner = getProvinceOwnerMap(game);
-  final minorsOwnInvadable = snapshot.conquest.invadableProvinceIdsSorted.any(
-    (pid) {
-      final owner = provinceOwner[pid];
-      return owner != null && game.minorNations.any((m) => m.id == owner);
-    },
-  );
+  final minorsOwnInvadable = snapshot.conquest.invadableProvinceIdsSorted.any((
+    pid,
+  ) {
+    final owner = provinceOwner[pid];
+    return owner != null && game.minorNations.any((m) => m.id == owner);
+  });
   if (minorsOwnInvadable) {
     return false;
   }
@@ -250,3 +262,145 @@ bool _isMutualBelowQuotaPlateauPeer({
     isBelowObserverConquestQuota(ownOw) &&
     isBelowObserverConquestQuota(partnerOw) &&
     (partnerOw - ownOw).abs() <= 1;
+
+/// Returns the deterministic factionId of the next declare-war target for
+/// the active EXPAND player, or `null` when no priority arm applies.
+///
+/// Contract (issue #2509 § EXPAND phase planner § planExpandDeclareWar):
+///
+///   "Priority-ordered scan of `invadableProvinceIdsSorted` (OW only).
+///    Pick the first valid candidate:
+///      1. Adjacent minor with uninvaded OW province
+///      2. Already-at-war minor with uninvaded OW province
+///      3. Sole GP frontier blocker (GP-only frontiers only, mutual
+///         plateau, our regiments ≥ partner's, treasury ≥ regiment cost)
+///      4. null — skip declaring."
+///
+/// The function is pure and deterministic — identical inputs always yield
+/// identical results (Refs #2509 Must-have #7). Tiebreaks are
+/// lexicographic ascending across factionIds within each priority arm.
+///
+/// Inputs:
+///   - [game]: used to (a) resolve the active player via
+///     [Game.playerById] for treasury and regiment-count gating; (b) walk
+///     the province-owner map for minor-vs-GP partitioning of
+///     [ConquestSummary.invadableProvinceIdsSorted]; (c) compute the lone
+///     GP blocker's holdings for mutual-plateau and regiment comparisons.
+///   - [snapshot]: per-player [AIWorldSnapshot] supplying
+///     [ThreatSummary.atWarWith], [ConquestSummary.invadableProvinceIdsSorted],
+///     [ConquestSummary.adjacentOwnerFactionIdsSorted], and
+///     [ConquestSummary.oldWorldProvincesOwned].
+///
+/// Returns:
+///   - `null` when [ConquestSummary.invadableProvinceIdsSorted] is empty
+///     (no OW frontier to expand into) or when treasury is below
+///     `_cheapestRegimentBuildTreasuryCost()` (the player cannot afford a
+///     regiment to follow up the declaration; the spec
+///     "skip if treasury < cheapestRegimentBuildTreasuryCost" arm).
+///   - The lowest-id minor faction owning an invadable OW province and
+///     present in [ConquestSummary.adjacentOwnerFactionIdsSorted] but not
+///     in [ThreatSummary.atWarWith] (priority 1: adjacent minor scan).
+///   - The lowest-id minor faction owning an invadable OW province and
+///     already in [ThreatSummary.atWarWith] (priority 2: formalize the
+///     existing war so the conquest army-move pass fires).
+///   - The single GP whose ownership covers the entire invadable OW
+///     frontier (priority 3) when: the frontier is GP-only (no minor
+///     holds an invadable OW tile), exactly one GP owns invadable
+///     provinces, both sides are mutual-plateau peers
+///     ([_isMutualBelowQuotaPlateauPeer]), and the active player's
+///     regiment count is ≥ that GP's regiment count.
+///   - `null` when none of the priority arms qualify.
+///
+/// The runtime "suggestDeclareWarOrders rejects" gate noted in the issue
+/// spec is enforced at the orchestrator layer (#2509 S5) so this pure
+/// function remains free of the order-suggestion API dispatch.
+String? planExpandDeclareWar({
+  required Game game,
+  required AIWorldSnapshot snapshot,
+}) {
+  final invadable = snapshot.conquest.invadableProvinceIdsSorted;
+  if (invadable.isEmpty) return null;
+  final player = game.playerById(snapshot.playerId);
+  if (player == null) return null;
+  if (player.treasury < _cheapestRegimentBuildTreasuryCost()) {
+    return null;
+  }
+
+  final atWarWith = snapshot.threats.atWarWith.toSet();
+  final adjacentOwners = snapshot.conquest.adjacentOwnerFactionIdsSorted
+      .toSet();
+  final minorIds = <String>{for (final m in game.minorNations) m.id};
+  final provinceOwner = getProvinceOwnerMap(game);
+
+  // Priority 1: adjacent minor not yet at war.
+  final adjacentNewWarMinors = <String>{};
+  // Priority 2: already-at-war minor with invadable OW province.
+  final atWarMinors = <String>{};
+  // Priority 3 prep: tally GP ownership across invadable provinces.
+  final gpInvadableCounts = <String, int>{};
+  var anyMinorOnInvadable = false;
+  for (final pid in invadable) {
+    final owner = provinceOwner[pid];
+    if (owner == null) continue;
+    if (minorIds.contains(owner)) {
+      anyMinorOnInvadable = true;
+      if (atWarWith.contains(owner)) {
+        atWarMinors.add(owner);
+      } else if (adjacentOwners.contains(owner)) {
+        adjacentNewWarMinors.add(owner);
+      }
+      continue;
+    }
+    if (game.playerById(owner) != null) {
+      gpInvadableCounts[owner] = (gpInvadableCounts[owner] ?? 0) + 1;
+    }
+  }
+
+  if (adjacentNewWarMinors.isNotEmpty) {
+    final sorted = adjacentNewWarMinors.toList()..sort();
+    return sorted.first;
+  }
+  if (atWarMinors.isNotEmpty) {
+    final sorted = atWarMinors.toList()..sort();
+    return sorted.first;
+  }
+
+  // Priority 3: sole GP frontier blocker on GP-only mutual-plateau front.
+  if (anyMinorOnInvadable) return null;
+  if (gpInvadableCounts.length != 1) return null;
+  final blockerId = gpInvadableCounts.keys.single;
+  if (atWarWith.contains(blockerId)) {
+    // Already at war — formalize is a no-op for GPs at this layer; the
+    // declare-war target is `null` so we do not re-issue declareWar.
+    return null;
+  }
+  final blockerOw = provinceCountOwnedBy(game, blockerId);
+  if (!_isMutualBelowQuotaPlateauPeer(
+    ownOw: snapshot.conquest.oldWorldProvincesOwned,
+    partnerOw: blockerOw,
+  )) {
+    return null;
+  }
+  final ownRegiments = regimentCountForPlayer(game, snapshot.playerId);
+  final partnerRegiments = regimentCountForPlayer(game, blockerId);
+  if (ownRegiments < partnerRegiments) return null;
+  return blockerId;
+}
+
+/// Minimum [RegimentEconomyCatalog] build treasury cost (deterministic
+/// catalog scan).
+///
+/// Mirrors `cheapestRegimentBuildTreasuryCost` from `colonial_pressure.dart`
+/// so the new planner stays self-contained against the S1 deletion of
+/// that file (Refs #2509 § EXPAND phase planner). Linear in the catalog
+/// size, matching the budget-rule note in
+/// `colonizethis-turn-resolution-budget.mdc`.
+int _cheapestRegimentBuildTreasuryCost() {
+  var min = 999999999;
+  for (final econ in RegimentEconomyCatalog.byId.values) {
+    if (econ.buildTreasuryCost < min) {
+      min = econ.buildTreasuryCost;
+    }
+  }
+  return min;
+}
