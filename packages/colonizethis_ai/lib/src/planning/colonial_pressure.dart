@@ -101,6 +101,15 @@ int cheapestRegimentBuildTreasuryCost() {
 ///
 /// Triggers overseas cargo preference so auto-transport can deliver riches to
 /// stockpile before the next build pass (Refs #2509).
+bool isBelowQuotaPeaceZeroRegimentsRebuild({
+  required int oldWorldProvincesOwned,
+  required int regimentCount,
+  required bool hasInvadableProvinces,
+}) =>
+    isBelowObserverConquestQuota(oldWorldProvincesOwned) &&
+    regimentCount == 0 &&
+    hasInvadableProvinces;
+
 bool isBelowQuotaPeaceTreasuryRecovery({
   required int oldWorldProvincesOwned,
   required int regimentCount,
@@ -109,6 +118,13 @@ bool isBelowQuotaPeaceTreasuryRecovery({
   required int treasury,
   required Stockpile stockpile,
 }) {
+  if (isBelowQuotaPeaceZeroRegimentsRebuild(
+    oldWorldProvincesOwned: oldWorldProvincesOwned,
+    regimentCount: regimentCount,
+    hasInvadableProvinces: hasInvadableProvinces,
+  )) {
+    return true;
+  }
   if (!isBelowQuotaPeaceInsufficientRegiments(
     oldWorldProvincesOwned: oldWorldProvincesOwned,
     regimentCount: regimentCount,
@@ -172,8 +188,8 @@ List<String> belowQuotaPeerGpPeaceTargets({
     }
     if (mutualPlateau &&
         gpOnlyFrontier &&
-        !hasUninvadedOldWorldMinor(game: game, snapshot: snapshot) &&
-        ownOw > partnerOw) {
+        !hasUninvadedOldWorldMinor(game: game, snapshot: snapshot)) {
+      targets.add(factionId);
       continue;
     }
     final maxPeerOwGap = hasUninvadedOldWorldMinor(game: game, snapshot: snapshot)
@@ -286,12 +302,19 @@ List<String> nearQuotaHoldPeaceTargets({
     game: game,
     snapshot: snapshot,
   );
-  if (gpWars.length == 1 &&
-      gpOnlyFrontier &&
-      blocker != null &&
-      gpWars.single == blocker &&
-      !hasUninvadedOldWorldMinor(game: game, snapshot: snapshot)) {
-    return const [];
+  if (gpWars.length == 1) {
+    final soleGp = gpWars.single;
+    final partnerOw = provinceCountOwnedBy(game, soleGp);
+    if (isMutualBelowQuotaPlateauPeer(ownOw: ownOw, partnerOw: partnerOw) &&
+        gpOnlyFrontier &&
+        !hasUninvadedOldWorldMinor(game: game, snapshot: snapshot)) {
+      return gpWars;
+    }
+    if (blocker != null &&
+        gpWars.single == blocker &&
+        !hasUninvadedOldWorldMinor(game: game, snapshot: snapshot)) {
+      return const [];
+    }
   }
   if (gpWars.length >= 2) {
     final targets = <String>[

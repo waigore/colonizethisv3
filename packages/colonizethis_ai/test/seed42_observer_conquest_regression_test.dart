@@ -78,8 +78,8 @@ void main() {
     }
     },
     skip:
-        'Partial AC #2509 S10: seed-42 turn-100 — gp3/gp6 still below +3 OW; '
-        'mutual-plateau peace/declare tuning landed, gate still red',
+        'Partial AC #2509 S10: seed-42 turn-100 gate — gp3/gp4/gp5/gp6 still '
+        'below +3 OW vs turn-1 snapshot after peace-plumbing fixes (Refs #2509)',
     timeout: const Timeout(Duration(minutes: 15)),
   );
 }
