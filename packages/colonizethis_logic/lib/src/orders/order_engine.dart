@@ -109,6 +109,7 @@ typedef OrderValidatorFactory =
       Stockpile stockpile,
       int treasury,
       DiplomacyFactionMembership factionMembership,
+      WorkerPool workerPool,
     );
 
 /// One post–move/army validation round: caller constructs a fresh [OrderValidators]
@@ -246,6 +247,8 @@ class OrderEngine with _OrderEngineGeneratedOrderMethods {
 
     final moves = _orders.moveOrdersByPlayerId[playerId] ?? [];
     final armyMoves = _orders.armyMoveOrdersByPlayerId[playerId] ?? [];
+    final recruitWorkers =
+        _orders.recruitWorkerOrdersByPlayerId[playerId] ?? [];
     final builds = _orders.buildUnitOrdersByPlayerId[playerId] ?? [];
     final works = _orders.workOrdersByPlayerId[playerId] ?? [];
     final diplomatic = _orders.diplomaticOrdersByPlayerId[playerId] ?? [];
@@ -254,6 +257,12 @@ class OrderEngine with _OrderEngineGeneratedOrderMethods {
     var rejected = false;
     var stockpile = player.stockpile;
     var treasury = player.treasury;
+    // Peasant reservation ledger: each accepted RecruitWorkerOrder consumes
+    // peasants per `WorkerActionEconomyCatalog`, and the downstream build
+    // validator must see the post-recruit headcount so military/naval builds
+    // that consume a peasant respect the combined reservation (see
+    // SPEC/game/workers-and-population.md § Peasant reservation).
+    var workerPool = player.workerPool;
 
     final unitsById = Map<String, Unit>.from(
       unitsByIdFromWorld(game.worldState),
@@ -295,6 +304,7 @@ class OrderEngine with _OrderEngineGeneratedOrderMethods {
       stockpile,
       treasury,
       factionMembership,
+      workerPool,
     );
 
     // One ordered list: move + army share the initial bundle; each later
@@ -347,6 +357,29 @@ class OrderEngine with _OrderEngineGeneratedOrderMethods {
             },
           ),
           (
+            // Worker pool orders (recruit / train) come before unit builds in
+            // both validation and resolution so the peasant reservation
+            // ledger reflects accepted recruit consumes before military /
+            // naval builds check their own peasant requirement (SPEC/game/
+            // workers-and-population.md § Peasant reservation; SPEC/program/
+            // turn-resolution-phase-details.md § Build / work).
+            refreshBundleBefore: true,
+            run: (v) {
+              rejected = _appendValidationResults(
+                results,
+                recruitWorkers,
+                rejected,
+                (o, prev) => v.recruitWorkerValidator.validate(
+                  o,
+                  previousRejected: prev,
+                ),
+              );
+              workerPool = v.recruitWorkerValidator.workers;
+              stockpile = v.recruitWorkerValidator.stockpile;
+              treasury = v.recruitWorkerValidator.treasury;
+            },
+          ),
+          (
             refreshBundleBefore: true,
             run: (v) {
               rejected = _appendValidationResults(
@@ -356,6 +389,7 @@ class OrderEngine with _OrderEngineGeneratedOrderMethods {
                 (o, prev) =>
                     v.buildValidator.validate(o, previousRejected: prev),
               );
+              workerPool = v.buildValidator.workers;
               stockpile = v.buildValidator.stockpile;
               treasury = v.buildValidator.treasury;
             },
@@ -472,6 +506,7 @@ OrderValidators _defaultOrderValidatorFactory(
   Stockpile stockpile,
   int treasury,
   DiplomacyFactionMembership factionMembership,
+  WorkerPool workerPool,
 ) {
   return createOrderValidators(
     game: game,
@@ -487,5 +522,6 @@ OrderValidators _defaultOrderValidatorFactory(
     stockpile: stockpile,
     treasury: treasury,
     factionMembership: factionMembership,
+    workerPool: workerPool,
   );
 }
