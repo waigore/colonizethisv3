@@ -8,6 +8,7 @@ import 'package:colonizethis_app/features/shell/new_game_leader_selection_dialog
 import 'package:colonizethis_app/l10n/l10n.dart';
 import 'package:colonizethis_app/widgets/ct_dialog_shell.dart';
 import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
+import 'package:colonizethis_app/widgets/ct_slider.dart';
 import 'package:colonizethis_app/widgets/gp_default_map_color_swatch.dart';
 
 void main() {
@@ -58,6 +59,7 @@ void main() {
         Map<String, String> leaderVariantByGpId,
         int seed,
         bool infiniteMode,
+        double terrainVariation,
       )
       onConfirmed,
     }) async {
@@ -110,7 +112,7 @@ void main() {
     testWidgets('shows six GP colour swatches and default nation labels', (
       WidgetTester tester,
     ) async {
-      await pumpDialog(tester, onConfirmed: (_, _, _, _) {});
+      await pumpDialog(tester, onConfirmed: (_, _, _, _, _) {});
 
       expect(find.byType(GpDefaultMapColorSwatch), findsNWidgets(6));
       expect(find.text('England'), findsWidgets);
@@ -134,7 +136,7 @@ void main() {
         await pumpDialog(
           tester,
           surfaceSize: const Size(900, 1600),
-          onConfirmed: (_, _, _, _) {},
+          onConfirmed: (_, _, _, _, _) {},
         );
         await tester.pumpAndSettle();
 
@@ -163,7 +165,7 @@ void main() {
       await pumpDialog(
         tester,
         surfaceSize: const Size(520, 420),
-        onConfirmed: (_, _, _, _) {},
+        onConfirmed: (_, _, _, _, _) {},
       );
       await tester.pumpAndSettle();
 
@@ -191,7 +193,7 @@ void main() {
 
       await pumpDialog(
         tester,
-        onConfirmed: (ids, leaders, seed, infiniteMode) {
+        onConfirmed: (ids, leaders, seed, infiniteMode, _) {
           gotIds = ids;
           gotLeaders = leaders;
           gotSeed = seed;
@@ -215,7 +217,7 @@ void main() {
       var confirmed = false;
       await pumpDialog(
         tester,
-        onConfirmed: (_, _, _, _) {
+        onConfirmed: (_, _, _, _, _) {
           confirmed = true;
         },
       );
@@ -234,7 +236,7 @@ void main() {
 
       await pumpDialog(
         tester,
-        onConfirmed: (ids, leaders, _, _) {
+        onConfirmed: (ids, leaders, _, _, _) {
           gotIds = ids;
           gotLeaders = leaders;
         },
@@ -257,7 +259,7 @@ void main() {
       WidgetTester tester,
     ) async {
       int? gotSeed;
-      await pumpDialog(tester, onConfirmed: (_, _, s, _) => gotSeed = s);
+      await pumpDialog(tester, onConfirmed: (_, _, s, _, _) => gotSeed = s);
       final field = find.byType(TextField);
       await tester.ensureVisible(field);
       await tester.pumpAndSettle();
@@ -271,7 +273,7 @@ void main() {
       WidgetTester tester,
     ) async {
       int? gotSeed;
-      await pumpDialog(tester, onConfirmed: (_, _, s, _) => gotSeed = s);
+      await pumpDialog(tester, onConfirmed: (_, _, s, _, _) => gotSeed = s);
       final field = find.byType(TextField);
       await tester.ensureVisible(field);
       await tester.pumpAndSettle();
@@ -287,7 +289,7 @@ void main() {
       bool? gotInfiniteMode;
       await pumpDialog(
         tester,
-        onConfirmed: (_, _, _, infiniteMode) => gotInfiniteMode = infiniteMode,
+        onConfirmed: (_, _, _, infiniteMode, _) => gotInfiniteMode = infiniteMode,
       );
       final checkbox = find.byType(Checkbox);
       await tester.ensureVisible(checkbox);
@@ -297,5 +299,78 @@ void main() {
       await ensureTapStart(tester);
       expect(gotInfiniteMode, isTrue);
     });
+
+    testWidgets(
+      'shows terrain variation slider with default helper and label',
+      (WidgetTester tester) async {
+        await pumpDialog(tester, onConfirmed: (_, _, _, _, _) {});
+        expect(find.byType(CtSlider), findsOneWidget);
+        expect(
+          find.textContaining('Terrain variation'),
+          findsOneWidget,
+        );
+        expect(
+          find.textContaining('Higher values produce more mixed terrain'),
+          findsOneWidget,
+        );
+      },
+    );
+
+    testWidgets(
+      'Start passes default terrainVariation 0.5 when slider not moved',
+      (WidgetTester tester) async {
+        double? gotTerrainVariation;
+        await pumpDialog(
+          tester,
+          onConfirmed: (_, _, _, _, terrainVariation) =>
+              gotTerrainVariation = terrainVariation,
+        );
+        await ensureTapStart(tester);
+        expect(gotTerrainVariation, closeTo(0.5, 1e-9));
+      },
+    );
+
+    testWidgets(
+      'Start passes terrainVariation 0.0 after dragging slider to leftmost',
+      (WidgetTester tester) async {
+        double? gotTerrainVariation;
+        await pumpDialog(
+          tester,
+          onConfirmed: (_, _, _, _, terrainVariation) =>
+              gotTerrainVariation = terrainVariation,
+        );
+
+        final slider = find.byType(CtSlider);
+        await tester.ensureVisible(slider);
+        await tester.pumpAndSettle();
+        // Tap at the far-left of the slider track to snap to min (0.0).
+        final rect = tester.getRect(slider);
+        await tester.tapAt(Offset(rect.left + 1, rect.center.dy));
+        await tester.pumpAndSettle();
+        await ensureTapStart(tester);
+        expect(gotTerrainVariation, closeTo(0.0, 1e-6));
+      },
+    );
+
+    testWidgets(
+      'Start passes terrainVariation 1.0 after dragging slider to rightmost',
+      (WidgetTester tester) async {
+        double? gotTerrainVariation;
+        await pumpDialog(
+          tester,
+          onConfirmed: (_, _, _, _, terrainVariation) =>
+              gotTerrainVariation = terrainVariation,
+        );
+
+        final slider = find.byType(CtSlider);
+        await tester.ensureVisible(slider);
+        await tester.pumpAndSettle();
+        final rect = tester.getRect(slider);
+        await tester.tapAt(Offset(rect.right - 1, rect.center.dy));
+        await tester.pumpAndSettle();
+        await ensureTapStart(tester);
+        expect(gotTerrainVariation, closeTo(1.0, 1e-6));
+      },
+    );
   });
 }

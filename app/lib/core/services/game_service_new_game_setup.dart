@@ -258,6 +258,7 @@ GameSetupResult _gameServiceLockedFullInitMapsWarpSetupWithRetry({
     height: sizeOW.height,
     seed: effectiveSeed,
     seaFraction: kDefaultSeaFraction,
+    terrainVariation: cfg.terrainVariation,
   );
   return TileMapGenerator(params: paramsOW).generate(
     numProvinces: cfg.numProvincesOldWorld,
@@ -286,6 +287,7 @@ GameSetupResult _gameServiceLockedFullInitMapsWarpSetupWithRetry({
     height: sizeNW.height,
     seed: effectiveSeed + 1,
     seaFraction: kDefaultSeaFraction,
+    terrainVariation: cfg.terrainVariation,
   );
   return TileMapGenerator(params: paramsNW).generate(
     numProvinces: cfg.numProvincesNewWorld,

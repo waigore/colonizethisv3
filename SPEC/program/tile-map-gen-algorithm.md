@@ -50,6 +50,15 @@ Used for land (Pass 3), province (Pass 9), and sea zone (Pass 11):
 6. **Pass 6 — Terrain assignment:**
    - **6a — Mountain ridges:** Assign `TerrainType.mountain` via ridge paths (random walks). Per-region mountain fraction from terrain rules.
    - **6b — Region-growing:** Non-mountain land: macro phase (large blobs by terrain), micro phase (smaller patches), optional pattern refinement (pockets inside blobs). Per-region terrain weights from colonizethis_data. Sea cells stay null terrain.
+   - **6b.5 — Noise perturbation (post pattern refinement):** For each connected land component, per non-mountain terrain type, find blobs whose size is **>=** `patternMinBlobSize` (smaller blobs are skipped — pattern refinement already handles those). For each interior cell of each such blob (4-neighbour fully inside blob), evaluate a smooth 2D noise field from `deterministicNoise(seed, gx, gy)` using **bilinear interpolation** of corner samples taken on a fixed grid spacing of **4 cells** (corners at `(floor(x/4)*4, floor(y/4)*4)` and the three neighbours). A cell is changed iff `noise > (1.0 - terrainVariation)`; for noise uniformly distributed in `[-1, 1]` this yields an expected interior change fraction of `terrainVariation / 2` (~25% at `0.5`, ~50% at `1.0`). Replacement terrain is picked from the other allowed non-mountain terrains by their `TerrainDistribution.nonMountainFractions` weights. Mountains, blob edge cells, and small blobs are never modified. **Bypass:** When `terrainVariation == 0.0`, the pass returns immediately at entry without sampling noise, iterating blobs, or advancing the RNG, guaranteeing byte-identical output to pre-change behaviour. Runs **after** `_refineTerrainPatternsInComponent` in the per-component flow.
+
+**Acceptance criteria (Pass 6b.5 — noise perturbation):**
+
+- Given map-generation runs Pass 6 with `terrainVariation == 0.0` for any region and seed, when the System completes terrain assignment, then the resulting `TileMapResult` is byte-identical (same per-cell terrain, same per-cell resource) to a generation run produced by the legacy pre-Pass-6b.5 pipeline (no RNG drift introduced by Pass 6b.5).
+- Given map-generation runs Pass 6 with `terrainVariation > 0.0` and any seed, when the System completes terrain assignment, then no `TerrainType.mountain` cell is reassigned to a different terrain type.
+- Given map-generation runs Pass 6 with `terrainVariation > 0.0`, when the System completes terrain assignment, then for every cell that lies on the **edge** of a blob (any 4-neighbour outside the blob or out of grid), the System leaves that cell's terrain unchanged.
+- Given map-generation runs Pass 6 with `terrainVariation > 0.0`, when the System completes terrain assignment, then any blob with size strictly less than `patternMinBlobSize` is left unchanged by Pass 6b.5.
+- Given two map-generation runs with the same `seed` and `terrainVariation` value (and otherwise identical params), when the System completes terrain assignment, then both runs produce identical `terrainGrid`s (deterministic per seed).
 
 ---
 

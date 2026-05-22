@@ -21,6 +21,7 @@ class GameSetupConfig {
     this.minProvincesPerMinor = 3,
     this.seed = 42,
     this.infiniteMode = false,
+    this.terrainVariation = 0.5,
     this.startingResources = const StartingResourcesConfig(),
     this.preferredInitialMapZoomMultiplier,
     Set<String>? initTownRoadWiringRegionIds,
@@ -35,7 +36,8 @@ class GameSetupConfig {
        assert(tribeCount >= 0),
        assert(minProvincesPerMinor >= 0),
        assert(numProvincesNewWorld >= 1),
-       assert(seed >= 0) {
+       assert(seed >= 0),
+       assert(terrainVariation >= 0.0 && terrainVariation <= 1.0) {
     _log.d(
       'GameSetupConfig created OW=$numProvincesOldWorld NW=$numProvincesNewWorld',
     );
@@ -72,6 +74,14 @@ class GameSetupConfig {
   /// When true, the campaign does not halt at the calendar year-1800 cap.
   /// Chosen at new-game setup only; immutable after game creation.
   final bool infiniteMode;
+
+  /// 0.0–1.0. Controls Pass 6b.5 noise perturbation strength for both
+  /// Old World and New World map generation. 0.0 bypasses the pass and
+  /// preserves byte-identical legacy output (no RNG advance);
+  /// 0.5 (default) yields ~25% expected interior-cell change per blob;
+  /// 1.0 yields ~50%. Immutable after game creation.
+  /// SPEC/program/tile-map-gen-algorithm.md § Pass 6b.5.
+  final double terrainVariation;
 
   final StartingResourcesConfig startingResources;
 
