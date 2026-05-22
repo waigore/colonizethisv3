@@ -60,7 +60,13 @@ engine_slots:
     add_with_context_method: addNavalMissionOrderWithContext
     remove_method: removeNavalMissionOrder
 
-# Copied in constructor and _copyOrders only; no engine slot or addResearchOrder API.
+# Copied in constructor and _copyOrders only; no engine slot or add*Order API.
+# recruitWorkerOrdersByPlayerId remains storage-only here; engine integration
+# lands with #2692 S4 (logic: validation, peasant reservation, Build/work
+# phase wiring per SPEC/game/workers-and-population.md).
 storage_only:
   - orders_field: researchOrdersByPlayerId
     copy_with_param: researchOrdersByPlayerId
+
+  - orders_field: recruitWorkerOrdersByPlayerId
+    copy_with_param: recruitWorkerOrdersByPlayerId
