@@ -156,8 +156,7 @@ void main() {
       );
     });
 
-    test('false when regimentCount is zero (broke-at-peace path owns this)',
-        () {
+    test('true when regimentCount is zero and invadable OW remains', () {
       expect(
         isBelowQuotaPeaceTreasuryRecovery(
           oldWorldProvincesOwned: 8,
@@ -167,12 +166,10 @@ void main() {
           treasury: 0,
           stockpile: const Stockpile(),
         ),
-        isFalse,
+        isTrue,
         reason:
-            'regimentCount == 0 is already handled by the broke-at-peace force '
-            'rebuild trigger upstream; the treasury-recovery predicate must '
-            'stay below the floor band (1..floor-1) so the two triggers do '
-            'not double-fire on the same turn.',
+            'Zero-regiment below-quota GPs need cargo preference to fund the '
+            'first rebuild before declare-war (seed-42 gp5/gp6; Refs #2509).',
       );
     });
 

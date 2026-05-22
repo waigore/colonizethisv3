@@ -110,7 +110,18 @@ List<String> expandPhaseGpPeaceTargets({
       isBelowObserverConquestQuota(snapshot.conquest.oldWorldProvincesOwned)) {
     return gpWars..sort();
   }
-  if (gpWars.length <= 1) {
+  if (gpWars.length == 1) {
+    final soleGp = gpWars.single;
+    final ownOw = snapshot.conquest.oldWorldProvincesOwned;
+    final partnerOw = provinceCountOwnedBy(game, soleGp);
+    if (isMutualBelowQuotaPlateauPeer(ownOw: ownOw, partnerOw: partnerOw) &&
+        isOldWorldGpOnlyInvadableFrontier(game: game, snapshot: snapshot) &&
+        !hasUninvadedOldWorldMinor(game: game, snapshot: snapshot)) {
+      return gpWars;
+    }
+    return const [];
+  }
+  if (gpWars.isEmpty) {
     return const [];
   }
   final blocker = primaryInvadableOldWorldGpBlocker(

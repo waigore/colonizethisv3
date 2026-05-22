@@ -343,6 +343,63 @@ List<String> criticalMultiFrontGpPeaceTargets({
   return multiFrontNonBlockerGpPeaceTargets(game: game, snapshot: snapshot);
 }
 
+/// Below-quota GPs with too few regiments to split across multiple minor wars:
+/// peace every at-war minor except the focused invadable frontier (Refs #2509).
+List<String> belowQuotaMultiMinorDistractionPeaceTargets({
+  required Game game,
+  required AIWorldSnapshot snapshot,
+}) {
+  if (!isBelowObserverConquestQuota(
+    snapshot.conquest.oldWorldProvincesOwned,
+  )) {
+    return const [];
+  }
+  final regimentCount = regimentCountForPlayer(game, snapshot.playerId);
+  if (regimentCount <= 0 ||
+      regimentCount >= kBelowQuotaPeaceMinRegimentsBeforeDeclareWar) {
+    return const [];
+  }
+  if (snapshot.conquest.invadableProvinceIdsSorted.isEmpty) {
+    return const [];
+  }
+  final focus = stalledFocusMinorTarget(game: game, snapshot: snapshot);
+  if (focus == null) {
+    return const [];
+  }
+  final targets = <String>[
+    for (final factionId in snapshot.threats.atWarWith)
+      if (game.minorNations.any((m) => m.id == factionId) &&
+          factionId != focus)
+        factionId,
+  ]..sort();
+  return targets;
+}
+
+/// Peace every at-war minor/tribe when stalled below quota with zero regiments
+/// so rebuild is not blocked by futile fronts (seed-42 gp5/gp6; Refs #2509).
+/// Great Power wars use [stalledZeroRegimentGpPeaceTargets] instead.
+List<String> stalledZeroRegimentAllFactionPeaceTargets({
+  required Game game,
+  required AIWorldSnapshot snapshot,
+}) {
+  if (!isBelowObserverConquestQuota(
+    snapshot.conquest.oldWorldProvincesOwned,
+  )) {
+    return const [];
+  }
+  if (!isStalledOldWorldExpansion(snapshot.conquest.oldWorldProvincesOwned)) {
+    return const [];
+  }
+  if (regimentCountForPlayer(game, snapshot.playerId) > 0) {
+    return const [];
+  }
+  final targets = <String>[
+    for (final factionId in snapshot.threats.atWarWith)
+      if (game.playerById(factionId) == null) factionId,
+  ]..sort();
+  return targets;
+}
+
 /// Peace every at-war Great Power when stalled with zero regiments (Refs #2509).
 List<String> stalledZeroRegimentGpPeaceTargets({
   required Game game,
@@ -484,6 +541,8 @@ bool stalledOwExpansionNeedsPeacePass({
         .isNotEmpty ||
     mutualZeroRegimentGpStalematePeaceTargets(game: game, snapshot: snapshot)
         .isNotEmpty ||
+    stalledZeroRegimentAllFactionPeaceTargets(game: game, snapshot: snapshot)
+        .isNotEmpty ||
     stalledZeroRegimentGpPeaceTargets(game: game, snapshot: snapshot)
         .isNotEmpty ||
     mutualExhaustedBelowQuotaGpStalematePeaceTargets(
@@ -559,6 +618,7 @@ Iterable<String> _survivalGreatPowerPeaceTargets({
   required AIWorldSnapshot snapshot,
 }) sync* {
   yield* criticalWeakGpSurvivalPeaceTargets(game: game, snapshot: snapshot);
+  yield* stalledZeroRegimentAllFactionPeaceTargets(game: game, snapshot: snapshot);
   yield* mutualZeroRegimentGpStalematePeaceTargets(game: game, snapshot: snapshot);
   yield* stalledZeroRegimentGpPeaceTargets(game: game, snapshot: snapshot);
   yield* mutualExhaustedBelowQuotaGpStalematePeaceTargets(
@@ -668,7 +728,7 @@ Set<String> collectStalledGreatPowerPeaceTargets({
       snapshot: snapshot,
     ),
   };
-  return targets
+  final greatPowerPeace = targets
       .where(
         (id) =>
             game.playerById(id) != null &&
@@ -677,6 +737,17 @@ Set<String> collectStalledGreatPowerPeaceTargets({
                 zeroRegimentBlockerPeace.contains(id)),
       )
       .toSet();
+  final minorTribePeace = <String>{
+    ...belowQuotaMultiMinorDistractionPeaceTargets(
+      game: game,
+      snapshot: snapshot,
+    ),
+    ...stalledZeroRegimentAllFactionPeaceTargets(
+      game: game,
+      snapshot: snapshot,
+    ),
+  }.where((id) => game.playerById(id) == null);
+  return {...greatPowerPeace, ...minorTribePeace};
 }
 
 /// GP–GP peace requires both sides to [offerPeace] in the same phase; mirror existing offers.
