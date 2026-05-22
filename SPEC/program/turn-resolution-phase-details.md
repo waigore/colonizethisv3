@@ -80,7 +80,9 @@ Apply validated land MoveOrders; naval MoveOrders (dock only at owned provinces;
 
 ## Build / work
 
-BuildUnitOrder: by unit type category — civilian: deduct cash from treasury and paper from stockpile per [civilian-units.md](../game/civilian-units.md), add unit; military: deduct cost, consume worker, add unit; naval: deduct cost, add ship to home fleet (in port at capital). WorkOrder: exploration/prospecting per [fog-and-exploration-resolution.md](fog-and-exploration-resolution.md); civilian development (Builder, Engineer, Rail Builder) per [development-resolution.md](development-resolution.md) with multi-turn progress and completion effects. Same behaviour in main game and ctdev sim_game.
+**Order within the phase (per player, deterministic):** (1) **`RecruitWorkerOrder`** — apply queued worker recruit / train actions per [workers-and-population.md](../game/workers-and-population.md) § Recruiting, Training, and Disbanding (cost row, peasant reservation, tech gates). Worker pool deltas settle first so subsequent `BuildUnitOrder` peasant consumes see post-recruit headcounts. (2) **`BuildUnitOrder`** — by unit type category — civilian: deduct cash from treasury and paper from stockpile per [civilian-units.md](../game/civilian-units.md), add unit; military: deduct cost, consume worker, add unit; naval: deduct cost, add ship to home fleet (in port at capital). (3) **`WorkOrder`** — exploration / prospecting per [fog-and-exploration-resolution.md](fog-and-exploration-resolution.md); civilian development (Builder, Engineer, Rail Builder) per [development-resolution.md](development-resolution.md) with multi-turn progress and completion effects. Same behaviour in main game and ctdev sim_game.
+
+**Same-turn labour:** Worker pool changes applied here affect **next turn** Consumption and Production only — Consumption and Production for the current turn already ran in phases 4–5 (see [workers-and-population.md](../game/workers-and-population.md) § Phase placement).
 
 ---
 

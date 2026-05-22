@@ -23,11 +23,79 @@ Per Imperialism II 02-economy: workers "in your city" supply labour for industry
 
 ---
 
-## Recruiting and Training
+## Recruiting, Training, and Disbanding
 
-- **Recruiting:** fabric → new Peasant. Adds to worker pool. **CLARIFICATION NEEDED:** How much fabric per Peasant? Need Imperialism II reference.
-- **Training:** worker + paper + cash → next tier. Worker is out of pool that turn. Requires tech per tier. **CLARIFICATION NEEDED:** What quantities of paper and cash? Need Imperialism II reference.
-- **Military/naval construction:** regiments and ships consume a worker when built.
+Source of truth for worker pool changes outside of military / naval builds and consumption strikes. Values below are the **authoritative SPEC** values for v1; the program-level worker action catalog (`colonizethis_data`) MUST match them exactly.
+
+### Costs (v1, program-level catalog, authoritative)
+
+| Target tier | Action(s) | Stockpile / treasury cost | Worker pool cost |
+|-------------|-----------|---------------------------|------------------|
+| Peasant | Recruit | `fabric` × 2 | — |
+| Apprentice | Recruit or train | treasury **200** + `paper` × 2 | 1 peasant consumed |
+| Journeyman | Recruit or train | treasury **500** + `paper` × 5 | 1 peasant consumed |
+| Master | Recruit or train | treasury **1000** + `paper` × 10 | 1 peasant consumed |
+
+**Treasury** values are **ducats** (integer), the same treasury field used by `BuildUnitOrder` costs. For non-peasant tiers, **recruit and train share this exact cost row** — there is no separate "recruit non-peasant" cost row.
+
+### Recruit
+
+- **Peasant:** Pay `fabric` × 2 from the stockpile; add **+1 peasant** to the pool. No worker consumed.
+- **Apprentice / Journeyman / Master:** Pay the treasury + paper amounts above and consume **1 peasant** from the pool; add **+1** of the target tier. Requires the tech gate for that tier to be unlocked (see Tech gates).
+
+### Train (peasant → higher tier only)
+
+- Converts exactly **one peasant** into **one** worker of a higher tier (apprentice, journeyman, or master) per queued order.
+- **No direct tier-to-tier training.** To upgrade a journeyman to master, the player must **disband** that journeyman to a peasant (immediate, see Disband) and then queue **train master** for that peasant.
+- **Model-layer note:** at the model layer, "train" is expressed as a `RecruitWorkerOrder` with `targetTier ∈ {apprentice, journeyman, master}` (a peasant is consumed per the cost row); there is **no** separate `TrainWorkerOrder` type. UI may render "Recruit" and "Train" as distinct controls per tier but emits the same order type.
+
+### Disband
+
+- Immediately decrements the chosen trained tier by **1** and increments **peasants** by **1**. Strict per-tier demotion to peasant (journeyman → peasant, apprentice → peasant, master → peasant). Disband does not skip tiers in any other way.
+- **Not queued in Build / work;** applies on player action during the **Orders** phase.
+- **No refund** of prior train / recruit costs (treasury, paper, fabric).
+
+### Phase placement
+
+- **`RecruitWorkerOrder` resolves in Build / work (phase 12)** **before** `BuildUnitOrder` (military, naval, civilian) per [turn-resolution-phase-details.md](../program/turn-resolution-phase-details.md) § Build / work.
+- **Same-turn labour:** Build-phase worker actions affect **next turn** Production only (Consumption → Production already ran earlier in the turn). The phase sequence is **not** reordered to support same-turn labour from new recruits.
+- **Disband** is not a queued order; it applies immediately on player action during the Orders phase. After disband, the player may queue `RecruitWorkerOrder(targetTier: …)` for the new peasant in the same Orders phase.
+
+### Peasant reservation
+
+At order validation and UI affordance, the System MUST reject any new recruit / train / military build / naval build order that would exceed the **available** peasants computed from:
+
+`availablePeasants = pool.peasants − sum(pending peasant consumes from queued worker actions + queued military / naval builds)`
+
+**Civilian builds do not consume peasants.** Order suggestion APIs and AI planners MUST respect the same reservation rule.
+
+### Tech gates
+
+| Target tier | Required techs |
+|-------------|----------------|
+| Peasant | — |
+| Apprentice | `apprentice_workers` and `sugar_refining` |
+| Journeyman | `trained_journeymen` and `cigar_production` |
+| Master | `master_artisans` and `hat_production` |
+
+Tech ids reference [tech-tree-labour-economy.md](tech-tree-labour-economy.md) and [tech-tree-new-world.md](tech-tree-new-world.md). Locked tiers cannot be recruited or trained.
+
+### Strike workers
+
+Workers on food or luxury strike may still be **recruited** or **trained** if the cost row is met. **Rationale:** strike is a per-turn labour state (not a worker-state flag); recruit / train acts on **pool counts**, not on individual worker objects, so adding a strike gate would require new per-worker tracking and would surface no v1 gameplay benefit (matches Imperialism II behaviour).
+
+### Order rejection reasons (validation)
+
+`RecruitWorkerOrder` may be rejected with one of:
+
+- `Insufficient workers` — not enough peasants given the reservation ledger above.
+- `Insufficient materials` — insufficient fabric or paper in the stockpile.
+- `Insufficient treasury` — insufficient ducats for the tier's treasury cost.
+- `Required technology not unlocked` — the target tier's tech gate is not satisfied.
+
+### Military and naval construction
+
+Regiments and ships continue to consume **1 peasant** per build (headcount, not idle labour) as specified in [military-units.md](military-units.md) and [ships-and-naval.md](ships-and-naval.md). These peasant consumes count toward the reservation ledger above.
 
 ---
 
@@ -58,7 +126,9 @@ Per Imperialism II 02-economy: workers "in your city" supply labour for industry
 
 Data structures in [economy-models.md](../program/economy-models.md). Worker model distinct from Unit; workers live in economy (TDD 04), not unit model (TDD 05). Config is program-level (no JSON rulesets).
 
-**Current scope:** Food and luxury consumption, land military and navy upkeep order, and worker **strike** rules (no removal for missing food) are implemented in `economy_consumption.dart` and `worker_economy.dart` (peasant 1 food unit, trained 2 food units; grain then meat; order land military → navy → workers; worker food priority Masters→Peasants; `WorkerIdleCounts` / `ConsumptionResult.idleLabour`; `resolveProduction` takes post-consumption `idleLabour`). Navy: 2 food units per ship per turn from catalog after land military, before workers. **Luxury consumption:** trained workers deduct tier luxury only when food-fed and assigned a unit; shortage of luxury zeros labour for that tier for that turn. Worker tier training (paper + cash → next tier) remains deferred until Recruiting/Training quantities are defined or a simplification is chosen.
+**Current scope:** Food and luxury consumption, land military and navy upkeep order, and worker **strike** rules (no removal for missing food) are implemented in `economy_consumption.dart` and `worker_economy.dart` (peasant 1 food unit, trained 2 food units; grain then meat; order land military → navy → workers; worker food priority Masters→Peasants; `WorkerIdleCounts` / `ConsumptionResult.idleLabour`; `resolveProduction` takes post-consumption `idleLabour`). Navy: 2 food units per ship per turn from catalog after land military, before workers. **Luxury consumption:** trained workers deduct tier luxury only when food-fed and assigned a unit; shortage of luxury zeros labour for that tier for that turn.
+
+**Recruit / train / disband (v1):** Costs and semantics in the § Recruiting, Training, and Disbanding section above are authoritative; the worker action cost catalog lives in `colonizethis_data` at program level (no JSON rulesets in v1). `RecruitWorkerOrder` is a new order type validated in the order engine and applied in Build / work **before** `BuildUnitOrder`. Disband is not a queued order; it is applied immediately during the Orders phase by `GameService` (or equivalent) and persists with the player's `WorkerPool`.
 
 ---
 
@@ -93,6 +163,34 @@ Data structures in [economy-models.md](../program/economy-models.md). Worker mod
   When the System executes the Production phase for that player  
   Then the System counts that worker's labour contribution as **zero** for that turn while the WorkerPool headcount is unchanged, and Production uses the post-Consumption stockpile and **WorkerIdleCounts** (or equivalent) for the labour budget.
 
-- Given a player has sufficient fabric (and, when defined, paper and cash) in the stockpile to recruit or train a worker according to the recruiting and training rules for a particular era  
-  When the System resolves a recruit or train action for that worker  
-  Then the System consumes the specified commodity quantities from the stockpile, updates the WorkerPool counts by adding the new or upgraded worker to the correct tier and removing the source worker in the case of training, and ensures that no stockpile quantity or worker count becomes negative as a result of the action.
+- Given a Great Power player has at least `2` fabric in the stockpile  
+  When the System resolves a queued `RecruitWorkerOrder(targetTier: peasant)` for that player in the Build / work phase  
+  Then the System deducts `2` fabric from the stockpile, increments `pool.peasants` by `1`, and no stockpile quantity or worker pool count becomes negative.
+
+- Given a Great Power player has at least `1` peasant in `pool.peasants`, `apprentice_workers` and `sugar_refining` in `techUnlocked`, treasury ≥ `200` ducats, and `paper` ≥ `2` in the stockpile  
+  When the System resolves a queued `RecruitWorkerOrder(targetTier: apprentice)` for that player in the Build / work phase before any `BuildUnitOrder`  
+  Then the System deducts `200` ducats from treasury, deducts `2` paper from the stockpile, decrements `pool.peasants` by `1`, and increments `pool.apprentices` by `1`.
+
+- Given a Great Power player has at least `1` peasant, `trained_journeymen` and `cigar_production` in `techUnlocked`, treasury ≥ `500` ducats, and `paper` ≥ `5` in the stockpile  
+  When the System resolves a queued `RecruitWorkerOrder(targetTier: journeyman)` for that player in the Build / work phase  
+  Then the System deducts `500` ducats from treasury, deducts `5` paper from the stockpile, decrements `pool.peasants` by `1`, and increments `pool.journeymen` by `1`.
+
+- Given a Great Power player has at least `1` peasant, `master_artisans` and `hat_production` in `techUnlocked`, treasury ≥ `1000` ducats, and `paper` ≥ `10` in the stockpile  
+  When the System resolves a queued `RecruitWorkerOrder(targetTier: master)` for that player in the Build / work phase  
+  Then the System deducts `1000` ducats from treasury, deducts `10` paper from the stockpile, decrements `pool.peasants` by `1`, and increments `pool.masters` by `1`.
+
+- Given a Great Power player has `pool.peasants == P` and a set of pending orders in `currentOrders` that would consume `R` peasants in total (worker recruit / train + military / naval builds, excluding civilian builds) such that `R == P`  
+  When the player attempts to queue another order that consumes a peasant  
+  Then the System rejects the new order with reason `Insufficient workers` and `pool.peasants` is unchanged.
+
+- Given a Great Power player has `pool.journeymen ≥ 1`  
+  When the player applies a disband action for one journeyman during the Orders phase  
+  Then the System immediately decrements `pool.journeymen` by `1`, increments `pool.peasants` by `1`, does not enqueue any order in `currentOrders`, and does not refund any prior treasury, paper, or fabric cost.
+
+- Given a Great Power player is in the Orders phase, holds `pool.journeymen ≥ 1`, has `master_artisans` and `hat_production` in `techUnlocked`, treasury ≥ `1000` ducats, and `paper` ≥ `10` in the stockpile  
+  When the player applies disband on one journeyman and then queues `RecruitWorkerOrder(targetTier: master)`, then ends the turn  
+  Then after Orders the journeyman count is `−1` and peasants `+1` (immediate), and after Build / work the master count is `+1`, peasants is `−1` (returning to its pre-disband value), treasury is `−1000` ducats, and paper is `−10`.
+
+- Given a Great Power player does not have the target tier's required techs in `techUnlocked`  
+  When the player or AI attempts to queue or suggest a `RecruitWorkerOrder` targeting that tier  
+  Then the System rejects the order with reason `Required technology not unlocked` and does not modify treasury, stockpile, or worker pool.
