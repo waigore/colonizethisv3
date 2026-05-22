@@ -16,12 +16,21 @@ class GameMapAreaCivilianDraftProjection {
 
   /// Projects player-owned civilian markers using current-turn pending orders.
   /// This keeps map feedback in sync with assign flows before turn resolution.
+  ///
+  /// [civilianMarkerOwnerIds] is the explicit set of owner ids whose civilian
+  /// units should be projected onto the region map. When null (legacy), only
+  /// [humanPlayerId]'s civilians are projected (single-player behavior). In
+  /// observe mode (per SPEC/ui/observe-mode.md), pass the full owner set
+  /// resolved from `ShellPlayerContext` so handoff (`isHuman = false` on every
+  /// player) does not empty the projection.
   static RegionMapViewData project({
     required RegionMapViewData region,
     required ct_models.Game game,
     required ct_models.Orders orders,
     required String humanPlayerId,
+    Set<String>? civilianMarkerOwnerIds,
   }) {
+    final ownerIds = civilianMarkerOwnerIds ?? <String>{humanPlayerId};
     final pendingByUnitId = <String, String>{};
     final pending = orders.workOrdersByPlayerId[humanPlayerId] ?? const [];
     for (final order in pending) {
@@ -41,9 +50,11 @@ class GameMapAreaCivilianDraftProjection {
 
     final unitsById = <String, ct_models.Unit>{
       for (final u in game.worldState.oldWorld.units)
-        if (u.ownerId == humanPlayerId && _isCivilianUnitType(u.type)) u.id: u,
+        if (ownerIds.contains(u.ownerId) && _isCivilianUnitType(u.type))
+          u.id: u,
       for (final u in game.worldState.newWorld.units)
-        if (u.ownerId == humanPlayerId && _isCivilianUnitType(u.type)) u.id: u,
+        if (ownerIds.contains(u.ownerId) && _isCivilianUnitType(u.type))
+          u.id: u,
     };
     if (unitsById.isEmpty) {
       return region;
