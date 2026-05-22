@@ -9,9 +9,18 @@
 /// in the unit-test layer so a future refactor cannot silently regress the
 /// short-circuit or tap-once-then-detect-mount paths.
 ///
+/// The opener previously used `e2eWaitUntilFound + fail()` for the post-rail-
+/// tap wait, mirroring the naval opener defect surfaced and fixed in PR #2555.
+/// The production opener now uses `e2ePumpUntilConditionOrIdle` (bounded poll
+/// without `fail()`) so a single rail-tap that fails to mount the panel does
+/// not surface as a hard `TestFailure` from the inner wait — instead, the
+/// outer opener loop dismisses any racing overlays/sheets and re-taps the
+/// rail until the overall [timeout] elapses. The negative test below still
+/// pins outer-timeout failure semantics.
+///
 /// Refs GitHub #2336 (AC2 — shared helpers used by E2E tests; AC5 — adaptive
 /// polling with pre-pump short-circuit; AC10 — no silent flakiness from
-/// timeout regressions).
+/// timeout regressions); aligns with PR #2555 fix for the naval opener.
 library;
 
 import 'package:colonizethis_app/config/ct_e2e.dart';
@@ -122,6 +131,83 @@ void main() {
       );
     },
   );
+
+  testWidgets(
+    'e2eOpenProductionPanel timeout failure surfaces the outer opener message, '
+    'not the inner post-tap wait',
+    (WidgetTester tester) async {
+      // Rail button is present but tapping it never mounts the panel, so the
+      // inner post-rail-tap wait must exhaust without `fail()`-ing the helper.
+      // Once the outer timeout elapses, the failure must come from the outer
+      // `Timed out opening production panel` path (PR #2555 contract for the
+      // naval opener; this pins the same contract for production).
+      await tester.pumpWidget(
+        const MaterialApp(home: _NoOpProductionRailHarness()),
+      );
+      expect(find.byKey(kEmpireProductionButtonKey), findsOneWidget);
+      expect(find.byKey(kCtE2EProductionPanelRootKey), findsNothing);
+      Object? caught;
+      try {
+        await e2eOpenProductionPanel(
+          tester,
+          // Small outer timeout keeps the test bounded; the inner 5s post-tap
+          // poll is the path under test — it must return without `fail()`.
+          timeout: const Duration(milliseconds: 250),
+        );
+      } catch (e) {
+        caught = e;
+      }
+      expect(caught, isA<TestFailure>());
+      final message = caught.toString();
+      expect(
+        message,
+        contains('Timed out opening production panel'),
+        reason:
+            'After the post-rail-tap wait is bounded by '
+            '`e2ePumpUntilConditionOrIdle` (no `fail()`), only the outer '
+            'opener loop owns the timeout failure path. A regression to '
+            '`e2eWaitUntilFound` would surface the inner `Timed out after Ns '
+            'waiting for ...` message instead (Refs GitHub #2336; aligns '
+            'with PR #2555 fix for the naval opener).',
+      );
+      expect(
+        message,
+        isNot(contains('wait_until_production_panel_after_rail_tap')),
+        reason:
+            'The legacy inner-wait phase name must not appear in any failure '
+            'path; the helper now uses `pump_until_...` semantics so the '
+            'outer loop can dismiss racing overlays and retry the rail tap '
+            '(Refs GitHub #2336).',
+      );
+    },
+  );
+}
+
+/// Test harness where the production rail button is present but tapping it
+/// never mounts the panel root. Used by the failure-message pin to validate
+/// that the helper's post-rail-tap wait does not surface its own `fail()`
+/// — the outer opener loop must own the timeout failure path.
+class _NoOpProductionRailHarness extends StatelessWidget {
+  const _NoOpProductionRailHarness();
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: Column(
+        children: <Widget>[
+          TextButton(
+            key: kEmpireProductionButtonKey,
+            onPressed: () {
+              // Intentionally no panel-mount side effect — the inner post-tap
+              // wait must exhaust without `fail()`, and the outer loop must
+              // surface the timeout failure (Refs GitHub #2336).
+            },
+            child: const Text('Production'),
+          ),
+        ],
+      ),
+    );
+  }
 }
 
 /// Test harness that mounts the panel root synchronously on the rail tap so

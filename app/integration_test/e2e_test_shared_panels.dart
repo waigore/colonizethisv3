@@ -425,29 +425,23 @@ Future<void> e2eOpenProductionPanel(
         perf?.timing('open_panel_production', sw.elapsed);
         return;
       }
-      idlePollMs = 25;
       await tester.pump();
       if (productionPanel.evaluate().isNotEmpty) {
         perf?.timing('open_panel_production', sw.elapsed);
         return;
       }
-      await e2eWaitUntilFound(
-        tester,
-        productionPanel,
-        timeout: const Duration(seconds: 5),
-        perf: perf,
-        phaseName: 'wait_until_production_panel_after_rail_tap',
-      );
-      if (productionPanel.evaluate().isNotEmpty) {
-        perf?.timing('open_panel_production', sw.elapsed);
-        return;
-      }
+      // Match civilian/naval `tryOpen` contract: bounded poll without `fail()`
+      // so the outer opener loop can dismiss transient overlays and retry the
+      // rail tap when a race covers the panel mount. Without this, a single
+      // rail-tap miss surfaced as a hard `TestFailure` (`wait_until_...` path)
+      // even though the outer loop still had budget to recover. Aligns with
+      // PR #2555 fix for the naval opener (Refs GitHub #2336).
       if (await e2ePumpUntilConditionOrIdle(
         tester,
         () => productionPanel.evaluate().isNotEmpty,
-        timeout: const Duration(milliseconds: 600),
+        timeout: const Duration(seconds: 5),
         perf: perf,
-        phaseName: 'pump_until_production_panel_after_rail_tap_miss',
+        phaseName: 'pump_until_production_panel_after_rail_tap',
       )) {
         perf?.timing('open_panel_production', sw.elapsed);
         return;
