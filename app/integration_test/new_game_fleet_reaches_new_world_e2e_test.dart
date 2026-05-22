@@ -53,14 +53,11 @@ void main() {
     await ensureAllRelocated64pxPngsLoadSuiteOnce();
 
     final wallClock = Stopwatch()..start();
-    void ensureUnderWallClock(String step) {
-      if (wallClock.elapsed > _kFleetE2eMaxWallClock) {
-        fail(
-          'Fleet e2e exceeded ${_kFleetE2eMaxWallClock.inMinutes} minute wall clock '
-          'at $step (elapsed=${wallClock.elapsed.inSeconds}s).',
-        );
-      }
-    }
+    final ensureUnderWallClock = e2eMakeWallClockGuard(
+      testName: testName,
+      stopwatch: wallClock,
+      cap: _kFleetE2eMaxWallClock,
+    );
 
     await bootstrapNewGameToMap(tester, perf: perf);
     ensureUnderWallClock('after bootstrap');
@@ -210,14 +207,11 @@ void main() {
       await ensureAllRelocated64pxPngsLoadSuiteOnce();
 
       final wallClock = Stopwatch()..start();
-      void ensureUnderWallClock(String step) {
-        if (wallClock.elapsed > _kFleetE2eMaxWallClock) {
-          fail(
-            'Fleet e2e exceeded ${_kFleetE2eMaxWallClock.inMinutes} minute wall clock '
-            'at $step (elapsed=${wallClock.elapsed.inSeconds}s).',
-          );
-        }
-      }
+      final ensureUnderWallClock = e2eMakeWallClockGuard(
+        testName: testName,
+        stopwatch: wallClock,
+        cap: _kFleetE2eMaxWallClock,
+      );
 
       await bootstrapNewGameToMap(tester, perf: perf);
       ensureUnderWallClock('after bootstrap');

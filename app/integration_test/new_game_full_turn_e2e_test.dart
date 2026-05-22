@@ -32,19 +32,31 @@ void main() {
             'Run with: flutter test integration_test/... --dart-define=CT_E2E=true',
       );
 
+      // 5-minute PR wall-clock cap per scenario path per
+      // `SPEC/program/e2e-integration-tests.md` § Determinism PR runtime rule
+      // (`colonizethis-e2e-ui-stability.mdc`). Mirrors the fleet E2E pattern;
+      // Refs GitHub #2336.
+      final ensureUnderWallClock = e2eMakeWallClockGuard(
+        testName: testName,
+        stopwatch: testSw,
+      );
+
       await tester.binding.setSurfaceSize(const Size(1280, 720));
       final bootstrapSw = Stopwatch()..start();
       await bootstrapForIntegrationTest();
       await tester.pump();
       await e2eWaitForNewGameEntry(tester, perf: perf);
       perf.timing('bootstrap_for_integration_test', bootstrapSw.elapsed);
+      ensureUnderWallClock('after bootstrap_for_integration_test');
       final preloadSw = Stopwatch()..start();
       await ensureAllRelocated64pxPngsLoadSuiteOnce();
       perf.timing('asset_preload', preloadSw.elapsed);
+      ensureUnderWallClock('after asset_preload');
 
       final newGameSw = Stopwatch()..start();
       await bootstrapNewGameToMap(tester, perf: perf);
       perf.timing('new_game_to_map', newGameSw.elapsed);
+      ensureUnderWallClock('after new_game_to_map');
 
       final l10n = lookupAppLocalizations(const Locale('en'));
 
@@ -125,6 +137,7 @@ void main() {
       await openCivilianPanel(tester, perf: perf);
       await expectCivilianPanelTexts();
       await closeBottomSheet(tester, perf: perf);
+      ensureUnderWallClock('after civilian baseline panel');
 
       // --- Builder: build improvement + first legal tile (e2e tap target) ---
       await openCivilianPanel(tester, perf: perf);
@@ -146,6 +159,7 @@ void main() {
         phaseName: 'pump_until_work_tile_overlay_cleared_build',
       );
       await closeBottomSheet(tester, perf: perf);
+      ensureUnderWallClock('after builder build_improvement');
 
       // --- Explorer: prospect + first legal tile ---
       await openCivilianPanel(tester, perf: perf);
@@ -176,11 +190,13 @@ void main() {
         );
       }
       await closeBottomSheet(tester, perf: perf);
+      ensureUnderWallClock('after explorer prospect');
 
       // --- Civilian rail: after draft orders ---
       await openCivilianPanel(tester, perf: perf);
       await expectCivilianPanelTexts();
       await closeBottomSheet(tester, perf: perf);
+      ensureUnderWallClock('after civilian post-draft panel');
 
       // --- Naval rail: collapsed ---
       await openNavalPanel(tester, perf: perf);
@@ -275,6 +291,7 @@ void main() {
       await expandEachExpansionTileOnce(tester);
       await expectNavalPanelTexts(expanded: true);
       await closeBottomSheet(tester, perf: perf);
+      ensureUnderWallClock('after naval split + move');
 
       // --- Civilian + naval from first map markers (tile scope) ---
       await openPanelFromMarker(
@@ -285,6 +302,7 @@ void main() {
       );
       await expectCivilianPanelTexts();
       await closeBottomSheet(tester, perf: perf);
+      ensureUnderWallClock('after civilian marker panel');
 
       await openPanelFromMarker(
         tester,
@@ -294,6 +312,7 @@ void main() {
       );
       await expectNavalPanelTexts(expanded: false);
       await closeBottomSheet(tester, perf: perf);
+      ensureUnderWallClock('after fleet marker panel');
 
       // --- Next turn ---
       await dismissTransientUi(tester, perf: perf);
@@ -309,6 +328,7 @@ void main() {
         reason:
             'Next turn should resolve within the turn-resolution usability budget.',
       );
+      ensureUnderWallClock('after next turn');
 
       // --- Production (post-resolution stockpiles) ---
       await openProductionPanel(tester, perf: perf);
@@ -323,6 +343,7 @@ void main() {
         phaseName: 'wait_until_home_to_capital_after_production_back',
       );
       expect(find.byKey(kHomeToCapitalButtonKey), findsOneWidget);
+      ensureUnderWallClock('test complete');
       perf.timing('test_total', testSw.elapsed);
     },
   );
