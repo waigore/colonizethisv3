@@ -8,6 +8,7 @@ import 'package:colonizethis_app/l10n/l10n.dart';
 import 'package:colonizethis_app/widgets/ct_dialog_shell.dart';
 import 'package:colonizethis_app/widgets/ct_dropdown.dart';
 import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
+import 'package:colonizethis_app/widgets/ct_slider.dart';
 import 'package:colonizethis_app/widgets/gp_default_map_color_swatch.dart';
 
 const int _kNumSlots = 6;
@@ -33,8 +34,12 @@ class NewGameLeaderSelectionDialog extends StatefulWidget {
     Map<String, String> leaderVariantByGpId,
     int seed,
     bool infiniteMode,
+    double terrainVariation,
   )
   onConfirmed;
+
+  /// Default terrain-variation slider value (matches `GameSetupConfig.terrainVariation` default).
+  static const double defaultTerrainVariation = 0.5;
 
   /// Parses seed field text for [GameSetupConfig.seed]: empty or invalid → 42; negative → 42.
   static int parseSeedInput(String text) {
@@ -60,6 +65,8 @@ class _NewGameLeaderSelectionDialogState
   late Map<String, String> _leaderByGpId;
   late final TextEditingController _seedController;
   bool _infiniteMode = false;
+  double _terrainVariation =
+      NewGameLeaderSelectionDialog.defaultTerrainVariation;
 
   List<String> get _allGpIds =>
       widget.naming.greatPowers.map((g) => g.id).toList();
@@ -217,6 +224,8 @@ class _NewGameLeaderSelectionDialogState
               ),
             ),
           ),
+          const SizedBox(height: 12),
+          _buildTerrainVariationField(context, l10n),
           const SizedBox(height: 16),
           Row(
             mainAxisAlignment: MainAxisAlignment.end,
@@ -239,6 +248,7 @@ class _NewGameLeaderSelectionDialogState
                           Map<String, String>.from(_leaderByGpId),
                           seed,
                           _infiniteMode,
+                          _terrainVariation,
                         );
                       }
                     : null,
@@ -249,6 +259,43 @@ class _NewGameLeaderSelectionDialogState
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildTerrainVariationField(
+    BuildContext context,
+    AppLocalizations l10n,
+  ) {
+    final percent = (_terrainVariation * 100).round();
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(
+          l10n.shell_leaderDialog_terrainVariationLabel(percent),
+          style: Theme.of(
+            context,
+          ).textTheme.bodySmall?.copyWith(fontWeight: FontWeight.w600),
+        ),
+        const SizedBox(height: 6),
+        CtSlider(
+          value: _terrainVariation,
+          min: 0.0,
+          max: 1.0,
+          divisions: 20,
+          onChanged: (value) {
+            setState(() => _terrainVariation = value);
+          },
+        ),
+        const SizedBox(height: 6),
+        Text(
+          l10n.shell_leaderDialog_terrainVariationHelper,
+          style: TextStyle(
+            fontSize: 12,
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
+          ),
+        ),
+      ],
     );
   }
 

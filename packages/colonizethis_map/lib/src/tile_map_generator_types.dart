@@ -197,6 +197,8 @@ class TileMapParams implements TileMapLandSeedParams {
     this.patternMaxSeedsPerBlob = 6,
     this.patternMaxChangesPerSeed = 12,
     this.patternMaxRadius = 4,
+    // Pass 6b.5 — noise perturbation
+    this.terrainVariation = 0.5,
     // Pass 10b — jitter
     this.jitterHomogeneityThreshold = 0.85,
     this.jitterMaxFraction = 0.1,
@@ -223,6 +225,7 @@ class TileMapParams implements TileMapLandSeedParams {
        assert(patternMaxSeedsPerBlob >= 0),
        assert(patternMaxChangesPerSeed >= 0),
        assert(patternMaxRadius >= 0),
+       assert(terrainVariation >= 0 && terrainVariation <= 1),
        assert(
          jitterHomogeneityThreshold >= 0 && jitterHomogeneityThreshold <= 1,
        ),
@@ -287,6 +290,13 @@ class TileMapParams implements TileMapLandSeedParams {
   final int patternMaxChangesPerSeed;
   final int patternMaxRadius;
 
+  // --- Pass 6b.5 (noise perturbation)
+  /// 0.0–1.0; controls expected interior-cell change fraction
+  /// (`terrainVariation / 2` for noise uniformly distributed in `[-1, 1]`).
+  /// 0.0 bypasses the pass entirely (byte-identical legacy output, no RNG advance).
+  /// SPEC/program/tile-map-gen-algorithm.md § Pass 6b.5.
+  final double terrainVariation;
+
   // --- Pass 10b (jitter)
   final double jitterHomogeneityThreshold;
   final double jitterMaxFraction;
@@ -306,6 +316,7 @@ class TileMapParams implements TileMapLandSeedParams {
     bool? joinContinents,
     bool? seedBeforeAssignment,
     double? borderNoise,
+    double? terrainVariation,
   }) {
     return TileMapParams(
       width: width,
@@ -335,6 +346,7 @@ class TileMapParams implements TileMapLandSeedParams {
       patternMaxSeedsPerBlob: patternMaxSeedsPerBlob,
       patternMaxChangesPerSeed: patternMaxChangesPerSeed,
       patternMaxRadius: patternMaxRadius,
+      terrainVariation: terrainVariation ?? this.terrainVariation,
       jitterHomogeneityThreshold: jitterHomogeneityThreshold,
       jitterMaxFraction: jitterMaxFraction,
       jitterProbability: jitterProbability,

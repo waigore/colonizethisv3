@@ -34,37 +34,45 @@ extension _DialogBuilders on _AppEventHandlerScopeState {
       naming: naming,
       initialLeaderByGpId: initialSelections,
       onCancel: () => Navigator.of(ctx).pop(),
-      onConfirmed: (orderedGreatPowerIds, leaderVariantByGpId, seed, infiniteMode) {
-        final navCtx = appNavigatorKey.currentContext;
-        if (navCtx == null) {
-          _logShell.w(
-            'appNavigatorKey has no context; skipping new game setup',
-          );
-          return;
-        }
-        final rootContainer = ProviderScope.containerOf(navCtx);
-        final templateConfig = GameSetupConfig(
-          selectedGreatPowerIds: orderedGreatPowerIds,
-          leaderVariantByGpId: leaderVariantByGpId,
-          continentCount: baseConfig.continentCount,
-          minorNationCount: baseConfig.minorNationCount,
-          tribeCount: baseConfig.tribeCount,
-          numProvincesOldWorld: baseConfig.numProvincesOldWorld,
-          numProvincesNewWorld: baseConfig.numProvincesNewWorld,
-          minProvincesPerMinor: baseConfig.minProvincesPerMinor,
-          seed: seed,
-          infiniteMode: infiniteMode,
-          startingResources: baseConfig.startingResources,
-          initTownRoadWiringRegionIds: baseConfig.initTownRoadWiringRegionIds,
-        );
-        unawaited(
-          runNewGameSetupAfterLeaderPick(
-            navigatorKey: appNavigatorKey,
-            container: rootContainer,
-            templateConfig: templateConfig,
-          ),
-        );
-      },
+      onConfirmed:
+          (
+            orderedGreatPowerIds,
+            leaderVariantByGpId,
+            seed,
+            infiniteMode,
+            terrainVariation,
+          ) {
+            final navCtx = appNavigatorKey.currentContext;
+            if (navCtx == null) {
+              _logShell.w(
+                'appNavigatorKey has no context; skipping new game setup',
+              );
+              return;
+            }
+            final rootContainer = ProviderScope.containerOf(navCtx);
+            final templateConfig = GameSetupConfig(
+              selectedGreatPowerIds: orderedGreatPowerIds,
+              leaderVariantByGpId: leaderVariantByGpId,
+              continentCount: baseConfig.continentCount,
+              minorNationCount: baseConfig.minorNationCount,
+              tribeCount: baseConfig.tribeCount,
+              numProvincesOldWorld: baseConfig.numProvincesOldWorld,
+              numProvincesNewWorld: baseConfig.numProvincesNewWorld,
+              minProvincesPerMinor: baseConfig.minProvincesPerMinor,
+              seed: seed,
+              infiniteMode: infiniteMode,
+              terrainVariation: terrainVariation,
+              startingResources: baseConfig.startingResources,
+              initTownRoadWiringRegionIds: baseConfig.initTownRoadWiringRegionIds,
+            );
+            unawaited(
+              runNewGameSetupAfterLeaderPick(
+                navigatorKey: appNavigatorKey,
+                container: rootContainer,
+                templateConfig: templateConfig,
+              ),
+            );
+          },
     );
   }
 
