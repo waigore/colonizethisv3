@@ -79,8 +79,18 @@ DebugCommandResult applyDebugFlipProvinceOwnership({
       for (final player in currentGame.players)
         player.id: player.capitalProvinceId,
     };
-    final priorOwner = findPlayerById(currentGame, oldOwnerId);
-    final ownerLosesCapital = priorOwner?.capitalProvinceId == province.id;
+    final previousCapitalByMinor = {
+      for (final minor in currentGame.minorNations)
+        minor.id: minor.capitalProvinceId,
+    };
+    final previousCapitalByTribe = {
+      for (final tribe in currentGame.tribes) tribe.id: tribe.capitalProvinceId,
+    };
+    final priorOwnerCapitalProvinceId = _capitalProvinceIdForFaction(
+      currentGame,
+      oldOwnerId,
+    );
+    final ownerLosesCapital = priorOwnerCapitalProvinceId == province.id;
     var noEligibleReplacementCapital = false;
     if (ownerLosesCapital) {
       final regionTopology =
@@ -112,11 +122,22 @@ DebugCommandResult applyDebugFlipProvinceOwnership({
       afterCapitalReassignment,
       previousCapitalByPlayer,
     );
+    final afterFactionReassignment =
+        applyFactionCapitalReassignmentAfterCombat(
+          afterGreatPowerFall,
+          combinedTopology,
+          topologyByRegion: topologyByRegion,
+        );
+    final afterFactionFall = applyFactionTerminalFall(
+      afterFactionReassignment,
+      previousCapitalByMinor: previousCapitalByMinor,
+      previousCapitalByTribe: previousCapitalByTribe,
+    );
     final result = out.result;
     final visibilityBeforeCoastal =
-        afterGreatPowerFall.worldState.playerVisibilityByTile;
+        afterFactionFall.worldState.playerVisibilityByTile;
     final visibilityAfterCoastal = applyCoastalSeaZoneFullVisibility(
-      afterGreatPowerFall,
+      afterFactionFall,
       visibilityBeforeCoastal,
       combinedTopology,
       topologyByRegion: topologyByRegion,
@@ -125,8 +146,8 @@ DebugCommandResult applyDebugFlipProvinceOwnership({
       before: visibilityBeforeCoastal,
       after: visibilityAfterCoastal,
     );
-    final nextGame = afterGreatPowerFall.copyWith(
-      worldState: afterGreatPowerFall.worldState.copyWith(
+    final nextGame = afterFactionFall.copyWith(
+      worldState: afterFactionFall.worldState.copyWith(
         playerVisibilityByTile: visibilityAfterCoastal,
       ),
     );
@@ -230,6 +251,18 @@ bool _isProvinceKnownToPlayer({
     }
   }
   return false;
+}
+
+String? _capitalProvinceIdForFaction(Game game, String factionId) {
+  final player = findPlayerById(game, factionId);
+  if (player != null) return player.capitalProvinceId;
+  for (final minor in game.minorNations) {
+    if (minor.id == factionId) return minor.capitalProvinceId;
+  }
+  for (final tribe in game.tribes) {
+    if (tribe.id == factionId) return tribe.capitalProvinceId;
+  }
+  return null;
 }
 
 int _countNewlyVisibleTiles({

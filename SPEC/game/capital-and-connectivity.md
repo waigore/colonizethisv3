@@ -133,19 +133,19 @@ Connectivity is recomputed each turn; blockade state is taken from the current f
 
 ## Capital loss and reassignment
 
-If a player no longer owns their capital province (e.g. after conquest), a new capital is chosen during turn resolution (see [turn-resolution-phase-details.md](../program/turn-resolution-phase-details.md) § Combat). This path is **separate** from the init-game capital-choice phase and **does not** use capital-choice A/B/C tile heuristics or § Capital Setup port/road placement.
+If a **capital-bearing faction** (Great Power, Minor Nation, or Tribe) no longer owns its capital province (e.g. after conquest), a new capital is chosen during turn resolution (see [turn-resolution-phase-details.md](../program/turn-resolution-phase-details.md) § Combat). This path is **separate** from the init-game capital-choice phase and **does not** use capital-choice A/B/C tile heuristics or § Capital Setup port/road placement. The same selection rules and `townTileKey` invariants apply to all three faction types; differences for Great Powers (town development level, terminal-fall eligibility) are called out below.
 
-**Province:** New capital province is in the player's **original region** (region of the lost capital), chosen from **owned** provinces in that region. Prefer **seaboard** provinces (P–S edge in region topology). If none, use **inland** owned provinces. Deterministic tie-break: ascending sorted full province id, first entry in the preferred list (seaboard list, else full owned list).
+**Province:** New capital province is in the faction's **original region** (region of the lost capital), chosen from **owned** provinces in that region. Prefer **seaboard** provinces (P–S edge in region topology). If none, use **inland** owned provinces. Deterministic tie-break: ascending sorted full province id, first entry in the preferred list (seaboard list, else full owned list). The picker is faction-agnostic and uses the same `pickCapitalProvinceIdForReassignment(ownedProvinceIds, topology)` invocation for Great Powers, Minor Nations, and Tribes.
 
 **Tile:** The new capital **tile** is exactly that province's stored **`townTileKey`**, parsed as tile key `regionId|localId|x|y` per [world-model-identity.md](world-model-identity.md). The System **does not** reassign, recompute, or validate `townTileKey` against the tile map during reassignment (post-generation data is authoritative). The System **does not** mutate any province's `townTileKey` during reassignment.
 
-**World state:** Reassignment updates **only** the player's `capitalProvinceId` and `capitalTile`. It **does not** add or change ports, roads, or other `WorldState.tileState` entries for capital wiring.
+**World state:** Reassignment updates **only** the faction's `capitalProvinceId` and `capitalTile`. It **does not** add or change ports, roads, or other `WorldState.tileState` entries for capital wiring. Minors and Tribes therefore retain **inland** capitals during reassignment without port/road placement.
 
-**Great Power capital province town development (reassignment):** When the new capital province is set for a **Great Power**, The System sets that province’s **`townDevelopmentLevel` to `4`** (see § Capital province town development (Great Powers)).
+**Great Power capital province town development (reassignment):** When the new capital province is set for a **Great Power**, The System sets that province’s **`townDevelopmentLevel` to `4`** (see § Capital province town development (Great Powers)). **Minor Nations and Tribes do not** change any province `townDevelopmentLevel` during reassignment.
 
-**Fatal error:** If reassignment must run for a chosen province but `townTileKey` is null, empty, or not parseable to a `CapitalTile` for that province id, The System **throws** a dedicated fatal error, emits **`logic:`** logs at **error** level with **full error and stack trace** for diagnostics, and the host treats this as **end of game** (turn resolution does not complete). The same logging and propagation apply to any other unexpected failure during reassignment.
+**Fatal error:** If reassignment must run for a chosen province but `townTileKey` is null, empty, or not parseable to a `CapitalTile` for that province id, The System **throws** a dedicated fatal error, emits **`logic:`** logs at **error** level with **full error and stack trace** for diagnostics, and the host treats this as **end of game** (turn resolution does not complete). The same logging and propagation apply to any other unexpected failure during reassignment, and apply equally to Great Power, Minor Nation, and Tribe reassignment paths.
 
-If the player has **no** owned provinces in the original region, The System sets `capitalProvinceId` and `capitalTile` to `null` and performs no throws from the missing-town rule above.
+If the faction has **no** owned provinces in the original region, The System sets `capitalProvinceId` and `capitalTile` to `null` for that faction and performs no throws from the missing-town rule above. For Minor Nations and Tribes, that empty-region condition is also the trigger for **terminal fall** (see § Minor Nation and Tribe terminal fall).
 
 ### Great Power fall (loss of capital and ports)
 
@@ -163,9 +163,26 @@ When a Great Power falls:
 
 This Great Power fall check runs **after** combat and capital reassignment, and **before** the next Extraction phase so that connectivity and extraction for remaining factions are computed with the updated ownership and player list.
 
+### Minor Nation and Tribe terminal fall
+
+For **Minor Nations** and **Tribes**, the capital loss rules have a terminal case parallel to § Great Power fall but with a different eligibility check:
+
+- If, after combat resolution and capital reassignment, a Minor Nation or Tribe:
+  - no longer owns its original capital province, **and**
+  - has **no owned provinces remaining in the original capital region** (the same `ownedInRegion.isEmpty` condition that prevents reassignment),
+- then that Minor Nation or Tribe **falls** during turn resolution.
+
+When a Minor Nation or Tribe falls:
+
+- All provinces previously owned by that faction (in any region) are transferred to the faction that currently owns its lost capital province (the conqueror of the original capital in this sequence). The same per-province owner replacement is applied as in § Great Power fall; per-province ports, roads, and `townTileKey` are not modified.
+- All remaining units owned by the falling faction in any region are removed from world state; all remaining fleets owned by the falling faction are removed from world state.
+- The falling faction is removed from `Game.minorNations` (for a Minor Nation) or `Game.tribes` (for a Tribe). No diplomacy relations, overtures, or subsidies for the removed faction are mutated by this rule beyond removing the faction entry itself (subsequent phases observe the missing faction and ignore it for active rules).
+
+This Minor Nation and Tribe fall check runs **after** Great Power reassignment and Great Power fall, and **before** the next Extraction phase, so that connectivity, extraction, and AI/diplomacy for remaining factions are computed with the updated ownership and faction lists.
+
 ### Debug `/flip_province` capital capture parity
 
-For debug command `/flip_province` (see [debug-console-panel.md](../ui/debug-console-panel.md)), when the command captures a **non-human** faction’s current capital and no eligible reassignment capital exists in that faction’s original region, The System still applies canonical ownership transfer and then executes the same terminal fall semantics used above. This parity rule applies equally to Great Powers, Minor Nations, and Tribes in the debug command path.
+For debug command `/flip_province` (see [debug-console-panel.md](../ui/debug-console-panel.md)), when the command captures a **non-human** faction’s current capital, The System still applies canonical ownership transfer and then executes the same reassignment-plus-fall sequencing as combat capital-loss handling. This parity rule applies equally to Great Powers, Minor Nations, and Tribes in the debug command path: when no eligible reassignment capital exists in that faction’s original region, terminal fall (§ Great Power fall for Great Powers; § Minor Nation and Tribe terminal fall for Minor Nations and Tribes) resolves in the same command transaction.
 
 ---
 
@@ -278,5 +295,33 @@ For debug command `/flip_province` (see [debug-console-panel.md](../ui/debug-con
 - Given a Great Power player's capital province is blockaded (an enemy fleet **at sea** on Blockade mission targets the capital's port and is in a sea zone adjacent to it)  
   When the system recomputes connectivity during the extraction phase  
   Then all overseas provinces and all same-region provinces that are only reachable via sea (no land path from capital) are not connected for that player; only tiles reachable by road/rail from the capital remain connected.
+
+- Given a Minor Nation no longer owns its capital province and still owns at least one other province in the original capital region, including at least one seaboard province with a valid `townTileKey`  
+  When the system executes capital loss and reassignment during turn resolution  
+  Then the system sets the Minor Nation's `capitalProvinceId` to the first ascending-sorted seaboard owned province in the original region and `capitalTile` to that province's `townTileKey` parsed as a `CapitalTile`; the system does not change `WorldState.tileState`, `WorldState.portsByProvinceSeaboard`, or any province's `townTileKey` or `townDevelopmentLevel`.
+
+- Given a Tribe no longer owns its capital province and still owns at least one other province in the original capital region, including at least one seaboard province with a valid `townTileKey`  
+  When the system executes capital loss and reassignment during turn resolution  
+  Then the system sets the Tribe's `capitalProvinceId` to the first ascending-sorted seaboard owned province in the original region and `capitalTile` to that province's `townTileKey` parsed as a `CapitalTile`; the system does not change `WorldState.tileState`, `WorldState.portsByProvinceSeaboard`, or any province's `townTileKey` or `townDevelopmentLevel`.
+
+- Given a Minor Nation no longer owns its capital province and still owns only inland (non-seaboard) provinces in the original capital region, each with a valid `townTileKey`  
+  When the system executes capital loss and reassignment during turn resolution  
+  Then the system selects the new capital province by ascending sorted full province id among those owned inland provinces, sets `capitalTile` from that province's `townTileKey` only, and does not change any province's `townDevelopmentLevel`.
+
+- Given a Minor Nation owned its capital province `C` plus at least one other province `P` outside the original capital region and no owned provinces remain in the original capital region after capital `C` is captured  
+  When the system executes capital loss and terminal fall during turn resolution  
+  Then the system sets the conqueror of `C` as the new `ownerId` for every province previously owned by that Minor Nation (in any region), removes the Minor Nation entry from `Game.minorNations`, removes every `Unit` whose `ownerId` matches the Minor Nation id from `WorldState.oldWorld.units` and `WorldState.newWorld.units`, and removes every `Fleet` whose `ownerId` matches the Minor Nation id from `WorldState.fleets`.
+
+- Given a Tribe owned its capital province `C` plus at least one other province `P` outside the original capital region and no owned provinces remain in the original capital region after capital `C` is captured  
+  When the system executes capital loss and terminal fall during turn resolution  
+  Then the system sets the conqueror of `C` as the new `ownerId` for every province previously owned by that Tribe (in any region), removes the Tribe entry from `Game.tribes`, removes every `Unit` whose `ownerId` matches the Tribe id, and removes every `Fleet` whose `ownerId` matches the Tribe id.
+
+- Given a Minor Nation or Tribe still owns its original capital province after combat resolution (and after debug `/flip_province` if applicable)  
+  When the system runs the reassignment-plus-terminal-fall sequence during turn resolution  
+  Then the system does not modify that faction's `capitalProvinceId`, `capitalTile`, or membership in `Game.minorNations` / `Game.tribes`, and does not remove its units or fleets through this sequence.
+
+- Given a Minor Nation lost its capital and capital reassignment selected a deterministic new capital province `P_new` in the original region  
+  When the system serializes the resulting `Game` via `toJson` and deserializes it via `fromJson`  
+  Then the deserialized Minor Nation entry has the same `capitalProvinceId == P_new.id` and `capitalTile` equal to the post-reassignment `CapitalTile`, with no other Minor Nation fields changed by the round trip.
 
 - **Implementation:** Capital choice and init: [capital-choice-phase.md](capital-choice-phase.md). Connectivity and extraction: [extraction-pipeline.md](../program/extraction-pipeline.md). Capital reassignment on loss: [turn-resolution-phase-details.md](../program/turn-resolution-phase-details.md) § Combat.
