@@ -304,6 +304,58 @@ Game setCapitalForReassignment({
   });
 }
 
+/// Sets [minorId]'s capital after runtime reassignment (combat / debug flip). Updates
+/// **only** the Minor Nation's `capitalProvinceId` and `capitalTile`; does not place
+/// ports/roads, does not change any province's `townTileKey` or `townDevelopmentLevel`.
+/// SPEC/game/capital-and-connectivity § Capital loss and reassignment.
+Game setCapitalForMinorReassignment({
+  required Game game,
+  required String minorId,
+  required String provinceId,
+  required CapitalTile tile,
+}) {
+  if (tile.provinceId != provinceId) {
+    throw CapitalTileMismatchException(
+      details:
+          'Capital tile province ${tile.provinceId} does not match $provinceId',
+    );
+  }
+  final updatedMinors = game.minorNations
+      .map(
+        (m) => m.id != minorId
+            ? m
+            : m.copyWith(capitalProvinceId: provinceId, capitalTile: tile),
+      )
+      .toList();
+  return game.copyWith(minorNations: updatedMinors);
+}
+
+/// Sets [tribeId]'s capital after runtime reassignment (combat / debug flip). Updates
+/// **only** the Tribe's `capitalProvinceId` and `capitalTile`; does not place ports/roads,
+/// does not change any province's `townTileKey` or `townDevelopmentLevel`.
+/// SPEC/game/capital-and-connectivity § Capital loss and reassignment.
+Game setCapitalForTribeReassignment({
+  required Game game,
+  required String tribeId,
+  required String provinceId,
+  required CapitalTile tile,
+}) {
+  if (tile.provinceId != provinceId) {
+    throw CapitalTileMismatchException(
+      details:
+          'Capital tile province ${tile.provinceId} does not match $provinceId',
+    );
+  }
+  final updatedTribes = game.tribes
+      .map(
+        (t) => t.id != tribeId
+            ? t
+            : t.copyWith(capitalProvinceId: provinceId, capitalTile: tile),
+      )
+      .toList();
+  return game.copyWith(tribes: updatedTribes);
+}
+
 /// Sets a Minor Nation's capital. Port/road applied only when province is sea-bound.
 /// SPEC/game/capital-choice-phase: minors may have inland capitals.
 Game setCapitalForMinorNation({
