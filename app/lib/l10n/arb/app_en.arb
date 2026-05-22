@@ -269,9 +269,15 @@
     "description": "Helper text for infinite mode in the new-game leader dialog."
   },
 
-  "shell_leaderDialog_terrainVariationLabel": "Terrain variation",
+  "shell_leaderDialog_terrainVariationLabel": "Terrain variation ({percent}%)",
   "@shell_leaderDialog_terrainVariationLabel": {
-    "description": "Slider label for terrain noise variation in the new-game leader dialog."
+    "description": "Slider label for terrain noise variation in the new-game leader dialog, including the current percent value.",
+    "placeholders": {
+      "percent": {
+        "type": "int",
+        "description": "Current terrain variation as a 0-100 integer percent."
+      }
+    }
   },
   "shell_leaderDialog_terrainVariationHelper": "Higher values produce more mixed terrain (0 keeps legacy clumps).",
   "@shell_leaderDialog_terrainVariationHelper": {

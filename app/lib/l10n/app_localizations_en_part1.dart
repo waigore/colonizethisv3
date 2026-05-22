@@ -200,7 +200,8 @@ mixin _AppLocalizationsEnStrings1 on AppLocalizations {
       'When enabled, the campaign continues past calendar year 1800 until a military victory.';
 
   @override
-  String get shell_leaderDialog_terrainVariationLabel => 'Terrain variation';
+  String shell_leaderDialog_terrainVariationLabel(int percent) =>
+      'Terrain variation ($percent%)';
 
   @override
   String get shell_leaderDialog_terrainVariationHelper =>

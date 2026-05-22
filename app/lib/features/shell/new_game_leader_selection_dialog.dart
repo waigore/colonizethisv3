@@ -272,7 +272,7 @@ class _NewGameLeaderSelectionDialogState
       mainAxisSize: MainAxisSize.min,
       children: [
         Text(
-          '${l10n.shell_leaderDialog_terrainVariationLabel} ($percent%)',
+          l10n.shell_leaderDialog_terrainVariationLabel(percent),
           style: Theme.of(
             context,
           ).textTheme.bodySmall?.copyWith(fontWeight: FontWeight.w600),
