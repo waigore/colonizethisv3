@@ -209,12 +209,14 @@ class GameMapAreaStateLogic {
     required ct_models.Game game,
     required ct_models.Orders orders,
     required String humanPlayerId,
+    Set<String>? civilianMarkerOwnerIds,
   }) =>
       GameMapAreaCivilianDraftProjection.project(
         region: region,
         game: game,
         orders: orders,
         humanPlayerId: humanPlayerId,
+        civilianMarkerOwnerIds: civilianMarkerOwnerIds,
       );
 
   /// Projects fleet marker tiles using human naval move drafts.
@@ -248,12 +250,14 @@ class GameMapAreaStateLogic {
     Map<String, TileMapResult>? tileMapByRegion,
     Map<String, MapTopology>? topologyByRegion,
     MapTopology? combinedTopology,
+    Set<String>? civilianMarkerOwnerIds,
   }) {
     var projected = GameMapAreaCivilianDraftProjection.project(
       region: baseRegion,
       game: game,
       orders: orders,
       humanPlayerId: humanPlayerId,
+      civilianMarkerOwnerIds: civilianMarkerOwnerIds,
     );
     if (tileMapByRegion != null &&
         topologyByRegion != null &&
