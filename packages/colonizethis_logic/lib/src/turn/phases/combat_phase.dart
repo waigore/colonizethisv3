@@ -65,6 +65,12 @@ Game runCombatPhase(
   final previousCapitalByPlayer = {
     for (final p in game.players) p.id: p.capitalProvinceId,
   };
+  final previousCapitalByMinor = {
+    for (final m in game.minorNations) m.id: m.capitalProvinceId,
+  };
+  final previousCapitalByTribe = {
+    for (final t in game.tribes) t.id: t.capitalProvinceId,
+  };
   Game state = game;
   final turn = state.worldState.turnState.turnNumber;
   final preBattleDialogueSeed =
@@ -126,6 +132,16 @@ Game runCombatPhase(
     tileMapByRegion: tileMapByRegion,
   );
   state = applyGreatPowerFall(state, previousCapitalByPlayer);
+  state = applyFactionCapitalReassignmentAfterCombat(
+    state,
+    topology,
+    topologyByRegion: topologyByRegion,
+  );
+  state = applyFactionTerminalFall(
+    state,
+    previousCapitalByMinor: previousCapitalByMinor,
+    previousCapitalByTribe: previousCapitalByTribe,
+  );
   return state;
 }
 

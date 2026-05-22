@@ -127,23 +127,44 @@ List<String> expandPhaseGpPeaceTargets({
 }
 
 /// GP owning the most invadable New World provinces (colonial frontier blocker).
+///
+/// Tally GP ownership in a single pass, then resolve the plurality winner in a
+/// second linear pass that preserves the original first-iterated-province
+/// tiebreak (sorted `invadableNewWorldProvinceIdsSorted`). Behaviorally
+/// identical to the prior nested-loop implementation but linear in the
+/// invadable-NW set rather than quadratic; relevant on hot peace-target
+/// collection paths (Refs `colonizethis-turn-resolution-budget.mdc`
+/// "Memoize per-target/per-player computations inside hot loops").
 String? primaryColonialGpBlocker({
   required Game game,
   required AIWorldSnapshot snapshot,
 }) {
+  final invadable = snapshot.colonial.invadableNewWorldProvinceIdsSorted;
+  if (invadable.isEmpty) {
+    return null;
+  }
   final provinceOwner = getProvinceOwnerMap(game);
-  String? bestGpId;
-  var bestCount = 0;
-  for (final provinceId in snapshot.colonial.invadableNewWorldProvinceIdsSorted) {
+  final counts = <String, int>{};
+  for (final provinceId in invadable) {
     final owner = provinceOwner[provinceId];
     if (owner == null || game.playerById(owner) == null) {
       continue;
     }
-    var count = 0;
-    for (final pid in snapshot.colonial.invadableNewWorldProvinceIdsSorted) {
-      if (provinceOwner[pid] == owner) {
-        count++;
-      }
+    counts[owner] = (counts[owner] ?? 0) + 1;
+  }
+  if (counts.isEmpty) {
+    return null;
+  }
+  String? bestGpId;
+  var bestCount = 0;
+  for (final provinceId in invadable) {
+    final owner = provinceOwner[provinceId];
+    if (owner == null) {
+      continue;
+    }
+    final count = counts[owner];
+    if (count == null) {
+      continue;
     }
     if (count > bestCount) {
       bestCount = count;

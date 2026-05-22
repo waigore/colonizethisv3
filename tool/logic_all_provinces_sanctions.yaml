@@ -34,7 +34,7 @@ sanctions:
     spec: SPEC/program/logic-dual-region-province-access.md
     issue: https://github.com/waigore/colonizethisv3/issues/2394
   - path: packages/colonizethis_logic/lib/src/world/capital_and_gp_fall.dart
-    line: 189
+    line: 454
     rationale: Capital fall logic scans province ownership across regions.
     spec: SPEC/program/logic-dual-region-province-access.md
     issue: https://github.com/waigore/colonizethisv3/issues/2278
