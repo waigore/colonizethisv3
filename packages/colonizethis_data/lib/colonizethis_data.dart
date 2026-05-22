@@ -32,6 +32,7 @@ export 'src/regiment_economy.dart';
 export 'src/ship_economy.dart';
 export 'src/civilian_economy.dart';
 export 'src/work_order_costs.dart';
+export 'src/worker_action_economy.dart';
 export 'src/naval_stats.dart';
 export 'src/starting_resources_config.dart';
 export 'src/turn_processing_wall_clock_budget.dart';

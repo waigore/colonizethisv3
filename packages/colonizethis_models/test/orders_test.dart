@@ -156,5 +156,116 @@ void main() {
         throwsA(isA<ArgumentError>()),
       );
     });
+
+    test('round-trips recruitWorkerOrdersByPlayerId for every tier', () {
+      const o = Orders(
+        recruitWorkerOrdersByPlayerId: {
+          'p1': [
+            RecruitWorkerOrder(targetTier: WorkerTier.peasant),
+            RecruitWorkerOrder(targetTier: WorkerTier.apprentice),
+            RecruitWorkerOrder(targetTier: WorkerTier.journeyman),
+            RecruitWorkerOrder(targetTier: WorkerTier.master),
+          ],
+        },
+      );
+      final o2 = Orders.fromJson(o.toJson());
+      expect(o2.recruitWorkerOrdersByPlayerId['p1']!.length, 4);
+      expect(
+        o2.recruitWorkerOrdersByPlayerId['p1']!.map((e) => e.targetTier),
+        [
+          WorkerTier.peasant,
+          WorkerTier.apprentice,
+          WorkerTier.journeyman,
+          WorkerTier.master,
+        ],
+      );
+      expect(o2, o);
+      expect(o2.hashCode, o.hashCode);
+    });
+
+    test('toJson omits recruitWorkerOrdersByPlayerId when empty', () {
+      const o = Orders();
+      expect(o.toJson().containsKey('recruitWorkerOrdersByPlayerId'), isFalse);
+    });
+
+    test('equality false when recruit worker orders differ', () {
+      const a = Orders(
+        recruitWorkerOrdersByPlayerId: {
+          'p1': [RecruitWorkerOrder(targetTier: WorkerTier.apprentice)],
+        },
+      );
+      const b = Orders(
+        recruitWorkerOrdersByPlayerId: {
+          'p1': [RecruitWorkerOrder(targetTier: WorkerTier.master)],
+        },
+      );
+      expect(a == b, isFalse);
+    });
+
+    test('copyWith preserves recruit worker orders by default', () {
+      const original = Orders(
+        recruitWorkerOrdersByPlayerId: {
+          'p1': [RecruitWorkerOrder(targetTier: WorkerTier.apprentice)],
+        },
+      );
+      final copy = original.copyWith();
+      expect(copy, original);
+      expect(copy.recruitWorkerOrdersByPlayerId, isNotEmpty);
+    });
+
+    test('copyWith can replace recruit worker orders', () {
+      const original = Orders(
+        recruitWorkerOrdersByPlayerId: {
+          'p1': [RecruitWorkerOrder(targetTier: WorkerTier.apprentice)],
+        },
+      );
+      final updated = original.copyWith(
+        recruitWorkerOrdersByPlayerId: const {
+          'p1': [RecruitWorkerOrder(targetTier: WorkerTier.master)],
+        },
+      );
+      expect(
+        updated.recruitWorkerOrdersByPlayerId['p1']!.single.targetTier,
+        WorkerTier.master,
+      );
+      expect(updated == original, isFalse);
+    });
+
+    test(
+      'RecruitWorkerOrder.fromJson throws on missing targetTier',
+      () {
+        expect(
+          () => RecruitWorkerOrder.fromJson(<String, dynamic>{}),
+          throwsA(isA<ArgumentError>()),
+        );
+      },
+    );
+
+    test(
+      'RecruitWorkerOrder.fromJson throws on empty targetTier',
+      () {
+        expect(
+          () => RecruitWorkerOrder.fromJson({'targetTier': ''}),
+          throwsA(isA<ArgumentError>()),
+        );
+      },
+    );
+
+    test(
+      'RecruitWorkerOrder.fromJson throws on unknown targetTier id',
+      () {
+        expect(
+          () => RecruitWorkerOrder.fromJson({'targetTier': 'engineers'}),
+          throwsA(isA<ArgumentError>()),
+        );
+      },
+    );
+
+    test('RecruitWorkerOrder.toJson uses canonical WorkerTier id', () {
+      expect(
+        const RecruitWorkerOrder(targetTier: WorkerTier.apprentice).toJson(),
+        {'targetTier': 'apprentices'},
+      );
+    });
   });
 }
