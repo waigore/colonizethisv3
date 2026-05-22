@@ -472,6 +472,56 @@ void main() {
     );
 
     test(
+      'mutual-plateau sole GP war on GP-only cleared frontier -> peace peer',
+      () {
+        final game = _gameWithOwProvinces(
+          turnNumber: 90,
+          owProvinces: [
+            for (var i = 0; i < 8; i++)
+              Province(
+                id: 'oldWorld|gp3_$i',
+                regionId: 'oldWorld',
+                ownerId: 'gp3',
+              ),
+            for (var i = 0; i < 9; i++)
+              Province(
+                id: 'oldWorld|gp4_$i',
+                regionId: 'oldWorld',
+                ownerId: 'gp4',
+              ),
+          ],
+          players: const [
+            Player(id: 'gp3', displayName: 'P3', isHuman: false),
+            Player(id: 'gp4', displayName: 'P4', isHuman: false),
+          ],
+        ).copyWith(
+          diplomacyRelations: const [
+            DiplomacyRelation(
+              factionId1: 'gp3',
+              factionId2: 'gp4',
+              state: RelationState.atWar,
+              score: 30,
+            ),
+          ],
+        );
+        final snapshot = _expandSnapshot(
+          playerId: 'gp3',
+          atWarWith: const ['gp4'],
+          invadableOw: const ['oldWorld|gp4_0'],
+          oldWorldProvincesOwned: 8,
+        );
+        expect(
+          expandPhaseGpPeaceTargets(game: game, snapshot: snapshot),
+          ['gp4'],
+          reason:
+              'Seed-42 gp3/gp4 plateau: when minors are cleared and the sole '
+              'GP front is the mutual-plateau blocker, EXPAND must offer peace '
+              'so rebuild/minor pivots can resume (Refs #2509).',
+        );
+      },
+    );
+
+    test(
       'minor-first does not engage when the only uninvaded minor is already '
       'at war',
       () {

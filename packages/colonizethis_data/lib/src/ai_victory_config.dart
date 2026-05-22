@@ -291,7 +291,9 @@ const int kMutualExhaustedGpRegimentMax = 4;
 /// exhausted for the mutual-stalemate peace check (Refs #2509). Combined with the
 /// regiment ceiling, this targets GPs that cannot rebuild offensive force while
 /// the war continues.
-const int kMutualExhaustedGpTreasuryMax = 30;
+/// Includes seed-42 gp3 plateau treasury (~50) so mutual-exhausted peace can
+/// fire alongside gp4 (0 treasury) and end the sole GP-blocker war (Refs #2509).
+const int kMutualExhaustedGpTreasuryMax = 55;
 
 /// Offer-peace bonus toward the sole at-war Great Power when both sides are
 /// mutual-plateau peers below the observer quota AND both are exhausted in

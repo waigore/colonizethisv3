@@ -69,7 +69,7 @@ void main() {
 
   group('belowQuotaPeerGpPeaceTargets', () {
     test(
-        'skips mutual plateau peace when stronger on GP-only cleared frontier',
+        'peaces mutual plateau peer on GP-only cleared frontier (both sides)',
         () {
       final game = Game(
         id: 'g-below-quota-peer-no-minors',
@@ -137,13 +137,14 @@ void main() {
       );
       expect(
         belowQuotaPeerGpPeaceTargets(game: game, snapshot: snapshot),
-        isEmpty,
-        reason: 'sole GP blocker war held for mutual-plateau peers',
+        ['gp6'],
+        reason:
+            'seed-42 gp5/gp6 plateau: both sides must exit the sole GP-blocker '
+            'war on a cleared frontier (Refs #2509).',
       );
       expect(
         belowQuotaPeerGpPeaceTargets(game: game, snapshot: snapshotGp6),
-        isEmpty,
-        reason: 'sole GP blocker war held for mutual-plateau peers',
+        ['gp5'],
       );
     });
 
