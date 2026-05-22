@@ -1,6 +1,7 @@
 import 'diplomacy.dart';
 import 'model_validation_exception.dart';
 import 'province_id.dart';
+import 'worker_tier.dart';
 
 /// Per-player orders for the current turn.
 /// SPEC/game/world-model.
@@ -11,6 +12,7 @@ class Orders {
     this.armyMoveOrdersByPlayerId = const {},
     this.buildUnitOrdersByPlayerId = const {},
     this.workOrdersByPlayerId = const {},
+    this.recruitWorkerOrdersByPlayerId = const {},
     this.diplomaticOrdersByPlayerId = const {},
     this.researchOrdersByPlayerId = const {},
     this.navalMoveOrdersByPlayerId = const {},
@@ -28,6 +30,15 @@ class Orders {
 
   /// Player id -> list of work orders.
   final Map<String, List<WorkOrder>> workOrdersByPlayerId;
+
+  /// Player id -> list of worker recruit / train orders.
+  ///
+  /// Single order type per SPEC/game/workers-and-population.md §
+  /// Recruiting, Training, and Disbanding: the UI may surface "Recruit" and
+  /// "Train" as separate controls but both emit a [RecruitWorkerOrder] with
+  /// `targetTier` set. Applied in Build / work (phase 12) before
+  /// [BuildUnitOrder].
+  final Map<String, List<RecruitWorkerOrder>> recruitWorkerOrdersByPlayerId;
 
   /// Player id -> list of diplomatic orders. Phase 4.
   final Map<String, List<DiplomaticOrder>> diplomaticOrdersByPlayerId;
@@ -76,6 +87,11 @@ class Orders {
       ),
     if (navalMissionOrdersByPlayerId.isNotEmpty)
       'navalMissionOrdersByPlayerId': navalMissionOrdersByPlayerId.map(
+        (playerId, orders) =>
+            MapEntry(playerId, orders.map((o) => o.toJson()).toList()),
+      ),
+    if (recruitWorkerOrdersByPlayerId.isNotEmpty)
+      'recruitWorkerOrdersByPlayerId': recruitWorkerOrdersByPlayerId.map(
         (playerId, orders) =>
             MapEntry(playerId, orders.map((o) => o.toJson()).toList()),
       ),
@@ -202,11 +218,27 @@ class Orders {
       missionByPlayerId[playerId] = list;
     });
 
+    final recruitWorkerRaw =
+        json['recruitWorkerOrdersByPlayerId'] as Map<dynamic, dynamic>? ?? {};
+    final recruitWorkerByPlayerId = <String, List<RecruitWorkerOrder>>{};
+    recruitWorkerRaw.forEach((key, value) {
+      final playerId = key.toString();
+      final list = (value as List<dynamic>? ?? [])
+          .map(
+            (e) => RecruitWorkerOrder.fromJson(
+              Map<String, dynamic>.from(e as Map<Object?, Object?>),
+            ),
+          )
+          .toList();
+      recruitWorkerByPlayerId[playerId] = list;
+    });
+
     return Orders(
       moveOrdersByPlayerId: moveByPlayerId,
       armyMoveOrdersByPlayerId: armyMoveByPlayerId,
       buildUnitOrdersByPlayerId: buildByPlayerId,
       workOrdersByPlayerId: workByPlayerId,
+      recruitWorkerOrdersByPlayerId: recruitWorkerByPlayerId,
       diplomaticOrdersByPlayerId: diploByPlayerId,
       researchOrdersByPlayerId: researchByPlayerId,
       navalMoveOrdersByPlayerId: navalByPlayerId,
@@ -244,6 +276,10 @@ class Orders {
           _mapEquals(
             navalMissionOrdersByPlayerId,
             other.navalMissionOrdersByPlayerId,
+          ) &&
+          _mapEquals(
+            recruitWorkerOrdersByPlayerId,
+            other.recruitWorkerOrdersByPlayerId,
           );
 
   @override
@@ -273,6 +309,9 @@ class Orders {
     Object.hashAll(
       navalMissionOrdersByPlayerId.entries.map((e) => Object.hashAll(e.value)),
     ),
+    Object.hashAll(
+      recruitWorkerOrdersByPlayerId.entries.map((e) => Object.hashAll(e.value)),
+    ),
   );
 
   Orders copyWith({
@@ -280,6 +319,7 @@ class Orders {
     Map<String, List<ArmyMoveOrder>>? armyMoveOrdersByPlayerId,
     Map<String, List<BuildUnitOrder>>? buildUnitOrdersByPlayerId,
     Map<String, List<WorkOrder>>? workOrdersByPlayerId,
+    Map<String, List<RecruitWorkerOrder>>? recruitWorkerOrdersByPlayerId,
     Map<String, List<DiplomaticOrder>>? diplomaticOrdersByPlayerId,
     Map<String, List<ResearchOrder>>? researchOrdersByPlayerId,
     Map<String, List<NavalMoveOrder>>? navalMoveOrdersByPlayerId,
@@ -291,6 +331,8 @@ class Orders {
     buildUnitOrdersByPlayerId:
         buildUnitOrdersByPlayerId ?? this.buildUnitOrdersByPlayerId,
     workOrdersByPlayerId: workOrdersByPlayerId ?? this.workOrdersByPlayerId,
+    recruitWorkerOrdersByPlayerId:
+        recruitWorkerOrdersByPlayerId ?? this.recruitWorkerOrdersByPlayerId,
     diplomaticOrdersByPlayerId:
         diplomaticOrdersByPlayerId ?? this.diplomaticOrdersByPlayerId,
     researchOrdersByPlayerId:
@@ -662,4 +704,52 @@ class ResearchOrder {
 
   @override
   int get hashCode => Object.hash(slotIndex, techId, funding);
+}
+
+/// Recruit or train a worker into the player's WorkerPool.
+///
+/// One queued order increments the target tier by one. Non-peasant tiers
+/// additionally consume one peasant (the "train" mapping per SPEC); UI may
+/// expose distinct Recruit and Train controls per tier but both emit this
+/// order type.
+///
+/// Resolved in Build / work (phase 12) before [BuildUnitOrder] per
+/// SPEC/program/turn-resolution-phase-details.md § Build / work.
+///
+/// SPEC/game/workers-and-population.md § Recruiting, Training, and
+/// Disbanding (authoritative cost table and rejection vocabulary).
+/// SPEC/program/orders.md § Order Types.
+class RecruitWorkerOrder {
+  const RecruitWorkerOrder({required this.targetTier});
+
+  /// Worker tier to add to the pool.
+  final WorkerTier targetTier;
+
+  Map<String, dynamic> toJson() => {'targetTier': targetTier.id};
+
+  static RecruitWorkerOrder fromJson(Map<String, dynamic> json) {
+    final raw = json['targetTier'];
+    if (raw is! String || raw.isEmpty) {
+      throw ModelValidationException(
+        'RecruitWorkerOrder requires non-empty targetTier id',
+      );
+    }
+    final tier = WorkerTier.tryFromId(raw);
+    if (tier == null) {
+      throw ModelValidationException(
+        'RecruitWorkerOrder has unknown targetTier id: "$raw"',
+      );
+    }
+    return RecruitWorkerOrder(targetTier: tier);
+  }
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is RecruitWorkerOrder &&
+          runtimeType == other.runtimeType &&
+          targetTier == other.targetTier;
+
+  @override
+  int get hashCode => Object.hash(runtimeType, targetTier);
 }
