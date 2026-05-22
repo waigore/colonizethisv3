@@ -1,6 +1,7 @@
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'commodities.dart';
+import 'data_validation_exception.dart';
 import 'tech_ids.dart';
 
 /// Worker recruit / train cost row for one [WorkerTier].
@@ -100,15 +101,13 @@ class WorkerActionEconomyCatalog {
     for (final e in all) e.targetTier: e,
   };
 
-  /// Throws [ArgumentError] when a tier somehow has no catalog row
+  /// Throws [DataValidationException] when a tier somehow has no catalog row
   /// (defensive guard against stale enum or partial registration).
   static WorkerActionEconomy forTier(WorkerTier tier) {
     final row = byTier[tier];
     if (row == null) {
-      throw ArgumentError.value(
-        tier,
-        'tier',
-        'WorkerActionEconomyCatalog has no row for tier',
+      throw DataValidationException(
+        'WorkerActionEconomyCatalog has no row for tier: $tier',
       );
     }
     return row;

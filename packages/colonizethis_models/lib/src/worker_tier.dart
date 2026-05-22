@@ -1,3 +1,5 @@
+import 'model_validation_exception.dart';
+
 /// Industrial worker tiers.
 ///
 /// SPEC/game/workers-and-population.md § Worker Tiers,
@@ -21,13 +23,13 @@ enum WorkerTier {
   /// True when this tier requires a tech gate per SPEC § Tech gates.
   bool get isTrained => this != WorkerTier.peasant;
 
-  /// Parse a [WorkerTier] from its canonical [id]; throws [ArgumentError] when
-  /// the value is unknown.
+  /// Parse a [WorkerTier] from its canonical [id]; throws
+  /// [ModelValidationException] when the value is unknown.
   static WorkerTier fromId(String id) {
     for (final tier in WorkerTier.values) {
       if (tier.id == id) return tier;
     }
-    throw ArgumentError.value(id, 'id', 'Unknown WorkerTier id');
+    throw ModelValidationException.value(id, 'id', 'Unknown WorkerTier id');
   }
 
   /// Parse a [WorkerTier] from its canonical [id]; returns `null` when
