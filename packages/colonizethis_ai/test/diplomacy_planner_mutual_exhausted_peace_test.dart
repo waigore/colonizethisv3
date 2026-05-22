@@ -444,10 +444,12 @@ void main() {
     );
 
     test(
-      'collectStalledGreatPowerPeaceTargets without exhaustion keeps the blocker at war',
+      'collectStalledGreatPowerPeaceTargets without exhaustion still peaces plateau peer',
       () {
-        // Negative control: the same GP-only invadable frontier without
-        // mutual exhaustion leaves the blocker filtered out of the peace set.
+        // Negative control for mutual exhaustion only: treasury/regiment guards
+        // reject `mutualExhaustedBelowQuotaGpStalematePeaceTargets`, but
+        // `nearQuotaHoldPeaceTargets` still peaces mutual-plateau peers on a
+        // GP-only cleared frontier (Refs #2509).
         final game = _exhaustedStalemateGame(
           ownTreasury: kMutualExhaustedGpTreasuryMax + 100,
           enemyTreasury: kMutualExhaustedGpTreasuryMax + 100,
@@ -523,10 +525,10 @@ void main() {
 
         expect(
           targets,
-          isNot(contains(_enemyNationId)),
+          contains(_enemyNationId),
           reason:
-              'Without mutual exhaustion the blocker GP stays at war on a '
-              'sole-frontier GP-only stalemate.',
+              'Mutual-plateau near-quota hold peace applies even without '
+              'regiment/treasury exhaustion on a GP-only cleared frontier.',
         );
       },
     );

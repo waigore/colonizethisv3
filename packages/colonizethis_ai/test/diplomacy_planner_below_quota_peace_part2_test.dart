@@ -339,7 +339,7 @@ void main() {
   );
 
   test(
-    'nearQuotaHoldPeaceTargets skips sole GP war at 9 OW',
+    'nearQuotaHoldPeaceTargets peace mutual plateau peer on sole GP war at 9 OW',
     () {
       final game = Game(
         id: 'g-near-quota-sole-gp-war',
@@ -394,7 +394,10 @@ void main() {
       );
       expect(
         nearQuotaHoldPeaceTargets(game: game, snapshot: snapshot),
-        isEmpty,
+        ['gp5'],
+        reason:
+            'Mutual 8–9 plateau peers on a GP-only cleared frontier peace even '
+            'when the peer owns the invadable blocker (Refs #2509).',
       );
     },
   );
