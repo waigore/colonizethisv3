@@ -216,10 +216,13 @@ Set<String>? civilianMarkerOwnerIdsFor(
   if (shell.inObservePhase && shell.viewingPlayerId != null) {
     return <String>{shell.viewingPlayerId!};
   }
-  // Global observe: every Great Power's civilians render so a debug observer
-  // can see all factions' map units at once.
+  // Global observe: every faction with civilians may appear on the map (P6).
   if (shell.inObservePhase) {
-    return <String>{for (final p in game.players) p.id};
+    return <String>{
+      for (final p in game.players) p.id,
+      for (final m in game.minorNations) m.id,
+      for (final t in game.tribes) t.id,
+    };
   }
   return null;
 }

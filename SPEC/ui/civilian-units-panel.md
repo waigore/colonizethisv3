@@ -13,7 +13,9 @@ The civilian units panel gives the player a single place to see every civilian u
 ## Scope: which units are shown
 
 - **Included:** All units owned by the human player that are **civilian** per the game model: Explorer, Builder, Engineer, Spy, Merchant, Rail Builder. Identification uses the same rule as the development flow (e.g. `unitRoleForType(unit.type)` is not military and not naval; units have `tileKey`).
-- **Excluded:** Military regiments and naval units. Units owned by other players or by Minor Nations/Tribes are not shown.
+- **Excluded:** Military regiments and naval units.
+- **Normal play:** Units owned by the human great power only; Minor Nations/Tribes and other GPs are not shown.
+- **Observe mode:** See § Observe mode below; owner filter follows the same `civilianMarkerOwnerIds` rules as map markers ([observe-mode.md](observe-mode.md)).
 - **Data source:** Units from `WorldState` for all regions (e.g. `oldWorld.units` and `newWorld.units`), filtered by `ownerId == humanPlayerId` and civilian type. Province and region for each unit are derived from the **projected civilian tile** (pending draft `WorkOrder.targetTileKey` for that unit when present, else non-empty `assignedTileKey`, else `tileKey`).
 
 ---
@@ -75,9 +77,15 @@ For each civilian unit, the panel shows:
 
 ---
 
+## Observe mode
+
+- **Global observe:** Panel opens read-only with civilians for **all factions** that own civilians (great powers, minor nations, tribes). Rows are grouped by region, then by **owner display name** when more than one owner is listed. Header **Train** is disabled; Assign/Cancel/work-target flows are disabled via `readOnly` and `canMutateViaUi`.
+- **Player observe:** Same read-only rules; lists only the observed GP's civilians (same filter as map `civilianMarkerOwnerIds` for player mode).
+- **Not** routed through `ObserveModeNotDefinedPanel` (unlike treasury/production in global observe).
+
 ## Empty state
 
-- When the human player has **no** civilian units, the panel still opens and shows an empty state message (e.g. "No civilian units") so the entry point is always available and the behaviour is consistent.
+- When no civilians match the active owner filter, the panel still opens and shows an empty state message (e.g. "No civilian units") so the entry point is always available and the behaviour is consistent.
 
 ---
 

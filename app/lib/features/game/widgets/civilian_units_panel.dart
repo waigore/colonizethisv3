@@ -30,6 +30,7 @@ class CivilianUnitsPanel extends ConsumerStatefulWidget {
     super.key,
     required this.game,
     required this.humanPlayerId,
+    this.civilianOwnerIds,
     required this.bus,
     this.currentOrders = const Orders(),
     this.tileScopeTileKey,
@@ -44,6 +45,10 @@ class CivilianUnitsPanel extends ConsumerStatefulWidget {
 
   final Game game;
   final String humanPlayerId;
+
+  /// When set, lists civilians for every id (global observe). Otherwise [humanPlayerId] only.
+  final Set<String>? civilianOwnerIds;
+
   final AppEventBus bus;
 
   /// Current-turn orders (to show Assign only when no pending work, Cancel when pending or in-progress).
@@ -108,6 +113,93 @@ class _CivilianUnitsPanelState extends ConsumerState<CivilianUnitsPanel> {
         false;
   }
 
+  List<Widget> _civilianListChildrenForRegion({
+    required String regionId,
+    required List<Unit> units,
+    required bool multiOwner,
+    required Game game,
+    required Map<String, String> provinceNames,
+    required bool tileScopeActive,
+    required String? resolvedSelectedUnitId,
+    required void Function(String id) onSelectUnit,
+  }) {
+    if (units.isEmpty) {
+      return const [];
+    }
+    final children = <Widget>[
+      RegionSectionHeader(label: unitsPanelRegionLabel(regionId)),
+    ];
+    if (!multiOwner) {
+      children.addAll(
+        units.map(
+          (u) => _unitRow(
+            unit: u,
+            provinceNames: provinceNames,
+            tileScopeActive: tileScopeActive,
+            resolvedSelectedUnitId: resolvedSelectedUnitId,
+            onSelectUnit: onSelectUnit,
+          ),
+        ),
+      );
+      return children;
+    }
+    final byOwner = <String, List<Unit>>{};
+    for (final u in units) {
+      byOwner.putIfAbsent(u.ownerId, () => []).add(u);
+    }
+    final ownerIds = byOwner.keys.toList()..sort();
+    for (final ownerId in ownerIds) {
+      final ownerUnits = byOwner[ownerId]!;
+      children.add(
+        RegionSectionHeader(
+          label: game.factionDisplayNameById(ownerId) ?? ownerId,
+        ),
+      );
+      children.addAll(
+        ownerUnits.map(
+          (u) => _unitRow(
+            unit: u,
+            provinceNames: provinceNames,
+            tileScopeActive: tileScopeActive,
+            resolvedSelectedUnitId: resolvedSelectedUnitId,
+            onSelectUnit: onSelectUnit,
+          ),
+        ),
+      );
+    }
+    return children;
+  }
+
+  Widget _unitRow({
+    required Unit unit,
+    required Map<String, String> provinceNames,
+    required bool tileScopeActive,
+    required String? resolvedSelectedUnitId,
+    required void Function(String id) onSelectUnit,
+  }) {
+    return _UnitRow(
+      game: widget.game,
+      unit: unit,
+      provinceNames: provinceNames,
+      currentOrders: widget.currentOrders,
+      humanPlayerId: unit.ownerId,
+      bus: widget.bus,
+      readOnly: widget.readOnly,
+      isTileScope: tileScopeActive,
+      isSelectedInTileScope: resolvedSelectedUnitId == unit.id,
+      onSelectInTileScope: () => onSelectUnit(unit.id),
+      projectedTileKey: projectedCivilianTileKey(
+        unit: unit,
+        playerId: unit.ownerId,
+        orders: widget.currentOrders,
+      ),
+      prospectShortcutTargetTileKey: widget.prospectShortcutTargetTileKey,
+      exploreShortcutTargetTileKey: widget.exploreShortcutTargetTileKey,
+      buildImprovementShortcutTargetTileKey:
+          widget.buildImprovementShortcutTargetTileKey,
+    );
+  }
+
   List<Unit> _scopedCivilianUnits(
     List<Unit> units, {
     required String? tileScopeTileKey,
@@ -124,7 +216,7 @@ class _CivilianUnitsPanelState extends ConsumerState<CivilianUnitsPanel> {
         if ((!tileScopeActive ||
                 projectedCivilianTileKey(
                       unit: u,
-                      playerId: widget.humanPlayerId,
+                      playerId: u.ownerId,
                       orders: widget.currentOrders,
                     ) ==
                     tileScopeTileKey) &&
@@ -138,15 +230,18 @@ class _CivilianUnitsPanelState extends ConsumerState<CivilianUnitsPanel> {
   Widget build(BuildContext context) {
     final l10n = appL10n(context);
     final provinceNames = provinceNamesByPrefixedId(widget.game);
-    final ow = civilianUnitsInRegion(
+    final ownerIds =
+        widget.civilianOwnerIds ?? {widget.humanPlayerId};
+    final multiOwner = ownerIds.length > 1;
+    final ow = civilianUnitsInRegionForOwners(
       widget.game.worldState.oldWorld.units,
-      widget.humanPlayerId,
+      ownerIds,
       provinceNames,
       widget.currentOrders,
     );
-    final nw = civilianUnitsInRegion(
+    final nw = civilianUnitsInRegionForOwners(
       widget.game.worldState.newWorld.units,
-      widget.humanPlayerId,
+      ownerIds,
       provinceNames,
       widget.currentOrders,
     );
@@ -185,7 +280,7 @@ class _CivilianUnitsPanelState extends ConsumerState<CivilianUnitsPanel> {
         ? null
         : projectedCivilianTileKey(
             unit: resolvedSelectedUnit,
-            playerId: widget.humanPlayerId,
+            playerId: resolvedSelectedUnit.ownerId,
             orders: widget.currentOrders,
           );
 
@@ -224,60 +319,26 @@ class _CivilianUnitsPanelState extends ConsumerState<CivilianUnitsPanel> {
       ],
       hasContent: hasAny,
       listChildren: [
-        if (scopedOw.isNotEmpty) ...[
-          RegionSectionHeader(label: unitsPanelRegionLabel('oldWorld')),
-          ...scopedOw.map(
-            (u) => _UnitRow(
-              game: widget.game,
-              unit: u,
-              provinceNames: provinceNames,
-              currentOrders: widget.currentOrders,
-              humanPlayerId: widget.humanPlayerId,
-              bus: widget.bus,
-              readOnly: widget.readOnly,
-              isTileScope: tileScopeActive,
-              isSelectedInTileScope: resolvedSelectedUnitId == u.id,
-              onSelectInTileScope: () => setState(() => _selectedUnitId = u.id),
-              projectedTileKey: projectedCivilianTileKey(
-                unit: u,
-                playerId: widget.humanPlayerId,
-                orders: widget.currentOrders,
-              ),
-              prospectShortcutTargetTileKey:
-                  widget.prospectShortcutTargetTileKey,
-              exploreShortcutTargetTileKey: widget.exploreShortcutTargetTileKey,
-              buildImprovementShortcutTargetTileKey:
-                  widget.buildImprovementShortcutTargetTileKey,
-            ),
-          ),
-        ],
-        if (scopedNw.isNotEmpty) ...[
-          RegionSectionHeader(label: unitsPanelRegionLabel('newWorld')),
-          ...scopedNw.map(
-            (u) => _UnitRow(
-              game: widget.game,
-              unit: u,
-              provinceNames: provinceNames,
-              currentOrders: widget.currentOrders,
-              humanPlayerId: widget.humanPlayerId,
-              bus: widget.bus,
-              readOnly: widget.readOnly,
-              isTileScope: tileScopeActive,
-              isSelectedInTileScope: resolvedSelectedUnitId == u.id,
-              onSelectInTileScope: () => setState(() => _selectedUnitId = u.id),
-              projectedTileKey: projectedCivilianTileKey(
-                unit: u,
-                playerId: widget.humanPlayerId,
-                orders: widget.currentOrders,
-              ),
-              prospectShortcutTargetTileKey:
-                  widget.prospectShortcutTargetTileKey,
-              exploreShortcutTargetTileKey: widget.exploreShortcutTargetTileKey,
-              buildImprovementShortcutTargetTileKey:
-                  widget.buildImprovementShortcutTargetTileKey,
-            ),
-          ),
-        ],
+        ..._civilianListChildrenForRegion(
+          regionId: 'oldWorld',
+          units: scopedOw,
+          multiOwner: multiOwner,
+          game: widget.game,
+          provinceNames: provinceNames,
+          tileScopeActive: tileScopeActive,
+          resolvedSelectedUnitId: resolvedSelectedUnitId,
+          onSelectUnit: (id) => setState(() => _selectedUnitId = id),
+        ),
+        ..._civilianListChildrenForRegion(
+          regionId: 'newWorld',
+          units: scopedNw,
+          multiOwner: multiOwner,
+          game: widget.game,
+          provinceNames: provinceNames,
+          tileScopeActive: tileScopeActive,
+          resolvedSelectedUnitId: resolvedSelectedUnitId,
+          onSelectUnit: (id) => setState(() => _selectedUnitId = id),
+        ),
       ],
       emptyMessage: l10n.civilian_units_empty,
     );

@@ -30,7 +30,7 @@ InitGameMapViewData buildInitGameMapViewData({
   /// Optional explicit owner set for civilian tile markers. When null, the
   /// builder falls back to `Player.isHuman` players (legacy single-player
   /// behavior). When provided, only civilians owned by ids in this set get
-  /// markers; pass all GP ids in global observe and the observed GP id in
+  /// markers; pass all faction ids in global observe and the observed GP id in
   /// player observe per SPEC/ui/observe-mode.md.
   Set<String>? civilianMarkerOwnerIds,
 }) {
