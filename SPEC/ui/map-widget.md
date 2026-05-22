@@ -287,6 +287,8 @@ The map widget exposes callbacks so the parent (e.g. Empire overview) can react;
 
 **Civilian map marker slice:** The map may render tile-scoped player civilian markers from `RegionMapViewData.civilianTileMarkers` as tile-sized overlays with deterministic representative type and stack badge. Marker visuals use PixelLab icon assets (color for idle, grayscale for assigned), while marker z-order, tile occupancy, tap hit-testing precedence, and selected-marker blink behavior remain part of the reusable map contract.
 
+**Civilian marker owner set:** `buildInitGameMapViewData` accepts an optional `civilianMarkerOwnerIds` set; the markers list filters owners to that set when provided. When `null`, the builder falls back to `Player.isHuman` players (legacy single-player behavior). Observe-mode call sites resolve the set via `civilianMarkerOwnerIdsFor(shell, game)` so global observe shows every GP's civilians and player observe shows only the observed GP — see [observe-mode.md](observe-mode.md) § Map civilian markers.
+
 Details of what “province details” shows are **not** defined in this spec; the screen that embeds the map defines that. The map widget reports taps via callbacks and paints outlines from passed-in keys.
 
 ---

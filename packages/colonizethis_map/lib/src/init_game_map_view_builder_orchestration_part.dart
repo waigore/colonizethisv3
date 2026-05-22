@@ -27,8 +27,11 @@ InitGameMapViewData buildInitGameMapViewData({
   /// Optional per-tile transport-blocked extraction units for map overlays.
   Map<String, int>? resourceExtractionBlockedUnitsByTile,
 
-  /// Faction ids eligible for [RegionMapViewData.civilianTileMarkers].
-  /// When omitted, only [Player.isHuman] great powers are included (legacy).
+  /// Optional explicit owner set for civilian tile markers. When null, the
+  /// builder falls back to `Player.isHuman` players (legacy single-player
+  /// behavior). When provided, only civilians owned by ids in this set get
+  /// markers; pass all faction ids in global observe and the observed GP id in
+  /// player observe per SPEC/ui/observe-mode.md.
   Set<String>? civilianMarkerOwnerIds,
 }) {
   _log.i('buildInitGameMapViewData start gameId=${game.id}');
@@ -269,7 +272,7 @@ _buildCellAndUnitData({
   required Map<String, TileVisibility>? visibilityByTile,
   required Map<String, int>? resourceExtractionUnitsByTile,
   required Map<String, int>? resourceExtractionEffectiveUnitsByTile,
-  required   Map<String, int>? resourceExtractionBlockedUnitsByTile,
+  required Map<String, int>? resourceExtractionBlockedUnitsByTile,
   Set<String>? civilianMarkerOwnerIds,
 }) {
   final cells = _buildCellViewDataList(

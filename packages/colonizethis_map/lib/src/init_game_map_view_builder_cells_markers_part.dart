@@ -101,7 +101,12 @@ _buildUnitAndCivilianMarkerData({
   final unitMarkers = <UnitMarkerView>[];
   final civilianUnitsByTileKey = <String, List<Unit>>{};
   final playerOwnedCivilianTileMarkers = <CivilianTileMarkerView>[];
-  final markerOwnerIds = civilianMarkerOwnerIds ??
+  // Default owner set for civilian markers is the `isHuman` players so callers
+  // that do not pass an explicit set keep legacy single-player behavior.
+  // Observe-mode call sites (see SPEC/ui/observe-mode.md) pass an explicit set
+  // because handoff clears `isHuman` on every player.
+  final civilianOwnerIds =
+      civilianMarkerOwnerIds ??
       game.players
           .where((player) => player.isHuman)
           .map((player) => player.id)
@@ -138,7 +143,7 @@ _buildUnitAndCivilianMarkerData({
       : game.worldState.newWorld.units;
   for (final u in regionUnits) {
     final isPlayerOwnedCivilian =
-        markerOwnerIds.contains(u.ownerId) && _isCivilianUnitType(u.type);
+        civilianOwnerIds.contains(u.ownerId) && _isCivilianUnitType(u.type);
     if (isPlayerOwnedCivilian) {
       _addCivilianUnitToTileKeyBucket(
         unit: u,

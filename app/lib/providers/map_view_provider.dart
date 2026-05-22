@@ -2,6 +2,7 @@ import 'package:colonizethis_app/core/utils/prefixed_id.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_map/colonizethis_map.dart';
+import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../config/map_terrain_config.dart';
@@ -183,9 +184,6 @@ final mapViewDataProvider = Provider<InitGameMapViewData?>((ref) {
       }
     }
 
-    final civilianMarkerOwnerIds =
-        resolveCivilianMarkerOwnerIds(shell, game);
-
     return buildInitGameMapViewData(
       game: game,
       tileMapByRegion: mapData.tileMapByRegion,
@@ -199,7 +197,32 @@ final mapViewDataProvider = Provider<InitGameMapViewData?>((ref) {
           resourceExtractionEffectiveUnitsByTile,
       resourceExtractionBlockedUnitsByTile:
           resourceExtractionBlockedUnitsByTile,
-      civilianMarkerOwnerIds: civilianMarkerOwnerIds,
+      civilianMarkerOwnerIds: civilianMarkerOwnerIdsFor(shell, game),
     );
   });
 });
+
+/// Owner set whose civilians get tile markers on the in-game map. Mirrors
+/// the observe-mode contract in SPEC/ui/observe-mode.md and avoids relying
+/// on `Player.isHuman`, which observe handoff clears for every GP. Returns
+/// null when the current shell context implies legacy single-player behavior
+/// (the map builder then falls back to its own `isHuman` filter).
+Set<String>? civilianMarkerOwnerIdsFor(
+  ShellPlayerContext shell,
+  Game game,
+) {
+  // Player observe pins markers to the observed GP only; player chrome stays
+  // visible so we use the panel/viewing id rather than the full GP list.
+  if (shell.inObservePhase && shell.viewingPlayerId != null) {
+    return <String>{shell.viewingPlayerId!};
+  }
+  // Global observe: every faction with civilians may appear on the map (P6).
+  if (shell.inObservePhase) {
+    return <String>{
+      for (final p in game.players) p.id,
+      for (final m in game.minorNations) m.id,
+      for (final t in game.tribes) t.id,
+    };
+  }
+  return null;
+}
