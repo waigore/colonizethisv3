@@ -42,5 +42,6 @@ final humanDraftProjectedRegionProvider =
         tileMapByRegion: mapData?.tileMapByRegion,
         topologyByRegion: mapData?.topologyByRegion,
         combinedTopology: mapData?.combinedTopology,
+        civilianMarkerOwnerIds: civilianMarkerOwnerIdsFor(shell, game),
       );
     });

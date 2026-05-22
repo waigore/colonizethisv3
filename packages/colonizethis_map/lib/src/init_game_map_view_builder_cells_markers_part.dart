@@ -96,14 +96,21 @@ _buildUnitAndCivilianMarkerData({
   required List<Province> provinces,
   required List<CellViewData> cells,
   required Map<String, (int x, int y)> provinceToTile,
+  Set<String>? civilianMarkerOwnerIds,
 }) {
   final unitMarkers = <UnitMarkerView>[];
   final civilianUnitsByTileKey = <String, List<Unit>>{};
   final playerOwnedCivilianTileMarkers = <CivilianTileMarkerView>[];
-  final humanPlayerIds = game.players
-      .where((player) => player.isHuman)
-      .map((player) => player.id)
-      .toSet();
+  // Default owner set for civilian markers is the `isHuman` players so callers
+  // that do not pass an explicit set keep legacy single-player behavior.
+  // Observe-mode call sites (see SPEC/ui/observe-mode.md) pass an explicit set
+  // because handoff clears `isHuman` on every player.
+  final civilianOwnerIds =
+      civilianMarkerOwnerIds ??
+      game.players
+          .where((player) => player.isHuman)
+          .map((player) => player.id)
+          .toSet();
   final provincePresenceById = <String, ProvinceUnitPresenceView>{};
   for (final p in provinces) {
     provincePresenceById[p.id] = const ProvinceUnitPresenceView(
@@ -136,7 +143,7 @@ _buildUnitAndCivilianMarkerData({
       : game.worldState.newWorld.units;
   for (final u in regionUnits) {
     final isPlayerOwnedCivilian =
-        humanPlayerIds.contains(u.ownerId) && _isCivilianUnitType(u.type);
+        civilianOwnerIds.contains(u.ownerId) && _isCivilianUnitType(u.type);
     if (isPlayerOwnedCivilian) {
       _addCivilianUnitToTileKeyBucket(
         unit: u,
