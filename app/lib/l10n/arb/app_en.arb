@@ -269,6 +269,15 @@
     "description": "Helper text for infinite mode in the new-game leader dialog."
   },
 
+  "shell_leaderDialog_terrainVariationLabel": "Terrain variation",
+  "@shell_leaderDialog_terrainVariationLabel": {
+    "description": "Slider label for terrain noise variation in the new-game leader dialog."
+  },
+  "shell_leaderDialog_terrainVariationHelper": "Higher values produce more mixed terrain (0 keeps legacy clumps).",
+  "@shell_leaderDialog_terrainVariationHelper": {
+    "description": "Helper text under the terrain variation slider."
+  },
+
   "gameParameters_title": "Game Parameters",
   "@gameParameters_title": {
     "description": "Title of the read-only in-game game parameters dialog."

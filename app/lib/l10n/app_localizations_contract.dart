@@ -198,6 +198,12 @@ abstract class AppLocalizations {
   /// Helper text for infinite mode in the new-game leader dialog.
   String get shell_leaderDialog_infiniteModeHelper;
 
+  /// Slider label for terrain noise variation in the new-game leader dialog.
+  String get shell_leaderDialog_terrainVariationLabel;
+
+  /// Helper text under the terrain variation slider.
+  String get shell_leaderDialog_terrainVariationHelper;
+
   /// Title of the read-only in-game game parameters dialog.
   String get gameParameters_title;
 

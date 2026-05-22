@@ -53,6 +53,7 @@ generateLockedFullInitTileMapPair({
       seed: owSeed,
       seaFraction: _kDefaultSeaFraction,
       skipFillLakes: skipFillLakes,
+      terrainVariation: config.terrainVariation,
     );
     final (tileOw, topoOw) = TileMapGenerator(params: paramsOW).generate(
       numProvinces: config.numProvincesOldWorld,
@@ -79,6 +80,7 @@ generateLockedFullInitTileMapPair({
       seed: nwSeed,
       seaFraction: _kDefaultSeaFraction,
       skipFillLakes: skipFillLakes,
+      terrainVariation: config.terrainVariation,
     );
     final (tileNw, topoNw) = TileMapGenerator(params: paramsNW).generate(
       numProvinces: config.numProvincesNewWorld,

@@ -200,6 +200,13 @@ mixin _AppLocalizationsEnStrings1 on AppLocalizations {
       'When enabled, the campaign continues past calendar year 1800 until a military victory.';
 
   @override
+  String get shell_leaderDialog_terrainVariationLabel => 'Terrain variation';
+
+  @override
+  String get shell_leaderDialog_terrainVariationHelper =>
+      'Higher values produce more mixed terrain (0 keeps legacy clumps).';
+
+  @override
   String get gameParameters_title => 'Game Parameters';
 
   @override
