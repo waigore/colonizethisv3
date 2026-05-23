@@ -63,27 +63,19 @@ void main() {
     expect(find.byKey(kCtE2EOpenCapitalProvinceDetailKey), findsOneWidget);
     await tester.tap(find.byKey(kCtE2EOpenCapitalProvinceDetailKey));
 
-    await waitUntilFound(
+    final l10n = lookupAppLocalizations(const Locale('en'));
+    await expectPanelTextsMatchSnapshot(
       tester,
-      find.byKey(kCtE2EProvincePanelRootKey),
+      panelRootKey: kCtE2EProvincePanelRootKey,
+      snapshot: ctE2eLastPanelSnapshot,
+      buildExpected: () =>
+          provincePanelWideLayoutExpectedTexts(ctE2eLastPanelSnapshot!, l10n),
+      phaseName: 'open_panel_province',
       timeout: const Duration(seconds: 30),
       perf: perf,
-      phaseName: 'open_panel_province',
     );
 
     expect(find.byKey(kCtE2EProvincePanelRootKey), findsOneWidget);
-
-    final snap = ctE2eLastPanelSnapshot;
-    expect(snap, isNotNull);
-    final l10n = lookupAppLocalizations(const Locale('en'));
-    final expected = provincePanelWideLayoutExpectedTexts(snap!, l10n);
-
-    final actual = <String>[];
-    collectTextPreorder(
-      tester.element(find.byKey(kCtE2EProvincePanelRootKey)),
-      actual,
-    );
-    expect(actual, orderedEquals(expected));
     ensureUnderWallClock('test complete');
     perf.timing('test_total', testSw.elapsed);
   });
