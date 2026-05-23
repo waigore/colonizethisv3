@@ -32,6 +32,7 @@ export 'e2e_test_shared.dart'
         e2ePlayerHasAnyNewWorldFoggedOrBetterFromCtSnapshot,
         e2ePumpUntil,
         e2ePumpUntilConditionOrIdle,
+        e2eRadioListTilesInAlertDialogs,
         e2eTextLooksLikeNewWorldLocationLine,
         e2eWaitForNewGameEntry,
         e2eWaitForNextTurnLabelAdvance,

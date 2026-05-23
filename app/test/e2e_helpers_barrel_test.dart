@@ -574,6 +574,42 @@ void main() {
       );
     });
 
+    testWidgets(
+      'e2eRadioListTilesInAlertDialogs is re-exported through the barrel',
+      (tester) async {
+        final Finder Function() ref = e2eRadioListTilesInAlertDialogs;
+        expect(
+          ref,
+          isNotNull,
+          reason:
+              'The fleet-reach move dialog consumes this scoped lookup via '
+              'the AC1 barrel (`_pickMoveDestinationAndConfirm` in '
+              '`new_game_fleet_reaches_new_world_e2e_helpers.dart` taps '
+              '`e2eRadioListTilesInAlertDialogs().first` to pick the sea '
+              'radio when the warp row is absent). A regression that '
+              'dropped it from the `show` clause would force the move '
+              'helper to either re-roll a private duplicate (Bottleneck 6) '
+              'or fall back to an unscoped RadioListTile finder that '
+              'matches panels outside the dialog (`SPEC/program/'
+              'e2e-integration-tests.md` § Determinism).',
+        );
+        await tester.pumpWidget(
+          const MaterialApp(home: Scaffold(body: SizedBox())),
+        );
+        expect(
+          ref(),
+          findsNothing,
+          reason:
+              'Sanity smoke through the barrel: with no AlertDialog '
+              'mounted the finder must resolve to zero matches. A '
+              'wrapper that returned a constant non-empty Finder, or '
+              'that dropped the AlertDialog scope and matched every '
+              'RadioListTile in the tree, would pass the tear-off pin '
+              'silently.',
+        );
+      },
+    );
+
     test('AC1 timing constants are exposed as Duration values', () {
       const Duration maxWallClock = kE2eMaxWallClock;
       const Duration nextTurnTimeout = kE2eNextTurnResolutionTimeout;
