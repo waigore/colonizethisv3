@@ -52,7 +52,7 @@ runDomainPlanners(ctx)
   runMovePlanner(ctx)
 ```
 
-Phase-specific peace/declare-war targets feed `runDiplomacyPlannerWithResult`; work and army-move plans feed the economy / conquest passes. The `collectStalledGreatPowerPeaceTargets` aggregate is retired by S5.
+Phase-specific peace/declare-war targets feed `runDiplomacyPlannerWithResult`; work and army-move plans feed the economy / conquest passes. The `collectStalledGreatPowerPeaceTargets` aggregate is retired by S5. Dispatcher: [phase-planner-dispatch.md](phase-planner-dispatch.md).
 
 ### Data flow
 
