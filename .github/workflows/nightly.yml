@@ -43,11 +43,12 @@ jobs:
       - name: Resolve dependencies (workspace)
         run: dart pub get
 
-      - name: Run observer game with conquest and colonial verification
+      - name: Run observer game with conquest, colonial, and workforce verification
         run: |
           dart run tool/run_observer_game/bin/run_observer_game.dart \
             --seed 42 \
             --max-turns 150 \
             --verify-conquest \
             --verify-colonial-expansion \
+            --verify-workforce \
             --output /tmp/observer_nightly
