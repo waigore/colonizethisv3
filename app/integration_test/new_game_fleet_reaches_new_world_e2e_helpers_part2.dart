@@ -57,66 +57,20 @@ part of 'new_game_fleet_reaches_new_world_e2e_test.dart';
 /// [e2eFleetReachDoneFromCtSnapshotOnly] (`e2e_test_shared.dart`, Refs #2336
 /// AC1 / AC2). Call sites pass [ctE2eNavalPanelSnapshot] explicitly.
 
-/// Post–#1869 only: fleet may sit in open-ocean New World first; ship reveal needs
-/// a P–S coastal sea zone (or visibility already updated). Sail / advance until then.
-Future<void> _awaitNwCoastalOrVisibleLandForBundledExploreE2e({
-  required WidgetTester tester,
-  required AppLocalizations l10n,
-  required void Function(String step) ensureUnderWallClock,
-}) async {
-  const maxTurns = 35;
-  for (var i = 0; i < maxTurns; i++) {
-    ensureUnderWallClock('NW bundled-explore readiness i=$i');
-    await dismissTransientUi(tester);
-    await e2eTapNewWorldRegionTabIfPresent(tester);
-    if (e2eNonHomeHumanFleetInCoastalNewWorldSeaFromCtSnapshot(
-          ctE2eNavalPanelSnapshot,
-        ) ||
-        e2ePlayerHasAnyNewWorldFoggedOrBetterFromCtSnapshot(
-          ctE2eNavalPanelSnapshot,
-        )) {
-      return;
-    }
-    // Snapshot-backed paths skip redundant naval sheet open/close (Refs #2336).
-    if (ctE2eNavalPanelSnapshot == null) {
-      await openNavalPanel(
-        tester,
-        timeout: _kMaxUiResponseWait,
-        bottomSheetCloseTimeout: _kMaxUiResponseWait,
-      );
-      if (e2eNonHomeHumanFleetInCoastalNewWorldSeaFromCtSnapshot(
-            ctE2eNavalPanelSnapshot,
-          ) ||
-          e2ePlayerHasAnyNewWorldFoggedOrBetterFromCtSnapshot(
-            ctE2eNavalPanelSnapshot,
-          )) {
-        await closeBottomSheet(tester, overallTimeout: _kMaxUiResponseWait);
-        return;
-      }
-    }
-    await tryNavalMoveSegment(
-      tester,
-      l10n,
-      useNewWorldMapTabFirst: true,
-      allowWarpDestinations: false,
-      maxUiResponseWait: _kMaxUiResponseWait,
-      navalPanelAlreadyOpen: ctE2eNavalPanelSnapshot == null,
-    );
-    await closeBottomSheet(tester, overallTimeout: _kMaxUiResponseWait);
-    await advanceOneHumanTurn(tester, l10n: l10n);
-    if (e2eNonHomeHumanFleetInCoastalNewWorldSeaFromCtSnapshot(
-          ctE2eNavalPanelSnapshot,
-        ) ||
-        e2ePlayerHasAnyNewWorldFoggedOrBetterFromCtSnapshot(
-          ctE2eNavalPanelSnapshot,
-        )) {
-      return;
-    }
-  }
-  // Some generated maps can keep the non-home fleet in open-ocean NW sea lanes
-  // for long bounded stretches; in that case bundled Explore has no visible NW
-  // destinations yet. Leave strict assertion to the final Explore-enabled check.
-}
+/// Post–#1869 bundled-Explore readiness wait was lifted into
+/// [e2eAwaitNwCoastalOrVisibleLandForBundledExplore]
+/// (`e2e_test_shared_panels.dart`) so the 35-turn readiness loop is shared
+/// and unit-pinned (Refs GitHub #2336 AC1 / AC2 / Bottleneck 4). The fleet
+/// scenario calls the lifted form through the AC1 barrel alias
+/// `awaitNwCoastalOrVisibleLandForBundledExplore` (`e2e_helpers.dart`); the
+/// widget-test pin in
+/// `app/test/e2e_await_nw_coastal_or_visible_land_for_bundled_explore_test.dart`
+/// carries the behavioural contract because the integration suite cannot
+/// validate this directly today (`app_e2e_linux` is a no-op per
+/// `SPEC/program/e2e-integration-tests.md` § CI). A regression here would
+/// stall the bundled-Explore retry path at
+/// `kE2eDefaultBundledExploreReadinessMaxTurns (35)` × per-turn cost —
+/// directly inflating the wall-clock budget #2336 is reducing.
 
 /// `_bundledExploreRejectionDiagnostics` was lifted into the public
 /// [e2eBundledExploreRejectionDiagnostics] in `e2e_test_shared.dart`
@@ -150,5 +104,10 @@ Future<void> _awaitNwCoastalOrVisibleLandForBundledExploreE2e({
 /// `maxPanelSweepSteps (16) × per-step Assign sweep` path described as
 /// Bottleneck 5 in `SPEC/program/e2e-integration-tests.md` § Determinism.
 
-/// Taps the map HUD next-turn button, handles the optional confirm dialog,
-/// and waits for the next-turn label to advance. This is the fleet e2e's
+/// Next-turn-tap / dialog-handle / label-advance routine was lifted into
+/// [e2eAdvanceOneHumanTurn] (`e2e_test_shared.dart`) so the fleet e2e's
+/// only next-turn entrypoint is shared and unit-pinned (Refs GitHub #2336
+/// AC1 / AC2). The fleet scenarios call the lifted form through the AC1
+/// barrel alias `advanceOneHumanTurn` (`e2e_helpers.dart`); the widget-test
+/// pin in `app/test/e2e_advance_one_human_turn_test.dart` carries the
+/// behavioural contract.
