@@ -22,6 +22,7 @@ export 'e2e_test_shared.dart'
         e2eBundledExploreRejectionDiagnostics,
         e2eCheckExploreEnabledFromCivilianPanel,
         e2eExploreAssignEnabledFromCivilianSnapshot,
+        e2eExpectPanelTextsMatchSnapshot,
         e2eFleetReachDoneFromCtSnapshotOnly,
         e2eHarnessDetectsNonHomeFleetInNewWorld,
         e2eMakeWallClockGuard,
@@ -37,6 +38,8 @@ export 'e2e_test_shared.dart'
         kE2eDefaultBundledExploreReadinessMaxTurns,
         kE2eDefaultBundledExploreRetryLoopPhase,
         kE2eDefaultBundledExploreSweepWait,
+        kE2eDefaultExpectPanelTextsPhase,
+        kE2eDefaultExpectPanelTextsTimeout,
         kE2eDefaultFleetCivilianOpenAfterSheetClearPhase,
         kE2eDefaultNavalMoveSegmentUiWait,
         e2ePumpUntil,
@@ -286,3 +289,29 @@ Future<void> ensureAllRelocated64pxPngsLoad() =>
 
 Future<void> ensureAllRelocated64pxPngsLoadSuiteOnce() =>
     e2eEnsureAllRelocated64pxPngsLoadSuiteOnce();
+
+/// Stable public name for [e2eExpectPanelTextsMatchSnapshot] so the
+/// snapshot-text panel scenarios in `new_game_full_turn_e2e_test.dart`
+/// (civilian / naval / production rails) and
+/// `new_game_capital_panel_e2e_test.dart` (province panel) consume the AC1
+/// barrel only (Refs GitHub #2336 AC1 / AC2). Forwards to the implementation
+/// in `e2e_test_shared_panels.dart`.
+Future<void> expectPanelTextsMatchSnapshot(
+  WidgetTester tester, {
+  required Key panelRootKey,
+  required Object? snapshot,
+  required List<String> Function() buildExpected,
+  String phaseName = kE2eDefaultExpectPanelTextsPhase,
+  Duration timeout = kE2eDefaultExpectPanelTextsTimeout,
+  E2ePerfLog? perf,
+  List<String> Function()? buildAlternativeExpected,
+}) => e2eExpectPanelTextsMatchSnapshot(
+  tester,
+  panelRootKey: panelRootKey,
+  snapshot: snapshot,
+  buildExpected: buildExpected,
+  phaseName: phaseName,
+  timeout: timeout,
+  perf: perf,
+  buildAlternativeExpected: buildAlternativeExpected,
+);

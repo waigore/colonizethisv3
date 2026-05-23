@@ -61,76 +61,51 @@ void main() {
       final l10n = lookupAppLocalizations(const Locale('en'));
 
       Future<void> expectCivilianPanelTexts() async {
-        await waitUntilFound(
+        await expectPanelTextsMatchSnapshot(
           tester,
-          find.byKey(kCtE2ECivilianPanelRootKey),
-          timeout: const Duration(seconds: 20),
-          perf: perf,
+          panelRootKey: kCtE2ECivilianPanelRootKey,
+          snapshot: ctE2eCivilianPanelSnapshot,
+          buildExpected: () =>
+              civilianUnitsPanelExpectedTexts(ctE2eCivilianPanelSnapshot!, l10n),
           phaseName: 'wait_until_found_civilian_panel',
+          perf: perf,
         );
-        final snap = ctE2eCivilianPanelSnapshot;
-        expect(snap, isNotNull);
-        final expected = civilianUnitsPanelExpectedTexts(snap!, l10n);
-        final actual = <String>[];
-        collectTextPreorder(
-          tester.element(find.byKey(kCtE2ECivilianPanelRootKey)),
-          actual,
-        );
-        expect(actual, orderedEquals(expected));
       }
 
       Future<void> expectNavalPanelTexts({required bool expanded}) async {
-        await waitUntilFound(
+        await expectPanelTextsMatchSnapshot(
           tester,
-          find.byKey(kCtE2ENavalPanelRootKey),
-          timeout: const Duration(seconds: 20),
-          perf: perf,
+          panelRootKey: kCtE2ENavalPanelRootKey,
+          snapshot: ctE2eNavalPanelSnapshot,
+          buildExpected: () => navalUnitsPanelExpectedTexts(
+            ctE2eNavalPanelSnapshot!,
+            l10n,
+            fleetTilesExpanded: expanded,
+          ),
           phaseName: 'wait_until_found_naval_panel',
-        );
-        final snap = ctE2eNavalPanelSnapshot;
-        expect(snap, isNotNull);
-        final expected = navalUnitsPanelExpectedTexts(
-          snap!,
-          l10n,
-          fleetTilesExpanded: expanded,
-        );
-        final actual = <String>[];
-        collectTextPreorder(
-          tester.element(find.byKey(kCtE2ENavalPanelRootKey)),
-          actual,
-        );
-        if (!expanded) {
-          expect(actual, orderedEquals(expected));
-          return;
-        }
-        final collapsedExpected = navalUnitsPanelExpectedTexts(
-          snap,
-          l10n,
-          fleetTilesExpanded: false,
-        );
-        expect(
-          actual,
-          anyOf(orderedEquals(expected), orderedEquals(collapsedExpected)),
+          perf: perf,
+          buildAlternativeExpected: expanded
+              ? () => navalUnitsPanelExpectedTexts(
+                  ctE2eNavalPanelSnapshot!,
+                  l10n,
+                  fleetTilesExpanded: false,
+                )
+              : null,
         );
       }
 
       Future<void> expectProductionPanelTexts() async {
-        await waitUntilFound(
+        await expectPanelTextsMatchSnapshot(
           tester,
-          find.byKey(kCtE2EProductionPanelRootKey),
-          timeout: const Duration(seconds: 20),
-          perf: perf,
+          panelRootKey: kCtE2EProductionPanelRootKey,
+          snapshot: ctE2eProductionPanelSnapshot,
+          buildExpected: () => productionPanelWideExpectedTexts(
+            ctE2eProductionPanelSnapshot!,
+            l10n,
+          ),
           phaseName: 'wait_until_found_production_panel',
+          perf: perf,
         );
-        final snap = ctE2eProductionPanelSnapshot;
-        expect(snap, isNotNull);
-        final expected = productionPanelWideExpectedTexts(snap!, l10n);
-        final actual = <String>[];
-        collectTextPreorder(
-          tester.element(find.byKey(kCtE2EProductionPanelRootKey)),
-          actual,
-        );
-        expect(actual, orderedEquals(expected));
       }
 
       // --- Civilian (empire rail): baseline ---
