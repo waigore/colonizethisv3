@@ -50,18 +50,18 @@ Active when **`--verify-conquest`, `--verify-colonial-expansion`, and/or `--veri
 - **`run-summary.json`** always written at end (`minimal_trace_mode: true` in summary when minimal mode ran).
 - **Artifact size cap:** cumulative bytes under the game trace directory must stay **strictly below 300 MB** (`300 * 1024 * 1024`); if a write would exceed the cap, the run aborts with exit **7** (`artifact_size_cap_exceeded`). Canonical nightly verify inputs are expected to be far below the cap; the cap guards regressions that reintroduce large artifacts.
 
-## ObserverSnapshot (`ObserverSnapshot` v3)
+## ObserverSnapshot (`ObserverSnapshot` v4)
 
-Versioned map written to `turn-<nnnnnn>.snapshot.json` and embedded (escaped) in paired `turn-<nnnnnn>.html`. **`observerSnapshotSchemaVersion` is `3`** (Refs **#2692** S10a; v3 adds per-player `workerPool`).
+Versioned map written to `turn-<nnnnnn>.snapshot.json` and embedded (escaped) in paired `turn-<nnnnnn>.html`. **`observerSnapshotSchemaVersion` is `4`** (Refs **#2692** S10a → S10b; v3 added per-player `workerPool`, v4 adds per-player `luxuryStockpile` + `lastTurnLuxuryProduction`).
 
 | Field | Meaning |
 |-------|---------|
-| `observerSnapshotSchemaVersion` | `3` (v2 lacked `workerPool`; v1 lacked extraction rollups). |
+| `observerSnapshotSchemaVersion` | `4` (v3 lacked luxury rollups; v2 lacked `workerPool`; v1 lacked extraction rollups). |
 | `gameId` | Game id string. |
 | `turnNumber` | Post-resolution turn index (`Game.worldState.turnState.turnNumber`). |
 | `calendarYearAtTurnStart` | `yearAtTurn(turnNumber)` using the game's active `TurnTimeMapping` (if `turnNumber` is below 1, the lookup uses 1). |
 | `calendarCampaignHalted` | Mirrors `Game.calendarCampaignHalted`. |
-| `players` | One object per `game.players`: ids, display name, human flag, GP power score, treasury, military strength / fleet hints, sorted tech unlock ids, **`workerPool`** (peasants / apprentices / journeymen / masters mirroring `Player.workerPool`). |
+| `players` | One object per `game.players`: ids, display name, human flag, GP power score, treasury, military strength / fleet hints, sorted tech unlock ids, **`workerPool`** (peasants / apprentices / journeymen / masters mirroring `Player.workerPool`), **`luxuryStockpile`** (`refinedSugar`, `cigars`, `furHats` quantities from `Player.stockpile`, with absent commodities serialized as `0`), and **`lastTurnLuxuryProduction`** (same three commodity ids, summed from the most recent `productionByRecipeByPlayerId` callback when `buildObserverSnapshotJson` is passed `lastTurnProductionByRecipeByPlayerId`; absent player ids and non-luxury recipe outputs serialize to `0`). |
 | `provinceOwnershipSorted` | Sorted list of `{ id, ownerId }` for every province (`allProvinces`), ids prefixed per world model. |
 | `diplomacyRelationSummariesSorted` | Stable string lines summarizing each `diplomacyRelations` row (pair, score, level, war/peace). |
 | `militaryArmySummariesSorted` | One string per land army (id, owner, region, regiment count). |
@@ -96,9 +96,9 @@ Pass **`--verify-colonial-expansion`** after a successful run (exit **6** on fai
 
 Unit tests cover parsers; full observer runs are slow and are **not** in the default `quality` gate. **Nightly:** `.github/workflows/nightly.yml` job `observer_conquest_verify` runs seed **42**, **150** turns, **`--verify-conquest`**, **`--verify-colonial-expansion`**, and **`--verify-workforce`** daily at **23:00 Asia/Hong_Kong** (`0 15 * * *` UTC; `workflow_dispatch` supported).
 
-## Workforce sustain verification (Refs #2692 S10)
+## Workforce sustain verification (Refs #2692 S10 + S10b)
 
-`lib/observer_workforce_verify.dart` reads `turn-000100.snapshot.json` and, per `gp1`–`gp6`, asserts `peasants >= 15` AND `apprentices + journeymen + masters >= 8`. Pass **`--verify-workforce`** after a successful run (exit **8** on failure; requires `--max-turns >= 100` or no turn cap). Food / luxury sustain checks (Requirement §21 bullets 3–4 of issue #2692) remain deferred behind `kObserverWorkforceFoodLuxuryDeferred`; thresholds, parser contract, and the deferral marker live in [observer-workforce-verify.md](observer-workforce-verify.md).
+`lib/observer_workforce_verify.dart` reads `turn-000100.snapshot.json` and, per `gp1`–`gp6`, asserts `peasants >= 15` AND `apprentices + journeymen + masters >= 8` AND, for each trained tier with a non-zero count, `luxuryStockpile + lastTurnLuxuryProduction >= tier count` for the matched luxury commodity (`apprentices ↔ refinedSugar`, `journeymen ↔ cigars`, `masters ↔ furHats` — Requirement §21 bullet 4 of issue #2692). Pass **`--verify-workforce`** after a successful run (exit **8** on failure; requires `--max-turns >= 100` or no turn cap). Food production sustain (§21 bullet 3, `grain + meat`) remains deferred behind `kObserverWorkforceFoodProductionDeferred`; thresholds, parser contract, and the deferral marker live in [observer-workforce-verify.md](observer-workforce-verify.md). `ObserverSnapshot` v4 surfaces `luxuryStockpile` and `lastTurnLuxuryProduction` per player; the session runner wires `onProductionComplete` through `validateOrdersAndResolveTurnFromTrustedOrders` and forwards the captured `productionByRecipeByPlayerId` into `buildObserverSnapshotJson` for aggregation.
 
 ## Coverage
 
