@@ -49,6 +49,7 @@ import 'package:colonizethis_app/config/ct_e2e_last_panel_snapshot.dart'
         ctE2eCivilianPanelSnapshot;
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_app/l10n/app_localizations_contract.dart';
+import 'package:colonizethis_app/l10n/app_localizations_lookup.dart';
 import 'package:colonizethis_data/colonizethis_data.dart' show MapTopology;
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
@@ -414,6 +415,86 @@ void main() {
       },
     );
 
+    testWidgets(
+      'pickMoveDestinationAndConfirm is re-exported through the barrel',
+      (tester) async {
+        final Future<void> Function(
+          WidgetTester,
+          AppLocalizations, {
+          bool allowWarpDestinations,
+          Duration moveDialogBudget,
+          int maxWarpDragProbes,
+        })
+        ref = pickMoveDestinationAndConfirm;
+        expect(
+          ref,
+          isNotNull,
+          reason:
+              'The fleet-reach hot path '
+              '(`_tryNavalMoveSegment` in '
+              '`new_game_fleet_reaches_new_world_e2e_helpers.dart`) '
+              'consumes this move-dialog picker via the AC1 barrel up to '
+              '`_kMaxNextTurnTapsForNwFleetReach (35)` times per scenario. '
+              "A regression that dropped the barrel wrapper, flipped the "
+              "return type, or removed the `allowWarpDestinations` / "
+              "`moveDialogBudget` / `maxWarpDragProbes` named parameters "
+              'would break the segment\'s NW-warp vs sea-radio routing or '
+              'silently inflate the warp-row drag loop past the legacy '
+              "`maxWarpDragProbes = 8` cap (Bottleneck 4 / H4 in "
+              '`SPEC/program/e2e-integration-tests.md` § Determinism, '
+              '#2336 AC1 / AC4).',
+        );
+        expect(
+          kE2eDefaultMoveFleetDialogBudget,
+          const Duration(seconds: 5),
+          reason:
+              'Default-budget constant must remain the legacy 5 s per-call '
+              'cap so the barrel signature matches the pre-lift '
+              '`_kMaxUiResponseWait` contract. A barrel re-export that '
+              'aliased the constant to a different value would silently '
+              'change call-site behaviour.',
+        );
+        expect(
+          kE2eDefaultMoveFleetWarpDragProbes,
+          8,
+          reason:
+              'Default warp-probe constant must remain the legacy '
+              '`maxWarpDragProbes = 8` bound. A regression that re-exported '
+              'a wider bound (for example the pre-#2336 36-probe loop) '
+              'would silently re-introduce Bottleneck 2 / H4 wall-clock '
+              'blow-out.',
+        );
+        // Sanity smoke through the barrel: pumping an empty scaffold has
+        // no AlertDialog, so the helper must fail via e2eWaitUntilFound's
+        // deterministic timeout. A wrapper that swallowed the missing
+        // dialog and silently returned would pass the tear-off pin
+        // without exercising the helper at all.
+        await tester.pumpWidget(
+          const MaterialApp(home: Scaffold(body: SizedBox())),
+        );
+        final l10n = lookupAppLocalizations(const Locale('en'));
+        Object? caught;
+        try {
+          await ref(
+            tester,
+            l10n,
+            moveDialogBudget: const Duration(seconds: 10),
+          );
+        } catch (e) {
+          caught = e;
+        }
+        expect(
+          caught,
+          isNotNull,
+          reason:
+              'Empty scaffold has no AlertDialog — the barrel-aliased '
+              'helper must throw via e2eWaitUntilFound rather than '
+              'silently no-op, so the tear-off smoke catches a wrapper '
+              'that swallowed the missing-dialog path.',
+        );
+      },
+    );
+
     test(
       'e2eTextLooksLikeNewWorldLocationLine is re-exported through the barrel',
       () {
@@ -693,8 +774,8 @@ void main() {
           isNotNull,
           reason:
               'The fleet-reach move dialog consumes this scoped lookup via '
-              'the AC1 barrel (`_pickMoveDestinationAndConfirm` in '
-              '`new_game_fleet_reaches_new_world_e2e_helpers.dart` taps '
+              'the AC1 barrel (`e2ePickMoveDestinationAndConfirm` in '
+              '`e2e_test_shared_panels.dart` taps '
               '`e2eRadioListTilesInAlertDialogs().first` to pick the sea '
               'radio when the warp row is absent). A regression that '
               'dropped it from the `show` clause would force the move '

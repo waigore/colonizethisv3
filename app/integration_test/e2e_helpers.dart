@@ -29,6 +29,7 @@ export 'e2e_test_shared.dart'
         e2eNonHomeHumanFleetInNewWorldFromCtSnapshot,
         e2eNwCoastalProvincesAdjacentToFleetSea,
         e2eOldWorldRegionChipAppearsSelected,
+        e2ePickMoveDestinationAndConfirm,
         e2ePlayerHasAnyNewWorldFoggedOrBetterFromCtSnapshot,
         e2ePumpUntil,
         e2ePumpUntilConditionOrIdle,
@@ -41,6 +42,8 @@ export 'e2e_test_shared.dart'
         e2eWaitUntilAnyFinderHitTestable,
         e2eOpenProductionPanel,
         e2eOpenPanelFromMarker,
+        kE2eDefaultMoveFleetDialogBudget,
+        kE2eDefaultMoveFleetWarpDragProbes,
         kE2eMaxWallClock,
         kE2eNextTurnResolutionTimeout;
 
@@ -179,6 +182,24 @@ Future<void> tapAssignOnCivilianRowWithTitle(
 /// the implementation in `e2e_test_shared_panels.dart`.
 Future<bool> tapMoveOnFirstNonHomeFleet(WidgetTester tester) =>
     e2eTapMoveOnFirstNonHomeFleet(tester);
+
+/// Stable public name for [e2ePickMoveDestinationAndConfirm] so fleet
+/// scenarios consume the AC1 barrel only (Refs GitHub #2336 AC1 / AC2 / AC4 /
+/// Bottleneck 4 / H4). Forwards to the implementation in
+/// `e2e_test_shared_panels.dart`.
+Future<void> pickMoveDestinationAndConfirm(
+  WidgetTester tester,
+  AppLocalizations l10n, {
+  bool allowWarpDestinations = true,
+  Duration moveDialogBudget = kE2eDefaultMoveFleetDialogBudget,
+  int maxWarpDragProbes = kE2eDefaultMoveFleetWarpDragProbes,
+}) => e2ePickMoveDestinationAndConfirm(
+  tester,
+  l10n,
+  allowWarpDestinations: allowWarpDestinations,
+  moveDialogBudget: moveDialogBudget,
+  maxWarpDragProbes: maxWarpDragProbes,
+);
 
 /// Stable public name for [e2eAnyExplorerHasEnabledExploreAssignFleet] so
 /// the fleet bundled-Explore retry loop consumes the AC1 barrel only

@@ -1,7 +1,6 @@
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:colonizethis_app/config/ct_e2e.dart';
 import 'package:colonizethis_app/config/ct_e2e_last_panel_snapshot.dart';
-import 'package:colonizethis_app/features/game/widgets/units/shared/units_panel_region_label.dart';
 import 'e2e_helpers.dart';
 import 'package:colonizethis_app/l10n/l10n.dart';
 import 'package:colonizethis_app/main.dart' show bootstrapForIntegrationTest;

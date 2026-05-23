@@ -46,121 +46,20 @@ const Duration _kFleetE2eMaxWallClock = kE2eMaxWallClock;
 /// against a silent rename / scope-removal that would re-introduce
 /// false positives in move-segment dialogs.
 
-/// Prefer cross-region warp row (English copy); else first adjacent sea tile.
-///
-/// When [allowWarpDestinations] is false, only S–S (radio) destinations are
-/// used. Post–#1869 the split fleet may already be in the New World; the move
-/// dialog still lists a warp row to the Old World—tapping it every turn
-/// prevents sailing along NW seas toward a P–S coastal zone.
-Future<void> _pickMoveDestinationAndConfirm(
-  WidgetTester tester,
-  AppLocalizations l10n, {
-  bool allowWarpDestinations = true,
-}) async {
-  final budget = Stopwatch()..start();
-  void ensureBudget(String step) {
-    if (budget.elapsed > _kMaxUiResponseWait) {
-      fail(
-        'Move fleet dialog exceeded ${_kMaxUiResponseWait.inSeconds}s at $step',
-      );
-    }
-  }
-
-  ensureBudget('start');
-  await waitUntilFound(
-    tester,
-    find.byType(AlertDialog),
-    timeout: const Duration(seconds: 2),
-    phaseName: 'wait_until_found_move_dialog',
-  );
-  final warpSuffix = l10n.moveFleet_warpLinkToRegion(
-    unitsPanelRegionLabel('newWorld'),
-  );
-  final warp = find.textContaining(warpSuffix);
-  if (allowWarpDestinations && warp.evaluate().isNotEmpty) {
-    final scrollRoot = find.byKey(kCtE2EMoveFleetDialogScrollRootKey);
-    final Finder scrollable;
-    if (scrollRoot.evaluate().isNotEmpty) {
-      scrollable = find.descendant(
-        of: scrollRoot,
-        matching: find.byType(Scrollable),
-      );
-    } else {
-      scrollable = find.descendant(
-        of: find.byType(AlertDialog),
-        matching: find.byType(Scrollable),
-      );
-    }
-    if (scrollable.evaluate().isNotEmpty) {
-      final sc = scrollable.first;
-      if (warp.hitTestable().evaluate().isEmpty) {
-        try {
-          await tester.scrollUntilVisible(warp.first, 200, scrollable: sc);
-        } catch (_) {
-          // Row may not be built yet; fall back to drag probing below.
-        }
-      }
-      const maxWarpDragProbes = 8;
-      for (
-        var i = 0;
-        i < maxWarpDragProbes && warp.hitTestable().evaluate().isEmpty;
-        i++
-      ) {
-        ensureBudget('warp drag $i');
-        await tester.drag(sc, const Offset(0, -120));
-        // Short-circuit as soon as the warp row becomes hit-testable instead of
-        // a single frame pump per drag (Refs #2336 H4 / adaptive polling).
-        await e2ePumpUntilConditionOrIdle(
-          tester,
-          () => warp.hitTestable().evaluate().isNotEmpty,
-          timeout: const Duration(milliseconds: 400),
-          phaseName: 'pump_until_warp_row_visible_after_move_dialog_drag',
-        );
-      }
-      if (warp.hitTestable().evaluate().isEmpty) {
-        fail(
-          'Warp row not hit-testable after drag attempts '
-          '(within ${_kMaxUiResponseWait.inSeconds}s dialog budget).',
-        );
-      }
-    }
-    ensureBudget('before warp tap');
-    final hit = warp.hitTestable();
-    expect(hit, findsWidgets);
-    // Tap the RadioListTile, not only the inner Text, so the tile's selection
-    // updates before Confirm (Linux CI / headless can miss implicit tile taps).
-    final warpTile = find.ancestor(
-      of: hit.first,
-      matching: find.byWidgetPredicate(
-        (w) => w.runtimeType.toString().startsWith('RadioListTile<'),
-      ),
-    );
-    expect(warpTile, findsWidgets);
-    await tester.tap(warpTile.first, warnIfMissed: false);
-  } else {
-    ensureBudget('sea radio');
-    final seaRadio = e2eRadioListTilesInAlertDialogs();
-    expect(seaRadio, findsWidgets);
-    await tester.tap(seaRadio.first, warnIfMissed: false);
-  }
-  await waitUntilFound(
-    tester,
-    find.text(l10n.common_confirm),
-    timeout: const Duration(seconds: 2),
-    phaseName: 'wait_until_found_move_confirm',
-  );
-  ensureBudget('confirm');
-  final confirm = find.text(l10n.common_confirm).hitTestable();
-  expect(confirm, findsWidgets);
-  await tester.tap(confirm.first, warnIfMissed: false);
-  await e2ePumpUntil(
-    tester,
-    () => find.byType(AlertDialog).evaluate().isEmpty,
-    timeout: const Duration(seconds: 2),
-    phaseName: 'pump_until_move_dialog_closed',
-  );
-  ensureBudget('after confirm');
-}
+/// `_pickMoveDestinationAndConfirm` was lifted into
+/// [e2ePickMoveDestinationAndConfirm] (`e2e_test_shared_panels.dart`) so the
+/// move-dialog warp-tap / sea-radio / drag-probe contract is shared and
+/// unit-pinned (Refs GitHub #2336 AC1 / AC2 / AC4 / Bottleneck 4 / H4). The
+/// fleet-reach loop calls the lifted form through the AC1 barrel alias
+/// `pickMoveDestinationAndConfirm` (`e2e_helpers.dart`). The widget-test pin
+/// in `app/test/e2e_pick_move_destination_and_confirm_test.dart` guards
+/// against silent regressions because the integration suite cannot validate
+/// this directly today (`app_e2e_linux` is a no-op per
+/// `SPEC/program/e2e-integration-tests.md` § CI). A regression here would
+/// stall the fleet-reach loop at the per-call
+/// [kE2eDefaultMoveFleetDialogBudget] cap × `_kMaxNextTurnTapsForNwFleetReach
+/// (35)` turns — Bottleneck 4 in
+/// `SPEC/program/e2e-integration-tests.md` § Determinism.
 
 Future<void> _tryNavalMoveSegment(
   WidgetTester tester,
@@ -223,10 +122,11 @@ Future<void> _tryNavalMoveSegment(
     return;
   }
   if (find.byType(AlertDialog).evaluate().isNotEmpty) {
-    await _pickMoveDestinationAndConfirm(
+    await pickMoveDestinationAndConfirm(
       tester,
       l10n,
       allowWarpDestinations: allowWarpDestinations,
+      moveDialogBudget: _kMaxUiResponseWait,
     );
   }
   perf?.timing('fleet_move_segment', phaseSw.elapsed);
