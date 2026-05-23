@@ -15,6 +15,7 @@ import '../shell_player_context.dart';
 import '../widgets/observe_mode_not_defined_panel.dart';
 import '../../../widgets/ct_game_feature_screen_shell.dart';
 import '../widgets/production_commodity_breakdown_dialog.dart';
+import '../widgets/production_labour_helpers.dart';
 import '../widgets/production_panel.dart';
 
 class ProductionScreen extends ConsumerWidget {
@@ -91,11 +92,44 @@ class ProductionScreen extends ConsumerWidget {
               },
             );
         final canEdit = shellRef.read(shellPlayerContextProvider).canMutateViaUi;
+        final labourCallbacks = ProductionLabourCallbacks(
+          onAppendRecruitOrder: (tier) {
+            if (!canEdit) return;
+            final next = ordersWithAppendedRecruitWorkerOrder(
+              currentOrders: shellRef.read(currentOrdersProvider),
+              playerId: displayPlayer.id,
+              tier: tier,
+            );
+            shellRef.read(currentOrdersProvider.notifier).replaceAll(next);
+          },
+          onPopLastRecruitOrder: (tier) {
+            if (!canEdit) return;
+            final next = ordersWithLastRecruitWorkerOrderRemoved(
+              currentOrders: shellRef.read(currentOrdersProvider),
+              playerId: displayPlayer.id,
+              tier: tier,
+            );
+            shellRef.read(currentOrdersProvider.notifier).replaceAll(next);
+          },
+          onDisband: (tier) {
+            if (!canEdit) return;
+            final nextGame = gameWithImmediateDisband(
+              game: shellRef.read(currentGameProvider) ?? displayGame,
+              playerId: displayPlayer.id,
+              tier: tier,
+            );
+            if (nextGame == null) return;
+            shellRef.read(currentGameProvider.notifier).setGame(nextGame);
+          },
+        );
         final productionPanel = ProductionPanel(
           game: displayGame,
           player: displayPlayer,
           desiredOutputByRecipe: desiredOutputByRecipe,
           netDeltasByCommodity: netDeltasByCommodity,
+          currentOrders: currentOrders,
+          labourCallbacks: labourCallbacks,
+          canEditLabour: canEdit,
           onOpenCommodityBreakdown: canEdit
               ? () {
                   showDialog<void>(
