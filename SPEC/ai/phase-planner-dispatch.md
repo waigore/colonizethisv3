@@ -46,7 +46,7 @@ Full-COLONIAL slots stay default under COLONIAL-lite. This is the structural NW-
 
 ### Adapter helpers
 
-Five pure adapter functions extract per-domain orchestrator-ready values from a single `PhasePlanOutcome`. The orchestrator calls `runPhasePlanners` once per player turn and consumes the adapters' outputs repeatedly without re-checking the active phase. All adapters are pure and deterministic (Must-have #7).
+Pure adapter functions extract per-domain orchestrator-ready values from a single `PhasePlanOutcome`. The orchestrator calls `runPhasePlanners` once per player turn and consumes the adapters' outputs repeatedly without re-checking the active phase. All adapters are pure and deterministic (Must-have #7).
 
 | Adapter | Module | Output | EXPAND | COLONIAL-lite | COLONIAL | DEVELOP |
 |---|---|---|---|---|---|---|
@@ -55,8 +55,10 @@ Five pure adapter functions extract per-domain orchestrator-ready values from a 
 | `gpColonialDeclareWarTargetFromPhasePlan` | `phase_planner_declare_war_targets.dart` | `String?` NW declare-war target | `null` | `null` | `colonialAcquisitionTarget.targetFactionId` when method is `declareWar`, else `null` | `null` |
 | `civilianWorkOrdersFromPhasePlan` | `phase_planner_civilian_work_orders.dart` | `List<WorkOrder>` civilian work to append to the economy pass | `const <WorkOrder>[]` | `const <WorkOrder>[]` | `colonialCivilianWorkOrders` | `developCivilianWorkOrders` |
 | `expandEconomyPlanFromPhasePlan` | `phase_planner_expand_economy.dart` | `ExpandEconomyPlan` regiment-rebuild / cargo-boost directive for the economy build pass | `expandEconomyPlan` | `expandEconomyPlan` | `ExpandEconomyPlan.defaultPlan` | `ExpandEconomyPlan.defaultPlan` |
+| `expandMilitaryPlanFromPhasePlan` | `phase_planner_military_plans.dart` | `ExpandMilitaryPlan` OW conquest destination filter | `expandMilitaryPlan` | `expandMilitaryPlan` | `ExpandMilitaryPlan.defaultPlan` | `ExpandMilitaryPlan.defaultPlan` |
+| `colonialMilitaryPlanFromPhasePlan` | `phase_planner_military_plans.dart` | `ColonialMilitaryPlan` NW conquest destination filter | `ColonialMilitaryPlan.defaultPlan` | `ColonialMilitaryPlan.defaultPlan` | `colonialMilitaryPlan` | `ColonialMilitaryPlan.defaultPlan` |
 
-EXPAND adapters surface their slot under both `expand` and `colonialLite` (OW push continues during the safeguard). The COLONIAL declare-war adapter returns `null` for `joinEmpire` / `purchase_land` / `null` acquisitions (at-war fallback). DEVELOP never declares war. The civilian work-order adapter returns empty under EXPAND (publishes only `ExpandEconomyPlan` flags) and COLONIAL-lite (suppresses NW builds so the OW push is not weakened). The EXPAND-economy adapter routes COLONIAL and DEVELOP to `ExpandEconomyPlan.defaultPlan` (not the dispatcher slot) so the regiment-rebuild crisis arm cannot leak into phases whose economy pass is driven by `colonialCivilianWorkOrders` / `developCivilianWorkOrders` plus the COLONIAL build cap — structural phase separation per issue #2509 § Phase transition guard.
+EXPAND-side adapters pass their slot through under both `expand` and `colonialLite` so the OW push continues during the safeguard; COLONIAL and DEVELOP route to `defaultPlan` / empty (not the slot) so OW directives cannot leak into NW-driven passes. The COLONIAL declare-war adapter returns `null` for `joinEmpire` / `purchase_land` / `null` acquisitions (at-war fallback); DEVELOP never declares war. The civilian work-order adapter returns empty under EXPAND and COLONIAL-lite. The COLONIAL-military adapter routes EXPAND, COLONIAL-lite, and DEVELOP to `ColonialMilitaryPlan.defaultPlan`; COLONIAL-lite explicitly suppresses NW invasion army moves per § COLONIAL-lite scope summary. Structural phase separation per issue #2509 § Phase transition guard.
 
 ## Acceptance criteria
 
@@ -71,6 +73,8 @@ EXPAND adapters surface their slot under both `expand` and `colonialLite` (OW pu
 - Given a `PhasePlanOutcome` whose `phase` is `expand`, `colonialLite`, or `develop`, when `gpColonialDeclareWarTargetFromPhasePlan(outcome)` runs, then the return equals `null` even when `colonialAcquisitionTarget` is non-null (structural phase suppression).
 - Given a `PhasePlanOutcome` with `phase == colonial`, when `civilianWorkOrdersFromPhasePlan(outcome)` runs, then the return equals `outcome.colonialCivilianWorkOrders` (same order); with `phase == develop` the return equals `outcome.developCivilianWorkOrders`; with `phase` in {`expand`, `colonialLite`} the return equals `const <WorkOrder>[]` even when COLONIAL / DEVELOP slots are non-empty (structural NW-civilian-work suppression).
 - Given a `PhasePlanOutcome` with `phase` in {`expand`, `colonialLite`}, when `expandEconomyPlanFromPhasePlan(outcome)` runs, then the return equals `outcome.expandEconomyPlan`; with `phase` in {`colonial`, `develop`} the return equals `ExpandEconomyPlan.defaultPlan` even when the EXPAND slot is non-default (structural phase separation — the EXPAND regiment-rebuild crisis arm must not leak into COLONIAL / DEVELOP).
+- Given a `PhasePlanOutcome` with `phase` in {`expand`, `colonialLite`}, when `expandMilitaryPlanFromPhasePlan(outcome)` runs, then the return equals `outcome.expandMilitaryPlan`; with `phase` in {`colonial`, `develop`} the return equals `ExpandMilitaryPlan.defaultPlan` even when the EXPAND slot is non-default (structural separation — OW conquest filter must not leak into COLONIAL / DEVELOP military passes).
+- Given a `PhasePlanOutcome` with `phase == colonial`, when `colonialMilitaryPlanFromPhasePlan(outcome)` runs, then the return equals `outcome.colonialMilitaryPlan`; with `phase` in {`expand`, `colonialLite`, `develop`} the return equals `ColonialMilitaryPlan.defaultPlan` even when the COLONIAL slot is non-default (COLONIAL-lite explicitly suppresses NW invasion army moves per § COLONIAL-lite scope summary).
 
 ## Interactions
 
