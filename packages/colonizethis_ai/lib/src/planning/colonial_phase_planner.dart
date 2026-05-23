@@ -27,8 +27,7 @@
 ///
 /// In-module contracts shipped to date (see issue #2509 § COLONIAL phase
 /// planner for the full set, including the deferred
-/// `planColonialAcquisition`, `planColonialNaval`, and
-/// `planColonialLiteNaval`):
+/// `planColonialNaval` and `planColonialLiteNaval`):
 ///
 ///   `planColonialPeace(game, snapshot) → List<String>`
 ///     Returns the deterministic list of at-war Great Powers the active
@@ -45,8 +44,42 @@
 ///     colonial wars are pursued through other phase-planner contracts
 ///     (`planColonialAcquisition` for `establishOverture` / Join Empire
 ///     / `purchase_land`, [planColonialMilitary] for NW conquest army
-///     moves; the acquisition planner is deferred to a follow-up S3
-///     slice).
+///     moves).
+///
+///   `planColonialAcquisition(game, snapshot) → ColonialAcquisitionTarget?`
+///     Returns the deterministic acquisition target for the active
+///     COLONIAL player when one is achievable this turn, or `null`
+///     when no method is reachable. Iterates over
+///     [ColonialSummary.invadableNewWorldProvinceIdsSorted] in sorted
+///     order (adjacency-distance reordering deferred to a follow-up
+///     slice — see § planColonialAcquisition for the spec ordering)
+///     and tries methods in priority order:
+///
+///       1. **Join Empire** (Acquisition method 1) — first NW
+///          province whose tribe/minor owner has an
+///          [OvertureStage.nap] with the active player, Friendly+
+///          relations, and treasury covering
+///          [joinEmpireCostForMinorOrTribe]. The cheapest, fastest
+///          path; always preferred first across all candidate
+///          provinces.
+///       2. **`purchase_land`** (Acquisition method 2) — only
+///          considered when the Join Empire pass yielded no target.
+///          Active player must hold at least one idle Merchant unit;
+///          per-province gates mirror
+///          `precheckPurchaseLand` in `work_order_target_prechecks.dart`
+///          (tribe / minor owner, not at war, embassy with that
+///          tribe / minor, plus at least one tile in the province
+///          with a non-empty resource that is unprospected-mineral
+///          safe, not already purchased, and whose
+///          [purchaseLandCost] is within treasury).
+///
+///     The `declareWar` acquisition method from issue #2509 §
+///     planColonialAcquisition § Acquisition method 3 is deferred to
+///     a follow-up S3 slice (sea-reachability + regiment-build
+///     gates); the function returns `null` when neither Join Empire
+///     nor `purchase_land` is reachable so consumers must treat
+///     `null` as "no acquisition order this turn" rather than
+///     "acquisition path impossible".
 ///
 ///   `planColonialMilitary(game, snapshot,
 ///                         colonialDeclaredWarTargetFactionId)
@@ -66,32 +99,15 @@
 ///     non-default plan as "restrict NW conquest army moves to this
 ///     subset" (Refs #2509 § COLONIAL phase planner § planColonialMilitary
 ///     "Use runConquestArmyMovePlanner with NW destination filter").
-///     Structural OW-defend / regiment-rebuild orders are emitted by
-///     sibling planners (the EXPAND economy planner and the conquest
-///     army-move planner running in defend mode); planColonialMilitary
-///     only emits the NW conquest destination filter so the orchestrator
-///     can drive `runConquestArmyMovePlanner` toward the colonial
-///     target.
 ///
 ///   `planColonialLiteOvertures(game, snapshot) → List<String>`
 ///     Returns the deterministic list of NW tribe / minor faction ids
 ///     the active COLONIAL-lite player should `establishOverture` toward
 ///     this turn. COLONIAL-lite is the parallel safeguard inside EXPAND
 ///     (issue #2509 § COLONIAL-lite, schedule turn ≥120 with OW = 9 and
-///     global NW carrying non-GP ownership) that prevents the deadlock
-///     where no GP reaches OW = 10 and zero NW colonisation ever
-///     begins. The contract is "for each visible NW tribe/minor owner
-///     in `adjacentNewWorldOwnerFactionIdsSorted ∪
-///     preferredColonialTargetFactionIdsSorted`, if no embassy yet,
-///     suggest `establishOverture(tribe)`. Never emit `declareWar`,
+///     global NW carrying non-GP ownership). Never emit `declareWar`,
 ///     `joinEmpire` chain advance, or `purchase_land` here. Tiebreak:
-///     lowest factionId". GP factions are filtered out structurally
-///     via [Game.playerById] returning non-null (only tribes / minors
-///     receive overtures); active-player embassies are filtered via
-///     [OvertureState.hasEmbassy] on `game.overtureStates` so the
-///     orchestrator (#2509 S5) does not re-issue the initial overture
-///     against a target that already advanced to `embassy`, `nap`, or
-///     `joinEmpire` stage.
+///     lowest factionId".
 ///
 ///   `planColonialCivilian(game, snapshot) → List<WorkOrder>`
 ///     Returns deterministic `build_improvement` work orders for the
@@ -137,8 +153,7 @@ import 'observer_goal_phase.dart' show primaryColonialGpBlocker;
 /// **never** emitted by this planner — the tribe / minor war-continuation
 /// rule is preserved by exclusion. Conversely, `establishOverture`,
 /// `purchase_land`, and NW conquest are emitted by sibling phase-planner
-/// functions (`planColonialAcquisition`, `planColonialMilitary` —
-/// deferred to follow-up S3 slices) rather than reasoned about here.
+/// functions (`planColonialAcquisition`, `planColonialMilitary`) rather than reasoned about here.
 ///
 /// Inputs:
 ///   - [game]: used to (a) filter [ThreatSummary.atWarWith] down to
@@ -200,6 +215,329 @@ List<String> planColonialPeace({
     for (final factionId in gpWars)
       if (factionId != blocker) factionId,
   ]..sort();
+}
+
+/// Method by which a COLONIAL acquisition target should be pursued
+/// (issue #2509 § COLONIAL phase planner § planColonialAcquisition).
+///
+/// Three methods are defined by the spec — Join Empire is the cheapest
+/// path and always preferred first when available; `purchase_land`
+/// applies when an idle Merchant and a valid purchase tile are present;
+/// `declareWar` applies when treasury / regiments support the conquest
+/// path and the target is sea-reachable. [joinEmpire] and
+/// [purchaseLand] are emitted by [planColonialAcquisition] in this
+/// slice; [declareWar] remains an enum entry so the contract stays
+/// stable across the follow-up S3 slice but is not yet returned.
+enum AcquisitionMethod {
+  /// `establishOverture` advancing the chain to `joinEmpire`. The
+  /// fastest, cheapest acquisition path (issue #2509 § Acquisition
+  /// method 1).
+  joinEmpire,
+
+  /// `purchase_land` work order for an idle Merchant unit (issue
+  /// #2509 § Acquisition method 2).
+  purchaseLand,
+
+  /// `declareWar` + NW army move toward a sea-reachable tribe / minor
+  /// (issue #2509 § Acquisition method 3). Reserved for a follow-up
+  /// slice.
+  declareWar,
+}
+
+/// Deterministic acquisition target picked by [planColonialAcquisition].
+///
+/// Pairs the faction id owning the chosen NW province with the
+/// [AcquisitionMethod] the orchestrator should use this turn. The pair
+/// is stable: identical inputs always yield identical targets (Refs
+/// #2509 Must-have #7). The pair is materialized as a small value
+/// class (not a record) to keep value-equality semantics explicit for
+/// tests and to mirror the shape of other phase-planner return types
+/// under construction in this file.
+class ColonialAcquisitionTarget {
+  const ColonialAcquisitionTarget({
+    required this.targetFactionId,
+    required this.method,
+  });
+
+  /// Faction id of the tribe or minor that currently owns the chosen
+  /// NW province. Never a Great Power — Join Empire toward a GP is
+  /// gated by Empire Building tech and the "nearly defeated" check in
+  /// the join-empire validator (see
+  /// `join_empire_validator.dart`), neither of which fits the COLONIAL
+  /// phase's "acquire tribe / minor NW" objective. The planner skips
+  /// GP-owned NW provinces structurally.
+  final String targetFactionId;
+
+  /// Resolution path the orchestrator should use. Today the planner
+  /// can return [AcquisitionMethod.joinEmpire] (Acquisition method 1)
+  /// and [AcquisitionMethod.purchaseLand] (Acquisition method 2);
+  /// [AcquisitionMethod.declareWar] is reserved for a follow-up slice
+  /// and never appears in returns produced by
+  /// [planColonialAcquisition] today.
+  final AcquisitionMethod method;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is ColonialAcquisitionTarget &&
+          targetFactionId == other.targetFactionId &&
+          method == other.method;
+
+  @override
+  int get hashCode => Object.hash(targetFactionId, method);
+
+  @override
+  String toString() =>
+      'ColonialAcquisitionTarget('
+      'targetFactionId: $targetFactionId, method: $method)';
+}
+
+/// Returns the deterministic acquisition target for the active
+/// COLONIAL player this turn, or `null` when no method is achievable.
+///
+/// Contract (issue #2509 § COLONIAL phase planner § planColonialAcquisition,
+/// Acquisition methods 1 and 2):
+///
+///   "1. Join Empire
+///      → Conditions: embassy with owning tribe, treasury ≥ cost.
+///      → Generate establishOverture(tribe) targeting Join Empire chain.
+///      → This is the cheapest, fastest path — always preferred first.
+///    2. purchase_land
+///      → Conditions: idle Merchant unit, tile has resource (prospected
+///        if mineral), treasury ≥ purchase cost.
+///      → Generate purchase_land work order for Merchant."
+///
+/// **Method 1 — Join Empire.** The "embassy with owning tribe" phrasing
+/// in the issue body is tightened here to align with the order-engine
+/// validator in
+/// `packages/colonizethis_logic/lib/src/orders/validators/diplomatic/`
+/// `join_empire_validator.dart`: Join Empire requires the active
+/// player's overture toward the tribe / minor target to already be at
+/// [OvertureStage.nap], plus a Friendly+ relation score, plus treasury
+/// covering [joinEmpireCostForMinorOrTribe]. Suggesting `joinEmpire`
+/// from a lower overture stage would be rejected by the validator and
+/// produce no order, so the planner gates on the same `nap` precondition
+/// the validator enforces. Advancing the chain through earlier stages
+/// (`consulate`, `embassy`) is the responsibility of sibling overture
+/// planners (`planColonialLiteOvertures` and the legacy overture
+/// helpers) — Join Empire kicks in only on the terminal
+/// `nap → joinEmpire` step.
+///
+/// **Method 2 — `purchase_land`.** Mirrors the validator-side gates in
+/// `precheckPurchaseLand` (`work_order_target_prechecks.dart`) so the
+/// planner never suggests a target the engine would reject:
+///
+///   - active player must hold at least one idle Merchant
+///     ([Unit.type] == [kUnitTypeMerchant], [Unit.status] ==
+///     [UnitStatus.idle]) anywhere in the world; the orchestrator and
+///     resolver handle the staging movement on follow-up turns;
+///   - target province owner must be a tribe / minor (not a Great
+///     Power; not the active player itself);
+///   - active player must not be at war with that owner
+///     ([DiplomacyRelation.atWar] == false);
+///   - active player must have at least an embassy-stage overture with
+///     that owner ([OvertureState.hasEmbassy] == true, i.e. stage in
+///     `{embassy, nap, joinEmpire}`);
+///   - the province must contain at least one tile that is itself a
+///     valid `purchase_land` candidate: non-empty resource id, not
+///     already purchased by any GP, treasury covering
+///     [purchaseLandCost], and — for mineral resource ids in
+///     [kMineralResourceIds] — already in the active player's
+///     prospected-tile set ([WorldState.playerProspectedTiles]).
+///
+/// The Method 1 pass scans every NW invadable province first; if no
+/// Join Empire target is reachable, the Method 2 pass scans the same
+/// list with the `purchase_land` gate set. This implements the spec
+/// "Join Empire is always preferred first" while still letting
+/// `purchase_land` rescue an acquisition slot when Join Empire fails
+/// (e.g. treasury shortfall, sub-`nap` overture stage, or no
+/// satisfying tribe-owned NW province). Method 3 (`declareWar`) is a
+/// follow-up slice and not yet wired.
+///
+/// Iteration ordering:
+///   - Walks [ColonialSummary.invadableNewWorldProvinceIdsSorted] in
+///     the sorted order provided by the perception snapshot. The
+///     issue body asks for adjacency-distance ordering ("sorted by
+///     adjacency distance to owned territory"); that re-ranking is
+///     deferred to a follow-up slice — switching the iteration to an
+///     adjacency-distance key changes which target wins on ties but
+///     does not change the gate set this slice pins.
+///     `invadableNewWorldProvinceIdsSorted` is itself sorted ascending
+///     by the snapshot builder, so the iteration is deterministic
+///     today (Refs #2509 Must-have #7).
+///
+/// Inputs:
+///   - [game]: resolves the active player ([Game.playerById]) for the
+///     defensive guard, looks up the province-owner map
+///     ([getProvinceOwnerMap]) to find each NW province's current
+///     owner, queries [getOverture] / [getRelation] for the gate
+///     evaluation, and computes [joinEmpireCostForMinorOrTribe] /
+///     [purchaseLandCost] for the treasury check. The Method 2 pass
+///     also reads [WorldState.playerProspectedTiles],
+///     [WorldState.purchasedTilesByTileKey], and
+///     [WorldState.resourceByTileKey] to validate per-tile gates.
+///   - [snapshot]: per-player [AIWorldSnapshot] supplying
+///     [ColonialSummary.invadableNewWorldProvinceIdsSorted] (the
+///     candidate NW province pool) and [EconomySummary.treasury] (the
+///     active player's spendable cash for the acquisition payment).
+///
+/// Output:
+///   - [ColonialAcquisitionTarget] with [AcquisitionMethod.joinEmpire]
+///     when the first NW province in
+///     [ColonialSummary.invadableNewWorldProvinceIdsSorted] whose
+///     owner satisfies the four Join-Empire gates (overture stage =
+///     [OvertureStage.nap], relation score ≥ [relationScoreMinFriendly],
+///     treasury ≥ [joinEmpireCostForMinorOrTribe], owner is a
+///     tribe / minor and not a Great Power).
+///   - [ColonialAcquisitionTarget] with
+///     [AcquisitionMethod.purchaseLand] when no Join-Empire target is
+///     reachable but the active player has at least one idle Merchant
+///     and the first NW province in the sorted list whose owner
+///     satisfies the embassy + non-war gates also contains at least
+///     one tile satisfying the per-tile `purchase_land` gates.
+///   - `null` when no NW province satisfies any acquisition method,
+///     or when the outer guards trip (missing active player record,
+///     empty NW invadable list). The follow-up `declareWar` slice
+///     will replace this null fall-through with its own acquisition
+///     method; consumers must treat `null` as "no acquisition order
+///     this turn" rather than "acquisition path impossible".
+///
+/// The function is pure and deterministic — identical inputs always
+/// yield identical [ColonialAcquisitionTarget]s (Refs #2509
+/// Must-have #7).
+ColonialAcquisitionTarget? planColonialAcquisition({
+  required Game game,
+  required AIWorldSnapshot snapshot,
+}) {
+  if (game.playerById(snapshot.playerId) == null) {
+    return null;
+  }
+  final invadable = snapshot.colonial.invadableNewWorldProvinceIdsSorted;
+  if (invadable.isEmpty) {
+    return null;
+  }
+
+  final provinceOwner = getProvinceOwnerMap(game);
+  final treasury = snapshot.economy.treasury;
+
+  for (final provinceId in invadable) {
+    final ownerId = provinceOwner[provinceId];
+    if (ownerId == null) continue;
+    if (game.playerById(ownerId) != null) continue;
+
+    final overture = getOverture(game, snapshot.playerId, ownerId);
+    if (overture == null) continue;
+    if (overture.stage != OvertureStage.nap) continue;
+
+    final relation = getRelation(game, snapshot.playerId, ownerId);
+    if (relation == null || relation.score < relationScoreMinFriendly) {
+      continue;
+    }
+
+    final cost = joinEmpireCostForMinorOrTribe(game, ownerId);
+    if (treasury < cost) continue;
+
+    return ColonialAcquisitionTarget(
+      targetFactionId: ownerId,
+      method: AcquisitionMethod.joinEmpire,
+    );
+  }
+
+  if (!_hasIdleMerchant(game.worldState, snapshot.playerId)) {
+    return null;
+  }
+
+  final prospected =
+      game.worldState.playerProspectedTiles[snapshot.playerId] ??
+      const <String>{};
+  final purchasedByTile = game.worldState.purchasedTilesByTileKey;
+
+  for (final provinceId in invadable) {
+    final ownerId = provinceOwner[provinceId];
+    if (ownerId == null) continue;
+    if (game.playerById(ownerId) != null) continue;
+
+    final relation = getRelation(game, snapshot.playerId, ownerId);
+    if (relation != null && relation.atWar) continue;
+
+    final overture = getOverture(game, snapshot.playerId, ownerId);
+    if (overture == null || !overture.hasEmbassy) continue;
+
+    if (!_provinceHasValidPurchaseLandTile(
+      world: game.worldState,
+      provinceId: provinceId,
+      treasury: treasury,
+      prospected: prospected,
+      purchasedByTile: purchasedByTile,
+    )) {
+      continue;
+    }
+
+    return ColonialAcquisitionTarget(
+      targetFactionId: ownerId,
+      method: AcquisitionMethod.purchaseLand,
+    );
+  }
+
+  return null;
+}
+
+/// True when [playerId] owns at least one [kUnitTypeMerchant] unit
+/// with [UnitStatus.idle] in either region. Region of the Merchant is
+/// not constrained — the orchestrator and resolver handle staging
+/// movement on follow-up turns (mirrors the Builder selection
+/// convention in [planColonialCivilian]).
+bool _hasIdleMerchant(WorldState world, String playerId) {
+  for (final unit in allUnitsFromWorld(world)) {
+    if (unit.ownerId == playerId &&
+        unit.type == kUnitTypeMerchant &&
+        unit.status == UnitStatus.idle) {
+      return true;
+    }
+  }
+  return false;
+}
+
+/// True when [provinceId] contains at least one tile satisfying every
+/// per-tile gate from `precheckPurchaseLand`:
+///
+///   - non-empty resource id in [WorldState.resourceByTileKey];
+///   - not present in [purchasedByTile] (no other GP has bought it,
+///     and the active player has not already purchased it either);
+///   - mineral resource ids ([kMineralResourceIds]) require the tile
+///     to be in [prospected] (the active player's prospected-tile
+///     set);
+///   - [purchaseLandCost] for the resource must be within [treasury].
+///
+/// Iteration over [WorldState.resourceByTileKey] is bounded by the
+/// total number of tiles with a resource entry (much smaller than the
+/// global tile count); per-tile checks are O(1). The function returns
+/// the existence answer only — picking a specific tile for the
+/// `purchase_land` work order is the orchestrator's job (the planner
+/// contract returns the *target faction* and the *method*, not the
+/// exact tile, mirroring the [AcquisitionMethod.joinEmpire] return
+/// shape).
+bool _provinceHasValidPurchaseLandTile({
+  required WorldState world,
+  required String provinceId,
+  required int treasury,
+  required Set<String> prospected,
+  required Map<String, String> purchasedByTile,
+}) {
+  for (final entry in world.resourceByTileKey.entries) {
+    final tileKey = entry.key;
+    if (Unit.provinceIdFromTileKey(tileKey) != provinceId) continue;
+    final resourceId = entry.value;
+    if (resourceId.isEmpty) continue;
+    if (purchasedByTile.containsKey(tileKey)) continue;
+    if (kMineralResourceIds.contains(resourceId) &&
+        !prospected.contains(tileKey)) {
+      continue;
+    }
+    if (treasury < purchaseLandCost(resourceId)) continue;
+    return true;
+  }
+  return false;
 }
 
 /// COLONIAL-phase conquest destination filter returned by
@@ -548,7 +886,7 @@ List<String> planColonialLiteOvertures({
 ///
 /// This slice covers the **NW improvements** half of that contract.
 /// `purchase_land` toward unowned NW tiles is the responsibility of
-/// `planColonialAcquisition` (deferred S3 slice). The narrow OW
+/// [planColonialAcquisition]. The narrow OW
 /// port/supply allowance noted in the spec ("except tiles needed for
 /// port/supply to active NW objectives") is also deferred — no caller
 /// consumes the planner pre-S5 wiring, and tightening that exception
