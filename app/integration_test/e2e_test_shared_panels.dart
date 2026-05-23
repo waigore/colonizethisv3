@@ -8,24 +8,13 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'e2e_test_shared.dart';
 
-Future<void> _e2eTapFirstEnabledTransferButtonInSplitDialog(
-  WidgetTester tester,
-  bool Function(ValueKey<String> key) keyMatches,
-) async {
-  final shell = find.byType(CtDialogShell);
-  final buttons = find.descendant(
-    of: shell,
-    matching: find.byWidgetPredicate((w) {
-      if (w is! CtNinePatchButton || !w.enabled) {
-        return false;
-      }
-      final key = w.key;
-      return key is ValueKey<String> && keyMatches(key);
-    }),
-  );
-  expect(buttons, findsWidgets);
-  await tester.tap(buttons.first, warnIfMissed: false);
-}
+// `_e2eTapFirstEnabledTransferButtonInSplitDialog` previously lived here as a
+// helper for split-fleet transfer-row taps but was never wired into any caller
+// (`e2eSplitHomeFleetOnce` inlines its own `enabledLeftNudge` finder for the
+// `>>` / `>` transfer keys). Static analysis flagged the symbol with
+// `unused_element` since at least PR #2596. The dead declaration is removed
+// here rather than carried forward so the shared-helpers surface only ships
+// reachable code (Refs GitHub #2336 AC1 / AC2 shared-helper hygiene).
 
 /// Opens the civilian units panel from the empire rail or the first civilian
 /// marker, closing a conflicting naval/civilian sheet first when needed.
@@ -525,15 +514,15 @@ Future<void> e2eSplitHomeFleetOnce(
   }
 
   Finder enabledLeftNudge(String prefix) => find.descendant(
-        of: find.byType(CtDialogShell),
-        matching: find.byWidgetPredicate((w) {
-          if (w is! CtNinePatchButton || !w.enabled) {
-            return false;
-          }
-          final key = w.key;
-          return key is ValueKey<String> && key.value.startsWith(prefix);
-        }),
-      );
+    of: find.byType(CtDialogShell),
+    matching: find.byWidgetPredicate((w) {
+      if (w is! CtNinePatchButton || !w.enabled) {
+        return false;
+      }
+      final key = w.key;
+      return key is ValueKey<String> && key.value.startsWith(prefix);
+    }),
+  );
 
   for (var attempt = 0; attempt < 6 && !splitConfirmEnabled(); attempt++) {
     final moveAll = enabledLeftNudge('ctTransfer.left.>>');
