@@ -342,17 +342,19 @@ String? planExpandDeclareWar({
   for (final pid in invadable) {
     final owner = provinceOwner[pid];
     if (owner == null) continue;
-    if (minorIds.contains(owner)) {
-      anyMinorOnInvadable = true;
-      if (atWarWith.contains(owner)) {
-        atWarMinors.add(owner);
-      } else if (adjacentOwners.contains(owner)) {
-        adjacentNewWarMinors.add(owner);
+    if (!minorIds.contains(owner)) {
+      if (game.playerById(owner) != null) {
+        gpInvadableCounts[owner] = (gpInvadableCounts[owner] ?? 0) + 1;
       }
       continue;
     }
-    if (game.playerById(owner) != null) {
-      gpInvadableCounts[owner] = (gpInvadableCounts[owner] ?? 0) + 1;
+    anyMinorOnInvadable = true;
+    if (atWarWith.contains(owner)) {
+      atWarMinors.add(owner);
+      continue;
+    }
+    if (adjacentOwners.contains(owner)) {
+      adjacentNewWarMinors.add(owner);
     }
   }
 
