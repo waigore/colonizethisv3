@@ -120,10 +120,11 @@ void main() {
         }
       }
 
-      await _tryNavalMoveSegment(
+      await tryNavalMoveSegment(
         tester,
         l10n,
         perf: perf,
+        maxUiResponseWait: _kMaxUiResponseWait,
         // Panel was opened above only when snapshot plumbing is unavailable.
         navalPanelAlreadyOpen: ctE2eNavalPanelSnapshot == null,
       );
@@ -274,10 +275,11 @@ void main() {
           lastKnownNavalSnapshot = ctE2eNavalPanelSnapshot;
         }
 
-        await _tryNavalMoveSegment(
+        await tryNavalMoveSegment(
           tester,
           l10n,
           perf: perf,
+          maxUiResponseWait: _kMaxUiResponseWait,
           navalPanelAlreadyOpen: ctE2eNavalPanelSnapshot == null,
         );
         await closeBottomSheet(

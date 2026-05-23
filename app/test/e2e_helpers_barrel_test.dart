@@ -416,6 +416,51 @@ void main() {
     );
 
     testWidgets(
+      'tryNavalMoveSegment is re-exported through the barrel',
+      (tester) async {
+        final Future<void> Function(
+          WidgetTester,
+          AppLocalizations, {
+          bool useNewWorldMapTabFirst,
+          bool allowWarpDestinations,
+          bool navalPanelAlreadyOpen,
+          E2ePerfLog? perf,
+          Duration maxUiResponseWait,
+        })
+        ref = tryNavalMoveSegment;
+        expect(
+          ref,
+          isNotNull,
+          reason:
+              'The fleet-reach hot path consumes this segment composer via '
+              'the AC1 barrel up to `_kMaxNextTurnTapsForNwFleetReach (35)` '
+              'times per scenario. A regression that dropped the barrel '
+              'wrapper or removed the `navalPanelAlreadyOpen` / '
+              '`allowWarpDestinations` / `maxUiResponseWait` named parameters '
+              'would break Bottleneck 4 short-circuits or re-introduce '
+              'redundant naval-panel open/close work (#2336 AC1 / H1–H4).',
+        );
+        expect(
+          kE2eDefaultNavalMoveSegmentUiWait,
+          const Duration(seconds: 5),
+          reason:
+              'Default UI-wait constant must remain the legacy 5 s '
+              '`_kMaxUiResponseWait` contract for open-naval + move-dialog '
+              'budget forwarding.',
+        );
+        final l10n = lookupAppLocalizations(const Locale('en'));
+        await tester.pumpWidget(
+          const MaterialApp(home: Scaffold(body: SizedBox())),
+        );
+        await ref(
+          tester,
+          l10n,
+          navalPanelAlreadyOpen: true,
+        );
+      },
+    );
+
+    testWidgets(
       'pickMoveDestinationAndConfirm is re-exported through the barrel',
       (tester) async {
         final Future<void> Function(

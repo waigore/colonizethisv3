@@ -94,11 +94,12 @@ Future<void> _awaitNwCoastalOrVisibleLandForBundledExploreE2e({
         return;
       }
     }
-    await _tryNavalMoveSegment(
+    await tryNavalMoveSegment(
       tester,
       l10n,
       useNewWorldMapTabFirst: true,
       allowWarpDestinations: false,
+      maxUiResponseWait: _kMaxUiResponseWait,
       navalPanelAlreadyOpen: ctE2eNavalPanelSnapshot == null,
     );
     await closeBottomSheet(tester, overallTimeout: _kMaxUiResponseWait);

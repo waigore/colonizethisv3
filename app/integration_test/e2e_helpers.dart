@@ -30,7 +30,9 @@ export 'e2e_test_shared.dart'
         e2eNwCoastalProvincesAdjacentToFleetSea,
         e2eOldWorldRegionChipAppearsSelected,
         e2ePickMoveDestinationAndConfirm,
+        e2eTryNavalMoveSegment,
         e2ePlayerHasAnyNewWorldFoggedOrBetterFromCtSnapshot,
+        kE2eDefaultNavalMoveSegmentUiWait,
         e2ePumpUntil,
         e2ePumpUntilConditionOrIdle,
         e2eRadioListTilesInAlertDialogs,
@@ -199,6 +201,27 @@ Future<void> pickMoveDestinationAndConfirm(
   allowWarpDestinations: allowWarpDestinations,
   moveDialogBudget: moveDialogBudget,
   maxWarpDragProbes: maxWarpDragProbes,
+);
+
+/// Stable public name for [e2eTryNavalMoveSegment] so fleet scenarios consume
+/// the AC1 barrel only (Refs GitHub #2336 AC1 / AC2 / Bottleneck 4 / H1–H4).
+/// Forwards to the implementation in `e2e_test_shared_panels.dart`.
+Future<void> tryNavalMoveSegment(
+  WidgetTester tester,
+  AppLocalizations l10n, {
+  bool useNewWorldMapTabFirst = false,
+  bool allowWarpDestinations = true,
+  bool navalPanelAlreadyOpen = false,
+  E2ePerfLog? perf,
+  Duration maxUiResponseWait = kE2eDefaultNavalMoveSegmentUiWait,
+}) => e2eTryNavalMoveSegment(
+  tester,
+  l10n,
+  useNewWorldMapTabFirst: useNewWorldMapTabFirst,
+  allowWarpDestinations: allowWarpDestinations,
+  navalPanelAlreadyOpen: navalPanelAlreadyOpen,
+  perf: perf,
+  maxUiResponseWait: maxUiResponseWait,
 );
 
 /// Stable public name for [e2eAnyExplorerHasEnabledExploreAssignFleet] so
