@@ -121,159 +121,44 @@ Future<bool> _tapMoveOnFirstNonHomeFleet(WidgetTester tester) async {
 /// [e2eTextLooksLikeNewWorldLocationLine] (`e2e_test_shared.dart`) so the
 /// dash-glyph contract is unit-pinned (Refs GitHub #2336).
 
-/// While the naval bottom sheet is open, [ctE2eNavalPanelSnapshot] mirrors the same
-/// [Game] the panel uses (`SPEC/program/e2e-integration-tests.md`). Prefer this on
-/// Linux CI: [ExpansionTile] / [Text] preorder can diverge from macOS while world
-/// state still shows the voyage completed.
-bool _nonHomeHumanFleetInNewWorldFromCtSnapshot() {
-  final snap = ctE2eNavalPanelSnapshot;
-  if (snap == null) return false;
-  final human = snap.humanPlayerId;
-  final homeId = homeFleetIdFor(human);
-  for (final f in snap.game.worldState.fleets) {
-    if (f.ownerId != human) continue;
-    if (f.id == homeId) continue;
-    if (f.regionId == 'newWorld') return true;
-    final sea = f.seaZoneId;
-    if (sea != null && regionIdForSeaZone(snap.topology, sea) == 'newWorld') {
-      return true;
-    }
-  }
-  return false;
-}
+/// Non-home human fleet-in-NW detection moved to
+/// [e2eNonHomeHumanFleetInNewWorldFromCtSnapshot] (`e2e_test_shared.dart`)
+/// so the snapshot-driven contract is unit-pinned (Refs GitHub #2336 AC1 /
+/// AC2). Call sites pass [ctE2eNavalPanelSnapshot] explicitly.
 
-/// [provinceIdsAdjacentToSeaZone] matches edge endpoints exactly. Combined game
-/// topology uses prefixed sea node ids (`newWorld|sea5`); some fleet states
-/// still carry the regional local id (`sea5`). Try both so coastal detection
-/// matches logic/ship-reveal (`SPEC/program/fog-and-exploration-resolution.md`).
-Set<String> _nwCoastalProvincesAdjacentToFleetSea(
-  MapTopology topology,
-  String seaZoneId,
-  String regionId,
-) {
-  final direct = provinceIdsAdjacentToSeaZone(
-    topology,
-    seaZoneId,
-    regionId: regionId,
-  );
-  if (direct.isNotEmpty) return direct;
-  if (!ProvinceId.isPrefixed(seaZoneId)) {
-    return provinceIdsAdjacentToSeaZone(
-      topology,
-      ProvinceId.full(regionId, seaZoneId),
-      regionId: regionId,
-    );
-  }
-  return const {};
-}
+/// Coastal sea-zone adjacency lookup with prefixed-id fallback moved to
+/// [e2eNwCoastalProvincesAdjacentToFleetSea] (`e2e_test_shared.dart`) so the
+/// two-tier `provinceIdsAdjacentToSeaZone` contract is unit-pinned and shared
+/// across scenarios (Refs GitHub #2336 AC1 / AC2). The combined topology
+/// uses prefixed sea node ids (`newWorld|sea5`) while some fleet states
+/// still carry the regional local id (`sea5`); the lifted helper tries
+/// both so coastal detection matches logic/ship-reveal
+/// (`SPEC/program/fog-and-exploration-resolution.md`).
 
-/// Ship reveal only paints coastal land for sea zones with a P–S province edge
+/// Non-home human fleet-in-NW-coastal-sea detection moved to
+/// [e2eNonHomeHumanFleetInCoastalNewWorldSeaFromCtSnapshot]
+/// (`e2e_test_shared.dart`) so the snapshot-driven coastal contract is
+/// unit-pinned (Refs GitHub #2336 AC1 / AC2). Ship reveal only paints
+/// coastal land for sea zones with a P–S province edge
 /// (`SPEC/program/fog-and-exploration-resolution.md`). Open-ocean NW sea
-/// placement satisfies [ _nonHomeHumanFleetInNewWorldFromCtSnapshot ] but never
-/// yields fogged/visible NW provinces, so bundled Explore stays disabled.
-bool _nonHomeHumanFleetInCoastalNewWorldSeaFromCtSnapshot() {
-  final snap = ctE2eNavalPanelSnapshot;
-  if (snap == null) return false;
-  final human = snap.humanPlayerId;
-  final homeId = homeFleetIdFor(human);
-  for (final f in snap.game.worldState.fleets) {
-    if (f.ownerId != human) continue;
-    if (f.id == homeId) continue;
-    if (!f.isAtSea || f.seaZoneId == null) continue;
-    final sea = f.seaZoneId!;
-    final String? regionId = f.regionId == 'newWorld'
-        ? 'newWorld'
-        : regionIdForSeaZone(snap.topology, sea);
-    if (regionId == null || regionId != 'newWorld') continue;
-    if (_nwCoastalProvincesAdjacentToFleetSea(
-      snap.topology,
-      sea,
-      regionId,
-    ).isNotEmpty) {
-      return true;
-    }
-  }
-  return false;
-}
+/// placement satisfies [e2eNonHomeHumanFleetInNewWorldFromCtSnapshot] but
+/// never yields fogged/visible NW provinces, so bundled Explore stays
+/// disabled. Call sites pass [ctE2eNavalPanelSnapshot] explicitly.
 
-bool _playerHasAnyNewWorldFoggedOrBetterFromCtSnapshot() {
-  final snap = ctE2eNavalPanelSnapshot;
-  if (snap == null) {
-    return false;
-  }
-  final newWorldProvinceLocalIds = allProvinces(snap.game.worldState)
-      .where((p) => ProvinceId.regionIdFrom(p.id) == 'newWorld')
-      .map((p) => ProvinceId.localIdFrom(p.id))
-      .toSet();
-  if (newWorldProvinceLocalIds.isEmpty) {
-    return false;
-  }
-  final view = buildPlayerView(snap.game, snap.topology, snap.humanPlayerId);
-  for (final entry in view.visibilityByTile.entries) {
-    final parts = entry.key.split('|');
-    if (parts.length != 4) {
-      continue;
-    }
-    if (parts[0] != 'newWorld') {
-      continue;
-    }
-    if (!newWorldProvinceLocalIds.contains(parts[1])) {
-      continue;
-    }
-    if (entry.value.name != 'unknown') {
-      return true;
-    }
-  }
-  return false;
-}
+/// NW fogged-or-better detection moved to
+/// [e2ePlayerHasAnyNewWorldFoggedOrBetterFromCtSnapshot] (`e2e_test_shared.dart`)
+/// so the [PlayerView]-driven contract is unit-pinned (Refs GitHub #2336
+/// AC1 / AC2). Call sites pass [ctE2eNavalPanelSnapshot] explicitly.
 
-/// Widget-only: a **non–home** fleet row shows [unitsPanelRegionLabel] for New World
-/// in the subtitle location line (`New World — …` per `naval_tree_builder.dart`).
-bool _navalPanelShowsNonHomeFleetInNewWorld(WidgetTester tester) {
-  final naval = find.byKey(kCtE2ENavalPanelRootKey);
-  if (naval.evaluate().isEmpty) {
-    return false;
-  }
-  final tiles = find.descendant(
-    of: naval,
-    matching: find.byType(ExpansionTile),
-  );
-  final n = tiles.evaluate().length;
-  for (var i = 0; i < n; i++) {
-    final sub = tiles.at(i);
-    final fleetTitle = find.descendant(
-      of: sub,
-      matching: find.byWidgetPredicate(
-        (w) => w is Text && (w.data?.startsWith('Fleet ') ?? false),
-      ),
-    );
-    if (fleetTitle.evaluate().isEmpty) {
-      continue;
-    }
-    final loc = find.descendant(
-      of: sub,
-      matching: find.byWidgetPredicate(
-        (w) => w is Text && e2eTextLooksLikeNewWorldLocationLine(w.data),
-      ),
-    );
-    if (loc.evaluate().isNotEmpty) {
-      return true;
-    }
-  }
-  return false;
-}
+/// Naval-panel widget fallback for fleet-in-NW detection moved to
+/// [e2eNavalPanelShowsNonHomeFleetInNewWorld] (`e2e_test_shared.dart`) so the
+/// ExpansionTile / location-line contract is unit-pinned (Refs GitHub #2336
+/// AC1 / AC2).
 
-bool _harnessDetectsNonHomeFleetInNewWorld(WidgetTester tester) =>
-    _nonHomeHumanFleetInNewWorldFromCtSnapshot() ||
-    // Fallback for environments where ct snapshot plumbing is unavailable.
-    (ctE2eNavalPanelSnapshot == null &&
-        _navalPanelShowsNonHomeFleetInNewWorld(tester));
-
-/// Post–next-turn [ctE2eNavalPanelSnapshot] refresh (see
-/// [refreshCtE2eNavalPanelSnapshotAfterTurnIfEnabled]) lets fleet loops skip
-/// [openNavalPanel] when world state already shows arrival (Refs #2336).
-bool _fleetReachDoneFromCtSnapshotOnly() =>
-    _nonHomeHumanFleetInNewWorldFromCtSnapshot();
+/// `_harnessDetectsNonHomeFleetInNewWorld` and `_fleetReachDoneFromCtSnapshotOnly`
+/// were lifted into [e2eHarnessDetectsNonHomeFleetInNewWorld] and
+/// [e2eFleetReachDoneFromCtSnapshotOnly] (`e2e_test_shared.dart`, Refs #2336
+/// AC1 / AC2). Call sites pass [ctE2eNavalPanelSnapshot] explicitly.
 
 /// Post–#1869 only: fleet may sit in open-ocean New World first; ship reveal needs
 /// a P–S coastal sea zone (or visibility already updated). Sail / advance until then.
@@ -287,8 +172,12 @@ Future<void> _awaitNwCoastalOrVisibleLandForBundledExploreE2e({
     ensureUnderWallClock('NW bundled-explore readiness i=$i');
     await dismissTransientUi(tester);
     await _tapNewWorldRegionTabIfPresent(tester);
-    if (_nonHomeHumanFleetInCoastalNewWorldSeaFromCtSnapshot() ||
-        _playerHasAnyNewWorldFoggedOrBetterFromCtSnapshot()) {
+    if (e2eNonHomeHumanFleetInCoastalNewWorldSeaFromCtSnapshot(
+          ctE2eNavalPanelSnapshot,
+        ) ||
+        e2ePlayerHasAnyNewWorldFoggedOrBetterFromCtSnapshot(
+          ctE2eNavalPanelSnapshot,
+        )) {
       return;
     }
     // Snapshot-backed paths skip redundant naval sheet open/close (Refs #2336).
@@ -298,8 +187,12 @@ Future<void> _awaitNwCoastalOrVisibleLandForBundledExploreE2e({
         timeout: _kMaxUiResponseWait,
         bottomSheetCloseTimeout: _kMaxUiResponseWait,
       );
-      if (_nonHomeHumanFleetInCoastalNewWorldSeaFromCtSnapshot() ||
-          _playerHasAnyNewWorldFoggedOrBetterFromCtSnapshot()) {
+      if (e2eNonHomeHumanFleetInCoastalNewWorldSeaFromCtSnapshot(
+            ctE2eNavalPanelSnapshot,
+          ) ||
+          e2ePlayerHasAnyNewWorldFoggedOrBetterFromCtSnapshot(
+            ctE2eNavalPanelSnapshot,
+          )) {
         await closeBottomSheet(tester, overallTimeout: _kMaxUiResponseWait);
         return;
       }
@@ -313,8 +206,12 @@ Future<void> _awaitNwCoastalOrVisibleLandForBundledExploreE2e({
     );
     await closeBottomSheet(tester, overallTimeout: _kMaxUiResponseWait);
     await advanceOneHumanTurn(tester, l10n: l10n);
-    if (_nonHomeHumanFleetInCoastalNewWorldSeaFromCtSnapshot() ||
-        _playerHasAnyNewWorldFoggedOrBetterFromCtSnapshot()) {
+    if (e2eNonHomeHumanFleetInCoastalNewWorldSeaFromCtSnapshot(
+          ctE2eNavalPanelSnapshot,
+        ) ||
+        e2ePlayerHasAnyNewWorldFoggedOrBetterFromCtSnapshot(
+          ctE2eNavalPanelSnapshot,
+        )) {
       return;
     }
   }
@@ -323,126 +220,30 @@ Future<void> _awaitNwCoastalOrVisibleLandForBundledExploreE2e({
   // destinations yet. Leave strict assertion to the final Explore-enabled check.
 }
 
-String _bundledExploreRejectionDiagnostics([
-  CtE2eNavalPanelSnapshot? lastKnownNavalSnapshot,
-]) {
-  final navalSnap = lastKnownNavalSnapshot ?? ctE2eNavalPanelSnapshot;
-  final civilianSnap = ctE2eCivilianPanelSnapshot;
-  if (navalSnap == null) {
-    return 'No ctE2eNavalPanelSnapshot available for diagnostics.';
-  }
-  final game = navalSnap.game;
-  final topology = navalSnap.topology;
-  final playerId = navalSnap.humanPlayerId;
-  final orders = navalSnap.draftOrders;
-  final view = buildPlayerView(game, topology, playerId);
-  final suggestions = suggestWorkOrders(view, game, topology, orders);
+/// `_bundledExploreRejectionDiagnostics` was lifted into the public
+/// [e2eBundledExploreRejectionDiagnostics] in `e2e_test_shared.dart`
+/// (Refs GitHub #2336 AC1 / AC2). The lifted form takes both
+/// [CtE2eNavalPanelSnapshot] and [CtE2eCivilianPanelSnapshot] explicitly
+/// rather than reading the global panel snapshots, so the diagnostic
+/// surface is deterministic and unit-pinned in
+/// `app/test/e2e_bundled_explore_rejection_diagnostics_test.dart`. Call
+/// sites compose the global fallback (`x ?? ctE2eNavalPanelSnapshot`)
+/// themselves before delegating to the public helper.
 
-  bool provinceHasFoggedOrBetter(String provinceFullId) {
-    final regionId = ProvinceId.regionIdFrom(provinceFullId);
-    final localId = ProvinceId.localIdFrom(provinceFullId);
-    for (final e in view.visibilityByTile.entries) {
-      final parts = e.key.split('|');
-      if (parts.length != 4) {
-        continue;
-      }
-      if (parts[0] != regionId || parts[1] != localId) {
-        continue;
-      }
-      if (e.value.name != 'unknown') {
-        return true;
-      }
-    }
-    return false;
-  }
-
-  final lines = <String>[
-    'diag: player=$playerId',
-    'diag: civilianSnapshotAvailable=${civilianSnap != null}',
-    if (civilianSnap != null)
-      'diag: availableWorkTargets=${civilianSnap.availableWorkTargets}',
-    'diag: draftMoveOrders=${orders.moveOrdersByPlayerId[playerId]?.map((o) => "${o.unitId}->${Unit.provinceIdFromTileKey(o.destinationTileKey) ?? "?"}").toList() ?? const []}',
-    'diag: suggestedExplore=${suggestions.where((o) => o.target == kWorkTargetExplore).map((o) => "${o.unitId}@${Unit.provinceIdFromTileKey(o.targetTileKey) ?? "?"}").toList()}',
-  ];
-
-  final explorerUnits =
-      view.ownUnits.where((u) => u.type == kUnitTypeExplorer).toList()
-        ..sort((a, b) => a.id.compareTo(b.id));
-  if (explorerUnits.isEmpty) {
-    lines.add('diag: no explorer units found in player view.');
-    return lines.join('\n');
-  }
-
-  final provinces = allProvinces(game.worldState).toList()
-    ..sort((a, b) => a.id.compareTo(b.id));
-  final tribeIds = game.tribes.map((t) => t.id).toSet();
-  final minorIds = game.minorNations.map((m) => m.id).toSet();
-  for (final unit in explorerUnits) {
-    lines.add(
-      'diag: explorer unit=${unit.id} atProvince=${unit.locationProvinceId} tileKey=${unit.tileKey ?? "(null)"}',
-    );
-    for (final prov in provinces) {
-      final foggedOrBetter = provinceHasFoggedOrBetter(prov.id);
-      final owner = prov.ownerId;
-      final ownerKind = owner == null
-          ? 'none'
-          : owner == playerId
-          ? 'self'
-          : tribeIds.contains(owner)
-          ? 'tribe'
-          : minorIds.contains(owner)
-          ? 'minor'
-          : 'gp';
-      final targetTileKey = '${prov.id}|0|0';
-      final workRes = OrderEngine(initialOrders: orders)
-          .addWorkOrderWithContext(
-            game,
-            topology,
-            playerId,
-            WorkOrder(
-              unitId: unit.id,
-              target: kWorkTargetExplore,
-              targetTileKey: targetTileKey,
-            ),
-          );
-      final moveRes = OrderEngine(initialOrders: orders)
-          .addMoveOrderWithContext(
-            game,
-            topology,
-            playerId,
-            MoveOrder(unitId: unit.id, destinationTileKey: '${prov.id}|0|0'),
-          );
-      lines.add(
-        'diag: province=${prov.id} owner=${prov.ownerId ?? "(none)"} ownerKind=$ownerKind '
-        'visibleFoggedPlus=$foggedOrBetter '
-        'workAccepted=${workRes.isAccepted} workReason=${workRes.reason ?? "(none)"} '
-        'moveAccepted=${moveRes.isAccepted} moveReason=${moveRes.reason ?? "(none)"}',
-      );
-    }
-  }
-  return lines.join('\n');
-}
-
-/// When the civilian panel is open, [ctE2eCivilianPanelSnapshot] mirrors
-/// [availableWorkTargetIdsForUnitProvider] — the same work-target ids that
-/// drive enabled Assign rows. Returns `null` when no snapshot is available.
-bool? _exploreAssignEnabledFromCivilianSnapshot() {
-  final snap = ctE2eCivilianPanelSnapshot;
-  if (snap == null) {
-    return null;
-  }
-  for (final targets in snap.availableWorkTargets.values) {
-    if (targets.contains(kWorkTargetExplore)) {
-      return true;
-    }
-  }
-  return false;
-}
+/// _exploreAssignEnabledFromCivilianSnapshot was lifted into the public
+/// [e2eExploreAssignEnabledFromCivilianSnapshot] in `e2e_test_shared.dart`
+/// (Refs GitHub #2336 AC1 / AC2). Call sites consume the public name and
+/// pass `ctE2eCivilianPanelSnapshot` explicitly; the integration suite
+/// re-exports it through the `e2e_helpers.dart` barrel and pins the
+/// contract via
+/// `app/test/e2e_explore_assign_enabled_from_civilian_snapshot_test.dart`.
 
 Future<bool> _anyExplorerHasEnabledExploreAssignFleetE2e(
   WidgetTester tester,
 ) async {
-  final snapshotHint = _exploreAssignEnabledFromCivilianSnapshot();
+  final snapshotHint = e2eExploreAssignEnabledFromCivilianSnapshot(
+    ctE2eCivilianPanelSnapshot,
+  );
   if (snapshotHint != null) {
     return snapshotHint;
   }

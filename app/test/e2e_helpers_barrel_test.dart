@@ -42,7 +42,11 @@
 //   - Issue #2336 § Acceptance criteria § AC1 (Shared helpers exist) and
 //     § AC5 (Adaptive polling) for the panel/turn entrypoints.
 
+import 'package:colonizethis_app/config/ct_e2e_last_panel_snapshot.dart'
+    show CtE2eCivilianPanelSnapshot, CtE2eNavalPanelSnapshot;
+import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_app/l10n/app_localizations_contract.dart';
+import 'package:colonizethis_data/colonizethis_data.dart' show MapTopology;
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -325,6 +329,250 @@ void main() {
         );
       },
     );
+
+    testWidgets(
+      'e2eNavalPanelShowsNonHomeFleetInNewWorld is re-exported through the barrel',
+      (tester) async {
+        final bool Function(WidgetTester) ref =
+            e2eNavalPanelShowsNonHomeFleetInNewWorld;
+        expect(
+          ref,
+          isNotNull,
+          reason:
+              'Fleet-reach harness fallback in '
+              '`new_game_fleet_reaches_new_world_e2e_helpers_part2.dart` '
+              '(`_harnessDetectsNonHomeFleetInNewWorld`) consumes this '
+              'widget predicate via the AC1 barrel when '
+              'ctE2eNavalPanelSnapshot is null. A regression that dropped it '
+              'from the `show` clause would break the UI fallback path at '
+              'E2E time.',
+        );
+        await tester.pumpWidget(
+          const MaterialApp(home: Scaffold(body: SizedBox())),
+        );
+        expect(
+          ref(tester),
+          isFalse,
+          reason:
+              'Sanity smoke through the barrel: an empty tree must return '
+              'false after re-export. A wrapper that swallowed the tester '
+              'argument would pass the tear-off pin silently.',
+        );
+      },
+    );
+
+    test('e2eNonHomeHumanFleetInNewWorldFromCtSnapshot is re-exported through '
+        'the barrel', () {
+      final bool Function(CtE2eNavalPanelSnapshot?) ref =
+          e2eNonHomeHumanFleetInNewWorldFromCtSnapshot;
+      expect(
+        ref,
+        isNotNull,
+        reason:
+            'Fleet-reach short-circuit in '
+            '`new_game_fleet_reaches_new_world_e2e_helpers_part2.dart` '
+            '(`_fleetReachDoneFromCtSnapshotOnly`, '
+            '`_harnessDetectsNonHomeFleetInNewWorld`) consumes this '
+            'snapshot-driven predicate via the AC1 barrel. A regression '
+            'that dropped it from the `show` clause would re-introduce '
+            'the `_kMaxNextTurnTapsForNwFleetReach (35) × ~5 s` stall '
+            'documented in #2336 Bottleneck 4 (`SPEC/program/'
+            'e2e-integration-tests.md` § Determinism).',
+      );
+      expect(
+        ref(null),
+        isFalse,
+        reason:
+            'Sanity smoke through the barrel: a null snapshot must keep '
+            'returning false after re-export. A wrapper that swallowed '
+            'the argument and returned a constant would pass the '
+            'tear-off pin silently; null is the canonical no-plumbing '
+            'state and must short-circuit before any field access.',
+      );
+    });
+
+    test(
+      'e2eFleetReachDoneFromCtSnapshotOnly is re-exported through the barrel',
+      () {
+        final bool Function(CtE2eNavalPanelSnapshot?) ref =
+            e2eFleetReachDoneFromCtSnapshotOnly;
+        expect(ref, isNotNull);
+        expect(ref(null), isFalse);
+      },
+    );
+
+    testWidgets(
+      'e2eHarnessDetectsNonHomeFleetInNewWorld is re-exported through the barrel',
+      (tester) async {
+        final bool Function(WidgetTester, CtE2eNavalPanelSnapshot?) ref =
+            e2eHarnessDetectsNonHomeFleetInNewWorld;
+        expect(ref, isNotNull);
+        await tester.pumpWidget(
+          const MaterialApp(home: Scaffold(body: SizedBox())),
+        );
+        expect(ref(tester, null), isFalse);
+      },
+    );
+
+    test('e2eNonHomeHumanFleetInCoastalNewWorldSeaFromCtSnapshot is '
+        're-exported through the barrel', () {
+      final bool Function(CtE2eNavalPanelSnapshot?) ref =
+          e2eNonHomeHumanFleetInCoastalNewWorldSeaFromCtSnapshot;
+      expect(
+        ref,
+        isNotNull,
+        reason:
+            'The bundled-explore readiness loop in '
+            '`new_game_fleet_reaches_new_world_e2e_helpers_part2.dart` '
+            '(`_awaitNwCoastalOrVisibleLandForBundledExploreE2e`) '
+            'short-circuits on this coastal-NW predicate alongside '
+            'e2ePlayerHasAnyNewWorldFoggedOrBetterFromCtSnapshot. A '
+            'regression that dropped it from the `show` clause would '
+            're-introduce the 35-turn × ~5 s stall documented in #2336 '
+            'Bottleneck 4 (`SPEC/program/e2e-integration-tests.md` '
+            '§ Determinism) for the open-ocean NW fleet branch where '
+            'ship reveal never paints coastal land.',
+      );
+      expect(
+        ref(null),
+        isFalse,
+        reason:
+            'Sanity smoke through the barrel: a null snapshot must keep '
+            'returning false after re-export. A wrapper that swallowed '
+            'the argument and returned a constant would pass the '
+            'tear-off pin silently; null is the canonical no-plumbing '
+            'state and must short-circuit before any field access.',
+      );
+    });
+
+    test('e2eNwCoastalProvincesAdjacentToFleetSea is re-exported through the '
+        'barrel', () {
+      final Set<String> Function(MapTopology, String, String) ref =
+          e2eNwCoastalProvincesAdjacentToFleetSea;
+      expect(
+        ref,
+        isNotNull,
+        reason:
+            'The two-tier coastal adjacency lookup (verbatim sea id, '
+            'then `ProvinceId.full(regionId, seaZoneId)` fallback) is '
+            'the helper '
+            '`e2eNonHomeHumanFleetInCoastalNewWorldSeaFromCtSnapshot` '
+            'consumes per fleet. A regression that dropped it from the '
+            '`show` clause would force scenarios to re-implement the '
+            'fallback (silently divergent across files) or fail to '
+            'compile entirely; pin the tear-off so the AC1 barrel keeps '
+            'this canonical entrypoint exported.',
+      );
+      expect(
+        ref(const MapTopology(), 'sea1', 'newWorld'),
+        isEmpty,
+        reason:
+            'Sanity smoke through the barrel: an empty topology must '
+            'yield an empty adjacency set for any sea zone. A wrapper '
+            'that swallowed the topology and returned a constant '
+            'non-empty set would pass the tear-off pin silently; the '
+            'empty-topology baseline is the canonical "no edges" state '
+            'that must surface as an empty result rather than a fake '
+            'coastal hit.',
+      );
+    });
+
+    test('e2ePlayerHasAnyNewWorldFoggedOrBetterFromCtSnapshot is re-exported '
+        'through the barrel', () {
+      final bool Function(CtE2eNavalPanelSnapshot?) ref =
+          e2ePlayerHasAnyNewWorldFoggedOrBetterFromCtSnapshot;
+      expect(
+        ref,
+        isNotNull,
+        reason:
+            'The bundled-explore readiness loop in '
+            '`new_game_fleet_reaches_new_world_e2e_helpers_part2.dart` '
+            '(`_awaitNwCoastalOrVisibleLandForBundledExploreE2e`) and '
+            'the fleet-reach test\'s final skip guard '
+            '(`new_game_fleet_reaches_new_world_e2e_test.dart`) both '
+            'consume this snapshot-driven predicate via the AC1 '
+            'barrel. A regression that dropped it from the `show` '
+            'clause would either stall the readiness loop for the '
+            'full 35-turn cap (Bottleneck 4 in `SPEC/program/'
+            'e2e-integration-tests.md` § Determinism) or convert the '
+            'strict bundled-explore assertion into a silent skip — '
+            'both directly inflate the wall-clock cap #2336 is '
+            'reducing.',
+      );
+      expect(
+        ref(null),
+        isFalse,
+        reason:
+            'Sanity smoke through the barrel: a null snapshot must '
+            'keep returning false after re-export. A wrapper that '
+            'swallowed the argument and returned a constant would '
+            'pass the tear-off pin silently; null is the canonical '
+            'no-plumbing state and must short-circuit before any '
+            'field access.',
+      );
+    });
+
+    test('e2eExploreAssignEnabledFromCivilianSnapshot is re-exported '
+        'through the barrel', () {
+      final bool? Function(CtE2eCivilianPanelSnapshot?) ref =
+          e2eExploreAssignEnabledFromCivilianSnapshot;
+      expect(
+        ref,
+        isNotNull,
+        reason:
+            'The fleet-reach test\'s '
+            '`_anyExplorerHasEnabledExploreAssignFleetE2e` helper in '
+            '`new_game_fleet_reaches_new_world_e2e_helpers_part2.dart` '
+            'short-circuits on this snapshot-driven predicate before '
+            'scrolling the civilian panel `Assign` sheet. A regression '
+            'that dropped it from the `show` clause would force the '
+            'panel-sweep loop to fall through to the '
+            '`maxPanelSweepSteps (16) × per-step Assign sweep` slow '
+            'path on every fleet-reach turn (Bottleneck 5 in '
+            '`SPEC/program/e2e-integration-tests.md` § Determinism, '
+            '#2336 AC5). The bool? return is part of the contract — '
+            '`null` distinguishes "no snapshot plumbed" from `false` '
+            '("panel mounted, no Explore"); pinning the typed tear-off '
+            'fails this test on any future signature mutation.',
+      );
+      expect(
+        ref(null),
+        isNull,
+        reason:
+            'Sanity smoke through the barrel: a null snapshot must keep '
+            'returning null (NOT false) after re-export. A wrapper that '
+            'collapsed null → false would silently skip the slow-path '
+            'fallback whenever the panel is mid-mount, masking real '
+            'bundled-Explore regressions; the typed `bool?` return is '
+            'the contract that keeps these two states distinct.',
+      );
+      const Game game = Game(
+        id: 'barrel-smoke',
+        worldState: WorldState(
+          turnState: TurnState(phase: TurnPhase.orders, turnNumber: 1),
+          oldWorld: RegionData(),
+          newWorld: RegionData(),
+        ),
+        players: [Player(id: 'gp1', displayName: 'You', isHuman: true)],
+      );
+      final emptySnap = const CtE2eCivilianPanelSnapshot(
+        game: game,
+        humanPlayerId: 'gp1',
+        currentOrders: Orders(),
+        availableWorkTargets: <String, List<String>>{},
+      );
+      expect(
+        ref(emptySnap),
+        isFalse,
+        reason:
+            'Empty `availableWorkTargets` is a definitive "panel '
+            'mounted but no civilian can be assigned anything" verdict '
+            '— `false` (not `null`). A wrapper that ignored the '
+            'snapshot and returned a constant would not distinguish '
+            'this from the null branch above; the typed `bool?` tear-'
+            'off plus both smoke probes catch that regression.',
+      );
+    });
 
     test('AC1 timing constants are exposed as Duration values', () {
       const Duration maxWallClock = kE2eMaxWallClock;
