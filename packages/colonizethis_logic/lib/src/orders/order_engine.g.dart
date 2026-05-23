@@ -74,6 +74,16 @@ const _orderSlotNavalMissionOrder = _OrderSlot<NavalMissionOrder>(
   label: 'naval mission',
 );
 
+Map<String, List<RecruitWorkerOrder>> _orderEngineGetRecruitWorkerOrder(Orders o) => o.recruitWorkerOrdersByPlayerId;
+
+Orders _orderEngineWithRecruitWorkerOrder(Orders o, Map<String, List<RecruitWorkerOrder>> m) => o.copyWith(recruitWorkerOrdersByPlayerId: m);
+
+const _orderSlotRecruitWorkerOrder = _OrderSlot<RecruitWorkerOrder>(
+  getter: _orderEngineGetRecruitWorkerOrder,
+  updater: _orderEngineWithRecruitWorkerOrder,
+  label: 'recruit worker',
+);
+
 Orders copyInitialOrdersForEngine(Orders initialOrders) =>
     Orders(
       moveOrdersByPlayerId: _copyMapOfOrderLists(initialOrders.moveOrdersByPlayerId),
@@ -83,8 +93,8 @@ Orders copyInitialOrdersForEngine(Orders initialOrders) =>
       diplomaticOrdersByPlayerId: _copyMapOfOrderLists(initialOrders.diplomaticOrdersByPlayerId),
       navalMoveOrdersByPlayerId: _copyMapOfOrderLists(initialOrders.navalMoveOrdersByPlayerId),
       navalMissionOrdersByPlayerId: _copyMapOfOrderLists(initialOrders.navalMissionOrdersByPlayerId),
-      researchOrdersByPlayerId: _copyMapOfOrderLists(initialOrders.researchOrdersByPlayerId),
       recruitWorkerOrdersByPlayerId: _copyMapOfOrderLists(initialOrders.recruitWorkerOrdersByPlayerId),
+      researchOrdersByPlayerId: _copyMapOfOrderLists(initialOrders.researchOrdersByPlayerId),
     );
 
 Orders copyOrdersSnapshotForEngine(Orders o) =>
@@ -96,8 +106,8 @@ Orders copyOrdersSnapshotForEngine(Orders o) =>
       diplomaticOrdersByPlayerId: _copyMapOfOrderLists(o.diplomaticOrdersByPlayerId),
       navalMoveOrdersByPlayerId: _copyMapOfOrderLists(o.navalMoveOrdersByPlayerId),
       navalMissionOrdersByPlayerId: _copyMapOfOrderLists(o.navalMissionOrdersByPlayerId),
-      researchOrdersByPlayerId: _copyMapOfOrderLists(o.researchOrdersByPlayerId),
       recruitWorkerOrdersByPlayerId: _copyMapOfOrderLists(o.recruitWorkerOrdersByPlayerId),
+      researchOrdersByPlayerId: _copyMapOfOrderLists(o.researchOrdersByPlayerId),
     );
 
 mixin _OrderEngineGeneratedOrderMethods {
@@ -247,6 +257,27 @@ mixin _OrderEngineGeneratedOrderMethods {
 
   void removeNavalMissionOrder(String playerId, int index) =>
       (this as OrderEngine).removeOrderForSlot(playerId, index, _orderSlotNavalMissionOrder);
+
+  OrderValidationResult addRecruitWorkerOrder(String playerId, RecruitWorkerOrder order) =>
+      (this as OrderEngine).addOrderForSlot(playerId, order, _orderSlotRecruitWorkerOrder);
+
+  OrderValidationResult addRecruitWorkerOrderWithContext(
+    Game game,
+    MapTopology topology,
+    String playerId,
+    RecruitWorkerOrder order, {
+    Map<String, TileMapResult>? tileMapByRegion,
+  }) => (this as OrderEngine).addOrderForSlotWithContext(
+    game,
+    topology,
+    playerId,
+    order,
+    _orderSlotRecruitWorkerOrder,
+    tileMapByRegion: tileMapByRegion,
+  );
+
+  void removeRecruitWorkerOrder(String playerId, int index) =>
+      (this as OrderEngine).removeOrderForSlot(playerId, index, _orderSlotRecruitWorkerOrder);
 
 }
 

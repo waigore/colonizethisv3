@@ -31,6 +31,12 @@ abstract class OrderSuggestionAPI {
     MapTopology topology,
     Orders currentOrders,
   );
+  List<RecruitWorkerOrder> suggestRecruitWorkerOrders(
+    PlayerView view,
+    Game game,
+    MapTopology topology,
+    Orders currentOrders,
+  );
   List<ResearchOrder> suggestResearchOrders(
     PlayerView view,
     Game game,

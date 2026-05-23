@@ -2211,6 +2211,55 @@
   "@production_labourInsufficient": {
     "description": "Warning when allocated labour exceeds effective labour."
   },
+  "production_labourQueued": "Queued: {count}",
+  "@production_labourQueued": {
+    "description": "Pending recruit-worker order count shown on a tier row in the Labour controls.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "production_labourRecruitTier": "Recruit {tier}",
+  "@production_labourRecruitTier": {
+    "description": "Tooltip and semantics label for the + stepper on the peasant row.",
+    "placeholders": {
+      "tier": {
+        "type": "String"
+      }
+    }
+  },
+  "production_labourTrainTier": "Train {tier}",
+  "@production_labourTrainTier": {
+    "description": "Tooltip and semantics label for the + stepper on a trained-tier row.",
+    "placeholders": {
+      "tier": {
+        "type": "String"
+      }
+    }
+  },
+  "production_labourDequeueTier": "Cancel last queued {tier}",
+  "@production_labourDequeueTier": {
+    "description": "Tooltip and semantics label for the − stepper on any tier row.",
+    "placeholders": {
+      "tier": {
+        "type": "String"
+      }
+    }
+  },
+  "production_labourDisbandTier": "Disband {tier}",
+  "@production_labourDisbandTier": {
+    "description": "Tooltip and semantics label for the Disband control on a trained-tier row.",
+    "placeholders": {
+      "tier": {
+        "type": "String"
+      }
+    }
+  },
+  "production_labourDisband": "Disband",
+  "@production_labourDisband": {
+    "description": "Visible label for the Disband button on trained-tier rows."
+  },
   "production_workerCount": "{name}: {count}",
   "@production_workerCount": {
     "description": "Worker type and count in production panel.",

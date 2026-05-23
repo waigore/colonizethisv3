@@ -57,6 +57,7 @@ void main() {
     expect(ctx.playerId, playerId);
     expect(bundle.moveValidator, isA<MoveValidator>());
     expect(bundle.armyMoveValidator, isA<ArmyMoveValidator>());
+    expect(bundle.recruitWorkerValidator, isA<RecruitWorkerOrderValidator>());
     expect(bundle.buildValidator, isA<BuildOrderValidator>());
     expect(bundle.workValidator, isA<WorkOrderValidator>());
     expect(bundle.diplomaticValidator, isA<DiplomaticOrderValidator>());

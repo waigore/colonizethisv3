@@ -6,6 +6,7 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'observer_colonial_verify.dart';
 import 'observer_conquest_verify.dart';
 import 'observer_session_runner.dart';
+import 'observer_workforce_verify.dart';
 import 'setup_config_parser.dart';
 
 /// Exit code for usage / argument errors (sysexits.h EX_USAGE).
@@ -16,6 +17,9 @@ const int kExitConquestVerifyFailed = 5;
 
 /// Exit code when `--verify-colonial-expansion` fails (Refs #2509).
 const int kExitColonialVerifyFailed = 6;
+
+/// Exit code when `--verify-workforce` fails (Refs #2692 S10).
+const int kExitWorkforceVerifyFailed = 8;
 
 String _usage(ArgParser parser) {
   final buf = StringBuffer()
@@ -95,6 +99,16 @@ Future<int> runObserverGameCli(
           'snapshot: all newWorld| provinces owned by gp1–gp6 and >=70% of '
           'extractable GP resource tiles improved (requires --max-turns >= '
           '$kObserverColonialCanonicalTurn or omit cap).',
+    )
+    ..addFlag(
+      'verify-workforce',
+      help:
+          'After a successful run, verify the turn-'
+          '$kObserverWorkforceCanonicalTurn snapshot: each Great Power gp1–gp6 '
+          'has peasants >= $kObserverWorkforceMinPeasants AND '
+          'apprentices+journeymen+masters >= $kObserverWorkforceMinTrained '
+          '(requires --max-turns >= $kObserverWorkforceCanonicalTurn or omit '
+          'cap).',
     );
 
   late final ArgResults results;
@@ -167,6 +181,7 @@ Future<int> runObserverGameCli(
 
   final verifyConquest = results['verify-conquest'] == true;
   final verifyColonial = results['verify-colonial-expansion'] == true;
+  final verifyWorkforce = results['verify-workforce'] == true;
 
   if (verifyConquest &&
       maxTurnsCap != null &&
@@ -186,6 +201,15 @@ Future<int> runObserverGameCli(
     );
     return kExitUsage;
   }
+  if (verifyWorkforce &&
+      maxTurnsCap != null &&
+      maxTurnsCap < kObserverWorkforceCanonicalTurn) {
+    emitStderr(
+      'Error: --verify-workforce requires --max-turns >= '
+      '$kObserverWorkforceCanonicalTurn (got $maxTurnsCap).',
+    );
+    return kExitUsage;
+  }
 
   final sessionCode = await runObserverSession(
     outputRoot: outputRoot,
@@ -193,12 +217,13 @@ Future<int> runObserverGameCli(
     maxTurnsCap: maxTurnsCap,
     verifyConquest: verifyConquest,
     verifyColonialExpansion: verifyColonial,
+    verifyWorkforce: verifyWorkforce,
   );
   if (sessionCode != 0) {
     return sessionCode;
   }
 
-  if (!verifyConquest && !verifyColonial) {
+  if (!verifyConquest && !verifyColonial && !verifyWorkforce) {
     return 0;
   }
 
@@ -242,6 +267,26 @@ Future<int> runObserverGameCli(
       'turn $kObserverColonialCanonicalTurn, all newWorld| GP-owned, '
       'extractable improvement >= '
       '${(kObserverColonialMinImprovementRatio * 100).round()}%).',
+    );
+  }
+
+  if (verifyWorkforce) {
+    final failures = verifyObserverWorkforceFromTraceDir(
+      gameDir,
+      endTurn: kObserverWorkforceCanonicalTurn,
+    );
+    if (failures.isNotEmpty) {
+      for (final line in failures) {
+        emitStderr('workforce_verify: $line');
+      }
+      return kExitWorkforceVerifyFailed;
+    }
+    emitStdout(
+      'Workforce verification passed (seed=${setup.seed}, '
+      'turn $kObserverWorkforceCanonicalTurn, '
+      'peasants >= $kObserverWorkforceMinPeasants AND '
+      'apprentices+journeymen+masters >= $kObserverWorkforceMinTrained '
+      'per gp1–gp6).',
     );
   }
 

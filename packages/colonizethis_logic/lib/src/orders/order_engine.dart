@@ -94,6 +94,25 @@ class _OrderSlot<T> {
   final String label;
 }
 
+/// Mutable state threaded through [OrderEngine._runOrderValidationPhases].
+/// Holds the running rejected flag, treasury, stockpile, worker pool, and
+/// the accumulated [OrderValidationResult] list. Existing only inside
+/// [OrderEngine.validatePlayerOrdersWithContext]'s call stack.
+class _OrderValidationRunState {
+  _OrderValidationRunState({
+    required this.results,
+    required this.stockpile,
+    required this.treasury,
+    required this.workerPool,
+  });
+
+  final List<OrderValidationResult> results;
+  bool rejected = false;
+  Stockpile stockpile;
+  int treasury;
+  WorkerPool workerPool;
+}
+
 typedef OrderValidatorFactory =
     OrderValidators Function(
       Game game,
@@ -109,6 +128,7 @@ typedef OrderValidatorFactory =
       Stockpile stockpile,
       int treasury,
       DiplomacyFactionMembership factionMembership,
+      WorkerPool workerPool,
     );
 
 /// One post–move/army validation round: caller constructs a fresh [OrderValidators]
@@ -238,22 +258,20 @@ class OrderEngine with _OrderEngineGeneratedOrderMethods {
     if (_trackValidatePlayerOrdersWithContextInvocationsForTests) {
       _validatePlayerOrdersWithContextInvocationCountForTests++;
     }
-    final results = <OrderValidationResult>[];
     final player = game.playerById(playerId);
-    if (player == null) return results;
+    if (player == null) return <OrderValidationResult>[];
 
     final view = buildPlayerView(game, topology, playerId);
 
     final moves = _orders.moveOrdersByPlayerId[playerId] ?? [];
     final armyMoves = _orders.armyMoveOrdersByPlayerId[playerId] ?? [];
+    final recruitWorkers =
+        _orders.recruitWorkerOrdersByPlayerId[playerId] ?? [];
     final builds = _orders.buildUnitOrdersByPlayerId[playerId] ?? [];
     final works = _orders.workOrdersByPlayerId[playerId] ?? [];
     final diplomatic = _orders.diplomaticOrdersByPlayerId[playerId] ?? [];
     final navals = _orders.navalMoveOrdersByPlayerId[playerId] ?? [];
     final missions = _orders.navalMissionOrdersByPlayerId[playerId] ?? [];
-    var rejected = false;
-    var stockpile = player.stockpile;
-    var treasury = player.treasury;
 
     final unitsById = Map<String, Unit>.from(
       unitsByIdFromWorld(game.worldState),
@@ -281,6 +299,69 @@ class OrderEngine with _OrderEngineGeneratedOrderMethods {
       for (final a in game.worldState.armies) a.id: a,
     };
 
+    // Peasant reservation ledger: each accepted RecruitWorkerOrder consumes
+    // peasants per `WorkerActionEconomyCatalog`, and the downstream build
+    // validator must see the post-recruit headcount so military/naval builds
+    // that consume a peasant respect the combined reservation (see
+    // SPEC/game/workers-and-population.md § Peasant reservation).
+    final state = _OrderValidationRunState(
+      results: <OrderValidationResult>[],
+      stockpile: player.stockpile,
+      treasury: player.treasury,
+      workerPool: player.workerPool,
+    );
+
+    _runOrderValidationPhases(
+      state: state,
+      game: game,
+      player: player,
+      playerId: playerId,
+      view: view,
+      topology: topology,
+      tileMapByRegion: tileMapByRegion,
+      unitsById: unitsById,
+      diplomatic: diplomatic,
+      civilianDraftMoveUnitIds: civilianDraftMoveUnitIds,
+      devExclusiveTiles: devExclusiveTiles,
+      factionMembership: factionMembership,
+      armiesById: armiesById,
+      moves: moves,
+      armyMoves: armyMoves,
+      recruitWorkers: recruitWorkers,
+      builds: builds,
+      works: works,
+      navals: navals,
+      missions: missions,
+    );
+    return state.results;
+  }
+
+  /// Build and run the per-category validation phases for one player.
+  /// Mutates [state] (results / rejected / stockpile / treasury / workerPool)
+  /// in submission order: move, army-move, recruit-worker, build, work,
+  /// diplomatic, naval, naval-mission.
+  void _runOrderValidationPhases({
+    required _OrderValidationRunState state,
+    required Game game,
+    required Player player,
+    required String playerId,
+    required PlayerView view,
+    required MapTopology topology,
+    required Map<String, TileMapResult>? tileMapByRegion,
+    required Map<String, Unit> unitsById,
+    required List<DiplomaticOrder> diplomatic,
+    required Set<String> civilianDraftMoveUnitIds,
+    required Set<String> devExclusiveTiles,
+    required DiplomacyFactionMembership factionMembership,
+    required Map<String, Army> armiesById,
+    required List<MoveOrder> moves,
+    required List<ArmyMoveOrder> armyMoves,
+    required List<RecruitWorkerOrder> recruitWorkers,
+    required List<BuildUnitOrder> builds,
+    required List<WorkOrder> works,
+    required List<NavalMoveOrder> navals,
+    required List<NavalMissionOrder> missions,
+  }) {
     OrderValidators newValidatorBundle() => _validatorFactory(
       game,
       player,
@@ -292,131 +373,72 @@ class OrderEngine with _OrderEngineGeneratedOrderMethods {
       tileMapByRegion,
       civilianDraftMoveUnitIds,
       devExclusiveTiles,
-      stockpile,
-      treasury,
+      state.stockpile,
+      state.treasury,
       factionMembership,
+      state.workerPool,
     );
 
     // One ordered list: move + army share the initial bundle; each later
     // category refreshes validators so stockpile/treasury/diplomatic state
     // matches incremental validation ordering (Refs #2391 AC7,
-    // SPEC/program/order-engine.md).
+    // SPEC/program/order-engine.md). Worker pool orders (recruit / train)
+    // come before unit builds in both validation and resolution so the
+    // peasant reservation ledger reflects accepted recruit consumes before
+    // military / naval builds check their own peasant requirement
+    // (SPEC/game/workers-and-population.md § Peasant reservation;
+    // SPEC/program/turn-resolution-phase-details.md § Build / work).
     final validationPhases =
         <({bool refreshBundleBefore, void Function(OrderValidators) run})>[
           (
             refreshBundleBefore: false,
-            run: (v) {
-              rejected = _appendValidationResults(
-                results,
-                moves,
-                rejected,
-                (o, prev) => v.moveValidator.validate(
-                  o,
-                  game,
-                  playerId,
-                  unitsById,
-                  diplomatic,
-                  view,
-                  topology,
-                  previousRejected: prev,
-                  factionMembership: factionMembership,
-                ),
-              );
-            },
+            run: (v) => _runMovePhase(
+              v,
+              state,
+              moves,
+              game,
+              playerId,
+              unitsById,
+              diplomatic,
+              view,
+              topology,
+              factionMembership,
+            ),
           ),
           (
             refreshBundleBefore: false,
-            run: (v) {
-              rejected = _appendValidationResults(
-                results,
-                armyMoves,
-                rejected,
-                (o, prev) => prev
-                    ? previousInvalidOrderResult
-                    : v.armyMoveValidator.validate(
-                        o,
-                        game,
-                        playerId,
-                        diplomatic,
-                        view,
-                        topology,
-                        armiesById: armiesById,
-                        factionMembership: factionMembership,
-                      ),
-              );
-            },
+            run: (v) => _runArmyMovePhase(
+              v,
+              state,
+              armyMoves,
+              game,
+              playerId,
+              diplomatic,
+              view,
+              topology,
+              armiesById,
+              factionMembership,
+            ),
           ),
           (
             refreshBundleBefore: true,
-            run: (v) {
-              rejected = _appendValidationResults(
-                results,
-                builds,
-                rejected,
-                (o, prev) =>
-                    v.buildValidator.validate(o, previousRejected: prev),
-              );
-              stockpile = v.buildValidator.stockpile;
-              treasury = v.buildValidator.treasury;
-            },
+            run: (v) => _runRecruitWorkerPhase(v, state, recruitWorkers),
           ),
           (
             refreshBundleBefore: true,
-            run: (v) {
-              rejected = _appendValidationResults(
-                results,
-                works,
-                rejected,
-                (o, prev) =>
-                    v.workValidator.validate(o, previousRejected: prev),
-              );
-              stockpile = v.workValidator.stockpile;
-              treasury = v.workValidator.treasury;
-            },
+            run: (v) => _runBuildPhase(v, state, builds),
           ),
           (
             refreshBundleBefore: true,
-            run: (v) {
-              final afterDiplomatic =
-                  _appendValidationResultsWithState<DiplomaticOrder, int>(
-                    results,
-                    diplomatic,
-                    rejected,
-                    treasury,
-                    (o, prev) {
-                      final r = v.diplomaticValidator.validate(
-                        o,
-                        previousRejected: prev,
-                      );
-                      return (result: r.result, state: r.treasury);
-                    },
-                  );
-              rejected = afterDiplomatic.rejected;
-              treasury = afterDiplomatic.state;
-            },
+            run: (v) => _runWorkPhase(v, state, works),
           ),
           (
             refreshBundleBefore: true,
-            run: (v) {
-              rejected = _appendValidationResults(
-                results,
-                navals,
-                rejected,
-                (o, prev) => v.navalValidator.validateNavalMove(
-                  o,
-                  previousRejected: prev,
-                ),
-              );
-              rejected = _appendValidationResults(
-                results,
-                missions,
-                rejected,
-                (o, prev) => v.navalValidator.validateNavalMission(
-                  o,
-                  previousRejected: prev,
-                ),
-              );
-            },
+            run: (v) => _runDiplomaticPhase(v, state, diplomatic),
+          ),
+          (
+            refreshBundleBefore: true,
+            run: (v) => _runNavalPhase(v, state, navals, missions),
           ),
         ];
 
@@ -427,7 +449,156 @@ class OrderEngine with _OrderEngineGeneratedOrderMethods {
       }
       phase.run(validators);
     }
-    return results;
+  }
+
+  void _runMovePhase(
+    OrderValidators v,
+    _OrderValidationRunState state,
+    List<MoveOrder> moves,
+    Game game,
+    String playerId,
+    Map<String, Unit> unitsById,
+    List<DiplomaticOrder> diplomatic,
+    PlayerView view,
+    MapTopology topology,
+    DiplomacyFactionMembership factionMembership,
+  ) {
+    state.rejected = _appendValidationResults(
+      state.results,
+      moves,
+      state.rejected,
+      (o, prev) => v.moveValidator.validate(
+        o,
+        game,
+        playerId,
+        unitsById,
+        diplomatic,
+        view,
+        topology,
+        previousRejected: prev,
+        factionMembership: factionMembership,
+      ),
+    );
+  }
+
+  void _runArmyMovePhase(
+    OrderValidators v,
+    _OrderValidationRunState state,
+    List<ArmyMoveOrder> armyMoves,
+    Game game,
+    String playerId,
+    List<DiplomaticOrder> diplomatic,
+    PlayerView view,
+    MapTopology topology,
+    Map<String, Army> armiesById,
+    DiplomacyFactionMembership factionMembership,
+  ) {
+    state.rejected = _appendValidationResults(
+      state.results,
+      armyMoves,
+      state.rejected,
+      (o, prev) => prev
+          ? previousInvalidOrderResult
+          : v.armyMoveValidator.validate(
+              o,
+              game,
+              playerId,
+              diplomatic,
+              view,
+              topology,
+              armiesById: armiesById,
+              factionMembership: factionMembership,
+            ),
+    );
+  }
+
+  void _runRecruitWorkerPhase(
+    OrderValidators v,
+    _OrderValidationRunState state,
+    List<RecruitWorkerOrder> recruitWorkers,
+  ) {
+    state.rejected = _appendValidationResults(
+      state.results,
+      recruitWorkers,
+      state.rejected,
+      (o, prev) => v.recruitWorkerValidator.validate(o, previousRejected: prev),
+    );
+    state.workerPool = v.recruitWorkerValidator.workers;
+    state.stockpile = v.recruitWorkerValidator.stockpile;
+    state.treasury = v.recruitWorkerValidator.treasury;
+  }
+
+  void _runBuildPhase(
+    OrderValidators v,
+    _OrderValidationRunState state,
+    List<BuildUnitOrder> builds,
+  ) {
+    state.rejected = _appendValidationResults(
+      state.results,
+      builds,
+      state.rejected,
+      (o, prev) => v.buildValidator.validate(o, previousRejected: prev),
+    );
+    state.workerPool = v.buildValidator.workers;
+    state.stockpile = v.buildValidator.stockpile;
+    state.treasury = v.buildValidator.treasury;
+  }
+
+  void _runWorkPhase(
+    OrderValidators v,
+    _OrderValidationRunState state,
+    List<WorkOrder> works,
+  ) {
+    state.rejected = _appendValidationResults(
+      state.results,
+      works,
+      state.rejected,
+      (o, prev) => v.workValidator.validate(o, previousRejected: prev),
+    );
+    state.stockpile = v.workValidator.stockpile;
+    state.treasury = v.workValidator.treasury;
+  }
+
+  void _runDiplomaticPhase(
+    OrderValidators v,
+    _OrderValidationRunState state,
+    List<DiplomaticOrder> diplomatic,
+  ) {
+    final afterDiplomatic =
+        _appendValidationResultsWithState<DiplomaticOrder, int>(
+          state.results,
+          diplomatic,
+          state.rejected,
+          state.treasury,
+          (o, prev) {
+            final r = v.diplomaticValidator.validate(o, previousRejected: prev);
+            return (result: r.result, state: r.treasury);
+          },
+        );
+    state.rejected = afterDiplomatic.rejected;
+    state.treasury = afterDiplomatic.state;
+  }
+
+  void _runNavalPhase(
+    OrderValidators v,
+    _OrderValidationRunState state,
+    List<NavalMoveOrder> navals,
+    List<NavalMissionOrder> missions,
+  ) {
+    state.rejected = _appendValidationResults(
+      state.results,
+      navals,
+      state.rejected,
+      (o, prev) =>
+          v.navalValidator.validateNavalMove(o, previousRejected: prev),
+    );
+    state.rejected = _appendValidationResults(
+      state.results,
+      missions,
+      state.rejected,
+      (o, prev) =>
+          v.navalValidator.validateNavalMission(o, previousRejected: prev),
+    );
   }
 
   /// Dry-run: apply orders via resolver (no mutation of [game]); return projected effects.
@@ -472,6 +643,7 @@ OrderValidators _defaultOrderValidatorFactory(
   Stockpile stockpile,
   int treasury,
   DiplomacyFactionMembership factionMembership,
+  WorkerPool workerPool,
 ) {
   return createOrderValidators(
     game: game,
@@ -487,5 +659,6 @@ OrderValidators _defaultOrderValidatorFactory(
     stockpile: stockpile,
     treasury: treasury,
     factionMembership: factionMembership,
+    workerPool: workerPool,
   );
 }
