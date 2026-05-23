@@ -13,6 +13,13 @@
 /// `purchase_land` / `build_improvement`, and never queues NW conquest army
 /// moves. Suppression is an architectural property of the module, not a
 /// runtime predicate check (Refs #2509 § EXPAND phase planner Suppressions).
+/// The structural NW-suppression AC for the planner **set as a whole**
+/// (issue #2509 § Phase planner unit tests § "EXPAND NW suppression";
+/// `SPEC/ai/phase-planner-architecture.md` § Acceptance criteria) is
+/// pinned in `test/planning/expand_phase_planner_nw_suppression_test.dart`,
+/// which exercises all four EXPAND planners (`planExpandDeclareWar`,
+/// `planExpandPeace`, `planExpandEconomy`, `planExpandMilitary`) against a
+/// NW-rich fixture and asserts the merged output set carries no NW orders.
 ///
 /// Callers are expected to dispatch to this module **only** when
 /// `observerGoalPhaseFor` resolves to `ObserverGoalPhase.expand`; the planner
