@@ -71,14 +71,31 @@
 ///          with a non-empty resource that is unprospected-mineral
 ///          safe, not already purchased, and whose
 ///          [purchaseLandCost] is within treasury).
-///
-///     The `declareWar` acquisition method from issue #2509 §
-///     planColonialAcquisition § Acquisition method 3 is deferred to
-///     a follow-up S3 slice (sea-reachability + regiment-build
-///     gates); the function returns `null` when neither Join Empire
-///     nor `purchase_land` is reachable so consumers must treat
-///     `null` as "no acquisition order this turn" rather than
-///     "acquisition path impossible".
+///       3. **`declareWar`** (Acquisition method 3) — only considered
+///          when both the Join Empire and `purchase_land` passes
+///          yielded no target. Outer gates require the active player
+///          to hold at least one standing regiment (so the spec's
+///          "Generate declareWar(tribe) + NW army move" follow-up is
+///          feasible) and treasury covering the cheapest regiment
+///          build cost (mirrors the EXPAND declare-war planner's
+///          `_cheapestRegimentBuildTreasuryCost` gate). Per-province
+///          gates: owner is a tribe / minor (GPs structurally
+///          excluded; same `game.playerById(ownerId) != null` skip as
+///          the earlier passes); the active player is not already at
+///          war with that owner (the order-engine
+///          `declareWarSubValidator` rejects with "Already at war
+///          with that faction" when [RelationState.atWar]). Sea
+///          reachability is structurally satisfied because every
+///          candidate appears in
+///          [ColonialSummary.invadableNewWorldProvinceIdsSorted],
+///          which the perception-snapshot builder restricts to
+///          provinces reachable from owned anchors via
+///          [reachableNonOwnedProvinceIdsViaSeas]. The structural
+///          priority Method 1 → 2 → 3 implements the spec's
+///          "deprioritize war behind Join Empire and purchase_land"
+///          guidance — the cheaper paths always run first, so the
+///          turn-110 inversion the spec calls out is a no-op for
+///          today's planner.
 ///
 ///   `planColonialMilitary(game, snapshot,
 ///                         colonialDeclaredWarTargetFactionId)
@@ -182,6 +199,7 @@ import 'package:colonizethis_logic/ai_api.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../perception/perception_snapshot.dart';
+import 'army_conquest_prep.dart' show regimentCountForPlayer;
 import 'observer_goal_phase.dart' show primaryColonialGpBlocker;
 
 /// Returns the deterministic list of at-war Great Powers the active player
@@ -276,10 +294,11 @@ List<String> planColonialPeace({
 /// path and always preferred first when available; `purchase_land`
 /// applies when an idle Merchant and a valid purchase tile are present;
 /// `declareWar` applies when treasury / regiments support the conquest
-/// path and the target is sea-reachable. [joinEmpire] and
-/// [purchaseLand] are emitted by [planColonialAcquisition] in this
-/// slice; [declareWar] remains an enum entry so the contract stays
-/// stable across the follow-up S3 slice but is not yet returned.
+/// path and the target is sea-reachable. All three methods are emitted
+/// by [planColonialAcquisition]; the structural priority Method 1 → 2 →
+/// 3 mirrors the spec's "always preferred first" Join Empire framing
+/// and the "deprioritize war behind Join Empire and purchase_land"
+/// turn-110 guidance.
 enum AcquisitionMethod {
   /// `establishOverture` advancing the chain to `joinEmpire`. The
   /// fastest, cheapest acquisition path (issue #2509 § Acquisition
@@ -291,8 +310,11 @@ enum AcquisitionMethod {
   purchaseLand,
 
   /// `declareWar` + NW army move toward a sea-reachable tribe / minor
-  /// (issue #2509 § Acquisition method 3). Reserved for a follow-up
-  /// slice.
+  /// (issue #2509 § Acquisition method 3). Emitted by
+  /// [planColonialAcquisition] only when Join Empire and
+  /// `purchase_land` both yielded no target this turn and the active
+  /// player can afford the cheapest regiment build with at least one
+  /// standing regiment already in service.
   declareWar,
 }
 
@@ -320,12 +342,12 @@ class ColonialAcquisitionTarget {
   /// GP-owned NW provinces structurally.
   final String targetFactionId;
 
-  /// Resolution path the orchestrator should use. Today the planner
-  /// can return [AcquisitionMethod.joinEmpire] (Acquisition method 1)
-  /// and [AcquisitionMethod.purchaseLand] (Acquisition method 2);
-  /// [AcquisitionMethod.declareWar] is reserved for a follow-up slice
-  /// and never appears in returns produced by
-  /// [planColonialAcquisition] today.
+  /// Resolution path the orchestrator should use. The planner can
+  /// return any of [AcquisitionMethod.joinEmpire] (Acquisition method
+  /// 1), [AcquisitionMethod.purchaseLand] (Acquisition method 2), or
+  /// [AcquisitionMethod.declareWar] (Acquisition method 3) per the
+  /// structural Method 1 → 2 → 3 priority documented on
+  /// [planColonialAcquisition].
   final AcquisitionMethod method;
 
   @override
@@ -348,7 +370,7 @@ class ColonialAcquisitionTarget {
 /// COLONIAL player this turn, or `null` when no method is achievable.
 ///
 /// Contract (issue #2509 § COLONIAL phase planner § planColonialAcquisition,
-/// Acquisition methods 1 and 2):
+/// Acquisition methods 1, 2, and 3):
 ///
 ///   "1. Join Empire
 ///      → Conditions: embassy with owning tribe, treasury ≥ cost.
@@ -357,7 +379,13 @@ class ColonialAcquisitionTarget {
 ///    2. purchase_land
 ///      → Conditions: idle Merchant unit, tile has resource (prospected
 ///        if mineral), treasury ≥ purchase cost.
-///      → Generate purchase_land work order for Merchant."
+///      → Generate purchase_land work order for Merchant.
+///    3. declareWar + invade
+///      → Conditions: treasury ≥ regiment build cost, regiments
+///        available, tribe/minor is sea-reachable.
+///      → Generate declareWar(tribe) + NW army move.
+///      → From turn 110: deprioritize war behind Join Empire and
+///        purchase_land (fewer turns to complete)."
 ///
 /// **Method 1 — Join Empire.** The "embassy with owning tribe" phrasing
 /// in the issue body is tightened here to align with the order-engine
@@ -397,14 +425,58 @@ class ColonialAcquisitionTarget {
 ///     [kMineralResourceIds] — already in the active player's
 ///     prospected-tile set ([WorldState.playerProspectedTiles]).
 ///
+/// **Method 3 — `declareWar`.** Mirrors the validator-side gate in
+/// `declareWarSubValidator` (`declare_war_validator.dart`) plus the
+/// spec's outer "treasury ≥ regiment build cost, regiments available"
+/// preconditions:
+///
+///   - outer: active player must hold at least one standing regiment
+///     across Home + field armies ([regimentCountForPlayer] > 0) so
+///     the spec's "Generate declareWar(tribe) + NW army move"
+///     follow-up has at least one unit available; without any
+///     regiments the order pair cannot be fulfilled and the planner
+///     would emit a target the conquest army-move pass could not
+///     follow up on;
+///   - outer: treasury must cover the cheapest [RegimentEconomyCatalog]
+///     build cost ([_cheapestRegimentBuildTreasuryCost]) so the
+///     declare-war target can be reinforced this turn or next via the
+///     economy build pass (matches the symmetric gate in
+///     `planExpandDeclareWar` for the EXPAND below-quota declare-war
+///     path);
+///   - per-province: owner must be a tribe / minor (GPs structurally
+///     excluded via `game.playerById(ownerId) != null`, same skip as
+///     Methods 1 and 2; declareWar against a GP is COLONIAL's
+///     `planColonialMilitary` declared-target arm, not an acquisition
+///     decision);
+///   - per-province: active player must not already be at war with
+///     that owner — the order-engine validator rejects with "Already
+///     at war with that faction" when [RelationState.atWar]. The
+///     planner matches the validator's `atPeace` framing by
+///     accepting a `null` relation row (no prior diplomatic record)
+///     while skipping any row with [DiplomacyRelation.atWar] true.
+///     Already-at-war tribes / minors are pursued by
+///     [planColonialMilitary]'s declared-target / at-war fallback
+///     arms instead.
+///
+/// Sea reachability is enforced **structurally** by the per-province
+/// iteration: every candidate appears in
+/// [ColonialSummary.invadableNewWorldProvinceIdsSorted], which the
+/// perception-snapshot builder restricts to provinces reachable from
+/// owned anchors via [reachableNonOwnedProvinceIdsViaSeas]. A tribe /
+/// minor that owns no sea-reachable NW invadable province therefore
+/// never enters the iteration and cannot become a declareWar target;
+/// no separate topology probe is required at the planner level.
+///
 /// The Method 1 pass scans every NW invadable province first; if no
 /// Join Empire target is reachable, the Method 2 pass scans the same
-/// list with the `purchase_land` gate set. This implements the spec
-/// "Join Empire is always preferred first" while still letting
-/// `purchase_land` rescue an acquisition slot when Join Empire fails
-/// (e.g. treasury shortfall, sub-`nap` overture stage, or no
-/// satisfying tribe-owned NW province). Method 3 (`declareWar`) is a
-/// follow-up slice and not yet wired.
+/// list with the `purchase_land` gate set; if neither pass yields a
+/// target, the Method 3 pass scans the same list with the declareWar
+/// gate set. This implements the spec "Join Empire is always
+/// preferred first" plus "deprioritize war behind Join Empire and
+/// purchase_land" by structural priority — the cheaper paths always
+/// run before the costlier conquest path. The turn-110 inversion the
+/// spec mentions is therefore a no-op for today's planner: declareWar
+/// is already last-resort across every turn.
 ///
 /// Iteration ordering:
 ///   - Walks [ColonialSummary.invadableNewWorldProvinceIdsSorted] in
@@ -428,6 +500,10 @@ class ColonialAcquisitionTarget {
 ///     also reads [WorldState.playerProspectedTiles],
 ///     [WorldState.purchasedTilesByTileKey], and
 ///     [WorldState.resourceByTileKey] to validate per-tile gates.
+///     The Method 3 pass reads
+///     [WorldState.armies] (via [regimentCountForPlayer]) for the
+///     standing-regiment gate and scans [RegimentEconomyCatalog] for
+///     the cheapest build cost.
 ///   - [snapshot]: per-player [AIWorldSnapshot] supplying
 ///     [ColonialSummary.invadableNewWorldProvinceIdsSorted] (the
 ///     candidate NW province pool) and [EconomySummary.treasury] (the
@@ -447,12 +523,17 @@ class ColonialAcquisitionTarget {
 ///     and the first NW province in the sorted list whose owner
 ///     satisfies the embassy + non-war gates also contains at least
 ///     one tile satisfying the per-tile `purchase_land` gates.
+///   - [ColonialAcquisitionTarget] with [AcquisitionMethod.declareWar]
+///     when neither Join Empire nor `purchase_land` yields a target,
+///     the active player holds at least one standing regiment and
+///     treasury covering [_cheapestRegimentBuildTreasuryCost], and
+///     the first NW province in the sorted list is owned by a
+///     tribe / minor the active player is not yet at war with.
 ///   - `null` when no NW province satisfies any acquisition method,
 ///     or when the outer guards trip (missing active player record,
-///     empty NW invadable list). The follow-up `declareWar` slice
-///     will replace this null fall-through with its own acquisition
-///     method; consumers must treat `null` as "no acquisition order
-///     this turn" rather than "acquisition path impossible".
+///     empty NW invadable list). Consumers should treat `null` as
+///     "no acquisition order this turn" rather than "acquisition
+///     path impossible".
 ///
 /// The function is pure and deterministic — identical inputs always
 /// yield identical [ColonialAcquisitionTarget]s (Refs #2509
@@ -495,14 +576,46 @@ ColonialAcquisitionTarget? planColonialAcquisition({
     );
   }
 
-  if (!_hasIdleMerchant(game.worldState, snapshot.playerId)) {
-    return null;
+  if (_hasIdleMerchant(game.worldState, snapshot.playerId)) {
+    final prospected =
+        game.worldState.playerProspectedTiles[snapshot.playerId] ??
+        const <String>{};
+    final purchasedByTile = game.worldState.purchasedTilesByTileKey;
+
+    for (final provinceId in invadable) {
+      final ownerId = provinceOwner[provinceId];
+      if (ownerId == null) continue;
+      if (game.playerById(ownerId) != null) continue;
+
+      final relation = getRelation(game, snapshot.playerId, ownerId);
+      if (relation != null && relation.atWar) continue;
+
+      final overture = getOverture(game, snapshot.playerId, ownerId);
+      if (overture == null || !overture.hasEmbassy) continue;
+
+      if (!_provinceHasValidPurchaseLandTile(
+        world: game.worldState,
+        provinceId: provinceId,
+        treasury: treasury,
+        prospected: prospected,
+        purchasedByTile: purchasedByTile,
+      )) {
+        continue;
+      }
+
+      return ColonialAcquisitionTarget(
+        targetFactionId: ownerId,
+        method: AcquisitionMethod.purchaseLand,
+      );
+    }
   }
 
-  final prospected =
-      game.worldState.playerProspectedTiles[snapshot.playerId] ??
-      const <String>{};
-  final purchasedByTile = game.worldState.purchasedTilesByTileKey;
+  if (regimentCountForPlayer(game, snapshot.playerId) <= 0) {
+    return null;
+  }
+  if (treasury < _cheapestRegimentBuildTreasuryCost()) {
+    return null;
+  }
 
   for (final provinceId in invadable) {
     final ownerId = provinceOwner[provinceId];
@@ -512,26 +625,32 @@ ColonialAcquisitionTarget? planColonialAcquisition({
     final relation = getRelation(game, snapshot.playerId, ownerId);
     if (relation != null && relation.atWar) continue;
 
-    final overture = getOverture(game, snapshot.playerId, ownerId);
-    if (overture == null || !overture.hasEmbassy) continue;
-
-    if (!_provinceHasValidPurchaseLandTile(
-      world: game.worldState,
-      provinceId: provinceId,
-      treasury: treasury,
-      prospected: prospected,
-      purchasedByTile: purchasedByTile,
-    )) {
-      continue;
-    }
-
     return ColonialAcquisitionTarget(
       targetFactionId: ownerId,
-      method: AcquisitionMethod.purchaseLand,
+      method: AcquisitionMethod.declareWar,
     );
   }
 
   return null;
+}
+
+/// Minimum [RegimentEconomyCatalog] build treasury cost (deterministic
+/// catalog scan).
+///
+/// Mirrors `_cheapestRegimentBuildTreasuryCost` in
+/// `expand_phase_planner.dart` (Refs #2509 § EXPAND phase planner) so
+/// the COLONIAL declare-war arm stays self-contained against the S1
+/// deletion of `colonial_pressure.dart`. Linear in the catalog size,
+/// matching the budget-rule note in
+/// `colonizethis-turn-resolution-budget.mdc`.
+int _cheapestRegimentBuildTreasuryCost() {
+  var min = 999999999;
+  for (final econ in RegimentEconomyCatalog.byId.values) {
+    if (econ.buildTreasuryCost < min) {
+      min = econ.buildTreasuryCost;
+    }
+  }
+  return min;
 }
 
 /// True when [playerId] owns at least one [kUnitTypeMerchant] unit
@@ -712,14 +831,17 @@ bool _colonialListEquals(List<String> a, List<String> b) {
 ///     [ThreatSummary.atWarWith] (the Priority 2 fallback when no
 ///     colonial declare-war target is given).
 ///   - [colonialDeclaredWarTargetFactionId]: optional colonial
-///     declare-war target chosen by `planColonialAcquisition`
-///     (deferred S3 slice) when the acquisition method resolves to
-///     `declareWar` (the "Acquisition method 3" in issue #2509 §
-///     planColonialAcquisition). When non-null, the planner restricts
-///     conquest destinations to NW provinces owned by that faction
-///     (Priority 1). The argument is not constrained to a specific
-///     faction class — tribes, minor nations, and Great Powers are all
-///     valid targets per the spec.
+///     declare-war target chosen by [planColonialAcquisition] when the
+///     acquisition method resolves to [AcquisitionMethod.declareWar]
+///     (issue #2509 § planColonialAcquisition Acquisition method 3).
+///     When non-null, the planner restricts conquest destinations to
+///     NW provinces owned by that faction (Priority 1). The argument
+///     is not constrained to a specific faction class — tribes, minor
+///     nations, and Great Powers are all valid targets per the spec;
+///     the acquisition planner only ever returns tribe / minor ids
+///     because Method 3 structurally excludes GP-owned NW invadable,
+///     but [planColonialMilitary] does not re-narrow that argument so
+///     the orchestrator stays free to pass any at-war target.
 ///
 /// Priority arms (first match wins; each arm produces a sorted-ascending,
 /// deduplicated province list):
@@ -1007,15 +1129,19 @@ class ColonialNavalPlan {
 ///     quota gate), and [ThreatSummary.atWarWith] (the Priority 2
 ///     fallback when no colonial declare-war target is given).
 ///   - [colonialDeclaredWarTargetFactionId]: optional colonial
-///     declare-war target chosen by `planColonialAcquisition`
-///     (deferred S3 slice) when the acquisition method resolves to
-///     `declareWar` (issue #2509 § planColonialAcquisition
-///     Acquisition method 3). When non-null, the planner restricts
-///     transport destinations to NW provinces owned by that faction
-///     (Priority 1). The argument is not constrained to a specific
-///     faction class -- tribes, minor nations, and Great Powers are
-///     all valid invasion-transport targets per the spec because
-///     COLONIAL allows invasion against any colonial blocker.
+///     declare-war target chosen by [planColonialAcquisition] when
+///     the acquisition method resolves to
+///     [AcquisitionMethod.declareWar] (issue #2509 §
+///     planColonialAcquisition Acquisition method 3). When non-null,
+///     the planner restricts transport destinations to NW provinces
+///     owned by that faction (Priority 1). The argument is not
+///     constrained to a specific faction class -- tribes, minor
+///     nations, and Great Powers are all valid invasion-transport
+///     targets per the spec because COLONIAL allows invasion against
+///     any colonial blocker; the acquisition planner returns only
+///     tribe / minor ids today, but [planColonialNaval] does not
+///     re-narrow the argument so the orchestrator stays free to pass
+///     any at-war target.
 ///
 /// Structural OW suppression: this function reads only
 /// [ColonialSummary.invadableNewWorldProvinceIdsSorted] (NW-only by
