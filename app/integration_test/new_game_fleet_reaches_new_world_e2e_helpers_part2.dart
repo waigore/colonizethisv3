@@ -171,7 +171,7 @@ Future<void> _awaitNwCoastalOrVisibleLandForBundledExploreE2e({
   for (var i = 0; i < maxTurns; i++) {
     ensureUnderWallClock('NW bundled-explore readiness i=$i');
     await dismissTransientUi(tester);
-    await _tapNewWorldRegionTabIfPresent(tester);
+    await e2eTapNewWorldRegionTabIfPresent(tester);
     if (e2eNonHomeHumanFleetInCoastalNewWorldSeaFromCtSnapshot(
           ctE2eNavalPanelSnapshot,
         ) ||

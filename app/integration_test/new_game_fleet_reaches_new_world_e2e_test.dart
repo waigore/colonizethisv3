@@ -5,7 +5,6 @@ import 'package:colonizethis_app/features/game/widgets/units/shared/units_panel_
 import 'e2e_helpers.dart';
 import 'package:colonizethis_app/l10n/l10n.dart';
 import 'package:colonizethis_app/main.dart' show bootstrapForIntegrationTest;
-import 'package:colonizethis_app/widgets/ct_choice_chip.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
@@ -89,7 +88,7 @@ void main() {
         );
         return;
       }
-      await _tapNewWorldRegionTabIfPresent(tester);
+      await e2eTapNewWorldRegionTabIfPresent(tester);
       if (e2eFleetReachDoneFromCtSnapshotOnly(ctE2eNavalPanelSnapshot)) {
         perf.timing(
           'test_total',
@@ -162,7 +161,7 @@ void main() {
 
     ensureUnderWallClock('before final naval check');
     await dismissTransientUi(tester, perf: perf);
-    await _tapNewWorldRegionTabIfPresent(tester);
+    await e2eTapNewWorldRegionTabIfPresent(tester);
     if (!e2eFleetReachDoneFromCtSnapshotOnly(ctE2eNavalPanelSnapshot)) {
       await openNavalPanel(
         tester,
@@ -252,7 +251,7 @@ void main() {
         if (e2eFleetReachDoneFromCtSnapshotOnly(ctE2eNavalPanelSnapshot)) {
           break;
         }
-        await _tapNewWorldRegionTabIfPresent(tester);
+        await e2eTapNewWorldRegionTabIfPresent(tester);
         if (e2eFleetReachDoneFromCtSnapshotOnly(ctE2eNavalPanelSnapshot)) {
           break;
         }
@@ -304,7 +303,7 @@ void main() {
       }
 
       await dismissTransientUi(tester, perf: perf);
-      await _tapNewWorldRegionTabIfPresent(tester);
+      await e2eTapNewWorldRegionTabIfPresent(tester);
       if (!e2eFleetReachDoneFromCtSnapshotOnly(ctE2eNavalPanelSnapshot)) {
         await openNavalPanel(
           tester,
@@ -338,7 +337,7 @@ void main() {
         ensureUnderWallClock: ensureUnderWallClock,
       );
 
-      await _tapNewWorldRegionTabIfPresent(tester);
+      await e2eTapNewWorldRegionTabIfPresent(tester);
       Future<bool> checkExploreEnabledFromCivilianPanel() async {
         final phaseSw = Stopwatch()..start();
         await openCivilianPanel(
@@ -385,7 +384,7 @@ void main() {
         perf.bumpCounter('bundled_explore_retry_iterations');
         await advanceOneHumanTurn(tester, l10n: l10n, perf: perf);
         await dismissTransientUi(tester, perf: perf);
-        await _tapNewWorldRegionTabIfPresent(tester);
+        await e2eTapNewWorldRegionTabIfPresent(tester);
         exploreEnabled = await checkExploreEnabledFromCivilianPanel();
       }
       if (!exploreEnabled) {
