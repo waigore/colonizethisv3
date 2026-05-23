@@ -96,18 +96,49 @@ class _ProductionLabourTierRow extends StatelessWidget {
         : l10n.production_labourTrainTier(label);
   }
 
+  Widget _buildQueuedSegment() {
+    if (data.queuedCount <= 0) {
+      return const SizedBox.shrink();
+    }
+    return Padding(
+      padding: const EdgeInsets.only(left: 8),
+      child: Text(
+        l10n.production_labourQueued(data.queuedCount),
+        style: theme.textTheme.labelSmall,
+      ),
+    );
+  }
+
+  List<Widget> _buildEditActions(String tierLabel) {
+    return [
+      _LabourIconButton(
+        enabled: data.canPop,
+        semanticLabel: l10n.production_labourDequeueTier(tierLabel),
+        tooltip: l10n.production_labourDequeueTier(tierLabel),
+        assetFileName: _uiIconLabourDecrement,
+        onPressed: () => callbacks.onPopLastRecruitOrder(data.tier),
+      ),
+      _LabourIconButton(
+        enabled: data.canAppend,
+        semanticLabel: _appendTooltip(),
+        tooltip: _appendTooltip(),
+        assetFileName: _uiIconLabourIncrement,
+        onPressed: () => callbacks.onAppendRecruitOrder(data.tier),
+      ),
+      if (data.tier != WorkerTier.peasant)
+        _DisbandTierButton(
+          tier: data.tier,
+          enabled: data.canDisband,
+          disbandLabel: l10n.production_labourDisband,
+          tooltip: l10n.production_labourDisbandTier(tierLabel),
+          onDisband: callbacks.onDisband,
+        ),
+    ];
+  }
+
   @override
   Widget build(BuildContext context) {
     final tierLabel = _tierLabel();
-    final queuedSegment = data.queuedCount > 0
-        ? Padding(
-            padding: const EdgeInsets.only(left: 8),
-            child: Text(
-              l10n.production_labourQueued(data.queuedCount),
-              style: theme.textTheme.labelSmall,
-            ),
-          )
-        : const SizedBox.shrink();
     return Row(
       mainAxisSize: MainAxisSize.max,
       children: [
@@ -118,48 +149,48 @@ class _ProductionLabourTierRow extends StatelessWidget {
             overflow: TextOverflow.ellipsis,
           ),
         ),
-        queuedSegment,
+        _buildQueuedSegment(),
         const Spacer(),
-        if (canEdit) ...[
-          _LabourIconButton(
-            enabled: data.canPop,
-            semanticLabel: l10n.production_labourDequeueTier(tierLabel),
-            tooltip: l10n.production_labourDequeueTier(tierLabel),
-            assetFileName: _uiIconLabourDecrement,
-            onPressed: () => callbacks.onPopLastRecruitOrder(data.tier),
-          ),
-          _LabourIconButton(
-            enabled: data.canAppend,
-            semanticLabel: _appendTooltip(),
-            tooltip: _appendTooltip(),
-            assetFileName: _uiIconLabourIncrement,
-            onPressed: () => callbacks.onAppendRecruitOrder(data.tier),
-          ),
-          if (data.tier != WorkerTier.peasant)
-            Padding(
-              padding: const EdgeInsets.only(left: 6),
-              child: MergeSemantics(
-                child: Semantics(
-                  button: true,
-                  enabled: data.canDisband,
-                  label: l10n.production_labourDisbandTier(tierLabel),
-                  child: Tooltip(
-                    message: l10n.production_labourDisbandTier(tierLabel),
-                    child: CtNinePatchButton(
-                      key: ValueKey<String>(
-                        'production_labour_disband_${data.tier.id}',
-                      ),
-                      onPressed: data.canDisband
-                          ? () => callbacks.onDisband(data.tier)
-                          : null,
-                      child: Text(l10n.production_labourDisband),
-                    ),
-                  ),
-                ),
-              ),
-            ),
-        ],
+        if (canEdit) ..._buildEditActions(tierLabel),
       ],
+    );
+  }
+}
+
+class _DisbandTierButton extends StatelessWidget {
+  const _DisbandTierButton({
+    required this.tier,
+    required this.enabled,
+    required this.disbandLabel,
+    required this.tooltip,
+    required this.onDisband,
+  });
+
+  final WorkerTier tier;
+  final bool enabled;
+  final String disbandLabel;
+  final String tooltip;
+  final void Function(WorkerTier tier) onDisband;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(left: 6),
+      child: MergeSemantics(
+        child: Semantics(
+          button: true,
+          enabled: enabled,
+          label: tooltip,
+          child: Tooltip(
+            message: tooltip,
+            child: CtNinePatchButton(
+              key: ValueKey<String>('production_labour_disband_${tier.id}'),
+              onPressed: enabled ? () => onDisband(tier) : null,
+              child: Text(disbandLabel),
+            ),
+          ),
+        ),
+      ),
     );
   }
 }
