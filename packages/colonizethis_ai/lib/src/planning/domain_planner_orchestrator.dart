@@ -146,6 +146,7 @@ DomainPlannerOutcome runDomainPlannersWithOutcome({
         ctx: ctx,
         snapshot: snapshot,
         declaredWarTargetFactionId: conquestDeclaredWarTarget,
+        phasePlan: phasePlan,
       ),
     );
     final movesAfterPass =
