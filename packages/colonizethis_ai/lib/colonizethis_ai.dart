@@ -18,6 +18,14 @@ export 'src/planning/diplomacy_planner.dart';
 export 'src/planning/economy_planner.dart';
 export 'src/planning/full_ai_planner.dart';
 export 'src/planning/goal_manager.dart';
+export 'src/planning/observer_goal_phase.dart' show ObserverGoalPhase;
+export 'src/planning/recruitment_planner.dart'
+    show
+        RecruitmentPlan,
+        RejectedRecruitmentSuggestion,
+        kRecruitmentRejectInsufficientWorkers,
+        kRecruitmentRejectSoftLuxuryCap,
+        runRecruitmentPlanner;
 export 'src/social/hidden_agenda.dart';
 export 'src/util/ai_validation_exception.dart';
 export 'src/social/mood_state_machine.dart';
