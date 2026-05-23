@@ -1,6 +1,6 @@
 import 'package:colonizethis_app/config/ct_e2e.dart';
 import 'package:colonizethis_app/config/ct_e2e_last_panel_snapshot.dart'
-    show ctE2eCivilianPanelSnapshot;
+    show ctE2eCivilianPanelSnapshot, ctE2eNavalPanelSnapshot;
 import 'package:colonizethis_app/features/game/flame/game_screen_shared.dart';
 import 'package:colonizethis_app/features/game/widgets/units/shared/units_panel_region_label.dart';
 import 'package:colonizethis_app/l10n/app_localizations_contract.dart';
@@ -1151,4 +1151,114 @@ Future<void> e2eTryNavalMoveSegment(
     );
   }
   perf?.timing('fleet_move_segment', phaseSw.elapsed);
+}
+
+/// Default bound on the outer turn loop that drives the bundled-Explore
+/// readiness wait (see [e2eAwaitNwCoastalOrVisibleLandForBundledExplore]).
+///
+/// Mirrors the legacy `maxTurns = 35` constant the helper carried as a
+/// private literal before the lift (Refs GitHub #2336 AC1 / AC2). The 35-turn
+/// budget tracks `_kMaxNextTurnTapsForNwFleetReach` in
+/// `new_game_fleet_reaches_new_world_e2e_helpers.dart` so the bundled-Explore
+/// readiness loop and the upstream fleet-reach loop share a common ceiling.
+const int kE2eDefaultBundledExploreReadinessMaxTurns = 35;
+
+/// Drives the bundled-Explore readiness wait: probes the live naval-panel
+/// snapshot every loop iteration, opens the naval panel only when snapshot
+/// plumbing is unavailable, attempts one bounded New-World move via
+/// [e2eTryNavalMoveSegment], advances one human turn, and exits as soon as
+/// either coastal-NW arrival or any NW fogged-or-better visibility is
+/// observed.
+///
+/// Lifted from the formerly private
+/// `_awaitNwCoastalOrVisibleLandForBundledExploreE2e` in
+/// `new_game_fleet_reaches_new_world_e2e_helpers_part2.dart` (Refs GitHub
+/// #2336 AC1 / AC2 / Bottleneck 4). The post-bundle Explore test calls this
+/// helper exactly once per scenario to bridge the gap between
+/// `e2eHarnessDetectsNonHomeFleetInNewWorld` (fleet has arrived at NW open
+/// sea) and the strict `anyExplorerHasEnabledExploreAssignFleet` check that
+/// requires coastal land visibility. The widget-test pin in
+/// `app/test/e2e_await_nw_coastal_or_visible_land_for_bundled_explore_test.dart`
+/// guards against silent regressions because the integration suite cannot
+/// validate this directly today (`app_e2e_linux` is a no-op per
+/// `SPEC/program/e2e-integration-tests.md` § CI).
+///
+/// Contract:
+///
+/// - Loops at most [maxTurns] iterations (default
+///   [kE2eDefaultBundledExploreReadinessMaxTurns]); each iteration invokes
+///   [ensureUnderWallClock] with `'NW bundled-explore readiness i=<idx>'`.
+/// - Returns immediately when
+///   [e2eNonHomeHumanFleetInCoastalNewWorldSeaFromCtSnapshot] **or**
+///   [e2ePlayerHasAnyNewWorldFoggedOrBetterFromCtSnapshot] holds for
+///   [ctE2eNavalPanelSnapshot] at any of the three probe points:
+///   start-of-iteration, post-naval-open (when snapshot was null), and
+///   post-`advanceOneHumanTurn`.
+/// - When the snapshot is null, opens the naval panel via
+///   [e2eOpenNavalPanel] (using [maxUiResponseWait] for both the open and
+///   close timeouts), re-probes, and closes the bottom sheet via
+///   [e2eCloseBottomSheet] before returning on success.
+/// - Calls [e2eTryNavalMoveSegment] with `useNewWorldMapTabFirst: true`,
+///   `allowWarpDestinations: false`, and `navalPanelAlreadyOpen` set to
+///   `ctE2eNavalPanelSnapshot == null` (mirroring the pre-lift contract so
+///   the snapshot-backed path keeps the naval sheet open across iterations).
+/// - Closes the bottom sheet after each move attempt and advances one human
+///   turn via [e2eAdvanceOneHumanTurn].
+/// - Returns normally — without throwing — when the loop exhausts
+///   [maxTurns] without satisfying either predicate. The caller is
+///   responsible for the strict Explore-enabled assertion that follows.
+Future<void> e2eAwaitNwCoastalOrVisibleLandForBundledExplore(
+  WidgetTester tester,
+  AppLocalizations l10n, {
+  required void Function(String step) ensureUnderWallClock,
+  int maxTurns = kE2eDefaultBundledExploreReadinessMaxTurns,
+  Duration maxUiResponseWait = kE2eDefaultNavalMoveSegmentUiWait,
+}) async {
+  for (var i = 0; i < maxTurns; i++) {
+    ensureUnderWallClock('NW bundled-explore readiness i=$i');
+    await e2eDismissTransientUi(tester);
+    await e2eTapNewWorldRegionTabIfPresent(tester);
+    if (e2eNonHomeHumanFleetInCoastalNewWorldSeaFromCtSnapshot(
+          ctE2eNavalPanelSnapshot,
+        ) ||
+        e2ePlayerHasAnyNewWorldFoggedOrBetterFromCtSnapshot(
+          ctE2eNavalPanelSnapshot,
+        )) {
+      return;
+    }
+    if (ctE2eNavalPanelSnapshot == null) {
+      await e2eOpenNavalPanel(
+        tester,
+        timeout: maxUiResponseWait,
+        bottomSheetCloseTimeout: maxUiResponseWait,
+      );
+      if (e2eNonHomeHumanFleetInCoastalNewWorldSeaFromCtSnapshot(
+            ctE2eNavalPanelSnapshot,
+          ) ||
+          e2ePlayerHasAnyNewWorldFoggedOrBetterFromCtSnapshot(
+            ctE2eNavalPanelSnapshot,
+          )) {
+        await e2eCloseBottomSheet(tester, overallTimeout: maxUiResponseWait);
+        return;
+      }
+    }
+    await e2eTryNavalMoveSegment(
+      tester,
+      l10n,
+      useNewWorldMapTabFirst: true,
+      allowWarpDestinations: false,
+      maxUiResponseWait: maxUiResponseWait,
+      navalPanelAlreadyOpen: ctE2eNavalPanelSnapshot == null,
+    );
+    await e2eCloseBottomSheet(tester, overallTimeout: maxUiResponseWait);
+    await e2eAdvanceOneHumanTurn(tester, l10n: l10n);
+    if (e2eNonHomeHumanFleetInCoastalNewWorldSeaFromCtSnapshot(
+          ctE2eNavalPanelSnapshot,
+        ) ||
+        e2ePlayerHasAnyNewWorldFoggedOrBetterFromCtSnapshot(
+          ctE2eNavalPanelSnapshot,
+        )) {
+      return;
+    }
+  }
 }
