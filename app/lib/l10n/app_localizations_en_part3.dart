@@ -484,6 +484,34 @@ mixin _AppLocalizationsEnStrings3 on AppLocalizations {
       'Insufficient labour — production will be capped next turn';
 
   @override
+  String production_labourQueued(int count) {
+    return 'Queued: $count';
+  }
+
+  @override
+  String production_labourRecruitTier(String tier) {
+    return 'Recruit $tier';
+  }
+
+  @override
+  String production_labourTrainTier(String tier) {
+    return 'Train $tier';
+  }
+
+  @override
+  String production_labourDequeueTier(String tier) {
+    return 'Cancel last queued $tier';
+  }
+
+  @override
+  String production_labourDisbandTier(String tier) {
+    return 'Disband $tier';
+  }
+
+  @override
+  String get production_labourDisband => 'Disband';
+
+  @override
   String production_workerCount(String name, int count) {
     return '$name: $count';
   }

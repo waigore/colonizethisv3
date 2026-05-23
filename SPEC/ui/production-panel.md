@@ -68,6 +68,51 @@ Asset filenames and style for commodities and workers appear in [game-toolbar-ic
 - **Breakdown live update:** Given the breakdown dialog is open, when the player changes any allocation (**slider**, **±** steppers, **maximize**, **clear**, or header **Reset**) on the main panel, then phase and total cells refresh to match the new preview without closing the dialog.
 - **Breakdown commodity icons:** Given the breakdown dialog open, when a data row for a commodity renders, then the **Commodity** cell shows a **leading** `ResourceIcon` for that commodity id (16px, 4dp gap before the name) like the Available grid; long names truncate with ellipsis without breaking table layout.
 
+## Labour Controls (12-A)
+
+The Available subpanel's Workers section is extended with **Labour controls** that let the Great Power human player queue worker recruit / train orders and apply immediate disband actions per [workers-and-population.md](../game/workers-and-population.md) § Recruiting, Training, and Disbanding. Controls are visible only when the viewed player is the human-controlled GP and the panel is in editable mode (`canEdit`).
+
+### Per-tier row layout
+
+- One row per [worker tier](../game/workers-and-population.md#worker-tiers) (peasant, apprentice, journeyman, master), rendered immediately below the existing tier count row inside the Workers section, in the same tier order as the count grid.
+- Each row contains, left to right: a **tier label** (reuses `production_workers_*` strings), a **pending counter** (`Queued: N` when `N > 0`, hidden when `N == 0`), a **decrement (−)** stepper, an **increment (+)** stepper, and — for trained tiers (`apprentice`, `journeyman`, `master`) — a **disband** button. Peasant rows have **no** disband control.
+- Stepper icons reuse the same `StrictAssetIcon` size and asset family as the per-recipe allocation steppers (`ui_icon_production_alloc_increment.png`, `ui_icon_production_alloc_decrement.png`). The disband control is a `CtNinePatchButton` with text `Disband` (single localizable string).
+
+### Recruit / train queue semantics
+
+- **+** appends one `RecruitWorkerOrder(targetTier: <tier>)` to the viewed player's slot in `currentOrders.recruitWorkerOrdersByPlayerId`, preserving previously-queued orders (matches `train_unit_dialog_helper.dart` queue model). One stepper press = exactly one order appended.
+- **−** removes the **last** queued `RecruitWorkerOrder` for that tier (LIFO) from the viewed player's slot. Disabled when the per-tier queued count is zero.
+- The Production panel **does not** distinguish "Recruit" from "Train" in the queue; both verbs produce the same `RecruitWorkerOrder` per the worker SPEC § Train. UI may surface separate tooltips per tier (peasant tooltip uses "Recruit"; trained tiers use "Train"), but the underlying order type is identical.
+- Pending queue counts and economy deltas remain reflected in the existing **Net Changes** preview pipeline (`previewStockpileNetDeltaByCommodityForPlayer`), since recruit worker orders are already deducted in the preview sequence per the Behaviour § Net Changes table.
+
+### Affordance rules (per-tier enabled flags)
+
+For each tier `t` and the running peasant ledger `availablePeasants = pool.peasants − sum(pending peasant consumes from all queued recruit worker + queued military / naval build orders for the viewed player, including the candidate order)`:
+
+- **+** is enabled iff **all** of:
+  1. The viewed player has every required tech for tier `t` unlocked (peasant has no tech gate).
+  2. After applying the cumulative cost of all already-queued recruit worker orders + the candidate, the player still affords the cost row (treasury + materials) per `canAffordRecruitWorker`.
+  3. For trained tiers, `availablePeasants ≥ 1` after the candidate is reserved (peasant reservation per workers-and-population.md § Peasant reservation).
+- **−** is enabled iff the per-tier queued count for the viewed player is ≥ 1.
+- **Disband** is enabled iff `pool.<tier>` ≥ 1 (excluding peasant) **and** the panel is in editable mode. Disband acts on the live `WorkerPool`, not on queued orders, so it is independent of the queue counters.
+
+### Disband (immediate)
+
+- Tapping **Disband** for tier `t` immediately decrements `pool.t` by 1 and increments `pool.peasants` by 1 on the viewed player. The mutation does **not** enqueue any order; it is applied to the live `Game` state during the Orders phase exactly as specified in workers-and-population.md § Disband.
+- Disband has **no** treasury, stockpile, or material refund — the cost row is forfeit.
+- After disband, the **+** stepper for the player's available trained tiers immediately reflects the new `availablePeasants` and may become enabled for tiers that were previously blocked by the peasant ledger.
+
+### Acceptance Criteria — Labour Controls
+
+- Given the viewed player is the human Great Power in Orders phase and the panel is editable, when the Workers section renders, then one Labour row appears for each of the four worker tiers in the order peasant → apprentice → journeyman → master, each with **+** / **−** steppers, and trained tiers additionally show a **Disband** control.
+- Given the viewed player has `peasant_workers` tech (none required), `fabric ≥ 2` in the stockpile, and the panel is editable, when the player taps **+** once on the peasant row, then exactly one `RecruitWorkerOrder(targetTier: peasant)` is appended to `currentOrders.recruitWorkerOrdersByPlayerId[viewedPlayer.id]` and the row's `Queued:` counter reads `1`.
+- Given the viewed player has at least one queued `RecruitWorkerOrder(targetTier: apprentice)`, when the player taps **−** on the apprentice row, then exactly one apprentice-tier order is removed (LIFO) from the viewed player's `recruitWorkerOrdersByPlayerId` slot and the queued counter decrements by 1.
+- Given the viewed player does not have all tech ids for tier `t` in `techUnlocked`, when the Workers section renders, then the **+** stepper for tier `t` is disabled and the row label remains visible (no row hidden).
+- Given `pool.peasants = 0` and no pending peasant-producing recruit orders for the viewed player, when the Workers section renders, then the **+** stepper for every trained tier is disabled and the **+** for peasant remains enabled iff fabric ≥ 2.
+- Given `pool.peasants = 2` and the viewed player already has one queued `RecruitWorkerOrder(targetTier: apprentice)` plus one queued `BuildUnitOrder` whose unit type consumes one peasant, when the player attempts a second apprentice **+**, then the **+** stepper for every trained tier is disabled (peasant ledger exhausted by the two pending consumes).
+- Given the viewed player has `pool.journeymen ≥ 1`, when the player taps **Disband** on the journeyman row, then `pool.journeymen` decrements by 1, `pool.peasants` increments by 1, no entry is added to `currentOrders.recruitWorkerOrdersByPlayerId`, and treasury / paper / fabric remain unchanged.
+- Given the panel is in non-editable view (e.g. observe mode), when the Workers section renders, then **+**, **−**, and **Disband** controls do not appear (or are completely disabled and have no effect on tap).
+
 ## Integration
 
 - Shown from the in-game shell (e.g. bottom toolbar). Game screen passes current game and human player; panel reads/writes allocation via app state (e.g. Riverpod provider) so nextTurn can pass `defaultAssignmentsByPlayerId`.

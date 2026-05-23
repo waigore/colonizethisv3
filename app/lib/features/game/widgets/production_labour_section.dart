@@ -1,0 +1,214 @@
+// Production panel Labour controls (per-tier recruit/train steppers +
+// immediate disband). SPEC/ui/production-panel.md § Labour Controls,
+// SPEC/game/workers-and-population.md.
+
+import 'package:colonizethis_models/colonizethis_models.dart';
+import 'package:flutter/material.dart';
+
+import '../../../config/app_assets.dart';
+import '../../../l10n/l10n.dart';
+import '../../../widgets/ct_nine_patch_button.dart';
+import '../../../widgets/strict_asset_icon.dart';
+import 'production_labour_helpers.dart';
+
+const _uiIconLabourIncrement = 'ui_icon_production_alloc_increment.png';
+const _uiIconLabourDecrement = 'ui_icon_production_alloc_decrement.png';
+
+/// Labour controls section appended to the Workers section of the
+/// Available subpanel. Renders one row per worker tier with recruit/train
+/// steppers and (for trained tiers) a disband button.
+class ProductionLabourSection extends StatelessWidget {
+  const ProductionLabourSection({
+    super.key,
+    required this.player,
+    required this.currentOrders,
+    required this.canEdit,
+    required this.callbacks,
+  });
+
+  final Player player;
+  final Orders currentOrders;
+  final bool canEdit;
+  final ProductionLabourCallbacks callbacks;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final l10n = appL10n(context);
+    final rows = buildProductionLabourRowData(
+      player: player,
+      currentOrders: currentOrders,
+      canEdit: canEdit,
+    );
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        for (final row in rows)
+          Padding(
+            key: ValueKey<String>('production_labour_row_${row.tier.id}'),
+            padding: const EdgeInsets.only(top: 4),
+            child: _ProductionLabourTierRow(
+              data: row,
+              callbacks: callbacks,
+              canEdit: canEdit,
+              l10n: l10n,
+              theme: theme,
+            ),
+          ),
+      ],
+    );
+  }
+}
+
+class _ProductionLabourTierRow extends StatelessWidget {
+  const _ProductionLabourTierRow({
+    required this.data,
+    required this.callbacks,
+    required this.canEdit,
+    required this.l10n,
+    required this.theme,
+  });
+
+  final ProductionLabourTierRowData data;
+  final ProductionLabourCallbacks callbacks;
+  final bool canEdit;
+  final AppLocalizations l10n;
+  final ThemeData theme;
+
+  String _tierLabel() {
+    switch (data.tier) {
+      case WorkerTier.peasant:
+        return l10n.production_workers_peasants;
+      case WorkerTier.apprentice:
+        return l10n.production_workers_apprentices;
+      case WorkerTier.journeyman:
+        return l10n.production_workers_journeymen;
+      case WorkerTier.master:
+        return l10n.production_workers_masters;
+    }
+  }
+
+  String _appendTooltip() {
+    final label = _tierLabel();
+    return data.tier == WorkerTier.peasant
+        ? l10n.production_labourRecruitTier(label)
+        : l10n.production_labourTrainTier(label);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final tierLabel = _tierLabel();
+    final queuedSegment = data.queuedCount > 0
+        ? Padding(
+            padding: const EdgeInsets.only(left: 8),
+            child: Text(
+              l10n.production_labourQueued(data.queuedCount),
+              style: theme.textTheme.labelSmall,
+            ),
+          )
+        : const SizedBox.shrink();
+    return Row(
+      mainAxisSize: MainAxisSize.max,
+      children: [
+        Flexible(
+          child: Text(
+            tierLabel,
+            style: theme.textTheme.bodySmall,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ),
+        queuedSegment,
+        const Spacer(),
+        if (canEdit) ...[
+          _LabourIconButton(
+            enabled: data.canPop,
+            semanticLabel: l10n.production_labourDequeueTier(tierLabel),
+            tooltip: l10n.production_labourDequeueTier(tierLabel),
+            assetFileName: _uiIconLabourDecrement,
+            onPressed: () => callbacks.onPopLastRecruitOrder(data.tier),
+          ),
+          _LabourIconButton(
+            enabled: data.canAppend,
+            semanticLabel: _appendTooltip(),
+            tooltip: _appendTooltip(),
+            assetFileName: _uiIconLabourIncrement,
+            onPressed: () => callbacks.onAppendRecruitOrder(data.tier),
+          ),
+          if (data.tier != WorkerTier.peasant)
+            Padding(
+              padding: const EdgeInsets.only(left: 6),
+              child: MergeSemantics(
+                child: Semantics(
+                  button: true,
+                  enabled: data.canDisband,
+                  label: l10n.production_labourDisbandTier(tierLabel),
+                  child: Tooltip(
+                    message: l10n.production_labourDisbandTier(tierLabel),
+                    child: CtNinePatchButton(
+                      key: ValueKey<String>(
+                        'production_labour_disband_${data.tier.id}',
+                      ),
+                      onPressed: data.canDisband
+                          ? () => callbacks.onDisband(data.tier)
+                          : null,
+                      child: Text(l10n.production_labourDisband),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+        ],
+      ],
+    );
+  }
+}
+
+class _LabourIconButton extends StatelessWidget {
+  const _LabourIconButton({
+    required this.enabled,
+    required this.semanticLabel,
+    required this.tooltip,
+    required this.assetFileName,
+    required this.onPressed,
+  });
+
+  static const double _iconSize = 15;
+
+  final bool enabled;
+  final String semanticLabel;
+  final String tooltip;
+  final String assetFileName;
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    final path = '$kAppIconAssetPrefix$assetFileName';
+    final icon = Opacity(
+      opacity: enabled ? 1 : 0.35,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 4),
+        child: StrictAssetIcon(
+          assetPath: path,
+          width: _iconSize,
+          height: _iconSize,
+        ),
+      ),
+    );
+    return Semantics(
+      button: true,
+      enabled: enabled,
+      label: semanticLabel,
+      child: Tooltip(
+        message: tooltip,
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: enabled ? onPressed : null,
+            child: icon,
+          ),
+        ),
+      ),
+    );
+  }
+}

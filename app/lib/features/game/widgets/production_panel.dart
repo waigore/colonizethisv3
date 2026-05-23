@@ -12,6 +12,8 @@ import '../../../widgets/resource_icon.dart';
 import '../production_recipe_affordance.dart';
 import 'production_allocation_mutations.dart';
 import 'production_allocation_row_buttons.dart';
+import 'production_labour_helpers.dart';
+import 'production_labour_section.dart';
 
 const _uiIconProductionAllocDecrement =
     'ui_icon_production_alloc_decrement.png';
@@ -29,6 +31,9 @@ class ProductionPanel extends StatelessWidget {
     required this.netDeltasByCommodity,
     required this.onDesiredOutputChanged,
     this.onOpenCommodityBreakdown,
+    this.currentOrders,
+    this.labourCallbacks,
+    this.canEditLabour = false,
   });
 
   final Game game;
@@ -39,6 +44,18 @@ class ProductionPanel extends StatelessWidget {
 
   /// When set, Available header shows a text button that opens the breakdown dialog.
   final VoidCallback? onOpenCommodityBreakdown;
+
+  /// Required for the Labour controls to display queued counts. When `null`
+  /// the Labour section renders read-only with zero pending counts.
+  final Orders? currentOrders;
+
+  /// Callbacks bound to the screen's providers. When `null`, the Labour
+  /// controls render in read-only mode (no +/-/Disband buttons).
+  final ProductionLabourCallbacks? labourCallbacks;
+
+  /// True when the viewed player may mutate orders or pool via the Labour
+  /// controls. Combined with [labourCallbacks] presence to gate buttons.
+  final bool canEditLabour;
 
   static Set<String> get _inputCommodityIds {
     final inputIds = <String>{};
@@ -77,6 +94,9 @@ class ProductionPanel extends StatelessWidget {
       netDeltasByCommodity: netDeltasByCommodity,
       l10n: l10n,
       onOpenCommodityBreakdown: onOpenCommodityBreakdown,
+      currentOrders: currentOrders,
+      labourCallbacks: labourCallbacks,
+      canEditLabour: canEditLabour,
     );
     final allocationSubpanel = _AllocationSubpanel(
       player: player,
@@ -159,6 +179,9 @@ class _AvailableSubpanel extends StatelessWidget {
     required this.netDeltasByCommodity,
     required this.l10n,
     this.onOpenCommodityBreakdown,
+    this.currentOrders,
+    this.labourCallbacks,
+    this.canEditLabour = false,
   });
 
   final Player player;
@@ -168,6 +191,9 @@ class _AvailableSubpanel extends StatelessWidget {
   final Map<String, int> netDeltasByCommodity;
   final AppLocalizations l10n;
   final VoidCallback? onOpenCommodityBreakdown;
+  final Orders? currentOrders;
+  final ProductionLabourCallbacks? labourCallbacks;
+  final bool canEditLabour;
 
   Widget _buildCommodityRow(Commodity c, int qty, int change, ThemeData theme) {
     final name = c.displayName ?? c.id;
@@ -280,7 +306,7 @@ class _AvailableSubpanel extends StatelessWidget {
   }
 
   List<Widget> _buildWorkerSection(ThemeData theme) {
-    return <Widget>[
+    final children = <Widget>[
       const SizedBox(height: 12),
       Text(l10n.production_workers, style: theme.textTheme.labelMedium),
       const SizedBox(height: 4),
@@ -296,12 +322,26 @@ class _AvailableSubpanel extends StatelessWidget {
           _buildWorkerRow('master', player.workerPool.masters, theme),
         ],
       ),
+    ];
+    if (currentOrders != null && labourCallbacks != null) {
+      children.addAll(<Widget>[
+        const SizedBox(height: 8),
+        ProductionLabourSection(
+          player: player,
+          currentOrders: currentOrders!,
+          canEdit: canEditLabour,
+          callbacks: labourCallbacks!,
+        ),
+      ]);
+    }
+    children.addAll(<Widget>[
       const SizedBox(height: 8),
       Text(
         l10n.production_effectiveLabour(effectiveLabour),
         style: theme.textTheme.bodySmall?.copyWith(fontWeight: FontWeight.w600),
       ),
-    ];
+    ]);
+    return children;
   }
 
   @override
