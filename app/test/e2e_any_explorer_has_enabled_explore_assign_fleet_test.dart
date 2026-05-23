@@ -168,7 +168,7 @@ void main() {
             _civilianPanel(
               children: [
                 _AssignRow(
-                  label: 'Explorer',
+                  label: kUnitTypeExplorer,
                   exploreTileEnabled: true,
                   onTap: () => assignTaps++,
                 ),
@@ -204,7 +204,7 @@ void main() {
               _civilianPanel(
                 children: [
                   _AssignRow(
-                    label: 'Builder',
+                    label: kUnitTypeBuilder,
                     exploreTileEnabled: true,
                     onTap: () => assignTaps++,
                   ),
@@ -238,7 +238,7 @@ void main() {
               _civilianPanel(
                 children: [
                   _AssignRow(
-                    label: 'Explorer',
+                    label: kUnitTypeExplorer,
                     exploreTileEnabled: true,
                     onTap: () => assignTaps++,
                   ),
@@ -276,7 +276,7 @@ void main() {
             _civilianPanel(
               children: [
                 _AssignRow(
-                  label: 'Explorer',
+                  label: kUnitTypeExplorer,
                   exploreTileEnabled: true,
                   onTap: () => assignTaps++,
                 ),
@@ -308,12 +308,12 @@ void main() {
               _civilianPanel(
                 children: [
                   _AssignRow(
-                    label: 'Builder',
+                    label: kUnitTypeBuilder,
                     exploreTileEnabled: false,
                     onTap: () => firstTaps++,
                   ),
                   _AssignRow(
-                    label: 'Explorer',
+                    label: kUnitTypeExplorer,
                     exploreTileEnabled: true,
                     onTap: () => secondTaps++,
                   ),
@@ -374,7 +374,7 @@ void main() {
             _civilianPanel(
               children: [
                 _AssignRow(
-                  label: 'Builder',
+                  label: kUnitTypeBuilder,
                   exploreTileEnabled: null,
                   onTap: () => taps++,
                 ),
@@ -410,7 +410,7 @@ void main() {
               _civilianPanel(
                 children: [
                   _AssignRow(
-                    label: 'Explorer',
+                    label: kUnitTypeExplorer,
                     exploreTileEnabled: false,
                     onTap: () => taps++,
                   ),
@@ -453,7 +453,7 @@ void main() {
               _civilianPanel(
                 children: [
                   _AssignRow(
-                    label: 'Explorer',
+                    label: kUnitTypeExplorer,
                     exploreTileEnabled: false,
                     onTap: () => taps++,
                   ),
@@ -490,7 +490,7 @@ void main() {
               _civilianPanel(
                 children: [
                   _AssignRow(
-                    label: 'Explorer',
+                    label: kUnitTypeExplorer,
                     exploreTileEnabled: true,
                     onTap: () => taps++,
                   ),
