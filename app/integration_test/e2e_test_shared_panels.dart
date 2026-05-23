@@ -11,6 +11,8 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'e2e_test_shared.dart';
 
+export 'e2e_test_shared_panel_text_assertions.dart';
+
 // `_e2eTapFirstEnabledTransferButtonInSplitDialog` previously lived here as a
 // helper for split-fleet transfer-row taps but was never wired into any caller
 // (`e2eSplitHomeFleetOnce` inlines its own `enabledLeftNudge` finder for the
@@ -1363,3 +1365,10 @@ Future<bool> e2eCheckExploreEnabledFromCivilianPanel(
   );
   return enabled;
 }
+
+// `e2eExpectPanelTextsMatchSnapshot`, `kE2eDefaultExpectPanelTextsPhase`,
+// and `kE2eDefaultExpectPanelTextsTimeout` live in
+// `e2e_test_shared_panel_text_assertions.dart` and are surfaced from this
+// barrel via the `export` directive at the top of the file so the snapshot
+// text-assertion recipe stays separable from the panel-opener and
+// panel-action helpers in this file (Refs GitHub #2336 AC1 / AC2).
