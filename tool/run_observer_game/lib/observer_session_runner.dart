@@ -27,6 +27,7 @@ Future<int> runObserverSession({
   int? maxTurnsCap,
   bool verifyConquest = false,
   bool verifyColonialExpansion = false,
+  bool verifyWorkforce = false,
   int verifyArtifactCapBytes = kObserverVerifyArtifactSizeCapBytes,
 }) async {
   late final InitGameResult init;
@@ -44,11 +45,13 @@ Future<int> runObserverSession({
     return 2;
   }
 
-  final minimalTraceMode = verifyConquest || verifyColonialExpansion;
+  final minimalTraceMode =
+      verifyConquest || verifyColonialExpansion || verifyWorkforce;
   final requiredSnapshotTurns = minimalTraceMode
       ? requiredObserverSnapshotTurns(
           verifyConquest: verifyConquest,
           verifyColonialExpansion: verifyColonialExpansion,
+          verifyWorkforce: verifyWorkforce,
         )
       : null;
 

@@ -8,7 +8,12 @@ import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'observer_extractable_rollup.dart';
 
 /// Observer canonical snapshot (SPEC/program/run_observer_game-tool.md).
-const int observerSnapshotSchemaVersion = 2;
+///
+/// **v3 (Refs #2692 S10a):** Adds `workerPool` per player rollup
+/// (`peasants`, `apprentices`, `journeymen`, `masters`) so workforce
+/// growth and 15-regiment sustain can be verified from snapshots at
+/// turn 100 without rerunning the campaign.
+const int observerSnapshotSchemaVersion = 3;
 
 Map<String, Object?> buildObserverSnapshotJson(
   Game game, {
@@ -28,6 +33,7 @@ Map<String, Object?> buildObserverSnapshotJson(
     final techKeys =
         (p.techUnlocked?.keys.map((k) => k.toString()).toList() ?? <String>[])
           ..sort();
+    final pool = p.workerPool;
     playerRollups.add(<String, Object?>{
       'playerId': p.id,
       'displayName': p.displayName,
@@ -40,6 +46,12 @@ Map<String, Object?> buildObserverSnapshotJson(
       ).round(),
       'fleetShipCountHint': shipCountForFaction(game, p.id),
       'techUnlockedIds': techKeys,
+      'workerPool': <String, Object?>{
+        'peasants': pool.peasants,
+        'apprentices': pool.apprentices,
+        'journeymen': pool.journeymen,
+        'masters': pool.masters,
+      },
     });
   }
 

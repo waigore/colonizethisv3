@@ -21,6 +21,7 @@ melos run run_observer_game -- [options]
 | `--config <path>` | Optional JSON `GameSetupConfig` consistent with **`init_game`**. |
 | `--verify-conquest` | After success: turn-1 vs turn-100 OW per-GP net +3 provinces (exit **5** on failure; requires `--max-turns >= 100` or no cap). |
 | `--verify-colonial-expansion` | After success: turn-150 snapshot checks NW GP ownership and extractable improvement ratio (exit **6** on failure; requires `--max-turns >= 150` or no cap). |
+| `--verify-workforce` | After success: turn-100 snapshot checks every Great Power `gp1`–`gp6` has `peasants >= 15` AND `apprentices + journeymen + masters >= 8` (exit **8** on failure; requires `--max-turns >= 100` or no cap; Refs #2692 S10). |
 
 **Errors:** Diagnostics via `logger`; user-facing failures → **stderr** and non-zero exit; no raw stack traces by default (match `init_game`).
 
@@ -38,28 +39,29 @@ Active when **no** `--verify-*` flag is set.
 
 ### Minimal trace mode (auto when `--verify-*` is set)
 
-Active when **`--verify-conquest` and/or `--verify-colonial-expansion`** is passed (no separate nightly flag). Refs **#2534**.
+Active when **`--verify-conquest`, `--verify-colonial-expansion`, and/or `--verify-workforce`** is passed (no separate nightly flag). Refs **#2534**, **#2692 S10**.
 
 - **No** merged turn-trace JSON, **no** `.html`, **no** in-memory phase tracing (`onTurnTracePhase` / `turnTraceRuntime` off).
 - **ObserverSnapshot** JSON only on turns required by the active verify flags (union):
   - `--verify-conquest` → `turn-000001.snapshot.json`, `turn-000100.snapshot.json`
   - `--verify-colonial-expansion` → `turn-000150.snapshot.json`
-  - Both (nightly) → those **three** snapshots plus `run-summary.json` only.
+  - `--verify-workforce` → `turn-000100.snapshot.json`
+  - All three (nightly) → those **three** distinct snapshots (turns 1, 100, 150) plus `run-summary.json` only.
 - **`run-summary.json`** always written at end (`minimal_trace_mode: true` in summary when minimal mode ran).
 - **Artifact size cap:** cumulative bytes under the game trace directory must stay **strictly below 300 MB** (`300 * 1024 * 1024`); if a write would exceed the cap, the run aborts with exit **7** (`artifact_size_cap_exceeded`). Canonical nightly verify inputs are expected to be far below the cap; the cap guards regressions that reintroduce large artifacts.
 
-## ObserverSnapshot (`ObserverSnapshot` v2)
+## ObserverSnapshot (`ObserverSnapshot` v3)
 
-Versioned map written to `turn-<nnnnnn>.snapshot.json` and embedded (escaped) in paired `turn-<nnnnnn>.html`. **`observerSnapshotSchemaVersion` is `2`.**
+Versioned map written to `turn-<nnnnnn>.snapshot.json` and embedded (escaped) in paired `turn-<nnnnnn>.html`. **`observerSnapshotSchemaVersion` is `3`** (Refs **#2692** S10a; v3 adds per-player `workerPool`).
 
 | Field | Meaning |
 |-------|---------|
-| `observerSnapshotSchemaVersion` | Always `2` for this shape (v1 lacked extraction rollups). |
+| `observerSnapshotSchemaVersion` | `3` (v2 lacked `workerPool`; v1 lacked extraction rollups). |
 | `gameId` | Game id string. |
 | `turnNumber` | Post-resolution turn index (`Game.worldState.turnState.turnNumber`). |
 | `calendarYearAtTurnStart` | `yearAtTurn(turnNumber)` using the game's active `TurnTimeMapping` (if `turnNumber` is below 1, the lookup uses 1). |
 | `calendarCampaignHalted` | Mirrors `Game.calendarCampaignHalted`. |
-| `players` | One object per `game.players`: ids, display name, human flag, GP power score, treasury, military strength / fleet hints, sorted tech unlock ids. |
+| `players` | One object per `game.players`: ids, display name, human flag, GP power score, treasury, military strength / fleet hints, sorted tech unlock ids, **`workerPool`** (peasants / apprentices / journeymen / masters mirroring `Player.workerPool`). |
 | `provinceOwnershipSorted` | Sorted list of `{ id, ownerId }` for every province (`allProvinces`), ids prefixed per world model. |
 | `diplomacyRelationSummariesSorted` | Stable string lines summarizing each `diplomacyRelations` row (pair, score, level, war/peace). |
 | `militaryArmySummariesSorted` | One string per land army (id, owner, region, regiment count). |
@@ -92,7 +94,11 @@ Each **resolved turn** in the session loop measures the same segment as the app 
 
 Pass **`--verify-colonial-expansion`** after a successful run (exit **6** on failure; requires `--max-turns >= 150` or no turn cap). Rollup computation: `lib/observer_extractable_rollup.dart` (init static resource grid ∩ GP-owned provinces at verify turn; excludes capital and province town tiles per [extraction-and-improvements.md](../game/extraction-and-improvements.md)).
 
-Unit tests cover parsers; full observer runs are slow and are **not** in the default `quality` gate. **Nightly:** `.github/workflows/nightly.yml` job `observer_conquest_verify` runs seed **42**, **150** turns, **`--verify-conquest`**, and **`--verify-colonial-expansion`** daily at **23:00 Asia/Hong_Kong** (`0 15 * * *` UTC; `workflow_dispatch` supported).
+Unit tests cover parsers; full observer runs are slow and are **not** in the default `quality` gate. **Nightly:** `.github/workflows/nightly.yml` job `observer_conquest_verify` runs seed **42**, **150** turns, **`--verify-conquest`**, **`--verify-colonial-expansion`**, and **`--verify-workforce`** daily at **23:00 Asia/Hong_Kong** (`0 15 * * *` UTC; `workflow_dispatch` supported).
+
+## Workforce sustain verification (Refs #2692 S10)
+
+`lib/observer_workforce_verify.dart` reads `turn-000100.snapshot.json` and, per `gp1`–`gp6`, asserts `peasants >= 15` AND `apprentices + journeymen + masters >= 8`. Pass **`--verify-workforce`** after a successful run (exit **8** on failure; requires `--max-turns >= 100` or no turn cap). Food / luxury sustain checks (Requirement §21 bullets 3–4 of issue #2692) remain deferred behind `kObserverWorkforceFoodLuxuryDeferred`; thresholds, parser contract, and the deferral marker live in [observer-workforce-verify.md](observer-workforce-verify.md).
 
 ## Coverage
 
