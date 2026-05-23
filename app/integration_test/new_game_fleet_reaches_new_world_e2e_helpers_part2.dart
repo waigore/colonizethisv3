@@ -111,3 +111,21 @@ part of 'new_game_fleet_reaches_new_world_e2e_test.dart';
 /// barrel alias `advanceOneHumanTurn` (`e2e_helpers.dart`); the widget-test
 /// pin in `app/test/e2e_advance_one_human_turn_test.dart` carries the
 /// behavioural contract.
+
+/// The bundled-Explore "check Explore enabled from civilian panel" inline
+/// closure was lifted into [e2eCheckExploreEnabledFromCivilianPanel]
+/// (`e2e_test_shared_panels.dart`) so the open-civilian → wait-root →
+/// Assign-sweep → close-sheet → perf-timing recipe is shared and
+/// unit-pinned (Refs GitHub #2336 AC1 / AC2 / AC5 / Bottleneck 5). The
+/// post-bundle Explore scenario calls the lifted form through the AC1
+/// barrel alias `checkExploreEnabledFromCivilianPanel`
+/// (`e2e_helpers.dart`) inside a bounded `maxBoundedTurnRetries (8)` retry
+/// loop. The widget-test pin in
+/// `app/test/e2e_check_explore_enabled_from_civilian_panel_test.dart`
+/// guards against silent regressions (the integration suite cannot
+/// validate this directly today — `app_e2e_linux` is a no-op per
+/// `SPEC/program/e2e-integration-tests.md` § CI). A regression that
+/// dropped the `closeBottomSheet` call would stall the retry loop on a
+/// stale Assign sheet; one that swapped `bottomSheetCloseTimeout` for the
+/// default 30 s would inflate the per-iteration wall clock past the
+/// `_kMaxUiResponseWait (5s)` cap #2336 is reducing.
