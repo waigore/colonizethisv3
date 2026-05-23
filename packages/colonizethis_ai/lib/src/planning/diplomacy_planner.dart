@@ -24,6 +24,7 @@ import '../util/orders_extensions.dart';
 import 'diplomatic_candidate_scoring.dart';
 import 'diplomacy_planner_peace_targets.dart';
 import 'diplomacy_planner_result.dart';
+import 'phase_planner_declare_war_targets.dart';
 import 'phase_planner_dispatch.dart';
 import 'phase_planner_peace_targets.dart';
 
@@ -773,6 +774,59 @@ DiplomacyPlannerResult? _criticalWeakMinorDeclarePlannerResultIfNeeded({
   );
 }
 
+DiplomacyPlannerResult? _forcedDeclareWarPlannerResult({
+  required PlannerContext ctx,
+  required String target,
+  required String logLabel,
+}) {
+  _log.i(
+    'diplomacy forced declareWar nationId=${ctx.nationId} '
+    '$logLabel=$target',
+  );
+  return DiplomacyPlannerResult(
+    orders: ctx.orders.appendDiplomaticOrders(
+      ctx.nationId,
+      [
+        DiplomaticOrder(
+          type: DiplomaticOrderType.declareWar,
+          targetFactionId: target,
+        ),
+      ],
+    ),
+    declaredWarTargetFactionId: target,
+  );
+}
+
+/// When [phasePlan] is set, declare-war targets come only from the phase
+/// planners via [gpExpandDeclareWarTargetFromPhasePlan] and
+/// [gpColonialDeclareWarTargetFromPhasePlan] (Refs #2509 S5).
+DiplomacyPlannerResult? _phasePlannerDeclareWarPlannerResultIfNeeded({
+  required PlannerContext ctx,
+  required DiplomacyPlannerPass pass,
+  PhasePlanOutcome? phasePlan,
+}) {
+  if (pass != DiplomacyPlannerPass.declareWarOnly || phasePlan == null) {
+    return null;
+  }
+  final expandTarget = gpExpandDeclareWarTargetFromPhasePlan(phasePlan);
+  if (expandTarget != null) {
+    return _forcedDeclareWarPlannerResult(
+      ctx: ctx,
+      target: expandTarget,
+      logLabel: 'phaseExpand',
+    );
+  }
+  final colonialTarget = gpColonialDeclareWarTargetFromPhasePlan(phasePlan);
+  if (colonialTarget != null) {
+    return _forcedDeclareWarPlannerResult(
+      ctx: ctx,
+      target: colonialTarget,
+      logLabel: 'phaseColonial',
+    );
+  }
+  return null;
+}
+
 DiplomacyPlannerResult? _stalledPeacePlannerResultIfNeeded({
   required PlannerContext ctx,
   required AIWorldSnapshot snapshot,
@@ -911,59 +965,73 @@ DiplomacyPlannerResult runDiplomacyPlannerWithResult({
     }
   }
   if (pass == DiplomacyPlannerPass.declareWarOnly) {
-    // EXPAND phase: minors before invadable-GP declare (Refs #2509).
-    final defaultStartMinorResult =
-        _defaultStartOwMinorDeclarePlannerResultIfNeeded(
+    final phaseDeclareResult = _phasePlannerDeclareWarPlannerResultIfNeeded(
       ctx: ctx,
-      snapshot: snapshot,
       pass: pass,
+      phasePlan: phasePlan,
     );
-    if (defaultStartMinorResult != null) {
-      return defaultStartMinorResult;
+    if (phaseDeclareResult != null) {
+      return phaseDeclareResult;
     }
-    final plateauMinorResult = _plateauOwMinorDeclarePlannerResultIfNeeded(
-      ctx: ctx,
-      snapshot: snapshot,
-      pass: pass,
-    );
-    if (plateauMinorResult != null) {
-      return plateauMinorResult;
-    }
-    final belowQuotaMinorResult =
-        _belowQuotaUninvadedMinorDeclarePlannerResultIfNeeded(
-      ctx: ctx,
-      snapshot: snapshot,
-      pass: pass,
-    );
-    if (belowQuotaMinorResult != null) {
-      return belowQuotaMinorResult;
-    }
-    final minorWarResult = _criticalWeakMinorDeclarePlannerResultIfNeeded(
-      ctx: ctx,
-      snapshot: snapshot,
-      pass: pass,
-    );
-    if (minorWarResult != null) {
-      return minorWarResult;
-    }
-    if (isOldWorldGpOnlyInvadableFrontier(game: ctx.game, snapshot: snapshot)) {
-      final blockerDeclareResult = _plateauGpBlockerDeclarePlannerResultIfNeeded(
+    if (phasePlan == null) {
+      // Legacy colonial_pressure declare-war ratchet (Refs #2509 S1 retires).
+      final defaultStartMinorResult =
+          _defaultStartOwMinorDeclarePlannerResultIfNeeded(
         ctx: ctx,
         snapshot: snapshot,
         pass: pass,
       );
-      if (blockerDeclareResult != null) {
-        return blockerDeclareResult;
+      if (defaultStartMinorResult != null) {
+        return defaultStartMinorResult;
       }
-    }
-    final stalledGpDeclareResult =
-        _stalledInvadableGpOwnerDeclarePlannerResultIfNeeded(
-      ctx: ctx,
-      snapshot: snapshot,
-      pass: pass,
-    );
-    if (stalledGpDeclareResult != null) {
-      return stalledGpDeclareResult;
+      final plateauMinorResult = _plateauOwMinorDeclarePlannerResultIfNeeded(
+        ctx: ctx,
+        snapshot: snapshot,
+        pass: pass,
+      );
+      if (plateauMinorResult != null) {
+        return plateauMinorResult;
+      }
+      final belowQuotaMinorResult =
+          _belowQuotaUninvadedMinorDeclarePlannerResultIfNeeded(
+        ctx: ctx,
+        snapshot: snapshot,
+        pass: pass,
+      );
+      if (belowQuotaMinorResult != null) {
+        return belowQuotaMinorResult;
+      }
+      final minorWarResult = _criticalWeakMinorDeclarePlannerResultIfNeeded(
+        ctx: ctx,
+        snapshot: snapshot,
+        pass: pass,
+      );
+      if (minorWarResult != null) {
+        return minorWarResult;
+      }
+      if (isOldWorldGpOnlyInvadableFrontier(
+        game: ctx.game,
+        snapshot: snapshot,
+      )) {
+        final blockerDeclareResult =
+            _plateauGpBlockerDeclarePlannerResultIfNeeded(
+          ctx: ctx,
+          snapshot: snapshot,
+          pass: pass,
+        );
+        if (blockerDeclareResult != null) {
+          return blockerDeclareResult;
+        }
+      }
+      final stalledGpDeclareResult =
+          _stalledInvadableGpOwnerDeclarePlannerResultIfNeeded(
+        ctx: ctx,
+        snapshot: snapshot,
+        pass: pass,
+      );
+      if (stalledGpDeclareResult != null) {
+        return stalledGpDeclareResult;
+      }
     }
   }
   final weight = _resolveDiplomacyPlannerWeight(
