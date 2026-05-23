@@ -1,7 +1,6 @@
 /// Pins the dash-glyph contract of [e2eTextLooksLikeNewWorldLocationLine]
 /// (`app/integration_test/e2e_test_shared.dart`) — the predicate fleet-reach
-/// E2E detection (`_navalPanelShowsNonHomeFleetInNewWorld` in
-/// `new_game_fleet_reaches_new_world_e2e_helpers_part2.dart`) uses to
+/// E2E detection ([e2eNavalPanelShowsNonHomeFleetInNewWorld]) uses to
 /// recognize a naval-panel location row like `"New World — Outer Sea"`.
 ///
 /// `naval_tree_builder.dart` joins the region and the location with an

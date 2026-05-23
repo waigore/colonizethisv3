@@ -14,22 +14,32 @@ import 'e2e_test_shared_bootstrap.dart';
 
 /// Re-export shared polling / settle entrypoints so scenarios depend on this
 /// barrel only (GitHub #2336 AC2).
-export 'e2e_test_shared.dart' show
-    E2ePerfLog,
-    e2eAdaptivePollRampAfterIdle,
-    e2eMakeWallClockGuard,
-    e2eNewWorldRegionChipAppearsSelected,
-    e2eOldWorldRegionChipAppearsSelected,
-    e2ePumpUntil,
-    e2ePumpUntilConditionOrIdle,
-    e2eTextLooksLikeNewWorldLocationLine,
-    e2eWaitForNewGameEntry,
-    e2eWaitForNextTurnLabelAdvance,
-    e2eWaitUntilAnyFinderHitTestable,
-    e2eOpenProductionPanel,
-    e2eOpenPanelFromMarker,
-    kE2eMaxWallClock,
-    kE2eNextTurnResolutionTimeout;
+export 'e2e_test_shared.dart'
+    show
+        E2ePerfLog,
+        e2eAdaptivePollRampAfterIdle,
+        e2eBundledExploreRejectionDiagnostics,
+        e2eExploreAssignEnabledFromCivilianSnapshot,
+        e2eFleetReachDoneFromCtSnapshotOnly,
+        e2eHarnessDetectsNonHomeFleetInNewWorld,
+        e2eMakeWallClockGuard,
+        e2eNewWorldRegionChipAppearsSelected,
+        e2eNonHomeHumanFleetInCoastalNewWorldSeaFromCtSnapshot,
+        e2eNavalPanelShowsNonHomeFleetInNewWorld,
+        e2eNonHomeHumanFleetInNewWorldFromCtSnapshot,
+        e2eNwCoastalProvincesAdjacentToFleetSea,
+        e2eOldWorldRegionChipAppearsSelected,
+        e2ePlayerHasAnyNewWorldFoggedOrBetterFromCtSnapshot,
+        e2ePumpUntil,
+        e2ePumpUntilConditionOrIdle,
+        e2eTextLooksLikeNewWorldLocationLine,
+        e2eWaitForNewGameEntry,
+        e2eWaitForNextTurnLabelAdvance,
+        e2eWaitUntilAnyFinderHitTestable,
+        e2eOpenProductionPanel,
+        e2eOpenPanelFromMarker,
+        kE2eMaxWallClock,
+        kE2eNextTurnResolutionTimeout;
 
 Future<void> pumpFor(WidgetTester tester, Duration total) =>
     e2ePumpFor(tester, total);
@@ -41,20 +51,16 @@ Future<void> waitUntilFound(
   Duration diagnoseAfter = Duration.zero,
   E2ePerfLog? perf,
   String phaseName = 'wait_until_found',
-}) =>
-    e2eWaitUntilFound(
-      tester,
-      finder,
-      timeout: timeout,
-      diagnoseAfter: diagnoseAfter,
-      perf: perf,
-      phaseName: phaseName,
-    );
+}) => e2eWaitUntilFound(
+  tester,
+  finder,
+  timeout: timeout,
+  diagnoseAfter: diagnoseAfter,
+  perf: perf,
+  phaseName: phaseName,
+);
 
-Future<void> dismissTransientUi(
-  WidgetTester tester, {
-  E2ePerfLog? perf,
-}) =>
+Future<void> dismissTransientUi(WidgetTester tester, {E2ePerfLog? perf}) =>
     e2eDismissTransientUi(tester, perf: perf);
 
 Future<void> openCivilianPanel(
@@ -64,34 +70,31 @@ Future<void> openCivilianPanel(
   Duration bottomSheetCloseTimeout = kE2eDefaultBottomSheetCloseTimeout,
   String afterSheetPanelsClearPhase =
       'pump_until_panels_cleared_after_close_sheet_civilian_open',
-}) =>
-    e2eOpenCivilianPanel(
-      tester,
-      timeout: timeout,
-      perf: perf,
-      bottomSheetCloseTimeout: bottomSheetCloseTimeout,
-      afterSheetPanelsClearPhase: afterSheetPanelsClearPhase,
-    );
+}) => e2eOpenCivilianPanel(
+  tester,
+  timeout: timeout,
+  perf: perf,
+  bottomSheetCloseTimeout: bottomSheetCloseTimeout,
+  afterSheetPanelsClearPhase: afterSheetPanelsClearPhase,
+);
 
 Future<void> openNavalPanel(
   WidgetTester tester, {
   E2ePerfLog? perf,
   Duration timeout = kE2eDefaultNavalOpenTimeout,
   Duration bottomSheetCloseTimeout = kE2eDefaultBottomSheetCloseTimeout,
-}) =>
-    e2eOpenNavalPanel(
-      tester,
-      perf: perf,
-      timeout: timeout,
-      bottomSheetCloseTimeout: bottomSheetCloseTimeout,
-    );
+}) => e2eOpenNavalPanel(
+  tester,
+  perf: perf,
+  timeout: timeout,
+  bottomSheetCloseTimeout: bottomSheetCloseTimeout,
+);
 
 Future<void> openProductionPanel(
   WidgetTester tester, {
   E2ePerfLog? perf,
   Duration timeout = const Duration(seconds: 20),
-}) =>
-    e2eOpenProductionPanel(tester, perf: perf, timeout: timeout);
+}) => e2eOpenProductionPanel(tester, perf: perf, timeout: timeout);
 
 Future<void> openPanelFromMarker(
   WidgetTester tester, {
@@ -99,58 +102,44 @@ Future<void> openPanelFromMarker(
   required Finder panelRoot,
   Duration timeout = const Duration(seconds: 20),
   E2ePerfLog? perf,
-}) =>
-    e2eOpenPanelFromMarker(
-      tester,
-      markerButton: markerButton,
-      panelRoot: panelRoot,
-      timeout: timeout,
-      perf: perf,
-    );
+}) => e2eOpenPanelFromMarker(
+  tester,
+  markerButton: markerButton,
+  panelRoot: panelRoot,
+  timeout: timeout,
+  perf: perf,
+);
 
 Future<Duration> waitForNextTurnLabelAdvance(
   WidgetTester tester, {
   required String turnLabelBefore,
   required Duration timeout,
   E2ePerfLog? perf,
-}) =>
-    e2eWaitForNextTurnLabelAdvance(
-      tester,
-      turnLabelBefore: turnLabelBefore,
-      timeout: timeout,
-      perf: perf,
-    );
+}) => e2eWaitForNextTurnLabelAdvance(
+  tester,
+  turnLabelBefore: turnLabelBefore,
+  timeout: timeout,
+  perf: perf,
+);
 
 Future<Duration> advanceOneHumanTurn(
   WidgetTester tester, {
   required AppLocalizations l10n,
   E2ePerfLog? perf,
   Duration timeout = kE2eNextTurnResolutionTimeout,
-}) =>
-    e2eAdvanceOneHumanTurn(
-      tester,
-      l10n: l10n,
-      perf: perf,
-      timeout: timeout,
-    );
+}) => e2eAdvanceOneHumanTurn(tester, l10n: l10n, perf: perf, timeout: timeout);
 
 Future<void> closeBottomSheet(
   WidgetTester tester, {
   E2ePerfLog? perf,
   Duration overallTimeout = kE2eDefaultBottomSheetCloseTimeout,
-}) =>
-    e2eCloseBottomSheet(
-      tester,
-      perf: perf,
-      overallTimeout: overallTimeout,
-    );
+}) => e2eCloseBottomSheet(tester, perf: perf, overallTimeout: overallTimeout);
 
 Future<void> bootstrapNewGameToMap(
   WidgetTester tester, {
   E2ePerfLog? perf,
   Duration overallCap = const Duration(seconds: 60),
-}) =>
-    e2eBootstrapNewGameToMap(tester, perf: perf, overallCap: overallCap);
+}) => e2eBootstrapNewGameToMap(tester, perf: perf, overallCap: overallCap);
 
 void collectTextPreorder(Element element, List<String> out) =>
     e2eCollectTextPreorder(element, out);
@@ -165,15 +154,14 @@ Future<void> splitHomeFleetOnce(
   Duration openNavalTimeout = kE2eDefaultNavalOpenTimeout,
   Duration bottomSheetCloseTimeout = kE2eDefaultBottomSheetCloseTimeout,
   bool navalPanelAlreadyOpen = false,
-}) =>
-    e2eSplitHomeFleetOnce(
-      tester,
-      l10n,
-      perf: perf,
-      openNavalTimeout: openNavalTimeout,
-      bottomSheetCloseTimeout: bottomSheetCloseTimeout,
-      navalPanelAlreadyOpen: navalPanelAlreadyOpen,
-    );
+}) => e2eSplitHomeFleetOnce(
+  tester,
+  l10n,
+  perf: perf,
+  openNavalTimeout: openNavalTimeout,
+  bottomSheetCloseTimeout: bottomSheetCloseTimeout,
+  navalPanelAlreadyOpen: navalPanelAlreadyOpen,
+);
 
 Future<void> tapFirstAssignInCivilianPanel(WidgetTester tester) =>
     e2eTapFirstAssignInCivilianPanel(tester);
@@ -181,8 +169,7 @@ Future<void> tapFirstAssignInCivilianPanel(WidgetTester tester) =>
 Future<void> tapAssignOnCivilianRowWithTitle(
   WidgetTester tester,
   String unitTypeTitle,
-) =>
-    e2eTapAssignOnCivilianRowWithTitle(tester, unitTypeTitle);
+) => e2eTapAssignOnCivilianRowWithTitle(tester, unitTypeTitle);
 
 Future<void> ensureAllRelocated64pxPngsLoad() =>
     e2eEnsureAllRelocated64pxPngsLoad();
