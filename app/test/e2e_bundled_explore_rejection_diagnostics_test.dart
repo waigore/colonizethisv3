@@ -36,6 +36,8 @@ library;
 
 import 'package:colonizethis_app/config/ct_e2e_last_panel_snapshot.dart';
 import 'package:colonizethis_data/colonizethis_data.dart' show MapTopology;
+import 'package:colonizethis_logic/colonizethis_logic.dart'
+    show kWorkTargetExplore, kWorkTargetProspect;
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter_test/flutter_test.dart';
@@ -149,7 +151,7 @@ void main() {
           navalSnapshot: null,
           civilianSnapshot: _civilianSnapshot(
             availableWorkTargets: const {
-              'unit-a': <String>['explore'],
+              'unit-a': <String>[kWorkTargetExplore],
             },
           ),
         ),
@@ -222,7 +224,7 @@ void main() {
         navalSnapshot: _navalSnapshot(),
         civilianSnapshot: _civilianSnapshot(
           availableWorkTargets: const {
-            'unit-a': <String>['explore', 'prospect'],
+            'unit-a': <String>[kWorkTargetExplore, kWorkTargetProspect],
           },
         ),
       );
@@ -233,7 +235,9 @@ void main() {
       );
       expect(
         diag,
-        contains('diag: availableWorkTargets={unit-a: [explore, prospect]}'),
+        contains(
+          'diag: availableWorkTargets={unit-a: [$kWorkTargetExplore, $kWorkTargetProspect]}',
+        ),
         reason:
             'availableWorkTargets serializes via Dart Map.toString(). '
             'Preserving the exact format lets CI grep on the literal '
@@ -491,7 +495,7 @@ void main() {
       );
       final civ = _civilianSnapshot(
         availableWorkTargets: const {
-          'unit-a': <String>['explore'],
+          'unit-a': <String>[kWorkTargetExplore],
         },
       );
       final first = e2eBundledExploreRejectionDiagnostics(
