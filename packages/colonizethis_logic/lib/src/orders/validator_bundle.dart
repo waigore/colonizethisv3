@@ -13,6 +13,7 @@ class OrderValidators {
   const OrderValidators({
     required this.moveValidator,
     required this.armyMoveValidator,
+    required this.recruitWorkerValidator,
     required this.buildValidator,
     required this.workValidator,
     required this.diplomaticValidator,
@@ -21,6 +22,7 @@ class OrderValidators {
 
   final MoveValidator moveValidator;
   final ArmyMoveValidator armyMoveValidator;
+  final RecruitWorkerOrderValidator recruitWorkerValidator;
   final BuildOrderValidator buildValidator;
   final WorkOrderValidator workValidator;
   final DiplomaticOrderValidator diplomaticValidator;
@@ -99,6 +101,12 @@ WorkOrderValidator createWorkOrderValidator({
 
 /// Factory for the default validator bundle used by [OrderEngine] and for
 /// economy projection inside incremental candidate validation.
+///
+/// [workerPool] is the projected worker pool state after any previously
+/// accepted `RecruitWorkerOrder`s in the same validation pass (peasant
+/// reservation ledger, SPEC/game/workers-and-population.md § Peasant
+/// reservation). Pass `player.workerPool` when no recruit orders are in
+/// scope.
 OrderValidators createOrderValidators({
   required Game game,
   required Player player,
@@ -113,21 +121,30 @@ OrderValidators createOrderValidators({
   required Stockpile stockpile,
   required int treasury,
   required DiplomacyFactionMembership factionMembership,
+  WorkerPool? workerPool,
 }) {
-  final treasuryForBuildValidation = treasury +
+  final treasuryForBuildValidation =
+      treasury +
       pendingRichesTreasuryDelta(
         stockpile: stockpile,
         richesCashMultiplier: game.richesCashMultiplier,
       );
+  final projectedWorkerPool = workerPool ?? player.workerPool;
   return OrderValidators(
     moveValidator: const MoveValidator(),
     armyMoveValidator: const ArmyMoveValidator(),
+    recruitWorkerValidator: RecruitWorkerOrderValidator.withProjectedEconomy(
+      player: player,
+      stockpile: stockpile,
+      treasury: treasury,
+      workerPool: projectedWorkerPool,
+    ),
     buildValidator: BuildOrderValidator.withProjectedEconomy(
       game: game,
       player: player,
       stockpile: stockpile,
       treasury: treasuryForBuildValidation,
-      workerPool: player.workerPool,
+      workerPool: projectedWorkerPool,
     ),
     workValidator: createWorkOrderValidator(
       game: game,

@@ -6,6 +6,7 @@ import 'package:colonizethis_logic/src/orders/validators/build_order_validator.d
 import 'package:colonizethis_logic/src/orders/validators/diplomatic_order_validator.dart';
 import 'package:colonizethis_logic/src/orders/validators/move_validator.dart';
 import 'package:colonizethis_logic/src/orders/validators/naval_order_validator.dart';
+import 'package:colonizethis_logic/src/orders/validators/recruit_worker_order_validator.dart';
 import 'package:colonizethis_logic/src/orders/validators/work_order_validator.dart';
 import 'package:colonizethis_logic/src/diplomacy/diplomacy_resolver.dart';
 import 'package:colonizethis_logic/src/world/player_view.dart';
@@ -61,6 +62,7 @@ void main() {
             Stockpile stockpile,
             int treasury,
             DiplomacyFactionMembership factionMembership,
+            WorkerPool workerPool,
           ) {
             final workContext = buildWorkOrderValidationContext(
               game: game,
@@ -78,6 +80,9 @@ void main() {
             return OrderValidators(
               moveValidator: const _AlwaysRejectMoveValidator(),
               armyMoveValidator: const ArmyMoveValidator(),
+              recruitWorkerValidator: RecruitWorkerOrderValidator(
+                player: player,
+              ),
               buildValidator: BuildOrderValidator(game: game, player: player),
               workValidator: WorkOrderValidator(
                 context: workContext,
@@ -109,50 +114,53 @@ void main() {
   });
 
   test(
-    'validatePlayerOrdersWithContext builds five validator bundles '
-    '(shared move+army, then fresh per later category; Refs #2391 AC7)',
+    'validatePlayerOrdersWithContext builds six validator bundles '
+    '(shared move+army, then fresh per later category; #2391 AC7, #2692 S4)',
     () {
-    var factoryCalls = 0;
-    final game = TestFixtures.minimalGame();
-    final topology = MapTopology(nodes: const [], edges: const []);
-    final engine = OrderEngine(
-      initialOrders: const Orders(),
-      validatorFactory:
-          (
-            Game game,
-            Player player,
-            String playerId,
-            PlayerView view,
-            MapTopology topology,
-            Map<String, Unit> unitsById,
-            List<DiplomaticOrder> diplomaticOrders,
-            Map<String, TileMapResult>? tileMapByRegion,
-            Set<String> civilianDraftMoveUnitIds,
-            Set<String> devExclusiveTiles,
-            Stockpile stockpile,
-            int treasury,
-            DiplomacyFactionMembership factionMembership,
-          ) {
-            factoryCalls++;
-            return createOrderValidators(
-              game: game,
-              player: player,
-              playerId: playerId,
-              view: view,
-              topology: topology,
-              unitsById: unitsById,
-              diplomaticOrders: diplomaticOrders,
-              tileMapByRegion: tileMapByRegion,
-              civilianDraftMoveUnitIds: civilianDraftMoveUnitIds,
-              devExclusiveTiles: devExclusiveTiles,
-              stockpile: stockpile,
-              treasury: treasury,
-              factionMembership: factionMembership,
-            );
-          },
-    );
+      var factoryCalls = 0;
+      final game = TestFixtures.minimalGame();
+      final topology = MapTopology(nodes: const [], edges: const []);
+      final engine = OrderEngine(
+        initialOrders: const Orders(),
+        validatorFactory:
+            (
+              Game game,
+              Player player,
+              String playerId,
+              PlayerView view,
+              MapTopology topology,
+              Map<String, Unit> unitsById,
+              List<DiplomaticOrder> diplomaticOrders,
+              Map<String, TileMapResult>? tileMapByRegion,
+              Set<String> civilianDraftMoveUnitIds,
+              Set<String> devExclusiveTiles,
+              Stockpile stockpile,
+              int treasury,
+              DiplomacyFactionMembership factionMembership,
+              WorkerPool workerPool,
+            ) {
+              factoryCalls++;
+              return createOrderValidators(
+                game: game,
+                player: player,
+                playerId: playerId,
+                view: view,
+                topology: topology,
+                unitsById: unitsById,
+                diplomaticOrders: diplomaticOrders,
+                tileMapByRegion: tileMapByRegion,
+                civilianDraftMoveUnitIds: civilianDraftMoveUnitIds,
+                devExclusiveTiles: devExclusiveTiles,
+                stockpile: stockpile,
+                treasury: treasury,
+                factionMembership: factionMembership,
+                workerPool: workerPool,
+              );
+            },
+      );
 
-    engine.validatePlayerOrdersWithContext(game, topology, 'h1');
-    expect(factoryCalls, 5);
-  });
+      engine.validatePlayerOrdersWithContext(game, topology, 'h1');
+      expect(factoryCalls, 6);
+    },
+  );
 }
