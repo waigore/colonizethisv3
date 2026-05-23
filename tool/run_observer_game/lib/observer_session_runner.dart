@@ -131,6 +131,16 @@ Future<int> runObserverSession({
         (pid, plan) => MapEntry(pid, plan.productionAssignments),
       );
 
+      Map<String, Map<String, int>>? lastTurnProductionByRecipeByPlayerId;
+      void captureProductionComplete(
+        Map<String, Map<String, int>> productionByRecipeByPlayerId,
+      ) {
+        lastTurnProductionByRecipeByPlayerId = productionByRecipeByPlayerId.map(
+          (pid, byRecipe) =>
+              MapEntry(pid, Map<String, int>.unmodifiable(byRecipe)),
+        );
+      }
+
       final TurnResolutionResult result;
       if (minimalTraceMode) {
         result = validateOrdersAndResolveTurnFromTrustedOrders(
@@ -139,6 +149,7 @@ Future<int> runObserverSession({
           orders: mergedOrders,
           tileMapByRegion: init.tileMapByRegion,
           defaultAssignmentsByPlayerId: defaultAssignmentsByPlayerId,
+          onProductionComplete: captureProductionComplete,
         );
       } else {
         final phaseTraces = <TurnTracePhaseTrace>[];
@@ -151,6 +162,7 @@ Future<int> runObserverSession({
           orders: mergedOrders,
           tileMapByRegion: init.tileMapByRegion,
           defaultAssignmentsByPlayerId: defaultAssignmentsByPlayerId,
+          onProductionComplete: captureProductionComplete,
           onTurnTracePhase: phaseTraces.add,
           turnTraceRuntime: traceRuntime,
         );
@@ -197,6 +209,8 @@ Future<int> runObserverSession({
           game,
           postResolutionTurnNumber: postTurn,
           tileMapByRegion: init.tileMapByRegion,
+          lastTurnProductionByRecipeByPlayerId:
+              lastTurnProductionByRecipeByPlayerId,
         );
         final snapshotText = encodeObserverSnapshotJson(snap);
         await writeTraceArtifact(
