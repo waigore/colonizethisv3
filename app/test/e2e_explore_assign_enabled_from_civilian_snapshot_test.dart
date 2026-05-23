@@ -31,6 +31,12 @@
 library;
 
 import 'package:colonizethis_app/config/ct_e2e_last_panel_snapshot.dart';
+import 'package:colonizethis_logic/colonizethis_logic.dart'
+    show
+        kWorkTargetBuildImprovement,
+        kWorkTargetBuildRoad,
+        kWorkTargetExplore,
+        kWorkTargetProspect;
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter_test/flutter_test.dart';
@@ -106,7 +112,7 @@ void main() {
         e2eExploreAssignEnabledFromCivilianSnapshot(
           _snapshot(
             availableWorkTargets: const {
-              'unit-1': ['build_road', 'prospect'],
+              'unit-1': [kWorkTargetBuildRoad, kWorkTargetProspect],
             },
           ),
         ),
@@ -124,8 +130,8 @@ void main() {
         e2eExploreAssignEnabledFromCivilianSnapshot(
           _snapshot(
             availableWorkTargets: const {
-              'unit-1': ['build_road'],
-              'unit-2': ['prospect', 'build_improvement'],
+              'unit-1': [kWorkTargetBuildRoad],
+              'unit-2': [kWorkTargetProspect, kWorkTargetBuildImprovement],
               'unit-3': <String>[],
             },
           ),
@@ -164,7 +170,7 @@ void main() {
         e2eExploreAssignEnabledFromCivilianSnapshot(
           _snapshot(
             availableWorkTargets: const {
-              'explorer-1': ['explore'],
+              'explorer-1': [kWorkTargetExplore],
             },
           ),
         ),
@@ -183,7 +189,11 @@ void main() {
           e2eExploreAssignEnabledFromCivilianSnapshot(
             _snapshot(
               availableWorkTargets: const {
-                'explorer-1': ['prospect', 'explore', 'build_road'],
+                'explorer-1': [
+                  kWorkTargetProspect,
+                  kWorkTargetExplore,
+                  kWorkTargetBuildRoad,
+                ],
               },
             ),
           ),
@@ -201,9 +211,9 @@ void main() {
         e2eExploreAssignEnabledFromCivilianSnapshot(
           _snapshot(
             availableWorkTargets: const {
-              'unit-1': ['build_road'],
-              'unit-2': ['prospect'],
-              'explorer-3': ['explore'],
+              'unit-1': [kWorkTargetBuildRoad],
+              'unit-2': [kWorkTargetProspect],
+              'explorer-3': [kWorkTargetExplore],
             },
           ),
         ),
@@ -220,8 +230,8 @@ void main() {
         e2eExploreAssignEnabledFromCivilianSnapshot(
           _snapshot(
             availableWorkTargets: const {
-              'explorer-1': ['explore', 'prospect'],
-              'explorer-2': ['explore'],
+              'explorer-1': [kWorkTargetExplore, kWorkTargetProspect],
+              'explorer-2': [kWorkTargetExplore],
             },
           ),
         ),
@@ -240,7 +250,7 @@ void main() {
             availableWorkTargets: const {
               'unit-1': <String>[],
               'unit-2': <String>[],
-              'explorer-3': ['explore'],
+              'explorer-3': [kWorkTargetExplore],
             },
           ),
         ),
@@ -318,7 +328,7 @@ void main() {
       // (no all-rows reduction, no aggregation).
       final snap = _snapshot(
         availableWorkTargets: const {
-          'explorer-1': ['explore'],
+          'explorer-1': [kWorkTargetExplore],
           'unit-2': ['EXPLORE_ALL_NOT_A_REAL_TARGET'],
         },
       );
@@ -340,14 +350,14 @@ void main() {
     test('identical input snapshots yield identical results', () {
       final snapA = _snapshot(
         availableWorkTargets: const {
-          'unit-1': ['build_road'],
-          'explorer-2': ['explore'],
+          'unit-1': [kWorkTargetBuildRoad],
+          'explorer-2': [kWorkTargetExplore],
         },
       );
       final snapB = _snapshot(
         availableWorkTargets: const {
-          'unit-1': ['build_road'],
-          'explorer-2': ['explore'],
+          'unit-1': [kWorkTargetBuildRoad],
+          'explorer-2': [kWorkTargetExplore],
         },
       );
 
@@ -366,7 +376,7 @@ void main() {
     test('repeated calls on same snapshot yield identical results', () {
       final snap = _snapshot(
         availableWorkTargets: const {
-          'unit-1': ['explore'],
+          'unit-1': [kWorkTargetExplore],
         },
       );
       final first = e2eExploreAssignEnabledFromCivilianSnapshot(snap);
