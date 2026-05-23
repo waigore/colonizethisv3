@@ -304,6 +304,45 @@ void main() {
       );
     });
 
+    testWidgets(
+      'tapMoveOnFirstNonHomeFleet is re-exported through the barrel',
+      (tester) async {
+        final Future<bool> Function(WidgetTester) ref =
+            tapMoveOnFirstNonHomeFleet;
+        expect(
+          ref,
+          isNotNull,
+          reason:
+              'The fleet-reach hot path '
+              '(`_tryNavalMoveSegment` in '
+              '`new_game_fleet_reaches_new_world_e2e_helpers.dart`) '
+              'consumes this Move-tap helper via the AC1 barrel up to '
+              '`_kMaxNextTurnTapsForNwFleetReach (35)` times per '
+              'scenario. A regression that dropped the barrel wrapper '
+              'or that flipped the return-type from `Future<bool>` to '
+              '`Future<void>` would break the segment\'s `if (!tappedMove) '
+              'return;` short-circuit and silently re-introduce '
+              'redundant move-dialog probes (Bottleneck 4 in '
+              '`SPEC/program/e2e-integration-tests.md` § Determinism).',
+        );
+        await tester.pumpWidget(
+          const MaterialApp(home: Scaffold(body: SizedBox())),
+        );
+        expect(
+          await ref(tester),
+          isFalse,
+          reason:
+              'Sanity smoke through the barrel: an empty scaffold has no '
+              'naval-panel root key, so the helper must return false '
+              'without tapping. A wrapper that ignored the panel-absent '
+              'guard would either throw on a missing tap target or '
+              'short-circuit to true (masking real fleet-reach '
+              'regressions); pin both the typed tear-off and the '
+              'no-panel return so the contract surfaces here.',
+        );
+      },
+    );
+
     test(
       'e2eTextLooksLikeNewWorldLocationLine is re-exported through the barrel',
       () {

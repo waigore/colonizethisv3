@@ -1,121 +1,18 @@
 part of 'new_game_fleet_reaches_new_world_e2e_test.dart';
 
-Future<bool> _tapMoveOnFirstNonHomeFleet(WidgetTester tester) async {
-  Future<bool> tryTap({required bool allowExpandAllFallback}) async {
-    final navalRoot = find.byKey(kCtE2ENavalPanelRootKey);
-    final tiles = find.descendant(
-      of: navalRoot,
-      matching: find.byType(ExpansionTile),
-    );
-    var n = tiles.evaluate().length;
-    if (n == 0) {
-      // Panel can mount before fleet rows render; poll instead of a fixed delay.
-      await e2ePumpUntilConditionOrIdle(
-        tester,
-        () => tiles.evaluate().isNotEmpty,
-        timeout: const Duration(seconds: 2),
-        phaseName: 'pump_until_naval_expansion_tiles_render',
-      );
-      n = tiles.evaluate().length;
-      if (n == 0) {
-        return false;
-      }
-    }
-    if (n == 1) {
-      final onlyTile = tiles.first;
-      final onlyHome = find.descendant(
-        of: onlyTile,
-        matching: find.text('Home Fleet'),
-      );
-      if (onlyHome.evaluate().isNotEmpty) {
-        return false;
-      }
-    }
-    Finder? fallbackMove;
-    for (var i = 0; i < n; i++) {
-      final sub = tiles.at(i);
-      final home = find.descendant(of: sub, matching: find.text('Home Fleet'));
-      if (home.evaluate().isNotEmpty) {
-        continue;
-      }
-      final fleetTitle = find.descendant(
-        of: sub,
-        matching: find.byWidgetPredicate(
-          (w) => w is Text && (w.data?.startsWith('Fleet ') ?? false),
-        ),
-      );
-      if (fleetTitle.evaluate().isEmpty) {
-        continue;
-      }
-      var move = find.descendant(of: sub, matching: find.text('Move'));
-      if (move.evaluate().isEmpty) {
-        final expandIcon = find.descendant(
-          of: sub,
-          matching: find.byIcon(Icons.expand_more),
-        );
-        if (expandIcon.evaluate().isNotEmpty) {
-          final iconHit = expandIcon.first;
-          await tester.ensureVisible(iconHit);
-          await tester.tap(iconHit, warnIfMissed: false);
-          await waitUntilFound(
-            tester,
-            find.descendant(of: sub, matching: find.text('Move')),
-            timeout: const Duration(seconds: 3),
-            phaseName: 'wait_until_found_move_after_expand',
-          );
-        }
-        move = find.descendant(of: sub, matching: find.text('Move'));
-      }
-      if (move.evaluate().isEmpty) {
-        continue;
-      }
-      final loc = find.descendant(
-        of: sub,
-        matching: find.byWidgetPredicate(
-          (w) => w is Text && e2eTextLooksLikeNewWorldLocationLine(w.data),
-        ),
-      );
-      final hit = move.hitTestable();
-      if (hit.evaluate().isEmpty) {
-        continue;
-      }
-      if (loc.evaluate().isNotEmpty) {
-        await tester.tap(hit.first, warnIfMissed: false);
-        await waitUntilFound(
-          tester,
-          find.byType(AlertDialog),
-          timeout: const Duration(seconds: 3),
-          phaseName: 'wait_until_found_move_dialog_after_move_tap',
-        );
-        return true;
-      }
-      fallbackMove ??= hit.first;
-    }
-    if (fallbackMove != null) {
-      await tester.tap(fallbackMove, warnIfMissed: false);
-      await waitUntilFound(
-        tester,
-        find.byType(AlertDialog),
-        timeout: const Duration(seconds: 3),
-        phaseName: 'wait_until_found_move_dialog_after_move_tap_fallback',
-      );
-      return true;
-    }
-    if (allowExpandAllFallback) {
-      await expandEachExpansionTileOnce(tester);
-      return false;
-    }
-    return false;
-  }
-
-  if (await tryTap(allowExpandAllFallback: true)) {
-    return true;
-  }
-  if (await tryTap(allowExpandAllFallback: false)) {
-    return true;
-  }
-  return false;
-}
+/// `_tapMoveOnFirstNonHomeFleet` was lifted into the public
+/// [e2eTapMoveOnFirstNonHomeFleet] (`e2e_test_shared_panels.dart`) so the
+/// non-home Move-tap contract is shared and unit-pinned (Refs GitHub
+/// #2336 AC1 / AC2). The fleet-reach loop calls the lifted form through
+/// the AC1 barrel alias `tapMoveOnFirstNonHomeFleet` (`e2e_helpers.dart`).
+/// The widget-test pin in
+/// `app/test/e2e_tap_move_on_first_non_home_fleet_test.dart` guards
+/// against silent regressions (the integration suite cannot validate this
+/// directly today — `app_e2e_linux` is a no-op per
+/// `SPEC/program/e2e-integration-tests.md` § CI). A regression here would
+/// stall the fleet-reach loop at
+/// `_kMaxNextTurnTapsForNwFleetReach (35) × ~5 s` (Bottleneck 4 in
+/// `SPEC/program/e2e-integration-tests.md` § Determinism).
 
 /// Naval-panel location row detection moved to
 /// [e2eTextLooksLikeNewWorldLocationLine] (`e2e_test_shared.dart`) so the
