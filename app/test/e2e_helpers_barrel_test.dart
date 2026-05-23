@@ -43,7 +43,10 @@
 //     § AC5 (Adaptive polling) for the panel/turn entrypoints.
 
 import 'package:colonizethis_app/config/ct_e2e_last_panel_snapshot.dart'
-    show CtE2eCivilianPanelSnapshot, CtE2eNavalPanelSnapshot;
+    show
+        CtE2eCivilianPanelSnapshot,
+        CtE2eNavalPanelSnapshot,
+        ctE2eCivilianPanelSnapshot;
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_app/l10n/app_localizations_contract.dart';
 import 'package:colonizethis_data/colonizethis_data.dart' show MapTopology;
@@ -339,6 +342,74 @@ void main() {
               'short-circuit to true (masking real fleet-reach '
               'regressions); pin both the typed tear-off and the '
               'no-panel return so the contract surfaces here.',
+        );
+      },
+    );
+
+    testWidgets(
+      'anyExplorerHasEnabledExploreAssignFleet is re-exported through '
+      'the barrel',
+      (tester) async {
+        final Future<bool> Function(
+          WidgetTester, {
+          Duration maxUiResponseWait,
+          int maxPanelSweepSteps,
+        })
+        ref = anyExplorerHasEnabledExploreAssignFleet;
+        expect(
+          ref,
+          isNotNull,
+          reason:
+              'The fleet bundled-Explore retry loop '
+              '(`checkExploreEnabledFromCivilianPanel` in '
+              '`new_game_fleet_reaches_new_world_e2e_test.dart`) '
+              'consumes this readiness helper via the AC1 barrel inside '
+              'the `maxBoundedTurnRetries = 8` retry window. A '
+              'regression that dropped the barrel wrapper, flipped the '
+              'return type, or removed the `maxUiResponseWait` / '
+              '`maxPanelSweepSteps` named parameters would either break '
+              'the retry loop\'s budget plumbing or silently inflate '
+              'every retry by the slow-path `maxPanelSweepSteps (16) × '
+              'per-step Assign sweep` cost (Bottleneck 5 in '
+              '`SPEC/program/e2e-integration-tests.md` § Determinism, '
+              '#2336 AC1 / AC5).',
+        );
+        ctE2eCivilianPanelSnapshot = const CtE2eCivilianPanelSnapshot(
+          game: Game(
+            id: 'barrel-smoke-no-explore',
+            worldState: WorldState(
+              turnState: TurnState(
+                phase: TurnPhase.orders,
+                turnNumber: 1,
+              ),
+              oldWorld: RegionData(),
+              newWorld: RegionData(),
+            ),
+            players: [Player(id: 'gp1', displayName: 'You', isHuman: true)],
+          ),
+          humanPlayerId: 'gp1',
+          currentOrders: Orders(),
+          availableWorkTargets: <String, List<String>>{},
+        );
+        addTearDown(() {
+          ctE2eCivilianPanelSnapshot = null;
+        });
+        await tester.pumpWidget(
+          const MaterialApp(home: Scaffold(body: SizedBox())),
+        );
+        expect(
+          await ref(tester, maxPanelSweepSteps: 0),
+          isFalse,
+          reason:
+              'Sanity smoke through the barrel: an empty-targets civilian-'
+              'panel snapshot short-circuits the helper via '
+              '[e2eExploreAssignEnabledFromCivilianSnapshot] (which '
+              'returns `false`), so the helper returns `false` without '
+              'ever consulting `kCtE2ECivilianPanelRootKey`. A wrapper '
+              'that swallowed the snapshot path or short-circuited to '
+              '`true` would pass the tear-off pin silently — this smoke '
+              'distinguishes the snapshot-driven false verdict from the '
+              'panel-sweep fallback.',
         );
       },
     );
