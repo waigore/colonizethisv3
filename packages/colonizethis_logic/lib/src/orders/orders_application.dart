@@ -15,7 +15,7 @@ import 'orders_application_completed_work.dart';
 import 'orders_application_context.dart';
 import 'orders_application_helpers.dart';
 import 'orders_application_work_phase.dart';
-import 'orders_application_worker_phase.dart';
+import 'orders_application_worker_pool_phase.dart';
 import '../turn/trace/turn_trace_runtime.dart';
 
 /// Order application helpers for build and work phases.
@@ -57,12 +57,12 @@ Game applyBuildAndWorkOrders(
   void Function(DialogueEvent)? onDialogue,
   WorkOrderTraceCallback? onWorkOrderTrace,
 }) {
+  final recruitWorkerOrders = orders.recruitWorkerOrdersByPlayerId;
   final buildOrders = orders.buildUnitOrdersByPlayerId;
   final workOrders = orders.workOrdersByPlayerId;
-  final recruitWorkerOrders = orders.recruitWorkerOrdersByPlayerId;
-  if (buildOrders.isEmpty &&
-      workOrders.isEmpty &&
-      recruitWorkerOrders.isEmpty) {
+  if (recruitWorkerOrders.isEmpty &&
+      buildOrders.isEmpty &&
+      workOrders.isEmpty) {
     return game;
   }
 
@@ -90,9 +90,9 @@ Game applyBuildAndWorkOrders(
   );
   var state = BuildWorkState(
     game: game,
+    recruitWorkerOrders: recruitWorkerOrders,
     buildOrders: buildOrders,
     workOrders: workOrders,
-    recruitWorkerOrders: recruitWorkerOrders,
     topology: topology,
     tileMapByRegion: tileMapByRegion,
     onDialogue: onDialogue,
@@ -100,6 +100,10 @@ Game applyBuildAndWorkOrders(
     work: work,
   );
 
+  // Worker pool sub-phase runs before unit builds so any recruit / train
+  // peasant consumes settle before military / naval builds re-evaluate the
+  // peasant pool (SPEC/program/turn-resolution-phase-details.md § Build /
+  // work).
   state = runWorkerPoolPhase(state);
   state = runBuildPhase(state);
   state = runWorkPhase(

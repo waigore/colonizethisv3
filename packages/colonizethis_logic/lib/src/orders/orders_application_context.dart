@@ -74,7 +74,7 @@ class BuildWorkState {
     required this.game,
     required this.buildOrders,
     required this.workOrders,
-    this.recruitWorkerOrders = const {},
+    this.recruitWorkerOrders = const <String, List<RecruitWorkerOrder>>{},
     this.topology,
     this.tileMapByRegion,
     this.onDialogue,
@@ -83,13 +83,14 @@ class BuildWorkState {
   });
 
   final Game game;
+
+  /// Player id -> queued worker recruit / train orders applied in the worker
+  /// pool sub-phase of Build / work, **before** [buildOrders]. SPEC/game/
+  /// workers-and-population.md § Phase placement.
+  final Map<String, List<RecruitWorkerOrder>> recruitWorkerOrders;
+
   final Map<String, List<BuildUnitOrder>> buildOrders;
   final Map<String, List<WorkOrder>> workOrders;
-
-  /// Per-player queued [RecruitWorkerOrder] lists resolved by
-  /// `runWorkerPoolPhase` before `runBuildPhase`. SPEC/program/
-  /// turn-resolution-phase-details.md § Build / work.
-  final Map<String, List<RecruitWorkerOrder>> recruitWorkerOrders;
   final MapTopology? topology;
   final Map<String, TileMapResult>? tileMapByRegion;
   final void Function(DialogueEvent)? onDialogue;
@@ -98,9 +99,9 @@ class BuildWorkState {
 
   BuildWorkState copyWith({
     Game? game,
+    Map<String, List<RecruitWorkerOrder>>? recruitWorkerOrders,
     Map<String, List<BuildUnitOrder>>? buildOrders,
     Map<String, List<WorkOrder>>? workOrders,
-    Map<String, List<RecruitWorkerOrder>>? recruitWorkerOrders,
     MapTopology? topology,
     Map<String, TileMapResult>? tileMapByRegion,
     void Function(DialogueEvent)? onDialogue,
@@ -109,9 +110,9 @@ class BuildWorkState {
   }) {
     return BuildWorkState(
       game: game ?? this.game,
+      recruitWorkerOrders: recruitWorkerOrders ?? this.recruitWorkerOrders,
       buildOrders: buildOrders ?? this.buildOrders,
       workOrders: workOrders ?? this.workOrders,
-      recruitWorkerOrders: recruitWorkerOrders ?? this.recruitWorkerOrders,
       topology: topology ?? this.topology,
       tileMapByRegion: tileMapByRegion ?? this.tileMapByRegion,
       onDialogue: onDialogue ?? this.onDialogue,

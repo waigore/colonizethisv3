@@ -2,7 +2,6 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'build_cost.dart';
-import 'worker_recruit_cost.dart';
 
 /// Shared afford/deduct paths for work material costs and build orders so
 /// validation, application, and economy preview stay aligned.
@@ -50,32 +49,4 @@ abstract final class ProjectedCostEngine {
     Stockpile stockpile,
     int treasury,
   ) => applyBuildCostDeduction(player, order, workers, stockpile, treasury);
-
-  /// Same contract as [canAffordRecruitWorker] in [worker_recruit_cost.dart].
-  ///
-  /// SPEC/game/workers-and-population.md § Order rejection reasons (validation).
-  static ({bool canAfford, String? reason}) canAffordRecruitWorkerOrder(
-    Player player,
-    RecruitWorkerOrder order,
-    WorkerPool workers,
-    Stockpile stockpile,
-    int treasury,
-  ) => canAffordRecruitWorker(player, order, workers, stockpile, treasury);
-
-  /// Same contract as [applyRecruitWorkerCostDeduction] in
-  /// [worker_recruit_cost.dart].
-  static ({WorkerPool workers, Stockpile stockpile, int treasury})
-  applyRecruitWorkerOrderCostDeduction(
-    Player player,
-    RecruitWorkerOrder order,
-    WorkerPool workers,
-    Stockpile stockpile,
-    int treasury,
-  ) => applyRecruitWorkerCostDeduction(
-    player,
-    order,
-    workers,
-    stockpile,
-    treasury,
-  );
 }
