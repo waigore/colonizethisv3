@@ -13,6 +13,7 @@ class FakeOrderSuggestionAPIForDomainPlannerTests implements OrderSuggestionAPI 
     required this.navalMission,
     this.diplomatic = const [],
     this.armyMove = const [],
+    this.recruitWorker = const [],
   });
 
   final List<WorkOrder> work;
@@ -23,6 +24,7 @@ class FakeOrderSuggestionAPIForDomainPlannerTests implements OrderSuggestionAPI 
   final List<NavalMissionOrder> navalMission;
   final List<DiplomaticOrder> diplomatic;
   final List<ArmyMoveOrder> armyMove;
+  final List<RecruitWorkerOrder> recruitWorker;
 
   @override
   List<MoveOrder> suggestMoveOrders(
@@ -56,6 +58,14 @@ class FakeOrderSuggestionAPIForDomainPlannerTests implements OrderSuggestionAPI 
     MapTopology topology,
     Orders currentOrders,
   ) => build;
+
+  @override
+  List<RecruitWorkerOrder> suggestRecruitWorkerOrders(
+    PlayerView view,
+    Game game,
+    MapTopology topology,
+    Orders currentOrders,
+  ) => recruitWorker;
 
   @override
   List<ResearchOrder> suggestResearchOrders(
