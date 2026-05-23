@@ -190,6 +190,8 @@ TurnResolutionResult validateOrdersAndResolveTurnFromTrustedOrders({
   GameEventBus? eventBus,
   void Function(DialogueEvent)? onDialogue,
   void Function(GameEvent)? onGameEvent,
+  void Function(Map<String, Map<String, int>> productionByRecipeByPlayerId)?
+  onProductionComplete,
   void Function(TurnPhase phase, TurnPhaseProgressMarker marker)?
   onPhaseProgress,
   void Function(TurnTracePhaseTrace phaseTrace)? onTurnTracePhase,
@@ -200,6 +202,7 @@ TurnResolutionResult validateOrdersAndResolveTurnFromTrustedOrders({
     eventBus: eventBus,
     onDialogue: onDialogue,
     onGameEvent: onGameEvent,
+    onProductionComplete: onProductionComplete,
     topology: topology,
     orders: orders,
     tileMapByRegion: tileMapByRegion,
