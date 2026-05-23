@@ -18,6 +18,7 @@ export 'e2e_test_shared.dart'
     show
         E2ePerfLog,
         e2eAdaptivePollRampAfterIdle,
+        e2eAwaitNwCoastalOrVisibleLandForBundledExplore,
         e2eBundledExploreRejectionDiagnostics,
         e2eExploreAssignEnabledFromCivilianSnapshot,
         e2eFleetReachDoneFromCtSnapshotOnly,
@@ -32,6 +33,7 @@ export 'e2e_test_shared.dart'
         e2ePickMoveDestinationAndConfirm,
         e2eTryNavalMoveSegment,
         e2ePlayerHasAnyNewWorldFoggedOrBetterFromCtSnapshot,
+        kE2eDefaultBundledExploreReadinessMaxTurns,
         kE2eDefaultNavalMoveSegmentUiWait,
         e2ePumpUntil,
         e2ePumpUntilConditionOrIdle,
@@ -236,6 +238,24 @@ Future<bool> anyExplorerHasEnabledExploreAssignFleet(
   tester,
   maxUiResponseWait: maxUiResponseWait,
   maxPanelSweepSteps: maxPanelSweepSteps,
+);
+
+/// Stable public name for [e2eAwaitNwCoastalOrVisibleLandForBundledExplore]
+/// so the post-bundle Explore scenario consumes the AC1 barrel only
+/// (Refs GitHub #2336 AC1 / AC2 / Bottleneck 4). Forwards to the
+/// implementation in `e2e_test_shared_panels.dart`.
+Future<void> awaitNwCoastalOrVisibleLandForBundledExplore(
+  WidgetTester tester,
+  AppLocalizations l10n, {
+  required void Function(String step) ensureUnderWallClock,
+  int maxTurns = kE2eDefaultBundledExploreReadinessMaxTurns,
+  Duration maxUiResponseWait = kE2eDefaultNavalMoveSegmentUiWait,
+}) => e2eAwaitNwCoastalOrVisibleLandForBundledExplore(
+  tester,
+  l10n,
+  ensureUnderWallClock: ensureUnderWallClock,
+  maxTurns: maxTurns,
+  maxUiResponseWait: maxUiResponseWait,
 );
 
 Future<void> ensureAllRelocated64pxPngsLoad() =>

@@ -332,10 +332,11 @@ void main() {
       );
       ensureUnderWallClock('fleet in NW confirmed');
 
-      await _awaitNwCoastalOrVisibleLandForBundledExploreE2e(
-        tester: tester,
-        l10n: l10n,
+      await awaitNwCoastalOrVisibleLandForBundledExplore(
+        tester,
+        l10n,
         ensureUnderWallClock: ensureUnderWallClock,
+        maxUiResponseWait: _kMaxUiResponseWait,
       );
 
       await e2eTapNewWorldRegionTabIfPresent(tester);
