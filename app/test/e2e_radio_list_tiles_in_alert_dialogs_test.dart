@@ -1,8 +1,8 @@
 /// Pins the dialog-scoped `RadioListTile<…>` lookup contract of
 /// [e2eRadioListTilesInAlertDialogs] (`app/integration_test/e2e_test_shared.dart`).
 ///
-/// The fleet-reach move helper (`_pickMoveDestinationAndConfirm` in
-/// `new_game_fleet_reaches_new_world_e2e_helpers.dart`) taps
+/// The fleet-reach move helper (`e2ePickMoveDestinationAndConfirm` in
+/// `e2e_test_shared_panels.dart`) taps
 /// `e2eRadioListTilesInAlertDialogs().first` to pick the destination sea
 /// radio when no warp row is present. Two regressions would silently
 /// re-introduce flakes / stalls if the helper drifted:
