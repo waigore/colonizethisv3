@@ -180,6 +180,20 @@ Future<void> tapAssignOnCivilianRowWithTitle(
 Future<bool> tapMoveOnFirstNonHomeFleet(WidgetTester tester) =>
     e2eTapMoveOnFirstNonHomeFleet(tester);
 
+/// Stable public name for [e2eAnyExplorerHasEnabledExploreAssignFleet] so
+/// the fleet bundled-Explore retry loop consumes the AC1 barrel only
+/// (Refs GitHub #2336 AC1 / AC2 / AC5 / Bottleneck 5). Forwards to the
+/// implementation in `e2e_test_shared_panels.dart`.
+Future<bool> anyExplorerHasEnabledExploreAssignFleet(
+  WidgetTester tester, {
+  Duration maxUiResponseWait = kE2eDefaultBundledExploreSweepWait,
+  int maxPanelSweepSteps = 16,
+}) => e2eAnyExplorerHasEnabledExploreAssignFleet(
+  tester,
+  maxUiResponseWait: maxUiResponseWait,
+  maxPanelSweepSteps: maxPanelSweepSteps,
+);
+
 Future<void> ensureAllRelocated64pxPngsLoad() =>
     e2eEnsureAllRelocated64pxPngsLoad();
 

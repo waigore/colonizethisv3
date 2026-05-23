@@ -135,95 +135,19 @@ Future<void> _awaitNwCoastalOrVisibleLandForBundledExploreE2e({
 /// contract via
 /// `app/test/e2e_explore_assign_enabled_from_civilian_snapshot_test.dart`.
 
-Future<bool> _anyExplorerHasEnabledExploreAssignFleetE2e(
-  WidgetTester tester,
-) async {
-  final snapshotHint = e2eExploreAssignEnabledFromCivilianSnapshot(
-    ctE2eCivilianPanelSnapshot,
-  );
-  if (snapshotHint != null) {
-    return snapshotHint;
-  }
-
-  final root = find.byKey(kCtE2ECivilianPanelRootKey);
-  final listView = find.descendant(of: root, matching: find.byType(ListView));
-  expect(listView, findsOneWidget);
-  final panelScrollable = find.descendant(
-    of: listView,
-    matching: find.byType(Scrollable),
-  );
-  expect(panelScrollable, findsOneWidget);
-  final exploreTile = find.widgetWithText(ListTile, 'Explore');
-  // Adaptive replacement (#2336 AC5 / Bottleneck 5): the prior 300ms post-tap
-  // settle plus 50ms fixed wait loop is replaced by a single condition-based
-  // wait that evaluates [exploreTile] before the first pump and ramps the
-  // pump interval via [e2eAdaptivePollRampAfterIdle]. The hard
-  // [_kMaxUiResponseWait] cap is preserved.
-  Future<void> waitForAssignSheetSettled() async {
-    final wait = Stopwatch()..start();
-    var assignPollMs = 25;
-    while (wait.elapsed < _kMaxUiResponseWait) {
-      if (exploreTile.evaluate().isNotEmpty) {
-        return;
-      }
-      await tester.pump(Duration(milliseconds: assignPollMs));
-      assignPollMs = e2eAdaptivePollRampAfterIdle(assignPollMs);
-    }
-  }
-
-  // After [handlePopRoute] the assign sheet can take a frame or two to leave
-  // the tree. Replace the prior fixed 200ms pump with a bounded adaptive
-  // poll that returns as soon as the sheet finishes dismissing.
-  Future<void> waitForAssignSheetDismissed() async {
-    await e2ePumpUntilConditionOrIdle(
-      tester,
-      () => exploreTile.evaluate().isEmpty,
-      timeout: const Duration(milliseconds: 400),
-      phaseName: 'pump_until_assign_sheet_dismissed',
-    );
-  }
-
-  final visitedAssignWidgets = <int>{};
-  const maxPanelSweepSteps = 16;
-  for (var step = 0; step < maxPanelSweepSteps; step++) {
-    final assignCandidates = find
-        .descendant(of: listView, matching: find.text('Assign'))
-        .evaluate()
-        .toList();
-    for (final assignElement in assignCandidates) {
-      final marker = identityHashCode(assignElement.widget);
-      if (!visitedAssignWidgets.add(marker)) {
-        continue;
-      }
-      final assignFinder = find.byWidget(assignElement.widget);
-      try {
-        await tester.ensureVisible(assignFinder);
-      } catch (_) {
-        continue;
-      }
-      await tester.tap(assignFinder.first, warnIfMissed: false);
-      await waitForAssignSheetSettled();
-      if (exploreTile.evaluate().isNotEmpty) {
-        final enabled = tester.widget<ListTile>(exploreTile.first).enabled;
-        await tester.binding.handlePopRoute();
-        await waitForAssignSheetDismissed();
-        if (enabled == true) {
-          return true;
-        }
-      } else {
-        await tester.binding.handlePopRoute();
-        await waitForAssignSheetDismissed();
-      }
-    }
-
-    await tester.drag(panelScrollable, const Offset(0, -180));
-    // Adaptive replacement for the prior 120ms post-drag settle (#2336 AC5):
-    // pump a single short frame and let the next iteration short-circuit if
-    // new Assign rows are already visible.
-    await tester.pump(const Duration(milliseconds: 25));
-  }
-  return false;
-}
+/// `_anyExplorerHasEnabledExploreAssignFleetE2e` was lifted into the public
+/// [e2eAnyExplorerHasEnabledExploreAssignFleet] in
+/// `e2e_test_shared_panels.dart` (Refs GitHub #2336 AC1 / AC2 / AC5 /
+/// Bottleneck 5). The fleet bundled-Explore retry loop calls the lifted
+/// form through the AC1 barrel alias `anyExplorerHasEnabledExploreAssignFleet`
+/// (`e2e_helpers.dart`). The widget-test pin in
+/// `app/test/e2e_any_explorer_has_enabled_explore_assign_fleet_test.dart`
+/// guards against silent regressions (the integration suite cannot validate
+/// this directly today — `app_e2e_linux` is a no-op per
+/// `SPEC/program/e2e-integration-tests.md` § CI). A regression here would
+/// stall the bundled-Explore retry loop on the slow
+/// `maxPanelSweepSteps (16) × per-step Assign sweep` path described as
+/// Bottleneck 5 in `SPEC/program/e2e-integration-tests.md` § Determinism.
 
 /// Taps the map HUD next-turn button, handles the optional confirm dialog,
 /// and waits for the next-turn label to advance. This is the fleet e2e's
