@@ -21,6 +21,7 @@ export 'e2e_test_shared.dart'
         e2eMakeWallClockGuard,
         e2eNewWorldRegionChipAppearsSelected,
         e2eNonHomeHumanFleetInCoastalNewWorldSeaFromCtSnapshot,
+        e2eNavalPanelShowsNonHomeFleetInNewWorld,
         e2eNonHomeHumanFleetInNewWorldFromCtSnapshot,
         e2eNwCoastalProvincesAdjacentToFleetSea,
         e2eOldWorldRegionChipAppearsSelected,

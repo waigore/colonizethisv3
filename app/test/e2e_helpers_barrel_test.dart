@@ -329,6 +329,37 @@ void main() {
       },
     );
 
+    testWidgets(
+      'e2eNavalPanelShowsNonHomeFleetInNewWorld is re-exported through the barrel',
+      (tester) async {
+        final bool Function(WidgetTester) ref =
+            e2eNavalPanelShowsNonHomeFleetInNewWorld;
+        expect(
+          ref,
+          isNotNull,
+          reason:
+              'Fleet-reach harness fallback in '
+              '`new_game_fleet_reaches_new_world_e2e_helpers_part2.dart` '
+              '(`_harnessDetectsNonHomeFleetInNewWorld`) consumes this '
+              'widget predicate via the AC1 barrel when '
+              'ctE2eNavalPanelSnapshot is null. A regression that dropped it '
+              'from the `show` clause would break the UI fallback path at '
+              'E2E time.',
+        );
+        await tester.pumpWidget(
+          const MaterialApp(home: Scaffold(body: SizedBox())),
+        );
+        expect(
+          ref(tester),
+          isFalse,
+          reason:
+              'Sanity smoke through the barrel: an empty tree must return '
+              'false after re-export. A wrapper that swallowed the tester '
+              'argument would pass the tear-off pin silently.',
+        );
+      },
+    );
+
     test('e2eNonHomeHumanFleetInNewWorldFromCtSnapshot is re-exported through '
         'the barrel', () {
       final bool Function(CtE2eNavalPanelSnapshot?) ref =

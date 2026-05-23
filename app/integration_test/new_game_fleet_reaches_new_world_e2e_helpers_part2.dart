@@ -150,47 +150,16 @@ Future<bool> _tapMoveOnFirstNonHomeFleet(WidgetTester tester) async {
 /// so the [PlayerView]-driven contract is unit-pinned (Refs GitHub #2336
 /// AC1 / AC2). Call sites pass [ctE2eNavalPanelSnapshot] explicitly.
 
-/// Widget-only: a **non–home** fleet row shows [unitsPanelRegionLabel] for New World
-/// in the subtitle location line (`New World — …` per `naval_tree_builder.dart`).
-bool _navalPanelShowsNonHomeFleetInNewWorld(WidgetTester tester) {
-  final naval = find.byKey(kCtE2ENavalPanelRootKey);
-  if (naval.evaluate().isEmpty) {
-    return false;
-  }
-  final tiles = find.descendant(
-    of: naval,
-    matching: find.byType(ExpansionTile),
-  );
-  final n = tiles.evaluate().length;
-  for (var i = 0; i < n; i++) {
-    final sub = tiles.at(i);
-    final fleetTitle = find.descendant(
-      of: sub,
-      matching: find.byWidgetPredicate(
-        (w) => w is Text && (w.data?.startsWith('Fleet ') ?? false),
-      ),
-    );
-    if (fleetTitle.evaluate().isEmpty) {
-      continue;
-    }
-    final loc = find.descendant(
-      of: sub,
-      matching: find.byWidgetPredicate(
-        (w) => w is Text && e2eTextLooksLikeNewWorldLocationLine(w.data),
-      ),
-    );
-    if (loc.evaluate().isNotEmpty) {
-      return true;
-    }
-  }
-  return false;
-}
+/// Naval-panel widget fallback for fleet-in-NW detection moved to
+/// [e2eNavalPanelShowsNonHomeFleetInNewWorld] (`e2e_test_shared.dart`) so the
+/// ExpansionTile / location-line contract is unit-pinned (Refs GitHub #2336
+/// AC1 / AC2).
 
 bool _harnessDetectsNonHomeFleetInNewWorld(WidgetTester tester) =>
     e2eNonHomeHumanFleetInNewWorldFromCtSnapshot(ctE2eNavalPanelSnapshot) ||
     // Fallback for environments where ct snapshot plumbing is unavailable.
     (ctE2eNavalPanelSnapshot == null &&
-        _navalPanelShowsNonHomeFleetInNewWorld(tester));
+        e2eNavalPanelShowsNonHomeFleetInNewWorld(tester));
 
 /// Post–next-turn [ctE2eNavalPanelSnapshot] refresh (see
 /// [refreshCtE2eNavalPanelSnapshotAfterTurnIfEnabled]) lets fleet loops skip

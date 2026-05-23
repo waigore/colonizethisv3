@@ -682,8 +682,7 @@ bool e2eNewWorldRegionChipAppearsSelected() {
 /// (`—`), but earlier CI dumps and Material text scaling can normalize the
 /// glyph to an **en dash** (`–`) or a plain **hyphen-minus** (`-`). The
 /// helper accepts all three so fleet-reach detection
-/// (`_navalPanelShowsNonHomeFleetInNewWorld` in
-/// `new_game_fleet_reaches_new_world_e2e_helpers_part2.dart`) is not coupled
+/// ([e2eNavalPanelShowsNonHomeFleetInNewWorld]) is not coupled
 /// to one specific Unicode glyph.
 ///
 /// Contract (Refs GitHub #2336):
@@ -709,6 +708,58 @@ bool e2eTextLooksLikeNewWorldLocationLine(String? data) {
   }
   final rest = after.trimLeft();
   return rest.startsWith('—') || rest.startsWith('–') || rest.startsWith('-');
+}
+
+/// Widget-only: true when a **non-home** fleet row under [kCtE2ENavalPanelRootKey]
+/// shows a New World location subtitle (`New World — …` per
+/// `naval_tree_builder.dart`).
+///
+/// Lifted from the formerly private `_navalPanelShowsNonHomeFleetInNewWorld` in
+/// `new_game_fleet_reaches_new_world_e2e_helpers_part2.dart` (Refs GitHub
+/// #2336 AC1 / AC2). Used as the UI fallback in
+/// `_harnessDetectsNonHomeFleetInNewWorld` when [ctE2eNavalPanelSnapshot] is
+/// null (snapshot plumbing unavailable). A silent rename / fail-open here would
+/// stall fleet-reach loops at `_kMaxNextTurnTapsForNwFleetReach (35) × ~5 s`
+/// (`SPEC/program/e2e-integration-tests.md` § Determinism, #2336 Bottleneck 4).
+///
+/// Contract:
+/// - Returns `false` when the naval panel root key is absent.
+/// - Iterates [ExpansionTile] descendants in stable tree order; skips tiles
+///   without a `Text` whose `data` starts with `'Fleet '`.
+/// - Returns `true` on the first tile that also has a descendant `Text` matching
+///   [e2eTextLooksLikeNewWorldLocationLine].
+bool e2eNavalPanelShowsNonHomeFleetInNewWorld(WidgetTester tester) {
+  final naval = find.byKey(kCtE2ENavalPanelRootKey);
+  if (naval.evaluate().isEmpty) {
+    return false;
+  }
+  final tiles = find.descendant(
+    of: naval,
+    matching: find.byType(ExpansionTile),
+  );
+  final n = tiles.evaluate().length;
+  for (var i = 0; i < n; i++) {
+    final sub = tiles.at(i);
+    final fleetTitle = find.descendant(
+      of: sub,
+      matching: find.byWidgetPredicate(
+        (w) => w is Text && (w.data?.startsWith('Fleet ') ?? false),
+      ),
+    );
+    if (fleetTitle.evaluate().isEmpty) {
+      continue;
+    }
+    final loc = find.descendant(
+      of: sub,
+      matching: find.byWidgetPredicate(
+        (w) => w is Text && e2eTextLooksLikeNewWorldLocationLine(w.data),
+      ),
+    );
+    if (loc.evaluate().isNotEmpty) {
+      return true;
+    }
+  }
+  return false;
 }
 
 /// True when [snap] reflects a **non-home human** fleet whose region is
