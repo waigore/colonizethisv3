@@ -81,7 +81,7 @@ void main() {
     ) {
       ensureUnderWallClock('turn loop start turnIdx=$turnIdx');
       perf.bumpCounter('turn_loop_iterations');
-      if (_fleetReachDoneFromCtSnapshotOnly()) {
+      if (e2eFleetReachDoneFromCtSnapshotOnly(ctE2eNavalPanelSnapshot)) {
         perf.timing(
           'test_total',
           testSw.elapsed,
@@ -90,7 +90,7 @@ void main() {
         return;
       }
       await dismissTransientUi(tester, perf: perf);
-      if (_fleetReachDoneFromCtSnapshotOnly()) {
+      if (e2eFleetReachDoneFromCtSnapshotOnly(ctE2eNavalPanelSnapshot)) {
         perf.timing(
           'test_total',
           testSw.elapsed,
@@ -99,7 +99,7 @@ void main() {
         return;
       }
       await _tapNewWorldRegionTabIfPresent(tester);
-      if (_fleetReachDoneFromCtSnapshotOnly()) {
+      if (e2eFleetReachDoneFromCtSnapshotOnly(ctE2eNavalPanelSnapshot)) {
         perf.timing(
           'test_total',
           testSw.elapsed,
@@ -144,7 +144,10 @@ void main() {
         overallTimeout: _kMaxUiResponseWait,
       );
 
-      if (_harnessDetectsNonHomeFleetInNewWorld(tester)) {
+      if (e2eHarnessDetectsNonHomeFleetInNewWorld(
+        tester,
+        ctE2eNavalPanelSnapshot,
+      )) {
         perf.timing(
           'test_total',
           testSw.elapsed,
@@ -154,7 +157,7 @@ void main() {
       }
 
       await advanceOneHumanTurn(tester, l10n: l10n, perf: perf);
-      if (_fleetReachDoneFromCtSnapshotOnly()) {
+      if (e2eFleetReachDoneFromCtSnapshotOnly(ctE2eNavalPanelSnapshot)) {
         perf.timing(
           'test_total',
           testSw.elapsed,
@@ -169,7 +172,7 @@ void main() {
     ensureUnderWallClock('before final naval check');
     await dismissTransientUi(tester, perf: perf);
     await _tapNewWorldRegionTabIfPresent(tester);
-    if (!_fleetReachDoneFromCtSnapshotOnly()) {
+    if (!e2eFleetReachDoneFromCtSnapshotOnly(ctE2eNavalPanelSnapshot)) {
       await openNavalPanel(
         tester,
         perf: perf,
@@ -177,7 +180,10 @@ void main() {
         bottomSheetCloseTimeout: _kMaxUiResponseWait,
       );
     }
-    if (!_harnessDetectsNonHomeFleetInNewWorld(tester)) {
+    if (!e2eHarnessDetectsNonHomeFleetInNewWorld(
+      tester,
+      ctE2eNavalPanelSnapshot,
+    )) {
       fail(
         'After $_kMaxNextTurnTapsForNwFleetReach Next turn resolutions, no non-home human fleet in region '
         'newWorld (ctE2eNavalPanelSnapshot / naval panel UI). '
@@ -248,15 +254,15 @@ void main() {
       ) {
         ensureUnderWallClock('turn loop start turnIdx=$turnIdx');
         perf.bumpCounter('turn_loop_iterations');
-        if (_fleetReachDoneFromCtSnapshotOnly()) {
+        if (e2eFleetReachDoneFromCtSnapshotOnly(ctE2eNavalPanelSnapshot)) {
           break;
         }
         await dismissTransientUi(tester, perf: perf);
-        if (_fleetReachDoneFromCtSnapshotOnly()) {
+        if (e2eFleetReachDoneFromCtSnapshotOnly(ctE2eNavalPanelSnapshot)) {
           break;
         }
         await _tapNewWorldRegionTabIfPresent(tester);
-        if (_fleetReachDoneFromCtSnapshotOnly()) {
+        if (e2eFleetReachDoneFromCtSnapshotOnly(ctE2eNavalPanelSnapshot)) {
           break;
         }
         if (ctE2eNavalPanelSnapshot == null) {
@@ -291,12 +297,15 @@ void main() {
           overallTimeout: _kMaxUiResponseWait,
         );
 
-        if (_harnessDetectsNonHomeFleetInNewWorld(tester)) {
+        if (e2eHarnessDetectsNonHomeFleetInNewWorld(
+          tester,
+          ctE2eNavalPanelSnapshot,
+        )) {
           break;
         }
 
         await advanceOneHumanTurn(tester, l10n: l10n, perf: perf);
-        if (_fleetReachDoneFromCtSnapshotOnly()) {
+        if (e2eFleetReachDoneFromCtSnapshotOnly(ctE2eNavalPanelSnapshot)) {
           break;
         }
         await dismissTransientUi(tester, perf: perf);
@@ -305,7 +314,7 @@ void main() {
 
       await dismissTransientUi(tester, perf: perf);
       await _tapNewWorldRegionTabIfPresent(tester);
-      if (!_fleetReachDoneFromCtSnapshotOnly()) {
+      if (!e2eFleetReachDoneFromCtSnapshotOnly(ctE2eNavalPanelSnapshot)) {
         await openNavalPanel(
           tester,
           perf: perf,
@@ -316,7 +325,10 @@ void main() {
       if (ctE2eNavalPanelSnapshot != null) {
         lastKnownNavalSnapshot = ctE2eNavalPanelSnapshot;
       }
-      if (!_harnessDetectsNonHomeFleetInNewWorld(tester)) {
+      if (!e2eHarnessDetectsNonHomeFleetInNewWorld(
+        tester,
+        ctE2eNavalPanelSnapshot,
+      )) {
         fail(
           'Explorer explore e2e requires a non-home human fleet in New World first. '
           'Last exception: ${tester.takeException()}',

@@ -391,6 +391,29 @@ void main() {
       );
     });
 
+    test(
+      'e2eFleetReachDoneFromCtSnapshotOnly is re-exported through the barrel',
+      () {
+        final bool Function(CtE2eNavalPanelSnapshot?) ref =
+            e2eFleetReachDoneFromCtSnapshotOnly;
+        expect(ref, isNotNull);
+        expect(ref(null), isFalse);
+      },
+    );
+
+    testWidgets(
+      'e2eHarnessDetectsNonHomeFleetInNewWorld is re-exported through the barrel',
+      (tester) async {
+        final bool Function(WidgetTester, CtE2eNavalPanelSnapshot?) ref =
+            e2eHarnessDetectsNonHomeFleetInNewWorld;
+        expect(ref, isNotNull);
+        await tester.pumpWidget(
+          const MaterialApp(home: Scaffold(body: SizedBox())),
+        );
+        expect(ref(tester, null), isFalse);
+      },
+    );
+
     test('e2eNonHomeHumanFleetInCoastalNewWorldSeaFromCtSnapshot is '
         're-exported through the barrel', () {
       final bool Function(CtE2eNavalPanelSnapshot?) ref =

@@ -820,6 +820,42 @@ bool e2eNonHomeHumanFleetInNewWorldFromCtSnapshot(
   return false;
 }
 
+/// Snapshot-only fleet-reach loop short-circuit (Refs GitHub #2336
+/// Bottleneck 4).
+///
+/// Returns whether [snap] already reports a **non-home human** fleet in the
+/// New World so the fleet-reach turn loop can skip [openNavalPanel] and
+/// redundant widget-tree probes on subsequent iterations. Semantically
+/// identical to [e2eNonHomeHumanFleetInNewWorldFromCtSnapshot] but named for
+/// the call-site contract in `new_game_fleet_reaches_new_world_e2e_test.dart`.
+///
+/// - Returns `false` when [snap] is `null` (keep iterating).
+/// - Does **not** consult the widget tree; use
+///   [e2eHarnessDetectsNonHomeFleetInNewWorld] when a UI fallback is required.
+bool e2eFleetReachDoneFromCtSnapshotOnly(CtE2eNavalPanelSnapshot? snap) =>
+    e2eNonHomeHumanFleetInNewWorldFromCtSnapshot(snap);
+
+/// Fleet-reach / bundled-explore arrival probe with snapshot-first semantics.
+///
+/// Lifted from the formerly private `_harnessDetectsNonHomeFleetInNewWorld`
+/// in `new_game_fleet_reaches_new_world_e2e_helpers_part2.dart` (Refs GitHub
+/// #2336 AC1 / AC2).
+///
+/// Contract:
+///
+/// - Returns `true` when [e2eNonHomeHumanFleetInNewWorldFromCtSnapshot]
+///   reports arrival for [snap] (including when [snap] is non-null and
+///   reports `false` — the widget fallback is **not** consulted in that case).
+/// - When [snap] is `null`, falls back to
+///   [e2eNavalPanelShowsNonHomeFleetInNewWorld] for environments where CT
+///   snapshot plumbing is unavailable.
+bool e2eHarnessDetectsNonHomeFleetInNewWorld(
+  WidgetTester tester,
+  CtE2eNavalPanelSnapshot? snap,
+) =>
+    e2eNonHomeHumanFleetInNewWorldFromCtSnapshot(snap) ||
+    (snap == null && e2eNavalPanelShowsNonHomeFleetInNewWorld(tester));
+
 /// True when the active player's [PlayerView] reports **at least one** tile
 /// belonging to a New World province whose visibility is above `unknown`
 /// (`fogged` or `fullyVisible`).

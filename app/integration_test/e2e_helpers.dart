@@ -19,6 +19,8 @@ export 'e2e_test_shared.dart'
         E2ePerfLog,
         e2eAdaptivePollRampAfterIdle,
         e2eExploreAssignEnabledFromCivilianSnapshot,
+        e2eFleetReachDoneFromCtSnapshotOnly,
+        e2eHarnessDetectsNonHomeFleetInNewWorld,
         e2eMakeWallClockGuard,
         e2eNewWorldRegionChipAppearsSelected,
         e2eNonHomeHumanFleetInCoastalNewWorldSeaFromCtSnapshot,

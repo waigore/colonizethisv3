@@ -155,17 +155,10 @@ Future<bool> _tapMoveOnFirstNonHomeFleet(WidgetTester tester) async {
 /// ExpansionTile / location-line contract is unit-pinned (Refs GitHub #2336
 /// AC1 / AC2).
 
-bool _harnessDetectsNonHomeFleetInNewWorld(WidgetTester tester) =>
-    e2eNonHomeHumanFleetInNewWorldFromCtSnapshot(ctE2eNavalPanelSnapshot) ||
-    // Fallback for environments where ct snapshot plumbing is unavailable.
-    (ctE2eNavalPanelSnapshot == null &&
-        e2eNavalPanelShowsNonHomeFleetInNewWorld(tester));
-
-/// Post–next-turn [ctE2eNavalPanelSnapshot] refresh (see
-/// [refreshCtE2eNavalPanelSnapshotAfterTurnIfEnabled]) lets fleet loops skip
-/// [openNavalPanel] when world state already shows arrival (Refs #2336).
-bool _fleetReachDoneFromCtSnapshotOnly() =>
-    e2eNonHomeHumanFleetInNewWorldFromCtSnapshot(ctE2eNavalPanelSnapshot);
+/// `_harnessDetectsNonHomeFleetInNewWorld` and `_fleetReachDoneFromCtSnapshotOnly`
+/// were lifted into [e2eHarnessDetectsNonHomeFleetInNewWorld] and
+/// [e2eFleetReachDoneFromCtSnapshotOnly] (`e2e_test_shared.dart`, Refs #2336
+/// AC1 / AC2). Call sites pass [ctE2eNavalPanelSnapshot] explicitly.
 
 /// Post–#1869 only: fleet may sit in open-ocean New World first; ship reveal needs
 /// a P–S coastal sea zone (or visibility already updated). Sail / advance until then.
