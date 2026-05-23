@@ -14,6 +14,7 @@ export 'src/ai/simple_ai_heuristics.dart' show turnSeedForPlayer;
 export 'src/constants.dart'
     show
         GamePlayerLookup,
+        kMineralResourceIds,
         kWorkTargetBuildImprovement,
         kWorkTargetCounterSpy,
         kWorkTargetPurchaseLand,
