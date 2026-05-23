@@ -19,6 +19,7 @@ export 'e2e_test_shared.dart' show
     e2eAdaptivePollRampAfterIdle,
     e2eMakeWallClockGuard,
     e2eNewWorldRegionChipAppearsSelected,
+    e2eNonHomeHumanFleetInNewWorldFromCtSnapshot,
     e2eOldWorldRegionChipAppearsSelected,
     e2ePumpUntil,
     e2ePumpUntilConditionOrIdle,

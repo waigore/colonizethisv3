@@ -42,6 +42,8 @@
 //   - Issue #2336 § Acceptance criteria § AC1 (Shared helpers exist) and
 //     § AC5 (Adaptive polling) for the panel/turn entrypoints.
 
+import 'package:colonizethis_app/config/ct_e2e_last_panel_snapshot.dart'
+    show CtE2eNavalPanelSnapshot;
 import 'package:colonizethis_app/l10n/app_localizations_contract.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
@@ -325,6 +327,36 @@ void main() {
         );
       },
     );
+
+    test('e2eNonHomeHumanFleetInNewWorldFromCtSnapshot is re-exported through '
+        'the barrel', () {
+      final bool Function(CtE2eNavalPanelSnapshot?) ref =
+          e2eNonHomeHumanFleetInNewWorldFromCtSnapshot;
+      expect(
+        ref,
+        isNotNull,
+        reason:
+            'Fleet-reach short-circuit in '
+            '`new_game_fleet_reaches_new_world_e2e_helpers_part2.dart` '
+            '(`_fleetReachDoneFromCtSnapshotOnly`, '
+            '`_harnessDetectsNonHomeFleetInNewWorld`) consumes this '
+            'snapshot-driven predicate via the AC1 barrel. A regression '
+            'that dropped it from the `show` clause would re-introduce '
+            'the `_kMaxNextTurnTapsForNwFleetReach (35) × ~5 s` stall '
+            'documented in #2336 Bottleneck 4 (`SPEC/program/'
+            'e2e-integration-tests.md` § Determinism).',
+      );
+      expect(
+        ref(null),
+        isFalse,
+        reason:
+            'Sanity smoke through the barrel: a null snapshot must keep '
+            'returning false after re-export. A wrapper that swallowed '
+            'the argument and returned a constant would pass the '
+            'tear-off pin silently; null is the canonical no-plumbing '
+            'state and must short-circuit before any field access.',
+      );
+    });
 
     test('AC1 timing constants are exposed as Duration values', () {
       const Duration maxWallClock = kE2eMaxWallClock;

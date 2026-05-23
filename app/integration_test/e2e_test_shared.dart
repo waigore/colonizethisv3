@@ -1,12 +1,16 @@
 import 'dart:math' as math;
 
 import 'package:colonizethis_app/config/ct_e2e.dart';
+import 'package:colonizethis_app/config/ct_e2e_last_panel_snapshot.dart'
+    show CtE2eNavalPanelSnapshot;
 import 'package:colonizethis_app/features/game/dialogue/game_start_intro_overlay.dart';
 import 'package:colonizethis_app/features/game/flame/game_screen_shared.dart';
 import 'package:colonizethis_app/features/game/flame/turn_resolution_processing_dialog.dart';
 import 'package:colonizethis_app/l10n/app_localizations_contract.dart';
 import 'package:colonizethis_app/widgets/ct_choice_chip.dart';
 import 'package:colonizethis_app/widgets/ct_dialog_shell.dart';
+import 'package:colonizethis_logic/colonizethis_logic.dart'
+    show homeFleetIdFor, regionIdForSeaZone;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -700,6 +704,63 @@ bool e2eTextLooksLikeNewWorldLocationLine(String? data) {
   return rest.startsWith('—') || rest.startsWith('–') || rest.startsWith('-');
 }
 
+/// True when [snap] reflects a **non-home human** fleet whose region is
+/// `newWorld` — either directly via `Fleet.regionId == 'newWorld'`, or
+/// indirectly because the fleet's `seaZoneId` resolves to `newWorld`
+/// through `regionIdForSeaZone(snap.topology, …)`.
+///
+/// Lifted from the formerly private
+/// `_nonHomeHumanFleetInNewWorldFromCtSnapshot` in
+/// `new_game_fleet_reaches_new_world_e2e_helpers_part2.dart` (Refs GitHub
+/// #2336 AC1 / AC2). The fleet-reach loop short-circuit
+/// (`_fleetReachDoneFromCtSnapshotOnly`, `_harnessDetectsNonHomeFleetInNewWorld`)
+/// and the bundled-explore readiness loop depend on this predicate to
+/// terminate within the 35-turn cap when [ctE2eNavalPanelSnapshot] reports
+/// arrival — a silent rename / fail-open here would stall the suite at
+/// `_kMaxNextTurnTapsForNwFleetReach × ~5 s` (`SPEC/program/e2e-integration-tests.md`
+/// § Determinism, #2336 Bottleneck 4).
+///
+/// Contract:
+///
+/// - Returns `false` when [snap] is `null` (no snapshot plumbing this turn).
+/// - Iterates `snap.game.worldState.fleets` in stable list order; for each
+///   fleet skips when `f.ownerId != snap.humanPlayerId`.
+/// - Skips the human's home fleet (`homeFleetIdFor(snap.humanPlayerId)`)
+///   so that an opening home-fleet-only state never short-circuits the
+///   loop on turn 0.
+/// - Returns `true` when the first surviving fleet has `regionId ==
+///   'newWorld'`.
+/// - Otherwise consults `regionIdForSeaZone(snap.topology, sea)` and
+///   returns `true` when the seaboard resolves to `newWorld`. A `null`
+///   `seaZoneId` (in-port) or a sea zone the topology cannot resolve
+///   keeps iterating.
+/// - Returns `false` only after every fleet has been considered.
+///
+/// The integration suite cannot validate this directly today
+/// (`app_e2e_linux` is a no-op per
+/// `SPEC/program/e2e-integration-tests.md` § CI), so the widget-test pin
+/// in `app/test/e2e_non_home_human_fleet_in_new_world_from_ct_snapshot_test.dart`
+/// carries the behavioural contract.
+bool e2eNonHomeHumanFleetInNewWorldFromCtSnapshot(
+  CtE2eNavalPanelSnapshot? snap,
+) {
+  if (snap == null) {
+    return false;
+  }
+  final human = snap.humanPlayerId;
+  final homeId = homeFleetIdFor(human);
+  for (final f in snap.game.worldState.fleets) {
+    if (f.ownerId != human) continue;
+    if (f.id == homeId) continue;
+    if (f.regionId == 'newWorld') return true;
+    final sea = f.seaZoneId;
+    if (sea != null && regionIdForSeaZone(snap.topology, sea) == 'newWorld') {
+      return true;
+    }
+  }
+  return false;
+}
+
 /// Returns after the first [Finder] has at least one hit-testable match.
 Future<void> e2eWaitUntilAnyFinderHitTestable(
   WidgetTester tester,
@@ -900,4 +961,3 @@ Future<Duration> e2eAdvanceOneHumanTurn(
   perf?.timing('next_turn_advance', phaseSw.elapsed);
   return labelWait;
 }
-

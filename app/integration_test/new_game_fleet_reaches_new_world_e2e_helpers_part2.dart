@@ -121,26 +121,10 @@ Future<bool> _tapMoveOnFirstNonHomeFleet(WidgetTester tester) async {
 /// [e2eTextLooksLikeNewWorldLocationLine] (`e2e_test_shared.dart`) so the
 /// dash-glyph contract is unit-pinned (Refs GitHub #2336).
 
-/// While the naval bottom sheet is open, [ctE2eNavalPanelSnapshot] mirrors the same
-/// [Game] the panel uses (`SPEC/program/e2e-integration-tests.md`). Prefer this on
-/// Linux CI: [ExpansionTile] / [Text] preorder can diverge from macOS while world
-/// state still shows the voyage completed.
-bool _nonHomeHumanFleetInNewWorldFromCtSnapshot() {
-  final snap = ctE2eNavalPanelSnapshot;
-  if (snap == null) return false;
-  final human = snap.humanPlayerId;
-  final homeId = homeFleetIdFor(human);
-  for (final f in snap.game.worldState.fleets) {
-    if (f.ownerId != human) continue;
-    if (f.id == homeId) continue;
-    if (f.regionId == 'newWorld') return true;
-    final sea = f.seaZoneId;
-    if (sea != null && regionIdForSeaZone(snap.topology, sea) == 'newWorld') {
-      return true;
-    }
-  }
-  return false;
-}
+/// Non-home human fleet-in-NW detection moved to
+/// [e2eNonHomeHumanFleetInNewWorldFromCtSnapshot] (`e2e_test_shared.dart`)
+/// so the snapshot-driven contract is unit-pinned (Refs GitHub #2336 AC1 /
+/// AC2). Call sites pass [ctE2eNavalPanelSnapshot] explicitly.
 
 /// [provinceIdsAdjacentToSeaZone] matches edge endpoints exactly. Combined game
 /// topology uses prefixed sea node ids (`newWorld|sea5`); some fleet states
@@ -264,7 +248,7 @@ bool _navalPanelShowsNonHomeFleetInNewWorld(WidgetTester tester) {
 }
 
 bool _harnessDetectsNonHomeFleetInNewWorld(WidgetTester tester) =>
-    _nonHomeHumanFleetInNewWorldFromCtSnapshot() ||
+    e2eNonHomeHumanFleetInNewWorldFromCtSnapshot(ctE2eNavalPanelSnapshot) ||
     // Fallback for environments where ct snapshot plumbing is unavailable.
     (ctE2eNavalPanelSnapshot == null &&
         _navalPanelShowsNonHomeFleetInNewWorld(tester));
@@ -273,7 +257,7 @@ bool _harnessDetectsNonHomeFleetInNewWorld(WidgetTester tester) =>
 /// [refreshCtE2eNavalPanelSnapshotAfterTurnIfEnabled]) lets fleet loops skip
 /// [openNavalPanel] when world state already shows arrival (Refs #2336).
 bool _fleetReachDoneFromCtSnapshotOnly() =>
-    _nonHomeHumanFleetInNewWorldFromCtSnapshot();
+    e2eNonHomeHumanFleetInNewWorldFromCtSnapshot(ctE2eNavalPanelSnapshot);
 
 /// Post–#1869 only: fleet may sit in open-ocean New World first; ship reveal needs
 /// a P–S coastal sea zone (or visibility already updated). Sail / advance until then.
