@@ -81,7 +81,7 @@ void main() {
       );
     });
 
-    test('invokes run_observer_game with both verify flags and seed 42', () {
+    test('invokes run_observer_game with all verify flags and seed 42', () {
       expect(
         yaml,
         contains('dart run tool/run_observer_game/bin/run_observer_game.dart'),
@@ -91,6 +91,14 @@ void main() {
       expect(yaml, contains('--max-turns 150'));
       expect(yaml, contains('--verify-conquest'));
       expect(yaml, contains('--verify-colonial-expansion'));
+      expect(
+        yaml,
+        contains('--verify-workforce'),
+        reason:
+            'Issue #2692 S10 wires the workforce sustain gate into the '
+            'nightly observer campaign alongside conquest and colonial '
+            'verification.',
+      );
     });
 
     test('allows enough wall-clock budget for the 150-turn campaign', () {
@@ -139,6 +147,13 @@ void main() {
         reason:
             'quality.yml must not run --verify-colonial-expansion; that gate '
             'is reserved for the nightly job (Refs #2509).',
+      );
+      expect(
+        yaml.contains('--verify-workforce'),
+        isFalse,
+        reason:
+            'quality.yml must not run --verify-workforce; that gate is '
+            'reserved for the nightly job (Refs #2692 S10).',
       );
       // The CLI binary path must not appear as a "run:" step. Allow path
       // references that gate test scope ("tool/run_observer_game/**") but
