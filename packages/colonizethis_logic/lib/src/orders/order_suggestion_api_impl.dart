@@ -75,6 +75,24 @@ class DefaultOrderSuggestionAPI implements OrderSuggestionAPI {
   }
 
   @override
+  List<RecruitWorkerOrder> suggestRecruitWorkerOrders(
+    PlayerView view,
+    Game game,
+    MapTopology topology,
+    Orders currentOrders,
+  ) {
+    logicLog.d(
+      'order suggestion API suggestRecruitWorkerOrders player=${view.playerId}',
+    );
+    return suggestion.suggestRecruitWorkerOrders(
+      view,
+      game,
+      topology,
+      currentOrders,
+    );
+  }
+
+  @override
   List<ResearchOrder> suggestResearchOrders(
     PlayerView view,
     Game game,

@@ -124,6 +124,13 @@ class IncrementalCandidateValidator {
   bool? _cachedBuildPrefixReplaySucceeded;
   ({Stockpile stockpile, int treasury, WorkerPool workers})?
   _cachedPostBuildPrefixEconomy;
+
+  /// When [false], existing recruit worker orders in [basePrefix] failed
+  /// incremental replay; every [isRecruitWorkerAccepted] probe must reject
+  /// (Refs #2692 S7).
+  bool? _cachedRecruitWorkerPrefixReplaySucceeded;
+  ({Stockpile stockpile, int treasury, WorkerPool workers})?
+  _cachedPostRecruitWorkerPrefixEconomy;
   Map<String, Army>? _cachedArmiesById;
   DiplomacyFactionMembership? _cachedFactionMembership;
   NavalOrderValidator? _cachedNavalOrderValidator;
@@ -250,6 +257,61 @@ class IncrementalCandidateValidator {
   bool isNavalMissionAccepted(NavalMissionOrder candidate) {
     return _navalOrderValidator()
         .validateNavalMission(candidate, previousRejected: false)
+        .isAccepted;
+  }
+
+  /// Validates a [RecruitWorkerOrder] candidate against accepted recruit
+  /// worker orders in [basePrefix] (Refs #2692 S7,
+  /// SPEC/program/order-suggestions.md § Recruit worker orders).
+  ///
+  /// Mirrors the order-engine recruit worker phase: existing recruit orders
+  /// in [basePrefix] are replayed in submission order against the player's
+  /// snapshot worker pool / stockpile / treasury so the candidate sees the
+  /// post-prefix peasant reservation ledger.
+  bool isRecruitWorkerAccepted(RecruitWorkerOrder candidate) {
+    final player = _player();
+    if (player == null) return false;
+    if (_cachedRecruitWorkerPrefixReplaySucceeded == false) {
+      return false;
+    }
+    if (_cachedPostRecruitWorkerPrefixEconomy == null) {
+      final prefixValidator = RecruitWorkerOrderValidator.withProjectedEconomy(
+        player: player,
+        stockpile: player.stockpile,
+        treasury: player.treasury,
+        workerPool: player.workerPool,
+      );
+      final existing =
+          basePrefix.recruitWorkerOrdersByPlayerId[playerId] ??
+          const <RecruitWorkerOrder>[];
+      for (final order in existing) {
+        final result = prefixValidator.validate(
+          order,
+          previousRejected: false,
+        );
+        if (!result.isAccepted) {
+          _cachedRecruitWorkerPrefixReplaySucceeded = false;
+          return false;
+        }
+      }
+      _cachedRecruitWorkerPrefixReplaySucceeded = true;
+      _cachedPostRecruitWorkerPrefixEconomy = (
+        stockpile: prefixValidator.stockpile,
+        treasury: prefixValidator.treasury,
+        workers: prefixValidator.workers,
+      );
+    }
+    final snap = _cachedPostRecruitWorkerPrefixEconomy!;
+    final candidateValidator = RecruitWorkerOrderValidator.withProjectedEconomy(
+      player: player,
+      stockpile: Stockpile(
+        quantities: Map<String, int>.from(snap.stockpile.quantities),
+      ),
+      treasury: snap.treasury,
+      workerPool: snap.workers,
+    );
+    return candidateValidator
+        .validate(candidate, previousRejected: false)
         .isAccepted;
   }
 

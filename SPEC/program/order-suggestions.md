@@ -6,7 +6,7 @@
 
 ## Responsibility
 
-Given a player, their current valid order list, and game context, enumerate **candidate orders** (move, build, work, research, naval, diplomatic) guaranteed to be accepted if appended.
+Given a player, their current valid order list, and game context, enumerate **candidate orders** (move, build, work, research, naval, diplomatic, recruit worker) guaranteed to be accepted if appended.
 
 ---
 
@@ -63,6 +63,7 @@ For every suggested order `o`, appending it to the current list and validating v
 - Given a `basePrefix` whose every order is `accepted` for player P and a candidate army move `c`, when the system evaluates `c` via the incremental primitive and via the existing army-move acceptance probe, then both return the same boolean accept/reject decision for `c`.
 - Given a `basePrefix` whose every order is `accepted` for player P and a candidate naval move `c`, when the system evaluates `c` via the incremental primitive and via `OrderEngine(initialOrders: basePrefix).addNavalMoveOrderWithContext(...)`, then both return the same boolean accept/reject decision for `c`.
 - Given a `basePrefix` whose every order is `accepted` for player P and a candidate naval mission `c`, when the system evaluates `c` via the incremental primitive and via `OrderEngine(initialOrders: basePrefix).addNavalMissionOrderWithContext(...)`, then both return the same boolean accept/reject decision for `c`.
+- Given a `basePrefix` whose every order is `accepted` for player P and a candidate `RecruitWorkerOrder` `c`, when the system evaluates `c` via the incremental primitive (`isRecruitWorkerAccepted` / `isRecruitWorkerOrderAcceptedWithValidator`) and via `OrderEngine(initialOrders: basePrefix).addRecruitWorkerOrderWithContext(...)`, then both return the same boolean accept/reject decision for `c`.
 
 ---
 
@@ -76,6 +77,7 @@ For every suggested order `o`, appending it to the current list and validating v
 - **Visibility:** Uses PlayerView only; may not inspect hidden tiles or enemy units directly. Checks per [fog-and-exploration-resolution.md](fog-and-exploration-resolution.md). Undiscovered factions are **never** valid diplomatic targets for order suggestions.
 - **Determinism:** Fixed inputs produce the same set and ordering of suggestions.
 - **Build orders:** `suggestBuildOrders` returns affordable, valid build-unit orders for both **military (regiment)** and **naval (ship)** unit types. Each candidate is validated (treasury, stockpile, tech, capital) via the order engine. For build affordability, validation adds [pending riches treasury](turn-resolution-phases.md) (`pendingRichesTreasuryDelta` on the current stockpile) to treasury because `TurnPhase.richesToTreasury` runs before `TurnPhase.buildWork` in the same turn. Ordering is deterministic (e.g. by unit type id).
+- **Recruit worker orders (`suggestRecruitWorkerOrders`):** Returns affordable, valid `RecruitWorkerOrder` candidates for `view.playerId` against the prefix in `currentOrders`, one candidate probed per [`WorkerTier`](../game/workers-and-population.md) value (`peasant`, `apprentice`, `journeyman`, `master`). Each candidate is validated via the same `RecruitWorkerOrderValidator` chain the order engine uses in the recruit worker sub-phase: the player's `WorkerPool` / `Stockpile` / `treasury` snapshot is replayed through every accepted recruit worker order in `currentOrders` (peasant reservation ledger per [workers-and-population.md](../game/workers-and-population.md) § Peasant reservation), then the candidate is validated against the post-prefix snapshot. Tech gates, treasury, paper / fabric stockpile, and consumed-peasant headcount are checked per [workers-and-population.md](../game/workers-and-population.md) § Recruiting, Training, and Disbanding. **Disband** is **not** a queued order ([workers-and-population.md](../game/workers-and-population.md) § Disband) and is therefore not enumerated here. Ordering is deterministic by `WorkerTier.index` (`peasant`, `apprentice`, `journeyman`, `master`).
 - **Naval mission orders (`suggestNavalMissionOrders`):** For each eligible fleet, the system tries each value of `FleetMission` (serialized as `FleetMission.name` on `NavalMissionOrder.mission`) and keeps candidates accepted by the order engine. Adding or renaming enum values in [ships-and-naval.md](../game/ships-and-naval.md) therefore updates suggestion enumeration without a separate hardcoded mission list.
 - **Diplomatic orders (`suggestDiplomaticOrders`):** Suggests valid diplomatic orders (Declare War, Offer Peace, Alliance, Establish Overture, Grant Aid, Set Subsidy) targeting factions the player knows about. Each candidate is validated with the order engine (`addDiplomaticOrderWithContext`), same as other suggestion families. Optional `tileMapByRegion` matches `suggestWorkOrders` for API symmetry. Visibility rules per [regional discovery model](../game/diplomacy.md):
   - **GP↔GP:** Always visible (global knowledge of major powers).
@@ -92,6 +94,14 @@ For every suggested order `o`, appending it to the current list and validating v
 - Given `currentOrders` already includes a non-economic diplomatic order from P to target T, when `suggestDiplomaticOrders` runs with those `currentOrders`, then L contains **no** order with `targetFactionId == T`.
 - Given `currentOrders` includes only a valid pending `grantAid` from P to T, when `suggestDiplomaticOrders` runs, then L **may** include a `setSubsidy` toward T if the engine accepts it when merged with `currentOrders`.
 - Given `currentOrders` includes no diplomatic order to T, when a prior call returned suggestions toward T and the player removed all diplomatic orders to T from the draft, when `suggestDiplomaticOrders` runs again with the updated `currentOrders`, then the system **may** again include valid suggestions toward T subject to game rules and engine validation.
+
+**Acceptance criteria (recruit worker suggestions)**
+
+- Given fixed `Game`, `MapTopology`, `PlayerView`, and `Orders` for a Great Power player P with `pool.peasants ≥ 1`, treasury / paper covering the apprentice cost row, and `apprentice_workers + sugar_refining` in `techUnlocked`, when `suggestRecruitWorkerOrders` runs, then the returned list contains a `RecruitWorkerOrder(targetTier: apprentice)` and the candidate is `accepted` by `OrderEngine(initialOrders: currentOrders).addRecruitWorkerOrderWithContext(...)` for that candidate.
+- Given a Great Power player P whose `techUnlocked` does not contain the target tier's required techs, when `suggestRecruitWorkerOrders` runs for `currentOrders` with no recruit worker prefix, then the returned list contains **no** `RecruitWorkerOrder` with that `targetTier`.
+- Given a Great Power player P whose stockpile or treasury cannot pay the cost row for a target tier (e.g. `fabric < 2` for `peasant`, or `treasury < 200` for `apprentice`), when `suggestRecruitWorkerOrders` runs for `currentOrders` with no recruit worker prefix, then the returned list contains **no** `RecruitWorkerOrder` with that `targetTier`.
+- Given a Great Power player P with `pool.peasants == N` and `currentOrders.recruitWorkerOrdersByPlayerId[P]` containing exactly `N` accepted apprentice / journeyman / master recruits (each consuming a peasant per [workers-and-population.md](../game/workers-and-population.md) § Recruit), when `suggestRecruitWorkerOrders` runs, then the returned list contains **no** `RecruitWorkerOrder` whose row sets `consumesPeasant == true` (peasant reservation ledger drained), and may still contain `RecruitWorkerOrder(targetTier: peasant)` when fabric is available.
+- Given any fixed `(Game, MapTopology, PlayerView, currentOrders)` tuple for player P, when `suggestRecruitWorkerOrders` returns a list L, then for each `c ∈ L` the result of `OrderEngine(initialOrders: currentOrders).addRecruitWorkerOrderWithContext(game, topology, P, c)` is `accepted`, and L is sorted ascending by `c.targetTier.index`.
 
 ---
 
