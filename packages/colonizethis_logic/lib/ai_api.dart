@@ -20,9 +20,12 @@ export 'src/constants.dart'
         kWorkTargetStealTech;
 export 'src/diplomacy/diplomacy_relation_lookup.dart'
     show
+        getOverture,
         getRelation,
         greatPowerPowerScore,
+        joinEmpireCostForMinorOrTribe,
         provinceCountOwnedBy,
+        relationScoreMinFriendly,
         shipCountForFaction;
 export 'src/diplomacy/diplomacy_resolver.dart' show DiplomacyFactionMembership;
 export 'src/orders/incremental_candidate_validator.dart'
