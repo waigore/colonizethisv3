@@ -51,7 +51,9 @@ export 'src/world/army_ids.dart' show homeArmyIdFor;
 export 'src/world/player_view.dart'
     show PlayerView, VisibilityLevel, buildPlayerView;
 export 'src/world/sea_reachable_provinces.dart'
-    show reachableNonOwnedProvinceIdsViaSeas;
+    show
+        reachableNonOwnedProvinceDistancesViaSeas,
+        reachableNonOwnedProvinceIdsViaSeas;
 export 'src/world/province_lookup.dart' show allProvinces;
 export 'src/world/unit_lookup.dart'
     show

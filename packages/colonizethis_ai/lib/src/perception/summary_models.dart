@@ -50,12 +50,41 @@ class ColonialSummary {
   const ColonialSummary({
     this.newWorldProvincesOwned = 0,
     this.invadableNewWorldProvinceIdsSorted = const [],
+    this.invadableNewWorldProvinceIdsByDistance = const [],
     this.adjacentNewWorldOwnerFactionIdsSorted = const [],
     this.preferredColonialTargetFactionIdsSorted = const [],
   });
 
   final int newWorldProvincesOwned;
+
+  /// NW invadable province ids, sorted **ascending by province id** (lex).
+  /// Used by the bulk-NW planners ([planColonialMilitary],
+  /// [planColonialNaval], [planColonialLiteNaval], COLONIAL-lite) where
+  /// the ordering only affects deterministic iteration and not target
+  /// selection. Always populated when a [MapTopology] is available.
   final List<String> invadableNewWorldProvinceIdsSorted;
+
+  /// NW invadable province ids, sorted by **ascending BFS topology
+  /// distance** to the nearest owned anchor, then ascending province
+  /// id as a deterministic tiebreaker for equal-distance candidates.
+  ///
+  /// Refs #2509 § COLONIAL phase planner § planColonialAcquisition --
+  /// "For each unowned-visible newWorld| province (sorted by adjacency
+  /// distance to owned territory)". Distance is measured as edges in
+  /// the topology graph: an NW province sharing a direct
+  /// province-province border with an owned anchor has distance 1,
+  /// and an NW province reached via the canonical
+  /// owned-anchor -> OW sea -> NW sea -> NW colony path has distance 3.
+  ///
+  /// Empty when the snapshot is built without a [MapTopology] (the
+  /// adjacency-distance key cannot be derived without topology
+  /// edges). Consumers must fall back to
+  /// [invadableNewWorldProvinceIdsSorted] when this list is empty
+  /// (`planColonialAcquisition` does so today; sibling COLONIAL
+  /// planners stay on the lex-sorted field because tie-break order
+  /// does not affect their plan outputs).
+  final List<String> invadableNewWorldProvinceIdsByDistance;
+
   final List<String> adjacentNewWorldOwnerFactionIdsSorted;
   final List<String> preferredColonialTargetFactionIdsSorted;
 }

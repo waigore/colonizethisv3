@@ -49,10 +49,14 @@
 ///     Returns the deterministic acquisition target for the active
 ///     COLONIAL player when one is achievable this turn, or `null`
 ///     when no method is reachable. Iterates over
-///     [ColonialSummary.invadableNewWorldProvinceIdsSorted] in sorted
-///     order (adjacency-distance reordering deferred to a follow-up
-///     slice — see § planColonialAcquisition for the spec ordering)
-///     and tries methods in priority order:
+///     [ColonialSummary.invadableNewWorldProvinceIdsByDistance] (the
+///     spec-mandated "sorted by adjacency distance to owned territory"
+///     ordering, populated by the perception-snapshot builder via
+///     [reachableNonOwnedProvinceDistancesViaSeas]) when topology was
+///     available at snapshot build time, otherwise falls back to
+///     [ColonialSummary.invadableNewWorldProvinceIdsSorted] (lex
+///     order) for synthetic fixtures built without a topology. The
+///     planner tries methods in priority order:
 ///
 ///       1. **Join Empire** (Acquisition method 1) — first NW
 ///          province whose tribe/minor owner has an
@@ -479,16 +483,22 @@ class ColonialAcquisitionTarget {
 /// is already last-resort across every turn.
 ///
 /// Iteration ordering:
-///   - Walks [ColonialSummary.invadableNewWorldProvinceIdsSorted] in
-///     the sorted order provided by the perception snapshot. The
-///     issue body asks for adjacency-distance ordering ("sorted by
-///     adjacency distance to owned territory"); that re-ranking is
-///     deferred to a follow-up slice — switching the iteration to an
-///     adjacency-distance key changes which target wins on ties but
-///     does not change the gate set this slice pins.
-///     `invadableNewWorldProvinceIdsSorted` is itself sorted ascending
-///     by the snapshot builder, so the iteration is deterministic
-///     today (Refs #2509 Must-have #7).
+///   - Walks [ColonialSummary.invadableNewWorldProvinceIdsByDistance]
+///     in BFS-distance order (nearest invadable NW province to the
+///     active player's territory first, ascending province id as a
+///     deterministic tiebreaker among equal-distance candidates).
+///     This matches the spec wording "sorted by adjacency distance
+///     to owned territory" (Refs #2509 § planColonialAcquisition).
+///     Distance is measured as topology edges (province <-> province
+///     borders count as 1; province <-> seaZone <-> province via the
+///     canonical NW colonial route counts as 2). The
+///     perception-snapshot builder derives this list from
+///     [reachableNonOwnedProvinceDistancesViaSeas]; when the snapshot
+///     was built without a [MapTopology] (e.g. synthetic unit-test
+///     fixtures) the planner falls back to
+///     [ColonialSummary.invadableNewWorldProvinceIdsSorted] (lex
+///     order) so legacy fixtures stay deterministic without
+///     re-plumbing topology through every test setup.
 ///
 /// Inputs:
 ///   - [game]: resolves the active player ([Game.playerById]) for the
@@ -545,7 +555,7 @@ ColonialAcquisitionTarget? planColonialAcquisition({
   if (game.playerById(snapshot.playerId) == null) {
     return null;
   }
-  final invadable = snapshot.colonial.invadableNewWorldProvinceIdsSorted;
+  final invadable = _acquisitionIterationOrder(snapshot.colonial);
   if (invadable.isEmpty) {
     return null;
   }
@@ -632,6 +642,36 @@ ColonialAcquisitionTarget? planColonialAcquisition({
   }
 
   return null;
+}
+
+/// Iteration order over NW invadable provinces for
+/// [planColonialAcquisition], honoring the spec's adjacency-distance
+/// requirement (Refs #2509 § COLONIAL phase planner §
+/// planColonialAcquisition -- "sorted by adjacency distance to owned
+/// territory").
+///
+/// Returns [ColonialSummary.invadableNewWorldProvinceIdsByDistance]
+/// when the snapshot was built with a [MapTopology] (the normal
+/// production path; the perception-snapshot builder populates the
+/// distance-sorted field via
+/// [reachableNonOwnedProvinceDistancesViaSeas]). Falls back to the
+/// lex-sorted [ColonialSummary.invadableNewWorldProvinceIdsSorted]
+/// for synthetic fixtures that build snapshots without a topology
+/// (today: the COLONIAL acquisition unit tests). The fallback
+/// preserves backward-compatible behavior for the legacy pin set
+/// (sort-by-province-id tiebreaks) while production play uses the
+/// distance-sorted iteration the spec mandates.
+///
+/// The function never throws or returns null: if the snapshot has
+/// neither field populated (e.g. an outer COLONIAL guard already
+/// short-circuited to an empty invadable set upstream), it returns
+/// the empty list and the caller's outer-guard short-circuits as
+/// today.
+List<String> _acquisitionIterationOrder(ColonialSummary colonial) {
+  if (colonial.invadableNewWorldProvinceIdsByDistance.isNotEmpty) {
+    return colonial.invadableNewWorldProvinceIdsByDistance;
+  }
+  return colonial.invadableNewWorldProvinceIdsSorted;
 }
 
 /// Minimum [RegimentEconomyCatalog] build treasury cost (deterministic
