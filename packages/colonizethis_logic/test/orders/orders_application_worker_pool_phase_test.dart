@@ -5,6 +5,11 @@ import 'package:colonizethis_test/test.dart';
 
 /// Build / work resolution applies RecruitWorkerOrder mutations to the player
 /// snapshot before BuildUnitOrder runs (#2692 S4; SPEC/program/turn-resolution-phase-details.md).
+///
+/// S9 tier / ordering / multi-player coverage lives in the sibling file
+/// `orders_application_worker_pool_phase_s9_test.dart` (split to honor the
+/// colonizethis_logic 400-line per-test-file policy enforced by
+/// `repo.logic_test_file_size`).
 void main() {
   group('applyBuildAndWorkOrders worker pool sub-phase (#2692 S4)', () {
     test(
