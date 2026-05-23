@@ -54,6 +54,7 @@ Skills live under `.cursor/skills/<name>/SKILL.md`. When a skill matches the tas
 | `create-github-issue` | Turn an informal bug/report into a structured GitHub issue after read-only SPEC/code analysis and mandatory numbered requirement clarifications with the user (read-only repo work; may use `gh`). |
 | `refactoring-opportunity-github-issue` | Scan `app/` or one `packages/*` package on latest `origin/dev`, de-duplicate against open GitHub issues, match `.cursor/rules`, propose focused refactors + CI (extend existing AST/analyzer gates first), draft/file a structured issue (OpenCode copy under `.opencode/skills/`). |
 | `clean-local-branches` | Prune local branch refs, keeping `dev` and open-PR heads; never delete remote branches. |
+| `consolidate-prs` | Collapse multiple open PRs that target the same issue into one PR (strict `fix-pr` first for stalled PRs), then forcibly cancel in-progress GitHub Actions runs no longer attached to any open PR. OpenCode copy under `.opencode/skills/` defers to the Cursor skill. |
 | `fix-pr` | Unblock a PR by fixing failing checks and quality gates. |
 | `implement-github-issue` | User gives an issue **#** or **URL**; validate problem/design/testable ACs, update **SPEC** if needed, implement, add positive/negative tests, open PR to **`dev`** with **`Refs #…`** (do **not** auto-close). Very large issues: one isolatable slice only. |
 | `merge-dev-into-android-build` | Merge `dev` into `build/app/android` for APK build workflows. |
