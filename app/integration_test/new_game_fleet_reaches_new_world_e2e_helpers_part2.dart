@@ -220,105 +220,15 @@ Future<void> _awaitNwCoastalOrVisibleLandForBundledExploreE2e({
   // destinations yet. Leave strict assertion to the final Explore-enabled check.
 }
 
-String _bundledExploreRejectionDiagnostics([
-  CtE2eNavalPanelSnapshot? lastKnownNavalSnapshot,
-]) {
-  final navalSnap = lastKnownNavalSnapshot ?? ctE2eNavalPanelSnapshot;
-  final civilianSnap = ctE2eCivilianPanelSnapshot;
-  if (navalSnap == null) {
-    return 'No ctE2eNavalPanelSnapshot available for diagnostics.';
-  }
-  final game = navalSnap.game;
-  final topology = navalSnap.topology;
-  final playerId = navalSnap.humanPlayerId;
-  final orders = navalSnap.draftOrders;
-  final view = buildPlayerView(game, topology, playerId);
-  final suggestions = suggestWorkOrders(view, game, topology, orders);
-
-  bool provinceHasFoggedOrBetter(String provinceFullId) {
-    final regionId = ProvinceId.regionIdFrom(provinceFullId);
-    final localId = ProvinceId.localIdFrom(provinceFullId);
-    for (final e in view.visibilityByTile.entries) {
-      final parts = e.key.split('|');
-      if (parts.length != 4) {
-        continue;
-      }
-      if (parts[0] != regionId || parts[1] != localId) {
-        continue;
-      }
-      if (e.value.name != 'unknown') {
-        return true;
-      }
-    }
-    return false;
-  }
-
-  final lines = <String>[
-    'diag: player=$playerId',
-    'diag: civilianSnapshotAvailable=${civilianSnap != null}',
-    if (civilianSnap != null)
-      'diag: availableWorkTargets=${civilianSnap.availableWorkTargets}',
-    'diag: draftMoveOrders=${orders.moveOrdersByPlayerId[playerId]?.map((o) => "${o.unitId}->${Unit.provinceIdFromTileKey(o.destinationTileKey) ?? "?"}").toList() ?? const []}',
-    'diag: suggestedExplore=${suggestions.where((o) => o.target == kWorkTargetExplore).map((o) => "${o.unitId}@${Unit.provinceIdFromTileKey(o.targetTileKey) ?? "?"}").toList()}',
-  ];
-
-  final explorerUnits =
-      view.ownUnits.where((u) => u.type == kUnitTypeExplorer).toList()
-        ..sort((a, b) => a.id.compareTo(b.id));
-  if (explorerUnits.isEmpty) {
-    lines.add('diag: no explorer units found in player view.');
-    return lines.join('\n');
-  }
-
-  final provinces = allProvinces(game.worldState).toList()
-    ..sort((a, b) => a.id.compareTo(b.id));
-  final tribeIds = game.tribes.map((t) => t.id).toSet();
-  final minorIds = game.minorNations.map((m) => m.id).toSet();
-  for (final unit in explorerUnits) {
-    lines.add(
-      'diag: explorer unit=${unit.id} atProvince=${unit.locationProvinceId} tileKey=${unit.tileKey ?? "(null)"}',
-    );
-    for (final prov in provinces) {
-      final foggedOrBetter = provinceHasFoggedOrBetter(prov.id);
-      final owner = prov.ownerId;
-      final ownerKind = owner == null
-          ? 'none'
-          : owner == playerId
-          ? 'self'
-          : tribeIds.contains(owner)
-          ? 'tribe'
-          : minorIds.contains(owner)
-          ? 'minor'
-          : 'gp';
-      final targetTileKey = '${prov.id}|0|0';
-      final workRes = OrderEngine(initialOrders: orders)
-          .addWorkOrderWithContext(
-            game,
-            topology,
-            playerId,
-            WorkOrder(
-              unitId: unit.id,
-              target: kWorkTargetExplore,
-              targetTileKey: targetTileKey,
-            ),
-          );
-      final moveRes = OrderEngine(initialOrders: orders)
-          .addMoveOrderWithContext(
-            game,
-            topology,
-            playerId,
-            MoveOrder(unitId: unit.id, destinationTileKey: '${prov.id}|0|0'),
-          );
-      lines.add(
-        'diag: province=${prov.id} owner=${prov.ownerId ?? "(none)"} ownerKind=$ownerKind '
-        'visibleFoggedPlus=$foggedOrBetter '
-        'workAccepted=${workRes.isAccepted} workReason=${workRes.reason ?? "(none)"} '
-        'moveAccepted=${moveRes.isAccepted} moveReason=${moveRes.reason ?? "(none)"}',
-      );
-    }
-  }
-  return lines.join('\n');
-}
+/// `_bundledExploreRejectionDiagnostics` was lifted into the public
+/// [e2eBundledExploreRejectionDiagnostics] in `e2e_test_shared.dart`
+/// (Refs GitHub #2336 AC1 / AC2). The lifted form takes both
+/// [CtE2eNavalPanelSnapshot] and [CtE2eCivilianPanelSnapshot] explicitly
+/// rather than reading the global panel snapshots, so the diagnostic
+/// surface is deterministic and unit-pinned in
+/// `app/test/e2e_bundled_explore_rejection_diagnostics_test.dart`. Call
+/// sites compose the global fallback (`x ?? ctE2eNavalPanelSnapshot`)
+/// themselves before delegating to the public helper.
 
 /// _exploreAssignEnabledFromCivilianSnapshot was lifted into the public
 /// [e2eExploreAssignEnabledFromCivilianSnapshot] in `e2e_test_shared.dart`

@@ -18,6 +18,7 @@ export 'e2e_test_shared.dart'
     show
         E2ePerfLog,
         e2eAdaptivePollRampAfterIdle,
+        e2eBundledExploreRejectionDiagnostics,
         e2eExploreAssignEnabledFromCivilianSnapshot,
         e2eFleetReachDoneFromCtSnapshotOnly,
         e2eHarnessDetectsNonHomeFleetInNewWorld,

@@ -3,15 +3,6 @@ import 'package:colonizethis_app/config/ct_e2e.dart';
 import 'package:colonizethis_app/config/ct_e2e_last_panel_snapshot.dart';
 import 'package:colonizethis_app/features/game/widgets/units/shared/units_panel_region_label.dart';
 import 'e2e_helpers.dart';
-import 'package:colonizethis_logic/colonizethis_logic.dart'
-    show
-        OrderEngine,
-        allProvinces,
-        buildPlayerView,
-        kWorkTargetExplore,
-        suggestWorkOrders;
-import 'package:colonizethis_models/colonizethis_models.dart'
-    show MoveOrder, ProvinceId, Unit, WorkOrder, kUnitTypeExplorer;
 import 'package:colonizethis_app/l10n/l10n.dart';
 import 'package:colonizethis_app/main.dart' show bootstrapForIntegrationTest;
 import 'package:colonizethis_app/widgets/ct_choice_chip.dart';
@@ -405,8 +396,9 @@ void main() {
           // visible within bounded retries, so Explore cannot be enabled.
           return;
         }
-        final diag = _bundledExploreRejectionDiagnostics(
-          lastKnownNavalSnapshot,
+        final diag = e2eBundledExploreRejectionDiagnostics(
+          navalSnapshot: lastKnownNavalSnapshot ?? ctE2eNavalPanelSnapshot,
+          civilianSnapshot: ctE2eCivilianPanelSnapshot,
         );
         fail(
           'Post-bundle #1869 regression: Explorer Assign never surfaced an enabled '
