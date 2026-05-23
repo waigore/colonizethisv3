@@ -72,7 +72,7 @@ Future<bool> _tapMoveOnFirstNonHomeFleet(WidgetTester tester) async {
       final loc = find.descendant(
         of: sub,
         matching: find.byWidgetPredicate(
-          (w) => w is Text && _textLooksLikeNewWorldLocationLine(w.data),
+          (w) => w is Text && e2eTextLooksLikeNewWorldLocationLine(w.data),
         ),
       );
       final hit = move.hitTestable();
@@ -117,18 +117,9 @@ Future<bool> _tapMoveOnFirstNonHomeFleet(WidgetTester tester) async {
   return false;
 }
 
-/// `naval_tree_builder.dart` uses an em dash; accept common dash glyphs for CI.
-bool _textLooksLikeNewWorldLocationLine(String? data) {
-  if (data == null) return false;
-  final t = data.trimLeft();
-  const prefix = 'New World';
-  if (!t.startsWith(prefix)) return false;
-  final after = t.substring(prefix.length);
-  if (after.isEmpty) return false;
-  // Em dash (UI), en dash, hyphen-minus, optional spaces.
-  final rest = after.trimLeft();
-  return rest.startsWith('—') || rest.startsWith('–') || rest.startsWith('-');
-}
+/// Naval-panel location row detection moved to
+/// [e2eTextLooksLikeNewWorldLocationLine] (`e2e_test_shared.dart`) so the
+/// dash-glyph contract is unit-pinned (Refs GitHub #2336).
 
 /// While the naval bottom sheet is open, [ctE2eNavalPanelSnapshot] mirrors the same
 /// [Game] the panel uses (`SPEC/program/e2e-integration-tests.md`). Prefer this on
@@ -262,7 +253,7 @@ bool _navalPanelShowsNonHomeFleetInNewWorld(WidgetTester tester) {
     final loc = find.descendant(
       of: sub,
       matching: find.byWidgetPredicate(
-        (w) => w is Text && _textLooksLikeNewWorldLocationLine(w.data),
+        (w) => w is Text && e2eTextLooksLikeNewWorldLocationLine(w.data),
       ),
     );
     if (loc.evaluate().isNotEmpty) {
