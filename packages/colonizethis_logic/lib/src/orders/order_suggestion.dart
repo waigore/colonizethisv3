@@ -8,6 +8,11 @@ export 'order_suggestion_context.dart'
         resetIncrementalCandidateValidatorBuildCountForTests,
         setOrderSuggestionWorkOrderAcceptanceProbeTrackingForTests;
 export 'order_suggestion_build.dart' show suggestBuildOrders;
+export 'order_suggestion_recruit_worker.dart'
+    show
+        isRecruitWorkerOrderAccepted,
+        isRecruitWorkerOrderAcceptedWithValidator,
+        suggestRecruitWorkerOrders;
 export 'order_suggestion_research.dart' show suggestResearchOrders;
 export 'order_suggestion_work_tile_keys.dart'
     show getValidWorkOrderTileKeys, getValidWorkOrderTileKeysWithVisibility;
