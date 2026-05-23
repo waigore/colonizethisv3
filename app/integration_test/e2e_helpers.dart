@@ -22,6 +22,7 @@ export 'e2e_test_shared.dart' show
     e2eOldWorldRegionChipAppearsSelected,
     e2ePumpUntil,
     e2ePumpUntilConditionOrIdle,
+    e2eTextLooksLikeNewWorldLocationLine,
     e2eWaitForNewGameEntry,
     e2eWaitForNextTurnLabelAdvance,
     e2eWaitUntilAnyFinderHitTestable,

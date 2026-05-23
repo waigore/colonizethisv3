@@ -300,6 +300,32 @@ void main() {
       );
     });
 
+    test(
+      'e2eTextLooksLikeNewWorldLocationLine is re-exported through the barrel',
+      () {
+        final bool Function(String?) ref = e2eTextLooksLikeNewWorldLocationLine;
+        expect(
+          ref,
+          isNotNull,
+          reason:
+              'Fleet-reach detection in '
+              '`new_game_fleet_reaches_new_world_e2e_helpers_part2.dart` '
+              'consumes this predicate via the AC1 barrel; a regression '
+              'that dropped it from the `show` clause would break the '
+              'naval-panel "New World — …" location row detection at '
+              'E2E time. Pin the tear-off so the regression surfaces here.',
+        );
+        expect(
+          ref('New World — Outer Sea'),
+          isTrue,
+          reason:
+              'Sanity smoke through the barrel: the canonical em-dash '
+              'shape must still match after re-export, otherwise a '
+              'wrapper that swallowed the argument would pass silently.',
+        );
+      },
+    );
+
     test('AC1 timing constants are exposed as Duration values', () {
       const Duration maxWallClock = kE2eMaxWallClock;
       const Duration nextTurnTimeout = kE2eNextTurnResolutionTimeout;
