@@ -1,7 +1,6 @@
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:colonizethis_app/config/ct_e2e.dart';
 import 'package:colonizethis_app/config/ct_e2e_last_panel_snapshot.dart';
-import 'package:colonizethis_app/features/game/widgets/units/shared/units_panel_region_label.dart';
 import 'e2e_helpers.dart';
 import 'package:colonizethis_app/l10n/l10n.dart';
 import 'package:colonizethis_app/main.dart' show bootstrapForIntegrationTest;
@@ -121,10 +120,11 @@ void main() {
         }
       }
 
-      await _tryNavalMoveSegment(
+      await tryNavalMoveSegment(
         tester,
         l10n,
         perf: perf,
+        maxUiResponseWait: _kMaxUiResponseWait,
         // Panel was opened above only when snapshot plumbing is unavailable.
         navalPanelAlreadyOpen: ctE2eNavalPanelSnapshot == null,
       );
@@ -275,10 +275,11 @@ void main() {
           lastKnownNavalSnapshot = ctE2eNavalPanelSnapshot;
         }
 
-        await _tryNavalMoveSegment(
+        await tryNavalMoveSegment(
           tester,
           l10n,
           perf: perf,
+          maxUiResponseWait: _kMaxUiResponseWait,
           navalPanelAlreadyOpen: ctE2eNavalPanelSnapshot == null,
         );
         await closeBottomSheet(
