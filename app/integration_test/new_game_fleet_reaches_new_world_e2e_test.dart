@@ -353,8 +353,9 @@ void main() {
           perf: perf,
           phaseName: 'wait_until_found_civilian_panel',
         );
-        final enabled = await _anyExplorerHasEnabledExploreAssignFleetE2e(
+        final enabled = await anyExplorerHasEnabledExploreAssignFleet(
           tester,
+          maxUiResponseWait: _kMaxUiResponseWait,
         );
         await closeBottomSheet(
           tester,
