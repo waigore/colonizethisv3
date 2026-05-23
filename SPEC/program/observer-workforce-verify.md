@@ -2,18 +2,21 @@
 
 **SPEC/program** — Verifier for the **15-regiment workforce sustain** metric from issue **#2692** Requirement §21. Lives in `tool/run_observer_game/lib/observer_workforce_verify.dart`. Consumes the `workerPool` block added to player rollups in `ObserverSnapshot` v3 (see [run_observer_game-tool.md](run_observer_game-tool.md)). Stakeholder decisions: GitHub **#2692**.
 
-## Scope (this slice, S10a)
+## Scope
 
-In scope:
+In scope (landed across **S10a** and **S10**):
 
-- Schema reader: `WorkerPoolCounts workerPoolCountsForPlayer(Map snapshotJson, String playerId)` returns the player's pool counts or `WorkerPoolCounts.zero` for missing / malformed / v2 rollups.
-- Per-GP verifier: `List<String> verifyPerGpWorkforceSustain({...})` checks each canonical Great Power (`gp1`–`gp6`) against the provisional thresholds and returns one human-readable failure line per failing threshold per GP.
-- Disk reader: `List<String> verifyObserverWorkforceFromTraceDir(String tracesGameDir, {int endTurn = 100, ...})` loads `turn-<endTurn>.snapshot.json` and delegates to the per-GP verifier; reports a single `missing end snapshot: <path>` line when the file is absent.
+- **Verifier library (S10a)**
+  - Schema reader: `WorkerPoolCounts workerPoolCountsForPlayer(Map snapshotJson, String playerId)` returns the player's pool counts or `WorkerPoolCounts.zero` for missing / malformed / v2 rollups.
+  - Per-GP verifier: `List<String> verifyPerGpWorkforceSustain({...})` checks each canonical Great Power (`gp1`–`gp6`) against the provisional thresholds and returns one human-readable failure line per failing threshold per GP.
+  - Disk reader: `List<String> verifyObserverWorkforceFromTraceDir(String tracesGameDir, {int endTurn = 100, ...})` loads `turn-<endTurn>.snapshot.json` and delegates to the per-GP verifier; reports a single `missing end snapshot: <path>` line when the file is absent.
+- **CLI + nightly wiring (S10)**
+  - `--verify-workforce` flag in `tool/run_observer_game/lib/run_observer_game_cli.dart`. Requires `--max-turns >= kObserverWorkforceCanonicalTurn` (or no cap). On verification failure the CLI exits with code **`kExitWorkforceVerifyFailed` (8)** and emits one `workforce_verify: …` line on stderr per failure. On pass, the CLI emits a single confirmation line on stdout.
+  - When `--verify-workforce` is the only active verify flag the runner enters minimal trace mode (no merged trace, no HTML) and writes only `turn-000100.snapshot.json` plus `run-summary.json` (Refs #2534). Combined verify flags union their canonical turns via `requiredObserverSnapshotTurns(...)` in `observer_minimal_trace.dart`.
+  - `.github/workflows/nightly.yml` job `observer_conquest_verify` runs `--verify-workforce` alongside `--verify-conquest` and `--verify-colonial-expansion` daily at **23:00 Asia/Hong_Kong** (`0 15 * * *` UTC).
 
-Out of scope for this slice (tracked under #2692 S10 follow-up):
+Out of scope (tracked as #2692 follow-ups):
 
-- `--verify-workforce` CLI flag wiring in `run_observer_game_cli.dart`.
-- Nightly workflow integration in `.github/workflows/nightly.yml`.
 - Food production (`grain + meat`) and luxury production (`refinedSugar` / `cigars` / `furHats`) checks from Requirement §21 bullets 3–4. These require new snapshot fields (production / stockpile rollups) and are gated by `kObserverWorkforceFoodLuxuryDeferred` in the verifier so future work can grep the marker.
 
 ## Provisional thresholds (v1; tunable in S10a)
@@ -54,3 +57,15 @@ S10a observer-trace analysis on **seed 42** (issue #2692 AC #7a) may revise thes
 - Given a trace directory containing a `turn-000050.snapshot.json` where every `gp1`–`gp6` has `peasants == 8` and `apprentices == 1`  
   When the System invokes `verifyObserverWorkforceFromTraceDir(tracesGameDir: dir, endTurn: 50)`  
   Then the System returns at least one failure line containing `peasants=8` and at least one containing `trained=1`.
+
+- Given CLI arguments `--output <dir> --max-turns 50 --verify-workforce`  
+  When the System invokes `runObserverGameCli(arguments: [...])`  
+  Then the System exits with code `kExitUsage` and writes a stderr line that mentions `--verify-workforce` and `>= kObserverWorkforceCanonicalTurn`.
+
+- Given the CLI ran a successful observer session with `--verify-workforce` and the resulting `turn-000100.snapshot.json` contains every Great Power `gp1`–`gp6` with `peasants < 15`  
+  When the System runs the workforce verification block in `runObserverGameCli`  
+  Then the System exits with code `kExitWorkforceVerifyFailed` (8) and writes one `workforce_verify: <gpId> peasants=<n> …` line to stderr per failing threshold per GP.
+
+- Given the nightly workflow `.github/workflows/nightly.yml` job `observer_conquest_verify`  
+  When the System renders the rendered `dart run …/run_observer_game.dart …` command line  
+  Then the command line contains `--verify-conquest`, `--verify-colonial-expansion`, **and** `--verify-workforce`, plus `--seed 42` and `--max-turns 150`.

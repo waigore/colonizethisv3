@@ -7,6 +7,7 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 
 import 'package:run_observer_game/observer_minimal_trace.dart';
 import 'package:run_observer_game/observer_session_runner.dart';
+import 'package:run_observer_game/observer_workforce_verify.dart';
 import 'package:run_observer_game/run_observer_game_cli.dart';
 
 /// Decodes `<pre>` text produced by `HtmlEscape` (snapshot HTML wrapper).
@@ -106,6 +107,47 @@ void main() {
       );
       expect(code, kExitUsage);
       expect(err.join('\n'), contains('verify-conquest'));
+    });
+
+    test('verify-workforce with low max-turns yields EX_USAGE', () async {
+      final out = <String>[];
+      final err = <String>[];
+      final tmp = Directory.systemTemp.createTempSync('roc_workforce_');
+      addTearDown(() => tmp.deleteSync(recursive: true));
+      final code = await runObserverGameCli(
+        [
+          '--output',
+          tmp.path,
+          '--max-turns',
+          '50',
+          '--verify-workforce',
+        ],
+        emitStdout: out.add,
+        emitStderr: err.add,
+      );
+      expect(code, kExitUsage);
+      final stderr = err.join('\n');
+      expect(stderr, contains('--verify-workforce'));
+      expect(
+        stderr,
+        contains('$kObserverWorkforceCanonicalTurn'),
+        reason:
+            'CLI usage error must surface the canonical workforce turn so '
+            'callers can fix --max-turns without spelunking SPEC.',
+      );
+    });
+
+    test('--help mentions --verify-workforce', () async {
+      final out = <String>[];
+      final err = <String>[];
+      final code = await runObserverGameCli(
+        ['--help'],
+        emitStdout: out.add,
+        emitStderr: err.add,
+      );
+      expect(code, 0);
+      expect(err, isEmpty);
+      expect(out.join('\n'), contains('verify-workforce'));
     });
 
     test('negative --max-turns yields EX_USAGE', () async {
@@ -342,6 +384,66 @@ void main() {
         );
 
         expect(code, kExitArtifactSizeCapExceeded);
+      },
+      timeout: const Timeout(Duration(minutes: 15)),
+    );
+
+    test(
+      'minimal trace mode honours verifyWorkforce union (turn-100 snapshot)',
+      () async {
+        final tmp = Directory.systemTemp.createTempSync('run_observer_wf_');
+        addTearDown(() => tmp.deleteSync(recursive: true));
+
+        final setup = GameSetupConfig(
+          selectedGreatPowerIds: const ['england', 'france'],
+          continentCount: 4,
+          minorNationCount: 2,
+          tribeCount: 2,
+          numProvincesOldWorld: 14,
+          numProvincesNewWorld: 6,
+          minProvincesPerMinor: 2,
+          seed: 11,
+        );
+
+        final code = await runObserverSession(
+          outputRoot: tmp.path,
+          setupConfig: setup,
+          maxTurnsCap: 1,
+          verifyWorkforce: true,
+        );
+
+        expect(code, 0);
+
+        final gameDir = Directory('${tmp.path}/observer-traces')
+            .listSync()
+            .whereType<Directory>()
+            .single;
+        final names = gameDir
+            .listSync()
+            .whereType<File>()
+            .map((f) => f.uri.pathSegments.last)
+            .toList()
+          ..sort();
+
+        expect(
+          names,
+          ['run-summary.json'],
+          reason:
+              '--verify-workforce + maxTurns=1 must not produce a turn-1 '
+              'snapshot (workforce only needs turn 100). The session ends '
+              'before turn 100 so no snapshot is written; only '
+              'run-summary.json remains.',
+        );
+        expect(names.where((n) => n.endsWith('.html')), isEmpty);
+
+        final summary = jsonDecode(
+              File('${gameDir.path}/run-summary.json').readAsStringSync(),
+            ) as Map<String, Object?>;
+        expect(summary['minimal_trace_mode'], isTrue);
+
+        final failures = verifyObserverWorkforceFromTraceDir(gameDir.path);
+        expect(failures, hasLength(1));
+        expect(failures.single, contains('missing end snapshot'));
       },
       timeout: const Timeout(Duration(minutes: 15)),
     );

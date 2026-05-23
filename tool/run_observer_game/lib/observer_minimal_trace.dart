@@ -1,5 +1,6 @@
 import 'observer_colonial_verify.dart';
 import 'observer_conquest_verify.dart';
+import 'observer_workforce_verify.dart';
 
 /// Exit code when verify-run artifact writes would exceed [kObserverVerifyArtifactSizeCapBytes].
 const int kExitArtifactSizeCapExceeded = 7;
@@ -8,9 +9,14 @@ const int kExitArtifactSizeCapExceeded = 7;
 const int kObserverVerifyArtifactSizeCapBytes = 300 * 1024 * 1024;
 
 /// Turn numbers for which [ObserverSnapshot] JSON is written in minimal trace mode.
+///
+/// The set unions the canonical turns required by every active verify flag so a
+/// single run can satisfy multiple downstream verifiers without re-running
+/// the campaign (Refs #2509, #2692 S10).
 Set<int> requiredObserverSnapshotTurns({
   required bool verifyConquest,
   required bool verifyColonialExpansion,
+  bool verifyWorkforce = false,
 }) {
   final turns = <int>{};
   if (verifyConquest) {
@@ -19,6 +25,9 @@ Set<int> requiredObserverSnapshotTurns({
   }
   if (verifyColonialExpansion) {
     turns.add(kObserverColonialCanonicalTurn);
+  }
+  if (verifyWorkforce) {
+    turns.add(kObserverWorkforceCanonicalTurn);
   }
   return turns;
 }
