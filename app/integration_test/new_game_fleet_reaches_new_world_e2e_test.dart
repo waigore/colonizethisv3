@@ -116,7 +116,7 @@ void main() {
           timeout: _kMaxUiResponseWait,
           bottomSheetCloseTimeout: _kMaxUiResponseWait,
         );
-        if (_navalPanelShowsNonHomeFleetInNewWorld(tester)) {
+        if (e2eNavalPanelShowsNonHomeFleetInNewWorld(tester)) {
           await closeBottomSheet(
             tester,
             perf: perf,
@@ -266,7 +266,7 @@ void main() {
             timeout: _kMaxUiResponseWait,
             bottomSheetCloseTimeout: _kMaxUiResponseWait,
           );
-          if (_navalPanelShowsNonHomeFleetInNewWorld(tester)) {
+          if (e2eNavalPanelShowsNonHomeFleetInNewWorld(tester)) {
             await closeBottomSheet(
               tester,
               perf: perf,
