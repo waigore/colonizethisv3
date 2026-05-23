@@ -12,6 +12,18 @@
 /// this module **only** when `observerGoalPhaseFor` resolves to
 /// `ObserverGoalPhase.develop`; the planner functions themselves do not
 /// re-check the phase (suppression is structural, per the issue spec).
+/// The structural NW-suppression AC for the planner **set as a whole**
+/// (issue #2509 § Phase planner unit tests § "DEVELOP NW suppression";
+/// `SPEC/ai/phase-planner-architecture.md` § Acceptance criteria) is
+/// pinned in `test/planning/develop_phase_planner_nw_suppression_test.dart`,
+/// which exercises both DEVELOP planners (`planDevelopPeace`,
+/// `planDevelopCivilian`) against a fixture loaded with tribe-owned NW
+/// provinces, an unowned NW province with a resource entry, and tribe /
+/// minor factions in `atWarWith`, then asserts the merged output set
+/// contains no declareWar, no NW-acquisition (`purchase_land` /
+/// `establishOverture` / NW-army-move), and no improvements toward
+/// foreign or unowned NW tiles. Structural absence: DEVELOP exposes no
+/// declareWar / acquisition / military / naval planner functions.
 ///
 /// Wiring this module into the orchestrator and removing the legacy
 /// `developPhaseGpPeaceTargets` helper from `observer_goal_phase.dart`
@@ -165,9 +177,9 @@ List<WorkOrder> planDevelopCivilian({
   }
 
   eligibleTileKeys.sort((a, b) {
-    final scoreCmp = _developCivilianTileScore(b).compareTo(
-      _developCivilianTileScore(a),
-    );
+    final scoreCmp = _developCivilianTileScore(
+      b,
+    ).compareTo(_developCivilianTileScore(a));
     if (scoreCmp != 0) return scoreCmp;
     return a.compareTo(b);
   });
