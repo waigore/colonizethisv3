@@ -24,8 +24,18 @@ const Duration _kFleetE2eMaxWallClock = kE2eMaxWallClock;
 /// `kCtE2ERegionTabNewWorldKey` and `CtChoiceChip + region_oldWorld` tap
 /// contracts are shared and unit-pinned (Refs GitHub #2336 AC1 / AC2). Call
 /// sites consume the public names directly; `_tryNavalMoveSegment` below
-/// composes them with [openNavalPanel] / [_tapMoveOnFirstNonHomeFleet]
+/// composes them with [openNavalPanel] / [tapMoveOnFirstNonHomeFleet]
 /// without changing observable behavior.
+
+/// `_tapMoveOnFirstNonHomeFleet` was lifted into
+/// [e2eTapMoveOnFirstNonHomeFleet] (`e2e_test_shared_panels.dart`) so the
+/// non-home Move-tap contract is shared and unit-pinned (Refs GitHub #2336
+/// AC1 / AC2). The fleet-reach loop calls this helper through
+/// `_tryNavalMoveSegment` up to `_kMaxNextTurnTapsForNwFleetReach (35)`
+/// times per scenario; the widget-test pin in
+/// `app/test/e2e_tap_move_on_first_non_home_fleet_test.dart` carries the
+/// behavioural contract because the integration suite cannot validate it
+/// directly today (`SPEC/program/e2e-integration-tests.md` § CI).
 
 /// Generic-instantiation `RadioListTile<…>` lookup inside any mounted
 /// [AlertDialog] moved to [e2eRadioListTilesInAlertDialogs]
@@ -177,7 +187,7 @@ Future<void> _tryNavalMoveSegment(
       bottomSheetCloseTimeout: _kMaxUiResponseWait,
     );
   }
-  final tappedMove = await _tapMoveOnFirstNonHomeFleet(tester);
+  final tappedMove = await tapMoveOnFirstNonHomeFleet(tester);
   if (!tappedMove) {
     perf?.timing(
       'fleet_move_segment',

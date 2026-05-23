@@ -174,6 +174,12 @@ Future<void> tapAssignOnCivilianRowWithTitle(
   String unitTypeTitle,
 ) => e2eTapAssignOnCivilianRowWithTitle(tester, unitTypeTitle);
 
+/// Stable public name for [e2eTapMoveOnFirstNonHomeFleet] so fleet scenarios
+/// consume the AC1 barrel only (Refs GitHub #2336 AC1 / AC2). Forwards to
+/// the implementation in `e2e_test_shared_panels.dart`.
+Future<bool> tapMoveOnFirstNonHomeFleet(WidgetTester tester) =>
+    e2eTapMoveOnFirstNonHomeFleet(tester);
+
 Future<void> ensureAllRelocated64pxPngsLoad() =>
     e2eEnsureAllRelocated64pxPngsLoad();
 
