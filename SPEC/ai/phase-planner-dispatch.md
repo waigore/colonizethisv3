@@ -44,6 +44,18 @@ Full-COLONIAL slots stay default under COLONIAL-lite. This is the structural NW-
 
 `PhasePlanOutcome.defaultExpand`, `.defaultColonialLite`, `.defaultColonial`, `.defaultDevelop` provide const-shared all-default instances per phase for short-circuit returns when every planner in the set reaches its outer guard.
 
+### Adapter helpers
+
+Three pure adapter functions extract per-domain orchestrator-ready values from a single `PhasePlanOutcome`. The orchestrator calls `runPhasePlanners` once per player turn and consumes the adapters' outputs repeatedly without re-checking the active phase. All adapters are pure and deterministic (Must-have #7).
+
+| Adapter | Module | Output | EXPAND | COLONIAL-lite | COLONIAL | DEVELOP |
+|---|---|---|---|---|---|---|
+| `gpPeaceTargetsFromPhasePlan` | `phase_planner_peace_targets.dart` | `List<String>` GP `offerPeace` targets | `expandPeaceTargetFactionIdsSorted` | `expandPeaceTargetFactionIdsSorted` | `colonialPeaceTargetFactionIdsSorted` | `developPeaceTargetFactionIdsSorted` |
+| `gpExpandDeclareWarTargetFromPhasePlan` | `phase_planner_declare_war_targets.dart` | `String?` OW declare-war target | `expandDeclareWarTargetFactionId` | `expandDeclareWarTargetFactionId` | `null` | `null` |
+| `gpColonialDeclareWarTargetFromPhasePlan` | `phase_planner_declare_war_targets.dart` | `String?` NW declare-war target | `null` | `null` | `colonialAcquisitionTarget.targetFactionId` when method is `declareWar`, else `null` | `null` |
+
+EXPAND continues running during the COLONIAL-lite safeguard ("Begin NW overture/naval penetration without weakening OW push"), so the EXPAND adapters surface their slot under both `expand` and `colonialLite`. The COLONIAL declare-war adapter returns `null` when the acquisition method is `joinEmpire` or `purchase_land` (acquisition resolves via peaceful pipelines) and when the acquisition target itself is `null` (the military / naval pair fall back to the at-war arm without forcing a fresh declareWar). DEVELOP never declares war by spec, so both declare-war adapters return `null`.
+
 ## Acceptance criteria
 
 - Given a `(Game, AIWorldSnapshot)` pair whose `observerGoalPhaseFor` resolves to `ObserverGoalPhase.expand`, when `runPhasePlanners(game, snapshot)` runs, then `PhasePlanOutcome.phase == ObserverGoalPhase.expand`, the four EXPAND slots equal the corresponding direct planner calls (with `planExpandMilitary` invoked with the same `declaredWarTargetFactionId` as `planExpandDeclareWar` returned), and all COLONIAL-lite / COLONIAL / DEVELOP slots equal their default-plan or empty values.
@@ -52,6 +64,9 @@ Full-COLONIAL slots stay default under COLONIAL-lite. This is the structural NW-
 - Given a `(Game, AIWorldSnapshot)` pair routing to `ObserverGoalPhase.colonial` where `planColonialAcquisition` returns `null`, when `runPhasePlanners(game, snapshot)` runs, then `colonialMilitaryPlan` and `colonialNavalPlan` equal direct calls with `colonialDeclaredWarTargetFactionId: null` (at-war fallback arm).
 - Given a `(Game, AIWorldSnapshot)` pair routing to `ObserverGoalPhase.develop`, when `runPhasePlanners(game, snapshot)` runs, then only `developPeaceTargetFactionIdsSorted` and `developCivilianWorkOrders` populate; every other slot equals its default-plan / empty value.
 - Given identical `(Game, AIWorldSnapshot, personalityId)` inputs, when `runPhasePlanners` runs twice, then both invocations return field-equal `PhasePlanOutcome` instances (Must-have #7 determinism).
+- Given a `PhasePlanOutcome` with `phase == ObserverGoalPhase.expand` or `ObserverGoalPhase.colonialLite`, when `gpExpandDeclareWarTargetFromPhasePlan(outcome)` runs, then the return value equals `outcome.expandDeclareWarTargetFactionId`; given the same outcome with `phase == ObserverGoalPhase.colonial` or `ObserverGoalPhase.develop`, the return value equals `null` even when the EXPAND slot is non-null.
+- Given a `PhasePlanOutcome` with `phase == ObserverGoalPhase.colonial` and `colonialAcquisitionTarget.method == AcquisitionMethod.declareWar`, when `gpColonialDeclareWarTargetFromPhasePlan(outcome)` runs, then the return value equals `colonialAcquisitionTarget.targetFactionId`; given the same outcome with `method` set to `joinEmpire` or `purchaseLand`, or with `colonialAcquisitionTarget == null`, the return value equals `null`.
+- Given a `PhasePlanOutcome` whose `phase` is `ObserverGoalPhase.expand`, `ObserverGoalPhase.colonialLite`, or `ObserverGoalPhase.develop`, when `gpColonialDeclareWarTargetFromPhasePlan(outcome)` runs, then the return value equals `null` even when `colonialAcquisitionTarget` is non-null (structural phase suppression).
 
 ## Interactions
 
