@@ -24,6 +24,8 @@ import '../util/orders_extensions.dart';
 import 'diplomatic_candidate_scoring.dart';
 import 'diplomacy_planner_peace_targets.dart';
 import 'diplomacy_planner_result.dart';
+import 'phase_planner_dispatch.dart';
+import 'phase_planner_peace_targets.dart';
 
 export 'diplomacy_planner_peace_targets.dart';
 export 'diplomatic_candidate_scoring.dart' show computeDiplomaticCandidateScores;
@@ -775,14 +777,17 @@ DiplomacyPlannerResult? _stalledPeacePlannerResultIfNeeded({
   required PlannerContext ctx,
   required AIWorldSnapshot snapshot,
   required DiplomacyPlannerPass pass,
+  PhasePlanOutcome? phasePlan,
 }) {
   if (pass == DiplomacyPlannerPass.declareWarOnly) {
     return null;
   }
-  final peaceTargets = collectStalledGreatPowerPeaceTargets(
-    game: ctx.game,
-    snapshot: snapshot,
-  );
+  final peaceTargets = phasePlan != null
+      ? gpPeaceTargetsFromPhasePlan(phasePlan)
+      : collectStalledGreatPowerPeaceTargets(
+          game: ctx.game,
+          snapshot: snapshot,
+        );
   if (peaceTargets.isEmpty) {
     return null;
   }
@@ -890,6 +895,7 @@ DiplomacyPlannerResult runDiplomacyPlannerWithResult({
   required PlannerContext ctx,
   required AIWorldSnapshot snapshot,
   DiplomacyPlannerPass pass = DiplomacyPlannerPass.all,
+  PhasePlanOutcome? phasePlan,
 }) {
   // Survival peace must run even when diplomacy weight is low or suggestion
   // APIs return no candidates (observer seed-42 gp3/gp6; Refs #2509).
@@ -898,6 +904,7 @@ DiplomacyPlannerResult runDiplomacyPlannerWithResult({
       ctx: ctx,
       snapshot: snapshot,
       pass: pass,
+      phasePlan: phasePlan,
     );
     if (peaceResult != null) {
       return peaceResult;

@@ -6,7 +6,9 @@
 
 `phase_planner_dispatch.dart` (in `packages/colonizethis_ai/lib/src/planning/`) exposes a single pure function `runPhasePlanners({game, snapshot, personalityId})` that calls `observerGoalPhaseFor(snapshot, game)` once and composes the per-phase planner outputs into a `PhasePlanOutcome` value class.
 
-The dispatcher is the wiring layer between phase resolution and the per-domain pure-function planner modules. It performs no I/O, no logging, no order emission, and is deterministic by construction (Must-have #7). The orchestrator (S5 target) consumes `PhasePlanOutcome` to feed `runDiplomacyPlannerWithResult`, the economy passes, and the army-move planner without re-checking phase in every call site.
+The dispatcher is the wiring layer between phase resolution and the per-domain pure-function planner modules. It performs no I/O, no logging, no order emission, and is deterministic by construction (Must-have #7). The orchestrator (S5) consumes `PhasePlanOutcome` to feed `runDiplomacyPlannerWithResult`, the economy passes, and the army-move planner without re-checking phase in every call site.
+
+**Orchestrator peace slice (landed):** `domain_planner_orchestrator.dart` calls `runPhasePlanners` once per player turn and passes the result into every `runDiplomacyPlannerWithResult` invocation. `phase_planner_peace_targets.dart` maps the active phase to the peace-target list (`gpPeaceTargetsFromPhasePlan`); `_stalledPeacePlannerResultIfNeeded` uses that list instead of `collectStalledGreatPowerPeaceTargets` when `phasePlan` is set. Declare-war, economy, conquest, and naval wiring remain on the legacy path until later S5 slices.
 
 ## Rules
 
