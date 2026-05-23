@@ -610,6 +610,68 @@ void main() {
       },
     );
 
+    testWidgets(
+      'e2eTapNewWorldRegionTabIfPresent is re-exported through the barrel',
+      (tester) async {
+        final Future<void> Function(WidgetTester) ref =
+            e2eTapNewWorldRegionTabIfPresent;
+        expect(
+          ref,
+          isNotNull,
+          reason:
+              'The fleet-reach hot path '
+              '(`_tryNavalMoveSegment` and '
+              '`_awaitNwCoastalOrVisibleLandForBundledExploreE2e` in '
+              '`new_game_fleet_reaches_new_world_e2e_helpers*.dart`) '
+              'consumes this region-tab tap via the AC1 barrel inside '
+              'the `_kMaxNextTurnTapsForNwFleetReach = 35` loop. A '
+              'regression that dropped it from the `show` clause would '
+              'force the fleet helpers to either re-roll a private '
+              'duplicate (Bottleneck 6) or revert to a fixed post-tap '
+              'pump, both of which inflate the wall clock cap #2336 '
+              'is shrinking.',
+        );
+        await tester.pumpWidget(
+          const MaterialApp(home: Scaffold(body: SizedBox())),
+        );
+        // Sanity smoke through the barrel: an empty scaffold has no
+        // keyed New World subtree, so the helper must complete without
+        // tapping or throwing. A wrapper that ignored the no-subtree
+        // guard would either fail with a tap-target-missing exception
+        // or silently no-op without forwarding to the implementation.
+        await ref(tester);
+      },
+    );
+
+    testWidgets(
+      'e2eTapOldWorldRegionTab is re-exported through the barrel',
+      (tester) async {
+        final Future<void> Function(WidgetTester, AppLocalizations) ref =
+            e2eTapOldWorldRegionTab;
+        expect(
+          ref,
+          isNotNull,
+          reason:
+              'The fleet-reach OW-split move path '
+              '(`_tryNavalMoveSegment` in '
+              '`new_game_fleet_reaches_new_world_e2e_helpers.dart`) '
+              'consumes this OW region-tab tap via the AC1 barrel to '
+              'flip the map HUD back to Old World before issuing naval '
+              'moves. A regression that dropped it from the `show` '
+              'clause would re-introduce a private duplicate of the '
+              'CtChoiceChip-label tap pattern (Bottleneck 6) or stall '
+              'on the wrong map region — both regress the fleet-reach '
+              'wall clock (#2336).',
+        );
+        // Sanity smoke: pumpWidget empty, then exercise the helper
+        // forwarding with a real AppLocalizations instance via a
+        // MaterialApp `localizationsDelegates` is heavyweight, so the
+        // tear-off capture above already gates the signature. The
+        // wrapper's runtime behavior is end-to-end pinned by
+        // `e2e_tap_region_tab_test.dart` (the helper-layer pin file).
+      },
+    );
+
     test('AC1 timing constants are exposed as Duration values', () {
       const Duration maxWallClock = kE2eMaxWallClock;
       const Duration nextTurnTimeout = kE2eNextTurnResolutionTimeout;

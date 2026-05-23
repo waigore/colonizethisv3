@@ -33,6 +33,8 @@ export 'e2e_test_shared.dart'
         e2ePumpUntil,
         e2ePumpUntilConditionOrIdle,
         e2eRadioListTilesInAlertDialogs,
+        e2eTapNewWorldRegionTabIfPresent,
+        e2eTapOldWorldRegionTab,
         e2eTextLooksLikeNewWorldLocationLine,
         e2eWaitForNewGameEntry,
         e2eWaitForNextTurnLabelAdvance,

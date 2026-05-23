@@ -18,51 +18,14 @@ const Duration _kMaxUiResponseWait = Duration(seconds: 5);
 /// (Refs GitHub #2336).
 const Duration _kFleetE2eMaxWallClock = kE2eMaxWallClock;
 
-/// Selects the New World map region via [kCtE2ERegionTabNewWorldKey] when present
-/// (reduces ambiguous "New World" text on screen; `SPEC/program/e2e-integration-tests.md`).
-///
-/// Adaptive replacement for fixed post-tap idle pumps (GitHub #2336 / AC4–AC5):
-/// uses [e2ePumpUntilConditionOrIdle] with [e2eNewWorldRegionChipAppearsSelected]
-/// so a no-op tap (already-selected) short-circuits before the first pump, while
-/// a bounded worst-case wait remains for Linux headless when the tab must flip.
-Future<void> _tapNewWorldRegionTabIfPresent(WidgetTester tester) async {
-  final tab = find.byKey(kCtE2ERegionTabNewWorldKey).hitTestable();
-  if (tab.evaluate().isEmpty) {
-    return;
-  }
-  await tester.tap(tab.first, warnIfMissed: false);
-  await e2ePumpUntilConditionOrIdle(
-    tester,
-    () => e2eNewWorldRegionChipAppearsSelected(),
-    timeout: const Duration(milliseconds: 500),
-    phaseName: 'pump_until_new_world_region_chip_selected',
-  );
-}
-
-/// Map HUD must show **Old World** before issuing naval moves so OW-split
-/// fleets and warp orders stay coherent on Linux CI (`SPEC/program/e2e-integration-tests.md`).
-///
-/// Adaptive replacement for fixed post-tap idle pumps (GitHub #2336 / AC4–AC5):
-/// uses [e2ePumpUntilConditionOrIdle] with [e2eOldWorldRegionChipAppearsSelected]
-/// so an already-selected chip exits immediately; otherwise polls with adaptive
-/// pacing up to a bounded timeout.
-Future<void> _tapOldWorldRegionTab(
-  WidgetTester tester,
-  AppLocalizations l10n,
-) async {
-  final chip = find.widgetWithText(CtChoiceChip, l10n.region_oldWorld);
-  final hit = chip.hitTestable();
-  if (hit.evaluate().isEmpty) {
-    return;
-  }
-  await tester.tap(hit.first, warnIfMissed: false);
-  await e2ePumpUntilConditionOrIdle(
-    tester,
-    () => e2eOldWorldRegionChipAppearsSelected(l10n),
-    timeout: const Duration(milliseconds: 500),
-    phaseName: 'pump_until_old_world_region_chip_selected',
-  );
-}
+/// Region-tab tap helpers `_tapNewWorldRegionTabIfPresent` and
+/// `_tapOldWorldRegionTab` were lifted into [e2eTapNewWorldRegionTabIfPresent]
+/// and [e2eTapOldWorldRegionTab] (`e2e_test_shared.dart`) so the
+/// `kCtE2ERegionTabNewWorldKey` and `CtChoiceChip + region_oldWorld` tap
+/// contracts are shared and unit-pinned (Refs GitHub #2336 AC1 / AC2). Call
+/// sites consume the public names directly; `_tryNavalMoveSegment` below
+/// composes them with [openNavalPanel] / [_tapMoveOnFirstNonHomeFleet]
+/// without changing observable behavior.
 
 /// Generic-instantiation `RadioListTile<…>` lookup inside any mounted
 /// [AlertDialog] moved to [e2eRadioListTilesInAlertDialogs]
@@ -202,9 +165,9 @@ Future<void> _tryNavalMoveSegment(
 }) async {
   final phaseSw = Stopwatch()..start();
   if (useNewWorldMapTabFirst) {
-    await _tapNewWorldRegionTabIfPresent(tester);
+    await e2eTapNewWorldRegionTabIfPresent(tester);
   } else {
-    await _tapOldWorldRegionTab(tester, l10n);
+    await e2eTapOldWorldRegionTab(tester, l10n);
   }
   if (!navalPanelAlreadyOpen) {
     await openNavalPanel(

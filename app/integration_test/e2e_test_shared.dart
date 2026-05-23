@@ -680,6 +680,71 @@ bool e2eNewWorldRegionChipAppearsSelected() {
   return (chipFinder.evaluate().single.widget as CtChoiceChip).selected;
 }
 
+/// Selects the New World map region via [kCtE2ERegionTabNewWorldKey] when
+/// present, then awaits the chip flip via [e2ePumpUntilConditionOrIdle] so an
+/// already-selected tab short-circuits without paying a fixed post-tap pump.
+///
+/// Lifted from the formerly private `_tapNewWorldRegionTabIfPresent` in
+/// `new_game_fleet_reaches_new_world_e2e_helpers.dart` (Refs GitHub #2336
+/// AC1 / AC2). The helper is silent (no `fail`) when the keyed subtree is
+/// absent so callers in scenarios that do not surface the map controls
+/// (e.g. capital-panel-only paths) can compose it unconditionally.
+///
+/// Contract:
+/// - No-op (returns immediately) when no hit-testable widget under
+///   [kCtE2ERegionTabNewWorldKey] is present.
+/// - Otherwise taps the first hit-testable subtree node, then polls
+///   [e2eNewWorldRegionChipAppearsSelected] with adaptive backoff up to a
+///   500ms cap. Never throws on timeout (best-effort post-tap settle).
+Future<void> e2eTapNewWorldRegionTabIfPresent(WidgetTester tester) async {
+  final tab = find.byKey(kCtE2ERegionTabNewWorldKey).hitTestable();
+  if (tab.evaluate().isEmpty) {
+    return;
+  }
+  await tester.tap(tab.first, warnIfMissed: false);
+  await e2ePumpUntilConditionOrIdle(
+    tester,
+    () => e2eNewWorldRegionChipAppearsSelected(),
+    timeout: const Duration(milliseconds: 500),
+    phaseName: 'pump_until_new_world_region_chip_selected',
+  );
+}
+
+/// Selects the Old World map region via the [CtChoiceChip] whose label
+/// matches [AppLocalizations.region_oldWorld], then awaits the chip flip via
+/// [e2ePumpUntilConditionOrIdle] so an already-selected tab short-circuits
+/// without paying a fixed post-tap pump.
+///
+/// Lifted from the formerly private `_tapOldWorldRegionTab` in
+/// `new_game_fleet_reaches_new_world_e2e_helpers.dart` (Refs GitHub #2336
+/// AC1 / AC2). Map HUD must show **Old World** before issuing naval moves
+/// so OW-split fleets and warp orders stay coherent on Linux CI
+/// (`SPEC/program/e2e-integration-tests.md`).
+///
+/// Contract:
+/// - No-op (returns immediately) when no hit-testable Old World [CtChoiceChip]
+///   is present.
+/// - Otherwise taps the first hit-testable chip, then polls
+///   [e2eOldWorldRegionChipAppearsSelected] with adaptive backoff up to a
+///   500ms cap. Never throws on timeout (best-effort post-tap settle).
+Future<void> e2eTapOldWorldRegionTab(
+  WidgetTester tester,
+  AppLocalizations l10n,
+) async {
+  final chip = find.widgetWithText(CtChoiceChip, l10n.region_oldWorld);
+  final hit = chip.hitTestable();
+  if (hit.evaluate().isEmpty) {
+    return;
+  }
+  await tester.tap(hit.first, warnIfMissed: false);
+  await e2ePumpUntilConditionOrIdle(
+    tester,
+    () => e2eOldWorldRegionChipAppearsSelected(l10n),
+    timeout: const Duration(milliseconds: 500),
+    phaseName: 'pump_until_old_world_region_chip_selected',
+  );
+}
+
 /// True when [data] reads like the naval-panel location row for a fleet in
 /// the New World (for example `New World — Outer Sea`).
 ///
