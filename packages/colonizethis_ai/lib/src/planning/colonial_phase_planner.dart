@@ -545,12 +545,31 @@ class ColonialAcquisitionTarget {
 ///     "no acquisition order this turn" rather than "acquisition
 ///     path impossible".
 ///
+/// **Personality bias (Must-have #4 / `SPEC/ai/phase-planner-architecture.md`
+/// § Personality bias):** when [personalityId] resolves to a personality
+/// whose `warLikelihood > allianceTendency` (currently `napoleon`,
+/// `isabella`, `frederick`, `gustavus`; see `personalityThresholds` in
+/// `ai_personality_config.dart`), the planner prefers
+/// [AcquisitionMethod.declareWar] over [AcquisitionMethod.joinEmpire] for
+/// the same tribe within the structural priority order — concretely, the
+/// declareWar pass runs **before** the Join Empire pass. The
+/// `purchase_land` pass position is unchanged. Diplomatic / neutral
+/// personalities (and the default `personalityId == null` legacy
+/// behaviour) keep `Join Empire > purchase_land > declareWar`.
+/// Outer declareWar gates (regiments ≥ 1, treasury ≥ cheapest regiment
+/// cost) and per-province non-war gates still apply identically in both
+/// orderings, so a militaristic personality with no regiments still
+/// falls through to Join Empire / purchase_land. The function remains
+/// pure: the personality input enters only as a deterministic
+/// comparison between two integer threshold fields.
+///
 /// The function is pure and deterministic — identical inputs always
 /// yield identical [ColonialAcquisitionTarget]s (Refs #2509
 /// Must-have #7).
 ColonialAcquisitionTarget? planColonialAcquisition({
   required Game game,
   required AIWorldSnapshot snapshot,
+  String? personalityId,
 }) {
   if (game.playerById(snapshot.playerId) == null) {
     return null;
@@ -562,7 +581,71 @@ ColonialAcquisitionTarget? planColonialAcquisition({
 
   final provinceOwner = getProvinceOwnerMap(game);
   final treasury = snapshot.economy.treasury;
+  final preferDeclareWarOverJoinEmpire = _personalityPrefersWarOverAlliance(
+    personalityId,
+  );
 
+  ColonialAcquisitionTarget? tryJoinEmpire() => _findJoinEmpireTarget(
+    game: game,
+    snapshot: snapshot,
+    invadable: invadable,
+    provinceOwner: provinceOwner,
+    treasury: treasury,
+  );
+  ColonialAcquisitionTarget? tryPurchaseLand() => _findPurchaseLandTarget(
+    game: game,
+    snapshot: snapshot,
+    invadable: invadable,
+    provinceOwner: provinceOwner,
+    treasury: treasury,
+  );
+  ColonialAcquisitionTarget? tryDeclareWar() => _findDeclareWarTarget(
+    game: game,
+    snapshot: snapshot,
+    invadable: invadable,
+    provinceOwner: provinceOwner,
+    treasury: treasury,
+  );
+
+  if (preferDeclareWarOverJoinEmpire) {
+    return tryDeclareWar() ?? tryJoinEmpire() ?? tryPurchaseLand();
+  }
+  return tryJoinEmpire() ?? tryPurchaseLand() ?? tryDeclareWar();
+}
+
+/// True when [personalityId] resolves to a personality whose
+/// `warLikelihood` strictly exceeds its `allianceTendency` per
+/// `personalityThresholds` in `ai_personality_config.dart` — the
+/// militaristic-leader bias defined in
+/// `SPEC/ai/phase-planner-architecture.md` § Personality bias.
+///
+/// Returns `false` when [personalityId] is `null`, unknown, or
+/// resolves to a personality whose thresholds are equal or
+/// alliance-leaning (`warLikelihood <= allianceTendency`). The
+/// resolution uses [personalityLookupKeyForAi] so leader-key aliases
+/// (e.g. `france_leader` → `napoleon`) map to canonical thresholds
+/// before the comparison, matching the rest of `colonizethis_ai`.
+///
+/// Pure: depends only on the static `personalityThresholds` map in
+/// `colonizethis_data` and the input string, so the comparison is
+/// deterministic for fixed inputs (Refs #2509 Must-have #7).
+bool _personalityPrefersWarOverAlliance(String? personalityId) {
+  if (personalityId == null) return false;
+  final thresholds = getThresholdsForLeader(personalityId);
+  return thresholds.warLikelihood > thresholds.allianceTendency;
+}
+
+/// Iterates [invadable] in distance order and returns the first
+/// [AcquisitionMethod.joinEmpire] candidate satisfying the four
+/// Join-Empire gates (non-GP owner, overture stage `nap`, relation
+/// score ≥ Friendly, treasury ≥ `joinEmpireCostForMinorOrTribe`).
+ColonialAcquisitionTarget? _findJoinEmpireTarget({
+  required Game game,
+  required AIWorldSnapshot snapshot,
+  required List<String> invadable,
+  required Map<String, String> provinceOwner,
+  required int treasury,
+}) {
   for (final provinceId in invadable) {
     final ownerId = provinceOwner[provinceId];
     if (ownerId == null) continue;
@@ -585,41 +668,68 @@ ColonialAcquisitionTarget? planColonialAcquisition({
       method: AcquisitionMethod.joinEmpire,
     );
   }
+  return null;
+}
 
-  if (_hasIdleMerchant(game.worldState, snapshot.playerId)) {
-    final prospected =
-        game.worldState.playerProspectedTiles[snapshot.playerId] ??
-        const <String>{};
-    final purchasedByTile = game.worldState.purchasedTilesByTileKey;
-
-    for (final provinceId in invadable) {
-      final ownerId = provinceOwner[provinceId];
-      if (ownerId == null) continue;
-      if (game.playerById(ownerId) != null) continue;
-
-      final relation = getRelation(game, snapshot.playerId, ownerId);
-      if (relation != null && relation.atWar) continue;
-
-      final overture = getOverture(game, snapshot.playerId, ownerId);
-      if (overture == null || !overture.hasEmbassy) continue;
-
-      if (!_provinceHasValidPurchaseLandTile(
-        world: game.worldState,
-        provinceId: provinceId,
-        treasury: treasury,
-        prospected: prospected,
-        purchasedByTile: purchasedByTile,
-      )) {
-        continue;
-      }
-
-      return ColonialAcquisitionTarget(
-        targetFactionId: ownerId,
-        method: AcquisitionMethod.purchaseLand,
-      );
-    }
+/// Iterates [invadable] in distance order and returns the first
+/// [AcquisitionMethod.purchaseLand] candidate satisfying the Method 2
+/// gates (idle Merchant, embassy with owner, not at war, per-tile
+/// resource + treasury gates).
+ColonialAcquisitionTarget? _findPurchaseLandTarget({
+  required Game game,
+  required AIWorldSnapshot snapshot,
+  required List<String> invadable,
+  required Map<String, String> provinceOwner,
+  required int treasury,
+}) {
+  if (!_hasIdleMerchant(game.worldState, snapshot.playerId)) {
+    return null;
   }
+  final prospected =
+      game.worldState.playerProspectedTiles[snapshot.playerId] ??
+      const <String>{};
+  final purchasedByTile = game.worldState.purchasedTilesByTileKey;
 
+  for (final provinceId in invadable) {
+    final ownerId = provinceOwner[provinceId];
+    if (ownerId == null) continue;
+    if (game.playerById(ownerId) != null) continue;
+
+    final relation = getRelation(game, snapshot.playerId, ownerId);
+    if (relation != null && relation.atWar) continue;
+
+    final overture = getOverture(game, snapshot.playerId, ownerId);
+    if (overture == null || !overture.hasEmbassy) continue;
+
+    if (!_provinceHasValidPurchaseLandTile(
+      world: game.worldState,
+      provinceId: provinceId,
+      treasury: treasury,
+      prospected: prospected,
+      purchasedByTile: purchasedByTile,
+    )) {
+      continue;
+    }
+
+    return ColonialAcquisitionTarget(
+      targetFactionId: ownerId,
+      method: AcquisitionMethod.purchaseLand,
+    );
+  }
+  return null;
+}
+
+/// Iterates [invadable] in distance order and returns the first
+/// [AcquisitionMethod.declareWar] candidate satisfying the outer
+/// gates (regiments ≥ 1, treasury ≥ cheapest regiment cost) and the
+/// per-province gates (non-GP owner, not already at war).
+ColonialAcquisitionTarget? _findDeclareWarTarget({
+  required Game game,
+  required AIWorldSnapshot snapshot,
+  required List<String> invadable,
+  required Map<String, String> provinceOwner,
+  required int treasury,
+}) {
   if (regimentCountForPlayer(game, snapshot.playerId) <= 0) {
     return null;
   }
@@ -640,7 +750,6 @@ ColonialAcquisitionTarget? planColonialAcquisition({
       method: AcquisitionMethod.declareWar,
     );
   }
-
   return null;
 }
 
