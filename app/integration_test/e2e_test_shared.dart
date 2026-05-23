@@ -664,6 +664,42 @@ bool e2eNewWorldRegionChipAppearsSelected() {
   return (chipFinder.evaluate().single.widget as CtChoiceChip).selected;
 }
 
+/// True when [data] reads like the naval-panel location row for a fleet in
+/// the New World (for example `New World — Outer Sea`).
+///
+/// `naval_tree_builder.dart` joins region and location with an **em dash**
+/// (`—`), but earlier CI dumps and Material text scaling can normalize the
+/// glyph to an **en dash** (`–`) or a plain **hyphen-minus** (`-`). The
+/// helper accepts all three so fleet-reach detection
+/// (`_navalPanelShowsNonHomeFleetInNewWorld` in
+/// `new_game_fleet_reaches_new_world_e2e_helpers_part2.dart`) is not coupled
+/// to one specific Unicode glyph.
+///
+/// Contract (Refs GitHub #2336):
+/// - `null` and empty string -> `false` (nothing to inspect).
+/// - String must begin with `"New World"` after trimming leading whitespace
+///   (`trimLeft`); trailing whitespace is preserved so callers can spot
+///   suspicious tail content in their own assertions.
+/// - The character(s) immediately after `"New World"` must reduce, via a
+///   second `trimLeft`, to one of `'—'`, `'–'`, or `'-'`. Anything else
+///   (alphanumerics, a colon, or no separator at all) -> `false`.
+bool e2eTextLooksLikeNewWorldLocationLine(String? data) {
+  if (data == null) {
+    return false;
+  }
+  final trimmed = data.trimLeft();
+  const prefix = 'New World';
+  if (!trimmed.startsWith(prefix)) {
+    return false;
+  }
+  final after = trimmed.substring(prefix.length);
+  if (after.isEmpty) {
+    return false;
+  }
+  final rest = after.trimLeft();
+  return rest.startsWith('—') || rest.startsWith('–') || rest.startsWith('-');
+}
+
 /// Returns after the first [Finder] has at least one hit-testable match.
 Future<void> e2eWaitUntilAnyFinderHitTestable(
   WidgetTester tester,
