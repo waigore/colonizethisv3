@@ -1515,3 +1515,45 @@ String e2eBundledExploreRejectionDiagnostics({
   }
   return lines.join('\n');
 }
+
+/// Returns a [Finder] matching every `RadioListTile<…>` widget that is a
+/// descendant of any currently-mounted [AlertDialog].
+///
+/// Contract (issue #2336 AC1 / AC2):
+///
+///   - Composes `find.descendant(of: find.byType(AlertDialog), matching: …)`
+///     so the search is scoped to dialog subtrees only — `RadioListTile`s
+///     outside an [AlertDialog] (panels, settings sheets, etc.) are never
+///     returned. Naval / civilian / production move dialogs all surface
+///     destination tiles via `RadioListTile<…>`; scoping to [AlertDialog]
+///     keeps the move-segment helpers from accidentally hitting a panel
+///     radio.
+///   - The matcher inspects [Widget.runtimeType] via `toString()` so it
+///     accepts any generic instantiation
+///     (`RadioListTile<String>`, `RadioListTile<int>`, etc.) without
+///     pulling in the concrete type argument. The fleet-reach move dialog
+///     parameterises radio tiles on the destination string id; binding to
+///     `RadioListTile<String>` directly would silently miss future
+///     dialogs that switch to a different parameter type.
+///   - Pure — the function reads no globals, returns a new [Finder] on
+///     every call, and never throws. The returned [Finder] is lazy and
+///     only resolves against the active widget tree when iterated, which
+///     keeps it safe to construct outside an `await tester.pump()`
+///     boundary.
+///
+/// Mirrors the lifted public-name pattern used by
+/// `e2eNonHomeHumanFleetInNewWorldFromCtSnapshot` and
+/// `e2eNavalPanelShowsNonHomeFleetInNewWorld` so callers consume the
+/// AC1 barrel (`e2e_helpers.dart`) only. A silent rename or accidental
+/// scope-removal (matching every `RadioListTile` across the tree)
+/// would re-introduce false positives in move-segment dialogs that
+/// also host non-destination radios on the surrounding screen
+/// (Refs `SPEC/program/e2e-integration-tests.md` § Determinism).
+Finder e2eRadioListTilesInAlertDialogs() {
+  return find.descendant(
+    of: find.byType(AlertDialog),
+    matching: find.byWidgetPredicate(
+      (w) => w.runtimeType.toString().startsWith('RadioListTile<'),
+    ),
+  );
+}

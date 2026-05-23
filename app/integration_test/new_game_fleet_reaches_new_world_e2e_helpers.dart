@@ -64,14 +64,14 @@ Future<void> _tapOldWorldRegionTab(
   );
 }
 
-Finder _radioListTilesInAlertDialogs() {
-  return find.descendant(
-    of: find.byType(AlertDialog),
-    matching: find.byWidgetPredicate(
-      (w) => w.runtimeType.toString().startsWith('RadioListTile<'),
-    ),
-  );
-}
+/// Generic-instantiation `RadioListTile<…>` lookup inside any mounted
+/// [AlertDialog] moved to [e2eRadioListTilesInAlertDialogs]
+/// (`e2e_test_shared.dart`) so the `runtimeType.toString().startsWith`
+/// contract is unit-pinned and shared across scenarios (Refs GitHub
+/// #2336 AC1 / AC2). The widget-test pin in
+/// `app/test/e2e_radio_list_tiles_in_alert_dialogs_test.dart` guards
+/// against a silent rename / scope-removal that would re-introduce
+/// false positives in move-segment dialogs.
 
 /// Prefer cross-region warp row (English copy); else first adjacent sea tile.
 ///
@@ -128,9 +128,11 @@ Future<void> _pickMoveDestinationAndConfirm(
         }
       }
       const maxWarpDragProbes = 8;
-      for (var i = 0;
-          i < maxWarpDragProbes && warp.hitTestable().evaluate().isEmpty;
-          i++) {
+      for (
+        var i = 0;
+        i < maxWarpDragProbes && warp.hitTestable().evaluate().isEmpty;
+        i++
+      ) {
         ensureBudget('warp drag $i');
         await tester.drag(sc, const Offset(0, -120));
         // Short-circuit as soon as the warp row becomes hit-testable instead of
@@ -164,7 +166,7 @@ Future<void> _pickMoveDestinationAndConfirm(
     await tester.tap(warpTile.first, warnIfMissed: false);
   } else {
     ensureBudget('sea radio');
-    final seaRadio = _radioListTilesInAlertDialogs();
+    final seaRadio = e2eRadioListTilesInAlertDialogs();
     expect(seaRadio, findsWidgets);
     await tester.tap(seaRadio.first, warnIfMissed: false);
   }
@@ -192,6 +194,7 @@ Future<void> _tryNavalMoveSegment(
   AppLocalizations l10n, {
   bool useNewWorldMapTabFirst = false,
   bool allowWarpDestinations = true,
+
   /// When true, the naval panel is already open from a prior [openNavalPanel]
   /// in the same turn iteration — skip close/reopen (Refs #2336 Bottleneck 4).
   bool navalPanelAlreadyOpen = false,
