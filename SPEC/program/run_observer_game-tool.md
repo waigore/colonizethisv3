@@ -48,18 +48,18 @@ Active when **`--verify-conquest` and/or `--verify-colonial-expansion`** is pass
 - **`run-summary.json`** always written at end (`minimal_trace_mode: true` in summary when minimal mode ran).
 - **Artifact size cap:** cumulative bytes under the game trace directory must stay **strictly below 300 MB** (`300 * 1024 * 1024`); if a write would exceed the cap, the run aborts with exit **7** (`artifact_size_cap_exceeded`). Canonical nightly verify inputs are expected to be far below the cap; the cap guards regressions that reintroduce large artifacts.
 
-## ObserverSnapshot (`ObserverSnapshot` v2)
+## ObserverSnapshot (`ObserverSnapshot` v3)
 
-Versioned map written to `turn-<nnnnnn>.snapshot.json` and embedded (escaped) in paired `turn-<nnnnnn>.html`. **`observerSnapshotSchemaVersion` is `2`.**
+Versioned map written to `turn-<nnnnnn>.snapshot.json` and embedded (escaped) in paired `turn-<nnnnnn>.html`. **`observerSnapshotSchemaVersion` is `3`** (Refs **#2692** S10a; v3 adds per-player `workerPool`).
 
 | Field | Meaning |
 |-------|---------|
-| `observerSnapshotSchemaVersion` | Always `2` for this shape (v1 lacked extraction rollups). |
+| `observerSnapshotSchemaVersion` | `3` (v2 lacked `workerPool`; v1 lacked extraction rollups). |
 | `gameId` | Game id string. |
 | `turnNumber` | Post-resolution turn index (`Game.worldState.turnState.turnNumber`). |
 | `calendarYearAtTurnStart` | `yearAtTurn(turnNumber)` using the game's active `TurnTimeMapping` (if `turnNumber` is below 1, the lookup uses 1). |
 | `calendarCampaignHalted` | Mirrors `Game.calendarCampaignHalted`. |
-| `players` | One object per `game.players`: ids, display name, human flag, GP power score, treasury, military strength / fleet hints, sorted tech unlock ids. |
+| `players` | One object per `game.players`: ids, display name, human flag, GP power score, treasury, military strength / fleet hints, sorted tech unlock ids, **`workerPool`** (peasants / apprentices / journeymen / masters mirroring `Player.workerPool`). |
 | `provinceOwnershipSorted` | Sorted list of `{ id, ownerId }` for every province (`allProvinces`), ids prefixed per world model. |
 | `diplomacyRelationSummariesSorted` | Stable string lines summarizing each `diplomacyRelations` row (pair, score, level, war/peace). |
 | `militaryArmySummariesSorted` | One string per land army (id, owner, region, regiment count). |
@@ -93,6 +93,10 @@ Each **resolved turn** in the session loop measures the same segment as the app 
 Pass **`--verify-colonial-expansion`** after a successful run (exit **6** on failure; requires `--max-turns >= 150` or no turn cap). Rollup computation: `lib/observer_extractable_rollup.dart` (init static resource grid ∩ GP-owned provinces at verify turn; excludes capital and province town tiles per [extraction-and-improvements.md](../game/extraction-and-improvements.md)).
 
 Unit tests cover parsers; full observer runs are slow and are **not** in the default `quality` gate. **Nightly:** `.github/workflows/nightly.yml` job `observer_conquest_verify` runs seed **42**, **150** turns, **`--verify-conquest`**, and **`--verify-colonial-expansion`** daily at **23:00 Asia/Hong_Kong** (`0 15 * * *` UTC; `workflow_dispatch` supported).
+
+## Workforce sustain verification (Refs #2692 S10a)
+
+`lib/observer_workforce_verify.dart` reads `turn-000100.snapshot.json` and, per `gp1`–`gp6`, asserts `peasants >= 15` AND `apprentices + journeymen + masters >= 8`. Thresholds, parser contract, food/luxury follow-ups, and the deferred `--verify-workforce` CLI wiring (S10) are in [observer-workforce-verify.md](observer-workforce-verify.md).
 
 ## Coverage
 
