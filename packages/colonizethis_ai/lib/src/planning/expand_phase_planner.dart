@@ -53,9 +53,23 @@
 ///     spec is enforced at the orchestrator layer (#2509 S5) so this
 ///     module remains a pure-function planner.
 ///
+///   `planExpandEconomy(game, snapshot) → ExpandEconomyPlan`
+///     Returns the EXPAND-phase economy directive for the active player:
+///     `forceCheapestRegimentBuild` (set the orchestrator build threshold
+///     to zero and pick the cheapest regiment in
+///     [RegimentEconomyCatalog]) and / or `boostTreasuryRecoveryCargo`
+///     (raise economy weight for overseas cargo so riches deliver to
+///     stockpile before the next build pass). Implements the
+///     three-arm decision tree from issue #2509 § EXPAND phase planner
+///     § planExpandEconomy (zero-regiment rebuild, insufficient-regiment
+///     rebuild with affordable treasury, treasury-recovery cargo boost).
+///     Effective treasury is `Player.treasury` plus
+///     [pendingRichesTreasuryDelta] so the planner aligns with build
+///     validation that already credits same-turn `richesToTreasury`
+///     phase income (Refs #2509 § Observer goal phases § EXPAND
+///     "Pending riches treasury").
+///
 /// Functions left for follow-up slices on this issue:
-///   - `planExpandEconomy` — force-regiment-rebuild trap and treasury-
-///     recovery cargo boost (#2509 S2).
 ///   - `planExpandMilitary` — OW-only conquest army moves toward the
 ///     declare-war target (#2509 S2).
 library;
@@ -387,6 +401,195 @@ String? planExpandDeclareWar({
   final partnerRegiments = regimentCountForPlayer(game, blockerId);
   if (ownRegiments < partnerRegiments) return null;
   return blockerId;
+}
+
+/// EXPAND-phase economy directive returned by [planExpandEconomy].
+///
+/// Two independent booleans describe the orchestrator overrides for the
+/// active player this turn. The planner stays a pure function: the
+/// orchestrator (Refs #2509 S5) translates these flags into the actual
+/// build-threshold reset and economy-weight cargo boost when wiring the
+/// EXPAND dispatch.
+///
+/// The flags compose — a GP can both be told to force a regiment build
+/// and to raise cargo preference in the same turn (canonical "rebuild
+/// fast while overseas riches keep arriving" arm when reg = 0 and
+/// effective treasury is still under the cheapest regiment cost).
+///
+/// `const`-friendly so the default "no override" return uses a single
+/// shared instance ([defaultPlan]) without per-call allocations on the
+/// hot AI path.
+class ExpandEconomyPlan {
+  const ExpandEconomyPlan({
+    required this.forceCheapestRegimentBuild,
+    required this.boostTreasuryRecoveryCargo,
+  });
+
+  /// Reusable "no override" plan returned for non-EXPAND callers, GPs
+  /// at quota, defensive guards, and the priority-arm fall-through.
+  static const ExpandEconomyPlan defaultPlan = ExpandEconomyPlan(
+    forceCheapestRegimentBuild: false,
+    boostTreasuryRecoveryCargo: false,
+  );
+
+  /// True when the orchestrator should drop the build-pass economy
+  /// threshold to zero and pick the cheapest entry in
+  /// [RegimentEconomyCatalog] (military rebuild crisis).
+  ///
+  /// Set under either of the two regiment-rebuild arms in issue #2509
+  /// § EXPAND phase planner § planExpandEconomy:
+  /// (a) `regimentCount == 0` with a non-empty
+  ///     [ConquestSummary.invadableProvinceIdsSorted] (the
+  ///     `brokeBelowQuotaAtPeace` / `needRegimentsToExpand` legacy
+  ///     condition collapsed into the phase planner); or
+  /// (b) the trap condition
+  ///     `0 < regimentCount < kBelowQuotaPeaceMinRegimentsBeforeDeclareWar`
+  ///     with non-empty invadable OW frontier and effective treasury
+  ///     (cash + [pendingRichesTreasuryDelta]) at or above
+  ///     `_cheapestRegimentBuildTreasuryCost()`.
+  final bool forceCheapestRegimentBuild;
+
+  /// True when the orchestrator should add
+  /// [kBelowQuotaPeaceTreasuryRecoveryCargoBoost] to economy weight so
+  /// overseas cargo preference rises (deliver NW riches to stockpile)
+  /// even in EXPAND.
+  ///
+  /// Set when below quota AND effective treasury (cash +
+  /// [pendingRichesTreasuryDelta]) is strictly below
+  /// `_cheapestRegimentBuildTreasuryCost()` (issue #2509 § EXPAND phase
+  /// planner § planExpandEconomy "treasury < cheapest" arm). The
+  /// boost composes with [forceCheapestRegimentBuild] so a GP that is
+  /// told to force a build AND cannot currently afford one still gets
+  /// the cargo signal to chase incoming riches.
+  final bool boostTreasuryRecoveryCargo;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is ExpandEconomyPlan &&
+          other.forceCheapestRegimentBuild == forceCheapestRegimentBuild &&
+          other.boostTreasuryRecoveryCargo == boostTreasuryRecoveryCargo;
+
+  @override
+  int get hashCode =>
+      Object.hash(forceCheapestRegimentBuild, boostTreasuryRecoveryCargo);
+
+  @override
+  String toString() =>
+      'ExpandEconomyPlan('
+      'forceCheapestRegimentBuild: $forceCheapestRegimentBuild, '
+      'boostTreasuryRecoveryCargo: $boostTreasuryRecoveryCargo)';
+}
+
+/// Returns the deterministic EXPAND-phase economy directive for the
+/// active player as an [ExpandEconomyPlan].
+///
+/// Contract (issue #2509 § EXPAND phase planner § planExpandEconomy):
+///
+///   "Force-regiment-rebuild when:
+///      ow < 10 AND (
+///        regimentCount == 0 AND hasInvadableProvinces
+///          → set buildThreshold = 0, force cheapest regiment
+///        OR
+///        0 < regimentCount < kBelowQuotaPeaceMinRegimentsBeforeDeclareWar
+///          AND treasury >= cheapestRegimentBuildTreasuryCost
+///          → set buildThreshold = 0, force cheapest regiment
+///        OR
+///        treasury < cheapestRegimentBuildTreasuryCost
+///          → add cargo preference boost (deliver riches to stockpile)
+///      )"
+///
+/// Effective treasury used by the regiment-affordability and cargo
+/// arms is `player.treasury + pendingRichesTreasuryDelta(...)` so the
+/// planner agrees with the build pipeline that already credits the
+/// same-turn `richesToTreasury` phase income before `buildWork`
+/// (Refs #2509 § Observer goal phases § EXPAND "Pending riches
+/// treasury"). The OW improvements / NW suppressions arms of the spec
+/// are out of scope for this planner contract — those orders are
+/// produced by `planDevelopCivilian` (DEVELOP) and the conquest
+/// army-move planner (EXPAND military) respectively; the EXPAND
+/// economy planner only emits the build/cargo override directive.
+///
+/// Inputs:
+///   - [game]: resolves the active player ([Game.playerById]) to read
+///     [Player.treasury] and [Player.stockpile] (for the pending-riches
+///     credit) and walks [WorldState.armies] via [regimentCountForPlayer]
+///     for the standing regiment count.
+///   - [snapshot]: per-player [AIWorldSnapshot] supplying
+///     [ConquestSummary.oldWorldProvincesOwned] (quota guard) and
+///     [ConquestSummary.invadableProvinceIdsSorted] (the "has invadable
+///     frontier" arms of the spec).
+///
+/// Output:
+///   - [ExpandEconomyPlan.defaultPlan] when the active player is at or
+///     above [kObserverConquestMinOwProvincesPerGp] OW provinces (not
+///     in EXPAND territory for this planner) or when
+///     [Game.playerById] returns `null` (defensive guard for snapshots
+///     pointing at non-existent players; matches the
+///     [planExpandDeclareWar] guard).
+///   - `forceCheapestRegimentBuild: true` when arm A
+///     (`regimentCount == 0` and non-empty invadable OW frontier) holds.
+///     Treasury is intentionally **not** part of arm A's gate per the
+///     issue spec — the orchestrator's existing build pipeline still
+///     handles the case where no regiment is affordable yet, but the
+///     phase planner signals intent unconditionally so the rebuild
+///     trap cannot stick.
+///   - `forceCheapestRegimentBuild: true` when arm B
+///     (`0 < regimentCount < kBelowQuotaPeaceMinRegimentsBeforeDeclareWar`
+///     and non-empty invadable OW frontier and effective treasury
+///     ≥ cheapest regiment cost) holds.
+///   - `boostTreasuryRecoveryCargo: true` when arm C
+///     (effective treasury < cheapest regiment cost) holds. Composes
+///     with arm A: a GP with `regimentCount == 0` and effective
+///     treasury below the cheapest cost gets **both** flags set, so
+///     the orchestrator forces the build attempt and also boosts
+///     cargo for the next turn's riches delivery.
+///
+/// The function is pure and deterministic — identical inputs always
+/// yield identical [ExpandEconomyPlan]s (Refs #2509 Must-have #7).
+ExpandEconomyPlan planExpandEconomy({
+  required Game game,
+  required AIWorldSnapshot snapshot,
+}) {
+  if (!isBelowObserverConquestQuota(snapshot.conquest.oldWorldProvincesOwned)) {
+    return ExpandEconomyPlan.defaultPlan;
+  }
+  final player = game.playerById(snapshot.playerId);
+  if (player == null) {
+    return ExpandEconomyPlan.defaultPlan;
+  }
+
+  final hasInvadable = snapshot.conquest.invadableProvinceIdsSorted.isNotEmpty;
+  final regimentCount = regimentCountForPlayer(game, snapshot.playerId);
+  final effectiveTreasury =
+      player.treasury + pendingRichesTreasuryDelta(stockpile: player.stockpile);
+  final cheapest = _cheapestRegimentBuildTreasuryCost();
+
+  // Arm A: regimentCount == 0 AND hasInvadable -> force rebuild
+  // (no treasury gate per spec; the build pipeline still applies its
+  // own affordability check, but the directive remains so the phase
+  // planner cannot be silently overridden by a treasury hiccup).
+  final armA = regimentCount == 0 && hasInvadable;
+
+  // Arm B: 0 < regimentCount < min AND hasInvadable AND effective
+  // treasury affords the cheapest regiment.
+  final armB =
+      regimentCount > 0 &&
+      regimentCount < kBelowQuotaPeaceMinRegimentsBeforeDeclareWar &&
+      hasInvadable &&
+      effectiveTreasury >= cheapest;
+
+  // Arm C: effective treasury below cheapest regiment cost (independent
+  // of regimentCount per the spec literal wording — boosts cargo so a
+  // GP in EXPAND with low cash always benefits from delivering riches,
+  // matching the SPEC/ai/ai-architecture.md "Treasury recovery cargo"
+  // intent).
+  final armC = effectiveTreasury < cheapest;
+
+  return ExpandEconomyPlan(
+    forceCheapestRegimentBuild: armA || armB,
+    boostTreasuryRecoveryCargo: armC,
+  );
 }
 
 /// Minimum [RegimentEconomyCatalog] build treasury cost (deterministic
