@@ -20,6 +20,7 @@ export 'e2e_test_shared.dart'
         e2eAdaptivePollRampAfterIdle,
         e2eAwaitNwCoastalOrVisibleLandForBundledExplore,
         e2eBundledExploreRejectionDiagnostics,
+        e2eCheckExploreEnabledFromCivilianPanel,
         e2eExploreAssignEnabledFromCivilianSnapshot,
         e2eFleetReachDoneFromCtSnapshotOnly,
         e2eHarnessDetectsNonHomeFleetInNewWorld,
@@ -33,7 +34,9 @@ export 'e2e_test_shared.dart'
         e2ePickMoveDestinationAndConfirm,
         e2eTryNavalMoveSegment,
         e2ePlayerHasAnyNewWorldFoggedOrBetterFromCtSnapshot,
+        kE2eCheckExploreEnabledFromCivilianPanelPhase,
         kE2eDefaultBundledExploreReadinessMaxTurns,
+        kE2eDefaultBundledExploreSweepWait,
         kE2eDefaultNavalMoveSegmentUiWait,
         e2ePumpUntil,
         e2ePumpUntilConditionOrIdle,
@@ -238,6 +241,25 @@ Future<bool> anyExplorerHasEnabledExploreAssignFleet(
   tester,
   maxUiResponseWait: maxUiResponseWait,
   maxPanelSweepSteps: maxPanelSweepSteps,
+);
+
+/// Stable public name for [e2eCheckExploreEnabledFromCivilianPanel] so the
+/// post-bundle Explore scenario consumes the AC1 barrel only (Refs GitHub
+/// #2336 AC1 / AC2 / AC5 / Bottleneck 5). Forwards to the implementation in
+/// `e2e_test_shared_panels.dart`.
+Future<bool> checkExploreEnabledFromCivilianPanel(
+  WidgetTester tester, {
+  E2ePerfLog? perf,
+  Duration maxUiResponseWait = kE2eDefaultBundledExploreSweepWait,
+  String waitUntilFoundPhase = 'wait_until_found_civilian_panel',
+  String afterSheetPanelsClearPhase =
+      'pump_until_panels_cleared_after_close_sheet_fleet_civilian_open',
+}) => e2eCheckExploreEnabledFromCivilianPanel(
+  tester,
+  perf: perf,
+  maxUiResponseWait: maxUiResponseWait,
+  waitUntilFoundPhase: waitUntilFoundPhase,
+  afterSheetPanelsClearPhase: afterSheetPanelsClearPhase,
 );
 
 /// Stable public name for [e2eAwaitNwCoastalOrVisibleLandForBundledExplore]

@@ -340,39 +340,11 @@ void main() {
       );
 
       await e2eTapNewWorldRegionTabIfPresent(tester);
-      Future<bool> checkExploreEnabledFromCivilianPanel() async {
-        final phaseSw = Stopwatch()..start();
-        await openCivilianPanel(
-          tester,
-          afterSheetPanelsClearPhase:
-              'pump_until_panels_cleared_after_close_sheet_fleet_civilian_open',
-          bottomSheetCloseTimeout: _kMaxUiResponseWait,
-        );
-        await waitUntilFound(
-          tester,
-          find.byKey(kCtE2ECivilianPanelRootKey),
-          timeout: _kMaxUiResponseWait,
-          perf: perf,
-          phaseName: 'wait_until_found_civilian_panel',
-        );
-        final enabled = await anyExplorerHasEnabledExploreAssignFleet(
-          tester,
-          maxUiResponseWait: _kMaxUiResponseWait,
-        );
-        await closeBottomSheet(
-          tester,
-          perf: perf,
-          overallTimeout: _kMaxUiResponseWait,
-        );
-        perf.timing(
-          'bundled_explore_retry_loop',
-          phaseSw.elapsed,
-          meta: 'result=${enabled ? "enabled" : "not_enabled"}',
-        );
-        return enabled;
-      }
-
-      var exploreEnabled = await checkExploreEnabledFromCivilianPanel();
+      var exploreEnabled = await checkExploreEnabledFromCivilianPanel(
+        tester,
+        perf: perf,
+        maxUiResponseWait: _kMaxUiResponseWait,
+      );
       // Linux CI can require more than three post-reveal turns before the
       // Assign list surfaces an enabled Explore row for at least one explorer.
       // Keep strict failure semantics, but widen the bounded retry window.
@@ -388,7 +360,11 @@ void main() {
         await advanceOneHumanTurn(tester, l10n: l10n, perf: perf);
         await dismissTransientUi(tester, perf: perf);
         await e2eTapNewWorldRegionTabIfPresent(tester);
-        exploreEnabled = await checkExploreEnabledFromCivilianPanel();
+        exploreEnabled = await checkExploreEnabledFromCivilianPanel(
+          tester,
+          perf: perf,
+          maxUiResponseWait: _kMaxUiResponseWait,
+        );
       }
       if (!exploreEnabled) {
         if (!e2ePlayerHasAnyNewWorldFoggedOrBetterFromCtSnapshot(

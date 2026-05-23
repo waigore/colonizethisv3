@@ -111,3 +111,21 @@ part of 'new_game_fleet_reaches_new_world_e2e_test.dart';
 /// barrel alias `advanceOneHumanTurn` (`e2e_helpers.dart`); the widget-test
 /// pin in `app/test/e2e_advance_one_human_turn_test.dart` carries the
 /// behavioural contract.
+
+/// The `checkExploreEnabledFromCivilianPanel` closure (formerly declared
+/// inside the post-bundle Explore `testWidgets` body in
+/// `new_game_fleet_reaches_new_world_e2e_test.dart`) was lifted into
+/// [e2eCheckExploreEnabledFromCivilianPanel]
+/// (`e2e_test_shared_panels.dart`) so the open-civilian / wait /
+/// any-explorer-enabled / close-sheet / perf-timing sequence is shared
+/// and unit-pinned (Refs GitHub #2336 AC1 / AC2 / AC5 / Bottleneck 5).
+/// The fleet scenario calls the lifted form through the AC1 barrel alias
+/// `checkExploreEnabledFromCivilianPanel` (`e2e_helpers.dart`). The
+/// widget-test pin in
+/// `app/test/e2e_check_explore_enabled_from_civilian_panel_test.dart`
+/// guards against silent regressions because the integration suite
+/// cannot validate this directly today (`app_e2e_linux` is a no-op per
+/// `SPEC/program/e2e-integration-tests.md` § CI). A regression here
+/// would burn `maxBoundedTurnRetries (8) × ~5 s` retry wall-clock on
+/// the bundled-Explore path — Bottleneck 5 in
+/// `SPEC/program/e2e-integration-tests.md` § Determinism.

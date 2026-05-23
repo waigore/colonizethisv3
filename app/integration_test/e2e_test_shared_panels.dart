@@ -1262,3 +1262,90 @@ Future<void> e2eAwaitNwCoastalOrVisibleLandForBundledExplore(
     }
   }
 }
+
+/// Canonical phase label recorded by [e2eCheckExploreEnabledFromCivilianPanel]
+/// for each invocation. Matches the pre-lift private closure literal in
+/// `new_game_fleet_reaches_new_world_e2e_test.dart`, which the post-bundle
+/// Explore scenario emitted once initially and once per `maxBoundedTurnRetries`
+/// iteration; any future timing harness that aggregates per-phase totals must
+/// continue to see this label so the readiness retry slice stays attributable
+/// (Refs GitHub #2336 AC1 / AC2 / AC8 / `SPEC/program/e2e-integration-tests.md`
+/// § Baseline / post-refactor timing).
+const String kE2eCheckExploreEnabledFromCivilianPanelPhase =
+    'bundled_explore_retry_loop';
+
+/// Opens the civilian panel, waits for [kCtE2ECivilianPanelRootKey] to mount,
+/// evaluates [e2eAnyExplorerHasEnabledExploreAssignFleet], closes the bottom
+/// sheet, and records the elapsed wall-clock under
+/// [kE2eCheckExploreEnabledFromCivilianPanelPhase] with meta
+/// `'result=enabled'` or `'result=not_enabled'`.
+///
+/// Lifted from the formerly private `checkExploreEnabledFromCivilianPanel`
+/// closure in `new_game_fleet_reaches_new_world_e2e_test.dart` (Refs GitHub
+/// #2336 AC1 / AC2 / AC5 / Bottleneck 5). The post-bundle Explore scenario
+/// invoked this helper once initially and then inside a bounded retry window
+/// (`maxBoundedTurnRetries = 8`) — centralising it preserves the phase-label
+/// and perf-timing surface the AC8 timing pipeline keys off, while removing
+/// the last file-scope private orchestration helper in the fleet bundled
+/// Explore path. The widget-test pin in
+/// `app/test/e2e_check_explore_enabled_from_civilian_panel_test.dart` guards
+/// against silent regressions because the integration suite cannot validate
+/// this directly today (`app_e2e_linux` is a no-op per
+/// `SPEC/program/e2e-integration-tests.md` § CI).
+///
+/// Contract:
+///
+/// - Delegates panel opening to [e2eOpenCivilianPanel] with
+///   [bottomSheetCloseTimeout] / [afterSheetPanelsClearPhase] forwarded so the
+///   AC1 phase labels remain stable for log-driven attribution.
+/// - Waits for [kCtE2ECivilianPanelRootKey] with [maxUiResponseWait] under
+///   the [waitUntilFoundPhase] label so the live opener's race window is the
+///   same as the pre-lift closure.
+/// - Returns the verdict from
+///   [e2eAnyExplorerHasEnabledExploreAssignFleet] verbatim (snapshot
+///   short-circuit included) — the helper itself never widens or narrows
+///   that decision.
+/// - Always calls [e2eCloseBottomSheet] before returning, even on `true`,
+///   so the caller can immediately enter the next retry / next-turn step
+///   without the sheet blocking subsequent rail/marker taps.
+/// - Emits exactly one [E2ePerfLog.timing] entry per call (when [perf] is
+///   non-null) under [kE2eCheckExploreEnabledFromCivilianPanelPhase] with the
+///   `'result=...'` meta.
+Future<bool> e2eCheckExploreEnabledFromCivilianPanel(
+  WidgetTester tester, {
+  E2ePerfLog? perf,
+  Duration maxUiResponseWait = kE2eDefaultBundledExploreSweepWait,
+  String waitUntilFoundPhase = 'wait_until_found_civilian_panel',
+  String afterSheetPanelsClearPhase =
+      'pump_until_panels_cleared_after_close_sheet_fleet_civilian_open',
+}) async {
+  final phaseSw = Stopwatch()..start();
+  await e2eOpenCivilianPanel(
+    tester,
+    perf: perf,
+    afterSheetPanelsClearPhase: afterSheetPanelsClearPhase,
+    bottomSheetCloseTimeout: maxUiResponseWait,
+  );
+  await e2eWaitUntilFound(
+    tester,
+    find.byKey(kCtE2ECivilianPanelRootKey),
+    timeout: maxUiResponseWait,
+    perf: perf,
+    phaseName: waitUntilFoundPhase,
+  );
+  final enabled = await e2eAnyExplorerHasEnabledExploreAssignFleet(
+    tester,
+    maxUiResponseWait: maxUiResponseWait,
+  );
+  await e2eCloseBottomSheet(
+    tester,
+    perf: perf,
+    overallTimeout: maxUiResponseWait,
+  );
+  perf?.timing(
+    kE2eCheckExploreEnabledFromCivilianPanelPhase,
+    phaseSw.elapsed,
+    meta: 'result=${enabled ? "enabled" : "not_enabled"}',
+  );
+  return enabled;
+}
