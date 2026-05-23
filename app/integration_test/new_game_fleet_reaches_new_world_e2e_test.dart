@@ -362,7 +362,9 @@ void main() {
         exploreEnabled = await checkExploreEnabledFromCivilianPanel();
       }
       if (!exploreEnabled) {
-        if (!_playerHasAnyNewWorldFoggedOrBetterFromCtSnapshot()) {
+        if (!e2ePlayerHasAnyNewWorldFoggedOrBetterFromCtSnapshot(
+          ctE2eNavalPanelSnapshot,
+        )) {
           // Guard against CI topology/seed runs where no NW land becomes
           // visible within bounded retries, so Explore cannot be enabled.
           return;

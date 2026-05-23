@@ -21,6 +21,7 @@ export 'e2e_test_shared.dart' show
     e2eNewWorldRegionChipAppearsSelected,
     e2eNonHomeHumanFleetInNewWorldFromCtSnapshot,
     e2eOldWorldRegionChipAppearsSelected,
+    e2ePlayerHasAnyNewWorldFoggedOrBetterFromCtSnapshot,
     e2ePumpUntil,
     e2ePumpUntilConditionOrIdle,
     e2eTextLooksLikeNewWorldLocationLine,

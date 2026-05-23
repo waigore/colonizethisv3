@@ -358,6 +358,41 @@ void main() {
       );
     });
 
+    test('e2ePlayerHasAnyNewWorldFoggedOrBetterFromCtSnapshot is re-exported '
+        'through the barrel', () {
+      final bool Function(CtE2eNavalPanelSnapshot?) ref =
+          e2ePlayerHasAnyNewWorldFoggedOrBetterFromCtSnapshot;
+      expect(
+        ref,
+        isNotNull,
+        reason:
+            'The bundled-explore readiness loop in '
+            '`new_game_fleet_reaches_new_world_e2e_helpers_part2.dart` '
+            '(`_awaitNwCoastalOrVisibleLandForBundledExploreE2e`) and '
+            'the fleet-reach test\'s final skip guard '
+            '(`new_game_fleet_reaches_new_world_e2e_test.dart`) both '
+            'consume this snapshot-driven predicate via the AC1 '
+            'barrel. A regression that dropped it from the `show` '
+            'clause would either stall the readiness loop for the '
+            'full 35-turn cap (Bottleneck 4 in `SPEC/program/'
+            'e2e-integration-tests.md` § Determinism) or convert the '
+            'strict bundled-explore assertion into a silent skip — '
+            'both directly inflate the wall-clock cap #2336 is '
+            'reducing.',
+      );
+      expect(
+        ref(null),
+        isFalse,
+        reason:
+            'Sanity smoke through the barrel: a null snapshot must '
+            'keep returning false after re-export. A wrapper that '
+            'swallowed the argument and returned a constant would '
+            'pass the tear-off pin silently; null is the canonical '
+            'no-plumbing state and must short-circuit before any '
+            'field access.',
+      );
+    });
+
     test('AC1 timing constants are exposed as Duration values', () {
       const Duration maxWallClock = kE2eMaxWallClock;
       const Duration nextTurnTimeout = kE2eNextTurnResolutionTimeout;

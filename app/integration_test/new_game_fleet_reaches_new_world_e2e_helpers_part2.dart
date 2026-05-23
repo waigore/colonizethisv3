@@ -180,36 +180,10 @@ bool _nonHomeHumanFleetInCoastalNewWorldSeaFromCtSnapshot() {
   return false;
 }
 
-bool _playerHasAnyNewWorldFoggedOrBetterFromCtSnapshot() {
-  final snap = ctE2eNavalPanelSnapshot;
-  if (snap == null) {
-    return false;
-  }
-  final newWorldProvinceLocalIds = allProvinces(snap.game.worldState)
-      .where((p) => ProvinceId.regionIdFrom(p.id) == 'newWorld')
-      .map((p) => ProvinceId.localIdFrom(p.id))
-      .toSet();
-  if (newWorldProvinceLocalIds.isEmpty) {
-    return false;
-  }
-  final view = buildPlayerView(snap.game, snap.topology, snap.humanPlayerId);
-  for (final entry in view.visibilityByTile.entries) {
-    final parts = entry.key.split('|');
-    if (parts.length != 4) {
-      continue;
-    }
-    if (parts[0] != 'newWorld') {
-      continue;
-    }
-    if (!newWorldProvinceLocalIds.contains(parts[1])) {
-      continue;
-    }
-    if (entry.value.name != 'unknown') {
-      return true;
-    }
-  }
-  return false;
-}
+/// NW fogged-or-better detection moved to
+/// [e2ePlayerHasAnyNewWorldFoggedOrBetterFromCtSnapshot] (`e2e_test_shared.dart`)
+/// so the [PlayerView]-driven contract is unit-pinned (Refs GitHub #2336
+/// AC1 / AC2). Call sites pass [ctE2eNavalPanelSnapshot] explicitly.
 
 /// Widget-only: a **non–home** fleet row shows [unitsPanelRegionLabel] for New World
 /// in the subtitle location line (`New World — …` per `naval_tree_builder.dart`).
@@ -272,7 +246,9 @@ Future<void> _awaitNwCoastalOrVisibleLandForBundledExploreE2e({
     await dismissTransientUi(tester);
     await _tapNewWorldRegionTabIfPresent(tester);
     if (_nonHomeHumanFleetInCoastalNewWorldSeaFromCtSnapshot() ||
-        _playerHasAnyNewWorldFoggedOrBetterFromCtSnapshot()) {
+        e2ePlayerHasAnyNewWorldFoggedOrBetterFromCtSnapshot(
+          ctE2eNavalPanelSnapshot,
+        )) {
       return;
     }
     // Snapshot-backed paths skip redundant naval sheet open/close (Refs #2336).
@@ -283,7 +259,9 @@ Future<void> _awaitNwCoastalOrVisibleLandForBundledExploreE2e({
         bottomSheetCloseTimeout: _kMaxUiResponseWait,
       );
       if (_nonHomeHumanFleetInCoastalNewWorldSeaFromCtSnapshot() ||
-          _playerHasAnyNewWorldFoggedOrBetterFromCtSnapshot()) {
+          e2ePlayerHasAnyNewWorldFoggedOrBetterFromCtSnapshot(
+            ctE2eNavalPanelSnapshot,
+          )) {
         await closeBottomSheet(tester, overallTimeout: _kMaxUiResponseWait);
         return;
       }
@@ -298,7 +276,9 @@ Future<void> _awaitNwCoastalOrVisibleLandForBundledExploreE2e({
     await closeBottomSheet(tester, overallTimeout: _kMaxUiResponseWait);
     await advanceOneHumanTurn(tester, l10n: l10n);
     if (_nonHomeHumanFleetInCoastalNewWorldSeaFromCtSnapshot() ||
-        _playerHasAnyNewWorldFoggedOrBetterFromCtSnapshot()) {
+        e2ePlayerHasAnyNewWorldFoggedOrBetterFromCtSnapshot(
+          ctE2eNavalPanelSnapshot,
+        )) {
       return;
     }
   }
