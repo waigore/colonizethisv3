@@ -1183,6 +1183,24 @@ abstract class AppLocalizations {
   /// Warning when allocated labour exceeds effective labour.
   String get production_labourInsufficient;
 
+  /// Pending recruit-worker order count shown on a tier row in the Labour controls.
+  String production_labourQueued(int count);
+
+  /// Tooltip and semantics label for the + stepper on the peasant row.
+  String production_labourRecruitTier(String tier);
+
+  /// Tooltip and semantics label for the + stepper on a trained-tier row.
+  String production_labourTrainTier(String tier);
+
+  /// Tooltip and semantics label for the − stepper on any tier row.
+  String production_labourDequeueTier(String tier);
+
+  /// Tooltip and semantics label for the Disband control on a trained-tier row.
+  String production_labourDisbandTier(String tier);
+
+  /// Visible label for the Disband button on trained-tier rows.
+  String get production_labourDisband;
+
   /// Worker type and count in production panel.
   String production_workerCount(String name, int count);
 
