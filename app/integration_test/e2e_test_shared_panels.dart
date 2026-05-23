@@ -1262,3 +1262,104 @@ Future<void> e2eAwaitNwCoastalOrVisibleLandForBundledExplore(
     }
   }
 }
+
+/// Default `perf.timing` phase label emitted by
+/// [e2eCheckExploreEnabledFromCivilianPanel].
+///
+/// Mirrors the pre-lift inline-closure literal in
+/// `new_game_fleet_reaches_new_world_e2e_test.dart` so downstream
+/// `E2E_TIMING|phase=...` log scrapers and dashboards remain stable across
+/// the lift (Refs GitHub #2336 AC1 / AC2 / AC5 / Bottleneck 5). A silent
+/// rename would orphan any existing telemetry keyed on this phase name.
+const String kE2eDefaultBundledExploreRetryLoopPhase =
+    'bundled_explore_retry_loop';
+
+/// Default `afterSheetPanelsClearPhase` override forwarded into
+/// [e2eOpenCivilianPanel] by [e2eCheckExploreEnabledFromCivilianPanel].
+///
+/// Mirrors the pre-lift fleet-scenario literal so the
+/// `pump_until_panels_cleared_after_close_sheet_fleet_civilian_open` phase
+/// label keeps attributing post-sheet-close settle time to the fleet
+/// scenario rather than to the generic civilian-open path. The full-turn
+/// scenario keeps the default `_civilian_open` label by going through
+/// [e2eOpenCivilianPanel] directly (Refs GitHub #2336 AC1 / AC2).
+const String kE2eDefaultFleetCivilianOpenAfterSheetClearPhase =
+    'pump_until_panels_cleared_after_close_sheet_fleet_civilian_open';
+
+/// Opens the civilian panel from the fleet bundled-Explore retry context and
+/// returns `true` when at least one civilian unit row exposes an enabled
+/// `Explore` assign target.
+///
+/// Lifted from the formerly inline `checkExploreEnabledFromCivilianPanel`
+/// closure in `new_game_fleet_reaches_new_world_e2e_test.dart` (Refs GitHub
+/// #2336 AC1 / AC2 / AC5 / Bottleneck 5). The post-bundle Explore scenario
+/// invokes this helper inside a bounded `maxBoundedTurnRetries (8)` retry
+/// loop, so a silent rename / fail-open would either inflate the bundled-
+/// Explore wall clock or mask a real Explore regression. The widget-test
+/// pin in
+/// `app/test/e2e_check_explore_enabled_from_civilian_panel_test.dart`
+/// guards against silent regressions because the integration suite cannot
+/// validate this directly today (`app_e2e_linux` is a no-op per
+/// `SPEC/program/e2e-integration-tests.md` § CI).
+///
+/// Contract:
+///
+/// - Starts a fresh stopwatch and forwards [perf] / [maxUiResponseWait]
+///   into [e2eOpenCivilianPanel]; the `afterSheetPanelsClearPhase` default
+///   ([kE2eDefaultFleetCivilianOpenAfterSheetClearPhase]) preserves the
+///   pre-lift fleet-scenario attribution label.
+/// - Calls [e2eWaitUntilFound] on [kCtE2ECivilianPanelRootKey] with
+///   `phaseName: 'wait_until_found_civilian_panel'` before evaluating any
+///   Assign rows, matching the pre-lift closure exactly.
+/// - Delegates to [e2eAnyExplorerHasEnabledExploreAssignFleet] for the
+///   actual sweep, forwarding [maxUiResponseWait]. The Assign-sweep is the
+///   only place where snapshot short-circuit / panel-walk semantics are
+///   defined (Bottleneck 5).
+/// - Calls [e2eCloseBottomSheet] with [maxUiResponseWait] regardless of
+///   the Explore-enabled outcome so the next retry iteration starts from a
+///   clean panel state. A regression that skipped the close would stall
+///   the retry loop on a stale Assign sheet.
+/// - When [perf] is non-`null`, emits a single `perf.timing(...)` event on
+///   return with phase [phaseTimingLabel] (default
+///   [kE2eDefaultBundledExploreRetryLoopPhase]) and
+///   `meta: 'result=enabled'` or `meta: 'result=not_enabled'`.
+/// - Returns the boolean reported by
+///   [e2eAnyExplorerHasEnabledExploreAssignFleet] verbatim.
+Future<bool> e2eCheckExploreEnabledFromCivilianPanel(
+  WidgetTester tester, {
+  E2ePerfLog? perf,
+  Duration maxUiResponseWait = kE2eDefaultBundledExploreSweepWait,
+  String afterSheetPanelsClearPhase =
+      kE2eDefaultFleetCivilianOpenAfterSheetClearPhase,
+  String phaseTimingLabel = kE2eDefaultBundledExploreRetryLoopPhase,
+}) async {
+  final phaseSw = Stopwatch()..start();
+  await e2eOpenCivilianPanel(
+    tester,
+    perf: perf,
+    afterSheetPanelsClearPhase: afterSheetPanelsClearPhase,
+    bottomSheetCloseTimeout: maxUiResponseWait,
+  );
+  await e2eWaitUntilFound(
+    tester,
+    find.byKey(kCtE2ECivilianPanelRootKey),
+    timeout: maxUiResponseWait,
+    perf: perf,
+    phaseName: 'wait_until_found_civilian_panel',
+  );
+  final enabled = await e2eAnyExplorerHasEnabledExploreAssignFleet(
+    tester,
+    maxUiResponseWait: maxUiResponseWait,
+  );
+  await e2eCloseBottomSheet(
+    tester,
+    perf: perf,
+    overallTimeout: maxUiResponseWait,
+  );
+  perf?.timing(
+    phaseTimingLabel,
+    phaseSw.elapsed,
+    meta: 'result=${enabled ? "enabled" : "not_enabled"}',
+  );
+  return enabled;
+}
