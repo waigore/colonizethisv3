@@ -1,4 +1,3 @@
-import 'package:colonizethis_data/colonizethis_data.dart' show MapTopology;
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:colonizethis_app/config/ct_e2e.dart';
 import 'package:colonizethis_app/config/ct_e2e_last_panel_snapshot.dart';
@@ -9,10 +8,7 @@ import 'package:colonizethis_logic/colonizethis_logic.dart'
         OrderEngine,
         allProvinces,
         buildPlayerView,
-        homeFleetIdFor,
         kWorkTargetExplore,
-        provinceIdsAdjacentToSeaZone,
-        regionIdForSeaZone,
         suggestWorkOrders;
 import 'package:colonizethis_models/colonizethis_models.dart'
     show MoveOrder, ProvinceId, Unit, WorkOrder, kUnitTypeExplorer;
@@ -71,7 +67,11 @@ void main() {
       openNavalTimeout: _kMaxUiResponseWait,
       bottomSheetCloseTimeout: _kMaxUiResponseWait,
     );
-    await closeBottomSheet(tester, perf: perf, overallTimeout: _kMaxUiResponseWait);
+    await closeBottomSheet(
+      tester,
+      perf: perf,
+      overallTimeout: _kMaxUiResponseWait,
+    );
     ensureUnderWallClock('after split fleet');
 
     for (
@@ -138,7 +138,11 @@ void main() {
         // Panel was opened above only when snapshot plumbing is unavailable.
         navalPanelAlreadyOpen: ctE2eNavalPanelSnapshot == null,
       );
-      await closeBottomSheet(tester, perf: perf, overallTimeout: _kMaxUiResponseWait);
+      await closeBottomSheet(
+        tester,
+        perf: perf,
+        overallTimeout: _kMaxUiResponseWait,
+      );
 
       if (_harnessDetectsNonHomeFleetInNewWorld(tester)) {
         perf.timing(
@@ -180,7 +184,11 @@ void main() {
         'Last exception: ${tester.takeException()}',
       );
     }
-    await closeBottomSheet(tester, perf: perf, overallTimeout: _kMaxUiResponseWait);
+    await closeBottomSheet(
+      tester,
+      perf: perf,
+      overallTimeout: _kMaxUiResponseWait,
+    );
     ensureUnderWallClock('test complete');
     perf.timing('test_total', testSw.elapsed, meta: 'result=final_check');
   });
@@ -225,7 +233,11 @@ void main() {
         openNavalTimeout: _kMaxUiResponseWait,
         bottomSheetCloseTimeout: _kMaxUiResponseWait,
       );
-      await closeBottomSheet(tester, perf: perf, overallTimeout: _kMaxUiResponseWait);
+      await closeBottomSheet(
+        tester,
+        perf: perf,
+        overallTimeout: _kMaxUiResponseWait,
+      );
       ensureUnderWallClock('after split fleet');
       CtE2eNavalPanelSnapshot? lastKnownNavalSnapshot;
 
@@ -273,7 +285,11 @@ void main() {
           perf: perf,
           navalPanelAlreadyOpen: ctE2eNavalPanelSnapshot == null,
         );
-        await closeBottomSheet(tester, perf: perf, overallTimeout: _kMaxUiResponseWait);
+        await closeBottomSheet(
+          tester,
+          perf: perf,
+          overallTimeout: _kMaxUiResponseWait,
+        );
 
         if (_harnessDetectsNonHomeFleetInNewWorld(tester)) {
           break;
@@ -306,7 +322,11 @@ void main() {
           'Last exception: ${tester.takeException()}',
         );
       }
-      await closeBottomSheet(tester, perf: perf, overallTimeout: _kMaxUiResponseWait);
+      await closeBottomSheet(
+        tester,
+        perf: perf,
+        overallTimeout: _kMaxUiResponseWait,
+      );
       ensureUnderWallClock('fleet in NW confirmed');
 
       await _awaitNwCoastalOrVisibleLandForBundledExploreE2e(
@@ -334,7 +354,11 @@ void main() {
         final enabled = await _anyExplorerHasEnabledExploreAssignFleetE2e(
           tester,
         );
-        await closeBottomSheet(tester, perf: perf, overallTimeout: _kMaxUiResponseWait);
+        await closeBottomSheet(
+          tester,
+          perf: perf,
+          overallTimeout: _kMaxUiResponseWait,
+        );
         perf.timing(
           'bundled_explore_retry_loop',
           phaseSw.elapsed,

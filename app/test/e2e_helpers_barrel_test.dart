@@ -45,6 +45,7 @@
 import 'package:colonizethis_app/config/ct_e2e_last_panel_snapshot.dart'
     show CtE2eNavalPanelSnapshot;
 import 'package:colonizethis_app/l10n/app_localizations_contract.dart';
+import 'package:colonizethis_data/colonizethis_data.dart' show MapTopology;
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -355,6 +356,69 @@ void main() {
             'the argument and returned a constant would pass the '
             'tear-off pin silently; null is the canonical no-plumbing '
             'state and must short-circuit before any field access.',
+      );
+    });
+
+    test('e2eNonHomeHumanFleetInCoastalNewWorldSeaFromCtSnapshot is '
+        're-exported through the barrel', () {
+      final bool Function(CtE2eNavalPanelSnapshot?) ref =
+          e2eNonHomeHumanFleetInCoastalNewWorldSeaFromCtSnapshot;
+      expect(
+        ref,
+        isNotNull,
+        reason:
+            'The bundled-explore readiness loop in '
+            '`new_game_fleet_reaches_new_world_e2e_helpers_part2.dart` '
+            '(`_awaitNwCoastalOrVisibleLandForBundledExploreE2e`) '
+            'short-circuits on this coastal-NW predicate alongside '
+            'e2ePlayerHasAnyNewWorldFoggedOrBetterFromCtSnapshot. A '
+            'regression that dropped it from the `show` clause would '
+            're-introduce the 35-turn × ~5 s stall documented in #2336 '
+            'Bottleneck 4 (`SPEC/program/e2e-integration-tests.md` '
+            '§ Determinism) for the open-ocean NW fleet branch where '
+            'ship reveal never paints coastal land.',
+      );
+      expect(
+        ref(null),
+        isFalse,
+        reason:
+            'Sanity smoke through the barrel: a null snapshot must keep '
+            'returning false after re-export. A wrapper that swallowed '
+            'the argument and returned a constant would pass the '
+            'tear-off pin silently; null is the canonical no-plumbing '
+            'state and must short-circuit before any field access.',
+      );
+    });
+
+    test('e2eNwCoastalProvincesAdjacentToFleetSea is re-exported through the '
+        'barrel', () {
+      final Set<String> Function(MapTopology, String, String) ref =
+          e2eNwCoastalProvincesAdjacentToFleetSea;
+      expect(
+        ref,
+        isNotNull,
+        reason:
+            'The two-tier coastal adjacency lookup (verbatim sea id, '
+            'then `ProvinceId.full(regionId, seaZoneId)` fallback) is '
+            'the helper '
+            '`e2eNonHomeHumanFleetInCoastalNewWorldSeaFromCtSnapshot` '
+            'consumes per fleet. A regression that dropped it from the '
+            '`show` clause would force scenarios to re-implement the '
+            'fallback (silently divergent across files) or fail to '
+            'compile entirely; pin the tear-off so the AC1 barrel keeps '
+            'this canonical entrypoint exported.',
+      );
+      expect(
+        ref(const MapTopology(), 'sea1', 'newWorld'),
+        isEmpty,
+        reason:
+            'Sanity smoke through the barrel: an empty topology must '
+            'yield an empty adjacency set for any sea zone. A wrapper '
+            'that swallowed the topology and returned a constant '
+            'non-empty set would pass the tear-off pin silently; the '
+            'empty-topology baseline is the canonical "no edges" state '
+            'that must surface as an empty result rather than a fake '
+            'coastal hit.',
       );
     });
 

@@ -126,59 +126,24 @@ Future<bool> _tapMoveOnFirstNonHomeFleet(WidgetTester tester) async {
 /// so the snapshot-driven contract is unit-pinned (Refs GitHub #2336 AC1 /
 /// AC2). Call sites pass [ctE2eNavalPanelSnapshot] explicitly.
 
-/// [provinceIdsAdjacentToSeaZone] matches edge endpoints exactly. Combined game
-/// topology uses prefixed sea node ids (`newWorld|sea5`); some fleet states
-/// still carry the regional local id (`sea5`). Try both so coastal detection
-/// matches logic/ship-reveal (`SPEC/program/fog-and-exploration-resolution.md`).
-Set<String> _nwCoastalProvincesAdjacentToFleetSea(
-  MapTopology topology,
-  String seaZoneId,
-  String regionId,
-) {
-  final direct = provinceIdsAdjacentToSeaZone(
-    topology,
-    seaZoneId,
-    regionId: regionId,
-  );
-  if (direct.isNotEmpty) return direct;
-  if (!ProvinceId.isPrefixed(seaZoneId)) {
-    return provinceIdsAdjacentToSeaZone(
-      topology,
-      ProvinceId.full(regionId, seaZoneId),
-      regionId: regionId,
-    );
-  }
-  return const {};
-}
+/// Coastal sea-zone adjacency lookup with prefixed-id fallback moved to
+/// [e2eNwCoastalProvincesAdjacentToFleetSea] (`e2e_test_shared.dart`) so the
+/// two-tier `provinceIdsAdjacentToSeaZone` contract is unit-pinned and shared
+/// across scenarios (Refs GitHub #2336 AC1 / AC2). The combined topology
+/// uses prefixed sea node ids (`newWorld|sea5`) while some fleet states
+/// still carry the regional local id (`sea5`); the lifted helper tries
+/// both so coastal detection matches logic/ship-reveal
+/// (`SPEC/program/fog-and-exploration-resolution.md`).
 
-/// Ship reveal only paints coastal land for sea zones with a P–S province edge
+/// Non-home human fleet-in-NW-coastal-sea detection moved to
+/// [e2eNonHomeHumanFleetInCoastalNewWorldSeaFromCtSnapshot]
+/// (`e2e_test_shared.dart`) so the snapshot-driven coastal contract is
+/// unit-pinned (Refs GitHub #2336 AC1 / AC2). Ship reveal only paints
+/// coastal land for sea zones with a P–S province edge
 /// (`SPEC/program/fog-and-exploration-resolution.md`). Open-ocean NW sea
-/// placement satisfies [ _nonHomeHumanFleetInNewWorldFromCtSnapshot ] but never
-/// yields fogged/visible NW provinces, so bundled Explore stays disabled.
-bool _nonHomeHumanFleetInCoastalNewWorldSeaFromCtSnapshot() {
-  final snap = ctE2eNavalPanelSnapshot;
-  if (snap == null) return false;
-  final human = snap.humanPlayerId;
-  final homeId = homeFleetIdFor(human);
-  for (final f in snap.game.worldState.fleets) {
-    if (f.ownerId != human) continue;
-    if (f.id == homeId) continue;
-    if (!f.isAtSea || f.seaZoneId == null) continue;
-    final sea = f.seaZoneId!;
-    final String? regionId = f.regionId == 'newWorld'
-        ? 'newWorld'
-        : regionIdForSeaZone(snap.topology, sea);
-    if (regionId == null || regionId != 'newWorld') continue;
-    if (_nwCoastalProvincesAdjacentToFleetSea(
-      snap.topology,
-      sea,
-      regionId,
-    ).isNotEmpty) {
-      return true;
-    }
-  }
-  return false;
-}
+/// placement satisfies [e2eNonHomeHumanFleetInNewWorldFromCtSnapshot] but
+/// never yields fogged/visible NW provinces, so bundled Explore stays
+/// disabled. Call sites pass [ctE2eNavalPanelSnapshot] explicitly.
 
 /// NW fogged-or-better detection moved to
 /// [e2ePlayerHasAnyNewWorldFoggedOrBetterFromCtSnapshot] (`e2e_test_shared.dart`)
@@ -245,7 +210,9 @@ Future<void> _awaitNwCoastalOrVisibleLandForBundledExploreE2e({
     ensureUnderWallClock('NW bundled-explore readiness i=$i');
     await dismissTransientUi(tester);
     await _tapNewWorldRegionTabIfPresent(tester);
-    if (_nonHomeHumanFleetInCoastalNewWorldSeaFromCtSnapshot() ||
+    if (e2eNonHomeHumanFleetInCoastalNewWorldSeaFromCtSnapshot(
+          ctE2eNavalPanelSnapshot,
+        ) ||
         e2ePlayerHasAnyNewWorldFoggedOrBetterFromCtSnapshot(
           ctE2eNavalPanelSnapshot,
         )) {
@@ -258,7 +225,9 @@ Future<void> _awaitNwCoastalOrVisibleLandForBundledExploreE2e({
         timeout: _kMaxUiResponseWait,
         bottomSheetCloseTimeout: _kMaxUiResponseWait,
       );
-      if (_nonHomeHumanFleetInCoastalNewWorldSeaFromCtSnapshot() ||
+      if (e2eNonHomeHumanFleetInCoastalNewWorldSeaFromCtSnapshot(
+            ctE2eNavalPanelSnapshot,
+          ) ||
           e2ePlayerHasAnyNewWorldFoggedOrBetterFromCtSnapshot(
             ctE2eNavalPanelSnapshot,
           )) {
@@ -275,7 +244,9 @@ Future<void> _awaitNwCoastalOrVisibleLandForBundledExploreE2e({
     );
     await closeBottomSheet(tester, overallTimeout: _kMaxUiResponseWait);
     await advanceOneHumanTurn(tester, l10n: l10n);
-    if (_nonHomeHumanFleetInCoastalNewWorldSeaFromCtSnapshot() ||
+    if (e2eNonHomeHumanFleetInCoastalNewWorldSeaFromCtSnapshot(
+          ctE2eNavalPanelSnapshot,
+        ) ||
         e2ePlayerHasAnyNewWorldFoggedOrBetterFromCtSnapshot(
           ctE2eNavalPanelSnapshot,
         )) {
