@@ -43,7 +43,8 @@
 //     § AC5 (Adaptive polling) for the panel/turn entrypoints.
 
 import 'package:colonizethis_app/config/ct_e2e_last_panel_snapshot.dart'
-    show CtE2eNavalPanelSnapshot;
+    show CtE2eCivilianPanelSnapshot, CtE2eNavalPanelSnapshot;
+import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_app/l10n/app_localizations_contract.dart';
 import 'package:colonizethis_data/colonizethis_data.dart' show MapTopology;
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
@@ -485,6 +486,68 @@ void main() {
             'pass the tear-off pin silently; null is the canonical '
             'no-plumbing state and must short-circuit before any '
             'field access.',
+      );
+    });
+
+    test('e2eExploreAssignEnabledFromCivilianSnapshot is re-exported '
+        'through the barrel', () {
+      final bool? Function(CtE2eCivilianPanelSnapshot?) ref =
+          e2eExploreAssignEnabledFromCivilianSnapshot;
+      expect(
+        ref,
+        isNotNull,
+        reason:
+            'The fleet-reach test\'s '
+            '`_anyExplorerHasEnabledExploreAssignFleetE2e` helper in '
+            '`new_game_fleet_reaches_new_world_e2e_helpers_part2.dart` '
+            'short-circuits on this snapshot-driven predicate before '
+            'scrolling the civilian panel `Assign` sheet. A regression '
+            'that dropped it from the `show` clause would force the '
+            'panel-sweep loop to fall through to the '
+            '`maxPanelSweepSteps (16) × per-step Assign sweep` slow '
+            'path on every fleet-reach turn (Bottleneck 5 in '
+            '`SPEC/program/e2e-integration-tests.md` § Determinism, '
+            '#2336 AC5). The bool? return is part of the contract — '
+            '`null` distinguishes "no snapshot plumbed" from `false` '
+            '("panel mounted, no Explore"); pinning the typed tear-off '
+            'fails this test on any future signature mutation.',
+      );
+      expect(
+        ref(null),
+        isNull,
+        reason:
+            'Sanity smoke through the barrel: a null snapshot must keep '
+            'returning null (NOT false) after re-export. A wrapper that '
+            'collapsed null → false would silently skip the slow-path '
+            'fallback whenever the panel is mid-mount, masking real '
+            'bundled-Explore regressions; the typed `bool?` return is '
+            'the contract that keeps these two states distinct.',
+      );
+      const Game game = Game(
+        id: 'barrel-smoke',
+        worldState: WorldState(
+          turnState: TurnState(phase: TurnPhase.orders, turnNumber: 1),
+          oldWorld: RegionData(),
+          newWorld: RegionData(),
+        ),
+        players: [Player(id: 'gp1', displayName: 'You', isHuman: true)],
+      );
+      final emptySnap = const CtE2eCivilianPanelSnapshot(
+        game: game,
+        humanPlayerId: 'gp1',
+        currentOrders: Orders(),
+        availableWorkTargets: <String, List<String>>{},
+      );
+      expect(
+        ref(emptySnap),
+        isFalse,
+        reason:
+            'Empty `availableWorkTargets` is a definitive "panel '
+            'mounted but no civilian can be assigned anything" verdict '
+            '— `false` (not `null`). A wrapper that ignored the '
+            'snapshot and returned a constant would not distinguish '
+            'this from the null branch above; the typed `bool?` tear-'
+            'off plus both smoke probes catch that regression.',
       );
     });
 

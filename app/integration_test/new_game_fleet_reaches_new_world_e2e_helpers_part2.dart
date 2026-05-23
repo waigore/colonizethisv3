@@ -327,26 +327,20 @@ String _bundledExploreRejectionDiagnostics([
   return lines.join('\n');
 }
 
-/// When the civilian panel is open, [ctE2eCivilianPanelSnapshot] mirrors
-/// [availableWorkTargetIdsForUnitProvider] — the same work-target ids that
-/// drive enabled Assign rows. Returns `null` when no snapshot is available.
-bool? _exploreAssignEnabledFromCivilianSnapshot() {
-  final snap = ctE2eCivilianPanelSnapshot;
-  if (snap == null) {
-    return null;
-  }
-  for (final targets in snap.availableWorkTargets.values) {
-    if (targets.contains(kWorkTargetExplore)) {
-      return true;
-    }
-  }
-  return false;
-}
+/// _exploreAssignEnabledFromCivilianSnapshot was lifted into the public
+/// [e2eExploreAssignEnabledFromCivilianSnapshot] in `e2e_test_shared.dart`
+/// (Refs GitHub #2336 AC1 / AC2). Call sites consume the public name and
+/// pass `ctE2eCivilianPanelSnapshot` explicitly; the integration suite
+/// re-exports it through the `e2e_helpers.dart` barrel and pins the
+/// contract via
+/// `app/test/e2e_explore_assign_enabled_from_civilian_snapshot_test.dart`.
 
 Future<bool> _anyExplorerHasEnabledExploreAssignFleetE2e(
   WidgetTester tester,
 ) async {
-  final snapshotHint = _exploreAssignEnabledFromCivilianSnapshot();
+  final snapshotHint = e2eExploreAssignEnabledFromCivilianSnapshot(
+    ctE2eCivilianPanelSnapshot,
+  );
   if (snapshotHint != null) {
     return snapshotHint;
   }
