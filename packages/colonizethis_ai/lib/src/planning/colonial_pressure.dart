@@ -3,45 +3,30 @@ import 'package:colonizethis_logic/ai_api.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../perception/perception_snapshot.dart';
+import 'expand_phase_planner.dart' as expand_phase_planner;
 
 /// Invadable Old World frontier held only by Great Powers (no minor on border).
+///
+/// Delegates to [expand_phase_planner.isOldWorldGpOnlyInvadableFrontier]
+/// (Refs #2509 S1).
 bool isOldWorldGpOnlyInvadableFrontier({
   required Game game,
   required AIWorldSnapshot snapshot,
-}) {
-  if (snapshot.conquest.invadableProvinceIdsSorted.isEmpty) {
-    return false;
-  }
-  final provinceOwner = getProvinceOwnerMap(game);
-  final minorsOwnInvadable = snapshot.conquest.invadableProvinceIdsSorted.any(
-    (pid) {
-      final owner = provinceOwner[pid];
-      return owner != null && game.minorNations.any((m) => m.id == owner);
-    },
-  );
-  if (minorsOwnInvadable) {
-    return false;
-  }
-  return snapshot.conquest.invadableProvinceIdsSorted.any(
-    (pid) => game.playerById(provinceOwner[pid] ?? '') != null,
-  );
-}
+}) => expand_phase_planner.isOldWorldGpOnlyInvadableFrontier(
+  game: game,
+  snapshot: snapshot,
+);
 
 /// Any OW minor not yet at war that still holds provinces (EXPAND minor-first).
+///
+/// Delegates to [expand_phase_planner.hasUninvadedOldWorldMinor] (Refs #2509 S1).
 bool hasUninvadedOldWorldMinor({
   required Game game,
   required AIWorldSnapshot snapshot,
-}) {
-  for (final minor in game.minorNations) {
-    if (snapshot.threats.atWarWith.contains(minor.id)) {
-      continue;
-    }
-    if (game.worldState.oldWorld.provinces.any((p) => p.ownerId == minor.id)) {
-      return true;
-    }
-  }
-  return false;
-}
+}) => expand_phase_planner.hasUninvadedOldWorldMinor(
+  game: game,
+  snapshot: snapshot,
+);
 
 /// Below-quota OW expansion with a GP-only invadable frontier (seed-42 gp5/gp6).
 bool isStalledOldWorldGpBlockerFocus({
@@ -139,15 +124,16 @@ bool isBelowQuotaPeaceTreasuryRecovery({
 }
 
 /// Both GPs in the 8–9 OW stalled band, below the observer quota, with similar holdings.
+///
+/// Delegates to [expand_phase_planner.isMutualBelowQuotaPlateauPeer]
+/// (Refs #2509 S1).
 bool isMutualBelowQuotaPlateauPeer({
   required int ownOw,
   required int partnerOw,
-}) =>
-    isStalledOldWorldExpansion(ownOw) &&
-    isStalledOldWorldExpansion(partnerOw) &&
-    isBelowObserverConquestQuota(ownOw) &&
-    isBelowObserverConquestQuota(partnerOw) &&
-    (partnerOw - ownOw).abs() <= 1;
+}) => expand_phase_planner.isMutualBelowQuotaPlateauPeer(
+  ownOw: ownOw,
+  partnerOw: partnerOw,
+);
 
 /// Peace other below-quota Great Powers in peer-stalled wars while minors remain
 /// (exit mutual gp5/gp6 distraction; Refs #2509).
@@ -192,9 +178,8 @@ List<String> belowQuotaPeerGpPeaceTargets({
       targets.add(factionId);
       continue;
     }
-    final maxPeerOwGap = hasUninvadedOldWorldMinor(game: game, snapshot: snapshot)
-        ? 3
-        : 1;
+    final maxPeerOwGap =
+        hasUninvadedOldWorldMinor(game: game, snapshot: snapshot) ? 3 : 1;
     if ((partnerOw - ownOw).abs() > maxPeerOwGap) {
       continue;
     }
@@ -254,7 +239,8 @@ List<String> defaultStartGpPeaceTargets({
   if (!isBelowObserverConquestQuota(ownOw)) {
     return const [];
   }
-  final maxOwForGpPeace = hasUninvadedOldWorldMinor(game: game, snapshot: snapshot)
+  final maxOwForGpPeace =
+      hasUninvadedOldWorldMinor(game: game, snapshot: snapshot)
       ? kStalledOldWorldProvinceThreshold
       : kObserverDefaultStartOldWorldProvincesPerGp + 1;
   if (ownOw > maxOwForGpPeace) {
@@ -269,8 +255,7 @@ List<String> defaultStartGpPeaceTargets({
       : null;
   final targets = <String>[
     for (final factionId in snapshot.threats.atWarWith)
-      if (game.playerById(factionId) != null &&
-          factionId != invadableBlocker)
+      if (game.playerById(factionId) != null && factionId != invadableBlocker)
         factionId,
   ]..sort();
   return targets;
@@ -327,60 +312,25 @@ List<String> nearQuotaHoldPeaceTargets({
 }
 
 /// GP owning the most invadable Old World provinces (frontier blocker).
+///
+/// Delegates to [expand_phase_planner.primaryInvadableOldWorldGpBlocker]
+/// (Refs #2509 S1).
 String? primaryInvadableOldWorldGpBlocker({
   required Game game,
   required AIWorldSnapshot snapshot,
-}) {
-  final invadable = snapshot.conquest.invadableProvinceIdsSorted;
-  if (invadable.isEmpty) {
-    return null;
-  }
-  final provinceOwner = getProvinceOwnerMap(game);
-  // Linear plurality scan: tally GP ownership in one pass, then resolve the
-  // plurality winner with a second linear pass that preserves the prior
-  // first-iterated-province tiebreak. Behaviorally identical to the previous
-  // nested-loop implementation; linear in the invadable-OW set rather than
-  // quadratic on hot peace-target collection paths (Refs
-  // `colonizethis-turn-resolution-budget.mdc`).
-  final counts = <String, int>{};
-  for (final provinceId in invadable) {
-    final owner = provinceOwner[provinceId];
-    if (owner == null || game.playerById(owner) == null) continue;
-    counts[owner] = (counts[owner] ?? 0) + 1;
-  }
-  if (counts.isEmpty) {
-    return null;
-  }
-  String? bestGpId;
-  var bestCount = 0;
-  for (final provinceId in invadable) {
-    final owner = provinceOwner[provinceId];
-    if (owner == null) continue;
-    final count = counts[owner];
-    if (count == null) continue;
-    if (count > bestCount) {
-      bestCount = count;
-      bestGpId = owner;
-    }
-  }
-  return bestGpId;
-}
+}) => expand_phase_planner.primaryInvadableOldWorldGpBlocker(
+  game: game,
+  snapshot: snapshot,
+);
 
-// `hasColonialAcquisitionTargets` was relocated to `observer_goal_phase.dart`
-// (Refs #2509 S1). It is the EXPAND -> COLONIAL phase transition guard for
-// `observerGoalPhaseFor` and must survive the planned deletion of this
-// file. The two internal callers below (`isEarlyColonialExpansion` and
-// `colonialBuildOrderThresholdCap`) inline the predicate body so this
-// file does not import `observer_goal_phase.dart` (which would create a
-// circular library reference). See also: `phase-planner-architecture.md`
-// § Phase transition guards.
-
-/// Early expansion boost while the GP holds fewer than
-/// [kColonialFewNwProvincesThreshold] NW provinces.
-bool isEarlyColonialExpansion(ColonialSummary colonial) =>
-    (colonial.invadableNewWorldProvinceIdsSorted.isNotEmpty ||
-            colonial.adjacentNewWorldOwnerFactionIdsSorted.isNotEmpty) &&
-    colonial.newWorldProvincesOwned < kColonialFewNwProvincesThreshold;
+// `hasColonialAcquisitionTargets` and `isEarlyColonialExpansion` were
+// relocated to `observer_goal_phase.dart` (Refs #2509 S1) — both
+// `ColonialSummary` predicates must survive the planned deletion of this
+// file. `colonialBuildOrderThresholdCap` (below) keeps the
+// acquisition-target check inlined so this file does not import
+// `observer_goal_phase.dart`, which would create a circular library
+// reference. See also: `phase-planner-architecture.md` § Phase transition
+// guards.
 
 /// Sole at-war Great Power, if any.
 String? soleAtWarGreatPowerId({
@@ -440,9 +390,9 @@ String? unwinnableSoleGpFrontierPeaceTarget({
   final minDeficit = own <= kObserverDefaultStartOldWorldProvincesPerGp
       ? 1
       : own >= kObserverConquestMinOwProvincesPerGp - 2 &&
-              !isOldWorldGpOnlyInvadableFrontier(game: game, snapshot: snapshot)
-          ? 1
-          : kUnwinnableSoleGpMinProvinceDeficit;
+            !isOldWorldGpOnlyInvadableFrontier(game: game, snapshot: snapshot)
+      ? 1
+      : kUnwinnableSoleGpMinProvinceDeficit;
   if (enemyOw < own + minDeficit) {
     return null;
   }
@@ -557,10 +507,8 @@ List<String> stalledBelowQuotaGpLeadPeaceTargets({
   final minLeadDeficit = own <= kObserverDefaultStartOldWorldProvincesPerGp
       ? kUnwinnableSoleGpMinProvinceDeficit
       : 1;
-  final invadableBlocker = isOldWorldGpOnlyInvadableFrontier(
-        game: game,
-        snapshot: snapshot,
-      )
+  final invadableBlocker =
+      isOldWorldGpOnlyInvadableFrontier(game: game, snapshot: snapshot)
       ? primaryInvadableOldWorldGpBlocker(game: game, snapshot: snapshot)
       : null;
   final targets = <String>[
@@ -674,7 +622,7 @@ int? colonialBuildOrderThresholdCap(ColonialSummary colonial) {
   // file does not import that library (would create a circular reference).
   final hasAcquisitionTargets =
       colonial.invadableNewWorldProvinceIdsSorted.isNotEmpty ||
-          colonial.adjacentNewWorldOwnerFactionIdsSorted.isNotEmpty;
+      colonial.adjacentNewWorldOwnerFactionIdsSorted.isNotEmpty;
   if (hasAcquisitionTargets && colonial.newWorldProvincesOwned > 0) {
     return kColonialBuildOrderThresholdWhenOwnedNwUnderPressure;
   }

@@ -3,7 +3,7 @@ import 'package:colonizethis_logic/ai_api.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../perception/perception_snapshot.dart';
-import 'colonial_pressure.dart';
+import 'expand_phase_planner.dart';
 
 /// Observer tuning phases for Full AI (Refs #2509 S10).
 enum ObserverGoalPhase {
@@ -43,6 +43,19 @@ bool hasColonialAcquisitionTargets(ColonialSummary colonial) =>
     colonial.invadableNewWorldProvinceIdsSorted.isNotEmpty ||
     colonial.adjacentNewWorldOwnerFactionIdsSorted.isNotEmpty;
 
+/// Early colonial expansion bonus while the GP holds fewer than
+/// [kColonialFewNwProvincesThreshold] NW provinces and visible colonial
+/// acquisition targets remain.
+///
+/// Fires the `goal_manager.dart` early-colonial conquer bonus alongside the
+/// `hasColonialAcquisitionTargets` guard above. Relocated from
+/// `colonial_pressure.dart` (Refs #2509 S1) so the predicate survives the
+/// planned deletion of `colonial_pressure.dart`. Pure function of
+/// [ColonialSummary]; deterministic for identical inputs (Must-have #7).
+bool isEarlyColonialExpansion(ColonialSummary colonial) =>
+    hasColonialAcquisitionTargets(colonial) &&
+    colonial.newWorldProvincesOwned < kColonialFewNwProvincesThreshold;
+
 /// COLONIAL-lite: turn ≥120, OW ≥9 and below quota, global NW not fully GP-owned.
 bool isObserverColonialLitePhase({
   required Game game,
@@ -80,24 +93,15 @@ ObserverGoalPhase observerGoalPhaseFor({
   return ObserverGoalPhase.develop;
 }
 
-bool isObserverDevelopPhase({
-  required AIWorldSnapshot snapshot,
-  Game? game,
-}) =>
+bool isObserverDevelopPhase({required AIWorldSnapshot snapshot, Game? game}) =>
     observerGoalPhaseFor(snapshot: snapshot, game: game) ==
     ObserverGoalPhase.develop;
 
-bool isObserverColonialPhase({
-  required AIWorldSnapshot snapshot,
-  Game? game,
-}) =>
+bool isObserverColonialPhase({required AIWorldSnapshot snapshot, Game? game}) =>
     observerGoalPhaseFor(snapshot: snapshot, game: game) ==
     ObserverGoalPhase.colonial;
 
-bool isObserverExpandPhase({
-  required AIWorldSnapshot snapshot,
-  Game? game,
-}) =>
+bool isObserverExpandPhase({required AIWorldSnapshot snapshot, Game? game}) =>
     observerGoalPhaseFor(snapshot: snapshot, game: game) ==
     ObserverGoalPhase.expand;
 
@@ -269,12 +273,14 @@ bool isExpandPhaseColonialDiplomacyTarget({
     return false;
   }
   if (isTribeFaction || isMinorFaction) {
-    if (snapshot.colonial.adjacentNewWorldOwnerFactionIdsSorted
-        .contains(targetFactionId)) {
+    if (snapshot.colonial.adjacentNewWorldOwnerFactionIdsSorted.contains(
+      targetFactionId,
+    )) {
       return true;
     }
-    if (snapshot.colonial.preferredColonialTargetFactionIdsSorted
-        .contains(targetFactionId)) {
+    if (snapshot.colonial.preferredColonialTargetFactionIdsSorted.contains(
+      targetFactionId,
+    )) {
       return true;
     }
     if (snapshot.colonial.invadableNewWorldProvinceIdsSorted.any(
