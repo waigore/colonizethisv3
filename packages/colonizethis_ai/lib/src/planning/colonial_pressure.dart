@@ -71,29 +71,32 @@ bool isBelowQuotaPeaceInsufficientRegiments({
 }
 
 /// Minimum [RegimentEconomyCatalog] build treasury cost (deterministic catalog scan).
-int cheapestRegimentBuildTreasuryCost() {
-  var min = 999999999;
-  for (final econ in RegimentEconomyCatalog.byId.values) {
-    if (econ.buildTreasuryCost < min) {
-      min = econ.buildTreasuryCost;
-    }
-  }
-  return min;
-}
+///
+/// Delegates to [expand_phase_planner.cheapestRegimentBuildTreasuryCost]
+/// (Refs #2509 S1) so the canonical implementation lives alongside the
+/// EXPAND-trap callers that govern the treasury affordability gate.
+int cheapestRegimentBuildTreasuryCost() =>
+    expand_phase_planner.cheapestRegimentBuildTreasuryCost();
 
 /// Below-quota EXPAND GP at peace with insufficient regiments and effective
 /// treasury (cash plus same-turn pending riches) below cheapest regiment build.
 ///
 /// Triggers overseas cargo preference so auto-transport can deliver riches to
 /// stockpile before the next build pass (Refs #2509).
+///
+/// Delegates to [expand_phase_planner.isBelowQuotaPeaceZeroRegimentsRebuild]
+/// (Refs #2509 S1) so the canonical implementation lives alongside the
+/// EXPAND-trap callers that share the zero-regiments / invadable-frontier
+/// gate.
 bool isBelowQuotaPeaceZeroRegimentsRebuild({
   required int oldWorldProvincesOwned,
   required int regimentCount,
   required bool hasInvadableProvinces,
-}) =>
-    isBelowObserverConquestQuota(oldWorldProvincesOwned) &&
-    regimentCount == 0 &&
-    hasInvadableProvinces;
+}) => expand_phase_planner.isBelowQuotaPeaceZeroRegimentsRebuild(
+  oldWorldProvincesOwned: oldWorldProvincesOwned,
+  regimentCount: regimentCount,
+  hasInvadableProvinces: hasInvadableProvinces,
+);
 
 bool isBelowQuotaPeaceTreasuryRecovery({
   required int oldWorldProvincesOwned,
