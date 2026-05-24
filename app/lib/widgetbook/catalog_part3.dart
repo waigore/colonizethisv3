@@ -836,7 +836,7 @@ class _CtDialogueViewStoryHarnessState
   Widget build(BuildContext context) {
     final view = _view;
     if (view == null || _runner == null) {
-      return const Center(child: CircularProgressIndicator());
+      return const CtLoadingIndicator();
     }
     if (_finished) {
       return const Center(child: Text('Dialogue finished.'));
@@ -866,7 +866,7 @@ class _CtDialogueViewStoryHarnessState
                 ),
               ),
           ] else
-            const Center(child: CircularProgressIndicator()),
+            const CtLoadingIndicator(),
         ],
       ),
     );
