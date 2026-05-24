@@ -78,3 +78,93 @@ import 'phase_planner_dispatch.dart';
 bool resolvePhaseDiplomacyDeclareWarColonialPressureActive({
   required PhasePlanOutcome phasePlan,
 }) => phasePlan.phase == ObserverGoalPhase.colonial;
+
+/// When `true`, `_declareWarSuppressedDevelopPhaseScore`
+/// (`diplomatic_candidate_scoring_declare_war.dart`) returns
+/// `kDeclareWarNonAdjacentSuppressedScore` for every declare-war
+/// candidate this turn, structurally collapsing every declare-war
+/// candidate before any scoring branch runs (issue #2509 § DEVELOP
+/// suppressions "No `declareWar` on anyone").
+///
+/// Active only under [ObserverGoalPhase.develop]. EXPAND, COLONIAL-lite,
+/// and COLONIAL all return `false`:
+///
+/// - EXPAND: declare-war candidates are scored normally; NW colonial
+///   targets fall through to [resolvePhaseDiplomacyDeclareWarExpandColonialSuppressionActive].
+/// - COLONIAL-lite: declare-war candidates are scored normally; NW
+///   colonial targets fall through to [resolvePhaseDiplomacyDeclareWarColonialLiteSuppressionActive]
+///   (NW `declareWar` collapses, OW remains scorable).
+/// - COLONIAL: declare-war candidates are scored normally; the
+///   `colonialPressure && ownsInvadableNw` exception in
+///   `_declareWarSuppressedWarConcentrationScore` keeps tribe targets
+///   scorable.
+///
+/// Pure and deterministic — identical inputs always yield identical
+/// resolutions (Refs #2509 Must-have #7). Performs no I/O, no logging,
+/// no order emission.
+bool resolvePhaseDiplomacyDeclareWarDevelopSuppressionActive({
+  required PhasePlanOutcome phasePlan,
+}) => phasePlan.phase == ObserverGoalPhase.develop;
+
+/// When `true`, `_declareWarSuppressedColonialLiteScore`
+/// (`diplomatic_candidate_scoring_declare_war.dart`) collapses NW
+/// colonial declare-war targets (tribes, NW invadable owners,
+/// colonial-adjacent owners) to
+/// `kDeclareWarNonAdjacentSuppressedScore`, while leaving OW declare-war
+/// candidates scorable (issue #2509 § COLONIAL-lite scope summary
+/// "Suppressed: NW declareWar, NW invasion army moves, purchase_land in
+/// NW" combined with the OW push remaining active during the safeguard).
+///
+/// Active only under [ObserverGoalPhase.colonialLite]. EXPAND, COLONIAL,
+/// and DEVELOP all return `false`:
+///
+/// - EXPAND: NW collapse happens via
+///   [resolvePhaseDiplomacyDeclareWarExpandColonialSuppressionActive]
+///   instead — the EXPAND branch runs separately.
+/// - COLONIAL: NW `declareWar` is the SPEC-authorized acquisition route
+///   (issue #2509 § COLONIAL `planColonialAcquisition` step 3), so no
+///   colonial-lite collapse fires.
+/// - DEVELOP: every declare-war candidate already collapses via
+///   [resolvePhaseDiplomacyDeclareWarDevelopSuppressionActive] before
+///   the colonial-lite branch runs; the resolver returning `false`
+///   keeps the structural ordering explicit.
+///
+/// Pure and deterministic — identical inputs always yield identical
+/// resolutions (Refs #2509 Must-have #7). Performs no I/O, no logging,
+/// no order emission.
+bool resolvePhaseDiplomacyDeclareWarColonialLiteSuppressionActive({
+  required PhasePlanOutcome phasePlan,
+}) => phasePlan.phase == ObserverGoalPhase.colonialLite;
+
+/// When `true`, `_declareWarSuppressedExpandColonialScore`
+/// (`diplomatic_candidate_scoring_declare_war.dart`) collapses NW
+/// colonial declare-war targets (tribes, NW invadable owners,
+/// colonial-adjacent owners) to
+/// `kDeclareWarNonAdjacentSuppressedScore`, while leaving OW declare-war
+/// candidates scorable (issue #2509 § EXPAND NW suppression "structural
+/// suppression — never imports or calls colonial modules").
+///
+/// Active only under [ObserverGoalPhase.expand]. COLONIAL-lite,
+/// COLONIAL, and DEVELOP all return `false`:
+///
+/// - COLONIAL-lite: NW collapse happens via
+///   [resolvePhaseDiplomacyDeclareWarColonialLiteSuppressionActive]
+///   instead.
+/// - COLONIAL: NW `declareWar` is the SPEC-authorized acquisition route.
+/// - DEVELOP: every declare-war candidate already collapses via
+///   [resolvePhaseDiplomacyDeclareWarDevelopSuppressionActive] before
+///   the EXPAND branch runs; the resolver returning `false` keeps the
+///   structural ordering explicit.
+///
+/// Mirrors the legacy `shouldSuppressNewWorldColonialOrders`
+/// (`observer_goal_phase.dart`) which returned `phase == EXPAND` —
+/// phase-derived `true/false` is field-equal across every
+/// [ObserverGoalPhase] value, so the migration is behaviour-preserving
+/// for the EXPAND-collapse scoring branch.
+///
+/// Pure and deterministic — identical inputs always yield identical
+/// resolutions (Refs #2509 Must-have #7). Performs no I/O, no logging,
+/// no order emission.
+bool resolvePhaseDiplomacyDeclareWarExpandColonialSuppressionActive({
+  required PhasePlanOutcome phasePlan,
+}) => phasePlan.phase == ObserverGoalPhase.expand;
