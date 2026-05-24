@@ -2,6 +2,14 @@
 // (Refs #2509 S5 — companion to `phase_planner_conquest_wiring_test.dart`
 // for the conquest-side `resolvePhaseConquestColonialPressureActive` pin).
 //
+// The EXPAND below-quota peace rebuild-trap resolvers
+// (`resolvePhaseEconomyExpandBelowQuotaPeaceInsufficientRegimentsActive`,
+// `resolvePhaseEconomyExpandBelowQuotaPeaceZeroRegimentsRebuildActive`)
+// are pinned in the sibling file
+// `phase_planner_economy_filter_below_quota_peace_test.dart` so both
+// files stay under the repo-lint
+// `dart_file_non_comment_line_size` 1000-line cap (SPEC/program/repo-lint.md).
+//
 // Pins the structural contract of `resolvePhaseEconomyColonialPressureActive`:
 //
 //   - Returns `true` *only* under `ObserverGoalPhase.colonial`.

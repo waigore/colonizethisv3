@@ -291,3 +291,120 @@ String? expandPrimaryInvadableGpBlockerFromPhasePlan({
   }
   return phasePlan.expandPrimaryInvadableGpBlockerFactionId;
 }
+
+/// When `true`, `_appendEconomyBuildOrders` should treat the active
+/// player as the seed-42 "EXPAND regiment-rebuild trap" case: a
+/// below-quota EXPAND GP at peace with every other Great Power, holding
+/// a small but non-zero standing regiment count
+/// (`[1, kBelowQuotaPeaceMinRegimentsBeforeDeclareWar)`) and a non-empty
+/// invadable OW frontier. The orchestrator routes this into both
+/// `forceRegimentRebuild` and `militaryRebuildCrisis` so the next build
+/// pass produces a cheapest-regiment order instead of stalling on
+/// civilian work.
+///
+/// Replaces the per-build-pass `expandQuotaPressure &&
+/// isBelowQuotaPeaceInsufficientRegiments(...)` compose in
+/// `_appendEconomyBuildOrders` (`colonial_pressure.dart`). The phase
+/// gate folded into the resolver is field-equal to the prior
+/// `expandQuotaPressure` prefix because
+/// [resolvePhaseEconomyExpandQuotaPressureActive] is itself field-equal
+/// to `isBelowObserverConquestQuota(ow)` (both routes resolve to
+/// `phase ∈ {EXPAND, COLONIAL-lite}`, which by [observerGoalPhaseFor]
+/// is precisely `ow < kObserverConquestMinOwProvincesPerGp`). The legacy
+/// helper's first guard (`isBelowObserverConquestQuota(ow)`) is therefore
+/// satisfied structurally; the remaining
+/// `!atWarWithAnyGreatPower &&
+/// 0 < regimentCount < kBelowQuotaPeaceMinRegimentsBeforeDeclareWar &&
+/// hasInvadableProvinces` arms are evaluated directly here so the
+/// orchestrator never needs to import `colonial_pressure.dart` to make
+/// this decision.
+///
+/// Structural suppression matrix (mirrors
+/// [resolvePhaseEconomyExpandQuotaPressureActive]):
+///
+/// - [ObserverGoalPhase.expand]: routes legacy arms when the per-turn
+///   peace/regiment/invadable inputs satisfy them; returns `false`
+///   otherwise.
+/// - [ObserverGoalPhase.colonialLite]: same routing as EXPAND — the
+///   COLONIAL-lite safeguard explicitly preserves the EXPAND
+///   regiment-rebuild crisis arm so the OW push is not weakened by NW
+///   overture/naval work (issue #2509 § COLONIAL-lite "Begin NW
+///   penetration without weakening OW push").
+/// - [ObserverGoalPhase.colonial]: returns `false` regardless of
+///   per-turn inputs (structural — at or above quota, the rebuild trap
+///   does not apply).
+/// - [ObserverGoalPhase.develop]: returns `false` regardless of
+///   per-turn inputs (structural — DEVELOP drives improvement work,
+///   not regiment rebuild).
+///
+/// Pure and deterministic — identical `(PhasePlanOutcome,
+/// regimentCount, atWarWithAnyGreatPower, hasInvadableProvinces)`
+/// inputs always yield identical resolutions (Refs #2509 Must-have #7).
+/// Performs no I/O, no logging, no order emission.
+bool resolvePhaseEconomyExpandBelowQuotaPeaceInsufficientRegimentsActive({
+  required PhasePlanOutcome phasePlan,
+  required int regimentCount,
+  required bool atWarWithAnyGreatPower,
+  required bool hasInvadableProvinces,
+}) {
+  if (!resolvePhaseEconomyExpandQuotaPressureActive(phasePlan: phasePlan)) {
+    return false;
+  }
+  if (atWarWithAnyGreatPower) {
+    return false;
+  }
+  if (regimentCount <= 0 ||
+      regimentCount >= kBelowQuotaPeaceMinRegimentsBeforeDeclareWar) {
+    return false;
+  }
+  return hasInvadableProvinces;
+}
+
+/// When `true`, `_appendEconomyBuildOrders` should treat the active
+/// player as a below-quota EXPAND GP that has fallen to **zero**
+/// regiments while still holding an invadable OW frontier. The
+/// orchestrator routes this into `minRegimentFloor = 1`,
+/// `forceRegimentRebuild`, and `militaryRebuildCrisis` so the next
+/// build pass produces a cheapest-regiment order (this is the
+/// strict-zero arm of the EXPAND regiment-rebuild trap and is the only
+/// path that drops the regiment floor to a single regiment).
+///
+/// Replaces the per-build-pass `expandQuotaPressure &&
+/// isBelowQuotaPeaceZeroRegimentsRebuild(...)` compose in
+/// `_appendEconomyBuildOrders` (`colonial_pressure.dart`). The phase
+/// gate folded into the resolver is field-equal to the prior
+/// `expandQuotaPressure` prefix because
+/// [resolvePhaseEconomyExpandQuotaPressureActive] is itself field-equal
+/// to `isBelowObserverConquestQuota(ow)`. The legacy helper's first
+/// guard is therefore satisfied structurally; the remaining
+/// `regimentCount == 0 && hasInvadableProvinces` arms are evaluated
+/// directly here so the orchestrator never needs to import
+/// `colonial_pressure.dart` to make this decision.
+///
+/// Structural suppression matrix (mirrors
+/// [resolvePhaseEconomyExpandQuotaPressureActive]):
+///
+/// - [ObserverGoalPhase.expand]: returns `regimentCount == 0 &&
+///   hasInvadableProvinces`.
+/// - [ObserverGoalPhase.colonialLite]: same routing as EXPAND — the
+///   COLONIAL-lite safeguard preserves the EXPAND regiment-rebuild
+///   crisis arm (issue #2509 § COLONIAL-lite).
+/// - [ObserverGoalPhase.colonial]: returns `false` regardless of
+///   per-turn inputs.
+/// - [ObserverGoalPhase.develop]: returns `false` regardless of
+///   per-turn inputs.
+///
+/// Pure and deterministic — identical `(PhasePlanOutcome,
+/// regimentCount, hasInvadableProvinces)` inputs always yield
+/// identical resolutions (Refs #2509 Must-have #7). Performs no I/O,
+/// no logging, no order emission.
+bool resolvePhaseEconomyExpandBelowQuotaPeaceZeroRegimentsRebuildActive({
+  required PhasePlanOutcome phasePlan,
+  required int regimentCount,
+  required bool hasInvadableProvinces,
+}) {
+  if (!resolvePhaseEconomyExpandQuotaPressureActive(phasePlan: phasePlan)) {
+    return false;
+  }
+  return regimentCount == 0 && hasInvadableProvinces;
+}
