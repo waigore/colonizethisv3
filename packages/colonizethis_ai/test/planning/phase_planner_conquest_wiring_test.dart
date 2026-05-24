@@ -26,35 +26,39 @@ const ColonialMilitaryPlan _colonialNwOnly = ColonialMilitaryPlan(
 
 void main() {
   group('resolvePhaseConquestInvadable', () {
-    test('EXPAND non-default expandMilitaryPlan restricts to OW destinations',
-        () {
-      const outcome = PhasePlanOutcome(
-        phase: ObserverGoalPhase.expand,
-        expandMilitaryPlan: _expandOwOnly,
-      );
-      final resolution = resolvePhaseConquestInvadable(phasePlan: outcome);
-      expect(resolution.skipConquestPass, isFalse);
-      expect(resolution.useLegacyInvadable, isFalse);
-      expect(
-        resolution.phasePlanInvadableSorted,
-        _expandOwOnly.priorityDestinationProvinceIdsSorted,
-      );
-    });
+    test(
+      'EXPAND non-default expandMilitaryPlan restricts to OW destinations',
+      () {
+        const outcome = PhasePlanOutcome(
+          phase: ObserverGoalPhase.expand,
+          expandMilitaryPlan: _expandOwOnly,
+        );
+        final resolution = resolvePhaseConquestInvadable(phasePlan: outcome);
+        expect(resolution.skipConquestPass, isFalse);
+        expect(resolution.useLegacyInvadable, isFalse);
+        expect(
+          resolution.phasePlanInvadableSorted,
+          _expandOwOnly.priorityDestinationProvinceIdsSorted,
+        );
+      },
+    );
 
-    test('COLONIAL non-default colonialMilitaryPlan restricts to NW destinations',
-        () {
-      const outcome = PhasePlanOutcome(
-        phase: ObserverGoalPhase.colonial,
-        colonialMilitaryPlan: _colonialNwOnly,
-      );
-      final resolution = resolvePhaseConquestInvadable(phasePlan: outcome);
-      expect(resolution.skipConquestPass, isFalse);
-      expect(resolution.useLegacyInvadable, isFalse);
-      expect(
-        resolution.phasePlanInvadableSorted,
-        _colonialNwOnly.priorityDestinationProvinceIdsSorted,
-      );
-    });
+    test(
+      'COLONIAL non-default colonialMilitaryPlan restricts to NW destinations',
+      () {
+        const outcome = PhasePlanOutcome(
+          phase: ObserverGoalPhase.colonial,
+          colonialMilitaryPlan: _colonialNwOnly,
+        );
+        final resolution = resolvePhaseConquestInvadable(phasePlan: outcome);
+        expect(resolution.skipConquestPass, isFalse);
+        expect(resolution.useLegacyInvadable, isFalse);
+        expect(
+          resolution.phasePlanInvadableSorted,
+          _colonialNwOnly.priorityDestinationProvinceIdsSorted,
+        );
+      },
+    );
 
     test('DEVELOP skips the conquest pass', () {
       const outcome = PhasePlanOutcome(phase: ObserverGoalPhase.develop);
@@ -70,21 +74,25 @@ void main() {
       expect(resolution.structuralNewWorldSuppressed, isTrue);
     });
 
-    test('COLONIAL-lite default plan falls back with structural NW suppression',
-        () {
-      const outcome = PhasePlanOutcome(phase: ObserverGoalPhase.colonialLite);
-      final resolution = resolvePhaseConquestInvadable(phasePlan: outcome);
-      expect(resolution.useLegacyInvadable, isTrue);
-      expect(resolution.structuralNewWorldSuppressed, isTrue);
-    });
+    test(
+      'COLONIAL-lite default plan falls back with structural NW suppression',
+      () {
+        const outcome = PhasePlanOutcome(phase: ObserverGoalPhase.colonialLite);
+        final resolution = resolvePhaseConquestInvadable(phasePlan: outcome);
+        expect(resolution.useLegacyInvadable, isTrue);
+        expect(resolution.structuralNewWorldSuppressed, isTrue);
+      },
+    );
 
-    test('COLONIAL default plan falls back without structural NW suppression',
-        () {
-      const outcome = PhasePlanOutcome(phase: ObserverGoalPhase.colonial);
-      final resolution = resolvePhaseConquestInvadable(phasePlan: outcome);
-      expect(resolution.useLegacyInvadable, isTrue);
-      expect(resolution.structuralNewWorldSuppressed, isFalse);
-    });
+    test(
+      'COLONIAL default plan falls back without structural NW suppression',
+      () {
+        const outcome = PhasePlanOutcome(phase: ObserverGoalPhase.colonial);
+        final resolution = resolvePhaseConquestInvadable(phasePlan: outcome);
+        expect(resolution.useLegacyInvadable, isTrue);
+        expect(resolution.structuralNewWorldSuppressed, isFalse);
+      },
+    );
 
     test('deterministic for identical inputs (Must-have #7)', () {
       const outcome = PhasePlanOutcome(
@@ -97,6 +105,57 @@ void main() {
       expect(a.useLegacyInvadable, b.useLegacyInvadable);
       expect(a.structuralNewWorldSuppressed, b.structuralNewWorldSuppressed);
       expect(a.phasePlanInvadableSorted, b.phasePlanInvadableSorted);
+    });
+  });
+
+  group('resolvePhaseConquestColonialPressureActive', () {
+    test('active only under COLONIAL', () {
+      expect(
+        resolvePhaseConquestColonialPressureActive(
+          phasePlan: const PhasePlanOutcome(phase: ObserverGoalPhase.colonial),
+        ),
+        isTrue,
+      );
+      for (final phase in <ObserverGoalPhase>[
+        ObserverGoalPhase.expand,
+        ObserverGoalPhase.colonialLite,
+        ObserverGoalPhase.develop,
+      ]) {
+        expect(
+          resolvePhaseConquestColonialPressureActive(
+            phasePlan: PhasePlanOutcome(phase: phase),
+          ),
+          isFalse,
+          reason: '$phase must not engage colonial-pressure weight floor',
+        );
+      }
+    });
+  });
+
+  group('resolvePhaseConquestSuppressNwInvasionScoring', () {
+    test('suppressed under EXPAND, COLONIAL-lite, and DEVELOP', () {
+      for (final phase in <ObserverGoalPhase>[
+        ObserverGoalPhase.expand,
+        ObserverGoalPhase.colonialLite,
+        ObserverGoalPhase.develop,
+      ]) {
+        expect(
+          resolvePhaseConquestSuppressNwInvasionScoring(
+            phasePlan: PhasePlanOutcome(phase: phase),
+          ),
+          isTrue,
+          reason: '$phase must suppress NW invasion army-move scoring',
+        );
+      }
+    });
+
+    test('allowed under COLONIAL', () {
+      expect(
+        resolvePhaseConquestSuppressNwInvasionScoring(
+          phasePlan: const PhasePlanOutcome(phase: ObserverGoalPhase.colonial),
+        ),
+        isFalse,
+      );
     });
   });
 

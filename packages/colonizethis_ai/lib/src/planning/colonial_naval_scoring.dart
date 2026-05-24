@@ -148,17 +148,45 @@ List<NavalMoveOrder> sortNavalMovesForColonialPressure(
 }
 
 /// Deterministic score for naval missions under colonial pressure.
-int colonialNavalMissionScore(NavalMissionOrder mission) {
+///
+/// When [phasePriorityNwProvinceIdsSorted] is non-empty (Refs #2509 S5 —
+/// the phase-planner naval directive surfaces a tighter NW priority subset
+/// of [ColonialSummary.invadableNewWorldProvinceIdsSorted]), a NW port
+/// mission whose [NavalMissionOrder.targetPortId] is in that subset earns
+/// [kColonialNavalMissionPhasePriorityNwPortScore] (200), one tier above
+/// [kColonialNavalMissionNwPortScore] (160). A NW province mission whose
+/// [NavalMissionOrder.targetProvinceId] is in the subset earns
+/// [kColonialNavalMissionPhasePriorityNwProvinceScore] (170), one tier
+/// above [kColonialNavalMissionNwProvinceScore] (130). Missions targeting
+/// other NW ports / provinces still earn the existing NW tiers; beachhead
+/// and OW branches are unaffected. Passing `null` or an empty list
+/// preserves legacy three-tier scoring exactly.
+int colonialNavalMissionScore(
+  NavalMissionOrder mission, {
+  List<String>? phasePriorityNwProvinceIdsSorted,
+}) {
+  final phasePriority =
+      (phasePriorityNwProvinceIdsSorted == null ||
+          phasePriorityNwProvinceIdsSorted.isEmpty)
+      ? const <String>{}
+      : phasePriorityNwProvinceIdsSorted.toSet();
+
   final portId = mission.targetPortId;
   if (portId != null &&
       portId.isNotEmpty &&
       ProvinceId.regionIdFrom(portId) == kNewWorldRegionId) {
+    if (phasePriority.contains(portId)) {
+      return kColonialNavalMissionPhasePriorityNwPortScore;
+    }
     return kColonialNavalMissionNwPortScore;
   }
   final provId = mission.targetProvinceId;
   if (provId != null &&
       provId.isNotEmpty &&
       ProvinceId.regionIdFrom(provId) == kNewWorldRegionId) {
+    if (phasePriority.contains(provId)) {
+      return kColonialNavalMissionPhasePriorityNwProvinceScore;
+    }
     return kColonialNavalMissionNwProvinceScore;
   }
   if (mission.mission == FleetMission.beachhead.name) {
@@ -168,11 +196,25 @@ int colonialNavalMissionScore(NavalMissionOrder mission) {
 }
 
 /// Sort [candidates] by [colonialNavalMissionScore] descending, then stable id order.
+///
+/// Pass [phasePriorityNwProvinceIdsSorted] from the phase-planner naval
+/// directive (Refs #2509 S5) to elevate NW-port / NW-province missions
+/// targeting phase-active provinces above the general NW tiers. `null` or
+/// empty preserves legacy ordering.
 List<NavalMissionOrder> sortNavalMissionsForColonialPressure(
-  List<NavalMissionOrder> candidates,
-) {
+  List<NavalMissionOrder> candidates, {
+  List<String>? phasePriorityNwProvinceIdsSorted,
+}) {
   final scored = candidates
-      .map((m) => (mission: m, score: colonialNavalMissionScore(m)))
+      .map(
+        (m) => (
+          mission: m,
+          score: colonialNavalMissionScore(
+            m,
+            phasePriorityNwProvinceIdsSorted: phasePriorityNwProvinceIdsSorted,
+          ),
+        ),
+      )
       .toList();
   scored.sort((a, b) {
     final s = b.score.compareTo(a.score);

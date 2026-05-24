@@ -67,11 +67,13 @@ PhaseConquestInvadableResolution resolvePhaseConquestInvadable({
   final colonialPlan = colonialMilitaryPlanFromPhasePlan(phasePlan);
   if (colonialPlan.priorityDestinationProvinceIdsSorted.isNotEmpty) {
     return PhaseConquestInvadableResolution(
-      phasePlanInvadableSorted: colonialPlan.priorityDestinationProvinceIdsSorted,
+      phasePlanInvadableSorted:
+          colonialPlan.priorityDestinationProvinceIdsSorted,
     );
   }
 
-  final suppressNewWorld = phasePlan.phase == ObserverGoalPhase.expand ||
+  final suppressNewWorld =
+      phasePlan.phase == ObserverGoalPhase.expand ||
       phasePlan.phase == ObserverGoalPhase.colonialLite;
 
   return PhaseConquestInvadableResolution(
@@ -79,3 +81,24 @@ PhaseConquestInvadableResolution resolvePhaseConquestInvadable({
     structuralNewWorldSuppressed: suppressNewWorld,
   );
 }
+
+/// When `true`, `runConquestArmyMovePlanner` applies the colonial-pressure
+/// minimum weight floor (`kConquestArmyMoveMinWeightWhenColonialPressure`).
+///
+/// Active only under [ObserverGoalPhase.colonial] — structural, mirroring
+/// full-COLONIAL NW invasion army moves. EXPAND, COLONIAL-lite, and DEVELOP
+/// suppress the floor the same way they suppress NW declare-war / invasion
+/// scoring (issue #2509 § phase suppressions).
+bool resolvePhaseConquestColonialPressureActive({
+  required PhasePlanOutcome phasePlan,
+}) => phasePlan.phase == ObserverGoalPhase.colonial;
+
+/// When `true`, NW invadable army-move destinations score `0` in the
+/// conquest destination scorer (legacy `shouldSuppressNewWorldDeclareWar
+/// InvasionAndPurchase` contract).
+///
+/// Suppressed under EXPAND, COLONIAL-lite, and DEVELOP; allowed under
+/// COLONIAL only.
+bool resolvePhaseConquestSuppressNwInvasionScoring({
+  required PhasePlanOutcome phasePlan,
+}) => phasePlan.phase != ObserverGoalPhase.colonial;
