@@ -102,6 +102,12 @@ void main() {
     });
   });
 
+  // `isEarlyColonialExpansion` (goal-scoring sibling of
+  // `hasColonialAcquisitionTargets`) is pinned in
+  // `observer_goal_phase_is_early_colonial_expansion_test.dart`; it lives in
+  // its own file so this suite stays under the 1000-non-comment-line cap
+  // (`repo.dart_file_non_comment_line_size`).
+
   group('observerGoalPhaseFor', () {
     test('expand when below observer OW quota', () {
       const snap = AIWorldSnapshot(
