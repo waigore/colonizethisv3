@@ -139,7 +139,7 @@ Error mode renders the same `Stack` but the `CtDialogShell` body is the localize
 
 ## Widgetbook
 
-Catalog directory: `Game Start Intro Overlay` (registered in `app/lib/widgetbook/catalog.dart` via `gameStartIntroOverlayDirectories` in `catalog_part3.dart`). Required use cases:
+Catalog directory: `Game Start Intro Overlay` (registered in `app/lib/widgetbook/catalog.dart` via `gameStartIntroOverlayDirectories` in `catalog_part4.dart`). Required use cases:
 
 1. **Default — single-line intro** — wraps an inline placeholder child in `GameStartIntroOverlay` using a stub `AssetBundle` that returns a minimal Yarn document (one line, one Continue option) for `kDialogueGameIntroAsset`. The story exercises the loading → presenting-line → dismissed transitions without depending on the production asset path.
 

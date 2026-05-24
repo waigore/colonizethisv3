@@ -116,7 +116,7 @@ There are no loading, transient, or error variants; absence of a Yarn dependency
 
 ## Widgetbook
 
-Catalog directory: `Call to Arms Dialogue Overlay` (registered in `app/lib/widgetbook/catalog.dart` via `callToArmsDialogueOverlayDirectories` in `catalog_part3.dart`). Required use cases:
+Catalog directory: `Call to Arms Dialogue Overlay` (registered in `app/lib/widgetbook/catalog.dart` via `callToArmsDialogueOverlayDirectories` in `catalog_part4.dart`). Required use cases:
 
 1. **Default — two pending calls** — wraps a localized `widgetbook_gameShell` child in `CallToArmsDialogueOverlay` with a small in-memory `Game` and two `CallToArmsPending` entries from different aggressor / defender combinations. The story exercises Join/Refuse toggles and the Submit button across two rows.
 
