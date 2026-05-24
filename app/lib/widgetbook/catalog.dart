@@ -1,13 +1,16 @@
 // coverage:ignore-file
 // Dev-only Widgetbook catalog; excluded from app coverage gate via instrumentation.
 import 'dart:async';
+import 'dart:convert';
 
 import 'package:colonizethis_app/core/utils/prefixed_id.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:jenny/jenny.dart';
 import 'package:widgetbook/widgetbook.dart';
 
 import '../config/themes.dart';
@@ -29,6 +32,8 @@ import '../features/game/widgets/province_sea_zone_detail_overlay.dart';
 import '../features/game/widgets/province_overlay_demo_data.dart';
 import '../features/game/widgets/tech_tree_widget.dart';
 import '../features/game/screens/technology_screen.dart';
+import '../features/game/dialogue/ct_dialogue_view.dart';
+import '../features/game/dialogue/game_start_intro_overlay.dart';
 import '../features/game/dialogue/intervention_dialogue_overlay.dart';
 import '../features/game/flame/game_screen.dart';
 import '../features/game/flame/victory_overlay.dart';
@@ -116,6 +121,8 @@ class CtWidgetbookApp extends StatelessWidget {
         ...diplomacyPanelDirectories,
         ...techTreeDirectories,
         ...interventionDialogueDirectories,
+        ...ctDialogueViewDirectories,
+        ...gameStartIntroOverlayDirectories,
         ...turnNewsDialogDirectories,
         ...victoryUiDirectories,
         ...combatUiDirectories,

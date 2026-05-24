@@ -747,3 +747,162 @@ List<WidgetbookNode> get gameScreenDirectories => [
     ],
   ),
 ];
+
+class _InlineYarnAssetBundle extends AssetBundle {
+  _InlineYarnAssetBundle(this._text);
+
+  final String _text;
+
+  @override
+  Future<ByteData> load(String key) {
+    final bytes = Uint8List.fromList(utf8.encode(_text));
+    return Future.value(
+      ByteData.view(bytes.buffer, bytes.offsetInBytes, bytes.lengthInBytes),
+    );
+  }
+
+  @override
+  Future<String> loadString(String key, {bool cache = true}) {
+    return Future.value(_text);
+  }
+}
+
+const String _kCtDialogueViewStorySource = '''
+title: ctdv_story
+---
+The story begins with a single archaic line.
+The narrator pauses, then offers a choice.
+-> Continue the tale.
+-> Cut the tale short.
+===
+''';
+
+/// CtDialogueView stories. SPEC/ui/ct-dialogue-view.md.
+List<WidgetbookNode> get ctDialogueViewDirectories => [
+  WidgetbookFolder(
+    name: 'Dialogue Engine',
+    children: [
+      WidgetbookUseCase(
+        name: 'Lines and choice trace',
+        builder: (context) => MaterialApp(
+          theme: AppThemes.colonial,
+          home: const Scaffold(body: _CtDialogueViewStoryHarness()),
+        ),
+      ),
+    ],
+  ),
+];
+
+class _CtDialogueViewStoryHarness extends StatefulWidget {
+  const _CtDialogueViewStoryHarness();
+
+  @override
+  State<_CtDialogueViewStoryHarness> createState() =>
+      _CtDialogueViewStoryHarnessState();
+}
+
+class _CtDialogueViewStoryHarnessState
+    extends State<_CtDialogueViewStoryHarness> {
+  CtDialogueView? _view;
+  DialogueRunner? _runner;
+  bool _finished = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _startDialogue();
+  }
+
+  Future<void> _startDialogue() async {
+    final project = YarnProject();
+    project.parse(_kCtDialogueViewStorySource);
+    final view = CtDialogueView();
+    final runner = DialogueRunner(
+      yarnProject: project,
+      dialogueViews: [view],
+    );
+    view.onStateChanged = (_, _) {
+      if (mounted) setState(() {});
+    };
+    setState(() {
+      _view = view;
+      _runner = runner;
+    });
+    await runner.startDialogue('ctdv_story');
+    if (mounted) setState(() => _finished = true);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final view = _view;
+    if (view == null || _runner == null) {
+      return const Center(child: CircularProgressIndicator());
+    }
+    if (_finished) {
+      return const Center(child: Text('Dialogue finished.'));
+    }
+    final line = view.currentLine;
+    final choice = view.currentChoice;
+    return Padding(
+      padding: const EdgeInsets.all(24),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          if (line != null) ...[
+            Text(line.text),
+            const SizedBox(height: 16),
+            ElevatedButton(
+              onPressed: view.advanceLine,
+              child: const Text('Advance line'),
+            ),
+          ] else if (choice != null) ...[
+            for (var i = 0; i < choice.options.length; i++)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 8),
+                child: ElevatedButton(
+                  onPressed: () => view.selectOption(i),
+                  child: Text(choice.options[i].text),
+                ),
+              ),
+          ] else
+            const Center(child: CircularProgressIndicator()),
+        ],
+      ),
+    );
+  }
+}
+
+const String _kGameStartIntroOverlayStorySource = '''
+title: game_start_intro
+---
+The age of imperialism draweth nigh.
+-> I shall.
+===
+''';
+
+/// Game Start Intro Overlay stories. SPEC/ui/game-start-intro-overlay.md.
+List<WidgetbookNode> get gameStartIntroOverlayDirectories => [
+  WidgetbookFolder(
+    name: 'Game Start Intro Overlay',
+    children: [
+      WidgetbookUseCase(
+        name: 'Default — single-line intro',
+        builder: (context) => MaterialApp(
+          theme: AppThemes.colonial,
+          localizationsDelegates: AppLocalizationsBinding.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: Scaffold(
+            body: GameStartIntroOverlay(
+              onDismissed: () {},
+              assetBundle: _InlineYarnAssetBundle(
+                _kGameStartIntroOverlayStorySource,
+              ),
+              child: const Center(child: Text('Game shell placeholder')),
+            ),
+          ),
+        ),
+      ),
+    ],
+  ),
+];
