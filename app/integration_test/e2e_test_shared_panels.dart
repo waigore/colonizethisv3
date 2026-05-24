@@ -11,6 +11,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'e2e_test_shared.dart';
 
+export 'e2e_test_shared_fleet_reach_loop.dart';
 export 'e2e_test_shared_panel_text_assertions.dart';
 
 // `_e2eTapFirstEnabledTransferButtonInSplitDialog` previously lived here as a
@@ -1372,3 +1373,13 @@ Future<bool> e2eCheckExploreEnabledFromCivilianPanel(
 // barrel via the `export` directive at the top of the file so the snapshot
 // text-assertion recipe stays separable from the panel-opener and
 // panel-action helpers in this file (Refs GitHub #2336 AC1 / AC2).
+//
+// `e2eFleetReachTurnLoop`, `E2eFleetReachLoopExit`,
+// `E2eFleetReachLoopResult`, and `kE2eDefaultFleetReachLoopMaxTurns` live in
+// `e2e_test_shared_fleet_reach_loop.dart` and are surfaced from this barrel
+// via the `export` directive at the top of the file so the per-turn
+// fleet-reach orchestration stays separable from the panel-opener and
+// panel-action helpers in this file. The extraction also keeps this file
+// within the repo-lint `dart_file_non_comment_line_size` budget
+// (`SPEC/program/repo-lint.md`, ≤ 1000 non-comment lines).
+
