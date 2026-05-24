@@ -141,6 +141,7 @@ On mobile: same tab row; map area fills available space; one region visible at a
 
 ## Integration
 
+- **Hosting screen:** [game-screen.md](game-screen.md). The `GameScreen` widget mounts `GameMapArea` (this screen's surface) when map view data is available, and the Flame canvas otherwise; it owns the next-turn flow, victory overlay, intro overlay, and pending diplomacy wrappers around this content.
 - **Map widget:** [map-widget.md](map-widget.md). Reusable Flame component; this screen supplies data and handles `onProvinceSelected` (and optional `onRegionViewChanged`).
 - **Data and events:** Same shared packages and event systems (colonizethis_logic, colonizethis_models, etc.). PlayerView or equivalent for human-player visibility. Game events may drive map updates or animations; see [game-events.md](../program/game-events.md) when wiring.
 - **HUD, panels, orders:** Turn controls, unit panels, development, production, etc. are specified in [empire-buttons.md](empire-buttons.md) (toolbar actions) and [in-game-shell-narrow.md](in-game-shell-narrow.md) (narrow viewport: side menu, top bar). This spec defines the map-centric layout and region tabs.

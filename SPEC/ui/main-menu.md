@@ -30,7 +30,7 @@ The CtMainMenu widget is presentational and accepts the following parameters. Th
 
 **Debug indicator formatting.** `CT_DEBUG_CONSOLE` is the sole mode flag for display suffix behavior. The shell must route version display through the shared debug-aware formatter; when the compile-time flag is true, all user-visible app version labels append ` (debug)` as a terminal suffix, and when false/undefined, labels remain unchanged.
 
-**Shell behaviour.** Shell responsibility (first screen after splash, callback wiring, clear in-memory game state on return from game) is defined in the app TDD: [ctdev-app.md](../program/ctdev-app.md) (app screens and navigation). For Flutter shell and route ownership see [repo-and-packages.md](../program/repo-and-packages.md).
+**Shell behaviour.** Shell responsibility (first screen after splash, callback wiring, clear in-memory game state on return from game) is defined in the dedicated UI spec [shell-screen.md](shell-screen.md) and the app TDD: [ctdev-app.md](../program/ctdev-app.md) (app screens and navigation). For Flutter shell and route ownership see [repo-and-packages.md](../program/repo-and-packages.md).
 
 **Interaction.** The main menu widget is presentational: it receives callbacks for each action. The shell (or parent) supplies `onNewGame`, `onResumeGame` (when resume is shown), `onLoadGame`, `onSettings`, `onQuit` and handles navigation and app exit. No routing logic lives in the widget.
 
