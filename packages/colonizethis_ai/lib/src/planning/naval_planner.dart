@@ -5,6 +5,8 @@ import 'planning_imports.dart';
 import 'colonial_pressure.dart';
 import 'observer_goal_phase.dart';
 import '../perception/perception_snapshot.dart';
+import 'phase_planner_dispatch.dart';
+import 'phase_planner_naval_filter.dart';
 import 'planner_context.dart';
 import '../util/orders_extensions.dart';
 
@@ -13,14 +15,27 @@ final _log = packageLogger();
 Orders runNavalPlanner({
   required PlannerContext ctx,
   required AIWorldSnapshot snapshot,
+  PhasePlanOutcome? phasePlan,
 }) {
   final colonial = snapshot.colonial;
   var weight = ctx.resolveNavalBaseWeight();
-  final hasColonialTargets = hasColonialAcquisitionTargets(colonial) &&
-      !shouldSuppressNewWorldColonialOrders(
-        snapshot: snapshot,
-        game: ctx.game,
-      );
+  final bool hasColonialTargets;
+  if (phasePlan != null) {
+    // S5 wiring: route the colonial-pressure gate through the phase
+    // planner so EXPAND / DEVELOP structurally suppress the boost and
+    // COLONIAL / COLONIAL-lite engage it without re-reading
+    // `colonial_pressure.dart` predicates from the naval pass.
+    hasColonialTargets = resolvePhaseNavalDirective(
+      phasePlan: phasePlan,
+    ).colonialPreferenceActive;
+  } else {
+    hasColonialTargets =
+        hasColonialAcquisitionTargets(colonial) &&
+        !shouldSuppressNewWorldColonialOrders(
+          snapshot: snapshot,
+          game: ctx.game,
+        );
+  }
   if (hasColonialTargets) {
     weight += kColonialNavalWeightBonus;
   }
@@ -85,9 +100,7 @@ Orders runNavalPlanner({
         ? sortNavalMissionsForColonialPressure(navalMissionCandidates)
         : navalMissionCandidates;
     final rng = math.Random(ctx.seeds.militarySeed + 1001);
-    final idx = hasColonialTargets
-        ? 0
-        : rng.nextInt(ranked.length);
+    final idx = hasColonialTargets ? 0 : rng.nextInt(ranked.length);
     final chosen = ranked[idx];
     _log.i(
       'naval mission chosen nationId=${ctx.nationId} '
