@@ -44,6 +44,7 @@ Orders runDomainPlanners({
   required EconomyPlan economyPlan,
   Map<String, TileMapResult>? tileMapByRegion,
   void Function(String phaseId)? onStagedPlannerProgress,
+  PhasePlanOutcome? phasePlan,
 }) {
   return runDomainPlannersWithOutcome(
     game: game,
@@ -58,9 +59,21 @@ Orders runDomainPlanners({
     economyPlan: economyPlan,
     tileMapByRegion: tileMapByRegion,
     onStagedPlannerProgress: onStagedPlannerProgress,
+    phasePlan: phasePlan,
   ).orders;
 }
 
+/// Runs the domain-planner pipeline for one AI-controlled player turn.
+///
+/// When [phasePlan] is provided the orchestrator threads it through every
+/// phase-derived call site instead of recomputing it via [runPhasePlanners].
+/// Callers that already resolved the dispatched plan once per AI turn
+/// (e.g. [generateStrategicOrdersWithTrace]) pass it in here so the planning
+/// pipeline does not duplicate the dispatch work for the same `(game,
+/// snapshot, personalityId)` inputs. When [phasePlan] is `null` the
+/// orchestrator falls back to the legacy internal compute so existing
+/// callers (orchestrator-level tests, the alternate `runDomainPlanners`
+/// entry without a hoisted plan) remain unchanged. Refs #2509 S5.
 DomainPlannerOutcome runDomainPlannersWithOutcome({
   required Game game,
   required MapTopology topology,
@@ -75,14 +88,17 @@ DomainPlannerOutcome runDomainPlannersWithOutcome({
   Map<String, TileMapResult>? tileMapByRegion,
   void Function(String phaseId)? onStagedPlannerProgress,
   Orders? sameTurnPriorDiplomaticOrders,
+  PhasePlanOutcome? phasePlan,
 }) {
   void emit(String phaseId) => onStagedPlannerProgress?.call(phaseId);
 
-  final phasePlan = runPhasePlanners(
-    game: game,
-    snapshot: snapshot,
-    personalityId: config.personalityId,
-  );
+  final resolvedPhasePlan =
+      phasePlan ??
+      runPhasePlanners(
+        game: game,
+        snapshot: snapshot,
+        personalityId: config.personalityId,
+      );
 
   var ctx = PlannerContext(
     nationId: nationId,
@@ -100,7 +116,7 @@ DomainPlannerOutcome runDomainPlannersWithOutcome({
   ctx = _runEconomyDomainPlanners(
     ctx: ctx,
     snapshot: snapshot,
-    phasePlan: phasePlan,
+    phasePlan: resolvedPhasePlan,
     economyPlan: economyPlan,
     tileMapByRegion: tileMapByRegion,
     emit: emit,
@@ -113,7 +129,7 @@ DomainPlannerOutcome runDomainPlannersWithOutcome({
     ctx: ctx,
     snapshot: snapshot,
     pass: DiplomacyPlannerPass.nonDeclareWarOnly,
-    phasePlan: phasePlan,
+    phasePlan: resolvedPhasePlan,
   );
   ctx = ctx.withOrders(peaceBeforeConquestResult.orders);
 
@@ -121,7 +137,7 @@ DomainPlannerOutcome runDomainPlannersWithOutcome({
     ctx: ctx,
     snapshot: snapshot,
     pass: DiplomacyPlannerPass.declareWarOnly,
-    phasePlan: phasePlan,
+    phasePlan: resolvedPhasePlan,
   );
   ctx = ctx.withOrders(declareWarResult.orders);
   final armyMovesBeforeConquest =
@@ -140,7 +156,7 @@ DomainPlannerOutcome runDomainPlannersWithOutcome({
   // exactly (see `SPEC/ai/phase-planner-dispatch.md` § Orchestrator
   // conquest extra-passes slice).
   final extraPassesActive = resolvePhaseConquestExtraPassesActive(
-    phasePlan: phasePlan,
+    phasePlan: resolvedPhasePlan,
   );
   final conquestDeclaredWarTarget = stalledConquestDeclaredWarTarget(
     game: ctx.game,
@@ -157,7 +173,7 @@ DomainPlannerOutcome runDomainPlannersWithOutcome({
         ctx: ctx,
         snapshot: snapshot,
         declaredWarTargetFactionId: conquestDeclaredWarTarget,
-        phasePlan: phasePlan,
+        phasePlan: resolvedPhasePlan,
       ),
     );
     final movesAfterPass =
@@ -181,7 +197,7 @@ DomainPlannerOutcome runDomainPlannersWithOutcome({
   emit('aiStageD');
 
   ctx = ctx.withOrders(
-    runNavalPlanner(ctx: ctx, snapshot: snapshot, phasePlan: phasePlan),
+    runNavalPlanner(ctx: ctx, snapshot: snapshot, phasePlan: resolvedPhasePlan),
   );
   emit('aiStageE');
 
@@ -192,7 +208,7 @@ DomainPlannerOutcome runDomainPlannersWithOutcome({
       ctx: ctx,
       snapshot: snapshot,
       pass: DiplomacyPlannerPass.nonDeclareWarOnly,
-      phasePlan: phasePlan,
+      phasePlan: resolvedPhasePlan,
     ).orders,
   );
   emit('aiStageF');
