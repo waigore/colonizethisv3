@@ -39,36 +39,21 @@ bool isStalledOldWorldGpBlockerFocus({
 /// Below-quota EXPAND GP at peace with all other Great Powers, with an invadable
 /// Old World frontier and a positive but small standing regiment count.
 ///
-/// Captures the seed-42 turn-100 trap where a GP that exited an early war with
-/// few standing regiments and zero treasury is no longer "broke"
-/// (`regimentCount > 0`) and so neither `needRegimentsToExpand` nor
-/// `brokeBelowQuotaAtPeace` triggers force regiment rebuild — yet the GP also
-/// has too few regiments to mount a credible EXPAND declare-war on the
-/// remaining GP-only frontier (Refs #2509 § Observer goal phases (Full AI)
-/// "EXPAND regiment-rebuild trap").
-///
-/// Returns true only while OW holdings are below
-/// [kObserverConquestMinOwProvincesPerGp], no Great Power is in the at-war set,
-/// `invadableProvinceIdsSorted` is non-empty, and the standing regiment count
-/// is in the range `[1, kBelowQuotaPeaceMinRegimentsBeforeDeclareWar)`.
+/// Delegates to [expand_phase_planner.isBelowQuotaPeaceInsufficientRegiments]
+/// (Refs #2509 S1) so the canonical implementation lives alongside the
+/// EXPAND-trap callers that share the insufficient-regiments / invadable-frontier
+/// gate (Arm B of the legacy below-quota treasury-recovery composite).
 bool isBelowQuotaPeaceInsufficientRegiments({
   required int oldWorldProvincesOwned,
   required int regimentCount,
   required bool atWarWithAnyGreatPower,
   required bool hasInvadableProvinces,
-}) {
-  if (!isBelowObserverConquestQuota(oldWorldProvincesOwned)) {
-    return false;
-  }
-  if (atWarWithAnyGreatPower) {
-    return false;
-  }
-  if (regimentCount <= 0 ||
-      regimentCount >= kBelowQuotaPeaceMinRegimentsBeforeDeclareWar) {
-    return false;
-  }
-  return hasInvadableProvinces;
-}
+}) => expand_phase_planner.isBelowQuotaPeaceInsufficientRegiments(
+  oldWorldProvincesOwned: oldWorldProvincesOwned,
+  regimentCount: regimentCount,
+  atWarWithAnyGreatPower: atWarWithAnyGreatPower,
+  hasInvadableProvinces: hasInvadableProvinces,
+);
 
 /// Minimum [RegimentEconomyCatalog] build treasury cost (deterministic catalog scan).
 ///
@@ -98,6 +83,14 @@ bool isBelowQuotaPeaceZeroRegimentsRebuild({
   hasInvadableProvinces: hasInvadableProvinces,
 );
 
+/// Below-quota EXPAND treasury-recovery composite (Arms A + B).
+///
+/// Delegates to [expand_phase_planner.isBelowQuotaPeaceTreasuryRecovery]
+/// (Refs #2509 S1) so the canonical three-arm EXPAND-trap composite lives
+/// alongside [expand_phase_planner.isBelowQuotaPeaceZeroRegimentsRebuild]
+/// (Arm A) and [expand_phase_planner.isBelowQuotaPeaceInsufficientRegiments]
+/// (Arm B) plus the [expand_phase_planner.cheapestRegimentBuildTreasuryCost]
+/// affordability gate that all share an EXPAND-trap callsite contract.
 bool isBelowQuotaPeaceTreasuryRecovery({
   required int oldWorldProvincesOwned,
   required int regimentCount,
@@ -105,26 +98,14 @@ bool isBelowQuotaPeaceTreasuryRecovery({
   required bool hasInvadableProvinces,
   required int treasury,
   required Stockpile stockpile,
-}) {
-  if (isBelowQuotaPeaceZeroRegimentsRebuild(
-    oldWorldProvincesOwned: oldWorldProvincesOwned,
-    regimentCount: regimentCount,
-    hasInvadableProvinces: hasInvadableProvinces,
-  )) {
-    return true;
-  }
-  if (!isBelowQuotaPeaceInsufficientRegiments(
-    oldWorldProvincesOwned: oldWorldProvincesOwned,
-    regimentCount: regimentCount,
-    atWarWithAnyGreatPower: atWarWithAnyGreatPower,
-    hasInvadableProvinces: hasInvadableProvinces,
-  )) {
-    return false;
-  }
-  final effectiveTreasury =
-      treasury + pendingRichesTreasuryDelta(stockpile: stockpile);
-  return effectiveTreasury < cheapestRegimentBuildTreasuryCost();
-}
+}) => expand_phase_planner.isBelowQuotaPeaceTreasuryRecovery(
+  oldWorldProvincesOwned: oldWorldProvincesOwned,
+  regimentCount: regimentCount,
+  atWarWithAnyGreatPower: atWarWithAnyGreatPower,
+  hasInvadableProvinces: hasInvadableProvinces,
+  treasury: treasury,
+  stockpile: stockpile,
+);
 
 /// Both GPs in the 8–9 OW stalled band, below the observer quota, with similar holdings.
 ///
