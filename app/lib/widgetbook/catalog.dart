@@ -20,9 +20,11 @@ import '../features/game/combat/quick_battle_deployment_view.dart';
 import '../features/game/combat/quick_battle_result_dialog.dart';
 import '../features/game/combat/quick_battle_screen.dart';
 import '../features/game/widgets/civilian_units_panel.dart';
+import '../features/game/widgets/diplomacy_dialogs.dart';
 import '../features/game/widgets/diplomacy_panel.dart';
 import '../features/game/widgets/military_units_panel.dart';
 import '../features/game/widgets/naval_units_panel.dart';
+import '../features/game/widgets/production_commodity_breakdown_dialog.dart';
 import '../features/game/widgets/production_panel.dart';
 import '../features/game/widgets/production_panel_demo_data.dart';
 import '../features/game/widgets/province_sea_zone_detail_overlay.dart';
@@ -34,9 +36,13 @@ import '../features/game/flame/game_screen.dart';
 import '../features/game/flame/victory_overlay.dart';
 import '../features/game/flame/region_map_component.dart'
     show CtMapVisibilityMode;
+import '../features/game/widgets/move_army_dialog.dart';
+import '../features/game/widgets/move_fleet_dialog.dart';
 import '../features/game/widgets/train_civilians_dialog.dart';
 import '../features/game/widgets/train_military_dialog.dart';
+import '../features/game/widgets/transfer_to_home_fleet_dialog.dart';
 import '../features/game/widgets/turn_news_dialog.dart';
+import '../features/shell/new_game_leader_selection_dialog.dart';
 import '../features/shell/shell_screen.dart';
 import '../l10n/l10n.dart';
 import '../widgets/debug_init_game.dart';
@@ -51,6 +57,7 @@ import '../widgets/ct_transfer_list.dart';
 part 'catalog_part1.dart';
 part 'catalog_part2.dart';
 part 'catalog_part3.dart';
+part 'catalog_part4.dart';
 
 Unit? _unitByIdForCatalog(Game game, String unitId) {
   for (final u in game.worldState.oldWorld.units) {
@@ -119,6 +126,12 @@ class CtWidgetbookApp extends StatelessWidget {
         ...turnNewsDialogDirectories,
         ...victoryUiDirectories,
         ...combatUiDirectories,
+        ...moveArmyDialogDirectories,
+        ...moveFleetDialogDirectories,
+        ...transferToHomeFleetDialogDirectories,
+        ...productionCommodityBreakdownDialogDirectories,
+        ...grantOrSubsidyDialogDirectories,
+        ...newGameLeaderSelectionDialogDirectories,
         ...shellScreenDirectories,
         ...gameScreenDirectories,
       ],
