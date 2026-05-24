@@ -64,8 +64,10 @@ void main() {
           tester,
           panelRootKey: kCtE2ECivilianPanelRootKey,
           snapshot: ctE2eCivilianPanelSnapshot,
-          buildExpected: () =>
-              civilianUnitsPanelExpectedTexts(ctE2eCivilianPanelSnapshot!, l10n),
+          buildExpected: () => civilianUnitsPanelExpectedTexts(
+            ctE2eCivilianPanelSnapshot!,
+            l10n,
+          ),
           phaseName: 'wait_until_found_civilian_panel',
           perf: perf,
         );
@@ -117,20 +119,11 @@ void main() {
       await openCivilianPanel(tester, perf: perf);
       await tapFirstAssignInCivilianPanel(tester);
       await tester.tap(find.text('Build improvement'));
-      await waitUntilFound(
+      await pickFirstValidWorkTileAndAwaitOverlayClear(
         tester,
-        find.byKey(kCtE2ESelectFirstValidWorkTileKey).hitTestable(),
-        timeout: const Duration(seconds: 15),
+        appearPhase: 'wait_until_first_valid_work_tile_after_build_improvement',
+        clearPhase: 'pump_until_work_tile_overlay_cleared_build',
         perf: perf,
-        phaseName: 'wait_until_first_valid_work_tile_after_build_improvement',
-      );
-      await tester.tap(find.byKey(kCtE2ESelectFirstValidWorkTileKey));
-      await e2ePumpUntil(
-        tester,
-        () => find.byKey(kCtE2ESelectFirstValidWorkTileKey).evaluate().isEmpty,
-        timeout: const Duration(seconds: 5),
-        perf: perf,
-        phaseName: 'pump_until_work_tile_overlay_cleared_build',
       );
       await closeBottomSheet(tester, perf: perf);
       ensureUnderWallClock('after builder build_improvement');
@@ -139,30 +132,14 @@ void main() {
       await openCivilianPanel(tester, perf: perf);
       await tapAssignOnCivilianRowWithTitle(tester, kUnitTypeExplorer);
       await tester.tap(find.text('Prospect'));
-      final prospectWorkTile = find.byKey(kCtE2ESelectFirstValidWorkTileKey);
-      final prospectTileReady = await e2ePumpUntilConditionOrIdle(
+      await maybePickFirstValidWorkTileAndAwaitOverlayClear(
         tester,
-        () => prospectWorkTile.hitTestable().evaluate().isNotEmpty,
-        timeout: const Duration(seconds: 15),
+        appearPhase: 'pump_until_prospect_work_tile_optional',
+        clearPhase: 'pump_until_work_tile_overlay_cleared_prospect',
+        skippedTimingLabel: 'prospect_work_tile',
+        skippedMeta: 'skipped_no_valid_tile_on_e2e_map',
         perf: perf,
-        phaseName: 'pump_until_prospect_work_tile_optional',
       );
-      if (prospectTileReady) {
-        await tester.tap(prospectWorkTile.hitTestable().first, warnIfMissed: false);
-        await e2ePumpUntil(
-          tester,
-          () => prospectWorkTile.evaluate().isEmpty,
-          timeout: const Duration(seconds: 5),
-          perf: perf,
-          phaseName: 'pump_until_work_tile_overlay_cleared_prospect',
-        );
-      } else {
-        perf.timing(
-          'prospect_work_tile',
-          Duration.zero,
-          meta: 'skipped_no_valid_tile_on_e2e_map',
-        );
-      }
       await closeBottomSheet(tester, perf: perf);
       ensureUnderWallClock('after explorer prospect');
 
