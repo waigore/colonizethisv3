@@ -31,6 +31,8 @@ import '../features/game/dialogue/intervention_dialogue_overlay.dart';
 import '../features/game/flame/victory_overlay.dart';
 import '../features/game/flame/region_map_component.dart'
     show CtMapVisibilityMode;
+import '../features/game/widgets/move_army_dialog.dart';
+import '../features/game/widgets/move_fleet_dialog.dart';
 import '../features/game/widgets/train_civilians_dialog.dart';
 import '../features/game/widgets/train_military_dialog.dart';
 import '../features/game/widgets/turn_news_dialog.dart';
@@ -115,6 +117,8 @@ class CtWidgetbookApp extends StatelessWidget {
         ...turnNewsDialogDirectories,
         ...victoryUiDirectories,
         ...combatUiDirectories,
+        ...moveArmyDialogDirectories,
+        ...moveFleetDialogDirectories,
       ],
       lightTheme: AppThemes.colonial,
       darkTheme: AppThemes.colonial,

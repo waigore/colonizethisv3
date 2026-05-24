@@ -21,7 +21,7 @@ The naval units panel gives the player a single place to see every **fleet** the
 
 For every **sea‑going** fleet (any fleet that is **not** the Home Fleet), the **collapsed row header area** includes a **Move** action next to **Split** so orders can be issued without expansion. The **Home Fleet** row does **not** show **Move** (cannot move).
 
-**Dialog (local `showDialog`, commit via bus):** Opening **Move** shows a modal where the player:
+**Dialog (local `showDialog`, commit via bus):** Opening **Move** shows a modal (see [move-fleet-dialog.md](move-fleet-dialog.md) for the authoritative widget contract, layout, states, and bus events) where the player:
 
 **Title:** **Fleet \<id\>** (or equivalent) and, when there is at least one destination, **(N destinations)** so numeric ids are not mistaken for option counts.
 
