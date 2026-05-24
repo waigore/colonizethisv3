@@ -32,6 +32,7 @@ export 'e2e_test_shared_first_fleet_move.dart';
 export 'e2e_test_shared_fleet_reach_loop_test_total_meta.dart';
 export 'e2e_test_shared_fleet_reach_scenario_preamble.dart';
 export 'e2e_test_shared_panels.dart';
+export 'e2e_test_shared_standard_scenario_opener.dart';
 
 /// Next interval after an idle poll pump in E2E busy-wait loops (25→50→75→100 ms).
 /// Aligns with [e2eWaitUntilFound] backoff (`SPEC/program/e2e-integration-tests.md`, #2336).

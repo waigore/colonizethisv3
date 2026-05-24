@@ -24,6 +24,7 @@ export 'e2e_test_shared.dart'
         E2eFleetReachLoopResult,
         E2eFleetReachScenarioPreamble,
         E2ePerfLog,
+        E2eStandardScenarioOpener,
         e2eAdaptivePollRampAfterIdle,
         e2eAttemptFirstFleetMoveOrCancel,
         e2eAwaitExploreEnabledFromCivilianPanel,
@@ -33,6 +34,7 @@ export 'e2e_test_shared.dart'
         e2eDismissCtDialogShellIfPresent,
         e2eEnsureNonHomeFleetInNwAfterLoop,
         e2eEnterFleetReachScenarioReady,
+        e2eEnterStandardE2eScenario,
         e2eExploreAssignEnabledFromCivilianSnapshot,
         e2eExpectPanelTextsMatchSnapshot,
         e2eFleetReachDoneFromCtSnapshotOnly,
@@ -76,6 +78,14 @@ export 'e2e_test_shared.dart'
         kE2eDefaultFleetReachPreambleMaxUiResponseWait,
         kE2eDefaultFleetReachPreambleSurfaceSize,
         kE2eDefaultNavalMoveSegmentUiWait,
+        kE2eDefaultStandardScenarioOpenerAfterAssetPreloadStep,
+        kE2eDefaultStandardScenarioOpenerAfterBootstrapStep,
+        kE2eDefaultStandardScenarioOpenerAfterNewGameToMapStep,
+        kE2eDefaultStandardScenarioOpenerAssetPreloadTimingPhase,
+        kE2eDefaultStandardScenarioOpenerBootstrapTimingPhase,
+        kE2eDefaultStandardScenarioOpenerLocale,
+        kE2eDefaultStandardScenarioOpenerNewGameToMapTimingPhase,
+        kE2eDefaultStandardScenarioOpenerSurfaceSize,
         e2ePumpUntil,
         e2ePumpUntilConditionOrIdle,
         e2eRadioListTilesInAlertDialogs,
@@ -558,4 +568,49 @@ Future<void> handleBundledExploreFailure(
   civilianSnapshot: civilianSnapshot,
   lastKnownNavalSnapshot: lastKnownNavalSnapshot,
   maxBoundedTurnRetries: maxBoundedTurnRetries,
+);
+
+/// Stable public name for [e2eEnterStandardE2eScenario] so the full-turn and
+/// capital-panel `testWidgets` bodies in `new_game_full_turn_e2e_test.dart`
+/// and `new_game_capital_panel_e2e_test.dart` consume the AC1 barrel only
+/// (Refs GitHub #2336 AC1 / AC2 / Bottleneck 6). Forwards to the
+/// implementation in `e2e_test_shared_standard_scenario_opener.dart`.
+///
+/// The call site injects the real `bootstrapForIntegrationTest` from
+/// `package:colonizethis_app/main.dart` so the shared module stays free of
+/// the app's main-entry import; the widget-test pin in
+/// `app/test/e2e_enter_standard_e2e_scenario_test.dart` exercises the
+/// callable-parameter and AC1 barrel signature contracts.
+Future<E2eStandardScenarioOpener> enterStandardE2eScenario(
+  WidgetTester tester, {
+  required String testName,
+  required Future<void> Function() bootstrapForIntegrationTest,
+  Duration wallClockCap = kE2eMaxWallClock,
+  Locale locale = kE2eDefaultStandardScenarioOpenerLocale,
+  Size surfaceSize = kE2eDefaultStandardScenarioOpenerSurfaceSize,
+  String bootstrapTimingPhase =
+      kE2eDefaultStandardScenarioOpenerBootstrapTimingPhase,
+  String afterBootstrapStep =
+      kE2eDefaultStandardScenarioOpenerAfterBootstrapStep,
+  String? assetPreloadTimingPhase =
+      kE2eDefaultStandardScenarioOpenerAssetPreloadTimingPhase,
+  String afterAssetPreloadStep =
+      kE2eDefaultStandardScenarioOpenerAfterAssetPreloadStep,
+  String? newGameToMapTimingPhase =
+      kE2eDefaultStandardScenarioOpenerNewGameToMapTimingPhase,
+  String afterNewGameToMapStep =
+      kE2eDefaultStandardScenarioOpenerAfterNewGameToMapStep,
+}) => e2eEnterStandardE2eScenario(
+  tester,
+  testName: testName,
+  bootstrapForIntegrationTest: bootstrapForIntegrationTest,
+  wallClockCap: wallClockCap,
+  locale: locale,
+  surfaceSize: surfaceSize,
+  bootstrapTimingPhase: bootstrapTimingPhase,
+  afterBootstrapStep: afterBootstrapStep,
+  assetPreloadTimingPhase: assetPreloadTimingPhase,
+  afterAssetPreloadStep: afterAssetPreloadStep,
+  newGameToMapTimingPhase: newGameToMapTimingPhase,
+  afterNewGameToMapStep: afterNewGameToMapStep,
 );
