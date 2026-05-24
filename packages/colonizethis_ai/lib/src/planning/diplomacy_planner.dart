@@ -724,6 +724,7 @@ DiplomacyPlannerResult runDiplomacyPlannerWithResult({
     config: ctx.config,
     primaryGoal: ctx.primaryGoal,
     sameTurnPriorDiplomaticOrders: ctx.sameTurnPriorDiplomaticOrders,
+    phasePlan: phasePlan,
   );
 
   final candidateDesc = filtered
