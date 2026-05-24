@@ -16,8 +16,10 @@ import 'e2e_test_shared_bootstrap.dart';
 /// barrel only (GitHub #2336 AC2).
 export 'e2e_test_shared.dart'
     show
+        E2eFirstFleetMoveOutcome,
         E2ePerfLog,
         e2eAdaptivePollRampAfterIdle,
+        e2eAttemptFirstFleetMoveOrCancel,
         e2eAwaitNwCoastalOrVisibleLandForBundledExplore,
         e2eBundledExploreRejectionDiagnostics,
         e2eCheckExploreEnabledFromCivilianPanel,
@@ -40,6 +42,9 @@ export 'e2e_test_shared.dart'
         kE2eDefaultBundledExploreSweepWait,
         kE2eDefaultExpectPanelTextsPhase,
         kE2eDefaultExpectPanelTextsTimeout,
+        kE2eDefaultFirstFleetMoveConfirmReadyTimeout,
+        kE2eDefaultFirstFleetMoveDialogCloseTimeout,
+        kE2eDefaultFirstFleetMoveDialogOpenTimeout,
         kE2eDefaultFleetCivilianOpenAfterSheetClearPhase,
         kE2eDefaultNavalMoveSegmentUiWait,
         e2ePumpUntil,
@@ -231,6 +236,26 @@ Future<void> tryNavalMoveSegment(
   navalPanelAlreadyOpen: navalPanelAlreadyOpen,
   perf: perf,
   maxUiResponseWait: maxUiResponseWait,
+);
+
+/// Stable public name for [e2eAttemptFirstFleetMoveOrCancel] so the full-turn
+/// scenario consumes the AC1 barrel only (Refs GitHub #2336 AC1 / AC2 /
+/// Bottleneck 2). Forwards to the implementation in
+/// `e2e_test_shared_first_fleet_move.dart`.
+Future<E2eFirstFleetMoveOutcome> attemptFirstFleetMoveOrCancel(
+  WidgetTester tester,
+  AppLocalizations l10n, {
+  E2ePerfLog? perf,
+  Duration moveDialogOpenTimeout = kE2eDefaultFirstFleetMoveDialogOpenTimeout,
+  Duration confirmReadyTimeout = kE2eDefaultFirstFleetMoveConfirmReadyTimeout,
+  Duration dialogCloseTimeout = kE2eDefaultFirstFleetMoveDialogCloseTimeout,
+}) => e2eAttemptFirstFleetMoveOrCancel(
+  tester,
+  l10n,
+  perf: perf,
+  moveDialogOpenTimeout: moveDialogOpenTimeout,
+  confirmReadyTimeout: confirmReadyTimeout,
+  dialogCloseTimeout: dialogCloseTimeout,
 );
 
 /// Stable public name for [e2eAnyExplorerHasEnabledExploreAssignFleet] so

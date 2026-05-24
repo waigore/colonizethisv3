@@ -183,64 +183,7 @@ void main() {
         perf: perf,
         navalPanelAlreadyOpen: true,
       );
-      final navalPanelRoot = find.byKey(kCtE2ENavalPanelRootKey);
-      final moveButtons = find.descendant(
-        of: navalPanelRoot,
-        matching: find.text('Move'),
-      );
-      if (moveButtons.evaluate().isNotEmpty) {
-        await tester.tap(moveButtons.first, warnIfMissed: false);
-        await waitUntilFound(
-          tester,
-          find.byType(AlertDialog),
-          timeout: const Duration(seconds: 5),
-          perf: perf,
-          phaseName: 'wait_until_move_dialog_after_tap',
-        );
-        final moveDialog = find.byType(AlertDialog);
-        final destinationRadios = find.descendant(
-          of: moveDialog,
-          matching: find.byType(RadioListTile<dynamic>),
-        );
-        if (destinationRadios.evaluate().isEmpty) {
-          final cancel = find.descendant(
-            of: moveDialog,
-            matching: find.text(l10n.common_cancel),
-          ).hitTestable();
-          expect(cancel, findsOneWidget);
-          await tester.tap(cancel.first, warnIfMissed: false);
-        } else {
-          await tester.tap(destinationRadios.first, warnIfMissed: false);
-          await e2ePumpUntilConditionOrIdle(
-            tester,
-            () => find
-                .descendant(
-                  of: moveDialog,
-                  matching: find.text(l10n.common_confirm),
-                )
-                .hitTestable()
-                .evaluate()
-                .isNotEmpty,
-            timeout: const Duration(seconds: 2),
-            perf: perf,
-            phaseName: 'pump_until_move_confirm_tappable',
-          );
-          final confirm = find
-              .descendant(
-                of: moveDialog,
-                matching: find.text(l10n.common_confirm),
-              )
-              .hitTestable();
-          await tester.tap(confirm.first, warnIfMissed: false);
-        }
-        await e2ePumpUntil(
-          tester,
-          () => find.byType(AlertDialog).evaluate().isEmpty,
-          timeout: const Duration(seconds: 10),
-          perf: perf,
-          phaseName: 'pump_until_move_dialog_closed',
-        );
-      }
+      await attemptFirstFleetMoveOrCancel(tester, l10n, perf: perf);
       if (find.byType(CtDialogShell).evaluate().isNotEmpty) {
         final closeCandidates = <Finder>[
           find.text(l10n.common_cancel),

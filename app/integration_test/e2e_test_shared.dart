@@ -23,6 +23,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 export 'e2e_test_shared_diagnostics.dart';
+export 'e2e_test_shared_first_fleet_move.dart';
 export 'e2e_test_shared_panels.dart';
 
 /// Next interval after an idle poll pump in E2E busy-wait loops (25→50→75→100 ms).
