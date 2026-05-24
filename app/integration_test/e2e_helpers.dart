@@ -5,6 +5,8 @@
 /// (`openProductionPanel`, `advanceOneHumanTurn`, `waitForNextTurnLabelAdvance`, etc.).
 library;
 
+import 'package:colonizethis_app/config/ct_e2e_last_panel_snapshot.dart'
+    show CtE2eCivilianPanelSnapshot, CtE2eNavalPanelSnapshot;
 import 'package:colonizethis_app/l10n/app_localizations_contract.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -16,35 +18,63 @@ import 'e2e_test_shared_bootstrap.dart';
 /// barrel only (GitHub #2336 AC2).
 export 'e2e_test_shared.dart'
     show
+        E2eFinalNavalReachCheckResult,
+        E2eFirstFleetMoveOutcome,
         E2eFleetReachLoopExit,
         E2eFleetReachLoopResult,
+        E2eFleetReachScenarioPreamble,
         E2ePerfLog,
         e2eAdaptivePollRampAfterIdle,
+        e2eAttemptFirstFleetMoveOrCancel,
+        e2eAwaitExploreEnabledFromCivilianPanel,
         e2eAwaitNwCoastalOrVisibleLandForBundledExplore,
         e2eBundledExploreRejectionDiagnostics,
         e2eCheckExploreEnabledFromCivilianPanel,
+        e2eDismissCtDialogShellIfPresent,
+        e2eEnsureNonHomeFleetInNwAfterLoop,
+        e2eEnterFleetReachScenarioReady,
         e2eExploreAssignEnabledFromCivilianSnapshot,
         e2eExpectPanelTextsMatchSnapshot,
         e2eFleetReachDoneFromCtSnapshotOnly,
+        e2eFleetReachLoopExitTestTotalMetaLabel,
         e2eFleetReachTurnLoop,
+        e2eHandleBundledExploreFailure,
         e2eHarnessDetectsNonHomeFleetInNewWorld,
         e2eMakeWallClockGuard,
+        e2eMaybePickFirstValidWorkTileAndAwaitOverlayClear,
         e2eNewWorldRegionChipAppearsSelected,
         e2eNonHomeHumanFleetInCoastalNewWorldSeaFromCtSnapshot,
         e2eNavalPanelShowsNonHomeFleetInNewWorld,
         e2eNonHomeHumanFleetInNewWorldFromCtSnapshot,
         e2eNwCoastalProvincesAdjacentToFleetSea,
         e2eOldWorldRegionChipAppearsSelected,
+        e2ePickFirstValidWorkTileAndAwaitOverlayClear,
         e2ePickMoveDestinationAndConfirm,
         e2eTryNavalMoveSegment,
         e2ePlayerHasAnyNewWorldFoggedOrBetterFromCtSnapshot,
+        kE2eDefaultBundledExploreMaxTurnRetries,
         kE2eDefaultBundledExploreReadinessMaxTurns,
+        kE2eDefaultBundledExploreRetryIterationCounter,
         kE2eDefaultBundledExploreRetryLoopPhase,
         kE2eDefaultBundledExploreSweepWait,
+        kE2eDefaultCivilianWorkTileAppearTimeout,
+        kE2eDefaultCivilianWorkTileClearTimeout,
+        kE2eDefaultCtDialogShellCloseTimeout,
+        kE2eDefaultCtDialogShellClosePhase,
         kE2eDefaultExpectPanelTextsPhase,
         kE2eDefaultExpectPanelTextsTimeout,
+        kE2eDefaultFinalNavalReachCheckUiWait,
+        kE2eDefaultFirstFleetMoveConfirmReadyTimeout,
+        kE2eDefaultFirstFleetMoveDialogCloseTimeout,
+        kE2eDefaultFirstFleetMoveDialogOpenTimeout,
         kE2eDefaultFleetCivilianOpenAfterSheetClearPhase,
         kE2eDefaultFleetReachLoopMaxTurns,
+        kE2eDefaultFleetReachPreambleAfterBootstrapStep,
+        kE2eDefaultFleetReachPreambleAfterSplitFleetStep,
+        kE2eDefaultFleetReachPreambleBootstrapTimingPhase,
+        kE2eDefaultFleetReachPreambleLocale,
+        kE2eDefaultFleetReachPreambleMaxUiResponseWait,
+        kE2eDefaultFleetReachPreambleSurfaceSize,
         kE2eDefaultNavalMoveSegmentUiWait,
         e2ePumpUntil,
         e2ePumpUntilConditionOrIdle,
@@ -83,6 +113,24 @@ Future<void> waitUntilFound(
 
 Future<void> dismissTransientUi(WidgetTester tester, {E2ePerfLog? perf}) =>
     e2eDismissTransientUi(tester, perf: perf);
+
+/// Stable public name for [e2eDismissCtDialogShellIfPresent] so the
+/// full-turn scenario consumes the AC1 barrel only (Refs GitHub #2336 AC1 /
+/// AC2 / Bottleneck 6). Forwards to the implementation in
+/// `e2e_test_shared_dismiss_ct_dialog_shell.dart`.
+Future<bool> dismissCtDialogShellIfPresent(
+  WidgetTester tester,
+  AppLocalizations l10n, {
+  E2ePerfLog? perf,
+  Duration shellCloseTimeout = kE2eDefaultCtDialogShellCloseTimeout,
+  String phaseName = kE2eDefaultCtDialogShellClosePhase,
+}) => e2eDismissCtDialogShellIfPresent(
+  tester,
+  l10n,
+  perf: perf,
+  shellCloseTimeout: shellCloseTimeout,
+  phaseName: phaseName,
+);
 
 Future<void> openCivilianPanel(
   WidgetTester tester, {
@@ -237,6 +285,26 @@ Future<void> tryNavalMoveSegment(
   maxUiResponseWait: maxUiResponseWait,
 );
 
+/// Stable public name for [e2eAttemptFirstFleetMoveOrCancel] so the full-turn
+/// scenario consumes the AC1 barrel only (Refs GitHub #2336 AC1 / AC2 /
+/// Bottleneck 2). Forwards to the implementation in
+/// `e2e_test_shared_first_fleet_move.dart`.
+Future<E2eFirstFleetMoveOutcome> attemptFirstFleetMoveOrCancel(
+  WidgetTester tester,
+  AppLocalizations l10n, {
+  E2ePerfLog? perf,
+  Duration moveDialogOpenTimeout = kE2eDefaultFirstFleetMoveDialogOpenTimeout,
+  Duration confirmReadyTimeout = kE2eDefaultFirstFleetMoveConfirmReadyTimeout,
+  Duration dialogCloseTimeout = kE2eDefaultFirstFleetMoveDialogCloseTimeout,
+}) => e2eAttemptFirstFleetMoveOrCancel(
+  tester,
+  l10n,
+  perf: perf,
+  moveDialogOpenTimeout: moveDialogOpenTimeout,
+  confirmReadyTimeout: confirmReadyTimeout,
+  dialogCloseTimeout: dialogCloseTimeout,
+);
+
 /// Stable public name for [e2eAnyExplorerHasEnabledExploreAssignFleet] so
 /// the fleet bundled-Explore retry loop consumes the AC1 barrel only
 /// (Refs GitHub #2336 AC1 / AC2 / AC5 / Bottleneck 5). Forwards to the
@@ -288,18 +356,75 @@ Future<bool> checkExploreEnabledFromCivilianPanel(
   phaseTimingLabel: phaseTimingLabel,
 );
 
+/// Stable public name for [e2eAwaitExploreEnabledFromCivilianPanel] so the
+/// post-bundle Explore scenario consumes the AC1 barrel only (Refs GitHub
+/// #2336 AC1 / AC2 / AC5 / Bottleneck 5). Forwards to the implementation
+/// in `e2e_test_shared_bundled_explore_retry.dart`.
+Future<bool> awaitExploreEnabledFromCivilianPanel(
+  WidgetTester tester,
+  AppLocalizations l10n, {
+  E2ePerfLog? perf,
+  Duration maxUiResponseWait = kE2eDefaultBundledExploreSweepWait,
+  int maxBoundedTurnRetries = kE2eDefaultBundledExploreMaxTurnRetries,
+  String retryIterationCounter = kE2eDefaultBundledExploreRetryIterationCounter,
+}) => e2eAwaitExploreEnabledFromCivilianPanel(
+  tester,
+  l10n,
+  perf: perf,
+  maxUiResponseWait: maxUiResponseWait,
+  maxBoundedTurnRetries: maxBoundedTurnRetries,
+  retryIterationCounter: retryIterationCounter,
+);
+
 Future<void> ensureAllRelocated64pxPngsLoad() =>
     e2eEnsureAllRelocated64pxPngsLoad();
 
 Future<void> ensureAllRelocated64pxPngsLoadSuiteOnce() =>
     e2eEnsureAllRelocated64pxPngsLoadSuiteOnce();
 
+/// Stable public name for [e2eEnterFleetReachScenarioReady] so the two
+/// fleet-reach `testWidgets` bodies in
+/// `new_game_fleet_reaches_new_world_e2e_test.dart` consume the AC1 barrel
+/// only (Refs GitHub #2336 AC1 / AC2 / Bottleneck 6). Forwards to the
+/// implementation in `e2e_test_shared_fleet_reach_scenario_preamble.dart`.
+///
+/// The call site injects the real `bootstrapForIntegrationTest` from
+/// `package:colonizethis_app/main.dart` so the shared module stays free of
+/// the app's main-entry import; the widget-test pin in
+/// `app/test/e2e_enter_fleet_reach_scenario_ready_test.dart` exercises the
+/// callable-parameter and AC1 barrel signature contracts.
+Future<E2eFleetReachScenarioPreamble> enterFleetReachScenarioReady(
+  WidgetTester tester, {
+  required String testName,
+  required Future<void> Function() bootstrapForIntegrationTest,
+  Duration maxUiResponseWait = kE2eDefaultFleetReachPreambleMaxUiResponseWait,
+  Duration wallClockCap = kE2eMaxWallClock,
+  Locale locale = kE2eDefaultFleetReachPreambleLocale,
+  Size surfaceSize = kE2eDefaultFleetReachPreambleSurfaceSize,
+  String bootstrapTimingPhase =
+      kE2eDefaultFleetReachPreambleBootstrapTimingPhase,
+  String afterBootstrapStep = kE2eDefaultFleetReachPreambleAfterBootstrapStep,
+  String afterSplitFleetStep = kE2eDefaultFleetReachPreambleAfterSplitFleetStep,
+}) => e2eEnterFleetReachScenarioReady(
+  tester,
+  testName: testName,
+  bootstrapForIntegrationTest: bootstrapForIntegrationTest,
+  maxUiResponseWait: maxUiResponseWait,
+  wallClockCap: wallClockCap,
+  locale: locale,
+  surfaceSize: surfaceSize,
+  bootstrapTimingPhase: bootstrapTimingPhase,
+  afterBootstrapStep: afterBootstrapStep,
+  afterSplitFleetStep: afterSplitFleetStep,
+);
+
 /// Stable public name for [e2eFleetReachTurnLoop] so the two fleet-reach
 /// scenarios in `new_game_fleet_reaches_new_world_e2e_test.dart` consume the
 /// AC1 barrel only (Refs GitHub #2336 AC1 / AC2 / Bottleneck 4). Forwards
 /// to the implementation in `e2e_test_shared_panels.dart` — call sites map
 /// the returned [E2eFleetReachLoopResult.exit] to the legacy
-/// `result=reached_*` perf-timing meta labels themselves.
+/// `result=reached_*` perf-timing meta labels via
+/// [fleetReachLoopExitTestTotalMetaLabel].
 Future<E2eFleetReachLoopResult> fleetReachTurnLoop(
   WidgetTester tester,
   AppLocalizations l10n, {
@@ -315,6 +440,16 @@ Future<E2eFleetReachLoopResult> fleetReachTurnLoop(
   maxUiResponseWait: maxUiResponseWait,
   maxTurns: maxTurns,
 );
+
+/// Stable public name for [e2eFleetReachLoopExitTestTotalMetaLabel] so the
+/// fleet-reach scenario consumes the AC1 barrel only (Refs GitHub #2336 AC1
+/// / AC2 / Bottleneck 4). Forwards to the implementation in
+/// `e2e_test_shared_fleet_reach_loop_test_total_meta.dart`. Returns the
+/// legacy `result=<branch>` string for every early-return exit and `null`
+/// for [E2eFleetReachLoopExit.loopExhausted] so the caller falls through to
+/// the post-loop final-naval-check path.
+String? fleetReachLoopExitTestTotalMetaLabel(E2eFleetReachLoopExit exit) =>
+    e2eFleetReachLoopExitTestTotalMetaLabel(exit);
 
 /// Stable public name for [e2eExpectPanelTextsMatchSnapshot] so the
 /// snapshot-text panel scenarios in `new_game_full_turn_e2e_test.dart`
@@ -340,4 +475,87 @@ Future<void> expectPanelTextsMatchSnapshot(
   timeout: timeout,
   perf: perf,
   buildAlternativeExpected: buildAlternativeExpected,
+);
+
+/// Stable public name for [e2eEnsureNonHomeFleetInNwAfterLoop] so the two
+/// fleet-reach scenarios in `new_game_fleet_reaches_new_world_e2e_test.dart`
+/// consume the AC1 barrel only (Refs GitHub #2336 AC1 / AC2 / Bottleneck 4).
+/// Forwards to the implementation in
+/// `e2e_test_shared_final_naval_reach_check.dart` — call sites compose the
+/// scenario-specific fail message via [failureMessageBuilder] and assign the
+/// captured [E2eFinalNavalReachCheckResult.lastKnownNavalSnapshot]
+/// themselves when their post-loop diagnostics need it.
+Future<E2eFinalNavalReachCheckResult> ensureNonHomeFleetInNwAfterLoop(
+  WidgetTester tester, {
+  required E2ePerfLog perf,
+  required String Function(Object? lastException) failureMessageBuilder,
+  Duration maxUiResponseWait = kE2eDefaultFinalNavalReachCheckUiWait,
+}) => e2eEnsureNonHomeFleetInNwAfterLoop(
+  tester,
+  perf: perf,
+  failureMessageBuilder: failureMessageBuilder,
+  maxUiResponseWait: maxUiResponseWait,
+);
+
+/// Stable public name for [e2ePickFirstValidWorkTileAndAwaitOverlayClear]
+/// so the full-turn scenario consumes the AC1 barrel only (Refs GitHub
+/// #2336 AC1 / AC2 / Bottleneck 6). Forwards to the implementation in
+/// `e2e_test_shared_civilian_work_tile_pick.dart`.
+Future<void> pickFirstValidWorkTileAndAwaitOverlayClear(
+  WidgetTester tester, {
+  required String appearPhase,
+  required String clearPhase,
+  Duration appearTimeout = kE2eDefaultCivilianWorkTileAppearTimeout,
+  Duration clearTimeout = kE2eDefaultCivilianWorkTileClearTimeout,
+  E2ePerfLog? perf,
+}) => e2ePickFirstValidWorkTileAndAwaitOverlayClear(
+  tester,
+  appearPhase: appearPhase,
+  clearPhase: clearPhase,
+  appearTimeout: appearTimeout,
+  clearTimeout: clearTimeout,
+  perf: perf,
+);
+
+/// Stable public name for
+/// [e2eMaybePickFirstValidWorkTileAndAwaitOverlayClear] so the full-turn
+/// scenario consumes the AC1 barrel only (Refs GitHub #2336 AC1 / AC2 /
+/// Bottleneck 6). Forwards to the implementation in
+/// `e2e_test_shared_civilian_work_tile_pick.dart`.
+Future<bool> maybePickFirstValidWorkTileAndAwaitOverlayClear(
+  WidgetTester tester, {
+  required String appearPhase,
+  required String clearPhase,
+  required String skippedTimingLabel,
+  required String skippedMeta,
+  Duration appearTimeout = kE2eDefaultCivilianWorkTileAppearTimeout,
+  Duration clearTimeout = kE2eDefaultCivilianWorkTileClearTimeout,
+  E2ePerfLog? perf,
+}) => e2eMaybePickFirstValidWorkTileAndAwaitOverlayClear(
+  tester,
+  appearPhase: appearPhase,
+  clearPhase: clearPhase,
+  skippedTimingLabel: skippedTimingLabel,
+  skippedMeta: skippedMeta,
+  appearTimeout: appearTimeout,
+  clearTimeout: clearTimeout,
+  perf: perf,
+);
+
+/// Stable public name for [e2eHandleBundledExploreFailure] so the
+/// post-bundle Explore scenario consumes the AC1 barrel only (Refs GitHub
+/// #2336 AC1 / AC2 / AC5 / Bottleneck 5). Forwards to the implementation
+/// in `e2e_test_shared_bundled_explore_failure.dart`.
+Future<void> handleBundledExploreFailure(
+  WidgetTester tester, {
+  required CtE2eNavalPanelSnapshot? navalSnapshot,
+  required CtE2eCivilianPanelSnapshot? civilianSnapshot,
+  CtE2eNavalPanelSnapshot? lastKnownNavalSnapshot,
+  required int maxBoundedTurnRetries,
+}) => e2eHandleBundledExploreFailure(
+  tester,
+  navalSnapshot: navalSnapshot,
+  civilianSnapshot: civilianSnapshot,
+  lastKnownNavalSnapshot: lastKnownNavalSnapshot,
+  maxBoundedTurnRetries: maxBoundedTurnRetries,
 );
