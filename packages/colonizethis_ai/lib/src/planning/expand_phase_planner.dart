@@ -162,7 +162,7 @@ List<String> planExpandPeace({
     return const [];
   }
 
-  final blocker = _primaryInvadableOldWorldGpBlocker(
+  final blocker = expandPrimaryInvadableOldWorldGpBlocker(
     game: game,
     snapshot: snapshot,
   );
@@ -175,7 +175,7 @@ List<String> planExpandPeace({
         ownOw: snapshot.conquest.oldWorldProvincesOwned,
         partnerOw: provinceCountOwnedBy(game, blocker),
       ) &&
-      _isOldWorldGpOnlyInvadableFrontier(game: game, snapshot: snapshot) &&
+      expandIsOldWorldGpOnlyInvadableFrontier(game: game, snapshot: snapshot) &&
       !_hasUninvadedOldWorldMinor(game: game, snapshot: snapshot)) {
     return List<String>.unmodifiable(gpWars);
   }
@@ -188,10 +188,11 @@ List<String> planExpandPeace({
 
 /// GP owning the most invadable Old World provinces (frontier blocker).
 ///
-/// Mirrors the existing `primaryInvadableOldWorldGpBlocker` algorithm in
-/// `colonial_pressure.dart` so the new planner stays self-contained
-/// against the S1 deletion of that file (Refs #2509 § EXPAND phase
-/// planner). Behavior is byte-identical to the legacy helper:
+/// Public entry for the phase dispatcher and orchestrator wiring (Refs
+/// #2509 S5). Mirrors the existing `primaryInvadableOldWorldGpBlocker`
+/// algorithm in `colonial_pressure.dart` so the new planner stays
+/// self-contained against the S1 deletion of that file (Refs #2509 §
+/// EXPAND phase planner). Behavior is byte-identical to the legacy helper:
 ///
 ///   1. Tally GP ownership across [ConquestSummary.invadableProvinceIdsSorted]
 ///      using [getProvinceOwnerMap], skipping unowned and non-GP entries.
@@ -203,7 +204,7 @@ List<String> planExpandPeace({
 /// invadable provinces are owned by a Great Power. Linear in the
 /// invadable-OW set, matching the budget-rule note in
 /// `colonizethis-turn-resolution-budget.mdc`.
-String? _primaryInvadableOldWorldGpBlocker({
+String? expandPrimaryInvadableOldWorldGpBlocker({
   required Game game,
   required AIWorldSnapshot snapshot,
 }) {
@@ -240,9 +241,11 @@ String? _primaryInvadableOldWorldGpBlocker({
 /// (no minor nation owns any invadable OW province).
 ///
 /// Mirrors `isOldWorldGpOnlyInvadableFrontier` from `colonial_pressure.dart`.
-/// The mutual-plateau sole-GP carve-out in [planExpandPeace] requires this
-/// gate so we only peace the lone GP blocker when no minor pivot remains.
-bool _isOldWorldGpOnlyInvadableFrontier({
+/// Public entry for the phase dispatcher and orchestrator wiring (Refs
+/// #2509 S5). The mutual-plateau sole-GP carve-out in [planExpandPeace]
+/// requires this gate so we only peace the lone GP blocker when no minor
+/// pivot remains.
+bool expandIsOldWorldGpOnlyInvadableFrontier({
   required Game game,
   required AIWorldSnapshot snapshot,
 }) {

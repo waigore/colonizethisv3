@@ -359,7 +359,7 @@ Orders _appendEconomyBuildOrders({
     buildThreshold = math.min(buildThreshold, 15);
   }
   if (expandQuotaPressure &&
-      isStalledOldWorldGpBlockerFocus(game: ctx.game, snapshot: snapshot)) {
+      resolvePhaseEconomyExpandGpBlockerFocusActive(phasePlan: phasePlan)) {
     buildThreshold = math.min(buildThreshold, 8);
   }
   // Refs #2509 S5: derive the colonial build-order threshold cap from
@@ -427,11 +427,9 @@ Orders _appendEconomyBuildOrders({
       snapshot.conquest.oldWorldProvincesOwned <=
           kFewOldWorldProvincesDefendThreshold &&
       !snapshot.threats.atWarWith.any((id) => ctx.game.playerById(id) != null);
-  final gpBlocker =
-      expandQuotaPressure &&
-          isStalledOldWorldGpBlockerFocus(game: ctx.game, snapshot: snapshot)
-      ? primaryInvadableOldWorldGpBlocker(game: ctx.game, snapshot: snapshot)
-      : null;
+  final gpBlocker = expandPrimaryInvadableGpBlockerFromPhasePlan(
+    phasePlan: phasePlan,
+  );
   final atWarWithGpBlocker =
       gpBlocker != null && snapshot.threats.atWarWith.contains(gpBlocker);
   var minRegimentFloor = atWarWithGpBlocker

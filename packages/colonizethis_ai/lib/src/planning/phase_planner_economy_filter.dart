@@ -252,3 +252,42 @@ int? resolvePhaseEconomyColonialBuildOrderThresholdCap({
 bool resolvePhaseEconomyExpandQuotaPressureActive({
   required PhasePlanOutcome phasePlan,
 }) => resolvePhaseConquestExtraPassesActive(phasePlan: phasePlan);
+
+/// When `true`, `_appendEconomyBuildOrders` applies the GP-blocker-focus
+/// build threshold cap (`min(buildThreshold, 8)`).
+///
+/// Field-equal to legacy `isStalledOldWorldGpBlockerFocus` when
+/// [resolvePhaseEconomyExpandQuotaPressureActive] is already `true`:
+/// EXPAND / COLONIAL-lite phase entry requires
+/// `oldWorldProvincesOwned < kObserverConquestMinOwProvincesPerGp`, so
+/// the below-quota arm of the legacy helper is satisfied structurally
+/// and the remaining signal is
+/// [PhasePlanOutcome.expandGpOnlyInvadableFrontierActive] (computed once
+/// in [runPhasePlanners] via [expandIsOldWorldGpOnlyInvadableFrontier]).
+///
+/// Returns `false` under COLONIAL and DEVELOP even when the expand
+/// frontier slots are populated.
+bool resolvePhaseEconomyExpandGpBlockerFocusActive({
+  required PhasePlanOutcome phasePlan,
+}) =>
+    resolvePhaseEconomyExpandQuotaPressureActive(phasePlan: phasePlan) &&
+    phasePlan.expandGpOnlyInvadableFrontierActive;
+
+/// Returns the primary OW invadable GP blocker faction id for economy
+/// build-pass routing when [resolvePhaseEconomyExpandGpBlockerFocusActive]
+/// is `true`, or `null` otherwise.
+///
+/// Replaces the per-build-pass `primaryInvadableOldWorldGpBlocker`
+/// recompute in `_appendEconomyBuildOrders` when the dispatched phase
+/// plan is set. Phase-derived `String?` is field-equal to the legacy
+/// helper across every reachable `(ObserverGoalPhase, AIWorldSnapshot)`
+/// pair because the dispatcher already computed the blocker once via
+/// [expandPrimaryInvadableOldWorldGpBlocker].
+String? expandPrimaryInvadableGpBlockerFromPhasePlan({
+  required PhasePlanOutcome phasePlan,
+}) {
+  if (!resolvePhaseEconomyExpandGpBlockerFocusActive(phasePlan: phasePlan)) {
+    return null;
+  }
+  return phasePlan.expandPrimaryInvadableGpBlockerFactionId;
+}
