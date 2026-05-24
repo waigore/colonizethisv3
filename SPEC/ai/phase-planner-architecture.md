@@ -75,7 +75,7 @@ Planner modules never call each other. The orchestrator passes `planColonialAcqu
 ### Phase transition guard
 
 - Enter **EXPAND** when `oldWorldProvincesOwned < kObserverConquestMinOwProvincesPerGp` (10). A province loss immediately restores EXPAND; no hysteresis at quota+1.
-- Enter **COLONIAL** when OW ≥ 10 and `hasColonialAcquisitionTargets` (defined in `observer_goal_phase.dart` per Refs #2509 S1; the goal-scoring sibling `isEarlyColonialExpansion` — `hasColonialAcquisitionTargets(colonial) && colonial.newWorldProvincesOwned < kColonialFewNwProvincesThreshold`, consumed by `goal_manager.dart` for the early-colonial conquer-score bonus — lives alongside it for the same retirement-survival reason).
+- Enter **COLONIAL** when OW ≥ 10 and `hasColonialAcquisitionTargets` (defined in `observer_goal_phase.dart` per Refs #2509 S1; the goal-scoring sibling `isEarlyColonialExpansion` — `hasColonialAcquisitionTargets(colonial) && colonial.newWorldProvincesOwned < kColonialFewNwProvincesThreshold`, consumed by `goal_manager.dart` for the early-colonial conquer-score bonus — lives alongside it for the same retirement-survival reason). EXPAND OW frontier helpers (`hasUninvadedOldWorldMinor`, `isOldWorldGpOnlyInvadableFrontier`, `isMutualBelowQuotaPlateauPeer`, `primaryInvadableOldWorldGpBlocker`) are canonical in `expand_phase_planner.dart`; `colonial_pressure.dart` delegates until S1 deletion.
 - Enter **DEVELOP** when OW ≥ 10 and no visible colonial targets.
 - **COLONIAL-lite** is a parallel entry inside EXPAND (turn ≥ `kObserverColonialLiteMinTurn`, OW ≥ `kObserverColonialLiteNearQuotaOw` and below quota, global `newWorld|` not all GP-owned).
 
