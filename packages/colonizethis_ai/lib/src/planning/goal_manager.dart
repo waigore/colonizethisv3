@@ -6,6 +6,7 @@ import '../util/ai_random_utils.dart';
 import '../perception/perception_snapshot.dart';
 import 'colonial_pressure.dart';
 import 'observer_goal_phase.dart';
+import 'phase_planner_goal_filter.dart';
 
 final _log = packageLogger();
 
@@ -19,8 +20,14 @@ enum StrategicGoal { defend, expand, conquer, trade, tech, diplomacy }
 Map<StrategicGoal, int> evaluateStrategicGoalScores(
   AIWorldSnapshot snapshot,
   AIConfig config, {
+  ObserverGoalPhase? observerGoalPhase,
   bool suppressColonialPressure = false,
 }) {
+  final phaseColonialPressureActive = observerGoalPhase != null
+      ? resolvePhaseGoalColonialPressureActive(observerGoalPhase)
+      : !suppressColonialPressure &&
+            hasColonialAcquisitionTargets(snapshot.colonial) &&
+            !shouldSuppressNewWorldColonialOrders(snapshot: snapshot);
   final weights = getGoalWeightsForLeader(config.personalityId);
   final thresholds = getThresholdsForLeader(config.personalityId);
 
@@ -90,9 +97,7 @@ Map<StrategicGoal, int> evaluateStrategicGoalScores(
       tech = math.min(tech, 45);
     }
   }
-  if (!suppressColonialPressure &&
-      hasColonialAcquisitionTargets(snapshot.colonial) &&
-      !shouldSuppressNewWorldColonialOrders(snapshot: snapshot)) {
+  if (phaseColonialPressureActive) {
     diplomacy -= kColonialDiplomacyGoalPenaltyWhenPressure;
     trade -= kColonialTradeGoalPenaltyWhenPressure;
     if (expand < kMinimumColonialExpandScoreWhenPressure) {
@@ -176,11 +181,13 @@ StrategicGoal selectPrimaryGoal(
   int goalSeed, {
   required String nationId,
   required int turn,
+  ObserverGoalPhase? observerGoalPhase,
   bool suppressColonialPressure = false,
 }) {
   final candidates = evaluateStrategicGoalScores(
     snapshot,
     config,
+    observerGoalPhase: observerGoalPhase,
     suppressColonialPressure: suppressColonialPressure,
   );
 
