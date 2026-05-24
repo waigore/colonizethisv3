@@ -29,12 +29,19 @@ bool hasUninvadedOldWorldMinor({
 );
 
 /// Below-quota OW expansion with a GP-only invadable frontier (seed-42 gp5/gp6).
+///
+/// Delegates to [expand_phase_planner.isStalledOldWorldGpBlockerFocus]
+/// (Refs #2509 S1) so the canonical implementation lives alongside the
+/// EXPAND OW frontier helpers it composes (`isBelowObserverConquestQuota`
+/// from `colonizethis_data` and `isOldWorldGpOnlyInvadableFrontier` from
+/// `expand_phase_planner.dart`).
 bool isStalledOldWorldGpBlockerFocus({
   required Game game,
   required AIWorldSnapshot snapshot,
-}) =>
-    isBelowObserverConquestQuota(snapshot.conquest.oldWorldProvincesOwned) &&
-    isOldWorldGpOnlyInvadableFrontier(game: game, snapshot: snapshot);
+}) => expand_phase_planner.isStalledOldWorldGpBlockerFocus(
+  game: game,
+  snapshot: snapshot,
+);
 
 /// Below-quota EXPAND GP at peace with all other Great Powers, with an invadable
 /// Old World frontier and a positive but small standing regiment count.

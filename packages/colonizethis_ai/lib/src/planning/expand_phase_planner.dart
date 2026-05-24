@@ -319,6 +319,29 @@ bool isMutualBelowQuotaPlateauPeer({
     isBelowObserverConquestQuota(partnerOw) &&
     (partnerOw - ownOw).abs() <= 1;
 
+/// Below-quota OW expansion with a GP-only invadable frontier (seed-42 gp5/gp6).
+///
+/// Composite gate combining [isBelowObserverConquestQuota] on the active
+/// player's [ConquestSummary.oldWorldProvincesOwned] with
+/// [isOldWorldGpOnlyInvadableFrontier]: returns `true` only when the GP is
+/// strictly below [kObserverConquestMinOwProvincesPerGp] **and** every
+/// invadable OW province is owned by a Great Power (no minor pivot
+/// remaining on the frontier).
+///
+/// Relocated from `colonial_pressure.dart` (Refs #2509 S1) so the predicate
+/// survives the planned deletion of that file. Fans out across the
+/// EXPAND/COLONIAL goal-scoring and diplomacy-planner call sites
+/// (`phase_planner_economy_filter.dart`, `phase_planner_goal_filter.dart`,
+/// `diplomacy_planner.dart`, `diplomacy_planner_peace_targets.dart`,
+/// `diplomatic_candidate_scoring_*.dart`) that gate the colonial-pressure
+/// routing and sole-GP-war scoring on the GP-only-frontier shape.
+bool isStalledOldWorldGpBlockerFocus({
+  required Game game,
+  required AIWorldSnapshot snapshot,
+}) =>
+    isBelowObserverConquestQuota(snapshot.conquest.oldWorldProvincesOwned) &&
+    isOldWorldGpOnlyInvadableFrontier(game: game, snapshot: snapshot);
+
 /// Returns the deterministic factionId of the next declare-war target for
 /// the active EXPAND player, or `null` when no priority arm applies.
 ///
