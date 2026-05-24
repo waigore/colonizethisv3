@@ -15,6 +15,12 @@
 ///   [kDevelopCivilianWorkThresholdCap], force
 ///   `runFullAiCivilianWork`). Active only under
 ///   [ObserverGoalPhase.develop].
+/// - [resolvePhaseEconomyExpandQuotaPressureActive] — gates the
+///   below-quota OW build-pass arms in `_appendEconomyBuildOrders`
+///   (stalled build threshold, GP-blocker focus, quota peace rebuild
+///   helpers). Active only under [ObserverGoalPhase.expand] and
+///   [ObserverGoalPhase.colonialLite]; field-equal to
+///   [resolvePhaseConquestExtraPassesActive].
 ///
 /// Both resolvers read **only** `outcome.phase` and never inspect
 /// sibling slots. The dispatcher already resolved
@@ -69,6 +75,7 @@
 library;
 
 import 'observer_goal_phase.dart';
+import 'phase_planner_conquest_filter.dart';
 import 'phase_planner_dispatch.dart';
 
 /// When `true`, `_runEconomyDomainPlanners` lowers the civilian work
@@ -146,3 +153,25 @@ bool resolvePhaseEconomyColonialPressureActive({
 /// no order emission.
 bool resolvePhaseEconomyDevelopActive({required PhasePlanOutcome phasePlan}) =>
     phasePlan.phase == ObserverGoalPhase.develop;
+
+/// When `true`, `_appendEconomyBuildOrders` applies the below-quota OW
+/// build-pass arms (stalled build threshold cap, GP-blocker focus,
+/// `isBelowQuotaPeace*` regiment-rebuild helpers, and the
+/// `forceRegimentRebuild` stalled-expansion arm) for the active player.
+///
+/// Active only under [ObserverGoalPhase.expand] and
+/// [ObserverGoalPhase.colonialLite] — field-equal to
+/// [resolvePhaseConquestExtraPassesActive] because both phases require
+/// `oldWorldProvincesOwned < kObserverConquestMinOwProvincesPerGp` at
+/// entry via [observerGoalPhaseFor], which is precisely the condition
+/// the legacy `isStalledOldWorldExpansion(ow)` /
+/// `isBelowObserverConquestQuota(ow)` pair evaluated to.
+///
+/// COLONIAL and DEVELOP return `false` even when EXPAND slots on
+/// [PhasePlanOutcome] are populated (structural phase separation).
+///
+/// Pure and deterministic — identical inputs always yield identical
+/// resolutions (Refs #2509 Must-have #7).
+bool resolvePhaseEconomyExpandQuotaPressureActive({
+  required PhasePlanOutcome phasePlan,
+}) => resolvePhaseConquestExtraPassesActive(phasePlan: phasePlan);

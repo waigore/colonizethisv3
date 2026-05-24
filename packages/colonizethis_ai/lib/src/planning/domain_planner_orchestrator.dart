@@ -7,6 +7,7 @@ import 'colonial_pressure.dart';
 import 'phase_planner_conquest_filter.dart';
 import 'phase_planner_dispatch.dart';
 import 'phase_planner_economy_filter.dart';
+import 'phase_planner_expand_economy.dart';
 import 'phase_planner_work_order_filter.dart';
 import 'planning_imports.dart';
 import 'goal_manager.dart';
@@ -317,6 +318,7 @@ PlannerContext _runEconomyDomainPlanners({
   result = _appendEconomyBuildOrders(
     ctx: ctx,
     snapshot: snapshot,
+    phasePlan: phasePlan,
     economyPlan: economyPlan,
     orders: result,
     colonialPressure: colonialPressure,
@@ -330,28 +332,44 @@ PlannerContext _runEconomyDomainPlanners({
 Orders _appendEconomyBuildOrders({
   required PlannerContext ctx,
   required AIWorldSnapshot snapshot,
+  required PhasePlanOutcome phasePlan,
   required EconomyPlan economyPlan,
   required Orders orders,
   required bool colonialPressure,
   required List<BuildUnitOrder> buildCandidates,
   required int domainEconomyWeight,
 }) {
+  // Refs #2509 S5: derive below-quota OW build-pass routing from the
+  // dispatched phase plan instead of recomputing
+  // `isStalledOldWorldExpansion(ow)` / `isBelowObserverConquestQuota(ow)`
+  // per build pass. Field-equal to `phase ∈ {EXPAND, COLONIAL-lite}` via
+  // `resolvePhaseEconomyExpandQuotaPressureActive` (see
+  // `SPEC/ai/phase-planner-dispatch.md` § Orchestrator economy build
+  // slice). The EXPAND regiment-rebuild directive comes from
+  // `expandEconomyPlanFromPhasePlan` (already computed once in
+  // `runPhasePlanners`).
+  final expandQuotaPressure = resolvePhaseEconomyExpandQuotaPressureActive(
+    phasePlan: phasePlan,
+  );
+  final expandEconomy = expandEconomyPlanFromPhasePlan(phasePlan);
+
   var buildThreshold =
       30 - getAgendaBuildOrderModifier(ctx.config.hiddenAgendaId);
-  if (isStalledOldWorldExpansion(snapshot.conquest.oldWorldProvincesOwned)) {
+  if (expandQuotaPressure) {
     buildThreshold = math.min(buildThreshold, 15);
   }
-  if (isStalledOldWorldGpBlockerFocus(game: ctx.game, snapshot: snapshot)) {
+  if (expandQuotaPressure &&
+      isStalledOldWorldGpBlockerFocus(game: ctx.game, snapshot: snapshot)) {
     buildThreshold = math.min(buildThreshold, 8);
   }
-  final colonialBuildCap = colonialBuildOrderThresholdCap(snapshot.colonial);
-  if (colonialBuildCap != null) {
-    buildThreshold = math.min(buildThreshold, colonialBuildCap);
+  if (colonialPressure) {
+    final colonialBuildCap = colonialBuildOrderThresholdCap(snapshot.colonial);
+    if (colonialBuildCap != null) {
+      buildThreshold = math.min(buildThreshold, colonialBuildCap);
+    }
   }
   final regimentCount = regimentCountForPlayer(ctx.game, ctx.nationId);
-  final observerQuotaPressure = isBelowObserverConquestQuota(
-    snapshot.conquest.oldWorldProvincesOwned,
-  );
+  final observerQuotaPressure = expandQuotaPressure;
   final atWarWithAnyGreatPower = snapshot.threats.atWarWith.any(
     (id) => ctx.game.playerById(id) != null,
   );
@@ -362,6 +380,7 @@ Orders _appendEconomyBuildOrders({
   final brokeBelowQuotaAtPeace =
       observerQuotaPressure && regimentCount == 0 && !atWarWithAnyGreatPower;
   final belowQuotaPeaceInsufficientRegiments =
+      expandQuotaPressure &&
       isBelowQuotaPeaceInsufficientRegiments(
         oldWorldProvincesOwned: snapshot.conquest.oldWorldProvincesOwned,
         regimentCount: regimentCount,
@@ -369,12 +388,14 @@ Orders _appendEconomyBuildOrders({
         hasInvadableProvinces:
             snapshot.conquest.invadableProvinceIdsSorted.isNotEmpty,
       );
-  final belowQuotaZeroRegimentsRebuild = isBelowQuotaPeaceZeroRegimentsRebuild(
-    oldWorldProvincesOwned: snapshot.conquest.oldWorldProvincesOwned,
-    regimentCount: regimentCount,
-    hasInvadableProvinces:
-        snapshot.conquest.invadableProvinceIdsSorted.isNotEmpty,
-  );
+  final belowQuotaZeroRegimentsRebuild =
+      expandQuotaPressure &&
+      isBelowQuotaPeaceZeroRegimentsRebuild(
+        oldWorldProvincesOwned: snapshot.conquest.oldWorldProvincesOwned,
+        regimentCount: regimentCount,
+        hasInvadableProvinces:
+            snapshot.conquest.invadableProvinceIdsSorted.isNotEmpty,
+      );
   final zeroRegimentsAtWar =
       regimentCount == 0 && snapshot.threats.atWarWith.isNotEmpty;
   final criticallyWeakBelowQuota =
@@ -388,7 +409,8 @@ Orders _appendEconomyBuildOrders({
           kFewOldWorldProvincesDefendThreshold &&
       !snapshot.threats.atWarWith.any((id) => ctx.game.playerById(id) != null);
   final gpBlocker =
-      isStalledOldWorldGpBlockerFocus(game: ctx.game, snapshot: snapshot)
+      expandQuotaPressure &&
+          isStalledOldWorldGpBlockerFocus(game: ctx.game, snapshot: snapshot)
       ? primaryInvadableOldWorldGpBlocker(game: ctx.game, snapshot: snapshot)
       : null;
   final atWarWithGpBlocker =
@@ -419,15 +441,17 @@ Orders _appendEconomyBuildOrders({
     minRegimentFloor = 1;
   }
   final forceRegimentRebuild =
-      (isStalledOldWorldExpansion(snapshot.conquest.oldWorldProvincesOwned) ||
-          criticallyWeakBelowQuota) &&
+      (expandQuotaPressure || criticallyWeakBelowQuota) &&
       (snapshot.threats.atWarWith.isNotEmpty ||
           needRegimentsToExpand ||
           brokeBelowQuotaAtPeace ||
           belowQuotaPeaceInsufficientRegiments ||
-          belowQuotaZeroRegimentsRebuild) &&
+          belowQuotaZeroRegimentsRebuild ||
+          expandEconomy.forceCheapestRegimentBuild) &&
       regimentCount < minRegimentFloor;
-  if (forceRegimentRebuild || atWarWithGpBlocker) {
+  if (forceRegimentRebuild ||
+      atWarWithGpBlocker ||
+      expandEconomy.forceCheapestRegimentBuild) {
     buildThreshold = 0;
   }
   _log.d(
@@ -460,11 +484,12 @@ Orders _appendEconomyBuildOrders({
       oldWorldProvincesOwned: snapshot.conquest.oldWorldProvincesOwned,
       colonialPressure: colonialPressure,
       militaryRebuildCrisis:
-          forceRegimentRebuild &&
+          (forceRegimentRebuild || expandEconomy.forceCheapestRegimentBuild) &&
           (atWarWithGpBlocker ||
               brokeBelowQuotaAtPeace ||
               belowQuotaZeroRegimentsRebuild ||
               belowQuotaPeaceInsufficientRegiments ||
+              expandEconomy.forceCheapestRegimentBuild ||
               (regimentCount <= kStalledMilitaryRebuildCrisisRegimentCap &&
                   !(observerQuotaPressure &&
                       snapshot.conquest.oldWorldProvincesOwned >

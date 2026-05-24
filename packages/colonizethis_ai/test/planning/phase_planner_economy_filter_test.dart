@@ -42,6 +42,8 @@
 
 import 'package:colonizethis_ai/colonizethis_ai.dart';
 import 'package:colonizethis_ai/src/planning/colonial_phase_planner.dart';
+import 'package:colonizethis_ai/src/planning/expand_phase_planner.dart'
+    show ExpandEconomyPlan;
 import 'package:colonizethis_ai/src/planning/phase_planner_conquest_filter.dart';
 import 'package:colonizethis_ai/src/planning/phase_planner_economy_filter.dart';
 import 'package:colonizethis_logic/ai_api.dart' show kWorkTargetBuildImprovement;
@@ -314,5 +316,94 @@ void main() {
         }
       },
     );
+  });
+
+  group('resolvePhaseEconomyExpandQuotaPressureActive', () {
+    test('active only under EXPAND and COLONIAL-lite', () {
+      for (final phase in <ObserverGoalPhase>[
+        ObserverGoalPhase.expand,
+        ObserverGoalPhase.colonialLite,
+      ]) {
+        expect(
+          resolvePhaseEconomyExpandQuotaPressureActive(
+            phasePlan: PhasePlanOutcome(phase: phase),
+          ),
+          isTrue,
+          reason:
+              '$phase: below-quota OW build-pass arms (stalled threshold, '
+              'GP-blocker focus, quota peace rebuild) are structurally on.',
+        );
+      }
+    });
+
+    test('suppressed under COLONIAL and DEVELOP', () {
+      for (final phase in <ObserverGoalPhase>[
+        ObserverGoalPhase.colonial,
+        ObserverGoalPhase.develop,
+      ]) {
+        expect(
+          resolvePhaseEconomyExpandQuotaPressureActive(
+            phasePlan: PhasePlanOutcome(phase: phase),
+          ),
+          isFalse,
+          reason:
+              '$phase: OW quota pressure build arms must not leak from '
+              'EXPAND / COLONIAL-lite once the GP is at or above quota '
+              'or in DEVELOP improvement push.',
+        );
+      }
+    });
+
+    test('field-equal to resolvePhaseConquestExtraPassesActive across all '
+        'phases', () {
+      for (final phase in ObserverGoalPhase.values) {
+        final outcome = PhasePlanOutcome(phase: phase);
+        expect(
+          resolvePhaseEconomyExpandQuotaPressureActive(phasePlan: outcome),
+          resolvePhaseConquestExtraPassesActive(phasePlan: outcome),
+          reason:
+              '$phase: economy and conquest below-quota resolvers must '
+              'agree (both gate on phase ∈ {EXPAND, COLONIAL-lite}).',
+        );
+      }
+    });
+
+    test('reads only outcome.phase — populated EXPAND slots under COLONIAL / '
+        'DEVELOP do not flip the resolver to true', () {
+      const expandEconomyPopulated = ExpandEconomyPlan(
+        forceCheapestRegimentBuild: true,
+        boostTreasuryRecoveryCargo: true,
+      );
+      for (final phase in <ObserverGoalPhase>[
+        ObserverGoalPhase.colonial,
+        ObserverGoalPhase.develop,
+      ]) {
+        final outcome = PhasePlanOutcome(
+          phase: phase,
+          expandEconomyPlan: expandEconomyPopulated,
+          expandDeclareWarTargetFactionId: 'minor1',
+        );
+        expect(
+          resolvePhaseEconomyExpandQuotaPressureActive(phasePlan: outcome),
+          isFalse,
+          reason:
+              '$phase: non-default expandEconomyPlan must not enable '
+              'below-quota OW build routing outside EXPAND / COLONIAL-lite.',
+        );
+      }
+    });
+
+    test('deterministic across repeated calls (Must-have #7)', () {
+      for (final phase in ObserverGoalPhase.values) {
+        final outcome = PhasePlanOutcome(phase: phase);
+        final a = resolvePhaseEconomyExpandQuotaPressureActive(
+          phasePlan: outcome,
+        );
+        final b = resolvePhaseEconomyExpandQuotaPressureActive(
+          phasePlan: outcome,
+        );
+        expect(a, b, reason: '$phase: two-call determinism');
+      }
+    });
   });
 }
