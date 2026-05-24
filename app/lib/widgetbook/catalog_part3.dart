@@ -839,7 +839,7 @@ class _CtDialogueViewStoryHarnessState
       return const CtLoadingIndicator();
     }
     if (_finished) {
-      return const Center(child: Text('Dialogue finished.'));
+      return const Center(child: Icon(Icons.check_circle, size: 32));
     }
     final line = view.currentLine;
     final choice = view.currentChoice;
@@ -854,7 +854,7 @@ class _CtDialogueViewStoryHarnessState
             const SizedBox(height: 16),
             ElevatedButton(
               onPressed: view.advanceLine,
-              child: const Text('Advance line'),
+              child: const Icon(Icons.arrow_forward),
             ),
           ] else if (choice != null) ...[
             for (var i = 0; i < choice.options.length; i++)
@@ -898,7 +898,7 @@ List<WidgetbookNode> get gameStartIntroOverlayDirectories => [
               assetBundle: _InlineYarnAssetBundle(
                 _kGameStartIntroOverlayStorySource,
               ),
-              child: const Center(child: Text('Game shell placeholder')),
+              child: const Placeholder(),
             ),
           ),
         ),
