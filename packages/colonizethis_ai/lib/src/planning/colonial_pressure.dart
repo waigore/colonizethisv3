@@ -390,100 +390,41 @@ String? unwinnableSoleGpFrontierPeaceTarget({
   return enemy;
 }
 
-String? _gpWarPartnerAgainstTarget(
-  DiplomacyRelation rel,
-  String targetGpId,
-  Game game,
-) {
-  if (rel.state != RelationState.atWar) {
-    return null;
-  }
-  if (rel.factionId1 == targetGpId && game.playerById(rel.factionId2) != null) {
-    return rel.factionId2;
-  }
-  if (rel.factionId2 == targetGpId && game.playerById(rel.factionId1) != null) {
-    return rel.factionId1;
-  }
-  return null;
-}
-
-bool _hasDeclareWarOnTarget(
-  Iterable<DiplomaticOrder> orders,
-  String targetGpId,
-) {
-  for (final order in orders) {
-    if (order.type == DiplomaticOrderType.declareWar &&
-        order.targetFactionId == targetGpId) {
-      return true;
-    }
-  }
-  return false;
-}
-
-void _addSameTurnDeclareWarGpTargets({
-  required Game game,
-  required String targetGpId,
-  required Orders orders,
-  required Set<String> atWarGpIds,
-}) {
-  for (final entry in orders.diplomaticOrdersByPlayerId.entries) {
-    final declarerId = entry.key;
-    if (game.playerById(declarerId) == null) {
-      continue;
-    }
-    if (!_hasDeclareWarOnTarget(entry.value, targetGpId)) {
-      continue;
-    }
-    atWarGpIds.add(declarerId);
-  }
-}
-
 /// Great Power wars already targeting [targetGpId] (resolved relations plus
 /// same-turn declare-war orders from earlier Full AI players).
+///
+/// Delegates to [expand_phase_planner.greatPowerWarCountOnTarget]
+/// (Refs #2509 S1) so the declare-war coordination helper survives the
+/// planned deletion of this file alongside its EXPAND-phase callers in
+/// `diplomatic_candidate_scoring_declare_war.dart` (war concentration
+/// suppression).
 int greatPowerWarCountOnTarget({
   required Game game,
   required String targetGpId,
   Orders? sameTurnPriorDiplomaticOrders,
-}) {
-  final atWarGpIds = <String>{};
-  for (final rel in game.diplomacyRelations) {
-    final partner = _gpWarPartnerAgainstTarget(rel, targetGpId, game);
-    if (partner != null) {
-      atWarGpIds.add(partner);
-    }
-  }
-  if (sameTurnPriorDiplomaticOrders != null) {
-    _addSameTurnDeclareWarGpTargets(
-      game: game,
-      targetGpId: targetGpId,
-      orders: sameTurnPriorDiplomaticOrders,
-      atWarGpIds: atWarGpIds,
-    );
-  }
-  return atWarGpIds.length;
-}
+}) => expand_phase_planner.greatPowerWarCountOnTarget(
+  game: game,
+  targetGpId: targetGpId,
+  sameTurnPriorDiplomaticOrders: sameTurnPriorDiplomaticOrders,
+);
 
 /// True when [declarerFactionId] has a same-turn declare-war on [targetFactionId]
 /// in [sameTurnPriorDiplomaticOrders] (earlier Full AI players).
+///
+/// Delegates to [expand_phase_planner.pendingDeclareWarFrom]
+/// (Refs #2509 S1) so the same-turn declare-war ordering helper survives
+/// the planned deletion of this file alongside the
+/// `diplomatic_candidate_scoring_declare_war.dart` consumer that uses it
+/// to suppress mutual declare-war dogpiles.
 bool pendingDeclareWarFrom({
   required Orders? sameTurnPriorDiplomaticOrders,
   required String declarerFactionId,
   required String targetFactionId,
-}) {
-  if (sameTurnPriorDiplomaticOrders == null) {
-    return false;
-  }
-  for (final order
-      in sameTurnPriorDiplomaticOrders
-              .diplomaticOrdersByPlayerId[declarerFactionId] ??
-          const []) {
-    if (order.type == DiplomaticOrderType.declareWar &&
-        order.targetFactionId == targetFactionId) {
-      return true;
-    }
-  }
-  return false;
-}
+}) => expand_phase_planner.pendingDeclareWarFrom(
+  sameTurnPriorDiplomaticOrders: sameTurnPriorDiplomaticOrders,
+  declarerFactionId: declarerFactionId,
+  targetFactionId: targetFactionId,
+);
 
 /// Peace at-war Great Powers that lead by [kUnwinnableSoleGpMinProvinceDeficit]
 /// or more while below the observer quota (even with minor wars; Refs #2509).
