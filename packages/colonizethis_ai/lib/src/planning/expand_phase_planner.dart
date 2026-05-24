@@ -302,6 +302,117 @@ bool hasUninvadedOldWorldMinor({
   return false;
 }
 
+/// Returns the `factionId` of the sole Great Power the active player is at
+/// war with, or `null` when the at-war set is empty, contains only minor /
+/// tribe ids, or contains more than one Great Power.
+///
+/// Canonical home (Refs #2509 S1) for the legacy `soleAtWarGreatPowerId`
+/// predicate previously hosted in `colonial_pressure.dart`. Captures the
+/// "exactly one GP foe remaining" precondition shared by the EXPAND-phase
+/// sole-GP peace deciders ([unwinnableSoleGpFrontierPeaceTarget],
+/// [consolidateGainsSoleGpPeaceTarget]) and the peer-stalled peace
+/// helper `belowQuotaPeerGpPeaceTargets` — all of which short-circuit to
+/// the default no-peace path when no sole-GP foe is identified.
+///
+/// `colonial_pressure.dart` retains a thin delegating stub for legacy
+/// import sites (the `colonial_pressure_sole_at_war_gp_branches_test.dart`
+/// fixture, the existing `belowQuotaPeerGpPeaceTargets` /
+/// `unwinnableSoleGpFrontierPeaceTarget` / `consolidateGainsSoleGpPeaceTarget`
+/// callers within `colonial_pressure.dart` itself) so the planned S1
+/// deletion of that file leaves no orphan callers.
+///
+/// Behavioral invariants pinned at the canonical-home test boundary
+/// (`test/planning/expand_phase_planner_sole_gp_war_helpers_test.dart`):
+///   1. Empty [ThreatSummary.atWarWith] returns `null` (no foe at all).
+///   2. At-war entries that are not current Great Powers
+///      ([Game.playerById] returns `null`) are filtered out before the
+///      length-one check — pure minor / tribe wars therefore yield
+///      `null`.
+///   3. The length guard refuses to elect a sole-GP foe when more than
+///      one Great Power is at war; a mixed two-GP-plus-minor at-war
+///      list still resolves to `null` after the minor filter collapses
+///      the list to two GPs.
+///
+/// Pure and deterministic — identical inputs always yield identical
+/// results (Refs #2509 Must-have #7). Linear in
+/// [ThreatSummary.atWarWith].
+String? soleAtWarGreatPowerId({
+  required Game game,
+  required AIWorldSnapshot snapshot,
+}) {
+  final gpWars = <String>[
+    for (final factionId in snapshot.threats.atWarWith)
+      if (game.playerById(factionId) != null) factionId,
+  ];
+  if (gpWars.length != 1) {
+    return null;
+  }
+  return gpWars.single;
+}
+
+/// Whether peacing a below-quota sole-GP war leaves the EXPAND-phase
+/// player a pivot path back to active OW expansion (a remaining
+/// uninvaded minor or a minor-owned invadable frontier province).
+///
+/// Canonical home (Refs #2509 S1) for the legacy
+/// `canPivotFromSoleGpWarAfterPeace` predicate previously hosted in
+/// `colonial_pressure.dart`. Used by [unwinnableSoleGpFrontierPeaceTarget]
+/// in `colonial_pressure.dart` to gate the "peace the lone GP foe when
+/// clearly outgunned" decision — peacing is only worthwhile if the
+/// active GP can immediately resume EXPAND against a minor rather than
+/// idle while the lone GP rebuilds.
+///
+/// Returns `true` exactly when **any** of these hold:
+///   1. The active player is at or above
+///      [kObserverConquestMinOwProvincesPerGp] OW provinces (no longer
+///      in EXPAND territory; the EXPAND-trap pivot guard is irrelevant
+///      so we always allow peace).
+///   2. A minor nation still owns at least one Old World province
+///      anywhere on the map (the GP can attempt to formalize a new
+///      minor war after peacing).
+///   3. The active player's [ConquestSummary.invadableProvinceIdsSorted]
+///      contains a province whose current owner is a minor nation (the
+///      planner can immediately declare on that minor after peacing
+///      the lone GP, since the invadable frontier already has a minor
+///      pivot).
+///
+/// All three arms are short-circuited (`||` semantics): the function
+/// returns on the first true arm without walking the remaining checks.
+///
+/// `colonial_pressure.dart` retains a thin delegating stub for legacy
+/// import sites (the `colonial_pressure_can_pivot_from_sole_gp_war_branches_test.dart`
+/// fixture and the existing `unwinnableSoleGpFrontierPeaceTarget` caller
+/// within `colonial_pressure.dart` itself) so the planned S1 deletion of
+/// that file leaves no orphan callers.
+///
+/// Pure and deterministic — identical inputs always yield identical
+/// results (Refs #2509 Must-have #7). Linear in the smaller of
+/// [WorldState.oldWorld] provinces (minors-on-map scan) and
+/// [ConquestSummary.invadableProvinceIdsSorted] (minor-owned invadable
+/// scan); short-circuited at the quota arm when above quota.
+bool canPivotFromSoleGpWarAfterPeace({
+  required Game game,
+  required AIWorldSnapshot snapshot,
+}) {
+  if (snapshot.conquest.oldWorldProvincesOwned >=
+      kObserverConquestMinOwProvincesPerGp) {
+    return true;
+  }
+  final minorsOnMap = game.worldState.oldWorld.provinces.any(
+    (p) =>
+        p.ownerId != null &&
+        p.ownerId!.isNotEmpty &&
+        game.minorNations.any((m) => m.id == p.ownerId),
+  );
+  if (minorsOnMap) {
+    return true;
+  }
+  return snapshot.conquest.invadableProvinceIdsSorted.any((pid) {
+    final owner = getProvinceOwnerMap(game)[pid];
+    return owner != null && game.minorNations.any((m) => m.id == owner);
+  });
+}
+
 /// Whether [ownOw] and [partnerOw] are both in the stalled below-quota
 /// plateau band with similar holdings (within one province of each other).
 ///
