@@ -6,6 +6,7 @@ import 'army_conquest_prep.dart';
 import 'colonial_pressure.dart';
 import 'observer_goal_phase.dart';
 import 'phase_planner_dispatch.dart';
+import 'phase_planner_economy_filter.dart';
 import 'phase_planner_work_order_filter.dart';
 import 'planning_imports.dart';
 import 'goal_manager.dart';
@@ -218,9 +219,7 @@ PlannerContext _runEconomyDomainPlanners({
     tileMapByRegion: tileMapByRegion,
   );
   workCandidates = workCandidates
-      .where(
-        (w) => !shouldSuppressWorkOrderFromPhasePlan(w, phasePlan),
-      )
+      .where((w) => !shouldSuppressWorkOrderFromPhasePlan(w, phasePlan))
       .toList();
   final buildCandidates = ctx.suggestionAPI.suggestBuildOrders(
     ctx.view,
@@ -239,10 +238,20 @@ PlannerContext _runEconomyDomainPlanners({
     snapshot: snapshot,
     game: ctx.game,
   );
-  final colonialPressure =
-      hasColonialAcquisitionTargets(snapshot.colonial) &&
-      !isStalledOldWorldGpBlockerFocus(game: ctx.game, snapshot: snapshot) &&
-      !shouldSuppressNewWorldColonialOrders(snapshot: snapshot, game: ctx.game);
+  // Refs #2509 S5: derive colonial economy pressure from the dispatched
+  // phase plan instead of the legacy three-predicate compute. The phase
+  // dispatcher already resolved `observerGoalPhaseFor` once per player turn;
+  // this resolver mirrors `resolvePhaseConquestColonialPressureActive` and
+  // enables the colonial economy boost only under COLONIAL — structurally
+  // suppressed under EXPAND, COLONIAL-lite, and DEVELOP per
+  // `SPEC/ai/phase-planner-dispatch.md` § Orchestrator economy slice.
+  // The tagalong `newWorldProvincesOwned > 0` guards below still
+  // independently trigger the colonial workThreshold cap and
+  // `runFullAiCivilianWork` so GPs that already own NW provinces keep
+  // running civilian planning under EXPAND / COLONIAL-lite.
+  final colonialPressure = resolvePhaseEconomyColonialPressureActive(
+    phasePlan: phasePlan,
+  );
   if (developPhase) {
     workThreshold = math.min(workThreshold, kDevelopCivilianWorkThresholdCap);
   } else if (colonialPressure || snapshot.colonial.newWorldProvincesOwned > 0) {

@@ -19,6 +19,7 @@ int _scoreDeclareWarDiplomaticOrder({
   required int Function(String targetFactionId, int relationScore)
   warDesireForTarget,
   Orders? sameTurnPriorDiplomaticOrders,
+  PhasePlanOutcome? phasePlan,
 }) {
   final ctx = _DeclareWarTargetContext.build(
     order: order,
@@ -37,6 +38,7 @@ int _scoreDeclareWarDiplomaticOrder({
     primaryGoal: primaryGoal,
     warDesireForTarget: warDesireForTarget,
     agendaId: agendaId,
+    phasePlan: phasePlan,
   );
   final suppressed = _declareWarSuppressedScore(
     ctx,
@@ -105,7 +107,8 @@ final class _DeclareWarTargetContext {
   final int currentTurn;
   final bool anyMinorOwnsOldWorld;
   final StrategicGoal? primaryGoal;
-  final int Function(String targetFactionId, int relationScore) warDesireForTarget;
+  final int Function(String targetFactionId, int relationScore)
+  warDesireForTarget;
   final DiplomacyRelation? relation;
   final int relationScore;
   final List<String> adjacentOwners;
@@ -147,6 +150,7 @@ final class _DeclareWarTargetContext {
     required StrategicGoal? primaryGoal,
     required int Function(String targetFactionId, int relationScore)
     warDesireForTarget,
+    PhasePlanOutcome? phasePlan,
   }) {
     final relation = snapshot.relations[order.targetFactionId];
     final relationScore = relation?.score ?? 50;
@@ -154,28 +158,46 @@ final class _DeclareWarTargetContext {
     final colonialAdjacent =
         snapshot.colonial.adjacentNewWorldOwnerFactionIdsSorted;
     final isAdjacentOwner = adjacentOwners.contains(order.targetFactionId);
-    final isColonialAdjacentOwner =
-        colonialAdjacent.contains(order.targetFactionId);
+    final isColonialAdjacentOwner = colonialAdjacent.contains(
+      order.targetFactionId,
+    );
     final isMinorTarget = _isMinorOrTribeFaction(game, order.targetFactionId);
     final ownsInvadableNw = snapshot.colonial.invadableNewWorldProvinceIdsSorted
         .any((pid) => provinceOwner[pid] == order.targetFactionId);
-    final colonialPressure = hasColonialAcquisitionTargets(snapshot.colonial) &&
-        !isStalledOldWorldGpBlockerFocus(game: game, snapshot: snapshot) &&
-        !shouldSuppressNewWorldColonialOrders(
-          snapshot: snapshot,
-          game: game,
-        );
+    // Refs #2509 S5: derive colonial-pressure from the dispatched phase
+    // plan when available — `resolvePhaseDiplomacyDeclareWarColonialPressureActive`
+    // returns `true` only under `ObserverGoalPhase.colonial`, mirroring the
+    // economy and conquest resolvers. Falls back to the legacy three-predicate
+    // compute when no phase plan was threaded through (test paths and other
+    // callers; the orchestrator always passes `phasePlan` so production runs
+    // route through the phase-derived value). The legacy path retires
+    // structurally in S1 once every consumer migrates.
+    final colonialPressure = phasePlan != null
+        ? resolvePhaseDiplomacyDeclareWarColonialPressureActive(
+            phasePlan: phasePlan,
+          )
+        : hasColonialAcquisitionTargets(snapshot.colonial) &&
+              !isStalledOldWorldGpBlockerFocus(
+                game: game,
+                snapshot: snapshot,
+              ) &&
+              !shouldSuppressNewWorldColonialOrders(
+                snapshot: snapshot,
+                game: game,
+              );
     final isTribeTarget = _isTribeFaction(game, order.targetFactionId);
     final stalledOwExpansion = isObserverConquestExpansionPressure(
       snapshot.conquest.oldWorldProvincesOwned,
     );
-    final ownsInvadableOwMinor = isMinorTarget &&
+    final ownsInvadableOwMinor =
+        isMinorTarget &&
         !isTribeTarget &&
         invadableOwners.contains(order.targetFactionId);
     final minorProvinces = isMinorTarget && !isTribeTarget
         ? provinceCountOwnedBy(game, order.targetFactionId)
         : 0;
-    final weakerDistantMinor = stalledOwExpansion &&
+    final weakerDistantMinor =
+        stalledOwExpansion &&
         behindVictoryPace &&
         isMinorTarget &&
         !isTribeTarget &&
@@ -209,18 +231,19 @@ final class _DeclareWarTargetContext {
     );
     final isAdjacentGp =
         isAdjacentOwner && game.playerById(order.targetFactionId) != null;
-    final invadableGpBlocker = game.playerById(order.targetFactionId) != null &&
+    final invadableGpBlocker =
+        game.playerById(order.targetFactionId) != null &&
         snapshot.conquest.invadableProvinceIdsSorted.any(
           (pid) => provinceOwner[pid] == order.targetFactionId,
         );
-    final invadableGpBlockerWeaker = invadableGpBlocker &&
+    final invadableGpBlockerWeaker =
+        invadableGpBlocker &&
         provinceCountOwnedBy(game, order.targetFactionId) <=
             snapshot.conquest.oldWorldProvincesOwned;
-    final invadableOwOwnedByGp =
-        snapshot.conquest.invadableProvinceIdsSorted.any(
-      (pid) => game.playerById(provinceOwner[pid] ?? '') != null,
-    );
-    final tribeOwnsOwInvadable = isTribeTarget &&
+    final invadableOwOwnedByGp = snapshot.conquest.invadableProvinceIdsSorted
+        .any((pid) => game.playerById(provinceOwner[pid] ?? '') != null);
+    final tribeOwnsOwInvadable =
+        isTribeTarget &&
         snapshot.conquest.invadableProvinceIdsSorted.any(
           (pid) => provinceOwner[pid] == order.targetFactionId,
         );
@@ -288,10 +311,7 @@ int? _declareWarSuppressedScore(
 }
 
 int? _declareWarSuppressedDevelopPhaseScore(_DeclareWarTargetContext ctx) {
-  if (!isObserverDevelopPhase(
-    snapshot: ctx.snapshot,
-    game: ctx.game,
-  )) {
+  if (!isObserverDevelopPhase(snapshot: ctx.snapshot, game: ctx.game)) {
     return null;
   }
   return kDeclareWarNonAdjacentSuppressedScore;
@@ -304,9 +324,7 @@ int? _declareWarSuppressedExpandColonialScore(_DeclareWarTargetContext ctx) {
   )) {
     return null;
   }
-  if (ctx.isTribeTarget ||
-      ctx.ownsInvadableNw ||
-      ctx.isColonialAdjacentOwner) {
+  if (ctx.isTribeTarget || ctx.ownsInvadableNw || ctx.isColonialAdjacentOwner) {
     return kDeclareWarNonAdjacentSuppressedScore;
   }
   return null;
@@ -337,9 +355,7 @@ int? _declareWarSuppressedColonialLiteScore(_DeclareWarTargetContext ctx) {
       ObserverGoalPhase.colonialLite) {
     return null;
   }
-  if (ctx.isTribeTarget ||
-      ctx.ownsInvadableNw ||
-      ctx.isColonialAdjacentOwner) {
+  if (ctx.isTribeTarget || ctx.ownsInvadableNw || ctx.isColonialAdjacentOwner) {
     return kDeclareWarNonAdjacentSuppressedScore;
   }
   return null;
@@ -359,16 +375,21 @@ int? _declareWarSuppressedStalledOwFrontierScore(_DeclareWarTargetContext ctx) {
       (ctx.isTribeTarget ||
           (ctx.game.playerById(ctx.order.targetFactionId) != null &&
               !ctx.invadableGpBlocker) ||
-          (ctx.isMinorTarget && !ctx.isTribeTarget && !ctx.weakerDistantMinor))) {
+          (ctx.isMinorTarget &&
+              !ctx.isTribeTarget &&
+              !ctx.weakerDistantMinor))) {
     return 0;
   }
   if (ctx.stalledOwExpansion && ctx.isMinorTarget && !ctx.isTribeTarget) {
-    final continuingMinorConflict =
-        ctx.activeMinorConflicts.contains(ctx.order.targetFactionId);
-    final adjacentInvadableMinor = ctx.isAdjacentOwner &&
+    final continuingMinorConflict = ctx.activeMinorConflicts.contains(
+      ctx.order.targetFactionId,
+    );
+    final adjacentInvadableMinor =
+        ctx.isAdjacentOwner &&
         ctx.invadableOwners.contains(ctx.order.targetFactionId);
-    final distantInvadableMinorOwner =
-        ctx.invadableOwners.contains(ctx.order.targetFactionId);
+    final distantInvadableMinorOwner = ctx.invadableOwners.contains(
+      ctx.order.targetFactionId,
+    );
     if (ctx.activeMinorConflicts.isNotEmpty) {
       if (!continuingMinorConflict) {
         return 0;
@@ -382,10 +403,7 @@ int? _declareWarSuppressedStalledOwFrontierScore(_DeclareWarTargetContext ctx) {
         !distantInvadableMinorOwner &&
         !(ctx.behindVictoryPace &&
             ctx.anyMinorOwnsOldWorld &&
-            _minorOwnsOldWorldProvinces(
-              ctx.game,
-              ctx.order.targetFactionId,
-            ))) {
+            _minorOwnsOldWorldProvinces(ctx.game, ctx.order.targetFactionId))) {
       return 0;
     }
   }
@@ -435,12 +453,15 @@ int? _declareWarSuppressedAdjacentGpScore(
           targetOw <= attackerOw) {
         return 0;
       }
-      final minorsOwnInvadable =
-          ctx.snapshot.conquest.invadableProvinceIdsSorted.any((pid) {
-        final owner = ctx.provinceOwner[pid];
-        return owner != null &&
-            ctx.game.minorNations.any((m) => m.id == owner);
-      });
+      final minorsOwnInvadable = ctx
+          .snapshot
+          .conquest
+          .invadableProvinceIdsSorted
+          .any((pid) {
+            final owner = ctx.provinceOwner[pid];
+            return owner != null &&
+                ctx.game.minorNations.any((m) => m.id == owner);
+          });
       if (minorsOwnInvadable &&
           isBelowObserverConquestQuota(attackerOw) &&
           isBelowObserverConquestQuota(targetOw) &&
@@ -483,7 +504,8 @@ int? _declareWarSuppressedAdjacentGpScore(
                   attackerOw > targetOw))) {
         return 0;
       }
-      final belowQuotaSuppressLead = targetOw <= kFewOldWorldProvincesDefendThreshold
+      final belowQuotaSuppressLead =
+          targetOw <= kFewOldWorldProvincesDefendThreshold
           ? 1
           : kUnwinnableSoleGpMinProvinceDeficit;
       if (isBelowObserverConquestQuota(targetOw) &&
