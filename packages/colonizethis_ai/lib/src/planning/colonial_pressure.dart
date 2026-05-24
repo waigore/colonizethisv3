@@ -353,33 +353,19 @@ bool canPivotFromSoleGpWarAfterPeace({
 );
 
 /// Peace the sole GP enemy when below the observer OW quota and clearly outgunned.
+///
+/// Delegates to [expand_phase_planner.unwinnableSoleGpFrontierPeaceTarget]
+/// (Refs #2509 S1) so the EXPAND-phase below-quota outgunned sole-GP peace
+/// decider survives the planned deletion of this file alongside the
+/// canonical helpers it composes (`soleAtWarGreatPowerId`,
+/// `canPivotFromSoleGpWarAfterPeace`, `isOldWorldGpOnlyInvadableFrontier`).
 String? unwinnableSoleGpFrontierPeaceTarget({
   required Game game,
   required AIWorldSnapshot snapshot,
-}) {
-  final enemy = soleAtWarGreatPowerId(game: game, snapshot: snapshot);
-  if (enemy == null) {
-    return null;
-  }
-  if (!isBelowObserverConquestQuota(snapshot.conquest.oldWorldProvincesOwned)) {
-    return null;
-  }
-  if (!canPivotFromSoleGpWarAfterPeace(game: game, snapshot: snapshot)) {
-    return null;
-  }
-  final own = snapshot.conquest.oldWorldProvincesOwned;
-  final enemyOw = provinceCountOwnedBy(game, enemy);
-  final minDeficit = own <= kObserverDefaultStartOldWorldProvincesPerGp
-      ? 1
-      : own >= kObserverConquestMinOwProvincesPerGp - 2 &&
-            !isOldWorldGpOnlyInvadableFrontier(game: game, snapshot: snapshot)
-      ? 1
-      : kUnwinnableSoleGpMinProvinceDeficit;
-  if (enemyOw < own + minDeficit) {
-    return null;
-  }
-  return enemy;
-}
+}) => expand_phase_planner.unwinnableSoleGpFrontierPeaceTarget(
+  game: game,
+  snapshot: snapshot,
+);
 
 /// Great Power wars already targeting [targetGpId] (resolved relations plus
 /// same-turn declare-war orders from earlier Full AI players).
@@ -519,24 +505,19 @@ List<String> criticalOwHoldPeaceTargets({
 }
 
 /// Peace the sole GP enemy when the observer OW quota is met and this GP leads.
+///
+/// Delegates to [expand_phase_planner.consolidateGainsSoleGpPeaceTarget]
+/// (Refs #2509 S1) so the quota-met consolidate-gains sole-GP peace decider
+/// survives the planned deletion of this file alongside the canonical
+/// [expand_phase_planner.soleAtWarGreatPowerId] precondition helper it
+/// composes.
 String? consolidateGainsSoleGpPeaceTarget({
   required Game game,
   required AIWorldSnapshot snapshot,
-}) {
-  final enemy = soleAtWarGreatPowerId(game: game, snapshot: snapshot);
-  if (enemy == null) {
-    return null;
-  }
-  final own = snapshot.conquest.oldWorldProvincesOwned;
-  if (own < kObserverConquestConsolidateMinOwProvinces) {
-    return null;
-  }
-  final enemyOw = provinceCountOwnedBy(game, enemy);
-  if (own < enemyOw + kConsolidateGainsSoleGpProvinceLead) {
-    return null;
-  }
-  return enemy;
-}
+}) => expand_phase_planner.consolidateGainsSoleGpPeaceTarget(
+  game: game,
+  snapshot: snapshot,
+);
 
 /// When non-null, build-order pass uses `min(buildThreshold, value)`.
 int? colonialBuildOrderThresholdCap(ColonialSummary colonial) {
