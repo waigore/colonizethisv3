@@ -30,15 +30,34 @@ Set<String> newWorldSeaZonesAdjacentToInvadableProvinces(
 }
 
 /// Deterministic score for prioritizing fleet moves toward colonial targets.
+///
+/// When [phasePriorityNwProvinceIdsSorted] is non-empty (Refs #2509 S5 —
+/// the phase-planner naval directive surfaces a tighter NW priority subset
+/// of [ColonialSummary.invadableNewWorldProvinceIdsSorted]), NW sea zones
+/// adjacent to a province in that subset earn
+/// [kColonialNavalMovePhasePriorityNwSeaZoneScore] (240), one tier above
+/// the general invadable-NW priority score (200). Sea zones adjacent to
+/// other invadable NW provinces (not in the phase subset) still earn the
+/// existing [kColonialNavalMovePriorityNwSeaZoneScore]. Passing `null` or
+/// an empty list preserves legacy scoring exactly.
 int colonialNavalMoveScore(
   NavalMoveOrder move,
   MapTopology topology,
-  ColonialSummary colonial,
-) {
+  ColonialSummary colonial, {
+  List<String>? phasePriorityNwProvinceIdsSorted,
+}) {
   final prioritySeas = newWorldSeaZonesAdjacentToInvadableProvinces(
     topology,
     colonial.invadableNewWorldProvinceIdsSorted,
   );
+  final phasePrioritySeas =
+      (phasePriorityNwProvinceIdsSorted == null ||
+          phasePriorityNwProvinceIdsSorted.isEmpty)
+      ? const <String>{}
+      : newWorldSeaZonesAdjacentToInvadableProvinces(
+          topology,
+          phasePriorityNwProvinceIdsSorted,
+        );
 
   if (move.isDock) {
     final portId = move.destinationPortProvinceId;
@@ -53,6 +72,9 @@ int colonialNavalMoveScore(
   final seaId = move.destinationSeaZoneId;
   if (seaId == null || seaId.isEmpty) return 0;
 
+  if (phasePrioritySeas.contains(seaId)) {
+    return kColonialNavalMovePhasePriorityNwSeaZoneScore;
+  }
   if (prioritySeas.contains(seaId)) {
     return kColonialNavalMovePriorityNwSeaZoneScore;
   }
@@ -85,16 +107,27 @@ bool _isOldWorldSeaAdjacentToNewWorldSea(
 }
 
 /// Sort [candidates] by [colonialNavalMoveScore] descending, then stable id order.
+///
+/// Pass [phasePriorityNwProvinceIdsSorted] from the phase-planner naval
+/// directive (Refs #2509 S5) to elevate NW sea zones adjacent to phase-active
+/// invadable provinces above the general invadable-NW priority tier. `null`
+/// or empty preserves legacy ordering.
 List<NavalMoveOrder> sortNavalMovesForColonialPressure(
   List<NavalMoveOrder> candidates,
   MapTopology topology,
-  ColonialSummary colonial,
-) {
+  ColonialSummary colonial, {
+  List<String>? phasePriorityNwProvinceIdsSorted,
+}) {
   final scored = candidates
       .map(
         (m) => (
           move: m,
-          score: colonialNavalMoveScore(m, topology, colonial),
+          score: colonialNavalMoveScore(
+            m,
+            topology,
+            colonial,
+            phasePriorityNwProvinceIdsSorted: phasePriorityNwProvinceIdsSorted,
+          ),
         ),
       )
       .toList();
