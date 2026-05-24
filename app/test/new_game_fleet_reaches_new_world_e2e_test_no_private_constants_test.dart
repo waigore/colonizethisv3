@@ -46,6 +46,7 @@
 /// Refs GitHub #2336 AC1 / AC2 / Bottleneck 6.
 library;
 
+import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'dart:io';
 
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
