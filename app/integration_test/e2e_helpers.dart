@@ -16,6 +16,7 @@ import 'e2e_test_shared_bootstrap.dart';
 /// barrel only (GitHub #2336 AC2).
 export 'e2e_test_shared.dart'
     show
+        E2eFinalNavalReachCheckResult,
         E2eFirstFleetMoveOutcome,
         E2eFleetReachLoopExit,
         E2eFleetReachLoopResult,
@@ -26,6 +27,7 @@ export 'e2e_test_shared.dart'
         e2eBundledExploreRejectionDiagnostics,
         e2eCheckExploreEnabledFromCivilianPanel,
         e2eDismissCtDialogShellIfPresent,
+        e2eEnsureNonHomeFleetInNwAfterLoop,
         e2eExploreAssignEnabledFromCivilianSnapshot,
         e2eExpectPanelTextsMatchSnapshot,
         e2eFleetReachDoneFromCtSnapshotOnly,
@@ -48,6 +50,7 @@ export 'e2e_test_shared.dart'
         kE2eDefaultCtDialogShellClosePhase,
         kE2eDefaultExpectPanelTextsPhase,
         kE2eDefaultExpectPanelTextsTimeout,
+        kE2eDefaultFinalNavalReachCheckUiWait,
         kE2eDefaultFirstFleetMoveConfirmReadyTimeout,
         kE2eDefaultFirstFleetMoveDialogCloseTimeout,
         kE2eDefaultFirstFleetMoveDialogOpenTimeout,
@@ -386,4 +389,24 @@ Future<void> expectPanelTextsMatchSnapshot(
   timeout: timeout,
   perf: perf,
   buildAlternativeExpected: buildAlternativeExpected,
+);
+
+/// Stable public name for [e2eEnsureNonHomeFleetInNwAfterLoop] so the two
+/// fleet-reach scenarios in `new_game_fleet_reaches_new_world_e2e_test.dart`
+/// consume the AC1 barrel only (Refs GitHub #2336 AC1 / AC2 / Bottleneck 4).
+/// Forwards to the implementation in
+/// `e2e_test_shared_final_naval_reach_check.dart` — call sites compose the
+/// scenario-specific fail message via [failureMessageBuilder] and assign the
+/// captured [E2eFinalNavalReachCheckResult.lastKnownNavalSnapshot]
+/// themselves when their post-loop diagnostics need it.
+Future<E2eFinalNavalReachCheckResult> ensureNonHomeFleetInNwAfterLoop(
+  WidgetTester tester, {
+  required E2ePerfLog perf,
+  required String Function(Object? lastException) failureMessageBuilder,
+  Duration maxUiResponseWait = kE2eDefaultFinalNavalReachCheckUiWait,
+}) => e2eEnsureNonHomeFleetInNwAfterLoop(
+  tester,
+  perf: perf,
+  failureMessageBuilder: failureMessageBuilder,
+  maxUiResponseWait: maxUiResponseWait,
 );

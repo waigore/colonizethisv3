@@ -129,3 +129,29 @@ part of 'new_game_fleet_reaches_new_world_e2e_test.dart';
 /// stale Assign sheet; one that swapped `bottomSheetCloseTimeout` for the
 /// default 30 s would inflate the per-iteration wall clock past the
 /// `_kMaxUiResponseWait (5s)` cap #2336 is reducing.
+
+/// The duplicated post-loop "final naval check" block (dismiss-transient
+/// → region-tab → conditional `openNavalPanel` → harness probe with
+/// scenario-specific fail → `closeBottomSheet`) was lifted into
+/// [e2eEnsureNonHomeFleetInNwAfterLoop]
+/// (`e2e_test_shared_final_naval_reach_check.dart`) so the
+/// post-`fleetReachTurnLoop` reach assertion is shared between both
+/// `testWidgets` bodies and unit-pinned (Refs GitHub #2336 AC1 / AC2 /
+/// Bottleneck 4). The fleet-reach scenarios call the lifted form
+/// through the AC1 barrel alias `ensureNonHomeFleetInNwAfterLoop`
+/// (`e2e_helpers.dart`) and compose the scenario-specific fail message
+/// via `failureMessageBuilder`. Test 2
+/// (`new_game_fleet_explore_enabled_post_bundle`) assigns the returned
+/// [E2eFinalNavalReachCheckResult.lastKnownNavalSnapshot] into its
+/// pre-existing `lastKnownNavalSnapshot` tracker; test 1 ignores the
+/// captured snapshot. The widget-test pin in
+/// `app/test/e2e_ensure_non_home_fleet_in_nw_after_loop_test.dart`
+/// carries the behavioural contract because the integration suite
+/// cannot validate this directly today (`app_e2e_linux` is a no-op
+/// per `SPEC/program/e2e-integration-tests.md` § CI). A regression
+/// that dropped the conditional `openNavalPanel` would mask a real
+/// reach failure as a clean exit; one that swapped the order of
+/// `dismissTransientUi` / `e2eTapNewWorldRegionTabIfPresent` would
+/// read the harness against the wrong region; one that bypassed the
+/// `failureMessageBuilder` would orphan the legacy "Last exception:"
+/// suffix on CI failures.

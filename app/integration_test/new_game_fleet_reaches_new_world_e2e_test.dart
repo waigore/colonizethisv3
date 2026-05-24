@@ -124,30 +124,14 @@ void main() {
     }
 
     ensureUnderWallClock('before final naval check');
-    await dismissTransientUi(tester, perf: perf);
-    await e2eTapNewWorldRegionTabIfPresent(tester);
-    if (!e2eFleetReachDoneFromCtSnapshotOnly(ctE2eNavalPanelSnapshot)) {
-      await openNavalPanel(
-        tester,
-        perf: perf,
-        timeout: _kMaxUiResponseWait,
-        bottomSheetCloseTimeout: _kMaxUiResponseWait,
-      );
-    }
-    if (!e2eHarnessDetectsNonHomeFleetInNewWorld(
-      tester,
-      ctE2eNavalPanelSnapshot,
-    )) {
-      fail(
-        'After $_kMaxNextTurnTapsForNwFleetReach Next turn resolutions, no non-home human fleet in region '
-        'newWorld (ctE2eNavalPanelSnapshot / naval panel UI). '
-        'Last exception: ${tester.takeException()}',
-      );
-    }
-    await closeBottomSheet(
+    await ensureNonHomeFleetInNwAfterLoop(
       tester,
       perf: perf,
-      overallTimeout: _kMaxUiResponseWait,
+      maxUiResponseWait: _kMaxUiResponseWait,
+      failureMessageBuilder: (lastException) =>
+          'After $_kMaxNextTurnTapsForNwFleetReach Next turn resolutions, no non-home human fleet in region '
+          'newWorld (ctE2eNavalPanelSnapshot / naval panel UI). '
+          'Last exception: $lastException',
     );
     ensureUnderWallClock('test complete');
     perf.timing('test_total', testSw.elapsed, meta: 'result=final_check');
@@ -211,33 +195,17 @@ void main() {
       CtE2eNavalPanelSnapshot? lastKnownNavalSnapshot =
           loopResult.lastKnownNavalSnapshot;
 
-      await dismissTransientUi(tester, perf: perf);
-      await e2eTapNewWorldRegionTabIfPresent(tester);
-      if (!e2eFleetReachDoneFromCtSnapshotOnly(ctE2eNavalPanelSnapshot)) {
-        await openNavalPanel(
-          tester,
-          perf: perf,
-          timeout: _kMaxUiResponseWait,
-          bottomSheetCloseTimeout: _kMaxUiResponseWait,
-        );
-      }
-      if (ctE2eNavalPanelSnapshot != null) {
-        lastKnownNavalSnapshot = ctE2eNavalPanelSnapshot;
-      }
-      if (!e2eHarnessDetectsNonHomeFleetInNewWorld(
-        tester,
-        ctE2eNavalPanelSnapshot,
-      )) {
-        fail(
-          'Explorer explore e2e requires a non-home human fleet in New World first. '
-          'Last exception: ${tester.takeException()}',
-        );
-      }
-      await closeBottomSheet(
+      final finalCheck = await ensureNonHomeFleetInNwAfterLoop(
         tester,
         perf: perf,
-        overallTimeout: _kMaxUiResponseWait,
+        maxUiResponseWait: _kMaxUiResponseWait,
+        failureMessageBuilder: (lastException) =>
+            'Explorer explore e2e requires a non-home human fleet in New World first. '
+            'Last exception: $lastException',
       );
+      if (finalCheck.lastKnownNavalSnapshot != null) {
+        lastKnownNavalSnapshot = finalCheck.lastKnownNavalSnapshot;
+      }
       ensureUnderWallClock('fleet in NW confirmed');
 
       await awaitNwCoastalOrVisibleLandForBundledExplore(
