@@ -5,6 +5,8 @@ import 'package:colonizethis_logic/order_suggestion_api.dart';
 import 'army_conquest_prep.dart';
 import 'colonial_pressure.dart';
 import 'observer_goal_phase.dart';
+import 'phase_planner_dispatch.dart';
+import 'phase_planner_work_order_filter.dart';
 import 'planning_imports.dart';
 import 'goal_manager.dart';
 import '../perception/perception_snapshot.dart';
@@ -75,6 +77,12 @@ DomainPlannerOutcome runDomainPlannersWithOutcome({
 }) {
   void emit(String phaseId) => onStagedPlannerProgress?.call(phaseId);
 
+  final phasePlan = runPhasePlanners(
+    game: game,
+    snapshot: snapshot,
+    personalityId: config.personalityId,
+  );
+
   var ctx = PlannerContext(
     nationId: nationId,
     view: view,
@@ -91,6 +99,7 @@ DomainPlannerOutcome runDomainPlannersWithOutcome({
   ctx = _runEconomyDomainPlanners(
     ctx: ctx,
     snapshot: snapshot,
+    phasePlan: phasePlan,
     economyPlan: economyPlan,
     tileMapByRegion: tileMapByRegion,
     emit: emit,
@@ -103,6 +112,7 @@ DomainPlannerOutcome runDomainPlannersWithOutcome({
     ctx: ctx,
     snapshot: snapshot,
     pass: DiplomacyPlannerPass.nonDeclareWarOnly,
+    phasePlan: phasePlan,
   );
   ctx = ctx.withOrders(peaceBeforeConquestResult.orders);
 
@@ -110,6 +120,7 @@ DomainPlannerOutcome runDomainPlannersWithOutcome({
     ctx: ctx,
     snapshot: snapshot,
     pass: DiplomacyPlannerPass.declareWarOnly,
+    phasePlan: phasePlan,
   );
   ctx = ctx.withOrders(declareWarResult.orders);
   final armyMovesBeforeConquest =
@@ -137,6 +148,7 @@ DomainPlannerOutcome runDomainPlannersWithOutcome({
         ctx: ctx,
         snapshot: snapshot,
         declaredWarTargetFactionId: conquestDeclaredWarTarget,
+        phasePlan: phasePlan,
       ),
     );
     final movesAfterPass =
@@ -171,6 +183,7 @@ DomainPlannerOutcome runDomainPlannersWithOutcome({
       ctx: ctx,
       snapshot: snapshot,
       pass: DiplomacyPlannerPass.nonDeclareWarOnly,
+      phasePlan: phasePlan,
     ).orders,
   );
   emit('aiStageF');
@@ -188,6 +201,7 @@ DomainPlannerOutcome runDomainPlannersWithOutcome({
 PlannerContext _runEconomyDomainPlanners({
   required PlannerContext ctx,
   required AIWorldSnapshot snapshot,
+  required PhasePlanOutcome phasePlan,
   required EconomyPlan economyPlan,
   Map<String, TileMapResult>? tileMapByRegion,
   required void Function(String phaseId) emit,
@@ -205,11 +219,7 @@ PlannerContext _runEconomyDomainPlanners({
   );
   workCandidates = workCandidates
       .where(
-        (w) => !shouldFilterObserverPhaseWorkOrder(
-          w,
-          snapshot: snapshot,
-          game: ctx.game,
-        ),
+        (w) => !shouldSuppressWorkOrderFromPhasePlan(w, phasePlan),
       )
       .toList();
   final buildCandidates = ctx.suggestionAPI.suggestBuildOrders(

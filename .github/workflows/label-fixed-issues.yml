@@ -21,7 +21,7 @@ jobs:
             -f name="${{ github.event.repository.name }}" \
             -F pr=${{ github.event.pull_request.number }} \
             -f query='query($owner: String!, $name: String!, $pr: Int!) { repository(owner: $owner, name: $name) { pullRequest(number: $pr) { closingIssuesReferences(first: 100) { nodes { number } } } } }' \
-            --jq '.data.repository.pullRequest.closingIssuesReferences.nodes[].number')
+            --jq '[.data.repository.pullRequest.closingIssuesReferences.nodes[].number] | join(" ")')
           echo "numbers<<EOF" >> $GITHUB_OUTPUT
           echo "$numbers" >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT

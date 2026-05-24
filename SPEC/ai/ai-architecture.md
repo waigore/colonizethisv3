@@ -69,6 +69,7 @@ Per-turn seed: `turnSeed[P, T] = hash(globalGameSeed, aiSeed[P], T)`. Sub-seeds:
 - [economy-planner.md](economy-planner.md) — worker allocation (production), cargo preference
 - [ai-personalities.md](ai-personalities.md) — per-leader weights
 - [hidden-agendas.md](hidden-agendas.md) — agenda modifiers
+- [phase-planner-architecture.md](phase-planner-architecture.md) — planner module contracts and orchestrator dispatch (Refs #2509)
 - [dialogue-and-mood.md](dialogue-and-mood.md) — event emission
 - [world-model-identity.md](../game/world-model-identity.md) — province identity (prefixed id) in AI context
 - Program: [ai-planner.md](../program/ai-planner.md) — control rules, order merge
@@ -112,7 +113,7 @@ New World province acquisition is a **supporting strategy** for the Old World mi
 
 ### Observer goal phases (Full AI)
 
-Deterministic phases from `PlayerView` → `AIWorldSnapshot` (`observer_goal_phase.dart`; Refs #2509 S10):
+Deterministic phases from `PlayerView` → `AIWorldSnapshot` (`observer_goal_phase.dart`; Refs #2509 S10). Phase planner module contracts, orchestrator dispatch, data flow, and acceptance criteria are normative in [phase-planner-architecture.md](phase-planner-architecture.md); phase definitions and suppressions below remain authoritative.
 
 | Phase | When | Imperative |
 |-------|------|------------|
