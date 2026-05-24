@@ -14,15 +14,15 @@ void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
 
   testWidgets('new game → non-home fleet at sea in New World '
-      '(≤$_kMaxNextTurnTapsForNwFleetReach Next turn taps)', (
+      '(≤$kE2eDefaultFleetReachLoopMaxTurns Next turn taps)', (
     WidgetTester tester,
   ) async {
     final preamble = await enterFleetReachScenarioReady(
       tester,
       testName: 'new_game_fleet_reaches_new_world',
       bootstrapForIntegrationTest: bootstrapForIntegrationTest,
-      maxUiResponseWait: _kMaxUiResponseWait,
-      wallClockCap: _kFleetE2eMaxWallClock,
+      maxUiResponseWait: kE2eDefaultNavalMoveSegmentUiWait,
+      wallClockCap: kE2eMaxWallClock,
     );
     final perf = preamble.perf;
     final testSw = preamble.testSw;
@@ -34,8 +34,8 @@ void main() {
       l10n,
       perf: perf,
       ensureUnderWallClock: ensureUnderWallClock,
-      maxUiResponseWait: _kMaxUiResponseWait,
-      maxTurns: _kMaxNextTurnTapsForNwFleetReach,
+      maxUiResponseWait: kE2eDefaultNavalMoveSegmentUiWait,
+      maxTurns: kE2eDefaultFleetReachLoopMaxTurns,
     );
     final earlyReturnMeta = fleetReachLoopExitTestTotalMetaLabel(
       loopResult.exit,
@@ -57,9 +57,9 @@ void main() {
     await ensureNonHomeFleetInNwAfterLoop(
       tester,
       perf: perf,
-      maxUiResponseWait: _kMaxUiResponseWait,
+      maxUiResponseWait: kE2eDefaultNavalMoveSegmentUiWait,
       failureMessageBuilder: (lastException) =>
-          'After $_kMaxNextTurnTapsForNwFleetReach Next turn resolutions, no non-home human fleet in region '
+          'After $kE2eDefaultFleetReachLoopMaxTurns Next turn resolutions, no non-home human fleet in region '
           'newWorld (ctE2eNavalPanelSnapshot / naval panel UI). '
           'Last exception: $lastException',
     );
@@ -74,8 +74,8 @@ void main() {
         tester,
         testName: 'new_game_fleet_explore_enabled_post_bundle',
         bootstrapForIntegrationTest: bootstrapForIntegrationTest,
-        maxUiResponseWait: _kMaxUiResponseWait,
-        wallClockCap: _kFleetE2eMaxWallClock,
+        maxUiResponseWait: kE2eDefaultNavalMoveSegmentUiWait,
+        wallClockCap: kE2eMaxWallClock,
       );
       final perf = preamble.perf;
       final testSw = preamble.testSw;
@@ -87,8 +87,8 @@ void main() {
         l10n,
         perf: perf,
         ensureUnderWallClock: ensureUnderWallClock,
-        maxUiResponseWait: _kMaxUiResponseWait,
-        maxTurns: _kMaxNextTurnTapsForNwFleetReach,
+        maxUiResponseWait: kE2eDefaultNavalMoveSegmentUiWait,
+        maxTurns: kE2eDefaultFleetReachLoopMaxTurns,
       );
       CtE2eNavalPanelSnapshot? lastKnownNavalSnapshot =
           loopResult.lastKnownNavalSnapshot;
@@ -96,7 +96,7 @@ void main() {
       final finalCheck = await ensureNonHomeFleetInNwAfterLoop(
         tester,
         perf: perf,
-        maxUiResponseWait: _kMaxUiResponseWait,
+        maxUiResponseWait: kE2eDefaultNavalMoveSegmentUiWait,
         failureMessageBuilder: (lastException) =>
             'Explorer explore e2e requires a non-home human fleet in New World first. '
             'Last exception: $lastException',
@@ -110,7 +110,7 @@ void main() {
         tester,
         l10n,
         ensureUnderWallClock: ensureUnderWallClock,
-        maxUiResponseWait: _kMaxUiResponseWait,
+        maxUiResponseWait: kE2eDefaultNavalMoveSegmentUiWait,
       );
 
       await e2eTapNewWorldRegionTabIfPresent(tester);
@@ -125,7 +125,7 @@ void main() {
         tester,
         l10n,
         perf: perf,
-        maxUiResponseWait: _kMaxUiResponseWait,
+        maxUiResponseWait: kE2eDefaultNavalMoveSegmentUiWait,
       );
       if (!exploreEnabled) {
         await handleBundledExploreFailure(
