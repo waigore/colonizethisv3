@@ -128,66 +128,22 @@ bool isMutualBelowQuotaPlateauPeer({
 
 /// Peace other below-quota Great Powers in peer-stalled wars while minors remain
 /// (exit mutual gp5/gp6 distraction; Refs #2509).
+///
+/// Delegates to [expand_phase_planner.belowQuotaPeerGpPeaceTargets]
+/// (Refs #2509 S1) so the EXPAND-phase below-quota peer-stalled peace
+/// decider survives the planned deletion of this file alongside the
+/// canonical helpers it composes
+/// ([expand_phase_planner.isOldWorldGpOnlyInvadableFrontier],
+/// [expand_phase_planner.soleAtWarGreatPowerId],
+/// [expand_phase_planner.isMutualBelowQuotaPlateauPeer], and
+/// [expand_phase_planner.hasUninvadedOldWorldMinor]).
 List<String> belowQuotaPeerGpPeaceTargets({
   required Game game,
   required AIWorldSnapshot snapshot,
-}) {
-  final ownOw = snapshot.conquest.oldWorldProvincesOwned;
-  if (!isBelowObserverConquestQuota(ownOw)) {
-    return const [];
-  }
-  final minorsOnMap = game.worldState.oldWorld.provinces.any(
-    (p) =>
-        p.ownerId != null &&
-        p.ownerId!.isNotEmpty &&
-        game.minorNations.any((m) => m.id == p.ownerId),
-  );
-  final gpOnlyFrontier = isOldWorldGpOnlyInvadableFrontier(
-    game: game,
-    snapshot: snapshot,
-  );
-  final soleGpWar = soleAtWarGreatPowerId(game: game, snapshot: snapshot);
-  final targets = <String>[];
-  for (final factionId in snapshot.threats.atWarWith) {
-    if (game.playerById(factionId) == null) {
-      continue;
-    }
-    final partnerOw = provinceCountOwnedBy(game, factionId);
-    if (!isBelowObserverConquestQuota(partnerOw)) {
-      continue;
-    }
-    final mutualPlateau = isMutualBelowQuotaPlateauPeer(
-      ownOw: ownOw,
-      partnerOw: partnerOw,
-    );
-    if (!minorsOnMap && !mutualPlateau) {
-      continue;
-    }
-    if (mutualPlateau &&
-        gpOnlyFrontier &&
-        !hasUninvadedOldWorldMinor(game: game, snapshot: snapshot)) {
-      targets.add(factionId);
-      continue;
-    }
-    final maxPeerOwGap =
-        hasUninvadedOldWorldMinor(game: game, snapshot: snapshot) ? 3 : 1;
-    if ((partnerOw - ownOw).abs() > maxPeerOwGap) {
-      continue;
-    }
-    if (!mutualPlateau && ownOw > partnerOw) {
-      continue;
-    }
-    // Hold sole GP-blocker wars only when no minor pivot remains (Refs #2509).
-    if (gpOnlyFrontier &&
-        soleGpWar == factionId &&
-        !hasUninvadedOldWorldMinor(game: game, snapshot: snapshot)) {
-      continue;
-    }
-    targets.add(factionId);
-  }
-  targets.sort();
-  return targets;
-}
+}) => expand_phase_planner.belowQuotaPeerGpPeaceTargets(
+  game: game,
+  snapshot: snapshot,
+);
 
 /// Peace at-war minors that own no invadable OW provinces while still at default
 /// start size (exit futile minor fronts before GP-blocker wars; seed-42 gp4).
