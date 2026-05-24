@@ -46,6 +46,10 @@ import 'package:colonizethis_ai/src/planning/expand_phase_planner.dart'
     show ExpandEconomyPlan;
 import 'package:colonizethis_ai/src/planning/phase_planner_conquest_filter.dart';
 import 'package:colonizethis_ai/src/planning/phase_planner_economy_filter.dart';
+import 'package:colonizethis_data/colonizethis_data.dart'
+    show
+        kColonialBuildOrderThresholdWhenOwnedNw,
+        kColonialBuildOrderThresholdWhenOwnedNwUnderPressure;
 import 'package:colonizethis_logic/ai_api.dart' show kWorkTargetBuildImprovement;
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
@@ -403,6 +407,209 @@ void main() {
           phasePlan: outcome,
         );
         expect(a, b, reason: '$phase: two-call determinism');
+      }
+    });
+  });
+
+  group('resolvePhaseEconomyColonialBuildOrderThresholdCap', () {
+    // The resolver replaces the per-call
+    // `colonialBuildOrderThresholdCap(snapshot.colonial)` invocation in
+    // `_appendEconomyBuildOrders` (`colonial_pressure.dart`). The
+    // legacy helper had two arms keyed on
+    // `hasColonialAcquisitionTargets(colonial)`; the orchestrator only
+    // invoked the helper inside the outer `if (colonialPressure)`
+    // guard, where `colonialPressure` is the dispatched
+    // `resolvePhaseEconomyColonialPressureActive` (active only under
+    // COLONIAL). COLONIAL phase entry is itself gated on
+    // `hasColonialAcquisitionTargets` via `observerGoalPhaseFor`, so
+    // the first legacy arm
+    // (`kColonialBuildOrderThresholdWhenOwnedNwUnderPressure`) was the
+    // only reachable arm — the second
+    // (`kColonialBuildOrderThresholdWhenOwnedNw`) requires
+    // `!hasColonialAcquisitionTargets`, which is structurally
+    // unreachable at the orchestrator's call site. The phase-derived
+    // `int?` is therefore field-equal to the legacy compute at the
+    // orchestrator's only call site across every reachable
+    // `(ObserverGoalPhase, ColonialSummary)` pair.
+    test('returns kColonialBuildOrderThresholdWhenOwnedNwUnderPressure under '
+        'COLONIAL with newWorldProvincesOwned > 0', () {
+      const outcome = PhasePlanOutcome(phase: ObserverGoalPhase.colonial);
+      const colonial = ColonialSummary(newWorldProvincesOwned: 1);
+      expect(
+        resolvePhaseEconomyColonialBuildOrderThresholdCap(
+          phasePlan: outcome,
+          colonial: colonial,
+        ),
+        kColonialBuildOrderThresholdWhenOwnedNwUnderPressure,
+        reason:
+            'COLONIAL phase entry is gated on hasColonialAcquisitionTargets '
+            'so the only reachable legacy arm under the orchestrator '
+            'guard returns the under-pressure cap when at least one NW '
+            'province is owned.',
+      );
+    });
+
+    test('returns null under COLONIAL with newWorldProvincesOwned == 0', () {
+      const outcome = PhasePlanOutcome(phase: ObserverGoalPhase.colonial);
+      const colonial = ColonialSummary();
+      expect(
+        resolvePhaseEconomyColonialBuildOrderThresholdCap(
+          phasePlan: outcome,
+          colonial: colonial,
+        ),
+        isNull,
+        reason:
+            'Legacy colonialBuildOrderThresholdCap returns null when '
+            'newWorldProvincesOwned == 0; the phase-derived resolver '
+            'must preserve that.',
+      );
+    });
+
+    test('returns null under EXPAND, COLONIAL-lite, and DEVELOP regardless of '
+        'newWorldProvincesOwned (structural NW-economy suppression)', () {
+      // Mirrors `resolvePhaseEconomyColonialPressureActive` suppression
+      // matrix: NW-owned GPs in EXPAND no longer receive the colonial
+      // cap outside COLONIAL. The legacy
+      // `colonialBuildOrderThresholdCap` would have returned
+      // `kColonialBuildOrderThresholdWhenOwnedNw` for the fallback arm
+      // when `hasColonialAcquisitionTargets` was false, but that branch
+      // was unreachable at the orchestrator's call site because the
+      // outer guard requires `colonialPressure` (COLONIAL only). The
+      // phase-derived resolver collapses to `null` for every
+      // non-COLONIAL phase, preserving the behaviour the orchestrator
+      // actually observed.
+      for (final phase in <ObserverGoalPhase>[
+        ObserverGoalPhase.expand,
+        ObserverGoalPhase.colonialLite,
+        ObserverGoalPhase.develop,
+      ]) {
+        for (final nwOwned in <int>[0, 1, 5]) {
+          final outcome = PhasePlanOutcome(phase: phase);
+          final colonial = ColonialSummary(
+            newWorldProvincesOwned: nwOwned,
+          );
+          expect(
+            resolvePhaseEconomyColonialBuildOrderThresholdCap(
+              phasePlan: outcome,
+              colonial: colonial,
+            ),
+            isNull,
+            reason:
+                '$phase with newWorldProvincesOwned=$nwOwned: colonial '
+                'cap must be structurally suppressed outside COLONIAL.',
+          );
+        }
+      }
+    });
+
+    test('reads only outcome.phase and colonial.newWorldProvincesOwned — '
+        'sibling slots on PhasePlanOutcome do not flip the resolver', () {
+      // Pins the resolver against a hypothetical regression that
+      // started leaking COLONIAL slot content into EXPAND /
+      // COLONIAL-lite / DEVELOP. Even with every COLONIAL slot
+      // populated, the resolver must still route off `outcome.phase`
+      // only and ignore the populated acquisition / military / naval /
+      // civilian slots when the active phase is not COLONIAL.
+      for (final phase in <ObserverGoalPhase>[
+        ObserverGoalPhase.expand,
+        ObserverGoalPhase.colonialLite,
+        ObserverGoalPhase.develop,
+      ]) {
+        final outcome = PhasePlanOutcome(
+          phase: phase,
+          colonialAcquisitionTarget: _colonialAcquisitionPopulated,
+          colonialPeaceTargetFactionIdsSorted: const <String>['gp2'],
+          colonialMilitaryPlan: _colonialMilitaryPopulated,
+          colonialNavalPlan: _colonialNavalPopulated,
+          colonialCivilianWorkOrders: _colonialCivilianPopulated,
+        );
+        const colonial = ColonialSummary(newWorldProvincesOwned: 3);
+        expect(
+          resolvePhaseEconomyColonialBuildOrderThresholdCap(
+            phasePlan: outcome,
+            colonial: colonial,
+          ),
+          isNull,
+          reason:
+              '$phase: populated COLONIAL slots must not flip the resolver '
+              '— only outcome.phase decides the COLONIAL-only gate.',
+        );
+      }
+    });
+
+    test('deterministic across repeated calls (Must-have #7)', () {
+      // The resolver is pure on `(outcome.phase,
+      // colonial.newWorldProvincesOwned)` so identical inputs must
+      // yield identical `int?` resolutions across any number of
+      // invocations. Iterates every phase x {0, 1, 5} NW-ownership
+      // combination so a future regression that introduced
+      // non-determinism (random tiebreak, mutable shared state, ...)
+      // would be caught.
+      for (final phase in ObserverGoalPhase.values) {
+        for (final nwOwned in <int>[0, 1, 5]) {
+          final outcome = PhasePlanOutcome(phase: phase);
+          final colonial = ColonialSummary(
+            newWorldProvincesOwned: nwOwned,
+          );
+          final a = resolvePhaseEconomyColonialBuildOrderThresholdCap(
+            phasePlan: outcome,
+            colonial: colonial,
+          );
+          final b = resolvePhaseEconomyColonialBuildOrderThresholdCap(
+            phasePlan: outcome,
+            colonial: colonial,
+          );
+          final c = resolvePhaseEconomyColonialBuildOrderThresholdCap(
+            phasePlan: outcome,
+            colonial: colonial,
+          );
+          expect(
+            a,
+            b,
+            reason: '$phase nwOwned=$nwOwned: two-call determinism',
+          );
+          expect(
+            b,
+            c,
+            reason: '$phase nwOwned=$nwOwned: three-call determinism',
+          );
+        }
+      }
+    });
+
+    test('returns the under-pressure constant, never the legacy '
+        'kColonialBuildOrderThresholdWhenOwnedNw fallback', () {
+      // Pins the structural invariant that the fallback arm is
+      // unreachable through the phase-derived path. The two constants
+      // are deliberately distinct in `colonizethis_data`
+      // (`kColonialBuildOrderThresholdWhenOwnedNwUnderPressure = 15`,
+      // `kColonialBuildOrderThresholdWhenOwnedNw = 18`), so a future
+      // regression that wired the wrong constant would flip this pin
+      // to red even if the COLONIAL-only suppression matrix stayed
+      // intact. Exhaustive over the reachable NW-ownership range to
+      // also pin the constant against any phase-keyed tier blend.
+      const outcome = PhasePlanOutcome(phase: ObserverGoalPhase.colonial);
+      for (final nwOwned in <int>[1, 2, 5, 20]) {
+        final colonial = ColonialSummary(newWorldProvincesOwned: nwOwned);
+        final cap = resolvePhaseEconomyColonialBuildOrderThresholdCap(
+          phasePlan: outcome,
+          colonial: colonial,
+        );
+        expect(
+          cap,
+          kColonialBuildOrderThresholdWhenOwnedNwUnderPressure,
+          reason:
+              'nwOwned=$nwOwned: COLONIAL with any positive NW ownership '
+              'must return the under-pressure cap.',
+        );
+        expect(
+          cap,
+          isNot(kColonialBuildOrderThresholdWhenOwnedNw),
+          reason:
+              'nwOwned=$nwOwned: the no-acquisition fallback constant '
+              'is unreachable through the phase-derived path because '
+              'COLONIAL phase entry requires hasColonialAcquisitionTargets.',
+        );
       }
     });
   });

@@ -74,6 +74,9 @@
 /// I/O, no logging, and no order emission.
 library;
 
+import 'package:colonizethis_data/colonizethis_data.dart';
+
+import '../perception/perception_snapshot.dart';
 import 'observer_goal_phase.dart';
 import 'phase_planner_conquest_filter.dart';
 import 'phase_planner_dispatch.dart';
@@ -153,6 +156,80 @@ bool resolvePhaseEconomyColonialPressureActive({
 /// no order emission.
 bool resolvePhaseEconomyDevelopActive({required PhasePlanOutcome phasePlan}) =>
     phasePlan.phase == ObserverGoalPhase.develop;
+
+/// Returns the build-order threshold cap that
+/// `_appendEconomyBuildOrders` should clamp `buildThreshold` to when
+/// the active player is operating under full COLONIAL acquisition
+/// pressure and already owns at least one New World province, or
+/// `null` when no cap applies for the current phase / NW-ownership
+/// combination.
+///
+/// Replaces the per-call `colonialBuildOrderThresholdCap` invocation
+/// in `_appendEconomyBuildOrders` (`colonial_pressure.dart`). The
+/// legacy helper had two arms keyed on
+/// `hasColonialAcquisitionTargets(colonial)`:
+///
+/// - `hasColonialAcquisitionTargets && newWorldProvincesOwned > 0`
+///   -> [kColonialBuildOrderThresholdWhenOwnedNwUnderPressure]
+/// - `newWorldProvincesOwned > 0` (no acquisition targets)
+///   -> [kColonialBuildOrderThresholdWhenOwnedNw]
+/// - otherwise -> `null`
+///
+/// The orchestrator only invoked the helper inside an outer
+/// `if (colonialPressure)` guard, where `colonialPressure` is the
+/// dispatched [resolvePhaseEconomyColonialPressureActive] (active
+/// only under [ObserverGoalPhase.colonial]). COLONIAL phase entry is
+/// itself gated on `hasColonialAcquisitionTargets` via
+/// [observerGoalPhaseFor], so the first legacy arm is the *only*
+/// reachable arm under the orchestrator call site — the second
+/// `kColonialBuildOrderThresholdWhenOwnedNw` arm requires
+/// `!hasColonialAcquisitionTargets`, which is structurally
+/// unreachable inside the orchestrator's COLONIAL-pressure branch.
+///
+/// This resolver therefore collapses the helper's reachable behaviour
+/// to a single phase-derived path: when phase is
+/// [ObserverGoalPhase.colonial] and `newWorldProvincesOwned > 0`,
+/// return [kColonialBuildOrderThresholdWhenOwnedNwUnderPressure];
+/// otherwise return `null`. Phase-derived `int?` is field-equal to
+/// the legacy `colonialBuildOrderThresholdCap` compute at the
+/// orchestrator's only call site across every reachable
+/// `(ObserverGoalPhase, ColonialSummary)` pair, preserving the
+/// prior build-threshold cap behaviour exactly during the S5
+/// migration.
+///
+/// Structural suppression matrix (mirrors
+/// [resolvePhaseEconomyColonialPressureActive]):
+///
+/// - [ObserverGoalPhase.expand]: returns `null` (NW economy bias is
+///   structurally suppressed under EXPAND).
+/// - [ObserverGoalPhase.colonialLite]: returns `null` (issue #2509
+///   § COLONIAL-lite "Begin NW penetration without weakening OW
+///   push" forbids biasing economy/build toward NW cargo under the
+///   safeguard).
+/// - [ObserverGoalPhase.colonial]: returns
+///   [kColonialBuildOrderThresholdWhenOwnedNwUnderPressure] when
+///   `colonial.newWorldProvincesOwned > 0`; returns `null` otherwise
+///   (no NW provinces yet -> no cap).
+/// - [ObserverGoalPhase.develop]: returns `null` (DEVELOP drives
+///   improvement work through `civilianWorkOrdersFromPhasePlan`, not
+///   the colonial build cap).
+///
+/// Pure and deterministic — identical
+/// `(PhasePlanOutcome, ColonialSummary)` inputs always yield
+/// identical `int?` resolutions (Refs #2509 Must-have #7). Performs
+/// no I/O, no logging, no order emission.
+int? resolvePhaseEconomyColonialBuildOrderThresholdCap({
+  required PhasePlanOutcome phasePlan,
+  required ColonialSummary colonial,
+}) {
+  if (!resolvePhaseEconomyColonialPressureActive(phasePlan: phasePlan)) {
+    return null;
+  }
+  if (colonial.newWorldProvincesOwned <= 0) {
+    return null;
+  }
+  return kColonialBuildOrderThresholdWhenOwnedNwUnderPressure;
+}
 
 /// When `true`, `_appendEconomyBuildOrders` applies the below-quota OW
 /// build-pass arms (stalled build threshold cap, GP-blocker focus,
