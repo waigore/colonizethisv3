@@ -696,12 +696,27 @@ bool e2eNewWorldRegionChipAppearsSelected() {
 /// (e.g. capital-panel-only paths) can compose it unconditionally.
 ///
 /// Contract:
+/// - **Already-selected short-circuit**: returns immediately without
+///   tapping or pumping when [e2eNewWorldRegionChipAppearsSelected] is
+///   already `true`. The fleet-reach turn loop calls this helper after
+///   every Next-turn resolution (up to `kE2eDefaultFleetReachLoopMaxTurns
+///   = 35` times per scenario), plus once inside
+///   [e2eTryNavalMoveSegment] for the NW branch and once per
+///   [e2eAwaitNwCoastalOrVisibleLandForBundledExplore] iteration; once
+///   the NW chip is selected on the first call, every subsequent call
+///   would re-tap and re-pump the same already-flipped chip. The
+///   short-circuit removes that redundant tap + post-tap settle from
+///   the wall-clock-bound hot path (Refs GitHub #2336 Bottleneck 4 /
+///   AC5).
 /// - No-op (returns immediately) when no hit-testable widget under
 ///   [kCtE2ERegionTabNewWorldKey] is present.
 /// - Otherwise taps the first hit-testable subtree node, then polls
 ///   [e2eNewWorldRegionChipAppearsSelected] with adaptive backoff up to a
 ///   500ms cap. Never throws on timeout (best-effort post-tap settle).
 Future<void> e2eTapNewWorldRegionTabIfPresent(WidgetTester tester) async {
+  if (e2eNewWorldRegionChipAppearsSelected()) {
+    return;
+  }
   final tab = find.byKey(kCtE2ERegionTabNewWorldKey).hitTestable();
   if (tab.evaluate().isEmpty) {
     return;
@@ -727,6 +742,13 @@ Future<void> e2eTapNewWorldRegionTabIfPresent(WidgetTester tester) async {
 /// (`SPEC/program/e2e-integration-tests.md`).
 ///
 /// Contract:
+/// - **Already-selected short-circuit**: returns immediately without
+///   tapping or pumping when [e2eOldWorldRegionChipAppearsSelected] is
+///   already `true`. Mirrors the sibling
+///   [e2eTapNewWorldRegionTabIfPresent] short-circuit so the OW branch
+///   of [e2eTryNavalMoveSegment] does not pay a redundant tap + post-tap
+///   settle when the OW chip is already selected (default map state for
+///   OW-split fleet scenarios). Refs GitHub #2336 Bottleneck 4 / AC5.
 /// - No-op (returns immediately) when no hit-testable Old World [CtChoiceChip]
 ///   is present.
 /// - Otherwise taps the first hit-testable chip, then polls
@@ -736,6 +758,9 @@ Future<void> e2eTapOldWorldRegionTab(
   WidgetTester tester,
   AppLocalizations l10n,
 ) async {
+  if (e2eOldWorldRegionChipAppearsSelected(l10n)) {
+    return;
+  }
   final chip = find.widgetWithText(CtChoiceChip, l10n.region_oldWorld);
   final hit = chip.hitTestable();
   if (hit.evaluate().isEmpty) {

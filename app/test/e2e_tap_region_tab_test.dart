@@ -1,5 +1,7 @@
 /// Pins the **tap-and-settle** contract of `e2eTapNewWorldRegionTabIfPresent`
-/// and `e2eTapOldWorldRegionTab` (`app/integration_test/e2e_test_shared.dart`).
+/// and `e2eTapOldWorldRegionTab` (`app/integration_test/e2e_test_shared.dart`),
+/// including the **already-selected short-circuit** that skips the tap +
+/// post-tap settle when the corresponding chip is already selected.
 ///
 /// Both helpers were lifted from
 /// `new_game_fleet_reaches_new_world_e2e_helpers.dart` so the
@@ -9,8 +11,11 @@
 /// (`_tryNavalMoveSegment`, `_awaitNwCoastalOrVisibleLandForBundledExploreE2e`)
 /// inside the `_kMaxNextTurnTapsForNwFleetReach = 35` turn loop, so a silent
 /// regression — for example dropping the `.hitTestable()` guard, throwing on
-/// timeout, or skipping the chip-selected poll — would regress the
-/// wall-clock-bound paths #2336 is shrinking.
+/// timeout, skipping the chip-selected poll, or dropping the
+/// already-selected short-circuit — would regress the wall-clock-bound paths
+/// #2336 is shrinking. The short-circuit in particular removes the redundant
+/// tap + 500ms-bounded post-tap settle that would otherwise fire on every
+/// fleet-reach turn iteration after the first call selects the NW chip.
 ///
 /// Because `integration_test/` runs behind a no-op `app_e2e_linux` lane today
 /// (`SPEC/program/e2e-integration-tests.md` § CI), these widget-test pins are
@@ -33,14 +38,19 @@ import '../integration_test/e2e_test_shared.dart';
 /// the [kCtE2ERegionTabNewWorldKey] so `find.byKey(...).hitTestable()` resolves
 /// and an `onSelected` flip drives [e2eNewWorldRegionChipAppearsSelected] true.
 class _NewWorldRegionTabHost extends StatefulWidget {
-  const _NewWorldRegionTabHost();
+  const _NewWorldRegionTabHost({this.initialSelected = false});
+
+  /// Initial value for the underlying [CtChoiceChip] `selected` flag — the
+  /// short-circuit pin tests pre-select the chip so the helper's
+  /// already-selected branch fires without going through an extra tap.
+  final bool initialSelected;
 
   @override
   State<_NewWorldRegionTabHost> createState() => _NewWorldRegionTabHostState();
 }
 
 class _NewWorldRegionTabHostState extends State<_NewWorldRegionTabHost> {
-  bool selected = false;
+  late bool selected = widget.initialSelected;
   int taps = 0;
 
   @override
@@ -62,16 +72,24 @@ class _NewWorldRegionTabHostState extends State<_NewWorldRegionTabHost> {
 /// Toggling host for a single Old World [CtChoiceChip] (no keyed subtree —
 /// `e2eTapOldWorldRegionTab` matches by label text via `widgetWithText`).
 class _OldWorldRegionTabHost extends StatefulWidget {
-  const _OldWorldRegionTabHost({required this.label});
+  const _OldWorldRegionTabHost({
+    required this.label,
+    this.initialSelected = false,
+  });
 
   final String label;
+
+  /// Initial value for the underlying [CtChoiceChip] `selected` flag — the
+  /// short-circuit pin tests pre-select the chip so the helper's
+  /// already-selected branch fires without going through an extra tap.
+  final bool initialSelected;
 
   @override
   State<_OldWorldRegionTabHost> createState() => _OldWorldRegionTabHostState();
 }
 
 class _OldWorldRegionTabHostState extends State<_OldWorldRegionTabHost> {
-  bool selected = false;
+  late bool selected = widget.initialSelected;
   int taps = 0;
 
   @override
@@ -219,6 +237,115 @@ void main() {
           reason:
               'Sanity: with onSelected stubbed to no-op the chip stays '
               'unselected, exercising the timeout branch of the helper.',
+        );
+      },
+    );
+
+    testWidgets(
+      'short-circuits without tapping when the chip is already selected',
+      (WidgetTester tester) async {
+        // Pre-select the chip so the already-selected branch fires before
+        // the helper even looks for a hit-testable subtree. This is the
+        // fleet-reach hot-path optimization: 34 of the 35 turn-loop
+        // iterations call this helper with the NW chip already selected
+        // from the first tap, so re-tapping would burn one frame + a
+        // bounded settle per iteration for no semantic effect.
+        await _pumpScaffold(
+          tester,
+          const _NewWorldRegionTabHost(initialSelected: true),
+        );
+        final hostState = tester.state<_NewWorldRegionTabHostState>(
+          find.byType(_NewWorldRegionTabHost),
+        );
+        expect(hostState.selected, isTrue);
+        expect(hostState.taps, 0);
+        expect(
+          e2eNewWorldRegionChipAppearsSelected(),
+          isTrue,
+          reason:
+              'Sanity: the pre-selected host must surface as selected to '
+              'the helper`s short-circuit predicate before the call.',
+        );
+
+        final sw = Stopwatch()..start();
+        await e2eTapNewWorldRegionTabIfPresent(tester);
+        sw.stop();
+
+        expect(
+          hostState.taps,
+          0,
+          reason:
+              'Already-selected short-circuit must skip the tap entirely; a '
+              'regression that re-tapped the chip would either thrash it to '
+              'unselected (via CtChoiceChip onSelected toggle semantics) or '
+              'burn an unnecessary frame + post-tap settle on every '
+              'fleet-reach turn (#2336 Bottleneck 4 / AC5).',
+        );
+        expect(
+          hostState.selected,
+          isTrue,
+          reason:
+              'Chip remains selected because no tap fires; sanity check '
+              'against a regression that calls onSelected unconditionally.',
+        );
+        expect(
+          sw.elapsed < const Duration(milliseconds: 200),
+          isTrue,
+          reason:
+              'Already-selected short-circuit must return well before the '
+              '500ms post-tap settle cap — ideally inside one synchronous '
+              'predicate read. A regression that fell through to the tap + '
+              'settle path would directly inflate fleet-reach wall clock.',
+        );
+      },
+    );
+
+    testWidgets(
+      'short-circuits even when the keyed subtree is non-hit-testable but '
+      'the chip already appears selected',
+      (WidgetTester tester) async {
+        // Mounts a non-hit-testable but visually-selected New World chip:
+        // before the short-circuit landed, the helper would have returned
+        // via the `.hitTestable().evaluate().isEmpty` no-op branch; with
+        // the short-circuit it returns via the already-selected branch
+        // first. Either way no tap fires, but pinning the order keeps a
+        // regression from accidentally tapping a non-hit-testable but
+        // mounted chip during a panel push that selects the NW tab off-
+        // screen.
+        await _pumpScaffold(
+          tester,
+          IgnorePointer(
+            child: KeyedSubtree(
+              key: kCtE2ERegionTabNewWorldKey,
+              child: CtChoiceChip(
+                label: const Text('New World'),
+                selected: true,
+                onSelected: (_) {},
+              ),
+            ),
+          ),
+        );
+        expect(
+          e2eNewWorldRegionChipAppearsSelected(),
+          isTrue,
+          reason:
+              'Sanity: the IgnorePointer wrapper does not strip the chip`s '
+              '`selected` flag from the predicate.',
+        );
+
+        Object? caught;
+        try {
+          await e2eTapNewWorldRegionTabIfPresent(tester);
+        } catch (e) {
+          caught = e;
+        }
+        expect(
+          caught,
+          isNull,
+          reason:
+              'Already-selected + non-hit-testable subtree must remain a '
+              'silent no-op so callers can compose the helper '
+              'unconditionally without paying an exception or a tap.',
         );
       },
     );
@@ -389,6 +516,112 @@ void main() {
           reason:
               'Sanity: stubbed onSelected keeps the chip unselected so the '
               'timeout branch is exercised end-to-end.',
+        );
+      },
+    );
+
+    testWidgets(
+      'short-circuits without tapping when the chip is already selected',
+      (WidgetTester tester) async {
+        // Pre-selected OW chip mirrors the steady state of fleet-reach OW
+        // segments: the OW tab is the default map state, so the OW branch
+        // of [e2eTryNavalMoveSegment] (called per fleet-reach iteration)
+        // would otherwise re-tap the already-selected chip every time and
+        // pay a redundant 500ms-bounded settle for no semantic effect.
+        final l10n = lookupAppLocalizations(const Locale('en'));
+        await _pumpScaffold(
+          tester,
+          _OldWorldRegionTabHost(
+            label: l10n.region_oldWorld,
+            initialSelected: true,
+          ),
+        );
+        final hostState = tester.state<_OldWorldRegionTabHostState>(
+          find.byType(_OldWorldRegionTabHost),
+        );
+        expect(hostState.selected, isTrue);
+        expect(hostState.taps, 0);
+        expect(
+          e2eOldWorldRegionChipAppearsSelected(l10n),
+          isTrue,
+          reason:
+              'Sanity: the pre-selected OW host must surface as selected to '
+              'the helper`s short-circuit predicate before the call.',
+        );
+
+        final sw = Stopwatch()..start();
+        await e2eTapOldWorldRegionTab(tester, l10n);
+        sw.stop();
+
+        expect(
+          hostState.taps,
+          0,
+          reason:
+              'Already-selected OW short-circuit must skip the tap; a '
+              'regression that re-tapped would either thrash the chip to '
+              'unselected or burn a frame + post-tap settle on every OW '
+              'segment iteration (#2336 Bottleneck 4 / AC5).',
+        );
+        expect(
+          hostState.selected,
+          isTrue,
+          reason:
+              'Chip remains selected because no tap fires; guards against a '
+              'regression that calls onSelected unconditionally.',
+        );
+        expect(
+          sw.elapsed < const Duration(milliseconds: 200),
+          isTrue,
+          reason:
+              'Already-selected short-circuit must return well before the '
+              '500ms settle cap; a regression that fell through to the tap '
+              '+ settle path would directly inflate fleet-reach OW wall '
+              'clock.',
+        );
+      },
+    );
+
+    testWidgets(
+      'short-circuits even when the matching chip is non-hit-testable but '
+      'already appears selected',
+      (WidgetTester tester) async {
+        // Mirrors the NW counterpart: a non-hit-testable but visually
+        // selected OW chip (e.g. behind an IgnorePointer during a sheet
+        // push) must short-circuit via the already-selected branch before
+        // the helper even queries hit-testability. No tap fires, no
+        // exception leaks.
+        final l10n = lookupAppLocalizations(const Locale('en'));
+        await _pumpScaffold(
+          tester,
+          IgnorePointer(
+            child: CtChoiceChip(
+              label: Text(l10n.region_oldWorld),
+              selected: true,
+              onSelected: (_) {},
+            ),
+          ),
+        );
+        expect(
+          e2eOldWorldRegionChipAppearsSelected(l10n),
+          isTrue,
+          reason:
+              'Sanity: IgnorePointer does not strip the chip`s `selected` '
+              'flag from the OW predicate.',
+        );
+
+        Object? caught;
+        try {
+          await e2eTapOldWorldRegionTab(tester, l10n);
+        } catch (e) {
+          caught = e;
+        }
+        expect(
+          caught,
+          isNull,
+          reason:
+              'Already-selected + non-hit-testable OW chip must remain a '
+              'silent no-op so callers can compose the helper '
+              'unconditionally without paying an exception or a tap.',
         );
       },
     );
