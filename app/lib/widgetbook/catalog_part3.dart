@@ -648,3 +648,102 @@ List<WidgetbookNode> get combatUiDirectories => [
     ],
   ),
 ];
+
+Widget _shellOrGameStoryFrame({required Widget child, Object? navigatorKey}) {
+  return MaterialApp(
+    navigatorKey: navigatorKey is GlobalKey<NavigatorState> ? navigatorKey : null,
+    theme: AppThemes.colonial,
+    localizationsDelegates: AppLocalizationsBinding.localizationsDelegates,
+    supportedLocales: AppLocalizations.supportedLocales,
+    home: child,
+  );
+}
+
+ProviderScope _shellScreenProviderScope({required bool autoSaveAvailable}) {
+  return ProviderScope(
+    overrides: [
+      appEventBusProvider.overrideWith((ref) {
+        final bus = AppEventBus.create();
+        ref.onDispose(bus.dispose);
+        return bus;
+      }),
+      mainMenuAutoSaveAvailableProvider.overrideWith((ref) => autoSaveAvailable),
+    ],
+    child: _shellOrGameStoryFrame(child: const ShellScreen()),
+  );
+}
+
+/// Shell screen stories. SPEC/ui/shell-screen.md.
+List<WidgetbookNode> get shellScreenDirectories => [
+  WidgetbookFolder(
+    name: 'Shell Screen',
+    children: [
+      WidgetbookUseCase(
+        name: 'Default — no auto-save',
+        builder: (context) =>
+            _shellScreenProviderScope(autoSaveAvailable: false),
+      ),
+      WidgetbookUseCase(
+        name: 'Auto-save available',
+        builder: (context) =>
+            _shellScreenProviderScope(autoSaveAvailable: true),
+      ),
+    ],
+  ),
+];
+
+ProviderScope _gameScreenProviderScope({
+  required Game game,
+  required bool victory,
+}) {
+  final activeGame = victory
+      ? game.copyWith(
+          victory: VictoryState(
+            winnerPlayerId: game.players.first.id,
+            type: VictoryType.military,
+            turnNumber: 45,
+          ),
+        )
+      : game;
+  return ProviderScope(
+    overrides: [
+      appEventBusProvider.overrideWith((ref) {
+        final bus = AppEventBus.create();
+        ref.onDispose(bus.dispose);
+        return bus;
+      }),
+      currentGameProvider.overrideWith(() => CurrentGameNotifier(activeGame)),
+      currentOrdersProvider.overrideWith(
+        () => CurrentOrdersNotifier(const Orders()),
+      ),
+      mapViewDataProvider.overrideWith((ref) => null),
+      gameIdsWithIntroShownProvider.overrideWith(
+        () => GameIdsWithIntroShownNotifier({activeGame.id}),
+      ),
+    ],
+    child: _shellOrGameStoryFrame(child: const GameScreen()),
+  );
+}
+
+/// Game screen stories. SPEC/ui/game-screen.md.
+List<WidgetbookNode> get gameScreenDirectories => [
+  WidgetbookFolder(
+    name: 'Game Screen',
+    children: [
+      WidgetbookUseCase(
+        name: 'Default — no victory',
+        builder: (context) {
+          final game = getDebugInitGameResult().game;
+          return _gameScreenProviderScope(game: game, victory: false);
+        },
+      ),
+      WidgetbookUseCase(
+        name: 'Victory',
+        builder: (context) {
+          final game = getDebugInitGameResult().game;
+          return _gameScreenProviderScope(game: game, victory: true);
+        },
+      ),
+    ],
+  ),
+];
