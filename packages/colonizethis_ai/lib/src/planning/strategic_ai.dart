@@ -6,10 +6,11 @@ import 'package:colonizethis_logic/order_suggestion_api.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'army_conquest_prep.dart';
-import 'colonial_pressure.dart';
 import 'domain_planner_orchestrator.dart';
 import 'economy_planner.dart';
 import 'goal_manager.dart';
+import 'observer_goal_phase.dart';
+import 'phase_planner_goal_filter.dart';
 import 'ai_order_reporting.dart';
 import 'ai_trace_builder.dart';
 import '../perception/perception_snapshot.dart';
@@ -78,17 +79,17 @@ StrategicOrderTraceResult generateStrategicOrdersWithTrace({
   final turn = game.worldState.turnState.turnNumber;
   _log.i('generateStrategicOrders nationId=$nationId turn=$turn');
   final snapshot = AIWorldSnapshot.fromPlayerView(view, topology: topology);
-  final suppressColonialPressure = isStalledOldWorldGpBlockerFocus(
-        game: game,
-        snapshot: snapshot,
-      ) ||
-      isBelowObserverConquestQuota(
-        snapshot.conquest.oldWorldProvincesOwned,
-      );
+  final observerGoalPhase = observerGoalPhaseFor(
+    snapshot: snapshot,
+    game: game,
+  );
+  final suppressColonialPressure = resolvePhaseGoalSuppressColonialPressure(
+    observerGoalPhase,
+  );
   final goalScores = evaluateStrategicGoalScores(
     snapshot,
     config,
-    suppressColonialPressure: suppressColonialPressure,
+    observerGoalPhase: observerGoalPhase,
   );
   var primaryGoal = selectPrimaryGoal(
     snapshot,
@@ -96,7 +97,7 @@ StrategicOrderTraceResult generateStrategicOrdersWithTrace({
     seeds.goalSeed,
     nationId: nationId,
     turn: turn,
-    suppressColonialPressure: suppressColonialPressure,
+    observerGoalPhase: observerGoalPhase,
   );
   if (suppressColonialPressure &&
       snapshot.conquest.provincesToVictory >
