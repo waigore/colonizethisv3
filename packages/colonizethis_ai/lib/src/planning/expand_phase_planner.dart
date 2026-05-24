@@ -657,6 +657,42 @@ int cheapestRegimentBuildTreasuryCost() {
   return min;
 }
 
+/// Below-quota EXPAND GP with zero standing regiments and a non-empty
+/// invadable Old World frontier.
+///
+/// Canonical home (Refs #2509 S1) for the legacy
+/// `isBelowQuotaPeaceZeroRegimentsRebuild` predicate previously hosted in
+/// `colonial_pressure.dart` (Arm A of the legacy below-quota treasury-recovery
+/// composite). The function captures the EXPAND-trap "zero regiments with
+/// frontier to expand into" arm shared by:
+///
+///   - [planExpandEconomy] Arm A (`regimentCount == 0 && hasInvadable` →
+///     `forceCheapestRegimentBuild: true`), which signals the orchestrator
+///     to force a regiment build attempt regardless of treasury (cargo
+///     boost in Arm C handles the funding side).
+///   - The legacy `isBelowQuotaPeaceTreasuryRecovery` composite still
+///     surfacing through `colonial_pressure.dart` (composed with the
+///     `isBelowQuotaPeaceInsufficientRegiments` arm) so the cargo-delivery
+///     trigger and the planner directive cannot drift apart while the
+///     S5 orchestrator wire-up is in flight.
+///
+/// `colonial_pressure.dart` retains a thin delegating stub for legacy
+/// import sites (the `colonial_pressure_below_quota_peace_*` tests and
+/// `phase_planner_economy_filter.dart`) so the planned S1 deletion of
+/// that file leaves no orphan callers.
+///
+/// Pure and deterministic — identical inputs always yield identical
+/// results (Refs #2509 Must-have #7). Constant-time (no catalog or
+/// game-state scan).
+bool isBelowQuotaPeaceZeroRegimentsRebuild({
+  required int oldWorldProvincesOwned,
+  required int regimentCount,
+  required bool hasInvadableProvinces,
+}) =>
+    isBelowObserverConquestQuota(oldWorldProvincesOwned) &&
+    regimentCount == 0 &&
+    hasInvadableProvinces;
+
 /// EXPAND-phase conquest destination filter returned by [planExpandMilitary].
 ///
 /// Two ascending-sorted lists describe the priority subset of OW

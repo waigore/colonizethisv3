@@ -83,14 +83,20 @@ int cheapestRegimentBuildTreasuryCost() =>
 ///
 /// Triggers overseas cargo preference so auto-transport can deliver riches to
 /// stockpile before the next build pass (Refs #2509).
+///
+/// Delegates to [expand_phase_planner.isBelowQuotaPeaceZeroRegimentsRebuild]
+/// (Refs #2509 S1) so the canonical implementation lives alongside the
+/// EXPAND-trap callers that share the zero-regiments / invadable-frontier
+/// gate.
 bool isBelowQuotaPeaceZeroRegimentsRebuild({
   required int oldWorldProvincesOwned,
   required int regimentCount,
   required bool hasInvadableProvinces,
-}) =>
-    isBelowObserverConquestQuota(oldWorldProvincesOwned) &&
-    regimentCount == 0 &&
-    hasInvadableProvinces;
+}) => expand_phase_planner.isBelowQuotaPeaceZeroRegimentsRebuild(
+  oldWorldProvincesOwned: oldWorldProvincesOwned,
+  regimentCount: regimentCount,
+  hasInvadableProvinces: hasInvadableProvinces,
+);
 
 bool isBelowQuotaPeaceTreasuryRecovery({
   required int oldWorldProvincesOwned,
