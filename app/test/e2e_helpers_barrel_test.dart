@@ -46,7 +46,8 @@ import 'package:colonizethis_app/config/ct_e2e_last_panel_snapshot.dart'
     show
         CtE2eCivilianPanelSnapshot,
         CtE2eNavalPanelSnapshot,
-        ctE2eCivilianPanelSnapshot;
+        ctE2eCivilianPanelSnapshot,
+        ctE2eNavalPanelSnapshot;
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_app/l10n/app_localizations_contract.dart';
 import 'package:colonizethis_app/l10n/app_localizations_lookup.dart';
@@ -536,6 +537,227 @@ void main() {
               'helper must throw via e2eWaitUntilFound rather than '
               'silently no-op, so the tear-off smoke catches a wrapper '
               'that swallowed the missing-dialog path.',
+        );
+      },
+    );
+
+    testWidgets(
+      'dismissCtDialogShellIfPresent is re-exported through the barrel',
+      (tester) async {
+        final Future<bool> Function(
+          WidgetTester,
+          AppLocalizations, {
+          E2ePerfLog? perf,
+          Duration shellCloseTimeout,
+          String phaseName,
+        })
+        ref = dismissCtDialogShellIfPresent;
+        expect(
+          ref,
+          isNotNull,
+          reason:
+              'The full-turn scenario consumes this locale-aware '
+              'CtDialogShell closer via the AC1 barrel immediately after '
+              '[attemptFirstFleetMoveOrCancel]. A regression that dropped '
+              'the barrel wrapper or removed the `shellCloseTimeout` / '
+              '`phaseName` named parameters would either re-introduce the '
+              'heavy [dismissTransientUi] sweep or orphan the legacy '
+              '`pump_until_shell_closed_after_close_candidate` timing '
+              'attribution (Bottleneck 6 in '
+              '`SPEC/program/e2e-integration-tests.md` § Determinism, '
+              '#2336 AC1 / AC2).',
+        );
+        expect(
+          kE2eDefaultCtDialogShellCloseTimeout,
+          const Duration(seconds: 3),
+          reason:
+              'Default shell-close cap must remain the legacy 3 s '
+              'post-move-confirm contract.',
+        );
+        expect(
+          kE2eDefaultCtDialogShellClosePhase,
+          'pump_until_shell_closed_after_close_candidate',
+          reason:
+              'Default phase label must remain stable for E2E_TIMING '
+              'scrapers keyed on the pre-lift inline block.',
+        );
+        final l10n = lookupAppLocalizations(const Locale('en'));
+        await tester.pumpWidget(
+          const MaterialApp(home: Scaffold(body: SizedBox())),
+        );
+        expect(
+          await ref(tester, l10n),
+          isFalse,
+          reason:
+              'Sanity smoke through the barrel: no CtDialogShell mounted '
+              'must return false without tapping.',
+        );
+      },
+    );
+
+    testWidgets(
+      'attemptFirstFleetMoveOrCancel is re-exported through the barrel',
+      (tester) async {
+        final Future<E2eFirstFleetMoveOutcome> Function(
+          WidgetTester,
+          AppLocalizations, {
+          E2ePerfLog? perf,
+          Duration moveDialogOpenTimeout,
+          Duration confirmReadyTimeout,
+          Duration dialogCloseTimeout,
+        })
+        ref = attemptFirstFleetMoveOrCancel;
+        expect(
+          ref,
+          isNotNull,
+          reason:
+              'The full-turn scenario consumes this post-split move helper '
+              'via the AC1 barrel. A regression that dropped the barrel '
+              'wrapper or removed the timeout named parameters would '
+              're-introduce the ~57-line inline orchestration block '
+              '(Bottleneck 2 in '
+              '`SPEC/program/e2e-integration-tests.md` § Determinism, '
+              '#2336 AC1 / AC2).',
+        );
+        expect(
+          kE2eDefaultFirstFleetMoveDialogOpenTimeout,
+          const Duration(seconds: 5),
+        );
+        expect(
+          kE2eDefaultFirstFleetMoveConfirmReadyTimeout,
+          const Duration(seconds: 2),
+        );
+        expect(
+          kE2eDefaultFirstFleetMoveDialogCloseTimeout,
+          const Duration(seconds: 10),
+        );
+        final l10n = lookupAppLocalizations(const Locale('en'));
+        await tester.pumpWidget(
+          const MaterialApp(home: Scaffold(body: SizedBox())),
+        );
+        expect(
+          await ref(tester, l10n),
+          E2eFirstFleetMoveOutcome.noMoveButton,
+          reason:
+              'Sanity smoke through the barrel: no naval-panel Move text '
+              'must return [E2eFirstFleetMoveOutcome.noMoveButton] without '
+              'opening a dialog.',
+        );
+      },
+    );
+
+    test(
+      'awaitExploreEnabledFromCivilianPanel is re-exported through the barrel',
+      () {
+        final Future<bool> Function(
+          WidgetTester,
+          AppLocalizations, {
+          E2ePerfLog? perf,
+          Duration maxUiResponseWait,
+          int maxBoundedTurnRetries,
+          String retryIterationCounter,
+        })
+        ref = awaitExploreEnabledFromCivilianPanel;
+        expect(
+          ref,
+          isNotNull,
+          reason:
+              'The post-bundle Explore scenario consumes this bounded '
+              'retry composer via the AC1 barrel. A regression that dropped '
+              'the barrel wrapper or removed the `maxBoundedTurnRetries` / '
+              '`retryIterationCounter` named parameters would break the '
+              'legacy `bundled_explore_retry_iterations` counter attribution '
+              'or silently widen the 8-retry window (Bottleneck 5 in '
+              '`SPEC/program/e2e-integration-tests.md` § Determinism, '
+              '#2336 AC1 / AC2 / AC5). Behavioural smoke lives in '
+              '`e2e_await_explore_enabled_from_civilian_panel_test.dart`.',
+        );
+        expect(kE2eDefaultBundledExploreMaxTurnRetries, 8);
+        expect(
+          kE2eDefaultBundledExploreRetryIterationCounter,
+          'bundled_explore_retry_iterations',
+        );
+      },
+    );
+
+    testWidgets(
+      'ensureNonHomeFleetInNwAfterLoop is re-exported through the barrel',
+      (tester) async {
+        final Future<E2eFinalNavalReachCheckResult> Function(
+          WidgetTester, {
+          required E2ePerfLog perf,
+          required String Function(Object? lastException) failureMessageBuilder,
+          Duration maxUiResponseWait,
+        })
+        ref = ensureNonHomeFleetInNwAfterLoop;
+        expect(
+          ref,
+          isNotNull,
+          reason:
+              'Both fleet-reach scenarios consume this post-loop reach '
+              'assertion via the AC1 barrel. A regression that dropped the '
+              'barrel wrapper or removed the `failureMessageBuilder` slot '
+              'would orphan scenario-specific fail messages or mask reach '
+              'regressions (Bottleneck 4 in '
+              '`SPEC/program/e2e-integration-tests.md` § Determinism, '
+              '#2336 AC1 / AC2).',
+        );
+        expect(
+          kE2eDefaultFinalNavalReachCheckUiWait,
+          const Duration(seconds: 5),
+        );
+        const human = 'gp1';
+        ctE2eNavalPanelSnapshot = CtE2eNavalPanelSnapshot(
+          game: Game(
+            id: 'barrel-smoke-nw-reach',
+            worldState: WorldState(
+              turnState: TurnState(
+                phase: TurnPhase.orders,
+                turnNumber: 1,
+              ),
+              oldWorld: RegionData(),
+              newWorld: RegionData(),
+              fleets: [
+                Fleet(
+                  id: 'fleet_$human',
+                  ownerId: human,
+                  regionId: 'oldWorld',
+                  inPortAtProvinceId: 'oldWorld|capital',
+                ),
+                Fleet(
+                  id: 'fleet_split',
+                  ownerId: human,
+                  regionId: 'newWorld',
+                  seaZoneId: 'nwSea',
+                ),
+              ],
+            ),
+            players: const [
+              Player(id: human, displayName: 'You', isHuman: true),
+            ],
+          ),
+          humanPlayerId: human,
+          topology: const MapTopology(),
+          draftOrders: const Orders(),
+        );
+        addTearDown(() {
+          ctE2eNavalPanelSnapshot = null;
+        });
+        final perf = E2ePerfLog('e2e_helpers_barrel_test');
+        await tester.pumpWidget(
+          const MaterialApp(home: Scaffold(body: SizedBox())),
+        );
+        final result = await ref(
+          tester,
+          perf: perf,
+          failureMessageBuilder: (_) => 'barrel smoke failure',
+        );
+        expect(
+          result.lastKnownNavalSnapshot,
+          same(ctE2eNavalPanelSnapshot),
+          reason:
+              'Sanity smoke through the barrel: snapshot reach must '
+              'short-circuit without invoking failureMessageBuilder.',
         );
       },
     );
