@@ -1,3 +1,7 @@
+// coverage:ignore-file
+// Dev-only Widgetbook catalog part; excluded from app coverage gate via
+// instrumentation (matches catalog.dart). Story builders are only exercised
+// in the developer-facing Widgetbook app, not in widget unit tests.
 part of 'catalog.dart';
 
 MaterialApp _moveDialogStoryFrame({required Widget Function(BuildContext) open}) {
