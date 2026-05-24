@@ -30,9 +30,7 @@ String? stalledConquestDeclaredWarTarget({
     snapshot: snapshot,
   );
   if (activeMinor == null &&
-      isBelowObserverConquestQuota(
-        snapshot.conquest.oldWorldProvincesOwned,
-      )) {
+      isBelowObserverConquestQuota(snapshot.conquest.oldWorldProvincesOwned)) {
     final atWarMinors = <String>[
       for (final factionId in snapshot.threats.atWarWith)
         if (game.minorNations.any((m) => m.id == factionId)) factionId,
@@ -43,8 +41,7 @@ String? stalledConquestDeclaredWarTarget({
       activeMinor = atWarMinors.single;
     }
   }
-  if (activeMinor != null &&
-      snapshot.threats.atWarWith.contains(activeMinor)) {
+  if (activeMinor != null && snapshot.threats.atWarWith.contains(activeMinor)) {
     return activeMinor;
   }
   final provinceOwner = getProvinceOwnerMap(game);
@@ -84,14 +81,17 @@ Set<String> _legacyInvadableProvinceIds({
   required Game game,
   required AIWorldSnapshot snapshot,
   required bool structuralNewWorldSuppressed,
+  bool? suppressNwInvasionFromPhasePlan,
 }) {
+  final suppressNwInvasion =
+      suppressNwInvasionFromPhasePlan ??
+      shouldSuppressNewWorldDeclareWarInvasionAndPurchase(
+        snapshot: snapshot,
+        game: game,
+      );
   return {
     ...snapshot.conquest.invadableProvinceIdsSorted,
-    if (!structuralNewWorldSuppressed &&
-        !shouldSuppressNewWorldDeclareWarInvasionAndPurchase(
-          snapshot: snapshot,
-          game: game,
-        ))
+    if (!structuralNewWorldSuppressed && !suppressNwInvasion)
       ...snapshot.colonial.invadableNewWorldProvinceIdsSorted,
   };
 }
@@ -111,11 +111,14 @@ Set<String> _invadableProvinceIdsForConquestPass({
   }
   final resolution =
       conquestResolution ?? resolvePhaseConquestInvadable(phasePlan: phasePlan);
+  final suppressNwInvasionFromPhasePlan =
+      resolvePhaseConquestSuppressNwInvasionScoring(phasePlan: phasePlan);
   if (resolution.useLegacyInvadable) {
     return _legacyInvadableProvinceIds(
       game: game,
       snapshot: snapshot,
       structuralNewWorldSuppressed: resolution.structuralNewWorldSuppressed,
+      suppressNwInvasionFromPhasePlan: suppressNwInvasionFromPhasePlan,
     );
   }
   return resolution.phasePlanInvadableSorted.toSet();
@@ -142,8 +145,17 @@ Orders runConquestArmyMovePlanner({
     phasePlan: phasePlan,
     conquestResolution: conquestResolution,
   );
-  final phasePlanInvadableIsAuthoritative = conquestResolution != null &&
-      !conquestResolution.useLegacyInvadable;
+  final phasePlanInvadableIsAuthoritative =
+      conquestResolution != null && !conquestResolution.useLegacyInvadable;
+  final colonialPressureActive = phasePlan != null
+      ? resolvePhaseConquestColonialPressureActive(phasePlan: phasePlan)
+      : hasColonialAcquisitionTargets(snapshot.colonial);
+  final suppressNwInvasionScoring = phasePlan != null
+      ? resolvePhaseConquestSuppressNwInvasionScoring(phasePlan: phasePlan)
+      : shouldSuppressNewWorldDeclareWarInvasionAndPurchase(
+          snapshot: snapshot,
+          game: ctx.game,
+        );
 
   final stalledExpansion = isObserverConquestExpansionPressure(
     snapshot.conquest.oldWorldProvincesOwned,
@@ -163,6 +175,7 @@ Orders runConquestArmyMovePlanner({
         declaredWarTargetFactionId: declaredWarTargetFactionId,
         invadable: invadableForPass,
         phasePlanInvadableIsAuthoritative: phasePlanInvadableIsAuthoritative,
+        suppressNwInvasionScoring: suppressNwInvasionScoring,
       );
     }
     return ctx.orders;
@@ -182,6 +195,7 @@ Orders runConquestArmyMovePlanner({
         declaredWarTargetFactionId: declaredWarTargetFactionId,
         invadable: invadableForPass,
         phasePlanInvadableIsAuthoritative: phasePlanInvadableIsAuthoritative,
+        suppressNwInvasionScoring: suppressNwInvasionScoring,
       );
     }
     return ctx.orders;
@@ -195,8 +209,8 @@ Orders runConquestArmyMovePlanner({
       weight < 10) {
     weight = 10;
   }
-  final atWarWithInvadableTarget = snapshot.conquest.invadableProvinceIdsSorted
-      .isNotEmpty &&
+  final atWarWithInvadableTarget =
+      snapshot.conquest.invadableProvinceIdsSorted.isNotEmpty &&
       snapshot.threats.atWarWith.isNotEmpty;
   if (stalledExpansion &&
       snapshot.conquest.invadableProvinceIdsSorted.isNotEmpty &&
@@ -216,20 +230,22 @@ Orders runConquestArmyMovePlanner({
       weight < kConquestArmyMoveMinWeightWhenCriticallyWeakNoGpWar) {
     weight = kConquestArmyMoveMinWeightWhenCriticallyWeakNoGpWar;
   }
-  if (hasColonialAcquisitionTargets(snapshot.colonial) &&
+  if (colonialPressureActive &&
       weight < kConquestArmyMoveMinWeightWhenColonialPressure) {
     weight = kConquestArmyMoveMinWeightWhenColonialPressure;
   }
   if (weight < 10) {
-    _log.d('conquest army move skipped nationId=${ctx.nationId} weight=$weight');
+    _log.d(
+      'conquest army move skipped nationId=${ctx.nationId} weight=$weight',
+    );
     return ctx.orders;
   }
   final scoringCandidates = phasePlanInvadableIsAuthoritative
       ? filtered
-          .where(
-            (move) => invadableForPass.contains(move.destinationProvinceId),
-          )
-          .toList()
+            .where(
+              (move) => invadableForPass.contains(move.destinationProvinceId),
+            )
+            .toList()
       : filtered;
   if (scoringCandidates.isEmpty) {
     return ctx.orders;
@@ -242,6 +258,7 @@ Orders runConquestArmyMovePlanner({
       filtered: scoringCandidates,
       declaredWarTargetFactionId: declaredWarTargetFactionId,
       phasePlanInvadableIsAuthoritative: phasePlanInvadableIsAuthoritative,
+      suppressNwInvasionScoring: suppressNwInvasionScoring,
     );
   }
   final selected = selectWeightedCandidate(
@@ -258,6 +275,7 @@ Orders runConquestArmyMovePlanner({
       stalledExpansion: false,
       declaredWarTargetFactionId: declaredWarTargetFactionId,
       phasePlanInvadableIsAuthoritative: phasePlanInvadableIsAuthoritative,
+      suppressNwInvasionScoring: suppressNwInvasionScoring,
     ),
   );
   if (selected == null) return ctx.orders;
@@ -276,9 +294,11 @@ Orders _applyStalledArmyMovesForAllFieldArmies({
   required List<ArmyMoveOrder> filtered,
   required String? declaredWarTargetFactionId,
   required bool phasePlanInvadableIsAuthoritative,
+  required bool suppressNwInvasionScoring,
 }) {
   final armiesWithOrders = <String>{
-    for (final m in ctx.orders.armyMoveOrdersByPlayerId[ctx.nationId] ?? const [])
+    for (final m
+        in ctx.orders.armyMoveOrdersByPlayerId[ctx.nationId] ?? const [])
       m.armyId,
   };
   final byArmy = <String, List<ArmyMoveOrder>>{};
@@ -303,6 +323,7 @@ Orders _applyStalledArmyMovesForAllFieldArmies({
         stalledExpansion: true,
         declaredWarTargetFactionId: declaredWarTargetFactionId,
         phasePlanInvadableIsAuthoritative: phasePlanInvadableIsAuthoritative,
+        suppressNwInvasionScoring: suppressNwInvasionScoring,
       );
       if (score > bestScore) {
         bestScore = score;
@@ -326,6 +347,7 @@ Orders _runStalledFrontierArmyMoveFallback({
   required String? declaredWarTargetFactionId,
   required Set<String> invadable,
   required bool phasePlanInvadableIsAuthoritative,
+  required bool suppressNwInvasionScoring,
 }) {
   final playerOwnedFullProvinceIds = <String>{
     for (final e in ctx.view.provincesById.entries)
@@ -341,7 +363,8 @@ Orders _runStalledFrontierArmyMoveFallback({
     unitsById: unitsByIdFromWorld(ctx.game.worldState),
   );
   final armiesWithOrders = <String>{
-    for (final m in ctx.orders.armyMoveOrdersByPlayerId[ctx.nationId] ?? const [])
+    for (final m
+        in ctx.orders.armyMoveOrdersByPlayerId[ctx.nationId] ?? const [])
       m.armyId,
   };
   ArmyMoveOrder? best;
@@ -373,6 +396,7 @@ Orders _runStalledFrontierArmyMoveFallback({
         stalledExpansion: true,
         declaredWarTargetFactionId: declaredWarTargetFactionId,
         phasePlanInvadableIsAuthoritative: phasePlanInvadableIsAuthoritative,
+        suppressNwInvasionScoring: suppressNwInvasionScoring,
       );
       if (score > bestScore) {
         bestScore = score;
@@ -422,7 +446,8 @@ double _stalledExpansionArmyMoveScoreDelta({
       destOwner != nationId &&
       snapshot.threats.atWarWith.contains(destOwner) &&
       _isMinorOrTribeFaction(game, destOwner);
-  final atWarGpInvadableBlocker = destOwner.isNotEmpty &&
+  final atWarGpInvadableBlocker =
+      destOwner.isNotEmpty &&
       destOwner != nationId &&
       snapshot.threats.atWarWith.contains(destOwner) &&
       game.playerById(destOwner) != null &&
@@ -481,6 +506,7 @@ double _scoreArmyMoveDestination({
   required bool stalledExpansion,
   required String? declaredWarTargetFactionId,
   required bool phasePlanInvadableIsAuthoritative,
+  required bool suppressNwInvasionScoring,
 }) {
   if (phasePlanInvadableIsAuthoritative &&
       !invadable.contains(move.destinationProvinceId)) {
@@ -525,12 +551,10 @@ double _scoreArmyMoveDestination({
   if (invadable.contains(move.destinationProvinceId)) {
     score += 10;
   }
-  if (snapshot.colonial.invadableNewWorldProvinceIdsSorted
-      .contains(move.destinationProvinceId)) {
-    if (shouldSuppressNewWorldDeclareWarInvasionAndPurchase(
-      snapshot: snapshot,
-      game: game,
-    )) {
+  if (snapshot.colonial.invadableNewWorldProvinceIdsSorted.contains(
+    move.destinationProvinceId,
+  )) {
+    if (suppressNwInvasionScoring) {
       return 0;
     }
     if (isBelowObserverConquestQuota(
