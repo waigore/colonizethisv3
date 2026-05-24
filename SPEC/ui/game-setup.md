@@ -46,7 +46,7 @@ The CtGameSetup widget is presentational and accepts the following parameters. T
 
 ## Shell new game dialog (`NewGameLeaderSelectionDialog`)
 
-**Flutter app shell** implements the same **six-slot** nation/leader semantics as `CtGameSetup` inside a **modal dialog** opened from Main Menu (bus id `new_game_leader_selection`). Full-screen `CtGameSetup` remains the catalog/widget contract for UXD 03b and tests; the shell path is dialog-based for current product.
+**Flutter app shell** implements the same **six-slot** nation/leader semantics as `CtGameSetup` inside a **modal dialog** opened from Main Menu (bus id `new_game_leader_selection`). Full-screen `CtGameSetup` remains the catalog/widget contract for UXD 03b and tests; the shell path is dialog-based for current product. See [new-game-leader-selection-dialog.md](new-game-leader-selection-dialog.md) for the authoritative widget contract, layout, states, and ACs.
 
 | Element | Requirement |
 |--------|-------------|
