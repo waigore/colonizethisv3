@@ -11,7 +11,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:widgetbook/widgetbook.dart';
 
 import '../config/themes.dart';
+import '../providers/app_event_bus_provider.dart';
 import '../providers/games_provider.dart';
+import '../providers/map_view_provider.dart';
 import '../features/game/combat/combat_mode_choice_dialog.dart';
 import '../features/game/combat/quick_battle_action_selector.dart';
 import '../features/game/combat/quick_battle_deployment_view.dart';
@@ -28,11 +30,13 @@ import '../features/game/widgets/province_overlay_demo_data.dart';
 import '../features/game/widgets/tech_tree_widget.dart';
 import '../features/game/screens/technology_screen.dart';
 import '../features/game/dialogue/intervention_dialogue_overlay.dart';
+import '../features/game/flame/game_screen.dart';
 import '../features/game/flame/region_map_component.dart'
     show CtMapVisibilityMode;
 import '../features/game/widgets/train_civilians_dialog.dart';
 import '../features/game/widgets/train_military_dialog.dart';
 import '../features/game/widgets/turn_news_dialog.dart';
+import '../features/shell/shell_screen.dart';
 import '../l10n/l10n.dart';
 import '../widgets/debug_init_game.dart';
 import '../widgets/ct_choice_chip.dart';
@@ -113,6 +117,8 @@ class CtWidgetbookApp extends StatelessWidget {
         ...interventionDialogueDirectories,
         ...turnNewsDialogDirectories,
         ...combatUiDirectories,
+        ...shellScreenDirectories,
+        ...gameScreenDirectories,
       ],
       lightTheme: AppThemes.colonial,
       darkTheme: AppThemes.colonial,
