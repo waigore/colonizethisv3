@@ -1,22 +1,26 @@
 part of 'new_game_fleet_reaches_new_world_e2e_test.dart';
 
-/// Locked full-init may succeed only after [GameService] bumps `mapSeed` on a
-/// topology/assigner retry (`effectiveSeed + 100003`, …), producing longer
-/// coast→warp→New World paths than nominal seed-42 alone. Keep this above the
-/// worst observed CI need (Refs #1849 / PR 1849).
-const int _kMaxNextTurnTapsForNwFleetReach = 35;
-
-/// Hard cap for any single “wait until UI shows X” poll (`waitUntilFound`,
-/// next-turn label settle, panel-open loops). Fail immediately when exceeded.
-const Duration _kMaxUiResponseWait = Duration(seconds: 5);
-
-/// Entire fleet e2e must finish within this wall clock (success or guarded fail).
+/// Legacy file-scope constants (`_kMaxNextTurnTapsForNwFleetReach`,
+/// `_kMaxUiResponseWait`, `_kFleetE2eMaxWallClock`) were retired from this
+/// `part` file because each was a value-identical private alias for a
+/// shared public constant on the AC1 barrel (Refs GitHub #2336 AC1 / AC2).
+/// Call sites in `new_game_fleet_reaches_new_world_e2e_test.dart` now consume
+/// the public names directly:
 ///
-/// Aliases the shared [kE2eMaxWallClock] (`e2e_test_shared.dart`) so all three
-/// E2E scenarios use the same 5-minute cap from
-/// `SPEC/program/e2e-integration-tests.md` § Determinism PR runtime rule
-/// (Refs GitHub #2336).
-const Duration _kFleetE2eMaxWallClock = kE2eMaxWallClock;
+/// | Retired private (legacy literal)                | Public replacement                  | Source                                  |
+/// |-------------------------------------------------|-------------------------------------|-----------------------------------------|
+/// | `_kMaxNextTurnTapsForNwFleetReach` (`35`)       | [kE2eDefaultFleetReachLoopMaxTurns] | `e2e_test_shared_fleet_reach_loop.dart` |
+/// | `_kMaxUiResponseWait` (`Duration(seconds: 5)`)  | [kE2eDefaultNavalMoveSegmentUiWait] | `e2e_test_shared_panels.dart`           |
+/// | `_kFleetE2eMaxWallClock` (`kE2eMaxWallClock`)   | [kE2eMaxWallClock]                  | `e2e_test_shared.dart`                  |
+///
+/// The byte-identical legacy-literal contract is unit-pinned in
+/// `app/test/e2e_fleet_reach_turn_loop_test.dart` (35-turn cap),
+/// `app/test/e2e_try_naval_move_segment_test.dart` (5 s UI response cap),
+/// `app/test/e2e_make_wall_clock_guard_test.dart` (5-minute wall-clock cap),
+/// and the AC2 source-of-truth pin in
+/// `app/test/new_game_fleet_reaches_new_world_e2e_test_no_private_constants_test.dart`
+/// guards against silent re-introduction of any file-scope `_k*` constant in
+/// the integration test library.
 
 /// Region-tab tap helpers `_tapNewWorldRegionTabIfPresent` and
 /// `_tapOldWorldRegionTab` were lifted into [e2eTapNewWorldRegionTabIfPresent]
@@ -31,7 +35,7 @@ const Duration _kFleetE2eMaxWallClock = kE2eMaxWallClock;
 /// [e2eTapMoveOnFirstNonHomeFleet] (`e2e_test_shared_panels.dart`) so the
 /// non-home Move-tap contract is shared and unit-pinned (Refs GitHub #2336
 /// AC1 / AC2). The fleet-reach loop calls this helper through
-/// [tryNavalMoveSegment] up to `_kMaxNextTurnTapsForNwFleetReach (35)`
+/// [tryNavalMoveSegment] up to [kE2eDefaultFleetReachLoopMaxTurns] (35)
 /// times per scenario; the widget-test pin in
 /// `app/test/e2e_tap_move_on_first_non_home_fleet_test.dart` carries the
 /// behavioural contract because the integration suite cannot validate it
@@ -57,8 +61,8 @@ const Duration _kFleetE2eMaxWallClock = kE2eMaxWallClock;
 /// this directly today (`app_e2e_linux` is a no-op per
 /// `SPEC/program/e2e-integration-tests.md` § CI). A regression here would
 /// stall the fleet-reach loop at the per-call
-/// [kE2eDefaultMoveFleetDialogBudget] cap × `_kMaxNextTurnTapsForNwFleetReach
-/// (35)` turns — Bottleneck 4 in
+/// [kE2eDefaultMoveFleetDialogBudget] cap ×
+/// [kE2eDefaultFleetReachLoopMaxTurns] (35) turns — Bottleneck 4 in
 /// `SPEC/program/e2e-integration-tests.md` § Determinism.
 
 /// `_tryNavalMoveSegment` was lifted into [e2eTryNavalMoveSegment]
