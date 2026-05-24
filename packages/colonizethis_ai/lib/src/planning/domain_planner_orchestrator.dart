@@ -4,6 +4,7 @@ import 'package:colonizethis_logic/order_suggestion_api.dart';
 
 import 'army_conquest_prep.dart';
 import 'colonial_pressure.dart';
+import 'phase_planner_conquest_filter.dart';
 import 'phase_planner_dispatch.dart';
 import 'phase_planner_economy_filter.dart';
 import 'phase_planner_work_order_filter.dart';
@@ -125,11 +126,21 @@ DomainPlannerOutcome runDomainPlannersWithOutcome({
   ctx = ctx.withOrders(declareWarResult.orders);
   final armyMovesBeforeConquest =
       ctx.orders.armyMoveOrdersByPlayerId[nationId]?.length ?? 0;
-  final stalledOldWorldExpansion = isStalledOldWorldExpansion(
-    snapshot.conquest.oldWorldProvincesOwned,
-  );
-  final observerQuotaPressure = isBelowObserverConquestQuota(
-    snapshot.conquest.oldWorldProvincesOwned,
+  // Refs #2509 S5: derive the extra-conquest-passes / relocation-skip
+  // gate from the dispatched phase plan instead of recomputing the
+  // legacy compound `isStalledOldWorldExpansion(ow) ||
+  // isBelowObserverConquestQuota(ow)`. The two `colonizethis_data`
+  // predicates are equivalent for integer `ow` (both reduce to
+  // `ow <= 9`) and field-equal to `phase ∈ {EXPAND, COLONIAL-lite}`
+  // because both phases require `oldWorldProvincesOwned <
+  // kObserverConquestMinOwProvincesPerGp` at entry via
+  // `observerGoalPhaseFor`. Routing the gate through the dispatched
+  // `phasePlan` eliminates two per-player-turn predicate recomputes
+  // and preserves the prior extra-passes / relocation-skip behaviour
+  // exactly (see `SPEC/ai/phase-planner-dispatch.md` § Orchestrator
+  // conquest extra-passes slice).
+  final extraPassesActive = resolvePhaseConquestExtraPassesActive(
+    phasePlan: phasePlan,
   );
   final conquestDeclaredWarTarget = stalledConquestDeclaredWarTarget(
     game: ctx.game,
@@ -137,9 +148,7 @@ DomainPlannerOutcome runDomainPlannersWithOutcome({
     snapshot: snapshot,
     declaredThisTurn: declareWarResult.declaredWarTargetFactionId,
   );
-  final conquestPasses = stalledOldWorldExpansion || observerQuotaPressure
-      ? kStalledConquestArmyMovePasses
-      : 1;
+  final conquestPasses = extraPassesActive ? kStalledConquestArmyMovePasses : 1;
   for (var pass = 0; pass < conquestPasses; pass++) {
     final movesBeforePass =
         ctx.orders.armyMoveOrdersByPlayerId[nationId]?.length ?? 0;
@@ -161,7 +170,7 @@ DomainPlannerOutcome runDomainPlannersWithOutcome({
       (ctx.orders.armyMoveOrdersByPlayerId[nationId]?.length ?? 0) -
       armyMovesBeforeConquest;
   // Stalled GPs must not run the relocation pass: it undoes frontier marches.
-  if (!stalledOldWorldExpansion && !observerQuotaPressure) {
+  if (!extraPassesActive) {
     ctx = ctx.withOrders(
       runArmyMovePlanner(
         ctx: ctx,
