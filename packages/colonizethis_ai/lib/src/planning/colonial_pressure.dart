@@ -324,42 +324,33 @@ String? primaryInvadableOldWorldGpBlocker({
 // guards.
 
 /// Sole at-war Great Power, if any.
+///
+/// Delegates to [expand_phase_planner.soleAtWarGreatPowerId] (Refs #2509 S1)
+/// so the sole-GP-foe precondition shared by
+/// [unwinnableSoleGpFrontierPeaceTarget], [consolidateGainsSoleGpPeaceTarget],
+/// and [belowQuotaPeerGpPeaceTargets] survives the planned deletion of this
+/// file alongside the EXPAND-phase peace deciders that consume it.
 String? soleAtWarGreatPowerId({
   required Game game,
   required AIWorldSnapshot snapshot,
-}) {
-  final gpWars = <String>[
-    for (final factionId in snapshot.threats.atWarWith)
-      if (game.playerById(factionId) != null) factionId,
-  ];
-  if (gpWars.length != 1) {
-    return null;
-  }
-  return gpWars.single;
-}
+}) =>
+    expand_phase_planner.soleAtWarGreatPowerId(game: game, snapshot: snapshot);
 
+/// Whether peacing a below-quota sole-GP war leaves the active player a
+/// pivot path back to OW expansion (uninvaded minor or minor-owned
+/// invadable frontier).
+///
+/// Delegates to [expand_phase_planner.canPivotFromSoleGpWarAfterPeace]
+/// (Refs #2509 S1) so the EXPAND-phase pivot guard consumed by
+/// [unwinnableSoleGpFrontierPeaceTarget] survives the planned deletion of
+/// this file alongside the sole-GP peace decider that calls it.
 bool canPivotFromSoleGpWarAfterPeace({
   required Game game,
   required AIWorldSnapshot snapshot,
-}) {
-  if (snapshot.conquest.oldWorldProvincesOwned >=
-      kObserverConquestMinOwProvincesPerGp) {
-    return true;
-  }
-  final minorsOnMap = game.worldState.oldWorld.provinces.any(
-    (p) =>
-        p.ownerId != null &&
-        p.ownerId!.isNotEmpty &&
-        game.minorNations.any((m) => m.id == p.ownerId),
-  );
-  if (minorsOnMap) {
-    return true;
-  }
-  return snapshot.conquest.invadableProvinceIdsSorted.any((pid) {
-    final owner = getProvinceOwnerMap(game)[pid];
-    return owner != null && game.minorNations.any((m) => m.id == owner);
-  });
-}
+}) => expand_phase_planner.canPivotFromSoleGpWarAfterPeace(
+  game: game,
+  snapshot: snapshot,
+);
 
 /// Peace the sole GP enemy when below the observer OW quota and clearly outgunned.
 String? unwinnableSoleGpFrontierPeaceTarget({
