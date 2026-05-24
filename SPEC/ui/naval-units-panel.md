@@ -21,7 +21,7 @@ The naval units panel gives the player a single place to see every **fleet** the
 
 For every **sea‑going** fleet (any fleet that is **not** the Home Fleet), the **collapsed row header area** includes a **Move** action next to **Split** so orders can be issued without expansion. The **Home Fleet** row does **not** show **Move** (cannot move).
 
-**Dialog (local `showDialog`, commit via bus):** Opening **Move** shows a modal where the player:
+**Dialog (local `showDialog`, commit via bus):** Opening **Move** shows a modal (see [move-fleet-dialog.md](move-fleet-dialog.md) for the authoritative widget contract, layout, states, and bus events) where the player:
 
 **Title:** **Fleet \<id\>** (or equivalent) and, when there is at least one destination, **(N destinations)** so numeric ids are not mistaken for option counts.
 
@@ -148,6 +148,7 @@ When a row is **expanded**, additional details are shown **within the same panel
 - **Province lookup:** Always use **prefixed province ids** (`regionId|localId`) when resolving provinces from fleet location or Home Fleet capital per [world-model-identity.md](../game/world-model-identity.md). Display **province names** (e.g. `Province.displayName`) and **never raw province ids** to the user.
 - **Sea zone identity:** Sea zones are identified by `seaZoneId` on the fleet and displayed via sea-zone display names stored in world state (prefixed `regionId|seaZoneId` key). The UI must show the resolved sea-zone display name (not raw id) and include the **region label** with it.
 - **Home Fleet detection:** The Home Fleet is identified via the rules in [ships-and-naval.md](../game/ships-and-naval.md) (§ Home Fleet): it is the fleet in port at the capital province that cannot move and whose mission is effectively none. Implementation may use a dedicated flag if provided by the model, but behaviour must remain consistent with the spec.
+- **Transfer to Home Fleet:** Regular-fleet rows expose a **Transfer to Home Fleet** action when a same-region Home Fleet exists; tapping it opens a local `showDialog` modal (see [transfer-to-home-fleet-dialog.md](transfer-to-home-fleet-dialog.md) for the authoritative widget contract, layout, states, and bus event). The Home Fleet row never shows this action.
 
 ---
 
