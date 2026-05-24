@@ -6,8 +6,16 @@ import 'package:colonizethis_app/main.dart' show bootstrapForIntegrationTest;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
 
-part 'new_game_fleet_reaches_new_world_e2e_helpers.dart';
-part 'new_game_fleet_reaches_new_world_e2e_helpers_part2.dart';
+// The former `new_game_fleet_reaches_new_world_e2e_helpers.dart` and
+// `…_helpers_part2.dart` `part` files contained only documentation
+// breadcrumbs after every private helper they originally hosted was lifted
+// into the shared `e2e_helpers.dart` barrel (Refs GitHub #2336 AC1 / AC2
+// slice cadence #2720–#2758). With no live code or constants left in either
+// file they have been retired entirely; their historical content is now
+// carried by the per-helper widget-test pins under `app/test/` and by the
+// AC2 source-of-truth pin
+// `app/test/new_game_fleet_reaches_new_world_e2e_test_no_private_constants_test.dart`,
+// which structurally asserts the retired files do not reappear.
 
 void main() {
   suppressLogsForTests();
