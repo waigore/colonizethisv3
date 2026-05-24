@@ -171,12 +171,12 @@ List<String> planExpandPeace({
   }
 
   if (gpWars.length == 1 &&
-      _isMutualBelowQuotaPlateauPeer(
+      isMutualBelowQuotaPlateauPeer(
         ownOw: snapshot.conquest.oldWorldProvincesOwned,
         partnerOw: provinceCountOwnedBy(game, blocker),
       ) &&
       expandIsOldWorldGpOnlyInvadableFrontier(game: game, snapshot: snapshot) &&
-      !_hasUninvadedOldWorldMinor(game: game, snapshot: snapshot)) {
+      !hasUninvadedOldWorldMinor(game: game, snapshot: snapshot)) {
     return List<String>.unmodifiable(gpWars);
   }
 
@@ -237,6 +237,12 @@ String? expandPrimaryInvadableOldWorldGpBlocker({
   return bestGpId;
 }
 
+/// Canonical name for [expandPrimaryInvadableOldWorldGpBlocker] (Refs #2509 S1).
+String? primaryInvadableOldWorldGpBlocker({
+  required Game game,
+  required AIWorldSnapshot snapshot,
+}) => expandPrimaryInvadableOldWorldGpBlocker(game: game, snapshot: snapshot);
+
 /// Whether the invadable Old World frontier is held only by Great Powers
 /// (no minor nation owns any invadable OW province).
 ///
@@ -267,13 +273,21 @@ bool expandIsOldWorldGpOnlyInvadableFrontier({
   );
 }
 
+/// Canonical name for [expandIsOldWorldGpOnlyInvadableFrontier] (Refs #2509 S1).
+bool isOldWorldGpOnlyInvadableFrontier({
+  required Game game,
+  required AIWorldSnapshot snapshot,
+}) => expandIsOldWorldGpOnlyInvadableFrontier(game: game, snapshot: snapshot);
+
 /// Whether any Old World minor nation still holds provinces and is not
 /// already at war with the active player (uninvaded minor pivot remaining).
 ///
-/// Mirrors `hasUninvadedOldWorldMinor` from `colonial_pressure.dart`. The
-/// mutual-plateau sole-GP carve-out in [planExpandPeace] holds the GP war
+/// The mutual-plateau sole-GP carve-out in [planExpandPeace] holds the GP war
 /// while uninvaded minors remain (we should expand against minors first).
-bool _hasUninvadedOldWorldMinor({
+///
+/// Relocated from `colonial_pressure.dart` (Refs #2509 S1) so the predicate
+/// survives the planned deletion of that file.
+bool hasUninvadedOldWorldMinor({
   required Game game,
   required AIWorldSnapshot snapshot,
 }) {
@@ -291,11 +305,11 @@ bool _hasUninvadedOldWorldMinor({
 /// Whether [ownOw] and [partnerOw] are both in the stalled below-quota
 /// plateau band with similar holdings (within one province of each other).
 ///
-/// Mirrors `isMutualBelowQuotaPlateauPeer` from `colonial_pressure.dart`.
 /// Stall threshold ([kStalledOldWorldProvinceThreshold]) and quota
-/// ([kObserverConquestMinOwProvincesPerGp]) are the same authoritative
-/// constants used by the legacy helper.
-bool _isMutualBelowQuotaPlateauPeer({
+/// ([kObserverConquestMinOwProvincesPerGp]) are authoritative here.
+///
+/// Relocated from `colonial_pressure.dart` (Refs #2509 S1).
+bool isMutualBelowQuotaPlateauPeer({
   required int ownOw,
   required int partnerOw,
 }) =>
@@ -419,7 +433,7 @@ String? planExpandDeclareWar({
     return null;
   }
   final blockerOw = provinceCountOwnedBy(game, blockerId);
-  if (!_isMutualBelowQuotaPlateauPeer(
+  if (!isMutualBelowQuotaPlateauPeer(
     ownOw: snapshot.conquest.oldWorldProvincesOwned,
     partnerOw: blockerOw,
   )) {

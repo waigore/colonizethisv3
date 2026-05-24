@@ -4,16 +4,13 @@ import 'package:colonizethis_ai/src/perception/perception_snapshot.dart';
 import 'package:colonizethis_ai/src/planning/colonial_pressure.dart';
 import 'package:colonizethis_ai/src/planning/conquest_planner.dart';
 import 'package:colonizethis_ai/src/planning/diplomacy_planner_peace_targets.dart';
-import 'package:colonizethis_ai/src/planning/observer_goal_phase.dart'
-    show hasColonialAcquisitionTargets;
 import 'package:colonizethis_data/colonizethis_data.dart';
 
 void main() {
-  // `hasColonialAcquisitionTargets` was relocated to `observer_goal_phase.dart`
-  // (Refs #2509 S1). Its dedicated tests now live in
-  // `observer_goal_phase_test.dart` alongside the EXPAND -> COLONIAL phase
-  // transition guard. The `isEarlyColonialExpansion` group below still
-  // asserts the predicate at a boundary that exercises both helpers.
+  // `hasColonialAcquisitionTargets` and `isEarlyColonialExpansion` were
+  // relocated to `observer_goal_phase.dart` (Refs #2509 S1). Their dedicated
+  // tests now live in `observer_goal_phase_test.dart` alongside the EXPAND
+  // -> COLONIAL phase transition guard.
 
   group('colonialBuildOrderThresholdCap', () {
     test('null when no NW provinces owned', () {
@@ -40,17 +37,6 @@ void main() {
         colonialBuildOrderThresholdCap(colonial),
         kColonialBuildOrderThresholdWhenOwnedNwUnderPressure,
       );
-    });
-  });
-
-  group('isEarlyColonialExpansion', () {
-    test('false when many NW provinces owned despite invadable targets', () {
-      const colonial = ColonialSummary(
-        newWorldProvincesOwned: kColonialFewNwProvincesThreshold,
-        invadableNewWorldProvinceIdsSorted: ['newWorld|p1'],
-      );
-      expect(isEarlyColonialExpansion(colonial), isFalse);
-      expect(hasColonialAcquisitionTargets(colonial), isTrue);
     });
   });
 
