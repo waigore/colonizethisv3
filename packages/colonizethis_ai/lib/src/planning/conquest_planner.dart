@@ -5,6 +5,8 @@ import 'colonial_pressure.dart';
 import 'observer_goal_phase.dart';
 import 'diplomacy_planner_peace_targets.dart'
     show belowQuotaActiveMinorWarTarget;
+import 'phase_planner_conquest_filter.dart';
+import 'phase_planner_dispatch.dart';
 import 'planner_context.dart';
 import '../util/ai_random_utils.dart';
 
@@ -78,12 +80,71 @@ String? stalledConquestDeclaredWarTarget({
   return bestMinorId ?? declaredThisTurn;
 }
 
+Set<String> _legacyInvadableProvinceIds({
+  required Game game,
+  required AIWorldSnapshot snapshot,
+  required bool structuralNewWorldSuppressed,
+}) {
+  return {
+    ...snapshot.conquest.invadableProvinceIdsSorted,
+    if (!structuralNewWorldSuppressed &&
+        !shouldSuppressNewWorldDeclareWarInvasionAndPurchase(
+          snapshot: snapshot,
+          game: game,
+        ))
+      ...snapshot.colonial.invadableNewWorldProvinceIdsSorted,
+  };
+}
+
+Set<String> _invadableProvinceIdsForConquestPass({
+  required Game game,
+  required AIWorldSnapshot snapshot,
+  PhasePlanOutcome? phasePlan,
+  PhaseConquestInvadableResolution? conquestResolution,
+}) {
+  if (phasePlan == null) {
+    return _legacyInvadableProvinceIds(
+      game: game,
+      snapshot: snapshot,
+      structuralNewWorldSuppressed: false,
+    );
+  }
+  final resolution =
+      conquestResolution ?? resolvePhaseConquestInvadable(phasePlan: phasePlan);
+  if (resolution.useLegacyInvadable) {
+    return _legacyInvadableProvinceIds(
+      game: game,
+      snapshot: snapshot,
+      structuralNewWorldSuppressed: resolution.structuralNewWorldSuppressed,
+    );
+  }
+  return resolution.phasePlanInvadableSorted.toSet();
+}
+
 /// Invasion army moves after same-turn declare war. SPEC/ai/ai-architecture.md.
 Orders runConquestArmyMovePlanner({
   required PlannerContext ctx,
   required AIWorldSnapshot snapshot,
   String? declaredWarTargetFactionId,
+  PhasePlanOutcome? phasePlan,
 }) {
+  PhaseConquestInvadableResolution? conquestResolution;
+  if (phasePlan != null) {
+    conquestResolution = resolvePhaseConquestInvadable(phasePlan: phasePlan);
+    if (conquestResolution.skipConquestPass) {
+      return ctx.orders;
+    }
+  }
+
+  final invadableForPass = _invadableProvinceIdsForConquestPass(
+    game: ctx.game,
+    snapshot: snapshot,
+    phasePlan: phasePlan,
+    conquestResolution: conquestResolution,
+  );
+  final phasePlanInvadableIsAuthoritative = conquestResolution != null &&
+      !conquestResolution.useLegacyInvadable;
+
   final stalledExpansion = isObserverConquestExpansionPressure(
     snapshot.conquest.oldWorldProvincesOwned,
   );
@@ -100,6 +161,8 @@ Orders runConquestArmyMovePlanner({
         ctx: ctx,
         snapshot: snapshot,
         declaredWarTargetFactionId: declaredWarTargetFactionId,
+        invadable: invadableForPass,
+        phasePlanInvadableIsAuthoritative: phasePlanInvadableIsAuthoritative,
       );
     }
     return ctx.orders;
@@ -117,6 +180,8 @@ Orders runConquestArmyMovePlanner({
         ctx: ctx,
         snapshot: snapshot,
         declaredWarTargetFactionId: declaredWarTargetFactionId,
+        invadable: invadableForPass,
+        phasePlanInvadableIsAuthoritative: phasePlanInvadableIsAuthoritative,
       );
     }
     return ctx.orders;
@@ -159,25 +224,28 @@ Orders runConquestArmyMovePlanner({
     _log.d('conquest army move skipped nationId=${ctx.nationId} weight=$weight');
     return ctx.orders;
   }
-  final invadable = {
-    ...snapshot.conquest.invadableProvinceIdsSorted,
-    if (!shouldSuppressNewWorldDeclareWarInvasionAndPurchase(
-      snapshot: snapshot,
-      game: ctx.game,
-    ))
-      ...snapshot.colonial.invadableNewWorldProvinceIdsSorted,
-  };
+  final scoringCandidates = phasePlanInvadableIsAuthoritative
+      ? filtered
+          .where(
+            (move) => invadableForPass.contains(move.destinationProvinceId),
+          )
+          .toList()
+      : filtered;
+  if (scoringCandidates.isEmpty) {
+    return ctx.orders;
+  }
   if (stalledExpansion) {
     return _applyStalledArmyMovesForAllFieldArmies(
       ctx: ctx,
       snapshot: snapshot,
-      invadable: invadable,
-      filtered: filtered,
+      invadable: invadableForPass,
+      filtered: scoringCandidates,
       declaredWarTargetFactionId: declaredWarTargetFactionId,
+      phasePlanInvadableIsAuthoritative: phasePlanInvadableIsAuthoritative,
     );
   }
   final selected = selectWeightedCandidate(
-    candidates: filtered,
+    candidates: scoringCandidates,
     seed: ctx.seeds.militarySeed + 4000,
     score: (m) => _scoreArmyMoveDestination(
       move: m,
@@ -186,9 +254,10 @@ Orders runConquestArmyMovePlanner({
       topology: ctx.topology,
       snapshot: snapshot,
       provinceOwner: ctx.provinceOwner,
-      invadable: invadable,
+      invadable: invadableForPass,
       stalledExpansion: false,
       declaredWarTargetFactionId: declaredWarTargetFactionId,
+      phasePlanInvadableIsAuthoritative: phasePlanInvadableIsAuthoritative,
     ),
   );
   if (selected == null) return ctx.orders;
@@ -206,6 +275,7 @@ Orders _applyStalledArmyMovesForAllFieldArmies({
   required Set<String> invadable,
   required List<ArmyMoveOrder> filtered,
   required String? declaredWarTargetFactionId,
+  required bool phasePlanInvadableIsAuthoritative,
 }) {
   final armiesWithOrders = <String>{
     for (final m in ctx.orders.armyMoveOrdersByPlayerId[ctx.nationId] ?? const [])
@@ -232,6 +302,7 @@ Orders _applyStalledArmyMovesForAllFieldArmies({
         invadable: invadable,
         stalledExpansion: true,
         declaredWarTargetFactionId: declaredWarTargetFactionId,
+        phasePlanInvadableIsAuthoritative: phasePlanInvadableIsAuthoritative,
       );
       if (score > bestScore) {
         bestScore = score;
@@ -253,15 +324,9 @@ Orders _runStalledFrontierArmyMoveFallback({
   required PlannerContext ctx,
   required AIWorldSnapshot snapshot,
   required String? declaredWarTargetFactionId,
+  required Set<String> invadable,
+  required bool phasePlanInvadableIsAuthoritative,
 }) {
-  final invadable = {
-    ...snapshot.conquest.invadableProvinceIdsSorted,
-    if (!shouldSuppressNewWorldDeclareWarInvasionAndPurchase(
-      snapshot: snapshot,
-      game: ctx.game,
-    ))
-      ...snapshot.colonial.invadableNewWorldProvinceIdsSorted,
-  };
   final playerOwnedFullProvinceIds = <String>{
     for (final e in ctx.view.provincesById.entries)
       if (e.value.ownerId == ctx.nationId) e.key,
@@ -307,6 +372,7 @@ Orders _runStalledFrontierArmyMoveFallback({
         invadable: invadable,
         stalledExpansion: true,
         declaredWarTargetFactionId: declaredWarTargetFactionId,
+        phasePlanInvadableIsAuthoritative: phasePlanInvadableIsAuthoritative,
       );
       if (score > bestScore) {
         bestScore = score;
@@ -414,7 +480,12 @@ double _scoreArmyMoveDestination({
   required Set<String> invadable,
   required bool stalledExpansion,
   required String? declaredWarTargetFactionId,
+  required bool phasePlanInvadableIsAuthoritative,
 }) {
+  if (phasePlanInvadableIsAuthoritative &&
+      !invadable.contains(move.destinationProvinceId)) {
+    return 0;
+  }
   final destOwner = provinceOwner[move.destinationProvinceId] ?? '';
   final destRegion = ProvinceId.regionIdFrom(move.destinationProvinceId);
   final destLocal = ProvinceId.localIdFrom(move.destinationProvinceId);

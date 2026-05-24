@@ -1,9 +1,6 @@
 part of 'perception_snapshot.dart';
 
-ThreatSummary _buildThreatSummary(
-  PlayerView view,
-  MapTopology? topology,
-) {
+ThreatSummary _buildThreatSummary(PlayerView view, MapTopology? topology) {
   final atWarWith = <String>[];
   for (final e in view.diplomacyByOtherId.entries) {
     final rel = e.value;
@@ -28,7 +25,8 @@ ThreatSummary _buildThreatSummary(
     final prov = view.provincesById[neighborFullId];
     if (prov == null) continue;
     final ownerId = prov.ownerId;
-    if (ownerId == null || ownerId.isEmpty || ownerId == view.playerId) continue;
+    if (ownerId == null || ownerId.isEmpty || ownerId == view.playerId)
+      continue;
     final rel = view.diplomacyByOtherId[ownerId];
     if (rel != null && rel.state == RelationState.atWar) {
       neighborProvincesHostile++;
@@ -87,19 +85,12 @@ OpportunitySummary _buildOpportunitySummary(
   );
 }
 
-List<String> _weakNeighborOwnerIds(
-  PlayerView view,
-  MapTopology topology,
-) {
+List<String> _weakNeighborOwnerIds(PlayerView view, MapTopology topology) {
   final ownedIds = <String>{};
   for (final p in view.provincesById.entries) {
     if (p.value.ownerId == view.playerId) ownedIds.add(p.key);
   }
-  final neighborIds = neighborProvinceIdsFromTopology(
-    topology,
-    ownedIds,
-    view,
-  );
+  final neighborIds = neighborProvinceIdsFromTopology(topology, ownedIds, view);
   final weakNeighbors = <String>[];
   for (final fid in neighborIds) {
     final prov = view.provincesById[fid];
@@ -136,8 +127,7 @@ ConquestSummary _buildConquestSummary(
     ...threats.atWarWith,
     ...opportunities.weakNeighbors,
     ...adjacentOwners,
-  }.toList()
-    ..sort();
+  }.toList()..sort();
   return ConquestSummary(
     oldWorldProvincesOwned: oldWorldOwned,
     provincesToVictory: provincesToVictory,
@@ -162,6 +152,9 @@ ColonialSummary _buildColonialSummary(
   final invadable = topology == null
       ? <String>[]
       : _invadableNewWorldProvinceIds(view, topology);
+  final invadableByDistance = topology == null
+      ? const <String>[]
+      : _invadableNewWorldProvinceIdsByDistance(view, topology);
   final adjacentOwners = <String>{};
   for (final provId in invadable) {
     final ownerId = view.provincesById[provId]?.ownerId;
@@ -175,11 +168,11 @@ ColonialSummary _buildColonialSummary(
     ...threats.atWarWith,
     ...opportunities.weakNeighbors,
     ...adjacentOwners,
-  }.toList()
-    ..sort();
+  }.toList()..sort();
   return ColonialSummary(
     newWorldProvincesOwned: nwOwned,
     invadableNewWorldProvinceIdsSorted: invadable,
+    invadableNewWorldProvinceIdsByDistance: invadableByDistance,
     adjacentNewWorldOwnerFactionIdsSorted: adjacentOwnersSorted,
     preferredColonialTargetFactionIdsSorted: preferredTargets,
   );
@@ -189,11 +182,7 @@ List<String> _adjacentOwnerFactionIdsSorted(
   PlayerView view,
   MapTopology topology,
 ) {
-  return _adjacentOwnerFactionIdsForRegion(
-    view,
-    topology,
-    kOldWorldRegionId,
-  );
+  return _adjacentOwnerFactionIdsForRegion(view, topology, kOldWorldRegionId);
 }
 
 List<String> _adjacentOwnerFactionIdsForRegion(
@@ -237,6 +226,41 @@ List<String> _invadableNewWorldProvinceIds(
   PlayerView view,
   MapTopology topology,
 ) {
+  final anchorProvinces = _colonialAnchorProvinceIds(view);
+  final reachable = reachableNonOwnedProvinceIdsViaSeas(
+    topology,
+    anchorProvinces,
+    view,
+    regionIdFilter: kNewWorldRegionId,
+  );
+  final sorted = reachable.toList()..sort();
+  return sorted;
+}
+
+/// NW invadable province ids sorted by BFS adjacency distance ascending,
+/// then by province id ascending. Refs #2509 § COLONIAL phase planner §
+/// planColonialAcquisition.
+List<String> _invadableNewWorldProvinceIdsByDistance(
+  PlayerView view,
+  MapTopology topology,
+) {
+  final anchorProvinces = _colonialAnchorProvinceIds(view);
+  final distances = reachableNonOwnedProvinceDistancesViaSeas(
+    topology,
+    anchorProvinces,
+    view,
+    regionIdFilter: kNewWorldRegionId,
+  );
+  final entries = distances.entries.toList()
+    ..sort((a, b) {
+      final byDistance = a.value.compareTo(b.value);
+      if (byDistance != 0) return byDistance;
+      return a.key.compareTo(b.key);
+    });
+  return <String>[for (final e in entries) e.key];
+}
+
+Set<String> _colonialAnchorProvinceIds(PlayerView view) {
   final anchorProvinces = <String>{};
   for (final p in view.provincesById.entries) {
     if (p.value.ownerId == view.playerId) {
@@ -247,14 +271,7 @@ List<String> _invadableNewWorldProvinceIds(
     final loc = u.locationProvinceId;
     if (loc.isNotEmpty) anchorProvinces.add(loc);
   }
-  final reachable = reachableNonOwnedProvinceIdsViaSeas(
-    topology,
-    anchorProvinces,
-    view,
-    regionIdFilter: kNewWorldRegionId,
-  );
-  final sorted = reachable.toList()..sort();
-  return sorted;
+  return anchorProvinces;
 }
 
 List<String> _invadableProvinceIdsForRegion(

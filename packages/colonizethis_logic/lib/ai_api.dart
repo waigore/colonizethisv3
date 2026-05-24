@@ -14,15 +14,19 @@ export 'src/ai/simple_ai_heuristics.dart' show turnSeedForPlayer;
 export 'src/constants.dart'
     show
         GamePlayerLookup,
+        kMineralResourceIds,
         kWorkTargetBuildImprovement,
         kWorkTargetCounterSpy,
         kWorkTargetPurchaseLand,
         kWorkTargetStealTech;
 export 'src/diplomacy/diplomacy_relation_lookup.dart'
     show
+        getOverture,
         getRelation,
         greatPowerPowerScore,
+        joinEmpireCostForMinorOrTribe,
         provinceCountOwnedBy,
+        relationScoreMinFriendly,
         shipCountForFaction;
 export 'src/diplomacy/diplomacy_resolver.dart' show DiplomacyFactionMembership;
 export 'src/orders/incremental_candidate_validator.dart'
@@ -47,7 +51,9 @@ export 'src/world/army_ids.dart' show homeArmyIdFor;
 export 'src/world/player_view.dart'
     show PlayerView, VisibilityLevel, buildPlayerView;
 export 'src/world/sea_reachable_provinces.dart'
-    show reachableNonOwnedProvinceIdsViaSeas;
+    show
+        reachableNonOwnedProvinceDistancesViaSeas,
+        reachableNonOwnedProvinceIdsViaSeas;
 export 'src/world/province_lookup.dart' show allProvinces;
 export 'src/world/unit_lookup.dart'
     show
