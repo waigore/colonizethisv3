@@ -4,7 +4,6 @@ import 'package:colonizethis_logic/order_suggestion_api.dart';
 
 import 'army_conquest_prep.dart';
 import 'colonial_pressure.dart';
-import 'observer_goal_phase.dart';
 import 'phase_planner_dispatch.dart';
 import 'phase_planner_economy_filter.dart';
 import 'phase_planner_work_order_filter.dart';
@@ -234,10 +233,20 @@ PlannerContext _runEconomyDomainPlanners({
   var workThreshold =
       40 -
       (hasSpyWork ? getAgendaSpyOrderModifier(ctx.config.hiddenAgendaId) : 0);
-  final developPhase = isObserverDevelopPhase(
-    snapshot: snapshot,
-    game: ctx.game,
-  );
+  // Refs #2509 S5: derive the DEVELOP-phase economy gate from the
+  // dispatched phase plan instead of recomputing
+  // `isObserverDevelopPhase` (which itself recomputes
+  // `observerGoalPhaseFor`) per player turn. The phase dispatcher
+  // already resolved `observerGoalPhaseFor` once via
+  // `runPhasePlanners`, so `resolvePhaseEconomyDevelopActive` mirrors
+  // `resolvePhaseEconomyColonialPressureActive` (this file) and
+  // `resolvePhaseDiplomacyDeclareWarDevelopSuppressionActive`
+  // (`phase_planner_diplomacy_filter.dart`) by routing the DEVELOP
+  // gate off the dispatched value. Phase-derived `true/false` is
+  // field-equal to the legacy compute across every
+  // [ObserverGoalPhase] value, preserving the prior workThreshold cap
+  // / `runFullAiCivilianWork` behaviour exactly under DEVELOP.
+  final developPhase = resolvePhaseEconomyDevelopActive(phasePlan: phasePlan);
   // Refs #2509 S5: derive colonial economy pressure from the dispatched
   // phase plan instead of the legacy three-predicate compute. The phase
   // dispatcher already resolved `observerGoalPhaseFor` once per player turn;
