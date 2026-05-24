@@ -20,14 +20,18 @@ Orders runNavalPlanner({
   final colonial = snapshot.colonial;
   var weight = ctx.resolveNavalBaseWeight();
   final bool hasColonialTargets;
+  // S5 wiring (Refs #2509): the phase-planner naval directive resolver
+  // surfaces both the boolean colonial-pressure gate and the per-phase
+  // priority NW province subset. Today the boolean drives the weight
+  // boost / take cap; the subset tightens move ranking via
+  // `sortNavalMovesForColonialPressure` so fleets approach the phase-
+  // active acquisition frontier ahead of unrelated invadable NW
+  // neighbors. Empty / null leaves the legacy two-tier scoring intact.
+  List<String> phasePriorityNwProvinceIdsSorted = const <String>[];
   if (phasePlan != null) {
-    // S5 wiring: route the colonial-pressure gate through the phase
-    // planner so EXPAND / DEVELOP structurally suppress the boost and
-    // COLONIAL / COLONIAL-lite engage it without re-reading
-    // `colonial_pressure.dart` predicates from the naval pass.
-    hasColonialTargets = resolvePhaseNavalDirective(
-      phasePlan: phasePlan,
-    ).colonialPreferenceActive;
+    final directive = resolvePhaseNavalDirective(phasePlan: phasePlan);
+    hasColonialTargets = directive.colonialPreferenceActive;
+    phasePriorityNwProvinceIdsSorted = directive.priorityNwProvinceIdsSorted;
   } else {
     hasColonialTargets =
         hasColonialAcquisitionTargets(colonial) &&
@@ -73,6 +77,8 @@ Orders runNavalPlanner({
               navalMoveCandidates,
               ctx.topology,
               colonial,
+              phasePriorityNwProvinceIdsSorted:
+                  phasePriorityNwProvinceIdsSorted,
             )
           : navalMoveCandidates;
       final selected = ranked.take(take).toList();
@@ -97,7 +103,10 @@ Orders runNavalPlanner({
   );
   if (navalMissionCandidates.isNotEmpty) {
     final ranked = hasColonialTargets
-        ? sortNavalMissionsForColonialPressure(navalMissionCandidates)
+        ? sortNavalMissionsForColonialPressure(
+            navalMissionCandidates,
+            phasePriorityNwProvinceIdsSorted: phasePriorityNwProvinceIdsSorted,
+          )
         : navalMissionCandidates;
     final rng = math.Random(ctx.seeds.militarySeed + 1001);
     final idx = hasColonialTargets ? 0 : rng.nextInt(ranked.length);

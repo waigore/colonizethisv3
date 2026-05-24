@@ -12,8 +12,7 @@ const String kNewWorldRegionId = 'newWorld';
 
 /// Provinces still needed to reach military victory from [oldWorldOwned].
 int provincesToVictoryFromOldWorldOwned(int oldWorldOwned) {
-  final gap =
-      kMilitaryVictoryOldWorldProvinceThreshold - oldWorldOwned;
+  final gap = kMilitaryVictoryOldWorldProvinceThreshold - oldWorldOwned;
   return gap < 0 ? 0 : gap;
 }
 
@@ -364,6 +363,18 @@ const int kColonialNavalMoveDockNewWorldPortScore = 180;
 /// Naval move score for an NW sea zone bordering an invadable NW province.
 const int kColonialNavalMovePriorityNwSeaZoneScore = 200;
 
+/// Naval move score for an NW sea zone bordering a **phase-priority** NW
+/// invadable province (Refs #2509 S5). Phase-priority provinces are surfaced
+/// by `resolvePhaseNavalDirective` from
+/// `ColonialNavalPlan.priorityInvasionTransportProvinceIdsSorted` (COLONIAL —
+/// declared colonial target's invadable provinces or the at-war owner
+/// fallback) or `ColonialLiteNavalPlan.priorityNwProvinceIdsSorted`
+/// (COLONIAL-lite — tribe / minor-only invadable provinces). The phase-
+/// priority tier ranks above the general priority tier so fleets approach the
+/// phase-active acquisition frontier ahead of unrelated invadable NW
+/// neighbors when both are reachable on the same turn.
+const int kColonialNavalMovePhasePriorityNwSeaZoneScore = 240;
+
 /// Naval move score for any other New World sea zone destination.
 const int kColonialNavalMoveNwSeaZoneScore = 140;
 
@@ -430,8 +441,27 @@ const int kColonialBuildOrderThresholdWhenOwnedNwUnderPressure = 15;
 /// Naval mission score when [NavalMissionOrder.targetPortId] is a New World port.
 const int kColonialNavalMissionNwPortScore = 160;
 
+/// Naval mission score when [NavalMissionOrder.targetPortId] points at a New
+/// World port whose province id is in the per-phase priority NW province
+/// subset surfaced by `resolvePhaseNavalDirective` (Refs #2509 S5 mission-
+/// ranking slice). One tier above [kColonialNavalMissionNwPortScore] (160) so
+/// missions targeting the COLONIAL declared invasion frontier (or the
+/// COLONIAL-lite tribe / minor-only subset) outrank missions toward unrelated
+/// NW ports when both arms are scored on the same turn. Empty / null priority
+/// list (legacy callers) preserves the prior NW-port tier exactly.
+const int kColonialNavalMissionPhasePriorityNwPortScore = 200;
+
 /// Naval mission score when [NavalMissionOrder.targetProvinceId] is in the NW.
 const int kColonialNavalMissionNwProvinceScore = 130;
+
+/// Naval mission score when [NavalMissionOrder.targetProvinceId] is in the
+/// per-phase priority NW province subset (Refs #2509 S5). Mirrors the
+/// [kColonialNavalMissionPhasePriorityNwPortScore] tier for the
+/// `targetProvinceId` branch: one step above
+/// [kColonialNavalMissionNwProvinceScore] (130) so missions targeting the
+/// phase-active NW frontier rank ahead of unrelated NW-province missions.
+/// Empty / null priority list preserves the legacy tier exactly.
+const int kColonialNavalMissionPhasePriorityNwProvinceScore = 170;
 
 /// Naval mission score for beachhead missions under colonial pressure.
 const int kColonialNavalMissionBeachheadScore = 100;
