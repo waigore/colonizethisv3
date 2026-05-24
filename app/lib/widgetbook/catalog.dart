@@ -12,6 +12,11 @@ import 'package:widgetbook/widgetbook.dart';
 
 import '../config/themes.dart';
 import '../providers/games_provider.dart';
+import '../features/game/combat/combat_mode_choice_dialog.dart';
+import '../features/game/combat/quick_battle_action_selector.dart';
+import '../features/game/combat/quick_battle_deployment_view.dart';
+import '../features/game/combat/quick_battle_result_dialog.dart';
+import '../features/game/combat/quick_battle_screen.dart';
 import '../features/game/widgets/civilian_units_panel.dart';
 import '../features/game/widgets/diplomacy_panel.dart';
 import '../features/game/widgets/military_units_panel.dart';
@@ -23,6 +28,7 @@ import '../features/game/widgets/province_overlay_demo_data.dart';
 import '../features/game/widgets/tech_tree_widget.dart';
 import '../features/game/screens/technology_screen.dart';
 import '../features/game/dialogue/intervention_dialogue_overlay.dart';
+import '../features/game/flame/victory_overlay.dart';
 import '../features/game/flame/region_map_component.dart'
     show CtMapVisibilityMode;
 import '../features/game/widgets/train_civilians_dialog.dart';
@@ -107,6 +113,8 @@ class CtWidgetbookApp extends StatelessWidget {
         ...techTreeDirectories,
         ...interventionDialogueDirectories,
         ...turnNewsDialogDirectories,
+        ...victoryUiDirectories,
+        ...combatUiDirectories,
       ],
       lightTheme: AppThemes.colonial,
       darkTheme: AppThemes.colonial,
