@@ -1310,3 +1310,88 @@ bool pendingDeclareWarFrom({
   }
   return false;
 }
+
+/// Returns the deterministic ascending-sorted list of at-war minor
+/// `factionId`s that the active player should `offerPeace` toward when
+/// stuck in a futile minor war at default observer start size, or an
+/// empty list when the EXPAND default-start futile-minor pivot does
+/// not apply this turn.
+///
+/// Canonical home (Refs #2509 S1) for the legacy
+/// `defaultStartFutileMinorPeaceTargets` peace decider previously
+/// hosted in `colonial_pressure.dart`. The decider implements the
+/// EXPAND-phase "exit a futile minor front before opening a GP-blocker
+/// war" pivot for seed-42 gp4 (default-start GP with one zero-province
+/// minor still in `threats.atWarWith`). It composes
+/// [isOldWorldGpOnlyInvadableFrontier] (band selector) with the
+/// observer default-start band table from
+/// `SPEC/ai/ai-architecture.md` § Diplomacy targeting.
+///
+/// Returns the empty list (`const []`) for any of the outer guards (in
+/// order):
+///   1. [isBelowObserverConquestQuota] is `false` for
+///      [ConquestSummary.oldWorldProvincesOwned] — at or above the
+///      observer OW quota the quota-met futile-peace collectors
+///      ([quotaMetFutileBelowQuotaGpPeaceTargets] et al, still in
+///      `colonial_pressure.dart` at this slice) take over.
+///   2. `ownOw > kObserverDefaultStartOldWorldProvincesPerGp + 1` —
+///      strictly above the default-start +1 band; the near-quota /
+///      stalled-band collectors own the decision in that shape.
+///   3. [ConquestSummary.invadableProvinceIdsSorted] is empty — no
+///      invadable OW exists for the current planner snapshot, so no
+///      futile minor war can be diagnosed.
+///
+/// When the guards pass, the band table selects between two arms:
+///   * **GP-only invadable frontier arm** — when
+///     [isOldWorldGpOnlyInvadableFrontier] is `true`, every at-war
+///     minor in [ThreatSummary.atWarWith] is peaced (no minor pivot
+///     remains so all open minor wars are futile by construction).
+///     Returned in ascending lex order over the minor `factionId`s.
+///   * **Mixed minor frontier arm** — otherwise, only the at-war
+///     minors that own **no** invadable OW province are peaced
+///     (futile front: the minor is in `atWarWith` but not on the
+///     invadable list). Resolved with [getProvinceOwnerMap] and an
+///     `any` scan over [ConquestSummary.invadableProvinceIdsSorted].
+///     Returned in ascending lex order over the minor `factionId`s.
+///
+/// `colonial_pressure.dart` retains a thin delegating stub for legacy
+/// callers (the `diplomacy_planner.dart` /
+/// `diplomacy_planner_peace_targets.dart` consumer chain and the
+/// existing `colonial_pressure_test.dart` § `defaultStartFutileMinorPeaceTargets`
+/// fixture) so the planned S1 deletion of that file leaves no orphan
+/// callers.
+///
+/// Pure and deterministic — identical inputs always yield identical
+/// lists (Refs #2509 Must-have #7). Linear in
+/// [ThreatSummary.atWarWith] across both arms, plus a single
+/// [getProvinceOwnerMap] pass on the mixed-frontier arm, matching the
+/// budget-rule note in `colonizethis-turn-resolution-budget.mdc`
+/// (no global province / tile scans introduced by the move).
+List<String> defaultStartFutileMinorPeaceTargets({
+  required Game game,
+  required AIWorldSnapshot snapshot,
+}) {
+  final ownOw = snapshot.conquest.oldWorldProvincesOwned;
+  if (!isBelowObserverConquestQuota(ownOw) ||
+      ownOw > kObserverDefaultStartOldWorldProvincesPerGp + 1 ||
+      snapshot.conquest.invadableProvinceIdsSorted.isEmpty) {
+    return const [];
+  }
+  if (isOldWorldGpOnlyInvadableFrontier(game: game, snapshot: snapshot)) {
+    final targets = <String>[
+      for (final factionId in snapshot.threats.atWarWith)
+        if (game.minorNations.any((m) => m.id == factionId)) factionId,
+    ]..sort();
+    return targets;
+  }
+  final provinceOwner = getProvinceOwnerMap(game);
+  final targets = <String>[
+    for (final factionId in snapshot.threats.atWarWith)
+      if (game.minorNations.any((m) => m.id == factionId) &&
+          !snapshot.conquest.invadableProvinceIdsSorted.any(
+            (pid) => provinceOwner[pid] == factionId,
+          ))
+        factionId,
+  ]..sort();
+  return targets;
+}
