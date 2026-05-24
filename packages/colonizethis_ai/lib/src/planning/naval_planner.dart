@@ -103,7 +103,10 @@ Orders runNavalPlanner({
   );
   if (navalMissionCandidates.isNotEmpty) {
     final ranked = hasColonialTargets
-        ? sortNavalMissionsForColonialPressure(navalMissionCandidates)
+        ? sortNavalMissionsForColonialPressure(
+            navalMissionCandidates,
+            phasePriorityNwProvinceIdsSorted: phasePriorityNwProvinceIdsSorted,
+          )
         : navalMissionCandidates;
     final rng = math.Random(ctx.seeds.militarySeed + 1001);
     final idx = hasColonialTargets ? 0 : rng.nextInt(ranked.length);
