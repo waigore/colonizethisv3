@@ -1,6 +1,7 @@
 import '../perception/perception_snapshot.dart';
 import 'planning_imports.dart';
 import 'colonial_pressure.dart';
+import 'observer_goal_phase.dart';
 export 'colonial_pressure.dart'
     show
         consolidateGainsSoleGpPeaceTarget,

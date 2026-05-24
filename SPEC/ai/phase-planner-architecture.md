@@ -6,7 +6,7 @@
 
 Each Great Power computes a deterministic `ObserverGoalPhase` from its `PlayerView` → `AIWorldSnapshot` once per turn. The phase dispatches to a self-contained **planner module** that makes one primary decision per domain — no cross-phase score aggregation or predicate fan-out.
 
-Phase definitions, suppressions, and COLONIAL-lite stay normative in [ai-architecture.md](ai-architecture.md). This file specifies module contracts, orchestrator dispatch, data flow, and acceptance criteria for the phase-planner replacement of the legacy scoring-ratchet helpers.
+Phase definitions, suppressions, and COLONIAL-lite stay normative in [ai-architecture.md](ai-architecture.md). This file specifies module contracts, orchestrator dispatch, data flow, and acceptance criteria.
 
 ## Rules
 
@@ -75,7 +75,7 @@ Planner modules never call each other. The orchestrator passes `planColonialAcqu
 ### Phase transition guard
 
 - Enter **EXPAND** when `oldWorldProvincesOwned < kObserverConquestMinOwProvincesPerGp` (10). A province loss immediately restores EXPAND; no hysteresis at quota+1.
-- Enter **COLONIAL** when OW ≥ 10 and `hasColonialAcquisitionTargets`.
+- Enter **COLONIAL** when OW ≥ 10 and `hasColonialAcquisitionTargets` (defined in `observer_goal_phase.dart` per Refs #2509 S1).
 - Enter **DEVELOP** when OW ≥ 10 and no visible colonial targets.
 - **COLONIAL-lite** is a parallel entry inside EXPAND (turn ≥ `kObserverColonialLiteMinTurn`, OW ≥ `kObserverColonialLiteNearQuotaOw` and below quota, global `newWorld|` not all GP-owned).
 

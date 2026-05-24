@@ -9,6 +9,99 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
 void main() {
+  // `hasColonialAcquisitionTargets` is the EXPAND -> COLONIAL phase
+  // transition guard for `observerGoalPhaseFor`. Relocated from
+  // `colonial_pressure.dart` (Refs #2509 S1) so the guard survives the
+  // planned deletion of that file.
+  group('hasColonialAcquisitionTargets', () {
+    test('true when invadable NW provinces remain', () {
+      const colonial = ColonialSummary(
+        invadableNewWorldProvinceIdsSorted: ['newWorld|p1'],
+      );
+      expect(hasColonialAcquisitionTargets(colonial), isTrue);
+    });
+
+    test('true when adjacent NW tribe owners remain', () {
+      const colonial = ColonialSummary(
+        adjacentNewWorldOwnerFactionIdsSorted: ['tribe1'],
+      );
+      expect(hasColonialAcquisitionTargets(colonial), isTrue);
+    });
+
+    test(
+      'true when both invadable provinces and adjacent owners are present',
+      () {
+        const colonial = ColonialSummary(
+          invadableNewWorldProvinceIdsSorted: ['newWorld|p1'],
+          adjacentNewWorldOwnerFactionIdsSorted: ['tribe1'],
+        );
+        expect(hasColonialAcquisitionTargets(colonial), isTrue);
+      },
+    );
+
+    test('false when NW holdings exist but no acquisition targets', () {
+      const colonial = ColonialSummary(newWorldProvincesOwned: 12);
+      expect(hasColonialAcquisitionTargets(colonial), isFalse);
+    });
+
+    test('false when colonial summary is fully empty', () {
+      const colonial = ColonialSummary();
+      expect(hasColonialAcquisitionTargets(colonial), isFalse);
+    });
+
+    test('drives observerGoalPhaseFor EXPAND -> COLONIAL transition guard', () {
+      const baseSnapshot = AIWorldSnapshot(
+        playerId: 'gp1',
+        threats: ThreatSummary(),
+        opportunities: OpportunitySummary(),
+        conquest: ConquestSummary(oldWorldProvincesOwned: 10),
+        colonial: ColonialSummary(
+          invadableNewWorldProvinceIdsSorted: ['newWorld|p1'],
+        ),
+        economy: EconomySummary(),
+        relations: {},
+      );
+      expect(
+        hasColonialAcquisitionTargets(baseSnapshot.colonial),
+        isTrue,
+        reason: 'guard fires the COLONIAL branch in observerGoalPhaseFor',
+      );
+      expect(
+        observerGoalPhaseFor(snapshot: baseSnapshot),
+        ObserverGoalPhase.colonial,
+      );
+
+      const developSnapshot = AIWorldSnapshot(
+        playerId: 'gp1',
+        threats: ThreatSummary(),
+        opportunities: OpportunitySummary(),
+        conquest: ConquestSummary(oldWorldProvincesOwned: 10),
+        colonial: ColonialSummary(newWorldProvincesOwned: 5),
+        economy: EconomySummary(),
+        relations: {},
+      );
+      expect(
+        hasColonialAcquisitionTargets(developSnapshot.colonial),
+        isFalse,
+        reason: 'absence of guard routes observerGoalPhaseFor to DEVELOP',
+      );
+      expect(
+        observerGoalPhaseFor(snapshot: developSnapshot),
+        ObserverGoalPhase.develop,
+      );
+    });
+
+    test('determinism: identical input returns identical bool', () {
+      const colonial = ColonialSummary(
+        invadableNewWorldProvinceIdsSorted: ['newWorld|p1'],
+        adjacentNewWorldOwnerFactionIdsSorted: ['tribe1'],
+      );
+      final a = hasColonialAcquisitionTargets(colonial);
+      final b = hasColonialAcquisitionTargets(colonial);
+      expect(a, b);
+    });
+  });
+
   group('observerGoalPhaseFor', () {
     test('expand when below observer OW quota', () {
       const snap = AIWorldSnapshot(
