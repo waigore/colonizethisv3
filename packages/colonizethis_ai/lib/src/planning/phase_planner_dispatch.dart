@@ -99,6 +99,8 @@ class PhasePlanOutcome {
     this.expandPeaceTargetFactionIdsSorted = const <String>[],
     this.expandEconomyPlan = ExpandEconomyPlan.defaultPlan,
     this.expandMilitaryPlan = ExpandMilitaryPlan.defaultPlan,
+    this.expandGpOnlyInvadableFrontierActive = false,
+    this.expandPrimaryInvadableGpBlockerFactionId,
     this.colonialLiteOverturesSorted = const <String>[],
     this.colonialLiteNavalPlan = ColonialLiteNavalPlan.defaultPlan,
     this.colonialAcquisitionTarget,
@@ -138,6 +140,19 @@ class PhasePlanOutcome {
   /// paired with the declare-war pick the same way the orchestrator
   /// will.
   final ExpandMilitaryPlan expandMilitaryPlan;
+
+  /// Whether the invadable Old World frontier is held only by Great
+  /// Powers (no minor owns any invadable OW province). Populated from
+  /// [expandIsOldWorldGpOnlyInvadableFrontier] for
+  /// [ObserverGoalPhase.expand] and [ObserverGoalPhase.colonialLite];
+  /// `false` for COLONIAL and DEVELOP.
+  final bool expandGpOnlyInvadableFrontierActive;
+
+  /// Primary OW invadable GP blocker from
+  /// [expandPrimaryInvadableOldWorldGpBlocker]. Populated for EXPAND and
+  /// COLONIAL-lite; `null` for COLONIAL and DEVELOP or when no GP owns
+  /// an invadable OW province.
+  final String? expandPrimaryInvadableGpBlockerFactionId;
 
   /// COLONIAL-lite overtures from `planColonialLiteOvertures`. Populated
   /// only for [ObserverGoalPhase.colonialLite]; empty otherwise.
@@ -222,6 +237,10 @@ class PhasePlanOutcome {
       '$expandPeaceTargetFactionIdsSorted, '
       'expandEconomyPlan: $expandEconomyPlan, '
       'expandMilitaryPlan: $expandMilitaryPlan, '
+      'expandGpOnlyInvadableFrontierActive: '
+      '$expandGpOnlyInvadableFrontierActive, '
+      'expandPrimaryInvadableGpBlockerFactionId: '
+      '$expandPrimaryInvadableGpBlockerFactionId, '
       'colonialLiteOverturesSorted: $colonialLiteOverturesSorted, '
       'colonialLiteNavalPlan: $colonialLiteNavalPlan, '
       'colonialAcquisitionTarget: $colonialAcquisitionTarget, '
@@ -283,6 +302,7 @@ PhasePlanOutcome _expandOutcome({
   required AIWorldSnapshot snapshot,
 }) {
   final declareWarTarget = planExpandDeclareWar(game: game, snapshot: snapshot);
+  final expandFrontier = _expandFrontierContext(game: game, snapshot: snapshot);
   return PhasePlanOutcome(
     phase: ObserverGoalPhase.expand,
     expandDeclareWarTargetFactionId: declareWarTarget,
@@ -296,6 +316,10 @@ PhasePlanOutcome _expandOutcome({
       snapshot: snapshot,
       declaredWarTargetFactionId: declareWarTarget,
     ),
+    expandGpOnlyInvadableFrontierActive:
+        expandFrontier.gpOnlyInvadableFrontierActive,
+    expandPrimaryInvadableGpBlockerFactionId:
+        expandFrontier.primaryInvadableGpBlockerFactionId,
   );
 }
 
@@ -304,6 +328,7 @@ PhasePlanOutcome _colonialLiteOutcome({
   required AIWorldSnapshot snapshot,
 }) {
   final declareWarTarget = planExpandDeclareWar(game: game, snapshot: snapshot);
+  final expandFrontier = _expandFrontierContext(game: game, snapshot: snapshot);
   return PhasePlanOutcome(
     phase: ObserverGoalPhase.colonialLite,
     expandDeclareWarTargetFactionId: declareWarTarget,
@@ -317,6 +342,10 @@ PhasePlanOutcome _colonialLiteOutcome({
       snapshot: snapshot,
       declaredWarTargetFactionId: declareWarTarget,
     ),
+    expandGpOnlyInvadableFrontierActive:
+        expandFrontier.gpOnlyInvadableFrontierActive,
+    expandPrimaryInvadableGpBlockerFactionId:
+        expandFrontier.primaryInvadableGpBlockerFactionId,
     colonialLiteOverturesSorted: planColonialLiteOvertures(
       game: game,
       snapshot: snapshot,
@@ -374,6 +403,23 @@ PhasePlanOutcome _developOutcome({
       snapshot: snapshot,
     ),
     developCivilianWorkOrders: planDevelopCivilian(
+      game: game,
+      snapshot: snapshot,
+    ),
+  );
+}
+
+({bool gpOnlyInvadableFrontierActive, String? primaryInvadableGpBlockerFactionId})
+_expandFrontierContext({
+  required Game game,
+  required AIWorldSnapshot snapshot,
+}) {
+  return (
+    gpOnlyInvadableFrontierActive: expandIsOldWorldGpOnlyInvadableFrontier(
+      game: game,
+      snapshot: snapshot,
+    ),
+    primaryInvadableGpBlockerFactionId: expandPrimaryInvadableOldWorldGpBlocker(
       game: game,
       snapshot: snapshot,
     ),

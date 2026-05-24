@@ -90,6 +90,7 @@ final class _DeclareWarTargetContext {
     required this.invadableGpBlockerWeaker,
     required this.invadableOwOwnedByGp,
     required this.tribeOwnsOwInvadable,
+    required this.phasePlan,
   });
 
   final DiplomaticOrder order;
@@ -131,6 +132,21 @@ final class _DeclareWarTargetContext {
   final bool invadableGpBlockerWeaker;
   final bool invadableOwOwnedByGp;
   final bool tribeOwnsOwInvadable;
+
+  /// Optional dispatched phase plan threaded from
+  /// `runDiplomacyPlannerWithResult`. When non-null, the suppression
+  /// scoring branches (`_declareWarSuppressedDevelopPhaseScore`,
+  /// `_declareWarSuppressedColonialLiteScore`,
+  /// `_declareWarSuppressedExpandColonialScore`) read the active phase
+  /// off this single dispatched value via the
+  /// `resolvePhaseDiplomacyDeclareWar*Suppression*Active` resolvers
+  /// instead of recomputing `observerGoalPhaseFor` per candidate.
+  ///
+  /// `null` preserves the legacy per-candidate phase compute for tests
+  /// and other callers that pre-date the orchestrator threading; the
+  /// orchestrator always passes `phasePlan` so production runs route
+  /// through the phase-derived value (Refs #2509 S5).
+  final PhasePlanOutcome? phasePlan;
 
   factory _DeclareWarTargetContext.build({
     required DiplomaticOrder order,
@@ -286,6 +302,7 @@ final class _DeclareWarTargetContext {
       invadableGpBlockerWeaker: invadableGpBlockerWeaker,
       invadableOwOwnedByGp: invadableOwOwnedByGp,
       tribeOwnsOwInvadable: tribeOwnsOwInvadable,
+      phasePlan: phasePlan,
     );
   }
 }
@@ -311,17 +328,49 @@ int? _declareWarSuppressedScore(
 }
 
 int? _declareWarSuppressedDevelopPhaseScore(_DeclareWarTargetContext ctx) {
-  if (!isObserverDevelopPhase(snapshot: ctx.snapshot, game: ctx.game)) {
+  // Refs #2509 S5: derive DEVELOP suppression from the dispatched phase
+  // plan instead of recomputing `observerGoalPhaseFor` per declare-war
+  // candidate via `isObserverDevelopPhase`. The phase dispatcher already
+  // resolved `observerGoalPhaseFor` once per player turn; this branch
+  // mirrors `resolvePhaseDiplomacyDeclareWarColonialPressureActive`,
+  // `resolvePhaseEconomyColonialPressureActive`, and
+  // `resolvePhaseConquestColonialPressureActive` by routing the phase
+  // check off the dispatched `PhasePlanOutcome`. Falls back to the
+  // legacy compute when no phase plan was threaded through (test paths
+  // and other callers); the orchestrator always passes `phasePlan` so
+  // production runs route through the phase-derived value.
+  final develop = ctx.phasePlan != null
+      ? resolvePhaseDiplomacyDeclareWarDevelopSuppressionActive(
+          phasePlan: ctx.phasePlan!,
+        )
+      : isObserverDevelopPhase(snapshot: ctx.snapshot, game: ctx.game);
+  if (!develop) {
     return null;
   }
   return kDeclareWarNonAdjacentSuppressedScore;
 }
 
 int? _declareWarSuppressedExpandColonialScore(_DeclareWarTargetContext ctx) {
-  if (!shouldSuppressNewWorldColonialOrders(
-    snapshot: ctx.snapshot,
-    game: ctx.game,
-  )) {
+  // Refs #2509 S5: derive EXPAND NW-colonial suppression from the
+  // dispatched phase plan instead of recomputing
+  // `shouldSuppressNewWorldColonialOrders` (which itself recomputes
+  // `observerGoalPhaseFor`) per declare-war candidate. Phase-derived
+  // `true/false` is field-equal to the legacy
+  // `phase == ObserverGoalPhase.expand` compute across every phase, so
+  // the migration is behaviour-preserving for the EXPAND-collapse
+  // scoring branch. Falls back to the legacy compute when no phase
+  // plan was threaded through; the orchestrator always passes
+  // `phasePlan` so production runs route through the phase-derived
+  // value.
+  final expandSuppress = ctx.phasePlan != null
+      ? resolvePhaseDiplomacyDeclareWarExpandColonialSuppressionActive(
+          phasePlan: ctx.phasePlan!,
+        )
+      : shouldSuppressNewWorldColonialOrders(
+          snapshot: ctx.snapshot,
+          game: ctx.game,
+        );
+  if (!expandSuppress) {
     return null;
   }
   if (ctx.isTribeTarget || ctx.ownsInvadableNw || ctx.isColonialAdjacentOwner) {
@@ -351,8 +400,24 @@ int? _declareWarSuppressedExpandColonialScore(_DeclareWarTargetContext ctx) {
 // stays distinct from the broader DEVELOP suppression
 // (`_declareWarSuppressedDevelopPhaseScore`).
 int? _declareWarSuppressedColonialLiteScore(_DeclareWarTargetContext ctx) {
-  if (observerGoalPhaseFor(snapshot: ctx.snapshot, game: ctx.game) !=
-      ObserverGoalPhase.colonialLite) {
+  // Refs #2509 S5: derive COLONIAL-lite NW-colonial suppression from
+  // the dispatched phase plan instead of recomputing
+  // `observerGoalPhaseFor` per declare-war candidate. Phase-derived
+  // `true/false` is field-equal to the legacy
+  // `phase == ObserverGoalPhase.colonialLite` compute across every
+  // phase, so the migration is behaviour-preserving for the
+  // COLONIAL-lite NW-collapse scoring branch (issue #2509 §
+  // COLONIAL-lite scope summary "Suppressed: NW declareWar"). Falls
+  // back to the legacy compute when no phase plan was threaded
+  // through; the orchestrator always passes `phasePlan` so production
+  // runs route through the phase-derived value.
+  final colonialLiteSuppress = ctx.phasePlan != null
+      ? resolvePhaseDiplomacyDeclareWarColonialLiteSuppressionActive(
+          phasePlan: ctx.phasePlan!,
+        )
+      : observerGoalPhaseFor(snapshot: ctx.snapshot, game: ctx.game) ==
+            ObserverGoalPhase.colonialLite;
+  if (!colonialLiteSuppress) {
     return null;
   }
   if (ctx.isTribeTarget || ctx.ownsInvadableNw || ctx.isColonialAdjacentOwner) {

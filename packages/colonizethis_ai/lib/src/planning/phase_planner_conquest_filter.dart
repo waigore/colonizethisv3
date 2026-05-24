@@ -102,3 +102,62 @@ bool resolvePhaseConquestColonialPressureActive({
 bool resolvePhaseConquestSuppressNwInvasionScoring({
   required PhasePlanOutcome phasePlan,
 }) => phasePlan.phase != ObserverGoalPhase.colonial;
+
+/// When `true`, `runDomainPlannersWithOutcome` runs
+/// [kStalledConquestArmyMovePasses] conquest passes and **skips** the
+/// follow-up army-relocation pass for the active player turn. When
+/// `false`, the orchestrator runs a single conquest pass and lets the
+/// relocation pass run normally.
+///
+/// Active only under [ObserverGoalPhase.expand] and
+/// [ObserverGoalPhase.colonialLite] — both phases require
+/// `oldWorldProvincesOwned < kObserverConquestMinOwProvincesPerGp` (10)
+/// at entry via [observerGoalPhaseFor], which is precisely the
+/// condition the legacy compound `isStalledOldWorldExpansion(ow) ||
+/// isBelowObserverConquestQuota(ow)` evaluated to (for integer `ow` the
+/// two `colonizethis_data` predicates are equivalent: both reduce to
+/// `ow <= 9`). The resolver therefore is field-equal to the legacy
+/// compound across every [ObserverGoalPhase] value, preserving the
+/// prior extra-passes / relocation-skip behaviour exactly during the S5
+/// migration.
+///
+/// Two orchestrator decisions consume this signal:
+///
+/// 1. **Extra conquest passes** — `runDomainPlannersWithOutcome` runs
+///    [kStalledConquestArmyMovePasses] passes through
+///    `runConquestArmyMovePlanner` instead of one so a stalled / below-quota
+///    GP gets multiple chances to commit invadable-frontier moves in the
+///    same turn (issue #2509 § Repository context "stalled conquest army
+///    move passes").
+/// 2. **Relocation pass guard** — the orchestrator skips
+///    `runArmyMovePlanner` (the relocation pass) for the active turn so
+///    frontier marches committed by the conquest passes are not undone
+///    by an opportunistic relocation back toward the capital. The skip
+///    is the *negation* of this resolver: under COLONIAL / DEVELOP
+///    (above quota) the relocation pass runs normally.
+///
+/// Structural separation with sibling resolvers in this file:
+///
+/// - [resolvePhaseConquestColonialPressureActive] is the *complement*
+///   slice (active only under COLONIAL); the colonial-pressure
+///   minimum weight floor never fires under EXPAND / COLONIAL-lite
+///   while extra passes are active.
+/// - [resolvePhaseConquestSuppressNwInvasionScoring] is the *parallel*
+///   suppression slice (active under EXPAND, COLONIAL-lite, **and**
+///   DEVELOP); NW invasion army-move scoring is suppressed under
+///   DEVELOP as well, but extra passes are not — DEVELOP has reached
+///   the OW quota and runs only one conquest pass alongside the
+///   relocation pass for any standing wars.
+/// - [resolvePhaseConquestInvadable] retains its own DEVELOP-skip
+///   short-circuit (`skipConquestPass: true`); the extra-passes
+///   resolver is *not* consulted in that branch because the conquest
+///   pass itself is skipped.
+///
+/// Pure and deterministic — identical inputs always yield identical
+/// resolutions (Refs #2509 Must-have #7). Performs no I/O, no logging,
+/// no order emission.
+bool resolvePhaseConquestExtraPassesActive({
+  required PhasePlanOutcome phasePlan,
+}) =>
+    phasePlan.phase == ObserverGoalPhase.expand ||
+    phasePlan.phase == ObserverGoalPhase.colonialLite;

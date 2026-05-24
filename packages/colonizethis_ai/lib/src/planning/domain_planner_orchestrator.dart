@@ -4,9 +4,10 @@ import 'package:colonizethis_logic/order_suggestion_api.dart';
 
 import 'army_conquest_prep.dart';
 import 'colonial_pressure.dart';
-import 'observer_goal_phase.dart';
+import 'phase_planner_conquest_filter.dart';
 import 'phase_planner_dispatch.dart';
 import 'phase_planner_economy_filter.dart';
+import 'phase_planner_expand_economy.dart';
 import 'phase_planner_work_order_filter.dart';
 import 'planning_imports.dart';
 import 'goal_manager.dart';
@@ -126,11 +127,21 @@ DomainPlannerOutcome runDomainPlannersWithOutcome({
   ctx = ctx.withOrders(declareWarResult.orders);
   final armyMovesBeforeConquest =
       ctx.orders.armyMoveOrdersByPlayerId[nationId]?.length ?? 0;
-  final stalledOldWorldExpansion = isStalledOldWorldExpansion(
-    snapshot.conquest.oldWorldProvincesOwned,
-  );
-  final observerQuotaPressure = isBelowObserverConquestQuota(
-    snapshot.conquest.oldWorldProvincesOwned,
+  // Refs #2509 S5: derive the extra-conquest-passes / relocation-skip
+  // gate from the dispatched phase plan instead of recomputing the
+  // legacy compound `isStalledOldWorldExpansion(ow) ||
+  // isBelowObserverConquestQuota(ow)`. The two `colonizethis_data`
+  // predicates are equivalent for integer `ow` (both reduce to
+  // `ow <= 9`) and field-equal to `phase ∈ {EXPAND, COLONIAL-lite}`
+  // because both phases require `oldWorldProvincesOwned <
+  // kObserverConquestMinOwProvincesPerGp` at entry via
+  // `observerGoalPhaseFor`. Routing the gate through the dispatched
+  // `phasePlan` eliminates two per-player-turn predicate recomputes
+  // and preserves the prior extra-passes / relocation-skip behaviour
+  // exactly (see `SPEC/ai/phase-planner-dispatch.md` § Orchestrator
+  // conquest extra-passes slice).
+  final extraPassesActive = resolvePhaseConquestExtraPassesActive(
+    phasePlan: phasePlan,
   );
   final conquestDeclaredWarTarget = stalledConquestDeclaredWarTarget(
     game: ctx.game,
@@ -138,9 +149,7 @@ DomainPlannerOutcome runDomainPlannersWithOutcome({
     snapshot: snapshot,
     declaredThisTurn: declareWarResult.declaredWarTargetFactionId,
   );
-  final conquestPasses = stalledOldWorldExpansion || observerQuotaPressure
-      ? kStalledConquestArmyMovePasses
-      : 1;
+  final conquestPasses = extraPassesActive ? kStalledConquestArmyMovePasses : 1;
   for (var pass = 0; pass < conquestPasses; pass++) {
     final movesBeforePass =
         ctx.orders.armyMoveOrdersByPlayerId[nationId]?.length ?? 0;
@@ -162,7 +171,7 @@ DomainPlannerOutcome runDomainPlannersWithOutcome({
       (ctx.orders.armyMoveOrdersByPlayerId[nationId]?.length ?? 0) -
       armyMovesBeforeConquest;
   // Stalled GPs must not run the relocation pass: it undoes frontier marches.
-  if (!stalledOldWorldExpansion && !observerQuotaPressure) {
+  if (!extraPassesActive) {
     ctx = ctx.withOrders(
       runArmyMovePlanner(
         ctx: ctx,
@@ -234,10 +243,20 @@ PlannerContext _runEconomyDomainPlanners({
   var workThreshold =
       40 -
       (hasSpyWork ? getAgendaSpyOrderModifier(ctx.config.hiddenAgendaId) : 0);
-  final developPhase = isObserverDevelopPhase(
-    snapshot: snapshot,
-    game: ctx.game,
-  );
+  // Refs #2509 S5: derive the DEVELOP-phase economy gate from the
+  // dispatched phase plan instead of recomputing
+  // `isObserverDevelopPhase` (which itself recomputes
+  // `observerGoalPhaseFor`) per player turn. The phase dispatcher
+  // already resolved `observerGoalPhaseFor` once via
+  // `runPhasePlanners`, so `resolvePhaseEconomyDevelopActive` mirrors
+  // `resolvePhaseEconomyColonialPressureActive` (this file) and
+  // `resolvePhaseDiplomacyDeclareWarDevelopSuppressionActive`
+  // (`phase_planner_diplomacy_filter.dart`) by routing the DEVELOP
+  // gate off the dispatched value. Phase-derived `true/false` is
+  // field-equal to the legacy compute across every
+  // [ObserverGoalPhase] value, preserving the prior workThreshold cap
+  // / `runFullAiCivilianWork` behaviour exactly under DEVELOP.
+  final developPhase = resolvePhaseEconomyDevelopActive(phasePlan: phasePlan);
   // Refs #2509 S5: derive colonial economy pressure from the dispatched
   // phase plan instead of the legacy three-predicate compute. The phase
   // dispatcher already resolved `observerGoalPhaseFor` once per player turn;
@@ -299,6 +318,7 @@ PlannerContext _runEconomyDomainPlanners({
   result = _appendEconomyBuildOrders(
     ctx: ctx,
     snapshot: snapshot,
+    phasePlan: phasePlan,
     economyPlan: economyPlan,
     orders: result,
     colonialPressure: colonialPressure,
@@ -312,28 +332,63 @@ PlannerContext _runEconomyDomainPlanners({
 Orders _appendEconomyBuildOrders({
   required PlannerContext ctx,
   required AIWorldSnapshot snapshot,
+  required PhasePlanOutcome phasePlan,
   required EconomyPlan economyPlan,
   required Orders orders,
   required bool colonialPressure,
   required List<BuildUnitOrder> buildCandidates,
   required int domainEconomyWeight,
 }) {
+  // Refs #2509 S5: derive below-quota OW build-pass routing from the
+  // dispatched phase plan instead of recomputing
+  // `isStalledOldWorldExpansion(ow)` / `isBelowObserverConquestQuota(ow)`
+  // per build pass. Field-equal to `phase ∈ {EXPAND, COLONIAL-lite}` via
+  // `resolvePhaseEconomyExpandQuotaPressureActive` (see
+  // `SPEC/ai/phase-planner-dispatch.md` § Orchestrator economy build
+  // slice). The EXPAND regiment-rebuild directive comes from
+  // `expandEconomyPlanFromPhasePlan` (already computed once in
+  // `runPhasePlanners`).
+  final expandQuotaPressure = resolvePhaseEconomyExpandQuotaPressureActive(
+    phasePlan: phasePlan,
+  );
+  final expandEconomy = expandEconomyPlanFromPhasePlan(phasePlan);
+
   var buildThreshold =
       30 - getAgendaBuildOrderModifier(ctx.config.hiddenAgendaId);
-  if (isStalledOldWorldExpansion(snapshot.conquest.oldWorldProvincesOwned)) {
+  if (expandQuotaPressure) {
     buildThreshold = math.min(buildThreshold, 15);
   }
-  if (isStalledOldWorldGpBlockerFocus(game: ctx.game, snapshot: snapshot)) {
+  if (expandQuotaPressure &&
+      resolvePhaseEconomyExpandGpBlockerFocusActive(phasePlan: phasePlan)) {
     buildThreshold = math.min(buildThreshold, 8);
   }
-  final colonialBuildCap = colonialBuildOrderThresholdCap(snapshot.colonial);
+  // Refs #2509 S5: derive the colonial build-order threshold cap from
+  // the dispatched phase plan instead of calling
+  // `colonialBuildOrderThresholdCap(snapshot.colonial)` (the
+  // `colonial_pressure.dart` helper). The legacy helper had two arms
+  // keyed on `hasColonialAcquisitionTargets(colonial)`, but the
+  // orchestrator only invoked it inside the outer `if (colonialPressure)`
+  // guard, where `colonialPressure` is the dispatched
+  // `resolvePhaseEconomyColonialPressureActive` (active only under
+  // COLONIAL). COLONIAL phase entry is itself gated on
+  // `hasColonialAcquisitionTargets` via `observerGoalPhaseFor`, so the
+  // first legacy arm was the only reachable arm — the second
+  // `kColonialBuildOrderThresholdWhenOwnedNw` arm requires
+  // `!hasColonialAcquisitionTargets`, which is structurally unreachable
+  // inside the orchestrator's COLONIAL-pressure branch. The phase-derived
+  // `int?` is therefore field-equal to the legacy compute at this call
+  // site across every reachable `(ObserverGoalPhase, ColonialSummary)`
+  // pair (see `SPEC/ai/phase-planner-dispatch.md` § Orchestrator economy
+  // build colonial-cap slice).
+  final colonialBuildCap = resolvePhaseEconomyColonialBuildOrderThresholdCap(
+    phasePlan: phasePlan,
+    colonial: snapshot.colonial,
+  );
   if (colonialBuildCap != null) {
     buildThreshold = math.min(buildThreshold, colonialBuildCap);
   }
   final regimentCount = regimentCountForPlayer(ctx.game, ctx.nationId);
-  final observerQuotaPressure = isBelowObserverConquestQuota(
-    snapshot.conquest.oldWorldProvincesOwned,
-  );
+  final observerQuotaPressure = expandQuotaPressure;
   final atWarWithAnyGreatPower = snapshot.threats.atWarWith.any(
     (id) => ctx.game.playerById(id) != null,
   );
@@ -344,6 +399,7 @@ Orders _appendEconomyBuildOrders({
   final brokeBelowQuotaAtPeace =
       observerQuotaPressure && regimentCount == 0 && !atWarWithAnyGreatPower;
   final belowQuotaPeaceInsufficientRegiments =
+      expandQuotaPressure &&
       isBelowQuotaPeaceInsufficientRegiments(
         oldWorldProvincesOwned: snapshot.conquest.oldWorldProvincesOwned,
         regimentCount: regimentCount,
@@ -351,12 +407,14 @@ Orders _appendEconomyBuildOrders({
         hasInvadableProvinces:
             snapshot.conquest.invadableProvinceIdsSorted.isNotEmpty,
       );
-  final belowQuotaZeroRegimentsRebuild = isBelowQuotaPeaceZeroRegimentsRebuild(
-    oldWorldProvincesOwned: snapshot.conquest.oldWorldProvincesOwned,
-    regimentCount: regimentCount,
-    hasInvadableProvinces:
-        snapshot.conquest.invadableProvinceIdsSorted.isNotEmpty,
-  );
+  final belowQuotaZeroRegimentsRebuild =
+      expandQuotaPressure &&
+      isBelowQuotaPeaceZeroRegimentsRebuild(
+        oldWorldProvincesOwned: snapshot.conquest.oldWorldProvincesOwned,
+        regimentCount: regimentCount,
+        hasInvadableProvinces:
+            snapshot.conquest.invadableProvinceIdsSorted.isNotEmpty,
+      );
   final zeroRegimentsAtWar =
       regimentCount == 0 && snapshot.threats.atWarWith.isNotEmpty;
   final criticallyWeakBelowQuota =
@@ -369,10 +427,9 @@ Orders _appendEconomyBuildOrders({
       snapshot.conquest.oldWorldProvincesOwned <=
           kFewOldWorldProvincesDefendThreshold &&
       !snapshot.threats.atWarWith.any((id) => ctx.game.playerById(id) != null);
-  final gpBlocker =
-      isStalledOldWorldGpBlockerFocus(game: ctx.game, snapshot: snapshot)
-      ? primaryInvadableOldWorldGpBlocker(game: ctx.game, snapshot: snapshot)
-      : null;
+  final gpBlocker = expandPrimaryInvadableGpBlockerFromPhasePlan(
+    phasePlan: phasePlan,
+  );
   final atWarWithGpBlocker =
       gpBlocker != null && snapshot.threats.atWarWith.contains(gpBlocker);
   var minRegimentFloor = atWarWithGpBlocker
@@ -401,15 +458,17 @@ Orders _appendEconomyBuildOrders({
     minRegimentFloor = 1;
   }
   final forceRegimentRebuild =
-      (isStalledOldWorldExpansion(snapshot.conquest.oldWorldProvincesOwned) ||
-          criticallyWeakBelowQuota) &&
+      (expandQuotaPressure || criticallyWeakBelowQuota) &&
       (snapshot.threats.atWarWith.isNotEmpty ||
           needRegimentsToExpand ||
           brokeBelowQuotaAtPeace ||
           belowQuotaPeaceInsufficientRegiments ||
-          belowQuotaZeroRegimentsRebuild) &&
+          belowQuotaZeroRegimentsRebuild ||
+          expandEconomy.forceCheapestRegimentBuild) &&
       regimentCount < minRegimentFloor;
-  if (forceRegimentRebuild || atWarWithGpBlocker) {
+  if (forceRegimentRebuild ||
+      atWarWithGpBlocker ||
+      expandEconomy.forceCheapestRegimentBuild) {
     buildThreshold = 0;
   }
   _log.d(
@@ -442,11 +501,12 @@ Orders _appendEconomyBuildOrders({
       oldWorldProvincesOwned: snapshot.conquest.oldWorldProvincesOwned,
       colonialPressure: colonialPressure,
       militaryRebuildCrisis:
-          forceRegimentRebuild &&
+          (forceRegimentRebuild || expandEconomy.forceCheapestRegimentBuild) &&
           (atWarWithGpBlocker ||
               brokeBelowQuotaAtPeace ||
               belowQuotaZeroRegimentsRebuild ||
               belowQuotaPeaceInsufficientRegiments ||
+              expandEconomy.forceCheapestRegimentBuild ||
               (regimentCount <= kStalledMilitaryRebuildCrisisRegimentCap &&
                   !(observerQuotaPressure &&
                       snapshot.conquest.oldWorldProvincesOwned >
