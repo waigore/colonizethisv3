@@ -6,6 +6,8 @@ import 'planning_imports.dart';
 import 'colonial_pressure.dart';
 import 'goal_manager.dart';
 import 'observer_goal_phase.dart';
+import 'phase_planner_diplomacy_filter.dart';
+import 'phase_planner_dispatch.dart';
 import 'war_desire_calculator.dart';
 
 part 'diplomatic_candidate_scoring_offer_peace.dart';
@@ -24,13 +26,16 @@ List<int> computeDiplomaticCandidateScores({
   required AIConfig config,
   StrategicGoal? primaryGoal,
   Orders? sameTurnPriorDiplomaticOrders,
+  PhasePlanOutcome? phasePlan,
 }) {
   final agendaId = config.hiddenAgendaId;
   final thresholds = getThresholdsForLeader(config.personalityId);
   var maxRelationForDeclareWar = getDeclareWarMaxRelationScore(agendaId);
-  final behindVictoryPace = snapshot.conquest.provincesToVictory >
+  final behindVictoryPace =
+      snapshot.conquest.provincesToVictory >
       kConquerScoreFloorProvincesToVictoryThreshold;
-  final suppressGpDeclareWar = snapshot.conquest.provincesToVictory >
+  final suppressGpDeclareWar =
+      snapshot.conquest.provincesToVictory >
       kSuppressGpDeclareWarMinProvincesToVictory;
   final provinceOwner = getProvinceOwnerMap(game);
   final invadableOwners = <String>{
@@ -61,6 +66,7 @@ List<int> computeDiplomaticCandidateScores({
       ),
     );
   }
+
   return candidates.map((o) {
     var s = 50;
     switch (o.type) {
@@ -100,6 +106,7 @@ List<int> computeDiplomaticCandidateScores({
           primaryGoal: primaryGoal,
           warDesireForTarget: warDesireForTarget,
           sameTurnPriorDiplomaticOrders: sameTurnPriorDiplomaticOrders,
+          phasePlan: phasePlan,
         );
         break;
       case DiplomaticOrderType.establishOverture:
@@ -158,6 +165,7 @@ List<int> computeDiplomaticCandidateScores({
     return s == 0 ? 0 : math.max(1, s);
   }).toList();
 }
+
 bool _isMinorOrTribeFaction(Game game, String factionId) {
   return game.minorNations.any((m) => m.id == factionId) ||
       game.tribes.any((t) => t.id == factionId);
