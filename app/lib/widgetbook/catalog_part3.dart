@@ -379,7 +379,47 @@ VictoryState _sampleVictoryState(Game game) {
   );
 }
 
+QuickBattleInput _sampleQuickBattleInput() {
+  return const QuickBattleInput(
+    attackerFactionId: 'castile',
+    defenderFactionId: 'england',
+    provinceId: 'oldWorld|p_lisbon',
+    regionId: 'oldWorld',
+    attackerDeployment: QuickBattleDeployment(
+      groups: [
+        QuickBattleGroup(
+          lane: QuickBattleLane.center,
+          line: QuickBattleLine.front,
+          unitIds: ['a1', 'a2', 'a3', 'a4'],
+          cohesion: 3,
+        ),
+      ],
+    ),
+    defenderDeployment: QuickBattleDeployment(
+      groups: [
+        QuickBattleGroup(
+          lane: QuickBattleLane.center,
+          line: QuickBattleLine.front,
+          unitIds: ['d1', 'd2', 'd3'],
+          cohesion: 3,
+        ),
+      ],
+    ),
+    maxRounds: 3,
+    seed: 1,
+  );
+}
+
 MaterialApp _victoryStoryFrame(Widget child) {
+  return MaterialApp(
+    theme: AppThemes.colonial,
+    localizationsDelegates: AppLocalizationsBinding.localizationsDelegates,
+    supportedLocales: AppLocalizations.supportedLocales,
+    home: Scaffold(body: Center(child: child)),
+  );
+}
+
+MaterialApp _combatStoryFrame(Widget child) {
   return MaterialApp(
     theme: AppThemes.colonial,
     localizationsDelegates: AppLocalizationsBinding.localizationsDelegates,
@@ -431,6 +471,179 @@ List<WidgetbookNode> get victoryUiDirectories => [
             ),
           );
         },
+      ),
+    ],
+  ),
+];
+
+/// Combat UI stories.
+/// SPEC/ui/quick-battle-screen.md, quick-battle-deployment-view.md,
+/// quick-battle-action-selector.md, combat-mode-choice-dialog.md,
+/// quick-battle-result-dialog.md.
+List<WidgetbookNode> get combatUiDirectories => [
+  WidgetbookFolder(
+    name: 'Quick Battle',
+    children: [
+      WidgetbookUseCase(
+        name: 'Quick Battle Screen — non-interactive',
+        builder: (context) => _combatStoryFrame(
+          ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 400, maxHeight: 500),
+            child: QuickBattleScreen(
+              input: _sampleQuickBattleInput(),
+              onComplete: (_) {},
+            ),
+          ),
+        ),
+      ),
+      WidgetbookUseCase(
+        name: 'Quick Battle Screen — interactive',
+        builder: (context) => _combatStoryFrame(
+          ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 400, maxHeight: 500),
+            child: QuickBattleScreen(
+              input: _sampleQuickBattleInput(),
+              onComplete: (_) {},
+              interactive: true,
+            ),
+          ),
+        ),
+      ),
+      WidgetbookUseCase(
+        name: 'Deployment view',
+        builder: (context) => _combatStoryFrame(
+          ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 400),
+            child: const Padding(
+              padding: EdgeInsets.all(16),
+              child: QuickBattleDeploymentView(
+                attackerDeployment: QuickBattleDeployment(
+                  groups: [
+                    QuickBattleGroup(
+                      lane: QuickBattleLane.center,
+                      line: QuickBattleLine.front,
+                      unitIds: ['a1', 'a2', 'a3', 'a4'],
+                      cohesion: 3,
+                    ),
+                  ],
+                ),
+                defenderDeployment: QuickBattleDeployment(
+                  groups: [
+                    QuickBattleGroup(
+                      lane: QuickBattleLane.center,
+                      line: QuickBattleLine.front,
+                      unitIds: ['d1', 'd2', 'd3'],
+                      cohesion: 2,
+                    ),
+                  ],
+                ),
+                attackerName: 'Castile',
+                defenderName: 'England',
+              ),
+            ),
+          ),
+        ),
+      ),
+      WidgetbookUseCase(
+        name: 'Action selector — full CP',
+        builder: (context) => _combatStoryFrame(
+          Padding(
+            padding: const EdgeInsets.all(16),
+            child: QuickBattleActionSelector(
+              cpRemaining: 3,
+              onActionSelected: (_) {},
+            ),
+          ),
+        ),
+      ),
+      WidgetbookUseCase(
+        name: 'Action selector — 1 CP (assault disabled)',
+        builder: (context) => _combatStoryFrame(
+          Padding(
+            padding: const EdgeInsets.all(16),
+            child: QuickBattleActionSelector(
+              cpRemaining: 1,
+              onActionSelected: (_) {},
+            ),
+          ),
+        ),
+      ),
+      WidgetbookUseCase(
+        name: 'Action selector — spent (0 CP)',
+        builder: (context) => _combatStoryFrame(
+          Padding(
+            padding: const EdgeInsets.all(16),
+            child: QuickBattleActionSelector(
+              cpRemaining: 0,
+              onActionSelected: (_) {},
+            ),
+          ),
+        ),
+      ),
+      WidgetbookUseCase(
+        name: 'Combat mode choice — regular province',
+        builder: (context) => _combatStoryFrame(
+          CombatModeChoiceDialog(
+            bus: AppEventBus.create(),
+            provinceName: 'Lisbon',
+            isCapitalSiege: false,
+          ),
+        ),
+      ),
+      WidgetbookUseCase(
+        name: 'Combat mode choice — capital siege',
+        builder: (context) => _combatStoryFrame(
+          CombatModeChoiceDialog(
+            bus: AppEventBus.create(),
+            provinceName: 'Madrid',
+            isCapitalSiege: true,
+          ),
+        ),
+      ),
+      WidgetbookUseCase(
+        name: 'Quick Battle result — attacker wins, province flips',
+        builder: (context) => _combatStoryFrame(
+          const QuickBattleResultDialog(
+            result: QuickBattleResult(
+              winner: QuickBattleWinner.attacker,
+              attackerCasualties: ['a3'],
+              defenderCasualties: ['d1', 'd2'],
+              provinceFlips: true,
+            ),
+            attackerName: 'Castile',
+            defenderName: 'England',
+          ),
+        ),
+      ),
+      WidgetbookUseCase(
+        name: 'Quick Battle result — defender holds',
+        builder: (context) => _combatStoryFrame(
+          const QuickBattleResultDialog(
+            result: QuickBattleResult(
+              winner: QuickBattleWinner.defender,
+              attackerCasualties: ['a1', 'a2', 'a3'],
+              defenderCasualties: ['d1'],
+              provinceFlips: false,
+            ),
+            attackerName: 'Castile',
+            defenderName: 'England',
+          ),
+        ),
+      ),
+      WidgetbookUseCase(
+        name: 'Quick Battle result — mutual exhaustion',
+        builder: (context) => _combatStoryFrame(
+          const QuickBattleResultDialog(
+            result: QuickBattleResult(
+              winner: QuickBattleWinner.mutualExhaustion,
+              attackerCasualties: ['a1'],
+              defenderCasualties: ['d1'],
+              provinceFlips: false,
+            ),
+            attackerName: 'Castile',
+            defenderName: 'England',
+          ),
+        ),
       ),
     ],
   ),

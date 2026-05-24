@@ -78,8 +78,10 @@ For `train_civilians` and `train_military`, shared order/count orchestration mus
 
 | ID | Widget | Status |
 |----|--------|--------|
-| `quick_battle_result` | `QuickBattleResultDialog` | `quickBattleResultDialogId` |
-| `combat_mode_choice` | `CombatModeChoiceDialog` (`CombatModeChosenEvent` on choice) | `combatModeChoiceDialogId` |
+| `quick_battle_result` | [`QuickBattleResultDialog`](../ui/quick-battle-result-dialog.md) | `quickBattleResultDialogId` |
+| `combat_mode_choice` | [`CombatModeChoiceDialog`](../ui/combat-mode-choice-dialog.md) (`CombatModeChosenEvent` on choice) | `combatModeChoiceDialogId` |
+
+Combat-flow non-dialog screens (constructed directly by the orchestrator, not via `OpenDialogEvent`) are documented in [`quick-battle-screen.md`](../ui/quick-battle-screen.md), with sub-views [`quick-battle-deployment-view.md`](../ui/quick-battle-deployment-view.md) and [`quick-battle-action-selector.md`](../ui/quick-battle-action-selector.md).
 
 **Local by design (no `OpenDialogEvent`):** map display options (`GameMapArea`), tech detail (`TechTreeWidget`), civilian work-target sheet (`CivilianUnitsPanel`), next-turn confirmation (`GameMapArea`), in-game Android back exit confirmation (`GameScreen`), research tech picker (`TechnologyPanel`), **`CtDropdown`** internal picker, **new-game setup progress and error dialogs** after leader confirmation (see **SPEC/ui/game-initializing.md**).
 

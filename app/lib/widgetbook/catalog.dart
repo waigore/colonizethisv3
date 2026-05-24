@@ -12,6 +12,11 @@ import 'package:widgetbook/widgetbook.dart';
 
 import '../config/themes.dart';
 import '../providers/games_provider.dart';
+import '../features/game/combat/combat_mode_choice_dialog.dart';
+import '../features/game/combat/quick_battle_action_selector.dart';
+import '../features/game/combat/quick_battle_deployment_view.dart';
+import '../features/game/combat/quick_battle_result_dialog.dart';
+import '../features/game/combat/quick_battle_screen.dart';
 import '../features/game/widgets/civilian_units_panel.dart';
 import '../features/game/widgets/diplomacy_panel.dart';
 import '../features/game/widgets/military_units_panel.dart';
@@ -109,6 +114,7 @@ class CtWidgetbookApp extends StatelessWidget {
         ...interventionDialogueDirectories,
         ...turnNewsDialogDirectories,
         ...victoryUiDirectories,
+        ...combatUiDirectories,
       ],
       lightTheme: AppThemes.colonial,
       darkTheme: AppThemes.colonial,
