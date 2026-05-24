@@ -566,8 +566,22 @@ Future<void> e2eWaitUntilFound(
     await tester.pump(Duration(milliseconds: stepMs));
     stepMs = math.min(500, stepMs * 2);
   }
+  // Final check after the loop exits on the timeout edge: the most recent
+  // pump may have made [finder] non-empty just as `sw.elapsed` crossed
+  // [timeout], so the loop's pre-pump check would never re-evaluate. Match
+  // [e2ePumpUntilConditionOrIdle]'s post-pump-check pattern so a successful
+  // late pump still returns success instead of falling through to `fail()`.
+  // Refs GitHub #2336 AC5 (adaptive polling) / busy-wait final-check fix.
+  if (finder.evaluate().isNotEmpty) {
+    perf?.timing(phaseName, sw.elapsed, meta: 'result=found_at_timeout');
+    return;
+  }
   if (diagnoseAfter > Duration.zero) {
     await e2ePumpFor(tester, diagnoseAfter);
+    if (finder.evaluate().isNotEmpty) {
+      perf?.timing(phaseName, sw.elapsed, meta: 'result=found_during_diagnose');
+      return;
+    }
   }
   perf?.timing(phaseName, sw.elapsed, meta: 'result=timeout');
   fail(
@@ -612,6 +626,16 @@ Future<void> e2ePumpUntil(
     }
     await tester.pump(Duration(milliseconds: stepMs));
     stepMs = math.min(500, stepMs * 2);
+  }
+  // Final check after the loop exits on the timeout edge: the most recent
+  // pump may have flipped [condition] just as `sw.elapsed` crossed
+  // [timeout], so the loop's pre-pump check would never re-evaluate. Match
+  // [e2ePumpUntilConditionOrIdle]'s post-pump-check pattern so a successful
+  // late pump still returns success instead of falling through to `fail()`.
+  // Refs GitHub #2336 AC5 (adaptive polling) / busy-wait final-check fix.
+  if (condition()) {
+    perf?.timing(phaseName, sw.elapsed, meta: 'result=met_at_timeout');
+    return;
   }
   perf?.timing(phaseName, sw.elapsed, meta: 'result=timeout');
   fail(
@@ -1274,6 +1298,19 @@ Future<void> e2eWaitUntilAnyFinderHitTestable(
     }
     await tester.pump(Duration(milliseconds: stepMs));
     stepMs = math.min(500, stepMs * 2);
+  }
+  // Final check after the loop exits on the timeout edge: the most recent
+  // pump may have made one of [finders] hit-testable just as `sw.elapsed`
+  // crossed [timeout], so the loop's pre-pump check would never re-evaluate.
+  // Match [e2ePumpUntilConditionOrIdle]'s post-pump-check pattern so a
+  // successful late pump still returns success instead of falling through to
+  // `fail()`. Refs GitHub #2336 AC5 (adaptive polling) / busy-wait
+  // final-check fix.
+  for (final finder in finders) {
+    if (finder.hitTestable().evaluate().isNotEmpty) {
+      perf?.timing(phaseName, sw.elapsed, meta: 'result=found_at_timeout');
+      return;
+    }
   }
   perf?.timing(phaseName, sw.elapsed, meta: 'result=timeout');
   fail(
