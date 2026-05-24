@@ -10,6 +10,7 @@ import 'domain_planner_orchestrator.dart';
 import 'economy_planner.dart';
 import 'goal_manager.dart';
 import 'observer_goal_phase.dart';
+import 'phase_planner_dispatch.dart';
 import 'phase_planner_goal_filter.dart';
 import 'ai_order_reporting.dart';
 import 'ai_trace_builder.dart';
@@ -126,6 +127,19 @@ StrategicOrderTraceResult generateStrategicOrdersWithTrace({
     colonial: snapshot.colonial,
     snapshot: planningSnapshot,
   );
+  // Refs #2509 S5: dispatch the phase plan once per AI player turn against
+  // the planning-state inputs and thread the resolved `PhasePlanOutcome`
+  // into the orchestrator. The orchestrator previously recomputed the
+  // dispatch internally; hoisting it here keeps the per-turn cost at a
+  // single `runPhasePlanners` call and prepares the next S5 slice to
+  // pass the same plan into `runEconomyPlanner` (the last in-tree
+  // planner still resolving phase signals via the legacy
+  // `colonial_pressure.dart` helpers).
+  final phasePlan = runPhasePlanners(
+    game: planningGame,
+    snapshot: planningSnapshot,
+    personalityId: config.personalityId,
+  );
   final plannerOutcome = runDomainPlannersWithOutcome(
     game: planningGame,
     topology: topology,
@@ -140,6 +154,7 @@ StrategicOrderTraceResult generateStrategicOrdersWithTrace({
     tileMapByRegion: tileMapByRegion,
     onStagedPlannerProgress: onStagedPlannerProgress,
     sameTurnPriorDiplomaticOrders: sameTurnPriorDiplomaticOrders,
+    phasePlan: phasePlan,
   );
   final orders = plannerOutcome.orders;
   final moveCount = orders.moveOrdersByPlayerId[nationId]?.length ?? 0;
