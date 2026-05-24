@@ -230,24 +230,14 @@ void main() {
         maxUiResponseWait: _kMaxUiResponseWait,
       );
       if (!exploreEnabled) {
-        if (!e2ePlayerHasAnyNewWorldFoggedOrBetterFromCtSnapshot(
-          ctE2eNavalPanelSnapshot,
-        )) {
-          // Guard against CI topology/seed runs where no NW land becomes
-          // visible within bounded retries, so Explore cannot be enabled.
-          return;
-        }
-        final diag = e2eBundledExploreRejectionDiagnostics(
-          navalSnapshot: lastKnownNavalSnapshot ?? ctE2eNavalPanelSnapshot,
+        await handleBundledExploreFailure(
+          tester,
+          navalSnapshot: ctE2eNavalPanelSnapshot,
           civilianSnapshot: ctE2eCivilianPanelSnapshot,
+          lastKnownNavalSnapshot: lastKnownNavalSnapshot,
+          maxBoundedTurnRetries: kE2eDefaultBundledExploreMaxTurnRetries,
         );
-        fail(
-          'Post-bundle #1869 regression: Explorer Assign never surfaced an enabled '
-          'Explore row after New World fleet confirmation and '
-          '$kE2eDefaultBundledExploreMaxTurnRetries bounded Next turn retries.\n'
-          '$diag\n'
-          'Last exception: ${tester.takeException()}',
-        );
+        return;
       }
 
       ensureUnderWallClock('test complete');

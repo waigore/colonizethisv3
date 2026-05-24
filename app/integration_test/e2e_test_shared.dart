@@ -22,6 +22,7 @@ import 'package:colonizethis_models/colonizethis_models.dart' show ProvinceId;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+export 'e2e_test_shared_bundled_explore_failure.dart';
 export 'e2e_test_shared_bundled_explore_retry.dart';
 export 'e2e_test_shared_diagnostics.dart';
 export 'e2e_test_shared_dismiss_ct_dialog_shell.dart';

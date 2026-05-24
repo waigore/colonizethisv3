@@ -5,6 +5,8 @@
 /// (`openProductionPanel`, `advanceOneHumanTurn`, `waitForNextTurnLabelAdvance`, etc.).
 library;
 
+import 'package:colonizethis_app/config/ct_e2e_last_panel_snapshot.dart'
+    show CtE2eCivilianPanelSnapshot, CtE2eNavalPanelSnapshot;
 import 'package:colonizethis_app/l10n/app_localizations_contract.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -33,6 +35,7 @@ export 'e2e_test_shared.dart'
         e2eExpectPanelTextsMatchSnapshot,
         e2eFleetReachDoneFromCtSnapshotOnly,
         e2eFleetReachTurnLoop,
+        e2eHandleBundledExploreFailure,
         e2eHarnessDetectsNonHomeFleetInNewWorld,
         e2eMakeWallClockGuard,
         e2eNewWorldRegionChipAppearsSelected,
@@ -433,4 +436,22 @@ Future<E2eFinalNavalReachCheckResult> ensureNonHomeFleetInNwAfterLoop(
   perf: perf,
   failureMessageBuilder: failureMessageBuilder,
   maxUiResponseWait: maxUiResponseWait,
+);
+
+/// Stable public name for [e2eHandleBundledExploreFailure] so the
+/// post-bundle Explore scenario consumes the AC1 barrel only (Refs GitHub
+/// #2336 AC1 / AC2 / AC5 / Bottleneck 5). Forwards to the implementation
+/// in `e2e_test_shared_bundled_explore_failure.dart`.
+Future<void> handleBundledExploreFailure(
+  WidgetTester tester, {
+  required CtE2eNavalPanelSnapshot? navalSnapshot,
+  required CtE2eCivilianPanelSnapshot? civilianSnapshot,
+  CtE2eNavalPanelSnapshot? lastKnownNavalSnapshot,
+  required int maxBoundedTurnRetries,
+}) => e2eHandleBundledExploreFailure(
+  tester,
+  navalSnapshot: navalSnapshot,
+  civilianSnapshot: civilianSnapshot,
+  lastKnownNavalSnapshot: lastKnownNavalSnapshot,
+  maxBoundedTurnRetries: maxBoundedTurnRetries,
 );

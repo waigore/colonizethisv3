@@ -5,7 +5,10 @@
 library;
 
 import 'package:colonizethis_app/config/ct_e2e_last_panel_snapshot.dart'
-    show CtE2eNavalPanelSnapshot, ctE2eNavalPanelSnapshot;
+    show
+        CtE2eCivilianPanelSnapshot,
+        CtE2eNavalPanelSnapshot,
+        ctE2eNavalPanelSnapshot;
 import 'package:colonizethis_app/l10n/app_localizations_contract.dart';
 import 'package:colonizethis_app/l10n/app_localizations_lookup.dart';
 import 'package:colonizethis_data/colonizethis_data.dart' show MapTopology;
@@ -102,6 +105,86 @@ void main() {
         'bundled_explore_retry_iterations',
       );
     });
+
+    testWidgets(
+      'handleBundledExploreFailure is re-exported through the barrel',
+      (tester) async {
+        final Future<void> Function(
+          WidgetTester, {
+          required CtE2eNavalPanelSnapshot? navalSnapshot,
+          required CtE2eCivilianPanelSnapshot? civilianSnapshot,
+          CtE2eNavalPanelSnapshot? lastKnownNavalSnapshot,
+          required int maxBoundedTurnRetries,
+        })
+        ref = handleBundledExploreFailure;
+        expect(ref, isNotNull);
+        await tester.pumpWidget(
+          const MaterialApp(home: Scaffold(body: SizedBox())),
+        );
+        // Build a snapshot that reports at least one fogged-or-better NW
+        // tile so the topology skip arm does NOT fire — exercising the
+        // barrel's forwarding into the regression fail arm. A `null`
+        // navalSnapshot would route through the skip arm (matches the
+        // pre-lift inline contract) and never raise, defeating the pin.
+        const human = 'gp1';
+        final regressionNaval = CtE2eNavalPanelSnapshot(
+          game: Game(
+            id: 'barrel-smoke-bundled-explore-failure',
+            worldState: WorldState(
+              turnState: const TurnState(
+                phase: TurnPhase.orders,
+                turnNumber: 1,
+              ),
+              oldWorld: const RegionData(),
+              newWorld: const RegionData(
+                provinces: [
+                  Province(id: 'newWorld|nwA', regionId: 'newWorld'),
+                ],
+              ),
+              playerVisibilityByTile: const {
+                human: {'newWorld|nwA|0|0': 'fogged'},
+              },
+            ),
+            players: const [
+              Player(id: human, displayName: 'You', isHuman: true),
+            ],
+          ),
+          humanPlayerId: human,
+          topology: const MapTopology(),
+          draftOrders: const Orders(),
+        );
+        Object? caught;
+        try {
+          await ref(
+            tester,
+            navalSnapshot: regressionNaval,
+            civilianSnapshot: null,
+            maxBoundedTurnRetries: kE2eDefaultBundledExploreMaxTurnRetries,
+          );
+        } catch (e) {
+          caught = e;
+        }
+        expect(caught, isA<TestFailure>());
+        expect(
+          caught.toString(),
+          contains('Post-bundle #1869 regression'),
+          reason:
+              'Barrel must forward to the lifted implementation that raises '
+              'with the canonical regression message; a regression that '
+              'forwarded to a stub or dropped an argument would fail this pin.',
+        );
+        expect(
+          caught.toString(),
+          contains(
+            '$kE2eDefaultBundledExploreMaxTurnRetries bounded Next turn retries',
+          ),
+          reason:
+              'maxBoundedTurnRetries must be interpolated into the failure '
+              'message — a barrel that dropped or hard-coded the arg would '
+              'render the wrong retry budget for downstream triage.',
+        );
+      },
+    );
 
     testWidgets(
       'ensureNonHomeFleetInNwAfterLoop is re-exported through the barrel',
