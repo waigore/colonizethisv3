@@ -4,29 +4,16 @@ import 'package:colonizethis_ai/src/perception/perception_snapshot.dart';
 import 'package:colonizethis_ai/src/planning/colonial_pressure.dart';
 import 'package:colonizethis_ai/src/planning/conquest_planner.dart';
 import 'package:colonizethis_ai/src/planning/diplomacy_planner_peace_targets.dart';
+import 'package:colonizethis_ai/src/planning/observer_goal_phase.dart'
+    show hasColonialAcquisitionTargets;
 import 'package:colonizethis_data/colonizethis_data.dart';
 
 void main() {
-  group('hasColonialAcquisitionTargets', () {
-    test('true when invadable NW provinces remain', () {
-      const colonial = ColonialSummary(
-        invadableNewWorldProvinceIdsSorted: ['newWorld|p1'],
-      );
-      expect(hasColonialAcquisitionTargets(colonial), isTrue);
-    });
-
-    test('true when adjacent NW tribe owners remain', () {
-      const colonial = ColonialSummary(
-        adjacentNewWorldOwnerFactionIdsSorted: ['tribe1'],
-      );
-      expect(hasColonialAcquisitionTargets(colonial), isTrue);
-    });
-
-    test('false when NW holdings exist but no acquisition targets', () {
-      const colonial = ColonialSummary(newWorldProvincesOwned: 12);
-      expect(hasColonialAcquisitionTargets(colonial), isFalse);
-    });
-  });
+  // `hasColonialAcquisitionTargets` was relocated to `observer_goal_phase.dart`
+  // (Refs #2509 S1). Its dedicated tests now live in
+  // `observer_goal_phase_test.dart` alongside the EXPAND -> COLONIAL phase
+  // transition guard. The `isEarlyColonialExpansion` group below still
+  // asserts the predicate at a boundary that exercises both helpers.
 
   group('colonialBuildOrderThresholdCap', () {
     test('null when no NW provinces owned', () {
