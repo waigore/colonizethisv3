@@ -43,6 +43,19 @@ bool hasColonialAcquisitionTargets(ColonialSummary colonial) =>
     colonial.invadableNewWorldProvinceIdsSorted.isNotEmpty ||
     colonial.adjacentNewWorldOwnerFactionIdsSorted.isNotEmpty;
 
+/// Early colonial expansion bonus while the GP holds fewer than
+/// [kColonialFewNwProvincesThreshold] NW provinces and visible colonial
+/// acquisition targets remain.
+///
+/// Fires the `goal_manager.dart` early-colonial conquer bonus alongside the
+/// `hasColonialAcquisitionTargets` guard above. Relocated from
+/// `colonial_pressure.dart` (Refs #2509 S1) so the predicate survives the
+/// planned deletion of `colonial_pressure.dart`. Pure function of
+/// [ColonialSummary]; deterministic for identical inputs (Must-have #7).
+bool isEarlyColonialExpansion(ColonialSummary colonial) =>
+    hasColonialAcquisitionTargets(colonial) &&
+    colonial.newWorldProvincesOwned < kColonialFewNwProvincesThreshold;
+
 /// COLONIAL-lite: turn ≥120, OW ≥9 and below quota, global NW not fully GP-owned.
 bool isObserverColonialLitePhase({
   required Game game,

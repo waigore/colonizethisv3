@@ -366,21 +366,14 @@ String? primaryInvadableOldWorldGpBlocker({
   return bestGpId;
 }
 
-// `hasColonialAcquisitionTargets` was relocated to `observer_goal_phase.dart`
-// (Refs #2509 S1). It is the EXPAND -> COLONIAL phase transition guard for
-// `observerGoalPhaseFor` and must survive the planned deletion of this
-// file. The two internal callers below (`isEarlyColonialExpansion` and
-// `colonialBuildOrderThresholdCap`) inline the predicate body so this
-// file does not import `observer_goal_phase.dart` (which would create a
-// circular library reference). See also: `phase-planner-architecture.md`
-// § Phase transition guards.
-
-/// Early expansion boost while the GP holds fewer than
-/// [kColonialFewNwProvincesThreshold] NW provinces.
-bool isEarlyColonialExpansion(ColonialSummary colonial) =>
-    (colonial.invadableNewWorldProvinceIdsSorted.isNotEmpty ||
-            colonial.adjacentNewWorldOwnerFactionIdsSorted.isNotEmpty) &&
-    colonial.newWorldProvincesOwned < kColonialFewNwProvincesThreshold;
+// `hasColonialAcquisitionTargets` and `isEarlyColonialExpansion` were
+// relocated to `observer_goal_phase.dart` (Refs #2509 S1) — both
+// `ColonialSummary` predicates must survive the planned deletion of this
+// file. `colonialBuildOrderThresholdCap` (below) keeps the
+// acquisition-target check inlined so this file does not import
+// `observer_goal_phase.dart`, which would create a circular library
+// reference. See also: `phase-planner-architecture.md` § Phase transition
+// guards.
 
 /// Sole at-war Great Power, if any.
 String? soleAtWarGreatPowerId({
