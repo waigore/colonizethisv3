@@ -10,7 +10,6 @@ import 'package:colonizethis_app/test_support/naval_units_panel_e2e_expected_lin
 import 'package:colonizethis_app/test_support/production_panel_e2e_expected_lines.dart';
 import 'package:colonizethis_models/colonizethis_models.dart'
     show kUnitTypeExplorer;
-import 'package:colonizethis_app/widgets/ct_dialog_shell.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
@@ -183,85 +182,8 @@ void main() {
         perf: perf,
         navalPanelAlreadyOpen: true,
       );
-      final navalPanelRoot = find.byKey(kCtE2ENavalPanelRootKey);
-      final moveButtons = find.descendant(
-        of: navalPanelRoot,
-        matching: find.text('Move'),
-      );
-      if (moveButtons.evaluate().isNotEmpty) {
-        await tester.tap(moveButtons.first, warnIfMissed: false);
-        await waitUntilFound(
-          tester,
-          find.byType(AlertDialog),
-          timeout: const Duration(seconds: 5),
-          perf: perf,
-          phaseName: 'wait_until_move_dialog_after_tap',
-        );
-        final moveDialog = find.byType(AlertDialog);
-        final destinationRadios = find.descendant(
-          of: moveDialog,
-          matching: find.byType(RadioListTile<dynamic>),
-        );
-        if (destinationRadios.evaluate().isEmpty) {
-          final cancel = find.descendant(
-            of: moveDialog,
-            matching: find.text(l10n.common_cancel),
-          ).hitTestable();
-          expect(cancel, findsOneWidget);
-          await tester.tap(cancel.first, warnIfMissed: false);
-        } else {
-          await tester.tap(destinationRadios.first, warnIfMissed: false);
-          await e2ePumpUntilConditionOrIdle(
-            tester,
-            () => find
-                .descendant(
-                  of: moveDialog,
-                  matching: find.text(l10n.common_confirm),
-                )
-                .hitTestable()
-                .evaluate()
-                .isNotEmpty,
-            timeout: const Duration(seconds: 2),
-            perf: perf,
-            phaseName: 'pump_until_move_confirm_tappable',
-          );
-          final confirm = find
-              .descendant(
-                of: moveDialog,
-                matching: find.text(l10n.common_confirm),
-              )
-              .hitTestable();
-          await tester.tap(confirm.first, warnIfMissed: false);
-        }
-        await e2ePumpUntil(
-          tester,
-          () => find.byType(AlertDialog).evaluate().isEmpty,
-          timeout: const Duration(seconds: 10),
-          perf: perf,
-          phaseName: 'pump_until_move_dialog_closed',
-        );
-      }
-      if (find.byType(CtDialogShell).evaluate().isNotEmpty) {
-        final closeCandidates = <Finder>[
-          find.text(l10n.common_cancel),
-          find.text(l10n.common_close),
-          find.byIcon(Icons.close),
-        ];
-        for (final candidate in closeCandidates) {
-          final tappable = candidate.hitTestable();
-          if (tappable.evaluate().isNotEmpty) {
-            await tester.tap(tappable.first, warnIfMissed: false);
-            await e2ePumpUntil(
-              tester,
-              () => find.byType(CtDialogShell).evaluate().isEmpty,
-              timeout: const Duration(seconds: 3),
-              perf: perf,
-              phaseName: 'pump_until_shell_closed_after_close_candidate',
-            );
-            break;
-          }
-        }
-      }
+      await attemptFirstFleetMoveOrCancel(tester, l10n, perf: perf);
+      await dismissCtDialogShellIfPresent(tester, l10n, perf: perf);
 
       await expandEachExpansionTileOnce(tester);
       await expectNavalPanelTexts(expanded: true);
