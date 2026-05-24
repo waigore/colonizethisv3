@@ -71,15 +71,12 @@ bool isBelowQuotaPeaceInsufficientRegiments({
 }
 
 /// Minimum [RegimentEconomyCatalog] build treasury cost (deterministic catalog scan).
-int cheapestRegimentBuildTreasuryCost() {
-  var min = 999999999;
-  for (final econ in RegimentEconomyCatalog.byId.values) {
-    if (econ.buildTreasuryCost < min) {
-      min = econ.buildTreasuryCost;
-    }
-  }
-  return min;
-}
+///
+/// Delegates to [expand_phase_planner.cheapestRegimentBuildTreasuryCost]
+/// (Refs #2509 S1) so the canonical implementation lives alongside the
+/// EXPAND-trap callers that govern the treasury affordability gate.
+int cheapestRegimentBuildTreasuryCost() =>
+    expand_phase_planner.cheapestRegimentBuildTreasuryCost();
 
 /// Below-quota EXPAND GP at peace with insufficient regiments and effective
 /// treasury (cash plus same-turn pending riches) below cheapest regiment build.

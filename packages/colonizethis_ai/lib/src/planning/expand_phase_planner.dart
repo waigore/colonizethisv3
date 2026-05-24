@@ -350,7 +350,7 @@ bool isMutualBelowQuotaPlateauPeer({
 /// Returns:
 ///   - `null` when [ConquestSummary.invadableProvinceIdsSorted] is empty
 ///     (no OW frontier to expand into) or when treasury is below
-///     `_cheapestRegimentBuildTreasuryCost()` (the player cannot afford a
+///     [cheapestRegimentBuildTreasuryCost] (the player cannot afford a
 ///     regiment to follow up the declaration; the spec
 ///     "skip if treasury < cheapestRegimentBuildTreasuryCost" arm).
 ///   - The lowest-id minor faction owning an invadable OW province and
@@ -378,7 +378,7 @@ String? planExpandDeclareWar({
   if (invadable.isEmpty) return null;
   final player = game.playerById(snapshot.playerId);
   if (player == null) return null;
-  if (player.treasury < _cheapestRegimentBuildTreasuryCost()) {
+  if (player.treasury < cheapestRegimentBuildTreasuryCost()) {
     return null;
   }
 
@@ -488,7 +488,7 @@ class ExpandEconomyPlan {
   ///     `0 < regimentCount < kBelowQuotaPeaceMinRegimentsBeforeDeclareWar`
   ///     with non-empty invadable OW frontier and effective treasury
   ///     (cash + [pendingRichesTreasuryDelta]) at or above
-  ///     `_cheapestRegimentBuildTreasuryCost()`.
+  ///     [cheapestRegimentBuildTreasuryCost].
   final bool forceCheapestRegimentBuild;
 
   /// True when the orchestrator should add
@@ -498,7 +498,7 @@ class ExpandEconomyPlan {
   ///
   /// Set when below quota AND effective treasury (cash +
   /// [pendingRichesTreasuryDelta]) is strictly below
-  /// `_cheapestRegimentBuildTreasuryCost()` (issue #2509 § EXPAND phase
+  /// [cheapestRegimentBuildTreasuryCost] (issue #2509 § EXPAND phase
   /// planner § planExpandEconomy "treasury < cheapest" arm). The
   /// boost composes with [forceCheapestRegimentBuild] so a GP that is
   /// told to force a build AND cannot currently afford one still gets
@@ -605,7 +605,7 @@ ExpandEconomyPlan planExpandEconomy({
   final regimentCount = regimentCountForPlayer(game, snapshot.playerId);
   final effectiveTreasury =
       player.treasury + pendingRichesTreasuryDelta(stockpile: player.stockpile);
-  final cheapest = _cheapestRegimentBuildTreasuryCost();
+  final cheapest = cheapestRegimentBuildTreasuryCost();
 
   // Arm A: regimentCount == 0 AND hasInvadable -> force rebuild
   // (no treasury gate per spec; the build pipeline still applies its
@@ -637,12 +637,17 @@ ExpandEconomyPlan planExpandEconomy({
 /// Minimum [RegimentEconomyCatalog] build treasury cost (deterministic
 /// catalog scan).
 ///
-/// Mirrors `cheapestRegimentBuildTreasuryCost` from `colonial_pressure.dart`
-/// so the new planner stays self-contained against the S1 deletion of
-/// that file (Refs #2509 § EXPAND phase planner). Linear in the catalog
-/// size, matching the budget-rule note in
+/// Canonical home (Refs #2509 S1) for the EXPAND-trap treasury affordability
+/// gate used by [planExpandDeclareWar] (treasury floor before declaring),
+/// [planExpandEconomy] (arms B/C threshold for force-build and treasury
+/// recovery cargo), and the [planColonialAcquisition] declare-war arm in
+/// `colonial_phase_planner.dart`. `colonial_pressure.dart` retains a
+/// thin delegating stub for legacy import sites so the planned S1
+/// deletion of that file leaves no orphan callers.
+///
+/// Linear in the catalog size, matching the budget-rule note in
 /// `colonizethis-turn-resolution-budget.mdc`.
-int _cheapestRegimentBuildTreasuryCost() {
+int cheapestRegimentBuildTreasuryCost() {
   var min = 999999999;
   for (final econ in RegimentEconomyCatalog.byId.values) {
     if (econ.buildTreasuryCost < min) {

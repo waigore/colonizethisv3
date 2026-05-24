@@ -204,6 +204,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../perception/perception_snapshot.dart';
 import 'army_conquest_prep.dart' show regimentCountForPlayer;
+import 'expand_phase_planner.dart' as expand_phase_planner;
 import 'observer_goal_phase.dart' show primaryColonialGpBlocker;
 
 /// Returns the deterministic list of at-war Great Powers the active player
@@ -786,21 +787,15 @@ List<String> _acquisitionIterationOrder(ColonialSummary colonial) {
 /// Minimum [RegimentEconomyCatalog] build treasury cost (deterministic
 /// catalog scan).
 ///
-/// Mirrors `_cheapestRegimentBuildTreasuryCost` in
-/// `expand_phase_planner.dart` (Refs #2509 § EXPAND phase planner) so
-/// the COLONIAL declare-war arm stays self-contained against the S1
-/// deletion of `colonial_pressure.dart`. Linear in the catalog size,
-/// matching the budget-rule note in
-/// `colonizethis-turn-resolution-budget.mdc`.
-int _cheapestRegimentBuildTreasuryCost() {
-  var min = 999999999;
-  for (final econ in RegimentEconomyCatalog.byId.values) {
-    if (econ.buildTreasuryCost < min) {
-      min = econ.buildTreasuryCost;
-    }
-  }
-  return min;
-}
+/// Delegates to the canonical
+/// [expand_phase_planner.cheapestRegimentBuildTreasuryCost] (Refs #2509
+/// S1) so the COLONIAL declare-war arm shares the same affordability
+/// gate as `planExpandDeclareWar` / `planExpandEconomy`. The COLONIAL
+/// planner intentionally keeps the call site private so it remains
+/// self-contained against the planned S1 deletion of
+/// `colonial_pressure.dart`.
+int _cheapestRegimentBuildTreasuryCost() =>
+    expand_phase_planner.cheapestRegimentBuildTreasuryCost();
 
 /// True when [playerId] owns at least one [kUnitTypeMerchant] unit
 /// with [UnitStatus.idle] in either region. Region of the Merchant is
