@@ -63,100 +63,64 @@ void main() {
     );
     ensureUnderWallClock('after split fleet');
 
-    for (
-      var turnIdx = 0;
-      turnIdx < _kMaxNextTurnTapsForNwFleetReach;
-      turnIdx++
-    ) {
-      ensureUnderWallClock('turn loop start turnIdx=$turnIdx');
-      perf.bumpCounter('turn_loop_iterations');
-      if (e2eFleetReachDoneFromCtSnapshotOnly(ctE2eNavalPanelSnapshot)) {
+    final loopResult = await fleetReachTurnLoop(
+      tester,
+      l10n,
+      perf: perf,
+      ensureUnderWallClock: ensureUnderWallClock,
+      maxUiResponseWait: _kMaxUiResponseWait,
+      maxTurns: _kMaxNextTurnTapsForNwFleetReach,
+    );
+    switch (loopResult.exit) {
+      case E2eFleetReachLoopExit.reachedSnapshotPrecheck:
         perf.timing(
           'test_total',
           testSw.elapsed,
           meta: 'result=reached_snapshot_precheck',
         );
         return;
-      }
-      await dismissTransientUi(tester, perf: perf);
-      if (e2eFleetReachDoneFromCtSnapshotOnly(ctE2eNavalPanelSnapshot)) {
+      case E2eFleetReachLoopExit.reachedSnapshotAfterDismiss:
         perf.timing(
           'test_total',
           testSw.elapsed,
           meta: 'result=reached_snapshot_after_dismiss',
         );
         return;
-      }
-      await e2eTapNewWorldRegionTabIfPresent(tester);
-      if (e2eFleetReachDoneFromCtSnapshotOnly(ctE2eNavalPanelSnapshot)) {
+      case E2eFleetReachLoopExit.reachedSnapshotAfterRegionTab:
+        // Legacy label: pre-lift loop emitted `reached_snapshot_precheck`
+        // here (not `..._after_region_tab`). Preserved byte-identical so
+        // downstream `E2E_TIMING|...|meta=result=...` log scrapers and
+        // dashboards keyed on the legacy label stay attributed to the
+        // same exit (Refs GitHub #2336 AC1 / AC2).
         perf.timing(
           'test_total',
           testSw.elapsed,
           meta: 'result=reached_snapshot_precheck',
         );
         return;
-      }
-      // When [ctE2eNavalPanelSnapshot] is live, world-state arrival does not
-      // require opening the naval sheet (Refs #2336 Bottleneck 4).
-      if (ctE2eNavalPanelSnapshot == null) {
-        await openNavalPanel(
-          tester,
-          perf: perf,
-          timeout: _kMaxUiResponseWait,
-          bottomSheetCloseTimeout: _kMaxUiResponseWait,
+      case E2eFleetReachLoopExit.reachedInLoop:
+        perf.timing(
+          'test_total',
+          testSw.elapsed,
+          meta: 'result=reached_in_loop',
         );
-        if (e2eNavalPanelShowsNonHomeFleetInNewWorld(tester)) {
-          await closeBottomSheet(
-            tester,
-            perf: perf,
-            overallTimeout: _kMaxUiResponseWait,
-          );
-          perf.timing(
-            'test_total',
-            testSw.elapsed,
-            meta: 'result=reached_in_loop',
-          );
-          return;
-        }
-      }
-
-      await tryNavalMoveSegment(
-        tester,
-        l10n,
-        perf: perf,
-        maxUiResponseWait: _kMaxUiResponseWait,
-        // Panel was opened above only when snapshot plumbing is unavailable.
-        navalPanelAlreadyOpen: ctE2eNavalPanelSnapshot == null,
-      );
-      await closeBottomSheet(
-        tester,
-        perf: perf,
-        overallTimeout: _kMaxUiResponseWait,
-      );
-
-      if (e2eHarnessDetectsNonHomeFleetInNewWorld(
-        tester,
-        ctE2eNavalPanelSnapshot,
-      )) {
+        return;
+      case E2eFleetReachLoopExit.reachedAfterMove:
         perf.timing(
           'test_total',
           testSw.elapsed,
           meta: 'result=reached_after_move',
         );
         return;
-      }
-
-      await advanceOneHumanTurn(tester, l10n: l10n, perf: perf);
-      if (e2eFleetReachDoneFromCtSnapshotOnly(ctE2eNavalPanelSnapshot)) {
+      case E2eFleetReachLoopExit.reachedSnapshotAfterTurn:
         perf.timing(
           'test_total',
           testSw.elapsed,
           meta: 'result=reached_snapshot_after_turn',
         );
         return;
-      }
-      await dismissTransientUi(tester, perf: perf);
-      ensureUnderWallClock('after turn advance turnIdx=$turnIdx');
+      case E2eFleetReachLoopExit.loopExhausted:
+        break;
     }
 
     ensureUnderWallClock('before final naval check');
@@ -235,73 +199,17 @@ void main() {
         overallTimeout: _kMaxUiResponseWait,
       );
       ensureUnderWallClock('after split fleet');
-      CtE2eNavalPanelSnapshot? lastKnownNavalSnapshot;
 
-      for (
-        var turnIdx = 0;
-        turnIdx < _kMaxNextTurnTapsForNwFleetReach;
-        turnIdx++
-      ) {
-        ensureUnderWallClock('turn loop start turnIdx=$turnIdx');
-        perf.bumpCounter('turn_loop_iterations');
-        if (e2eFleetReachDoneFromCtSnapshotOnly(ctE2eNavalPanelSnapshot)) {
-          break;
-        }
-        await dismissTransientUi(tester, perf: perf);
-        if (e2eFleetReachDoneFromCtSnapshotOnly(ctE2eNavalPanelSnapshot)) {
-          break;
-        }
-        await e2eTapNewWorldRegionTabIfPresent(tester);
-        if (e2eFleetReachDoneFromCtSnapshotOnly(ctE2eNavalPanelSnapshot)) {
-          break;
-        }
-        if (ctE2eNavalPanelSnapshot == null) {
-          await openNavalPanel(
-            tester,
-            perf: perf,
-            timeout: _kMaxUiResponseWait,
-            bottomSheetCloseTimeout: _kMaxUiResponseWait,
-          );
-          if (e2eNavalPanelShowsNonHomeFleetInNewWorld(tester)) {
-            await closeBottomSheet(
-              tester,
-              perf: perf,
-              overallTimeout: _kMaxUiResponseWait,
-            );
-            break;
-          }
-        }
-        if (ctE2eNavalPanelSnapshot != null) {
-          lastKnownNavalSnapshot = ctE2eNavalPanelSnapshot;
-        }
-
-        await tryNavalMoveSegment(
-          tester,
-          l10n,
-          perf: perf,
-          maxUiResponseWait: _kMaxUiResponseWait,
-          navalPanelAlreadyOpen: ctE2eNavalPanelSnapshot == null,
-        );
-        await closeBottomSheet(
-          tester,
-          perf: perf,
-          overallTimeout: _kMaxUiResponseWait,
-        );
-
-        if (e2eHarnessDetectsNonHomeFleetInNewWorld(
-          tester,
-          ctE2eNavalPanelSnapshot,
-        )) {
-          break;
-        }
-
-        await advanceOneHumanTurn(tester, l10n: l10n, perf: perf);
-        if (e2eFleetReachDoneFromCtSnapshotOnly(ctE2eNavalPanelSnapshot)) {
-          break;
-        }
-        await dismissTransientUi(tester, perf: perf);
-        ensureUnderWallClock('after turn advance turnIdx=$turnIdx');
-      }
+      final loopResult = await fleetReachTurnLoop(
+        tester,
+        l10n,
+        perf: perf,
+        ensureUnderWallClock: ensureUnderWallClock,
+        maxUiResponseWait: _kMaxUiResponseWait,
+        maxTurns: _kMaxNextTurnTapsForNwFleetReach,
+      );
+      CtE2eNavalPanelSnapshot? lastKnownNavalSnapshot =
+          loopResult.lastKnownNavalSnapshot;
 
       await dismissTransientUi(tester, perf: perf);
       await e2eTapNewWorldRegionTabIfPresent(tester);
