@@ -25,6 +25,7 @@ export 'e2e_test_shared.dart'
         e2eAwaitNwCoastalOrVisibleLandForBundledExplore,
         e2eBundledExploreRejectionDiagnostics,
         e2eCheckExploreEnabledFromCivilianPanel,
+        e2eDismissCtDialogShellIfPresent,
         e2eExploreAssignEnabledFromCivilianSnapshot,
         e2eExpectPanelTextsMatchSnapshot,
         e2eFleetReachDoneFromCtSnapshotOnly,
@@ -43,6 +44,8 @@ export 'e2e_test_shared.dart'
         kE2eDefaultBundledExploreReadinessMaxTurns,
         kE2eDefaultBundledExploreRetryLoopPhase,
         kE2eDefaultBundledExploreSweepWait,
+        kE2eDefaultCtDialogShellCloseTimeout,
+        kE2eDefaultCtDialogShellClosePhase,
         kE2eDefaultExpectPanelTextsPhase,
         kE2eDefaultExpectPanelTextsTimeout,
         kE2eDefaultFirstFleetMoveConfirmReadyTimeout,
@@ -88,6 +91,24 @@ Future<void> waitUntilFound(
 
 Future<void> dismissTransientUi(WidgetTester tester, {E2ePerfLog? perf}) =>
     e2eDismissTransientUi(tester, perf: perf);
+
+/// Stable public name for [e2eDismissCtDialogShellIfPresent] so the
+/// full-turn scenario consumes the AC1 barrel only (Refs GitHub #2336 AC1 /
+/// AC2 / Bottleneck 6). Forwards to the implementation in
+/// `e2e_test_shared_dismiss_ct_dialog_shell.dart`.
+Future<bool> dismissCtDialogShellIfPresent(
+  WidgetTester tester,
+  AppLocalizations l10n, {
+  E2ePerfLog? perf,
+  Duration shellCloseTimeout = kE2eDefaultCtDialogShellCloseTimeout,
+  String phaseName = kE2eDefaultCtDialogShellClosePhase,
+}) => e2eDismissCtDialogShellIfPresent(
+  tester,
+  l10n,
+  perf: perf,
+  shellCloseTimeout: shellCloseTimeout,
+  phaseName: phaseName,
+);
 
 Future<void> openCivilianPanel(
   WidgetTester tester, {

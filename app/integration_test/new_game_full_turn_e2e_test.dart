@@ -10,7 +10,6 @@ import 'package:colonizethis_app/test_support/naval_units_panel_e2e_expected_lin
 import 'package:colonizethis_app/test_support/production_panel_e2e_expected_lines.dart';
 import 'package:colonizethis_models/colonizethis_models.dart'
     show kUnitTypeExplorer;
-import 'package:colonizethis_app/widgets/ct_dialog_shell.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
@@ -184,27 +183,7 @@ void main() {
         navalPanelAlreadyOpen: true,
       );
       await attemptFirstFleetMoveOrCancel(tester, l10n, perf: perf);
-      if (find.byType(CtDialogShell).evaluate().isNotEmpty) {
-        final closeCandidates = <Finder>[
-          find.text(l10n.common_cancel),
-          find.text(l10n.common_close),
-          find.byIcon(Icons.close),
-        ];
-        for (final candidate in closeCandidates) {
-          final tappable = candidate.hitTestable();
-          if (tappable.evaluate().isNotEmpty) {
-            await tester.tap(tappable.first, warnIfMissed: false);
-            await e2ePumpUntil(
-              tester,
-              () => find.byType(CtDialogShell).evaluate().isEmpty,
-              timeout: const Duration(seconds: 3),
-              perf: perf,
-              phaseName: 'pump_until_shell_closed_after_close_candidate',
-            );
-            break;
-          }
-        }
-      }
+      await dismissCtDialogShellIfPresent(tester, l10n, perf: perf);
 
       await expandEachExpansionTileOnce(tester);
       await expectNavalPanelTexts(expanded: true);

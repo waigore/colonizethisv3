@@ -23,6 +23,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 export 'e2e_test_shared_diagnostics.dart';
+export 'e2e_test_shared_dismiss_ct_dialog_shell.dart';
 export 'e2e_test_shared_first_fleet_move.dart';
 export 'e2e_test_shared_panels.dart';
 
