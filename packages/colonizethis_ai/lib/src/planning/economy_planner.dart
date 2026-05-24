@@ -3,6 +3,8 @@
 import '../perception/perception_snapshot.dart';
 import 'army_conquest_prep.dart';
 import 'colonial_pressure.dart';
+import 'phase_planner_dispatch.dart';
+import 'phase_planner_economy_filter.dart';
 import 'planning_imports.dart';
 import 'recipe_scoring.dart';
 
@@ -11,6 +13,23 @@ final _log = packageLogger('economy_planner');
 /// Runs the economy planner for one AI-controlled player. Deterministic given
 /// [game], [view], [config], and [seeds]. Returns production assignments and
 /// cargo preference. SPEC/ai/economy-planner.md.
+///
+/// When [phasePlan] is supplied (Refs #2509 S5), the below-quota peace
+/// treasury-recovery cargo boost is derived from the dispatched
+/// [PhasePlanOutcome] via the phase-planner economy resolvers
+/// (`resolvePhaseEconomyExpandBelowQuotaPeaceZeroRegimentsRebuildActive` and
+/// `resolvePhaseEconomyExpandBelowQuotaPeaceInsufficientRegimentsActive`)
+/// rather than the legacy `isBelowQuotaPeaceTreasuryRecovery` compute
+/// (`colonial_pressure.dart`). The phase-derived path is field-equal to the
+/// legacy compute under EXPAND / COLONIAL-lite because both phases require
+/// `oldWorldProvincesOwned < kObserverConquestMinOwProvincesPerGp` at entry
+/// via [observerGoalPhaseFor]; the legacy compute's `isBelowObserverConquestQuota`
+/// guard is therefore satisfied structurally and the remaining
+/// regiment / war / invadable arms route through the phase resolvers. When
+/// [phasePlan] is `null` (legacy callers and unit tests that pre-date the
+/// threading), the planner falls back to the legacy
+/// `isBelowQuotaPeaceTreasuryRecovery` compute so existing fixtures remain
+/// behaviour-equal during the S5 migration.
 EconomyPlan runEconomyPlanner({
   required Game game,
   required PlayerView view,
@@ -18,6 +37,7 @@ EconomyPlan runEconomyPlanner({
   required AISeedBundle seeds,
   ColonialSummary colonial = const ColonialSummary(),
   AIWorldSnapshot? snapshot,
+  PhasePlanOutcome? phasePlan,
 }) {
   final player = game.playerById(view.playerId);
   if (player == null) {
@@ -42,18 +62,14 @@ EconomyPlan runEconomyPlanner({
     shipCountsById: shipCounts,
   );
 
-  final belowQuotaPeaceTreasuryRecovery = snapshot != null &&
-      isBelowQuotaPeaceTreasuryRecovery(
-        oldWorldProvincesOwned: snapshot.conquest.oldWorldProvincesOwned,
-        regimentCount: regimentCountForPlayer(game, view.playerId),
-        atWarWithAnyGreatPower: snapshot.threats.atWarWith.any(
-          (id) => game.playerById(id) != null,
-        ),
-        hasInvadableProvinces:
-            snapshot.conquest.invadableProvinceIdsSorted.isNotEmpty,
-        treasury: player.treasury,
-        stockpile: stockpile,
-      );
+  final belowQuotaPeaceTreasuryRecovery = _resolveBelowQuotaPeaceTreasuryRecovery(
+    game: game,
+    view: view,
+    snapshot: snapshot,
+    phasePlan: phasePlan,
+    treasury: player.treasury,
+    stockpile: stockpile,
+  );
 
   if (effectiveLabour <= 0) {
     return EconomyPlan(
@@ -246,4 +262,81 @@ bool _isMilitaryInputRecipe(ProductionRecipe recipe) {
     'timber',
   };
   return militaryOutputIds.contains(recipe.outputCommodityId);
+}
+
+/// Resolves the EXPAND-phase "below-quota peace treasury recovery" cargo
+/// boost trigger for `runEconomyPlanner`.
+///
+/// When [phasePlan] is supplied (Refs #2509 S5), the resolver routes the
+/// two rebuild-trap arms through the phase-planner economy resolvers
+/// instead of the legacy `colonial_pressure.dart` predicates:
+///
+/// - Zero-regiments rebuild arm ->
+///   [resolvePhaseEconomyExpandBelowQuotaPeaceZeroRegimentsRebuildActive]
+/// - Insufficient-regiments + treasury arm ->
+///   [resolvePhaseEconomyExpandBelowQuotaPeaceInsufficientRegimentsActive]
+///   paired with the same effective-treasury threshold used by the legacy
+///   compute (`treasury + pendingRichesTreasuryDelta(...) <
+///   cheapestRegimentBuildTreasuryCost()`).
+///
+/// Phase-derived `bool` is field-equal to the legacy
+/// [isBelowQuotaPeaceTreasuryRecovery] compute under EXPAND / COLONIAL-lite
+/// because both phases require
+/// `oldWorldProvincesOwned < kObserverConquestMinOwProvincesPerGp` at
+/// entry via [observerGoalPhaseFor], satisfying the legacy
+/// `isBelowObserverConquestQuota` guard structurally. Under COLONIAL and
+/// DEVELOP the phase resolvers collapse to `false`, mirroring the
+/// suppression matrix established for the orchestrator's economy
+/// build-pass slice (`_appendEconomyBuildOrders`).
+///
+/// When [phasePlan] is `null`, the helper falls back to the legacy
+/// compute so callers that have not yet migrated remain behaviour-equal
+/// during the S5 migration. When [snapshot] is `null`, the cargo boost
+/// cannot be evaluated and the return is `false` (matches the prior
+/// guard).
+bool _resolveBelowQuotaPeaceTreasuryRecovery({
+  required Game game,
+  required PlayerView view,
+  required AIWorldSnapshot? snapshot,
+  required PhasePlanOutcome? phasePlan,
+  required int treasury,
+  required Stockpile stockpile,
+}) {
+  if (snapshot == null) {
+    return false;
+  }
+  final regimentCount = regimentCountForPlayer(game, view.playerId);
+  final atWarWithAnyGreatPower = snapshot.threats.atWarWith.any(
+    (id) => game.playerById(id) != null,
+  );
+  final hasInvadableProvinces =
+      snapshot.conquest.invadableProvinceIdsSorted.isNotEmpty;
+  if (phasePlan == null) {
+    return isBelowQuotaPeaceTreasuryRecovery(
+      oldWorldProvincesOwned: snapshot.conquest.oldWorldProvincesOwned,
+      regimentCount: regimentCount,
+      atWarWithAnyGreatPower: atWarWithAnyGreatPower,
+      hasInvadableProvinces: hasInvadableProvinces,
+      treasury: treasury,
+      stockpile: stockpile,
+    );
+  }
+  if (resolvePhaseEconomyExpandBelowQuotaPeaceZeroRegimentsRebuildActive(
+    phasePlan: phasePlan,
+    regimentCount: regimentCount,
+    hasInvadableProvinces: hasInvadableProvinces,
+  )) {
+    return true;
+  }
+  if (!resolvePhaseEconomyExpandBelowQuotaPeaceInsufficientRegimentsActive(
+    phasePlan: phasePlan,
+    regimentCount: regimentCount,
+    atWarWithAnyGreatPower: atWarWithAnyGreatPower,
+    hasInvadableProvinces: hasInvadableProvinces,
+  )) {
+    return false;
+  }
+  final effectiveTreasury =
+      treasury + pendingRichesTreasuryDelta(stockpile: stockpile);
+  return effectiveTreasury < cheapestRegimentBuildTreasuryCost();
 }
