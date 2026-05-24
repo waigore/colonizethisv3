@@ -413,6 +413,152 @@ bool canPivotFromSoleGpWarAfterPeace({
   });
 }
 
+/// Returns the lone Great Power foe's `factionId` when an EXPAND-phase
+/// player should peace it as unwinnable, or `null` when the forced
+/// sole-GP-frontier peace path does not apply this turn.
+///
+/// Canonical home (Refs #2509 S1) for the legacy
+/// `unwinnableSoleGpFrontierPeaceTarget` peace decider previously hosted
+/// in `colonial_pressure.dart`. The decider is the below-quota EXPAND
+/// shortcut that surrenders an unwinnable sole-GP war so the planner
+/// can pivot back to a minor frontier; it composes the already-canonical
+/// helpers [soleAtWarGreatPowerId] and [canPivotFromSoleGpWarAfterPeace]
+/// with the deficit-band table from `SPEC/ai/ai-architecture.md`
+/// § Diplomacy targeting — "Forced offerPeace toward the sole at-war
+/// Great Power...".
+///
+/// Returns `null` for any of the following short-circuits (in order):
+///   1. [soleAtWarGreatPowerId] returns `null` — no sole GP foe (zero
+///      GP wars after the [Game.playerById] filter, or two or more GP
+///      wars). Multi-front peace selection (`nearQuotaHoldPeaceTargets`,
+///      `belowQuotaPeerGpPeaceTargets`) owns the decision in that
+///      shape, not this shortcut.
+///   2. [isBelowObserverConquestQuota] is `false` for the active
+///      player's [ConquestSummary.oldWorldProvincesOwned] — at or
+///      above the observer OW quota the consolidate-gains decider
+///      ([consolidateGainsSoleGpPeaceTarget]) and the quota-met
+///      futile-peace collectors take over.
+///   3. [canPivotFromSoleGpWarAfterPeace] is `false` — peacing the
+///      lone GP would leave no SPEC-legal minor pivot, so the planner
+///      must keep the war open and defer to the critical-weak survival
+///      peace path instead.
+///   4. The OW lead deficit `enemyOw - ownOw` is strictly less than the
+///      band's `minDeficit`:
+///        * `kUnwinnableSoleGpMinProvinceDeficit` (today: 2) on the
+///          8–9 OW GP-only invadable frontier band — preserves
+///          near-quota GP-only wars when the partner only narrowly
+///          leads (lead 1) so the planner does not surrender the
+///          near-peer blocker;
+///        * `1` everywhere else (default-start band `own ≤
+///          kObserverDefaultStartOldWorldProvincesPerGp`; 8–9 OW
+///          non-GP-only band) — minimum +1 OW lead suffices.
+///
+/// When all four gates pass, returns the [soleAtWarGreatPowerId] result
+/// (the sole GP foe).
+///
+/// `colonial_pressure.dart` retains a thin delegating stub for legacy
+/// callers (the `diplomacy_planner_peace_targets.dart` consumer chain
+/// and the
+/// `colonial_pressure_unwinnable_sole_gp_branches_test.dart` fixture)
+/// so the planned S1 deletion of that file leaves no orphan callers.
+///
+/// Pure and deterministic — identical inputs always yield identical
+/// results (Refs #2509 Must-have #7). Linear in
+/// [ConquestSummary.invadableProvinceIdsSorted] via the GP-only-frontier
+/// composite; constant-time on all other arms (short-circuited by the
+/// sole-GP and quota guards above the band table).
+String? unwinnableSoleGpFrontierPeaceTarget({
+  required Game game,
+  required AIWorldSnapshot snapshot,
+}) {
+  final enemy = soleAtWarGreatPowerId(game: game, snapshot: snapshot);
+  if (enemy == null) {
+    return null;
+  }
+  if (!isBelowObserverConquestQuota(snapshot.conquest.oldWorldProvincesOwned)) {
+    return null;
+  }
+  if (!canPivotFromSoleGpWarAfterPeace(game: game, snapshot: snapshot)) {
+    return null;
+  }
+  final own = snapshot.conquest.oldWorldProvincesOwned;
+  final enemyOw = provinceCountOwnedBy(game, enemy);
+  final minDeficit = own <= kObserverDefaultStartOldWorldProvincesPerGp
+      ? 1
+      : own >= kObserverConquestMinOwProvincesPerGp - 2 &&
+            !isOldWorldGpOnlyInvadableFrontier(game: game, snapshot: snapshot)
+      ? 1
+      : kUnwinnableSoleGpMinProvinceDeficit;
+  if (enemyOw < own + minDeficit) {
+    return null;
+  }
+  return enemy;
+}
+
+/// Returns the lone Great Power foe's `factionId` when a quota-met
+/// EXPAND/COLONIAL player should peace it to lock in observer gains,
+/// or `null` when the consolidate-gains shortcut does not apply.
+///
+/// Canonical home (Refs #2509 S1) for the legacy
+/// `consolidateGainsSoleGpPeaceTarget` peace decider previously hosted
+/// in `colonial_pressure.dart`. The decider is the quota-met companion
+/// of [unwinnableSoleGpFrontierPeaceTarget]: once the active player has
+/// secured a comfortable OW buffer above the observer quota and leads
+/// the lone GP enemy by at least
+/// [kConsolidateGainsSoleGpProvinceLead] OW provinces, peacing locks
+/// the conquest gains in before a counter-offensive can erase them
+/// (`SPEC/ai/ai-architecture.md` § Diplomacy targeting —
+/// "when this GP holds at least
+/// `kObserverConquestConsolidateMinOwProvinces` and leads the sole
+/// enemy by `kConsolidateGainsSoleGpProvinceLead` or more (lock
+/// observer gains before a counter-offensive)").
+///
+/// Returns `null` for any of the following short-circuits (in order):
+///   1. [soleAtWarGreatPowerId] returns `null` — no sole GP foe (zero
+///      or two-plus GP wars). The consolidate shortcut is sole-GP-only
+///      so a multi-front context defers to the standard collectors.
+///   2. [ConquestSummary.oldWorldProvincesOwned] is strictly below
+///      [kObserverConquestConsolidateMinOwProvinces] — the active
+///      player has not yet built the OW buffer SPEC requires before
+///      locking in via peace (otherwise a marginal lead could be
+///      reversed before the consolidate decision pays off).
+///   3. The OW lead `own - enemyOw` is strictly below
+///      [kConsolidateGainsSoleGpProvinceLead] — the consolidate
+///      shortcut requires a clear lead, not just any positive gap.
+///
+/// When all three gates pass, returns the [soleAtWarGreatPowerId]
+/// result (the sole GP foe).
+///
+/// `colonial_pressure.dart` retains a thin delegating stub for legacy
+/// callers (the
+/// `colonial_pressure_consolidate_gains_sole_gp_peace_branches_test.dart`
+/// fixture and the
+/// `diplomatic_candidate_scoring_offer_peace.dart` consumer chain) so
+/// the planned S1 deletion of that file leaves no orphan callers.
+///
+/// Pure and deterministic — identical inputs always yield identical
+/// results (Refs #2509 Must-have #7). Linear in the total province
+/// count via [provinceCountOwnedBy] for the enemy lookup; otherwise
+/// constant-time.
+String? consolidateGainsSoleGpPeaceTarget({
+  required Game game,
+  required AIWorldSnapshot snapshot,
+}) {
+  final enemy = soleAtWarGreatPowerId(game: game, snapshot: snapshot);
+  if (enemy == null) {
+    return null;
+  }
+  final own = snapshot.conquest.oldWorldProvincesOwned;
+  if (own < kObserverConquestConsolidateMinOwProvinces) {
+    return null;
+  }
+  final enemyOw = provinceCountOwnedBy(game, enemy);
+  if (own < enemyOw + kConsolidateGainsSoleGpProvinceLead) {
+    return null;
+  }
+  return enemy;
+}
+
 /// Whether [ownOw] and [partnerOw] are both in the stalled below-quota
 /// plateau band with similar holdings (within one province of each other).
 ///
