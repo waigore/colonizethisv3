@@ -906,3 +906,144 @@ List<WidgetbookNode> get gameStartIntroOverlayDirectories => [
     ],
   ),
 ];
+
+Game _overtureStoryGame() {
+  return const Game(
+    id: 'wb_overture',
+    worldState: WorldState(
+      turnState: TurnState(phase: TurnPhase.orders, turnNumber: 4),
+      oldWorld: RegionData(),
+      newWorld: RegionData(),
+    ),
+    players: [
+      Player(id: 'gp_spain', displayName: 'Spain', isHuman: false, treasury: 0),
+      Player(
+        id: 'gp_portugal',
+        displayName: 'Portugal',
+        isHuman: false,
+        treasury: 0,
+      ),
+      Player(
+        id: 'gp_player',
+        displayName: 'Player',
+        isHuman: true,
+        treasury: 0,
+      ),
+    ],
+  );
+}
+
+/// Overture Dialogue Overlay stories. SPEC/ui/overture-dialogue-overlay.md.
+List<WidgetbookNode> get overtureDialogueOverlayDirectories => [
+  WidgetbookFolder(
+    name: 'Overture Dialogue Overlay',
+    children: [
+      WidgetbookUseCase(
+        name: 'Default — two pending overtures',
+        builder: (context) => MaterialApp(
+          theme: AppThemes.colonial,
+          localizationsDelegates: AppLocalizationsBinding.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: Scaffold(
+            body: OvertureDialogueOverlay(
+              game: _overtureStoryGame(),
+              pendingOvertures: const [
+                OvertureOffer(
+                  offererGpId: 'gp_spain',
+                  targetFactionId: 'gp_player',
+                  stage: OvertureStage.tradeConsulate,
+                ),
+                OvertureOffer(
+                  offererGpId: 'gp_portugal',
+                  targetFactionId: 'gp_player',
+                  stage: OvertureStage.embassy,
+                ),
+              ],
+              skipIntroForTest: true,
+              onDecisions: (_) {},
+              child: Center(
+                child: Text(appL10n(context).widgetbook_gameShell),
+              ),
+            ),
+          ),
+        ),
+      ),
+    ],
+  ),
+];
+
+Game _callToArmsStoryGame() {
+  return const Game(
+    id: 'wb_cta',
+    worldState: WorldState(
+      turnState: TurnState(phase: TurnPhase.orders, turnNumber: 5),
+      oldWorld: RegionData(),
+      newWorld: RegionData(),
+    ),
+    players: [
+      Player(id: 'gp_spain', displayName: 'Spain', isHuman: false, treasury: 0),
+      Player(
+        id: 'gp_portugal',
+        displayName: 'Portugal',
+        isHuman: false,
+        treasury: 0,
+      ),
+      Player(
+        id: 'gp_france',
+        displayName: 'France',
+        isHuman: false,
+        treasury: 0,
+      ),
+      Player(
+        id: 'gp_england',
+        displayName: 'England',
+        isHuman: false,
+        treasury: 0,
+      ),
+      Player(
+        id: 'gp_player',
+        displayName: 'Player',
+        isHuman: true,
+        treasury: 0,
+      ),
+    ],
+  );
+}
+
+/// Call to Arms Dialogue Overlay stories. SPEC/ui/call-to-arms-dialogue-overlay.md.
+List<WidgetbookNode> get callToArmsDialogueOverlayDirectories => [
+  WidgetbookFolder(
+    name: 'Call to Arms Dialogue Overlay',
+    children: [
+      WidgetbookUseCase(
+        name: 'Default — two pending calls',
+        builder: (context) => MaterialApp(
+          theme: AppThemes.colonial,
+          localizationsDelegates: AppLocalizationsBinding.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: Scaffold(
+            body: CallToArmsDialogueOverlay(
+              game: _callToArmsStoryGame(),
+              pending: const [
+                CallToArmsPending(
+                  allyGpId: 'gp_player',
+                  defenderGpId: 'gp_portugal',
+                  aggressorGpId: 'gp_spain',
+                ),
+                CallToArmsPending(
+                  allyGpId: 'gp_player',
+                  defenderGpId: 'gp_france',
+                  aggressorGpId: 'gp_england',
+                ),
+              ],
+              onDecisions: (_) {},
+              child: Center(
+                child: Text(appL10n(context).widgetbook_gameShell),
+              ),
+            ),
+          ),
+        ),
+      ),
+    ],
+  ),
+];
