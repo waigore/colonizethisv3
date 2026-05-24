@@ -3,7 +3,6 @@ import 'dart:math' as math;
 import 'package:colonizethis_logic/order_suggestion_api.dart';
 
 import 'army_conquest_prep.dart';
-import 'colonial_pressure.dart';
 import 'phase_planner_conquest_filter.dart';
 import 'phase_planner_dispatch.dart';
 import 'phase_planner_economy_filter.dart';
@@ -398,19 +397,28 @@ Orders _appendEconomyBuildOrders({
       snapshot.conquest.invadableProvinceIdsSorted.isNotEmpty;
   final brokeBelowQuotaAtPeace =
       observerQuotaPressure && regimentCount == 0 && !atWarWithAnyGreatPower;
+  // Refs #2509 S5: derive the two `isBelowQuotaPeace*` rebuild-trap
+  // signals from the dispatched phase plan instead of re-importing the
+  // legacy `colonial_pressure.dart` helpers. The new resolvers fold the
+  // prior `expandQuotaPressure &&` prefix into the phase gate (both
+  // routes resolve to `phase ∈ {EXPAND, COLONIAL-lite}` and are
+  // field-equal to `isBelowObserverConquestQuota(ow)` via
+  // `observerGoalPhaseFor`) and evaluate the remaining per-turn arms
+  // directly, so the orchestrator's last two direct call sites into
+  // `colonial_pressure.dart` are gone from this file (the import is
+  // removed too — see `SPEC/ai/phase-planner-dispatch.md` §
+  // Orchestrator economy build rebuild-trap slice).
   final belowQuotaPeaceInsufficientRegiments =
-      expandQuotaPressure &&
-      isBelowQuotaPeaceInsufficientRegiments(
-        oldWorldProvincesOwned: snapshot.conquest.oldWorldProvincesOwned,
+      resolvePhaseEconomyExpandBelowQuotaPeaceInsufficientRegimentsActive(
+        phasePlan: phasePlan,
         regimentCount: regimentCount,
         atWarWithAnyGreatPower: atWarWithAnyGreatPower,
         hasInvadableProvinces:
             snapshot.conquest.invadableProvinceIdsSorted.isNotEmpty,
       );
   final belowQuotaZeroRegimentsRebuild =
-      expandQuotaPressure &&
-      isBelowQuotaPeaceZeroRegimentsRebuild(
-        oldWorldProvincesOwned: snapshot.conquest.oldWorldProvincesOwned,
+      resolvePhaseEconomyExpandBelowQuotaPeaceZeroRegimentsRebuildActive(
+        phasePlan: phasePlan,
         regimentCount: regimentCount,
         hasInvadableProvinces:
             snapshot.conquest.invadableProvinceIdsSorted.isNotEmpty,
