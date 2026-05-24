@@ -133,3 +133,174 @@ List<WidgetbookNode> get gameSideMenuDirectories => [
     ],
   ),
 ];
+
+/// Hosts [GameMapNarrowDetailOverlaySlot] with the map panel provider opened on a
+/// sample tile. SPEC/ui/game-map-narrow-detail-overlay-slot.md.
+class _GameMapNarrowDetailOverlaySlotStoryHost extends ConsumerStatefulWidget {
+  const _GameMapNarrowDetailOverlaySlotStoryHost();
+
+  @override
+  ConsumerState<_GameMapNarrowDetailOverlaySlotStoryHost> createState() =>
+      _GameMapNarrowDetailOverlaySlotStoryHostState();
+}
+
+class _GameMapNarrowDetailOverlaySlotStoryHostState
+    extends ConsumerState<_GameMapNarrowDetailOverlaySlotStoryHost> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref
+          .read(mapProvincePanelProvider.notifier)
+          .reportMapTileTapped(sampleTileKeyForProvinceOverlay);
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final game = demoGameForOverlay;
+    final region = demoRegionForOverlay;
+    return MaterialApp(
+      theme: AppThemes.colonial,
+      localizationsDelegates: AppLocalizationsBinding.localizationsDelegates,
+      supportedLocales: AppLocalizations.supportedLocales,
+      home: MediaQuery(
+        data: const MediaQueryData(size: Size(400, 600)),
+        child: Scaffold(
+          body: Stack(
+            children: [
+              Positioned.fill(child: Container(color: Colors.black12)),
+              Align(
+                alignment: Alignment.bottomCenter,
+                child: GameMapNarrowDetailOverlaySlot(
+                  game: game,
+                  region: region,
+                  humanPlayerId: game.players.first.id,
+                  playerView: demoHumanPlayerViewForOverlay,
+                  workTargetSelectionCache:
+                      PerPlayerWorkTargetSelectionCache(),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+ProviderScope _gameMapNarrowDetailOverlaySlotProviderScope() {
+  return ProviderScope(
+    child: const _GameMapNarrowDetailOverlaySlotStoryHost(),
+  );
+}
+
+/// Game map narrow detail overlay slot stories.
+List<WidgetbookNode> get gameMapNarrowDetailOverlaySlotDirectories => [
+  WidgetbookFolder(
+    name: 'Game Map Narrow Detail Overlay Slot',
+    children: [
+      WidgetbookUseCase(
+        name: 'Default — province open',
+        builder: (context) => _gameMapNarrowDetailOverlaySlotProviderScope(),
+      ),
+    ],
+  ),
+];
+
+Game _diplomacyDetailStoryGame() {
+  const humanId = 'gp_human';
+  const rivalId = 'gp_rival';
+  return Game(
+    id: 'wb_diplomacy_detail',
+    worldState: WorldState(
+      turnState: TurnState(phase: TurnPhase.orders, turnNumber: 3),
+      oldWorld: const RegionData(),
+      newWorld: const RegionData(),
+    ),
+    turnTimeMapping: TurnTimeMapping.gdd01,
+    players: [
+      Player(
+        id: humanId,
+        displayName: 'England',
+        isHuman: true,
+        treasury: 0,
+      ),
+      Player(
+        id: rivalId,
+        displayName: 'Spain',
+        isHuman: false,
+        treasury: 0,
+      ),
+    ],
+    diplomacyRelations: [
+      DiplomacyRelation(
+        factionId1: humanId,
+        factionId2: rivalId,
+        score: 70,
+        state: RelationState.atPeace,
+      ),
+    ],
+    diplomaticHistoryEvents: [
+      DiplomaticEvent(
+        turn: 2,
+        intraTurnIndex: 0,
+        type: DiplomaticEventType.overtureAccepted,
+        participants: {humanId, rivalId},
+        fromFactionId: humanId,
+        toFactionId: rivalId,
+        overtureStage: OvertureStage.embassy,
+      ),
+    ],
+    dossierEvidenceEntries: [
+      DossierEvidenceEntry(
+        observerId: humanId,
+        subjectId: rivalId,
+        agendaType: 'trade_focus',
+        turnNumber: 2,
+        description: 'Favoured trade over military buildup.',
+      ),
+    ],
+  );
+}
+
+ProviderScope _diplomacyDetailScreenProviderScope() {
+  const humanId = 'gp_human';
+  const rivalId = 'gp_rival';
+  final game = _diplomacyDetailStoryGame();
+  return ProviderScope(
+    overrides: [
+      appEventBusProvider.overrideWith((ref) {
+        final bus = AppEventBus.create();
+        ref.onDispose(bus.dispose);
+        return bus;
+      }),
+    ],
+    child: MaterialApp(
+      theme: AppThemes.colonial,
+      localizationsDelegates: AppLocalizationsBinding.localizationsDelegates,
+      supportedLocales: AppLocalizations.supportedLocales,
+      home: DiplomacyDetailScreen(
+        game: game,
+        humanPlayerId: humanId,
+        factionId: rivalId,
+        factionDisplayName: 'Spain',
+        kind: FactionKind.greatPower,
+        relation: game.diplomacyRelations.first,
+      ),
+    ),
+  );
+}
+
+/// Diplomacy detail screen stories. SPEC/ui/diplomacy-detail-screen.md.
+List<WidgetbookNode> get diplomacyDetailScreenDirectories => [
+  WidgetbookFolder(
+    name: 'Diplomacy Detail Screen',
+    children: [
+      WidgetbookUseCase(
+        name: 'Default — GP with history and dossier',
+        builder: (context) => _diplomacyDetailScreenProviderScope(),
+      ),
+    ],
+  ),
+];

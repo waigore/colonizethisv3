@@ -13,6 +13,7 @@ import 'package:widgetbook/widgetbook.dart';
 import '../config/themes.dart';
 import '../providers/app_event_bus_provider.dart';
 import '../providers/games_provider.dart';
+import '../providers/map_province_panel_provider.dart';
 import '../providers/map_view_provider.dart';
 import '../features/game/combat/combat_mode_choice_dialog.dart';
 import '../features/game/combat/quick_battle_action_selector.dart';
@@ -29,7 +30,9 @@ import '../features/game/widgets/production_panel_demo_data.dart';
 import '../features/game/widgets/province_sea_zone_detail_overlay.dart';
 import '../features/game/widgets/province_overlay_demo_data.dart';
 import '../features/game/widgets/tech_tree_widget.dart';
+import '../features/game/screens/diplomacy_detail_screen.dart';
 import '../features/game/screens/technology_screen.dart';
+import '../features/game/flame/game_map_narrow_detail_overlay.dart';
 import '../features/game/dialogue/intervention_dialogue_overlay.dart';
 import '../features/game/flame/game_screen.dart';
 import '../features/game/flame/game_side_menu.dart';
@@ -126,6 +129,8 @@ class CtWidgetbookApp extends StatelessWidget {
         ...gameScreenDirectories,
         ...pauseMenuPanelDirectories,
         ...gameSideMenuDirectories,
+        ...gameMapNarrowDetailOverlaySlotDirectories,
+        ...diplomacyDetailScreenDirectories,
       ],
       lightTheme: AppThemes.colonial,
       darkTheme: AppThemes.colonial,
