@@ -3,7 +3,6 @@ import 'package:colonizethis_app/config/ct_e2e.dart';
 import 'package:colonizethis_app/config/ct_e2e_last_panel_snapshot.dart';
 import 'package:colonizethis_app/features/game/flame/game_screen_shared.dart';
 import 'e2e_helpers.dart';
-import 'package:colonizethis_app/l10n/l10n.dart';
 import 'package:colonizethis_app/main.dart' show bootstrapForIntegrationTest;
 import 'package:colonizethis_app/test_support/civilian_units_panel_e2e_expected_lines.dart';
 import 'package:colonizethis_app/test_support/naval_units_panel_e2e_expected_lines.dart';
@@ -21,43 +20,24 @@ void main() {
   testWidgets(
     'new game → full human turn: civilians, naval split/move, production',
     (WidgetTester tester) async {
-      const testName = 'new_game_full_turn';
-      final perf = E2ePerfLog(testName);
-      final testSw = Stopwatch()..start();
-      expect(
-        kCtE2EEnabled,
-        isTrue,
-        reason:
-            'Run with: flutter test integration_test/... --dart-define=CT_E2E=true',
+      // Standard E2E scenario opener (kCtE2EEnabled gate, surface size,
+      // bootstrap, asset preload, new-game-to-map, l10n) lifted into
+      // [enterStandardE2eScenario] so the full-turn and capital-panel
+      // scenarios share one canonical entry sequence and the widget-test
+      // pin at `app/test/e2e_enter_standard_e2e_scenario_test.dart`
+      // guards the constants / signature contract. The lifted helper
+      // emits the `asset_preload` timing slice (full-turn parity) by
+      // default; passing `assetPreloadTimingPhase: null` would suppress
+      // it. Refs GitHub #2336 AC1 / AC2 / Bottleneck 6.
+      final opener = await enterStandardE2eScenario(
+        tester,
+        testName: 'new_game_full_turn',
+        bootstrapForIntegrationTest: bootstrapForIntegrationTest,
       );
-
-      // 5-minute PR wall-clock cap per scenario path per
-      // `SPEC/program/e2e-integration-tests.md` § Determinism PR runtime rule
-      // (`colonizethis-e2e-ui-stability.mdc`). Mirrors the fleet E2E pattern;
-      // Refs GitHub #2336.
-      final ensureUnderWallClock = e2eMakeWallClockGuard(
-        testName: testName,
-        stopwatch: testSw,
-      );
-
-      await tester.binding.setSurfaceSize(const Size(1280, 720));
-      final bootstrapSw = Stopwatch()..start();
-      await bootstrapForIntegrationTest();
-      await tester.pump();
-      await e2eWaitForNewGameEntry(tester, perf: perf);
-      perf.timing('bootstrap_for_integration_test', bootstrapSw.elapsed);
-      ensureUnderWallClock('after bootstrap_for_integration_test');
-      final preloadSw = Stopwatch()..start();
-      await ensureAllRelocated64pxPngsLoadSuiteOnce();
-      perf.timing('asset_preload', preloadSw.elapsed);
-      ensureUnderWallClock('after asset_preload');
-
-      final newGameSw = Stopwatch()..start();
-      await bootstrapNewGameToMap(tester, perf: perf);
-      perf.timing('new_game_to_map', newGameSw.elapsed);
-      ensureUnderWallClock('after new_game_to_map');
-
-      final l10n = lookupAppLocalizations(const Locale('en'));
+      final perf = opener.perf;
+      final testSw = opener.testSw;
+      final l10n = opener.l10n;
+      final ensureUnderWallClock = opener.ensureUnderWallClock;
 
       Future<void> expectCivilianPanelTexts() async {
         await expectPanelTextsMatchSnapshot(

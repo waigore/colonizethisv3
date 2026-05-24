@@ -3,10 +3,8 @@ import 'package:colonizethis_app/config/ct_e2e.dart';
 import 'package:colonizethis_app/config/ct_e2e_last_panel_snapshot.dart';
 import 'package:colonizethis_app/features/game/flame/game_screen_shared.dart';
 import 'e2e_helpers.dart';
-import 'package:colonizethis_app/l10n/l10n.dart';
 import 'package:colonizethis_app/main.dart' show bootstrapForIntegrationTest;
 import 'package:colonizethis_app/test_support/province_panel_e2e_expected_lines.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
 
@@ -17,39 +15,24 @@ void main() {
   testWidgets('new game → capital province panel matches model (wide layout)', (
     WidgetTester tester,
   ) async {
-    const testName = 'new_game_capital_panel';
-    final perf = E2ePerfLog(testName);
-    final testSw = Stopwatch()..start();
-    expect(
-      kCtE2EEnabled,
-      isTrue,
-      reason:
-          'Run with: flutter test integration_test/... --dart-define=CT_E2E=true',
+    // Standard E2E scenario opener (kCtE2EEnabled gate, surface size,
+    // bootstrap, asset preload, new-game-to-map, l10n) lifted into
+    // [enterStandardE2eScenario] so the full-turn and capital-panel
+    // scenarios share one canonical entry sequence. The legacy
+    // capital-panel inline opener did not time the asset-preload slice;
+    // passing `assetPreloadTimingPhase: null` preserves byte-identical
+    // emitted-log behaviour across the lift (no new `asset_preload`
+    // `E2E_TIMING` line). Refs GitHub #2336 AC1 / AC2 / Bottleneck 6.
+    final opener = await enterStandardE2eScenario(
+      tester,
+      testName: 'new_game_capital_panel',
+      bootstrapForIntegrationTest: bootstrapForIntegrationTest,
+      assetPreloadTimingPhase: null,
     );
-
-    // 5-minute PR wall-clock cap per scenario path per
-    // `SPEC/program/e2e-integration-tests.md` § Determinism PR runtime rule
-    // (`colonizethis-e2e-ui-stability.mdc`). Mirrors the fleet E2E pattern;
-    // Refs GitHub #2336.
-    final ensureUnderWallClock = e2eMakeWallClockGuard(
-      testName: testName,
-      stopwatch: testSw,
-    );
-
-    await tester.binding.setSurfaceSize(const Size(1280, 720));
-    final bootstrapSw = Stopwatch()..start();
-    await bootstrapForIntegrationTest();
-    await tester.pump();
-    await e2eWaitForNewGameEntry(tester, perf: perf);
-    perf.timing('bootstrap_for_integration_test', bootstrapSw.elapsed);
-    ensureUnderWallClock('after bootstrap_for_integration_test');
-    await ensureAllRelocated64pxPngsLoadSuiteOnce();
-    ensureUnderWallClock('after asset_preload');
-
-    final newGameToMapSw = Stopwatch()..start();
-    await bootstrapNewGameToMap(tester, perf: perf);
-    perf.timing('new_game_to_map', newGameToMapSw.elapsed);
-    ensureUnderWallClock('after new_game_to_map');
+    final perf = opener.perf;
+    final testSw = opener.testSw;
+    final l10n = opener.l10n;
+    final ensureUnderWallClock = opener.ensureUnderWallClock;
 
     await tester.tap(find.byKey(kHomeToCapitalButtonKey));
     await waitUntilFound(
@@ -63,7 +46,6 @@ void main() {
     expect(find.byKey(kCtE2EOpenCapitalProvinceDetailKey), findsOneWidget);
     await tester.tap(find.byKey(kCtE2EOpenCapitalProvinceDetailKey));
 
-    final l10n = lookupAppLocalizations(const Locale('en'));
     await expectPanelTextsMatchSnapshot(
       tester,
       panelRootKey: kCtE2EProvincePanelRootKey,
