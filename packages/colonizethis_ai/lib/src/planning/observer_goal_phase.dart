@@ -34,6 +34,15 @@ bool globalNewWorldHasNonGpOwnership(Game game) {
   return false;
 }
 
+/// Sea-reachable unowned NW provinces or tribe/minor owners still to clear.
+///
+/// EXPAND -> COLONIAL phase transition guard for `observerGoalPhaseFor`.
+/// Relocated from `colonial_pressure.dart` (Refs #2509 S1) so the guard
+/// survives the planned deletion of `colonial_pressure.dart`.
+bool hasColonialAcquisitionTargets(ColonialSummary colonial) =>
+    colonial.invadableNewWorldProvinceIdsSorted.isNotEmpty ||
+    colonial.adjacentNewWorldOwnerFactionIdsSorted.isNotEmpty;
+
 /// COLONIAL-lite: turn ≥120, OW ≥9 and below quota, global NW not fully GP-owned.
 bool isObserverColonialLitePhase({
   required Game game,

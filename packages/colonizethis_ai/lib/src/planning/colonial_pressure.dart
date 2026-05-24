@@ -366,15 +366,20 @@ String? primaryInvadableOldWorldGpBlocker({
   return bestGpId;
 }
 
-/// Sea-reachable unowned NW provinces or tribe/minor owners still to clear.
-bool hasColonialAcquisitionTargets(ColonialSummary colonial) =>
-    colonial.invadableNewWorldProvinceIdsSorted.isNotEmpty ||
-    colonial.adjacentNewWorldOwnerFactionIdsSorted.isNotEmpty;
+// `hasColonialAcquisitionTargets` was relocated to `observer_goal_phase.dart`
+// (Refs #2509 S1). It is the EXPAND -> COLONIAL phase transition guard for
+// `observerGoalPhaseFor` and must survive the planned deletion of this
+// file. The two internal callers below (`isEarlyColonialExpansion` and
+// `colonialBuildOrderThresholdCap`) inline the predicate body so this
+// file does not import `observer_goal_phase.dart` (which would create a
+// circular library reference). See also: `phase-planner-architecture.md`
+// § Phase transition guards.
 
 /// Early expansion boost while the GP holds fewer than
 /// [kColonialFewNwProvincesThreshold] NW provinces.
 bool isEarlyColonialExpansion(ColonialSummary colonial) =>
-    hasColonialAcquisitionTargets(colonial) &&
+    (colonial.invadableNewWorldProvinceIdsSorted.isNotEmpty ||
+            colonial.adjacentNewWorldOwnerFactionIdsSorted.isNotEmpty) &&
     colonial.newWorldProvincesOwned < kColonialFewNwProvincesThreshold;
 
 /// Sole at-war Great Power, if any.
@@ -664,8 +669,13 @@ String? consolidateGainsSoleGpPeaceTarget({
 
 /// When non-null, build-order pass uses `min(buildThreshold, value)`.
 int? colonialBuildOrderThresholdCap(ColonialSummary colonial) {
-  if (hasColonialAcquisitionTargets(colonial) &&
-      colonial.newWorldProvincesOwned > 0) {
+  // `hasColonialAcquisitionTargets` body is inlined here (Refs #2509 S1)
+  // because the canonical home is now `observer_goal_phase.dart` and this
+  // file does not import that library (would create a circular reference).
+  final hasAcquisitionTargets =
+      colonial.invadableNewWorldProvinceIdsSorted.isNotEmpty ||
+          colonial.adjacentNewWorldOwnerFactionIdsSorted.isNotEmpty;
+  if (hasAcquisitionTargets && colonial.newWorldProvincesOwned > 0) {
     return kColonialBuildOrderThresholdWhenOwnedNwUnderPressure;
   }
   if (colonial.newWorldProvincesOwned > 0) {
