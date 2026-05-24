@@ -59,6 +59,7 @@ import '../widgets/ct_transfer_list.dart';
 part 'catalog_part1.dart';
 part 'catalog_part2.dart';
 part 'catalog_part3.dart';
+part 'catalog_part4.dart';
 
 Unit? _unitByIdForCatalog(Game game, String unitId) {
   for (final u in game.worldState.oldWorld.units) {
