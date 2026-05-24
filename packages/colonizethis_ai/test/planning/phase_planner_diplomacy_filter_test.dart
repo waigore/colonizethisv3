@@ -27,9 +27,29 @@
 // § COLONIAL-lite scope summary "Suppressed: NW declareWar, NW invasion army
 // moves, purchase_land in NW". A negative-control test pins COLONIAL-lite at
 // `isFalse` even when every COLONIAL slot in `PhasePlanOutcome` is populated.
+//
+// This file also pins the three sibling phase-suppression resolvers added by
+// the declare-war scoring phase-suppression slice:
+//
+//   - `resolvePhaseDiplomacyDeclareWarDevelopSuppressionActive` — DEVELOP-only.
+//   - `resolvePhaseDiplomacyDeclareWarColonialLiteSuppressionActive` —
+//     COLONIAL-lite-only.
+//   - `resolvePhaseDiplomacyDeclareWarExpandColonialSuppressionActive` —
+//     EXPAND-only.
+//
+// The three resolvers form a *partition* matrix: exactly one returns `true`
+// for any given `outcome.phase`, and all three return `false` under COLONIAL
+// (declare-war candidates score normally under COLONIAL — the
+// `colonialPressure && ownsInvadableNw` exception in
+// `_declareWarSuppressedWarConcentrationScore` handles tribe-target
+// preservation there). The partition pin guards against a regression that
+// allows two resolvers to return `true` simultaneously, which would fold
+// suppression branches into each other and either over- or under-collapse
+// candidates.
 
 import 'package:colonizethis_ai/colonizethis_ai.dart';
 import 'package:colonizethis_ai/src/planning/colonial_phase_planner.dart';
+import 'package:colonizethis_ai/src/planning/expand_phase_planner.dart';
 import 'package:colonizethis_ai/src/planning/phase_planner_conquest_filter.dart';
 import 'package:colonizethis_ai/src/planning/phase_planner_diplomacy_filter.dart';
 import 'package:colonizethis_ai/src/planning/phase_planner_economy_filter.dart';
@@ -61,6 +81,20 @@ const List<WorkOrder> _colonialCivilianPopulated = <WorkOrder>[
     unitId: 'm1',
     target: 'purchase_land',
     targetTileKey: 'newWorld|tribe1_a|0|0',
+  ),
+];
+
+// Mirrors the COLONIAL "structural exclusion" guard above for the
+// DEVELOP-side population pin used by
+// `resolvePhaseDiplomacyDeclareWarDevelopSuppressionActive` tests. Hoisted
+// to a top-level const so the WorkOrder string literal lives in a field
+// declaration rather than an executable literal context (Refs
+// `tool/check_work_target_constants.dart` `_isExecutableLiteral`).
+const List<WorkOrder> _developCivilianPopulated = <WorkOrder>[
+  WorkOrder(
+    unitId: 'b1',
+    target: 'build_improvement',
+    targetTileKey: 'oldWorld|gp1_a|0|0',
   ),
 ];
 
@@ -199,5 +233,355 @@ void main() {
         );
       }
     });
+  });
+
+  group('resolvePhaseDiplomacyDeclareWarDevelopSuppressionActive', () {
+    test('active only under DEVELOP', () {
+      expect(
+        resolvePhaseDiplomacyDeclareWarDevelopSuppressionActive(
+          phasePlan: const PhasePlanOutcome(phase: ObserverGoalPhase.develop),
+        ),
+        isTrue,
+        reason:
+            'DEVELOP suppresses every declare-war candidate via '
+            '_declareWarSuppressedDevelopPhaseScore (issue #2509 § DEVELOP '
+            'suppressions "No `declareWar` on anyone").',
+      );
+    });
+
+    test('suppressed under EXPAND, COLONIAL-lite, and COLONIAL', () {
+      for (final phase in <ObserverGoalPhase>[
+        ObserverGoalPhase.expand,
+        ObserverGoalPhase.colonialLite,
+        ObserverGoalPhase.colonial,
+      ]) {
+        expect(
+          resolvePhaseDiplomacyDeclareWarDevelopSuppressionActive(
+            phasePlan: PhasePlanOutcome(phase: phase),
+          ),
+          isFalse,
+          reason:
+              '$phase must not engage DEVELOP-wide declare-war suppression. '
+              'EXPAND / COLONIAL-lite NW collapse via the sibling '
+              'expandColonial / colonialLite resolvers; COLONIAL allows '
+              'declare-war candidates to score normally so the '
+              '`colonialPressure && ownsInvadableNw` exception in '
+              '_declareWarSuppressedWarConcentrationScore can preserve '
+              'tribe-target scoring.',
+        );
+      }
+    });
+
+    test('reads only outcome.phase — populated DEVELOP slots under EXPAND / '
+        'COLONIAL-lite / COLONIAL do not flip the resolver to true', () {
+      const developPeacePopulated = <String>['gp2', 'gp3'];
+      for (final phase in <ObserverGoalPhase>[
+        ObserverGoalPhase.expand,
+        ObserverGoalPhase.colonialLite,
+        ObserverGoalPhase.colonial,
+      ]) {
+        final outcome = PhasePlanOutcome(
+          phase: phase,
+          developPeaceTargetFactionIdsSorted: developPeacePopulated,
+          developCivilianWorkOrders: _developCivilianPopulated,
+        );
+        expect(
+          resolvePhaseDiplomacyDeclareWarDevelopSuppressionActive(
+            phasePlan: outcome,
+          ),
+          isFalse,
+          reason:
+              '$phase: DEVELOP slots populated must not flip the '
+              'resolver — only outcome.phase decides.',
+        );
+      }
+    });
+
+    test('deterministic across repeated calls (Must-have #7)', () {
+      for (final phase in ObserverGoalPhase.values) {
+        final outcome = PhasePlanOutcome(phase: phase);
+        final a = resolvePhaseDiplomacyDeclareWarDevelopSuppressionActive(
+          phasePlan: outcome,
+        );
+        final b = resolvePhaseDiplomacyDeclareWarDevelopSuppressionActive(
+          phasePlan: outcome,
+        );
+        final c = resolvePhaseDiplomacyDeclareWarDevelopSuppressionActive(
+          phasePlan: outcome,
+        );
+        expect(a, b, reason: '$phase: two-call determinism');
+        expect(b, c, reason: '$phase: three-call determinism');
+      }
+    });
+  });
+
+  group('resolvePhaseDiplomacyDeclareWarColonialLiteSuppressionActive', () {
+    test('active only under COLONIAL-lite', () {
+      expect(
+        resolvePhaseDiplomacyDeclareWarColonialLiteSuppressionActive(
+          phasePlan: const PhasePlanOutcome(
+            phase: ObserverGoalPhase.colonialLite,
+          ),
+        ),
+        isTrue,
+        reason:
+            'COLONIAL-lite collapses NW declare-war candidates (tribe / '
+            'NW invadable / colonial-adjacent owners) via '
+            '_declareWarSuppressedColonialLiteScore — issue #2509 § '
+            'COLONIAL-lite scope summary "Suppressed: NW declareWar".',
+      );
+    });
+
+    test('suppressed under EXPAND, COLONIAL, and DEVELOP', () {
+      for (final phase in <ObserverGoalPhase>[
+        ObserverGoalPhase.expand,
+        ObserverGoalPhase.colonial,
+        ObserverGoalPhase.develop,
+      ]) {
+        expect(
+          resolvePhaseDiplomacyDeclareWarColonialLiteSuppressionActive(
+            phasePlan: PhasePlanOutcome(phase: phase),
+          ),
+          isFalse,
+          reason:
+              '$phase must not engage COLONIAL-lite NW-collapse '
+              'suppression. EXPAND collapses NW via the sibling EXPAND '
+              'resolver; COLONIAL allows NW declare-war as the '
+              'SPEC-authorized acquisition route; DEVELOP collapses every '
+              'declare-war candidate via the sibling DEVELOP resolver '
+              'before this branch runs.',
+        );
+      }
+    });
+
+    test('reads only outcome.phase — populated COLONIAL-lite slots under '
+        'EXPAND / COLONIAL / DEVELOP do not flip the resolver to true', () {
+      const colonialLiteOverturesPopulated = <String>['tribe1', 'tribe2'];
+      const colonialLiteNavalPopulated = ColonialLiteNavalPlan(
+        priorityNwProvinceIdsSorted: <String>['newWorld|tribe1_a'],
+        priorityTargetOwnerFactionIdsSorted: <String>['tribe1'],
+      );
+      for (final phase in <ObserverGoalPhase>[
+        ObserverGoalPhase.expand,
+        ObserverGoalPhase.colonial,
+        ObserverGoalPhase.develop,
+      ]) {
+        final outcome = PhasePlanOutcome(
+          phase: phase,
+          colonialLiteOverturesSorted: colonialLiteOverturesPopulated,
+          colonialLiteNavalPlan: colonialLiteNavalPopulated,
+        );
+        expect(
+          resolvePhaseDiplomacyDeclareWarColonialLiteSuppressionActive(
+            phasePlan: outcome,
+          ),
+          isFalse,
+          reason:
+              '$phase: COLONIAL-lite slots populated must not flip the '
+              'resolver — only outcome.phase decides.',
+        );
+      }
+    });
+
+    test('deterministic across repeated calls (Must-have #7)', () {
+      for (final phase in ObserverGoalPhase.values) {
+        final outcome = PhasePlanOutcome(phase: phase);
+        final a = resolvePhaseDiplomacyDeclareWarColonialLiteSuppressionActive(
+          phasePlan: outcome,
+        );
+        final b = resolvePhaseDiplomacyDeclareWarColonialLiteSuppressionActive(
+          phasePlan: outcome,
+        );
+        final c = resolvePhaseDiplomacyDeclareWarColonialLiteSuppressionActive(
+          phasePlan: outcome,
+        );
+        expect(a, b, reason: '$phase: two-call determinism');
+        expect(b, c, reason: '$phase: three-call determinism');
+      }
+    });
+  });
+
+  group('resolvePhaseDiplomacyDeclareWarExpandColonialSuppressionActive', () {
+    test('active only under EXPAND', () {
+      expect(
+        resolvePhaseDiplomacyDeclareWarExpandColonialSuppressionActive(
+          phasePlan: const PhasePlanOutcome(phase: ObserverGoalPhase.expand),
+        ),
+        isTrue,
+        reason:
+            'EXPAND collapses NW declare-war candidates (tribe / NW '
+            'invadable / colonial-adjacent owners) via '
+            '_declareWarSuppressedExpandColonialScore — issue #2509 § '
+            'EXPAND NW suppression "structural suppression — never imports '
+            'or calls colonial modules".',
+      );
+    });
+
+    test('suppressed under COLONIAL-lite, COLONIAL, and DEVELOP', () {
+      for (final phase in <ObserverGoalPhase>[
+        ObserverGoalPhase.colonialLite,
+        ObserverGoalPhase.colonial,
+        ObserverGoalPhase.develop,
+      ]) {
+        expect(
+          resolvePhaseDiplomacyDeclareWarExpandColonialSuppressionActive(
+            phasePlan: PhasePlanOutcome(phase: phase),
+          ),
+          isFalse,
+          reason:
+              '$phase must not engage EXPAND NW-collapse suppression. '
+              'COLONIAL-lite NW collapse runs via the sibling '
+              'colonialLite resolver; COLONIAL allows NW declare-war as '
+              'the SPEC-authorized acquisition route; DEVELOP collapses '
+              'every declare-war candidate via the sibling DEVELOP '
+              'resolver before this branch runs.',
+        );
+      }
+    });
+
+    test('reads only outcome.phase — populated EXPAND slots under '
+        'COLONIAL-lite / COLONIAL / DEVELOP do not flip the resolver to '
+        'true', () {
+      const expandEconomyPopulated = ExpandEconomyPlan(
+        forceCheapestRegimentBuild: true,
+        boostTreasuryRecoveryCargo: true,
+      );
+      const expandMilitaryPopulated = ExpandMilitaryPlan(
+        priorityDestinationProvinceIdsSorted: <String>['oldWorld|gp1_a'],
+        priorityTargetOwnerFactionIdsSorted: <String>['minor1'],
+      );
+      for (final phase in <ObserverGoalPhase>[
+        ObserverGoalPhase.colonialLite,
+        ObserverGoalPhase.colonial,
+        ObserverGoalPhase.develop,
+      ]) {
+        final outcome = PhasePlanOutcome(
+          phase: phase,
+          expandDeclareWarTargetFactionId: 'minor1',
+          expandPeaceTargetFactionIdsSorted: const <String>['gp2'],
+          expandEconomyPlan: expandEconomyPopulated,
+          expandMilitaryPlan: expandMilitaryPopulated,
+        );
+        expect(
+          resolvePhaseDiplomacyDeclareWarExpandColonialSuppressionActive(
+            phasePlan: outcome,
+          ),
+          isFalse,
+          reason:
+              '$phase: EXPAND slots populated must not flip the '
+              'resolver — only outcome.phase decides.',
+        );
+      }
+    });
+
+    test('deterministic across repeated calls (Must-have #7)', () {
+      for (final phase in ObserverGoalPhase.values) {
+        final outcome = PhasePlanOutcome(phase: phase);
+        final a =
+            resolvePhaseDiplomacyDeclareWarExpandColonialSuppressionActive(
+              phasePlan: outcome,
+            );
+        final b =
+            resolvePhaseDiplomacyDeclareWarExpandColonialSuppressionActive(
+              phasePlan: outcome,
+            );
+        final c =
+            resolvePhaseDiplomacyDeclareWarExpandColonialSuppressionActive(
+              phasePlan: outcome,
+            );
+        expect(a, b, reason: '$phase: two-call determinism');
+        expect(b, c, reason: '$phase: three-call determinism');
+      }
+    });
+  });
+
+  group('phase-suppression resolver partition', () {
+    test('exactly one of the three phase-suppression resolvers returns true '
+        'for EXPAND, COLONIAL-lite, and DEVELOP', () {
+      // Partition pin: the three sibling resolvers
+      // (`...DevelopSuppressionActive`,
+      // `...ColonialLiteSuppressionActive`,
+      // `...ExpandColonialSuppressionActive`) divide the four
+      // ObserverGoalPhase values into a strict partition. EXPAND,
+      // COLONIAL-lite, and DEVELOP each activate exactly one resolver;
+      // COLONIAL activates none of the three (declare-war candidates
+      // score normally under COLONIAL — the colonialPressure exception
+      // in _declareWarSuppressedWarConcentrationScore handles
+      // tribe-target preservation there). A regression where two
+      // resolvers fire simultaneously would fold suppression branches
+      // into each other and over-collapse candidates; a regression
+      // where none fires under EXPAND/COLONIAL-lite/DEVELOP would
+      // re-enable scoring branches the SPEC explicitly suppresses.
+      for (final phase in <ObserverGoalPhase>[
+        ObserverGoalPhase.expand,
+        ObserverGoalPhase.colonialLite,
+        ObserverGoalPhase.develop,
+      ]) {
+        final outcome = PhasePlanOutcome(phase: phase);
+        final develop = resolvePhaseDiplomacyDeclareWarDevelopSuppressionActive(
+          phasePlan: outcome,
+        );
+        final colonialLite =
+            resolvePhaseDiplomacyDeclareWarColonialLiteSuppressionActive(
+              phasePlan: outcome,
+            );
+        final expand =
+            resolvePhaseDiplomacyDeclareWarExpandColonialSuppressionActive(
+              phasePlan: outcome,
+            );
+        final activeCount = [
+          develop,
+          colonialLite,
+          expand,
+        ].where((b) => b).length;
+        expect(
+          activeCount,
+          1,
+          reason:
+              '$phase: partition contract requires exactly one of the '
+              'three phase-suppression resolvers to return true '
+              '(develop=$develop, colonialLite=$colonialLite, '
+              'expandColonial=$expand).',
+        );
+      }
+    });
+
+    test(
+      'all three phase-suppression resolvers return false under COLONIAL',
+      () {
+        // COLONIAL declare-war candidates score normally — the
+        // `colonialPressure && ownsInvadableNw` exception in
+        // _declareWarSuppressedWarConcentrationScore handles tribe-target
+        // preservation. A regression where any of the three suppression
+        // resolvers fires under COLONIAL would prematurely collapse
+        // declare-war candidates and break the
+        // `planColonialAcquisition` step 3 "declareWar + invade" path.
+        const outcome = PhasePlanOutcome(phase: ObserverGoalPhase.colonial);
+        expect(
+          resolvePhaseDiplomacyDeclareWarDevelopSuppressionActive(
+            phasePlan: outcome,
+          ),
+          isFalse,
+          reason:
+              'COLONIAL must not activate the DEVELOP suppression resolver.',
+        );
+        expect(
+          resolvePhaseDiplomacyDeclareWarColonialLiteSuppressionActive(
+            phasePlan: outcome,
+          ),
+          isFalse,
+          reason:
+              'COLONIAL must not activate the COLONIAL-lite suppression '
+              'resolver.',
+        );
+        expect(
+          resolvePhaseDiplomacyDeclareWarExpandColonialSuppressionActive(
+            phasePlan: outcome,
+          ),
+          isFalse,
+          reason: 'COLONIAL must not activate the EXPAND suppression resolver.',
+        );
+      },
+    );
   });
 }
