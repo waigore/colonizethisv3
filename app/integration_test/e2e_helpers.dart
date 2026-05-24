@@ -41,12 +41,14 @@ export 'e2e_test_shared.dart'
         e2eHandleBundledExploreFailure,
         e2eHarnessDetectsNonHomeFleetInNewWorld,
         e2eMakeWallClockGuard,
+        e2eMaybePickFirstValidWorkTileAndAwaitOverlayClear,
         e2eNewWorldRegionChipAppearsSelected,
         e2eNonHomeHumanFleetInCoastalNewWorldSeaFromCtSnapshot,
         e2eNavalPanelShowsNonHomeFleetInNewWorld,
         e2eNonHomeHumanFleetInNewWorldFromCtSnapshot,
         e2eNwCoastalProvincesAdjacentToFleetSea,
         e2eOldWorldRegionChipAppearsSelected,
+        e2ePickFirstValidWorkTileAndAwaitOverlayClear,
         e2ePickMoveDestinationAndConfirm,
         e2eTryNavalMoveSegment,
         e2ePlayerHasAnyNewWorldFoggedOrBetterFromCtSnapshot,
@@ -55,6 +57,8 @@ export 'e2e_test_shared.dart'
         kE2eDefaultBundledExploreRetryIterationCounter,
         kE2eDefaultBundledExploreRetryLoopPhase,
         kE2eDefaultBundledExploreSweepWait,
+        kE2eDefaultCivilianWorkTileAppearTimeout,
+        kE2eDefaultCivilianWorkTileClearTimeout,
         kE2eDefaultCtDialogShellCloseTimeout,
         kE2eDefaultCtDialogShellClosePhase,
         kE2eDefaultExpectPanelTextsPhase,
@@ -362,8 +366,7 @@ Future<bool> awaitExploreEnabledFromCivilianPanel(
   E2ePerfLog? perf,
   Duration maxUiResponseWait = kE2eDefaultBundledExploreSweepWait,
   int maxBoundedTurnRetries = kE2eDefaultBundledExploreMaxTurnRetries,
-  String retryIterationCounter =
-      kE2eDefaultBundledExploreRetryIterationCounter,
+  String retryIterationCounter = kE2eDefaultBundledExploreRetryIterationCounter,
 }) => e2eAwaitExploreEnabledFromCivilianPanel(
   tester,
   l10n,
@@ -401,8 +404,7 @@ Future<E2eFleetReachScenarioPreamble> enterFleetReachScenarioReady(
   String bootstrapTimingPhase =
       kE2eDefaultFleetReachPreambleBootstrapTimingPhase,
   String afterBootstrapStep = kE2eDefaultFleetReachPreambleAfterBootstrapStep,
-  String afterSplitFleetStep =
-      kE2eDefaultFleetReachPreambleAfterSplitFleetStep,
+  String afterSplitFleetStep = kE2eDefaultFleetReachPreambleAfterSplitFleetStep,
 }) => e2eEnterFleetReachScenarioReady(
   tester,
   testName: testName,
@@ -493,6 +495,51 @@ Future<E2eFinalNavalReachCheckResult> ensureNonHomeFleetInNwAfterLoop(
   perf: perf,
   failureMessageBuilder: failureMessageBuilder,
   maxUiResponseWait: maxUiResponseWait,
+);
+
+/// Stable public name for [e2ePickFirstValidWorkTileAndAwaitOverlayClear]
+/// so the full-turn scenario consumes the AC1 barrel only (Refs GitHub
+/// #2336 AC1 / AC2 / Bottleneck 6). Forwards to the implementation in
+/// `e2e_test_shared_civilian_work_tile_pick.dart`.
+Future<void> pickFirstValidWorkTileAndAwaitOverlayClear(
+  WidgetTester tester, {
+  required String appearPhase,
+  required String clearPhase,
+  Duration appearTimeout = kE2eDefaultCivilianWorkTileAppearTimeout,
+  Duration clearTimeout = kE2eDefaultCivilianWorkTileClearTimeout,
+  E2ePerfLog? perf,
+}) => e2ePickFirstValidWorkTileAndAwaitOverlayClear(
+  tester,
+  appearPhase: appearPhase,
+  clearPhase: clearPhase,
+  appearTimeout: appearTimeout,
+  clearTimeout: clearTimeout,
+  perf: perf,
+);
+
+/// Stable public name for
+/// [e2eMaybePickFirstValidWorkTileAndAwaitOverlayClear] so the full-turn
+/// scenario consumes the AC1 barrel only (Refs GitHub #2336 AC1 / AC2 /
+/// Bottleneck 6). Forwards to the implementation in
+/// `e2e_test_shared_civilian_work_tile_pick.dart`.
+Future<bool> maybePickFirstValidWorkTileAndAwaitOverlayClear(
+  WidgetTester tester, {
+  required String appearPhase,
+  required String clearPhase,
+  required String skippedTimingLabel,
+  required String skippedMeta,
+  Duration appearTimeout = kE2eDefaultCivilianWorkTileAppearTimeout,
+  Duration clearTimeout = kE2eDefaultCivilianWorkTileClearTimeout,
+  E2ePerfLog? perf,
+}) => e2eMaybePickFirstValidWorkTileAndAwaitOverlayClear(
+  tester,
+  appearPhase: appearPhase,
+  clearPhase: clearPhase,
+  skippedTimingLabel: skippedTimingLabel,
+  skippedMeta: skippedMeta,
+  appearTimeout: appearTimeout,
+  clearTimeout: clearTimeout,
+  perf: perf,
 );
 
 /// Stable public name for [e2eHandleBundledExploreFailure] so the
