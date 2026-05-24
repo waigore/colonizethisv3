@@ -16,6 +16,8 @@ import 'e2e_test_shared_bootstrap.dart';
 /// barrel only (GitHub #2336 AC2).
 export 'e2e_test_shared.dart'
     show
+        E2eFleetReachLoopExit,
+        E2eFleetReachLoopResult,
         E2ePerfLog,
         e2eAdaptivePollRampAfterIdle,
         e2eAwaitNwCoastalOrVisibleLandForBundledExplore,
@@ -24,6 +26,7 @@ export 'e2e_test_shared.dart'
         e2eExploreAssignEnabledFromCivilianSnapshot,
         e2eExpectPanelTextsMatchSnapshot,
         e2eFleetReachDoneFromCtSnapshotOnly,
+        e2eFleetReachTurnLoop,
         e2eHarnessDetectsNonHomeFleetInNewWorld,
         e2eMakeWallClockGuard,
         e2eNewWorldRegionChipAppearsSelected,
@@ -41,6 +44,7 @@ export 'e2e_test_shared.dart'
         kE2eDefaultExpectPanelTextsPhase,
         kE2eDefaultExpectPanelTextsTimeout,
         kE2eDefaultFleetCivilianOpenAfterSheetClearPhase,
+        kE2eDefaultFleetReachLoopMaxTurns,
         kE2eDefaultNavalMoveSegmentUiWait,
         e2ePumpUntil,
         e2ePumpUntilConditionOrIdle,
@@ -289,6 +293,28 @@ Future<void> ensureAllRelocated64pxPngsLoad() =>
 
 Future<void> ensureAllRelocated64pxPngsLoadSuiteOnce() =>
     e2eEnsureAllRelocated64pxPngsLoadSuiteOnce();
+
+/// Stable public name for [e2eFleetReachTurnLoop] so the two fleet-reach
+/// scenarios in `new_game_fleet_reaches_new_world_e2e_test.dart` consume the
+/// AC1 barrel only (Refs GitHub #2336 AC1 / AC2 / Bottleneck 4). Forwards
+/// to the implementation in `e2e_test_shared_panels.dart` — call sites map
+/// the returned [E2eFleetReachLoopResult.exit] to the legacy
+/// `result=reached_*` perf-timing meta labels themselves.
+Future<E2eFleetReachLoopResult> fleetReachTurnLoop(
+  WidgetTester tester,
+  AppLocalizations l10n, {
+  required E2ePerfLog perf,
+  required void Function(String step) ensureUnderWallClock,
+  Duration maxUiResponseWait = kE2eDefaultNavalMoveSegmentUiWait,
+  int maxTurns = kE2eDefaultFleetReachLoopMaxTurns,
+}) => e2eFleetReachTurnLoop(
+  tester,
+  l10n,
+  perf: perf,
+  ensureUnderWallClock: ensureUnderWallClock,
+  maxUiResponseWait: maxUiResponseWait,
+  maxTurns: maxTurns,
+);
 
 /// Stable public name for [e2eExpectPanelTextsMatchSnapshot] so the
 /// snapshot-text panel scenarios in `new_game_full_turn_e2e_test.dart`
