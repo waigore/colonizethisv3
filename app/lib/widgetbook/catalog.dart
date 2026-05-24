@@ -31,6 +31,7 @@ import '../features/game/widgets/tech_tree_widget.dart';
 import '../features/game/screens/technology_screen.dart';
 import '../features/game/dialogue/intervention_dialogue_overlay.dart';
 import '../features/game/flame/game_screen.dart';
+import '../features/game/flame/victory_overlay.dart';
 import '../features/game/flame/region_map_component.dart'
     show CtMapVisibilityMode;
 import '../features/game/widgets/train_civilians_dialog.dart';
@@ -116,6 +117,7 @@ class CtWidgetbookApp extends StatelessWidget {
         ...techTreeDirectories,
         ...interventionDialogueDirectories,
         ...turnNewsDialogDirectories,
+        ...victoryUiDirectories,
         ...combatUiDirectories,
         ...shellScreenDirectories,
         ...gameScreenDirectories,

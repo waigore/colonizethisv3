@@ -371,6 +371,14 @@ class _MapWithOverlayStoryState extends State<_MapWithOverlayStory> {
   }
 }
 
+VictoryState _sampleVictoryState(Game game) {
+  return VictoryState(
+    winnerPlayerId: game.players.first.id,
+    type: VictoryType.military,
+    turnNumber: 45,
+  );
+}
+
 QuickBattleInput _sampleQuickBattleInput() {
   return const QuickBattleInput(
     attackerFactionId: 'castile',
@@ -402,6 +410,15 @@ QuickBattleInput _sampleQuickBattleInput() {
   );
 }
 
+MaterialApp _victoryStoryFrame(Widget child) {
+  return MaterialApp(
+    theme: AppThemes.colonial,
+    localizationsDelegates: AppLocalizationsBinding.localizationsDelegates,
+    supportedLocales: AppLocalizations.supportedLocales,
+    home: Scaffold(body: Center(child: child)),
+  );
+}
+
 MaterialApp _combatStoryFrame(Widget child) {
   return MaterialApp(
     theme: AppThemes.colonial,
@@ -410,6 +427,54 @@ MaterialApp _combatStoryFrame(Widget child) {
     home: Scaffold(body: Center(child: child)),
   );
 }
+
+/// Victory overlay stories. SPEC/ui/victory-overlay.md.
+List<WidgetbookNode> get victoryUiDirectories => [
+  WidgetbookFolder(
+    name: 'Victory',
+    children: [
+      WidgetbookUseCase(
+        name: 'Victory panel — military',
+        builder: (context) {
+          final game = getDebugInitGameResult().game;
+          final victory = _sampleVictoryState(game);
+          return _victoryStoryFrame(
+            VictoryPanel(
+              game: game,
+              victory: victory,
+              bus: AppEventBus.create(),
+            ),
+          );
+        },
+      ),
+      WidgetbookUseCase(
+        name: 'Victory overlay — full scrim',
+        builder: (context) {
+          final game = getDebugInitGameResult().game;
+          final victory = _sampleVictoryState(game);
+          return _victoryStoryFrame(
+            SizedBox(
+              width: 400,
+              height: 560,
+              child: Stack(
+                children: [
+                  ColoredBox(
+                    color: Theme.of(context).colorScheme.surfaceContainerHighest,
+                  ),
+                  VictoryOverlay(
+                    game: game,
+                    victory: victory,
+                    bus: AppEventBus.create(),
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
+      ),
+    ],
+  ),
+];
 
 /// Combat UI stories.
 /// SPEC/ui/quick-battle-screen.md, quick-battle-deployment-view.md,

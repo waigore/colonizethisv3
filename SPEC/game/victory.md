@@ -43,7 +43,9 @@ When the campaign reaches the **calendar cap** (`Game.calendarCampaignHalted == 
 
 ## Victory Screen (UI)
 
-- When `Game.victory != null`, the app shows a **victory screen** (overlay or dedicated view).
+Authoritative layout, triggers, states, navigation, and acceptance criteria: **[victory-overlay.md](../ui/victory-overlay.md)**.
+
+- When `Game.victory != null`, the app shows the **victory overlay** (`VictoryOverlay` / `VictoryPanel` on `GameScreen`).
 - **Content:** Winner’s display name, victory type label (e.g. “Military victory”), turn number. Option to **return to main menu** or **view final state** (continue viewing the map without further turns).
 - No further orders or turn advancement once victory is set.
 

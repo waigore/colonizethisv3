@@ -1,4 +1,5 @@
 import 'package:colonizethis_app/features/game/flame/victory_overlay.dart';
+import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
 import 'package:colonizethis_app/widgets/debug_init_game.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:colonizethis_models/colonizethis_models.dart' as ct_models;
@@ -106,6 +107,33 @@ void main() {
     await tester.pump();
 
     expect(emitted, isA<ct_models.NavigateToShellEvent>());
+  });
+
+  testWidgets('VictoryPanel uses first player when winner id is unknown',
+      (WidgetTester tester) async {
+    final victory = ct_models.VictoryState(
+      winnerPlayerId: 'nonexistent-player',
+      type: ct_models.VictoryType.military,
+      turnNumber: 45,
+    );
+    final fallbackName = game.players.first.displayName;
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: VictoryPanel(
+            game: game,
+            victory: victory,
+            bus: victoryTestBus,
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.textContaining(fallbackName), findsOneWidget);
+    expect(find.textContaining('turn 45'), findsOneWidget);
+    expect(find.byType(CtNinePatchButton), findsNWidgets(2));
   });
 }
 
