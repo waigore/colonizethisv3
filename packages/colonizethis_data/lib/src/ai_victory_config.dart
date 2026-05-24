@@ -12,8 +12,7 @@ const String kNewWorldRegionId = 'newWorld';
 
 /// Provinces still needed to reach military victory from [oldWorldOwned].
 int provincesToVictoryFromOldWorldOwned(int oldWorldOwned) {
-  final gap =
-      kMilitaryVictoryOldWorldProvinceThreshold - oldWorldOwned;
+  final gap = kMilitaryVictoryOldWorldProvinceThreshold - oldWorldOwned;
   return gap < 0 ? 0 : gap;
 }
 
@@ -363,6 +362,18 @@ const int kColonialNavalMoveDockNewWorldPortScore = 180;
 
 /// Naval move score for an NW sea zone bordering an invadable NW province.
 const int kColonialNavalMovePriorityNwSeaZoneScore = 200;
+
+/// Naval move score for an NW sea zone bordering a **phase-priority** NW
+/// invadable province (Refs #2509 S5). Phase-priority provinces are surfaced
+/// by `resolvePhaseNavalDirective` from
+/// `ColonialNavalPlan.priorityInvasionTransportProvinceIdsSorted` (COLONIAL —
+/// declared colonial target's invadable provinces or the at-war owner
+/// fallback) or `ColonialLiteNavalPlan.priorityNwProvinceIdsSorted`
+/// (COLONIAL-lite — tribe / minor-only invadable provinces). The phase-
+/// priority tier ranks above the general priority tier so fleets approach the
+/// phase-active acquisition frontier ahead of unrelated invadable NW
+/// neighbors when both are reachable on the same turn.
+const int kColonialNavalMovePhasePriorityNwSeaZoneScore = 240;
 
 /// Naval move score for any other New World sea zone destination.
 const int kColonialNavalMoveNwSeaZoneScore = 140;
