@@ -119,6 +119,23 @@ StrategicOrderTraceResult generateStrategicOrdersWithTrace({
   final planningSnapshot = planningView == view
       ? snapshot
       : AIWorldSnapshot.fromPlayerView(planningView, topology: topology);
+  // Refs #2509 S5: dispatch the phase plan once per AI player turn against
+  // the planning-state inputs and thread the resolved `PhasePlanOutcome`
+  // into both `runEconomyPlanner` and the orchestrator. The dispatch is
+  // hoisted *above* `runEconomyPlanner` so the economy planner can derive
+  // the EXPAND below-quota peace treasury-recovery cargo boost via the
+  // phase-planner economy resolvers
+  // (`resolvePhaseEconomyExpandBelowQuotaPeaceZeroRegimentsRebuildActive`
+  // and `resolvePhaseEconomyExpandBelowQuotaPeaceInsufficientRegimentsActive`)
+  // instead of recomputing `isBelowQuotaPeaceTreasuryRecovery` from
+  // `colonial_pressure.dart`. The orchestrator continues to consume the
+  // same plan so the dispatch runs exactly once per AI player turn against
+  // the same `(planningGame, planningSnapshot, personalityId)` inputs.
+  final phasePlan = runPhasePlanners(
+    game: planningGame,
+    snapshot: planningSnapshot,
+    personalityId: config.personalityId,
+  );
   final economyPlan = runEconomyPlanner(
     game: planningGame,
     view: planningView,
@@ -126,19 +143,7 @@ StrategicOrderTraceResult generateStrategicOrdersWithTrace({
     seeds: seeds,
     colonial: snapshot.colonial,
     snapshot: planningSnapshot,
-  );
-  // Refs #2509 S5: dispatch the phase plan once per AI player turn against
-  // the planning-state inputs and thread the resolved `PhasePlanOutcome`
-  // into the orchestrator. The orchestrator previously recomputed the
-  // dispatch internally; hoisting it here keeps the per-turn cost at a
-  // single `runPhasePlanners` call and prepares the next S5 slice to
-  // pass the same plan into `runEconomyPlanner` (the last in-tree
-  // planner still resolving phase signals via the legacy
-  // `colonial_pressure.dart` helpers).
-  final phasePlan = runPhasePlanners(
-    game: planningGame,
-    snapshot: planningSnapshot,
-    personalityId: config.personalityId,
+    phasePlan: phasePlan,
   );
   final plannerOutcome = runDomainPlannersWithOutcome(
     game: planningGame,
