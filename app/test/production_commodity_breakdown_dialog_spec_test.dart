@@ -1,0 +1,117 @@
+// Pins SPEC/ui/production-commodity-breakdown-dialog.md contract for the
+// read-only commodity breakdown modal opened from ProductionScreen.
+
+import 'package:colonizethis_logic/colonizethis_logic.dart';
+import 'package:colonizethis_models/colonizethis_models.dart';
+import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_test/flutter_test.dart';
+
+import 'package:colonizethis_app/features/game/widgets/production_commodity_breakdown_dialog.dart';
+import 'package:colonizethis_app/l10n/l10n.dart';
+import 'package:colonizethis_app/widgets/debug_init_game.dart';
+import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
+
+void main() {
+  suppressLogsForTests();
+
+  group(
+    'ProductionCommodityBreakdownDialog '
+    '(SPEC/ui/production-commodity-breakdown-dialog.md)',
+    () {
+      Future<void> pumpDialog(
+        WidgetTester tester, {
+        AppEventBus? bus,
+        Size surfaceSize = const Size(900, 1400),
+      }) async {
+        addTearDown(tester.view.reset);
+        tester.view.physicalSize = surfaceSize;
+        tester.view.devicePixelRatio = 1.0;
+
+        final result = getDebugInitGameResult();
+        final game = result.game;
+        final humanPlayerId = game.players.firstWhere((p) => p.isHuman).id;
+        final player = game.playerById(humanPlayerId) ?? game.players.first;
+        await tester.pumpWidget(
+          ProviderScope(
+            child: MaterialApp(
+              localizationsDelegates:
+                  AppLocalizationsBinding.localizationsDelegates,
+              supportedLocales: AppLocalizations.supportedLocales,
+              home: Scaffold(
+                body: Builder(
+                  builder: (context) => TextButton(
+                    onPressed: () {
+                      showDialog<void>(
+                        context: context,
+                        builder: (_) => ProductionCommodityBreakdownDialog(
+                          game: game,
+                          player: player,
+                          topology: result.combinedTopology,
+                          tileMapByRegion: result.tileMapByRegion,
+                          currentOrders: const Orders(),
+                        ),
+                      );
+                    },
+                    child: const Text('open'),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        );
+        await tester.tap(find.text('open'));
+        await tester.pumpAndSettle();
+      }
+
+      testWidgets(
+        'renders one DataTable with leading + per-phase + total columns',
+        (WidgetTester tester) async {
+          await pumpDialog(tester);
+          expect(find.byType(ProductionCommodityBreakdownDialog), findsOneWidget);
+          expect(find.byType(DataTable), findsOneWidget);
+
+          final dataTable = tester.widget<DataTable>(find.byType(DataTable));
+          final expected = 1 + EconomyPreviewStockpilePhase.values.length + 1;
+          expect(dataTable.columns.length, expected);
+        },
+      );
+
+      testWidgets(
+        'renders the commodity-breakdown title and a Close button',
+        (WidgetTester tester) async {
+          await pumpDialog(tester);
+          expect(find.text('Commodity breakdown'), findsOneWidget);
+          expect(
+            find.widgetWithText(CtNinePatchButton, 'Close'),
+            findsOneWidget,
+          );
+        },
+      );
+
+      testWidgets(
+        'tapping Close dismisses the dialog and emits no bus events',
+        (WidgetTester tester) async {
+          var eventCount = 0;
+          final bus = AppEventBus.create();
+          final sub = bus.on<AppEvent>().listen((_) => eventCount++);
+          addTearDown(sub.cancel);
+
+          await pumpDialog(tester, bus: bus);
+          final closeButton = find.widgetWithText(CtNinePatchButton, 'Close');
+          await tester.ensureVisible(closeButton);
+          await tester.pumpAndSettle();
+          await tester.tap(closeButton);
+          await tester.pumpAndSettle();
+
+          expect(
+            find.byType(ProductionCommodityBreakdownDialog),
+            findsNothing,
+          );
+          expect(eventCount, 0);
+        },
+      );
+    },
+  );
+}

@@ -71,8 +71,8 @@ Register builders in **`app/lib/core/services/app_event_handler_scope.dart`**.
 |----|--------|----------|
 | `train_civilians` | `TrainCiviliansDialog` | `trainCiviliansDialogId` |
 | `train_military` | `TrainMilitaryDialog` | `trainMilitaryDialogId` |
-| `grant_or_subsidy` | `GrantOrSubsidyDialog` | `grantOrSubsidyDialogId` |
-| `new_game_leader_selection` | `NewGameLeaderSelectionDialog` (six slots: **nation** + **leader** per slot; nation picker shows default GP map colour swatch beside each nation name; fair GP Old World assignment checkbox; **game / world seed** field + helper below checkbox; initial nations = `GameSetupConfig.defaultConfig.selectedGreatPowerIds`) | `newGameLeaderSelectionDialogId` |
+| `grant_or_subsidy` | `GrantOrSubsidyDialog` (see [grant-or-subsidy-dialog.md](../ui/grant-or-subsidy-dialog.md)) | `grantOrSubsidyDialogId` |
+| `new_game_leader_selection` | `NewGameLeaderSelectionDialog` (six slots: **nation** + **leader** per slot; nation picker shows default GP map colour swatch beside each nation name; fair GP Old World assignment checkbox; **game / world seed** field + helper below checkbox; initial nations = `GameSetupConfig.defaultConfig.selectedGreatPowerIds`; see [new-game-leader-selection-dialog.md](../ui/new-game-leader-selection-dialog.md)) | `newGameLeaderSelectionDialogId` |
 
 For `train_civilians` and `train_military`, shared order/count orchestration must be implemented in `app/lib/features/game/widgets/train_unit_dialog_helper.dart`; keep dialog-specific economics and lock rules inside each dialog widget.
 
@@ -83,7 +83,7 @@ For `train_civilians` and `train_military`, shared order/count orchestration mus
 
 Combat-flow non-dialog screens (constructed directly by the orchestrator, not via `OpenDialogEvent`) are documented in [`quick-battle-screen.md`](../ui/quick-battle-screen.md), with sub-views [`quick-battle-deployment-view.md`](../ui/quick-battle-deployment-view.md) and [`quick-battle-action-selector.md`](../ui/quick-battle-action-selector.md).
 
-**Local by design (no `OpenDialogEvent`):** map display options (`GameMapArea`), tech detail (`TechTreeWidget`), civilian work-target sheet (`CivilianUnitsPanel`), next-turn confirmation (`GameMapArea`), in-game Android back exit confirmation (`GameScreen`), research tech picker (`TechnologyPanel`), **`CtDropdown`** internal picker, **new-game setup progress and error dialogs** after leader confirmation (see **SPEC/ui/game-initializing.md**).
+**Local by design (no `OpenDialogEvent`):** map display options (`GameMapArea`), tech detail (`TechTreeWidget`), civilian work-target sheet (`CivilianUnitsPanel`), next-turn confirmation (`GameMapArea`), in-game Android back exit confirmation (`GameScreen`), research tech picker (`TechnologyPanel`), **`CtDropdown`** internal picker, **new-game setup progress and error dialogs** after leader confirmation (see **SPEC/ui/game-initializing.md**), **`TransferToHomeFleetDialog`** (opened from `NavalUnitsPanel` via local `showDialog` for the regular-fleet → Home Fleet ship merge flow, commits via **`NavalTransferShipsRequestedEvent`**; see [SPEC/ui/transfer-to-home-fleet-dialog.md](../ui/transfer-to-home-fleet-dialog.md)), **`ProductionCommodityBreakdownDialog`** (opened from `ProductionScreen` via local `showDialog` as a read-only commodity preview; see [SPEC/ui/production-commodity-breakdown-dialog.md](../ui/production-commodity-breakdown-dialog.md)).
 
 **Split fleet:** `NavalUnitsPanel` uses local `showDialog` for `SplitFleetDialog`, but the dialog commits via **`NavalSplitFleetRequestedEvent`** → `AppEventHandlerScope` (applies `applyNavalSplitFleet`, then emits **`NavalFleetsUpdatedEvent`**) so the dialog does not receive panel merge callbacks. Widgetbook / tests without the shell wire the same request event or listen for `NavalFleetsUpdatedEvent` only.
 
