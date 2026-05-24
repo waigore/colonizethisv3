@@ -23,6 +23,7 @@ import '../features/game/widgets/civilian_units_panel.dart';
 import '../features/game/widgets/diplomacy_panel.dart';
 import '../features/game/widgets/military_units_panel.dart';
 import '../features/game/widgets/naval_units_panel.dart';
+import '../features/game/widgets/pause_menu_panel.dart';
 import '../features/game/widgets/production_panel.dart';
 import '../features/game/widgets/production_panel_demo_data.dart';
 import '../features/game/widgets/province_sea_zone_detail_overlay.dart';
@@ -31,6 +32,7 @@ import '../features/game/widgets/tech_tree_widget.dart';
 import '../features/game/screens/technology_screen.dart';
 import '../features/game/dialogue/intervention_dialogue_overlay.dart';
 import '../features/game/flame/game_screen.dart';
+import '../features/game/flame/game_side_menu.dart';
 import '../features/game/flame/victory_overlay.dart';
 import '../features/game/flame/region_map_component.dart'
     show CtMapVisibilityMode;
@@ -51,6 +53,7 @@ import '../widgets/ct_transfer_list.dart';
 part 'catalog_part1.dart';
 part 'catalog_part2.dart';
 part 'catalog_part3.dart';
+part 'catalog_part4.dart';
 
 Unit? _unitByIdForCatalog(Game game, String unitId) {
   for (final u in game.worldState.oldWorld.units) {
@@ -121,6 +124,8 @@ class CtWidgetbookApp extends StatelessWidget {
         ...combatUiDirectories,
         ...shellScreenDirectories,
         ...gameScreenDirectories,
+        ...pauseMenuPanelDirectories,
+        ...gameSideMenuDirectories,
       ],
       lightTheme: AppThemes.colonial,
       darkTheme: AppThemes.colonial,
