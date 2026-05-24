@@ -1413,6 +1413,30 @@ Future<Duration> e2eWaitForNextTurnLabelAdvance(
     await tester.pump(Duration(milliseconds: nextTurnPollMs));
     nextTurnPollMs = e2eAdaptivePollRampAfterIdle(nextTurnPollMs);
   }
+  // Final check after the loop exits on the timeout edge: the most recent
+  // pump may have advanced the next-turn label (and/or cleared the
+  // [TurnResolutionProcessingDialog]) just as `sw.elapsed` crossed [timeout],
+  // so the loop's pre-pump check would never re-evaluate. Match the
+  // post-pump-check pattern used by the strict busy-wait siblings
+  // ([e2eWaitUntilFound], [e2ePumpUntil], [e2eWaitUntilAnyFinderHitTestable])
+  // so a successful late pump still returns the elapsed wall clock instead
+  // of falling through to `fail()`. Refs GitHub #2336 AC5 (adaptive polling)
+  // / busy-wait final-check fix.
+  if (find.byType(TurnResolutionProcessingDialog).evaluate().isNotEmpty) {
+    sawProcessingDialog = true;
+  }
+  final lateLabel = e2eReadNextTurnButtonLabel(tester);
+  if (lateLabel != null && lateLabel != turnLabelBefore) {
+    if (!sawProcessingDialog ||
+        find.byType(TurnResolutionProcessingDialog).evaluate().isEmpty) {
+      perf?.timing(
+        'next_turn_wall_clock',
+        sw.elapsed,
+        meta: 'result=advanced_at_timeout',
+      );
+      return sw.elapsed;
+    }
+  }
   perf?.timing('next_turn_wall_clock', sw.elapsed, meta: 'result=timeout');
   fail(
     'Next turn label did not advance within ${timeout.inSeconds}s. '

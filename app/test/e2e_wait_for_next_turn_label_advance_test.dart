@@ -328,6 +328,116 @@ void main() {
     },
   );
 
+  group('post-pump final check (timeout-edge correctness)', () {
+    testWidgets(
+      'returns elapsed via post-loop final check when the while loop is '
+      'skipped (Duration.zero) and the label already differs',
+      (WidgetTester tester) async {
+        final controller = _NextTurnLabelController(
+          initialLabel: 'Next turn (2 / 1492)',
+        );
+        await _pumpHost(tester, controller);
+
+        // With `timeout: Duration.zero` the `while (sw.elapsed < timeout)`
+        // loop deterministically never enters because `sw.elapsed >= 0`
+        // from the moment the Stopwatch starts. The only opportunity to
+        // observe the already-different label is the post-loop final
+        // check. Without the fix the helper falls straight through to
+        // `fail()`, mirroring the regression class covered for
+        // `e2eWaitUntilFound` / `e2ePumpUntil` /
+        // `e2eWaitUntilAnyFinderHitTestable` in `a4c07ebf4` (Refs GitHub
+        // #2336 AC5 busy-wait final check).
+        final returned = await e2eWaitForNextTurnLabelAdvance(
+          tester,
+          turnLabelBefore: 'Next turn (1 / 1492)',
+          timeout: Duration.zero,
+        );
+
+        expect(
+          returned,
+          lessThan(const Duration(milliseconds: 100)),
+          reason:
+              'Post-loop final check must report ~Duration.zero — only the '
+              'final check ran, the pump loop was skipped.',
+        );
+      },
+    );
+
+    testWidgets(
+      'still fails with TestFailure when the label never advances and '
+      'the loop is skipped (Duration.zero, additive contract)',
+      (WidgetTester tester) async {
+        final controller = _NextTurnLabelController(
+          initialLabel: 'Next turn (1 / 1492)',
+        );
+        await _pumpHost(tester, controller);
+
+        Object? caught;
+        try {
+          await e2eWaitForNextTurnLabelAdvance(
+            tester,
+            turnLabelBefore: 'Next turn (1 / 1492)',
+            timeout: Duration.zero,
+          );
+        } catch (e) {
+          caught = e;
+        }
+        expect(
+          caught,
+          isA<TestFailure>(),
+          reason:
+              'The post-loop final check is additive — when the label '
+              'stays equal through both the (skipped) loop and the '
+              'post-loop check, the helper must still hit the timeout '
+              '`fail()` path so the absence is attributable in CI logs '
+              '(Refs GitHub #2336 AC10).',
+        );
+        expect(
+          caught.toString(),
+          contains('did not advance'),
+          reason:
+              'Failure message must call out the missed label advance so '
+              'the helper failure is attributable in CI logs.',
+        );
+      },
+    );
+
+    testWidgets(
+      'post-loop final check refuses to return while the '
+      'TurnResolutionProcessingDialog is still mounted',
+      (WidgetTester tester) async {
+        final controller = _NextTurnLabelController(
+          initialLabel: 'Next turn (2 / 1492)',
+          initialShowProcessingDialog: true,
+        );
+        await _pumpHost(tester, controller);
+        expect(find.byType(TurnResolutionProcessingDialog), findsOneWidget);
+
+        Object? caught;
+        try {
+          await e2eWaitForNextTurnLabelAdvance(
+            tester,
+            turnLabelBefore: 'Next turn (1 / 1492)',
+            timeout: Duration.zero,
+          );
+        } catch (e) {
+          caught = e;
+        }
+        expect(
+          caught,
+          isA<TestFailure>(),
+          reason:
+              'Even though the post-loop final check sees a different '
+              'label, it must observe `sawProcessingDialog=true` AND a '
+              'still-mounted dialog and therefore refuse to return — '
+              'matching the in-loop dialog gate so the post-loop fix '
+              'does not weaken the race contract pinned by the '
+              'sibling "holds return until …" test (#2336 AC5).',
+        );
+      },
+    );
+  });
+
   testWidgets(
     'e2eReadNextTurnButtonLabel returns null when no next-turn button is mounted',
     (WidgetTester tester) async {
