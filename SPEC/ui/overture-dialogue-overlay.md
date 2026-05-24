@@ -150,7 +150,7 @@ Exactly one variant is rendered at a time. Phase 2 is the only state in which Ac
 
 ## Widgetbook
 
-Catalog directory: `Overture Dialogue Overlay` (registered in `app/lib/widgetbook/catalog.dart` via `overtureDialogueOverlayDirectories` in `catalog_part3.dart`). Required use cases:
+Catalog directory: `Overture Dialogue Overlay` (registered in `app/lib/widgetbook/catalog.dart` via `overtureDialogueOverlayDirectories` in `catalog_part4.dart`). Required use cases:
 
 1. **Default — two pending overtures** — wraps a localized `widgetbook_gameShell` child in `OvertureDialogueOverlay` with `skipIntroForTest: true` so the story renders phase 2 immediately without depending on the production Yarn asset. The story exercises Accept/Reject toggles and the Submit button across two offers from different offerers.
 

@@ -101,7 +101,7 @@ Logging follows the [logging core principle](../program/logging/logging.md): no 
 
 ## Widgetbook
 
-Catalog directory: `Dialogue Engine` (registered in `app/lib/widgetbook/catalog.dart` via `ctDialogueViewDirectories` in `catalog_part3.dart`). Required use cases:
+Catalog directory: `Dialogue Engine` (registered in `app/lib/widgetbook/catalog.dart` via `ctDialogueViewDirectories` in `catalog_part4.dart`). Required use cases:
 
 1. **Lines and choice trace** — runs a small inline Yarn snippet (two lines + one choice) under a `CtDialogueView`, renders the live `currentLine` / `currentChoice` next to manual **Advance** and **Select option** buttons. The story acts as the canonical visual probe for the state machine described above and lets reviewers exercise both `advanceLine` and `selectOption` without loading any real Yarn assets from disk.
 
