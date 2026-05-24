@@ -4,306 +4,301 @@
 // in the developer-facing Widgetbook app, not in widget unit tests.
 part of 'catalog.dart';
 
-/// Pause menu panel stories. SPEC/ui/pause-menu-panel.md.
-///
-/// Renders [PauseMenuPanel] inside a plain [Scaffold] body so the catalog can
-/// preview the row layout without the modal bottom-sheet scrim that
-/// [AppEventHandler] uses in production.
-class _PauseMenuPanelStoryHost extends StatefulWidget {
-  const _PauseMenuPanelStoryHost();
+class _InlineYarnAssetBundle extends AssetBundle {
+  _InlineYarnAssetBundle(this._text);
+
+  final String _text;
 
   @override
-  State<_PauseMenuPanelStoryHost> createState() =>
-      _PauseMenuPanelStoryHostState();
-}
-
-class _PauseMenuPanelStoryHostState extends State<_PauseMenuPanelStoryHost> {
-  late final AppEventBus _bus;
-
-  @override
-  void initState() {
-    super.initState();
-    _bus = AppEventBus.create();
-  }
-
-  @override
-  void dispose() {
-    _bus.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      theme: AppThemes.colonial,
-      localizationsDelegates: AppLocalizationsBinding.localizationsDelegates,
-      supportedLocales: AppLocalizations.supportedLocales,
-      home: Scaffold(
-        body: SafeArea(
-          child: Align(
-            alignment: Alignment.bottomCenter,
-            child: PauseMenuPanel(bus: _bus),
-          ),
-        ),
-      ),
+  Future<ByteData> load(String key) {
+    final bytes = Uint8List.fromList(utf8.encode(_text));
+    return Future.value(
+      ByteData.view(bytes.buffer, bytes.offsetInBytes, bytes.lengthInBytes),
     );
   }
+
+  @override
+  Future<String> loadString(String key, {bool cache = true}) {
+    return Future.value(_text);
+  }
 }
 
-/// Pause menu panel stories. SPEC/ui/pause-menu-panel.md.
-List<WidgetbookNode> get pauseMenuPanelDirectories => [
+const String _kCtDialogueViewStorySource = '''
+title: ctdv_story
+---
+The story begins with a single archaic line.
+The narrator pauses, then offers a choice.
+-> Continue the tale.
+-> Cut the tale short.
+===
+''';
+
+/// CtDialogueView stories. SPEC/ui/ct-dialogue-view.md.
+List<WidgetbookNode> get ctDialogueViewDirectories => [
   WidgetbookFolder(
-    name: 'Pause Menu Panel',
+    name: 'Dialogue Engine',
     children: [
       WidgetbookUseCase(
-        name: 'Default',
-        builder: (context) => const _PauseMenuPanelStoryHost(),
+        name: 'Lines and choice trace',
+        builder: (context) => MaterialApp(
+          theme: AppThemes.colonial,
+          home: const Scaffold(body: _CtDialogueViewStoryHarness()),
+        ),
       ),
     ],
   ),
 ];
 
-/// Hosts [GameSideMenu] in a [Stack] so the [Positioned] body has bounded
-/// constraints, matching how [GameMapArea] mounts the drawer in production.
-class _GameSideMenuStoryHost extends StatefulWidget {
-  const _GameSideMenuStoryHost({required this.initialOpen});
-
-  final bool initialOpen;
+class _CtDialogueViewStoryHarness extends StatefulWidget {
+  const _CtDialogueViewStoryHarness();
 
   @override
-  State<_GameSideMenuStoryHost> createState() => _GameSideMenuStoryHostState();
+  State<_CtDialogueViewStoryHarness> createState() =>
+      _CtDialogueViewStoryHarnessState();
 }
 
-class _GameSideMenuStoryHostState extends State<_GameSideMenuStoryHost> {
-  late bool _open;
+class _CtDialogueViewStoryHarnessState
+    extends State<_CtDialogueViewStoryHarness> {
+  CtDialogueView? _view;
+  DialogueRunner? _runner;
+  bool _finished = false;
 
   @override
   void initState() {
     super.initState();
-    _open = widget.initialOpen;
+    _startDialogue();
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      theme: AppThemes.colonial,
-      localizationsDelegates: AppLocalizationsBinding.localizationsDelegates,
-      supportedLocales: AppLocalizations.supportedLocales,
-      home: Scaffold(
-        body: Stack(
-          children: [
-            Positioned.fill(
-              child: Container(color: Colors.black12),
-            ),
-            GameSideMenu(
-              sideMenuOpen: _open,
-              onClose: () => setState(() => _open = false),
-            ),
-          ],
-        ),
-      ),
+  Future<void> _startDialogue() async {
+    final project = YarnProject();
+    project.parse(_kCtDialogueViewStorySource);
+    final view = CtDialogueView();
+    final runner = DialogueRunner(
+      yarnProject: project,
+      dialogueViews: [view],
     );
-  }
-}
-
-ProviderScope _gameSideMenuProviderScope({required bool initialOpen}) {
-  final game = getDebugInitGameResult().game;
-  return ProviderScope(
-    overrides: [
-      appEventBusProvider.overrideWith((ref) {
-        final bus = AppEventBus.create();
-        ref.onDispose(bus.dispose);
-        return bus;
-      }),
-      currentGameProvider.overrideWith(() => CurrentGameNotifier(game)),
-    ],
-    child: _GameSideMenuStoryHost(initialOpen: initialOpen),
-  );
-}
-
-/// Game side menu stories. SPEC/ui/game-side-menu.md.
-List<WidgetbookNode> get gameSideMenuDirectories => [
-  WidgetbookFolder(
-    name: 'Game Side Menu',
-    children: [
-      WidgetbookUseCase(
-        name: 'Default — open',
-        builder: (context) => _gameSideMenuProviderScope(initialOpen: true),
-      ),
-      WidgetbookUseCase(
-        name: 'Closed',
-        builder: (context) => _gameSideMenuProviderScope(initialOpen: false),
-      ),
-    ],
-  ),
-];
-
-/// Hosts [GameMapNarrowDetailOverlaySlot] with the map panel provider opened on a
-/// sample tile. SPEC/ui/game-map-narrow-detail-overlay-slot.md.
-class _GameMapNarrowDetailOverlaySlotStoryHost extends ConsumerStatefulWidget {
-  const _GameMapNarrowDetailOverlaySlotStoryHost();
-
-  @override
-  ConsumerState<_GameMapNarrowDetailOverlaySlotStoryHost> createState() =>
-      _GameMapNarrowDetailOverlaySlotStoryHostState();
-}
-
-class _GameMapNarrowDetailOverlaySlotStoryHostState
-    extends ConsumerState<_GameMapNarrowDetailOverlaySlotStoryHost> {
-  @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      ref
-          .read(mapProvincePanelProvider.notifier)
-          .reportMapTileTapped(sampleTileKeyForProvinceOverlay);
+    view.onStateChanged = (_, _) {
+      if (mounted) setState(() {});
+    };
+    setState(() {
+      _view = view;
+      _runner = runner;
     });
+    await runner.startDialogue('ctdv_story');
+    if (mounted) setState(() => _finished = true);
   }
 
   @override
   Widget build(BuildContext context) {
-    final game = demoGameForOverlay;
-    final region = demoRegionForOverlay;
-    return MaterialApp(
-      theme: AppThemes.colonial,
-      localizationsDelegates: AppLocalizationsBinding.localizationsDelegates,
-      supportedLocales: AppLocalizations.supportedLocales,
-      home: MediaQuery(
-        data: const MediaQueryData(size: Size(400, 600)),
-        child: Scaffold(
-          body: Stack(
-            children: [
-              Positioned.fill(child: Container(color: Colors.black12)),
-              Align(
-                alignment: Alignment.bottomCenter,
-                child: GameMapNarrowDetailOverlaySlot(
-                  game: game,
-                  region: region,
-                  humanPlayerId: game.players.first.id,
-                  playerView: demoHumanPlayerViewForOverlay,
-                  workTargetSelectionCache:
-                      PerPlayerWorkTargetSelectionCache(),
+    final view = _view;
+    if (view == null || _runner == null) {
+      return const CtLoadingIndicator();
+    }
+    if (_finished) {
+      return const Center(child: Icon(Icons.check_circle, size: 32));
+    }
+    final line = view.currentLine;
+    final choice = view.currentChoice;
+    return Padding(
+      padding: const EdgeInsets.all(24),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          if (line != null) ...[
+            Text(line.text),
+            const SizedBox(height: 16),
+            ElevatedButton(
+              onPressed: view.advanceLine,
+              child: const Icon(Icons.arrow_forward),
+            ),
+          ] else if (choice != null) ...[
+            for (var i = 0; i < choice.options.length; i++)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 8),
+                child: ElevatedButton(
+                  onPressed: () => view.selectOption(i),
+                  child: Text(choice.options[i].text),
                 ),
               ),
-            ],
-          ),
-        ),
+          ] else
+            const CtLoadingIndicator(),
+        ],
       ),
     );
   }
 }
 
-ProviderScope _gameMapNarrowDetailOverlaySlotProviderScope() {
-  return ProviderScope(
-    child: const _GameMapNarrowDetailOverlaySlotStoryHost(),
-  );
-}
+const String _kGameStartIntroOverlayStorySource = '''
+title: game_start_intro
+---
+The age of imperialism draweth nigh.
+-> I shall.
+===
+''';
 
-/// Game map narrow detail overlay slot stories.
-List<WidgetbookNode> get gameMapNarrowDetailOverlaySlotDirectories => [
+/// Game Start Intro Overlay stories. SPEC/ui/game-start-intro-overlay.md.
+List<WidgetbookNode> get gameStartIntroOverlayDirectories => [
   WidgetbookFolder(
-    name: 'Game Map Narrow Detail Overlay Slot',
+    name: 'Game Start Intro Overlay',
     children: [
       WidgetbookUseCase(
-        name: 'Default — province open',
-        builder: (context) => _gameMapNarrowDetailOverlaySlotProviderScope(),
+        name: 'Default — single-line intro',
+        builder: (context) => MaterialApp(
+          theme: AppThemes.colonial,
+          localizationsDelegates: AppLocalizationsBinding.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: Scaffold(
+            body: GameStartIntroOverlay(
+              onDismissed: () {},
+              assetBundle: _InlineYarnAssetBundle(
+                _kGameStartIntroOverlayStorySource,
+              ),
+              child: const Placeholder(),
+            ),
+          ),
+        ),
       ),
     ],
   ),
 ];
 
-Game _diplomacyDetailStoryGame() {
-  const humanId = 'gp_human';
-  const rivalId = 'gp_rival';
-  return Game(
-    id: 'wb_diplomacy_detail',
+Game _overtureStoryGame() {
+  return const Game(
+    id: 'wb_overture',
     worldState: WorldState(
-      turnState: TurnState(phase: TurnPhase.orders, turnNumber: 3),
-      oldWorld: const RegionData(),
-      newWorld: const RegionData(),
+      turnState: TurnState(phase: TurnPhase.orders, turnNumber: 4),
+      oldWorld: RegionData(),
+      newWorld: RegionData(),
     ),
-    turnTimeMapping: TurnTimeMapping.gdd01,
     players: [
+      Player(id: 'gp_spain', displayName: 'Spain', isHuman: false, treasury: 0),
       Player(
-        id: humanId,
-        displayName: 'England',
-        isHuman: true,
-        treasury: 0,
-      ),
-      Player(
-        id: rivalId,
-        displayName: 'Spain',
+        id: 'gp_portugal',
+        displayName: 'Portugal',
         isHuman: false,
         treasury: 0,
       ),
-    ],
-    diplomacyRelations: [
-      DiplomacyRelation(
-        factionId1: humanId,
-        factionId2: rivalId,
-        score: 70,
-        state: RelationState.atPeace,
-      ),
-    ],
-    diplomaticHistoryEvents: [
-      DiplomaticEvent(
-        turn: 2,
-        intraTurnIndex: 0,
-        type: DiplomaticEventType.overtureAccepted,
-        participants: {humanId, rivalId},
-        fromFactionId: humanId,
-        toFactionId: rivalId,
-        overtureStage: OvertureStage.embassy,
-      ),
-    ],
-    dossierEvidenceEntries: [
-      DossierEvidenceEntry(
-        observerId: humanId,
-        subjectId: rivalId,
-        agendaType: 'trade_focus',
-        turnNumber: 2,
-        description: 'Favoured trade over military buildup.',
+      Player(
+        id: 'gp_player',
+        displayName: 'Player',
+        isHuman: true,
+        treasury: 0,
       ),
     ],
   );
 }
 
-ProviderScope _diplomacyDetailScreenProviderScope() {
-  const humanId = 'gp_human';
-  const rivalId = 'gp_rival';
-  final game = _diplomacyDetailStoryGame();
-  return ProviderScope(
-    overrides: [
-      appEventBusProvider.overrideWith((ref) {
-        final bus = AppEventBus.create();
-        ref.onDispose(bus.dispose);
-        return bus;
-      }),
-    ],
-    child: MaterialApp(
-      theme: AppThemes.colonial,
-      localizationsDelegates: AppLocalizationsBinding.localizationsDelegates,
-      supportedLocales: AppLocalizations.supportedLocales,
-      home: DiplomacyDetailScreen(
-        game: game,
-        humanPlayerId: humanId,
-        factionId: rivalId,
-        factionDisplayName: 'Spain',
-        kind: FactionKind.greatPower,
-        relation: game.diplomacyRelations.first,
-      ),
-    ),
-  );
-}
-
-/// Diplomacy detail screen stories. SPEC/ui/diplomacy-detail-screen.md.
-List<WidgetbookNode> get diplomacyDetailScreenDirectories => [
+/// Overture Dialogue Overlay stories. SPEC/ui/overture-dialogue-overlay.md.
+List<WidgetbookNode> get overtureDialogueOverlayDirectories => [
   WidgetbookFolder(
-    name: 'Diplomacy Detail Screen',
+    name: 'Overture Dialogue Overlay',
     children: [
       WidgetbookUseCase(
-        name: 'Default — GP with history and dossier',
-        builder: (context) => _diplomacyDetailScreenProviderScope(),
+        name: 'Default — two pending overtures',
+        builder: (context) => MaterialApp(
+          theme: AppThemes.colonial,
+          localizationsDelegates: AppLocalizationsBinding.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: Scaffold(
+            body: OvertureDialogueOverlay(
+              game: _overtureStoryGame(),
+              pendingOvertures: const [
+                OvertureOffer(
+                  offererGpId: 'gp_spain',
+                  targetFactionId: 'gp_player',
+                  stage: OvertureStage.tradeConsulate,
+                ),
+                OvertureOffer(
+                  offererGpId: 'gp_portugal',
+                  targetFactionId: 'gp_player',
+                  stage: OvertureStage.embassy,
+                ),
+              ],
+              skipIntroForTest: true,
+              onDecisions: (_) {},
+              child: Center(
+                child: Text(appL10n(context).widgetbook_gameShell),
+              ),
+            ),
+          ),
+        ),
+      ),
+    ],
+  ),
+];
+
+Game _callToArmsStoryGame() {
+  return const Game(
+    id: 'wb_cta',
+    worldState: WorldState(
+      turnState: TurnState(phase: TurnPhase.orders, turnNumber: 5),
+      oldWorld: RegionData(),
+      newWorld: RegionData(),
+    ),
+    players: [
+      Player(id: 'gp_spain', displayName: 'Spain', isHuman: false, treasury: 0),
+      Player(
+        id: 'gp_portugal',
+        displayName: 'Portugal',
+        isHuman: false,
+        treasury: 0,
+      ),
+      Player(
+        id: 'gp_france',
+        displayName: 'France',
+        isHuman: false,
+        treasury: 0,
+      ),
+      Player(
+        id: 'gp_england',
+        displayName: 'England',
+        isHuman: false,
+        treasury: 0,
+      ),
+      Player(
+        id: 'gp_player',
+        displayName: 'Player',
+        isHuman: true,
+        treasury: 0,
+      ),
+    ],
+  );
+}
+
+/// Call to Arms Dialogue Overlay stories. SPEC/ui/call-to-arms-dialogue-overlay.md.
+List<WidgetbookNode> get callToArmsDialogueOverlayDirectories => [
+  WidgetbookFolder(
+    name: 'Call to Arms Dialogue Overlay',
+    children: [
+      WidgetbookUseCase(
+        name: 'Default — two pending calls',
+        builder: (context) => MaterialApp(
+          theme: AppThemes.colonial,
+          localizationsDelegates: AppLocalizationsBinding.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: Scaffold(
+            body: CallToArmsDialogueOverlay(
+              game: _callToArmsStoryGame(),
+              pending: const [
+                CallToArmsPending(
+                  allyGpId: 'gp_player',
+                  defenderGpId: 'gp_portugal',
+                  aggressorGpId: 'gp_spain',
+                ),
+                CallToArmsPending(
+                  allyGpId: 'gp_player',
+                  defenderGpId: 'gp_france',
+                  aggressorGpId: 'gp_england',
+                ),
+              ],
+              onDecisions: (_) {},
+              child: Center(
+                child: Text(appL10n(context).widgetbook_gameShell),
+              ),
+            ),
+          ),
+        ),
       ),
     ],
   ),

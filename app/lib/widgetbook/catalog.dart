@@ -1,13 +1,16 @@
 // coverage:ignore-file
 // Dev-only Widgetbook catalog; excluded from app coverage gate via instrumentation.
 import 'dart:async';
+import 'dart:convert';
 
 import 'package:colonizethis_app/core/utils/prefixed_id.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:jenny/jenny.dart';
 import 'package:widgetbook/widgetbook.dart';
 
 import '../config/themes.dart';
@@ -35,7 +38,11 @@ import '../features/game/widgets/tech_tree_widget.dart';
 import '../features/game/screens/diplomacy_detail_screen.dart';
 import '../features/game/screens/technology_screen.dart';
 import '../features/game/flame/game_map_narrow_detail_overlay.dart';
+import '../features/game/dialogue/call_to_arms_dialogue_overlay.dart';
+import '../features/game/dialogue/ct_dialogue_view.dart';
+import '../features/game/dialogue/game_start_intro_overlay.dart';
 import '../features/game/dialogue/intervention_dialogue_overlay.dart';
+import '../features/game/dialogue/overture_dialogue_overlay.dart';
 import '../features/game/flame/game_screen.dart';
 import '../features/game/flame/game_side_menu.dart';
 import '../features/game/flame/victory_overlay.dart';
@@ -52,6 +59,7 @@ import '../features/shell/shell_screen.dart';
 import '../l10n/l10n.dart';
 import '../widgets/debug_init_game.dart';
 import '../widgets/ct_choice_chip.dart';
+import '../widgets/ct_loading_indicator.dart';
 import 'debug_map_visibility_story.dart';
 import '../widgets/game_setup.dart';
 import '../widgets/main_menu.dart';
@@ -63,6 +71,7 @@ part 'catalog_part1.dart';
 part 'catalog_part2.dart';
 part 'catalog_part3.dart';
 part 'catalog_part4.dart';
+part 'catalog_part5.dart';
 
 Unit? _unitByIdForCatalog(Game game, String unitId) {
   for (final u in game.worldState.oldWorld.units) {
@@ -128,6 +137,10 @@ class CtWidgetbookApp extends StatelessWidget {
         ...diplomacyPanelDirectories,
         ...techTreeDirectories,
         ...interventionDialogueDirectories,
+        ...ctDialogueViewDirectories,
+        ...gameStartIntroOverlayDirectories,
+        ...overtureDialogueOverlayDirectories,
+        ...callToArmsDialogueOverlayDirectories,
         ...turnNewsDialogDirectories,
         ...victoryUiDirectories,
         ...combatUiDirectories,

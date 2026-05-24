@@ -1,6 +1,6 @@
 # Dialogue Presentation (Flutter / Flame)
 
-**SPEC/ui** — How the Flutter app presents AI–human dialogue using Flame and Jenny. Dialogue model: [dialogue-management.md](../ai/dialogue-management.md). Content: [dialogue-content-and-yarn.md](../ai/dialogue-content-and-yarn.md). Technical contract: [dialogue-system.md](../program/dialogue-system.md). Pixel-art catalog: [pixel-art-ui-catalog.md](pixel-art-ui-catalog.md).
+**SPEC/ui** — How the Flutter app presents AI–human dialogue using Flame and Jenny. Dialogue model: [dialogue-management.md](../ai/dialogue-management.md). Content: [dialogue-content-and-yarn.md](../ai/dialogue-content-and-yarn.md). Technical contract: [dialogue-system.md](../program/dialogue-system.md). Pixel-art catalog: [pixel-art-ui-catalog.md](pixel-art-ui-catalog.md). Jenny adapter contract: [ct-dialogue-view.md](ct-dialogue-view.md). Per-overlay specs: [game-start-intro-overlay.md](game-start-intro-overlay.md), [overture-dialogue-overlay.md](overture-dialogue-overlay.md), [call-to-arms-dialogue-overlay.md](call-to-arms-dialogue-overlay.md), [screens/pending-intervention-overlay.md](screens/pending-intervention-overlay.md), [pending-diplomacy-state.md](pending-diplomacy-state.md).
 
 ---
 
