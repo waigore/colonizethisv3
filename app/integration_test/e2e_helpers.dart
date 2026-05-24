@@ -22,6 +22,7 @@ export 'e2e_test_shared.dart'
         E2eFirstFleetMoveOutcome,
         E2eFleetReachLoopExit,
         E2eFleetReachLoopResult,
+        E2eFleetReachScenarioPreamble,
         E2ePerfLog,
         e2eAdaptivePollRampAfterIdle,
         e2eAttemptFirstFleetMoveOrCancel,
@@ -31,6 +32,7 @@ export 'e2e_test_shared.dart'
         e2eCheckExploreEnabledFromCivilianPanel,
         e2eDismissCtDialogShellIfPresent,
         e2eEnsureNonHomeFleetInNwAfterLoop,
+        e2eEnterFleetReachScenarioReady,
         e2eExploreAssignEnabledFromCivilianSnapshot,
         e2eExpectPanelTextsMatchSnapshot,
         e2eFleetReachDoneFromCtSnapshotOnly,
@@ -63,6 +65,12 @@ export 'e2e_test_shared.dart'
         kE2eDefaultFirstFleetMoveDialogOpenTimeout,
         kE2eDefaultFleetCivilianOpenAfterSheetClearPhase,
         kE2eDefaultFleetReachLoopMaxTurns,
+        kE2eDefaultFleetReachPreambleAfterBootstrapStep,
+        kE2eDefaultFleetReachPreambleAfterSplitFleetStep,
+        kE2eDefaultFleetReachPreambleBootstrapTimingPhase,
+        kE2eDefaultFleetReachPreambleLocale,
+        kE2eDefaultFleetReachPreambleMaxUiResponseWait,
+        kE2eDefaultFleetReachPreambleSurfaceSize,
         kE2eDefaultNavalMoveSegmentUiWait,
         e2ePumpUntil,
         e2ePumpUntilConditionOrIdle,
@@ -370,6 +378,43 @@ Future<void> ensureAllRelocated64pxPngsLoad() =>
 
 Future<void> ensureAllRelocated64pxPngsLoadSuiteOnce() =>
     e2eEnsureAllRelocated64pxPngsLoadSuiteOnce();
+
+/// Stable public name for [e2eEnterFleetReachScenarioReady] so the two
+/// fleet-reach `testWidgets` bodies in
+/// `new_game_fleet_reaches_new_world_e2e_test.dart` consume the AC1 barrel
+/// only (Refs GitHub #2336 AC1 / AC2 / Bottleneck 6). Forwards to the
+/// implementation in `e2e_test_shared_fleet_reach_scenario_preamble.dart`.
+///
+/// The call site injects the real `bootstrapForIntegrationTest` from
+/// `package:colonizethis_app/main.dart` so the shared module stays free of
+/// the app's main-entry import; the widget-test pin in
+/// `app/test/e2e_enter_fleet_reach_scenario_ready_test.dart` exercises the
+/// callable-parameter and AC1 barrel signature contracts.
+Future<E2eFleetReachScenarioPreamble> enterFleetReachScenarioReady(
+  WidgetTester tester, {
+  required String testName,
+  required Future<void> Function() bootstrapForIntegrationTest,
+  Duration maxUiResponseWait = kE2eDefaultFleetReachPreambleMaxUiResponseWait,
+  Duration wallClockCap = kE2eMaxWallClock,
+  Locale locale = kE2eDefaultFleetReachPreambleLocale,
+  Size surfaceSize = kE2eDefaultFleetReachPreambleSurfaceSize,
+  String bootstrapTimingPhase =
+      kE2eDefaultFleetReachPreambleBootstrapTimingPhase,
+  String afterBootstrapStep = kE2eDefaultFleetReachPreambleAfterBootstrapStep,
+  String afterSplitFleetStep =
+      kE2eDefaultFleetReachPreambleAfterSplitFleetStep,
+}) => e2eEnterFleetReachScenarioReady(
+  tester,
+  testName: testName,
+  bootstrapForIntegrationTest: bootstrapForIntegrationTest,
+  maxUiResponseWait: maxUiResponseWait,
+  wallClockCap: wallClockCap,
+  locale: locale,
+  surfaceSize: surfaceSize,
+  bootstrapTimingPhase: bootstrapTimingPhase,
+  afterBootstrapStep: afterBootstrapStep,
+  afterSplitFleetStep: afterSplitFleetStep,
+);
 
 /// Stable public name for [e2eFleetReachTurnLoop] so the two fleet-reach
 /// scenarios in `new_game_fleet_reaches_new_world_e2e_test.dart` consume the

@@ -2,9 +2,7 @@ import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:colonizethis_app/config/ct_e2e.dart';
 import 'package:colonizethis_app/config/ct_e2e_last_panel_snapshot.dart';
 import 'e2e_helpers.dart';
-import 'package:colonizethis_app/l10n/l10n.dart';
 import 'package:colonizethis_app/main.dart' show bootstrapForIntegrationTest;
-import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
 
@@ -19,49 +17,17 @@ void main() {
       '(≤$_kMaxNextTurnTapsForNwFleetReach Next turn taps)', (
     WidgetTester tester,
   ) async {
-    const testName = 'new_game_fleet_reaches_new_world';
-    final perf = E2ePerfLog(testName);
-    final testSw = Stopwatch()..start();
-    expect(
-      kCtE2EEnabled,
-      isTrue,
-      reason:
-          'Run with: flutter test integration_test/... --dart-define=CT_E2E=true',
-    );
-
-    await tester.binding.setSurfaceSize(const Size(1280, 720));
-    final bootstrapSw = Stopwatch()..start();
-    await bootstrapForIntegrationTest();
-    await tester.pump();
-    await e2eWaitForNewGameEntry(tester, perf: perf);
-    perf.timing('bootstrap_for_integration_test', bootstrapSw.elapsed);
-    await ensureAllRelocated64pxPngsLoadSuiteOnce();
-
-    final wallClock = Stopwatch()..start();
-    final ensureUnderWallClock = e2eMakeWallClockGuard(
-      testName: testName,
-      stopwatch: wallClock,
-      cap: _kFleetE2eMaxWallClock,
-    );
-
-    await bootstrapNewGameToMap(tester, perf: perf);
-    ensureUnderWallClock('after bootstrap');
-
-    final l10n = lookupAppLocalizations(const Locale('en'));
-
-    await splitHomeFleetOnce(
+    final preamble = await enterFleetReachScenarioReady(
       tester,
-      l10n,
-      perf: perf,
-      openNavalTimeout: _kMaxUiResponseWait,
-      bottomSheetCloseTimeout: _kMaxUiResponseWait,
+      testName: 'new_game_fleet_reaches_new_world',
+      bootstrapForIntegrationTest: bootstrapForIntegrationTest,
+      maxUiResponseWait: _kMaxUiResponseWait,
+      wallClockCap: _kFleetE2eMaxWallClock,
     );
-    await closeBottomSheet(
-      tester,
-      perf: perf,
-      overallTimeout: _kMaxUiResponseWait,
-    );
-    ensureUnderWallClock('after split fleet');
+    final perf = preamble.perf;
+    final testSw = preamble.testSw;
+    final l10n = preamble.l10n;
+    final ensureUnderWallClock = preamble.ensureUnderWallClock;
 
     final loopResult = await fleetReachTurnLoop(
       tester,
@@ -104,49 +70,17 @@ void main() {
   testWidgets(
     'post-bundle GitHub #1869: after NW fleet, Explorer Assign → Explore enabled',
     (WidgetTester tester) async {
-      const testName = 'new_game_fleet_explore_enabled_post_bundle';
-      final perf = E2ePerfLog(testName);
-      final testSw = Stopwatch()..start();
-      expect(
-        kCtE2EEnabled,
-        isTrue,
-        reason:
-            'Run with: flutter test integration_test/... --dart-define=CT_E2E=true',
-      );
-
-      await tester.binding.setSurfaceSize(const Size(1280, 720));
-      final bootstrapSw = Stopwatch()..start();
-      await bootstrapForIntegrationTest();
-      await tester.pump();
-      await e2eWaitForNewGameEntry(tester, perf: perf);
-      perf.timing('bootstrap_for_integration_test', bootstrapSw.elapsed);
-      await ensureAllRelocated64pxPngsLoadSuiteOnce();
-
-      final wallClock = Stopwatch()..start();
-      final ensureUnderWallClock = e2eMakeWallClockGuard(
-        testName: testName,
-        stopwatch: wallClock,
-        cap: _kFleetE2eMaxWallClock,
-      );
-
-      await bootstrapNewGameToMap(tester, perf: perf);
-      ensureUnderWallClock('after bootstrap');
-
-      final l10n = lookupAppLocalizations(const Locale('en'));
-
-      await splitHomeFleetOnce(
+      final preamble = await enterFleetReachScenarioReady(
         tester,
-        l10n,
-        perf: perf,
-        openNavalTimeout: _kMaxUiResponseWait,
-        bottomSheetCloseTimeout: _kMaxUiResponseWait,
+        testName: 'new_game_fleet_explore_enabled_post_bundle',
+        bootstrapForIntegrationTest: bootstrapForIntegrationTest,
+        maxUiResponseWait: _kMaxUiResponseWait,
+        wallClockCap: _kFleetE2eMaxWallClock,
       );
-      await closeBottomSheet(
-        tester,
-        perf: perf,
-        overallTimeout: _kMaxUiResponseWait,
-      );
-      ensureUnderWallClock('after split fleet');
+      final perf = preamble.perf;
+      final testSw = preamble.testSw;
+      final l10n = preamble.l10n;
+      final ensureUnderWallClock = preamble.ensureUnderWallClock;
 
       final loopResult = await fleetReachTurnLoop(
         tester,
