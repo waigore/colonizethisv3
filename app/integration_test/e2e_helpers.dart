@@ -23,6 +23,7 @@ export 'e2e_test_shared.dart'
         E2ePerfLog,
         e2eAdaptivePollRampAfterIdle,
         e2eAttemptFirstFleetMoveOrCancel,
+        e2eAwaitExploreEnabledFromCivilianPanel,
         e2eAwaitNwCoastalOrVisibleLandForBundledExplore,
         e2eBundledExploreRejectionDiagnostics,
         e2eCheckExploreEnabledFromCivilianPanel,
@@ -43,7 +44,9 @@ export 'e2e_test_shared.dart'
         e2ePickMoveDestinationAndConfirm,
         e2eTryNavalMoveSegment,
         e2ePlayerHasAnyNewWorldFoggedOrBetterFromCtSnapshot,
+        kE2eDefaultBundledExploreMaxTurnRetries,
         kE2eDefaultBundledExploreReadinessMaxTurns,
+        kE2eDefaultBundledExploreRetryIterationCounter,
         kE2eDefaultBundledExploreRetryLoopPhase,
         kE2eDefaultBundledExploreSweepWait,
         kE2eDefaultCtDialogShellCloseTimeout,
@@ -335,6 +338,27 @@ Future<bool> checkExploreEnabledFromCivilianPanel(
   maxUiResponseWait: maxUiResponseWait,
   afterSheetPanelsClearPhase: afterSheetPanelsClearPhase,
   phaseTimingLabel: phaseTimingLabel,
+);
+
+/// Stable public name for [e2eAwaitExploreEnabledFromCivilianPanel] so the
+/// post-bundle Explore scenario consumes the AC1 barrel only (Refs GitHub
+/// #2336 AC1 / AC2 / AC5 / Bottleneck 5). Forwards to the implementation
+/// in `e2e_test_shared_bundled_explore_retry.dart`.
+Future<bool> awaitExploreEnabledFromCivilianPanel(
+  WidgetTester tester,
+  AppLocalizations l10n, {
+  E2ePerfLog? perf,
+  Duration maxUiResponseWait = kE2eDefaultBundledExploreSweepWait,
+  int maxBoundedTurnRetries = kE2eDefaultBundledExploreMaxTurnRetries,
+  String retryIterationCounter =
+      kE2eDefaultBundledExploreRetryIterationCounter,
+}) => e2eAwaitExploreEnabledFromCivilianPanel(
+  tester,
+  l10n,
+  perf: perf,
+  maxUiResponseWait: maxUiResponseWait,
+  maxBoundedTurnRetries: maxBoundedTurnRetries,
+  retryIterationCounter: retryIterationCounter,
 );
 
 Future<void> ensureAllRelocated64pxPngsLoad() =>

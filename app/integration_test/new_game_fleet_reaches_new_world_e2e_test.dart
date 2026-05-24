@@ -217,32 +217,18 @@ void main() {
 
       await e2eTapNewWorldRegionTabIfPresent(tester);
 
-      var exploreEnabled = await checkExploreEnabledFromCivilianPanel(
+      // Linux CI can require more than three post-reveal turns before the
+      // Assign list surfaces an enabled Explore row for at least one explorer.
+      // Keep strict failure semantics, but widen the bounded retry window via
+      // the lifted [awaitExploreEnabledFromCivilianPanel] helper which carries
+      // the bounded retry-loop contract (Refs GitHub #2336 AC1 / AC2 / AC5 /
+      // Bottleneck 5).
+      final exploreEnabled = await awaitExploreEnabledFromCivilianPanel(
         tester,
+        l10n,
         perf: perf,
         maxUiResponseWait: _kMaxUiResponseWait,
       );
-      // Linux CI can require more than three post-reveal turns before the
-      // Assign list surfaces an enabled Explore row for at least one explorer.
-      // Keep strict failure semantics, but widen the bounded retry window.
-      const maxBoundedTurnRetries = 8;
-      for (
-        var retryIdx = 0;
-        !exploreEnabled && retryIdx < maxBoundedTurnRetries;
-        retryIdx++
-      ) {
-        // CI can lag reveal/suggestion propagation by a few turns.
-        // Keep assertion strict, but retry with a small bounded loop.
-        perf.bumpCounter('bundled_explore_retry_iterations');
-        await advanceOneHumanTurn(tester, l10n: l10n, perf: perf);
-        await dismissTransientUi(tester, perf: perf);
-        await e2eTapNewWorldRegionTabIfPresent(tester);
-        exploreEnabled = await checkExploreEnabledFromCivilianPanel(
-          tester,
-          perf: perf,
-          maxUiResponseWait: _kMaxUiResponseWait,
-        );
-      }
       if (!exploreEnabled) {
         if (!e2ePlayerHasAnyNewWorldFoggedOrBetterFromCtSnapshot(
           ctE2eNavalPanelSnapshot,
@@ -258,7 +244,7 @@ void main() {
         fail(
           'Post-bundle #1869 regression: Explorer Assign never surfaced an enabled '
           'Explore row after New World fleet confirmation and '
-          '$maxBoundedTurnRetries bounded Next turn retries.\n'
+          '$kE2eDefaultBundledExploreMaxTurnRetries bounded Next turn retries.\n'
           '$diag\n'
           'Last exception: ${tester.takeException()}',
         );
