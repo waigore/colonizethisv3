@@ -34,6 +34,7 @@ export 'e2e_test_shared.dart'
         e2eExploreAssignEnabledFromCivilianSnapshot,
         e2eExpectPanelTextsMatchSnapshot,
         e2eFleetReachDoneFromCtSnapshotOnly,
+        e2eFleetReachLoopExitTestTotalMetaLabel,
         e2eFleetReachTurnLoop,
         e2eHandleBundledExploreFailure,
         e2eHarnessDetectsNonHomeFleetInNewWorld,
@@ -375,7 +376,8 @@ Future<void> ensureAllRelocated64pxPngsLoadSuiteOnce() =>
 /// AC1 barrel only (Refs GitHub #2336 AC1 / AC2 / Bottleneck 4). Forwards
 /// to the implementation in `e2e_test_shared_panels.dart` — call sites map
 /// the returned [E2eFleetReachLoopResult.exit] to the legacy
-/// `result=reached_*` perf-timing meta labels themselves.
+/// `result=reached_*` perf-timing meta labels via
+/// [fleetReachLoopExitTestTotalMetaLabel].
 Future<E2eFleetReachLoopResult> fleetReachTurnLoop(
   WidgetTester tester,
   AppLocalizations l10n, {
@@ -391,6 +393,16 @@ Future<E2eFleetReachLoopResult> fleetReachTurnLoop(
   maxUiResponseWait: maxUiResponseWait,
   maxTurns: maxTurns,
 );
+
+/// Stable public name for [e2eFleetReachLoopExitTestTotalMetaLabel] so the
+/// fleet-reach scenario consumes the AC1 barrel only (Refs GitHub #2336 AC1
+/// / AC2 / Bottleneck 4). Forwards to the implementation in
+/// `e2e_test_shared_fleet_reach_loop_test_total_meta.dart`. Returns the
+/// legacy `result=<branch>` string for every early-return exit and `null`
+/// for [E2eFleetReachLoopExit.loopExhausted] so the caller falls through to
+/// the post-loop final-naval-check path.
+String? fleetReachLoopExitTestTotalMetaLabel(E2eFleetReachLoopExit exit) =>
+    e2eFleetReachLoopExitTestTotalMetaLabel(exit);
 
 /// Stable public name for [e2eExpectPanelTextsMatchSnapshot] so the
 /// snapshot-text panel scenarios in `new_game_full_turn_e2e_test.dart`

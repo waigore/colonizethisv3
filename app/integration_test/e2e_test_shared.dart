@@ -28,6 +28,7 @@ export 'e2e_test_shared_diagnostics.dart';
 export 'e2e_test_shared_dismiss_ct_dialog_shell.dart';
 export 'e2e_test_shared_final_naval_reach_check.dart';
 export 'e2e_test_shared_first_fleet_move.dart';
+export 'e2e_test_shared_fleet_reach_loop_test_total_meta.dart';
 export 'e2e_test_shared_panels.dart';
 
 /// Next interval after an idle poll pump in E2E busy-wait loops (25→50→75→100 ms).

@@ -71,56 +71,20 @@ void main() {
       maxUiResponseWait: _kMaxUiResponseWait,
       maxTurns: _kMaxNextTurnTapsForNwFleetReach,
     );
-    switch (loopResult.exit) {
-      case E2eFleetReachLoopExit.reachedSnapshotPrecheck:
-        perf.timing(
-          'test_total',
-          testSw.elapsed,
-          meta: 'result=reached_snapshot_precheck',
-        );
-        return;
-      case E2eFleetReachLoopExit.reachedSnapshotAfterDismiss:
-        perf.timing(
-          'test_total',
-          testSw.elapsed,
-          meta: 'result=reached_snapshot_after_dismiss',
-        );
-        return;
-      case E2eFleetReachLoopExit.reachedSnapshotAfterRegionTab:
-        // Legacy label: pre-lift loop emitted `reached_snapshot_precheck`
-        // here (not `..._after_region_tab`). Preserved byte-identical so
-        // downstream `E2E_TIMING|...|meta=result=...` log scrapers and
-        // dashboards keyed on the legacy label stay attributed to the
-        // same exit (Refs GitHub #2336 AC1 / AC2).
-        perf.timing(
-          'test_total',
-          testSw.elapsed,
-          meta: 'result=reached_snapshot_precheck',
-        );
-        return;
-      case E2eFleetReachLoopExit.reachedInLoop:
-        perf.timing(
-          'test_total',
-          testSw.elapsed,
-          meta: 'result=reached_in_loop',
-        );
-        return;
-      case E2eFleetReachLoopExit.reachedAfterMove:
-        perf.timing(
-          'test_total',
-          testSw.elapsed,
-          meta: 'result=reached_after_move',
-        );
-        return;
-      case E2eFleetReachLoopExit.reachedSnapshotAfterTurn:
-        perf.timing(
-          'test_total',
-          testSw.elapsed,
-          meta: 'result=reached_snapshot_after_turn',
-        );
-        return;
-      case E2eFleetReachLoopExit.loopExhausted:
-        break;
+    final earlyReturnMeta = fleetReachLoopExitTestTotalMetaLabel(
+      loopResult.exit,
+    );
+    if (earlyReturnMeta != null) {
+      // Non-null meta label means the loop took an early-return exit
+      // (snapshot detection during the loop, either before/after the move
+      // or before/after the region-tab settle, or any inner-loop reach
+      // detection). The lifted mapping preserves the legacy
+      // `reachedSnapshotAfterRegionTab → 'result=reached_snapshot_precheck'`
+      // quirk byte-for-byte; see
+      // [e2eFleetReachLoopExitTestTotalMetaLabel] for the historical
+      // context (Refs GitHub #2336 AC1 / AC2 / Bottleneck 4).
+      perf.timing('test_total', testSw.elapsed, meta: earlyReturnMeta);
+      return;
     }
 
     ensureUnderWallClock('before final naval check');
