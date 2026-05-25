@@ -40,7 +40,11 @@ export 'e2e_test_shared.dart'
         e2eEnterFleetReachScenarioReady,
         e2eEnterStandardE2eScenario,
         e2eExploreAssignEnabledFromCivilianSnapshot,
+        e2eExpectCivilianPanelMatchesE2eSnapshot,
+        e2eExpectNavalPanelMatchesE2eSnapshot,
         e2eExpectPanelTextsMatchSnapshot,
+        e2eExpectProductionPanelMatchesE2eSnapshot,
+        e2eExpectProvincePanelMatchesE2eSnapshot,
         e2eFleetReachDoneFromCtSnapshotOnly,
         e2eFleetReachLoopExitTestTotalMetaLabel,
         e2eFleetReachTurnLoop,
@@ -71,6 +75,11 @@ export 'e2e_test_shared.dart'
         kE2eDefaultCtDialogShellClosePhase,
         kE2eDefaultExpectPanelTextsPhase,
         kE2eDefaultExpectPanelTextsTimeout,
+        kE2eExpectCivilianPanelTextsPhase,
+        kE2eExpectNavalPanelTextsPhase,
+        kE2eExpectProductionPanelTextsPhase,
+        kE2eExpectProvincePanelTextsPhase,
+        kE2eExpectProvincePanelTextsTimeout,
         kE2eDefaultFinalNavalReachCheckUiWait,
         kE2eDefaultFirstFleetMoveConfirmReadyTimeout,
         kE2eDefaultFirstFleetMoveDialogCloseTimeout,
@@ -617,6 +626,66 @@ Future<void> expectPanelTextsMatchSnapshot(
   perf: perf,
   buildAlternativeExpected: buildAlternativeExpected,
 );
+
+/// Stable public name for [e2eExpectCivilianPanelMatchesE2eSnapshot] so the
+/// full-turn scenario consumes the AC1 barrel only (Refs GitHub #2336 AC1 /
+/// AC2 / Bottleneck 6). Forwards to the implementation in
+/// `e2e_test_shared_panel_text_match.dart`. Encapsulates the civilian-panel
+/// root key, [ctE2eCivilianPanelSnapshot] read, [civilianUnitsPanelExpectedTexts]
+/// builder, and `wait_until_found_civilian_panel` phase label.
+Future<void> expectCivilianPanelMatchesE2eSnapshot(
+  WidgetTester tester,
+  AppLocalizations l10n, {
+  E2ePerfLog? perf,
+}) => e2eExpectCivilianPanelMatchesE2eSnapshot(tester, l10n, perf: perf);
+
+/// Stable public name for [e2eExpectNavalPanelMatchesE2eSnapshot] so the
+/// full-turn scenario consumes the AC1 barrel only (Refs GitHub #2336 AC1 /
+/// AC2 / Bottleneck 6). Forwards to the implementation in
+/// `e2e_test_shared_panel_text_match.dart`. Encapsulates the naval-panel
+/// root key, [ctE2eNavalPanelSnapshot] read,
+/// [navalUnitsPanelExpectedTexts] builder, `wait_until_found_naval_panel`
+/// phase label, and the `fleetTilesExpanded`-aware `anyOf` fallback that
+/// keeps post-tap settles on the collapsed mirror green.
+Future<void> expectNavalPanelMatchesE2eSnapshot(
+  WidgetTester tester,
+  AppLocalizations l10n, {
+  required bool expanded,
+  E2ePerfLog? perf,
+}) => e2eExpectNavalPanelMatchesE2eSnapshot(
+  tester,
+  l10n,
+  expanded: expanded,
+  perf: perf,
+);
+
+/// Stable public name for [e2eExpectProductionPanelMatchesE2eSnapshot] so
+/// the full-turn scenario consumes the AC1 barrel only (Refs GitHub #2336
+/// AC1 / AC2 / Bottleneck 6). Forwards to the implementation in
+/// `e2e_test_shared_panel_text_match.dart`. Encapsulates the production-panel
+/// root key, [ctE2eProductionPanelSnapshot] read,
+/// [productionPanelWideExpectedTexts] builder, and
+/// `wait_until_found_production_panel` phase label.
+Future<void> expectProductionPanelMatchesE2eSnapshot(
+  WidgetTester tester,
+  AppLocalizations l10n, {
+  E2ePerfLog? perf,
+}) => e2eExpectProductionPanelMatchesE2eSnapshot(tester, l10n, perf: perf);
+
+/// Stable public name for [e2eExpectProvincePanelMatchesE2eSnapshot] so the
+/// capital-panel scenario consumes the AC1 barrel only (Refs GitHub #2336
+/// AC1 / AC2 / Bottleneck 6). Forwards to the implementation in
+/// `e2e_test_shared_panel_text_match.dart`. Encapsulates the province-panel
+/// root key, [ctE2eLastPanelSnapshot] read,
+/// [provincePanelWideLayoutExpectedTexts] builder,
+/// `open_panel_province` phase label, and the wider 30s timeout used by the
+/// pre-lift inline assertion (the province panel mounts later in its
+/// scenario).
+Future<void> expectProvincePanelMatchesE2eSnapshot(
+  WidgetTester tester,
+  AppLocalizations l10n, {
+  E2ePerfLog? perf,
+}) => e2eExpectProvincePanelMatchesE2eSnapshot(tester, l10n, perf: perf);
 
 /// Stable public name for [e2eEnsureNonHomeFleetInNwAfterLoop] so the two
 /// fleet-reach scenarios in `new_game_fleet_reaches_new_world_e2e_test.dart`

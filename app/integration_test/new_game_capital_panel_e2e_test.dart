@@ -1,10 +1,8 @@
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:colonizethis_app/config/ct_e2e.dart';
-import 'package:colonizethis_app/config/ct_e2e_last_panel_snapshot.dart';
 import 'package:colonizethis_app/features/game/flame/game_screen_shared.dart';
 import 'e2e_helpers.dart';
 import 'package:colonizethis_app/main.dart' show bootstrapForIntegrationTest;
-import 'package:colonizethis_app/test_support/province_panel_e2e_expected_lines.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
 
@@ -46,16 +44,12 @@ void main() {
     expect(find.byKey(kCtE2EOpenCapitalProvinceDetailKey), findsOneWidget);
     await tester.tap(find.byKey(kCtE2EOpenCapitalProvinceDetailKey));
 
-    await expectPanelTextsMatchSnapshot(
-      tester,
-      panelRootKey: kCtE2EProvincePanelRootKey,
-      snapshot: ctE2eLastPanelSnapshot,
-      buildExpected: () =>
-          provincePanelWideLayoutExpectedTexts(ctE2eLastPanelSnapshot!, l10n),
-      phaseName: 'open_panel_province',
-      timeout: const Duration(seconds: 30),
-      perf: perf,
-    );
+    // Pre-lift this was an inline `expectPanelTextsMatchSnapshot` call with
+    // an explicit 30s timeout and the `open_panel_province` phase label;
+    // both are captured byte-identically by
+    // `expectProvincePanelMatchesE2eSnapshot` (Refs GitHub #2336 AC1 / AC2 /
+    // Bottleneck 6).
+    await expectProvincePanelMatchesE2eSnapshot(tester, l10n, perf: perf);
 
     expect(find.byKey(kCtE2EProvincePanelRootKey), findsOneWidget);
     ensureUnderWallClock('test complete');
