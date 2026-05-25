@@ -774,6 +774,15 @@ const Duration kE2eDefaultBundledExploreSweepWait = Duration(seconds: 5);
 /// - When the sweep exhausts [maxPanelSweepSteps] (defaults to **16**, the
 ///   narrowed bound from issue #2336 § Bottleneck 5 / AC1; the pre-#2336
 ///   helper used 24), returns `false`.
+/// - **Fast-path exit when the panel has stabilized** (Refs GitHub #2336
+///   § Bottleneck 5 / AC5 / Proposed work item 5): when two consecutive
+///   sweep steps add zero new `Assign` widgets to the `visitedAssignWidgets`
+///   identity set, the helper returns `false` without paying the remaining
+///   drag-and-pump cycles. The two-step buffer absorbs a single transient
+///   frame where freshly dragged rows have not yet attached to the tree,
+///   matching the conservative "settle once before declaring stable"
+///   contract the rest of the bundled-Explore retry path uses. A single
+///   empty step never short-circuits.
 /// - Between sweep steps, drags the panel `Scrollable` upward by
 ///   `Offset(0, -180)` and pumps a single 25 ms frame so the next iteration
 ///   can short-circuit on freshly revealed `Assign` rows without paying a
@@ -833,16 +842,26 @@ Future<bool> e2eAnyExplorerHasEnabledExploreAssignFleet(
   }
 
   final visitedAssignWidgets = <int>{};
+  // Refs GitHub #2336 § Bottleneck 5 / AC5 / Proposed work item 5: track
+  // consecutive sweep steps that added zero new Assign widgets so the helper
+  // can exit early once the panel has stopped revealing new rows. A
+  // single empty step is tolerated to absorb one transient post-drag frame
+  // before the freshly dragged rows are attached to the element tree; a
+  // second consecutive empty step is treated as evidence the panel has
+  // stabilized and the remaining sweep budget is unproductive.
+  var consecutiveEmptyStepsAfterDrag = 0;
   for (var step = 0; step < maxPanelSweepSteps; step++) {
     final assignCandidates = find
         .descendant(of: listView, matching: find.text('Assign'))
         .evaluate()
         .toList();
+    var newAssignWidgetsThisStep = 0;
     for (final assignElement in assignCandidates) {
       final marker = identityHashCode(assignElement.widget);
       if (!visitedAssignWidgets.add(marker)) {
         continue;
       }
+      newAssignWidgetsThisStep++;
       final assignFinder = find.byWidget(assignElement.widget);
       try {
         await tester.ensureVisible(assignFinder);
@@ -862,6 +881,15 @@ Future<bool> e2eAnyExplorerHasEnabledExploreAssignFleet(
         await tester.binding.handlePopRoute();
         await waitForAssignSheetDismissed();
       }
+    }
+
+    if (newAssignWidgetsThisStep == 0) {
+      consecutiveEmptyStepsAfterDrag++;
+      if (consecutiveEmptyStepsAfterDrag >= 2) {
+        return false;
+      }
+    } else {
+      consecutiveEmptyStepsAfterDrag = 0;
     }
 
     await tester.drag(panelScrollable, const Offset(0, -180));

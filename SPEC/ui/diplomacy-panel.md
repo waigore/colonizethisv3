@@ -39,7 +39,7 @@ Tapping anywhere on a faction row (or an explicit “Details” affordance in th
 
 ## Diplomacy Detail view (per faction)
 
-When the user opens the detail view for a faction `B` while controlling Great Power `A`, the UI shows:
+Widget contract, layout, navigation, and acceptance criteria: **[diplomacy-detail-screen.md](diplomacy-detail-screen.md)**. When the user opens the detail view for a faction `B` while controlling Great Power `A`, the UI shows:
 
 - **Header:** Faction name and type (GP / Minor / Tribe), and the same current relation summary as the row (relation state, one-word relation).
 - **History panel:** A vertical list of **diplomatic history events** involving `A` and `B`, newest first. Each entry renders:

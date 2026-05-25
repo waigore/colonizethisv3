@@ -16,6 +16,7 @@ import 'package:widgetbook/widgetbook.dart';
 import '../config/themes.dart';
 import '../providers/app_event_bus_provider.dart';
 import '../providers/games_provider.dart';
+import '../providers/map_province_panel_provider.dart';
 import '../providers/map_view_provider.dart';
 import '../features/game/combat/combat_mode_choice_dialog.dart';
 import '../features/game/combat/quick_battle_action_selector.dart';
@@ -27,19 +28,23 @@ import '../features/game/widgets/diplomacy_dialogs.dart';
 import '../features/game/widgets/diplomacy_panel.dart';
 import '../features/game/widgets/military_units_panel.dart';
 import '../features/game/widgets/naval_units_panel.dart';
+import '../features/game/widgets/pause_menu_panel.dart';
 import '../features/game/widgets/production_commodity_breakdown_dialog.dart';
 import '../features/game/widgets/production_panel.dart';
 import '../features/game/widgets/production_panel_demo_data.dart';
 import '../features/game/widgets/province_sea_zone_detail_overlay.dart';
 import '../features/game/widgets/province_overlay_demo_data.dart';
 import '../features/game/widgets/tech_tree_widget.dart';
+import '../features/game/screens/diplomacy_detail_screen.dart';
 import '../features/game/screens/technology_screen.dart';
+import '../features/game/flame/game_map_narrow_detail_overlay.dart';
 import '../features/game/dialogue/call_to_arms_dialogue_overlay.dart';
 import '../features/game/dialogue/ct_dialogue_view.dart';
 import '../features/game/dialogue/game_start_intro_overlay.dart';
 import '../features/game/dialogue/intervention_dialogue_overlay.dart';
 import '../features/game/dialogue/overture_dialogue_overlay.dart';
 import '../features/game/flame/game_screen.dart';
+import '../features/game/flame/game_side_menu.dart';
 import '../features/game/flame/victory_overlay.dart';
 import '../features/game/flame/region_map_component.dart'
     show CtMapVisibilityMode;
@@ -66,6 +71,7 @@ part 'catalog_part1.dart';
 part 'catalog_part2.dart';
 part 'catalog_part3.dart';
 part 'catalog_part4.dart';
+part 'catalog_part5.dart';
 
 Unit? _unitByIdForCatalog(Game game, String unitId) {
   for (final u in game.worldState.oldWorld.units) {
@@ -146,6 +152,10 @@ class CtWidgetbookApp extends StatelessWidget {
         ...newGameLeaderSelectionDialogDirectories,
         ...shellScreenDirectories,
         ...gameScreenDirectories,
+        ...pauseMenuPanelDirectories,
+        ...gameSideMenuDirectories,
+        ...gameMapNarrowDetailOverlaySlotDirectories,
+        ...diplomacyDetailScreenDirectories,
       ],
       lightTheme: AppThemes.colonial,
       darkTheme: AppThemes.colonial,

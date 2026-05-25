@@ -18,6 +18,8 @@ The top bar shows:
 
 ## Hamburger side menu
 
+Widget contract and navigation: **[game-side-menu.md](game-side-menu.md)**. Pause bottom-sheet variant: **[pause-menu-panel.md](pause-menu-panel.md)**. Narrow map province/sea detail host: **[game-map-narrow-detail-overlay-slot.md](game-map-narrow-detail-overlay-slot.md)**.
+
 - **Availability:** Available at all viewport sizes (both narrow and wide).
 - **Open:** Swipe in from the **left** edge of the **map** (narrow strip), or tap the **hamburger** in the top bar.
 - **Close:** Swipe the menu to the **left** (drag to close), tap a **close (×)** button in the menu, tap outside the menu (on scrim), or press **Escape**.
