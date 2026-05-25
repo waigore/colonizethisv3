@@ -205,18 +205,19 @@ Future<void> e2eOpenProductionPanel(
       continue;
     }
 
-    if (find.byType(CtDialogShell).evaluate().isNotEmpty) {
-      await e2eDismissTransientUi(tester, perf: perf);
-      if (find.byType(CtDialogShell).evaluate().isNotEmpty) {
-        await tester.binding.handlePopRoute();
-        await e2ePumpUntil(
-          tester,
-          () => find.byType(CtDialogShell).evaluate().isEmpty,
-          timeout: const Duration(seconds: 5),
-          perf: perf,
-          phaseName: 'pump_until_production_path_shell_cleared',
-        );
-      }
+    // Shared two-step CtDialogShell dismissal: broad-spectrum dismiss first,
+    // then `handlePopRoute()` + bounded `e2ePumpUntil` when the shell
+    // survives. Lifted into [e2eDismissCtDialogShellWithPopRouteEscalation]
+    // so the escalation recipe is single-source-of-truth and pinned by
+    // `app/test/e2e_dismiss_ct_dialog_shell_with_pop_route_escalation_test.dart`.
+    // The default `escalationPhase` preserves the legacy
+    // `pump_until_production_path_shell_cleared` perf-timing label so
+    // downstream `E2E_TIMING|phase=...` log scrapers stay attributed to the
+    // same step (Refs GitHub #2336 AC1 / AC2 / AC10).
+    if (await e2eDismissCtDialogShellWithPopRouteEscalation(
+      tester,
+      perf: perf,
+    )) {
       idlePollMs = 25;
       continue;
     }

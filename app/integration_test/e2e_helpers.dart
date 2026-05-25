@@ -35,6 +35,7 @@ export 'e2e_test_shared.dart'
         e2eCheckExploreEnabledFromCivilianPanel,
         e2eClosePanelOpenerSheetAndAwaitOpener,
         e2eDismissCtDialogShellIfPresent,
+        e2eDismissCtDialogShellWithPopRouteEscalation,
         e2eEnsureNonHomeFleetInNwAfterLoop,
         e2eEnsureVisibleAndTapHitTestable,
         e2eEnterFleetReachScenarioReady,
@@ -73,6 +74,8 @@ export 'e2e_test_shared.dart'
         kE2eDefaultCivilianWorkTileClearTimeout,
         kE2eDefaultCtDialogShellCloseTimeout,
         kE2eDefaultCtDialogShellClosePhase,
+        kE2eDefaultCtDialogShellEscalationPhase,
+        kE2eDefaultCtDialogShellEscalationTimeout,
         kE2eDefaultExpectPanelTextsPhase,
         kE2eDefaultExpectPanelTextsTimeout,
         kE2eExpectCivilianPanelTextsPhase,
@@ -280,6 +283,26 @@ Future<bool> dismissCtDialogShellIfPresent(
   perf: perf,
   shellCloseTimeout: shellCloseTimeout,
   phaseName: phaseName,
+);
+
+/// Stable public name for [e2eDismissCtDialogShellWithPopRouteEscalation]
+/// (Refs GitHub #2336 AC1 / AC2 / AC10). Forwards to the implementation in
+/// `e2e_test_shared_dismiss_ct_dialog_shell_escalation.dart`. The shared
+/// two-step CtDialogShell dismissal (broad-spectrum [dismissTransientUi]
+/// → `handlePopRoute()` + bounded [e2ePumpUntil] when the shell survives)
+/// is consumed indirectly by [openProductionPanel] today; the alias is
+/// re-exposed so future panel openers that need the escalation can compose
+/// the byte-equivalent recipe without duplicating the inline block.
+Future<bool> dismissCtDialogShellWithPopRouteEscalation(
+  WidgetTester tester, {
+  E2ePerfLog? perf,
+  Duration escalationTimeout = kE2eDefaultCtDialogShellEscalationTimeout,
+  String escalationPhase = kE2eDefaultCtDialogShellEscalationPhase,
+}) => e2eDismissCtDialogShellWithPopRouteEscalation(
+  tester,
+  perf: perf,
+  escalationTimeout: escalationTimeout,
+  escalationPhase: escalationPhase,
 );
 
 Future<void> openCivilianPanel(
