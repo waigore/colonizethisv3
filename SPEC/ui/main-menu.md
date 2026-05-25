@@ -1,6 +1,8 @@
 # Main Menu
 
-**SPEC/ui** — Main menu screen. Authority: UXD 03a (Main Menu and Shell). Catalog widget: CtMainMenu.
+**Screen ID:** `SHEL10002` — stable; do not reassign.
+**SPEC/ui** — Main menu screen (CtMainMenu). Implementation: `app/lib/widgets/main_menu.dart`.
+**Widgetbook:** `Main Menu` → `app/lib/widgetbook/catalog.dart`. Authority: UXD 03a (Main Menu and Shell).
 
 ---
 
@@ -22,11 +24,53 @@ The CtMainMenu widget is presentational and accepts the following parameters. Th
 
 ---
 
+## Trigger conditions
+
+- **Host:** [`shell-screen.md`](shell-screen.md) at `Routes.shell` always mounts `CtMainMenu` with shell-supplied callbacks.
+- **Return-from-game:** Pause exit or [`victory-overlay.md`](victory-overlay.md) navigates to shell; menu rebuilds with updated `resumeGameVisible`.
+
+---
+
 ## How this spec satisfies UXD 03a
 
 **User stories.** The main menu supports: single tap **New Game** (one action to start fresh); **Load Game** (continue or pick a save); **Settings** (open from menu); **Quit** (exit app). Return-from-in-game is satisfied by the shell/navigation: pause and Victory Screen (03l) navigate back to this screen, which is the destination.
 
-**Acceptance criteria.** (1) **Visibility:** The app shell shows the Main Menu as the first screen after any splash; the widget displays New Game, Load Game, Settings, and Quit, and optionally **Resume game** (see below). (2) **Resume game:** When a valid auto-save exists (`SPEC/program/save-load.md` § Auto-save slot), the shell sets `resumeGameVisible` to true; the widget shows **Resume game** **below New Game** and above Load Game. When no valid auto-save exists, `resumeGameVisible` is false and the widget does not show **Resume game**. (3) **Load Game:** When no manual saves exist, Load Game is disabled and shows explanatory tooltip or helper text; when saves exist, it is enabled. **Resume game** visibility is independent of manual saves. (4) **Navigation:** The widget does not perform routing; it exposes callbacks (`onNewGame`, `onResumeGame`, `onLoadGame`, `onSettings`, `onQuit`). The shell wires: New Game → **combined nation & leader dialog** (`OpenDialogEvent` id `new_game_leader_selection`, `NewGameLeaderSelectionDialog`; same six-slot rules as [Game Setup](game-setup.md) § Shell new game dialog) → [Game Initializing](game-initializing.md) → [Empire overview](empire-overview.md); **Resume game** → load auto-save slot → Empire overview (same entry conditions as a normal load); Load Game → Load list (03b) → Empire overview on load; Settings → Settings (03c); Quit → app exit. (5) **Return from game:** Pause "Exit to Main Menu" and Victory "Return to Main Menu" both navigate to this screen; the shell clears in-memory game state as needed. The shell re-evaluates `resumeGameVisible` when the menu is shown so **Resume game** appears immediately if an auto-save was written during play (no app restart).
+**Acceptance criteria (Given–When–Then).**
+
+Visibility:
+
+- Given the app shell has finished initialisation and any splash screen has dismissed, when the shell mounts the first user-facing screen, then the UI layer renders `CtMainMenu` as that first screen.
+- Given `CtMainMenu` is mounted in any `state` (`default`, `afterVictory`, `noSaves`), when the user views the menu, then the UI layer displays the **New Game**, **Load Game**, **Settings**, and **Quit** controls.
+
+Resume game visibility:
+
+- Given a valid auto-save slot exists per `SPEC/program/save-load.md` § Auto-save slot, when the shell builds `CtMainMenu`, then the shell passes `resumeGameVisible: true` to the widget.
+- Given `CtMainMenu` receives `resumeGameVisible: true`, when the widget renders the button column, then the UI layer renders the **Resume game** control between **New Game** (immediately above) and **Load Game** (immediately below).
+- Given no valid auto-save slot exists per `SPEC/program/save-load.md` § Auto-save slot, when the shell builds `CtMainMenu`, then the shell passes `resumeGameVisible: false` to the widget.
+- Given `CtMainMenu` receives `resumeGameVisible: false`, when the widget renders the button column, then the UI layer renders no **Resume game** control (the control is omitted, not merely disabled).
+
+Load Game state:
+
+- Given the save store contains zero manual save slots, when the widget renders `CtMainMenu`, then the UI layer renders the **Load Game** control as disabled and attaches an explanatory tooltip or helper text indicating no saves are available.
+- Given the save store contains at least one manual save slot, when the widget renders `CtMainMenu`, then the UI layer renders the **Load Game** control as enabled.
+- Given the **Resume game** control's visibility is governed solely by the auto-save slot, when the presence of manual saves changes (added or removed), then the shell does not change `resumeGameVisible` in response (Resume game visibility remains independent of manual saves).
+
+Navigation (widget exposes callbacks; shell performs routing):
+
+- Given `CtMainMenu` is rendered with non-null `onNewGame`, when the user taps **New Game**, then the widget invokes `onNewGame` and performs no routing inside the widget itself.
+- Given the shell has wired `onNewGame`, when `onNewGame` fires, then the shell emits `OpenDialogEvent(id: 'new_game_leader_selection')` to mount `NewGameLeaderSelectionDialog` per [Game Setup](game-setup.md) § Shell new game dialog, then on confirm navigates to [Game Initializing](game-initializing.md) and on initialisation complete to [Empire overview](empire-overview.md).
+- Given `CtMainMenu` is rendered with `resumeGameVisible: true` and a non-null `onResumeGame`, when the user taps **Resume game**, then the widget invokes `onResumeGame`.
+- Given the shell has wired `onResumeGame`, when `onResumeGame` fires, then the shell loads the auto-save slot under the same entry conditions as a normal load and then navigates to [Empire overview](empire-overview.md).
+- Given the **Load Game** control is enabled and `CtMainMenu` is rendered with non-null `onLoadGame`, when the user taps **Load Game**, then the widget invokes `onLoadGame`.
+- Given the shell has wired `onLoadGame`, when `onLoadGame` fires, then the shell navigates to the Load list (UXD 03b) and, on a successful load selection, navigates to [Empire overview](empire-overview.md).
+- Given `CtMainMenu` is rendered with non-null `onSettings`, when the user taps **Settings**, then the widget invokes `onSettings` and the shell navigates to the Settings screen (UXD 03c).
+- Given `CtMainMenu` is rendered with non-null `onQuit`, when the user taps **Quit**, then the widget invokes `onQuit` and the shell exits the application.
+
+Return from game and resume visibility refresh:
+
+- Given the user is in the pause menu during an active game, when the user activates **Exit to Main Menu**, then the shell clears in-memory game state and navigates back to `CtMainMenu`.
+- Given the user is on the Victory Screen (UXD 03l), when the user activates **Return to Main Menu**, then the shell clears in-memory game state and navigates back to `CtMainMenu`.
+- Given an auto-save slot was written during play and the user has returned to the main menu without restarting the app, when the shell mounts `CtMainMenu`, then the shell re-evaluates `resumeGameVisible` against the current auto-save slot so that **Resume game** appears immediately (no app restart required).
 
 **Debug indicator formatting.** `CT_DEBUG_CONSOLE` is the sole mode flag for display suffix behavior. The shell must route version display through the shared debug-aware formatter; when the compile-time flag is true, all user-visible app version labels append ` (debug)` as a terminal suffix, and when false/undefined, labels remain unchanged.
 
@@ -38,7 +82,7 @@ The CtMainMenu widget is presentational and accepts the following parameters. Th
 
 ---
 
-## Wireframe
+## Layout / wireframe
 
 Positions, layout, and hierarchy (per UXD 03a; 44dp min touch targets).
 
@@ -66,6 +110,37 @@ Positions, layout, and hierarchy (per UXD 03a; 44dp min touch targets).
 **Layout (pixel-art variant):** The menu content column is constrained to a **maximum width of 400 dp** (content only; padding is additional). Buttons and logo area use this width so that the button asset is never upscaled on typical screens. Content is **centered** (e.g. `Center` + `ConstrainedBox(maxWidth: 400)` in code). All buttons use `CtNinePatchButton`; **Material buttons (ElevatedButton, TextButton, etc.) are not permitted for this screen.**
 
 **Mobile:** See [mobile-adaptation.md](mobile-adaptation.md). The main menu scrolls when the viewport is short (wrap content in `SingleChildScrollView`). No breakpoint layout change; vertical list suits narrow width. Safe area and 44 dp touch targets apply.
+
+---
+
+## Behavior
+
+### Incoming (what shows this UI)
+
+| Source | Condition | Result |
+|--------|-----------|--------|
+| `ShellScreen` | `Routes.shell` is active | `CtMainMenu` fills the route with shell callbacks. |
+
+### User actions → outcomes
+
+| Control / gesture | When enabled | Emits / calls | Side effects |
+|-------------------|--------------|---------------|--------------|
+| New Game | Always | `onNewGame` | Shell opens leader-selection dialog. |
+| Resume game | `resumeGameVisible == true` | `onResumeGame` | Shell loads auto-save and navigates to game. |
+| Load Game | Saves exist | `onLoadGame` | Shell loads game or no-op when disabled. |
+| Settings | Always | `onSettings` | Shell opens Settings (stub). |
+| Quit | Always | `onQuit` | App exit. |
+
+---
+
+## States and variants
+
+| ID | Variant | Trigger | Render difference |
+|----|---------|---------|-------------------|
+| `SHEL10002` | `default` | `state == default` | No subtitle; Load enabled when saves exist. |
+| `SHEL10002a` | `afterVictory` | `state == afterVictory` | Subtitle "Congratulations, you won your last game." |
+| `SHEL10002b` | `noSaves` | `state == noSaves` | Load disabled with helper/tooltip. |
+| — | `plain` / `pixelArt` | `variant` param | Pixel-art assets per tables below when `pixelArt`. |
 
 ---
 
@@ -176,6 +251,20 @@ For each asset, the **exact** wording used in PixelLab is recorded below so rege
 
 ---
 
-## Widget catalog
+## Components
 
-Once implemented, the main menu is registered in `app/widget_catalog.json` as CtMainMenu (category: screen, source: pipeline), with `dart_file_path` and optional `widgetbook_story_path` for discovery.
+- `CtMainMenu` — presentational menu (`app/lib/widgets/main_menu.dart`).
+- `CtNinePatchButton`, `CtScreenShell` — pixel-art catalog per [pixel-art-ui-catalog.md](pixel-art-ui-catalog.md).
+- Registered in `app/widget_catalog.json` as CtMainMenu (category: screen).
+
+---
+
+## Widgetbook
+
+Folder: **Main Menu** (`app/lib/widgetbook/catalog.dart`). Use cases: **Default**, **After victory**, **No saves**, **Pixel art (mobile)** per variant table.
+
+---
+
+## Acceptance criteria
+
+See **How this spec satisfies UXD 03a** above for full Given–When–Then ACs. Automated tests: `app/test/screen_spec_acceptance_test.dart`.

@@ -1,6 +1,66 @@
 # Technology Panel (Research Slots)
 
-**SPEC/ui** — App technology panel: research slots and assignment. Game rules: [tech-tree.md](../game/tech-tree.md), [research-state.md](../game/research-state.md). Placement: [tech-tree-widget.md](tech-tree-widget.md) (slots tab within Technology flow).
+**Screen ID:** `GAME40001` — stable; do not reassign.
+**SPEC/ui** — Technology panel: research slots and assignment. Implementation: `app/lib/features/game/screens/technology_screen.dart`.
+**Widgetbook:** `Tech Tree` → `app/lib/widgetbook/catalog.dart`. Game rules: [tech-tree.md](../game/tech-tree.md), [research-state.md](../game/research-state.md). Placement: [tech-tree-widget.md](tech-tree-widget.md) (slots tab).
+
+---
+
+## Widget contract
+
+Technology screen hosts research slots UI: slot count from `player.researchSlots`; assignment updates `Orders.researchOrdersByPlayerId`.
+
+---
+
+## Trigger conditions
+
+- **Toolbar / route:** Technology flow opened from in-game shell (Slots tab within technology screen).
+
+---
+
+## Layout / wireframe
+
+Slots tab: vertical list of slot rows (label, assigned tech + progress, Cancel / Choose tech). Choose-tech opens dialog or bottom sheet listing researchable techs only.
+
+---
+
+## Behavior
+
+### Incoming (what shows this UI)
+
+| Source | Condition | Result |
+|--------|-----------|--------|
+| Technology route | Player opens Technology → Slots tab | Research slots panel visible. |
+
+### User actions → outcomes
+
+| Control / gesture | When enabled | Emits / calls | Side effects |
+|-------------------|--------------|---------------|--------------|
+| Choose tech | Slot empty or re-assign | Opens filtered tech list | Assigns `ResearchOrder` on select. |
+| Cancel | Slot assigned | Clears slot order | Progress lost on resolution per research-resolution. |
+
+---
+
+## States and variants
+
+| Variant | Trigger | Render difference |
+|---------|---------|-------------------|
+| Empty chooser | No researchable techs | Message "No techs available to research". |
+| Assigned slot | `ResearchOrder` present | Shows tech id + progress. |
+
+---
+
+## Components
+
+- Technology screen widgets, choose-tech dialog, [tech-tree-widget.md](tech-tree-widget.md).
+
+---
+
+## Widgetbook
+
+Folder: **Tech Tree** — stories for slots tab with fixture player research state.
+
+---
 
 ## Purpose
 

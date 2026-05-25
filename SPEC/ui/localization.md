@@ -29,8 +29,9 @@ All user-visible copy in the Flutter app is localized via Flutter’s built-in i
 - Short symbol tokens are allowed where localization does not apply (for example punctuation-only or operator-like tokens).
 - Localized strings that are user-visible copy are not exempt solely because they appear in debug, widgetbook, or dev-facing screens under `app/lib/**`.
 
-## Acceptance criteria
-- **AC1:** Any visible UI string in `app/lib/**` is sourced from `AppLocalizations`.
-- **AC2:** Parameterized/dynamic UI copy uses `AppLocalizations` parameters (no in-widget interpolation for user-visible strings).
-- **AC3:** Tooltips, dialogs, and screen titles are localized.
+## Acceptance criteria (Given–When–Then)
+
+- **AC1 — Visible UI strings sourced from `AppLocalizations`.** Given any Flutter widget under `app/lib/**` that exposes user-visible copy through one of the CI-gated slots listed in `SPEC/program/localization.md` (`Text` / `SelectableText` content, `Tooltip.message`, `InputDecoration.labelText` / `hintText`, `Semantics.label` / `value` / `hint` / `tooltip`, `SnackBarAction.label`), when `tool/check_app_hardcoded_ui_strings.dart` is executed via `dart run tool/ct_repo_lint.dart` with the app rule enabled, then every such slot resolves to a value sourced from `AppLocalizations` (no bare string literal that is not on the allowed-literal exception list, and no `ignore_for_file` suppression) and the lint exits with code `0`.
+- **AC2 — Parameterized/dynamic UI copy uses `AppLocalizations` parameters.** Given any user-visible string under `app/lib/**` that interpolates runtime values (turn numbers, names, counts, etc.), when the widget is rendered, then the string is produced by calling an `AppLocalizations` method that accepts the runtime values as parameters (for example `l10n.endTurnConfirm(turnNumber)`), and no widget composes the localized string via Dart string interpolation, `+` concatenation, or `StringBuffer` writes on the user-visible side.
+- **AC3 — Tooltips, dialog text, and screen titles are localized.** Given any tooltip (`Tooltip.message`), dialog title or body (`AlertDialog` / `SimpleDialog` / custom dialog headers and content), or screen-title element rendered under `app/lib/**`, when the widget tree is built, then every user-visible string in those positions is sourced from `AppLocalizations` (subject to the **Allowed literal exceptions** list above), and `tool/check_app_hardcoded_ui_strings.dart` reports zero violations for those slots.
 

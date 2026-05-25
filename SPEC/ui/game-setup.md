@@ -1,6 +1,8 @@
 # Game Setup
 
-**SPEC/ui** — Game Setup screen. Authority: UXD 03b (Game Setup). Catalog widget: CtGameSetup.
+**Screen ID:** `SHEL20001` — stable; do not reassign.
+**SPEC/ui** — Game Setup screen (CtGameSetup). Implementation: `app/lib/widgets/game_setup.dart`.
+**Widgetbook:** `Game Setup` → `app/lib/widgetbook/catalog.dart`. Authority: UXD 03b.
 
 ---
 
@@ -20,21 +22,66 @@ The CtGameSetup widget is presentational and accepts the following parameters. T
 
 ---
 
+## Trigger conditions
+
+- **Entry:** Shell pushes Game Setup after New Game / leader-selection per [`app-ui-wiring.md`](../program/app-ui-wiring.md).
+- **Back:** `onBack` returns to main menu.
+
+---
+
 ## How this spec satisfies UXD 03b
 
 **User stories.** The user lands here from Main Menu "New Game". **On load, all nation and leader choices are unselected** (each slot shows e.g. "Select nation" / "Select leader"). They see six player slots: **Player 1 (You)** (human) and **Players 2–6 (AI)**. For each slot they select a **nation** (GP) from a dropdown, then a **leader** for that nation. **Start Game is disabled until every slot has both a nation and a leader selected.** Nations/leaders already selected in another slot are excluded from other dropdowns so no two players share a nation. Changing a slot’s nation updates that slot’s leader options to that nation’s variants (and resets to the default leader for that nation). Tapping **Start Game** creates the game with slot 0 as human and slots 1–5 as AI; **Back** returns to Main Menu. Shell wires callbacks and owns navigation. Config semantics: [SPEC/game/game-setup.md](../game/game-setup.md), [game-setup-pipeline.md](../program/game-setup-pipeline.md).
 
 **Acceptance criteria (Given–When–Then).**
 
-- **Visibility:** Given the user navigated from Main Menu via New Game, the UI layer shows the Game Setup screen with title, six player-slot rows, Start Game button, and Back button. Slot 1 is labeled as the human player (e.g. "Player 1 (You)"); slots 2–6 are labeled as AI (e.g. "Player 2 (AI)" … "Player 6 (AI)"). Each row has a nation dropdown and a leader dropdown rendered with pixel-art compatible components (CtDropdown, CtNinePatchButton); **no Material buttons or dropdowns are used.**
-- **Initial state unselected:** Given the screen is loaded with all nation/leader choices unselected (e.g. `initialOrderedGpIds` is six empty strings and `initialLeaderVariantByGpId` is empty), the UI layer shows each slot with no nation and no leader selected (e.g. nation dropdown shows "Select nation", leader dropdown shows "Select leader" or is disabled). Start Game is disabled.
-- **Start disabled until complete:** Given state is default, when one or more slots have no nation selected or no leader selected (or leader not yet chosen for a selected nation), the UI layer keeps Start Game disabled. When the user has selected a nation and a leader for all six slots, the UI layer enables Start Game.
-- **No duplicate nations:** Given the current slot selections, when the user opens the nation dropdown for any slot, the dropdown lists only nations not already selected in another slot. Selecting a nation in one slot removes it from the nation options in every other slot.
-- **Leader follows nation:** Given a slot has a selected nation, when the user changes that slot’s nation, the UI layer updates the leader dropdown to that nation’s leader variants and sets the selected leader to the default variant for that nation. The previous nation’s leader selection is no longer shown for that slot.
-- **Leader uniqueness:** Leaders are per nation; once a nation is assigned to a slot, the leader dropdown for that slot shows only that nation’s variants. No separate “leader taken” rule across slots because each slot has a distinct nation.
-- **Start:** Given state is default and **all six slots have both a nation and a leader selected**, when the user taps Start Game, the widget invokes `onStartGame` once with (1) a list of six gpIds in slot order (index 0 = human, 1–5 = AI) and (2) a map gpId → leaderVariantId for each of those gpIds. The shell builds GameSetupConfig (e.g. selectedGreatPowerIds = that list, leaderVariantByGpId = that map), creates the game, and navigates.
-- **Back:** When the user taps Back, the widget invokes `onBack` once; the shell navigates to Main Menu.
-- **Loading:** Given state is loading, the Start Game control is disabled; a loading indicator is visible; nation and leader dropdowns are disabled; tapping Back remains enabled.
+Visibility and slot labels:
+
+- Given the user navigated to Game Setup from the Main Menu via **New Game**, when the screen mounts, then the UI layer renders the screen title, six player-slot rows, the **Start Game** button, and the **Back** button.
+- Given the Game Setup screen is mounted with six player slots, when the slot labels render, then slot 0 displays a localized human-player label of the form "Player 1 (You)".
+- Given the Game Setup screen is mounted with six player slots, when the slot labels render, then slots 1–5 display localized AI labels of the form "Player 2 (AI)", "Player 3 (AI)", "Player 4 (AI)", "Player 5 (AI)", and "Player 6 (AI)" in that order.
+- Given any player-slot row in Game Setup, when its dropdowns and surrounding controls render, then the UI layer uses `CtDropdown` for the nation and leader pickers and `CtNinePatchButton` for action controls, and the screen mounts no Material `DropdownButton`, `DropdownMenu`, `ElevatedButton`, or `TextButton` widgets.
+
+Initial unselected state:
+
+- Given the widget is constructed with `initialOrderedGpIds` equal to six empty strings and `initialLeaderVariantByGpId` empty, when the screen renders, then each slot's nation dropdown shows the localized placeholder "Select nation" with no nation pre-selected.
+- Given the widget is constructed with `initialOrderedGpIds` equal to six empty strings and `initialLeaderVariantByGpId` empty, when the screen renders, then each slot's leader dropdown either shows the localized placeholder "Select leader" or is rendered in a disabled state until a nation is selected for that slot.
+- Given the widget is constructed with `initialOrderedGpIds` equal to six empty strings and `initialLeaderVariantByGpId` empty, when the screen renders, then the UI layer renders **Start Game** in its disabled state.
+
+Start-button gating:
+
+- Given the screen is in `state: default` and at least one of the six slots has no nation selected, no leader selected, or a selected nation but no chosen leader, when the action row renders, then the UI layer renders **Start Game** in its disabled state.
+- Given the screen is in `state: default` and all six slots have both a nation and a leader selected, when the slot state change that completes the last unselected slot is committed, then the UI layer renders **Start Game** in its enabled state without further input.
+
+Nation uniqueness across slots:
+
+- Given a set of current slot selections in which one or more GP nations are already assigned to other slots, when the user opens the nation dropdown for any slot, then the dropdown lists only GP nations not already selected in another slot (plus the current slot's own nation if any).
+- Given a slot has been assigned a new nation, when the selection is committed, then the UI layer removes that nation id from every other slot's nation-dropdown option list for any subsequent open.
+
+Leader follows nation:
+
+- Given a slot already has a nation selected, when the user changes that slot's nation to a different GP, then the UI layer rebuilds the slot's leader dropdown using the new nation's leader variants and sets the selected leader to that new nation's default variant.
+- Given the user changed a slot's nation, when the slot's leader dropdown rebuilds, then the previous nation's leader variants are not listed for that slot and the previously selected leader id is not retained for that slot.
+
+Leader uniqueness derives from nation uniqueness:
+
+- Given a slot has a nation assigned, when the user opens that slot's leader dropdown, then the UI layer lists only the leader variants registered to that nation's `gpId` in `ResolvedNamingConfig`, and the UI layer applies no separate cross-slot "leader taken" exclusion (per-slot leader uniqueness follows from the no-duplicate-nations rule).
+
+Start handler payload and shell wiring:
+
+- Given the screen is in `state: default` and all six slots have both a nation and a leader selected, when the user taps **Start Game**, then the widget invokes `onStartGame` exactly once, passing (1) a `List<String>` of six gpIds in slot order (index 0 = human, indices 1–5 = AI) and (2) a `Map<String, String>` of gpId → leaderVariantId covering each of those six gpIds.
+- Given the shell has wired `onStartGame`, when `onStartGame` fires with the six gpIds and the leader-variant map, then the shell builds a `GameSetupConfig` with `selectedGreatPowerIds` equal to the list and `leaderVariantByGpId` equal to the map, creates the game, and navigates to [Game initializing](game-initializing.md) per the [App flow after Start Game](#app-flow-after-start-game) section.
+
+Back navigation:
+
+- Given the Game Setup screen is rendered in any `state` where the **Back** button is enabled, when the user taps **Back**, then the widget invokes `onBack` exactly once and the shell navigates to the Main Menu.
+
+Loading state:
+
+- Given the widget is constructed with `state: loading`, when the screen renders, then the UI layer renders **Start Game** in its disabled state.
+- Given the widget is constructed with `state: loading`, when the screen renders, then the UI layer renders a visible loading indicator inside the screen body (per Wireframe § Loading: a "Starting…" label and/or spinner).
+- Given the widget is constructed with `state: loading`, when the screen renders, then every slot's nation and leader dropdowns are disabled and tapping them opens no list.
+- Given the widget is constructed with `state: loading`, when the screen renders, then the **Back** button remains enabled and tappable.
 
 **Interaction.** The widget holds per-slot state (ordered list of six gpIds and leader variant per gpId) and exposes it via `onStartGame(orderedGpIdsForSlots, leaderVariantByGpId)`. No routing logic lives in the widget.
 
@@ -76,7 +123,7 @@ The CtGameSetup widget is presentational and accepts the following parameters. T
 
 ---
 
-## Wireframe
+## Layout / wireframe
 
 Positions, layout, and hierarchy (per UXD 03b; 44 dp min touch targets).
 
@@ -107,12 +154,51 @@ When the user has selected a nation and leader for every slot, Start Game become
 
 ---
 
+## Behavior
+
+### Incoming (what shows this UI)
+
+| Source | Condition | Result |
+|--------|-----------|--------|
+| Shell / setup route | After leader dialog or direct setup navigation | `CtGameSetup` mounted with `naming` and slot config. |
+
+### User actions → outcomes
+
+| Control / gesture | When enabled | Emits / calls | Side effects |
+|-------------------|--------------|---------------|--------------|
+| Start Game | All slots filled; `state != loading` | `onStartGame` | Shell runs game init → game route. |
+| Back | `state != loading` | `onBack` | Returns to prior screen. |
+
+---
+
+## States and variants
+
+| ID | Variant | Trigger | Render difference |
+|----|---------|---------|-------------------|
+| `SHEL20001` | `default` | `state == default` | Dropdowns and Start enabled. |
+| `SHEL20001` | `loading` | `state == loading` | Start disabled; loading indicator; dropdowns disabled. |
+
+---
+
 ## Pixel-art assets
 
 For current product, reuse main menu assets: `ui_main_menu_button.png` for Start Game and Back. Dropdowns and list use theme styling. Style lock: UXD 02.
 
 ---
 
-## Widget catalog
+## Components
 
-Once implemented, register in `app/widget_catalog.json` as CtGameSetup (category: screen, source: pipeline), with `dart_file_path` and `widgetbook_story_path`: "Game Setup".
+- `CtGameSetup`, `CtDropdown`, `CtNinePatchButton`, `CtScreenShell` — see [pixel-art-ui-catalog.md](pixel-art-ui-catalog.md).
+- `app/widget_catalog.json` entry: CtGameSetup (category: screen).
+
+---
+
+## Widgetbook
+
+Folder: **Game Setup**. Use cases: **Default**, **Loading** per states table.
+
+---
+
+## Acceptance criteria
+
+See **How this spec satisfies UXD 03b** and shell dialog section for Given–When–Then ACs.

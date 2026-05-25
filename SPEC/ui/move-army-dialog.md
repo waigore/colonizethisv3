@@ -1,6 +1,8 @@
 # Move Army Dialog
 
-**SPEC/ui** — Modal that lets the human player move a non-Home army to a legal destination province from the [military-units-panel.md](military-units-panel.md). Game model: [military-armies.md](../game/military-armies.md), [world-model.md](../game/world-model.md). Orders contract: [orders.md](../program/orders.md). Order suggestions / probe semantics: [order-suggestions.md](../program/order-suggestions.md). App wiring and events: [app-ui-wiring.md](../program/app-ui-wiring.md), [app-event-bus.md](../program/app-event-bus.md).
+**Screen ID:** `DLG20001` — stable; do not reassign.
+**SPEC/ui** — Modal that lets the human player move a non-Home army to a legal destination province from the [military-units-panel.md](military-units-panel.md). Implementation: `app/lib/features/game/widgets/move_army_dialog.dart`.
+**Widgetbook:** `Move Army Dialog` → `app/lib/widgetbook/catalog.dart`. Game model: [military-armies.md](../game/military-armies.md), [world-model.md](../game/world-model.md). Orders: [orders.md](../program/orders.md). Order suggestions: [order-suggestions.md](../program/order-suggestions.md). App wiring: [app-ui-wiring.md](../program/app-ui-wiring.md), [app-event-bus.md](../program/app-event-bus.md).
 
 ---
 
@@ -65,16 +67,23 @@ The dialog **does not** mutate game state. All state changes flow through the bu
 
 ---
 
-## Navigation
+## Behavior
 
-| Action | Behavior |
-|--------|----------|
-| Cancel | `Navigator.of(context).pop()`; no event emitted. |
-| Confirm — owned destination | `bus.emit(ArmyMoveRequestedEvent(humanPlayerId, ArmyMoveOrder(armyId, destinationProvinceId), declareWarTargetFactionId: null))`; then pop. |
-| Confirm — invasion accepted | Inner confirm pops first; the outer dialog emits `ArmyMoveRequestedEvent` with `declareWarTargetFactionId = entry.ownerFactionId`; then pop. |
-| Confirm — invasion declined | Inner confirm returns `false`; no event; outer dialog stays open. |
+### Incoming (what shows this UI)
 
-Confirm uses `context.mounted` guard before the second emit/pop so a tester-initiated unmount cannot cause a use-after-dispose.
+| Source | Condition | Result |
+|--------|-----------|--------|
+| `MilitaryUnitsPanel` Move action | Non-Home army row; at least one valid destination from `armyMovePickerDestinations` | `showDialog` mounts `MoveArmyDialog` with `draftOrders` and optional `playerView`. |
+| — | Home Army row | Move action hidden; dialog never opens. |
+
+### User actions → outcomes
+
+| Control / gesture | When enabled | Emits / calls | Side effects |
+|-------------------|--------------|---------------|--------------|
+| Cancel | Always | `Navigator.pop` | No bus event. |
+| Confirm — owned destination | `_selected != null` and `requiresDeclareWarOnConfirm == false` | `ArmyMoveRequestedEvent` (`declareWarTargetFactionId: null`) | Dialog popped. |
+| Confirm — invasion accepted | Secondary dialog Confirm | `ArmyMoveRequestedEvent` with `declareWarTargetFactionId = entry.ownerFactionId` | Inner then outer pop; `context.mounted` guard before emit. |
+| Confirm — invasion declined | Secondary dialog Cancel | — | Outer dialog stays open; no event. |
 
 ---
 

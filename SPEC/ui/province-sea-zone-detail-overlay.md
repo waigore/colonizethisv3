@@ -1,6 +1,21 @@
 # Province and Sea Zone Detail Overlay
 
-**SPEC/ui** — Detail overlay when the user selects a tile on the map for province/sea-zone context. Integrates with [map-widget.md](map-widget.md). Province/sea zone identity: [world-model-identity.md](../game/world-model-identity.md).
+**Screen ID:** `MAP20001` — stable; do not reassign.
+**SPEC/ui** — Detail overlay for map tile selection. Implementation: `app/lib/features/game/widgets/province_sea_zone_detail_overlay.dart`.
+**Widgetbook:** `Province Overlay` → `app/lib/widgetbook/catalog.dart`. Integrates with [map-widget.md](map-widget.md). Identity: [world-model-identity.md](../game/world-model-identity.md).
+
+---
+
+## Widget contract
+
+`ProvinceSeaZoneDetailOverlay` — presentational; parents pass `displayId`, `selectedTileKey`, `draftOrders`, and game/view data. No direct `AppEventBus` in overlay (provider-based map↔panel contract).
+
+---
+
+## Trigger conditions
+
+- **Map tile tap:** `mapProvincePanelProvider` sets `selectedTileKey` and `overlayOpen`.
+- **Close:** Overlay close control sets `overlayOpen` false.
 
 ---
 
@@ -38,7 +53,7 @@ When the user **taps/clicks a map tile** (not hover), the shell shows detail for
 
 ---
 
-## Layout, responsiveness, and height rules
+## Layout / wireframe
 
 **Narrow** means viewport width &lt; shell breakpoint (e.g. 600 logical px). Let `H` = `MediaQuery` screen height, `third = 0.33 * H`. Let layout max height from parent be `parentMax` (from `LayoutBuilder` / parent constraints).
 
@@ -98,20 +113,78 @@ Non-Material, pixel-art friendly: `CtPanel`, `CtTabStrip`, explicit text styles 
 
 ---
 
+## Behavior
+
+### Incoming (what shows this UI)
+
+| Source | Condition | Result |
+|--------|-----------|--------|
+| Map tile tap | User taps committed selection | `overlayOpen` + overlay content for `selectedTileKey`. |
+| Hover | Pointer over map | Does not change overlay content. |
+
+### User actions → outcomes
+
+| Control / gesture | When enabled | Emits / calls | Side effects |
+|-------------------|--------------|---------------|--------------|
+| Close | Overlay open | `overlayOpen = false` | Scrim may remain per provider rules. |
+| Tile shortcuts (Explore / Prospect / Build) | Province intel + unit gates | Opens civilian panel shortcuts / work orders | Per Interaction section. |
+| Economic row hover | Intel allows | Sets `secondaryHighlightTileKey` | Map secondary outline. |
+
+---
+
+## States and variants
+
+| Variant | Trigger | Render difference |
+|---------|---------|-------------------|
+| Province context | Land tile selected | Full section set per intel gating. |
+| Sea zone context | Sea tile selected | Political + Naval; no port-scoped naval pending. |
+| Obfuscated | Fog / intel fails | Section bodies `???`. |
+
+---
+
+## Components
+
+- `ProvinceSeaZoneDetailOverlay`, `GameMapProvinceDetailSidePanel`, `GameMapNarrowDetailOverlaySlot`.
+- `mapProvincePanelProvider` bridge — no cross-import with map widget.
+
+---
+
+## Widgetbook
+
+Folder: **Province Overlay**. Map stories use provider overrides; Flame map does not import the overlay.
+
+---
+
 ## Acceptance criteria
 
-- Map and panel do not cross-import; bridge is `mapProvincePanelProvider` (and map ctor params fed by that layer).
-- Tile **tap** opens/updates overlay and `selectedTileKey`; Tile section matches. **Hover** does not change `selectedTileKey` or Tile section.
-- Narrow full-width: max height ≤ `third` when parent does not already cap. Bottom slot height `third`: no overflow; tabs scroll. Narrow side rail: full rail height allowed. Desktop: side panel, scrollable.
-- Economic row hover updates `secondaryHighlightTileKey` and a non-orange map outline. Close sets `overlayOpen` false; tile tap may reopen.
-- **Draft orders:** Own civilian lines reflect the first matching draft **`WorkOrder`** target when present; otherwise localized idle/other status. Military ship/regiment labels are localized; pending land **`MoveOrder`** and in-port naval **`NavalMoveOrder`** / **`NavalMissionOrder`** lines appear when `draftOrders` contains them (province view for naval-in-port only) **only when province intel gating allows full content**.
+- **Map/panel decoupling:** Given the implementation files for the Flame `CtRegionMap` widget and `ProvinceSeaZoneDetailOverlay`, when those files are inspected for imports, then neither imports nor references the other; the map embedding layer reads and writes `mapProvincePanelProvider` and passes plain data plus callbacks (`selectedTileKey`, `secondaryHighlightTileKey`, `onMapTileTappedForDetail`) into the map widget's constructor.
+- **Tap opens/updates the overlay:** Given the overlay is closed or showing a different tile, when the user taps or clicks a map tile, then `mapProvincePanelProvider` records the tapped tile in `selectedTileKey`, sets `overlayOpen` to true, and the overlay's Tile section renders content derived from that exact `selectedTileKey`.
+- **Hover never updates selection:** Given the user's pointer is hovering over a map tile without a tap or click, when the pointer moves, then the UI layer does not change `selectedTileKey`, does not toggle `overlayOpen`, and does not change the overlay's Tile section content (hover may still update map-only hover visuals).
+- **Narrow full-width, uncapped parent:** Given a narrow viewport (width < shell breakpoint, e.g. 600 logical px) where the parent does not already constrain the overlay's height to at most `0.33 × MediaQuery.size.height`, when the overlay layout builds, then the UI layer caps the effective max content height at `min(parentMax, 0.33 × H)`.
+- **Narrow full-width, parent already capping:** Given a narrow viewport where the parent already constrains the overlay height to exactly `0.33 × H` (e.g. a bottom slot wrapped in `SizedBox(height: third)`), when the overlay layout builds, then the UI layer uses that constrained height exactly without further shrinking and wraps each tab body in a scrollable container so content never overflows.
+- **Narrow side rail:** Given a narrow viewport where the overlay is hosted in a fixed-width side rail (panel width clearly less than screen width, e.g. 320 dp), when the overlay layout builds, then the UI layer uses the full rail height (`parentMax`) without applying the `0.33 × H` cap.
+- **Wide viewport side panel:** Given a viewport width ≥ shell breakpoint, when the overlay mounts, then the UI layer renders the overlay in a side panel using the parent's bounded height with a single scrollable column of sections and without a tab strip.
+- **Economic row hover sets secondary highlight:** Given the overlay is open and the Economic section is rendering at least one resource row, when the user hovers over an Economic resource row, then the UI layer writes that row's tile key to `secondaryHighlightTileKey` and the map renders a non-orange outline (distinct from the orange `selectedTileKey` outline) on that tile.
+- **Overlay close behavior:** Given the overlay is open, when the user activates the overlay's close control, then `mapProvincePanelProvider.overlayOpen` becomes false while `selectedTileKey` retention is implementation-defined per the Interaction § Close rules (may remain or clear).
+- **Reopen via tile tap after close:** Given the overlay is closed and `selectedTileKey` is set to a valid tile, when the user taps a tile (the same one or another), then the overlay may reopen with `overlayOpen` set to true and `selectedTileKey` updated to the newly tapped tile.
+- **Civilian line from draft work order:** Given `draftOrders.workOrdersByPlayerId[humanPlayerId]` contains a `WorkOrder` whose `unitId` matches an own civilian unit, when the Civilian section renders that unit, then the UI layer renders the line as `{localized type}: {localized target}` derived from the first matching draft `WorkOrder` (e.g. `Explorer: Prospect`) and the line text does not contain the raw `unit.id` substring.
+- **Civilian line falls back to unit status:** Given an own civilian unit with no matching draft `WorkOrder` in `draftOrders.workOrdersByPlayerId[humanPlayerId]`, when the Civilian section renders that unit, then the UI layer renders the line as `{localized type}: {localized status}` using the unit's current status (e.g. `Builder: Idle`) with no raw `unit.id` substring.
+- **Military labels are localized:** Given the Military section renders in-province units, when ship and regiment type labels are emitted, then the UI layer uses the localized type ids (`province_regiment_*` / `province_ship_*`) and falls back to the raw catalog id only when the localization key is missing.
+- **Pending land MoveOrder preview lines:** Given province intel gating allows full content for the selected province and `draftOrders` contains pending `MoveOrder` entries for armies or regiments concerning that province, when the Military section renders, then the UI layer appends a localized pending land-movement preview line for each such order beneath the in-province unit listing.
+- **Pending in-port naval preview lines (province context):** Given the overlay is in **province** context, province intel gating allows full content, and `draftOrders` contains pending `NavalMoveOrder` or `NavalMissionOrder` entries for fleets that are in-port in the selected province, when the Naval section renders, then the UI layer appends a localized pending naval preview line for each such order.
+- **Sea-zone overlay omits port-scoped naval lines:** Given the overlay is in **sea-zone** context, when the Naval section renders pending lines, then the UI layer does not append any port-scoped pending naval lines (no port province id is forwarded to the helper) regardless of `draftOrders` content.
 - Given the Civilian section lists an own Explorer with pending `prospect` work, when the overlay renders, then the line reads `Explorer: Prospect` (localized type and target) and does **not** contain the internal `unit.id` substring.
 - Given the Civilian section lists a visible foreign civilian, when the overlay renders, then the line uses owner display name, type, and localized status only (e.g. `France — Explorer: Idle`) with **no** internal `unit.id` in parentheses.
-- **Economic grouping/filtering:** Rows bucketed by visible resource; improved → improvable; no terrain-only prospect rows. Economic includes only prospected tiles that have player-visible discovered resources; unprospected tiles and prospected no-resource tiles are excluded. No coordinates in row text; hover unchanged.
-- Unrevealed / fully unrevealed province: `???` obfuscation per player view (unchanged).
-- Province intel gating: For a non-fully-unrevealed province, when province intel gating is not satisfied, Economic/Military/Civilian/Naval bodies are `???` and pending military/naval draft lines are hidden; Political and Tile sections remain per their own rules.
-- Fully unrevealed sea zone (all sea tiles in zone unrevealed in map view data): Political and Naval `???`; no preset sea-zone display name until partial reveal.
-- When at least one sea tile in the zone is not unrevealed: sea-zone political header uses world-state display name for the selected prefixed sea-zone id (raw id only as defensive fallback for legacy/missing data).
+- **Economic rows bucket by visible resource:** Given the Economic section renders in full-content mode for the selected province, when rows are emitted, then the UI layer groups rows by the player-visible commodity discovery (commodity icon + visible name) for each prospected tile that has an actual player-visible discovered resource.
+- **Economic improved before improvable order:** Given a commodity bucket in the Economic section, when rows render under that bucket, then the UI layer lists **improved** tiles first (with the improvement label) and then **improvable** terrain rows (suffixed e.g. `improvable`), with no terrain-only prospect-required rows interleaved.
+- **Economic excludes unprospected and no-resource tiles:** Given a tile in the selected province that is either unprospected by the human player or prospected with no player-visible discovered resource, when the Economic section renders, then the UI layer excludes that tile from every commodity bucket.
+- **Economic rows omit coordinates:** Given the Economic section renders any row, when the row text is emitted, then the UI layer does not include tile coordinates in the row text, while hover behavior continues to update `secondaryHighlightTileKey` per the Economic-row-hover AC.
+- **Unrevealed obfuscation:** Given the selected tile's `CellViewData.visibility` is `unrevealed` or the entire selected province is fully unrevealed for the human player in `PlayerView`, when the overlay renders the Tile section and any province-scoped section, then the UI layer substitutes `???` for all obfuscated fields per the fog-of-war obfuscation rules in `SPEC/game/fog-and-exploration.md`.
+- **Province intel gating obfuscates section bodies:** Given a non-fully-unrevealed province where none of the province intel conditions hold (province not human-owned, not all land tiles fully visible, no own Spy present, and no active Spy fog-decay timer entry), when the overlay renders, then the UI layer renders the bodies of the **Economic**, **Military**, **Civilian**, and **Naval** sections as `???` while keeping each section's header visible.
+- **Province intel gating hides pending draft lines:** Given the same province intel gating failure condition, when the overlay renders, then the UI layer hides all pending land `MoveOrder` and naval `NavalMoveOrder` / `NavalMissionOrder` draft preview lines for that province.
+- **Province intel gating preserves Political and Tile sections:** Given the same province intel gating failure condition, when the overlay renders, then the UI layer continues to render the **Political** section per its own authoritative-ownership rule and the **Tile** section per the selected-tile visibility rule (intel gating does not suppress those sections).
+- **Fully unrevealed sea zone obfuscation:** Given the overlay is in sea-zone context and every sea tile in the selected sea zone has `TileVisibility.unrevealed` for the human player in `RegionMapViewData`, when the overlay renders, then the UI layer renders the Political and Naval section bodies as `???` and does not surface the world-state `seaZoneDisplayNameById` text for that zone.
+- **Sea-zone partial reveal uses world-state display name:** Given the overlay is in sea-zone context and at least one sea tile in the selected sea zone is not `TileVisibility.unrevealed` for the human player, when the Political section header renders, then the UI layer uses `seaZoneDisplayNameById` keyed by the selected prefixed sea-zone id as the header text, falling back to the raw id only as a defensive path when the display-name lookup is missing.
 - Given a province Tile section with visible tile details and a selected tile that is mineral-eligible and not already prospected by the human player, when the overlay renders, then the UI layer shows an inline icon next to `Prospected` with tooltip/accessibility label `Prospect with explorer`.
 - Given the Tile section is unrevealed/obfuscated (`???`) or the overlay is in sea-zone context, when the overlay renders, then the UI layer does not show the inline `Prospect with explorer` icon.
 - Given the human player has zero Explorer units, when the province Tile section renders the inline `Prospect with explorer` icon, then the UI layer renders it disabled, grayscale, and non-clickable.
@@ -131,10 +204,6 @@ Non-Material, pixel-art friendly: `CtPanel`, `CtTabStrip`, explicit text styles 
 - Given selected tile is a prospect-required mineral and the tile is not yet prospected by the human player, when the tile is otherwise improvable by trait, then the UI layer may keep `Build improvement` visible but disabled until prospection and all assign-time rules pass.
 - Given user taps enabled `Build improvement` and click-time state remains valid, when the Civilian Units panel opens, then it opens in Builder-only shortcut mode targeting the exact selected tile key for direct `WorkOrder(target: build_improvement, targetTileKey: <exact selected tile key>)`.
 - Given click-time state drift invalidates `Build improvement`, when user taps the icon, then the UI layer performs a silent no-op and commits no pending work order.
-
-### Widgetbook
-
-Map stories use `onMapTileTappedForDetail` and passed-in keys from demo/overrides; Flame map does not import the overlay.
 
 ---
 

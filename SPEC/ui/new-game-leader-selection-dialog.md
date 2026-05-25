@@ -1,6 +1,8 @@
 # New Game Leader Selection Dialog
 
-**SPEC/ui** — Modal that captures the six-slot **nation + leader** lineup plus the per-game **seed**, **infinite-mode** toggle, and **terrain variation** slider for a new game, opened from the shell main menu New Game flow. Parent context: [game-setup.md](game-setup.md). New game progress and error handling after confirmation: [game-initializing.md](game-initializing.md). App wiring and events: [app-ui-wiring.md](../program/app-ui-wiring.md), [app-event-bus.md](../program/app-event-bus.md).
+**Screen ID:** `DLG10001` — stable; do not reassign.
+**SPEC/ui** — Modal that captures the six-slot **nation + leader** lineup plus seed, infinite-mode, and terrain variation for a new game. Implementation: `app/lib/features/shell/new_game_leader_selection_dialog.dart`.
+**Widgetbook:** `New Game Leader Selection Dialog` → `app/lib/widgetbook/catalog.dart`. Parent: [game-setup.md](game-setup.md). After confirm: [game-initializing.md](game-initializing.md). App wiring: [app-ui-wiring.md](../program/app-ui-wiring.md), [app-event-bus.md](../program/app-event-bus.md).
 
 ---
 
@@ -78,13 +80,21 @@ Implementation: `app/lib/features/shell/new_game_leader_selection_dialog.dart`. 
 
 ---
 
-## Navigation
+## Behavior
 
-| Action | Behavior |
-|--------|----------|
-| Cancel | Invokes `widget.onCancel` (typically pops the dialog). No `onConfirmed` payload is dispatched. |
-| Start (enabled) | Parses the seed via `NewGameLeaderSelectionDialog.parseSeedInput`, pops the dialog, then calls `widget.onConfirmed(orderedGreatPowerIds, leaderVariantByGpId, seed, infiniteMode, terrainVariation)`. The scope builder then schedules `runNewGameSetupAfterLeaderPick` for the resolved template. |
-| Start (disabled) | No-op (`enabled: false` on the `CtNinePatchButton`). |
+### Incoming (what shows this UI)
+
+| Source | Condition | Result |
+|--------|-----------|--------|
+| `OpenDialogEvent(newGameLeaderSelectionDialogId)` | Shell New Game from [`shell-screen.md`](shell-screen.md) | Bus-registered dialog mounts with `baseConfig` and `naming`. |
+
+### User actions → outcomes
+
+| Control / gesture | When enabled | Emits / calls | Side effects |
+|-------------------|--------------|---------------|--------------|
+| Cancel | Always | `widget.onCancel` | Dialog popped; no `onConfirmed`. |
+| Start | All six slots have nations (`_startEnabled`) | `widget.onConfirmed(...)` after `parseSeedInput` | Scope runs `runNewGameSetupAfterLeaderPick`. |
+| Start (disabled) | Any slot empty | — | No-op. |
 
 ---
 

@@ -1,6 +1,8 @@
 # Victory Overlay
 
-**SPEC/ui** — Full-screen overlay shown when a military victory is recorded. Game model: [victory.md](../game/victory.md). Navigation target for “Return to Main Menu”: [main-menu.md](main-menu.md). Host screen: `GameScreen` (`app/lib/features/game/flame/game_screen.dart`).
+**Screen ID:** `OVL20001` — stable; do not reassign.
+**SPEC/ui** — Full-screen overlay shown when a military victory is recorded. Implementation: `app/lib/features/game/flame/victory_overlay.dart`.
+**Widgetbook:** `Victory` → `app/lib/widgetbook/catalog.dart`. Game model: [victory.md](../game/victory.md). Return target: [main-menu.md](main-menu.md). Host: [`game-screen.md`](game-screen.md).
 
 ---
 
@@ -68,13 +70,20 @@ Calendar campaign halt (`Game.calendarCampaignHalted == true` with `Game.victory
 
 ---
 
-## Navigation
+## Behavior
 
-| Action | Behavior |
-|--------|----------|
-| Return to Main Menu | `bus.emit(const NavigateToShellEvent())` → shell navigates to main menu per [main-menu.md](main-menu.md) § Return from game. |
-| View Final State | Invokes `onViewFinalState` → `VictoryOverlay` sets `_dismissed = true`. No `AppEvent`; no route pop. |
-| Other exits | No settings, load-game, or in-game panel entry points from this overlay. |
+### Incoming (what shows this UI)
+
+| Source | Condition | Result |
+|--------|-----------|--------|
+| `GameScreen` stack | `game.victory != null` and `VictoryOverlay` mounted | Full-screen scrim + `VictoryPanel`. |
+
+### User actions → outcomes
+
+| Control / gesture | When enabled | Emits / calls | Side effects |
+|-------------------|--------------|---------------|--------------|
+| Return to Main Menu | Overlay visible | `NavigateToShellEvent` | Shell navigates per [main-menu.md](main-menu.md). |
+| View Final State | Overlay visible | `onViewFinalState` callback | `_dismissed = true`; map remains; no route pop. |
 
 ---
 

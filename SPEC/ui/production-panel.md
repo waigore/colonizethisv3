@@ -1,6 +1,23 @@
 # Production Panel
 
-**SPEC/ui** — Flutter production panel for allocating resources and workers to material production. Game rules: [stockpiles-and-production.md](../game/stockpiles-and-production.md), [production-recipes.md](../game/production-recipes.md), [workers-and-population.md](../game/workers-and-population.md). Mobile: [mobile-adaptation.md](mobile-adaptation.md).
+**Screen ID:** `GAME20001` — stable; do not reassign.
+**SPEC/ui** — Production allocation panel. Implementation: `app/lib/features/game/screens/production_screen.dart`.
+**Widgetbook:** `Production Panel` → `app/lib/widgetbook/catalog.dart`. Game rules: [stockpiles-and-production.md](../game/stockpiles-and-production.md), [production-recipes.md](../game/production-recipes.md), [workers-and-population.md](../game/workers-and-population.md). Mobile: [mobile-adaptation.md](mobile-adaptation.md).
+
+---
+
+## Widget contract
+
+`ProductionScreen` / production panel widgets are presentational; parent supplies `Game`, map topology, `Orders`, and desired-output state via Riverpod (`productionDesiredOutputProvider`). See **Data** and **Behaviour** sections for inputs and mutations.
+
+---
+
+## Trigger conditions
+
+- **Toolbar:** In-game toolbar opens production as full-page route (`Routes.production` / production screen).
+- **Turn resolution:** Panel read-only or disabled while `turnResolutionBlockingProvider` when applicable.
+
+---
 
 ## Overview
 
@@ -10,7 +27,7 @@ The production panel lets the player allocate production by setting **desired ou
 
 Asset filenames and style for commodities and workers appear in [game-toolbar-icons.md](game-toolbar-icons.md) § Resource & Worker Icons (Production Panel); bundle paths are `assets/icons/<filename>` with `StrictAssetIcon` / `ResourceIconCache` per that spec. **Usage:** (1) **Available** — icon before each commodity/worker line; (2) **Allocation** — icon before the **output** commodity name on each recipe row (input materials are listed by name in parentheses).
 
-## Layout
+## Layout / wireframe
 
 ### Desktop / wide viewport (e.g. width ≥ 600 dp)
 
@@ -36,7 +53,25 @@ Asset filenames and style for commodities and workers appear in [game-toolbar-ic
 - **Map inputs:** `MapTopology` and `tileMapByRegion` from the same cached map data the running game uses for turn resolution (e.g. app `GameService.getMapData(game.id)`). The production **screen** may supply optional overrides so tests do not need Hive (`panelTopologyOverride` / `panelTileMapByRegionOverride`). Widgetbook may pass an empty topology and null tile maps (extraction preview zero).
 - **Allocation:** UI holds desired output per recipe (recipe id → integer ≥ 0). Converted to `List<AssignedRecipe>` for the turn resolver: for each recipe, `assignedLabour = desiredOutput * recipe.labourPerOutput`.
 
-## Behaviour
+## Behavior
+
+### Incoming (what shows this UI)
+
+| Source | Condition | Result |
+|--------|-----------|--------|
+| Toolbar / route | Player opens Production from in-game shell | Production screen with Available + Allocation subpanels. |
+
+### User actions → outcomes
+
+| Control / gesture | When enabled | Emits / calls | Side effects |
+|-------------------|--------------|---------------|--------------|
+| Recipe sliders / ± / max / clear | `canEdit` | Updates `productionDesiredOutputProvider` | Recalculates affordance and net-change preview. |
+| Reset | Always | Clears all recipe allocations | — |
+| Breakdown | Always | Opens [production-commodity-breakdown-dialog.md](production-commodity-breakdown-dialog.md) | Read-only dialog. |
+| Labour ± / disband | Human GP, editable | Updates recruit/train/disband draft orders | See **Labour Controls**. |
+| Next turn (host) | Outside panel | Passes assignments to turn resolver | Per **Behaviour** closing bullets. |
+
+### Behaviour (detailed rules)
 
 - Sliders adjust desired output (drag may emit non-integer doubles; call sites **round** and clamp to `maxAchievable`). **Integer ±1** changes use **+** / **−** steppers (authoritative discrete steps); do not rely on slider double resolution for tap semantics.
 - **Per-recipe controls:** **−** / **+** step by **1** toward **0** … **`maxAchievable`** (`computeRecipeAffordance`, then `kProductionAllocationSliderCap`). **−** enabled iff `desired > 0`. **+** enabled iff `maxAchievable > 0` and `desired < maxAchievable`. **Maximize** sets desired to current **`maxAchievable`** (same cap as slider thumb max); enabled iff **+** would be enabled. **Clear** removes the recipe key (equivalent to 0); enabled iff `desired > 0`. After any change, **every** row recomputes affordance so cross-row labour/input coupling updates **+** / **maximize** without touching other rows.
@@ -51,18 +86,50 @@ Asset filenames and style for commodities and workers appear in [game-toolbar-ic
 - When the player advances the turn, the app passes the current allocation as production assignments for the human player to the turn resolver (`defaultAssignmentsByPlayerId`). Assignment is not persisted in the save (app state only) unless extended later.
 - The turn resolver still runs as many complete recipe runs as inputs and labour allow (per production-recipes.md).
 
-## Acceptance Criteria
+---
 
-- **Available:** Food / Raw Materials / Manufactured in **3-column** grids (icon, name, qty, net change in parentheses **only when non-zero**); Workers **2-column** + effective labour; icons 32×32 per [game-toolbar-icons.md](game-toolbar-icons.md).
+## States and variants
+
+| Variant | Trigger | Render difference |
+|---------|---------|-------------------|
+| Wide (≥600 dp) | Viewport width | Available \| Allocation row layout. |
+| Narrow (<600 dp) | Viewport width | Stacked subpanels; scrollable. |
+
+---
+
+## Components
+
+- `CtSlider`, `CtNinePatchButton`, `ProductionAllocationStepButton`, `ResourceIcon`, `StrictAssetIcon` — `app/lib/features/game/widgets/`.
+- [production-commodity-breakdown-dialog.md](production-commodity-breakdown-dialog.md).
+
+---
+
+## Widgetbook
+
+Folder: **Production Panel** (`app/lib/widgetbook/catalog.dart`).
+
+---
+
+## Acceptance criteria
+
+- **Available (commodity grids):** Given the Production screen is rendered for the viewed player on any viewport, when the Available subpanel builds its commodity grids, then the UI layer arranges the **Food**, **Raw Materials**, and **Manufactured** sections each as a **3-column** grid where every cell shows the leading commodity icon (32×32 per [game-toolbar-icons.md](game-toolbar-icons.md)), the commodity display name, the current quantity, and a parenthetical net-change value rendered **only** when the projected end-of-turn net change for that commodity is non-zero.
+- **Available (workers and labour):** Given the Available subpanel is rendering with the viewed player's `WorkerPool`, when the Workers section is built, then the UI layer renders the worker tiers in a **2-column** grid (icon + tier label + count per cell) and appends a bold **Effective labour** total line at the bottom of the section.
 - **Net change correctness:** Given a loaded `Game`, matching topology and tile maps, the current unresolved `Orders`, and a human production desired-output map, When the UI builds the Available grid for that player, Then each shown parenthetical delta equals the difference between that player’s stockpile **after** `applyEconomyPhasesForPreview` and **before** it, per commodity, for phases Pending build costs → Extraction → Riches-to-treasury → Consumption → Production with that player’s assignments; other players run the same phases with empty default assignments unless specified elsewhere.
-- **Allocation:** Each recipe: output icon + name; inputs in parentheses; **right-aligned** `max · bottleneck` (not clipped by panel frame); slider row: **`CtSlider`** (`Expanded`), **right-aligned** desired number, then **−**, **+**, **maximize**, **clear** (icon-only, semantics + l10n; tooltips match where used). **max** equals slider cap (Behaviour). Changing **any** recipe’s allocation updates **every** row’s **max** / **bottleneck** and per-control **enabled** flags. **Comfort headroom:** thumb→max track segment is deeper purple iff Behaviour **Comfort headroom** rules are satisfied; otherwise default track colour.
+- **Allocation (recipe header row):** Given a recipe row in the Allocation subpanel, when the row's header sub-line renders, then the UI layer shows the output commodity icon followed by the output display name, the input commodity display names in parentheses (each with its leading icon), and a **right-aligned** `max · bottleneck` label where `max` equals the slider cap from Behaviour and `bottleneck` is the limiting commodity display name or **Labour**, and the right-aligned label is not clipped by the surrounding nine-patch panel frame.
+- **Allocation (slider sub-row controls):** Given a recipe row in the Allocation subpanel, when the slider sub-row renders, then the UI layer renders a `CtSlider` wrapped in `Expanded`, then a right-aligned numeric **desired output** value, then four icon-only controls in the order **decrement (−)**, **increment (+)**, **maximize**, **clear**, with each icon-only control carrying the localized semantic label and tooltip required by the icon-only catalogue rule.
+- **Allocation (cross-row recompute on change):** Given the player changes recipe **A**'s allocation via slider, stepper, **maximize**, or **clear**, when the Allocation subpanel rebuilds, then every other recipe row's `max · bottleneck` label and the **enabled** flags of its **−** / **+** / **maximize** / **clear** controls are recomputed by calling a fresh `computeRecipeAffordance` for that other row, without further interaction on that row.
+- **Allocation (comfort headroom — purple track on):** Given a recipe row where all Behaviour § Comfort headroom preconditions hold (the row's `desired < max` while `max > 0`; `remainingLabour > desired × labourPerOutput`; and for every recipe input `remainingStock > desired × inputPerOutput` after subtracting other recipes' commitments), when the slider track renders, then the UI layer paints the thumb→max segment in the deeper-purple comfort colour while the 0→thumb fill remains the existing primary colour.
+- **Allocation (comfort headroom — default track off):** Given a recipe row where any Behaviour § Comfort headroom precondition fails, when the slider track renders, then the UI layer paints the thumb→max segment using the default unfilled track styling.
 - **Steppers / long-press:** Given `maxAchievable ≥ 1`, when the player taps **+** once, then desired increases by **1** (clamped). When the player long-presses **+** or **−**, then after ~**500 ms** the value steps by **1** and repeats every **~125 ms** until bound or release, without overshoot; constants **`kProductionAllocationRepeatInitialDelay`** and **`kProductionAllocationRepeatInterval`** in `production_allocation_repeat_timing.dart`.
 - **Per-recipe max/clear:** Given partial allocation, when the player taps **maximize**, then that recipe’s desired equals current **`maxAchievable`**. When the player taps **clear**, then that recipe becomes **0** and others unchanged.
 - **Cross-row affordance:** Given two recipes sharing labour or inputs, when the player changes recipe A’s allocation, then recipe B’s **−** / **+** / **maximize** / **clear** **enabled** states match a fresh `computeRecipeAffordance` for B without further interaction on B.
 - **Preview parity:** Given map data from `GameService` cache for the current game and a viewed player, when the Production screen renders Available rows, then each parenthetical delta equals the corresponding commodity value from `previewStockpileNetDeltaByCommodityForPlayer(...)` for that player and current desired outputs.
 - **Zero-delta formatting:** Given a commodity whose preview net delta is 0, when the Available row renders, then the row omits the parenthetical delta text.
-- **Reset** clears all sliders. **Next turn** passes human assignments to the turn resolver. **Labour line** uses error colour + cap message when total required labour > effective.
-- **Narrow (<600 dp):** stack subpanels, scroll, keep grid column counts. **Wide (≥600 dp):** Available | Allocation in a row.
+- **Reset clears all recipes:** Given the Allocation subpanel has at least one recipe with `desired > 0`, when the player taps the header **Reset** button, then the panel sets every recipe's desired output to **0** (clearing all sliders) and the Available net-change preview recomputes against the empty allocation map.
+- **Next turn passes human assignments:** Given the human player advances the turn from the Production screen, when the next-turn action fires, then the app converts the current human production desired-output map into `List<AssignedRecipe>` entries (`assignedLabour = desiredOutput × recipe.labourPerOutput`) and passes them as the human player's slot in `defaultAssignmentsByPlayerId` when invoking the turn resolver.
+- **Labour-line over-cap styling:** Given the current human allocation produces a total required labour strictly greater than effective labour for the viewed player, when the Labour summary line renders, then the UI layer renders the line in the error colour and appends the localized "capped next turn" message.
+- **Narrow viewport stack (<600 dp):** Given a viewport width strictly less than **600 dp**, when the Production screen builds its body, then the UI layer stacks the Available and Allocation subpanels vertically (Available on top, Allocation below), wraps the content in a scrollable container so all rows are reachable, and preserves the 3-column resource grids and 2-column worker grid from the wide layout.
+- **Wide viewport row (≥600 dp):** Given a viewport width greater than or equal to **600 dp**, when the Production screen builds its body, then the UI layer places the Available and Allocation subpanels side-by-side in a single horizontal row with Available on the left and Allocation on the right.
 - **Breakdown entry:** Given the Production screen with map data and a viewed player, when the Available header renders on wide or narrow viewports, then the breakdown control is a visible **text** button labeled **Breakdown** (not icon-only).
 - **Breakdown table parity:** Given the breakdown dialog open for the current preview inputs, when the table renders, then for every commodity row **Pending build costs + Extraction + Riches to treasury + Consumption + Production** equals the **Total** column and matches `previewStockpileNetDeltaByCommodityForPlayer` for that commodity (or **Total** `0` when the net map omits that id).
 - **Breakdown live update:** Given the breakdown dialog is open, when the player changes any allocation (**slider**, **±** steppers, **maximize**, **clear**, or header **Reset**) on the main panel, then phase and total cells refresh to match the new preview without closing the dialog.

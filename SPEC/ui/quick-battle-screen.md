@@ -1,6 +1,8 @@
 # Quick Battle Screen
 
-**SPEC/ui** — Tactical mini-game screen that runs a single Quick Battle from deployment to result. Game model: [quick-battle.md](../game/quick-battle.md). Resolver pipeline: [quick-battle-resolution.md](../program/quick-battle-resolution.md). Combat mode entry: [combat-mode-choice-dialog.md](combat-mode-choice-dialog.md). Final result presentation: [quick-battle-result-dialog.md](quick-battle-result-dialog.md). Sub-views: [quick-battle-deployment-view.md](quick-battle-deployment-view.md), [quick-battle-action-selector.md](quick-battle-action-selector.md). Dialog wiring: [app-ui-wiring.md](../program/app-ui-wiring.md).
+**Screen ID:** `CMPT20001` — stable; do not reassign.
+**SPEC/ui** — Tactical mini-game screen that runs a single Quick Battle from deployment to result. Implementation: `app/lib/features/game/combat/quick_battle_screen.dart`.
+**Widgetbook:** `Quick Battle` → `app/lib/widgetbook/catalog.dart`. Game model: [quick-battle.md](../game/quick-battle.md). Resolver: [quick-battle-resolution.md](../program/quick-battle-resolution.md). Entry: [combat-mode-choice-dialog.md](combat-mode-choice-dialog.md). Sub-views: [quick-battle-deployment-view.md](quick-battle-deployment-view.md), [quick-battle-action-selector.md](quick-battle-action-selector.md).
 
 ---
 
@@ -88,13 +90,24 @@ The current Quick Battle phase only deploys `CENTER + FRONT` units (see [quick-b
 
 ---
 
-## Navigation
+## Behavior
 
-- **Entry points:**
-  - Combat phase orchestrator after the player chooses `CombatMode.quickBattle` via [combat-mode-choice-dialog.md](combat-mode-choice-dialog.md), or when `isCapitalSiege == true` (forced Quick Battle, see [siege-mechanics.md](../game/siege-mechanics.md)).
-  - Future AI / observer paths may construct the screen with `interactive: false` to run the resolver inside a dialog tree without user input.
-- **Exit:** Always via `onComplete(QuickBattleResult)` once the user taps Continue. The orchestrator typically follows up by emitting `OpenDialogEvent(quickBattleResultDialogId)` so the result is presented through the canonical dialog registry (`QuickBattleResultDialog`), or by applying the result directly when no further confirmation is needed.
-- **Hardware back / dismiss:** The screen does not handle Android back; the orchestrator keeps the screen alive until `onComplete` fires.
+### Incoming (what shows this UI)
+
+| Source | Condition | Result |
+|--------|-----------|--------|
+| Combat orchestrator | Player chose Quick Battle via [combat-mode-choice-dialog.md](combat-mode-choice-dialog.md) or capital siege forced QB | `QuickBattleScreen` mounted in `CtDialogShell`. |
+| AI / observer path | `interactive: false` | Auto-resolves on first frame. |
+
+### User actions → outcomes
+
+| Control / gesture | When enabled | Emits / calls | Side effects |
+|-------------------|--------------|---------------|--------------|
+| Continue (result view) | `_result != null` | `onComplete(QuickBattleResult)` once | Orchestrator may open result dialog or apply result. |
+| Resolve (Auto) | `interactive: true`, round phase | `resolveQuickBattle(input)` | Transitions to result view. |
+| Action selector picks | `interactive: true` | Per-round action then resolve | See [quick-battle-action-selector.md](quick-battle-action-selector.md). |
+
+Hardware back is not handled; orchestrator owns lifecycle until `onComplete`.
 
 ---
 

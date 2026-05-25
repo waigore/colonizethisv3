@@ -1,6 +1,8 @@
 # Transfer to Home Fleet Dialog
 
-**SPEC/ui** — Modal that lets the human player move ship instances from a regular fleet **at the capital port** into the same-region **Home Fleet** from the [naval-units-panel.md](naval-units-panel.md). Game model: [ships-and-naval.md](../game/ships-and-naval.md) (Home Fleet merge semantics). App wiring and events: [app-ui-wiring.md](../program/app-ui-wiring.md), [app-event-bus.md](../program/app-event-bus.md).
+**Screen ID:** `DLG40001` — stable; do not reassign.
+**SPEC/ui** — Modal that lets the human player move ship instances from a regular fleet **at the capital port** into the same-region **Home Fleet** from the [naval-units-panel.md](naval-units-panel.md). Implementation: `app/lib/features/game/widgets/transfer_to_home_fleet_dialog.dart`.
+**Widgetbook:** `Transfer to Home Fleet Dialog` → `app/lib/widgetbook/catalog.dart`. Game model: [ships-and-naval.md](../game/ships-and-naval.md). App wiring: [app-ui-wiring.md](../program/app-ui-wiring.md), [app-event-bus.md](../program/app-event-bus.md).
 
 ---
 
@@ -62,13 +64,21 @@ The dialog **does not** mutate game state. All state changes flow through `Naval
 
 ---
 
-## Navigation
+## Behavior
 
-| Action | Behavior |
-|--------|----------|
-| Cancel | `Navigator.of(context).pop()`; no event emitted. |
-| Confirm — no ships moved | Internal `_handleConfirm` computes `movedByType` and returns early when `shipInstancesForTransferCounts` yields zero instances; no event, dialog stays open. |
-| Confirm — at least one ship moved | `bus.emit(NavalTransferShipsRequestedEvent(humanPlayerId, sourceFleetId, targetFleetId: homeFleetId, shipInstanceIdsToTransfer: [...]))` with the deterministic instance ids returned by `shipInstancesForTransferCounts(sourceFleet.ships, movedByType)`; then pop. |
+### Incoming (what shows this UI)
+
+| Source | Condition | Result |
+|--------|-----------|--------|
+| `NavalUnitsPanel` Transfer to Home Fleet | Regular fleet at capital port; eligible ship instances | `showDialog` mounts `TransferToHomeFleetDialog`. |
+
+### User actions → outcomes
+
+| Control / gesture | When enabled | Emits / calls | Side effects |
+|-------------------|--------------|---------------|--------------|
+| Cancel | Always | `Navigator.pop` | No bus event. |
+| Confirm | At least one ship moved (`movedByType` non-empty) | `NavalTransferShipsRequestedEvent` with `shipInstanceIdsToTransfer` | Dialog popped. |
+| Confirm (no ships) | Zero instances after `_handleConfirm` | — | Dialog stays open. |
 
 ---
 
