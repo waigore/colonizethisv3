@@ -73,33 +73,40 @@ List<String> _scanForbiddenSubstrings(Iterable<File> files) {
   return offenders;
 }
 
+const _deletedLegacyImportNeedles = <String>[
+  "'colonial_pressure.dart'",
+  "'diplomacy_planner_peace_targets.dart'",
+  'package:colonizethis_ai/src/planning/colonial_pressure.dart',
+  'package:colonizethis_ai/src/planning/'
+      'diplomacy_planner_peace_targets.dart',
+];
+
 List<String> _scanLegacyImports(Iterable<File> files) {
   final offenders = <String>[];
-  const deletedImportNeedles = <String>[
-    "'colonial_pressure.dart'",
-    "'diplomacy_planner_peace_targets.dart'",
-    'package:colonizethis_ai/src/planning/colonial_pressure.dart',
-    'package:colonizethis_ai/src/planning/'
-        'diplomacy_planner_peace_targets.dart',
-  ];
   for (final file in files) {
     final lines = file.readAsLinesSync();
     for (var i = 0; i < lines.length; i++) {
-      final line = lines[i];
-      if (!line.trimLeft().startsWith('import ')) {
-        continue;
-      }
-      for (final needle in deletedImportNeedles) {
-        if (line.contains(needle)) {
-          offenders.add(
-            '${file.path}:${i + 1}: imports deleted legacy file '
-            '($needle)',
-          );
-        }
-      }
+      _collectLegacyImportOffenders(file, i + 1, lines[i], offenders);
     }
   }
   return offenders;
+}
+
+void _collectLegacyImportOffenders(
+  File file,
+  int lineNumber,
+  String line,
+  List<String> offenders,
+) {
+  if (!line.trimLeft().startsWith('import ')) return;
+  for (final needle in _deletedLegacyImportNeedles) {
+    if (line.contains(needle)) {
+      offenders.add(
+        '${file.path}:$lineNumber: imports deleted legacy file '
+        '($needle)',
+      );
+    }
+  }
 }
 
 void main() {
@@ -147,9 +154,7 @@ void main() {
     });
 
     test('test/**/*.dart does not import deleted legacy files', () {
-      final offenders = _scanLegacyImports(
-        _dartFilesUnder(_testDirRelative),
-      );
+      final offenders = _scanLegacyImports(_dartFilesUnder(_testDirRelative));
       expect(offenders, isEmpty);
     });
   });
