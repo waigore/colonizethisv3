@@ -2,6 +2,7 @@ import '../perception/perception_snapshot.dart';
 import 'army_conquest_prep.dart';
 import 'planning_imports.dart';
 import 'colonial_pressure.dart';
+import 'expand_phase_planner.dart' as expand_phase_planner;
 import 'observer_goal_phase.dart';
 
 /// Strongest at-war GP that owns invadable OW provinces while this GP is stalled.
@@ -401,47 +402,38 @@ List<String> stalledZeroRegimentAllFactionPeaceTargets({
 }
 
 /// Peace every at-war Great Power when stalled with zero regiments (Refs #2509).
+///
+/// Delegates to [expand_phase_planner.stalledZeroRegimentGpPeaceTargets]
+/// (Refs #2509 S1) so the canonical implementation lives alongside the
+/// EXPAND zero-regiment survival arm. Retained here as a thin stub for
+/// the legacy `diplomacy_planner_below_quota_peace_part3_test.dart`
+/// fixture and the in-file `_survivalGreatPowerPeaceTargets` /
+/// `collectStalledGreatPowerPeaceTargets` / `stalledOwExpansionNeedsPeacePass`
+/// consumer chains until the planned S1 deletion of this file.
 List<String> stalledZeroRegimentGpPeaceTargets({
   required Game game,
   required AIWorldSnapshot snapshot,
-}) {
-  if (!isStalledOldWorldExpansion(snapshot.conquest.oldWorldProvincesOwned)) {
-    return const [];
-  }
-  if (regimentCountForPlayer(game, snapshot.playerId) > 0) {
-    return const [];
-  }
-  final targets = <String>[
-    for (final factionId in snapshot.threats.atWarWith)
-      if (game.playerById(factionId) != null) factionId,
-  ]..sort();
-  return targets;
-}
+}) => expand_phase_planner.stalledZeroRegimentGpPeaceTargets(
+      game: game,
+      snapshot: snapshot,
+    );
 
 /// Peace a sole GP enemy when both sides have zero regiments (stalemate reset).
+///
+/// Delegates to [expand_phase_planner.mutualZeroRegimentGpStalematePeaceTargets]
+/// (Refs #2509 S1) so the canonical implementation lives alongside the
+/// EXPAND zero-regiment mutual-stalemate arm. Retained here as a thin
+/// stub for the in-file `_survivalGreatPowerPeaceTargets` /
+/// `collectStalledGreatPowerPeaceTargets` `zeroRegimentBlockerPeace` /
+/// `stalledOwExpansionNeedsPeacePass` consumer chains until the planned
+/// S1 deletion of this file.
 List<String> mutualZeroRegimentGpStalematePeaceTargets({
   required Game game,
   required AIWorldSnapshot snapshot,
-}) {
-  if (!isStalledOldWorldExpansion(snapshot.conquest.oldWorldProvincesOwned)) {
-    return const [];
-  }
-  if (regimentCountForPlayer(game, snapshot.playerId) > 0) {
-    return const [];
-  }
-  final gpWars = <String>[
-    for (final factionId in snapshot.threats.atWarWith)
-      if (game.playerById(factionId) != null) factionId,
-  ];
-  if (gpWars.length != 1) {
-    return const [];
-  }
-  final enemy = gpWars.single;
-  if (regimentCountForPlayer(game, enemy) > 0) {
-    return const [];
-  }
-  return [enemy];
-}
+}) => expand_phase_planner.mutualZeroRegimentGpStalematePeaceTargets(
+      game: game,
+      snapshot: snapshot,
+    );
 
 /// Peace the sole at-war Great Power when both sides are mutual-plateau peers
 /// below the observer quota AND both are exhausted in regiments and treasury.
