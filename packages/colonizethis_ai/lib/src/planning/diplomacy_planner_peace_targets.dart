@@ -137,37 +137,35 @@ bool _isMinorOrTribeFaction(Game game, String factionId) =>
     game.tribes.any((t) => t.id == factionId);
 
 /// At-war minor with the most invadable Old World provinces (single-front focus).
+///
+/// Delegates to [expand_phase_planner.stalledFocusMinorTarget]
+/// (Refs #2509 S1) so the EXPAND-phase focused-minor target identifier
+/// survives the planned deletion of this file alongside its
+/// [belowQuotaActiveMinorWarTarget] gate-wrapper sibling and the
+/// `stalledExpansionDistractionPeaceTargets` /
+/// `belowQuotaMultiMinorDistractionPeaceTargets` consumer chain that
+/// pivot off the focused-minor identity.
 String? stalledFocusMinorTarget({
   required Game game,
   required AIWorldSnapshot snapshot,
-}) {
-  final provinceOwner = getProvinceOwnerMap(game);
-  String? bestMinorId;
-  var bestInvadableCount = 0;
-  for (final minor in game.minorNations) {
-    final rel = getRelation(game, snapshot.playerId, minor.id);
-    if (rel?.state != RelationState.atWar) continue;
-    final invadableCount = snapshot.conquest.invadableProvinceIdsSorted
-        .where((pid) => provinceOwner[pid] == minor.id)
-        .length;
-    if (invadableCount > bestInvadableCount) {
-      bestInvadableCount = invadableCount;
-      bestMinorId = minor.id;
-    }
-  }
-  return bestMinorId;
-}
+}) => expand_phase_planner.stalledFocusMinorTarget(
+  game: game,
+  snapshot: snapshot,
+);
 
 /// Active at-war minor front while below the observer quota (seed-42 gp4).
+///
+/// Delegates to [expand_phase_planner.belowQuotaActiveMinorWarTarget]
+/// (Refs #2509 S1) so the EXPAND-phase below-quota minor-front gate
+/// survives the planned deletion of this file alongside the canonical
+/// [expand_phase_planner.stalledFocusMinorTarget] helper it composes.
 String? belowQuotaActiveMinorWarTarget({
   required Game game,
   required AIWorldSnapshot snapshot,
-}) {
-  if (!isBelowObserverConquestQuota(snapshot.conquest.oldWorldProvincesOwned)) {
-    return null;
-  }
-  return stalledFocusMinorTarget(game: game, snapshot: snapshot);
-}
+}) => expand_phase_planner.belowQuotaActiveMinorWarTarget(
+  game: game,
+  snapshot: snapshot,
+);
 
 /// Peace tribe wars while fighting a Great Power (OW consolidation; Refs #2509).
 ///
