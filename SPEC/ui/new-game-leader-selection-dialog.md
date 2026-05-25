@@ -1,6 +1,8 @@
 # New Game Leader Selection Dialog
 
-**SPEC/ui** — Modal that captures the six-slot **nation + leader** lineup plus the per-game **seed**, **infinite-mode** toggle, and **terrain variation** slider for a new game, opened from the shell main menu New Game flow. Parent context: [game-setup.md](game-setup.md). New game progress and error handling after confirmation: [game-initializing.md](game-initializing.md). App wiring and events: [app-ui-wiring.md](../program/app-ui-wiring.md), [app-event-bus.md](../program/app-event-bus.md).
+**Screen ID:** `DLG10001` — stable; do not reassign.
+**SPEC/ui** — Modal that captures the six-slot **nation + leader** lineup plus the per-game **seed**, **infinite-mode** toggle, and **terrain variation** slider for a new game, opened from the shell main menu New Game flow. Parent context: [game-setup.md](game-setup.md). New game progress and error handling after confirmation: [game-initializing.md](game-initializing.md). Implementation: `app/lib/features/shell/new_game_leader_selection_dialog.dart`. App wiring and events: [app-ui-wiring.md](../program/app-ui-wiring.md), [app-event-bus.md](../program/app-event-bus.md).
+**Widgetbook:** `New Game Leader Selection Dialog` → `app/lib/widgetbook/catalog.dart` (see § Widgetbook).
 
 ---
 
@@ -60,6 +62,32 @@ Implementation: `app/lib/features/shell/new_game_leader_selection_dialog.dart`. 
 - Opened by the shell New Game button via `bus.emit(OpenDialogEvent(newGameLeaderSelectionDialogId))`. The shell builder `_buildNewGameLeaderSelectionDialog` (`app_event_handler_scope_dialog_builders.dart`) constructs `baseConfig` from `GameSetupConfig.defaultConfig` (or the E2E template when `kCtE2EEnabled`), seeds `initialLeaderByGpId` from each `GpId`'s `defaultLeaderVariantId`, and wires `onCancel` / `onConfirmed`.
 - `selectedGreatPowerIds` from `baseConfig` provides the initial slot ordering when its length equals `_kNumSlots`; otherwise the dialog falls back to `GameSetupConfig.defaultConfig.selectedGreatPowerIds`.
 - The dialog **does not** mutate game state; on confirm it invokes `widget.onConfirmed` and pops itself first to avoid use-after-dispose during the setup launch.
+
+---
+
+## Behavior
+
+### Incoming
+
+| Source | Condition | Result |
+|--------|-----------|--------|
+| `OpenDialogEvent(newGameLeaderSelectionDialogId)` on `AppEventBus` | The shell handler registers `_buildNewGameLeaderSelectionDialog` (`app_event_handler_scope_dialog_builders.dart`) for `newGameLeaderSelectionDialogId` | The handler scope mounts `NewGameLeaderSelectionDialog` with `baseConfig`, `naming`, `initialLeaderByGpId`, `onCancel`, and `onConfirmed` per [app-ui-wiring.md](../program/app-ui-wiring.md) § Dialog IDs. |
+| `baseConfig.selectedGreatPowerIds.length == 6` | First build pass | Slot rows 1..6 use those IDs in order; otherwise the dialog falls back to `GameSetupConfig.defaultConfig.selectedGreatPowerIds`. |
+
+### User actions → outcomes
+
+| Control / gesture | When enabled | Emits / calls | Side effects |
+|-------------------|--------------|---------------|--------------|
+| Slot nation `CtDropdown` change | The chosen GP id is not currently used by another slot (other than this one) | Updates `_orderedGpIdsBySlot[i]`; sets `_leaderByGpId[newId] = gp.defaultLeaderVariantId` | Other slots' dropdown item filters refresh; `_startEnabled` recomputes. |
+| Slot leader `CtDropdown` change | A nation is selected for that slot and the chosen id is in `gp.leaderVariants` | Updates `_leaderByGpId[effectiveGpId]` | `_startEnabled` recomputes. |
+| Seed `TextField` edit | Always | Updates the controller text; parsed on Start via `parseSeedInput` | No immediate side effect; helper text reminds the user the value is parsed on Start. |
+| Infinite mode `CheckboxListTile` | Always | Updates `_infiniteMode` | Helper subtitle remains visible. |
+| Terrain variation `CtSlider` | Always | Updates `_terrainVariation` | Label percent rerenders as `(value * 100).round()`. |
+| Start `CtNinePatchButton` | `_startEnabled == true` (all six slots filled, no duplicates, every slot's leader id is valid) | Parses seed via `parseSeedInput`, pops the dialog, then calls `widget.onConfirmed(orderedGreatPowerIds, leaderVariantByGpId, seed, infiniteMode, terrainVariation)` | The scope builder schedules `runNewGameSetupAfterLeaderPick` for the resolved template. |
+| Start `CtNinePatchButton` | `_startEnabled == false` | No-op (`enabled: false`) | No callback fires; dialog remains mounted. |
+| Cancel `CtNinePatchButton` | Always | Calls `widget.onCancel` (typically pops the dialog) | `widget.onConfirmed` is not invoked. |
+
+The dialog never mutates game state directly; all effects flow through `widget.onConfirmed` and the shell setup pipeline.
 
 ---
 

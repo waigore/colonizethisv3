@@ -1,7 +1,8 @@
 # Shell Screen
 
 **Screen ID:** `SHEL10001` — stable; do not reassign.
-**SPEC/ui** — App shell. Hosts [`CtMainMenu`](main-menu.md) on the `Routes.shell` route and acts as the navigation choke point between the main menu and gameplay. Source of truth for the menu surface itself: [`main-menu.md`](main-menu.md). App-screen / route table: [`ctdev-app.md`](../program/ctdev-app.md). Routes: `app/lib/config/routes.dart`. Bus events: [`app-event-bus.md`](../program/app-event-bus.md). Bus wiring rules: [`app-ui-wiring.md`](../program/app-ui-wiring.md). Auto-save / resume contract: [`save-load.md`](../program/save-load.md).
+**SPEC/ui** — App shell. Hosts [`CtMainMenu`](main-menu.md) on the `Routes.shell` route and acts as the navigation choke point between the main menu and gameplay. Source of truth for the menu surface itself: [`main-menu.md`](main-menu.md). App-screen / route table: [`ctdev-app.md`](../program/ctdev-app.md). Implementation: `app/lib/features/shell/shell_screen.dart`. Bus events: [`app-event-bus.md`](../program/app-event-bus.md). Bus wiring rules: [`app-ui-wiring.md`](../program/app-ui-wiring.md). Auto-save / resume contract: [`save-load.md`](../program/save-load.md).
+**Widgetbook:** `Shell Screen` → `app/lib/widgetbook/catalog.dart` (see § Widgetbook).
 
 ---
 
@@ -46,6 +47,34 @@ The shell does not own the menu UI: visual layout, asset choices, and per-state 
 ```
 
 The shell does not paint chrome around the menu; it returns the `CtMainMenu` widget directly so the menu fills the route.
+
+---
+
+## Behavior
+
+The shell owns no on-screen controls of its own: every visible interaction is hosted by [`CtMainMenu`](main-menu.md). This section enumerates the side effects this widget contributes when those menu controls fire and when bus events mount or remount the shell route.
+
+### Incoming
+
+| Source | Condition | Result |
+|--------|-----------|--------|
+| App navigator initial route | First frame after splash/init | `ShellScreen` mounts on `Routes.shell` and reads `mainMenuAutoSaveAvailableProvider`. |
+| `NavigateToShellEvent` on `AppEventBus` | `AppEventHandler` routes the event per [`app-ui-wiring.md`](../program/app-ui-wiring.md) § Routes | The shell rebuilds via `pushNamedAndRemoveUntil(Routes.shell)` and re-evaluates the auto-save provider; Resume game visibility refreshes without an app restart. |
+| Post-victory return | [`victory-overlay.md`](victory-overlay.md) emits `NavigateToShellEvent` | Same as above; the shell displays without a dedicated "after victory" subtitle (the menu spec owns that pointer). |
+| `mainMenuAutoSaveAvailableProvider` value change | Provider transitions between `true` and `false` | The shell rebuilds and passes the new `resumeGameVisible` flag to `CtMainMenu`. |
+
+### User actions → outcomes
+
+| Control / gesture | When enabled | Emits / calls | Side effects |
+|-------------------|--------------|---------------|--------------|
+| `CtMainMenu` New Game tap | Always | `bus.emit(OpenDialogEvent(newGameLeaderSelectionDialogId))` | Leader-selection dialog opens per [`app-ui-wiring.md`](../program/app-ui-wiring.md) § Dialog IDs. |
+| `CtMainMenu` Resume game tap | `mainMenuAutoSaveAvailableProvider == true` | `gameServiceProvider.loadAutoSaveGame()` → reset `observeSessionProvider` → set `currentGameProvider` → `bus.emit(NavigateToRouteEvent(Routes.game))` | Replaces the route stack with the in-game route on success. |
+| `CtMainMenu` Load game tap with at least one saved id | `gameServiceProvider.listGameIds()` returns non-empty | `gameServiceProvider.loadGame(id)` → reset `observeSessionProvider` → set `currentGameProvider` → `bus.emit(NavigateToRouteEvent(Routes.game))` | Same as Resume game. |
+| `CtMainMenu` Load game tap with no saves | `gameServiceProvider.listGameIds()` returns empty | None (no-op) | The menu disables Load game via [`main-menu.md`](main-menu.md). |
+| `CtMainMenu` Settings tap | Always | None (stub) | Reserved for the eventual Settings flow. |
+| `CtMainMenu` Quit tap | Always | `SystemNavigator.pop()` | App exit; no bus events emitted. |
+
+The shell never calls `Navigator.pushNamed` / `pushReplacement` / `popUntil` directly for cross-cutting flows — every navigation handoff goes through `AppEventBus` per [`app-ui-wiring.md`](../program/app-ui-wiring.md).
 
 ---
 

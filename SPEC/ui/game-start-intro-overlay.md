@@ -1,6 +1,8 @@
 # Game Start Intro Overlay
 
-**SPEC/ui** — Modal blocking overlay shown the **first time** a player enters a freshly created game (or one whose intro has not yet been dismissed for the active session). Plays the archaic-language `game_start_intro` Yarn node via [`CtDialogueView`](ct-dialogue-view.md). Lifecycle / Yarn first-emission contract: [`dialogue-management.md`](../ai/dialogue-management.md) § First dialogue emission point. Modal presentation rules: [`dialogue-presentation.md`](dialogue-presentation.md). Host screen / wrap order: [`game-screen.md`](game-screen.md) § States and variants. Pixel-art chrome: [`pixel-art-ui-catalog.md`](pixel-art-ui-catalog.md). Asset constant: `kDialogueGameIntroAsset` in `app/lib/config/app_constants.dart`.
+**Screen ID:** `OVL10001` — stable; do not reassign.
+**SPEC/ui** — Modal blocking overlay shown the **first time** a player enters a freshly created game (or one whose intro has not yet been dismissed for the active session). Plays the archaic-language `game_start_intro` Yarn node via [`CtDialogueView`](ct-dialogue-view.md). Lifecycle / Yarn first-emission contract: [`dialogue-management.md`](../ai/dialogue-management.md) § First dialogue emission point. Modal presentation rules: [`dialogue-presentation.md`](dialogue-presentation.md). Host screen / wrap order: [`game-screen.md`](game-screen.md) § States and variants. Pixel-art chrome: [`pixel-art-ui-catalog.md`](pixel-art-ui-catalog.md). Asset constant: `kDialogueGameIntroAsset` in `app/lib/config/app_constants.dart`. Implementation: `app/lib/features/game/dialogue/game_start_intro_overlay.dart`.
+**Widgetbook:** `Game Start Intro Overlay` → `app/lib/widgetbook/catalog.dart` (see § Widgetbook).
 
 ---
 
@@ -59,6 +61,30 @@ The overlay is meant to be **single-shot per game id per session**: once the hos
 ```
 
 Error mode renders the same `Stack` but the `CtDialogShell` body is the localized error message (`l10n.game_intro_loadError`) plus a single Continue button (`l10n.game_intervention_continue`).
+
+---
+
+## Behavior
+
+### Incoming
+
+| Source | Condition | Result |
+|--------|-----------|--------|
+| `GameScreen` wraps the content stack with `GameStartIntroOverlay` | `currentGameProvider != null && !gameIdsWithIntroShownProvider.contains(game.id)` | Overlay mounts; `initState` kicks off `_loadAndRun()` and emits `intro.asset_load.begin`. |
+| `_loadAndRun()` resolves the Yarn asset and parses `game_start_intro` | Asset bundle returns the expected text and the node exists | Emits `intro.asset_load.end`, constructs the `CtDialogueView`, starts the runner, then emits `intro.dialogue_begin`. |
+| `CtDialogueView.onStateChanged(line, _)` fires with the first non-null `line` | First time per overlay lifetime | Emits `intro.first_line` once and logs `game_intro first_line_shown`. |
+| `_loadAndRun()` throws (missing node / parse failure) | Yarn asset is malformed or missing | `_loadError` is set; the overlay flips to the error variant with a Continue affordance. |
+
+### User actions → outcomes
+
+| Control / gesture | When enabled | Emits / calls | Side effects |
+|-------------------|--------------|---------------|--------------|
+| Continue `CtNinePatchButton` (line variant) | `_view!.currentLine != null` | `CtDialogueView.advanceLine()` | Dialogue advances to the next Jenny event (line, choice, or finish); the overlay rebuilds with the updated state. |
+| Option `CtNinePatchButton` (choice variant) | `_view!.currentChoice != null && i` is a valid option index | `CtDialogueView.selectOption(i)` | Dialogue advances; the overlay rebuilds with the next event. |
+| Continue `CtNinePatchButton` (error variant) | `_loadError != null` | Clears `_loadError` and calls `widget.onDismissed` | Host marks the id via `gameIdsWithIntroShownProvider.notifier.markShown`; overlay unmounts on the next build. |
+| Yarn runner reaches end of `game_start_intro` | `runner.startDialogue` completes successfully | Sets `_dialogueFinished = true` and calls `widget.onDismissed` | Host marks the id; overlay unmounts on the next build. |
+
+The overlay never reads or emits `AppEventBus` events directly and never calls `Navigator.pushNamed` / `pop` — all navigation side effects flow through `widget.onDismissed`.
 
 ---
 

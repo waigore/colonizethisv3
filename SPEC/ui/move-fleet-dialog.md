@@ -1,6 +1,8 @@
 # Move Fleet Dialog
 
-**SPEC/ui** — Modal that lets the human player move a sea-going fleet to an adjacent sea zone or owned port from the [naval-units-panel.md](naval-units-panel.md). Game model: [ships-and-naval.md](../game/ships-and-naval.md). Movement resolution: [naval-movement-resolution.md](../program/naval-movement-resolution.md). Map locate semantics: [map-widget.md](map-widget.md). App wiring and events: [app-ui-wiring.md](../program/app-ui-wiring.md), [app-event-bus.md](../program/app-event-bus.md).
+**Screen ID:** `DLG30001` — stable; do not reassign.
+**SPEC/ui** — Modal that lets the human player move a sea-going fleet to an adjacent sea zone or owned port from the [naval-units-panel.md](naval-units-panel.md). Game model: [ships-and-naval.md](../game/ships-and-naval.md). Movement resolution: [naval-movement-resolution.md](../program/naval-movement-resolution.md). Map locate semantics: [map-widget.md](map-widget.md). Implementation: `app/lib/features/game/widgets/move_fleet_dialog.dart`. App wiring and events: [app-ui-wiring.md](../program/app-ui-wiring.md), [app-event-bus.md](../program/app-event-bus.md).
+**Widgetbook:** `Move Fleet Dialog` → `app/lib/widgetbook/catalog.dart` (see § Widgetbook).
 
 ---
 
@@ -52,6 +54,29 @@ Implementation: `app/lib/features/game/widgets/move_fleet_dialog.dart`. Wrapped 
 - Opened from `NavalUnitsPanel` non-Home fleet row **Move** action; the **Home Fleet** row never shows Move ([naval-units-panel.md](naval-units-panel.md) § Move fleet).
 - `_buildNavalMovePicks` derives candidates from `navalMoveTopologyPicksForFleet(topology, fleet)`. With zero topology picks the dialog opens in the empty state.
 - The dialog does not mutate game state; it emits `NavalMoveFleetRequestedEvent` and the shell/turn-resolution pipeline applies the order.
+
+---
+
+## Behavior
+
+### Incoming
+
+| Source | Condition | Result |
+|--------|-----------|--------|
+| `NavalUnitsPanel` non-Home fleet row **Move** tap | The row's fleet is not the Home Fleet | `showDialog` mounts `MoveFleetDialog` with the current `game`, `topology`, `humanPlayerId`, `fleet`, and `bus`. |
+| `_buildNavalMovePicks` evaluation on first build | `navalMoveTopologyPicksForFleet(topology, fleet)` returns at least one entry | The dialog renders the picks under `Sea zones` and (when applicable) `Provinces (dock)` sections. |
+| `_buildNavalMovePicks` evaluation on first build | The topology returns no picks | The dialog renders `moveFleet_noAdjacentSeaZones` and the Confirm button stays disabled. |
+
+### User actions → outcomes
+
+| Control / gesture | When enabled | Emits / calls | Side effects |
+|-------------------|--------------|---------------|--------------|
+| `RadioListTile<_MovePick>` row | The pick is rendered | Sets local `_selected` to the chosen `_MovePick` | Confirm enables when `_selected != null`. |
+| Per-row locate `IconButton` (`Icons.my_location`) | The pick has a resolvable map tile | `pick.emitLocate(bus, game)` → `bus.emit(LocateMapTileEvent(tileKey))` via `tileKeyForSeaZoneLocation` or `tileKeyForProvinceLocation` | Map pans/centers per [map-widget.md](map-widget.md). When no key resolves, no event is emitted. |
+| `common_cancel` `TextButton` | Always | `Navigator.pop(context, false)` | No event emitted; dialog removed from tree. |
+| `common_confirm` `TextButton` | `_selected != null` | `bus.emit(NavalMoveFleetRequestedEvent(humanPlayerId, selected.toOrder(fleet.id)))` then `Navigator.pop(context, true)` | Sea pick → `NavalMoveOrder(fleetId, destinationSeaZoneId)`; port pick → `NavalMoveOrder(fleetId, destinationPortProvinceId)`; order joins the next-turn draft. |
+
+The dialog never mutates `Game`, `MapTopology`, or fleet state; all effects flow through the emitted `NavalMoveFleetRequestedEvent`.
 
 ---
 

@@ -1,6 +1,8 @@
 # Quick Battle Screen
 
-**SPEC/ui** — Tactical mini-game screen that runs a single Quick Battle from deployment to result. Game model: [quick-battle.md](../game/quick-battle.md). Resolver pipeline: [quick-battle-resolution.md](../program/quick-battle-resolution.md). Combat mode entry: [combat-mode-choice-dialog.md](combat-mode-choice-dialog.md). Final result presentation: [quick-battle-result-dialog.md](quick-battle-result-dialog.md). Sub-views: [quick-battle-deployment-view.md](quick-battle-deployment-view.md), [quick-battle-action-selector.md](quick-battle-action-selector.md). Dialog wiring: [app-ui-wiring.md](../program/app-ui-wiring.md).
+**Screen ID:** `CMPT20001` — stable; do not reassign.
+**SPEC/ui** — Tactical mini-game screen that runs a single Quick Battle from deployment to result. Game model: [quick-battle.md](../game/quick-battle.md). Resolver pipeline: [quick-battle-resolution.md](../program/quick-battle-resolution.md). Combat mode entry: [combat-mode-choice-dialog.md](combat-mode-choice-dialog.md). Final result presentation: [quick-battle-result-dialog.md](quick-battle-result-dialog.md). Sub-views: [quick-battle-deployment-view.md](quick-battle-deployment-view.md), [quick-battle-action-selector.md](quick-battle-action-selector.md). Dialog wiring: [app-ui-wiring.md](../program/app-ui-wiring.md). Implementation: `app/lib/features/game/combat/quick_battle_screen.dart`.
+**Widgetbook:** `Quick Battle` → `app/lib/widgetbook/catalog.dart` (see § Widgetbook).
 
 ---
 
@@ -73,6 +75,28 @@ The widget is presentational with respect to game state — it does not read pro
 - Winner text comes from `QuickBattleResult.winner` mapped to `quickBattle_attackerWins`, `quickBattle_defenderHolds`, or `quickBattle_mutualExhaustion`.
 - `provinceCaptured` line appears only when `result.provinceFlips == true`.
 - Continue button (`CtNinePatchButton`) invokes `onComplete(result)` exactly once.
+
+---
+
+## Behavior
+
+### Incoming
+
+| Source | Condition | Result |
+|--------|-----------|--------|
+| Combat phase orchestrator constructs `QuickBattleScreen` | The player chose `CombatMode.quickBattle` via [combat-mode-choice-dialog.md](combat-mode-choice-dialog.md), or a capital siege forced Quick Battle, or AI / observer paths request a headless run | The screen mounts inside a `CtDialogShell`; `interactive` is forwarded by the orchestrator. |
+| First frame after mount with `interactive == false` | The constructor passed `interactive: false` | `initState` calls `_runWithDefaults`, which invokes `resolveQuickBattle(input)` with default Volley Fire actions and stores the result in `_result`. |
+| First frame after mount with `interactive == true` | The constructor passed `interactive: true` | `_result` stays `null`; round-phase widgets render and wait for the action selector. |
+
+### User actions → outcomes
+
+| Control / gesture | When enabled | Emits / calls | Side effects |
+|-------------------|--------------|---------------|--------------|
+| Resolve (Auto) `CtNinePatchButton` | `interactive == false && _result == null` (manual fallback before auto-resolve completes) | Calls `_runWithDefaults`, which calls `resolveQuickBattle(input)` once | Result phase renders winner, casualties, and Continue. |
+| Action button inside `QuickBattleActionSelector` | `interactive == true && _result == null` and the action's CP fits in `cpRemaining: 3` | `_onActionSelected(action)` calls `resolveQuickBattle(input, roundActions: [action, VolleyFire, VolleyFire])` | Result phase renders winner, casualties, and Continue. |
+| Continue `CtNinePatchButton` (result phase) | `_result != null` | Calls `onComplete(_result!)` exactly once (guarded by `_completionInvoked` so subsequent taps are no-ops) | Orchestrator forwards the result back into the combat pipeline (often via `OpenDialogEvent(quickBattleResultDialogId)`); the host removes the screen from the widget tree. |
+
+The screen never reads providers, never emits bus events, and never handles Android back; the orchestrator owns the lifecycle through `onComplete`.
 
 ---
 

@@ -1,7 +1,8 @@
 # Game Screen
 
 **Screen ID:** `GAME10001` — stable; do not reassign.
-**SPEC/ui** — In-game host screen for the Flutter app. Lives at `Routes.game` and orchestrates the map / Flame canvas, the next-turn flow, the pause menu, the Victory overlay, the intro dialogue, and the pending diplomacy overlays. Source of truth for the in-game shell layout (region tabs, map widget, sidebars): [`empire-overview.md`](empire-overview.md). The Game Screen widget itself is the **router** that decides which content is mounted; this spec covers that contract. Bus wiring: [`app-ui-wiring.md`](../program/app-ui-wiring.md). Bus events: [`app-event-bus.md`](../program/app-event-bus.md). Turn resolution: [`turn-resolution.md`](../program/turn-resolution.md), [`next-turn-confirmation.md`](next-turn-confirmation.md). Victory: [`victory.md`](../game/victory.md). Routes: `app/lib/config/routes.dart`.
+**SPEC/ui** — In-game host screen for the Flutter app. Lives at `Routes.game` and orchestrates the map / Flame canvas, the next-turn flow, the pause menu, the Victory overlay, the intro dialogue, and the pending diplomacy overlays. Source of truth for the in-game shell layout (region tabs, map widget, sidebars): [`empire-overview.md`](empire-overview.md). The Game Screen widget itself is the **router** that decides which content is mounted; this spec covers that contract. Implementation: `app/lib/features/game/flame/game_screen.dart`. Bus wiring: [`app-ui-wiring.md`](../program/app-ui-wiring.md). Bus events: [`app-event-bus.md`](../program/app-event-bus.md). Turn resolution: [`turn-resolution.md`](../program/turn-resolution.md), [`next-turn-confirmation.md`](next-turn-confirmation.md). Victory: [`victory.md`](../game/victory.md). Routes: `app/lib/config/routes.dart`.
+**Widgetbook:** `Game Screen` → `app/lib/widgetbook/catalog.dart` (see § Widgetbook).
 
 ---
 
@@ -69,6 +70,40 @@ The widget is wrapped in a `PopScope(canPop: false)` so the system back gesture 
 ```
 
 The screen never paints chrome around the map / Flame canvas itself; layout for that surface is governed by [`empire-overview.md`](empire-overview.md) (region tabs, sidebars, treasury indicator, minimap).
+
+---
+
+## Behavior
+
+The `GameScreen` widget is a thin router: it wires bus events and provider-driven wrappers around the map / Flame canvas. Detailed sub-behavior lives in the linked overlay / dialog specs.
+
+### Incoming
+
+| Source | Condition | Result |
+|--------|-----------|--------|
+| `NavigateToRouteEvent(Routes.game)` on `AppEventBus` | Emitted by [`shell-screen.md`](shell-screen.md) (New Game / Resume / Load) or the new-game setup flow | `GameScreen` is pushed by `AppEventHandler` and reads `currentGameProvider`, `mapViewDataProvider`, `pendingDiplomacyProvider`. |
+| `pendingDiplomacyProvider` becomes a non-empty `PendingDiplomacyOvertures` / `Intervention` / `CallToArms` | Turn resolution returned pending decisions | The build wraps the content stack in the matching overlay (see § States and variants); the screen does not emit; resume callbacks come from `gameServiceProvider`. |
+| `gameIdsWithIntroShownProvider` excludes `game.id` | Fresh game / intro not yet dismissed this session | The content stack is wrapped in `GameStartIntroOverlay`; dismissing the overlay calls `markShown(game.id)`. |
+| Victory recorded on the current `game` | `game.victory != null` | The pause and Next turn buttons are hidden; `VictoryOverlay` is stacked on top per [`victory-overlay.md`](victory-overlay.md). |
+| `turnResolutionBlockingProvider == true` | A turn resolution flow is in progress | Next turn button becomes disabled; the gate is enforced for bus-driven dialog opens by [`app-ui-wiring.md`](../program/app-ui-wiring.md). |
+
+### User actions → outcomes
+
+| Control / gesture | When enabled | Emits / calls | Side effects |
+|-------------------|--------------|---------------|--------------|
+| Pause `IconButton` (top-left) | `showOverlayButtons == true` | `bus.emit(OpenPauseMenuPanelEvent())` | Allowed during turn resolution; handled by `AppEventHandlerScope` per [`app-ui-wiring.md`](../program/app-ui-wiring.md) § Typed panel events. |
+| Next turn `CtNinePatchButton` | `showOverlayButtons == true && !turnResolutionBlockingProvider && allowsFullTurnResolution(game)` | Runs the local `_runFlameCanvasNextTurn` flow (confirm dialog → processing dialog → `turnResolutionRunnerProvider.startResolution`) | On terminal complete: `applyTurnResolutionResult(ref, result)`; on terminal error: snackbar + rethrow; always clears the blocking flag and disposes the phase notifier on the next frame. |
+| `NextTurnConfirmationDialog` Confirm | The dialog is shown | Triggers steps 2–6 of the flow described above | Same as above. |
+| `NextTurnConfirmationDialog` Cancel | The dialog is shown | Returns from `_runFlameCanvasNextTurn` | No resolution attempt. |
+| Android back / `PopScope.onPopInvoked` | Always (`canPop: false`) | Opens an exit-confirm `CtDialogShell` via local `showDialog(useRootNavigator: true)` | The screen does not pop directly; cross-route exit is bus-driven. |
+| Exit-to-Main-Menu confirm | Exit dialog shown | `bus.emit(NavigateToShellEvent())` | `AppEventHandler` pops back to `Routes.shell` per [`app-ui-wiring.md`](../program/app-ui-wiring.md). |
+| Exit-to-Main-Menu cancel | Exit dialog shown | Dialog closes | No navigation. |
+| `OvertureDialogueOverlay.onDecisions` | A pending overture batch is active | `gameServiceProvider.resumeOvertureDecisions(...)` → `applyTurnResolutionResult(ref, result)` | Clears the overture pending state and continues the turn pipeline. |
+| `InterventionDialogueOverlay.onDecisions` | A pending intervention batch is active | `gameServiceProvider.resumeInterventionDecisions(...)` → `applyTurnResolutionResult(ref, result)` | Clears the intervention pending state. |
+| `CallToArmsDialogueOverlay.onDecisions` | A pending call-to-arms batch is active | `gameServiceProvider.resumeCallToArmsDecisions(...)` → `applyTurnResolutionResult(ref, result)` | Clears the call-to-arms pending state. |
+| `GameStartIntroOverlay.onDismissed` | The intro is shown for the current game id | `gameIdsWithIntroShownProvider.notifier.markShown(game.id)` | Subsequent rebuilds skip the intro wrapper for that id. |
+
+`GameScreen` never calls `Navigator.popUntil` or `pushReplacementNamed` for cross-screen flows; the exit-confirm dialog itself is the only `showDialog` invocation it owns directly (plus the next-turn confirm / processing dialogs handled by the next-turn handler).
 
 ---
 

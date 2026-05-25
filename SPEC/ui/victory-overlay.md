@@ -1,6 +1,8 @@
 # Victory Overlay
 
-**SPEC/ui** — Full-screen overlay shown when a military victory is recorded. Game model: [victory.md](../game/victory.md). Navigation target for “Return to Main Menu”: [main-menu.md](main-menu.md). Host screen: `GameScreen` (`app/lib/features/game/flame/game_screen.dart`).
+**Screen ID:** `OVL20001` — stable; do not reassign.
+**SPEC/ui** — Full-screen overlay shown when a military victory is recorded. Game model: [victory.md](../game/victory.md). Navigation target for “Return to Main Menu”: [main-menu.md](main-menu.md). Host screen: `GameScreen` (`app/lib/features/game/flame/game_screen.dart`). Implementation: `app/lib/features/game/flame/victory_overlay.dart`.
+**Widgetbook:** `Victory` → `app/lib/widgetbook/catalog.dart` (see § Widgetbook).
 
 ---
 
@@ -52,6 +54,26 @@ Winner resolution: `game.playerById(victory.winnerPlayerId) ?? game.players.firs
 - `GameScreen` renders `VictoryOverlay` when `game != null && game.victory != null` (see `game_screen.dart` build `Stack` children).
 - The overlay is the topmost interactive layer above the Flame canvas / map area, next-turn control, and pause affordances.
 - Turn advancement and full turn resolution are blocked while `Game.victory != null` via `GameMapAreaStateLogic.allowsFullTurnResolution` (returns `false` when victory is set). See [victory.md](../game/victory.md) § Victory Check and § Victory Screen (UI).
+
+---
+
+## Behavior
+
+### Incoming
+
+| Source | Condition | Result |
+|--------|-----------|--------|
+| `GameScreen` build pass | `game != null && game.victory != null` | `VictoryOverlay` is added as the topmost child of the `Stack`; the next-turn and pause overlay buttons hide via `showOverlayButtons == false`. |
+| `Game.victory` becomes non-null while the overlay is dismissed (`_dismissed == true`) | A new resolution sets victory while the user is viewing the final state from a prior dismiss | The overlay stays in `SizedBox.shrink()` for the current instance; the next `VictoryOverlay` mount restarts at `_dismissed == false`. |
+
+### User actions → outcomes
+
+| Control / gesture | When enabled | Emits / calls | Side effects |
+|-------------------|--------------|---------------|--------------|
+| `victory_returnToMainMenu` `CtNinePatchButton` | `_dismissed == false` (overlay visible) | `bus.emit(const NavigateToShellEvent())` | `AppEventHandler` pops back to `Routes.shell` per [main-menu.md](main-menu.md) § Return from game. |
+| `victory_viewFinalState` `CtNinePatchButton` | `_dismissed == false` | Calls `onViewFinalState` → sets `_dismissed = true` | Scrim and panel disappear (`SizedBox.shrink()`); map/canvas remains visible; `Game.victory` stays set so next-turn paths remain blocked. |
+
+The overlay never calls `Navigator.popUntil` or other navigation helpers directly; cross-route exit is bus-driven.
 
 ---
 

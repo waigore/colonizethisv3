@@ -1,6 +1,8 @@
 # Transfer to Home Fleet Dialog
 
-**SPEC/ui** — Modal that lets the human player move ship instances from a regular fleet **at the capital port** into the same-region **Home Fleet** from the [naval-units-panel.md](naval-units-panel.md). Game model: [ships-and-naval.md](../game/ships-and-naval.md) (Home Fleet merge semantics). App wiring and events: [app-ui-wiring.md](../program/app-ui-wiring.md), [app-event-bus.md](../program/app-event-bus.md).
+**Screen ID:** `DLG40001` — stable; do not reassign.
+**SPEC/ui** — Modal that lets the human player move ship instances from a regular fleet **at the capital port** into the same-region **Home Fleet** from the [naval-units-panel.md](naval-units-panel.md). Game model: [ships-and-naval.md](../game/ships-and-naval.md) (Home Fleet merge semantics). Implementation: `app/lib/features/game/widgets/transfer_to_home_fleet_dialog.dart`. App wiring and events: [app-ui-wiring.md](../program/app-ui-wiring.md), [app-event-bus.md](../program/app-event-bus.md).
+**Widgetbook:** `Transfer to Home Fleet Dialog` → `app/lib/widgetbook/catalog.dart` (see § Widgetbook).
 
 ---
 
@@ -46,6 +48,29 @@ Implementation: `app/lib/features/game/widgets/transfer_to_home_fleet_dialog.dar
 - Opened from `NavalUnitsPanel` regular-fleet row **Transfer to Home Fleet** action when a same-region Home Fleet exists; the row is not shown for the Home Fleet itself. See [naval-units-panel.md](naval-units-panel.md) § Move fleet for the cross-link.
 - Source and Home Fleet must belong to `humanPlayerId` and share the same `regionId` (the panel pre-resolves the pair).
 - The dialog does not mutate game state; it emits `NavalTransferShipsRequestedEvent` and the handler scope applies the merge via `applyNavalTransferShips`.
+
+---
+
+## Behavior
+
+### Incoming
+
+| Source | Condition | Result |
+|--------|-----------|--------|
+| `NavalUnitsPanel` regular-fleet row **Transfer to Home Fleet** tap | Source fleet is not the Home Fleet and a same-region Home Fleet exists for `humanPlayerId` | `showDialog` mounts `TransferToHomeFleetDialog` with the pre-resolved `(sourceFleet, homeFleet)` pair. |
+| Initial `CtTransferList` mount | The dialog just opened | Left side shows `sourceFleet` inventory, right side shows `homeFleet` inventory, both aggregated by ship `typeId`; Confirm stays disabled until at least one row moves. |
+
+### User actions → outcomes
+
+| Control / gesture | When enabled | Emits / calls | Side effects |
+|-------------------|--------------|---------------|--------------|
+| Source row `-` button | The row's source count is greater than `0` | Decrements the source count and increments the matching home-side count | Confirm enables once any source row has a positive delta from `initialLeftCounts`. |
+| Source row `+` button | The row's source count is below `initialLeftCounts[typeId]` (i.e. previously moved) | Increments source / decrements home | Confirm disables again when all rows return to their initial counts. |
+| `common_cancel` action | Always | `Navigator.of(context).pop()` | No event emitted; dialog removed from tree. |
+| `naval_transferToHome_confirm` action — no ships moved | Movement totals reduce to zero | `_handleConfirm` returns early before emitting | No event; dialog stays open. |
+| `naval_transferToHome_confirm` action — at least one ship moved | `movedByType` resolves to at least one instance via `shipInstancesForTransferCounts(sourceFleet.ships, movedByType)` | `bus.emit(NavalTransferShipsRequestedEvent(humanPlayerId, sourceFleet.id, targetFleetId: homeFleet.id, shipInstanceIdsToTransfer: [...]))` then `Navigator.of(context).pop()` | Dialog removed; merge applies via `applyNavalTransferShips` per [app-ui-wiring.md](../program/app-ui-wiring.md). |
+
+The dialog never mutates `Game` or `Fleet` state directly; effects flow through `NavalTransferShipsRequestedEvent`.
 
 ---
 

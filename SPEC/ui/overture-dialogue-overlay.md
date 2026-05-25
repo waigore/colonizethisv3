@@ -1,6 +1,8 @@
 # Overture Dialogue Overlay
 
-**SPEC/ui** — Modal blocking overlay shown when turn resolution returns one or more pending **overture offers** that a human-controlled faction must accept or reject before the turn can advance. Plays an archaic-language intro via the `DialoguePoint/overture_target_response` Yarn node (loaded from `kDialogueOvertureAsset`) using [`CtDialogueView`](ct-dialogue-view.md), then presents a per-offer Accept/Reject form. Modal presentation rules: [`dialogue-presentation.md`](dialogue-presentation.md). Source provider: [`pending-diplomacy-state.md`](pending-diplomacy-state.md). Yarn content map: [`dialogue-content-and-yarn.md`](../ai/dialogue-content-and-yarn.md). Host screen / wrap order: [`game-screen.md`](game-screen.md) § States and variants. Pixel-art chrome: [`pixel-art-ui-catalog.md`](pixel-art-ui-catalog.md). Asset constant: `kDialogueOvertureAsset` in `app/lib/config/app_constants.dart`.
+**Screen ID:** `OVL30001` — stable; do not reassign.
+**SPEC/ui** — Modal blocking overlay shown when turn resolution returns one or more pending **overture offers** that a human-controlled faction must accept or reject before the turn can advance. Plays an archaic-language intro via the `DialoguePoint/overture_target_response` Yarn node (loaded from `kDialogueOvertureAsset`) using [`CtDialogueView`](ct-dialogue-view.md), then presents a per-offer Accept/Reject form. Modal presentation rules: [`dialogue-presentation.md`](dialogue-presentation.md). Source provider: [`pending-diplomacy-state.md`](pending-diplomacy-state.md). Yarn content map: [`dialogue-content-and-yarn.md`](../ai/dialogue-content-and-yarn.md). Host screen / wrap order: [`game-screen.md`](game-screen.md) § States and variants. Pixel-art chrome: [`pixel-art-ui-catalog.md`](pixel-art-ui-catalog.md). Asset constant: `kDialogueOvertureAsset` in `app/lib/config/app_constants.dart`. Implementation: `app/lib/features/game/dialogue/overture_dialogue_overlay.dart`.
+**Widgetbook:** `Overture Dialogue Overlay` → `app/lib/widgetbook/catalog.dart` (see § Widgetbook).
 
 ---
 
@@ -72,6 +74,31 @@ Internal state ownership (phase 1 — intro):
 ```
 
 Error mode renders the same `Stack` but the `CtDialogShell` body is the localized error message (`l10n.game_overture_loadError`) plus a single Continue button (`l10n.game_intervention_continue`).
+
+---
+
+## Behavior
+
+### Incoming
+
+| Source | Condition | Result |
+|--------|-----------|--------|
+| `GameScreen` wraps the content stack with `OvertureDialogueOverlay` | `pendingDiplomacyProvider` exposes `PendingDiplomacyOvertures(offers)` with at least one entry | Overlay mounts; `initState` runs `_loadAndRunIntro` and `_accepted` initializes to `List.filled(pendingOvertures.length, true)`. |
+| `_loadAndRunIntro` resolves the Yarn asset and parses the overture node | `kDialogueOvertureAsset` loads, parses, and contains `DialoguePoint/overture_target_response` | Phase 1 progresses through line/choice events; on runner completion `_introDone = true`. |
+| `_loadAndRunIntro` throws | Asset missing, parse error, or node missing | `_loadError` is set; the overlay switches to the error variant. |
+
+### User actions → outcomes
+
+| Control / gesture | When enabled | Emits / calls | Side effects |
+|-------------------|--------------|---------------|--------------|
+| Continue `CtNinePatchButton` (phase 1 line) | `!_introDone && _view!.currentLine != null` | `CtDialogueView.advanceLine()` | Dialogue advances to the next Jenny event; the overlay rebuilds. |
+| Option `CtNinePatchButton` (phase 1 choice) | `!_introDone && _view!.currentChoice != null && i` is a valid option index | `CtDialogueView.selectOption(i)` | Dialogue advances. |
+| Accept `CtNinePatchButton` on offer row `i` (phase 2) | `_introDone && _loadError == null` | Sets `_accepted[i] = true` | Row visually marks the offer accepted; Submit remains enabled. |
+| Reject `CtNinePatchButton` on offer row `i` (phase 2) | `_introDone && _loadError == null` | Sets `_accepted[i] = false` | Row visually marks the offer rejected; Submit remains enabled. |
+| Submit `CtNinePatchButton` (phase 2) | `_introDone && _loadError == null` | Calls `onDecisions([OvertureDecision(offer, accepted: _accepted[i]) for each i])` | Host (`GameScreen`) forwards to `service.resumeOvertureDecisions(...)` and clears the pending state on the resulting `TurnResolutionResult` per [`pending-diplomacy-state.md`](pending-diplomacy-state.md). |
+| Continue `CtNinePatchButton` (error variant) | `_loadError != null` | Calls `_submit()` directly with the current `_accepted` defaults | Host still receives one `OvertureDecision` per offer so the turn pipeline can advance even when the Yarn asset is broken. |
+
+The overlay never reads or emits `AppEventBus` events directly and never calls `Navigator.pushNamed` / `pop` — all navigation side effects flow through `onDecisions`.
 
 ---
 

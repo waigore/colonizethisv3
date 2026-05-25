@@ -1,6 +1,8 @@
 # Move Army Dialog
 
-**SPEC/ui** — Modal that lets the human player move a non-Home army to a legal destination province from the [military-units-panel.md](military-units-panel.md). Game model: [military-armies.md](../game/military-armies.md), [world-model.md](../game/world-model.md). Orders contract: [orders.md](../program/orders.md). Order suggestions / probe semantics: [order-suggestions.md](../program/order-suggestions.md). App wiring and events: [app-ui-wiring.md](../program/app-ui-wiring.md), [app-event-bus.md](../program/app-event-bus.md).
+**Screen ID:** `DLG20001` — stable; do not reassign.
+**SPEC/ui** — Modal that lets the human player move a non-Home army to a legal destination province from the [military-units-panel.md](military-units-panel.md). Game model: [military-armies.md](../game/military-armies.md), [world-model.md](../game/world-model.md). Orders contract: [orders.md](../program/orders.md). Order suggestions / probe semantics: [order-suggestions.md](../program/order-suggestions.md). Implementation: `app/lib/features/game/widgets/move_army_dialog.dart`. App wiring and events: [app-ui-wiring.md](../program/app-ui-wiring.md), [app-event-bus.md](../program/app-event-bus.md).
+**Widgetbook:** `Move Army Dialog` → `app/lib/widgetbook/catalog.dart` (see § Widgetbook).
 
 ---
 
@@ -48,6 +50,30 @@ Implementation: `app/lib/features/game/widgets/move_army_dialog.dart`. Wrapped M
 - Opened from `MilitaryUnitsPanel` non-Home army row **Move** action; **Home Army** never shows Move and cannot open this dialog.
 - The panel passes the current `currentOrders` as `draftOrders` and optionally a cached `playerView` so the dialog reuses an `IncrementalCandidateValidator` per [order-suggestions.md](../program/order-suggestions.md) instead of rebuilding per probe.
 - Destination probing calls `armyMovePickerDestinations` exactly as `MilitaryUnitsPanel` does, so the dialog never offers a destination that the order engine would reject for the current `(game, topology, playerView, draftOrders)`.
+
+---
+
+## Behavior
+
+### Incoming
+
+| Source | Condition | Result |
+|--------|-----------|--------|
+| `MilitaryUnitsPanel` non-Home army row **Move** tap | Row's army is not the Home Army; the panel reuses its cached `playerView` and current `draftOrders` | `showDialog` mounts `MoveArmyDialog` with that fixture; the dialog builds an `IncrementalCandidateValidator` and resolves destinations via `armyMovePickerDestinations`. |
+| `didUpdateWidget` with changed `draftOrders` / `game` / `army` / `playerView` | The parent rebuilt with a fresh fixture while the dialog is open | The validator and destination list rebuild; if the prior `_selected` is no longer offered, it resets to the first entry (or `null` when empty). |
+
+### User actions → outcomes
+
+| Control / gesture | When enabled | Emits / calls | Side effects |
+|-------------------|--------------|---------------|--------------|
+| Destination `DropdownButtonFormField` row | The row's value is a selectable `fullProvinceId` (not a `__header__<key>` synthetic id) | Sets local `_selected` to the chosen entry | Confirm enables when a non-header row is selected. |
+| `common_cancel` `TextButton` | Always | `Navigator.of(context).pop()` | No event emitted; dialog removed from tree. |
+| `common_confirm` `TextButton` — owned destination | `_selected != null` and the entry has `requiresDeclareWarOnConfirm == false` | `bus.emit(ArmyMoveRequestedEvent(humanPlayerId, ArmyMoveOrder(armyId, destinationProvinceId), declareWarTargetFactionId: null))` then `Navigator.of(context).pop()` | Dialog removed; the army-move order joins the next-turn draft. |
+| `common_confirm` `TextButton` — invasion destination | `_selected != null` and the entry has `requiresDeclareWarOnConfirm == true` | Opens a secondary `AlertDialog` (title `moveArmy_invadeProvinceTitle`, body `moveArmy_invadeProvinceBody(<ownerLabel>)`) with `common_cancel` and `moveArmy_declareWarAndMove` | Outer dialog stays mounted until the secondary resolves. |
+| Secondary dialog `moveArmy_declareWarAndMove` | The secondary is shown | Secondary pops with `true`; outer emits `ArmyMoveRequestedEvent` with `declareWarTargetFactionId = entry.ownerFactionId`, then `Navigator.of(context).pop()` | Dialog removed; declaration of war and move resolve through turn resolution. |
+| Secondary dialog `common_cancel` | The secondary is shown | Secondary pops with `false` | No event emitted; outer dialog remains mounted with the current selection. |
+
+The widget never mutates `Game` state directly: every effect flows through the emitted `ArmyMoveRequestedEvent` and the turn-resolution pipeline.
 
 ---
 
