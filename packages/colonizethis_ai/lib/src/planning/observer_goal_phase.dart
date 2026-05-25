@@ -321,3 +321,283 @@ bool isNewWorldColonialWorkOrder(WorkOrder order) {
   }
   return false;
 }
+
+/// Critical-collapse / zero-regiment peace aggregator for all observer phases.
+///
+/// Canonical home (Refs #2509 S1) for the legacy private
+/// `_survivalGreatPowerPeaceTargets` helper previously hosted in
+/// `diplomacy_planner_peace_targets.dart`. The aggregator collects all
+/// survival / zero-regiment / mutual-exhausted peace deciders into a
+/// single yield, preserving the same precedence order as the legacy code.
+///
+/// Called by [collectStalledGreatPowerPeaceTargets] which is the single
+/// public entry for the GP peace-targets set consumed by the diplomacy
+/// planner. `diplomacy_planner_peace_targets.dart` retains a thin
+/// delegating stub until the planned S1 deletion of that file.
+///
+/// Pure and deterministic — identical inputs always yield identical
+/// output (Refs #2509 Must-have #7).
+Iterable<String> survivalGreatPowerPeaceTargets({
+  required Game game,
+  required AIWorldSnapshot snapshot,
+}) sync* {
+  yield* criticalWeakGpSurvivalPeaceTargets(game: game, snapshot: snapshot);
+  yield* stalledZeroRegimentAllFactionPeaceTargets(
+    game: game,
+    snapshot: snapshot,
+  );
+  yield* mutualZeroRegimentGpStalematePeaceTargets(
+    game: game,
+    snapshot: snapshot,
+  );
+  yield* stalledZeroRegimentGpPeaceTargets(game: game, snapshot: snapshot);
+  yield* mutualExhaustedBelowQuotaGpStalematePeaceTargets(
+    game: game,
+    snapshot: snapshot,
+  );
+}
+
+/// Legacy OW-expansion scoring ratchet peace aggregator (EXPAND / COLONIAL-lite only; Refs #2509 S10).
+///
+/// Canonical home (Refs #2509 S1) for the legacy private
+/// `_expandRatchetGreatPowerPeaceTargets` helper previously hosted in
+/// `diplomacy_planner_peace_targets.dart`. The aggregator collects all
+/// EXPAND-regime peace deciders from the expanded canonical set (22
+/// helpers in `expand_phase_planner.dart` and its part files) into a
+/// single yield, preserving the same precedence order as the legacy code.
+///
+/// Called by [collectStalledGreatPowerPeaceTargets] which is the single
+/// public entry for the GP peace-targets set consumed by the diplomacy
+/// planner. `diplomacy_planner_peace_targets.dart` retains a thin
+/// delegating stub until the planned S1 deletion of that file.
+///
+/// Pure and deterministic — identical inputs always yield identical
+/// output (Refs #2509 Must-have #7).
+Iterable<String> expandRatchetGreatPowerPeaceTargets({
+  required Game game,
+  required AIWorldSnapshot snapshot,
+}) sync* {
+  yield* stalledFutileGpPeaceTargets(game: game, snapshot: snapshot);
+  yield* stalledGpBlockerFocusPeaceTargets(game: game, snapshot: snapshot);
+  yield* stalledExpansionDistractionPeaceTargets(
+    game: game,
+    snapshot: snapshot,
+  );
+  yield* multiFrontNonBlockerGpPeaceTargets(game: game, snapshot: snapshot);
+  yield* criticalMultiFrontGpPeaceTargets(game: game, snapshot: snapshot);
+  yield* weakHoldingsInvadableBlockerPeaceTargets(
+    game: game,
+    snapshot: snapshot,
+  );
+  final strongerBlocker = stalledStrongerGpBlockerPeaceTarget(
+    game: game,
+    snapshot: snapshot,
+  );
+  if (strongerBlocker != null) {
+    yield strongerBlocker;
+  }
+  yield* criticalOwHoldPeaceTargets(game: game, snapshot: snapshot);
+  yield* stalledBelowQuotaGpLeadPeaceTargets(game: game, snapshot: snapshot);
+  yield* belowQuotaPeerGpPeaceTargets(game: game, snapshot: snapshot);
+  yield* defaultStartGpPeaceTargets(game: game, snapshot: snapshot);
+  yield* defaultStartFutileMinorPeaceTargets(game: game, snapshot: snapshot);
+  yield* nearQuotaHoldPeaceTargets(game: game, snapshot: snapshot);
+  yield* quotaMetBelowQuotaAtWarPeaceTargets(game: game, snapshot: snapshot);
+  yield* quotaMetFutileBelowQuotaGpPeaceTargets(game: game, snapshot: snapshot);
+  final unwinnable = unwinnableSoleGpFrontierPeaceTarget(
+    game: game,
+    snapshot: snapshot,
+  );
+  if (unwinnable != null) {
+    yield unwinnable;
+  }
+  final consolidate = consolidateGainsSoleGpPeaceTarget(
+    game: game,
+    snapshot: snapshot,
+  );
+  if (consolidate != null) {
+    yield consolidate;
+  }
+}
+
+/// Great Power peace targets from observer phase rules and stalled expansion helpers.
+///
+/// Canonical home (Refs #2509 S1) for the legacy `collectStalledGreatPowerPeaceTargets`
+/// entry-point previously hosted in `diplomacy_planner_peace_targets.dart`. The
+/// function merges phase-specific GP peace targets (`expandPhaseGpPeaceTargets`,
+/// `colonialPhaseGpPeaceTargets`, `developPhaseGpPeaceTargets`) with the survival
+/// and expansion-ratchet aggregators, then filters by invadable-blocker preservation
+/// rules and zero-regiment stalemate overrides before adding minor/tribe distraction
+/// peace targets.
+///
+/// `diplomacy_planner_peace_targets.dart` retains a thin delegating stub until the
+/// planned S1 deletion of that file.
+///
+/// Pure and deterministic — identical inputs always yield identical
+/// output (Refs #2509 Must-have #7).
+Set<String> collectStalledGreatPowerPeaceTargets({
+  required Game game,
+  required AIWorldSnapshot snapshot,
+}) {
+  final phase = observerGoalPhaseFor(snapshot: snapshot, game: game);
+  final phaseRatchetPeace = switch (phase) {
+    ObserverGoalPhase.develop => const <String>[],
+    ObserverGoalPhase.colonial => atWarGpDistractionTribePeaceTargets(
+      game: game,
+      snapshot: snapshot,
+    ),
+    ObserverGoalPhase.expand ||
+    ObserverGoalPhase.colonialLite => expandRatchetGreatPowerPeaceTargets(
+      game: game,
+      snapshot: snapshot,
+    ).toList(),
+  };
+  final targets = <String>{
+    ...developPhaseGpPeaceTargets(game: game, snapshot: snapshot),
+    ...colonialPhaseGpPeaceTargets(game: game, snapshot: snapshot),
+    ...expandPhaseGpPeaceTargets(game: game, snapshot: snapshot),
+    ...survivalGreatPowerPeaceTargets(game: game, snapshot: snapshot),
+    ...phaseRatchetPeace,
+  };
+  final invadableBlocker =
+      isBelowObserverConquestQuota(snapshot.conquest.oldWorldProvincesOwned) &&
+          isOldWorldGpOnlyInvadableFrontier(game: game, snapshot: snapshot)
+      ? primaryInvadableOldWorldGpBlocker(game: game, snapshot: snapshot)
+      : null;
+  final unwinnableBlockerPeace = unwinnableSoleGpFrontierPeaceTarget(
+    game: game,
+    snapshot: snapshot,
+  );
+  final preserveBlockerPeace = <String>{
+    if (!isOldWorldGpOnlyInvadableFrontier(game: game, snapshot: snapshot))
+      ...weakHoldingsInvadableBlockerPeaceTargets(
+        game: game,
+        snapshot: snapshot,
+      ),
+    if (unwinnableBlockerPeace != null) unwinnableBlockerPeace,
+    ...quotaMetBelowQuotaAtWarPeaceTargets(game: game, snapshot: snapshot),
+    ...belowQuotaPeerGpPeaceTargets(game: game, snapshot: snapshot),
+    if (snapshot.conquest.oldWorldProvincesOwned >=
+        kObserverDefaultStartOldWorldProvincesPerGp)
+      ...defaultStartGpPeaceTargets(game: game, snapshot: snapshot),
+    ...nearQuotaHoldPeaceTargets(game: game, snapshot: snapshot),
+  };
+  final zeroRegimentBlockerPeace = <String>{
+    ...mutualZeroRegimentGpStalematePeaceTargets(
+      game: game,
+      snapshot: snapshot,
+    ),
+    ...stalledZeroRegimentGpPeaceTargets(game: game, snapshot: snapshot),
+    ...mutualExhaustedBelowQuotaGpStalematePeaceTargets(
+      game: game,
+      snapshot: snapshot,
+    ),
+  };
+  final greatPowerPeace = targets
+      .where(
+        (id) =>
+            game.playerById(id) != null &&
+            (id != invadableBlocker ||
+                preserveBlockerPeace.contains(id) ||
+                zeroRegimentBlockerPeace.contains(id)),
+      )
+      .toSet();
+  final minorTribePeace = <String>{
+    ...belowQuotaMultiMinorDistractionPeaceTargets(
+      game: game,
+      snapshot: snapshot,
+    ),
+    ...stalledZeroRegimentAllFactionPeaceTargets(
+      game: game,
+      snapshot: snapshot,
+    ),
+  }.where((id) => game.playerById(id) == null);
+  return {...greatPowerPeace, ...minorTribePeace};
+}
+
+/// GP–GP peace requires both sides to [offerPeace] in the same phase; mirror existing offers.
+///
+/// Canonical home (Refs #2509 S1) for the legacy
+/// `supplementMutualStalledGreatPowerPeaceOrders` helper previously hosted in
+/// `diplomacy_planner_peace_targets.dart`. The function mirrors declared
+/// GP→GP [offerPeace] orders onto the target GP's own diplomatic orders so
+/// that mutual stalled Great Power peace pairs resolve within the same
+/// diplomacy planner pass.
+///
+/// `diplomacy_planner_peace_targets.dart` retains a thin delegating stub until the
+/// planned S1 deletion of that file.
+Orders supplementMutualStalledGreatPowerPeaceOrders({
+  required Game game,
+  required MapTopology topology,
+  required Orders orders,
+}) {
+  final diplo = Map<String, List<DiplomaticOrder>>.from(
+    orders.diplomaticOrdersByPlayerId,
+  );
+  var changed = false;
+  for (final entry in orders.diplomaticOrdersByPlayerId.entries) {
+    final fromGp = entry.key;
+    if (!isAiControlled(game, fromGp)) continue;
+    for (final order in entry.value) {
+      if (order.type != DiplomaticOrderType.offerPeace) continue;
+      final toGp = order.targetFactionId;
+      if (game.playerById(toGp) == null || !isAiControlled(game, toGp)) {
+        continue;
+      }
+      final fromView = buildPlayerView(game, topology, fromGp);
+      final fromSnapshot = AIWorldSnapshot.fromPlayerView(
+        fromView,
+        topology: topology,
+      );
+      final invadableBlocker = primaryInvadableOldWorldGpBlocker(
+        game: game,
+        snapshot: fromSnapshot,
+      );
+      final stalledPeaceTargets = collectStalledGreatPowerPeaceTargets(
+        game: game,
+        snapshot: fromSnapshot,
+      );
+      if (toGp == invadableBlocker && !stalledPeaceTargets.contains(toGp)) {
+        continue;
+      }
+      final before = diplo[toGp]?.length ?? 0;
+      _appendOfferPeaceIfMissing(diplo, toGp, fromGp);
+      if ((diplo[toGp]?.length ?? 0) > before) {
+        changed = true;
+      }
+    }
+  }
+  if (!changed) {
+    return orders;
+  }
+  return orders.copyWith(diplomaticOrdersByPlayerId: diplo);
+}
+
+/// Low-level offer-peace insertion into a [DiplomaticOrder] list by
+/// faction; no-op when the identical order is already present.
+///
+/// Canonical home (Refs #2509 S1) for the legacy private
+/// `_appendOfferPeaceIfMissing` helper previously hosted in
+/// `diplomacy_planner_peace_targets.dart`. Used by
+/// [supplementMutualStalledGreatPowerPeaceOrders] to durably register
+/// mirrored peace offers without duplicates.
+void _appendOfferPeaceIfMissing(
+  Map<String, List<DiplomaticOrder>> diplo,
+  String fromGp,
+  String toGp,
+) {
+  final existing = diplo[fromGp] ?? const [];
+  if (existing.any(
+    (o) =>
+        o.type == DiplomaticOrderType.offerPeace && o.targetFactionId == toGp,
+  )) {
+    return;
+  }
+  diplo[fromGp] = [
+    ...existing,
+    DiplomaticOrder(
+      type: DiplomaticOrderType.offerPeace,
+      targetFactionId: toGp,
+    ),
+  ];
+}

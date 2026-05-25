@@ -2173,3 +2173,252 @@ String? belowQuotaActiveMinorWarTarget({
   }
   return stalledFocusMinorTarget(game: game, snapshot: snapshot);
 }
+
+/// Returns the deterministic ascending-sorted list of at-war minor
+/// `factionId`s the active player should `offerPeace` toward in EXPAND
+/// while below the observer OW quota with a regiment count too small to
+/// split across multiple minor wars, dropping every distraction minor
+/// front except the focused-minor target, or `const []` when the
+/// distraction-peace pivot does not apply.
+///
+/// Canonical home (Refs #2509 S1) for the legacy
+/// `belowQuotaMultiMinorDistractionPeaceTargets` peace decider previously
+/// hosted in `diplomacy_planner_peace_targets.dart`. The decider
+/// implements the EXPAND-phase "while below quota and regiment-thin,
+/// peace every distracting at-war minor so the few regiments we have
+/// concentrate on the focused single-front minor" pivot used by the
+/// seed-42 gp4 zero-gain stall: gp4 fights minor1 and minor2 with only
+/// one or two regiments and the planner needs to drop one war so the
+/// remaining regiments can finish the focused frontier.
+///
+/// Returns `const []` for any of the outer guards (in order):
+///   1. [isBelowObserverConquestQuota] is `false` for
+///      [ConquestSummary.oldWorldProvincesOwned] — at and above quota
+///      the quota-met / consolidate / near-quota deciders own the
+///      multi-minor decision instead.
+///   2. `regimentCount <= 0` — zero-regiment survival deciders
+///      ([stalledZeroRegimentAllFactionPeaceTargets],
+///      [stalledZeroRegimentGpPeaceTargets]) own the peace decision
+///      below the affordability gate; this decider does not also
+///      compete for that zero band.
+///   3. `regimentCount >= kBelowQuotaPeaceMinRegimentsBeforeDeclareWar`
+///      — once the active player can afford to declare and project
+///      across multiple fronts the multi-minor distraction pivot is
+///      not warranted; the planner can sustain the additional minor
+///      wars while it walks the EXPAND ratchet.
+///   4. [ConquestSummary.invadableProvinceIdsSorted] is empty — no
+///      OW frontier means no minor war to concentrate on.
+///   5. [stalledFocusMinorTarget] returns `null` — without an at-war
+///      minor owning an invadable OW province the distraction-peace
+///      pivot has no target to preserve.
+///
+/// When the guards pass:
+///   * Walks [ThreatSummary.atWarWith] in iteration order and keeps
+///     every entry that is a member of [Game.minorNations] (tribes
+///     and Great Powers are dropped because the GP-blocker, peer-GP,
+///     and GP-distraction-tribe deciders own those decisions) and is
+///     not the focused-minor target preserved by
+///     [stalledFocusMinorTarget].
+///   * Sorts the result ascending so emission order is deterministic
+///     for fixed inputs (Refs #2509 Must-have #7).
+///
+/// `diplomacy_planner_peace_targets.dart` retains a thin delegating
+/// stub for the legacy `diplomacy_planner_below_quota_peace_part3_test.dart`
+/// fixture and the in-file `collectStalledGreatPowerPeaceTargets`
+/// `minorTribePeace` consumer chain until the planned S1 deletion of
+/// that file.
+///
+/// Pure and deterministic — identical inputs always yield identical
+/// output (Refs #2509 Must-have #7). Cost is dominated by the
+/// [stalledFocusMinorTarget] scan once the outer guards pass plus a
+/// single pass over [ThreatSummary.atWarWith]; matches the budget-rule
+/// note in `colonizethis-turn-resolution-budget.mdc` (no global
+/// province / tile scans introduced by the move).
+List<String> belowQuotaMultiMinorDistractionPeaceTargets({
+  required Game game,
+  required AIWorldSnapshot snapshot,
+}) {
+  if (!isBelowObserverConquestQuota(snapshot.conquest.oldWorldProvincesOwned)) {
+    return const [];
+  }
+  final regimentCount = regimentCountForPlayer(game, snapshot.playerId);
+  if (regimentCount <= 0 ||
+      regimentCount >= kBelowQuotaPeaceMinRegimentsBeforeDeclareWar) {
+    return const [];
+  }
+  if (snapshot.conquest.invadableProvinceIdsSorted.isEmpty) {
+    return const [];
+  }
+  final focus = stalledFocusMinorTarget(game: game, snapshot: snapshot);
+  if (focus == null) {
+    return const [];
+  }
+  final targets = <String>[
+    for (final factionId in snapshot.threats.atWarWith)
+      if (game.minorNations.any((m) => m.id == factionId) && factionId != focus)
+        factionId,
+  ]..sort();
+  return targets;
+}
+
+/// Returns `true` when at least one EXPAND-phase stalled-expansion
+/// peace decider would emit a non-empty target list under the given
+/// [game] / [snapshot] pair — the composite predicate used by the
+/// diplomacy planner's `offerPeace` passes and the
+/// `collectStalledGreatPowerPeaceTargets` public entry.
+///
+/// Canonical home (Refs #2509 S1) for the legacy
+/// `stalledOwExpansionNeedsPeacePass` composite predicate previously
+/// hosted in `diplomacy_planner_peace_targets.dart`. The composite
+/// OR-checks all 22 EXPAND-phase peace deciders in a fixed deterministic
+/// order identical to the order the current orchestrator evaluates
+/// them; any one decider returning a non-empty result is sufficient
+/// to signal that a stalled-expansion `offerPeace` pass is warranted.
+///
+/// `diplomacy_planner_peace_targets.dart` retains a thin delegating
+/// stub for the legacy `diplomacy_planner_stalled_peace_test.dart`
+/// fixture and the in-file `_expandRatchetGreatPowerPeaceTargets` /
+/// `stalledOwExpansionNeedsPeacePass` / `collectStalledGreatPowerPeaceTargets`
+/// / `supplementMutualStalledGreatPowerPeaceOrders` consumer chains
+/// until the planned S1 deletion of that file.
+///
+/// Pure and deterministic — identical inputs always yield identical
+/// output (Refs #2509 Must-have #7). Cost is bounded by the union
+/// of the individual decider costs.
+bool stalledOwExpansionNeedsPeacePass({
+  required Game game,
+  required AIWorldSnapshot snapshot,
+}) =>
+    stalledStrongerGpBlockerPeaceTarget(game: game, snapshot: snapshot) !=
+        null ||
+    stalledFutileGpPeaceTargets(game: game, snapshot: snapshot).isNotEmpty ||
+    stalledGpBlockerFocusPeaceTargets(
+      game: game,
+      snapshot: snapshot,
+    ).isNotEmpty ||
+    stalledExpansionDistractionPeaceTargets(
+      game: game,
+      snapshot: snapshot,
+    ).isNotEmpty ||
+    atWarGpDistractionTribePeaceTargets(
+      game: game,
+      snapshot: snapshot,
+    ).isNotEmpty ||
+    multiFrontNonBlockerGpPeaceTargets(
+      game: game,
+      snapshot: snapshot,
+    ).isNotEmpty ||
+    criticalMultiFrontGpPeaceTargets(
+      game: game,
+      snapshot: snapshot,
+    ).isNotEmpty ||
+    criticalWeakGpSurvivalPeaceTargets(
+      game: game,
+      snapshot: snapshot,
+    ).isNotEmpty ||
+    weakHoldingsInvadableBlockerPeaceTargets(
+      game: game,
+      snapshot: snapshot,
+    ).isNotEmpty ||
+    mutualZeroRegimentGpStalematePeaceTargets(
+      game: game,
+      snapshot: snapshot,
+    ).isNotEmpty ||
+    stalledZeroRegimentAllFactionPeaceTargets(
+      game: game,
+      snapshot: snapshot,
+    ).isNotEmpty ||
+    stalledZeroRegimentGpPeaceTargets(
+      game: game,
+      snapshot: snapshot,
+    ).isNotEmpty ||
+    mutualExhaustedBelowQuotaGpStalematePeaceTargets(
+      game: game,
+      snapshot: snapshot,
+    ).isNotEmpty ||
+    criticalOwHoldPeaceTargets(game: game, snapshot: snapshot).isNotEmpty ||
+    stalledBelowQuotaGpLeadPeaceTargets(
+      game: game,
+      snapshot: snapshot,
+    ).isNotEmpty ||
+    belowQuotaPeerGpPeaceTargets(game: game, snapshot: snapshot).isNotEmpty ||
+    defaultStartGpPeaceTargets(game: game, snapshot: snapshot).isNotEmpty ||
+    defaultStartFutileMinorPeaceTargets(
+      game: game,
+      snapshot: snapshot,
+    ).isNotEmpty ||
+    nearQuotaHoldPeaceTargets(game: game, snapshot: snapshot).isNotEmpty ||
+    quotaMetBelowQuotaAtWarPeaceTargets(
+      game: game,
+      snapshot: snapshot,
+    ).isNotEmpty ||
+    quotaMetFutileBelowQuotaGpPeaceTargets(
+      game: game,
+      snapshot: snapshot,
+    ).isNotEmpty ||
+    unwinnableSoleGpFrontierPeaceTarget(game: game, snapshot: snapshot) !=
+        null ||
+    consolidateGainsSoleGpPeaceTarget(game: game, snapshot: snapshot) != null;
+
+/// EXPAND critical-collapse and zero-regiment survival peace pivots.
+///
+/// Yields the deterministic union of the five EXPAND-phase survival
+/// peace deciders consumed by the diplomacy planner's stalled-GP peace
+/// collector when any observer phase (EXPAND / COLONIAL-lite / COLONIAL /
+/// DEVELOP) needs to peace at-war Great Powers to avoid total collapse
+/// or unwind zero-regiment / mutually-exhausted stalemates that would
+/// otherwise leave broke mutual-plateau pairs at war indefinitely.
+///
+/// Canonical home (Refs #2509 S1) for the previously private
+/// `_survivalGreatPowerPeaceTargets` aggregator hosted in
+/// `diplomacy_planner_peace_targets.dart`. The aggregator fans out across
+/// the five already-canonicalized survival sibling deciders in a fixed
+/// deterministic order identical to the order the legacy private
+/// aggregator emitted them — the iteration order is observable through
+/// `collectStalledGreatPowerPeaceTargets` because the consumer feeds the
+/// yielded targets into a `Set<String>` literal alongside the
+/// observer-phase peace-target lists, and `Set` insertion order is part
+/// of the public iteration contract for `LinkedHashSet`.
+///
+/// Order of yielded sources:
+///   1. [criticalWeakGpSurvivalPeaceTargets] — band-dependent stronger-GP
+///      peace at `oldWorldProvincesOwned <= kFewOldWorldProvincesDefendThreshold`.
+///   2. [stalledZeroRegimentAllFactionPeaceTargets] — peace every at-war
+///      minor/tribe when stalled below quota with zero regiments.
+///   3. [mutualZeroRegimentGpStalematePeaceTargets] — peace a sole GP
+///      enemy when both sides have zero regiments (stalemate reset).
+///   4. [stalledZeroRegimentGpPeaceTargets] — peace every at-war Great
+///      Power when stalled with zero regiments.
+///   5. [mutualExhaustedBelowQuotaGpStalematePeaceTargets] — peace the
+///      sole at-war GP when both sides are mutual-plateau peers below
+///      quota and mutually exhausted in regiments and treasury.
+///
+/// `diplomacy_planner_peace_targets.dart` retains a thin private
+/// `_survivalGreatPowerPeaceTargets` delegating stub forwarding into
+/// this canonical aggregator so the in-file
+/// `collectStalledGreatPowerPeaceTargets` consumer chain resolves to
+/// the same target stream until the planned S1 deletion of that file.
+///
+/// Pure and deterministic — identical inputs always yield identical
+/// output across repeated invocations (Refs #2509 Must-have #7). Cost
+/// is bounded by the union of the five canonicalized sub-decider costs;
+/// no new global province / tile scans are introduced.
+Iterable<String> survivalGreatPowerPeaceTargets({
+  required Game game,
+  required AIWorldSnapshot snapshot,
+}) sync* {
+  yield* criticalWeakGpSurvivalPeaceTargets(game: game, snapshot: snapshot);
+  yield* stalledZeroRegimentAllFactionPeaceTargets(
+    game: game,
+    snapshot: snapshot,
+  );
+  yield* mutualZeroRegimentGpStalematePeaceTargets(
+    game: game,
+    snapshot: snapshot,
+  );
+  yield* stalledZeroRegimentGpPeaceTargets(game: game, snapshot: snapshot);
+  yield* mutualExhaustedBelowQuotaGpStalematePeaceTargets(
+    game: game,
+    snapshot: snapshot,
+  );
+}
