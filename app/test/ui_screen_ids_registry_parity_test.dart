@@ -43,6 +43,7 @@ const Map<String, String> _expectedConstants = {
   'victoryOverlay': UiScreenIds.victoryOverlay,
   'overtureDialogueOverlay': UiScreenIds.overtureDialogueOverlay,
   'callToArmsDialogueOverlay': UiScreenIds.callToArmsDialogueOverlay,
+  'pendingInterventionOverlay': UiScreenIds.pendingInterventionOverlay,
   'observeModeOverlay': UiScreenIds.observeModeOverlay,
   'playerTurnEventFeed': UiScreenIds.playerTurnEventFeed,
   'newGameLeaderSelectionDialog': UiScreenIds.newGameLeaderSelectionDialog,

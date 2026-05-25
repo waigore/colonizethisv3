@@ -1,5 +1,6 @@
 # Pending intervention overlay (Flutter)
 
+**Screen ID:** `OVL50001` — stable; do not reassign.
 **SPEC/ui** — Blocking turn-resolution UI when `TurnResolutionPendingIntervention` is returned. Technical contract: [dialogue-system.md](../../program/dialogue-system.md). Yarn keys: [dialogue-content-and-yarn.md](../../ai/dialogue-content-and-yarn.md). Event bus: [app-event-bus.md](../../program/app-event-bus.md).
 
 ---

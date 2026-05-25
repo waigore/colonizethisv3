@@ -65,6 +65,7 @@ Status: `draft` = ID reserved, spec incomplete; `active` = spec + Widgetbook + c
 | `OVL20001` | Victory overlay | [victory-overlay.md](victory-overlay.md) | `app/lib/features/game/flame/victory_overlay.dart` | Victory | active |
 | `OVL30001` | Overture dialogue | [overture-dialogue-overlay.md](overture-dialogue-overlay.md) | `app/lib/features/game/dialogue/overture_dialogue_overlay.dart` | Overture Dialogue Overlay | active |
 | `OVL40001` | Call to arms dialogue overlay | [call-to-arms-dialogue-overlay.md](call-to-arms-dialogue-overlay.md) | TBD | Call to Arms Dialogue Overlay | active |
+| `OVL50001` | Pending intervention overlay | [pending-intervention-overlay.md](screens/pending-intervention-overlay.md) | `app/lib/features/game/dialogue/intervention_dialogue_overlay.dart` | Dialogue | active |
 | `OVL60001` | Observe mode overlay | [observe-mode.md](observe-mode.md) | TBD | — | draft |
 | `OVL70001` | Player turn event feed | [player-turn-event-feed.md](player-turn-event-feed.md) | TBD | — | draft |
 | `SYS10001` | Debug log viewer | — | `app/lib/features/debug_log/debug_log_viewer_screen.dart` | — | draft |

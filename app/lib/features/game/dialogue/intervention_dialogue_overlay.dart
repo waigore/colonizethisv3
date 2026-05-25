@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_app/config/app_assets.dart';
+import 'package:colonizethis_app/config/ui_screen_ids.dart';
 import 'package:flutter/material.dart';
 import 'package:colonizethis_app/package_logger.dart';
 import 'package:flutter/services.dart';
@@ -27,6 +28,9 @@ class InterventionDialogueOverlay extends StatefulWidget {
     this.skipIntroForTest = false,
     this.assetBundle,
   });
+
+  /// SPEC/ui/screens/pending-intervention-overlay.md — [UiScreenIds.pendingInterventionOverlay].
+  static const screenId = UiScreenIds.pendingInterventionOverlay;
 
   final Game game;
   final List<InterventionPrompt> prompts;
