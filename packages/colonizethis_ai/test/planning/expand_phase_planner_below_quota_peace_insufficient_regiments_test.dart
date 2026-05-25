@@ -19,12 +19,9 @@
 //     in `phase_planner_economy_filter.dart` consumed by the orchestrator's
 //     `_appendEconomyBuildOrders` build-rebuild-trap slice (Refs #2509 S5).
 //
-// The S1 plan in #2509 deletes `colonial_pressure.dart` outright, so the
-// public helper now lives in `expand_phase_planner.dart`. This test pins
-// the canonical entrypoint directly so the delegation stub in
-// `colonial_pressure.dart` can be removed in a future slice without
-// regressing the legacy `isBelowQuotaPeaceTreasuryRecovery` composite or
-// the orchestrator's phase-derived rebuild-trap path.
+// `colonial_pressure.dart` was deleted in S1 of #2509; the canonical
+// helper lives in `expand_phase_planner.dart` and this test pins it
+// directly.
 //
 // Behavioral invariants pinned here (all deterministic, constant-time):
 //
@@ -49,14 +46,7 @@
 //      issue #2509 Must-have #7 "Determinism: same save + seeds → same
 //      orders; phase planners are pure functions with deterministic
 //      inputs."
-//   5. The delegating stub in `colonial_pressure.dart` returns the same
-//      value as the canonical helper for every relevant input
-//      combination — required so the legacy
-//      `isBelowQuotaPeaceTreasuryRecovery` callers and the EXPAND
-//      planner agree on the insufficient-regiments boundary.
 
-import 'package:colonizethis_ai/src/planning/expand_phase_planner.dart'
-    as colonial_pressure;
 import 'package:colonizethis_ai/src/planning/expand_phase_planner.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_test/test.dart';
@@ -216,48 +206,6 @@ void main() {
             'required by issue #2509 Must-have #7 (phase planners are pure '
             'functions with deterministic inputs).',
       );
-    });
-
-    test('colonial_pressure delegation stub returns the canonical value', () {
-      // Pins the S1 delegation contract: the legacy public symbol exported
-      // from `colonial_pressure.dart` must mirror the canonical helper for
-      // every relevant truth-table input so removing the stub in a future
-      // slice cannot silently shift the EXPAND-trap insufficient-regiments
-      // boundary for legacy callers.
-      for (final ow in const [
-        kObserverConquestMinOwProvincesPerGp - 2,
-        kObserverConquestMinOwProvincesPerGp,
-      ]) {
-        for (final regimentCount in const [0, 1, 3]) {
-          for (final atWar in const [true, false]) {
-            for (final hasInvadable in const [true, false]) {
-              expect(
-                colonial_pressure.isBelowQuotaPeaceInsufficientRegiments(
-                  oldWorldProvincesOwned: ow,
-                  regimentCount: regimentCount,
-                  atWarWithAnyGreatPower: atWar,
-                  hasInvadableProvinces: hasInvadable,
-                ),
-                isBelowQuotaPeaceInsufficientRegiments(
-                  oldWorldProvincesOwned: ow,
-                  regimentCount: regimentCount,
-                  atWarWithAnyGreatPower: atWar,
-                  hasInvadableProvinces: hasInvadable,
-                ),
-                reason:
-                    '`colonial_pressure.isBelowQuotaPeaceInsufficientRegiments` '
-                    'is a thin delegating stub for legacy callers; it must '
-                    'mirror the canonical helper exactly so the EXPAND-trap '
-                    'rebuild composite and orchestrator phase-derived path '
-                    'agree on the insufficient-regiments trigger '
-                    '(ow=$ow, regimentCount=$regimentCount, '
-                    'atWarWithAnyGreatPower=$atWar, '
-                    'hasInvadableProvinces=$hasInvadable).',
-              );
-            }
-          }
-        }
-      }
     });
   });
 }

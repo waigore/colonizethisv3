@@ -10,7 +10,7 @@
 // `collectStalledGreatPowerPeaceTargets` /
 // `supplementMutualStalledGreatPowerPeaceOrders` consumer chains and
 // the legacy `diplomacy_planner_stalled_peace_test.dart` fixture until
-// the planned S1 deletion.
+// the now-completed S1 deletion.
 //
 // Behavioral invariants pinned at the canonical entry point:
 //
@@ -31,7 +31,7 @@
 //     `_expandRatchetGreatPowerPeaceTargets` /
 //     `collectStalledGreatPowerPeaceTargets` /
 //     `supplementMutualStalledGreatPowerPeaceOrders` consumers
-//     resolve to the same boolean result until the planned S1 deletion.
+//     resolve to the same boolean result until the now-completed S1 deletion.
 
 import 'package:colonizethis_ai/src/perception/perception_snapshot.dart';
 import 'package:colonizethis_ai/src/planning/expand_phase_planner.dart'
@@ -228,7 +228,7 @@ void main() {
         reason:
             'The delegating stub must return the same boolean as the '
             'canonical helper so the in-file consumer chains resolve '
-            'to the same result until the planned S1 deletion.',
+            'to the same result until the now-completed S1 deletion.',
       );
     });
   });

@@ -106,14 +106,14 @@ const int _kMaxPeerOwGapWithoutMinors = 1;
 /// deterministic ordering (Must-have #7). Tribes, minors, and at-war
 /// GPs that fail [isBelowObserverConquestQuota] are dropped silently.
 ///
-/// `colonial_pressure.dart` retains a thin delegating stub for legacy
-/// callers (the existing `expand_phase_planner_peer_peace_basic_test.dart` and
-/// `expand_phase_planner_peer_gap_boundary_test.dart` fixtures, the
+/// `colonial_pressure.dart` previously retained a thin delegating stub for legacy
+/// callers (the existing `colonial_pressure_test.dart` and
+/// `colonial_pressure_peer_gap_boundary_test.dart` fixtures, the
 /// `diplomacy_planner.dart` /
 /// `diplomacy_planner_peace_targets.dart` /
 /// `diplomatic_candidate_scoring_offer_peace.dart` consumer chain, and
 /// the related `colonial_pressure_*` branch-coverage fixtures that
-/// reference the peer-gap helper) so the planned S1 deletion of that
+/// reference the peer-gap helper) so the now-completed S1 deletion of that
 /// file leaves no orphan callers.
 ///
 /// Pure and deterministic — identical inputs always yield identical
@@ -225,7 +225,7 @@ List<String> belowQuotaPeerGpPeaceTargets({
 /// will route through their own arms). The output is sorted
 /// ascending by `factionId` for deterministic ordering.
 ///
-/// `diplomacy_planner_peace_targets.dart` retains a thin delegating
+/// `diplomacy_planner_peace_targets.dart` previously retained a thin delegating
 /// stub for legacy callers (the existing
 /// `diplomacy_planner_stalled_peace_test.dart` § `stalledFutileGpPeaceTargets`
 /// fixture and the `_expandRatchetGreatPowerPeaceTargets` /
@@ -309,13 +309,13 @@ List<String> stalledFutileGpPeaceTargets({
 /// are routed through the focus / futile minor collectors and GPs
 /// through the GP-blocker / consolidate collectors.
 ///
-/// `diplomacy_planner_peace_targets.dart` retains a thin delegating
+/// `diplomacy_planner_peace_targets.dart` previously retained a thin delegating
 /// stub for legacy callers (the
 /// `_expandRatchetGreatPowerPeaceTargets` / `collectStalledGreatPowerPeaceTargets`
 /// consumer chains within `diplomacy_planner_peace_targets.dart`
 /// itself, the `stalledOwExpansionNeedsPeacePass` predicate, and any
 /// COLONIAL-phase tribe-peace flag consumers via
-/// `collectStalledGreatPowerPeaceTargets`) so the planned S1 deletion
+/// `collectStalledGreatPowerPeaceTargets`) so the now-completed S1 deletion
 /// of that file leaves no orphan callers.
 ///
 /// Pure and deterministic — identical inputs always yield identical
@@ -380,13 +380,13 @@ List<String> atWarGpDistractionTribePeaceTargets({
 /// regardless of the iteration order of [ThreatSummary.atWarWith]
 /// (Refs #2509 Must-have #7).
 ///
-/// `diplomacy_planner_peace_targets.dart` retains a thin delegating stub
+/// `diplomacy_planner_peace_targets.dart` previously retained a thin delegating stub
 /// for legacy callers (the existing
 /// `diplomacy_planner_below_quota_peace_part3_test.dart` § "all GP wars
 /// when stalled" fixture and the in-file
 /// `_survivalGreatPowerPeaceTargets` / `collectStalledGreatPowerPeaceTargets`
 /// `zeroRegimentBlockerPeace` / `stalledOwExpansionNeedsPeacePass`
-/// consumer chains) so the planned S1 deletion of that file leaves no
+/// consumer chains) so the now-completed S1 deletion of that file leaves no
 /// orphan callers.
 ///
 /// Pure and deterministic — identical inputs always yield identical
@@ -454,11 +454,11 @@ List<String> stalledZeroRegimentGpPeaceTargets({
 /// list containing the lone enemy's `factionId` (one element so sort
 /// order is trivial).
 ///
-/// `diplomacy_planner_peace_targets.dart` retains a thin delegating stub
+/// `diplomacy_planner_peace_targets.dart` previously retained a thin delegating stub
 /// for legacy callers (the in-file
 /// `_survivalGreatPowerPeaceTargets` / `collectStalledGreatPowerPeaceTargets`
 /// `zeroRegimentBlockerPeace` / `stalledOwExpansionNeedsPeacePass`
-/// consumer chains) so the planned S1 deletion of that file leaves no
+/// consumer chains) so the now-completed S1 deletion of that file leaves no
 /// orphan callers.
 ///
 /// Pure and deterministic — identical inputs always yield identical
@@ -504,8 +504,8 @@ List<String> mutualZeroRegimentGpStalematePeaceTargets({
 /// every at-war faction that is not a Great Power ([Game.playerById]
 /// is `null`), sorted ascending (Refs #2509 Must-have #7).
 ///
-/// `diplomacy_planner_peace_targets.dart` retains a thin delegating stub
-/// for legacy callers until the planned S1 deletion of that file.
+/// `diplomacy_planner_peace_targets.dart` previously retained a thin delegating stub
+/// for legacy callers until the now-completed S1 deletion of that file.
 List<String> stalledZeroRegimentAllFactionPeaceTargets({
   required Game game,
   required AIWorldSnapshot snapshot,
@@ -685,7 +685,7 @@ List<String> multiFrontNonBlockerGpPeaceTargets({
 /// regardless of [ThreatSummary.atWarWith] iteration order (Refs #2509
 /// Must-have #7).
 ///
-/// `diplomacy_planner_peace_targets.dart` retains a thin delegating
+/// `diplomacy_planner_peace_targets.dart` previously retained a thin delegating
 /// stub for the legacy `diplomacy_planner_mutual_exhausted_peace_test.dart`
 /// and `diplomacy_planner_stalled_peace_test.dart` fixtures and the
 /// in-file `_survivalGreatPowerPeaceTargets` /
@@ -756,7 +756,7 @@ List<String> criticalWeakGpSurvivalPeaceTargets({
 /// every other GP foe is peaced) sorted ascending by `factionId`
 /// (Refs #2509 Must-have #7).
 ///
-/// `diplomacy_planner_peace_targets.dart` retains a thin delegating
+/// `diplomacy_planner_peace_targets.dart` previously retained a thin delegating
 /// stub for the legacy `diplomacy_planner_below_quota_peace_part3_test.dart`
 /// and `diplomacy_planner_stalled_peace_test.dart` fixtures and the
 /// in-file `_expandRatchetGreatPowerPeaceTargets` /

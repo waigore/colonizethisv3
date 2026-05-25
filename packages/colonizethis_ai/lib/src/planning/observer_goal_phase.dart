@@ -332,8 +332,8 @@ bool isNewWorldColonialWorkOrder(WorkOrder order) {
 ///
 /// Called by [collectStalledGreatPowerPeaceTargets] which is the single
 /// public entry for the GP peace-targets set consumed by the diplomacy
-/// planner. `diplomacy_planner_peace_targets.dart` retains a thin
-/// delegating stub until the planned S1 deletion of that file.
+/// planner. `diplomacy_planner_peace_targets.dart` previously retained a thin
+/// delegating stub until the now-completed S1 deletion of that file.
 ///
 /// Pure and deterministic — identical inputs always yield identical
 /// output (Refs #2509 Must-have #7).
@@ -368,8 +368,8 @@ Iterable<String> survivalGreatPowerPeaceTargets({
 ///
 /// Called by [collectStalledGreatPowerPeaceTargets] which is the single
 /// public entry for the GP peace-targets set consumed by the diplomacy
-/// planner. `diplomacy_planner_peace_targets.dart` retains a thin
-/// delegating stub until the planned S1 deletion of that file.
+/// planner. `diplomacy_planner_peace_targets.dart` previously retained a thin
+/// delegating stub until the now-completed S1 deletion of that file.
 ///
 /// Pure and deterministic — identical inputs always yield identical
 /// output (Refs #2509 Must-have #7).
@@ -430,8 +430,8 @@ Iterable<String> expandRatchetGreatPowerPeaceTargets({
 /// rules and zero-regiment stalemate overrides before adding minor/tribe distraction
 /// peace targets.
 ///
-/// `diplomacy_planner_peace_targets.dart` retains a thin delegating stub until the
-/// planned S1 deletion of that file.
+/// `diplomacy_planner_peace_targets.dart` previously retained a thin delegating stub until the
+/// now-completed S1 deletion of that file.
 ///
 /// Pure and deterministic — identical inputs always yield identical
 /// output (Refs #2509 Must-have #7).
@@ -524,8 +524,8 @@ Set<String> collectStalledGreatPowerPeaceTargets({
 /// that mutual stalled Great Power peace pairs resolve within the same
 /// diplomacy planner pass.
 ///
-/// `diplomacy_planner_peace_targets.dart` retains a thin delegating stub until the
-/// planned S1 deletion of that file.
+/// `diplomacy_planner_peace_targets.dart` previously retained a thin delegating stub until the
+/// now-completed S1 deletion of that file.
 Orders supplementMutualStalledGreatPowerPeaceOrders({
   required Game game,
   required MapTopology topology,

@@ -7,15 +7,11 @@
 // (`ExpandEconomyPlan.boostTreasuryRecoveryCargo` when below-quota cash +
 // pending riches cannot fund a build), and the COLONIAL declare-war arm
 // in `colonial_phase_planner.dart`. The same value also backs the
-// `isBelowQuotaPeaceTreasuryRecovery` cargo trigger in
-// `colonial_pressure.dart` (now a thin delegating stub).
+// `isBelowQuotaPeaceTreasuryRecovery` cargo trigger.
 //
-// The S1 plan in #2509 deletes `colonial_pressure.dart` outright, so the
-// public helper now lives in `expand_phase_planner.dart`. This test pins
-// the canonical entrypoint directly so the delegation stubs in
-// `colonial_pressure.dart` and the private wrapper in
-// `colonial_phase_planner.dart` can be removed in a future slice without
-// regressing the cross-phase callers.
+// `colonial_pressure.dart` was deleted in S1 of #2509; the canonical
+// helper lives in `expand_phase_planner.dart` and this test pins it
+// directly.
 //
 // Behavioral invariants pinned here (all deterministic against the
 // embedded [RegimentEconomyCatalog]):
@@ -33,15 +29,7 @@
 //      orders; phase planners are pure functions with deterministic
 //      inputs." Two consecutive calls inside the same isolate must
 //      yield the same value (no hidden global mutation, no rng).
-//   4. The delegating stub in `colonial_pressure.dart` returns the same
-//      value as the canonical helper — required so the legacy
-//      `isBelowQuotaPeaceTreasuryRecovery` callers and the EXPAND /
-//      COLONIAL phase planners agree on the affordability boundary.
-//      A drift here would silently let one code path declare war while
-//      the other still gates on cargo recovery for the same GP.
 
-import 'package:colonizethis_ai/src/planning/expand_phase_planner.dart'
-    as colonial_pressure;
 import 'package:colonizethis_ai/src/planning/expand_phase_planner.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_test/test.dart';
@@ -103,22 +91,6 @@ void main() {
             'Pure helper must return identical results on repeated calls — '
             'required by issue #2509 Must-have #7 (phase planners are pure '
             'functions with deterministic inputs).',
-      );
-    });
-
-    test('colonial_pressure delegation stub returns the canonical value', () {
-      // Pins the S1 delegation contract: removing the legacy public
-      // `cheapestRegimentBuildTreasuryCost` symbol from
-      // `colonial_pressure.dart` must keep returning the same value as
-      // the canonical helper for as long as the stub survives.
-      expect(
-        colonial_pressure.cheapestRegimentBuildTreasuryCost(),
-        cheapestRegimentBuildTreasuryCost(),
-        reason:
-            '`colonial_pressure.cheapestRegimentBuildTreasuryCost` is a thin '
-            'delegating stub for legacy callers; it must mirror the '
-            'canonical helper exactly so the EXPAND and COLONIAL phase '
-            'planners agree on the affordability boundary.',
       );
     });
   });
