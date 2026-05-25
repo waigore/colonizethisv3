@@ -2173,3 +2173,90 @@ String? belowQuotaActiveMinorWarTarget({
   }
   return stalledFocusMinorTarget(game: game, snapshot: snapshot);
 }
+
+/// Returns the deterministic ascending-sorted list of at-war minor
+/// `factionId`s the active player should `offerPeace` toward in EXPAND
+/// while below the observer OW quota with a regiment count too small to
+/// split across multiple minor wars, dropping every distraction minor
+/// front except the focused-minor target, or `const []` when the
+/// distraction-peace pivot does not apply.
+///
+/// Canonical home (Refs #2509 S1) for the legacy
+/// `belowQuotaMultiMinorDistractionPeaceTargets` peace decider previously
+/// hosted in `diplomacy_planner_peace_targets.dart`. The decider
+/// implements the EXPAND-phase "while below quota and regiment-thin,
+/// peace every distracting at-war minor so the few regiments we have
+/// concentrate on the focused single-front minor" pivot used by the
+/// seed-42 gp4 zero-gain stall: gp4 fights minor1 and minor2 with only
+/// one or two regiments and the planner needs to drop one war so the
+/// remaining regiments can finish the focused frontier.
+///
+/// Returns `const []` for any of the outer guards (in order):
+///   1. [isBelowObserverConquestQuota] is `false` for
+///      [ConquestSummary.oldWorldProvincesOwned] — at and above quota
+///      the quota-met / consolidate / near-quota deciders own the
+///      multi-minor decision instead.
+///   2. `regimentCount <= 0` — zero-regiment survival deciders
+///      ([stalledZeroRegimentAllFactionPeaceTargets],
+///      [stalledZeroRegimentGpPeaceTargets]) own the peace decision
+///      below the affordability gate; this decider does not also
+///      compete for that zero band.
+///   3. `regimentCount >= kBelowQuotaPeaceMinRegimentsBeforeDeclareWar`
+///      — once the active player can afford to declare and project
+///      across multiple fronts the multi-minor distraction pivot is
+///      not warranted; the planner can sustain the additional minor
+///      wars while it walks the EXPAND ratchet.
+///   4. [ConquestSummary.invadableProvinceIdsSorted] is empty — no
+///      OW frontier means no minor war to concentrate on.
+///   5. [stalledFocusMinorTarget] returns `null` — without an at-war
+///      minor owning an invadable OW province the distraction-peace
+///      pivot has no target to preserve.
+///
+/// When the guards pass:
+///   * Walks [ThreatSummary.atWarWith] in iteration order and keeps
+///     every entry that is a member of [Game.minorNations] (tribes
+///     and Great Powers are dropped because the GP-blocker, peer-GP,
+///     and GP-distraction-tribe deciders own those decisions) and is
+///     not the focused-minor target preserved by
+///     [stalledFocusMinorTarget].
+///   * Sorts the result ascending so emission order is deterministic
+///     for fixed inputs (Refs #2509 Must-have #7).
+///
+/// `diplomacy_planner_peace_targets.dart` retains a thin delegating
+/// stub for the legacy `diplomacy_planner_below_quota_peace_part3_test.dart`
+/// fixture and the in-file `collectStalledGreatPowerPeaceTargets`
+/// `minorTribePeace` consumer chain until the planned S1 deletion of
+/// that file.
+///
+/// Pure and deterministic — identical inputs always yield identical
+/// output (Refs #2509 Must-have #7). Cost is dominated by the
+/// [stalledFocusMinorTarget] scan once the outer guards pass plus a
+/// single pass over [ThreatSummary.atWarWith]; matches the budget-rule
+/// note in `colonizethis-turn-resolution-budget.mdc` (no global
+/// province / tile scans introduced by the move).
+List<String> belowQuotaMultiMinorDistractionPeaceTargets({
+  required Game game,
+  required AIWorldSnapshot snapshot,
+}) {
+  if (!isBelowObserverConquestQuota(snapshot.conquest.oldWorldProvincesOwned)) {
+    return const [];
+  }
+  final regimentCount = regimentCountForPlayer(game, snapshot.playerId);
+  if (regimentCount <= 0 ||
+      regimentCount >= kBelowQuotaPeaceMinRegimentsBeforeDeclareWar) {
+    return const [];
+  }
+  if (snapshot.conquest.invadableProvinceIdsSorted.isEmpty) {
+    return const [];
+  }
+  final focus = stalledFocusMinorTarget(game: game, snapshot: snapshot);
+  if (focus == null) {
+    return const [];
+  }
+  final targets = <String>[
+    for (final factionId in snapshot.threats.atWarWith)
+      if (game.minorNations.any((m) => m.id == factionId) && factionId != focus)
+        factionId,
+  ]..sort();
+  return targets;
+}

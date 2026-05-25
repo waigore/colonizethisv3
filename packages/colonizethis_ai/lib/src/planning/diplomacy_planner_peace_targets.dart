@@ -1,5 +1,4 @@
 import '../perception/perception_snapshot.dart';
-import 'army_conquest_prep.dart';
 import 'planning_imports.dart';
 import 'colonial_pressure.dart';
 import 'expand_phase_planner.dart' as expand_phase_planner;
@@ -192,32 +191,22 @@ List<String> criticalMultiFrontGpPeaceTargets({
 
 /// Below-quota GPs with too few regiments to split across multiple minor wars:
 /// peace every at-war minor except the focused invadable frontier (Refs #2509).
+///
+/// Delegates to [expand_phase_planner.belowQuotaMultiMinorDistractionPeaceTargets]
+/// (Refs #2509 S1) so the EXPAND-phase below-quota multi-minor
+/// distraction-peace decider survives the planned deletion of this file
+/// alongside the canonical [expand_phase_planner.stalledFocusMinorTarget]
+/// helper it composes. Retained here as a thin stub for the legacy
+/// `diplomacy_planner_below_quota_peace_part3_test.dart` fixture and the
+/// in-file `collectStalledGreatPowerPeaceTargets` `minorTribePeace`
+/// consumer chain until the planned S1 deletion of this file.
 List<String> belowQuotaMultiMinorDistractionPeaceTargets({
   required Game game,
   required AIWorldSnapshot snapshot,
-}) {
-  if (!isBelowObserverConquestQuota(snapshot.conquest.oldWorldProvincesOwned)) {
-    return const [];
-  }
-  final regimentCount = regimentCountForPlayer(game, snapshot.playerId);
-  if (regimentCount <= 0 ||
-      regimentCount >= kBelowQuotaPeaceMinRegimentsBeforeDeclareWar) {
-    return const [];
-  }
-  if (snapshot.conquest.invadableProvinceIdsSorted.isEmpty) {
-    return const [];
-  }
-  final focus = stalledFocusMinorTarget(game: game, snapshot: snapshot);
-  if (focus == null) {
-    return const [];
-  }
-  final targets = <String>[
-    for (final factionId in snapshot.threats.atWarWith)
-      if (game.minorNations.any((m) => m.id == factionId) && factionId != focus)
-        factionId,
-  ]..sort();
-  return targets;
-}
+}) => expand_phase_planner.belowQuotaMultiMinorDistractionPeaceTargets(
+  game: game,
+  snapshot: snapshot,
+);
 
 /// Peace every at-war minor/tribe when stalled below quota with zero regiments.
 ///
