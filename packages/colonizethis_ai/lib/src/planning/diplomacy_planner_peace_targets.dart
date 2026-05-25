@@ -348,28 +348,21 @@ List<String> belowQuotaMultiMinorDistractionPeaceTargets({
   return targets;
 }
 
-/// Peace every at-war minor/tribe when stalled below quota with zero regiments
-/// so rebuild is not blocked by futile fronts (seed-42 gp5/gp6; Refs #2509).
-/// Great Power wars use [stalledZeroRegimentGpPeaceTargets] instead.
+/// Peace every at-war minor/tribe when stalled below quota with zero regiments.
+///
+/// Delegates to [expand_phase_planner.stalledZeroRegimentAllFactionPeaceTargets]
+/// (Refs #2509 S1) so the canonical implementation lives alongside the
+/// EXPAND zero-regiment survival arm. Retained here as a thin stub for
+/// the legacy `diplomacy_planner_below_quota_peace_part3_test.dart`
+/// fixture and the in-file `_survivalGreatPowerPeaceTargets` consumer
+/// chain until the planned S1 deletion of this file.
 List<String> stalledZeroRegimentAllFactionPeaceTargets({
   required Game game,
   required AIWorldSnapshot snapshot,
-}) {
-  if (!isBelowObserverConquestQuota(snapshot.conquest.oldWorldProvincesOwned)) {
-    return const [];
-  }
-  if (!isStalledOldWorldExpansion(snapshot.conquest.oldWorldProvincesOwned)) {
-    return const [];
-  }
-  if (regimentCountForPlayer(game, snapshot.playerId) > 0) {
-    return const [];
-  }
-  final targets = <String>[
-    for (final factionId in snapshot.threats.atWarWith)
-      if (game.playerById(factionId) == null) factionId,
-  ]..sort();
-  return targets;
-}
+}) => expand_phase_planner.stalledZeroRegimentAllFactionPeaceTargets(
+  game: game,
+  snapshot: snapshot,
+);
 
 /// Peace every at-war Great Power when stalled with zero regiments (Refs #2509).
 ///
@@ -405,82 +398,23 @@ List<String> mutualZeroRegimentGpStalematePeaceTargets({
       snapshot: snapshot,
     );
 
-/// Peace the sole at-war Great Power when both sides are mutual-plateau peers
-/// below the observer quota AND both are exhausted in regiments and treasury.
+/// Peace the sole at-war GP when both sides are mutual-plateau peers below
+/// quota and mutually exhausted in regiments and treasury (Refs #2509).
 ///
-/// Enables rebuild after a deadlocked GP-vs-GP war when no minor pivot remains
-/// (observer seed-42 gp3/gp4 turn-100 stalemate; Refs #2509). Authorized by
-/// `SPEC/ai/ai-architecture.md` § Observer goal phases (Full AI) — late-game
-/// survival peace clause extended to mutually-exhausted stalemates.
-///
-/// Trigger conditions (all must hold):
-/// - Both sides own at least [kMutualExhaustedGpStalemateMinOw] OW provinces
-///   (the "8-9 plateau" — excludes early-game / collapsed-survival GPs that
-///   are handled by `criticalWeakGpSurvivalPeaceTargets`).
-/// - This GP is below the observer quota and within the stalled OW band.
-/// - This GP is at war with exactly one Great Power (sole GP war).
-/// - The enemy GP is also below the quota and within the stalled OW band.
-/// - The mutual plateau gap is at most one OW province (|ownOw - enemyOw| <= 1).
-/// - Both GPs have at most [kMutualExhaustedGpRegimentMax] regiments.
-/// - Both GPs have at most [kMutualExhaustedGpTreasuryMax] treasury.
+/// Delegates to
+/// [expand_phase_planner.mutualExhaustedBelowQuotaGpStalematePeaceTargets]
+/// (Refs #2509 S1) so the canonical implementation lives alongside the
+/// EXPAND mutually-exhausted stalemate arm. Retained here as a thin stub
+/// for the legacy `diplomacy_planner_mutual_exhausted_peace_test.dart`
+/// fixture and the in-file `_survivalGreatPowerPeaceTargets` consumer
+/// chain until the planned S1 deletion of this file.
 List<String> mutualExhaustedBelowQuotaGpStalematePeaceTargets({
   required Game game,
   required AIWorldSnapshot snapshot,
-}) {
-  final ownOw = snapshot.conquest.oldWorldProvincesOwned;
-  if (ownOw < kMutualExhaustedGpStalemateMinOw) {
-    return const [];
-  }
-  if (!isBelowObserverConquestQuota(ownOw)) {
-    return const [];
-  }
-  if (!isStalledOldWorldExpansion(ownOw)) {
-    return const [];
-  }
-  final ownPlayer = game.playerById(snapshot.playerId);
-  if (ownPlayer == null) {
-    return const [];
-  }
-  if (regimentCountForPlayer(game, snapshot.playerId) >
-      kMutualExhaustedGpRegimentMax) {
-    return const [];
-  }
-  if (ownPlayer.treasury > kMutualExhaustedGpTreasuryMax) {
-    return const [];
-  }
-  final gpWars = <String>[
-    for (final factionId in snapshot.threats.atWarWith)
-      if (game.playerById(factionId) != null) factionId,
-  ];
-  if (gpWars.length != 1) {
-    return const [];
-  }
-  final enemy = gpWars.single;
-  final enemyPlayer = game.playerById(enemy);
-  if (enemyPlayer == null) {
-    return const [];
-  }
-  final enemyOw = provinceCountOwnedBy(game, enemy);
-  if (enemyOw < kMutualExhaustedGpStalemateMinOw) {
-    return const [];
-  }
-  if (!isBelowObserverConquestQuota(enemyOw)) {
-    return const [];
-  }
-  if (!isStalledOldWorldExpansion(enemyOw)) {
-    return const [];
-  }
-  if ((enemyOw - ownOw).abs() > 1) {
-    return const [];
-  }
-  if (regimentCountForPlayer(game, enemy) > kMutualExhaustedGpRegimentMax) {
-    return const [];
-  }
-  if (enemyPlayer.treasury > kMutualExhaustedGpTreasuryMax) {
-    return const [];
-  }
-  return [enemy];
-}
+}) => expand_phase_planner.mutualExhaustedBelowQuotaGpStalematePeaceTargets(
+  game: game,
+  snapshot: snapshot,
+);
 
 bool stalledOwExpansionNeedsPeacePass({
   required Game game,
@@ -559,50 +493,20 @@ bool stalledOwExpansionNeedsPeacePass({
 
 /// When fighting 2+ Great Powers, peace every non-blocker GP. Also peace a sole
 /// non-blocker GP war while invadable OW remains (Refs #2509).
+///
+/// Delegates to [expand_phase_planner.multiFrontNonBlockerGpPeaceTargets]
+/// (Refs #2509 S1) so the canonical implementation lives alongside the
+/// other EXPAND multi-front / non-blocker peace deciders. Retained here
+/// as a thin stub for the legacy `multi_front_peace_targets_test.dart`
+/// fixture and the `stalledOwExpansionNeedsPeacePass` consumer chain
+/// until the planned S1 deletion of this file.
 List<String> multiFrontNonBlockerGpPeaceTargets({
   required Game game,
   required AIWorldSnapshot snapshot,
-}) {
-  final gpWars = <String>[
-    for (final factionId in snapshot.threats.atWarWith)
-      if (game.playerById(factionId) != null) factionId,
-  ];
-  if (gpWars.isEmpty) {
-    return const [];
-  }
-  if (!isStalledOldWorldExpansion(snapshot.conquest.oldWorldProvincesOwned) &&
-      snapshot.conquest.invadableProvinceIdsSorted.isEmpty) {
-    return const [];
-  }
-  var blocker = primaryInvadableOldWorldGpBlocker(
-    game: game,
-    snapshot: snapshot,
-  );
-  if (blocker == null) {
-    var bestOw = 0;
-    for (final factionId in gpWars) {
-      final ow = provinceCountOwnedBy(game, factionId);
-      if (ow > bestOw) {
-        bestOw = ow;
-        blocker = factionId;
-      }
-    }
-  }
-  if (blocker == null) {
-    return const [];
-  }
-  if (gpWars.length == 1 && gpWars.single != blocker) {
-    return gpWars;
-  }
-  if (gpWars.length <= 1) {
-    return const [];
-  }
-  final targets = <String>[
-    for (final factionId in gpWars)
-      if (factionId != blocker) factionId,
-  ]..sort();
-  return targets;
-}
+}) => expand_phase_planner.multiFrontNonBlockerGpPeaceTargets(
+  game: game,
+  snapshot: snapshot,
+);
 
 /// Critical collapse / zero-regiment peace (all observer phases).
 Iterable<String> _survivalGreatPowerPeaceTargets({
