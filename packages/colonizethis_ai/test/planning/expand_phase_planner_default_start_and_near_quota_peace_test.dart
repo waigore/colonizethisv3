@@ -3,13 +3,8 @@
 // `expand_phase_planner.dart` (Refs #2509 S1).
 //
 // Both deciders were relocated from `colonial_pressure.dart` so they
-// survive the planned S1 deletion of that file. The canonical
-// implementations live in `expand_phase_planner.dart`;
-// `colonial_pressure.dart` retains thin delegating stubs for legacy
-// callers (the existing `expand_phase_planner_default_start_gp_peace_branches_test.dart`
-// and `expand_phase_planner_peer_peace_basic_test.dart` near-quota fixtures plus the
-// `diplomacy_planner.dart` / `diplomacy_planner_peace_targets.dart`
-// consumer chain) until the planned deletion.
+// survive the now-completed S1 deletion of that file. The canonical
+// implementations live in `expand_phase_planner.dart`.
 //
 // Live consumers (post-relocation):
 //   * `defaultStartGpPeaceTargets` is the EXPAND default-start band
@@ -58,16 +53,8 @@
 //      `primaryInvadableOldWorldGpBlocker` and a minor pivot remains
 //      the war is held open (`const []`). On the multi-GP arm it
 //      peaces every at-war GP except the blocker, sorted ascending.
-//   5. The delegating stubs in `colonial_pressure.dart` return the
-//      same value as the canonical helpers for every relevant input —
-//      required so the legacy
-//      `expand_phase_planner_default_start_gp_peace_branches_test.dart`
-//      and `expand_phase_planner_peer_peace_basic_test.dart` near-quota fixtures plus the
-//      in-file consumer paths agree on the deciders.
 
 import 'package:colonizethis_ai/src/perception/perception_snapshot.dart';
-import 'package:colonizethis_ai/src/planning/expand_phase_planner.dart'
-    as colonial_pressure;
 import 'package:colonizethis_ai/src/planning/expand_phase_planner.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
@@ -380,74 +367,6 @@ void main() {
     },
   );
 
-  group('defaultStartGpPeaceTargets — delegation equality', () {
-    test(
-      'colonial_pressure stub matches canonical helper across representative shapes',
-      () {
-        // Iterate three diagnostic fixtures (above-quota guard, GP-only
-        // frontier blocker exclusion, mixed-frontier all-GPs) and pin
-        // that the colonial_pressure stub mirrors the canonical
-        // expand_phase_planner helper for each.
-        final cases = <(Game, AIWorldSnapshot, String)>[
-          (
-            _gameOf(
-              owOwners: const {_gpOwn: 10, _gpA: 1},
-              atWarPartners: const [_gpA],
-            ),
-            _snapshot(
-              oldWorldProvincesOwned: kObserverConquestMinOwProvincesPerGp,
-              atWarWith: const [_gpA],
-              invadableProvinceIdsSorted: const ['oldWorld|gp_a_1'],
-            ),
-            'above quota',
-          ),
-          (
-            _gameOf(
-              owOwners: const {_gpOwn: 7, _gpA: 1, _gpB: 0},
-              atWarPartners: const [_gpA, _gpB],
-            ),
-            _snapshot(
-              oldWorldProvincesOwned:
-                  kObserverDefaultStartOldWorldProvincesPerGp,
-              atWarWith: const [_gpA, _gpB],
-              invadableProvinceIdsSorted: const ['oldWorld|gp_a_1'],
-            ),
-            'GP-only frontier excludes blocker',
-          ),
-          (
-            _gameOf(
-              owOwners: const {_gpOwn: 7, _gpA: 1, _minorM1: 1},
-              atWarPartners: const [_gpA],
-            ),
-            _snapshot(
-              oldWorldProvincesOwned:
-                  kObserverDefaultStartOldWorldProvincesPerGp,
-              atWarWith: const [_gpA],
-              invadableProvinceIdsSorted: const [
-                'oldWorld|gp_a_1',
-                'oldWorld|minor_m1_1',
-              ],
-            ),
-            'mixed frontier returns all GPs',
-          ),
-        ];
-        for (final (game, snapshot, label) in cases) {
-          expect(
-            colonial_pressure.defaultStartGpPeaceTargets(
-              game: game,
-              snapshot: snapshot,
-            ),
-            defaultStartGpPeaceTargets(game: game, snapshot: snapshot),
-            reason:
-                'colonial_pressure delegating stub must mirror the '
-                'canonical helper for case "$label" so the legacy '
-                'fixtures and consumer chain agree on the decider.',
-          );
-        }
-      },
-    );
-  });
-
   group('nearQuotaHoldPeaceTargets — outer guards', () {
     test('returns const [] when at the observer OW quota', () {
       // OW == kObserverConquestMinOwProvincesPerGp → not below quota →
@@ -676,78 +595,5 @@ void main() {
             'inputs must return identical lists (Must-have #7).',
       );
     });
-
-    test(
-      'colonial_pressure stub matches canonical helper across representative shapes',
-      () {
-        // Iterate four diagnostic fixtures (above-quota guard, sole-GP
-        // mutual-plateau peace, sole-GP blocker hold, multi-GP exclude
-        // blocker) and pin that the colonial_pressure stub mirrors the
-        // canonical expand_phase_planner helper for each.
-        final cases = <(Game, AIWorldSnapshot, String)>[
-          (
-            _gameOf(
-              owOwners: const {_gpOwn: 10, _gpA: 1},
-              atWarPartners: const [_gpA],
-            ),
-            _snapshot(
-              oldWorldProvincesOwned: kObserverConquestMinOwProvincesPerGp,
-              atWarWith: const [_gpA],
-              invadableProvinceIdsSorted: const ['oldWorld|gp_a_1'],
-            ),
-            'above quota',
-          ),
-          (
-            _gameOf(
-              owOwners: const {_gpOwn: 8, _gpA: 8},
-              atWarPartners: const [_gpA],
-            ),
-            _snapshot(
-              oldWorldProvincesOwned: kStalledOldWorldProvinceThreshold - 1,
-              atWarWith: const [_gpA],
-              invadableProvinceIdsSorted: const ['oldWorld|gp_a_1'],
-            ),
-            'sole-GP mutual-plateau peace',
-          ),
-          (
-            _gameOf(
-              owOwners: const {_gpOwn: 8, _gpA: 8, _minorM1: 1},
-              atWarPartners: const [_gpA],
-            ),
-            _snapshot(
-              oldWorldProvincesOwned: kStalledOldWorldProvinceThreshold - 1,
-              atWarWith: const [_gpA],
-              invadableProvinceIdsSorted: const ['oldWorld|gp_a_1'],
-            ),
-            'sole-GP blocker hold-open',
-          ),
-          (
-            _gameOf(
-              owOwners: const {_gpOwn: 8, _gpA: 1, _gpB: 0, _gpC: 0},
-              atWarPartners: const [_gpA, _gpB, _gpC],
-            ),
-            _snapshot(
-              oldWorldProvincesOwned: kStalledOldWorldProvinceThreshold - 1,
-              atWarWith: const [_gpA, _gpB, _gpC],
-              invadableProvinceIdsSorted: const ['oldWorld|gp_a_1'],
-            ),
-            'multi-GP exclude blocker',
-          ),
-        ];
-        for (final (game, snapshot, label) in cases) {
-          expect(
-            colonial_pressure.nearQuotaHoldPeaceTargets(
-              game: game,
-              snapshot: snapshot,
-            ),
-            nearQuotaHoldPeaceTargets(game: game, snapshot: snapshot),
-            reason:
-                'colonial_pressure delegating stub must mirror the '
-                'canonical helper for case "$label" so the legacy '
-                'fixtures and consumer chain agree on the decider.',
-          );
-        }
-      },
-    );
   });
 }

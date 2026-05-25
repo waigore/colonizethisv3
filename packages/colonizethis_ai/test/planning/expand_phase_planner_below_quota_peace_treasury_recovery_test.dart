@@ -17,22 +17,16 @@
 // `expand_phase_planner.dart`) AND an effective treasury
 // `treasury + pendingRichesTreasuryDelta(stockpile)` strictly below
 // `cheapestRegimentBuildTreasuryCost()` (canonical affordability gate,
-// `expand_phase_planner.dart`). All three sub-helpers are now canonical in
-// `expand_phase_planner.dart`; this composite sits on top so the EXPAND-trap
-// rebuild/recovery story is fully co-located ahead of the planned S1
-// deletion of `colonial_pressure.dart`.
+// `expand_phase_planner.dart`). All three sub-helpers are canonical in
+// `expand_phase_planner.dart`; this composite sits on top so the
+// EXPAND-trap rebuild/recovery story is fully co-located.
 //
-// The S1 plan in #2509 deletes `colonial_pressure.dart` outright, so the
-// public helper now lives in `expand_phase_planner.dart`. This test pins
-// the canonical entrypoint directly so the delegation stub in
-// `colonial_pressure.dart` can be removed in a future slice without
-// regressing the legacy cargo-recovery callers or the orchestrator's
-// phase-derived rebuild-trap path. The pre-existing
-// `expand_phase_planner_below_quota_peace_treasury_recovery_branches_test.dart`
-// still pins the legacy-callsite contract through the delegating stub; this
-// file pins the canonical function boundary plus the cross-arm composition
-// (Arm A short-circuit + Arm B + affordability gate) and the delegation
-// equality at one representative trap shape.
+// `colonial_pressure.dart` was deleted in S1 of #2509; the canonical
+// helper lives in `expand_phase_planner.dart` and this test pins it
+// directly. Cross-arm composition (Arm A short-circuit + Arm B +
+// affordability gate) is the focus here; legacy-callsite branch coverage
+// belongs to the planner-specific tests under
+// `packages/colonizethis_ai/test/planning/`.
 //
 // Behavioral invariants pinned here (all deterministic):
 //
@@ -58,12 +52,7 @@
 //      mishandle mixed cash + riches GP states.
 //   5. Determinism (Must-have #7): two identical calls inside the same
 //      isolate return the same `bool` (no rng, no hidden mutation).
-//   6. Delegation equality: the `colonial_pressure.dart` stub mirrors the
-//      canonical helper at a representative trap shape so a future stub
-//      removal cannot silently shift the recovery boundary.
 
-import 'package:colonizethis_ai/src/planning/expand_phase_planner.dart'
-    as colonial_pressure;
 import 'package:colonizethis_ai/src/planning/expand_phase_planner.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/ai_api.dart';
@@ -275,52 +264,6 @@ void main() {
             'required by issue #2509 Must-have #7 (phase planners are pure '
             'functions with deterministic inputs).',
       );
-    });
-
-    test('colonial_pressure delegation stub returns the canonical value', () {
-      // Trap shape (Arm B + zero treasury) plus an at-quota shape (false
-      // by precondition) pinned together to prove the delegation stub
-      // tracks the canonical helper across true and false outcomes.
-      for (final ow in const [
-        kObserverConquestMinOwProvincesPerGp - 2,
-        kObserverConquestMinOwProvincesPerGp,
-      ]) {
-        for (final regimentCount in const [0, 3]) {
-          for (final atWar in const [true, false]) {
-            for (final hasInvadable in const [true, false]) {
-              for (final treasury in const [0, 1000]) {
-                expect(
-                  colonial_pressure.isBelowQuotaPeaceTreasuryRecovery(
-                    oldWorldProvincesOwned: ow,
-                    regimentCount: regimentCount,
-                    atWarWithAnyGreatPower: atWar,
-                    hasInvadableProvinces: hasInvadable,
-                    treasury: treasury,
-                    stockpile: const Stockpile(),
-                  ),
-                  isBelowQuotaPeaceTreasuryRecovery(
-                    oldWorldProvincesOwned: ow,
-                    regimentCount: regimentCount,
-                    atWarWithAnyGreatPower: atWar,
-                    hasInvadableProvinces: hasInvadable,
-                    treasury: treasury,
-                    stockpile: const Stockpile(),
-                  ),
-                  reason:
-                      '`colonial_pressure.isBelowQuotaPeaceTreasuryRecovery` '
-                      'is a thin delegating stub for legacy callers; it '
-                      'must mirror the canonical helper exactly so the '
-                      'cargo-recovery boundary stays consistent '
-                      '(ow=$ow, regimentCount=$regimentCount, '
-                      'atWarWithAnyGreatPower=$atWar, '
-                      'hasInvadableProvinces=$hasInvadable, '
-                      'treasury=$treasury).',
-                );
-              }
-            }
-          }
-        }
-      }
     });
   });
 }

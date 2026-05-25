@@ -6,8 +6,8 @@
 // `diplomacy_planner_peace_targets.dart` so they survive the planned
 // S1 deletion of that file. The canonical implementations live in
 // `expand_phase_planner_peer_peace.dart` (part of `expand_phase_planner.dart`);
-// `diplomacy_planner_peace_targets.dart` retains thin delegating stubs
-// for the legacy `expand_phase_planner_peer_peace_basic_test.dart` and
+// `diplomacy_planner_peace_targets.dart` previously retained thin delegating stubs
+// for the legacy `colonial_pressure_test.dart` and
 // `diplomacy_planner_stalled_peace_test.dart` fixtures and the in-file
 // `_expandRatchetGreatPowerPeaceTargets` /
 // `stalledOwExpansionNeedsPeacePass` consumer chains until the planned
@@ -259,45 +259,42 @@ void main() {
       );
     });
 
-    test(
-      'returns null when no OW minor remains on the map (GP-blocker focus)',
-      () {
-        // Mirrors diplomacy_planner_stalled_peace_test: minor exists in
-        // minorNations but owns no OW province → anyMinorOwnsOw is false.
-        final game = _gpBlockerFocusGame(
-          provinces: [
-            for (var i = 0; i < 7; i++)
-              Province(
-                id: 'oldWorld|${_gpOwn}_$i',
-                regionId: 'oldWorld',
-                ownerId: _gpOwn,
-              ),
-            for (var i = 0; i < 10; i++)
-              Province(
-                id: 'oldWorld|${_gpBlocker}_$i',
-                regionId: 'oldWorld',
-                ownerId: _gpBlocker,
-              ),
-            const Province(
-              id: 'oldWorld|inv1',
+    test('returns null when no OW minor remains on the map (GP-blocker focus)', () {
+      // Mirrors diplomacy_planner_stalled_peace_test: minor exists in
+      // minorNations but owns no OW province → anyMinorOwnsOw is false.
+      final game = _gpBlockerFocusGame(
+        provinces: [
+          for (var i = 0; i < 7; i++)
+            Province(
+              id: 'oldWorld|${_gpOwn}_$i',
+              regionId: 'oldWorld',
+              ownerId: _gpOwn,
+            ),
+          for (var i = 0; i < 10; i++)
+            Province(
+              id: 'oldWorld|${_gpBlocker}_$i',
               regionId: 'oldWorld',
               ownerId: _gpBlocker,
             ),
-          ],
-          atWarFactionIds: const [_gpBlocker],
-          minorNations: const [MinorNation(id: _minor1, displayName: 'M1')],
-        );
-        final snapshot = _ownSnapshot(
-          oldWorldProvincesOwned: 7,
-          atWarWith: const [_gpBlocker],
-          invadableProvinceIdsSorted: const ['oldWorld|inv1'],
-        );
-        expect(
-          stalledStrongerGpBlockerPeaceTarget(game: game, snapshot: snapshot),
-          isNull,
-        );
-      },
-    );
+          const Province(
+            id: 'oldWorld|inv1',
+            regionId: 'oldWorld',
+            ownerId: _gpBlocker,
+          ),
+        ],
+        atWarFactionIds: const [_gpBlocker],
+        minorNations: const [MinorNation(id: _minor1, displayName: 'M1')],
+      );
+      final snapshot = _ownSnapshot(
+        oldWorldProvincesOwned: 7,
+        atWarWith: const [_gpBlocker],
+        invadableProvinceIdsSorted: const ['oldWorld|inv1'],
+      );
+      expect(
+        stalledStrongerGpBlockerPeaceTarget(game: game, snapshot: snapshot),
+        isNull,
+      );
+    });
   });
 
   group('stalledStrongerGpBlockerPeaceTarget — fire path', () {
@@ -397,7 +394,10 @@ void main() {
       final snapshot = _ownSnapshot(
         oldWorldProvincesOwned: 7,
         atWarWith: const [_gpBlocker],
-        invadableProvinceIdsSorted: const ['oldWorld|inv1', 'oldWorld|inv2'],
+        invadableProvinceIdsSorted: const [
+          'oldWorld|inv1',
+          'oldWorld|inv2',
+        ],
       );
       expect(
         stalledStrongerGpBlockerPeaceTarget(game: game, snapshot: snapshot),

@@ -792,7 +792,7 @@ List<String> _acquisitionIterationOrder(ColonialSummary colonial) {
 /// S1) so the COLONIAL declare-war arm shares the same affordability
 /// gate as `planExpandDeclareWar` / `planExpandEconomy`. The COLONIAL
 /// planner intentionally keeps the call site private so it remains
-/// self-contained against the planned S1 deletion of
+/// self-contained against the now-completed S1 deletion of
 /// `colonial_pressure.dart`.
 int _cheapestRegimentBuildTreasuryCost() =>
     expand_phase_planner.cheapestRegimentBuildTreasuryCost();

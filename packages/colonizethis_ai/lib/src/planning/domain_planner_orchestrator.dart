@@ -378,23 +378,25 @@ Orders _appendEconomyBuildOrders({
     buildThreshold = math.min(buildThreshold, 8);
   }
   // Refs #2509 S5: derive the colonial build-order threshold cap from
-  // the dispatched phase plan instead of calling
-  // `colonialBuildOrderThresholdCap(snapshot.colonial)` (the
-  // `colonial_pressure.dart` helper). The legacy helper had two arms
-  // keyed on `hasColonialAcquisitionTargets(colonial)`, but the
-  // orchestrator only invoked it inside the outer `if (colonialPressure)`
-  // guard, where `colonialPressure` is the dispatched
-  // `resolvePhaseEconomyColonialPressureActive` (active only under
-  // COLONIAL). COLONIAL phase entry is itself gated on
+  // the dispatched phase plan instead of calling the legacy
+  // `colonialBuildOrderThresholdCap(snapshot.colonial)` (previously in
+  // the now-deleted `colonial_pressure.dart`). The legacy helper had
+  // two arms keyed on `hasColonialAcquisitionTargets(colonial)`, but
+  // the orchestrator only invoked it inside the outer
+  // `if (colonialPressure)` guard, where `colonialPressure` is the
+  // dispatched `resolvePhaseEconomyColonialPressureActive` (active
+  // only under COLONIAL). COLONIAL phase entry is itself gated on
   // `hasColonialAcquisitionTargets` via `observerGoalPhaseFor`, so the
   // first legacy arm was the only reachable arm — the second
-  // `kColonialBuildOrderThresholdWhenOwnedNw` arm requires
-  // `!hasColonialAcquisitionTargets`, which is structurally unreachable
-  // inside the orchestrator's COLONIAL-pressure branch. The phase-derived
-  // `int?` is therefore field-equal to the legacy compute at this call
-  // site across every reachable `(ObserverGoalPhase, ColonialSummary)`
-  // pair (see `SPEC/ai/phase-planner-dispatch.md` § Orchestrator economy
-  // build colonial-cap slice).
+  // (no-acquisition fallback) arm required
+  // `!hasColonialAcquisitionTargets`, which is structurally
+  // unreachable inside the orchestrator's COLONIAL-pressure branch.
+  // The fallback constant has since been retired from `colonizethis_data`
+  // (Refs #2509) and the phase-derived `int?` collapses to the single-arm
+  // form, field-equal to the legacy compute at this call site across
+  // every reachable `(ObserverGoalPhase, ColonialSummary)` pair (see
+  // `SPEC/ai/phase-planner-dispatch.md` § Orchestrator economy build
+  // colonial-cap slice).
   final colonialBuildCap = resolvePhaseEconomyColonialBuildOrderThresholdCap(
     phasePlan: phasePlan,
     colonial: snapshot.colonial,

@@ -3,9 +3,8 @@
 // (Refs #2509 S1).
 //
 // Both helpers were relocated from `colonial_pressure.dart` so they survive
-// the planned S1 deletion of that file. The canonical implementations live
-// in `expand_phase_planner.dart`; `colonial_pressure.dart` retains thin
-// delegating stubs for legacy callers until the planned deletion.
+// the now-completed S1 deletion of that file. The canonical implementations
+// live in `expand_phase_planner.dart`.
 //
 // Live consumers (post-relocation):
 //   * `greatPowerWarCountOnTarget` is consumed by
@@ -41,14 +40,7 @@
 //   6. Both helpers are deterministic across repeated calls — required by
 //      issue #2509 Must-have #7 (phase planners are pure functions with
 //      deterministic inputs).
-//   7. The delegating stubs in `colonial_pressure.dart` return the same
-//      value as the canonical helpers for every relevant input — required
-//      so the legacy `diplomatic_candidate_scoring_declare_war.dart`
-//      consumers and the EXPAND planner agree on the war-concentration
-//      and same-turn-declare-war gates.
 
-import 'package:colonizethis_ai/src/planning/expand_phase_planner.dart'
-    as colonial_pressure;
 import 'package:colonizethis_ai/src/planning/expand_phase_planner.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
@@ -489,175 +481,5 @@ void main() {
         reason: 'Same as above across three consecutive calls.',
       );
     });
-  });
-
-  group('colonial_pressure delegation contract (Refs #2509 S1)', () {
-    test(
-      'colonial_pressure.greatPowerWarCountOnTarget mirrors the canonical helper',
-      () {
-        // Pins the S1 delegation contract: the legacy public symbol exported
-        // from `colonial_pressure.dart` must mirror the canonical helper for
-        // every relevant fixture so removing the stub in a future slice
-        // cannot silently shift the war-concentration suppression boundary
-        // in `diplomatic_candidate_scoring_declare_war.dart`.
-        final game = Game(
-          id: 'g-delegation-gp-war-count',
-          worldState: WorldState(
-            turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 25),
-            oldWorld: const RegionData(),
-            newWorld: const RegionData(),
-          ),
-          players: const [
-            Player(id: 'gp1', displayName: 'P1', isHuman: false),
-            Player(id: 'gp2', displayName: 'P2', isHuman: false),
-            Player(id: 'gp3', displayName: 'P3', isHuman: false),
-            Player(id: 'gp4', displayName: 'P4', isHuman: false),
-          ],
-          minorNations: const [MinorNation(id: 'minor1', displayName: 'M1')],
-          diplomacyRelations: const [
-            DiplomacyRelation(
-              factionId1: 'gp1',
-              factionId2: 'gp3',
-              state: RelationState.atWar,
-              score: 10,
-            ),
-            DiplomacyRelation(
-              factionId1: 'gp2',
-              factionId2: 'gp3',
-              state: RelationState.atWar,
-              score: 20,
-            ),
-          ],
-        );
-        const priorOrders = Orders(
-          diplomaticOrdersByPlayerId: {
-            'gp4': [
-              DiplomaticOrder(
-                type: DiplomaticOrderType.declareWar,
-                targetFactionId: 'gp3',
-              ),
-            ],
-          },
-        );
-        // Fixture coverage: zero-count target (gp4, no relations),
-        // count-only-from-relations, count-from-relations-plus-same-turn.
-        final fixtures = <(String, Orders?, int, String)>[
-          ('gp4', null, 0, 'target with no GP at war'),
-          ('gp3', null, 2, 'target with two at-war GP partners only'),
-          (
-            'gp3',
-            priorOrders,
-            3,
-            'target with two at-war partners plus a same-turn declarer',
-          ),
-        ];
-        for (final (targetGpId, sameTurn, expectedCount, label) in fixtures) {
-          final canonical = greatPowerWarCountOnTarget(
-            game: game,
-            targetGpId: targetGpId,
-            sameTurnPriorDiplomaticOrders: sameTurn,
-          );
-          final delegated = colonial_pressure.greatPowerWarCountOnTarget(
-            game: game,
-            targetGpId: targetGpId,
-            sameTurnPriorDiplomaticOrders: sameTurn,
-          );
-          expect(
-            delegated,
-            canonical,
-            reason:
-                '`colonial_pressure.greatPowerWarCountOnTarget` is a thin '
-                'delegating stub for legacy callers; it must mirror the '
-                'canonical helper exactly so the '
-                'diplomatic_candidate_scoring_declare_war.dart war-'
-                'concentration gate stays consistent (fixture: $label).',
-          );
-          expect(
-            canonical,
-            expectedCount,
-            reason: 'Canonical helper count check (fixture: $label).',
-          );
-        }
-      },
-    );
-
-    test(
-      'colonial_pressure.pendingDeclareWarFrom mirrors the canonical helper',
-      () {
-        // Pins the S1 delegation contract: the legacy public symbol exported
-        // from `colonial_pressure.dart` must mirror the canonical helper for
-        // every relevant fixture so removing the stub in a future slice
-        // cannot silently shift the same-turn declare-war suppression
-        // boundary in `diplomatic_candidate_scoring_declare_war.dart`.
-        const priorOrders = Orders(
-          diplomaticOrdersByPlayerId: {
-            'gp2': [
-              DiplomaticOrder(
-                type: DiplomaticOrderType.declareWar,
-                targetFactionId: 'gp4',
-              ),
-            ],
-            'gp3': [
-              DiplomaticOrder(
-                type: DiplomaticOrderType.offerPeace,
-                targetFactionId: 'gp4',
-              ),
-            ],
-          },
-        );
-        final fixtures = <(Orders?, String, String, bool, String)>[
-          (null, 'gp2', 'gp4', false, 'null bag short-circuits to false'),
-          (priorOrders, 'gp2', 'gp4', true, 'declareWar matches target'),
-          (
-            priorOrders,
-            'gp2',
-            'gp5',
-            false,
-            'declareWar targets a different faction',
-          ),
-          (
-            priorOrders,
-            'gp3',
-            'gp4',
-            false,
-            'order type is offerPeace, not declareWar',
-          ),
-          (
-            priorOrders,
-            'gp1',
-            'gp4',
-            false,
-            'declarer has no orders in the bag',
-          ),
-        ];
-        for (final (sameTurn, declarer, target, expected, label) in fixtures) {
-          final canonical = pendingDeclareWarFrom(
-            sameTurnPriorDiplomaticOrders: sameTurn,
-            declarerFactionId: declarer,
-            targetFactionId: target,
-          );
-          final delegated = colonial_pressure.pendingDeclareWarFrom(
-            sameTurnPriorDiplomaticOrders: sameTurn,
-            declarerFactionId: declarer,
-            targetFactionId: target,
-          );
-          expect(
-            delegated,
-            canonical,
-            reason:
-                '`colonial_pressure.pendingDeclareWarFrom` is a thin '
-                'delegating stub for legacy callers; it must mirror the '
-                'canonical helper exactly so the '
-                'diplomatic_candidate_scoring_declare_war.dart same-turn '
-                'suppression gate stays consistent (fixture: $label).',
-          );
-          expect(
-            canonical,
-            expected,
-            reason: 'Canonical helper truth check (fixture: $label).',
-          );
-        }
-      },
-    );
   });
 }

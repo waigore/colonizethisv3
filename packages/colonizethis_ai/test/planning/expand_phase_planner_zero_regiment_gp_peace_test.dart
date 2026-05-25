@@ -4,9 +4,9 @@
 // (Refs #2509 S1).
 //
 // Both deciders were relocated from `diplomacy_planner_peace_targets.dart`
-// so they survive the planned S1 deletion of that file. The canonical
+// so they survive the now-completed S1 deletion of that file. The canonical
 // implementations live in `expand_phase_planner.dart`;
-// `diplomacy_planner_peace_targets.dart` retains thin delegating stubs
+// `diplomacy_planner_peace_targets.dart` previously retained thin delegating stubs
 // for the legacy `diplomacy_planner_below_quota_peace_part3_test.dart`
 // § "all GP wars when stalled" fixture and the in-file
 // `_survivalGreatPowerPeaceTargets` /
@@ -744,7 +744,7 @@ void main() {
               "fixture and the in-file _survivalGreatPowerPeaceTargets / "
               'collectStalledGreatPowerPeaceTargets / '
               'stalledOwExpansionNeedsPeacePass consumer chains '
-              'reach until the planned S1 deletion of '
+              'reach until the now-completed S1 deletion of '
               'diplomacy_planner_peace_targets.dart.',
         );
       }
@@ -859,7 +859,7 @@ void main() {
                 'caller path the in-file _survivalGreatPowerPeaceTargets / '
                 'collectStalledGreatPowerPeaceTargets / '
                 'stalledOwExpansionNeedsPeacePass consumer chains '
-                'reach until the planned S1 deletion of '
+                'reach until the now-completed S1 deletion of '
                 'diplomacy_planner_peace_targets.dart.',
           );
         }

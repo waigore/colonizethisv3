@@ -4,19 +4,15 @@
 // This helper is Arm A of the EXPAND-trap below-quota rebuild gate:
 // a below-quota GP with zero standing regiments and a non-empty invadable
 // OW frontier is told to force a regiment build regardless of treasury
-// (Arm C handles the cargo-recovery side). It is shared by:
+// (Arm C handles the cargo-recovery side). It is consumed by
+// `planExpandEconomy` Arm A in `expand_phase_planner.dart`
+// (`regimentCount == 0 && hasInvadable` → `forceCheapestRegimentBuild`)
+// and by the legacy `isBelowQuotaPeaceTreasuryRecovery` composite, which
+// short-circuits to `true` when this predicate fires.
 //
-//   - `planExpandEconomy` Arm A in `expand_phase_planner.dart`
-//     (`regimentCount == 0 && hasInvadable` → `forceCheapestRegimentBuild`).
-//   - `isBelowQuotaPeaceTreasuryRecovery` in `colonial_pressure.dart` —
-//     a composite that short-circuits to `true` when this predicate fires.
-//
-// The S1 plan in #2509 deletes `colonial_pressure.dart` outright, so the
-// public helper now lives in `expand_phase_planner.dart`. This test pins
-// the canonical entrypoint directly so the delegation stub in
-// `colonial_pressure.dart` can be removed in a future slice without
-// regressing the legacy `isBelowQuotaPeaceTreasuryRecovery` composite or
-// the planner's Arm A path.
+// `colonial_pressure.dart` was deleted in S1 of #2509; the canonical
+// helper lives in `expand_phase_planner.dart` and this test pins it
+// directly.
 //
 // Behavioral invariants pinned here (all deterministic, constant-time):
 //
@@ -38,16 +34,7 @@
 //      orders; phase planners are pure functions with deterministic
 //      inputs." Two consecutive calls with identical inputs must yield
 //      the same value (no hidden global mutation, no rng).
-//   4. The delegating stub in `colonial_pressure.dart` returns the same
-//      value as the canonical helper for every relevant input
-//      combination — required so the legacy
-//      `isBelowQuotaPeaceTreasuryRecovery` callers and the EXPAND
-//      planner agree on the zero-regiments rebuild boundary. A drift
-//      here would silently let one code path trigger the cargo-recovery
-//      composite while the other planner Arm A diverges.
 
-import 'package:colonizethis_ai/src/planning/expand_phase_planner.dart'
-    as colonial_pressure;
 import 'package:colonizethis_ai/src/planning/expand_phase_planner.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_test/test.dart';
@@ -149,40 +136,6 @@ void main() {
             'required by issue #2509 Must-have #7 (phase planners are pure '
             'functions with deterministic inputs).',
       );
-    });
-
-    test('colonial_pressure delegation stub returns the canonical value', () {
-      // Pins the S1 delegation contract: the legacy public symbol
-      // exported from `colonial_pressure.dart` must mirror the canonical
-      // helper for every relevant truth-table input so removing the stub
-      // in a future slice cannot silently shift the EXPAND-trap rebuild
-      // boundary for legacy callers.
-      const ow = kObserverConquestMinOwProvincesPerGp - 1;
-      for (final regimentCount in const [0, 1]) {
-        for (final hasInvadableProvinces in const [true, false]) {
-          expect(
-            colonial_pressure.isBelowQuotaPeaceZeroRegimentsRebuild(
-              oldWorldProvincesOwned: ow,
-              regimentCount: regimentCount,
-              hasInvadableProvinces: hasInvadableProvinces,
-            ),
-            isBelowQuotaPeaceZeroRegimentsRebuild(
-              oldWorldProvincesOwned: ow,
-              regimentCount: regimentCount,
-              hasInvadableProvinces: hasInvadableProvinces,
-            ),
-            reason:
-                '`colonial_pressure.isBelowQuotaPeaceZeroRegimentsRebuild` '
-                'is a thin delegating stub for legacy callers; it must '
-                'mirror the canonical helper exactly so the EXPAND '
-                'planner Arm A and the legacy '
-                '`isBelowQuotaPeaceTreasuryRecovery` composite agree on '
-                'the zero-regiments rebuild trigger '
-                '(regimentCount=$regimentCount, '
-                'hasInvadableProvinces=$hasInvadableProvinces).',
-          );
-        }
-      }
     });
   });
 }

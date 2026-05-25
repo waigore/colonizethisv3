@@ -5,7 +5,7 @@
 // `diplomacy_planner_peace_targets.dart` so it survives the planned
 // S1 deletion of that file. The canonical implementation lives in
 // `expand_phase_planner_peer_peace.dart` (part of `expand_phase_planner.dart`);
-// `diplomacy_planner_peace_targets.dart` retains a thin delegating
+// `diplomacy_planner_peace_targets.dart` previously retained a thin delegating
 // stub for the legacy
 // `diplomacy_planner_below_quota_peace_test.dart` and
 // `diplomacy_planner_below_quota_peace_part3_test.dart` fixtures and
@@ -466,7 +466,7 @@ void main() {
               '_expandRatchetGreatPowerPeaceTargets and '
               'collectStalledGreatPowerPeaceTargets '
               'preserveBlockerPeace consumers depend on this parity '
-              'until the planned S1 deletion.',
+              'until the now-completed S1 deletion.',
         );
       }
     });

@@ -7,7 +7,7 @@
 // S1 deletion of that file. The canonical implementations live in
 // `expand_phase_planner.dart` (part file
 // `expand_phase_planner_peer_peace.dart`);
-// `diplomacy_planner_peace_targets.dart` retains thin delegating
+// `diplomacy_planner_peace_targets.dart` previously retained thin delegating
 // stubs for the legacy
 // `diplomacy_planner_mutual_exhausted_peace_test.dart`,
 // `diplomacy_planner_below_quota_peace_part3_test.dart`, and

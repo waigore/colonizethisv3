@@ -3,15 +3,11 @@
 // `expand_phase_planner.dart` (Refs #2509 S1).
 //
 // Both helpers were relocated from `colonial_pressure.dart` so they survive
-// the planned S1 deletion of that file. The canonical implementations live
-// in `expand_phase_planner.dart`; `colonial_pressure.dart` retains thin
-// delegating stubs for legacy callers (its own
-// `belowQuotaPeerGpPeaceTargets`, `unwinnableSoleGpFrontierPeaceTarget`,
-// and `consolidateGainsSoleGpPeaceTarget` consumers) until the planned
-// deletion.
+// the now-completed S1 deletion of that file. The canonical implementations
+// live in `expand_phase_planner.dart`.
 //
 // Live consumers (post-relocation):
-//   * `soleAtWarGreatPowerId` is consumed inside `colonial_pressure.dart`
+//   * `soleAtWarGreatPowerId` is consumed inside `expand_phase_planner.dart`
 //     by `belowQuotaPeerGpPeaceTargets` (peer-stalled peace pivot fork),
 //     `unwinnableSoleGpFrontierPeaceTarget` (below-quota outgunned sole-GP
 //     peace), and `consolidateGainsSoleGpPeaceTarget` (quota-met
@@ -52,16 +48,8 @@
 //      province AND the invadable list contains no minor-owned
 //      province. This is the EXPAND-trap deadlock the helper exists to
 //      report.
-//   7. The delegating stubs in `colonial_pressure.dart` return the same
-//      value as the canonical helpers for every relevant input — required
-//      so the legacy `expand_phase_planner_sole_at_war_gp_branches_test.dart`
-//      and `expand_phase_planner_can_pivot_from_sole_gp_war_branches_test.dart`
-//      fixtures and the in-file consumer paths agree on the sole-GP-foe
-//      precondition and pivot guard.
 
 import 'package:colonizethis_ai/src/perception/perception_snapshot.dart';
-import 'package:colonizethis_ai/src/planning/expand_phase_planner.dart'
-    as colonial_pressure;
 import 'package:colonizethis_ai/src/planning/expand_phase_planner.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
@@ -500,175 +488,5 @@ void main() {
       expect(second, first);
       expect(third, first);
     });
-  });
-
-  group('colonial_pressure delegation contract (Refs #2509 S1)', () {
-    test(
-      'colonial_pressure.soleAtWarGreatPowerId mirrors the canonical helper',
-      () {
-        // Pins the S1 delegation contract: the legacy public symbol exported
-        // from `colonial_pressure.dart` must mirror the canonical helper for
-        // every relevant fixture so removing the stub in a future slice
-        // cannot silently shift the sole-GP-foe precondition shared by the
-        // in-file peace deciders.
-        final game = _gameWithGpsAndMinors();
-        final fixtures = <(List<String>, String?, String)>[
-          (const [], null, 'empty at-war list short-circuits to null'),
-          (const [_minor1], null, 'minor-only at-war list filters to null'),
-          (
-            const [_tribe1],
-            null,
-            'unknown-faction-only at-war list filters to null',
-          ),
-          (const [_gp2], _gp2, 'sole GP at war returns that GP'),
-          (
-            const [_gp2, _minor1],
-            _gp2,
-            'GP + minor mix filters to the lone GP',
-          ),
-          (const [_gp2, _gp3], null, 'two GPs at war exceeds the length guard'),
-        ];
-        for (final (atWarWith, expected, label) in fixtures) {
-          final snapshot = _snapshotAtWarWith(atWarWith);
-          final canonical = soleAtWarGreatPowerId(
-            game: game,
-            snapshot: snapshot,
-          );
-          final delegated = colonial_pressure.soleAtWarGreatPowerId(
-            game: game,
-            snapshot: snapshot,
-          );
-          expect(
-            delegated,
-            canonical,
-            reason:
-                '`colonial_pressure.soleAtWarGreatPowerId` is a thin '
-                'delegating stub for legacy callers; it must mirror the '
-                'canonical helper exactly so the sole-GP peace deciders '
-                'inside `colonial_pressure.dart` agree with the canonical '
-                'helper (fixture: $label).',
-          );
-          expect(
-            canonical,
-            expected,
-            reason: 'Canonical helper truth check (fixture: $label).',
-          );
-        }
-      },
-    );
-
-    test(
-      'colonial_pressure.canPivotFromSoleGpWarAfterPeace mirrors the canonical helper',
-      () {
-        // Pins the S1 delegation contract for the pivot-availability gate:
-        // every reachable arm of the canonical helper must produce the same
-        // result through the colonial_pressure stub.
-        final gameQuotaMet = _gameWithProvinces(
-          owProvinces: _gp1OwProvinces(kObserverConquestMinOwProvincesPerGp),
-        );
-        final snapshotQuotaMet = _pivotSnapshotFor(
-          oldWorldProvincesOwned: kObserverConquestMinOwProvincesPerGp,
-        );
-
-        final gameOwMinor = _gameWithProvinces(
-          owProvinces: [
-            ..._gp1OwProvinces(8),
-            const Province(
-              id: 'oldWorld|minor1_a',
-              regionId: 'oldWorld',
-              ownerId: _minor1,
-            ),
-          ],
-          minorNations: const [MinorNation(id: _minor1, displayName: 'M1')],
-        );
-        final snapshotOwMinor = _pivotSnapshotFor(
-          oldWorldProvincesOwned: 8,
-          invadableProvinceIdsSorted: const ['oldWorld|minor1_a'],
-        );
-
-        final gameNwMinor = _gameWithProvinces(
-          owProvinces: _gp1OwProvinces(8),
-          nwProvinces: const [
-            Province(
-              id: 'newWorld|minor1_a',
-              regionId: 'newWorld',
-              ownerId: _minor1,
-            ),
-          ],
-          minorNations: const [MinorNation(id: _minor1, displayName: 'M1')],
-        );
-        final snapshotNwMinor = _pivotSnapshotFor(
-          oldWorldProvincesOwned: 8,
-          invadableProvinceIdsSorted: const ['newWorld|minor1_a'],
-        );
-
-        final gameGpOnly = _gameWithProvinces(
-          owProvinces: [
-            ..._gp1OwProvinces(8),
-            const Province(
-              id: 'oldWorld|gp2_1',
-              regionId: 'oldWorld',
-              ownerId: _gp2,
-            ),
-          ],
-        );
-        final snapshotGpOnly = _pivotSnapshotFor(
-          oldWorldProvincesOwned: 8,
-          invadableProvinceIdsSorted: const ['oldWorld|gp2_1'],
-        );
-
-        final fixtures = <(Game, AIWorldSnapshot, bool, String)>[
-          (
-            gameQuotaMet,
-            snapshotQuotaMet,
-            true,
-            'quota-met short-circuit returns true',
-          ),
-          (
-            gameOwMinor,
-            snapshotOwMinor,
-            true,
-            'OW minor on map satisfies the minorsOnMap arm',
-          ),
-          (
-            gameNwMinor,
-            snapshotNwMinor,
-            true,
-            'NW minor in invadable list satisfies the trailing any arm',
-          ),
-          (
-            gameGpOnly,
-            snapshotGpOnly,
-            false,
-            'GP-only invadable frontier with no minors falls through to false',
-          ),
-        ];
-        for (final (game, snapshot, expected, label) in fixtures) {
-          final canonical = canPivotFromSoleGpWarAfterPeace(
-            game: game,
-            snapshot: snapshot,
-          );
-          final delegated = colonial_pressure.canPivotFromSoleGpWarAfterPeace(
-            game: game,
-            snapshot: snapshot,
-          );
-          expect(
-            delegated,
-            canonical,
-            reason:
-                '`colonial_pressure.canPivotFromSoleGpWarAfterPeace` is a '
-                'thin delegating stub for legacy callers; it must mirror '
-                'the canonical helper exactly so the in-file '
-                '`unwinnableSoleGpFrontierPeaceTarget` consumer keeps the '
-                'same EXPAND-trap pivot-guard boundary (fixture: $label).',
-          );
-          expect(
-            canonical,
-            expected,
-            reason: 'Canonical helper truth check (fixture: $label).',
-          );
-        }
-      },
-    );
   });
 }
