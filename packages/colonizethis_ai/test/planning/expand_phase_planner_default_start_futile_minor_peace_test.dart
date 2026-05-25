@@ -4,12 +4,7 @@
 //
 // The decider was relocated from `colonial_pressure.dart` so it
 // survives the now-completed S1 deletion of that file. The canonical
-// implementation lives in `expand_phase_planner.dart`;
-// `colonial_pressure.dart` previously retained a thin delegating stub for legacy
-// callers (the existing `colonial_pressure_test.dart` §
-// `defaultStartFutileMinorPeaceTargets` fixture and the
-// `diplomacy_planner.dart` / `diplomacy_planner_peace_targets.dart`
-// consumer chain) until the planned deletion.
+// implementation lives in `expand_phase_planner.dart`.
 //
 // Live consumer (post-relocation):
 //   `defaultStartFutileMinorPeaceTargets` is the EXPAND default-start
@@ -39,16 +34,8 @@
 //      OW province are kept at war (active minor frontier, not
 //      futile). Returned in ascending lex order over the minor
 //      `factionId`s.
-//   4. The delegating stub in `colonial_pressure.dart` returns the
-//      same value as the canonical helper for every relevant input —
-//      required so the legacy `colonial_pressure_test.dart` §
-//      `defaultStartFutileMinorPeaceTargets` fixture and the
-//      `diplomacy_planner_peace_targets.dart` consumer chain agree
-//      on the decider.
 
 import 'package:colonizethis_ai/src/perception/perception_snapshot.dart';
-import 'package:colonizethis_ai/src/planning/expand_phase_planner.dart'
-    as colonial_pressure;
 import 'package:colonizethis_ai/src/planning/expand_phase_planner.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
@@ -486,110 +473,6 @@ void main() {
             'Must-have #7: identical inputs must always yield identical '
             'lists (call 3 vs call 1).',
       );
-    });
-  });
-
-  group('defaultStartFutileMinorPeaceTargets — colonial_pressure delegation '
-      'equality scan', () {
-    test('colonial_pressure stub mirrors the canonical helper across '
-        'GP-only and mixed-frontier fixtures', () {
-      // Each fixture exercises one branch of the canonical decider.
-      // For each, the canonical helper and the delegating stub in
-      // `colonial_pressure.dart` must return identical lists — the
-      // legacy `colonial_pressure_test.dart` fixture and the
-      // `diplomacy_planner_peace_targets.dart` consumer chain rely
-      // on the equivalence until the now-completed S1 deletion.
-      const minor1InvadablePid = 'oldWorld|${_minor1}_1';
-      final fixtures = <({String name, Game game, AIWorldSnapshot snapshot})>[
-        (
-          name: 'GP-only invadable frontier, two at-war minors',
-          game: _ownGame(
-            ownProvinces: kObserverDefaultStartOldWorldProvincesPerGp,
-            rivalGpProvinces: 1,
-            minorOwProvincesByMinorId: const {_minor1: [], _minor2: []},
-            atWarMinorIds: const [_minor1, _minor2],
-          ),
-          snapshot: _ownSnapshot(
-            oldWorldProvincesOwned: kObserverDefaultStartOldWorldProvincesPerGp,
-            atWarWith: const [_minor1, _minor2],
-            invadableProvinceIdsSorted: const ['oldWorld|${_gpRival}_1'],
-          ),
-        ),
-        (
-          name: 'mixed-frontier, only futile minor peaced',
-          game: _ownGame(
-            ownProvinces: kObserverDefaultStartOldWorldProvincesPerGp,
-            minorOwProvincesByMinorId: const {
-              _minor1: [minor1InvadablePid],
-              _minor2: [],
-            },
-            atWarMinorIds: const [_minor1, _minor2],
-          ),
-          snapshot: _ownSnapshot(
-            oldWorldProvincesOwned: kObserverDefaultStartOldWorldProvincesPerGp,
-            atWarWith: const [_minor1, _minor2],
-            invadableProvinceIdsSorted: const [minor1InvadablePid],
-          ),
-        ),
-        (
-          name: 'above-quota guard',
-          game: _ownGame(
-            ownProvinces: kObserverConquestMinOwProvincesPerGp,
-            minorOwProvincesByMinorId: const {_minor1: []},
-            atWarMinorIds: const [_minor1],
-          ),
-          snapshot: _ownSnapshot(
-            oldWorldProvincesOwned: kObserverConquestMinOwProvincesPerGp,
-            atWarWith: const [_minor1],
-            invadableProvinceIdsSorted: const ['oldWorld|gp_target'],
-          ),
-        ),
-        (
-          name: 'above default-start +1 band guard',
-          game: _ownGame(
-            ownProvinces: kObserverDefaultStartOldWorldProvincesPerGp + 2,
-            minorOwProvincesByMinorId: const {_minor1: []},
-            atWarMinorIds: const [_minor1],
-          ),
-          snapshot: _ownSnapshot(
-            oldWorldProvincesOwned:
-                kObserverDefaultStartOldWorldProvincesPerGp + 2,
-            atWarWith: const [_minor1],
-            invadableProvinceIdsSorted: const ['oldWorld|gp_target'],
-          ),
-        ),
-        (
-          name: 'empty invadable list guard',
-          game: _ownGame(
-            ownProvinces: kObserverDefaultStartOldWorldProvincesPerGp,
-            minorOwProvincesByMinorId: const {_minor1: []},
-            atWarMinorIds: const [_minor1],
-          ),
-          snapshot: _ownSnapshot(
-            oldWorldProvincesOwned: kObserverDefaultStartOldWorldProvincesPerGp,
-            atWarWith: const [_minor1],
-            invadableProvinceIdsSorted: const [],
-          ),
-        ),
-      ];
-
-      for (final fx in fixtures) {
-        final canonical = defaultStartFutileMinorPeaceTargets(
-          game: fx.game,
-          snapshot: fx.snapshot,
-        );
-        final stub = colonial_pressure.defaultStartFutileMinorPeaceTargets(
-          game: fx.game,
-          snapshot: fx.snapshot,
-        );
-        expect(
-          stub,
-          canonical,
-          reason:
-              'Delegating stub must mirror the canonical helper for '
-              'fixture "${fx.name}".',
-        );
-      }
     });
   });
 }

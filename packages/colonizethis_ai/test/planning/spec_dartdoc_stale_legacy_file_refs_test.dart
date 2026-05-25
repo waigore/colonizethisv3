@@ -19,6 +19,8 @@ import 'package:colonizethis_test/test.dart';
 const _forbiddenSubstrings = <String>[
   'retains a thin delegating',
   'retains thin delegating',
+  'is a thin delegating',
+  'now a thin delegating',
   'planned S1 deletion',
   'until S1 deletion',
 ];

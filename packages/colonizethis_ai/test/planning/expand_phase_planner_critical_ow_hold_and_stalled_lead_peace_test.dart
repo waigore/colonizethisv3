@@ -4,15 +4,7 @@
 //
 // Both deciders were relocated from `colonial_pressure.dart` so they
 // survive the now-completed S1 deletion of that file. The canonical
-// implementations live in `expand_phase_planner.dart`;
-// `colonial_pressure.dart` previously retained thin delegating stubs for the legacy
-// `colonial_pressure_critical_ow_hold_branches_test.dart`,
-// `colonial_pressure_stalled_below_quota_gp_lead_branches_test.dart`,
-// `colonial_pressure_test.dart`, and `diplomacy_planner_below_quota_peace_test.dart`
-// fixtures plus the `diplomacy_planner.dart` /
-// `diplomacy_planner_peace_targets.dart` /
-// `diplomatic_candidate_scoring_offer_peace.dart` consumer chains until
-// the planned deletion.
+// implementations live in `expand_phase_planner.dart`.
 //
 // Live consumers (post-relocation):
 //   * `criticalOwHoldPeaceTargets` is the EXPAND "critical OW hold"
@@ -34,23 +26,10 @@
 //
 // Sibling test coverage that this file complements (but does not duplicate):
 //
-//   * `colonial_pressure_critical_ow_hold_branches_test.dart` and
-//     `colonial_pressure_stalled_below_quota_gp_lead_branches_test.dart`
-//     pin the legacy `colonial_pressure.dart`-side branches (boundary
-//     bands, sort determinism, GP-filter, minLeadDeficit table). This
-//     file pins the **canonical** invocations against
-//     `expand_phase_planner.dart` directly and additionally pins
-//     **delegator parity** so the thin stubs in `colonial_pressure.dart`
-//     return the same value as the canonical helpers for representative
-//     inputs across both functions.
-//   * `colonial_pressure_test.dart` § `criticalOwHoldPeaceTargets`
-//     contains the legacy at-threshold happy-path test. Both legacy
-//     fixtures depend on the delegating stubs and will continue to pass
-//     unchanged after the canonical bodies relocated here.
 //   * `diplomacy_planner_below_quota_peace_test.dart` exercises the
 //     deciders through the diplomacy-planner orchestration chain (GP
-//     wars at 6 OW, sole GP at 7 OW). Those flows depend on the same
-//     post-delegation return values pinned here.
+//     wars at 6 OW, sole GP at 7 OW). Those flows resolve through the
+//     canonical helpers pinned here.
 //
 // Behavioral invariants pinned at the canonical entry points:
 //
@@ -77,14 +56,8 @@
 //      `primaryInvadableOldWorldGpBlocker` on a GP-only invadable
 //      frontier while keeping non-blocker GP foes that still satisfy
 //      the deficit.
-//   6. The delegating stubs in `colonial_pressure.dart` return the same
-//      value as the canonical helpers for every representative input —
-//      required so the legacy fixtures and the in-file consumer paths
-//      agree on the deciders.
 
 import 'package:colonizethis_ai/src/perception/perception_snapshot.dart';
-import 'package:colonizethis_ai/src/planning/expand_phase_planner.dart'
-    as colonial_pressure;
 import 'package:colonizethis_ai/src/planning/expand_phase_planner.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
@@ -584,227 +557,4 @@ void main() {
     },
   );
 
-  group('Delegating stubs match canonical', () {
-    test(
-      'colonial_pressure.criticalOwHoldPeaceTargets matches canonical',
-      () {
-        // Pin delegator parity across the band table: empty-after-filter,
-        // boundary above threshold, interior at threshold, and at-quota.
-        final scenarios = <({Game game, AIWorldSnapshot snapshot})>[
-          (
-            game: Game(
-              id: 'g-delegator-minor-only',
-              worldState: WorldState(
-                turnState: const TurnState(
-                  phase: TurnPhase.orders,
-                  turnNumber: 80,
-                ),
-                oldWorld: RegionData(
-                  provinces: [
-                    for (var i = 1; i <= 5; i++)
-                      Province(
-                        id: 'oldWorld|${_gpOwn}_$i',
-                        regionId: 'oldWorld',
-                        ownerId: _gpOwn,
-                      ),
-                  ],
-                ),
-                newWorld: const RegionData(),
-              ),
-              players: const [
-                Player(id: _gpOwn, displayName: 'GP_OWN', isHuman: false),
-              ],
-              minorNations: const [
-                MinorNation(id: _minor1, displayName: 'M1'),
-              ],
-              diplomacyRelations: const [
-                DiplomacyRelation(
-                  factionId1: _gpOwn,
-                  factionId2: _minor1,
-                  state: RelationState.atWar,
-                  score: 30,
-                ),
-              ],
-            ),
-            snapshot: _ownSnapshot(
-              oldWorldProvincesOwned: 5,
-              atWarWith: const [_minor1],
-            ),
-          ),
-          (
-            game: _ownVsPartnerGame(
-              ownProvinces: kFewOldWorldProvincesDefendThreshold,
-              partnerProvinces: 10,
-            ),
-            snapshot: _ownSnapshot(
-              oldWorldProvincesOwned: kFewOldWorldProvincesDefendThreshold,
-              atWarWith: const [_gpPartner],
-            ),
-          ),
-          (
-            game: _ownVsPartnerGame(
-              ownProvinces: kFewOldWorldProvincesDefendThreshold + 1,
-              partnerProvinces: 10,
-            ),
-            snapshot: _ownSnapshot(
-              oldWorldProvincesOwned: kFewOldWorldProvincesDefendThreshold + 1,
-              atWarWith: const [_gpPartner],
-            ),
-          ),
-          (
-            game: _ownVsPartnerGame(
-              ownProvinces: kObserverConquestMinOwProvincesPerGp,
-              partnerProvinces: 12,
-            ),
-            snapshot: _ownSnapshot(
-              oldWorldProvincesOwned: kObserverConquestMinOwProvincesPerGp,
-              atWarWith: const [_gpPartner],
-            ),
-          ),
-        ];
-        for (final scenario in scenarios) {
-          final canonical = criticalOwHoldPeaceTargets(
-            game: scenario.game,
-            snapshot: scenario.snapshot,
-          );
-          final delegated = colonial_pressure.criticalOwHoldPeaceTargets(
-            game: scenario.game,
-            snapshot: scenario.snapshot,
-          );
-          expect(
-            delegated,
-            canonical,
-            reason:
-                'colonial_pressure.criticalOwHoldPeaceTargets must agree '
-                'with the canonical expand_phase_planner implementation '
-                'across the band table; the delegating stub is the only '
-                'live caller path the legacy fixtures and the '
-                'diplomacy_planner consumer chain reach until the planned '
-                'S1 deletion of colonial_pressure.dart.',
-          );
-        }
-      },
-    );
-
-    test(
-      'colonial_pressure.stalledBelowQuotaGpLeadPeaceTargets matches canonical',
-      () {
-        // Pin delegator parity across: quota guard, default-start band
-        // (positive + negative), post-default band (positive + negative),
-        // and GP-only blocker carve-out (sole-blocker negative +
-        // non-blocker positive).
-        final scenarios = <({Game game, AIWorldSnapshot snapshot})>[
-          (
-            game: _ownVsPartnerGame(
-              ownProvinces: kObserverConquestMinOwProvincesPerGp,
-              partnerProvinces: kObserverConquestMinOwProvincesPerGp + 3,
-            ),
-            snapshot: _ownSnapshot(
-              oldWorldProvincesOwned: kObserverConquestMinOwProvincesPerGp,
-              atWarWith: const [_gpPartner],
-            ),
-          ),
-          (
-            game: _ownVsPartnerGame(
-              ownProvinces: kObserverDefaultStartOldWorldProvincesPerGp,
-              partnerProvinces:
-                  kObserverDefaultStartOldWorldProvincesPerGp +
-                  kUnwinnableSoleGpMinProvinceDeficit,
-            ),
-            snapshot: _ownSnapshot(
-              oldWorldProvincesOwned:
-                  kObserverDefaultStartOldWorldProvincesPerGp,
-              atWarWith: const [_gpPartner],
-            ),
-          ),
-          (
-            game: _ownVsPartnerGame(
-              ownProvinces: kObserverDefaultStartOldWorldProvincesPerGp,
-              partnerProvinces:
-                  kObserverDefaultStartOldWorldProvincesPerGp + 1,
-            ),
-            snapshot: _ownSnapshot(
-              oldWorldProvincesOwned:
-                  kObserverDefaultStartOldWorldProvincesPerGp,
-              atWarWith: const [_gpPartner],
-            ),
-          ),
-          (
-            game: _ownVsPartnerGame(
-              ownProvinces: kObserverDefaultStartOldWorldProvincesPerGp + 1,
-              partnerProvinces:
-                  kObserverDefaultStartOldWorldProvincesPerGp + 2,
-            ),
-            snapshot: _ownSnapshot(
-              oldWorldProvincesOwned:
-                  kObserverDefaultStartOldWorldProvincesPerGp + 1,
-              atWarWith: const [_gpPartner],
-            ),
-          ),
-          (
-            game: _ownVsPartnerGame(
-              ownProvinces: kObserverDefaultStartOldWorldProvincesPerGp,
-              partnerProvinces:
-                  kObserverDefaultStartOldWorldProvincesPerGp +
-                  kUnwinnableSoleGpMinProvinceDeficit,
-              invadablePartnerProvince: true,
-            ),
-            snapshot: _ownSnapshot(
-              oldWorldProvincesOwned:
-                  kObserverDefaultStartOldWorldProvincesPerGp,
-              atWarWith: const [_gpPartner],
-              invadableProvinceIdsSorted: const [
-                'oldWorld|invadable_partner',
-              ],
-            ),
-          ),
-          (
-            game: _ownVsPartnerGame(
-              ownProvinces: kObserverDefaultStartOldWorldProvincesPerGp,
-              partnerProvinces:
-                  kObserverDefaultStartOldWorldProvincesPerGp +
-                  kUnwinnableSoleGpMinProvinceDeficit,
-              invadablePartnerProvince: true,
-              extraGpId: _gpThird,
-              extraGpProvinces:
-                  kObserverDefaultStartOldWorldProvincesPerGp +
-                  kUnwinnableSoleGpMinProvinceDeficit,
-            ),
-            snapshot: _ownSnapshot(
-              oldWorldProvincesOwned:
-                  kObserverDefaultStartOldWorldProvincesPerGp,
-              atWarWith: const [_gpPartner, _gpThird],
-              invadableProvinceIdsSorted: const [
-                'oldWorld|invadable_partner',
-              ],
-            ),
-          ),
-        ];
-        for (final scenario in scenarios) {
-          final canonical = stalledBelowQuotaGpLeadPeaceTargets(
-            game: scenario.game,
-            snapshot: scenario.snapshot,
-          );
-          final delegated = colonial_pressure
-              .stalledBelowQuotaGpLeadPeaceTargets(
-                game: scenario.game,
-                snapshot: scenario.snapshot,
-              );
-          expect(
-            delegated,
-            canonical,
-            reason:
-                'colonial_pressure.stalledBelowQuotaGpLeadPeaceTargets must '
-                'agree with the canonical expand_phase_planner '
-                'implementation across the quota guard, the minLeadDeficit '
-                'band selector, and the GP-only blocker carve-out — the '
-                'delegating stub is the only live caller path the legacy '
-                'fixtures and the diplomatic_candidate_scoring_offer_peace '
-                'consumer chain reach until the now-completed S1 deletion of '
-                'colonial_pressure.dart.',
-          );
-        }
-      },
-    );
-  });
 }

@@ -4,13 +4,7 @@
 //
 // The decider was relocated from `colonial_pressure.dart` so it
 // survives the now-completed S1 deletion of that file. The canonical
-// implementation lives in `expand_phase_planner.dart`;
-// `colonial_pressure.dart` previously retained a thin delegating stub for legacy
-// callers (the existing `colonial_pressure_test.dart` and
-// `colonial_pressure_peer_gap_boundary_test.dart` fixtures, the
-// `diplomacy_planner.dart` /
-// `diplomacy_planner_peace_targets.dart` /
-// `diplomatic_candidate_scoring_offer_peace.dart` consumer chain).
+// implementation lives in `expand_phase_planner.dart`.
 //
 // The decider implements the EXPAND-phase "peace other below-quota
 // Great Power peers in peer-stalled wars while at least one OW minor
@@ -48,15 +42,8 @@
 //      skipped, even when the OW gap is within the cap).
 //   7. Deterministic ordering — multi-peer results are sorted
 //      ascending by `factionId`.
-//   8. The delegating stub in `colonial_pressure.dart` returns the
-//      same value as the canonical helper for every relevant input —
-//      required so the legacy `colonial_pressure_test.dart` and
-//      `colonial_pressure_peer_gap_boundary_test.dart` fixtures and
-//      the in-file consumer paths agree on the decider.
 
 import 'package:colonizethis_ai/src/perception/perception_snapshot.dart';
-import 'package:colonizethis_ai/src/planning/expand_phase_planner.dart'
-    as colonial_pressure;
 import 'package:colonizethis_ai/src/planning/expand_phase_planner.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
@@ -534,9 +521,9 @@ void main() {
     // The sole-GP-blocker hold-open arm
     //     if (gpOnlyFrontier && soleGpWar == factionId &&
     //         !hasUninvadedOldWorldMinor) continue;
-    // is intentionally preserved by the canonical move for
-    // byte-equivalence with the legacy `colonial_pressure.dart`
-    // body, but it is shadowed by the mutual-plateau carve-out
+    // is intentionally preserved by the canonical helper for
+    // continuity with the pre-S1 decider behavior, but it is
+    // shadowed by the mutual-plateau carve-out
     // short-circuit (and the symmetric peer-gap cap) on every input
     // currently reachable through this function: when
     // `hasUninvadedOldWorldMinor` is `false` the cap collapses to
@@ -623,65 +610,4 @@ void main() {
     });
   });
 
-  group('belowQuotaPeerGpPeaceTargets — delegating stub agreement', () {
-    test(
-      'colonial_pressure.belowQuotaPeerGpPeaceTargets matches the canonical helper '
-      'across the with-minors-pivot peer-gap-3 input',
-      () {
-        // Same input as the with-minors peer-gap-3 case above. The
-        // canonical helper and the colonial_pressure delegating
-        // stub must agree byte-for-byte so the now-completed S1 deletion
-        // of colonial_pressure.dart is a safe one-line removal,
-        // not a behavioral change.
-        final game = _peerGame(
-          ownProvinces: 6,
-          partnerProvinces: 9,
-          minorId: _minor1,
-          minorProvinces: 1,
-        );
-        final snapshot = _ownSnapshot(
-          oldWorldProvincesOwned: 6,
-          atWarWith: const [_gpPartner],
-          invadableProvinceIdsSorted: const ['oldWorld|${_minor1}_1'],
-        );
-        expect(
-          colonial_pressure.belowQuotaPeerGpPeaceTargets(
-            game: game,
-            snapshot: snapshot,
-          ),
-          belowQuotaPeerGpPeaceTargets(game: game, snapshot: snapshot),
-          reason:
-              'colonial_pressure.dart must remain a thin delegating stub '
-              'until the now-completed S1 deletion; agreement with the canonical helper is '
-              'required so the legacy fixtures continue resolving to the '
-              'same behavior.',
-        );
-      },
-    );
-
-    test(
-      'colonial_pressure.belowQuotaPeerGpPeaceTargets matches the canonical helper '
-      'across the no-minors-no-mutual-plateau guard input',
-      () {
-        // Distinct guard branch from the test above so the
-        // delegation invariant is checked on both an inside-cap
-        // and an outer-guard input.
-        final game = _peerGame(ownProvinces: 6, partnerProvinces: 8);
-        final snapshot = _ownSnapshot(
-          oldWorldProvincesOwned: 6,
-          atWarWith: const [_gpPartner],
-        );
-        expect(
-          colonial_pressure.belowQuotaPeerGpPeaceTargets(
-            game: game,
-            snapshot: snapshot,
-          ),
-          belowQuotaPeerGpPeaceTargets(game: game, snapshot: snapshot),
-          reason:
-              'Outer-guard agreement: the delegating stub must short-circuit '
-              'to the same empty list as the canonical helper.',
-        );
-      },
-    );
-  });
 }
