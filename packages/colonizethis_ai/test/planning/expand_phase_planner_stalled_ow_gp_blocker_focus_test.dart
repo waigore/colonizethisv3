@@ -38,7 +38,7 @@
 //      OW province is owned by a minor nation (minor pivot exists) or
 //      when every invadable owner is a tribe (no GP to invade — the
 //      GP-only check returns false). The truth table here mirrors the
-//      legacy `colonial_pressure_stalled_ow_gp_blocker_focus_branches_test.dart`
+//      legacy `expand_phase_planner_stalled_ow_gp_blocker_focus_branches_test.dart`
 //      so removing the delegation stub cannot silently shift the
 //      branch behavior.
 //   4. The result is deterministic across repeated calls — required by

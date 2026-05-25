@@ -6,7 +6,7 @@
 // survives the planned S1 deletion of that file. The canonical
 // implementation lives in `expand_phase_planner.dart`;
 // `colonial_pressure.dart` retains a thin delegating stub for legacy
-// callers (the existing `colonial_pressure_test.dart` §
+// callers (the existing `expand_phase_planner_peer_peace_basic_test.dart` §
 // `defaultStartFutileMinorPeaceTargets` fixture and the
 // `diplomacy_planner.dart` / `diplomacy_planner_peace_targets.dart`
 // consumer chain) until the planned deletion.
@@ -41,7 +41,7 @@
 //      `factionId`s.
 //   4. The delegating stub in `colonial_pressure.dart` returns the
 //      same value as the canonical helper for every relevant input —
-//      required so the legacy `colonial_pressure_test.dart` §
+//      required so the legacy `expand_phase_planner_peer_peace_basic_test.dart` §
 //      `defaultStartFutileMinorPeaceTargets` fixture and the
 //      `diplomacy_planner_peace_targets.dart` consumer chain agree
 //      on the decider.
@@ -496,7 +496,7 @@ void main() {
       // Each fixture exercises one branch of the canonical decider.
       // For each, the canonical helper and the delegating stub in
       // `colonial_pressure.dart` must return identical lists — the
-      // legacy `colonial_pressure_test.dart` fixture and the
+      // legacy `expand_phase_planner_peer_peace_basic_test.dart` fixture and the
       // `diplomacy_planner_peace_targets.dart` consumer chain rely
       // on the equivalence until the planned S1 deletion.
       const minor1InvadablePid = 'oldWorld|${_minor1}_1';

@@ -28,7 +28,7 @@
 //     today, leaving the predicate vulnerable to silent guard regressions
 //     such as flipping `<` to `<=`, dropping the consolidate-min guard, or
 //     dropping the lead guard entirely.
-//   - `colonial_pressure_test.dart` exercises peer / near-quota / default
+//   - `expand_phase_planner_peer_peace_basic_test.dart` exercises peer / near-quota / default
 //     start peace target helpers, but never calls
 //     `consolidateGainsSoleGpPeaceTarget`.
 //   - `diplomatic_candidate_scoring_offer_peace*` tests cover the **score
@@ -208,66 +208,72 @@ void main() {
   });
 
   group('consolidateGainsSoleGpPeaceTarget — consolidate-min boundary', () {
-    test('returns null at own == consolidate-min - 1 even with a huge lead',
-        () {
-      final game = _twoGpGame(focusOw: 11, enemyOw: 1);
-      final snapshot = _focusSnapshot(
-        focusOw: kObserverConquestConsolidateMinOwProvinces - 1,
-        atWarWith: const ['enemy'],
-      );
+    test(
+      'returns null at own == consolidate-min - 1 even with a huge lead',
+      () {
+        final game = _twoGpGame(focusOw: 11, enemyOw: 1);
+        final snapshot = _focusSnapshot(
+          focusOw: kObserverConquestConsolidateMinOwProvinces - 1,
+          atWarWith: const ['enemy'],
+        );
 
-      expect(
-        consolidateGainsSoleGpPeaceTarget(game: game, snapshot: snapshot),
-        isNull,
-        reason:
-            'One province below kObserverConquestConsolidateMinOwProvinces '
-            '(11 OW today) must defer consolidate peace regardless of how '
-            'large the enemy lead is. A regression that flipped `<` to `<=` '
-            'here would silently peace one province earlier than SPEC.',
-      );
-    });
+        expect(
+          consolidateGainsSoleGpPeaceTarget(game: game, snapshot: snapshot),
+          isNull,
+          reason:
+              'One province below kObserverConquestConsolidateMinOwProvinces '
+              '(11 OW today) must defer consolidate peace regardless of how '
+              'large the enemy lead is. A regression that flipped `<` to `<=` '
+              'here would silently peace one province earlier than SPEC.',
+        );
+      },
+    );
 
-    test('returns enemy at exact consolidate-min boundary with sufficient lead',
-        () {
-      final game = _twoGpGame(focusOw: 12, enemyOw: 1);
-      final snapshot = _focusSnapshot(
-        focusOw: kObserverConquestConsolidateMinOwProvinces,
-        atWarWith: const ['enemy'],
-      );
+    test(
+      'returns enemy at exact consolidate-min boundary with sufficient lead',
+      () {
+        final game = _twoGpGame(focusOw: 12, enemyOw: 1);
+        final snapshot = _focusSnapshot(
+          focusOw: kObserverConquestConsolidateMinOwProvinces,
+          atWarWith: const ['enemy'],
+        );
 
-      expect(
-        consolidateGainsSoleGpPeaceTarget(game: game, snapshot: snapshot),
-        'enemy',
-        reason:
-            'Exactly at kObserverConquestConsolidateMinOwProvinces (12 OW) '
-            'with a sufficient lead the consolidate peace must fire. A '
-            'regression that flipped `<` to `<` or moved the threshold up '
-            'would silently delay locking in observer gains.',
-      );
-    });
+        expect(
+          consolidateGainsSoleGpPeaceTarget(game: game, snapshot: snapshot),
+          'enemy',
+          reason:
+              'Exactly at kObserverConquestConsolidateMinOwProvinces (12 OW) '
+              'with a sufficient lead the consolidate peace must fire. A '
+              'regression that flipped `<` to `<` or moved the threshold up '
+              'would silently delay locking in observer gains.',
+        );
+      },
+    );
   });
 
   group('consolidateGainsSoleGpPeaceTarget — lead boundary', () {
-    test('returns null at own == enemyOw + (lead - 1) with consolidate-min met',
-        () {
-      // enemyOw = 10, focusOw = 12 -> lead = 2 == 3 - 1. Consolidate-min
-      // (12) is met, so the lead guard is the only thing keeping this null.
-      final game = _twoGpGame(focusOw: 12, enemyOw: 10);
-      final snapshot = _focusSnapshot(
-        focusOw: kObserverConquestConsolidateMinOwProvinces,
-        atWarWith: const ['enemy'],
-      );
+    test(
+      'returns null at own == enemyOw + (lead - 1) with consolidate-min met',
+      () {
+        // enemyOw = 10, focusOw = 12 -> lead = 2 == 3 - 1. Consolidate-min
+        // (12) is met, so the lead guard is the only thing keeping this null.
+        final game = _twoGpGame(focusOw: 12, enemyOw: 10);
+        final snapshot = _focusSnapshot(
+          focusOw: kObserverConquestConsolidateMinOwProvinces,
+          atWarWith: const ['enemy'],
+        );
 
-      expect(
-        consolidateGainsSoleGpPeaceTarget(game: game, snapshot: snapshot),
-        isNull,
-        reason:
-            'Lead of exactly (kConsolidateGainsSoleGpProvinceLead - 1) is '
-            'one province short of the required gap. The consolidate peace '
-            'must defer so the focus GP keeps pressing the war rather than '
-            'lock in a marginal lead that a counter-offensive could erase.',
-      );
-    });
+        expect(
+          consolidateGainsSoleGpPeaceTarget(game: game, snapshot: snapshot),
+          isNull,
+          reason:
+              'Lead of exactly (kConsolidateGainsSoleGpProvinceLead - 1) is '
+              'one province short of the required gap. The consolidate peace '
+              'must defer so the focus GP keeps pressing the war rather than '
+              'lock in a marginal lead that a counter-offensive could erase.',
+        );
+      },
+    );
 
     test('returns enemy at own == enemyOw + lead boundary', () {
       // enemyOw = 9, focusOw = 12 -> lead = 3 == required. Consolidate-min

@@ -6,8 +6,8 @@
 // survive the planned S1 deletion of that file. The canonical
 // implementations live in `expand_phase_planner.dart`;
 // `colonial_pressure.dart` retains thin delegating stubs for legacy
-// callers (the existing `colonial_pressure_default_start_gp_peace_branches_test.dart`
-// and `colonial_pressure_test.dart` near-quota fixtures plus the
+// callers (the existing `expand_phase_planner_default_start_gp_peace_branches_test.dart`
+// and `expand_phase_planner_peer_peace_basic_test.dart` near-quota fixtures plus the
 // `diplomacy_planner.dart` / `diplomacy_planner_peace_targets.dart`
 // consumer chain) until the planned deletion.
 //
@@ -61,8 +61,8 @@
 //   5. The delegating stubs in `colonial_pressure.dart` return the
 //      same value as the canonical helpers for every relevant input —
 //      required so the legacy
-//      `colonial_pressure_default_start_gp_peace_branches_test.dart`
-//      and `colonial_pressure_test.dart` near-quota fixtures plus the
+//      `expand_phase_planner_default_start_gp_peace_branches_test.dart`
+//      and `expand_phase_planner_peer_peace_basic_test.dart` near-quota fixtures plus the
 //      in-file consumer paths agree on the deciders.
 
 import 'package:colonizethis_ai/src/perception/perception_snapshot.dart';

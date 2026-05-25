@@ -54,8 +54,8 @@
 //      report.
 //   7. The delegating stubs in `colonial_pressure.dart` return the same
 //      value as the canonical helpers for every relevant input — required
-//      so the legacy `colonial_pressure_sole_at_war_gp_branches_test.dart`
-//      and `colonial_pressure_can_pivot_from_sole_gp_war_branches_test.dart`
+//      so the legacy `expand_phase_planner_sole_at_war_gp_branches_test.dart`
+//      and `expand_phase_planner_can_pivot_from_sole_gp_war_branches_test.dart`
 //      fixtures and the in-file consumer paths agree on the sole-GP-foe
 //      precondition and pivot guard.
 
