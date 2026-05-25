@@ -1,12 +1,8 @@
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:colonizethis_app/config/ct_e2e.dart';
-import 'package:colonizethis_app/config/ct_e2e_last_panel_snapshot.dart';
 import 'package:colonizethis_app/features/game/flame/game_screen_shared.dart';
 import 'e2e_helpers.dart';
 import 'package:colonizethis_app/main.dart' show bootstrapForIntegrationTest;
-import 'package:colonizethis_app/test_support/civilian_units_panel_e2e_expected_lines.dart';
-import 'package:colonizethis_app/test_support/naval_units_panel_e2e_expected_lines.dart';
-import 'package:colonizethis_app/test_support/production_panel_e2e_expected_lines.dart';
 import 'package:colonizethis_models/colonizethis_models.dart'
     show kUnitTypeExplorer;
 import 'package:flutter/material.dart';
@@ -39,59 +35,24 @@ void main() {
       final l10n = opener.l10n;
       final ensureUnderWallClock = opener.ensureUnderWallClock;
 
-      Future<void> expectCivilianPanelTexts() async {
-        await expectPanelTextsMatchSnapshot(
-          tester,
-          panelRootKey: kCtE2ECivilianPanelRootKey,
-          snapshot: ctE2eCivilianPanelSnapshot,
-          buildExpected: () => civilianUnitsPanelExpectedTexts(
-            ctE2eCivilianPanelSnapshot!,
-            l10n,
-          ),
-          phaseName: 'wait_until_found_civilian_panel',
-          perf: perf,
-        );
-      }
-
-      Future<void> expectNavalPanelTexts({required bool expanded}) async {
-        await expectPanelTextsMatchSnapshot(
-          tester,
-          panelRootKey: kCtE2ENavalPanelRootKey,
-          snapshot: ctE2eNavalPanelSnapshot,
-          buildExpected: () => navalUnitsPanelExpectedTexts(
-            ctE2eNavalPanelSnapshot!,
-            l10n,
-            fleetTilesExpanded: expanded,
-          ),
-          phaseName: 'wait_until_found_naval_panel',
-          perf: perf,
-          buildAlternativeExpected: expanded
-              ? () => navalUnitsPanelExpectedTexts(
-                  ctE2eNavalPanelSnapshot!,
-                  l10n,
-                  fleetTilesExpanded: false,
-                )
-              : null,
-        );
-      }
-
-      Future<void> expectProductionPanelTexts() async {
-        await expectPanelTextsMatchSnapshot(
-          tester,
-          panelRootKey: kCtE2EProductionPanelRootKey,
-          snapshot: ctE2eProductionPanelSnapshot,
-          buildExpected: () => productionPanelWideExpectedTexts(
-            ctE2eProductionPanelSnapshot!,
-            l10n,
-          ),
-          phaseName: 'wait_until_found_production_panel',
-          perf: perf,
-        );
-      }
+      // The pre-lift `expectCivilianPanelTexts` / `expectNavalPanelTexts` /
+      // `expectProductionPanelTexts` inline closures (each composing a
+      // panel-specific root key + snapshot global + expected-text builder
+      // around `expectPanelTextsMatchSnapshot`) are now reusable shared
+      // helpers:
+      //
+      //   - `expectCivilianPanelMatchesE2eSnapshot`
+      //   - `expectNavalPanelMatchesE2eSnapshot`
+      //   - `expectProductionPanelMatchesE2eSnapshot`
+      //
+      // The lifted bodies preserve the exact phase labels
+      // (`wait_until_found_civilian_panel` / `_naval_panel` /
+      // `_production_panel`) and the naval `fleetTilesExpanded` `anyOf`
+      // fallback. Refs GitHub #2336 AC1 / AC2 / Bottleneck 6.
 
       // --- Civilian (empire rail): baseline ---
       await openCivilianPanel(tester, perf: perf);
-      await expectCivilianPanelTexts();
+      await expectCivilianPanelMatchesE2eSnapshot(tester, l10n, perf: perf);
       await closeBottomSheet(tester, perf: perf);
       ensureUnderWallClock('after civilian baseline panel');
 
@@ -125,13 +86,18 @@ void main() {
 
       // --- Civilian rail: after draft orders ---
       await openCivilianPanel(tester, perf: perf);
-      await expectCivilianPanelTexts();
+      await expectCivilianPanelMatchesE2eSnapshot(tester, l10n, perf: perf);
       await closeBottomSheet(tester, perf: perf);
       ensureUnderWallClock('after civilian post-draft panel');
 
       // --- Naval rail: collapsed ---
       await openNavalPanel(tester, perf: perf);
-      await expectNavalPanelTexts(expanded: false);
+      await expectNavalPanelMatchesE2eSnapshot(
+        tester,
+        l10n,
+        expanded: false,
+        perf: perf,
+      );
       await expandEachExpansionTileOnce(tester);
       await splitHomeFleetOnce(
         tester,
@@ -143,7 +109,12 @@ void main() {
       await dismissCtDialogShellIfPresent(tester, l10n, perf: perf);
 
       await expandEachExpansionTileOnce(tester);
-      await expectNavalPanelTexts(expanded: true);
+      await expectNavalPanelMatchesE2eSnapshot(
+        tester,
+        l10n,
+        expanded: true,
+        perf: perf,
+      );
       await closeBottomSheet(tester, perf: perf);
       ensureUnderWallClock('after naval split + move');
 
@@ -154,7 +125,7 @@ void main() {
         panelRoot: find.byKey(kCtE2ECivilianPanelRootKey),
         perf: perf,
       );
-      await expectCivilianPanelTexts();
+      await expectCivilianPanelMatchesE2eSnapshot(tester, l10n, perf: perf);
       await closeBottomSheet(tester, perf: perf);
       ensureUnderWallClock('after civilian marker panel');
 
@@ -164,7 +135,12 @@ void main() {
         panelRoot: find.byKey(kCtE2ENavalPanelRootKey),
         perf: perf,
       );
-      await expectNavalPanelTexts(expanded: false);
+      await expectNavalPanelMatchesE2eSnapshot(
+        tester,
+        l10n,
+        expanded: false,
+        perf: perf,
+      );
       await closeBottomSheet(tester, perf: perf);
       ensureUnderWallClock('after fleet marker panel');
 
@@ -186,7 +162,7 @@ void main() {
 
       // --- Production (post-resolution stockpiles) ---
       await openProductionPanel(tester, perf: perf);
-      await expectProductionPanelTexts();
+      await expectProductionPanelMatchesE2eSnapshot(tester, l10n, perf: perf);
 
       await tester.tap(find.byIcon(Icons.arrow_back));
       await waitUntilFound(

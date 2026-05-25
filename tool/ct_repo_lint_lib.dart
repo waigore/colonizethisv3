@@ -38,6 +38,7 @@ import 'check_no_flame_in_widgets.dart';
 import 'check_no_screen_in_game_widgets.dart';
 import 'check_part_unit_size.dart';
 import 'check_repeated_magic_numbers.dart';
+import 'check_screen_registry_active_paths.dart';
 import 'check_subscription_tracker.dart';
 import 'check_tech_id_constants.dart';
 import 'check_work_target_constants.dart';
@@ -753,10 +754,7 @@ int? _tryRunDartRuleInProcess({
       // cleared across `packages/colonizethis_logic/test/**`, so the rule
       // scans the entire tree when no changed-file baseline is provided and
       // narrows to changed files when CI supplies an incremental baseline.
-      return runCheckLogicTestFileSize(
-        repoRoot,
-        targetFiles: incrementalPaths,
-      );
+      return runCheckLogicTestFileSize(repoRoot, targetFiles: incrementalPaths);
     case 'repo.dart_file_non_comment_line_size':
       return runCheckDartFileNonCommentLineSize(
         repoRoot,
@@ -809,6 +807,8 @@ int? _tryRunDartRuleInProcess({
       return runCheckAppNoDuplicateHelpers(repoRoot);
     case 'repo.app_widget_imports':
       return runCheckAppWidgetImports(repoRoot);
+    case 'repo.screen_registry_active_paths':
+      return runCheckScreenRegistryActivePaths(repoRoot);
     default:
       return null;
   }
