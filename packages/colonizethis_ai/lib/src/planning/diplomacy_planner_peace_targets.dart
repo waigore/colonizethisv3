@@ -391,7 +391,12 @@ List<String> stalledZeroRegimentAllFactionPeaceTargets({
 /// Peace every at-war Great Power when stalled with zero regiments (Refs #2509).
 ///
 /// Delegates to [expand_phase_planner.stalledZeroRegimentGpPeaceTargets]
-/// (Refs #2509 S1).
+/// (Refs #2509 S1) so the canonical implementation lives alongside the
+/// EXPAND zero-regiment survival arm. Retained here as a thin stub for
+/// the legacy `diplomacy_planner_below_quota_peace_part3_test.dart`
+/// fixture and the in-file `_survivalGreatPowerPeaceTargets` /
+/// `collectStalledGreatPowerPeaceTargets` / `stalledOwExpansionNeedsPeacePass`
+/// consumer chains until the planned S1 deletion of this file.
 List<String> stalledZeroRegimentGpPeaceTargets({
   required Game game,
   required AIWorldSnapshot snapshot,
@@ -403,7 +408,12 @@ List<String> stalledZeroRegimentGpPeaceTargets({
 /// Peace a sole GP enemy when both sides have zero regiments (stalemate reset).
 ///
 /// Delegates to [expand_phase_planner.mutualZeroRegimentGpStalematePeaceTargets]
-/// (Refs #2509 S1).
+/// (Refs #2509 S1) so the canonical implementation lives alongside the
+/// EXPAND zero-regiment mutual-stalemate arm. Retained here as a thin
+/// stub for the in-file `_survivalGreatPowerPeaceTargets` /
+/// `collectStalledGreatPowerPeaceTargets` `zeroRegimentBlockerPeace` /
+/// `stalledOwExpansionNeedsPeacePass` consumer chains until the planned
+/// S1 deletion of this file.
 List<String> mutualZeroRegimentGpStalematePeaceTargets({
   required Game game,
   required AIWorldSnapshot snapshot,
