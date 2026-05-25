@@ -1,5 +1,4 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:colonizethis_logic/ai_api.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../perception/perception_snapshot.dart';
@@ -128,66 +127,22 @@ bool isMutualBelowQuotaPlateauPeer({
 
 /// Peace other below-quota Great Powers in peer-stalled wars while minors remain
 /// (exit mutual gp5/gp6 distraction; Refs #2509).
+///
+/// Delegates to [expand_phase_planner.belowQuotaPeerGpPeaceTargets]
+/// (Refs #2509 S1) so the EXPAND-phase below-quota peer-stalled peace
+/// decider survives the planned deletion of this file alongside the
+/// canonical helpers it composes
+/// ([expand_phase_planner.isOldWorldGpOnlyInvadableFrontier],
+/// [expand_phase_planner.soleAtWarGreatPowerId],
+/// [expand_phase_planner.isMutualBelowQuotaPlateauPeer], and
+/// [expand_phase_planner.hasUninvadedOldWorldMinor]).
 List<String> belowQuotaPeerGpPeaceTargets({
   required Game game,
   required AIWorldSnapshot snapshot,
-}) {
-  final ownOw = snapshot.conquest.oldWorldProvincesOwned;
-  if (!isBelowObserverConquestQuota(ownOw)) {
-    return const [];
-  }
-  final minorsOnMap = game.worldState.oldWorld.provinces.any(
-    (p) =>
-        p.ownerId != null &&
-        p.ownerId!.isNotEmpty &&
-        game.minorNations.any((m) => m.id == p.ownerId),
-  );
-  final gpOnlyFrontier = isOldWorldGpOnlyInvadableFrontier(
-    game: game,
-    snapshot: snapshot,
-  );
-  final soleGpWar = soleAtWarGreatPowerId(game: game, snapshot: snapshot);
-  final targets = <String>[];
-  for (final factionId in snapshot.threats.atWarWith) {
-    if (game.playerById(factionId) == null) {
-      continue;
-    }
-    final partnerOw = provinceCountOwnedBy(game, factionId);
-    if (!isBelowObserverConquestQuota(partnerOw)) {
-      continue;
-    }
-    final mutualPlateau = isMutualBelowQuotaPlateauPeer(
-      ownOw: ownOw,
-      partnerOw: partnerOw,
-    );
-    if (!minorsOnMap && !mutualPlateau) {
-      continue;
-    }
-    if (mutualPlateau &&
-        gpOnlyFrontier &&
-        !hasUninvadedOldWorldMinor(game: game, snapshot: snapshot)) {
-      targets.add(factionId);
-      continue;
-    }
-    final maxPeerOwGap =
-        hasUninvadedOldWorldMinor(game: game, snapshot: snapshot) ? 3 : 1;
-    if ((partnerOw - ownOw).abs() > maxPeerOwGap) {
-      continue;
-    }
-    if (!mutualPlateau && ownOw > partnerOw) {
-      continue;
-    }
-    // Hold sole GP-blocker wars only when no minor pivot remains (Refs #2509).
-    if (gpOnlyFrontier &&
-        soleGpWar == factionId &&
-        !hasUninvadedOldWorldMinor(game: game, snapshot: snapshot)) {
-      continue;
-    }
-    targets.add(factionId);
-  }
-  targets.sort();
-  return targets;
-}
+}) => expand_phase_planner.belowQuotaPeerGpPeaceTargets(
+  game: game,
+  snapshot: snapshot,
+);
 
 /// Peace at-war minors that own no invadable OW provinces while still at default
 /// start size (exit futile minor fronts before GP-blocker wars; seed-42 gp4).
@@ -256,10 +211,7 @@ String? primaryInvadableOldWorldGpBlocker({
 // `hasColonialAcquisitionTargets` and `isEarlyColonialExpansion` were
 // relocated to `observer_goal_phase.dart` (Refs #2509 S1) — both
 // `ColonialSummary` predicates must survive the planned deletion of this
-// file. `colonialBuildOrderThresholdCap` (below) keeps the
-// acquisition-target check inlined so this file does not import
-// `observer_goal_phase.dart`, which would create a circular library
-// reference. See also: `phase-planner-architecture.md` § Phase transition
+// file. See also: `phase-planner-architecture.md` § Phase transition
 // guards.
 
 /// Sole at-war Great Power, if any.
@@ -426,19 +378,17 @@ String? consolidateGainsSoleGpPeaceTarget({
   snapshot: snapshot,
 );
 
-/// When non-null, build-order pass uses `min(buildThreshold, value)`.
-int? colonialBuildOrderThresholdCap(ColonialSummary colonial) {
-  // `hasColonialAcquisitionTargets` body is inlined here (Refs #2509 S1)
-  // because the canonical home is now `observer_goal_phase.dart` and this
-  // file does not import that library (would create a circular reference).
-  final hasAcquisitionTargets =
-      colonial.invadableNewWorldProvinceIdsSorted.isNotEmpty ||
-      colonial.adjacentNewWorldOwnerFactionIdsSorted.isNotEmpty;
-  if (hasAcquisitionTargets && colonial.newWorldProvincesOwned > 0) {
-    return kColonialBuildOrderThresholdWhenOwnedNwUnderPressure;
-  }
-  if (colonial.newWorldProvincesOwned > 0) {
-    return kColonialBuildOrderThresholdWhenOwnedNw;
-  }
-  return null;
-}
+// `colonialBuildOrderThresholdCap(ColonialSummary)` was retired here
+// (Refs #2509 S1). The legacy helper had two arms keyed on
+// `hasColonialAcquisitionTargets(colonial)` and was only invoked by
+// `_appendEconomyBuildOrders` inside the outer `if (colonialPressure)` guard,
+// where `colonialPressure` is `resolvePhaseEconomyColonialPressureActive`
+// (active only under COLONIAL). COLONIAL phase entry is itself gated on
+// `hasColonialAcquisitionTargets` via `observerGoalPhaseFor`, so the second
+// `kColonialBuildOrderThresholdWhenOwnedNw` fallback arm was structurally
+// unreachable at the orchestrator's call site. The reachable behaviour now
+// lives in `resolvePhaseEconomyColonialBuildOrderThresholdCap`
+// (`phase_planner_economy_filter.dart`), which is the sole production caller
+// of the colonial build-order threshold cap. See
+// `SPEC/ai/phase-planner-dispatch.md` § Orchestrator economy build colonial
+// -cap slice.
