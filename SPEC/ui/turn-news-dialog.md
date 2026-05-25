@@ -1,5 +1,6 @@
 # Turn-start news dialog
 
+**Screen ID:** `DLG50001` — stable; do not reassign.
 **Source:** #1478 + product 2026-04-03. **Trigger:** `TurnResolutionCompleteEvent` with `turnNumber >= 1`, `turnNewsDigest != null`, and loaded game `victory == null`. **Not shown** on initial map entry at turn 0 with no completed resolution. **Victory:** if `victory != null`, omit news (victory flow first).
 
 ## Behavior

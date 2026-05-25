@@ -40,7 +40,7 @@
 //      A drift here would silently let one code path declare war while
 //      the other still gates on cargo recovery for the same GP.
 
-import 'package:colonizethis_ai/src/planning/colonial_pressure.dart'
+import 'package:colonizethis_ai/src/planning/expand_phase_planner.dart'
     as colonial_pressure;
 import 'package:colonizethis_ai/src/planning/expand_phase_planner.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';

@@ -1,5 +1,6 @@
 # Pause Menu Panel
 
+**Screen ID:** `SHEL40001` — stable; do not reassign.
 **SPEC/ui** — Bottom-sheet content shown by [`AppEventHandler`](../program/app-ui-wiring.md) in response to `OpenPauseMenuPanelEvent`. Used during in-game play to give the player access to the **Debug log** route and a quick **Resume** action. Authority: [`in-game-shell-narrow.md`](in-game-shell-narrow.md) (hamburger menu). Bus contract: [`app-event-bus.md`](../program/app-event-bus.md), [`app-ui-wiring.md`](../program/app-ui-wiring.md). Related: [`game-side-menu.md`](game-side-menu.md) (the wide slide-out drawer that hosts the hamburger entries during normal play; the pause panel is the **modal bottom-sheet** variant reachable from [`game-screen.md`](game-screen.md)). Source: `app/lib/features/game/widgets/pause_menu_panel.dart`.
 
 ---

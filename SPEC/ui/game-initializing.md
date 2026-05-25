@@ -1,5 +1,6 @@
 # Game initialization (new game)
 
+**Screen ID:** `SHEL30001` — stable; do not reassign.
 **SPEC/ui** — User-visible progress and errors while the app builds a new game (map generation, setup pipeline, persistence). Aligns with pipeline phases in [game-setup-pipeline.md](../program/game-setup-pipeline.md).
 
 ---

@@ -1,17 +1,19 @@
-// Pins the canonical home in `expand_phase_planner.dart` for the
-// EXPAND-phase critical-collapse and zero-regiment survival peace
+// Pins the canonical home in `observer_goal_phase.dart` for the
+// cross-phase critical-collapse and zero-regiment survival peace
 // aggregator `survivalGreatPowerPeaceTargets` (Refs #2509 S1).
 //
 // The aggregator was relocated from the previously private
 // `_survivalGreatPowerPeaceTargets` in
 // `diplomacy_planner_peace_targets.dart` so it survives the planned
 // S1 deletion of that file. The canonical implementation lives in
-// `expand_phase_planner.dart` alongside the five canonicalized
-// survival deciders it composes; `diplomacy_planner_peace_targets.dart`
-// retains a thin private `_survivalGreatPowerPeaceTargets` delegating
-// stub forwarding into the canonical aggregator so the in-file
-// `collectStalledGreatPowerPeaceTargets` consumer chain resolves to
-// the same target stream until the planned deletion.
+// `observer_goal_phase.dart` alongside the sibling composite peace
+// aggregators (`expandRatchetGreatPowerPeaceTargets`,
+// `collectStalledGreatPowerPeaceTargets`,
+// `supplementMutualStalledGreatPowerPeaceOrders`) and the per-phase
+// GP-peace-target helpers (`expandPhaseGpPeaceTargets`,
+// `colonialPhaseGpPeaceTargets`, `developPhaseGpPeaceTargets`); the
+// EXPAND-phase sub-deciders this aggregator fans across remain
+// canonical in `expand_phase_planner.dart` and its part files.
 //
 // Sibling deciders the aggregator fans across (each already pinned by
 // its own canonical-home suite — this file only pins the aggregator
@@ -70,7 +72,7 @@
 //      `sync*` generator is re-driven from scratch on each call).
 
 import 'package:colonizethis_ai/src/perception/perception_snapshot.dart';
-import 'package:colonizethis_ai/src/planning/expand_phase_planner.dart';
+import 'package:colonizethis_ai/src/planning/observer_goal_phase.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/ai_api.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';

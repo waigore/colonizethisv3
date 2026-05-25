@@ -55,7 +55,7 @@
 //      `isBelowQuotaPeaceTreasuryRecovery` callers and the EXPAND
 //      planner agree on the insufficient-regiments boundary.
 
-import 'package:colonizethis_ai/src/planning/colonial_pressure.dart'
+import 'package:colonizethis_ai/src/planning/expand_phase_planner.dart'
     as colonial_pressure;
 import 'package:colonizethis_ai/src/planning/expand_phase_planner.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';

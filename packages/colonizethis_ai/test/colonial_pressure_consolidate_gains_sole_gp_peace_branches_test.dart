@@ -62,6 +62,7 @@ import 'package:colonizethis_ai/colonizethis_ai.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
+import 'package:colonizethis_ai/src/planning/expand_phase_planner.dart';
 
 /// Builds a Game with two GPs (`focus` and `enemy`) whose OW holdings are
 /// exactly [focusOw] and [enemyOw] respectively, optionally including

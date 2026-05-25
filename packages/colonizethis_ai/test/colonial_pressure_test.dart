@@ -1,9 +1,8 @@
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 import 'package:colonizethis_ai/src/perception/perception_snapshot.dart';
-import 'package:colonizethis_ai/src/planning/colonial_pressure.dart';
 import 'package:colonizethis_ai/src/planning/conquest_planner.dart';
-import 'package:colonizethis_ai/src/planning/diplomacy_planner_peace_targets.dart';
+import 'package:colonizethis_ai/src/planning/expand_phase_planner.dart';
 
 void main() {
   // `hasColonialAcquisitionTargets` and `isEarlyColonialExpansion` were

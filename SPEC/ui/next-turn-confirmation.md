@@ -1,5 +1,6 @@
 # Next turn confirmation dialog
 
+**Screen ID:** `DLG60001` — stable; do not reassign.
 **SPEC/ui** — Confirmation dialog when player clicks the "Next turn" button. Authority: GDD/TDD; derives from in-game-shell-narrow.md.
 
 ---
