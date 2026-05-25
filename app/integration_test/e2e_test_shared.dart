@@ -22,12 +22,14 @@ import 'package:colonizethis_models/colonizethis_models.dart' show ProvinceId;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'e2e_test_shared_dismiss_alert_dialog.dart';
 import 'e2e_test_shared_dismiss_snackbar.dart';
 
 export 'e2e_test_shared_bundled_explore_failure.dart';
 export 'e2e_test_shared_bundled_explore_retry.dart';
 export 'e2e_test_shared_civilian_work_tile_pick.dart';
 export 'e2e_test_shared_diagnostics.dart';
+export 'e2e_test_shared_dismiss_alert_dialog.dart';
 export 'e2e_test_shared_dismiss_ct_dialog_shell.dart';
 export 'e2e_test_shared_dismiss_ct_dialog_shell_escalation.dart';
 export 'e2e_test_shared_dismiss_snackbar.dart';
@@ -506,27 +508,14 @@ Future<void> e2eDismissTransientUi(
     );
     return;
   }
-  if (find.byType(AlertDialog).evaluate().isNotEmpty) {
-    for (final label in ['Close', 'OK', 'Cancel', 'Yes']) {
-      final hit = find
-          .descendant(of: find.byType(AlertDialog), matching: find.text(label))
-          .hitTestable();
-      if (hit.evaluate().isNotEmpty) {
-        await tester.tap(hit.first, warnIfMissed: false);
-        await e2ePumpUntilFinderEmpty(
-          tester,
-          find.byType(AlertDialog),
-          timeout: const Duration(seconds: 2),
-        );
-        return;
-      }
-    }
-    await tester.binding.handlePopRoute();
-    await e2ePumpUntilFinderEmpty(
-      tester,
-      find.byType(AlertDialog),
-      timeout: const Duration(seconds: 2),
-    );
+  // Shared AlertDialog dismissal: lifted into [e2eDismissAlertDialogIfPresent]
+  // so the labelled-button-priority tap + `handlePopRoute` fallback recipe is
+  // single-source-of-truth and pinned by widget tests. The lifted form
+  // preserves the legacy English label priority (`Close` → `OK` → `Cancel` →
+  // `Yes`), the 2 s dismiss budget, and the unconditional `handlePopRoute`
+  // fallback when no labelled button is hit-testable. Refs GitHub #2336
+  // AC1 / AC2 / Bottleneck 6.
+  if (await e2eDismissAlertDialogIfPresent(tester, perf: perf)) {
     return;
   }
   if (find.byType(BottomSheet).evaluate().isNotEmpty) {
