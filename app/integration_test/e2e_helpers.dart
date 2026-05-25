@@ -36,6 +36,7 @@ export 'e2e_test_shared.dart'
         e2eClosePanelOpenerSheetAndAwaitOpener,
         e2eDismissCtDialogShellIfPresent,
         e2eDismissCtDialogShellWithPopRouteEscalation,
+        e2eDismissSnackBarIfPresent,
         e2eEnsureNonHomeFleetInNwAfterLoop,
         e2eEnsureVisibleAndTapHitTestable,
         e2eEnterFleetReachScenarioReady,
@@ -103,6 +104,7 @@ export 'e2e_test_shared.dart'
         kE2eDefaultStandardScenarioOpenerBootstrapTimingPhase,
         kE2eDefaultStandardScenarioOpenerLocale,
         kE2eDefaultStandardScenarioOpenerNewGameToMapTimingPhase,
+        kE2eDefaultSnackBarDismissTimeout,
         kE2eDefaultStandardScenarioOpenerSurfaceSize,
         e2ePumpUntil,
         e2ePumpUntilConditionOrIdle,
@@ -303,6 +305,24 @@ Future<bool> dismissCtDialogShellWithPopRouteEscalation(
   perf: perf,
   escalationTimeout: escalationTimeout,
   escalationPhase: escalationPhase,
+);
+
+/// Stable public name for [e2eDismissSnackBarIfPresent] (Refs GitHub #2336
+/// AC1 / AC2 / AC10). Forwards to the implementation in
+/// `e2e_test_shared_dismiss_snackbar.dart` (re-exported via
+/// `e2e_test_shared.dart`). The shared SnackBar-dismiss recipe is consumed
+/// indirectly by [dismissTransientUi] today; the alias is re-exposed so
+/// future scenarios that need a focused SnackBar-only dismissal (without
+/// triggering the AlertDialog / BottomSheet / CtDialogShell fallback
+/// branches of the broad sweep) can compose it directly.
+Future<bool> dismissSnackBarIfPresent(
+  WidgetTester tester, {
+  E2ePerfLog? perf,
+  Duration dismissTimeout = kE2eDefaultSnackBarDismissTimeout,
+}) => e2eDismissSnackBarIfPresent(
+  tester,
+  perf: perf,
+  dismissTimeout: dismissTimeout,
 );
 
 Future<void> openCivilianPanel(

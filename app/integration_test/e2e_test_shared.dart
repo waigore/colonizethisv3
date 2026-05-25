@@ -22,12 +22,15 @@ import 'package:colonizethis_models/colonizethis_models.dart' show ProvinceId;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'e2e_test_shared_dismiss_snackbar.dart';
+
 export 'e2e_test_shared_bundled_explore_failure.dart';
 export 'e2e_test_shared_bundled_explore_retry.dart';
 export 'e2e_test_shared_civilian_work_tile_pick.dart';
 export 'e2e_test_shared_diagnostics.dart';
 export 'e2e_test_shared_dismiss_ct_dialog_shell.dart';
 export 'e2e_test_shared_dismiss_ct_dialog_shell_escalation.dart';
+export 'e2e_test_shared_dismiss_snackbar.dart';
 export 'e2e_test_shared_final_naval_reach_check.dart';
 export 'e2e_test_shared_first_fleet_move.dart';
 export 'e2e_test_shared_fleet_reach_loop_test_total_meta.dart';
@@ -480,20 +483,18 @@ Future<void> e2eDismissTransientUi(
     await e2eAdvanceGameStartIntroUntilDismissed(tester, perf: perf);
     return;
   }
-  if (find.byType(SnackBar).evaluate().isNotEmpty) {
-    final snackAction = find.descendant(
-      of: find.byType(SnackBar),
-      matching: find.byType(TextButton),
-    );
-    if (snackAction.hitTestable().evaluate().isNotEmpty) {
-      await tester.tap(snackAction.first, warnIfMissed: false);
-      await e2ePumpUntilFinderEmpty(
-        tester,
-        find.byType(SnackBar),
-        timeout: const Duration(seconds: 2),
-      );
-      return;
-    }
+  // Shared SnackBar dismissal: lifted into [e2eDismissSnackBarIfPresent]
+  // so the hit-testable-action tap recipe is single-source-of-truth and
+  // pinned by widget tests. The pre-lift inline block checked
+  // `snackAction.hitTestable()` for presence but tapped `snackAction.first`
+  // (the first [TextButton] without the hit-testable filter), which could
+  // miss the tap when the first [TextButton] was covered by another overlay
+  // while a later one remained hit-testable. The lifted form taps the
+  // hit-testable filter's first match — matching the adjacent AlertDialog
+  // and CtDialogShell branches below that already use the filtered finder
+  // for both check and tap. Refs GitHub #2336 AC1 / AC2 / AC10.
+  if (await e2eDismissSnackBarIfPresent(tester, perf: perf)) {
+    return;
   }
   final ok = find.text('OK').hitTestable();
   if (ok.evaluate().isNotEmpty) {
