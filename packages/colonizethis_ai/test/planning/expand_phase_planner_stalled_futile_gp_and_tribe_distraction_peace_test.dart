@@ -6,7 +6,7 @@
 // `diplomacy_planner_peace_targets.dart` so they survive the planned
 // S1 deletion of that file. The canonical implementations live in
 // `expand_phase_planner.dart`; `diplomacy_planner_peace_targets.dart`
-// retains thin delegating stubs for legacy callers (the existing
+// previously retained thin delegating stubs for legacy callers (the existing
 // `diplomacy_planner_stalled_peace_test.dart` § `stalledFutileGpPeaceTargets`
 // fixture and the `_expandRatchetGreatPowerPeaceTargets` /
 // `collectStalledGreatPowerPeaceTargets` /

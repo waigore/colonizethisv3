@@ -6,7 +6,7 @@
 // `diplomacy_planner_peace_targets.dart` so they survive the planned
 // S1 deletion of that file. The canonical implementations live in
 // `expand_phase_planner.dart`; `diplomacy_planner_peace_targets.dart`
-// retains thin delegating stubs for the in-file
+// previously retained thin delegating stubs for the in-file
 // `stalledExpansionDistractionPeaceTargets` /
 // `belowQuotaMultiMinorDistractionPeaceTargets` consumer chains and
 // the `diplomatic_candidate_scoring_offer_peace.dart` below-quota
@@ -619,7 +619,7 @@ void main() {
               '"${fixture.label}". The legacy '
               'stalledExpansionDistractionPeaceTargets and '
               'belowQuotaMultiMinorDistractionPeaceTargets consumers '
-              'depend on this parity until the planned S1 deletion.',
+              'depend on this parity until the now-completed S1 deletion.',
         );
       }
     });
@@ -697,7 +697,7 @@ void main() {
                 'Stub-canonical parity broken for fixture '
                 '"${fixture.label}". The diplomatic-candidate-scoring '
                 'below-quota minor-front-hold consumer depends on '
-                'this parity until the planned S1 deletion.',
+                'this parity until the now-completed S1 deletion.',
           );
         }
       },

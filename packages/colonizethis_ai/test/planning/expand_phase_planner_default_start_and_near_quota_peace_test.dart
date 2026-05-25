@@ -3,9 +3,9 @@
 // `expand_phase_planner.dart` (Refs #2509 S1).
 //
 // Both deciders were relocated from `colonial_pressure.dart` so they
-// survive the planned S1 deletion of that file. The canonical
+// survive the now-completed S1 deletion of that file. The canonical
 // implementations live in `expand_phase_planner.dart`;
-// `colonial_pressure.dart` retains thin delegating stubs for legacy
+// `colonial_pressure.dart` previously retained thin delegating stubs for legacy
 // callers (the existing `colonial_pressure_default_start_gp_peace_branches_test.dart`
 // and `colonial_pressure_test.dart` near-quota fixtures plus the
 // `diplomacy_planner.dart` / `diplomacy_planner_peace_targets.dart`

@@ -3,9 +3,9 @@
 // (Refs #2509 S1).
 //
 // The decider was relocated from `colonial_pressure.dart` so it
-// survives the planned S1 deletion of that file. The canonical
+// survives the now-completed S1 deletion of that file. The canonical
 // implementation lives in `expand_phase_planner.dart`;
-// `colonial_pressure.dart` retains a thin delegating stub for legacy
+// `colonial_pressure.dart` previously retained a thin delegating stub for legacy
 // callers (the existing `colonial_pressure_test.dart` and
 // `colonial_pressure_peer_gap_boundary_test.dart` fixtures, the
 // `diplomacy_planner.dart` /
@@ -630,7 +630,7 @@ void main() {
       () {
         // Same input as the with-minors peer-gap-3 case above. The
         // canonical helper and the colonial_pressure delegating
-        // stub must agree byte-for-byte so the planned S1 deletion
+        // stub must agree byte-for-byte so the now-completed S1 deletion
         // of colonial_pressure.dart is a safe one-line removal,
         // not a behavioral change.
         final game = _peerGame(
@@ -652,7 +652,7 @@ void main() {
           belowQuotaPeerGpPeaceTargets(game: game, snapshot: snapshot),
           reason:
               'colonial_pressure.dart must remain a thin delegating stub '
-              'until S1 deletion; agreement with the canonical helper is '
+              'until the now-completed S1 deletion; agreement with the canonical helper is '
               'required so the legacy fixtures continue resolving to the '
               'same behavior.',
         );

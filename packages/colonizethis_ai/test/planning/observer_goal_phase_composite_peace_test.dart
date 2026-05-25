@@ -13,7 +13,7 @@
 // `colonialPhaseGpPeaceTargets`, `developPhaseGpPeaceTargets`) already
 // defined there.
 //
-// `diplomacy_planner_peace_targets.dart` retains thin delegating stubs
+// `diplomacy_planner_peace_targets.dart` previously retained thin delegating stubs
 // for `collectStalledGreatPowerPeaceTargets` and
 // `supplementMutualStalledGreatPowerPeaceOrders`; this file verifies
 // delegation parity so every legacy call site resolves to the same

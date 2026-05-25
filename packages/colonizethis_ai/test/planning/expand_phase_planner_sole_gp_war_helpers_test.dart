@@ -3,7 +3,7 @@
 // `expand_phase_planner.dart` (Refs #2509 S1).
 //
 // Both helpers were relocated from `colonial_pressure.dart` so they survive
-// the planned S1 deletion of that file. The canonical implementations live
+// the now-completed S1 deletion of that file. The canonical implementations live
 // in `expand_phase_planner.dart`; `colonial_pressure.dart` retains thin
 // delegating stubs for legacy callers (its own
 // `belowQuotaPeerGpPeaceTargets`, `unwinnableSoleGpFrontierPeaceTarget`,

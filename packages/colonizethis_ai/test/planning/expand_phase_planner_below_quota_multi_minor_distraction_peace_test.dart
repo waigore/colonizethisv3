@@ -2,14 +2,14 @@
 // `belowQuotaMultiMinorDistractionPeaceTargets` (Refs #2509 S1).
 //
 // The helper was relocated from `diplomacy_planner_peace_targets.dart`
-// so it survives the planned S1 deletion of that file. The canonical
+// so it survives the now-completed S1 deletion of that file. The canonical
 // implementation lives in `expand_phase_planner.dart` alongside the
 // `stalledFocusMinorTarget` helper it composes;
-// `diplomacy_planner_peace_targets.dart` retains a thin delegating
+// `diplomacy_planner_peace_targets.dart` previously retained a thin delegating
 // stub for the in-file `collectStalledGreatPowerPeaceTargets`
 // `minorTribePeace` consumer chain and the legacy
 // `diplomacy_planner_below_quota_peace_part3_test.dart` fixture until
-// the planned S1 deletion.
+// the now-completed S1 deletion.
 //
 // Behavioral invariants pinned at the canonical entry point:
 //
@@ -45,7 +45,7 @@
 //     representative input — required so the in-file
 //     `collectStalledGreatPowerPeaceTargets` `minorTribePeace`
 //     consumer resolves to the same multi-minor peace set until the
-//     planned S1 deletion.
+//     now-completed S1 deletion.
 
 import 'package:colonizethis_ai/src/perception/perception_snapshot.dart';
 import 'package:colonizethis_ai/src/planning/expand_phase_planner.dart'

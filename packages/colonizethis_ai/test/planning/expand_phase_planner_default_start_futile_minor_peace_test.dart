@@ -3,9 +3,9 @@
 // (Refs #2509 S1).
 //
 // The decider was relocated from `colonial_pressure.dart` so it
-// survives the planned S1 deletion of that file. The canonical
+// survives the now-completed S1 deletion of that file. The canonical
 // implementation lives in `expand_phase_planner.dart`;
-// `colonial_pressure.dart` retains a thin delegating stub for legacy
+// `colonial_pressure.dart` previously retained a thin delegating stub for legacy
 // callers (the existing `colonial_pressure_test.dart` §
 // `defaultStartFutileMinorPeaceTargets` fixture and the
 // `diplomacy_planner.dart` / `diplomacy_planner_peace_targets.dart`
@@ -498,7 +498,7 @@ void main() {
       // `colonial_pressure.dart` must return identical lists — the
       // legacy `colonial_pressure_test.dart` fixture and the
       // `diplomacy_planner_peace_targets.dart` consumer chain rely
-      // on the equivalence until the planned S1 deletion.
+      // on the equivalence until the now-completed S1 deletion.
       const minor1InvadablePid = 'oldWorld|${_minor1}_1';
       final fixtures = <({String name, Game game, AIWorldSnapshot snapshot})>[
         (

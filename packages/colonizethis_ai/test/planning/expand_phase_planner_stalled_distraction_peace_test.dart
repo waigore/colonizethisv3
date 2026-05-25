@@ -6,7 +6,7 @@
 // S1 deletion of that file. The canonical implementation lives in
 // `expand_phase_planner_gp_blocker_peace.dart` (part of
 // `expand_phase_planner.dart`); `diplomacy_planner_peace_targets.dart`
-// retains a thin delegating stub for the legacy
+// previously retained a thin delegating stub for the legacy
 // `diplomacy_planner_stalled_peace_test.dart` fixture and the in-file
 // `_expandRatchetGreatPowerPeaceTargets` /
 // `stalledOwExpansionNeedsPeacePass` consumer chains until the
@@ -581,7 +581,7 @@ void main() {
                 '"${fixture.label}". The legacy '
                 '_expandRatchetGreatPowerPeaceTargets and '
                 'stalledOwExpansionNeedsPeacePass consumers depend on '
-                'this parity until the planned S1 deletion.',
+                'this parity until the now-completed S1 deletion.',
           );
         }
       },

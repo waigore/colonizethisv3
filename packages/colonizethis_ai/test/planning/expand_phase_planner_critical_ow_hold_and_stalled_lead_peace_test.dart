@@ -3,9 +3,9 @@
 // at their new home in `expand_phase_planner.dart` (Refs #2509 S1).
 //
 // Both deciders were relocated from `colonial_pressure.dart` so they
-// survive the planned S1 deletion of that file. The canonical
+// survive the now-completed S1 deletion of that file. The canonical
 // implementations live in `expand_phase_planner.dart`;
-// `colonial_pressure.dart` retains thin delegating stubs for the legacy
+// `colonial_pressure.dart` previously retained thin delegating stubs for the legacy
 // `colonial_pressure_critical_ow_hold_branches_test.dart`,
 // `colonial_pressure_stalled_below_quota_gp_lead_branches_test.dart`,
 // `colonial_pressure_test.dart`, and `diplomacy_planner_below_quota_peace_test.dart`
@@ -800,7 +800,7 @@ void main() {
                 'band selector, and the GP-only blocker carve-out — the '
                 'delegating stub is the only live caller path the legacy '
                 'fixtures and the diplomatic_candidate_scoring_offer_peace '
-                'consumer chain reach until the planned S1 deletion of '
+                'consumer chain reach until the now-completed S1 deletion of '
                 'colonial_pressure.dart.',
           );
         }
