@@ -1,9 +1,33 @@
 import '../perception/perception_snapshot.dart';
 import 'planning_imports.dart';
-import 'colonial_pressure.dart';
+import 'expand_phase_planner.dart';
 import 'observer_goal_phase.dart';
-export 'colonial_pressure.dart'
+import 'planner_context.dart';
+import '../util/ai_random_utils.dart';
+import '../util/orders_extensions.dart';
+import 'diplomacy_planner_declare_war_targets.dart';
+import 'diplomatic_candidate_scoring.dart';
+import 'diplomacy_planner_result.dart';
+import 'phase_planner_declare_war_targets.dart';
+import 'phase_planner_dispatch.dart';
+import 'phase_planner_peace_targets.dart';
+
+// Public peace-target / OW frontier helper re-exports below replace the legacy
+// `colonial_pressure.dart` and `diplomacy_planner_peace_targets.dart`
+// re-exports (Refs #2509 S1). The exported surface is identical to the prior
+// `export 'colonial_pressure.dart' show ...; export
+// 'diplomacy_planner_peace_targets.dart';` pair: every name previously
+// re-exported through this file now sources from its canonical home
+// (`expand_phase_planner.dart` plus its part files for EXPAND-phase
+// per-decider helpers, and `observer_goal_phase.dart` for the cross-phase
+// composite peace aggregators `collectStalledGreatPowerPeaceTargets` and
+// `supplementMutualStalledGreatPowerPeaceOrders`). After this migration the
+// `colonial_pressure.dart` and `diplomacy_planner_peace_targets.dart`
+// delegating shims have no production importer left and are scheduled for
+// deletion as part of the S1 cleanup tracked by #2509.
+export 'expand_phase_planner.dart'
     show
+        // Previously re-exported via `colonial_pressure.dart`.
         consolidateGainsSoleGpPeaceTarget,
         criticalOwHoldPeaceTargets,
         hasUninvadedOldWorldMinor,
@@ -17,21 +41,30 @@ export 'colonial_pressure.dart'
         defaultStartGpPeaceTargets,
         defaultStartFutileMinorPeaceTargets,
         nearQuotaHoldPeaceTargets,
-        unwinnableSoleGpFrontierPeaceTarget;
-import 'planner_context.dart';
-import '../util/ai_random_utils.dart';
-import '../util/orders_extensions.dart';
-import 'diplomacy_planner_declare_war_targets.dart';
-import 'diplomatic_candidate_scoring.dart';
-import 'diplomacy_planner_peace_targets.dart'
-    hide collectStalledGreatPowerPeaceTargets;
-import 'diplomacy_planner_result.dart';
-import 'phase_planner_declare_war_targets.dart';
-import 'phase_planner_dispatch.dart';
-import 'phase_planner_peace_targets.dart';
-
+        unwinnableSoleGpFrontierPeaceTarget,
+        // Previously re-exported via `diplomacy_planner_peace_targets.dart`.
+        stalledStrongerGpBlockerPeaceTarget,
+        stalledGpBlockerFocusPeaceTargets,
+        stalledFutileGpPeaceTargets,
+        stalledFocusMinorTarget,
+        belowQuotaActiveMinorWarTarget,
+        atWarGpDistractionTribePeaceTargets,
+        stalledExpansionDistractionPeaceTargets,
+        criticalWeakGpSurvivalPeaceTargets,
+        weakHoldingsInvadableBlockerPeaceTargets,
+        criticalMultiFrontGpPeaceTargets,
+        belowQuotaMultiMinorDistractionPeaceTargets,
+        stalledZeroRegimentAllFactionPeaceTargets,
+        stalledZeroRegimentGpPeaceTargets,
+        mutualZeroRegimentGpStalematePeaceTargets,
+        mutualExhaustedBelowQuotaGpStalematePeaceTargets,
+        stalledOwExpansionNeedsPeacePass,
+        multiFrontNonBlockerGpPeaceTargets;
+export 'observer_goal_phase.dart'
+    show
+        collectStalledGreatPowerPeaceTargets,
+        supplementMutualStalledGreatPowerPeaceOrders;
 export 'diplomacy_planner_declare_war_targets.dart';
-export 'diplomacy_planner_peace_targets.dart';
 export 'diplomatic_candidate_scoring.dart'
     show computeDiplomaticCandidateScores;
 export 'war_desire_calculator.dart' show computeWarDesireScore;
