@@ -3,7 +3,7 @@ import 'dart:math' as math;
 import '../perception/perception_snapshot.dart';
 import 'army_conquest_prep.dart';
 import 'planning_imports.dart';
-import 'colonial_pressure.dart';
+import 'expand_phase_planner.dart';
 import 'goal_manager.dart';
 import 'observer_goal_phase.dart';
 import 'phase_planner_diplomacy_filter.dart';

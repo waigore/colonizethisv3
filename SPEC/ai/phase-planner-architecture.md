@@ -79,6 +79,17 @@ Planner modules never call each other. The orchestrator passes `planColonialAcqu
 - Enter **DEVELOP** when OW ≥ 10 and no visible colonial targets.
 - **COLONIAL-lite** is a parallel entry inside EXPAND (turn ≥ `kObserverColonialLiteMinTurn`, OW ≥ `kObserverColonialLiteNearQuotaOw` and below quota, global `newWorld|` not all GP-owned).
 
+### Caller migration to canonical exports (S1 progress)
+
+Production callers are progressively switched from `colonial_pressure.dart` thin delegating stubs to the canonical `expand_phase_planner.dart` (and its part files `expand_phase_planner_peer_peace.dart`, `expand_phase_planner_gp_blocker_peace.dart`) so `colonial_pressure.dart` can be deleted in the S1 wrap-up. Migrated callers (no `colonial_pressure.dart` import) on current `dev`:
+
+- `diplomatic_candidate_scoring.dart` (and its `_declare_war` / `_declare_war_bonuses` / `_offer_peace` part files which inherit imports from the parent library)
+- `conquest_planner.dart`
+- `economy_planner.dart`
+- `diplomacy_planner_declare_war_targets.dart`
+
+Remaining production callers of `colonial_pressure.dart` (slated for follow-up slices): `diplomacy_planner.dart` (which still re-exports legacy names from `colonial_pressure.dart` for fixture-compat) and `diplomacy_planner_peace_targets.dart` (in-file collectors). Legacy `colonial_pressure_*_test.dart` fixtures continue to pin the delegating stubs directly until both production caller chains are migrated.
+
 ## Acceptance criteria
 
 - Given a GP in EXPAND with non-empty `ConquestSummary.invadableProvinceIdsSorted` and a minor in `adjacentOwnerFactionIdsSorted` owning such a province, when `planExpandDeclareWar(game, snapshot)` runs, then it returns that minor's `factionId` (deterministic).
