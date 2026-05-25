@@ -344,30 +344,19 @@ bool pendingDeclareWarFrom({
 
 /// Peace at-war Great Powers that lead by [kUnwinnableSoleGpMinProvinceDeficit]
 /// or more while below the observer quota (even with minor wars; Refs #2509).
+///
+/// Delegates to [expand_phase_planner.stalledBelowQuotaGpLeadPeaceTargets]
+/// (Refs #2509 S1) so the EXPAND-phase below-quota lead-peace decider
+/// survives the planned deletion of this file alongside the canonical
+/// helpers it composes ([expand_phase_planner.isOldWorldGpOnlyInvadableFrontier]
+/// and [expand_phase_planner.primaryInvadableOldWorldGpBlocker]).
 List<String> stalledBelowQuotaGpLeadPeaceTargets({
   required Game game,
   required AIWorldSnapshot snapshot,
-}) {
-  if (!isBelowObserverConquestQuota(snapshot.conquest.oldWorldProvincesOwned)) {
-    return const [];
-  }
-  final own = snapshot.conquest.oldWorldProvincesOwned;
-  final minLeadDeficit = own <= kObserverDefaultStartOldWorldProvincesPerGp
-      ? kUnwinnableSoleGpMinProvinceDeficit
-      : 1;
-  final invadableBlocker =
-      isOldWorldGpOnlyInvadableFrontier(game: game, snapshot: snapshot)
-      ? primaryInvadableOldWorldGpBlocker(game: game, snapshot: snapshot)
-      : null;
-  final targets = <String>[
-    for (final factionId in snapshot.threats.atWarWith)
-      if (game.playerById(factionId) != null &&
-          factionId != invadableBlocker &&
-          provinceCountOwnedBy(game, factionId) >= own + minLeadDeficit)
-        factionId,
-  ]..sort();
-  return targets;
-}
+}) => expand_phase_planner.stalledBelowQuotaGpLeadPeaceTargets(
+  game: game,
+  snapshot: snapshot,
+);
 
 /// Peace every below-quota Great Power at war once this GP meets the observer
 /// quota (stop mop-up wars after the frontier is cleared; Refs #2509).
@@ -406,24 +395,21 @@ List<String> quotaMetFutileBelowQuotaGpPeaceTargets({
 /// remain on the map (avoid OW elimination; Refs #2509).
 ///
 /// Peace all GP wars when critically weak (≤6 OW) or stalled with minors left.
+///
+/// Delegates to [expand_phase_planner.criticalOwHoldPeaceTargets]
+/// (Refs #2509 S1) so the EXPAND-phase critical-hold peace decider
+/// survives the planned deletion of this file alongside the canonical
+/// sibling below-quota peace deciders (
+/// [expand_phase_planner.stalledBelowQuotaGpLeadPeaceTargets],
+/// [expand_phase_planner.unwinnableSoleGpFrontierPeaceTarget],
+/// [expand_phase_planner.consolidateGainsSoleGpPeaceTarget]).
 List<String> criticalOwHoldPeaceTargets({
   required Game game,
   required AIWorldSnapshot snapshot,
-}) {
-  final ownOw = snapshot.conquest.oldWorldProvincesOwned;
-  final targets = <String>[
-    for (final factionId in snapshot.threats.atWarWith)
-      if (game.playerById(factionId) != null) factionId,
-  ]..sort();
-  if (targets.isEmpty) {
-    return const [];
-  }
-  if (isBelowObserverConquestQuota(ownOw) &&
-      ownOw <= kFewOldWorldProvincesDefendThreshold) {
-    return targets;
-  }
-  return const [];
-}
+}) => expand_phase_planner.criticalOwHoldPeaceTargets(
+  game: game,
+  snapshot: snapshot,
+);
 
 /// Peace the sole GP enemy when the observer OW quota is met and this GP leads.
 ///
