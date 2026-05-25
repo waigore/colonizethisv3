@@ -226,28 +226,26 @@ List<String> stalledExpansionDistractionPeaceTargets({
 }
 
 /// When OW holdings are critically low (≤6), peace every stronger at-war GP (Refs #2509).
+///
+/// Delegates to [expand_phase_planner.criticalWeakGpSurvivalPeaceTargets]
+/// (Refs #2509 S1) so the EXPAND-phase critical-survival peace decider
+/// survives the planned deletion of this file alongside the canonical
+/// sibling survival deciders ([expand_phase_planner.stalledZeroRegimentGpPeaceTargets],
+/// [expand_phase_planner.stalledZeroRegimentAllFactionPeaceTargets],
+/// [expand_phase_planner.mutualZeroRegimentGpStalematePeaceTargets],
+/// [expand_phase_planner.mutualExhaustedBelowQuotaGpStalematePeaceTargets]).
+/// Retained here as a thin stub for the legacy
+/// `diplomacy_planner_mutual_exhausted_peace_test.dart` and
+/// `diplomacy_planner_stalled_peace_test.dart` fixtures and the in-file
+/// `_survivalGreatPowerPeaceTargets` / `stalledOwExpansionNeedsPeacePass`
+/// consumer chains until the planned S1 deletion of this file.
 List<String> criticalWeakGpSurvivalPeaceTargets({
   required Game game,
   required AIWorldSnapshot snapshot,
-}) {
-  if (snapshot.conquest.oldWorldProvincesOwned >
-      kFewOldWorldProvincesDefendThreshold) {
-    return const [];
-  }
-  final ownOw = snapshot.conquest.oldWorldProvincesOwned;
-  final minLead = ownOw <= kObserverDefaultStartOldWorldProvincesPerGp + 1
-      ? 1
-      : isBelowObserverConquestQuota(ownOw)
-      ? kUnwinnableSoleGpMinProvinceDeficit
-      : kDeclareWarAggressorSuppressWeakGpLeadThreshold;
-  final targets = <String>[
-    for (final factionId in snapshot.threats.atWarWith)
-      if (game.playerById(factionId) != null &&
-          provinceCountOwnedBy(game, factionId) >= ownOw + minLead)
-        factionId,
-  ]..sort();
-  return targets;
-}
+}) => expand_phase_planner.criticalWeakGpSurvivalPeaceTargets(
+  game: game,
+  snapshot: snapshot,
+);
 
 /// Peace the invadable OW frontier GP while critically weak and outmatched
 /// (pivot to minors/tribes instead of unwinnable GP wars; Refs #2509).
@@ -297,27 +295,24 @@ List<String> weakHoldingsInvadableBlockerPeaceTargets({
 
 /// When OW holdings are critically low, peace non-blocker Great Power fronts only
 /// (avoid total collapse from multi-front GP wars; Refs #2509).
+///
+/// Delegates to [expand_phase_planner.criticalMultiFrontGpPeaceTargets]
+/// (Refs #2509 S1) so the EXPAND-phase critical multi-front peace
+/// decider survives the planned deletion of this file alongside the
+/// canonical [expand_phase_planner.multiFrontNonBlockerGpPeaceTargets]
+/// helper it composes. Retained here as a thin stub for the legacy
+/// `diplomacy_planner_below_quota_peace_part3_test.dart` and
+/// `diplomacy_planner_stalled_peace_test.dart` fixtures and the in-file
+/// `_expandRatchetGreatPowerPeaceTargets` /
+/// `stalledOwExpansionNeedsPeacePass` consumer chains until the planned
+/// S1 deletion of this file.
 List<String> criticalMultiFrontGpPeaceTargets({
   required Game game,
   required AIWorldSnapshot snapshot,
-}) {
-  if (!isObserverConquestExpansionPressure(
-        snapshot.conquest.oldWorldProvincesOwned,
-      ) &&
-      !isAtObserverConquestQuotaBand(
-        snapshot.conquest.oldWorldProvincesOwned,
-      )) {
-    return const [];
-  }
-  final gpWars = <String>[
-    for (final factionId in snapshot.threats.atWarWith)
-      if (game.playerById(factionId) != null) factionId,
-  ];
-  if (gpWars.length < 2) {
-    return const [];
-  }
-  return multiFrontNonBlockerGpPeaceTargets(game: game, snapshot: snapshot);
-}
+}) => expand_phase_planner.criticalMultiFrontGpPeaceTargets(
+  game: game,
+  snapshot: snapshot,
+);
 
 /// Below-quota GPs with too few regiments to split across multiple minor wars:
 /// peace every at-war minor except the focused invadable frontier (Refs #2509).
@@ -377,9 +372,9 @@ List<String> stalledZeroRegimentGpPeaceTargets({
   required Game game,
   required AIWorldSnapshot snapshot,
 }) => expand_phase_planner.stalledZeroRegimentGpPeaceTargets(
-      game: game,
-      snapshot: snapshot,
-    );
+  game: game,
+  snapshot: snapshot,
+);
 
 /// Peace a sole GP enemy when both sides have zero regiments (stalemate reset).
 ///
@@ -394,9 +389,9 @@ List<String> mutualZeroRegimentGpStalematePeaceTargets({
   required Game game,
   required AIWorldSnapshot snapshot,
 }) => expand_phase_planner.mutualZeroRegimentGpStalematePeaceTargets(
-      game: game,
-      snapshot: snapshot,
-    );
+  game: game,
+  snapshot: snapshot,
+);
 
 /// Peace the sole at-war GP when both sides are mutual-plateau peers below
 /// quota and mutually exhausted in regiments and treasury (Refs #2509).
