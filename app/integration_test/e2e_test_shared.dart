@@ -33,6 +33,7 @@ export 'e2e_test_shared_fleet_reach_loop_test_total_meta.dart';
 export 'e2e_test_shared_fleet_reach_scenario_preamble.dart';
 export 'e2e_test_shared_panel_open_post_tap_probe.dart';
 export 'e2e_test_shared_panel_open_sheet_close.dart';
+export 'e2e_test_shared_panel_open_trigger_attempt.dart';
 export 'e2e_test_shared_panels.dart';
 export 'e2e_test_shared_standard_scenario_opener.dart';
 

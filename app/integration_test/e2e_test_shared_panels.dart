@@ -40,30 +40,21 @@ Future<void> e2eOpenCivilianPanel(
   final empireRailButton = find.byKey(kEmpireCivilianUnitsButtonKey);
   final markerButton = find.byKey(kCtE2EOpenFirstCivilianMarkerPanelKey);
   final civilianPanel = find.byKey(kCtE2ECivilianPanelRootKey);
-  Future<bool> tryOpen(Finder trigger) async {
-    if (civilianPanel.hitTestable().evaluate().isNotEmpty) {
-      return true;
-    }
-    // Shared defensive tap: `ensureVisible` (best-effort) + hit-testable
-    // resolve so a rail/marker pushed off-screen by a transient overlay
-    // still lands a centered tap, matching the naval opener parity fix
-    // landed in PR #2555. Refs GitHub #2336 AC1 / AC10.
-    if (!await e2eEnsureVisibleAndTapHitTestable(tester, trigger)) {
-      return false;
-    }
-    // Shared post-tap mount probe: fast hit-check → one pump → bounded
-    // adaptive poll, with the per-opener 3 s cap preserved verbatim. The
-    // helper keeps civilian/naval/production byte-equivalent on the
-    // post-tap path so drift between the three openers cannot reappear
-    // (Refs GitHub #2336 AC1 / AC10).
-    return e2eAwaitPanelMountAfterOpenerTap(
-      tester,
-      civilianPanel,
-      timeout: const Duration(seconds: 3),
-      perf: perf,
-      phaseName: 'pump_until_civilian_panel_after_trigger_tap',
-    );
-  }
+  // Inner `tryOpen` is the shared three-step attempt (already-hit-testable
+  // short-circuit → defensive [e2eEnsureVisibleAndTapHitTestable] tap →
+  // bounded [e2eAwaitPanelMountAfterOpenerTap] mount probe). Lifted into
+  // [e2eOpenerTapTriggerAndAwaitMount] so the civilian and naval openers
+  // share one canonical `tryOpen` body byte-equivalently and the per-opener
+  // 3 s mount cap and `pump_until_<panel>_panel_after_trigger_tap` phase
+  // label are preserved verbatim. Refs GitHub #2336 AC1 / AC10.
+  Future<bool> tryOpen(Finder trigger) => e2eOpenerTapTriggerAndAwaitMount(
+    tester,
+    trigger: trigger,
+    panelRoot: civilianPanel,
+    mountTimeout: const Duration(seconds: 3),
+    mountPhaseName: 'pump_until_civilian_panel_after_trigger_tap',
+    perf: perf,
+  );
 
   if (civilianPanel.hitTestable().evaluate().isNotEmpty) {
     perf?.timing('open_panel_civilian', sw.elapsed);
@@ -186,31 +177,21 @@ Future<void> e2eOpenNavalPanel(
   final markerButton = find.byKey(kCtE2EOpenFirstFleetMarkerPanelKey);
   final navalPanel = find.byKey(kCtE2ENavalPanelRootKey);
 
-  Future<bool> tryOpen(Finder trigger) async {
-    if (navalPanel.hitTestable().evaluate().isNotEmpty) {
-      return true;
-    }
-    // Shared defensive tap: `ensureVisible` (best-effort) + hit-testable
-    // resolve. This is the canonical inline pattern that PR #2555 inlined
-    // for the naval opener; lifted into [e2eEnsureVisibleAndTapHitTestable]
-    // so the civilian and production openers gain the same off-screen
-    // resilience byte-equivalently. Refs GitHub #2336 AC1 / AC10.
-    if (!await e2eEnsureVisibleAndTapHitTestable(tester, trigger)) {
-      return false;
-    }
-    // Shared post-tap mount probe (bounded poll without fail() so the outer
-    // opener loop can dismiss sheets and retry rail/marker). Same 3 s cap
-    // and phase name the inline body used pre-lift, keeping civilian /
-    // naval byte-equivalent on the post-tap path (Refs GitHub #2336 AC1 /
-    // AC10).
-    return e2eAwaitPanelMountAfterOpenerTap(
-      tester,
-      navalPanel,
-      timeout: const Duration(seconds: 3),
-      perf: perf,
-      phaseName: 'pump_until_naval_panel_after_trigger_tap',
-    );
-  }
+  // Inner `tryOpen` is the shared three-step attempt (already-hit-testable
+  // short-circuit → defensive [e2eEnsureVisibleAndTapHitTestable] tap →
+  // bounded [e2eAwaitPanelMountAfterOpenerTap] mount probe). Lifted into
+  // [e2eOpenerTapTriggerAndAwaitMount] so the civilian and naval openers
+  // share one canonical `tryOpen` body byte-equivalently. Same 3 s cap
+  // and `pump_until_naval_panel_after_trigger_tap` phase label as the
+  // pre-lift inline body. Refs GitHub #2336 AC1 / AC10.
+  Future<bool> tryOpen(Finder trigger) => e2eOpenerTapTriggerAndAwaitMount(
+    tester,
+    trigger: trigger,
+    panelRoot: navalPanel,
+    mountTimeout: const Duration(seconds: 3),
+    mountPhaseName: 'pump_until_naval_panel_after_trigger_tap',
+    perf: perf,
+  );
 
   if (navalPanel.hitTestable().evaluate().isNotEmpty) {
     perf?.timing('open_panel_naval', sw.elapsed);
@@ -345,18 +326,18 @@ Future<void> e2eOpenPanelFromMarker(
       continue;
     }
     await tester.tap(tappable.first, warnIfMissed: false);
-    if (panelRoot.evaluate().isNotEmpty) {
-      perf?.timing('open_panel_from_marker', sw.elapsed);
-      return;
-    }
-    await tester.pump();
-    if (panelRoot.evaluate().isNotEmpty) {
-      perf?.timing('open_panel_from_marker', sw.elapsed);
-      return;
-    }
-    if (await e2ePumpUntilConditionOrIdle(
+    // Shared post-tap mount probe: byte-equivalent to the pre-lift inline
+    // "fast hit-check → one explicit pump → bounded
+    // [e2ePumpUntilConditionOrIdle] (3 s cap)" recipe so a regression that
+    // dropped the post-pump fast-check on `e2eOpenPanelFromMarker` would
+    // surface alongside the panel-opener pins for the same recipe. The
+    // helper preserves the `pump_until_marker_panel_root_after_tap` phase
+    // label so downstream `E2E_TIMING|phase=...` log scrapers keep
+    // attributing post-tap settle time here. Refs GitHub #2336 AC1 / AC2 /
+    // AC10 (follow-up slice from PR #2782).
+    if (await e2eAwaitPanelMountAfterOpenerTap(
       tester,
-      () => panelRoot.evaluate().isNotEmpty,
+      panelRoot,
       timeout: const Duration(seconds: 3),
       perf: perf,
       phaseName: 'pump_until_marker_panel_root_after_tap',

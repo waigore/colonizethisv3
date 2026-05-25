@@ -54,6 +54,7 @@ export 'e2e_test_shared.dart'
         e2eNonHomeHumanFleetInNewWorldFromCtSnapshot,
         e2eNwCoastalProvincesAdjacentToFleetSea,
         e2eOldWorldRegionChipAppearsSelected,
+        e2eOpenerTapTriggerAndAwaitMount,
         e2ePickFirstValidWorkTileAndAwaitOverlayClear,
         e2ePickMoveDestinationAndConfirm,
         e2eTryNavalMoveSegment,
@@ -191,6 +192,32 @@ Future<void> closePanelOpenerSheetAndAwaitOpener(
   bottomSheetCloseTimeout: bottomSheetCloseTimeout,
   sheetClearTimeout: sheetClearTimeout,
   awaitOpenerTimeout: awaitOpenerTimeout,
+);
+
+/// Stable public name for [e2eOpenerTapTriggerAndAwaitMount] (Refs GitHub
+/// #2336 AC1 / AC2 / AC10). Forwards to the implementation in
+/// `e2e_test_shared_panel_open_trigger_attempt.dart` (re-exported via
+/// `e2e_test_shared.dart`). The shared inner-attempt composition
+/// (panel-already-hit-testable short-circuit → defensive
+/// [ensureVisibleAndTapHitTestable] tap → [awaitPanelMountAfterOpenerTap]
+/// bounded mount probe) is consumed indirectly by [openCivilianPanel] /
+/// [openNavalPanel] today; the alias is re-exposed so future scenarios
+/// can compose the same `tryOpen` recipe after their own opener taps
+/// without duplicating the three-step body.
+Future<bool> openerTapTriggerAndAwaitMount(
+  WidgetTester tester, {
+  required Finder trigger,
+  required Finder panelRoot,
+  required Duration mountTimeout,
+  required String mountPhaseName,
+  E2ePerfLog? perf,
+}) => e2eOpenerTapTriggerAndAwaitMount(
+  tester,
+  trigger: trigger,
+  panelRoot: panelRoot,
+  mountTimeout: mountTimeout,
+  mountPhaseName: mountPhaseName,
+  perf: perf,
 );
 
 /// Stable public name for [e2eDismissCtDialogShellIfPresent] so the
