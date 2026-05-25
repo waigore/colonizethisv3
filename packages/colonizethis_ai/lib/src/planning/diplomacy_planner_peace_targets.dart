@@ -55,10 +55,6 @@ List<String> stalledFutileGpPeaceTargets({
   snapshot: snapshot,
 );
 
-bool _isMinorOrTribeFaction(Game game, String factionId) =>
-    game.minorNations.any((m) => m.id == factionId) ||
-    game.tribes.any((t) => t.id == factionId);
-
 /// At-war minor with the most invadable Old World provinces (single-front focus).
 ///
 /// Delegates to [expand_phase_planner.stalledFocusMinorTarget]
@@ -106,45 +102,26 @@ List<String> atWarGpDistractionTribePeaceTargets({
 );
 
 /// Peace every at-war minor/tribe except the focused minor or GP blocker war.
+///
+/// Delegates to
+/// [expand_phase_planner.stalledExpansionDistractionPeaceTargets]
+/// (Refs #2509 S1) so the EXPAND-phase distraction-peace decider
+/// survives the planned deletion of this file alongside the canonical
+/// helpers it composes ([expand_phase_planner.isStalledOldWorldExpansion],
+/// [expand_phase_planner.isStalledOldWorldGpBlockerFocus],
+/// [expand_phase_planner.primaryInvadableOldWorldGpBlocker],
+/// [expand_phase_planner.stalledFocusMinorTarget]). Retained here as a
+/// thin stub for the legacy `diplomacy_planner_stalled_peace_test.dart`
+/// fixture and the in-file `_expandRatchetGreatPowerPeaceTargets` /
+/// `stalledOwExpansionNeedsPeacePass` consumer chains until the
+/// planned S1 deletion of this file.
 List<String> stalledExpansionDistractionPeaceTargets({
   required Game game,
   required AIWorldSnapshot snapshot,
-}) {
-  if (!isStalledOldWorldExpansion(snapshot.conquest.oldWorldProvincesOwned)) {
-    return const [];
-  }
-  if (snapshot.threats.atWarWith.isEmpty) {
-    return const [];
-  }
-  final provinceOwner = getProvinceOwnerMap(game);
-  final minorsOwnInvadable = snapshot.conquest.invadableProvinceIdsSorted.any((
-    pid,
-  ) {
-    final owner = provinceOwner[pid];
-    return owner != null && game.minorNations.any((m) => m.id == owner);
-  });
-  final gpBlockerFocus = isStalledOldWorldGpBlockerFocus(
-    game: game,
-    snapshot: snapshot,
-  );
-  if (!minorsOwnInvadable && !gpBlockerFocus) {
-    return const [];
-  }
-  final keepMinor = minorsOwnInvadable
-      ? stalledFocusMinorTarget(game: game, snapshot: snapshot)
-      : null;
-  final keepGp = gpBlockerFocus
-      ? primaryInvadableOldWorldGpBlocker(game: game, snapshot: snapshot)
-      : null;
-  final targets = <String>[
-    for (final factionId in snapshot.threats.atWarWith)
-      if (factionId != keepMinor &&
-          factionId != keepGp &&
-          _isMinorOrTribeFaction(game, factionId))
-        factionId,
-  ]..sort();
-  return targets;
-}
+}) => expand_phase_planner.stalledExpansionDistractionPeaceTargets(
+  game: game,
+  snapshot: snapshot,
+);
 
 /// When OW holdings are critically low (≤6), peace every stronger at-war GP (Refs #2509).
 ///
