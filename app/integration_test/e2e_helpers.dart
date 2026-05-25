@@ -34,6 +34,7 @@ export 'e2e_test_shared.dart'
         e2eBundledExploreRejectionDiagnostics,
         e2eCheckExploreEnabledFromCivilianPanel,
         e2eClosePanelOpenerSheetAndAwaitOpener,
+        e2eDismissAlertDialogIfPresent,
         e2eDismissCtDialogShellIfPresent,
         e2eDismissCtDialogShellWithPopRouteEscalation,
         e2eDismissSnackBarIfPresent,
@@ -66,6 +67,8 @@ export 'e2e_test_shared.dart'
         e2ePickMoveDestinationAndConfirm,
         e2eTryNavalMoveSegment,
         e2ePlayerHasAnyNewWorldFoggedOrBetterFromCtSnapshot,
+        kE2eDefaultAlertDialogDismissLabels,
+        kE2eDefaultAlertDialogDismissTimeout,
         kE2eDefaultBundledExploreMaxTurnRetries,
         kE2eDefaultBundledExploreReadinessMaxTurns,
         kE2eDefaultBundledExploreRetryIterationCounter,
@@ -267,6 +270,26 @@ Future<void> openPanelViaRailOrMarker(
   bottomSheetCloseTimeout: bottomSheetCloseTimeout,
   mountTimeout: mountTimeout,
   perf: perf,
+);
+
+/// Stable public name for [e2eDismissAlertDialogIfPresent] (Refs GitHub
+/// #2336 AC1 / AC2 / Bottleneck 6). Forwards to the implementation in
+/// `e2e_test_shared_dismiss_alert_dialog.dart` (re-exported via
+/// `e2e_test_shared.dart`). The shared AlertDialog-dismiss recipe is
+/// consumed indirectly by [dismissTransientUi] today; the alias is
+/// re-exposed so future scenarios that need a focused AlertDialog-only
+/// dismissal (without triggering the SnackBar / BottomSheet / CtDialogShell
+/// fallback branches of the broad sweep) can compose it directly.
+Future<bool> dismissAlertDialogIfPresent(
+  WidgetTester tester, {
+  E2ePerfLog? perf,
+  Duration dismissTimeout = kE2eDefaultAlertDialogDismissTimeout,
+  List<String> dismissLabels = kE2eDefaultAlertDialogDismissLabels,
+}) => e2eDismissAlertDialogIfPresent(
+  tester,
+  perf: perf,
+  dismissTimeout: dismissTimeout,
+  dismissLabels: dismissLabels,
 );
 
 /// Stable public name for [e2eDismissCtDialogShellIfPresent] so the
