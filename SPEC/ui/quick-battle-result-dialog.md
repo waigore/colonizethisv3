@@ -1,5 +1,6 @@
 # Quick Battle Result Dialog
 
+**Screen ID:** `CMPT50001` — stable; do not reassign.
 **SPEC/ui** — Modal dialog that presents the outcome of a Quick Battle. Game model: [quick-battle.md](../game/quick-battle.md). Resolver: [quick-battle-resolution.md](../program/quick-battle-resolution.md). Dialog wiring: [app-ui-wiring.md](../program/app-ui-wiring.md). Sibling: [combat-mode-choice-dialog.md](combat-mode-choice-dialog.md).
 
 ---

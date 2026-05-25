@@ -1,5 +1,6 @@
 # Player Turn Event Feed (map overlay + news toggle)
 
+**Screen ID:** `OVL70001` — stable; do not reassign.
 **SPEC/ui** - Human-player-scoped turn outcomes feed rendered over the in-game map. Uses existing bus wiring (`GameEventBus -> GameEventBridge -> AppEventBus`) and commits one batch per resolved turn.
 
 ---
