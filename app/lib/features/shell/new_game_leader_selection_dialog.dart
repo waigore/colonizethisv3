@@ -4,6 +4,7 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:flutter/material.dart';
 
+import 'package:colonizethis_app/config/ui_screen_ids.dart';
 import 'package:colonizethis_app/l10n/l10n.dart';
 import 'package:colonizethis_app/widgets/ct_dialog_shell.dart';
 import 'package:colonizethis_app/widgets/ct_dropdown.dart';
@@ -23,6 +24,9 @@ class NewGameLeaderSelectionDialog extends StatefulWidget {
     required this.onCancel,
     required this.onConfirmed,
   });
+
+  /// SPEC/ui/new-game-leader-selection-dialog.md — [UiScreenIds.newGameLeaderSelectionDialog].
+  static const screenId = UiScreenIds.newGameLeaderSelectionDialog;
 
   /// Template for non-GP fields; [GameSetupConfig.selectedGreatPowerIds] supplies initial six nations.
   final GameSetupConfig baseConfig;

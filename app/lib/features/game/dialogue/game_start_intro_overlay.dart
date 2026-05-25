@@ -1,4 +1,5 @@
 import 'package:colonizethis_app/config/app_assets.dart';
+import 'package:colonizethis_app/config/ui_screen_ids.dart';
 import 'package:colonizethis_app/package_logger.dart';
 import 'package:colonizethis_app/perf/app_perf_trace.dart';
 import 'package:flutter/services.dart';
@@ -35,6 +36,9 @@ class GameStartIntroOverlay extends StatefulWidget {
     /// When set (e.g. in tests), used to load the Yarn asset instead of [rootBundle].
     this.assetBundle,
   });
+
+  /// SPEC/ui/game-start-intro-overlay.md — [UiScreenIds.gameStartIntroOverlay].
+  static const screenId = UiScreenIds.gameStartIntroOverlay;
 
   final VoidCallback onDismissed;
   final Widget child;

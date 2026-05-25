@@ -1,6 +1,7 @@
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_app/config/app_assets.dart';
+import 'package:colonizethis_app/config/ui_screen_ids.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:colonizethis_app/package_logger.dart';
@@ -26,6 +27,9 @@ class OvertureDialogueOverlay extends StatefulWidget {
     /// When true, skip Jenny intro and show list immediately. For tests only.
     this.skipIntroForTest = false,
   });
+
+  /// SPEC/ui/overture-dialogue-overlay.md — [UiScreenIds.overtureDialogueOverlay].
+  static const screenId = UiScreenIds.overtureDialogueOverlay;
 
   final Game game;
   final List<OvertureOffer> pendingOvertures;

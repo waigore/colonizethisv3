@@ -5,11 +5,13 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../config/ui_screen_ids.dart';
 import '../../../providers/app_event_bus_provider.dart';
 import '../../../providers/game_service_provider.dart';
 import '../../../providers/games_provider.dart';
 import '../../../widgets/ct_game_feature_screen_shell.dart';
-import '../shell_player_context.dart' show shellPanelsNotDefined, shellPlayerContextProvider;
+import '../shell_player_context.dart'
+    show shellPanelsNotDefined, shellPlayerContextProvider;
 import '../widgets/observe_mode_not_defined_panel.dart';
 import '../widgets/diplomacy_panel.dart';
 import '../widgets/grant_or_subsidy_listener.dart';
@@ -20,6 +22,9 @@ class DiplomacyScreen extends ConsumerWidget {
     required this.game,
     required this.humanPlayerId,
   });
+
+  /// SPEC/ui/diplomacy-panel.md — [UiScreenIds.diplomacyScreen].
+  static const screenId = UiScreenIds.diplomacyScreen;
 
   final Game game;
   final String humanPlayerId;
@@ -45,8 +50,9 @@ class DiplomacyScreen extends ConsumerWidget {
         } on Object {
           // Widget tests may not initialize Hive-backed game service providers.
         }
-        final readOnly =
-            !shellRef.read(shellPlayerContextProvider).canMutateViaUi;
+        final readOnly = !shellRef
+            .read(shellPlayerContextProvider)
+            .canMutateViaUi;
         return GrantOrSubsidyListener(
           bus: bus,
           game: displayGame,
