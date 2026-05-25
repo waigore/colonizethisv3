@@ -1,10 +1,12 @@
 // Military units panel. SPEC/ui/military-units-panel.md, SPEC/ui/military-units-army-management.md.
 
 import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:colonizethis_logic/colonizethis_logic.dart' show buildPlayerView;
+import 'package:colonizethis_logic/colonizethis_logic.dart'
+    show buildPlayerView;
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
 
+import '../../../config/ui_screen_ids.dart';
 import '../../../core/services/app_event_handler_scope.dart'
     show trainMilitaryDialogId;
 import '../../../l10n/l10n.dart';
@@ -28,6 +30,9 @@ class MilitaryUnitsPanel extends StatefulWidget {
     required this.draftOrders,
     this.readOnly = false,
   });
+
+  /// SPEC/ui/military-units-panel.md — [UiScreenIds.militaryUnitsPanel].
+  static const screenId = UiScreenIds.militaryUnitsPanel;
 
   final Game game;
   final String humanPlayerId;
@@ -128,8 +133,8 @@ class _MilitaryUnitsPanelState extends State<MilitaryUnitsPanel> {
     final groups = buildMilitaryGroups(widget.game, widget.humanPlayerId);
     final flat = flattenMilitaryArmyBlocks(groups);
     final hasAny = groups.isNotEmpty;
-    final canCombine = !widget.readOnly &&
-        canCombineArmySelection(flat, _selectedArmyIds);
+    final canCombine =
+        !widget.readOnly && canCombineArmySelection(flat, _selectedArmyIds);
     final headerCheckbox = _headerSelectAllValue(flat);
     final readOnly = widget.readOnly;
 
@@ -244,7 +249,8 @@ class _MilitaryUnitsPanelState extends State<MilitaryUnitsPanel> {
       onSplit: widget.readOnly || block.army.regimentUnitIds.length < 2
           ? null
           : () => _openSplitDialog(block),
-      onMove: widget.readOnly ||
+      onMove:
+          widget.readOnly ||
               block.army.isHomeArmy ||
               block.army.regimentUnitIds.isEmpty
           ? null

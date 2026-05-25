@@ -8,6 +8,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
 
 import '../../../config/ct_e2e.dart';
+import '../../../config/ui_screen_ids.dart';
 import '../../../l10n/l10n.dart';
 import '../utils/map_location_resolver.dart';
 import '../utils/sea_zone_name_resolver.dart';
@@ -156,6 +157,9 @@ class MoveFleetDialog extends StatefulWidget {
     required this.fleet,
     required this.bus,
   });
+
+  /// SPEC/ui/move-fleet-dialog.md — [UiScreenIds.moveFleetDialog].
+  static const screenId = UiScreenIds.moveFleetDialog;
 
   final Game game;
   final MapTopology topology;

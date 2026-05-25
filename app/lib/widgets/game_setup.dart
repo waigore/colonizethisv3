@@ -2,6 +2,7 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:flutter/material.dart';
 
 import '../config/constants.dart';
+import '../config/ui_screen_ids.dart';
 import '../l10n/l10n.dart';
 import 'ct_dropdown.dart';
 import 'ct_loading_indicator.dart';
@@ -42,6 +43,9 @@ class CtGameSetup extends StatefulWidget {
     required this.onStartGame,
     required this.onBack,
   });
+
+  /// SPEC/ui/game-setup.md — [UiScreenIds.gameSetup].
+  static const screenId = UiScreenIds.gameSetup;
 
   final GameSetupVariant variant;
   final GameSetupState state;

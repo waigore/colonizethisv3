@@ -5,6 +5,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../config/ui_screen_ids.dart';
 import '../../../providers/games_provider.dart';
 import '../../../widgets/ct_game_feature_screen_shell.dart';
 import '../shell_player_context.dart';
@@ -16,6 +17,9 @@ import '../widgets/technology_panel.dart';
 /// SPEC/ui/tech-tree-widget.md.
 class TechnologyScreen extends ConsumerWidget {
   const TechnologyScreen({super.key, required this.game, required this.player});
+
+  /// SPEC/ui/technology-panel.md — [UiScreenIds.technologyScreen].
+  static const screenId = UiScreenIds.technologyScreen;
 
   final Game game;
   final Player player;
@@ -31,7 +35,9 @@ class TechnologyScreen extends ConsumerWidget {
           return const ObserveModeNotDefinedPanel(title: 'Technology');
         }
         final displayPlayer = displayGame.playerById(player.id)!;
-        final canEdit = shellRef.read(shellPlayerContextProvider).canMutateViaUi;
+        final canEdit = shellRef
+            .read(shellPlayerContextProvider)
+            .canMutateViaUi;
         return DefaultTabController(
           length: 2,
           child: Column(
