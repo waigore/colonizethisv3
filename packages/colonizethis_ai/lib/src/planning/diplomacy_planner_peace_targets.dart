@@ -6,114 +6,37 @@ import 'expand_phase_planner.dart' as expand_phase_planner;
 import 'observer_goal_phase.dart';
 
 /// Strongest at-war GP that owns invadable OW provinces while this GP is stalled.
+///
+/// Delegates to [expand_phase_planner.stalledStrongerGpBlockerPeaceTarget]
+/// (Refs #2509 S1) so the EXPAND-phase stronger-blocker peace decider
+/// survives the planned deletion of this file alongside the canonical
+/// [expand_phase_planner.stalledGpBlockerFocusPeaceTargets] sibling and
+/// the in-file `_expandRatchetGreatPowerPeaceTargets` /
+/// `stalledOwExpansionNeedsPeacePass` consumer chains.
 String? stalledStrongerGpBlockerPeaceTarget({
   required Game game,
   required AIWorldSnapshot snapshot,
-}) {
-  if (!isStalledOldWorldExpansion(snapshot.conquest.oldWorldProvincesOwned)) {
-    return null;
-  }
-  if (snapshot.conquest.invadableProvinceIdsSorted.isEmpty) {
-    return null;
-  }
-  final provinceOwner = getProvinceOwnerMap(game);
-  final minorsOwnInvadable = snapshot.conquest.invadableProvinceIdsSorted.any((
-    pid,
-  ) {
-    final owner = provinceOwner[pid];
-    return owner != null && game.minorNations.any((m) => m.id == owner);
-  });
-  final gpBlockerFocus = isStalledOldWorldGpBlockerFocus(
-    game: game,
-    snapshot: snapshot,
-  );
-  if (!minorsOwnInvadable && !gpBlockerFocus) {
-    return null;
-  }
-  if (gpBlockerFocus) {
-    final anyMinorOwnsOw = game.worldState.oldWorld.provinces.any(
-      (p) =>
-          p.ownerId != null &&
-          p.ownerId!.isNotEmpty &&
-          game.minorNations.any((m) => m.id == p.ownerId),
-    );
-    if (!anyMinorOwnsOw) {
-      return null;
-    }
-  }
-  final primaryBlocker = primaryInvadableOldWorldGpBlocker(
-    game: game,
-    snapshot: snapshot,
-  );
-  String? bestFactionId;
-  var bestLead = 0;
-  for (final factionId in snapshot.threats.atWarWith) {
-    if (game.playerById(factionId) == null) continue;
-    if (factionId == primaryBlocker) continue;
-    final ownsInvadable = snapshot.conquest.invadableProvinceIdsSorted.any(
-      (pid) => provinceOwner[pid] == factionId,
-    );
-    if (!ownsInvadable) continue;
-    final lead =
-        provinceCountOwnedBy(game, factionId) -
-        snapshot.conquest.oldWorldProvincesOwned;
-    if (lead <= 0) continue;
-    if (lead > bestLead) {
-      bestLead = lead;
-      bestFactionId = factionId;
-    }
-  }
-  return bestFactionId;
-}
+}) => expand_phase_planner.stalledStrongerGpBlockerPeaceTarget(
+  game: game,
+  snapshot: snapshot,
+);
 
 /// Factions at war with this GP to peace while a single GP owns the invadable OW
 /// frontier (minors, tribes, and other GPs are distractions; Refs #2509).
+///
+/// Delegates to [expand_phase_planner.stalledGpBlockerFocusPeaceTargets]
+/// (Refs #2509 S1) so the EXPAND-phase GP-blocker-focus peace decider
+/// survives the planned deletion of this file alongside the legacy
+/// `colonial_pressure_test.dart` fixture and the in-file
+/// `_expandRatchetGreatPowerPeaceTargets` /
+/// `stalledOwExpansionNeedsPeacePass` consumer chains.
 List<String> stalledGpBlockerFocusPeaceTargets({
   required Game game,
   required AIWorldSnapshot snapshot,
-}) {
-  if (!isOldWorldGpOnlyInvadableFrontier(game: game, snapshot: snapshot)) {
-    return const [];
-  }
-  final provinceOwner = getProvinceOwnerMap(game);
-  final minorsOwnInvadable = snapshot.conquest.invadableProvinceIdsSorted.any((
-    pid,
-  ) {
-    final owner = provinceOwner[pid];
-    return owner != null && game.minorNations.any((m) => m.id == owner);
-  });
-  final gpWars = <String>[
-    for (final factionId in snapshot.threats.atWarWith)
-      if (game.playerById(factionId) != null) factionId,
-  ];
-  final blocker = primaryInvadableOldWorldGpBlocker(
-    game: game,
-    snapshot: snapshot,
-  );
-  if (blocker == null) {
-    return const [];
-  }
-  if (minorsOwnInvadable && gpWars.length <= 1) {
-    // Sole GP war on a mixed frontier must still drop non-blocker fronts
-    // (seed-42 gp4/gp5 vs gp3 blocker; Refs #2509).
-    if (gpWars.length == 1 && gpWars.single != blocker) {
-      return [gpWars.single];
-    }
-    return const [];
-  }
-  if (minorsOwnInvadable) {
-    final targets = <String>[
-      for (final factionId in gpWars)
-        if (factionId != blocker) factionId,
-    ]..sort();
-    return targets;
-  }
-  final targets = <String>[
-    for (final factionId in snapshot.threats.atWarWith)
-      if (factionId != blocker) factionId,
-  ]..sort();
-  return targets;
-}
+}) => expand_phase_planner.stalledGpBlockerFocusPeaceTargets(
+  game: game,
+  snapshot: snapshot,
+);
 
 /// At-war Great Powers that own none of this GP's invadable Old World provinces
 /// while minors still hold invadable land (distracting GP wars; Refs #2509).
