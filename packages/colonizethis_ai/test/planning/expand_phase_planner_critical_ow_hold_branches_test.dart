@@ -23,7 +23,7 @@
 //
 // Sibling coverage that this file complements (but does not duplicate):
 //
-//   - `colonial_pressure_test.dart` contains a **single** happy-path
+//   - `expand_phase_planner_peer_peace_basic_test.dart` contains a **single** happy-path
 //     test (`'includes GP wars at exactly six OW provinces'`) that
 //     covers the at-threshold fire path (`own == 6`) and the GP filter
 //     against an empty atWarWith implicitly. **All other branches are
@@ -31,8 +31,8 @@
 //     above-threshold-below-quota no-fire shape, the at-quota no-fire
 //     shape, the strictly-below-threshold extreme fire shape, and the
 //     ascending sort with multiple GP targets.
-//   - `colonial_pressure_below_quota_peace_treasury_recovery_branches_test.dart`
-//     and `colonial_pressure_below_quota_peace_insufficient_regiments_test.dart`
+//   - `expand_phase_planner_below_quota_peace_treasury_recovery_branches_test.dart`
+//     and `expand_phase_planner_below_quota_peace_insufficient_regiments_branches_test.dart`
 //     pin sibling below-quota peace families that share part of the
 //     OW critical band; they do **not** read this helper.
 //   - `diplomacy_planner_peace_targets.dart` invokes
@@ -142,10 +142,7 @@ void main() {
         ],
         minorNations: const [MinorNation(id: 'minor_a', displayName: 'M')],
       );
-      final snapshot = _focusSnapshot(
-        focusOw: 5,
-        atWarWith: const ['minor_a'],
-      );
+      final snapshot = _focusSnapshot(focusOw: 5, atWarWith: const ['minor_a']);
 
       expect(
         criticalOwHoldPeaceTargets(game: game, snapshot: snapshot),

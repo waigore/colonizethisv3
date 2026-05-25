@@ -107,8 +107,8 @@ const int _kMaxPeerOwGapWithoutMinors = 1;
 /// GPs that fail [isBelowObserverConquestQuota] are dropped silently.
 ///
 /// `colonial_pressure.dart` retains a thin delegating stub for legacy
-/// callers (the existing `colonial_pressure_test.dart` and
-/// `colonial_pressure_peer_gap_boundary_test.dart` fixtures, the
+/// callers (the existing `expand_phase_planner_peer_peace_basic_test.dart` and
+/// `expand_phase_planner_peer_gap_boundary_test.dart` fixtures, the
 /// `diplomacy_planner.dart` /
 /// `diplomacy_planner_peace_targets.dart` /
 /// `diplomatic_candidate_scoring_offer_peace.dart` consumer chain, and

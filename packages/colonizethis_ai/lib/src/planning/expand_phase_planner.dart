@@ -318,7 +318,7 @@ bool hasUninvadedOldWorldMinor({
 /// the default no-peace path when no sole-GP foe is identified.
 ///
 /// `colonial_pressure.dart` retains a thin delegating stub for legacy
-/// import sites (the `colonial_pressure_sole_at_war_gp_branches_test.dart`
+/// import sites (the `expand_phase_planner_sole_at_war_gp_branches_test.dart`
 /// fixture, the existing `belowQuotaPeerGpPeaceTargets` /
 /// `unwinnableSoleGpFrontierPeaceTarget` / `consolidateGainsSoleGpPeaceTarget`
 /// callers within `colonial_pressure.dart` itself) so the planned S1
@@ -383,7 +383,7 @@ String? soleAtWarGreatPowerId({
 /// returns on the first true arm without walking the remaining checks.
 ///
 /// `colonial_pressure.dart` retains a thin delegating stub for legacy
-/// import sites (the `colonial_pressure_can_pivot_from_sole_gp_war_branches_test.dart`
+/// import sites (the `expand_phase_planner_can_pivot_from_sole_gp_war_branches_test.dart`
 /// fixture and the existing `unwinnableSoleGpFrontierPeaceTarget` caller
 /// within `colonial_pressure.dart` itself) so the planned S1 deletion of
 /// that file leaves no orphan callers.
@@ -462,7 +462,7 @@ bool canPivotFromSoleGpWarAfterPeace({
 /// `colonial_pressure.dart` retains a thin delegating stub for legacy
 /// callers (the `diplomacy_planner_peace_targets.dart` consumer chain
 /// and the
-/// `colonial_pressure_unwinnable_sole_gp_branches_test.dart` fixture)
+/// `expand_phase_planner_unwinnable_sole_gp_branches_test.dart` fixture)
 /// so the planned S1 deletion of that file leaves no orphan callers.
 ///
 /// Pure and deterministic — identical inputs always yield identical
@@ -534,7 +534,7 @@ String? unwinnableSoleGpFrontierPeaceTarget({
 ///
 /// `colonial_pressure.dart` retains a thin delegating stub for legacy
 /// callers (the
-/// `colonial_pressure_consolidate_gains_sole_gp_peace_branches_test.dart`
+/// `expand_phase_planner_consolidate_gains_sole_gp_peace_branches_test.dart`
 /// fixture and the
 /// `diplomatic_candidate_scoring_offer_peace.dart` consumer chain) so
 /// the planned S1 deletion of that file leaves no orphan callers.
@@ -607,7 +607,7 @@ String? consolidateGainsSoleGpPeaceTarget({
 ///      stable order regardless of `atWarWith` iteration order.
 ///
 /// `colonial_pressure.dart` retains a thin delegating stub for legacy
-/// callers (the `colonial_pressure_stalled_below_quota_gp_lead_branches_test.dart`
+/// callers (the `expand_phase_planner_stalled_below_quota_gp_lead_branches_test.dart`
 /// fixture and the
 /// `diplomatic_candidate_scoring_offer_peace.dart` / `diplomacy_planner.dart`
 /// / `diplomacy_planner_peace_targets.dart` consumer chains) so the
@@ -700,7 +700,7 @@ List<String> stalledBelowQuotaGpLeadPeaceTargets({
 ///
 /// `colonial_pressure.dart` retains a thin delegating stub for legacy
 /// callers (the
-/// `colonial_pressure_quota_met_below_quota_at_war_peace_branches_test.dart`
+/// `expand_phase_planner_quota_met_below_quota_at_war_peace_branches_test.dart`
 /// fixture and the `diplomacy_planner.dart` /
 /// `diplomacy_planner_peace_targets.dart` consumer chain) so the
 /// planned S1 deletion of that file leaves no orphan callers.
@@ -763,8 +763,8 @@ List<String> quotaMetBelowQuotaAtWarPeaceTargets({
 ///      threshold).
 ///
 /// `colonial_pressure.dart` retains a thin delegating stub for legacy
-/// callers (the `colonial_pressure_critical_ow_hold_branches_test.dart`
-/// and `colonial_pressure_test.dart` fixtures and the
+/// callers (the `expand_phase_planner_critical_ow_hold_branches_test.dart`
+/// and `expand_phase_planner_peer_peace_basic_test.dart` fixtures and the
 /// `diplomacy_planner.dart` / `diplomacy_planner_peace_targets.dart`
 /// consumer chains) so the planned S1 deletion of that file leaves no
 /// orphan callers.
@@ -851,7 +851,7 @@ List<String> criticalOwHoldPeaceTargets({
 ///
 /// `colonial_pressure.dart` retains a thin delegating stub for legacy
 /// callers (the
-/// `colonial_pressure_quota_met_futile_below_quota_gp_peace_branches_test.dart`
+/// `expand_phase_planner_quota_met_futile_below_quota_gp_peace_branches_test.dart`
 /// fixture, the `diplomacy_planner_stalled_peace_test.dart` sole
 /// positive-case fixture, and the `diplomacy_planner.dart` /
 /// `diplomacy_planner_peace_targets.dart` /
@@ -1838,7 +1838,7 @@ bool pendingDeclareWarFrom({
 /// `colonial_pressure.dart` retains a thin delegating stub for legacy
 /// callers (the `diplomacy_planner.dart` /
 /// `diplomacy_planner_peace_targets.dart` consumer chain and the
-/// existing `colonial_pressure_test.dart` § `defaultStartFutileMinorPeaceTargets`
+/// existing `expand_phase_planner_peer_peace_basic_test.dart` § `defaultStartFutileMinorPeaceTargets`
 /// fixture) so the planned S1 deletion of that file leaves no orphan
 /// callers.
 ///
@@ -1919,7 +1919,7 @@ List<String> defaultStartFutileMinorPeaceTargets({
 ///
 /// `colonial_pressure.dart` retains a thin delegating stub for
 /// legacy callers (the existing
-/// `colonial_pressure_default_start_gp_peace_branches_test.dart`
+/// `expand_phase_planner_default_start_gp_peace_branches_test.dart`
 /// fixture and the `diplomacy_planner.dart` /
 /// `diplomacy_planner_peace_targets.dart` consumer chain) so the
 /// planned S1 deletion of that file leaves no orphan callers.
@@ -2018,7 +2018,7 @@ List<String> defaultStartGpPeaceTargets({
 ///     trivial).
 ///
 /// `colonial_pressure.dart` retains a thin delegating stub for
-/// legacy callers (the existing `colonial_pressure_test.dart`
+/// legacy callers (the existing `expand_phase_planner_peer_peace_basic_test.dart`
 /// fixtures that exercise the near-quota arms and the
 /// `diplomacy_planner.dart` /
 /// `diplomacy_planner_peace_targets.dart` consumer chain) so the

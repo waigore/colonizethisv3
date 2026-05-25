@@ -28,7 +28,7 @@
 // `colonial_pressure.dart` can be removed in a future slice without
 // regressing the legacy cargo-recovery callers or the orchestrator's
 // phase-derived rebuild-trap path. The pre-existing
-// `colonial_pressure_below_quota_peace_treasury_recovery_branches_test.dart`
+// `expand_phase_planner_below_quota_peace_treasury_recovery_branches_test.dart`
 // still pins the legacy-callsite contract through the delegating stub; this
 // file pins the canonical function boundary plus the cross-arm composition
 // (Arm A short-circuit + Arm B + affordability gate) and the delegation

@@ -133,7 +133,7 @@ String? stalledStrongerGpBlockerPeaceTarget({
 ///     preserved byte-for-byte), sorted ascending.
 ///
 /// `diplomacy_planner_peace_targets.dart` retains a thin delegating
-/// stub for the legacy `colonial_pressure_test.dart` §
+/// stub for the legacy `expand_phase_planner_peer_peace_basic_test.dart` §
 /// `stalledGpBlockerFocusPeaceTargets` fixture and the in-file
 /// `_expandRatchetGreatPowerPeaceTargets` /
 /// `stalledOwExpansionNeedsPeacePass` consumer chains until the

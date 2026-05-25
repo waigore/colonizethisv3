@@ -39,7 +39,7 @@
 //
 // Existing related coverage (not redundant with this pin):
 //
-//   - `colonial_pressure_peer_gap_boundary_test.dart` — pins the **3-province
+//   - `expand_phase_planner_peer_gap_boundary_test.dart` — pins the **3-province
 //     gap with uninvaded minor** branch of the *consumer*
 //     `belowQuotaPeerGpPeaceTargets`; that helper's `maxPeerOwGap` is gated
 //     by `hasUninvadedOldWorldMinor` (3-province window when a minor pivot
