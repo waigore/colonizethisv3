@@ -1,5 +1,6 @@
 # Game Side Menu
 
+**Screen ID:** `GAME50001` — stable; do not reassign.
 **SPEC/ui** — Slide-out hamburger drawer for the in-game shell. Hosts **Game Parameters** (read-only) and **Debug log**. Authority for the hamburger contract (240 dp width, content list, scrim/modal behaviour): [`in-game-shell-narrow.md`](in-game-shell-narrow.md). Related: [`pause-menu-panel.md`](pause-menu-panel.md) (the modal bottom-sheet variant emitted by `OpenPauseMenuPanelEvent`). Bus contract: [`app-event-bus.md`](../program/app-event-bus.md), [`app-ui-wiring.md`](../program/app-ui-wiring.md). Source: `app/lib/features/game/flame/game_side_menu.dart`.
 
 ---
