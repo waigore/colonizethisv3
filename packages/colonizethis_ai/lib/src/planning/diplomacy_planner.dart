@@ -23,7 +23,8 @@ import '../util/ai_random_utils.dart';
 import '../util/orders_extensions.dart';
 import 'diplomacy_planner_declare_war_targets.dart';
 import 'diplomatic_candidate_scoring.dart';
-import 'diplomacy_planner_peace_targets.dart';
+import 'diplomacy_planner_peace_targets.dart'
+    hide collectStalledGreatPowerPeaceTargets;
 import 'diplomacy_planner_result.dart';
 import 'phase_planner_declare_war_targets.dart';
 import 'phase_planner_dispatch.dart';
