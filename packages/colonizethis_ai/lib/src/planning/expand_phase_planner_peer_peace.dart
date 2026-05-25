@@ -978,3 +978,99 @@ List<String> stalledGpBlockerFocusPeaceTargets({
   ]..sort();
   return targets;
 }
+
+/// Returns `[blocker]` (single-element list) when the active player
+/// should peace the primary OW frontier blocker because it is
+/// critically weak and outmatched, or `const []` when this pivot does
+/// not apply.
+///
+/// Canonical home (Refs #2509 S1) for the legacy
+/// `weakHoldingsInvadableBlockerPeaceTargets` peace decider previously
+/// hosted in `diplomacy_planner_peace_targets.dart`. The decider
+/// implements the EXPAND-phase "pivot to minors/tribes instead of
+/// unwinnable GP wars when critically weak" pivot: when the active
+/// player holds few OW provinces and the OW frontier blocker has a
+/// large lead, peace the blocker so the planner can chase weaker
+/// minor / tribe targets instead.
+///
+/// Returns `const []` for any of the outer guards (in order):
+///   1. The active player is **not** in a critical-weak band: above
+///      [kFewOldWorldProvincesDefendThreshold], not below quota, and
+///      not (zero regiments + stalled OW band) — none of the three
+///      "critically weak" rows applies.
+///   2. The invadable OW frontier is GP-only
+///      ([isOldWorldGpOnlyInvadableFrontier] is `true`) — the
+///      `stalledGpBlockerFocusPeaceTargets` collector owns the
+///      decision instead.
+///   3. [primaryInvadableOldWorldGpBlocker] is `null`, the blocker is
+///      not in [ThreatSummary.atWarWith], or the blocker is not a
+///      Great Power ([Game.playerById] returns `null`).
+///   4. The blocker's OW lead falls below the band-dependent
+///      `minLead` table:
+///        * Below quota at default-start + 2 OW or fewer: `1`.
+///        * Below quota above default-start + 2: `kUnwinnableSoleGpMinProvinceDeficit`.
+///        * Above quota (defensive zero-regiment / stalled
+///          critical-weak entry path): `kDeclareWarAggressorSuppressWeakGpLeadThreshold`.
+///
+/// When all guards pass, returns the single-element list `[blocker]`
+/// — the planner peaces only the OW frontier blocker so the player
+/// can pivot to minor / tribe wars without dropping every other GP
+/// war.
+///
+/// `diplomacy_planner_peace_targets.dart` retains a thin delegating
+/// stub for the legacy `diplomacy_planner_below_quota_peace_test.dart`
+/// and `diplomacy_planner_below_quota_peace_part3_test.dart` fixtures
+/// and the in-file `_expandRatchetGreatPowerPeaceTargets` /
+/// `collectStalledGreatPowerPeaceTargets` `preserveBlockerPeace` /
+/// `stalledOwExpansionNeedsPeacePass` consumer chains until the
+/// planned S1 deletion of that file.
+///
+/// Pure and deterministic — identical inputs always yield identical
+/// output (Refs #2509 Must-have #7). Linear in
+/// [ThreatSummary.atWarWith] for the blocker membership check plus a
+/// single [provinceCountOwnedBy] scan; matches the budget-rule note
+/// in `colonizethis-turn-resolution-budget.mdc` (no global province /
+/// tile scans introduced by the move).
+List<String> weakHoldingsInvadableBlockerPeaceTargets({
+  required Game game,
+  required AIWorldSnapshot snapshot,
+}) {
+  final zeroRegiments = regimentCountForPlayer(game, snapshot.playerId) == 0;
+  final belowQuota = isBelowObserverConquestQuota(
+    snapshot.conquest.oldWorldProvincesOwned,
+  );
+  if (snapshot.conquest.oldWorldProvincesOwned >
+          kFewOldWorldProvincesDefendThreshold &&
+      !belowQuota &&
+      !(zeroRegiments &&
+          isStalledOldWorldExpansion(
+            snapshot.conquest.oldWorldProvincesOwned,
+          ))) {
+    return const [];
+  }
+  if (isOldWorldGpOnlyInvadableFrontier(game: game, snapshot: snapshot)) {
+    return const [];
+  }
+  final blocker = primaryInvadableOldWorldGpBlocker(
+    game: game,
+    snapshot: snapshot,
+  );
+  if (blocker == null ||
+      !snapshot.threats.atWarWith.contains(blocker) ||
+      game.playerById(blocker) == null) {
+    return const [];
+  }
+  final lead =
+      provinceCountOwnedBy(game, blocker) -
+      snapshot.conquest.oldWorldProvincesOwned;
+  final minLead = belowQuota
+      ? (snapshot.conquest.oldWorldProvincesOwned <=
+                kObserverDefaultStartOldWorldProvincesPerGp + 2
+            ? 1
+            : kUnwinnableSoleGpMinProvinceDeficit)
+      : kDeclareWarAggressorSuppressWeakGpLeadThreshold;
+  if (lead < minLead) {
+    return const [];
+  }
+  return [blocker];
+}

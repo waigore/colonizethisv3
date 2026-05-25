@@ -170,49 +170,27 @@ List<String> criticalWeakGpSurvivalPeaceTargets({
 
 /// Peace the invadable OW frontier GP while critically weak and outmatched
 /// (pivot to minors/tribes instead of unwinnable GP wars; Refs #2509).
+///
+/// Delegates to
+/// [expand_phase_planner.weakHoldingsInvadableBlockerPeaceTargets]
+/// (Refs #2509 S1) so the EXPAND-phase critically-weak blocker peace
+/// decider survives the planned deletion of this file alongside the
+/// canonical [expand_phase_planner.isOldWorldGpOnlyInvadableFrontier]
+/// and [expand_phase_planner.primaryInvadableOldWorldGpBlocker]
+/// helpers it composes. Retained here as a thin stub for the legacy
+/// `diplomacy_planner_below_quota_peace_test.dart` and
+/// `diplomacy_planner_below_quota_peace_part3_test.dart` fixtures and
+/// the in-file `_expandRatchetGreatPowerPeaceTargets` /
+/// `collectStalledGreatPowerPeaceTargets` `preserveBlockerPeace` /
+/// `stalledOwExpansionNeedsPeacePass` consumer chains until the
+/// planned S1 deletion of this file.
 List<String> weakHoldingsInvadableBlockerPeaceTargets({
   required Game game,
   required AIWorldSnapshot snapshot,
-}) {
-  final zeroRegiments = regimentCountForPlayer(game, snapshot.playerId) == 0;
-  final belowQuota = isBelowObserverConquestQuota(
-    snapshot.conquest.oldWorldProvincesOwned,
-  );
-  if (snapshot.conquest.oldWorldProvincesOwned >
-          kFewOldWorldProvincesDefendThreshold &&
-      !belowQuota &&
-      !(zeroRegiments &&
-          isStalledOldWorldExpansion(
-            snapshot.conquest.oldWorldProvincesOwned,
-          ))) {
-    return const [];
-  }
-  if (isOldWorldGpOnlyInvadableFrontier(game: game, snapshot: snapshot)) {
-    return const [];
-  }
-  final blocker = primaryInvadableOldWorldGpBlocker(
-    game: game,
-    snapshot: snapshot,
-  );
-  if (blocker == null ||
-      !snapshot.threats.atWarWith.contains(blocker) ||
-      game.playerById(blocker) == null) {
-    return const [];
-  }
-  final lead =
-      provinceCountOwnedBy(game, blocker) -
-      snapshot.conquest.oldWorldProvincesOwned;
-  final minLead = belowQuota
-      ? (snapshot.conquest.oldWorldProvincesOwned <=
-                kObserverDefaultStartOldWorldProvincesPerGp + 2
-            ? 1
-            : kUnwinnableSoleGpMinProvinceDeficit)
-      : kDeclareWarAggressorSuppressWeakGpLeadThreshold;
-  if (lead < minLead) {
-    return const [];
-  }
-  return [blocker];
-}
+}) => expand_phase_planner.weakHoldingsInvadableBlockerPeaceTargets(
+  game: game,
+  snapshot: snapshot,
+);
 
 /// When OW holdings are critically low, peace non-blocker Great Power fronts only
 /// (avoid total collapse from multi-front GP wars; Refs #2509).
