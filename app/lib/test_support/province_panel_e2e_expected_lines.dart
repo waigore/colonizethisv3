@@ -1,3 +1,9 @@
+// coverage:ignore-file
+// E2E test fixture; exercised only by integration_test scenarios (which do not
+// run in `flutter test test/`). Pulled into the test isolate's import graph by
+// `app/integration_test/e2e_test_shared_panel_text_match.dart` (Refs #2336);
+// excluded from the app coverage gate using the same convention as
+// `app/lib/widgetbook/catalog*.dart`.
 // Expected plain-text lines for ProvinceSeaZoneDetailOverlay wide layout (scroll column).
 // Mirrors app/lib/features/game/widgets/province_sea_zone_detail_overlay.dart for e2e.
 // If drift fails tests, align this file with the overlay widget.
