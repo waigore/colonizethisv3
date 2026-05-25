@@ -1604,3 +1604,207 @@ bool pendingDeclareWarFrom({
   }
   return false;
 }
+
+/// Returns the deterministic ascending-sorted list of at-war Great
+/// Power `factionId`s the active player should `offerPeace` toward
+/// at default observer start size in EXPAND, or `const []` when the
+/// default-start GP-peace pivot does not apply this turn.
+///
+/// Canonical home (Refs #2509 S1) for the legacy
+/// `defaultStartGpPeaceTargets` peace decider previously hosted in
+/// `colonial_pressure.dart`. The decider implements the EXPAND-phase
+/// "at default observer start size, peace every Great Power war so
+/// the GP can open a minor frontier" pivot for seed-42 gp4
+/// (zero-gain stall, default-start band). It composes
+/// [hasUninvadedOldWorldMinor], [isOldWorldGpOnlyInvadableFrontier],
+/// and [primaryInvadableOldWorldGpBlocker] with the observer
+/// default-start band table from `SPEC/ai/ai-architecture.md`
+/// § Diplomacy targeting.
+///
+/// Returns `const []` for any of the outer guards (in order):
+///   1. [isBelowObserverConquestQuota] is `false` for
+///      [ConquestSummary.oldWorldProvincesOwned] — at or above the
+///      observer OW quota the quota-met futile-peace collectors
+///      ([quotaMetFutileBelowQuotaGpPeaceTargets] et al, still in
+///      `colonial_pressure.dart` at this slice) take over.
+///   2. `ownOw > maxOwForGpPeace` where `maxOwForGpPeace` is
+///      [kStalledOldWorldProvinceThreshold] when at least one
+///      uninvaded OW minor remains (the planner can stretch the
+///      default-start GP-peace pivot up into the stalled band) and
+///      `kObserverDefaultStartOldWorldProvincesPerGp + 1` otherwise
+///      (no minor pivot remains, so the pivot is restricted to the
+///      default-start +1 band).
+///
+/// When the guards pass, the function peaces every at-war Great
+/// Power faction (filtered via [Game.playerById]) **except** the
+/// invadable OW frontier blocker on the GP-only invadable arm: when
+/// [isOldWorldGpOnlyInvadableFrontier] is `true` the
+/// [primaryInvadableOldWorldGpBlocker] is excluded so the planner
+/// keeps fighting the lone GP that owns the GP-only frontier; on
+/// every other shape the blocker filter is `null` and all at-war GPs
+/// are peaced. The output is sorted ascending by `factionId` for
+/// deterministic ordering.
+///
+/// `colonial_pressure.dart` retains a thin delegating stub for
+/// legacy callers (the existing
+/// `colonial_pressure_default_start_gp_peace_branches_test.dart`
+/// fixture and the `diplomacy_planner.dart` /
+/// `diplomacy_planner_peace_targets.dart` consumer chain) so the
+/// planned S1 deletion of that file leaves no orphan callers.
+///
+/// Pure and deterministic — identical inputs always yield identical
+/// lists (Refs #2509 Must-have #7). Linear in
+/// [ThreatSummary.atWarWith] across both arms, plus the canonical
+/// composite calls into [hasUninvadedOldWorldMinor],
+/// [isOldWorldGpOnlyInvadableFrontier], and
+/// [primaryInvadableOldWorldGpBlocker] (each linear in the OW
+/// invadable / minor sets), matching the budget-rule note in
+/// `colonizethis-turn-resolution-budget.mdc` (no global province /
+/// tile scans introduced by the move).
+List<String> defaultStartGpPeaceTargets({
+  required Game game,
+  required AIWorldSnapshot snapshot,
+}) {
+  final ownOw = snapshot.conquest.oldWorldProvincesOwned;
+  if (!isBelowObserverConquestQuota(ownOw)) {
+    return const [];
+  }
+  final maxOwForGpPeace =
+      hasUninvadedOldWorldMinor(game: game, snapshot: snapshot)
+      ? kStalledOldWorldProvinceThreshold
+      : kObserverDefaultStartOldWorldProvincesPerGp + 1;
+  if (ownOw > maxOwForGpPeace) {
+    return const [];
+  }
+  final gpOnlyFrontier = isOldWorldGpOnlyInvadableFrontier(
+    game: game,
+    snapshot: snapshot,
+  );
+  final invadableBlocker = gpOnlyFrontier
+      ? primaryInvadableOldWorldGpBlocker(game: game, snapshot: snapshot)
+      : null;
+  final targets = <String>[
+    for (final factionId in snapshot.threats.atWarWith)
+      if (game.playerById(factionId) != null && factionId != invadableBlocker)
+        factionId,
+  ]..sort();
+  return targets;
+}
+
+/// Returns the deterministic ascending-sorted list of at-war Great
+/// Power `factionId`s the active player should `offerPeace` toward
+/// at near-quota (8–9 OW) while still below the observer quota in
+/// EXPAND, or `const []` when the near-quota hold-gains pivot does
+/// not apply this turn.
+///
+/// Canonical home (Refs #2509 S1) for the legacy
+/// `nearQuotaHoldPeaceTargets` peace decider previously hosted in
+/// `colonial_pressure.dart`. The decider implements the EXPAND-phase
+/// "at 8–9 OW, peace distracting GP wars so the planner can hold
+/// gains and finish the OW push" pivot for seed-42 gp3 (near-quota
+/// stalled-band GP). It composes the canonical helpers
+/// [primaryInvadableOldWorldGpBlocker] (frontier blocker selector),
+/// [isOldWorldGpOnlyInvadableFrontier] (band selector),
+/// [isMutualBelowQuotaPlateauPeer] (sole-GP plateau detector), and
+/// [hasUninvadedOldWorldMinor] (minor-pivot detector) with the
+/// near-quota band rules from `SPEC/ai/ai-architecture.md`
+/// § Diplomacy targeting.
+///
+/// Returns `const []` for any of the outer guards (in order):
+///   1. [isBelowObserverConquestQuota] is `false` for
+///      [ConquestSummary.oldWorldProvincesOwned] — at or above the
+///      observer OW quota the quota-met futile-peace collectors
+///      take over.
+///   2. [isStalledOldWorldExpansion] is `false` for
+///      [ConquestSummary.oldWorldProvincesOwned] — strictly below
+///      the stalled-band threshold the default-start GP-peace
+///      collector ([defaultStartGpPeaceTargets]) owns the decision.
+///   3. The active player has zero at-war Great Powers in
+///      [ThreatSummary.atWarWith] (filtered via [Game.playerById])
+///      — no GP wars to peace at all.
+///
+/// When the guards pass, the function dispatches on the GP-war set:
+///   * **Sole GP war arm** — exactly one at-war Great Power. Peaces
+///     the lone GP only when the war is a mutual-plateau sole-GP
+///     stalemate ([isMutualBelowQuotaPlateauPeer]) on a GP-only
+///     invadable frontier ([isOldWorldGpOnlyInvadableFrontier])
+///     with no uninvaded OW minors remaining
+///     ([hasUninvadedOldWorldMinor] is `false`); otherwise, when
+///     the lone GP is the [primaryInvadableOldWorldGpBlocker] and a
+///     minor pivot remains the war is held open (`const []`) so the
+///     planner keeps fighting the blocker. Every other sole-GP
+///     shape falls through to the multi-GP arm below.
+///   * **Multi-GP war arm (≥2 at-war GPs, or sole-GP fall-through)**
+///     — peace every at-war GP except the
+///     [primaryInvadableOldWorldGpBlocker]. Returned in ascending
+///     lex order over the GP `factionId`s.
+///   * **Sole-GP fall-through** — when the sole-GP arm short-circuit
+///     above does not fire and does not return the held-open
+///     `const []`, the function falls back to returning the
+///     unsorted single-GP list for compatibility with the legacy
+///     `colonial_pressure.dart` shape (one element so sort order is
+///     trivial).
+///
+/// `colonial_pressure.dart` retains a thin delegating stub for
+/// legacy callers (the existing `colonial_pressure_test.dart`
+/// fixtures that exercise the near-quota arms and the
+/// `diplomacy_planner.dart` /
+/// `diplomacy_planner_peace_targets.dart` consumer chain) so the
+/// planned S1 deletion of that file leaves no orphan callers.
+///
+/// Pure and deterministic — identical inputs always yield identical
+/// lists (Refs #2509 Must-have #7). Linear in
+/// [ThreatSummary.atWarWith] across both arms, plus the canonical
+/// composite calls into [primaryInvadableOldWorldGpBlocker],
+/// [isOldWorldGpOnlyInvadableFrontier],
+/// [isMutualBelowQuotaPlateauPeer], and [hasUninvadedOldWorldMinor]
+/// (each linear in the OW invadable / minor sets), matching the
+/// budget-rule note in `colonizethis-turn-resolution-budget.mdc`
+/// (no global province / tile scans introduced by the move).
+List<String> nearQuotaHoldPeaceTargets({
+  required Game game,
+  required AIWorldSnapshot snapshot,
+}) {
+  final ownOw = snapshot.conquest.oldWorldProvincesOwned;
+  if (!isBelowObserverConquestQuota(ownOw) ||
+      !isStalledOldWorldExpansion(ownOw)) {
+    return const [];
+  }
+  final gpWars = <String>[
+    for (final factionId in snapshot.threats.atWarWith)
+      if (game.playerById(factionId) != null) factionId,
+  ];
+  if (gpWars.isEmpty) {
+    return const [];
+  }
+  final blocker = primaryInvadableOldWorldGpBlocker(
+    game: game,
+    snapshot: snapshot,
+  );
+  final gpOnlyFrontier = isOldWorldGpOnlyInvadableFrontier(
+    game: game,
+    snapshot: snapshot,
+  );
+  if (gpWars.length == 1) {
+    final soleGp = gpWars.single;
+    final partnerOw = provinceCountOwnedBy(game, soleGp);
+    if (isMutualBelowQuotaPlateauPeer(ownOw: ownOw, partnerOw: partnerOw) &&
+        gpOnlyFrontier &&
+        !hasUninvadedOldWorldMinor(game: game, snapshot: snapshot)) {
+      return gpWars;
+    }
+    if (blocker != null &&
+        gpWars.single == blocker &&
+        !hasUninvadedOldWorldMinor(game: game, snapshot: snapshot)) {
+      return const [];
+    }
+  }
+  if (gpWars.length >= 2) {
+    final targets = <String>[
+      for (final factionId in gpWars)
+        if (factionId != blocker) factionId,
+    ]..sort();
+    return targets;
+  }
+  return gpWars;
+}
