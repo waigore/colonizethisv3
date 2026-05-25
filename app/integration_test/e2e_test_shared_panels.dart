@@ -78,26 +78,25 @@ Future<void> e2eOpenCivilianPanel(
   // the loop with adaptive backoff. Refs GitHub #2336 AC5 / pump-reduction.
   while (sw.elapsed < timeout) {
     if (find.byType(BottomSheet).evaluate().isNotEmpty) {
-      await e2eCloseBottomSheet(
+      // Shared post-sheet-close cleanup: close the conflicting sheet,
+      // poll until it leaves the tree, then poll until the empire rail
+      // (or fallback marker) becomes hit-testable. Lifted into
+      // [e2eClosePanelOpenerSheetAndAwaitOpener] so the civilian and
+      // naval openers stay byte-equivalent on the post-sheet-close path.
+      // Phase labels (`afterSheetPanelsClearPhase` parameter and the
+      // local `pump_until_civilian_opener_after_sheet_close` constant)
+      // are forwarded verbatim so existing `E2E_TIMING|phase=...` log
+      // scrapers and dashboards keep attributing settle time to the
+      // civilian opener. Refs GitHub #2336 AC1 / AC2 / AC10 (follow-up
+      // slice from PR #2782).
+      await e2eClosePanelOpenerSheetAndAwaitOpener(
         tester,
+        primary: empireRailButton,
+        secondary: markerButton,
+        afterSheetClearPhase: afterSheetPanelsClearPhase,
+        awaitOpenerPhase: 'pump_until_civilian_opener_after_sheet_close',
         perf: perf,
-        overallTimeout: bottomSheetCloseTimeout,
-      );
-      await e2ePumpUntilConditionOrIdle(
-        tester,
-        () => find.byType(BottomSheet).evaluate().isEmpty,
-        timeout: const Duration(seconds: 2),
-        perf: perf,
-        phaseName: afterSheetPanelsClearPhase,
-      );
-      await e2ePumpUntilConditionOrIdle(
-        tester,
-        () =>
-            empireRailButton.hitTestable().evaluate().isNotEmpty ||
-            markerButton.hitTestable().evaluate().isNotEmpty,
-        timeout: const Duration(seconds: 3),
-        perf: perf,
-        phaseName: 'pump_until_civilian_opener_after_sheet_close',
+        bottomSheetCloseTimeout: bottomSheetCloseTimeout,
       );
       panelPollMs = 25;
       continue;
@@ -226,26 +225,21 @@ Future<void> e2eOpenNavalPanel(
   // the loop with adaptive backoff. Refs GitHub #2336 AC5 / pump-reduction.
   while (sw.elapsed < timeout) {
     if (find.byType(BottomSheet).evaluate().isNotEmpty) {
-      await e2eCloseBottomSheet(
+      // Shared post-sheet-close cleanup. Byte-equivalent to the inline
+      // pre-lift body — same `bottomSheetCloseTimeout`, same 2 s sheet-
+      // clear poll cap (forwarded as the default), same 3 s rail/marker
+      // hit-testable poll cap, and the same
+      // `pump_until_naval_opener_after_sheet_close` phase label so the
+      // existing `E2E_TIMING` attribution for the naval opener stays
+      // stable. Refs GitHub #2336 AC1 / AC2 / AC10.
+      await e2eClosePanelOpenerSheetAndAwaitOpener(
         tester,
+        primary: empireRailButton,
+        secondary: markerButton,
+        afterSheetClearPhase: afterSheetPanelsClearPhase,
+        awaitOpenerPhase: 'pump_until_naval_opener_after_sheet_close',
         perf: perf,
-        overallTimeout: bottomSheetCloseTimeout,
-      );
-      await e2ePumpUntilConditionOrIdle(
-        tester,
-        () => find.byType(BottomSheet).evaluate().isEmpty,
-        timeout: const Duration(seconds: 2),
-        perf: perf,
-        phaseName: afterSheetPanelsClearPhase,
-      );
-      await e2ePumpUntilConditionOrIdle(
-        tester,
-        () =>
-            empireRailButton.hitTestable().evaluate().isNotEmpty ||
-            markerButton.hitTestable().evaluate().isNotEmpty,
-        timeout: const Duration(seconds: 3),
-        perf: perf,
-        phaseName: 'pump_until_naval_opener_after_sheet_close',
+        bottomSheetCloseTimeout: bottomSheetCloseTimeout,
       );
       panelPollMs = 25;
       continue;

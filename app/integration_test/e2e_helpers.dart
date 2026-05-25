@@ -33,6 +33,7 @@ export 'e2e_test_shared.dart'
         e2eAwaitPanelOpenerRailHitTestable,
         e2eBundledExploreRejectionDiagnostics,
         e2eCheckExploreEnabledFromCivilianPanel,
+        e2eClosePanelOpenerSheetAndAwaitOpener,
         e2eDismissCtDialogShellIfPresent,
         e2eEnsureNonHomeFleetInNwAfterLoop,
         e2eEnsureVisibleAndTapHitTestable,
@@ -159,6 +160,37 @@ Future<bool> awaitPanelMountAfterOpenerTap(
   timeout: timeout,
   perf: perf,
   phaseName: phaseName,
+);
+
+/// Stable public name for [e2eClosePanelOpenerSheetAndAwaitOpener] (Refs
+/// GitHub #2336 AC1 / AC2 / AC10). Forwards to the implementation in
+/// `e2e_test_shared_panel_open_sheet_close.dart` (re-exported via
+/// `e2e_test_shared.dart`). The shared post-sheet-close cleanup recipe
+/// (close sheet → poll until cleared → poll until rail/marker
+/// hit-testable) is consumed indirectly by [openCivilianPanel] /
+/// [openNavalPanel] today; the alias is re-exposed so future scenarios
+/// can compose the same cleanup after their own opener taps without
+/// duplicating the recipe.
+Future<void> closePanelOpenerSheetAndAwaitOpener(
+  WidgetTester tester, {
+  required Finder primary,
+  Finder? secondary,
+  required String afterSheetClearPhase,
+  required String awaitOpenerPhase,
+  E2ePerfLog? perf,
+  Duration bottomSheetCloseTimeout = kE2eDefaultBottomSheetCloseTimeout,
+  Duration sheetClearTimeout = const Duration(seconds: 2),
+  Duration awaitOpenerTimeout = const Duration(seconds: 3),
+}) => e2eClosePanelOpenerSheetAndAwaitOpener(
+  tester,
+  primary: primary,
+  secondary: secondary,
+  afterSheetClearPhase: afterSheetClearPhase,
+  awaitOpenerPhase: awaitOpenerPhase,
+  perf: perf,
+  bottomSheetCloseTimeout: bottomSheetCloseTimeout,
+  sheetClearTimeout: sheetClearTimeout,
+  awaitOpenerTimeout: awaitOpenerTimeout,
 );
 
 /// Stable public name for [e2eDismissCtDialogShellIfPresent] so the
