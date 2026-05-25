@@ -1,3 +1,4 @@
+import 'package:colonizethis_app/config/ui_screen_ids.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
@@ -15,6 +16,8 @@ class CallToArmsDialogueOverlay extends StatefulWidget {
     required this.onDecisions,
     required this.child,
   });
+
+  static const screenId = UiScreenIds.callToArmsDialogueOverlay;
 
   final Game game;
   final List<CallToArmsPending> pending;
