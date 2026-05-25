@@ -60,7 +60,7 @@
 //      precondition and pivot guard.
 
 import 'package:colonizethis_ai/src/perception/perception_snapshot.dart';
-import 'package:colonizethis_ai/src/planning/colonial_pressure.dart'
+import 'package:colonizethis_ai/src/planning/expand_phase_planner.dart'
     as colonial_pressure;
 import 'package:colonizethis_ai/src/planning/expand_phase_planner.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';

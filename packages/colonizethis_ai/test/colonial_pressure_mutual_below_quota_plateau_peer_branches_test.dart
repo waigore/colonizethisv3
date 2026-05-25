@@ -87,7 +87,7 @@
 // No production code changes — pin tests only.
 
 import 'package:colonizethis_test/test.dart';
-import 'package:colonizethis_ai/src/planning/colonial_pressure.dart';
+import 'package:colonizethis_ai/src/planning/expand_phase_planner.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 
 void main() {

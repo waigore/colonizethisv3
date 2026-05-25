@@ -1,7 +1,7 @@
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 import 'package:colonizethis_ai/src/perception/perception_snapshot.dart';
-import 'package:colonizethis_ai/src/planning/colonial_pressure.dart';
+import 'package:colonizethis_ai/src/planning/expand_phase_planner.dart';
 
 // SPEC/ai/ai-architecture.md § Observer goal phases (Full AI), EXPAND:
 // "While uninvaded OW minors remain, also peace below-quota GP peers within

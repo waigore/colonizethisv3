@@ -39,7 +39,7 @@
 import 'package:colonizethis_ai/colonizethis_ai.dart';
 import 'package:colonizethis_ai/src/planning/colonial_phase_planner.dart';
 import 'package:colonizethis_ai/src/planning/phase_planner_economy_filter.dart';
-import 'package:colonizethis_ai/src/planning/colonial_pressure.dart'
+import 'package:colonizethis_ai/src/planning/expand_phase_planner.dart'
     show
         isBelowQuotaPeaceInsufficientRegiments,
         isBelowQuotaPeaceZeroRegimentsRebuild;

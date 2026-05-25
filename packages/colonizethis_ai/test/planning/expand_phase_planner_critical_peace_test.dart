@@ -66,7 +66,7 @@
 //     chains agree on both deciders.
 
 import 'package:colonizethis_ai/src/perception/perception_snapshot.dart';
-import 'package:colonizethis_ai/src/planning/diplomacy_planner_peace_targets.dart'
+import 'package:colonizethis_ai/src/planning/expand_phase_planner.dart'
     as diplomacy_planner_peace_targets;
 import 'package:colonizethis_ai/src/planning/expand_phase_planner.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
