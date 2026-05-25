@@ -374,6 +374,19 @@ Future<void> e2eAwaitPanelOpenerRailHitTestable(
 }
 
 /// Taps the first visible **Assign** in the civilian panel work menu (GitHub #2336 H9).
+///
+/// After scrolling the unfiltered first `Assign` text into view, the tap
+/// prefers the first **hit-testable** `Assign` so a leading row whose
+/// `Assign` is mounted but covered (rare in production — possible when a
+/// transient overlay races the civilian panel mount, or when a SnackBar
+/// briefly obscures the top of the panel) does not poison the tap with a
+/// silent warn-and-miss. Falls back to the unfiltered first match only
+/// when no `Assign` is currently hit-testable so the existing fail-fast
+/// guard above (`expect(assign, findsWidgets)`) still owns the
+/// no-Assign-anywhere diagnostic. Mirrors the
+/// [e2eEnsureVisibleAndTapHitTestable] / [e2eDismissSnackBarIfPresent]
+/// hit-testable-preferred tap pattern (Refs GitHub #2336 AC1 / AC2 /
+/// AC10).
 Future<void> e2eTapFirstAssignInCivilianPanel(WidgetTester tester) async {
   final root = find.byKey(kCtE2ECivilianPanelRootKey);
   final listView = find.descendant(of: root, matching: find.byType(ListView));
@@ -393,7 +406,11 @@ Future<void> e2eTapFirstAssignInCivilianPanel(WidgetTester tester) async {
   );
   await tester.ensureVisible(firstAssign);
   await tester.pump();
-  await tester.tap(firstAssign);
+  final assignHit = assign.hitTestable();
+  final tapTarget = assignHit.evaluate().isNotEmpty
+      ? assignHit.first
+      : firstAssign;
+  await tester.tap(tapTarget, warnIfMissed: false);
   await e2eWaitUntilAnyFinderHitTestable(
     tester,
     <Finder>[
@@ -407,6 +424,17 @@ Future<void> e2eTapFirstAssignInCivilianPanel(WidgetTester tester) async {
 }
 
 /// Taps **Assign** on a [ListTile] whose title is exactly [unitTypeTitle] (GitHub #2336 H9).
+///
+/// The iteration skips matching rows whose [ListTile] subtree exposes an
+/// `Assign` text descendant **but no currently hit-testable** `Assign` (in
+/// addition to the existing skip-rows-with-no-Assign branch). This
+/// symmetric guard prevents the helper from firing a silent warn-and-miss
+/// tap on a leading matching row whose `Assign` is mounted but covered
+/// (rare in production — possible when a transient overlay races the
+/// civilian panel mount), which would otherwise burn the downstream 5 s
+/// work-menu wait at the offending turn. Mirrors the
+/// [e2eDismissSnackBarIfPresent] hit-testable-preferred contract (Refs
+/// GitHub #2336 AC1 / AC2 / AC10).
 Future<void> e2eTapAssignOnCivilianRowWithTitle(
   WidgetTester tester,
   String unitTypeTitle,
@@ -453,10 +481,14 @@ Future<void> e2eTapAssignOnCivilianRowWithTitle(
     if (assign.evaluate().isEmpty) {
       continue;
     }
-    final assignHit = assign.first;
-    await tester.ensureVisible(assignHit);
+    final assignHit = assign.hitTestable();
+    if (assignHit.evaluate().isEmpty) {
+      continue;
+    }
+    final tapTarget = assignHit.first;
+    await tester.ensureVisible(tapTarget);
     await tester.pump();
-    await tester.tap(assignHit);
+    await tester.tap(tapTarget, warnIfMissed: false);
     await e2eWaitUntilAnyFinderHitTestable(
       tester,
       <Finder>[
