@@ -29,6 +29,7 @@ export 'e2e_test_shared.dart'
         e2eAttemptFirstFleetMoveOrCancel,
         e2eAwaitExploreEnabledFromCivilianPanel,
         e2eAwaitNwCoastalOrVisibleLandForBundledExplore,
+        e2eAwaitPanelOpenerRailHitTestable,
         e2eBundledExploreRejectionDiagnostics,
         e2eCheckExploreEnabledFromCivilianPanel,
         e2eDismissCtDialogShellIfPresent,

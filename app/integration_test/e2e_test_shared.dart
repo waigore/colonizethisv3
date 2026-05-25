@@ -304,6 +304,66 @@ Future<bool> e2eEnsureVisibleAndTapHitTestable(
   return true;
 }
 
+/// Awaits one of [primary] / [secondary] becoming hit-testable before the
+/// outer panel-opener loop attempts a [e2eEnsureVisibleAndTapHitTestable]
+/// tap, defending against transient overlays that cover the rail/marker
+/// trigger.
+///
+/// Lifts the inline rail/marker hit-testable wait that the naval opener
+/// has carried since PR #2555 (`wait_until_naval_rail_hit_testable` /
+/// `wait_until_naval_marker_hit_testable` phases) into a single shared
+/// primitive so [e2eOpenCivilianPanel], [e2eOpenNavalPanel], and
+/// [e2eOpenProductionPanel] gain identical pre-tap settle semantics.
+/// Before this lift, the civilian opener tapped a rail that might not be
+/// hit-testable (relying on `e2eEnsureVisibleAndTapHitTestable`'s
+/// best-effort scroll-into-view) and let the outer adaptive-poll loop
+/// retry on miss; production took the same shape. The naval opener
+/// instead waited up to 5 s for one of `[empireRailButton, markerButton]`
+/// to become hit-testable before tapping. Refs GitHub #2336 AC1 / AC10
+/// (deferred slice from PR #2782).
+///
+/// Contract:
+///
+/// - Short-circuits with no pump and no perf event when either [primary]
+///   or [secondary] is already hit-testable. The fast-path keeps the
+///   no-overlay common case at byte-equivalent cost vs the pre-#2555
+///   civilian/production openers.
+/// - Otherwise delegates to [e2eWaitUntilAnyFinderHitTestable] with the
+///   provided [timeout] and [phaseName]. That helper polls with adaptive
+///   backoff (25 → 500 ms cap) and emits `result=found{,_immediate,_at_
+///   timeout}` / `result=timeout` perf timings on [perf]. On final
+///   timeout it fails via [fail] with the same diagnostic message the
+///   inline naval opener has surfaced since PR #2555 (`Timed out after
+///   ${timeout.inSeconds}s waiting for any of ...`), so a regression that
+///   left the trigger permanently obscured fails with a useful message
+///   inside the inner wait rather than silently consuming the outer
+///   opener loop's full budget.
+/// - When [secondary] is `null`, only [primary] is polled (production
+///   opener path — no `markerButton` concept).
+Future<void> e2eAwaitPanelOpenerRailHitTestable(
+  WidgetTester tester, {
+  required Finder primary,
+  Finder? secondary,
+  Duration timeout = const Duration(seconds: 5),
+  E2ePerfLog? perf,
+  required String phaseName,
+}) async {
+  if (primary.hitTestable().evaluate().isNotEmpty) {
+    return;
+  }
+  if (secondary != null && secondary.hitTestable().evaluate().isNotEmpty) {
+    return;
+  }
+  final finders = <Finder>[primary, ?secondary];
+  await e2eWaitUntilAnyFinderHitTestable(
+    tester,
+    finders,
+    timeout: timeout,
+    perf: perf,
+    phaseName: phaseName,
+  );
+}
+
 /// Taps the first visible **Assign** in the civilian panel work menu (GitHub #2336 H9).
 Future<void> e2eTapFirstAssignInCivilianPanel(WidgetTester tester) async {
   final root = find.byKey(kCtE2ECivilianPanelRootKey);

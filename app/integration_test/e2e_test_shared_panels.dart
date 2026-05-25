@@ -111,6 +111,19 @@ Future<void> e2eOpenCivilianPanel(
       continue;
     }
     if (empireRailButton.evaluate().isNotEmpty) {
+      // Mirror the naval opener's pre-tap rail-hit-testable wait so a
+      // transient overlay covering the rail does not silently drop the
+      // tap (`e2eEnsureVisibleAndTapHitTestable` is best-effort and falls
+      // back to a raw-trigger tap when the hit-testable resolve is empty,
+      // which an opaque overlay can absorb). Refs GitHub #2336 AC1 /
+      // AC10 (deferred slice from PR #2782).
+      await e2eAwaitPanelOpenerRailHitTestable(
+        tester,
+        primary: empireRailButton,
+        secondary: markerButton,
+        perf: perf,
+        phaseName: 'wait_until_civilian_rail_hit_testable',
+      );
       if (await tryOpen(empireRailButton)) {
         perf?.timing('open_panel_civilian', sw.elapsed);
         return;
@@ -119,6 +132,13 @@ Future<void> e2eOpenCivilianPanel(
       continue;
     }
     if (markerButton.evaluate().isNotEmpty) {
+      await e2eAwaitPanelOpenerRailHitTestable(
+        tester,
+        primary: markerButton,
+        secondary: empireRailButton,
+        perf: perf,
+        phaseName: 'wait_until_civilian_marker_hit_testable',
+      );
       if (await tryOpen(markerButton)) {
         perf?.timing('open_panel_civilian', sw.elapsed);
         return;
@@ -243,15 +263,18 @@ Future<void> e2eOpenNavalPanel(
       continue;
     }
     if (empireRailButton.evaluate().isNotEmpty) {
-      if (empireRailButton.hitTestable().evaluate().isEmpty) {
-        await e2eWaitUntilAnyFinderHitTestable(
-          tester,
-          [empireRailButton, markerButton],
-          timeout: const Duration(seconds: 5),
-          perf: perf,
-          phaseName: 'wait_until_naval_rail_hit_testable',
-        );
-      }
+      // Byte-equivalent to the pre-lift inline `if (...hitTestable...empty) {
+      // await e2eWaitUntilAnyFinderHitTestable([rail, marker], 5s, ...) }`
+      // pattern that PR #2555 inlined here. Lifted into the shared helper so
+      // civilian and production openers gain the same pre-tap settle
+      // semantics (Refs GitHub #2336 AC1 / AC10).
+      await e2eAwaitPanelOpenerRailHitTestable(
+        tester,
+        primary: empireRailButton,
+        secondary: markerButton,
+        perf: perf,
+        phaseName: 'wait_until_naval_rail_hit_testable',
+      );
       if (await tryOpen(empireRailButton)) {
         perf?.timing('open_panel_naval', sw.elapsed);
         return;
@@ -260,15 +283,13 @@ Future<void> e2eOpenNavalPanel(
       continue;
     }
     if (markerButton.evaluate().isNotEmpty) {
-      if (markerButton.hitTestable().evaluate().isEmpty) {
-        await e2eWaitUntilAnyFinderHitTestable(
-          tester,
-          [markerButton, empireRailButton],
-          timeout: const Duration(seconds: 5),
-          perf: perf,
-          phaseName: 'wait_until_naval_marker_hit_testable',
-        );
-      }
+      await e2eAwaitPanelOpenerRailHitTestable(
+        tester,
+        primary: markerButton,
+        secondary: empireRailButton,
+        perf: perf,
+        phaseName: 'wait_until_naval_marker_hit_testable',
+      );
       if (await tryOpen(markerButton)) {
         perf?.timing('open_panel_naval', sw.elapsed);
         return;
@@ -413,6 +434,17 @@ Future<void> e2eOpenProductionPanel(
     }
 
     if (productionButton.evaluate().isNotEmpty) {
+      // Mirror the naval/civilian opener's pre-tap rail-hit-testable wait
+      // so an overlay covering the production button does not silently
+      // drop the tap. No `secondary` finder — production has no
+      // map-marker concept. Refs GitHub #2336 AC1 / AC10 (deferred slice
+      // from PR #2782).
+      await e2eAwaitPanelOpenerRailHitTestable(
+        tester,
+        primary: productionButton,
+        perf: perf,
+        phaseName: 'wait_until_production_rail_hit_testable',
+      );
       // Shared defensive tap: `ensureVisible` (best-effort) + hit-testable
       // resolve so a rail button pushed off-screen by a transient overlay
       // still lands a centered tap. Production previously did the
