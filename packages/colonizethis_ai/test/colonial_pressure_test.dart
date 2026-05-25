@@ -4,7 +4,6 @@ import 'package:colonizethis_ai/src/perception/perception_snapshot.dart';
 import 'package:colonizethis_ai/src/planning/colonial_pressure.dart';
 import 'package:colonizethis_ai/src/planning/conquest_planner.dart';
 import 'package:colonizethis_ai/src/planning/diplomacy_planner_peace_targets.dart';
-import 'package:colonizethis_data/colonizethis_data.dart';
 
 void main() {
   // `hasColonialAcquisitionTargets` and `isEarlyColonialExpansion` were
@@ -12,33 +11,11 @@ void main() {
   // tests now live in `observer_goal_phase_test.dart` alongside the EXPAND
   // -> COLONIAL phase transition guard.
 
-  group('colonialBuildOrderThresholdCap', () {
-    test('null when no NW provinces owned', () {
-      const colonial = ColonialSummary(
-        invadableNewWorldProvinceIdsSorted: ['newWorld|p1'],
-      );
-      expect(colonialBuildOrderThresholdCap(colonial), isNull);
-    });
-
-    test('owned NW cap when holdings exist without acquisition targets', () {
-      const colonial = ColonialSummary(newWorldProvincesOwned: 10);
-      expect(
-        colonialBuildOrderThresholdCap(colonial),
-        kColonialBuildOrderThresholdWhenOwnedNw,
-      );
-    });
-
-    test('lower cap when owned NW and acquisition targets remain', () {
-      const colonial = ColonialSummary(
-        newWorldProvincesOwned: kColonialFewNwProvincesThreshold,
-        invadableNewWorldProvinceIdsSorted: ['newWorld|p1'],
-      );
-      expect(
-        colonialBuildOrderThresholdCap(colonial),
-        kColonialBuildOrderThresholdWhenOwnedNwUnderPressure,
-      );
-    });
-  });
+  // `colonialBuildOrderThresholdCap` was retired from `colonial_pressure.dart`
+  // (Refs #2509 S1). The reachable behaviour is exercised by
+  // `phase_planner_economy_filter_test.dart` against
+  // `resolvePhaseEconomyColonialBuildOrderThresholdCap`, which is the sole
+  // production caller of the colonial build-order threshold cap.
 
   group('belowQuotaPeerGpPeaceTargets', () {
     test(
