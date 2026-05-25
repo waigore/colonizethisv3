@@ -29,6 +29,7 @@ export 'e2e_test_shared.dart'
         e2eAttemptFirstFleetMoveOrCancel,
         e2eAwaitExploreEnabledFromCivilianPanel,
         e2eAwaitNwCoastalOrVisibleLandForBundledExplore,
+        e2eAwaitPanelMountAfterOpenerTap,
         e2eAwaitPanelOpenerRailHitTestable,
         e2eBundledExploreRejectionDiagnostics,
         e2eCheckExploreEnabledFromCivilianPanel,
@@ -137,6 +138,28 @@ Future<bool> ensureVisibleAndTapHitTestable(
   WidgetTester tester,
   Finder trigger,
 ) => e2eEnsureVisibleAndTapHitTestable(tester, trigger);
+
+/// Stable public name for [e2eAwaitPanelMountAfterOpenerTap] (Refs GitHub
+/// #2336 AC1 / AC2 / AC10). Forwards to the implementation in
+/// `e2e_test_shared.dart`. The shared post-tap panel-mount probe is
+/// consumed indirectly by [openCivilianPanel] / [openNavalPanel] /
+/// [openProductionPanel] today; the alias is re-exposed so future
+/// scenarios can compose the same "fast-check → one pump → bounded poll"
+/// mount probe after their own rail/marker taps without duplicating the
+/// recipe.
+Future<bool> awaitPanelMountAfterOpenerTap(
+  WidgetTester tester,
+  Finder panelRoot, {
+  required Duration timeout,
+  E2ePerfLog? perf,
+  required String phaseName,
+}) => e2eAwaitPanelMountAfterOpenerTap(
+  tester,
+  panelRoot,
+  timeout: timeout,
+  perf: perf,
+  phaseName: phaseName,
+);
 
 /// Stable public name for [e2eDismissCtDialogShellIfPresent] so the
 /// full-turn scenario consumes the AC1 barrel only (Refs GitHub #2336 AC1 /
