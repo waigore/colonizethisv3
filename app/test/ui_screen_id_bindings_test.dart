@@ -8,12 +8,18 @@
 
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:colonizethis_app/config/ui_screen_ids.dart';
+import 'package:colonizethis_app/features/debug_log/debug_log_viewer_screen.dart';
+import 'package:colonizethis_app/features/game/combat/combat_mode_choice_dialog.dart';
+import 'package:colonizethis_app/features/game/combat/quick_battle_result_dialog.dart';
 import 'package:colonizethis_app/features/game/combat/quick_battle_screen.dart';
+import 'package:colonizethis_app/features/game/dialogue/call_to_arms_dialogue_overlay.dart';
 import 'package:colonizethis_app/features/game/dialogue/game_start_intro_overlay.dart';
 import 'package:colonizethis_app/features/game/dialogue/overture_dialogue_overlay.dart';
 import 'package:colonizethis_app/features/game/flame/game_map_area.dart';
 import 'package:colonizethis_app/features/game/flame/game_screen.dart';
+import 'package:colonizethis_app/features/game/flame/game_side_menu.dart';
 import 'package:colonizethis_app/features/game/flame/victory_overlay.dart';
+import 'package:colonizethis_app/features/game/screens/diplomacy_detail_screen.dart';
 import 'package:colonizethis_app/features/game/screens/diplomacy_screen.dart';
 import 'package:colonizethis_app/features/game/screens/production_screen.dart';
 import 'package:colonizethis_app/features/game/screens/technology_screen.dart';
@@ -22,8 +28,10 @@ import 'package:colonizethis_app/features/game/widgets/military_units_panel.dart
 import 'package:colonizethis_app/features/game/widgets/move_army_dialog.dart';
 import 'package:colonizethis_app/features/game/widgets/move_fleet_dialog.dart';
 import 'package:colonizethis_app/features/game/widgets/naval_units_panel.dart';
+import 'package:colonizethis_app/features/game/widgets/pause_menu_panel.dart';
 import 'package:colonizethis_app/features/game/widgets/province_sea_zone_detail_overlay.dart';
 import 'package:colonizethis_app/features/game/widgets/transfer_to_home_fleet_dialog.dart';
+import 'package:colonizethis_app/features/game/widgets/turn_news_dialog.dart';
 import 'package:colonizethis_app/features/shell/new_game_leader_selection_dialog.dart';
 import 'package:colonizethis_app/features/shell/shell_screen.dart';
 import 'package:colonizethis_app/widgets/game_setup.dart';
@@ -109,12 +117,45 @@ const Map<String, ({String actual, String expected})> _bindings = {
     actual: QuickBattleScreen.screenId,
     expected: UiScreenIds.quickBattleScreen,
   ),
+  // Bindings added in #2797 (remaining widgets identified for screenId pinning).
+  'PauseMenuPanel': (
+    actual: PauseMenuPanel.screenId,
+    expected: UiScreenIds.pauseMenuPanel,
+  ),
+  'DiplomacyDetailScreen': (
+    actual: DiplomacyDetailScreen.screenId,
+    expected: UiScreenIds.diplomacyDetailScreen,
+  ),
+  'GameSideMenu': (
+    actual: GameSideMenu.screenId,
+    expected: UiScreenIds.gameSideMenu,
+  ),
+  'CombatModeChoiceDialog': (
+    actual: CombatModeChoiceDialog.screenId,
+    expected: UiScreenIds.combatModeChoiceDialog,
+  ),
+  'QuickBattleResultDialog': (
+    actual: QuickBattleResultDialog.screenId,
+    expected: UiScreenIds.quickBattleResultDialog,
+  ),
+  'TurnNewsDialog': (
+    actual: TurnNewsDialog.screenId,
+    expected: UiScreenIds.turnNewsDialog,
+  ),
+  'CallToArmsDialogueOverlay': (
+    actual: CallToArmsDialogueOverlay.screenId,
+    expected: UiScreenIds.callToArmsDialogueOverlay,
+  ),
+  'DebugLogViewerScreen': (
+    actual: DebugLogViewerScreen.screenId,
+    expected: UiScreenIds.debugLogViewer,
+  ),
 };
 
 void main() {
   suppressLogsForTests();
 
-  group('Widget `screenId` <-> UiScreenIds bindings (#2783)', () {
+  group('Widget `screenId` <-> UiScreenIds bindings (#2783, extended #2797)', () {
     _bindings.forEach((widgetName, pair) {
       test(
         '$widgetName.screenId is bound to the matching UiScreenIds constant',

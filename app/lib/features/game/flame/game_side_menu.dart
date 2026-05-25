@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../config/routes.dart';
+import '../../../config/ui_screen_ids.dart';
 import '../../../l10n/l10n.dart';
 import '../../../providers/app_event_bus_provider.dart';
 import '../../../providers/games_provider.dart';
@@ -18,6 +19,8 @@ class GameSideMenu extends ConsumerWidget {
     required this.onClose,
     super.key,
   });
+
+  static const screenId = UiScreenIds.gameSideMenu;
 
   final bool sideMenuOpen;
   final VoidCallback onClose;

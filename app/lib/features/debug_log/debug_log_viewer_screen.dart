@@ -3,11 +3,14 @@
 import 'package:flutter/material.dart';
 import 'package:logger/logger.dart';
 import 'package:session_log_buffer/session_log_buffer.dart';
+import 'package:colonizethis_app/config/ui_screen_ids.dart';
 import 'package:colonizethis_app/l10n/l10n.dart';
 
 /// Full-screen viewer for session logs with multiselect filters by package and level.
 class DebugLogViewerScreen extends StatefulWidget {
   const DebugLogViewerScreen({super.key});
+
+  static const screenId = UiScreenIds.debugLogViewer;
 
   @override
   State<DebugLogViewerScreen> createState() => _DebugLogViewerScreenState();
