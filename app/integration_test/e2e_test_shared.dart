@@ -27,6 +27,7 @@ export 'e2e_test_shared_bundled_explore_retry.dart';
 export 'e2e_test_shared_civilian_work_tile_pick.dart';
 export 'e2e_test_shared_diagnostics.dart';
 export 'e2e_test_shared_dismiss_ct_dialog_shell.dart';
+export 'e2e_test_shared_dismiss_ct_dialog_shell_escalation.dart';
 export 'e2e_test_shared_final_naval_reach_check.dart';
 export 'e2e_test_shared_first_fleet_move.dart';
 export 'e2e_test_shared_fleet_reach_loop_test_total_meta.dart';
