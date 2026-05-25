@@ -315,21 +315,25 @@ List<String> multiFrontNonBlockerGpPeaceTargets({
 );
 
 /// Critical collapse / zero-regiment peace (all observer phases).
+///
+/// Delegates to [expand_phase_planner.survivalGreatPowerPeaceTargets]
+/// (Refs #2509 S1) so the EXPAND-phase critical-collapse and
+/// zero-regiment survival peace aggregator survives the planned
+/// deletion of this file alongside the five canonical sibling
+/// deciders it composes
+/// ([expand_phase_planner.criticalWeakGpSurvivalPeaceTargets],
+/// [expand_phase_planner.stalledZeroRegimentAllFactionPeaceTargets],
+/// [expand_phase_planner.mutualZeroRegimentGpStalematePeaceTargets],
+/// [expand_phase_planner.stalledZeroRegimentGpPeaceTargets],
+/// [expand_phase_planner.mutualExhaustedBelowQuotaGpStalematePeaceTargets]).
+/// Retained here as a thin delegating stub for the in-file
+/// `collectStalledGreatPowerPeaceTargets` consumer chain until the
+/// planned S1 deletion of this file.
 Iterable<String> _survivalGreatPowerPeaceTargets({
   required Game game,
   required AIWorldSnapshot snapshot,
 }) sync* {
-  yield* criticalWeakGpSurvivalPeaceTargets(game: game, snapshot: snapshot);
-  yield* stalledZeroRegimentAllFactionPeaceTargets(
-    game: game,
-    snapshot: snapshot,
-  );
-  yield* mutualZeroRegimentGpStalematePeaceTargets(
-    game: game,
-    snapshot: snapshot,
-  );
-  yield* stalledZeroRegimentGpPeaceTargets(game: game, snapshot: snapshot);
-  yield* mutualExhaustedBelowQuotaGpStalematePeaceTargets(
+  yield* expand_phase_planner.survivalGreatPowerPeaceTargets(
     game: game,
     snapshot: snapshot,
   );
