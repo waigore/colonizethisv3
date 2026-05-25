@@ -2079,3 +2079,96 @@ List<String> nearQuotaHoldPeaceTargets({
   }
   return gpWars;
 }
+
+/// At-war minor with the most invadable Old World provinces (single-front
+/// focus minor), or `null` when no at-war minor owns any invadable OW
+/// province.
+///
+/// Canonical home (Refs #2509 S1) for the legacy `stalledFocusMinorTarget`
+/// helper previously hosted in `diplomacy_planner_peace_targets.dart`. The
+/// helper survives the planned S1 deletion of that file alongside its
+/// EXPAND-phase consumers ([belowQuotaActiveMinorWarTarget],
+/// `stalledExpansionDistractionPeaceTargets`,
+/// `belowQuotaMultiMinorDistractionPeaceTargets`) which all use the
+/// "focused minor" identity to keep one OW minor war open while peacing
+/// every other distraction front.
+///
+/// Inputs:
+///   - [game]: used to resolve `(playerId, minor.id)` relations via
+///     [getRelation] and to score each at-war minor against
+///     [ConquestSummary.invadableProvinceIdsSorted] via [getProvinceOwnerMap].
+///   - [snapshot]: per-player [AIWorldSnapshot] supplying the active player
+///     id and the deterministic invadable OW frontier list.
+///
+/// Output:
+///   - The `factionId` of the at-war minor that owns the most provinces in
+///     [ConquestSummary.invadableProvinceIdsSorted]. The first minor that
+///     reaches a strictly greater invadable count wins, so ties resolve to
+///     the iteration order of `Game.minorNations` (deterministic for a
+///     fixed game-state input).
+///   - `null` when no at-war minor owns any invadable OW province (every
+///     candidate stays at `bestInvadableCount == 0`).
+///
+/// Pure and deterministic — identical inputs always yield identical output
+/// (Refs #2509 Must-have #7). Linear in `Game.minorNations` with one
+/// [ConquestSummary.invadableProvinceIdsSorted] scan per at-war minor;
+/// matches the budget-rule note in
+/// `colonizethis-turn-resolution-budget.mdc` (no global province / tile
+/// scans introduced by the move).
+String? stalledFocusMinorTarget({
+  required Game game,
+  required AIWorldSnapshot snapshot,
+}) {
+  final provinceOwner = getProvinceOwnerMap(game);
+  String? bestMinorId;
+  var bestInvadableCount = 0;
+  for (final minor in game.minorNations) {
+    final rel = getRelation(game, snapshot.playerId, minor.id);
+    if (rel?.state != RelationState.atWar) continue;
+    final invadableCount = snapshot.conquest.invadableProvinceIdsSorted
+        .where((pid) => provinceOwner[pid] == minor.id)
+        .length;
+    if (invadableCount > bestInvadableCount) {
+      bestInvadableCount = invadableCount;
+      bestMinorId = minor.id;
+    }
+  }
+  return bestMinorId;
+}
+
+/// At-war minor "active OW front" target while the active player is below
+/// the observer OW conquest quota, or `null` when above-quota or no at-war
+/// minor owns invadable OW provinces.
+///
+/// Canonical home (Refs #2509 S1) for the legacy
+/// `belowQuotaActiveMinorWarTarget` helper previously hosted in
+/// `diplomacy_planner_peace_targets.dart`. The helper is a thin
+/// below-quota gate over [stalledFocusMinorTarget] used by EXPAND-phase
+/// candidate scoring (`diplomatic_candidate_scoring_offer_peace.dart` and
+/// the seed-42 gp4 minor-front-hold path) so the planner does not peace a
+/// minor that still owns a real OW frontier while we are below quota.
+///
+/// Outer guard: returns `null` when
+/// [isBelowObserverConquestQuota] is `false` for
+/// [ConquestSummary.oldWorldProvincesOwned] — the at-quota and above-quota
+/// bands route minor-front decisions through the quota-met /
+/// near-quota / consolidate deciders instead.
+///
+/// When the outer guard passes, the helper delegates to
+/// [stalledFocusMinorTarget] and returns its result unchanged: either the
+/// minor that owns the most invadable OW provinces, or `null` when the
+/// scan finds no at-war minor with an invadable OW province.
+///
+/// Pure and deterministic — identical inputs always yield identical
+/// output (Refs #2509 Must-have #7). Cost is dominated by the
+/// [stalledFocusMinorTarget] scan once the outer guard passes; the
+/// quota-band check is O(1).
+String? belowQuotaActiveMinorWarTarget({
+  required Game game,
+  required AIWorldSnapshot snapshot,
+}) {
+  if (!isBelowObserverConquestQuota(snapshot.conquest.oldWorldProvincesOwned)) {
+    return null;
+  }
+  return stalledFocusMinorTarget(game: game, snapshot: snapshot);
+}
