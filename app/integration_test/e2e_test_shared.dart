@@ -258,6 +258,52 @@ Future<void> e2eCloseBottomSheet(
   );
 }
 
+/// Ensures [trigger] is visible (best-effort) and taps its first
+/// hit-testable element, falling back to the raw [trigger] when no
+/// hit-testable element resolves.
+///
+/// Encodes the defensive rail/marker tap sequence shared by
+/// [e2eOpenCivilianPanel], [e2eOpenNavalPanel], and [e2eOpenProductionPanel]
+/// so each panel opener gains uniform off-screen-trigger resilience
+/// (Refs GitHub #2336 AC1 / AC2 / AC10; PR #2555 history — the naval rail
+/// tap could land off-target until `ensureVisible` + hit-testable resolve
+/// was added inline, while the civilian opener kept the brittle raw-tap
+/// path that drops the tap when the rail button is rendered but pushed
+/// outside the viewport by a transient overlay).
+///
+/// Contract:
+///
+/// - When [trigger] resolves to zero elements, returns `false` without
+///   tapping. The caller remains responsible for the upstream presence
+///   check; the panel-opener `tryOpen` closures already gate on
+///   `trigger.evaluate().isNotEmpty` before calling, so this no-op branch
+///   is a safety net rather than the primary path.
+/// - Calls [WidgetTester.ensureVisible] inside a `try`/`catch (_)` so an
+///   `ensureVisible` failure (for example when the trigger is not in any
+///   `Scrollable`) does not throw past the helper.
+/// - Resolves the tap target via `trigger.hitTestable()`; falls back to
+///   the raw [trigger] when no element is hit-testable so the tap still
+///   fires from the same canonical position the legacy opener bodies
+///   used.
+/// - Taps the first resolved element with `warnIfMissed: false` to match
+///   the existing panel-opener contract.
+/// - Returns `true` when the tap was issued.
+Future<bool> e2eEnsureVisibleAndTapHitTestable(
+  WidgetTester tester,
+  Finder trigger,
+) async {
+  if (trigger.evaluate().isEmpty) {
+    return false;
+  }
+  try {
+    await tester.ensureVisible(trigger);
+  } catch (_) {}
+  final hit = trigger.hitTestable();
+  final target = hit.evaluate().isNotEmpty ? hit : trigger;
+  await tester.tap(target.first, warnIfMissed: false);
+  return true;
+}
+
 /// Taps the first visible **Assign** in the civilian panel work menu (GitHub #2336 H9).
 Future<void> e2eTapFirstAssignInCivilianPanel(WidgetTester tester) async {
   final root = find.byKey(kCtE2ECivilianPanelRootKey);

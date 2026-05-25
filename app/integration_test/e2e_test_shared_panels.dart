@@ -44,10 +44,13 @@ Future<void> e2eOpenCivilianPanel(
     if (civilianPanel.hitTestable().evaluate().isNotEmpty) {
       return true;
     }
-    if (trigger.evaluate().isEmpty) {
+    // Shared defensive tap: `ensureVisible` (best-effort) + hit-testable
+    // resolve so a rail/marker pushed off-screen by a transient overlay
+    // still lands a centered tap, matching the naval opener parity fix
+    // landed in PR #2555. Refs GitHub #2336 AC1 / AC10.
+    if (!await e2eEnsureVisibleAndTapHitTestable(tester, trigger)) {
       return false;
     }
-    await tester.tap(trigger.first, warnIfMissed: false);
     if (civilianPanel.evaluate().isNotEmpty) {
       return true;
     }
@@ -170,15 +173,14 @@ Future<void> e2eOpenNavalPanel(
     if (navalPanel.hitTestable().evaluate().isNotEmpty) {
       return true;
     }
-    if (trigger.evaluate().isEmpty) {
+    // Shared defensive tap: `ensureVisible` (best-effort) + hit-testable
+    // resolve. This is the canonical inline pattern that PR #2555 inlined
+    // for the naval opener; lifted into [e2eEnsureVisibleAndTapHitTestable]
+    // so the civilian and production openers gain the same off-screen
+    // resilience byte-equivalently. Refs GitHub #2336 AC1 / AC10.
+    if (!await e2eEnsureVisibleAndTapHitTestable(tester, trigger)) {
       return false;
     }
-    try {
-      await tester.ensureVisible(trigger);
-    } catch (_) {}
-    final hit = trigger.hitTestable();
-    final target = hit.evaluate().isNotEmpty ? hit : trigger;
-    await tester.tap(target.first, warnIfMissed: false);
     if (navalPanel.evaluate().isNotEmpty) {
       return true;
     }
@@ -411,11 +413,14 @@ Future<void> e2eOpenProductionPanel(
     }
 
     if (productionButton.evaluate().isNotEmpty) {
-      final productionButtonHit = productionButton.hitTestable();
-      final target = productionButtonHit.evaluate().isNotEmpty
-          ? productionButtonHit
-          : productionButton;
-      await tester.tap(target.first, warnIfMissed: false);
+      // Shared defensive tap: `ensureVisible` (best-effort) + hit-testable
+      // resolve so a rail button pushed off-screen by a transient overlay
+      // still lands a centered tap. Production previously did the
+      // hit-testable resolve inline but skipped `ensureVisible`; lifting
+      // both behind [e2eEnsureVisibleAndTapHitTestable] makes the three
+      // panel openers byte-equivalent on the post-tap path. Refs GitHub
+      // #2336 AC1 / AC10.
+      await e2eEnsureVisibleAndTapHitTestable(tester, productionButton);
       if (productionPanel.evaluate().isNotEmpty) {
         perf?.timing('open_panel_production', sw.elapsed);
         return;
@@ -1410,4 +1415,3 @@ Future<bool> e2eCheckExploreEnabledFromCivilianPanel(
 // panel-action helpers in this file. The extraction also keeps this file
 // within the repo-lint `dart_file_non_comment_line_size` budget
 // (`SPEC/program/repo-lint.md`, ≤ 1000 non-comment lines).
-

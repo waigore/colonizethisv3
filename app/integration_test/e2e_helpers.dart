@@ -33,6 +33,7 @@ export 'e2e_test_shared.dart'
         e2eCheckExploreEnabledFromCivilianPanel,
         e2eDismissCtDialogShellIfPresent,
         e2eEnsureNonHomeFleetInNwAfterLoop,
+        e2eEnsureVisibleAndTapHitTestable,
         e2eEnterFleetReachScenarioReady,
         e2eEnterStandardE2eScenario,
         e2eExploreAssignEnabledFromCivilianSnapshot,
@@ -123,6 +124,18 @@ Future<void> waitUntilFound(
 
 Future<void> dismissTransientUi(WidgetTester tester, {E2ePerfLog? perf}) =>
     e2eDismissTransientUi(tester, perf: perf);
+
+/// Stable public name for [e2eEnsureVisibleAndTapHitTestable] (Refs GitHub
+/// #2336 AC1 / AC2 / AC10). Forwards to the implementation in
+/// `e2e_test_shared.dart`. The shared defensive tap is consumed indirectly
+/// by [openCivilianPanel] / [openNavalPanel] / [openProductionPanel] today;
+/// the alias is re-exposed so future scenarios can compose the same
+/// rail/marker tap path without duplicating the `ensureVisible` +
+/// hit-testable resolve recipe.
+Future<bool> ensureVisibleAndTapHitTestable(
+  WidgetTester tester,
+  Finder trigger,
+) => e2eEnsureVisibleAndTapHitTestable(tester, trigger);
 
 /// Stable public name for [e2eDismissCtDialogShellIfPresent] so the
 /// full-turn scenario consumes the AC1 barrel only (Refs GitHub #2336 AC1 /
