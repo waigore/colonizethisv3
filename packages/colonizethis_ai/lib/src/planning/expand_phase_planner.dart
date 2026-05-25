@@ -2259,7 +2259,19 @@ List<String> belowQuotaPeerGpPeaceTargets({
         !hasUninvadedOldWorldMinor(game: game, snapshot: snapshot)) {
       continue;
     }
+    targets.add(factionId);
+  }
+  targets.sort();
+  return targets;
+}
 
+/// Returns the deterministic ascending-sorted list of at-war Great
+/// Power `factionId`s the active player should `offerPeace` toward in
+/// EXPAND when stalled below the observer quota and minors still hold
+/// invadable Old World land — the legacy "stalled futile GP" peace
+/// pivot — or `const []` when the pivot does not apply this turn.
+///
+/// Canonical home (Refs #2509 S1) for the legacy
 /// `stalledFutileGpPeaceTargets` peace decider previously hosted in
 /// `diplomacy_planner_peace_targets.dart`. The decider implements the
 /// EXPAND-phase "while stalled with a minor still on the invadable
