@@ -46,6 +46,7 @@ abstract final class UiScreenIds {
   static const String victoryOverlay = 'OVL20001';
   static const String overtureDialogueOverlay = 'OVL30001';
   static const String callToArmsDialogueOverlay = 'OVL40001';
+  static const String pendingInterventionOverlay = 'OVL50001';
   static const String observeModeOverlay = 'OVL60001';
   static const String playerTurnEventFeed = 'OVL70001';
 
