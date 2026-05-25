@@ -276,80 +276,26 @@ List<String> mutualExhaustedBelowQuotaGpStalematePeaceTargets({
   snapshot: snapshot,
 );
 
+/// Returns `true` when at least one EXPAND-phase stalled-expansion
+/// peace decider would fire; used by the diplomacy planner `offerPeace`
+/// passes and `collectStalledGreatPowerPeaceTargets`.
+///
+/// Delegates to [expand_phase_planner.stalledOwExpansionNeedsPeacePass]
+/// (Refs #2509 S1) so the EXPAND-phase stalled-expansion composite
+/// predicate survives the planned deletion of this file alongside the
+/// other canonicalized deciders. Retained here as a thin stub for the
+/// legacy `diplomacy_planner_stalled_peace_test.dart` fixture and the
+/// in-file `_expandRatchetGreatPowerPeaceTargets` /
+/// `collectStalledGreatPowerPeaceTargets` /
+/// `supplementMutualStalledGreatPowerPeaceOrders` consumer chains
+/// until the planned S1 deletion of this file.
 bool stalledOwExpansionNeedsPeacePass({
   required Game game,
   required AIWorldSnapshot snapshot,
-}) =>
-    stalledStrongerGpBlockerPeaceTarget(game: game, snapshot: snapshot) !=
-        null ||
-    stalledFutileGpPeaceTargets(game: game, snapshot: snapshot).isNotEmpty ||
-    stalledGpBlockerFocusPeaceTargets(
-      game: game,
-      snapshot: snapshot,
-    ).isNotEmpty ||
-    stalledExpansionDistractionPeaceTargets(
-      game: game,
-      snapshot: snapshot,
-    ).isNotEmpty ||
-    atWarGpDistractionTribePeaceTargets(
-      game: game,
-      snapshot: snapshot,
-    ).isNotEmpty ||
-    multiFrontNonBlockerGpPeaceTargets(
-      game: game,
-      snapshot: snapshot,
-    ).isNotEmpty ||
-    criticalMultiFrontGpPeaceTargets(
-      game: game,
-      snapshot: snapshot,
-    ).isNotEmpty ||
-    criticalWeakGpSurvivalPeaceTargets(
-      game: game,
-      snapshot: snapshot,
-    ).isNotEmpty ||
-    weakHoldingsInvadableBlockerPeaceTargets(
-      game: game,
-      snapshot: snapshot,
-    ).isNotEmpty ||
-    mutualZeroRegimentGpStalematePeaceTargets(
-      game: game,
-      snapshot: snapshot,
-    ).isNotEmpty ||
-    stalledZeroRegimentAllFactionPeaceTargets(
-      game: game,
-      snapshot: snapshot,
-    ).isNotEmpty ||
-    stalledZeroRegimentGpPeaceTargets(
-      game: game,
-      snapshot: snapshot,
-    ).isNotEmpty ||
-    mutualExhaustedBelowQuotaGpStalematePeaceTargets(
-      game: game,
-      snapshot: snapshot,
-    ).isNotEmpty ||
-    criticalOwHoldPeaceTargets(game: game, snapshot: snapshot).isNotEmpty ||
-    stalledBelowQuotaGpLeadPeaceTargets(
-      game: game,
-      snapshot: snapshot,
-    ).isNotEmpty ||
-    belowQuotaPeerGpPeaceTargets(game: game, snapshot: snapshot).isNotEmpty ||
-    defaultStartGpPeaceTargets(game: game, snapshot: snapshot).isNotEmpty ||
-    defaultStartFutileMinorPeaceTargets(
-      game: game,
-      snapshot: snapshot,
-    ).isNotEmpty ||
-    nearQuotaHoldPeaceTargets(game: game, snapshot: snapshot).isNotEmpty ||
-    quotaMetBelowQuotaAtWarPeaceTargets(
-      game: game,
-      snapshot: snapshot,
-    ).isNotEmpty ||
-    quotaMetFutileBelowQuotaGpPeaceTargets(
-      game: game,
-      snapshot: snapshot,
-    ).isNotEmpty ||
-    unwinnableSoleGpFrontierPeaceTarget(game: game, snapshot: snapshot) !=
-        null ||
-    consolidateGainsSoleGpPeaceTarget(game: game, snapshot: snapshot) != null;
+}) => expand_phase_planner.stalledOwExpansionNeedsPeacePass(
+  game: game,
+  snapshot: snapshot,
+);
 
 /// When fighting 2+ Great Powers, peace every non-blocker GP. Also peace a sole
 /// non-blocker GP war while invadable OW remains (Refs #2509).
