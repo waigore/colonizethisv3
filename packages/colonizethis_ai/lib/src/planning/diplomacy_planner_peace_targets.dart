@@ -6,114 +6,37 @@ import 'expand_phase_planner.dart' as expand_phase_planner;
 import 'observer_goal_phase.dart';
 
 /// Strongest at-war GP that owns invadable OW provinces while this GP is stalled.
+///
+/// Delegates to [expand_phase_planner.stalledStrongerGpBlockerPeaceTarget]
+/// (Refs #2509 S1) so the EXPAND-phase stronger-blocker peace decider
+/// survives the planned deletion of this file alongside the canonical
+/// [expand_phase_planner.stalledGpBlockerFocusPeaceTargets] sibling and
+/// the in-file `_expandRatchetGreatPowerPeaceTargets` /
+/// `stalledOwExpansionNeedsPeacePass` consumer chains.
 String? stalledStrongerGpBlockerPeaceTarget({
   required Game game,
   required AIWorldSnapshot snapshot,
-}) {
-  if (!isStalledOldWorldExpansion(snapshot.conquest.oldWorldProvincesOwned)) {
-    return null;
-  }
-  if (snapshot.conquest.invadableProvinceIdsSorted.isEmpty) {
-    return null;
-  }
-  final provinceOwner = getProvinceOwnerMap(game);
-  final minorsOwnInvadable = snapshot.conquest.invadableProvinceIdsSorted.any((
-    pid,
-  ) {
-    final owner = provinceOwner[pid];
-    return owner != null && game.minorNations.any((m) => m.id == owner);
-  });
-  final gpBlockerFocus = isStalledOldWorldGpBlockerFocus(
-    game: game,
-    snapshot: snapshot,
-  );
-  if (!minorsOwnInvadable && !gpBlockerFocus) {
-    return null;
-  }
-  if (gpBlockerFocus) {
-    final anyMinorOwnsOw = game.worldState.oldWorld.provinces.any(
-      (p) =>
-          p.ownerId != null &&
-          p.ownerId!.isNotEmpty &&
-          game.minorNations.any((m) => m.id == p.ownerId),
-    );
-    if (!anyMinorOwnsOw) {
-      return null;
-    }
-  }
-  final primaryBlocker = primaryInvadableOldWorldGpBlocker(
-    game: game,
-    snapshot: snapshot,
-  );
-  String? bestFactionId;
-  var bestLead = 0;
-  for (final factionId in snapshot.threats.atWarWith) {
-    if (game.playerById(factionId) == null) continue;
-    if (factionId == primaryBlocker) continue;
-    final ownsInvadable = snapshot.conquest.invadableProvinceIdsSorted.any(
-      (pid) => provinceOwner[pid] == factionId,
-    );
-    if (!ownsInvadable) continue;
-    final lead =
-        provinceCountOwnedBy(game, factionId) -
-        snapshot.conquest.oldWorldProvincesOwned;
-    if (lead <= 0) continue;
-    if (lead > bestLead) {
-      bestLead = lead;
-      bestFactionId = factionId;
-    }
-  }
-  return bestFactionId;
-}
+}) => expand_phase_planner.stalledStrongerGpBlockerPeaceTarget(
+  game: game,
+  snapshot: snapshot,
+);
 
 /// Factions at war with this GP to peace while a single GP owns the invadable OW
 /// frontier (minors, tribes, and other GPs are distractions; Refs #2509).
+///
+/// Delegates to [expand_phase_planner.stalledGpBlockerFocusPeaceTargets]
+/// (Refs #2509 S1) so the EXPAND-phase GP-blocker-focus peace decider
+/// survives the planned deletion of this file alongside the legacy
+/// `colonial_pressure_test.dart` fixture and the in-file
+/// `_expandRatchetGreatPowerPeaceTargets` /
+/// `stalledOwExpansionNeedsPeacePass` consumer chains.
 List<String> stalledGpBlockerFocusPeaceTargets({
   required Game game,
   required AIWorldSnapshot snapshot,
-}) {
-  if (!isOldWorldGpOnlyInvadableFrontier(game: game, snapshot: snapshot)) {
-    return const [];
-  }
-  final provinceOwner = getProvinceOwnerMap(game);
-  final minorsOwnInvadable = snapshot.conquest.invadableProvinceIdsSorted.any((
-    pid,
-  ) {
-    final owner = provinceOwner[pid];
-    return owner != null && game.minorNations.any((m) => m.id == owner);
-  });
-  final gpWars = <String>[
-    for (final factionId in snapshot.threats.atWarWith)
-      if (game.playerById(factionId) != null) factionId,
-  ];
-  final blocker = primaryInvadableOldWorldGpBlocker(
-    game: game,
-    snapshot: snapshot,
-  );
-  if (blocker == null) {
-    return const [];
-  }
-  if (minorsOwnInvadable && gpWars.length <= 1) {
-    // Sole GP war on a mixed frontier must still drop non-blocker fronts
-    // (seed-42 gp4/gp5 vs gp3 blocker; Refs #2509).
-    if (gpWars.length == 1 && gpWars.single != blocker) {
-      return [gpWars.single];
-    }
-    return const [];
-  }
-  if (minorsOwnInvadable) {
-    final targets = <String>[
-      for (final factionId in gpWars)
-        if (factionId != blocker) factionId,
-    ]..sort();
-    return targets;
-  }
-  final targets = <String>[
-    for (final factionId in snapshot.threats.atWarWith)
-      if (factionId != blocker) factionId,
-  ]..sort();
-  return targets;
-}
+}) => expand_phase_planner.stalledGpBlockerFocusPeaceTargets(
+  game: game,
+  snapshot: snapshot,
+);
 
 /// At-war Great Powers that own none of this GP's invadable Old World provinces
 /// while minors still hold invadable land (distracting GP wars; Refs #2509).
@@ -131,10 +54,6 @@ List<String> stalledFutileGpPeaceTargets({
   game: game,
   snapshot: snapshot,
 );
-
-bool _isMinorOrTribeFaction(Game game, String factionId) =>
-    game.minorNations.any((m) => m.id == factionId) ||
-    game.tribes.any((t) => t.id == factionId);
 
 /// At-war minor with the most invadable Old World provinces (single-front focus).
 ///
@@ -183,45 +102,26 @@ List<String> atWarGpDistractionTribePeaceTargets({
 );
 
 /// Peace every at-war minor/tribe except the focused minor or GP blocker war.
+///
+/// Delegates to
+/// [expand_phase_planner.stalledExpansionDistractionPeaceTargets]
+/// (Refs #2509 S1) so the EXPAND-phase distraction-peace decider
+/// survives the planned deletion of this file alongside the canonical
+/// helpers it composes ([expand_phase_planner.isStalledOldWorldExpansion],
+/// [expand_phase_planner.isStalledOldWorldGpBlockerFocus],
+/// [expand_phase_planner.primaryInvadableOldWorldGpBlocker],
+/// [expand_phase_planner.stalledFocusMinorTarget]). Retained here as a
+/// thin stub for the legacy `diplomacy_planner_stalled_peace_test.dart`
+/// fixture and the in-file `_expandRatchetGreatPowerPeaceTargets` /
+/// `stalledOwExpansionNeedsPeacePass` consumer chains until the
+/// planned S1 deletion of this file.
 List<String> stalledExpansionDistractionPeaceTargets({
   required Game game,
   required AIWorldSnapshot snapshot,
-}) {
-  if (!isStalledOldWorldExpansion(snapshot.conquest.oldWorldProvincesOwned)) {
-    return const [];
-  }
-  if (snapshot.threats.atWarWith.isEmpty) {
-    return const [];
-  }
-  final provinceOwner = getProvinceOwnerMap(game);
-  final minorsOwnInvadable = snapshot.conquest.invadableProvinceIdsSorted.any((
-    pid,
-  ) {
-    final owner = provinceOwner[pid];
-    return owner != null && game.minorNations.any((m) => m.id == owner);
-  });
-  final gpBlockerFocus = isStalledOldWorldGpBlockerFocus(
-    game: game,
-    snapshot: snapshot,
-  );
-  if (!minorsOwnInvadable && !gpBlockerFocus) {
-    return const [];
-  }
-  final keepMinor = minorsOwnInvadable
-      ? stalledFocusMinorTarget(game: game, snapshot: snapshot)
-      : null;
-  final keepGp = gpBlockerFocus
-      ? primaryInvadableOldWorldGpBlocker(game: game, snapshot: snapshot)
-      : null;
-  final targets = <String>[
-    for (final factionId in snapshot.threats.atWarWith)
-      if (factionId != keepMinor &&
-          factionId != keepGp &&
-          _isMinorOrTribeFaction(game, factionId))
-        factionId,
-  ]..sort();
-  return targets;
-}
+}) => expand_phase_planner.stalledExpansionDistractionPeaceTargets(
+  game: game,
+  snapshot: snapshot,
+);
 
 /// When OW holdings are critically low (≤6), peace every stronger at-war GP (Refs #2509).
 ///
@@ -247,49 +147,27 @@ List<String> criticalWeakGpSurvivalPeaceTargets({
 
 /// Peace the invadable OW frontier GP while critically weak and outmatched
 /// (pivot to minors/tribes instead of unwinnable GP wars; Refs #2509).
+///
+/// Delegates to
+/// [expand_phase_planner.weakHoldingsInvadableBlockerPeaceTargets]
+/// (Refs #2509 S1) so the EXPAND-phase critically-weak blocker peace
+/// decider survives the planned deletion of this file alongside the
+/// canonical [expand_phase_planner.isOldWorldGpOnlyInvadableFrontier]
+/// and [expand_phase_planner.primaryInvadableOldWorldGpBlocker]
+/// helpers it composes. Retained here as a thin stub for the legacy
+/// `diplomacy_planner_below_quota_peace_test.dart` and
+/// `diplomacy_planner_below_quota_peace_part3_test.dart` fixtures and
+/// the in-file `_expandRatchetGreatPowerPeaceTargets` /
+/// `collectStalledGreatPowerPeaceTargets` `preserveBlockerPeace` /
+/// `stalledOwExpansionNeedsPeacePass` consumer chains until the
+/// planned S1 deletion of this file.
 List<String> weakHoldingsInvadableBlockerPeaceTargets({
   required Game game,
   required AIWorldSnapshot snapshot,
-}) {
-  final zeroRegiments = regimentCountForPlayer(game, snapshot.playerId) == 0;
-  final belowQuota = isBelowObserverConquestQuota(
-    snapshot.conquest.oldWorldProvincesOwned,
-  );
-  if (snapshot.conquest.oldWorldProvincesOwned >
-          kFewOldWorldProvincesDefendThreshold &&
-      !belowQuota &&
-      !(zeroRegiments &&
-          isStalledOldWorldExpansion(
-            snapshot.conquest.oldWorldProvincesOwned,
-          ))) {
-    return const [];
-  }
-  if (isOldWorldGpOnlyInvadableFrontier(game: game, snapshot: snapshot)) {
-    return const [];
-  }
-  final blocker = primaryInvadableOldWorldGpBlocker(
-    game: game,
-    snapshot: snapshot,
-  );
-  if (blocker == null ||
-      !snapshot.threats.atWarWith.contains(blocker) ||
-      game.playerById(blocker) == null) {
-    return const [];
-  }
-  final lead =
-      provinceCountOwnedBy(game, blocker) -
-      snapshot.conquest.oldWorldProvincesOwned;
-  final minLead = belowQuota
-      ? (snapshot.conquest.oldWorldProvincesOwned <=
-                kObserverDefaultStartOldWorldProvincesPerGp + 2
-            ? 1
-            : kUnwinnableSoleGpMinProvinceDeficit)
-      : kDeclareWarAggressorSuppressWeakGpLeadThreshold;
-  if (lead < minLead) {
-    return const [];
-  }
-  return [blocker];
-}
+}) => expand_phase_planner.weakHoldingsInvadableBlockerPeaceTargets(
+  game: game,
+  snapshot: snapshot,
+);
 
 /// When OW holdings are critically low, peace non-blocker Great Power fronts only
 /// (avoid total collapse from multi-front GP wars; Refs #2509).
