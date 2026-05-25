@@ -1,5 +1,6 @@
 # Shell Screen
 
+**Screen ID:** `SHEL10001` — stable; do not reassign.
 **SPEC/ui** — App shell. Hosts [`CtMainMenu`](main-menu.md) on the `Routes.shell` route and acts as the navigation choke point between the main menu and gameplay. Source of truth for the menu surface itself: [`main-menu.md`](main-menu.md). App-screen / route table: [`ctdev-app.md`](../program/ctdev-app.md). Routes: `app/lib/config/routes.dart`. Bus events: [`app-event-bus.md`](../program/app-event-bus.md). Bus wiring rules: [`app-ui-wiring.md`](../program/app-ui-wiring.md). Auto-save / resume contract: [`save-load.md`](../program/save-load.md).
 
 ---

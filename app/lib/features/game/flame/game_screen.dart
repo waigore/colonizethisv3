@@ -10,6 +10,7 @@ import 'package:flutter/material.dart';
 import 'package:colonizethis_app/l10n/l10n.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../config/ui_screen_ids.dart';
 import '../../../../providers/app_event_bus_provider.dart';
 import '../../../../providers/game_service_provider.dart';
 import '../../../../providers/games_provider.dart';
@@ -249,6 +250,9 @@ Future<void> _runFlameCanvasNextTurn(
 /// Hosts the Flame game canvas or map. When map data exists, shows map + province/sea zone overlay.
 class GameScreen extends ConsumerWidget {
   const GameScreen({super.key});
+
+  /// SPEC/ui/game-screen.md — [UiScreenIds.gameScreen].
+  static const screenId = UiScreenIds.gameScreen;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {

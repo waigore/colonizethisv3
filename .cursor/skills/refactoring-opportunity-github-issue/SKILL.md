@@ -50,7 +50,7 @@ Before finalizing findings and the issue body, **compare planned themes** to wor
 ### 2. Load governance context
 
 1. Read **`AGENTS.md`** at repo root for the rule index.
-2. For the chosen target path, read **every `.cursor/rules/*.mdc` file whose `globs` / `alwaysApply` plausibly covers that tree** (always-applied rules first, then additive context rules). At minimum for Dart under `app/` or `packages/**`: `colonizethis-spec-required`, `colonizethis-core-principles`, `colonizethis-component-structure`, `colonizethis-code-review`, plus any others that match (e.g. `colonizethis-testing` for tests, `colonizethis-ui-design` for UI paths, `colonizethis-logic-ai-decoupling` when touching logic↔ai boundaries).
+2. For the chosen target path, read **every `.cursor/rules/*.mdc` file whose `globs` / `alwaysApply` plausibly covers that tree** (always-applied rules first, then additive context rules). At minimum for Dart under `app/` or `packages/**`: `colonizethis-spec-required`, `colonizethis-core-principles`, `colonizethis-component-structure`, `colonizethis-code-review`, plus any others that match (e.g. `colonizethis-testing` for tests, `colonizethis-ui-documentation` + `colonizethis-ui-design` for UI paths under `app/` or `SPEC/ui/`, `colonizethis-logic-ai-decoupling` when touching logic↔ai boundaries).
 3. When behavior or architecture could be normative, spot-check relevant **`SPEC/`** sections (program/game/ui) **read-only** — same SPEC-first instinct as implementation, but do not edit SPEC in this skill unless the user asks.
 
 ### 3. Analyze the codebase (evidence-based)
@@ -59,6 +59,7 @@ Search and read concrete sites (types, public APIs, large files, cross-imports, 
 
 - **Project rules:** Tie each finding to a **specific rule file** (and SPEC section if applicable), or label it **general practice** (Dart/Flutter: e.g. unnecessary `dynamic`, over-wide imports, God widgets, tight coupling across layers).
 - **Architecture:** Respect boundaries from rules (e.g. logic vs AI, UI vs Flame, `AppEventBus` vs cross-panel callbacks) — flag violations with file paths and a short “why it matters.”
+- **UI screens:** Refactors that split, merge, or rename screens/dialogs/overlays must preserve **stable screen IDs** (`SPEC/ui/screen-registry.md`, `UiScreenIds`) unless the issue explicitly authorizes migration. Note implementers should run **`document-app-ui`** when spec/registry/Widgetbook must change.
 - **Tests:** Note gaps that would make a refactor risky; reference `colonizethis-testing.mdc` expectations for the layer.
 
 Prefer **file:symbol** or **path + pattern** citations over vague advice. Separate **facts** (what the code does) from **recommendations** (what to change).
@@ -116,6 +117,7 @@ Not applicable (refactoring / maintainability improvement).
 - **Refactors:** [ordered bullets: smallest safe steps first]
 - **CI / enforcement:** [extend vs new; AST vs analyzer; files like `quality.yml`, `tool/ct_repo_lint_manifest.yaml`, `test/check_*`]
 - **SPEC follow-up:** none | clarification | new section (per spec-required policy)
+- **UI docs:** If player-app UI structure changes, subtask to update specs/registry/Widgetbook via **`document-app-ui`** (`.cursor/skills/document-app-ui/SKILL.md`; OpenCode: `.opencode/skills/document-app-ui/SKILL.md`)
 
 ## Risks / edge cases
 - ...
@@ -133,5 +135,6 @@ Not applicable (refactoring / maintainability improvement).
 ## Related
 
 - Issue filing format and `gh` usage: `.cursor/skills/create-github-issue/SKILL.md`
+- Player-app UI spec/registry/Widgetbook: `.cursor/skills/document-app-ui/SKILL.md` (OpenCode: `.opencode/skills/document-app-ui/SKILL.md`)
 - Pre-implementation issue coherence: `.cursor/skills/review-github-issue/SKILL.md`
 - Post-implementation verification: `.cursor/skills/verify-github-issue/SKILL.md`

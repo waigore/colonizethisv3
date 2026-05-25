@@ -56,6 +56,7 @@ Do not proceed to draft/create the issue until this clarification step is comple
 ### 3. Investigate (read-only)
 
 - **Specs:** Trace the reported behavior to authoritative docs. For ColonizeThis: GDD under `SPEC/game/`, TDD under `SPEC/program/`, plus `SPEC/ai/` and `SPEC/ui/` as needed (see project SPEC-first rules). Quote or summarize **specific files/sections** that align or contradict the report.
+- **Player-app UI:** When the report involves screens, dialogs, overlays, layout, or UI-triggered bus events, also read `SPEC/ui/screen-registry.md` and the relevant screen spec under `SPEC/ui/`. Screen structure is governed by `.cursor/rules/colonizethis-ui-documentation.mdc` (stable 8-char IDs, layout/behavior/variants, Widgetbook)—orthogonal to style in `colonizethis-ui-design.mdc`.
 - **Implementation:** Search and read relevant modules. Map **symptoms -> likely code paths** (files, types, key functions). Stay factual; label inference as hypothesis when not proven.
 - **Tests:** Note existing tests that would fail or are missing for this scenario (read-only).
 
@@ -69,6 +70,7 @@ Output a **concrete but unapplied** plan:
 - **Suggested change** (bullet list: logic, UI, data, config—at appropriate abstraction level)
 - **Files / areas** likely to change (paths, not patches)
 - **SPEC impact:** none, clarification only, or new/extended spec required before implementation (per project SPEC-first policy)
+- **UI documentation follow-up:** If the fix adds or changes a player-app screen/dialog/overlay, note that implementation must use **`document-app-ui`** (`.cursor/skills/document-app-ui/SKILL.md`; OpenCode: `.opencode/skills/document-app-ui/SKILL.md`) for registry ID, `SPEC/ui/<screen>.md`, `UiScreenIds`, and Widgetbook—include as subtask or acceptance criterion; do not edit those artifacts in this read-only skill.
 - **Risks / edge cases**
 - **Suggested acceptance criteria** (testable bullets the implementer can paste into the issue)
 
@@ -141,4 +143,5 @@ Always preserve the complete draft on fallback; it is the backup deliverable.
 ## Related
 
 - For **verifying** an existing issue: see [.cursor/skills/verify-github-issue/SKILL.md](../verify-github-issue/SKILL.md).
+- For **player-app UI** spec/registry/Widgetbook work during implementation: [.cursor/skills/document-app-ui/SKILL.md](../document-app-ui/SKILL.md) (OpenCode: `.opencode/skills/document-app-ui/SKILL.md`).
 - For **implementation** after the issue exists: **AGENTS.md**, **CONTRIBUTING.md**, and `.cursor/rules/` (testing, SPEC-required, etc.).
