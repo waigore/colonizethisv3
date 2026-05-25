@@ -10,8 +10,7 @@
 
 import '../perception/perception_snapshot.dart';
 import 'army_conquest_prep.dart';
-import 'colonial_pressure.dart';
-import 'diplomacy_planner_peace_targets.dart';
+import 'expand_phase_planner.dart';
 import 'planning_imports.dart';
 
 /// First minor nation that owns invadable OW land but is not yet at war, while
