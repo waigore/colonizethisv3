@@ -94,7 +94,10 @@ void main() {
             .map((e) => e.message)
             .toList();
         expect(idleLines, hasLength(2));
-        expect(idleLines.every((m) => m.contains('reason=no_suggestions')), isTrue);
+        expect(
+          idleLines.every((m) => m.contains('reason=no_suggestions')),
+          isTrue,
+        );
         expect(idleLines.any((m) => m.contains('unitId=e1')), isTrue);
         expect(idleLines.any((m) => m.contains('unitId=e2')), isTrue);
 

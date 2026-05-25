@@ -254,13 +254,10 @@ class _PlanState {
   final Map<WorkerTier, int> _emittedTrainedCount = <WorkerTier, int>{};
 
   int availablePeasants() =>
-      workerPool.peasants -
-      pendingPeasantConsumes -
-      _emittedPeasantConsumes;
+      workerPool.peasants - pendingPeasantConsumes - _emittedPeasantConsumes;
 
   int projectedTrainedCount(WorkerTier tier) =>
-      _currentTierCount(workerPool, tier) +
-      (_emittedTrainedCount[tier] ?? 0);
+      _currentTierCount(workerPool, tier) + (_emittedTrainedCount[tier] ?? 0);
 
   void applyRecruit(RecruitWorkerOrder order) {
     final row = WorkerActionEconomyCatalog.forTier(order.targetTier);

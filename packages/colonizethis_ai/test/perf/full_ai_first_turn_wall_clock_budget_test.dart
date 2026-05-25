@@ -39,8 +39,7 @@ void main() {
           humanOrders: const Orders(),
           aiOrders: fullAi.orders,
         );
-        final defaultAssignmentsByPlayerId =
-            fullAi.economyPlansByPlayerId.map(
+        final defaultAssignmentsByPlayerId = fullAi.economyPlansByPlayerId.map(
           (pid, plan) => MapEntry(pid, plan.productionAssignments),
         );
 

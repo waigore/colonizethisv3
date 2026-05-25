@@ -125,10 +125,7 @@ Game _gameWithTribeNw({required int turnNumber}) {
   return Game(
     id: 'g-2509-nw-colonial-orders-predicate',
     worldState: WorldState(
-      turnState: TurnState(
-        turnNumber: turnNumber,
-        phase: TurnPhase.orders,
-      ),
+      turnState: TurnState(turnNumber: turnNumber, phase: TurnPhase.orders),
       oldWorld: const RegionData(),
       newWorld: RegionData(
         provinces: const [
@@ -153,10 +150,7 @@ Game _gameWithGpOwnedNw() {
   return Game(
     id: 'g-2509-nw-colonial-orders-predicate-develop',
     worldState: WorldState(
-      turnState: const TurnState(
-        turnNumber: 140,
-        phase: TurnPhase.orders,
-      ),
+      turnState: const TurnState(turnNumber: 140, phase: TurnPhase.orders),
       oldWorld: const RegionData(),
       newWorld: RegionData(
         provinces: const [
@@ -383,8 +377,9 @@ void main() {
       // catches a regression that introduced incidental state (e.g.
       // caching a singleton phase or reading mutable globals) without
       // depending on the broader Full AI determinism harness.
-      final colonialLiteGame =
-          _gameWithTribeNw(turnNumber: kObserverColonialLiteMinTurn);
+      final colonialLiteGame = _gameWithTribeNw(
+        turnNumber: kObserverColonialLiteMinTurn,
+      );
       final colonialGame = _gameWithTribeNw(turnNumber: 110);
       final developGame = _gameWithGpOwnedNw();
       final expandGame = _gameWithTribeNw(turnNumber: 50);

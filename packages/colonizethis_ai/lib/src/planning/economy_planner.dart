@@ -62,14 +62,15 @@ EconomyPlan runEconomyPlanner({
     shipCountsById: shipCounts,
   );
 
-  final belowQuotaPeaceTreasuryRecovery = _resolveBelowQuotaPeaceTreasuryRecovery(
-    game: game,
-    view: view,
-    snapshot: snapshot,
-    phasePlan: phasePlan,
-    treasury: player.treasury,
-    stockpile: stockpile,
-  );
+  final belowQuotaPeaceTreasuryRecovery =
+      _resolveBelowQuotaPeaceTreasuryRecovery(
+        game: game,
+        view: view,
+        snapshot: snapshot,
+        phasePlan: phasePlan,
+        treasury: player.treasury,
+        stockpile: stockpile,
+      );
 
   if (effectiveLabour <= 0) {
     return EconomyPlan(
@@ -84,7 +85,8 @@ EconomyPlan runEconomyPlanner({
     );
   }
 
-  final militaryRebuildCrisis = snapshot != null &&
+  final militaryRebuildCrisis =
+      snapshot != null &&
       isStalledOldWorldExpansion(snapshot.conquest.oldWorldProvincesOwned) &&
       snapshot.threats.atWarWith.isNotEmpty &&
       regimentCountForPlayer(game, view.playerId) <

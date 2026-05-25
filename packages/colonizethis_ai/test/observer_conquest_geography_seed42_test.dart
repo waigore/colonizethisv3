@@ -35,14 +35,15 @@ void main() {
       final invadableOwners = <String>{
         for (final provinceId in snap.conquest.invadableProvinceIdsSorted)
           game.worldState.oldWorld.provinces
-              .firstWhere((p) => p.id == provinceId)
-              .ownerId ??
+                  .firstWhere((p) => p.id == provinceId)
+                  .ownerId ??
               '',
       }..remove('');
       expect(
         snap.conquest.invadableProvinceIdsSorted,
         isNotEmpty,
-        reason: '$gpId invadable=${snap.conquest.invadableProvinceIdsSorted} '
+        reason:
+            '$gpId invadable=${snap.conquest.invadableProvinceIdsSorted} '
             'adjacentOwners=${snap.conquest.adjacentOwnerFactionIdsSorted}',
       );
       expect(

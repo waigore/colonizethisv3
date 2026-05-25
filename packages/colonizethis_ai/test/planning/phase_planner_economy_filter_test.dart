@@ -58,7 +58,8 @@ import 'package:colonizethis_data/colonizethis_data.dart'
     show
         kColonialBuildOrderThresholdWhenOwnedNw,
         kColonialBuildOrderThresholdWhenOwnedNwUnderPressure;
-import 'package:colonizethis_logic/ai_api.dart' show kWorkTargetBuildImprovement;
+import 'package:colonizethis_logic/ai_api.dart'
+    show kWorkTargetBuildImprovement;
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
@@ -493,9 +494,7 @@ void main() {
       ]) {
         for (final nwOwned in <int>[0, 1, 5]) {
           final outcome = PhasePlanOutcome(phase: phase);
-          final colonial = ColonialSummary(
-            newWorldProvincesOwned: nwOwned,
-          );
+          final colonial = ColonialSummary(newWorldProvincesOwned: nwOwned);
           expect(
             resolvePhaseEconomyColonialBuildOrderThresholdCap(
               phasePlan: outcome,
@@ -556,9 +555,7 @@ void main() {
       for (final phase in ObserverGoalPhase.values) {
         for (final nwOwned in <int>[0, 1, 5]) {
           final outcome = PhasePlanOutcome(phase: phase);
-          final colonial = ColonialSummary(
-            newWorldProvincesOwned: nwOwned,
-          );
+          final colonial = ColonialSummary(newWorldProvincesOwned: nwOwned);
           final a = resolvePhaseEconomyColonialBuildOrderThresholdCap(
             phasePlan: outcome,
             colonial: colonial,
@@ -571,11 +568,7 @@ void main() {
             phasePlan: outcome,
             colonial: colonial,
           );
-          expect(
-            a,
-            b,
-            reason: '$phase nwOwned=$nwOwned: two-call determinism',
-          );
+          expect(a, b, reason: '$phase nwOwned=$nwOwned: two-call determinism');
           expect(
             b,
             c,
@@ -656,28 +649,30 @@ void main() {
       );
     });
 
-    test('inactive under COLONIAL and DEVELOP even when frontier slots set',
-        () {
-      const populated = PhasePlanOutcome(
-        phase: ObserverGoalPhase.colonial,
-        expandGpOnlyInvadableFrontierActive: true,
-        expandPrimaryInvadableGpBlockerFactionId: 'gp2',
-      );
-      expect(
-        resolvePhaseEconomyExpandGpBlockerFocusActive(phasePlan: populated),
-        isFalse,
-      );
-      expect(
-        resolvePhaseEconomyExpandGpBlockerFocusActive(
-          phasePlan: const PhasePlanOutcome(
-            phase: ObserverGoalPhase.develop,
-            expandGpOnlyInvadableFrontierActive: true,
-            expandPrimaryInvadableGpBlockerFactionId: 'gp2',
+    test(
+      'inactive under COLONIAL and DEVELOP even when frontier slots set',
+      () {
+        const populated = PhasePlanOutcome(
+          phase: ObserverGoalPhase.colonial,
+          expandGpOnlyInvadableFrontierActive: true,
+          expandPrimaryInvadableGpBlockerFactionId: 'gp2',
+        );
+        expect(
+          resolvePhaseEconomyExpandGpBlockerFocusActive(phasePlan: populated),
+          isFalse,
+        );
+        expect(
+          resolvePhaseEconomyExpandGpBlockerFocusActive(
+            phasePlan: const PhasePlanOutcome(
+              phase: ObserverGoalPhase.develop,
+              expandGpOnlyInvadableFrontierActive: true,
+              expandPrimaryInvadableGpBlockerFactionId: 'gp2',
+            ),
           ),
-        ),
-        isFalse,
-      );
-    });
+          isFalse,
+        );
+      },
+    );
 
     test('deterministic across repeated calls (Must-have #7)', () {
       const outcome = PhasePlanOutcome(

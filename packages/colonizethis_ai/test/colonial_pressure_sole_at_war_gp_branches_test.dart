@@ -100,10 +100,7 @@ Game _gameWithGpsAndMinors({
   return Game(
     id: 'g-2509-sole-at-war-gp-branches',
     worldState: WorldState(
-      turnState: const TurnState(
-        turnNumber: 60,
-        phase: TurnPhase.orders,
-      ),
+      turnState: const TurnState(turnNumber: 60, phase: TurnPhase.orders),
       oldWorld: const RegionData(),
       newWorld: const RegionData(),
     ),
@@ -188,24 +185,21 @@ void main() {
       );
     });
 
-    test(
-      'atWarWith with one GP and one minor returns only the GP (B5)',
-      () {
-        // Minor wars are deliberately ignored when counting GP foes;
-        // the resulting `gpWars` list is length 1 and the GP wins.
-        final game = _gameWithGpsAndMinors();
-        final snapshot = _snapshotAtWarWith(const [_gp2, _minor1]);
-        expect(
-          soleAtWarGreatPowerId(game: game, snapshot: snapshot),
-          _gp2,
-          reason:
-              'Minor wars are filtered out before the length check, so '
-              'a GP + minor mix is treated as a sole-GP foe. A '
-              'regression that included minors in `gpWars` would refuse '
-              'to elect the GP whenever a concurrent minor war existed.',
-        );
-      },
-    );
+    test('atWarWith with one GP and one minor returns only the GP (B5)', () {
+      // Minor wars are deliberately ignored when counting GP foes;
+      // the resulting `gpWars` list is length 1 and the GP wins.
+      final game = _gameWithGpsAndMinors();
+      final snapshot = _snapshotAtWarWith(const [_gp2, _minor1]);
+      expect(
+        soleAtWarGreatPowerId(game: game, snapshot: snapshot),
+        _gp2,
+        reason:
+            'Minor wars are filtered out before the length check, so '
+            'a GP + minor mix is treated as a sole-GP foe. A '
+            'regression that included minors in `gpWars` would refuse '
+            'to elect the GP whenever a concurrent minor war existed.',
+      );
+    });
 
     test('atWarWith with two GPs returns null (B6 length guard)', () {
       final game = _gameWithGpsAndMinors();

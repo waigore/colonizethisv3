@@ -23,78 +23,108 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 void main() {
   suppressLogsForTests();
 
-  group('generateOrdersForPlayerFullAI determinism (Refs #2509 Must-have #7)', () {
-    test('repeated calls with identical game state yield identical orders', () {
-      final game = _scenarioGame();
-      const topology = MapTopology(nodes: [], edges: []);
-
-      final r1 = generateOrdersForPlayerFullAI(game, topology, 'gp1');
-      final r2 = generateOrdersForPlayerFullAI(game, topology, 'gp1');
-
-      expect(
-        r1.orders,
-        r2.orders,
-        reason: 'Full AI orders must be deterministic for identical Game state '
-            'and turn-seed bundle inputs.',
-      );
-      _expectEconomyPlansEqual(r1.economyPlan, r2.economyPlan);
-    });
-
-    test('repeated calls preserve order list ordering (not just set membership)',
+  group(
+    'generateOrdersForPlayerFullAI determinism (Refs #2509 Must-have #7)',
+    () {
+      test(
+        'repeated calls with identical game state yield identical orders',
         () {
-      final game = _scenarioGame();
-      const topology = MapTopology(nodes: [], edges: []);
+          final game = _scenarioGame();
+          const topology = MapTopology(nodes: [], edges: []);
 
-      final r1 = generateOrdersForPlayerFullAI(game, topology, 'gp1');
-      final r2 = generateOrdersForPlayerFullAI(game, topology, 'gp1');
+          final r1 = generateOrdersForPlayerFullAI(game, topology, 'gp1');
+          final r2 = generateOrdersForPlayerFullAI(game, topology, 'gp1');
 
-      final w1 = r1.orders.workOrdersByPlayerId['gp1'] ?? const <WorkOrder>[];
-      final w2 = r2.orders.workOrdersByPlayerId['gp1'] ?? const <WorkOrder>[];
-      expect(w1.length, w2.length);
-      for (var i = 0; i < w1.length; i++) {
-        expect(w1[i], w2[i], reason: 'work order index $i must match across runs');
-      }
+          expect(
+            r1.orders,
+            r2.orders,
+            reason:
+                'Full AI orders must be deterministic for identical Game state '
+                'and turn-seed bundle inputs.',
+          );
+          _expectEconomyPlansEqual(r1.economyPlan, r2.economyPlan);
+        },
+      );
 
-      final d1 = r1.orders.diplomaticOrdersByPlayerId['gp1'] ??
-          const <DiplomaticOrder>[];
-      final d2 = r2.orders.diplomaticOrdersByPlayerId['gp1'] ??
-          const <DiplomaticOrder>[];
-      expect(d1.length, d2.length);
-      for (var i = 0; i < d1.length; i++) {
-        expect(d1[i], d2[i],
-            reason: 'diplomatic order index $i must match across runs');
-      }
-    });
-  });
+      test(
+        'repeated calls preserve order list ordering (not just set membership)',
+        () {
+          final game = _scenarioGame();
+          const topology = MapTopology(nodes: [], edges: []);
 
-  group('generateOrdersForGameFullAI determinism (Refs #2509 Must-have #7)', () {
-    test(
+          final r1 = generateOrdersForPlayerFullAI(game, topology, 'gp1');
+          final r2 = generateOrdersForPlayerFullAI(game, topology, 'gp1');
+
+          final w1 =
+              r1.orders.workOrdersByPlayerId['gp1'] ?? const <WorkOrder>[];
+          final w2 =
+              r2.orders.workOrdersByPlayerId['gp1'] ?? const <WorkOrder>[];
+          expect(w1.length, w2.length);
+          for (var i = 0; i < w1.length; i++) {
+            expect(
+              w1[i],
+              w2[i],
+              reason: 'work order index $i must match across runs',
+            );
+          }
+
+          final d1 =
+              r1.orders.diplomaticOrdersByPlayerId['gp1'] ??
+              const <DiplomaticOrder>[];
+          final d2 =
+              r2.orders.diplomaticOrdersByPlayerId['gp1'] ??
+              const <DiplomaticOrder>[];
+          expect(d1.length, d2.length);
+          for (var i = 0; i < d1.length; i++) {
+            expect(
+              d1[i],
+              d2[i],
+              reason: 'diplomatic order index $i must match across runs',
+            );
+          }
+        },
+      );
+    },
+  );
+
+  group(
+    'generateOrdersForGameFullAI determinism (Refs #2509 Must-have #7)',
+    () {
+      test(
         'aggregate orders and per-player economy plans match across two runs',
         () {
-      final game = _scenarioGame();
-      const topology = MapTopology(nodes: [], edges: []);
+          final game = _scenarioGame();
+          const topology = MapTopology(nodes: [], edges: []);
 
-      final r1 = generateOrdersForGameFullAI(game, topology);
-      final r2 = generateOrdersForGameFullAI(game, topology);
+          final r1 = generateOrdersForGameFullAI(game, topology);
+          final r2 = generateOrdersForGameFullAI(game, topology);
 
-      expect(r1.orders, r2.orders);
-      expect(
-        r1.economyPlansByPlayerId.keys.toSet(),
-        r2.economyPlansByPlayerId.keys.toSet(),
+          expect(r1.orders, r2.orders);
+          expect(
+            r1.economyPlansByPlayerId.keys.toSet(),
+            r2.economyPlansByPlayerId.keys.toSet(),
+          );
+          for (final entry in r1.economyPlansByPlayerId.entries) {
+            final other = r2.economyPlansByPlayerId[entry.key];
+            expect(
+              other,
+              isNotNull,
+              reason: 'player ${entry.key} missing economy plan in run 2',
+            );
+            _expectEconomyPlansEqual(entry.value, other!);
+          }
+        },
       );
-      for (final entry in r1.economyPlansByPlayerId.entries) {
-        final other = r2.economyPlansByPlayerId[entry.key];
-        expect(other, isNotNull,
-            reason: 'player ${entry.key} missing economy plan in run 2');
-        _expectEconomyPlansEqual(entry.value, other!);
-      }
-    });
-  });
+    },
+  );
 }
 
 void _expectEconomyPlansEqual(EconomyPlan a, EconomyPlan b) {
-  expect(a.cargoPreference, b.cargoPreference,
-      reason: 'cargoPreference must be deterministic');
+  expect(
+    a.cargoPreference,
+    b.cargoPreference,
+    reason: 'cargoPreference must be deterministic',
+  );
   expect(
     a.productionAssignments.length,
     b.productionAssignments.length,

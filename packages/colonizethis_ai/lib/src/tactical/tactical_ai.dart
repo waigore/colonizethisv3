@@ -34,12 +34,17 @@ QuickBattleRoundActions decideQuickBattleActions({
   final ourStrength =
       _effectiveStrength(ourDeploy.groups, ourDeploy.laneTerrain) * ourMult;
   final enemyStrength =
-      _effectiveStrength(enemyDeploy.groups, enemyDeploy.laneTerrain) * enemyMult;
+      _effectiveStrength(enemyDeploy.groups, enemyDeploy.laneTerrain) *
+      enemyMult;
   final outmatched = ourStrength > 0 && enemyStrength >= ourStrength * 1.15;
-  final holdingCenter = _hasGroupInLane(ourDeploy.groups, QuickBattleLane.center);
+  final holdingCenter = _hasGroupInLane(
+    ourDeploy.groups,
+    QuickBattleLane.center,
+  );
   final weHaveDamaged = _hasDamagedGroups(ourDeploy.groups);
   final enemyDisrupted =
-      enemyStrength <= ourStrength * 0.7 || _hasDamagedGroups(enemyDeploy.groups);
+      enemyStrength <= ourStrength * 0.7 ||
+      _hasDamagedGroups(enemyDeploy.groups);
   final terrainFavorable = _terrainFavorableForUs(ourDeploy, enemyDeploy);
 
   // SPEC: Maneuver / Fall Back to rotate damaged units (prioritize over holding).

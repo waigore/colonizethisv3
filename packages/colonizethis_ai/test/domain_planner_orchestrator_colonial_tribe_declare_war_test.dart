@@ -136,19 +136,19 @@ Game _scenarioGame({required List<String> gp1OwProvinces}) {
 
 const FakeOrderSuggestionAPIForDomainPlannerTests _tribeDeclareWarApi =
     FakeOrderSuggestionAPIForDomainPlannerTests(
-  work: [],
-  build: [],
-  move: [],
-  research: [],
-  navalMove: [],
-  navalMission: [],
-  diplomatic: [
-    DiplomaticOrder(
-      type: DiplomaticOrderType.declareWar,
-      targetFactionId: _tribeId,
-    ),
-  ],
-);
+      work: [],
+      build: [],
+      move: [],
+      research: [],
+      navalMove: [],
+      navalMission: [],
+      diplomatic: [
+        DiplomaticOrder(
+          type: DiplomaticOrderType.declareWar,
+          targetFactionId: _tribeId,
+        ),
+      ],
+    );
 
 const EconomyPlan _economyPlan = EconomyPlan(
   productionAssignments: [],
@@ -213,11 +213,9 @@ AIWorldSnapshot _expandSnapshot() {
 }
 
 List<String> _declareWarTargets(Orders orders) => <String>[
-      for (final order
-          in orders.diplomaticOrdersByPlayerId[_nationId] ?? const [])
-        if (order.type == DiplomaticOrderType.declareWar)
-          order.targetFactionId,
-    ];
+  for (final order in orders.diplomaticOrdersByPlayerId[_nationId] ?? const [])
+    if (order.type == DiplomaticOrderType.declareWar) order.targetFactionId,
+];
 
 void main() {
   group('runDomainPlanners COLONIAL tribe declareWar', () {
@@ -298,34 +296,33 @@ void main() {
       );
     });
 
-    test('emits identical diplomatic orders for identical COLONIAL inputs',
-        () {
+    test('emits identical diplomatic orders for identical COLONIAL inputs', () {
       final game = _scenarioGame(gp1OwProvinces: _gp1OwProvincesAtQuota);
       const topology = MapTopology(nodes: [], edges: []);
       final view = buildPlayerView(game, topology, _nationId);
       final snapshot = _colonialSnapshot();
 
       Orders runOnce(int turnSeed) => runDomainPlanners(
-            game: game,
-            topology: topology,
-            nationId: _nationId,
-            view: view,
-            snapshot: snapshot,
-            config: _aiConfig,
-            primaryGoal: StrategicGoal.conquer,
-            seeds: AISeedBundle.fromTurnSeed(turnSeed),
-            suggestionAPI: _tribeDeclareWarApi,
-            economyPlan: _economyPlan,
-          );
+        game: game,
+        topology: topology,
+        nationId: _nationId,
+        view: view,
+        snapshot: snapshot,
+        config: _aiConfig,
+        primaryGoal: StrategicGoal.conquer,
+        seeds: AISeedBundle.fromTurnSeed(turnSeed),
+        suggestionAPI: _tribeDeclareWarApi,
+        economyPlan: _economyPlan,
+      );
 
       final firstRun = runOnce(2509122);
       final secondRun = runOnce(2509122);
 
       List<String> diplomaticFingerprint(Orders orders) => <String>[
-            for (final o
-                in orders.diplomaticOrdersByPlayerId[_nationId] ?? const [])
-              '${o.type}|${o.targetFactionId}|${o.overtureStage}',
-          ];
+        for (final o
+            in orders.diplomaticOrdersByPlayerId[_nationId] ?? const [])
+          '${o.type}|${o.targetFactionId}|${o.overtureStage}',
+      ];
 
       expect(
         diplomaticFingerprint(secondRun),

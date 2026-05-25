@@ -62,8 +62,7 @@ TurnTraceAiSection buildAiTraceSection({
           'treasury': snapshot.economy.treasury,
           'ownProvinceCount': snapshot.economy.ownProvinceCount,
           'provincesToVictory': snapshot.conquest.provincesToVictory,
-          'invadableCount':
-              snapshot.conquest.invadableProvinceIdsSorted.length,
+          'invadableCount': snapshot.conquest.invadableProvinceIdsSorted.length,
           'declaredWarTarget': declaredWarTargetFactionId,
           'conquestArmyMoveCount': conquestArmyMoveCount,
         },

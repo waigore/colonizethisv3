@@ -120,10 +120,7 @@ Game _gameWithOwProvinces({
   return Game(
     id: 'g-2509-expand-peace-blocker-branches-t$turnNumber',
     worldState: WorldState(
-      turnState: TurnState(
-        turnNumber: turnNumber,
-        phase: TurnPhase.orders,
-      ),
+      turnState: TurnState(turnNumber: turnNumber, phase: TurnPhase.orders),
       oldWorld: RegionData(provinces: owProvinces),
       newWorld: const RegionData(),
     ),
@@ -182,31 +179,15 @@ void main() {
       final game = _gameWithOwProvinces(
         turnNumber: 50,
         owProvinces: const [
-          Province(
-            id: 'oldWorld|t1_a',
-            regionId: 'oldWorld',
-            ownerId: _tribe1,
-          ),
-          Province(
-            id: 'oldWorld|t2_a',
-            regionId: 'oldWorld',
-            ownerId: _tribe2,
-          ),
-          Province(
-            id: 'oldWorld|m1_a',
-            regionId: 'oldWorld',
-            ownerId: _minor1,
-          ),
+          Province(id: 'oldWorld|t1_a', regionId: 'oldWorld', ownerId: _tribe1),
+          Province(id: 'oldWorld|t2_a', regionId: 'oldWorld', ownerId: _tribe2),
+          Province(id: 'oldWorld|m1_a', regionId: 'oldWorld', ownerId: _minor1),
         ],
         minorNations: const [MinorNation(id: _minor1, displayName: 'M1')],
       );
       final snapshot = _expandSnapshot(
         atWarWith: const [_gp2, _gp3],
-        invadableOw: const [
-          'oldWorld|t1_a',
-          'oldWorld|t2_a',
-          'oldWorld|m1_a',
-        ],
+        invadableOw: const ['oldWorld|t1_a', 'oldWorld|t2_a', 'oldWorld|m1_a'],
       );
       expect(
         primaryInvadableOldWorldGpBlocker(game: game, snapshot: snapshot),
@@ -301,27 +282,15 @@ void main() {
       final game = _gameWithOwProvinces(
         turnNumber: 50,
         owProvinces: const [
-          Province(
-            id: 'oldWorld|m1_a',
-            regionId: 'oldWorld',
-            ownerId: _minor1,
-          ),
-          Province(
-            id: 'oldWorld|m1_b',
-            regionId: 'oldWorld',
-            ownerId: _minor1,
-          ),
+          Province(id: 'oldWorld|m1_a', regionId: 'oldWorld', ownerId: _minor1),
+          Province(id: 'oldWorld|m1_b', regionId: 'oldWorld', ownerId: _minor1),
           Province(id: 'oldWorld|gp3_a', regionId: 'oldWorld', ownerId: _gp3),
         ],
         minorNations: const [MinorNation(id: _minor1, displayName: 'M1')],
       );
       final snapshot = _expandSnapshot(
         atWarWith: const [_gp2, _gp3],
-        invadableOw: const [
-          'oldWorld|gp3_a',
-          'oldWorld|m1_a',
-          'oldWorld|m1_b',
-        ],
+        invadableOw: const ['oldWorld|gp3_a', 'oldWorld|m1_a', 'oldWorld|m1_b'],
       );
       expect(
         primaryInvadableOldWorldGpBlocker(game: game, snapshot: snapshot),
@@ -443,11 +412,7 @@ void main() {
         final game = _gameWithOwProvinces(
           turnNumber: 50,
           owProvinces: const [
-            Province(
-              id: 'oldWorld|gp2_a',
-              regionId: 'oldWorld',
-              ownerId: _gp2,
-            ),
+            Province(id: 'oldWorld|gp2_a', regionId: 'oldWorld', ownerId: _gp2),
           ],
         );
         final snapshot = _expandSnapshot(
@@ -474,36 +439,37 @@ void main() {
     test(
       'mutual-plateau sole GP war on GP-only cleared frontier -> peace peer',
       () {
-        final game = _gameWithOwProvinces(
-          turnNumber: 90,
-          owProvinces: [
-            for (var i = 0; i < 8; i++)
-              Province(
-                id: 'oldWorld|gp3_$i',
-                regionId: 'oldWorld',
-                ownerId: 'gp3',
-              ),
-            for (var i = 0; i < 9; i++)
-              Province(
-                id: 'oldWorld|gp4_$i',
-                regionId: 'oldWorld',
-                ownerId: 'gp4',
-              ),
-          ],
-          players: const [
-            Player(id: 'gp3', displayName: 'P3', isHuman: false),
-            Player(id: 'gp4', displayName: 'P4', isHuman: false),
-          ],
-        ).copyWith(
-          diplomacyRelations: const [
-            DiplomacyRelation(
-              factionId1: 'gp3',
-              factionId2: 'gp4',
-              state: RelationState.atWar,
-              score: 30,
-            ),
-          ],
-        );
+        final game =
+            _gameWithOwProvinces(
+              turnNumber: 90,
+              owProvinces: [
+                for (var i = 0; i < 8; i++)
+                  Province(
+                    id: 'oldWorld|gp3_$i',
+                    regionId: 'oldWorld',
+                    ownerId: 'gp3',
+                  ),
+                for (var i = 0; i < 9; i++)
+                  Province(
+                    id: 'oldWorld|gp4_$i',
+                    regionId: 'oldWorld',
+                    ownerId: 'gp4',
+                  ),
+              ],
+              players: const [
+                Player(id: 'gp3', displayName: 'P3', isHuman: false),
+                Player(id: 'gp4', displayName: 'P4', isHuman: false),
+              ],
+            ).copyWith(
+              diplomacyRelations: const [
+                DiplomacyRelation(
+                  factionId1: 'gp3',
+                  factionId2: 'gp4',
+                  state: RelationState.atWar,
+                  score: 30,
+                ),
+              ],
+            );
         final snapshot = _expandSnapshot(
           playerId: 'gp3',
           atWarWith: const ['gp4'],
@@ -521,97 +487,83 @@ void main() {
       },
     );
 
-    test(
-      'minor-first does not engage when the only uninvaded minor is already '
-      'at war',
-      () {
-        // The minor-first branch requires `hasUninvadedOldWorldMinor`,
-        // which **excludes** minors that are themselves in
-        // `atWarWith`. So a minor that is "the only minor on the map"
-        // but currently at war cannot trigger the rule. With a single
-        // GP at war and no other minors, the helper must fall through
-        // to the `gpWars.length <= 1` guard and return empty.
-        final game = _gameWithOwProvinces(
-          turnNumber: 50,
-          owProvinces: const [
-            Province(
-              id: 'oldWorld|m1_a',
-              regionId: 'oldWorld',
-              ownerId: _minor1,
-            ),
-          ],
-          minorNations: const [MinorNation(id: _minor1, displayName: 'M1')],
-        );
-        final snapshot = _expandSnapshot(
-          atWarWith: const [_gp2, _minor1],
-          invadableOw: const ['oldWorld|m1_a'],
-        );
-        expect(
-          observerGoalPhaseFor(snapshot: snapshot, game: game),
-          ObserverGoalPhase.expand,
-        );
-        expect(
-          expandPhaseGpPeaceTargets(game: game, snapshot: snapshot),
-          isEmpty,
-          reason:
-              'A minor already in `atWarWith` is not "uninvaded", so the '
-              'minor-first branch does not engage. With only one GP in '
-              'the filtered `gpWars` list and no remaining uninvaded '
-              'minor, the helper returns empty via the `length <= 1` '
-              'guard. A regression that counted at-war minors as '
-              'uninvaded would peace the lone GP and undermine the '
-              'EXPAND quota push.',
-        );
-      },
-    );
+    test('minor-first does not engage when the only uninvaded minor is already '
+        'at war', () {
+      // The minor-first branch requires `hasUninvadedOldWorldMinor`,
+      // which **excludes** minors that are themselves in
+      // `atWarWith`. So a minor that is "the only minor on the map"
+      // but currently at war cannot trigger the rule. With a single
+      // GP at war and no other minors, the helper must fall through
+      // to the `gpWars.length <= 1` guard and return empty.
+      final game = _gameWithOwProvinces(
+        turnNumber: 50,
+        owProvinces: const [
+          Province(id: 'oldWorld|m1_a', regionId: 'oldWorld', ownerId: _minor1),
+        ],
+        minorNations: const [MinorNation(id: _minor1, displayName: 'M1')],
+      );
+      final snapshot = _expandSnapshot(
+        atWarWith: const [_gp2, _minor1],
+        invadableOw: const ['oldWorld|m1_a'],
+      );
+      expect(
+        observerGoalPhaseFor(snapshot: snapshot, game: game),
+        ObserverGoalPhase.expand,
+      );
+      expect(
+        expandPhaseGpPeaceTargets(game: game, snapshot: snapshot),
+        isEmpty,
+        reason:
+            'A minor already in `atWarWith` is not "uninvaded", so the '
+            'minor-first branch does not engage. With only one GP in '
+            'the filtered `gpWars` list and no remaining uninvaded '
+            'minor, the helper returns empty via the `length <= 1` '
+            'guard. A regression that counted at-war minors as '
+            'uninvaded would peace the lone GP and undermine the '
+            'EXPAND quota push.',
+      );
+    });
 
-    test(
-      'two GPs at war but no GP-owned blocker -> empty (null blocker)',
-      () {
-        // 2 GPs at war, but all invadable OW are minor-owned, so
-        // `primaryInvadableOldWorldGpBlocker` is null. With no uninvaded
-        // (non-at-war) minor on the map the minor-first branch is also
-        // skipped, and the null-blocker guard returns empty rather than
-        // picking an arbitrary non-blocker GP.
-        final game = _gameWithOwProvinces(
-          turnNumber: 50,
-          owProvinces: const [
-            Province(
-              id: 'oldWorld|m1_a',
-              regionId: 'oldWorld',
-              ownerId: _minor1,
-            ),
-          ],
-          // minor1 is at war -> excluded from `hasUninvadedOldWorldMinor`.
-          minorNations: const [MinorNation(id: _minor1, displayName: 'M1')],
-        );
-        final snapshot = _expandSnapshot(
-          atWarWith: const [_gp2, _gp3, _minor1],
-          invadableOw: const ['oldWorld|m1_a'],
-        );
-        expect(
-          observerGoalPhaseFor(snapshot: snapshot, game: game),
-          ObserverGoalPhase.expand,
-        );
-        expect(
-          primaryInvadableOldWorldGpBlocker(game: game, snapshot: snapshot),
-          isNull,
-          reason:
-              'Sanity check: only a minor owns invadable OW, so no GP '
-              'qualifies as the OW blocker.',
-        );
-        expect(
-          expandPhaseGpPeaceTargets(game: game, snapshot: snapshot),
-          isEmpty,
-          reason:
-              'Without a GP blocker the rule has no front to preserve. '
-              'A regression that returned all `gpWars` as peace targets '
-              'would silently peace both GPs and remove pressure on '
-              'rival OW powers when the only invadable target is a '
-              'minor (regular war-pursuit still handles the minor).',
-        );
-      },
-    );
+    test('two GPs at war but no GP-owned blocker -> empty (null blocker)', () {
+      // 2 GPs at war, but all invadable OW are minor-owned, so
+      // `primaryInvadableOldWorldGpBlocker` is null. With no uninvaded
+      // (non-at-war) minor on the map the minor-first branch is also
+      // skipped, and the null-blocker guard returns empty rather than
+      // picking an arbitrary non-blocker GP.
+      final game = _gameWithOwProvinces(
+        turnNumber: 50,
+        owProvinces: const [
+          Province(id: 'oldWorld|m1_a', regionId: 'oldWorld', ownerId: _minor1),
+        ],
+        // minor1 is at war -> excluded from `hasUninvadedOldWorldMinor`.
+        minorNations: const [MinorNation(id: _minor1, displayName: 'M1')],
+      );
+      final snapshot = _expandSnapshot(
+        atWarWith: const [_gp2, _gp3, _minor1],
+        invadableOw: const ['oldWorld|m1_a'],
+      );
+      expect(
+        observerGoalPhaseFor(snapshot: snapshot, game: game),
+        ObserverGoalPhase.expand,
+      );
+      expect(
+        primaryInvadableOldWorldGpBlocker(game: game, snapshot: snapshot),
+        isNull,
+        reason:
+            'Sanity check: only a minor owns invadable OW, so no GP '
+            'qualifies as the OW blocker.',
+      );
+      expect(
+        expandPhaseGpPeaceTargets(game: game, snapshot: snapshot),
+        isEmpty,
+        reason:
+            'Without a GP blocker the rule has no front to preserve. '
+            'A regression that returned all `gpWars` as peace targets '
+            'would silently peace both GPs and remove pressure on '
+            'rival OW powers when the only invadable target is a '
+            'minor (regular war-pursuit still handles the minor).',
+      );
+    });
 
     test('blocker exists but is not among gpWars -> empty', () {
       // gp4 owns the invadable OW (blocker = gp4) but the GP is at war
@@ -652,96 +604,78 @@ void main() {
       );
     });
 
-    test(
-      'minor-first peaces every GP front while a second uninvaded minor '
-      'remains and `atWarWith` includes a non-GP faction',
-      () {
-        // Defensive pin for the `gpWars` filter that runs before
-        // minor-first: `atWarWith` includes a tribe id, which must be
-        // dropped (it is not a player). With two GPs and one tribe in
-        // `atWarWith`, plus an uninvaded minor still holding territory,
-        // the helper must peace **both** GPs in ascending factionId
-        // order. A regression that left the tribe in `gpWars` would
-        // produce an order list with a non-GP target and break the
-        // downstream `offerPeace` validation.
-        final game = _gameWithOwProvinces(
-          turnNumber: 50,
-          owProvinces: const [
-            Province(
-              id: 'oldWorld|m2_a',
-              regionId: 'oldWorld',
-              ownerId: _minor2,
-            ),
-            Province(
-              id: 'oldWorld|gp2_a',
-              regionId: 'oldWorld',
-              ownerId: _gp2,
-            ),
-          ],
-          minorNations: const [MinorNation(id: _minor2, displayName: 'M2')],
-        );
-        final snapshot = _expandSnapshot(
-          // Provide war list out of sorted order to exercise the sort.
-          atWarWith: const [_gp3, _tribe1, _gp2],
-          invadableOw: const ['oldWorld|gp2_a'],
-        );
-        expect(
-          observerGoalPhaseFor(snapshot: snapshot, game: game),
-          ObserverGoalPhase.expand,
-        );
-        expect(
-          expandPhaseGpPeaceTargets(game: game, snapshot: snapshot),
-          const [_gp2, _gp3],
-          reason:
-              'Minor-first peaces every GP front in stable ascending '
-              'factionId order; non-GP factions in `atWarWith` must be '
-              'filtered out of `gpWars` first (Refs #2509 must-have #7 '
-              'determinism + EXPAND minor-first rule).',
-        );
-      },
-    );
+    test('minor-first peaces every GP front while a second uninvaded minor '
+        'remains and `atWarWith` includes a non-GP faction', () {
+      // Defensive pin for the `gpWars` filter that runs before
+      // minor-first: `atWarWith` includes a tribe id, which must be
+      // dropped (it is not a player). With two GPs and one tribe in
+      // `atWarWith`, plus an uninvaded minor still holding territory,
+      // the helper must peace **both** GPs in ascending factionId
+      // order. A regression that left the tribe in `gpWars` would
+      // produce an order list with a non-GP target and break the
+      // downstream `offerPeace` validation.
+      final game = _gameWithOwProvinces(
+        turnNumber: 50,
+        owProvinces: const [
+          Province(id: 'oldWorld|m2_a', regionId: 'oldWorld', ownerId: _minor2),
+          Province(id: 'oldWorld|gp2_a', regionId: 'oldWorld', ownerId: _gp2),
+        ],
+        minorNations: const [MinorNation(id: _minor2, displayName: 'M2')],
+      );
+      final snapshot = _expandSnapshot(
+        // Provide war list out of sorted order to exercise the sort.
+        atWarWith: const [_gp3, _tribe1, _gp2],
+        invadableOw: const ['oldWorld|gp2_a'],
+      );
+      expect(
+        observerGoalPhaseFor(snapshot: snapshot, game: game),
+        ObserverGoalPhase.expand,
+      );
+      expect(
+        expandPhaseGpPeaceTargets(game: game, snapshot: snapshot),
+        const [_gp2, _gp3],
+        reason:
+            'Minor-first peaces every GP front in stable ascending '
+            'factionId order; non-GP factions in `atWarWith` must be '
+            'filtered out of `gpWars` first (Refs #2509 must-have #7 '
+            'determinism + EXPAND minor-first rule).',
+      );
+    });
 
-    test(
-      'three GPs at war with one blocker (no uninvaded minor) -> other two '
-      'sorted ascending',
-      () {
-        // Pins the deterministic ordering for the multi-GP-at-war happy
-        // path with no minor-first short-circuit. gp2 is the blocker;
-        // gp3 and gp4 are non-blockers and must appear in stable
-        // ascending factionId order.
-        final game = _gameWithOwProvinces(
-          turnNumber: 50,
-          owProvinces: const [
-            Province(
-              id: 'oldWorld|gp2_a',
-              regionId: 'oldWorld',
-              ownerId: _gp2,
-            ),
-          ],
-        );
-        final snapshot = _expandSnapshot(
-          // Provide war list out of sorted order to exercise the sort.
-          atWarWith: const [_gp4, _gp2, _gp3],
-          invadableOw: const ['oldWorld|gp2_a'],
-        );
-        expect(
-          observerGoalPhaseFor(snapshot: snapshot, game: game),
-          ObserverGoalPhase.expand,
-        );
-        expect(
-          primaryInvadableOldWorldGpBlocker(game: game, snapshot: snapshot),
-          _gp2,
-        );
-        expect(
-          expandPhaseGpPeaceTargets(game: game, snapshot: snapshot),
-          const [_gp3, _gp4],
-          reason:
-              'Non-blocker GPs must be returned in stable ascending '
-              'factionId order so downstream order generation is '
-              'deterministic for a fixed seed (Must-have #7).',
-        );
-      },
-    );
+    test('three GPs at war with one blocker (no uninvaded minor) -> other two '
+        'sorted ascending', () {
+      // Pins the deterministic ordering for the multi-GP-at-war happy
+      // path with no minor-first short-circuit. gp2 is the blocker;
+      // gp3 and gp4 are non-blockers and must appear in stable
+      // ascending factionId order.
+      final game = _gameWithOwProvinces(
+        turnNumber: 50,
+        owProvinces: const [
+          Province(id: 'oldWorld|gp2_a', regionId: 'oldWorld', ownerId: _gp2),
+        ],
+      );
+      final snapshot = _expandSnapshot(
+        // Provide war list out of sorted order to exercise the sort.
+        atWarWith: const [_gp4, _gp2, _gp3],
+        invadableOw: const ['oldWorld|gp2_a'],
+      );
+      expect(
+        observerGoalPhaseFor(snapshot: snapshot, game: game),
+        ObserverGoalPhase.expand,
+      );
+      expect(
+        primaryInvadableOldWorldGpBlocker(game: game, snapshot: snapshot),
+        _gp2,
+      );
+      expect(
+        expandPhaseGpPeaceTargets(game: game, snapshot: snapshot),
+        const [_gp3, _gp4],
+        reason:
+            'Non-blocker GPs must be returned in stable ascending '
+            'factionId order so downstream order generation is '
+            'deterministic for a fixed seed (Must-have #7).',
+      );
+    });
 
     test(
       'determinism: identical inputs produce identical peace target list',
@@ -753,21 +687,14 @@ void main() {
         final game = _gameWithOwProvinces(
           turnNumber: 50,
           owProvinces: const [
-            Province(
-              id: 'oldWorld|gp2_a',
-              regionId: 'oldWorld',
-              ownerId: _gp2,
-            ),
+            Province(id: 'oldWorld|gp2_a', regionId: 'oldWorld', ownerId: _gp2),
           ],
         );
         final snapshot = _expandSnapshot(
           atWarWith: const [_gp4, _gp2, _gp3],
           invadableOw: const ['oldWorld|gp2_a'],
         );
-        final first = expandPhaseGpPeaceTargets(
-          game: game,
-          snapshot: snapshot,
-        );
+        final first = expandPhaseGpPeaceTargets(game: game, snapshot: snapshot);
         final second = expandPhaseGpPeaceTargets(
           game: game,
           snapshot: snapshot,

@@ -4,7 +4,6 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
-
 void main() {
   group('computeDiplomaticCandidateScores suppression', () {
     test(
@@ -28,19 +27,12 @@ void main() {
         final game = Game(
           id: 'g-colonial-tribe',
           worldState: WorldState(
-            turnState: const TurnState(
-              phase: TurnPhase.orders,
-              turnNumber: 1,
-            ),
+            turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
             oldWorld: const RegionData(),
             newWorld: const RegionData(),
           ),
-          players: const [
-            Player(id: 'gp1', displayName: 'A', isHuman: false),
-          ],
-          tribes: const [
-            Tribe(id: 'tribe1', displayName: 'T1'),
-          ],
+          players: const [Player(id: 'gp1', displayName: 'A', isHuman: false)],
+          tribes: const [Tribe(id: 'tribe1', displayName: 'T1')],
         );
         const config = AIConfig(
           leaderId: 'henry',
@@ -60,7 +52,10 @@ void main() {
           config: config,
         ).single;
         expect(score, greaterThan(0));
-        expect(score, greaterThanOrEqualTo(kDeclareWarColonialAdjacentTribeBonus));
+        expect(
+          score,
+          greaterThanOrEqualTo(kDeclareWarColonialAdjacentTribeBonus),
+        );
       },
     );
 
@@ -87,10 +82,7 @@ void main() {
         final game = Game(
           id: 'g-stalled-ow-minor',
           worldState: WorldState(
-            turnState: const TurnState(
-              phase: TurnPhase.orders,
-              turnNumber: 1,
-            ),
+            turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
             oldWorld: const RegionData(
               provinces: [
                 Province(
@@ -110,15 +102,9 @@ void main() {
               ],
             ),
           ),
-          players: const [
-            Player(id: 'gp1', displayName: 'A', isHuman: false),
-          ],
-          minorNations: const [
-            MinorNation(id: 'minor1', displayName: 'M1'),
-          ],
-          tribes: const [
-            Tribe(id: 'tribe1', displayName: 'T1'),
-          ],
+          players: const [Player(id: 'gp1', displayName: 'A', isHuman: false)],
+          minorNations: const [MinorNation(id: 'minor1', displayName: 'M1')],
+          tribes: const [Tribe(id: 'tribe1', displayName: 'T1')],
         );
         const config = AIConfig(
           leaderId: 'henry',
@@ -169,10 +155,7 @@ void main() {
         final game = Game(
           id: 'g-colonial-nw-tribe',
           worldState: WorldState(
-            turnState: const TurnState(
-              phase: TurnPhase.orders,
-              turnNumber: 1,
-            ),
+            turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
             oldWorld: const RegionData(
               provinces: [
                 Province(
@@ -192,15 +175,9 @@ void main() {
               ],
             ),
           ),
-          players: const [
-            Player(id: 'gp1', displayName: 'A', isHuman: false),
-          ],
-          minorNations: const [
-            MinorNation(id: 'minor1', displayName: 'M1'),
-          ],
-          tribes: const [
-            Tribe(id: 'tribe1', displayName: 'T1'),
-          ],
+          players: const [Player(id: 'gp1', displayName: 'A', isHuman: false)],
+          minorNations: const [MinorNation(id: 'minor1', displayName: 'M1')],
+          tribes: const [Tribe(id: 'tribe1', displayName: 'T1')],
         );
         const config = AIConfig(
           leaderId: 'henry',
@@ -277,9 +254,7 @@ void main() {
             Player(id: 'gp4', displayName: 'P', isHuman: false),
             Player(id: 'gp3', displayName: 'Q', isHuman: false),
           ],
-          minorNations: const [
-            MinorNation(id: 'minor2', displayName: 'M2'),
-          ],
+          minorNations: const [MinorNation(id: 'minor2', displayName: 'M2')],
         );
         const config = AIConfig(
           leaderId: 'henry',
@@ -324,10 +299,7 @@ void main() {
         final game = Game(
           id: 'g-colonial-stalled-distant',
           worldState: WorldState(
-            turnState: const TurnState(
-              phase: TurnPhase.orders,
-              turnNumber: 1,
-            ),
+            turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
             oldWorld: const RegionData(
               provinces: [
                 Province(
@@ -351,12 +323,8 @@ void main() {
             Player(id: 'gp1', displayName: 'A', isHuman: false),
             Player(id: 'gp2', displayName: 'B', isHuman: false),
           ],
-          minorNations: const [
-            MinorNation(id: 'minor1', displayName: 'M1'),
-          ],
-          tribes: const [
-            Tribe(id: 'tribe1', displayName: 'T1'),
-          ],
+          minorNations: const [MinorNation(id: 'minor1', displayName: 'M1')],
+          tribes: const [Tribe(id: 'tribe1', displayName: 'T1')],
         );
         const config = AIConfig(
           leaderId: 'henry',
@@ -403,10 +371,7 @@ void main() {
         final game = Game(
           id: 'g-colonial-stalled-ow',
           worldState: WorldState(
-            turnState: const TurnState(
-              phase: TurnPhase.orders,
-              turnNumber: 1,
-            ),
+            turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
             oldWorld: const RegionData(
               provinces: [
                 Province(
@@ -426,15 +391,9 @@ void main() {
               ],
             ),
           ),
-          players: const [
-            Player(id: 'gp1', displayName: 'A', isHuman: false),
-          ],
-          minorNations: const [
-            MinorNation(id: 'minor1', displayName: 'M1'),
-          ],
-          tribes: const [
-            Tribe(id: 'tribe1', displayName: 'T1'),
-          ],
+          players: const [Player(id: 'gp1', displayName: 'A', isHuman: false)],
+          minorNations: const [MinorNation(id: 'minor1', displayName: 'M1')],
+          tribes: const [Tribe(id: 'tribe1', displayName: 'T1')],
         );
         const config = AIConfig(
           leaderId: 'henry',
@@ -484,10 +443,7 @@ void main() {
         final game = Game(
           id: 'g-colonial-overture',
           worldState: WorldState(
-            turnState: const TurnState(
-              phase: TurnPhase.orders,
-              turnNumber: 1,
-            ),
+            turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
             oldWorld: const RegionData(),
             newWorld: const RegionData(
               provinces: [
@@ -499,12 +455,8 @@ void main() {
               ],
             ),
           ),
-          players: const [
-            Player(id: 'gp1', displayName: 'A', isHuman: false),
-          ],
-          tribes: const [
-            Tribe(id: 'tribe1', displayName: 'T1'),
-          ],
+          players: const [Player(id: 'gp1', displayName: 'A', isHuman: false)],
+          tribes: const [Tribe(id: 'tribe1', displayName: 'T1')],
         );
         const config = AIConfig(
           leaderId: 'henry',
@@ -523,7 +475,10 @@ void main() {
           snapshot: snap,
           config: config,
         ).single;
-        expect(score, greaterThanOrEqualTo(kEstablishOvertureColonialInvadableOwnerBonus));
+        expect(
+          score,
+          greaterThanOrEqualTo(kEstablishOvertureColonialInvadableOwnerBonus),
+        );
       },
     );
 
@@ -555,10 +510,7 @@ void main() {
         final game = Game(
           id: 'g-expand-overture-suppress',
           worldState: WorldState(
-            turnState: const TurnState(
-              phase: TurnPhase.orders,
-              turnNumber: 1,
-            ),
+            turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
             oldWorld: const RegionData(),
             newWorld: const RegionData(
               provinces: [
@@ -570,12 +522,8 @@ void main() {
               ],
             ),
           ),
-          players: const [
-            Player(id: 'gp1', displayName: 'A', isHuman: false),
-          ],
-          tribes: const [
-            Tribe(id: 'tribe1', displayName: 'T1'),
-          ],
+          players: const [Player(id: 'gp1', displayName: 'A', isHuman: false)],
+          tribes: const [Tribe(id: 'tribe1', displayName: 'T1')],
         );
         const config = AIConfig(
           leaderId: 'henry',
@@ -620,10 +568,7 @@ void main() {
         final game = Game(
           id: 'g-stalled-gp-blocker-tribe',
           worldState: WorldState(
-            turnState: const TurnState(
-              phase: TurnPhase.orders,
-              turnNumber: 40,
-            ),
+            turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 40),
             oldWorld: const RegionData(
               provinces: [
                 Province(

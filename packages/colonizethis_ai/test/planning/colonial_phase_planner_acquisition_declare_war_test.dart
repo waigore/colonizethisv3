@@ -437,91 +437,100 @@ void main() {
       );
     });
 
-    test('Join Empire reachable -> Join Empire wins (declareWar suppressed)',
-        () {
-      // Priority pin: even with regiments + treasury sufficient for
-      // declareWar, a satisfying Join Empire candidate ends the
-      // function in the first pass. Pins the spec's "Join Empire is
-      // always preferred first" framing across all three arms.
-      final game = _declareWarGame(
-        newWorldProvinces: const [
-          Province(id: _nwProv1, regionId: 'newWorld', ownerId: _tribe1),
-        ],
-        armies: <Army>[_homeArmyWithRegiments(_gp1, 5)],
-        overtureStates: <OvertureState>[_nap(_gp1, _tribe1)],
-        diplomacyRelations: <DiplomacyRelation>[_peaceFriendly(_gp1, _tribe1)],
-      );
-      final snapshot = _declareWarSnapshot(invadableNw: const [_nwProv1]);
-      expect(
-        planColonialAcquisition(game: game, snapshot: snapshot),
-        const ColonialAcquisitionTarget(
-          targetFactionId: _tribe1,
-          method: AcquisitionMethod.joinEmpire,
-        ),
-        reason:
-            'Join Empire (Method 1) reachable -> the function returns '
-            'in the first pass and declareWar (Method 3) is never '
-            'evaluated; pins the "always preferred first" priority.',
-      );
-    });
-
-    test('purchase_land reachable -> purchase_land wins (declareWar suppressed)',
-        () {
-      // Priority pin: even with regiments + treasury sufficient for
-      // declareWar, a satisfying purchase_land candidate ends the
-      // function in the second pass. Pins the structural Method 2 ->
-      // Method 3 ordering.
-      final game = Game(
-        id: 'g-2509-colonial-acquisition-declare-war-priority-pl',
-        worldState: WorldState(
-          turnState: const TurnState(turnNumber: 130, phase: TurnPhase.orders),
-          oldWorld: const RegionData(),
-          newWorld: RegionData(
-            provinces: const [
-              Province(id: _nwProv1, regionId: 'newWorld', ownerId: _tribe1),
-            ],
-            units: <Unit>[
-              Unit(
-                id: 'm1',
-                type: kUnitTypeMerchant,
-                ownerId: _gp1,
-                locationProvinceId: _nwProv1,
-                tileKey: '$_nwProv1|5|5',
-                status: UnitStatus.idle,
-              ),
-            ],
-          ),
+    test(
+      'Join Empire reachable -> Join Empire wins (declareWar suppressed)',
+      () {
+        // Priority pin: even with regiments + treasury sufficient for
+        // declareWar, a satisfying Join Empire candidate ends the
+        // function in the first pass. Pins the spec's "Join Empire is
+        // always preferred first" framing across all three arms.
+        final game = _declareWarGame(
+          newWorldProvinces: const [
+            Province(id: _nwProv1, regionId: 'newWorld', ownerId: _tribe1),
+          ],
           armies: <Army>[_homeArmyWithRegiments(_gp1, 5)],
-          resourceByTileKey: const {_nwTile1: 'grain'},
-        ),
-        players: const [
-          Player(
-            id: _gp1,
-            displayName: 'GP1',
-            isHuman: false,
-            treasury: 100000,
+          overtureStates: <OvertureState>[_nap(_gp1, _tribe1)],
+          diplomacyRelations: <DiplomacyRelation>[
+            _peaceFriendly(_gp1, _tribe1),
+          ],
+        );
+        final snapshot = _declareWarSnapshot(invadableNw: const [_nwProv1]);
+        expect(
+          planColonialAcquisition(game: game, snapshot: snapshot),
+          const ColonialAcquisitionTarget(
+            targetFactionId: _tribe1,
+            method: AcquisitionMethod.joinEmpire,
           ),
-          Player(id: _gp2, displayName: 'GP2', isHuman: false),
-        ],
-        tribes: const [
-          Tribe(id: _tribe1, displayName: 'T1'),
-        ],
-        overtureStates: <OvertureState>[_embassy(_gp1, _tribe1)],
-        diplomacyRelations: <DiplomacyRelation>[_peaceFriendly(_gp1, _tribe1)],
-      );
-      final snapshot = _declareWarSnapshot(invadableNw: const [_nwProv1]);
-      expect(
-        planColonialAcquisition(game: game, snapshot: snapshot),
-        const ColonialAcquisitionTarget(
-          targetFactionId: _tribe1,
-          method: AcquisitionMethod.purchaseLand,
-        ),
-        reason:
-            'purchase_land (Method 2) reachable -> the function returns '
-            'in the second pass and declareWar (Method 3) is never '
-            'evaluated; pins the Method 2 -> Method 3 priority.',
-      );
-    });
+          reason:
+              'Join Empire (Method 1) reachable -> the function returns '
+              'in the first pass and declareWar (Method 3) is never '
+              'evaluated; pins the "always preferred first" priority.',
+        );
+      },
+    );
+
+    test(
+      'purchase_land reachable -> purchase_land wins (declareWar suppressed)',
+      () {
+        // Priority pin: even with regiments + treasury sufficient for
+        // declareWar, a satisfying purchase_land candidate ends the
+        // function in the second pass. Pins the structural Method 2 ->
+        // Method 3 ordering.
+        final game = Game(
+          id: 'g-2509-colonial-acquisition-declare-war-priority-pl',
+          worldState: WorldState(
+            turnState: const TurnState(
+              turnNumber: 130,
+              phase: TurnPhase.orders,
+            ),
+            oldWorld: const RegionData(),
+            newWorld: RegionData(
+              provinces: const [
+                Province(id: _nwProv1, regionId: 'newWorld', ownerId: _tribe1),
+              ],
+              units: <Unit>[
+                Unit(
+                  id: 'm1',
+                  type: kUnitTypeMerchant,
+                  ownerId: _gp1,
+                  locationProvinceId: _nwProv1,
+                  tileKey: '$_nwProv1|5|5',
+                  status: UnitStatus.idle,
+                ),
+              ],
+            ),
+            armies: <Army>[_homeArmyWithRegiments(_gp1, 5)],
+            resourceByTileKey: const {_nwTile1: 'grain'},
+          ),
+          players: const [
+            Player(
+              id: _gp1,
+              displayName: 'GP1',
+              isHuman: false,
+              treasury: 100000,
+            ),
+            Player(id: _gp2, displayName: 'GP2', isHuman: false),
+          ],
+          tribes: const [Tribe(id: _tribe1, displayName: 'T1')],
+          overtureStates: <OvertureState>[_embassy(_gp1, _tribe1)],
+          diplomacyRelations: <DiplomacyRelation>[
+            _peaceFriendly(_gp1, _tribe1),
+          ],
+        );
+        final snapshot = _declareWarSnapshot(invadableNw: const [_nwProv1]);
+        expect(
+          planColonialAcquisition(game: game, snapshot: snapshot),
+          const ColonialAcquisitionTarget(
+            targetFactionId: _tribe1,
+            method: AcquisitionMethod.purchaseLand,
+          ),
+          reason:
+              'purchase_land (Method 2) reachable -> the function returns '
+              'in the second pass and declareWar (Method 3) is never '
+              'evaluated; pins the Method 2 -> Method 3 priority.',
+        );
+      },
+    );
 
     test('two valid tribe targets -> first sorted invadable NW wins', () {
       // Deterministic iteration over
@@ -560,44 +569,46 @@ void main() {
       );
     });
 
-    test('determinism: identical inputs produce identical declareWar targets',
-        () {
-      // Refs #2509 Must-have #7. The planner must be pure: identical
-      // inputs always yield identical `ColonialAcquisitionTarget`s.
-      final game = _declareWarGame(
-        newWorldProvinces: const [
-          Province(id: _nwProv1, regionId: 'newWorld', ownerId: _tribe1),
-          Province(id: _nwProv2, regionId: 'newWorld', ownerId: _tribe2),
-        ],
-        armies: <Army>[_homeArmyWithRegiments(_gp1, 5)],
-        diplomacyRelations: <DiplomacyRelation>[
-          _peaceNeutral(_gp1, _tribe1),
-          _peaceNeutral(_gp1, _tribe2),
-        ],
-      );
-      final snapshot = _declareWarSnapshot(
-        invadableNw: const [_nwProv1, _nwProv2],
-      );
-      final first = planColonialAcquisition(game: game, snapshot: snapshot);
-      final second = planColonialAcquisition(game: game, snapshot: snapshot);
-      expect(
-        second,
-        equals(first),
-        reason:
-            'Pure-function determinism (Refs #2509 Must-have #7): '
-            'the second call must return a ColonialAcquisitionTarget '
-            'value-equal to the first.',
-      );
-      expect(
-        first,
-        const ColonialAcquisitionTarget(
-          targetFactionId: _tribe1,
-          method: AcquisitionMethod.declareWar,
-        ),
-        reason:
-            'Pin the actual return so the determinism check cannot '
-            'silently regress to `(null, null)` on both calls.',
-      );
-    });
+    test(
+      'determinism: identical inputs produce identical declareWar targets',
+      () {
+        // Refs #2509 Must-have #7. The planner must be pure: identical
+        // inputs always yield identical `ColonialAcquisitionTarget`s.
+        final game = _declareWarGame(
+          newWorldProvinces: const [
+            Province(id: _nwProv1, regionId: 'newWorld', ownerId: _tribe1),
+            Province(id: _nwProv2, regionId: 'newWorld', ownerId: _tribe2),
+          ],
+          armies: <Army>[_homeArmyWithRegiments(_gp1, 5)],
+          diplomacyRelations: <DiplomacyRelation>[
+            _peaceNeutral(_gp1, _tribe1),
+            _peaceNeutral(_gp1, _tribe2),
+          ],
+        );
+        final snapshot = _declareWarSnapshot(
+          invadableNw: const [_nwProv1, _nwProv2],
+        );
+        final first = planColonialAcquisition(game: game, snapshot: snapshot);
+        final second = planColonialAcquisition(game: game, snapshot: snapshot);
+        expect(
+          second,
+          equals(first),
+          reason:
+              'Pure-function determinism (Refs #2509 Must-have #7): '
+              'the second call must return a ColonialAcquisitionTarget '
+              'value-equal to the first.',
+        );
+        expect(
+          first,
+          const ColonialAcquisitionTarget(
+            targetFactionId: _tribe1,
+            method: AcquisitionMethod.declareWar,
+          ),
+          reason:
+              'Pin the actual return so the determinism check cannot '
+              'silently regress to `(null, null)` on both calls.',
+        );
+      },
+    );
   });
 }

@@ -298,65 +298,60 @@ void main() {
       }
     });
 
-    test(
-      'partition matrix with resolvePhaseConquestColonialPressureActive '
-      '— exactly one of the two conquest-routing resolvers returns true for '
-      'any non-DEVELOP phase, and both return false under DEVELOP',
-      () {
-        // The two conquest-routing resolvers gate disjoint orchestrator
-        // decisions (extra-passes / relocation-skip vs colonial-pressure
-        // weight floor). They must form a partition over the non-DEVELOP
-        // phases so the orchestrator routes deterministically:
-        //   EXPAND, COLONIAL-lite -> extra passes only (no NW floor)
-        //   COLONIAL              -> NW floor only (no extra passes)
-        //   DEVELOP               -> neither (skipConquestPass via
-        //                            resolvePhaseConquestInvadable)
-        // A future regression that fired both simultaneously would mean
-        // the same player turn is treated as both below-OW-quota and
-        // in-COLONIAL-acquisition-pressure, contradicting the phase-
-        // planner single-goal architecture (issue #2509 § Single-goal
-        // replacement).
-        const expectedExtraPasses = <ObserverGoalPhase, bool>{
-          ObserverGoalPhase.expand: true,
-          ObserverGoalPhase.colonialLite: true,
-          ObserverGoalPhase.colonial: false,
-          ObserverGoalPhase.develop: false,
-        };
-        const expectedColonialPressure = <ObserverGoalPhase, bool>{
-          ObserverGoalPhase.expand: false,
-          ObserverGoalPhase.colonialLite: false,
-          ObserverGoalPhase.colonial: true,
-          ObserverGoalPhase.develop: false,
-        };
-        for (final phase in ObserverGoalPhase.values) {
-          final outcome = PhasePlanOutcome(phase: phase);
-          final extra = resolvePhaseConquestExtraPassesActive(
-            phasePlan: outcome,
-          );
-          final pressure = resolvePhaseConquestColonialPressureActive(
-            phasePlan: outcome,
-          );
-          expect(
-            extra,
-            expectedExtraPasses[phase],
-            reason: '$phase: extra-passes value',
-          );
-          expect(
-            pressure,
-            expectedColonialPressure[phase],
-            reason: '$phase: colonial-pressure value',
-          );
-          expect(
-            extra && pressure,
-            isFalse,
-            reason:
-                '$phase: extra-passes and colonial-pressure resolvers '
-                'must never both return true (phases are mutually '
-                'exclusive per outcome.phase).',
-          );
-        }
-      },
-    );
+    test('partition matrix with resolvePhaseConquestColonialPressureActive '
+        '— exactly one of the two conquest-routing resolvers returns true for '
+        'any non-DEVELOP phase, and both return false under DEVELOP', () {
+      // The two conquest-routing resolvers gate disjoint orchestrator
+      // decisions (extra-passes / relocation-skip vs colonial-pressure
+      // weight floor). They must form a partition over the non-DEVELOP
+      // phases so the orchestrator routes deterministically:
+      //   EXPAND, COLONIAL-lite -> extra passes only (no NW floor)
+      //   COLONIAL              -> NW floor only (no extra passes)
+      //   DEVELOP               -> neither (skipConquestPass via
+      //                            resolvePhaseConquestInvadable)
+      // A future regression that fired both simultaneously would mean
+      // the same player turn is treated as both below-OW-quota and
+      // in-COLONIAL-acquisition-pressure, contradicting the phase-
+      // planner single-goal architecture (issue #2509 § Single-goal
+      // replacement).
+      const expectedExtraPasses = <ObserverGoalPhase, bool>{
+        ObserverGoalPhase.expand: true,
+        ObserverGoalPhase.colonialLite: true,
+        ObserverGoalPhase.colonial: false,
+        ObserverGoalPhase.develop: false,
+      };
+      const expectedColonialPressure = <ObserverGoalPhase, bool>{
+        ObserverGoalPhase.expand: false,
+        ObserverGoalPhase.colonialLite: false,
+        ObserverGoalPhase.colonial: true,
+        ObserverGoalPhase.develop: false,
+      };
+      for (final phase in ObserverGoalPhase.values) {
+        final outcome = PhasePlanOutcome(phase: phase);
+        final extra = resolvePhaseConquestExtraPassesActive(phasePlan: outcome);
+        final pressure = resolvePhaseConquestColonialPressureActive(
+          phasePlan: outcome,
+        );
+        expect(
+          extra,
+          expectedExtraPasses[phase],
+          reason: '$phase: extra-passes value',
+        );
+        expect(
+          pressure,
+          expectedColonialPressure[phase],
+          reason: '$phase: colonial-pressure value',
+        );
+        expect(
+          extra && pressure,
+          isFalse,
+          reason:
+              '$phase: extra-passes and colonial-pressure resolvers '
+              'must never both return true (phases are mutually '
+              'exclusive per outcome.phase).',
+        );
+      }
+    });
   });
 
   group('runConquestArmyMovePlanner phase military wiring', () {

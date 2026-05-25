@@ -109,10 +109,7 @@ Game _gameWithMinors({
   return Game(
     id: 'g-2509-has-uninvaded-minor-branches',
     worldState: WorldState(
-      turnState: const TurnState(
-        turnNumber: 50,
-        phase: TurnPhase.orders,
-      ),
+      turnState: const TurnState(turnNumber: 50, phase: TurnPhase.orders),
       oldWorld: RegionData(provinces: owProvinces),
       newWorld: RegionData(provinces: nwProvinces),
     ),
@@ -192,11 +189,7 @@ void main() {
           Province(id: 'oldWorld|gp1_a', regionId: 'oldWorld', ownerId: _gp1),
         ],
         nwProvinces: const [
-          Province(
-            id: 'newWorld|m1_a',
-            regionId: 'newWorld',
-            ownerId: _minor1,
-          ),
+          Province(id: 'newWorld|m1_a', regionId: 'newWorld', ownerId: _minor1),
         ],
       );
       final snapshot = _snapshotAtWarWith(const []);
@@ -218,11 +211,7 @@ void main() {
         minorNations: const [MinorNation(id: _minor1, displayName: 'M1')],
         owProvinces: const [
           Province(id: 'oldWorld|gp1_a', regionId: 'oldWorld', ownerId: _gp1),
-          Province(
-            id: 'oldWorld|m1_a',
-            regionId: 'oldWorld',
-            ownerId: _minor1,
-          ),
+          Province(id: 'oldWorld|m1_a', regionId: 'oldWorld', ownerId: _minor1),
         ],
       );
       final snapshot = _snapshotAtWarWith(const []);
@@ -249,11 +238,7 @@ void main() {
         minorNations: const [MinorNation(id: _minor1, displayName: 'M1')],
         owProvinces: const [
           Province(id: 'oldWorld|gp1_a', regionId: 'oldWorld', ownerId: _gp1),
-          Province(
-            id: 'oldWorld|m1_a',
-            regionId: 'oldWorld',
-            ownerId: _minor1,
-          ),
+          Province(id: 'oldWorld|m1_a', regionId: 'oldWorld', ownerId: _minor1),
         ],
       );
       final snapshot = _snapshotAtWarWith(const [_minor1]);
@@ -360,16 +345,8 @@ void main() {
         ],
         owProvinces: const [
           Province(id: 'oldWorld|gp1_a', regionId: 'oldWorld', ownerId: _gp1),
-          Province(
-            id: 'oldWorld|m1_a',
-            regionId: 'oldWorld',
-            ownerId: _minor1,
-          ),
-          Province(
-            id: 'oldWorld|m2_a',
-            regionId: 'oldWorld',
-            ownerId: _minor2,
-          ),
+          Province(id: 'oldWorld|m1_a', regionId: 'oldWorld', ownerId: _minor1),
+          Province(id: 'oldWorld|m2_a', regionId: 'oldWorld', ownerId: _minor2),
         ],
       );
       final snapshot = _snapshotAtWarWith(const [_minor1, _minor2]);
@@ -398,11 +375,7 @@ void main() {
         ],
         owProvinces: const [
           Province(id: 'oldWorld|gp1_a', regionId: 'oldWorld', ownerId: _gp1),
-          Province(
-            id: 'oldWorld|m2_a',
-            regionId: 'oldWorld',
-            ownerId: _minor2,
-          ),
+          Province(id: 'oldWorld|m2_a', regionId: 'oldWorld', ownerId: _minor2),
         ],
       );
       final snapshot = _snapshotAtWarWith(const [_minor1]);

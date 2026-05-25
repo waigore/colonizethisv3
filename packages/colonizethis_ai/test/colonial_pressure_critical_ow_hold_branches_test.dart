@@ -141,10 +141,7 @@ void main() {
         ],
         minorNations: const [MinorNation(id: 'minor_a', displayName: 'M')],
       );
-      final snapshot = _focusSnapshot(
-        focusOw: 5,
-        atWarWith: const ['minor_a'],
-      );
+      final snapshot = _focusSnapshot(focusOw: 5, atWarWith: const ['minor_a']);
 
       expect(
         criticalOwHoldPeaceTargets(game: game, snapshot: snapshot),

@@ -151,7 +151,9 @@ const AIWorldSnapshot _colonialLiteSnapshot = AIWorldSnapshot(
   playerId: _nationId,
   threats: ThreatSummary(),
   opportunities: OpportunitySummary(),
-  conquest: ConquestSummary(oldWorldProvincesOwned: kObserverColonialLiteNearQuotaOw),
+  conquest: ConquestSummary(
+    oldWorldProvincesOwned: kObserverColonialLiteNearQuotaOw,
+  ),
   colonial: ColonialSummary(
     invadableNewWorldProvinceIdsSorted: ['newWorld|tribe1'],
   ),
@@ -276,33 +278,38 @@ void main() {
       },
     );
 
-    test('DEVELOP keeps OW purchase_land (NW suppression is region-scoped)', () {
-      expect(
-        shouldFilterObserverPhaseWorkOrder(
-          _workOrder(kWorkTargetPurchaseLand, _owTile),
-          snapshot: _developSnapshot,
-        ),
-        isFalse,
-        reason:
-            'OW `purchase_land` is not a colonial acquisition; the DEVELOP '
-            'NW-acquisition filter must not over-fire on OW orders.',
-      );
-    });
+    test(
+      'DEVELOP keeps OW purchase_land (NW suppression is region-scoped)',
+      () {
+        expect(
+          shouldFilterObserverPhaseWorkOrder(
+            _workOrder(kWorkTargetPurchaseLand, _owTile),
+            snapshot: _developSnapshot,
+          ),
+          isFalse,
+          reason:
+              'OW `purchase_land` is not a colonial acquisition; the DEVELOP '
+              'NW-acquisition filter must not over-fire on OW orders.',
+        );
+      },
+    );
 
-    test('DEVELOP keeps OW build_improvement (DEVELOP imperative, 70% gate)',
-        () {
-      expect(
-        shouldFilterObserverPhaseWorkOrder(
-          _workOrder(kWorkTargetBuildImprovement, _owTile),
-          snapshot: _developSnapshot,
-        ),
-        isFalse,
-        reason:
-            'DEVELOP imperative is improvement-first development across '
-            'both regions; OW build_improvement is the primary contributor '
-            'to the 70% extractable improvement gate.',
-      );
-    });
+    test(
+      'DEVELOP keeps OW build_improvement (DEVELOP imperative, 70% gate)',
+      () {
+        expect(
+          shouldFilterObserverPhaseWorkOrder(
+            _workOrder(kWorkTargetBuildImprovement, _owTile),
+            snapshot: _developSnapshot,
+          ),
+          isFalse,
+          reason:
+              'DEVELOP imperative is improvement-first development across '
+              'both regions; OW build_improvement is the primary contributor '
+              'to the 70% extractable improvement gate.',
+        );
+      },
+    );
   });
 
   group('shouldFilterObserverPhaseWorkOrder COLONIAL-lite OW pass-through', () {
@@ -362,9 +369,7 @@ void main() {
       // `build_improvement` (e.g. `explore`, `prospect`); only the two
       // listed targets are EXPAND-suppressed regardless of region.
       expect(
-        isNewWorldColonialWorkOrder(
-          _workOrder(kWorkTargetExplore, _nwTile),
-        ),
+        isNewWorldColonialWorkOrder(_workOrder(kWorkTargetExplore, _nwTile)),
         isFalse,
       );
     });
@@ -392,19 +397,21 @@ void main() {
   });
 
   group('shouldFilterObserverPhaseWorkOrder determinism', () {
-    test('same inputs produce same filter outcome (Refs #2509 must-have #7)',
-        () {
-      final order = _workOrder(kWorkTargetPurchaseLand, _nwTile);
-      final first = shouldFilterObserverPhaseWorkOrder(
-        order,
-        snapshot: _developSnapshot,
-      );
-      final second = shouldFilterObserverPhaseWorkOrder(
-        order,
-        snapshot: _developSnapshot,
-      );
-      expect(first, second);
-    });
+    test(
+      'same inputs produce same filter outcome (Refs #2509 must-have #7)',
+      () {
+        final order = _workOrder(kWorkTargetPurchaseLand, _nwTile);
+        final first = shouldFilterObserverPhaseWorkOrder(
+          order,
+          snapshot: _developSnapshot,
+        );
+        final second = shouldFilterObserverPhaseWorkOrder(
+          order,
+          snapshot: _developSnapshot,
+        );
+        expect(first, second);
+      },
+    );
 
     test('EXPAND fixture remains the predicate boundary (control)', () {
       // Sanity check that the existing EXPAND coverage in

@@ -42,8 +42,18 @@ class AIWorldSnapshot {
   }) {
     final threats = _buildThreatSummary(view, topology);
     final opportunities = _buildOpportunitySummary(view, topology);
-    final conquest = _buildConquestSummary(view, topology, threats, opportunities);
-    final colonial = _buildColonialSummary(view, topology, threats, opportunities);
+    final conquest = _buildConquestSummary(
+      view,
+      topology,
+      threats,
+      opportunities,
+    );
+    final colonial = _buildColonialSummary(
+      view,
+      topology,
+      threats,
+      opportunities,
+    );
     final economy = _buildEconomySummary(view);
     final snapshot = AIWorldSnapshot(
       playerId: view.playerId,

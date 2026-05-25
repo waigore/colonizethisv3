@@ -232,38 +232,40 @@ void main() {
       );
     });
 
-    test('ownOw at ceiling WITH uninvaded minor -> non-blocker GPs returned',
-        () {
-      // OW = 9, uninvaded minor (m1) holds an OW province →
-      // `hasUninvadedOldWorldMinor` true → ceiling = 9 → eligible. GP-only
-      // frontier is **false** here because the only invadable OW (the
-      // minor's province) is not GP-owned, so `invadableBlocker = null`
-      // and every at-war GP is returned (single GP -> single entry).
-      final game = _gameWithOwProvinces(
-        owProvinces: const [
-          Province(
-            id: 'oldWorld|m1_a',
-            regionId: 'oldWorld',
-            ownerId: _minor1,
-          ),
-        ],
-        minorNations: const [MinorNation(id: _minor1, displayName: 'M1')],
-      );
-      final snapshot = _snapshot(
-        oldWorldProvincesOwned: kStalledOldWorldProvinceThreshold,
-        atWarWith: const [_gp2],
-        invadableOw: const ['oldWorld|m1_a'],
-      );
-      expect(
-        defaultStartGpPeaceTargets(game: game, snapshot: snapshot),
-        const [_gp2],
-        reason:
-            'With an uninvaded minor on the map the ceiling extends to 9 '
-            'OW and the lone non-blocker GP must be returned. A '
-            'regression that kept the ceiling at 8 in this case would '
-            'block the minor-frontier pivot the rule was added for.',
-      );
-    });
+    test(
+      'ownOw at ceiling WITH uninvaded minor -> non-blocker GPs returned',
+      () {
+        // OW = 9, uninvaded minor (m1) holds an OW province →
+        // `hasUninvadedOldWorldMinor` true → ceiling = 9 → eligible. GP-only
+        // frontier is **false** here because the only invadable OW (the
+        // minor's province) is not GP-owned, so `invadableBlocker = null`
+        // and every at-war GP is returned (single GP -> single entry).
+        final game = _gameWithOwProvinces(
+          owProvinces: const [
+            Province(
+              id: 'oldWorld|m1_a',
+              regionId: 'oldWorld',
+              ownerId: _minor1,
+            ),
+          ],
+          minorNations: const [MinorNation(id: _minor1, displayName: 'M1')],
+        );
+        final snapshot = _snapshot(
+          oldWorldProvincesOwned: kStalledOldWorldProvinceThreshold,
+          atWarWith: const [_gp2],
+          invadableOw: const ['oldWorld|m1_a'],
+        );
+        expect(
+          defaultStartGpPeaceTargets(game: game, snapshot: snapshot),
+          const [_gp2],
+          reason:
+              'With an uninvaded minor on the map the ceiling extends to 9 '
+              'OW and the lone non-blocker GP must be returned. A '
+              'regression that kept the ceiling at 8 in this case would '
+              'block the minor-frontier pivot the rule was added for.',
+        );
+      },
+    );
   });
 
   group('defaultStartGpPeaceTargets blocker / frontier branches', () {
@@ -276,11 +278,7 @@ void main() {
       final game = _gameWithOwProvinces(
         owProvinces: const [
           Province(id: 'oldWorld|gp2_a', regionId: 'oldWorld', ownerId: _gp2),
-          Province(
-            id: 'oldWorld|m1_a',
-            regionId: 'oldWorld',
-            ownerId: _minor1,
-          ),
+          Province(id: 'oldWorld|m1_a', regionId: 'oldWorld', ownerId: _minor1),
         ],
         minorNations: const [MinorNation(id: _minor1, displayName: 'M1')],
       );
@@ -336,11 +334,7 @@ void main() {
       // returned without blocker exclusion.
       final game = _gameWithOwProvinces(
         owProvinces: const [
-          Province(
-            id: 'oldWorld|m1_a',
-            regionId: 'oldWorld',
-            ownerId: _minor1,
-          ),
+          Province(id: 'oldWorld|m1_a', regionId: 'oldWorld', ownerId: _minor1),
         ],
         minorNations: const [MinorNation(id: _minor1, displayName: 'M1')],
       );
@@ -427,8 +421,7 @@ void main() {
         invadableOw: const ['oldWorld|gp2_a'],
       );
       final first = defaultStartGpPeaceTargets(game: game, snapshot: snapshot);
-      final second =
-          defaultStartGpPeaceTargets(game: game, snapshot: snapshot);
+      final second = defaultStartGpPeaceTargets(game: game, snapshot: snapshot);
       expect(second, first);
       expect(first, const [_gp3, _gp4]);
     });

@@ -1,10 +1,6 @@
 import 'dart:math' as math;
 
-int? pickWeightedIndex(
-  List<num> weights,
-  int seed, {
-  bool useIntRoll = false,
-}) {
+int? pickWeightedIndex(List<num> weights, int seed, {bool useIntRoll = false}) {
   if (weights.isEmpty) return null;
   final normalized = weights
       .map((weight) => weight < 0 ? 0.0 : weight.toDouble())
@@ -46,11 +42,7 @@ T? selectWeightedCandidate<T>({
   final resolvedScores =
       scores ?? candidates.map(score!).toList(growable: false);
   if (resolvedScores.length != candidates.length) return null;
-  final idx = pickWeightedIndex(
-    resolvedScores,
-    seed,
-    useIntRoll: useIntRoll,
-  );
+  final idx = pickWeightedIndex(resolvedScores, seed, useIntRoll: useIntRoll);
   if (idx == null) return null;
   return candidates[idx];
 }

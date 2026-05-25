@@ -178,19 +178,19 @@ Game _scenarioGame({required List<String> gp1OwProvinces}) {
 // under test for the SPEC COLONIAL-lite `declareWar` suppression rule.
 const FakeOrderSuggestionAPIForDomainPlannerTests _nwTribeDeclareWarApi =
     FakeOrderSuggestionAPIForDomainPlannerTests(
-  work: [],
-  build: [],
-  move: [],
-  research: [],
-  navalMove: [],
-  navalMission: [],
-  diplomatic: [
-    DiplomaticOrder(
-      type: DiplomaticOrderType.declareWar,
-      targetFactionId: _tribeId,
-    ),
-  ],
-);
+      work: [],
+      build: [],
+      move: [],
+      research: [],
+      navalMove: [],
+      navalMission: [],
+      diplomatic: [
+        DiplomaticOrder(
+          type: DiplomaticOrderType.declareWar,
+          targetFactionId: _tribeId,
+        ),
+      ],
+    );
 
 const EconomyPlan _economyPlan = EconomyPlan(
   productionAssignments: [],
@@ -280,162 +280,153 @@ AIWorldSnapshot _colonialSnapshot() {
 }
 
 List<String> _declareWarTargets(Orders orders) => <String>[
-  for (final order
-      in orders.diplomaticOrdersByPlayerId[_nationId] ?? const [])
+  for (final order in orders.diplomaticOrdersByPlayerId[_nationId] ?? const [])
     if (order.type == DiplomaticOrderType.declareWar) order.targetFactionId,
 ];
 
 void main() {
-  group(
-    'runDomainPlanners COLONIAL-lite-phase NW declareWar suppression',
-    () {
-      test(
-        'COLONIAL-lite drops declareWar toward NW tribe colonial target',
-        () {
-          final game = _scenarioGame(
-            gp1OwProvinces: _gp1OwProvincesAtColonialLiteFloor,
-          );
-          const topology = MapTopology(nodes: [], edges: []);
-          final view = buildPlayerView(game, topology, _nationId);
-          final snapshot = _colonialLiteSnapshot();
+  group('runDomainPlanners COLONIAL-lite-phase NW declareWar suppression', () {
+    test('COLONIAL-lite drops declareWar toward NW tribe colonial target', () {
+      final game = _scenarioGame(
+        gp1OwProvinces: _gp1OwProvincesAtColonialLiteFloor,
+      );
+      const topology = MapTopology(nodes: [], edges: []);
+      final view = buildPlayerView(game, topology, _nationId);
+      final snapshot = _colonialLiteSnapshot();
 
-          expect(
-            observerGoalPhaseFor(snapshot: snapshot, game: game),
-            ObserverGoalPhase.colonialLite,
-            reason:
-                'Fixture must place GP in COLONIAL-lite so the NW '
-                'declareWar suppression contract is exercised by the '
-                'orchestrator. EXPAND (turn < 120) or COLONIAL (OW >= 10) '
-                'mis-tagging would either over-suppress the positive case '
-                '(and pass for the wrong reason) or skip the COLONIAL-lite '
-                'branch under test entirely.',
-          );
-
-          final orders = runDomainPlanners(
-            game: game,
-            topology: topology,
-            nationId: _nationId,
-            view: view,
-            snapshot: snapshot,
-            config: _aiConfig,
-            primaryGoal: StrategicGoal.expand,
-            seeds: AISeedBundle.fromTurnSeed(2509300),
-            suggestionAPI: _nwTribeDeclareWarApi,
-            economyPlan: _economyPlan,
-          );
-
-          expect(
-            _declareWarTargets(orders),
-            isNot(contains(_tribeId)),
-            reason:
-                'COLONIAL-lite must drop declareWar toward NW colonial '
-                'targets so the near-quota GP keeps pursuing OW expansion '
-                'to the quota of 10 without trading away the OW conquest '
-                'path before turn 100 (SPEC § Observer goal phases (Full '
-                'AI), COLONIAL-lite suppression list: "NW declareWar, '
-                'invasion army moves, purchase_land"). A non-empty contains '
-                'list here indicates the orchestrator surfaced a declareWar '
-                'the COLONIAL-lite branch of '
-                'shouldSuppressNewWorldDeclareWarInvasionAndPurchase should '
-                'have collapsed — most likely a forced/short-circuit '
-                'declare-war helper bypassing the score gate.',
-          );
-        },
+      expect(
+        observerGoalPhaseFor(snapshot: snapshot, game: game),
+        ObserverGoalPhase.colonialLite,
+        reason:
+            'Fixture must place GP in COLONIAL-lite so the NW '
+            'declareWar suppression contract is exercised by the '
+            'orchestrator. EXPAND (turn < 120) or COLONIAL (OW >= 10) '
+            'mis-tagging would either over-suppress the positive case '
+            '(and pass for the wrong reason) or skip the COLONIAL-lite '
+            'branch under test entirely.',
       );
 
-      test(
-        'COLONIAL (OW=10) keeps declareWar toward the same NW tribe candidate',
-        () {
-          final game = _scenarioGame(
-            gp1OwProvinces: _gp1OwProvincesAtQuota,
-          );
-          const topology = MapTopology(nodes: [], edges: []);
-          final view = buildPlayerView(game, topology, _nationId);
-          final snapshot = _colonialSnapshot();
-
-          expect(
-            observerGoalPhaseFor(snapshot: snapshot, game: game),
-            ObserverGoalPhase.colonial,
-            reason:
-                'Negative-control fixture must place GP in COLONIAL so '
-                'the COLONIAL-lite NW declareWar filter is verified to '
-                '**not** fire here. The only fixture difference vs the '
-                'positive case is the OW count (9 -> 10), which is the '
-                'COLONIAL-lite/COLONIAL boundary per '
-                'isBelowObserverConquestQuota + isObserverColonialLitePhase.',
-          );
-
-          final orders = runDomainPlanners(
-            game: game,
-            topology: topology,
-            nationId: _nationId,
-            view: view,
-            snapshot: snapshot,
-            config: _aiConfig,
-            primaryGoal: StrategicGoal.conquer,
-            seeds: AISeedBundle.fromTurnSeed(2509301),
-            suggestionAPI: _nwTribeDeclareWarApi,
-            economyPlan: _economyPlan,
-          );
-
-          expect(
-            _declareWarTargets(orders),
-            contains(_tribeId),
-            reason:
-                'COLONIAL must allow declareWar toward visible tribe '
-                'colonial targets so the SPEC § COLONIAL phase acquisition '
-                'priority "Join Empire -> purchase_land -> declare-war + '
-                'NW invasion" remains reachable once the GP hits the OW '
-                'quota. Over-suppression here would stall NW acquisition '
-                'toward the turn-150 NW ownership gate and collapse the '
-                'COLONIAL-lite/COLONIAL distinction into a single rule.',
-          );
-        },
+      final orders = runDomainPlanners(
+        game: game,
+        topology: topology,
+        nationId: _nationId,
+        view: view,
+        snapshot: snapshot,
+        config: _aiConfig,
+        primaryGoal: StrategicGoal.expand,
+        seeds: AISeedBundle.fromTurnSeed(2509300),
+        suggestionAPI: _nwTribeDeclareWarApi,
+        economyPlan: _economyPlan,
       );
 
-      test(
-        'emits identical diplomatic orders for identical COLONIAL-lite inputs',
-        () {
-          final game = _scenarioGame(
-            gp1OwProvinces: _gp1OwProvincesAtColonialLiteFloor,
-          );
-          const topology = MapTopology(nodes: [], edges: []);
-          final view = buildPlayerView(game, topology, _nationId);
-          final snapshot = _colonialLiteSnapshot();
-
-          Orders runOnce(int turnSeed) => runDomainPlanners(
-            game: game,
-            topology: topology,
-            nationId: _nationId,
-            view: view,
-            snapshot: snapshot,
-            config: _aiConfig,
-            primaryGoal: StrategicGoal.expand,
-            seeds: AISeedBundle.fromTurnSeed(turnSeed),
-            suggestionAPI: _nwTribeDeclareWarApi,
-            economyPlan: _economyPlan,
-          );
-
-          final firstRun = runOnce(2509302);
-          final secondRun = runOnce(2509302);
-
-          List<String> diplomaticFingerprint(Orders orders) => <String>[
-            for (final o
-                in orders.diplomaticOrdersByPlayerId[_nationId] ?? const [])
-              '${o.type}|${o.targetFactionId}|${o.overtureStage}',
-          ];
-
-          expect(
-            diplomaticFingerprint(secondRun),
-            diplomaticFingerprint(firstRun),
-            reason:
-                'Determinism (must-have #7): identical COLONIAL-lite-phase '
-                'inputs must produce identical diplomatic orders across '
-                'runs (otherwise a flaky filter or random scoring path '
-                'could mask this contract under repeated runs).',
-          );
-        },
+      expect(
+        _declareWarTargets(orders),
+        isNot(contains(_tribeId)),
+        reason:
+            'COLONIAL-lite must drop declareWar toward NW colonial '
+            'targets so the near-quota GP keeps pursuing OW expansion '
+            'to the quota of 10 without trading away the OW conquest '
+            'path before turn 100 (SPEC § Observer goal phases (Full '
+            'AI), COLONIAL-lite suppression list: "NW declareWar, '
+            'invasion army moves, purchase_land"). A non-empty contains '
+            'list here indicates the orchestrator surfaced a declareWar '
+            'the COLONIAL-lite branch of '
+            'shouldSuppressNewWorldDeclareWarInvasionAndPurchase should '
+            'have collapsed — most likely a forced/short-circuit '
+            'declare-war helper bypassing the score gate.',
       );
-    },
-  );
+    });
+
+    test(
+      'COLONIAL (OW=10) keeps declareWar toward the same NW tribe candidate',
+      () {
+        final game = _scenarioGame(gp1OwProvinces: _gp1OwProvincesAtQuota);
+        const topology = MapTopology(nodes: [], edges: []);
+        final view = buildPlayerView(game, topology, _nationId);
+        final snapshot = _colonialSnapshot();
+
+        expect(
+          observerGoalPhaseFor(snapshot: snapshot, game: game),
+          ObserverGoalPhase.colonial,
+          reason:
+              'Negative-control fixture must place GP in COLONIAL so '
+              'the COLONIAL-lite NW declareWar filter is verified to '
+              '**not** fire here. The only fixture difference vs the '
+              'positive case is the OW count (9 -> 10), which is the '
+              'COLONIAL-lite/COLONIAL boundary per '
+              'isBelowObserverConquestQuota + isObserverColonialLitePhase.',
+        );
+
+        final orders = runDomainPlanners(
+          game: game,
+          topology: topology,
+          nationId: _nationId,
+          view: view,
+          snapshot: snapshot,
+          config: _aiConfig,
+          primaryGoal: StrategicGoal.conquer,
+          seeds: AISeedBundle.fromTurnSeed(2509301),
+          suggestionAPI: _nwTribeDeclareWarApi,
+          economyPlan: _economyPlan,
+        );
+
+        expect(
+          _declareWarTargets(orders),
+          contains(_tribeId),
+          reason:
+              'COLONIAL must allow declareWar toward visible tribe '
+              'colonial targets so the SPEC § COLONIAL phase acquisition '
+              'priority "Join Empire -> purchase_land -> declare-war + '
+              'NW invasion" remains reachable once the GP hits the OW '
+              'quota. Over-suppression here would stall NW acquisition '
+              'toward the turn-150 NW ownership gate and collapse the '
+              'COLONIAL-lite/COLONIAL distinction into a single rule.',
+        );
+      },
+    );
+
+    test(
+      'emits identical diplomatic orders for identical COLONIAL-lite inputs',
+      () {
+        final game = _scenarioGame(
+          gp1OwProvinces: _gp1OwProvincesAtColonialLiteFloor,
+        );
+        const topology = MapTopology(nodes: [], edges: []);
+        final view = buildPlayerView(game, topology, _nationId);
+        final snapshot = _colonialLiteSnapshot();
+
+        Orders runOnce(int turnSeed) => runDomainPlanners(
+          game: game,
+          topology: topology,
+          nationId: _nationId,
+          view: view,
+          snapshot: snapshot,
+          config: _aiConfig,
+          primaryGoal: StrategicGoal.expand,
+          seeds: AISeedBundle.fromTurnSeed(turnSeed),
+          suggestionAPI: _nwTribeDeclareWarApi,
+          economyPlan: _economyPlan,
+        );
+
+        final firstRun = runOnce(2509302);
+        final secondRun = runOnce(2509302);
+
+        List<String> diplomaticFingerprint(Orders orders) => <String>[
+          for (final o
+              in orders.diplomaticOrdersByPlayerId[_nationId] ?? const [])
+            '${o.type}|${o.targetFactionId}|${o.overtureStage}',
+        ];
+
+        expect(
+          diplomaticFingerprint(secondRun),
+          diplomaticFingerprint(firstRun),
+          reason:
+              'Determinism (must-have #7): identical COLONIAL-lite-phase '
+              'inputs must produce identical diplomatic orders across '
+              'runs (otherwise a flaky filter or random scoring path '
+              'could mask this contract under repeated runs).',
+        );
+      },
+    );
+  });
 }

@@ -106,10 +106,7 @@ Game _gameWithTribeNw({required int turnNumber}) {
   return Game(
     id: 'g-2509-nw-suppress-predicate',
     worldState: WorldState(
-      turnState: TurnState(
-        turnNumber: turnNumber,
-        phase: TurnPhase.orders,
-      ),
+      turnState: TurnState(turnNumber: turnNumber, phase: TurnPhase.orders),
       oldWorld: const RegionData(),
       newWorld: RegionData(
         provinces: const [
@@ -134,10 +131,7 @@ Game _gameWithGpOwnedNw() {
   return Game(
     id: 'g-2509-nw-suppress-predicate-develop',
     worldState: WorldState(
-      turnState: const TurnState(
-        turnNumber: 140,
-        phase: TurnPhase.orders,
-      ),
+      turnState: const TurnState(turnNumber: 140, phase: TurnPhase.orders),
       oldWorld: const RegionData(),
       newWorld: RegionData(
         provinces: const [
@@ -217,130 +211,134 @@ const AIWorldSnapshot _developSnapshot = AIWorldSnapshot(
 );
 
 void main() {
-  group('shouldSuppressNewWorldDeclareWarInvasionAndPurchase phase branches',
-      () {
-    test('EXPAND suppresses NW declareWar / invasion / purchase_land', () {
-      // Turn 50 is far below `kObserverColonialLiteMinTurn` (120) so the
-      // COLONIAL-lite safeguard is inactive; OW=7 keeps the GP below quota
-      // → EXPAND. Pinned here so a regression that returned `false` for
-      // EXPAND would re-open NW declare-war + invasion + `purchase_land`
-      // below the OW quota and starve the turn-100 conquest gate.
-      final game = _gameWithTribeNw(turnNumber: 50);
-      expect(
-        observerGoalPhaseFor(snapshot: _expandSnapshot, game: game),
-        ObserverGoalPhase.expand,
-        reason:
-            'Fixture must place GP in EXPAND so the EXPAND arm of the '
-            'predicate switch is exercised, not the COLONIAL-lite or '
-            'COLONIAL fall-through.',
-      );
-      expect(
-        shouldSuppressNewWorldDeclareWarInvasionAndPurchase(
-          snapshot: _expandSnapshot,
-          game: game,
-        ),
-        isTrue,
-        reason:
-            'EXPAND must suppress NW declareWar / invasion / purchase_land '
-            'so below-quota GPs do not trade OW conquest pressure for NW '
-            'work (SPEC § Observer goal phases (Full AI) EXPAND row).',
-      );
-    });
-
-    test(
-      'COLONIAL-lite suppresses NW declareWar / invasion / purchase_land',
-      () {
-        // Turn 120 + OW=9 + tribe-owned NW = COLONIAL-lite per
-        // `isObserverColonialLitePhase`. The COLONIAL-lite SPEC clause
-        // explicitly suppresses these three NW order families while still
-        // allowing colonial naval / overture (which this predicate does
-        // not gate).
-        final game = _gameWithTribeNw(turnNumber: kObserverColonialLiteMinTurn);
+  group(
+    'shouldSuppressNewWorldDeclareWarInvasionAndPurchase phase branches',
+    () {
+      test('EXPAND suppresses NW declareWar / invasion / purchase_land', () {
+        // Turn 50 is far below `kObserverColonialLiteMinTurn` (120) so the
+        // COLONIAL-lite safeguard is inactive; OW=7 keeps the GP below quota
+        // → EXPAND. Pinned here so a regression that returned `false` for
+        // EXPAND would re-open NW declare-war + invasion + `purchase_land`
+        // below the OW quota and starve the turn-100 conquest gate.
+        final game = _gameWithTribeNw(turnNumber: 50);
         expect(
-          observerGoalPhaseFor(snapshot: _colonialLiteSnapshot, game: game),
-          ObserverGoalPhase.colonialLite,
+          observerGoalPhaseFor(snapshot: _expandSnapshot, game: game),
+          ObserverGoalPhase.expand,
           reason:
-              'Fixture must place GP in COLONIAL-lite so the COLONIAL-lite '
-              'arm of the predicate switch is exercised, not EXPAND (turn '
-              'below 120) or COLONIAL (OW at quota).',
+              'Fixture must place GP in EXPAND so the EXPAND arm of the '
+              'predicate switch is exercised, not the COLONIAL-lite or '
+              'COLONIAL fall-through.',
         );
         expect(
           shouldSuppressNewWorldDeclareWarInvasionAndPurchase(
-            snapshot: _colonialLiteSnapshot,
+            snapshot: _expandSnapshot,
             game: game,
           ),
           isTrue,
           reason:
-              'COLONIAL-lite must suppress NW declareWar / invasion / '
-              'purchase_land per the SPEC § COLONIAL-lite suppress list '
-              '("NW declareWar, invasion army moves, and purchase_land '
-              'only"). A regression returning `false` here would re-enable '
-              'NW conquest before the OW quota is met and regress the '
-              'turn-100 conquest gate.',
+              'EXPAND must suppress NW declareWar / invasion / purchase_land '
+              'so below-quota GPs do not trade OW conquest pressure for NW '
+              'work (SPEC § Observer goal phases (Full AI) EXPAND row).',
         );
-      },
-    );
+      });
 
-    test('COLONIAL allows NW declareWar / invasion / purchase_land', () {
-      // OW=11 + visible NW colonial target = COLONIAL. This is the **only**
-      // phase where NW declare-war + invasion + purchase_land are
-      // SPEC-sanctioned (acquisition priority: Join Empire →
-      // purchase_land → declareWar + invasion). A regression that
-      // returned `true` here would silently block must-have #2
-      // (purchase_land path) and the COLONIAL declareWar AC.
-      final game = _gameWithTribeNw(turnNumber: 110);
-      expect(
-        observerGoalPhaseFor(snapshot: _colonialSnapshot, game: game),
-        ObserverGoalPhase.colonial,
-        reason:
-            'Fixture must place GP in COLONIAL so the COLONIAL arm of the '
-            'predicate switch is exercised. OW at quota + visible colonial '
-            'acquisition targets is the canonical COLONIAL entry.',
+      test(
+        'COLONIAL-lite suppresses NW declareWar / invasion / purchase_land',
+        () {
+          // Turn 120 + OW=9 + tribe-owned NW = COLONIAL-lite per
+          // `isObserverColonialLitePhase`. The COLONIAL-lite SPEC clause
+          // explicitly suppresses these three NW order families while still
+          // allowing colonial naval / overture (which this predicate does
+          // not gate).
+          final game = _gameWithTribeNw(
+            turnNumber: kObserverColonialLiteMinTurn,
+          );
+          expect(
+            observerGoalPhaseFor(snapshot: _colonialLiteSnapshot, game: game),
+            ObserverGoalPhase.colonialLite,
+            reason:
+                'Fixture must place GP in COLONIAL-lite so the COLONIAL-lite '
+                'arm of the predicate switch is exercised, not EXPAND (turn '
+                'below 120) or COLONIAL (OW at quota).',
+          );
+          expect(
+            shouldSuppressNewWorldDeclareWarInvasionAndPurchase(
+              snapshot: _colonialLiteSnapshot,
+              game: game,
+            ),
+            isTrue,
+            reason:
+                'COLONIAL-lite must suppress NW declareWar / invasion / '
+                'purchase_land per the SPEC § COLONIAL-lite suppress list '
+                '("NW declareWar, invasion army moves, and purchase_land '
+                'only"). A regression returning `false` here would re-enable '
+                'NW conquest before the OW quota is met and regress the '
+                'turn-100 conquest gate.',
+          );
+        },
       );
-      expect(
-        shouldSuppressNewWorldDeclareWarInvasionAndPurchase(
-          snapshot: _colonialSnapshot,
-          game: game,
-        ),
-        isFalse,
-        reason:
-            'COLONIAL is the only phase where NW acquisition is the '
-            'imperative; the predicate must return `false` so the NW '
-            'declare-war, invasion army move, and Merchant purchase_land '
-            'paths remain reachable for the turn-150 NW ownership gate.',
-      );
-    });
 
-    test('DEVELOP suppresses NW declareWar / invasion / purchase_land', () {
-      // OW=11 + no colonial acquisition targets + no unowned visible NW =
-      // DEVELOP per `observerGoalPhaseFor`. DEVELOP's imperative is
-      // improvement-first development; new NW acquisition wars would
-      // starve the 70% extractable improvement gate at turn 150.
-      final game = _gameWithGpOwnedNw();
-      expect(
-        observerGoalPhaseFor(snapshot: _developSnapshot, game: game),
-        ObserverGoalPhase.develop,
-        reason:
-            'Fixture must place GP in DEVELOP so the DEVELOP arm of the '
-            'predicate switch is exercised, not the COLONIAL fall-through. '
-            'OW at quota with no visible colonial targets is the canonical '
-            'DEVELOP entry.',
-      );
-      expect(
-        shouldSuppressNewWorldDeclareWarInvasionAndPurchase(
-          snapshot: _developSnapshot,
-          game: game,
-        ),
-        isTrue,
-        reason:
-            'DEVELOP must suppress new NW declareWar / invasion / '
-            'purchase_land per SPEC § DEVELOP rule 2 ("Suppress: new '
-            'declareWar, NW acquisition orders ..."). A regression '
-            'returning `false` here would re-open NW conquest in DEVELOP '
-            'and pull Builders off the improvement-first path.',
-      );
-    });
-  });
+      test('COLONIAL allows NW declareWar / invasion / purchase_land', () {
+        // OW=11 + visible NW colonial target = COLONIAL. This is the **only**
+        // phase where NW declare-war + invasion + purchase_land are
+        // SPEC-sanctioned (acquisition priority: Join Empire →
+        // purchase_land → declareWar + invasion). A regression that
+        // returned `true` here would silently block must-have #2
+        // (purchase_land path) and the COLONIAL declareWar AC.
+        final game = _gameWithTribeNw(turnNumber: 110);
+        expect(
+          observerGoalPhaseFor(snapshot: _colonialSnapshot, game: game),
+          ObserverGoalPhase.colonial,
+          reason:
+              'Fixture must place GP in COLONIAL so the COLONIAL arm of the '
+              'predicate switch is exercised. OW at quota + visible colonial '
+              'acquisition targets is the canonical COLONIAL entry.',
+        );
+        expect(
+          shouldSuppressNewWorldDeclareWarInvasionAndPurchase(
+            snapshot: _colonialSnapshot,
+            game: game,
+          ),
+          isFalse,
+          reason:
+              'COLONIAL is the only phase where NW acquisition is the '
+              'imperative; the predicate must return `false` so the NW '
+              'declare-war, invasion army move, and Merchant purchase_land '
+              'paths remain reachable for the turn-150 NW ownership gate.',
+        );
+      });
+
+      test('DEVELOP suppresses NW declareWar / invasion / purchase_land', () {
+        // OW=11 + no colonial acquisition targets + no unowned visible NW =
+        // DEVELOP per `observerGoalPhaseFor`. DEVELOP's imperative is
+        // improvement-first development; new NW acquisition wars would
+        // starve the 70% extractable improvement gate at turn 150.
+        final game = _gameWithGpOwnedNw();
+        expect(
+          observerGoalPhaseFor(snapshot: _developSnapshot, game: game),
+          ObserverGoalPhase.develop,
+          reason:
+              'Fixture must place GP in DEVELOP so the DEVELOP arm of the '
+              'predicate switch is exercised, not the COLONIAL fall-through. '
+              'OW at quota with no visible colonial targets is the canonical '
+              'DEVELOP entry.',
+        );
+        expect(
+          shouldSuppressNewWorldDeclareWarInvasionAndPurchase(
+            snapshot: _developSnapshot,
+            game: game,
+          ),
+          isTrue,
+          reason:
+              'DEVELOP must suppress new NW declareWar / invasion / '
+              'purchase_land per SPEC § DEVELOP rule 2 ("Suppress: new '
+              'declareWar, NW acquisition orders ..."). A regression '
+              'returning `false` here would re-open NW conquest in DEVELOP '
+              'and pull Builders off the improvement-first path.',
+        );
+      });
+    },
+  );
 
   group('shouldSuppressNewWorldDeclareWarInvasionAndPurchase determinism', () {
     test('identical phase inputs produce identical predicate outcome', () {
@@ -349,8 +347,9 @@ void main() {
       // catches a regression that introduced incidental state (e.g.
       // caching a singleton phase or reading mutable globals) without
       // depending on the broader Full AI determinism harness.
-      final colonialLiteGame =
-          _gameWithTribeNw(turnNumber: kObserverColonialLiteMinTurn);
+      final colonialLiteGame = _gameWithTribeNw(
+        turnNumber: kObserverColonialLiteMinTurn,
+      );
       final colonialGame = _gameWithTribeNw(turnNumber: 110);
       final developGame = _gameWithGpOwnedNw();
       final expandGame = _gameWithTribeNw(turnNumber: 50);

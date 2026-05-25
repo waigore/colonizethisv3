@@ -439,72 +439,76 @@ void main() {
   });
 
   group('COLONIAL outcome composition', () {
-    test('declareWar acquisition pairs target factionId into military / naval',
-        () {
-      // The fixture has an at-war tribe owning the NW invadable
-      // province. `planColonialAcquisition` resolves to
-      // `(tribe1, declareWar)` and the dispatcher forwards that
-      // factionId into both `planColonialMilitary` and
-      // `planColonialNaval` -- the at-war fallback arm fires for both
-      // sibling plans with `_tribe1` listed as the priority owner.
-      final game = _colonialGame();
-      final snapshot = _colonialSnapshot();
-      final outcome = runPhasePlanners(game: game, snapshot: snapshot);
+    test(
+      'declareWar acquisition pairs target factionId into military / naval',
+      () {
+        // The fixture has an at-war tribe owning the NW invadable
+        // province. `planColonialAcquisition` resolves to
+        // `(tribe1, declareWar)` and the dispatcher forwards that
+        // factionId into both `planColonialMilitary` and
+        // `planColonialNaval` -- the at-war fallback arm fires for both
+        // sibling plans with `_tribe1` listed as the priority owner.
+        final game = _colonialGame();
+        final snapshot = _colonialSnapshot();
+        final outcome = runPhasePlanners(game: game, snapshot: snapshot);
 
-      expect(outcome.phase, ObserverGoalPhase.colonial);
+        expect(outcome.phase, ObserverGoalPhase.colonial);
 
-      // Acquisition arm: declareWar over the tribe (Join Empire and
-      // purchase_land arms have no overture / merchant).
-      expect(
-        outcome.colonialAcquisitionTarget,
-        const ColonialAcquisitionTarget(
-          targetFactionId: _tribe1,
-          method: AcquisitionMethod.declareWar,
-        ),
-      );
+        // Acquisition arm: declareWar over the tribe (Join Empire and
+        // purchase_land arms have no overture / merchant).
+        expect(
+          outcome.colonialAcquisitionTarget,
+          const ColonialAcquisitionTarget(
+            targetFactionId: _tribe1,
+            method: AcquisitionMethod.declareWar,
+          ),
+        );
 
-      // Military / naval invasion-transport restricted to the
-      // declared target.
-      expect(
-        outcome.colonialMilitaryPlan,
-        planColonialMilitary(
-          game: game,
-          snapshot: snapshot,
-          colonialDeclaredWarTargetFactionId: _tribe1,
-        ),
-      );
-      expect(
-        outcome.colonialNavalPlan,
-        planColonialNaval(
-          game: game,
-          snapshot: snapshot,
-          colonialDeclaredWarTargetFactionId: _tribe1,
-        ),
-      );
+        // Military / naval invasion-transport restricted to the
+        // declared target.
+        expect(
+          outcome.colonialMilitaryPlan,
+          planColonialMilitary(
+            game: game,
+            snapshot: snapshot,
+            colonialDeclaredWarTargetFactionId: _tribe1,
+          ),
+        );
+        expect(
+          outcome.colonialNavalPlan,
+          planColonialNaval(
+            game: game,
+            snapshot: snapshot,
+            colonialDeclaredWarTargetFactionId: _tribe1,
+          ),
+        );
 
-      // Peace + civilian still flow.
-      expect(
-        outcome.colonialPeaceTargetFactionIdsSorted,
-        planColonialPeace(game: game, snapshot: snapshot),
-      );
-      expect(
-        outcome.colonialCivilianWorkOrders,
-        planColonialCivilian(game: game, snapshot: snapshot),
-      );
+        // Peace + civilian still flow.
+        expect(
+          outcome.colonialPeaceTargetFactionIdsSorted,
+          planColonialPeace(game: game, snapshot: snapshot),
+        );
+        expect(
+          outcome.colonialCivilianWorkOrders,
+          planColonialCivilian(game: game, snapshot: snapshot),
+        );
 
-      // EXPAND / COLONIAL-lite / DEVELOP slots stay default.
-      expect(outcome.expandDeclareWarTargetFactionId, isNull);
-      expect(outcome.expandPeaceTargetFactionIdsSorted, isEmpty);
-      expect(outcome.expandEconomyPlan, ExpandEconomyPlan.defaultPlan);
-      expect(outcome.expandMilitaryPlan, ExpandMilitaryPlan.defaultPlan);
-      expect(outcome.colonialLiteOverturesSorted, isEmpty);
-      expect(outcome.colonialLiteNavalPlan, ColonialLiteNavalPlan.defaultPlan);
-      expect(outcome.developPeaceTargetFactionIdsSorted, isEmpty);
-      expect(outcome.developCivilianWorkOrders, isEmpty);
-    });
+        // EXPAND / COLONIAL-lite / DEVELOP slots stay default.
+        expect(outcome.expandDeclareWarTargetFactionId, isNull);
+        expect(outcome.expandPeaceTargetFactionIdsSorted, isEmpty);
+        expect(outcome.expandEconomyPlan, ExpandEconomyPlan.defaultPlan);
+        expect(outcome.expandMilitaryPlan, ExpandMilitaryPlan.defaultPlan);
+        expect(outcome.colonialLiteOverturesSorted, isEmpty);
+        expect(
+          outcome.colonialLiteNavalPlan,
+          ColonialLiteNavalPlan.defaultPlan,
+        );
+        expect(outcome.developPeaceTargetFactionIdsSorted, isEmpty);
+        expect(outcome.developCivilianWorkOrders, isEmpty);
+      },
+    );
 
-    test('null acquisition leaves military / naval to at-war fallback arm',
-        () {
+    test('null acquisition leaves military / naval to at-war fallback arm', () {
       // Zero regiments + no Join Empire / purchase_land path means
       // `planColonialAcquisition` returns null; the dispatcher must
       // therefore pass `null` as `colonialDeclaredWarTargetFactionId`
@@ -584,7 +588,10 @@ void main() {
         b.expandDeclareWarTargetFactionId,
         a.expandDeclareWarTargetFactionId,
       );
-      expect(b.expandPeaceTargetFactionIdsSorted, a.expandPeaceTargetFactionIdsSorted);
+      expect(
+        b.expandPeaceTargetFactionIdsSorted,
+        a.expandPeaceTargetFactionIdsSorted,
+      );
       expect(b.expandEconomyPlan, a.expandEconomyPlan);
       expect(b.expandMilitaryPlan, a.expandMilitaryPlan);
     });
@@ -596,7 +603,10 @@ void main() {
       final b = runPhasePlanners(game: game, snapshot: snapshot);
       expect(b.phase, a.phase);
       expect(b.colonialAcquisitionTarget, a.colonialAcquisitionTarget);
-      expect(b.colonialPeaceTargetFactionIdsSorted, a.colonialPeaceTargetFactionIdsSorted);
+      expect(
+        b.colonialPeaceTargetFactionIdsSorted,
+        a.colonialPeaceTargetFactionIdsSorted,
+      );
       expect(b.colonialMilitaryPlan, a.colonialMilitaryPlan);
       expect(b.colonialNavalPlan, a.colonialNavalPlan);
       expect(b.colonialCivilianWorkOrders, a.colonialCivilianWorkOrders);

@@ -70,7 +70,9 @@ void main() {
           },
         );
         final api = _fakeApi(
-          recruit: const [RecruitWorkerOrder(targetTier: WorkerTier.apprentice)],
+          recruit: const [
+            RecruitWorkerOrder(targetTier: WorkerTier.apprentice),
+          ],
           build: const [
             BuildUnitOrder(
               unitType: 'pikemen',
@@ -133,133 +135,124 @@ void main() {
       expect(plan.rejected, isEmpty);
     });
 
-    test(
-      'civilian builds do not draw on peasant budget; trained recruit still '
-      'fits a single peasant',
-      () {
-        final game = _gameWith(
-          const Player(
-            id: 'gp1',
-            displayName: 'A',
-            isHuman: false,
-            workerPool: WorkerPool(peasants: 1, apprentices: 5),
-            stockpile: Stockpile(quantities: {'refinedSugar': 10}),
+    test('civilian builds do not draw on peasant budget; trained recruit still '
+        'fits a single peasant', () {
+      final game = _gameWith(
+        const Player(
+          id: 'gp1',
+          displayName: 'A',
+          isHuman: false,
+          workerPool: WorkerPool(peasants: 1, apprentices: 5),
+          stockpile: Stockpile(quantities: {'refinedSugar': 10}),
+        ),
+      );
+      final view = buildPlayerView(game, _topology, 'gp1');
+      final api = _fakeApi(
+        recruit: const [RecruitWorkerOrder(targetTier: WorkerTier.apprentice)],
+        build: const [
+          BuildUnitOrder(
+            unitType: 'builder',
+            isMilitary: false,
+            spawnProvinceId: 'oldWorld|P1',
           ),
-        );
-        final view = buildPlayerView(game, _topology, 'gp1');
-        final api = _fakeApi(
-          recruit: const [RecruitWorkerOrder(targetTier: WorkerTier.apprentice)],
-          build: const [
-            BuildUnitOrder(
-              unitType: 'builder',
-              isMilitary: false,
-              spawnProvinceId: 'oldWorld|P1',
-            ),
-          ],
-        );
+        ],
+      );
 
-        final plan = runRecruitmentPlanner(
-          game: game,
-          view: view,
-          currentOrders: const Orders(),
-          config: _config,
-          seeds: AISeedBundle.fromTurnSeed(0),
-          goalPhase: ObserverGoalPhase.develop,
-          suggestionApi: api,
-        );
+      final plan = runRecruitmentPlanner(
+        game: game,
+        view: view,
+        currentOrders: const Orders(),
+        config: _config,
+        seeds: AISeedBundle.fromTurnSeed(0),
+        goalPhase: ObserverGoalPhase.develop,
+        suggestionApi: api,
+      );
 
-        expect(plan.recruitOrders, hasLength(1));
-        expect(plan.recruitOrders.single.targetTier, WorkerTier.apprentice);
-        expect(plan.buildUnitOrders, hasLength(1));
-        expect(plan.buildUnitOrders.single.unitType, 'builder');
-        expect(plan.rejected, isEmpty);
-      },
-    );
+      expect(plan.recruitOrders, hasLength(1));
+      expect(plan.recruitOrders.single.targetTier, WorkerTier.apprentice);
+      expect(plan.buildUnitOrders, hasLength(1));
+      expect(plan.buildUnitOrders.single.unitType, 'builder');
+      expect(plan.rejected, isEmpty);
+    });
   });
 
   group('runRecruitmentPlanner — soft luxury cap', () {
-    test(
-      'AC-RP-2: rejects apprentice when sustainableTrainedCount == 0 and '
-      'no deficit override',
-      () {
-        // sustainable[apprentice] = stockpile.refinedSugar + projected = 0 + 0 = 0
-        // projected after emit = 0 + 1 = 1 > 0 → reject.
-        final game = _gameWith(
-          const Player(
-            id: 'gp1',
-            displayName: 'A',
-            isHuman: false,
-            workerPool: WorkerPool(peasants: 5, apprentices: 0),
-          ),
-        );
-        final view = buildPlayerView(game, _topology, 'gp1');
-        final api = _fakeApi(
-          recruit: const [RecruitWorkerOrder(targetTier: WorkerTier.apprentice)],
-        );
+    test('AC-RP-2: rejects apprentice when sustainableTrainedCount == 0 and '
+        'no deficit override', () {
+      // sustainable[apprentice] = stockpile.refinedSugar + projected = 0 + 0 = 0
+      // projected after emit = 0 + 1 = 1 > 0 → reject.
+      final game = _gameWith(
+        const Player(
+          id: 'gp1',
+          displayName: 'A',
+          isHuman: false,
+          workerPool: WorkerPool(peasants: 5, apprentices: 0),
+        ),
+      );
+      final view = buildPlayerView(game, _topology, 'gp1');
+      final api = _fakeApi(
+        recruit: const [RecruitWorkerOrder(targetTier: WorkerTier.apprentice)],
+      );
 
-        final plan = runRecruitmentPlanner(
-          game: game,
-          view: view,
-          currentOrders: const Orders(),
-          config: _config,
-          seeds: AISeedBundle.fromTurnSeed(0),
-          goalPhase: ObserverGoalPhase.develop,
-          suggestionApi: api,
-        );
+      final plan = runRecruitmentPlanner(
+        game: game,
+        view: view,
+        currentOrders: const Orders(),
+        config: _config,
+        seeds: AISeedBundle.fromTurnSeed(0),
+        goalPhase: ObserverGoalPhase.develop,
+        suggestionApi: api,
+      );
 
-        expect(plan.recruitOrders, isEmpty);
-        expect(plan.rejected, hasLength(1));
-        expect(plan.rejected.single.reason, kRecruitmentRejectSoftLuxuryCap);
-        expect(plan.rejected.single.targetTier, 'apprentice');
-      },
-    );
+      expect(plan.recruitOrders, isEmpty);
+      expect(plan.rejected, hasLength(1));
+      expect(plan.rejected.single.reason, kRecruitmentRejectSoftLuxuryCap);
+      expect(plan.rejected.single.targetTier, 'apprentice');
+    });
 
-    test(
-      'AC-RP-3: deficit override caps journeyman recruit at 1.2 × sustainable '
-      '(floor)',
-      () {
-        // sustainable[journeyman] = stockpile.cigars + projected = 1 + 0 = 1.
-        // deficit limit floor(1 * 12 / 10) = 1.
-        // current = 1, projected after one emit = 2 > 1 → reject.
-        final game = _gameWith(
-          const Player(
-            id: 'gp1',
-            displayName: 'A',
-            isHuman: false,
-            workerPool: WorkerPool(peasants: 5, journeymen: 1),
-            stockpile: Stockpile(quantities: {'cigars': 1}),
-          ),
-        );
-        final view = buildPlayerView(game, _topology, 'gp1');
-        final api = _fakeApi(
-          recruit: const [RecruitWorkerOrder(targetTier: WorkerTier.journeyman)],
-        );
-        // Deficit hint: target labour 100, effective labour from workers
-        // (5 peasants × 1 + 1 journeyman × 6 = 11) → 11 × 10 < 100 × 8 → deficit.
-        const hint = EconomyPlan(
-          productionAssignments: [
-            AssignedRecipe(recipeId: 'lumber_from_timber', assignedLabour: 100),
-          ],
-          cargoPreference: CargoPreference.none,
-        );
+    test('AC-RP-3: deficit override caps journeyman recruit at 1.2 × sustainable '
+        '(floor)', () {
+      // sustainable[journeyman] = stockpile.cigars + projected = 1 + 0 = 1.
+      // deficit limit floor(1 * 12 / 10) = 1.
+      // current = 1, projected after one emit = 2 > 1 → reject.
+      final game = _gameWith(
+        const Player(
+          id: 'gp1',
+          displayName: 'A',
+          isHuman: false,
+          workerPool: WorkerPool(peasants: 5, journeymen: 1),
+          stockpile: Stockpile(quantities: {'cigars': 1}),
+        ),
+      );
+      final view = buildPlayerView(game, _topology, 'gp1');
+      final api = _fakeApi(
+        recruit: const [RecruitWorkerOrder(targetTier: WorkerTier.journeyman)],
+      );
+      // Deficit hint: target labour 100, effective labour from workers
+      // (5 peasants × 1 + 1 journeyman × 6 = 11) → 11 × 10 < 100 × 8 → deficit.
+      const hint = EconomyPlan(
+        productionAssignments: [
+          AssignedRecipe(recipeId: 'lumber_from_timber', assignedLabour: 100),
+        ],
+        cargoPreference: CargoPreference.none,
+      );
 
-        final plan = runRecruitmentPlanner(
-          game: game,
-          view: view,
-          currentOrders: const Orders(),
-          config: _config,
-          seeds: AISeedBundle.fromTurnSeed(0),
-          goalPhase: ObserverGoalPhase.develop,
-          suggestionApi: api,
-          economyPlanHint: hint,
-        );
+      final plan = runRecruitmentPlanner(
+        game: game,
+        view: view,
+        currentOrders: const Orders(),
+        config: _config,
+        seeds: AISeedBundle.fromTurnSeed(0),
+        goalPhase: ObserverGoalPhase.develop,
+        suggestionApi: api,
+        economyPlanHint: hint,
+      );
 
-        expect(plan.recruitOrders, isEmpty);
-        expect(plan.rejected, hasLength(1));
-        expect(plan.rejected.single.reason, kRecruitmentRejectSoftLuxuryCap);
-        expect(plan.rejected.single.targetTier, 'journeyman');
-      },
-    );
+      expect(plan.recruitOrders, isEmpty);
+      expect(plan.rejected, hasLength(1));
+      expect(plan.rejected.single.reason, kRecruitmentRejectSoftLuxuryCap);
+      expect(plan.rejected.single.targetTier, 'journeyman');
+    });
 
     test(
       'accepts apprentice when projected count fits sustainableTrainedCount',
@@ -277,7 +270,9 @@ void main() {
         );
         final view = buildPlayerView(game, _topology, 'gp1');
         final api = _fakeApi(
-          recruit: const [RecruitWorkerOrder(targetTier: WorkerTier.apprentice)],
+          recruit: const [
+            RecruitWorkerOrder(targetTier: WorkerTier.apprentice),
+          ],
         );
 
         final plan = runRecruitmentPlanner(
@@ -296,49 +291,46 @@ void main() {
       },
     );
 
-    test(
-      'economyPlanHint projected refinedSugar output raises sustainable for '
-      'apprentice tier',
-      () {
-        // sustainable[apprentice] = 0 (stockpile) + 2 (projected: 4 labour at
-        // 2 labour/run × 1 output = 2). projected after one emit = 1 ≤ 2 → accept.
-        final game = _gameWith(
-          const Player(
-            id: 'gp1',
-            displayName: 'A',
-            isHuman: false,
-            workerPool: WorkerPool(peasants: 1, apprentices: 0),
+    test('economyPlanHint projected refinedSugar output raises sustainable for '
+        'apprentice tier', () {
+      // sustainable[apprentice] = 0 (stockpile) + 2 (projected: 4 labour at
+      // 2 labour/run × 1 output = 2). projected after one emit = 1 ≤ 2 → accept.
+      final game = _gameWith(
+        const Player(
+          id: 'gp1',
+          displayName: 'A',
+          isHuman: false,
+          workerPool: WorkerPool(peasants: 1, apprentices: 0),
+        ),
+      );
+      final view = buildPlayerView(game, _topology, 'gp1');
+      final api = _fakeApi(
+        recruit: const [RecruitWorkerOrder(targetTier: WorkerTier.apprentice)],
+      );
+      const hint = EconomyPlan(
+        productionAssignments: [
+          AssignedRecipe(
+            recipeId: 'refinedSugar_from_sugarCane',
+            assignedLabour: 4,
           ),
-        );
-        final view = buildPlayerView(game, _topology, 'gp1');
-        final api = _fakeApi(
-          recruit: const [RecruitWorkerOrder(targetTier: WorkerTier.apprentice)],
-        );
-        const hint = EconomyPlan(
-          productionAssignments: [
-            AssignedRecipe(
-              recipeId: 'refinedSugar_from_sugarCane',
-              assignedLabour: 4,
-            ),
-          ],
-          cargoPreference: CargoPreference.none,
-        );
+        ],
+        cargoPreference: CargoPreference.none,
+      );
 
-        final plan = runRecruitmentPlanner(
-          game: game,
-          view: view,
-          currentOrders: const Orders(),
-          config: _config,
-          seeds: AISeedBundle.fromTurnSeed(0),
-          goalPhase: ObserverGoalPhase.develop,
-          suggestionApi: api,
-          economyPlanHint: hint,
-        );
+      final plan = runRecruitmentPlanner(
+        game: game,
+        view: view,
+        currentOrders: const Orders(),
+        config: _config,
+        seeds: AISeedBundle.fromTurnSeed(0),
+        goalPhase: ObserverGoalPhase.develop,
+        suggestionApi: api,
+        economyPlanHint: hint,
+      );
 
-        expect(plan.recruitOrders, hasLength(1));
-        expect(plan.rejected, isEmpty);
-      },
-    );
+      expect(plan.recruitOrders, hasLength(1));
+      expect(plan.rejected, isEmpty);
+    });
   });
 
   group('runRecruitmentPlanner — emit order by phase (AC-RP-5)', () {
@@ -378,7 +370,10 @@ void main() {
       expect(plan.recruitOrders.single.targetTier, WorkerTier.apprentice);
       expect(plan.buildUnitOrders, isEmpty);
       expect(plan.rejected, hasLength(1));
-      expect(plan.rejected.single.reason, kRecruitmentRejectInsufficientWorkers);
+      expect(
+        plan.rejected.single.reason,
+        kRecruitmentRejectInsufficientWorkers,
+      );
       expect(plan.rejected.single.targetTier, 'peasant_levies');
     });
 
@@ -410,7 +405,10 @@ void main() {
       expect(plan.buildUnitOrders.single.unitType, 'peasant_levies');
       expect(plan.recruitOrders, isEmpty);
       expect(plan.rejected, hasLength(1));
-      expect(plan.rejected.single.reason, kRecruitmentRejectInsufficientWorkers);
+      expect(
+        plan.rejected.single.reason,
+        kRecruitmentRejectInsufficientWorkers,
+      );
       expect(plan.rejected.single.targetTier, 'apprentice');
     });
 
@@ -604,14 +602,11 @@ void main() {
           suggestionApi: api,
         );
 
-        expect(
-          plan.recruitOrders.map((o) => o.targetTier).toList(),
-          const [
-            WorkerTier.peasant,
-            WorkerTier.apprentice,
-            WorkerTier.journeyman,
-          ],
-        );
+        expect(plan.recruitOrders.map((o) => o.targetTier).toList(), const [
+          WorkerTier.peasant,
+          WorkerTier.apprentice,
+          WorkerTier.journeyman,
+        ]);
         expect(plan.rejected, isEmpty);
       },
     );

@@ -111,10 +111,7 @@ Game _scenarioGame({required int turnNumber}) {
   return Game(
     id: 'g-2509-colonial-lite-naval-allow',
     worldState: WorldState(
-      turnState: TurnState(
-        phase: TurnPhase.orders,
-        turnNumber: turnNumber,
-      ),
+      turnState: TurnState(phase: TurnPhase.orders, turnNumber: turnNumber),
       oldWorld: RegionData(
         provinces: [
           for (final id in _gp1OwProvincesNearQuota)
@@ -154,18 +151,15 @@ Game _scenarioGame({required int turnNumber}) {
 /// whether the naval planner ran or short-circuited.
 const FakeOrderSuggestionAPIForDomainPlannerTests _navalCandidateApi =
     FakeOrderSuggestionAPIForDomainPlannerTests(
-  work: [],
-  build: [],
-  move: [],
-  research: [],
-  navalMove: [
-    NavalMoveOrder(
-      fleetId: _fleetId,
-      destinationSeaZoneId: _nwSeaZoneId,
-    ),
-  ],
-  navalMission: [],
-);
+      work: [],
+      build: [],
+      move: [],
+      research: [],
+      navalMove: [
+        NavalMoveOrder(fleetId: _fleetId, destinationSeaZoneId: _nwSeaZoneId),
+      ],
+      navalMission: [],
+    );
 
 const EconomyPlan _economyPlan = EconomyPlan(
   productionAssignments: [],
@@ -212,64 +206,61 @@ List<NavalMoveOrder> _navalMoves(Orders orders) =>
 
 void main() {
   group('runDomainPlanners COLONIAL-lite naval move ALLOW contract', () {
-    test(
-      'COLONIAL-lite emits the colonial naval move candidate under the '
-      'colonial pressure boost',
-      () {
-        final game = _scenarioGame(turnNumber: kObserverColonialLiteMinTurn);
-        const topology = MapTopology(nodes: [], edges: []);
-        final view = buildPlayerView(game, topology, _nationId);
-        final snapshot = _nearQuotaSnapshotWithColonialTarget();
+    test('COLONIAL-lite emits the colonial naval move candidate under the '
+        'colonial pressure boost', () {
+      final game = _scenarioGame(turnNumber: kObserverColonialLiteMinTurn);
+      const topology = MapTopology(nodes: [], edges: []);
+      final view = buildPlayerView(game, topology, _nationId);
+      final snapshot = _nearQuotaSnapshotWithColonialTarget();
 
-        expect(
-          observerGoalPhaseFor(snapshot: snapshot, game: game),
-          ObserverGoalPhase.colonialLite,
-          reason:
-              'Fixture must place GP in COLONIAL-lite so the colonial naval '
-              'ALLOW contract is exercised, not EXPAND (which suppresses the '
-              'naval colonial boost) or COLONIAL (which does not require '
-              'the COLONIAL-lite safeguard).',
-        );
+      expect(
+        observerGoalPhaseFor(snapshot: snapshot, game: game),
+        ObserverGoalPhase.colonialLite,
+        reason:
+            'Fixture must place GP in COLONIAL-lite so the colonial naval '
+            'ALLOW contract is exercised, not EXPAND (which suppresses the '
+            'naval colonial boost) or COLONIAL (which does not require '
+            'the COLONIAL-lite safeguard).',
+      );
 
-        final orders = runDomainPlanners(
-          game: game,
-          topology: topology,
-          nationId: _nationId,
-          view: view,
-          snapshot: snapshot,
-          config: _aiConfig,
-          // `expand` (or `conquer`/`defend`) resolves the naval base
-          // weight to `domainWeights.military` for henry (20), so the
-          // colonial boost is the only path past the < 25 skip floor.
-          primaryGoal: StrategicGoal.expand,
-          seeds: AISeedBundle.fromTurnSeed(2509200),
-          suggestionAPI: _navalCandidateApi,
-          economyPlan: _economyPlan,
-        );
+      final orders = runDomainPlanners(
+        game: game,
+        topology: topology,
+        nationId: _nationId,
+        view: view,
+        snapshot: snapshot,
+        config: _aiConfig,
+        // `expand` (or `conquer`/`defend`) resolves the naval base
+        // weight to `domainWeights.military` for henry (20), so the
+        // colonial boost is the only path past the < 25 skip floor.
+        primaryGoal: StrategicGoal.expand,
+        seeds: AISeedBundle.fromTurnSeed(2509200),
+        suggestionAPI: _navalCandidateApi,
+        economyPlan: _economyPlan,
+      );
 
-        final navalMoves = _navalMoves(orders);
-        expect(
-          navalMoves,
-          isNotEmpty,
-          reason:
-              'COLONIAL-lite must allow colonial naval moves (SPEC § '
-              'Observer goal phases (Full AI), COLONIAL-lite allow list: '
-              '"colonial naval/cargo"). An empty list here means the '
-              'colonial naval boost has been stripped in COLONIAL-lite '
-              '(`hasColonialTargets` false) and `runNavalPlanner` skipped '
-              'at the < 25 weight floor.',
-        );
-        expect(
-          navalMoves.first.destinationSeaZoneId,
-          _nwSeaZoneId,
-          reason:
-              'The single candidate targets the visible NW sea zone — when '
-              'emitted, the colonial-pressure-ranked output must surface '
-              'that NW destination so the COLONIAL-lite safeguard actually '
-              'advances NW progress for the near-quota GP.',
-        );
-      },
-    );
+      final navalMoves = _navalMoves(orders);
+      expect(
+        navalMoves,
+        isNotEmpty,
+        reason:
+            'COLONIAL-lite must allow colonial naval moves (SPEC § '
+            'Observer goal phases (Full AI), COLONIAL-lite allow list: '
+            '"colonial naval/cargo"). An empty list here means the '
+            'colonial naval boost has been stripped in COLONIAL-lite '
+            '(`hasColonialTargets` false) and `runNavalPlanner` skipped '
+            'at the < 25 weight floor.',
+      );
+      expect(
+        navalMoves.first.destinationSeaZoneId,
+        _nwSeaZoneId,
+        reason:
+            'The single candidate targets the visible NW sea zone — when '
+            'emitted, the colonial-pressure-ranked output must surface '
+            'that NW destination so the COLONIAL-lite safeguard actually '
+            'advances NW progress for the near-quota GP.',
+      );
+    });
 
     test(
       'EXPAND control: turn 90 with the same fixture skips the naval planner '

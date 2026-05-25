@@ -1,4 +1,12 @@
 import 'package:colonizethis_ai/colonizethis_ai.dart';
+import 'package:colonizethis_ai/src/planning/expand_phase_planner.dart'
+    show
+        criticalWeakGpSurvivalPeaceTargets,
+        stalledExpansionDistractionPeaceTargets,
+        stalledFutileGpPeaceTargets,
+        stalledStrongerGpBlockerPeaceTarget;
+import 'package:colonizethis_ai/src/planning/observer_goal_phase.dart'
+    show collectStalledGreatPowerPeaceTargets;
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
@@ -278,140 +286,145 @@ void main() {
     },
   );
 
-  test('stalledFutileGpPeaceTargets includes non-invadable GP while at war', () {
-    final game = Game(
-      id: 'g-futile-gp',
-      worldState: WorldState(
-        turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 50),
-        oldWorld: RegionData(
-          provinces: [
-            for (var i = 1; i <= 7; i++)
-              Province(
-                id: 'oldWorld|gp4_$i',
+  test(
+    'stalledFutileGpPeaceTargets includes non-invadable GP while at war',
+    () {
+      final game = Game(
+        id: 'g-futile-gp',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 50),
+          oldWorld: RegionData(
+            provinces: [
+              for (var i = 1; i <= 7; i++)
+                Province(
+                  id: 'oldWorld|gp4_$i',
+                  regionId: 'oldWorld',
+                  ownerId: 'gp4',
+                ),
+              const Province(
+                id: 'oldWorld|inv1',
                 regionId: 'oldWorld',
-                ownerId: 'gp4',
+                ownerId: 'minor1',
               ),
-            const Province(
-              id: 'oldWorld|inv1',
-              regionId: 'oldWorld',
-              ownerId: 'minor1',
-            ),
-            for (var i = 1; i <= 7; i++)
-              Province(
-                id: 'oldWorld|gp2_$i',
-                regionId: 'oldWorld',
-                ownerId: 'gp2',
-              ),
-          ],
+              for (var i = 1; i <= 7; i++)
+                Province(
+                  id: 'oldWorld|gp2_$i',
+                  regionId: 'oldWorld',
+                  ownerId: 'gp2',
+                ),
+            ],
+          ),
+          newWorld: const RegionData(),
         ),
-        newWorld: const RegionData(),
-      ),
-      players: const [
-        Player(id: 'gp4', displayName: 'P4', isHuman: false),
-        Player(id: 'gp2', displayName: 'P2', isHuman: false),
-      ],
-      minorNations: const [MinorNation(id: 'minor1', displayName: 'M1')],
-      diplomacyRelations: [
-        const DiplomacyRelation(
-          factionId1: 'gp4',
-          factionId2: 'gp2',
-          state: RelationState.atWar,
-          score: 30,
+        players: const [
+          Player(id: 'gp4', displayName: 'P4', isHuman: false),
+          Player(id: 'gp2', displayName: 'P2', isHuman: false),
+        ],
+        minorNations: const [MinorNation(id: 'minor1', displayName: 'M1')],
+        diplomacyRelations: [
+          const DiplomacyRelation(
+            factionId1: 'gp4',
+            factionId2: 'gp2',
+            state: RelationState.atWar,
+            score: 30,
+          ),
+        ],
+      );
+      const snapshot = AIWorldSnapshot(
+        playerId: 'gp4',
+        threats: ThreatSummary(atWarWith: ['gp2']),
+        opportunities: OpportunitySummary(),
+        conquest: ConquestSummary(
+          oldWorldProvincesOwned: 7,
+          invadableProvinceIdsSorted: ['oldWorld|inv1'],
         ),
-      ],
-    );
-    const snapshot = AIWorldSnapshot(
-      playerId: 'gp4',
-      threats: ThreatSummary(atWarWith: ['gp2']),
-      opportunities: OpportunitySummary(),
-      conquest: ConquestSummary(
-        oldWorldProvincesOwned: 7,
-        invadableProvinceIdsSorted: ['oldWorld|inv1'],
-      ),
-      economy: EconomySummary(),
-      relations: {},
-    );
+        economy: EconomySummary(),
+        relations: {},
+      );
 
-    expect(
-      stalledFutileGpPeaceTargets(game: game, snapshot: snapshot),
-      ['gp2'],
-    );
-    expect(
-      collectStalledGreatPowerPeaceTargets(game: game, snapshot: snapshot),
-      contains('gp2'),
-    );
-  });
+      expect(stalledFutileGpPeaceTargets(game: game, snapshot: snapshot), [
+        'gp2',
+      ]);
+      expect(
+        collectStalledGreatPowerPeaceTargets(game: game, snapshot: snapshot),
+        contains('gp2'),
+      );
+    },
+  );
 
-  test('unwinnableSoleGpFrontierPeaceTarget returns stronger sole GP enemy', () {
-    final game = Game(
-      id: 'g-unwinnable',
-      worldState: WorldState(
-        turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 20),
-        oldWorld: RegionData(
-          provinces: [
-            for (var i = 1; i <= 5; i++)
-              Province(
-                id: 'oldWorld|gp6_$i',
+  test(
+    'unwinnableSoleGpFrontierPeaceTarget returns stronger sole GP enemy',
+    () {
+      final game = Game(
+        id: 'g-unwinnable',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 20),
+          oldWorld: RegionData(
+            provinces: [
+              for (var i = 1; i <= 5; i++)
+                Province(
+                  id: 'oldWorld|gp6_$i',
+                  regionId: 'oldWorld',
+                  ownerId: 'gp6',
+                ),
+              for (var i = 1; i <= 12; i++)
+                Province(
+                  id: 'oldWorld|gp5_$i',
+                  regionId: 'oldWorld',
+                  ownerId: 'gp5',
+                ),
+              const Province(
+                id: 'oldWorld|minor1',
                 regionId: 'oldWorld',
-                ownerId: 'gp6',
+                ownerId: 'minor1',
               ),
-            for (var i = 1; i <= 12; i++)
-              Province(
-                id: 'oldWorld|gp5_$i',
-                regionId: 'oldWorld',
-                ownerId: 'gp5',
-              ),
-            const Province(
-              id: 'oldWorld|minor1',
-              regionId: 'oldWorld',
-              ownerId: 'minor1',
-            ),
-          ],
-          units: [],
+            ],
+            units: [],
+          ),
+          newWorld: const RegionData(provinces: [], units: []),
         ),
-        newWorld: const RegionData(provinces: [], units: []),
-      ),
-      players: const [
-        Player(
-          id: 'gp6',
-          displayName: 'GP6',
-          isHuman: false,
-          leaderKey: 'victoria',
+        players: const [
+          Player(
+            id: 'gp6',
+            displayName: 'GP6',
+            isHuman: false,
+            leaderKey: 'victoria',
+          ),
+          Player(
+            id: 'gp5',
+            displayName: 'GP5',
+            isHuman: false,
+            leaderKey: 'napoleon',
+          ),
+        ],
+        minorNations: const [MinorNation(id: 'minor1', displayName: 'Minor')],
+        diplomacyRelations: [
+          const DiplomacyRelation(
+            factionId1: 'gp6',
+            factionId2: 'gp5',
+            state: RelationState.atWar,
+            score: 30,
+          ),
+        ],
+      );
+      const snapshot = AIWorldSnapshot(
+        playerId: 'gp6',
+        threats: ThreatSummary(atWarWith: ['gp5']),
+        opportunities: OpportunitySummary(),
+        conquest: ConquestSummary(
+          oldWorldProvincesOwned: 5,
+          invadableProvinceIdsSorted: ['oldWorld|minor1'],
         ),
-        Player(
-          id: 'gp5',
-          displayName: 'GP5',
-          isHuman: false,
-          leaderKey: 'napoleon',
-        ),
-      ],
-      minorNations: const [MinorNation(id: 'minor1', displayName: 'Minor')],
-      diplomacyRelations: [
-        const DiplomacyRelation(
-          factionId1: 'gp6',
-          factionId2: 'gp5',
-          state: RelationState.atWar,
-          score: 30,
-        ),
-      ],
-    );
-    const snapshot = AIWorldSnapshot(
-      playerId: 'gp6',
-      threats: ThreatSummary(atWarWith: ['gp5']),
-      opportunities: OpportunitySummary(),
-      conquest: ConquestSummary(
-        oldWorldProvincesOwned: 5,
-        invadableProvinceIdsSorted: ['oldWorld|minor1'],
-      ),
-      economy: EconomySummary(),
-      relations: {},
-    );
+        economy: EconomySummary(),
+        relations: {},
+      );
 
-    expect(
-      unwinnableSoleGpFrontierPeaceTarget(game: game, snapshot: snapshot),
-      'gp5',
-    );
-  });
+      expect(
+        unwinnableSoleGpFrontierPeaceTarget(game: game, snapshot: snapshot),
+        'gp5',
+      );
+    },
+  );
 
   test('consolidateGainsSoleGpPeaceTarget returns weaker sole GP enemy', () {
     final game = Game(
@@ -552,11 +565,9 @@ void main() {
       expect(
         supplemented.diplomaticOrdersByPlayerId['gp5'],
         contains(
-          isA<DiplomaticOrder>().having(
-            (o) => o.type,
-            'type',
-            DiplomaticOrderType.offerPeace,
-          ).having((o) => o.targetFactionId, 'target', 'gp6'),
+          isA<DiplomaticOrder>()
+              .having((o) => o.type, 'type', DiplomaticOrderType.offerPeace)
+              .having((o) => o.targetFactionId, 'target', 'gp6'),
         ),
       );
     },

@@ -148,9 +148,7 @@ Game _scenarioGame({required List<String> gp1OwProvinces}) {
       ),
     ],
     tribes: const [],
-    minorNations: const [
-      MinorNation(id: _minorId, displayName: 'Minor1'),
-    ],
+    minorNations: const [MinorNation(id: _minorId, displayName: 'Minor1')],
   );
 }
 
@@ -160,19 +158,19 @@ Game _scenarioGame({required List<String> gp1OwProvinces}) {
 // suppression, not candidate availability.
 const FakeOrderSuggestionAPIForDomainPlannerTests _minorDeclareWarApi =
     FakeOrderSuggestionAPIForDomainPlannerTests(
-  work: [],
-  build: [],
-  move: [],
-  research: [],
-  navalMove: [],
-  navalMission: [],
-  diplomatic: [
-    DiplomaticOrder(
-      type: DiplomaticOrderType.declareWar,
-      targetFactionId: _minorId,
-    ),
-  ],
-);
+      work: [],
+      build: [],
+      move: [],
+      research: [],
+      navalMove: [],
+      navalMission: [],
+      diplomatic: [
+        DiplomaticOrder(
+          type: DiplomaticOrderType.declareWar,
+          targetFactionId: _minorId,
+        ),
+      ],
+    );
 
 const EconomyPlan _economyPlan = EconomyPlan(
   productionAssignments: [],
@@ -240,8 +238,7 @@ AIWorldSnapshot _developSnapshot() {
 }
 
 List<String> _declareWarTargets(Orders orders) => <String>[
-  for (final order
-      in orders.diplomaticOrdersByPlayerId[_nationId] ?? const [])
+  for (final order in orders.diplomaticOrdersByPlayerId[_nationId] ?? const [])
     if (order.type == DiplomaticOrderType.declareWar) order.targetFactionId,
 ];
 

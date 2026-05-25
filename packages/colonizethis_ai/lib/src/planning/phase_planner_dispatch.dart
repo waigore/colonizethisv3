@@ -350,7 +350,10 @@ PhasePlanOutcome _colonialLiteOutcome({
       game: game,
       snapshot: snapshot,
     ),
-    colonialLiteNavalPlan: planColonialLiteNaval(game: game, snapshot: snapshot),
+    colonialLiteNavalPlan: planColonialLiteNaval(
+      game: game,
+      snapshot: snapshot,
+    ),
   );
 }
 
@@ -365,9 +368,10 @@ PhasePlanOutcome _colonialOutcome({
     personalityId: personalityId,
   );
   final declaredColonialTarget =
-      (acquisition != null && acquisition.method == AcquisitionMethod.declareWar)
-          ? acquisition.targetFactionId
-          : null;
+      (acquisition != null &&
+          acquisition.method == AcquisitionMethod.declareWar)
+      ? acquisition.targetFactionId
+      : null;
   return PhasePlanOutcome(
     phase: ObserverGoalPhase.colonial,
     colonialAcquisitionTarget: acquisition,
@@ -409,7 +413,10 @@ PhasePlanOutcome _developOutcome({
   );
 }
 
-({bool gpOnlyInvadableFrontierActive, String? primaryInvadableGpBlockerFactionId})
+({
+  bool gpOnlyInvadableFrontierActive,
+  String? primaryInvadableGpBlockerFactionId,
+})
 _expandFrontierContext({
   required Game game,
   required AIWorldSnapshot snapshot,

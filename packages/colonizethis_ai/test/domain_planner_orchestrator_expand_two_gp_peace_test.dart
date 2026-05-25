@@ -158,13 +158,13 @@ Game _expandTwoGpWarsScenarioGame() {
 
 const FakeOrderSuggestionAPIForDomainPlannerTests _emptyApi =
     FakeOrderSuggestionAPIForDomainPlannerTests(
-  work: [],
-  build: [],
-  move: [],
-  research: [],
-  navalMove: [],
-  navalMission: [],
-);
+      work: [],
+      build: [],
+      move: [],
+      research: [],
+      navalMove: [],
+      navalMission: [],
+    );
 
 const EconomyPlan _economyPlan = EconomyPlan(
   productionAssignments: [],

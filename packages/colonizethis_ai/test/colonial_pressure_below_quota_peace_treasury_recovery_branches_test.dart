@@ -79,22 +79,18 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 /// (`50 * 10 / 3 == 166`) is a non-divisor of typical regiment build costs,
 /// so the boundary tests below exercise the integer-truncation path through
 /// `pendingRichesTreasuryDelta`.
-Stockpile _goldStockpile(int qty) =>
-    qty <= 0 ? const Stockpile() : Stockpile().applyDelta(
-          CommodityCatalog.gold.id,
-          qty,
-        );
+Stockpile _goldStockpile(int qty) => qty <= 0
+    ? const Stockpile()
+    : Stockpile().applyDelta(CommodityCatalog.gold.id, qty);
 
 /// Stockpile holding [qty] **spices**, whose base price is exactly 50 (the
 /// spices spawn weight equals the spices base-price denominator in
 /// `richesBasePrice`). This makes effective-treasury composition arithmetic
 /// straightforward for boundary tests that need to land on
 /// `cheapest`/`cheapest - 1` exactly.
-Stockpile _spicesStockpile(int qty) =>
-    qty <= 0 ? const Stockpile() : Stockpile().applyDelta(
-          CommodityCatalog.spices.id,
-          qty,
-        );
+Stockpile _spicesStockpile(int qty) => qty <= 0
+    ? const Stockpile()
+    : Stockpile().applyDelta(CommodityCatalog.spices.id, qty);
 
 void main() {
   group('isBelowQuotaPeaceTreasuryRecovery — predicate fall-through', () {
@@ -173,25 +169,27 @@ void main() {
       );
     });
 
-    test('false at the at-peace declare-war regiment floor (upper band exit)',
-        () {
-      expect(
-        isBelowQuotaPeaceTreasuryRecovery(
-          oldWorldProvincesOwned: 8,
-          regimentCount: kBelowQuotaPeaceMinRegimentsBeforeDeclareWar,
-          atWarWithAnyGreatPower: false,
-          hasInvadableProvinces: true,
-          treasury: 0,
-          stockpile: const Stockpile(),
-        ),
-        isFalse,
-        reason:
-            'At or above the at-peace declare-war regiment floor the GP is no '
-            'longer in the "too few to declare war" band; treasury-recovery '
-            'must not keep diverting cargo to a GP that should be opening a '
-            'minor frontier this turn.',
-      );
-    });
+    test(
+      'false at the at-peace declare-war regiment floor (upper band exit)',
+      () {
+        expect(
+          isBelowQuotaPeaceTreasuryRecovery(
+            oldWorldProvincesOwned: 8,
+            regimentCount: kBelowQuotaPeaceMinRegimentsBeforeDeclareWar,
+            atWarWithAnyGreatPower: false,
+            hasInvadableProvinces: true,
+            treasury: 0,
+            stockpile: const Stockpile(),
+          ),
+          isFalse,
+          reason:
+              'At or above the at-peace declare-war regiment floor the GP is no '
+              'longer in the "too few to declare war" band; treasury-recovery '
+              'must not keep diverting cargo to a GP that should be opening a '
+              'minor frontier this turn.',
+        );
+      },
+    );
   });
 
   group('isBelowQuotaPeaceTreasuryRecovery — effective-treasury boundary', () {
@@ -240,55 +238,49 @@ void main() {
       );
     });
 
-    test(
-      'false when cash + 1 spice (=50) just clears cheapest cost',
-      () {
-        final cheapest = cheapestRegimentBuildTreasuryCost();
-        // spices basePrice is exactly 50, so one spice contributes 50 to
-        // effective treasury (verified at the constant).
-        expect(richesBasePrice(CommodityCatalog.spices.id), 50);
-        expect(
-          isBelowQuotaPeaceTreasuryRecovery(
-            oldWorldProvincesOwned: 8,
-            regimentCount: 3,
-            atWarWithAnyGreatPower: false,
-            hasInvadableProvinces: true,
-            treasury: cheapest - 50,
-            stockpile: _spicesStockpile(1),
-          ),
-          isFalse,
-          reason:
-              'Mixed cash + riches must compose into `effectiveTreasury` via '
-              '`pendingRichesTreasuryDelta`. (treasury=cheapest-50) + (1 '
-              'spice × 50) == cheapest, so recovery exits at the boundary '
-              'just like cash-only.',
-        );
-      },
-    );
+    test('false when cash + 1 spice (=50) just clears cheapest cost', () {
+      final cheapest = cheapestRegimentBuildTreasuryCost();
+      // spices basePrice is exactly 50, so one spice contributes 50 to
+      // effective treasury (verified at the constant).
+      expect(richesBasePrice(CommodityCatalog.spices.id), 50);
+      expect(
+        isBelowQuotaPeaceTreasuryRecovery(
+          oldWorldProvincesOwned: 8,
+          regimentCount: 3,
+          atWarWithAnyGreatPower: false,
+          hasInvadableProvinces: true,
+          treasury: cheapest - 50,
+          stockpile: _spicesStockpile(1),
+        ),
+        isFalse,
+        reason:
+            'Mixed cash + riches must compose into `effectiveTreasury` via '
+            '`pendingRichesTreasuryDelta`. (treasury=cheapest-50) + (1 '
+            'spice × 50) == cheapest, so recovery exits at the boundary '
+            'just like cash-only.',
+      );
+    });
 
-    test(
-      'true when cash + 1 spice is still one short of cheapest cost',
-      () {
-        final cheapest = cheapestRegimentBuildTreasuryCost();
-        expect(richesBasePrice(CommodityCatalog.spices.id), 50);
-        expect(
-          isBelowQuotaPeaceTreasuryRecovery(
-            oldWorldProvincesOwned: 8,
-            regimentCount: 3,
-            atWarWithAnyGreatPower: false,
-            hasInvadableProvinces: true,
-            treasury: cheapest - 50 - 1,
-            stockpile: _spicesStockpile(1),
-          ),
-          isTrue,
-          reason:
-              'Mixed cash + riches composition: (treasury=cheapest-51) + (1 '
-              'spice × 50) == cheapest - 1, still strictly below the build '
-              'cost so recovery stays active. Guards against a regression '
-              'that drops either the cash or the riches addend.',
-        );
-      },
-    );
+    test('true when cash + 1 spice is still one short of cheapest cost', () {
+      final cheapest = cheapestRegimentBuildTreasuryCost();
+      expect(richesBasePrice(CommodityCatalog.spices.id), 50);
+      expect(
+        isBelowQuotaPeaceTreasuryRecovery(
+          oldWorldProvincesOwned: 8,
+          regimentCount: 3,
+          atWarWithAnyGreatPower: false,
+          hasInvadableProvinces: true,
+          treasury: cheapest - 50 - 1,
+          stockpile: _spicesStockpile(1),
+        ),
+        isTrue,
+        reason:
+            'Mixed cash + riches composition: (treasury=cheapest-51) + (1 '
+            'spice × 50) == cheapest - 1, still strictly below the build '
+            'cost so recovery stays active. Guards against a regression '
+            'that drops either the cash or the riches addend.',
+      );
+    });
 
     test('true when gold-only stockpile is one full gold unit short', () {
       final goldPrice = richesBasePrice(CommodityCatalog.gold.id);

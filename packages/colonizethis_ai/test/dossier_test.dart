@@ -127,8 +127,20 @@ void main() {
           newWorld: const RegionData(),
         ),
         players: const [
-          Player(id: 'obs', displayName: 'Observer', isHuman: true, militaryLevel: 2, treasury: 100),
-          Player(id: 'napoleon', displayName: 'France', isHuman: false, militaryLevel: 3, treasury: 50),
+          Player(
+            id: 'obs',
+            displayName: 'Observer',
+            isHuman: true,
+            militaryLevel: 2,
+            treasury: 100,
+          ),
+          Player(
+            id: 'napoleon',
+            displayName: 'France',
+            isHuman: false,
+            militaryLevel: 3,
+            treasury: 50,
+          ),
         ],
         diplomacyRelations: [
           DiplomacyRelation(
@@ -150,34 +162,40 @@ void main() {
       expect(d.basicIntel!.personalityArchetype, 'Fortifier');
     });
 
-    test('includes best-guess agenda and confidence from highest suspicion', () {
-      final game = _gameWithEvidence([
-        const DossierEvidenceEntry(
-          observerId: 'obs',
-          subjectId: 'subj',
-          agendaType: 'warmonger',
-          turnNumber: 1,
-          description: 'declared war on weaker neighbor',
-          scoreDelta: 6,
-        ),
-      ]);
-      final d = getDossierForSubject(game, 'obs', 'subj');
-      expect(d.bestGuessAgenda, isNotNull);
-      expect(d.bestGuessAgenda!.agendaType, 'warmonger');
-      expect(d.bestGuessAgenda!.confidencePercent, 60);
-    });
+    test(
+      'includes best-guess agenda and confidence from highest suspicion',
+      () {
+        final game = _gameWithEvidence([
+          const DossierEvidenceEntry(
+            observerId: 'obs',
+            subjectId: 'subj',
+            agendaType: 'warmonger',
+            turnNumber: 1,
+            description: 'declared war on weaker neighbor',
+            scoreDelta: 6,
+          ),
+        ]);
+        final d = getDossierForSubject(game, 'obs', 'subj');
+        expect(d.bestGuessAgenda, isNotNull);
+        expect(d.bestGuessAgenda!.agendaType, 'warmonger');
+        expect(d.bestGuessAgenda!.confidencePercent, 60);
+      },
+    );
 
-    test('confidencePercentFromScore returns 0 for 0-2, 25 for 3-5, 60 for 6-8, 85 for 9-10, 100 for 11+', () {
-      expect(confidencePercentFromScore(0), 0);
-      expect(confidencePercentFromScore(2), 0);
-      expect(confidencePercentFromScore(3), 25);
-      expect(confidencePercentFromScore(5), 25);
-      expect(confidencePercentFromScore(6), 60);
-      expect(confidencePercentFromScore(8), 60);
-      expect(confidencePercentFromScore(9), 85);
-      expect(confidencePercentFromScore(10), 85);
-      expect(confidencePercentFromScore(11), 100);
-    });
+    test(
+      'confidencePercentFromScore returns 0 for 0-2, 25 for 3-5, 60 for 6-8, 85 for 9-10, 100 for 11+',
+      () {
+        expect(confidencePercentFromScore(0), 0);
+        expect(confidencePercentFromScore(2), 0);
+        expect(confidencePercentFromScore(3), 25);
+        expect(confidencePercentFromScore(5), 25);
+        expect(confidencePercentFromScore(6), 60);
+        expect(confidencePercentFromScore(8), 60);
+        expect(confidencePercentFromScore(9), 85);
+        expect(confidencePercentFromScore(10), 85);
+        expect(confidencePercentFromScore(11), 100);
+      },
+    );
 
     test('behavioral notes summarize evidence', () {
       final game = _gameWithEvidence([
@@ -232,24 +250,29 @@ void main() {
       expect(d.timeline, ['Turn 2: A', 'Turn 5: B']);
     });
 
-    test('evidence list is chronological and capped to most recent entries', () {
-      const cap = 50; // kMaxDossierEvidenceEntries in colonizethis_data.
-      final entries = <DossierEvidenceEntry>[];
-      for (var turn = 1; turn <= cap + 10; turn++) {
-        entries.add(DossierEvidenceEntry(
-          observerId: 'obs',
-          subjectId: 'subj',
-          agendaType: 'warmonger',
-          turnNumber: turn,
-          description: 'E$turn',
-          scoreDelta: 1,
-        ));
-      }
-      final game = _gameWithEvidence(entries);
-      final d = getDossierForSubject(game, 'obs', 'subj');
-      expect(d.evidenceList.length, cap);
-      expect(d.evidenceList.first, 'Turn 11: E11');
-      expect(d.evidenceList.last, 'Turn 60: E60');
-    });
+    test(
+      'evidence list is chronological and capped to most recent entries',
+      () {
+        const cap = 50; // kMaxDossierEvidenceEntries in colonizethis_data.
+        final entries = <DossierEvidenceEntry>[];
+        for (var turn = 1; turn <= cap + 10; turn++) {
+          entries.add(
+            DossierEvidenceEntry(
+              observerId: 'obs',
+              subjectId: 'subj',
+              agendaType: 'warmonger',
+              turnNumber: turn,
+              description: 'E$turn',
+              scoreDelta: 1,
+            ),
+          );
+        }
+        final game = _gameWithEvidence(entries);
+        final d = getDossierForSubject(game, 'obs', 'subj');
+        expect(d.evidenceList.length, cap);
+        expect(d.evidenceList.first, 'Turn 11: E11');
+        expect(d.evidenceList.last, 'Turn 60: E60');
+      },
+    );
   });
 }

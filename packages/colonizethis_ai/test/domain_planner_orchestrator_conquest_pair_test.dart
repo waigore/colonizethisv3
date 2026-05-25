@@ -57,9 +57,7 @@ void main() {
             leaderKey: 'napoleon',
           ),
         ],
-        minorNations: const [
-          MinorNation(id: 'minor1', displayName: 'Minor 1'),
-        ],
+        minorNations: const [MinorNation(id: 'minor1', displayName: 'Minor 1')],
       );
       const topology = MapTopology(
         nodes: [
@@ -84,10 +82,10 @@ void main() {
         turnSeed: 99,
         primaryGoal: StrategicGoal.conquer,
         config: AIConfig(
-        leaderId: 'napoleon',
-        personalityId: 'napoleon',
-        hiddenAgendaId: 'warmonger',
-      ),
+          leaderId: 'napoleon',
+          personalityId: 'napoleon',
+          hiddenAgendaId: 'warmonger',
+        ),
         suggestionAPI: fakeApi,
       );
 

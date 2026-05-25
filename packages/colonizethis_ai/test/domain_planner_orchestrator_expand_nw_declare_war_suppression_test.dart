@@ -159,19 +159,19 @@ Game _scenarioGame({required List<String> gp1OwProvinces}) {
 // under test for the SPEC EXPAND `declareWar` suppression rule.
 const FakeOrderSuggestionAPIForDomainPlannerTests _nwTribeDeclareWarApi =
     FakeOrderSuggestionAPIForDomainPlannerTests(
-  work: [],
-  build: [],
-  move: [],
-  research: [],
-  navalMove: [],
-  navalMission: [],
-  diplomatic: [
-    DiplomaticOrder(
-      type: DiplomaticOrderType.declareWar,
-      targetFactionId: _tribeId,
-    ),
-  ],
-);
+      work: [],
+      build: [],
+      move: [],
+      research: [],
+      navalMove: [],
+      navalMission: [],
+      diplomatic: [
+        DiplomaticOrder(
+          type: DiplomaticOrderType.declareWar,
+          targetFactionId: _tribeId,
+        ),
+      ],
+    );
 
 const EconomyPlan _economyPlan = EconomyPlan(
   productionAssignments: [],
@@ -256,8 +256,7 @@ AIWorldSnapshot _colonialSnapshot() {
 }
 
 List<String> _declareWarTargets(Orders orders) => <String>[
-  for (final order
-      in orders.diplomaticOrdersByPlayerId[_nationId] ?? const [])
+  for (final order in orders.diplomaticOrdersByPlayerId[_nationId] ?? const [])
     if (order.type == DiplomaticOrderType.declareWar) order.targetFactionId,
 ];
 
@@ -306,52 +305,49 @@ void main() {
       );
     });
 
-    test(
-      'COLONIAL allows declareWar toward the same NW tribe candidate',
-      () {
-        final game = _scenarioGame(gp1OwProvinces: _gp1OwProvincesAtQuota);
-        const topology = MapTopology(nodes: [], edges: []);
-        final view = buildPlayerView(game, topology, _nationId);
-        final snapshot = _colonialSnapshot();
+    test('COLONIAL allows declareWar toward the same NW tribe candidate', () {
+      final game = _scenarioGame(gp1OwProvinces: _gp1OwProvincesAtQuota);
+      const topology = MapTopology(nodes: [], edges: []);
+      final view = buildPlayerView(game, topology, _nationId);
+      final snapshot = _colonialSnapshot();
 
-        expect(
-          observerGoalPhaseFor(snapshot: snapshot, game: game),
-          ObserverGoalPhase.colonial,
-          reason:
-              'Negative-control fixture must place GP in COLONIAL so the '
-              'EXPAND NW declareWar filter is verified to **not** fire '
-              'here. Otherwise a regression that over-suppresses NW '
-              'declareWar in COLONIAL (stripping the war + invasion '
-              'acquisition route from SPEC § COLONIAL phase minimum '
-              'rule 1) would also pass the positive case.',
-        );
+      expect(
+        observerGoalPhaseFor(snapshot: snapshot, game: game),
+        ObserverGoalPhase.colonial,
+        reason:
+            'Negative-control fixture must place GP in COLONIAL so the '
+            'EXPAND NW declareWar filter is verified to **not** fire '
+            'here. Otherwise a regression that over-suppresses NW '
+            'declareWar in COLONIAL (stripping the war + invasion '
+            'acquisition route from SPEC § COLONIAL phase minimum '
+            'rule 1) would also pass the positive case.',
+      );
 
-        final orders = runDomainPlanners(
-          game: game,
-          topology: topology,
-          nationId: _nationId,
-          view: view,
-          snapshot: snapshot,
-          config: _aiConfig,
-          primaryGoal: StrategicGoal.conquer,
-          seeds: AISeedBundle.fromTurnSeed(2509241),
-          suggestionAPI: _nwTribeDeclareWarApi,
-          economyPlan: _economyPlan,
-        );
+      final orders = runDomainPlanners(
+        game: game,
+        topology: topology,
+        nationId: _nationId,
+        view: view,
+        snapshot: snapshot,
+        config: _aiConfig,
+        primaryGoal: StrategicGoal.conquer,
+        seeds: AISeedBundle.fromTurnSeed(2509241),
+        suggestionAPI: _nwTribeDeclareWarApi,
+        economyPlan: _economyPlan,
+      );
 
-        expect(
-          _declareWarTargets(orders),
-          contains(_tribeId),
-          reason:
-              'COLONIAL must allow declareWar toward visible tribe '
-              'colonial targets so the SPEC COLONIAL acquisition '
-              'priority "Join Empire -> purchase_land -> declare-war + '
-              'NW invasion" remains reachable. Over-suppression here '
-              'would stall NW acquisition toward the turn-150 NW '
-              'ownership gate.',
-        );
-      },
-    );
+      expect(
+        _declareWarTargets(orders),
+        contains(_tribeId),
+        reason:
+            'COLONIAL must allow declareWar toward visible tribe '
+            'colonial targets so the SPEC COLONIAL acquisition '
+            'priority "Join Empire -> purchase_land -> declare-war + '
+            'NW invasion" remains reachable. Over-suppression here '
+            'would stall NW acquisition toward the turn-150 NW '
+            'ownership gate.',
+      );
+    });
 
     test('emits identical diplomatic orders for identical EXPAND inputs', () {
       final game = _scenarioGame(gp1OwProvinces: _gp1OwProvincesBelowQuota);

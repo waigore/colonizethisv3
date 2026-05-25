@@ -60,8 +60,10 @@ void main() {
         suggestionAPI: fakeApi,
       );
 
-      expect(orders.armyMoveOrdersByPlayerId['gp1']?.single.destinationProvinceId,
-          'oldWorld|p2');
+      expect(
+        orders.armyMoveOrdersByPlayerId['gp1']?.single.destinationProvinceId,
+        'oldWorld|p2',
+      );
     });
   });
 }

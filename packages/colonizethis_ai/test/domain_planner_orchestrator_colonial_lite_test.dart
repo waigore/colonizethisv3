@@ -94,10 +94,7 @@ Game _scenarioGame({required int turnNumber}) {
   return Game(
     id: 'g-2509-colonial-lite-orchestrator',
     worldState: WorldState(
-      turnState: TurnState(
-        phase: TurnPhase.orders,
-        turnNumber: turnNumber,
-      ),
+      turnState: TurnState(phase: TurnPhase.orders, turnNumber: turnNumber),
       oldWorld: RegionData(
         provinces: [
           for (final id in _gp1OwProvincesNearQuota)
@@ -106,11 +103,7 @@ Game _scenarioGame({required int turnNumber}) {
       ),
       newWorld: RegionData(
         provinces: const [
-          Province(
-            id: _nwGpProvince,
-            regionId: 'newWorld',
-            ownerId: _nationId,
-          ),
+          Province(id: _nwGpProvince, regionId: 'newWorld', ownerId: _nationId),
           Province(
             id: _nwTribeProvince,
             regionId: 'newWorld',
@@ -145,10 +138,7 @@ Game _scenarioGame({required int turnNumber}) {
         ),
       ],
       playerVisibilityByTile: const {
-        _nationId: {
-          _nwGpTile: 'fullyVisible',
-          _nwTribeTile: 'fullyVisible',
-        },
+        _nationId: {_nwGpTile: 'fullyVisible', _nwTribeTile: 'fullyVisible'},
       },
       tileKeysByRegionAndProvince: const {
         'newWorld': {
@@ -156,10 +146,7 @@ Game _scenarioGame({required int turnNumber}) {
           _nwTribeProvince: [_nwTribeTile],
         },
       },
-      resourceByTileKey: const {
-        _nwGpTile: 'grain',
-        _nwTribeTile: 'grain',
-      },
+      resourceByTileKey: const {_nwGpTile: 'grain', _nwTribeTile: 'grain'},
     ),
     players: const [
       Player(
@@ -199,31 +186,31 @@ Game _scenarioGame({required int turnNumber}) {
 /// COLONIAL-lite vs EXPAND overture contract gates.
 const FakeOrderSuggestionAPIForDomainPlannerTests _phasePhasingApi =
     FakeOrderSuggestionAPIForDomainPlannerTests(
-  work: [
-    WorkOrder(
-      unitId: 'b_nw',
-      target: kWorkTargetBuildImprovement,
-      targetTileKey: _nwGpTile,
-    ),
-    WorkOrder(
-      unitId: 'm_nw',
-      target: kWorkTargetPurchaseLand,
-      targetTileKey: _nwTribeTile,
-    ),
-  ],
-  build: [],
-  move: [],
-  research: [],
-  navalMove: [],
-  navalMission: [],
-  diplomatic: [
-    DiplomaticOrder(
-      type: DiplomaticOrderType.establishOverture,
-      targetFactionId: _tribeId,
-      overtureStage: OvertureStage.joinEmpire,
-    ),
-  ],
-);
+      work: [
+        WorkOrder(
+          unitId: 'b_nw',
+          target: kWorkTargetBuildImprovement,
+          targetTileKey: _nwGpTile,
+        ),
+        WorkOrder(
+          unitId: 'm_nw',
+          target: kWorkTargetPurchaseLand,
+          targetTileKey: _nwTribeTile,
+        ),
+      ],
+      build: [],
+      move: [],
+      research: [],
+      navalMove: [],
+      navalMission: [],
+      diplomatic: [
+        DiplomaticOrder(
+          type: DiplomaticOrderType.establishOverture,
+          targetFactionId: _tribeId,
+          overtureStage: OvertureStage.joinEmpire,
+        ),
+      ],
+    );
 
 const EconomyPlan _economyPlan = EconomyPlan(
   productionAssignments: [],
@@ -277,8 +264,7 @@ AIWorldSnapshot _nearQuotaSnapshot() {
 }
 
 List<String> _overtureTargets(Orders orders) => <String>[
-  for (final order
-      in orders.diplomaticOrdersByPlayerId[_nationId] ?? const [])
+  for (final order in orders.diplomaticOrdersByPlayerId[_nationId] ?? const [])
     if (order.type == DiplomaticOrderType.establishOverture)
       order.targetFactionId,
 ];
@@ -288,158 +274,152 @@ List<WorkOrder> _workOrders(Orders orders) =>
 
 void main() {
   group('runDomainPlanners COLONIAL-lite phase orchestrator contract', () {
-    test(
-      'COLONIAL-lite drops NW purchase_land, keeps NW build_improvement and '
-      'NW-tribe establishOverture',
-      () {
-        // Turn 120 + OW 9 + tribe-owned NW = COLONIAL-lite per
-        // `isObserverColonialLitePhase`.
-        final game = _scenarioGame(turnNumber: kObserverColonialLiteMinTurn);
-        const topology = MapTopology(nodes: [], edges: []);
-        final view = buildPlayerView(game, topology, _nationId);
-        final snapshot = _nearQuotaSnapshot();
+    test('COLONIAL-lite drops NW purchase_land, keeps NW build_improvement and '
+        'NW-tribe establishOverture', () {
+      // Turn 120 + OW 9 + tribe-owned NW = COLONIAL-lite per
+      // `isObserverColonialLitePhase`.
+      final game = _scenarioGame(turnNumber: kObserverColonialLiteMinTurn);
+      const topology = MapTopology(nodes: [], edges: []);
+      final view = buildPlayerView(game, topology, _nationId);
+      final snapshot = _nearQuotaSnapshot();
 
-        expect(
-          observerGoalPhaseFor(snapshot: snapshot, game: game),
-          ObserverGoalPhase.colonialLite,
-          reason:
-              'Fixture must place GP in COLONIAL-lite so the COLONIAL-lite '
-              'contract is exercised by the orchestrator, not EXPAND '
-              '(which over-suppresses NW build_improvement / overture) or '
-              'COLONIAL (which does not suppress NW purchase_land).',
-        );
+      expect(
+        observerGoalPhaseFor(snapshot: snapshot, game: game),
+        ObserverGoalPhase.colonialLite,
+        reason:
+            'Fixture must place GP in COLONIAL-lite so the COLONIAL-lite '
+            'contract is exercised by the orchestrator, not EXPAND '
+            '(which over-suppresses NW build_improvement / overture) or '
+            'COLONIAL (which does not suppress NW purchase_land).',
+      );
 
-        final orders = runDomainPlanners(
-          game: game,
-          topology: topology,
-          nationId: _nationId,
-          view: view,
-          snapshot: snapshot,
-          config: _aiConfig,
-          primaryGoal: StrategicGoal.expand,
-          seeds: AISeedBundle.fromTurnSeed(2509120),
-          suggestionAPI: _phasePhasingApi,
-          economyPlan: _economyPlan,
-        );
+      final orders = runDomainPlanners(
+        game: game,
+        topology: topology,
+        nationId: _nationId,
+        view: view,
+        snapshot: snapshot,
+        config: _aiConfig,
+        primaryGoal: StrategicGoal.expand,
+        seeds: AISeedBundle.fromTurnSeed(2509120),
+        suggestionAPI: _phasePhasingApi,
+        economyPlan: _economyPlan,
+      );
 
-        final work = _workOrders(orders);
-        expect(
-          work.any(
-            (w) =>
-                w.target == kWorkTargetPurchaseLand &&
-                w.targetTileKey == _nwTribeTile,
-          ),
-          isFalse,
-          reason:
-              'COLONIAL-lite must drop NW purchase_land candidates (SPEC § '
-              'COLONIAL-lite suppression list). A surviving purchase_land '
-              'here indicates the orchestrator stopped applying '
-              'shouldFilterObserverPhaseWorkOrder to merchant candidates.',
-        );
-        expect(
-          work.any(
-            (w) =>
-                w.target == kWorkTargetBuildImprovement &&
-                w.targetTileKey == _nwGpTile,
-          ),
-          isTrue,
-          reason:
-              'COLONIAL-lite must keep NW build_improvement candidates so '
-              'GPs near the OW quota continue accruing improvement coverage '
-              'toward the turn-150 70% gate (SPEC § COLONIAL-lite: suppress '
-              'list is "NW declareWar, invasion army moves, purchase_land '
-              'only"). An empty list here means an EXPAND-style over-filter '
-              'leaked into COLONIAL-lite.',
-        );
-        expect(
-          _overtureTargets(orders),
-          contains(_tribeId),
-          reason:
-              'COLONIAL-lite must allow establishOverture toward visible '
-              'tribes/minors so Join Empire stays reachable as an NW '
-              'acquisition route (SPEC § COLONIAL-lite: "allows '
-              'establishOverture"). A missing tribe id here indicates the '
-              'EXPAND overture suppression (shouldSuppressNewWorldColonial'
-              'Orders) leaked into COLONIAL-lite.',
-        );
-      },
-    );
+      final work = _workOrders(orders);
+      expect(
+        work.any(
+          (w) =>
+              w.target == kWorkTargetPurchaseLand &&
+              w.targetTileKey == _nwTribeTile,
+        ),
+        isFalse,
+        reason:
+            'COLONIAL-lite must drop NW purchase_land candidates (SPEC § '
+            'COLONIAL-lite suppression list). A surviving purchase_land '
+            'here indicates the orchestrator stopped applying '
+            'shouldFilterObserverPhaseWorkOrder to merchant candidates.',
+      );
+      expect(
+        work.any(
+          (w) =>
+              w.target == kWorkTargetBuildImprovement &&
+              w.targetTileKey == _nwGpTile,
+        ),
+        isTrue,
+        reason:
+            'COLONIAL-lite must keep NW build_improvement candidates so '
+            'GPs near the OW quota continue accruing improvement coverage '
+            'toward the turn-150 70% gate (SPEC § COLONIAL-lite: suppress '
+            'list is "NW declareWar, invasion army moves, purchase_land '
+            'only"). An empty list here means an EXPAND-style over-filter '
+            'leaked into COLONIAL-lite.',
+      );
+      expect(
+        _overtureTargets(orders),
+        contains(_tribeId),
+        reason:
+            'COLONIAL-lite must allow establishOverture toward visible '
+            'tribes/minors so Join Empire stays reachable as an NW '
+            'acquisition route (SPEC § COLONIAL-lite: "allows '
+            'establishOverture"). A missing tribe id here indicates the '
+            'EXPAND overture suppression (shouldSuppressNewWorldColonial'
+            'Orders) leaked into COLONIAL-lite.',
+      );
+    });
 
-    test(
-      'EXPAND control: turn 90 with otherwise identical fixture drops both '
-      'NW work candidates and the NW-tribe establishOverture',
-      () {
-        // Same OW=9 + tribe-owned NW fixture, but turn 90 is below
-        // `kObserverColonialLiteMinTurn` (120) so the GP stays in EXPAND and
-        // the EXPAND-only suppressions must fire.
-        final game = _scenarioGame(turnNumber: 90);
-        const topology = MapTopology(nodes: [], edges: []);
-        final view = buildPlayerView(game, topology, _nationId);
-        final snapshot = _nearQuotaSnapshot();
+    test('EXPAND control: turn 90 with otherwise identical fixture drops both '
+        'NW work candidates and the NW-tribe establishOverture', () {
+      // Same OW=9 + tribe-owned NW fixture, but turn 90 is below
+      // `kObserverColonialLiteMinTurn` (120) so the GP stays in EXPAND and
+      // the EXPAND-only suppressions must fire.
+      final game = _scenarioGame(turnNumber: 90);
+      const topology = MapTopology(nodes: [], edges: []);
+      final view = buildPlayerView(game, topology, _nationId);
+      final snapshot = _nearQuotaSnapshot();
 
-        expect(
-          observerGoalPhaseFor(snapshot: snapshot, game: game),
-          ObserverGoalPhase.expand,
-          reason:
-              'Negative-control fixture must place GP in EXPAND so the '
-              'COLONIAL-lite contract is verified to **not** fire here. '
-              'Otherwise a regression that mis-tags EXPAND as COLONIAL-lite '
-              '(loosening the EXPAND NW suppressions before turn 100) would '
-              'also pass the positive case.',
-        );
+      expect(
+        observerGoalPhaseFor(snapshot: snapshot, game: game),
+        ObserverGoalPhase.expand,
+        reason:
+            'Negative-control fixture must place GP in EXPAND so the '
+            'COLONIAL-lite contract is verified to **not** fire here. '
+            'Otherwise a regression that mis-tags EXPAND as COLONIAL-lite '
+            '(loosening the EXPAND NW suppressions before turn 100) would '
+            'also pass the positive case.',
+      );
 
-        final orders = runDomainPlanners(
-          game: game,
-          topology: topology,
-          nationId: _nationId,
-          view: view,
-          snapshot: snapshot,
-          config: _aiConfig,
-          primaryGoal: StrategicGoal.expand,
-          seeds: AISeedBundle.fromTurnSeed(2509121),
-          suggestionAPI: _phasePhasingApi,
-          economyPlan: _economyPlan,
-        );
+      final orders = runDomainPlanners(
+        game: game,
+        topology: topology,
+        nationId: _nationId,
+        view: view,
+        snapshot: snapshot,
+        config: _aiConfig,
+        primaryGoal: StrategicGoal.expand,
+        seeds: AISeedBundle.fromTurnSeed(2509121),
+        suggestionAPI: _phasePhasingApi,
+        economyPlan: _economyPlan,
+      );
 
-        final work = _workOrders(orders);
-        expect(
-          work.any(
-            (w) =>
-                w.target == kWorkTargetBuildImprovement &&
-                w.targetTileKey == _nwGpTile,
-          ),
-          isFalse,
-          reason:
-              'EXPAND must drop NW build_improvement candidates — this is '
-              'the key contract differentiating EXPAND from COLONIAL-lite. '
-              'A surviving order here means the EXPAND NW work filter is '
-              'mis-gated and OW conquest pressure is being traded for NW '
-              'improvement work below the turn-120 gate.',
-        );
-        expect(
-          work.any(
-            (w) =>
-                w.target == kWorkTargetPurchaseLand &&
-                w.targetTileKey == _nwTribeTile,
-          ),
-          isFalse,
-          reason:
-              'EXPAND must drop NW purchase_land candidates (same SPEC '
-              'EXPAND suppress list — coincides with the COLONIAL-lite '
-              'positive case to keep the two contracts symmetric).',
-        );
-        expect(
-          _overtureTargets(orders),
-          isNot(contains(_tribeId)),
-          reason:
-              'EXPAND must drop NW-tribe establishOverture candidates — '
-              'this is the second contract differentiating EXPAND from '
-              'COLONIAL-lite. A surviving overture target here means the '
-              'EXPAND NW colonial diplomacy suppression '
-              '(shouldSuppressNewWorldColonialOrders) is bypassed.',
-        );
-      },
-    );
+      final work = _workOrders(orders);
+      expect(
+        work.any(
+          (w) =>
+              w.target == kWorkTargetBuildImprovement &&
+              w.targetTileKey == _nwGpTile,
+        ),
+        isFalse,
+        reason:
+            'EXPAND must drop NW build_improvement candidates — this is '
+            'the key contract differentiating EXPAND from COLONIAL-lite. '
+            'A surviving order here means the EXPAND NW work filter is '
+            'mis-gated and OW conquest pressure is being traded for NW '
+            'improvement work below the turn-120 gate.',
+      );
+      expect(
+        work.any(
+          (w) =>
+              w.target == kWorkTargetPurchaseLand &&
+              w.targetTileKey == _nwTribeTile,
+        ),
+        isFalse,
+        reason:
+            'EXPAND must drop NW purchase_land candidates (same SPEC '
+            'EXPAND suppress list — coincides with the COLONIAL-lite '
+            'positive case to keep the two contracts symmetric).',
+      );
+      expect(
+        _overtureTargets(orders),
+        isNot(contains(_tribeId)),
+        reason:
+            'EXPAND must drop NW-tribe establishOverture candidates — '
+            'this is the second contract differentiating EXPAND from '
+            'COLONIAL-lite. A surviving overture target here means the '
+            'EXPAND NW colonial diplomacy suppression '
+            '(shouldSuppressNewWorldColonialOrders) is bypassed.',
+      );
+    });
 
     test(
       'emits identical work and diplomatic orders for identical COLONIAL-lite '

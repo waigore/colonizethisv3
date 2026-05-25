@@ -1,4 +1,6 @@
 import 'package:colonizethis_ai/colonizethis_ai.dart';
+import 'package:colonizethis_ai/src/planning/expand_phase_planner.dart';
+import 'package:colonizethis_ai/src/planning/observer_goal_phase.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/ai_api.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
@@ -32,12 +34,8 @@ void main() {
           ),
           newWorld: const RegionData(),
         ),
-        players: const [
-          Player(id: 'gp5', displayName: 'P5', isHuman: false),
-        ],
-        minorNations: const [
-          MinorNation(id: 'minor1', displayName: 'M1'),
-        ],
+        players: const [Player(id: 'gp5', displayName: 'P5', isHuman: false)],
+        minorNations: const [MinorNation(id: 'minor1', displayName: 'M1')],
         diplomacyRelations: [
           const DiplomacyRelation(
             factionId1: 'gp5',
@@ -59,9 +57,13 @@ void main() {
         relations: {},
       );
       expect(
-        stalledZeroRegimentAllFactionPeaceTargets(game: game, snapshot: snapshot),
+        stalledZeroRegimentAllFactionPeaceTargets(
+          game: game,
+          snapshot: snapshot,
+        ),
         ['minor1', 'minor2'],
-        reason: 'Zero-regiment path peaces minors/tribes only, not Great Powers',
+        reason:
+            'Zero-regiment path peaces minors/tribes only, not Great Powers',
       );
     },
   );
@@ -105,9 +107,7 @@ void main() {
             ),
           ],
         ),
-        players: const [
-          Player(id: 'gp3', displayName: 'P3', isHuman: false),
-        ],
+        players: const [Player(id: 'gp3', displayName: 'P3', isHuman: false)],
         minorNations: const [
           MinorNation(id: 'minor1', displayName: 'M1'),
           MinorNation(id: 'minor2', displayName: 'M2'),
@@ -329,7 +329,10 @@ void main() {
         relations: {},
       );
       expect(
-        weakHoldingsInvadableBlockerPeaceTargets(game: game, snapshot: snapshot),
+        weakHoldingsInvadableBlockerPeaceTargets(
+          game: game,
+          snapshot: snapshot,
+        ),
         ['gp4'],
       );
     },

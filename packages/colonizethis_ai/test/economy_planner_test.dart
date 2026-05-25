@@ -44,7 +44,11 @@ void main() {
       expect(plan.productionAssignments, isEmpty);
       expect(
         plan.cargoPreference,
-        isIn([CargoPreference.none, CargoPreference.preferCargo, CargoPreference.strongCargo]),
+        isIn([
+          CargoPreference.none,
+          CargoPreference.preferCargo,
+          CargoPreference.strongCargo,
+        ]),
         reason: 'cargo preference depends on personality economy weight',
       );
     });
@@ -142,7 +146,10 @@ void main() {
         seeds: seeds,
       );
 
-      expect(plan1.productionAssignments.length, plan2.productionAssignments.length);
+      expect(
+        plan1.productionAssignments.length,
+        plan2.productionAssignments.length,
+      );
       for (var i = 0; i < plan1.productionAssignments.length; i++) {
         expect(
           plan1.productionAssignments[i].recipeId,
@@ -198,20 +205,23 @@ void main() {
         seeds: seeds,
       );
 
-      final industrialLevel = industrialResult.cargoPreference == CargoPreference.strongCargo
+      final industrialLevel =
+          industrialResult.cargoPreference == CargoPreference.strongCargo
           ? 2
           : industrialResult.cargoPreference == CargoPreference.preferCargo
-              ? 1
-              : 0;
-      final warmongerLevel = warmongerResult.cargoPreference == CargoPreference.strongCargo
+          ? 1
+          : 0;
+      final warmongerLevel =
+          warmongerResult.cargoPreference == CargoPreference.strongCargo
           ? 2
           : warmongerResult.cargoPreference == CargoPreference.preferCargo
-              ? 1
-              : 0;
+          ? 1
+          : 0;
       expect(
         industrialLevel,
         greaterThanOrEqualTo(warmongerLevel),
-        reason: 'high economy leader should prefer cargo at least as much as warmonger',
+        reason:
+            'high economy leader should prefer cargo at least as much as warmonger',
       );
     });
 

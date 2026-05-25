@@ -63,7 +63,9 @@ double scoreRecipe({
   final chain = _recipeChainScore(outputId, workers);
   final agenda = _recipeAgendaScore(agendaId, outputId);
 
-  return shortage * kShortageWeight + chain * kChainWeight + agenda * kAgendaWeight;
+  return shortage * kShortageWeight +
+      chain * kChainWeight +
+      agenda * kAgendaWeight;
 }
 
 /// Chain value: outputs that feed other recipes or are luxuries.

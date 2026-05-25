@@ -25,11 +25,7 @@ void main() {
         100,
       );
       expect(
-        feasibleRuns(
-          recipe: recipe,
-          stockpile: stockpile,
-          remainingLabour: 1,
-        ),
+        feasibleRuns(recipe: recipe, stockpile: stockpile, remainingLabour: 1),
         0,
         reason: 'labourPerOutput is 2',
       );
@@ -42,11 +38,7 @@ void main() {
         100,
       );
       expect(
-        feasibleRuns(
-          recipe: recipe,
-          stockpile: stockpile,
-          remainingLabour: 5,
-        ),
+        feasibleRuns(recipe: recipe, stockpile: stockpile, remainingLabour: 5),
         2,
         reason: '50 input-runs vs 5//2 labour-runs → 2',
       );

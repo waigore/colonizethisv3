@@ -117,7 +117,7 @@ const List<DiplomaticOrder> _tribeDeclareWarCandidates = <DiplomaticOrder>[
 // `_declareWarCoreBonuses` rather than by hidden-agenda shifts that
 // would change between fixtures.
 //
-// `victoria` (personalityId) keeps `warLikelihood` = 50 / 
+// `victoria` (personalityId) keeps `warLikelihood` = 50 /
 // `allianceTendency` = 50, so the personality term in
 // `_declareWarCoreBonuses` is exactly zero — the residual cross-fixture
 // score delta isolates the intervention-risk path the AC pins.
@@ -138,9 +138,7 @@ const AIConfig _aiConfig = AIConfig(
 /// `gp2` / `gp3` / `gp4` are present as bystander Great Powers so the
 /// intervention-risk variant can attach embassy overtures to the tribe
 /// without changing the OW / NW topology between fixtures.
-Game _colonialTribeScenarioGame({
-  required List<OvertureState> overtureStates,
-}) {
+Game _colonialTribeScenarioGame({required List<OvertureState> overtureStates}) {
   return Game(
     id: 'g-2509-intervention-tribe-tolerance',
     worldState: WorldState(
@@ -185,12 +183,7 @@ Game _colonialTribeScenarioGame({
       // Bystander GPs so the intervention-risk overtures resolve to a
       // valid `playerById` and count toward `_interventionRiskPenalty`
       // (`if (game.players.any((p) => p.id == overture.gpId)) count++`).
-      Player(
-        id: 'gp2',
-        displayName: 'GP2',
-        isHuman: false,
-        leaderKey: 'henry',
-      ),
+      Player(id: 'gp2', displayName: 'GP2', isHuman: false, leaderKey: 'henry'),
       Player(
         id: 'gp3',
         displayName: 'GP3',
@@ -235,21 +228,9 @@ const OvertureState _gp1Embassy = OvertureState(
 /// other GPs trigger the maximum intervention-risk penalty
 /// (`-(count * 8).clamp(0, 24)` = -24) in `_interventionRiskPenalty`.
 const List<OvertureState> _interventionEmbassies = <OvertureState>[
-  OvertureState(
-    gpId: 'gp2',
-    targetId: _tribeId,
-    stage: OvertureStage.embassy,
-  ),
-  OvertureState(
-    gpId: 'gp3',
-    targetId: _tribeId,
-    stage: OvertureStage.embassy,
-  ),
-  OvertureState(
-    gpId: 'gp4',
-    targetId: _tribeId,
-    stage: OvertureStage.embassy,
-  ),
+  OvertureState(gpId: 'gp2', targetId: _tribeId, stage: OvertureStage.embassy),
+  OvertureState(gpId: 'gp3', targetId: _tribeId, stage: OvertureStage.embassy),
+  OvertureState(gpId: 'gp4', targetId: _tribeId, stage: OvertureStage.embassy),
 ];
 
 /// COLONIAL-phase snapshot mirroring the AC's "tribe is a valid
@@ -297,11 +278,8 @@ AIWorldSnapshot _colonialSnapshot() {
   );
 }
 
-List<int> _scoreTribeDeclareWar({
-  required List<OvertureState> overtureStates,
-}) {
-  final game =
-      _colonialTribeScenarioGame(overtureStates: overtureStates);
+List<int> _scoreTribeDeclareWar({required List<OvertureState> overtureStates}) {
+  final game = _colonialTribeScenarioGame(overtureStates: overtureStates);
   final snapshot = _colonialSnapshot();
   return computeDiplomaticCandidateScores(
     candidates: _tribeDeclareWarCandidates,
@@ -313,116 +291,92 @@ List<int> _scoreTribeDeclareWar({
 }
 
 void main() {
-  group(
-    'computeDiplomaticCandidateScores COLONIAL tribe intervention '
-    'tolerance (Refs #2509 must-have #6)',
-    () {
-      test(
-        'tribe declareWar candidate stays in the candidate set under '
-        'max intervention risk (3 other-GP embassies)',
-        () {
-          final scores = _scoreTribeDeclareWar(
-            overtureStates: <OvertureState>[
-              _gp1Embassy,
-              ..._interventionEmbassies,
-            ],
-          );
-
-          expect(
-            scores.length,
-            _tribeDeclareWarCandidates.length,
-            reason:
-                '`computeDiplomaticCandidateScores` must return one score '
-                'per input candidate — a refactor that filters out the '
-                'tribe declare-war slot under intervention risk would '
-                'silently break must-have #6 by reshaping the list.',
-          );
-          expect(
-            scores.single,
-            greaterThan(0),
-            reason:
-                'Issue #2509 must-have #6 forbids a hard "never declare" '
-                'guard on tribe declare-war candidates under elevated '
-                'intervention-risk preconditions. The score may be low '
-                '(intervention risk is applied as a graded war-desire '
-                'penalty in `_interventionRiskPenalty`, -8 per other-GP '
-                'embassy, capped at -24) but it **must remain > 0** so '
-                'the candidate stays selectable by the weighted-random '
-                'pick downstream of `computeDiplomaticCandidateScores`.',
-          );
-        },
+  group('computeDiplomaticCandidateScores COLONIAL tribe intervention '
+      'tolerance (Refs #2509 must-have #6)', () {
+    test('tribe declareWar candidate stays in the candidate set under '
+        'max intervention risk (3 other-GP embassies)', () {
+      final scores = _scoreTribeDeclareWar(
+        overtureStates: <OvertureState>[_gp1Embassy, ..._interventionEmbassies],
       );
 
-      test(
-        'tribe declareWar score is strictly higher without intervention '
+      expect(
+        scores.length,
+        _tribeDeclareWarCandidates.length,
+        reason:
+            '`computeDiplomaticCandidateScores` must return one score '
+            'per input candidate — a refactor that filters out the '
+            'tribe declare-war slot under intervention risk would '
+            'silently break must-have #6 by reshaping the list.',
+      );
+      expect(
+        scores.single,
+        greaterThan(0),
+        reason:
+            'Issue #2509 must-have #6 forbids a hard "never declare" '
+            'guard on tribe declare-war candidates under elevated '
+            'intervention-risk preconditions. The score may be low '
+            '(intervention risk is applied as a graded war-desire '
+            'penalty in `_interventionRiskPenalty`, -8 per other-GP '
+            'embassy, capped at -24) but it **must remain > 0** so '
+            'the candidate stays selectable by the weighted-random '
+            'pick downstream of `computeDiplomaticCandidateScores`.',
+      );
+    });
+
+    test('tribe declareWar score is strictly higher without intervention '
         'overtures (intervention risk applied as graded penalty, not a '
-        'hard skip nor a no-op)',
-        () {
-          final withoutIntervention = _scoreTribeDeclareWar(
-            overtureStates: const <OvertureState>[_gp1Embassy],
-          );
-          final withIntervention = _scoreTribeDeclareWar(
-            overtureStates: <OvertureState>[
-              _gp1Embassy,
-              ..._interventionEmbassies,
-            ],
-          );
-
-          expect(
-            withoutIntervention.single,
-            greaterThan(withIntervention.single),
-            reason:
-                'Removing the three other-GP embassies must raise the '
-                'tribe declare-war score, proving intervention risk is '
-                'still applied as a graded scoring penalty rather than '
-                'collapsed into a no-op or upgraded into a hard skip. '
-                'If both scores are equal a tuning slice has silently '
-                'dropped the `_interventionRiskPenalty` contribution; if '
-                'the high-intervention score is zero must-have #6 has '
-                'regressed.',
-          );
-          expect(
-            withIntervention.single,
-            greaterThan(0),
-            reason:
-                'Cross-check: the high-intervention variant must still be '
-                '> 0 alongside the strictly-greater delta, so the test '
-                'fails distinctly for the hard-skip regression versus '
-                'the no-op regression.',
-          );
-        },
+        'hard skip nor a no-op)', () {
+      final withoutIntervention = _scoreTribeDeclareWar(
+        overtureStates: const <OvertureState>[_gp1Embassy],
+      );
+      final withIntervention = _scoreTribeDeclareWar(
+        overtureStates: <OvertureState>[_gp1Embassy, ..._interventionEmbassies],
       );
 
-      test(
-        'tribe declareWar score is deterministic for the same inputs '
-        'under high intervention risk (must-have #7)',
-        () {
-          final first = _scoreTribeDeclareWar(
-            overtureStates: <OvertureState>[
-              _gp1Embassy,
-              ..._interventionEmbassies,
-            ],
-          );
-          final second = _scoreTribeDeclareWar(
-            overtureStates: <OvertureState>[
-              _gp1Embassy,
-              ..._interventionEmbassies,
-            ],
-          );
-
-          expect(
-            second,
-            equals(first),
-            reason:
-                'Issue #2509 must-have #7 — same `Game` state + same '
-                '`computeDiplomaticCandidateScores` inputs must produce '
-                'identical score lists across repeat invocations. A '
-                'refactor that introduces non-determinism in the '
-                'intervention-risk path (e.g. iterating overture states '
-                'in non-stable order) would surface here.',
-          );
-        },
+      expect(
+        withoutIntervention.single,
+        greaterThan(withIntervention.single),
+        reason:
+            'Removing the three other-GP embassies must raise the '
+            'tribe declare-war score, proving intervention risk is '
+            'still applied as a graded scoring penalty rather than '
+            'collapsed into a no-op or upgraded into a hard skip. '
+            'If both scores are equal a tuning slice has silently '
+            'dropped the `_interventionRiskPenalty` contribution; if '
+            'the high-intervention score is zero must-have #6 has '
+            'regressed.',
       );
-    },
-  );
+      expect(
+        withIntervention.single,
+        greaterThan(0),
+        reason:
+            'Cross-check: the high-intervention variant must still be '
+            '> 0 alongside the strictly-greater delta, so the test '
+            'fails distinctly for the hard-skip regression versus '
+            'the no-op regression.',
+      );
+    });
+
+    test('tribe declareWar score is deterministic for the same inputs '
+        'under high intervention risk (must-have #7)', () {
+      final first = _scoreTribeDeclareWar(
+        overtureStates: <OvertureState>[_gp1Embassy, ..._interventionEmbassies],
+      );
+      final second = _scoreTribeDeclareWar(
+        overtureStates: <OvertureState>[_gp1Embassy, ..._interventionEmbassies],
+      );
+
+      expect(
+        second,
+        equals(first),
+        reason:
+            'Issue #2509 must-have #7 — same `Game` state + same '
+            '`computeDiplomaticCandidateScores` inputs must produce '
+            'identical score lists across repeat invocations. A '
+            'refactor that introduces non-determinism in the '
+            'intervention-risk path (e.g. iterating overture states '
+            'in non-stable order) would surface here.',
+      );
+    });
+  });
 }

@@ -42,7 +42,8 @@
 /// targets in any region always pass through under every phase.
 library;
 
-import 'package:colonizethis_data/colonizethis_data.dart' show kNewWorldRegionId;
+import 'package:colonizethis_data/colonizethis_data.dart'
+    show kNewWorldRegionId;
 import 'package:colonizethis_logic/ai_api.dart'
     show kWorkTargetBuildImprovement, kWorkTargetPurchaseLand;
 import 'package:colonizethis_models/colonizethis_models.dart'

@@ -44,8 +44,6 @@
 //   3. Must-have #7 determinism.
 
 import 'package:colonizethis_ai/src/perception/perception_snapshot.dart';
-import 'package:colonizethis_ai/src/planning/diplomacy_planner_peace_targets.dart'
-    as diplomacy_planner_peace_targets;
 import 'package:colonizethis_ai/src/planning/observer_goal_phase.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/ai_api.dart';
@@ -61,14 +59,16 @@ Game _pristineOwProvinces(int count) {
     id: 'g-2509-composite-pristine-$count',
     worldState: WorldState(
       turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 60),
-      oldWorld: RegionData(provinces: [
-        for (var i = 1; i <= count; i++)
-          Province(
-            id: 'oldWorld|${_gpOwn}_$i',
-            regionId: 'oldWorld',
-            ownerId: _gpOwn,
-          ),
-      ]),
+      oldWorld: RegionData(
+        provinces: [
+          for (var i = 1; i <= count; i++)
+            Province(
+              id: 'oldWorld|${_gpOwn}_$i',
+              regionId: 'oldWorld',
+              ownerId: _gpOwn,
+            ),
+        ],
+      ),
       newWorld: const RegionData(),
       armies: [],
     ),
@@ -87,25 +87,27 @@ Game _zeroRegimentAtWarGame() {
     id: 'g-2509-composite-zero-reg',
     worldState: WorldState(
       turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 60),
-      oldWorld: RegionData(provinces: [
-        for (var i = 1; i <= 6; i++)
-          Province(
-            id: 'oldWorld|${_gpOwn}_$i',
+      oldWorld: RegionData(
+        provinces: [
+          for (var i = 1; i <= 6; i++)
+            Province(
+              id: 'oldWorld|${_gpOwn}_$i',
+              regionId: 'oldWorld',
+              ownerId: _gpOwn,
+            ),
+          for (var i = 1; i <= 6; i++)
+            Province(
+              id: 'oldWorld|${_gpOther}_$i',
+              regionId: 'oldWorld',
+              ownerId: _gpOther,
+            ),
+          const Province(
+            id: 'oldWorld|minor_invadable',
             regionId: 'oldWorld',
-            ownerId: _gpOwn,
+            ownerId: _minorZeta,
           ),
-        for (var i = 1; i <= 6; i++)
-          Province(
-            id: 'oldWorld|${_gpOther}_$i',
-            regionId: 'oldWorld',
-            ownerId: _gpOther,
-          ),
-        const Province(
-          id: 'oldWorld|minor_invadable',
-          regionId: 'oldWorld',
-          ownerId: _minorZeta,
-        ),
-      ]),
+        ],
+      ),
       newWorld: const RegionData(),
       armies: [],
     ),
@@ -259,71 +261,6 @@ void main() {
   });
 
   group('collectStalledGreatPowerPeaceTargets', () {
-    test('delegation parity: stub matches canonical for typical EXPAND state', () {
-      final game = _zeroRegimentAtWarGame();
-      final snapshot = _snapshotFor(
-        playerId: _gpOwn,
-        oldWorldProvincesOwned: 6,
-        atWarWith: [_gpOther, _minorZeta],
-      );
-      final canonical = collectStalledGreatPowerPeaceTargets(
-        game: game,
-        snapshot: snapshot,
-      );
-      final stubbed = diplomacy_planner_peace_targets
-          .collectStalledGreatPowerPeaceTargets(
-        game: game,
-        snapshot: snapshot,
-      );
-      expect(canonical, stubbed);
-    });
-
-    test('delegation parity: stub matches canonical for DEVELOP state', () {
-      final game = Game(
-        id: 'g-2509-collect-develop',
-        worldState: WorldState(
-          turnState:
-              const TurnState(phase: TurnPhase.orders, turnNumber: 140),
-          oldWorld: RegionData(provinces: [
-            for (var i = 1; i <= 10; i++)
-              Province(
-                id: 'oldWorld|${_gpOwn}_$i',
-                regionId: 'oldWorld',
-                ownerId: _gpOwn,
-              ),
-          ]),
-          newWorld: const RegionData(),
-        ),
-        players: [
-          Player(id: _gpOwn, displayName: 'GP_OWN', isHuman: false),
-          Player(id: _gpOther, displayName: 'GP_OTHER', isHuman: false),
-        ],
-        diplomacyRelations: [
-          const DiplomacyRelation(
-            factionId1: _gpOwn,
-            factionId2: _gpOther,
-            state: RelationState.atWar,
-            score: 30,
-          ),
-        ],
-      );
-      final snapshot = _snapshotFor(
-        playerId: _gpOwn,
-        oldWorldProvincesOwned: 10,
-        atWarWith: [_gpOther],
-      );
-      final canonical = collectStalledGreatPowerPeaceTargets(
-        game: game,
-        snapshot: snapshot,
-      );
-      final stubbed = diplomacy_planner_peace_targets
-          .collectStalledGreatPowerPeaceTargets(
-        game: game,
-        snapshot: snapshot,
-      );
-      expect(canonical, stubbed);
-    });
-
     test('deterministic across repeated calls (Must-have #7)', () {
       final game = _zeroRegimentAtWarGame();
       final snapshot = _snapshotFor(
@@ -355,23 +292,6 @@ void main() {
         orders: orders,
       );
       expect(result, same(orders));
-    });
-
-    test('delegation parity: stub matches canonical for pristine state', () {
-      final game = _pristineOwProvinces(8);
-      const orders = Orders();
-      final canonical = supplementMutualStalledGreatPowerPeaceOrders(
-        game: game,
-        topology: const MapTopology(),
-        orders: orders,
-      );
-      final stubbed = diplomacy_planner_peace_targets
-          .supplementMutualStalledGreatPowerPeaceOrders(
-        game: game,
-        topology: const MapTopology(),
-        orders: orders,
-      );
-      expect(canonical, stubbed);
     });
 
     test('deterministic across repeated calls (Must-have #7)', () {

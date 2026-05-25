@@ -44,26 +44,13 @@ void main() {
       );
     });
 
-    test('false when regimentCount is zero (handled by broke-at-peace trigger)',
-        () {
-      expect(
-        isBelowQuotaPeaceInsufficientRegiments(
-          oldWorldProvincesOwned: 8,
-          regimentCount: 0,
-          atWarWithAnyGreatPower: false,
-          hasInvadableProvinces: true,
-        ),
-        isFalse,
-      );
-    });
-
     test(
-      'false when regimentCount meets the at-peace declare-war floor',
+      'false when regimentCount is zero (handled by broke-at-peace trigger)',
       () {
         expect(
           isBelowQuotaPeaceInsufficientRegiments(
             oldWorldProvincesOwned: 8,
-            regimentCount: kBelowQuotaPeaceMinRegimentsBeforeDeclareWar,
+            regimentCount: 0,
             atWarWithAnyGreatPower: false,
             hasInvadableProvinces: true,
           ),
@@ -71,6 +58,18 @@ void main() {
         );
       },
     );
+
+    test('false when regimentCount meets the at-peace declare-war floor', () {
+      expect(
+        isBelowQuotaPeaceInsufficientRegiments(
+          oldWorldProvincesOwned: 8,
+          regimentCount: kBelowQuotaPeaceMinRegimentsBeforeDeclareWar,
+          atWarWithAnyGreatPower: false,
+          hasInvadableProvinces: true,
+        ),
+        isFalse,
+      );
+    });
 
     test(
       'true for the seed-42 gp3 trap: 8 OW, 3 regiments, peace, invadable GP frontier',
@@ -103,20 +102,17 @@ void main() {
       },
     );
 
-    test(
-      'true just below the at-peace declare-war floor',
-      () {
-        expect(
-          isBelowQuotaPeaceInsufficientRegiments(
-            oldWorldProvincesOwned: 9,
-            regimentCount: kBelowQuotaPeaceMinRegimentsBeforeDeclareWar - 1,
-            atWarWithAnyGreatPower: false,
-            hasInvadableProvinces: true,
-          ),
-          isTrue,
-        );
-      },
-    );
+    test('true just below the at-peace declare-war floor', () {
+      expect(
+        isBelowQuotaPeaceInsufficientRegiments(
+          oldWorldProvincesOwned: 9,
+          regimentCount: kBelowQuotaPeaceMinRegimentsBeforeDeclareWar - 1,
+          atWarWithAnyGreatPower: false,
+          hasInvadableProvinces: true,
+        ),
+        isTrue,
+      );
+    });
   });
 
   group('isBelowQuotaPeaceTreasuryRecovery', () {
@@ -140,18 +136,21 @@ void main() {
       );
     });
 
-    test('true for seed-42 trap shape with zero treasury and empty stockpile', () {
-      expect(
-        isBelowQuotaPeaceTreasuryRecovery(
-          oldWorldProvincesOwned: 8,
-          regimentCount: 3,
-          atWarWithAnyGreatPower: false,
-          hasInvadableProvinces: true,
-          treasury: 0,
-          stockpile: const Stockpile(),
-        ),
-        isTrue,
-      );
-    });
+    test(
+      'true for seed-42 trap shape with zero treasury and empty stockpile',
+      () {
+        expect(
+          isBelowQuotaPeaceTreasuryRecovery(
+            oldWorldProvincesOwned: 8,
+            regimentCount: 3,
+            atWarWithAnyGreatPower: false,
+            hasInvadableProvinces: true,
+            treasury: 0,
+            stockpile: const Stockpile(),
+          ),
+          isTrue,
+        );
+      },
+    );
   });
 }

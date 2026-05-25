@@ -88,7 +88,9 @@ Production callers are progressively switched from `colonial_pressure.dart` thin
 - `economy_planner.dart`
 - `diplomacy_planner_declare_war_targets.dart`
 
-Remaining production callers of `colonial_pressure.dart` (slated for follow-up slices): `diplomacy_planner.dart` (which still re-exports legacy names from `colonial_pressure.dart` for fixture-compat) and `diplomacy_planner_peace_targets.dart` (in-file collectors). Legacy `colonial_pressure_*_test.dart` fixtures continue to pin the delegating stubs directly until both production caller chains are migrated.
+Remaining production callers of `colonial_pressure.dart` (slated for follow-up slices): `diplomacy_planner.dart` (which still re-exports legacy names from `colonial_pressure.dart` for fixture-compat). Legacy `colonial_pressure_*_test.dart` fixtures continue to pin the delegating stubs directly until the production caller chain is migrated.
+
+`diplomacy_planner_peace_targets.dart` was deleted in the S1 wrap-up (Refs #2509 S1). All functions that resided there now resolve from their canonical homes: `expand_phase_planner.dart` (peace-target deciders and stalled-expansion predicates) and `observer_goal_phase.dart` (`collectStalledGreatPowerPeaceTargets`, `supplementMutualStalledGreatPowerPeaceOrders`). The `diplomacy_planner.dart` re-export chain was updated to source the two used functions (`stalledOwExpansionNeedsPeacePass`, `multiFrontNonBlockerGpPeaceTargets`) from `expand_phase_planner.dart` and to export `supplementMutualStalledGreatPowerPeaceOrders` from `observer_goal_phase.dart`. Legacy `diplomacy_planner_*_test.dart` fixtures were updated to import directly from the canonical homes, and canonical-home planning tests had their delegation-parity test blocks removed.
 
 ## Acceptance criteria
 

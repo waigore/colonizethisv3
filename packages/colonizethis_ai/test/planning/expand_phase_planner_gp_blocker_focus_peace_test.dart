@@ -14,8 +14,6 @@
 // deletion.
 
 import 'package:colonizethis_ai/src/perception/perception_snapshot.dart';
-import 'package:colonizethis_ai/src/planning/diplomacy_planner_peace_targets.dart'
-    as diplomacy_planner_peace_targets;
 import 'package:colonizethis_ai/src/planning/expand_phase_planner.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
@@ -259,42 +257,45 @@ void main() {
       );
     });
 
-    test('returns null when no OW minor remains on the map (GP-blocker focus)', () {
-      // Mirrors diplomacy_planner_stalled_peace_test: minor exists in
-      // minorNations but owns no OW province → anyMinorOwnsOw is false.
-      final game = _gpBlockerFocusGame(
-        provinces: [
-          for (var i = 0; i < 7; i++)
-            Province(
-              id: 'oldWorld|${_gpOwn}_$i',
-              regionId: 'oldWorld',
-              ownerId: _gpOwn,
-            ),
-          for (var i = 0; i < 10; i++)
-            Province(
-              id: 'oldWorld|${_gpBlocker}_$i',
+    test(
+      'returns null when no OW minor remains on the map (GP-blocker focus)',
+      () {
+        // Mirrors diplomacy_planner_stalled_peace_test: minor exists in
+        // minorNations but owns no OW province → anyMinorOwnsOw is false.
+        final game = _gpBlockerFocusGame(
+          provinces: [
+            for (var i = 0; i < 7; i++)
+              Province(
+                id: 'oldWorld|${_gpOwn}_$i',
+                regionId: 'oldWorld',
+                ownerId: _gpOwn,
+              ),
+            for (var i = 0; i < 10; i++)
+              Province(
+                id: 'oldWorld|${_gpBlocker}_$i',
+                regionId: 'oldWorld',
+                ownerId: _gpBlocker,
+              ),
+            const Province(
+              id: 'oldWorld|inv1',
               regionId: 'oldWorld',
               ownerId: _gpBlocker,
             ),
-          const Province(
-            id: 'oldWorld|inv1',
-            regionId: 'oldWorld',
-            ownerId: _gpBlocker,
-          ),
-        ],
-        atWarFactionIds: const [_gpBlocker],
-        minorNations: const [MinorNation(id: _minor1, displayName: 'M1')],
-      );
-      final snapshot = _ownSnapshot(
-        oldWorldProvincesOwned: 7,
-        atWarWith: const [_gpBlocker],
-        invadableProvinceIdsSorted: const ['oldWorld|inv1'],
-      );
-      expect(
-        stalledStrongerGpBlockerPeaceTarget(game: game, snapshot: snapshot),
-        isNull,
-      );
-    });
+          ],
+          atWarFactionIds: const [_gpBlocker],
+          minorNations: const [MinorNation(id: _minor1, displayName: 'M1')],
+        );
+        final snapshot = _ownSnapshot(
+          oldWorldProvincesOwned: 7,
+          atWarWith: const [_gpBlocker],
+          invadableProvinceIdsSorted: const ['oldWorld|inv1'],
+        );
+        expect(
+          stalledStrongerGpBlockerPeaceTarget(game: game, snapshot: snapshot),
+          isNull,
+        );
+      },
+    );
   });
 
   group('stalledStrongerGpBlockerPeaceTarget — fire path', () {
@@ -394,10 +395,7 @@ void main() {
       final snapshot = _ownSnapshot(
         oldWorldProvincesOwned: 7,
         atWarWith: const [_gpBlocker],
-        invadableProvinceIdsSorted: const [
-          'oldWorld|inv1',
-          'oldWorld|inv2',
-        ],
+        invadableProvinceIdsSorted: const ['oldWorld|inv1', 'oldWorld|inv2'],
       );
       expect(
         stalledStrongerGpBlockerPeaceTarget(game: game, snapshot: snapshot),
@@ -505,82 +503,6 @@ void main() {
       );
       expect(first, equals(second));
       expect(first, _gpDistraction);
-    });
-  });
-
-  group('Stub delegation parity', () {
-    test('stalledGpBlockerFocusPeaceTargets stub mirrors canonical', () {
-      final game = _gpBlockerFocusGame(
-        provinces: [
-          for (var i = 0; i < 7; i++)
-            Province(
-              id: 'oldWorld|${_gpOwn}_$i',
-              regionId: 'oldWorld',
-              ownerId: _gpOwn,
-            ),
-          for (var i = 0; i < 10; i++)
-            Province(
-              id: 'oldWorld|${_gpBlocker}_$i',
-              regionId: 'oldWorld',
-              ownerId: _gpBlocker,
-            ),
-          const Province(
-            id: 'oldWorld|inv1',
-            regionId: 'oldWorld',
-            ownerId: _gpBlocker,
-          ),
-        ],
-        atWarFactionIds: const [_gpBlocker, _gpDistraction],
-      );
-      final snapshot = _ownSnapshot(
-        oldWorldProvincesOwned: 7,
-        atWarWith: const [_gpBlocker, _gpDistraction],
-        invadableProvinceIdsSorted: const ['oldWorld|inv1'],
-      );
-      final canonical = stalledGpBlockerFocusPeaceTargets(
-        game: game,
-        snapshot: snapshot,
-      );
-      final stub = diplomacy_planner_peace_targets
-          .stalledGpBlockerFocusPeaceTargets(game: game, snapshot: snapshot);
-      expect(stub, equals(canonical));
-    });
-
-    test('stalledStrongerGpBlockerPeaceTarget stub mirrors canonical', () {
-      final game = _gpBlockerFocusGame(
-        provinces: [
-          for (var i = 0; i < 7; i++)
-            Province(
-              id: 'oldWorld|${_gpOwn}_$i',
-              regionId: 'oldWorld',
-              ownerId: _gpOwn,
-            ),
-          const Province(
-            id: 'oldWorld|inv1',
-            regionId: 'oldWorld',
-            ownerId: _minor1,
-          ),
-          const Province(
-            id: 'oldWorld|minor1_p1',
-            regionId: 'oldWorld',
-            ownerId: _minor1,
-          ),
-        ],
-        atWarFactionIds: const [_gpBlocker],
-        minorNations: const [MinorNation(id: _minor1, displayName: 'M1')],
-      );
-      final snapshot = _ownSnapshot(
-        oldWorldProvincesOwned: 7,
-        atWarWith: const [_gpBlocker],
-        invadableProvinceIdsSorted: const ['oldWorld|inv1'],
-      );
-      final canonical = stalledStrongerGpBlockerPeaceTarget(
-        game: game,
-        snapshot: snapshot,
-      );
-      final stub = diplomacy_planner_peace_targets
-          .stalledStrongerGpBlockerPeaceTarget(game: game, snapshot: snapshot);
-      expect(stub, equals(canonical));
     });
   });
 }

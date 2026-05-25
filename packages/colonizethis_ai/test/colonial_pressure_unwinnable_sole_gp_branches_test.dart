@@ -222,10 +222,7 @@ void main() {
         final game = Game(
           id: 'g-unwinnable-only-minor-at-war',
           worldState: WorldState(
-            turnState: const TurnState(
-              phase: TurnPhase.orders,
-              turnNumber: 80,
-            ),
+            turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 80),
             oldWorld: RegionData(
               provinces: [
                 for (var i = 1; i <= 5; i++)
@@ -247,9 +244,7 @@ void main() {
           players: const [
             Player(id: 'gp_own', displayName: 'GP_OWN', isHuman: false),
           ],
-          minorNations: const [
-            MinorNation(id: 'minor1', displayName: 'M1'),
-          ],
+          minorNations: const [MinorNation(id: 'minor1', displayName: 'M1')],
           diplomacyRelations: const [
             DiplomacyRelation(
               factionId1: 'gp_own',
@@ -371,121 +366,109 @@ void main() {
 
   group('unwinnableSoleGpFrontierPeaceTarget — deficit table', () {
     // default-start band (own ≤ kObserverDefaultStartOldWorldProvincesPerGp):
-    test(
-      'null at default-start when enemy ties OW count (lead 0)',
-      () {
-        // own=kObserverDefaultStartOldWorldProvincesPerGp, minDeficit=1 row.
-        // Enemy ties exactly (lead 0). `enemyOw < own + 1` → null. The
-        // existing positive at lead 1 lives in
-        // `diplomacy_planner_below_quota_peace_test.dart` so this file pins
-        // the negative boundary.
-        final game = _ownVsPartnerGame(
-          ownProvinces: kObserverDefaultStartOldWorldProvincesPerGp,
-          partnerProvinces: kObserverDefaultStartOldWorldProvincesPerGp,
-          partnerId: 'gp_partner',
-          minorId: 'minor_pivot',
-          minorProvinces: 1,
-        );
-        final snapshot = _ownSnapshot(
-          oldWorldProvincesOwned: kObserverDefaultStartOldWorldProvincesPerGp,
-          atWarWith: const ['gp_partner'],
-        );
-        expect(
-          unwinnableSoleGpFrontierPeaceTarget(game: game, snapshot: snapshot),
-          isNull,
-          reason:
-              'Default-start band requires `enemyOw >= own + 1` (lead ≥ 1). '
-              'A tied enemy at own=7 returns null. Guards against a regression '
-              'that swapped `<` for `<=` (would peace at lead 0) or that '
-              'inflated the default-start deficit above 1.',
-        );
-      },
-    );
+    test('null at default-start when enemy ties OW count (lead 0)', () {
+      // own=kObserverDefaultStartOldWorldProvincesPerGp, minDeficit=1 row.
+      // Enemy ties exactly (lead 0). `enemyOw < own + 1` → null. The
+      // existing positive at lead 1 lives in
+      // `diplomacy_planner_below_quota_peace_test.dart` so this file pins
+      // the negative boundary.
+      final game = _ownVsPartnerGame(
+        ownProvinces: kObserverDefaultStartOldWorldProvincesPerGp,
+        partnerProvinces: kObserverDefaultStartOldWorldProvincesPerGp,
+        partnerId: 'gp_partner',
+        minorId: 'minor_pivot',
+        minorProvinces: 1,
+      );
+      final snapshot = _ownSnapshot(
+        oldWorldProvincesOwned: kObserverDefaultStartOldWorldProvincesPerGp,
+        atWarWith: const ['gp_partner'],
+      );
+      expect(
+        unwinnableSoleGpFrontierPeaceTarget(game: game, snapshot: snapshot),
+        isNull,
+        reason:
+            'Default-start band requires `enemyOw >= own + 1` (lead ≥ 1). '
+            'A tied enemy at own=7 returns null. Guards against a regression '
+            'that swapped `<` for `<=` (would peace at lead 0) or that '
+            'inflated the default-start deficit above 1.',
+      );
+    });
 
     // 8–9 OW band, non-GP-only frontier (minDeficit=1):
-    test(
-      'null at 8 OW non-GP-only when enemy ties (lead 0)',
-      () {
-        // own=8 ≥ kObserverConquestMinOwProvincesPerGp - 2, !GP-only frontier
-        // (minor on the invadable), minDeficit=1. Enemy ties → null. Pins
-        // the negative boundary the existing 8-OW positive case
-        // (`diplomacy_planner_below_quota_peace_test.dart`) does not cover.
-        final game = _ownVsPartnerGame(
-          ownProvinces: 8,
-          partnerProvinces: 8,
-          partnerId: 'gp_partner',
-          extraInvadableMinorOwnerId: 'minor_frontier',
-        );
-        final snapshot = _ownSnapshot(
-          oldWorldProvincesOwned: 8,
-          atWarWith: const ['gp_partner'],
-          invadableProvinceIdsSorted: const ['oldWorld|invadable_minor'],
-        );
-        expect(
-          unwinnableSoleGpFrontierPeaceTarget(game: game, snapshot: snapshot),
-          isNull,
-          reason:
-              '8 OW non-GP-only band still requires lead ≥ 1. A regression '
-              'that promoted ties to peace would peace too eagerly when the '
-              'GP is at parity with its enemy.',
-        );
-      },
-    );
+    test('null at 8 OW non-GP-only when enemy ties (lead 0)', () {
+      // own=8 ≥ kObserverConquestMinOwProvincesPerGp - 2, !GP-only frontier
+      // (minor on the invadable), minDeficit=1. Enemy ties → null. Pins
+      // the negative boundary the existing 8-OW positive case
+      // (`diplomacy_planner_below_quota_peace_test.dart`) does not cover.
+      final game = _ownVsPartnerGame(
+        ownProvinces: 8,
+        partnerProvinces: 8,
+        partnerId: 'gp_partner',
+        extraInvadableMinorOwnerId: 'minor_frontier',
+      );
+      final snapshot = _ownSnapshot(
+        oldWorldProvincesOwned: 8,
+        atWarWith: const ['gp_partner'],
+        invadableProvinceIdsSorted: const ['oldWorld|invadable_minor'],
+      );
+      expect(
+        unwinnableSoleGpFrontierPeaceTarget(game: game, snapshot: snapshot),
+        isNull,
+        reason:
+            '8 OW non-GP-only band still requires lead ≥ 1. A regression '
+            'that promoted ties to peace would peace too eagerly when the '
+            'GP is at parity with its enemy.',
+      );
+    });
 
-    test(
-      'null at 9 OW non-GP-only when enemy ties (lead 0)',
-      () {
-        // Re-pin the 8–9 OW non-GP-only minDeficit=1 row at the upper boundary
-        // (own=9). The condition is `own >= kObserverConquestMinOwProvincesPerGp
-        // - 2 && !gpOnly`, so own=9 must also use minDeficit=1.
-        final game = _ownVsPartnerGame(
-          ownProvinces: 9,
-          partnerProvinces: 9,
-          partnerId: 'gp_partner',
-          extraInvadableMinorOwnerId: 'minor_frontier',
-        );
-        final snapshot = _ownSnapshot(
-          oldWorldProvincesOwned: 9,
-          atWarWith: const ['gp_partner'],
-          invadableProvinceIdsSorted: const ['oldWorld|invadable_minor'],
-        );
-        expect(
-          unwinnableSoleGpFrontierPeaceTarget(game: game, snapshot: snapshot),
-          isNull,
-          reason:
-              '9 OW non-GP-only also uses minDeficit=1. Tied enemy at own=9 '
-              'still returns null. A regression that narrowed the 8–9-OW '
-              'non-GP-only branch to own=8 only would silently flip this row.',
-        );
-      },
-    );
+    test('null at 9 OW non-GP-only when enemy ties (lead 0)', () {
+      // Re-pin the 8–9 OW non-GP-only minDeficit=1 row at the upper boundary
+      // (own=9). The condition is `own >= kObserverConquestMinOwProvincesPerGp
+      // - 2 && !gpOnly`, so own=9 must also use minDeficit=1.
+      final game = _ownVsPartnerGame(
+        ownProvinces: 9,
+        partnerProvinces: 9,
+        partnerId: 'gp_partner',
+        extraInvadableMinorOwnerId: 'minor_frontier',
+      );
+      final snapshot = _ownSnapshot(
+        oldWorldProvincesOwned: 9,
+        atWarWith: const ['gp_partner'],
+        invadableProvinceIdsSorted: const ['oldWorld|invadable_minor'],
+      );
+      expect(
+        unwinnableSoleGpFrontierPeaceTarget(game: game, snapshot: snapshot),
+        isNull,
+        reason:
+            '9 OW non-GP-only also uses minDeficit=1. Tied enemy at own=9 '
+            'still returns null. A regression that narrowed the 8–9-OW '
+            'non-GP-only branch to own=8 only would silently flip this row.',
+      );
+    });
 
-    test(
-      'returns enemy at 9 OW non-GP-only with one-province lead',
-      () {
-        // Positive boundary pin for the 9-OW row (the existing positive case
-        // covers own=8 only). Enemy=10 leads by 1; minDeficit=1; satisfies.
-        final game = _ownVsPartnerGame(
-          ownProvinces: 9,
-          partnerProvinces: 10,
-          partnerId: 'gp_partner',
-          extraInvadableMinorOwnerId: 'minor_frontier',
-        );
-        final snapshot = _ownSnapshot(
-          oldWorldProvincesOwned: 9,
-          atWarWith: const ['gp_partner'],
-          invadableProvinceIdsSorted: const ['oldWorld|invadable_minor'],
-        );
-        expect(
-          unwinnableSoleGpFrontierPeaceTarget(game: game, snapshot: snapshot),
-          'gp_partner',
-          reason:
-              '9 OW non-GP-only with lead-1 enemy must peace (minDeficit=1). '
-              'Mirrors the existing 8-OW pin and locks the upper boundary '
-              'of the 8–9 OW non-GP-only row.',
-        );
-      },
-    );
+    test('returns enemy at 9 OW non-GP-only with one-province lead', () {
+      // Positive boundary pin for the 9-OW row (the existing positive case
+      // covers own=8 only). Enemy=10 leads by 1; minDeficit=1; satisfies.
+      final game = _ownVsPartnerGame(
+        ownProvinces: 9,
+        partnerProvinces: 10,
+        partnerId: 'gp_partner',
+        extraInvadableMinorOwnerId: 'minor_frontier',
+      );
+      final snapshot = _ownSnapshot(
+        oldWorldProvincesOwned: 9,
+        atWarWith: const ['gp_partner'],
+        invadableProvinceIdsSorted: const ['oldWorld|invadable_minor'],
+      );
+      expect(
+        unwinnableSoleGpFrontierPeaceTarget(game: game, snapshot: snapshot),
+        'gp_partner',
+        reason:
+            '9 OW non-GP-only with lead-1 enemy must peace (minDeficit=1). '
+            'Mirrors the existing 8-OW pin and locks the upper boundary '
+            'of the 8–9 OW non-GP-only row.',
+      );
+    });
 
     // 8–9 OW band, GP-only frontier (minDeficit=kUnwinnableSoleGpMinProvinceDeficit):
     test(
@@ -521,92 +504,83 @@ void main() {
       },
     );
 
-    test(
-      'returns enemy at 8 OW GP-only frontier when enemy leads by 2',
-      () {
-        // own=8 GP-only frontier, enemy=10 (lead 2 == minDeficit). `<` is
-        // strict so 10 >= 8+2 → enemy. Pins the positive boundary for the
-        // GP-only minDeficit row.
-        final game = _ownVsPartnerGame(
-          ownProvinces: 8,
-          partnerProvinces: 10,
-          partnerId: 'gp_partner',
-          minorId: 'minor_pivot',
-          minorProvinces: 1,
-        );
-        final snapshot = _ownSnapshot(
-          oldWorldProvincesOwned: 8,
-          atWarWith: const ['gp_partner'],
-          invadableProvinceIdsSorted: const ['oldWorld|gp_partner_1'],
-        );
-        expect(
-          unwinnableSoleGpFrontierPeaceTarget(game: game, snapshot: snapshot),
-          'gp_partner',
-          reason:
-              '8 OW GP-only with lead exactly equal to '
-              'kUnwinnableSoleGpMinProvinceDeficit must peace (the inequality '
-              'is `enemyOw < own + minDeficit`, so equality satisfies). '
-              'Guards against a regression to a strict `>` lead requirement.',
-        );
-      },
-    );
+    test('returns enemy at 8 OW GP-only frontier when enemy leads by 2', () {
+      // own=8 GP-only frontier, enemy=10 (lead 2 == minDeficit). `<` is
+      // strict so 10 >= 8+2 → enemy. Pins the positive boundary for the
+      // GP-only minDeficit row.
+      final game = _ownVsPartnerGame(
+        ownProvinces: 8,
+        partnerProvinces: 10,
+        partnerId: 'gp_partner',
+        minorId: 'minor_pivot',
+        minorProvinces: 1,
+      );
+      final snapshot = _ownSnapshot(
+        oldWorldProvincesOwned: 8,
+        atWarWith: const ['gp_partner'],
+        invadableProvinceIdsSorted: const ['oldWorld|gp_partner_1'],
+      );
+      expect(
+        unwinnableSoleGpFrontierPeaceTarget(game: game, snapshot: snapshot),
+        'gp_partner',
+        reason:
+            '8 OW GP-only with lead exactly equal to '
+            'kUnwinnableSoleGpMinProvinceDeficit must peace (the inequality '
+            'is `enemyOw < own + minDeficit`, so equality satisfies). '
+            'Guards against a regression to a strict `>` lead requirement.',
+      );
+    });
 
-    test(
-      'null at 9 OW GP-only frontier when enemy leads by only 1',
-      () {
-        // Upper boundary of the GP-only band (own=9). Lead 1 still fails the
-        // minDeficit=2 row. Pins that the GP-only branch applies at own=9.
-        final game = _ownVsPartnerGame(
-          ownProvinces: 9,
-          partnerProvinces: 10,
-          partnerId: 'gp_partner',
-          minorId: 'minor_pivot',
-          minorProvinces: 1,
-        );
-        final snapshot = _ownSnapshot(
-          oldWorldProvincesOwned: 9,
-          atWarWith: const ['gp_partner'],
-          invadableProvinceIdsSorted: const ['oldWorld|gp_partner_1'],
-        );
-        expect(
-          unwinnableSoleGpFrontierPeaceTarget(game: game, snapshot: snapshot),
-          isNull,
-          reason:
-              '9 OW on a GP-only invadable frontier still uses '
-              'kUnwinnableSoleGpMinProvinceDeficit. Lead 1 returns null. A '
-              'regression that exempted own=9 from the GP-only branch would '
-              'silently peace at lead 1 and surrender the near-quota war.',
-        );
-      },
-    );
+    test('null at 9 OW GP-only frontier when enemy leads by only 1', () {
+      // Upper boundary of the GP-only band (own=9). Lead 1 still fails the
+      // minDeficit=2 row. Pins that the GP-only branch applies at own=9.
+      final game = _ownVsPartnerGame(
+        ownProvinces: 9,
+        partnerProvinces: 10,
+        partnerId: 'gp_partner',
+        minorId: 'minor_pivot',
+        minorProvinces: 1,
+      );
+      final snapshot = _ownSnapshot(
+        oldWorldProvincesOwned: 9,
+        atWarWith: const ['gp_partner'],
+        invadableProvinceIdsSorted: const ['oldWorld|gp_partner_1'],
+      );
+      expect(
+        unwinnableSoleGpFrontierPeaceTarget(game: game, snapshot: snapshot),
+        isNull,
+        reason:
+            '9 OW on a GP-only invadable frontier still uses '
+            'kUnwinnableSoleGpMinProvinceDeficit. Lead 1 returns null. A '
+            'regression that exempted own=9 from the GP-only branch would '
+            'silently peace at lead 1 and surrender the near-quota war.',
+      );
+    });
 
-    test(
-      'returns enemy at 9 OW GP-only frontier when enemy leads by 2',
-      () {
-        // own=9 GP-only frontier, enemy=11 (lead 2). Locks the positive
-        // boundary at the upper end of the GP-only band so both own=8 and
-        // own=9 are pinned at lead == kUnwinnableSoleGpMinProvinceDeficit.
-        final game = _ownVsPartnerGame(
-          ownProvinces: 9,
-          partnerProvinces: 11,
-          partnerId: 'gp_partner',
-          minorId: 'minor_pivot',
-          minorProvinces: 1,
-        );
-        final snapshot = _ownSnapshot(
-          oldWorldProvincesOwned: 9,
-          atWarWith: const ['gp_partner'],
-          invadableProvinceIdsSorted: const ['oldWorld|gp_partner_1'],
-        );
-        expect(
-          unwinnableSoleGpFrontierPeaceTarget(game: game, snapshot: snapshot),
-          'gp_partner',
-          reason:
-              '9 OW GP-only with lead exactly equal to '
-              'kUnwinnableSoleGpMinProvinceDeficit must peace. Locks the '
-              'upper boundary of the GP-only row.',
-        );
-      },
-    );
+    test('returns enemy at 9 OW GP-only frontier when enemy leads by 2', () {
+      // own=9 GP-only frontier, enemy=11 (lead 2). Locks the positive
+      // boundary at the upper end of the GP-only band so both own=8 and
+      // own=9 are pinned at lead == kUnwinnableSoleGpMinProvinceDeficit.
+      final game = _ownVsPartnerGame(
+        ownProvinces: 9,
+        partnerProvinces: 11,
+        partnerId: 'gp_partner',
+        minorId: 'minor_pivot',
+        minorProvinces: 1,
+      );
+      final snapshot = _ownSnapshot(
+        oldWorldProvincesOwned: 9,
+        atWarWith: const ['gp_partner'],
+        invadableProvinceIdsSorted: const ['oldWorld|gp_partner_1'],
+      );
+      expect(
+        unwinnableSoleGpFrontierPeaceTarget(game: game, snapshot: snapshot),
+        'gp_partner',
+        reason:
+            '9 OW GP-only with lead exactly equal to '
+            'kUnwinnableSoleGpMinProvinceDeficit must peace. Locks the '
+            'upper boundary of the GP-only row.',
+      );
+    });
   });
 }

@@ -23,15 +23,16 @@ import '../util/ai_random_utils.dart';
 import '../util/orders_extensions.dart';
 import 'diplomacy_planner_declare_war_targets.dart';
 import 'diplomatic_candidate_scoring.dart';
-import 'diplomacy_planner_peace_targets.dart'
-    hide collectStalledGreatPowerPeaceTargets;
+import 'expand_phase_planner.dart'
+    show multiFrontNonBlockerGpPeaceTargets, stalledOwExpansionNeedsPeacePass;
 import 'diplomacy_planner_result.dart';
 import 'phase_planner_declare_war_targets.dart';
 import 'phase_planner_dispatch.dart';
 import 'phase_planner_peace_targets.dart';
 
 export 'diplomacy_planner_declare_war_targets.dart';
-export 'diplomacy_planner_peace_targets.dart';
+export 'observer_goal_phase.dart'
+    show supplementMutualStalledGreatPowerPeaceOrders;
 export 'diplomatic_candidate_scoring.dart'
     show computeDiplomaticCandidateScores;
 export 'war_desire_calculator.dart' show computeWarDesireScore;

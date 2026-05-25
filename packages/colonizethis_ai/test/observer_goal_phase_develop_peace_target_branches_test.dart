@@ -120,10 +120,7 @@ Game _developGame({
   return Game(
     id: 'g-2509-develop-peace-target-branches-t$turnNumber',
     worldState: WorldState(
-      turnState: TurnState(
-        turnNumber: turnNumber,
-        phase: TurnPhase.orders,
-      ),
+      turnState: TurnState(turnNumber: turnNumber, phase: TurnPhase.orders),
       oldWorld: const RegionData(),
       newWorld: const RegionData(),
     ),
@@ -146,9 +143,7 @@ AIWorldSnapshot _developSnapshot({
     playerId: playerId,
     threats: ThreatSummary(atWarWith: atWarWith),
     opportunities: const OpportunitySummary(),
-    conquest: ConquestSummary(
-      oldWorldProvincesOwned: oldWorldProvincesOwned,
-    ),
+    conquest: ConquestSummary(oldWorldProvincesOwned: oldWorldProvincesOwned),
     colonial: const ColonialSummary(),
     economy: const EconomySummary(),
     relations: const {},
@@ -266,9 +261,7 @@ void main() {
         tribes: const [Tribe(id: _tribe1, displayName: 'T1')],
         minorNations: const [MinorNation(id: _minor1, displayName: 'M1')],
       );
-      final snapshot = _developSnapshot(
-        atWarWith: const [_tribe1, _minor1],
-      );
+      final snapshot = _developSnapshot(atWarWith: const [_tribe1, _minor1]);
       expect(
         observerGoalPhaseFor(snapshot: snapshot, game: game),
         ObserverGoalPhase.develop,
@@ -320,9 +313,7 @@ void main() {
         // a regression that dropped the sort (or replaced it with
         // input-order preservation) would surface here.
         final game = _developGame(turnNumber: 140);
-        final snapshot = _developSnapshot(
-          atWarWith: const [_gp3, _gp4, _gp2],
-        );
+        final snapshot = _developSnapshot(atWarWith: const [_gp3, _gp4, _gp2]);
         expect(
           observerGoalPhaseFor(snapshot: snapshot, game: game),
           ObserverGoalPhase.develop,
@@ -339,40 +330,37 @@ void main() {
       },
     );
 
-    test(
-      'DEVELOP with mixed GP + non-GP atWarWith -> only GPs, sorted',
-      () {
-        // Defensive pin: the filter and the sort must compose so that
-        // tribe / minor ids in `atWarWith` are dropped **before** the
-        // sort runs. The shuffled input order (gp3, tribe1, gp2,
-        // minor1) exercises both the filter (drops tribe1, minor1)
-        // and the sort (gp3, gp2 -> gp2, gp3) in one fixture. A
-        // regression that sorted first and filtered after would
-        // still pass; a regression that left non-GP ids in the
-        // output list would break downstream `offerPeace` validation.
-        final game = _developGame(
-          turnNumber: 140,
-          tribes: const [Tribe(id: _tribe1, displayName: 'T1')],
-          minorNations: const [MinorNation(id: _minor1, displayName: 'M1')],
-        );
-        final snapshot = _developSnapshot(
-          atWarWith: const [_gp3, _tribe1, _gp2, _minor1],
-        );
-        expect(
-          observerGoalPhaseFor(snapshot: snapshot, game: game),
-          ObserverGoalPhase.develop,
-          reason: 'Fixture must place GP in DEVELOP.',
-        );
-        expect(
-          developPhaseGpPeaceTargets(game: game, snapshot: snapshot),
-          const [_gp2, _gp3],
-          reason:
-              'Non-GP factions in `atWarWith` are filtered out before '
-              'the sort, leaving the GP fronts in ascending '
-              '`factionId` order.',
-        );
-      },
-    );
+    test('DEVELOP with mixed GP + non-GP atWarWith -> only GPs, sorted', () {
+      // Defensive pin: the filter and the sort must compose so that
+      // tribe / minor ids in `atWarWith` are dropped **before** the
+      // sort runs. The shuffled input order (gp3, tribe1, gp2,
+      // minor1) exercises both the filter (drops tribe1, minor1)
+      // and the sort (gp3, gp2 -> gp2, gp3) in one fixture. A
+      // regression that sorted first and filtered after would
+      // still pass; a regression that left non-GP ids in the
+      // output list would break downstream `offerPeace` validation.
+      final game = _developGame(
+        turnNumber: 140,
+        tribes: const [Tribe(id: _tribe1, displayName: 'T1')],
+        minorNations: const [MinorNation(id: _minor1, displayName: 'M1')],
+      );
+      final snapshot = _developSnapshot(
+        atWarWith: const [_gp3, _tribe1, _gp2, _minor1],
+      );
+      expect(
+        observerGoalPhaseFor(snapshot: snapshot, game: game),
+        ObserverGoalPhase.develop,
+        reason: 'Fixture must place GP in DEVELOP.',
+      );
+      expect(
+        developPhaseGpPeaceTargets(game: game, snapshot: snapshot),
+        const [_gp2, _gp3],
+        reason:
+            'Non-GP factions in `atWarWith` are filtered out before '
+            'the sort, leaving the GP fronts in ascending '
+            '`factionId` order.',
+      );
+    });
 
     test(
       'determinism: identical inputs produce identical peace target list',

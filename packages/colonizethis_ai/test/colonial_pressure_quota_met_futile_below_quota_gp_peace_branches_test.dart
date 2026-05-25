@@ -134,9 +134,7 @@ Game _gameWithOwProvinces({
   List<MinorNation> minorNations = const [
     MinorNation(id: _minor1, displayName: 'M1'),
   ],
-  List<Tribe> tribes = const [
-    Tribe(id: _tribe1, displayName: 'T1'),
-  ],
+  List<Tribe> tribes = const [Tribe(id: _tribe1, displayName: 'T1')],
 }) {
   return Game(
     id: 'g-quota-met-futile',
@@ -187,155 +185,127 @@ List<Province> _ownedProvinces(String ownerId, int count, int idOffset) {
 
 void main() {
   group('quotaMetFutileBelowQuotaGpPeaceTargets — early guards', () {
-    test(
-      'returns [] when own OW is one below the observer quota '
-      '(`isBelowObserverConquestQuota` early guard)',
-      () {
-        // Below-quota own + below-quota non-blocker non-invadable-owning enemy:
-        // the main pass would normally include gp3, but the early guard
-        // short-circuits regardless because this helper only applies
-        // **after** the quota is met.
-        final game = _gameWithOwProvinces(
-          provinces: <Province>[
-            ..._ownedProvinces(_gp1, kObserverConquestMinOwProvincesPerGp - 1,
-                0),
-            ..._ownedProvinces(_gp3, 8, 0),
-            const Province(
-              id: 'oldWorld|inv1',
-              regionId: 'oldWorld',
-              ownerId: _minor1,
-            ),
-          ],
-        );
-        final snapshot = _snapshot(
-          ownOw: kObserverConquestMinOwProvincesPerGp - 1,
-          atWarWith: const [_gp3],
-          invadableProvinceIdsSorted: const ['oldWorld|inv1'],
-        );
-        expect(
-          quotaMetFutileBelowQuotaGpPeaceTargets(
-            game: game,
-            snapshot: snapshot,
+    test('returns [] when own OW is one below the observer quota '
+        '(`isBelowObserverConquestQuota` early guard)', () {
+      // Below-quota own + below-quota non-blocker non-invadable-owning enemy:
+      // the main pass would normally include gp3, but the early guard
+      // short-circuits regardless because this helper only applies
+      // **after** the quota is met.
+      final game = _gameWithOwProvinces(
+        provinces: <Province>[
+          ..._ownedProvinces(_gp1, kObserverConquestMinOwProvincesPerGp - 1, 0),
+          ..._ownedProvinces(_gp3, 8, 0),
+          const Province(
+            id: 'oldWorld|inv1',
+            regionId: 'oldWorld',
+            ownerId: _minor1,
           ),
-          isEmpty,
-          reason:
-              'The futile-below-quota peace helper is reserved for quota-met '
-              'GPs; the EXPAND-phase peace helpers own the below-quota set. '
-              'Flipping `<` to `<=` in `isBelowObserverConquestQuota` would '
-              'silently regress this early guard and double-emit peace from '
-              'two helpers on the same turn.',
-        );
-      },
-    );
+        ],
+      );
+      final snapshot = _snapshot(
+        ownOw: kObserverConquestMinOwProvincesPerGp - 1,
+        atWarWith: const [_gp3],
+        invadableProvinceIdsSorted: const ['oldWorld|inv1'],
+      );
+      expect(
+        quotaMetFutileBelowQuotaGpPeaceTargets(game: game, snapshot: snapshot),
+        isEmpty,
+        reason:
+            'The futile-below-quota peace helper is reserved for quota-met '
+            'GPs; the EXPAND-phase peace helpers own the below-quota set. '
+            'Flipping `<` to `<=` in `isBelowObserverConquestQuota` would '
+            'silently regress this early guard and double-emit peace from '
+            'two helpers on the same turn.',
+      );
+    });
 
-    test(
-      'returns [] when no invadable OW provinces remain '
-      '(`invadableProvinceIdsSorted.isEmpty` early guard)',
-      () {
-        // Quota-met own + below-quota non-blocker non-invadable-owning enemy:
-        // without an invadable OW frontier there is nothing to defend, so the
-        // consolidate helpers (not this one) own the peace decision.
-        final game = _gameWithOwProvinces(
-          provinces: <Province>[
-            ..._ownedProvinces(_gp1, kObserverConquestMinOwProvincesPerGp + 2,
-                0),
-            ..._ownedProvinces(_gp3, 8, 0),
-          ],
-        );
-        final snapshot = _snapshot(
-          ownOw: kObserverConquestMinOwProvincesPerGp + 2,
-          atWarWith: const [_gp3],
-        );
-        expect(
-          quotaMetFutileBelowQuotaGpPeaceTargets(
-            game: game,
-            snapshot: snapshot,
-          ),
-          isEmpty,
-          reason:
-              'No invadable OW frontier means there is nothing this helper '
-              'must defend by keeping a war active; deferring to the '
-              'consolidate / quota-met helpers keeps responsibilities '
-              'partitioned.',
-        );
-      },
-    );
+    test('returns [] when no invadable OW provinces remain '
+        '(`invadableProvinceIdsSorted.isEmpty` early guard)', () {
+      // Quota-met own + below-quota non-blocker non-invadable-owning enemy:
+      // without an invadable OW frontier there is nothing to defend, so the
+      // consolidate helpers (not this one) own the peace decision.
+      final game = _gameWithOwProvinces(
+        provinces: <Province>[
+          ..._ownedProvinces(_gp1, kObserverConquestMinOwProvincesPerGp + 2, 0),
+          ..._ownedProvinces(_gp3, 8, 0),
+        ],
+      );
+      final snapshot = _snapshot(
+        ownOw: kObserverConquestMinOwProvincesPerGp + 2,
+        atWarWith: const [_gp3],
+      );
+      expect(
+        quotaMetFutileBelowQuotaGpPeaceTargets(game: game, snapshot: snapshot),
+        isEmpty,
+        reason:
+            'No invadable OW frontier means there is nothing this helper '
+            'must defend by keeping a war active; deferring to the '
+            'consolidate / quota-met helpers keeps responsibilities '
+            'partitioned.',
+      );
+    });
   });
 
   group('quotaMetFutileBelowQuotaGpPeaceTargets — per-enemy filters', () {
-    test(
-      'skips non-GP factions in `atWarWith` (minors / tribes filtered)',
-      () {
-        // A minor and a tribe appear in `atWarWith` alongside a valid
-        // below-quota non-blocker GP. Only the GP must surface as a target.
-        final game = _gameWithOwProvinces(
-          provinces: <Province>[
-            ..._ownedProvinces(_gp1, kObserverConquestMinOwProvincesPerGp + 2,
-                0),
-            ..._ownedProvinces(_gp3, 8, 0),
-            const Province(
-              id: 'oldWorld|inv1',
-              regionId: 'oldWorld',
-              ownerId: _minor1,
-            ),
-          ],
-        );
-        final snapshot = _snapshot(
-          ownOw: kObserverConquestMinOwProvincesPerGp + 2,
-          atWarWith: const [_minor1, _tribe1, _gp3],
-          invadableProvinceIdsSorted: const ['oldWorld|inv1'],
-        );
-        expect(
-          quotaMetFutileBelowQuotaGpPeaceTargets(
-            game: game,
-            snapshot: snapshot,
+    test('skips non-GP factions in `atWarWith` (minors / tribes filtered)', () {
+      // A minor and a tribe appear in `atWarWith` alongside a valid
+      // below-quota non-blocker GP. Only the GP must surface as a target.
+      final game = _gameWithOwProvinces(
+        provinces: <Province>[
+          ..._ownedProvinces(_gp1, kObserverConquestMinOwProvincesPerGp + 2, 0),
+          ..._ownedProvinces(_gp3, 8, 0),
+          const Province(
+            id: 'oldWorld|inv1',
+            regionId: 'oldWorld',
+            ownerId: _minor1,
           ),
-          const [_gp3],
-          reason:
-              'Minors and tribes must be filtered by `game.playerById` even '
-              'when they appear in `atWarWith`; only Great Powers should '
-              'surface as peace targets for this helper.',
-        );
-      },
-    );
+        ],
+      );
+      final snapshot = _snapshot(
+        ownOw: kObserverConquestMinOwProvincesPerGp + 2,
+        atWarWith: const [_minor1, _tribe1, _gp3],
+        invadableProvinceIdsSorted: const ['oldWorld|inv1'],
+      );
+      expect(
+        quotaMetFutileBelowQuotaGpPeaceTargets(game: game, snapshot: snapshot),
+        const [_gp3],
+        reason:
+            'Minors and tribes must be filtered by `game.playerById` even '
+            'when they appear in `atWarWith`; only Great Powers should '
+            'surface as peace targets for this helper.',
+      );
+    });
 
-    test(
-      'skips at-war enemy GPs that have met the observer quota',
-      () {
-        // gp2 is at quota (10 OW) so the per-enemy guard skips it; gp3 is
-        // still below quota and remains eligible.
-        final game = _gameWithOwProvinces(
-          provinces: <Province>[
-            ..._ownedProvinces(_gp1, kObserverConquestMinOwProvincesPerGp + 2,
-                0),
-            ..._ownedProvinces(_gp2, kObserverConquestMinOwProvincesPerGp, 0),
-            ..._ownedProvinces(_gp3, 8, 0),
-            const Province(
-              id: 'oldWorld|inv1',
-              regionId: 'oldWorld',
-              ownerId: _minor1,
-            ),
-          ],
-        );
-        final snapshot = _snapshot(
-          ownOw: kObserverConquestMinOwProvincesPerGp + 2,
-          atWarWith: const [_gp2, _gp3],
-          invadableProvinceIdsSorted: const ['oldWorld|inv1'],
-        );
-        expect(
-          quotaMetFutileBelowQuotaGpPeaceTargets(
-            game: game,
-            snapshot: snapshot,
+    test('skips at-war enemy GPs that have met the observer quota', () {
+      // gp2 is at quota (10 OW) so the per-enemy guard skips it; gp3 is
+      // still below quota and remains eligible.
+      final game = _gameWithOwProvinces(
+        provinces: <Province>[
+          ..._ownedProvinces(_gp1, kObserverConquestMinOwProvincesPerGp + 2, 0),
+          ..._ownedProvinces(_gp2, kObserverConquestMinOwProvincesPerGp, 0),
+          ..._ownedProvinces(_gp3, 8, 0),
+          const Province(
+            id: 'oldWorld|inv1',
+            regionId: 'oldWorld',
+            ownerId: _minor1,
           ),
-          const [_gp3],
-          reason:
-              'Quota-met enemy GPs are not "futile below quota" by definition; '
-              'peace toward them is owned by the consolidate helpers. The '
-              'per-enemy quota check must stay strictly below the threshold '
-              '(matches `isBelowObserverConquestQuota`).',
-        );
-      },
-    );
+        ],
+      );
+      final snapshot = _snapshot(
+        ownOw: kObserverConquestMinOwProvincesPerGp + 2,
+        atWarWith: const [_gp2, _gp3],
+        invadableProvinceIdsSorted: const ['oldWorld|inv1'],
+      );
+      expect(
+        quotaMetFutileBelowQuotaGpPeaceTargets(game: game, snapshot: snapshot),
+        const [_gp3],
+        reason:
+            'Quota-met enemy GPs are not "futile below quota" by definition; '
+            'peace toward them is owned by the consolidate helpers. The '
+            'per-enemy quota check must stay strictly below the threshold '
+            '(matches `isBelowObserverConquestQuota`).',
+      );
+    });
 
     test(
       'skips at-war enemy GPs that own one of the invadable OW provinces',
@@ -345,8 +315,11 @@ void main() {
         // stays open.
         final game = _gameWithOwProvinces(
           provinces: <Province>[
-            ..._ownedProvinces(_gp1, kObserverConquestMinOwProvincesPerGp + 2,
-                0),
+            ..._ownedProvinces(
+              _gp1,
+              kObserverConquestMinOwProvincesPerGp + 2,
+              0,
+            ),
             ..._ownedProvinces(_gp2, 7, 0),
             ..._ownedProvinces(_gp3, 8, 0),
             const Province(
@@ -376,68 +349,61 @@ void main() {
       },
     );
 
-    test(
-      'skips the primary invadable OW blocker (defensive backstop)',
-      () {
-        // gp2 is the primary invadable OW blocker (owns both invadable
-        // provinces). The blocker-equality clause acts as a backstop for a
-        // future blocker-resolution refactor; on this fixture it produces the
-        // same result as the invadable-owning skip, but the helper must
-        // exclude gp2 either way and surface only the below-quota non-blocker
-        // non-invadable-owning gp3 front.
-        final game = _gameWithOwProvinces(
-          provinces: <Province>[
-            ..._ownedProvinces(_gp1, kObserverConquestMinOwProvincesPerGp + 2,
-                0),
-            ..._ownedProvinces(_gp2, 6, 0),
-            ..._ownedProvinces(_gp3, 8, 0),
-            const Province(
-              id: 'oldWorld|gp2_inv_a',
-              regionId: 'oldWorld',
-              ownerId: _gp2,
-            ),
-            const Province(
-              id: 'oldWorld|gp2_inv_b',
-              regionId: 'oldWorld',
-              ownerId: _gp2,
-            ),
-          ],
-        );
-        final snapshot = _snapshot(
-          ownOw: kObserverConquestMinOwProvincesPerGp + 2,
-          atWarWith: const [_gp2, _gp3],
-          invadableProvinceIdsSorted: const [
-            'oldWorld|gp2_inv_a',
-            'oldWorld|gp2_inv_b',
-          ],
-        );
-        // Sanity: confirm `primaryInvadableOldWorldGpBlocker` returns gp2
-        // for the synthetic fixture so the blocker-equality arm is the
-        // contract under test.
-        expect(
-          primaryInvadableOldWorldGpBlocker(game: game, snapshot: snapshot),
-          _gp2,
-          reason:
-              'Fixture sanity: gp2 owns the plurality of invadable OW so the '
-              'blocker resolves to gp2 — the blocker-equality skip arm in '
-              '`quotaMetFutileBelowQuotaGpPeaceTargets` must therefore '
-              'exclude gp2 even if the invadable-owning skip is bypassed by '
-              'a future refactor.',
-        );
-        expect(
-          quotaMetFutileBelowQuotaGpPeaceTargets(
-            game: game,
-            snapshot: snapshot,
+    test('skips the primary invadable OW blocker (defensive backstop)', () {
+      // gp2 is the primary invadable OW blocker (owns both invadable
+      // provinces). The blocker-equality clause acts as a backstop for a
+      // future blocker-resolution refactor; on this fixture it produces the
+      // same result as the invadable-owning skip, but the helper must
+      // exclude gp2 either way and surface only the below-quota non-blocker
+      // non-invadable-owning gp3 front.
+      final game = _gameWithOwProvinces(
+        provinces: <Province>[
+          ..._ownedProvinces(_gp1, kObserverConquestMinOwProvincesPerGp + 2, 0),
+          ..._ownedProvinces(_gp2, 6, 0),
+          ..._ownedProvinces(_gp3, 8, 0),
+          const Province(
+            id: 'oldWorld|gp2_inv_a',
+            regionId: 'oldWorld',
+            ownerId: _gp2,
           ),
-          const [_gp3],
-          reason:
-              'gp2 is the primary invadable OW blocker; peacing it would '
-              'lose the OW acquisition path. The defensive `factionId == '
-              'blocker` clause guarantees blocker exclusion independently '
-              'of the invadable-owning lookup.',
-        );
-      },
-    );
+          const Province(
+            id: 'oldWorld|gp2_inv_b',
+            regionId: 'oldWorld',
+            ownerId: _gp2,
+          ),
+        ],
+      );
+      final snapshot = _snapshot(
+        ownOw: kObserverConquestMinOwProvincesPerGp + 2,
+        atWarWith: const [_gp2, _gp3],
+        invadableProvinceIdsSorted: const [
+          'oldWorld|gp2_inv_a',
+          'oldWorld|gp2_inv_b',
+        ],
+      );
+      // Sanity: confirm `primaryInvadableOldWorldGpBlocker` returns gp2
+      // for the synthetic fixture so the blocker-equality arm is the
+      // contract under test.
+      expect(
+        primaryInvadableOldWorldGpBlocker(game: game, snapshot: snapshot),
+        _gp2,
+        reason:
+            'Fixture sanity: gp2 owns the plurality of invadable OW so the '
+            'blocker resolves to gp2 — the blocker-equality skip arm in '
+            '`quotaMetFutileBelowQuotaGpPeaceTargets` must therefore '
+            'exclude gp2 even if the invadable-owning skip is bypassed by '
+            'a future refactor.',
+      );
+      expect(
+        quotaMetFutileBelowQuotaGpPeaceTargets(game: game, snapshot: snapshot),
+        const [_gp3],
+        reason:
+            'gp2 is the primary invadable OW blocker; peacing it would '
+            'lose the OW acquisition path. The defensive `factionId == '
+            'blocker` clause guarantees blocker exclusion independently '
+            'of the invadable-owning lookup.',
+      );
+    });
   });
 
   group('quotaMetFutileBelowQuotaGpPeaceTargets — multi-target ordering', () {
@@ -449,8 +415,11 @@ void main() {
         // must be the deterministic ascending-`factionId` sort.
         final game = _gameWithOwProvinces(
           provinces: <Province>[
-            ..._ownedProvinces(_gp1, kObserverConquestMinOwProvincesPerGp + 2,
-                0),
+            ..._ownedProvinces(
+              _gp1,
+              kObserverConquestMinOwProvincesPerGp + 2,
+              0,
+            ),
             ..._ownedProvinces(_gp2, 8, 0),
             ..._ownedProvinces(_gp3, 8, 0),
             ..._ownedProvinces(_gp4, 7, 0),
@@ -487,43 +456,37 @@ void main() {
   });
 
   group('quotaMetFutileBelowQuotaGpPeaceTargets — quota boundary', () {
-    test(
-      'enters main pass when own OW equals the observer quota '
-      '(strict `<` boundary)',
-      () {
-        // own OW == quota: `isBelowObserverConquestQuota` is false (strict
-        // `<` comparison) so the early guard does not fire and the main pass
-        // produces the expected `[gp3]`. A regression that switched to `<=`
-        // would yield `[]` here.
-        final game = _gameWithOwProvinces(
-          provinces: <Province>[
-            ..._ownedProvinces(_gp1, kObserverConquestMinOwProvincesPerGp, 0),
-            ..._ownedProvinces(_gp3, 8, 0),
-            const Province(
-              id: 'oldWorld|inv1',
-              regionId: 'oldWorld',
-              ownerId: _minor1,
-            ),
-          ],
-        );
-        final snapshot = _snapshot(
-          ownOw: kObserverConquestMinOwProvincesPerGp,
-          atWarWith: const [_gp3],
-          invadableProvinceIdsSorted: const ['oldWorld|inv1'],
-        );
-        expect(
-          quotaMetFutileBelowQuotaGpPeaceTargets(
-            game: game,
-            snapshot: snapshot,
+    test('enters main pass when own OW equals the observer quota '
+        '(strict `<` boundary)', () {
+      // own OW == quota: `isBelowObserverConquestQuota` is false (strict
+      // `<` comparison) so the early guard does not fire and the main pass
+      // produces the expected `[gp3]`. A regression that switched to `<=`
+      // would yield `[]` here.
+      final game = _gameWithOwProvinces(
+        provinces: <Province>[
+          ..._ownedProvinces(_gp1, kObserverConquestMinOwProvincesPerGp, 0),
+          ..._ownedProvinces(_gp3, 8, 0),
+          const Province(
+            id: 'oldWorld|inv1',
+            regionId: 'oldWorld',
+            ownerId: _minor1,
           ),
-          const [_gp3],
-          reason:
-              'The quota boundary `own == kObserverConquestMinOwProvincesPerGp` '
-              'is the first turn a GP qualifies for this helper. Flipping the '
-              'comparison would silently delay the futile-below-quota peace '
-              'pass by one quota tick.',
-        );
-      },
-    );
+        ],
+      );
+      final snapshot = _snapshot(
+        ownOw: kObserverConquestMinOwProvincesPerGp,
+        atWarWith: const [_gp3],
+        invadableProvinceIdsSorted: const ['oldWorld|inv1'],
+      );
+      expect(
+        quotaMetFutileBelowQuotaGpPeaceTargets(game: game, snapshot: snapshot),
+        const [_gp3],
+        reason:
+            'The quota boundary `own == kObserverConquestMinOwProvincesPerGp` '
+            'is the first turn a GP qualifies for this helper. Flipping the '
+            'comparison would silently delay the futile-below-quota peace '
+            'pass by one quota tick.',
+      );
+    });
   });
 }

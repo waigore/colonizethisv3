@@ -3,7 +3,8 @@ import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 // Fake suggestion API used to drive domain planners deterministically in tests.
-class FakeOrderSuggestionAPIForDomainPlannerTests implements OrderSuggestionAPI {
+class FakeOrderSuggestionAPIForDomainPlannerTests
+    implements OrderSuggestionAPI {
   const FakeOrderSuggestionAPIForDomainPlannerTests({
     required this.work,
     required this.build,
@@ -109,9 +110,7 @@ class FakeOrderSuggestionAPIForDomainPlannerTests implements OrderSuggestionAPI 
     MapTopology topology,
     Orders currentOrders, {
     Map<String, TileMapResult>? tileMapByRegion,
-  }) =>
-      diplomatic
-          .where((o) => o.type == DiplomaticOrderType.declareWar)
-          .toList();
+  }) => diplomatic
+      .where((o) => o.type == DiplomaticOrderType.declareWar)
+      .toList();
 }
-

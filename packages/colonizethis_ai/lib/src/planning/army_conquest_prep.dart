@@ -37,7 +37,8 @@ Game prepareConquestFieldArmy({
   required StrategicGoal primaryGoal,
 }) {
   final stalled = isStalledOldWorldExpansion(oldWorldProvincesOwned);
-  final shouldPrep = primaryGoal == StrategicGoal.conquer ||
+  final shouldPrep =
+      primaryGoal == StrategicGoal.conquer ||
       provincesToVictory > kBuildRegimentVictoryPaceThreshold ||
       stalled;
   if (!shouldPrep) return game;
@@ -66,9 +67,11 @@ Game prepareConquestFieldArmy({
 
   if (stalled) {
     var planningGame = game;
-    for (var i = fieldArmiesAtCapital;
-        i < kStalledConquestFieldArmySplitCap;
-        i++) {
+    for (
+      var i = fieldArmiesAtCapital;
+      i < kStalledConquestFieldArmySplitCap;
+      i++
+    ) {
       final currentHome = _homeArmyForPlayer(planningGame, nationId);
       if (currentHome == null || currentHome.regimentUnitIds.length < 2) {
         break;

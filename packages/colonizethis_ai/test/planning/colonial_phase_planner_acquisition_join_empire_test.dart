@@ -208,9 +208,7 @@ void main() {
         overtureStates: <OvertureState>[_nap(_gp1, _gp2)],
         diplomacyRelations: <DiplomacyRelation>[_friendly(_gp1, _gp2)],
       );
-      final snapshot = _acquisitionSnapshot(
-        invadableNw: const [_province3],
-      );
+      final snapshot = _acquisitionSnapshot(invadableNw: const [_province3]);
       expect(
         planColonialAcquisition(game: game, snapshot: snapshot),
         isNull,
@@ -231,9 +229,7 @@ void main() {
         ],
         diplomacyRelations: <DiplomacyRelation>[_friendly(_gp1, _tribe1)],
       );
-      final snapshot = _acquisitionSnapshot(
-        invadableNw: const [_province1],
-      );
+      final snapshot = _acquisitionSnapshot(invadableNw: const [_province1]);
       expect(
         planColonialAcquisition(game: game, snapshot: snapshot),
         isNull,
@@ -254,9 +250,7 @@ void main() {
         overtureStates: <OvertureState>[_embassy(_gp1, _tribe1)],
         diplomacyRelations: <DiplomacyRelation>[_friendly(_gp1, _tribe1)],
       );
-      final snapshot = _acquisitionSnapshot(
-        invadableNw: const [_province1],
-      );
+      final snapshot = _acquisitionSnapshot(invadableNw: const [_province1]);
       expect(
         planColonialAcquisition(game: game, snapshot: snapshot),
         isNull,
@@ -315,9 +309,7 @@ void main() {
           ),
         ],
       );
-      final snapshot = _acquisitionSnapshot(
-        invadableNw: const [_province1],
-      );
+      final snapshot = _acquisitionSnapshot(invadableNw: const [_province1]);
       expect(
         planColonialAcquisition(game: game, snapshot: snapshot),
         isNull,
@@ -340,9 +332,7 @@ void main() {
         overtureStates: <OvertureState>[_nap(_gp1, _tribe1)],
         diplomacyRelations: <DiplomacyRelation>[_friendly(_gp1, _tribe1)],
       );
-      final snapshot = _acquisitionSnapshot(
-        invadableNw: const [_province1],
-      );
+      final snapshot = _acquisitionSnapshot(invadableNw: const [_province1]);
       expect(
         planColonialAcquisition(game: game, snapshot: snapshot),
         const ColonialAcquisitionTarget(

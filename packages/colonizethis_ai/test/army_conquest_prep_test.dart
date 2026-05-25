@@ -55,8 +55,9 @@ void main() {
         primaryGoal: StrategicGoal.conquer,
       );
 
-      final home = game.worldState.armies
-          .singleWhere((a) => a.id == homeArmyIdFor('gp1'));
+      final home = game.worldState.armies.singleWhere(
+        (a) => a.id == homeArmyIdFor('gp1'),
+      );
       final field = game.worldState.armies
           .where((a) => a.ownerId == 'gp1' && !a.isHomeArmy)
           .toList();

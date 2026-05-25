@@ -134,10 +134,7 @@ void main() {
 
     test('keeps OW build_improvement (OW push continues under safeguard)', () {
       expect(
-        shouldSuppressWorkOrderFromPhasePlan(
-          _owBuildImprovement,
-          colonialLite,
-        ),
+        shouldSuppressWorkOrderFromPhasePlan(_owBuildImprovement, colonialLite),
         isFalse,
       );
     });
@@ -231,24 +228,25 @@ void main() {
       expect(first, equals(second));
     });
 
-    test('phase change with identical order flips suppression deterministically',
-        () {
-      const expand = PhasePlanOutcome(phase: ObserverGoalPhase.expand);
-      const colonial = PhasePlanOutcome(phase: ObserverGoalPhase.colonial);
-      expect(
-        shouldSuppressWorkOrderFromPhasePlan(_nwBuildImprovement, expand),
-        isTrue,
-      );
-      expect(
-        shouldSuppressWorkOrderFromPhasePlan(_nwBuildImprovement, colonial),
-        isFalse,
-      );
-    });
+    test(
+      'phase change with identical order flips suppression deterministically',
+      () {
+        const expand = PhasePlanOutcome(phase: ObserverGoalPhase.expand);
+        const colonial = PhasePlanOutcome(phase: ObserverGoalPhase.colonial);
+        expect(
+          shouldSuppressWorkOrderFromPhasePlan(_nwBuildImprovement, expand),
+          isTrue,
+        );
+        expect(
+          shouldSuppressWorkOrderFromPhasePlan(_nwBuildImprovement, colonial),
+          isFalse,
+        );
+      },
+    );
   });
 
   group('shouldSuppressWorkOrderFromPhasePlan — outcome slot independence', () {
-    test('only `phase` drives suppression — sibling slots have no effect',
-        () {
+    test('only `phase` drives suppression — sibling slots have no effect', () {
       const populatedExpand = PhasePlanOutcome(
         phase: ObserverGoalPhase.expand,
         expandDeclareWarTargetFactionId: 'minor1',
@@ -258,10 +256,7 @@ void main() {
       );
       const bareExpand = PhasePlanOutcome(phase: ObserverGoalPhase.expand);
       expect(
-        shouldSuppressWorkOrderFromPhasePlan(
-          _nwPurchaseLand,
-          populatedExpand,
-        ),
+        shouldSuppressWorkOrderFromPhasePlan(_nwPurchaseLand, populatedExpand),
         equals(
           shouldSuppressWorkOrderFromPhasePlan(_nwPurchaseLand, bareExpand),
         ),

@@ -34,8 +34,6 @@
 //     resolve to the same boolean result until the planned S1 deletion.
 
 import 'package:colonizethis_ai/src/perception/perception_snapshot.dart';
-import 'package:colonizethis_ai/src/planning/diplomacy_planner_peace_targets.dart'
-    as diplomacy_planner_peace_targets;
 import 'package:colonizethis_ai/src/planning/expand_phase_planner.dart';
 import 'package:colonizethis_logic/ai_api.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
@@ -49,20 +47,20 @@ Game _pristineGame() {
     id: 'g-2509-needs-peace-pass-pristine',
     worldState: WorldState(
       turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 60),
-      oldWorld: RegionData(provinces: [
-        for (var i = 1; i <= 6; i++)
-          Province(
-            id: 'oldWorld|${_gpOwn}_$i',
-            regionId: 'oldWorld',
-            ownerId: _gpOwn,
-          ),
-      ]),
+      oldWorld: RegionData(
+        provinces: [
+          for (var i = 1; i <= 6; i++)
+            Province(
+              id: 'oldWorld|${_gpOwn}_$i',
+              regionId: 'oldWorld',
+              ownerId: _gpOwn,
+            ),
+        ],
+      ),
       newWorld: const RegionData(),
       armies: [],
     ),
-    players: [
-      const Player(id: _gpOwn, displayName: 'GP_OWN', isHuman: false),
-    ],
+    players: [const Player(id: _gpOwn, displayName: 'GP_OWN', isHuman: false)],
     minorNations: const [],
     tribes: const [],
     diplomacyRelations: const [],
@@ -74,19 +72,21 @@ Game _zeroRegimentAtWarGame() {
     id: 'g-2509-needs-peace-pass-zero-reg',
     worldState: WorldState(
       turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 60),
-      oldWorld: RegionData(provinces: [
-        for (var i = 1; i <= 6; i++)
+      oldWorld: RegionData(
+        provinces: [
+          for (var i = 1; i <= 6; i++)
+            Province(
+              id: 'oldWorld|${_gpOwn}_$i',
+              regionId: 'oldWorld',
+              ownerId: _gpOwn,
+            ),
           Province(
-            id: 'oldWorld|${_gpOwn}_$i',
+            id: 'oldWorld|minor_zeta_1',
             regionId: 'oldWorld',
-            ownerId: _gpOwn,
+            ownerId: _minorZeta,
           ),
-        Province(
-          id: 'oldWorld|minor_zeta_1',
-          regionId: 'oldWorld',
-          ownerId: _minorZeta,
-        ),
-      ]),
+        ],
+      ),
       newWorld: const RegionData(),
       armies: [
         Army(
@@ -99,9 +99,7 @@ Game _zeroRegimentAtWarGame() {
         ),
       ],
     ),
-    players: [
-      const Player(id: _gpOwn, displayName: 'GP_OWN', isHuman: false),
-    ],
+    players: [const Player(id: _gpOwn, displayName: 'GP_OWN', isHuman: false)],
     minorNations: [
       const MinorNation(id: _minorZeta, displayName: 'minor_zeta'),
     ],
@@ -146,10 +144,7 @@ void main() {
         invadableProvinceIdsSorted: const [],
       );
       expect(
-        stalledOwExpansionNeedsPeacePass(
-          game: game,
-          snapshot: snapshot,
-        ),
+        stalledOwExpansionNeedsPeacePass(game: game, snapshot: snapshot),
         isFalse,
         reason:
             'A pristine state with no at-war factions, no regiments, '
@@ -169,10 +164,7 @@ void main() {
           invadableProvinceIdsSorted: const ['oldWorld|minor_zeta_1'],
         );
         expect(
-          stalledOwExpansionNeedsPeacePass(
-            game: game,
-            snapshot: snapshot,
-          ),
+          stalledOwExpansionNeedsPeacePass(game: game, snapshot: snapshot),
           isTrue,
           reason:
               'Zero-regiment survival decider fires on a below-quota GP '
@@ -203,32 +195,6 @@ void main() {
         reason:
             'Identical inputs must yield identical output across '
             'consecutive calls (Refs #2509 Must-have #7).',
-      );
-    });
-
-    test('Stub delegation parity', () {
-      final game = _zeroRegimentAtWarGame();
-      final snapshot = _ownSnapshot(
-        oldWorldProvincesOwned: 6,
-        atWarWith: const [_minorZeta],
-        invadableProvinceIdsSorted: const ['oldWorld|minor_zeta_1'],
-      );
-      final canonical = stalledOwExpansionNeedsPeacePass(
-        game: game,
-        snapshot: snapshot,
-      );
-      final stub = diplomacy_planner_peace_targets
-          .stalledOwExpansionNeedsPeacePass(
-        game: game,
-        snapshot: snapshot,
-      );
-      expect(
-        canonical,
-        stub,
-        reason:
-            'The delegating stub must return the same boolean as the '
-            'canonical helper so the in-file consumer chains resolve '
-            'to the same result until the planned S1 deletion.',
       );
     });
   });

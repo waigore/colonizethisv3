@@ -134,39 +134,30 @@ void main() {
       },
     );
 
-    test(
-      'dock at Old World port returns 0 (no colonial bonus)',
-      () {
-        const move = NavalMoveOrder(
-          fleetId: 'f1',
-          destinationPortProvinceId: 'oldWorld|home',
-        );
-        expect(move.isDock, isTrue);
-        expect(
-          colonialNavalMoveScore(move, topology, colonialWithInvadable),
-          0,
-        );
-      },
-    );
+    test('dock at Old World port returns 0 (no colonial bonus)', () {
+      const move = NavalMoveOrder(
+        fleetId: 'f1',
+        destinationPortProvinceId: 'oldWorld|home',
+      );
+      expect(move.isDock, isTrue);
+      expect(colonialNavalMoveScore(move, topology, colonialWithInvadable), 0);
+    });
   });
 
   group('colonialNavalMoveScore (sea-zone branches)', () {
-    test(
-      'NW sea adjacent to invadable province returns priority score',
-      () {
-        expect(
-          colonialNavalMoveScore(
-            const NavalMoveOrder(
-              fleetId: 'f1',
-              destinationSeaZoneId: 'newWorld|nwSeaShared',
-            ),
-            topology,
-            colonialWithInvadable,
+    test('NW sea adjacent to invadable province returns priority score', () {
+      expect(
+        colonialNavalMoveScore(
+          const NavalMoveOrder(
+            fleetId: 'f1',
+            destinationSeaZoneId: 'newWorld|nwSeaShared',
           ),
-          kColonialNavalMovePriorityNwSeaZoneScore,
-        );
-      },
-    );
+          topology,
+          colonialWithInvadable,
+        ),
+        kColonialNavalMovePriorityNwSeaZoneScore,
+      );
+    });
 
     test(
       'NW sea without invadable summary falls back to NW-sea-zone score',
@@ -208,39 +199,33 @@ void main() {
       },
     );
 
-    test(
-      'OW sea adjacent to a NW sea zone returns gateway score',
-      () {
-        expect(
-          colonialNavalMoveScore(
-            const NavalMoveOrder(
-              fleetId: 'f1',
-              destinationSeaZoneId: 'oldWorld|owSeaGateway',
-            ),
-            topology,
-            colonialWithInvadable,
+    test('OW sea adjacent to a NW sea zone returns gateway score', () {
+      expect(
+        colonialNavalMoveScore(
+          const NavalMoveOrder(
+            fleetId: 'f1',
+            destinationSeaZoneId: 'oldWorld|owSeaGateway',
           ),
-          kColonialNavalMoveGatewaySeaZoneScore,
-        );
-      },
-    );
+          topology,
+          colonialWithInvadable,
+        ),
+        kColonialNavalMoveGatewaySeaZoneScore,
+      );
+    });
 
-    test(
-      'OW sea without any NW sea adjacency returns 0',
-      () {
-        expect(
-          colonialNavalMoveScore(
-            const NavalMoveOrder(
-              fleetId: 'f1',
-              destinationSeaZoneId: 'oldWorld|owSeaInterior',
-            ),
-            topology,
-            colonialWithInvadable,
+    test('OW sea without any NW sea adjacency returns 0', () {
+      expect(
+        colonialNavalMoveScore(
+          const NavalMoveOrder(
+            fleetId: 'f1',
+            destinationSeaZoneId: 'oldWorld|owSeaInterior',
           ),
-          0,
-        );
-      },
-    );
+          topology,
+          colonialWithInvadable,
+        ),
+        0,
+      );
+    });
 
     test(
       'null seaZoneId and empty seaZoneId both return 0 (no colonial bonus)',
@@ -268,21 +253,18 @@ void main() {
   });
 
   group('colonialNavalMissionScore (target/mission branches)', () {
-    test(
-      'New World targetPortId returns NW-port mission score',
-      () {
-        expect(
-          colonialNavalMissionScore(
-            const NavalMissionOrder(
-              fleetId: 'f1',
-              mission: 'patrol',
-              targetPortId: 'newWorld|colonyA',
-            ),
+    test('New World targetPortId returns NW-port mission score', () {
+      expect(
+        colonialNavalMissionScore(
+          const NavalMissionOrder(
+            fleetId: 'f1',
+            mission: 'patrol',
+            targetPortId: 'newWorld|colonyA',
           ),
-          kColonialNavalMissionNwPortScore,
-        );
-      },
-    );
+        ),
+        kColonialNavalMissionNwPortScore,
+      );
+    });
 
     test(
       'Old World targetPortId falls through to mission/province branches',
@@ -302,50 +284,44 @@ void main() {
       },
     );
 
-    test(
-      'null/empty targetPortId + NW province returns NW-province score',
-      () {
-        expect(
-          colonialNavalMissionScore(
-            const NavalMissionOrder(
-              fleetId: 'f1',
-              mission: 'patrol',
-              targetProvinceId: 'newWorld|colonyA',
-            ),
+    test('null/empty targetPortId + NW province returns NW-province score', () {
+      expect(
+        colonialNavalMissionScore(
+          const NavalMissionOrder(
+            fleetId: 'f1',
+            mission: 'patrol',
+            targetProvinceId: 'newWorld|colonyA',
           ),
-          kColonialNavalMissionNwProvinceScore,
-        );
-        // Empty port id must fall through identically to null (the
-        // `portId.isNotEmpty` guard in `colonial_naval_scoring.dart`).
-        expect(
-          colonialNavalMissionScore(
-            const NavalMissionOrder(
-              fleetId: 'f1',
-              mission: 'patrol',
-              targetPortId: '',
-              targetProvinceId: 'newWorld|colonyA',
-            ),
+        ),
+        kColonialNavalMissionNwProvinceScore,
+      );
+      // Empty port id must fall through identically to null (the
+      // `portId.isNotEmpty` guard in `colonial_naval_scoring.dart`).
+      expect(
+        colonialNavalMissionScore(
+          const NavalMissionOrder(
+            fleetId: 'f1',
+            mission: 'patrol',
+            targetPortId: '',
+            targetProvinceId: 'newWorld|colonyA',
           ),
-          kColonialNavalMissionNwProvinceScore,
-        );
-      },
-    );
+        ),
+        kColonialNavalMissionNwProvinceScore,
+      );
+    });
 
-    test(
-      'OW province target without beachhead mission returns 0',
-      () {
-        expect(
-          colonialNavalMissionScore(
-            const NavalMissionOrder(
-              fleetId: 'f1',
-              mission: 'patrol',
-              targetProvinceId: 'oldWorld|home',
-            ),
+    test('OW province target without beachhead mission returns 0', () {
+      expect(
+        colonialNavalMissionScore(
+          const NavalMissionOrder(
+            fleetId: 'f1',
+            mission: 'patrol',
+            targetProvinceId: 'oldWorld|home',
           ),
-          0,
-        );
-      },
-    );
+        ),
+        0,
+      );
+    });
 
     test(
       'beachhead mission returns beachhead score regardless of OW target',
@@ -376,17 +352,14 @@ void main() {
       },
     );
 
-    test(
-      'non-beachhead mission with no targets returns 0',
-      () {
-        expect(
-          colonialNavalMissionScore(
-            const NavalMissionOrder(fleetId: 'f1', mission: 'patrol'),
-          ),
-          0,
-        );
-      },
-    );
+    test('non-beachhead mission with no targets returns 0', () {
+      expect(
+        colonialNavalMissionScore(
+          const NavalMissionOrder(fleetId: 'f1', mission: 'patrol'),
+        ),
+        0,
+      );
+    });
   });
 
   group('newWorldSeaZonesAdjacentToInvadableProvinces', () {
@@ -413,47 +386,39 @@ void main() {
       },
     );
 
-    test(
-      'filters out OW sea adjacents (only NW seas remain)',
-      () {
-        // Pin that `regionIdFrom(nb) != kNewWorldRegionId` is correctly
-        // applied. We add an invadable NW province that borders an OW sea
-        // zone — no NW sea should be returned.
-        const topo = MapTopology(
-          nodes: [
-            TopologyNode(
-              id: 'newWorld|cross',
-              regionId: 'newWorld',
-              type: TopologyNodeType.province,
-            ),
-            TopologyNode(
-              id: 'oldWorld|crossSea',
-              regionId: 'oldWorld',
-              type: TopologyNodeType.seaZone,
-            ),
-          ],
-          edges: [
-            TopologyEdge(id1: 'newWorld|cross', id2: 'oldWorld|crossSea'),
-          ],
-        );
-        final out = newWorldSeaZonesAdjacentToInvadableProvinces(
-          topo,
-          const <String>['newWorld|cross'],
-        );
-        expect(out, isEmpty);
-      },
-    );
+    test('filters out OW sea adjacents (only NW seas remain)', () {
+      // Pin that `regionIdFrom(nb) != kNewWorldRegionId` is correctly
+      // applied. We add an invadable NW province that borders an OW sea
+      // zone — no NW sea should be returned.
+      const topo = MapTopology(
+        nodes: [
+          TopologyNode(
+            id: 'newWorld|cross',
+            regionId: 'newWorld',
+            type: TopologyNodeType.province,
+          ),
+          TopologyNode(
+            id: 'oldWorld|crossSea',
+            regionId: 'oldWorld',
+            type: TopologyNodeType.seaZone,
+          ),
+        ],
+        edges: [TopologyEdge(id1: 'newWorld|cross', id2: 'oldWorld|crossSea')],
+      );
+      final out = newWorldSeaZonesAdjacentToInvadableProvinces(
+        topo,
+        const <String>['newWorld|cross'],
+      );
+      expect(out, isEmpty);
+    });
 
-    test(
-      'invadable id absent from topology contributes nothing',
-      () {
-        final out = newWorldSeaZonesAdjacentToInvadableProvinces(
-          topology,
-          const <String>['newWorld|ghostProvinceNotInTopology'],
-        );
-        expect(out, isEmpty);
-      },
-    );
+    test('invadable id absent from topology contributes nothing', () {
+      final out = newWorldSeaZonesAdjacentToInvadableProvinces(
+        topology,
+        const <String>['newWorld|ghostProvinceNotInTopology'],
+      );
+      expect(out, isEmpty);
+    });
   });
 
   group('sortNavalMovesForColonialPressure', () {
@@ -546,27 +511,24 @@ void main() {
   });
 
   group('sortNavalMissionsForColonialPressure', () {
-    test(
-      'score desc dominates fleetId ordering',
-      () {
-        // fA → OW port (mission patrol) → 0. fB → NW port → 160. fB ranks
-        // first despite later fleetId.
-        final ranked = sortNavalMissionsForColonialPressure([
-          const NavalMissionOrder(
-            fleetId: 'fA',
-            mission: 'patrol',
-            targetPortId: 'oldWorld|home',
-          ),
-          const NavalMissionOrder(
-            fleetId: 'fB',
-            mission: 'patrol',
-            targetPortId: 'newWorld|colonyA',
-          ),
-        ]);
-        expect(ranked.first.fleetId, 'fB');
-        expect(ranked.last.fleetId, 'fA');
-      },
-    );
+    test('score desc dominates fleetId ordering', () {
+      // fA → OW port (mission patrol) → 0. fB → NW port → 160. fB ranks
+      // first despite later fleetId.
+      final ranked = sortNavalMissionsForColonialPressure([
+        const NavalMissionOrder(
+          fleetId: 'fA',
+          mission: 'patrol',
+          targetPortId: 'oldWorld|home',
+        ),
+        const NavalMissionOrder(
+          fleetId: 'fB',
+          mission: 'patrol',
+          targetPortId: 'newWorld|colonyA',
+        ),
+      ]);
+      expect(ranked.first.fleetId, 'fB');
+      expect(ranked.last.fleetId, 'fA');
+    });
 
     test(
       'tie-break chain: fleetId, then mission, then portId, then provinceId',

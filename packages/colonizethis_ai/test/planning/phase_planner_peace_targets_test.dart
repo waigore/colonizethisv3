@@ -12,10 +12,7 @@ void main() {
         phase: ObserverGoalPhase.expand,
         expandPeaceTargetFactionIdsSorted: ['gp2', 'gp3'],
       );
-      expect(
-        gpPeaceTargetsFromPhasePlan(outcome),
-        ['gp2', 'gp3'],
-      );
+      expect(gpPeaceTargetsFromPhasePlan(outcome), ['gp2', 'gp3']);
     });
 
     test('COLONIAL-lite routes expand peace slots', () {

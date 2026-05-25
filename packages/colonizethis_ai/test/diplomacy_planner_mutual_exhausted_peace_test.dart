@@ -19,6 +19,8 @@
 //   - Negative: mutual gap > 1 OW province → empty.
 //   - Determinism: identical inputs → identical outputs across calls.
 import 'package:colonizethis_ai/colonizethis_ai.dart';
+import 'package:colonizethis_ai/src/planning/expand_phase_planner.dart';
+import 'package:colonizethis_ai/src/planning/observer_goal_phase.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
@@ -53,7 +55,11 @@ Game _exhaustedStalemateGame({
   int ownTreasury = 0,
   int enemyTreasury = 0,
   List<String> ownRegimentIds = const <String>['u_gp4_a', 'u_gp4_b', 'u_gp4_c'],
-  List<String> enemyRegimentIds = const <String>['u_gp3_a', 'u_gp3_b', 'u_gp3_c'],
+  List<String> enemyRegimentIds = const <String>[
+    'u_gp3_a',
+    'u_gp3_b',
+    'u_gp3_c',
+  ],
   List<String> extraOwnOwProvinces = const <String>[],
   List<String> extraEnemyOwProvinces = const <String>[],
   List<DiplomacyRelation> diplomacyRelations = const <DiplomacyRelation>[
@@ -101,7 +107,8 @@ Game _exhaustedStalemateGame({
         ),
       ],
     ),
-    players: playersOverride ??
+    players:
+        playersOverride ??
         [
           Player(
             id: _ownNationId,
@@ -240,8 +247,7 @@ void main() {
 
     test('negative: own regiments above ceiling returns empty', () {
       final tooManyRegiments = <String>[
-        for (var i = 0; i < kMutualExhaustedGpRegimentMax + 1; i++)
-          'u_gp4_$i',
+        for (var i = 0; i < kMutualExhaustedGpRegimentMax + 1; i++) 'u_gp4_$i',
       ];
       final game = _exhaustedStalemateGame(ownRegimentIds: tooManyRegiments);
       final snapshot = _snapshotForOwn();
@@ -270,8 +276,7 @@ void main() {
 
     test('negative: enemy regiments above ceiling returns empty', () {
       final tooManyEnemyRegiments = <String>[
-        for (var i = 0; i < kMutualExhaustedGpRegimentMax + 1; i++)
-          'u_gp3_$i',
+        for (var i = 0; i < kMutualExhaustedGpRegimentMax + 1; i++) 'u_gp3_$i',
       ];
       final game = _exhaustedStalemateGame(
         enemyRegimentIds: tooManyEnemyRegiments,
@@ -357,28 +362,30 @@ void main() {
       expect(targets, isEmpty);
     });
 
-    test('determinism: repeated calls return identical results (must-have #7)',
-        () {
-      final game = _exhaustedStalemateGame();
-      final snapshot = _snapshotForOwn();
+    test(
+      'determinism: repeated calls return identical results (must-have #7)',
+      () {
+        final game = _exhaustedStalemateGame();
+        final snapshot = _snapshotForOwn();
 
-      final a = mutualExhaustedBelowQuotaGpStalematePeaceTargets(
-        game: game,
-        snapshot: snapshot,
-      );
-      final b = mutualExhaustedBelowQuotaGpStalematePeaceTargets(
-        game: game,
-        snapshot: snapshot,
-      );
-      final c = mutualExhaustedBelowQuotaGpStalematePeaceTargets(
-        game: game,
-        snapshot: snapshot,
-      );
+        final a = mutualExhaustedBelowQuotaGpStalematePeaceTargets(
+          game: game,
+          snapshot: snapshot,
+        );
+        final b = mutualExhaustedBelowQuotaGpStalematePeaceTargets(
+          game: game,
+          snapshot: snapshot,
+        );
+        final c = mutualExhaustedBelowQuotaGpStalematePeaceTargets(
+          game: game,
+          snapshot: snapshot,
+        );
 
-      expect(a, [_enemyNationId]);
-      expect(b, a);
-      expect(c, a);
-    });
+        expect(a, [_enemyNationId]);
+        expect(b, a);
+        expect(c, a);
+      },
+    );
   });
 
   group('mutual-exhausted stalemate wiring into peace orchestration', () {
@@ -509,9 +516,9 @@ void main() {
 
         final exhaustedTargets =
             mutualExhaustedBelowQuotaGpStalematePeaceTargets(
-          game: gameWithInvadable,
-          snapshot: snapshot,
-        );
+              game: gameWithInvadable,
+              snapshot: snapshot,
+            );
         expect(
           exhaustedTargets,
           isEmpty,

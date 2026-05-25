@@ -33,7 +33,8 @@ void main() {
       expect(
         snap.colonial.invadableNewWorldProvinceIdsSorted,
         isNotEmpty,
-        reason: '$gpId nwInvadable=${snap.colonial.invadableNewWorldProvinceIdsSorted}',
+        reason:
+            '$gpId nwInvadable=${snap.colonial.invadableNewWorldProvinceIdsSorted}',
       );
     }
   });

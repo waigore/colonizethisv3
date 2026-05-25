@@ -15,21 +15,26 @@ void main() {
   // exercised exclusively here so the parent suite stays under the
   // 1000-non-comment-line cap (`repo.dart_file_non_comment_line_size`).
   group('isEarlyColonialExpansion', () {
-    test('true when invadable NW provinces remain and no NW provinces owned', () {
-      const colonial = ColonialSummary(
-        invadableNewWorldProvinceIdsSorted: ['newWorld|p1'],
-      );
-      expect(isEarlyColonialExpansion(colonial), isTrue);
-      expect(hasColonialAcquisitionTargets(colonial), isTrue);
-    });
+    test(
+      'true when invadable NW provinces remain and no NW provinces owned',
+      () {
+        const colonial = ColonialSummary(
+          invadableNewWorldProvinceIdsSorted: ['newWorld|p1'],
+        );
+        expect(isEarlyColonialExpansion(colonial), isTrue);
+        expect(hasColonialAcquisitionTargets(colonial), isTrue);
+      },
+    );
 
-    test('true when adjacent NW tribe owners remain and no NW provinces owned',
-        () {
-      const colonial = ColonialSummary(
-        adjacentNewWorldOwnerFactionIdsSorted: ['tribe1'],
-      );
-      expect(isEarlyColonialExpansion(colonial), isTrue);
-    });
+    test(
+      'true when adjacent NW tribe owners remain and no NW provinces owned',
+      () {
+        const colonial = ColonialSummary(
+          adjacentNewWorldOwnerFactionIdsSorted: ['tribe1'],
+        );
+        expect(isEarlyColonialExpansion(colonial), isTrue);
+      },
+    );
 
     test('true just below the few-NW-provinces threshold with targets', () {
       const colonial = ColonialSummary(
@@ -39,12 +44,14 @@ void main() {
       expect(isEarlyColonialExpansion(colonial), isTrue);
     });
 
-    test('false when no acquisition targets visible despite zero NW holdings',
-        () {
-      const colonial = ColonialSummary();
-      expect(isEarlyColonialExpansion(colonial), isFalse);
-      expect(hasColonialAcquisitionTargets(colonial), isFalse);
-    });
+    test(
+      'false when no acquisition targets visible despite zero NW holdings',
+      () {
+        const colonial = ColonialSummary();
+        expect(isEarlyColonialExpansion(colonial), isFalse);
+        expect(hasColonialAcquisitionTargets(colonial), isFalse);
+      },
+    );
 
     test('false when many NW provinces owned despite invadable targets', () {
       const colonial = ColonialSummary(

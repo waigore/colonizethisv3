@@ -8,7 +8,10 @@ _OrdersByPlayer<T> _appendOrdersByPlayer<T>(
   List<T> list,
 ) {
   final existing = source[playerId] ?? const [];
-  return {...source, playerId: [...existing, ...list]};
+  return {
+    ...source,
+    playerId: [...existing, ...list],
+  };
 }
 
 extension OrdersAppendExtension on Orders {

@@ -52,8 +52,6 @@ Orders runResearchPlanner({required PlannerContext ctx}) {
   );
   if (chosen == null) return ctx.orders;
 
-  _log.i(
-    'research chosen nationId=${ctx.nationId} techId=${chosen.techId}',
-  );
+  _log.i('research chosen nationId=${ctx.nationId} techId=${chosen.techId}');
   return ctx.orders.appendResearchOrders(ctx.nationId, [chosen]);
 }

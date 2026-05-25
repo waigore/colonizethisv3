@@ -287,173 +287,153 @@ List<int> _scoreFor(AIConfig config) {
 }
 
 void main() {
-  group(
-    'computeDiplomaticCandidateScores COLONIAL personality divergence '
-    '(Refs #2509 must-have #4)',
-    () {
-      test(
-        'napoleon ranks declareWar above establishOverture for COLONIAL '
-        'tribe target',
-        () {
-          final scores = _scoreFor(_napoleonConfig);
+  group('computeDiplomaticCandidateScores COLONIAL personality divergence '
+      '(Refs #2509 must-have #4)', () {
+    test('napoleon ranks declareWar above establishOverture for COLONIAL '
+        'tribe target', () {
+      final scores = _scoreFor(_napoleonConfig);
 
-          expect(scores.length, _candidates.length);
-          expect(
-            scores[_declareWarIdx],
-            greaterThan(scores[_establishOvertureIdx]),
-            reason:
-                'napoleon (`warLikelihood`=80, `allianceTendency`=25 per '
-                '`SPEC/ai/ai-personalities.md`) must rank `declareWar` above '
-                '`establishOverture` for a COLONIAL tribe target where both '
-                'paths are valid candidates (issue #2509 must-have #4).',
-          );
-          expect(
-            scores[_declareWarIdx],
-            greaterThan(0),
-            reason:
-                'napoleon `declareWar` must remain a viable colonial '
-                'acquisition order in COLONIAL — a regression that zeroes the '
-                'tribe declare-war path would silently break the must-have #4 '
-                'ranking contract.',
-          );
-        },
+      expect(scores.length, _candidates.length);
+      expect(
+        scores[_declareWarIdx],
+        greaterThan(scores[_establishOvertureIdx]),
+        reason:
+            'napoleon (`warLikelihood`=80, `allianceTendency`=25 per '
+            '`SPEC/ai/ai-personalities.md`) must rank `declareWar` above '
+            '`establishOverture` for a COLONIAL tribe target where both '
+            'paths are valid candidates (issue #2509 must-have #4).',
       );
-
-      test(
-        'henry ranks establishOverture above declareWar for COLONIAL tribe '
-        'target',
-        () {
-          final scores = _scoreFor(_henryConfig);
-
-          expect(scores.length, _candidates.length);
-          expect(
-            scores[_establishOvertureIdx],
-            greaterThan(scores[_declareWarIdx]),
-            reason:
-                'henry (`warLikelihood`=10, `allianceTendency`=75 per '
-                '`SPEC/ai/ai-personalities.md`) must rank '
-                '`establishOverture(joinEmpire)` above `declareWar` for the '
-                'same COLONIAL tribe target (issue #2509 must-have #4).',
-          );
-          expect(
-            scores[_establishOvertureIdx],
-            greaterThan(0),
-            reason:
-                'henry `establishOverture(joinEmpire)` must remain a viable '
-                'colonial acquisition order in COLONIAL — a regression that '
-                'zeroes the overture path would silently break the '
-                'must-have #4 ranking contract.',
-          );
-        },
+      expect(
+        scores[_declareWarIdx],
+        greaterThan(0),
+        reason:
+            'napoleon `declareWar` must remain a viable colonial '
+            'acquisition order in COLONIAL — a regression that zeroes the '
+            'tribe declare-war path would silently break the must-have #4 '
+            'ranking contract.',
       );
+    });
 
-      test(
-        'highest-ranked colonial acquisition order TYPE flips between '
-        'napoleon and henry on identical COLONIAL inputs',
-        () {
-          // Determinism + cross-personality assertion in one pass: each
-          // personality independently picks the highest-scoring candidate
-          // type, and the picked types must differ (issue #2509 must-have
-          // #4: "the highest-ranked colonial acquisition order **type**
-          // differs between personalities").
-          final napoleonScores = _scoreFor(_napoleonConfig);
-          final henryScores = _scoreFor(_henryConfig);
+    test('henry ranks establishOverture above declareWar for COLONIAL tribe '
+        'target', () {
+      final scores = _scoreFor(_henryConfig);
 
-          final napoleonTopType =
-              _candidates[_indexOfMax(napoleonScores)].type;
-          final henryTopType =
-              _candidates[_indexOfMax(henryScores)].type;
-
-          expect(
-            napoleonTopType,
-            DiplomaticOrderType.declareWar,
-            reason:
-                'Napoleon (high war / low alliance per '
-                '`SPEC/ai/ai-personalities.md` § Canonical leaders) must '
-                'top-rank `declareWar` among colonial acquisition orders.',
-          );
-          expect(
-            henryTopType,
-            DiplomaticOrderType.establishOverture,
-            reason:
-                'Henry (very-low war / high alliance per '
-                '`SPEC/ai/ai-personalities.md` § Canonical leaders) must '
-                'top-rank `establishOverture(joinEmpire)` among colonial '
-                'acquisition orders.',
-          );
-          expect(
-            napoleonTopType,
-            isNot(henryTopType),
-            reason:
-                'Must-have #4: the highest-ranked colonial acquisition '
-                'order type must differ between personalities for the same '
-                'COLONIAL tribe target (war vs alliance personality '
-                'modifiers).',
-          );
-        },
+      expect(scores.length, _candidates.length);
+      expect(
+        scores[_establishOvertureIdx],
+        greaterThan(scores[_declareWarIdx]),
+        reason:
+            'henry (`warLikelihood`=10, `allianceTendency`=75 per '
+            '`SPEC/ai/ai-personalities.md`) must rank '
+            '`establishOverture(joinEmpire)` above `declareWar` for the '
+            'same COLONIAL tribe target (issue #2509 must-have #4).',
       );
-
-      test(
-        'napoleon scores declareWar strictly higher than henry; henry '
-        'scores establishOverture strictly higher than napoleon',
-        () {
-          // Cross-personality isolation: with every non-personality input
-          // held identical, the personality `warLikelihood` /
-          // `allianceTendency` deltas (napoleon 80/25 vs henry 10/75 per
-          // `SPEC/ai/ai-personalities.md`) must shift the **same** candidate
-          // type's score between configs. This catches a regression where
-          // the personality terms collapse to a constant even if relative
-          // per-personality ordering still happens to flip via some other
-          // asymmetric branch.
-          final napoleonScores = _scoreFor(_napoleonConfig);
-          final henryScores = _scoreFor(_henryConfig);
-
-          expect(
-            napoleonScores[_declareWarIdx],
-            greaterThan(henryScores[_declareWarIdx]),
-            reason:
-                'napoleon `warLikelihood`=80 (+30 vs centerline) must lift '
-                '`declareWar` above henry `warLikelihood`=10 (-40) for the '
-                'same target / state.',
-          );
-          expect(
-            henryScores[_establishOvertureIdx],
-            greaterThan(napoleonScores[_establishOvertureIdx]),
-            reason:
-                'henry `allianceTendency`=75 (+25 vs centerline) must lift '
-                '`establishOverture(joinEmpire)` above napoleon '
-                '`allianceTendency`=25 (-25) for the same target / state.',
-          );
-        },
+      expect(
+        scores[_establishOvertureIdx],
+        greaterThan(0),
+        reason:
+            'henry `establishOverture(joinEmpire)` must remain a viable '
+            'colonial acquisition order in COLONIAL — a regression that '
+            'zeroes the overture path would silently break the '
+            'must-have #4 ranking contract.',
       );
+    });
 
-      test(
-        'identical COLONIAL inputs produce identical score lists per '
-        'personality (must-have #7 determinism)',
-        () {
-          final napoleonFirst = _scoreFor(_napoleonConfig);
-          final napoleonSecond = _scoreFor(_napoleonConfig);
-          final henryFirst = _scoreFor(_henryConfig);
-          final henrySecond = _scoreFor(_henryConfig);
+    test('highest-ranked colonial acquisition order TYPE flips between '
+        'napoleon and henry on identical COLONIAL inputs', () {
+      // Determinism + cross-personality assertion in one pass: each
+      // personality independently picks the highest-scoring candidate
+      // type, and the picked types must differ (issue #2509 must-have
+      // #4: "the highest-ranked colonial acquisition order **type**
+      // differs between personalities").
+      final napoleonScores = _scoreFor(_napoleonConfig);
+      final henryScores = _scoreFor(_henryConfig);
 
-          expect(
-            napoleonSecond,
-            napoleonFirst,
-            reason:
-                'Determinism (must-have #7): identical COLONIAL inputs must '
-                'produce identical napoleon score lists across runs.',
-          );
-          expect(
-            henrySecond,
-            henryFirst,
-            reason:
-                'Determinism (must-have #7): identical COLONIAL inputs must '
-                'produce identical henry score lists across runs.',
-          );
-        },
+      final napoleonTopType = _candidates[_indexOfMax(napoleonScores)].type;
+      final henryTopType = _candidates[_indexOfMax(henryScores)].type;
+
+      expect(
+        napoleonTopType,
+        DiplomaticOrderType.declareWar,
+        reason:
+            'Napoleon (high war / low alliance per '
+            '`SPEC/ai/ai-personalities.md` § Canonical leaders) must '
+            'top-rank `declareWar` among colonial acquisition orders.',
       );
-    },
-  );
+      expect(
+        henryTopType,
+        DiplomaticOrderType.establishOverture,
+        reason:
+            'Henry (very-low war / high alliance per '
+            '`SPEC/ai/ai-personalities.md` § Canonical leaders) must '
+            'top-rank `establishOverture(joinEmpire)` among colonial '
+            'acquisition orders.',
+      );
+      expect(
+        napoleonTopType,
+        isNot(henryTopType),
+        reason:
+            'Must-have #4: the highest-ranked colonial acquisition '
+            'order type must differ between personalities for the same '
+            'COLONIAL tribe target (war vs alliance personality '
+            'modifiers).',
+      );
+    });
+
+    test('napoleon scores declareWar strictly higher than henry; henry '
+        'scores establishOverture strictly higher than napoleon', () {
+      // Cross-personality isolation: with every non-personality input
+      // held identical, the personality `warLikelihood` /
+      // `allianceTendency` deltas (napoleon 80/25 vs henry 10/75 per
+      // `SPEC/ai/ai-personalities.md`) must shift the **same** candidate
+      // type's score between configs. This catches a regression where
+      // the personality terms collapse to a constant even if relative
+      // per-personality ordering still happens to flip via some other
+      // asymmetric branch.
+      final napoleonScores = _scoreFor(_napoleonConfig);
+      final henryScores = _scoreFor(_henryConfig);
+
+      expect(
+        napoleonScores[_declareWarIdx],
+        greaterThan(henryScores[_declareWarIdx]),
+        reason:
+            'napoleon `warLikelihood`=80 (+30 vs centerline) must lift '
+            '`declareWar` above henry `warLikelihood`=10 (-40) for the '
+            'same target / state.',
+      );
+      expect(
+        henryScores[_establishOvertureIdx],
+        greaterThan(napoleonScores[_establishOvertureIdx]),
+        reason:
+            'henry `allianceTendency`=75 (+25 vs centerline) must lift '
+            '`establishOverture(joinEmpire)` above napoleon '
+            '`allianceTendency`=25 (-25) for the same target / state.',
+      );
+    });
+
+    test('identical COLONIAL inputs produce identical score lists per '
+        'personality (must-have #7 determinism)', () {
+      final napoleonFirst = _scoreFor(_napoleonConfig);
+      final napoleonSecond = _scoreFor(_napoleonConfig);
+      final henryFirst = _scoreFor(_henryConfig);
+      final henrySecond = _scoreFor(_henryConfig);
+
+      expect(
+        napoleonSecond,
+        napoleonFirst,
+        reason:
+            'Determinism (must-have #7): identical COLONIAL inputs must '
+            'produce identical napoleon score lists across runs.',
+      );
+      expect(
+        henrySecond,
+        henryFirst,
+        reason:
+            'Determinism (must-have #7): identical COLONIAL inputs must '
+            'produce identical henry score lists across runs.',
+      );
+    });
+  });
 }
 
 /// Returns the first index that holds the maximum value in [scores].

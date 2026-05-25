@@ -156,9 +156,7 @@ void main() {
       // dropped the sort (or replaced it with input-order
       // preservation) would surface here.
       final game = _developGame();
-      final snapshot = _developSnapshot(
-        atWarWith: const [_gp3, _gp4, _gp2],
-      );
+      final snapshot = _developSnapshot(atWarWith: const [_gp3, _gp4, _gp2]);
       expect(
         planDevelopPeace(game: game, snapshot: snapshot),
         const [_gp2, _gp3, _gp4],
@@ -180,9 +178,7 @@ void main() {
         tribes: const [Tribe(id: _tribe1, displayName: 'T1')],
         minorNations: const [MinorNation(id: _minor1, displayName: 'M1')],
       );
-      final snapshot = _developSnapshot(
-        atWarWith: const [_tribe1, _minor1],
-      );
+      final snapshot = _developSnapshot(atWarWith: const [_tribe1, _minor1]);
       expect(
         planDevelopPeace(game: game, snapshot: snapshot),
         isEmpty,
@@ -362,9 +358,7 @@ void main() {
         ],
         owUnits: [idleBuilder('b1')],
         resourceByTileKey: const {owTileImproved: 'iron'},
-        tileState: const TileMapState(
-          improvementByTile: {owTileImproved: 1},
-        ),
+        tileState: const TileMapState(improvementByTile: {owTileImproved: 1}),
       );
       expect(
         planDevelopCivilian(game: game, snapshot: civilianSnapshot()),
@@ -392,10 +386,7 @@ void main() {
           ),
         ],
         owUnits: [idleBuilder('b1')],
-        resourceByTileKey: const {
-          owTileTown: 'grain',
-          owTileA: 'grain',
-        },
+        resourceByTileKey: const {owTileTown: 'grain', owTileA: 'grain'},
       );
       final orders = planDevelopCivilian(
         game: game,
@@ -422,10 +413,7 @@ void main() {
           ),
         ],
         owUnits: [idleBuilder('b1')],
-        resourceByTileKey: const {
-          foreignNwTile: 'gold',
-          owTileA: 'grain',
-        },
+        resourceByTileKey: const {foreignNwTile: 'gold', owTileA: 'grain'},
       );
       final orders = planDevelopCivilian(
         game: game,
@@ -589,13 +577,21 @@ void main() {
           nwTileA: 'spices',
         },
       );
-      final first =
-          planDevelopCivilian(game: game, snapshot: civilianSnapshot());
-      final second =
-          planDevelopCivilian(game: game, snapshot: civilianSnapshot());
+      final first = planDevelopCivilian(
+        game: game,
+        snapshot: civilianSnapshot(),
+      );
+      final second = planDevelopCivilian(
+        game: game,
+        snapshot: civilianSnapshot(),
+      );
       expect(
         first.map((o) => '${o.unitId}->${o.targetTileKey}').toList(),
-        const ['b1->newWorld|p_gamma|1|1', 'b2->oldWorld|p_alpha|1|1', 'b3->oldWorld|p_alpha|2|2'],
+        const [
+          'b1->newWorld|p_gamma|1|1',
+          'b2->oldWorld|p_alpha|1|1',
+          'b3->oldWorld|p_alpha|2|2',
+        ],
         reason:
             'NW tile ranks first (highest score), then OW tiles in lex '
             'order; builder ids assigned ascending; town tile excluded.',

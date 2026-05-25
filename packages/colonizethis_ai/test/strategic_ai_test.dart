@@ -49,7 +49,11 @@ void main() {
       expect(result.economyPlan.productionAssignments, isEmpty);
       expect(
         result.economyPlan.cargoPreference,
-        isIn([CargoPreference.none, CargoPreference.preferCargo, CargoPreference.strongCargo]),
+        isIn([
+          CargoPreference.none,
+          CargoPreference.preferCargo,
+          CargoPreference.strongCargo,
+        ]),
       );
     });
 
@@ -62,7 +66,12 @@ void main() {
           newWorld: RegionData(provinces: [], units: []),
         ),
         players: const [
-          Player(id: 'gp1', displayName: 'England', isHuman: false, leaderKey: 'victoria'),
+          Player(
+            id: 'gp1',
+            displayName: 'England',
+            isHuman: false,
+            leaderKey: 'victoria',
+          ),
         ],
       );
       const topology = MapTopology(nodes: [], edges: []);
@@ -111,7 +120,12 @@ void main() {
           newWorld: RegionData(provinces: [], units: []),
         ),
         players: const [
-          Player(id: 'gp1', displayName: 'England', isHuman: false, leaderKey: 'victoria'),
+          Player(
+            id: 'gp1',
+            displayName: 'England',
+            isHuman: false,
+            leaderKey: 'victoria',
+          ),
         ],
       );
       const topology = MapTopology(nodes: [], edges: []);

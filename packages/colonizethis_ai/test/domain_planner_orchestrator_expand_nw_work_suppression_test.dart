@@ -167,65 +167,65 @@ Game _expandScenarioGame() {
 
 const FakeOrderSuggestionAPIForDomainPlannerTests _mixedRegionWorkApi =
     FakeOrderSuggestionAPIForDomainPlannerTests(
-  work: [
-    WorkOrder(
-      unitId: 'b_ow',
-      target: kWorkTargetBuildImprovement,
-      targetTileKey: _owTile,
-    ),
-    WorkOrder(
-      unitId: 'b_nw',
-      target: kWorkTargetBuildImprovement,
-      targetTileKey: _nwOwnedTile,
-    ),
-    WorkOrder(
-      unitId: 'm_nw',
-      target: kWorkTargetPurchaseLand,
-      targetTileKey: _nwTribeTile,
-    ),
-  ],
-  build: [],
-  move: [],
-  research: [],
-  navalMove: [],
-  navalMission: [],
-);
+      work: [
+        WorkOrder(
+          unitId: 'b_ow',
+          target: kWorkTargetBuildImprovement,
+          targetTileKey: _owTile,
+        ),
+        WorkOrder(
+          unitId: 'b_nw',
+          target: kWorkTargetBuildImprovement,
+          targetTileKey: _nwOwnedTile,
+        ),
+        WorkOrder(
+          unitId: 'm_nw',
+          target: kWorkTargetPurchaseLand,
+          targetTileKey: _nwTribeTile,
+        ),
+      ],
+      build: [],
+      move: [],
+      research: [],
+      navalMove: [],
+      navalMission: [],
+    );
 
 const FakeOrderSuggestionAPIForDomainPlannerTests _mixedOwNwArmyMoveApi =
     FakeOrderSuggestionAPIForDomainPlannerTests(
-  work: [],
-  build: [],
-  move: [],
-  research: [],
-  navalMove: [],
-  navalMission: [],
-  armyMove: [
-    ArmyMoveOrder(
-      armyId: _fieldArmyId,
-      destinationProvinceId: _nwTribeProvince,
-    ),
-    ArmyMoveOrder(
-      armyId: _fieldArmyId,
-      destinationProvinceId: _owMinorProvince,
-    ),
-  ],
-);
+      work: [],
+      build: [],
+      move: [],
+      research: [],
+      navalMove: [],
+      navalMission: [],
+      armyMove: [
+        ArmyMoveOrder(
+          armyId: _fieldArmyId,
+          destinationProvinceId: _nwTribeProvince,
+        ),
+        ArmyMoveOrder(
+          armyId: _fieldArmyId,
+          destinationProvinceId: _owMinorProvince,
+        ),
+      ],
+    );
 
 const FakeOrderSuggestionAPIForDomainPlannerTests _nwOnlyArmyMoveApi =
     FakeOrderSuggestionAPIForDomainPlannerTests(
-  work: [],
-  build: [],
-  move: [],
-  research: [],
-  navalMove: [],
-  navalMission: [],
-  armyMove: [
-    ArmyMoveOrder(
-      armyId: _fieldArmyId,
-      destinationProvinceId: _nwTribeProvince,
-    ),
-  ],
-);
+      work: [],
+      build: [],
+      move: [],
+      research: [],
+      navalMove: [],
+      navalMission: [],
+      armyMove: [
+        ArmyMoveOrder(
+          armyId: _fieldArmyId,
+          destinationProvinceId: _nwTribeProvince,
+        ),
+      ],
+    );
 
 const EconomyPlan _economyPlan = EconomyPlan(
   productionAssignments: [],
@@ -361,9 +361,9 @@ void main() {
           work.any(
             (w) =>
                 (w.target == kWorkTargetBuildImprovement &&
-                        w.targetTileKey == _nwOwnedTile) ||
-                    (w.target == kWorkTargetPurchaseLand &&
-                        w.targetTileKey == _nwTribeTile),
+                    w.targetTileKey == _nwOwnedTile) ||
+                (w.target == kWorkTargetPurchaseLand &&
+                    w.targetTileKey == _nwTribeTile),
           ),
           isTrue,
           reason:
@@ -416,18 +416,14 @@ void main() {
             orders.armyMoveOrdersByPlayerId[_nationId] ?? const [];
         expect(armyMoves, isNotEmpty);
         expect(
-          armyMoves.any(
-            (m) => m.destinationProvinceId == _nwTribeProvince,
-          ),
+          armyMoves.any((m) => m.destinationProvinceId == _nwTribeProvince),
           isFalse,
           reason:
               'When OW and NW army-move candidates are both suggested, EXPAND '
               'must score NW invasion to zero and prefer the OW invadable path.',
         );
         expect(
-          armyMoves.any(
-            (m) => m.destinationProvinceId == _owMinorProvince,
-          ),
+          armyMoves.any((m) => m.destinationProvinceId == _owMinorProvince),
           isTrue,
           reason: 'OW invadable minor must remain the chosen conquest move.',
         );
@@ -474,9 +470,7 @@ void main() {
         final armyMoves =
             orders.armyMoveOrdersByPlayerId[_nationId] ?? const [];
         expect(
-          armyMoves.any(
-            (m) => m.destinationProvinceId == _nwTribeProvince,
-          ),
+          armyMoves.any((m) => m.destinationProvinceId == _nwTribeProvince),
           isTrue,
           reason:
               'COLONIAL must allow NW invasion army moves toward visible '

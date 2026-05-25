@@ -206,13 +206,13 @@ Game _scenarioGame({required List<String> gp1OwProvinces}) {
 // integration from any candidate scoring path.
 const FakeOrderSuggestionAPIForDomainPlannerTests _emptyApi =
     FakeOrderSuggestionAPIForDomainPlannerTests(
-  work: [],
-  build: [],
-  move: [],
-  research: [],
-  navalMove: [],
-  navalMission: [],
-);
+      work: [],
+      build: [],
+      move: [],
+      research: [],
+      navalMove: [],
+      navalMission: [],
+    );
 
 const EconomyPlan _economyPlan = EconomyPlan(
   productionAssignments: [],
@@ -349,97 +349,91 @@ void main() {
       },
     );
 
-    test(
-      'suppresses GP blocker declareWar at quota in DEVELOP',
-      () {
-        final game = _scenarioGame(gp1OwProvinces: _gp1OwProvincesDevelop);
-        const topology = MapTopology(nodes: [], edges: []);
-        final view = buildPlayerView(game, topology, _nationId);
-        final snapshot = _developSnapshot();
+    test('suppresses GP blocker declareWar at quota in DEVELOP', () {
+      final game = _scenarioGame(gp1OwProvinces: _gp1OwProvincesDevelop);
+      const topology = MapTopology(nodes: [], edges: []);
+      final view = buildPlayerView(game, topology, _nationId);
+      final snapshot = _developSnapshot();
 
-        expect(
-          observerGoalPhaseFor(snapshot: snapshot, game: game),
-          ObserverGoalPhase.develop,
-          reason:
-              'Negative-control fixture must place GP in DEVELOP so the '
-              'observer-quota gate inside '
-              '`stalledGpBlockerDeclareWarTarget` (and the matching '
-              'wrapper gate in `_plateauGpBlockerDeclarePlannerResultIfNeeded`) '
-              'is exercised (otherwise this case would silently re-emit '
-              'the EXPAND short-circuit and not verify the regression '
-              'target).',
-        );
+      expect(
+        observerGoalPhaseFor(snapshot: snapshot, game: game),
+        ObserverGoalPhase.develop,
+        reason:
+            'Negative-control fixture must place GP in DEVELOP so the '
+            'observer-quota gate inside '
+            '`stalledGpBlockerDeclareWarTarget` (and the matching '
+            'wrapper gate in `_plateauGpBlockerDeclarePlannerResultIfNeeded`) '
+            'is exercised (otherwise this case would silently re-emit '
+            'the EXPAND short-circuit and not verify the regression '
+            'target).',
+      );
 
-        final orders = runDomainPlanners(
-          game: game,
-          topology: topology,
-          nationId: _nationId,
-          view: view,
-          snapshot: snapshot,
-          config: _aiConfig,
-          primaryGoal: StrategicGoal.diplomacy,
-          seeds: AISeedBundle.fromTurnSeed(2509122),
-          suggestionAPI: _emptyApi,
-          economyPlan: _economyPlan,
-        );
+      final orders = runDomainPlanners(
+        game: game,
+        topology: topology,
+        nationId: _nationId,
+        view: view,
+        snapshot: snapshot,
+        config: _aiConfig,
+        primaryGoal: StrategicGoal.diplomacy,
+        seeds: AISeedBundle.fromTurnSeed(2509122),
+        suggestionAPI: _emptyApi,
+        economyPlan: _economyPlan,
+      );
 
-        expect(
-          _declareWarTargets(orders),
-          isNot(contains(_blockerGpId)),
-          reason:
-              'DEVELOP must drop the GP-only invadable blocker forced '
-              'declare (the helper short-circuits at the observer-quota / '
-              'stalled-OW gate, the wrapper short-circuits at the same '
-              'gate, and DEVELOP scoring zeroes every declare-war '
-              'candidate from the non-forced fall-through). Suppressing '
-              'this declare preserves civilian work bandwidth for the '
-              'turn-150 70% extractable-tile improvement gate (SPEC § '
-              'Observer goal phases (Full AI), DEVELOP).',
-        );
-      },
-    );
+      expect(
+        _declareWarTargets(orders),
+        isNot(contains(_blockerGpId)),
+        reason:
+            'DEVELOP must drop the GP-only invadable blocker forced '
+            'declare (the helper short-circuits at the observer-quota / '
+            'stalled-OW gate, the wrapper short-circuits at the same '
+            'gate, and DEVELOP scoring zeroes every declare-war '
+            'candidate from the non-forced fall-through). Suppressing '
+            'this declare preserves civilian work bandwidth for the '
+            'turn-150 70% extractable-tile improvement gate (SPEC § '
+            'Observer goal phases (Full AI), DEVELOP).',
+      );
+    });
 
-    test(
-      'emits identical diplomatic orders for identical EXPAND inputs',
-      () {
-        final game = _scenarioGame(gp1OwProvinces: _gp1OwProvincesBelowQuota);
-        const topology = MapTopology(nodes: [], edges: []);
-        final view = buildPlayerView(game, topology, _nationId);
-        final snapshot = _expandSnapshot();
+    test('emits identical diplomatic orders for identical EXPAND inputs', () {
+      final game = _scenarioGame(gp1OwProvinces: _gp1OwProvincesBelowQuota);
+      const topology = MapTopology(nodes: [], edges: []);
+      final view = buildPlayerView(game, topology, _nationId);
+      final snapshot = _expandSnapshot();
 
-        Orders runOnce(int turnSeed) => runDomainPlanners(
-          game: game,
-          topology: topology,
-          nationId: _nationId,
-          view: view,
-          snapshot: snapshot,
-          config: _aiConfig,
-          primaryGoal: StrategicGoal.expand,
-          seeds: AISeedBundle.fromTurnSeed(turnSeed),
-          suggestionAPI: _emptyApi,
-          economyPlan: _economyPlan,
-        );
+      Orders runOnce(int turnSeed) => runDomainPlanners(
+        game: game,
+        topology: topology,
+        nationId: _nationId,
+        view: view,
+        snapshot: snapshot,
+        config: _aiConfig,
+        primaryGoal: StrategicGoal.expand,
+        seeds: AISeedBundle.fromTurnSeed(turnSeed),
+        suggestionAPI: _emptyApi,
+        economyPlan: _economyPlan,
+      );
 
-        final firstRun = runOnce(2509123);
-        final secondRun = runOnce(2509123);
+      final firstRun = runOnce(2509123);
+      final secondRun = runOnce(2509123);
 
-        List<String> diplomaticFingerprint(Orders orders) => <String>[
-          for (final o
-              in orders.diplomaticOrdersByPlayerId[_nationId] ?? const [])
-            '${o.type}|${o.targetFactionId}|${o.overtureStage}',
-        ];
+      List<String> diplomaticFingerprint(Orders orders) => <String>[
+        for (final o
+            in orders.diplomaticOrdersByPlayerId[_nationId] ?? const [])
+          '${o.type}|${o.targetFactionId}|${o.overtureStage}',
+      ];
 
-        expect(
-          diplomaticFingerprint(secondRun),
-          diplomaticFingerprint(firstRun),
-          reason:
-              'Determinism (must-have #7): identical EXPAND-phase inputs '
-              'on a GP-only invadable frontier must produce identical '
-              'diplomatic orders across runs (forced-blocker declare is '
-              'derived from `Game` state, not from rng-driven candidate '
-              'sampling, so the fingerprint must be stable).',
-        );
-      },
-    );
+      expect(
+        diplomaticFingerprint(secondRun),
+        diplomaticFingerprint(firstRun),
+        reason:
+            'Determinism (must-have #7): identical EXPAND-phase inputs '
+            'on a GP-only invadable frontier must produce identical '
+            'diplomatic orders across runs (forced-blocker declare is '
+            'derived from `Game` state, not from rng-driven candidate '
+            'sampling, so the fingerprint must be stable).',
+      );
+    });
   });
 }

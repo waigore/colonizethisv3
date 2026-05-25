@@ -183,12 +183,14 @@ void main() {
   group(
     'computeDiplomaticCandidateScores mutual-exhausted offer-peace bonus',
     () {
-      test('positive: exhausted-plateau offerPeace toward peer enemy scores > 0',
-          () {
-        final game = _exhaustedStalemateGame();
+      test(
+        'positive: exhausted-plateau offerPeace toward peer enemy scores > 0',
+        () {
+          final game = _exhaustedStalemateGame();
 
-        expect(_scoreOfferPeaceTowardEnemy(game), greaterThan(0));
-      });
+          expect(_scoreOfferPeaceTowardEnemy(game), greaterThan(0));
+        },
+      );
 
       test(
         'delta: own treasury above ceiling drops score by exactly the bonus',

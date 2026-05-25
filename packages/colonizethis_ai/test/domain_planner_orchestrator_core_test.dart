@@ -137,9 +137,7 @@ void main() {
             ],
           ),
           newWorld: RegionData(
-            provinces: [
-              Province(id: nw, regionId: 'newWorld', ownerId: 'gp1'),
-            ],
+            provinces: [Province(id: nw, regionId: 'newWorld', ownerId: 'gp1')],
           ),
           armies: [
             Army(

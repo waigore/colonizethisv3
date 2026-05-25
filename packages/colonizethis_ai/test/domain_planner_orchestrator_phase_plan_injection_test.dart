@@ -104,9 +104,7 @@ Game _scenarioGame() {
         leaderKey: 'napoleon',
       ),
     ],
-    minorNations: const [
-      MinorNation(id: _minorId, displayName: 'Minor One'),
-    ],
+    minorNations: const [MinorNation(id: _minorId, displayName: 'Minor One')],
     tribes: const [],
     diplomacyRelations: const [
       DiplomacyRelation(
@@ -124,19 +122,19 @@ Game _scenarioGame() {
 // short-circuited (DEVELOP).
 const FakeOrderSuggestionAPIForDomainPlannerTests _conquestCandidateApi =
     FakeOrderSuggestionAPIForDomainPlannerTests(
-  work: [],
-  build: [],
-  move: [],
-  research: [],
-  navalMove: [],
-  navalMission: [],
-  armyMove: [
-    ArmyMoveOrder(
-      armyId: _fieldArmyId,
-      destinationProvinceId: _owMinorProvince,
-    ),
-  ],
-);
+      work: [],
+      build: [],
+      move: [],
+      research: [],
+      navalMove: [],
+      navalMission: [],
+      armyMove: [
+        ArmyMoveOrder(
+          armyId: _fieldArmyId,
+          destinationProvinceId: _owMinorProvince,
+        ),
+      ],
+    );
 
 const EconomyPlan _economyPlan = EconomyPlan(
   productionAssignments: [],
@@ -176,106 +174,100 @@ AIWorldSnapshot _expandSnapshot() {
 
 void main() {
   group('runDomainPlannersWithOutcome phasePlan injection', () {
-    test(
-      'natural-fixture sanity: EXPAND dispatch commits at least one '
-      'conquest army move when phasePlan is omitted (legacy internal '
-      'compute)',
-      () {
-        final game = _scenarioGame();
-        const topology = MapTopology(nodes: [], edges: []);
-        final view = buildPlayerView(game, topology, _nationId);
-        final snapshot = _expandSnapshot();
+    test('natural-fixture sanity: EXPAND dispatch commits at least one '
+        'conquest army move when phasePlan is omitted (legacy internal '
+        'compute)', () {
+      final game = _scenarioGame();
+      const topology = MapTopology(nodes: [], edges: []);
+      final view = buildPlayerView(game, topology, _nationId);
+      final snapshot = _expandSnapshot();
 
-        expect(
-          observerGoalPhaseFor(snapshot: snapshot, game: game),
-          ObserverGoalPhase.expand,
-          reason:
-              'Sanity guard for the injection contract: the fixture must '
-              'place the GP in EXPAND so the contrast between the '
-              'internal-compute (EXPAND, `conquestArmyMoveCount > 0`) '
-              'and injected `defaultDevelop` (DEVELOP, '
-              '`conquestArmyMoveCount == 0`) paths is decided by the '
-              'new parameter, not by the fixture itself.',
-        );
+      expect(
+        observerGoalPhaseFor(snapshot: snapshot, game: game),
+        ObserverGoalPhase.expand,
+        reason:
+            'Sanity guard for the injection contract: the fixture must '
+            'place the GP in EXPAND so the contrast between the '
+            'internal-compute (EXPAND, `conquestArmyMoveCount > 0`) '
+            'and injected `defaultDevelop` (DEVELOP, '
+            '`conquestArmyMoveCount == 0`) paths is decided by the '
+            'new parameter, not by the fixture itself.',
+      );
 
-        final outcome = runDomainPlannersWithOutcome(
-          game: game,
-          topology: topology,
-          nationId: _nationId,
-          view: view,
-          snapshot: snapshot,
-          config: _aiConfig,
-          primaryGoal: StrategicGoal.conquer,
-          seeds: AISeedBundle.fromTurnSeed(2509300),
-          suggestionAPI: _conquestCandidateApi,
-          economyPlan: _economyPlan,
-        );
+      final outcome = runDomainPlannersWithOutcome(
+        game: game,
+        topology: topology,
+        nationId: _nationId,
+        view: view,
+        snapshot: snapshot,
+        config: _aiConfig,
+        primaryGoal: StrategicGoal.conquer,
+        seeds: AISeedBundle.fromTurnSeed(2509300),
+        suggestionAPI: _conquestCandidateApi,
+        economyPlan: _economyPlan,
+      );
 
-        expect(
-          outcome.conquestArmyMoveCount,
-          greaterThan(0),
-          reason:
-              'EXPAND dispatch must run the conquest army-move planner '
-              'and commit the candidate. A zero count here means the '
-              'fixture itself is not exercising the conquest pass — '
-              'rewire before relying on the positive injection assertion '
-              'below.',
-        );
-      },
-    );
+      expect(
+        outcome.conquestArmyMoveCount,
+        greaterThan(0),
+        reason:
+            'EXPAND dispatch must run the conquest army-move planner '
+            'and commit the candidate. A zero count here means the '
+            'fixture itself is not exercising the conquest pass — '
+            'rewire before relying on the positive injection assertion '
+            'below.',
+      );
+    });
 
-    test(
-      'injected `defaultDevelop` PhasePlanOutcome forces DEVELOP routing — '
-      'orchestrator skips the conquest pass (conquestArmyMoveCount == 0), '
-      'overriding the natural EXPAND dispatch',
-      () {
-        final game = _scenarioGame();
-        const topology = MapTopology(nodes: [], edges: []);
-        final view = buildPlayerView(game, topology, _nationId);
-        final snapshot = _expandSnapshot();
+    test('injected `defaultDevelop` PhasePlanOutcome forces DEVELOP routing — '
+        'orchestrator skips the conquest pass (conquestArmyMoveCount == 0), '
+        'overriding the natural EXPAND dispatch', () {
+      final game = _scenarioGame();
+      const topology = MapTopology(nodes: [], edges: []);
+      final view = buildPlayerView(game, topology, _nationId);
+      final snapshot = _expandSnapshot();
 
-        expect(
-          observerGoalPhaseFor(snapshot: snapshot, game: game),
-          ObserverGoalPhase.expand,
-          reason:
-              'The injection contract is observable only when the natural '
-              'dispatch would have routed to EXPAND. If a future fixture '
-              'drift flipped the natural phase, this guard catches it '
-              'before the assertion below silently passes.',
-        );
+      expect(
+        observerGoalPhaseFor(snapshot: snapshot, game: game),
+        ObserverGoalPhase.expand,
+        reason:
+            'The injection contract is observable only when the natural '
+            'dispatch would have routed to EXPAND. If a future fixture '
+            'drift flipped the natural phase, this guard catches it '
+            'before the assertion below silently passes.',
+      );
 
-        final outcome = runDomainPlannersWithOutcome(
-          game: game,
-          topology: topology,
-          nationId: _nationId,
-          view: view,
-          snapshot: snapshot,
-          config: _aiConfig,
-          primaryGoal: StrategicGoal.conquer,
-          seeds: AISeedBundle.fromTurnSeed(2509300),
-          suggestionAPI: _conquestCandidateApi,
-          economyPlan: _economyPlan,
-          phasePlan: PhasePlanOutcome.defaultDevelop,
-        );
+      final outcome = runDomainPlannersWithOutcome(
+        game: game,
+        topology: topology,
+        nationId: _nationId,
+        view: view,
+        snapshot: snapshot,
+        config: _aiConfig,
+        primaryGoal: StrategicGoal.conquer,
+        seeds: AISeedBundle.fromTurnSeed(2509300),
+        suggestionAPI: _conquestCandidateApi,
+        economyPlan: _economyPlan,
+        phasePlan: PhasePlanOutcome.defaultDevelop,
+      );
 
-        expect(
-          outcome.conquestArmyMoveCount,
-          0,
-          reason:
-              'When `phasePlan: PhasePlanOutcome.defaultDevelop` is '
-              'supplied, `runConquestArmyMovePlanner` must short-circuit '
-              'via `resolvePhaseConquestInvadable.skipConquestPass` '
-              '(active only under DEVELOP) and contribute zero entries '
-              'to `conquestArmyMoveCount`. A positive count here means '
-              'the orchestrator silently ignored the injected plan and '
-              'recomputed EXPAND internally — exactly the regression '
-              'this pin guards against. (Total army-move orders may be '
-              'non-zero in DEVELOP via the relocation pass; the '
-              'orchestrator-tracked `conquestArmyMoveCount` is the only '
-              'count that separates the two paths.)',
-        );
-      },
-    );
+      expect(
+        outcome.conquestArmyMoveCount,
+        0,
+        reason:
+            'When `phasePlan: PhasePlanOutcome.defaultDevelop` is '
+            'supplied, `runConquestArmyMovePlanner` must short-circuit '
+            'via `resolvePhaseConquestInvadable.skipConquestPass` '
+            '(active only under DEVELOP) and contribute zero entries '
+            'to `conquestArmyMoveCount`. A positive count here means '
+            'the orchestrator silently ignored the injected plan and '
+            'recomputed EXPAND internally — exactly the regression '
+            'this pin guards against. (Total army-move orders may be '
+            'non-zero in DEVELOP via the relocation pass; the '
+            'orchestrator-tracked `conquestArmyMoveCount` is the only '
+            'count that separates the two paths.)',
+      );
+    });
 
     test(
       'omitting `phasePlan` produces identical orders to passing the natural '
@@ -376,67 +368,64 @@ void main() {
       },
     );
 
-    test(
-      'injecting the same `PhasePlanOutcome` twice into '
-      'runDomainPlannersWithOutcome produces identical orders '
-      '(Must-have #7 determinism under hoisted dispatch)',
-      () {
-        final game = _scenarioGame();
-        const topology = MapTopology(nodes: [], edges: []);
-        final view = buildPlayerView(game, topology, _nationId);
-        final snapshot = _expandSnapshot();
+    test('injecting the same `PhasePlanOutcome` twice into '
+        'runDomainPlannersWithOutcome produces identical orders '
+        '(Must-have #7 determinism under hoisted dispatch)', () {
+      final game = _scenarioGame();
+      const topology = MapTopology(nodes: [], edges: []);
+      final view = buildPlayerView(game, topology, _nationId);
+      final snapshot = _expandSnapshot();
 
-        final naturalPlan = runPhasePlanners(
-          game: game,
-          snapshot: snapshot,
-          personalityId: _aiConfig.personalityId,
-        );
+      final naturalPlan = runPhasePlanners(
+        game: game,
+        snapshot: snapshot,
+        personalityId: _aiConfig.personalityId,
+      );
 
-        DomainPlannerOutcome runOnce() => runDomainPlannersWithOutcome(
-              game: game,
-              topology: topology,
-              nationId: _nationId,
-              view: view,
-              snapshot: snapshot,
-              config: _aiConfig,
-              primaryGoal: StrategicGoal.conquer,
-              seeds: AISeedBundle.fromTurnSeed(2509302),
-              suggestionAPI: _conquestCandidateApi,
-              economyPlan: _economyPlan,
-              phasePlan: naturalPlan,
-            );
+      DomainPlannerOutcome runOnce() => runDomainPlannersWithOutcome(
+        game: game,
+        topology: topology,
+        nationId: _nationId,
+        view: view,
+        snapshot: snapshot,
+        config: _aiConfig,
+        primaryGoal: StrategicGoal.conquer,
+        seeds: AISeedBundle.fromTurnSeed(2509302),
+        suggestionAPI: _conquestCandidateApi,
+        economyPlan: _economyPlan,
+        phasePlan: naturalPlan,
+      );
 
-        final first = runOnce();
-        final second = runOnce();
+      final first = runOnce();
+      final second = runOnce();
 
-        expect(
-          second.orders.armyMoveOrdersByPlayerId,
-          first.orders.armyMoveOrdersByPlayerId,
-          reason:
-              'Two consecutive `runDomainPlannersWithOutcome` calls with '
-              'the same hoisted `PhasePlanOutcome` must produce the same '
-              'army-move orders. Non-determinism here would silently '
-              'desynchronize the strategic-AI hoisted dispatch from the '
-              'orchestrator-internal fallback the same fixture exercises '
-              'in the equivalence test above.',
-        );
-        expect(
-          second.declaredWarTargetFactionId,
-          first.declaredWarTargetFactionId,
-          reason:
-              'The declare-war target tracked on `DomainPlannerOutcome` '
-              'must be stable across runs — it is the same compute the '
-              'AI trace export reads.',
-        );
-        expect(
-          second.conquestArmyMoveCount,
-          first.conquestArmyMoveCount,
-          reason:
-              'The conquest army-move count is the orchestrator-level '
-              'rollup the trace pin consumes; determinism across the '
-              'hoisted-plan path must be preserved.',
-        );
-      },
-    );
+      expect(
+        second.orders.armyMoveOrdersByPlayerId,
+        first.orders.armyMoveOrdersByPlayerId,
+        reason:
+            'Two consecutive `runDomainPlannersWithOutcome` calls with '
+            'the same hoisted `PhasePlanOutcome` must produce the same '
+            'army-move orders. Non-determinism here would silently '
+            'desynchronize the strategic-AI hoisted dispatch from the '
+            'orchestrator-internal fallback the same fixture exercises '
+            'in the equivalence test above.',
+      );
+      expect(
+        second.declaredWarTargetFactionId,
+        first.declaredWarTargetFactionId,
+        reason:
+            'The declare-war target tracked on `DomainPlannerOutcome` '
+            'must be stable across runs — it is the same compute the '
+            'AI trace export reads.',
+      );
+      expect(
+        second.conquestArmyMoveCount,
+        first.conquestArmyMoveCount,
+        reason:
+            'The conquest army-move count is the orchestrator-level '
+            'rollup the trace pin consumes; determinism across the '
+            'hoisted-plan path must be preserved.',
+      );
+    });
   });
 }

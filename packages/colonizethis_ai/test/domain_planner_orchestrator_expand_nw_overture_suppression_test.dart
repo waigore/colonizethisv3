@@ -157,20 +157,20 @@ Game _scenarioGame({required List<String> gp1OwProvinces}) {
 // `establishOverture` suppression rule.
 const FakeOrderSuggestionAPIForDomainPlannerTests _nwTribeOvertureApi =
     FakeOrderSuggestionAPIForDomainPlannerTests(
-  work: [],
-  build: [],
-  move: [],
-  research: [],
-  navalMove: [],
-  navalMission: [],
-  diplomatic: [
-    DiplomaticOrder(
-      type: DiplomaticOrderType.establishOverture,
-      targetFactionId: _tribeId,
-      overtureStage: OvertureStage.joinEmpire,
-    ),
-  ],
-);
+      work: [],
+      build: [],
+      move: [],
+      research: [],
+      navalMove: [],
+      navalMission: [],
+      diplomatic: [
+        DiplomaticOrder(
+          type: DiplomaticOrderType.establishOverture,
+          targetFactionId: _tribeId,
+          overtureStage: OvertureStage.joinEmpire,
+        ),
+      ],
+    );
 
 const EconomyPlan _economyPlan = EconomyPlan(
   productionAssignments: [],
@@ -253,8 +253,7 @@ AIWorldSnapshot _colonialSnapshot() {
 }
 
 List<String> _overtureTargets(Orders orders) => <String>[
-  for (final order
-      in orders.diplomaticOrdersByPlayerId[_nationId] ?? const [])
+  for (final order in orders.diplomaticOrdersByPlayerId[_nationId] ?? const [])
     if (order.type == DiplomaticOrderType.establishOverture)
       order.targetFactionId,
 ];

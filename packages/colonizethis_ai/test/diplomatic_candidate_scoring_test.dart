@@ -4,107 +4,109 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
-
 void main() {
   group('computeDiplomaticCandidateScores', () {
-    test('declareWar score exceeds establishOverture for same hostile target', () {
-      final game = Game(
-        id: 'g-diplo-score-1',
-        worldState: WorldState(
-          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-          oldWorld: RegionData(
-            provinces: const [
-              Province(
-                id: 'oldWorld|p1',
-                regionId: 'oldWorld',
-                ownerId: 'gp1',
-              ),
-              Province(
-                id: 'oldWorld|p2',
-                regionId: 'oldWorld',
-                ownerId: 'gp1',
-              ),
-              Province(
-                id: 'oldWorld|p3',
-                regionId: 'oldWorld',
-                ownerId: 'gp1',
-              ),
-              Province(
-                id: 'oldWorld|p4',
-                regionId: 'oldWorld',
-                ownerId: 'gp2',
-              ),
-            ],
-            units: [
-              Unit(
-                id: 'u1',
-                type: 'grenadiers',
-                ownerId: 'gp1',
-                locationProvinceId: 'oldWorld|p1',
-              ),
-              Unit(
-                id: 'u2',
-                type: 'grenadiers',
-                ownerId: 'gp1',
-                locationProvinceId: 'oldWorld|p2',
-              ),
-              Unit(
-                id: 'u3',
-                type: 'grenadiers',
-                ownerId: 'gp1',
-                locationProvinceId: 'oldWorld|p3',
-              ),
-              Unit(
-                id: 'u4',
-                type: 'grenadiers',
-                ownerId: 'gp2',
-                locationProvinceId: 'oldWorld|p4',
-              ),
-            ],
+    test(
+      'declareWar score exceeds establishOverture for same hostile target',
+      () {
+        final game = Game(
+          id: 'g-diplo-score-1',
+          worldState: WorldState(
+            turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+            oldWorld: RegionData(
+              provinces: const [
+                Province(
+                  id: 'oldWorld|p1',
+                  regionId: 'oldWorld',
+                  ownerId: 'gp1',
+                ),
+                Province(
+                  id: 'oldWorld|p2',
+                  regionId: 'oldWorld',
+                  ownerId: 'gp1',
+                ),
+                Province(
+                  id: 'oldWorld|p3',
+                  regionId: 'oldWorld',
+                  ownerId: 'gp1',
+                ),
+                Province(
+                  id: 'oldWorld|p4',
+                  regionId: 'oldWorld',
+                  ownerId: 'gp2',
+                ),
+              ],
+              units: [
+                Unit(
+                  id: 'u1',
+                  type: 'grenadiers',
+                  ownerId: 'gp1',
+                  locationProvinceId: 'oldWorld|p1',
+                ),
+                Unit(
+                  id: 'u2',
+                  type: 'grenadiers',
+                  ownerId: 'gp1',
+                  locationProvinceId: 'oldWorld|p2',
+                ),
+                Unit(
+                  id: 'u3',
+                  type: 'grenadiers',
+                  ownerId: 'gp1',
+                  locationProvinceId: 'oldWorld|p3',
+                ),
+                Unit(
+                  id: 'u4',
+                  type: 'grenadiers',
+                  ownerId: 'gp2',
+                  locationProvinceId: 'oldWorld|p4',
+                ),
+              ],
+            ),
+            newWorld: const RegionData(),
           ),
-          newWorld: const RegionData(),
-        ),
-        players: const [
-          Player(id: 'gp1', displayName: 'A', isHuman: false),
-          Player(id: 'gp2', displayName: 'B', isHuman: false),
-        ],
-        diplomacyRelations: [
-          const DiplomacyRelation(
-            factionId1: 'gp1',
-            factionId2: 'gp2',
-            score: 20,
-            level: RelationLevel.hostile,
-            state: RelationState.atPeace,
-          ),
-        ],
-      );
-      const topology = MapTopology(nodes: [], edges: []);
-      final view = buildPlayerView(game, topology, 'gp1');
-      final snapshot = AIWorldSnapshot.fromPlayerView(view);
-      const config = AIConfig(
-        leaderId: 'napoleon',
-        personalityId: 'napoleon',
-        hiddenAgendaId: 'warmonger',
-      );
-      final scores = computeDiplomaticCandidateScores(
-        candidates: const [
-          DiplomaticOrder(
-            type: DiplomaticOrderType.declareWar,
-            targetFactionId: 'gp2',
-          ),
-          DiplomaticOrder(
-            type: DiplomaticOrderType.establishOverture,
-            targetFactionId: 'gp2',
-          ),
-        ],
-        nationId: 'gp1',
-        game: game,
-        snapshot: snapshot,
-        config: config,
-      );
-      expect(scores.length, 2);
-      expect(scores[0], greaterThan(scores[1]));
-    });
+          players: const [
+            Player(id: 'gp1', displayName: 'A', isHuman: false),
+            Player(id: 'gp2', displayName: 'B', isHuman: false),
+          ],
+          diplomacyRelations: [
+            const DiplomacyRelation(
+              factionId1: 'gp1',
+              factionId2: 'gp2',
+              score: 20,
+              level: RelationLevel.hostile,
+              state: RelationState.atPeace,
+            ),
+          ],
+        );
+        const topology = MapTopology(nodes: [], edges: []);
+        final view = buildPlayerView(game, topology, 'gp1');
+        final snapshot = AIWorldSnapshot.fromPlayerView(view);
+        const config = AIConfig(
+          leaderId: 'napoleon',
+          personalityId: 'napoleon',
+          hiddenAgendaId: 'warmonger',
+        );
+        final scores = computeDiplomaticCandidateScores(
+          candidates: const [
+            DiplomaticOrder(
+              type: DiplomaticOrderType.declareWar,
+              targetFactionId: 'gp2',
+            ),
+            DiplomaticOrder(
+              type: DiplomaticOrderType.establishOverture,
+              targetFactionId: 'gp2',
+            ),
+          ],
+          nationId: 'gp1',
+          game: game,
+          snapshot: snapshot,
+          config: config,
+        );
+        expect(scores.length, 2);
+        expect(scores[0], greaterThan(scores[1]));
+      },
+    );
 
     test('offer peace candidate scores lower when war desire is higher', () {
       Game gameForWarDesire({
@@ -175,9 +177,14 @@ void main() {
         );
       }
 
-      final highDesireGame = gameForWarDesire(gp2ProvinceCount: 1, gp2Regiments: 1);
-      final lowDesireGame =
-          gameForWarDesire(gp2ProvinceCount: 3, gp2Regiments: 4);
+      final highDesireGame = gameForWarDesire(
+        gp2ProvinceCount: 1,
+        gp2Regiments: 1,
+      );
+      final lowDesireGame = gameForWarDesire(
+        gp2ProvinceCount: 3,
+        gp2Regiments: 4,
+      );
       expect(
         computeWarDesireScore(
           game: highDesireGame,
@@ -336,10 +343,7 @@ void main() {
         final game = Game(
           id: 'g-minor-war-pace',
           worldState: WorldState(
-            turnState: const TurnState(
-              phase: TurnPhase.orders,
-              turnNumber: 1,
-            ),
+            turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
             oldWorld: RegionData(
               provinces: const [
                 Province(
@@ -356,9 +360,7 @@ void main() {
             ),
             newWorld: const RegionData(),
           ),
-          players: const [
-            Player(id: 'gp1', displayName: 'A', isHuman: false),
-          ],
+          players: const [Player(id: 'gp1', displayName: 'A', isHuman: false)],
           minorNations: const [
             MinorNation(id: 'minor1', displayName: 'Minor 1'),
           ],
@@ -427,10 +429,7 @@ void main() {
         final game = Game(
           id: 'g-adj-minor',
           worldState: WorldState(
-            turnState: const TurnState(
-              phase: TurnPhase.orders,
-              turnNumber: 1,
-            ),
+            turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
             oldWorld: RegionData(
               provinces: const [
                 Province(
@@ -452,9 +451,7 @@ void main() {
             ),
             newWorld: const RegionData(),
           ),
-          players: const [
-            Player(id: 'gp1', displayName: 'A', isHuman: false),
-          ],
+          players: const [Player(id: 'gp1', displayName: 'A', isHuman: false)],
           minorNations: const [
             MinorNation(id: 'minor1', displayName: 'M1'),
             MinorNation(id: 'minor6', displayName: 'M6'),
@@ -478,13 +475,23 @@ void main() {
         );
         final topology = MapTopology(
           nodes: const [
-            TopologyNode(id: 'p1', regionId: 'oldWorld', type: TopologyNodeType.province),
-            TopologyNode(id: 'p2', regionId: 'oldWorld', type: TopologyNodeType.province),
-            TopologyNode(id: 'p9', regionId: 'oldWorld', type: TopologyNodeType.province),
+            TopologyNode(
+              id: 'p1',
+              regionId: 'oldWorld',
+              type: TopologyNodeType.province,
+            ),
+            TopologyNode(
+              id: 'p2',
+              regionId: 'oldWorld',
+              type: TopologyNodeType.province,
+            ),
+            TopologyNode(
+              id: 'p9',
+              regionId: 'oldWorld',
+              type: TopologyNodeType.province,
+            ),
           ],
-          edges: const [
-            TopologyEdge(id1: 'p1', id2: 'p2'),
-          ],
+          edges: const [TopologyEdge(id1: 'p1', id2: 'p2')],
         );
         const config = AIConfig(
           leaderId: 'henry',
@@ -547,10 +554,7 @@ void main() {
         final game = Game(
           id: 'g-suppress',
           worldState: WorldState(
-            turnState: const TurnState(
-              phase: TurnPhase.orders,
-              turnNumber: 1,
-            ),
+            turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
             oldWorld: const RegionData(),
             newWorld: const RegionData(),
           ),
@@ -558,9 +562,7 @@ void main() {
             Player(id: 'gp1', displayName: 'A', isHuman: false),
             Player(id: 'gp2', displayName: 'B', isHuman: false),
           ],
-          minorNations: const [
-            MinorNation(id: 'minor1', displayName: 'M1'),
-          ],
+          minorNations: const [MinorNation(id: 'minor1', displayName: 'M1')],
         );
         const config = AIConfig(
           leaderId: 'henry',
@@ -613,10 +615,7 @@ void main() {
         final game = Game(
           id: 'g-suppress-strong-gp',
           worldState: WorldState(
-            turnState: const TurnState(
-              phase: TurnPhase.orders,
-              turnNumber: 1,
-            ),
+            turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
             oldWorld: RegionData(
               provinces: [
                 for (var i = 0; i < 8; i++)
@@ -683,6 +682,5 @@ void main() {
         expect(gpScore, kDeclareWarNonAdjacentSuppressedScore);
       },
     );
-
   });
 }

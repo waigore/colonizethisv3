@@ -44,8 +44,6 @@
 // the legacy fixtures and in-file consumer chains agree.
 
 import 'package:colonizethis_ai/src/perception/perception_snapshot.dart';
-import 'package:colonizethis_ai/src/planning/diplomacy_planner_peace_targets.dart'
-    as diplomacy_planner_peace_targets;
 import 'package:colonizethis_ai/src/planning/expand_phase_planner.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
@@ -367,108 +365,6 @@ void main() {
       );
       expect(first, equals(second));
       expect(first, const [_gpBlocker]);
-    });
-  });
-
-  group('Stub delegation parity', () {
-    test('stub mirrors canonical across outer-guard and fire-path inputs', () {
-      final fixtures = <({Game game, AIWorldSnapshot snapshot, String label})>[
-        (
-          label: 'outer guard: not in critical-weak band',
-          game: _weakHoldingsGame(
-            ownProvinces: 12,
-            blockerOwnProvinces: 20,
-            extraInvadableOwners: const {
-              _gpBlocker: ['oldWorld|inv_blocker'],
-              _minor1: ['oldWorld|inv_minor'],
-            },
-          ),
-          snapshot: _ownSnapshot(
-            oldWorldProvincesOwned: 12,
-            atWarWith: const [_gpBlocker],
-            invadableProvinceIdsSorted: const [
-              'oldWorld|inv_blocker',
-              'oldWorld|inv_minor',
-            ],
-          ),
-        ),
-        (
-          label: 'outer guard: GP-only frontier',
-          game: _weakHoldingsGame(
-            ownProvinces: 5,
-            blockerOwnProvinces: 10,
-            extraInvadableOwners: const {
-              _gpBlocker: ['oldWorld|inv_blocker'],
-            },
-            minorNations: const [],
-          ),
-          snapshot: _ownSnapshot(
-            oldWorldProvincesOwned: 5,
-            atWarWith: const [_gpBlocker],
-            invadableProvinceIdsSorted: const ['oldWorld|inv_blocker'],
-          ),
-        ),
-        (
-          label: 'fire path: default-start critical row at lead 1',
-          game: _weakHoldingsGame(
-            ownProvinces: 7,
-            blockerOwnProvinces: 7,
-            extraInvadableOwners: const {
-              _gpBlocker: ['oldWorld|inv_blocker'],
-              _minor1: ['oldWorld|inv_minor'],
-            },
-          ),
-          snapshot: _ownSnapshot(
-            oldWorldProvincesOwned: 7,
-            atWarWith: const [_gpBlocker],
-            invadableProvinceIdsSorted: const [
-              'oldWorld|inv_blocker',
-              'oldWorld|inv_minor',
-            ],
-          ),
-        ),
-        (
-          label: 'fire path: below-quota row at lead 2',
-          game: _weakHoldingsGame(
-            ownProvinces: 8,
-            blockerOwnProvinces: 9,
-            extraInvadableOwners: const {
-              _gpBlocker: ['oldWorld|inv_blocker'],
-              _minor1: ['oldWorld|inv_minor'],
-            },
-          ),
-          snapshot: _ownSnapshot(
-            oldWorldProvincesOwned: 8,
-            atWarWith: const [_gpBlocker],
-            invadableProvinceIdsSorted: const [
-              'oldWorld|inv_blocker',
-              'oldWorld|inv_minor',
-            ],
-          ),
-        ),
-      ];
-      for (final fixture in fixtures) {
-        final canonical = weakHoldingsInvadableBlockerPeaceTargets(
-          game: fixture.game,
-          snapshot: fixture.snapshot,
-        );
-        final stub = diplomacy_planner_peace_targets
-            .weakHoldingsInvadableBlockerPeaceTargets(
-              game: fixture.game,
-              snapshot: fixture.snapshot,
-            );
-        expect(
-          stub,
-          equals(canonical),
-          reason:
-              'Stub-canonical parity broken for fixture '
-              '"${fixture.label}". The legacy '
-              '_expandRatchetGreatPowerPeaceTargets and '
-              'collectStalledGreatPowerPeaceTargets '
-              'preserveBlockerPeace consumers depend on this parity '
-              'until the planned S1 deletion.',
-        );
-      }
     });
   });
 }

@@ -159,9 +159,7 @@ Game _developTwoGpWarsScenarioGame() {
       Player(id: _atWarGpAId, displayName: 'GP2', isHuman: false),
       Player(id: _atWarGpBId, displayName: 'GP3', isHuman: false),
     ],
-    minorNations: const [
-      MinorNation(id: _atWarMinorId, displayName: 'Minor1'),
-    ],
+    minorNations: const [MinorNation(id: _atWarMinorId, displayName: 'Minor1')],
     tribes: const [],
     diplomacyRelations: const [
       DiplomacyRelation(
@@ -188,13 +186,13 @@ Game _developTwoGpWarsScenarioGame() {
 
 const FakeOrderSuggestionAPIForDomainPlannerTests _emptyApi =
     FakeOrderSuggestionAPIForDomainPlannerTests(
-  work: [],
-  build: [],
-  move: [],
-  research: [],
-  navalMove: [],
-  navalMission: [],
-);
+      work: [],
+      build: [],
+      move: [],
+      research: [],
+      navalMove: [],
+      navalMission: [],
+    );
 
 const EconomyPlan _economyPlan = EconomyPlan(
   productionAssignments: [],

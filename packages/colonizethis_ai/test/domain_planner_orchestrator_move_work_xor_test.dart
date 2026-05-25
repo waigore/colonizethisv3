@@ -9,7 +9,8 @@ import 'planner_test_helpers.dart';
 /// [DefaultOrderSuggestionAPI] with fixed civilian work rows so Full AI assigns
 /// work first; move suggestions still use production [suggestMoveOrders] (draft
 /// work excludes same-unit moves).
-final class _InjectedCivilianWorkSuggestionApi extends DefaultOrderSuggestionAPI {
+final class _InjectedCivilianWorkSuggestionApi
+    extends DefaultOrderSuggestionAPI {
   _InjectedCivilianWorkSuggestionApi(this._work);
   final List<WorkOrder> _work;
 
@@ -62,10 +63,7 @@ void main() {
             },
           },
           playerVisibilityByTile: const {
-            playerId: {
-              tileA: 'fullyVisible',
-              tileB: 'fullyVisible',
-            },
+            playerId: {tileA: 'fullyVisible', tileB: 'fullyVisible'},
           },
         ),
         players: const [
@@ -91,9 +89,7 @@ void main() {
             type: TopologyNodeType.province,
           ),
         ],
-        edges: const [
-          TopologyEdge(id1: 'P1', id2: 'P2'),
-        ],
+        edges: const [TopologyEdge(id1: 'P1', id2: 'P2')],
       );
 
       final view = buildPlayerView(game, topology, playerId);
@@ -115,7 +111,8 @@ void main() {
       expect(
         moveIfNoWork.any((m) => m.unitId == 'u1'),
         isTrue,
-        reason: 'fixture should yield at least one move candidate for u1 when '
+        reason:
+            'fixture should yield at least one move candidate for u1 when '
             'draft orders omit work so XOR behavior is meaningful',
       );
 
@@ -136,7 +133,8 @@ void main() {
       expect(
         moveList.where((m) => m.unitId == 'u1'),
         isEmpty,
-        reason: 'civilian move/work XOR: no MoveOrder for same unitId as draft '
+        reason:
+            'civilian move/work XOR: no MoveOrder for same unitId as draft '
             'WorkOrder after Full AI civilian work in the same planner pass',
       );
     },

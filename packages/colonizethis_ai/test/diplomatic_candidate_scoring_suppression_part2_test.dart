@@ -5,8 +5,6 @@ import 'package:colonizethis_logic/ai_api.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
-
-
 void main() {
   group('computeDiplomaticCandidateScores suppression (part 2)', () {
     test(
@@ -29,10 +27,7 @@ void main() {
         final game = Game(
           id: 'g-mutual-plateau-suppress',
           worldState: WorldState(
-            turnState: const TurnState(
-              phase: TurnPhase.orders,
-              turnNumber: 40,
-            ),
+            turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 40),
             oldWorld: RegionData(
               provinces: [
                 for (var i = 0; i < 8; i++)
@@ -88,10 +83,7 @@ void main() {
         final game = Game(
           id: 'g-stalled-gp-blocker-declare',
           worldState: WorldState(
-            turnState: const TurnState(
-              phase: TurnPhase.orders,
-              turnNumber: 60,
-            ),
+            turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 60),
             oldWorld: RegionData(
               provinces: [
                 const Province(
@@ -149,10 +141,7 @@ void main() {
         final game = Game(
           id: 'g-mutual-plateau-peace-declare',
           worldState: WorldState(
-            turnState: const TurnState(
-              phase: TurnPhase.orders,
-              turnNumber: 60,
-            ),
+            turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 60),
             oldWorld: RegionData(
               provinces: [
                 for (var i = 0; i < 9; i++)
@@ -237,10 +226,7 @@ void main() {
         final game = Game(
           id: 'g-mutual-plateau-no-minor-pivot',
           worldState: WorldState(
-            turnState: const TurnState(
-              phase: TurnPhase.orders,
-              turnNumber: 60,
-            ),
+            turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 60),
             oldWorld: RegionData(
               provinces: [
                 for (var i = 0; i < 9; i++)
@@ -308,10 +294,7 @@ void main() {
         final game = Game(
           id: 'g-mutual-plateau-distant-minors',
           worldState: WorldState(
-            turnState: const TurnState(
-              phase: TurnPhase.orders,
-              turnNumber: 30,
-            ),
+            turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 30),
             oldWorld: RegionData(
               provinces: [
                 for (var i = 0; i < 9; i++)
@@ -385,10 +368,7 @@ void main() {
         final game = Game(
           id: 'g-zero-reg-no-declare',
           worldState: WorldState(
-            turnState: const TurnState(
-              phase: TurnPhase.orders,
-              turnNumber: 50,
-            ),
+            turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 50),
             oldWorld: RegionData(
               provinces: [
                 for (var i = 1; i <= 8; i++)
@@ -442,10 +422,7 @@ void main() {
         final game = Game(
           id: 'g-mutual-plateau-at-war',
           worldState: WorldState(
-            turnState: const TurnState(
-              phase: TurnPhase.orders,
-              turnNumber: 60,
-            ),
+            turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 60),
             oldWorld: RegionData(
               provinces: [
                 for (var i = 0; i < 8; i++)
@@ -516,10 +493,7 @@ void main() {
         final game = Game(
           id: 'g-early-anti-dogpile',
           worldState: WorldState(
-            turnState: const TurnState(
-              phase: TurnPhase.orders,
-              turnNumber: 8,
-            ),
+            turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 8),
             oldWorld: RegionData(
               provinces: [
                 for (var i = 0; i < 8; i++)
@@ -591,10 +565,7 @@ void main() {
         final game = Game(
           id: 'g-quota-dogpile',
           worldState: WorldState(
-            turnState: const TurnState(
-              phase: TurnPhase.orders,
-              turnNumber: 50,
-            ),
+            turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 50),
             oldWorld: RegionData(
               provinces: [
                 for (var i = 0; i < 8; i++)
@@ -674,10 +645,7 @@ void main() {
         final game = Game(
           id: 'g-second-attacker',
           worldState: WorldState(
-            turnState: const TurnState(
-              phase: TurnPhase.orders,
-              turnNumber: 2,
-            ),
+            turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 2),
             oldWorld: RegionData(
               provinces: [
                 for (var i = 0; i < 8; i++)
@@ -739,79 +707,73 @@ void main() {
       },
     );
 
-    test(
-      'suppresses new declareWar on below-quota GP with zero regiments',
-      () {
-        const snap = AIWorldSnapshot(
-          playerId: 'gp4',
-          threats: ThreatSummary(),
-          opportunities: OpportunitySummary(),
-          conquest: ConquestSummary(
-            oldWorldProvincesOwned: 11,
-            provincesToVictory: 20,
-            invadableProvinceIdsSorted: ['oldWorld|p30'],
-            adjacentOwnerFactionIdsSorted: ['gp3'],
-          ),
-          colonial: ColonialSummary(),
-          economy: EconomySummary(),
-          relations: {},
-        );
-        final game = Game(
-          id: 'g-zero-regiment-victim',
-          worldState: WorldState(
-            turnState: const TurnState(
-              phase: TurnPhase.orders,
-              turnNumber: 2,
-            ),
-            oldWorld: RegionData(
-              provinces: [
-                for (var i = 0; i < 8; i++)
-                  Province(
-                    id: 'oldWorld|gp3_$i',
-                    regionId: 'oldWorld',
-                    ownerId: 'gp3',
-                  ),
-                for (var i = 0; i < 11; i++)
-                  Province(
-                    id: 'oldWorld|gp4_$i',
-                    regionId: 'oldWorld',
-                    ownerId: 'gp4',
-                  ),
-                const Province(
-                  id: 'oldWorld|p30',
+    test('suppresses new declareWar on below-quota GP with zero regiments', () {
+      const snap = AIWorldSnapshot(
+        playerId: 'gp4',
+        threats: ThreatSummary(),
+        opportunities: OpportunitySummary(),
+        conquest: ConquestSummary(
+          oldWorldProvincesOwned: 11,
+          provincesToVictory: 20,
+          invadableProvinceIdsSorted: ['oldWorld|p30'],
+          adjacentOwnerFactionIdsSorted: ['gp3'],
+        ),
+        colonial: ColonialSummary(),
+        economy: EconomySummary(),
+        relations: {},
+      );
+      final game = Game(
+        id: 'g-zero-regiment-victim',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 2),
+          oldWorld: RegionData(
+            provinces: [
+              for (var i = 0; i < 8; i++)
+                Province(
+                  id: 'oldWorld|gp3_$i',
                   regionId: 'oldWorld',
-                  ownerId: 'minor1',
+                  ownerId: 'gp3',
                 ),
-              ],
-            ),
-            newWorld: const RegionData(),
+              for (var i = 0; i < 11; i++)
+                Province(
+                  id: 'oldWorld|gp4_$i',
+                  regionId: 'oldWorld',
+                  ownerId: 'gp4',
+                ),
+              const Province(
+                id: 'oldWorld|p30',
+                regionId: 'oldWorld',
+                ownerId: 'minor1',
+              ),
+            ],
           ),
-          players: const [
-            Player(id: 'gp3', displayName: 'C', isHuman: false),
-            Player(id: 'gp4', displayName: 'D', isHuman: false),
-          ],
-          minorNations: const [MinorNation(id: 'minor1', displayName: 'M1')],
-        );
-        const config = AIConfig(
-          leaderId: 'henry',
-          personalityId: 'henry',
-          hiddenAgendaId: 'merchant',
-        );
-        final score = computeDiplomaticCandidateScores(
-          candidates: const [
-            DiplomaticOrder(
-              type: DiplomaticOrderType.declareWar,
-              targetFactionId: 'gp3',
-            ),
-          ],
-          nationId: 'gp4',
-          game: game,
-          snapshot: snap,
-          config: config,
-          primaryGoal: StrategicGoal.conquer,
-        ).single;
-        expect(score, 0);
-      },
-    );
+          newWorld: const RegionData(),
+        ),
+        players: const [
+          Player(id: 'gp3', displayName: 'C', isHuman: false),
+          Player(id: 'gp4', displayName: 'D', isHuman: false),
+        ],
+        minorNations: const [MinorNation(id: 'minor1', displayName: 'M1')],
+      );
+      const config = AIConfig(
+        leaderId: 'henry',
+        personalityId: 'henry',
+        hiddenAgendaId: 'merchant',
+      );
+      final score = computeDiplomaticCandidateScores(
+        candidates: const [
+          DiplomaticOrder(
+            type: DiplomaticOrderType.declareWar,
+            targetFactionId: 'gp3',
+          ),
+        ],
+        nationId: 'gp4',
+        game: game,
+        snapshot: snap,
+        config: config,
+        primaryGoal: StrategicGoal.conquer,
+      ).single;
+      expect(score, 0);
+    });
   });
 }

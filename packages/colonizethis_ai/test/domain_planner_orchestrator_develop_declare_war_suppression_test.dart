@@ -179,19 +179,19 @@ Game _colonialScenarioGame() {
 // than candidate availability.
 const FakeOrderSuggestionAPIForDomainPlannerTests _tribeDeclareWarApi =
     FakeOrderSuggestionAPIForDomainPlannerTests(
-  work: [],
-  build: [],
-  move: [],
-  research: [],
-  navalMove: [],
-  navalMission: [],
-  diplomatic: [
-    DiplomaticOrder(
-      type: DiplomaticOrderType.declareWar,
-      targetFactionId: _tribeId,
-    ),
-  ],
-);
+      work: [],
+      build: [],
+      move: [],
+      research: [],
+      navalMove: [],
+      navalMission: [],
+      diplomatic: [
+        DiplomaticOrder(
+          type: DiplomaticOrderType.declareWar,
+          targetFactionId: _tribeId,
+        ),
+      ],
+    );
 
 const EconomyPlan _economyPlan = EconomyPlan(
   productionAssignments: [],
@@ -269,10 +269,8 @@ AIWorldSnapshot _colonialSnapshot() {
 }
 
 List<String> _declareWarTargets(Orders orders) => <String>[
-  for (final order
-      in orders.diplomaticOrdersByPlayerId[_nationId] ?? const [])
-    if (order.type == DiplomaticOrderType.declareWar)
-      order.targetFactionId,
+  for (final order in orders.diplomaticOrdersByPlayerId[_nationId] ?? const [])
+    if (order.type == DiplomaticOrderType.declareWar) order.targetFactionId,
 ];
 
 void main() {

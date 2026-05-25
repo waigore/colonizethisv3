@@ -168,58 +168,49 @@ void main() {
   });
 
   group('stalledBelowQuotaGpLeadPeaceTargets — minLeadDeficit table', () {
-    test(
-      'default-start empty when enemy leads by only 1 (needs 2)',
-      () {
-        final game = _ownVsPartnerGame(
-          ownProvinces: kObserverDefaultStartOldWorldProvincesPerGp,
-          partnerProvinces:
-              kObserverDefaultStartOldWorldProvincesPerGp + 1,
-          partnerId: 'gp_enemy',
-          invadableOwnerId: 'minor1',
-        );
-        final snapshot = _ownSnapshot(
-          oldWorldProvincesOwned:
-              kObserverDefaultStartOldWorldProvincesPerGp,
-          atWarWith: const ['gp_enemy'],
-          invadableProvinceIdsSorted: const ['oldWorld|frontier'],
-        );
+    test('default-start empty when enemy leads by only 1 (needs 2)', () {
+      final game = _ownVsPartnerGame(
+        ownProvinces: kObserverDefaultStartOldWorldProvincesPerGp,
+        partnerProvinces: kObserverDefaultStartOldWorldProvincesPerGp + 1,
+        partnerId: 'gp_enemy',
+        invadableOwnerId: 'minor1',
+      );
+      final snapshot = _ownSnapshot(
+        oldWorldProvincesOwned: kObserverDefaultStartOldWorldProvincesPerGp,
+        atWarWith: const ['gp_enemy'],
+        invadableProvinceIdsSorted: const ['oldWorld|frontier'],
+      );
 
-        expect(
-          stalledBelowQuotaGpLeadPeaceTargets(game: game, snapshot: snapshot),
-          isEmpty,
-          reason:
-              'own <= kObserverDefaultStartOldWorldProvincesPerGp uses '
-              'minLeadDeficit=kUnwinnableSoleGpMinProvinceDeficit (2). '
-              'Lead 1 must not peace.',
-        );
-      },
-    );
+      expect(
+        stalledBelowQuotaGpLeadPeaceTargets(game: game, snapshot: snapshot),
+        isEmpty,
+        reason:
+            'own <= kObserverDefaultStartOldWorldProvincesPerGp uses '
+            'minLeadDeficit=kUnwinnableSoleGpMinProvinceDeficit (2). '
+            'Lead 1 must not peace.',
+      );
+    });
 
-    test(
-      'default-start returns enemy when lead is exactly 2',
-      () {
-        final game = _ownVsPartnerGame(
-          ownProvinces: kObserverDefaultStartOldWorldProvincesPerGp,
-          partnerProvinces:
-              kObserverDefaultStartOldWorldProvincesPerGp +
-              kUnwinnableSoleGpMinProvinceDeficit,
-          partnerId: 'gp_enemy',
-          invadableOwnerId: 'minor1',
-        );
-        final snapshot = _ownSnapshot(
-          oldWorldProvincesOwned:
-              kObserverDefaultStartOldWorldProvincesPerGp,
-          atWarWith: const ['gp_enemy'],
-          invadableProvinceIdsSorted: const ['oldWorld|frontier'],
-        );
+    test('default-start returns enemy when lead is exactly 2', () {
+      final game = _ownVsPartnerGame(
+        ownProvinces: kObserverDefaultStartOldWorldProvincesPerGp,
+        partnerProvinces:
+            kObserverDefaultStartOldWorldProvincesPerGp +
+            kUnwinnableSoleGpMinProvinceDeficit,
+        partnerId: 'gp_enemy',
+        invadableOwnerId: 'minor1',
+      );
+      final snapshot = _ownSnapshot(
+        oldWorldProvincesOwned: kObserverDefaultStartOldWorldProvincesPerGp,
+        atWarWith: const ['gp_enemy'],
+        invadableProvinceIdsSorted: const ['oldWorld|frontier'],
+      );
 
-        expect(
-          stalledBelowQuotaGpLeadPeaceTargets(game: game, snapshot: snapshot),
-          ['gp_enemy'],
-        );
-      },
-    );
+      expect(
+        stalledBelowQuotaGpLeadPeaceTargets(game: game, snapshot: snapshot),
+        ['gp_enemy'],
+      );
+    });
 
     test('post-default empty when enemy ties OW count (needs 1)', () {
       const ownOw = kObserverDefaultStartOldWorldProvincesPerGp + 1;
@@ -292,27 +283,24 @@ void main() {
       },
     );
 
-    test(
-      'empty when sole at-war GP is the invadable blocker with lead 1',
-      () {
-        final game = _ownVsPartnerGame(
-          ownProvinces: 8,
-          partnerProvinces: 9,
-          partnerId: 'gp_blocker',
-          invadableOwnerId: 'gp_blocker',
-        );
-        final snapshot = _ownSnapshot(
-          oldWorldProvincesOwned: 8,
-          atWarWith: const ['gp_blocker'],
-          invadableProvinceIdsSorted: const ['oldWorld|frontier'],
-        );
+    test('empty when sole at-war GP is the invadable blocker with lead 1', () {
+      final game = _ownVsPartnerGame(
+        ownProvinces: 8,
+        partnerProvinces: 9,
+        partnerId: 'gp_blocker',
+        invadableOwnerId: 'gp_blocker',
+      );
+      final snapshot = _ownSnapshot(
+        oldWorldProvincesOwned: 8,
+        atWarWith: const ['gp_blocker'],
+        invadableProvinceIdsSorted: const ['oldWorld|frontier'],
+      );
 
-        expect(
-          stalledBelowQuotaGpLeadPeaceTargets(game: game, snapshot: snapshot),
-          isEmpty,
-        );
-      },
-    );
+      expect(
+        stalledBelowQuotaGpLeadPeaceTargets(game: game, snapshot: snapshot),
+        isEmpty,
+      );
+    });
   });
 
   group('stalledBelowQuotaGpLeadPeaceTargets — collection guards', () {

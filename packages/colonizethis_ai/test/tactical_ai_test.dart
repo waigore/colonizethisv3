@@ -10,14 +10,8 @@ void main() {
         defenderFactionId: 'def',
         provinceId: 'p1',
         regionId: 'oldWorld',
-        attackerDeployment: QuickBattleDeployment(
-          groups: [],
-          laneTerrain: {},
-        ),
-        defenderDeployment: QuickBattleDeployment(
-          groups: [],
-          laneTerrain: {},
-        ),
+        attackerDeployment: QuickBattleDeployment(groups: [], laneTerrain: {}),
+        defenderDeployment: QuickBattleDeployment(groups: [], laneTerrain: {}),
         fortLevel: 0,
         provinceTerrain: 'plains',
         seed: 0,
@@ -69,60 +63,65 @@ void main() {
       );
       expect(a.actions, b.actions);
     });
-    test('prefers Volley Fire or Defend when outmatched (we are defender, weaker)', () {
-      const input = QuickBattleInput(
-        attackerFactionId: 'att',
-        defenderFactionId: 'def',
-        provinceId: 'p1',
-        regionId: 'oldWorld',
-        attackerDeployment: QuickBattleDeployment(
-          groups: [
-            QuickBattleGroup(
-              lane: QuickBattleLane.center,
-              line: QuickBattleLine.front,
-              unitIds: ['a1', 'a2', 'a3', 'a4', 'a5'],
-              cohesion: 3,
-            ),
-          ],
-          laneTerrain: {'center_front': QuickBattleLaneTerrain.open},
-        ),
-        defenderDeployment: QuickBattleDeployment(
-          groups: [
-            QuickBattleGroup(
-              lane: QuickBattleLane.center,
-              line: QuickBattleLine.front,
-              unitIds: ['d1', 'd2'],
-              cohesion: 3,
-            ),
-          ],
-          laneTerrain: {'center_front': QuickBattleLaneTerrain.open},
-        ),
-        fortLevel: 0,
-        provinceTerrain: 'plains',
-        seed: 0,
-        maxRounds: 10,
-        attackerLeaderMultiplier: 1.0,
-        defenderLeaderMultiplier: 1.0,
-      );
-      const config = AIConfig(
-        leaderId: 'test',
-        personalityId: 'test',
-        hiddenAgendaId: 'warmonger',
-      );
-      for (var i = 0; i < 20; i++) {
-        final actions = decideQuickBattleActions(
-          input: input,
-          nationId: 'def',
-          config: config,
-          tacticalSeed: 1000 + i,
+    test(
+      'prefers Volley Fire or Defend when outmatched (we are defender, weaker)',
+      () {
+        const input = QuickBattleInput(
+          attackerFactionId: 'att',
+          defenderFactionId: 'def',
+          provinceId: 'p1',
+          regionId: 'oldWorld',
+          attackerDeployment: QuickBattleDeployment(
+            groups: [
+              QuickBattleGroup(
+                lane: QuickBattleLane.center,
+                line: QuickBattleLine.front,
+                unitIds: ['a1', 'a2', 'a3', 'a4', 'a5'],
+                cohesion: 3,
+              ),
+            ],
+            laneTerrain: {'center_front': QuickBattleLaneTerrain.open},
+          ),
+          defenderDeployment: QuickBattleDeployment(
+            groups: [
+              QuickBattleGroup(
+                lane: QuickBattleLane.center,
+                line: QuickBattleLine.front,
+                unitIds: ['d1', 'd2'],
+                cohesion: 3,
+              ),
+            ],
+            laneTerrain: {'center_front': QuickBattleLaneTerrain.open},
+          ),
+          fortLevel: 0,
+          provinceTerrain: 'plains',
+          seed: 0,
+          maxRounds: 10,
+          attackerLeaderMultiplier: 1.0,
+          defenderLeaderMultiplier: 1.0,
         );
-        expect(actions.actions, isNotEmpty);
-        final hasDefensive = actions.actions.any((a) =>
-            a == QuickBattleAction.volleyFire ||
-            a == QuickBattleAction.defendEntrench);
-        expect(hasDefensive, isTrue);
-      }
-    });
+        const config = AIConfig(
+          leaderId: 'test',
+          personalityId: 'test',
+          hiddenAgendaId: 'warmonger',
+        );
+        for (var i = 0; i < 20; i++) {
+          final actions = decideQuickBattleActions(
+            input: input,
+            nationId: 'def',
+            config: config,
+            tacticalSeed: 1000 + i,
+          );
+          expect(actions.actions, isNotEmpty);
+          final hasDefensive = actions.actions.any(
+            (a) =>
+                a == QuickBattleAction.volleyFire ||
+                a == QuickBattleAction.defendEntrench,
+          );
+          expect(hasDefensive, isTrue);
+        }
+      },
+    );
     test('prefers Maneuver or Fall Back when we have damaged groups', () {
       const input = QuickBattleInput(
         attackerFactionId: 'att',
@@ -168,62 +167,67 @@ void main() {
           config: config,
           tacticalSeed: 2000 + i,
         );
-        final hasManeuverOrFallBack = actions.actions.any((a) =>
-            a == QuickBattleAction.maneuver ||
-            a == QuickBattleAction.fallBackRefuseFlank);
+        final hasManeuverOrFallBack = actions.actions.any(
+          (a) =>
+              a == QuickBattleAction.maneuver ||
+              a == QuickBattleAction.fallBackRefuseFlank,
+        );
         expect(hasManeuverOrFallBack, isTrue);
       }
     });
-    test('prefers Assault/Charge when enemy disrupted and terrain favorable', () {
-      const input = QuickBattleInput(
-        attackerFactionId: 'att',
-        defenderFactionId: 'def',
-        provinceId: 'p1',
-        regionId: 'oldWorld',
-        attackerDeployment: QuickBattleDeployment(
-          groups: [
-            QuickBattleGroup(
-              lane: QuickBattleLane.center,
-              line: QuickBattleLine.front,
-              unitIds: ['a1', 'a2', 'a3', 'a4'],
-              cohesion: 3,
-            ),
-          ],
-          laneTerrain: {'center_front': QuickBattleLaneTerrain.hill},
-        ),
-        defenderDeployment: QuickBattleDeployment(
-          groups: [
-            QuickBattleGroup(
-              lane: QuickBattleLane.center,
-              line: QuickBattleLine.front,
-              unitIds: ['d1'],
-              cohesion: 1,
-            ),
-          ],
-          laneTerrain: {'center_front': QuickBattleLaneTerrain.open},
-        ),
-        fortLevel: 0,
-        provinceTerrain: 'plains',
-        seed: 0,
-        maxRounds: 10,
-      );
-      const config = AIConfig(
-        leaderId: 'test',
-        personalityId: 'militant',
-        hiddenAgendaId: 'warmonger',
-      );
-      for (var i = 0; i < 20; i++) {
-        final actions = decideQuickBattleActions(
-          input: input,
-          nationId: 'att',
-          config: config,
-          tacticalSeed: 3000 + i,
+    test(
+      'prefers Assault/Charge when enemy disrupted and terrain favorable',
+      () {
+        const input = QuickBattleInput(
+          attackerFactionId: 'att',
+          defenderFactionId: 'def',
+          provinceId: 'p1',
+          regionId: 'oldWorld',
+          attackerDeployment: QuickBattleDeployment(
+            groups: [
+              QuickBattleGroup(
+                lane: QuickBattleLane.center,
+                line: QuickBattleLine.front,
+                unitIds: ['a1', 'a2', 'a3', 'a4'],
+                cohesion: 3,
+              ),
+            ],
+            laneTerrain: {'center_front': QuickBattleLaneTerrain.hill},
+          ),
+          defenderDeployment: QuickBattleDeployment(
+            groups: [
+              QuickBattleGroup(
+                lane: QuickBattleLane.center,
+                line: QuickBattleLine.front,
+                unitIds: ['d1'],
+                cohesion: 1,
+              ),
+            ],
+            laneTerrain: {'center_front': QuickBattleLaneTerrain.open},
+          ),
+          fortLevel: 0,
+          provinceTerrain: 'plains',
+          seed: 0,
+          maxRounds: 10,
         );
-        expect(
-          actions.actions.contains(QuickBattleAction.assaultCharge),
-          isTrue,
+        const config = AIConfig(
+          leaderId: 'test',
+          personalityId: 'militant',
+          hiddenAgendaId: 'warmonger',
         );
-      }
-    });
+        for (var i = 0; i < 20; i++) {
+          final actions = decideQuickBattleActions(
+            input: input,
+            nationId: 'att',
+            config: config,
+            tacticalSeed: 3000 + i,
+          );
+          expect(
+            actions.actions.contains(QuickBattleAction.assaultCharge),
+            isTrue,
+          );
+        }
+      },
+    );
   });
 }

@@ -152,29 +152,29 @@ Game _developScenarioGame() {
 
 const FakeOrderSuggestionAPIForDomainPlannerTests _mixedRegionWorkApi =
     FakeOrderSuggestionAPIForDomainPlannerTests(
-  work: [
-    WorkOrder(
-      unitId: 'b_ow',
-      target: kWorkTargetBuildImprovement,
-      targetTileKey: _owTile,
-    ),
-    WorkOrder(
-      unitId: 'b_nw',
-      target: kWorkTargetBuildImprovement,
-      targetTileKey: _nwOwnedTile,
-    ),
-    WorkOrder(
-      unitId: 'm_nw',
-      target: kWorkTargetPurchaseLand,
-      targetTileKey: _nwTribeTile,
-    ),
-  ],
-  build: [],
-  move: [],
-  research: [],
-  navalMove: [],
-  navalMission: [],
-);
+      work: [
+        WorkOrder(
+          unitId: 'b_ow',
+          target: kWorkTargetBuildImprovement,
+          targetTileKey: _owTile,
+        ),
+        WorkOrder(
+          unitId: 'b_nw',
+          target: kWorkTargetBuildImprovement,
+          targetTileKey: _nwOwnedTile,
+        ),
+        WorkOrder(
+          unitId: 'm_nw',
+          target: kWorkTargetPurchaseLand,
+          targetTileKey: _nwTribeTile,
+        ),
+      ],
+      build: [],
+      move: [],
+      research: [],
+      navalMove: [],
+      navalMission: [],
+    );
 
 const EconomyPlan _economyPlan = EconomyPlan(
   productionAssignments: [],
@@ -264,67 +264,64 @@ void main() {
       },
     );
 
-    test(
-      'COLONIAL keeps NW purchase_land the DEVELOP filter would drop',
-      () {
-        final game = _developScenarioGame();
-        const topology = MapTopology(nodes: [], edges: []);
-        final view = buildPlayerView(game, topology, _nationId);
-        // OW quota met (>=10) + visible colonial target → COLONIAL.
-        const snapshot = AIWorldSnapshot(
-          playerId: _nationId,
-          threats: ThreatSummary(),
-          opportunities: OpportunitySummary(),
-          conquest: ConquestSummary(oldWorldProvincesOwned: 11),
-          colonial: ColonialSummary(
-            newWorldProvincesOwned: 1,
-            invadableNewWorldProvinceIdsSorted: [_nwTribeProvince],
-            adjacentNewWorldOwnerFactionIdsSorted: ['tribe1'],
-          ),
-          economy: EconomySummary(ownProvinceCount: 2),
-          relations: {},
-        );
-        expect(
-          observerGoalPhaseFor(snapshot: snapshot, game: game),
-          ObserverGoalPhase.colonial,
-          reason:
-              'Negative-control fixture must place GP in COLONIAL so the '
-              'DEVELOP NW purchase_land filter is verified to **not** fire here.',
-        );
+    test('COLONIAL keeps NW purchase_land the DEVELOP filter would drop', () {
+      final game = _developScenarioGame();
+      const topology = MapTopology(nodes: [], edges: []);
+      final view = buildPlayerView(game, topology, _nationId);
+      // OW quota met (>=10) + visible colonial target → COLONIAL.
+      const snapshot = AIWorldSnapshot(
+        playerId: _nationId,
+        threats: ThreatSummary(),
+        opportunities: OpportunitySummary(),
+        conquest: ConquestSummary(oldWorldProvincesOwned: 11),
+        colonial: ColonialSummary(
+          newWorldProvincesOwned: 1,
+          invadableNewWorldProvinceIdsSorted: [_nwTribeProvince],
+          adjacentNewWorldOwnerFactionIdsSorted: ['tribe1'],
+        ),
+        economy: EconomySummary(ownProvinceCount: 2),
+        relations: {},
+      );
+      expect(
+        observerGoalPhaseFor(snapshot: snapshot, game: game),
+        ObserverGoalPhase.colonial,
+        reason:
+            'Negative-control fixture must place GP in COLONIAL so the '
+            'DEVELOP NW purchase_land filter is verified to **not** fire here.',
+      );
 
-        final orders = runDomainPlanners(
-          game: game,
-          topology: topology,
-          nationId: _nationId,
-          view: view,
-          snapshot: snapshot,
-          config: _aiConfig,
-          primaryGoal: StrategicGoal.diplomacy,
-          seeds: AISeedBundle.fromTurnSeed(2509102),
-          suggestionAPI: _mixedRegionWorkApi,
-          economyPlan: _economyPlan,
-        );
+      final orders = runDomainPlanners(
+        game: game,
+        topology: topology,
+        nationId: _nationId,
+        view: view,
+        snapshot: snapshot,
+        config: _aiConfig,
+        primaryGoal: StrategicGoal.diplomacy,
+        seeds: AISeedBundle.fromTurnSeed(2509102),
+        suggestionAPI: _mixedRegionWorkApi,
+        economyPlan: _economyPlan,
+      );
 
-        final work = orders.workOrdersByPlayerId[_nationId] ?? const [];
-        // selectFullAiCivilianWorkOrders may pick a single per-unit best
-        // target, so we don't assert every candidate remains; the key
-        // contract is that NW `purchase_land` is not unconditionally
-        // suppressed in COLONIAL (the candidate must survive the
-        // orchestrator's filter pass and remain available for selection).
-        expect(
-          work.any(
-            (w) =>
-                w.target == kWorkTargetPurchaseLand &&
-                w.targetTileKey == _nwTribeTile,
-          ),
-          isTrue,
-          reason:
-              'COLONIAL must not apply the DEVELOP NW purchase_land filter; '
-              'the merchant purchase_land work order must survive when visible '
-              'colonial targets are present.',
-        );
-      },
-    );
+      final work = orders.workOrdersByPlayerId[_nationId] ?? const [];
+      // selectFullAiCivilianWorkOrders may pick a single per-unit best
+      // target, so we don't assert every candidate remains; the key
+      // contract is that NW `purchase_land` is not unconditionally
+      // suppressed in COLONIAL (the candidate must survive the
+      // orchestrator's filter pass and remain available for selection).
+      expect(
+        work.any(
+          (w) =>
+              w.target == kWorkTargetPurchaseLand &&
+              w.targetTileKey == _nwTribeTile,
+        ),
+        isTrue,
+        reason:
+            'COLONIAL must not apply the DEVELOP NW purchase_land filter; '
+            'the merchant purchase_land work order must survive when visible '
+            'colonial targets are present.',
+      );
+    });
 
     test('DEVELOP filter outcome is deterministic for identical inputs', () {
       final game = _developScenarioGame();

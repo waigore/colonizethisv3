@@ -54,7 +54,8 @@ void main() {
         expect(
           isStalledOldWorldGpBlockerFocus(game: game, snapshot: snapshot),
           isFalse,
-          reason: 'at-quota short-circuit must skip the GP-only frontier delegate',
+          reason:
+              'at-quota short-circuit must skip the GP-only frontier delegate',
         );
       },
     );
@@ -83,10 +84,7 @@ void main() {
         final game = Game(
           id: 'g-stalled-blocker-minor-pivot',
           worldState: WorldState(
-            turnState: const TurnState(
-              phase: TurnPhase.orders,
-              turnNumber: 60,
-            ),
+            turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 60),
             oldWorld: RegionData(
               provinces: [
                 for (var i = 0; i < 8; i++)
@@ -142,10 +140,7 @@ void main() {
       final game = Game(
         id: 'g-stalled-blocker-tribe-only',
         worldState: WorldState(
-          turnState: const TurnState(
-            phase: TurnPhase.orders,
-            turnNumber: 60,
-          ),
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 60),
           oldWorld: RegionData(
             provinces: [
               for (var i = 0; i < 8; i++)
@@ -184,7 +179,8 @@ void main() {
       expect(
         isStalledOldWorldGpBlockerFocus(game: game, snapshot: snapshot),
         isFalse,
-        reason: 'tribe-owned invadable provinces do not satisfy the GP-only check',
+        reason:
+            'tribe-owned invadable provinces do not satisfy the GP-only check',
       );
     });
 
@@ -212,39 +208,15 @@ void main() {
       },
     );
 
-    test('true at zero OW provinces with an all-GP invadable list (lower bound)', () {
-      final game = _gameWithGpOnlyInvadable(ownOwProvinces: 0);
-      const snapshot = AIWorldSnapshot(
-        playerId: 'gp5',
-        threats: ThreatSummary(atWarWith: ['gp6']),
-        opportunities: OpportunitySummary(),
-        conquest: ConquestSummary(
-          invadableProvinceIdsSorted: ['oldWorld|gp6_frontier'],
-        ),
-        colonial: ColonialSummary(),
-        economy: EconomySummary(),
-        relations: {},
-      );
-      expect(
-        isStalledOldWorldGpBlockerFocus(game: game, snapshot: snapshot),
-        isTrue,
-        reason: 'no non-zero OW floor — only the quota ceiling matters',
-      );
-    });
-
     test(
-      'true just below the observer OW quota with an all-GP invadable list '
-      '(quota - 1 boundary)',
+      'true at zero OW provinces with an all-GP invadable list (lower bound)',
       () {
-        final game = _gameWithGpOnlyInvadable(
-          ownOwProvinces: kObserverConquestMinOwProvincesPerGp - 1,
-        );
+        final game = _gameWithGpOnlyInvadable(ownOwProvinces: 0);
         const snapshot = AIWorldSnapshot(
           playerId: 'gp5',
           threats: ThreatSummary(atWarWith: ['gp6']),
           opportunities: OpportunitySummary(),
           conquest: ConquestSummary(
-            oldWorldProvincesOwned: kObserverConquestMinOwProvincesPerGp - 1,
             invadableProvinceIdsSorted: ['oldWorld|gp6_frontier'],
           ),
           colonial: ColonialSummary(),
@@ -254,10 +226,34 @@ void main() {
         expect(
           isStalledOldWorldGpBlockerFocus(game: game, snapshot: snapshot),
           isTrue,
-          reason: 'one province below quota must still trip the predicate',
+          reason: 'no non-zero OW floor — only the quota ceiling matters',
         );
       },
     );
+
+    test('true just below the observer OW quota with an all-GP invadable list '
+        '(quota - 1 boundary)', () {
+      final game = _gameWithGpOnlyInvadable(
+        ownOwProvinces: kObserverConquestMinOwProvincesPerGp - 1,
+      );
+      const snapshot = AIWorldSnapshot(
+        playerId: 'gp5',
+        threats: ThreatSummary(atWarWith: ['gp6']),
+        opportunities: OpportunitySummary(),
+        conquest: ConquestSummary(
+          oldWorldProvincesOwned: kObserverConquestMinOwProvincesPerGp - 1,
+          invadableProvinceIdsSorted: ['oldWorld|gp6_frontier'],
+        ),
+        colonial: ColonialSummary(),
+        economy: EconomySummary(),
+        relations: {},
+      );
+      expect(
+        isStalledOldWorldGpBlockerFocus(game: game, snapshot: snapshot),
+        isTrue,
+        reason: 'one province below quota must still trip the predicate',
+      );
+    });
   });
 }
 

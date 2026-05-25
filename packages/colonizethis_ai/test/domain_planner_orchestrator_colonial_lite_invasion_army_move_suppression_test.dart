@@ -96,18 +96,12 @@ List<String> _gpOwProvincesAt(int count) => <String>[
 ///     candidate reaches the conquest planner's scoring path.
 ///   - One field army stationed in the GP's home OW province so the fake API
 ///     can submit cross-region army-move candidates with consistent army id.
-Game _scenarioGame({
-  required int turnNumber,
-  required int gpOwProvinceCount,
-}) {
+Game _scenarioGame({required int turnNumber, required int gpOwProvinceCount}) {
   final gpOwProvinces = _gpOwProvincesAt(gpOwProvinceCount);
   return Game(
     id: 'g-2509-colonial-lite-invasion-army-move-suppression',
     worldState: WorldState(
-      turnState: TurnState(
-        phase: TurnPhase.orders,
-        turnNumber: turnNumber,
-      ),
+      turnState: TurnState(phase: TurnPhase.orders, turnNumber: turnNumber),
       oldWorld: RegionData(
         provinces: [
           for (final id in gpOwProvinces)
@@ -184,23 +178,23 @@ Game _scenarioGame({
 /// candidate shape.
 const FakeOrderSuggestionAPIForDomainPlannerTests _mixedOwNwArmyMoveApi =
     FakeOrderSuggestionAPIForDomainPlannerTests(
-  work: [],
-  build: [],
-  move: [],
-  research: [],
-  navalMove: [],
-  navalMission: [],
-  armyMove: [
-    ArmyMoveOrder(
-      armyId: _fieldArmyId,
-      destinationProvinceId: _nwTribeProvince,
-    ),
-    ArmyMoveOrder(
-      armyId: _fieldArmyId,
-      destinationProvinceId: _owMinorProvince,
-    ),
-  ],
-);
+      work: [],
+      build: [],
+      move: [],
+      research: [],
+      navalMove: [],
+      navalMission: [],
+      armyMove: [
+        ArmyMoveOrder(
+          armyId: _fieldArmyId,
+          destinationProvinceId: _nwTribeProvince,
+        ),
+        ArmyMoveOrder(
+          armyId: _fieldArmyId,
+          destinationProvinceId: _owMinorProvince,
+        ),
+      ],
+    );
 
 const EconomyPlan _economyPlan = EconomyPlan(
   productionAssignments: [],
@@ -305,9 +299,7 @@ void main() {
               'phase choice rather than a "no orders" side effect.',
         );
         expect(
-          armyMoves.any(
-            (m) => m.destinationProvinceId == _nwTribeProvince,
-          ),
+          armyMoves.any((m) => m.destinationProvinceId == _nwTribeProvince),
           isFalse,
           reason:
               'COLONIAL-lite must drop NW invasion army moves (SPEC § '
@@ -322,9 +314,7 @@ void main() {
               'burn turns invading tribes instead of pushing to OW=10.',
         );
         expect(
-          armyMoves.any(
-            (m) => m.destinationProvinceId == _owMinorProvince,
-          ),
+          armyMoves.any((m) => m.destinationProvinceId == _owMinorProvince),
           isTrue,
           reason:
               'COLONIAL-lite must keep the OW invadable minor army move so '
@@ -378,9 +368,7 @@ void main() {
 
         final armyMoves = _armyMoves(orders);
         expect(
-          armyMoves.any(
-            (m) => m.destinationProvinceId == _nwTribeProvince,
-          ),
+          armyMoves.any((m) => m.destinationProvinceId == _nwTribeProvince),
           isTrue,
           reason:
               'COLONIAL must allow NW invasion army moves toward visible '

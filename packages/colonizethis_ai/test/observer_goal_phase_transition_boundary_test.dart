@@ -164,20 +164,20 @@ Game _scenarioGame({required List<String> gp1OwProvinces}) {
 // vs COLONIAL emission contract at the boundary OW=9/10 exercised here.
 const FakeOrderSuggestionAPIForDomainPlannerTests _nwTribeOvertureApi =
     FakeOrderSuggestionAPIForDomainPlannerTests(
-  work: [],
-  build: [],
-  move: [],
-  research: [],
-  navalMove: [],
-  navalMission: [],
-  diplomatic: [
-    DiplomaticOrder(
-      type: DiplomaticOrderType.establishOverture,
-      targetFactionId: _tribeId,
-      overtureStage: OvertureStage.joinEmpire,
-    ),
-  ],
-);
+      work: [],
+      build: [],
+      move: [],
+      research: [],
+      navalMove: [],
+      navalMission: [],
+      diplomatic: [
+        DiplomaticOrder(
+          type: DiplomaticOrderType.establishOverture,
+          targetFactionId: _tribeId,
+          overtureStage: OvertureStage.joinEmpire,
+        ),
+      ],
+    );
 
 const EconomyPlan _economyPlan = EconomyPlan(
   productionAssignments: [],
@@ -251,8 +251,7 @@ AIWorldSnapshot _colonialAtQuotaSnapshot() {
 }
 
 List<String> _overtureTargets(Orders orders) => <String>[
-  for (final order
-      in orders.diplomaticOrdersByPlayerId[_nationId] ?? const [])
+  for (final order in orders.diplomaticOrdersByPlayerId[_nationId] ?? const [])
     if (order.type == DiplomaticOrderType.establishOverture)
       order.targetFactionId,
 ];
@@ -275,9 +274,7 @@ void main() {
     });
 
     test('OW=9 falls back to EXPAND (just-below-quota boundary)', () {
-      final game = _scenarioGame(
-        gp1OwProvinces: _gp1OwProvincesJustBelowQuota,
-      );
+      final game = _scenarioGame(gp1OwProvinces: _gp1OwProvincesJustBelowQuota);
       final snapshot = _expandJustBelowQuotaSnapshot();
       expect(
         observerGoalPhaseFor(snapshot: snapshot, game: game),
@@ -298,9 +295,7 @@ void main() {
       // the corresponding phases on every call. A regression that cached
       // the previous phase per GP (or used hysteresis to retain COLONIAL
       // on the first OW=9 call after OW=10) would break this loop.
-      final gameAtQuota = _scenarioGame(
-        gp1OwProvinces: _gp1OwProvincesAtQuota,
-      );
+      final gameAtQuota = _scenarioGame(gp1OwProvinces: _gp1OwProvincesAtQuota);
       final gameJustBelowQuota = _scenarioGame(
         gp1OwProvinces: _gp1OwProvincesJustBelowQuota,
       );
@@ -339,101 +334,91 @@ void main() {
   });
 
   group('runDomainPlanners OW-boundary phase transition', () {
-    test(
-      'OW=10 (COLONIAL) surfaces NW tribe overture',
-      () {
-        final game = _scenarioGame(
-          gp1OwProvinces: _gp1OwProvincesAtQuota,
-        );
-        const topology = MapTopology(nodes: [], edges: []);
-        final view = buildPlayerView(game, topology, _nationId);
-        final snapshot = _colonialAtQuotaSnapshot();
+    test('OW=10 (COLONIAL) surfaces NW tribe overture', () {
+      final game = _scenarioGame(gp1OwProvinces: _gp1OwProvincesAtQuota);
+      const topology = MapTopology(nodes: [], edges: []);
+      final view = buildPlayerView(game, topology, _nationId);
+      final snapshot = _colonialAtQuotaSnapshot();
 
-        expect(
-          observerGoalPhaseFor(snapshot: snapshot, game: game),
-          ObserverGoalPhase.colonial,
-          reason:
-              'Sanity: the at-quota fixture must land in COLONIAL so the '
-              'orchestrator pin below exercises the COLONIAL allow path. '
-              'A failure here means the phase boundary itself drifted, '
-              'and the orchestrator assertion would be measuring the '
-              'wrong contract.',
-        );
+      expect(
+        observerGoalPhaseFor(snapshot: snapshot, game: game),
+        ObserverGoalPhase.colonial,
+        reason:
+            'Sanity: the at-quota fixture must land in COLONIAL so the '
+            'orchestrator pin below exercises the COLONIAL allow path. '
+            'A failure here means the phase boundary itself drifted, '
+            'and the orchestrator assertion would be measuring the '
+            'wrong contract.',
+      );
 
-        final orders = runDomainPlanners(
-          game: game,
-          topology: topology,
-          nationId: _nationId,
-          view: view,
-          snapshot: snapshot,
-          config: _aiConfig,
-          primaryGoal: StrategicGoal.conquer,
-          seeds: AISeedBundle.fromTurnSeed(2509330),
-          suggestionAPI: _nwTribeOvertureApi,
-          economyPlan: _economyPlan,
-        );
+      final orders = runDomainPlanners(
+        game: game,
+        topology: topology,
+        nationId: _nationId,
+        view: view,
+        snapshot: snapshot,
+        config: _aiConfig,
+        primaryGoal: StrategicGoal.conquer,
+        seeds: AISeedBundle.fromTurnSeed(2509330),
+        suggestionAPI: _nwTribeOvertureApi,
+        economyPlan: _economyPlan,
+      );
 
-        expect(
-          _overtureTargets(orders),
-          contains(_tribeId),
-          reason:
-              'At quota (OW=10) the GP is in COLONIAL: SPEC § COLONIAL '
-              'phase acquisition priority allows Join Empire (and the '
-              'establishOverture candidate the fake API supplies). Over-'
-              'suppression here would strip Join Empire from the NW '
-              'acquisition routes and stall turn-150 NW ownership.',
-        );
-      },
-    );
+      expect(
+        _overtureTargets(orders),
+        contains(_tribeId),
+        reason:
+            'At quota (OW=10) the GP is in COLONIAL: SPEC § COLONIAL '
+            'phase acquisition priority allows Join Empire (and the '
+            'establishOverture candidate the fake API supplies). Over-'
+            'suppression here would strip Join Empire from the NW '
+            'acquisition routes and stall turn-150 NW ownership.',
+      );
+    });
 
-    test(
-      'OW=9 (post-loss EXPAND) drops the same NW tribe overture',
-      () {
-        final game = _scenarioGame(
-          gp1OwProvinces: _gp1OwProvincesJustBelowQuota,
-        );
-        const topology = MapTopology(nodes: [], edges: []);
-        final view = buildPlayerView(game, topology, _nationId);
-        final snapshot = _expandJustBelowQuotaSnapshot();
+    test('OW=9 (post-loss EXPAND) drops the same NW tribe overture', () {
+      final game = _scenarioGame(gp1OwProvinces: _gp1OwProvincesJustBelowQuota);
+      const topology = MapTopology(nodes: [], edges: []);
+      final view = buildPlayerView(game, topology, _nationId);
+      final snapshot = _expandJustBelowQuotaSnapshot();
 
-        expect(
-          observerGoalPhaseFor(snapshot: snapshot, game: game),
-          ObserverGoalPhase.expand,
-          reason:
-              'Sanity: dropping a single province from quota (10 -> 9) '
-              'must put the GP in EXPAND immediately (no hysteresis band '
-              'at quota+1). A failure here means the phase guard drifted '
-              'and the orchestrator suppression below would be '
-              'spuriously verified against the wrong phase.',
-        );
+      expect(
+        observerGoalPhaseFor(snapshot: snapshot, game: game),
+        ObserverGoalPhase.expand,
+        reason:
+            'Sanity: dropping a single province from quota (10 -> 9) '
+            'must put the GP in EXPAND immediately (no hysteresis band '
+            'at quota+1). A failure here means the phase guard drifted '
+            'and the orchestrator suppression below would be '
+            'spuriously verified against the wrong phase.',
+      );
 
-        final orders = runDomainPlanners(
-          game: game,
-          topology: topology,
-          nationId: _nationId,
-          view: view,
-          snapshot: snapshot,
-          config: _aiConfig,
-          primaryGoal: StrategicGoal.expand,
-          seeds: AISeedBundle.fromTurnSeed(2509331),
-          suggestionAPI: _nwTribeOvertureApi,
-          economyPlan: _economyPlan,
-        );
+      final orders = runDomainPlanners(
+        game: game,
+        topology: topology,
+        nationId: _nationId,
+        view: view,
+        snapshot: snapshot,
+        config: _aiConfig,
+        primaryGoal: StrategicGoal.expand,
+        seeds: AISeedBundle.fromTurnSeed(2509331),
+        suggestionAPI: _nwTribeOvertureApi,
+        economyPlan: _economyPlan,
+      );
 
-        expect(
-          _overtureTargets(orders),
-          isNot(contains(_tribeId)),
-          reason:
-              'Issue #2509 § Phase transition guard: a province loss '
-              'from quota immediately restores EXPAND so NW work cannot '
-              'mask OW regression. The orchestrator must therefore drop '
-              'the same NW tribe overture candidate it surfaced at OW=10. '
-              'A regression that retained the COLONIAL phase (hysteresis) '
-              'would let NW work continue and threaten the canonical '
-              'seed-42 `--verify-conquest` per-GP +3 net OW gain gate.',
-        );
-      },
-    );
+      expect(
+        _overtureTargets(orders),
+        isNot(contains(_tribeId)),
+        reason:
+            'Issue #2509 § Phase transition guard: a province loss '
+            'from quota immediately restores EXPAND so NW work cannot '
+            'mask OW regression. The orchestrator must therefore drop '
+            'the same NW tribe overture candidate it surfaced at OW=10. '
+            'A regression that retained the COLONIAL phase (hysteresis) '
+            'would let NW work continue and threaten the canonical '
+            'seed-42 `--verify-conquest` per-GP +3 net OW gain gate.',
+      );
+    });
 
     test(
       'identical OW=9 inputs produce identical EXPAND orders across runs',

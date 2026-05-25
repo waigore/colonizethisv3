@@ -41,27 +41,30 @@ void main() {
     adjacentNewWorldOwnerFactionIdsSorted: const ['tribe1'],
   );
 
-  test('prioritizes NW sea zones over Old World seas under colonial pressure', () {
-    final ranked = sortNavalMovesForColonialPressure(
-      [
-        const NavalMoveOrder(
-          fleetId: 'f1',
-          destinationSeaZoneId: 'oldWorld|owSea',
-        ),
-        const NavalMoveOrder(
-          fleetId: 'f1',
-          destinationSeaZoneId: 'newWorld|nwSea',
-        ),
-      ],
-      topology,
-      colonial,
-    );
-    expect(ranked.first.destinationSeaZoneId, 'newWorld|nwSea');
-    expect(
-      colonialNavalMoveScore(ranked.first, topology, colonial),
-      kColonialNavalMovePriorityNwSeaZoneScore,
-    );
-  });
+  test(
+    'prioritizes NW sea zones over Old World seas under colonial pressure',
+    () {
+      final ranked = sortNavalMovesForColonialPressure(
+        [
+          const NavalMoveOrder(
+            fleetId: 'f1',
+            destinationSeaZoneId: 'oldWorld|owSea',
+          ),
+          const NavalMoveOrder(
+            fleetId: 'f1',
+            destinationSeaZoneId: 'newWorld|nwSea',
+          ),
+        ],
+        topology,
+        colonial,
+      );
+      expect(ranked.first.destinationSeaZoneId, 'newWorld|nwSea');
+      expect(
+        colonialNavalMoveScore(ranked.first, topology, colonial),
+        kColonialNavalMovePriorityNwSeaZoneScore,
+      );
+    },
+  );
 
   test('gateway Old World sea outscores unrelated seas', () {
     expect(

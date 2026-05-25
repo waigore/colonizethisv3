@@ -10,102 +10,93 @@ import 'planner_test_helpers.dart';
 
 void main() {
   group('runDomainPlanners civilian work logging — mixed unit types', () {
-    test(
-      'tech_thief: spy work present still assigns Explorer work (per-unit, '
-      'Refs #2082)',
-      () {
-        const nationId = 'gp1';
-        const ow = 'oldWorld';
-        const provinceId = '$ow|p1';
-        const tileSpy = '$ow|p1|0|0';
-        const tileExp = '$ow|p1|1|0';
-        final game = Game(
-          id: 'g1',
-          worldState: WorldState(
-            turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-            oldWorld: RegionData(
-              provinces: [
-                Province(id: provinceId, regionId: ow, ownerId: nationId),
-              ],
-              units: [
-                Unit(
-                  id: 's1',
-                  type: kUnitTypeSpy,
-                  ownerId: nationId,
-                  locationProvinceId: provinceId,
-                  tileKey: tileSpy,
-                ),
-                Unit(
-                  id: 'e1',
-                  type: kUnitTypeExplorer,
-                  ownerId: nationId,
-                  locationProvinceId: provinceId,
-                  tileKey: tileExp,
-                ),
-              ],
-            ),
-            newWorld: const RegionData(),
-            playerVisibilityByTile: const {
-              nationId: {
-                tileSpy: 'fullyVisible',
-                tileExp: 'fullyVisible',
-              },
-            },
-            tileKeysByRegionAndProvince: const {
-              ow: {
-                provinceId: [tileSpy, tileExp],
-              },
-            },
+    test('tech_thief: spy work present still assigns Explorer work (per-unit, '
+        'Refs #2082)', () {
+      const nationId = 'gp1';
+      const ow = 'oldWorld';
+      const provinceId = '$ow|p1';
+      const tileSpy = '$ow|p1|0|0';
+      const tileExp = '$ow|p1|1|0';
+      final game = Game(
+        id: 'g1',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+          oldWorld: RegionData(
+            provinces: [
+              Province(id: provinceId, regionId: ow, ownerId: nationId),
+            ],
+            units: [
+              Unit(
+                id: 's1',
+                type: kUnitTypeSpy,
+                ownerId: nationId,
+                locationProvinceId: provinceId,
+                tileKey: tileSpy,
+              ),
+              Unit(
+                id: 'e1',
+                type: kUnitTypeExplorer,
+                ownerId: nationId,
+                locationProvinceId: provinceId,
+                tileKey: tileExp,
+              ),
+            ],
           ),
-          players: const [
-            Player(
-              id: nationId,
-              displayName: 'GP',
-              isHuman: false,
-              leaderKey: 'victoria',
-            ),
-          ],
-        );
-        const topology = MapTopology(nodes: [], edges: []);
-        const fakeApi = FakeOrderSuggestionAPIForDomainPlannerTests(
-          work: [
-            WorkOrder(
-              unitId: 's1',
-              target: kWorkTargetStealTech,
-              targetTileKey: tileSpy,
-            ),
-            WorkOrder(
-              unitId: 'e1',
-              target: kWorkTargetExplore,
-              targetTileKey: tileExp,
-            ),
-          ],
-          build: const [],
-          move: const [],
-          research: const [],
-          navalMove: const [],
-          navalMission: const [],
-        );
-        final orders = runDomainPlannersInTest(
-          game: game,
-          topology: topology,
-          turnSeed: 20823,
-          config: const AIConfig(
-            leaderId: 'victoria',
-            personalityId: 'victoria',
-            hiddenAgendaId: 'tech_thief',
+          newWorld: const RegionData(),
+          playerVisibilityByTile: const {
+            nationId: {tileSpy: 'fullyVisible', tileExp: 'fullyVisible'},
+          },
+          tileKeysByRegionAndProvince: const {
+            ow: {
+              provinceId: [tileSpy, tileExp],
+            },
+          },
+        ),
+        players: const [
+          Player(
+            id: nationId,
+            displayName: 'GP',
+            isHuman: false,
+            leaderKey: 'victoria',
           ),
-          suggestionAPI: fakeApi,
-        );
+        ],
+      );
+      const topology = MapTopology(nodes: [], edges: []);
+      const fakeApi = FakeOrderSuggestionAPIForDomainPlannerTests(
+        work: [
+          WorkOrder(
+            unitId: 's1',
+            target: kWorkTargetStealTech,
+            targetTileKey: tileSpy,
+          ),
+          WorkOrder(
+            unitId: 'e1',
+            target: kWorkTargetExplore,
+            targetTileKey: tileExp,
+          ),
+        ],
+        build: const [],
+        move: const [],
+        research: const [],
+        navalMove: const [],
+        navalMission: const [],
+      );
+      final orders = runDomainPlannersInTest(
+        game: game,
+        topology: topology,
+        turnSeed: 20823,
+        config: const AIConfig(
+          leaderId: 'victoria',
+          personalityId: 'victoria',
+          hiddenAgendaId: 'tech_thief',
+        ),
+        suggestionAPI: fakeApi,
+      );
 
-        final workList = orders.workOrdersByPlayerId[nationId] ?? const [];
-        expect(workList, hasLength(2));
-        expect(
-          workList.map((w) => w.unitId).toSet(),
-          {'s1', 'e1'},
-        );
-      },
-    );
+      final workList = orders.workOrdersByPlayerId[nationId] ?? const [];
+      expect(workList, hasLength(2));
+      expect(workList.map((w) => w.unitId).toSet(), {'s1', 'e1'});
+    });
 
     test(
       'mixed idle + assigned: K civilian_work_assigned and N civilian_work_idle',

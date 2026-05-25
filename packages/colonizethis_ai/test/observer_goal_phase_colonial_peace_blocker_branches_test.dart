@@ -91,10 +91,7 @@ Game _gameWithNwProvinces({
   return Game(
     id: 'g-2509-colonial-peace-blocker-branches-t$turnNumber',
     worldState: WorldState(
-      turnState: TurnState(
-        turnNumber: turnNumber,
-        phase: TurnPhase.orders,
-      ),
+      turnState: TurnState(turnNumber: turnNumber, phase: TurnPhase.orders),
       oldWorld: const RegionData(),
       newWorld: RegionData(provinces: nwProvinces),
     ),
@@ -156,30 +153,14 @@ void main() {
       final game = _gameWithNwProvinces(
         turnNumber: 110,
         nwProvinces: const [
-          Province(
-            id: 'newWorld|t1_a',
-            regionId: 'newWorld',
-            ownerId: _tribe1,
-          ),
-          Province(
-            id: 'newWorld|t2_a',
-            regionId: 'newWorld',
-            ownerId: _tribe2,
-          ),
-          Province(
-            id: 'newWorld|m1_a',
-            regionId: 'newWorld',
-            ownerId: _minor1,
-          ),
+          Province(id: 'newWorld|t1_a', regionId: 'newWorld', ownerId: _tribe1),
+          Province(id: 'newWorld|t2_a', regionId: 'newWorld', ownerId: _tribe2),
+          Province(id: 'newWorld|m1_a', regionId: 'newWorld', ownerId: _minor1),
         ],
       );
       final snapshot = _colonialSnapshot(
         atWarWith: const [_gp2, _gp3],
-        invadableNw: const [
-          'newWorld|t1_a',
-          'newWorld|t2_a',
-          'newWorld|m1_a',
-        ],
+        invadableNw: const ['newWorld|t1_a', 'newWorld|t2_a', 'newWorld|m1_a'],
       );
       expect(
         primaryColonialGpBlocker(game: game, snapshot: snapshot),
@@ -281,11 +262,7 @@ void main() {
       );
       final snapshot = _colonialSnapshot(
         atWarWith: const [_gp2, _gp3],
-        invadableNw: const [
-          'newWorld|gp3_a',
-          'newWorld|t1_a',
-          'newWorld|t1_b',
-        ],
+        invadableNw: const ['newWorld|gp3_a', 'newWorld|t1_a', 'newWorld|t1_b'],
       );
       expect(
         primaryColonialGpBlocker(game: game, snapshot: snapshot),
@@ -418,34 +395,36 @@ void main() {
       );
     });
 
-    test('single GP at war which is the blocker → still empty (length guard)',
-        () {
-      // Confirms the order of guard checks: `gpWars.length <= 1` runs
-      // before the blocker computation, so a single-GP war never reaches
-      // the blocker-membership branch.
-      final game = _gameWithNwProvinces(
-        turnNumber: 110,
-        nwProvinces: const [
-          Province(id: 'newWorld|gp2_a', regionId: 'newWorld', ownerId: _gp2),
-        ],
-      );
-      final snapshot = _colonialSnapshot(
-        atWarWith: const [_gp2],
-        invadableNw: const ['newWorld|gp2_a'],
-      );
-      expect(
-        primaryColonialGpBlocker(game: game, snapshot: snapshot),
-        _gp2,
-        reason:
-            'Sanity check: the blocker resolves to the only at-war GP. '
-            'Despite that, the helper must still return empty due to the '
-            '`gpWars.length <= 1` guard.',
-      );
-      expect(
-        colonialPhaseGpPeaceTargets(game: game, snapshot: snapshot),
-        isEmpty,
-      );
-    });
+    test(
+      'single GP at war which is the blocker → still empty (length guard)',
+      () {
+        // Confirms the order of guard checks: `gpWars.length <= 1` runs
+        // before the blocker computation, so a single-GP war never reaches
+        // the blocker-membership branch.
+        final game = _gameWithNwProvinces(
+          turnNumber: 110,
+          nwProvinces: const [
+            Province(id: 'newWorld|gp2_a', regionId: 'newWorld', ownerId: _gp2),
+          ],
+        );
+        final snapshot = _colonialSnapshot(
+          atWarWith: const [_gp2],
+          invadableNw: const ['newWorld|gp2_a'],
+        );
+        expect(
+          primaryColonialGpBlocker(game: game, snapshot: snapshot),
+          _gp2,
+          reason:
+              'Sanity check: the blocker resolves to the only at-war GP. '
+              'Despite that, the helper must still return empty due to the '
+              '`gpWars.length <= 1` guard.',
+        );
+        expect(
+          colonialPhaseGpPeaceTargets(game: game, snapshot: snapshot),
+          isEmpty,
+        );
+      },
+    );
 
     test('two GPs at war but no GP-owned blocker → empty', () {
       // 2 GPs at war, but all invadable NW are tribe-owned, so
@@ -547,10 +526,7 @@ void main() {
         observerGoalPhaseFor(snapshot: snapshot, game: game),
         ObserverGoalPhase.colonial,
       );
-      expect(
-        primaryColonialGpBlocker(game: game, snapshot: snapshot),
-        _gp2,
-      );
+      expect(primaryColonialGpBlocker(game: game, snapshot: snapshot), _gp2);
       expect(
         colonialPhaseGpPeaceTargets(game: game, snapshot: snapshot),
         const [_gp3, _gp4],
