@@ -10,6 +10,8 @@ Use the canonical routing map at `.cursor/rules/routing-index.md` for:
 
 Normative policy wording lives only in `.cursor/rules/*.mdc`. OpenCode references should link to those files instead of restating policy clauses.
 
+**Player-app UI structure** (screen IDs, layout/behavior/variants, Widgetbook contracts): `colonizethis-ui-documentation.mdc`. **Style/pixel-art:** `colonizethis-ui-design.mdc`. Implementation/docs workflow: `.opencode/skills/document-app-ui/SKILL.md` (Cursor: `.cursor/skills/document-app-ui/SKILL.md`).
+
 ## Existing CI gates (extension points)
 
 Primary workflow: **`.github/workflows/quality.yml`**.
