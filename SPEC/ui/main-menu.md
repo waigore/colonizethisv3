@@ -1,6 +1,8 @@
 # Main Menu
 
-**SPEC/ui** — Main menu screen. Authority: UXD 03a (Main Menu and Shell). Catalog widget: CtMainMenu.
+**Screen ID:** `SHEL10002` — stable; do not reassign.
+**SPEC/ui** — Main menu screen (CtMainMenu). Implementation: `app/lib/widgets/main_menu.dart`.
+**Widgetbook:** `Main Menu` → `app/lib/widgetbook/catalog.dart`. Authority: UXD 03a (Main Menu and Shell).
 
 ---
 
@@ -19,6 +21,13 @@ The CtMainMenu widget is presentational and accepts the following parameters. Th
 | `onLoadGame` | callback | Invoked when user taps Load Game (when enabled). |
 | `onSettings` | callback | Invoked when user taps Settings. |
 | `onQuit` | callback | Invoked when user taps Quit. |
+
+---
+
+## Trigger conditions
+
+- **Host:** [`shell-screen.md`](shell-screen.md) at `Routes.shell` always mounts `CtMainMenu` with shell-supplied callbacks.
+- **Return-from-game:** Pause exit or [`victory-overlay.md`](victory-overlay.md) navigates to shell; menu rebuilds with updated `resumeGameVisible`.
 
 ---
 
@@ -73,7 +82,7 @@ Return from game and resume visibility refresh:
 
 ---
 
-## Wireframe
+## Layout / wireframe
 
 Positions, layout, and hierarchy (per UXD 03a; 44dp min touch targets).
 
@@ -101,6 +110,37 @@ Positions, layout, and hierarchy (per UXD 03a; 44dp min touch targets).
 **Layout (pixel-art variant):** The menu content column is constrained to a **maximum width of 400 dp** (content only; padding is additional). Buttons and logo area use this width so that the button asset is never upscaled on typical screens. Content is **centered** (e.g. `Center` + `ConstrainedBox(maxWidth: 400)` in code). All buttons use `CtNinePatchButton`; **Material buttons (ElevatedButton, TextButton, etc.) are not permitted for this screen.**
 
 **Mobile:** See [mobile-adaptation.md](mobile-adaptation.md). The main menu scrolls when the viewport is short (wrap content in `SingleChildScrollView`). No breakpoint layout change; vertical list suits narrow width. Safe area and 44 dp touch targets apply.
+
+---
+
+## Behavior
+
+### Incoming (what shows this UI)
+
+| Source | Condition | Result |
+|--------|-----------|--------|
+| `ShellScreen` | `Routes.shell` is active | `CtMainMenu` fills the route with shell callbacks. |
+
+### User actions → outcomes
+
+| Control / gesture | When enabled | Emits / calls | Side effects |
+|-------------------|--------------|---------------|--------------|
+| New Game | Always | `onNewGame` | Shell opens leader-selection dialog. |
+| Resume game | `resumeGameVisible == true` | `onResumeGame` | Shell loads auto-save and navigates to game. |
+| Load Game | Saves exist | `onLoadGame` | Shell loads game or no-op when disabled. |
+| Settings | Always | `onSettings` | Shell opens Settings (stub). |
+| Quit | Always | `onQuit` | App exit. |
+
+---
+
+## States and variants
+
+| ID | Variant | Trigger | Render difference |
+|----|---------|---------|-------------------|
+| `SHEL10002` | `default` | `state == default` | No subtitle; Load enabled when saves exist. |
+| `SHEL10002a` | `afterVictory` | `state == afterVictory` | Subtitle "Congratulations, you won your last game." |
+| `SHEL10002b` | `noSaves` | `state == noSaves` | Load disabled with helper/tooltip. |
+| — | `plain` / `pixelArt` | `variant` param | Pixel-art assets per tables below when `pixelArt`. |
 
 ---
 
@@ -211,6 +251,20 @@ For each asset, the **exact** wording used in PixelLab is recorded below so rege
 
 ---
 
-## Widget catalog
+## Components
 
-Once implemented, the main menu is registered in `app/widget_catalog.json` as CtMainMenu (category: screen, source: pipeline), with `dart_file_path` and optional `widgetbook_story_path` for discovery.
+- `CtMainMenu` — presentational menu (`app/lib/widgets/main_menu.dart`).
+- `CtNinePatchButton`, `CtScreenShell` — pixel-art catalog per [pixel-art-ui-catalog.md](pixel-art-ui-catalog.md).
+- Registered in `app/widget_catalog.json` as CtMainMenu (category: screen).
+
+---
+
+## Widgetbook
+
+Folder: **Main Menu** (`app/lib/widgetbook/catalog.dart`). Use cases: **Default**, **After victory**, **No saves**, **Pixel art (mobile)** per variant table.
+
+---
+
+## Acceptance criteria
+
+See **How this spec satisfies UXD 03a** above for full Given–When–Then ACs. Automated tests: `app/test/screen_spec_acceptance_test.dart`.

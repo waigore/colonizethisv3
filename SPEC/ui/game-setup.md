@@ -1,6 +1,8 @@
 # Game Setup
 
-**SPEC/ui** — Game Setup screen. Authority: UXD 03b (Game Setup). Catalog widget: CtGameSetup.
+**Screen ID:** `SHEL20001` — stable; do not reassign.
+**SPEC/ui** — Game Setup screen (CtGameSetup). Implementation: `app/lib/widgets/game_setup.dart`.
+**Widgetbook:** `Game Setup` → `app/lib/widgetbook/catalog.dart`. Authority: UXD 03b.
 
 ---
 
@@ -17,6 +19,13 @@ The CtGameSetup widget is presentational and accepts the following parameters. T
 | `initialLeaderVariantByGpId` | `Map<String, String>` | Initial leader variant per gpId (gpId → variantId). When the screen loads with all choices unselected, this is empty. When a slot’s nation changes, leader resets to default for that nation. |
 | `onStartGame` | `void Function(List<String> orderedGpIdsForSlots, Map<String, String> leaderVariantByGpId)` | Invoked when user taps Start Game. Widget passes ordered list of 6 gpIds (slot 0 = human, 1–5 = AI) and leader map; shell builds GameSetupConfig and creates game. |
 | `onBack` | callback | Invoked when user taps Back; shell navigates to Main Menu. |
+
+---
+
+## Trigger conditions
+
+- **Entry:** Shell pushes Game Setup after New Game / leader-selection per [`app-ui-wiring.md`](../program/app-ui-wiring.md).
+- **Back:** `onBack` returns to main menu.
 
 ---
 
@@ -114,7 +123,7 @@ Loading state:
 
 ---
 
-## Wireframe
+## Layout / wireframe
 
 Positions, layout, and hierarchy (per UXD 03b; 44 dp min touch targets).
 
@@ -145,12 +154,51 @@ When the user has selected a nation and leader for every slot, Start Game become
 
 ---
 
+## Behavior
+
+### Incoming (what shows this UI)
+
+| Source | Condition | Result |
+|--------|-----------|--------|
+| Shell / setup route | After leader dialog or direct setup navigation | `CtGameSetup` mounted with `naming` and slot config. |
+
+### User actions → outcomes
+
+| Control / gesture | When enabled | Emits / calls | Side effects |
+|-------------------|--------------|---------------|--------------|
+| Start Game | All slots filled; `state != loading` | `onStartGame` | Shell runs game init → game route. |
+| Back | `state != loading` | `onBack` | Returns to prior screen. |
+
+---
+
+## States and variants
+
+| ID | Variant | Trigger | Render difference |
+|----|---------|---------|-------------------|
+| `SHEL20001` | `default` | `state == default` | Dropdowns and Start enabled. |
+| `SHEL20001` | `loading` | `state == loading` | Start disabled; loading indicator; dropdowns disabled. |
+
+---
+
 ## Pixel-art assets
 
 For current product, reuse main menu assets: `ui_main_menu_button.png` for Start Game and Back. Dropdowns and list use theme styling. Style lock: UXD 02.
 
 ---
 
-## Widget catalog
+## Components
 
-Once implemented, register in `app/widget_catalog.json` as CtGameSetup (category: screen, source: pipeline), with `dart_file_path` and `widgetbook_story_path`: "Game Setup".
+- `CtGameSetup`, `CtDropdown`, `CtNinePatchButton`, `CtScreenShell` — see [pixel-art-ui-catalog.md](pixel-art-ui-catalog.md).
+- `app/widget_catalog.json` entry: CtGameSetup (category: screen).
+
+---
+
+## Widgetbook
+
+Folder: **Game Setup**. Use cases: **Default**, **Loading** per states table.
+
+---
+
+## Acceptance criteria
+
+See **How this spec satisfies UXD 03b** and shell dialog section for Given–When–Then ACs.

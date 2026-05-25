@@ -1,6 +1,8 @@
 # Move Fleet Dialog
 
-**SPEC/ui** — Modal that lets the human player move a sea-going fleet to an adjacent sea zone or owned port from the [naval-units-panel.md](naval-units-panel.md). Game model: [ships-and-naval.md](../game/ships-and-naval.md). Movement resolution: [naval-movement-resolution.md](../program/naval-movement-resolution.md). Map locate semantics: [map-widget.md](map-widget.md). App wiring and events: [app-ui-wiring.md](../program/app-ui-wiring.md), [app-event-bus.md](../program/app-event-bus.md).
+**Screen ID:** `DLG30001` — stable; do not reassign.
+**SPEC/ui** — Modal that lets the human player move a sea-going fleet to an adjacent sea zone or owned port from the [naval-units-panel.md](naval-units-panel.md). Implementation: `app/lib/features/game/widgets/move_fleet_dialog.dart`.
+**Widgetbook:** `Move Fleet Dialog` → `app/lib/widgetbook/catalog.dart`. Game model: [ships-and-naval.md](../game/ships-and-naval.md). Movement: [naval-movement-resolution.md](../program/naval-movement-resolution.md). Map locate: [map-widget.md](map-widget.md). App wiring: [app-ui-wiring.md](../program/app-ui-wiring.md), [app-event-bus.md](../program/app-event-bus.md).
 
 ---
 
@@ -70,13 +72,22 @@ Implementation: `app/lib/features/game/widgets/move_fleet_dialog.dart`. Wrapped 
 
 ---
 
-## Navigation
+## Behavior
 
-| Action | Behavior |
-|--------|----------|
-| Cancel | `Navigator.pop(context, false)`; no event. |
-| Confirm | `bus.emit(NavalMoveFleetRequestedEvent(humanPlayerId, selected.toOrder(fleet.id)))`; then `Navigator.pop(context, true)`. `_PickSeaZone.toOrder` → `NavalMoveOrder(fleetId, destinationSeaZoneId)`; `_PickPort.toOrder` → `NavalMoveOrder(fleetId, destinationPortProvinceId)`. |
-| Locate | `pick.emitLocate(bus, game)` emits `LocateMapTileEvent` using `tileKeyForSeaZoneLocation` (sea zone) or `tileKeyForProvinceLocation` (port). If no key resolves, no event is emitted. |
+### Incoming (what shows this UI)
+
+| Source | Condition | Result |
+|--------|-----------|--------|
+| `NavalUnitsPanel` Move action | Fleet row; `navalMoveTopologyPicksForFleet` non-empty | `showDialog` mounts `MoveFleetDialog`. |
+| — | Zero move picks | Dialog may open with empty state (`moveFleet_noAdjacentSeaZones`). |
+
+### User actions → outcomes
+
+| Control / gesture | When enabled | Emits / calls | Side effects |
+|-------------------|--------------|---------------|--------------|
+| Cancel | Always | `Navigator.pop(context, false)` | No bus event. |
+| Confirm | `_selected != null` | `NavalMoveFleetRequestedEvent` via `selected.toOrder(fleet.id)` | Dialog popped with `true`. |
+| Locate (per row) | Tile key resolves | `LocateMapTileEvent` | Panel may stay open. |
 
 ---
 

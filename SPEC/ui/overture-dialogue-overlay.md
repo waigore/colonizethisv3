@@ -1,6 +1,8 @@
 # Overture Dialogue Overlay
 
-**SPEC/ui** — Modal blocking overlay shown when turn resolution returns one or more pending **overture offers** that a human-controlled faction must accept or reject before the turn can advance. Plays an archaic-language intro via the `DialoguePoint/overture_target_response` Yarn node (loaded from `kDialogueOvertureAsset`) using [`CtDialogueView`](ct-dialogue-view.md), then presents a per-offer Accept/Reject form. Modal presentation rules: [`dialogue-presentation.md`](dialogue-presentation.md). Source provider: [`pending-diplomacy-state.md`](pending-diplomacy-state.md). Yarn content map: [`dialogue-content-and-yarn.md`](../ai/dialogue-content-and-yarn.md). Host screen / wrap order: [`game-screen.md`](game-screen.md) § States and variants. Pixel-art chrome: [`pixel-art-ui-catalog.md`](pixel-art-ui-catalog.md). Asset constant: `kDialogueOvertureAsset` in `app/lib/config/app_constants.dart`.
+**Screen ID:** `OVL30001` — stable; do not reassign.
+**SPEC/ui** — Blocking overlay for pending overture offers before the turn advances. Implementation: `app/lib/features/game/dialogue/overture_dialogue_overlay.dart`.
+**Widgetbook:** `Overture Dialogue Overlay` → `app/lib/widgetbook/catalog.dart`. Provider: [`pending-diplomacy-state.md`](pending-diplomacy-state.md). Host: [`game-screen.md`](game-screen.md). Asset: `kDialogueOvertureAsset`.
 
 ---
 
@@ -90,11 +92,23 @@ Exactly one variant is rendered at a time. Phase 2 is the only state in which Ac
 
 ---
 
-## Navigation and bus
+## Behavior
 
-- The overlay does **not** read or emit `AppEventBus` events directly.
-- All navigation side effects flow through the `onDecisions` callback. The host (`GameScreen`) is responsible for forwarding the resulting `List<OvertureDecision>` to `service.resumeOvertureDecisions(...)` and for clearing the pending-diplomacy provider on the resulting `TurnResolutionResult` per [`pending-diplomacy-state.md`](pending-diplomacy-state.md).
-- The overlay does not interact with `Navigator` for any reason: no `pushNamed`, no `pop`, no `popUntil`. The host route remains mounted; only the scrim is removed when the host clears the pending state on a successful resume.
+### Incoming (what shows this UI)
+
+| Source | Condition | Result |
+|--------|-----------|--------|
+| `pendingDiplomacyProvider` | `PendingDiplomacyOvertures` with non-empty `offers` | `GameScreen` wraps content in `OvertureDialogueOverlay`. |
+
+### User actions → outcomes
+
+| Control / gesture | When enabled | Emits / calls | Side effects |
+|-------------------|--------------|---------------|--------------|
+| Yarn Continue / options | Phase 1 intro | Jenny runner advances | — |
+| Accept / Reject toggles | Phase 2 | Updates `_accepted` list | — |
+| Submit | Phase 2 | `onDecisions(List<OvertureDecision>)` once | Host calls `resumeOvertureDecisions` and clears pending state. |
+
+No direct `AppEventBus` or `Navigator` usage in the overlay.
 
 ---
 

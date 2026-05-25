@@ -1,12 +1,32 @@
 # Civilian Units Panel
 
-**SPEC/ui** — Panel that lists all civilian units under the human player's control and supports locating them on the map. Integrates with [empire-overview.md](empire-overview.md), [map-widget.md](map-widget.md), and [province-sea-zone-detail-overlay.md](province-sea-zone-detail-overlay.md). Game model: [civilian-units.md](../game/civilian-units.md), [world-model.md](../game/world-model.md). Province identity: [world-model-identity.md](../game/world-model-identity.md).
+**Screen ID:** `UNIT10001` — stable; do not reassign.
+**SPEC/ui** — Civilian units bottom sheet / panel. Implementation: `app/lib/features/game/widgets/civilian_units_panel.dart`.
+**Widgetbook:** `Civilian Units Panel` → `app/lib/widgetbook/catalog.dart`. Integrates with [empire-overview.md](empire-overview.md), [map-widget.md](map-widget.md), [province-sea-zone-detail-overlay.md](province-sea-zone-detail-overlay.md). Game model: [civilian-units.md](../game/civilian-units.md).
+
+---
+
+## Widget contract
+
+`CivilianUnitsPanel` — lists human-owned civilian units; emits `LocateMapTileEvent`, work-order and panel bus events per row actions. Parents supply `Game`, `Orders`, `PlayerView`, and optional tile-scope filters.
+
+---
+
+## Trigger conditions
+
+- **Access:** The panel is opened from the in-game shell **toolbar**, in the same way as the Production panel (e.g. a toolbar button such as "Civilian Units" or "Units" that opens the panel).
+- **Map tile access (tile scope):** The panel may also be opened from a **civilian map marker tap** (see [map-widget.md](map-widget.md)). In this mode the panel is scoped to one tile key (`regionId|provinceId|x|y`) and shows only player-owned civilians whose **rendered tile** equals that tile key (assigned civilians use `assignedTileKey` when present; otherwise `tileKey`).
+- **Map tile access (explorer shortcut scope):** The panel may be opened from province Tile-section inline actions (`Explore with explorer`, `Prospect with explorer`) in **explorer-filtered mode**. In this mode, the list is filtered to player-owned Explorer units (across regions, including units with pending work), preserving standard row rendering and locate behavior unless explicitly overridden below.
+- **Map tile access (builder shortcut scope):** The panel may be opened from province Tile-section inline action (`Build improvement`) in **builder-filtered mode**. In this mode, the list is filtered to player-owned Builder units (across regions, including units with pending/in-progress work), preserving standard row rendering and locate behavior unless explicitly overridden below.
+- **Presentation:** The panel **appears from the bottom** as a **bottom sheet** that slides up from the bottom edge (same pattern as the province/sea zone detail overlay on narrow viewports; see [province-sea-zone-detail-overlay.md](province-sea-zone-detail-overlay.md)). This applies on both desktop and narrow viewports so behaviour is consistent and the map remains visible above.
+- **Max height:** Bottom sheet is constrained (e.g. up to one-third of screen height on narrow, or similar cap on wide) so the map stays visible; content scrolls inside the sheet.
+- **Mobile / narrow viewport:** Same bottom-sheet presentation; touch targets per [mobile-adaptation.md](mobile-adaptation.md).
 
 ---
 
 ## Purpose
 
-The civilian units panel gives the player a single place to see every civilian unit they control: status, location (province + region), and current assignment (when not idle). Selecting a unit in the panel highlights that unit's tile on the map, pans/centers the map on it, and switches the region tab if needed so the player sees the unit right away.
+The civilian units panel gives the player a single place to see every civilian unit they control: status, location (province + region), and current assignment (when not idle). Selecting a unit highlights that unit's tile on the map, pans/centers the map on it, and switches the region tab if needed.
 
 ---
 
@@ -20,15 +40,44 @@ The civilian units panel gives the player a single place to see every civilian u
 
 ---
 
-## Panel placement and opening
+## Layout / wireframe
 
-- **Access:** The panel is opened from the in-game shell **toolbar**, in the same way as the Production panel (e.g. a toolbar button such as "Civilian Units" or "Units" that opens the panel).
-- **Map tile access (tile scope):** The panel may also be opened from a **civilian map marker tap** (see [map-widget.md](map-widget.md)). In this mode the panel is scoped to one tile key (`regionId|provinceId|x|y`) and shows only player-owned civilians whose **rendered tile** equals that tile key (assigned civilians use `assignedTileKey` when present; otherwise `tileKey`).
-- **Map tile access (explorer shortcut scope):** The panel may be opened from province Tile-section inline actions (`Explore with explorer`, `Prospect with explorer`) in **explorer-filtered mode**. In this mode, the list is filtered to player-owned Explorer units (across regions, including units with pending work), preserving standard row rendering and locate behavior unless explicitly overridden below.
-- **Map tile access (builder shortcut scope):** The panel may be opened from province Tile-section inline action (`Build improvement`) in **builder-filtered mode**. In this mode, the list is filtered to player-owned Builder units (across regions, including units with pending/in-progress work), preserving standard row rendering and locate behavior unless explicitly overridden below.
-- **Presentation:** The panel **appears from the bottom** as a **bottom sheet** that slides up from the bottom edge (same pattern as the province/sea zone detail overlay on narrow viewports; see [province-sea-zone-detail-overlay.md](province-sea-zone-detail-overlay.md)). This applies on both desktop and narrow viewports so behaviour is consistent and the map remains visible above.
-- **Max height:** Bottom sheet is constrained (e.g. up to one-third of screen height on narrow, or similar cap on wide) so the map stays visible; content scrolls inside the sheet.
-- **Mobile / narrow viewport:** Same bottom-sheet presentation; touch targets per [mobile-adaptation.md](mobile-adaptation.md).
+Bottom sheet (up to ~⅓ screen height); scrollable grouped list by region; per-unit rows with locate and assign actions on the right.
+
+---
+
+## Behavior
+
+### Incoming (what shows this UI)
+
+| Source | Condition | Result |
+|--------|-----------|--------|
+| Toolbar | Civilian Units button | Bottom sheet opens (full list or scoped — see opening modes below). |
+| Map / province shortcuts | `OpenCivilianUnitsPanelEvent` with tile or shortcut fields | Filtered list or direct-assign modes. |
+
+### User actions → outcomes
+
+| Control / gesture | When enabled | Emits / calls | Side effects |
+|-------------------|--------------|---------------|--------------|
+| Row tap (full list) | Full-list mode | `ClosePanelEvent` + `LocateMapTileEvent` | Panel closes; map pans. |
+| Locate icon | Always in scoped mode | `LocateMapTileEvent` | Panel stays open. |
+| Assign | Idle, no pending work | Work-target selection or shortcut commit | Per row rules in **Per-unit row content**. |
+
+---
+
+## States and variants
+
+| Variant | Trigger | Render difference |
+|---------|---------|-------------------|
+| Full list | Default toolbar open | All human civilians by region. |
+| Tile-scoped | Map marker tap | Units on one tile only. |
+| Explorer / Builder shortcut | Province tile actions | Filtered + direct assign. |
+
+---
+
+## Components
+
+- `CivilianUnitsPanel`, shared unit row-action widgets under `app/lib/features/game/widgets/units/shared/`.
 
 ---
 
