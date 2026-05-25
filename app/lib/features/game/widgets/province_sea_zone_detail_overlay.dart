@@ -24,6 +24,7 @@ import 'package:flutter/material.dart';
 import 'package:colonizethis_app/core/utils/prefixed_id.dart';
 
 import '../../../config/constants.dart';
+import '../../../config/ui_screen_ids.dart';
 import 'province_panel_labels.dart';
 import 'province_panel_pending_orders.dart';
 import '../utils/sea_zone_name_resolver.dart';
@@ -37,6 +38,9 @@ part 'province_sea_zone_detail_overlay_sections.dart';
 part 'province_sea_zone_detail_overlay_economic_military_sections.dart';
 
 class ProvinceSeaZoneDetailOverlay extends StatelessWidget {
+  /// SPEC/ui/province-sea-zone-detail-overlay.md — [UiScreenIds.provinceSeaZoneOverlay].
+  static const screenId = UiScreenIds.provinceSeaZoneOverlay;
+
   const ProvinceSeaZoneDetailOverlay({
     super.key,
     required this.game,
@@ -288,7 +292,8 @@ _OverlayContent _provinceContent({
 }) {
   final regionId = prefixedIdRegionSegment(provinceId) ?? region.regionId;
   final localProvinceId = prefixedIdLocalSegment(provinceId);
-  final isFullyUnrevealed = !omniscientDetail &&
+  final isFullyUnrevealed =
+      !omniscientDetail &&
       region.regionId == regionId &&
       !region.cells.any(
         (c) =>
@@ -391,7 +396,8 @@ _OverlayContent _provinceContent({
       game.worldState.tileKeysByRegionAndProvince[region
           .regionId]?[provinceId] ??
       [];
-  final showsFullIntel = omniscientDetail ||
+  final showsFullIntel =
+      omniscientDetail ||
       provincePanelShowsFullTileDerivedIntel(
         game: game,
         view: playerView,

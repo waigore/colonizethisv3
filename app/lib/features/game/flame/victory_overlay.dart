@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart' as ct_models;
 
+import '../../../config/ui_screen_ids.dart';
 import '../../../l10n/l10n.dart';
 import '../../../widgets/ct_nine_patch_button.dart';
 import '../../../widgets/ct_panel.dart';
@@ -15,6 +16,9 @@ class VictoryOverlay extends StatefulWidget {
     required this.bus,
     super.key,
   });
+
+  /// SPEC/ui/victory-overlay.md — [UiScreenIds.victoryOverlay].
+  static const screenId = UiScreenIds.victoryOverlay;
 
   final ct_models.Game game;
   final ct_models.VictoryState victory;

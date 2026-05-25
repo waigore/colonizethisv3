@@ -3,27 +3,41 @@ part of 'catalog.dart';
 /// Production Panel stories. SPEC/ui/production-panel.md.
 List<WidgetbookNode> get productionPanelDirectories => [
   WidgetbookFolder(
-    name: 'Diplomacy Panel',
+    name: 'Production Panel',
     children: [
       WidgetbookUseCase(
-        name: 'With real game',
-        builder: (context) {
-          final result = getDebugInitGameResult();
-          final game = result.game;
-          final humanPlayerId = game.players.isNotEmpty
-              ? game.players.first.id
-              : 'gp1';
-          return ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 800, maxHeight: 600),
-            child: DiplomacyPanel(
-              game: game,
-              humanPlayerId: humanPlayerId,
-              topology: result.combinedTopology,
-              currentOrders: const Orders(),
-              bus: AppEventBus(),
-            ),
-          );
-        },
+        name: 'Full availability',
+        builder: (context) => const _ProductionPanelStory(
+          playerOverride: null,
+          useFullAvailability: true,
+        ),
+      ),
+      WidgetbookUseCase(
+        name: 'Partial availability',
+        builder: (context) => const _ProductionPanelStory(
+          playerOverride: null,
+          useFullAvailability: false,
+        ),
+      ),
+      WidgetbookUseCase(
+        name: 'Full availability (mobile)',
+        builder: (context) => mobileViewport(
+          context,
+          const _ProductionPanelStory(
+            playerOverride: null,
+            useFullAvailability: true,
+          ),
+        ),
+      ),
+      WidgetbookUseCase(
+        name: 'Partial availability (mobile)',
+        builder: (context) => mobileViewport(
+          context,
+          const _ProductionPanelStory(
+            playerOverride: null,
+            useFullAvailability: false,
+          ),
+        ),
       ),
     ],
   ),
@@ -214,7 +228,8 @@ List<WidgetbookNode> get turnNewsDialogDirectories => [
           );
           return MaterialApp(
             theme: AppThemes.colonial,
-            localizationsDelegates: AppLocalizationsBinding.localizationsDelegates,
+            localizationsDelegates:
+                AppLocalizationsBinding.localizationsDelegates,
             supportedLocales: AppLocalizations.supportedLocales,
             home: Scaffold(
               body: Center(
@@ -249,7 +264,8 @@ List<WidgetbookNode> get turnNewsDialogDirectories => [
           );
           return MaterialApp(
             theme: AppThemes.colonial,
-            localizationsDelegates: AppLocalizationsBinding.localizationsDelegates,
+            localizationsDelegates:
+                AppLocalizationsBinding.localizationsDelegates,
             supportedLocales: AppLocalizations.supportedLocales,
             home: Scaffold(
               body: Center(
@@ -289,7 +305,8 @@ List<WidgetbookNode> get turnNewsDialogDirectories => [
             context,
             MaterialApp(
               theme: AppThemes.colonial,
-              localizationsDelegates: AppLocalizationsBinding.localizationsDelegates,
+              localizationsDelegates:
+                  AppLocalizationsBinding.localizationsDelegates,
               supportedLocales: AppLocalizations.supportedLocales,
               home: Scaffold(
                 body: Center(
@@ -379,41 +396,27 @@ List<WidgetbookNode> get navalUnitsPanelDirectories => [
 /// Diplomacy Panel stories. SPEC/ui/diplomacy-panel.md.
 List<WidgetbookNode> get diplomacyPanelDirectories => [
   WidgetbookFolder(
-    name: 'Production Panel',
+    name: 'Diplomacy Panel',
     children: [
       WidgetbookUseCase(
-        name: 'Full availability',
-        builder: (context) => const _ProductionPanelStory(
-          playerOverride: null,
-          useFullAvailability: true,
-        ),
-      ),
-      WidgetbookUseCase(
-        name: 'Partial availability',
-        builder: (context) => const _ProductionPanelStory(
-          playerOverride: null,
-          useFullAvailability: false,
-        ),
-      ),
-      WidgetbookUseCase(
-        name: 'Full availability (mobile)',
-        builder: (context) => mobileViewport(
-          context,
-          const _ProductionPanelStory(
-            playerOverride: null,
-            useFullAvailability: true,
-          ),
-        ),
-      ),
-      WidgetbookUseCase(
-        name: 'Partial availability (mobile)',
-        builder: (context) => mobileViewport(
-          context,
-          const _ProductionPanelStory(
-            playerOverride: null,
-            useFullAvailability: false,
-          ),
-        ),
+        name: 'With real game',
+        builder: (context) {
+          final result = getDebugInitGameResult();
+          final game = result.game;
+          final humanPlayerId = game.players.isNotEmpty
+              ? game.players.first.id
+              : 'gp1';
+          return ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 800, maxHeight: 600),
+            child: DiplomacyPanel(
+              game: game,
+              humanPlayerId: humanPlayerId,
+              topology: result.combinedTopology,
+              currentOrders: const Orders(),
+              bus: AppEventBus(),
+            ),
+          );
+        },
       ),
     ],
   ),

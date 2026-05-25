@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:colonizethis_app/l10n/l10n.dart';
 import '../config/app_assets.dart';
 import '../config/themes.dart';
+import '../config/ui_screen_ids.dart';
 import 'ct_nine_patch_button.dart';
 
 /// Visual variant of the main menu. SPEC/ui/main-menu.md; UXD 03a.
@@ -44,6 +45,9 @@ class CtMainMenu extends StatelessWidget {
          !resumeGameVisible || onResumeGame != null,
          'onResumeGame is required when resumeGameVisible is true',
        );
+
+  /// SPEC/ui/main-menu.md — [UiScreenIds.mainMenu].
+  static const screenId = UiScreenIds.mainMenu;
 
   final MainMenuVariant variant;
   final MainMenuState state;

@@ -10,6 +10,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../config/ct_e2e.dart';
 import '../../../config/ct_e2e_last_panel_snapshot.dart';
+import '../../../config/ui_screen_ids.dart';
 import '../../../core/services/app_event_handler_scope.dart';
 import '../../../l10n/l10n.dart';
 import '../../../providers/games_provider.dart';
@@ -42,6 +43,9 @@ class CivilianUnitsPanel extends ConsumerStatefulWidget {
     this.buildImprovementShortcutTargetTileKey,
     this.readOnly = false,
   });
+
+  /// SPEC/ui/civilian-units-panel.md — [UiScreenIds.civilianUnitsPanel].
+  static const screenId = UiScreenIds.civilianUnitsPanel;
 
   final Game game;
   final String humanPlayerId;
@@ -230,8 +234,7 @@ class _CivilianUnitsPanelState extends ConsumerState<CivilianUnitsPanel> {
   Widget build(BuildContext context) {
     final l10n = appL10n(context);
     final provinceNames = provinceNamesByPrefixedId(widget.game);
-    final ownerIds =
-        widget.civilianOwnerIds ?? {widget.humanPlayerId};
+    final ownerIds = widget.civilianOwnerIds ?? {widget.humanPlayerId};
     final multiOwner = ownerIds.length > 1;
     final ow = civilianUnitsInRegionForOwners(
       widget.game.worldState.oldWorld.units,

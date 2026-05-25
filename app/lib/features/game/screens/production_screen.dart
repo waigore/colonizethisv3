@@ -8,6 +8,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../config/ct_e2e.dart';
 import '../../../config/ct_e2e_last_panel_snapshot.dart';
+import '../../../config/ui_screen_ids.dart';
 import '../../../providers/game_service_provider.dart';
 import '../../../providers/games_provider.dart';
 import '../../../providers/production_allocation_provider.dart';
@@ -27,6 +28,9 @@ class ProductionScreen extends ConsumerWidget {
     this.panelTopologyOverride,
     this.panelTileMapByRegionOverride,
   });
+
+  /// SPEC/ui/production-panel.md — [UiScreenIds.productionScreen].
+  static const screenId = UiScreenIds.productionScreen;
 
   final Game game;
   final Player player;
@@ -91,7 +95,9 @@ class ProductionScreen extends ConsumerWidget {
                 ),
               },
             );
-        final canEdit = shellRef.read(shellPlayerContextProvider).canMutateViaUi;
+        final canEdit = shellRef
+            .read(shellPlayerContextProvider)
+            .canMutateViaUi;
         final labourCallbacks = ProductionLabourCallbacks(
           onAppendRecruitOrder: (tier) {
             if (!canEdit) return;
@@ -165,10 +171,7 @@ class ProductionScreen extends ConsumerWidget {
               tileMapByRegion: panelTileMaps,
             ),
           );
-          return KeyedSubtree(
-            key: kCtE2EProductionPanelRootKey,
-            child: panel,
-          );
+          return KeyedSubtree(key: kCtE2EProductionPanelRootKey, child: panel);
         }
         return panel;
       },
