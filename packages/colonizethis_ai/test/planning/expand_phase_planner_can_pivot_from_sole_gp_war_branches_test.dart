@@ -62,8 +62,8 @@
 //     `unwinnableSoleGpFrontierPeaceTarget` at the orchestrator boundary
 //     and indirectly assume the quota-met / minors-on-map branches; they
 //     do not isolate the predicate or pin the no-pivot-false exit.
-//   - `colonial_pressure_test.dart` and
-//     `colonial_pressure_peer_gap_boundary_test.dart` cover other
+//   - `expand_phase_planner_peer_peace_basic_test.dart` and
+//     `expand_phase_planner_peer_gap_boundary_test.dart` cover other
 //     `colonial_pressure` predicates and the peer-gap rule; they do not
 //     reference `canPivotFromSoleGpWarAfterPeace`.
 //
@@ -119,10 +119,7 @@ Game _gameWith({
   return Game(
     id: 'g-2509-can-pivot-from-sole-gp-war-branches',
     worldState: WorldState(
-      turnState: const TurnState(
-        turnNumber: 80,
-        phase: TurnPhase.orders,
-      ),
+      turnState: const TurnState(turnNumber: 80, phase: TurnPhase.orders),
       oldWorld: RegionData(provinces: owProvinces),
       newWorld: RegionData(provinces: nwProvinces),
     ),
@@ -159,11 +156,7 @@ AIWorldSnapshot _snapshotFor({
 List<Province> _gpOnlyOwProvinces(int count) {
   return [
     for (var i = 1; i <= count; i++)
-      Province(
-        id: 'oldWorld|gp1_$i',
-        regionId: 'oldWorld',
-        ownerId: _gp1,
-      ),
+      Province(id: 'oldWorld|gp1_$i', regionId: 'oldWorld', ownerId: _gp1),
   ];
 }
 
@@ -192,8 +185,9 @@ void main() {
 
     test('quota-exceeded with no minor pivot still returns true', () {
       final game = _gameWith(
-        owProvinces:
-            _gpOnlyOwProvinces(kObserverConquestMinOwProvincesPerGp + 5),
+        owProvinces: _gpOnlyOwProvinces(
+          kObserverConquestMinOwProvincesPerGp + 5,
+        ),
       );
       final snapshot = _snapshotFor(
         oldWorldProvincesOwned: kObserverConquestMinOwProvincesPerGp + 5,
@@ -208,36 +202,33 @@ void main() {
       );
     });
 
-    test(
-      'below quota with an OW-owning uninvaded minor returns true',
-      () {
-        final game = _gameWith(
-          owProvinces: [
-            ..._gpOnlyOwProvinces(8),
-            const Province(
-              id: 'oldWorld|minor1_a',
-              regionId: 'oldWorld',
-              ownerId: _minor1,
-            ),
-          ],
-          minorNations: const [MinorNation(id: _minor1, displayName: 'M1')],
-        );
-        final snapshot = _snapshotFor(
-          oldWorldProvincesOwned: 8,
-          invadableProvinceIdsSorted: const ['oldWorld|minor1_a'],
-        );
-        expect(
-          canPivotFromSoleGpWarAfterPeace(game: game, snapshot: snapshot),
-          isTrue,
-          reason:
-              'An OW minor on the map provides the SPEC-authorized minor '
-              'pivot when the GP peaces its sole GP foe. A regression '
-              'that collapsed the OW `minorsOnMap` scan would strand '
-              'below-quota GPs in stalemated sole-GP wars (Refs #2509 '
-              'turn-100 verify exit code 5).',
-        );
-      },
-    );
+    test('below quota with an OW-owning uninvaded minor returns true', () {
+      final game = _gameWith(
+        owProvinces: [
+          ..._gpOnlyOwProvinces(8),
+          const Province(
+            id: 'oldWorld|minor1_a',
+            regionId: 'oldWorld',
+            ownerId: _minor1,
+          ),
+        ],
+        minorNations: const [MinorNation(id: _minor1, displayName: 'M1')],
+      );
+      final snapshot = _snapshotFor(
+        oldWorldProvincesOwned: 8,
+        invadableProvinceIdsSorted: const ['oldWorld|minor1_a'],
+      );
+      expect(
+        canPivotFromSoleGpWarAfterPeace(game: game, snapshot: snapshot),
+        isTrue,
+        reason:
+            'An OW minor on the map provides the SPEC-authorized minor '
+            'pivot when the GP peaces its sole GP foe. A regression '
+            'that collapsed the OW `minorsOnMap` scan would strand '
+            'below-quota GPs in stalemated sole-GP wars (Refs #2509 '
+            'turn-100 verify exit code 5).',
+      );
+    });
 
     test(
       'OW minor already in atWarWith still counts as a pivot (no at-war filter)',
@@ -353,12 +344,8 @@ void main() {
         // Empty `invadableProvinceIdsSorted` collapses the trailing `any`
         // to false without ever consulting `getProvinceOwnerMap`; with no
         // OW minor either, the predicate exits via `return false`.
-        final game = _gameWith(
-          owProvinces: _gpOnlyOwProvinces(8),
-        );
-        final snapshot = _snapshotFor(
-          oldWorldProvincesOwned: 8,
-        );
+        final game = _gameWith(owProvinces: _gpOnlyOwProvinces(8));
+        final snapshot = _snapshotFor(oldWorldProvincesOwned: 8);
         expect(
           canPivotFromSoleGpWarAfterPeace(game: game, snapshot: snapshot),
           isFalse,
@@ -379,12 +366,8 @@ void main() {
         // so this case must miss the short-circuit and fall through to
         // the minor/invadable scans, which then return false.
         final owCount = kObserverConquestMinOwProvincesPerGp - 1;
-        final game = _gameWith(
-          owProvinces: _gpOnlyOwProvinces(owCount),
-        );
-        final snapshot = _snapshotFor(
-          oldWorldProvincesOwned: owCount,
-        );
+        final game = _gameWith(owProvinces: _gpOnlyOwProvinces(owCount));
+        final snapshot = _snapshotFor(oldWorldProvincesOwned: owCount);
         expect(
           canPivotFromSoleGpWarAfterPeace(game: game, snapshot: snapshot),
           isFalse,
@@ -414,12 +397,18 @@ void main() {
           oldWorldProvincesOwned: 8,
           invadableProvinceIdsSorted: const ['oldWorld|minor1_a'],
         );
-        final first =
-            canPivotFromSoleGpWarAfterPeace(game: game, snapshot: snapshot);
-        final second =
-            canPivotFromSoleGpWarAfterPeace(game: game, snapshot: snapshot);
-        final third =
-            canPivotFromSoleGpWarAfterPeace(game: game, snapshot: snapshot);
+        final first = canPivotFromSoleGpWarAfterPeace(
+          game: game,
+          snapshot: snapshot,
+        );
+        final second = canPivotFromSoleGpWarAfterPeace(
+          game: game,
+          snapshot: snapshot,
+        );
+        final third = canPivotFromSoleGpWarAfterPeace(
+          game: game,
+          snapshot: snapshot,
+        );
         expect(first, isTrue);
         expect(second, first);
         expect(third, first);

@@ -52,8 +52,8 @@
 //     pins one minor-first happy path (uninvaded minor + 1 GP at war).
 //     The predicate's empty-roster, no-OW-province, NW-only-minor, and
 //     multi-minor-mixed branches are not isolated there.
-//   - `colonial_pressure_test.dart` and
-//     `colonial_pressure_peer_gap_boundary_test.dart` exercise the
+//   - `expand_phase_planner_peer_peace_basic_test.dart` and
+//     `expand_phase_planner_peer_gap_boundary_test.dart` exercise the
 //     predicate only indirectly through `belowQuotaPeerGpPeaceTargets`
 //     and `defaultStartFutileMinorPeaceTargets`. A regression that
 //     inverted the `atWarWith` guard could pass those orchestrated
@@ -109,10 +109,7 @@ Game _gameWithMinors({
   return Game(
     id: 'g-2509-has-uninvaded-minor-branches',
     worldState: WorldState(
-      turnState: const TurnState(
-        turnNumber: 50,
-        phase: TurnPhase.orders,
-      ),
+      turnState: const TurnState(turnNumber: 50, phase: TurnPhase.orders),
       oldWorld: RegionData(provinces: owProvinces),
       newWorld: RegionData(provinces: nwProvinces),
     ),
@@ -192,11 +189,7 @@ void main() {
           Province(id: 'oldWorld|gp1_a', regionId: 'oldWorld', ownerId: _gp1),
         ],
         nwProvinces: const [
-          Province(
-            id: 'newWorld|m1_a',
-            regionId: 'newWorld',
-            ownerId: _minor1,
-          ),
+          Province(id: 'newWorld|m1_a', regionId: 'newWorld', ownerId: _minor1),
         ],
       );
       final snapshot = _snapshotAtWarWith(const []);
@@ -218,11 +211,7 @@ void main() {
         minorNations: const [MinorNation(id: _minor1, displayName: 'M1')],
         owProvinces: const [
           Province(id: 'oldWorld|gp1_a', regionId: 'oldWorld', ownerId: _gp1),
-          Province(
-            id: 'oldWorld|m1_a',
-            regionId: 'oldWorld',
-            ownerId: _minor1,
-          ),
+          Province(id: 'oldWorld|m1_a', regionId: 'oldWorld', ownerId: _minor1),
         ],
       );
       final snapshot = _snapshotAtWarWith(const []);
@@ -249,11 +238,7 @@ void main() {
         minorNations: const [MinorNation(id: _minor1, displayName: 'M1')],
         owProvinces: const [
           Province(id: 'oldWorld|gp1_a', regionId: 'oldWorld', ownerId: _gp1),
-          Province(
-            id: 'oldWorld|m1_a',
-            regionId: 'oldWorld',
-            ownerId: _minor1,
-          ),
+          Province(id: 'oldWorld|m1_a', regionId: 'oldWorld', ownerId: _minor1),
         ],
       );
       final snapshot = _snapshotAtWarWith(const [_minor1]);
@@ -360,16 +345,8 @@ void main() {
         ],
         owProvinces: const [
           Province(id: 'oldWorld|gp1_a', regionId: 'oldWorld', ownerId: _gp1),
-          Province(
-            id: 'oldWorld|m1_a',
-            regionId: 'oldWorld',
-            ownerId: _minor1,
-          ),
-          Province(
-            id: 'oldWorld|m2_a',
-            regionId: 'oldWorld',
-            ownerId: _minor2,
-          ),
+          Province(id: 'oldWorld|m1_a', regionId: 'oldWorld', ownerId: _minor1),
+          Province(id: 'oldWorld|m2_a', regionId: 'oldWorld', ownerId: _minor2),
         ],
       );
       final snapshot = _snapshotAtWarWith(const [_minor1, _minor2]);
@@ -398,11 +375,7 @@ void main() {
         ],
         owProvinces: const [
           Province(id: 'oldWorld|gp1_a', regionId: 'oldWorld', ownerId: _gp1),
-          Province(
-            id: 'oldWorld|m2_a',
-            regionId: 'oldWorld',
-            ownerId: _minor2,
-          ),
+          Province(id: 'oldWorld|m2_a', regionId: 'oldWorld', ownerId: _minor2),
         ],
       );
       final snapshot = _snapshotAtWarWith(const [_minor1]);

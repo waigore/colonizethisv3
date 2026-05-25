@@ -31,7 +31,7 @@
 //     invadable-frontier ownership). There is **no** direct unit-level
 //     test today for `quotaMetBelowQuotaAtWarPeaceTargets` at all — every
 //     branch is currently unpinned.
-//   - `colonial_pressure_test.dart` covers `belowQuotaPeerGpPeaceTargets`,
+//   - `expand_phase_planner_peer_peace_basic_test.dart` covers `belowQuotaPeerGpPeaceTargets`,
 //     `nearQuotaHoldPeaceTargets`, `defaultStartGpPeaceTargets`, and
 //     `criticalOwHoldPeaceTargets` — none touch the quota-met
 //     below-quota peace family.
@@ -120,41 +120,38 @@ AIWorldSnapshot _focusSnapshot({
 }
 
 void main() {
-  group(
-    'quotaMetBelowQuotaAtWarPeaceTargets — own-OW below-quota guard',
-    () {
-      test('returns const [] at own == quota - 1 even with two below-quota '
-          'GP enemies at war', () {
-        final game = _buildGame(
-          provincesByOwner: {
-            'focus': kObserverConquestMinOwProvincesPerGp - 1,
-            'gp_low_a': 5,
-            'gp_low_b': 6,
-          },
-          players: const [
-            Player(id: 'focus', displayName: 'Focus', isHuman: false),
-            Player(id: 'gp_low_a', displayName: 'A', isHuman: false),
-            Player(id: 'gp_low_b', displayName: 'B', isHuman: false),
-          ],
-        );
-        final snapshot = _focusSnapshot(
-          focusOw: kObserverConquestMinOwProvincesPerGp - 1,
-          atWarWith: const ['gp_low_a', 'gp_low_b'],
-        );
+  group('quotaMetBelowQuotaAtWarPeaceTargets — own-OW below-quota guard', () {
+    test('returns const [] at own == quota - 1 even with two below-quota '
+        'GP enemies at war', () {
+      final game = _buildGame(
+        provincesByOwner: {
+          'focus': kObserverConquestMinOwProvincesPerGp - 1,
+          'gp_low_a': 5,
+          'gp_low_b': 6,
+        },
+        players: const [
+          Player(id: 'focus', displayName: 'Focus', isHuman: false),
+          Player(id: 'gp_low_a', displayName: 'A', isHuman: false),
+          Player(id: 'gp_low_b', displayName: 'B', isHuman: false),
+        ],
+      );
+      final snapshot = _focusSnapshot(
+        focusOw: kObserverConquestMinOwProvincesPerGp - 1,
+        atWarWith: const ['gp_low_a', 'gp_low_b'],
+      );
 
-        expect(
-          quotaMetBelowQuotaAtWarPeaceTargets(game: game, snapshot: snapshot),
-          isEmpty,
-          reason:
-              'Below the observer quota the helper must short-circuit before '
-              'evaluating targets. A regression that flipped `<` to `<=` '
-              'here would silently re-engage quota-met peace one province '
-              'early and weaken the observer gate sequencing the SPEC '
-              'requires.',
-        );
-      });
-    },
-  );
+      expect(
+        quotaMetBelowQuotaAtWarPeaceTargets(game: game, snapshot: snapshot),
+        isEmpty,
+        reason:
+            'Below the observer quota the helper must short-circuit before '
+            'evaluating targets. A regression that flipped `<` to `<=` '
+            'here would silently re-engage quota-met peace one province '
+            'early and weaken the observer gate sequencing the SPEC '
+            'requires.',
+      );
+    });
+  });
 
   group('quotaMetBelowQuotaAtWarPeaceTargets — at-quota fire path', () {
     test('returns the sole below-quota GP enemy at own == quota boundary', () {
@@ -185,41 +182,38 @@ void main() {
     });
   });
 
-  group(
-    'quotaMetBelowQuotaAtWarPeaceTargets — at-war faction filters',
-    () {
-      test('filters out at-war minors (only GP targets are returned)', () {
-        final game = _buildGame(
-          provincesByOwner: {
-            'focus': kObserverConquestMinOwProvincesPerGp + 2,
-            'minor_low': 3,
-          },
-          players: const [
-            Player(id: 'focus', displayName: 'Focus', isHuman: false),
-          ],
-          minorNations: const [
-            MinorNation(id: 'minor_low', displayName: 'M'),
-          ],
-        );
-        final snapshot = _focusSnapshot(
-          focusOw: kObserverConquestMinOwProvincesPerGp + 2,
-          atWarWith: const ['minor_low'],
-        );
+  group('quotaMetBelowQuotaAtWarPeaceTargets — at-war faction filters', () {
+    test('filters out at-war minors (only GP targets are returned)', () {
+      final game = _buildGame(
+        provincesByOwner: {
+          'focus': kObserverConquestMinOwProvincesPerGp + 2,
+          'minor_low': 3,
+        },
+        players: const [
+          Player(id: 'focus', displayName: 'Focus', isHuman: false),
+        ],
+        minorNations: const [MinorNation(id: 'minor_low', displayName: 'M')],
+      );
+      final snapshot = _focusSnapshot(
+        focusOw: kObserverConquestMinOwProvincesPerGp + 2,
+        atWarWith: const ['minor_low'],
+      );
 
-        expect(
-          quotaMetBelowQuotaAtWarPeaceTargets(game: game, snapshot: snapshot),
-          isEmpty,
-          reason:
-              'Minors and tribes are not in the GP-vs-GP futile-bullying war '
-              'family this helper exits. A regression that dropped the '
-              '`game.playerById(...) != null` guard would silently sweep a '
-              'minor war into the GP peace list and consume the offer-peace '
-              'cap intended for GPs.',
-        );
-      });
+      expect(
+        quotaMetBelowQuotaAtWarPeaceTargets(game: game, snapshot: snapshot),
+        isEmpty,
+        reason:
+            'Minors and tribes are not in the GP-vs-GP futile-bullying war '
+            'family this helper exits. A regression that dropped the '
+            '`game.playerById(...) != null` guard would silently sweep a '
+            'minor war into the GP peace list and consume the offer-peace '
+            'cap intended for GPs.',
+      );
+    });
 
-      test('filters out a GP target whose own holdings are at observer quota',
-          () {
+    test(
+      'filters out a GP target whose own holdings are at observer quota',
+      () {
         // Two enemies: one above quota (filtered) and one strictly below
         // quota (kept) so the surviving result also pins ordering.
         final game = _buildGame(
@@ -249,42 +243,44 @@ void main() {
               'on the target side would silently sweep in peers who already '
               'completed their own observer quota.',
         );
-      });
-    },
-  );
+      },
+    );
+  });
 
   group('quotaMetBelowQuotaAtWarPeaceTargets — sort determinism', () {
-    test('returns ascending factionId order regardless of at-war list order',
-        () {
-      final game = _buildGame(
-        provincesByOwner: {
-          'focus': kObserverConquestMinOwProvincesPerGp + 1,
-          'gp_a': 4,
-          'gp_b': 5,
-        },
-        players: const [
-          Player(id: 'focus', displayName: 'Focus', isHuman: false),
-          Player(id: 'gp_a', displayName: 'A', isHuman: false),
-          Player(id: 'gp_b', displayName: 'B', isHuman: false),
-        ],
-      );
-      // Intentionally pass the at-war list in reverse sort order so a
-      // regression that dropped the `..sort()` would surface as a flipped
-      // result.
-      final snapshot = _focusSnapshot(
-        focusOw: kObserverConquestMinOwProvincesPerGp + 1,
-        atWarWith: const ['gp_b', 'gp_a'],
-      );
+    test(
+      'returns ascending factionId order regardless of at-war list order',
+      () {
+        final game = _buildGame(
+          provincesByOwner: {
+            'focus': kObserverConquestMinOwProvincesPerGp + 1,
+            'gp_a': 4,
+            'gp_b': 5,
+          },
+          players: const [
+            Player(id: 'focus', displayName: 'Focus', isHuman: false),
+            Player(id: 'gp_a', displayName: 'A', isHuman: false),
+            Player(id: 'gp_b', displayName: 'B', isHuman: false),
+          ],
+        );
+        // Intentionally pass the at-war list in reverse sort order so a
+        // regression that dropped the `..sort()` would surface as a flipped
+        // result.
+        final snapshot = _focusSnapshot(
+          focusOw: kObserverConquestMinOwProvincesPerGp + 1,
+          atWarWith: const ['gp_b', 'gp_a'],
+        );
 
-      expect(
-        quotaMetBelowQuotaAtWarPeaceTargets(game: game, snapshot: snapshot),
-        ['gp_a', 'gp_b'],
-        reason:
-            'Multi-target results must be sorted ascending so downstream '
-            'offer-peace scoring and trace logs are independent of the '
-            'iteration order of snapshot.threats.atWarWith. Dropping the '
-            'sort would surface as ["gp_b", "gp_a"] here.',
-      );
-    });
+        expect(
+          quotaMetBelowQuotaAtWarPeaceTargets(game: game, snapshot: snapshot),
+          ['gp_a', 'gp_b'],
+          reason:
+              'Multi-target results must be sorted ascending so downstream '
+              'offer-peace scoring and trace logs are independent of the '
+              'iteration order of snapshot.threats.atWarWith. Dropping the '
+              'sort would surface as ["gp_b", "gp_a"] here.',
+        );
+      },
+    );
   });
 }
