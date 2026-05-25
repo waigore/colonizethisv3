@@ -1,6 +1,21 @@
 # Province and Sea Zone Detail Overlay
 
-**SPEC/ui** — Detail overlay when the user selects a tile on the map for province/sea-zone context. Integrates with [map-widget.md](map-widget.md). Province/sea zone identity: [world-model-identity.md](../game/world-model-identity.md).
+**Screen ID:** `MAP20001` — stable; do not reassign.
+**SPEC/ui** — Detail overlay for map tile selection. Implementation: `app/lib/features/game/widgets/province_sea_zone_detail_overlay.dart`.
+**Widgetbook:** `Province Overlay` → `app/lib/widgetbook/catalog.dart`. Integrates with [map-widget.md](map-widget.md). Identity: [world-model-identity.md](../game/world-model-identity.md).
+
+---
+
+## Widget contract
+
+`ProvinceSeaZoneDetailOverlay` — presentational; parents pass `displayId`, `selectedTileKey`, `draftOrders`, and game/view data. No direct `AppEventBus` in overlay (provider-based map↔panel contract).
+
+---
+
+## Trigger conditions
+
+- **Map tile tap:** `mapProvincePanelProvider` sets `selectedTileKey` and `overlayOpen`.
+- **Close:** Overlay close control sets `overlayOpen` false.
 
 ---
 
@@ -38,7 +53,7 @@ When the user **taps/clicks a map tile** (not hover), the shell shows detail for
 
 ---
 
-## Layout, responsiveness, and height rules
+## Layout / wireframe
 
 **Narrow** means viewport width &lt; shell breakpoint (e.g. 600 logical px). Let `H` = `MediaQuery` screen height, `third = 0.33 * H`. Let layout max height from parent be `parentMax` (from `LayoutBuilder` / parent constraints).
 
@@ -98,6 +113,48 @@ Non-Material, pixel-art friendly: `CtPanel`, `CtTabStrip`, explicit text styles 
 
 ---
 
+## Behavior
+
+### Incoming (what shows this UI)
+
+| Source | Condition | Result |
+|--------|-----------|--------|
+| Map tile tap | User taps committed selection | `overlayOpen` + overlay content for `selectedTileKey`. |
+| Hover | Pointer over map | Does not change overlay content. |
+
+### User actions → outcomes
+
+| Control / gesture | When enabled | Emits / calls | Side effects |
+|-------------------|--------------|---------------|--------------|
+| Close | Overlay open | `overlayOpen = false` | Scrim may remain per provider rules. |
+| Tile shortcuts (Explore / Prospect / Build) | Province intel + unit gates | Opens civilian panel shortcuts / work orders | Per Interaction section. |
+| Economic row hover | Intel allows | Sets `secondaryHighlightTileKey` | Map secondary outline. |
+
+---
+
+## States and variants
+
+| Variant | Trigger | Render difference |
+|---------|---------|-------------------|
+| Province context | Land tile selected | Full section set per intel gating. |
+| Sea zone context | Sea tile selected | Political + Naval; no port-scoped naval pending. |
+| Obfuscated | Fog / intel fails | Section bodies `???`. |
+
+---
+
+## Components
+
+- `ProvinceSeaZoneDetailOverlay`, `GameMapProvinceDetailSidePanel`, `GameMapNarrowDetailOverlaySlot`.
+- `mapProvincePanelProvider` bridge — no cross-import with map widget.
+
+---
+
+## Widgetbook
+
+Folder: **Province Overlay**. Map stories use provider overrides; Flame map does not import the overlay.
+
+---
+
 ## Acceptance criteria
 
 - Map and panel do not cross-import; bridge is `mapProvincePanelProvider` (and map ctor params fed by that layer).
@@ -131,10 +188,6 @@ Non-Material, pixel-art friendly: `CtPanel`, `CtTabStrip`, explicit text styles 
 - Given selected tile is a prospect-required mineral and the tile is not yet prospected by the human player, when the tile is otherwise improvable by trait, then the UI layer may keep `Build improvement` visible but disabled until prospection and all assign-time rules pass.
 - Given user taps enabled `Build improvement` and click-time state remains valid, when the Civilian Units panel opens, then it opens in Builder-only shortcut mode targeting the exact selected tile key for direct `WorkOrder(target: build_improvement, targetTileKey: <exact selected tile key>)`.
 - Given click-time state drift invalidates `Build improvement`, when user taps the icon, then the UI layer performs a silent no-op and commits no pending work order.
-
-### Widgetbook
-
-Map stories use `onMapTileTappedForDetail` and passed-in keys from demo/overrides; Flame map does not import the overlay.
 
 ---
 

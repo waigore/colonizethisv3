@@ -1,6 +1,20 @@
 # Empire Overview (in-game shell)
 
-**SPEC/ui** — Main in-game screen for the Flutter app. Shown after game initialization succeeds. The player sees one or more region maps (tabs), each using the reusable map widget; province selection opens details (content TBD). This screen is the **in-game shell**: from here the player issues orders, ends turn, opens panels, and continues play. Desktop and mobile both use a tab system for regions; on mobile, one region per map (one tab per region).
+**Screen ID:** `MAP10001` — stable; do not reassign.
+**SPEC/ui** — In-game map shell (region tabs, map widget, HUD). Implementation: `app/lib/features/game/flame/game_map_area.dart`.
+**Widgetbook:** `Map Widget` → `app/lib/widgetbook/catalog.dart`. Host orchestration: [`game-screen.md`](game-screen.md).
+
+---
+
+## Widget contract
+
+`GameMapArea` hosts region tabs, `CtRegionMap` / map stack, sidebars, and panel slots. Province selection drives [`province-sea-zone-detail-overlay.md`](province-sea-zone-detail-overlay.md) via `mapProvincePanelProvider`.
+
+---
+
+## Trigger conditions
+
+- **Entry:** After game init success or load into play ([`game-screen.md`](game-screen.md) mounts `GameMapArea` when `mapViewDataProvider != null`).
 
 ---
 
@@ -74,7 +88,7 @@
 
 ---
 
-## Wireframe (conceptual)
+## Layout / wireframe
 
 ```text
 +------------------------------------------------------------------+
@@ -91,6 +105,46 @@
 ```
 
 On mobile: same tab row; map area fills available space; one region visible at a time; province detail overlays the bottom of the map stack when open (narrow).
+
+---
+
+## Behavior
+
+### Incoming (what shows this UI)
+
+| Source | Condition | Result |
+|--------|-----------|--------|
+| `GameScreen` | `mapViewDataProvider != null` | `GameMapArea` mounted as primary in-game surface. |
+
+### User actions → outcomes
+
+| Control / gesture | When enabled | Emits / calls | Side effects |
+|-------------------|--------------|---------------|--------------|
+| Region tab | Always | Switches active region map | Updates `mapViewData`. |
+| Map tile tap | Map visible | Updates `mapProvincePanelProvider` | Opens province overlay. |
+| Toolbar / empire icons | Per [empire-buttons.md](empire-buttons.md) | Bus events for panels | — |
+| Next turn | Host [`game-screen.md`](game-screen.md) | Turn resolution flow | — |
+
+---
+
+## States and variants
+
+| Variant | Trigger | Render difference |
+|---------|---------|-------------------|
+| Desktop wide | Viewport | Side-by-side chrome; side panel for detail. |
+| Mobile narrow | Viewport | Bottom overlay for province detail. |
+
+---
+
+## Components
+
+- `GameMapArea`, `CtRegionMap`, map tool row, treasury/cargo indicators — see [map-widget.md](map-widget.md), [empire-buttons.md](empire-buttons.md).
+
+---
+
+## Widgetbook
+
+Folder: **Map Widget** — stories for map area with fixture topology and view data.
 
 ---
 

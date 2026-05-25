@@ -1,19 +1,25 @@
 # Diplomacy Panel
 
-**SPEC/ui** — Full-page diplomacy screen. Source: SPEC/game/diplomacy.md, SPEC/game/factions.md.
+**Screen ID:** `GAME30001` — stable; do not reassign.
+**SPEC/ui** — Full-page diplomacy screen. Implementation: `app/lib/features/game/screens/diplomacy_screen.dart`.
+**Widgetbook:** `Diplomacy Panel` → `app/lib/widgetbook/catalog.dart`. Source: [diplomacy.md](../game/diplomacy.md), [factions.md](../game/factions.md).
 
 ---
+
+## Widget contract
+
+`DiplomacyScreen` presents discovered factions, relation summaries, and diplomatic action buttons. Orders accumulate in `currentOrders` until Next Turn; panel does not resolve orders locally.
+
+---
+
+## Trigger conditions
+
+- **Toolbar:** Dove icon opens Diplomacy as a **full-page** screen (pushed route).
+- **Single-player vs AI only.** No multiplayer-specific UI.
 
 ## Purpose
 
-The player can view all **discovered** factions (Great Powers, Minor Nations, Tribes), see current diplomatic state with each, and take **diplomatic actions** (declare war, offer peace, alliance, establish overture, grant aid, set subsidy) per SPEC/game/diplomacy.md.
-
----
-
-## Access
-
-- **Toolbar:** New icon (dove) in the in-game toolbar. Tapping opens the Diplomacy panel as a **full-page** screen (modal or pushed route).
-- **Single-player vs AI only.** No multiplayer-specific UI.
+The player can view all **discovered** factions (Great Powers, Minor Nations, Tribes), see current diplomatic state with each, and take **diplomatic actions** per [diplomacy.md](../game/diplomacy.md).
 
 ---
 
@@ -78,10 +84,43 @@ Orders are submitted into the current turn's order set; resolution happens on Ne
 
 ---
 
-## Layout
+## Layout / wireframe
 
 - Full-page: list is scrollable; sections (GPs, Minors, Tribes) with headers.
 - Actions shown to the right of each faction row (inline buttons or compact actions). **Current product:** pairwise diplomacy only (human Great Power toward each discovered faction). **Out of scope:** multi-party treaty or coalition UI beyond what pairwise orders already support; not a deferred placeholder—such flows are undefined until specified in GDD/TDD.
+
+---
+
+## Behavior
+
+### Incoming (what shows this UI)
+
+| Source | Condition | Result |
+|--------|-----------|--------|
+| Toolbar dove | In-game | `DiplomacyScreen` pushed full-page. |
+| Faction row tap | Any discovered faction | Navigates to detail per [diplomacy-detail-screen.md](diplomacy-detail-screen.md) (out of scope for GAME30001 row). |
+
+### User actions → outcomes
+
+| Control / gesture | When enabled | Emits / calls | Side effects |
+|-------------------|--------------|---------------|--------------|
+| Diplomatic action button | Valid per validator | Confirm (+ parameter dialogs) → adds/cancels draft diplomatic order | Pending shows **Cancel** label. |
+| Row Details | Always | Opens detail route | See diplomacy-detail spec. |
+
+---
+
+## States and variants
+
+| Variant | Trigger | Render difference |
+|---------|---------|-------------------|
+| Default | Panel open | Scrollable faction list with inline actions. |
+| Pending action | Order in `currentOrders` | Action button label **Cancel**. |
+
+---
+
+## Components
+
+- `DiplomacyScreen`, faction row widgets, `GrantOrSubsidyDialog` — [grant-or-subsidy-dialog.md](grant-or-subsidy-dialog.md).
 
 ---
 

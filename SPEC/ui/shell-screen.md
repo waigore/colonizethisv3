@@ -1,7 +1,8 @@
 # Shell Screen
 
 **Screen ID:** `SHEL10001` — stable; do not reassign.
-**SPEC/ui** — App shell. Hosts [`CtMainMenu`](main-menu.md) on the `Routes.shell` route and acts as the navigation choke point between the main menu and gameplay. Source of truth for the menu surface itself: [`main-menu.md`](main-menu.md). App-screen / route table: [`ctdev-app.md`](../program/ctdev-app.md). Routes: `app/lib/config/routes.dart`. Bus events: [`app-event-bus.md`](../program/app-event-bus.md). Bus wiring rules: [`app-ui-wiring.md`](../program/app-ui-wiring.md). Auto-save / resume contract: [`save-load.md`](../program/save-load.md).
+**SPEC/ui** — App shell. Hosts [`CtMainMenu`](main-menu.md) on the `Routes.shell` route and acts as the navigation choke point between the main menu and gameplay. Source of truth for the menu surface itself: [`main-menu.md`](main-menu.md). Implementation: `app/lib/features/shell/shell_screen.dart`.
+**Widgetbook:** `Shell Screen` → `app/lib/widgetbook/catalog.dart`. App-screen / route table: [`ctdev-app.md`](../program/ctdev-app.md). Routes: `app/lib/config/routes.dart`. Bus events: [`app-event-bus.md`](../program/app-event-bus.md). Bus wiring rules: [`app-ui-wiring.md`](../program/app-ui-wiring.md). Auto-save / resume contract: [`save-load.md`](../program/save-load.md).
 
 ---
 
@@ -61,16 +62,27 @@ The shell never renders an "afterVictory" subtitle by itself — that detail is 
 
 ---
 
-## Navigation
+## Behavior
 
-- **Entry:** `Routes.shell` (initial route, or via `NavigateToShellEvent` → `AppEventHandler.pushNamedAndRemoveUntil`).
-- **Exit paths:**
-  - **New Game:** `onNewGame` → `bus.emit(OpenDialogEvent(newGameLeaderSelectionDialogId))` → leader-selection dialog → game initializing → game per [`app-ui-wiring.md`](../program/app-ui-wiring.md) § Dialog IDs.
-  - **Resume game (only when `resumeGameVisible == true`):** `onResumeGame` reads `gameServiceProvider.loadAutoSaveGame()`; on success, resets `observeSessionProvider`, sets `currentGameProvider`, then emits `NavigateToRouteEvent(Routes.game)`.
-  - **Load game:** `onLoadGame` calls `gameServiceProvider.listGameIds()` / `loadGame(id)`. When a game is loaded, the same observe-session reset + `currentGameProvider` set + `NavigateToRouteEvent(Routes.game)` sequence runs. When no saves exist (`ids.isEmpty`), the callback is a no-op (the menu itself disables Load game per [`main-menu.md`](main-menu.md)).
-  - **Settings:** `onSettings` is a no-op stub today; reserved for the eventual Settings flow.
-  - **Quit:** `onQuit` calls `SystemNavigator.pop()` to exit the app.
-- **No direct `Navigator` chains:** All cross-screen transitions go through `AppEventBus` per [`app-ui-wiring.md`](../program/app-ui-wiring.md) (no `Navigator.pushNamed` from this widget for cross-cutting flows; `SystemNavigator.pop` for app-exit is allowed).
+### Incoming (what shows this UI)
+
+| Source | Condition | Result |
+|--------|-----------|--------|
+| Initial route | App navigator at `Routes.shell` (`/`) after splash/init | `ShellScreen` mounts and renders [`CtMainMenu`](main-menu.md) with shell-supplied callbacks. |
+| `NavigateToShellEvent` | Post-game return from [`victory-overlay.md`](victory-overlay.md) or pause exit | `AppEventHandler` pops to shell; shell rebuilds and re-reads `mainMenuAutoSaveAvailableProvider`. |
+| Provider refresh | `mainMenuAutoSaveAvailableProvider` changes while shell is visible | `resumeGameVisible` on `CtMainMenu` updates without app restart. |
+
+### User actions → outcomes
+
+| Control / gesture | When enabled | Emits / calls | Side effects |
+|-------------------|--------------|---------------|--------------|
+| New Game (`onNewGame`) | Always | `OpenDialogEvent(newGameLeaderSelectionDialogId)` on `AppEventBus` | Opens leader-selection dialog per [`app-ui-wiring.md`](../program/app-ui-wiring.md); no `Navigator.pushNamed` from shell. |
+| Resume game (`onResumeGame`) | `resumeGameVisible == true` | `NavigateToRouteEvent(Routes.game)` after `loadAutoSaveGame()` | Resets `observeSessionProvider`; sets `currentGameProvider`. |
+| Load game (`onLoadGame`) | Menu enables when saves exist | `NavigateToRouteEvent(Routes.game)` when `listGameIds()` non-empty | Same observe-session + `currentGameProvider` sequence as resume; no-op when `ids.isEmpty`. |
+| Settings (`onSettings`) | Always (stub) | — | No-op today; reserved for Settings flow. |
+| Quit (`onQuit`) | Always | `SystemNavigator.pop()` | Exits app; no bus events. |
+
+All cross-screen transitions use `AppEventBus` per [`app-ui-wiring.md`](../program/app-ui-wiring.md) (no `Navigator.pushNamed` from this widget).
 
 ---
 

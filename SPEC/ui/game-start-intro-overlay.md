@@ -1,6 +1,8 @@
 # Game Start Intro Overlay
 
-**SPEC/ui** — Modal blocking overlay shown the **first time** a player enters a freshly created game (or one whose intro has not yet been dismissed for the active session). Plays the archaic-language `game_start_intro` Yarn node via [`CtDialogueView`](ct-dialogue-view.md). Lifecycle / Yarn first-emission contract: [`dialogue-management.md`](../ai/dialogue-management.md) § First dialogue emission point. Modal presentation rules: [`dialogue-presentation.md`](dialogue-presentation.md). Host screen / wrap order: [`game-screen.md`](game-screen.md) § States and variants. Pixel-art chrome: [`pixel-art-ui-catalog.md`](pixel-art-ui-catalog.md). Asset constant: `kDialogueGameIntroAsset` in `app/lib/config/app_constants.dart`.
+**Screen ID:** `OVL10001` — stable; do not reassign.
+**SPEC/ui** — Modal blocking overlay on first entry to a new game session. Implementation: `app/lib/features/game/dialogue/game_start_intro_overlay.dart`.
+**Widgetbook:** `Game Start Intro Overlay` → `app/lib/widgetbook/catalog.dart`. Yarn: `game_start_intro` via [`CtDialogueView`](ct-dialogue-view.md). Host: [`game-screen.md`](game-screen.md). Asset: `kDialogueGameIntroAsset` in `app/lib/config/app_constants.dart`.
 
 ---
 
@@ -75,11 +77,23 @@ Error mode renders the same `Stack` but the `CtDialogShell` body is the localize
 
 ---
 
-## Navigation and bus
+## Behavior
 
-- The overlay does **not** read or emit `AppEventBus` events directly.
-- All navigation side effects flow through the `onDismissed` callback supplied by [`game-screen.md`](game-screen.md). The host owns the `gameIdsWithIntroShownProvider.notifier.markShown` call; this widget only signals completion.
-- The overlay does not interact with `Navigator` for any reason: no `pushNamed`, no `pop`, no `popUntil`. The host route remains mounted; only the scrim is removed when the overlay dismisses.
+### Incoming (what shows this UI)
+
+| Source | Condition | Result |
+|--------|-----------|--------|
+| `GameScreen` wrap | `game != null` and `game.id` not in `gameIdsWithIntroShownProvider` | Overlay scrim + dialogue shell over host `child`. |
+
+### User actions → outcomes
+
+| Control / gesture | When enabled | Emits / calls | Side effects |
+|-------------------|--------------|---------------|--------------|
+| Continue / Yarn option | Dialogue line or choice active | Jenny runner advances | — |
+| Dialogue complete | Yarn node finished | `widget.onDismissed` once | Host calls `gameIdsWithIntroShownProvider.markShown`. |
+| Error Continue | `_loadError != null` | `widget.onDismissed` | Host advances even when asset broken. |
+
+The overlay does not use `AppEventBus` or `Navigator`; host route stays mounted.
 
 ---
 

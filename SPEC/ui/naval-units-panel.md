@@ -1,12 +1,28 @@
 # Naval Units Panel
 
-**SPEC/ui** — Panel that lists all naval fleets owned by the human player, grouped by region then by location (port province or sea zone). Shows key fleet info at a glance, with expandable details for composition and capabilities, and supports locating each fleet on the map. Integrates with [empire-overview.md](empire-overview.md), [map-widget.md](map-widget.md), [game-toolbar-icons.md](game-toolbar-icons.md), and [empire-buttons.md](empire-buttons.md). Game model: [ships-and-naval.md](../game/ships-and-naval.md), [world-model.md](../game/world-model.md); movement: [naval-movement-resolution.md](../program/naval-movement-resolution.md). Province identity: [world-model-identity.md](../game/world-model-identity.md).
+**Screen ID:** `UNIT30001` — stable; do not reassign.
+**SPEC/ui** — Naval fleets panel. Implementation: `app/lib/features/game/widgets/naval_units_panel.dart`.
+**Widgetbook:** `Naval Units Panel` → `app/lib/widgetbook/catalog.dart`. Integrates with [empire-overview.md](empire-overview.md), [map-widget.md](map-widget.md). Game model: [ships-and-naval.md](../game/ships-and-naval.md).
+
+---
+
+## Widget contract
+
+`NavalUnitsPanel` — fleet rows by region/location; Move, Transfer, split/combine, locate; emits naval bus events per [move-fleet-dialog.md](move-fleet-dialog.md) and fleet management spec.
+
+---
+
+## Trigger conditions
+
+- **Access:** The panel is opened from the in-game shell **toolbar** via a dedicated **Naval Units** button, alongside Production, Civilian Units, Military Units, Diplomacy, and Technology per [empire-buttons.md](empire-buttons.md) and [in-game-shell-narrow.md](in-game-shell-narrow.md).
+- **Desktop / wide viewport:** Panel appears as a **side panel** (CtPanel) next to the map (map remains visible). At viewport widths **>=1280px**, panel width is derived from viewport width using a bounded scale rule (not a fixed `maxWidth: 400`), while preserving sensible min/max limits.
+- **Mobile / narrow viewport:** Behaviour matches the wide layout but may adapt to a narrower side panel or overlay per [mobile-adaptation.md](mobile-adaptation.md); interaction (list + locate) remains the same.
 
 ---
 
 ## Purpose
 
-The naval units panel gives the player a single place to see every **fleet** they control, including the **Home Fleet**. **Split** and **combine** fleet actions (checkbox multi-select, locality rules, Home Fleet merge target) are specified in [naval-units-fleet-management.md](naval-units-fleet-management.md). The panel:
+The naval units panel gives the player a single place to see every **fleet** they control, including the **Home Fleet**. **Split** and **combine** fleet actions are specified in [naval-units-fleet-management.md](naval-units-fleet-management.md). The panel:
 
 - Lists fleets grouped by **region** and by **location** (in port at a province vs at sea in a sea zone).
 - Always shows the **Home Fleet** as a special entry at the top for the player’s capital, even when it currently has zero ships.
@@ -58,11 +74,45 @@ When the shell opens the panel via **`OpenNavalUnitsPanelEvent`** with `location
 
 ---
 
-## Panel placement and opening
+## Layout / wireframe
 
-- **Access:** The panel is opened from the in-game shell **toolbar** via a dedicated **Naval Units** button, alongside Production, Civilian Units, Military Units, Diplomacy, and Technology per [empire-buttons.md](empire-buttons.md) and [in-game-shell-narrow.md](in-game-shell-narrow.md).
-- **Desktop / wide viewport:** Panel appears as a **side panel** (CtPanel) next to the map (map remains visible). At viewport widths **>=1280px**, panel width is derived from viewport width using a bounded scale rule (not a fixed `maxWidth: 400`), while preserving sensible min/max limits.
-- **Mobile / narrow viewport:** Behaviour matches the wide layout but may adapt to a narrower side panel or overlay per [mobile-adaptation.md](mobile-adaptation.md); interaction (list + locate) remains the same.
+Side panel (CtPanel) beside map on wide viewports; scrollable fleet tree grouped by region → Home Fleet → ports → sea zones.
+
+---
+
+## Behavior
+
+### Incoming (what shows this UI)
+
+| Source | Condition | Result |
+|--------|-----------|--------|
+| Toolbar Naval Units | In-game | Panel opens full fleet list. |
+| `OpenNavalUnitsPanelEvent` | Tile / fleet scope | Filtered list + optional selection. |
+
+### User actions → outcomes
+
+| Control / gesture | When enabled | Emits / calls | Side effects |
+|-------------------|--------------|---------------|--------------|
+| Move | Sea-going fleet | Opens [move-fleet-dialog.md](move-fleet-dialog.md) | `NavalMoveFleetRequestedEvent` on confirm. |
+| Transfer to Home Fleet | At capital port | Opens [transfer-to-home-fleet-dialog.md](transfer-to-home-fleet-dialog.md) | Transfer event on confirm. |
+| Locate | Row action | `LocateMapTileEvent` | Map centers on fleet. |
+| Split / Combine | Per fleet management spec | Bus events | See [naval-units-fleet-management.md](naval-units-fleet-management.md). |
+
+---
+
+## States and variants
+
+| Variant | Trigger | Render difference |
+|---------|---------|-------------------|
+| Home Fleet row | Capital region | Pinned first; no Move. |
+| Pending move | Draft naval move order | **Moving to:** line on row. |
+| Tile-scoped | Map marker open | Filtered title + Tile header action. |
+
+---
+
+## Components
+
+- `NavalUnitsPanel`, [move-fleet-dialog.md](move-fleet-dialog.md), [transfer-to-home-fleet-dialog.md](transfer-to-home-fleet-dialog.md).
 
 ---
 
