@@ -147,34 +147,19 @@ List<String> belowQuotaPeerGpPeaceTargets({
 
 /// Peace at-war minors that own no invadable OW provinces while still at default
 /// start size (exit futile minor fronts before GP-blocker wars; seed-42 gp4).
+///
+/// Delegates to [expand_phase_planner.defaultStartFutileMinorPeaceTargets]
+/// (Refs #2509 S1) so the EXPAND default-start futile-minor peace decider
+/// survives the planned deletion of this file alongside the canonical
+/// [expand_phase_planner.isOldWorldGpOnlyInvadableFrontier] band selector
+/// it composes.
 List<String> defaultStartFutileMinorPeaceTargets({
   required Game game,
   required AIWorldSnapshot snapshot,
-}) {
-  final ownOw = snapshot.conquest.oldWorldProvincesOwned;
-  if (!isBelowObserverConquestQuota(ownOw) ||
-      ownOw > kObserverDefaultStartOldWorldProvincesPerGp + 1 ||
-      snapshot.conquest.invadableProvinceIdsSorted.isEmpty) {
-    return const [];
-  }
-  if (isOldWorldGpOnlyInvadableFrontier(game: game, snapshot: snapshot)) {
-    final targets = <String>[
-      for (final factionId in snapshot.threats.atWarWith)
-        if (game.minorNations.any((m) => m.id == factionId)) factionId,
-    ]..sort();
-    return targets;
-  }
-  final provinceOwner = getProvinceOwnerMap(game);
-  final targets = <String>[
-    for (final factionId in snapshot.threats.atWarWith)
-      if (game.minorNations.any((m) => m.id == factionId) &&
-          !snapshot.conquest.invadableProvinceIdsSorted.any(
-            (pid) => provinceOwner[pid] == factionId,
-          ))
-        factionId,
-  ]..sort();
-  return targets;
-}
+}) => expand_phase_planner.defaultStartFutileMinorPeaceTargets(
+  game: game,
+  snapshot: snapshot,
+);
 
 /// At default observer start size (7 OW), peace every Great Power war so the GP
 /// can open a minor frontier (seed-42 gp4 zero-gain stall; Refs #2509).
