@@ -28,6 +28,18 @@ export 'e2e_test_shared_panel_text_assertions.dart';
 /// Single canonical implementation for full-turn and fleet E2E (GitHub #2336
 /// / AC2). Uses adaptive waits for rail/marker readiness instead of blind
 /// idle pumps.
+///
+/// The full rail-or-marker outer adaptive-poll loop body (bottom-sheet
+/// dismissal → dialog dismissal → rail-tap arm → marker-tap arm → bounded
+/// rail/marker hit-testable pump → adaptive idle pump) lives in
+/// [e2eOpenPanelViaRailOrMarker]. This function forwards civilian-specific
+/// finders, the `'civilian'` opener label that the helper interpolates into
+/// every phase label (`pump_until_civilian_panel_after_trigger_tap`,
+/// `wait_until_civilian_rail_hit_testable`, `wait_until_civilian_marker_hit_testable`,
+/// `pump_until_civilian_rail_or_marker_hit_testable`,
+/// `pump_until_civilian_opener_after_sheet_close`), and the byte-equivalent
+/// timeout-diagnostic prefix. Refs GitHub #2336 AC1 / AC2 / AC10 (follow-up
+/// slice from PR #2787 after the inner-attempt and post-sheet-close lifts).
 Future<void> e2eOpenCivilianPanel(
   WidgetTester tester, {
   Duration timeout = const Duration(seconds: 20),
@@ -35,124 +47,20 @@ Future<void> e2eOpenCivilianPanel(
   Duration bottomSheetCloseTimeout = kE2eDefaultBottomSheetCloseTimeout,
   String afterSheetPanelsClearPhase =
       'pump_until_panels_cleared_after_close_sheet_civilian_open',
-}) async {
-  final sw = Stopwatch()..start();
-  final empireRailButton = find.byKey(kEmpireCivilianUnitsButtonKey);
-  final markerButton = find.byKey(kCtE2EOpenFirstCivilianMarkerPanelKey);
-  final civilianPanel = find.byKey(kCtE2ECivilianPanelRootKey);
-  // Inner `tryOpen` is the shared three-step attempt (already-hit-testable
-  // short-circuit → defensive [e2eEnsureVisibleAndTapHitTestable] tap →
-  // bounded [e2eAwaitPanelMountAfterOpenerTap] mount probe). Lifted into
-  // [e2eOpenerTapTriggerAndAwaitMount] so the civilian and naval openers
-  // share one canonical `tryOpen` body byte-equivalently and the per-opener
-  // 3 s mount cap and `pump_until_<panel>_panel_after_trigger_tap` phase
-  // label are preserved verbatim. Refs GitHub #2336 AC1 / AC10.
-  Future<bool> tryOpen(Finder trigger) => e2eOpenerTapTriggerAndAwaitMount(
+}) {
+  return e2eOpenPanelViaRailOrMarker(
     tester,
-    trigger: trigger,
-    panelRoot: civilianPanel,
-    mountTimeout: const Duration(seconds: 3),
-    mountPhaseName: 'pump_until_civilian_panel_after_trigger_tap',
+    openerLabel: 'civilian',
+    railButton: find.byKey(kEmpireCivilianUnitsButtonKey),
+    markerButton: find.byKey(kCtE2EOpenFirstCivilianMarkerPanelKey),
+    panelRoot: find.byKey(kCtE2ECivilianPanelRootKey),
+    afterSheetPanelsClearPhase: afterSheetPanelsClearPhase,
+    overallTimeout: timeout,
+    bottomSheetCloseTimeout: bottomSheetCloseTimeout,
     perf: perf,
-  );
-
-  if (civilianPanel.hitTestable().evaluate().isNotEmpty) {
-    perf?.timing('open_panel_civilian', sw.elapsed);
-    return;
-  }
-  await e2eAdvanceGameStartIntroUntilDismissed(tester, perf: perf);
-
-  var panelPollMs = 25;
-  // The loop checks ready conditions **before** the first pump so a panel
-  // opener that is already on-screen (typical after bootstrap) short-circuits
-  // without paying a leading 25ms frame. Idle pumps happen at the bottom of
-  // the loop with adaptive backoff. Refs GitHub #2336 AC5 / pump-reduction.
-  while (sw.elapsed < timeout) {
-    if (find.byType(BottomSheet).evaluate().isNotEmpty) {
-      // Shared post-sheet-close cleanup: close the conflicting sheet,
-      // poll until it leaves the tree, then poll until the empire rail
-      // (or fallback marker) becomes hit-testable. Lifted into
-      // [e2eClosePanelOpenerSheetAndAwaitOpener] so the civilian and
-      // naval openers stay byte-equivalent on the post-sheet-close path.
-      // Phase labels (`afterSheetPanelsClearPhase` parameter and the
-      // local `pump_until_civilian_opener_after_sheet_close` constant)
-      // are forwarded verbatim so existing `E2E_TIMING|phase=...` log
-      // scrapers and dashboards keep attributing settle time to the
-      // civilian opener. Refs GitHub #2336 AC1 / AC2 / AC10 (follow-up
-      // slice from PR #2782).
-      await e2eClosePanelOpenerSheetAndAwaitOpener(
-        tester,
-        primary: empireRailButton,
-        secondary: markerButton,
-        afterSheetClearPhase: afterSheetPanelsClearPhase,
-        awaitOpenerPhase: 'pump_until_civilian_opener_after_sheet_close',
-        perf: perf,
-        bottomSheetCloseTimeout: bottomSheetCloseTimeout,
-      );
-      panelPollMs = 25;
-      continue;
-    }
-    if (find.byType(AlertDialog).evaluate().isNotEmpty ||
-        find.byType(CtDialogShell).evaluate().isNotEmpty) {
-      await e2eDismissTransientUi(tester, perf: perf);
-      panelPollMs = 25;
-      continue;
-    }
-    if (empireRailButton.evaluate().isNotEmpty) {
-      // Mirror the naval opener's pre-tap rail-hit-testable wait so a
-      // transient overlay covering the rail does not silently drop the
-      // tap (`e2eEnsureVisibleAndTapHitTestable` is best-effort and falls
-      // back to a raw-trigger tap when the hit-testable resolve is empty,
-      // which an opaque overlay can absorb). Refs GitHub #2336 AC1 /
-      // AC10 (deferred slice from PR #2782).
-      await e2eAwaitPanelOpenerRailHitTestable(
-        tester,
-        primary: empireRailButton,
-        secondary: markerButton,
-        perf: perf,
-        phaseName: 'wait_until_civilian_rail_hit_testable',
-      );
-      if (await tryOpen(empireRailButton)) {
-        perf?.timing('open_panel_civilian', sw.elapsed);
-        return;
-      }
-      panelPollMs = 25;
-      continue;
-    }
-    if (markerButton.evaluate().isNotEmpty) {
-      await e2eAwaitPanelOpenerRailHitTestable(
-        tester,
-        primary: markerButton,
-        secondary: empireRailButton,
-        perf: perf,
-        phaseName: 'wait_until_civilian_marker_hit_testable',
-      );
-      if (await tryOpen(markerButton)) {
-        perf?.timing('open_panel_civilian', sw.elapsed);
-        return;
-      }
-      panelPollMs = 25;
-      continue;
-    }
-    if (await e2ePumpUntilConditionOrIdle(
-      tester,
-      () =>
-          empireRailButton.hitTestable().evaluate().isNotEmpty ||
-          markerButton.hitTestable().evaluate().isNotEmpty,
-      timeout: Duration(milliseconds: panelPollMs),
-      perf: perf,
-      phaseName: 'pump_until_civilian_rail_or_marker_hit_testable',
-    )) {
-      panelPollMs = 25;
-      continue;
-    }
-    await tester.pump(Duration(milliseconds: panelPollMs));
-    panelPollMs = e2eAdaptivePollRampAfterIdle(panelPollMs);
-  }
-  fail(
-    'Timed out after ${timeout.inSeconds}s waiting for a civilian panel opener '
-    '(empire rail or first-civilian marker). '
-    'Last exception: ${tester.takeException()}',
+    timeoutMessageBuilder: (t) =>
+        'Timed out after ${t.inSeconds}s waiting for a civilian panel opener '
+        '(empire rail or first-civilian marker)',
   );
 }
 
@@ -163,7 +71,18 @@ const Duration kE2eDefaultNavalOpenTimeout = Duration(seconds: 20);
 /// dismissing transient UI and closing conflicting sheets when needed.
 ///
 /// Single canonical implementation for fleet E2E (GitHub #2336); mirrors
-/// [e2eOpenCivilianPanel] structure with naval keys and adaptive polling.
+/// [e2eOpenCivilianPanel] by forwarding naval-specific finders, the
+/// `'naval'` opener label, and the naval timeout-diagnostic prefix into the
+/// shared [e2eOpenPanelViaRailOrMarker] outer-loop helper. The helper
+/// interpolates the `pump_until_naval_panel_after_trigger_tap`,
+/// `wait_until_naval_rail_hit_testable`,
+/// `wait_until_naval_marker_hit_testable`,
+/// `pump_until_naval_rail_or_marker_hit_testable`, and
+/// `pump_until_naval_opener_after_sheet_close` phase labels verbatim from
+/// the `openerLabel` argument so downstream `E2E_TIMING|phase=...` log
+/// scrapers and dashboards keep attributing settle time to the naval
+/// opener. Refs GitHub #2336 AC1 / AC2 / AC10 (follow-up slice from
+/// PR #2787 after the inner-attempt and post-sheet-close lifts).
 Future<void> e2eOpenNavalPanel(
   WidgetTester tester, {
   E2ePerfLog? perf,
@@ -171,120 +90,20 @@ Future<void> e2eOpenNavalPanel(
   Duration bottomSheetCloseTimeout = kE2eDefaultBottomSheetCloseTimeout,
   String afterSheetPanelsClearPhase =
       'pump_until_panels_cleared_after_close_sheet_naval_open',
-}) async {
-  final sw = Stopwatch()..start();
-  final empireRailButton = find.byKey(kEmpireNavalUnitsButtonKey);
-  final markerButton = find.byKey(kCtE2EOpenFirstFleetMarkerPanelKey);
-  final navalPanel = find.byKey(kCtE2ENavalPanelRootKey);
-
-  // Inner `tryOpen` is the shared three-step attempt (already-hit-testable
-  // short-circuit → defensive [e2eEnsureVisibleAndTapHitTestable] tap →
-  // bounded [e2eAwaitPanelMountAfterOpenerTap] mount probe). Lifted into
-  // [e2eOpenerTapTriggerAndAwaitMount] so the civilian and naval openers
-  // share one canonical `tryOpen` body byte-equivalently. Same 3 s cap
-  // and `pump_until_naval_panel_after_trigger_tap` phase label as the
-  // pre-lift inline body. Refs GitHub #2336 AC1 / AC10.
-  Future<bool> tryOpen(Finder trigger) => e2eOpenerTapTriggerAndAwaitMount(
+}) {
+  return e2eOpenPanelViaRailOrMarker(
     tester,
-    trigger: trigger,
-    panelRoot: navalPanel,
-    mountTimeout: const Duration(seconds: 3),
-    mountPhaseName: 'pump_until_naval_panel_after_trigger_tap',
+    openerLabel: 'naval',
+    railButton: find.byKey(kEmpireNavalUnitsButtonKey),
+    markerButton: find.byKey(kCtE2EOpenFirstFleetMarkerPanelKey),
+    panelRoot: find.byKey(kCtE2ENavalPanelRootKey),
+    afterSheetPanelsClearPhase: afterSheetPanelsClearPhase,
+    overallTimeout: timeout,
+    bottomSheetCloseTimeout: bottomSheetCloseTimeout,
     perf: perf,
-  );
-
-  if (navalPanel.hitTestable().evaluate().isNotEmpty) {
-    perf?.timing('open_panel_naval', sw.elapsed);
-    return;
-  }
-  await e2eAdvanceGameStartIntroUntilDismissed(tester, perf: perf);
-
-  var panelPollMs = 25;
-  // The loop checks ready conditions **before** the first pump so a naval
-  // opener that is already on-screen (typical after bootstrap) short-circuits
-  // without paying a leading 25ms frame. Idle pumps happen at the bottom of
-  // the loop with adaptive backoff. Refs GitHub #2336 AC5 / pump-reduction.
-  while (sw.elapsed < timeout) {
-    if (find.byType(BottomSheet).evaluate().isNotEmpty) {
-      // Shared post-sheet-close cleanup. Byte-equivalent to the inline
-      // pre-lift body — same `bottomSheetCloseTimeout`, same 2 s sheet-
-      // clear poll cap (forwarded as the default), same 3 s rail/marker
-      // hit-testable poll cap, and the same
-      // `pump_until_naval_opener_after_sheet_close` phase label so the
-      // existing `E2E_TIMING` attribution for the naval opener stays
-      // stable. Refs GitHub #2336 AC1 / AC2 / AC10.
-      await e2eClosePanelOpenerSheetAndAwaitOpener(
-        tester,
-        primary: empireRailButton,
-        secondary: markerButton,
-        afterSheetClearPhase: afterSheetPanelsClearPhase,
-        awaitOpenerPhase: 'pump_until_naval_opener_after_sheet_close',
-        perf: perf,
-        bottomSheetCloseTimeout: bottomSheetCloseTimeout,
-      );
-      panelPollMs = 25;
-      continue;
-    }
-    if (find.byType(AlertDialog).evaluate().isNotEmpty ||
-        find.byType(CtDialogShell).evaluate().isNotEmpty) {
-      await e2eDismissTransientUi(tester, perf: perf);
-      panelPollMs = 25;
-      continue;
-    }
-    if (empireRailButton.evaluate().isNotEmpty) {
-      // Byte-equivalent to the pre-lift inline `if (...hitTestable...empty) {
-      // await e2eWaitUntilAnyFinderHitTestable([rail, marker], 5s, ...) }`
-      // pattern that PR #2555 inlined here. Lifted into the shared helper so
-      // civilian and production openers gain the same pre-tap settle
-      // semantics (Refs GitHub #2336 AC1 / AC10).
-      await e2eAwaitPanelOpenerRailHitTestable(
-        tester,
-        primary: empireRailButton,
-        secondary: markerButton,
-        perf: perf,
-        phaseName: 'wait_until_naval_rail_hit_testable',
-      );
-      if (await tryOpen(empireRailButton)) {
-        perf?.timing('open_panel_naval', sw.elapsed);
-        return;
-      }
-      panelPollMs = 25;
-      continue;
-    }
-    if (markerButton.evaluate().isNotEmpty) {
-      await e2eAwaitPanelOpenerRailHitTestable(
-        tester,
-        primary: markerButton,
-        secondary: empireRailButton,
-        perf: perf,
-        phaseName: 'wait_until_naval_marker_hit_testable',
-      );
-      if (await tryOpen(markerButton)) {
-        perf?.timing('open_panel_naval', sw.elapsed);
-        return;
-      }
-      panelPollMs = 25;
-      continue;
-    }
-    if (await e2ePumpUntilConditionOrIdle(
-      tester,
-      () =>
-          empireRailButton.hitTestable().evaluate().isNotEmpty ||
-          markerButton.hitTestable().evaluate().isNotEmpty,
-      timeout: Duration(milliseconds: panelPollMs),
-      perf: perf,
-      phaseName: 'pump_until_naval_rail_or_marker_hit_testable',
-    )) {
-      panelPollMs = 25;
-      continue;
-    }
-    await tester.pump(Duration(milliseconds: panelPollMs));
-    panelPollMs = e2eAdaptivePollRampAfterIdle(panelPollMs);
-  }
-  fail(
-    'Timed out after ${timeout.inSeconds}s opening naval panel '
-    '(empire naval rail or first-fleet marker). '
-    'Last exception: ${tester.takeException()}',
+    timeoutMessageBuilder: (t) =>
+        'Timed out after ${t.inSeconds}s opening naval panel '
+        '(empire naval rail or first-fleet marker)',
   );
 }
 
