@@ -44,20 +44,21 @@ Future<void> e2eOpenCivilianPanel(
     if (civilianPanel.hitTestable().evaluate().isNotEmpty) {
       return true;
     }
-    if (trigger.evaluate().isEmpty) {
+    // Shared defensive tap: `ensureVisible` (best-effort) + hit-testable
+    // resolve so a rail/marker pushed off-screen by a transient overlay
+    // still lands a centered tap, matching the naval opener parity fix
+    // landed in PR #2555. Refs GitHub #2336 AC1 / AC10.
+    if (!await e2eEnsureVisibleAndTapHitTestable(tester, trigger)) {
       return false;
     }
-    await tester.tap(trigger.first, warnIfMissed: false);
-    if (civilianPanel.evaluate().isNotEmpty) {
-      return true;
-    }
-    await tester.pump();
-    if (civilianPanel.evaluate().isNotEmpty) {
-      return true;
-    }
-    return e2ePumpUntilConditionOrIdle(
+    // Shared post-tap mount probe: fast hit-check → one pump → bounded
+    // adaptive poll, with the per-opener 3 s cap preserved verbatim. The
+    // helper keeps civilian/naval/production byte-equivalent on the
+    // post-tap path so drift between the three openers cannot reappear
+    // (Refs GitHub #2336 AC1 / AC10).
+    return e2eAwaitPanelMountAfterOpenerTap(
       tester,
-      () => civilianPanel.evaluate().isNotEmpty,
+      civilianPanel,
       timeout: const Duration(seconds: 3),
       perf: perf,
       phaseName: 'pump_until_civilian_panel_after_trigger_tap',
@@ -77,26 +78,25 @@ Future<void> e2eOpenCivilianPanel(
   // the loop with adaptive backoff. Refs GitHub #2336 AC5 / pump-reduction.
   while (sw.elapsed < timeout) {
     if (find.byType(BottomSheet).evaluate().isNotEmpty) {
-      await e2eCloseBottomSheet(
+      // Shared post-sheet-close cleanup: close the conflicting sheet,
+      // poll until it leaves the tree, then poll until the empire rail
+      // (or fallback marker) becomes hit-testable. Lifted into
+      // [e2eClosePanelOpenerSheetAndAwaitOpener] so the civilian and
+      // naval openers stay byte-equivalent on the post-sheet-close path.
+      // Phase labels (`afterSheetPanelsClearPhase` parameter and the
+      // local `pump_until_civilian_opener_after_sheet_close` constant)
+      // are forwarded verbatim so existing `E2E_TIMING|phase=...` log
+      // scrapers and dashboards keep attributing settle time to the
+      // civilian opener. Refs GitHub #2336 AC1 / AC2 / AC10 (follow-up
+      // slice from PR #2782).
+      await e2eClosePanelOpenerSheetAndAwaitOpener(
         tester,
+        primary: empireRailButton,
+        secondary: markerButton,
+        afterSheetClearPhase: afterSheetPanelsClearPhase,
+        awaitOpenerPhase: 'pump_until_civilian_opener_after_sheet_close',
         perf: perf,
-        overallTimeout: bottomSheetCloseTimeout,
-      );
-      await e2ePumpUntilConditionOrIdle(
-        tester,
-        () => find.byType(BottomSheet).evaluate().isEmpty,
-        timeout: const Duration(seconds: 2),
-        perf: perf,
-        phaseName: afterSheetPanelsClearPhase,
-      );
-      await e2ePumpUntilConditionOrIdle(
-        tester,
-        () =>
-            empireRailButton.hitTestable().evaluate().isNotEmpty ||
-            markerButton.hitTestable().evaluate().isNotEmpty,
-        timeout: const Duration(seconds: 3),
-        perf: perf,
-        phaseName: 'pump_until_civilian_opener_after_sheet_close',
+        bottomSheetCloseTimeout: bottomSheetCloseTimeout,
       );
       panelPollMs = 25;
       continue;
@@ -108,6 +108,19 @@ Future<void> e2eOpenCivilianPanel(
       continue;
     }
     if (empireRailButton.evaluate().isNotEmpty) {
+      // Mirror the naval opener's pre-tap rail-hit-testable wait so a
+      // transient overlay covering the rail does not silently drop the
+      // tap (`e2eEnsureVisibleAndTapHitTestable` is best-effort and falls
+      // back to a raw-trigger tap when the hit-testable resolve is empty,
+      // which an opaque overlay can absorb). Refs GitHub #2336 AC1 /
+      // AC10 (deferred slice from PR #2782).
+      await e2eAwaitPanelOpenerRailHitTestable(
+        tester,
+        primary: empireRailButton,
+        secondary: markerButton,
+        perf: perf,
+        phaseName: 'wait_until_civilian_rail_hit_testable',
+      );
       if (await tryOpen(empireRailButton)) {
         perf?.timing('open_panel_civilian', sw.elapsed);
         return;
@@ -116,6 +129,13 @@ Future<void> e2eOpenCivilianPanel(
       continue;
     }
     if (markerButton.evaluate().isNotEmpty) {
+      await e2eAwaitPanelOpenerRailHitTestable(
+        tester,
+        primary: markerButton,
+        secondary: empireRailButton,
+        perf: perf,
+        phaseName: 'wait_until_civilian_marker_hit_testable',
+      );
       if (await tryOpen(markerButton)) {
         perf?.timing('open_panel_civilian', sw.elapsed);
         return;
@@ -170,27 +190,22 @@ Future<void> e2eOpenNavalPanel(
     if (navalPanel.hitTestable().evaluate().isNotEmpty) {
       return true;
     }
-    if (trigger.evaluate().isEmpty) {
+    // Shared defensive tap: `ensureVisible` (best-effort) + hit-testable
+    // resolve. This is the canonical inline pattern that PR #2555 inlined
+    // for the naval opener; lifted into [e2eEnsureVisibleAndTapHitTestable]
+    // so the civilian and production openers gain the same off-screen
+    // resilience byte-equivalently. Refs GitHub #2336 AC1 / AC10.
+    if (!await e2eEnsureVisibleAndTapHitTestable(tester, trigger)) {
       return false;
     }
-    try {
-      await tester.ensureVisible(trigger);
-    } catch (_) {}
-    final hit = trigger.hitTestable();
-    final target = hit.evaluate().isNotEmpty ? hit : trigger;
-    await tester.tap(target.first, warnIfMissed: false);
-    if (navalPanel.evaluate().isNotEmpty) {
-      return true;
-    }
-    await tester.pump();
-    if (navalPanel.evaluate().isNotEmpty) {
-      return true;
-    }
-    // Match [e2eOpenCivilianPanel] tryOpen: bounded poll without fail() so the
-    // outer opener loop can dismiss sheets and retry rail/marker (Refs #2336).
-    return e2ePumpUntilConditionOrIdle(
+    // Shared post-tap mount probe (bounded poll without fail() so the outer
+    // opener loop can dismiss sheets and retry rail/marker). Same 3 s cap
+    // and phase name the inline body used pre-lift, keeping civilian /
+    // naval byte-equivalent on the post-tap path (Refs GitHub #2336 AC1 /
+    // AC10).
+    return e2eAwaitPanelMountAfterOpenerTap(
       tester,
-      () => navalPanel.evaluate().isNotEmpty,
+      navalPanel,
       timeout: const Duration(seconds: 3),
       perf: perf,
       phaseName: 'pump_until_naval_panel_after_trigger_tap',
@@ -210,26 +225,21 @@ Future<void> e2eOpenNavalPanel(
   // the loop with adaptive backoff. Refs GitHub #2336 AC5 / pump-reduction.
   while (sw.elapsed < timeout) {
     if (find.byType(BottomSheet).evaluate().isNotEmpty) {
-      await e2eCloseBottomSheet(
+      // Shared post-sheet-close cleanup. Byte-equivalent to the inline
+      // pre-lift body — same `bottomSheetCloseTimeout`, same 2 s sheet-
+      // clear poll cap (forwarded as the default), same 3 s rail/marker
+      // hit-testable poll cap, and the same
+      // `pump_until_naval_opener_after_sheet_close` phase label so the
+      // existing `E2E_TIMING` attribution for the naval opener stays
+      // stable. Refs GitHub #2336 AC1 / AC2 / AC10.
+      await e2eClosePanelOpenerSheetAndAwaitOpener(
         tester,
+        primary: empireRailButton,
+        secondary: markerButton,
+        afterSheetClearPhase: afterSheetPanelsClearPhase,
+        awaitOpenerPhase: 'pump_until_naval_opener_after_sheet_close',
         perf: perf,
-        overallTimeout: bottomSheetCloseTimeout,
-      );
-      await e2ePumpUntilConditionOrIdle(
-        tester,
-        () => find.byType(BottomSheet).evaluate().isEmpty,
-        timeout: const Duration(seconds: 2),
-        perf: perf,
-        phaseName: afterSheetPanelsClearPhase,
-      );
-      await e2ePumpUntilConditionOrIdle(
-        tester,
-        () =>
-            empireRailButton.hitTestable().evaluate().isNotEmpty ||
-            markerButton.hitTestable().evaluate().isNotEmpty,
-        timeout: const Duration(seconds: 3),
-        perf: perf,
-        phaseName: 'pump_until_naval_opener_after_sheet_close',
+        bottomSheetCloseTimeout: bottomSheetCloseTimeout,
       );
       panelPollMs = 25;
       continue;
@@ -241,15 +251,18 @@ Future<void> e2eOpenNavalPanel(
       continue;
     }
     if (empireRailButton.evaluate().isNotEmpty) {
-      if (empireRailButton.hitTestable().evaluate().isEmpty) {
-        await e2eWaitUntilAnyFinderHitTestable(
-          tester,
-          [empireRailButton, markerButton],
-          timeout: const Duration(seconds: 5),
-          perf: perf,
-          phaseName: 'wait_until_naval_rail_hit_testable',
-        );
-      }
+      // Byte-equivalent to the pre-lift inline `if (...hitTestable...empty) {
+      // await e2eWaitUntilAnyFinderHitTestable([rail, marker], 5s, ...) }`
+      // pattern that PR #2555 inlined here. Lifted into the shared helper so
+      // civilian and production openers gain the same pre-tap settle
+      // semantics (Refs GitHub #2336 AC1 / AC10).
+      await e2eAwaitPanelOpenerRailHitTestable(
+        tester,
+        primary: empireRailButton,
+        secondary: markerButton,
+        perf: perf,
+        phaseName: 'wait_until_naval_rail_hit_testable',
+      );
       if (await tryOpen(empireRailButton)) {
         perf?.timing('open_panel_naval', sw.elapsed);
         return;
@@ -258,15 +271,13 @@ Future<void> e2eOpenNavalPanel(
       continue;
     }
     if (markerButton.evaluate().isNotEmpty) {
-      if (markerButton.hitTestable().evaluate().isEmpty) {
-        await e2eWaitUntilAnyFinderHitTestable(
-          tester,
-          [markerButton, empireRailButton],
-          timeout: const Duration(seconds: 5),
-          perf: perf,
-          phaseName: 'wait_until_naval_marker_hit_testable',
-        );
-      }
+      await e2eAwaitPanelOpenerRailHitTestable(
+        tester,
+        primary: markerButton,
+        secondary: empireRailButton,
+        perf: perf,
+        phaseName: 'wait_until_naval_marker_hit_testable',
+      );
       if (await tryOpen(markerButton)) {
         perf?.timing('open_panel_naval', sw.elapsed);
         return;
@@ -411,29 +422,36 @@ Future<void> e2eOpenProductionPanel(
     }
 
     if (productionButton.evaluate().isNotEmpty) {
-      final productionButtonHit = productionButton.hitTestable();
-      final target = productionButtonHit.evaluate().isNotEmpty
-          ? productionButtonHit
-          : productionButton;
-      await tester.tap(target.first, warnIfMissed: false);
-      if (productionPanel.evaluate().isNotEmpty) {
-        perf?.timing('open_panel_production', sw.elapsed);
-        return;
-      }
-      await tester.pump();
-      if (productionPanel.evaluate().isNotEmpty) {
-        perf?.timing('open_panel_production', sw.elapsed);
-        return;
-      }
-      // Match civilian/naval `tryOpen` contract: bounded poll without `fail()`
-      // so the outer opener loop can dismiss transient overlays and retry the
-      // rail tap when a race covers the panel mount. Without this, a single
-      // rail-tap miss surfaced as a hard `TestFailure` (`wait_until_...` path)
-      // even though the outer loop still had budget to recover. Aligns with
-      // PR #2555 fix for the naval opener (Refs GitHub #2336).
-      if (await e2ePumpUntilConditionOrIdle(
+      // Mirror the naval/civilian opener's pre-tap rail-hit-testable wait
+      // so an overlay covering the production button does not silently
+      // drop the tap. No `secondary` finder — production has no
+      // map-marker concept. Refs GitHub #2336 AC1 / AC10 (deferred slice
+      // from PR #2782).
+      await e2eAwaitPanelOpenerRailHitTestable(
         tester,
-        () => productionPanel.evaluate().isNotEmpty,
+        primary: productionButton,
+        perf: perf,
+        phaseName: 'wait_until_production_rail_hit_testable',
+      );
+      // Shared defensive tap: `ensureVisible` (best-effort) + hit-testable
+      // resolve so a rail button pushed off-screen by a transient overlay
+      // still lands a centered tap. Production previously did the
+      // hit-testable resolve inline but skipped `ensureVisible`; lifting
+      // both behind [e2eEnsureVisibleAndTapHitTestable] makes the three
+      // panel openers byte-equivalent on the post-tap path. Refs GitHub
+      // #2336 AC1 / AC10.
+      await e2eEnsureVisibleAndTapHitTestable(tester, productionButton);
+      // Shared post-tap mount probe: fast hit-check → one pump → bounded
+      // poll without `fail()` so the outer opener loop can dismiss
+      // transient overlays and retry the rail tap when a race covers the
+      // panel mount. Production keeps its longer 5 s cap (vs the 3 s used
+      // by civilian/naval) so the existing wider tolerance for production
+      // panel mount is preserved verbatim. Without this lift each of the
+      // three openers inlined the same three-step recipe and could drift
+      // independently (Refs GitHub #2336 AC1 / AC10).
+      if (await e2eAwaitPanelMountAfterOpenerTap(
+        tester,
+        productionPanel,
         timeout: const Duration(seconds: 5),
         perf: perf,
         phaseName: 'pump_until_production_panel_after_rail_tap',
@@ -1410,4 +1428,3 @@ Future<bool> e2eCheckExploreEnabledFromCivilianPanel(
 // panel-action helpers in this file. The extraction also keeps this file
 // within the repo-lint `dart_file_non_comment_line_size` budget
 // (`SPEC/program/repo-lint.md`, ≤ 1000 non-comment lines).
-
