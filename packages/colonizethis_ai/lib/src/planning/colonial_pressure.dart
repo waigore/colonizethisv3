@@ -371,54 +371,36 @@ List<String> stalledBelowQuotaGpLeadPeaceTargets({
 
 /// Peace every below-quota Great Power at war once this GP meets the observer
 /// quota (stop mop-up wars after the frontier is cleared; Refs #2509).
+///
+/// Delegates to [expand_phase_planner.quotaMetBelowQuotaAtWarPeaceTargets]
+/// (Refs #2509 S1) so the quota-met below-quota at-war peace decider
+/// survives the planned deletion of this file alongside the canonical
+/// [expand_phase_planner.consolidateGainsSoleGpPeaceTarget] sibling that
+/// shares the quota-met outer guard and the GP-vs-GP at-war filter.
 List<String> quotaMetBelowQuotaAtWarPeaceTargets({
   required Game game,
   required AIWorldSnapshot snapshot,
-}) {
-  if (isBelowObserverConquestQuota(snapshot.conquest.oldWorldProvincesOwned)) {
-    return const [];
-  }
-  final targets = <String>[
-    for (final factionId in snapshot.threats.atWarWith)
-      if (game.playerById(factionId) != null &&
-          isBelowObserverConquestQuota(provinceCountOwnedBy(game, factionId)))
-        factionId,
-  ]..sort();
-  return targets;
-}
+}) => expand_phase_planner.quotaMetBelowQuotaAtWarPeaceTargets(
+  game: game,
+  snapshot: snapshot,
+);
 
 /// Peace below-quota Great Powers while this GP meets the observer quota and the
 /// victim does not own this GP's invadable OW frontier (Refs #2509).
+///
+/// Delegates to [expand_phase_planner.quotaMetFutileBelowQuotaGpPeaceTargets]
+/// (Refs #2509 S1) so the narrower quota-met futile-peace decider
+/// survives the planned deletion of this file alongside the broader
+/// [expand_phase_planner.quotaMetBelowQuotaAtWarPeaceTargets] sibling
+/// and the [expand_phase_planner.primaryInvadableOldWorldGpBlocker]
+/// defensive backstop helper it composes.
 List<String> quotaMetFutileBelowQuotaGpPeaceTargets({
   required Game game,
   required AIWorldSnapshot snapshot,
-}) {
-  if (isBelowObserverConquestQuota(snapshot.conquest.oldWorldProvincesOwned)) {
-    return const [];
-  }
-  if (snapshot.conquest.invadableProvinceIdsSorted.isEmpty) {
-    return const [];
-  }
-  final provinceOwner = getProvinceOwnerMap(game);
-  final blocker = primaryInvadableOldWorldGpBlocker(
-    game: game,
-    snapshot: snapshot,
-  );
-  final targets = <String>[];
-  for (final factionId in snapshot.threats.atWarWith) {
-    if (game.playerById(factionId) == null) continue;
-    if (!isBelowObserverConquestQuota(provinceCountOwnedBy(game, factionId))) {
-      continue;
-    }
-    final ownsInvadable = snapshot.conquest.invadableProvinceIdsSorted.any(
-      (pid) => provinceOwner[pid] == factionId,
-    );
-    if (ownsInvadable || factionId == blocker) continue;
-    targets.add(factionId);
-  }
-  targets.sort();
-  return targets;
-}
+}) => expand_phase_planner.quotaMetFutileBelowQuotaGpPeaceTargets(
+  game: game,
+  snapshot: snapshot,
+);
 
 /// Peace every at-war Great Power when OW holdings are critically low and minors
 /// remain on the map (avoid OW elimination; Refs #2509).
