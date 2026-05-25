@@ -2360,65 +2360,18 @@ bool stalledOwExpansionNeedsPeacePass({
         null ||
     consolidateGainsSoleGpPeaceTarget(game: game, snapshot: snapshot) != null;
 
-/// EXPAND critical-collapse and zero-regiment survival peace pivots.
-///
-/// Yields the deterministic union of the five EXPAND-phase survival
-/// peace deciders consumed by the diplomacy planner's stalled-GP peace
-/// collector when any observer phase (EXPAND / COLONIAL-lite / COLONIAL /
-/// DEVELOP) needs to peace at-war Great Powers to avoid total collapse
-/// or unwind zero-regiment / mutually-exhausted stalemates that would
-/// otherwise leave broke mutual-plateau pairs at war indefinitely.
-///
-/// Canonical home (Refs #2509 S1) for the previously private
-/// `_survivalGreatPowerPeaceTargets` aggregator hosted in
-/// `diplomacy_planner_peace_targets.dart`. The aggregator fans out across
-/// the five already-canonicalized survival sibling deciders in a fixed
-/// deterministic order identical to the order the legacy private
-/// aggregator emitted them — the iteration order is observable through
-/// `collectStalledGreatPowerPeaceTargets` because the consumer feeds the
-/// yielded targets into a `Set<String>` literal alongside the
-/// observer-phase peace-target lists, and `Set` insertion order is part
-/// of the public iteration contract for `LinkedHashSet`.
-///
-/// Order of yielded sources:
-///   1. [criticalWeakGpSurvivalPeaceTargets] — band-dependent stronger-GP
-///      peace at `oldWorldProvincesOwned <= kFewOldWorldProvincesDefendThreshold`.
-///   2. [stalledZeroRegimentAllFactionPeaceTargets] — peace every at-war
-///      minor/tribe when stalled below quota with zero regiments.
-///   3. [mutualZeroRegimentGpStalematePeaceTargets] — peace a sole GP
-///      enemy when both sides have zero regiments (stalemate reset).
-///   4. [stalledZeroRegimentGpPeaceTargets] — peace every at-war Great
-///      Power when stalled with zero regiments.
-///   5. [mutualExhaustedBelowQuotaGpStalematePeaceTargets] — peace the
-///      sole at-war GP when both sides are mutual-plateau peers below
-///      quota and mutually exhausted in regiments and treasury.
-///
-/// `diplomacy_planner_peace_targets.dart` retains a thin private
-/// `_survivalGreatPowerPeaceTargets` delegating stub forwarding into
-/// this canonical aggregator so the in-file
-/// `collectStalledGreatPowerPeaceTargets` consumer chain resolves to
-/// the same target stream until the planned S1 deletion of that file.
-///
-/// Pure and deterministic — identical inputs always yield identical
-/// output across repeated invocations (Refs #2509 Must-have #7). Cost
-/// is bounded by the union of the five canonicalized sub-decider costs;
-/// no new global province / tile scans are introduced.
-Iterable<String> survivalGreatPowerPeaceTargets({
-  required Game game,
-  required AIWorldSnapshot snapshot,
-}) sync* {
-  yield* criticalWeakGpSurvivalPeaceTargets(game: game, snapshot: snapshot);
-  yield* stalledZeroRegimentAllFactionPeaceTargets(
-    game: game,
-    snapshot: snapshot,
-  );
-  yield* mutualZeroRegimentGpStalematePeaceTargets(
-    game: game,
-    snapshot: snapshot,
-  );
-  yield* stalledZeroRegimentGpPeaceTargets(game: game, snapshot: snapshot);
-  yield* mutualExhaustedBelowQuotaGpStalematePeaceTargets(
-    game: game,
-    snapshot: snapshot,
-  );
-}
+// `survivalGreatPowerPeaceTargets` was relocated to
+// `observer_goal_phase.dart` (Refs #2509 S1) alongside the sibling
+// stalled-peace composers `expandRatchetGreatPowerPeaceTargets`,
+// `collectStalledGreatPowerPeaceTargets`, and
+// `supplementMutualStalledGreatPowerPeaceOrders` so all composite
+// peace aggregators that feed `runDiplomacyPlanner` live in the same
+// module as the phase-dispatcher and the per-phase GP-peace-target
+// helpers (`expandPhaseGpPeaceTargets`, `colonialPhaseGpPeaceTargets`,
+// `developPhaseGpPeaceTargets`). The EXPAND-phase sub-deciders the
+// aggregator fans across (`criticalWeakGpSurvivalPeaceTargets`,
+// `stalledZeroRegimentAllFactionPeaceTargets`,
+// `mutualZeroRegimentGpStalematePeaceTargets`,
+// `stalledZeroRegimentGpPeaceTargets`,
+// `mutualExhaustedBelowQuotaGpStalematePeaceTargets`) remain canonical
+// in this file.
