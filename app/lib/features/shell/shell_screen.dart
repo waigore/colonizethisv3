@@ -5,6 +5,7 @@ import 'package:colonizethis_app/config/app_display_strings.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../../config/routes.dart';
+import '../../config/ui_screen_ids.dart';
 import '../../core/services/app_event_handler_scope.dart';
 import '../../providers/app_event_bus_provider.dart';
 import '../../providers/game_service_provider.dart';
@@ -15,6 +16,9 @@ import '../../widgets/main_menu.dart';
 /// App shell. Shows CtMainMenu per SPEC/ui/main-menu.md. Phase 1: wired to resolve and persist.
 class ShellScreen extends ConsumerWidget {
   const ShellScreen({super.key});
+
+  /// SPEC/ui/shell-screen.md — [UiScreenIds.shellScreen].
+  static const screenId = UiScreenIds.shellScreen;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
