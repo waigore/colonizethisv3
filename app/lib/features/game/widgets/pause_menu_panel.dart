@@ -2,11 +2,14 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
 
 import '../../../config/routes.dart';
+import '../../../config/ui_screen_ids.dart';
 import '../../../l10n/l10n.dart';
 
 /// Pause menu content for [OpenPauseMenuPanelEvent]. Emits bus follow-up events only.
 class PauseMenuPanel extends StatelessWidget {
   const PauseMenuPanel({super.key, required this.bus});
+
+  static const screenId = UiScreenIds.pauseMenuPanel;
 
   final AppEventBus bus;
 

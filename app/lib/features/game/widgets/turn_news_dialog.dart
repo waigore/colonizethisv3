@@ -4,6 +4,7 @@ import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
 
+import '../../../config/ui_screen_ids.dart';
 import '../../../l10n/l10n.dart';
 
 /// Prior-turn summary dialog; [newTurnNumber] is current turn after resolution.
@@ -14,6 +15,8 @@ class TurnNewsDialog extends StatelessWidget {
     required this.digest,
     required this.newTurnNumber,
   });
+
+  static const screenId = UiScreenIds.turnNewsDialog;
 
   final Game game;
   final TurnNewsDigest digest;
