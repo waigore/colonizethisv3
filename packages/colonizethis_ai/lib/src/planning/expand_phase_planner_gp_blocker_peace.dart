@@ -33,11 +33,11 @@ part of 'expand_phase_planner.dart';
 /// (`provinceCountOwnedBy - oldWorldProvincesOwned`). Returns `null`
 /// when no GP satisfies `lead > 0`.
 ///
-/// `diplomacy_planner_peace_targets.dart` retains a thin delegating
+/// `diplomacy_planner_peace_targets.dart` previously retained a thin delegating
 /// stub for the legacy `diplomacy_planner_stalled_peace_test.dart`
 /// fixtures and the in-file `_expandRatchetGreatPowerPeaceTargets` /
 /// `stalledOwExpansionNeedsPeacePass` consumer chains until the
-/// planned S1 deletion of that file.
+/// now-completed S1 deletion of that file.
 ///
 /// Pure and deterministic — identical inputs always yield identical
 /// output (Refs #2509 Must-have #7).
@@ -132,12 +132,12 @@ String? stalledStrongerGpBlockerPeaceTarget({
 ///     blocker (includes minors/tribes in the scan — legacy behavior
 ///     preserved byte-for-byte), sorted ascending.
 ///
-/// `diplomacy_planner_peace_targets.dart` retains a thin delegating
+/// `diplomacy_planner_peace_targets.dart` previously retained a thin delegating
 /// stub for the legacy `colonial_pressure_test.dart` §
 /// `stalledGpBlockerFocusPeaceTargets` fixture and the in-file
 /// `_expandRatchetGreatPowerPeaceTargets` /
 /// `stalledOwExpansionNeedsPeacePass` consumer chains until the
-/// planned S1 deletion of that file.
+/// now-completed S1 deletion of that file.
 ///
 /// Pure and deterministic — identical inputs always yield identical
 /// lists (Refs #2509 Must-have #7).
@@ -226,13 +226,13 @@ List<String> stalledGpBlockerFocusPeaceTargets({
 /// can pivot to minor / tribe wars without dropping every other GP
 /// war.
 ///
-/// `diplomacy_planner_peace_targets.dart` retains a thin delegating
+/// `diplomacy_planner_peace_targets.dart` previously retained a thin delegating
 /// stub for the legacy `diplomacy_planner_below_quota_peace_test.dart`
 /// and `diplomacy_planner_below_quota_peace_part3_test.dart` fixtures
 /// and the in-file `_expandRatchetGreatPowerPeaceTargets` /
 /// `collectStalledGreatPowerPeaceTargets` `preserveBlockerPeace` /
 /// `stalledOwExpansionNeedsPeacePass` consumer chains until the
-/// planned S1 deletion of that file.
+/// now-completed S1 deletion of that file.
 ///
 /// Pure and deterministic — identical inputs always yield identical
 /// output (Refs #2509 Must-have #7). Linear in
@@ -331,11 +331,11 @@ List<String> weakHoldingsInvadableBlockerPeaceTargets({
 ///   * Sorts the result ascending so emission order is deterministic
 ///     for fixed inputs (Refs #2509 Must-have #7).
 ///
-/// `diplomacy_planner_peace_targets.dart` retains a thin delegating
+/// `diplomacy_planner_peace_targets.dart` previously retained a thin delegating
 /// stub for the legacy `diplomacy_planner_stalled_peace_test.dart`
 /// fixture and the in-file `_expandRatchetGreatPowerPeaceTargets` /
 /// `stalledOwExpansionNeedsPeacePass` consumer chains until the
-/// planned S1 deletion of that file.
+/// now-completed S1 deletion of that file.
 ///
 /// Pure and deterministic — identical inputs always yield identical
 /// output (Refs #2509 Must-have #7). Linear in

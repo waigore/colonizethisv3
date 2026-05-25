@@ -317,7 +317,7 @@ bool hasUninvadedOldWorldMinor({
 /// helper `belowQuotaPeerGpPeaceTargets` — all of which short-circuit to
 /// the default no-peace path when no sole-GP foe is identified.
 ///
-/// `colonial_pressure.dart` retains a thin delegating stub for legacy
+/// `colonial_pressure.dart` previously retained a thin delegating stub for legacy
 /// import sites (the `colonial_pressure_sole_at_war_gp_branches_test.dart`
 /// fixture, the existing `belowQuotaPeerGpPeaceTargets` /
 /// `unwinnableSoleGpFrontierPeaceTarget` / `consolidateGainsSoleGpPeaceTarget`
@@ -382,10 +382,10 @@ String? soleAtWarGreatPowerId({
 /// All three arms are short-circuited (`||` semantics): the function
 /// returns on the first true arm without walking the remaining checks.
 ///
-/// `colonial_pressure.dart` retains a thin delegating stub for legacy
+/// `colonial_pressure.dart` previously retained a thin delegating stub for legacy
 /// import sites (the `colonial_pressure_can_pivot_from_sole_gp_war_branches_test.dart`
 /// fixture and the existing `unwinnableSoleGpFrontierPeaceTarget` caller
-/// within `colonial_pressure.dart` itself) so the planned S1 deletion of
+/// within `colonial_pressure.dart` itself) so the now-completed S1 deletion of
 /// that file leaves no orphan callers.
 ///
 /// Pure and deterministic — identical inputs always yield identical
@@ -459,11 +459,11 @@ bool canPivotFromSoleGpWarAfterPeace({
 /// When all four gates pass, returns the [soleAtWarGreatPowerId] result
 /// (the sole GP foe).
 ///
-/// `colonial_pressure.dart` retains a thin delegating stub for legacy
+/// `colonial_pressure.dart` previously retained a thin delegating stub for legacy
 /// callers (the `diplomacy_planner_peace_targets.dart` consumer chain
 /// and the
 /// `colonial_pressure_unwinnable_sole_gp_branches_test.dart` fixture)
-/// so the planned S1 deletion of that file leaves no orphan callers.
+/// so the now-completed S1 deletion of that file leaves no orphan callers.
 ///
 /// Pure and deterministic — identical inputs always yield identical
 /// results (Refs #2509 Must-have #7). Linear in
@@ -532,12 +532,12 @@ String? unwinnableSoleGpFrontierPeaceTarget({
 /// When all three gates pass, returns the [soleAtWarGreatPowerId]
 /// result (the sole GP foe).
 ///
-/// `colonial_pressure.dart` retains a thin delegating stub for legacy
+/// `colonial_pressure.dart` previously retained a thin delegating stub for legacy
 /// callers (the
 /// `colonial_pressure_consolidate_gains_sole_gp_peace_branches_test.dart`
 /// fixture and the
 /// `diplomatic_candidate_scoring_offer_peace.dart` consumer chain) so
-/// the planned S1 deletion of that file leaves no orphan callers.
+/// the now-completed S1 deletion of that file leaves no orphan callers.
 ///
 /// Pure and deterministic — identical inputs always yield identical
 /// results (Refs #2509 Must-have #7). Linear in the total province
@@ -606,12 +606,12 @@ String? consolidateGainsSoleGpPeaceTarget({
 ///      on `factionId` so the downstream offer-peace pass observes a
 ///      stable order regardless of `atWarWith` iteration order.
 ///
-/// `colonial_pressure.dart` retains a thin delegating stub for legacy
+/// `colonial_pressure.dart` previously retained a thin delegating stub for legacy
 /// callers (the `colonial_pressure_stalled_below_quota_gp_lead_branches_test.dart`
 /// fixture and the
 /// `diplomatic_candidate_scoring_offer_peace.dart` / `diplomacy_planner.dart`
 /// / `diplomacy_planner_peace_targets.dart` consumer chains) so the
-/// planned S1 deletion of that file leaves no orphan callers.
+/// now-completed S1 deletion of that file leaves no orphan callers.
 ///
 /// Pure and deterministic — identical inputs always yield identical
 /// results (Refs #2509 Must-have #7). Linear in
@@ -698,12 +698,12 @@ List<String> stalledBelowQuotaGpLeadPeaceTargets({
 /// order regardless of the iteration order of
 /// [ThreatSummary.atWarWith] (Refs #2509 Must-have #7).
 ///
-/// `colonial_pressure.dart` retains a thin delegating stub for legacy
+/// `colonial_pressure.dart` previously retained a thin delegating stub for legacy
 /// callers (the
 /// `colonial_pressure_quota_met_below_quota_at_war_peace_branches_test.dart`
 /// fixture and the `diplomacy_planner.dart` /
 /// `diplomacy_planner_peace_targets.dart` consumer chain) so the
-/// planned S1 deletion of that file leaves no orphan callers.
+/// now-completed S1 deletion of that file leaves no orphan callers.
 ///
 /// Pure and deterministic — identical inputs always yield identical
 /// lists (Refs #2509 Must-have #7). Linear in
@@ -762,11 +762,11 @@ List<String> quotaMetBelowQuotaAtWarPeaceTargets({
 ///      future quota change that drops the quota below the defend
 ///      threshold).
 ///
-/// `colonial_pressure.dart` retains a thin delegating stub for legacy
+/// `colonial_pressure.dart` previously retained a thin delegating stub for legacy
 /// callers (the `colonial_pressure_critical_ow_hold_branches_test.dart`
 /// and `colonial_pressure_test.dart` fixtures and the
 /// `diplomacy_planner.dart` / `diplomacy_planner_peace_targets.dart`
-/// consumer chains) so the planned S1 deletion of that file leaves no
+/// consumer chains) so the now-completed S1 deletion of that file leaves no
 /// orphan callers.
 ///
 /// Pure and deterministic — identical inputs always yield identical
@@ -849,14 +849,14 @@ List<String> criticalOwHoldPeaceTargets({
 /// order regardless of the iteration order of
 /// [ThreatSummary.atWarWith] (Refs #2509 Must-have #7).
 ///
-/// `colonial_pressure.dart` retains a thin delegating stub for legacy
+/// `colonial_pressure.dart` previously retained a thin delegating stub for legacy
 /// callers (the
 /// `colonial_pressure_quota_met_futile_below_quota_gp_peace_branches_test.dart`
 /// fixture, the `diplomacy_planner_stalled_peace_test.dart` sole
 /// positive-case fixture, and the `diplomacy_planner.dart` /
 /// `diplomacy_planner_peace_targets.dart` /
 /// `diplomatic_candidate_scoring_offer_peace.dart` consumer chains)
-/// so the planned S1 deletion of that file leaves no orphan callers.
+/// so the now-completed S1 deletion of that file leaves no orphan callers.
 ///
 /// Pure and deterministic — identical inputs always yield identical
 /// lists (Refs #2509 Must-have #7). Linear in
@@ -1291,9 +1291,9 @@ int cheapestRegimentBuildTreasuryCost() {
 ///     trigger and the planner directive cannot drift apart while the
 ///     S5 orchestrator wire-up is in flight.
 ///
-/// `colonial_pressure.dart` retains a thin delegating stub for legacy
+/// `colonial_pressure.dart` previously retained a thin delegating stub for legacy
 /// import sites (the `colonial_pressure_below_quota_peace_*` tests and
-/// `phase_planner_economy_filter.dart`) so the planned S1 deletion of
+/// `phase_planner_economy_filter.dart`) so the now-completed S1 deletion of
 /// that file leaves no orphan callers.
 ///
 /// Pure and deterministic — identical inputs always yield identical
@@ -1331,10 +1331,10 @@ bool isBelowQuotaPeaceZeroRegimentsRebuild({
 /// [isBelowQuotaPeaceZeroRegimentsRebuild] (Arm A) inside
 /// [isBelowQuotaPeaceTreasuryRecovery].
 ///
-/// `colonial_pressure.dart` retains a thin delegating stub for legacy
+/// `colonial_pressure.dart` previously retained a thin delegating stub for legacy
 /// import sites (the `colonial_pressure_below_quota_peace_insufficient_regiments`
 /// tests, `economy_planner.dart`, and `phase_planner_economy_filter.dart`)
-/// so the planned S1 deletion of that file leaves no orphan callers.
+/// so the now-completed S1 deletion of that file leaves no orphan callers.
 ///
 /// Pure and deterministic — identical inputs always yield identical
 /// results (Refs #2509 Must-have #7). Constant-time (no catalog or
@@ -1376,10 +1376,10 @@ bool isBelowQuotaPeaceInsufficientRegiments({
 /// EXPAND-trap decision tree without the cargo-boost wiring at the same
 /// function boundary the orchestrator and `economy_planner.dart` consume.
 ///
-/// `colonial_pressure.dart` retains a thin delegating stub for legacy
+/// `colonial_pressure.dart` previously retained a thin delegating stub for legacy
 /// import sites (the `colonial_pressure_below_quota_peace_treasury_recovery_branches`
 /// tests, `economy_planner.dart`, and `phase_planner_economy_filter.dart`)
-/// so the planned S1 deletion of that file leaves no orphan callers.
+/// so the now-completed S1 deletion of that file leaves no orphan callers.
 ///
 /// Pure and deterministic — identical inputs always yield identical
 /// results (Refs #2509 Must-have #7). Linear in the [RegimentEconomyCatalog]
@@ -1835,11 +1835,11 @@ bool pendingDeclareWarFrom({
 ///     `any` scan over [ConquestSummary.invadableProvinceIdsSorted].
 ///     Returned in ascending lex order over the minor `factionId`s.
 ///
-/// `colonial_pressure.dart` retains a thin delegating stub for legacy
+/// `colonial_pressure.dart` previously retained a thin delegating stub for legacy
 /// callers (the `diplomacy_planner.dart` /
 /// `diplomacy_planner_peace_targets.dart` consumer chain and the
 /// existing `colonial_pressure_test.dart` § `defaultStartFutileMinorPeaceTargets`
-/// fixture) so the planned S1 deletion of that file leaves no orphan
+/// fixture) so the now-completed S1 deletion of that file leaves no orphan
 /// callers.
 ///
 /// Pure and deterministic — identical inputs always yield identical
@@ -1917,12 +1917,12 @@ List<String> defaultStartFutileMinorPeaceTargets({
 /// are peaced. The output is sorted ascending by `factionId` for
 /// deterministic ordering.
 ///
-/// `colonial_pressure.dart` retains a thin delegating stub for
+/// `colonial_pressure.dart` previously retained a thin delegating stub for
 /// legacy callers (the existing
 /// `colonial_pressure_default_start_gp_peace_branches_test.dart`
 /// fixture and the `diplomacy_planner.dart` /
 /// `diplomacy_planner_peace_targets.dart` consumer chain) so the
-/// planned S1 deletion of that file leaves no orphan callers.
+/// now-completed S1 deletion of that file leaves no orphan callers.
 ///
 /// Pure and deterministic — identical inputs always yield identical
 /// lists (Refs #2509 Must-have #7). Linear in
@@ -2017,12 +2017,12 @@ List<String> defaultStartGpPeaceTargets({
 ///     `colonial_pressure.dart` shape (one element so sort order is
 ///     trivial).
 ///
-/// `colonial_pressure.dart` retains a thin delegating stub for
+/// `colonial_pressure.dart` previously retained a thin delegating stub for
 /// legacy callers (the existing `colonial_pressure_test.dart`
 /// fixtures that exercise the near-quota arms and the
 /// `diplomacy_planner.dart` /
 /// `diplomacy_planner_peace_targets.dart` consumer chain) so the
-/// planned S1 deletion of that file leaves no orphan callers.
+/// now-completed S1 deletion of that file leaves no orphan callers.
 ///
 /// Pure and deterministic — identical inputs always yield identical
 /// lists (Refs #2509 Must-have #7). Linear in
@@ -2087,7 +2087,7 @@ List<String> nearQuotaHoldPeaceTargets({
 ///
 /// Canonical home (Refs #2509 S1) for the legacy `stalledFocusMinorTarget`
 /// helper previously hosted in `diplomacy_planner_peace_targets.dart`. The
-/// helper survives the planned S1 deletion of that file alongside its
+/// helper survives the now-completed S1 deletion of that file alongside its
 /// EXPAND-phase consumers ([belowQuotaActiveMinorWarTarget],
 /// `stalledExpansionDistractionPeaceTargets`,
 /// `belowQuotaMultiMinorDistractionPeaceTargets`) which all use the
@@ -2222,10 +2222,10 @@ String? belowQuotaActiveMinorWarTarget({
 ///   * Sorts the result ascending so emission order is deterministic
 ///     for fixed inputs (Refs #2509 Must-have #7).
 ///
-/// `diplomacy_planner_peace_targets.dart` retains a thin delegating
+/// `diplomacy_planner_peace_targets.dart` previously retained a thin delegating
 /// stub for the legacy `diplomacy_planner_below_quota_peace_part3_test.dart`
 /// fixture and the in-file `collectStalledGreatPowerPeaceTargets`
-/// `minorTribePeace` consumer chain until the planned S1 deletion of
+/// `minorTribePeace` consumer chain until the now-completed S1 deletion of
 /// that file.
 ///
 /// Pure and deterministic — identical inputs always yield identical
@@ -2275,12 +2275,12 @@ List<String> belowQuotaMultiMinorDistractionPeaceTargets({
 /// them; any one decider returning a non-empty result is sufficient
 /// to signal that a stalled-expansion `offerPeace` pass is warranted.
 ///
-/// `diplomacy_planner_peace_targets.dart` retains a thin delegating
+/// `diplomacy_planner_peace_targets.dart` previously retained a thin delegating
 /// stub for the legacy `diplomacy_planner_stalled_peace_test.dart`
 /// fixture and the in-file `_expandRatchetGreatPowerPeaceTargets` /
 /// `stalledOwExpansionNeedsPeacePass` / `collectStalledGreatPowerPeaceTargets`
 /// / `supplementMutualStalledGreatPowerPeaceOrders` consumer chains
-/// until the planned S1 deletion of that file.
+/// until the now-completed S1 deletion of that file.
 ///
 /// Pure and deterministic — identical inputs always yield identical
 /// output (Refs #2509 Must-have #7). Cost is bounded by the union
