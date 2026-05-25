@@ -222,85 +222,39 @@ List<String> defaultStartFutileMinorPeaceTargets({
 
 /// At default observer start size (7 OW), peace every Great Power war so the GP
 /// can open a minor frontier (seed-42 gp4 zero-gain stall; Refs #2509).
+///
+/// Delegates to [expand_phase_planner.defaultStartGpPeaceTargets]
+/// (Refs #2509 S1) so the EXPAND default-start GP-peace decider survives
+/// the planned deletion of this file alongside the canonical
+/// [expand_phase_planner.hasUninvadedOldWorldMinor],
+/// [expand_phase_planner.isOldWorldGpOnlyInvadableFrontier], and
+/// [expand_phase_planner.primaryInvadableOldWorldGpBlocker] helpers it
+/// composes.
 List<String> defaultStartGpPeaceTargets({
   required Game game,
   required AIWorldSnapshot snapshot,
-}) {
-  final ownOw = snapshot.conquest.oldWorldProvincesOwned;
-  if (!isBelowObserverConquestQuota(ownOw)) {
-    return const [];
-  }
-  final maxOwForGpPeace =
-      hasUninvadedOldWorldMinor(game: game, snapshot: snapshot)
-      ? kStalledOldWorldProvinceThreshold
-      : kObserverDefaultStartOldWorldProvincesPerGp + 1;
-  if (ownOw > maxOwForGpPeace) {
-    return const [];
-  }
-  final gpOnlyFrontier = isOldWorldGpOnlyInvadableFrontier(
-    game: game,
-    snapshot: snapshot,
-  );
-  final invadableBlocker = gpOnlyFrontier
-      ? primaryInvadableOldWorldGpBlocker(game: game, snapshot: snapshot)
-      : null;
-  final targets = <String>[
-    for (final factionId in snapshot.threats.atWarWith)
-      if (game.playerById(factionId) != null && factionId != invadableBlocker)
-        factionId,
-  ]..sort();
-  return targets;
-}
+}) => expand_phase_planner.defaultStartGpPeaceTargets(
+  game: game,
+  snapshot: snapshot,
+);
 
 /// Peace distracting GP wars at 8–9 OW while below the observer quota (hold gains;
 /// seed-42 gp3; Refs #2509).
+///
+/// Delegates to [expand_phase_planner.nearQuotaHoldPeaceTargets]
+/// (Refs #2509 S1) so the EXPAND near-quota hold-gains peace decider
+/// survives the planned deletion of this file alongside the canonical
+/// [expand_phase_planner.primaryInvadableOldWorldGpBlocker],
+/// [expand_phase_planner.isOldWorldGpOnlyInvadableFrontier],
+/// [expand_phase_planner.isMutualBelowQuotaPlateauPeer], and
+/// [expand_phase_planner.hasUninvadedOldWorldMinor] helpers it composes.
 List<String> nearQuotaHoldPeaceTargets({
   required Game game,
   required AIWorldSnapshot snapshot,
-}) {
-  final ownOw = snapshot.conquest.oldWorldProvincesOwned;
-  if (!isBelowObserverConquestQuota(ownOw) ||
-      !isStalledOldWorldExpansion(ownOw)) {
-    return const [];
-  }
-  final gpWars = <String>[
-    for (final factionId in snapshot.threats.atWarWith)
-      if (game.playerById(factionId) != null) factionId,
-  ];
-  if (gpWars.isEmpty) {
-    return const [];
-  }
-  final blocker = primaryInvadableOldWorldGpBlocker(
-    game: game,
-    snapshot: snapshot,
-  );
-  final gpOnlyFrontier = isOldWorldGpOnlyInvadableFrontier(
-    game: game,
-    snapshot: snapshot,
-  );
-  if (gpWars.length == 1) {
-    final soleGp = gpWars.single;
-    final partnerOw = provinceCountOwnedBy(game, soleGp);
-    if (isMutualBelowQuotaPlateauPeer(ownOw: ownOw, partnerOw: partnerOw) &&
-        gpOnlyFrontier &&
-        !hasUninvadedOldWorldMinor(game: game, snapshot: snapshot)) {
-      return gpWars;
-    }
-    if (blocker != null &&
-        gpWars.single == blocker &&
-        !hasUninvadedOldWorldMinor(game: game, snapshot: snapshot)) {
-      return const [];
-    }
-  }
-  if (gpWars.length >= 2) {
-    final targets = <String>[
-      for (final factionId in gpWars)
-        if (factionId != blocker) factionId,
-    ]..sort();
-    return targets;
-  }
-  return gpWars;
-}
+}) => expand_phase_planner.nearQuotaHoldPeaceTargets(
+  game: game,
+  snapshot: snapshot,
+);
 
 /// GP owning the most invadable Old World provinces (frontier blocker).
 ///
