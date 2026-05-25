@@ -271,10 +271,7 @@ String? primaryInvadableOldWorldGpBlocker({
 // `hasColonialAcquisitionTargets` and `isEarlyColonialExpansion` were
 // relocated to `observer_goal_phase.dart` (Refs #2509 S1) — both
 // `ColonialSummary` predicates must survive the planned deletion of this
-// file. `colonialBuildOrderThresholdCap` (below) keeps the
-// acquisition-target check inlined so this file does not import
-// `observer_goal_phase.dart`, which would create a circular library
-// reference. See also: `phase-planner-architecture.md` § Phase transition
+// file. See also: `phase-planner-architecture.md` § Phase transition
 // guards.
 
 /// Sole at-war Great Power, if any.
@@ -473,19 +470,17 @@ String? consolidateGainsSoleGpPeaceTarget({
   snapshot: snapshot,
 );
 
-/// When non-null, build-order pass uses `min(buildThreshold, value)`.
-int? colonialBuildOrderThresholdCap(ColonialSummary colonial) {
-  // `hasColonialAcquisitionTargets` body is inlined here (Refs #2509 S1)
-  // because the canonical home is now `observer_goal_phase.dart` and this
-  // file does not import that library (would create a circular reference).
-  final hasAcquisitionTargets =
-      colonial.invadableNewWorldProvinceIdsSorted.isNotEmpty ||
-      colonial.adjacentNewWorldOwnerFactionIdsSorted.isNotEmpty;
-  if (hasAcquisitionTargets && colonial.newWorldProvincesOwned > 0) {
-    return kColonialBuildOrderThresholdWhenOwnedNwUnderPressure;
-  }
-  if (colonial.newWorldProvincesOwned > 0) {
-    return kColonialBuildOrderThresholdWhenOwnedNw;
-  }
-  return null;
-}
+// `colonialBuildOrderThresholdCap(ColonialSummary)` was retired here
+// (Refs #2509 S1). The legacy helper had two arms keyed on
+// `hasColonialAcquisitionTargets(colonial)` and was only invoked by
+// `_appendEconomyBuildOrders` inside the outer `if (colonialPressure)` guard,
+// where `colonialPressure` is `resolvePhaseEconomyColonialPressureActive`
+// (active only under COLONIAL). COLONIAL phase entry is itself gated on
+// `hasColonialAcquisitionTargets` via `observerGoalPhaseFor`, so the second
+// `kColonialBuildOrderThresholdWhenOwnedNw` fallback arm was structurally
+// unreachable at the orchestrator's call site. The reachable behaviour now
+// lives in `resolvePhaseEconomyColonialBuildOrderThresholdCap`
+// (`phase_planner_economy_filter.dart`), which is the sole production caller
+// of the colonial build-order threshold cap. See
+// `SPEC/ai/phase-planner-dispatch.md` § Orchestrator economy build colonial
+// -cap slice.
