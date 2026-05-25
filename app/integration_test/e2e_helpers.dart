@@ -55,6 +55,7 @@ export 'e2e_test_shared.dart'
         e2eNwCoastalProvincesAdjacentToFleetSea,
         e2eOldWorldRegionChipAppearsSelected,
         e2eOpenerTapTriggerAndAwaitMount,
+        e2eOpenPanelViaRailOrMarker,
         e2ePickFirstValidWorkTileAndAwaitOverlayClear,
         e2ePickMoveDestinationAndConfirm,
         e2eTryNavalMoveSegment,
@@ -217,6 +218,40 @@ Future<bool> openerTapTriggerAndAwaitMount(
   panelRoot: panelRoot,
   mountTimeout: mountTimeout,
   mountPhaseName: mountPhaseName,
+  perf: perf,
+);
+
+/// Stable public name for [e2eOpenPanelViaRailOrMarker] (Refs GitHub #2336
+/// AC1 / AC2 / AC10). Forwards to the implementation in
+/// `e2e_test_shared_panel_open_outer_loop.dart` (re-exported via
+/// `e2e_test_shared.dart`). The shared rail-or-marker outer adaptive-poll
+/// loop is consumed indirectly by [openCivilianPanel] and [openNavalPanel]
+/// today; the alias is re-exposed so future panel openers that share the
+/// same rail/marker structure can compose the byte-equivalent recipe
+/// without duplicating the outer-loop body.
+Future<void> openPanelViaRailOrMarker(
+  WidgetTester tester, {
+  required String openerLabel,
+  required Finder railButton,
+  required Finder markerButton,
+  required Finder panelRoot,
+  required String afterSheetPanelsClearPhase,
+  required String Function(Duration timeout) timeoutMessageBuilder,
+  Duration overallTimeout = const Duration(seconds: 20),
+  Duration bottomSheetCloseTimeout = kE2eDefaultBottomSheetCloseTimeout,
+  Duration mountTimeout = const Duration(seconds: 3),
+  E2ePerfLog? perf,
+}) => e2eOpenPanelViaRailOrMarker(
+  tester,
+  openerLabel: openerLabel,
+  railButton: railButton,
+  markerButton: markerButton,
+  panelRoot: panelRoot,
+  afterSheetPanelsClearPhase: afterSheetPanelsClearPhase,
+  timeoutMessageBuilder: timeoutMessageBuilder,
+  overallTimeout: overallTimeout,
+  bottomSheetCloseTimeout: bottomSheetCloseTimeout,
+  mountTimeout: mountTimeout,
   perf: perf,
 );
 

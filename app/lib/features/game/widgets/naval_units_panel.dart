@@ -11,6 +11,7 @@ import 'package:flutter/material.dart';
 
 import '../../../config/ct_e2e.dart';
 import '../../../config/ct_e2e_last_panel_snapshot.dart';
+import '../../../config/ui_screen_ids.dart';
 import '../../../l10n/l10n.dart';
 import '../../../widgets/ct_nine_patch_button.dart';
 import 'fleet_expansion_tile.dart';
@@ -38,6 +39,9 @@ class NavalUnitsPanel extends StatefulWidget {
     this.tileScopeTileKey,
     this.readOnly = false,
   });
+
+  /// SPEC/ui/naval-units-panel.md — [UiScreenIds.navalUnitsPanel].
+  static const screenId = UiScreenIds.navalUnitsPanel;
 
   final Game game;
   final String humanPlayerId;
@@ -481,8 +485,7 @@ class _NavalUnitsPanelState extends State<NavalUnitsPanel> {
     final hasAny = tree.any(
       (group) => group.homeFleet != null || group.locations.isNotEmpty,
     );
-    final canCombine =
-        !widget.readOnly && _canCombineSelection(flat);
+    final canCombine = !widget.readOnly && _canCombineSelection(flat);
     final headerCheckbox = _headerSelectAllValue(flat);
     final readOnly = widget.readOnly;
 
@@ -552,7 +555,9 @@ class _NavalUnitsPanelState extends State<NavalUnitsPanel> {
               combineSelectionEnabled: !readOnly,
               onCombineSelectionToggle: () =>
                   _toggleFleetSelection(group.homeFleet!),
-              onSplitFleet: readOnly ? null : () => _openSplitDialog(group.homeFleet!),
+              onSplitFleet: readOnly
+                  ? null
+                  : () => _openSplitDialog(group.homeFleet!),
               onMoveFleet: null,
               isSplitAllowed: !readOnly,
             ),
@@ -578,10 +583,8 @@ class _NavalUnitsPanelState extends State<NavalUnitsPanel> {
                 ),
                 combineSelectionEnabled: !readOnly,
                 onCombineSelectionToggle: () => _toggleFleetSelection(row),
-                onSplitFleet:
-                    readOnly ? null : () => _openSplitDialog(row),
-                onMoveFleet:
-                    readOnly ? null : () => _openMoveFleetDialog(row),
+                onSplitFleet: readOnly ? null : () => _openSplitDialog(row),
+                onMoveFleet: readOnly ? null : () => _openMoveFleetDialog(row),
                 isSplitAllowed: true,
               ),
           ],

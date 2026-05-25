@@ -35,6 +35,7 @@ import '../../../../providers/home_fleet_cargo_provider.dart';
 import '../../../../providers/human_draft_projected_region_provider.dart';
 
 import '../../../config/constants.dart';
+import '../../../config/ui_screen_ids.dart';
 import 'game_screen_shared.dart';
 import 'game_side_menu.dart';
 import 'game_map_controls.dart';
@@ -62,6 +63,9 @@ final _gameMapNextTurnUiLog = packageLogger('logic');
 /// Map area with region tabs and province/sea zone detail overlay. SPEC/ui/province-sea-zone-detail-overlay.md.
 class GameMapArea extends ConsumerStatefulWidget {
   const GameMapArea({required this.game, required this.mapViewData, super.key});
+
+  /// SPEC/ui/empire-overview.md — [UiScreenIds.empireOverviewMapArea].
+  static const screenId = UiScreenIds.empireOverviewMapArea;
 
   final ct_models.Game game;
   final InitGameMapViewData mapViewData;

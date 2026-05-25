@@ -5,6 +5,7 @@ import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
 
+import '../../../config/ui_screen_ids.dart';
 import '../../../l10n/l10n.dart';
 
 String moveArmyFactionGroupHeaderLabel(
@@ -40,6 +41,9 @@ class MoveArmyDialog extends StatefulWidget {
     required this.draftOrders,
     this.playerView,
   });
+
+  /// SPEC/ui/move-army-dialog.md — [UiScreenIds.moveArmyDialog].
+  static const screenId = UiScreenIds.moveArmyDialog;
 
   final Army army;
   final Game game;
@@ -84,8 +88,9 @@ class _MoveArmyDialogState extends State<MoveArmyDialog> {
         unitsById: unitsByIdFromWorld(widget.game.worldState),
       );
     } else {
-      _sharedCandidateValidator =
-          _sharedCandidateValidator!.forBasePrefix(orders);
+      _sharedCandidateValidator = _sharedCandidateValidator!.forBasePrefix(
+        orders,
+      );
     }
     final armyId = widget.army.id;
     if (_cachedDestinationsOrders != orders ||
