@@ -47,7 +47,7 @@
 //      consumers and the EXPAND planner agree on the war-concentration
 //      and same-turn-declare-war gates.
 
-import 'package:colonizethis_ai/src/planning/colonial_pressure.dart'
+import 'package:colonizethis_ai/src/planning/expand_phase_planner.dart'
     as colonial_pressure;
 import 'package:colonizethis_ai/src/planning/expand_phase_planner.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';

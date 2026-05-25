@@ -6,6 +6,8 @@ import 'package:colonizethis_test/test.dart';
 
 import 'domain_planner_test_fake_api.dart';
 import 'planner_test_helpers.dart';
+import 'package:colonizethis_ai/src/planning/expand_phase_planner.dart';
+import 'package:colonizethis_ai/src/planning/observer_goal_phase.dart';
 
 void main() {
   test(

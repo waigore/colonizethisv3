@@ -44,8 +44,7 @@
 //   3. Must-have #7 determinism.
 
 import 'package:colonizethis_ai/src/perception/perception_snapshot.dart';
-import 'package:colonizethis_ai/src/planning/diplomacy_planner_peace_targets.dart'
-    as diplomacy_planner_peace_targets;
+import 'package:colonizethis_ai/src/planning/expand_phase_planner.dart';
 import 'package:colonizethis_ai/src/planning/observer_goal_phase.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/ai_api.dart';
@@ -259,26 +258,21 @@ void main() {
   });
 
   group('collectStalledGreatPowerPeaceTargets', () {
-    test('delegation parity: stub matches canonical for typical EXPAND state', () {
+    test('canonical: returns expected results for typical EXPAND state', () {
       final game = _zeroRegimentAtWarGame();
       final snapshot = _snapshotFor(
         playerId: _gpOwn,
         oldWorldProvincesOwned: 6,
         atWarWith: [_gpOther, _minorZeta],
       );
-      final canonical = collectStalledGreatPowerPeaceTargets(
+      final result = collectStalledGreatPowerPeaceTargets(
         game: game,
         snapshot: snapshot,
       );
-      final stubbed = diplomacy_planner_peace_targets
-          .collectStalledGreatPowerPeaceTargets(
-        game: game,
-        snapshot: snapshot,
-      );
-      expect(canonical, stubbed);
+      expect(result, isNotEmpty);
     });
 
-    test('delegation parity: stub matches canonical for DEVELOP state', () {
+    test('canonical: returns expected results for DEVELOP state', () {
       final game = Game(
         id: 'g-2509-collect-develop',
         worldState: WorldState(
@@ -312,16 +306,11 @@ void main() {
         oldWorldProvincesOwned: 10,
         atWarWith: [_gpOther],
       );
-      final canonical = collectStalledGreatPowerPeaceTargets(
+      final result = collectStalledGreatPowerPeaceTargets(
         game: game,
         snapshot: snapshot,
       );
-      final stubbed = diplomacy_planner_peace_targets
-          .collectStalledGreatPowerPeaceTargets(
-        game: game,
-        snapshot: snapshot,
-      );
-      expect(canonical, stubbed);
+      expect(result, isNotEmpty);
     });
 
     test('deterministic across repeated calls (Must-have #7)', () {
@@ -355,23 +344,6 @@ void main() {
         orders: orders,
       );
       expect(result, same(orders));
-    });
-
-    test('delegation parity: stub matches canonical for pristine state', () {
-      final game = _pristineOwProvinces(8);
-      const orders = Orders();
-      final canonical = supplementMutualStalledGreatPowerPeaceOrders(
-        game: game,
-        topology: const MapTopology(),
-        orders: orders,
-      );
-      final stubbed = diplomacy_planner_peace_targets
-          .supplementMutualStalledGreatPowerPeaceOrders(
-        game: game,
-        topology: const MapTopology(),
-        orders: orders,
-      );
-      expect(canonical, stubbed);
     });
 
     test('deterministic across repeated calls (Must-have #7)', () {

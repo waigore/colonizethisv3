@@ -1,37 +1,18 @@
 import '../perception/perception_snapshot.dart';
 import 'planning_imports.dart';
-import 'colonial_pressure.dart';
+import 'expand_phase_planner.dart' as expand_phase_planner;
 import 'observer_goal_phase.dart';
-export 'colonial_pressure.dart'
-    show
-        consolidateGainsSoleGpPeaceTarget,
-        criticalOwHoldPeaceTargets,
-        hasUninvadedOldWorldMinor,
-        isOldWorldGpOnlyInvadableFrontier,
-        isStalledOldWorldGpBlockerFocus,
-        primaryInvadableOldWorldGpBlocker,
-        quotaMetBelowQuotaAtWarPeaceTargets,
-        quotaMetFutileBelowQuotaGpPeaceTargets,
-        stalledBelowQuotaGpLeadPeaceTargets,
-        belowQuotaPeerGpPeaceTargets,
-        defaultStartGpPeaceTargets,
-        defaultStartFutileMinorPeaceTargets,
-        nearQuotaHoldPeaceTargets,
-        unwinnableSoleGpFrontierPeaceTarget;
 import 'planner_context.dart';
 import '../util/ai_random_utils.dart';
 import '../util/orders_extensions.dart';
 import 'diplomacy_planner_declare_war_targets.dart';
 import 'diplomatic_candidate_scoring.dart';
-import 'diplomacy_planner_peace_targets.dart'
-    hide collectStalledGreatPowerPeaceTargets;
 import 'diplomacy_planner_result.dart';
 import 'phase_planner_declare_war_targets.dart';
 import 'phase_planner_dispatch.dart';
 import 'phase_planner_peace_targets.dart';
 
 export 'diplomacy_planner_declare_war_targets.dart';
-export 'diplomacy_planner_peace_targets.dart';
 export 'diplomatic_candidate_scoring.dart'
     show computeDiplomaticCandidateScores;
 export 'war_desire_calculator.dart' show computeWarDesireScore;
@@ -93,11 +74,16 @@ int _resolveDiplomacyPlannerWeight({
     weight = kDiplomacyDeclareWarMinWeightWhenColonialPressure;
   }
   if (pass != DiplomacyPlannerPass.declareWarOnly &&
-      (stalledOwExpansionNeedsPeacePass(game: ctx.game, snapshot: snapshot) ||
-          multiFrontNonBlockerGpPeaceTargets(
+      (expand_phase_planner.stalledOwExpansionNeedsPeacePass(
             game: ctx.game,
             snapshot: snapshot,
-          ).isNotEmpty) &&
+          ) ||
+          expand_phase_planner
+              .multiFrontNonBlockerGpPeaceTargets(
+                game: ctx.game,
+                snapshot: snapshot,
+              )
+              .isNotEmpty) &&
       weight < 25) {
     weight = 25;
   }
@@ -165,7 +151,7 @@ List<DiplomaticOrder> _filterDiplomacyCandidatesForPass({
     final gpWars = snapshot.threats.atWarWith
         .where((id) => ctx.game.playerById(id) != null)
         .toList();
-    final blocker = primaryInvadableOldWorldGpBlocker(
+    final blocker = expand_phase_planner.primaryInvadableOldWorldGpBlocker(
       game: ctx.game,
       snapshot: snapshot,
     );
@@ -173,15 +159,14 @@ List<DiplomaticOrder> _filterDiplomacyCandidatesForPass({
         gpWars.length > 1 ||
         (isStalledOldWorldExpansion(snapshot.conquest.oldWorldProvincesOwned) &&
             gpWars.isNotEmpty);
-    final gpOnlyFrontier = isOldWorldGpOnlyInvadableFrontier(
-      game: ctx.game,
-      snapshot: snapshot,
-    );
+    final gpOnlyFrontier = expand_phase_planner
+        .isOldWorldGpOnlyInvadableFrontier(game: ctx.game, snapshot: snapshot);
     if (blocker != null && gpOnlyFrontier) {
-      final mutualPlateauBlocker = isMutualBelowQuotaPlateauPeer(
-        ownOw: snapshot.conquest.oldWorldProvincesOwned,
-        partnerOw: provinceCountOwnedBy(ctx.game, blocker),
-      );
+      final mutualPlateauBlocker = expand_phase_planner
+          .isMutualBelowQuotaPlateauPeer(
+            ownOw: snapshot.conquest.oldWorldProvincesOwned,
+            partnerOw: provinceCountOwnedBy(ctx.game, blocker),
+          );
       if (!mutualPlateauBlocker) {
         filtered = filtered
             .where(
@@ -204,14 +189,17 @@ List<DiplomaticOrder> _filterDiplomacyCandidatesForPass({
   }
   if (pass == DiplomacyPlannerPass.nonDeclareWarOnly &&
       isBelowObserverConquestQuota(snapshot.conquest.oldWorldProvincesOwned) &&
-      isOldWorldGpOnlyInvadableFrontier(game: ctx.game, snapshot: snapshot)) {
-    final blocker = primaryInvadableOldWorldGpBlocker(
+      expand_phase_planner.isOldWorldGpOnlyInvadableFrontier(
+        game: ctx.game,
+        snapshot: snapshot,
+      )) {
+    final blocker = expand_phase_planner.primaryInvadableOldWorldGpBlocker(
       game: ctx.game,
       snapshot: snapshot,
     );
     final allowBlockerPeace =
         blocker != null &&
-        unwinnableSoleGpFrontierPeaceTarget(
+        expand_phase_planner.unwinnableSoleGpFrontierPeaceTarget(
               game: ctx.game,
               snapshot: snapshot,
             ) ==
@@ -293,10 +281,16 @@ DiplomacyPlannerResult? _plateauGpBlockerDeclarePlannerResultIfNeeded({
   if (!isBelowObserverConquestQuota(snapshot.conquest.oldWorldProvincesOwned)) {
     return null;
   }
-  if (hasUninvadedOldWorldMinor(game: ctx.game, snapshot: snapshot)) {
+  if (expand_phase_planner.hasUninvadedOldWorldMinor(
+    game: ctx.game,
+    snapshot: snapshot,
+  )) {
     return null;
   }
-  if (!isOldWorldGpOnlyInvadableFrontier(game: ctx.game, snapshot: snapshot)) {
+  if (!expand_phase_planner.isOldWorldGpOnlyInvadableFrontier(
+    game: ctx.game,
+    snapshot: snapshot,
+  )) {
     return null;
   }
   return _forcedInvadableGpDeclarePlannerResultIfNeeded(
@@ -573,8 +567,14 @@ DiplomaticOrder? _chooseDiplomaticOrder({
   required List<int> scores,
 }) {
   if (pass == DiplomacyPlannerPass.declareWarOnly) {
-    if (isOldWorldGpOnlyInvadableFrontier(game: ctx.game, snapshot: snapshot) &&
-        hasUninvadedOldWorldMinor(game: ctx.game, snapshot: snapshot)) {
+    if (expand_phase_planner.isOldWorldGpOnlyInvadableFrontier(
+          game: ctx.game,
+          snapshot: snapshot,
+        ) &&
+        expand_phase_planner.hasUninvadedOldWorldMinor(
+          game: ctx.game,
+          snapshot: snapshot,
+        )) {
       final minorIdx = _pickMinorDeclareCandidateIndex(
         ctx: ctx,
         candidates: candidates,
@@ -677,7 +677,10 @@ DiplomacyPlannerResult runDiplomacyPlannerWithResult({
     if (minorWarResult != null) {
       return minorWarResult;
     }
-    if (isOldWorldGpOnlyInvadableFrontier(game: ctx.game, snapshot: snapshot)) {
+    if (expand_phase_planner.isOldWorldGpOnlyInvadableFrontier(
+      game: ctx.game,
+      snapshot: snapshot,
+    )) {
       final blockerDeclareResult =
           _plateauGpBlockerDeclarePlannerResultIfNeeded(
             ctx: ctx,

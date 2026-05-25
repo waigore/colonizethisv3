@@ -62,7 +62,7 @@
 //      canonical helper at a representative trap shape so a future stub
 //      removal cannot silently shift the recovery boundary.
 
-import 'package:colonizethis_ai/src/planning/colonial_pressure.dart'
+import 'package:colonizethis_ai/src/planning/expand_phase_planner.dart'
     as colonial_pressure;
 import 'package:colonizethis_ai/src/planning/expand_phase_planner.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';

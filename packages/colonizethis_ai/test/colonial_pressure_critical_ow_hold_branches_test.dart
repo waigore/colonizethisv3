@@ -79,6 +79,7 @@ import 'package:colonizethis_ai/colonizethis_ai.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
+import 'package:colonizethis_ai/src/planning/expand_phase_planner.dart';
 
 /// Builds a Game whose OW region contains the requested per-faction
 /// province counts. Each entry of [provincesByOwner] becomes that many
