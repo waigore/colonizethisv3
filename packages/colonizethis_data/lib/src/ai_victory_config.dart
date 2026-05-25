@@ -431,11 +431,14 @@ const int kPurchaseLandNewWorldOtherWorkScore = 160;
 /// Civilian work economy threshold cap when colonial targets are visible.
 const int kColonialCivilianWorkThresholdCap = 12;
 
-/// Build-order economy threshold cap when the GP owns any NW provinces.
-const int kColonialBuildOrderThresholdWhenOwnedNw = 18;
-
-/// Lower build threshold when the GP owns NW provinces and acquisition targets
-/// remain (late-game improvement pacing for observer turn-150 gate; Refs #2509).
+/// Build-order economy threshold cap under COLONIAL acquisition pressure when
+/// the GP already owns at least one New World province (late-game improvement
+/// pacing for observer turn-150 gate; Refs #2509). Applied by
+/// `resolvePhaseEconomyColonialBuildOrderThresholdCap` only when the active
+/// phase is [ObserverGoalPhase.colonial]; structurally suppressed under
+/// EXPAND, COLONIAL-lite, and DEVELOP per
+/// `SPEC/ai/phase-planner-dispatch.md` § Orchestrator economy build
+/// colonial-cap slice.
 const int kColonialBuildOrderThresholdWhenOwnedNwUnderPressure = 15;
 
 /// Naval mission score when [NavalMissionOrder.targetPortId] is a New World port.

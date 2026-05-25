@@ -165,14 +165,14 @@ bool resolvePhaseEconomyDevelopActive({required PhasePlanOutcome phasePlan}) =>
 /// combination.
 ///
 /// Replaces the per-call `colonialBuildOrderThresholdCap` invocation
-/// in `_appendEconomyBuildOrders` (`colonial_pressure.dart`). The
-/// legacy helper had two arms keyed on
+/// previously hosted in the now-deleted `colonial_pressure.dart`
+/// helper. The legacy helper had two arms keyed on
 /// `hasColonialAcquisitionTargets(colonial)`:
 ///
 /// - `hasColonialAcquisitionTargets && newWorldProvincesOwned > 0`
 ///   -> [kColonialBuildOrderThresholdWhenOwnedNwUnderPressure]
 /// - `newWorldProvincesOwned > 0` (no acquisition targets)
-///   -> [kColonialBuildOrderThresholdWhenOwnedNw]
+///   -> a fallback constant (since deleted; see below)
 /// - otherwise -> `null`
 ///
 /// The orchestrator only invoked the helper inside an outer
@@ -180,14 +180,17 @@ bool resolvePhaseEconomyDevelopActive({required PhasePlanOutcome phasePlan}) =>
 /// dispatched [resolvePhaseEconomyColonialPressureActive] (active
 /// only under [ObserverGoalPhase.colonial]). COLONIAL phase entry is
 /// itself gated on `hasColonialAcquisitionTargets` via
-/// [observerGoalPhaseFor], so the first legacy arm is the *only*
+/// [observerGoalPhaseFor], so the first legacy arm was the *only*
 /// reachable arm under the orchestrator call site — the second
-/// `kColonialBuildOrderThresholdWhenOwnedNw` arm requires
+/// (no-acquisition fallback) arm required
 /// `!hasColonialAcquisitionTargets`, which is structurally
 /// unreachable inside the orchestrator's COLONIAL-pressure branch.
+/// The fallback constant has therefore been retired from
+/// `colonizethis_data` (Refs #2509) along with this resolver
+/// collapsing to the single-arm form below.
 ///
-/// This resolver therefore collapses the helper's reachable behaviour
-/// to a single phase-derived path: when phase is
+/// This resolver collapses the helper's reachable behaviour to a
+/// single phase-derived path: when phase is
 /// [ObserverGoalPhase.colonial] and `newWorldProvincesOwned > 0`,
 /// return [kColonialBuildOrderThresholdWhenOwnedNwUnderPressure];
 /// otherwise return `null`. Phase-derived `int?` is field-equal to

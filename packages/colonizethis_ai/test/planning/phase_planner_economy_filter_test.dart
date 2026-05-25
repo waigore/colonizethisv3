@@ -55,9 +55,7 @@ import 'package:colonizethis_ai/src/planning/expand_phase_planner.dart'
 import 'package:colonizethis_ai/src/planning/phase_planner_conquest_filter.dart';
 import 'package:colonizethis_ai/src/planning/phase_planner_economy_filter.dart';
 import 'package:colonizethis_data/colonizethis_data.dart'
-    show
-        kColonialBuildOrderThresholdWhenOwnedNw,
-        kColonialBuildOrderThresholdWhenOwnedNwUnderPressure;
+    show kColonialBuildOrderThresholdWhenOwnedNwUnderPressure;
 import 'package:colonizethis_logic/ai_api.dart' show kWorkTargetBuildImprovement;
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
@@ -422,23 +420,24 @@ void main() {
   group('resolvePhaseEconomyColonialBuildOrderThresholdCap', () {
     // The resolver replaces the per-call
     // `colonialBuildOrderThresholdCap(snapshot.colonial)` invocation in
-    // `_appendEconomyBuildOrders` (`colonial_pressure.dart`). The
-    // legacy helper had two arms keyed on
-    // `hasColonialAcquisitionTargets(colonial)`; the orchestrator only
-    // invoked the helper inside the outer `if (colonialPressure)`
-    // guard, where `colonialPressure` is the dispatched
-    // `resolvePhaseEconomyColonialPressureActive` (active only under
-    // COLONIAL). COLONIAL phase entry is itself gated on
+    // `_appendEconomyBuildOrders` (previously hosted in the now-deleted
+    // `colonial_pressure.dart`). The legacy helper had two arms keyed
+    // on `hasColonialAcquisitionTargets(colonial)`; the orchestrator
+    // only invoked the helper inside the outer
+    // `if (colonialPressure)` guard, where `colonialPressure` is the
+    // dispatched `resolvePhaseEconomyColonialPressureActive` (active
+    // only under COLONIAL). COLONIAL phase entry is itself gated on
     // `hasColonialAcquisitionTargets` via `observerGoalPhaseFor`, so
     // the first legacy arm
     // (`kColonialBuildOrderThresholdWhenOwnedNwUnderPressure`) was the
-    // only reachable arm — the second
-    // (`kColonialBuildOrderThresholdWhenOwnedNw`) requires
-    // `!hasColonialAcquisitionTargets`, which is structurally
-    // unreachable at the orchestrator's call site. The phase-derived
-    // `int?` is therefore field-equal to the legacy compute at the
-    // orchestrator's only call site across every reachable
-    // `(ObserverGoalPhase, ColonialSummary)` pair.
+    // only reachable arm — the second (no-acquisition fallback)
+    // required `!hasColonialAcquisitionTargets`, which is structurally
+    // unreachable at the orchestrator's call site. The fallback
+    // constant has since been retired from `colonizethis_data`
+    // (Refs #2509). The phase-derived `int?` is therefore field-equal
+    // to the legacy compute at the orchestrator's only call site
+    // across every reachable `(ObserverGoalPhase, ColonialSummary)`
+    // pair.
     test('returns kColonialBuildOrderThresholdWhenOwnedNwUnderPressure under '
         'COLONIAL with newWorldProvincesOwned > 0', () {
       const outcome = PhasePlanOutcome(phase: ObserverGoalPhase.colonial);
@@ -478,8 +477,8 @@ void main() {
       // Mirrors `resolvePhaseEconomyColonialPressureActive` suppression
       // matrix: NW-owned GPs in EXPAND no longer receive the colonial
       // cap outside COLONIAL. The legacy
-      // `colonialBuildOrderThresholdCap` would have returned
-      // `kColonialBuildOrderThresholdWhenOwnedNw` for the fallback arm
+      // `colonialBuildOrderThresholdCap` had a fallback arm (since
+      // retired from `colonizethis_data`) that returned a higher cap
       // when `hasColonialAcquisitionTargets` was false, but that branch
       // was unreachable at the orchestrator's call site because the
       // outer guard requires `colonialPressure` (COLONIAL only). The
@@ -585,17 +584,18 @@ void main() {
       }
     });
 
-    test('returns the under-pressure constant, never the legacy '
-        'kColonialBuildOrderThresholdWhenOwnedNw fallback', () {
-      // Pins the structural invariant that the fallback arm is
-      // unreachable through the phase-derived path. The two constants
-      // are deliberately distinct in `colonizethis_data`
-      // (`kColonialBuildOrderThresholdWhenOwnedNwUnderPressure = 15`,
-      // `kColonialBuildOrderThresholdWhenOwnedNw = 18`), so a future
-      // regression that wired the wrong constant would flip this pin
-      // to red even if the COLONIAL-only suppression matrix stayed
-      // intact. Exhaustive over the reachable NW-ownership range to
-      // also pin the constant against any phase-keyed tier blend.
+    test('returns the under-pressure constant, never the retired '
+        'no-acquisition fallback value (18)', () {
+      // Pins the structural invariant that the legacy no-acquisition
+      // fallback arm is unreachable through the phase-derived path.
+      // The retired fallback constant (since removed from
+      // `colonizethis_data`; Refs #2509) carried the value 18 — the
+      // under-pressure cap (`kColonialBuildOrderThresholdWhenOwnedNwUnderPressure`)
+      // is 15, so a future regression that wired a mistakenly higher
+      // numeric cap would flip this pin to red even if the
+      // COLONIAL-only suppression matrix stayed intact. Exhaustive
+      // over the reachable NW-ownership range to also pin the
+      // constant against any phase-keyed tier blend.
       const outcome = PhasePlanOutcome(phase: ObserverGoalPhase.colonial);
       for (final nwOwned in <int>[1, 2, 5, 20]) {
         final colonial = ColonialSummary(newWorldProvincesOwned: nwOwned);
@@ -612,11 +612,12 @@ void main() {
         );
         expect(
           cap,
-          isNot(kColonialBuildOrderThresholdWhenOwnedNw),
+          isNot(18),
           reason:
-              'nwOwned=$nwOwned: the no-acquisition fallback constant '
-              'is unreachable through the phase-derived path because '
-              'COLONIAL phase entry requires hasColonialAcquisitionTargets.',
+              'nwOwned=$nwOwned: the retired no-acquisition fallback '
+              'value (18) is unreachable through the phase-derived '
+              'path because COLONIAL phase entry requires '
+              'hasColonialAcquisitionTargets.',
         );
       }
     });
