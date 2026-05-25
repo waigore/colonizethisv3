@@ -2,6 +2,7 @@ import '../perception/perception_snapshot.dart';
 import 'army_conquest_prep.dart';
 import 'planning_imports.dart';
 import 'colonial_pressure.dart';
+import 'expand_phase_planner.dart' as expand_phase_planner;
 import 'observer_goal_phase.dart';
 
 /// Strongest at-war GP that owns invadable OW provinces while this GP is stalled.
@@ -16,12 +17,12 @@ String? stalledStrongerGpBlockerPeaceTarget({
     return null;
   }
   final provinceOwner = getProvinceOwnerMap(game);
-  final minorsOwnInvadable = snapshot.conquest.invadableProvinceIdsSorted.any(
-    (pid) {
-      final owner = provinceOwner[pid];
-      return owner != null && game.minorNations.any((m) => m.id == owner);
-    },
-  );
+  final minorsOwnInvadable = snapshot.conquest.invadableProvinceIdsSorted.any((
+    pid,
+  ) {
+    final owner = provinceOwner[pid];
+    return owner != null && game.minorNations.any((m) => m.id == owner);
+  });
   final gpBlockerFocus = isStalledOldWorldGpBlockerFocus(
     game: game,
     snapshot: snapshot,
@@ -53,7 +54,8 @@ String? stalledStrongerGpBlockerPeaceTarget({
       (pid) => provinceOwner[pid] == factionId,
     );
     if (!ownsInvadable) continue;
-    final lead = provinceCountOwnedBy(game, factionId) -
+    final lead =
+        provinceCountOwnedBy(game, factionId) -
         snapshot.conquest.oldWorldProvincesOwned;
     if (lead <= 0) continue;
     if (lead > bestLead) {
@@ -74,12 +76,12 @@ List<String> stalledGpBlockerFocusPeaceTargets({
     return const [];
   }
   final provinceOwner = getProvinceOwnerMap(game);
-  final minorsOwnInvadable = snapshot.conquest.invadableProvinceIdsSorted.any(
-    (pid) {
-      final owner = provinceOwner[pid];
-      return owner != null && game.minorNations.any((m) => m.id == owner);
-    },
-  );
+  final minorsOwnInvadable = snapshot.conquest.invadableProvinceIdsSorted.any((
+    pid,
+  ) {
+    final owner = provinceOwner[pid];
+    return owner != null && game.minorNations.any((m) => m.id == owner);
+  });
   final gpWars = <String>[
     for (final factionId in snapshot.threats.atWarWith)
       if (game.playerById(factionId) != null) factionId,
@@ -115,38 +117,20 @@ List<String> stalledGpBlockerFocusPeaceTargets({
 
 /// At-war Great Powers that own none of this GP's invadable Old World provinces
 /// while minors still hold invadable land (distracting GP wars; Refs #2509).
+///
+/// Delegates to [expand_phase_planner.stalledFutileGpPeaceTargets]
+/// (Refs #2509 S1) so the EXPAND-phase futile-GP peace decider survives
+/// the planned deletion of this file alongside the canonical
+/// [expand_phase_planner.isOldWorldGpOnlyInvadableFrontier] band selector
+/// it composes with through the [getProvinceOwnerMap]-shared
+/// `minorsOwnInvadable` precondition scan.
 List<String> stalledFutileGpPeaceTargets({
   required Game game,
   required AIWorldSnapshot snapshot,
-}) {
-  if (!isStalledOldWorldExpansion(snapshot.conquest.oldWorldProvincesOwned)) {
-    return const [];
-  }
-  if (snapshot.conquest.invadableProvinceIdsSorted.isEmpty) {
-    return const [];
-  }
-  final provinceOwner = getProvinceOwnerMap(game);
-  final minorsOwnInvadable = snapshot.conquest.invadableProvinceIdsSorted.any(
-    (pid) {
-      final owner = provinceOwner[pid];
-      return owner != null && game.minorNations.any((m) => m.id == owner);
-    },
-  );
-  if (!minorsOwnInvadable) {
-    return const [];
-  }
-  final targets = <String>[];
-  for (final factionId in snapshot.threats.atWarWith) {
-    if (game.playerById(factionId) == null) continue;
-    final ownsInvadable = snapshot.conquest.invadableProvinceIdsSorted.any(
-      (pid) => provinceOwner[pid] == factionId,
-    );
-    if (ownsInvadable) continue;
-    targets.add(factionId);
-  }
-  targets.sort();
-  return targets;
-}
+}) => expand_phase_planner.stalledFutileGpPeaceTargets(
+  game: game,
+  snapshot: snapshot,
+);
 
 bool _isMinorOrTribeFaction(Game game, String factionId) =>
     game.minorNations.any((m) => m.id == factionId) ||
@@ -179,34 +163,26 @@ String? belowQuotaActiveMinorWarTarget({
   required Game game,
   required AIWorldSnapshot snapshot,
 }) {
-  if (!isBelowObserverConquestQuota(
-    snapshot.conquest.oldWorldProvincesOwned,
-  )) {
+  if (!isBelowObserverConquestQuota(snapshot.conquest.oldWorldProvincesOwned)) {
     return null;
   }
   return stalledFocusMinorTarget(game: game, snapshot: snapshot);
 }
 
 /// Peace tribe wars while fighting a Great Power (OW consolidation; Refs #2509).
+///
+/// Delegates to [expand_phase_planner.atWarGpDistractionTribePeaceTargets]
+/// (Refs #2509 S1) so the EXPAND-phase GP-distraction tribe peace
+/// decider survives the planned deletion of this file alongside its
+/// `_expandRatchetGreatPowerPeaceTargets` /
+/// `collectStalledGreatPowerPeaceTargets` consumer chains.
 List<String> atWarGpDistractionTribePeaceTargets({
   required Game game,
   required AIWorldSnapshot snapshot,
-}) {
-  if (!isStalledOldWorldExpansion(snapshot.conquest.oldWorldProvincesOwned)) {
-    return const [];
-  }
-  final atWarWithGp = snapshot.threats.atWarWith.any(
-    (id) => game.playerById(id) != null,
-  );
-  if (!atWarWithGp) {
-    return const [];
-  }
-  final targets = <String>[
-    for (final factionId in snapshot.threats.atWarWith)
-      if (game.tribes.any((t) => t.id == factionId)) factionId,
-  ]..sort();
-  return targets;
-}
+}) => expand_phase_planner.atWarGpDistractionTribePeaceTargets(
+  game: game,
+  snapshot: snapshot,
+);
 
 /// Peace every at-war minor/tribe except the focused minor or GP blocker war.
 List<String> stalledExpansionDistractionPeaceTargets({
@@ -220,12 +196,12 @@ List<String> stalledExpansionDistractionPeaceTargets({
     return const [];
   }
   final provinceOwner = getProvinceOwnerMap(game);
-  final minorsOwnInvadable = snapshot.conquest.invadableProvinceIdsSorted.any(
-    (pid) {
-      final owner = provinceOwner[pid];
-      return owner != null && game.minorNations.any((m) => m.id == owner);
-    },
-  );
+  final minorsOwnInvadable = snapshot.conquest.invadableProvinceIdsSorted.any((
+    pid,
+  ) {
+    final owner = provinceOwner[pid];
+    return owner != null && game.minorNations.any((m) => m.id == owner);
+  });
   final gpBlockerFocus = isStalledOldWorldGpBlockerFocus(
     game: game,
     snapshot: snapshot,
@@ -262,8 +238,8 @@ List<String> criticalWeakGpSurvivalPeaceTargets({
   final minLead = ownOw <= kObserverDefaultStartOldWorldProvincesPerGp + 1
       ? 1
       : isBelowObserverConquestQuota(ownOw)
-          ? kUnwinnableSoleGpMinProvinceDeficit
-          : kDeclareWarAggressorSuppressWeakGpLeadThreshold;
+      ? kUnwinnableSoleGpMinProvinceDeficit
+      : kDeclareWarAggressorSuppressWeakGpLeadThreshold;
   final targets = <String>[
     for (final factionId in snapshot.threats.atWarWith)
       if (game.playerById(factionId) != null &&
@@ -279,8 +255,7 @@ List<String> weakHoldingsInvadableBlockerPeaceTargets({
   required Game game,
   required AIWorldSnapshot snapshot,
 }) {
-  final zeroRegiments =
-      regimentCountForPlayer(game, snapshot.playerId) == 0;
+  final zeroRegiments = regimentCountForPlayer(game, snapshot.playerId) == 0;
   final belowQuota = isBelowObserverConquestQuota(
     snapshot.conquest.oldWorldProvincesOwned,
   );
@@ -305,7 +280,8 @@ List<String> weakHoldingsInvadableBlockerPeaceTargets({
       game.playerById(blocker) == null) {
     return const [];
   }
-  final lead = provinceCountOwnedBy(game, blocker) -
+  final lead =
+      provinceCountOwnedBy(game, blocker) -
       snapshot.conquest.oldWorldProvincesOwned;
   final minLead = belowQuota
       ? (snapshot.conquest.oldWorldProvincesOwned <=
@@ -349,9 +325,7 @@ List<String> belowQuotaMultiMinorDistractionPeaceTargets({
   required Game game,
   required AIWorldSnapshot snapshot,
 }) {
-  if (!isBelowObserverConquestQuota(
-    snapshot.conquest.oldWorldProvincesOwned,
-  )) {
+  if (!isBelowObserverConquestQuota(snapshot.conquest.oldWorldProvincesOwned)) {
     return const [];
   }
   final regimentCount = regimentCountForPlayer(game, snapshot.playerId);
@@ -368,8 +342,7 @@ List<String> belowQuotaMultiMinorDistractionPeaceTargets({
   }
   final targets = <String>[
     for (final factionId in snapshot.threats.atWarWith)
-      if (game.minorNations.any((m) => m.id == factionId) &&
-          factionId != focus)
+      if (game.minorNations.any((m) => m.id == factionId) && factionId != focus)
         factionId,
   ]..sort();
   return targets;
@@ -382,9 +355,7 @@ List<String> stalledZeroRegimentAllFactionPeaceTargets({
   required Game game,
   required AIWorldSnapshot snapshot,
 }) {
-  if (!isBelowObserverConquestQuota(
-    snapshot.conquest.oldWorldProvincesOwned,
-  )) {
+  if (!isBelowObserverConquestQuota(snapshot.conquest.oldWorldProvincesOwned)) {
     return const [];
   }
   if (!isStalledOldWorldExpansion(snapshot.conquest.oldWorldProvincesOwned)) {
@@ -527,40 +498,70 @@ bool stalledOwExpansionNeedsPeacePass({
     stalledStrongerGpBlockerPeaceTarget(game: game, snapshot: snapshot) !=
         null ||
     stalledFutileGpPeaceTargets(game: game, snapshot: snapshot).isNotEmpty ||
-    stalledGpBlockerFocusPeaceTargets(game: game, snapshot: snapshot).isNotEmpty ||
-    stalledExpansionDistractionPeaceTargets(game: game, snapshot: snapshot)
-        .isNotEmpty ||
-    atWarGpDistractionTribePeaceTargets(game: game, snapshot: snapshot)
-        .isNotEmpty ||
-    multiFrontNonBlockerGpPeaceTargets(game: game, snapshot: snapshot)
-        .isNotEmpty ||
-    criticalMultiFrontGpPeaceTargets(game: game, snapshot: snapshot).isNotEmpty ||
-    criticalWeakGpSurvivalPeaceTargets(game: game, snapshot: snapshot)
-        .isNotEmpty ||
-    weakHoldingsInvadableBlockerPeaceTargets(game: game, snapshot: snapshot)
-        .isNotEmpty ||
-    mutualZeroRegimentGpStalematePeaceTargets(game: game, snapshot: snapshot)
-        .isNotEmpty ||
-    stalledZeroRegimentAllFactionPeaceTargets(game: game, snapshot: snapshot)
-        .isNotEmpty ||
-    stalledZeroRegimentGpPeaceTargets(game: game, snapshot: snapshot)
-        .isNotEmpty ||
+    stalledGpBlockerFocusPeaceTargets(
+      game: game,
+      snapshot: snapshot,
+    ).isNotEmpty ||
+    stalledExpansionDistractionPeaceTargets(
+      game: game,
+      snapshot: snapshot,
+    ).isNotEmpty ||
+    atWarGpDistractionTribePeaceTargets(
+      game: game,
+      snapshot: snapshot,
+    ).isNotEmpty ||
+    multiFrontNonBlockerGpPeaceTargets(
+      game: game,
+      snapshot: snapshot,
+    ).isNotEmpty ||
+    criticalMultiFrontGpPeaceTargets(
+      game: game,
+      snapshot: snapshot,
+    ).isNotEmpty ||
+    criticalWeakGpSurvivalPeaceTargets(
+      game: game,
+      snapshot: snapshot,
+    ).isNotEmpty ||
+    weakHoldingsInvadableBlockerPeaceTargets(
+      game: game,
+      snapshot: snapshot,
+    ).isNotEmpty ||
+    mutualZeroRegimentGpStalematePeaceTargets(
+      game: game,
+      snapshot: snapshot,
+    ).isNotEmpty ||
+    stalledZeroRegimentAllFactionPeaceTargets(
+      game: game,
+      snapshot: snapshot,
+    ).isNotEmpty ||
+    stalledZeroRegimentGpPeaceTargets(
+      game: game,
+      snapshot: snapshot,
+    ).isNotEmpty ||
     mutualExhaustedBelowQuotaGpStalematePeaceTargets(
       game: game,
       snapshot: snapshot,
     ).isNotEmpty ||
     criticalOwHoldPeaceTargets(game: game, snapshot: snapshot).isNotEmpty ||
-    stalledBelowQuotaGpLeadPeaceTargets(game: game, snapshot: snapshot)
-        .isNotEmpty ||
+    stalledBelowQuotaGpLeadPeaceTargets(
+      game: game,
+      snapshot: snapshot,
+    ).isNotEmpty ||
     belowQuotaPeerGpPeaceTargets(game: game, snapshot: snapshot).isNotEmpty ||
     defaultStartGpPeaceTargets(game: game, snapshot: snapshot).isNotEmpty ||
-    defaultStartFutileMinorPeaceTargets(game: game, snapshot: snapshot)
-        .isNotEmpty ||
+    defaultStartFutileMinorPeaceTargets(
+      game: game,
+      snapshot: snapshot,
+    ).isNotEmpty ||
     nearQuotaHoldPeaceTargets(game: game, snapshot: snapshot).isNotEmpty ||
-    quotaMetBelowQuotaAtWarPeaceTargets(game: game, snapshot: snapshot)
-        .isNotEmpty ||
-    quotaMetFutileBelowQuotaGpPeaceTargets(game: game, snapshot: snapshot)
-        .isNotEmpty ||
+    quotaMetBelowQuotaAtWarPeaceTargets(
+      game: game,
+      snapshot: snapshot,
+    ).isNotEmpty ||
+    quotaMetFutileBelowQuotaGpPeaceTargets(
+      game: game,
+      snapshot: snapshot,
+    ).isNotEmpty ||
     unwinnableSoleGpFrontierPeaceTarget(game: game, snapshot: snapshot) !=
         null ||
     consolidateGainsSoleGpPeaceTarget(game: game, snapshot: snapshot) != null;
@@ -618,8 +619,14 @@ Iterable<String> _survivalGreatPowerPeaceTargets({
   required AIWorldSnapshot snapshot,
 }) sync* {
   yield* criticalWeakGpSurvivalPeaceTargets(game: game, snapshot: snapshot);
-  yield* stalledZeroRegimentAllFactionPeaceTargets(game: game, snapshot: snapshot);
-  yield* mutualZeroRegimentGpStalematePeaceTargets(game: game, snapshot: snapshot);
+  yield* stalledZeroRegimentAllFactionPeaceTargets(
+    game: game,
+    snapshot: snapshot,
+  );
+  yield* mutualZeroRegimentGpStalematePeaceTargets(
+    game: game,
+    snapshot: snapshot,
+  );
   yield* stalledZeroRegimentGpPeaceTargets(game: game, snapshot: snapshot);
   yield* mutualExhaustedBelowQuotaGpStalematePeaceTargets(
     game: game,
@@ -634,10 +641,16 @@ Iterable<String> _expandRatchetGreatPowerPeaceTargets({
 }) sync* {
   yield* stalledFutileGpPeaceTargets(game: game, snapshot: snapshot);
   yield* stalledGpBlockerFocusPeaceTargets(game: game, snapshot: snapshot);
-  yield* stalledExpansionDistractionPeaceTargets(game: game, snapshot: snapshot);
+  yield* stalledExpansionDistractionPeaceTargets(
+    game: game,
+    snapshot: snapshot,
+  );
   yield* multiFrontNonBlockerGpPeaceTargets(game: game, snapshot: snapshot);
   yield* criticalMultiFrontGpPeaceTargets(game: game, snapshot: snapshot);
-  yield* weakHoldingsInvadableBlockerPeaceTargets(game: game, snapshot: snapshot);
+  yield* weakHoldingsInvadableBlockerPeaceTargets(
+    game: game,
+    snapshot: snapshot,
+  );
   final strongerBlocker = stalledStrongerGpBlockerPeaceTarget(
     game: game,
     snapshot: snapshot,
@@ -678,12 +691,14 @@ Set<String> collectStalledGreatPowerPeaceTargets({
   final phaseRatchetPeace = switch (phase) {
     ObserverGoalPhase.develop => const <String>[],
     ObserverGoalPhase.colonial => atWarGpDistractionTribePeaceTargets(
-        game: game,
-        snapshot: snapshot,
-      ),
-    ObserverGoalPhase.expand || ObserverGoalPhase.colonialLite =>
-      _expandRatchetGreatPowerPeaceTargets(game: game, snapshot: snapshot)
-          .toList(),
+      game: game,
+      snapshot: snapshot,
+    ),
+    ObserverGoalPhase.expand ||
+    ObserverGoalPhase.colonialLite => _expandRatchetGreatPowerPeaceTargets(
+      game: game,
+      snapshot: snapshot,
+    ).toList(),
   };
   final targets = <String>{
     ...developPhaseGpPeaceTargets(game: game, snapshot: snapshot),
@@ -721,7 +736,10 @@ Set<String> collectStalledGreatPowerPeaceTargets({
   // covers the same stalemate at non-zero but critically low regiment counts
   // (3-regiment 0-treasury plateau) when no minor pivot remains.
   final zeroRegimentBlockerPeace = <String>{
-    ...mutualZeroRegimentGpStalematePeaceTargets(game: game, snapshot: snapshot),
+    ...mutualZeroRegimentGpStalematePeaceTargets(
+      game: game,
+      snapshot: snapshot,
+    ),
     ...stalledZeroRegimentGpPeaceTargets(game: game, snapshot: snapshot),
     ...mutualExhaustedBelowQuotaGpStalematePeaceTargets(
       game: game,
@@ -806,8 +824,7 @@ void _appendOfferPeaceIfMissing(
   final existing = diplo[fromGp] ?? const [];
   if (existing.any(
     (o) =>
-        o.type == DiplomaticOrderType.offerPeace &&
-        o.targetFactionId == toGp,
+        o.type == DiplomaticOrderType.offerPeace && o.targetFactionId == toGp,
   )) {
     return;
   }
