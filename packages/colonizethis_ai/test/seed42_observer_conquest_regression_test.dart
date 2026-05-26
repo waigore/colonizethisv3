@@ -77,9 +77,9 @@ void main() {
       );
     }
     },
-    skip:
-        'Partial AC #2509 S10: seed-42 turn-100 gate — gp3/gp4/gp5/gp6 still '
-        'below +3 OW vs turn-1 snapshot after peace-plumbing fixes (Refs #2509)',
     timeout: const Timeout(Duration(minutes: 15)),
+    skip:
+        'S7: gp1 still +0 OW after treasury-gate fix applied '
+        '(gp1=0, gp2=6, gp3=2, gp4=1, gp5=1, gp6=2)',
   );
 }
