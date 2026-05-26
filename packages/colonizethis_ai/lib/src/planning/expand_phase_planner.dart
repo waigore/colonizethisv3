@@ -258,6 +258,39 @@ bool expandIsGeographicPeerWarLock({
   return adjacentOwners.single == peerGpId;
 }
 
+/// Whether [planExpandEconomy] should suppress treasury-recovery cargo
+/// and widen the insufficient-regiment force-build arm (Refs #2847 § H5,
+/// § H3).
+///
+/// Fires when the active player owns zero New World provinces and the
+/// geographic peer-war lock predicate holds for the sole OW adjacent Great
+/// Power. Overseas cargo preference cannot deliver riches under EXPAND
+/// (NW colonial orders are structurally suppressed) when there is no NW
+/// ownership to receive deliveries.
+///
+/// Pure and deterministic — identical inputs always yield identical
+/// results (Refs #2509 Must-have #7).
+bool expandIsGeographicPeerWarLockNoNwTreasuryRecovery({
+  required Game game,
+  required AIWorldSnapshot snapshot,
+}) {
+  if (snapshot.colonial.newWorldProvincesOwned > 0) {
+    return false;
+  }
+  final adjacentOwners = snapshot.conquest.adjacentOwnerFactionIdsSorted;
+  if (adjacentOwners.length != 1) {
+    return false;
+  }
+  final peerGpId = adjacentOwners.single;
+  if (game.playerById(peerGpId) == null) {
+    return false;
+  }
+  return expandIsGeographicPeerWarLock(
+    snapshot: snapshot,
+    peerGpId: peerGpId,
+  );
+}
+
 /// GP owning the most invadable Old World provinces (frontier blocker).
 ///
 /// Public entry for the phase dispatcher and orchestrator wiring (Refs
@@ -1281,11 +1314,16 @@ class ExpandEconomyPlan {
 ///     and non-empty invadable OW frontier and effective treasury
 ///     ≥ cheapest regiment cost) holds.
 ///   - `boostTreasuryRecoveryCargo: true` when arm C
-///     (effective treasury < cheapest regiment cost) holds. Composes
-///     with arm A: a GP with `regimentCount == 0` and effective
-///     treasury below the cheapest cost gets **both** flags set, so
-///     the orchestrator forces the build attempt and also boosts
-///     cargo for the next turn's riches delivery.
+///     (effective treasury < cheapest regiment cost) holds unless
+///     [expandIsGeographicPeerWarLockNoNwTreasuryRecovery] is true
+///     (Refs #2847 § H5 — futile overseas cargo under zero NW
+///     ownership + geographic peer-war lock). Composes with arm A when
+///     arm C is not suppressed.
+///   - `forceCheapestRegimentBuild: true` when arm D holds (Refs #2847
+///     § H3): geographic peer-war lock with zero NW ownership,
+///     `0 < regimentCount < kBelowQuotaPeaceMinRegimentsBeforeDeclareWar`,
+///     and non-empty invadable OW frontier — without the arm-B treasury
+///     gate (build pipeline affordability unchanged).
 ///
 /// The function is pure and deterministic — identical inputs always
 /// yield identical [ExpandEconomyPlan]s (Refs #2509 Must-have #7).
@@ -1321,15 +1359,28 @@ ExpandEconomyPlan planExpandEconomy({
       hasInvadable &&
       effectiveTreasury >= cheapest;
 
+  final futilityLock = expandIsGeographicPeerWarLockNoNwTreasuryRecovery(
+    game: game,
+    snapshot: snapshot,
+  );
+
+  // Arm D (Refs #2847 § H3): trap-band force rebuild without treasury
+  // gate when overseas cargo recovery is futile.
+  final armD = futilityLock &&
+      regimentCount > 0 &&
+      regimentCount < kBelowQuotaPeaceMinRegimentsBeforeDeclareWar &&
+      hasInvadable;
+
   // Arm C: effective treasury below cheapest regiment cost (independent
   // of regimentCount per the spec literal wording — boosts cargo so a
   // GP in EXPAND with low cash always benefits from delivering riches,
   // matching the SPEC/ai/ai-architecture.md "Treasury recovery cargo"
-  // intent).
-  final armC = effectiveTreasury < cheapest;
+  // intent). Suppressed under geographic peer-war lock with zero NW
+  // ownership (Refs #2847 § H5).
+  final armC = effectiveTreasury < cheapest && !futilityLock;
 
   return ExpandEconomyPlan(
-    forceCheapestRegimentBuild: armA || armB,
+    forceCheapestRegimentBuild: armA || armB || armD,
     boostTreasuryRecoveryCargo: armC,
   );
 }
