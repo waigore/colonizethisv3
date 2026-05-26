@@ -457,6 +457,16 @@ Future<void> e2eAwaitCivilianWorkMenuMounted(
 }
 
 /// Taps the first visible **Assign** in the civilian panel work menu (GitHub #2336 H9).
+///
+/// Settles + taps the resolved Assign via [e2eEnsureVisibleAndTapHitTestable]
+/// so the call site picks up the shared `ensureVisible` + `hitTestable()`
+/// resolve recipe (the same path the panel-opener rail/marker taps already
+/// use). The inline `await tester.pump();` between `ensureVisible` and
+/// `tap` is removed because the lifted helper does not insert a settle
+/// frame; the shared helper instead resolves `hitTestable()` first and
+/// falls back to the raw finder, which is the canonical AC5 / AC10
+/// adaptive-pre-tap recipe documented in the e2e-ui-stability rule
+/// (Refs GitHub #2336 AC5 / AC10 / Bottleneck 6).
 Future<void> e2eTapFirstAssignInCivilianPanel(WidgetTester tester) async {
   final root = find.byKey(kCtE2ECivilianPanelRootKey);
   final listView = find.descendant(of: root, matching: find.byType(ListView));
@@ -474,9 +484,15 @@ Future<void> e2eTapFirstAssignInCivilianPanel(WidgetTester tester) async {
     120,
     scrollable: panelScrollable,
   );
-  await tester.ensureVisible(firstAssign);
-  await tester.pump();
-  await tester.tap(firstAssign);
+  final didTap = await e2eEnsureVisibleAndTapHitTestable(tester, firstAssign);
+  expect(
+    didTap,
+    isTrue,
+    reason:
+        'First Assign in civilian panel resolved to zero elements after the '
+        'findsWidgets guard passed; the downstream work-menu wait would race '
+        'a not-yet-tapped Assign button.',
+  );
   // Lifted post-tap work-menu wait: see [e2eAwaitCivilianWorkMenuMounted] for
   // the canonical label set and 5 s timeout. The default phase name preserves
   // the legacy inline `wait_until_civilian_work_menu` label byte-for-byte.
@@ -591,9 +607,15 @@ Future<void> e2eTapAssignOnCivilianRowWithTitle(
       continue;
     }
     final assignHit = assign.first;
-    await tester.ensureVisible(assignHit);
-    await tester.pump();
-    await tester.tap(assignHit);
+    final didTap = await e2eEnsureVisibleAndTapHitTestable(tester, assignHit);
+    expect(
+      didTap,
+      isTrue,
+      reason:
+          'Assign on civilian row "$unitTypeTitle" resolved to zero elements '
+          'after the per-row Assign descendant guard passed; the downstream '
+          'work-menu wait would race a not-yet-tapped Assign button.',
+    );
     // Lifted post-tap work-menu wait: see [e2eAwaitCivilianWorkMenuMounted].
     // The legacy `wait_until_civilian_work_menu_row` phase label is preserved
     // explicitly so the title-scoped sibling helper stays distinguishable in
