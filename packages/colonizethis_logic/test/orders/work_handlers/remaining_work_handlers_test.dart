@@ -219,7 +219,7 @@ void main() {
         hasValidTarget: true,
         orderTarget: kWorkTargetBuildImprovement,
         tileState: TileMapState(),
-        provinceById: (_) => null,
+        provincesById: const {},
         canAffordMaterialCost: (_) => true,
         deductMaterialCost: (_) {},
         updateUnit: (_, __) => fail('no update'),
