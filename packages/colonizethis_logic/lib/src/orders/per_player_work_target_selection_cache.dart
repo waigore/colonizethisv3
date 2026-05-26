@@ -8,6 +8,7 @@ import '../diplomacy/diplomacy_resolver.dart';
 import '../world/player_view.dart';
 import '../world/unit_lookup.dart';
 import 'incremental_candidate_validator.dart';
+import 'order_resolution_context.dart';
 import 'order_suggestion_context.dart';
 import 'order_suggestion_work_tile_keys.dart';
 
@@ -100,8 +101,7 @@ class PerPlayerWorkTargetSelectionCache {
       playerId: s.playerId,
       baseOrders: s.currentOrders,
       tileMapByRegion: s.tileMapByRegion,
-      view: s.playerView,
-      unitsById: s.game.worldState.allUnitsById,
+      resolution: orderResolutionContextFromView(s.playerView, s.game),
       factionMembership: DiplomacyFactionMembership.from(s.game),
     );
   }

@@ -10,6 +10,7 @@ import '../world/province_lookup.dart';
 import '../world/unit_lookup.dart';
 import 'bundled_civilian_work_order.dart';
 import 'incremental_candidate_validator.dart';
+import 'order_resolution_context.dart';
 import 'order_suggestion_helpers.dart';
 import 'order_suggestion_work_tile_keys.dart';
 import 'order_suggestion_work_tile_prefilter.dart';
@@ -148,8 +149,7 @@ List<WorkOrder> suggestWorkOrders(
         playerId: playerId,
         baseOrders: currentOrders,
         tileMapByRegion: tileMapByRegion,
-        view: view,
-        unitsById: game.worldState.allUnitsById,
+        resolution: orderResolutionContextFromView(view, game),
         factionMembership: factionMembership,
       );
 

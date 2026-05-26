@@ -29,7 +29,7 @@ sanctions:
     issue: https://github.com/waigore/colonizethisv3/issues/2278
 
   - path: packages/colonizethis_logic/lib/src/orders/order_suggestion_move_army.dart
-    line: 337
+    line: 341
     rationale: Army move picker fallback builds owned-province ids across regions when PlayerView is absent.
     spec: SPEC/program/logic-dual-region-province-access.md
     issue: https://github.com/waigore/colonizethisv3/issues/2394
@@ -58,7 +58,7 @@ sanctions:
     issue: https://github.com/waigore/colonizethisv3/issues/2278
 
   - path: packages/colonizethis_logic/lib/src/orders/order_suggestion_work.dart
-    line: 43
+    line: 44
     rationale: merchantPurchaseLandCandidateTileKeys walks all provinces once per suggestWorkOrders pass when merchants are present (foreign-owned resource tiles).
     spec: SPEC/program/logic-dual-region-province-access.md
     issue: https://github.com/waigore/colonizethisv3/issues/2394

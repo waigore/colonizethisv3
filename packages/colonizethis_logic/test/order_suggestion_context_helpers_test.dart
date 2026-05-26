@@ -1,6 +1,7 @@
 import 'package:colonizethis_test/test.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
+import 'package:colonizethis_logic/src/orders/order_resolution_context.dart';
 import 'package:colonizethis_logic/src/orders/order_suggestion_context.dart';
 import 'package:colonizethis_logic/src/world/player_view.dart';
 import 'package:colonizethis_logic/src/world/unit_lookup.dart';
@@ -192,8 +193,7 @@ void main() {
           'gp1',
           const Orders(),
           candidate,
-          view: sharedView,
-          unitsById: sharedUnits,
+          resolution: orderResolutionContextFromView(sharedView, game, unitsById: sharedUnits),
         );
         expect(sharedPath, defaultPath);
         expect(defaultPath, isTrue);
@@ -233,8 +233,7 @@ void main() {
           topology: topology,
           playerId: 'gp1',
           baseOrders: baseOrders,
-          view: sharedView,
-          unitsById: sharedUnits,
+          resolution: orderResolutionContextFromView(sharedView, game, unitsById: sharedUnits),
         );
         expect(incrementalCandidateValidatorBuildCountForTests, 1);
 
@@ -306,8 +305,7 @@ void main() {
           topology: topology,
           playerId: 'gp1',
           baseOrders: baseOrders,
-          view: sharedView,
-          unitsById: sharedUnits,
+          resolution: orderResolutionContextFromView(sharedView, game, unitsById: sharedUnits),
         );
         expect(
           isDiplomaticOrderAcceptedWithValidator(validator, candidate),
@@ -317,8 +315,7 @@ void main() {
             'gp1',
             baseOrders,
             candidate,
-            view: sharedView,
-            unitsById: sharedUnits,
+            resolution: orderResolutionContextFromView(sharedView, game, unitsById: sharedUnits),
           ),
         );
       },

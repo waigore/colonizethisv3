@@ -136,7 +136,7 @@ void main() {
             topology: topology,
             playerId: gp,
             basePrefix: const Orders(),
-            view: foreignView,
+            resolution: orderResolutionContextFromView(foreignView, game),
           ),
           throwsA(isA<AssertionError>()),
         );

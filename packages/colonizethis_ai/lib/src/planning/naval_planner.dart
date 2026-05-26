@@ -1,5 +1,7 @@
 import 'dart:math' as math;
 
+import 'package:colonizethis_logic/order_suggestion_api.dart';
+
 import 'colonial_naval_scoring.dart';
 import 'planning_imports.dart';
 import 'observer_goal_phase.dart';
@@ -98,13 +100,13 @@ Orders runNavalPlanner({
 
   var o = ctx.orders;
 
-  final unitsById = ctx.game.worldState.allUnitsById;
+  final resolution = orderResolutionContextFromView(ctx.view, ctx.game);
   final navalMoveCandidates = ctx.suggestionAPI.suggestNavalMoveOrders(
     ctx.view,
     ctx.game,
     ctx.topology,
     o,
-    unitsById: unitsById,
+    resolution: resolution,
   );
   _log.d(
     'naval move eval nationId=${ctx.nationId} '
@@ -140,7 +142,7 @@ Orders runNavalPlanner({
     ctx.game,
     ctx.topology,
     o,
-    unitsById: unitsById,
+    resolution: resolution,
   );
   _log.d(
     'naval mission eval nationId=${ctx.nationId} '

@@ -12,6 +12,7 @@ import '../constants.dart';
 import '../diplomacy/diplomacy_resolver.dart';
 import '../orders/draft_orders_mutations.dart';
 import '../orders/order_suggestion.dart';
+import '../orders/order_resolution_context.dart';
 import '../orders/order_suggestion_context.dart';
 import '../world/army_migration.dart';
 import '../world/player_view.dart';
@@ -272,7 +273,7 @@ Orders generateOrdersWithSimpleHeuristics(
   // iteration, a single validator wraps these around the up-to-date
   // [current] basePrefix and feeds all four suggest families. Refs #2394;
   // SPEC/program/order-suggestions.md § Throughput bounds.
-  final unitsById = g.worldState.allUnitsById;
+  final passResolution = orderResolutionContextFromView(view, g);
 
   /// Max iterations per player per turn (cap to avoid unbounded loops).
   /// Documented in SPEC/program/sim-game-default-ai.md.
@@ -283,8 +284,7 @@ Orders generateOrdersWithSimpleHeuristics(
     playerId: player.id,
     baseOrders: current,
     tileMapByRegion: tileMapByRegion,
-    view: view,
-    unitsById: unitsById,
+    resolution: passResolution,
     factionMembership: factionMembership,
   );
   for (var i = 0; i < maxIterationsPerPlayer; i++) {

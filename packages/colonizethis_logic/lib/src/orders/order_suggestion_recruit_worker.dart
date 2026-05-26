@@ -5,6 +5,7 @@ import '../diplomacy/diplomacy_resolver.dart';
 import '../world/player_view.dart';
 import '../world/unit_lookup.dart';
 import 'incremental_candidate_validator.dart';
+import 'order_resolution_context.dart';
 import 'order_suggestion_context.dart';
 
 /// Suggests `RecruitWorkerOrder` candidates that are affordable and valid
@@ -42,8 +43,13 @@ List<RecruitWorkerOrder> suggestRecruitWorkerOrders(
         sharedCandidateValidator.playerId == playerId,
     'sharedCandidateValidator playerId must match view.playerId',
   );
-  final effectiveUnits =
-      sharedCandidateValidator?.unitsById ?? game.worldState.allUnitsById;
+  final effectiveResolution = sharedCandidateValidator != null
+      ? (
+          view: sharedCandidateValidator.view,
+          unitsById: sharedCandidateValidator.unitsById,
+          provinceById: sharedCandidateValidator.view.provincesById,
+        )
+      : orderResolutionContextFromView(view, game);
   final candidateValidator =
       sharedCandidateValidator ??
       buildIncrementalCandidateValidator(
@@ -51,8 +57,7 @@ List<RecruitWorkerOrder> suggestRecruitWorkerOrders(
         topology: topology,
         playerId: playerId,
         baseOrders: currentOrders,
-        view: view,
-        unitsById: effectiveUnits,
+        resolution: effectiveResolution,
         factionMembership: DiplomacyFactionMembership.from(game),
       );
 
@@ -102,8 +107,7 @@ bool isRecruitWorkerOrderAccepted(
   Orders baseOrders,
   RecruitWorkerOrder candidate, {
   IncrementalCandidateValidator? sharedCandidateValidator,
-  PlayerView? view,
-  Map<String, Unit>? unitsById,
+  OrderResolutionContext? resolution,
   DiplomacyFactionMembership? factionMembership,
 }) {
   final validator = incrementalValidatorForCandidateProbe(
@@ -111,8 +115,7 @@ bool isRecruitWorkerOrderAccepted(
     topology: topology,
     playerId: playerId,
     baseOrders: baseOrders,
-    view: view,
-    unitsById: unitsById,
+    resolution: resolution,
     factionMembership: factionMembership,
     sharedCandidateValidator: sharedCandidateValidator,
   );

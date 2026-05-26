@@ -6,6 +6,7 @@ import '../diplomacy/diplomacy_resolver.dart';
 import '../economy/economy_riches_to_treasury.dart';
 import '../world/player_view.dart';
 import '../world/unit_lookup.dart';
+import 'order_resolution_context.dart';
 import 'order_validators.dart';
 import 'unit_type_helpers.dart';
 import 'validator_bundle.dart';
@@ -41,20 +42,18 @@ class IncrementalCandidateValidator {
   /// build cost across many candidate probes (the AI suggestion API enumerates
   /// many candidates per call).
   ///
-  /// When the caller already has a `PlayerView` and/or units-by-id map computed
-  /// for the same `(game, topology, playerId)` tuple, it may pass them via
-  /// [view] / [unitsById] to skip the embedded `buildPlayerView` and
-  /// `unitsByIdFromWorld` scans (Refs #2394, `SPEC/program/order-suggestions.md`
-  /// § Throughput bounds). The shared instances must be built from the **same**
-  /// inputs as the validator; behavior is undefined otherwise.
+  /// When the caller already built [resolution] for this suggestion pass, pass
+  /// it to skip embedded `buildPlayerView` and unit-map scans (Refs #2394,
+  /// #2836; `SPEC/program/order-suggestions.md` § Throughput bounds). The
+  /// shared instance must be built from the **same** inputs as the validator;
+  /// behavior is undefined otherwise.
   factory IncrementalCandidateValidator.forPlayer({
     required Game game,
     required MapTopology topology,
     required String playerId,
     required Orders basePrefix,
     Map<String, TileMapResult>? tileMapByRegion,
-    PlayerView? view,
-    Map<String, Unit>? unitsById,
+    OrderResolutionContext? resolution,
 
     /// When callers rebuild this validator for many `basePrefix` snapshots over
     /// the same [game] (for example simple-heuristic iterations), supplying the
@@ -62,12 +61,19 @@ class IncrementalCandidateValidator {
     /// work. Must remain valid for [game] for the validator lifetime (Refs #2394).
     DiplomacyFactionMembership? factionMembership,
   }) {
+    final ctx =
+        resolution ??
+        buildOrderResolutionContext(
+          game: game,
+          topology: topology,
+          playerId: playerId,
+        );
     assert(
-      view == null || view.playerId == playerId,
-      'shared PlayerView playerId must match validator playerId',
+      ctx.view.playerId == playerId,
+      'OrderResolutionContext view playerId must match validator playerId',
     );
-    final actualView = view ?? buildPlayerView(game, topology, playerId);
-    final actualUnitsById = unitsById ?? game.worldState.allUnitsById;
+    final actualView = ctx.view;
+    final actualUnitsById = ctx.unitsById;
     final diplomaticOrders =
         basePrefix.diplomaticOrdersByPlayerId[playerId] ??
         const <DiplomaticOrder>[];
@@ -94,8 +100,11 @@ class IncrementalCandidateValidator {
       playerId: playerId,
       basePrefix: basePrefix,
       tileMapByRegion: tileMapByRegion,
-      view: view,
-      unitsById: unitsById,
+      resolution: (
+        view: view,
+        unitsById: unitsById,
+        provinceById: view.provincesById,
+      ),
       factionMembership: prefetchedFactionMembership,
     );
   }

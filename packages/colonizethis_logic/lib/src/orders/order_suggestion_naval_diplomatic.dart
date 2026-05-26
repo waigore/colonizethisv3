@@ -9,8 +9,26 @@ import '../world/province_lookup.dart';
 import '../world/topology_helpers.dart';
 import '../world/unit_lookup.dart';
 import 'incremental_candidate_validator.dart';
+import 'order_resolution_context.dart';
 import 'order_suggestion_context.dart';
 import 'order_suggestion_helpers.dart';
+
+OrderResolutionContext _effectiveOrderResolutionContext({
+  required PlayerView view,
+  required Game game,
+  OrderResolutionContext? resolution,
+  IncrementalCandidateValidator? sharedCandidateValidator,
+}) {
+  if (resolution != null) return resolution;
+  if (sharedCandidateValidator != null) {
+    return (
+      view: sharedCandidateValidator.view,
+      unitsById: sharedCandidateValidator.unitsById,
+      provinceById: sharedCandidateValidator.view.provincesById,
+    );
+  }
+  return orderResolutionContextFromView(view, game);
+}
 
 void _addAcceptedSeaZoneCandidates({
   required IncrementalCandidateValidator candidateValidator,
@@ -112,7 +130,7 @@ List<NavalMoveOrder> suggestNavalMoveOrders(
   Game game,
   MapTopology topology,
   Orders currentOrders, {
-  Map<String, Unit>? unitsById,
+  OrderResolutionContext? resolution,
   IncrementalCandidateValidator? sharedCandidateValidator,
 }) {
   orderSuggestionLog.d('suggestNavalMoveOrders player=${view.playerId}');
@@ -139,12 +157,12 @@ List<NavalMoveOrder> suggestNavalMoveOrders(
         sharedCandidateValidator.playerId == playerId,
     'sharedCandidateValidator playerId must match view.playerId',
   );
-  // Reuse the caller-supplied [view] and a one-time units index so we do not
-  // pay redundant `buildPlayerView` / `unitsByIdFromWorld` scans (Refs #2394).
-  final effectiveUnits =
-      unitsById ??
-      sharedCandidateValidator?.unitsById ??
-      game.worldState.allUnitsById;
+  final effectiveResolution = _effectiveOrderResolutionContext(
+    view: view,
+    game: game,
+    resolution: resolution,
+    sharedCandidateValidator: sharedCandidateValidator,
+  );
   final candidateValidator =
       sharedCandidateValidator ??
       IncrementalCandidateValidator.forPlayer(
@@ -152,8 +170,7 @@ List<NavalMoveOrder> suggestNavalMoveOrders(
         topology: topology,
         playerId: playerId,
         basePrefix: currentOrders,
-        view: view,
-        unitsById: effectiveUnits,
+        resolution: effectiveResolution,
       );
 
   final homeFleetId = homeFleetIdFor(playerId);
@@ -216,7 +233,7 @@ List<NavalMissionOrder> suggestNavalMissionOrders(
   Game game,
   MapTopology topology,
   Orders currentOrders, {
-  Map<String, Unit>? unitsById,
+  OrderResolutionContext? resolution,
   IncrementalCandidateValidator? sharedCandidateValidator,
 }) {
   orderSuggestionLog.d('suggestNavalMissionOrders player=${view.playerId}');
@@ -237,11 +254,12 @@ List<NavalMissionOrder> suggestNavalMissionOrders(
         sharedCandidateValidator.playerId == playerId,
     'sharedCandidateValidator playerId must match view.playerId',
   );
-  // Reuse [view] and one units snapshot (Refs #2394).
-  final effectiveUnits =
-      unitsById ??
-      sharedCandidateValidator?.unitsById ??
-      game.worldState.allUnitsById;
+  final effectiveResolution = _effectiveOrderResolutionContext(
+    view: view,
+    game: game,
+    resolution: resolution,
+    sharedCandidateValidator: sharedCandidateValidator,
+  );
   final candidateValidator =
       sharedCandidateValidator ??
       IncrementalCandidateValidator.forPlayer(
@@ -249,8 +267,7 @@ List<NavalMissionOrder> suggestNavalMissionOrders(
         topology: topology,
         playerId: playerId,
         basePrefix: currentOrders,
-        view: view,
-        unitsById: effectiveUnits,
+        resolution: effectiveResolution,
       );
 
   for (final fleet in game.worldState.fleets) {
@@ -456,10 +473,11 @@ List<DiplomaticOrder> suggestDiplomaticOrders(
         sharedCandidateValidator.playerId == playerId,
     'sharedCandidateValidator playerId must match view.playerId',
   );
-  // One world scan for the suggestion pass: every diplomatic probe shares the
-  // same `(game, topology, playerId)` view/units snapshot (Refs #2394).
-  final unitsByIdForDiplomatic =
-      sharedCandidateValidator?.unitsById ?? game.worldState.allUnitsById;
+  final diplomaticResolution = _effectiveOrderResolutionContext(
+    view: view,
+    game: game,
+    sharedCandidateValidator: sharedCandidateValidator,
+  );
 
   final unionTargets = <String>{
     ...knownTargets,
@@ -481,8 +499,7 @@ List<DiplomaticOrder> suggestDiplomaticOrders(
           playerId: playerId,
           baseOrders: workingOrders,
           tileMapByRegion: tileMapByRegion,
-          view: view,
-          unitsById: unitsByIdForDiplomatic,
+          resolution: diplomaticResolution,
           factionMembership: factionMembership,
         );
   for (final targetId in sortedTargetIds) {
@@ -611,8 +628,11 @@ List<DiplomaticOrder> suggestDeclareWarOrders(
         sharedCandidateValidator.playerId == playerId,
     'sharedCandidateValidator playerId must match view.playerId',
   );
-  final unitsByIdForDiplomatic =
-      sharedCandidateValidator?.unitsById ?? game.worldState.allUnitsById;
+  final declareWarResolution = _effectiveOrderResolutionContext(
+    view: view,
+    game: game,
+    sharedCandidateValidator: sharedCandidateValidator,
+  );
 
   final sortedTargetIds = knownTargetIds.toList()..sort();
   var passValidator = sharedCandidateValidator != null
@@ -625,8 +645,7 @@ List<DiplomaticOrder> suggestDeclareWarOrders(
           playerId: playerId,
           baseOrders: currentOrders,
           tileMapByRegion: tileMapByRegion,
-          view: view,
-          unitsById: unitsByIdForDiplomatic,
+          resolution: declareWarResolution,
           factionMembership: factionMembership,
         );
 
