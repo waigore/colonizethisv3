@@ -408,6 +408,65 @@ Future<void> e2eTapFirstAssignInCivilianPanel(WidgetTester tester) async {
   );
 }
 
+/// Taps a civilian work-order label (for example `Build improvement`,
+/// `Prospect`, or `Explore`) inside the open civilian-panel work menu, using
+/// [e2eEnsureVisibleAndTapHitTestable] so the tap fires from a canonical
+/// hit-testable position even when the label is rendered slightly off-screen
+/// by a transient overlay or a small surface.
+///
+/// Replaces the legacy raw `tester.tap(find.text(workOrderLabel))` taps in
+/// `new_game_full_turn_e2e_test.dart` that ran right after
+/// [e2eTapFirstAssignInCivilianPanel] / [e2eTapAssignOnCivilianRowWithTitle].
+/// Those tap-Assign helpers only guarantee that *one* of
+/// `{Build improvement, Prospect, Explore}` is hit-testable on return — the
+/// **specific** label the caller wants may still be obscured (e.g. behind a
+/// soft keyboard, a transient bottom sheet, or a viewport that needs scrolling)
+/// at the instant of the tap. Wrapping the tap in this helper enforces the
+/// e2e-ui-stability rule's *verify visibility before interaction* directive
+/// at the same call sites that previously skipped it. Refs GitHub #2336 AC1 /
+/// AC2 / AC10; `colonizethis-e2e-ui-stability.mdc`.
+///
+/// Contract:
+///
+/// - Throws [TestFailure] via [expect] when no `Text` widget matching
+///   [workOrderLabel] is mounted at all, so the surrounding scenario fails
+///   fast at the offending step rather than burning the downstream
+///   work-tile timeout against an unmounted work menu (the same fail-fast
+///   contract documented on [e2eTapFirstAssignInCivilianPanel]).
+/// - Delegates to [e2eEnsureVisibleAndTapHitTestable], which best-effort
+///   scrolls the label into view, prefers the `hitTestable()` resolution,
+///   and falls back to the raw finder when no hit-testable element resolves
+///   (the same path the panel-opener rail/marker taps already use).
+/// - Throws [TestFailure] when [e2eEnsureVisibleAndTapHitTestable] reports
+///   no tap was issued (zero-element resolution after the presence assertion
+///   passes — only possible under unusual race conditions where the label
+///   vanishes between the assertion and the resolve). This keeps the helper
+///   sound for callers that rely on a tap actually firing before the
+///   downstream work-tile pick begins.
+Future<void> e2eTapCivilianWorkOrderLabel(
+  WidgetTester tester,
+  String workOrderLabel,
+) async {
+  final label = find.text(workOrderLabel);
+  expect(
+    label,
+    findsWidgets,
+    reason:
+        'Civilian work-order label "$workOrderLabel" not found in the open '
+        'work menu. Either the preceding Assign tap did not mount the work '
+        'menu, or the label name has drifted from the production scaffold.',
+  );
+  final didTap = await e2eEnsureVisibleAndTapHitTestable(tester, label);
+  expect(
+    didTap,
+    isTrue,
+    reason:
+        'Civilian work-order label "$workOrderLabel" was present but the '
+        'shared ensureVisible/hit-testable tap path issued no tap; the '
+        'downstream work-tile pick would race a not-yet-tapped label.',
+  );
+}
+
 /// Taps **Assign** on a [ListTile] whose title is exactly [unitTypeTitle] (GitHub #2336 H9).
 Future<void> e2eTapAssignOnCivilianRowWithTitle(
   WidgetTester tester,
