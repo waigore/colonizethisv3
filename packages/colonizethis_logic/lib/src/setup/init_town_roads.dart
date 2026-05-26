@@ -130,7 +130,7 @@ Game applyInitTownRoadsToCapitals({
   logicLog.i(
     'init town roads raised $_initTownRoadLevel on ${toRaise.length} tile(s)',
   );
-  return game.updateWorldState((ws) => ws.copyWith(tileState: tileState));
+  return game.withTileState(tileState);
 }
 
 Map<String, String> _coordToTileKey(WorldState ws, String regionId) {

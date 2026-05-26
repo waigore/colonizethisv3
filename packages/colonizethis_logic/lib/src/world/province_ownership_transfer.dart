@@ -6,6 +6,7 @@ import 'army_migration.dart';
 import 'civilian_tile_occupancy.dart';
 import 'civilian_ownership_legality.dart';
 import 'fog_resolution.dart';
+import 'game_world_mutations.dart';
 import 'province_lookup.dart';
 import 'unit_lookup.dart';
 
@@ -266,7 +267,7 @@ _applyCanonicalSingleProvinceOwnershipTransferFromResolved(
   );
   nextWs = nextWs.updateRegionById(regionId, (_) => newRegion);
 
-  var nextGame = game.copyWith(worldState: nextWs);
+  var nextGame = game.withWorldState(nextWs);
 
   final visOutcome = applyProvinceOwnershipChangeVisibility(
     nextGame,

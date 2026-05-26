@@ -2,29 +2,16 @@ import 'dart:collection';
 
 import 'package:colonizethis_data/colonizethis_data.dart';
 
+import '../utils/expando_index.dart';
+
 /// Topology helpers shared by movement and connectivity. SPEC/game/map-topology.md.
 ///
 /// `MapTopology` is immutable (const constructor, final fields), so per-topology
-/// node-id partitions are cached via [Expando] keyed on the topology instance.
-/// Cached sets are returned as `UnmodifiableSetView` so callers cannot mutate
-/// the cached entry and so leak read-only semantics across call sites
-/// (`packages/colonizethis_logic` hot paths: connectivity, naval moves, fog).
-/// Cache entries are garbage-collected together with their topology.
-
-final Expando<Set<String>> _provinceNodeIdsCache =
-    Expando<Set<String>>('topology.provinceNodeIds');
-
-final Expando<Map<String, Set<String>>> _provinceNodeIdsByRegionCache =
-    Expando<Map<String, Set<String>>>('topology.provinceNodeIdsByRegion');
-
-final Expando<Set<String>> _seaZoneNodeIdsCache =
-    Expando<Set<String>>('topology.seaZoneNodeIds');
-
-final Expando<bool> _topologyUsesPrefixedIdsCache =
-    Expando<bool>('topology.usesPrefixedIds');
-
-final Expando<Map<String, MapTopology>> _topologyByRegionSubgraphCache =
-    Expando<Map<String, MapTopology>>('topology.byRegionSubgraph');
+/// node-id partitions are cached via [ExpandoIndex] keyed on the topology
+/// instance. Cached sets are returned as `UnmodifiableSetView` so callers
+/// cannot mutate the cached entry and so leak read-only semantics across call
+/// sites (`packages/colonizethis_logic` hot paths: connectivity, naval moves,
+/// fog). Cache entries are garbage-collected together with their topology.
 
 Set<String> _computeProvinceNodeIds(MapTopology topology) {
   final out = <String>{};
@@ -54,35 +41,63 @@ Map<String, Set<String>> _computeProvinceNodeIdsByRegion(MapTopology topology) {
   };
 }
 
+final ExpandoIndex<MapTopology, Set<String>> _provinceNodeIdsCache =
+    ExpandoIndex<MapTopology, Set<String>>(
+      'topology.provinceNodeIds',
+      _computeProvinceNodeIds,
+    );
+
+final ExpandoIndex<MapTopology, Map<String, Set<String>>>
+_provinceNodeIdsByRegionCache =
+    ExpandoIndex<MapTopology, Map<String, Set<String>>>(
+      'topology.provinceNodeIdsByRegion',
+      _computeProvinceNodeIdsByRegion,
+    );
+
+final ExpandoIndex<MapTopology, Set<String>> _seaZoneNodeIdsCache =
+    ExpandoIndex<MapTopology, Set<String>>(
+      'topology.seaZoneNodeIds',
+      _computeSeaZoneNodeIds,
+    );
+
+final ExpandoIndex<MapTopology, bool> _topologyUsesPrefixedIdsCache =
+    ExpandoIndex<MapTopology, bool>(
+      'topology.usesPrefixedIds',
+      (topology) => topology.nodes.any((n) => n.id.contains('|')),
+    );
+
+/// Outer cache for per-`(MapTopology, regionId)` subgraphs. The inner
+/// `Map<String, MapTopology>` is built lazily and entries are filled
+/// progressively by [topologyForRegion]; the [ExpandoIndex] only guarantees
+/// the outer holder exists per topology instance.
+final ExpandoIndex<MapTopology, Map<String, MapTopology>>
+_topologyByRegionSubgraphCache =
+    ExpandoIndex<MapTopology, Map<String, MapTopology>>(
+      'topology.byRegionSubgraph',
+      (_) => <String, MapTopology>{},
+    );
+
 /// All province node ids in [topology]. Cached per topology instance; the
 /// returned set is unmodifiable.
-Set<String> provinceNodeIds(MapTopology topology) {
-  return _provinceNodeIdsCache[topology] ??= _computeProvinceNodeIds(topology);
-}
+Set<String> provinceNodeIds(MapTopology topology) =>
+    _provinceNodeIdsCache.get(topology);
 
 /// Province node ids in [regionId] in [topology]. Cached per topology instance;
 /// the returned set is unmodifiable. Returns an empty set when no provinces
 /// exist for the region.
 Set<String> provinceNodeIdsForRegion(MapTopology topology, String regionId) {
-  final byRegion = _provinceNodeIdsByRegionCache[topology] ??=
-      _computeProvinceNodeIdsByRegion(topology);
+  final byRegion = _provinceNodeIdsByRegionCache.get(topology);
   return byRegion[regionId] ?? const <String>{};
 }
 
 /// True when any topology node id uses prefixed form (regionId|localId).
-bool topologyUsesPrefixedIds(MapTopology topology) {
-  final cached = _topologyUsesPrefixedIdsCache[topology];
-  if (cached != null) return cached;
-  final computed = topology.nodes.any((n) => n.id.contains('|'));
-  _topologyUsesPrefixedIdsCache[topology] = computed;
-  return computed;
-}
+bool topologyUsesPrefixedIds(MapTopology topology) =>
+    _topologyUsesPrefixedIdsCache.get(topology);
 
 /// All sea zone node ids in [topology]. Cached per topology instance; the
 /// returned set is unmodifiable.
-Set<String> seaZoneNodeIds(MapTopology topology) {
-  return _seaZoneNodeIdsCache[topology] ??= _computeSeaZoneNodeIds(topology);
-}
+Set<String> seaZoneNodeIds(MapTopology topology) =>
+    _seaZoneNodeIdsCache.get(topology);
 
 /// Sea zones reachable from [startSeaZoneIds] by following S–S edges in [topology].
 /// SPEC/game/map-topology.md, capital-and-connectivity § Sea paths.
@@ -163,11 +178,9 @@ MapTopology topologyForRegion(
 }) {
   final override = topologyByRegion?[regionId];
   if (override != null) return override;
-  final cached = _topologyByRegionSubgraphCache[base];
-  if (cached != null) {
-    final hit = cached[regionId];
-    if (hit != null) return hit;
-  }
+  final byRegion = _topologyByRegionSubgraphCache.get(base);
+  final hit = byRegion[regionId];
+  if (hit != null) return hit;
   final regionNodes = <TopologyNode>[];
   final regionNodeIds = <String>{};
   for (final n in base.nodes) {
@@ -183,8 +196,6 @@ MapTopology topologyForRegion(
       if (regionNodeIds.contains(e.id1) && regionNodeIds.contains(e.id2)) e,
   ];
   final subgraph = MapTopology(nodes: regionNodes, edges: regionEdges);
-  (cached ?? (_topologyByRegionSubgraphCache[base] = <String, MapTopology>{}))
-      .putIfAbsent(regionId, () => subgraph);
+  byRegion.putIfAbsent(regionId, () => subgraph);
   return subgraph;
 }
-

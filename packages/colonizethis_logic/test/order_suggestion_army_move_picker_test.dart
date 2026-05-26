@@ -200,8 +200,7 @@ void main() {
           playerId: gp,
           army: army,
           currentOrders: const Orders(),
-          playerView: view,
-          unitsById: unitsById,
+          resolution: orderResolutionContextFromView(view, game, unitsById: unitsById),
         );
         expect(withShared, baseline);
       },
@@ -356,8 +355,7 @@ void main() {
           topology: topology,
           playerId: gp,
           basePrefix: orders,
-          view: view,
-          unitsById: unitsByIdFromWorld(game.worldState),
+          resolution: orderResolutionContextFromView(view, game),
         );
         resetIncrementalCandidateValidatorBuildCountForTests();
         final withSharedValidator = armyMovePickerDestinations(

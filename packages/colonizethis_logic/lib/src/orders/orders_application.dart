@@ -6,6 +6,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import '../constants.dart';
 import '../dossier/event_dialogue.dart';
 import '../dossier/evidence_rules.dart';
+import '../world/game_world_mutations.dart';
 import '../world/player_view.dart';
 import '../world/province_lookup.dart';
 import '../world/tile_control.dart';
@@ -37,7 +38,7 @@ Game clearUnitCurrentWork(Game game, String unitId) {
     final list = region.units.map((u) => u.id == unitId ? cleared : u).toList();
     return RegionData(provinces: region.provinces, units: list);
   });
-  return game.copyWith(worldState: updatedWs);
+  return game.withWorldState(updatedWs);
 }
 
 /// Applies BuildUnitOrder and WorkOrder for all players in [game].

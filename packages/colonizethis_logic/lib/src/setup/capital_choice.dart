@@ -4,6 +4,7 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../constants.dart';
+import '../world/game_world_mutations.dart';
 import '../world/province_lookup.dart';
 import '../world/player_state_pipeline.dart';
 import 'setup_exceptions.dart';
@@ -277,7 +278,7 @@ Game setCapital({
     provinceId,
   );
 
-  return game.copyWith(worldState: worldState).mapPlayers((p) {
+  return game.withWorldState(worldState).mapPlayers((p) {
     if (p.id != playerId) return p;
     return p.copyWith(capitalProvinceId: provinceId, capitalTile: tile);
   });
@@ -389,6 +390,8 @@ Game setCapitalForMinorNation({
     return m.copyWith(capitalProvinceId: provinceId, capitalTile: tile);
   }).toList();
 
+  // Atomic multi-field mutation (worldState + minorNations); kept as raw
+  // copyWith per Issue #2836 AC 6 single-field-only helper scope.
   return game.copyWith(worldState: worldState, minorNations: updatedMinors);
 }
 
@@ -425,6 +428,8 @@ Game setCapitalForTribe({
     return t.copyWith(capitalProvinceId: provinceId, capitalTile: tile);
   }).toList();
 
+  // Atomic multi-field mutation (worldState + tribes); kept as raw copyWith
+  // per Issue #2836 AC 6 single-field-only helper scope.
   return game.copyWith(worldState: worldState, tribes: updatedTribes);
 }
 

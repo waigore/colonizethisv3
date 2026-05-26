@@ -336,6 +336,13 @@ rules:
     runner: dart
     script: tool/check_logic_all_provinces_sanctioned_calls.dart
 
+  - rule_id: repo.logic_units_by_id_rebuild
+    group: architecture
+    title: colonizethis_logic must use WorldState.allUnitsById, not unitsByIdFromWorld( (Refs #2836)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_logic_units_by_id_rebuild.dart
+
   - rule_id: repo.app_hardcoded_ui_strings
     group: ui_i18n
     title: No hardcoded user-visible UI strings in app/lib (AST gate)

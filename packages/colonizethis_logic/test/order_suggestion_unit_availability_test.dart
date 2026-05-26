@@ -282,8 +282,7 @@ void main() {
           topology: topology,
           playerId: playerId,
           baseOrders: orders,
-          view: view,
-          unitsById: unitsById,
+          resolution: orderResolutionContextFromView(view, game, unitsById: unitsById),
           factionMembership: DiplomacyFactionMembership.from(game),
         );
 

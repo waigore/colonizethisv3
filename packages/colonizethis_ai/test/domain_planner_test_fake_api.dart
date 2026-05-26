@@ -81,7 +81,7 @@ class FakeOrderSuggestionAPIForDomainPlannerTests implements OrderSuggestionAPI 
     Game game,
     MapTopology topology,
     Orders currentOrders, {
-    Map<String, Unit>? unitsById,
+    OrderResolutionContext? resolution,
   }) => navalMove;
 
   @override
@@ -90,7 +90,7 @@ class FakeOrderSuggestionAPIForDomainPlannerTests implements OrderSuggestionAPI 
     Game game,
     MapTopology topology,
     Orders currentOrders, {
-    Map<String, Unit>? unitsById,
+    OrderResolutionContext? resolution,
   }) => navalMission;
 
   @override

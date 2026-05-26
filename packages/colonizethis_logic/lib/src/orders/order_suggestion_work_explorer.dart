@@ -8,7 +8,7 @@ part of 'order_suggestion_work.dart';
   required String playerId,
   required Unit unit,
   required Province prov,
-  required Map<String, Unit> unitsById,
+  required OrderResolutionContext resolution,
   required List<DiplomaticOrder> diplomatic,
   required Map<String, Map<String, List<String>>> tileKeysByRegion,
   required IncrementalCandidateValidator candidateValidator,
@@ -60,7 +60,7 @@ part of 'order_suggestion_work.dart';
       unit: unit,
       order: probe,
       view: view,
-      unitsById: unitsById,
+      unitsById: resolution.unitsById,
       diplomaticOrders: diplomatic,
     );
     if (!bundled.isAccepted) {
@@ -96,7 +96,7 @@ void _addExplorerWorkSuggestionsForUnit({
   required WorkSuggestionProbeBudget workProbeBudget,
   Map<String, TileMapResult>? tileMapByRegion,
 }) {
-  final unitsById = Map<String, Unit>.from(unitsByIdFromWorld(game.worldState));
+  final resolution = orderResolutionContextFromView(view, game);
   final diplomatic =
       currentOrders.diplomaticOrdersByPlayerId[playerId] ?? const [];
 
@@ -141,7 +141,7 @@ void _addExplorerWorkSuggestionsForUnit({
           playerId: playerId,
           unit: unit,
           prov: prov,
-          unitsById: unitsById,
+          resolution: resolution,
           diplomatic: diplomatic,
           tileKeysByRegion: tileKeysByRegion,
           candidateValidator: candidateValidator,
@@ -175,6 +175,7 @@ void _addExplorerWorkSuggestionsForUnit({
     suggestions: suggestions,
     candidateValidator: candidateValidator,
     workProbeBudget: workProbeBudget,
+    resolution: resolution,
     tileMapByRegion: tileMapByRegion,
   );
 }
@@ -190,7 +191,7 @@ void _addExplorerWorkSuggestionsForUnit({
   required Unit unit,
   required List<String> tilesInProvince,
   required Set<String> prospected,
-  required Map<String, Unit> unitsById,
+  required OrderResolutionContext resolution,
   required List<DiplomaticOrder> diplomaticOrders,
   required IncrementalCandidateValidator candidateValidator,
   required WorkSuggestionProbeBudget workProbeBudget,
@@ -222,7 +223,7 @@ void _addExplorerWorkSuggestionsForUnit({
         targetTileKey: sortedTiles.first,
       ),
       view: view,
-      unitsById: unitsById,
+      unitsById: resolution.unitsById,
       diplomaticOrders: diplomaticOrders,
     );
     if (!bundled.isAccepted) {
@@ -271,6 +272,7 @@ void _addProspectSuggestionIfEligible({
   required List<WorkOrder> suggestions,
   required IncrementalCandidateValidator candidateValidator,
   required WorkSuggestionProbeBudget workProbeBudget,
+  required OrderResolutionContext resolution,
   Map<String, TileMapResult>? tileMapByRegion,
 }) {
   // Early bail mirrors [WorkSuggestionPipeline]'s duplicate-pending check so we
@@ -292,7 +294,6 @@ void _addProspectSuggestionIfEligible({
     return;
   }
 
-  final unitsById = Map<String, Unit>.from(unitsByIdFromWorld(game.worldState));
   final diplomatic =
       currentOrders.diplomaticOrdersByPlayerId[playerId] ?? const [];
 
@@ -347,7 +348,7 @@ void _addProspectSuggestionIfEligible({
           unit: unit,
           tilesInProvince: tilesInP,
           prospected: prospected,
-          unitsById: unitsById,
+          resolution: resolution,
           diplomaticOrders: diplomatic,
           candidateValidator: candidateValidator,
           workProbeBudget: workProbeBudget,
@@ -368,6 +369,7 @@ void _addProspectSuggestionIfEligible({
     resolveNoCandidateReason: () => lastReason,
     includeAllAccepted: true,
     maxProbeAttempts:
-        kMaxExploreProvinceProbesPerUnit * kMaxWorkProbeAttemptsPerUnitPerTarget,
+        kMaxExploreProvinceProbesPerUnit *
+        kMaxWorkProbeAttemptsPerUnitPerTarget,
   );
 }

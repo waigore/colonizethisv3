@@ -1,6 +1,11 @@
 export 'order_suggestion_api.dart';
 export 'order_suggestion_helpers.dart';
 export 'order_suggestion_unit_availability.dart';
+export 'order_resolution_context.dart'
+    show
+        OrderResolutionContext,
+        buildOrderResolutionContext,
+        orderResolutionContextFromView;
 export 'order_suggestion_context.dart'
     show
         incrementalCandidateValidatorBuildCountForTests,

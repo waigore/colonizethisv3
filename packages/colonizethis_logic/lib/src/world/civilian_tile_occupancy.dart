@@ -2,6 +2,7 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../diplomacy/diplomacy_resolver.dart';
+import '../utils/expando_index.dart';
 import 'province_lookup.dart';
 import 'tile_key_coordinates.dart';
 
@@ -35,29 +36,26 @@ List<String> sortedLandTileKeys(WorldState world) {
   return list;
 }
 
-final Expando<Set<String>> _landTileKeysByWorldState =
-    Expando<Set<String>>('landTileKeysByWorldState');
+final ExpandoIndex<WorldState, Set<String>> _landTileKeysByWorldState =
+    ExpandoIndex<WorldState, Set<String>>('landTileKeysByWorldState', (world) {
+      final keys = <String>{};
+      for (final byProvince in world.tileKeysByRegionAndProvince.values) {
+        for (final tiles in byProvince.values) {
+          keys.addAll(tiles);
+        }
+      }
+      return keys;
+    });
 
-Set<String> _landTileKeysForWorld(WorldState world) {
-  final cached = _landTileKeysByWorldState[world];
-  if (cached != null) {
-    return cached;
-  }
-  final keys = <String>{};
-  for (final byProvince in world.tileKeysByRegionAndProvince.values) {
-    for (final tiles in byProvince.values) {
-      keys.addAll(tiles);
-    }
-  }
-  _landTileKeysByWorldState[world] = keys;
-  return keys;
-}
+Set<String> _landTileKeysForWorld(WorldState world) =>
+    _landTileKeysByWorldState.get(world);
 
 bool civilianMayOccupyLandTileKey({
   required Game game,
   required String playerId,
   required String unitType,
   required String destinationTileKey,
+
   /// When set, avoids per-call linear `.any()` scans over players, minors, and
   /// tribes when classifying [ownerId] (Refs #2394, SPEC/program/order-suggestions.md).
   DiplomacyFactionMembership? factionMembership,

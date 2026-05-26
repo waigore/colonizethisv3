@@ -85,15 +85,13 @@ Game runExtractionPhase(
           seed: extractionSeed ^ player.id.hashCode,
         );
         overseasDelivered = interception.reducedDelivered;
-        currentState = currentState.updateWorldState(
-          (ws) => ws.copyWith(fleets: interception.updatedFleets),
-        );
+        currentState = currentState.withFleets(interception.updatedFleets);
       }
       stockpile = applyExtractionToStockpile(stockpile, overseasDelivered);
     }
     updatedPlayers.add(player.copyWith(stockpile: stockpile));
   }
-  return currentState.copyWith(players: updatedPlayers);
+  return currentState.withPlayers(updatedPlayers);
 }
 
 TurnPhaseStepOutcome extractionTurnPhaseHandler(

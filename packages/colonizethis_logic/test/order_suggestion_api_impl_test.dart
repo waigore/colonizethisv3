@@ -183,7 +183,7 @@ void main() {
           game,
           topology,
           emptyOrders,
-          unitsById: unitsById,
+          resolution: orderResolutionContextFromView(view, game, unitsById: unitsById),
         );
         expect(moveShared, moveDefault);
         final missionDefault = api.suggestNavalMissionOrders(
@@ -197,7 +197,7 @@ void main() {
           game,
           topology,
           emptyOrders,
-          unitsById: unitsById,
+          resolution: orderResolutionContextFromView(view, game, unitsById: unitsById),
         );
         expect(missionShared, missionDefault);
       },

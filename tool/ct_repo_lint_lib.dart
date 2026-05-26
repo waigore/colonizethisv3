@@ -34,6 +34,7 @@ import 'check_logic_dedup_logger.dart';
 import 'check_ai_planner_context.dart';
 import 'check_logic_all_provinces_sanctioned_calls.dart';
 import 'check_logic_dual_region_province_field_access.dart';
+import 'check_logic_units_by_id_rebuild.dart';
 import 'check_no_flame_in_widgets.dart';
 import 'check_no_screen_in_game_widgets.dart';
 import 'check_part_unit_size.dart';
@@ -795,6 +796,8 @@ int? _tryRunDartRuleInProcess({
       return runCheckLogicDualRegionProvinceFieldAccess(repoRoot);
     case 'repo.logic_all_provinces_sanctioned_calls':
       return runCheckLogicAllProvincesSanctionedCalls(repoRoot);
+    case 'repo.logic_units_by_id_rebuild':
+      return runCheckLogicUnitsByIdRebuild(repoRoot);
     case 'repo.logic_dead_files':
       return runCheckLogicDeadFiles(repoRoot);
     case 'repo.logic_dedup_logger':

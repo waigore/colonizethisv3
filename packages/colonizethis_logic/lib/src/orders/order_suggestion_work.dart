@@ -10,6 +10,7 @@ import '../world/province_lookup.dart';
 import '../world/unit_lookup.dart';
 import 'bundled_civilian_work_order.dart';
 import 'incremental_candidate_validator.dart';
+import 'order_resolution_context.dart';
 import 'order_suggestion_helpers.dart';
 import 'order_suggestion_work_tile_keys.dart';
 import 'order_suggestion_work_tile_prefilter.dart';
@@ -55,9 +56,7 @@ List<String> merchantPurchaseLandCandidateTileKeys({
     final rank = merchantPurchaseLandCandidateSortRank(
       game: game,
       tileKey: a,
-    ).compareTo(
-      merchantPurchaseLandCandidateSortRank(game: game, tileKey: b),
-    );
+    ).compareTo(merchantPurchaseLandCandidateSortRank(game: game, tileKey: b));
     if (rank != 0) return rank;
     return a.compareTo(b);
   });
@@ -106,11 +105,10 @@ List<WorkOrder> suggestWorkOrders(
         view: view,
         partiallyRevealedPrefixedProvinceIds: partiallyRevealedProvinceCache,
       );
-  final colonialIntelExploreProvinceIds =
-      colonialIntelExploreProvinceIdsSorted(
-        view: view,
-        topology: topology,
-      ).toSet();
+  final colonialIntelExploreProvinceIds = colonialIntelExploreProvinceIdsSorted(
+    view: view,
+    topology: topology,
+  ).toSet();
   final explorerProvincesSorted = _explorerProvincesSortedForWork(
     view: view,
     partiallyRevealedProvincesSorted: partiallyRevealedProvincesSorted,
@@ -151,8 +149,7 @@ List<WorkOrder> suggestWorkOrders(
         playerId: playerId,
         baseOrders: currentOrders,
         tileMapByRegion: tileMapByRegion,
-        view: view,
-        unitsById: unitsByIdFromWorld(game.worldState),
+        resolution: orderResolutionContextFromView(view, game),
         factionMembership: factionMembership,
       );
 

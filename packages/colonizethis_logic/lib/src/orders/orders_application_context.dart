@@ -178,7 +178,7 @@ Game appendMilitaryRegimentToArmy(
         if (a.id == armyId && a.ownerId == player.id) updated else a,
     ];
     armiesById?[armyId] = updated;
-    return game.updateWorldState((ws) => ws.copyWith(armies: next));
+    return game.withArmies(next);
   }
   final stationed = atHome ? cap : spawnProvinceId;
   final newArmy = Army(
@@ -191,7 +191,7 @@ Game appendMilitaryRegimentToArmy(
   );
   final next = [...ws.armies, newArmy]..sort((a, b) => a.id.compareTo(b.id));
   armiesById?[newArmy.id] = newArmy;
-  return game.updateWorldState((ws) => ws.copyWith(armies: next));
+  return game.withArmies(next);
 }
 
 Army? _firstArmyByIdAndOwner(List<Army> armies, String armyId, String ownerId) {
