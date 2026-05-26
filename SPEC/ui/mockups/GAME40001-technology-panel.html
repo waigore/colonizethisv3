@@ -1,0 +1,242 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ColonizeThis — Technology Panel</title>
+<style>
+:root {
+  --bg: oklch(16% 0.018 50); --bg-deep: oklch(12% 0.015 45);
+  --surface: oklch(24% 0.015 45); --surface-lite: oklch(30% 0.016 52);
+  --fg: oklch(88% 0.015 80); --muted: oklch(65% 0.025 70);
+  --border: oklch(40% 0.02 55); --accent: oklch(72% 0.14 85);
+  --accent-dim: oklch(60% 0.12 82); --accent-bright: oklch(82% 0.13 90);
+  --danger: oklch(55% 0.16 22); --success: oklch(55% 0.12 150);
+  --font-display: 'Iowan Old Style', 'Cinzel', 'Charter', Georgia, serif;
+  --font-body: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  --font-mono: 'SF Mono', ui-monospace, Menlo, monospace;
+  --topbar-h:36px;
+}
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+html,body{min-height:100vh;min-height:100dvh;background:var(--bg);color:var(--fg);font-family:var(--font-body);overflow-x:hidden}
+html{overflow-y:auto;scroll-behavior:smooth}
+
+.topbar{height:var(--topbar-h);background:linear-gradient(180deg,var(--surface-lite)0%,var(--surface)100%);border-bottom:1px solid var(--accent-dim);display:flex;align-items:center;padding:0 10px;gap:8px;flex-shrink:0;position:relative;z-index:10}
+.topbar::after{content:'';position:absolute;bottom:-1px;left:0;right:0;height:1px;background:var(--accent);opacity:.25}
+.back-btn{padding:4px 10px;background:linear-gradient(180deg,var(--surface-lite),var(--bg-deep));border:1px solid var(--border);color:var(--accent-dim);font-family:var(--font-display);font-size:11px;cursor:pointer;min-height:26px;letter-spacing:.04em;transition:color .15s}
+.back-btn:hover{color:var(--accent-bright)}
+.topbar-title{flex:1;font-family:var(--font-display);font-size:13px;font-weight:600;letter-spacing:.05em;color:var(--fg);text-align:center;display:flex;align-items:center;justify-content:center;gap:6px}
+.topbar-title img{width:18px;height:18px;image-rendering:pixelated;display:block}
+.topbar-tabs{display:flex;gap:2px}
+.tab{padding:4px 10px;background:linear-gradient(180deg,var(--surface-lite),var(--bg-deep));border:1px solid var(--border);color:var(--muted);font-family:var(--font-display);font-size:10px;cursor:pointer;letter-spacing:.04em;transition:color .15s,border-color .15s}
+.tab.active{color:var(--accent);border-color:var(--accent-dim)}
+.tab:hover:not(.active){color:var(--fg);border-color:var(--accent-dim)}
+
+.content{padding:clamp(10px,2vh,16px)clamp(10px,2vw,14px);max-width:720px;margin:0 auto}
+.researched-heading,.slots-heading{font-family:var(--font-display);font-size:clamp(11px,1.5vw,13px);font-weight:600;letter-spacing:.04em;color:var(--accent);margin-bottom:clamp(4px,.8vh,6px)}
+.slots-heading{margin-top:clamp(12px,2vh,18px)}
+
+.researched-grid{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:clamp(6px,1vh,8px)}
+.tech-chip{display:inline-flex;align-items:center;gap:4px;padding:3px 6px;background:linear-gradient(180deg,var(--bg-deep),var(--surface));border:1px solid var(--border);font-family:var(--font-body);font-size:clamp(9px,1.2vw,10px);color:var(--fg)}
+.tech-chip img{width:14px;height:14px;image-rendering:pixelated;display:block}
+
+.slot-card{padding:clamp(6px,1vh,8px)clamp(8px,1.5vw,10px);background:linear-gradient(180deg,var(--bg-deep),var(--surface));border:1px solid var(--border);margin-bottom:6px;position:relative}
+.slot-card::before,.slot-card::after{content:'';position:absolute;top:0;bottom:0;width:1px;background:var(--accent-dim);opacity:.35}
+.slot-card::before{left:0}.slot-card::after{right:0}
+.slot-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:4px}
+.slot-label{font-family:var(--font-display);font-size:clamp(10px,1.3vw,12px);font-weight:600;letter-spacing:.04em;color:var(--fg)}
+.slot-actions{display:flex;gap:4px}
+.slot-actions button{padding:2px 8px;background:linear-gradient(180deg,var(--surface-lite),var(--bg-deep));border:1px solid var(--border);color:var(--accent-dim);font-family:var(--font-display);font-size:9px;cursor:pointer;letter-spacing:.04em;transition:color .15s}
+.slot-actions button:hover{color:var(--accent-bright)}
+.slot-actions .cancel-slot{color:var(--danger);border-color:var(--danger);opacity:.7}
+.slot-actions .cancel-slot:hover{opacity:1}
+.slot-tech{display:flex;align-items:center;gap:5px;font-family:var(--font-body);font-size:clamp(11px,1.5vw,12px);color:var(--fg);font-weight:600}
+.slot-tech img{width:20px;height:20px;image-rendering:pixelated;display:block}
+.slot-empty{font-family:var(--font-body);font-style:italic;font-size:clamp(10px,1.3vw,11px);color:var(--muted);padding:c​lamp(6px,1vh,8px)0}
+.slot-progress{display:flex;align-items:center;gap:8px;margin-top:clamp(4px,.7vh,6px)}
+.prog-bar{flex:1;height:clamp(4px,.6vh,5px);background:var(--bg-deep);border:1px solid var(--border);border-radius:2px;overflow:hidden}
+.prog-fill{height:100%;background:var(--accent-dim);border-radius:1px;transition:width .3s}
+.slot-progress span{font-family:var(--font-mono);font-size:clamp(9px,1.2vw,10px);color:var(--accent-dim);white-space:nowrap}
+
+.tech-dialog{display:none;position:fixed;inset:0;z-index:100;background:oklch(8% 0.01 30 / .6);align-items:center;justify-content:center;padding:20px}
+.tech-dialog.show{display:flex}
+.dialog-card{background:var(--surface);border:2px solid var(--accent-dim);padding:clamp(12px,2vh,18px);max-width:480px;width:100%;max-height:70vh;overflow-y:auto}
+.dialog-card h3{font-family:var(--font-display);font-size:15px;font-weight:600;color:var(--accent);margin-bottom:8px}
+.tech-option{display:flex;align-items:center;gap:8px;padding:clamp(6px,1vh,8px);border:1px solid var(--border);cursor:pointer;transition:border-color .15s,background .15s;margin-bottom:4px}
+.tech-option:hover{border-color:var(--accent-dim);background:var(--surface-lite)}
+.tech-option img{width:22px;height:22px;image-rendering:pixelated;display:block;flex-shrink:0}
+.t-info .t-name{font-family:var(--font-body);font-weight:600;font-size:clamp(11px,1.4vw,12px);color:var(--fg)}
+.t-info .t-cost{font-family:var(--font-mono);font-size:clamp(9px,1.2vw,10px);color:var(--muted)}
+.close-dialog{display:block;width:100%;margin-top:10px;padding:6px;background:linear-gradient(180deg,var(--surface-lite),var(--bg-deep));border:1px solid var(--border);color:var(--accent-dim);font-family:var(--font-display);font-size:11px;cursor:pointer;letter-spacing:.04em}
+.close-dialog:hover{color:var(--accent-bright)}
+.empty-tech{font-family:var(--font-body);font-style:italic;color:var(--muted);padding:12px 0;text-align:center}
+
+.mode-bar{text-align:center;padding:clamp(6px,1vh,10px);border-top:1px solid var(--border);margin-top:clamp(8px,1.5vh,12px)}
+.mode-bar button{padding:3px 8px;margin:0 2px;background:linear-gradient(180deg,var(--surface-lite),var(--bg-deep));border:1px solid var(--border);color:var(--muted);font-family:var(--font-mono);font-size:9px;letter-spacing:.04em;cursor:pointer;transition:color .15s,border-color .15s}
+.mode-bar button:hover,.mode-bar button.active{color:var(--accent);border-color:var(--accent-dim)}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <button class="back-btn" onclick="alert('Back to Map')">&larr; Map</button>
+  <span class="topbar-title"><img src="icons/32/ui_icon_technology.png" width="32" height="32" alt="">Technology</span>
+  <div class="topbar-tabs">
+    <button class="tab active">Slots</button>
+    <button class="tab" style="opacity:.5">Tree</button>
+  </div>
+</div>
+
+<div class="content">
+  <div class="researched-heading">Researched Techs</div>
+  <div class="researched-grid" id="researched-grid"></div>
+
+  <div class="slots-heading">Research Slots</div>
+  <div id="slots-container"></div>
+</div>
+
+<div class="mode-bar">
+  <button class="active" onclick="setVariant('default')">Default (3 slots, 4th locked)</button>
+  <button onclick="setVariant('all')">All 4 slots (have University)</button>
+  <button onclick="setVariant('empty')">No researchable techs</button>
+</div>
+
+<div class="tech-dialog" id="tech-dialog">
+  <div class="dialog-card" id="dialog-card"></div>
+</div>
+
+<script>
+const ICON = 'icons/32/ui_icon_';
+function icn(f){return `<img src="${ICON}${f}" width="32" height="32" alt="">`}
+
+let variant='default';
+let unlockedTechs=['agriculture','workshop','militia','galleon','frigate','exploration','trade_consulate'];
+let currentResearch={};
+let reserved=[];
+
+const techCatalog=[
+  {id:'workshop',name:'Workshop',iconFile:'tech_labour.png',cost:'75 RP',desc:'Unlocks Apprentice worker tier'},
+  {id:'guild_hall',name:'Guild Hall',iconFile:'tech_labour.png',cost:'150 RP',desc:'Unlocks Journeyman worker tier',prereq:['workshop']},
+  {id:'university',name:'University',iconFile:'tech_civilian.png',cost:'250 RP',desc:'+1 research slot, unlocks Master tier'},
+  {id:'line_infantry',name:'Line Infantry',iconFile:'tech_military.png',cost:'120 RP',desc:'Train Line Infantry regiments'},
+  {id:'dragoons',name:'Dragoons',iconFile:'tech_military.png',cost:'120 RP',desc:'Train Dragoon cavalry regiments'},
+  {id:'artillery',name:'Artillery',iconFile:'tech_military.png',cost:'200 RP',desc:'Train Artillery regiments',prereq:['line_infantry']},
+  {id:'ship_of_the_line',name:'Ship of the Line',iconFile:'tech_naval.png',cost:'180 RP',desc:'Build Ships of the Line'},
+  {id:'merchant_steamship',name:'Merchant Steamship',iconFile:'tech_transport.png',cost:'160 RP',desc:'Build Merchant Steamships',prereq:['galleon']},
+  {id:'trade_fairs',name:'Trade Fairs',iconFile:'tech_diplomacy.png',cost:'90 RP',desc:'+3 trade slots with Minor Nations'},
+  {id:'embassy',name:'Embassy',iconFile:'tech_diplomacy.png',cost:'100 RP',desc:'Establish embassies with factions'},
+  {id:'discovery_of_sugar',name:'Discovery of Sugar',iconFile:'tech_new_world.png',cost:'80 RP',desc:'Reveal sugar resources (requires revealed Sugar)'},
+  {id:'steam_engine',name:'Steam Engine',iconFile:'tech_transport.png',cost:'300 RP',desc:'Unlocks Rail Builder units',prereq:['university']},
+];
+
+function isResearchable(tech){
+  if(unlockedTechs.includes(tech.id))return false;
+  if(reserved.includes(tech.id))return false;
+  if(tech.prereq){
+    for(const p of tech.prereq)if(!unlockedTechs.includes(p))return false;
+  }
+  if(tech.id==='discovery_of_sugar'&&variant==='empty')return false;
+  return true;
+}
+
+function getResearchable(){return techCatalog.filter(isResearchable)}
+
+function renderAll(){
+  document.getElementById('researched-grid').innerHTML=unlockedTechs.map(id=>{
+    const t=techCatalog.find(x=>x.id===id);
+    if(!t)return `<div class="tech-chip">${id}</div>`;
+    return `<div class="tech-chip">${icn(t.iconFile)}<span>${t.name}</span></div>`;
+  }).join('');
+
+  const maxSlots=variant==='all'?4:3;
+  let slotsHtml='';
+  for(let i=1;i<=maxSlots;i++){
+    const assigned=currentResearch[i];
+    const t=assigned?techCatalog.find(x=>x.id===assigned.tech):null;
+    const pct=assigned?(assigned.progress/assigned.cost*100):0;
+    slotsHtml+=`<div class="slot-card">
+      <div class="slot-header">
+        <span class="slot-label">Slot ${i}</span>
+        <div class="slot-actions">
+          ${assigned?`<button class="cancel-slot" onclick="cancelSlot(${i})">Cancel</button>`:''}
+          <button onclick="openChooseTech(${i})">Choose tech</button>
+        </div>
+      </div>
+      ${assigned?`
+        <div class="slot-tech">${icn(t.iconFile)} ${t.name}</div>
+        <div class="slot-progress">
+          <div class="prog-bar"><div class="prog-fill" style="width:${pct}%"></div></div>
+          <span>${assigned.progress} / ${assigned.cost} RP</span>
+        </div>
+      `:`<div class="slot-empty">No tech assigned</div>`}
+    </div>`;
+    if(i>=3&&variant==='all')slotsHtml+=`<div class="slot-card" style="opacity:.45">
+      <div class="slot-header"><span class="slot-label">Slot 4 (University)</span></div>
+      <div class="slot-empty">Requires University tech</div>
+    </div>`;
+  }
+  document.getElementById('slots-container').innerHTML=slotsHtml;
+}
+
+function cancelSlot(slot){
+  currentResearch[slot]=null;
+  updateReserved();
+  renderAll();
+}
+
+function updateReserved(){
+  reserved=[];
+  for(const [s,r] of Object.entries(currentResearch)){if(r)reserved.push(r.tech)}
+}
+
+function openChooseTech(slot){
+  updateReserved();
+  const choosable=getResearchable();
+  let html=`<h3>Choose Tech &mdash; Slot ${slot}</h3>`;
+  if(choosable.length===0){
+    html+=`<div class="empty-tech">No techs available to research</div>`;
+  }else{
+    html+=choosable.map(t=>`<div class="tech-option" onclick="assignTech(${slot},'${t.id}')">
+      ${icn(t.iconFile)}
+      <div class="t-info"><div class="t-name">${t.name}</div><div class="t-cost">${t.cost} &middot; ${t.desc}</div></div>
+    </div>`).join('');
+  }
+  html+=`<button class="close-dialog" onclick="document.getElementById('tech-dialog').classList.remove('show')">Close</button>`;
+  document.getElementById('dialog-card').innerHTML=html;
+  document.getElementById('tech-dialog').classList.add('show');
+}
+
+function assignTech(slot,techId){
+  const t=techCatalog.find(x=>x.id===techId);
+  currentResearch[slot]={tech:techId,progress:Math.floor(Math.random()*parseInt(t.cost)*0.6),cost:parseInt(t.cost)};
+  updateReserved();
+  document.getElementById('tech-dialog').classList.remove('show');
+  renderAll();
+}
+
+function setVariant(v){
+  variant=v;
+  document.querySelectorAll('.mode-bar button').forEach((b,i)=>{
+    b.classList.toggle('active',(i===0&&v==='default')||(i===1&&v==='all')||(i===2&&v==='empty'));
+  });
+  if(v==='all'){currentResearch[4]=null}
+  if(v==='empty'){
+    currentResearch[1]=null;currentResearch[2]=null;currentResearch[3]=null;currentResearch[4]=null;
+    unlockedTechs=['agriculture','workshop','militia','galleon','frigate','exploration','trade_consulate','embassy','line_infantry','dragoons','artillery','ship_of_the_line','steam_engine','guild_hall'];
+  }else{
+    currentResearch[1]={tech:'guild_hall',progress:45,cost:150};
+    currentResearch[2]=null;
+    currentResearch[3]=null;
+    currentResearch[4]=null;
+    unlockedTechs=['agriculture','workshop','militia','galleon','frigate','exploration','trade_consulate'];
+  }
+  updateReserved();
+  renderAll();
+}
+
+setVariant('default');
+
+document.getElementById('tech-dialog').addEventListener('click',function(e){if(e.target===this)this.classList.remove('show')});
+</script>
+</body>
+</html>

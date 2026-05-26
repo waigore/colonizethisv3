@@ -4,6 +4,7 @@
 **SPEC/ui** — Modal that lets the human player move ship instances from a regular fleet **at the capital port** into the same-region **Home Fleet** from the [naval-units-panel.md](naval-units-panel.md). Implementation: `app/lib/features/game/widgets/transfer_to_home_fleet_dialog.dart`.
 **Widgetbook:** `Transfer to Home Fleet Dialog` → `app/lib/widgetbook/catalog.dart`. Game model: [ships-and-naval.md](../game/ships-and-naval.md). App wiring: [app-ui-wiring.md](../program/app-ui-wiring.md), [app-event-bus.md](../program/app-event-bus.md).
 
+**Mockup:** [mockups/DLG40001-transfer-to-home-fleet.html](mockups/DLG40001-transfer-to-home-fleet.html)
 ---
 
 ## Widget contract

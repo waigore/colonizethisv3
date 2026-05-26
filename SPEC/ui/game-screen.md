@@ -4,6 +4,7 @@
 **SPEC/ui** — In-game host screen for the Flutter app. Lives at `Routes.game` and orchestrates the map / Flame canvas, the next-turn flow, the pause menu, the Victory overlay, the intro dialogue, and the pending diplomacy overlays. Source of truth for the in-game shell layout (region tabs, map widget, sidebars): [`empire-overview.md`](empire-overview.md). Implementation: `app/lib/features/game/flame/game_screen.dart`.
 **Widgetbook:** `Game Screen` → `app/lib/widgetbook/catalog.dart`. Bus wiring: [`app-ui-wiring.md`](../program/app-ui-wiring.md). Bus events: [`app-event-bus.md`](../program/app-event-bus.md). Turn resolution: [`turn-resolution.md`](../program/turn-resolution.md), [`next-turn-confirmation.md`](next-turn-confirmation.md). Victory: [`victory.md`](../game/victory.md). Routes: `app/lib/config/routes.dart`.
 
+**Mockup:** [mockups/GAME10001-game-screen.html](mockups/GAME10001-game-screen.html)
 ---
 
 ## Widget contract

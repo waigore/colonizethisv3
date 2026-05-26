@@ -4,6 +4,7 @@
 **SPEC/ui** — Civilian units bottom sheet / panel. Implementation: `app/lib/features/game/widgets/civilian_units_panel.dart`.
 **Widgetbook:** `Civilian Units Panel` → `app/lib/widgetbook/catalog.dart`. Integrates with [empire-overview.md](empire-overview.md), [map-widget.md](map-widget.md), [province-sea-zone-detail-overlay.md](province-sea-zone-detail-overlay.md). Game model: [civilian-units.md](../game/civilian-units.md).
 
+**Mockup:** [mockups/UNIT10001-civilian-units-panel.html](mockups/UNIT10001-civilian-units-panel.html)
 ---
 
 ## Widget contract

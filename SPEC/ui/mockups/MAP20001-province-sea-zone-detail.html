@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ColonizeThis — Province Detail</title>
+<style>
+:root {
+  --bg: oklch(16% 0.018 50); --bg-deep: oklch(12% 0.015 45);
+  --surface: oklch(24% 0.015 45); --surface-lite: oklch(30% 0.016 52);
+  --fg: oklch(88% 0.015 80); --muted: oklch(65% 0.025 70);
+  --border: oklch(40% 0.02 55); --accent: oklch(72% 0.14 85); --accent-dim: oklch(60% 0.12 82);
+  --font-display: 'Iowan Old Style','Cinzel','Charter',Georgia,serif;
+  --font-body: -apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;
+}
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+html,body{min-height:100vh;min-height:100dvh;background:var(--bg);color:var(--fg);font-family:var(--font-body);overflow:hidden}
+/* Fake map behind panel */
+.bg{position:fixed;inset:0;z-index:0;background:radial-gradient(ellipse at 20% 80%,oklch(28% 0.02 40 / 0.25) 0%,transparent 60%),radial-gradient(ellipse at 85% 15%,oklch(25% 0.015 55 / 0.2) 0%,transparent 55%),var(--bg)}
+/* Panel — wide side panel layout */
+.panel{position:fixed;z-index:10;top:0;right:0;bottom:0;width:320px;background:linear-gradient(180deg,var(--surface-lite) 0%,var(--surface) 8%,var(--bg-deep) 100%);border-left:2px solid var(--accent-dim);display:flex;flex-direction:column;overflow:hidden}
+.panel-header{padding:12px 14px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border)}.panel-header h4{font-family:var(--font-display);font-size:15px;font-weight:700;letter-spacing:0.05em;color:var(--accent)}.panel-header .close{width:24px;height:24px;display:flex;align-items:center;justify-content:center;background:var(--surface);border:1px solid var(--border);color:var(--muted);cursor:pointer;font-size:14px}.panel-header .close:hover{color:var(--accent)}
+.tabs{display:flex;border-bottom:1px solid var(--border);overflow-x:auto}.tabs button{flex:1;padding:8px 6px;background:var(--bg-deep);border:none;color:var(--muted);font-family:var(--font-display);font-size:11px;font-weight:600;letter-spacing:0.04em;cursor:pointer;white-space:nowrap;border-bottom:2px solid transparent;transition:color 0.15s,border-color 0.15s}.tabs button.active{color:var(--accent);border-bottom-color:var(--accent)}.tabs button:hover{color:var(--fg)}
+.tab-content{flex:1;overflow-y:auto;padding:12px 14px;display:flex;flex-direction:column;gap:10px}
+.section-label{font-family:var(--font-display);font-size:11px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:var(--muted)}
+.row{display:flex;justify-content:space-between;align-items:center;padding:6px 0;font-size:12px;border-bottom:1px solid var(--border)}.row .key{color:var(--muted)}.row .val{color:var(--fg);font-family:monospace;font-size:11px;text-align:right}
+.resource-tag{display:inline-block;padding:2px 6px;background:var(--surface);border:1px solid var(--border);font-size:10px;color:var(--accent-dim);margin:1px}
+/* Narrow layout */
+@media(max-width:600px){
+  .panel{position:fixed;top:auto;left:0;right:0;bottom:0;width:100%;height:33vh;border-left:none;border-top:2px solid var(--accent-dim)}
+  .tabs button{font-size:10px;padding:6px 4px}
+}
+</style>
+</head>
+<body>
+<div class="bg"></div>
+<div class="panel">
+  <div class="panel-header">
+    <h4>London</h4>
+    <button class="close" onclick="location.reload()">&#xd7;</button>
+  </div>
+  <div class="tabs">
+    <button class="active" onclick="switchTab(event,'political')">Political</button>
+    <button onclick="switchTab(event,'tile')">Tile</button>
+    <button onclick="switchTab(event,'economic')">Economic</button>
+    <button onclick="switchTab(event,'military')">Military</button>
+    <button onclick="switchTab(event,'civilian')">Civilian</button>
+    <button onclick="switchTab(event,'naval')">Naval</button>
+  </div>
+  <div class="tab-content" id="tab-content"></div>
+</div>
+<script>
+const tabs={
+  political:`<div class="section-label">Political</div>
+    <div class="row"><span class="key">Owner</span><span class="val">England</span></div>
+    <div class="row"><span class="key">Region</span><span class="val">Old World</span></div>
+    <div class="row"><span class="key">Capital</span><span class="val">Yes &#x2605;</span></div>
+    <div class="row"><span class="key">Town level</span><span class="val">Major Town</span></div>
+    <div class="row"><span class="key">Port</span><span class="val">Yes</span></div>`,
+  tile:`<div class="section-label">Tile</div>
+    <div class="row"><span class="key">Terrain</span><span class="val">Plains</span></div>
+    <div class="row"><span class="key">Resources</span><span class="val"><span class="resource-tag">Grain</span><span class="resource-tag">Wool</span></span></div>
+    <div class="row"><span class="key">Improvements</span><span class="val">Farm L2, Road</span></div>
+    <div class="row"><span class="key">Visibility</span><span class="val">Full</span></div>`,
+  economic:`<div class="section-label">Economic</div>
+    <div class="row"><span class="key">Province population</span><span class="val">12,400</span></div>
+    <div class="row"><span class="key">Town population</span><span class="val">3,200</span></div>
+    <div class="row"><span class="key">Workers</span><span class="val">8 peasants, 2 appr.</span></div>
+    <div class="row"><span class="key">Stockpile</span><span class="val">Grain 40, Wool 25</span></div>`,
+  military:`<div class="section-label">Military</div>
+    <div class="row"><span class="key">Garrison</span><span class="val">Peasant Levies (100 HP)</span></div>
+    <div class="row"><span class="key">Home Army</span><span class="val">3 regiments present</span></div>
+    <div class="row"><span class="key">Fortifications</span><span class="val">Stone Walls</span></div>`,
+  civilian:`<div class="section-label">Civilian</div>
+    <div class="row"><span class="key">Builders</span><span class="val">1 (farming)</span></div>
+    <div class="row"><span class="key">Engineers</span><span class="val">0</span></div>
+    <div class="row"><span class="key">Spies</span><span class="val">0</span></div>`,
+  naval:`<div class="section-label">Naval</div>
+    <div class="row"><span class="key">Home Fleet</span><span class="val">Carrack x3, Fluyte x1</span></div>
+    <div class="row"><span class="key">Fleet 2</span><span class="val">Carrack x2</span></div>
+    <div class="row"><span class="key">Docked</span><span class="val">5 ships</span></div>`
+}
+function switchTab(e,tab){
+  document.querySelectorAll('.tabs button').forEach(b=>b.classList.remove('active'))
+  e.target.classList.add('active')
+  document.getElementById('tab-content').innerHTML=tabs[tab]
+}
+document.getElementById('tab-content').innerHTML=tabs.political
+</script>
+</body>
+</html>

@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ColonizeThis — Train Civilians</title>
+<style>
+:root {
+  --bg: oklch(16% 0.018 50); --bg-deep: oklch(12% 0.015 45);
+  --surface: oklch(24% 0.015 45); --surface-lite: oklch(30% 0.016 52);
+  --fg: oklch(88% 0.015 80); --muted: oklch(65% 0.025 70);
+  --border: oklch(40% 0.02 55); --accent: oklch(72% 0.14 85); --accent-dim: oklch(60% 0.12 82);
+  --danger: oklch(58% 0.16 22);
+  --font-display: 'Iowan Old Style','Cinzel','Charter',Georgia,serif;
+  --font-body: -apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;
+}
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+html,body{min-height:100vh;min-height:100dvh;background:var(--bg);color:var(--fg);font-family:var(--font-body);display:flex;align-items:center;justify-content:center;overflow:hidden}
+.scrim{position:fixed;inset:0;background:oklch(0% 0 0 / 0.6);z-index:0}
+.dialog{position:relative;z-index:1;width:min(92vw,440px);max-height:88vh;overflow-y:auto;background:linear-gradient(180deg,var(--surface-lite) 0%,var(--surface) 15%,var(--bg-deep) 100%);border:2px solid var(--accent-dim);padding:16px 20px}
+.dialog h3{font-family:var(--font-display);font-size:clamp(16px,2.2vw,20px);font-weight:700;letter-spacing:0.05em;color:var(--accent);text-align:center;margin-bottom:10px}
+.resource-bar{display:flex;justify-content:space-around;padding:8px;background:var(--bg-deep);border:1px solid var(--border);margin-bottom:6px;font-size:12px}.resource-bar span{color:var(--muted)}.resource-bar .val{color:var(--fg);font-family:monospace;font-weight:700;margin-left:4px}
+.deficit{font-size:11px;color:var(--danger);font-style:italic;text-align:center;margin-bottom:8px}
+.unit-row{display:flex;align-items:center;gap:8px;padding:8px 10px;background:var(--surface);border:1px solid var(--border);margin-bottom:6px;flex-wrap:wrap}
+.unit-row.locked{opacity:0.5}
+.unit-row .info{flex:1;min-width:120px}.unit-row .name{font-family:var(--font-display);font-size:13px;font-weight:600;color:var(--fg);letter-spacing:0.03em;margin-bottom:2px}.unit-row .cost{font-size:11px;color:var(--muted)}.unit-row .lock-reason{font-size:10px;color:var(--muted);font-style:italic}
+.stepper{display:flex;align-items:center;gap:6px;flex-shrink:0}
+.stepper .btn{padding:3px 10px;font-family:monospace;font-size:14px;font-weight:700;cursor:pointer;border:none;min-width:28px;transition:color 0.15s}
+.stepper .btn-minus{background:var(--bg-deep);border:1px solid var(--border);color:var(--muted)}.stepper .btn-minus:hover:not(:disabled){color:var(--fg)}.stepper .btn-minus:disabled{opacity:0.3;cursor:not-allowed}
+.stepper .btn-plus{background:var(--surface-lite);border:1px solid var(--accent-dim);color:var(--accent)}.stepper .btn-plus:hover:not(:disabled){color:var(--accent)}.stepper .btn-plus:disabled{opacity:0.3;cursor:not-allowed}
+.stepper .count{font-family:monospace;font-size:14px;font-weight:700;color:var(--fg);min-width:20px;text-align:center}
+.sep{height:1px;background:var(--border);margin:2px 0 8px}
+.actions{display:flex;gap:10px;justify-content:flex-end;margin-top:8px}
+.btn-act{padding:8px 18px;font-family:var(--font-display);font-size:13px;font-weight:600;letter-spacing:0.05em;cursor:pointer;border:none;transition:color 0.15s}
+.btn-reset{background:linear-gradient(180deg,var(--surface) 0%,var(--bg-deep) 100%);border-top:1px solid var(--border);border-bottom:1px solid var(--border);color:var(--muted)}.btn-reset:hover{color:var(--fg)}
+</style>
+</head>
+<body>
+<div class="scrim" onclick="location.reload()"></div>
+<div class="dialog">
+  <h3>Train Civilians</h3>
+  <div class="resource-bar">
+    <span>Treasury: <span class="val">&#xa3;5,000</span></span>
+    <span>Paper: <span class="val">12</span></span>
+  </div>
+  <p class="deficit" id="deficit" style="display:none"></p>
+  <div id="units"></div>
+  <div class="actions">
+    <button class="btn-act btn-reset" onclick="resetAll()">Reset</button>
+  </div>
+</div>
+<script>
+const units=[
+  {id:'explorer',name:'Explorer',treasury:1000,paper:2,locked:false},
+  {id:'builder',name:'Builder',treasury:1000,paper:2,locked:false},
+  {id:'engineer',name:'Engineer',treasury:1500,paper:3,locked:false},
+  {id:'spy',name:'Spy',treasury:2000,paper:4,locked:false},
+  {id:'merchant',name:'Merchant',treasury:2000,paper:4,locked:true,tech:'Merchant Companies'},
+  {id:'rail_builder',name:'Rail Builder',treasury:2000,paper:4,locked:true,tech:'Early Steam Engine'}
+]
+let counts={} ; let treasury=5000, paper=12
+units.forEach(u=>{counts[u.id]=0})
+function deficitCheck(){
+  let totalT=0,totalP=0
+  units.forEach(u=>{totalT+=counts[u.id]*u.treasury;totalP+=counts[u.id]*u.paper})
+  let msgs=[]
+  if(totalT>treasury)msgs.push('Treasury low')
+  if(totalP>paper)msgs.push('Paper low')
+  const d=document.getElementById('deficit')
+  d.style.display=msgs.length?'block':'none'
+  d.textContent=msgs.join(' and ')
+}
+function canAdd(id){
+  const u=units.find(x=>x.id===id);if(!u||u.locked)return false
+  let totalT=0,totalP=0
+  units.forEach(x=>{totalT+=counts[x.id]*x.treasury;totalP+=counts[x.id]*x.paper})
+  return totalT+u.treasury<=treasury && totalP+u.paper<=paper
+}
+function adjust(id,d){
+  if(d<0&&counts[id]<=0)return;if(d>0&&!canAdd(id))return
+  counts[id]+=d;if(counts[id]<0)counts[id]=0;deficitCheck();render()
+}
+function resetAll(){units.forEach(u=>{counts[u.id]=0});deficitCheck();render()}
+function render(){
+  document.getElementById('units').innerHTML=units.map(u=>`
+    <div class="unit-row${u.locked?' locked':''}">
+      <div class="info"><div class="name">${u.locked?'&#x1F512; ':''}${u.name}</div>
+      <div class="cost">\u00a3${u.treasury.toLocaleString()} + ${u.paper} paper</div>
+      ${u.locked?`<div class="lock-reason">Requires: ${u.tech}</div>`:''}</div>
+      <div class="stepper">
+        <button class="btn btn-minus" ${u.locked?'disabled':''} onclick="adjust('${u.id}',-1)" ${counts[u.id]<=0?'disabled':''}>&#x2212;</button>
+        <span class="count">${counts[u.id]}</span>
+        <button class="btn btn-plus" ${u.locked?'disabled':''} onclick="adjust('${u.id}',1)" ${!canAdd(u.id)?'disabled':''}>+</button>
+      </div>
+    </div>`).join('')
+}
+render()
+</script>
+</body>
+</html>

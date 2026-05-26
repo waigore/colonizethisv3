@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ColonizeThis — Move Army</title>
+<style>
+:root {
+  --bg: oklch(16% 0.018 50); --bg-deep: oklch(12% 0.015 45);
+  --surface: oklch(24% 0.015 45); --surface-lite: oklch(30% 0.016 52);
+  --fg: oklch(88% 0.015 80); --muted: oklch(65% 0.025 70);
+  --border: oklch(40% 0.02 55); --accent: oklch(72% 0.14 85); --accent-dim: oklch(60% 0.12 82);
+  --danger: oklch(58% 0.16 22);
+  --font-display: 'Iowan Old Style','Cinzel','Charter',Georgia,serif;
+  --font-body: -apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;
+}
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+html,body{min-height:100vh;min-height:100dvh;background:var(--bg);color:var(--fg);font-family:var(--font-body);display:flex;align-items:center;justify-content:center;overflow:hidden}
+.scrim{position:fixed;inset:0;background:oklch(0% 0 0 / 0.6);z-index:0}
+.dialog{position:relative;z-index:1;width:min(90vw,380px);background:linear-gradient(180deg,var(--surface-lite) 0%,var(--surface) 20%,var(--bg-deep) 100%);border:2px solid var(--accent-dim);padding:20px;display:flex;flex-direction:column;gap:14px}
+.dialog h3{font-family:var(--font-display);font-size:clamp(16px,2.2vw,20px);font-weight:700;letter-spacing:0.05em;color:var(--accent)}
+.section-label{font-family:var(--font-display);font-size:12px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted);margin-bottom:4px}
+.dest-list{display:flex;flex-direction:column;gap:6px;max-height:200px;overflow-y:auto}
+.dest{display:flex;align-items:center;gap:8px;padding:8px 10px;background:var(--surface);border:1px solid var(--border);cursor:pointer;transition:border-color 0.15s,background 0.15s;font-size:13px}.dest:hover{border-color:var(--accent-dim)}.dest.selected{border-color:var(--accent);background:var(--surface-lite)}
+.dest .radio{width:16px;height:16px;border-radius:50%;border:2px solid var(--border);flex-shrink:0;position:relative}.dest.selected .radio{border-color:var(--accent)}.dest.selected .radio::after{content:'';position:absolute;inset:3px;border-radius:50%;background:var(--accent)}
+.dest .invade{font-size:10px;color:var(--danger);margin-left:auto;font-style:italic}
+.actions{display:flex;gap:10px;justify-content:flex-end;margin-top:4px}
+.btn{padding:10px 22px;font-family:var(--font-display);font-size:14px;font-weight:600;letter-spacing:0.06em;cursor:pointer;border:none;transition:color 0.15s}
+.btn-cancel{background:linear-gradient(180deg,var(--surface) 0%,var(--bg-deep) 100%);border-top:1px solid var(--border);border-bottom:1px solid var(--border);color:var(--muted)}.btn-cancel:hover{color:var(--fg)}
+.btn-confirm{background:linear-gradient(180deg,var(--surface-lite) 0%,var(--surface) 40%,var(--bg-deep) 100%);border-top:1.5px solid var(--accent-dim);border-bottom:1.5px solid var(--accent-dim);color:var(--fg)}.btn-confirm:hover:not(:disabled){color:var(--accent)}.btn-confirm:disabled{opacity:0.4;cursor:not-allowed}
+/* Invasion sub-dialog */
+.sub-dialog{display:none;position:absolute;inset:0;background:oklch(0% 0 0 / 0.8);z-index:2;align-items:center;justify-content:center}
+.sub-dialog.show{display:flex}
+.sub-card{width:min(80vw,300px);background:linear-gradient(180deg,var(--surface-lite) 0%,var(--surface) 30%,var(--bg-deep) 100%);border:2px solid var(--danger);padding:20px;text-align:center;display:flex;flex-direction:column;gap:12px}
+.sub-card h4{font-family:var(--font-display);font-size:16px;font-weight:700;color:var(--danger)}
+.sub-card p{font-size:13px;color:var(--muted);line-height:1.5}
+.btn-war{background:linear-gradient(180deg,oklch(30% 0.04 20) 0%,oklch(22% 0.03 18) 100%);border-top:1.5px solid var(--danger);border-bottom:1.5px solid var(--danger);color:var(--danger);padding:10px;font-family:var(--font-display);font-size:13px;font-weight:700;letter-spacing:0.06em;cursor:pointer;border-left:none;border-right:none}
+.btn-war:hover{color:oklch(75% 0.16 22)}
+</style>
+</head>
+<body>
+<div class="scrim" onclick="if(!document.querySelector('.sub-dialog.show'))location.reload()"></div>
+<div class="dialog" id="main">
+  <h3>Move army — Army 1</h3>
+  <div>
+    <div class="section-label">Your provinces</div>
+    <div class="dest-list" id="owned"></div>
+  </div>
+  <div>
+    <div class="section-label">Invasion targets</div>
+    <div class="dest-list" id="other"></div>
+  </div>
+  <div class="actions">
+    <button class="btn btn-cancel" onclick="location.reload()">Cancel</button>
+    <button class="btn btn-confirm" id="confirm" disabled onclick="confirmMove()">Confirm</button>
+  </div>
+  <div class="sub-dialog" id="invade-dialog">
+    <div class="sub-card">
+      <h4>Declare war?</h4>
+      <p id="invade-msg">Moving into Spain will require a declaration of war against Spain.</p>
+      <button class="btn-war" onclick="doInvade()">Declare war and move</button>
+      <button class="btn btn-cancel" onclick="document.getElementById('invade-dialog').classList.remove('show')">Cancel</button>
+    </div>
+  </div>
+</div>
+<script>
+const owned=[{id:'L1',name:'London'},{id:'B1',name:'Bristol'},{id:'P1',name:'Plymouth'}]
+const other=[{id:'P2',name:'Paris',owner:'France'},{id:'M1',name:'Madrid',owner:'Spain',invade:true}]
+let sel=null
+function renderDests(id,dests){
+  document.getElementById(id).innerHTML=dests.map(d=>`<div class="dest${sel===d.id?' selected':''}" onclick="selectDest('${d.id}')"><span class="radio"></span>${d.name}${d.invade?`<span class="invade">declare war on ${d.owner}</span>`:''}</div>`).join('')
+}
+function selectDest(id){sel=id;renderDests('owned',owned);renderDests('other',other);document.getElementById('confirm').disabled=false}
+function confirmMove(){
+  const d=other.find(o=>o.id===sel)
+  if(d&&d.invade){document.getElementById('invade-msg').textContent=`Moving into ${d.name} will require a declaration of war against ${d.owner}.`;document.getElementById('invade-dialog').classList.add('show')}
+  else{location.reload()}
+}
+function doInvade(){location.reload()}
+renderDests('owned',owned);renderDests('other',other)
+</script>
+</body>
+</html>

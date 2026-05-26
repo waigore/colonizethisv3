@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ColonizeThis — Call to Arms</title>
+<style>
+:root {
+  --bg: oklch(16% 0.018 50); --bg-deep: oklch(12% 0.015 45);
+  --surface: oklch(24% 0.015 45); --surface-lite: oklch(30% 0.016 52);
+  --fg: oklch(88% 0.015 80); --muted: oklch(65% 0.025 70);
+  --border: oklch(40% 0.02 55); --accent: oklch(72% 0.14 85); --accent-dim: oklch(60% 0.12 82);
+  --danger: oklch(58% 0.16 22); --success: oklch(58% 0.14 140);
+  --font-display: 'Iowan Old Style','Cinzel','Charter',Georgia,serif;
+  --font-body: -apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;
+}
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+html,body{min-height:100vh;min-height:100dvh;background:var(--bg);color:var(--fg);font-family:var(--font-body);display:flex;align-items:center;justify-content:center;overflow:hidden}
+.scrim{position:fixed;inset:0;background:oklch(0% 0 0 / 0.7);z-index:0}
+.dialog{position:relative;z-index:1;width:min(90vw,520px);max-height:88vh;overflow-y:auto;background:linear-gradient(180deg,var(--surface-lite) 0%,var(--surface) 15%,var(--bg-deep) 100%);border:2px solid var(--accent-dim);padding:clamp(14px,3vw,24px);display:flex;flex-direction:column;gap:14px}
+.dialog h2{font-family:var(--font-display);font-size:clamp(18px,2.5vw,24px);font-weight:700;letter-spacing:0.05em;color:var(--accent)}
+.dialog .intro{font-family:var(--font-body);font-size:13px;color:var(--muted);font-style:italic;line-height:1.5}
+.divider{width:80px;height:2px;background:linear-gradient(90deg,transparent,var(--accent-dim),var(--accent),var(--accent-dim),transparent)}
+.call-row{display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--surface);border:1px solid var(--border);flex-wrap:wrap}
+.call-row .prompt{flex:1;min-width:0;font-size:13px;line-height:1.4;color:var(--fg)}
+.call-row .toggles{display:flex;gap:6px;flex-shrink:0}
+.tog{padding:6px 14px;font-family:var(--font-display);font-size:12px;font-weight:600;letter-spacing:0.05em;cursor:pointer;border:none;transition:all 0.15s}
+.tog-join{background:oklch(25% 0.03 140 / 0.3);border:1.5px solid var(--success);color:var(--success)}.tog-join.on{background:oklch(30% 0.06 140 / 0.4)}
+.tog-refuse{background:oklch(25% 0.03 20 / 0.3);border:1.5px solid var(--danger);color:var(--danger)}.tog-refuse.on{background:oklch(30% 0.06 20 / 0.4)}
+.tog:not(.on){opacity:0.4;border-color:var(--border);color:var(--muted);background:var(--bg-deep)}
+.btn-submit{width:100%;padding:12px;background:linear-gradient(180deg,var(--surface-lite) 0%,var(--surface) 40%,var(--bg-deep) 100%);border-top:1.5px solid var(--accent-dim);border-bottom:1.5px solid var(--accent-dim);color:var(--fg);font-family:var(--font-display);font-size:15px;font-weight:700;letter-spacing:0.06em;cursor:pointer;text-align:center;transition:color 0.15s}.btn-submit:hover{color:var(--accent)}
+</style>
+</head>
+<body>
+<div class="scrim"></div>
+<div class="dialog">
+  <h2>Call to Arms</h2>
+  <p class="intro">Your allies have requested your aid. Choose whether to join each war or refuse.</p>
+  <div class="divider"></div>
+  <div id="calls"></div>
+  <button class="btn-submit" onclick="submit()">Submit decisions</button>
+</div>
+<script>
+const calls=[
+  {id:1,defender:'Portugal',aggressor:'Spain'},
+  {id:2,defender:'Dutch Republic',aggressor:'France'}
+]
+let decisions={}
+calls.forEach(c=>{decisions[c.id]=true})
+function render(){
+  document.getElementById('calls').innerHTML=calls.map(c=>`
+    <div class="call-row">
+      <span class="prompt">${c.defender} is being attacked by ${c.aggressor}. Will you honour your alliance?</span>
+      <div class="toggles">
+        <button class="tog tog-join ${decisions[c.id]?'on':''}" onclick="toggle(${c.id},true)">Join</button>
+        <button class="tog tog-refuse ${!decisions[c.id]?'on':''}" onclick="toggle(${c.id},false)">Refuse</button>
+      </div>
+    </div>`).join('')
+}
+function toggle(id,v){decisions[id]=v;render()}
+function submit(){
+  const r=calls.map(c=>`${c.defender}: ${decisions[c.id]?'Join':'Refuse'}`).join(', ')
+  alert('Decisions submitted: '+r);location.reload()
+}
+render()
+</script>
+</body>
+</html>

@@ -1,0 +1,1106 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ColonizeThis — Game Screen</title>
+<style>
+/* ── Theme: editorial-monocle + nautical / brass / mahogany ── */
+:root {
+  --bg:        oklch(16% 0.018 50);
+  --bg-deep:   oklch(12% 0.015 45);
+  --surface:   oklch(24% 0.015 45);
+  --surface-lite: oklch(30% 0.016 52);
+  --fg:        oklch(88% 0.015 80);
+  --muted:     oklch(65% 0.025 70);
+  --border:    oklch(40% 0.02 55);
+  --accent:    oklch(72% 0.14 85);
+  --accent-dim: oklch(60% 0.12 82);
+  --accent-bright: oklch(82% 0.13 90);
+  --danger:    oklch(55% 0.16 22);
+  --success:   oklch(55% 0.12 150);
+  --font-display: 'Iowan Old Style', 'Cinzel', 'Charter', Georgia, serif;
+  --font-body:    -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  --font-mono:    'SF Mono', ui-monospace, Menlo, monospace;
+  --topbar-h: 36px; --tabbar-h: 34px; --chrome-h: calc(var(--topbar-h) + var(--tabbar-h));
+}
+*, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+html, body {
+  height:100vh; height:100dvh;
+  background:var(--bg-deep); color:var(--fg);
+  font-family:var(--font-body);
+  overflow:hidden; user-select:none;
+}
+
+/* ── Shell layout ── */
+.shell { display:flex; flex-direction:column; height:100%; position:relative; z-index:0; }
+
+/* ── Top bar ── */
+.topbar {
+  height:var(--topbar-h); flex-shrink:0;
+  background:linear-gradient(180deg, var(--surface-lite) 0%, var(--surface) 100%);
+  border-bottom:1px solid var(--accent-dim);
+  display:flex; align-items:center; padding:0 8px; gap:8px;
+  position:relative; z-index:10;
+}
+.hamburger-btn {
+  width:28px; height:28px; background:transparent; border:none;
+  cursor:pointer; display:flex; flex-direction:column;
+  justify-content:center; align-items:center; gap:3px; padding:4px;
+  flex-shrink:0; -webkit-tap-highlight-color:transparent;
+  transition:opacity 0.15s;
+}
+.hamburger-btn:hover { opacity:0.8; }
+.hamburger-line { width:16px; height:2px; background:var(--accent-dim); border-radius:1px; }
+.topbar-center { flex:1; text-align:center; font-family:var(--font-display); font-size:13px; font-weight:600; letter-spacing:0.04em; color:var(--fg); }
+.pause-btn-sm {
+  width:28px; height:28px; background:transparent; border:1px solid var(--border);
+  color:var(--accent-dim); cursor:pointer; font-size:12px;
+  display:flex; align-items:center; justify-content:center;
+  transition:color 0.15s, border-color 0.15s;
+  -webkit-tap-highlight-color:transparent;
+}
+.pause-btn-sm:hover { color:var(--accent-bright); border-color:var(--accent-dim); }
+
+/* ── Tab bar ── */
+.tabbar {
+  height:var(--tabbar-h); flex-shrink:0;
+  background:var(--surface); border-bottom:1px solid var(--border);
+  display:flex; align-items:center; padding:0 6px; gap:2px;
+  position:relative; z-index:9;
+}
+.region-tab {
+  padding:4px 12px;
+  background:linear-gradient(180deg, var(--bg-deep) 0%, var(--surface) 100%);
+  border:1px solid var(--border); border-bottom:none;
+  color:var(--muted); font-family:var(--font-display);
+  font-size:11px; font-weight:600; letter-spacing:0.03em;
+  cursor:pointer; border-radius:1px 1px 0 0;
+  transition:color 0.15s, background 0.15s, border-color 0.15s;
+  -webkit-tap-highlight-color:transparent;
+}
+.region-tab.active {
+  background:var(--bg); color:var(--accent);
+  border-color:var(--accent-dim);
+  border-bottom:2px solid var(--accent); margin-bottom:-1px;
+}
+.region-tab:hover:not(.active) { color:var(--fg); border-color:var(--accent-dim); }
+.tabbar-spacer { flex:1; }
+.treasury {
+  display:flex; align-items:center; gap:4px; padding:0 8px;
+  font-family:var(--font-mono); font-size:11px; color:var(--accent-dim);
+  cursor:pointer; transition:color 0.15s;
+}
+.treasury:hover { color:var(--accent-bright); }
+.treasury-icon img { width:18px; height:18px; image-rendering:pixelated; display:block; }
+.treasury-delta { font-size:10px; }
+.treasury-delta.positive { color:var(--success); }
+.treasury-delta.negative { color:var(--danger); }
+.cargo-hold {
+  display:flex; align-items:center; gap:4px; padding:0 8px;
+  font-family:var(--font-mono); font-size:11px; color:var(--muted);
+  border-left:1px solid var(--border); margin-left:4px;
+}
+.cargo-icon img { width:18px; height:18px; image-rendering:pixelated; display:block; }
+
+/* ── Map area ── */
+.map-area {
+  flex:1; position:relative;
+  background:
+    radial-gradient(ellipse at 30% 60%, oklch(25% 0.03 110 / 0.3) 0%, transparent 50%),
+    radial-gradient(ellipse at 70% 30%, oklch(22% 0.04 200 / 0.25) 0%, transparent 50%),
+    var(--bg-deep);
+  overflow:hidden; min-height:0;
+}
+.map-grid {
+  position:absolute; inset:0;
+  background-image:
+    linear-gradient(oklch(40% 0.02 55 / 0.08) 1px, transparent 1px),
+    linear-gradient(90deg, oklch(40% 0.02 55 / 0.08) 1px, transparent 1px);
+  background-size:48px 48px; opacity:0.6;
+}
+.terrain { position:absolute; inset:0; pointer-events:none; }
+.terrain-blob { position:absolute; border-radius:50%; opacity:0.15; border:1px solid oklch(50% 0.02 60 / 0.15); }
+.terrain-blob.forest { background:oklch(28% 0.04 130); }
+.terrain-blob.plains { background:oklch(32% 0.025 105); }
+.terrain-blob.mountain { background:oklch(28% 0.008 230); }
+.terrain-blob.desert { background:oklch(35% 0.025 75); }
+.terrain-blob.river { width:2px !important; border-radius:0 !important; opacity:0.12; background:oklch(48% 0.06 220); border:none; transform:rotate(-15deg); }
+.town-dot { position:absolute; width:6px; height:6px; border-radius:50%; background:var(--accent); opacity:0.5; box-shadow:0 0 4px oklch(70% 0.12 80 / 0.3); }
+.town-label { position:absolute; font-family:var(--font-display); font-size:8px; color:var(--fg); opacity:0.5; white-space:nowrap; pointer-events:none; }
+
+/* ── Left rail empire buttons ── */
+.left-rail {
+  position:absolute; left:6px; top:50%; transform:translateY(-50%);
+  display:flex; flex-direction:column; gap:3px; z-index:5;
+}
+.empire-btn {
+  width:36px; height:36px;
+  background:linear-gradient(180deg, var(--surface-lite) 0%, var(--bg-deep) 100%);
+  border:1px solid var(--border); color:var(--accent-dim);
+  cursor:pointer;
+  display:flex; align-items:center; justify-content:center;
+  position:relative; transition:color 0.15s, border-color 0.15s;
+  -webkit-tap-highlight-color:transparent;
+  padding:2px;
+}
+.empire-btn img {
+  width:24px; height:24px;
+  image-rendering:pixelated;
+  display:block;
+}
+.empire-btn:hover { color:var(--accent-bright); border-color:var(--accent-dim); }
+.empire-btn:hover::after {
+  content:attr(data-tooltip);
+  position:absolute; left:calc(100% + 6px); top:50%; transform:translateY(-50%);
+  background:var(--bg-deep); color:var(--fg);
+  padding:3px 8px; border:1px solid var(--border);
+  font-family:var(--font-body); font-size:10px; white-space:nowrap; z-index:10;
+}
+.empire-btn .eicon { font-size:15px; }
+
+/* ── Corner controls ── */
+.corner-controls {
+  position:absolute; left:6px; bottom:6px;
+  display:flex; gap:3px; z-index:5;
+}
+.corner-btn {
+  width:32px; height:32px;
+  background:linear-gradient(180deg, var(--surface-lite) 0%, var(--bg-deep) 100%);
+  border:1px solid var(--border); color:var(--accent-dim);
+  cursor:pointer;
+  display:flex; align-items:center; justify-content:center;
+  transition:color 0.15s, border-color 0.15s;
+  -webkit-tap-highlight-color:transparent;
+  padding:2px;
+}
+.corner-btn img {
+  width:22px; height:22px;
+  image-rendering:pixelated;
+  display:block;
+}
+.corner-btn:hover { color:var(--accent-bright); border-color:var(--accent-dim); }
+
+/* ── Minimap ── */
+.minimap-container {
+  position:absolute; right:6px; bottom:6px; z-index:5;
+  display:flex; flex-direction:column; gap:4px; align-items:flex-end;
+}
+.minimap-panel {
+  background:var(--bg-deep); border:1px solid var(--border);
+  padding:2px; position:relative;
+  width:clamp(100px,14vw,140px); height:clamp(75px,10vw,105px);
+  overflow:hidden;
+}
+.minimap-canvas {
+  width:100%; height:100%;
+  background:
+    linear-gradient(oklch(28% 0.02 90 / 0.5) 0%, oklch(26% 0.03 90 / 0.5) 40%),
+    linear-gradient(180deg, oklch(20% 0.04 240 / 0.6) 0%, oklch(20% 0.04 240 / 0.6) 60%, oklch(28% 0.02 90 / 0.5) 60%);
+  background-size:100% 60%, 100% 100%; background-repeat:no-repeat;
+  position:relative;
+}
+.minimap-viewport {
+  position:absolute; border:1px solid oklch(90% 0.01 240);
+  background:oklch(100% 0 0 / 0.06); pointer-events:none;
+}
+.minimap-toggle {
+  position:absolute; top:2px; right:2px; z-index:2;
+  width:20px; height:20px; background:var(--bg-deep);
+  border:1px solid var(--border); color:var(--accent-dim);
+  cursor:pointer; font-size:10px;
+  display:flex; align-items:center; justify-content:center;
+  -webkit-tap-highlight-color:transparent;
+}
+.minimap-toggle:hover { color:var(--accent-bright); }
+.zoom-slider {
+  width:100%; display:flex; align-items:center; gap:4px;
+}
+.zoom-slider label { font-family:var(--font-mono); font-size:9px; color:var(--muted); }
+.zoom-slider input[type="range"] {
+  flex:1; -webkit-appearance:none; appearance:none;
+  height:3px; background:var(--bg-deep);
+  border:1px solid var(--border); border-radius:2px;
+  outline:none; cursor:pointer;
+}
+.zoom-slider input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance:none; appearance:none;
+  width:12px; height:12px; border-radius:50%;
+  background:var(--accent-dim); border:1px solid var(--accent);
+  cursor:pointer;
+}
+
+/* ── Players bar ── */
+.players-bar {
+  position:absolute; right:6px; top:78px;
+  display:flex; flex-direction:column; gap:3px; z-index:5;
+}
+.player-chip {
+  display:flex; align-items:center; gap:4px; padding:3px 6px;
+  background:linear-gradient(180deg, var(--surface) 0%, var(--bg-deep) 100%);
+  border:1px solid var(--border);
+  font-family:var(--font-body); font-size:10px; color:var(--muted);
+  min-width:80px; justify-content:flex-end;
+}
+.player-chip .chip-swatch { width:8px; height:8px; border-radius:1px; border:1px solid oklch(50% 0.02 60 / 0.4); flex-shrink:0; }
+.player-chip .chip-name { font-weight:500; }
+.player-chip .chip-score { font-family:var(--font-mono); font-size:9px; color:var(--accent-dim); }
+
+/* ── Next Turn (in topbar) ── */
+.next-turn {
+  position:relative;
+  padding:2px 12px;
+  background:linear-gradient(180deg, var(--surface-lite) 0%, var(--surface) 50%, var(--bg-deep) 100%);
+  border:1px solid var(--accent-dim); color:var(--accent);
+  font-family:var(--font-display); font-size:11px; font-weight:700;
+  letter-spacing:0.04em; cursor:pointer;
+  border-radius:2px; min-height:26px;
+  white-space:nowrap;
+  -webkit-tap-highlight-color:transparent;
+  transition:color 0.15s, border-color 0.15s, background 0.15s;
+}
+.next-turn::before, .next-turn::after { content:''; position:absolute; top:0; bottom:0; width:2px; background:var(--accent-dim); opacity:0.5; }
+.next-turn::before { left:0; } .next-turn::after { right:0; }
+.next-turn:hover { color:var(--accent-bright); border-color:var(--accent); }
+.next-turn.disabled { opacity:0.35; cursor:not-allowed; }
+.next-turn.disabled:hover { color:var(--accent); border-color:var(--accent-dim); }
+
+/* ── News feed toggle + card ── */
+.news-toggle {
+  position:relative; width:28px; height:22px;
+  background:var(--bg-deep); border:1px solid var(--border);
+  color:var(--accent-dim); cursor:pointer;
+  display:flex; align-items:center; justify-content:center;
+  transition:color 0.15s, border-color 0.15s;
+  -webkit-tap-highlight-color:transparent; margin-left:4px;
+}
+.news-toggle:hover { color:var(--accent-bright); border-color:var(--accent-dim); }
+.news-toggle.active { color:var(--accent); border-color:var(--accent-dim); }
+.news-toggle svg { width:14px; height:14px; }
+.news-badge {
+  position:absolute; top:-4px; right:-6px;
+  min-width:14px; height:14px;
+  background:var(--danger); color:var(--fg);
+  font-family:var(--font-mono); font-size:8px; font-weight:700;
+  line-height:14px; text-align:center;
+  border-radius:7px; padding:0 3px;
+  display:none;
+}
+.news-badge.visible { display:block; }
+.news-feed-card {
+  position:absolute; z-index:7;
+  right:8px; top:8px;
+  width:clamp(220px, 28vw, 320px);
+  max-height:clamp(180px, 35vh, 300px);
+  background:linear-gradient(180deg, var(--surface) 0%, var(--bg-deep) 100%);
+  border:1px solid var(--accent-dim);
+  border-top:2px solid var(--accent);
+  padding:6px 0;
+  display:none; flex-direction:column;
+  overflow-y:auto; pointer-events:auto;
+}
+.news-feed-card.open { display:flex; }
+.news-feed-card.wide-panel-open { right:calc(8px + clamp(200px, 25vw, 280px)); }
+.news-feed-header {
+  display:flex; align-items:center; justify-content:space-between;
+  padding:0 10px 4px; border-bottom:1px solid var(--border); flex-shrink:0;
+}
+.news-feed-title {
+  font-family:var(--font-display); font-size:12px; font-weight:700;
+  letter-spacing:0.04em; color:var(--accent);
+}
+.news-feed-close {
+  width:16px; height:16px; background:transparent; border:none;
+  color:var(--muted); cursor:pointer; font-size:10px;
+  display:flex; align-items:center; justify-content:center;
+}
+.news-feed-close:hover { color:var(--accent-bright); }
+.news-feed-body {
+  padding:4px 10px; flex:1; overflow-y:auto;
+  display:flex; flex-direction:column; gap:1px;
+}
+.news-feed-entry {
+  padding:4px 6px; font-family:var(--font-body); font-size:10px; line-height:1.4;
+  color:var(--fg); border-bottom:1px solid oklch(40% 0.02 55 / 0.3); cursor:default;
+}
+.news-feed-entry.tappable { cursor:pointer; transition:color 0.15s, background 0.15s; }
+.news-feed-entry.tappable:hover { color:var(--accent-bright); background:oklch(30% 0.016 52 / 0.4); }
+
+/* ── Side menu ── */
+.side-menu {
+  position:absolute; left:0; top:var(--chrome-h); bottom:0;
+  width:240px; z-index:15;
+  background:linear-gradient(180deg, var(--surface-lite) 0%, var(--bg-deep) 100%);
+  border-right:1.5px solid var(--accent-dim);
+  transform:translateX(-100%); transition:transform 0.2s ease;
+  display:flex; flex-direction:column; padding:8px;
+  box-shadow:4px 0 16px oklch(8% 0.01 30 / 0.4);
+}
+.side-menu.open { transform:translateX(0); }
+.side-menu-header { display:flex; justify-content:flex-end; margin-bottom:8px; }
+.side-menu-close {
+  width:24px; height:24px; background:transparent; border:1px solid var(--border);
+  color:var(--muted); cursor:pointer; font-size:12px;
+  display:flex; align-items:center; justify-content:center;
+}
+.side-menu-close:hover { color:var(--accent-bright); }
+.side-menu-item {
+  width:100%; padding:8px 10px;
+  background:linear-gradient(180deg, var(--surface) 0%, var(--bg-deep) 100%);
+  border:1px solid var(--border); color:var(--fg);
+  font-family:var(--font-body); font-size:11px;
+  display:flex; align-items:center; gap:6px;
+  cursor:pointer; transition:color 0.15s, border-color 0.15s;
+}
+.side-menu-item:hover { color:var(--accent-bright); border-color:var(--accent-dim); }
+.side-menu-item .sm-icon { display:flex; align-items:center; justify-content:center; width:18px; height:18px; flex-shrink:0; }
+.side-menu-item .sm-icon img { width:18px; height:18px; image-rendering:pixelated; display:block; }
+.side-menu-scrim {
+  position:absolute; inset:0; top:var(--chrome-h); z-index:14;
+  background:oklch(8% 0.01 30 / 0.5);
+  pointer-events:none; opacity:0; transition:opacity 0.2s;
+}
+.side-menu-scrim.active { pointer-events:auto; opacity:1; }
+
+/* ── Province panel ── */
+.province-panel {
+  position:absolute; right:0; top:var(--chrome-h); bottom:0;
+  width:clamp(200px,25vw,280px); z-index:8;
+  background:linear-gradient(180deg, var(--surface) 0%, var(--bg-deep) 100%);
+  border-left:1.5px solid var(--accent-dim);
+  padding:12px; display:none; flex-direction:column; gap:6px;
+  font-size:11px; overflow-y:auto;
+}
+.province-panel.open { display:flex; }
+.province-panel h4 { font-family:var(--font-display); font-size:14px; font-weight:700; letter-spacing:0.03em; color:var(--accent); }
+.province-stat { display:flex; justify-content:space-between; padding:3px 0; border-bottom:1px solid var(--border); font-size:10px; }
+.province-stat .stat-value { color:var(--accent-dim); font-family:var(--font-mono); }
+.panel-close-btn {
+  width:100%; padding:6px; margin-top:4px;
+  background:linear-gradient(180deg, var(--surface) 0%, var(--bg-deep) 100%);
+  border:1px solid var(--border); color:var(--fg);
+  font-family:var(--font-display); font-size:11px; font-weight:600;
+  letter-spacing:0.04em; cursor:pointer; text-align:center;
+}
+.panel-close-btn:hover { color:var(--accent-bright); }
+
+/* ── Overlay scrim base ── */
+.overlay-scrim {
+  position:absolute; inset:0; z-index:20;
+  background:oklch(8% 0.01 30 / 0.7);
+  display:none; align-items:center; justify-content:center;
+}
+.overlay-scrim.active { display:flex; }
+
+/* ── Pause overlay ── */
+.pause-panel {
+  background:linear-gradient(180deg, var(--surface-lite) 0%, var(--bg-deep) 100%);
+  border:1.5px solid var(--accent-dim); padding:24px;
+  display:flex; flex-direction:column; align-items:center; gap:10px;
+  max-width:280px; width:90%;
+}
+.pause-panel-title { font-family:var(--font-display); font-size:18px; font-weight:700; letter-spacing:0.05em; color:var(--accent); }
+.brass-divider {
+  width:80px; height:1.5px;
+  background:linear-gradient(90deg, transparent, var(--accent-dim) 20%, var(--accent) 50%, var(--accent-dim) 80%, transparent);
+  margin:4px 0 8px;
+}
+.pause-btn-item {
+  width:100%; padding:10px 16px;
+  background:linear-gradient(180deg, var(--surface) 0%, var(--bg-deep) 100%);
+  border:1px solid var(--border); color:var(--fg);
+  font-family:var(--font-display); font-size:14px; font-weight:600;
+  letter-spacing:0.04em; text-align:center; cursor:pointer;
+  transition:color 0.15s, border-color 0.15s;
+}
+.pause-btn-item:hover { color:var(--accent-bright); border-color:var(--accent-dim); }
+.pause-btn-item.danger { color:var(--danger); }
+.pause-btn-item.danger:hover { border-color:var(--danger); }
+
+/* ── Map options dialog ── */
+.map-options-panel {
+  background:linear-gradient(180deg, var(--surface-lite) 0%, var(--bg-deep) 100%);
+  border:1.5px solid var(--accent-dim); padding:20px 24px;
+  max-width:320px; width:90%;
+}
+.map-options-panel h3 { font-family:var(--font-display); font-size:16px; font-weight:700; letter-spacing:0.04em; color:var(--accent); margin-bottom:14px; text-align:center; }
+.map-option-row { display:flex; align-items:center; justify-content:space-between; padding:8px 0; border-bottom:1px solid var(--border); font-size:12px; }
+.map-option-row:last-child { border-bottom:none; }
+.toggle-switch { position:relative; width:36px; height:20px; flex-shrink:0; cursor:pointer; }
+.toggle-switch::before { content:''; position:absolute; inset:0; background:var(--bg-deep); border:1px solid var(--border); border-radius:10px; transition:background 0.2s, border-color 0.2s; }
+.toggle-switch::after { content:''; position:absolute; top:3px; left:3px; width:14px; height:14px; border-radius:50%; background:var(--muted); transition:left 0.2s, background 0.2s; }
+.toggle-switch.on::before { background:var(--surface-lite); border-color:var(--accent-dim); }
+.toggle-switch.on::after { left:19px; background:var(--accent); box-shadow:0 0 4px var(--accent-dim); }
+.map-options-close {
+  width:100%; padding:8px; margin-top:14px;
+  background:linear-gradient(180deg, var(--surface) 0%, var(--bg-deep) 100%);
+  border:1px solid var(--border); color:var(--fg);
+  font-family:var(--font-display); font-size:13px; font-weight:600;
+  letter-spacing:0.04em; text-align:center; cursor:pointer;
+}
+.map-options-close:hover { color:var(--accent-bright); }
+
+/* ── Victory overlay ── */
+.victory-panel {
+  background:linear-gradient(180deg, var(--surface-lite) 0%, var(--bg-deep) 100%);
+  border:2px solid var(--accent); padding:clamp(20px,4vw,36px) clamp(16px,4vw,32px);
+  max-width:clamp(280px,88vw,460px); width:90%;
+  text-align:center; position:relative;
+  box-shadow:0 0 30px oklch(65% 0.12 80 / 0.25), inset 0 1px 0 oklch(60% 0.08 80 / 0.08);
+}
+.victory-panel::before, .victory-panel::after {
+  content:''; position:absolute;
+  width:clamp(16px,3vw,24px); height:clamp(20px,3.5vw,28px);
+  border-color:var(--accent); border-style:solid; opacity:0.7;
+}
+.victory-panel::before { top:4px; left:4px; border-width:1.5px 0 0 1.5px; }
+.victory-panel::after { bottom:4px; right:4px; border-width:0 1.5px 1.5px 0; }
+.laurel { font-size:clamp(24px,5vw,36px); color:var(--accent); margin-bottom:6px; opacity:0.6; }
+.laurel .leaf { margin:0 2px; }
+.victory-type { font-family:var(--font-display); font-size:clamp(16px,3vw,22px); font-weight:700; letter-spacing:0.06em; color:var(--accent); margin-bottom:12px; text-transform:uppercase; }
+.victory-divider { width:clamp(100px,18vw,160px); margin:0 auto 14px; }
+.victory-body { font-family:var(--font-display); font-size:clamp(14px,2.2vw,18px); line-height:1.5; color:var(--fg); margin-bottom:clamp(16px,3vh,24px); }
+.victory-winner { color:var(--accent-bright); font-weight:700; }
+.victory-actions { display:flex; gap:clamp(6px,1.5vw,12px); justify-content:center; flex-wrap:wrap; }
+.victory-btn {
+  padding:clamp(8px,1.5vh,12px) clamp(14px,2.5vw,20px);
+  background:linear-gradient(180deg, var(--surface) 0%, var(--bg-deep) 100%);
+  border:1px solid var(--accent-dim); color:var(--fg);
+  font-family:var(--font-display); font-size:clamp(12px,1.8vw,14px);
+  font-weight:600; letter-spacing:0.04em; cursor:pointer;
+  min-width:clamp(120px,25vw,170px);
+  transition:color 0.15s, border-color 0.15s;
+}
+.victory-btn:hover { color:var(--accent-bright); border-color:var(--accent); }
+.victory-btn.secondary { border-color:var(--border); color:var(--muted); }
+.victory-btn.secondary:hover { border-color:var(--accent-dim); color:var(--fg); }
+
+/* ── Overture overlay ── */
+.overture-dialog {
+  background:linear-gradient(180deg, var(--surface-lite) 0%, var(--bg-deep) 100%);
+  border:1.5px solid var(--accent-dim); padding:clamp(16px,3vw,24px);
+  max-width:clamp(300px,88vw,520px); max-height:clamp(360px,70vh,500px);
+  width:90%; overflow-y:auto; display:flex; flex-direction:column; gap:10px;
+}
+.overture-title { font-family:var(--font-display); font-size:clamp(15px,2.3vw,18px); font-weight:700; letter-spacing:0.05em; color:var(--accent); text-align:center; }
+.overture-intro { font-family:var(--font-display); font-size:clamp(11px,1.6vw,13px); color:var(--muted); text-align:center; font-style:italic; line-height:1.4; }
+.offer-list { display:flex; flex-direction:column; gap:8px; margin-top:4px; }
+.offer-row {
+  display:flex; align-items:center; gap:8px; padding:8px 10px;
+  background:linear-gradient(180deg, var(--surface) 0%, var(--bg-deep) 100%);
+  border:1px solid var(--border); flex-wrap:wrap;
+}
+.offer-info { flex:1; min-width:100px; font-size:clamp(10px,1.4vw,12px); }
+.offer-offerer { font-family:var(--font-display); font-size:clamp(11px,1.6vw,13px); font-weight:600; color:var(--accent); letter-spacing:0.03em; }
+.offer-stage { font-family:var(--font-body); font-size:10px; color:var(--muted); margin-top:1px; }
+.offer-actions { display:flex; gap:4px; flex-shrink:0; }
+.offer-btn {
+  padding:4px 10px; border:1px solid var(--border);
+  background:linear-gradient(180deg, var(--surface) 0%, var(--bg-deep) 100%);
+  color:var(--muted); font-family:var(--font-display);
+  font-size:clamp(10px,1.3vw,11px); font-weight:600; letter-spacing:0.03em;
+  cursor:pointer; transition:color 0.15s, border-color 0.15s, background 0.15s;
+}
+.offer-btn:hover { color:var(--accent-bright); border-color:var(--accent-dim); }
+.offer-btn.accepted { color:var(--success); border-color:var(--success); background:linear-gradient(180deg, var(--surface) 0%, oklch(18% 0.03 130) 100%); }
+.offer-btn.rejected { color:var(--danger); border-color:var(--danger); background:linear-gradient(180deg, var(--surface) 0%, oklch(18% 0.03 20) 100%); }
+.overture-submit {
+  width:100%; padding:8px;
+  background:linear-gradient(180deg, var(--surface-lite) 0%, var(--surface) 50%, var(--bg-deep) 100%);
+  border:1.5px solid var(--accent-dim); color:var(--accent);
+  font-family:var(--font-display); font-size:clamp(12px,1.8vw,14px);
+  font-weight:700; letter-spacing:0.05em; cursor:pointer; margin-top:6px;
+  transition:color 0.15s, border-color 0.15s;
+}
+.overture-submit:hover { color:var(--accent-bright); border-color:var(--accent); }
+
+/* ── Intro overlay ── */
+.intro-dialog {
+  background:linear-gradient(180deg, var(--surface-lite) 0%, var(--bg-deep) 100%);
+  border:1.5px solid var(--accent-dim); padding:clamp(16px,3vw,24px);
+  max-width:clamp(280px,85vw,520px); width:90%;
+  box-shadow:0 0 24px oklch(8% 0.01 30 / 0.6);
+}
+.intro-title { font-family:var(--font-display); font-size:clamp(16px,2.5vw,20px); font-weight:700; letter-spacing:0.06em; color:var(--accent); text-align:center; margin-bottom:14px; }
+.intro-line { font-family:var(--font-display); font-size:clamp(13px,2vw,16px); line-height:1.5; color:var(--fg); text-align:center; margin-bottom:16px; min-height:2em; }
+.intro-actions { display:flex; justify-content:center; gap:8px; flex-wrap:wrap; }
+.intro-btn {
+  padding:8px 18px;
+  background:linear-gradient(180deg, var(--surface) 0%, var(--bg-deep) 100%);
+  border:1px solid var(--border); color:var(--fg);
+  font-family:var(--font-display); font-size:clamp(12px,1.8vw,14px);
+  font-weight:600; letter-spacing:0.04em; cursor:pointer;
+  min-width:100px; transition:color 0.15s, border-color 0.15s;
+}
+.intro-btn:hover { color:var(--accent-bright); border-color:var(--accent-dim); }
+.spinner { display:flex; align-items:center; justify-content:center; margin:20px 0; }
+.spinner-ring { width:32px; height:32px; border:2px solid var(--border); border-top-color:var(--accent); border-radius:50%; animation:spin 0.8s linear infinite; }
+@keyframes spin { to { transform:rotate(360deg); } }
+
+/* ── Exit confirm ── */
+.exit-dialog {
+  background:linear-gradient(180deg, var(--surface-lite) 0%, var(--bg-deep) 100%);
+  border:1.5px solid var(--accent-dim); padding:20px;
+  max-width:320px; width:90%; text-align:center;
+}
+.exit-dialog h3 { font-family:var(--font-display); font-size:16px; font-weight:700; letter-spacing:0.04em; color:var(--accent); margin-bottom:8px; }
+.exit-dialog p { font-family:var(--font-body); font-size:12px; color:var(--muted); margin-bottom:16px; line-height:1.4; }
+.exit-actions { display:flex; gap:8px; justify-content:center; }
+.exit-btn {
+  padding:8px 18px; border:1px solid var(--border);
+  background:linear-gradient(180deg, var(--surface) 0%, var(--bg-deep) 100%);
+  color:var(--fg); font-family:var(--font-display); font-size:13px;
+  font-weight:600; letter-spacing:0.04em; cursor:pointer;
+  transition:color 0.15s, border-color 0.15s;
+}
+.exit-btn:hover { color:var(--accent-bright); border-color:var(--accent-dim); }
+.exit-btn.danger:hover { color:var(--danger); border-color:var(--danger); }
+
+/* ── State toggle controls (demo) ── */
+.demo-bar {
+  position:fixed; bottom:10px; right:10px; z-index:50;
+  display:flex; gap:5px; flex-wrap:wrap; justify-content:flex-end;
+}
+.demo-bar button {
+  padding:4px 10px;
+  background:var(--bg-deep); border:1px solid var(--border);
+  color:var(--muted); font-family:var(--font-mono); font-size:9px;
+  cursor:pointer; letter-spacing:0.05em; transition:color 0.15s;
+  -webkit-tap-highlight-color:transparent;
+}
+.demo-bar button:hover { color:var(--accent); }
+.demo-bar button.active { color:var(--accent); border-color:var(--accent-dim); }
+.demo-label {
+  font-family:var(--font-mono); font-size:9px; color:var(--muted);
+  align-self:center; margin-right:4px; opacity:0.7;
+}
+
+/* ── Responsive ── */
+@media (max-width:600px) {
+  .province-panel { width:100%; top:auto; height:clamp(140px,33vh,200px); border-left:none; border-top:1.5px solid var(--accent-dim); bottom:0; }
+  .players-bar { display:none; }
+  .minimap-panel { width:90px; height:70px; }
+  .left-rail { left:2px; }
+  .empire-btn { width:26px; height:26px; }
+  .corner-controls { left:2px; bottom:2px; }
+  .corner-btn { width:24px; height:24px; }
+  .news-feed-card { width:clamp(180px, 50vw, 260px); }
+  .news-feed-card.wide-panel-open { right:8px; }
+}
+
+@media (min-width:601px) and (max-width:1023px) {
+  .news-feed-card.wide-panel-open { right:calc(8px + clamp(200px, 25vw, 280px)); }
+  .news-feed-card { width:clamp(200px, 26vw, 300px); }
+}
+
+@media (min-width:1440px) {
+  .minimap-panel { width:160px; height:120px; }
+  .province-panel { width:300px; }
+  .news-feed-card { width:320px; }
+}
+@media (min-width:1920px) {
+  .province-panel { width:320px; }
+}
+
+@media (prefers-reduced-motion:reduce) {
+  * { transition-duration:0.01ms !important; }
+  .spinner-ring { animation-duration:2s; }
+}
+</style>
+</head>
+<body>
+<div class="shell">
+
+<!-- ── Top bar ── -->
+<header class="topbar">
+  <button class="hamburger-btn" onclick="toggleSideMenu()" aria-label="Menu">
+    <span class="hamburger-line"></span><span class="hamburger-line"></span><span class="hamburger-line"></span>
+  </button>
+  <div class="topbar-center" id="turnDisplay">Turn 42 / Year 1650</div>
+  <button class="pause-btn-sm" onclick="togglePause()">&#9654;</button>
+  <button class="next-turn" id="nextTurnBtn" onclick="handleNextTurn()">Next Turn (42 / 1650)</button>
+</header>
+
+<!-- ── Tab bar ── -->
+<nav class="tabbar">
+  <button class="region-tab active" onclick="switchTab(event,'old')">Old World</button>
+  <button class="region-tab" onclick="switchTab(event,'new')">New World</button>
+  <div class="tabbar-spacer"></div>
+  <span class="treasury" title="Tap to toggle display mode" onclick="toggleTreasury()">
+    <span class="treasury-icon"><img src="icons/32/ui_icon_treasury_coin.png" width="32" height="32" alt=""></span>
+    <span id="treasuryValue">12.3k</span>
+    <span class="treasury-delta positive" id="treasuryDelta">+250</span>
+  </span>
+  <span class="cargo-hold"><span class="cargo-icon"><img src="icons/32/ui_icon_cargo_hold.png" width="32" height="32" alt=""></span><span>12/120</span></span>
+  <button class="news-toggle" id="newsToggleBtn" onclick="toggleNewsFeed()" title="Turn events (5)">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="8" y1="7" x2="16" y2="7"/><line x1="8" y1="11" x2="16" y2="11"/><line x1="8" y1="15" x2="12" y2="15"/></svg>
+    <span class="news-badge visible" id="newsBadge">5</span>
+  </button>
+</nav>
+
+<!-- ── Map area ── -->
+<section class="map-area" id="mapArea">
+  <div class="map-grid"></div>
+
+  <div class="terrain">
+    <div class="terrain-blob forest" style="left:10%;top:15%;width:120px;height:80px;"></div>
+    <div class="terrain-blob forest" style="left:5%;top:45%;width:90px;height:100px;"></div>
+    <div class="terrain-blob plains" style="left:30%;top:10%;width:200px;height:150px;"></div>
+    <div class="terrain-blob plains" style="left:55%;top:40%;width:180px;height:120px;"></div>
+    <div class="terrain-blob mountain" style="left:40%;top:55%;width:160px;height:90px;"></div>
+    <div class="terrain-blob mountain" style="left:70%;top:20%;width:100px;height:70px;"></div>
+    <div class="terrain-blob desert" style="left:75%;top:60%;width:130px;height:100px;"></div>
+    <div class="terrain-blob river" style="left:25%;top:30%;width:80px;"></div>
+    <div class="town-dot" style="left:20%;top:25%;"></div>
+    <span class="town-label" style="left:calc(20% + 8px);top:calc(25% - 4px);">London</span>
+    <div class="town-dot" style="left:50%;top:50%;"></div>
+    <span class="town-label" style="left:calc(50% + 8px);top:calc(50% - 4px);">Jamestown</span>
+    <div class="town-dot" style="left:32%;top:70%;"></div>
+    <span class="town-label" style="left:calc(32% + 8px);top:calc(70% - 4px);">Paris</span>
+    <div class="town-dot" style="left:65%;top:65%;"></div>
+    <span class="town-label" style="left:calc(65% + 8px);top:calc(65% - 4px);">Havana</span>
+  </div>
+
+  <!-- Left rail -->
+  <div class="left-rail">
+    <button class="empire-btn" data-tooltip="Production"><img src="icons/32/ui_icon_production.png" width="32" height="32" alt=""></button>
+    <button class="empire-btn" data-tooltip="Civilian Units"><img src="icons/32/ui_icon_civilian_units.png" width="32" height="32" alt=""></button>
+    <button class="empire-btn" data-tooltip="Military Units"><img src="icons/32/ui_icon_military_units.png" width="32" height="32" alt=""></button>
+    <button class="empire-btn" data-tooltip="Naval Units"><img src="icons/32/ui_icon_naval_units.png" width="32" height="32" alt=""></button>
+    <button class="empire-btn" data-tooltip="Diplomacy"><img src="icons/32/ui_icon_diplomacy.png" width="32" height="32" alt=""></button>
+    <button class="empire-btn" data-tooltip="Technology"><img src="icons/32/ui_icon_technology.png" width="32" height="32" alt=""></button>
+  </div>
+
+  <!-- Corner controls -->
+  <div class="corner-controls">
+    <button class="corner-btn" title="Cycle base layer" onclick="cycleBaseLayer(this)"><img src="icons/32/ui_icon_layer_toggle.png" width="32" height="32" alt=""></button>
+    <button class="corner-btn" title="Home to capital"><img src="icons/32/ui_icon_home_capital.png" width="32" height="32" alt=""></button>
+    <button class="corner-btn" title="Map display options" onclick="toggleMapOptions()"><img src="icons/32/ui_icon_map_options.png" width="32" height="32" alt=""></button>
+  </div>
+
+  <!-- Minimap -->
+  <div class="minimap-container" id="minimapContainer">
+    <div class="minimap-panel">
+      <button class="minimap-toggle" onclick="toggleMinimap()">&#10005;</button>
+      <div class="minimap-canvas">
+        <div class="minimap-viewport" style="left:20%;top:25%;width:45%;height:40%;"></div>
+      </div>
+    </div>
+    <div class="zoom-slider">
+      <label>50%</label>
+      <input type="range" min="0.5" max="8" step="0.25" value="2.0">
+      <label>800%</label>
+    </div>
+  </div>
+
+  <!-- Players bar -->
+  <div class="players-bar">
+    <div class="player-chip"><span class="chip-swatch" style="background:oklch(55% 0.15 25);"></span><span class="chip-name">England</span><span class="chip-score">1,250</span></div>
+    <div class="player-chip"><span class="chip-swatch" style="background:oklch(55% 0.15 190);"></span><span class="chip-name">France</span><span class="chip-score">980</span></div>
+    <div class="player-chip"><span class="chip-swatch" style="background:oklch(55% 0.15 80);"></span><span class="chip-name">Spain</span><span class="chip-score">1,100</span></div>
+  </div>
+
+  <!-- News feed floating card -->
+  <div class="news-feed-card" id="newsFeedCard">
+    <div class="news-feed-header">
+      <span class="news-feed-title">Turn 42 Events</span>
+      <button class="news-feed-close" onclick="toggleNewsFeed()">&times;</button>
+    </div>
+    <div class="news-feed-body" id="newsFeedBody"></div>
+  </div>
+
+  <!-- Province panel -->
+  <aside class="province-panel" id="provincePanel">
+    <h4>London</h4>
+    <div class="province-stat"><span>Owner</span><span class="stat-value">England</span></div>
+    <div class="province-stat"><span>Population</span><span class="stat-value">12,450</span></div>
+    <div class="province-stat"><span>Defenses</span><span class="stat-value">Fort Lv. 3</span></div>
+    <div class="province-stat"><span>Production</span><span class="stat-value">+24/turn</span></div>
+    <div class="province-stat"><span>Gold</span><span class="stat-value">+18/turn</span></div>
+    <div class="province-stat"><span>Resources</span><span class="stat-value">Timber, Iron</span></div>
+    <div class="province-stat"><span>Garrison</span><span class="stat-value">2 Rgts</span></div>
+    <button class="panel-close-btn" onclick="toggleProvince()">Close</button>
+  </aside>
+
+  <!-- Side menu scrim -->
+  <div class="side-menu-scrim" id="sideMenuScrim" onclick="closeSideMenu()"></div>
+
+  <!-- Side menu -->
+  <aside class="side-menu" id="sideMenu">
+    <div class="side-menu-header"><button class="side-menu-close" onclick="closeSideMenu()">&times;</button></div>
+    <button class="side-menu-item" onclick="closeSideMenu();alert('Game Parameters\nInfinite Mode: Off')"><span class="sm-icon"><img src="icons/32/ui_icon_map_options.png" width="32" height="32" alt=""></span> Game Parameters</button>
+    <button class="side-menu-item" onclick="closeSideMenu();alert('Debug Log opened')">Debug Log</button>
+  </aside>
+
+  <!-- =================== OVERLAYS =================== -->
+
+  <!-- Pause overlay -->
+  <div class="overlay-scrim" id="pauseOverlay">
+    <div class="pause-panel">
+      <div class="pause-panel-title">Game Paused</div>
+      <div class="brass-divider"></div>
+      <button class="pause-btn-item" onclick="togglePause()">Resume</button>
+      <button class="pause-btn-item" onclick="alert('Game saved.');togglePause();">Save Game</button>
+      <button class="pause-btn-item" onclick="alert('Load dialog.');togglePause();">Load Game</button>
+      <button class="pause-btn-item" onclick="alert('Settings.');">Settings</button>
+      <button class="pause-btn-item danger" onclick="togglePause();showExitConfirm();">Exit to Main Menu</button>
+    </div>
+  </div>
+
+  <!-- Map display options dialog -->
+  <div class="overlay-scrim" id="mapOptionsDialog">
+    <div class="map-options-panel">
+      <h3>Map Display Options</h3>
+      <div class="map-option-row"><span>Show province overlay</span><span class="toggle-switch on" id="mo1" onclick="this.classList.toggle('on')"></span></div>
+      <div class="map-option-row"><span>Show province ownership</span><span class="toggle-switch" id="mo2" onclick="this.classList.toggle('on')"></span></div>
+      <div class="map-option-row"><span>Show province names</span><span class="toggle-switch on" id="mo3" onclick="this.classList.toggle('on')"></span></div>
+      <button class="map-options-close" onclick="toggleMapOptions()">Close</button>
+    </div>
+  </div>
+
+  <!-- Victory overlay -->
+  <div class="overlay-scrim" id="victoryOverlay">
+    <div class="victory-panel">
+      <div class="laurel"><span class="leaf">&#x269C;</span><span class="leaf">&#9733;</span><span class="leaf">&#x269C;</span></div>
+      <div class="victory-type">Military Victory</div>
+      <div class="brass-divider victory-divider"></div>
+      <div class="victory-body">
+        <span class="victory-winner">England</span> has achieved supremacy by military conquest.
+        <br><br>
+        Final turn: <strong>42</strong> &mdash; Year <strong>1650</strong>
+      </div>
+      <div class="victory-actions">
+        <button class="victory-btn" onclick="document.getElementById('victoryOverlay').classList.remove('active');document.getElementById('nextTurnBtn').style.display='none';alert('Returning to main menu...');">Return to Main Menu</button>
+        <button class="victory-btn secondary" onclick="document.getElementById('victoryOverlay').classList.remove('active');document.getElementById('nextTurnBtn').style.display='none';">View Final State</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Overture overlay -->
+  <div class="overlay-scrim" id="overtureOverlay">
+    <div class="overture-dialog">
+      <div class="overture-title">Diplomatic Overture</div>
+      <div class="brass-divider"></div>
+      <div class="overture-intro">Several powers have sent emissaries. Decide how to respond.</div>
+      <div class="offer-list">
+        <div class="offer-row">
+          <div class="offer-info"><div class="offer-offerer">Kingdom of Spain</div><div class="offer-stage">Trade Consulate Agreement</div></div>
+          <div class="offer-actions">
+            <button class="offer-btn accepted" onclick="toggleOverture(0,'accept',this)">Accept</button>
+            <button class="offer-btn" onclick="toggleOverture(0,'reject',this)">Reject</button>
+          </div>
+        </div>
+        <div class="offer-row">
+          <div class="offer-info"><div class="offer-offerer">French Empire</div><div class="offer-stage">Mutual Defense Pact</div></div>
+          <div class="offer-actions">
+            <button class="offer-btn accepted" onclick="toggleOverture(1,'accept',this)">Accept</button>
+            <button class="offer-btn" onclick="toggleOverture(1,'reject',this)">Reject</button>
+          </div>
+        </div>
+      </div>
+      <button class="overture-submit" onclick="submitOvertures()">Submit Decisions</button>
+    </div>
+  </div>
+
+  <!-- Intro overlay -->
+  <div class="overlay-scrim" id="introOverlay">
+    <div class="intro-dialog">
+      <div class="intro-title">A New World Awaits</div>
+      <div class="brass-divider"></div>
+      <div id="introContent">
+        <div class="intro-line" id="introLine">The year is 1500. Europe stirs with ambition. Across uncharted oceans lies a world of riches, danger, and destiny.</div>
+        <div class="intro-actions" id="introActions">
+          <button class="intro-btn" onclick="advanceIntro()">Continue</button>
+        </div>
+        <div class="intro-actions" id="introChoices" style="display:none;">
+          <button class="intro-btn" onclick="selectIntroChoice(0)">Establish trade routes</button>
+          <button class="intro-btn" onclick="selectIntroChoice(1)">Build colonial infrastructure</button>
+          <button class="intro-btn" onclick="selectIntroChoice(2)">Explore uncharted territory</button>
+        </div>
+        <div id="introLoading" style="display:none">
+          <div class="spinner"><div class="spinner-ring"></div></div>
+          <p style="text-align:center;font-family:var(--font-body);font-size:11px;color:var(--muted);">Loading...</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Exit confirm dialog -->
+  <div class="overlay-scrim" id="exitOverlay">
+    <div class="exit-dialog">
+      <h3>Exit Game?</h3>
+      <p>Your current progress will be lost if not saved.</p>
+      <div class="exit-actions">
+        <button class="exit-btn" onclick="closeExitConfirm()">Cancel</button>
+        <button class="exit-btn danger" onclick="window.location.href='main-menu.html'">Exit</button>
+      </div>
+    </div>
+  </div>
+
+</section><!-- /map-area -->
+</div><!-- /shell -->
+
+<!-- ── Demo controls ── -->
+<div class="demo-bar">
+  <span class="demo-label">States:</span>
+  <button onclick="resetAll();showState('default')" class="active" id="btn-default">Default</button>
+  <button onclick="showState('intro')" id="btn-intro">Intro</button>
+  <button onclick="showState('overture')" id="btn-overture">Overture</button>
+  <button onclick="showState('victory')" id="btn-victory">Victory</button>
+  <button onclick="showState('pause')" id="btn-pause">Pause</button>
+  <button onclick="showState('turnResolving')" id="btn-turn">Turn Resolving</button>
+  <button onclick="toggleProvince()">Province</button>
+</div>
+
+<script>
+/* ── Shell interactions ── */
+function toggleSideMenu() {
+  var m = document.getElementById('sideMenu');
+  var s = document.getElementById('sideMenuScrim');
+  m.classList.toggle('open');
+  s.classList.toggle('active');
+}
+function closeSideMenu() {
+  document.getElementById('sideMenu').classList.remove('open');
+  document.getElementById('sideMenuScrim').classList.remove('active');
+}
+function togglePause() {
+  document.getElementById('pauseOverlay').classList.toggle('active');
+}
+function toggleMapOptions() {
+  document.getElementById('mapOptionsDialog').classList.toggle('active');
+}
+function toggleMinimap() {
+  var c = document.getElementById('minimapContainer');
+  c.style.display = c.style.display === 'none' ? '' : 'none';
+}
+function toggleProvince() {
+  document.getElementById('provincePanel').classList.toggle('open');
+  syncNewsFeedInset();
+}
+function toggleTreasury() {
+  var v = document.getElementById('treasuryValue');
+  v.textContent = v.textContent === '12.3k' ? '12,345' : '12.3k';
+}
+
+/* ── News feed ── */
+var newsFeedData = [
+  { text: 'Our explorers discovered the West Indies archipelago.', tappable: true },
+  { text: 'France declared war on Spain. Europe grows tense.', tappable: false },
+  { text: 'Technology "Square Sails" has been researched.', tappable: false },
+  { text: 'A new iron ore deposit was found in Cornwall.', tappable: true },
+  { text: 'Naval battle off Cape Verde: England vs Spain — England victory.', tappable: true },
+];
+
+function populateNewsFeed() {
+  var body = document.getElementById('newsFeedBody');
+  var html = '';
+  for (var i = 0; i < newsFeedData.length; i++) {
+    var cls = newsFeedData[i].tappable ? 'news-feed-entry tappable' : 'news-feed-entry';
+    html += '<div class="' + cls + '" onclick="' + (newsFeedData[i].tappable ? 'focusNewsEvent(' + i + ')' : '') + '">' + newsFeedData[i].text + '</div>';
+  }
+  body.innerHTML = html;
+  updateNewsBadge();
+}
+function updateNewsBadge() {
+  var badge = document.getElementById('newsBadge');
+  var count = newsFeedData.length;
+  badge.textContent = count > 99 ? '99+' : count;
+  if (count > 0) badge.classList.add('visible');
+  else badge.classList.remove('visible');
+}
+function toggleNewsFeed() {
+  var card = document.getElementById('newsFeedCard');
+  var toggle = document.getElementById('newsToggleBtn');
+  card.classList.toggle('open');
+  toggle.classList.toggle('active');
+  syncNewsFeedInset();
+}
+function focusNewsEvent(index) {
+  var card = document.getElementById('newsFeedCard');
+  card.style.borderTopColor = 'var(--accent-bright)';
+  setTimeout(function() { card.style.borderTopColor = 'var(--accent)'; }, 600);
+}
+function syncNewsFeedInset() {
+  var card = document.getElementById('newsFeedCard');
+  var panel = document.getElementById('provincePanel');
+  var isWide = window.innerWidth >= 601;
+  if (isWide && panel.classList.contains('open')) {
+    card.classList.add('wide-panel-open');
+  } else {
+    card.classList.remove('wide-panel-open');
+  }
+}
+window.addEventListener('resize', syncNewsFeedInset);
+populateNewsFeed();
+function switchTab(evt, region) {
+  document.querySelectorAll('.region-tab').forEach(function(t) { t.classList.remove('active'); });
+  evt.target.classList.add('active');
+}
+function cycleBaseLayer(btn) {
+  var modes = ['Terrain only', 'Terrain + Resources', 'Terr. + Res. + Imp.', 'Full detail'];
+  btn._mode = ((btn._mode || 0) + 1) % modes.length;
+  btn.title = modes[btn._mode];
+}
+function handleNextTurn() {
+  var btn = document.getElementById('nextTurnBtn');
+  if (btn.classList.contains('disabled')) return;
+  if (confirm('Confirm end of turn?\nUnresolved orders will be submitted.')) {
+    btn.classList.add('disabled');
+    btn.textContent = 'Processing...';
+    setTimeout(function() {
+      btn.classList.remove('disabled');
+      btn.textContent = 'Next Turn (43 / 1651)';
+    }, 2000);
+  }
+}
+function showExitConfirm() {
+  document.getElementById('exitOverlay').classList.add('active');
+}
+function closeExitConfirm() {
+  document.getElementById('exitOverlay').classList.remove('active');
+}
+
+/* ── Overlay state controller ── */
+var overtureDecisions = [true, true];
+
+function resetAll() {
+  var overlays = ['pauseOverlay','mapOptionsDialog','victoryOverlay','overtureOverlay','introOverlay','exitOverlay'];
+  overlays.forEach(function(id) { document.getElementById(id).classList.remove('active'); });
+  document.getElementById('nextTurnBtn').style.display = '';
+  document.getElementById('nextTurnBtn').classList.remove('disabled');
+  document.getElementById('nextTurnBtn').textContent = 'Next Turn (42 / 1650)';
+  document.querySelectorAll('.demo-bar button').forEach(function(b) { b.classList.remove('active'); });
+  document.getElementById('btn-default').classList.add('active');
+  overtureDecisions = [true, true];
+  resetOvertureBtns();
+  resetIntro();
+}
+
+function showState(state) {
+  resetAll();
+  document.querySelectorAll('.demo-bar button').forEach(function(b) { b.classList.remove('active'); });
+
+  switch(state) {
+    case 'default': document.getElementById('btn-default').classList.add('active'); break;
+    case 'intro':
+      document.getElementById('introOverlay').classList.add('active');
+      document.getElementById('btn-intro').classList.add('active');
+      break;
+    case 'overture':
+      document.getElementById('overtureOverlay').classList.add('active');
+      document.getElementById('btn-overture').classList.add('active');
+      break;
+    case 'victory':
+      document.getElementById('victoryOverlay').classList.add('active');
+      document.getElementById('nextTurnBtn').style.display = 'none';
+      document.getElementById('btn-victory').classList.add('active');
+      break;
+    case 'pause':
+      document.getElementById('pauseOverlay').classList.add('active');
+      document.getElementById('btn-pause').classList.add('active');
+      break;
+    case 'turnResolving':
+      var btn = document.getElementById('nextTurnBtn');
+      btn.classList.add('disabled');
+      btn.textContent = 'Processing...';
+      document.getElementById('btn-turn').classList.add('active');
+      break;
+  }
+}
+
+function resetOvertureBtns() {
+  for (var i = 0; i < 2; i++) {
+    var btns = document.querySelectorAll('.offer-row:nth-child(' + (i + 1) + ') .offer-btn');
+    if (btns.length >= 2) {
+      btns[0].classList.add('accepted');
+      btns[0].classList.remove('rejected');
+      btns[1].classList.remove('rejected');
+      btns[1].classList.remove('accepted');
+    }
+  }
+}
+
+function toggleOverture(idx, action, btn) {
+  overtureDecisions[idx] = (action === 'accept');
+  var btns = btn.parentElement.querySelectorAll('.offer-btn');
+  btns[0].classList.toggle('accepted', action === 'accept');
+  btns[0].classList.remove('rejected');
+  btns[1].classList.toggle('rejected', action === 'reject');
+  btns[1].classList.remove('accepted');
+}
+
+function submitOvertures() {
+  var msg = 'Decisions submitted:\n\n';
+  msg += 'Spain: ' + (overtureDecisions[0] ? 'ACCEPTED' : 'REJECTED') + '\n';
+  msg += 'France: ' + (overtureDecisions[1] ? 'ACCEPTED' : 'REJECTED');
+  alert(msg);
+  document.getElementById('overtureOverlay').classList.remove('active');
+  showState('default');
+}
+
+/* ── Intro dialogue ── */
+var introStep = 0;
+var introSteps = [
+  { type:'line', text:'The year is 1500. Europe stirs with ambition. Across uncharted oceans lies a world of riches, danger, and destiny.' },
+  { type:'choice', text:'What is your first priority, Governor?', options:['Establish trade routes','Build colonial infrastructure','Explore uncharted territory'] },
+  { type:'line', text:'A wise choice. The Crown expects great returns. Your ships are provisioned and colonists are ready.' },
+  { type:'line', text:'The New World awaits, Governor. May fortune favor your sails.' },
+  { type:'dismiss' }
+];
+
+function resetIntro() { introStep = 0; }
+
+function renderIntro() {
+  document.getElementById('introContent').style.display = 'none';
+  document.getElementById('introLine').parentElement.style.display = 'none';
+  document.getElementById('introActions').style.display = 'none';
+  document.getElementById('introChoices').style.display = 'none';
+  document.getElementById('introLoading').style.display = 'none';
+
+  if (introStep >= introSteps.length) {
+    document.getElementById('introOverlay').classList.remove('active');
+    showState('default');
+    return;
+  }
+
+  var s = introSteps[introStep];
+  if (s.type === 'line') {
+    document.getElementById('introLine').textContent = s.text;
+    document.getElementById('introLine').parentElement.style.display = 'block';
+    document.getElementById('introActions').style.display = 'flex';
+    document.getElementById('introContent').style.display = 'block';
+  } else if (s.type === 'choice') {
+    document.getElementById('introLine').textContent = s.text;
+    document.getElementById('introLine').parentElement.style.display = 'block';
+    document.getElementById('introChoices').style.display = 'flex';
+    document.getElementById('introContent').style.display = 'block';
+    var btns = document.getElementById('introChoices').querySelectorAll('.intro-btn');
+    s.options.forEach(function(opt, i) { if (btns[i]) btns[i].textContent = opt; });
+  } else if (s.type === 'dismiss') {
+    document.getElementById('introOverlay').classList.remove('active');
+    showState('default');
+    return;
+  }
+}
+
+function advanceIntro() {
+  document.getElementById('introLoading').style.display = 'block';
+  document.getElementById('introActions').style.display = 'none';
+  setTimeout(function() {
+    introStep++;
+    document.getElementById('introLoading').style.display = 'none';
+    renderIntro();
+  }, 400);
+}
+
+function selectIntroChoice(i) {
+  introStep++;
+  renderIntro();
+}
+
+// Initialize intro
+renderIntro();
+</script>
+</body>
+</html>

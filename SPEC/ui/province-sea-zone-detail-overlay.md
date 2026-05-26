@@ -4,6 +4,7 @@
 **SPEC/ui** — Detail overlay for map tile selection. Implementation: `app/lib/features/game/widgets/province_sea_zone_detail_overlay.dart`.
 **Widgetbook:** `Province Overlay` → `app/lib/widgetbook/catalog.dart`. Integrates with [map-widget.md](map-widget.md). Identity: [world-model-identity.md](../game/world-model-identity.md).
 
+**Mockup:** [mockups/MAP20001-province-sea-zone-detail.html](mockups/MAP20001-province-sea-zone-detail.html)
 ---
 
 ## Widget contract
