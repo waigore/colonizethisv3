@@ -1,6 +1,7 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
+import '../world/province_lookup.dart';
 import '../world/unit_lookup.dart';
 
 /// Battle context for one contested province. SPEC/program/combat-resolution.md.
@@ -296,8 +297,7 @@ List<BattleContext> detectConflicts(Game game, Orders orders) {
     }
   }
 
-  processRegion(game.worldState.oldWorld);
-  processRegion(game.worldState.newWorld);
+  game.worldState.forEachRegion((_, region) => processRegion(region));
 
   contexts.sort((a, b) {
     final regionCompare = a.regionId.compareTo(b.regionId);

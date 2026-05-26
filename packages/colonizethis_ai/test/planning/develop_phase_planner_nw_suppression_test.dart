@@ -136,8 +136,8 @@ Game _developGame({int turnNumber = 145}) {
           ),
         ],
       ),
-      newWorld: const RegionData(
-        provinces: [
+      newWorld: RegionData(
+        provinces: const [
           Province(
             id: _gp1NwProvinceId,
             regionId: kNewWorldRegionId,
@@ -149,6 +149,23 @@ Game _developGame({int turnNumber = 145}) {
             ownerId: _tribe1,
           ),
           Province(id: _unownedNwProvinceId, regionId: kNewWorldRegionId),
+        ],
+        // One idle NW Builder so the owned-NW tile has an in-region
+        // candidate under the distance-aware + same-region pairing
+        // (Refs #2848 § S2). Without an NW Builder the NW improvement
+        // slot is left unfilled — the planner-set NW-suppression AC
+        // exercises the **positive coverage path** (NW + OW both
+        // assigned) so the suppression check exercises every tile the
+        // planner walks; the cross-region tile-skipping behaviour is
+        // pinned separately in `develop_phase_planner_test.dart`.
+        units: [
+          Unit(
+            id: 'b3',
+            type: kUnitTypeBuilder,
+            ownerId: _gp1,
+            locationProvinceId: _gp1NwProvinceId,
+            tileKey: '$_gp1NwProvinceId|7|7',
+          ),
         ],
       ),
       // Every NW tile slot the planner-set could possibly leak

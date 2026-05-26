@@ -7,6 +7,7 @@
 - **Canonical implementation:** `packages/colonizethis_logic/lib/src/world/province_lookup.dart` may use `oldWorld.provinces` and `newWorld.provinces` to implement `allProvinces`, `WorldState.allProvinces()`, region-scoped lookup, and related helpers.
 - **Canonical implementation (units):** `packages/colonizethis_logic/lib/src/world/unit_lookup.dart` may use `oldWorld.units` and `newWorld.units` to implement `allUnits`, `WorldState.allUnits()`, region-scoped lookup, and related helpers.
 - **Canonical region updates:** Prefer `WorldState.updateRegionById(...)` (for one-region updates) and `WorldState.mapBothRegions(...)` / `WorldState.mapBothRegionUnits(...)` (for two-region updates) over inline `if (regionId == oldWorld)` or `copyWith(oldWorld: ...)/copyWith(newWorld: ...)` branching in `lib/src/**`.
+- **Region-scoped lookups:** Prefer `WorldState.provincesForRegion(regionId)` (canonical helper in `world/province_lookup.dart`) over hand-rolled `if (regionId == kRegionOldWorld) return ws.oldWorld.provinces` branching in `lib/src/**`.
 - **Elsewhere under** `packages/colonizethis_logic/lib/src/**`: prefer `allProvinces(world)` / `allUnits(world)` or the related `WorldState` lookup extension methods so dual-region iteration stays centralized.
 - **Exceptions:** Old-World–only rules (e.g. military victory province counts, GP Old World redistribution) may still touch `oldWorld.provinces` directly when the GDD scope is explicitly Old World only. Such sites are counted toward the **global line budget** below so the total stays small and reviewable.
 
@@ -18,14 +19,18 @@
 | Checker | `tool/check_logic_dual_region_province_field_access.dart` |
 | Scan root | `packages/colonizethis_logic/lib/src/` (non-generated `.dart` only) |
 | Excluded files | `packages/colonizethis_logic/lib/src/world/province_lookup.dart`, `packages/colonizethis_logic/lib/src/world/unit_lookup.dart` |
-| Budget | At most **28** physical source lines (total) outside the excluded files may contain `oldWorld.provinces`, `newWorld.provinces`, `oldWorld.units`, `newWorld.units`, `copyWith(oldWorld: ...)`, `copyWith(newWorld: ...)`, or manual `if (regionId == kRegionOldWorld)` / `else if (regionId == kRegionOldWorld)` branching. |
+| Budget | At most **21** physical source lines (total) outside the excluded files may contain `oldWorld.provinces`, `newWorld.provinces`, `oldWorld.units`, `newWorld.units`, `copyWith(oldWorld: ...)`, `copyWith(newWorld: ...)`, or manual `if (regionId == kRegionOldWorld)` / `else if (regionId == kRegionOldWorld)` branching. |
 
-Raising the budget requires a SPEC update in this file and a maintainer-reviewed PR (same PR as the checker constant change).
+Raising the budget requires a SPEC update in this file and a maintainer-reviewed PR (same PR as the checker constant change). Lowering the budget tracks the smallest value the latest audit (Refs #2836 AC 5) confirms is achievable; future cleanup of remaining sites should drop the budget further in the same PR.
+
+## Audit history
+
+- Refs #2836 AC 5 (this PR): introduced `WorldState.provincesForRegion(regionId)` canonical helper, replaced 7 region-scoped lookup hits across `init_town_roads.dart`, `init_game_orchestrator.dart`, and `game_setup_helpers_naming.dart`, lowering the budget from **28 → 21**. Remaining 21 hits are split between Old-World-only canonical exceptions (military victory province counts, GP Old World redistribution) and locally mutable dual-region `List.from(region.units)`/`List.from(region.provinces)` builds that pre-stage in-place mutation before applying — these are not addressed by `provincesForRegion` / `mapBothRegions` shapes without restructuring the calling resolvers and are tracked as follow-up for a future audit pass.
 
 ## Acceptance criteria
 
-- Given the repository at `dev` with `packages/colonizethis_logic/lib/src/**` sources, when CI runs `dart run tool/ct_repo_lint.dart` including rule `repo.logic_dual_region_province_field_access`, then the checker counts matching lines outside `province_lookup.dart` and `unit_lookup.dart` and the run passes when the count is at most 28.
-- Given a contributor adds a 29th matching line outside `province_lookup.dart` and `unit_lookup.dart` without updating the budget in this SPEC and the checker constant, when repo lint runs, then the run fails and lists each `path:line` hit.
+- Given the repository at `dev` with `packages/colonizethis_logic/lib/src/**` sources, when CI runs `dart run tool/ct_repo_lint.dart` including rule `repo.logic_dual_region_province_field_access`, then the checker counts matching lines outside `province_lookup.dart` and `unit_lookup.dart` and the run passes when the count is at most 21.
+- Given a contributor adds a 22nd matching line outside `province_lookup.dart` and `unit_lookup.dart` without updating the budget in this SPEC and the checker constant, when repo lint runs, then the run fails and lists each `path:line` hit.
 
 ## `allProvinces(` call-site sanction gate (Refs **#2278**)
 

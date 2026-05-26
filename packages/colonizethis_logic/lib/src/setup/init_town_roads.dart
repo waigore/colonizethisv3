@@ -8,6 +8,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../constants.dart';
 import '../world/game_world_mutations.dart';
+import '../world/province_lookup.dart';
 import '../world/tile_key_coordinates.dart';
 
 const int _initTownRoadLevel = 1;
@@ -62,7 +63,7 @@ Game applyInitTownRoadsToCapitals({
       mapHeight: map.height,
     );
 
-    for (final p in _provincesWithRegionId(ws, regionId)) {
+    for (final p in ws.provincesForRegion(regionId)) {
       if (p.ownerId != factionId) continue;
       final tk = p.townTileKey;
       if (tk == null) continue;
@@ -155,19 +156,13 @@ Set<String> _allowedTileKeysForFaction(
   final keys = <String>{};
   final byProvince = ws.tileKeysByRegionAndProvince[regionId];
   if (byProvince == null) return keys;
-  for (final p in _provincesWithRegionId(ws, regionId)) {
+  for (final p in ws.provincesForRegion(regionId)) {
     if (p.ownerId != factionId) continue;
     final list = byProvince[p.id];
     if (list == null) continue;
     keys.addAll(list);
   }
   return keys;
-}
-
-Iterable<Province> _provincesWithRegionId(WorldState ws, String regionId) {
-  if (regionId == kRegionOldWorld) return ws.oldWorld.provinces;
-  if (regionId == kRegionNewWorld) return ws.newWorld.provinces;
-  return const [];
 }
 
 /// Returns map tileKey -> predecessor tileKey toward [capitalKey]. [capitalKey] maps to
