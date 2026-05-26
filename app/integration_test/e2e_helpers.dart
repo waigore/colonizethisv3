@@ -88,6 +88,8 @@ export 'e2e_test_shared.dart'
         kE2eDefaultCtDialogShellEscalationPhase,
         kE2eDefaultCtDialogShellEscalationTimeout,
         kE2eDefaultExpectPanelTextsPhase,
+        kE2eDefaultExpectPanelTextsSnapshotReaderPhase,
+        kE2eDefaultExpectPanelTextsSnapshotReaderTimeout,
         kE2eDefaultExpectPanelTextsTimeout,
         kE2eExpectCivilianPanelTextsPhase,
         kE2eExpectNavalPanelTextsPhase,
@@ -733,19 +735,25 @@ String? fleetReachLoopExitTestTotalMetaLabel(E2eFleetReachLoopExit exit) =>
 Future<void> expectPanelTextsMatchSnapshot(
   WidgetTester tester, {
   required Key panelRootKey,
-  required Object? snapshot,
+  required Object? Function() snapshotReader,
   required List<String> Function() buildExpected,
   String phaseName = kE2eDefaultExpectPanelTextsPhase,
   Duration timeout = kE2eDefaultExpectPanelTextsTimeout,
+  Duration snapshotReaderTimeout =
+      kE2eDefaultExpectPanelTextsSnapshotReaderTimeout,
+  String snapshotReaderPhaseName =
+      kE2eDefaultExpectPanelTextsSnapshotReaderPhase,
   E2ePerfLog? perf,
   List<String> Function()? buildAlternativeExpected,
 }) => e2eExpectPanelTextsMatchSnapshot(
   tester,
   panelRootKey: panelRootKey,
-  snapshot: snapshot,
+  snapshotReader: snapshotReader,
   buildExpected: buildExpected,
   phaseName: phaseName,
   timeout: timeout,
+  snapshotReaderTimeout: snapshotReaderTimeout,
+  snapshotReaderPhaseName: snapshotReaderPhaseName,
   perf: perf,
   buildAlternativeExpected: buildAlternativeExpected,
 );

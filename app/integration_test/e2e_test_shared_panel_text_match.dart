@@ -85,7 +85,7 @@ Future<void> e2eExpectCivilianPanelMatchesE2eSnapshot(
 }) => e2eExpectPanelTextsMatchSnapshot(
   tester,
   panelRootKey: kCtE2ECivilianPanelRootKey,
-  snapshot: ctE2eCivilianPanelSnapshot,
+  snapshotReader: () => ctE2eCivilianPanelSnapshot,
   buildExpected: () =>
       civilianUnitsPanelExpectedTexts(ctE2eCivilianPanelSnapshot!, l10n),
   phaseName: kE2eExpectCivilianPanelTextsPhase,
@@ -118,7 +118,7 @@ Future<void> e2eExpectNavalPanelMatchesE2eSnapshot(
 }) => e2eExpectPanelTextsMatchSnapshot(
   tester,
   panelRootKey: kCtE2ENavalPanelRootKey,
-  snapshot: ctE2eNavalPanelSnapshot,
+  snapshotReader: () => ctE2eNavalPanelSnapshot,
   buildExpected: () => navalUnitsPanelExpectedTexts(
     ctE2eNavalPanelSnapshot!,
     l10n,
@@ -157,7 +157,7 @@ Future<void> e2eExpectProductionPanelMatchesE2eSnapshot(
 }) => e2eExpectPanelTextsMatchSnapshot(
   tester,
   panelRootKey: kCtE2EProductionPanelRootKey,
-  snapshot: ctE2eProductionPanelSnapshot,
+  snapshotReader: () => ctE2eProductionPanelSnapshot,
   buildExpected: () =>
       productionPanelWideExpectedTexts(ctE2eProductionPanelSnapshot!, l10n),
   phaseName: kE2eExpectProductionPanelTextsPhase,
@@ -188,7 +188,7 @@ Future<void> e2eExpectProvincePanelMatchesE2eSnapshot(
 }) => e2eExpectPanelTextsMatchSnapshot(
   tester,
   panelRootKey: kCtE2EProvincePanelRootKey,
-  snapshot: ctE2eLastPanelSnapshot,
+  snapshotReader: () => ctE2eLastPanelSnapshot,
   buildExpected: () =>
       provincePanelWideLayoutExpectedTexts(ctE2eLastPanelSnapshot!, l10n),
   phaseName: kE2eExpectProvincePanelTextsPhase,
