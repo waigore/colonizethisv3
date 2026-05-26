@@ -688,13 +688,14 @@ DiplomacyPlannerResult runDiplomacyPlannerWithResult({
     if (phaseDeclareResult != null) {
       return phaseDeclareResult;
     }
-    // Legacy colonial_pressure declare-war ratchet runs as a fallback when
-    // the phase-planner adapter returns no target (Refs #2509 S5 migration:
+    // Legacy declare-war ratchet runs as a fallback when the
+    // phase-planner adapter returns no target (Refs #2509 post-S5:
     // phase plan is authoritative when it surfaces a target, otherwise the
     // legacy ratchet preserves below-quota / GP-only frontier declare
     // behaviour pinned by `domain_planner_orchestrator_expand_gp_only_blocker_declare_test.dart`
     // and `war_declaration_target_scoring_warmonger_test.dart`; the legacy
-    // helpers are retired structurally in S1).
+    // `colonial_pressure.dart` host was deleted in S1, the surviving
+    // helpers are canonical in `expand_phase_planner.dart`).
     final defaultStartMinorResult =
         _defaultStartOwMinorDeclarePlannerResultIfNeeded(
           ctx: ctx,
