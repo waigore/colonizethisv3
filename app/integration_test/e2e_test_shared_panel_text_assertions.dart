@@ -26,6 +26,48 @@ const String kE2eDefaultExpectPanelTextsPhase =
 /// unchanged; capital-panel callers pass their explicit 30s timeout.
 const Duration kE2eDefaultExpectPanelTextsTimeout = Duration(seconds: 20);
 
+/// Default bounded budget for the post-panel-mount poll that waits for the
+/// caller-provided `snapshotReader` to return non-null inside
+/// [e2eExpectPanelTextsMatchSnapshot].
+///
+/// The pre-lift inline closures in `new_game_full_turn_e2e_test.dart` and
+/// `new_game_capital_panel_e2e_test.dart` read the matching `ctE2e*` global
+/// **after** the panel-root `waitUntilFound` had completed, so the snapshot
+/// setter had at least one extra pump-frame to fire (the panel-root mount
+/// itself drove the next build, during which the panel's first frame
+/// invoked `updateCtE2e*PanelSnapshotIfEnabled`). The post-lift signature
+/// captured the snapshot value at call time, which races against
+/// `addPostFrameCallback` / `setState`-driven setters: the panel-root
+/// finder can become non-empty in the same frame the snapshot setter is
+/// scheduled for, leaving the captured value `null` when the assertion
+/// runs. The bounded poll restores the pre-lift semantics — read the
+/// global *after* the panel mounts, with a small adaptive window for the
+/// post-frame setter to fire (Refs GitHub #2336 AC5 / AC10 — no new
+/// flakiness — and the race surfaced under
+/// `xvfb-run` Linux desktop).
+///
+/// Two seconds is intentionally generous compared with the typical
+/// single-frame turnaround so a slow CI runner that drops a frame mid-mount
+/// still settles inside the budget without re-introducing the false
+/// `null snapshot` failure. Callers can override via the
+/// `snapshotReaderTimeout` parameter — the production-panel scenario
+/// passes 30 s when the panel mounts under heavier app-side work.
+const Duration kE2eDefaultExpectPanelTextsSnapshotReaderTimeout = Duration(
+  seconds: 2,
+);
+
+/// Default `phaseName` forwarded into the bounded snapshot-reader poll
+/// inside [e2eExpectPanelTextsMatchSnapshot].
+///
+/// Carries a distinct phase label (separate from the panel-root
+/// `waitUntilFound` slice) so AC8 timing tables can attribute the
+/// post-mount snapshot-population wait independently of the panel-root
+/// mount wait. A regression that merged the two would either hide a
+/// growing post-mount setter latency or attribute it to the unrelated
+/// rail/marker wait bucket.
+const String kE2eDefaultExpectPanelTextsSnapshotReaderPhase =
+    'pump_until_panel_snapshot_populated';
+
 /// Asserts that the rendered widget tree under [panelRootKey] matches the
 /// expected text lines built by [buildExpected] (or, when a panel can be in
 /// one of two valid steady-state variants, either [buildExpected] **or**
@@ -51,11 +93,25 @@ const Duration kE2eDefaultExpectPanelTextsTimeout = Duration(seconds: 20);
 ///   (default [kE2eDefaultExpectPanelTextsPhase]) and [timeout]
 ///   (default [kE2eDefaultExpectPanelTextsTimeout]). [perf] is forwarded
 ///   verbatim so callers keep their attribution labels.
-/// - Asserts [snapshot] is not null with a `reason:` that names
-///   [panelRootKey]; the pre-lift closures all relied on the matching
-///   global panel snapshot being populated before reading expected
-///   texts (`civilianUnitsPanelExpectedTexts(snap!, l10n)` etc.), so a
-///   regression that called this helper before the panel finished
+/// - After the panel root mounts, runs a bounded
+///   [e2ePumpUntilConditionOrIdle] poll waiting for
+///   `snapshotReader()` to return non-null — the panel-mirror setter runs
+///   in the panel's first build / post-frame callback, which can land in
+///   the same frame as the panel-root finder becoming non-empty. Without
+///   this re-read the pre-lift inline behaviour (read the matching
+///   `ctE2e*` global **after** the wait completed) would not be
+///   preserved and the assertion would race the setter. The poll uses
+///   [snapshotReaderTimeout] (default
+///   [kE2eDefaultExpectPanelTextsSnapshotReaderTimeout] = 2 s) and emits
+///   a dedicated [snapshotReaderPhaseName] timing slice (default
+///   [kE2eDefaultExpectPanelTextsSnapshotReaderPhase]) so AC8 dashboards
+///   keep post-mount setter latency separate from the panel-root mount
+///   slice.
+/// - Asserts the re-read `snapshotReader()` is not null with a `reason:`
+///   that names [panelRootKey]; the pre-lift closures all relied on the
+///   matching global panel snapshot being populated before reading
+///   expected texts (`civilianUnitsPanelExpectedTexts(snap!, l10n)` etc.),
+///   so a regression that called this helper before the panel finished
 ///   priming its snapshot would fail here with a deterministic message
 ///   instead of a confusing `null!` cast deeper in the builder.
 /// - Calls [e2eCollectTextPreorder] on the panel root element to populate
@@ -67,19 +123,24 @@ const Duration kE2eDefaultExpectPanelTextsTimeout = Duration(seconds: 20);
 ///   collapsed mirror when the post-tap expansion has not finished
 ///   re-rendering) keep their pre-lift `anyOf` semantics.
 ///
-/// [buildExpected] and [buildAlternativeExpected] are zero-arg builders so
-/// callers can capture the (now non-null) panel snapshot in a closure and
-/// keep the helper free of generics — every snapshot type
+/// [snapshotReader], [buildExpected], and [buildAlternativeExpected] are
+/// zero-arg closures so callers can read the matching `ctE2e*` mirror at
+/// the moment of evaluation (rather than capturing a stale value at call
+/// time) and so the helper remains free of generics — every snapshot type
 /// (`CtE2eCivilianPanelSnapshot`, `CtE2eNavalPanelSnapshot`,
 /// `CtE2eProductionPanelSnapshot`, `CtE2eLastPanelSnapshot`) reuses the
 /// same composition.
 Future<void> e2eExpectPanelTextsMatchSnapshot(
   WidgetTester tester, {
   required Key panelRootKey,
-  required Object? snapshot,
+  required Object? Function() snapshotReader,
   required List<String> Function() buildExpected,
   String phaseName = kE2eDefaultExpectPanelTextsPhase,
   Duration timeout = kE2eDefaultExpectPanelTextsTimeout,
+  Duration snapshotReaderTimeout =
+      kE2eDefaultExpectPanelTextsSnapshotReaderTimeout,
+  String snapshotReaderPhaseName =
+      kE2eDefaultExpectPanelTextsSnapshotReaderPhase,
   E2ePerfLog? perf,
   List<String> Function()? buildAlternativeExpected,
 }) async {
@@ -90,8 +151,15 @@ Future<void> e2eExpectPanelTextsMatchSnapshot(
     perf: perf,
     phaseName: phaseName,
   );
+  await e2ePumpUntilConditionOrIdle(
+    tester,
+    () => snapshotReader() != null,
+    timeout: snapshotReaderTimeout,
+    perf: perf,
+    phaseName: snapshotReaderPhaseName,
+  );
   expect(
-    snapshot,
+    snapshotReader(),
     isNotNull,
     reason:
         'snapshot for panel root key $panelRootKey must be populated before '
