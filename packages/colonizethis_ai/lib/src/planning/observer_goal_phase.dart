@@ -292,36 +292,6 @@ bool isExpandPhaseColonialDiplomacyTarget({
   return false;
 }
 
-/// True when a civilian work order should be filtered for the current observer phase.
-bool shouldFilterObserverPhaseWorkOrder(
-  WorkOrder order, {
-  required AIWorldSnapshot snapshot,
-  Game? game,
-}) {
-  final phase = observerGoalPhaseFor(snapshot: snapshot, game: game);
-  if (phase == ObserverGoalPhase.expand) {
-    return isNewWorldColonialWorkOrder(order);
-  }
-  if (phase == ObserverGoalPhase.colonialLite ||
-      phase == ObserverGoalPhase.develop) {
-    if (order.target == kWorkTargetPurchaseLand &&
-        ProvinceId.regionIdFrom(order.targetTileKey) == kNewWorldRegionId) {
-      return true;
-    }
-  }
-  return false;
-}
-
-/// True when a civilian work order targets New World colonial tiles (EXPAND suppress).
-bool isNewWorldColonialWorkOrder(WorkOrder order) {
-  final regionId = ProvinceId.regionIdFrom(order.targetTileKey);
-  if (regionId == kNewWorldRegionId) {
-    return order.target == kWorkTargetPurchaseLand ||
-        order.target == kWorkTargetBuildImprovement;
-  }
-  return false;
-}
-
 /// Critical-collapse / zero-regiment peace aggregator for all observer phases.
 ///
 /// Canonical home (Refs #2509 S1) for the legacy private
