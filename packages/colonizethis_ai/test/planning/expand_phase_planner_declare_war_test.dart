@@ -135,9 +135,11 @@ void main() {
     });
 
     test('treasury below cheapest regiment cost -> null', () {
-      // Treasury gate: even when an adjacent minor candidate exists, a
-      // GP that cannot afford a single regiment is told not to declare
-      // war (the conquest army-move pass would have nothing to commit).
+      // Treasury gate (arm 1 skip clause): when an adjacent minor
+      // candidate exists but the GP cannot afford a single regiment,
+      // arm 1 is skipped. With no at-war minor (arm 2 empty) and a
+      // minor on the invadable frontier (arm 3 short-circuit), the
+      // planner returns null.
       final game = _expandGame(
         players: const [
           Player(id: _gp1, displayName: 'GP1', isHuman: false, treasury: 0),
@@ -155,6 +157,128 @@ void main() {
         adjacentOwners: const [_minor1],
       );
       expect(planExpandDeclareWar(game: game, snapshot: snapshot), isNull);
+    });
+
+    test('AC: treasury below cheapest but at-war minor on invadable OW -> '
+        'that minor (arm 2 fires without treasury gate)', () {
+      // Acceptance criterion (issue #2509 § EXPAND § planExpandDeclareWar
+      // arm 2): the at-war "formalize" arm has NO treasury gate per
+      // spec — the war is already open and existing regiments commit on
+      // it. Regression pin for the seed-42 turn-100 trap (Refs #2509
+      // PR #2823 10-turn trace) where gp1's treasury collapsed below
+      // `cheapestRegimentBuildTreasuryCost` from turn 4 onward yet the
+      // GP still had at-war minors on invadable OW; the prior global
+      // treasury hoist suppressed arm 2 and the planner returned `null`,
+      // stalling gp1 at +0 net OW gain over 100 turns.
+      final game = _expandGame(
+        players: const [
+          Player(id: _gp1, displayName: 'GP1', isHuman: false, treasury: 0),
+          Player(id: _gp2, displayName: 'GP2', isHuman: false, treasury: 9999),
+          Player(id: _gp3, displayName: 'GP3', isHuman: false, treasury: 9999),
+        ],
+        oldWorldProvinces: const [
+          Province(id: 'oldWorld|m1_a', regionId: 'oldWorld', ownerId: _minor1),
+        ],
+        minorNations: const [MinorNation(id: _minor1, displayName: 'M1')],
+      );
+      final snapshot = _expandSnapshot(
+        atWarWith: const [_minor1],
+        invadableOw: const ['oldWorld|m1_a'],
+        // No adjacent-not-at-war candidates so arm 1 is empty regardless
+        // of treasury; arm 2 must fire on the already-at-war minor.
+        adjacentOwners: const [_minor1],
+      );
+      expect(
+        planExpandDeclareWar(game: game, snapshot: snapshot),
+        _minor1,
+        reason:
+            'Arm 2 (already-at-war minor with invadable OW) must fire '
+            'even when treasury is below cheapestRegimentBuildTreasuryCost. '
+            'Per issue #2509 spec the treasury skip clause is arm-1-only; '
+            'arm 2 formalizes an existing war so the conquest army-move '
+            'pass commits on already-built regiments.',
+      );
+    });
+
+    test('AC: treasury below cheapest, mixed arm-1 + arm-2 candidates -> '
+        'at-war minor wins (arm 1 skipped for treasury)', () {
+      // When treasury is below the cheapest regiment cost, arm 1 (NEW
+      // declaration on `minor2` — adjacent + not at war) is skipped and
+      // arm 2 fires on `minor1` (already at war). Pins that arm-1
+      // candidacy does NOT block fall-through to arm 2 when treasury
+      // disqualifies arm 1, and that the lex tiebreak inside each arm
+      // is unaffected by the cross-arm priority.
+      final game = _expandGame(
+        players: const [
+          Player(id: _gp1, displayName: 'GP1', isHuman: false, treasury: 0),
+          Player(id: _gp2, displayName: 'GP2', isHuman: false, treasury: 9999),
+          Player(id: _gp3, displayName: 'GP3', isHuman: false, treasury: 9999),
+        ],
+        oldWorldProvinces: const [
+          Province(id: 'oldWorld|m1_a', regionId: 'oldWorld', ownerId: _minor1),
+          Province(id: 'oldWorld|m2_a', regionId: 'oldWorld', ownerId: _minor2),
+        ],
+        minorNations: const [
+          MinorNation(id: _minor1, displayName: 'M1'),
+          MinorNation(id: _minor2, displayName: 'M2'),
+        ],
+      );
+      final snapshot = _expandSnapshot(
+        atWarWith: const [_minor1],
+        invadableOw: const ['oldWorld|m1_a', 'oldWorld|m2_a'],
+        adjacentOwners: const [_minor1, _minor2],
+      );
+      expect(
+        planExpandDeclareWar(game: game, snapshot: snapshot),
+        _minor1,
+        reason:
+            'Arm 1 (minor2, new war) is skipped because treasury < '
+            'cheapestRegimentBuildTreasuryCost; arm 2 (minor1, already at '
+            'war) fires next regardless of treasury per issue #2509 spec.',
+      );
+    });
+
+    test('AC: treasury below cheapest, sole-GP-blocker carve-out -> null '
+        '(arm 3 inline treasury gate)', () {
+      // Negative pin: the per-arm treasury gate must also apply to
+      // arm 3 (declare war on a sole GP frontier blocker). With the
+      // top-level hoist removed, an inline treasury check now sits
+      // directly in the priority-3 branch; this test ensures arm 3 does
+      // not slip through when treasury is below the cheapest regiment
+      // cost.
+      final owProvinces = <Province>[
+        for (var i = 0; i < 8; i++)
+          Province(id: 'oldWorld|gp1_$i', regionId: 'oldWorld', ownerId: _gp1),
+        for (var i = 0; i < 8; i++)
+          Province(id: 'oldWorld|gp2_$i', regionId: 'oldWorld', ownerId: _gp2),
+      ];
+      final game = _expandGame(
+        players: const [
+          Player(id: _gp1, displayName: 'GP1', isHuman: false, treasury: 0),
+          Player(id: _gp2, displayName: 'GP2', isHuman: false, treasury: 9999),
+          Player(id: _gp3, displayName: 'GP3', isHuman: false, treasury: 9999),
+        ],
+        oldWorldProvinces: owProvinces,
+        armies: [
+          _homeArmyWithRegiments(_gp1, 5),
+          _homeArmyWithRegiments(_gp2, 5),
+        ],
+      );
+      final snapshot = _expandSnapshot(
+        atWarWith: const [],
+        invadableOw: const ['oldWorld|gp2_0'],
+        adjacentOwners: const [_gp2],
+        oldWorldProvincesOwned: 8,
+      );
+      expect(
+        planExpandDeclareWar(game: game, snapshot: snapshot),
+        isNull,
+        reason:
+            'Arm 3 requires treasury >= cheapestRegimentBuildTreasuryCost '
+            'per issue #2509 spec ("declare on that GP only if ... '
+            'treasury >= regiment build cost"). Even with regiment parity '
+            'and mutual-plateau peers, treasury == 0 must suppress arm 3.',
+      );
     });
 
     test('AC: adjacent minor with invadable OW -> that minor factionId', () {
