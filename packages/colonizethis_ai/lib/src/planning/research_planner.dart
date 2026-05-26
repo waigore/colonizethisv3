@@ -8,6 +8,34 @@ import '../util/orders_extensions.dart';
 
 final _log = packageLogger();
 
+/// Computes the research planner threshold the same way [runResearchPlanner]
+/// does: `40 - getAgendaResearchModifier(hiddenAgendaId)`.
+///
+/// Pure and deterministic — identical inputs always yield identical
+/// outputs. Used by the orchestrator (Refs #2832 trace
+/// decision-provenance) to populate `thresholds.domainGates.thresholds.research`
+/// without re-running the planner.
+int computeResearchThreshold({required PlannerContext ctx}) =>
+    40 - getAgendaResearchModifier(ctx.config.hiddenAgendaId);
+
+/// Whether the research planner would execute weighted-pick selection
+/// instead of short-circuiting on its threshold gate.
+///
+/// Mirrors the predicate inside [runResearchPlanner]: research runs when
+/// `primaryGoal == tech` **or** `domainWeights.research >=
+/// computeResearchThreshold(ctx)`. The presence of research candidates
+/// is checked separately by callers because the suggestion API is a
+/// side-effecting call this helper does not re-issue.
+///
+/// Pure and deterministic — identical inputs always yield identical
+/// outputs.
+bool researchPlannerWillRun({required PlannerContext ctx}) {
+  if (ctx.primaryGoal == StrategicGoal.tech) {
+    return true;
+  }
+  return ctx.domainWeights.research >= computeResearchThreshold(ctx: ctx);
+}
+
 Orders runResearchPlanner({required PlannerContext ctx}) {
   final researchCandidates = ctx.suggestionAPI.suggestResearchOrders(
     ctx.view,
@@ -15,8 +43,7 @@ Orders runResearchPlanner({required PlannerContext ctx}) {
     ctx.topology,
     ctx.orders,
   );
-  final researchThreshold =
-      40 - getAgendaResearchModifier(ctx.config.hiddenAgendaId);
+  final researchThreshold = computeResearchThreshold(ctx: ctx);
   if (researchCandidates.isEmpty ||
       (ctx.primaryGoal != StrategicGoal.tech &&
           ctx.domainWeights.research < researchThreshold)) {

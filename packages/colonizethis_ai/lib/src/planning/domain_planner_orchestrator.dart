@@ -3,6 +3,7 @@ import 'dart:math' as math;
 import 'package:colonizethis_logic/order_suggestion_api.dart';
 
 import 'army_conquest_prep.dart';
+import 'domain_gate_data.dart';
 import 'phase_planner_conquest_filter.dart';
 import 'phase_planner_dispatch.dart';
 import 'phase_planner_economy_filter.dart';
@@ -113,7 +114,7 @@ DomainPlannerOutcome runDomainPlannersWithOutcome({
     sameTurnPriorDiplomaticOrders: sameTurnPriorDiplomaticOrders,
   );
 
-  ctx = _runEconomyDomainPlanners(
+  final economyResult = _runEconomyDomainPlanners(
     ctx: ctx,
     snapshot: snapshot,
     phasePlan: resolvedPhasePlan,
@@ -121,6 +122,8 @@ DomainPlannerOutcome runDomainPlannersWithOutcome({
     tileMapByRegion: tileMapByRegion,
     emit: emit,
   );
+  ctx = economyResult.ctx;
+  final economyGate = economyResult.gate;
 
   ctx = ctx.withOrders(runMovePlanner(ctx: ctx));
   emit('aiStageC');
@@ -165,7 +168,9 @@ DomainPlannerOutcome runDomainPlannersWithOutcome({
     declaredThisTurn: declareWarResult.declaredWarTargetFactionId,
   );
   final conquestPasses = extraPassesActive ? kStalledConquestArmyMovePasses : 1;
+  var conquestArmyMovePlannerRan = false;
   for (var pass = 0; pass < conquestPasses; pass++) {
+    conquestArmyMovePlannerRan = true;
     final movesBeforePass =
         ctx.orders.armyMoveOrdersByPlayerId[nationId]?.length ?? 0;
     ctx = ctx.withOrders(
@@ -196,6 +201,11 @@ DomainPlannerOutcome runDomainPlannersWithOutcome({
   }
   emit('aiStageD');
 
+  final navalGate = computeNavalRunGate(
+    ctx: ctx,
+    snapshot: snapshot,
+    phasePlan: resolvedPhasePlan,
+  );
   ctx = ctx.withOrders(
     runNavalPlanner(ctx: ctx, snapshot: snapshot, phasePlan: resolvedPhasePlan),
   );
@@ -213,17 +223,61 @@ DomainPlannerOutcome runDomainPlannersWithOutcome({
   );
   emit('aiStageF');
 
+  final researchThreshold = computeResearchThreshold(ctx: ctx);
+  final researchWillRun = researchPlannerWillRun(ctx: ctx);
   ctx = ctx.withOrders(runResearchPlanner(ctx: ctx));
   emit('aiStageG');
+
+  final domainGateData = DomainGateData(
+    workPlannerRan: economyGate.workPlannerRan,
+    buildPlannerRan: economyGate.buildPlannerRan,
+    movePlannerRan: true,
+    diplomacyPlannerRan: true,
+    navalPlannerRan: navalGate.willRun,
+    researchPlannerRan: researchWillRun,
+    conquestArmyMovePlannerRan: conquestArmyMovePlannerRan,
+    conquestPasses: conquestPasses,
+    workThreshold: economyGate.workThreshold,
+    buildThreshold: economyGate.buildThreshold,
+    researchThreshold: researchThreshold,
+  );
 
   return DomainPlannerOutcome(
     orders: ctx.orders,
     declaredWarTargetFactionId: declareWarResult.declaredWarTargetFactionId,
     conquestArmyMoveCount: conquestArmyMoveCount,
+    phasePlan: resolvedPhasePlan,
+    domainGateData: domainGateData,
   );
 }
 
-PlannerContext _runEconomyDomainPlanners({
+/// Economy-phase orchestrator slice carrying both the post-pass
+/// [PlannerContext] and the [EconomyGateRecord] required to populate
+/// `thresholds.domainGates` in the AI trace (Refs #2832).
+class _EconomyDomainPlannersResult {
+  const _EconomyDomainPlannersResult({required this.ctx, required this.gate});
+
+  final PlannerContext ctx;
+  final EconomyGateRecord gate;
+}
+
+/// Captures the resolved civilian-work and build gate decisions of one
+/// [_runEconomyDomainPlanners] pass.
+class EconomyGateRecord {
+  const EconomyGateRecord({
+    required this.workPlannerRan,
+    required this.buildPlannerRan,
+    required this.workThreshold,
+    required this.buildThreshold,
+  });
+
+  final bool workPlannerRan;
+  final bool buildPlannerRan;
+  final int workThreshold;
+  final int buildThreshold;
+}
+
+_EconomyDomainPlannersResult _runEconomyDomainPlanners({
   required PlannerContext ctx,
   required AIWorldSnapshot snapshot,
   required PhasePlanOutcome phasePlan,
@@ -330,7 +384,7 @@ PlannerContext _runEconomyDomainPlanners({
   }
   emit('aiStageA');
 
-  result = _appendEconomyBuildOrders(
+  final buildResult = _appendEconomyBuildOrders(
     ctx: ctx,
     snapshot: snapshot,
     phasePlan: phasePlan,
@@ -340,11 +394,33 @@ PlannerContext _runEconomyDomainPlanners({
     buildCandidates: buildCandidates,
     domainEconomyWeight: domainWeights.economy,
   );
+  result = buildResult.orders;
   emit('aiStageB');
-  return ctx.withOrders(result);
+  return _EconomyDomainPlannersResult(
+    ctx: ctx.withOrders(result),
+    gate: EconomyGateRecord(
+      workPlannerRan: runFullAiCivilianWork,
+      buildPlannerRan: buildResult.buildPlannerRan,
+      workThreshold: workThreshold,
+      buildThreshold: buildResult.buildThreshold,
+    ),
+  );
 }
 
-Orders _appendEconomyBuildOrders({
+/// Build pass outcome plus the resolved build-threshold gate decision.
+class _BuildPassResult {
+  const _BuildPassResult({
+    required this.orders,
+    required this.buildPlannerRan,
+    required this.buildThreshold,
+  });
+
+  final Orders orders;
+  final bool buildPlannerRan;
+  final int buildThreshold;
+}
+
+_BuildPassResult _appendEconomyBuildOrders({
   required PlannerContext ctx,
   required AIWorldSnapshot snapshot,
   required PhasePlanOutcome phasePlan,
@@ -507,7 +583,11 @@ Orders _appendEconomyBuildOrders({
     if (buildCandidates.isNotEmpty) {
       _log.d('build skipped nationId=${ctx.nationId} weight below threshold');
     }
-    return orders;
+    return _BuildPassResult(
+      orders: orders,
+      buildPlannerRan: false,
+      buildThreshold: buildThreshold,
+    );
   }
   var candidatesForBuild = buildCandidates;
   if (forceRegimentRebuild) {
@@ -540,8 +620,16 @@ Orders _appendEconomyBuildOrders({
     ),
   );
   if (chosen == null) {
-    return orders;
+    return _BuildPassResult(
+      orders: orders,
+      buildPlannerRan: true,
+      buildThreshold: buildThreshold,
+    );
   }
   _log.i('build chosen nationId=${ctx.nationId} unitType=${chosen.unitType}');
-  return orders.appendBuildOrders(ctx.nationId, [chosen]);
+  return _BuildPassResult(
+    orders: orders.appendBuildOrders(ctx.nationId, [chosen]),
+    buildPlannerRan: true,
+    buildThreshold: buildThreshold,
+  );
 }

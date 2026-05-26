@@ -11,7 +11,32 @@ import '../util/orders_extensions.dart';
 
 final _log = packageLogger();
 
-Orders runNavalPlanner({
+/// Minimum naval planner weight for the run gate (`weight >= kNavalRunMinWeight`).
+const int kNavalRunMinWeight = 25;
+
+/// Naval planner run-gate inputs.
+///
+/// Pure record of the values [runNavalPlanner] computes before its
+/// `weight < kNavalRunMinWeight` short-circuit. The orchestrator
+/// (Refs #2832 trace decision-provenance) consumes it via
+/// [computeNavalRunGate] without re-running the planner so the trace
+/// can report `thresholds.domainGates.navalPlannerRan` deterministically
+/// without leaking planner internals.
+class NavalRunGate {
+  const NavalRunGate({required this.weight, required this.hasColonialTargets});
+
+  final int weight;
+  final bool hasColonialTargets;
+
+  bool get willRun => weight >= kNavalRunMinWeight;
+}
+
+/// Computes the [NavalRunGate] for the naval planner using the same gate
+/// arithmetic [runNavalPlanner] applies before its weight short-circuit.
+///
+/// Pure and deterministic — identical inputs always yield identical
+/// outputs. No I/O, no logging.
+NavalRunGate computeNavalRunGate({
   required PlannerContext ctx,
   required AIWorldSnapshot snapshot,
   PhasePlanOutcome? phasePlan,
@@ -19,18 +44,9 @@ Orders runNavalPlanner({
   final colonial = snapshot.colonial;
   var weight = ctx.resolveNavalBaseWeight();
   final bool hasColonialTargets;
-  // S5 wiring (Refs #2509): the phase-planner naval directive resolver
-  // surfaces both the boolean colonial-pressure gate and the per-phase
-  // priority NW province subset. Today the boolean drives the weight
-  // boost / take cap; the subset tightens move ranking via
-  // `sortNavalMovesForColonialPressure` so fleets approach the phase-
-  // active acquisition frontier ahead of unrelated invadable NW
-  // neighbors. Empty / null leaves the legacy two-tier scoring intact.
-  List<String> phasePriorityNwProvinceIdsSorted = const <String>[];
   if (phasePlan != null) {
     final directive = resolvePhaseNavalDirective(phasePlan: phasePlan);
     hasColonialTargets = directive.colonialPreferenceActive;
-    phasePriorityNwProvinceIdsSorted = directive.priorityNwProvinceIdsSorted;
   } else {
     hasColonialTargets =
         hasColonialAcquisitionTargets(colonial) &&
@@ -45,8 +61,38 @@ Orders runNavalPlanner({
   if (hasColonialTargets && weight < kColonialNavalMinWeightWhenPressure) {
     weight = kColonialNavalMinWeightWhenPressure;
   }
-  if (weight < 25) {
-    _log.d('naval skipped nationId=${ctx.nationId} weight=$weight < 25');
+  return NavalRunGate(weight: weight, hasColonialTargets: hasColonialTargets);
+}
+
+Orders runNavalPlanner({
+  required PlannerContext ctx,
+  required AIWorldSnapshot snapshot,
+  PhasePlanOutcome? phasePlan,
+}) {
+  final colonial = snapshot.colonial;
+  final gate = computeNavalRunGate(
+    ctx: ctx,
+    snapshot: snapshot,
+    phasePlan: phasePlan,
+  );
+  final hasColonialTargets = gate.hasColonialTargets;
+  // S5 wiring (Refs #2509): the phase-planner naval directive resolver
+  // surfaces both the boolean colonial-pressure gate and the per-phase
+  // priority NW province subset. Today the boolean drives the weight
+  // boost / take cap; the subset tightens move ranking via
+  // `sortNavalMovesForColonialPressure` so fleets approach the phase-
+  // active acquisition frontier ahead of unrelated invadable NW
+  // neighbors. Empty / null leaves the legacy two-tier scoring intact.
+  List<String> phasePriorityNwProvinceIdsSorted = const <String>[];
+  if (phasePlan != null) {
+    final directive = resolvePhaseNavalDirective(phasePlan: phasePlan);
+    phasePriorityNwProvinceIdsSorted = directive.priorityNwProvinceIdsSorted;
+  }
+  if (!gate.willRun) {
+    _log.d(
+      'naval skipped nationId=${ctx.nationId} weight=${gate.weight} '
+      '< $kNavalRunMinWeight',
+    );
     return ctx.orders;
   }
 
