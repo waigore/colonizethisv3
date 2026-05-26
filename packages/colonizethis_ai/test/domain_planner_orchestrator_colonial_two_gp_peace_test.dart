@@ -86,9 +86,23 @@ const List<String> _gp2InvadableNwProvinces = <String>[
 // outnumber gp2 in the invadable set so it is not the colonial blocker.
 const String _tribeNwProvince = 'newWorld|tribe1_nw0';
 
-// gp3 owns one OW province only (no NW presence), making it the
-// non-blocker target of the COLONIAL multi-GP peace rule.
-const String _gp3OwProvince = 'oldWorld|gp3_0';
+// gp3 owns 10 OW provinces (at the observer quota) with no NW presence,
+// making it the non-blocker target of the COLONIAL multi-GP peace rule.
+// The below-quota peer exclusion in `planColonialPeace` (Refs #2509
+// § Must-have #5) requires every peaceable peer to own ≥
+// `kObserverConquestMinOwProvincesPerGp` OW provinces.
+const List<String> _gp3OwProvinces = <String>[
+  'oldWorld|gp3_0',
+  'oldWorld|gp3_1',
+  'oldWorld|gp3_2',
+  'oldWorld|gp3_3',
+  'oldWorld|gp3_4',
+  'oldWorld|gp3_5',
+  'oldWorld|gp3_6',
+  'oldWorld|gp3_7',
+  'oldWorld|gp3_8',
+  'oldWorld|gp3_9',
+];
 
 Game _colonialTwoGpWarsScenarioGame() {
   return Game(
@@ -99,11 +113,8 @@ Game _colonialTwoGpWarsScenarioGame() {
         provinces: [
           for (final id in _gp1OwProvinces)
             Province(id: id, regionId: 'oldWorld', ownerId: _nationId),
-          const Province(
-            id: _gp3OwProvince,
-            regionId: 'oldWorld',
-            ownerId: _nonBlockerGpId,
-          ),
+          for (final id in _gp3OwProvinces)
+            Province(id: id, regionId: 'oldWorld', ownerId: _nonBlockerGpId),
         ],
       ),
       newWorld: RegionData(
@@ -146,7 +157,7 @@ Game _colonialTwoGpWarsScenarioGame() {
           id: homeArmyIdFor(_nonBlockerGpId),
           ownerId: _nonBlockerGpId,
           regionId: 'oldWorld',
-          stationedProvinceId: _gp3OwProvince,
+          stationedProvinceId: _gp3OwProvinces.first,
           regimentUnitIds: const ['u_gp3'],
           isHomeArmy: true,
         ),
@@ -183,13 +194,13 @@ Game _colonialTwoGpWarsScenarioGame() {
 
 const FakeOrderSuggestionAPIForDomainPlannerTests _emptyApi =
     FakeOrderSuggestionAPIForDomainPlannerTests(
-  work: [],
-  build: [],
-  move: [],
-  research: [],
-  navalMove: [],
-  navalMission: [],
-);
+      work: [],
+      build: [],
+      move: [],
+      research: [],
+      navalMove: [],
+      navalMission: [],
+    );
 
 const EconomyPlan _economyPlan = EconomyPlan(
   productionAssignments: [],
