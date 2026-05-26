@@ -2,42 +2,43 @@ import 'package:colonizethis_models/colonizethis_models.dart'
     show Province, ProvinceId, RegionData, Unit, WorldState;
 
 import '../constants.dart';
+import '../utils/expando_index.dart';
 
 /// Id → first list index for one [RegionData.provinces] list instance (Refs #2394).
 /// First matching id wins, matching [List.indexWhere] semantics on duplicates.
-final Expando<Map<String, int>> _provinceFirstIndexByIdForProvinceList =
-    Expando<Map<String, int>>('provinceFirstIndexByIdForProvinceList');
+final ExpandoIndex<List<Province>, Map<String, int>>
+_provinceFirstIndexByIdForProvinceList =
+    ExpandoIndex<List<Province>, Map<String, int>>(
+      'provinceFirstIndexByIdForProvinceList',
+      (provinces) {
+        final built = <String, int>{};
+        for (var i = 0; i < provinces.length; i++) {
+          built.putIfAbsent(provinces[i].id, () => i);
+        }
+        return built;
+      },
+    );
 
 /// Id → province row for one [RegionData.provinces] list instance (Refs #2394).
 /// First matching id wins, matching [List.indexWhere] semantics on duplicates.
-final Expando<Map<String, Province>> _provinceByIdForProvinceList =
-    Expando<Map<String, Province>>('provinceByIdForProvinceList');
+final ExpandoIndex<List<Province>, Map<String, Province>>
+_provinceByIdForProvinceList =
+    ExpandoIndex<List<Province>, Map<String, Province>>(
+      'provinceByIdForProvinceList',
+      (provinces) {
+        final index = <String, Province>{};
+        for (final p in provinces) {
+          index.putIfAbsent(p.id, () => p);
+        }
+        return index;
+      },
+    );
 
-Map<String, int> _provinceFirstIndexByIdForList(List<Province> provinces) {
-  final cached = _provinceFirstIndexByIdForProvinceList[provinces];
-  if (cached != null) {
-    return cached;
-  }
-  final built = <String, int>{};
-  for (var i = 0; i < provinces.length; i++) {
-    built.putIfAbsent(provinces[i].id, () => i);
-  }
-  _provinceFirstIndexByIdForProvinceList[provinces] = built;
-  return built;
-}
+Map<String, int> _provinceFirstIndexByIdForList(List<Province> provinces) =>
+    _provinceFirstIndexByIdForProvinceList.get(provinces);
 
-Map<String, Province> _provinceIdIndexForList(List<Province> provinces) {
-  var index = _provinceByIdForProvinceList[provinces];
-  if (index != null) {
-    return index;
-  }
-  index = <String, Province>{};
-  for (final p in provinces) {
-    index.putIfAbsent(p.id, () => p);
-  }
-  _provinceByIdForProvinceList[provinces] = index;
-  return index;
-}
+Map<String, Province> _provinceIdIndexForList(List<Province> provinces) =>
+    _provinceByIdForProvinceList.get(provinces);
 
 /// O(1) check that [provinces] contains a row whose [Province.id] equals [provinceId].
 ///

@@ -2,6 +2,7 @@ import 'package:colonizethis_models/colonizethis_models.dart'
     show RegionData, Unit, WorldState;
 
 import '../constants.dart';
+import '../utils/expando_index.dart';
 
 /// Central unit lookup. Units live in [WorldState.oldWorld] and [WorldState.newWorld];
 /// lookup is by unit id. SPEC/game/world-model-identity.md.
@@ -108,11 +109,6 @@ MilitaryTypeCountsByPlayer militaryTypeCountsByPlayer(WorldState world) {
   );
 }
 
-/// Lazily built per [WorldState] instance (issue #2268 AC-3). A new
-/// [WorldState] from [WorldState.copyWith] gets a fresh cache via identity.
-final Expando<_WorldUnitIndex> _worldUnitIndexByState =
-    Expando<_WorldUnitIndex>('worldUnitIndexByState');
-
 /// Old-world-first id → unit plus membership sets for O(1) region checks.
 final class _WorldUnitIndex {
   _WorldUnitIndex({
@@ -126,25 +122,26 @@ final class _WorldUnitIndex {
   final Set<String> newIds;
 }
 
-_WorldUnitIndex _unitIndexForWorld(WorldState world) {
-  var index = _worldUnitIndexByState[world];
-  if (index != null) return index;
+/// Lazily built per [WorldState] instance (issue #2268 AC-3). A new
+/// [WorldState] from [WorldState.copyWith] gets a fresh cache via identity.
+final ExpandoIndex<WorldState, _WorldUnitIndex> _worldUnitIndexByState =
+    ExpandoIndex<WorldState, _WorldUnitIndex>('worldUnitIndexByState', (world) {
+      final byId = <String, Unit>{};
+      final oldIds = <String>{};
+      for (final u in world.oldWorld.units) {
+        oldIds.add(u.id);
+        byId.putIfAbsent(u.id, () => u);
+      }
+      final newIds = <String>{};
+      for (final u in world.newWorld.units) {
+        newIds.add(u.id);
+        byId.putIfAbsent(u.id, () => u);
+      }
+      return _WorldUnitIndex(byId: byId, oldIds: oldIds, newIds: newIds);
+    });
 
-  final byId = <String, Unit>{};
-  final oldIds = <String>{};
-  for (final u in world.oldWorld.units) {
-    oldIds.add(u.id);
-    byId.putIfAbsent(u.id, () => u);
-  }
-  final newIds = <String>{};
-  for (final u in world.newWorld.units) {
-    newIds.add(u.id);
-    byId.putIfAbsent(u.id, () => u);
-  }
-  index = _WorldUnitIndex(byId: byId, oldIds: oldIds, newIds: newIds);
-  _worldUnitIndexByState[world] = index;
-  return index;
-}
+_WorldUnitIndex _unitIndexForWorld(WorldState world) =>
+    _worldUnitIndexByState.get(world);
 
 /// Cross-region unit lookup on [WorldState] (waigore/colonizethis#2071 Phase 1).
 extension WorldStateUnitLookup on WorldState {

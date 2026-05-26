@@ -1,6 +1,7 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
+import '../utils/expando_index.dart';
 import 'sea_zone_identity.dart';
 import 'topology_helpers.dart';
 
@@ -55,10 +56,7 @@ String homeFleetIdFor(String playerId) => 'fleet_$playerId';
 /// cost every iteration.
 Map<String, Map<String, TopologyNode>> indexTopologyNodesByRegion(
   MapTopology topology,
-) {
-  return _nodesByRegionAndIdCache[topology] ??=
-      _computeNodesByRegionAndId(topology);
-}
+) => _nodesByRegionAndIdCache.get(topology);
 
 Map<String, Map<String, TopologyNode>> _computeNodesByRegionAndId(
   MapTopology topology,
@@ -73,9 +71,8 @@ Map<String, Map<String, TopologyNode>> _computeNodesByRegionAndId(
 /// All topology nodes keyed by node id. Cached per topology instance for the
 /// same reasons as [indexTopologyNodesByRegion]; the returned map is treated
 /// as read-only by callers.
-Map<String, TopologyNode> _nodesByIdFor(MapTopology topology) {
-  return _nodesByIdCache[topology] ??= _computeNodesById(topology);
-}
+Map<String, TopologyNode> _nodesByIdFor(MapTopology topology) =>
+    _nodesByIdCache.get(topology);
 
 Map<String, TopologyNode> _computeNodesById(MapTopology topology) {
   final out = <String, TopologyNode>{};
@@ -85,13 +82,18 @@ Map<String, TopologyNode> _computeNodesById(MapTopology topology) {
   return out;
 }
 
-final Expando<Map<String, Map<String, TopologyNode>>>
-_nodesByRegionAndIdCache = Expando<Map<String, Map<String, TopologyNode>>>(
-  'topology.nodesByRegionAndId',
-);
+final ExpandoIndex<MapTopology, Map<String, Map<String, TopologyNode>>>
+_nodesByRegionAndIdCache =
+    ExpandoIndex<MapTopology, Map<String, Map<String, TopologyNode>>>(
+      'topology.nodesByRegionAndId',
+      _computeNodesByRegionAndId,
+    );
 
-final Expando<Map<String, TopologyNode>> _nodesByIdCache =
-    Expando<Map<String, TopologyNode>>('topology.nodesById');
+final ExpandoIndex<MapTopology, Map<String, TopologyNode>> _nodesByIdCache =
+    ExpandoIndex<MapTopology, Map<String, TopologyNode>>(
+      'topology.nodesById',
+      _computeNodesById,
+    );
 
 /// True if there is an edge between [fromSeaZoneId] and [toSeaZoneId] (S<->S or P<->S).
 bool isAdjacentSeaZone(
@@ -272,8 +274,7 @@ String? _seaZoneIdForProvinceInRegionTopology(
   if (provinceNode == null && !ProvinceId.isPrefixed(provinceId)) {
     provinceNode = regionNodes[provinceId];
   }
-  if (provinceNode == null ||
-      provinceNode.type != TopologyNodeType.province) {
+  if (provinceNode == null || provinceNode.type != TopologyNodeType.province) {
     return null;
   }
   for (final e in topology.edges) {
@@ -379,18 +380,12 @@ Set<String> provinceIdsAdjacentToSeaZone(
     String? adjacentProvinceNodeId;
     if (node1.type == TopologyNodeType.seaZone &&
         node2.type == TopologyNodeType.province &&
-        canonicalizeSeaZoneId(
-              regionId: effectiveRegion,
-              seaZoneId: node1.id,
-            ) ==
+        canonicalizeSeaZoneId(regionId: effectiveRegion, seaZoneId: node1.id) ==
             canonicalSeaZoneId) {
       adjacentProvinceNodeId = node2.id;
     } else if (node2.type == TopologyNodeType.seaZone &&
         node1.type == TopologyNodeType.province &&
-        canonicalizeSeaZoneId(
-              regionId: effectiveRegion,
-              seaZoneId: node2.id,
-            ) ==
+        canonicalizeSeaZoneId(regionId: effectiveRegion, seaZoneId: node2.id) ==
             canonicalSeaZoneId) {
       adjacentProvinceNodeId = node1.id;
     }
