@@ -2,7 +2,11 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/ai_api.dart' show TurnTraceAiSection;
 import 'package:colonizethis_models/colonizethis_models.dart';
 
+import 'colonial_phase_planner.dart';
+import 'domain_gate_data.dart';
 import 'goal_manager.dart';
+import 'observer_goal_phase.dart';
+import 'phase_planner_dispatch.dart';
 import '../perception/perception_snapshot.dart';
 
 TurnTraceAiSection buildAiTraceSection({
@@ -19,6 +23,9 @@ TurnTraceAiSection buildAiTraceSection({
   required List<Map<String, Object?>> finalOrders,
   String? declaredWarTargetFactionId,
   int conquestArmyMoveCount = 0,
+  ObserverGoalPhase? observerGoalPhase,
+  PhasePlanOutcome? phasePlan,
+  DomainGateData? domainGateData,
 }) {
   final domainWeights = getDomainWeightsForLeader(config.personalityId);
   final goalWeights = getGoalWeightsForLeader(config.personalityId);
@@ -28,6 +35,18 @@ TurnTraceAiSection buildAiTraceSection({
   final agendaDiplomacyModifier = getAgendaDiplomacyModifier(
     config.hiddenAgendaId,
   );
+  final agendaSpyOrderModifier = getAgendaSpyOrderModifier(
+    config.hiddenAgendaId,
+  );
+  final agendaBuildOrderModifier = getAgendaBuildOrderModifier(
+    config.hiddenAgendaId,
+  );
+  final agendaResearchModifier = getAgendaResearchModifier(
+    config.hiddenAgendaId,
+  );
+  final phasePlanJson = phasePlan == null
+      ? null
+      : compactPhasePlanJson(phasePlan);
   return TurnTraceAiSection(
     factionId: nationId,
     state: <String, Object?>{
@@ -68,6 +87,9 @@ TurnTraceAiSection buildAiTraceSection({
           'conquestArmyMoveCount': conquestArmyMoveCount,
         },
       },
+      if (observerGoalPhase != null) 'observerGoalPhase': observerGoalPhase.name,
+      if (phasePlanJson != null && phasePlanJson.isNotEmpty)
+        'phasePlan': phasePlanJson,
       'decisionContext': <String, Object?>{
         'turnNumber': turn,
         'leaderId': config.leaderId,
@@ -99,6 +121,9 @@ TurnTraceAiSection buildAiTraceSection({
         'agendaModifiers': <String, Object?>{
           'conquer': agendaConquerModifier,
           'diplomacy': agendaDiplomacyModifier,
+          'spyOrder': agendaSpyOrderModifier,
+          'buildOrder': agendaBuildOrderModifier,
+          'research': agendaResearchModifier,
         },
       },
       'derived': <String, Object?>{
@@ -125,6 +150,7 @@ TurnTraceAiSection buildAiTraceSection({
         },
       },
       'gates': <Object?>[...goalSelectionGates(goalScores, primaryGoal)],
+      if (domainGateData != null) 'domainGates': domainGateData.toJson(),
     },
     outcome: <String, Object?>{
       'domainOutputs': <String, Object?>{
@@ -135,6 +161,51 @@ TurnTraceAiSection buildAiTraceSection({
       'emittedOrderCount': finalOrders.length,
     },
   );
+}
+
+/// Compact decision-provenance projection of [PhasePlanOutcome] for AI
+/// trace emission under `state.phasePlan` (Refs #2832).
+///
+/// Returns only the provenance-relevant fields for the active phase and
+/// omits null / empty values to keep the payload compact. The verbose
+/// nested plan objects (economy, military, naval, civilian work orders)
+/// are intentionally excluded because the trace already captures their
+/// emitted output under `outcome.domainOutputs` and
+/// `outcome.finalAggregatedOrders`.
+Map<String, Object?> compactPhasePlanJson(PhasePlanOutcome phasePlan) {
+  final acquisition = phasePlan.colonialAcquisitionTarget;
+  return <String, Object?>{
+    if (acquisition != null)
+      'colonialAcquisition': <String, Object?>{
+        'targetFactionId': acquisition.targetFactionId,
+        'method': acquisition.method.traceJsonName,
+      },
+    if (phasePlan.expandDeclareWarTargetFactionId != null)
+      'expandDeclareWarTarget': phasePlan.expandDeclareWarTargetFactionId,
+    if (phasePlan.expandPeaceTargetFactionIdsSorted.isNotEmpty)
+      'expandPeaceTargets': phasePlan.expandPeaceTargetFactionIdsSorted,
+    if (phasePlan.colonialPeaceTargetFactionIdsSorted.isNotEmpty)
+      'colonialPeaceTargets': phasePlan.colonialPeaceTargetFactionIdsSorted,
+    if (phasePlan.colonialLiteOverturesSorted.isNotEmpty)
+      'colonialLiteOvertures': phasePlan.colonialLiteOverturesSorted,
+    if (phasePlan.developPeaceTargetFactionIdsSorted.isNotEmpty)
+      'developPeaceTargets': phasePlan.developPeaceTargetFactionIdsSorted,
+  };
+}
+
+extension _AcquisitionMethodTraceJsonName on AcquisitionMethod {
+  /// Stable lowerCamelCase string used in the trace under
+  /// `state.phasePlan.colonialAcquisition.method` (Refs #2832).
+  String get traceJsonName {
+    switch (this) {
+      case AcquisitionMethod.joinEmpire:
+        return 'joinEmpire';
+      case AcquisitionMethod.purchaseLand:
+        return 'purchaseLand';
+      case AcquisitionMethod.declareWar:
+        return 'declareWar';
+    }
+  }
 }
 
 List<Map<String, Object?>> goalSelectionGates(
