@@ -48,7 +48,8 @@
 //   - The AC ("when its phase-planner orders are collected") is
 //     explicitly the planner set, not a single function. Pinning
 //     that wording at the library level keeps the AC verifiable
-//     today, before the S5 orchestrator wiring lands.
+//     against the canonical `planDevelopPeace` / `planDevelopCivilian`
+//     contracts now that the S5 orchestrator wiring is in place.
 //   - The fixture explicitly includes tribe-owned NW provinces, an
 //     owned NW province with a resource tile, and tribe / minor
 //     factions in `atWarWith` — every surface a DEVELOP planner

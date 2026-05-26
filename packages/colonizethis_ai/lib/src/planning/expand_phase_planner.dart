@@ -26,13 +26,21 @@
 /// functions themselves do not re-check the phase, matching the convention
 /// established by `develop_phase_planner.dart` (Refs #2509 S4).
 ///
-/// Wiring this module into the orchestrator and removing the legacy
-/// `expandPhaseGpPeaceTargets` helper from `observer_goal_phase.dart` are
-/// out of scope for this slice (tracked under S5 / S1 of #2509). Both the
-/// legacy `expandPhaseGpPeaceTargets` helper and the new `planExpandPeace`
-/// function remain pinned at the function-unit level until the orchestrator
-/// rewrite reconciles them, so this slice carries **zero behavior change**
-/// and **zero regression risk** for live AI play.
+/// Orchestrator wiring (#2509 S5) is now in place: `phase_planner_dispatch.dart`
+/// calls `planExpandPeace`, `planExpandDeclareWar`, `planExpandEconomy`, and
+/// `planExpandMilitary` for every EXPAND-phase player and threads the result
+/// through `PhasePlanOutcome`; `domain_planner_orchestrator.dart` consumes the
+/// outcome via `gpPeaceTargetsFromPhasePlan` /
+/// `gpExpandDeclareWarTargetFromPhasePlan` so EXPAND domain decisions reach
+/// the resolver without re-checking the phase. The legacy
+/// `expandPhaseGpPeaceTargets` helper still lives in
+/// `observer_goal_phase.dart` because the no-`phasePlan` fallback path through
+/// `collectStalledGreatPowerPeaceTargets` keeps it on the production hot path
+/// alongside the EXPAND ratchet aggregator; `colonial_pressure.dart` and
+/// `diplomacy_planner_peace_targets.dart` were removed in #2509 S1, with their
+/// helpers canonical here (and in `observer_goal_phase.dart` for the
+/// cross-phase composite peace aggregators). Both `expandPhaseGpPeaceTargets`
+/// and `planExpandPeace` are pinned at the function-unit level.
 ///
 /// In-module contracts shipped to date (see issue #2509 § EXPAND phase
 /// planner for the full set):
@@ -1285,11 +1293,12 @@ int cheapestRegimentBuildTreasuryCost() {
 ///     `forceCheapestRegimentBuild: true`), which signals the orchestrator
 ///     to force a regiment build attempt regardless of treasury (cargo
 ///     boost in Arm C handles the funding side).
-///   - The legacy `isBelowQuotaPeaceTreasuryRecovery` composite still
-///     surfacing through `colonial_pressure.dart` (composed with the
+///   - The `isBelowQuotaPeaceTreasuryRecovery` composite (composed with the
 ///     `isBelowQuotaPeaceInsufficientRegiments` arm) so the cargo-delivery
-///     trigger and the planner directive cannot drift apart while the
-///     S5 orchestrator wire-up is in flight.
+///     trigger and the planner directive cannot drift apart now that the
+///     S5 orchestrator wire-up is in place. The composite was canonical in
+///     the now-deleted `colonial_pressure.dart` (#2509 S1) and is hosted
+///     here alongside this predicate.
 ///
 /// `colonial_pressure.dart` previously retained a thin delegating stub for legacy
 /// import sites (the `colonial_pressure_below_quota_peace_*` tests and

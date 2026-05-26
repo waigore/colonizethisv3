@@ -25,9 +25,17 @@
 /// foreign or unowned NW tiles. Structural absence: DEVELOP exposes no
 /// declareWar / acquisition / military / naval planner functions.
 ///
-/// Wiring this module into the orchestrator and removing the legacy
-/// `developPhaseGpPeaceTargets` helper from `observer_goal_phase.dart`
-/// are out of scope for these slices (tracked under S5 / S1 of #2509).
+/// Orchestrator wiring (#2509 S5) is now in place: `phase_planner_dispatch.dart`
+/// calls `planDevelopPeace` and `planDevelopCivilian` for every DEVELOP-phase
+/// player and threads the result through `PhasePlanOutcome`;
+/// `domain_planner_orchestrator.dart` consumes the outcome via
+/// `gpPeaceTargetsFromPhasePlan` so DEVELOP domain decisions reach the
+/// resolver without re-checking the phase. The legacy
+/// `developPhaseGpPeaceTargets` helper still lives in
+/// `observer_goal_phase.dart` because the no-`phasePlan` fallback path
+/// through `collectStalledGreatPowerPeaceTargets` keeps it on the production
+/// hot path. `colonial_pressure.dart` and
+/// `diplomacy_planner_peace_targets.dart` were removed in #2509 S1.
 /// The in-module contracts documented here match the issue spec:
 ///
 ///   `planDevelopPeace(game, snapshot) → List<String>`
@@ -86,8 +94,9 @@ List<String> planDevelopPeace({
 /// logic-side civilian selection (`kBuildImprovementExtractableResourceScore`,
 /// `kBuildImprovementNewWorldResourceBonus`,
 /// `kBuildImprovementOwnedNewWorldResourceBonus`) so the DEVELOP planner
-/// remains consistent with the resolver-facing scoring during the
-/// transition until S5 wires this module into the orchestrator.
+/// stays consistent with the resolver-facing scoring now that
+/// `phase_planner_dispatch.dart` wires this module into every DEVELOP-phase
+/// turn (#2509 S5).
 ///
 /// Filtering (each is a structural gate from issue #2509 DEVELOP planner spec):
 ///   1. Tile must be in a province owned by the active player
@@ -114,10 +123,11 @@ List<String> planDevelopPeace({
 /// `type == kUnitTypeBuilder` and `status == UnitStatus.idle` is included,
 /// sorted ascending by `unit.id`. Builders are assigned one-to-one to the
 /// top-priority unimproved tiles. Distance-from-Builder ordering and
-/// per-Builder pathfinding are deferred to follow-up tuning under
-/// #2509 S5 (orchestrator wiring) / S7 (observer integration); the current
-/// deterministic-priority assignment satisfies the issue's
-/// "highest-yield first" contract and the determinism Must-have #7.
+/// per-Builder pathfinding are deferred to follow-up tuning under #2509;
+/// orchestrator wiring (#2509 S5) and observer-integration nightly gates
+/// (#2509 S7) are already in place. The current deterministic-priority
+/// assignment satisfies the issue's "highest-yield first" contract and
+/// the determinism Must-have #7.
 ///
 /// Output: a new `List<WorkOrder>` of at most
 /// `min(idleBuilders, eligibleTiles)` entries, each with
