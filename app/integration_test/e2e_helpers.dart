@@ -40,6 +40,7 @@ export 'e2e_test_shared.dart'
         e2eDismissCtDialogShellBroadSweepIfPresent,
         e2eDismissCtDialogShellIfPresent,
         e2eDismissCtDialogShellWithPopRouteEscalation,
+        e2eDismissGenericOkIfPresent,
         e2eDismissSnackBarIfPresent,
         e2eEnsureNonHomeFleetInNwAfterLoop,
         e2eEnsureVisibleAndTapHitTestable,
@@ -91,6 +92,8 @@ export 'e2e_test_shared.dart'
         kE2eDefaultExpectPanelTextsSnapshotReaderPhase,
         kE2eDefaultExpectPanelTextsSnapshotReaderTimeout,
         kE2eDefaultExpectPanelTextsTimeout,
+        kE2eDefaultGenericOkDismissTimeout,
+        kE2eDefaultGenericOkLabel,
         kE2eExpectCivilianPanelTextsPhase,
         kE2eExpectNavalPanelTextsPhase,
         kE2eExpectProductionPanelTextsPhase,
@@ -303,6 +306,27 @@ Future<bool> dismissAlertDialogIfPresent(
   perf: perf,
   dismissTimeout: dismissTimeout,
   dismissLabels: dismissLabels,
+);
+
+/// Stable public name for [e2eDismissGenericOkIfPresent] (Refs GitHub
+/// #2336 AC1 / AC2 / Bottleneck 6). Forwards to the implementation in
+/// `e2e_test_shared_dismiss_generic_ok.dart` (re-exported via
+/// `e2e_test_shared.dart`). The shared top-level OK dismiss recipe is
+/// consumed indirectly by [dismissTransientUi] today; the alias is
+/// re-exposed so future scenarios that need a focused top-level OK
+/// dismissal (without triggering the SnackBar / AlertDialog / BottomSheet
+/// / CtDialogShell fallback branches of the broad sweep) can compose it
+/// directly.
+Future<bool> dismissGenericOkIfPresent(
+  WidgetTester tester, {
+  E2ePerfLog? perf,
+  Duration dismissTimeout = kE2eDefaultGenericOkDismissTimeout,
+  String label = kE2eDefaultGenericOkLabel,
+}) => e2eDismissGenericOkIfPresent(
+  tester,
+  perf: perf,
+  dismissTimeout: dismissTimeout,
+  label: label,
 );
 
 /// Stable public name for [e2eDismissCtDialogShellBroadSweepIfPresent]
