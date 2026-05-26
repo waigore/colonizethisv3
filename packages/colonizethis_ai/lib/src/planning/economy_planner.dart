@@ -26,10 +26,10 @@ final _log = packageLogger('economy_planner');
 /// via [observerGoalPhaseFor]; the legacy compute's `isBelowObserverConquestQuota`
 /// guard is therefore satisfied structurally and the remaining
 /// regiment / war / invadable arms route through the phase resolvers. When
-/// [phasePlan] is `null` (legacy callers and unit tests that pre-date the
-/// threading), the planner falls back to the legacy
-/// `isBelowQuotaPeaceTreasuryRecovery` compute so existing fixtures remain
-/// behaviour-equal during the S5 migration.
+/// [phasePlan] is `null` (test callers and other unmigrated entry points
+/// that pre-date the S5 threading), the planner falls back to the legacy
+/// `isBelowQuotaPeaceTreasuryRecovery` compute so existing fixtures stay
+/// behaviour-equal on the no-`phasePlan` path.
 EconomyPlan runEconomyPlanner({
   required Game game,
   required PlayerView view,
@@ -290,8 +290,9 @@ bool _isMilitaryInputRecipe(ProductionRecipe recipe) {
 /// build-pass slice (`_appendEconomyBuildOrders`).
 ///
 /// When [phasePlan] is `null`, the helper falls back to the legacy
-/// compute so callers that have not yet migrated remain behaviour-equal
-/// during the S5 migration. When [snapshot] is `null`, the cargo boost
+/// compute so test callers and other unmigrated entry points that
+/// pre-date the S5 threading stay behaviour-equal on the
+/// no-`phasePlan` path. When [snapshot] is `null`, the cargo boost
 /// cannot be evaluated and the return is `false` (matches the prior
 /// guard).
 bool _resolveBelowQuotaPeaceTreasuryRecovery({
