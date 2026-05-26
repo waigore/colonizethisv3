@@ -260,38 +260,6 @@ List<String> developPhaseGpPeaceTargets({
   ]..sort();
 }
 
-/// Whether [targetFactionId] is a tribe/minor colonial diplomacy target in EXPAND.
-bool isExpandPhaseColonialDiplomacyTarget({
-  required AIWorldSnapshot snapshot,
-  required String targetFactionId,
-  required Map<String, String> provinceOwner,
-  required bool isTribeFaction,
-  required bool isMinorFaction,
-  Game? game,
-}) {
-  if (!shouldSuppressNewWorldColonialOrders(snapshot: snapshot, game: game)) {
-    return false;
-  }
-  if (isTribeFaction || isMinorFaction) {
-    if (snapshot.colonial.adjacentNewWorldOwnerFactionIdsSorted.contains(
-      targetFactionId,
-    )) {
-      return true;
-    }
-    if (snapshot.colonial.preferredColonialTargetFactionIdsSorted.contains(
-      targetFactionId,
-    )) {
-      return true;
-    }
-    if (snapshot.colonial.invadableNewWorldProvinceIdsSorted.any(
-      (pid) => provinceOwner[pid] == targetFactionId,
-    )) {
-      return true;
-    }
-  }
-  return false;
-}
-
 /// Critical-collapse / zero-regiment peace aggregator for all observer phases.
 ///
 /// Canonical home (Refs #2509 S1) for the legacy private
