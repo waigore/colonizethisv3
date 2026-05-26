@@ -25,6 +25,7 @@ export 'src/diplomacy/diplomacy_relation_lookup.dart'
         getRelation,
         greatPowerPowerScore,
         joinEmpireCostForMinorOrTribe,
+        oldWorldProvinceCountOwnedBy,
         provinceCountOwnedBy,
         relationScoreMinFriendly,
         shipCountForFaction;
