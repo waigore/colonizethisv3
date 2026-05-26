@@ -62,7 +62,17 @@ class WorkOrderExecutionContext {
       ? kRegionOldWorld
       : kRegionNewWorld;
 
-  Province? provinceById(String id) => state.game.worldState.tryGetProvince(id);
+  /// Cached cross-region province map (Refs #2836 item 4).
+  Map<String, Province> get provincesById =>
+      state.game.worldState.allProvincesById;
+
+  /// [provincesById] lookup with [WorldState.tryGetProvince] fallback for
+  /// legacy short ids.
+  Province? provinceById(String id) {
+    final cached = provincesById[id];
+    if (cached != null) return cached;
+    return state.game.worldState.tryGetProvince(id);
+  }
 
   bool canAffordMaterialCost(WorkOrderCost cost) =>
       ProjectedCostEngine.canAffordWorkMaterialCost(stockpile, cost);

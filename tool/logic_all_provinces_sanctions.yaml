@@ -10,7 +10,7 @@ sanctions:
     issue: https://github.com/waigore/colonizethisv3/issues/2278
 
   - path: packages/colonizethis_logic/lib/src/diplomacy/diplomacy_relation_lookup.dart
-    line: 30
+    line: 29
     rationale: Diplomatic relation scoring inspects province ownership globally.
     spec: SPEC/program/logic-dual-region-province-access.md
     issue: https://github.com/waigore/colonizethisv3/issues/2278
