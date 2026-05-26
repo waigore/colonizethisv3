@@ -235,7 +235,25 @@ Orders runConquestArmyMovePlanner({
     );
     return ctx.orders;
   }
-  final scoringCandidates = phasePlanInvadableIsAuthoritative
+  // Under stalled-expansion (Refs #2509 EXPAND / COLONIAL-lite hot path) a
+  // capital field army frequently has no direct neighbor in the phase plan's
+  // invadable set — e.g. seed-42 gp1's two field armies at `oldWorld|p12`
+  // produce 12 diplomacy-passed candidates that all land on gp1-owned
+  // provinces (`p1, p4, p5, p7, p8, p9`), none of which appear in
+  // `invadableForPass = {p11, p13, p2}`. The strict invadable-only prefilter
+  // here would empty `scoringCandidates`, the planner would return without
+  // emitting any army move, and the capital armies sit at the capital across
+  // every turn of the 100-turn observer run (gp1 OW gain = 0 against the
+  // turn-100 +3 gate). Bypass the prefilter on the stalled-expansion path so
+  // the stalled-expansion scoring in `_scoreArmyMoveDestination` (which
+  // already prefers invadable destinations first, then own-territory
+  // adjacent-at-war-frontier marches via
+  // `_stalledExpansionArmyMoveScoreDelta`, and structurally returns `0` for
+  // foreign non-invadable destinations) picks the best multi-turn approach
+  // move toward the at-war frontier instead. Non-stalled (at-quota) callers
+  // keep the strict prefilter so DEVELOP / COLONIAL stay structural.
+  final scoringCandidates =
+      phasePlanInvadableIsAuthoritative && !stalledExpansion
       ? filtered
             .where(
               (move) => invadableForPass.contains(move.destinationProvinceId),
@@ -503,11 +521,20 @@ double _scoreArmyMoveDestination({
   required bool phasePlanInvadableIsAuthoritative,
   required bool suppressNwInvasionScoring,
 }) {
+  final destOwner = provinceOwner[move.destinationProvinceId] ?? '';
   if (phasePlanInvadableIsAuthoritative &&
       !invadable.contains(move.destinationProvinceId)) {
-    return 0;
+    // Stalled-expansion allowance (Refs #2509): own-territory marches stay
+    // scoreable even when the phase plan's invadable set is authoritative,
+    // so a stuck capital field army can march one province toward the
+    // at-war frontier this turn and invade on the next. Foreign non-invadable
+    // destinations (other GP, NW under EXPAND, etc.) remain blocked here —
+    // the relaxation does not introduce any new declare-war / NW behavior.
+    final ownMarchPermitted = stalledExpansion && destOwner == nationId;
+    if (!ownMarchPermitted) {
+      return 0;
+    }
   }
-  final destOwner = provinceOwner[move.destinationProvinceId] ?? '';
   final destRegion = ProvinceId.regionIdFrom(move.destinationProvinceId);
   final destLocal = ProvinceId.localIdFrom(move.destinationProvinceId);
   final destNeighborLocals = neighborProvinceIdsInRegion(

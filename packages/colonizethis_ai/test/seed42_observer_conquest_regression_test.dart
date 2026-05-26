@@ -77,9 +77,13 @@ void main() {
       );
     }
     },
-    timeout: const Timeout(Duration(minutes: 15)),
     skip:
-        'S7: gp1 still +0 OW after treasury-gate fix applied '
-        '(gp1=0, gp2=6, gp3=2, gp4=1, gp5=1, gp6=2)',
+        'Partial AC #2509 S10: seed-42 turn-100 gate — gp1 now passes via the '
+        'EXPAND stalled-expansion own-territory frontier-march fix combined '
+        'with the planExpandDeclareWar per-arm treasury gate and the '
+        'planColonialPeace below-quota-peer exclusion (Refs #2509). '
+        'gp3/gp4/gp5/gp6 still below +3 OW vs turn-1 snapshot; remaining gap '
+        'tracks companion stalled-tuning slices (separate follow-up).',
+    timeout: const Timeout(Duration(minutes: 15)),
   );
 }
