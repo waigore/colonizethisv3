@@ -1,6 +1,7 @@
 import 'package:colonizethis_test/test.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/src/diplomacy/diplomacy_resolver.dart';
+import 'package:colonizethis_logic/src/orders/order_resolution_context.dart';
 import 'package:colonizethis_logic/src/orders/order_validators.dart';
 import 'package:colonizethis_logic/src/orders/validator_bundle.dart';
 import 'package:colonizethis_logic/src/world/player_view.dart';
@@ -24,13 +25,17 @@ void main() {
     const devExclusiveTiles = <String>{};
     final stockpile = player.stockpile;
     final treasury = player.treasury;
+    final resolution = orderResolutionContextFromView(
+      view,
+      game,
+      unitsById: unitsById,
+    );
 
     final ctx = buildWorkOrderValidationContext(
       game: game,
       player: player,
       playerId: playerId,
-      view: view,
-      unitsById: unitsById,
+      resolution: resolution,
       devExclusiveTiles: devExclusiveTiles,
       tileMapByRegion: null,
       civilianDraftMoveUnitIds: civilianDraftMoveUnitIds,

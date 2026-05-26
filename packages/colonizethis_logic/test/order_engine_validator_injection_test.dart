@@ -1,6 +1,7 @@
 import 'package:colonizethis_test/test.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/src/orders/order_engine.dart';
+import 'package:colonizethis_logic/src/orders/order_resolution_context.dart';
 import 'package:colonizethis_logic/src/orders/validators/army_move_validator.dart';
 import 'package:colonizethis_logic/src/orders/validators/build_order_validator.dart';
 import 'package:colonizethis_logic/src/orders/validators/diplomatic_order_validator.dart';
@@ -68,8 +69,11 @@ void main() {
               game: game,
               player: player,
               playerId: playerId,
-              view: view,
-              unitsById: unitsById,
+              resolution: orderResolutionContextFromView(
+                view,
+                game,
+                unitsById: unitsById,
+              ),
               devExclusiveTiles: devExclusiveTiles,
               tileMapByRegion: tileMapByRegion,
               civilianDraftMoveUnitIds: civilianDraftMoveUnitIds,

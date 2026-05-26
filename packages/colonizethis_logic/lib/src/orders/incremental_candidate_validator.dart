@@ -5,7 +5,6 @@ import '../constants.dart';
 import '../diplomacy/diplomacy_resolver.dart';
 import '../economy/economy_riches_to_treasury.dart';
 import '../world/player_view.dart';
-import '../world/unit_lookup.dart';
 import 'order_resolution_context.dart';
 import 'order_validators.dart';
 import 'unit_type_helpers.dart';
@@ -401,9 +400,12 @@ class IncrementalCandidateValidator {
       game: game,
       player: player,
       playerId: playerId,
-      view: view,
+      resolution: (
+        view: view,
+        unitsById: unitsById,
+        provinceById: view.provincesById,
+      ),
       topology: topology,
-      unitsById: unitsById,
       diplomaticOrders: diplomaticOrders,
       tileMapByRegion: tileMapByRegion,
       civilianDraftMoveUnitIds: _civilianDraftMoveUnitIds(),
@@ -560,9 +562,12 @@ class IncrementalCandidateValidator {
       game: game,
       player: player,
       playerId: playerId,
-      view: view,
+      resolution: (
+        view: view,
+        unitsById: unitsById,
+        provinceById: view.provincesById,
+      ),
       topology: topology,
-      unitsById: unitsById,
       diplomaticOrders: diplomaticOrders,
       tileMapByRegion: tileMapByRegion,
       civilianDraftMoveUnitIds: _civilianDraftMoveUnitIds(),
