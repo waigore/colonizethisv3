@@ -97,20 +97,13 @@ bool isObserverDevelopPhase({required AIWorldSnapshot snapshot, Game? game}) =>
     observerGoalPhaseFor(snapshot: snapshot, game: game) ==
     ObserverGoalPhase.develop;
 
-bool isObserverColonialPhase({required AIWorldSnapshot snapshot, Game? game}) =>
-    observerGoalPhaseFor(snapshot: snapshot, game: game) ==
-    ObserverGoalPhase.colonial;
-
-bool isObserverExpandPhase({required AIWorldSnapshot snapshot, Game? game}) =>
-    observerGoalPhaseFor(snapshot: snapshot, game: game) ==
-    ObserverGoalPhase.expand;
-
 /// EXPAND: peace non-blocker Great Power fronts when fighting 2+ GPs (Refs #2509 S10).
 List<String> expandPhaseGpPeaceTargets({
   required Game game,
   required AIWorldSnapshot snapshot,
 }) {
-  if (!isObserverExpandPhase(snapshot: snapshot, game: game)) {
+  if (!(observerGoalPhaseFor(snapshot: snapshot, game: game) ==
+      ObserverGoalPhase.expand)) {
     return const [];
   }
   final gpWars = <String>[
@@ -203,7 +196,8 @@ List<String> colonialPhaseGpPeaceTargets({
   required Game game,
   required AIWorldSnapshot snapshot,
 }) {
-  if (!isObserverColonialPhase(snapshot: snapshot, game: game)) {
+  if (!(observerGoalPhaseFor(snapshot: snapshot, game: game) ==
+      ObserverGoalPhase.colonial)) {
     return const [];
   }
   final gpWars = <String>[
@@ -258,68 +252,6 @@ List<String> developPhaseGpPeaceTargets({
     for (final factionId in snapshot.threats.atWarWith)
       if (game.playerById(factionId) != null) factionId,
   ]..sort();
-}
-
-/// Whether [targetFactionId] is a tribe/minor colonial diplomacy target in EXPAND.
-bool isExpandPhaseColonialDiplomacyTarget({
-  required AIWorldSnapshot snapshot,
-  required String targetFactionId,
-  required Map<String, String> provinceOwner,
-  required bool isTribeFaction,
-  required bool isMinorFaction,
-  Game? game,
-}) {
-  if (!shouldSuppressNewWorldColonialOrders(snapshot: snapshot, game: game)) {
-    return false;
-  }
-  if (isTribeFaction || isMinorFaction) {
-    if (snapshot.colonial.adjacentNewWorldOwnerFactionIdsSorted.contains(
-      targetFactionId,
-    )) {
-      return true;
-    }
-    if (snapshot.colonial.preferredColonialTargetFactionIdsSorted.contains(
-      targetFactionId,
-    )) {
-      return true;
-    }
-    if (snapshot.colonial.invadableNewWorldProvinceIdsSorted.any(
-      (pid) => provinceOwner[pid] == targetFactionId,
-    )) {
-      return true;
-    }
-  }
-  return false;
-}
-
-/// True when a civilian work order should be filtered for the current observer phase.
-bool shouldFilterObserverPhaseWorkOrder(
-  WorkOrder order, {
-  required AIWorldSnapshot snapshot,
-  Game? game,
-}) {
-  final phase = observerGoalPhaseFor(snapshot: snapshot, game: game);
-  if (phase == ObserverGoalPhase.expand) {
-    return isNewWorldColonialWorkOrder(order);
-  }
-  if (phase == ObserverGoalPhase.colonialLite ||
-      phase == ObserverGoalPhase.develop) {
-    if (order.target == kWorkTargetPurchaseLand &&
-        ProvinceId.regionIdFrom(order.targetTileKey) == kNewWorldRegionId) {
-      return true;
-    }
-  }
-  return false;
-}
-
-/// True when a civilian work order targets New World colonial tiles (EXPAND suppress).
-bool isNewWorldColonialWorkOrder(WorkOrder order) {
-  final regionId = ProvinceId.regionIdFrom(order.targetTileKey);
-  if (regionId == kNewWorldRegionId) {
-    return order.target == kWorkTargetPurchaseLand ||
-        order.target == kWorkTargetBuildImprovement;
-  }
-  return false;
 }
 
 /// Critical-collapse / zero-regiment peace aggregator for all observer phases.

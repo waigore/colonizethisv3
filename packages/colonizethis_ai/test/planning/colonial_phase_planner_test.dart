@@ -50,12 +50,14 @@
 //  10. **Determinism:** identical inputs yield identical lists across
 //      repeated calls (Must-have #7).
 //
-// This file is the in-module pin for the new COLONIAL planner. The
-// existing function-unit pins on the legacy `colonialPhaseGpPeaceTargets`
-// helper in `observer_goal_phase_colonial_peace_blocker_branches_test.dart`
-// keep the legacy code path covered until the S5 orchestrator wiring
-// lands. Both will be reconciled when the legacy helper is removed
-// (#2509 S1).
+// This file is the in-module pin for the COLONIAL planner. The S5
+// orchestrator wiring through `phase_planner_dispatch.dart` /
+// `domain_planner_orchestrator.dart` is in place, so this pin guards the
+// canonical `planColonialPeace` contract. The function-unit pin on the
+// legacy `colonialPhaseGpPeaceTargets` helper in
+// `observer_goal_phase_colonial_peace_blocker_branches_test.dart` keeps
+// the no-`phasePlan` fallback path through
+// `collectStalledGreatPowerPeaceTargets` covered.
 
 import 'package:colonizethis_ai/colonizethis_ai.dart';
 import 'package:colonizethis_ai/src/planning/colonial_phase_planner.dart';

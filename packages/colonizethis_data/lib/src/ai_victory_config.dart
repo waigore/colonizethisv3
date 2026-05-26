@@ -321,12 +321,6 @@ const int kDefendBonusWhenAtWarAndFewHoldings = 45;
 /// Old World province count at or below which [kDefendBonusWhenFewOldWorldProvinces] applies.
 const int kFewOldWorldProvincesDefendThreshold = 6;
 
-/// OW holdings at or below which a lone GP [offerPeace] may end a GP war without
-/// a reciprocal offer (survival peace; matches
-/// [kFewOldWorldProvincesDefendThreshold]; Refs #2509).
-const int kCollapsedOldWorldProvincesSurvivalPeace =
-    kFewOldWorldProvincesDefendThreshold;
-
 /// Expand-goal bonus when invadable New World tribe/minor provinces exist.
 const int kColonialExpandBonusWhenInvadableNw = 45;
 

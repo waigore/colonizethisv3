@@ -15,15 +15,24 @@
 /// `develop_phase_planner.dart` (Refs #2509 S4) and
 /// `expand_phase_planner.dart` (Refs #2509 S2).
 ///
-/// Wiring this module into the orchestrator, replacing the legacy
-/// `colonialPhaseGpPeaceTargets` helper in `observer_goal_phase.dart`, and
-/// retiring the `colonial_pressure.dart` / `diplomacy_planner_peace_targets.dart`
-/// ratchet helpers are out of scope for this slice (tracked under S5 / S1
-/// of #2509). Both the legacy `colonialPhaseGpPeaceTargets` helper and the
-/// new `planColonialPeace` function remain pinned at the function-unit
-/// level until the orchestrator rewrite reconciles them, so this slice
-/// carries **zero behavior change** and **zero regression risk** for live
-/// AI play.
+/// Orchestrator wiring (#2509 S5) is now in place: `phase_planner_dispatch.dart`
+/// calls `planColonialPeace`, `planColonialAcquisition`,
+/// `planColonialMilitary`, `planColonialNaval`, and `planColonialCivilian`
+/// for every COLONIAL-phase player and threads the result through
+/// `PhasePlanOutcome`; `domain_planner_orchestrator.dart` consumes the
+/// outcome via `gpPeaceTargetsFromPhasePlan` /
+/// `gpColonialDeclareWarTargetFromPhasePlan` /
+/// `colonialMilitaryPlanFromPhasePlan` so COLONIAL domain decisions reach
+/// the resolver without re-checking the phase. The legacy
+/// `colonialPhaseGpPeaceTargets` helper still lives in
+/// `observer_goal_phase.dart` because the no-`phasePlan` fallback path
+/// through `collectStalledGreatPowerPeaceTargets` keeps it on the production
+/// hot path alongside the EXPAND ratchet aggregator;
+/// `colonial_pressure.dart` and `diplomacy_planner_peace_targets.dart` were
+/// removed in #2509 S1, with their helpers canonical in the phase-planner
+/// modules and in `observer_goal_phase.dart` for the cross-phase composite
+/// peace aggregators. Both `colonialPhaseGpPeaceTargets` and
+/// `planColonialPeace` are pinned at the function-unit level.
 ///
 /// In-module contracts shipped to date (see issue #2509 § COLONIAL phase
 /// planner for the full set):
