@@ -24,6 +24,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'e2e_test_shared_dismiss_alert_dialog.dart';
 import 'e2e_test_shared_dismiss_ct_dialog_shell_broad_sweep.dart';
+import 'e2e_test_shared_dismiss_generic_ok.dart';
 import 'e2e_test_shared_dismiss_snackbar.dart';
 
 export 'e2e_test_shared_bundled_explore_failure.dart';
@@ -34,6 +35,7 @@ export 'e2e_test_shared_dismiss_alert_dialog.dart';
 export 'e2e_test_shared_dismiss_ct_dialog_shell.dart';
 export 'e2e_test_shared_dismiss_ct_dialog_shell_broad_sweep.dart';
 export 'e2e_test_shared_dismiss_ct_dialog_shell_escalation.dart';
+export 'e2e_test_shared_dismiss_generic_ok.dart';
 export 'e2e_test_shared_dismiss_snackbar.dart';
 export 'e2e_test_shared_final_naval_reach_check.dart';
 export 'e2e_test_shared_first_fleet_move.dart';
@@ -653,14 +655,16 @@ Future<void> e2eDismissTransientUi(
   if (await e2eDismissSnackBarIfPresent(tester, perf: perf)) {
     return;
   }
-  final ok = find.text('OK').hitTestable();
-  if (ok.evaluate().isNotEmpty) {
-    await tester.tap(ok.first, warnIfMissed: false);
-    await e2ePumpUntilFinderEmpty(
-      tester,
-      find.text('OK').hitTestable(),
-      timeout: const Duration(seconds: 2),
-    );
+  // Shared top-level OK dismissal: lifted into [e2eDismissGenericOkIfPresent]
+  // so the legacy `find.text('OK').hitTestable()` tap + 2 s
+  // `e2ePumpUntilFinderEmpty` recipe is single-source-of-truth and pinned by
+  // widget tests. The pre-lift inline block lived between the SnackBar and
+  // AlertDialog branches and targeted a top-level OK button (not nested in
+  // an [AlertDialog]) — a stray confirmation banner above the map HUD
+  // between phases. The lifted form preserves the legacy English literal
+  // (`OK`), the 2 s dismiss budget, and the post-tap return semantics.
+  // Refs GitHub #2336 AC1 / AC2 / Bottleneck 6.
+  if (await e2eDismissGenericOkIfPresent(tester, perf: perf)) {
     return;
   }
   // Shared AlertDialog dismissal: lifted into [e2eDismissAlertDialogIfPresent]
