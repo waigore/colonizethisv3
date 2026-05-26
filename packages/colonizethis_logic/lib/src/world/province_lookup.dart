@@ -337,6 +337,18 @@ extension WorldStateProvinceLookup on WorldState {
     );
   }
 
+  /// Read-only iteration over both regions. [action] is invoked first with
+  /// ([kRegionOldWorld], [oldWorld]), then ([kRegionNewWorld], [newWorld]) —
+  /// same order as [mapBothRegions]. Use for symmetric side-effecting work on
+  /// both regions that does not produce a new [WorldState], replacing
+  /// hand-rolled `processRegion(oldWorld); processRegion(newWorld);` pairs in
+  /// `lib/src/**` (Refs #2836 item 1,
+  /// SPEC/program/logic-dual-region-province-access.md).
+  void forEachRegion(void Function(String regionId, RegionData region) action) {
+    action(kRegionOldWorld, oldWorld);
+    action(kRegionNewWorld, newWorld);
+  }
+
   /// Updates unit lists in both regions; province rows are unchanged.
   WorldState mapBothRegionUnits(
     List<Unit> Function(String regionId, List<Unit> units) updateUnits,
