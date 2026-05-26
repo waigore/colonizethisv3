@@ -14,8 +14,8 @@
 // "now-completed S1 deletion", "formerly in colonial_pressure.dart",
 // "the S5 orchestrator wiring is in place", "on the landed post-S5
 // dispatch path"). This guard fails when present-tense claims reappear
-// that contradict the live tree, whether in `lib/src/planning/` or in
-// this package's `test/` tree.
+// that contradict the live tree, whether in `lib/src/planning/`, in this
+// package's `test/` tree, or in `SPEC/ai/**/*.md` markdown documents.
 
 import 'dart:io';
 
@@ -36,10 +36,17 @@ const _forbiddenSubstrings = <String>[
   'until the S5 orchestrator wiring lands',
   'once S5 wiring is active',
   'pre-S5 wiring',
+  'exactly during the S5',
+  'civilian selection until the S5',
 ];
 
 const _planningDirRelative = 'lib/src/planning';
 const _testDirRelative = 'test';
+
+/// Repo-relative SPEC/ai directory. The guard's documented intent (see file
+/// header) covers SPEC/ai markdown alongside `lib/src/planning/` dartdoc and
+/// `test/` comments; scanning it here closes the doc-vs-code gap.
+const _specAiDirRelative = 'SPEC/ai';
 
 /// Self-reference excluded from the scan because this guard intentionally
 /// embeds the forbidden substrings in its own constants.
@@ -64,10 +71,32 @@ Directory _packageDir(String relative) {
   );
 }
 
+/// Resolves a repo-root-relative directory (e.g. `SPEC/ai`) whether the test
+/// is invoked from the repo root or from `packages/colonizethis_ai/`. Mirrors
+/// `_packageDir` so the SPEC scan tolerates the same `melos` / per-package
+/// invocation matrix the planning + test scans already tolerate.
+Directory _repoDir(String relative) {
+  for (final candidate in <String>[relative, '../../$relative']) {
+    final dir = Directory(candidate);
+    if (dir.existsSync()) {
+      return dir;
+    }
+  }
+  fail(
+    'Could not locate $relative directory; tried '
+    '$relative and ../../$relative',
+  );
+}
+
 Iterable<File> _dartFilesUnder(String relative) => _packageDir(relative)
     .listSync(recursive: true, followLinks: false)
     .whereType<File>()
     .where((f) => f.path.endsWith('.dart'));
+
+Iterable<File> _markdownFilesUnder(String relative) => _repoDir(relative)
+    .listSync(recursive: true, followLinks: false)
+    .whereType<File>()
+    .where((f) => f.path.endsWith('.md'));
 
 bool _isSelfReferenceGuard(File file) {
   final normalized = file.path.replaceAll('\\', '/');
@@ -171,6 +200,29 @@ void main() {
     test('test/**/*.dart does not import deleted legacy files', () {
       final offenders = _scanLegacyImports(_dartFilesUnder(_testDirRelative));
       expect(offenders, isEmpty);
+    });
+
+    test('SPEC/ai/**/*.md contains no present-tense claims that deleted files '
+        'retain delegating stubs or that the S5 orchestrator wiring is still '
+        'pending', () {
+      final offenders = _scanForbiddenSubstrings(
+        _markdownFilesUnder(_specAiDirRelative),
+      );
+      expect(
+        offenders,
+        isEmpty,
+        reason:
+            'SPEC/ai documents must not reintroduce the present-tense claim '
+            'that `colonial_pressure.dart` or '
+            '`diplomacy_planner_peace_targets.dart` still exists with '
+            'delegating stubs, or that the S5 orchestrator wiring is still '
+            'in flight. Both legacy files were deleted in #2509 S1; the S5 '
+            'orchestrator wiring through `phase_planner_dispatch.dart` and '
+            '`domain_planner_orchestrator.dart` is in place. Rewrite to past '
+            'tense (e.g. "previously retained a thin delegating stub", '
+            '"on the landed post-S5 dispatch path").'
+            '\n\nOffending sites:\n${offenders.join('\n')}',
+      );
     });
   });
 }

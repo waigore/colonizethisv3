@@ -30,8 +30,8 @@
 /// `isObserverDevelopPhase` for the develop gate) with an O(1) phase
 /// comparison. Phase-derived `true/false` is field-equal to the legacy
 /// computes across every [ObserverGoalPhase] value, preserving the
-/// orchestrator's economy-pass behaviour exactly during the S5
-/// migration.
+/// orchestrator's economy-pass behaviour exactly on the landed
+/// post-S5 dispatch path.
 ///
 /// Resolves whether `_runEconomyDomainPlanners` should engage the colonial
 /// economy boost this turn for the active player, given a single
@@ -197,8 +197,8 @@ bool resolvePhaseEconomyDevelopActive({required PhasePlanOutcome phasePlan}) =>
 /// the legacy `colonialBuildOrderThresholdCap` compute at the
 /// orchestrator's only call site across every reachable
 /// `(ObserverGoalPhase, ColonialSummary)` pair, preserving the
-/// prior build-threshold cap behaviour exactly during the S5
-/// migration.
+/// prior build-threshold cap behaviour exactly on the landed
+/// post-S5 dispatch path.
 ///
 /// Structural suppression matrix (mirrors
 /// [resolvePhaseEconomyColonialPressureActive]):
