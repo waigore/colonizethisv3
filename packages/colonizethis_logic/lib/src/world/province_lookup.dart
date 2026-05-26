@@ -255,6 +255,30 @@ extension WorldStateProvinceLookup on WorldState {
 
   RegionData? regionDataForId(String regionId) => _regionForId(this, regionId);
 
+  /// Strict variant of [regionDataForId]: returns the region for [regionId] or
+  /// throws [StateError] when unknown.
+  ///
+  /// Use in code paths whose contract guarantees [regionId] is canonical (i.e.
+  /// [kRegionOldWorld] or [kRegionNewWorld]) and where a silent fallback would
+  /// hide a malformed id. Mirrors the `Unknown region` contract of
+  /// [updateRegionById] for symmetry between read and write paths
+  /// (Refs #2836 item 1).
+  RegionData regionDataForIdOrThrow(String regionId) {
+    final region = _regionForId(this, regionId);
+    if (region == null) {
+      throw StateError('Unknown region "$regionId"');
+    }
+    return region;
+  }
+
+  /// Provinces belonging to [regionId]. Returns an empty iterable when the
+  /// region is unknown. Use in `lib/src/**` callers that need a region-scoped
+  /// province iteration without hand-rolled `if (regionId == kRegionOldWorld)`
+  /// branching against `oldWorld.provinces`/`newWorld.provinces`
+  /// (SPEC/program/logic-dual-region-province-access.md).
+  Iterable<Province> provincesForRegion(String regionId) =>
+      _regionForId(this, regionId)?.provinces ?? const <Province>[];
+
   Iterable<Province> allProvinces() sync* {
     yield* oldWorld.provinces;
     yield* newWorld.provinces;
@@ -335,6 +359,18 @@ extension WorldStateProvinceLookup on WorldState {
       oldWorld: update(kRegionOldWorld, oldWorld),
       newWorld: update(kRegionNewWorld, newWorld),
     );
+  }
+
+  /// Read-only iteration over both regions. [action] is invoked first with
+  /// ([kRegionOldWorld], [oldWorld]), then ([kRegionNewWorld], [newWorld]) —
+  /// same order as [mapBothRegions]. Use for symmetric side-effecting work on
+  /// both regions that does not produce a new [WorldState], replacing
+  /// hand-rolled `processRegion(oldWorld); processRegion(newWorld);` pairs in
+  /// `lib/src/**` (Refs #2836 item 1,
+  /// SPEC/program/logic-dual-region-province-access.md).
+  void forEachRegion(void Function(String regionId, RegionData region) action) {
+    action(kRegionOldWorld, oldWorld);
+    action(kRegionNewWorld, newWorld);
   }
 
   /// Updates unit lists in both regions; province rows are unchanged.

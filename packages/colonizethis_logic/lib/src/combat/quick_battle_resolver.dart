@@ -4,7 +4,6 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/src/logging.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
-import '../constants.dart';
 import '../world/army_migration.dart';
 import '../world/game_world_mutations.dart';
 import '../world/province_lookup.dart';
@@ -295,9 +294,7 @@ Game applyQuickBattleResultToGame(
   BattleContext ctx,
   QuickBattleResult result,
 ) {
-  final region = ctx.regionId == kRegionOldWorld
-      ? game.worldState.oldWorld
-      : game.worldState.newWorld;
+  final region = game.worldState.regionDataForIdOrThrow(ctx.regionId);
   final casualtySet = {
     ...result.attackerCasualties,
     ...result.defenderCasualties,
