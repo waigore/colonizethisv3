@@ -121,13 +121,20 @@ List<String> planDevelopPeace({
 ///
 /// Builder selection: every active-player [Unit] with
 /// `type == kUnitTypeBuilder` and `status == UnitStatus.idle` is included,
-/// sorted ascending by `unit.id`. Builders are assigned one-to-one to the
-/// top-priority unimproved tiles. Distance-from-Builder ordering and
-/// per-Builder pathfinding are deferred to follow-up tuning under #2509;
-/// orchestrator wiring (#2509 S5) and observer-integration nightly gates
-/// (#2509 S7) are already in place. The current deterministic-priority
-/// assignment satisfies the issue's "highest-yield first" contract and
-/// the determinism Must-have #7.
+/// sorted ascending by `unit.id`. For each tile in (priority desc,
+/// tile-key asc) order, the planner pairs the tile with the closest
+/// unassigned idle Builder in the **same region** by Manhattan distance
+/// over the `regionId|localId|x|y` tile-key coordinates, tiebreaking by
+/// ascending Builder `id`. Cross-region pairings are suppressed: a
+/// Builder whose `tileKey` region differs from the tile's region is
+/// never assigned (the DEVELOP planner does not model naval Builder
+/// transport — `SPEC/ai/phase-planner-architecture.md` § Acceptance
+/// criteria). When a tile's region has no remaining idle Builder, the
+/// tile is skipped and the next tile is considered. Per-Builder
+/// pathfinding (multi-hop traversal cost vs straight-line distance) is
+/// deferred to follow-up tuning; the Manhattan-distance approximation
+/// satisfies the issue's "closest idle Builder to highest-yield tile"
+/// contract (Refs #2848 § S2) and the determinism Must-have #7.
 ///
 /// Output: a new `List<WorkOrder>` of at most
 /// `min(idleBuilders, eligibleTiles)` entries, each with
@@ -194,18 +201,60 @@ List<WorkOrder> planDevelopCivilian({
     return a.compareTo(b);
   });
 
-  final pairCount = eligibleTileKeys.length < builders.length
-      ? eligibleTileKeys.length
-      : builders.length;
-  final orders = <WorkOrder>[
-    for (var i = 0; i < pairCount; i++)
+  final assignedBuilderIds = <String>{};
+  final orders = <WorkOrder>[];
+  for (final tileKey in eligibleTileKeys) {
+    if (assignedBuilderIds.length == builders.length) break;
+    final tileRegionId = Unit.regionIdFromTileKey(tileKey);
+    if (tileRegionId == null || tileRegionId.isEmpty) continue;
+    final tileXy = _xyFromTileKey(tileKey);
+    if (tileXy == null) continue;
+
+    Unit? best;
+    int? bestDistance;
+    for (final builder in builders) {
+      if (assignedBuilderIds.contains(builder.id)) continue;
+      final builderTileKey = builder.tileKey;
+      if (builderTileKey == null || builderTileKey.isEmpty) continue;
+      if (Unit.regionIdFromTileKey(builderTileKey) != tileRegionId) continue;
+      final builderXy = _xyFromTileKey(builderTileKey);
+      if (builderXy == null) continue;
+      final distance =
+          (builderXy.x - tileXy.x).abs() + (builderXy.y - tileXy.y).abs();
+      if (best == null || distance < bestDistance!) {
+        best = builder;
+        bestDistance = distance;
+      }
+    }
+    if (best == null) continue;
+    orders.add(
       WorkOrder(
-        unitId: builders[i].id,
+        unitId: best.id,
         target: kWorkTargetBuildImprovement,
-        targetTileKey: eligibleTileKeys[i],
+        targetTileKey: tileKey,
       ),
-  ];
+    );
+    assignedBuilderIds.add(best.id);
+  }
   return orders;
+}
+
+/// Parses the integer `(x, y)` coordinates from a canonical tile key
+/// `regionId|localId|x|y`. Returns `null` when the key is malformed
+/// (fewer than four segments) or either coordinate is not a base-10
+/// integer. Mirrors `parseTileKeyCoordinates` in `colonizethis_logic`
+/// (`SPEC/game/world-model-identity.md`) without crossing the
+/// `colonizethis_ai → colonizethis_logic` narrow-contract boundary
+/// (`colonizethis-logic-ai-decoupling.mdc`); the planner only needs the
+/// `(x, y)` slice and re-uses [Unit.regionIdFromTileKey] for the region
+/// gate.
+({int x, int y})? _xyFromTileKey(String tileKey) {
+  final parts = tileKey.split('|');
+  if (parts.length < 4) return null;
+  final x = int.tryParse(parts[2]);
+  final y = int.tryParse(parts[3]);
+  if (x == null || y == null) return null;
+  return (x: x, y: y);
 }
 
 /// Deterministic priority score for an unimproved extractable tile in
