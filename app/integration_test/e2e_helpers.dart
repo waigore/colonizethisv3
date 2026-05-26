@@ -112,6 +112,7 @@ export 'e2e_test_shared.dart'
         e2ePumpUntil,
         e2ePumpUntilConditionOrIdle,
         e2eRadioListTilesInAlertDialogs,
+        e2eTapCivilianWorkOrderLabel,
         e2eTapNewWorldRegionTabIfPresent,
         e2eTapOldWorldRegionTab,
         e2eTextLooksLikeNewWorldLocationLine,
@@ -455,6 +456,14 @@ Future<void> tapAssignOnCivilianRowWithTitle(
   WidgetTester tester,
   String unitTypeTitle,
 ) => e2eTapAssignOnCivilianRowWithTitle(tester, unitTypeTitle);
+
+/// Stable public name for [e2eTapCivilianWorkOrderLabel] so the full-turn
+/// scenario consumes the AC1 barrel only (Refs GitHub #2336 AC1 / AC2 /
+/// AC10). Forwards to the implementation in `e2e_test_shared.dart`.
+Future<void> tapCivilianWorkOrderLabel(
+  WidgetTester tester,
+  String workOrderLabel,
+) => e2eTapCivilianWorkOrderLabel(tester, workOrderLabel);
 
 /// Stable public name for [e2eTapMoveOnFirstNonHomeFleet] so fleet scenarios
 /// consume the AC1 barrel only (Refs GitHub #2336 AC1 / AC2). Forwards to
