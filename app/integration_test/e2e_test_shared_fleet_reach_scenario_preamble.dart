@@ -1,4 +1,3 @@
-import 'package:colonizethis_app/config/ct_e2e.dart';
 import 'package:colonizethis_app/l10n/app_localizations_contract.dart';
 import 'package:colonizethis_app/l10n/app_localizations_delegate.dart';
 import 'package:flutter/widgets.dart';
@@ -63,7 +62,8 @@ const String kE2eDefaultFleetReachPreambleBootstrapTimingPhase =
 /// `colonizethis-e2e-ui-stability.mdc` 5-minute fail-fast attribution stays
 /// keyed on the same checkpoint string across the lift. Refs GitHub #2336
 /// AC1 / AC2.
-const String kE2eDefaultFleetReachPreambleAfterBootstrapStep = 'after bootstrap';
+const String kE2eDefaultFleetReachPreambleAfterBootstrapStep =
+    'after bootstrap';
 
 /// Default `ensureUnderWallClock(...)` checkpoint label emitted by
 /// [e2eEnterFleetReachScenarioReady] after the post-`splitHomeFleetOnce` /
@@ -232,24 +232,24 @@ Future<E2eFleetReachScenarioPreamble> e2eEnterFleetReachScenarioReady(
   String bootstrapTimingPhase =
       kE2eDefaultFleetReachPreambleBootstrapTimingPhase,
   String afterBootstrapStep = kE2eDefaultFleetReachPreambleAfterBootstrapStep,
-  String afterSplitFleetStep =
-      kE2eDefaultFleetReachPreambleAfterSplitFleetStep,
+  String afterSplitFleetStep = kE2eDefaultFleetReachPreambleAfterSplitFleetStep,
 }) async {
-  final perf = E2ePerfLog(testName);
-  final testSw = Stopwatch()..start();
-  expect(
-    kCtE2EEnabled,
-    isTrue,
-    reason:
-        'Run with: flutter test integration_test/... --dart-define=CT_E2E=true',
+  // Lifted bootstrap-through-`New Game`-entry preamble: see
+  // [e2eRunIntegrationTestBootstrap] for the canonical
+  // `E2ePerfLog(testName)` + `testSw` + `kCtE2EEnabled` gate +
+  // `setSurfaceSize` + `bootstrapForIntegrationTest` + first pump +
+  // `e2eWaitForNewGameEntry` + `bootstrap_for_integration_test` timing
+  // sequence both standard / fleet preambles previously duplicated.
+  // Refs GitHub #2336 AC1 / AC2 / Bottleneck 6.
+  final bootstrap = await e2eRunIntegrationTestBootstrap(
+    tester,
+    testName: testName,
+    bootstrapForIntegrationTest: bootstrapForIntegrationTest,
+    surfaceSize: surfaceSize,
+    bootstrapTimingPhase: bootstrapTimingPhase,
   );
-
-  await tester.binding.setSurfaceSize(surfaceSize);
-  final bootstrapSw = Stopwatch()..start();
-  await bootstrapForIntegrationTest();
-  await tester.pump();
-  await e2eWaitForNewGameEntry(tester, perf: perf);
-  perf.timing(bootstrapTimingPhase, bootstrapSw.elapsed);
+  final perf = bootstrap.perf;
+  final testSw = bootstrap.testSw;
   await e2eEnsureAllRelocated64pxPngsLoadSuiteOnce();
 
   final wallClock = Stopwatch()..start();

@@ -1,4 +1,3 @@
-import 'package:colonizethis_app/config/ct_e2e.dart';
 import 'package:colonizethis_app/l10n/app_localizations_contract.dart';
 import 'package:colonizethis_app/l10n/app_localizations_delegate.dart';
 import 'package:flutter/widgets.dart';
@@ -282,28 +281,33 @@ Future<E2eStandardScenarioOpener> e2eEnterStandardE2eScenario(
   String afterNewGameToMapStep =
       kE2eDefaultStandardScenarioOpenerAfterNewGameToMapStep,
 }) async {
-  final perf = E2ePerfLog(testName);
-  final testSw = Stopwatch()..start();
-  expect(
-    kCtE2EEnabled,
-    isTrue,
-    reason:
-        'Run with: flutter test integration_test/... --dart-define=CT_E2E=true',
+  // Lifted bootstrap-through-`New Game`-entry preamble: see
+  // [e2eRunIntegrationTestBootstrap] for the canonical
+  // `E2ePerfLog(testName)` + `testSw` + `kCtE2EEnabled` gate +
+  // `setSurfaceSize` + `bootstrapForIntegrationTest` + first pump +
+  // `e2eWaitForNewGameEntry` + `bootstrap_for_integration_test` timing
+  // sequence both standard / fleet preambles previously duplicated.
+  // The wall-clock guard build moves to **after** the lifted call here;
+  // the pre-lift build at `expect` time was never invoked before the
+  // first `ensureUnderWallClock(afterBootstrapStep)` call below (the
+  // helper closure is pure), so deferring the guard construction by a
+  // few statements is observably byte-equivalent. Refs GitHub #2336
+  // AC1 / AC2 / Bottleneck 6.
+  final bootstrap = await e2eRunIntegrationTestBootstrap(
+    tester,
+    testName: testName,
+    bootstrapForIntegrationTest: bootstrapForIntegrationTest,
+    surfaceSize: surfaceSize,
+    bootstrapTimingPhase: bootstrapTimingPhase,
   );
+  final perf = bootstrap.perf;
+  final testSw = bootstrap.testSw;
 
   final ensureUnderWallClock = e2eMakeWallClockGuard(
     testName: testName,
     stopwatch: testSw,
     cap: wallClockCap,
   );
-
-  await tester.binding.setSurfaceSize(surfaceSize);
-
-  final bootstrapSw = Stopwatch()..start();
-  await bootstrapForIntegrationTest();
-  await tester.pump();
-  await e2eWaitForNewGameEntry(tester, perf: perf);
-  perf.timing(bootstrapTimingPhase, bootstrapSw.elapsed);
   ensureUnderWallClock(afterBootstrapStep);
 
   if (assetPreloadTimingPhase != null) {

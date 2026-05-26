@@ -23,6 +23,7 @@ export 'e2e_test_shared.dart'
         E2eFleetReachLoopExit,
         E2eFleetReachLoopResult,
         E2eFleetReachScenarioPreamble,
+        E2eIntegrationTestBootstrapResult,
         E2ePerfLog,
         E2eStandardScenarioOpener,
         e2eAdaptivePollRampAfterIdle,
@@ -105,6 +106,8 @@ export 'e2e_test_shared.dart'
         kE2eDefaultFleetReachPreambleLocale,
         kE2eDefaultFleetReachPreambleMaxUiResponseWait,
         kE2eDefaultFleetReachPreambleSurfaceSize,
+        kE2eDefaultIntegrationTestBootstrapSurfaceSize,
+        kE2eDefaultIntegrationTestBootstrapTimingPhase,
         kE2eDefaultNavalMoveSegmentUiWait,
         kE2eDefaultStandardScenarioOpenerAfterAssetPreloadStep,
         kE2eDefaultStandardScenarioOpenerAfterBootstrapStep,
@@ -118,6 +121,7 @@ export 'e2e_test_shared.dart'
         e2ePumpUntil,
         e2ePumpUntilConditionOrIdle,
         e2eRadioListTilesInAlertDialogs,
+        e2eRunIntegrationTestBootstrap,
         e2eTapCivilianWorkOrderLabel,
         e2eTapNewWorldRegionTabIfPresent,
         e2eTapOldWorldRegionTab,
@@ -932,4 +936,32 @@ Future<E2eStandardScenarioOpener> enterStandardE2eScenario(
   afterAssetPreloadStep: afterAssetPreloadStep,
   newGameToMapTimingPhase: newGameToMapTimingPhase,
   afterNewGameToMapStep: afterNewGameToMapStep,
+);
+
+/// Stable public name for [e2eRunIntegrationTestBootstrap] so future scenario
+/// preambles that need the `IntegrationTestWidgetsFlutterBinding`-side
+/// `E2ePerfLog(testName)` + `testSw` + `kCtE2EEnabled` gate +
+/// `setSurfaceSize` + `bootstrapForIntegrationTest` + first pump +
+/// `e2eWaitForNewGameEntry` + `bootstrap_for_integration_test` timing
+/// sequence consume the AC1 barrel without re-deriving the recipe (Refs
+/// GitHub #2336 AC1 / AC2 / Bottleneck 6). Forwards to the implementation
+/// in `e2e_test_shared_integration_test_bootstrap.dart`.
+///
+/// The two existing preambles
+/// ([e2eEnterStandardE2eScenario], [e2eEnterFleetReachScenarioReady]) now
+/// delegate to the same helper so a silent rename / surface-size drift /
+/// timing-phase change here has a single source of truth instead of two
+/// copy-pasted inline blocks.
+Future<E2eIntegrationTestBootstrapResult> runIntegrationTestBootstrap(
+  WidgetTester tester, {
+  required String testName,
+  required Future<void> Function() bootstrapForIntegrationTest,
+  Size surfaceSize = kE2eDefaultIntegrationTestBootstrapSurfaceSize,
+  String bootstrapTimingPhase = kE2eDefaultIntegrationTestBootstrapTimingPhase,
+}) => e2eRunIntegrationTestBootstrap(
+  tester,
+  testName: testName,
+  bootstrapForIntegrationTest: bootstrapForIntegrationTest,
+  surfaceSize: surfaceSize,
+  bootstrapTimingPhase: bootstrapTimingPhase,
 );
