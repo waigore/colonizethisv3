@@ -1,0 +1,179 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ColonizeThis — Diplomacy Panel</title>
+<style>
+:root {
+  --bg: oklch(16% 0.018 50); --bg-deep: oklch(12% 0.015 45);
+  --surface: oklch(24% 0.015 45); --surface-lite: oklch(30% 0.016 52);
+  --fg: oklch(88% 0.015 80); --muted: oklch(65% 0.025 70);
+  --border: oklch(40% 0.02 55); --accent: oklch(72% 0.14 85);
+  --accent-dim: oklch(60% 0.12 82); --accent-bright: oklch(82% 0.13 90);
+  --danger: oklch(55% 0.16 22); --success: oklch(55% 0.12 150);
+  --font-display: 'Iowan Old Style', 'Cinzel', 'Charter', Georgia, serif;
+  --font-body: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  --font-mono: 'SF Mono', ui-monospace, Menlo, monospace;
+  --topbar-h:36px;
+}
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+html,body{min-height:100vh;min-height:100dvh;background:var(--bg);color:var(--fg);font-family:var(--font-body);overflow-x:hidden}
+html{overflow-y:auto;scroll-behavior:smooth}
+
+.topbar{height:var(--topbar-h);background:linear-gradient(180deg,var(--surface-lite)0%,var(--surface)100%);border-bottom:1px solid var(--accent-dim);display:flex;align-items:center;padding:0 10px;gap:8px;flex-shrink:0;position:relative;z-index:10}
+.topbar::after{content:'';position:absolute;bottom:-1px;left:0;right:0;height:1px;background:var(--accent);opacity:.25}
+.back-btn{padding:4px 10px;background:linear-gradient(180deg,var(--surface-lite),var(--bg-deep));border:1px solid var(--border);color:var(--accent-dim);font-family:var(--font-display);font-size:11px;cursor:pointer;min-height:26px;letter-spacing:.04em;transition:color .15s}
+.back-btn:hover{color:var(--accent-bright)}
+.topbar-title{flex:1;font-family:var(--font-display);font-size:13px;font-weight:600;letter-spacing:.05em;color:var(--fg);text-align:center}
+.topbar-title .icon{font-size:14px}
+
+.content{max-width:760px;margin:0 auto;padding:clamp(10px,2vh,16px)clamp(10px,2vw,14px)}
+
+.section-head{font-family:var(--font-display);font-size:clamp(13px,1.8vw,15px);font-weight:600;letter-spacing:.04em;color:var(--accent);padding:clamp(6px,1vh,8px)0;border-bottom:2px solid var(--accent-dim);margin-bottom:clamp(6px,1vh,10px);margin-top:clamp(10px,2vh,16px)}
+.section-head:first-child{margin-top:0}
+
+.faction-row{display:flex;align-items:flex-start;gap:clamp(6px,1vw,10px);padding:clamp(6px,1vh,10px)clamp(10px,2vw,14px);background:linear-gradient(180deg,var(--bg-deep),var(--surface));border:1px solid var(--border);margin-bottom:4px;cursor:pointer;transition:border-color .15s;min-height:48px}
+.faction-row:hover{border-color:var(--accent-dim)}
+.faction-row .f-details{flex:1;min-width:0}
+.faction-row .f-name{font-family:var(--font-display);font-size:clamp(12px,1.6vw,14px);font-weight:600;letter-spacing:.03em;color:var(--fg);display:flex;align-items:center;gap:6px}
+.faction-row .f-badge{padding:1px 6px;font-family:var(--font-mono);font-size:8px;letter-spacing:.06em;border-radius:1px}
+.faction-row .f-badge.gp{background:var(--accent-dim);color:var(--bg-deep)}
+.faction-row .f-badge.minor{background:var(--muted);color:var(--bg-deep)}
+.faction-row .f-badge.tribe{border:1px solid var(--muted);color:var(--muted);background:transparent}
+.faction-row .f-relation{font-family:var(--font-body);font-size:clamp(9px,1.2vw,11px);margin-top:2px}
+.faction-row .f-relation .state{padding:1px 5px;border-radius:1px;margin-right:4px;font-family:var(--font-mono);font-size:9px;letter-spacing:.04em}
+.faction-row .f-relation .state.war{background:oklch(40% 0.06 20 / .4);color:var(--danger)}
+.faction-row .f-relation .state.peace{background:oklch(40% 0.06 150 / .2);color:var(--success)}
+.faction-row .f-relation .word{color:var(--muted);font-style:italic}
+.faction-row .f-relation .power{font-family:var(--font-mono);font-size:9px;margin-left:8px}
+.faction-row .f-relation .power.green{color:var(--success)}
+.faction-row .f-relation .power.red{color:var(--danger)}
+.faction-row .f-subsidy{font-family:var(--font-mono);font-size:clamp(8px,1vw,9px);color:var(--accent-dim);margin-top:2px}
+.faction-row .f-overture{font-family:var(--font-body);font-size:clamp(8px,1vw,9px);color:var(--muted);margin-top:1px}
+.faction-row .f-actions{display:flex;flex-wrap:wrap;gap:4px;flex-shrink:0;padding-top:2px;max-width:180px;justify-content:flex-end}
+@media(max-width:500px){.faction-row{flex-wrap:wrap}.faction-row .f-actions{max-width:none;justify-content:flex-start}}
+.faction-row .f-actions button{padding:3px 7px;background:linear-gradient(180deg,var(--surface-lite),var(--bg-deep));border:1px solid var(--border);color:var(--accent-dim);font-family:var(--font-display);font-size:8px;letter-spacing:.04em;cursor:pointer;white-space:nowrap;transition:color .15s,border-color .15s}
+.faction-row .f-actions button:hover{color:var(--accent-bright);border-color:var(--accent-dim)}
+.faction-row .f-actions button.pending{color:var(--danger);border-color:var(--danger)}
+.faction-row .f-actions button.war-btn{border-color:var(--danger);color:var(--danger)}
+
+.detail-overlay{display:none;position:fixed;inset:0;background:oklch(8% 0.01 30 / .6);z-index:100;align-items:center;justify-content:center;padding:clamp(16px,3vh,24px)}
+.detail-overlay.show{display:flex}
+.detail-card{background:linear-gradient(180deg,var(--surface)0%,var(--bg-deep)100%);border:2px solid var(--accent-dim);max-width:540px;width:100%;max-height:80vh;overflow-y:auto;padding:clamp(10px,2vh,16px)clamp(12px,2vw,18px);border-radius:4px}
+.detail-card h3{font-family:var(--font-display);font-size:clamp(14px,2vw,18px);color:var(--accent);margin-bottom:clamp(6px,1vh,10px);letter-spacing:.04em}
+.detail-card .dl{display:flex;gap:8px;margin-bottom:4px;font-family:var(--font-body);font-size:clamp(10px,1.3vw,12px)}
+.detail-card .dl .lk{color:var(--muted);min-width:80px}
+.detail-card .dl .lv{color:var(--fg)}
+.detail-card .history{margin-top:clamp(8px,1.5vh,12px)}
+.detail-card .history h4{font-family:var(--font-display);font-size:12px;color:var(--accent-dim);letter-spacing:.04em;border-bottom:1px solid var(--border);padding-bottom:4px;margin-bottom:6px}
+.detail-card .history .ev{font-family:var(--font-body);font-size:clamp(9px,1.2vw,10px);color:var(--fg);padding:3px 0;border-bottom:1px solid oklch(40% 0.02 55 / .3)}
+.detail-card .history .ev .yr{color:var(--muted);font-family:var(--font-mono);font-size:9px;margin-right:6px}
+.detail-card .close-detail{padding:4px 12px;margin-top:clamp(8px,1.5vh,12px);background:linear-gradient(180deg,var(--surface-lite),var(--bg-deep));border:1px solid var(--border);color:var(--accent-dim);font-family:var(--font-display);font-size:10px;cursor:pointer;letter-spacing:.04em;display:block;width:100%;text-align:center}
+.detail-card .close-detail:hover{color:var(--accent-bright)}
+
+.mode-bar{text-align:center;padding:clamp(4px,.8vh,8px);border-top:1px solid var(--border);margin-top:clamp(8px,1.5vh,12px)}
+.mode-bar button{padding:3px 8px;margin:0 2px;background:linear-gradient(180deg,var(--surface-lite),var(--bg-deep));border:1px solid var(--border);color:var(--muted);font-family:var(--font-mono);font-size:9px;letter-spacing:.04em;cursor:pointer;transition:color .15s,border-color .15s}
+.mode-bar button:hover,.mode-bar button.active{color:var(--accent);border-color:var(--accent-dim)}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <button class="back-btn" onclick="alert('Back to Map')">← Map</button>
+  <span class="topbar-title"><img src="icons/32/ui_icon_diplomacy.png" width="32" height="32" alt="" style="width:18px;height:18px;image-rendering:pixelated;vertical-align:middle;margin-right:4px">Diplomacy</span>
+</div>
+
+<div class="content" id="diplomacy-content"></div>
+<div class="mode-bar">
+  <button class="active" onclick="setMode('all')">All</button>
+  <button onclick="setMode('gps')">Great Powers only</button>
+  <button onclick="setMode('minors')">Minors only</button>
+</div>
+
+<div class="detail-overlay" id="detail-overlay">
+  <div class="detail-card" id="detail-card"></div>
+</div>
+
+<script>
+let currentMode='all';
+const factions=[
+  {id:'spain',name:'Spain',type:'GP',state:'AT_WAR',word:'Hostile',power:'+12%',powerGood:false,overture:'',actions:['Offer Peace'],subsidy:'',pendingGrant:'',pendingSubsidy:''},
+  {id:'france',name:'France',type:'GP',state:'AT_PEACE',word:'Unfriendly',power:'−8%',powerGood:true,overture:'',actions:['Declare War','Alliance','Grant Aid'],subsidy:'',pendingGrant:'',pendingSubsidy:''},
+  {id:'portugal',name:'Portugal',type:'GP',state:'AT_PEACE',word:'Cordial',power:'−22%',powerGood:true,overture:'',actions:[],subsidy:'Outgoing subsidy: £1,500/turn to Portugal',pendingGrant:'',pendingSubsidy:''},
+  {id:'dutch',name:'Dutch Republic',type:'GP',state:'AT_PEACE',word:'Friendly',power:'−15%',powerGood:true,overture:'',actions:['Set Subsidy'],subsidy:'',pendingGrant:'',pendingSubsidy:''},
+  {id:'bavaria',name:'Bavaria',type:'Minor',state:'AT_PEACE',word:'Cordial',power:'',powerGood:true,overture:'Consulate → Embassy next',actions:['Establish Overture','Grant Aid'],subsidy:'',pendingGrant:'',pendingSubsidy:''},
+  {id:'saxony',name:'Saxony',type:'Minor',state:'AT_PEACE',word:'Friendly',power:'',powerGood:true,overture:'Already at Embassy',actions:['Set Subsidy'],subsidy:'',pendingGrant:'',pendingSubsidy:''},
+  {id:'creek',name:'Creek',type:'Tribe',state:'AT_PEACE',word:'Unfriendly',power:'',powerGood:true,overture:'No overture yet',actions:['Establish Overture'],subsidy:'',pendingGrant:'',pendingSubsidy:''},
+];
+
+function makeFactionRow(f){
+  const wordColors={Hostile:'oklch(55% 0.16 22)',Unfriendly:'oklch(62% 0.10 55)',Cordial:'oklch(58% 0.08 160)',Friendly:'oklch(55% 0.12 150)'};
+  return `<div class="faction-row" onclick="openDetail('${f.id}')">
+    <div class="f-details">
+      <div class="f-name">${f.name}<span class="f-badge ${f.type==='GP'?'gp':f.type==='Minor'?'minor':'tribe'}">${f.type}</span></div>
+      <div class="f-relation">
+        <span class="state ${f.state==='AT_WAR'?'war':'peace'}">${f.state==='AT_WAR'?'WAR':'PEACE'}</span>
+        <span class="word" style="color:${wordColors[f.word]||'var(--muted)'}">${f.word}</span>
+        ${f.power?`<span class="power ${f.powerGood?'green':'red'}">${f.power}</span>`:''}
+        ${f.type!=='GP'?`<span class="f-overture"> · ${f.overture}</span>`:''}
+      </div>
+      ${f.subsidy?`<div class="f-subsidy">${f.subsidy}</div>`:''}
+      ${f.pendingGrant?`<div class="f-subsidy">${f.pendingGrant}</div>`:''}
+      ${f.pendingSubsidy?`<div class="f-subsidy">${f.pendingSubsidy}</div>`:''}
+    </div>
+    <div class="f-actions" onclick="event.stopPropagation()">
+      ${f.actions.map(a=>`<button${a==='Declare War'?' class="war-btn"':''} onclick="alert('${a} → ${f.name}')">${a}</button>`).join('')}
+    </div>
+  </div>`;
+}
+
+function renderList(){
+  let list=factions.filter(f=>{
+    if(currentMode==='gps')return f.type==='GP';
+    if(currentMode==='minors')return f.type==='Minor'||f.type==='Tribe';
+    return true;
+  });
+  let gps=list.filter(f=>f.type==='GP');
+  let minors=list.filter(f=>f.type==='Minor');
+  let tribes=list.filter(f=>f.type==='Tribe');
+  let html='';
+  if(gps.length){html+=`<div class="section-head">Great Powers</div>${gps.map(makeFactionRow).join('')}`}
+  if(minors.length){html+=`<div class="section-head">Minor Nations</div>${minors.map(makeFactionRow).join('')}`}
+  if(tribes.length){html+=`<div class="section-head">Tribes</div>${tribes.map(makeFactionRow).join('')}`}
+  if(!gps.length&&!minors.length&&!tribes.length){html=`<div style="text-align:center;padding:24px;font-family:var(--font-display);font-style:italic;color:var(--muted)">No factions discovered</div>`}
+  document.getElementById('diplomacy-content').innerHTML=html;
+}
+
+function setMode(m){
+  currentMode=m;
+  document.querySelectorAll('.mode-bar button').forEach(b=>b.classList.toggle('active',b.textContent.toLowerCase().includes(m==='all'?'all':m==='gps'?'great':m==='minors'?'minor':'')));
+  renderList();
+}
+
+function openDetail(id){
+  const f=factions.find(x=>x.id===id);
+  if(!f)return;
+  const wordColors={Hostile:'oklch(55% 0.16 22)',Unfriendly:'oklch(62% 0.10 55)',Cordial:'oklch(58% 0.08 160)',Friendly:'oklch(55% 0.12 150)'};
+  let hist=[
+    {yr:'1522 (Turn 18)',txt:'We established an Embassy with Bavaria.'},
+    {yr:'1518 (Turn 14)',txt:'Our subsidies to Bavaria were cancelled when war began.'},
+    {yr:'1515 (Turn 12)',txt:`We declared war on ${f.name}.`},
+    {yr:'1508 (Turn 6)',txt:`We met ${f.name} — opened trade consulate.`},
+  ];
+  if(f.type==='GP')hist=hist.concat([{yr:'1525 (Turn 21)',txt:`Our treasury surpassed ${f.name}'s in composite power.`}]);
+  document.getElementById('detail-card').innerHTML=`
+    <h3>${f.name} <span class="f-badge ${f.type==='GP'?'gp':f.type==='Minor'?'minor':'tribe'}" style="vertical-align:middle">${f.type}</span></h3>
+    <div class="dl"><span class="lk">Relation</span><span class="lv"><span class="state ${f.state==='AT_WAR'?'war':'peace'}" style="margin-right:6px">${f.state==='AT_WAR'?'WAR':'PEACE'}</span> <span style="color:${wordColors[f.word]||'var(--muted)'}">${f.word}</span></span></div>
+    ${f.power?`<div class="dl"><span class="lk">Power Score</span><span class="lv" style="color:${f.powerGood?'var(--success)':'var(--danger)'}">${f.power} vs your GP</span></div>`:''}
+    ${f.overture?`<div class="dl"><span class="lk">Overture</span><span class="lv">${f.overture}</span></div>`:''}
+    <div class="history"><h4>Diplomatic History</h4>${hist.map(h=>`<div class="ev"><span class="yr">${h.yr}</span>${h.txt}</div>`).join('')}</div>
+    <button class="close-detail" onclick="document.getElementById('detail-overlay').classList.remove('show')">Close</button>
+  `;
+  document.getElementById('detail-overlay').classList.add('show');
+}
+document.getElementById('detail-overlay').addEventListener('click',function(e){if(e.target===this)this.classList.remove('show')});
+renderList();
+</script>
+</body>
+</html>

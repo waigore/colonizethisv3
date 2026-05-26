@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ColonizeThis — Debug Console</title>
+<style>
+:root {
+  --bg: oklch(16% 0.018 50); --bg-deep: oklch(12% 0.015 45);
+  --surface: oklch(24% 0.015 45); --surface-lite: oklch(30% 0.016 52);
+  --fg: oklch(88% 0.015 80); --muted: oklch(65% 0.025 70);
+  --border: oklch(40% 0.02 55); --accent: oklch(72% 0.14 85); --accent-dim: oklch(60% 0.12 82);
+  --success: oklch(58% 0.14 140); --danger: oklch(58% 0.16 22);
+  --font-display: 'Iowan Old Style','Cinzel','Charter',Georgia,serif;
+  --font-body: -apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;
+  --font-mono: 'SF Mono',ui-monospace,Menlo,monospace;
+}
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+html,body{min-height:100vh;min-height:100dvh;background:var(--bg);color:var(--fg);font-family:var(--font-mono);overflow:hidden;display:flex;align-items:flex-end;justify-content:flex-end}
+.panel{width:min(96vw,480px);max-height:60vh;background:linear-gradient(180deg,var(--surface-lite) 0%,var(--surface) 5%,var(--bg-deep) 100%);border:2px solid var(--accent-dim);margin:0 10px 10px 0;display:flex;flex-direction:column;overflow:hidden}
+.header{padding:8px 12px;background:var(--bg-deep);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;font-size:11px;color:var(--muted)}
+.header .close-btn{width:20px;height:20px;display:flex;align-items:center;justify-content:center;background:none;border:1px solid var(--border);color:var(--muted);cursor:pointer;font-size:12px}.header .close-btn:hover{color:var(--accent)}
+.output{flex:1;overflow-y:auto;padding:8px;display:flex;flex-direction:column;gap:2px;font-size:11px;max-height:200px}
+.output .line{line-height:1.5}.output .cmd{color:var(--accent)}.output .ok{color:var(--success)}.output .err{color:var(--danger)}.output .info{color:var(--muted)}
+.input-row{display:flex;border-top:1px solid var(--border)}
+.input-row .prompt{color:var(--accent);padding:8px 6px 8px 12px;font-size:12px;font-weight:700}
+.input-row input{flex:1;padding:8px 10px;background:var(--bg-deep);border:none;color:var(--fg);font-family:var(--font-mono);font-size:12px;outline:none}.input-row input::placeholder{color:var(--muted);font-style:italic}
+.help-tag{position:fixed;top:10px;right:10px;z-index:1;padding:4px 10px;background:var(--bg-deep);border:1px solid var(--border);color:var(--muted);font-family:monospace;font-size:10px;cursor:pointer}.help-tag:hover{color:var(--accent)}
+</style>
+</head>
+<body>
+<div class="help-tag" onclick="appendOutput('/help','[Help]','info')">/help</div>
+<div class="panel" id="panel">
+  <div class="header"><span>Debug Console</span><button class="close-btn" onclick="document.getElementById('panel').style.display='none'">&#xd7;</button></div>
+  <div class="output" id="output"></div>
+  <div class="input-row">
+    <span class="prompt">&gt;</span>
+    <input type="text" placeholder="Type /help for commands..." id="input" onkeydown="handleKey(event)">
+  </div>
+</div>
+<script>
+let history=[],hIdx=-1
+const responses={
+  '/spawn_civilian explorer 3':'<span class="ok">Spawned 3 Explorers at capital.</span>',
+  '/add_money 5000':'<span class="ok">Credited \u00a35,000 to treasury. New balance: \u00a313,420.</span>',
+  '/add_worker peasants 20':'<span class="ok">Added 20 peasants. New count: 44.</span>',
+  '/add_resource grain 50':'<span class="ok">Added 50 grain to stockpile.</span>',
+  '/spawn_regiment line_infantry 2':'<span class="ok">Spawned 2 Line Infantry regiments at Home Army.</span>',
+  '/spawn_ship carrack':'<span class="ok">Spawned 1 Carrack at Home Fleet.</span>',
+  '/flip_province oldWorld P12':'<span class="ok">Province oldWorld|P12 ownership transferred.</span>',
+  '/reveal_province oldWorld|P5':'<span class="ok">Province oldWorld|P5 revealed.</span>',
+  '/observe france':'<span class="ok">Now observing France.</span>',
+  '/observe off':'<span class="ok">Observe mode disabled.</span>',
+  '/list_players':'<span class="info">players_count: 6\nEngland (human)\nFrance (ai)\nSpain (ai)\nPortugal (ai)\nDutch Republic (ai)\nOttoman Empire (ai)</span>',
+  '/get_tile_basic_info':'<span class="info">tile_id: oldWorld|P1|10|15\nprovince_id: oldWorld|P1</span>',
+  '/help':'<span class="info">Available commands:\n/spawn_civilian &lt;type&gt; [count]\n/spawn_regiment &lt;id&gt; [count]\n/spawn_ship &lt;id&gt; [count]\n/add_money &lt;amount&gt;\n/add_worker &lt;tier&gt; &lt;amount&gt;\n/add_resource &lt;id&gt; &lt;amount&gt;\n/flip_province &lt;region&gt; &lt;name|id&gt;\n/reveal_province &lt;id&gt;\n/observe [player|off]\n/list_players\n/get_tile_basic_info\n/help</span>'
+}
+function handleKey(e){
+  if(e.key==='Enter'){submit();return}
+  if(e.key==='ArrowUp'&&history.length){hIdx=hIdx<0?history.length-1:Math.max(0,hIdx-1);e.target.value=history[hIdx]}
+  if(e.key==='ArrowDown'){if(hIdx>=0&&hIdx<history.length-1)hIdx++;else{hIdx=-1;e.target.value=''};if(hIdx>=0)e.target.value=history[hIdx]}
+  if(e.key==='Escape')e.target.blur()
+}
+function submit(){
+  const inp=document.getElementById('input');const cmd=inp.value.trim()
+  if(!cmd)return;history.push(cmd);hIdx=-1;inp.value=''
+  let rsp=responses[cmd]
+  if(!rsp){
+    const base=cmd.split(' ')[0]
+    const known=['/spawn_civilian','/spawn_regiment','/spawn_ship','/add_money','/add_worker','/add_resource','/flip_province','/reveal_province','/observe','/list_players','/get_tile_basic_info','/help']
+    if(known.includes(base))rsp=`<span class="ok">OK &mdash; command processed.</span>`
+    else rsp=`<span class="err">Unknown command: ${cmd}</span>`
+  }
+  appendOutput(cmd,rsp,'cmd')
+}
+function appendOutput(cmd,rsp,t){
+  const o=document.getElementById('output')
+  o.innerHTML+=`<div class="line"><span class="${t}">&gt; ${cmd}</span></div><div class="line">${rsp}</div>`
+  o.scrollTop=o.scrollHeight
+}
+appendOutput('Debug console ready.','Type /help for available commands.','info')
+</script>
+</body>
+</html>

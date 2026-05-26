@@ -4,6 +4,7 @@
 **SPEC/ui** — Modal that lets the human player move a sea-going fleet to an adjacent sea zone or owned port from the [naval-units-panel.md](naval-units-panel.md). Implementation: `app/lib/features/game/widgets/move_fleet_dialog.dart`.
 **Widgetbook:** `Move Fleet Dialog` → `app/lib/widgetbook/catalog.dart`. Game model: [ships-and-naval.md](../game/ships-and-naval.md). Movement: [naval-movement-resolution.md](../program/naval-movement-resolution.md). Map locate: [map-widget.md](map-widget.md). App wiring: [app-ui-wiring.md](../program/app-ui-wiring.md), [app-event-bus.md](../program/app-event-bus.md).
 
+**Mockup:** [mockups/DLG30001-move-fleet-dialog.html](mockups/DLG30001-move-fleet-dialog.html)
 ---
 
 ## Widget contract

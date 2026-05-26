@@ -4,6 +4,7 @@
 **SPEC/ui** — Main menu screen (CtMainMenu). Implementation: `app/lib/widgets/main_menu.dart`.
 **Widgetbook:** `Main Menu` → `app/lib/widgetbook/catalog.dart`. Authority: UXD 03a (Main Menu and Shell).
 
+**Mockup:** [mockups/SHEL10002-main-menu.html](mockups/SHEL10002-main-menu.html)
 ---
 
 ## Widget contract

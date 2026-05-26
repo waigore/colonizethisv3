@@ -1,0 +1,149 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ColonizeThis — Naval Units Panel</title>
+<style>
+:root {
+  --bg: oklch(16% 0.018 50); --bg-deep: oklch(12% 0.015 45);
+  --surface: oklch(24% 0.015 45); --surface-lite: oklch(30% 0.016 52);
+  --fg: oklch(88% 0.015 80); --muted: oklch(65% 0.025 70);
+  --border: oklch(40% 0.02 55); --accent: oklch(72% 0.14 85);
+  --accent-dim: oklch(60% 0.12 82); --accent-bright: oklch(82% 0.13 90);
+  --danger: oklch(55% 0.16 22); --success: oklch(55% 0.12 150);
+  --font-display: 'Iowan Old Style', 'Cinzel', 'Charter', Georgia, serif;
+  --font-body: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  --font-mono: 'SF Mono', ui-monospace, Menlo, monospace;
+  --sidebar-w: 340px;
+}
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+html,body{min-height:100vh;min-height:100dvh;background:var(--bg);color:var(--fg);font-family:var(--font-body);overflow-x:hidden}
+html{overflow-y:auto;scroll-behavior:smooth}
+
+.shell{display:flex;min-height:100vh;min-height:100dvh}
+
+.sidebar{width:var(--sidebar-w);max-width:95vw;min-width:260px;background:linear-gradient(180deg,var(--surface)0%,var(--bg-deep)100%);border-right:2px solid var(--accent-dim);display:flex;flex-direction:column;flex-shrink:0}
+@media(max-width:580px){.sidebar{width:100%;max-width:100%}}
+
+.sidebar-header{padding:clamp(8px,1.5vh,10px)clamp(10px,2vw,14px);border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px;flex-shrink:0}
+.sidebar-header h2{font-family:var(--font-display);font-size:clamp(13px,1.8vw,15px);font-weight:600;letter-spacing:.04em;color:var(--accent);flex:1}
+.sidebar-header .close-btn{padding:3px 8px;background:linear-gradient(180deg,var(--surface-lite),var(--bg-deep));border:1px solid var(--border);color:var(--accent-dim);font-family:var(--font-display);font-size:10px;cursor:pointer;letter-spacing:.04em;transition:color .15s}
+.sidebar-header .close-btn:hover{color:var(--accent-bright)}
+.panel-subtitle{font-family:var(--font-body);font-size:clamp(9px,1.2vw,10px);color:var(--muted);padding:0 clamp(10px,2vw,14px)clamp(4px,.8vh,6px);border-bottom:1px solid var(--border)}
+
+.sidebar-body{overflow-y:auto;flex:1;padding:clamp(6px,1vh,10px)clamp(10px,2vw,14px)}
+
+.region-group{margin-bottom:clamp(8px,1.5vh,12px)}
+.region-heading{font-family:var(--font-display);font-size:clamp(10px,1.4vw,12px);font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);padding:3px 6px;border-left:3px solid var(--accent-dim);margin-bottom:clamp(4px,.8vh,6px)}
+
+.location-group{margin-left:clamp(8px,1.5vw,12px);margin-bottom:clamp(4px,.8vh,6px)}
+.location-label{font-family:var(--font-body);font-size:clamp(9px,1.2vw,10px);font-weight:600;color:var(--fg);opacity:.8;margin-bottom:2px}
+.home-tag{display:inline-block;padding:1px 5px;background:var(--accent-dim);color:var(--bg-deep);font-family:var(--font-mono);font-size:8px;letter-spacing:.06em;margin-left:4px;border-radius:1px}
+
+.fleet-row{display:flex;align-items:flex-start;gap:clamp(6px,1vw,10px);padding:clamp(5px,1vh,7px)clamp(8px,1.5vw,10px);background:linear-gradient(180deg,var(--bg-deep),var(--surface));border:1px solid var(--border);margin-bottom:3px;cursor:pointer;transition:border-color .15s;min-height:40px}
+.fleet-row:hover{border-color:var(--accent-dim)}
+.fleet-row.expanded{background:var(--surface);border-color:var(--accent-dim)}
+.fleet-row .f-details{flex:1;min-width:0}
+.fleet-row .f-name{font-family:var(--font-display);font-size:clamp(10px,1.4vw,12px);font-weight:600;letter-spacing:.03em;color:var(--fg)}
+.fleet-row .f-location{font-family:var(--font-body);font-size:clamp(9px,1.2vw,10px);color:var(--muted);margin-top:1px}
+.fleet-row .f-mission{font-family:var(--font-mono);font-size:clamp(8px,1.1vw,9px);color:var(--accent-dim);margin-top:1px}
+.fleet-row .f-pending{font-family:var(--font-mono);font-size:clamp(8px,1.1vw,9px);color:var(--accent);margin-top:1px}
+.fleet-row .f-expanded{display:none;margin-top:clamp(4px,.7vh,6px);border-top:1px solid var(--border);padding-top:clamp(4px,.7vh,6px)}
+.fleet-row.expanded .f-expanded{display:block}
+.fleet-row .f-expanded table{width:100%;border-collapse:collapse;font-family:var(--font-mono);font-size:clamp(8px,1vw,9px)}
+.fleet-row .f-expanded td{padding:2px 4px;border-bottom:1px solid var(--border);color:var(--fg)}
+.fleet-row .f-expanded td.nr{text-align:right;color:var(--accent-dim)}
+.fleet-row .f-expanded .f-cap{font-family:var(--font-body);font-size:9px;color:var(--accent-dim);margin-top:4px}
+.fleet-row .f-expanded .f-stats{font-family:var(--font-mono);font-size:9px;color:var(--muted);margin-top:2px}
+.fleet-row .f-actions{display:flex;align-items:center;gap:4px;flex-shrink:0;padding-top:2px}
+.fleet-row .f-actions button{padding:3px 7px;background:linear-gradient(180deg,var(--surface-lite),var(--bg-deep));border:1px solid var(--border);color:var(--accent-dim);font-family:var(--font-display);font-size:9px;letter-spacing:.04em;cursor:pointer;transition:color .15s;white-space:nowrap}
+.fleet-row .f-actions button:hover{color:var(--accent-bright);border-color:var(--accent-dim)}
+.fleet-row .f-actions button:disabled{opacity:.3;cursor:not-allowed}
+.fleet-row .f-actions .locate-btn{width:22px;height:22px;font-size:11px;display:flex;align-items:center;justify-content:center;border-radius:50%;padding:0}
+
+.map-preview{flex:1;background:var(--bg-deep);position:relative;overflow:hidden;display:flex;align-items:center;justify-content:center}
+@media(max-width:580px){.map-preview{display:none}}
+.map-grid{position:absolute;inset:0;background-image:linear-gradient(oklch(40% 0.02 55 / .08)1px,transparent 1px),linear-gradient(90deg,oklch(40% 0.02 55 / .08)1px,transparent 1px);background-size:32px 32px;opacity:.5}
+.map-note{font-family:var(--font-display);font-style:italic;color:var(--muted);font-size:clamp(11px,1.5vw,13px);z-index:1}
+
+.empty-msg{text-align:center;padding:clamp(12px,2vh,20px);font-family:var(--font-display);font-style:italic;color:var(--muted);font-size:clamp(11px,1.5vw,13px)}
+</style>
+</head>
+<body>
+
+<div class="shell">
+  <div class="sidebar">
+    <div class="sidebar-header">
+      <h2>Naval Units</h2>
+      <button class="close-btn" onclick="alert('Close panel')">Close</button>
+    </div>
+    <div class="panel-subtitle">All fleets · Great Britain</div>
+    <div class="sidebar-body" id="naval-body"></div>
+  </div>
+  <div class="map-preview">
+    <div class="map-grid"></div>
+    <div class="map-note">Map area — click fleet row to locate</div>
+  </div>
+</div>
+
+<script>
+const fleets=[
+  {id:'hf1',name:'Home Fleet',region:'Old World',loc:'London (in port)',seaZone:false,home:true,mission:'None',ships:[{type:'Galleon',n:1,role:'Merchant'},{type:'Frigate',n:1,role:'Warship'},{type:'Merchant Steamship',n:2,role:'Merchant'}],cargo:'Cargo capacity: 18 holds',pending:''},
+  {id:'f2',name:'Channel Fleet',region:'Old World',loc:'Portsmouth (in port)',seaZone:false,home:false,mission:'None',ships:[{type:'Ship of the Line',n:3,role:'Warship'},{type:'Frigate',n:2,role:'Warship'}],cargo:'',pending:''},
+  {id:'f3',name:'Mediterranean Squadron',region:'Old World',loc:'Gibraltar (in port)',seaZone:false,home:false,mission:'None',ships:[{type:'Frigate',n:2,role:'Warship'},{type:'Galleon',n:1,role:'Merchant'}],cargo:'',pending:''},
+  {id:'f4',name:'Atlantic Fleet',region:'Old World',loc:'Bay of Biscay (at sea)',seaZone:true,home:false,mission:'Patrol',ships:[{type:'Ship of the Line',n:2,role:'Warship'},{type:'Frigate',n:3,role:'Warship'}],cargo:'',pending:'Moving to: English Channel'},
+  {id:'f5',name:'Caribbean Fleet',region:'New World',loc:'Caribbean Sea (at sea)',seaZone:true,home:false,mission:'Blockade',ships:[{type:'Ship of the Line',n:1,role:'Warship'},{type:'Frigate',n:2,role:'Warship'},{type:'Carrack',n:1,role:'Merchant'}],cargo:'',pending:''},
+  {id:'f6',name:'West Indies Squadron',region:'New World',loc:'Port Royal (in port)',seaZone:false,home:false,mission:'None',ships:[{type:'Frigate',n:2,role:'Warship'},{type:'Merchant Steamship',n:1,role:'Merchant'}],cargo:'',pending:''},
+  {id:'f7',name:'South Atlantic Flotilla',region:'New World',loc:'South Atlantic (at sea)',seaZone:true,home:false,mission:'Patrol',ships:[{type:'Frigate',n:1,role:'Warship'},{type:'Galleon',n:2,role:'Merchant'}],cargo:'',pending:''},
+];
+
+const collapsedState={};
+
+function toggleFleet(id){collapsedState['f_'+id]=!collapsedState['f_'+id];renderAll()}
+
+function makeFleetRow(f){
+  const exp=collapsedState['f_'+f.id];
+  const warships=f.ships.filter(s=>s.role==='Warship').reduce((a,s)=>a+s.n,0);
+  const merchants=f.ships.filter(s=>s.role==='Merchant').reduce((a,s)=>a+s.n,0);
+  return `<div class="fleet-row${exp?' expanded':''}" onclick="toggleFleet('${f.id}')">
+    <div class="f-details">
+      <div class="f-name">${f.name}${f.home?' <span class="home-tag">HOME</span>':''}</div>
+      <div class="f-location">${f.region} — ${f.loc}</div>
+      <div class="f-mission">Mission: ${f.mission}</div>
+      ${f.pending?`<div class="f-pending">${f.pending}</div>`:''}
+      <div class="f-expanded">
+        <table><tbody>${f.ships.map(s=>`<tr><td>${s.type}</td><td class="nr">×${s.n}</td><td style="font-size:7px">${s.role}</td></tr>`).join('')}</tbody></table>
+        ${f.cargo?`<div class="f-cap">${f.cargo}</div>`:''}
+        <div class="f-stats">Total ships: ${f.ships.reduce((a,s)=>a+s.n,0)} · Warships: ${warships} · Merchants: ${merchants}</div>
+      </div>
+    </div>
+    <div class="f-actions" onclick="event.stopPropagation()">
+      <button class="locate-btn" title="Locate" onclick="alert('Locate ${f.name} · ${f.loc}')">⊙</button>
+      ${!f.home?`<button onclick="alert('Move ${f.name}')">Move</button>`:''}
+      <button onclick="alert('Split ${f.name}')">Split</button>
+    </div>
+  </div>`;
+}
+
+function renderAll(){
+  const regionOrder=['Old World','New World'];
+  let html='';
+  for(const reg of regionOrder){
+    const rf=fleets.filter(f=>f.region===reg);
+    if(!rf.length)continue;
+    html+=`<div class="region-group"><div class="region-heading">${reg}</div>`;
+    const homeF=rf.filter(f=>f.home);
+    const portF=rf.filter(f=>!f.home&&!f.seaZone);
+    const seaF=rf.filter(f=>!f.home&&f.seaZone);
+    if(homeF.length){html+=`<div class="location-group"><div class="location-label">Home Fleet</div>${homeF.map(makeFleetRow).join('')}</div>`}
+    if(portF.length){html+=`<div class="location-group"><div class="location-label">In Port</div>${portF.map(makeFleetRow).join('')}</div>`}
+    if(seaF.length){html+=`<div class="location-group"><div class="location-label">At Sea</div>${seaF.map(makeFleetRow).join('')}</div>`}
+    html+=`</div>`;
+  }
+  document.getElementById('naval-body').innerHTML=html;
+}
+renderAll();
+</script>
+</body>
+</html>

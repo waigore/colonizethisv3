@@ -3,6 +3,7 @@
 **Screen ID:** `GAME30002` — stable; do not reassign.
 **SPEC/ui** — Full-screen route showing diplomatic **history** and (for Great Powers) **dossier evidence** for one discovered faction. Opened from [`diplomacy-panel.md`](diplomacy-panel.md). Route: `Routes.diplomacyDetail` (`/game/diplomacy/detail`). Bus contract: [`app-event-bus.md`](../program/app-event-bus.md). Source: `app/lib/features/game/screens/diplomacy_detail_screen.dart`.
 
+**Mockup:** [mockups/GAME30002-diplomacy-detail-screen.html](mockups/GAME30002-diplomacy-detail-screen.html)
 ---
 
 ## Widget contract

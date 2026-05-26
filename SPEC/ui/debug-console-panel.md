@@ -3,6 +3,7 @@
 **Screen ID:** `SYS20001` — stable; do not reassign.
 **SPEC/ui** — Debug-only in-map console overlay for immediate debug session commands (spawn, treasury credit, worker pool credit, debug province transfer).
 
+**Mockup:** [mockups/SYS20001-debug-console-panel.html](mockups/SYS20001-debug-console-panel.html)
 ---
 
 ## Glossary

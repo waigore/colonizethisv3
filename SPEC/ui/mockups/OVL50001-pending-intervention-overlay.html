@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ColonizeThis — Pending Intervention</title>
+<style>
+:root {
+  --bg: oklch(16% 0.018 50); --bg-deep: oklch(12% 0.015 45);
+  --surface: oklch(24% 0.015 45); --surface-lite: oklch(30% 0.016 52);
+  --fg: oklch(88% 0.015 80); --muted: oklch(65% 0.025 70);
+  --border: oklch(40% 0.02 55); --accent: oklch(72% 0.14 85); --accent-dim: oklch(60% 0.12 82);
+  --danger: oklch(58% 0.16 22);
+  --font-display: 'Iowan Old Style','Cinzel','Charter',Georgia,serif;
+  --font-body: -apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;
+}
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+html,body{min-height:100vh;min-height:100dvh;background:var(--bg);color:var(--fg);font-family:var(--font-body);display:flex;align-items:center;justify-content:center;overflow:hidden}
+.scrim{position:fixed;inset:0;background:oklch(0% 0 0 / 0.7);z-index:0}
+/* Yarn intro phase */
+.intro{position:relative;z-index:1;width:min(88vw,480px);background:linear-gradient(180deg,var(--surface-lite) 0%,var(--surface) 20%,var(--bg-deep) 100%);border:2px solid var(--accent-dim);padding:clamp(16px,4vw,28px);text-align:center;display:flex;flex-direction:column;align-items:center;gap:16px}
+.intro .yarn{font-family:var(--font-display);font-size:clamp(15px,2.2vw,18px);font-style:italic;color:var(--fg);line-height:1.6;max-width:360px}
+.intro .continue{margin-top:8px;padding:10px 28px;background:linear-gradient(180deg,var(--surface-lite) 0%,var(--surface) 40%,var(--bg-deep) 100%);border-top:1.5px solid var(--accent-dim);border-bottom:1.5px solid var(--accent-dim);color:var(--fg);font-family:var(--font-display);font-size:14px;font-weight:600;letter-spacing:0.06em;cursor:pointer;border-left:none;border-right:none}
+.intro .continue:hover{color:var(--accent)}
+/* Decision phase */
+.decisions{display:none;position:relative;z-index:1;width:min(88vw,480px);max-height:85vh;overflow-y:auto;background:linear-gradient(180deg,var(--surface-lite) 0%,var(--surface) 15%,var(--bg-deep) 100%);border:2px solid var(--accent-dim);padding:clamp(14px,3vw,24px);flex-direction:column;gap:14px}
+.decisions.show{display:flex}
+.decisions h3{font-family:var(--font-display);font-size:clamp(16px,2.2vw,20px);font-weight:700;letter-spacing:0.05em;color:var(--accent);text-align:center}
+.decisions .situation{font-family:var(--font-display);font-size:14px;font-style:italic;color:var(--muted);text-align:center;line-height:1.5}
+.divider{width:60px;height:2px;background:linear-gradient(90deg,transparent,var(--accent-dim),var(--accent),var(--accent-dim),transparent);margin:0 auto}
+.choices{display:flex;flex-direction:column;gap:8px;margin:8px 0}
+.choice{padding:12px 16px;background:var(--surface);border:1px solid var(--border);font-family:var(--font-display);font-size:14px;font-weight:600;letter-spacing:0.04em;color:var(--fg);cursor:pointer;text-align:left;transition:border-color 0.15s,color 0.15s}.choice:hover{border-color:var(--accent-dim);color:var(--accent)}
+/* Reaction */
+.reaction{display:none;font-family:var(--font-display);font-size:14px;font-style:italic;color:var(--muted);text-align:center;padding:10px 0;line-height:1.6}.reaction.show{display:block}
+.reaction .continue-btn{display:block;margin:12px auto 0;padding:8px 24px;background:linear-gradient(180deg,var(--surface-lite) 0%,var(--surface) 40%,var(--bg-deep) 100%);border-top:1.5px solid var(--accent-dim);border-bottom:1.5px solid var(--accent-dim);color:var(--fg);font-family:var(--font-display);font-size:13px;font-weight:600;letter-spacing:0.06em;cursor:pointer;border-left:none;border-right:none}
+</style>
+</head>
+<body>
+<div class="scrim"></div>
+<div class="intro" id="intro">
+  <p class="yarn">"A missive arrives by fast courier, sealed with the Crown's wax. A distant conflict brews across the seas, and whispers of intervention fill the halls of power..."</p>
+  <button class="continue" onclick="showDecisions()">Continue</button>
+</div>
+<div class="decisions show" id="decisions">
+  <h3>Intervention Required</h3>
+  <p class="situation">France has moved troops into Portuguese colonial territory. As a neutral power with interests in the region, your stance will shape the balance of power.</p>
+  <div class="divider"></div>
+  <div class="choices">
+    <button class="choice" onclick="choose('intervene')">Intervene — send forces to defend Portugal's holdings</button>
+    <button class="choice" onclick="choose('nothing')">Do naught — let the conflict resolve without your involvement</button>
+    <button class="choice" onclick="choose('protest')">Diplomatic protest — formally condemn France's actions</button>
+  </div>
+  <div class="reaction" id="reaction">
+    <p id="reaction-text"></p>
+    <button class="continue-btn" onclick="finish()">Continue</button>
+  </div>
+</div>
+<script>
+const reactions={
+  intervene:'"You dare challenge the balance of power? We shall meet your forces on the field." — France reacts with hostility.',
+  nothing:'"Your silence speaks volumes. We shall not forget your inaction." — France is dismissive.',
+  protest:'"A diplomatic protest. Your words are noted, and judged accordingly." — France responds coldly.'
+}
+function showDecisions(){
+  document.getElementById('intro').style.display='none'
+  document.getElementById('decisions').classList.add('show')
+}
+function choose(type){
+  document.getElementById('reaction-text').textContent=reactions[type]
+  document.getElementById('reaction').classList.add('show')
+  document.querySelector('.choices').style.display='none'
+}
+function finish(){location.reload()}
+document.getElementById('intro').style.display='flex'
+document.getElementById('decisions').classList.remove('show')
+</script>
+</body>
+</html>

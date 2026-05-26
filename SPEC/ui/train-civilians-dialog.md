@@ -3,6 +3,7 @@
 **Screen ID:** `UNIT40001` — stable; do not reassign.
 **SPEC/ui** — Modal dialog for training civilian units (Explorer, Builder, Engineer, Spy, Merchant, Rail Builder). Integrates with [civilian-units-panel.md](civilian-units-panel.md), [empire-overview.md](empire-overview.md), and [buttons-nine-patch.md](buttons-nine-patch.md). Game model: [civilian-units.md](../game/civilian-units.md), [civilian-economy.md](../game/civilian-units.md), [world-model.md](../game/world-model.md). Province identity: [world-model-identity.md](../game/world-model-identity.md).
 
+**Mockup:** [mockups/UNIT40001-train-civilians-dialog.html](mockups/UNIT40001-train-civilians-dialog.html)
 ---
 
 ## Purpose
