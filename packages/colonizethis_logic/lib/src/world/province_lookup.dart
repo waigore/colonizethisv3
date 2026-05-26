@@ -255,6 +255,14 @@ extension WorldStateProvinceLookup on WorldState {
 
   RegionData? regionDataForId(String regionId) => _regionForId(this, regionId);
 
+  /// Provinces belonging to [regionId]. Returns an empty iterable when the
+  /// region is unknown. Use in `lib/src/**` callers that need a region-scoped
+  /// province iteration without hand-rolled `if (regionId == kRegionOldWorld)`
+  /// branching against `oldWorld.provinces`/`newWorld.provinces`
+  /// (SPEC/program/logic-dual-region-province-access.md).
+  Iterable<Province> provincesForRegion(String regionId) =>
+      _regionForId(this, regionId)?.provinces ?? const <Province>[];
+
   Iterable<Province> allProvinces() sync* {
     yield* oldWorld.provinces;
     yield* newWorld.provinces;

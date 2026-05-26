@@ -438,8 +438,8 @@ Game applyNaming({
   );
 
   gameSetupLog.i(
-    'naming applied ow=${updatedWorld.oldWorld.provinces.length} '
-    'nw=${updatedWorld.newWorld.provinces.length} players=${game.players.length} '
+    'naming applied ow=${updatedWorld.provincesForRegion(kRegionOldWorld).length} '
+    'nw=${updatedWorld.provincesForRegion(kRegionNewWorld).length} players=${game.players.length} '
     'minors=${game.minorNations.length} tribes=${game.tribes.length}',
   );
   if (proceduralFallbackCount > 0) {

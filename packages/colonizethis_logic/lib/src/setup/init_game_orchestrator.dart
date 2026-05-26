@@ -10,6 +10,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'hidden_agenda_assignment.dart';
 import '../constants.dart';
+import '../world/province_lookup.dart';
 import '../world/unit_lookup.dart';
 import 'effective_setup_seed.dart';
 import 'game_setup.dart';
@@ -392,9 +393,11 @@ String formatInitGameSetupMarkdown(Game game) {
   buf.writeln('| Faction | Type | Capital Province | Provinces Owned |');
   buf.writeln('|---------|------|------------------|-----------------|');
 
+  final oldWorldProvinces = game.worldState.provincesForRegion(kRegionOldWorld);
+  final newWorldProvinces = game.worldState.provincesForRegion(kRegionNewWorld);
   for (final p in game.players) {
     final owned =
-        game.worldState.oldWorld.provinces
+        oldWorldProvinces
             .where((pr) => pr.ownerId == p.id)
             .map((pr) => pr.id)
             .toList()
@@ -406,7 +409,7 @@ String formatInitGameSetupMarkdown(Game game) {
   }
   for (final m in game.minorNations) {
     final owned =
-        game.worldState.oldWorld.provinces
+        oldWorldProvinces
             .where((pr) => pr.ownerId == m.id)
             .map((pr) => pr.id)
             .toList()
@@ -418,7 +421,7 @@ String formatInitGameSetupMarkdown(Game game) {
   }
   for (final t in game.tribes) {
     final owned =
-        game.worldState.newWorld.provinces
+        newWorldProvinces
             .where((pr) => pr.ownerId == t.id)
             .map((pr) => pr.id)
             .toList()
