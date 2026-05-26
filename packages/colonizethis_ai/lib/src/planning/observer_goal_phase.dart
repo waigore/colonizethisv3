@@ -97,20 +97,13 @@ bool isObserverDevelopPhase({required AIWorldSnapshot snapshot, Game? game}) =>
     observerGoalPhaseFor(snapshot: snapshot, game: game) ==
     ObserverGoalPhase.develop;
 
-bool isObserverColonialPhase({required AIWorldSnapshot snapshot, Game? game}) =>
-    observerGoalPhaseFor(snapshot: snapshot, game: game) ==
-    ObserverGoalPhase.colonial;
-
-bool isObserverExpandPhase({required AIWorldSnapshot snapshot, Game? game}) =>
-    observerGoalPhaseFor(snapshot: snapshot, game: game) ==
-    ObserverGoalPhase.expand;
-
 /// EXPAND: peace non-blocker Great Power fronts when fighting 2+ GPs (Refs #2509 S10).
 List<String> expandPhaseGpPeaceTargets({
   required Game game,
   required AIWorldSnapshot snapshot,
 }) {
-  if (!isObserverExpandPhase(snapshot: snapshot, game: game)) {
+  if (!(observerGoalPhaseFor(snapshot: snapshot, game: game) ==
+      ObserverGoalPhase.expand)) {
     return const [];
   }
   final gpWars = <String>[
@@ -203,7 +196,8 @@ List<String> colonialPhaseGpPeaceTargets({
   required Game game,
   required AIWorldSnapshot snapshot,
 }) {
-  if (!isObserverColonialPhase(snapshot: snapshot, game: game)) {
+  if (!(observerGoalPhaseFor(snapshot: snapshot, game: game) ==
+      ObserverGoalPhase.colonial)) {
     return const [];
   }
   final gpWars = <String>[
