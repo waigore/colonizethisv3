@@ -286,12 +286,17 @@ void main() {
         'gpTreasuryUnderCheapestRegimentTurns': treasuryUnderCheapestTurns,
         'gpTurn99Snapshot': lastSnapshotFields,
       };
-      // ignore: avoid_print
-      print('S7D_DIAGNOSTIC_JSON_BEGIN');
-      // ignore: avoid_print
-      print(const JsonEncoder.withIndent('  ').convert(diagnostic));
-      // ignore: avoid_print
-      print('S7D_DIAGNOSTIC_JSON_END');
+      // Re-enable info-level logging so the structured diagnostic JSON
+      // surfaces in stdout via the package logger (the simulation above
+      // intentionally ran with logging off to suppress planner noise).
+      // Routing through `aiLogger` keeps this test compliant with the
+      // disallowed-AST `avoid_print_suppression` rule while preserving
+      // greppable BEGIN/END markers for issue-comment transcription.
+      CtLogger.level = Level.info;
+      final log = aiLogger('s7d-diagnostic');
+      log.i('S7D_DIAGNOSTIC_JSON_BEGIN');
+      log.i(const JsonEncoder.withIndent('  ').convert(diagnostic));
+      log.i('S7D_DIAGNOSTIC_JSON_END');
 
       // Lightweight assertion: data was actually collected. The diagnostic
       // does not pin arm-fire counts so the planner can be tuned freely
