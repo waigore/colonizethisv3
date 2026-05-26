@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ColonizeThis — Pause Menu</title>
+<style>
+:root {
+  --bg:        oklch(16% 0.018 50);
+  --bg-deep:   oklch(12% 0.015 45);
+  --surface:   oklch(24% 0.015 45);
+  --surface-lite: oklch(30% 0.016 52);
+  --fg:        oklch(88% 0.015 80);
+  --muted:     oklch(65% 0.025 70);
+  --border:    oklch(40% 0.02 55);
+  --accent:    oklch(72% 0.14 85);
+  --accent-dim: oklch(60% 0.12 82);
+  --font-display: 'Iowan Old Style','Cinzel','Charter',Georgia,serif;
+  --font-body: -apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;
+}
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+html,body{min-height:100vh;min-height:100dvh;background:var(--bg);color:var(--fg);font-family:var(--font-body);display:flex;align-items:flex-end;justify-content:center;overflow:hidden}
+.scrim{position:fixed;inset:0;background:oklch(0% 0 0 / 0.6);z-index:0}
+.panel{position:relative;z-index:1;width:100%;max-width:420px;margin:0 auto 0;background:linear-gradient(180deg,var(--surface-lite) 0%,var(--surface) 30%,var(--bg-deep) 100%);border-top:2px solid var(--accent-dim);border-left:2px solid var(--accent-dim);border-right:2px solid var(--accent-dim);padding:14px 0 env(safe-area-inset-bottom) 0}
+.panel::after{content:'';position:absolute;bottom:0;left:8px;right:8px;height:1px;background:var(--accent-dim);opacity:0.4}
+.row{display:flex;align-items:center;gap:12px;padding:12px 20px;cursor:pointer;transition:background 0.15s;border-bottom:1px solid var(--border)}.row:hover{background:var(--surface-lite)}.row:last-child{border-bottom:none}
+.row .icon{width:24px;height:24px;flex-shrink:0;color:var(--accent-dim)}
+.row .label{font-family:var(--font-display);font-size:15px;font-weight:600;letter-spacing:0.04em;color:var(--fg)}
+@media(min-width:600px){.panel{max-width:320px}}
+</style>
+</head>
+<body>
+<div class="scrim"></div>
+<div class="panel">
+  <div class="row" onclick="alert('Navigate to Debug Log')">
+    <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+    <span class="label">Debug log</span>
+  </div>
+  <div class="row" onclick="alert('Resume game')">
+    <svg class="icon" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+    <span class="label">Resume</span>
+  </div>
+</div>
+</body>
+</html>

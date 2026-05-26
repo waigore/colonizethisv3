@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ColonizeThis — Turn News</title>
+<style>
+:root {
+  --bg:        oklch(16% 0.018 50);
+  --bg-deep:   oklch(12% 0.015 45);
+  --surface:   oklch(24% 0.015 45);
+  --surface-lite: oklch(30% 0.016 52);
+  --fg:        oklch(88% 0.015 80);
+  --muted:     oklch(65% 0.025 70);
+  --border:    oklch(40% 0.02 55);
+  --accent:    oklch(72% 0.14 85);
+  --accent-dim: oklch(60% 0.12 82);
+  --font-display: 'Iowan Old Style','Cinzel','Charter',Georgia,serif;
+  --font-body: -apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;
+}
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+html,body{min-height:100vh;min-height:100dvh;background:var(--bg);color:var(--fg);font-family:var(--font-body);display:flex;align-items:center;justify-content:center;overflow:hidden}
+.scrim{position:fixed;inset:0;background:oklch(0% 0 0 / 0.6);z-index:0}
+.dialog{position:relative;z-index:1;width:min(90vw,440px);max-height:80vh;background:linear-gradient(180deg,var(--surface-lite) 0%,var(--surface) 20%,var(--bg-deep) 100%);border:2px solid var(--accent-dim);padding:20px;display:flex;flex-direction:column}
+.dialog h2{font-family:var(--font-display);font-size:clamp(18px,2.5vw,22px);font-weight:700;letter-spacing:0.05em;color:var(--accent);text-align:center;margin-bottom:12px}
+.divider{width:80px;height:2px;background:linear-gradient(90deg,transparent,var(--accent-dim),var(--accent),var(--accent-dim),transparent);margin:0 auto 16px}
+.list{flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:8px;margin-bottom:16px;font-size:clamp(12px,1.6vw,14px)}
+.item{display:flex;gap:8px;align-items:baseline;padding:6px 10px;background:var(--surface);border-left:2px solid var(--accent-dim)}.item .t{color:var(--muted);font-size:11px;flex-shrink:0;min-width:42px}.item .m{color:var(--fg);line-height:1.4}
+.item.empty{color:var(--muted);font-style:italic;border-left-color:var(--border)}
+.btn{width:100%;padding:10px;background:linear-gradient(180deg,var(--surface-lite) 0%,var(--surface) 40%,var(--bg-deep) 100%);border-top:1.5px solid var(--accent-dim);border-bottom:1.5px solid var(--accent-dim);color:var(--fg);font-family:var(--font-display);font-size:14px;font-weight:600;letter-spacing:0.06em;cursor:pointer;text-align:center;transition:color 0.15s,background 0.15s}
+.btn:hover{color:var(--accent);background:linear-gradient(180deg,var(--surface-lite) 0%,var(--surface) 60%,var(--bg-deep) 100%)}
+@media(min-width:600px){.dialog{max-width:480px}}
+</style>
+</head>
+<body>
+<div class="scrim" onclick="this.parentElement.style.display='none'"></div>
+<div class="dialog">
+  <h2>News of Turn 24</h2>
+  <div class="divider"></div>
+  <div class="list">
+    <div class="item"><span class="t">Discovery</span><span class="m">Explorer Ferdinand has discovered the distant shores of the New World&rsquo;s southern continent.</span></div>
+    <div class="item"><span class="t">Diplomacy</span><span class="m">France has signed a trade agreement with the Dutch Republic.</span></div>
+    <div class="item"><span class="t">War</span><span class="m">Spain has declared war on a native tribe in the New World.</span></div>
+    <div class="item"><span class="t">Research</span><span class="m">Your scholars have completed research on Naval Architecture.</span></div>
+    <div class="item"><span class="t">Resource</span><span class="m">A rich deposit of silver has been discovered in Santiago province.</span></div>
+    <div class="item"><span class="t">Naval</span><span class="m">A French fleet has been sighted in the Caribbean Sea.</span></div>
+  </div>
+  <button class="btn" onclick="this.closest('.dialog').parentElement.style.display='none'">Close</button>
+</div>
+</body>
+</html>

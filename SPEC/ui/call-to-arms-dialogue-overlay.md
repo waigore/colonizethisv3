@@ -3,6 +3,7 @@
 **Screen ID:** `OVL40001` — stable; do not reassign.
 **SPEC/ui** — Modal blocking overlay shown when turn resolution returns one or more pending **call to arms** decisions that a human-controlled faction must accept (Join) or refuse for each of its allies before the turn can advance. The overlay has **no Yarn intro phase**: it presents the per-call list immediately. Modal presentation rules: [`dialogue-presentation.md`](dialogue-presentation.md). Source provider: [`pending-diplomacy-state.md`](pending-diplomacy-state.md). Host screen / wrap order: [`game-screen.md`](game-screen.md) § States and variants. Pixel-art chrome: [`pixel-art-ui-catalog.md`](pixel-art-ui-catalog.md).
 
+**Mockup:** [mockups/OVL40001-call-to-arms-overlay.html](mockups/OVL40001-call-to-arms-overlay.html)
 ---
 
 ## Widget contract

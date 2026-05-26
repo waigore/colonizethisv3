@@ -4,6 +4,7 @@
 **SPEC/ui** — Blocking overlay for pending overture offers before the turn advances. Implementation: `app/lib/features/game/dialogue/overture_dialogue_overlay.dart`.
 **Widgetbook:** `Overture Dialogue Overlay` → `app/lib/widgetbook/catalog.dart`. Provider: [`pending-diplomacy-state.md`](pending-diplomacy-state.md). Host: [`game-screen.md`](game-screen.md). Asset: `kDialogueOvertureAsset`.
 
+**Mockup:** [mockups/OVL30001-game-overture-overlay.html](mockups/OVL30001-game-overture-overlay.html)
 ---
 
 ## Widget contract

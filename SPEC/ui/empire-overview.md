@@ -4,6 +4,7 @@
 **SPEC/ui** — In-game map shell (region tabs, map widget, HUD). Implementation: `app/lib/features/game/flame/game_map_area.dart`.
 **Widgetbook:** `Map Widget` → `app/lib/widgetbook/catalog.dart`. Host orchestration: [`game-screen.md`](game-screen.md).
 
+**Mockup:** [mockups/MAP10001-empire-overview.html](mockups/MAP10001-empire-overview.html)
 ---
 
 ## Widget contract

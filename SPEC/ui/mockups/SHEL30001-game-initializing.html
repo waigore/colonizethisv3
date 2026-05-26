@@ -1,0 +1,683 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ColonizeThis — Game Initializing</title>
+<style>
+:root {
+  --bg:        oklch(16% 0.018 50);
+  --bg-deep:   oklch(12% 0.015 45);
+  --surface:   oklch(24% 0.015 45);
+  --surface-lite: oklch(30% 0.016 52);
+  --fg:        oklch(88% 0.015 80);
+  --muted:     oklch(65% 0.025 70);
+  --border:    oklch(40% 0.02 55);
+  --accent:    oklch(72% 0.14 85);
+  --accent-dim: oklch(60% 0.12 82);
+  --accent-bright: oklch(82% 0.13 90);
+  --danger:    oklch(62% 0.17 25);
+
+  --font-display: 'Iowan Old Style', 'Cinzel', 'Charter', Georgia, serif;
+  --font-body:    -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  --font-mono:    'SF Mono', ui-monospace, Menlo, monospace;
+}
+
+*, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+
+html, body {
+  min-height:100vh; min-height:100dvh;
+  background:var(--bg);
+  color:var(--fg);
+  font-family:var(--font-body);
+  overflow-x:hidden;
+}
+html { overflow-y:auto; scroll-behavior:smooth; }
+
+.background {
+  position:fixed; inset:0; z-index:0;
+  background:
+    radial-gradient(ellipse at 20% 80%, oklch(28% 0.02 40 / 0.25) 0%, transparent 60%),
+    radial-gradient(ellipse at 85% 15%, oklch(25% 0.015 55 / 0.2) 0%, transparent 55%),
+    radial-gradient(ellipse at 50% 50%, oklch(14% 0.012 48 / 0.6) 0%, transparent 70%),
+    var(--bg);
+  overflow:hidden;
+}
+.background::before {
+  content:'';
+  position:absolute; right:3vw; bottom:3vw;
+  width:min(300px,35vw); height:min(300px,35vw);
+  background:
+    conic-gradient(from 22.5deg, oklch(40% 0.04 55 / 0.15) 0deg 45deg, transparent 45deg 90deg, oklch(40% 0.04 55 / 0.15) 90deg 135deg, transparent 135deg 180deg, oklch(40% 0.04 55 / 0.15) 180deg 225deg, transparent 225deg 270deg, oklch(40% 0.04 55 / 0.15) 270deg 315deg, transparent 315deg 360deg);
+  border-radius:50%; border:1px solid oklch(40% 0.04 55 / 0.2);
+  opacity:0.3; transform:rotate(-12deg); pointer-events:none;
+}
+.background::after {
+  content:'';
+  position:absolute; inset:0;
+  background-image:
+    linear-gradient(oklch(40% 0.02 55 / 0.06) 1px, transparent 1px),
+    linear-gradient(90deg, oklch(40% 0.02 55 / 0.06) 1px, transparent 1px);
+  background-size:80px 80px;
+  mask-image:radial-gradient(ellipse at 50% 50%, black 30%, transparent 80%);
+  pointer-events:none;
+}
+
+.collage-svg {
+  position:absolute; inset:0; width:100%; height:100%;
+  color:var(--accent); pointer-events:none; z-index:0; opacity:0.75;
+}
+
+.main {
+  position:relative; z-index:1;
+  display:flex; align-items:center; justify-content:center;
+  min-height:100vh; min-height:100svh;
+  padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+}
+
+.progress-panel {
+  width:100%; max-width:440px;
+  margin:clamp(16px,3vw,24px);
+  display:flex; flex-direction:column; align-items:center;
+  gap:clamp(10px,2vh,18px);
+}
+
+.title-row {
+  display:flex; align-items:center; justify-content:center;
+  gap:clamp(8px,1.5vw,14px);
+}
+.title-flank {
+  width:clamp(16px,2.5vw,24px); height:clamp(20px,3vw,28px);
+  color:var(--accent-dim); opacity:0.5; flex-shrink:0; user-select:none;
+}
+.title-row h2 {
+  font-family:var(--font-display);
+  font-size:clamp(22px,3.5vw,30px);
+  font-weight:700; letter-spacing:0.05em;
+  color:var(--accent);
+  text-shadow:0 2px 10px oklch(65% 0.12 80 / 0.25);
+}
+
+.brass-divider {
+  width:clamp(100px,16vw,160px); height:2px;
+  background:linear-gradient(90deg, transparent 0%, var(--accent-dim) 15%, var(--accent) 50%, var(--accent-dim) 85%, transparent 100%);
+  position:relative;
+}
+.brass-divider::before {
+  content:''; position:absolute; left:50%; top:50%;
+  transform:translate(-50%,-50%) rotate(45deg);
+  width:7px; height:7px; background:var(--accent);
+  border:1px solid var(--accent-bright);
+  box-shadow:0 0 6px oklch(75% 0.12 85 / 0.5);
+}
+
+.spinner-region {
+  position:relative;
+  width:clamp(80px,16vw,120px); height:clamp(80px,16vw,120px);
+  display:flex; align-items:center; justify-content:center;
+}
+
+.compass-spinner {
+  position:relative;
+  width:100%; height:100%;
+}
+
+.compass-spinner .ring-outer {
+  position:absolute; inset:0;
+  border-radius:50%;
+  border:2px solid var(--border);
+  opacity:0.5;
+}
+.compass-spinner .ring-inner {
+  position:absolute; inset:clamp(6px,1.2vw,10px);
+  border-radius:50%;
+  border:1.5px solid var(--accent-dim);
+  opacity:0.6;
+}
+.compass-spinner .ring-dash {
+  position:absolute; inset:0;
+  border-radius:50%;
+  border:2px solid transparent;
+  border-top-color:var(--accent);
+  animation:spin 2s linear infinite;
+  mask:conic-gradient(from 0deg, black 0deg 270deg, transparent 270deg 360deg);
+  -webkit-mask:conic-gradient(from 0deg, black 0deg 270deg, transparent 270deg 360deg);
+}
+.compass-spinner .ring-dash2 {
+  position:absolute; inset:clamp(4px,0.8vw,6px);
+  border-radius:50%;
+  border:1.5px solid transparent;
+  border-top-color:var(--accent-dim);
+  animation:spin 3s linear infinite reverse;
+  mask:conic-gradient(from 180deg, black 0deg 200deg, transparent 200deg 360deg);
+  -webkit-mask:conic-gradient(from 180deg, black 0deg 200deg, transparent 200deg 360deg);
+}
+
+.compass-spinner .center-dot {
+  position:absolute;
+  left:50%; top:50%;
+  transform:translate(-50%,-50%);
+  width:clamp(8px,1.6vw,12px); height:clamp(8px,1.6vw,12px);
+  border-radius:50%;
+  background:var(--accent);
+  box-shadow:0 0 10px oklch(75% 0.12 85 / 0.5);
+}
+
+@keyframes spin {
+  from { transform:rotate(0deg); }
+  to   { transform:rotate(360deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .compass-spinner .ring-dash,
+  .compass-spinner .ring-dash2 {
+    animation:none;
+  }
+}
+
+.step-label {
+  font-family:var(--font-display);
+  font-size:clamp(14px,2vw,17px);
+  font-weight:600; letter-spacing:0.04em;
+  color:var(--fg);
+  text-align:center;
+  min-height:clamp(28px,5vh,36px);
+  transition:opacity 0.3s;
+}
+
+.phase-list {
+  width:100%;
+  display:flex; flex-direction:column;
+  gap:2px;
+  margin-top:clamp(4px,1vh,8px);
+}
+
+.phase-row {
+  display:flex; align-items:center;
+  gap:clamp(8px,1.2vw,12px);
+  padding:clamp(5px,1vh,8px) clamp(8px,1.2vw,10px);
+  font-family:var(--font-body);
+  font-size:clamp(11px,1.5vw,13px);
+  letter-spacing:0.02em;
+  color:var(--muted);
+  transition:color 0.3s;
+}
+.phase-row .phase-icon {
+  width:clamp(14px,2vw,18px); height:clamp(14px,2vw,18px);
+  flex-shrink:0;
+  display:flex; align-items:center; justify-content:center;
+}
+.phase-row.completed .phase-icon {
+  color:var(--accent);
+}
+.phase-row.current .phase-icon {
+  color:var(--accent);
+}
+.phase-row.completed {
+  color:var(--accent-dim);
+}
+.phase-row.current {
+  color:var(--fg);
+  font-weight:500;
+}
+
+/* Phase icons */
+.phase-dot {
+  width:clamp(6px,1vw,8px); height:clamp(6px,1vw,8px);
+  border-radius:50%;
+  background:var(--border);
+  transition:background 0.3s;
+}
+.phase-row.completed .phase-dot,
+.phase-row.current .phase-dot {
+  background:var(--accent);
+  box-shadow:0 0 6px oklch(70% 0.12 85 / 0.4);
+}
+.phase-row.current .phase-dot {
+  animation:pulse 1.5s ease-in-out infinite;
+}
+@keyframes pulse {
+  0%, 100% { box-shadow:0 0 4px oklch(70% 0.12 85 / 0.3); }
+  50%      { box-shadow:0 0 12px oklch(75% 0.12 85 / 0.6); }
+}
+
+/* ── Error overlay ── */
+.error-overlay {
+  display:none;
+  position:fixed; inset:0; z-index:10;
+  background:oklch(8% 0.01 30 / 0.85);
+  align-items:center; justify-content:center;
+  padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+}
+.error-overlay.show {
+  display:flex;
+}
+.error-card {
+  width:100%; max-width:420px;
+  margin:clamp(16px,3vw,24px);
+  background:linear-gradient(180deg, var(--surface-lite) 0%, var(--surface) 60%, var(--bg-deep) 100%);
+  border-top:1.5px solid var(--danger);
+  border-bottom:1.5px solid var(--danger);
+  position:relative;
+}
+.error-card::before,
+.error-card::after {
+  content:''; position:absolute; top:0; bottom:0; width:1.5px;
+  background:var(--danger); opacity:0.6;
+}
+.error-card::before { left:0; }
+.error-card::after  { right:0; }
+
+.error-header {
+  padding:clamp(14px,2.5vh,20px) clamp(14px,2.5vw,20px);
+  border-bottom:1px solid var(--border);
+  display:flex; align-items:center; gap:10px;
+}
+.error-header .error-icon {
+  width:clamp(22px,3.5vw,28px); height:clamp(22px,3.5vw,28px);
+  color:var(--danger); flex-shrink:0;
+}
+.error-header h3 {
+  font-family:var(--font-display);
+  font-size:clamp(15px,2vw,18px);
+  font-weight:600; letter-spacing:0.04em;
+  color:var(--danger);
+}
+.error-body {
+  padding:clamp(10px,1.8vh,16px) clamp(14px,2.5vw,20px);
+}
+.error-body p {
+  font-family:var(--font-body);
+  font-size:clamp(12px,1.6vw,14px);
+  line-height:1.5;
+  color:var(--fg);
+}
+.error-body .error-detail {
+  display:block;
+  font-family:var(--font-mono);
+  font-size:clamp(10px,1.3vw,11px);
+  color:var(--muted);
+  padding:clamp(6px,1vh,10px);
+  background:var(--bg-deep);
+  margin-top:clamp(6px,1vh,10px);
+  border:1px solid var(--border);
+  word-break:break-all;
+}
+
+.error-actions {
+  display:flex; gap:0;
+  border-top:1px solid var(--border);
+}
+.error-btn {
+  flex:1;
+  padding:clamp(10px,1.8vh,14px);
+  border:none;
+  background:none;
+  font-family:var(--font-display);
+  font-size:clamp(13px,1.7vw,15px);
+  font-weight:600; letter-spacing:0.06em;
+  cursor:pointer;
+  color:var(--fg);
+  min-height:44px;
+  transition:color 0.15s, background 0.15s;
+  -webkit-tap-highlight-color:transparent;
+  position:relative;
+}
+.error-btn:first-child {
+  border-right:1px solid var(--border);
+}
+.error-btn:hover {
+  color:var(--accent-bright);
+  background:var(--surface-lite);
+}
+.error-btn.accent {
+  color:var(--accent);
+}
+.error-btn.accent:hover {
+  color:var(--accent-bright);
+}
+.error-btn:focus-visible {
+  outline:1px solid var(--accent); outline-offset:-3px;
+}
+
+/* ── Demo controls ── */
+.demo-controls {
+  position:fixed; bottom:16px; right:16px; z-index:20;
+  display:flex; gap:6px;
+}
+.demo-controls button {
+  padding:6px 12px;
+  border:1px solid var(--border);
+  background:var(--bg-deep);
+  color:var(--muted);
+  font-family:var(--font-mono);
+  font-size:10px; letter-spacing:0.06em;
+  cursor:pointer;
+  transition:color 0.15s, border-color 0.15s;
+}
+.demo-controls button:hover,
+.demo-controls button.active {
+  color:var(--accent);
+  border-color:var(--accent-dim);
+}
+
+/* ── Responsive ── */
+@media (max-width:430px) {
+  .progress-panel { max-width:100%; margin:12px; }
+}
+@media (min-width:1440px) {
+  .progress-panel { max-width:460px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  * { animation-duration:0.01ms !important; transition-duration:0.01ms !important; }
+}
+</style>
+</head>
+<body>
+
+<div class="background">
+  <svg class="collage-svg" viewBox="0 0 1920 1080" preserveAspectRatio="xMidYMid meet">
+    <defs></defs>
+    <g opacity="0.35">
+      <path d="M 80 250 L 120 220 L 140 240 L 130 260 Z" fill="none" stroke="currentColor" stroke-width="1.5"/>
+      <rect x="70" y="300" width="80" height="6" rx="3" fill="currentColor" opacity="0.4"/>
+      <rect x="74" y="312" width="72" height="6" rx="3" fill="currentColor" opacity="0.25"/>
+      <line x1="110" y1="260" x2="110" y2="300" stroke="currentColor" stroke-width="1" opacity="0.4"/>
+    </g>
+    <g opacity="0.35">
+      <line x1="1700" y1="220" x2="1780" y2="220" stroke="currentColor" stroke-width="2" opacity="0.8"/>
+      <line x1="1700" y1="235" x2="1780" y2="235" stroke="currentColor" stroke-width="2" opacity="0.8"/>
+      <line x1="1700" y1="220" x2="1700" y2="235" stroke="currentColor" stroke-width="1.5" opacity="0.4"/>
+      <line x1="1740" y1="220" x2="1740" y2="235" stroke="currentColor" stroke-width="1.5" opacity="0.4"/>
+      <line x1="1780" y1="220" x2="1780" y2="235" stroke="currentColor" stroke-width="1.5" opacity="0.4"/>
+      <path d="M 1680 240 C 1680 200, 1750 200, 1750 240" fill="none" stroke="currentColor" stroke-width="1.5" opacity="0.5"/>
+      <circle cx="1715" cy="260" r="3" fill="none" stroke="currentColor" stroke-width="1" opacity="0.4"/>
+      <circle cx="1715" cy="272" r="3" fill="none" stroke="currentColor" stroke-width="1" opacity="0.25"/>
+    </g>
+    <g opacity="0.35">
+      <circle cx="180" cy="600" r="18" fill="none" stroke="currentColor" stroke-width="1.5" opacity="0.6"/>
+      <line x1="180" y1="582" x2="180" y2="598" stroke="currentColor" stroke-width="1.2" opacity="0.5"/>
+      <circle cx="180" cy="600" r="2" fill="currentColor" opacity="0.5"/>
+      <line x1="162" y1="600" x2="175" y2="600" stroke="currentColor" stroke-width="1" opacity="0.4"/>
+      <line x1="185" y1="600" x2="198" y2="600" stroke="currentColor" stroke-width="1" opacity="0.4"/>
+    </g>
+    <g opacity="0.3">
+      <circle cx="1800" cy="750" r="22" fill="none" stroke="currentColor" stroke-width="1.5" opacity="0.5"/>
+      <line x1="1800" y1="728" x2="1800" y2="748" stroke="currentColor" stroke-width="1.2" opacity="0.5"/>
+      <circle cx="1800" cy="750" r="3" fill="currentColor" opacity="0.4"/>
+      <line x1="1778" y1="750" x2="1794" y2="750" stroke="currentColor" stroke-width="1" opacity="0.4"/>
+      <line x1="1806" y1="750" x2="1822" y2="750" stroke="currentColor" stroke-width="1" opacity="0.4"/>
+    </g>
+    <g opacity="0.3">
+      <circle cx="200" cy="850" r="24" fill="none" stroke="currentColor" stroke-width="1.5" opacity="0.5"/>
+      <circle cx="200" cy="850" r="4" fill="currentColor" opacity="0.3"/>
+      <path d="M 200 826 L 205 835 L 200 830 L 195 835 Z" fill="currentColor" opacity="0.4"/>
+      <path d="M 200 874 L 205 865 L 200 870 L 195 865 Z" fill="currentColor" opacity="0.4"/>
+    </g>
+    <g opacity="0.3">
+      <circle cx="1600" cy="200" r="40" fill="none" stroke="currentColor" stroke-width="1.5" opacity="0.5"/>
+      <line x1="1560" y1="200" x2="1568" y2="200" stroke="currentColor" stroke-width="2" opacity="0.7"/>
+      <line x1="1590" y1="200" x2="1610" y2="200" stroke="currentColor" stroke-width="2" opacity="0.7"/>
+      <line x1="1632" y1="200" x2="1640" y2="200" stroke="currentColor" stroke-width="2" opacity="0.7"/>
+      <line x1="1600" y1="160" x2="1600" y2="168" stroke="currentColor" stroke-width="2" opacity="0.7"/>
+      <line x1="1600" y1="190" x2="1600" y2="210" stroke="currentColor" stroke-width="2" opacity="0.7"/>
+      <line x1="1600" y1="232" x2="1600" y2="240" stroke="currentColor" stroke-width="2" opacity="0.7"/>
+      <circle cx="1600" cy="200" r="6" fill="currentColor" opacity="0.5"/>
+      <circle cx="1572" cy="200" r="3" fill="currentColor" opacity="0.5"/>
+      <circle cx="1628" cy="200" r="3" fill="currentColor" opacity="0.5"/>
+      <circle cx="1600" cy="172" r="3" fill="currentColor" opacity="0.5"/>
+      <circle cx="1600" cy="228" r="3" fill="currentColor" opacity="0.5"/>
+    </g>
+    <g opacity="0.35">
+      <path d="M 150 120 C 150 100, 180 100, 180 120 L 180 150 C 180 170, 150 170, 150 150 Z" fill="none" stroke="currentColor" stroke-width="1.5" opacity="0.5"/>
+      <line x1="165" y1="150" x2="165" y2="165" stroke="currentColor" stroke-width="1" opacity="0.4"/>
+      <line x1="155" y1="155" x2="175" y2="155" stroke="currentColor" stroke-width="1" opacity="0.4"/>
+    </g>
+    <g opacity="0.3">
+      <line x1="800" y1="60" x2="1100" y2="90" stroke="currentColor" stroke-width="1" stroke-dasharray="12 20 4 20" opacity="0.5"/>
+      <circle cx="800" cy="60" r="2" fill="currentColor" opacity="0.4"/>
+      <circle cx="1100" cy="90" r="2" fill="currentColor" opacity="0.4"/>
+      <circle cx="950" cy="75" r="1.5" fill="currentColor" opacity="0.3"/>
+    </g>
+    <g opacity="0.3">
+      <line x1="500" y1="900" x2="800" y2="880" stroke="currentColor" stroke-width="1" stroke-dasharray="16 24 4 20" opacity="0.5"/>
+      <circle cx="500" cy="900" r="2" fill="currentColor" opacity="0.4"/>
+      <circle cx="800" cy="880" r="2" fill="currentColor" opacity="0.4"/>
+    </g>
+    <g opacity="0.3">
+      <line x1="1300" y1="920" x2="1600" y2="900" stroke="currentColor" stroke-width="1" stroke-dasharray="14 22 4 18" opacity="0.5"/>
+      <circle cx="1300" cy="920" r="2" fill="currentColor" opacity="0.4"/>
+      <circle cx="1600" cy="900" r="2" fill="currentColor" opacity="0.4"/>
+    </g>
+    <g opacity="0.3">
+      <ellipse cx="100" cy="400" rx="14" ry="20" fill="none" stroke="currentColor" stroke-width="1.5" opacity="0.5"/>
+      <ellipse cx="100" cy="440" rx="14" ry="20" fill="none" stroke="currentColor" stroke-width="1.5" opacity="0.5"/>
+      <line x1="100" y1="420" x2="100" y2="420" stroke="currentColor" stroke-width="1" opacity="0.3"/>
+      <ellipse cx="120" cy="420" rx="10" ry="14" fill="none" stroke="currentColor" stroke-width="1.2" opacity="0.4"/>
+    </g>
+    <g opacity="0.25">
+      <path d="M 300 940 Q 400 920, 500 940 Q 600 960, 700 940 Q 800 920, 900 940" fill="none" stroke="currentColor" stroke-width="1" opacity="0.4"/>
+      <path d="M 300 930 Q 400 910, 500 930 Q 600 950, 700 930 Q 800 910, 900 930" fill="none" stroke="currentColor" stroke-width="0.8" opacity="0.25"/>
+      <path d="M 300 925 Q 400 905, 500 925 Q 600 945, 700 925 Q 800 905, 900 925" fill="none" stroke="currentColor" stroke-width="0.6" opacity="0.15"/>
+    </g>
+    <g opacity="0.3">
+      <line x1="700" y1="140" x2="700" y2="200" stroke="currentColor" stroke-width="1.5" opacity="0.5"/>
+      <line x1="680" y1="170" x2="720" y2="170" stroke="currentColor" stroke-width="1.5" opacity="0.5"/>
+      <line x1="688" y1="160" x2="712" y2="180" stroke="currentColor" stroke-width="1" opacity="0.3"/>
+      <line x1="688" y1="180" x2="712" y2="160" stroke="currentColor" stroke-width="1" opacity="0.3"/>
+      <polygon points="700,140 704,160 720,160 706,172 712,192 700,180 688,192 694,172 680,160 696,160" fill="none" stroke="currentColor" stroke-width="1" opacity="0.35"/>
+    </g>
+    <g opacity="0.3">
+      <polygon points="1200,700 1205,725 1230,725 1208,740 1216,765 1200,750 1184,765 1192,740 1170,725 1195,725" fill="none" stroke="currentColor" stroke-width="1" opacity="0.4"/>
+      <circle cx="1200" cy="730" r="14" fill="none" stroke="currentColor" stroke-width="0.8" opacity="0.3"/>
+    </g>
+    <g opacity="0.3">
+      <path d="M 920 620 L 960 610 L 960 640 L 920 630 Z" fill="none" stroke="currentColor" stroke-width="1.5" opacity="0.5"/>
+      <circle cx="900" cy="618" r="6" fill="none" stroke="currentColor" stroke-width="1.2" opacity="0.4"/>
+      <circle cx="900" cy="618" r="2.5" fill="currentColor" opacity="0.3"/>
+      <circle cx="885" cy="615" r="3.5" fill="none" stroke="currentColor" stroke-width="1" opacity="0.3"/>
+      <circle cx="885" cy="615" r="1.5" fill="currentColor" opacity="0.2"/>
+    </g>
+  </svg>
+</div>
+
+<main class="main" id="main">
+
+  <div class="progress-panel">
+
+    <div class="title-row">
+      <svg class="title-flank" viewBox="0 0 20 28"><ellipse cx="10" cy="10" rx="5" ry="8" fill="none" stroke="currentColor" stroke-width="1.2"/><ellipse cx="6" cy="14" rx="4.5" ry="7" fill="none" stroke="currentColor" stroke-width="1.2" transform="rotate(-30, 6, 14)"/><ellipse cx="14" cy="14" rx="4.5" ry="7" fill="none" stroke="currentColor" stroke-width="1.2" transform="rotate(30, 14, 14)"/><rect x="9" y="14" width="2" height="5" rx="1" fill="currentColor" opacity="0.6"/><rect x="5" y="16" width="10" height="1.5" rx="0.75" fill="currentColor" opacity="0.4"/><rect x="5" y="20" width="10" height="1.5" rx="0.75" fill="currentColor" opacity="0.25"/></svg>
+      <h2>Creating Game</h2>
+      <svg class="title-flank" viewBox="0 0 20 28"><ellipse cx="10" cy="10" rx="5" ry="8" fill="none" stroke="currentColor" stroke-width="1.2"/><ellipse cx="6" cy="14" rx="4.5" ry="7" fill="none" stroke="currentColor" stroke-width="1.2" transform="rotate(-30, 6, 14)"/><ellipse cx="14" cy="14" rx="4.5" ry="7" fill="none" stroke="currentColor" stroke-width="1.2" transform="rotate(30, 14, 14)"/><rect x="9" y="14" width="2" height="5" rx="1" fill="currentColor" opacity="0.6"/><rect x="5" y="16" width="10" height="1.5" rx="0.75" fill="currentColor" opacity="0.4"/><rect x="5" y="20" width="10" height="1.5" rx="0.75" fill="currentColor" opacity="0.25"/></svg>
+    </div>
+
+    <div class="brass-divider"></div>
+
+    <div class="spinner-region">
+      <div class="compass-spinner">
+        <div class="ring-outer"></div>
+        <div class="ring-inner"></div>
+        <div class="ring-dash"></div>
+        <div class="ring-dash2"></div>
+        <div class="center-dot"></div>
+      </div>
+    </div>
+
+    <div class="step-label" id="step-label">Generating Old World map</div>
+
+    <div class="phase-list" id="phase-list">
+      <div class="phase-row current" data-phase="0">
+        <span class="phase-icon"><span class="phase-dot"></span></span>
+        <span>Generating Old World map</span>
+      </div>
+      <div class="phase-row" data-phase="1">
+        <span class="phase-icon"><span class="phase-dot"></span></span>
+        <span>Generating New World map</span>
+      </div>
+      <div class="phase-row" data-phase="2">
+        <span class="phase-icon"><span class="phase-dot"></span></span>
+        <span>Linking Old World and New World</span>
+      </div>
+      <div class="phase-row" data-phase="3">
+        <span class="phase-icon"><span class="phase-dot"></span></span>
+        <span>Building world</span>
+      </div>
+      <div class="phase-row" data-phase="4">
+        <span class="phase-icon"><span class="phase-dot"></span></span>
+        <span>Saving game</span>
+      </div>
+    </div>
+
+  </div>
+
+</main>
+
+<div class="error-overlay" id="error-overlay">
+  <div class="error-card">
+    <div class="error-header">
+      <svg class="error-icon" viewBox="0 0 28 28"><circle cx="14" cy="14" r="13" fill="none" stroke="currentColor" stroke-width="1.5"/><line x1="14" y1="8" x2="14" y2="16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><circle cx="14" cy="20" r="1.5" fill="currentColor"/></svg>
+      <h3>Could not create game</h3>
+    </div>
+    <div class="error-body">
+      <p>An error occurred while building the world.</p>
+      <span class="error-detail" id="error-detail">OutOfMemoryException: Unable to allocate 12 MB for region allocation table (OS Error: 5, errno = 12)</span>
+    </div>
+    <div class="error-actions">
+      <button class="error-btn" onclick="dismissError()">Close</button>
+      <button class="error-btn accent" onclick="retryFromError()">Retry</button>
+    </div>
+  </div>
+</div>
+
+<div class="demo-controls" id="demo-controls">
+  <button id="btn-auto" class="active" onclick="toggleAuto()">Auto</button>
+  <button id="btn-error" onclick="triggerError()">Error</button>
+  <button id="btn-speed" onclick="toggleSpeed()">&#9733; speed</button>
+</div>
+
+<script>
+const PHASES = [
+  'Generating Old World map',
+  'Generating New World map',
+  'Linking Old World and New World',
+  'Building world',
+  'Saving game'
+];
+
+let currentPhase = 0;
+let autoMode = true;
+let fastMode = false;
+let autoTimer = null;
+let errorActive = false;
+
+function getDelay(phase) {
+  const base = fastMode ? [600, 400, 300, 500, 400] : [1800, 1400, 1000, 1600, 1200];
+  return base[phase] + (Math.random() * 400);
+}
+
+function advancePhase() {
+  if (errorActive) return;
+  var rows = document.querySelectorAll('.phase-row');
+  var label = document.getElementById('step-label');
+
+  if (currentPhase < PHASES.length) {
+    for (var r = 0; r < rows.length; r++) {
+      rows[r].classList.remove('completed', 'current');
+      if (r < currentPhase) rows[r].classList.add('completed');
+      if (r === currentPhase) rows[r].classList.add('current');
+    }
+    label.textContent = PHASES[currentPhase];
+    label.style.opacity = 1;
+    currentPhase++;
+  }
+
+  if (currentPhase > PHASES.length) {
+    allDone();
+    return;
+  }
+
+  if (autoMode && currentPhase <= PHASES.length) {
+    autoTimer = setTimeout(advancePhase, getDelay(Math.min(currentPhase, 4)));
+  }
+}
+
+function allDone() {
+  document.getElementById('step-label').textContent = 'Ready';
+  var rows = document.querySelectorAll('.phase-row');
+  for (var r = 0; r < rows.length; r++) {
+    rows[r].classList.add('completed');
+    rows[r].classList.remove('current');
+  }
+  document.getElementById('btn-auto').classList.remove('active');
+  autoMode = false;
+  clearTimeout(autoTimer);
+}
+
+function toggleAuto() {
+  if (errorActive) return;
+  autoMode = !autoMode;
+  var btn = document.getElementById('btn-auto');
+  if (autoMode) {
+    btn.classList.add('active');
+    if (currentPhase <= PHASES.length) {
+      autoTimer = setTimeout(advancePhase, 400);
+    }
+  } else {
+    btn.classList.remove('active');
+    clearTimeout(autoTimer);
+  }
+}
+
+function toggleSpeed() {
+  fastMode = !fastMode;
+  var btn = document.getElementById('btn-speed');
+  btn.classList.toggle('active', fastMode);
+}
+
+function triggerError() {
+  if (errorActive) return;
+  errorActive = true;
+  autoMode = false;
+  clearTimeout(autoTimer);
+  document.getElementById('btn-auto').classList.remove('active');
+
+  var errorMsgs = [
+    'OutOfMemoryException: Unable to allocate 12 MB for region allocation table (OS Error: 5, errno = 12)',
+    'MapGenerationError: Failed to generate New World terrain — noise generator returned null (seed 4291, pass 4)',
+    'PersistenceError: Could not write save file to disk — permission denied at /data/saves/game_001.sav',
+    'ProvinceAssignmentError: Tile (37, 142) could not be assigned to any province within max distance (12 tiles)',
+    'FatalError: Dart isolate terminated unexpectedly during world building phase'
+  ];
+
+  var detail = errorMsgs[Math.floor(Math.random() * errorMsgs.length)];
+  document.getElementById('error-detail').textContent = detail;
+  document.getElementById('error-overlay').classList.add('show');
+}
+
+function dismissError() {
+  errorActive = false;
+  document.getElementById('error-overlay').classList.remove('show');
+}
+
+function retryFromError() {
+  errorActive = false;
+  document.getElementById('error-overlay').classList.remove('show');
+
+  currentPhase = 0;
+  var rows = document.querySelectorAll('.phase-row');
+  for (var r = 0; r < rows.length; r++) {
+    rows[r].classList.remove('completed', 'current');
+  }
+  document.getElementById('step-label').textContent = '';
+  document.getElementById('step-label').style.opacity = 0;
+
+  autoMode = true;
+  document.getElementById('btn-auto').classList.add('active');
+
+  setTimeout(advancePhase, 500);
+}
+
+advancePhase();
+</script>
+</body>
+</html>

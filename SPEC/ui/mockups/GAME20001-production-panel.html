@@ -1,0 +1,273 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ColonizeThis — Production Panel</title>
+<style>
+:root {
+  --bg: oklch(16% 0.018 50); --bg-deep: oklch(12% 0.015 45);
+  --surface: oklch(24% 0.015 45); --surface-lite: oklch(30% 0.016 52);
+  --fg: oklch(88% 0.015 80); --muted: oklch(65% 0.025 70);
+  --border: oklch(40% 0.02 55); --accent: oklch(72% 0.14 85);
+  --accent-dim: oklch(60% 0.12 82); --accent-bright: oklch(82% 0.13 90);
+  --danger: oklch(55% 0.16 22); --success: oklch(55% 0.12 150);
+  --font-display: 'Iowan Old Style', 'Cinzel', 'Charter', Georgia, serif;
+  --font-body: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  --font-mono: 'SF Mono', ui-monospace, Menlo, monospace;
+  --topbar-h:36px;
+}
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+html,body{min-height:100vh;min-height:100dvh;background:var(--bg);color:var(--fg);font-family:var(--font-body);overflow-x:hidden}
+html{overflow-y:auto;scroll-behavior:smooth}
+
+.topbar{height:var(--topbar-h);background:linear-gradient(180deg,var(--surface-lite)0%,var(--surface)100%);border-bottom:1px solid var(--accent-dim);display:flex;align-items:center;padding:0 10px;gap:8px;flex-shrink:0;position:relative;z-index:10}
+.topbar::after{content:'';position:absolute;bottom:-1px;left:0;right:0;height:1px;background:var(--accent);opacity:.25}
+.back-btn{padding:4px 10px;background:linear-gradient(180deg,var(--surface-lite),var(--bg-deep));border:1px solid var(--border);color:var(--accent-dim);font-family:var(--font-display);font-size:11px;cursor:pointer;min-height:26px;letter-spacing:.04em;transition:color .15s}
+.back-btn:hover{color:var(--accent-bright)}
+.topbar-title{flex:1;font-family:var(--font-display);font-size:13px;font-weight:600;letter-spacing:.05em;color:var(--fg);text-align:center;display:flex;align-items:center;justify-content:center;gap:6px}
+.topbar-title img{width:18px;height:18px;image-rendering:pixelated;display:block}
+
+.shell{display:flex;flex:1;min-height:calc(100vh - var(--topbar-h));min-height:calc(100dvh - var(--topbar-h))}
+@media(max-width:599px){.shell{flex-direction:column;overflow-y:auto}}
+
+.panel{padding:clamp(10px,2vh,16px)clamp(10px,2vw,14px);overflow-y:auto;border-right:1px solid var(--border)}
+@media(min-width:600px){.panel{width:50%;min-width:280px}}
+@media(max-width:599px){.panel{border-right:none;border-bottom:1px solid var(--border);overflow-y:visible}}
+.panel-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:clamp(6px,1.2vh,10px)}
+.panel-header h3{font-family:var(--font-display);font-size:clamp(13px,1.8vw,15px);font-weight:600;letter-spacing:.04em;color:var(--accent)}
+.panel-header .action-btn{padding:3px 10px;background:linear-gradient(180deg,var(--surface-lite),var(--bg-deep));border:1px solid var(--border);color:var(--accent-dim);font-family:var(--font-display);font-size:10px;cursor:pointer;letter-spacing:.04em;transition:color .15s}
+.panel-header .action-btn:hover{color:var(--accent-bright)}
+.panel-header .reset-btn{color:var(--danger);border-color:var(--danger);opacity:.7}
+.panel-header .reset-btn:hover{opacity:1}
+
+.section-label{font-family:var(--font-display);font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin:clamp(8px,1.5vh,12px)0 clamp(4px,.8vh,6px);padding-bottom:3px;border-bottom:1px solid var(--border)}
+
+.grid-3col{display:grid;grid-template-columns:repeat(3,1fr);gap:4px;margin-bottom:clamp(6px,1vh,8px)}
+.grid-2col{display:grid;grid-template-columns:repeat(2,1fr);gap:4px;margin-bottom:clamp(6px,1vh,8px)}
+.resource-cell{display:flex;align-items:center;gap:5px;padding:4px 6px;background:linear-gradient(180deg,var(--bg-deep),var(--surface));border:1px solid var(--border);font-size:clamp(9px,1.3vw,10px)}
+.resource-cell .r-icon{flex-shrink:0;width:20px;height:20px;display:flex;align-items:center;justify-content:center}
+.resource-cell .r-icon img{width:20px;height:20px;image-rendering:pixelated;display:block}
+.resource-cell .r-icon .e-icon{font-size:14px;text-align:center}
+.resource-cell .r-name{font-family:var(--font-body);color:var(--fg);flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.resource-cell .r-qty{font-family:var(--font-mono);font-size:clamp(9px,1.3vw,10px);color:var(--accent-dim)}
+.resource-cell .r-delta{font-family:var(--font-mono);font-size:clamp(8px,1.1vw,9px);margin-left:2px}
+.resource-cell .r-delta.pos{color:var(--success)}
+.resource-cell .r-delta.neg{color:var(--danger)}
+
+.effective-labour{font-family:var(--font-mono);font-size:clamp(10px,1.4vw,11px);font-weight:600;color:var(--accent);padding:4px 8px;border-top:1px solid var(--accent-dim);margin-top:4px;text-align:right}
+
+.allocation-list{display:flex;flex-direction:column;gap:clamp(6px,1vh,8px)}
+.recipe-row{background:linear-gradient(180deg,var(--bg-deep),var(--surface));border:1px solid var(--border);padding:clamp(6px,1vh,8px);position:relative}
+.recipe-row::before,.recipe-row::after{content:'';position:absolute;top:0;bottom:0;width:1px;background:var(--accent-dim);opacity:.35}
+.recipe-row::before{left:0}.recipe-row::after{right:0}
+.recipe-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:4px}
+.recipe-header .r-title{display:flex;align-items:center;gap:5px;font-size:clamp(10px,1.4vw,12px);font-family:var(--font-body)}
+.recipe-header .r-title .out-icon{flex-shrink:0;width:20px;height:20px;display:flex;align-items:center;justify-content:center}
+.recipe-header .r-title .out-icon img{width:20px;height:20px;image-rendering:pixelated;display:block}
+.recipe-header .r-title .out-icon .e-icon{font-size:14px}
+.recipe-header .r-title .out-name{color:var(--fg);font-weight:600}
+.recipe-header .r-title .inputs{color:var(--muted);font-size:clamp(9px,1.2vw,10px);margin-left:4px}
+.recipe-header .r-cap{font-family:var(--font-mono);font-size:clamp(9px,1.2vw,10px);color:var(--muted);text-align:right}
+.recipe-header .r-cap span{color:var(--accent-dim)}
+.recipe-slider-row{display:flex;align-items:center;gap:6px}
+.recipe-slider-row input[type=range]{flex:1;-webkit-appearance:none;appearance:none;height:clamp(4px,.6vh,5px);background:var(--bg-deep);border:1px solid var(--border);border-radius:2px;outline:none;cursor:pointer}
+.recipe-slider-row input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;width:clamp(14px,2vw,16px);height:clamp(14px,2vw,16px);border-radius:50%;background:var(--accent);border:1px solid var(--accent-bright);cursor:pointer}
+.recipe-slider-row .slider-val{font-family:var(--font-mono);font-size:clamp(10px,1.4vw,11px);color:var(--accent-dim);min-width:20px;text-align:right}
+.step-btn{width:clamp(22px,3vw,26px);height:clamp(22px,3vw,26px);background:linear-gradient(180deg,var(--surface-lite),var(--bg-deep));border:1px solid var(--border);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:color .15s,border-color .15s;flex-shrink:0;-webkit-tap-highlight-color:transparent;padding:2px}
+.step-btn img{width:16px;height:16px;image-rendering:pixelated;display:block}
+.step-btn:hover:not(:disabled){border-color:var(--accent-dim)}
+.step-btn:hover:not(:disabled) img{filter:brightness(1.3)}
+.step-btn:disabled{opacity:.3;cursor:not-allowed}
+
+.labour-summary{font-family:var(--font-mono);font-size:clamp(10px,1.3vw,11px);padding:clamp(6px,1vh,8px);text-align:right;margin-top:4px}
+.labour-summary.ok{color:var(--success)}
+.labour-summary.over{color:var(--danger)}
+
+.labour-row{display:flex;align-items:center;gap:6px;padding:3px 6px;font-family:var(--font-body);font-size:clamp(9px,1.2vw,10px)}
+.labour-row .tier-label{flex:1;min-width:0;color:var(--fg)}
+.labour-row .tier-label span{color:var(--muted);font-size:clamp(8px,1vw,9px)}
+.labour-row .queued{font-family:var(--font-mono);font-size:clamp(8px,1vw,9px);color:var(--accent-dim);margin-right:4px}
+.labour-row .disband-btn{padding:2px 6px;background:transparent;border:1px solid var(--danger);color:var(--danger);font-family:var(--font-display);font-size:8px;cursor:pointer;letter-spacing:.04em;opacity:.7;transition:opacity .15s}
+.labour-row .disband-btn:hover{opacity:1}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <button class="back-btn" title="Back to Map">&larr; Map</button>
+  <span class="topbar-title"><img src="icons/32/ui_icon_production.png" width="32" height="32" alt="">Production</span>
+</div>
+
+<div class="shell">
+  <div class="panel" id="panel-available">
+    <div class="panel-header">
+      <h3>Available</h3>
+      <button class="action-btn" onclick="alert('Breakdown dialog &mdash; read-only commodity phase table')">Breakdown</button>
+    </div>
+
+    <div class="section-label">Food</div>
+    <div class="grid-3col">
+      <div class="resource-cell"><span class="r-icon"><img src="icons/32/ui_icon_com_grain.png" width="32" height="32" alt=""></span><span class="r-name">Grain</span><span class="r-qty">1,240</span><span class="r-delta pos">+45</span></div>
+      <div class="resource-cell"><span class="r-icon"><img src="icons/32/ui_icon_com_meat.png" width="32" height="32" alt=""></span><span class="r-name">Meat</span><span class="r-qty">870</span></div>
+    </div>
+
+    <div class="section-label">Raw Materials</div>
+    <div class="grid-3col">
+      <div class="resource-cell"><span class="r-icon"><img src="icons/32/ui_icon_com_timber.png" width="32" height="32" alt=""></span><span class="r-name">Timber</span><span class="r-qty">920</span><span class="r-delta neg">&minus;40</span></div>
+      <div class="resource-cell"><span class="r-icon"><img src="icons/32/ui_icon_com_iron.png" width="32" height="32" alt=""></span><span class="r-name">Iron</span><span class="r-qty">430</span><span class="r-delta neg">&minus;20</span></div>
+      <div class="resource-cell"><span class="r-icon"><img src="icons/32/ui_icon_com_wool.png" width="32" height="32" alt=""></span><span class="r-name">Wool</span><span class="r-qty">380</span><span class="r-delta neg">&minus;10</span></div>
+      <div class="resource-cell"><span class="r-icon"><img src="icons/32/ui_icon_com_cotton.png" width="32" height="32" alt=""></span><span class="r-name">Cotton</span><span class="r-qty">290</span><span class="r-delta neg">&minus;15</span></div>
+      <div class="resource-cell"><span class="r-icon"><img src="icons/32/ui_icon_com_coal.png" width="32" height="32" alt=""></span><span class="r-name">Coal</span><span class="r-qty">170</span></div>
+      <div class="resource-cell"><span class="r-icon"><img src="icons/32/ui_icon_com_copper.png" width="32" height="32" alt=""></span><span class="r-name">Copper</span><span class="r-qty">120</span></div>
+      <div class="resource-cell"><span class="r-icon"><img src="icons/32/ui_icon_com_tin.png" width="32" height="32" alt=""></span><span class="r-name">Tin</span><span class="r-qty">85</span></div>
+      <div class="resource-cell"><span class="r-icon"><img src="icons/32/ui_icon_com_sugar_cane.png" width="32" height="32" alt=""></span><span class="r-name">Sugar Cane</span><span class="r-qty">310</span></div>
+      <div class="resource-cell"><span class="r-icon"><img src="icons/32/ui_icon_com_tobacco.png" width="32" height="32" alt=""></span><span class="r-name">Tobacco</span><span class="r-qty">195</span></div>
+      <div class="resource-cell"><span class="r-icon"><img src="icons/32/ui_icon_com_furs.png" width="32" height="32" alt=""></span><span class="r-name">Furs</span><span class="r-qty">140</span></div>
+      <div class="resource-cell"><span class="r-icon"><img src="icons/32/ui_icon_com_horses.png" width="32" height="32" alt=""></span><span class="r-name">Horses</span><span class="r-qty">65</span></div>
+    </div>
+
+    <div class="section-label">Manufactured</div>
+    <div class="grid-3col">
+      <div class="resource-cell"><span class="r-icon"><img src="icons/32/ui_icon_com_lumber.png" width="32" height="32" alt=""></span><span class="r-name">Lumber</span><span class="r-qty">210</span><span class="r-delta pos">+30</span></div>
+      <div class="resource-cell"><span class="r-icon"><img src="icons/32/ui_icon_com_cast_iron.png" width="32" height="32" alt=""></span><span class="r-name">Cast Iron</span><span class="r-qty">95</span><span class="r-delta pos">+15</span></div>
+      <div class="resource-cell"><span class="r-icon"><img src="icons/32/ui_icon_com_fabric.png" width="32" height="32" alt=""></span><span class="r-name">Fabric</span><span class="r-qty">180</span><span class="r-delta pos">+10</span></div>
+      <div class="resource-cell"><span class="r-icon"><img src="icons/32/ui_icon_com_refined_sugar.png" width="32" height="32" alt=""></span><span class="r-name">Refined Sugar</span><span class="r-qty">50</span></div>
+      <div class="resource-cell"><span class="r-icon"><img src="icons/32/ui_icon_com_cigars.png" width="32" height="32" alt=""></span><span class="r-name">Cigars</span><span class="r-qty">30</span></div>
+      <div class="resource-cell"><span class="r-icon"><img src="icons/32/ui_icon_com_fur_hats.png" width="32" height="32" alt=""></span><span class="r-name">Fur Hats</span><span class="r-qty">25</span></div>
+      <div class="resource-cell"><span class="r-icon"><img src="icons/32/ui_icon_com_steel.png" width="32" height="32" alt=""></span><span class="r-name">Steel</span><span class="r-qty">75</span><span class="r-delta pos">+5</span></div>
+      <div class="resource-cell"><span class="r-icon"><img src="icons/32/ui_icon_com_paper.png" width="32" height="32" alt=""></span><span class="r-name">Paper</span><span class="r-qty">60</span></div>
+      <div class="resource-cell"><span class="r-icon"><img src="icons/32/ui_icon_com_bronze.png" width="32" height="32" alt=""></span><span class="r-name">Bronze</span><span class="r-qty">45</span></div>
+    </div>
+
+    <div class="section-label">Riches &amp; Luxury</div>
+    <div class="grid-3col">
+      <div class="resource-cell"><span class="r-icon"><img src="icons/32/ui_icon_com_gold.png" width="32" height="32" alt=""></span><span class="r-name">Gold</span><span class="r-qty">18</span></div>
+      <div class="resource-cell"><span class="r-icon"><img src="icons/32/ui_icon_com_silver.png" width="32" height="32" alt=""></span><span class="r-name">Silver</span><span class="r-qty">24</span></div>
+      <div class="resource-cell"><span class="r-icon"><img src="icons/32/ui_icon_com_gems.png" width="32" height="32" alt=""></span><span class="r-name">Gems</span><span class="r-qty">8</span></div>
+      <div class="resource-cell"><span class="r-icon"><img src="icons/32/ui_icon_com_diamonds.png" width="32" height="32" alt=""></span><span class="r-name">Diamonds</span><span class="r-qty">4</span></div>
+      <div class="resource-cell"><span class="r-icon"><img src="icons/32/ui_icon_com_spices.png" width="32" height="32" alt=""></span><span class="r-name">Spices</span><span class="r-qty">12</span></div>
+    </div>
+
+    <div class="section-label">Workers</div>
+    <div class="grid-2col">
+      <div class="resource-cell"><span class="r-icon"><img src="icons/32/ui_icon_worker_peasant.png" width="32" height="32" alt=""></span><span class="r-name">Peasants</span><span class="r-qty">24</span></div>
+      <div class="resource-cell"><span class="r-icon"><img src="icons/32/ui_icon_worker_apprentice.png" width="32" height="32" alt=""></span><span class="r-name">Apprentices</span><span class="r-qty">12</span></div>
+      <div class="resource-cell"><span class="r-icon"><img src="icons/32/ui_icon_worker_journeyman.png" width="32" height="32" alt=""></span><span class="r-name">Journeymen</span><span class="r-qty">6</span></div>
+      <div class="resource-cell"><span class="r-icon"><img src="icons/32/ui_icon_worker_master.png" width="32" height="32" alt=""></span><span class="r-name">Masters</span><span class="r-qty">2</span></div>
+    </div>
+    <div class="effective-labour">Effective Labour: 28.5</div>
+
+    <div class="section-label">Labour Controls</div>
+    <div class="labour-row">
+      <span class="tier-label">Peasants <span>(always available)</span></span>
+      <span class="queued">Queued: 0</span>
+      <button class="step-btn" disabled><img src="icons/32/ui_icon_production_alloc_decrement.png" width="32" height="32" alt=""></button>
+      <button class="step-btn"><img src="icons/32/ui_icon_production_alloc_increment.png" width="32" height="32" alt=""></button>
+    </div>
+    <div class="labour-row">
+      <span class="tier-label">Apprentices <span>(req. Workshop)</span></span>
+      <span class="queued">Queued: 1</span>
+      <button class="step-btn"><img src="icons/32/ui_icon_production_alloc_decrement.png" width="32" height="32" alt=""></button>
+      <button class="step-btn"><img src="icons/32/ui_icon_production_alloc_increment.png" width="32" height="32" alt=""></button>
+      <button class="disband-btn">Disband</button>
+    </div>
+    <div class="labour-row">
+      <span class="tier-label">Journeymen <span>(req. Guild Hall)</span></span>
+      <span class="queued">Queued: 0</span>
+      <button class="step-btn" disabled><img src="icons/32/ui_icon_production_alloc_decrement.png" width="32" height="32" alt=""></button>
+      <button class="step-btn"><img src="icons/32/ui_icon_production_alloc_increment.png" width="32" height="32" alt=""></button>
+      <button class="disband-btn">Disband</button>
+    </div>
+    <div class="labour-row">
+      <span class="tier-label">Masters <span>(req. University)</span></span>
+      <span class="queued">Queued: 0</span>
+      <button class="step-btn" disabled><img src="icons/32/ui_icon_production_alloc_decrement.png" width="32" height="32" alt=""></button>
+      <button class="step-btn" disabled><img src="icons/32/ui_icon_production_alloc_increment.png" width="32" height="32" alt=""></button>
+      <button class="disband-btn">Disband</button>
+    </div>
+  </div>
+
+  <div class="panel" id="panel-allocation">
+    <div class="panel-header">
+      <h3>Allocation</h3>
+      <button class="action-btn reset-btn" onclick="resetAll()">Reset</button>
+    </div>
+    <div class="allocation-list" id="recipe-list"></div>
+    <div class="labour-summary ok" id="labour-summary">Labour: 18 / 28.5 &check;</div>
+  </div>
+</div>
+
+<script>
+const ICON = 'icons/32/';
+function icn(f){return `<img src="${ICON}${f}" width="32" height="32" alt="">`}
+function eicn(c){return `<span class="e-icon">${c}</span>`}
+
+const I = {
+  lumber:      {out:'com_lumber',      input:'Timber &times;2'},
+  fabricWool:  {out:'com_fabric',      input:'Wool &times;2'},
+  fabricCotton:{out:'com_fabric',      input:'Cotton &times;2'},
+  castIron:    {out:'com_cast_iron',   input:'Timber &times;2, Iron &times;2'},
+  refinedSugar:{out:'com_refined_sugar',input:'Sugar Cane &times;2'},
+  cigars:      {out:'com_cigars',      input:'Tobacco &times;3'},
+  furHats:     {out:'com_fur_hats',    input:'Furs &times;2'},
+  steel:       {out:'com_steel',       input:'Cast Iron &times;2, Coal &times;1'},
+  paper:       {out:'com_paper',       input:'Timber &times;3'},
+  bronze:      {out:'com_bronze',      input:'Copper &times;1, Tin &times;1'},
+};
+
+const recipes = [
+  {id:'lumber',      outName:'Lumber',      labour:2, maxBase:15},
+  {id:'fabricWool',  outName:'Fabric',      labour:2, maxBase:12, variant:'(wool)'},
+  {id:'fabricCotton',outName:'Fabric',      labour:2, maxBase:10, variant:'(cotton)'},
+  {id:'castIron',    outName:'Cast Iron',   labour:5, maxBase:8},
+  {id:'refinedSugar',outName:'Refined Sugar',labour:2, maxBase:8},
+  {id:'cigars',      outName:'Cigars',      labour:3, maxBase:6},
+  {id:'furHats',     outName:'Fur Hats',    labour:2, maxBase:6},
+  {id:'steel',       outName:'Steel',       labour:5, maxBase:5},
+  {id:'paper',       outName:'Paper',       labour:3, maxBase:6},
+  {id:'bronze',      outName:'Bronze',      labour:3, maxBase:6},
+];
+
+let desired = {};
+
+function makeRecipeRow(r){
+  const d = desired[r.id]||0;
+  const max = r.maxBase;
+  const iconDef = I[r.id];
+  const outIcon = iconDef.out ? icn(`ui_icon_${iconDef.out}.png`) : '';
+  const bottleneck = Math.floor(Math.random()*4)===0 ? 'Labour' : iconDef.input.split(',')[0].split(' ')[0].replace(/×/,'') || 'Labour';
+  const displayName = r.outName + (r.variant ? ' '+r.variant : '');
+  return `<div class="recipe-row">
+    <div class="recipe-header">
+      <span class="r-title"><span class="out-icon">${outIcon}</span><span class="out-name">${displayName}</span><span class="inputs">(${iconDef.input})</span></span>
+      <span class="r-cap">${max} &middot; <span>${bottleneck}</span></span>
+    </div>
+    <div class="recipe-slider-row">
+      <input type="range" min="0" max="${max}" value="${d}" oninput="updateDesired('${r.id}',this.value)">
+      <span class="slider-val">${d}</span>
+      <button class="step-btn" ${d<=0?'disabled':''} onclick="stepDesired('${r.id}',-1)">${icn('ui_icon_production_alloc_decrement.png')}</button>
+      <button class="step-btn" ${d>=max?'disabled':''} onclick="stepDesired('${r.id}',1)">${icn('ui_icon_production_alloc_increment.png')}</button>
+      <button class="step-btn" ${d>=max?'disabled':''} onclick="maxDesired('${r.id}')">${icn('ui_icon_production_alloc_maximize.png')}</button>
+      <button class="step-btn" ${d<=0?'disabled':''} onclick="clearDesired('${r.id}')">${icn('ui_icon_production_alloc_clear.png')}</button>
+    </div>
+  </div>`;
+}
+
+function renderAll(){document.getElementById('recipe-list').innerHTML=recipes.map(makeRecipeRow).join('');updateLabour()}
+function updateDesired(id,v){desired[id]=parseInt(v);renderAll()}
+function stepDesired(id,d){desired[id]=(desired[id]||0)+d;renderAll()}
+function maxDesired(id){const r=recipes.find(x=>x.id===id);desired[id]=r.maxBase;renderAll()}
+function clearDesired(id){desired[id]=0;renderAll()}
+function resetAll(){desired={};renderAll()}
+function updateLabour(){
+  let tot=0;
+  for(const r of recipes) tot+=(desired[r.id]||0)*r.labour;
+  const el=document.getElementById('labour-summary');
+  if(tot>28.5){el.className='labour-summary over';el.textContent=`Labour: ${tot.toFixed(1)} / 28.5 &mdash; capped next turn`}
+  else{el.className='labour-summary ok';el.textContent=`Labour: ${tot.toFixed(1)} / 28.5 \u2713`}
+}
+renderAll();
+</script>
+</body>
+</html>

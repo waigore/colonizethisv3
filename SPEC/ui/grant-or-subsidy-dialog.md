@@ -3,6 +3,7 @@
 **Screen ID:** `DIPL20001` — stable; do not reassign.
 **SPEC/ui** — Modal that lets the human player set the **amount** for a one-time grant or recurring subsidy toward a target faction, opened from [diplomacy-panel.md](diplomacy-panel.md). Game model: [diplomacy.md](../game/diplomacy.md). Orders contract: [orders.md](../program/orders.md). App wiring and events: [app-ui-wiring.md](../program/app-ui-wiring.md), [app-event-bus.md](../program/app-event-bus.md).
 
+**Mockup:** [mockups/DIPL20001-grant-or-subsidy-dialog.html](mockups/DIPL20001-grant-or-subsidy-dialog.html)
 ---
 
 ## Widget contract

@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ColonizeThis — Leader Selection</title>
+<style>
+:root {
+  --bg: oklch(16% 0.018 50); --bg-deep: oklch(12% 0.015 45);
+  --surface: oklch(24% 0.015 45); --surface-lite: oklch(30% 0.016 52);
+  --fg: oklch(88% 0.015 80); --muted: oklch(65% 0.025 70);
+  --border: oklch(40% 0.02 55); --accent: oklch(72% 0.14 85); --accent-dim: oklch(60% 0.12 82);
+  --font-display: 'Iowan Old Style','Cinzel','Charter',Georgia,serif;
+  --font-body: -apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;
+}
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+html,body{min-height:100vh;min-height:100dvh;background:var(--bg);color:var(--fg);font-family:var(--font-body);overflow-x:hidden;overflow-y:auto}
+.main{display:flex;align-items:center;justify-content:center;min-height:100vh;padding:20px 12px}
+.dialog{width:100%;max-width:480px;background:linear-gradient(180deg,var(--surface-lite) 0%,var(--surface) 8%,var(--bg-deep) 100%);border:2px solid var(--accent-dim);padding:20px clamp(12px,3vw,24px) 24px}
+h2{font-family:var(--font-display);font-size:clamp(18px,2.5vw,22px);font-weight:700;letter-spacing:0.05em;color:var(--accent);text-align:center;margin-bottom:4px}
+.intro{font-family:var(--font-body);font-size:clamp(11px,1.4vw,12px);color:var(--muted);text-align:center;margin-bottom:14px;font-style:italic}
+.divider{width:80px;height:2px;background:linear-gradient(90deg,transparent,var(--accent-dim),var(--accent),var(--accent-dim),transparent);margin:0 auto 16px}
+.slot{display:flex;align-items:center;gap:8px;padding:8px 10px;background:linear-gradient(180deg,var(--surface) 0%,var(--bg-deep) 100%);border-top:1px solid var(--accent-dim);border-bottom:1px solid var(--accent-dim);margin-bottom:6px}
+.slot .lbl{font-family:var(--font-display);font-size:12px;font-weight:600;letter-spacing:0.04em;color:var(--muted);min-width:70px;flex-shrink:0}
+.slot .lbl .tag{display:block;font-family:var(--font-body);font-size:9px;letter-spacing:0.06em;text-transform:uppercase;color:var(--accent-dim);margin-top:1px}
+.slot select{flex:1;padding:6px 8px;background:var(--bg-deep);border:1px solid var(--border);color:var(--fg);font-family:var(--font-body);font-size:12px;min-width:0;cursor:pointer}
+.slot select:focus{outline:none;border-color:var(--accent-dim)}
+.slot select option{background:var(--surface);color:var(--fg)}
+.seed-label{font-family:var(--font-display);font-size:13px;font-weight:600;letter-spacing:0.04em;color:var(--fg);display:block;margin:10px 0 4px}
+.seed-input{width:100%;padding:8px 10px;background:var(--bg-deep);border:1px solid var(--border);color:var(--fg);font-family:monospace;font-size:14px;letter-spacing:0.04em;margin-bottom:2px}.seed-input:focus{outline:none;border-color:var(--accent-dim)}
+.seed-hint{font-family:var(--font-body);font-size:10px;font-style:italic;color:var(--muted);opacity:0.7;margin-bottom:12px;display:block}
+.toggles{display:flex;flex-direction:column;gap:8px;margin-bottom:14px}
+.toggle-row{display:flex;align-items:flex-start;gap:10px}
+.toggle-row input[type=checkbox]{display:none}
+.toggle{position:relative;width:36px;height:20px;flex-shrink:0;cursor:pointer;margin-top:1px}
+.toggle::before{content:'';position:absolute;inset:0;background:var(--bg-deep);border:1px solid var(--border);border-radius:10px;transition:background 0.2s}
+.toggle::after{content:'';position:absolute;top:2px;left:2px;width:16px;height:16px;border-radius:50%;background:var(--muted);transition:left 0.2s,background 0.2s}
+.toggle.on::before{background:var(--surface-lite);border-color:var(--accent-dim)}
+.toggle.on::after{left:18px;background:var(--accent)}
+.toggle-text{font-family:var(--font-display);font-size:13px;font-weight:600;letter-spacing:0.04em;color:var(--fg)}
+.toggle-hint{font-size:10px;font-style:italic;color:var(--muted);opacity:0.7;margin-left:46px;margin-top:-4px}
+.slider-section{margin-bottom:14px}.slider-row{display:flex;align-items:center;gap:8px;margin-bottom:2px}
+.slider-row .slbl{font-family:var(--font-display);font-size:13px;font-weight:600;letter-spacing:0.04em;color:var(--fg)}
+.slider-row .sval{font-family:monospace;font-size:12px;color:var(--accent-dim)}
+.slider{width:100%;-webkit-appearance:none;appearance:none;height:5px;background:var(--bg-deep);border:1px solid var(--border);border-radius:3px;outline:none;cursor:pointer;margin-bottom:2px}
+.slider::-webkit-slider-thumb{-webkit-appearance:none;width:18px;height:18px;border-radius:50%;background:var(--accent);border:2px solid var(--accent-dim);cursor:pointer}
+.actions{display:flex;gap:10px;justify-content:flex-end;margin-top:8px}
+.btn{padding:10px 22px;font-family:var(--font-display);font-size:14px;font-weight:600;letter-spacing:0.06em;cursor:pointer;border:none;transition:color 0.15s}
+.btn-cancel{background:linear-gradient(180deg,var(--surface) 0%,var(--bg-deep) 100%);border-top:1px solid var(--border);border-bottom:1px solid var(--border);color:var(--muted)}.btn-cancel:hover{color:var(--fg)}
+.btn-start{background:linear-gradient(180deg,var(--surface-lite) 0%,var(--surface) 40%,var(--bg-deep) 100%);border-top:1.5px solid var(--accent-dim);border-bottom:1.5px solid var(--accent-dim);color:var(--fg)}.btn-start:hover{color:var(--accent)}.btn-start:disabled{opacity:0.4;cursor:not-allowed}
+</style>
+</head>
+<body>
+<div class="main">
+<div class="dialog">
+<h2>Choose nations and leaders</h2>
+<p class="intro">Choose six great powers and a leader variant for each</p>
+<div class="divider"></div>
+
+<div id="slots"></div>
+
+<label class="seed-label">Game seed</label>
+<input class="seed-input" type="text" value="42" placeholder="0 = random" id="seed">
+<span class="seed-hint">Enter 0 for a random seed</span>
+
+<div class="toggles">
+  <div class="toggle-row">
+    <div class="toggle on" id="infinite-toggle" onclick="this.classList.toggle('on')"></div>
+    <span class="toggle-text">Infinite mode (no victory condition)</span>
+  </div>
+  <div class="toggle-hint">The game will continue indefinitely</div>
+</div>
+
+<div class="slider-section">
+  <div class="slider-row">
+    <span class="slbl">Terrain variation:</span>
+    <span class="sval" id="tv-pct">50%</span>
+  </div>
+  <input type="range" class="slider" min="0" max="1" step="0.05" value="0.5" id="tv" oninput="document.getElementById('tv-pct').textContent=Math.round(this.value*100)+'%'">
+</div>
+
+<div class="actions">
+  <button class="btn btn-cancel" onclick="location.reload()">Cancel</button>
+  <button class="btn btn-start" onclick="alert('Starting game with selected setup...')">Start</button>
+</div>
+</div>
+</div>
+<script>
+const nations=['England','France','Spain','Portugal','Dutch Republic','Ottoman Empire']
+const leaders={England:['Elizabeth I','Henry VIII','Victoria'],France:['Louis XIV','Napoleon','Richelieu'],Spain:['Isabella I','Philip II','Charles III'],Portugal:['Henry the Navigator','Joao II','Manuel I'],'Dutch Republic':['William of Orange','Jan de Witt','Maurice of Nassau'],'Ottoman Empire':['Suleiman I','Mehmed II','Selim III']}
+let slots=['',...nations.slice(1)]
+function render(){
+  const c=document.getElementById('slots')
+  c.innerHTML=slots.map((s,i)=>`<div class="slot"><span class="lbl">Slot ${i+1}<span class="tag">${i===0?'You':'AI'}</span></span><select onchange="pick(${i},this.value)"><option value="">— Select —</option>${nations.filter(n=>!slots.includes(n)||n===s).map(n=>`<option value="${n}" ${n===s?'selected':''}>${n}</option>`).join('')}</select><select><option>— Leader —</option>${(leaders[s]||[]).map(l=>`<option>${l}</option>`).join('')}</select></div>`).join('')
+}
+function pick(i,v){slots[i]=v;render()}
+render()
+</script>
+</body>
+</html>

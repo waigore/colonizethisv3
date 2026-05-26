@@ -6,6 +6,7 @@
 
 **Separation:** Logic owns validation; app emits **AppEventBus** events only ([app-ui-wiring.md](../program/app-ui-wiring.md)).
 
+**Mockup:** [mockups/UNIT20001-military-units-panel.html](mockups/UNIT20001-military-units-panel.html)
 ---
 
 ## Widget contract
