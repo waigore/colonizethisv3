@@ -32,7 +32,17 @@ void main() {
     final l10n = opener.l10n;
     final ensureUnderWallClock = opener.ensureUnderWallClock;
 
-    await tester.tap(find.byKey(kHomeToCapitalButtonKey));
+    // Replaces the legacy raw `tester.tap(find.byKey(...))` taps with the
+    // shared defensive `ensureVisible` + `hitTestable` resolve recipe so a
+    // transient overlay or surface clip cannot silently drop the home/marker
+    // tap on a small viewport. The helper is the same primitive the panel
+    // openers consume via `e2eEnsureVisibleAndTapHitTestable` (Refs GitHub
+    // #2336 AC10 / e2e-ui-stability rule — verify visibility before
+    // interaction).
+    await ensureVisibleAndTapHitTestable(
+      tester,
+      find.byKey(kHomeToCapitalButtonKey),
+    );
     await waitUntilFound(
       tester,
       find.byKey(kCtE2EOpenCapitalProvinceDetailKey).hitTestable(),
@@ -42,7 +52,10 @@ void main() {
     );
 
     expect(find.byKey(kCtE2EOpenCapitalProvinceDetailKey), findsOneWidget);
-    await tester.tap(find.byKey(kCtE2EOpenCapitalProvinceDetailKey));
+    await ensureVisibleAndTapHitTestable(
+      tester,
+      find.byKey(kCtE2EOpenCapitalProvinceDetailKey),
+    );
 
     // Pre-lift this was an inline `expectPanelTextsMatchSnapshot` call with
     // an explicit 30s timeout and the `open_panel_province` phase label;
