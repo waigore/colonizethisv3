@@ -492,5 +492,5 @@ Game applyNavalBattleResults(
       ),
     );
   }
-  return game.updateWorldState((ws) => ws.copyWith(fleets: fleets));
+  return game.withFleets(fleets);
 }

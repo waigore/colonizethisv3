@@ -139,7 +139,7 @@ Game applyInitialVisibility({
     tileKeysByRegionAndProvince: tileKeysByRegionAndProvince,
     resourceByTileKey: resourceByTileKey,
   );
-  var resultGame = game.copyWith(worldState: updatedWorldState);
+  var resultGame = game.withWorldState(updatedWorldState);
 
   // Apply coastal sea zone full visibility for Great Powers.
   // SPEC/program/fog-and-exploration-resolution.md § Coastal sea zone full visibility.

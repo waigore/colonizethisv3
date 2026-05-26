@@ -135,7 +135,7 @@ Game runMovementPhase(
       isDestinationOwnedByPlayer: isDestinationOwnedByPlayer,
       onArmyMoveOrderTrace: onArmyMoveOrderTrace,
     );
-    state = state.copyWith(worldState: ws);
+    state = state.withWorldState(ws);
   }
 
   final navalOrders = orders.navalMoveOrdersByPlayerId;
@@ -260,7 +260,7 @@ Game applyImplicitBundledCivilianWorkOrderMoves(
           );
         });
       }
-      state = state.copyWith(worldState: ws);
+      state = state.withWorldState(ws);
       unitById[unit.id] = movedUnit;
       view = _playerViewWithMovedUnit(view, movedUnit);
       viewByPlayerId[playerId] = view;

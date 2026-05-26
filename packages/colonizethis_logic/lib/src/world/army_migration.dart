@@ -83,7 +83,7 @@ Game _ensureHomeArmiesExist(Game game) {
     changed = _ensureHomeArmyForPlayer(ws, armies, player) || changed;
   }
   if (!changed) return game;
-  return game.updateWorldState((ws) => ws.copyWith(armies: armies));
+  return game.withArmies(armies);
 }
 
 bool _ensureHomeArmyForPlayer(WorldState ws, List<Army> armies, Player player) {
@@ -120,10 +120,7 @@ Game _rebuildArmiesFromMilitaryUnits(Game game) {
   armies.sort((a, b) => a.id.compareTo(b.id));
   final nextSeq = _nextArmySequence(armies);
   return game.updateWorldState(
-    (ws) => ws.copyWith(
-      armies: armies,
-      nextArmySeq: nextSeq < 2 ? 2 : nextSeq,
-    ),
+    (ws) => ws.copyWith(armies: armies, nextArmySeq: nextSeq < 2 ? 2 : nextSeq),
   );
 }
 
@@ -357,10 +354,9 @@ WorldState _worldStateWithUpdatedArmyAndUnits(
   List<Army> armies,
   List<Unit> owUnits,
   List<Unit> nwUnits,
-) =>
-    worldState.copyWith(armies: armies).mapBothRegionUnits((regionId, _) {
-      return regionId == kRegionOldWorld ? owUnits : nwUnits;
-    });
+) => worldState.copyWith(armies: armies).mapBothRegionUnits((regionId, _) {
+  return regionId == kRegionOldWorld ? owUnits : nwUnits;
+});
 
 List<Army> _retargetArmyStation(
   List<Army> armies,

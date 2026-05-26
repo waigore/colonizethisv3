@@ -2,6 +2,7 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../constants.dart';
+import '../world/game_world_mutations.dart';
 import '../world/province_lookup.dart';
 import 'orders_application_helpers.dart';
 import '../dossier/event_dialogue.dart';
@@ -373,7 +374,7 @@ BuildWorkState _completedWorkProspect(
       u.ownerId: newProspected,
     },
   );
-  return s.copyWith(game: s.game.copyWith(worldState: ws));
+  return s.copyWith(game: s.game.withWorldState(ws));
 }
 
 BuildWorkState _completedWorkPurchaseLand(
@@ -402,7 +403,7 @@ BuildWorkState _completedWorkPurchaseLand(
       .map((p) => p.id == u.ownerId ? updatedPlayer : p)
       .toList();
   return s.copyWith(
-    game: s.game.copyWith(players: nextPlayers),
+    game: s.game.withPlayers(nextPlayers),
     work: s.work.copyWith(
       purchasedTilesByTileKey: land.purchasedTilesByTileKey,
       updatedPlayers: upsertPlayerSnapshot(

@@ -58,7 +58,7 @@ Game applyNavalSplitFleet({
     newFleet,
   ];
 
-  return game.updateWorldState((ws) => ws.copyWith(fleets: updatedFleets));
+  return game.withFleets(updatedFleets);
 }
 
 /// Transfers selected ship instances from [sourceFleetId] into [targetFleetId].
@@ -125,5 +125,5 @@ Game applyNavalTransferShipsBetweenFleets({
     ],
   ];
 
-  return game.updateWorldState((ws) => ws.copyWith(fleets: updatedFleets));
+  return game.withFleets(updatedFleets);
 }
