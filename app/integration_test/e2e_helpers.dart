@@ -35,6 +35,7 @@ export 'e2e_test_shared.dart'
         e2eCheckExploreEnabledFromCivilianPanel,
         e2eClosePanelOpenerSheetAndAwaitOpener,
         e2eDismissAlertDialogIfPresent,
+        e2eDismissCtDialogShellBroadSweepIfPresent,
         e2eDismissCtDialogShellIfPresent,
         e2eDismissCtDialogShellWithPopRouteEscalation,
         e2eDismissSnackBarIfPresent,
@@ -76,6 +77,7 @@ export 'e2e_test_shared.dart'
         kE2eDefaultBundledExploreSweepWait,
         kE2eDefaultCivilianWorkTileAppearTimeout,
         kE2eDefaultCivilianWorkTileClearTimeout,
+        kE2eDefaultCtDialogShellBroadSweepDismissTimeout,
         kE2eDefaultCtDialogShellCloseTimeout,
         kE2eDefaultCtDialogShellClosePhase,
         kE2eDefaultCtDialogShellEscalationPhase,
@@ -291,6 +293,27 @@ Future<bool> dismissAlertDialogIfPresent(
   perf: perf,
   dismissTimeout: dismissTimeout,
   dismissLabels: dismissLabels,
+);
+
+/// Stable public name for [e2eDismissCtDialogShellBroadSweepIfPresent]
+/// (Refs GitHub #2336 AC1 / AC2 / Bottleneck 6). Forwards to the
+/// implementation in
+/// `e2e_test_shared_dismiss_ct_dialog_shell_broad_sweep.dart`. The shared
+/// English-only [CtDialogShell] dismiss recipe (`Cancel` → `Close` →
+/// `Icons.close` → `Icons.arrow_back`, with `tester.binding.handlePopRoute()`
+/// fallback) is consumed indirectly by [dismissTransientUi] today; the
+/// alias is re-exposed so future scenarios that need a focused
+/// [CtDialogShell]-only dismissal (without triggering the SnackBar /
+/// AlertDialog / BottomSheet branches of the broad sweep) can compose it
+/// directly.
+Future<bool> dismissCtDialogShellBroadSweepIfPresent(
+  WidgetTester tester, {
+  E2ePerfLog? perf,
+  Duration dismissTimeout = kE2eDefaultCtDialogShellBroadSweepDismissTimeout,
+}) => e2eDismissCtDialogShellBroadSweepIfPresent(
+  tester,
+  perf: perf,
+  dismissTimeout: dismissTimeout,
 );
 
 /// Stable public name for [e2eDismissCtDialogShellIfPresent] so the

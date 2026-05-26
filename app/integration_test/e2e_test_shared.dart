@@ -23,6 +23,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'e2e_test_shared_dismiss_alert_dialog.dart';
+import 'e2e_test_shared_dismiss_ct_dialog_shell_broad_sweep.dart';
 import 'e2e_test_shared_dismiss_snackbar.dart';
 
 export 'e2e_test_shared_bundled_explore_failure.dart';
@@ -31,6 +32,7 @@ export 'e2e_test_shared_civilian_work_tile_pick.dart';
 export 'e2e_test_shared_diagnostics.dart';
 export 'e2e_test_shared_dismiss_alert_dialog.dart';
 export 'e2e_test_shared_dismiss_ct_dialog_shell.dart';
+export 'e2e_test_shared_dismiss_ct_dialog_shell_broad_sweep.dart';
 export 'e2e_test_shared_dismiss_ct_dialog_shell_escalation.dart';
 export 'e2e_test_shared_dismiss_snackbar.dart';
 export 'e2e_test_shared_final_naval_reach_check.dart';
@@ -580,32 +582,15 @@ Future<void> e2eDismissTransientUi(
   if (find.byType(BottomSheet).evaluate().isNotEmpty) {
     await e2eCloseBottomSheet(tester, perf: perf);
   }
-  if (find.byType(CtDialogShell).evaluate().isNotEmpty) {
-    final closeCandidates = <Finder>[
-      find.text('Cancel'),
-      find.text('Close'),
-      find.byIcon(Icons.close),
-      find.byIcon(Icons.arrow_back),
-    ];
-    for (final candidate in closeCandidates) {
-      final tappable = candidate.hitTestable();
-      if (tappable.evaluate().isNotEmpty) {
-        await tester.tap(tappable.first, warnIfMissed: false);
-        await e2ePumpUntilFinderEmpty(
-          tester,
-          find.byType(CtDialogShell),
-          timeout: const Duration(seconds: 2),
-        );
-        return;
-      }
-    }
-    await tester.binding.handlePopRoute();
-    await e2ePumpUntilFinderEmpty(
-      tester,
-      find.byType(CtDialogShell),
-      timeout: const Duration(seconds: 2),
-    );
-  }
+  // Shared CtDialogShell broad-sweep dismissal: lifted into
+  // [e2eDismissCtDialogShellBroadSweepIfPresent] so the English-only
+  // close-candidate sweep (`Cancel` → `Close` → `Icons.close` →
+  // `Icons.arrow_back`) plus the `tester.binding.handlePopRoute()` fallback
+  // are single-source-of-truth and pinned by widget tests. After this lift,
+  // every overlay branch of the broad-spectrum sweep delegates to a focused
+  // shared helper — no inline dismissal recipes remain in this function's
+  // overlay branches. Refs GitHub #2336 AC1 / AC2 / Bottleneck 6.
+  await e2eDismissCtDialogShellBroadSweepIfPresent(tester, perf: perf);
 }
 
 /// True when [tileElement] (an [ExpansionTile] element) hosts a
