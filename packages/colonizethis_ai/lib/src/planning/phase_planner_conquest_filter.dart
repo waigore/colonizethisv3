@@ -118,8 +118,8 @@ bool resolvePhaseConquestSuppressNwInvasionScoring({
 /// two `colonizethis_data` predicates are equivalent: both reduce to
 /// `ow <= 9`). The resolver therefore is field-equal to the legacy
 /// compound across every [ObserverGoalPhase] value, preserving the
-/// prior extra-passes / relocation-skip behaviour exactly during the S5
-/// migration.
+/// prior extra-passes / relocation-skip behaviour exactly on the
+/// landed post-S5 dispatch path.
 ///
 /// Two orchestrator decisions consume this signal:
 ///

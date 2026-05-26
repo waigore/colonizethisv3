@@ -212,8 +212,9 @@ List<WorkOrder> planDevelopCivilian({
 /// [planDevelopCivilian]. Higher score = higher build-improvement
 /// priority. Mirrors the per-tile component of the logic-side
 /// `_buildImprovementWorkScore` so DEVELOP-phase planner ranking stays
-/// consistent with resolver-facing civilian selection until the S5
-/// orchestrator refactor lands.
+/// consistent with resolver-facing civilian selection on the landed
+/// post-S5 orchestrator path (`civilianWorkOrdersFromPhasePlan` in
+/// `phase_planner_civilian_work_orders.dart`).
 int _developCivilianTileScore(String tileKey) {
   var score = kBuildImprovementExtractableResourceScore;
   if (Unit.regionIdFromTileKey(tileKey) == kNewWorldRegionId) {

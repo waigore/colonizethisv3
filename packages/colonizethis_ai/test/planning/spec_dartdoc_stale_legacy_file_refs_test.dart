@@ -36,6 +36,8 @@ const _forbiddenSubstrings = <String>[
   'until the S5 orchestrator wiring lands',
   'once S5 wiring is active',
   'pre-S5 wiring',
+  'exactly during the S5',
+  'civilian selection until the S5',
 ];
 
 const _planningDirRelative = 'lib/src/planning';
