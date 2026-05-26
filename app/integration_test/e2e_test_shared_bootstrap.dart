@@ -103,6 +103,29 @@ Future<void> e2eWaitForMapHudAfterNewGameStart(
 }
 
 /// Canonical new-game → map HUD path shared by E2E scenarios (Refs #2336).
+///
+/// Adaptive polling notes (GitHub #2336 AC5):
+///
+/// - After the `New Game` tap, [e2eWaitUntilFound] polls for the `Start`
+///   button with check-before-pump + exponential backoff (25 → 500 ms cap)
+///   via the inner [e2eWaitUntilFound] call.
+/// - After the drag that scrolls the dialog to the `Start` button,
+///   [e2ePumpUntilConditionOrIdle] polls for the button becoming
+///   hit-testable with the same check-before-pump cadence.
+/// - After the `Start` tap, [e2ePumpUntilConditionOrIdle] polls for any
+///   post-tap observable (`Creating game` indicator, the home-to-capital
+///   button on instant map gen, the intro-overlay loading branch, or the
+///   `Could not create game` error dialog) with a short 200 ms safety net.
+///   The downstream [e2eWaitForMapHudAfterNewGameStart] then handles the
+///   longer-running adaptive poll up to [overallCap]. The settle slice is
+///   attributable to `pump_until_post_start_tap_settled`.
+/// - After the map HUD mounts, [e2ePumpUntilConditionOrIdle] polls for the
+///   home-to-capital button becoming hit-testable before
+///   [e2eAdvanceGameStartIntroUntilDismissed] dismisses the intro overlay.
+///
+/// No bare single-frame `tester.pump()` settles remain in the body; every
+/// state transition is gated by a condition-based wait so the helper
+/// conforms to AC5 end-to-end.
 Future<void> e2eBootstrapNewGameToMap(
   WidgetTester tester, {
   E2ePerfLog? perf,
@@ -142,7 +165,32 @@ Future<void> e2eBootstrapNewGameToMap(
   );
   await tester.ensureVisible(startButton);
   await tester.tap(startButton);
-  await tester.pump();
+  // Replace the legacy bare single-frame `await tester.pump();` settle with
+  // an adaptive condition-based wait so the helper conforms to GitHub #2336
+  // AC5 (check-before-pump + exponential backoff capped at ≤500 ms). The
+  // poll short-circuits the moment any post-Start-tap observable surfaces
+  // (`Creating game` indicator, the home-to-capital button on instant map
+  // gen, the intro-overlay loading branch, or the `Could not create game`
+  // error dialog), so the canonical success path (which mounts `Creating
+  // game` on the very next frame) returns within a single 25 ms pump
+  // instead of opaque pump-then-blind-handoff sequencing. The downstream
+  // [e2eWaitForMapHudAfterNewGameStart] still runs the longer-running
+  // adaptive poll; this settle is a short, observable safety net so
+  // post-Start-tap latency is attributable to a dedicated
+  // `pump_until_post_start_tap_settled` perf slice. The 200 ms cap is
+  // strictly a fast-path bound — the downstream helper's `overallCap`
+  // (default 60 s) governs the slow path.
+  await e2ePumpUntilConditionOrIdle(
+    tester,
+    () =>
+        find.text('Creating game').evaluate().isNotEmpty ||
+        find.byKey(kHomeToCapitalButtonKey).evaluate().isNotEmpty ||
+        find.text('Could not create game').evaluate().isNotEmpty ||
+        e2eGameStartIntroBlocksUi(tester),
+    timeout: const Duration(milliseconds: 200),
+    perf: perf,
+    phaseName: 'pump_until_post_start_tap_settled',
+  );
 
   await e2eWaitForMapHudAfterNewGameStart(tester, overallCap: overallCap);
 
