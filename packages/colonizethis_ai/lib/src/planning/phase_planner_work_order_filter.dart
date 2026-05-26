@@ -6,9 +6,10 @@
 /// [OrderSuggestionAPI.suggestWorkOrders] (a broader candidate pool than
 /// the phase planners directly emit) and then drops the suggestions that
 /// the active observer phase forbids by spec. Historically this drop was
-/// performed by `shouldFilterObserverPhaseWorkOrder`
-/// (`observer_goal_phase.dart`), which re-invoked `observerGoalPhaseFor`
-/// on every candidate. With the [PhasePlanOutcome] dispatcher already
+/// performed by a now-removed legacy helper in
+/// `observer_goal_phase.dart` (Refs #2509 S10), which re-invoked
+/// `observerGoalPhaseFor` on every candidate. With the [PhasePlanOutcome]
+/// dispatcher already
 /// resolving the phase once per player turn
 /// (`SPEC/ai/phase-planner-dispatch.md`), the orchestrator can read the
 /// suppression contract directly off [PhasePlanOutcome.phase] without
@@ -36,8 +37,8 @@
 /// no I/O, no logging, and never re-invokes `observerGoalPhaseFor`
 /// because [PhasePlanOutcome] already pinned the active phase.
 ///
-/// Behaviour parity: this adapter reproduces every branch of
-/// `shouldFilterObserverPhaseWorkOrder` exactly. OW `purchase_land`,
+/// Behaviour parity: this adapter reproduces every branch of the
+/// now-removed legacy work-order filter exactly. OW `purchase_land`,
 /// OW `build_improvement`, and non-acquisition / non-improvement
 /// targets in any region always pass through under every phase.
 library;
