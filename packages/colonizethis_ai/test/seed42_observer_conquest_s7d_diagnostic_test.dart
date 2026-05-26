@@ -63,23 +63,47 @@ import 'package:logger/logger.dart';
 ///   * **Targets exist for the failing GPs** — turn-99 snapshot shows
 ///     gp3/gp4/gp5/gp6 with 6–8 invadable OW provinces each, yet only
 ///     1–2 regiments and treasury 0–50.
+///   * **Geographic peer-war lock (turn-99 snapshot, all four failing
+///     GPs)** — `adjacentOwnerFactionIdsSorted` collapses to a single
+///     entry per GP: `gp4` for gp3, `gp3` for gp4, `gp6` for gp5,
+///     `gp5` for gp6. Every invadable OW province is owned by that
+///     peer; the at-war minors in `ThreatSummary.atWarWith` are not
+///     adjacent and therefore never reach the `atWarMinors` set
+///     inside `planExpandDeclareWar`. This is the proximate cause
+///     of the arm-2 underfire — refutes H1 and elevates the new
+///     hypothesis H4 below.
 ///
 /// ## S7-T tuning surface (issue § S7-T hypotheses, ordered by S7-D
 ///     evidence)
 ///
-///   * **H1: planExpandDeclareWar arm-2 under-fires under treasury
-///     starvation.** Arm 2 ("already-at-war minor with invadable OW")
-///     has **no** treasury gate per the spec, yet gp3 (at war with 5
-///     minors, 6 invadable provinces) picks only `minor1` three
-///     times in 100 turns. Investigate whether arm 2 candidate
-///     filtering (the `adjacentOwners` cross-check, the
-///     `atWarMinors` set construction, or a downstream
-///     suggestDeclareWar reject) is rejecting valid at-war minor
-///     targets.
+/// **H1 refuted** (re-run 2026-05-26, captured in
+/// `expand_phase_planner_declare_war_test.dart` ›
+/// `Refs #2847 S7-D H1 refutation` pin). The turn-99 snapshot for
+/// every failing GP shows `adjacentOwnerFactionIdsSorted` containing
+/// **only the at-war peer GP** (gp4 for gp3, gp3 for gp4, gp6 for gp5,
+/// gp5 for gp6). Because `ConquestSummary.invadableProvinceIdsSorted`
+/// is a P–P neighbor scan, **no at-war minor owns any invadable
+/// province by mid-late game** for the failing GPs — they are
+/// geographically surrounded by their peer GP and cut off from the
+/// minor frontier. Arm 2 therefore has zero candidates structurally,
+/// not because of a candidate-filtering bug. Tuning the `atWarMinors`
+/// set construction or the `adjacentOwners` cross-check will not
+/// produce arm-2 fires the planner is currently missing because the
+/// inputs already correctly exclude non-adjacent minors. The 3 arm-2
+/// fires gp3 does emit (`minor1` ×3) occur in earlier turns when the
+/// geography still routes through a minor.
+///
+///   * **H1 [refuted]: planExpandDeclareWar arm-2 candidate filtering.**
+///     Spec gives no arm for at-war minors that own no invadable
+///     province. The proximate cause for the missing arm-2 fires is
+///     **upstream of the planner** — the geographic peer-war lock
+///     (see H4) keeps the at-war minor owners outside the invadable
+///     set in the first place.
 ///   * **H2: mutual-plateau peer-war exit is too lax for the gp3↔gp4
 ///     and gp5↔gp6 pairs.** Both pairs spend ~45 turns at war with
-///     each other while invadable minor targets remain. The
-///     `belowQuotaPeerGpPeaceTargets` /
+///     each other while invadable minor targets remain on the wider
+///     map (just not reachable from the failing GP's own anchors).
+///     The `belowQuotaPeerGpPeaceTargets` /
 ///     `mutualExhaustedBelowQuotaGpStalematePeaceTargets` deciders
 ///     fire ~44% of turns but the war reopens. Investigate whether
 ///     the declare-war path re-opens the war the same turn peace is
@@ -94,6 +118,31 @@ import 'package:logger/logger.dart';
 ///     regiments — does the build pipeline cap arm A to once-per-
 ///     drop-to-zero, or is the arm gate semantically wrong for the
 ///     "1–2 regiments stuck" case?
+///   * **H4 [new, highest signal]: geographic peer-war lock starves
+///     the failing GPs of reachable conquest targets.** For each of
+///     the four failing GPs, `adjacentOwnerFactionIdsSorted` collapses
+///     to a single at-war peer GP by mid-game, every invadable OW
+///     province is owned by that peer, and the
+///     `kStalledMinRegimentCountWhenGpBlockerAtWar` (22) plus
+///     province-deficit scaling pushes the `minRegimentFloor`
+///     above 22 while the GP has 1–2 regiments and treasury 0–50.
+///     `boostTreasuryRecoveryCargo` fires 91–97 turns per failing
+///     GP but treasury never climbs to `cheapestRegimentBuildTreasuryCost`
+///     (2000). The peer war cannot be broken via declare-war
+///     (already at war), army-move (insufficient regiments), or
+///     peace (45-turn mutual offer + war reopens). Investigate
+///     **(a)** whether `planExpandPeace` should include the sole
+///     at-war GP blocker more aggressively when the failing GP's
+///     adjacency collapses to that single peer (today's gate
+///     requires `mutualPlateau && gpOnlyFrontier && !hasUninvadedOldWorldMinor`
+///     and excludes the blocker otherwise — see
+///     `expand_phase_planner.dart::planExpandPeace`), and
+///     **(b)** whether the stalled-expansion own-territory frontier-march
+///     in `runConquestArmyMovePlanner` (SPEC/ai/phase-planner-architecture.md
+///     § Acceptance criteria #2) should extend to at-war minor/tribe
+///     owned OW provinces reachable through the at-war peer GP's
+///     territory (currently the multi-turn march targets minor/tribe
+///     destinations adjacent to *own* territory only).
 ///
 /// ## How to refresh
 ///
