@@ -59,7 +59,7 @@ void main() {
       // --- Builder: build improvement + first legal tile (e2e tap target) ---
       await openCivilianPanel(tester, perf: perf);
       await tapFirstAssignInCivilianPanel(tester);
-      await tester.tap(find.text('Build improvement'));
+      await tapCivilianWorkOrderLabel(tester, 'Build improvement');
       await pickFirstValidWorkTileAndAwaitOverlayClear(
         tester,
         appearPhase: 'wait_until_first_valid_work_tile_after_build_improvement',
@@ -72,7 +72,7 @@ void main() {
       // --- Explorer: prospect + first legal tile ---
       await openCivilianPanel(tester, perf: perf);
       await tapAssignOnCivilianRowWithTitle(tester, kUnitTypeExplorer);
-      await tester.tap(find.text('Prospect'));
+      await tapCivilianWorkOrderLabel(tester, 'Prospect');
       await maybePickFirstValidWorkTileAndAwaitOverlayClear(
         tester,
         appearPhase: 'pump_until_prospect_work_tile_optional',
