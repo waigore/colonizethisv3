@@ -39,6 +39,7 @@ export 'e2e_test_shared_final_naval_reach_check.dart';
 export 'e2e_test_shared_first_fleet_move.dart';
 export 'e2e_test_shared_fleet_reach_loop_test_total_meta.dart';
 export 'e2e_test_shared_fleet_reach_scenario_preamble.dart';
+export 'e2e_test_shared_integration_test_bootstrap.dart';
 export 'e2e_test_shared_panel_open_outer_loop.dart';
 export 'e2e_test_shared_panel_open_post_tap_probe.dart';
 export 'e2e_test_shared_panel_open_sheet_close.dart';
