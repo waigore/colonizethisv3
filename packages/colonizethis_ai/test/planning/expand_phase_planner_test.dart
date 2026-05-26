@@ -47,12 +47,14 @@
 //  12. **Determinism:** identical inputs yield identical lists across
 //      repeated calls (Must-have #7).
 //
-// This file is the in-module pin for the new EXPAND planner. The
-// existing function-unit pins on the legacy `expandPhaseGpPeaceTargets`
-// and `primaryInvadableOldWorldGpBlocker` helpers in
-// `observer_goal_phase_expand_peace_blocker_branches_test.dart` keep the
-// legacy code path covered until the S5 orchestrator wiring lands. Both
-// will be reconciled when the legacy helper is removed (#2509 S1).
+// This file is the in-module pin for the EXPAND planner. The S5
+// orchestrator wiring through `phase_planner_dispatch.dart` /
+// `domain_planner_orchestrator.dart` is in place, so this pin guards the
+// canonical `planExpandPeace` contract. The function-unit pins on the
+// legacy `expandPhaseGpPeaceTargets` and `primaryInvadableOldWorldGpBlocker`
+// helpers in `observer_goal_phase_expand_peace_blocker_branches_test.dart`
+// keep the no-`phasePlan` fallback path through
+// `collectStalledGreatPowerPeaceTargets` covered.
 
 import 'package:colonizethis_ai/colonizethis_ai.dart';
 import 'package:colonizethis_ai/src/planning/expand_phase_planner.dart';

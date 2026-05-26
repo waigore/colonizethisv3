@@ -1,16 +1,20 @@
-// Regression guard (Refs #2509 S1): ensures planning dartdoc, SPEC/ai
+// Regression guard (Refs #2509 S1 / S5): ensures planning dartdoc, SPEC/ai
 // documents, and `colonizethis_ai` test comments stop claiming the deleted
 // legacy files (`colonial_pressure.dart` and
 // `diplomacy_planner_peace_targets.dart`) retain delegating stubs or have
-// a pending deletion. Both files were deleted in #2509 S1; the helpers they
-// hosted are canonical in the phase-planner modules and
-// `observer_goal_phase.dart`.
+// a pending deletion, and stop claiming the S5 orchestrator wiring is still
+// pending. Both legacy files were deleted in #2509 S1; their helpers are
+// canonical in the phase-planner modules and `observer_goal_phase.dart`.
+// The S5 orchestrator wiring through `phase_planner_dispatch.dart` and
+// `domain_planner_orchestrator.dart` is in place; `collectStalledGreatPowerPeaceTargets`
+// is retained as the no-`phasePlan` fallback path, not as a placeholder.
 //
 // New dartdoc / SPEC / test-comment text may still describe the historical
 // migration via past-tense phrases ("previously retained",
-// "now-completed S1 deletion", "formerly in colonial_pressure.dart"). This
-// guard fails when present-tense claims reappear that contradict the live
-// tree, whether in `lib/src/planning/` or in this package's `test/` tree.
+// "now-completed S1 deletion", "formerly in colonial_pressure.dart",
+// "the S5 orchestrator wiring is in place"). This guard fails when
+// present-tense claims reappear that contradict the live tree, whether
+// in `lib/src/planning/` or in this package's `test/` tree.
 
 import 'dart:io';
 
@@ -23,6 +27,11 @@ const _forbiddenSubstrings = <String>[
   'now a thin delegating',
   'planned S1 deletion',
   'until S1 deletion',
+  'tracked under S5 / S1 of #2509',
+  'tracked under S5/S1 of #2509',
+  'until S5 wires this module',
+  'S5 orchestrator wire-up is in flight',
+  'until the S5 orchestrator wiring lands',
 ];
 
 const _planningDirRelative = 'lib/src/planning';

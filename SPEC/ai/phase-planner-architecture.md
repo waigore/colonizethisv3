@@ -52,7 +52,7 @@ runDomainPlanners(ctx)
   runMovePlanner(ctx)
 ```
 
-Phase-specific peace/declare-war targets feed `runDiplomacyPlannerWithResult`; work and army-move plans feed the economy / conquest passes. The legacy `collectStalledGreatPowerPeaceTargets` aggregate is retained on the diplomacy planner path (canonical home: `observer_goal_phase.dart`) until S5 replaces it with the phase-dispatched call sites described above. Dispatcher: [phase-planner-dispatch.md](phase-planner-dispatch.md).
+Phase-specific peace/declare-war targets feed `runDiplomacyPlannerWithResult`; work and army-move plans feed the economy / conquest passes. The S5 orchestrator wiring is in place: `domain_planner_orchestrator.dart` threads `PhasePlanOutcome` into every diplomacy / conquest / economy call site via the adapter helpers in `phase_planner_peace_targets.dart` / `phase_planner_declare_war_targets.dart` / `phase_planner_military_plans.dart`. `collectStalledGreatPowerPeaceTargets` (canonical home: `observer_goal_phase.dart`) remains the fallback path for callers that omit `phasePlan` (tests, legacy entry points) and keeps the EXPAND ratchet aggregator on the production hot path. Dispatcher: [phase-planner-dispatch.md](phase-planner-dispatch.md).
 
 ### Data flow
 
