@@ -78,8 +78,9 @@ class E2eIntegrationTestBootstrapResult {
 ///    **before** the `expect` gate),
 /// 2. `expect(kCtE2EEnabled, isTrue, ...)` gate,
 /// 3. `tester.binding.setSurfaceSize(surfaceSize)`,
-/// 4. `await bootstrapForIntegrationTest()` + first `tester.pump()` +
-///    [e2eWaitForNewGameEntry],
+/// 4. `await bootstrapForIntegrationTest()` + adaptive
+///    [e2ePumpUntilConditionOrIdle] settle (replaces the legacy bare
+///    single-frame `tester.pump()`) + [e2eWaitForNewGameEntry],
 /// 5. `perf.timing(bootstrapTimingPhase, bootstrapSw.elapsed)`.
 ///
 /// Both [e2eEnterStandardE2eScenario]
@@ -125,13 +126,16 @@ class E2eIntegrationTestBootstrapResult {
 ///   [kE2eDefaultIntegrationTestBootstrapSurfaceSize] = `Size(1280, 720)`)
 ///   before the bootstrap callable so Flame viewport sizing matches the
 ///   pre-lift inline behaviour.
-/// - Awaits the injected [bootstrapForIntegrationTest], then issues one
-///   `tester.pump()` so the engine settles whatever microtasks the
-///   bootstrap scheduled. The same single-frame pump appeared verbatim
-///   in both pre-lift inline blocks; the `e2eWaitForNewGameEntry` call
-///   immediately following does its own adaptive polling so the pump is
-///   the canonical Flutter `tap → pump → await` ordering rather than a
-///   wasted settle.
+/// - Awaits the injected [bootstrapForIntegrationTest], then replaces the
+///   legacy bare single-frame `await tester.pump();` settle with a
+///   bounded [e2ePumpUntilConditionOrIdle] poll that short-circuits the
+///   moment `find.text('New Game')` resolves. The poll evaluates its
+///   condition before the first pump and uses exponential backoff capped
+///   at ≤500 ms per GitHub #2336 AC5; downstream [e2eWaitForNewGameEntry]
+///   still runs the longer-running adaptive poll on the hit-testable
+///   filter (15 s default cap) so this settle is a short, observable
+///   fast-path bound. The 200 ms cap is strictly a fast-path safety net —
+///   the downstream helper governs the slow path.
 /// - Calls [e2eWaitForNewGameEntry] with the scenario perf log so the
 ///   shared adaptive-poll path attributes its slices to the same test
 ///   identifier the rest of the scenario uses.
@@ -168,7 +172,23 @@ Future<E2eIntegrationTestBootstrapResult> e2eRunIntegrationTestBootstrap(
 
   final bootstrapSw = Stopwatch()..start();
   await bootstrapForIntegrationTest();
-  await tester.pump();
+  // Replace the legacy bare single-frame `await tester.pump();` settle
+  // with an adaptive condition-based wait so the helper conforms to
+  // GitHub #2336 AC5 (check-before-pump + exponential backoff capped at
+  // ≤500 ms). The poll short-circuits the moment the post-bootstrap
+  // `New Game` entry is mounted (presence check; the downstream
+  // [e2eWaitForNewGameEntry] still verifies the hit-testable form on the
+  // longer 15 s budget), so post-bootstrap settle latency is attributable
+  // to a dedicated `pump_until_post_bootstrap_settled` perf slice instead
+  // of an opaque single-frame pump. The 200 ms cap is strictly a
+  // fast-path bound — the downstream helper governs the slow path.
+  await e2ePumpUntilConditionOrIdle(
+    tester,
+    () => find.text('New Game').evaluate().isNotEmpty,
+    timeout: const Duration(milliseconds: 200),
+    perf: perf,
+    phaseName: 'pump_until_post_bootstrap_settled',
+  );
   await e2eWaitForNewGameEntry(tester, perf: perf);
   perf.timing(bootstrapTimingPhase, bootstrapSw.elapsed);
 
