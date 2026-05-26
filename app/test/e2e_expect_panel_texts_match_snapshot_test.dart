@@ -118,6 +118,41 @@ void main() {
         );
       },
     );
+
+    test(
+      'kE2eDefaultExpectPanelTextsSnapshotReaderTimeout caps the post-mount '
+      'reader poll at 2 seconds',
+      () {
+        expect(
+          kE2eDefaultExpectPanelTextsSnapshotReaderTimeout,
+          const Duration(seconds: 2),
+          reason:
+              'The bounded post-mount snapshot-reader poll closes the race '
+              'between the panel-root mount and the post-frame snapshot '
+              'setter (Refs #2336 AC10). Two seconds is generous compared '
+              'with the typical single-frame turnaround; raising it would '
+              'inflate the AC9 wall-clock budget on the slow path, while '
+              'shortening it would re-introduce the same false '
+              '`null snapshot` failure on slower CI runners.',
+        );
+      },
+    );
+
+    test(
+      'kE2eDefaultExpectPanelTextsSnapshotReaderPhase preserves the '
+      'attribution label for AC8 timing tables',
+      () {
+        expect(
+          kE2eDefaultExpectPanelTextsSnapshotReaderPhase,
+          'pump_until_panel_snapshot_populated',
+          reason:
+              'AC8 timing tables attribute the post-mount snapshot-setter '
+              'wait to this dedicated phase label so its latency stays '
+              'separate from the panel-root mount slice; a silent rename '
+              'would orphan that bucket.',
+        );
+      },
+    );
   });
 
   group('e2eExpectPanelTextsMatchSnapshot — happy path', () {
@@ -133,7 +168,7 @@ void main() {
         await e2eExpectPanelTextsMatchSnapshot(
           tester,
           panelRootKey: root,
-          snapshot: const Object(),
+          snapshotReader: () => const Object(),
           buildExpected: () {
             calls++;
             return const ['alpha', 'beta', 'gamma'];
@@ -163,7 +198,7 @@ void main() {
           () => e2eExpectPanelTextsMatchSnapshot(
             tester,
             panelRootKey: root,
-            snapshot: const Object(),
+            snapshotReader: () => const Object(),
             buildExpected: () => const ['alpha', 'gamma'],
           ),
           throwsA(isA<TestFailure>()),
@@ -180,7 +215,8 @@ void main() {
 
   group('e2eExpectPanelTextsMatchSnapshot — null-snapshot guard', () {
     testWidgets(
-      'null snapshot -> assertion fails with a panel-root-keyed reason',
+      'snapshotReader stays null after panel mounts -> assertion fails with '
+      'a panel-root-keyed reason',
       (tester) async {
         const root = Key('panel_root_null_snapshot');
         await tester.pumpWidget(_wrap(root, const [Text('whatever')]));
@@ -188,12 +224,13 @@ void main() {
           await e2eExpectPanelTextsMatchSnapshot(
             tester,
             panelRootKey: root,
-            snapshot: null,
+            snapshotReader: () => null,
             buildExpected: () => const ['whatever'],
+            snapshotReaderTimeout: const Duration(milliseconds: 50),
           );
           fail(
             'expected the helper to throw a TestFailure when the '
-            'snapshot is null',
+            'snapshot reader returns null',
           );
         } on TestFailure catch (e) {
           expect(
@@ -216,7 +253,7 @@ void main() {
     );
 
     testWidgets(
-      'null snapshot -> primary builder is never invoked',
+      'snapshotReader stays null -> primary builder is never invoked',
       (tester) async {
         const root = Key('panel_root_null_snapshot_no_call');
         await tester.pumpWidget(_wrap(root, const [Text('only')]));
@@ -225,11 +262,12 @@ void main() {
           await e2eExpectPanelTextsMatchSnapshot(
             tester,
             panelRootKey: root,
-            snapshot: null,
+            snapshotReader: () => null,
             buildExpected: () {
               called = true;
               return const ['only'];
             },
+            snapshotReaderTimeout: const Duration(milliseconds: 50),
           );
         } on TestFailure {
           // Expected — null guard fires before the builder runs.
@@ -249,6 +287,86 @@ void main() {
   });
 
   group(
+    'e2eExpectPanelTextsMatchSnapshot — post-mount async snapshot population',
+    () {
+      testWidgets(
+        'snapshotReader returns null at call time, then non-null after a '
+        'pump frame -> assertion passes (race fix for #2336 AC10)',
+        (tester) async {
+          const root = Key('panel_root_late_snapshot');
+          await tester.pumpWidget(
+            _wrap(root, const [Text('alpha'), Text('beta')]),
+          );
+          Object? lateSnapshot;
+          // Schedule the snapshot setter to fire on the next post-frame
+          // callback, mirroring the production `updateCtE2e*PanelSnapshotIfEnabled`
+          // call sites that are invoked from a widget's first build or a
+          // post-frame callback after the panel-root finder has already
+          // become non-empty. Before the bounded reader poll this race
+          // produced the false `null snapshot` failure documented in
+          // Refs #2336 AC10.
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            lateSnapshot = const Object();
+          });
+          await e2eExpectPanelTextsMatchSnapshot(
+            tester,
+            panelRootKey: root,
+            snapshotReader: () => lateSnapshot,
+            buildExpected: () => const ['alpha', 'beta'],
+            snapshotReaderTimeout: const Duration(seconds: 1),
+          );
+          expect(
+            lateSnapshot,
+            isNotNull,
+            reason:
+                'Sanity: the bounded reader poll must have driven enough '
+                'pumps for the post-frame callback to fire and populate '
+                'the local snapshot mirror; otherwise the race-fix '
+                'pin is testing nothing.',
+          );
+        },
+      );
+
+      testWidgets(
+        'snapshotReader poll emits a dedicated phase-attribution timing '
+        'event keyed on snapshotReaderPhaseName',
+        (tester) async {
+          const root = Key('panel_root_snapshot_reader_phase');
+          await tester.pumpWidget(_wrap(root, const [Text('only')]));
+          final perf = shared.E2ePerfLog('expect_panel_texts_reader_phase');
+          final lines = await _captureDebugPrints(() async {
+            await e2eExpectPanelTextsMatchSnapshot(
+              tester,
+              panelRootKey: root,
+              snapshotReader: () => const Object(),
+              buildExpected: () => const ['only'],
+              perf: perf,
+              snapshotReaderPhaseName: 'pin_snapshot_reader_phase',
+              snapshotReaderTimeout: const Duration(milliseconds: 50),
+            );
+          });
+          expect(
+            lines.where(
+              (line) =>
+                  line.startsWith('E2E_TIMING|') &&
+                  line.contains('|phase=pin_snapshot_reader_phase|'),
+            ),
+            isNotEmpty,
+            reason:
+                'The bounded snapshot-reader poll must forward the '
+                'caller-supplied `snapshotReaderPhaseName` into its '
+                'timing event so AC8 dashboards keep post-mount '
+                'snapshot-population latency separate from the '
+                'panel-root mount slice. A regression that hard-coded '
+                'the default phase would silently merge the two '
+                'buckets.',
+          );
+        },
+      );
+    },
+  );
+
+  group(
     'e2eExpectPanelTextsMatchSnapshot — alternative-expected anyOf fallback',
     () {
       testWidgets(
@@ -262,7 +380,7 @@ void main() {
           await e2eExpectPanelTextsMatchSnapshot(
             tester,
             panelRootKey: root,
-            snapshot: const Object(),
+            snapshotReader: () => const Object(),
             buildExpected: () => const ['alpha', 'beta'],
             buildAlternativeExpected: () {
               altCalls++;
@@ -295,7 +413,7 @@ void main() {
           await e2eExpectPanelTextsMatchSnapshot(
             tester,
             panelRootKey: root,
-            snapshot: const Object(),
+            snapshotReader: () => const Object(),
             buildExpected: () => const ['expanded-only'],
             buildAlternativeExpected: () => const ['collapsed-only'],
           );
@@ -311,7 +429,7 @@ void main() {
             () => e2eExpectPanelTextsMatchSnapshot(
               tester,
               panelRootKey: root,
-              snapshot: const Object(),
+              snapshotReader: () => const Object(),
               buildExpected: () => const ['expanded-only'],
               buildAlternativeExpected: () => const ['collapsed-only'],
             ),
@@ -338,7 +456,7 @@ void main() {
         await e2eExpectPanelTextsMatchSnapshot(
           tester,
           panelRootKey: root,
-          snapshot: const Object(),
+          snapshotReader: () => const Object(),
           buildExpected: () => const ['only'],
           phaseName: 'pin_panel_phase',
           perf: perf,
@@ -374,7 +492,7 @@ void main() {
         await expectPanelTextsMatchSnapshot(
           tester,
           panelRootKey: root,
-          snapshot: const Object(),
+          snapshotReader: () => const Object(),
           buildExpected: () => const ['alpha', 'beta'],
         );
       },
@@ -387,10 +505,12 @@ void main() {
         final Future<void> Function(
           WidgetTester, {
           required Key panelRootKey,
-          required Object? snapshot,
+          required Object? Function() snapshotReader,
           required List<String> Function() buildExpected,
           String phaseName,
           Duration timeout,
+          Duration snapshotReaderTimeout,
+          String snapshotReaderPhaseName,
           shared.E2ePerfLog? perf,
           List<String> Function()? buildAlternativeExpected,
         })
@@ -402,8 +522,10 @@ void main() {
               'The AC1 barrel must keep exporting the helper with the '
               'documented signature. A silent removal from the `show` '
               'clause, an arg-order swap on the wrapper, or a default '
-              'change for `phaseName` / `timeout` would fail this '
-              'assignment at compile time, not at slow-CI E2E time.',
+              'change for `phaseName` / `timeout` / '
+              '`snapshotReaderTimeout` / `snapshotReaderPhaseName` would '
+              'fail this assignment at compile time, not at slow-CI E2E '
+              'time.',
         );
       },
     );
