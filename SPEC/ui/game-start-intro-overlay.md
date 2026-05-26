@@ -4,6 +4,7 @@
 **SPEC/ui** — Modal blocking overlay on first entry to a new game session. Implementation: `app/lib/features/game/dialogue/game_start_intro_overlay.dart`.
 **Widgetbook:** `Game Start Intro Overlay` → `app/lib/widgetbook/catalog.dart`. Yarn: `game_start_intro` via [`CtDialogueView`](ct-dialogue-view.md). Host: [`game-screen.md`](game-screen.md). Asset: `kDialogueGameIntroAsset` in `app/lib/config/app_constants.dart`.
 
+**Mockup:** [mockups/OVL10001-game-intro-overlay.html](mockups/OVL10001-game-intro-overlay.html)
 ---
 
 ## Widget contract

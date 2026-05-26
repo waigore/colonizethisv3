@@ -3,6 +3,7 @@
 **Screen ID:** `PROD20001` — stable; do not reassign.
 **SPEC/ui** — Read-only modal that shows the human player's per-commodity preview deltas across each `EconomyPreviewStockpilePhase`, opened from [production-panel.md](production-panel.md). Economy preview model: [economy-preview.md](../game/economy-preview.md). App wiring and events: [app-ui-wiring.md](../program/app-ui-wiring.md).
 
+**Mockup:** [mockups/PROD20001-production-commodity-breakdown.html](mockups/PROD20001-production-commodity-breakdown.html)
 ---
 
 ## Widget contract

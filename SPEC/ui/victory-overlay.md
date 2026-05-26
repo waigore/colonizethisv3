@@ -4,6 +4,7 @@
 **SPEC/ui** — Full-screen overlay shown when a military victory is recorded. Implementation: `app/lib/features/game/flame/victory_overlay.dart`.
 **Widgetbook:** `Victory` → `app/lib/widgetbook/catalog.dart`. Game model: [victory.md](../game/victory.md). Return target: [main-menu.md](main-menu.md). Host: [`game-screen.md`](game-screen.md).
 
+**Mockup:** [mockups/OVL20001-game-victory-overlay.html](mockups/OVL20001-game-victory-overlay.html)
 ---
 
 ## Widget contract

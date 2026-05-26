@@ -4,6 +4,7 @@
 **SPEC/ui** — Game Setup screen (CtGameSetup). Implementation: `app/lib/widgets/game_setup.dart`.
 **Widgetbook:** `Game Setup` → `app/lib/widgetbook/catalog.dart`. Authority: UXD 03b.
 
+**Mockup:** [mockups/SHEL20001-game-setup.html](mockups/SHEL20001-game-setup.html)
 ---
 
 ## Widget contract

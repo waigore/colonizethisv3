@@ -4,6 +4,7 @@
 **SPEC/ui** — Tactical mini-game screen that runs a single Quick Battle from deployment to result. Implementation: `app/lib/features/game/combat/quick_battle_screen.dart`.
 **Widgetbook:** `Quick Battle` → `app/lib/widgetbook/catalog.dart`. Game model: [quick-battle.md](../game/quick-battle.md). Resolver: [quick-battle-resolution.md](../program/quick-battle-resolution.md). Entry: [combat-mode-choice-dialog.md](combat-mode-choice-dialog.md). Sub-views: [quick-battle-deployment-view.md](quick-battle-deployment-view.md), [quick-battle-action-selector.md](quick-battle-action-selector.md).
 
+**Mockup:** [mockups/CMPT20001-quick-battle-screen.html](mockups/CMPT20001-quick-battle-screen.html)
 ---
 
 ## Widget contract

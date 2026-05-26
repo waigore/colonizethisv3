@@ -3,6 +3,7 @@
 **Screen ID:** `CMPT10001` — stable; do not reassign.
 **SPEC/ui** — Modal dialog that lets the player pick between Auto-Resolve and Quick Battle for an upcoming combat. Game model: [quick-battle.md](../game/quick-battle.md), [siege-mechanics.md](../game/siege-mechanics.md). Resolver: [quick-battle-resolution.md](../program/quick-battle-resolution.md). Dialog wiring: [app-ui-wiring.md](../program/app-ui-wiring.md). Follow-up screen: [quick-battle-screen.md](quick-battle-screen.md).
 
+**Mockup:** [mockups/CMPT10001-combat-mode-choice.html](mockups/CMPT10001-combat-mode-choice.html)
 ---
 
 ## Widget contract

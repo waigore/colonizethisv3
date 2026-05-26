@@ -1,0 +1,173 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ColonizeThis — Military Units Panel</title>
+<style>
+:root {
+  --bg: oklch(16% 0.018 50); --bg-deep: oklch(12% 0.015 45);
+  --surface: oklch(24% 0.015 45); --surface-lite: oklch(30% 0.016 52);
+  --fg: oklch(88% 0.015 80); --muted: oklch(65% 0.025 70);
+  --border: oklch(40% 0.02 55); --accent: oklch(72% 0.14 85);
+  --accent-dim: oklch(60% 0.12 82); --accent-bright: oklch(82% 0.13 90);
+  --danger: oklch(55% 0.16 22); --success: oklch(55% 0.12 150);
+  --font-display: 'Iowan Old Style', 'Cinzel', 'Charter', Georgia, serif;
+  --font-body: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  --font-mono: 'SF Mono', ui-monospace, Menlo, monospace;
+  --topbar-h:36px;
+}
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+html,body{min-height:100vh;min-height:100dvh;background:var(--bg);color:var(--fg);font-family:var(--font-body);overflow-x:hidden}
+html{overflow-y:auto;scroll-behavior:smooth}
+
+.topbar{height:var(--topbar-h);background:linear-gradient(180deg,var(--surface-lite)0%,var(--surface)100%);border-bottom:1px solid var(--accent-dim);display:flex;align-items:center;padding:0 10px;gap:8px;flex-shrink:0;position:relative;z-index:10}
+.topbar::after{content:'';position:absolute;bottom:-1px;left:0;right:0;height:1px;background:var(--accent);opacity:.25}
+.back-btn{padding:4px 10px;background:linear-gradient(180deg,var(--surface-lite),var(--bg-deep));border:1px solid var(--border);color:var(--accent-dim);font-family:var(--font-display);font-size:11px;cursor:pointer;min-height:26px;letter-spacing:.04em;transition:color .15s}
+.back-btn:hover{color:var(--accent-bright)}
+.topbar-title{flex:1;font-family:var(--font-display);font-size:13px;font-weight:600;letter-spacing:.05em;color:var(--fg);text-align:center}
+.topbar-actions{display:flex;gap:6px}
+.train-btn{padding:4px 10px;background:linear-gradient(180deg,var(--surface-lite),var(--bg-deep));border:1px solid var(--accent-dim);color:var(--accent-dim);font-family:var(--font-display);font-size:10px;cursor:pointer;letter-spacing:.04em;transition:color .15s}
+.train-btn:hover{color:var(--accent-bright)}
+
+.panel{max-width:720px;margin:0 auto;padding:clamp(10px,2vh,16px)clamp(10px,2vw,14px)}
+
+.section-heading{font-family:var(--font-display);font-size:clamp(13px,1.8vw,15px);font-weight:600;letter-spacing:.04em;color:var(--accent);padding:clamp(6px,1vh,8px)0;border-bottom:2px solid var(--accent-dim);margin-bottom:clamp(6px,1vh,10px)}
+.section-heading.empty{color:var(--muted);font-weight:400;font-style:italic;border-bottom-color:var(--border)}
+
+.region-group{margin-bottom:clamp(8px,1.5vh,12px)}
+.region-label{font-family:var(--font-display);font-size:clamp(10px,1.4vw,12px);font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);padding:3px 6px;border-left:3px solid var(--accent-dim);margin-bottom:clamp(4px,.8vh,6px)}
+.province-group{margin-left:clamp(8px,1.5vw,12px);margin-bottom:clamp(4px,.8vh,6px)}
+.province-label{font-family:var(--font-body);font-size:clamp(9px,1.2vw,10px);font-weight:600;color:var(--fg);opacity:.8;margin-bottom:2px}
+.home-tag{display:inline-block;padding:1px 5px;background:var(--accent-dim);color:var(--bg-deep);font-family:var(--font-mono);font-size:8px;letter-spacing:.06em;margin-left:4px;border-radius:1px}
+
+.unit-row{display:flex;align-items:flex-start;gap:clamp(6px,1vw,10px);padding:clamp(5px,1vh,7px)clamp(8px,1.5vw,10px);background:linear-gradient(180deg,var(--bg-deep),var(--surface));border:1px solid var(--border);margin-bottom:3px;cursor:pointer;transition:border-color .15s;min-height:40px}
+.unit-row:hover{border-color:var(--accent-dim)}
+.unit-row.expanded{background:var(--surface);border-color:var(--accent-dim)}
+.unit-row .u-details{flex:1;min-width:0}
+.unit-row .u-title{font-family:var(--font-display);font-size:clamp(10px,1.4vw,12px);font-weight:600;letter-spacing:.03em;color:var(--fg)}
+.unit-row .u-subtitle{font-family:var(--font-body);font-size:clamp(9px,1.2vw,10px);color:var(--muted);margin-top:1px}
+.unit-row .u-composition{font-family:var(--font-mono);font-size:clamp(8px,1.1vw,9px);color:var(--accent-dim);margin-top:2px}
+.unit-row .u-pending{font-family:var(--font-mono);font-size:clamp(8px,1.1vw,9px);color:var(--accent);margin-top:1px}
+.unit-row .u-comp-table{display:none;margin-top:clamp(4px,.7vh,6px);border-top:1px solid var(--border);padding-top:clamp(4px,.7vh,6px)}
+.unit-row.expanded .u-comp-table{display:block}
+.unit-row .u-comp-table table{width:100%;border-collapse:collapse;font-family:var(--font-mono);font-size:clamp(8px,1vw,9px)}
+.unit-row .u-comp-table td{padding:2px 4px;border-bottom:1px solid var(--border);color:var(--fg)}
+.unit-row .u-comp-table td.n{text-align:right;color:var(--accent-dim)}
+.unit-row .u-actions{display:flex;align-items:center;gap:4px;flex-shrink:0;padding-top:2px}
+.unit-row .u-actions button{padding:3px 7px;background:linear-gradient(180deg,var(--surface-lite),var(--bg-deep));border:1px solid var(--border);color:var(--accent-dim);font-family:var(--font-display);font-size:9px;letter-spacing:.04em;cursor:pointer;transition:color .15s;white-space:nowrap}
+.unit-row .u-actions button:hover{color:var(--accent-bright);border-color:var(--accent-dim)}
+.unit-row .u-actions button:disabled{opacity:.3;cursor:not-allowed}
+.unit-row .u-actions .locate-btn{width:22px;height:22px;font-size:11px;display:flex;align-items:center;justify-content:center;border-radius:50%;padding:0}
+
+.empty-msg{text-align:center;padding:clamp(12px,2vh,20px);font-family:var(--font-display);font-style:italic;color:var(--muted);font-size:clamp(11px,1.5vw,13px)}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <button class="back-btn" onclick="alert('Back to Map')">← Map</button>
+  <span class="topbar-title">Military Units</span>
+  <div class="topbar-actions"><button class="train-btn" onclick="alert('Open Train Military dialog')">Train</button></div>
+</div>
+
+<div class="panel">
+  <div id="land-section"></div>
+  <div id="naval-section"></div>
+</div>
+
+<script>
+const armies=[
+  {id:'a1',name:'Home Army',location:'London',province:'London',region:'Old World',home:true,regiments:3,comps:[{type:'Peasant Levies',count:2,medal:'†'},{type:'Militia',count:1,medal:''}],pending:''},
+  {id:'a2',name:'Army of the North',location:'Yorkshire',province:'Yorkshire',region:'Old World',home:false,regiments:5,comps:[{type:'Line Infantry',count:3,medal:'★★'},{type:'Dragoons',count:1,medal:'★'},{type:'Artillery',count:1,medal:''}],pending:''},
+  {id:'a3',name:'Expeditionary Force',location:'Port Royal',province:'Port Royal',region:'New World',home:false,regiments:4,comps:[{type:'Line Infantry',count:2,medal:'★'},{type:'Rangers',count:1,medal:''},{type:'Artillery',count:1,medal:''}],pending:'Moving to: Havana'},
+  {id:'a4',name:'Colonial Garrison',location:'Havana',province:'Havana',region:'New World',home:false,regiments:2,comps:[{type:'Militia',count:2,medal:''}],pending:''},
+];
+const fleets=[
+  {id:'f1',name:'Home Fleet',location:'London',province:'London',region:'Old World',home:true,mission:'None',ships:[{type:'Galleon',count:1,role:'Merchant'},{type:'Frigate',count:1,role:'Warship'},{type:'Merchant Steamship',count:2,role:'Merchant'}],cargo:'Cargo capacity: 18 holds',pending:''},
+  {id:'f2',name:'Fleet #3',location:'English Channel (sea)',province:'',region:'Old World',home:false,mission:'Patrol',ships:[{type:'Ship of the Line',count:2,role:'Warship'},{type:'Frigate',count:3,role:'Warship'}],cargo:'',pending:''},
+  {id:'f3',name:'Caribbean Squadron',location:'Caribbean Sea (sea)',province:'',region:'New World',home:false,mission:'Blockade',ships:[{type:'Ship of the Line',count:1,role:'Warship'},{type:'Frigate',count:2,role:'Warship'},{type:'Carrack',count:1,role:'Merchant'}],cargo:'',pending:'Moving to: Gulf of Mexico'},
+];
+
+const collapsedState={};
+
+function toggleRow(id){
+  collapsedState[id]=!collapsedState[id];
+  renderAll();
+}
+
+function makeArmyRow(a){
+  const exp=collapsedState['army_'+a.id];
+  return `<div class="unit-row${exp?' expanded':''}" onclick="toggleRow('army_${a.id}')">
+    <div class="u-details">
+      <div class="u-title">${a.name}${a.home?' <span class="home-tag">HOME</span>':''}</div>
+      <div class="u-subtitle">${a.region} — ${a.location} · ${a.regiments} regiments</div>
+      ${a.pending?`<div class="u-pending">${a.pending}</div>`:''}
+      <div class="u-comp-table">
+        <table><tbody>${a.comps.map(c=>`<tr><td>${c.medal?' '+c.medal:''} ${c.type}</td><td class="n">×${c.count}</td></tr>`).join('')}</tbody></table>
+      </div>
+    </div>
+    <div class="u-actions" onclick="event.stopPropagation()">
+      <button class="locate-btn" title="Locate" onclick="alert('Locate ${a.name} at ${a.location}')">⊙</button>
+      ${!a.home?`<button onclick="alert('Move ${a.name}')">Move</button>`:''}
+      <button onclick="alert('Split ${a.name}')">Split</button>
+    </div>
+  </div>`;
+}
+
+function makeFleetRow(f){
+  const exp=collapsedState['fleet_'+f.id];
+  return `<div class="unit-row${exp?' expanded':''}" onclick="toggleRow('fleet_${f.id}')">
+    <div class="u-details">
+      <div class="u-title">${f.name}${f.home?' <span class="home-tag">HOME</span>':''}</div>
+      <div class="u-subtitle">${f.region} — ${f.location} · Mission: ${f.mission}</div>
+      ${f.pending?`<div class="u-pending">${f.pending}</div>`:''}
+      <div class="u-comp-table">
+        <table><tbody>${f.ships.map(s=>`<tr><td>${s.type}</td><td class="n">×${s.count}</td><td style="font-size:7px">${s.role}</td></tr>`).join('')}</tbody></table>
+        ${f.cargo?`<div style="font-size:9px;margin-top:4px;color:var(--accent-dim)">${f.cargo}</div>`:''}
+        ${!f.home?`<div style="font-size:9px;margin-top:2px;color:var(--muted)">Warships: ${f.ships.filter(s=>s.role==='Warship').reduce((a,s)=>a+s.count,0)} · Merchants: ${f.ships.filter(s=>s.role==='Merchant').reduce((a,s)=>a+s.count,0)}</div>`:''}
+      </div>
+    </div>
+    <div class="u-actions" onclick="event.stopPropagation()">
+      <button class="locate-btn" title="Locate" onclick="alert('Locate ${f.name} at ${f.location}')">⊙</button>
+      ${!f.home?`<button onclick="alert('Move ${f.name}')">Move</button>`:''}
+      <button onclick="alert('Split ${f.name}')">Split</button>
+    </div>
+  </div>`;
+}
+
+function renderAll(){
+  let landHtml=`<div class="section-heading">Land Armies</div>`;
+  const landByRegion={};
+  for(const a of armies){const r=a.region;if(!landByRegion[r])landByRegion[r]=[];landByRegion[r].push(a)}
+  for(const [reg,alist] of Object.entries(landByRegion)){
+    landHtml+=`<div class="region-group"><div class="region-label">${reg}</div>`;
+    const byProv={};
+    for(const a of alist){const p=a.province;if(!byProv[p])byProv[p]=[];byProv[p].push(a)}
+    for(const [prov,pList] of Object.entries(byProv)){
+      landHtml+=`<div class="province-group"><div class="province-label">${prov}</div>${pList.map(makeArmyRow).join('')}</div>`;
+    }
+    landHtml+=`</div>`;
+  }
+  document.getElementById('land-section').innerHTML=landHtml;
+
+  let navalHtml=`<div class="section-heading">Naval Fleets</div>`;
+  const navalByRegion={};
+  for(const f of fleets){const r=f.region;if(!navalByRegion[r])navalByRegion[r]=[];navalByRegion[r].push(f)}
+  for(const [reg,flist] of Object.entries(navalByRegion)){
+    navalHtml+=`<div class="region-group"><div class="region-label">${reg}</div>`;
+    const homeFleets=flist.filter(f=>f.home);
+    const otherFleets=flist.filter(f=>!f.home);
+    if(homeFleets.length){navalHtml+=`<div class="province-group"><div class="province-label">Home Fleet</div>${homeFleets.map(makeFleetRow).join('')}</div>`}
+    const inPort=otherFleets.filter(f=>f.province);
+    const atSea=otherFleets.filter(f=>!f.province);
+    if(inPort.length){navalHtml+=`<div class="province-group"><div class="province-label">In Port</div>${inPort.map(makeFleetRow).join('')}</div>`}
+    if(atSea.length){navalHtml+=`<div class="province-group"><div class="province-label">At Sea</div>${atSea.map(makeFleetRow).join('')}</div>`}
+    navalHtml+=`</div>`;
+  }
+  document.getElementById('naval-section').innerHTML=navalHtml;
+}
+renderAll();
+</script>
+</body>
+</html>

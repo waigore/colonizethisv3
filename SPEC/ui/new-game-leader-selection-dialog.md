@@ -4,6 +4,7 @@
 **SPEC/ui** — Modal that captures the six-slot **nation + leader** lineup plus seed, infinite-mode, and terrain variation for a new game. Implementation: `app/lib/features/shell/new_game_leader_selection_dialog.dart`.
 **Widgetbook:** `New Game Leader Selection Dialog` → `app/lib/widgetbook/catalog.dart`. Parent: [game-setup.md](game-setup.md). After confirm: [game-initializing.md](game-initializing.md). App wiring: [app-ui-wiring.md](../program/app-ui-wiring.md), [app-event-bus.md](../program/app-event-bus.md).
 
+**Mockup:** [mockups/DLG10001-leader-selection-dialog.html](mockups/DLG10001-leader-selection-dialog.html)
 ---
 
 ## Widget contract
