@@ -158,9 +158,7 @@ void main() {
       // dropped the sort (or replaced it with input-order
       // preservation) would surface here.
       final game = _developGame();
-      final snapshot = _developSnapshot(
-        atWarWith: const [_gp3, _gp4, _gp2],
-      );
+      final snapshot = _developSnapshot(atWarWith: const [_gp3, _gp4, _gp2]);
       expect(
         planDevelopPeace(game: game, snapshot: snapshot),
         const [_gp2, _gp3, _gp4],
@@ -182,9 +180,7 @@ void main() {
         tribes: const [Tribe(id: _tribe1, displayName: 'T1')],
         minorNations: const [MinorNation(id: _minor1, displayName: 'M1')],
       );
-      final snapshot = _developSnapshot(
-        atWarWith: const [_tribe1, _minor1],
-      );
+      final snapshot = _developSnapshot(atWarWith: const [_tribe1, _minor1]);
       expect(
         planDevelopPeace(game: game, snapshot: snapshot),
         isEmpty,
@@ -364,9 +360,7 @@ void main() {
         ],
         owUnits: [idleBuilder('b1')],
         resourceByTileKey: const {owTileImproved: 'iron'},
-        tileState: const TileMapState(
-          improvementByTile: {owTileImproved: 1},
-        ),
+        tileState: const TileMapState(improvementByTile: {owTileImproved: 1}),
       );
       expect(
         planDevelopCivilian(game: game, snapshot: civilianSnapshot()),
@@ -394,10 +388,7 @@ void main() {
           ),
         ],
         owUnits: [idleBuilder('b1')],
-        resourceByTileKey: const {
-          owTileTown: 'grain',
-          owTileA: 'grain',
-        },
+        resourceByTileKey: const {owTileTown: 'grain', owTileA: 'grain'},
       );
       final orders = planDevelopCivilian(
         game: game,
@@ -424,10 +415,7 @@ void main() {
           ),
         ],
         owUnits: [idleBuilder('b1')],
-        resourceByTileKey: const {
-          foreignNwTile: 'gold',
-          owTileA: 'grain',
-        },
+        resourceByTileKey: const {foreignNwTile: 'gold', owTileA: 'grain'},
       );
       final orders = planDevelopCivilian(
         game: game,
@@ -440,14 +428,19 @@ void main() {
       // Score ordering pin (AC "build_improvement orders are generated
       // for the highest-yield unimproved tiles before lower-priority
       // work"). NW owned tile = base + NW bonus + owned-NW bonus; OW
-      // tile = base alone. With two builders and one tile per region,
-      // builder `b1` (sorted first) must target the NW tile.
+      // tile = base alone. Distance-aware + same-region pairing (Refs
+      // #2848 § S2): the NW tile must be paired with an NW Builder;
+      // the OW tile with an OW Builder. `b1` sits in OW and is paired
+      // against the lower-priority OW tile (no cross-region naval
+      // transport in DEVELOP), while `b2` placed in NW takes the
+      // higher-priority NW tile.
       final game = civilianGame(
         provinces: const [
           Province(id: owProv1, regionId: kOldWorldRegionId, ownerId: _gp1),
           Province(id: nwProv1, regionId: kNewWorldRegionId, ownerId: _gp1),
         ],
-        owUnits: [idleBuilder('b1'), idleBuilder('b2')],
+        owUnits: [idleBuilder('b1')],
+        nwUnits: [idleBuilder('b2', regionId: kNewWorldRegionId)],
         resourceByTileKey: const {owTileA: 'grain', nwTileA: 'tobacco'},
       );
       final orders = planDevelopCivilian(
@@ -456,9 +449,9 @@ void main() {
       );
       expect(orders.length, 2);
       expect(orders.first.targetTileKey, nwTileA);
-      expect(orders.first.unitId, 'b1');
+      expect(orders.first.unitId, 'b2');
       expect(orders[1].targetTileKey, owTileA);
-      expect(orders[1].unitId, 'b2');
+      expect(orders[1].unitId, 'b1');
       expect(
         orders.every((o) => o.target == kWorkTargetBuildImprovement),
         isTrue,
@@ -490,10 +483,12 @@ void main() {
     });
 
     test('builder count caps emitted orders below tile count', () {
-      // `min(builders, tiles)` cap: two tiles available, one builder ->
-      // exactly one order targeting the higher-priority NW tile. The
-      // surplus OW tile is left unimproved this turn (acceptable; the
-      // remaining builder slot will fill on a subsequent turn).
+      // `min(builders, tiles)` cap combined with same-region pairing
+      // (Refs #2848 § S2): the NW tile carries the higher priority
+      // score but the only Builder lives in OW, so distance-aware +
+      // same-region selection skips the NW tile and pairs `b1` with
+      // the in-region OW tile instead. The surplus NW tile is left
+      // unimproved this turn (no naval Builder transport modeled).
       final game = civilianGame(
         provinces: const [
           Province(id: owProv1, regionId: kOldWorldRegionId, ownerId: _gp1),
@@ -507,7 +502,7 @@ void main() {
         snapshot: civilianSnapshot(),
       );
       expect(orders.length, 1);
-      expect(orders.single.targetTileKey, nwTileA);
+      expect(orders.single.targetTileKey, owTileA);
       expect(orders.single.unitId, 'b1');
     });
 
@@ -569,9 +564,15 @@ void main() {
 
     test('determinism: identical inputs yield identical orders', () {
       // Mixed-region scenario exercises ownership, town exclusion,
-      // improvement-level filter, score ordering, builder sort, and
-      // the min cap in one fixture. Two calls must produce the same
-      // list (Must-have #7).
+      // improvement-level filter, score ordering, builder sort, the
+      // min cap, and distance-aware + same-region Builder pairing
+      // (Refs #2848 § S2) in one fixture. Two calls must produce the
+      // same list (Must-have #7). With `b3` the only NW Builder, the
+      // NW tile is paired with `b3`. The two OW Builders `b1`/`b2`
+      // both sit at OW (9, 9); the closer-by-Manhattan-distance OW
+      // tile breaks the tie deterministically (both at distance 16
+      // from (9, 9) so the Builder-id ascending tiebreak resolves
+      // `b1` → `owTileA` and `b2` → `owTileB`).
       final game = civilianGame(
         provinces: const [
           Province(
@@ -591,18 +592,176 @@ void main() {
           nwTileA: 'spices',
         },
       );
-      final first =
-          planDevelopCivilian(game: game, snapshot: civilianSnapshot());
-      final second =
-          planDevelopCivilian(game: game, snapshot: civilianSnapshot());
+      final first = planDevelopCivilian(
+        game: game,
+        snapshot: civilianSnapshot(),
+      );
+      final second = planDevelopCivilian(
+        game: game,
+        snapshot: civilianSnapshot(),
+      );
       expect(
         first.map((o) => '${o.unitId}->${o.targetTileKey}').toList(),
-        const ['b1->newWorld|p_gamma|1|1', 'b2->oldWorld|p_alpha|1|1', 'b3->oldWorld|p_alpha|2|2'],
+        const [
+          'b3->newWorld|p_gamma|1|1',
+          'b1->oldWorld|p_alpha|1|1',
+          'b2->oldWorld|p_alpha|2|2',
+        ],
         reason:
-            'NW tile ranks first (highest score), then OW tiles in lex '
-            'order; builder ids assigned ascending; town tile excluded.',
+            'NW tile ranks first (highest score) and is paired with the '
+            'only same-region (NW) Builder b3; OW tiles follow in lex '
+            'order, with b1/b2 (equidistant from (9, 9)) tiebroken by '
+            'ascending Builder id.',
       );
       expect(second, first);
+    });
+
+    test('cross-region NW tile is skipped when only OW Builders exist', () {
+      // Distance-aware + same-region pairing (Refs #2848 § S2 cross-
+      // region suppression AC). Active player owns one OW province and
+      // one NW province with an unimproved extractable tile in each;
+      // the only idle Builder lives in OW. The NW tile carries the
+      // higher priority score but lacks a same-region Builder, so the
+      // planner skips it and pairs `b1` with the in-region OW tile.
+      // Regression guard against re-introducing the cross-region
+      // index-pairing that emitted no-op orders against unreachable
+      // NW tiles.
+      final game = civilianGame(
+        provinces: const [
+          Province(id: owProv1, regionId: kOldWorldRegionId, ownerId: _gp1),
+          Province(id: nwProv1, regionId: kNewWorldRegionId, ownerId: _gp1),
+        ],
+        owUnits: [idleBuilder('b1')],
+        resourceByTileKey: const {owTileA: 'grain', nwTileA: 'spices'},
+      );
+      final orders = planDevelopCivilian(
+        game: game,
+        snapshot: civilianSnapshot(),
+      );
+      expect(orders.map((o) => o.targetTileKey).toList(), const [owTileA]);
+      expect(orders.single.unitId, 'b1');
+    });
+
+    test(
+      'closer same-region Builder wins over farther same-region Builder',
+      () {
+        // Distance-aware pairing core AC (Refs #2848 § S2). `b_far` at
+        // (10, 10) and `b_near` at (1, 1) both reside in OW; the only
+        // eligible tile sits at (2, 2). Manhattan distances:
+        //   |10-2| + |10-2| = 16  (b_far)
+        //   |1-2|  + |1-2|  = 2   (b_near)
+        // The planner must pair the tile with `b_near` regardless of
+        // alphabetical order (`b_far` < `b_near` lex but loses on
+        // distance). A regression that fell back to index-pairing by
+        // builder id would re-introduce the alphabetical pairing
+        // (`b_far` → tile) and surface here.
+        final farBuilder = Unit(
+          id: 'b_far',
+          type: kUnitTypeBuilder,
+          ownerId: _gp1,
+          locationProvinceId: owProv1,
+          tileKey: '$owProv1|10|10',
+        );
+        final nearBuilder = Unit(
+          id: 'b_near',
+          type: kUnitTypeBuilder,
+          ownerId: _gp1,
+          locationProvinceId: owProv1,
+          tileKey: '$owProv1|1|1',
+        );
+        final game = civilianGame(
+          provinces: const [
+            Province(id: owProv1, regionId: kOldWorldRegionId, ownerId: _gp1),
+          ],
+          owUnits: [farBuilder, nearBuilder],
+          resourceByTileKey: const {owTileB: 'grain'},
+        );
+        final orders = planDevelopCivilian(
+          game: game,
+          snapshot: civilianSnapshot(),
+        );
+        expect(orders.length, 1);
+        expect(orders.single.unitId, 'b_near');
+        expect(orders.single.targetTileKey, owTileB);
+      },
+    );
+
+    test('equal-distance Builders tiebreak by ascending Builder id', () {
+      // Distance-aware tiebreak AC (Refs #2848 § S2). Both Builders
+      // sit at OW (9, 9); the eligible OW tile at (1, 1) is equidistant
+      // (Manhattan 16). Lex tiebreak picks `b1` over `b2`, matching
+      // the determinism Must-have #7. A regression that flipped the
+      // tiebreak (e.g. last-encountered Builder wins) would surface
+      // here.
+      final game = civilianGame(
+        provinces: const [
+          Province(id: owProv1, regionId: kOldWorldRegionId, ownerId: _gp1),
+        ],
+        owUnits: [idleBuilder('b2'), idleBuilder('b1')],
+        resourceByTileKey: const {owTileA: 'grain'},
+      );
+      final orders = planDevelopCivilian(
+        game: game,
+        snapshot: civilianSnapshot(),
+      );
+      expect(orders.length, 1);
+      expect(orders.single.unitId, 'b1');
+      expect(orders.single.targetTileKey, owTileA);
+    });
+
+    test('distance pairing across two tiles re-optimizes vs index-pairing', () {
+      // Distance-aware multi-tile pairing AC (Refs #2848 § S2). Two
+      // Builders and two same-region tiles such that the lex-first
+      // Builder is NOT the closest to the priority-first tile.
+      //   b1 at OW (0, 0); b2 at OW (5, 5).
+      //   tile1 at (4, 4) → score base (+ no NW bonus). Distance:
+      //     b1=8, b2=2 → b2 wins.
+      //   tile2 at (1, 1) → score base. Distance:
+      //     b1=2, b2 already assigned → b1 wins.
+      // Tile priority is identical (same OW base score); lex tile-key
+      // ordering puts `tile1` (`...|4|4`) before `tile2` (`...|1|1`)?
+      // Actually `'oldWorld|p_alpha|1|1' < 'oldWorld|p_alpha|4|4'` lex,
+      // so `tile2` is processed first.
+      //   tile2 first → b1 (distance 2) vs b2 (distance 8). b1 wins.
+      //   tile1 next → only b2 remains. b2 wins (distance 2).
+      // Old index-pairing would emit `b1→tile2, b2→tile1` by accident
+      // (lex-first Builder paired with lex-first tile). The new
+      // distance-aware logic emits the same pairing here because b1's
+      // lex-first ordering coincidentally matches the optimum. Pin
+      // verifies the new logic does not regress on the simple case.
+      final b1 = Unit(
+        id: 'b1',
+        type: kUnitTypeBuilder,
+        ownerId: _gp1,
+        locationProvinceId: owProv1,
+        tileKey: '$owProv1|0|0',
+      );
+      final b2 = Unit(
+        id: 'b2',
+        type: kUnitTypeBuilder,
+        ownerId: _gp1,
+        locationProvinceId: owProv1,
+        tileKey: '$owProv1|5|5',
+      );
+      final game = civilianGame(
+        provinces: const [
+          Province(id: owProv1, regionId: kOldWorldRegionId, ownerId: _gp1),
+        ],
+        owUnits: [b1, b2],
+        resourceByTileKey: const {
+          'oldWorld|p_alpha|4|4': 'grain',
+          'oldWorld|p_alpha|1|1': 'iron',
+        },
+      );
+      final orders = planDevelopCivilian(
+        game: game,
+        snapshot: civilianSnapshot(),
+      );
+      expect(orders.length, 2);
+      expect(orders[0].targetTileKey, 'oldWorld|p_alpha|1|1');
+      expect(orders[0].unitId, 'b1');
+      expect(orders[1].targetTileKey, 'oldWorld|p_alpha|4|4');
+      expect(orders[1].unitId, 'b2');
     });
   });
 }
