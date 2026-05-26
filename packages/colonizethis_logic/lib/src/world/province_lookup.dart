@@ -255,6 +255,22 @@ extension WorldStateProvinceLookup on WorldState {
 
   RegionData? regionDataForId(String regionId) => _regionForId(this, regionId);
 
+  /// Strict variant of [regionDataForId]: returns the region for [regionId] or
+  /// throws [StateError] when unknown.
+  ///
+  /// Use in code paths whose contract guarantees [regionId] is canonical (i.e.
+  /// [kRegionOldWorld] or [kRegionNewWorld]) and where a silent fallback would
+  /// hide a malformed id. Mirrors the `Unknown region` contract of
+  /// [updateRegionById] for symmetry between read and write paths
+  /// (Refs #2836 item 1).
+  RegionData regionDataForIdOrThrow(String regionId) {
+    final region = _regionForId(this, regionId);
+    if (region == null) {
+      throw StateError('Unknown region "$regionId"');
+    }
+    return region;
+  }
+
   Iterable<Province> allProvinces() sync* {
     yield* oldWorld.provinces;
     yield* newWorld.provinces;

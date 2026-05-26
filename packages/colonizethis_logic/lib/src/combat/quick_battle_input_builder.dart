@@ -1,7 +1,7 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
-import '../constants.dart';
+import '../world/province_lookup.dart';
 import '../world/unit_lookup.dart';
 import 'battle_general_assignment.dart';
 import 'conflict_detection.dart';
@@ -20,9 +20,7 @@ QuickBattleInput buildQuickBattleInput(
   int seed = 0,
   BattleGeneralAssignment? battleAssignment,
 }) {
-  final region = ctx.regionId == kRegionOldWorld
-      ? game.worldState.oldWorld
-      : game.worldState.newWorld;
+  final region = game.worldState.regionDataForIdOrThrow(ctx.regionId);
   final unitsById = unitsByIdFromRegion(region);
 
   final defGroups = [
