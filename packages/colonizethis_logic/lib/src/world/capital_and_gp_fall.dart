@@ -4,6 +4,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../setup/capital_choice.dart';
 import '../setup/town_capital_occupancy.dart';
+import 'game_world_mutations.dart';
 import 'player_state_pipeline.dart';
 import 'port_seaboard_registry_key.dart';
 import 'province_lookup.dart';
@@ -403,9 +404,7 @@ Game _applyTerminalFallForFaction({
   final prevCapital = game.worldState.tryGetProvince(previousCapitalId);
   if (prevCapital == null) return game;
   final conquerorId = prevCapital.ownerId;
-  if (conquerorId == null ||
-      conquerorId.isEmpty ||
-      conquerorId == factionId) {
+  if (conquerorId == null || conquerorId.isEmpty || conquerorId == factionId) {
     return game;
   }
   final originalRegionId = ProvinceId.regionIdFrom(previousCapitalId);
@@ -435,7 +434,7 @@ Game _applyTerminalFallForFaction({
       .where((f) => f.ownerId != factionId)
       .toList();
   final nextWorldState = updatedWorldState.copyWith(fleets: remainingFleets);
-  var next = game.copyWith(worldState: nextWorldState);
+  var next = game.withWorldState(nextWorldState);
   next = removeFaction(next);
   logicLog.i(
     '$factionLabel $factionId fell after capital loss; '
@@ -502,11 +501,13 @@ Game applyGreatPowerFall(
         .toList();
 
     final nextWorldState = updatedWorldState.copyWith(fleets: remainingFleets);
-    game = game.copyWith(worldState: nextWorldState).mapPlayers(
-      (p) => p.id == playerId
-          ? p.copyWith(capitalProvinceId: null, capitalTile: null)
-          : p,
-    );
+    game = game
+        .withWorldState(nextWorldState)
+        .mapPlayers(
+          (p) => p.id == playerId
+              ? p.copyWith(capitalProvinceId: null, capitalTile: null)
+              : p,
+        );
   }
 
   return game;

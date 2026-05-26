@@ -5,6 +5,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'order_suggestion.dart' as suggestion;
 import 'order_suggestion_api.dart';
 import '../world/player_view.dart';
+import 'order_resolution_context.dart';
 
 /// Default implementation of [OrderSuggestionAPI] using the top-level suggest* functions.
 class DefaultOrderSuggestionAPI implements OrderSuggestionAPI {
@@ -116,7 +117,7 @@ class DefaultOrderSuggestionAPI implements OrderSuggestionAPI {
     Game game,
     MapTopology topology,
     Orders currentOrders, {
-    Map<String, Unit>? unitsById,
+    OrderResolutionContext? resolution,
   }) {
     logicLog.d(
       'order suggestion API suggestNavalMoveOrders player=${view.playerId}',
@@ -126,7 +127,7 @@ class DefaultOrderSuggestionAPI implements OrderSuggestionAPI {
       game,
       topology,
       currentOrders,
-      unitsById: unitsById,
+      resolution: resolution,
     );
   }
 
@@ -136,7 +137,7 @@ class DefaultOrderSuggestionAPI implements OrderSuggestionAPI {
     Game game,
     MapTopology topology,
     Orders currentOrders, {
-    Map<String, Unit>? unitsById,
+    OrderResolutionContext? resolution,
   }) {
     logicLog.d(
       'order suggestion API suggestNavalMissionOrders player=${view.playerId}',
@@ -146,7 +147,7 @@ class DefaultOrderSuggestionAPI implements OrderSuggestionAPI {
       game,
       topology,
       currentOrders,
-      unitsById: unitsById,
+      resolution: resolution,
     );
   }
 

@@ -5,6 +5,7 @@ import '../diplomacy/diplomacy_resolver.dart';
 import '../world/player_view.dart';
 import '../world/unit_lookup.dart';
 import 'incremental_candidate_validator.dart';
+import 'order_resolution_context.dart';
 import 'order_suggestion_context.dart';
 
 /// Suggests build-unit orders that are affordable and valid for [view.playerId].
@@ -38,8 +39,7 @@ List<BuildUnitOrder> suggestBuildOrders(
         topology: topology,
         playerId: playerId,
         baseOrders: currentOrders,
-        view: view,
-        unitsById: unitsByIdFromWorld(game.worldState),
+        resolution: orderResolutionContextFromView(view, game),
         factionMembership: DiplomacyFactionMembership.from(game),
       );
 

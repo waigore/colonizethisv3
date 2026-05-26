@@ -1,3 +1,5 @@
+import 'package:colonizethis_logic/order_suggestion_api.dart';
+
 import 'goal_manager.dart';
 import 'planning_imports.dart';
 import '../perception/perception_snapshot.dart';
@@ -372,8 +374,7 @@ Orders _runStalledFrontierArmyMoveFallback({
     playerId: ctx.nationId,
     basePrefix: ctx.orders,
     factionMembership: DiplomacyFactionMembership.from(ctx.game),
-    view: ctx.view,
-    unitsById: unitsByIdFromWorld(ctx.game.worldState),
+    resolution: orderResolutionContextFromView(ctx.view, ctx.game),
   );
   final armiesWithOrders = <String>{
     for (final m

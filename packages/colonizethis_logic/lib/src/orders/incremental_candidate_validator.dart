@@ -6,6 +6,7 @@ import '../diplomacy/diplomacy_resolver.dart';
 import '../economy/economy_riches_to_treasury.dart';
 import '../world/player_view.dart';
 import '../world/unit_lookup.dart';
+import 'order_resolution_context.dart';
 import 'order_validators.dart';
 import 'unit_type_helpers.dart';
 import 'validator_bundle.dart';
@@ -41,32 +42,38 @@ class IncrementalCandidateValidator {
   /// build cost across many candidate probes (the AI suggestion API enumerates
   /// many candidates per call).
   ///
-  /// When the caller already has a `PlayerView` and/or units-by-id map computed
-  /// for the same `(game, topology, playerId)` tuple, it may pass them via
-  /// [view] / [unitsById] to skip the embedded `buildPlayerView` and
-  /// `unitsByIdFromWorld` scans (Refs #2394, `SPEC/program/order-suggestions.md`
-  /// § Throughput bounds). The shared instances must be built from the **same**
-  /// inputs as the validator; behavior is undefined otherwise.
+  /// When the caller already built [resolution] for this suggestion pass, pass
+  /// it to skip embedded `buildPlayerView` and unit-map scans (Refs #2394,
+  /// #2836; `SPEC/program/order-suggestions.md` § Throughput bounds). The
+  /// shared instance must be built from the **same** inputs as the validator;
+  /// behavior is undefined otherwise.
   factory IncrementalCandidateValidator.forPlayer({
     required Game game,
     required MapTopology topology,
     required String playerId,
     required Orders basePrefix,
     Map<String, TileMapResult>? tileMapByRegion,
-    PlayerView? view,
-    Map<String, Unit>? unitsById,
+    OrderResolutionContext? resolution,
+
     /// When callers rebuild this validator for many `basePrefix` snapshots over
     /// the same [game] (for example simple-heuristic iterations), supplying the
     /// membership snapshot avoids repeated `DiplomacyFactionMembership.from`
     /// work. Must remain valid for [game] for the validator lifetime (Refs #2394).
     DiplomacyFactionMembership? factionMembership,
   }) {
+    final ctx =
+        resolution ??
+        buildOrderResolutionContext(
+          game: game,
+          topology: topology,
+          playerId: playerId,
+        );
     assert(
-      view == null || view.playerId == playerId,
-      'shared PlayerView playerId must match validator playerId',
+      ctx.view.playerId == playerId,
+      'OrderResolutionContext view playerId must match validator playerId',
     );
-    final actualView = view ?? buildPlayerView(game, topology, playerId);
-    final actualUnitsById = unitsById ?? unitsByIdFromWorld(game.worldState);
+    final actualView = ctx.view;
+    final actualUnitsById = ctx.unitsById;
     final diplomaticOrders =
         basePrefix.diplomaticOrdersByPlayerId[playerId] ??
         const <DiplomaticOrder>[];
@@ -93,8 +100,11 @@ class IncrementalCandidateValidator {
       playerId: playerId,
       basePrefix: basePrefix,
       tileMapByRegion: tileMapByRegion,
-      view: view,
-      unitsById: unitsById,
+      resolution: (
+        view: view,
+        unitsById: unitsById,
+        provinceById: view.provincesById,
+      ),
       factionMembership: prefetchedFactionMembership,
     );
   }
@@ -116,8 +126,13 @@ class IncrementalCandidateValidator {
   /// When [false], existing work orders in [basePrefix] failed incremental
   /// replay; every [isWorkAccepted] probe must reject (Refs #2394).
   bool? _cachedWorkPrefixReplaySucceeded;
-  ({Stockpile stockpile, int treasury, Set<String> seenUnitIds, Set<String>
-      devExclusive})? _cachedPostWorkPrefixState;
+  ({
+    Stockpile stockpile,
+    int treasury,
+    Set<String> seenUnitIds,
+    Set<String> devExclusive,
+  })?
+  _cachedPostWorkPrefixState;
 
   /// When [false], existing build orders in [basePrefix] failed incremental
   /// replay; every [isBuildAccepted] probe must reject (Refs #2394).
@@ -285,10 +300,7 @@ class IncrementalCandidateValidator {
           basePrefix.recruitWorkerOrdersByPlayerId[playerId] ??
           const <RecruitWorkerOrder>[];
       for (final order in existing) {
-        final result = prefixValidator.validate(
-          order,
-          previousRejected: false,
-        );
+        final result = prefixValidator.validate(order, previousRejected: false);
         if (!result.isAccepted) {
           _cachedRecruitWorkerPrefixReplaySucceeded = false;
           return false;
@@ -329,7 +341,8 @@ class IncrementalCandidateValidator {
         game: game,
         player: player,
         stockpile: player.stockpile,
-        treasury: player.treasury +
+        treasury:
+            player.treasury +
             pendingRichesTreasuryDelta(
               stockpile: player.stockpile,
               richesCashMultiplier: game.richesCashMultiplier,
@@ -361,7 +374,8 @@ class IncrementalCandidateValidator {
       game: game,
       player: player,
       stockpile: candidateStockpile,
-      treasury: snap.treasury +
+      treasury:
+          snap.treasury +
           pendingRichesTreasuryDelta(
             stockpile: candidateStockpile,
             richesCashMultiplier: game.richesCashMultiplier,
@@ -433,8 +447,8 @@ class IncrementalCandidateValidator {
         }
       }
       _cachedDiplomaticPrefixReplaySucceeded = true;
-      _cachedPostDiplomaticPrefixState =
-          prefixValidator.capturePrefixCheckpoint();
+      _cachedPostDiplomaticPrefixState = prefixValidator
+          .capturePrefixCheckpoint();
     }
 
     final checkpoint = _cachedPostDiplomaticPrefixState!;
@@ -461,7 +475,8 @@ class IncrementalCandidateValidator {
       game: game,
       player: player,
       stockpile: player.stockpile,
-      treasury: player.treasury +
+      treasury:
+          player.treasury +
           pendingRichesTreasuryDelta(
             stockpile: player.stockpile,
             richesCashMultiplier: game.richesCashMultiplier,
@@ -510,8 +525,13 @@ class IncrementalCandidateValidator {
   /// Replays accepted work orders in [basePrefix] once per validator instance,
   /// then exposes projected economy + work-order state for candidate probes
   /// and diplomatic projection (Refs #2394, Category B).
-  ({Stockpile stockpile, int treasury, Set<String> seenUnitIds, Set<String>
-      devExclusive})? _ensurePostWorkPrefixState(Player player) {
+  ({
+    Stockpile stockpile,
+    int treasury,
+    Set<String> seenUnitIds,
+    Set<String> devExclusive,
+  })?
+  _ensurePostWorkPrefixState(Player player) {
     if (_cachedWorkPrefixReplaySucceeded == false) {
       return null;
     }

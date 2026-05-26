@@ -243,8 +243,8 @@ void emitWorkOrderCompletedEvents(
   GameEventBus? eventBus,
   void Function(GameEvent)? onGameEvent,
 ) {
-  final beforeById = unitsByIdFromWorld(stateBefore.worldState);
-  final afterById = unitsByIdFromWorld(stateAfter.worldState);
+  final beforeById = stateBefore.worldState.allUnitsById;
+  final afterById = stateAfter.worldState.allUnitsById;
   final supportedTargets = <String>{
     kWorkTargetBuildImprovement,
     kWorkTargetUpgradeTown,

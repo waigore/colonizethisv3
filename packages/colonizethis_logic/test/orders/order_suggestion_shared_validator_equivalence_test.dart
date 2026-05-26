@@ -146,8 +146,7 @@ void main() {
           topology: topology,
           playerId: gp,
           basePrefix: orders,
-          view: view,
-          unitsById: unitsById,
+          resolution: orderResolutionContextFromView(view, game, unitsById: unitsById),
         );
 
         expect(
@@ -291,8 +290,7 @@ void main() {
         topology: topology,
         playerId: gp,
         basePrefix: orders,
-        view: view,
-        unitsById: unitsById,
+        resolution: orderResolutionContextFromView(view, game, unitsById: unitsById),
       );
       final rebound = initial.forBasePrefix(orders);
       final fresh = IncrementalCandidateValidator.forPlayer(
@@ -300,8 +298,7 @@ void main() {
         topology: topology,
         playerId: gp,
         basePrefix: orders,
-        view: view,
-        unitsById: unitsById,
+        resolution: orderResolutionContextFromView(view, game, unitsById: unitsById),
       );
 
       expect(

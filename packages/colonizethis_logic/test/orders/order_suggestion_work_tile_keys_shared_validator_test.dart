@@ -195,7 +195,7 @@ void main() {
         unitId: 'b1',
         workTarget: kWorkTargetBuildImprovement,
         currentOrders: orders,
-        unitsById: unitsById,
+        resolution: orderResolutionContextFromView(view, game, unitsById: unitsById),
       );
 
       expect(withUnitsById, equals(baseline));
@@ -312,8 +312,7 @@ void main() {
         topology: topology,
         playerId: playerId,
         baseOrders: orders,
-        view: view,
-        unitsById: unitsById,
+        resolution: orderResolutionContextFromView(view, game, unitsById: unitsById),
         factionMembership: membership,
       );
 
@@ -324,8 +323,7 @@ void main() {
         'b1',
         kWorkTargetBuildImprovement,
         orders,
-        view: view,
-        unitsById: unitsById,
+        resolution: orderResolutionContextFromView(view, game, unitsById: unitsById),
         factionMembership: membership,
         sharedCandidateValidator: shared,
         playerOwnedProvinceIds: ownedIds,

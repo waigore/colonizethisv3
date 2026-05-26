@@ -5,6 +5,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../constants.dart';
 import '../diplomacy/diplomacy_resolver.dart';
+import '../world/game_world_mutations.dart';
 import 'conflict_detection.dart';
 
 /// Base treasury cost per land battle for each Great Power attacker side.
@@ -54,5 +55,5 @@ Game applyLandBattleAttackTreasuryCosts(Game game, BattleContext ctx) {
     players = List<Player>.from(players);
     players[idx] = players[idx].copyWith(treasury: nextTreasury);
   }
-  return game.copyWith(players: players);
+  return game.withPlayers(players);
 }

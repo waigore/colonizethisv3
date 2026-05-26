@@ -7,6 +7,7 @@ import 'package:colonizethis_logic/src/logging.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../constants.dart';
+import '../world/game_world_mutations.dart';
 import '../world/tile_key_coordinates.dart';
 import 'setup_exceptions.dart';
 import 'town_capital_occupancy.dart';
@@ -575,7 +576,7 @@ applyGreatPowerOldWorldResourceRedistribution({
   var resMap = cleared.$2;
   final tileState = cleared.$3;
   ws = ws.copyWith(tileState: tileState, resourceByTileKey: resMap);
-  game = game.copyWith(worldState: ws);
+  game = game.withWorldState(ws);
 
   for (final r in resourceSet) {
     final nR = inventoryN[r] ?? 0;
@@ -598,7 +599,7 @@ applyGreatPowerOldWorldResourceRedistribution({
       tileState: tileState,
       resourceByTileKey: resMap,
     );
-    game = game.copyWith(worldState: ws);
+    game = game.withWorldState(ws);
   }
 
   final fairness = _fairnessScore(

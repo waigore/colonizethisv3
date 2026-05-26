@@ -273,9 +273,7 @@ class OrderEngine with _OrderEngineGeneratedOrderMethods {
     final navals = _orders.navalMoveOrdersByPlayerId[playerId] ?? [];
     final missions = _orders.navalMissionOrdersByPlayerId[playerId] ?? [];
 
-    final unitsById = Map<String, Unit>.from(
-      unitsByIdFromWorld(game.worldState),
-    );
+    final unitsById = Map<String, Unit>.from(game.worldState.allUnitsById);
 
     final devExclusiveTiles = devExclusiveTilesFromWorld(
       game.worldState,

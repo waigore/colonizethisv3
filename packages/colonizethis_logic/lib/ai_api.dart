@@ -58,6 +58,7 @@ export 'src/world/sea_reachable_provinces.dart'
 export 'src/world/province_lookup.dart' show allProvinces;
 export 'src/world/unit_lookup.dart'
     show
+        WorldStateUnitLookup,
         allUnitsFromWorld,
         regimentTypeCountsForPlayer,
         shipTypeCountsForPlayer,

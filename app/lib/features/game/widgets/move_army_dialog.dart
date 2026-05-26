@@ -84,8 +84,7 @@ class _MoveArmyDialogState extends State<MoveArmyDialog> {
         topology: widget.topology,
         playerId: widget.humanPlayerId,
         basePrefix: orders,
-        view: view,
-        unitsById: unitsByIdFromWorld(widget.game.worldState),
+        resolution: orderResolutionContextFromView(view, widget.game),
       );
     } else {
       _sharedCandidateValidator = _sharedCandidateValidator!.forBasePrefix(
@@ -101,7 +100,6 @@ class _MoveArmyDialogState extends State<MoveArmyDialog> {
         playerId: widget.humanPlayerId,
         army: widget.army,
         currentOrders: orders,
-        playerView: view,
         sharedCandidateValidator: _sharedCandidateValidator,
       );
       _cachedDestinationsOrders = orders;

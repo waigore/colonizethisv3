@@ -173,7 +173,10 @@ void main() {
           playerId: base.playerId,
           baseOrders: base.currentOrders,
           tileMapByRegion: base.tileMapByRegion,
-          view: base.playerView,
+          resolution: orderResolutionContextFromView(
+            base.playerView,
+            base.game,
+          ),
         );
         final withShared = WorkTargetSelectionSnapshot(
           game: base.game,

@@ -53,7 +53,7 @@ Game applyArmyCombine({
     target.copyWith(regimentUnitIds: unique),
   ]..sort((a, b) => a.id.compareTo(b.id));
 
-  return game.updateWorldState((ws) => ws.copyWith(armies: nextArmies));
+  return game.withArmies(nextArmies);
 }
 
 /// Splits [unitIdsToMove] from [sourceArmyId] into a new army in the same province.
@@ -85,8 +85,9 @@ Game applyArmySplit({
     return game;
   }
 
-  final remaining =
-      source.regimentUnitIds.where((id) => !moveSet.contains(id)).toList();
+  final remaining = source.regimentUnitIds
+      .where((id) => !moveSet.contains(id))
+      .toList();
   final newId = 'army_${game.worldState.nextArmySeq}';
   final newArmy = Army(
     id: newId,
@@ -104,9 +105,6 @@ Game applyArmySplit({
   armies = [...armies, newArmy]..sort((a, b) => a.id.compareTo(b.id));
 
   return game.updateWorldState(
-    (ws) => ws.copyWith(
-      armies: armies,
-      nextArmySeq: ws.nextArmySeq + 1,
-    ),
+    (ws) => ws.copyWith(armies: armies, nextArmySeq: ws.nextArmySeq + 1),
   );
 }

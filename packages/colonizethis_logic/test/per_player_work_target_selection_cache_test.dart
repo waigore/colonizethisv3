@@ -213,7 +213,10 @@ void main() {
           playerId: base.playerId,
           basePrefix: base.currentOrders,
           tileMapByRegion: base.tileMapByRegion,
-          view: base.playerView,
+          resolution: orderResolutionContextFromView(
+            base.playerView,
+            base.game,
+          ),
         );
         Object? seen;
         final cache = PerPlayerWorkTargetSelectionCache(

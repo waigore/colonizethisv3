@@ -39,8 +39,7 @@ void main() {
           topology: topology,
           playerId: 'gp1',
           basePrefix: orders,
-          view: view,
-          unitsById: unitsByIdFromWorld(game.worldState),
+          resolution: orderResolutionContextFromView(view, game),
         );
 
         resetIncrementalCandidateValidatorBuildCountForTests();

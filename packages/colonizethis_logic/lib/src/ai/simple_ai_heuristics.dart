@@ -12,6 +12,7 @@ import '../constants.dart';
 import '../diplomacy/diplomacy_resolver.dart';
 import '../orders/draft_orders_mutations.dart';
 import '../orders/order_suggestion.dart';
+import '../orders/order_resolution_context.dart';
 import '../orders/order_suggestion_context.dart';
 import '../world/army_migration.dart';
 import '../world/player_view.dart';
@@ -248,6 +249,7 @@ Orders generateOrdersWithSimpleHeuristics(
   String playerId,
   int turnSeed, {
   Map<String, TileMapResult>? tileMapByRegion,
+
   /// When true, [game] is used as-is (callers must already have run
   /// [ensureMilitaryArmiesForGame]). Used by [generateOrdersForGame] to avoid
   /// O(players) redundant full-world army reconciliation (Refs #2394).
@@ -258,9 +260,7 @@ Orders generateOrdersWithSimpleHeuristics(
     return const Orders();
   }
 
-  final g = skipEnsureMilitaryArmies
-      ? game
-      : ensureMilitaryArmiesForGame(game);
+  final g = skipEnsureMilitaryArmies ? game : ensureMilitaryArmiesForGame(game);
   final factionMembership = DiplomacyFactionMembership.from(g);
   final rng = math.Random(turnSeed);
   var current = const Orders();
@@ -273,7 +273,7 @@ Orders generateOrdersWithSimpleHeuristics(
   // iteration, a single validator wraps these around the up-to-date
   // [current] basePrefix and feeds all four suggest families. Refs #2394;
   // SPEC/program/order-suggestions.md § Throughput bounds.
-  final unitsById = unitsByIdFromWorld(g.worldState);
+  final passResolution = orderResolutionContextFromView(view, g);
 
   /// Max iterations per player per turn (cap to avoid unbounded loops).
   /// Documented in SPEC/program/sim-game-default-ai.md.
@@ -284,8 +284,7 @@ Orders generateOrdersWithSimpleHeuristics(
     playerId: player.id,
     baseOrders: current,
     tileMapByRegion: tileMapByRegion,
-    view: view,
-    unitsById: unitsById,
+    resolution: passResolution,
     factionMembership: factionMembership,
   );
   for (var i = 0; i < maxIterationsPerPlayer; i++) {
