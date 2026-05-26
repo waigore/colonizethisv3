@@ -164,7 +164,17 @@ void main() {
       await openProductionPanel(tester, perf: perf);
       await expectProductionPanelMatchesE2eSnapshot(tester, l10n, perf: perf);
 
-      await tester.tap(find.byIcon(Icons.arrow_back));
+      // Replaces the legacy raw `tester.tap(find.byIcon(...))` back-button
+      // tap with the shared defensive `ensureVisible` + `hitTestable`
+      // resolve recipe so a transient overlay covering the production
+      // screen's AppBar cannot silently drop the back tap and burn the
+      // downstream `wait_until_home_to_capital_after_production_back`
+      // timeout against an unmounted HUD (Refs GitHub #2336 AC10 /
+      // e2e-ui-stability rule — verify visibility before interaction).
+      await ensureVisibleAndTapHitTestable(
+        tester,
+        find.byIcon(Icons.arrow_back),
+      );
       await waitUntilFound(
         tester,
         find.byKey(kHomeToCapitalButtonKey),
