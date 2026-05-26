@@ -27,6 +27,7 @@ export 'e2e_test_shared.dart'
         E2eStandardScenarioOpener,
         e2eAdaptivePollRampAfterIdle,
         e2eAttemptFirstFleetMoveOrCancel,
+        e2eAwaitCivilianWorkMenuMounted,
         e2eAwaitExploreEnabledFromCivilianPanel,
         e2eAwaitNwCoastalOrVisibleLandForBundledExplore,
         e2eAwaitPanelMountAfterOpenerTap,
@@ -74,7 +75,10 @@ export 'e2e_test_shared.dart'
         kE2eDefaultBundledExploreReadinessMaxTurns,
         kE2eDefaultBundledExploreRetryIterationCounter,
         kE2eDefaultBundledExploreRetryLoopPhase,
+        kE2eCivilianWorkMenuLabels,
         kE2eDefaultBundledExploreSweepWait,
+        kE2eDefaultCivilianWorkMenuMountPhase,
+        kE2eDefaultCivilianWorkMenuMountTimeout,
         kE2eDefaultCivilianWorkTileAppearTimeout,
         kE2eDefaultCivilianWorkTileClearTimeout,
         kE2eDefaultCtDialogShellBroadSweepDismissTimeout,
@@ -474,6 +478,23 @@ Future<void> splitHomeFleetOnce(
 
 Future<void> tapFirstAssignInCivilianPanel(WidgetTester tester) =>
     e2eTapFirstAssignInCivilianPanel(tester);
+
+/// Stable public name for [e2eAwaitCivilianWorkMenuMounted] so future scenarios
+/// that tap an `Assign` button (or any upstream affordance that mounts the
+/// civilian work menu) consume the AC1 barrel without duplicating the
+/// label-set / timeout recipe (Refs GitHub #2336 AC1 / AC2 / Bottleneck 6).
+/// Forwards to the implementation in `e2e_test_shared.dart`.
+Future<void> awaitCivilianWorkMenuMounted(
+  WidgetTester tester, {
+  Duration timeout = kE2eDefaultCivilianWorkMenuMountTimeout,
+  String phaseName = kE2eDefaultCivilianWorkMenuMountPhase,
+  E2ePerfLog? perf,
+}) => e2eAwaitCivilianWorkMenuMounted(
+  tester,
+  timeout: timeout,
+  phaseName: phaseName,
+  perf: perf,
+);
 
 Future<void> tapAssignOnCivilianRowWithTitle(
   WidgetTester tester,
