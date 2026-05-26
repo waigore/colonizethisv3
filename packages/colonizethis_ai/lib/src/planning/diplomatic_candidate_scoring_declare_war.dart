@@ -177,7 +177,7 @@ final class _DeclareWarTargetContext {
     final isColonialAdjacentOwner = colonialAdjacent.contains(
       order.targetFactionId,
     );
-    final isMinorTarget = _isMinorOrTribeFaction(game, order.targetFactionId);
+    final isMinorTarget = isMinorOrTribeFaction(game, order.targetFactionId);
     final ownsInvadableNw = snapshot.colonial.invadableNewWorldProvinceIdsSorted
         .any((pid) => provinceOwner[pid] == order.targetFactionId);
     // Refs #2509 S5: derive colonial-pressure from the dispatched phase
@@ -201,7 +201,7 @@ final class _DeclareWarTargetContext {
                 snapshot: snapshot,
                 game: game,
               );
-    final isTribeTarget = _isTribeFaction(game, order.targetFactionId);
+    final isTribeTarget = isTribeFaction(game, order.targetFactionId);
     final stalledOwExpansion = isObserverConquestExpansionPressure(
       snapshot.conquest.oldWorldProvincesOwned,
     );

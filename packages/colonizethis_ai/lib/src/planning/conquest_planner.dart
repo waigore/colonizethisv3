@@ -7,12 +7,9 @@ import 'phase_planner_conquest_filter.dart';
 import 'phase_planner_dispatch.dart';
 import 'planner_context.dart';
 import '../util/ai_random_utils.dart';
+import '../util/faction_query.dart';
 
 final _log = packageLogger();
-
-bool _isMinorOrTribeFaction(Game game, String factionId) =>
-    game.minorNations.any((m) => m.id == factionId) ||
-    game.tribes.any((t) => t.id == factionId);
 
 /// When Old World expansion is stalled, prefer marching against an at-war minor
 /// that still owns invadable provinces over this turn's declare-war target (e.g.
@@ -422,7 +419,7 @@ bool _isOnAtWarMinorOrTribeFrontier({
   for (final n in destNeighborLocals) {
     final nOwner = provinceOwner[ProvinceId.full(destRegion, n)] ?? '';
     if (!atWarWith.contains(nOwner)) continue;
-    if (_isMinorOrTribeFaction(game, nOwner)) return true;
+    if (isMinorOrTribeFaction(game, nOwner)) return true;
   }
   return false;
 }
@@ -443,7 +440,7 @@ double _stalledExpansionArmyMoveScoreDelta({
       destOwner.isNotEmpty &&
       destOwner != nationId &&
       snapshot.threats.atWarWith.contains(destOwner) &&
-      _isMinorOrTribeFaction(game, destOwner);
+      isMinorOrTribeFaction(game, destOwner);
   final atWarGpInvadableBlocker =
       destOwner.isNotEmpty &&
       destOwner != nationId &&
