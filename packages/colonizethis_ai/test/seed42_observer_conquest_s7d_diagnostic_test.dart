@@ -146,14 +146,105 @@ import 'package:logger/logger.dart';
 ///     locks; a refreshed S7-D run after this lands should show
 ///     the gain.
 ///
-///     **H4-b [still open]:** extend the stalled-expansion own-
-///     territory frontier-march in `runConquestArmyMovePlanner`
-///     (`SPEC/ai/phase-planner-architecture.md` § Acceptance
-///     criteria #2) to at-war minor / tribe owned OW provinces
-///     reachable *through* the at-war peer GP's territory
-///     (currently the multi-turn march targets minor / tribe
-///     destinations adjacent to *own* territory only). This is
-///     out of scope for the H4-a slice.
+///     **H4-b [deferred — refresh evidence below]:** extend the
+///     stalled-expansion own-territory frontier-march in
+///     `runConquestArmyMovePlanner` (`SPEC/ai/phase-planner-architecture.md`
+///     § Acceptance criteria #2) to at-war minor / tribe owned OW
+///     provinces reachable *through* the at-war peer GP's
+///     territory. The post-H4-a refresh below shows the failing
+///     GPs hold **1 regiment + 0 treasury** at turn 99 — a
+///     longer reach without offensive strength would not close
+///     the gate. This is now deferred behind H5 / H3 below.
+///
+/// ## S7-D refresh (captured 2026-05-26 against `feat/issue-2847-s7d-diagnostic`
+///     with the H4-a peace-widening slice in place)
+///
+/// Re-running the diagnostic with the H4-a `planExpandPeace`
+/// carve-out landed (commit `0f1f0a7295`) reveals that **H4-a
+/// alone does not close the +3 OW gate**. Headline numbers:
+///
+///   * **OW gain (+3 gate):** gp3=+2, gp4=+1, gp5=+1, gp6=+2
+///     (all still failing — same band as the original baseline).
+///     gp1=+6, gp2=+2 (unchanged passes).
+///   * **Phase distribution unchanged:** gp3 / gp4 / gp5 stay in
+///     EXPAND for all 100 turns; gp6 reaches COLONIAL only at
+///     turn 94+ (94 expand / 6 colonial). H4-a does not unlock
+///     the EXPAND → COLONIAL transition for the failing GPs.
+///   * **Peer-war at-war turn count drops modestly:**
+///     gp3↔gp4 stays at war 45 / 100 (down from 53 / 100 in the
+///     pre-H4-a baseline — the peace fires every turn now via
+///     the carve-out, but the war is **re-declared** by the peer
+///     a few turns later because both sides still satisfy the
+///     same EXPAND declare-war priority arms). gp5↔gp6 stays at
+///     war 45 / 100 (already at 45 in baseline, no movement).
+///   * **Economy bottleneck dominates:** every failing GP holds
+///     **1 regiment + 0 treasury** at turn 99 with
+///     `cheapestRegimentBuildTreasuryCost = 2000`.
+///     `boostTreasuryRecoveryCargo` fires 91–97 turns per failing
+///     GP but treasury never crosses 2000 because the failing GPs
+///     hold zero NW provinces and have no overseas riches to
+///     deliver — `boostTreasuryRecoveryCargo` boosts cargo
+///     preference for an income path that does not exist.
+///     `forceCheapestRegimentBuild` fires only **3 turns** per GP
+///     (Arm A's `regimentCount == 0` gate; Arm B requires
+///     `effectiveTreasury >= 2000` which never happens).
+///   * **Geographic peer-war lock unchanged at turn 99:**
+///     `adjacentOwnerFactionIdsSorted` still collapses to a single
+///     at-war (or recently-at-war) peer per failing GP — gp4 for
+///     gp3, gp3 for gp4, gp6 for gp5, gp5 for gp6 — and the
+///     invadable OW set (5–8 provinces per GP) is owned entirely
+///     by that peer.
+///
+/// ## Updated S7-T tuning surface (ordered by post-H4-a evidence)
+///
+/// Constraint per issue § Scope constraint stays unchanged:
+/// **phase-planner logic only**, **no new config constants**,
+/// **no value changes** to existing constants in
+/// `packages/colonizethis_data/lib/src/ai_victory_config.dart`.
+///
+///   1. **H5 (new, highest signal): treasury-recovery cargo
+///      futility under geographic peer-war lock.**
+///      `boostTreasuryRecoveryCargo` is set on 91–97 turns per
+///      failing GP but `gpTreasuryUnderCheapestRegimentTurns` /
+///      treasury / `gpOwGain` show the boost never lifts the
+///      regiment-build gate — the failing GPs hold **zero NW
+///      provinces** and **zero NW invadables in EXPAND** (NW
+///      acquisition is structurally suppressed in EXPAND) so the
+///      cargo-preference signal targets an income path that the
+///      GP cannot reach. The single highest-signal slice is to
+///      detect the geographic peer-war lock + zero NW ownership +
+///      EXPAND combination and either suppress the futile cargo
+///      boost, route the economy-weight bonus toward a different
+///      income arm (OW trade with neighbors, OW build queue,
+///      forced cheapest-regiment build under a relaxed treasury
+///      gate), or surface the dead-end as a deferred-survival
+///      signal so a future SPEC slice can authorise an OW-only
+///      trade-recovery arm. Phase-planner-only; no new constants.
+///   2. **H3 (still open): `planExpandEconomy` Arm A semantics
+///      under the lock.** Arm A's `regimentCount == 0` gate fires
+///      only 3 turns per GP because the failing GPs **always have
+///      ≥ 1 regiment** (the EXPAND-trap predicate
+///      `isBelowQuotaPeaceInsufficientRegiments` was already
+///      lifted to Arm B but Arm B requires `effectiveTreasury >=
+///      cheapestRegimentBuildTreasuryCost`). Investigate widening
+///      Arm A — `forceCheapestRegimentBuild: true` — to also fire
+///      under geographic peer-war lock + below quota +
+///      insufficient regiments **without** the affordable-treasury
+///      gate, paired with H5. The build pipeline still applies
+///      its own affordability check, so this is a directive change
+///      not a budget change.
+///   3. **H4-b [deferred]: stalled-expansion frontier-march
+///      extension through peer-GP territory.** The +3 OW gate
+///      cannot close while the failing GPs hold 1 regiment and
+///      0 treasury — extending reach without fixing the offensive
+///      strength gap would still leave combat outcomes
+///      unfavourable. Re-evaluate after H5 / H3 lift the
+///      regiment / treasury floor.
+///   4. **H2 (still open): mutual-plateau peer-war exit lax.**
+///      H4-a is the canonical fix here; the residual peer-war
+///      re-declare oscillation (45-turn at-war count after H4-a)
+///      remains and can be tuned in a follow-up declare-war
+///      cooldown slice.
 ///
 /// ## How to refresh
 ///
