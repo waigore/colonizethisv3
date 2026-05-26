@@ -196,6 +196,9 @@ StrategicOrderTraceResult generateStrategicOrdersWithTrace({
       finalOrders: finalOrders,
       declaredWarTargetFactionId: plannerOutcome.declaredWarTargetFactionId,
       conquestArmyMoveCount: plannerOutcome.conquestArmyMoveCount,
+      observerGoalPhase: observerGoalPhase,
+      phasePlan: plannerOutcome.phasePlan ?? phasePlan,
+      domainGateData: plannerOutcome.domainGateData,
     ),
   );
 }

@@ -13,11 +13,16 @@ Field reference for the versioned schemas introduced for issue #2218.
 | `state.winningCandidate` | object | yes | Candidate selected by AI. |
 | `state.topAlternates` | array<object> | yes | Ranked non-winning candidates. |
 | `state.aggregates` | object | yes | Aggregated scoring/input signals. |
+| `state.observerGoalPhase` | string | no | Resolved phase (`expand`, `colonialLite`, `colonial`, `develop`) for full-AI traces. Omitted for fallback/submitted-order summaries (Refs #2832). |
+| `state.phasePlan` | object | no | Compact `PhasePlanOutcome` provenance projection. Optional sub-fields: `colonialAcquisition.{targetFactionId,method}`, `expandDeclareWarTarget`, `expandPeaceTargets`, `colonialPeaceTargets`, `colonialLiteOvertures`, `developPeaceTargets`. Null / empty arms are omitted (Refs #2832). |
+| `state.decisionContext` | object | no | Turn / leader / personality / hidden-agenda block. |
 | `thresholds` | object | yes | Threshold and gate data. |
 | `thresholds.constants` | object | yes | Rule constants used by planner. |
+| `thresholds.constants.agendaModifiers` | object | no | Hidden-agenda integer modifiers keyed by `conquer`, `diplomacy`, `spyOrder`, `buildOrder`, `research` (each `0` when no modifier applies for the active agenda). Refs #2832. |
 | `thresholds.derived` | object | yes | Derived threshold values. |
 | `thresholds.effective` | object | yes | Runtime effective thresholds. |
 | `thresholds.gates` | array<object> | yes | Gate checks used for filtering/approval. |
+| `thresholds.domainGates` | object | no | Per-planner activation record + resolved thresholds. Required sub-keys when present: `workPlannerRan`, `buildPlannerRan`, `movePlannerRan`, `diplomacyPlannerRan`, `navalPlannerRan`, `researchPlannerRan`, `conquestArmyMovePlannerRan` (booleans); `conquestPasses` (integer). Optional `thresholds.{work,build,research}` integer cutoffs (omitted when the orchestrator did not compute them). Refs #2832. |
 | `outcome` | object | yes | Emitted planner outcomes. |
 | `outcome.finalAggregatedOrders` | array<object> | yes | Final orders emitted for the faction. |
 | `outcome.domainOutputs` | object | yes | Domain planner diagnostics. |
