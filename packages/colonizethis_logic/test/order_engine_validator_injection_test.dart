@@ -23,9 +23,8 @@ class _AlwaysRejectMoveValidator extends MoveValidator {
     MoveOrder order,
     Game game,
     String playerId,
-    Map<String, Unit> unitsById,
+    OrderResolutionContext context,
     List<DiplomaticOrder> diplomaticOrders,
-    PlayerView view,
     MapTopology topology, {
     required bool previousRejected,
     DiplomacyFactionMembership? factionMembership,

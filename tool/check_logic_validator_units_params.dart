@@ -17,7 +17,7 @@ const _scanDirRelative = 'packages/colonizethis_logic/lib/src/orders';
 /// budget tracks further [OrderResolutionContext] threading; raising it
 /// requires a SPEC update in
 /// SPEC/program/logic-validator-units-params.md and a maintainer-reviewed PR.
-const _maxMatchingParamSitesOutsideCanonical = 8;
+const _maxMatchingParamSitesOutsideCanonical = 7;
 
 final RegExp _generatedSuffix = RegExp(r'\.(g|freezed|mocks|gen)\.dart$');
 

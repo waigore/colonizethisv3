@@ -7,6 +7,7 @@ import '../diplomacy/diplomacy_resolver.dart';
 import '../world/player_view.dart';
 import '../world/unit_lookup.dart';
 import '../constants.dart';
+import 'order_resolution_context.dart';
 import 'projected_effects.dart';
 import 'order_validation_result.dart';
 export 'order_validation_result.dart';
@@ -461,6 +462,15 @@ class OrderEngine with _OrderEngineGeneratedOrderMethods {
     MapTopology topology,
     DiplomacyFactionMembership factionMembership,
   ) {
+    // Build the per-phase [OrderResolutionContext] once so every per-move
+    // [MoveValidator.validate] call reuses the same `view` + `unitsById`
+    // snapshot (Refs #2836 AC 3;
+    // SPEC/program/logic-validator-units-params.md).
+    final moveContext = orderResolutionContextFromView(
+      view,
+      game,
+      unitsById: unitsById,
+    );
     state.rejected = _appendValidationResults(
       state.results,
       moves,
@@ -469,9 +479,8 @@ class OrderEngine with _OrderEngineGeneratedOrderMethods {
         o,
         game,
         playerId,
-        unitsById,
+        moveContext,
         diplomatic,
-        view,
         topology,
         previousRejected: prev,
         factionMembership: factionMembership,
