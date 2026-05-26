@@ -144,7 +144,7 @@ List<NavalMoveOrder> suggestNavalMoveOrders(
   final effectiveUnits =
       unitsById ??
       sharedCandidateValidator?.unitsById ??
-      unitsByIdFromWorld(game.worldState);
+      game.worldState.allUnitsById;
   final candidateValidator =
       sharedCandidateValidator ??
       IncrementalCandidateValidator.forPlayer(
@@ -241,7 +241,7 @@ List<NavalMissionOrder> suggestNavalMissionOrders(
   final effectiveUnits =
       unitsById ??
       sharedCandidateValidator?.unitsById ??
-      unitsByIdFromWorld(game.worldState);
+      game.worldState.allUnitsById;
   final candidateValidator =
       sharedCandidateValidator ??
       IncrementalCandidateValidator.forPlayer(
@@ -459,7 +459,7 @@ List<DiplomaticOrder> suggestDiplomaticOrders(
   // One world scan for the suggestion pass: every diplomatic probe shares the
   // same `(game, topology, playerId)` view/units snapshot (Refs #2394).
   final unitsByIdForDiplomatic =
-      sharedCandidateValidator?.unitsById ?? unitsByIdFromWorld(game.worldState);
+      sharedCandidateValidator?.unitsById ?? game.worldState.allUnitsById;
 
   final unionTargets = <String>{
     ...knownTargets,
@@ -471,8 +471,7 @@ List<DiplomaticOrder> suggestDiplomaticOrders(
   var workingOrders = currentOrders;
   // Rebind [basePrefix] per target via [forBasePrefix]; pay view/units/membership
   // setup once for the whole suggestion pass (Refs #2394).
-  var passValidator =
-      sharedCandidateValidator != null
+  var passValidator = sharedCandidateValidator != null
       ? (sharedCandidateValidator.basePrefix == workingOrders
             ? sharedCandidateValidator
             : sharedCandidateValidator.forBasePrefix(workingOrders))
@@ -613,11 +612,10 @@ List<DiplomaticOrder> suggestDeclareWarOrders(
     'sharedCandidateValidator playerId must match view.playerId',
   );
   final unitsByIdForDiplomatic =
-      sharedCandidateValidator?.unitsById ?? unitsByIdFromWorld(game.worldState);
+      sharedCandidateValidator?.unitsById ?? game.worldState.allUnitsById;
 
   final sortedTargetIds = knownTargetIds.toList()..sort();
-  var passValidator =
-      sharedCandidateValidator != null
+  var passValidator = sharedCandidateValidator != null
       ? (sharedCandidateValidator.basePrefix == currentOrders
             ? sharedCandidateValidator
             : sharedCandidateValidator.forBasePrefix(currentOrders))

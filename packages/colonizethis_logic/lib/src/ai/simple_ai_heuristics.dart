@@ -248,6 +248,7 @@ Orders generateOrdersWithSimpleHeuristics(
   String playerId,
   int turnSeed, {
   Map<String, TileMapResult>? tileMapByRegion,
+
   /// When true, [game] is used as-is (callers must already have run
   /// [ensureMilitaryArmiesForGame]). Used by [generateOrdersForGame] to avoid
   /// O(players) redundant full-world army reconciliation (Refs #2394).
@@ -258,9 +259,7 @@ Orders generateOrdersWithSimpleHeuristics(
     return const Orders();
   }
 
-  final g = skipEnsureMilitaryArmies
-      ? game
-      : ensureMilitaryArmiesForGame(game);
+  final g = skipEnsureMilitaryArmies ? game : ensureMilitaryArmiesForGame(game);
   final factionMembership = DiplomacyFactionMembership.from(g);
   final rng = math.Random(turnSeed);
   var current = const Orders();
@@ -273,7 +272,7 @@ Orders generateOrdersWithSimpleHeuristics(
   // iteration, a single validator wraps these around the up-to-date
   // [current] basePrefix and feeds all four suggest families. Refs #2394;
   // SPEC/program/order-suggestions.md § Throughput bounds.
-  final unitsById = unitsByIdFromWorld(g.worldState);
+  final unitsById = g.worldState.allUnitsById;
 
   /// Max iterations per player per turn (cap to avoid unbounded loops).
   /// Documented in SPEC/program/sim-game-default-ai.md.

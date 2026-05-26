@@ -23,15 +23,20 @@ Set<String> getValidWorkOrderTileKeys(
   String workTarget,
   Orders currentOrders, {
   Map<String, TileMapResult>? tileMapByRegion,
+
   /// When callers evaluate many tile highlights for the same player and
   /// [currentOrders], they may pass a shared [PlayerView] (Refs #2394).
   PlayerView? view,
+
   /// Optional units index; must match [game.worldState] when supplied.
   Map<String, Unit>? unitsById,
+
   /// Optional faction snapshot; must match [game] when supplied.
   DiplomacyFactionMembership? factionMembership,
+
   /// When non-null, must match `(game, topology, playerId, currentOrders, …)`.
   IncrementalCandidateValidator? sharedCandidateValidator,
+
   /// When non-null, must match [view.provincesById] owned by [playerId].
   Set<String>? playerOwnedProvinceIds,
 }) {
@@ -67,7 +72,7 @@ Set<String> getValidWorkOrderTileKeys(
       sharedCandidateValidator?.factionMembershipSnapshot ??
       factionMembership ??
       DiplomacyFactionMembership.from(game);
-  final effectiveUnitsById = unitsById ?? unitsByIdFromWorld(game.worldState);
+  final effectiveUnitsById = unitsById ?? game.worldState.allUnitsById;
   final effectiveOwnedProvinceIds =
       playerOwnedProvinceIds ??
       <String>{
@@ -170,9 +175,11 @@ Set<String> getValidWorkOrderTileKeysWithVisibility({
     ignorePendingWorkOrderUnitId: unitId,
   );
 
-  final factionMembership = sharedCandidateValidator?.factionMembershipSnapshot ??
+  final factionMembership =
+      sharedCandidateValidator?.factionMembershipSnapshot ??
       DiplomacyFactionMembership.from(game);
-  final ownedProvinceIds = playerOwnedProvinceIds ??
+  final ownedProvinceIds =
+      playerOwnedProvinceIds ??
       <String>{
         for (final e in view.provincesById.entries)
           if (e.value.ownerId == playerId) e.key,
@@ -189,7 +196,7 @@ Set<String> getValidWorkOrderTileKeysWithVisibility({
     factionMembership: factionMembership,
   );
   final sortedVisible = sortedVisibleWorkTargetCandidates(view, raw);
-  final effectiveUnitsById = unitsById ?? unitsByIdFromWorld(game.worldState);
+  final effectiveUnitsById = unitsById ?? game.worldState.allUnitsById;
   final candidateValidator =
       sharedCandidateValidator ??
       buildIncrementalCandidateValidator(

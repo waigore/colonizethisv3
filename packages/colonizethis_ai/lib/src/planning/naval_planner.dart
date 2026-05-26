@@ -98,7 +98,7 @@ Orders runNavalPlanner({
 
   var o = ctx.orders;
 
-  final unitsById = unitsByIdFromWorld(ctx.game.worldState);
+  final unitsById = ctx.game.worldState.allUnitsById;
   final navalMoveCandidates = ctx.suggestionAPI.suggestNavalMoveOrders(
     ctx.view,
     ctx.game,

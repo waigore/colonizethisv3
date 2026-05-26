@@ -1,3 +1,5 @@
+import 'dart:collection' show UnmodifiableMapView;
+
 import 'package:colonizethis_models/colonizethis_models.dart'
     show RegionData, Unit, WorldState;
 
@@ -7,7 +9,9 @@ import '../utils/expando_index.dart';
 /// Central unit lookup. Units live in [WorldState.oldWorld] and [WorldState.newWorld];
 /// lookup is by unit id. SPEC/game/world-model-identity.md.
 ///
-/// Use [unitsByIdFromWorld] for combined read-only or mutable copy across both regions.
+/// Use [WorldStateUnitLookup.allUnitsById] for combined read-only access across
+/// both regions; the result is cached per-[WorldState] and shared across callers.
+/// Use [Map.from](world.allUnitsById) when a mutable copy is required.
 /// Use [unitsByIdFromRegion] for a single region (e.g. combat, movement within region).
 
 /// Returns a new map from unit id to unit for [region]. Callers that need to mutate
@@ -17,7 +21,15 @@ Map<String, Unit> unitsByIdFromRegion(RegionData region) {
 }
 
 /// Returns a new map from unit id to unit for all units in [world] (both regions).
-/// Callers that need to mutate should use [Map.from](unitsByIdFromWorld(world)).
+///
+/// **Prefer [WorldStateUnitLookup.allUnitsById]** — it returns the same combined
+/// view backed by a per-[WorldState] cache (see `_WorldUnitIndex`), so repeated
+/// callers within one turn no longer rebuild the same map. This function is
+/// retained for the canonical [unit_lookup] internals (building the cached
+/// index) and for tests; callers under `lib/src/` must use [allUnitsById]
+/// instead and is enforced by `repo.logic_units_by_id_rebuild` (Refs #2836).
+/// Callers that need to mutate should use
+/// `Map<String, Unit>.from(world.allUnitsById)`.
 Map<String, Unit> unitsByIdFromWorld(WorldState world) {
   return <String, Unit>{
     ...unitsByIdFromRegion(world.oldWorld),
@@ -110,14 +122,20 @@ MilitaryTypeCountsByPlayer militaryTypeCountsByPlayer(WorldState world) {
 }
 
 /// Old-world-first id → unit plus membership sets for O(1) region checks.
+///
+/// [byId] is the raw mutable backing map (used internally for build). The
+/// unmodifiable view [byIdUnmodifiable] is the public surface exposed through
+/// [WorldStateUnitLookup.allUnitsById]: it is allocated once per
+/// [WorldState] and shared across all read-only callers (Refs #2836 AC 2).
 final class _WorldUnitIndex {
   _WorldUnitIndex({
     required this.byId,
     required this.oldIds,
     required this.newIds,
-  });
+  }) : byIdUnmodifiable = UnmodifiableMapView<String, Unit>(byId);
 
   final Map<String, Unit> byId;
+  final UnmodifiableMapView<String, Unit> byIdUnmodifiable;
   final Set<String> oldIds;
   final Set<String> newIds;
 }
@@ -147,6 +165,16 @@ _WorldUnitIndex _unitIndexForWorld(WorldState world) =>
 extension WorldStateUnitLookup on WorldState {
   /// Returns the unit with [unitId] in old world first, then new world, or null.
   Unit? tryGetUnitById(String unitId) => _unitIndexForWorld(this).byId[unitId];
+
+  /// Cross-region unit-by-id map (old-world entries first, then new world).
+  ///
+  /// Returns an unmodifiable view of the cached [_WorldUnitIndex.byId], so the
+  /// same object is reused across all read-only callers for the same
+  /// [WorldState] (Refs #2836 AC 2). Mutating callers must take an explicit
+  /// copy via `Map<String, Unit>.from(world.allUnitsById)` — direct mutation
+  /// of the returned map throws [UnsupportedError].
+  Map<String, Unit> get allUnitsById =>
+      _unitIndexForWorld(this).byIdUnmodifiable;
 
   /// [kRegionOldWorld] or [kRegionNewWorld] based on which regional unit list
   /// contains [unit]'s id (old world checked first). Null if absent from both.

@@ -96,7 +96,7 @@ void _addExplorerWorkSuggestionsForUnit({
   required WorkSuggestionProbeBudget workProbeBudget,
   Map<String, TileMapResult>? tileMapByRegion,
 }) {
-  final unitsById = Map<String, Unit>.from(unitsByIdFromWorld(game.worldState));
+  final unitsById = Map<String, Unit>.from(game.worldState.allUnitsById);
   final diplomatic =
       currentOrders.diplomaticOrdersByPlayerId[playerId] ?? const [];
 
@@ -292,7 +292,7 @@ void _addProspectSuggestionIfEligible({
     return;
   }
 
-  final unitsById = Map<String, Unit>.from(unitsByIdFromWorld(game.worldState));
+  final unitsById = Map<String, Unit>.from(game.worldState.allUnitsById);
   final diplomatic =
       currentOrders.diplomaticOrdersByPlayerId[playerId] ?? const [];
 
@@ -368,6 +368,7 @@ void _addProspectSuggestionIfEligible({
     resolveNoCandidateReason: () => lastReason,
     includeAllAccepted: true,
     maxProbeAttempts:
-        kMaxExploreProvinceProbesPerUnit * kMaxWorkProbeAttemptsPerUnitPerTarget,
+        kMaxExploreProvinceProbesPerUnit *
+        kMaxWorkProbeAttemptsPerUnitPerTarget,
   );
 }

@@ -358,7 +358,7 @@ Orders _runStalledFrontierArmyMoveFallback({
     basePrefix: ctx.orders,
     factionMembership: DiplomacyFactionMembership.from(ctx.game),
     view: ctx.view,
-    unitsById: unitsByIdFromWorld(ctx.game.worldState),
+    unitsById: ctx.game.worldState.allUnitsById,
   );
   final armiesWithOrders = <String>{
     for (final m

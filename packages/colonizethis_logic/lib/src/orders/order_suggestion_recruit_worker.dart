@@ -43,8 +43,7 @@ List<RecruitWorkerOrder> suggestRecruitWorkerOrders(
     'sharedCandidateValidator playerId must match view.playerId',
   );
   final effectiveUnits =
-      sharedCandidateValidator?.unitsById ??
-      unitsByIdFromWorld(game.worldState);
+      sharedCandidateValidator?.unitsById ?? game.worldState.allUnitsById;
   final candidateValidator =
       sharedCandidateValidator ??
       buildIncrementalCandidateValidator(

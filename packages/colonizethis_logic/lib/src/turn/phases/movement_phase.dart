@@ -164,7 +164,7 @@ Game applyImplicitBundledCivilianWorkOrderMoves(
     return state;
   }
 
-  final unitById = unitsByIdFromWorld(state.worldState);
+  final unitById = Map<String, Unit>.from(state.worldState.allUnitsById);
   final viewByPlayerId = <String, PlayerView>{};
   for (final entry in workByPlayerId.entries) {
     final playerId = entry.key;

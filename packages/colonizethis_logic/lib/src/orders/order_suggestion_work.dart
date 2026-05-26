@@ -55,9 +55,7 @@ List<String> merchantPurchaseLandCandidateTileKeys({
     final rank = merchantPurchaseLandCandidateSortRank(
       game: game,
       tileKey: a,
-    ).compareTo(
-      merchantPurchaseLandCandidateSortRank(game: game, tileKey: b),
-    );
+    ).compareTo(merchantPurchaseLandCandidateSortRank(game: game, tileKey: b));
     if (rank != 0) return rank;
     return a.compareTo(b);
   });
@@ -106,11 +104,10 @@ List<WorkOrder> suggestWorkOrders(
         view: view,
         partiallyRevealedPrefixedProvinceIds: partiallyRevealedProvinceCache,
       );
-  final colonialIntelExploreProvinceIds =
-      colonialIntelExploreProvinceIdsSorted(
-        view: view,
-        topology: topology,
-      ).toSet();
+  final colonialIntelExploreProvinceIds = colonialIntelExploreProvinceIdsSorted(
+    view: view,
+    topology: topology,
+  ).toSet();
   final explorerProvincesSorted = _explorerProvincesSortedForWork(
     view: view,
     partiallyRevealedProvincesSorted: partiallyRevealedProvincesSorted,
@@ -152,7 +149,7 @@ List<WorkOrder> suggestWorkOrders(
         baseOrders: currentOrders,
         tileMapByRegion: tileMapByRegion,
         view: view,
-        unitsById: unitsByIdFromWorld(game.worldState),
+        unitsById: game.worldState.allUnitsById,
         factionMembership: factionMembership,
       );
 

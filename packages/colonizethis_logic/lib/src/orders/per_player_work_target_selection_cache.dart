@@ -101,7 +101,7 @@ class PerPlayerWorkTargetSelectionCache {
       baseOrders: s.currentOrders,
       tileMapByRegion: s.tileMapByRegion,
       view: s.playerView,
-      unitsById: unitsByIdFromWorld(s.game.worldState),
+      unitsById: s.game.worldState.allUnitsById,
       factionMembership: DiplomacyFactionMembership.from(s.game),
     );
   }

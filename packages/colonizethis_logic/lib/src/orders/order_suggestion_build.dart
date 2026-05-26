@@ -39,7 +39,7 @@ List<BuildUnitOrder> suggestBuildOrders(
         playerId: playerId,
         baseOrders: currentOrders,
         view: view,
-        unitsById: unitsByIdFromWorld(game.worldState),
+        unitsById: game.worldState.allUnitsById,
         factionMembership: DiplomacyFactionMembership.from(game),
       );
 
