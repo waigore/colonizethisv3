@@ -396,7 +396,9 @@ BuildWorkState _completedWorkPurchaseLand(
     targetTileKey: cw.tileKey,
     treasury: player.treasury,
     purchasedTilesByTileKey: s.work.purchasedTilesByTileKey,
-    provinceById: (id) => s.game.worldState.tryGetProvince(id),
+    provinceById: (id) =>
+        s.game.worldState.allProvincesById[id] ??
+        s.game.worldState.tryGetProvince(id),
   );
   final updatedPlayer = player.copyWith(treasury: land.treasury);
   final nextPlayers = s.game.players

@@ -1,3 +1,5 @@
+import 'dart:collection' show UnmodifiableMapView;
+
 import 'package:colonizethis_models/colonizethis_models.dart'
     show Province, ProvinceId, RegionData, Unit, WorldState;
 
@@ -74,6 +76,33 @@ List<Province> decrementFortLevelForProvinceIdIfPresent(
         p,
   ];
 }
+
+/// Old-world-first id → province row (Refs #2836 item 4).
+final class _WorldProvinceIndex {
+  _WorldProvinceIndex({required Map<String, Province> byId})
+    : byIdUnmodifiable = UnmodifiableMapView<String, Province>(byId);
+
+  final UnmodifiableMapView<String, Province> byIdUnmodifiable;
+}
+
+/// Lazily built per [WorldState] instance. A new [WorldState] from
+/// [WorldState.copyWith] gets a fresh cache via identity.
+final ExpandoIndex<WorldState, _WorldProvinceIndex> _worldProvinceIndexByState =
+    ExpandoIndex<WorldState, _WorldProvinceIndex>('worldProvinceIndexByState', (
+      world,
+    ) {
+      final byId = <String, Province>{};
+      for (final p in world.oldWorld.provinces) {
+        byId.putIfAbsent(p.id, () => p);
+      }
+      for (final p in world.newWorld.provinces) {
+        byId.putIfAbsent(p.id, () => p);
+      }
+      return _WorldProvinceIndex(byId: byId);
+    });
+
+_WorldProvinceIndex _provinceIndexForWorld(WorldState world) =>
+    _worldProvinceIndexByState.get(world);
 
 RegionData? _regionForId(WorldState world, String regionId) {
   return regionId == kRegionOldWorld
@@ -216,6 +245,14 @@ List<String> landTileKeysForProvinceBucket(
 
 /// Province lookup helpers on [WorldState] to avoid repeatedly passing the world state.
 extension WorldStateProvinceLookup on WorldState {
+  /// Cross-region province-by-id map (old-world entries first, then new world).
+  ///
+  /// Returns an unmodifiable view cached per [WorldState] identity (Refs #2836
+  /// item 4). Keys are [Province.id] rows from both regions. For prefixed-id
+  /// resolution that parses region segments, use [tryGetProvince].
+  Map<String, Province> get allProvincesById =>
+      _provinceIndexForWorld(this).byIdUnmodifiable;
+
   RegionData? regionDataForId(String regionId) => _regionForId(this, regionId);
 
   Iterable<Province> allProvinces() sync* {

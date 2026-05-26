@@ -23,7 +23,7 @@ typedef _StandardWorkTargetConfigBuilder =
       required String targetTileKey,
       required Unit unit,
       required TileMapState tileState,
-      required Province? Function(String) provinceById,
+      required Map<String, Province> provincesById,
     });
 
 _StandardWorkTargetConfig _fixedMaterialWorkTargetConfig(String target) =>
@@ -40,7 +40,7 @@ _standardWorkTargetConfigBuilders = {
         required targetTileKey,
         required unit,
         required tileState,
-        required provinceById,
+        required provincesById,
       }) => _StandardWorkTargetConfig(
         allowedForUnitType: (t) =>
             isWorkOrderTargetAllowedForUnitType(t, kWorkTargetBuildImprovement),
@@ -58,9 +58,9 @@ _standardWorkTargetConfigBuilders = {
         required targetTileKey,
         required unit,
         required tileState,
-        required provinceById,
+        required provincesById,
       }) {
-        final prov = provinceById(unit.locationProvinceId);
+        final prov = provincesById[unit.locationProvinceId];
         final fortLevel = prov?.fortLevel ?? 0;
         return _StandardWorkTargetConfig(
           allowedForUnitType: (t) =>
@@ -71,11 +71,18 @@ _standardWorkTargetConfigBuilders = {
               totalTurnsForWork(kWorkTargetBuildFort, fortLevel: fortLevel),
         );
       },
-  kWorkTargetBuildRoad: _fixedMaterialWorkTargetConfigBuilder(kWorkTargetBuildRoad),
-  kWorkTargetBuildPort: _fixedMaterialWorkTargetConfigBuilder(kWorkTargetBuildPort),
-  kWorkTargetBuildRail: _fixedMaterialWorkTargetConfigBuilder(kWorkTargetBuildRail),
-  kWorkTargetUpgradeTown:
-      _fixedMaterialWorkTargetConfigBuilder(kWorkTargetUpgradeTown),
+  kWorkTargetBuildRoad: _fixedMaterialWorkTargetConfigBuilder(
+    kWorkTargetBuildRoad,
+  ),
+  kWorkTargetBuildPort: _fixedMaterialWorkTargetConfigBuilder(
+    kWorkTargetBuildPort,
+  ),
+  kWorkTargetBuildRail: _fixedMaterialWorkTargetConfigBuilder(
+    kWorkTargetBuildRail,
+  ),
+  kWorkTargetUpgradeTown: _fixedMaterialWorkTargetConfigBuilder(
+    kWorkTargetUpgradeTown,
+  ),
 };
 
 _StandardWorkTargetConfigBuilder _fixedMaterialWorkTargetConfigBuilder(
@@ -85,7 +92,7 @@ _StandardWorkTargetConfigBuilder _fixedMaterialWorkTargetConfigBuilder(
       required targetTileKey,
       required unit,
       required tileState,
-      required provinceById,
+      required provincesById,
     }) => _fixedMaterialWorkTargetConfig(target);
 
 const _StandardWorkTargetConfig _unsupportedStandardWorkTargetConfig =
@@ -100,7 +107,7 @@ _StandardWorkTargetConfig _buildStandardWorkTargetConfig({
   required String targetTileKey,
   required Unit unit,
   required TileMapState tileState,
-  required Province? Function(String) provinceById,
+  required Map<String, Province> provincesById,
 }) {
   final builder = _standardWorkTargetConfigBuilders[target];
   if (builder == null) return _unsupportedStandardWorkTargetConfig;
@@ -108,7 +115,7 @@ _StandardWorkTargetConfig _buildStandardWorkTargetConfig({
     targetTileKey: targetTileKey,
     unit: unit,
     tileState: tileState,
-    provinceById: provinceById,
+    provincesById: provincesById,
   );
 }
 
@@ -123,7 +130,7 @@ bool applyStandardWorkOrder({
   required bool hasValidTarget,
   required String orderTarget,
   required TileMapState tileState,
-  required Province? Function(String) provinceById,
+  required Map<String, Province> provincesById,
   required bool Function(WorkOrderCost) canAffordMaterialCost,
   required void Function(WorkOrderCost) deductMaterialCost,
   required void Function(String, Unit) updateUnit,
@@ -135,7 +142,7 @@ bool applyStandardWorkOrder({
     targetTileKey: targetTileKey,
     unit: unit,
     tileState: tileState,
-    provinceById: provinceById,
+    provincesById: provincesById,
   );
   if (!config.allowedForUnitType(unit.type)) return false;
 
@@ -171,7 +178,9 @@ bool shouldSkipBuildFortForMissingTech({
 }) {
   final fortLevel = province?.fortLevel ?? 0;
   if (fortLevel == 1 && techUnlocked?[kTechIdMineEngineering] != true) {
-    logicLog.d('build_fort skipped - Mine Engineering required for fort level 2');
+    logicLog.d(
+      'build_fort skipped - Mine Engineering required for fort level 2',
+    );
     return true;
   }
   if (fortLevel == 2 && techUnlocked?[kTechIdModernForts] != true) {
@@ -202,16 +211,13 @@ typedef StandardBuildPreApplyGate =
       required Unit unit,
       required String targetTileKey,
       required TileMapState tileState,
-      required Province? Function(String) provinceById,
+      required Map<String, Province> provincesById,
       required TerrainType? terrain,
     });
 
 /// Applies multi-turn standard build work for a single [target] string.
 class StandardBuildWorkOrderHandler implements WorkOrderHandler {
-  const StandardBuildWorkOrderHandler(
-    this.target, {
-    this.preApplyGate,
-  });
+  const StandardBuildWorkOrderHandler(this.target, {this.preApplyGate});
 
   final String target;
   final StandardBuildPreApplyGate? preApplyGate;
@@ -233,7 +239,7 @@ class StandardBuildWorkOrderHandler implements WorkOrderHandler {
           unit: unit,
           targetTileKey: targetTileKey,
           tileState: context.state.work.tileState,
-          provinceById: context.provinceById,
+          provincesById: context.provincesById,
           terrain: terrainTypeForTileKey(
             context.state.tileMapByRegion,
             targetTileKey,
@@ -248,7 +254,7 @@ class StandardBuildWorkOrderHandler implements WorkOrderHandler {
       hasValidTarget: hasValidTarget,
       orderTarget: target,
       tileState: context.state.work.tileState,
-      provinceById: context.provinceById,
+      provincesById: context.provincesById,
       canAffordMaterialCost: context.canAffordMaterialCost,
       deductMaterialCost: context.deductMaterialCost,
       updateUnit: context.updateUnit,
@@ -261,11 +267,11 @@ bool _skipBuildFortPreApply({
   required Unit unit,
   required String targetTileKey,
   required TileMapState tileState,
-  required Province? Function(String) provinceById,
+  required Map<String, Province> provincesById,
   required TerrainType? terrain,
 }) {
   return shouldSkipBuildFortForMissingTech(
-    province: provinceById(unit.locationProvinceId),
+    province: provincesById[unit.locationProvinceId],
     techUnlocked: player.techUnlocked,
   );
 }
@@ -275,7 +281,7 @@ bool _skipBuildRailPreApply({
   required Unit unit,
   required String targetTileKey,
   required TileMapState tileState,
-  required Province? Function(String) provinceById,
+  required Map<String, Province> provincesById,
   required TerrainType? terrain,
 }) {
   return shouldSkipBuildRailForInvalidTerrainOrTech(
