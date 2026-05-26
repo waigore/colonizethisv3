@@ -5,6 +5,7 @@ import '../constants.dart';
 import '../diplomacy/diplomacy_resolver.dart';
 import '../world/player_view.dart';
 import '../world/province_lookup.dart';
+import 'order_resolution_context.dart';
 import 'order_validation_result.dart';
 import 'validators/move_validator.dart';
 
@@ -81,6 +82,9 @@ bool civilianBundledWorkNeedsProvinceMoveLeg(
 ///
 /// Suggestions, bundled work validation, and movement-phase implicit relocation
 /// must use the same predicate so validation and execution agree (Refs #1916).
+/// [resolution] threads the canonical [OrderResolutionContext] so the cached
+/// `view` + `unitsById` are reused across the per-tile probe loop (Refs #2836
+/// AC 3).
 String? firstLegalBundledEntryTileKeyInProvince({
   required Game game,
   required MapTopology topology,
@@ -88,8 +92,7 @@ String? firstLegalBundledEntryTileKeyInProvince({
   required Unit unit,
   required String destProvinceFullId,
   String? preferredTargetTileKey,
-  required PlayerView view,
-  required Map<String, Unit> unitsById,
+  required OrderResolutionContext resolution,
   required List<DiplomaticOrder> diplomaticOrders,
 }) {
   const moveValidator = MoveValidator();
@@ -101,9 +104,9 @@ String? firstLegalBundledEntryTileKeyInProvince({
       MoveOrder(unitId: unit.id, destinationTileKey: tileKey),
       game,
       playerId,
-      unitsById,
+      resolution.unitsById,
       diplomaticOrders,
-      view,
+      resolution.view,
       topology,
       previousRejected: false,
       factionMembership: factionMembership,
@@ -147,14 +150,16 @@ bool exploreProvinceStillUsefulFromAuthoritativeTiles(
   return false;
 }
 
+/// [resolution] threads the canonical [OrderResolutionContext]
+/// (`view` + `unitsById`) so the per-tile probe loop reuses one shared
+/// pass snapshot (Refs #2836 AC 3).
 OrderValidationResult validateCivilianBundledWorkMoveLeg({
   required Game game,
   required MapTopology topology,
   required String playerId,
   required Unit unit,
   required WorkOrder order,
-  required PlayerView view,
-  required Map<String, Unit> unitsById,
+  required OrderResolutionContext resolution,
   required List<DiplomaticOrder> diplomaticOrders,
 }) {
   if (!civilianBundledWorkNeedsProvinceMoveLeg(game, unit, order)) {
@@ -175,8 +180,7 @@ OrderValidationResult validateCivilianBundledWorkMoveLeg({
     unit: unit,
     destProvinceFullId: destFull,
     preferredTargetTileKey: order.targetTileKey,
-    view: view,
-    unitsById: unitsById,
+    resolution: resolution,
     diplomaticOrders: diplomaticOrders,
   );
   if (legal == null) {
