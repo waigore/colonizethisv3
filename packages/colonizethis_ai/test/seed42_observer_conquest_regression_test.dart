@@ -78,8 +78,12 @@ void main() {
     }
     },
     skip:
-        'Partial AC #2509 S10: seed-42 turn-100 gate — gp3/gp4/gp5/gp6 still '
-        'below +3 OW vs turn-1 snapshot after peace-plumbing fixes (Refs #2509)',
+        'Partial AC #2509 S10: seed-42 turn-100 gate — gp1 now passes via the '
+        'EXPAND stalled-expansion own-territory frontier-march fix combined '
+        'with the planExpandDeclareWar per-arm treasury gate and the '
+        'planColonialPeace below-quota-peer exclusion (Refs #2509). '
+        'gp3/gp4/gp5/gp6 still below +3 OW vs turn-1 snapshot; remaining gap '
+        'tracks companion stalled-tuning slices (separate follow-up).',
     timeout: const Timeout(Duration(minutes: 15)),
   );
 }
