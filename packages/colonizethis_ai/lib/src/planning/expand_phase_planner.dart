@@ -120,13 +120,19 @@ part 'expand_phase_planner_gp_blocker_peace.dart';
 /// Returns the deterministic list of at-war Great Powers the active player
 /// should `offerPeace` toward this turn while in EXPAND phase.
 ///
-/// Contract (issue #2509 § EXPAND phase planner § planExpandPeace):
+/// Contract (issue #2509 § EXPAND phase planner § planExpandPeace, extended
+/// by issue #2847 § H4 § H4-a):
 ///
 ///   "Peace ALL at-war Great Powers, with ONE exception:
 ///    → Keep fighting the GP that owns the primary invadable OW frontier
 ///      blocker (primaryInvadableOldWorldGpBlocker), UNLESS:
 ///      - It's a mutual-plateau sole GP war on a GP-only cleared frontier
-///        with no uninvaded minors (peace to exit stalemate)."
+///        with no uninvaded minors (peace to exit stalemate), OR
+///      - The sole at-war GP is the only owner of OW provinces adjacent to
+///        the active player's territory (geographic peer-war lock) and both
+///        sides are in the mutual-plateau below-quota band — the uninvaded
+///        OW minor pivot is unreachable from the active player's anchors,
+///        so the minor-pivot guard is irrelevant (Refs #2847 § H4-a)."
 ///
 /// Inputs:
 ///   - [game]: used to (a) filter [ThreatSummary.atWarWith] down to Great
@@ -137,27 +143,37 @@ part 'expand_phase_planner_gp_blocker_peace.dart';
 ///     border).
 ///   - [snapshot]: per-player [AIWorldSnapshot] supplying
 ///     [ThreatSummary.atWarWith], [ConquestSummary.invadableProvinceIdsSorted],
-///     and [ConquestSummary.oldWorldProvincesOwned] for the mutual-plateau
+///     [ConquestSummary.adjacentOwnerFactionIdsSorted], and
+///     [ConquestSummary.oldWorldProvincesOwned] for the mutual-plateau
 ///     comparison.
 ///
 /// Output:
 ///   - Empty list when no Great Powers are at war with the active player.
 ///   - Empty list when the sole at-war GP **is** the primary OW invadable
-///     blocker and the mutual-plateau sole-GP carve-out does **not** apply
-///     (keep fighting the blocker; default EXPAND posture).
+///     blocker and neither carve-out applies (keep fighting the blocker;
+///     default EXPAND posture).
 ///   - All GPs sorted ascending when the primary blocker is `null` or not
 ///     among the at-war GPs (peace ALL: the legacy "no exception applies"
 ///     case).
 ///   - All GPs except the blocker sorted ascending when the blocker is
-///     among the at-war GPs and the carve-out does not fire (peace ALL
+///     among the at-war GPs and no carve-out fires (peace ALL
 ///     except the blocker).
 ///   - The single GP (still sorted as a 1-element list) when the
 ///     mutual-plateau sole-GP carve-out fires: exactly one GP at war,
 ///     that GP owns the primary OW invadable blocker, both sides are in
 ///     the stalled below-quota plateau band
-///     ([_isMutualBelowQuotaPlateauPeer]), the invadable frontier is
-///     GP-only ([_isOldWorldGpOnlyInvadableFrontier]), and no uninvaded
-///     OW minors remain ([_hasUninvadedOldWorldMinor] is false).
+///     ([isMutualBelowQuotaPlateauPeer]), the invadable frontier is
+///     GP-only ([expandIsOldWorldGpOnlyInvadableFrontier]), and no uninvaded
+///     OW minors remain ([hasUninvadedOldWorldMinor] is false).
+///   - The single GP (still sorted as a 1-element list) when the
+///     geographic peer-war lock carve-out fires: exactly one GP at war,
+///     that GP owns the primary OW invadable blocker, both sides are in
+///     the mutual-plateau below-quota band, and
+///     [ConquestSummary.adjacentOwnerFactionIdsSorted] is exactly
+///     `[blocker]` — the at-war peer GP is the only faction owning OW
+///     provinces adjacent to the active player's anchors, so any
+///     uninvaded OW minor is geographically unreachable (Refs #2847
+///     § H4-a).
 ///
 /// The function is pure and deterministic — identical inputs always yield
 /// identical lists (Refs #2509 Must-have #7).
@@ -185,16 +201,61 @@ List<String> planExpandPeace({
       isMutualBelowQuotaPlateauPeer(
         ownOw: snapshot.conquest.oldWorldProvincesOwned,
         partnerOw: provinceCountOwnedBy(game, blocker),
-      ) &&
-      expandIsOldWorldGpOnlyInvadableFrontier(game: game, snapshot: snapshot) &&
-      !hasUninvadedOldWorldMinor(game: game, snapshot: snapshot)) {
-    return List<String>.unmodifiable(gpWars);
+      )) {
+    if (expandIsGeographicPeerWarLock(snapshot: snapshot, peerGpId: blocker)) {
+      return List<String>.unmodifiable(gpWars);
+    }
+    if (expandIsOldWorldGpOnlyInvadableFrontier(
+          game: game,
+          snapshot: snapshot,
+        ) &&
+        !hasUninvadedOldWorldMinor(game: game, snapshot: snapshot)) {
+      return List<String>.unmodifiable(gpWars);
+    }
   }
 
   return <String>[
     for (final factionId in gpWars)
       if (factionId != blocker) factionId,
   ]..sort();
+}
+
+/// Whether the active player is in a geographic peer-war lock against
+/// [peerGpId] — exactly one Great Power foe owns every Old World province
+/// adjacent to the active player's territory (Refs #2847 § H4-a).
+///
+/// When this predicate fires, the uninvaded OW minor pivot guarded by
+/// [hasUninvadedOldWorldMinor] is irrelevant for the EXPAND peace
+/// decision: uninvaded minors exist on the wider map but none of them
+/// are reachable from the active player's anchors (their provinces are
+/// not in [ConquestSummary.adjacentOwnerFactionIdsSorted]). The
+/// canonical [planExpandPeace] arm pairs this geographic check with
+/// [isMutualBelowQuotaPlateauPeer] so the mutual-plateau stalemate is
+/// peaced even when minors are still alive somewhere on the map but
+/// outside the active player's reach (seed-42 gp3↔gp4 and gp5↔gp6
+/// mid-game lock; the failing GPs spent 45–53 turns at war with their
+/// peer with no minor-frontier route through their own territory).
+///
+/// Returns `false` when [ConquestSummary.adjacentOwnerFactionIdsSorted]
+/// is empty (no OW adjacency at all — no lock to break), when it
+/// contains more than one entry (the active player has another OW
+/// neighbor that may still be reachable), or when its single entry is
+/// not [peerGpId] (some other faction owns the OW frontier).
+///
+/// Pure and deterministic — identical inputs always yield identical
+/// results (Refs #2509 Must-have #7). Constant-time on the adjacency
+/// list length (single equality check); no global province / tile
+/// scans introduced, matching the budget-rule note in
+/// `colonizethis-turn-resolution-budget.mdc`.
+bool expandIsGeographicPeerWarLock({
+  required AIWorldSnapshot snapshot,
+  required String peerGpId,
+}) {
+  final adjacentOwners = snapshot.conquest.adjacentOwnerFactionIdsSorted;
+  if (adjacentOwners.length != 1) {
+    return false;
+  }
+  return adjacentOwners.single == peerGpId;
 }
 
 /// GP owning the most invadable Old World provinces (frontier blocker).

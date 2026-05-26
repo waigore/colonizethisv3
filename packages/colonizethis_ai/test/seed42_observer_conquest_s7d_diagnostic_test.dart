@@ -118,7 +118,7 @@ import 'package:logger/logger.dart';
 ///     regiments — does the build pipeline cap arm A to once-per-
 ///     drop-to-zero, or is the arm gate semantically wrong for the
 ///     "1–2 regiments stuck" case?
-///   * **H4 [new, highest signal]: geographic peer-war lock starves
+///   * **H4 [highest signal]: geographic peer-war lock starves
 ///     the failing GPs of reachable conquest targets.** For each of
 ///     the four failing GPs, `adjacentOwnerFactionIdsSorted` collapses
 ///     to a single at-war peer GP by mid-game, every invadable OW
@@ -130,19 +130,30 @@ import 'package:logger/logger.dart';
 ///     GP but treasury never climbs to `cheapestRegimentBuildTreasuryCost`
 ///     (2000). The peer war cannot be broken via declare-war
 ///     (already at war), army-move (insufficient regiments), or
-///     peace (45-turn mutual offer + war reopens). Investigate
-///     **(a)** whether `planExpandPeace` should include the sole
-///     at-war GP blocker more aggressively when the failing GP's
-///     adjacency collapses to that single peer (today's gate
-///     requires `mutualPlateau && gpOnlyFrontier && !hasUninvadedOldWorldMinor`
-///     and excludes the blocker otherwise — see
-///     `expand_phase_planner.dart::planExpandPeace`), and
-///     **(b)** whether the stalled-expansion own-territory frontier-march
-///     in `runConquestArmyMovePlanner` (SPEC/ai/phase-planner-architecture.md
-///     § Acceptance criteria #2) should extend to at-war minor/tribe
-///     owned OW provinces reachable through the at-war peer GP's
-///     territory (currently the multi-turn march targets minor/tribe
-///     destinations adjacent to *own* territory only).
+///     peace (45-turn mutual offer + war reopens). Two follow-up
+///     tuning surfaces remain:
+///
+///     **H4-a [implemented]:** widen the `planExpandPeace` carve-out
+///     so peace fires on every at-war turn when adjacency collapses
+///     to a single at-war peer GP, regardless of whether uninvaded
+///     OW minors remain elsewhere on the map. Landed in this PR via
+///     the new [expandIsGeographicPeerWarLock] helper and a parallel
+///     carve-out arm inside [planExpandPeace]; SPEC update at
+///     `SPEC/ai/ai-architecture.md` § EXPAND and
+///     `SPEC/ai/phase-planner-architecture.md` AC list (Refs #2847
+///     § H4-a). Lifts the peace-fire ratio from ~45 / 53 at-war
+///     turns toward 53 / 53 in the seed-42 gp3↔gp4 and gp5↔gp6
+///     locks; a refreshed S7-D run after this lands should show
+///     the gain.
+///
+///     **H4-b [still open]:** extend the stalled-expansion own-
+///     territory frontier-march in `runConquestArmyMovePlanner`
+///     (`SPEC/ai/phase-planner-architecture.md` § Acceptance
+///     criteria #2) to at-war minor / tribe owned OW provinces
+///     reachable *through* the at-war peer GP's territory
+///     (currently the multi-turn march targets minor / tribe
+///     destinations adjacent to *own* territory only). This is
+///     out of scope for the H4-a slice.
 ///
 /// ## How to refresh
 ///
