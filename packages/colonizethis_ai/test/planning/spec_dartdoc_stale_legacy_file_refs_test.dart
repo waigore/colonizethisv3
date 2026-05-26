@@ -12,9 +12,10 @@
 // New dartdoc / SPEC / test-comment text may still describe the historical
 // migration via past-tense phrases ("previously retained",
 // "now-completed S1 deletion", "formerly in colonial_pressure.dart",
-// "the S5 orchestrator wiring is in place"). This guard fails when
-// present-tense claims reappear that contradict the live tree, whether
-// in `lib/src/planning/` or in this package's `test/` tree.
+// "the S5 orchestrator wiring is in place", "on the landed post-S5
+// dispatch path"). This guard fails when present-tense claims reappear
+// that contradict the live tree, whether in `lib/src/planning/` or in
+// this package's `test/` tree.
 
 import 'dart:io';
 
@@ -27,11 +28,14 @@ const _forbiddenSubstrings = <String>[
   'now a thin delegating',
   'planned S1 deletion',
   'until S1 deletion',
+  'until S1 deletes',
   'tracked under S5 / S1 of #2509',
   'tracked under S5/S1 of #2509',
   'until S5 wires this module',
   'S5 orchestrator wire-up is in flight',
   'until the S5 orchestrator wiring lands',
+  'once S5 wiring is active',
+  'pre-S5 wiring',
 ];
 
 const _planningDirRelative = 'lib/src/planning';

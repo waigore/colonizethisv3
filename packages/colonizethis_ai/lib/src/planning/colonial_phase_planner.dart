@@ -199,12 +199,13 @@
 ///     tiles needed for port/supply to active NW objectives"). The
 ///     planner emits NW-only orders as the structural COLONIAL-phase
 ///     posture; the narrow OW port/supply allowance is deferred to a
-///     follow-up slice (no current consumer needs it pre-S5 wiring,
-///     and the SPEC text scopes it tightly to active NW objectives).
+///     follow-up slice (no orchestrator consumer needs it on the
+///     landed post-S5 dispatch path, and the SPEC text scopes it
+///     tightly to active NW objectives).
 ///     Same yield-score key as `planDevelopCivilian`
 ///     (`kBuildImprovementExtractableResourceScore` plus the NW + owned-NW
 ///     bonuses) so the orchestrator sees consistent priority rankings
-///     across phases during the S5 transition.
+///     across phases on the landed post-S5 dispatch path.
 library;
 
 import 'package:colonizethis_data/colonizethis_data.dart';
@@ -1730,9 +1731,10 @@ ColonialLiteNavalPlan planColonialLiteNaval({
 /// `purchase_land` toward unowned NW tiles is the responsibility of
 /// [planColonialAcquisition]. The narrow OW
 /// port/supply allowance noted in the spec ("except tiles needed for
-/// port/supply to active NW objectives") is also deferred — no caller
-/// consumes the planner pre-S5 wiring, and tightening that exception
-/// requires the orchestrator's active-NW-objective set which lives in
+/// port/supply to active NW objectives") is also deferred — no
+/// orchestrator caller consumes the planner on the landed post-S5
+/// dispatch path, and tightening that exception requires the
+/// orchestrator's active-NW-objective set which lives in
 /// `planColonialAcquisition` / `planColonialMilitary` (neither in
 /// place today). Suppressing OW improvements unconditionally here is
 /// the structural COLONIAL-phase default the spec mandates; the
