@@ -1,12 +1,19 @@
 // Unit tests for the COLONIAL-phase planner contracts in
 // `packages/colonizethis_ai/lib/src/planning/colonial_phase_planner.dart`
-// (Refs #2509 S3 / S10).
+// (Refs #2509 S3 / S10 + S7 below-quota peer exclusion).
 //
-// Spec contract (issue #2509 § COLONIAL phase planner § planColonialPeace):
+// Spec contract (issue #2509 § COLONIAL phase planner § planColonialPeace
+// plus the `phase-planner-architecture.md` below-quota peer AC):
 //
-//   "Peace all at-war Great Powers, with ONE exception:
-//    → Keep fighting a GP that owns a province blocking the primary
-//      colonial NW target (primaryColonialGpBlocker).
+//   "Peace all at-war Great Powers, with TWO exceptions:
+//    1. Keep fighting a GP that owns a province blocking the primary
+//       colonial NW target (primaryColonialGpBlocker).
+//    2. Keep fighting a Great Power peer whose OW province count is
+//       below `kObserverConquestMinOwProvincesPerGp` (the OW quota).
+//       This preserves Must-have #5 ('OW pressure preserved while
+//       below quota'): a peer still in EXPAND may depend on the
+//       active COLONIAL player as their only invadable OW
+//       frontier-blocker war.
 //
 //    Never peace tribe/minor colonial targets until:
 //    → Objective met (tribe no longer owns the target NW province), OR
@@ -17,9 +24,15 @@
 // `develop_phase_planner_test.dart`: small synthetic fixtures, one
 // branch arm per test, in-module pin (planner module never re-checks
 // phase, so these tests stay scoped to the GP filter, blocker scan,
-// blocker membership guard, and deterministic-sort contract). The
-// tribe / minor "never peace" rule is preserved structurally via the
-// `game.playerById` filter; the tests pin that behavior directly.
+// blocker membership guard, the below-quota peer filter, and the
+// deterministic-sort contract). The tribe / minor "never peace" rule
+// is preserved structurally via the `game.playerById` filter; the
+// tests pin that behavior directly. The default `_colonialGame`
+// helper puts every roster GP at the OW quota
+// (`kObserverConquestMinOwProvincesPerGp = 10`) so the at-quota tests
+// surface the canonical paths without accidental below-quota
+// filtering; the dedicated below-quota tests override the per-GP OW
+// count via `perGpOwCounts`.
 //
 // `planColonialPeace` tests:
 //
@@ -29,19 +42,19 @@
 //      filtered via `game.playerById` returning null -> empty (COLONIAL
 //      peace is GP-only; tribe / minor wars continue per the
 //      "Never peace tribe/minor" rule).
-//   3. **Multi-GP, no invadable NW (blocker null):** peace ALL GPs
-//      sorted ascending (no exception applies; legacy "peace all" arm).
-//   4. **Multi-GP, blocker is a non-at-war GP:** the blocker is a
-//      different GP than any live war front -> peace all live fronts
-//      ascending (`!gpWars.contains(blocker)` guard arm).
-//   5. **Multi-GP, blocker among `gpWars`:** peace all GPs except the
-//      blocker, sorted ascending (canonical COLONIAL-peace happy path).
+//   3. **Multi-GP at quota, no invadable NW (blocker null):** peace
+//      ALL at-war GPs sorted ascending (no exception applies; "peace
+//      all at-quota peers" arm).
+//   4. **Multi-GP at quota, blocker is a non-at-war GP:** the blocker
+//      is a different GP than any live war front -> peace all live
+//      fronts ascending (`factionId != blocker` arm).
+//   5. **Multi-GP at quota, blocker among `gpWars`:** peace all GPs
+//      except the blocker, sorted ascending (canonical COLONIAL-peace
+//      happy path).
 //   6. **Sole GP at war IS the blocker:** keep fighting the lone
 //      blocker -> empty (the lone war IS the colonial blocker war).
-//   7. **Sole GP at war is NOT the blocker:** peace that single GP
-//      -> `[that GP]` (explicit divergence from the legacy
-//      `colonialPhaseGpPeaceTargets` `gpWars.length <= 1 → const []`
-//      short-circuit; new spec says "Peace all" with no length guard).
+//   7. **Sole at-quota GP at war is NOT the blocker:** peace that
+//      single GP -> `[that GP]`.
 //   8. **Three GPs at war (input order shuffled):** trailing
 //      `..sort()` restores ascending order (Must-have #7 pin).
 //   9. **Mixed GP + non-GP `atWarWith` with blocker:** non-GP ids
@@ -49,6 +62,20 @@
 //      ascending less blocker (composite filter pin).
 //  10. **Determinism:** identical inputs yield identical lists across
 //      repeated calls (Must-have #7).
+//  11. **Single below-quota peer at war -> empty (Refs #2509 S7):**
+//      the active player is at war with exactly one Great Power whose
+//      OW province count is below `kObserverConquestMinOwProvincesPerGp`
+//      and that peer is not the colonial blocker -> the new exclusion
+//      arm fires, returning an empty list so the COLONIAL planner
+//      does not emit `offerPeace` while the peer is still in EXPAND.
+//  12. **Mixed at-quota + below-quota peers at war (Refs #2509 S7):**
+//      below-quota peer dropped; at-quota peers peaced sorted
+//      ascending. Pins that the exclusion arm is per-GP, not a
+//      whole-list short-circuit.
+//  13. **Below-quota peer that IS the blocker (Refs #2509 S7):** the
+//      blocker exclusion and the below-quota peer exclusion compose
+//      additively -- the blocker is removed once via either arm and
+//      the remaining at-quota peers are returned sorted ascending.
 //
 // This file is the in-module pin for the COLONIAL planner. The S5
 // orchestrator wiring through `phase_planner_dispatch.dart` /
@@ -71,14 +98,62 @@ const String _gp4 = 'gp4';
 const String _tribe1 = 'tribe1';
 const String _minor1 = 'minor1';
 
+/// Minimum at-quota OW province count per GP. Matches
+/// `kObserverConquestMinOwProvincesPerGp = 10` (the COLONIAL phase entry
+/// floor) so the [planColonialPeace] below-quota peer exclusion arm
+/// (Refs #2509 § Must-have #5) does not surface in tests that intend
+/// to exercise the canonical at-quota peace paths.
+const int _kOwProvincesAtQuota = 10;
+
+/// Builds a deterministic list of [Province] entries owned by [ownerId]
+/// in the Old World region. Each province id is shaped
+/// `oldWorld|<ownerId>_<index>` so the synthetic fixtures stay
+/// human-readable in trace dumps and do not collide between players.
+List<Province> _owProvincesForOwner(
+  String ownerId, {
+  int count = _kOwProvincesAtQuota,
+}) {
+  return [
+    for (var i = 0; i < count; i++)
+      Province(
+        id: 'oldWorld|${ownerId}_$i',
+        regionId: 'oldWorld',
+        ownerId: ownerId,
+      ),
+  ];
+}
+
+/// Builds an OW province list putting every default-roster GP
+/// (`gp1`..`gp4`) at [_kOwProvincesAtQuota] OW provinces -- the floor
+/// the new COLONIAL `planColonialPeace` requires before a peer becomes
+/// peaceable. Tests that want to exercise the below-quota exclusion
+/// arm pass [perGpOwCounts] with at least one entry set below the
+/// quota.
+List<Province> _defaultOwQuotaProvinces({
+  Map<String, int> perGpOwCounts = const {},
+}) {
+  return [
+    for (final gp in const [_gp1, _gp2, _gp3, _gp4])
+      ..._owProvincesForOwner(
+        gp,
+        count: perGpOwCounts[gp] ?? _kOwProvincesAtQuota,
+      ),
+  ];
+}
+
 /// Game scaffold with a 4-GP roster + optional tribes / minors. New World
 /// provinces are passed in directly so each test can shape ownership for
-/// the blocker scan; Old World is intentionally left empty (COLONIAL
-/// peace planner does not query OW state -- it consumes the GP-vs-GP
-/// at-war roster and the NW invadable blocker lookup).
+/// the blocker scan. Old World is populated by default so every roster
+/// GP sits at [_kOwProvincesAtQuota] OW provinces, satisfying the
+/// COLONIAL `planColonialPeace` at-quota peer requirement (Refs #2509
+/// § Must-have #5). Tests that intentionally cross the below-quota
+/// arm can override the OW count per GP via [perGpOwCounts] or pass a
+/// fully custom [oldWorldProvinces] list.
 Game _colonialGame({
   int turnNumber = 130,
   List<Province> newWorldProvinces = const [],
+  List<Province>? oldWorldProvinces,
+  Map<String, int> perGpOwCounts = const {},
   List<Player> players = const [
     Player(id: _gp1, displayName: 'GP1', isHuman: false),
     Player(id: _gp2, displayName: 'GP2', isHuman: false),
@@ -92,7 +167,11 @@ Game _colonialGame({
     id: 'g-2509-colonial-phase-planner-peace-t$turnNumber',
     worldState: WorldState(
       turnState: TurnState(turnNumber: turnNumber, phase: TurnPhase.orders),
-      oldWorld: const RegionData(),
+      oldWorld: RegionData(
+        provinces:
+            oldWorldProvinces ??
+            _defaultOwQuotaProvinces(perGpOwCounts: perGpOwCounts),
+      ),
       newWorld: RegionData(provinces: newWorldProvinces),
     ),
     players: players,
@@ -368,5 +447,85 @@ void main() {
       final second = planColonialPeace(game: game, snapshot: snapshot);
       expect(second, first);
     });
+
+    test(
+      'single below-quota peer at war -> empty (Refs #2509 S7 Must-have #5)',
+      () {
+        // The active player (gp1, COLONIAL at quota) is at war with
+        // exactly one Great Power peer (gp3) whose OW province count
+        // is 7 -- below `kObserverConquestMinOwProvincesPerGp = 10`.
+        // No invadable NW is owned by gp3 (the blocker scan returns
+        // null). The new below-quota peer exclusion arm fires: the
+        // planner must NOT emit `offerPeace` toward gp3 while gp3 is
+        // still in EXPAND, otherwise `war_resolver.dart`'s one-sided
+        // GP peace conditions would end gp3's only OW frontier-blocker
+        // war on a single offerer.
+        final game = _colonialGame(perGpOwCounts: const {_gp3: 7});
+        final snapshot = _colonialSnapshot(atWarWith: const [_gp3]);
+        expect(
+          planColonialPeace(game: game, snapshot: snapshot),
+          isEmpty,
+          reason:
+              'gp3 is a below-quota peer (OW = 7 < quota = 10) and not the '
+              'colonial blocker -- the below-quota exclusion arm must drop '
+              'it so the COLONIAL planner emits no `offerPeace` while the '
+              'peer is still in EXPAND (Refs #2509 § Must-have #5).',
+        );
+      },
+    );
+
+    test(
+      'mixed at-quota + below-quota peers at war -> only at-quota peers peaced (Refs #2509 S7)',
+      () {
+        // gp2 is at quota (10 OW) and not the blocker; gp3 is below
+        // quota (8 OW, still in EXPAND); gp4 is at quota (10 OW) and
+        // not the blocker. No invadable NW is owned by any GP (blocker
+        // is null). Expected: peace gp2 + gp4 sorted ascending; gp3 is
+        // dropped by the below-quota exclusion arm. Pins that the
+        // exclusion is per-GP and does not short-circuit the whole
+        // list.
+        final game = _colonialGame(perGpOwCounts: const {_gp3: 8});
+        final snapshot = _colonialSnapshot(atWarWith: const [_gp4, _gp3, _gp2]);
+        expect(
+          planColonialPeace(game: game, snapshot: snapshot),
+          const [_gp2, _gp4],
+          reason:
+              'Below-quota peer gp3 dropped (OW = 8 < quota = 10); at-quota '
+              'peers gp2 + gp4 peaced in ascending sort (Refs #2509 § '
+              'Must-have #5; trailing `..sort()` -> Must-have #7).',
+        );
+      },
+    );
+
+    test(
+      'below-quota peer that IS the blocker -> dropped once, remaining at-quota peers peaced (Refs #2509 S7)',
+      () {
+        // gp2 is the colonial blocker (owns the only invadable NW
+        // province) AND is below quota (OW = 6). gp3 and gp4 are at
+        // quota and not the blocker. Both exclusion arms target gp2:
+        // it is excluded once and the remaining at-quota peers
+        // (gp3, gp4) are returned sorted ascending. Pins that the
+        // composed filter does not double-drop or accidentally
+        // surface gp2 via either arm.
+        final game = _colonialGame(
+          perGpOwCounts: const {_gp2: 6},
+          newWorldProvinces: const [
+            Province(id: 'newWorld|gp2_a', regionId: 'newWorld', ownerId: _gp2),
+          ],
+        );
+        final snapshot = _colonialSnapshot(
+          atWarWith: const [_gp4, _gp3, _gp2],
+          invadableNw: const ['newWorld|gp2_a'],
+        );
+        expect(
+          planColonialPeace(game: game, snapshot: snapshot),
+          const [_gp3, _gp4],
+          reason:
+              'gp2 is both the colonial NW blocker and a below-quota peer; '
+              'either exclusion arm drops it. Remaining at-quota peers '
+              'gp3 + gp4 are peaced in ascending sort.',
+        );
+      },
+    );
   });
 }

@@ -3,6 +3,8 @@ import 'dart:math' as math;
 import 'package:colonizethis_logic/ai_api.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
+import '../util/faction_query.dart';
+
 int computeWarDesireScore({
   required Game game,
   required String nationId,
@@ -31,9 +33,7 @@ int computeWarDesireScore({
     score += 10;
   }
 
-  final targetIsMinorOrTribe =
-      game.minorNations.any((m) => m.id == targetFactionId) ||
-      game.tribes.any((t) => t.id == targetFactionId);
+  final targetIsMinorOrTribe = isMinorOrTribeFaction(game, targetFactionId);
   if (targetIsMinorOrTribe) {
     score += _resourceNeedBonus(game, nationId, targetFactionId);
     score += _interventionRiskPenalty(game, nationId, targetFactionId);

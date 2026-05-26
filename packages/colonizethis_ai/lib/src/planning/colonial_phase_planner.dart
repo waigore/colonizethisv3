@@ -220,11 +220,21 @@ import 'observer_goal_phase.dart' show primaryColonialGpBlocker;
 /// Returns the deterministic list of at-war Great Powers the active player
 /// should `offerPeace` toward this turn while in COLONIAL phase.
 ///
-/// Contract (issue #2509 § COLONIAL phase planner § planColonialPeace):
+/// Contract (issue #2509 § COLONIAL phase planner § planColonialPeace + the
+/// `phase-planner-architecture.md` below-quota peer AC):
 ///
-///   "Peace all at-war Great Powers, with ONE exception:
-///    → Keep fighting a GP that owns a province blocking the primary
-///      colonial NW target (primaryColonialGpBlocker).
+///   "Peace all at-war Great Powers, with TWO exceptions:
+///    1. Keep fighting a GP that owns a province blocking the primary
+///       colonial NW target (`primaryColonialGpBlocker`).
+///    2. Keep fighting a Great Power peer whose OW province count is
+///       below `kObserverConquestMinOwProvincesPerGp` (the OW quota).
+///       This preserves Must-have #5 ('OW pressure preserved while
+///       below quota'): a peer still in EXPAND may depend on the
+///       active COLONIAL player as their only invadable OW
+///       frontier-blocker war, and `war_resolver.dart`'s one-sided
+///       GP peace conditions (collapsed survival / consolidation
+///       arms) end the peer's war on a single offerer when the
+///       offerer is the COLONIAL-phase player.
 ///
 ///    Never peace tribe/minor colonial targets until:
 ///    → Objective met (tribe no longer owns the target NW province), OR
@@ -246,7 +256,11 @@ import 'observer_goal_phase.dart' show primaryColonialGpBlocker;
 ///     primary colonial NW frontier blocker via
 ///     [primaryColonialGpBlocker], which maps the active player's
 ///     visible invadable NW provinces to their current owners and picks
-///     the GP with the largest invadable-NW ownership share.
+///     the GP with the largest invadable-NW ownership share; (c) look
+///     up each at-war GP's authoritative OW province count via
+///     [oldWorldProvinceCountOwnedBy] for the below-quota peer
+///     exclusion (post-resolution game state, identical to the source
+///     `war_resolver.dart` consumes for one-sided peace evaluation).
 ///   - [snapshot]: per-player [AIWorldSnapshot] supplying
 ///     [ThreatSummary.atWarWith] and
 ///     [ColonialSummary.invadableNewWorldProvinceIdsSorted] (consumed
@@ -256,26 +270,17 @@ import 'observer_goal_phase.dart' show primaryColonialGpBlocker;
 ///   - Empty list when no Great Powers are at war with the active
 ///     player (the GP filter loop produces an empty `gpWars` and the
 ///     trailing sort is a no-op).
-///   - All GPs sorted ascending when the blocker is `null` (no
-///     invadable NW province is owned by a Great Power) or when the
-///     blocker is not among the at-war GPs (the membership guard arm).
-///     The legacy "no exception applies" path: peace **all** live GP
-///     fronts.
-///   - All GPs except the blocker sorted ascending when the blocker is
-///     among the at-war GPs (canonical COLONIAL-peace happy path:
-///     keep fighting the colonial blocker, peace every other GP front).
-///   - Empty list when the active player is at war with exactly one
-///     GP **and** that GP is the colonial blocker (the lone war IS the
-///     blocker war -- keep fighting it; nothing else to peace).
-///   - The single GP (as a 1-element list) when the active player is
-///     at war with exactly one GP and that GP is **not** the colonial
-///     blocker. This is the explicit divergence from the legacy
-///     [colonialPhaseGpPeaceTargets] helper, which short-circuits with
-///     `return const []` when `gpWars.length <= 1`. The new spec wording
-///     "Peace all at-war Great Powers" does not carry the legacy
-///     `>= 2 GPs` guard: every non-blocker GP front must peace so the
-///     orchestrator (#2509 S5) can drive NW acquisition / improvement
-///     work without an idle GP-vs-GP distraction war.
+///   - All at-quota GPs sorted ascending when the blocker is `null`
+///     (no invadable NW province is owned by a Great Power) or when
+///     the blocker is not among the at-war GPs (the membership guard
+///     arm). Below-quota peers are dropped from this list.
+///   - All at-quota GPs except the blocker sorted ascending when the
+///     blocker is among the at-war GPs (canonical COLONIAL-peace
+///     happy path: keep fighting the colonial blocker, peace every
+///     other at-quota GP front, leave below-quota peers active).
+///   - Empty list when every at-war GP is either the colonial blocker
+///     or a below-quota peer (the COLONIAL planner has nothing to
+///     peace this turn -- the peer expansion is still in progress).
 ///
 /// The function is pure and deterministic — identical inputs always yield
 /// identical lists (Refs #2509 Must-have #7).
@@ -292,14 +297,16 @@ List<String> planColonialPeace({
   }
 
   final blocker = primaryColonialGpBlocker(game: game, snapshot: snapshot);
-  if (blocker == null || !gpWars.contains(blocker)) {
-    return gpWars..sort();
-  }
 
-  return <String>[
+  final result = <String>[
     for (final factionId in gpWars)
-      if (factionId != blocker) factionId,
+      if (factionId != blocker &&
+          !isBelowObserverConquestQuota(
+            oldWorldProvinceCountOwnedBy(game, factionId),
+          ))
+        factionId,
   ]..sort();
+  return result;
 }
 
 /// Method by which a COLONIAL acquisition target should be pursued

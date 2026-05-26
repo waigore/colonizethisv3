@@ -202,7 +202,7 @@ int _scoreOfferPeaceDiplomaticOrder({
   );
   // Lower peace desire when current war desire remains high.
   s -= (warDesire - 50);
-  if (_isMinorOrTribeFaction(game, order.targetFactionId) &&
+  if (isMinorOrTribeFaction(game, order.targetFactionId) &&
       snapshot.threats.atWarWith.contains(order.targetFactionId) &&
       (!_minorOwnsOldWorldProvinces(game, order.targetFactionId) ||
           !invadableOwners.contains(order.targetFactionId))) {

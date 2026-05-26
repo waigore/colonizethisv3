@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 
 import '../perception/perception_snapshot.dart';
+import '../util/faction_query.dart';
 import 'army_conquest_prep.dart';
 import 'planning_imports.dart';
 import 'expand_phase_planner.dart';
@@ -115,7 +116,7 @@ List<int> computeDiplomaticCandidateScores({
                 snapshot: snapshot,
                 game: game,
               ) &&
-              (_isTribeFaction(game, o.targetFactionId) ||
+              (isTribeFaction(game, o.targetFactionId) ||
                   snapshot.colonial.preferredColonialTargetFactionIdsSorted
                       .contains(o.targetFactionId) ||
                   snapshot.colonial.invadableNewWorldProvinceIdsSorted.any(
@@ -154,7 +155,7 @@ List<int> computeDiplomaticCandidateScores({
               .colonial
               .invadableNewWorldProvinceIdsSorted
               .any((pid) => provinceOwner[pid] == o.targetFactionId);
-          if (ownsInvadableNw && _isTribeFaction(game, o.targetFactionId)) {
+          if (ownsInvadableNw && isTribeFaction(game, o.targetFactionId)) {
             s += kEstablishOvertureColonialInvadableOwnerBonus;
           }
           break;
@@ -164,15 +165,6 @@ List<int> computeDiplomaticCandidateScores({
     }
     return s == 0 ? 0 : math.max(1, s);
   }).toList();
-}
-
-bool _isMinorOrTribeFaction(Game game, String factionId) {
-  return game.minorNations.any((m) => m.id == factionId) ||
-      game.tribes.any((t) => t.id == factionId);
-}
-
-bool _isTribeFaction(Game game, String factionId) {
-  return game.tribes.any((t) => t.id == factionId);
 }
 
 bool _minorOwnsOldWorldProvinces(Game game, String minorId) =>
