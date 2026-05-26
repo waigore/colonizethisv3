@@ -972,21 +972,26 @@ bool isStalledOldWorldGpBlockerFocus({
 ///
 /// Returns:
 ///   - `null` when [ConquestSummary.invadableProvinceIdsSorted] is empty
-///     (no OW frontier to expand into) or when treasury is below
-///     [cheapestRegimentBuildTreasuryCost] (the player cannot afford a
-///     regiment to follow up the declaration; the spec
-///     "skip if treasury < cheapestRegimentBuildTreasuryCost" arm).
+///     (no OW frontier to expand into).
 ///   - The lowest-id minor faction owning an invadable OW province and
 ///     present in [ConquestSummary.adjacentOwnerFactionIdsSorted] but not
-///     in [ThreatSummary.atWarWith] (priority 1: adjacent minor scan).
+///     in [ThreatSummary.atWarWith] (priority 1: adjacent minor scan),
+///     **only** when `player.treasury >= cheapestRegimentBuildTreasuryCost`
+///     so the conquest pass can fund the follow-up regiment. When the
+///     treasury check fails arm 1 is skipped and priority 2 is consulted.
 ///   - The lowest-id minor faction owning an invadable OW province and
 ///     already in [ThreatSummary.atWarWith] (priority 2: formalize the
-///     existing war so the conquest army-move pass fires).
+///     existing war so the conquest army-move pass fires). **No treasury
+///     gate** applies here because the war is already open and existing
+///     regiments commit on it — the global treasury hoist that suppressed
+///     arm 2 in the seed-42 turn-100 trap is removed (Refs #2509 § EXPAND
+///     § planExpandDeclareWar 10-turn trace).
 ///   - The single GP whose ownership covers the entire invadable OW
 ///     frontier (priority 3) when: the frontier is GP-only (no minor
 ///     holds an invadable OW tile), exactly one GP owns invadable
-///     provinces, both sides are mutual-plateau peers
-///     ([_isMutualBelowQuotaPlateauPeer]), and the active player's
+///     provinces, the active player's treasury is at or above
+///     [cheapestRegimentBuildTreasuryCost], both sides are mutual-plateau
+///     peers ([isMutualBelowQuotaPlateauPeer]), and the active player's
 ///     regiment count is ≥ that GP's regiment count.
 ///   - `null` when none of the priority arms qualify.
 ///
@@ -1001,9 +1006,6 @@ String? planExpandDeclareWar({
   if (invadable.isEmpty) return null;
   final player = game.playerById(snapshot.playerId);
   if (player == null) return null;
-  if (player.treasury < cheapestRegimentBuildTreasuryCost()) {
-    return null;
-  }
 
   final atWarWith = snapshot.threats.atWarWith.toSet();
   final adjacentOwners = snapshot.conquest.adjacentOwnerFactionIdsSorted
@@ -1037,7 +1039,20 @@ String? planExpandDeclareWar({
     }
   }
 
-  if (adjacentNewWarMinors.isNotEmpty) {
+  // The treasury floor is a per-arm skip clause in the issue spec
+  // (§ EXPAND § planExpandDeclareWar): arm 1 (NEW declaration on an
+  // adjacent minor) and arm 3 (NEW declaration on a sole GP blocker)
+  // both require treasury for the follow-up regiment build; arm 2
+  // (formalize an already-at-war minor) does NOT — the war is already
+  // open and existing regiments can commit on it. Hoisting the gate to
+  // the top of this function was the seed-42 turn-100 trap: when
+  // treasury collapsed below `cheapestRegimentBuildTreasuryCost`,
+  // arm 2 was suppressed even though the GP still had at-war minors
+  // sitting on invadable OW provinces (Refs #2509 § 10-turn trace).
+  final canAffordNewWar =
+      player.treasury >= cheapestRegimentBuildTreasuryCost();
+
+  if (adjacentNewWarMinors.isNotEmpty && canAffordNewWar) {
     final sorted = adjacentNewWarMinors.toList()..sort();
     return sorted.first;
   }
@@ -1055,6 +1070,7 @@ String? planExpandDeclareWar({
     // declare-war target is `null` so we do not re-issue declareWar.
     return null;
   }
+  if (!canAffordNewWar) return null;
   final blockerOw = provinceCountOwnedBy(game, blockerId);
   if (!isMutualBelowQuotaPlateauPeer(
     ownOw: snapshot.conquest.oldWorldProvincesOwned,
