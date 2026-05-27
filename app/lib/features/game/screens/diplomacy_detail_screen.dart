@@ -1,14 +1,15 @@
-// Diplomacy detail: history + dossier for one faction. SPEC/ui/diplomacy-panel.md.
+// Diplomacy detail: history + dossier for one faction. SPEC/ui/diplomacy-detail-screen.md.
 
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../config/editorial_monocle_palette.dart';
 import '../../../config/ui_screen_ids.dart';
 import '../../../l10n/l10n.dart';
 import '../../../providers/app_event_bus_provider.dart';
-import '../../../widgets/ct_panel.dart';
+import '../../../widgets/ct_top_bar.dart';
 import '../widgets/diplomacy_panel.dart';
 
 /// Human-readable sentence for a diplomatic event. Unknown factions shown as "Unknown faction".
@@ -88,7 +89,8 @@ String _overtureLabel(OvertureStage s) {
   };
 }
 
-/// Full-screen diplomacy detail: history list (newest first) and dossier for GP.
+/// Full-screen diplomacy detail. Dark editorial-monocle chrome per
+/// `SPEC/ui/diplomacy-detail-screen.md` and `SPEC/ui/mockups/GAME30002-…html`.
 class DiplomacyDetailScreen extends ConsumerWidget {
   const DiplomacyDetailScreen({
     super.key,
@@ -101,6 +103,16 @@ class DiplomacyDetailScreen extends ConsumerWidget {
   });
 
   static const screenId = UiScreenIds.diplomacyDetailScreen;
+
+  /// Max content column width per the GAME30002 mockup `.content` rule
+  /// (`max-width: 600px`).
+  static const double contentMaxWidth = 600;
+
+  /// Outer horizontal/vertical padding inside the content column.
+  static const double contentPadding = 14;
+
+  /// Spacing between stacked cards.
+  static const double cardSpacing = 14;
 
   final Game game;
   final String humanPlayerId;
@@ -117,115 +129,229 @@ class DiplomacyDetailScreen extends ConsumerWidget {
     int year(int turn) => turnToYear(turn, game.turnTimeMapping);
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text(factionDisplayName),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => bus.emit(const PopNavigationEvent()),
-        ),
-      ),
-      body: ListView(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        children: [
-          _relationSummary(context, l10n),
-          const SizedBox(height: 16),
-          Text(
-            l10n.diplomacy_detail_historyTitle,
-            style: Theme.of(
-              context,
-            ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: 8),
-          if (history.isEmpty)
-            Padding(
-              padding: const EdgeInsets.only(bottom: 16),
-              child: Text(
-                l10n.diplomacy_detail_noEvents,
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: Theme.of(context).colorScheme.onSurfaceVariant,
-                ),
-              ),
-            )
-          else
-            ...history.map(
-              (e) => Padding(
-                padding: const EdgeInsets.only(bottom: 8),
-                child: Card(
-                  child: Padding(
-                    padding: const EdgeInsets.all(12),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          l10n.diplomacy_detail_yearTurn(year(e.turn), e.turn),
-                          style: Theme.of(context).textTheme.labelSmall
-                              ?.copyWith(
-                                color: Theme.of(context).colorScheme.primary,
-                              ),
+      backgroundColor: EditorialMonoclePalette.bg,
+      body: SafeArea(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: <Widget>[
+            CtTopBar(
+              title: factionDisplayName,
+              onBackPressed: () => bus.emit(const PopNavigationEvent()),
+            ),
+            Expanded(
+              child: Center(
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: contentMaxWidth),
+                  child: ListView(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: contentPadding,
+                      vertical: contentPadding,
+                    ),
+                    children: <Widget>[
+                      _DetailCard(
+                        title: l10n.diplomacy_detail_currentRelation,
+                        child: _RelationSummary(relation: relation, l10n: l10n),
+                      ),
+                      const SizedBox(height: cardSpacing),
+                      _DetailCard(
+                        title: l10n.diplomacy_detail_historyTitle,
+                        child: _HistorySection(
+                          history: history,
+                          formatYear: year,
+                          formatSentence: (e) =>
+                              formatDiplomaticEvent(e, game, humanPlayerId),
+                          l10n: l10n,
                         ),
-                        const SizedBox(height: 4),
-                        Text(
-                          formatDiplomaticEvent(e, game, humanPlayerId),
-                          style: Theme.of(context).textTheme.bodyMedium,
+                      ),
+                      if (kind == FactionKind.greatPower) ...<Widget>[
+                        const SizedBox(height: cardSpacing),
+                        _DetailCard(
+                          title: l10n.diplomacy_detail_dossierTitle,
+                          child: _DossierSection(
+                            game: game,
+                            observerId: humanPlayerId,
+                            subjectId: factionId,
+                            l10n: l10n,
+                          ),
                         ),
                       ],
-                    ),
+                    ],
                   ),
                 ),
               ),
             ),
-          if (kind == FactionKind.greatPower) ...[
-            const SizedBox(height: 24),
-            Text(
-              l10n.diplomacy_detail_dossierTitle,
-              style: Theme.of(
-                context,
-              ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 8),
-            _DossierSection(
-              game: game,
-              observerId: humanPlayerId,
-              subjectId: factionId,
-              l10n: l10n,
-            ),
           ],
-        ],
-      ),
-    );
-  }
-
-  Widget _relationSummary(BuildContext context, AppLocalizations l10n) {
-    final stateLabel = relation == null
-        ? '—'
-        : relation!.atWar
-        ? l10n.diplomacy_relationState_war
-        : l10n.diplomacy_relationState_peace;
-    final relationLabel = relation == null
-        ? ''
-        : relationScoreToDisplayLabel(relation!.score);
-    return CtPanel(
-      padding: const EdgeInsets.all(12),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            l10n.diplomacy_detail_currentRelation,
-            style: Theme.of(context).textTheme.labelMedium?.copyWith(
-              color: Theme.of(context).colorScheme.onSurfaceVariant,
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            relationLabel.isEmpty ? stateLabel : '$stateLabel · $relationLabel',
-            style: Theme.of(context).textTheme.titleSmall,
-          ),
-        ],
+        ),
       ),
     );
   }
 }
 
+/// Inner heading inside a `_DetailCard`. Matches the GAME30002 mockup
+/// `.card h3` rule (display font, 13 px, `--muted`, uppercase, letter-spacing
+/// 0.06 em). Separate from `CtSectionLabel` because card titles do not paint
+/// a bottom border on the mockup.
+class _CardTitle extends StatelessWidget {
+  const _CardTitle(this.text);
+
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    final ThemeData theme = Theme.of(context);
+    final TextStyle baseDisplay =
+        theme.textTheme.titleSmall ?? const TextStyle(fontSize: 13);
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Text(
+        text.toUpperCase(),
+        style: baseDisplay.copyWith(
+          color: EditorialMonoclePalette.muted,
+          fontSize: 13,
+          fontWeight: FontWeight.w700,
+          letterSpacing: 0.06 * 13,
+        ),
+      ),
+    );
+  }
+}
+
+/// Framed card with gradient background (`--surface-lite → --surface →
+/// --bg-deep`) and a 1 px `--border` outline. Mirrors mockup `.card`.
+class _DetailCard extends StatelessWidget {
+  const _DetailCard({required this.title, required this.child});
+
+  final String title;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          stops: const <double>[0.0, 0.3, 1.0],
+          colors: <Color>[
+            EditorialMonoclePalette.surfaceLite,
+            EditorialMonoclePalette.surface,
+            EditorialMonoclePalette.bgDeep,
+          ],
+        ),
+        border: Border.all(color: EditorialMonoclePalette.border, width: 1),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(14),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          mainAxisSize: MainAxisSize.min,
+          children: <Widget>[
+            _CardTitle(title),
+            child,
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Body of the "Current relation" card. Renders a one-line summary with a
+/// War/Peace state (colored badge label) and the one-word relation label.
+class _RelationSummary extends StatelessWidget {
+  const _RelationSummary({required this.relation, required this.l10n});
+
+  final DiplomacyRelation? relation;
+  final AppLocalizations l10n;
+
+  @override
+  Widget build(BuildContext context) {
+    if (relation == null) {
+      return Text(
+        '—',
+        style: _displayStyle(context).copyWith(
+          color: EditorialMonoclePalette.muted,
+        ),
+      );
+    }
+    final bool atWar = relation!.atWar;
+    final String stateLabel = atWar
+        ? l10n.diplomacy_relationState_war
+        : l10n.diplomacy_relationState_peace;
+    final Color stateColor = atWar
+        ? EditorialMonoclePalette.danger
+        : EditorialMonoclePalette.success;
+    final String relationLabel = relationScoreToDisplayLabel(relation!.score);
+
+    return Wrap(
+      spacing: 10,
+      runSpacing: 4,
+      crossAxisAlignment: WrapCrossAlignment.center,
+      children: <Widget>[
+        Text(
+          stateLabel,
+          style: _displayStyle(context).copyWith(
+            color: stateColor,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        if (relationLabel.isNotEmpty)
+          Text(
+            relationLabel,
+            style: _displayStyle(context).copyWith(
+              color: EditorialMonoclePalette.fg,
+            ),
+          ),
+      ],
+    );
+  }
+
+  TextStyle _displayStyle(BuildContext context) {
+    final ThemeData theme = Theme.of(context);
+    return (theme.textTheme.titleSmall ?? const TextStyle(fontSize: 14))
+        .copyWith(letterSpacing: 0.02);
+  }
+}
+
+/// Body of the "History" card — vertical list of [_LeftBorderTile]s, newest
+/// first, or an italic muted empty-state.
+class _HistorySection extends StatelessWidget {
+  const _HistorySection({
+    required this.history,
+    required this.formatYear,
+    required this.formatSentence,
+    required this.l10n,
+  });
+
+  final List<DiplomaticEvent> history;
+  final int Function(int turn) formatYear;
+  final String Function(DiplomaticEvent e) formatSentence;
+  final AppLocalizations l10n;
+
+  @override
+  Widget build(BuildContext context) {
+    if (history.isEmpty) {
+      return _EmptyState(text: l10n.diplomacy_detail_noEvents);
+    }
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      mainAxisSize: MainAxisSize.min,
+      children: <Widget>[
+        for (final e in history)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 6),
+            child: _LeftBorderTile(
+              label: l10n.diplomacy_detail_yearTurn(formatYear(e.turn), e.turn),
+              body: formatSentence(e),
+            ),
+          ),
+      ],
+    );
+  }
+}
+
+/// Body of the "Dossier" card (Great Powers only). Reuses [_LeftBorderTile]
+/// chrome so dossier rows match the mockup `.dossier` rule (left border, mono
+/// turn label, body sentence).
 class _DossierSection extends StatelessWidget {
   const _DossierSection({
     required this.game,
@@ -251,46 +377,98 @@ class _DossierSection extends StatelessWidget {
     });
 
     if (entries.isEmpty) {
-      return Padding(
-        padding: const EdgeInsets.only(bottom: 16),
-        child: Text(
-          l10n.diplomacy_detail_noDossier,
-          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-            color: Theme.of(context).colorScheme.onSurfaceVariant,
-          ),
-        ),
-      );
+      return _EmptyState(text: l10n.diplomacy_detail_noDossier);
     }
 
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 24),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: entries
-            .map(
-              (e) => Padding(
-                padding: const EdgeInsets.only(bottom: 6),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      l10n.diplomacy_detail_turnEvidence(e.turnNumber),
-                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        e.description,
-                        style: Theme.of(context).textTheme.bodySmall,
-                      ),
-                    ),
-                  ],
-                ),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      mainAxisSize: MainAxisSize.min,
+      children: <Widget>[
+        for (final e in entries)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 6),
+            child: _LeftBorderTile(
+              label: l10n.diplomacy_detail_turnEvidence(e.turnNumber),
+              body: e.description,
+            ),
+          ),
+      ],
+    );
+  }
+}
+
+/// Pixel-art tile used by the history and dossier lists. Mirrors mockup
+/// `.event` / `.dossier` rules: `--surface` background, 2 px `--accent-dim`
+/// left border, monospace `--accent-dim` label, `--fg` body sentence.
+class _LeftBorderTile extends StatelessWidget {
+  const _LeftBorderTile({required this.label, required this.body});
+
+  final String label;
+  final String body;
+
+  @override
+  Widget build(BuildContext context) {
+    final ThemeData theme = Theme.of(context);
+    final TextStyle bodyBase =
+        theme.textTheme.bodyMedium ?? const TextStyle(fontSize: 13);
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: EditorialMonoclePalette.surface,
+        border: Border(
+          left: BorderSide(
+            color: EditorialMonoclePalette.accentDim,
+            width: 2,
+          ),
+        ),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: <Widget>[
+            Text(
+              label,
+              style: const TextStyle(
+                fontFamily: 'monospace',
+                fontFamilyFallback: <String>['Courier'],
+                fontSize: 11,
+              ).copyWith(color: EditorialMonoclePalette.accentDim),
+            ),
+            const SizedBox(height: 3),
+            Text(
+              body,
+              style: bodyBase.copyWith(
+                color: EditorialMonoclePalette.fg,
+                height: 1.5,
               ),
-            )
-            .toList(),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Italic muted empty-state line shared by the history and dossier sections.
+class _EmptyState extends StatelessWidget {
+  const _EmptyState({required this.text});
+
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    final ThemeData theme = Theme.of(context);
+    final TextStyle base =
+        theme.textTheme.bodySmall ?? const TextStyle(fontSize: 12);
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Text(
+        text,
+        style: base.copyWith(
+          color: EditorialMonoclePalette.muted,
+          fontStyle: FontStyle.italic,
+        ),
       ),
     );
   }
