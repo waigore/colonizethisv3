@@ -120,13 +120,19 @@ part 'expand_phase_planner_gp_blocker_peace.dart';
 /// Returns the deterministic list of at-war Great Powers the active player
 /// should `offerPeace` toward this turn while in EXPAND phase.
 ///
-/// Contract (issue #2509 § EXPAND phase planner § planExpandPeace):
+/// Contract (issue #2509 § EXPAND phase planner § planExpandPeace, extended
+/// by issue #2847 § H4 § H4-a):
 ///
 ///   "Peace ALL at-war Great Powers, with ONE exception:
 ///    → Keep fighting the GP that owns the primary invadable OW frontier
 ///      blocker (primaryInvadableOldWorldGpBlocker), UNLESS:
 ///      - It's a mutual-plateau sole GP war on a GP-only cleared frontier
-///        with no uninvaded minors (peace to exit stalemate)."
+///        with no uninvaded minors (peace to exit stalemate), OR
+///      - The sole at-war GP is the only owner of OW provinces adjacent to
+///        the active player's territory (geographic peer-war lock) and both
+///        sides are in the mutual-plateau below-quota band — the uninvaded
+///        OW minor pivot is unreachable from the active player's anchors,
+///        so the minor-pivot guard is irrelevant (Refs #2847 § H4-a)."
 ///
 /// Inputs:
 ///   - [game]: used to (a) filter [ThreatSummary.atWarWith] down to Great
@@ -137,27 +143,37 @@ part 'expand_phase_planner_gp_blocker_peace.dart';
 ///     border).
 ///   - [snapshot]: per-player [AIWorldSnapshot] supplying
 ///     [ThreatSummary.atWarWith], [ConquestSummary.invadableProvinceIdsSorted],
-///     and [ConquestSummary.oldWorldProvincesOwned] for the mutual-plateau
+///     [ConquestSummary.adjacentOwnerFactionIdsSorted], and
+///     [ConquestSummary.oldWorldProvincesOwned] for the mutual-plateau
 ///     comparison.
 ///
 /// Output:
 ///   - Empty list when no Great Powers are at war with the active player.
 ///   - Empty list when the sole at-war GP **is** the primary OW invadable
-///     blocker and the mutual-plateau sole-GP carve-out does **not** apply
-///     (keep fighting the blocker; default EXPAND posture).
+///     blocker and neither carve-out applies (keep fighting the blocker;
+///     default EXPAND posture).
 ///   - All GPs sorted ascending when the primary blocker is `null` or not
 ///     among the at-war GPs (peace ALL: the legacy "no exception applies"
 ///     case).
 ///   - All GPs except the blocker sorted ascending when the blocker is
-///     among the at-war GPs and the carve-out does not fire (peace ALL
+///     among the at-war GPs and no carve-out fires (peace ALL
 ///     except the blocker).
 ///   - The single GP (still sorted as a 1-element list) when the
 ///     mutual-plateau sole-GP carve-out fires: exactly one GP at war,
 ///     that GP owns the primary OW invadable blocker, both sides are in
 ///     the stalled below-quota plateau band
-///     ([_isMutualBelowQuotaPlateauPeer]), the invadable frontier is
-///     GP-only ([_isOldWorldGpOnlyInvadableFrontier]), and no uninvaded
-///     OW minors remain ([_hasUninvadedOldWorldMinor] is false).
+///     ([isMutualBelowQuotaPlateauPeer]), the invadable frontier is
+///     GP-only ([expandIsOldWorldGpOnlyInvadableFrontier]), and no uninvaded
+///     OW minors remain ([hasUninvadedOldWorldMinor] is false).
+///   - The single GP (still sorted as a 1-element list) when the
+///     geographic peer-war lock carve-out fires: exactly one GP at war,
+///     that GP owns the primary OW invadable blocker, both sides are in
+///     the mutual-plateau below-quota band, and
+///     [ConquestSummary.adjacentOwnerFactionIdsSorted] is exactly
+///     `[blocker]` — the at-war peer GP is the only faction owning OW
+///     provinces adjacent to the active player's anchors, so any
+///     uninvaded OW minor is geographically unreachable (Refs #2847
+///     § H4-a).
 ///
 /// The function is pure and deterministic — identical inputs always yield
 /// identical lists (Refs #2509 Must-have #7).
@@ -185,16 +201,160 @@ List<String> planExpandPeace({
       isMutualBelowQuotaPlateauPeer(
         ownOw: snapshot.conquest.oldWorldProvincesOwned,
         partnerOw: provinceCountOwnedBy(game, blocker),
-      ) &&
-      expandIsOldWorldGpOnlyInvadableFrontier(game: game, snapshot: snapshot) &&
-      !hasUninvadedOldWorldMinor(game: game, snapshot: snapshot)) {
-    return List<String>.unmodifiable(gpWars);
+      )) {
+    if (expandIsGeographicPeerWarLock(snapshot: snapshot, peerGpId: blocker)) {
+      return List<String>.unmodifiable(gpWars);
+    }
+    if (expandIsOldWorldGpOnlyInvadableFrontier(
+          game: game,
+          snapshot: snapshot,
+        ) &&
+        !hasUninvadedOldWorldMinor(game: game, snapshot: snapshot)) {
+      return List<String>.unmodifiable(gpWars);
+    }
   }
 
   return <String>[
     for (final factionId in gpWars)
       if (factionId != blocker) factionId,
   ]..sort();
+}
+
+/// Whether the active player is in a geographic peer-war lock against
+/// [peerGpId] — exactly one Great Power foe owns every Old World province
+/// adjacent to the active player's territory (Refs #2847 § H4-a).
+///
+/// When this predicate fires, the uninvaded OW minor pivot guarded by
+/// [hasUninvadedOldWorldMinor] is irrelevant for the EXPAND peace
+/// decision: uninvaded minors exist on the wider map but none of them
+/// are reachable from the active player's anchors (their provinces are
+/// not in [ConquestSummary.adjacentOwnerFactionIdsSorted]). The
+/// canonical [planExpandPeace] arm pairs this geographic check with
+/// [isMutualBelowQuotaPlateauPeer] so the mutual-plateau stalemate is
+/// peaced even when minors are still alive somewhere on the map but
+/// outside the active player's reach (seed-42 gp3↔gp4 and gp5↔gp6
+/// mid-game lock; the failing GPs spent 45–53 turns at war with their
+/// peer with no minor-frontier route through their own territory).
+///
+/// Returns `false` when [ConquestSummary.adjacentOwnerFactionIdsSorted]
+/// is empty (no OW adjacency at all — no lock to break), when it
+/// contains more than one entry (the active player has another OW
+/// neighbor that may still be reachable), or when its single entry is
+/// not [peerGpId] (some other faction owns the OW frontier).
+///
+/// Pure and deterministic — identical inputs always yield identical
+/// results (Refs #2509 Must-have #7). Constant-time on the adjacency
+/// list length (single equality check); no global province / tile
+/// scans introduced, matching the budget-rule note in
+/// `colonizethis-turn-resolution-budget.mdc`.
+bool expandIsGeographicPeerWarLock({
+  required AIWorldSnapshot snapshot,
+  required String peerGpId,
+}) {
+  final adjacentOwners = snapshot.conquest.adjacentOwnerFactionIdsSorted;
+  if (adjacentOwners.length != 1) {
+    return false;
+  }
+  return adjacentOwners.single == peerGpId;
+}
+
+/// Number of turns the EXPAND declare-war planner suppresses a re-declaration
+/// against a Great Power immediately after a peace event involving the
+/// active player and that peer (Refs #2847 § H2).
+///
+/// Mirrors the per-pair `warCooldownTurns = 4` value used by
+/// `diplomatic_candidate_scoring.dart` for declare-war scoring cooldowns.
+/// Kept as a file-private constant here (not in
+/// `colonizethis_data/ai_victory_config.dart`) so the issue's scope
+/// constraint "no new config constants" stays satisfied while the
+/// planner-side cooldown remains independently testable.
+///
+/// The constant is matched by the public helper
+/// [expandRecentlyPeacedWithGreatPower]'s default and the
+/// [planExpandDeclareWar] arm-3 cooldown gate; tests pass the same value
+/// explicitly so accidental drift in either direction surfaces as a
+/// failing pin.
+const int kExpandPeerWarPeaceCooldownTurns = 4;
+
+/// Whether the active player and [peerGpId] completed a peace event within
+/// the last [cooldownTurns] turns (Refs #2847 § H2).
+///
+/// The EXPAND declare-war planner uses this predicate to suppress the
+/// priority-3 sole-GP-blocker re-declaration after the planExpandPeace
+/// H4-a carve-out exits a mutual-plateau peer-war: without the cooldown,
+/// the next turn's `planExpandDeclareWar` arm 3 would re-declare against
+/// the same peer (treasury and regiment gates pass; the only `at-war`
+/// guard is now false because peace just landed). The cooldown keeps
+/// both peers locked in peace long enough for one side to drop out of
+/// the geographic peer-war lock band (build regiments via the H3 arm,
+/// pivot via a freshly-reachable minor, or exit the mutual-plateau
+/// gate by gaining provinces elsewhere) before the war reopens.
+///
+/// Looks at [Game.diplomaticHistoryEvents] (already ordered ascending by
+/// turn / intra-turn index) for the most-recent peace event whose
+/// `participants` set contains both the active player and [peerGpId].
+/// The check is symmetric: the helper does not require the active
+/// player to have been the second-leg-of-mutual-peace offerer. Either
+/// side's offerPeace order can produce the canonical
+/// [DiplomaticEventType.peace] event.
+///
+/// Returns `false` when no peace event between the pair exists, when
+/// the most-recent peace event is at least [cooldownTurns] turns old,
+/// or when [cooldownTurns] is non-positive (caller can disable the
+/// cooldown without restructuring the arm).
+///
+/// Pure and deterministic — identical inputs always yield identical
+/// results (Refs #2509 Must-have #7). Linear in the diplomatic history
+/// length in the worst case, matching the budget-rule note in
+/// `colonizethis-turn-resolution-budget.mdc`.
+bool expandRecentlyPeacedWithGreatPower({
+  required Game game,
+  required String activePlayerId,
+  required String peerGpId,
+  required int currentTurn,
+  int cooldownTurns = kExpandPeerWarPeaceCooldownTurns,
+}) {
+  if (cooldownTurns <= 0) return false;
+  for (final event in game.diplomaticHistoryEvents.reversed) {
+    if (event.type != DiplomaticEventType.peace) continue;
+    if (!event.participants.contains(activePlayerId)) continue;
+    if (!event.participants.contains(peerGpId)) continue;
+    return (currentTurn - event.turn) < cooldownTurns;
+  }
+  return false;
+}
+
+/// Whether [planExpandEconomy] should suppress treasury-recovery cargo
+/// and widen the insufficient-regiment force-build arm (Refs #2847 § H5,
+/// § H3).
+///
+/// Fires when the active player owns zero New World provinces and the
+/// geographic peer-war lock predicate holds for the sole OW adjacent Great
+/// Power. Overseas cargo preference cannot deliver riches under EXPAND
+/// (NW colonial orders are structurally suppressed) when there is no NW
+/// ownership to receive deliveries.
+///
+/// Pure and deterministic — identical inputs always yield identical
+/// results (Refs #2509 Must-have #7).
+bool expandIsGeographicPeerWarLockNoNwTreasuryRecovery({
+  required Game game,
+  required AIWorldSnapshot snapshot,
+}) {
+  if (snapshot.colonial.newWorldProvincesOwned > 0) {
+    return false;
+  }
+  final adjacentOwners = snapshot.conquest.adjacentOwnerFactionIdsSorted;
+  if (adjacentOwners.length != 1) {
+    return false;
+  }
+  final peerGpId = adjacentOwners.single;
+  if (game.playerById(peerGpId) == null) {
+    return false;
+  }
+  return expandIsGeographicPeerWarLock(
+    snapshot: snapshot,
+    peerGpId: peerGpId,
+  );
 }
 
 /// GP owning the most invadable Old World provinces (frontier blocker).
@@ -990,8 +1150,13 @@ bool isStalledOldWorldGpBlockerFocus({
 ///     frontier (priority 3) when: the frontier is GP-only (no minor
 ///     holds an invadable OW tile), exactly one GP owns invadable
 ///     provinces, the active player's treasury is at or above
-///     [cheapestRegimentBuildTreasuryCost], both sides are mutual-plateau
-///     peers ([isMutualBelowQuotaPlateauPeer]), and the active player's
+///     [cheapestRegimentBuildTreasuryCost], the active player has not
+///     completed a peace event with that GP within the last
+///     [kExpandPeerWarPeaceCooldownTurns] turns
+///     ([expandRecentlyPeacedWithGreatPower] is `false`; Refs #2847
+///     § H2 — prevents the H4-a peace carve-out from being undone on
+///     the very next turn), both sides are mutual-plateau peers
+///     ([isMutualBelowQuotaPlateauPeer]), and the active player's
 ///     regiment count is ≥ that GP's regiment count.
 ///   - `null` when none of the priority arms qualify.
 ///
@@ -1071,6 +1236,21 @@ String? planExpandDeclareWar({
     return null;
   }
   if (!canAffordNewWar) return null;
+  // Refs #2847 § H2: declare-war cooldown after a recent peace with the
+  // same peer. Without this gate, the planExpandPeace H4-a carve-out
+  // peace would be undone the very next turn — arm 3's other gates
+  // (treasury, mutual-plateau, regiment parity) all still pass once
+  // peace ends the `at-war` short-circuit above. The cooldown lets H3
+  // raise regiments and gives the H4-a carve-out room to actually
+  // break the geographic peer-war lock.
+  if (expandRecentlyPeacedWithGreatPower(
+    game: game,
+    activePlayerId: snapshot.playerId,
+    peerGpId: blockerId,
+    currentTurn: game.worldState.turnState.turnNumber,
+  )) {
+    return null;
+  }
   final blockerOw = provinceCountOwnedBy(game, blockerId);
   if (!isMutualBelowQuotaPlateauPeer(
     ownOw: snapshot.conquest.oldWorldProvincesOwned,
@@ -1220,11 +1400,16 @@ class ExpandEconomyPlan {
 ///     and non-empty invadable OW frontier and effective treasury
 ///     ≥ cheapest regiment cost) holds.
 ///   - `boostTreasuryRecoveryCargo: true` when arm C
-///     (effective treasury < cheapest regiment cost) holds. Composes
-///     with arm A: a GP with `regimentCount == 0` and effective
-///     treasury below the cheapest cost gets **both** flags set, so
-///     the orchestrator forces the build attempt and also boosts
-///     cargo for the next turn's riches delivery.
+///     (effective treasury < cheapest regiment cost) holds unless
+///     [expandIsGeographicPeerWarLockNoNwTreasuryRecovery] is true
+///     (Refs #2847 § H5 — futile overseas cargo under zero NW
+///     ownership + geographic peer-war lock). Composes with arm A when
+///     arm C is not suppressed.
+///   - `forceCheapestRegimentBuild: true` when arm D holds (Refs #2847
+///     § H3): geographic peer-war lock with zero NW ownership,
+///     `0 < regimentCount < kBelowQuotaPeaceMinRegimentsBeforeDeclareWar`,
+///     and non-empty invadable OW frontier — without the arm-B treasury
+///     gate (build pipeline affordability unchanged).
 ///
 /// The function is pure and deterministic — identical inputs always
 /// yield identical [ExpandEconomyPlan]s (Refs #2509 Must-have #7).
@@ -1260,15 +1445,28 @@ ExpandEconomyPlan planExpandEconomy({
       hasInvadable &&
       effectiveTreasury >= cheapest;
 
+  final futilityLock = expandIsGeographicPeerWarLockNoNwTreasuryRecovery(
+    game: game,
+    snapshot: snapshot,
+  );
+
+  // Arm D (Refs #2847 § H3): trap-band force rebuild without treasury
+  // gate when overseas cargo recovery is futile.
+  final armD = futilityLock &&
+      regimentCount > 0 &&
+      regimentCount < kBelowQuotaPeaceMinRegimentsBeforeDeclareWar &&
+      hasInvadable;
+
   // Arm C: effective treasury below cheapest regiment cost (independent
   // of regimentCount per the spec literal wording — boosts cargo so a
   // GP in EXPAND with low cash always benefits from delivering riches,
   // matching the SPEC/ai/ai-architecture.md "Treasury recovery cargo"
-  // intent).
-  final armC = effectiveTreasury < cheapest;
+  // intent). Suppressed under geographic peer-war lock with zero NW
+  // ownership (Refs #2847 § H5).
+  final armC = effectiveTreasury < cheapest && !futilityLock;
 
   return ExpandEconomyPlan(
-    forceCheapestRegimentBuild: armA || armB,
+    forceCheapestRegimentBuild: armA || armB || armD,
     boostTreasuryRecoveryCargo: armC,
   );
 }
