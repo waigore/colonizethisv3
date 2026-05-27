@@ -433,18 +433,22 @@ class _CtProgressBarStory extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         mainAxisSize: MainAxisSize.min,
         children: const [
+          // ignore: avoid_hardcoded_strings_in_widgets
           Text('0%'),
           SizedBox(height: 4),
           CtProgressBar(value: 0),
           SizedBox(height: 16),
+          // ignore: avoid_hardcoded_strings_in_widgets
           Text('30% with label'),
           SizedBox(height: 4),
           CtProgressBar(value: 0.3, label: '30%'),
           SizedBox(height: 16),
+          // ignore: avoid_hardcoded_strings_in_widgets
           Text('70% (clamped from 1.2)'),
           SizedBox(height: 4),
           CtProgressBar(value: 1.2, label: '100%'),
           SizedBox(height: 16),
+          // ignore: avoid_hardcoded_strings_in_widgets
           Text('Disabled (40%)'),
           SizedBox(height: 4),
           CtProgressBar(value: 0.4, enabled: false, label: '40%'),
