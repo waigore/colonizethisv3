@@ -4,6 +4,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import '../../constants.dart';
 import '../../orders/bundled_civilian_work_order.dart';
 import '../../orders/draft_orders_mutations.dart';
+import '../../orders/order_resolution_context.dart';
 import '../../world/army_movement.dart';
 import '../../world/game_world_mutations.dart';
 import '../../world/movement.dart';
@@ -208,6 +209,11 @@ Game applyImplicitBundledCivilianWorkOrderMoves(
         );
         continue;
       }
+      final resolution = orderResolutionContextFromView(
+        view,
+        state,
+        unitsById: unitById,
+      );
       final destinationTile = firstLegalBundledEntryTileKeyInProvince(
         game: state,
         topology: topology,
@@ -215,8 +221,7 @@ Game applyImplicitBundledCivilianWorkOrderMoves(
         unit: unit,
         destProvinceFullId: destination,
         preferredTargetTileKey: workOrder.targetTileKey,
-        view: view,
-        unitsById: unitById,
+        resolution: resolution,
         diplomaticOrders: diplomatic,
       );
       if (destinationTile == null) {
