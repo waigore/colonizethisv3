@@ -94,6 +94,8 @@ AIWorldSnapshot _expandSnapshot({
   List<String> invadableOw = const [],
   int oldWorldProvincesOwned = 8,
   String playerId = _gp1,
+  List<String> adjacentOwnerFactionIdsSorted = const [],
+  int newWorldProvincesOwned = 0,
 }) {
   return AIWorldSnapshot(
     playerId: playerId,
@@ -103,8 +105,9 @@ AIWorldSnapshot _expandSnapshot({
       oldWorldProvincesOwned: oldWorldProvincesOwned,
       provincesToVictory: kObserverConquestMinOwProvincesPerGp * 3,
       invadableProvinceIdsSorted: invadableOw,
+      adjacentOwnerFactionIdsSorted: adjacentOwnerFactionIdsSorted,
     ),
-    colonial: const ColonialSummary(),
+    colonial: ColonialSummary(newWorldProvincesOwned: newWorldProvincesOwned),
     economy: const EconomySummary(),
     relations: const {},
   );
@@ -357,6 +360,104 @@ void main() {
             'boost. Both flags fire together; the orchestrator '
             'translates the dual signal into a build attempt AND a '
             'cargo preference bump.',
+      );
+    });
+
+    group('geographic peer-war lock NW futility (Refs #2847 H5 + H3)', () {
+      test(
+        'H5+H3: trap band + lock + zero NW -> forceRebuild, no cargo boost',
+        () {
+          final game = _expandGame(
+            players: [
+              _player(treasury: 0),
+              _player(id: _gp2, displayName: 'GP2'),
+            ],
+            armies: [_homeArmyWithRegiments(_gp1, 3)],
+          );
+          final snapshot = _expandSnapshot(
+            invadableOw: const ['oldWorld|gp2_0'],
+            adjacentOwnerFactionIdsSorted: const [_gp2],
+          );
+          expect(
+            expandIsGeographicPeerWarLockNoNwTreasuryRecovery(
+              game: game,
+              snapshot: snapshot,
+            ),
+            isTrue,
+          );
+          expect(
+            planExpandEconomy(game: game, snapshot: snapshot),
+            const ExpandEconomyPlan(
+              forceCheapestRegimentBuild: true,
+              boostTreasuryRecoveryCargo: false,
+            ),
+            reason:
+                'Arm D (H3) fires without treasury gate; arm C suppressed '
+                '(H5) because overseas cargo cannot deliver riches with '
+                'zero NW ownership under geographic peer-war lock.',
+          );
+        },
+      );
+
+      test(
+        'H5 negative: NW ownership restores cargo boost when treasury low',
+        () {
+          final game = _expandGame(
+            players: [
+              _player(treasury: 0),
+              _player(id: _gp2, displayName: 'GP2'),
+            ],
+            armies: [_homeArmyWithRegiments(_gp1, 3)],
+          );
+          final snapshot = _expandSnapshot(
+            invadableOw: const ['oldWorld|gp2_0'],
+            adjacentOwnerFactionIdsSorted: const [_gp2],
+            newWorldProvincesOwned: 1,
+          );
+          expect(
+            expandIsGeographicPeerWarLockNoNwTreasuryRecovery(
+              game: game,
+              snapshot: snapshot,
+            ),
+            isFalse,
+          );
+          expect(
+            planExpandEconomy(game: game, snapshot: snapshot),
+            const ExpandEconomyPlan(
+              forceCheapestRegimentBuild: false,
+              boostTreasuryRecoveryCargo: true,
+            ),
+            reason:
+                'Without zero NW ownership the futility predicate is false; '
+                'legacy arm C alone fires (arm B blocked by treasury).',
+          );
+        },
+      );
+
+      test(
+        'H3 does not fire when adjacent owners are not a sole GP lock',
+        () {
+          final game = _expandGame(
+            players: [
+              _player(treasury: 0),
+              _player(id: _gp2, displayName: 'GP2'),
+            ],
+            armies: [_homeArmyWithRegiments(_gp1, 3)],
+          );
+          final snapshot = _expandSnapshot(
+            invadableOw: const ['oldWorld|gp2_0'],
+            adjacentOwnerFactionIdsSorted: const [_gp2, 'minor1'],
+          );
+          expect(
+            planExpandEconomy(game: game, snapshot: snapshot),
+            const ExpandEconomyPlan(
+              forceCheapestRegimentBuild: false,
+              boostTreasuryRecoveryCargo: true,
+            ),
+            reason:
+                'Two adjacent owners -> not geographic lock; legacy arm C.',
+          );
+        },
       );
     });
 
