@@ -81,7 +81,7 @@ Planner modules never call each other. The orchestrator passes `planColonialAcqu
 
 ### Soft-phase priority weights (Refs #2847 — scaffolding)
 
-`PhasePlanOutcome` carries an additive `priorityWeights` slot ([PhasePriorityWeights] value class in `phase_priority_weights.dart`) computed once per dispatch by `runPhasePlanners` from `(AIWorldSnapshot, Game, ExpandEconomyPlan)`. The slot exists so downstream slices can migrate scoring sites from hard structural suppression to soft weight multipliers without further dispatcher changes; this scaffolding slice does **not** change any production behaviour and no current consumer reads `priorityWeights` (Refs #2847 Phase 1).
+`PhasePlanOutcome` carries an additive `priorityWeights` slot ([PhasePriorityWeights] value class in `phase_priority_weights.dart`) computed once per dispatch by `runPhasePlanners` from `(AIWorldSnapshot, Game, ExpandEconomyPlan)`. The slot exists so downstream slices can migrate scoring sites from hard structural suppression to soft weight multipliers without further dispatcher changes (Refs #2847).
 
 The four normative domain weights model "how much should the planner bias toward this domain right now" as deterministic `double` values in `[0.0, 1.0]`:
 
@@ -107,13 +107,22 @@ When both predicates fire on the same dispatch, the larger floor (`0.60`) wins. 
 
 #### Determinism and SPEC-first contract
 
-`computePhasePriorityWeights({snapshot, game, expandEconomyPlan})` is pure on its inputs (`Refs #2509` Must-have #7): identical inputs always yield field-equal `PhasePriorityWeights`. The function performs no I/O and no logging. The values it produces are advisory inputs to future consumer wiring — they do not affect dispatch routing, planner-module invocation, suppression matrix population, or any emitted order in this slice. Hard structural suppression as described in [Planner module contracts](#planner-module-contracts) above remains the production source of truth until the consumer-wiring slices land (Refs #2847 Phase 2+).
+`computePhasePriorityWeights({snapshot, game, expandEconomyPlan})` is pure on its inputs (`Refs #2509` Must-have #7): identical inputs always yield field-equal `PhasePriorityWeights`. The function performs no I/O and no logging.
+
+#### Phase 3 consumer wiring — conquest NW invasion (Refs #2847)
+
+`runConquestArmyMovePlanner` and [resolvePhaseConquestInvadable] consume `resolvePhaseConquestNwInvasionWeight` as the production NW invasion multiplier:
+
+- Legacy invadable unions include `snapshot.colonial.invadableNewWorldProvinceIdsSorted` when the weight is `> 0.0` (continuous curve — early sprint keeps a `0.05` floor so NW provinces remain reachable at low priority).
+- NW army-move destination scoring multiplies the NW invadable bonus by the weight; weights `<= 0.0` zero the destination (legacy hard-suppress equivalent).
+
+Other scoring sites (diplomacy declare-war, economy colonial pressure, goal floors, colonial-pressure minimum weight) still use the Phase 2 boolean resolvers until their Phase 3 slices land. Hard structural suppression for planner-module dispatch (which modules run per phase) remains unchanged in this slice.
 
 #### Phase 2 weight resolvers (Refs #2847 scaffolding)
 
 The phase-planner filter modules (`phase_planner_conquest_filter.dart`, `phase_planner_goal_filter.dart`, `phase_planner_economy_filter.dart`, `phase_planner_diplomacy_filter.dart`) host the per-domain advisory weight resolvers consumed by future scoring-site migrations. Each resolver is a **pure, deterministic projection** of `phasePlan.priorityWeights` (or a directly supplied `PhasePriorityWeights` value when the call site has no `PhasePlanOutcome`); resolvers perform no I/O, no logging, and no order emission.
 
-The Phase 2 resolvers ship **side by side** with the existing boolean structural-suppression resolvers (`resolvePhaseConquestSuppressNwInvasionScoring`, `resolvePhaseConquestColonialPressureActive`, `resolvePhaseGoalSuppressColonialPressure`, `resolvePhaseGoalColonialPressureActive`, `resolvePhaseEconomyColonialPressureActive`, `resolvePhaseDiplomacyDeclareWarColonialPressureActive`, ...). The booleans remain the production source of truth in this slice — orchestrator scoring sites still consume them unchanged. The weight resolvers exist so Phase 3 consumer wiring can migrate one site at a time without further filter-module churn.
+The Phase 2 resolvers ship **side by side** with the existing boolean structural-suppression resolvers (`resolvePhaseConquestSuppressNwInvasionScoring`, `resolvePhaseConquestColonialPressureActive`, ...). `resolvePhaseConquestNwInvasionWeight` is wired into conquest army-move scoring (Phase 3); the remaining booleans stay the production source of truth at their legacy sites until subsequent Phase 3 slices migrate them.
 
 | Domain | Weight resolver | Maps to `priorityWeights` field |
 |--------|-----------------|---------------------------------|
