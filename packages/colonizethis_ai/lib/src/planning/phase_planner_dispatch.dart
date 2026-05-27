@@ -72,6 +72,19 @@
 ///
 /// The dispatcher is pure and deterministic — identical inputs always
 /// yield identical [PhasePlanOutcome] instances (Refs #2509 Must-have #7).
+///
+/// Soft-phase priority weights (Refs #2847 Phase 1): every dispatch
+/// also computes a [PhasePriorityWeights] profile via
+/// [computePhasePriorityWeights] and stores it on
+/// [PhasePlanOutcome.priorityWeights]. The weights are advisory in
+/// this slice — no production scoring site reads them yet.
+/// Downstream slices (Refs #2847 Phase 2+) will wire the weight slot
+/// into the existing scoring functions in
+/// `phase_planner_*_filter.dart` and
+/// `domain_planner_orchestrator.dart`. Hard structural suppression
+/// (see `SPEC/ai/phase-planner-architecture.md` § Planner module
+/// contracts) remains the production source of truth until that
+/// consumer wiring lands.
 library;
 
 import 'package:colonizethis_models/colonizethis_models.dart';
@@ -81,6 +94,7 @@ import 'colonial_phase_planner.dart';
 import 'develop_phase_planner.dart';
 import 'expand_phase_planner.dart';
 import 'observer_goal_phase.dart';
+import 'phase_priority_weights.dart';
 
 /// Combined output of a single [runPhasePlanners] dispatch.
 ///
@@ -110,6 +124,7 @@ class PhasePlanOutcome {
     this.colonialCivilianWorkOrders = const <WorkOrder>[],
     this.developPeaceTargetFactionIdsSorted = const <String>[],
     this.developCivilianWorkOrders = const <WorkOrder>[],
+    this.priorityWeights = PhasePriorityWeights.earlySprintDefault,
   });
 
   /// Resolved phase from [observerGoalPhaseFor]. Drives the suppression
@@ -201,6 +216,23 @@ class PhasePlanOutcome {
   /// Populated only for [ObserverGoalPhase.develop]; empty otherwise.
   final List<WorkOrder> developCivilianWorkOrders;
 
+  /// Soft-phase priority weight profile for this dispatch (Refs
+  /// #2847 Phase 1 scaffolding). Computed by
+  /// [computePhasePriorityWeights] from
+  /// `(snapshot, game, expandEconomyPlan)`. The slot is
+  /// **advisory** in this slice — no production scoring site reads
+  /// it yet. Downstream consumer-wiring slices (Refs #2847 Phase 2+)
+  /// will migrate `phase_planner_*_filter.dart` resolvers and
+  /// `domain_planner_orchestrator.dart` scoring sites from hard
+  /// structural suppression to weight multipliers sourced from this
+  /// slot.
+  ///
+  /// Defaults to [PhasePriorityWeights.earlySprintDefault] for
+  /// const-friendly construction; [runPhasePlanners] overrides the
+  /// default with the actual computed weight profile on every
+  /// dispatch.
+  final PhasePriorityWeights priorityWeights;
+
   /// Reusable "EXPAND defaults, no targets" outcome. Returned when the
   /// EXPAND-phase planner set short-circuits at outer guards (missing
   /// player, empty OW invadable, OW at/above quota).
@@ -251,7 +283,8 @@ class PhasePlanOutcome {
       'colonialCivilianWorkOrders: $colonialCivilianWorkOrders, '
       'developPeaceTargetFactionIdsSorted: '
       '$developPeaceTargetFactionIdsSorted, '
-      'developCivilianWorkOrders: $developCivilianWorkOrders)';
+      'developCivilianWorkOrders: $developCivilianWorkOrders, '
+      'priorityWeights: $priorityWeights)';
 }
 
 /// Returns the [PhasePlanOutcome] for the active player on this turn by
@@ -303,6 +336,7 @@ PhasePlanOutcome _expandOutcome({
 }) {
   final declareWarTarget = planExpandDeclareWar(game: game, snapshot: snapshot);
   final expandFrontier = _expandFrontierContext(game: game, snapshot: snapshot);
+  final expandEconomyPlan = planExpandEconomy(game: game, snapshot: snapshot);
   return PhasePlanOutcome(
     phase: ObserverGoalPhase.expand,
     expandDeclareWarTargetFactionId: declareWarTarget,
@@ -310,7 +344,7 @@ PhasePlanOutcome _expandOutcome({
       game: game,
       snapshot: snapshot,
     ),
-    expandEconomyPlan: planExpandEconomy(game: game, snapshot: snapshot),
+    expandEconomyPlan: expandEconomyPlan,
     expandMilitaryPlan: planExpandMilitary(
       game: game,
       snapshot: snapshot,
@@ -320,6 +354,11 @@ PhasePlanOutcome _expandOutcome({
         expandFrontier.gpOnlyInvadableFrontierActive,
     expandPrimaryInvadableGpBlockerFactionId:
         expandFrontier.primaryInvadableGpBlockerFactionId,
+    priorityWeights: computePhasePriorityWeights(
+      snapshot: snapshot,
+      game: game,
+      expandEconomyPlan: expandEconomyPlan,
+    ),
   );
 }
 
@@ -329,6 +368,7 @@ PhasePlanOutcome _colonialLiteOutcome({
 }) {
   final declareWarTarget = planExpandDeclareWar(game: game, snapshot: snapshot);
   final expandFrontier = _expandFrontierContext(game: game, snapshot: snapshot);
+  final expandEconomyPlan = planExpandEconomy(game: game, snapshot: snapshot);
   return PhasePlanOutcome(
     phase: ObserverGoalPhase.colonialLite,
     expandDeclareWarTargetFactionId: declareWarTarget,
@@ -336,7 +376,7 @@ PhasePlanOutcome _colonialLiteOutcome({
       game: game,
       snapshot: snapshot,
     ),
-    expandEconomyPlan: planExpandEconomy(game: game, snapshot: snapshot),
+    expandEconomyPlan: expandEconomyPlan,
     expandMilitaryPlan: planExpandMilitary(
       game: game,
       snapshot: snapshot,
@@ -350,7 +390,15 @@ PhasePlanOutcome _colonialLiteOutcome({
       game: game,
       snapshot: snapshot,
     ),
-    colonialLiteNavalPlan: planColonialLiteNaval(game: game, snapshot: snapshot),
+    colonialLiteNavalPlan: planColonialLiteNaval(
+      game: game,
+      snapshot: snapshot,
+    ),
+    priorityWeights: computePhasePriorityWeights(
+      snapshot: snapshot,
+      game: game,
+      expandEconomyPlan: expandEconomyPlan,
+    ),
   );
 }
 
@@ -365,9 +413,10 @@ PhasePlanOutcome _colonialOutcome({
     personalityId: personalityId,
   );
   final declaredColonialTarget =
-      (acquisition != null && acquisition.method == AcquisitionMethod.declareWar)
-          ? acquisition.targetFactionId
-          : null;
+      (acquisition != null &&
+          acquisition.method == AcquisitionMethod.declareWar)
+      ? acquisition.targetFactionId
+      : null;
   return PhasePlanOutcome(
     phase: ObserverGoalPhase.colonial,
     colonialAcquisitionTarget: acquisition,
@@ -389,6 +438,11 @@ PhasePlanOutcome _colonialOutcome({
       game: game,
       snapshot: snapshot,
     ),
+    priorityWeights: computePhasePriorityWeights(
+      snapshot: snapshot,
+      game: game,
+      expandEconomyPlan: ExpandEconomyPlan.defaultPlan,
+    ),
   );
 }
 
@@ -406,10 +460,18 @@ PhasePlanOutcome _developOutcome({
       game: game,
       snapshot: snapshot,
     ),
+    priorityWeights: computePhasePriorityWeights(
+      snapshot: snapshot,
+      game: game,
+      expandEconomyPlan: ExpandEconomyPlan.defaultPlan,
+    ),
   );
 }
 
-({bool gpOnlyInvadableFrontierActive, String? primaryInvadableGpBlockerFactionId})
+({
+  bool gpOnlyInvadableFrontierActive,
+  String? primaryInvadableGpBlockerFactionId,
+})
 _expandFrontierContext({
   required Game game,
   required AIWorldSnapshot snapshot,

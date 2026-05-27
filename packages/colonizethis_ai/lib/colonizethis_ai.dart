@@ -21,6 +21,13 @@ export 'src/planning/goal_manager.dart';
 export 'src/planning/observer_goal_phase.dart' show ObserverGoalPhase;
 export 'src/planning/phase_planner_dispatch.dart'
     show PhasePlanOutcome, runPhasePlanners;
+export 'src/planning/phase_priority_weights.dart'
+    show
+        PhasePriorityWeights,
+        computePhasePriorityWeights,
+        kPhasePriorityCurveEarlySprintCeiling,
+        kPhasePriorityNwTreasuryRecoveryFloor,
+        kPhasePriorityNwZeroRegimentFloor;
 export 'src/planning/recruitment_planner.dart'
     show
         RecruitmentPlan,
