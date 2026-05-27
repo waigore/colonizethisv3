@@ -31,12 +31,40 @@ When designing screens for the app, **mobile must be considered from the start.*
 
 - **Full-screen screens** (Main Menu, Game Setup, etc.) must **scroll** when content overflows the viewport. Use `SingleChildScrollView` (or equivalent) so that on short viewports the user can scroll to reach all actions. No unreachable content.
 
-### 4. Narrow viewport layout (breakpoint)
+### 4. Narrow viewport layout (breakpoints)
 
-- **Breakpoint:** 500 dp width. Below that, screens may switch to a **narrow layout** (e.g. stacked rows, single-column forms) when the default horizontal layout would be cramped.
-- **Game Setup:** Below the breakpoint, each player-slot row uses a **stacked layout**: slot label on one line, nation dropdown full width on the next, leader dropdown full width below. Above the breakpoint, one row: label | nation | leader.
-- **Main Menu:** No breakpoint change; vertical list of buttons already suits narrow width. Only scroll is required (see §3).
-- **In-game shell:** 600 dp width. Below that, top bar shows only hamburger and turn counter; empire buttons move to a side menu (swipe from left or hamburger). See [in-game-shell-narrow.md](in-game-shell-narrow.md) and [empire-buttons.md](empire-buttons.md).
+This rule covers three normalised Flutter `LayoutBuilder` dp breakpoints, each matching a per-screen mockup `@media` rule:
+
+- **`< 600 dp`** — in-game shell narrow adaptations.
+- **`< 500 dp`** — Game Setup stacked rows.
+- **`≤ 430 dp`** — Main Menu extra-tight padding and letter-spacing.
+
+#### Game Setup (`< 500 dp`)
+
+- Each player-slot row uses a **stacked layout**: slot label on one line, nation dropdown full width on the next, leader dropdown full width below. Above the breakpoint, one row: label | nation | leader. Source: [game-setup.md](game-setup.md) and `SPEC/ui/mockups/SHEL20001-game-setup.html` `@media (max-width:499px)`.
+
+#### Main Menu (`≤ 430 dp`)
+
+- Below `430 dp` viewport width the menu container compacts and button labels reduce letter-spacing per `SPEC/ui/mockups/SHEL10002-main-menu.html` `@media (max-width: 430px)`:
+  - Menu container padding compacts to `24 px 12 px` (mockup `.menu-container` override).
+  - Wood-panel `CtNinePatchButton` labels reduce `letter-spacing` from `0.08em` to `0.04em` (mockup `.menu-btn` override).
+- Above `430 dp` the vertical list of buttons keeps its default padding and letter-spacing; only scroll is required (see §3).
+- Source: [main-menu.md](main-menu.md) § Responsive rules; `SPEC/ui/mockups/SHEL10002-main-menu.html`.
+
+#### In-game shell (`< 600 dp`)
+
+- Below `600 dp` the in-game shell adopts the narrow chrome defined in [in-game-shell-narrow.md](in-game-shell-narrow.md) and [empire-buttons.md](empire-buttons.md): the top bar carries only the hamburger and the turn counter, the **Debug log** lives in the hamburger side menu, and empire actions stay on the map left rail (rendered at the narrow measurements below).
+- The following measurements are normative for the narrow chrome. They mirror `SPEC/ui/mockups/GAME10001-game-screen.html` `@media (max-width:600px)` and the layout sections of [in-game-shell-narrow.md](in-game-shell-narrow.md):
+
+| Element             | Narrow (`< 600 dp`)                                            | Default (`≥ 600 dp`)                                | Source                                                                                                                  |
+|---------------------|----------------------------------------------------------------|-----------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------|
+| Minimap panel       | 90 × 70 dp                                                     | `clamp(100, 15vw, 160) × clamp(80, 12vw, 120)` dp   | `GAME10001-game-screen.html` `.minimap-panel @media`; [empire-overview.md](empire-overview.md) § Region minimap          |
+| Left-rail buttons   | 26 × 26 dp                                                     | 36 × 36 dp                                          | `GAME10001-game-screen.html` `.empire-btn @media`; [empire-buttons.md](empire-buttons.md) § Display                       |
+| Corner controls     | 24 × 24 dp                                                     | 32 × 32 dp                                          | `GAME10001-game-screen.html` `.corner-btn @media`; [empire-overview.md](empire-overview.md) § Corner controls            |
+| Players bar         | Hidden (not present in widget tree)                            | Visible (per-player chip strip)                     | `GAME10001-game-screen.html` `.players-bar @media`                                                                       |
+| Province / sea detail | Full-width bottom sheet, height ~33 vh, accent-dim top border | Right side panel, width 320 dp                       | `GAME10001-game-screen.html` `.province-panel @media`; [in-game-shell-narrow.md](in-game-shell-narrow.md) § Province/sea zone detail overlay |
+
+- The wide-layout widgets themselves (left rail, corner controls, minimap, players bar, province panel) are introduced by their per-screen alignment issues; this section codifies the **narrow measurements** so the cross-cutting adaptation work has a single authoritative source.
 
 ### 5. Safe area
 
@@ -51,19 +79,20 @@ When designing screens for the app, **mobile must be considered from the start.*
 
 ## Summary table
 
-| Requirement        | Main Menu | Game Setup | In-game shell   |
-|-------------------|-----------|------------|-----------------|
-| Max width 400 dp  | ✓         | ✓          | —               |
-| Scroll on overflow| ✓         | ✓          | —               |
-| Safe area         | ✓         | ✓          | ✓               |
-| 44 dp touch       | ✓ (48 dp) | ✓ (48 dp)  | ✓               |
-| Narrow breakpoint | —         | ✓ stacked  | ✓ side menu 600 dp |
+| Requirement        | Main Menu          | Game Setup        | In-game shell        |
+|--------------------|--------------------|-------------------|----------------------|
+| Max width 400 dp   | ✓                  | ✓                 | —                    |
+| Scroll on overflow | ✓                  | ✓                 | —                    |
+| Safe area          | ✓                  | ✓                 | ✓                    |
+| 44 dp touch        | ✓ (48 dp)          | ✓ (48 dp)         | ✓                    |
+| Narrow breakpoint  | ✓ tight ≤ 430 dp   | ✓ stacked < 500 dp | ✓ side menu < 600 dp |
 
 ---
 
 ## References
 
-- Main menu: [main-menu.md](main-menu.md) — layout, scroll.
+- Main menu: [main-menu.md](main-menu.md) § Responsive rules — layout, scroll, ≤ 430 dp tight-layout rule.
 - Game Setup: [game-setup.md](game-setup.md) — layout, narrow breakpoint, scroll.
-- In-game shell (narrow): [in-game-shell-narrow.md](in-game-shell-narrow.md) — side menu, top bar; [empire-buttons.md](empire-buttons.md) — empire buttons.
+- In-game shell (narrow): [in-game-shell-narrow.md](in-game-shell-narrow.md) — side menu, top bar, province/sea detail overlay; [empire-buttons.md](empire-buttons.md) — empire buttons; [empire-overview.md](empire-overview.md) — minimap, corner controls.
+- Per-screen mockups (visual source of truth for `@media` rules normalised above): `SPEC/ui/mockups/SHEL10002-main-menu.html`, `SPEC/ui/mockups/SHEL20001-game-setup.html`, `SPEC/ui/mockups/GAME10001-game-screen.html`.
 - UXD 03: acceptance criteria and touch targets.
