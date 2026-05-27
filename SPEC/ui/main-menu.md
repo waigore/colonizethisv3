@@ -202,7 +202,7 @@ Hard-coded hex literals are forbidden in `app/lib/widgets/main_menu.dart` and th
 
 ### Background
 
-Dark SVG collage rendered via a Flutter `CustomPainter` (`_MainMenuCollagePainter`, S2): telescope, crossed muskets, anchor, sextant, hourglass, cannon, ship's wheel, soldier silhouette, layered wave bands, and dashed trade-route arcs. Painted in `--accent` at low opacity over the scaffold `--bg`. **No external SVG asset is required** — primitives mirror the inline `<svg class="collage-svg">` block of the mockup.
+Dark SVG collage rendered via the `CtMainMenuCollage` widget (S2; `app/lib/widgets/ct_main_menu_collage.dart`): telescope, crossed muskets, anchor, sextant, hourglass, cannon, ship's wheel, soldier silhouette, layered wave bands, navigation-star waypoints, and dashed trade-route arcs. Painted in `--accent` at low opacity (per-glyph group alphas × `0.8` final layer) over the scaffold `--bg`. **No external SVG asset is required** — primitives mirror the inline `<svg class="collage-svg">` block of the mockup.
 
 ### Logo region
 
@@ -239,7 +239,7 @@ Display font: `Iowan Old Style, Cinzel, Charter, Georgia, serif` (mirrors mockup
 | `CtCompassRose` | `app/lib/widgets/ct_compass_rose.dart` | `.compass-rose` / `.compass-rose .arm` / `.compass-rose .medallion` / `.compass-rose .ring` |
 | `CtFleurDeLisOrnament` | `app/lib/widgets/ct_fleur_de_lis_ornament.dart` | `<svg class="title-flank">` block |
 | `CtBrassDivider` | `app/lib/widgets/ct_brass_divider.dart` (issue #2859) | `.brass-divider` |
-| `_MainMenuCollagePainter` (S2; not yet landed) | `app/lib/widgets/main_menu.dart` | `<svg class="collage-svg">` block |
+| `CtMainMenuCollage` | `app/lib/widgets/ct_main_menu_collage.dart` (S2) | `<svg class="collage-svg">` block |
 | Scroll-bracket gutters (S5; not yet landed) | inline in `main_menu.dart` | `.buttons-region::before` / `.buttons-region::after` |
 
 All decorative primitives are self-painted; **no PixelLab / Bitforge / Pixflux asset generation is required** for the `pixelArt` main menu. The legacy `ui_main_menu_background.png` / `ui_main_menu_logo.png` / `ui_main_menu_button.png` / `ui_main_menu_panel.png` assets are no longer referenced by this screen and may be retired once `CtMainMenu` consumes the new primitives (S5).
@@ -253,6 +253,7 @@ All decorative primitives are self-painted; **no PixelLab / Bitforge / Pixflux a
 - `CtBrassDivider` — divider between logo and buttons regions in the `pixelArt` variant (issue #2859 R7, [pixel-art-ui-catalog.md](pixel-art-ui-catalog.md)).
 - `CtCompassRose` — decorative 8-arm emblem above the title in the `pixelArt` variant (issue #2860 S1, [pixel-art-ui-catalog.md](pixel-art-ui-catalog.md)).
 - `CtFleurDeLisOrnament` — decorative flourish flanking the title in the `pixelArt` variant (issue #2860 S4, [pixel-art-ui-catalog.md](pixel-art-ui-catalog.md)).
+- `CtMainMenuCollage` — decorative full-screen SVG-collage background painted under the `pixelArt` variant content stack (issue #2860 S2, [pixel-art-ui-catalog.md](pixel-art-ui-catalog.md)).
 - `CtScreenShell` — pixel-art shell per [pixel-art-ui-catalog.md](pixel-art-ui-catalog.md).
 - Registered in `app/widget_catalog.json` as CtMainMenu (category: screen).
 
@@ -261,7 +262,7 @@ All decorative primitives are self-painted; **no PixelLab / Bitforge / Pixflux a
 ## Widgetbook
 
 - **Folder:** **Main Menu** (`app/lib/widgetbook/catalog.dart`) for `CtMainMenu` use cases: **Default**, **After victory**, **No saves**, **Resume game visible**, **Pixel art (mobile)** per the **States and variants** table (each rendered under `AppThemes.editorialMonocle`).
-- **Folder:** **Ct- Dark Theme Primitives** (`app/lib/widgetbook/catalog_part5.dart`) hosts the decorative primitives consumed by this screen: `CtBrassDivider`, `CtCompassRose`, `CtFleurDeLisOrnament`. Each story renders the primitive over `AppThemes.editorialMonocle.scaffoldBackgroundColor` so reviewers see the wood-on-brass contrast in context.
+- **Folder:** **Ct- Dark Theme Primitives** (`app/lib/widgetbook/catalog_part5.dart`) hosts the decorative primitives consumed by this screen: `CtBrassDivider`, `CtCompassRose`, `CtFleurDeLisOrnament`, `CtMainMenuCollage`. Each story renders the primitive over `AppThemes.editorialMonocle.scaffoldBackgroundColor` so reviewers see the wood-on-brass contrast in context.
 
 ---
 
