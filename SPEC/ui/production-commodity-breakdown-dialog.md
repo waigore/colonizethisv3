@@ -12,7 +12,7 @@
 |--------|------|------------|-------------|
 | `ProductionCommodityBreakdownDialog` | `ConsumerStatefulWidget` | `game` (`Game`), `player` (`Player`), `topology` (`MapTopology`), `tileMapByRegion` (`Map<String, TileMapResult>?`), `currentOrders` (`Orders`) | Local `showDialog` modal opened from `ProductionScreen` Commodity Breakdown button. Pure read-only preview dialog — emits no `AppEvent`s. |
 
-Implementation: `app/lib/features/game/widgets/production_commodity_breakdown_dialog.dart`. Wrapped in `CtDialogShell` (`maxWidth: 720`, `maxHeight: 560`, `destTileSize: 16`); content is a horizontally-scrollable `DataTable`. Per-commodity values are computed by `previewStockpilePhaseDeltasByCommodityForPlayer` using the player's current `desiredOutputByRecipe` (resolved via `productionDesiredOutputProvider`).
+Implementation: `app/lib/features/game/widgets/production_commodity_breakdown_dialog.dart`. Wrapped in `CtDialogShell` (`maxWidth: 720`, `maxHeight: 560`); content is a horizontally-scrollable `DataTable`. Per-commodity values are computed by `previewStockpilePhaseDeltasByCommodityForPlayer` using the player's current `desiredOutputByRecipe` (resolved via `productionDesiredOutputProvider`).
 
 ---
 
