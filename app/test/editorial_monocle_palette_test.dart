@@ -1,3 +1,4 @@
+import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/painting.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -30,6 +31,8 @@ int _toArgb(Color c) {
 }
 
 void main() {
+  suppressLogsForTests();
+
   group('EditorialMonoclePalette OKLCH → sRGB', () {
     test('every token resolves to the catalog-pinned sRGB value', () {
       expect(_toArgb(EditorialMonoclePalette.bg), _expectedHex['bg']);
