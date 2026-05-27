@@ -258,6 +258,72 @@ bool expandIsGeographicPeerWarLock({
   return adjacentOwners.single == peerGpId;
 }
 
+/// Number of turns the EXPAND declare-war planner suppresses a re-declaration
+/// against a Great Power immediately after a peace event involving the
+/// active player and that peer (Refs #2847 § H2).
+///
+/// Mirrors the per-pair `warCooldownTurns = 4` value used by
+/// `diplomatic_candidate_scoring.dart` for declare-war scoring cooldowns.
+/// Kept as a file-private constant here (not in
+/// `colonizethis_data/ai_victory_config.dart`) so the issue's scope
+/// constraint "no new config constants" stays satisfied while the
+/// planner-side cooldown remains independently testable.
+///
+/// The constant is matched by the public helper
+/// [expandRecentlyPeacedWithGreatPower]'s default and the
+/// [planExpandDeclareWar] arm-3 cooldown gate; tests pass the same value
+/// explicitly so accidental drift in either direction surfaces as a
+/// failing pin.
+const int kExpandPeerWarPeaceCooldownTurns = 4;
+
+/// Whether the active player and [peerGpId] completed a peace event within
+/// the last [cooldownTurns] turns (Refs #2847 § H2).
+///
+/// The EXPAND declare-war planner uses this predicate to suppress the
+/// priority-3 sole-GP-blocker re-declaration after the planExpandPeace
+/// H4-a carve-out exits a mutual-plateau peer-war: without the cooldown,
+/// the next turn's `planExpandDeclareWar` arm 3 would re-declare against
+/// the same peer (treasury and regiment gates pass; the only `at-war`
+/// guard is now false because peace just landed). The cooldown keeps
+/// both peers locked in peace long enough for one side to drop out of
+/// the geographic peer-war lock band (build regiments via the H3 arm,
+/// pivot via a freshly-reachable minor, or exit the mutual-plateau
+/// gate by gaining provinces elsewhere) before the war reopens.
+///
+/// Looks at [Game.diplomaticHistoryEvents] (already ordered ascending by
+/// turn / intra-turn index) for the most-recent peace event whose
+/// `participants` set contains both the active player and [peerGpId].
+/// The check is symmetric: the helper does not require the active
+/// player to have been the second-leg-of-mutual-peace offerer. Either
+/// side's offerPeace order can produce the canonical
+/// [DiplomaticEventType.peace] event.
+///
+/// Returns `false` when no peace event between the pair exists, when
+/// the most-recent peace event is at least [cooldownTurns] turns old,
+/// or when [cooldownTurns] is non-positive (caller can disable the
+/// cooldown without restructuring the arm).
+///
+/// Pure and deterministic — identical inputs always yield identical
+/// results (Refs #2509 Must-have #7). Linear in the diplomatic history
+/// length in the worst case, matching the budget-rule note in
+/// `colonizethis-turn-resolution-budget.mdc`.
+bool expandRecentlyPeacedWithGreatPower({
+  required Game game,
+  required String activePlayerId,
+  required String peerGpId,
+  required int currentTurn,
+  int cooldownTurns = kExpandPeerWarPeaceCooldownTurns,
+}) {
+  if (cooldownTurns <= 0) return false;
+  for (final event in game.diplomaticHistoryEvents.reversed) {
+    if (event.type != DiplomaticEventType.peace) continue;
+    if (!event.participants.contains(activePlayerId)) continue;
+    if (!event.participants.contains(peerGpId)) continue;
+    return (currentTurn - event.turn) < cooldownTurns;
+  }
+  return false;
+}
+
 /// Whether [planExpandEconomy] should suppress treasury-recovery cargo
 /// and widen the insufficient-regiment force-build arm (Refs #2847 § H5,
 /// § H3).
@@ -1084,8 +1150,13 @@ bool isStalledOldWorldGpBlockerFocus({
 ///     frontier (priority 3) when: the frontier is GP-only (no minor
 ///     holds an invadable OW tile), exactly one GP owns invadable
 ///     provinces, the active player's treasury is at or above
-///     [cheapestRegimentBuildTreasuryCost], both sides are mutual-plateau
-///     peers ([isMutualBelowQuotaPlateauPeer]), and the active player's
+///     [cheapestRegimentBuildTreasuryCost], the active player has not
+///     completed a peace event with that GP within the last
+///     [kExpandPeerWarPeaceCooldownTurns] turns
+///     ([expandRecentlyPeacedWithGreatPower] is `false`; Refs #2847
+///     § H2 — prevents the H4-a peace carve-out from being undone on
+///     the very next turn), both sides are mutual-plateau peers
+///     ([isMutualBelowQuotaPlateauPeer]), and the active player's
 ///     regiment count is ≥ that GP's regiment count.
 ///   - `null` when none of the priority arms qualify.
 ///
@@ -1165,6 +1236,21 @@ String? planExpandDeclareWar({
     return null;
   }
   if (!canAffordNewWar) return null;
+  // Refs #2847 § H2: declare-war cooldown after a recent peace with the
+  // same peer. Without this gate, the planExpandPeace H4-a carve-out
+  // peace would be undone the very next turn — arm 3's other gates
+  // (treasury, mutual-plateau, regiment parity) all still pass once
+  // peace ends the `at-war` short-circuit above. The cooldown lets H3
+  // raise regiments and gives the H4-a carve-out room to actually
+  // break the geographic peer-war lock.
+  if (expandRecentlyPeacedWithGreatPower(
+    game: game,
+    activePlayerId: snapshot.playerId,
+    peerGpId: blockerId,
+    currentTurn: game.worldState.turnState.turnNumber,
+  )) {
+    return null;
+  }
   final blockerOw = provinceCountOwnedBy(game, blockerId);
   if (!isMutualBelowQuotaPlateauPeer(
     ownOw: snapshot.conquest.oldWorldProvincesOwned,
