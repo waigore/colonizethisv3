@@ -92,9 +92,7 @@ class _GameSideMenuStoryHostState extends State<_GameSideMenuStoryHost> {
       home: Scaffold(
         body: Stack(
           children: [
-            Positioned.fill(
-              child: Container(color: Colors.black12),
-            ),
+            Positioned.fill(child: Container(color: Colors.black12)),
             GameSideMenu(
               sideMenuOpen: _open,
               onClose: () => setState(() => _open = false),
@@ -181,8 +179,7 @@ class _GameMapNarrowDetailOverlaySlotStoryHostState
                   region: region,
                   humanPlayerId: game.players.first.id,
                   playerView: demoHumanPlayerViewForOverlay,
-                  workTargetSelectionCache:
-                      PerPlayerWorkTargetSelectionCache(),
+                  workTargetSelectionCache: PerPlayerWorkTargetSelectionCache(),
                 ),
               ),
             ],
@@ -194,9 +191,7 @@ class _GameMapNarrowDetailOverlaySlotStoryHostState
 }
 
 ProviderScope _gameMapNarrowDetailOverlaySlotProviderScope() {
-  return ProviderScope(
-    child: const _GameMapNarrowDetailOverlaySlotStoryHost(),
-  );
+  return ProviderScope(child: const _GameMapNarrowDetailOverlaySlotStoryHost());
 }
 
 /// Game map narrow detail overlay slot stories.
@@ -224,18 +219,8 @@ Game _diplomacyDetailStoryGame() {
     ),
     turnTimeMapping: TurnTimeMapping.gdd01,
     players: [
-      Player(
-        id: humanId,
-        displayName: 'England',
-        isHuman: true,
-        treasury: 0,
-      ),
-      Player(
-        id: rivalId,
-        displayName: 'Spain',
-        isHuman: false,
-        treasury: 0,
-      ),
+      Player(id: humanId, displayName: 'England', isHuman: true, treasury: 0),
+      Player(id: rivalId, displayName: 'Spain', isHuman: false, treasury: 0),
     ],
     diplomacyRelations: [
       DiplomacyRelation(
@@ -333,6 +318,14 @@ List<WidgetbookNode> get ctDarkThemePrimitiveDirectories => [
         name: 'CtProgressBar — value sweep',
         builder: (context) => _CtProgressBarStory(),
       ),
+      WidgetbookUseCase(
+        name: 'CtCompassRose — size sweep',
+        builder: (context) => _CtCompassRoseStory(),
+      ),
+      WidgetbookUseCase(
+        name: 'CtFleurDeLisOrnament — flanking pair',
+        builder: (context) => _CtFleurDeLisOrnamentStory(),
+      ),
     ],
   ),
 ];
@@ -425,6 +418,49 @@ class _CtSectionLabelStory extends StatelessWidget {
   }
 }
 
+class _CtCompassRoseStory extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return _CtDarkPrimitiveScaffold(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: const [
+          CtCompassRose(size: 32),
+          SizedBox(height: 16),
+          CtCompassRose(size: 48),
+          SizedBox(height: 16),
+          CtCompassRose(size: 72),
+        ],
+      ),
+    );
+  }
+}
+
+class _CtFleurDeLisOrnamentStory extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return _CtDarkPrimitiveScaffold(
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        mainAxisAlignment: MainAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: const [
+          CtFleurDeLisOrnament(),
+          SizedBox(width: 16),
+          Text(
+            // ignore: avoid_hardcoded_strings_in_widgets
+            'ColonizeThis',
+            style: TextStyle(fontSize: 28, fontWeight: FontWeight.w700),
+          ),
+          SizedBox(width: 16),
+          CtFleurDeLisOrnament(),
+        ],
+      ),
+    );
+  }
+}
+
 class _CtProgressBarStory extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
@@ -457,4 +493,3 @@ class _CtProgressBarStory extends StatelessWidget {
     );
   }
 }
-
