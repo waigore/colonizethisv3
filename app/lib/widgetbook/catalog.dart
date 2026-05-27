@@ -89,6 +89,7 @@ part 'catalog_part2.dart';
 part 'catalog_part3.dart';
 part 'catalog_part4.dart';
 part 'catalog_part5.dart';
+part 'catalog_part6.dart';
 
 Unit? _unitByIdForCatalog(Game game, String unitId) {
   for (final u in game.worldState.oldWorld.units) {
