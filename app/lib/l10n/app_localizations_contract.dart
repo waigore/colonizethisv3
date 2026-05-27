@@ -33,6 +33,9 @@ abstract class AppLocalizations {
   /// Main menu title text when not using the pixel-art logo.
   String get mainMenu_title;
 
+  /// Small-caps eyebrow tagline shown above the title in the pixel-art editorial-monocle main menu variant.
+  String get mainMenu_eyebrow;
+
   /// Subtitle shown on the main menu after the player has won their last game.
   String get mainMenu_subtitleAfterVictory;
 

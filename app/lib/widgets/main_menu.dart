@@ -1,16 +1,28 @@
 import 'package:flutter/material.dart';
 import 'package:colonizethis_app/l10n/l10n.dart';
-import '../config/app_assets.dart';
+import '../config/editorial_monocle_palette.dart';
 import '../config/themes.dart';
 import '../config/ui_screen_ids.dart';
+import 'ct_brass_divider.dart';
+import 'ct_compass_rose.dart';
+import 'ct_fleur_de_lis_ornament.dart';
+import 'ct_main_menu_collage.dart';
 import 'ct_nine_patch_button.dart';
 
 /// Visual variant of the main menu. SPEC/ui/main-menu.md; UXD 03a.
 enum MainMenuVariant {
-  /// Standard Flutter widgets with colonial theme (no pixel-art assets).
+  /// Theme-scaffold only fallback: standard Flutter widgets with the
+  /// running app theme; no SVG collage, no compass rose, no fleur-de-lis,
+  /// no brass divider, no scroll brackets, no wood-panel chrome. See
+  /// `SPEC/ui/main-menu.md` § Variant rendering.
   plain,
 
-  /// Same layout with pixel-art assets from SPEC/ui/main-menu.md.
+  /// Dark editorial-monocle layout per
+  /// `SPEC/ui/mockups/SHEL10002-main-menu.html`: [CtMainMenuCollage]
+  /// background, [CtCompassRose] above the title row, title flanked by two
+  /// [CtFleurDeLisOrnament]s, [CtBrassDivider] between the logo region and
+  /// the buttons region. Rendered under [AppThemes.editorialMonocle] and
+  /// [EditorialMonoclePalette] tokens.
   pixelArt,
 }
 
@@ -79,20 +91,17 @@ class CtMainMenu extends StatelessWidget {
     );
 
     if (variant == MainMenuVariant.pixelArt) {
-      return Scaffold(
-        body: Stack(
-          fit: StackFit.expand,
-          children: [
-            Positioned.fill(
-              child: Image.asset(
-                kMainMenuBackgroundAsset,
-                fit: BoxFit.cover,
-                filterQuality: FilterQuality.none,
-                errorBuilder: (_, _, _) => Container(color: darkWood),
-              ),
-            ),
-            Theme(data: AppThemes.colonialPixelArt, child: content),
-          ],
+      return Theme(
+        data: AppThemes.editorialMonocle,
+        child: Scaffold(
+          backgroundColor: EditorialMonoclePalette.bg,
+          body: Stack(
+            fit: StackFit.expand,
+            children: [
+              const Positioned.fill(child: CtMainMenuCollage()),
+              content,
+            ],
+          ),
         ),
       );
     }
@@ -108,17 +117,68 @@ class CtMainMenu extends StatelessWidget {
         textAlign: TextAlign.center,
       );
     }
-    // Pixel-art logo asset already contains "ColonizeThis"; no overlay. SPEC/ui/main-menu.md.
-    return SizedBox(
-      height: 64,
-      child: Image.asset(
-        kMainMenuLogoAsset,
-        fit: BoxFit.contain,
-        filterQuality: FilterQuality.none,
-        errorBuilder: (_, _, _) {
-          return const SizedBox.shrink();
-        },
-      ),
+    return _PixelArtLogoRegion(title: appL10n(context).mainMenu_title);
+  }
+}
+
+/// Dark editorial-monocle logo region for the `pixelArt` main-menu variant.
+///
+/// Renders, top-to-bottom: the eyebrow tagline (small-caps `--muted`), the
+/// [CtCompassRose] emblem, and a title row composed of
+/// `[CtFleurDeLisOrnament] — title text — [CtFleurDeLisOrnament]`. Mirrors
+/// `SPEC/ui/main-menu.md` § Logo region.
+class _PixelArtLogoRegion extends StatelessWidget {
+  const _PixelArtLogoRegion({required this.title});
+
+  final String title;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = appL10n(context);
+    final ThemeData theme = Theme.of(context);
+    final TextStyle? eyebrowStyle = theme.textTheme.labelSmall?.copyWith(
+      color: EditorialMonoclePalette.muted,
+      letterSpacing: 2.5,
+      fontFamily: editorialMonocleDisplayFontFamily,
+    );
+    final TextStyle? titleStyle = theme.textTheme.headlineMedium?.copyWith(
+      color: EditorialMonoclePalette.accent,
+      letterSpacing: 0.08,
+    );
+
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(
+          l10n.mainMenu_eyebrow.toUpperCase(),
+          textAlign: TextAlign.center,
+          style: eyebrowStyle,
+        ),
+        const SizedBox(height: 16),
+        const CtCompassRose(),
+        const SizedBox(height: 12),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            const CtFleurDeLisOrnament(),
+            const SizedBox(width: 12),
+            Flexible(
+              child: FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Text(
+                  title,
+                  style: titleStyle,
+                  textAlign: TextAlign.center,
+                  maxLines: 1,
+                ),
+              ),
+            ),
+            const SizedBox(width: 12),
+            const CtFleurDeLisOrnament(),
+          ],
+        ),
+      ],
     );
   }
 }
@@ -218,6 +278,15 @@ class _MainMenuBodyContent extends StatelessWidget {
 
   List<Widget> _menuChildren(BuildContext context) {
     final l10n = appL10n(context);
+    final bool isPixelArt = variant == MainMenuVariant.pixelArt;
+    final TextStyle? subtitleStyle = isPixelArt
+        ? Theme.of(context).textTheme.bodyMedium?.copyWith(
+            fontStyle: FontStyle.italic,
+            color: EditorialMonoclePalette.muted,
+          )
+        : Theme.of(
+            context,
+          ).textTheme.bodyMedium?.copyWith(fontStyle: FontStyle.italic);
     return [
       const SizedBox(height: 48),
       logoBuilder(context),
@@ -225,13 +294,16 @@ class _MainMenuBodyContent extends StatelessWidget {
         const SizedBox(height: 12),
         Text(
           l10n.mainMenu_subtitleAfterVictory,
-          style: Theme.of(
-            context,
-          ).textTheme.bodyMedium?.copyWith(fontStyle: FontStyle.italic),
+          style: subtitleStyle,
           textAlign: TextAlign.center,
         ),
       ],
-      const SizedBox(height: 32),
+      if (isPixelArt) ...[
+        const SizedBox(height: 24),
+        const CtBrassDivider(),
+        const SizedBox(height: 24),
+      ] else
+        const SizedBox(height: 32),
       _MenuButton(
         label: l10n.mainMenu_newGame,
         variant: variant,

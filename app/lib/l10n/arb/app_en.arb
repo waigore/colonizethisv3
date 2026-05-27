@@ -20,6 +20,10 @@
   "@mainMenu_title": {
     "description": "Main menu title text when not using the pixel-art logo."
   },
+  "mainMenu_eyebrow": "A Game of Empire & Discovery",
+  "@mainMenu_eyebrow": {
+    "description": "Small-caps eyebrow tagline shown above the title in the pixel-art editorial-monocle main menu variant."
+  },
   "mainMenu_subtitleAfterVictory": "Congratulations, you won your last game.",
   "@mainMenu_subtitleAfterVictory": {
     "description": "Subtitle shown on the main menu after the player has won their last game."
