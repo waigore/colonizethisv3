@@ -386,12 +386,20 @@ int? _declareWarSuppressedDevelopPhaseScore(_DeclareWarTargetContext ctx) {
 }
 
 int? _declareWarSuppressedExpandColonialScore(_DeclareWarTargetContext ctx) {
-  final shouldSuppressExpand = ctx.phasePlan != null
-      ? resolvePhaseDiplomacyDeclareWarExpandColonialSuppressionActive(
-          phasePlan: ctx.phasePlan!,
-        )
-      : ctx.nwAcquisitionWeight <= 0.0;
-  if (!shouldSuppressExpand) {
+  // Refs #2847 Phase 3 diplomacy wiring: derive EXPAND NW-colonial
+  // suppression from the soft-phase NW acquisition weight on the
+  // dispatched phase plan instead of the boolean
+  // `resolvePhaseDiplomacyDeclareWarExpandColonialSuppressionActive`
+  // (`phase == ObserverGoalPhase.expand`). The legacy hard-suppress
+  // contract is preserved exactly at `nwAcquisitionWeight <= 0.0`
+  // (mirroring `runConquestArmyMovePlanner`'s NW invadable-bonus zeroing
+  // gate); the default soft-phase curve produces a `0.05` early-sprint
+  // floor at OW<=7, so EXPAND turns now keep NW declare-war candidates
+  // scorable at low priority rather than structurally collapsing them.
+  // Callers without a phase plan use the legacy-derived weight (1.0 /
+  // 0.0) from `_DeclareWarTargetContext.build`, preserving the
+  // pre-soft-phase behaviour for tests and other entry points.
+  if (ctx.nwAcquisitionWeight > 0.0) {
     return null;
   }
   if (ctx.isTribeTarget || ctx.ownsInvadableNw || ctx.isColonialAdjacentOwner) {
@@ -421,12 +429,23 @@ int? _declareWarSuppressedExpandColonialScore(_DeclareWarTargetContext ctx) {
 // stays distinct from the broader DEVELOP suppression
 // (`_declareWarSuppressedDevelopPhaseScore`).
 int? _declareWarSuppressedColonialLiteScore(_DeclareWarTargetContext ctx) {
-  final shouldSuppressColonialLite = ctx.phasePlan != null
-      ? resolvePhaseDiplomacyDeclareWarColonialLiteSuppressionActive(
-          phasePlan: ctx.phasePlan!,
-        )
-      : ctx.nwAcquisitionWeight <= 0.0;
-  if (!shouldSuppressColonialLite) {
+  // Refs #2847 Phase 3 diplomacy wiring: collapsed to the same soft-phase
+  // NW-weight predicate as `_declareWarSuppressedExpandColonialScore`.
+  // Under the soft-phase curve both EXPAND and COLONIAL-lite share the
+  // same low-NW-priority profile (early-sprint plateau at OW<=9), so the
+  // suppression contract is "NW colonial declare-war collapses iff
+  // `nwAcquisitionWeight <= 0.0`" — which is reached only when an
+  // explicit phase-plan override sets the weight to `0.0` (no override
+  // does so today; default curves never produce `0.0`).
+  //
+  // The branch remains in the suppression chain (rather than being
+  // inlined into the EXPAND branch) so the structural ordering matches
+  // `_declareWarSuppressedScore` and so future Phase 4 SPEC alignment
+  // can retire the EXPAND / COLONIAL-lite Phase 2 boolean resolvers
+  // independently of this scoring path. Callers without a phase plan
+  // use the legacy-derived weight (1.0 / 0.0) from
+  // `_DeclareWarTargetContext.build`.
+  if (ctx.nwAcquisitionWeight > 0.0) {
     return null;
   }
   if (ctx.isTribeTarget || ctx.ownsInvadableNw || ctx.isColonialAdjacentOwner) {
