@@ -295,9 +295,9 @@ List<WidgetbookNode> get diplomacyDetailScreenDirectories => [
 ];
 
 /// Stories for the dark editorial-monocle theme primitives introduced by
-/// issue #2859 S1/S8/S9/S10/S11/S13: `CtGradients`, `CtBrassDivider`,
-/// `CtToggleSwitch`, `CtSectionLabel`, `CtResourceCell`, and
-/// `CtProgressBar`. SPEC/ui/pixel-art-ui-catalog.md
+/// issue #2859 S1/S8/S9/S10/S11/S12/S13: `CtGradients`, `CtBrassDivider`,
+/// `CtToggleSwitch`, `CtSectionLabel`, `CtResourceCell`, `CtProgressBar`,
+/// `CtBackButton`, and `CtTopBar`. SPEC/ui/pixel-art-ui-catalog.md
 /// § Editorial-monocle palette.
 List<WidgetbookNode> get ctDarkThemePrimitiveDirectories => [
   WidgetbookFolder(
@@ -326,6 +326,14 @@ List<WidgetbookNode> get ctDarkThemePrimitiveDirectories => [
       WidgetbookUseCase(
         name: 'CtResourceCell — delta sign sweep',
         builder: (context) => _CtResourceCellStory(),
+      ),
+      WidgetbookUseCase(
+        name: 'CtBackButton — interactive states',
+        builder: (context) => const _CtBackButtonStory(),
+      ),
+      WidgetbookUseCase(
+        name: 'CtTopBar — slot composition',
+        builder: (context) => const _CtTopBarStory(),
       ),
       WidgetbookUseCase(
         name: 'CtCompassRose — size sweep',
@@ -622,6 +630,104 @@ class _CtResourceCellStory extends StatelessWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _CtBackButtonStory extends StatefulWidget {
+  const _CtBackButtonStory();
+
+  @override
+  State<_CtBackButtonStory> createState() => _CtBackButtonStoryState();
+}
+
+class _CtBackButtonStoryState extends State<_CtBackButtonStory> {
+  int _taps = 0;
+
+  @override
+  Widget build(BuildContext context) {
+    return _CtDarkPrimitiveScaffold(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            // ignore: avoid_hardcoded_strings_in_widgets
+            'Default (hover / press to inspect states)',
+            style: TextStyle(color: Colors.white70),
+          ),
+          const SizedBox(height: 4),
+          CtBackButton(onPressed: () => setState(() => _taps++)),
+          const SizedBox(height: 16),
+          const Text(
+            // ignore: avoid_hardcoded_strings_in_widgets
+            'Disabled',
+            style: TextStyle(color: Colors.white70),
+          ),
+          const SizedBox(height: 4),
+          const CtBackButton(enabled: false),
+          const SizedBox(height: 16),
+          Text(
+            // ignore: avoid_hardcoded_strings_in_widgets
+            'taps: $_taps',
+            style: const TextStyle(color: Colors.white70),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _CtTopBarStory extends StatelessWidget {
+  const _CtTopBarStory();
+
+  @override
+  Widget build(BuildContext context) {
+    return _CtDarkPrimitiveScaffold(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: const [
+          Text(
+            // ignore: avoid_hardcoded_strings_in_widgets
+            'Title only',
+            style: TextStyle(color: Colors.white70),
+          ),
+          SizedBox(height: 4),
+          CtTopBar(
+            // ignore: avoid_hardcoded_strings_in_widgets
+            title: 'Production',
+          ),
+          SizedBox(height: 16),
+          Text(
+            // ignore: avoid_hardcoded_strings_in_widgets
+            'Back-label + icon + title',
+            style: TextStyle(color: Colors.white70),
+          ),
+          SizedBox(height: 4),
+          CtTopBar(
+            // ignore: avoid_hardcoded_strings_in_widgets
+            title: 'Production',
+            // ignore: avoid_hardcoded_strings_in_widgets
+            backButtonLabel: 'Map',
+            icon: Icon(Icons.factory_outlined, size: 18, color: Colors.white),
+          ),
+          SizedBox(height: 16),
+          Text(
+            // ignore: avoid_hardcoded_strings_in_widgets
+            'Disabled back affordance',
+            style: TextStyle(color: Colors.white70),
+          ),
+          SizedBox(height: 4),
+          CtTopBar(
+            // ignore: avoid_hardcoded_strings_in_widgets
+            title: 'Production',
+            // ignore: avoid_hardcoded_strings_in_widgets
+            backButtonLabel: 'Map',
+            backButtonEnabled: false,
+          ),
+        ],
       ),
     );
   }
