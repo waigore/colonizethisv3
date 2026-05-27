@@ -42,62 +42,75 @@ class CombatModeChoiceDialog extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = appL10n(context);
     final theme = Theme.of(context);
-    final titleStyle = (theme.textTheme.titleMedium ?? const TextStyle())
-        .copyWith(
-          color: EditorialMonoclePalette.accent,
-          letterSpacing: _titleLetterSpacing,
-        );
-    final bodyStyle = (theme.textTheme.bodyMedium ?? const TextStyle())
-        .copyWith(color: EditorialMonoclePalette.muted);
-    final primaryLabelStyle = (theme.textTheme.titleSmall ?? const TextStyle())
-        .copyWith(color: EditorialMonoclePalette.accent);
-    final secondaryLabelStyle =
-        (theme.textTheme.titleSmall ?? const TextStyle())
-            .copyWith(color: EditorialMonoclePalette.muted);
-
     return CtDialogShell(
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(l10n.quickBattle_combatAt(provinceName), style: titleStyle),
+          _buildTitle(theme, l10n),
           const SizedBox(height: 8),
-          if (isCapitalSiege)
-            Text(l10n.quickBattle_capitalSiegeQuickBattleOnly, style: bodyStyle)
-          else
-            Text(l10n.quickBattle_chooseCombatMode, style: bodyStyle),
+          _buildBody(theme, l10n),
           const SizedBox(height: 16),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.end,
-            children: [
-              if (!isCapitalSiege)
-                CtNinePatchButton(
-                  onPressed: () {
-                    bus.emit(
-                      const CombatModeChosenEvent(CombatMode.autoResolve),
-                    );
-                    Navigator.of(context).pop();
-                  },
-                  child: Text(
-                    l10n.quickBattle_autoResolve,
-                    style: secondaryLabelStyle,
-                  ),
-                ),
-              if (!isCapitalSiege) const SizedBox(width: 8),
-              CtNinePatchButton(
-                onPressed: () {
-                  bus.emit(const CombatModeChosenEvent(CombatMode.quickBattle));
-                  Navigator.of(context).pop();
-                },
-                child: Text(
-                  l10n.quickBattle_quickBattle,
-                  style: primaryLabelStyle,
-                ),
-              ),
-            ],
-          ),
+          _buildActionRow(context, theme, l10n),
         ],
       ),
     );
+  }
+
+  Widget _buildTitle(ThemeData theme, AppLocalizations l10n) {
+    final style = (theme.textTheme.titleMedium ?? const TextStyle()).copyWith(
+      color: EditorialMonoclePalette.accent,
+      letterSpacing: _titleLetterSpacing,
+    );
+    return Text(l10n.quickBattle_combatAt(provinceName), style: style);
+  }
+
+  Widget _buildBody(ThemeData theme, AppLocalizations l10n) {
+    final style = (theme.textTheme.bodyMedium ?? const TextStyle()).copyWith(
+      color: EditorialMonoclePalette.muted,
+    );
+    final text = isCapitalSiege
+        ? l10n.quickBattle_capitalSiegeQuickBattleOnly
+        : l10n.quickBattle_chooseCombatMode;
+    return Text(text, style: style);
+  }
+
+  Widget _buildActionRow(
+    BuildContext context,
+    ThemeData theme,
+    AppLocalizations l10n,
+  ) {
+    final primaryLabelStyle = (theme.textTheme.titleSmall ?? const TextStyle())
+        .copyWith(color: EditorialMonoclePalette.accent);
+    final secondaryLabelStyle =
+        (theme.textTheme.titleSmall ?? const TextStyle())
+            .copyWith(color: EditorialMonoclePalette.muted);
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.end,
+      children: [
+        if (!isCapitalSiege) ...[
+          CtNinePatchButton(
+            onPressed: () => _onModeChosen(context, CombatMode.autoResolve),
+            child: Text(
+              l10n.quickBattle_autoResolve,
+              style: secondaryLabelStyle,
+            ),
+          ),
+          const SizedBox(width: 8),
+        ],
+        CtNinePatchButton(
+          onPressed: () => _onModeChosen(context, CombatMode.quickBattle),
+          child: Text(
+            l10n.quickBattle_quickBattle,
+            style: primaryLabelStyle,
+          ),
+        ),
+      ],
+    );
+  }
+
+  void _onModeChosen(BuildContext context, CombatMode mode) {
+    bus.emit(CombatModeChosenEvent(mode));
+    Navigator.of(context).pop();
   }
 }
