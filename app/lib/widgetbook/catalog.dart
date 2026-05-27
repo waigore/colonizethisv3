@@ -114,7 +114,12 @@ Widget mobileViewport(BuildContext context, Widget child) {
   );
 }
 
-/// Widgetbook app with colonial theme. SPEC/ui/main-menu.md; UXD 03a. SPEC/ui/game-setup.md; UXD 03b. Mobile viewport: SPEC/ui/mobile-adaptation.md.
+/// Widgetbook app: defaults to `AppThemes.editorialMonocle` (dark) per
+/// `SPEC/ui/pixel-art-ui-catalog.md` § Editorial-monocle palette; the
+/// MaterialThemeAddon below exposes a toolbar toggle between the
+/// editorial-monocle theme and the colonial / colonialPixelArt light
+/// fallbacks. SPEC/ui/main-menu.md; UXD 03a. SPEC/ui/game-setup.md; UXD 03b.
+/// Mobile viewport: SPEC/ui/mobile-adaptation.md.
 class CtWidgetbookApp extends StatelessWidget {
   const CtWidgetbookApp({super.key});
 
@@ -157,8 +162,30 @@ class CtWidgetbookApp extends StatelessWidget {
         ...gameMapNarrowDetailOverlaySlotDirectories,
         ...diplomacyDetailScreenDirectories,
       ],
-      lightTheme: AppThemes.colonial,
-      darkTheme: AppThemes.colonial,
+      addons: [
+        MaterialThemeAddon(
+          themes: [
+            WidgetbookTheme(
+              name: 'Editorial Monocle (dark)',
+              data: AppThemes.editorialMonocle,
+            ),
+            WidgetbookTheme(
+              name: 'Colonial (light fallback)',
+              data: AppThemes.colonial,
+            ),
+            WidgetbookTheme(
+              name: 'Colonial Pixel Art (light fallback)',
+              data: AppThemes.colonialPixelArt,
+            ),
+          ],
+          initialTheme: WidgetbookTheme(
+            name: 'Editorial Monocle (dark)',
+            data: AppThemes.editorialMonocle,
+          ),
+        ),
+      ],
+      lightTheme: AppThemes.editorialMonocle,
+      darkTheme: AppThemes.editorialMonocle,
     );
   }
 }
@@ -171,7 +198,7 @@ List<WidgetbookNode> get buttonDirectories => [
       WidgetbookUseCase(
         name: 'CtNinePatchButton',
         builder: (context) => Theme(
-          data: AppThemes.colonial,
+          data: AppThemes.editorialMonocle,
           child: Padding(
             padding: const EdgeInsets.all(24),
             child: Column(
@@ -213,7 +240,7 @@ List<WidgetbookNode> get transferListDirectories => [
       WidgetbookUseCase(
         name: 'Default',
         builder: (context) => Theme(
-          data: AppThemes.colonial,
+          data: AppThemes.editorialMonocle,
           child: Padding(
             padding: const EdgeInsets.all(24),
             child: SizedBox(

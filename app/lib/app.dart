@@ -34,7 +34,7 @@ class App extends ConsumerWidget {
           formatDebugAwareTitle(appL10n(context).app_title),
       localizationsDelegates: AppLocalizationsBinding.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
-      theme: AppThemes.light,
+      theme: AppThemes.editorialMonocle,
       initialRoute: Routes.shell,
       onGenerateRoute: Routes.generate,
     );
