@@ -295,11 +295,11 @@ List<WidgetbookNode> get diplomacyDetailScreenDirectories => [
 ];
 
 /// Stories for the dark editorial-monocle theme primitives introduced by
-/// issue #2859 S1/S8/S9/S10/S11/S12/S13 (`CtGradients`, `CtBrassDivider`,
-/// `CtToggleSwitch`, `CtSectionLabel`, `CtResourceCell`, `CtProgressBar`,
-/// `CtBackButton`, `CtTopBar`) and issue #2860 S1/S2/S4 (`CtCompassRose`,
-/// `CtMainMenuCollage`, `CtFleurDeLisOrnament`). SPEC/ui/pixel-art-ui-catalog.md
-/// § Editorial-monocle palette.
+/// issue #2859 S1/S4/S8/S9/S10/S11/S12/S13 (`CtGradients`, `CtDialogShell`,
+/// `CtBrassDivider`, `CtToggleSwitch`, `CtSectionLabel`, `CtResourceCell`,
+/// `CtProgressBar`, `CtBackButton`, `CtTopBar`) and issue #2860 S1/S2/S4
+/// (`CtCompassRose`, `CtMainMenuCollage`, `CtFleurDeLisOrnament`).
+/// SPEC/ui/pixel-art-ui-catalog.md § Editorial-monocle palette.
 List<WidgetbookNode> get ctDarkThemePrimitiveDirectories => [
   WidgetbookFolder(
     name: 'Ct- Dark Theme Primitives',
@@ -307,6 +307,10 @@ List<WidgetbookNode> get ctDarkThemePrimitiveDirectories => [
       WidgetbookUseCase(
         name: 'CtGradients — token swatches',
         builder: (context) => _CtGradientsStory(),
+      ),
+      WidgetbookUseCase(
+        name: 'CtDialogShell — dark frame',
+        builder: (context) => _CtDialogShellStory(),
       ),
       WidgetbookUseCase(
         name: 'CtBrassDivider — wide and narrow',
@@ -364,6 +368,58 @@ class _CtDarkPrimitiveScaffold extends StatelessWidget {
       child: Material(
         color: AppThemes.editorialMonocle.scaffoldBackgroundColor,
         child: Padding(padding: const EdgeInsets.all(24), child: child),
+      ),
+    );
+  }
+}
+
+class _CtDialogShellStory extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Theme(
+      data: AppThemes.editorialMonocle,
+      child: Material(
+        color: AppThemes.editorialMonocle.scaffoldBackgroundColor,
+        child: Stack(
+          children: const [
+            Positioned.fill(child: _CtDialogShellBackdrop()),
+            Center(
+              child: CtDialogShell(
+                maxWidth: 360,
+                maxHeight: 280,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      // ignore: avoid_hardcoded_strings_in_widgets
+                      'Dialog shell preview',
+                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+                    ),
+                    SizedBox(height: 8),
+                    Text(
+                      // ignore: avoid_hardcoded_strings_in_widgets
+                      'Frame shows the 2px --accent-dim border and panelGradient background per Refs #2859 R3 / S4.',
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _CtDialogShellBackdrop extends StatelessWidget {
+  const _CtDialogShellBackdrop();
+
+  @override
+  Widget build(BuildContext context) {
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: AppThemes.editorialMonocle.scaffoldBackgroundColor,
       ),
     );
   }
