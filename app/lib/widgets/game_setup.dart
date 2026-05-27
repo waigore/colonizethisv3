@@ -424,46 +424,58 @@ class _GameSetupHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final l10n = appL10n(context);
-    final ThemeData theme = Theme.of(context);
-    final bool pixelArt = variant == GameSetupVariant.pixelArt;
-
-    if (!pixelArt) {
-      return Text(
-        l10n.gameSetup_title,
-        key: const ValueKey<String>('gameSetupTitlePlain'),
-        style: theme.textTheme.headlineSmall,
-      );
+    if (variant == GameSetupVariant.pixelArt) {
+      return const _GameSetupPixelArtHeader();
     }
+    return Text(
+      appL10n(context).gameSetup_title,
+      key: const ValueKey<String>('gameSetupTitlePlain'),
+      style: Theme.of(context).textTheme.headlineSmall,
+    );
+  }
+}
 
-    final TextStyle titleStyle =
-        (theme.textTheme.headlineMedium ?? const TextStyle()).copyWith(
-          color: EditorialMonoclePalette.accent,
-          shadows: <Shadow>[
-            Shadow(
-              color: EditorialMonoclePalette.accentBright.withValues(
-                alpha: _titleGlowAlpha,
-              ),
-              offset: _titleGlowOffset,
-              blurRadius: _titleGlowBlur,
+/// PixelArt-variant header body for [_GameSetupHeader]. Extracted to keep
+/// each `build()` body below the repo lint ceiling
+/// (`repo.disallowed_ast_patterns` → `widget_build_method_too_long`,
+/// 60 physical lines) while preserving the SPEC-authorised header chrome.
+class _GameSetupPixelArtHeader extends StatelessWidget {
+  const _GameSetupPixelArtHeader();
+
+  TextStyle _titleStyle(ThemeData theme) =>
+      (theme.textTheme.headlineMedium ?? const TextStyle()).copyWith(
+        color: EditorialMonoclePalette.accent,
+        shadows: <Shadow>[
+          Shadow(
+            color: EditorialMonoclePalette.accentBright.withValues(
+              alpha: _GameSetupHeader._titleGlowAlpha,
             ),
-          ],
-        );
+            offset: _GameSetupHeader._titleGlowOffset,
+            blurRadius: _GameSetupHeader._titleGlowBlur,
+          ),
+        ],
+      );
 
-    final TextStyle? eyebrowBase = theme.textTheme.labelSmall;
-    final double eyebrowFontSize = eyebrowBase?.fontSize ?? 11;
-    final TextStyle eyebrowStyle = (eyebrowBase ?? const TextStyle()).copyWith(
+  TextStyle _eyebrowStyle(ThemeData theme) {
+    final TextStyle? base = theme.textTheme.labelSmall;
+    final double fontSize = base?.fontSize ?? 11;
+    return (base ?? const TextStyle()).copyWith(
       color: EditorialMonoclePalette.muted,
       fontWeight: FontWeight.w500,
-      letterSpacing: eyebrowFontSize * _eyebrowLetterSpacingEm,
+      letterSpacing: fontSize * _GameSetupHeader._eyebrowLetterSpacingEm,
     );
+  }
 
-    final TextStyle introStyle =
-        (theme.textTheme.bodyMedium ?? const TextStyle()).copyWith(
-          color: EditorialMonoclePalette.muted,
-          fontStyle: FontStyle.italic,
-        );
+  TextStyle _introStyle(ThemeData theme) =>
+      (theme.textTheme.bodyMedium ?? const TextStyle()).copyWith(
+        color: EditorialMonoclePalette.muted,
+        fontStyle: FontStyle.italic,
+      );
 
+  @override
+  Widget build(BuildContext context) {
+    final l10n = appL10n(context);
+    final ThemeData theme = Theme.of(context);
     return Column(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.center,
@@ -471,23 +483,23 @@ class _GameSetupHeader extends StatelessWidget {
         Text(
           l10n.gameSetup_eyebrow.toUpperCase(),
           key: const ValueKey<String>('gameSetupEyebrow'),
-          style: eyebrowStyle,
+          style: _eyebrowStyle(theme),
         ),
-        const SizedBox(height: _eyebrowToTitleGap),
+        const SizedBox(height: _GameSetupHeader._eyebrowToTitleGap),
         Text(
           l10n.gameSetup_title,
           key: const ValueKey<String>('gameSetupTitlePixelArt'),
-          style: titleStyle,
+          style: _titleStyle(theme),
           textAlign: TextAlign.center,
         ),
-        const SizedBox(height: _titleToIntroGap),
+        const SizedBox(height: _GameSetupHeader._titleToIntroGap),
         Text(
           l10n.gameSetup_intro,
           key: const ValueKey<String>('gameSetupIntro'),
-          style: introStyle,
+          style: _introStyle(theme),
           textAlign: TextAlign.center,
         ),
-        const SizedBox(height: _introToDividerGap),
+        const SizedBox(height: _GameSetupHeader._introToDividerGap),
         const CtBrassDivider(key: ValueKey<String>('gameSetupBrassDivider')),
       ],
     );
