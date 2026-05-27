@@ -48,6 +48,7 @@ class CtNinePatchButton extends StatefulWidget {
     this.padding,
     this.destTileSize = 16,
     this.minHeight = 48,
+    this.dangerVariant = false,
   });
 
   /// Callback fired on tap when [enabled] is `true` and [onPressed] is
@@ -78,6 +79,16 @@ class CtNinePatchButton extends StatefulWidget {
   /// the 44 dp accessibility threshold called out in
   /// `SPEC/ui/buttons-nine-patch.md`.
   final double minHeight;
+
+  /// When `true`, the resolved border and engraved label foreground swap
+  /// from the brass `--border` / `--accent` family to the `--danger` token
+  /// (border, label, and hover all stay on `--danger`). The gradient
+  /// surface and brass corner brackets are unchanged. Used by destructive
+  /// action buttons such as the diplomacy panel `Declare War` button per
+  /// `SPEC/ui/diplomacy-panel.md` § Action button styling and
+  /// `SPEC/ui/pixel-art-ui-catalog.md` § Pixel-art component catalog
+  /// (CtNinePatchButton). Defaults to `false`.
+  final bool dangerVariant;
 
   /// Side length of each brass corner-bracket overlay (R1).
   static const double cornerBracketSize = 10;
@@ -133,13 +144,23 @@ class _CtNinePatchButtonState extends State<CtNinePatchButton> {
     return base.withValues(alpha: alpha);
   }
 
-  Color get _borderColor => _hovered
-      ? EditorialMonoclePalette.accent
-      : EditorialMonoclePalette.border;
+  Color get _borderColor {
+    if (widget.dangerVariant) {
+      return EditorialMonoclePalette.danger;
+    }
+    return _hovered
+        ? EditorialMonoclePalette.accent
+        : EditorialMonoclePalette.border;
+  }
 
-  Color get _textColor => _hovered
-      ? EditorialMonoclePalette.accentBright
-      : EditorialMonoclePalette.accent;
+  Color get _textColor {
+    if (widget.dangerVariant) {
+      return EditorialMonoclePalette.danger;
+    }
+    return _hovered
+        ? EditorialMonoclePalette.accentBright
+        : EditorialMonoclePalette.accent;
+  }
 
   @override
   Widget build(BuildContext context) {

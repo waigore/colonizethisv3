@@ -13,7 +13,6 @@ import '../../../core/services/app_event_handler_scope.dart';
 import '../../../core/services/subscription_tracker.dart';
 import '../../../l10n/l10n.dart';
 import '../../../widgets/ct_nine_patch_button.dart';
-import '../../../widgets/ct_panel.dart';
 import 'diplomacy_order_helpers.dart';
 import 'diplomacy_panel_rows.dart';
 import 'fnv1a_hash_constants.dart';
@@ -353,11 +352,14 @@ class _DiplomacyRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
+    // SPEC/ui/diplomacy-panel.md § Per-faction row → Row chrome: each row
+    // is rendered as a flat gradient tile with a 1 px outline and pointer
+    // hover behaviour. The InkWell sits inside the hover-aware chrome so
+    // taps still navigate to the detail screen (or order-cancel toggle).
+    return _DiplomacyRowChrome(
       child: InkWell(
         onTap: onTap,
-        child: CtPanel(
+        child: Padding(
           padding: const EdgeInsets.all(12),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -378,10 +380,7 @@ class _DiplomacyRow extends StatelessWidget {
       children: [
         _buildHeaderRow(context),
         const SizedBox(height: 4),
-        Text(
-          _relationSummary(context),
-          style: Theme.of(context).textTheme.bodySmall,
-        ),
+        _buildRelationRow(context),
         ..._buildOptionalStatusLines(context),
       ],
     );
@@ -431,25 +430,42 @@ class _DiplomacyRow extends StatelessWidget {
     ];
   }
 
-  String _relationSummary(BuildContext context) {
-    final l10n = appL10n(context);
-    final rel = data.relation;
-    final stateLabel = rel == null
-        ? '—'
-        : rel.atWar
-        ? l10n.diplomacy_relationState_war
-        : l10n.diplomacy_relationState_peace;
-    // SPEC/game/diplomacy.md § Player-facing relation display: show one-word state, hide score.
-    final relationStateLabel = rel == null
-        ? ''
-        : relationScoreToDisplayLabel(rel.score);
-    final overtureLabel = data.overture == null
+  /// Renders the relation summary row per SPEC/ui/diplomacy-panel.md
+  /// § Relation state badge + § Per-faction row. The WAR/PEACE chip uses
+  /// the dedicated [_RelationStateBadge]; the one-word relation state
+  /// (Hostile / Unfriendly / Cordial / Friendly) and the optional
+  /// overture stage stay as inline text.
+  Widget _buildRelationRow(BuildContext context) {
+    final TextStyle? bodySmall = Theme.of(context).textTheme.bodySmall;
+    final DiplomacyRelation? rel = data.relation;
+    if (rel == null) {
+      return Text('—', style: bodySmall);
+    }
+    // SPEC/game/diplomacy.md § Player-facing relation display: show
+    // one-word state, hide score.
+    final String relationStateLabel = relationScoreToDisplayLabel(rel.score);
+    final String overtureLabel = data.overture == null
         ? ''
         : ' · ${_overtureStageLabel(data.overture!.stage)}';
-    if (relationStateLabel.isEmpty) {
-      return '$stateLabel$overtureLabel';
-    }
-    return '$stateLabel · $relationStateLabel$overtureLabel';
+    final String trailing = relationStateLabel.isEmpty
+        ? overtureLabel
+        : ' · $relationStateLabel$overtureLabel';
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        _RelationStateBadge(atWar: rel.atWar),
+        if (trailing.isNotEmpty)
+          Flexible(
+            child: Text(
+              trailing,
+              style: bodySmall,
+              overflow: TextOverflow.ellipsis,
+              maxLines: 2,
+            ),
+          ),
+      ],
+    );
   }
 
   List<Widget> _buildOptionalStatusLines(BuildContext context) {
@@ -551,6 +567,14 @@ class _ActionButton extends StatelessWidget {
   final bool isPending;
   final VoidCallback? onCancel;
 
+  /// SPEC/ui/diplomacy-panel.md § Action button styling — destructive
+  /// `Declare War` action resolves both the button outline and the
+  /// engraved label to the canonical `--danger` token. Pending state
+  /// keeps the default brass chrome so the "Cancel" affordance still
+  /// reads as a recoverable toggle.
+  bool get _isWarVariant =>
+      !isPending && order.type == DiplomaticOrderType.declareWar;
+
   @override
   Widget build(BuildContext context) {
     final label = isPending ? 'Cancel' : diplomacyActionLabel(order);
@@ -559,6 +583,7 @@ class _ActionButton extends StatelessWidget {
       child: CtNinePatchButton(
         onPressed: isPending ? onCancel : onPressed,
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+        dangerVariant: _isWarVariant,
         child: Text(label, style: const TextStyle(fontSize: 12)),
       ),
     );

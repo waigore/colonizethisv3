@@ -48,7 +48,8 @@ The heading is otherwise an inert label (no tap target).
 
 ## Per-faction row
 
-- **Left:** Faction name (displayName or id), type badge (GP / Minor / Tribe), current **diplomatic state**: relation state (AT_PEACE / AT_WAR), **one-word relation state** (Hostile / Unfriendly / Cordial / Friendly) derived from the hidden relation score per [diplomacy.md](../game/diplomacy.md) § Player-facing relation display. The numeric relation score is **not** shown. For Minor/Tribe: overture stage (none, Trade Consulate, Embassy, NAP, Join Empire) if any. For **Great Powers:** a **power comparison percentage** is shown — a derived display only, not a new data field. See **Power comparison percentage (Great Power rows only)** below.
+- **Row chrome (editorial-monocle dark theme):** Each faction row is a flat-bordered tile per [mockups/GAME30001-diplomacy-panel.html](mockups/GAME30001-diplomacy-panel.html) `.faction-row` — **vertical** `linear-gradient(180deg, --bg-deep, --surface)` background, 1 px `--border` outline, 4 px vertical gap between consecutive rows, minimum content height ~48 dp. On hover the outline transitions to `--accent-dim` (`transition:border-color .15s` in the mockup; in Flutter, a `MouseRegion` + `StatefulWidget` swap is acceptable — the **visible target** is the resolved border color). Touch devices that do not emit hover events render the row in its idle state. Nine-patch `CtPanel` chrome is **not** used for diplomacy rows because the mockup uses a sharp 1 px border, not the brass nine-patch frame.
+- **Left:** Faction name (displayName or id), type badge (GP / Minor / Tribe), current **diplomatic state**: relation state (AT_PEACE / AT_WAR) rendered via the **relation state badge** (see § Relation state badge), **one-word relation state** (Hostile / Unfriendly / Cordial / Friendly) derived from the hidden relation score per [diplomacy.md](../game/diplomacy.md) § Player-facing relation display. The numeric relation score is **not** shown. For Minor/Tribe: overture stage (none, Trade Consulate, Embassy, NAP, Join Empire) if any. For **Great Powers:** a **power comparison percentage** is shown — a derived display only, not a new data field. See **Power comparison percentage (Great Power rows only)** below.
 - **Type badge colors (editorial-monocle dark theme):** The type badge uses mono font and the canonical [pixel-art-ui-catalog.md](pixel-art-ui-catalog.md) § Editorial-monocle palette tokens per [mockups/GAME30001-diplomacy-panel.html](mockups/GAME30001-diplomacy-panel.html) `.f-badge`. Great Power rows use `--accent-dim` background with `--bg-deep` foreground; Minor Nation rows use `--muted` background with `--bg-deep` foreground; Tribe rows are **outlined** — transparent background, `--muted` border and `--muted` foreground. No hardcoded Material chrome colors are permitted.
 - **Outgoing economic diplomacy (list row only):** On the **same row**, below the relation line, when the human Great Power has **active or pending** economic diplomacy toward this faction (receiver-centric copy): **Active subsidy:** `Outgoing subsidy: £N/turn to {displayName}` when `Game.subsidyStates` has `payerId` = human GP and `targetId` = this row’s faction. **Pending grant:** `Pending grant aid: £N (resolves end of turn)` when current-turn orders include `grantAid` toward this faction. **Pending subsidy:** `Pending subsidy: £N/turn (resolves end of turn)` when current-turn orders include `setSubsidy` toward this faction. Omit each line when not applicable. Do **not** duplicate this block on the Diplomacy Detail screen for current product (list row is the source of truth).
 - **Right:** **Available diplomatic actions** for the player toward that faction. Actions are those explicitly in SPEC/game/diplomacy.md and SPEC/program/orders.md: Declare War, Offer Peace, Alliance (GP only), Establish Overture (stage), **Grant Aid**, **Set Subsidy** as **separate** buttons when each is valid. Grant Aid requires Embassy; Set Subsidy requires Consulate or Embassy — hide or omit a button when its preconditions are not met. Only show actions that are **valid** per the diplomatic order validator (same rules as order submission). Any counterparty that is a valid target for aid/subsidy per game rules (Great Power, Minor, or Tribe) uses the same button rules.
@@ -63,6 +64,18 @@ Replaces the previously displayed absolute **power score** per [diplomacy.md](..
 - **Zero-player guard:** `max(playerPowerScore, 1)` so a player at score 0 still yields a finite percentage (no division-by-zero).
 
 Tapping anywhere on a faction row (or an explicit “Details” affordance in that row) opens the **Diplomacy Detail** screen for that faction (GAME30002), scoped to the current player’s Great Power. See [Diplomacy Detail navigation](#diplomacy-detail-view-per-faction) below.
+
+---
+
+## Relation state badge
+
+Each faction row renders the AT_PEACE / AT_WAR state as a small mono-font chip preceding the one-word relation label, per [mockups/GAME30001-diplomacy-panel.html](mockups/GAME30001-diplomacy-panel.html) `.f-relation .state`:
+
+- **Label:** uppercase `WAR` when the relation is `atWar`, otherwise `PEACE`.
+- **Chrome:** mono font, font-size 9 sp, padding 1 dp top/bottom × 5 dp left/right, square 1 dp corners (`border-radius: 1px`), 4 dp gap before the relation word.
+- **War variant:** translucent warm-red overlay background derived from the canonical `--danger` token (the mockup uses `oklch(40% 0.06 20 / 0.4)`, which is the danger hue desaturated and alpha-tinted at 0.40); foreground text `--danger`.
+- **Peace variant:** translucent cool-green overlay background derived from the canonical `--success` token (the mockup uses `oklch(40% 0.06 150 / 0.2)`, which is the success hue desaturated and alpha-tinted at 0.20); foreground text `--success`.
+- **Forbidden:** raw `Colors.red`, `Colors.green`, or any Material chrome background. The badge resolves background and foreground from the editorial-monocle palette only.
 
 ---
 
@@ -122,6 +135,14 @@ All diplomatic actions are **submitted for end-of-turn resolution** — the pane
 | Establish Overture | "Consulate/Embassy/NAP/Join Empire" | "Cancel" |
 | Grant Aid | "Grant Aid (£N)" | "Cancel" |
 | Set Subsidy | "Set Subsidy (£N)" | "Cancel" |
+
+### Action button styling (editorial-monocle dark theme)
+
+Per [mockups/GAME30001-diplomacy-panel.html](mockups/GAME30001-diplomacy-panel.html) `.f-actions button`, all diplomatic action buttons render against a small (compact) variant of the canonical `CtNinePatchButton` brass surface. The **Declare War** button is the only action button with a destructive variant per `.f-actions button.war-btn`:
+
+- **Border and text color:** `--danger` (warm-red brass).
+- **Background:** unchanged from the standard action button gradient (`--surface-lite` → `--bg-deep`); only the outline and label color shift.
+- **Applies to:** `DiplomaticOrderType.declareWar` only. The pending (Cancel) variant retains its own pending styling and is not the war variant.
 
 Orders are submitted into the current turn's order set; resolution happens on Next Turn.
 
@@ -194,6 +215,10 @@ At least one story that shows the Diplomacy panel using a **real game** (e.g. fr
 - Given the diplomacy panel is open and at least one Great Power row is rendered, when the GP type badge is inspected, then its background resolves to `--accent-dim` and its foreground resolves to `--bg-deep` from the editorial-monocle palette (no Material primary or `Colors.blue` chrome).
 - Given the diplomacy panel is open and at least one Minor Nation row is rendered, when the Minor type badge is inspected, then its background resolves to `--muted` and its foreground resolves to `--bg-deep` from the editorial-monocle palette (no Material grey chrome).
 - Given the diplomacy panel is open and at least one Tribe row is rendered, when the Tribe type badge is inspected, then it renders as an outlined chip: transparent background, 1 px `--muted` border, foreground text color `--muted` (no Material orange chrome).
+- Given the diplomacy panel is open and a faction row is rendered, when the row chrome is inspected, then it paints a vertical `linear-gradient(180deg, --bg-deep, --surface)` background and a 1 dp solid border in `--border`; the row does **not** wrap a `CtPanel` (nine-patch) frame, matching `.faction-row` in [mockups/GAME30001-diplomacy-panel.html](mockups/GAME30001-diplomacy-panel.html).
+- Given the diplomacy panel is open and at least one faction row is rendered, when the row's relation state chip is inspected for a row whose `DiplomacyRelation.atWar` is `true`, then the chip label is the uppercase string `WAR`, the foreground text color resolves to `--danger`, and the chip background is a translucent warm-red overlay derived from the `--danger` hue (mockup token `oklch(40% 0.06 20 / 0.4)`).
+- Given the diplomacy panel is open and at least one faction row is rendered, when the row's relation state chip is inspected for a row whose `DiplomacyRelation.atWar` is `false`, then the chip label is the uppercase string `PEACE`, the foreground text color resolves to `--success`, and the chip background is a translucent cool-green overlay derived from the `--success` hue (mockup token `oklch(40% 0.06 150 / 0.2)`).
+- Given the diplomacy panel is open and a faction row has a valid `Declare War` action button, when the action button is inspected, then its label text color resolves to `--danger` and its outer outline resolves to `--danger` per [mockups/GAME30001-diplomacy-panel.html](mockups/GAME30001-diplomacy-panel.html) `.f-actions button.war-btn`. The non-war action buttons (`Offer Peace`, `Alliance`, `Establish Overture`, `Grant Aid`, `Set Subsidy`) keep the standard `--accent-dim` label.
 - Given the diplomacy panel is open with default state, when the bottom mode bar is inspected, then the "All" filter button is active (text in `--accent`, `--accent-dim` border) and the other two ("Great Powers only", "Minors only") render as inactive (text in `--muted`, no accent border).
 - Given the user taps "Great Powers only" in the mode bar, when the list re-renders, then only Great Power rows are visible — no Minor Nation or Tribe rows are present in the rendered widget tree.
 - Given the user taps "Minors only" in the mode bar, when the list re-renders, then both Minor Nation and Tribe rows are visible (using their normal section headings) and no Great Power rows are present in the rendered widget tree.
