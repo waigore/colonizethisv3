@@ -5,7 +5,6 @@ import '../constants.dart';
 import '../diplomacy/diplomacy_resolver.dart';
 import '../economy/economy_riches_to_treasury.dart';
 import '../world/player_view.dart';
-import '../world/unit_lookup.dart';
 import 'order_resolution_context.dart';
 import 'order_validators.dart';
 import 'unit_type_helpers.dart';
@@ -149,6 +148,27 @@ class IncrementalCandidateValidator {
   Map<String, Army>? _cachedArmiesById;
   DiplomacyFactionMembership? _cachedFactionMembership;
   NavalOrderValidator? _cachedNavalOrderValidator;
+  OrderResolutionContext? _cachedOrderResolutionContext;
+
+  /// Per-pass [OrderResolutionContext] reused across move / work / build /
+  /// recruit / naval / diplomatic probe sites that already accept the record.
+  /// Mirrors the per-pass caching of [_factionMembership] and
+  /// [_armiesById] so a single suggestion pass does not allocate one record
+  /// per candidate probe (Refs #2836 AC 3;
+  /// SPEC/program/logic-validator-units-params.md).
+  OrderResolutionContext _orderResolutionContext() {
+    final cached = _cachedOrderResolutionContext;
+    if (cached != null) {
+      return cached;
+    }
+    final built = orderResolutionContextFromView(
+      view,
+      game,
+      unitsById: unitsById,
+    );
+    _cachedOrderResolutionContext = built;
+    return built;
+  }
 
   /// When [false], existing diplomatic orders in [basePrefix] failed incremental
   /// replay; every [isDiplomaticAccepted] probe must reject (Refs #2394).
@@ -184,9 +204,8 @@ class IncrementalCandidateValidator {
           candidate,
           game,
           playerId,
-          unitsById,
+          _orderResolutionContext(),
           diplomaticOrders,
-          view,
           topology,
           previousRejected: false,
           factionMembership: _factionMembership(),
@@ -401,9 +420,12 @@ class IncrementalCandidateValidator {
       game: game,
       player: player,
       playerId: playerId,
-      view: view,
+      resolution: (
+        view: view,
+        unitsById: unitsById,
+        provinceById: view.provincesById,
+      ),
       topology: topology,
-      unitsById: unitsById,
       diplomaticOrders: diplomaticOrders,
       tileMapByRegion: tileMapByRegion,
       civilianDraftMoveUnitIds: _civilianDraftMoveUnitIds(),
@@ -560,9 +582,12 @@ class IncrementalCandidateValidator {
       game: game,
       player: player,
       playerId: playerId,
-      view: view,
+      resolution: (
+        view: view,
+        unitsById: unitsById,
+        provinceById: view.provincesById,
+      ),
       topology: topology,
-      unitsById: unitsById,
       diplomaticOrders: diplomaticOrders,
       tileMapByRegion: tileMapByRegion,
       civilianDraftMoveUnitIds: _civilianDraftMoveUnitIds(),

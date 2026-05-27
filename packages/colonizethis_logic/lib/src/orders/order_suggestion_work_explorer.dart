@@ -59,8 +59,7 @@ part of 'order_suggestion_work.dart';
       playerId: playerId,
       unit: unit,
       order: probe,
-      view: view,
-      unitsById: resolution.unitsById,
+      resolution: resolution,
       diplomaticOrders: diplomatic,
     );
     if (!bundled.isAccepted) {
@@ -222,8 +221,7 @@ void _addExplorerWorkSuggestionsForUnit({
         target: kWorkTargetProspect,
         targetTileKey: sortedTiles.first,
       ),
-      view: view,
-      unitsById: resolution.unitsById,
+      resolution: resolution,
       diplomaticOrders: diplomaticOrders,
     );
     if (!bundled.isAccepted) {
