@@ -295,11 +295,13 @@ List<WidgetbookNode> get diplomacyDetailScreenDirectories => [
 ];
 
 /// Stories for the dark editorial-monocle theme primitives introduced by
-/// issue #2859 S1/S8/S9/S10/S11/S12/S13 (`CtGradients`, `CtBrassDivider`,
-/// `CtToggleSwitch`, `CtSectionLabel`, `CtResourceCell`, `CtProgressBar`,
-/// `CtBackButton`, `CtTopBar`) and issue #2860 S1/S2/S4 (`CtCompassRose`,
-/// `CtMainMenuCollage`, `CtFleurDeLisOrnament`). SPEC/ui/pixel-art-ui-catalog.md
-/// § Editorial-monocle palette.
+/// issue #2859 S1/S4/S5/S7/S8/S9/S10/S11/S12/S13 (`CtGradients`, `CtSlider`,
+/// `CtDialogShell`,
+/// `CtBrassDivider`, `CtToggleSwitch`, `CtSectionLabel`, `CtResourceCell`,
+/// `CtProgressBar`, `CtBackButton`, `CtTopBar`, `CtScreenShell`) and issue
+/// #2860 S1/S2/S4 (`CtCompassRose`, `CtMainMenuCollage`,
+/// `CtFleurDeLisOrnament`). SPEC/ui/pixel-art-ui-catalog.md § Editorial-monocle
+/// palette.
 List<WidgetbookNode> get ctDarkThemePrimitiveDirectories => [
   WidgetbookFolder(
     name: 'Ct- Dark Theme Primitives',
@@ -307,6 +309,14 @@ List<WidgetbookNode> get ctDarkThemePrimitiveDirectories => [
       WidgetbookUseCase(
         name: 'CtGradients — token swatches',
         builder: (context) => _CtGradientsStory(),
+      ),
+      WidgetbookUseCase(
+        name: 'CtDialogShell — dark frame',
+        builder: (context) => _CtDialogShellStory(),
+      ),
+      WidgetbookUseCase(
+        name: 'CtSlider — value sweep',
+        builder: (context) => const _CtSliderStory(),
       ),
       WidgetbookUseCase(
         name: 'CtBrassDivider — wide and narrow',
@@ -335,6 +345,10 @@ List<WidgetbookNode> get ctDarkThemePrimitiveDirectories => [
       WidgetbookUseCase(
         name: 'CtTopBar — slot composition',
         builder: (context) => const _CtTopBarStory(),
+      ),
+      WidgetbookUseCase(
+        name: 'CtScreenShell — with and without back button',
+        builder: (context) => const _CtScreenShellStory(),
       ),
       WidgetbookUseCase(
         name: 'CtCompassRose — size sweep',
@@ -369,6 +383,58 @@ class _CtDarkPrimitiveScaffold extends StatelessWidget {
   }
 }
 
+class _CtDialogShellStory extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Theme(
+      data: AppThemes.editorialMonocle,
+      child: Material(
+        color: AppThemes.editorialMonocle.scaffoldBackgroundColor,
+        child: Stack(
+          children: const [
+            Positioned.fill(child: _CtDialogShellBackdrop()),
+            Center(
+              child: CtDialogShell(
+                maxWidth: 360,
+                maxHeight: 280,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      // ignore: avoid_hardcoded_strings_in_widgets
+                      'Dialog shell preview',
+                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+                    ),
+                    SizedBox(height: 8),
+                    Text(
+                      // ignore: avoid_hardcoded_strings_in_widgets
+                      'Frame shows the 2px --accent-dim border and panelGradient background per Refs #2859 R3 / S4.',
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _CtDialogShellBackdrop extends StatelessWidget {
+  const _CtDialogShellBackdrop();
+
+  @override
+  Widget build(BuildContext context) {
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: AppThemes.editorialMonocle.scaffoldBackgroundColor,
+      ),
+    );
+  }
+}
+
 class _CtGradientsStory extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
@@ -392,6 +458,57 @@ class _CtGradientsStory extends StatelessWidget {
             ),
             const SizedBox(height: 16),
           ],
+        ],
+      ),
+    );
+  }
+}
+
+class _CtSliderStory extends StatefulWidget {
+  const _CtSliderStory();
+
+  @override
+  State<_CtSliderStory> createState() => _CtSliderStoryState();
+}
+
+class _CtSliderStoryState extends State<_CtSliderStory> {
+  double _value = 0.4;
+
+  @override
+  Widget build(BuildContext context) {
+    return _CtDarkPrimitiveScaffold(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            // ignore: avoid_hardcoded_strings_in_widgets
+            'Value ${_value.toStringAsFixed(2)}',
+            style: const TextStyle(color: Colors.white70),
+          ),
+          const SizedBox(height: 8),
+          CtSlider(
+            value: _value,
+            min: 0,
+            max: 1,
+            divisions: 10,
+            onChanged: (v) => setState(() => _value = v),
+          ),
+          const SizedBox(height: 24),
+          const Text(
+            // ignore: avoid_hardcoded_strings_in_widgets
+            'Comfort headroom active',
+            style: TextStyle(color: Colors.white70),
+          ),
+          const SizedBox(height: 8),
+          CtSlider(
+            value: 0.3,
+            min: 0,
+            max: 1,
+            divisions: 10,
+            comfortHeadroomActive: true,
+            onChanged: (_) {},
+          ),
         ],
       ),
     );
@@ -733,6 +850,66 @@ class _CtTopBarStory extends StatelessWidget {
             backButtonEnabled: false,
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// Showcases [CtScreenShell] in both its default (no back button) and
+/// `showBackButton: true` modes so reviewers can confirm the 36 px
+/// [CtTopBar] chrome + framed body composition under the
+/// `editorialMonocle` theme (Refs #2859 R4 / S5). The host inflates the
+/// shells inside a `MaterialApp` so [Navigator.maybePop] is valid when the
+/// chevron is tapped.
+class _CtScreenShellStory extends StatelessWidget {
+  const _CtScreenShellStory();
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      debugShowCheckedModeBanner: false,
+      theme: AppThemes.editorialMonocle,
+      home: Scaffold(
+        backgroundColor: AppThemes.editorialMonocle.scaffoldBackgroundColor,
+        body: Row(
+          children: <Widget>[
+            Expanded(
+              child: CtScreenShell(
+                // ignore: avoid_hardcoded_strings_in_widgets
+                title: 'Default (no back button)',
+                child: const Center(
+                  child: Padding(
+                    padding: EdgeInsets.all(16),
+                    child: Text(
+                      // ignore: avoid_hardcoded_strings_in_widgets
+                      'CtTopBar omits the leading CtBackButton when '
+                      'showBackButton is false.',
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            Expanded(
+              child: CtScreenShell(
+                // ignore: avoid_hardcoded_strings_in_widgets
+                title: 'With back button',
+                showBackButton: true,
+                child: const Center(
+                  child: Padding(
+                    padding: EdgeInsets.all(16),
+                    child: Text(
+                      // ignore: avoid_hardcoded_strings_in_widgets
+                      'CtTopBar renders the leading CtBackButton chevron '
+                      'and wires it through to Navigator.maybePop().',
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

@@ -26,6 +26,7 @@ class CtTopBar extends StatelessWidget {
     this.backButtonEnabled = true,
     this.backButtonSemanticLabel,
     this.trailing,
+    this.showBackButton = true,
   });
 
   /// Required title text rendered using the dark-theme `titleMedium` slot
@@ -59,6 +60,13 @@ class CtTopBar extends StatelessWidget {
   /// Optional trailing slot rendered after the title (e.g. action button
   /// or right-aligned status icon).
   final Widget? trailing;
+
+  /// When `false`, the leading [CtBackButton] (and the optional
+  /// [backButtonLabel] text) is omitted entirely; the title plus optional
+  /// icon and trailing slot still render. Used by container chrome that
+  /// embeds [CtTopBar] but needs to control the back affordance separately
+  /// (for example top-level shell routes that have no parent to pop to).
+  final bool showBackButton;
 
   /// Fixed bar height (R11 / R4 — `36 px top bar`).
   static const double height = 36;
@@ -115,19 +123,22 @@ class CtTopBar extends StatelessWidget {
   }
 
   List<Widget> _buildRowChildren(BuildContext context) {
-    final List<Widget> children = <Widget>[_buildBackButton()];
-    if (backButtonLabel != null) {
+    final List<Widget> children = <Widget>[];
+    if (showBackButton) {
+      children.add(_buildBackButton());
+      if (backButtonLabel != null) {
+        children.add(const SizedBox(width: leadingGap));
+        children.add(
+          Text(
+            backButtonLabel!,
+            style: _backLabelStyle(context),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+        );
+      }
       children.add(const SizedBox(width: leadingGap));
-      children.add(
-        Text(
-          backButtonLabel!,
-          style: _backLabelStyle(context),
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-        ),
-      );
     }
-    children.add(const SizedBox(width: leadingGap));
     if (icon != null) {
       children.add(icon!);
       children.add(const SizedBox(width: iconGap));
