@@ -543,6 +543,222 @@ void main() {
     });
   });
 
+  group('diplomacyFilterShowsKind', () {
+    test('mode `all` shows every faction kind', () {
+      for (final kind in FactionKind.values) {
+        expect(
+          diplomacyFilterShowsKind(DiplomacyFilterMode.all, kind),
+          isTrue,
+          reason: 'DiplomacyFilterMode.all must accept $kind',
+        );
+      }
+    });
+
+    test('mode `greatPowersOnly` shows only Great Power rows', () {
+      expect(
+        diplomacyFilterShowsKind(
+          DiplomacyFilterMode.greatPowersOnly,
+          FactionKind.greatPower,
+        ),
+        isTrue,
+      );
+      expect(
+        diplomacyFilterShowsKind(
+          DiplomacyFilterMode.greatPowersOnly,
+          FactionKind.minor,
+        ),
+        isFalse,
+      );
+      expect(
+        diplomacyFilterShowsKind(
+          DiplomacyFilterMode.greatPowersOnly,
+          FactionKind.tribe,
+        ),
+        isFalse,
+      );
+    });
+
+    test(
+      'mode `minorsOnly` shows Minor Nations and Tribes but not Great Powers',
+      () {
+        expect(
+          diplomacyFilterShowsKind(
+            DiplomacyFilterMode.minorsOnly,
+            FactionKind.minor,
+          ),
+          isTrue,
+        );
+        expect(
+          diplomacyFilterShowsKind(
+            DiplomacyFilterMode.minorsOnly,
+            FactionKind.tribe,
+          ),
+          isTrue,
+        );
+        expect(
+          diplomacyFilterShowsKind(
+            DiplomacyFilterMode.minorsOnly,
+            FactionKind.greatPower,
+          ),
+          isFalse,
+        );
+      },
+    );
+  });
+
+  group('DiplomacyPanel mode bar', () {
+    testWidgets(
+      'AC: default state — All button active (--accent), others inactive (--muted)',
+      (WidgetTester tester) async {
+        await _bindTallTestSurface(tester);
+        await tester.pumpWidget(
+          buildPanel(
+            game: gameWithFactions,
+            humanPlayerId: humanPlayerId,
+            topology: topology,
+          ),
+        );
+        await _pumpPanelBuilt(tester);
+
+        final allButton = tester.widget<Text>(find.text('All'));
+        expect(
+          allButton.style?.color,
+          EditorialMonoclePalette.accent,
+          reason: 'Default "All" filter must render in --accent.',
+        );
+
+        final gpOnlyButton = tester.widget<Text>(find.text('Great Powers only'));
+        expect(
+          gpOnlyButton.style?.color,
+          EditorialMonoclePalette.muted,
+          reason: 'Inactive "Great Powers only" filter must render in --muted.',
+        );
+
+        final minorsOnlyButton = tester.widget<Text>(find.text('Minors only'));
+        expect(
+          minorsOnlyButton.style?.color,
+          EditorialMonoclePalette.muted,
+          reason: 'Inactive "Minors only" filter must render in --muted.',
+        );
+      },
+    );
+
+    testWidgets(
+      'AC: tapping "Great Powers only" hides Minor Nation and Tribe rows',
+      (WidgetTester tester) async {
+        await _bindTallTestSurface(tester);
+        await tester.pumpWidget(
+          buildPanel(
+            game: gameWithFactions,
+            humanPlayerId: humanPlayerId,
+            topology: topology,
+          ),
+        );
+        await _pumpPanelBuilt(tester);
+
+        // Sanity: default "All" view includes the Great Powers heading.
+        expect(find.text('Great Powers'), findsOneWidget);
+
+        await tester.tap(find.text('Great Powers only'));
+        await _pumpPanelBuilt(tester);
+
+        expect(
+          find.text('Great Powers'),
+          findsOneWidget,
+          reason: 'Great Powers heading must remain after filter switch.',
+        );
+        expect(
+          find.text('Minor Nations'),
+          findsNothing,
+          reason: 'Minor Nations section must be hidden when GP-only is active.',
+        );
+        expect(
+          find.text('Tribes'),
+          findsNothing,
+          reason: 'Tribes section must be hidden when GP-only is active.',
+        );
+
+        final activeLabel = tester.widget<Text>(
+          find.text('Great Powers only'),
+        );
+        expect(
+          activeLabel.style?.color,
+          EditorialMonoclePalette.accent,
+          reason: 'Selected mode-bar button label must use --accent.',
+        );
+      },
+    );
+
+    testWidgets(
+      'AC: tapping "Minors only" hides Great Power rows but keeps Minors and Tribes',
+      (WidgetTester tester) async {
+        await _bindTallTestSurface(tester);
+        await tester.pumpWidget(
+          buildPanel(
+            game: gameWithFactions,
+            humanPlayerId: humanPlayerId,
+            topology: topology,
+          ),
+        );
+        await _pumpPanelBuilt(tester);
+
+        // Sanity: GP section starts visible.
+        expect(find.text('Great Powers'), findsOneWidget);
+
+        await tester.tap(find.text('Minors only'));
+        await _pumpPanelBuilt(tester);
+
+        expect(
+          find.text('Great Powers'),
+          findsNothing,
+          reason: 'Great Powers section must be hidden when Minors-only is active.',
+        );
+        // Both Minor and Tribe sections may or may not appear depending on
+        // discovered factions in the debug-init game; assert that whichever
+        // are present render at least once and the GP section is gone.
+        final rows = buildDiplomacyRows(
+          gameWithFactions,
+          topology,
+          humanPlayerId,
+          const Orders(),
+        );
+        final hasMinors = rows.any((r) => r.kind == FactionKind.minor);
+        final hasTribes = rows.any((r) => r.kind == FactionKind.tribe);
+        if (hasMinors) {
+          expect(find.text('Minor Nations'), findsOneWidget);
+        }
+        if (hasTribes) {
+          expect(find.text('Tribes'), findsOneWidget);
+        }
+
+        final activeLabel = tester.widget<Text>(find.text('Minors only'));
+        expect(
+          activeLabel.style?.color,
+          EditorialMonoclePalette.accent,
+          reason: 'Selected mode-bar button label must use --accent.',
+        );
+      },
+    );
+
+    testWidgets('AC: mode bar renders all three filter labels', (
+      WidgetTester tester,
+    ) async {
+      await _bindTallTestSurface(tester);
+      await tester.pumpWidget(
+        buildPanel(
+          game: gameWithFactions,
+          humanPlayerId: humanPlayerId,
+          topology: topology,
+        ),
+      );
+      await _pumpPanelBuilt(tester);
+
+      expect(find.text('All'), findsOneWidget);
+      expect(find.text('Great Powers only'), findsOneWidget);
+      expect(find.text('Minors only'), findsOneWidget);
+    });
+  });
+
   group('DiplomacyPanel GP power-comparison rendering', () {
     testWidgets('AC: GP +10% renders in --danger color', (
       WidgetTester tester,

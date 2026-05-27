@@ -60,6 +60,28 @@ void _appendDiscoveredFactionId(
 /// Faction type for display. SPEC/game/factions.md.
 enum FactionKind { greatPower, minor, tribe }
 
+/// Diplomacy panel bottom mode-bar filter selection, per
+/// `SPEC/ui/diplomacy-panel.md` § Mode bar (filter).
+///
+/// - [all] shows Great Powers, Minor Nations, and Tribes (default).
+/// - [greatPowersOnly] hides Minor Nations and Tribes.
+/// - [minorsOnly] hides Great Powers; both Minor Nations and Tribes remain
+///   visible (the word "Minors" is shorthand for "non-Great-Power factions").
+enum DiplomacyFilterMode { all, greatPowersOnly, minorsOnly }
+
+/// Returns `true` when [kind] is visible under the given mode-bar [mode],
+/// per `SPEC/ui/diplomacy-panel.md` § Mode bar (filter).
+bool diplomacyFilterShowsKind(DiplomacyFilterMode mode, FactionKind kind) {
+  switch (mode) {
+    case DiplomacyFilterMode.all:
+      return true;
+    case DiplomacyFilterMode.greatPowersOnly:
+      return kind == FactionKind.greatPower;
+    case DiplomacyFilterMode.minorsOnly:
+      return kind == FactionKind.minor || kind == FactionKind.tribe;
+  }
+}
+
 /// One row of data for the diplomacy list.
 class DiplomacyRowData {
   const DiplomacyRowData({
