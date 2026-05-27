@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:colonizethis_app/config/app_display_strings.dart';
+import 'package:colonizethis_app/config/editorial_monocle_palette.dart';
 import 'package:colonizethis_app/config/themes.dart';
 import 'package:colonizethis_app/widgets/ct_dropdown.dart';
 import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
@@ -559,7 +560,13 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      await tester.tap(find.text('Back'));
+      // Dark editorial-monocle header chrome (Refs #2868 S1) makes the
+      // pixelArt setup taller than the 800x600 test viewport; scroll the
+      // Back button into the visible region before tapping.
+      final backFinder = find.text('Back');
+      await tester.ensureVisible(backFinder);
+      await tester.pumpAndSettle();
+      await tester.tap(backFinder);
       await tester.pumpAndSettle();
       expect(backCalled, isTrue);
     });
@@ -649,5 +656,90 @@ void main() {
       }
       await tester.pumpAndSettle();
     });
+
+    // Refs #2868 S1 — dark editorial-monocle header chrome (pixelArt variant).
+    testWidgets(
+      'AC Header (pixelArt): eyebrow, title, intro, brass divider visible',
+      (WidgetTester tester) async {
+        await tester.pumpWidget(
+          buildGameSetup(variant: GameSetupVariant.pixelArt),
+        );
+        await tester.pumpAndSettle();
+
+        expect(
+          find.byKey(const ValueKey<String>('gameSetupEyebrow')),
+          findsOneWidget,
+        );
+        expect(find.text('NEW CAMPAIGN'), findsOneWidget);
+        expect(
+          find.byKey(const ValueKey<String>('gameSetupTitlePixelArt')),
+          findsOneWidget,
+        );
+        expect(
+          find.byKey(const ValueKey<String>('gameSetupIntro')),
+          findsOneWidget,
+        );
+        expect(
+          find.text('Choose six great powers and a leader variant for each.'),
+          findsOneWidget,
+        );
+        expect(
+          find.byKey(const ValueKey<String>('gameSetupBrassDivider')),
+          findsOneWidget,
+        );
+      },
+    );
+
+    testWidgets('AC Header (pixelArt): title uses accent colour + glow shadow', (
+      WidgetTester tester,
+    ) async {
+      await tester.pumpWidget(
+        buildGameSetup(variant: GameSetupVariant.pixelArt),
+      );
+      await tester.pumpAndSettle();
+
+      final titleFinder = find.byKey(
+        const ValueKey<String>('gameSetupTitlePixelArt'),
+      );
+      expect(titleFinder, findsOneWidget);
+      final TextStyle? titleStyle = tester.widget<Text>(titleFinder).style;
+      expect(titleStyle, isNotNull);
+      expect(titleStyle!.color, EditorialMonoclePalette.accent);
+      expect(titleStyle.shadows, isNotNull);
+      expect(titleStyle.shadows!.length, 1);
+      expect(
+        titleStyle.shadows!.first.color.toARGB32() & 0x00FFFFFF,
+        EditorialMonoclePalette.accentBright.toARGB32() & 0x00FFFFFF,
+      );
+    });
+
+    testWidgets(
+      'AC Header (plain): eyebrow, intro, brass divider are not rendered',
+      (WidgetTester tester) async {
+        await tester.pumpWidget(buildGameSetup());
+        await tester.pumpAndSettle();
+
+        expect(
+          find.byKey(const ValueKey<String>('gameSetupEyebrow')),
+          findsNothing,
+        );
+        expect(
+          find.byKey(const ValueKey<String>('gameSetupIntro')),
+          findsNothing,
+        );
+        expect(
+          find.byKey(const ValueKey<String>('gameSetupBrassDivider')),
+          findsNothing,
+        );
+        expect(
+          find.byKey(const ValueKey<String>('gameSetupTitlePixelArt')),
+          findsNothing,
+        );
+        expect(
+          find.byKey(const ValueKey<String>('gameSetupTitlePlain')),
+          findsOneWidget,
+        );
+      },
+    );
   });
 }

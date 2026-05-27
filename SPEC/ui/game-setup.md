@@ -43,6 +43,11 @@ Visibility and slot labels:
 - Given the Game Setup screen is mounted with six player slots, when the slot labels render, then slots 1–5 display localized AI labels of the form "Player 2 (AI)", "Player 3 (AI)", "Player 4 (AI)", "Player 5 (AI)", and "Player 6 (AI)" in that order.
 - Given any player-slot row in Game Setup, when its dropdowns and surrounding controls render, then the UI layer uses `CtDropdown` for the nation and leader pickers and `CtNinePatchButton` for action controls, and the screen mounts no Material `DropdownButton`, `DropdownMenu`, `ElevatedButton`, or `TextButton` widgets.
 
+Header chrome (dark editorial-monocle, `pixelArt` variant):
+
+- Given the screen mounts in the `pixelArt` variant, when the header region renders, then the UI layer paints, in order from top to bottom, the eyebrow text resolved from `gameSetup_eyebrow` (uppercased, 0.22em letter-spacing, colour resolved from `EditorialMonoclePalette.muted`), the title text resolved from `gameSetup_title` (display font from `Theme.of(context).textTheme.headlineMedium`, colour resolved from `EditorialMonoclePalette.accent`, with a single shadow whose colour resolves from `EditorialMonoclePalette.accentBright`), the intro text resolved from `gameSetup_intro` (italic, colour resolved from `EditorialMonoclePalette.muted`), and a `CtBrassDivider` instance.
+- Given the screen mounts in the `plain` variant, when the header region renders, then the UI layer renders the title text resolved from `gameSetup_title` (theme `headlineSmall` style with no accent override and no glow shadow) and mounts no `CtBrassDivider`, no eyebrow text, and no intro text.
+
 Initial unselected state:
 
 - Given the widget is constructed with `initialOrderedGpIds` equal to six empty strings and `initialLeaderVariantByGpId` empty, when the screen renders, then each slot's nation dropdown shows the localized placeholder "Select nation" with no nation pre-selected.
@@ -128,26 +133,40 @@ Loading state:
 
 Positions, layout, and hierarchy (per UXD 03b; 44 dp min touch targets).
 
-**Default:**
+**Default (dark editorial-monocle, `pixelArt` variant):**
 
 ```text
-+------------------------------------------------------+
-|                  Game Setup                          |
-|                                                      |
++--------------------------------------------------------+
+|  NEW CAMPAIGN                                          |   ← eyebrow_region
+|  Game Setup                                            |   ← title_region (accent + glow)
+|  Choose six great powers and a leader variant for each.|   ← intro_region (italic, muted)
+|  ─────────────◆─────────────                          |   ← divider_region (CtBrassDivider)
+|                                                        |
 |  Player 1 (You)    [ Select nation ▼ ] [ Select leader ▼ ] |
 |  Player 2 (AI)     [ Select nation ▼ ] [ Select leader ▼ ] |
-|  ... (all six slots initially unselected)            |
-|                                                      |
-|  [ Start Game ]  (disabled until all slots complete)  |
-|  [ Back ]                                            |
-+------------------------------------------------------+
+|  ... (all six slots initially unselected)              |
+|                                                        |
+|  [ Start Game ]  (disabled until all slots complete)   |
+|  [ Back ]                                              |
++--------------------------------------------------------+
 ```
+
+The header chrome (eyebrow + title + intro + divider) is the dark editorial-monocle redesign per `pixel-art-ui-catalog.md` § Editorial-monocle palette. The eyebrow renders the localized `gameSetup_eyebrow` string in uppercase, **muted** color, and 0.22em letter-spacing. The title renders the localized `gameSetup_title` using the catalog display font (Cinzel via `Theme.of(context).textTheme.headlineMedium`) painted in `EditorialMonoclePalette.accent` with a subtle text-shadow glow that resolves from `EditorialMonoclePalette.accentBright` (no hard-coded hex). The intro renders the localized `gameSetup_intro` in italic, **muted** color. The `CtBrassDivider` from `Refs #2859` separates the header from the slot rows.
 
 When the user has selected a nation and leader for every slot, Start Game becomes enabled. Nation dropdown for a slot lists "Select nation" (empty) plus GPs not selected in other slots. Leader dropdown lists "Select leader" (empty) until a nation is chosen, then that nation’s variants. When nation changes, leader resets to that nation’s default.
 
 **Loading:** Same layout; Start Game disabled; a visible loading indicator ("Starting…" label and/or spinner) is required; Back enabled.
 
-**Regions (UXD 07–style):** canvas full-screen; title_region ("Game Setup"); slots_region (scrollable: six rows, each with slot label, nation dropdown, leader dropdown); buttons_region (Start Game, Back); loading_region is present in `loading` state.
+**Regions (UXD 07–style):** canvas full-screen; `eyebrow_region` ("NEW CAMPAIGN"), `title_region` ("Game Setup"), `intro_region` (one-line intro), `divider_region` (`CtBrassDivider`), `slots_region` (scrollable: six rows, each with slot label, nation dropdown, leader dropdown), `buttons_region` (Start Game, Back); `loading_region` is present in `loading` state.
+
+**Variant rendering (header chrome).** The dark editorial-monocle header chrome is tied to the `pixelArt` variant (catalog-aligned). The `plain` variant remains a theme-only fallback for Widgetbook/debug (no eyebrow, no glow, no brass divider) per the table below; the existing widget contract (callbacks, `state`, `naming`, slot list) is unchanged for both variants.
+
+| Element | `plain` variant | `pixelArt` variant |
+|---------|-----------------|--------------------|
+| Eyebrow ("NEW CAMPAIGN") | Hidden | Visible: uppercase, muted, 0.22em letter-spacing |
+| Title ("Game Setup") | `Theme.of(context).textTheme.headlineSmall` (theme default colour, no glow) | Display font + `EditorialMonoclePalette.accent` colour + subtle glow shadow from `EditorialMonoclePalette.accentBright` |
+| Intro text | Hidden | Visible: italic, muted |
+| Brass divider | Hidden | `CtBrassDivider` between header and slot rows |
 
 **Layout (pixel-art variant):** Content column constrained to **max width 400 dp**; Start/Back use main menu button asset. Content centered. Slots may scroll on small screens.
 

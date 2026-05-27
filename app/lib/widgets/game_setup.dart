@@ -2,8 +2,10 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:flutter/material.dart';
 
 import '../config/constants.dart';
+import '../config/editorial_monocle_palette.dart';
 import '../config/ui_screen_ids.dart';
 import '../l10n/l10n.dart';
+import 'ct_brass_divider.dart';
 import 'ct_dropdown.dart';
 import 'ct_loading_indicator.dart';
 import 'ct_nine_patch_button.dart';
@@ -134,10 +136,7 @@ class _CtGameSetupState extends State<CtGameSetup> {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     const SizedBox(height: 24),
-                    Text(
-                      l10n.gameSetup_title,
-                      style: Theme.of(context).textTheme.headlineSmall,
-                    ),
+                    _GameSetupHeader(variant: widget.variant),
                     const SizedBox(height: 24),
                     _buildSlots(context, narrow: narrow),
                     const SizedBox(height: 24),
@@ -381,6 +380,116 @@ class _GameSetupMenuButton extends StatelessWidget {
         enabled: enabled && onPressed != null,
         child: Text(label),
       ),
+    );
+  }
+}
+
+/// Dark editorial-monocle header chrome for Game Setup (Refs #2868 S1).
+///
+/// Renders, in pixelArt variant, the eyebrow ("NEW CAMPAIGN"), title
+/// ("Game Setup") with accent colour + glow shadow, italic muted intro
+/// line, and a [CtBrassDivider]. In plain variant, only the existing
+/// theme-styled title renders; the eyebrow, intro and brass divider are
+/// omitted per `SPEC/ui/game-setup.md` § Layout / wireframe (Variant
+/// rendering — header chrome).
+class _GameSetupHeader extends StatelessWidget {
+  const _GameSetupHeader({required this.variant});
+
+  final GameSetupVariant variant;
+
+  /// Letter-spacing used by the eyebrow text per SPEC (0.22em).
+  static const double _eyebrowLetterSpacingEm = 0.22;
+
+  /// Vertical gap between the eyebrow and the title.
+  static const double _eyebrowToTitleGap = 4;
+
+  /// Vertical gap between the title and the intro line.
+  static const double _titleToIntroGap = 8;
+
+  /// Vertical gap between the intro line and the brass divider.
+  static const double _introToDividerGap = 12;
+
+  /// Title shadow offset; soft single-shadow glow drawn directly under
+  /// the glyph (no offset) so it reads as a halo on the dark background.
+  static const Offset _titleGlowOffset = Offset.zero;
+
+  /// Title shadow blur radius; per `SPEC/ui/pixel-art-ui-catalog.md`
+  /// § Editorial-monocle palette the glow is soft and short-range so the
+  /// title still reads sharply against the scaffold background.
+  static const double _titleGlowBlur = 6;
+
+  /// Glow shadow alpha. Tuned conservatively so the accent-bright halo
+  /// sits behind the title text without washing the surrounding chrome.
+  static const double _titleGlowAlpha = 0.45;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = appL10n(context);
+    final ThemeData theme = Theme.of(context);
+    final bool pixelArt = variant == GameSetupVariant.pixelArt;
+
+    if (!pixelArt) {
+      return Text(
+        l10n.gameSetup_title,
+        key: const ValueKey<String>('gameSetupTitlePlain'),
+        style: theme.textTheme.headlineSmall,
+      );
+    }
+
+    final TextStyle titleStyle =
+        (theme.textTheme.headlineMedium ?? const TextStyle()).copyWith(
+          color: EditorialMonoclePalette.accent,
+          shadows: <Shadow>[
+            Shadow(
+              color: EditorialMonoclePalette.accentBright.withValues(
+                alpha: _titleGlowAlpha,
+              ),
+              offset: _titleGlowOffset,
+              blurRadius: _titleGlowBlur,
+            ),
+          ],
+        );
+
+    final TextStyle? eyebrowBase = theme.textTheme.labelSmall;
+    final double eyebrowFontSize = eyebrowBase?.fontSize ?? 11;
+    final TextStyle eyebrowStyle = (eyebrowBase ?? const TextStyle()).copyWith(
+      color: EditorialMonoclePalette.muted,
+      fontWeight: FontWeight.w500,
+      letterSpacing: eyebrowFontSize * _eyebrowLetterSpacingEm,
+    );
+
+    final TextStyle introStyle =
+        (theme.textTheme.bodyMedium ?? const TextStyle()).copyWith(
+          color: EditorialMonoclePalette.muted,
+          fontStyle: FontStyle.italic,
+        );
+
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: <Widget>[
+        Text(
+          l10n.gameSetup_eyebrow.toUpperCase(),
+          key: const ValueKey<String>('gameSetupEyebrow'),
+          style: eyebrowStyle,
+        ),
+        const SizedBox(height: _eyebrowToTitleGap),
+        Text(
+          l10n.gameSetup_title,
+          key: const ValueKey<String>('gameSetupTitlePixelArt'),
+          style: titleStyle,
+          textAlign: TextAlign.center,
+        ),
+        const SizedBox(height: _titleToIntroGap),
+        Text(
+          l10n.gameSetup_intro,
+          key: const ValueKey<String>('gameSetupIntro'),
+          style: introStyle,
+          textAlign: TextAlign.center,
+        ),
+        const SizedBox(height: _introToDividerGap),
+        const CtBrassDivider(key: ValueKey<String>('gameSetupBrassDivider')),
+      ],
     );
   }
 }
