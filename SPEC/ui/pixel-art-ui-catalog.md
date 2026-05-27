@@ -90,6 +90,26 @@ tokens is therefore raised to `L = 0.62` here; chroma and hue are preserved
 so the warm-red / cool-green perceptual identity is unchanged. All other
 tokens match the issue's Design proposal verbatim.
 
+### Dialog scrim
+
+Modal dialogs, full-screen overture / victory / call-to-arms / intervention
+overlays, and any surface that uses Flutter `showDialog` (or an equivalent
+full-screen `Stack` layer) on the running app theme MUST dim the underlying
+canvas with a single canonical scrim token derived from the `--bg-deep`
+hue family:
+
+| Token | OKLCH | sRGB (approx.) | Role |
+|-------|-------|----------------|------|
+| `--dialog-scrim` | `oklch(8% 0.01 30 / 0.70)` | `#070303` at 70% alpha | Universal modal scrim color (`barrierColor` for `showDialog`; container fill for full-screen overlay scrims) |
+
+The opaque base color (`oklch(8% 0.01 30)`) is darker than `--bg-deep` so
+the scrim reads as a near-black wash; the `0.70` alpha keeps the underlying
+map / shell readable underneath. The Dart implementation exposes this token
+as `EditorialMonoclePalette.dialogScrim` (`app/lib/config/editorial_monocle_palette.dart`).
+Widgets MUST resolve the scrim through that token (or, for `showDialog`
+calls, by passing `EditorialMonoclePalette.dialogScrim` as `barrierColor`)
+rather than hard-coding `Colors.black54` / hex literals.
+
 ### Font stacks
 
 | Role | Stack |

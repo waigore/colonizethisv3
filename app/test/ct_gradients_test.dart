@@ -41,6 +41,15 @@ void main() {
       expect(g.colors.last, EditorialMonoclePalette.surface);
     });
 
+    test('victoryPanelGradient flows surfaceLite → bgDeep top-to-bottom', () {
+      final LinearGradient g = CtGradients.victoryPanelGradient;
+      expect(g.begin, Alignment.topCenter);
+      expect(g.end, Alignment.bottomCenter);
+      expect(g.colors, hasLength(2));
+      expect(g.colors.first, EditorialMonoclePalette.surfaceLite);
+      expect(g.colors.last, EditorialMonoclePalette.bgDeep);
+    });
+
     test('no gradient color is a hard-coded literal off the palette', () {
       final Set<Color> palette = <Color>{
         EditorialMonoclePalette.bg,
@@ -53,6 +62,7 @@ void main() {
         CtGradients.panelGradient,
         CtGradients.rowGradient,
         CtGradients.topBarGradient,
+        CtGradients.victoryPanelGradient,
       ];
       for (final LinearGradient g in all) {
         for (final Color c in g.colors) {

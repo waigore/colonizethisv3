@@ -11,8 +11,8 @@
 
 | Widget | Type | Parameters | Description |
 |--------|------|------------|-------------|
-| `VictoryOverlay` | `StatefulWidget` | `game` (`Game`), `victory` (`VictoryState`), `bus` (`AppEventBus`) | Full-screen semi-transparent scrim with centered `VictoryPanel`. Owns `_dismissed` so “View final state” hides the overlay without a route change. |
-| `VictoryPanel` | `StatelessWidget` | `game`, `victory`, `bus`, `onViewFinalState` (`VoidCallback?`, optional) | Presentational panel inside `CtPanel`; resolves winner display name and victory-type label. |
+| `VictoryOverlay` | `StatefulWidget` | `game` (`Game`), `victory` (`VictoryState`), `bus` (`AppEventBus`) | Full-screen `--dialog-scrim` wash with centered `VictoryPanel`. Owns `_dismissed` so "View final state" hides the overlay without a route change. |
+| `VictoryPanel` | `StatelessWidget` | `game`, `victory`, `bus`, `onViewFinalState` (`VoidCallback?`, optional) | Presentational brass-bordered panel (2px `--accent` border + asymmetric corner brackets + `surface-lite → bg-deep` vertical gradient). Resolves winner display name and victory-type label. |
 
 Implementation: `app/lib/features/game/flame/victory_overlay.dart`.
 
@@ -21,29 +21,37 @@ Implementation: `app/lib/features/game/flame/victory_overlay.dart`.
 ## Layout / wireframe
 
 ```text
-+----------------------------------------------------------+
-|  (full screen, Colors.black54 scrim)                     |
-|                                                          |
-|              +--------------------------------+          |
-|              | CtPanel (padding 24)           |          |
-|              |  <Victory type label>          |          |
-|              |    headlineSmall               |          |
-|              |                                |          |
-|              |  <Winner> wins on turn <N>.    |          |
-|              |    bodyLarge, centered         |          |
-|              |                                |          |
-|              |  [ Return to Main Menu ]       |          |
-|              |  [ View Final State ]          |          |
-|              |    Row, mainAxisSize: min      |          |
-|              +--------------------------------+          |
-|                                                          |
-+----------------------------------------------------------+
++--------------------------------------------------------------+
+|  (full screen, --dialog-scrim wash: oklch(8% 0.01 30 / 0.70)) |
+|                                                              |
+|     ┌─                                                       |
+|     |  +----------------------------------------+            |
+|     |  | top-left corner bracket (1.5px brass)  |            |
+|     |  |                                        |            |
+|     |  |   ☜  ☆  ☞    (laurel row, --accent)     |            |
+|     |  |    Military Victory                    |            |
+|     |  |       display, --accent, upper-case    |            |
+|     |  |  ─── CtBrassDivider ───                |            |
+|     |  |   <Winner> wins on turn <N>.           |            |
+|     |  |       display, --fg + --accent-bright  |            |
+|     |  |   [ Return to Main Menu ] (primary)    |            |
+|     |  |   [ View Final State ]    (secondary)  |            |
+|     |  |               bottom-right corner bracket |          |
+|     |  +----------------------------------------+            |
+|     └─                                                       |
+|         2px solid --accent border, panelGradient (surface-lite -> bg-deep)|
+|                                                              |
++--------------------------------------------------------------+
 ```
 
-- Outer: `Positioned.fill` → `Container(color: Colors.black54)` → `Center` → outer `Padding(24)` → `VictoryPanel`.
-- Title: `appL10n(context).victory_military` when `victory.type == VictoryType.military` (only variant implemented).
-- Body: `appL10n(context).victory_winnerOnTurn(winner.displayName, victory.turnNumber)`.
-- Buttons: two `CtNinePatchButton`s in a `Row` with 12 dp spacing — “Return to Main Menu” (left), “View Final State” (right).
+- Outer: `Positioned.fill` → `Container(color: EditorialMonoclePalette.dialogScrim)` → `Center` → outer `Padding(24)` → `VictoryPanel`.
+- Scrim color resolves through `EditorialMonoclePalette.dialogScrim` (canonical `--dialog-scrim` token; see [pixel-art-ui-catalog.md](pixel-art-ui-catalog.md) § Dialog scrim).
+- Panel container: 2px solid `--accent` border, `surface-lite → bg-deep` vertical gradient (`CtGradients.victoryPanelGradient`), inner padding `24` logical px, max-width `460`, intrinsic-min height. Two `--accent` asymmetric corner brackets — top-left (1.5px borders, ~20x24 box, 4px inset) and bottom-right (1.5px borders, ~20x24 box, 4px inset) at 0.7 alpha.
+- Laurel row: three Unicode glyphs in `--accent` at 0.6 alpha — `☜` `☆` `☞` (or visually equivalent decorative cluster) rendered with the display font.
+- Title: `appL10n(context).victory_military` when `victory.type == VictoryType.military` (only variant implemented). Display font (Cinzel slot — `headlineSmall`), color `--accent`, letter-spacing 0.06em, upper-cased.
+- Brass divider: `CtBrassDivider` between title and body.
+- Body: `appL10n(context).victory_winnerOnTurn(winner.displayName, victory.turnNumber)`. Display font, color `--fg`. Winner name highlighted in `--accent-bright` is reserved for a future enhancement (the localized line is rendered as a single span until the winner-substring helper lands).
+- Buttons: two `CtNinePatchButton`s in a `Row` with 12 logical-px spacing — "Return to Main Menu" (primary, default styling), "View Final State" (secondary; rendered with the muted/secondary text variant — label color `--muted`).
 - No Material buttons.
 
 Winner resolution: `game.playerById(victory.winnerPlayerId) ?? game.players.first`.
@@ -90,8 +98,10 @@ Calendar campaign halt (`Game.calendarCampaignHalted == true` with `Game.victory
 
 ## Components
 
-- `CtPanel` (`app/lib/widgets/ct_panel.dart`).
+- `CtBrassDivider` (`app/lib/widgets/ct_brass_divider.dart`).
+- `CtGradients.victoryPanelGradient` (`app/lib/widgets/ct_gradients.dart`).
 - `CtNinePatchButton` (`app/lib/widgets/ct_nine_patch_button.dart`).
+- `EditorialMonoclePalette` (`app/lib/config/editorial_monocle_palette.dart`) — `accent`, `accentBright`, `fg`, `muted`, `dialogScrim`, `surfaceLite`, `bgDeep` tokens.
 - Localized strings: `victory_military`, `victory_winnerOnTurn`, `victory_returnToMainMenu`, `victory_viewFinalState` via `appL10n(context)`.
 
 ---
@@ -103,11 +113,11 @@ Calendar campaign halt (`Game.calendarCampaignHalted == true` with `Game.victory
   Then the UI layer renders `VictoryOverlay` above the game stack and shows the military victory label and a winner sentence containing turn `12`.
 
 - Given `VictoryOverlay` is visible,
-  When the user taps “View final state”,
+  When the user taps "View final state",
   Then the overlay is removed from the widget tree (`Military victory` text is no longer found) and `Game.victory` remains non-null.
 
 - Given `VictoryOverlay` is visible and an `AppEventBus` is wired,
-  When the user taps “Return to main menu”,
+  When the user taps "Return to main menu",
   Then the UI layer emits exactly one `NavigateToShellEvent` on that bus.
 
 - Given `Game.victory != null`,
@@ -121,6 +131,18 @@ Calendar campaign halt (`Game.calendarCampaignHalted == true` with `Game.victory
 - Given `VictoryPanel` is mounted in a test or Widgetbook harness,
   When the widget tree is built,
   Then there are zero Material `ElevatedButton`, `TextButton`, or `OutlinedButton` widgets and exactly two `CtNinePatchButton` instances.
+
+- Given `VictoryOverlay` is mounted,
+  When the underlying widget tree is built,
+  Then the scrim background color resolves to `EditorialMonoclePalette.dialogScrim` (the canonical `--dialog-scrim` token; no `Colors.black54` literal in the widget code).
+
+- Given `VictoryPanel` is mounted,
+  When the panel surface is built,
+  Then the surface paints `CtGradients.victoryPanelGradient` (`surface-lite → bg-deep` top-to-bottom) under a 2px solid `--accent` border, and renders both the top-left and bottom-right `--accent` corner brackets as decorative overlays.
+
+- Given `VictoryPanel` is mounted,
+  When the title row is built,
+  Then a `CtBrassDivider` instance is present in the widget tree between the victory-type label and the winner sentence.
 
 ---
 

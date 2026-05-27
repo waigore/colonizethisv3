@@ -65,4 +65,18 @@ class CtGradients {
       EditorialMonoclePalette.surface,
     ],
   );
+
+  /// Deeper vertical gradient used by ceremonial brass-bordered overlays
+  /// such as the `VictoryOverlay`'s panel (SPEC/ui/victory-overlay.md). Top
+  /// edge is the raised `--surface-lite` tone; bottom edge sinks to
+  /// `--bg-deep` to read as a heavier ceremonial card distinct from the
+  /// canonical [panelGradient].
+  static LinearGradient get victoryPanelGradient => LinearGradient(
+    begin: Alignment.topCenter,
+    end: Alignment.bottomCenter,
+    colors: <Color>[
+      EditorialMonoclePalette.surfaceLite,
+      EditorialMonoclePalette.bgDeep,
+    ],
+  );
 }
