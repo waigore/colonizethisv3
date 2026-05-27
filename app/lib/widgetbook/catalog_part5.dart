@@ -295,9 +295,10 @@ List<WidgetbookNode> get diplomacyDetailScreenDirectories => [
 ];
 
 /// Stories for the dark editorial-monocle theme primitives introduced by
-/// issue #2859 S1/S8/S10/S13: `CtGradients`, `CtBrassDivider`,
-/// `CtSectionLabel`, and `CtProgressBar`. SPEC/ui/pixel-art-ui-catalog.md
-/// § Editorial-monocle palette.
+/// issue #2859 S1/S8/S10/S13 (`CtGradients`, `CtBrassDivider`,
+/// `CtSectionLabel`, `CtProgressBar`) and issue #2860 S1/S2/S4
+/// (`CtCompassRose`, `CtMainMenuCollage`, `CtFleurDeLisOrnament`).
+/// SPEC/ui/pixel-art-ui-catalog.md § Editorial-monocle palette.
 List<WidgetbookNode> get ctDarkThemePrimitiveDirectories => [
   WidgetbookFolder(
     name: 'Ct- Dark Theme Primitives',
@@ -325,6 +326,10 @@ List<WidgetbookNode> get ctDarkThemePrimitiveDirectories => [
       WidgetbookUseCase(
         name: 'CtFleurDeLisOrnament — flanking pair',
         builder: (context) => _CtFleurDeLisOrnamentStory(),
+      ),
+      WidgetbookUseCase(
+        name: 'CtMainMenuCollage — full background',
+        builder: (context) => const _CtMainMenuCollageStory(),
       ),
     ],
   ),
@@ -489,6 +494,25 @@ class _CtProgressBarStory extends StatelessWidget {
           SizedBox(height: 4),
           CtProgressBar(value: 0.4, enabled: false, label: '40%'),
         ],
+      ),
+    );
+  }
+}
+
+/// Showcases the [CtMainMenuCollage] painter at full background scale
+/// (mirrors how `CtMainMenu` consumes it via `Positioned.fill`). The host
+/// uses the `editorialMonocle` scaffold color underneath so reviewers see
+/// the collage's `--accent` glyphs against the canonical `--bg` token.
+class _CtMainMenuCollageStory extends StatelessWidget {
+  const _CtMainMenuCollageStory();
+
+  @override
+  Widget build(BuildContext context) {
+    return Theme(
+      data: AppThemes.editorialMonocle,
+      child: Material(
+        color: AppThemes.editorialMonocle.scaffoldBackgroundColor,
+        child: const SizedBox.expand(child: CtMainMenuCollage()),
       ),
     );
   }
