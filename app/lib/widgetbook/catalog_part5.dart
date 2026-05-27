@@ -919,16 +919,9 @@ class _CtScreenShellStory extends StatelessWidget {
   }
 }
 
-/// Showcases [CtDropdown] under the dark editorial-monocle theme so
-/// reviewers can verify the R5d chevron rotation contract: opening the
-/// picker rotates the trigger chevron 180° (chevron-down → chevron-up)
-/// over [kCtDropdownChevronAnimationDuration] using `Curves.easeOut`,
-/// and closing the picker rotates it back. The story renders a single
-/// trigger backed by a small static option list; tapping the trigger
-/// opens the modal picker, tapping an option (or the scrim) closes it,
-/// and the chevron animation runs in both directions. See
-/// SPEC/ui/pixel-art-ui-catalog.md § Pixel-art component catalog
-/// (CtDropdown) and issue #2859 R5d / S6.
+/// Showcases [CtDropdown] R5d chevron rotation under the dark
+/// editorial-monocle theme. See SPEC/ui/pixel-art-ui-catalog.md
+/// § Pixel-art component catalog (CtDropdown) and issue #2859 R5d / S6.
 class _CtDropdownStory extends StatefulWidget {
   const _CtDropdownStory();
 
@@ -957,12 +950,8 @@ class _CtDropdownStoryState extends State<_CtDropdownStory> {
         children: [
           const Text(
             // ignore: avoid_hardcoded_strings_in_widgets
-            'Tap the trigger — chevron rotates 180° over 120ms (open),',
-            style: TextStyle(color: Colors.white70),
-          ),
-          const Text(
-            // ignore: avoid_hardcoded_strings_in_widgets
-            'and rotates back when the picker closes.',
+            'Tap the trigger — chevron rotates 180° over 120ms '
+            '(open), and rotates back when the picker closes.',
             style: TextStyle(color: Colors.white70),
           ),
           const SizedBox(height: 12),
