@@ -333,6 +333,14 @@ List<WidgetbookNode> get ctDarkThemePrimitiveDirectories => [
         name: 'CtProgressBar — value sweep',
         builder: (context) => _CtProgressBarStory(),
       ),
+      WidgetbookUseCase(
+        name: 'CtCompassRose — size sweep',
+        builder: (context) => _CtCompassRoseStory(),
+      ),
+      WidgetbookUseCase(
+        name: 'CtFleurDeLisOrnament — flanking pair',
+        builder: (context) => _CtFleurDeLisOrnamentStory(),
+      ),
     ],
   ),
 ];
@@ -419,6 +427,49 @@ class _CtSectionLabelStory extends StatelessWidget {
           ),
           SizedBox(height: 16),
           CtSectionLabel('Naval Units'),
+        ],
+      ),
+    );
+  }
+}
+
+class _CtCompassRoseStory extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return _CtDarkPrimitiveScaffold(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: const [
+          CtCompassRose(size: 32),
+          SizedBox(height: 16),
+          CtCompassRose(size: 48),
+          SizedBox(height: 16),
+          CtCompassRose(size: 72),
+        ],
+      ),
+    );
+  }
+}
+
+class _CtFleurDeLisOrnamentStory extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return _CtDarkPrimitiveScaffold(
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        mainAxisAlignment: MainAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: const [
+          CtFleurDeLisOrnament(),
+          SizedBox(width: 16),
+          // ignore: avoid_hardcoded_strings_in_widgets
+          Text(
+            'ColonizeThis',
+            style: TextStyle(fontSize: 28, fontWeight: FontWeight.w700),
+          ),
+          SizedBox(width: 16),
+          CtFleurDeLisOrnament(),
         ],
       ),
     );
