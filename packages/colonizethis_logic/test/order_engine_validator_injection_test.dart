@@ -10,7 +10,6 @@ import 'package:colonizethis_logic/src/orders/validators/naval_order_validator.d
 import 'package:colonizethis_logic/src/orders/validators/recruit_worker_order_validator.dart';
 import 'package:colonizethis_logic/src/orders/validators/work_order_validator.dart';
 import 'package:colonizethis_logic/src/diplomacy/diplomacy_resolver.dart';
-import 'package:colonizethis_logic/src/world/player_view.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'test_fixtures.dart';
@@ -52,9 +51,8 @@ void main() {
             Game game,
             Player player,
             String playerId,
-            PlayerView view,
+            OrderResolutionContext resolution,
             MapTopology topology,
-            Map<String, Unit> unitsById,
             List<DiplomaticOrder> diplomaticOrders,
             Map<String, TileMapResult>? tileMapByRegion,
             Set<String> civilianDraftMoveUnitIds,
@@ -68,11 +66,7 @@ void main() {
               game: game,
               player: player,
               playerId: playerId,
-              resolution: orderResolutionContextFromView(
-                view,
-                game,
-                unitsById: unitsById,
-              ),
+              resolution: resolution,
               devExclusiveTiles: devExclusiveTiles,
               tileMapByRegion: tileMapByRegion,
               civilianDraftMoveUnitIds: civilianDraftMoveUnitIds,
@@ -130,9 +124,8 @@ void main() {
               Game game,
               Player player,
               String playerId,
-              PlayerView view,
+              OrderResolutionContext resolution,
               MapTopology topology,
-              Map<String, Unit> unitsById,
               List<DiplomaticOrder> diplomaticOrders,
               Map<String, TileMapResult>? tileMapByRegion,
               Set<String> civilianDraftMoveUnitIds,
@@ -147,9 +140,8 @@ void main() {
                 game: game,
                 player: player,
                 playerId: playerId,
-                view: view,
+                resolution: resolution,
                 topology: topology,
-                unitsById: unitsById,
                 diplomaticOrders: diplomaticOrders,
                 tileMapByRegion: tileMapByRegion,
                 civilianDraftMoveUnitIds: civilianDraftMoveUnitIds,

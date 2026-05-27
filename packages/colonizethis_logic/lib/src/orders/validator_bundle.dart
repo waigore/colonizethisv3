@@ -3,7 +3,6 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../diplomacy/diplomacy_resolver.dart';
 import '../economy/economy_riches_to_treasury.dart';
-import '../world/player_view.dart';
 import 'order_resolution_context.dart';
 import 'order_validators.dart';
 
@@ -111,6 +110,13 @@ WorkOrderValidator createWorkOrderValidator({
 /// Factory for the default validator bundle used by [OrderEngine] and for
 /// economy projection inside incremental candidate validation.
 ///
+/// [resolution] threads the canonical [OrderResolutionContext] record
+/// (`view` + `unitsById` + `provinceById`) built once by the engine entry
+/// point so the bundle factory does not reconstruct `view` or rescan the
+/// world for unit / province indexes (Refs #2836 AC 3;
+/// SPEC/program/logic-validator-units-params.md). The work-validator
+/// branch forwards the record verbatim into [createWorkOrderValidator].
+///
 /// [workerPool] is the projected worker pool state after any previously
 /// accepted `RecruitWorkerOrder`s in the same validation pass (peasant
 /// reservation ledger, SPEC/game/workers-and-population.md § Peasant
@@ -120,9 +126,8 @@ OrderValidators createOrderValidators({
   required Game game,
   required Player player,
   required String playerId,
-  required PlayerView view,
+  required OrderResolutionContext resolution,
   required MapTopology topology,
-  required Map<String, Unit> unitsById,
   required List<DiplomaticOrder> diplomaticOrders,
   required Map<String, TileMapResult>? tileMapByRegion,
   required Set<String> civilianDraftMoveUnitIds,
@@ -159,11 +164,7 @@ OrderValidators createOrderValidators({
       game: game,
       player: player,
       playerId: playerId,
-      resolution: orderResolutionContextFromView(
-        view,
-        game,
-        unitsById: unitsById,
-      ),
+      resolution: resolution,
       topology: topology,
       diplomaticOrders: diplomaticOrders,
       tileMapByRegion: tileMapByRegion,
