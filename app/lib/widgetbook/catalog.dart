@@ -114,54 +114,91 @@ Widget mobileViewport(BuildContext context, Widget child) {
   );
 }
 
-/// Widgetbook app with colonial theme. SPEC/ui/main-menu.md; UXD 03a. SPEC/ui/game-setup.md; UXD 03b. Mobile viewport: SPEC/ui/mobile-adaptation.md.
+/// Widgetbook app: defaults to `AppThemes.editorialMonocle` (dark) per
+/// `SPEC/ui/pixel-art-ui-catalog.md` § Editorial-monocle palette; the
+/// MaterialThemeAddon below exposes a toolbar toggle between the
+/// editorial-monocle theme and the colonial / colonialPixelArt light
+/// fallbacks. SPEC/ui/main-menu.md; UXD 03a. SPEC/ui/game-setup.md; UXD 03b.
+/// Mobile viewport: SPEC/ui/mobile-adaptation.md.
 class CtWidgetbookApp extends StatelessWidget {
   const CtWidgetbookApp({super.key});
 
   @override
   Widget build(BuildContext context) {
     return Widgetbook.material(
-      directories: [
-        ...buttonDirectories,
-        ...transferListDirectories,
-        ...mainMenuDirectories,
-        ...gameSetupDirectories,
-        ...mapWidgetDirectories,
-        ...provinceOverlayDirectories,
-        ...productionPanelDirectories,
-        ...civilianUnitsPanelDirectories,
-        ...trainCiviliansDialogDirectories,
-        ...trainMilitaryDialogDirectories,
-        ...militaryUnitsPanelDirectories,
-        ...navalUnitsPanelDirectories,
-        ...diplomacyPanelDirectories,
-        ...techTreeDirectories,
-        ...interventionDialogueDirectories,
-        ...ctDialogueViewDirectories,
-        ...gameStartIntroOverlayDirectories,
-        ...overtureDialogueOverlayDirectories,
-        ...callToArmsDialogueOverlayDirectories,
-        ...turnNewsDialogDirectories,
-        ...victoryUiDirectories,
-        ...combatUiDirectories,
-        ...moveArmyDialogDirectories,
-        ...moveFleetDialogDirectories,
-        ...transferToHomeFleetDialogDirectories,
-        ...productionCommodityBreakdownDialogDirectories,
-        ...grantOrSubsidyDialogDirectories,
-        ...newGameLeaderSelectionDialogDirectories,
-        ...shellScreenDirectories,
-        ...gameScreenDirectories,
-        ...pauseMenuPanelDirectories,
-        ...gameSideMenuDirectories,
-        ...gameMapNarrowDetailOverlaySlotDirectories,
-        ...diplomacyDetailScreenDirectories,
-      ],
-      lightTheme: AppThemes.colonial,
-      darkTheme: AppThemes.colonial,
+      directories: _ctWidgetbookDirectories,
+      addons: _ctWidgetbookAddons,
+      lightTheme: AppThemes.editorialMonocle,
+      darkTheme: AppThemes.editorialMonocle,
     );
   }
 }
+
+/// Aggregate Widgetbook directories shown in the chrome — split out of
+/// `CtWidgetbookApp.build` to keep the build body under the
+/// `widget_build_method_too_long` budget (`SPEC/program/repo-lint.md`).
+List<WidgetbookNode> get _ctWidgetbookDirectories => [
+  ...buttonDirectories,
+  ...transferListDirectories,
+  ...mainMenuDirectories,
+  ...gameSetupDirectories,
+  ...mapWidgetDirectories,
+  ...provinceOverlayDirectories,
+  ...productionPanelDirectories,
+  ...civilianUnitsPanelDirectories,
+  ...trainCiviliansDialogDirectories,
+  ...trainMilitaryDialogDirectories,
+  ...militaryUnitsPanelDirectories,
+  ...navalUnitsPanelDirectories,
+  ...diplomacyPanelDirectories,
+  ...techTreeDirectories,
+  ...interventionDialogueDirectories,
+  ...ctDialogueViewDirectories,
+  ...gameStartIntroOverlayDirectories,
+  ...overtureDialogueOverlayDirectories,
+  ...callToArmsDialogueOverlayDirectories,
+  ...turnNewsDialogDirectories,
+  ...victoryUiDirectories,
+  ...combatUiDirectories,
+  ...moveArmyDialogDirectories,
+  ...moveFleetDialogDirectories,
+  ...transferToHomeFleetDialogDirectories,
+  ...productionCommodityBreakdownDialogDirectories,
+  ...grantOrSubsidyDialogDirectories,
+  ...newGameLeaderSelectionDialogDirectories,
+  ...shellScreenDirectories,
+  ...gameScreenDirectories,
+  ...pauseMenuPanelDirectories,
+  ...gameSideMenuDirectories,
+  ...gameMapNarrowDetailOverlaySlotDirectories,
+  ...diplomacyDetailScreenDirectories,
+];
+
+/// Toolbar addons for the Widgetbook chrome — exposes the editorial-monocle
+/// dark default with light-fallback toggles per
+/// `SPEC/ui/pixel-art-ui-catalog.md` § Editorial-monocle palette.
+List<WidgetbookAddon<dynamic>> get _ctWidgetbookAddons => [
+  MaterialThemeAddon(
+    themes: [
+      WidgetbookTheme(
+        name: 'Editorial Monocle (dark)',
+        data: AppThemes.editorialMonocle,
+      ),
+      WidgetbookTheme(
+        name: 'Colonial (light fallback)',
+        data: AppThemes.colonial,
+      ),
+      WidgetbookTheme(
+        name: 'Colonial Pixel Art (light fallback)',
+        data: AppThemes.colonialPixelArt,
+      ),
+    ],
+    initialTheme: WidgetbookTheme(
+      name: 'Editorial Monocle (dark)',
+      data: AppThemes.editorialMonocle,
+    ),
+  ),
+];
 
 /// Nine-patch button stories. SPEC/ui/buttons-nine-patch.md; catalog: CtNinePatchButton.
 List<WidgetbookNode> get buttonDirectories => [
@@ -171,7 +208,7 @@ List<WidgetbookNode> get buttonDirectories => [
       WidgetbookUseCase(
         name: 'CtNinePatchButton',
         builder: (context) => Theme(
-          data: AppThemes.colonial,
+          data: AppThemes.editorialMonocle,
           child: Padding(
             padding: const EdgeInsets.all(24),
             child: Column(
@@ -213,7 +250,7 @@ List<WidgetbookNode> get transferListDirectories => [
       WidgetbookUseCase(
         name: 'Default',
         builder: (context) => Theme(
-          data: AppThemes.colonial,
+          data: AppThemes.editorialMonocle,
           child: Padding(
             padding: const EdgeInsets.all(24),
             child: SizedBox(

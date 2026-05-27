@@ -77,7 +77,7 @@ List<WidgetbookNode> get techTreeDirectories => [
             players: [midGamePlayer, ...game.players.skip(1)],
           );
           return MaterialApp(
-            theme: AppThemes.colonial,
+            theme: AppThemes.editorialMonocle,
             home: Scaffold(
               body: TechnologyScreen(game: midGame, player: midGamePlayer),
             ),
@@ -103,7 +103,7 @@ List<WidgetbookNode> get techTreeDirectories => [
             players: [midGamePlayer, ...game.players.skip(1)],
           );
           return MaterialApp(
-            theme: AppThemes.colonial,
+            theme: AppThemes.editorialMonocle,
             home: Scaffold(
               appBar: AppBar(
                 title: Text(appL10n(context).widgetbook_techTreeTitle),
@@ -151,7 +151,7 @@ List<WidgetbookNode> get interventionDialogueDirectories => [
             ],
           );
           return MaterialApp(
-            theme: AppThemes.colonial,
+            theme: AppThemes.editorialMonocle,
             home: Scaffold(
               body: InterventionDialogueOverlay(
                 game: game,
@@ -227,7 +227,7 @@ List<WidgetbookNode> get turnNewsDialogDirectories => [
             ],
           );
           return MaterialApp(
-            theme: AppThemes.colonial,
+            theme: AppThemes.editorialMonocle,
             localizationsDelegates:
                 AppLocalizationsBinding.localizationsDelegates,
             supportedLocales: AppLocalizations.supportedLocales,
@@ -263,7 +263,7 @@ List<WidgetbookNode> get turnNewsDialogDirectories => [
             ],
           );
           return MaterialApp(
-            theme: AppThemes.colonial,
+            theme: AppThemes.editorialMonocle,
             localizationsDelegates:
                 AppLocalizationsBinding.localizationsDelegates,
             supportedLocales: AppLocalizations.supportedLocales,
@@ -304,7 +304,7 @@ List<WidgetbookNode> get turnNewsDialogDirectories => [
           return mobileViewport(
             context,
             MaterialApp(
-              theme: AppThemes.colonial,
+              theme: AppThemes.editorialMonocle,
               localizationsDelegates:
                   AppLocalizationsBinding.localizationsDelegates,
               supportedLocales: AppLocalizations.supportedLocales,
