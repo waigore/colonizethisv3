@@ -20,7 +20,11 @@ When the player clicks the "Next turn" button in the top bar, a confirmation dia
   - Title: "End turn?" or "Proceed to next turn?"
   - Body text: "Turn {N} will end. Continue?"
   - Actions: "No" (abort), "Yes" (confirm)
-- **Styling:** Matches existing confirm dialogs (e.g., civilian_units_panel.dart `_confirmCancel`). Uses `CtNinePatchButton` for actions. No Material chrome.
+- **Styling:** Matches the editorial-monocle dark theme catalog (`SPEC/ui/pixel-art-ui-catalog.md` § Editorial-monocle palette) and the universal dialog pattern under #2867:
+  - Title text colour resolves to `EditorialMonoclePalette.accent` (display font slot from the dark theme).
+  - Body text colour resolves to `EditorialMonoclePalette.fg` (body font slot from the dark theme).
+  - Actions use `CtNinePatchButton`. The primary "Yes" (confirm) action keeps the default brass styling; the secondary "No" (cancel) action also uses `CtNinePatchButton` with default brass styling so both options are visually equivalent — confirm is the inferred default, but neither is destructive.
+  - No Material chrome (`AlertDialog`, `TextButton`, `ElevatedButton`) anywhere in the dialog tree.
 
 ---
 
@@ -65,6 +69,8 @@ When the player clicks the "Next turn" button in the top bar, a confirmation dia
 - **Given** turn-resolution active state is true, **when** the player attempts to press Next Turn, **then** the Next Turn button is disabled and no second resolution starts.
 - **Given** turn-resolution active state is true, **when** the player interacts with map content, **then** the map interaction is blocked while the hamburger menu remains available.
 - **Given** turn resolution reaches terminal success or terminal failure, **when** the terminal event is delivered to the UI handler, **then** the processing modal closes **before** synchronous main-isolate apply/persist work begins, and turn-resolution active state becomes false in the same cleanup path as today.
+- **Given** the confirmation dialog is built under `AppThemes.editorialMonocle`, **when** the widget tree is inspected, **then** the dialog uses `CtDialogShell` (no Material `AlertDialog`), the title text colour resolves to `EditorialMonoclePalette.accent`, and the body text colour resolves to `EditorialMonoclePalette.fg`.
+- **Given** the confirmation dialog is built, **when** the action row is inspected, **then** both the abort and confirm actions are rendered with `CtNinePatchButton` (no Material `TextButton` / `ElevatedButton`) and use the default brass label colour.
 
 ---
 
