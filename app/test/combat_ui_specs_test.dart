@@ -9,14 +9,24 @@ import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'package:colonizethis_app/config/editorial_monocle_palette.dart';
+import 'package:colonizethis_app/config/themes.dart';
 import 'package:colonizethis_app/features/game/combat/combat_mode_choice_dialog.dart';
 import 'package:colonizethis_app/features/game/combat/quick_battle_action_selector.dart';
 import 'package:colonizethis_app/features/game/combat/quick_battle_deployment_view.dart';
 import 'package:colonizethis_app/features/game/combat/quick_battle_result_dialog.dart';
+import 'package:colonizethis_app/widgets/ct_dialog_shell.dart';
 import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
 
 Widget _frame(Widget child) {
   return MaterialApp(
+    home: Scaffold(body: child),
+  );
+}
+
+Widget _darkFrame(Widget child) {
+  return MaterialApp(
+    theme: AppThemes.editorialMonocle,
     home: Scaffold(body: child),
   );
 }
@@ -301,6 +311,96 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(received, [CombatMode.quickBattle]);
+    });
+
+    testWidgets(
+        'dark editorial-monocle chrome: title resolves to --accent + 0.05 letter-spacing',
+        (WidgetTester tester) async {
+      final bus = AppEventBus.create();
+      await tester.pumpWidget(_darkFrame(
+        CombatModeChoiceDialog(
+          bus: bus,
+          provinceName: 'Lisbon',
+          isCapitalSiege: false,
+        ),
+      ));
+
+      final Text title = tester.widget<Text>(find.textContaining('Lisbon'));
+      expect(title.style?.color, EditorialMonoclePalette.accent);
+      expect(title.style?.letterSpacing, 0.05);
+    });
+
+    testWidgets(
+        'dark editorial-monocle chrome: regular body text resolves to --muted',
+        (WidgetTester tester) async {
+      final bus = AppEventBus.create();
+      await tester.pumpWidget(_darkFrame(
+        CombatModeChoiceDialog(
+          bus: bus,
+          provinceName: 'Lisbon',
+          isCapitalSiege: false,
+        ),
+      ));
+
+      final Text body = tester.widget<Text>(find.text('Choose combat mode:'));
+      expect(body.style?.color, EditorialMonoclePalette.muted);
+    });
+
+    testWidgets(
+        'dark editorial-monocle chrome: capital-siege body text resolves to --muted',
+        (WidgetTester tester) async {
+      final bus = AppEventBus.create();
+      await tester.pumpWidget(_darkFrame(
+        CombatModeChoiceDialog(
+          bus: bus,
+          provinceName: 'Madrid',
+          isCapitalSiege: true,
+        ),
+      ));
+
+      final Finder bodyFinder = find.text(
+        'Capital siege — Quick Battle only (no auto-resolve).',
+      );
+      expect(bodyFinder, findsOneWidget);
+      final Text body = tester.widget<Text>(bodyFinder);
+      expect(body.style?.color, EditorialMonoclePalette.muted);
+    });
+
+    testWidgets(
+        'dark editorial-monocle chrome: Quick Battle label resolves to --accent, Auto-Resolve label resolves to --muted',
+        (WidgetTester tester) async {
+      final bus = AppEventBus.create();
+      await tester.pumpWidget(_darkFrame(
+        CombatModeChoiceDialog(
+          bus: bus,
+          provinceName: 'Lisbon',
+          isCapitalSiege: false,
+        ),
+      ));
+
+      final Text autoLabel = tester.widget<Text>(find.text('Auto-Resolve'));
+      expect(autoLabel.style?.color, EditorialMonoclePalette.muted);
+
+      final Text qbLabel = tester.widget<Text>(find.text('Quick Battle'));
+      expect(qbLabel.style?.color, EditorialMonoclePalette.accent);
+    });
+
+    testWidgets(
+        'dark editorial-monocle chrome: regular variant has exactly one CtDialogShell and zero Material action buttons',
+        (WidgetTester tester) async {
+      final bus = AppEventBus.create();
+      await tester.pumpWidget(_darkFrame(
+        CombatModeChoiceDialog(
+          bus: bus,
+          provinceName: 'Lisbon',
+          isCapitalSiege: false,
+        ),
+      ));
+
+      expect(find.byType(CtDialogShell), findsOneWidget);
+      expect(find.byType(ElevatedButton), findsNothing);
+      expect(find.byType(OutlinedButton), findsNothing);
+      expect(find.byType(FilledButton), findsNothing);
     });
   });
 
