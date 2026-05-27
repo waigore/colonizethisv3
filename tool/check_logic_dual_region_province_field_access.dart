@@ -14,7 +14,7 @@ const _scanDirRelative = 'packages/colonizethis_logic/lib/src';
 /// Keep direct dual-region field access rare; budget tracks the smallest value
 /// confirmed achievable by the audit recorded in
 /// SPEC/program/logic-dual-region-province-access.md (Refs #2836 AC 5).
-const _maxMatchingLinesOutsideCanonical = 21;
+const _maxMatchingLinesOutsideCanonical = 17;
 
 final RegExp _generatedSuffix = RegExp(r'\.(g|freezed|mocks|gen)\.dart$');
 final RegExp _manualRegionBranchPattern = RegExp(

@@ -6,9 +6,11 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/src/logging.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
+import '../constants.dart';
 import '../dossier/event_dialogue.dart';
 import '../world/fog_resolution.dart';
 import '../world/game_world_mutations.dart';
+import '../world/province_lookup.dart';
 import 'turn_seed_constants.dart';
 
 /// Runs the end-of-turn phase: victory check, era-change dialogue, Spy timers, fog decay,
@@ -124,7 +126,7 @@ void _emitEraChangeDialogue(
 String? findMilitaryVictoryWinner(Game game) {
   const int requiredProvinces = 31;
   final countsByOwner = <String, int>{};
-  for (final province in game.worldState.oldWorld.provinces) {
+  for (final province in game.worldState.provincesForRegion(kRegionOldWorld)) {
     final ownerId = province.ownerId;
     if (ownerId == null || ownerId.isEmpty) continue;
     countsByOwner.update(ownerId, (v) => v + 1, ifAbsent: () => 1);
