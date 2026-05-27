@@ -56,6 +56,30 @@ const String _nationId = 'gp1';
 const String _tribeId = 'tribe1';
 const String _tribeNwProvince = 'newWorld|tribe1_nw0';
 
+// Explicit NW-acquisition-zero phase plan emulating the legacy
+// hard-suppress contract for the EXPAND negative-control assertion
+// (Refs #2847 Phase 3 — soft-weight migration). The production
+// `_curveWeightsForOw(7)` curve emits `newWorldAcquisition = 0.05`
+// (early-sprint plateau), which the scoring-side migration in
+// `_declareWarSuppressedExpandColonialScore` treats as
+// "reachable at low priority" — see the PR's
+// `phase_planner_diplomacy_declare_war_soft_weight_wiring_test.dart`.
+// The strict hard-suppress regression assertion threads this
+// explicit override through the orchestrator so
+// `nwAcquisitionWeight == 0.0` collapses NW colonial declare-war
+// candidates.
+const PhasePriorityWeights _nwAcquisitionZeroExpand = PhasePriorityWeights(
+  oldWorldConquest: 0.95,
+  newWorldAcquisition: 0.0,
+  oldWorldCivilian: 0.90,
+  newWorldCivilian: 0.10,
+);
+
+const PhasePlanOutcome _expandPhasePlanHardSuppressNw = PhasePlanOutcome(
+  phase: ObserverGoalPhase.expand,
+  priorityWeights: _nwAcquisitionZeroExpand,
+);
+
 // gp1 owns 11 OW provinces (>= the observer quota of 10), so the GP is
 // past EXPAND and `isBelowObserverConquestQuota` is false. Combined with
 // a non-empty `invadableNewWorldProvinceIdsSorted` set, this places the
@@ -286,15 +310,24 @@ void main() {
         seeds: AISeedBundle.fromTurnSeed(2509121),
         suggestionAPI: _tribeDeclareWarApi,
         economyPlan: _economyPlan,
+        // Pin the legacy EXPAND hard-suppress contract via an explicit
+        // `newWorldAcquisition = 0.0` override (Refs #2847 Phase 3).
+        // Under the soft-weight production curve
+        // `_curveWeightsForOw(7)` returns 0.05 — see
+        // `phase_planner_diplomacy_declare_war_soft_weight_wiring_test.dart`
+        // for the new soft-weight contract.
+        phasePlan: _expandPhasePlanHardSuppressNw,
       );
 
       expect(
         _declareWarTargets(orders),
         isNot(contains(_tribeId)),
         reason:
-            'EXPAND below OW quota must drop NW tribe declare-war '
-            'candidates so OW conquest pressure is preserved (SPEC § '
-            'Observer goal phases (Full AI), EXPAND suppression rule).',
+            'Under the explicit `newWorldAcquisition = 0.0` override '
+            '(legacy hard-suppress regression contract), EXPAND below '
+            'OW quota must drop NW tribe declare-war candidates so OW '
+            'conquest pressure is preserved (SPEC § Observer goal '
+            'phases (Full AI), EXPAND suppression rule).',
       );
     });
 
