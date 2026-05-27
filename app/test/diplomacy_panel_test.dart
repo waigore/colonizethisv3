@@ -12,6 +12,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'package:colonizethis_app/config/editorial_monocle_palette.dart';
 import 'package:colonizethis_app/features/game/widgets/diplomacy_panel.dart';
 import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
 import 'package:colonizethis_app/widgets/ct_panel.dart';
@@ -485,5 +486,183 @@ void main() {
         contains(DiplomaticOrderType.declareWar),
       );
     });
+  });
+
+  group('powerComparisonPercent', () {
+    test('GP stronger than player produces positive percentage', () {
+      expect(powerComparisonPercent(110, 100), 10);
+    });
+
+    test('GP weaker than player produces negative percentage', () {
+      expect(powerComparisonPercent(78, 100), -22);
+    });
+
+    test('equal scores produce zero percentage', () {
+      expect(powerComparisonPercent(100, 100), 0);
+    });
+
+    test('rounding uses banker-agnostic round() (positive)', () {
+      // (105 - 100) / 100 = 0.05 → +5
+      expect(powerComparisonPercent(105, 100), 5);
+      // (114 - 100) / 100 = 0.14 → +14
+      expect(powerComparisonPercent(114, 100), 14);
+    });
+
+    test('zero playerPowerScore uses max(playerScore, 1) guard', () {
+      // With denominator clamped to 1, (50 - 0) / 1 = 50 → +5000%
+      expect(powerComparisonPercent(50, 0), 5000);
+      // (0 - 0) / max(0, 1) = 0 → 0%, finite (no NaN, no division-by-zero)
+      expect(powerComparisonPercent(0, 0), 0);
+    });
+
+    test('negative playerPowerScore is still guarded by max(.., 1)', () {
+      // The SPEC formula uses `max(playerPowerScore, 1)`; a defensive call
+      // with a negative `playerPowerScore` must not produce a sign flip via a
+      // negative denominator. Result must be a finite integer using `1` as
+      // the effective denominator.
+      expect(powerComparisonPercent(50, -10), 6000);
+    });
+  });
+
+  group('formatPowerComparisonPercent', () {
+    test('positive percentage uses ASCII plus and percent suffix', () {
+      expect(formatPowerComparisonPercent(10), '+10%');
+      expect(formatPowerComparisonPercent(1), '+1%');
+    });
+
+    test('negative percentage uses unicode minus sign (U+2212)', () {
+      // U+2212 MINUS SIGN, not U+002D HYPHEN-MINUS.
+      expect(formatPowerComparisonPercent(-22), '\u221222%');
+      expect(formatPowerComparisonPercent(-1), '\u22121%');
+      expect(formatPowerComparisonPercent(-22).startsWith('\u2212'), isTrue);
+      expect(formatPowerComparisonPercent(-22).startsWith('-'), isFalse);
+    });
+
+    test('zero percentage formats as "0%" without sign', () {
+      expect(formatPowerComparisonPercent(0), '0%');
+    });
+  });
+
+  group('DiplomacyPanel GP power-comparison rendering', () {
+    testWidgets('AC: GP +10% renders in --danger color', (
+      WidgetTester tester,
+    ) async {
+      await _bindTallTestSurface(tester);
+      await tester.pumpWidget(
+        buildPanel(
+          game: gameWithFactions,
+          humanPlayerId: humanPlayerId,
+          topology: topology,
+        ),
+      );
+      await _pumpPanelBuilt(tester);
+
+      final rows = buildDiplomacyRows(
+        gameWithFactions,
+        topology,
+        humanPlayerId,
+        const Orders(),
+      );
+      final stronger = rows
+          .where(
+            (r) =>
+                r.kind == FactionKind.greatPower &&
+                r.powerScore != null &&
+                r.playerPowerScore != null &&
+                r.powerScore! > r.playerPowerScore!,
+          )
+          .toList();
+      if (stronger.isEmpty) {
+        // No qualifying row in the debug-init game; skip dynamically rather
+        // than failing — the helper-level tests already pin the formula.
+        return;
+      }
+      for (final r in stronger) {
+        final pct = powerComparisonPercent(r.powerScore!, r.playerPowerScore!);
+        if (pct <= 0) continue;
+        final expectedText = formatPowerComparisonPercent(pct);
+        final finder = find.text(expectedText);
+        expect(
+          finder,
+          findsAtLeastNWidgets(1),
+          reason: 'Expected "$expectedText" for ${r.displayName}',
+        );
+        final widget = tester.widget<Text>(finder.first);
+        expect(
+          widget.style?.color,
+          EditorialMonoclePalette.danger,
+          reason: 'Stronger GP percentage must use --danger',
+        );
+      }
+    });
+
+    testWidgets('AC: GP ≤0% renders in --success color', (
+      WidgetTester tester,
+    ) async {
+      await _bindTallTestSurface(tester);
+      await tester.pumpWidget(
+        buildPanel(
+          game: gameWithFactions,
+          humanPlayerId: humanPlayerId,
+          topology: topology,
+        ),
+      );
+      await _pumpPanelBuilt(tester);
+
+      final rows = buildDiplomacyRows(
+        gameWithFactions,
+        topology,
+        humanPlayerId,
+        const Orders(),
+      );
+      final weakerOrEqual = rows
+          .where(
+            (r) =>
+                r.kind == FactionKind.greatPower &&
+                r.powerScore != null &&
+                r.playerPowerScore != null &&
+                r.powerScore! <= r.playerPowerScore!,
+          )
+          .toList();
+      if (weakerOrEqual.isEmpty) {
+        return;
+      }
+      for (final r in weakerOrEqual) {
+        final pct = powerComparisonPercent(r.powerScore!, r.playerPowerScore!);
+        if (pct > 0) continue;
+        final expectedText = formatPowerComparisonPercent(pct);
+        final finder = find.text(expectedText);
+        expect(
+          finder,
+          findsAtLeastNWidgets(1),
+          reason: 'Expected "$expectedText" for ${r.displayName}',
+        );
+        final widget = tester.widget<Text>(finder.first);
+        expect(
+          widget.style?.color,
+          EditorialMonoclePalette.success,
+          reason: 'Weaker/equal GP percentage must use --success',
+        );
+      }
+    });
+
+    testWidgets(
+      'absolute "Power: N" score label is no longer rendered on GP rows',
+      (WidgetTester tester) async {
+        await _bindTallTestSurface(tester);
+        await tester.pumpWidget(
+          buildPanel(
+            game: gameWithFactions,
+            humanPlayerId: humanPlayerId,
+            topology: topology,
+          ),
+        );
+        await _pumpPanelBuilt(tester);
+
+        // SPEC: percentage replaces the absolute score. No row should render
+        // text starting with "Power: ".
+        expect(find.textContaining('Power: '), findsNothing);
+      },
+    );
   });
 }

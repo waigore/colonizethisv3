@@ -1,5 +1,7 @@
 // Row model and builder for diplomacy UI. SPEC/ui/diplomacy-panel.md.
 
+import 'dart:math' as math;
+
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
@@ -229,4 +231,31 @@ List<DiplomacyRowData> buildDiplomacyRows(
     );
   }
   return rows;
+}
+
+/// Computes the relative Great Power power-comparison percentage used by
+/// `SPEC/ui/diplomacy-panel.md` § Power comparison percentage.
+///
+/// Formula: `round(((gpPowerScore - playerPowerScore) / max(playerPowerScore,
+/// 1)) * 100)`. The `max(.., 1)` guard prevents division-by-zero when the
+/// human player's score is `0`, yielding a finite percentage.
+///
+/// Returns the integer percentage (positive when the GP is stronger, negative
+/// when weaker, zero when equal).
+int powerComparisonPercent(int gpPowerScore, int playerPowerScore) {
+  final int denom = math.max(playerPowerScore, 1);
+  final double ratio = (gpPowerScore - playerPowerScore) / denom;
+  return (ratio * 100).round();
+}
+
+/// Formats a `powerComparisonPercent` integer for display per
+/// `SPEC/ui/diplomacy-panel.md` § Power comparison percentage:
+/// `+N%` when positive, `−N%` (U+2212 minus) when negative, `0%` when zero.
+///
+/// The minus sign is the unicode `MINUS SIGN` (U+2212) to match the mockup,
+/// not the ASCII hyphen-minus (U+002D).
+String formatPowerComparisonPercent(int pct) {
+  if (pct > 0) return '+$pct%';
+  if (pct < 0) return '\u2212${-pct}%';
+  return '0%';
 }

@@ -6,6 +6,7 @@ import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
 
+import '../../../config/editorial_monocle_palette.dart';
 import '../../../config/routes.dart';
 import '../../../core/services/app_event_handler_scope.dart';
 import '../../../core/services/subscription_tracker.dart';
@@ -369,7 +370,6 @@ class _DiplomacyRow extends StatelessWidget {
   }
 
   Widget _buildHeaderRow(BuildContext context) {
-    final l10n = appL10n(context);
     return Row(
       children: [
         Text(
@@ -380,22 +380,37 @@ class _DiplomacyRow extends StatelessWidget {
         ),
         const SizedBox(width: 8),
         _kindChip(context, data.kind),
-        if (data.powerScore != null) ...[
-          const SizedBox(width: 8),
-          Text(
-            l10n.diplomacy_panel_powerScore(data.powerScore!),
-            style: Theme.of(context).textTheme.labelMedium?.copyWith(
-              color:
-                  data.playerPowerScore != null &&
-                      data.powerScore! > data.playerPowerScore!
-                  ? Colors.red
-                  : Colors.green,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-        ],
+        ..._buildPowerComparison(context),
       ],
     );
+  }
+
+  /// Renders the Great Power power-comparison percentage per
+  /// SPEC/ui/diplomacy-panel.md § Power comparison percentage.
+  List<Widget> _buildPowerComparison(BuildContext context) {
+    final int? gpScore = data.powerScore;
+    final int? playerScore = data.playerPowerScore;
+    if (gpScore == null || playerScore == null) {
+      return const [];
+    }
+    final int pct = powerComparisonPercent(gpScore, playerScore);
+    final String text = formatPowerComparisonPercent(pct);
+    // SPEC: red (--danger) when GP stronger (pct > 0), green (--success) when
+    // weaker or equal (pct <= 0). Token colors live in the editorial-monocle
+    // palette so the row matches the dark theme rather than raw Material reds.
+    final Color color = pct > 0
+        ? EditorialMonoclePalette.danger
+        : EditorialMonoclePalette.success;
+    return [
+      const SizedBox(width: 8),
+      Text(
+        text,
+        style: Theme.of(context).textTheme.labelMedium?.copyWith(
+          color: color,
+          fontWeight: FontWeight.w600,
+        ),
+      ),
+    ];
   }
 
   String _relationSummary(BuildContext context) {
