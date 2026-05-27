@@ -77,7 +77,7 @@ void main() {
       },
     );
 
-    testWidgets('always renders a leading CtBackButton', (tester) async {
+    testWidgets('renders a leading CtBackButton by default', (tester) async {
       await pumpTopBar(tester, const CtTopBar(title: 'Production'));
       expect(
         find.descendant(
@@ -87,6 +87,73 @@ void main() {
         findsOneWidget,
       );
     });
+
+    testWidgets(
+      'omits the CtBackButton when showBackButton is false (negative path)',
+      (tester) async {
+        await pumpTopBar(
+          tester,
+          const CtTopBar(title: 'Production', showBackButton: false),
+        );
+        expect(
+          find.descendant(
+            of: find.byType(CtTopBar),
+            matching: find.byType(CtBackButton),
+          ),
+          findsNothing,
+        );
+      },
+    );
+
+    testWidgets(
+      'omits the backButtonLabel when showBackButton is false (negative path)',
+      (tester) async {
+        await pumpTopBar(
+          tester,
+          const CtTopBar(
+            title: 'Production',
+            backButtonLabel: 'Map',
+            showBackButton: false,
+          ),
+        );
+        expect(
+          find.descendant(
+            of: find.byType(CtTopBar),
+            matching: find.text('Map'),
+          ),
+          findsNothing,
+        );
+      },
+    );
+
+    testWidgets(
+      'still renders the title and trailing slot when showBackButton is false',
+      (tester) async {
+        await pumpTopBar(
+          tester,
+          const CtTopBar(
+            title: 'Production',
+            showBackButton: false,
+            trailing: SizedBox(
+              key: ValueKey<String>('ctTopBarTestTrailing'),
+              width: 24,
+              height: 24,
+            ),
+          ),
+        );
+        expect(
+          find.descendant(
+            of: find.byType(CtTopBar),
+            matching: find.text('Production'),
+          ),
+          findsOneWidget,
+        );
+        expect(
+          find.byKey(const ValueKey<String>('ctTopBarTestTrailing')),
+          findsOneWidget,
+        );
+      },
+    );
   });
 
   group('CtTopBar slot composition', () {

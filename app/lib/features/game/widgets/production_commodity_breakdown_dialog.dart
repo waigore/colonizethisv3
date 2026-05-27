@@ -183,7 +183,6 @@ class _ProductionCommodityBreakdownDialogState
     return CtDialogShell(
       maxWidth: 720,
       maxHeight: 560,
-      destTileSize: 16,
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
