@@ -7,6 +7,7 @@ import '../diplomacy/diplomacy_resolver.dart';
 import '../world/player_view.dart';
 import '../world/unit_lookup.dart';
 import '../constants.dart';
+import 'order_resolution_context.dart';
 import 'projected_effects.dart';
 import 'order_validation_result.dart';
 export 'order_validation_result.dart';
@@ -113,14 +114,20 @@ class _OrderValidationRunState {
   WorkerPool workerPool;
 }
 
+/// Builds the per-bundle [OrderValidators] for one validation slice.
+///
+/// [resolution] threads the canonical [OrderResolutionContext] record
+/// (`view` + `unitsById` + `provinceById`) so factories reuse the
+/// per-pass snapshot the engine entry-point already built instead of
+/// rebuilding the player view or unit-by-id map (Refs #2836 AC 3;
+/// SPEC/program/logic-validator-units-params.md).
 typedef OrderValidatorFactory =
     OrderValidators Function(
       Game game,
       Player player,
       String playerId,
-      PlayerView view,
+      OrderResolutionContext resolution,
       MapTopology topology,
-      Map<String, Unit> unitsById,
       List<DiplomaticOrder> diplomaticOrders,
       Map<String, TileMapResult>? tileMapByRegion,
       Set<String> civilianDraftMoveUnitIds,
@@ -275,6 +282,17 @@ class OrderEngine with _OrderEngineGeneratedOrderMethods {
 
     final unitsById = Map<String, Unit>.from(game.worldState.allUnitsById);
 
+    // Single per-pass [OrderResolutionContext] snapshot shared across every
+    // validator factory invocation and per-phase probe (Refs #2836 AC 3;
+    // SPEC/program/logic-validator-units-params.md). The same `view` +
+    // `unitsById` references back both the bundle factory and the per-move
+    // validation context so probes do not rebuild equivalent maps.
+    final resolution = orderResolutionContextFromView(
+      view,
+      game,
+      unitsById: unitsById,
+    );
+
     final devExclusiveTiles = devExclusiveTilesFromWorld(
       game.worldState,
       playerId,
@@ -314,10 +332,9 @@ class OrderEngine with _OrderEngineGeneratedOrderMethods {
       game: game,
       player: player,
       playerId: playerId,
-      view: view,
+      resolution: resolution,
       topology: topology,
       tileMapByRegion: tileMapByRegion,
-      unitsById: unitsById,
       diplomatic: diplomatic,
       civilianDraftMoveUnitIds: civilianDraftMoveUnitIds,
       devExclusiveTiles: devExclusiveTiles,
@@ -338,15 +355,20 @@ class OrderEngine with _OrderEngineGeneratedOrderMethods {
   /// Mutates [state] (results / rejected / stockpile / treasury / workerPool)
   /// in submission order: move, army-move, recruit-worker, build, work,
   /// diplomatic, naval, naval-mission.
+  ///
+  /// [resolution] is the per-pass [OrderResolutionContext] snapshot built
+  /// once in [validatePlayerOrdersWithContext] (view + unitsById +
+  /// provinceById); both the per-bundle validator factory and the per-move
+  /// validator share this exact record so probes do not rebuild equivalent
+  /// maps (Refs #2836 AC 3; SPEC/program/logic-validator-units-params.md).
   void _runOrderValidationPhases({
     required _OrderValidationRunState state,
     required Game game,
     required Player player,
     required String playerId,
-    required PlayerView view,
+    required OrderResolutionContext resolution,
     required MapTopology topology,
     required Map<String, TileMapResult>? tileMapByRegion,
-    required Map<String, Unit> unitsById,
     required List<DiplomaticOrder> diplomatic,
     required Set<String> civilianDraftMoveUnitIds,
     required Set<String> devExclusiveTiles,
@@ -364,9 +386,8 @@ class OrderEngine with _OrderEngineGeneratedOrderMethods {
       game,
       player,
       playerId,
-      view,
+      resolution,
       topology,
-      unitsById,
       diplomatic,
       tileMapByRegion,
       civilianDraftMoveUnitIds,
@@ -396,9 +417,8 @@ class OrderEngine with _OrderEngineGeneratedOrderMethods {
               moves,
               game,
               playerId,
-              unitsById,
+              resolution,
               diplomatic,
-              view,
               topology,
               factionMembership,
             ),
@@ -412,7 +432,7 @@ class OrderEngine with _OrderEngineGeneratedOrderMethods {
               game,
               playerId,
               diplomatic,
-              view,
+              resolution.view,
               topology,
               armiesById,
               factionMembership,
@@ -455,12 +475,16 @@ class OrderEngine with _OrderEngineGeneratedOrderMethods {
     List<MoveOrder> moves,
     Game game,
     String playerId,
-    Map<String, Unit> unitsById,
+    OrderResolutionContext resolution,
     List<DiplomaticOrder> diplomatic,
-    PlayerView view,
     MapTopology topology,
     DiplomacyFactionMembership factionMembership,
   ) {
+    // [resolution] is the per-pass snapshot built once in
+    // [validatePlayerOrdersWithContext]; the per-move
+    // [MoveValidator.validate] call reuses it directly so probes do not
+    // rebuild equivalent `view` / `unitsById` maps (Refs #2836 AC 3;
+    // SPEC/program/logic-validator-units-params.md).
     state.rejected = _appendValidationResults(
       state.results,
       moves,
@@ -469,9 +493,8 @@ class OrderEngine with _OrderEngineGeneratedOrderMethods {
         o,
         game,
         playerId,
-        unitsById,
+        resolution,
         diplomatic,
-        view,
         topology,
         previousRejected: prev,
         factionMembership: factionMembership,
@@ -631,9 +654,8 @@ OrderValidators _defaultOrderValidatorFactory(
   Game game,
   Player player,
   String playerId,
-  PlayerView view,
+  OrderResolutionContext resolution,
   MapTopology topology,
-  Map<String, Unit> unitsById,
   List<DiplomaticOrder> diplomaticOrders,
   Map<String, TileMapResult>? tileMapByRegion,
   Set<String> civilianDraftMoveUnitIds,
@@ -647,9 +669,8 @@ OrderValidators _defaultOrderValidatorFactory(
     game: game,
     player: player,
     playerId: playerId,
-    view: view,
+    resolution: resolution,
     topology: topology,
-    unitsById: unitsById,
     diplomaticOrders: diplomaticOrders,
     tileMapByRegion: tileMapByRegion,
     civilianDraftMoveUnitIds: civilianDraftMoveUnitIds,
