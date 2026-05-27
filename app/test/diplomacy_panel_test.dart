@@ -881,4 +881,233 @@ void main() {
       },
     );
   });
+
+  group('DiplomacyPanel section headings (editorial-monocle)', () {
+    testWidgets(
+      'AC: Section heading text resolves to --accent color',
+      (WidgetTester tester) async {
+        await _bindTallTestSurface(tester);
+        await tester.pumpWidget(
+          buildPanel(
+            game: gameWithFactions,
+            humanPlayerId: humanPlayerId,
+            topology: topology,
+          ),
+        );
+        await _pumpPanelBuilt(tester);
+
+        final heading = tester.widget<Text>(find.text('Great Powers'));
+        expect(
+          heading.style?.color,
+          EditorialMonoclePalette.accent,
+          reason:
+              'Section heading must render in --accent per editorial-monocle.',
+        );
+        expect(
+          heading.style?.fontFamily,
+          'Cinzel',
+          reason: 'Section heading must use the editorial-monocle display font.',
+        );
+      },
+    );
+
+    testWidgets(
+      'AC: Section heading container exposes a 2 px --accent-dim bottom border',
+      (WidgetTester tester) async {
+        await _bindTallTestSurface(tester);
+        await tester.pumpWidget(
+          buildPanel(
+            game: gameWithFactions,
+            humanPlayerId: humanPlayerId,
+            topology: topology,
+          ),
+        );
+        await _pumpPanelBuilt(tester);
+
+        final headingFinder = find.text('Great Powers');
+        final decorated = find.ancestor(
+          of: headingFinder,
+          matching: find.byType(DecoratedBox),
+        );
+        expect(decorated, findsAtLeastNWidgets(1));
+        final box = tester.widget<DecoratedBox>(decorated.first);
+        final decoration = box.decoration as BoxDecoration;
+        final BorderSide bottom = decoration.border!.bottom;
+        expect(bottom.color, EditorialMonoclePalette.accentDim);
+        expect(bottom.width, 2);
+      },
+    );
+  });
+
+  group('DiplomacyPanel faction kind badges (editorial-monocle)', () {
+    testWidgets(
+      'AC: GP badge background --accent-dim and foreground --bg-deep',
+      (WidgetTester tester) async {
+        await _bindTallTestSurface(tester);
+        await tester.pumpWidget(
+          buildPanel(
+            game: gameWithFactions,
+            humanPlayerId: humanPlayerId,
+            topology: topology,
+          ),
+        );
+        await _pumpPanelBuilt(tester);
+
+        // Only assert if the debug-init game actually has a GP row.
+        final rows = buildDiplomacyRows(
+          gameWithFactions,
+          topology,
+          humanPlayerId,
+          const Orders(),
+        );
+        final hasGp = rows.any((r) => r.kind == FactionKind.greatPower);
+        if (!hasGp) return;
+
+        final gpText = find.text('GP').first;
+        final container = tester.widget<Container>(
+          find.ancestor(of: gpText, matching: find.byType(Container)).first,
+        );
+        final decoration = container.decoration as BoxDecoration;
+        expect(
+          decoration.color,
+          EditorialMonoclePalette.accentDim,
+          reason: 'GP badge background must resolve to --accent-dim.',
+        );
+        expect(
+          decoration.border,
+          isNull,
+          reason: 'GP badge must not draw an outline border.',
+        );
+        final textWidget = tester.widget<Text>(gpText);
+        expect(
+          textWidget.style?.color,
+          EditorialMonoclePalette.bgDeep,
+          reason: 'GP badge foreground must resolve to --bg-deep.',
+        );
+      },
+    );
+
+    testWidgets(
+      'AC: Minor badge background --muted and foreground --bg-deep',
+      (WidgetTester tester) async {
+        await _bindTallTestSurface(tester);
+        await tester.pumpWidget(
+          buildPanel(
+            game: gameWithFactions,
+            humanPlayerId: humanPlayerId,
+            topology: topology,
+          ),
+        );
+        await _pumpPanelBuilt(tester);
+
+        final rows = buildDiplomacyRows(
+          gameWithFactions,
+          topology,
+          humanPlayerId,
+          const Orders(),
+        );
+        final hasMinor = rows.any((r) => r.kind == FactionKind.minor);
+        if (!hasMinor) return;
+
+        final minorText = find.text('Minor').first;
+        final container = tester.widget<Container>(
+          find.ancestor(of: minorText, matching: find.byType(Container)).first,
+        );
+        final decoration = container.decoration as BoxDecoration;
+        expect(
+          decoration.color,
+          EditorialMonoclePalette.muted,
+          reason: 'Minor badge background must resolve to --muted.',
+        );
+        expect(
+          decoration.border,
+          isNull,
+          reason: 'Minor badge must not draw an outline border.',
+        );
+        final textWidget = tester.widget<Text>(minorText);
+        expect(
+          textWidget.style?.color,
+          EditorialMonoclePalette.bgDeep,
+          reason: 'Minor badge foreground must resolve to --bg-deep.',
+        );
+      },
+    );
+
+    testWidgets(
+      'AC: Tribe badge outlined with --muted border, transparent background',
+      (WidgetTester tester) async {
+        await _bindTallTestSurface(tester);
+        await tester.pumpWidget(
+          buildPanel(
+            game: gameWithFactions,
+            humanPlayerId: humanPlayerId,
+            topology: topology,
+          ),
+        );
+        await _pumpPanelBuilt(tester);
+
+        final rows = buildDiplomacyRows(
+          gameWithFactions,
+          topology,
+          humanPlayerId,
+          const Orders(),
+        );
+        final hasTribe = rows.any((r) => r.kind == FactionKind.tribe);
+        if (!hasTribe) return;
+
+        final tribeText = find.text('Tribe').first;
+        final container = tester.widget<Container>(
+          find.ancestor(of: tribeText, matching: find.byType(Container)).first,
+        );
+        final decoration = container.decoration as BoxDecoration;
+        expect(
+          decoration.color,
+          isNull,
+          reason: 'Tribe badge background must be transparent (null).',
+        );
+        expect(decoration.border, isNotNull);
+        expect(
+          decoration.border!.top.color,
+          EditorialMonoclePalette.muted,
+          reason: 'Tribe badge outline must use --muted.',
+        );
+        final textWidget = tester.widget<Text>(tribeText);
+        expect(
+          textWidget.style?.color,
+          EditorialMonoclePalette.muted,
+          reason: 'Tribe badge foreground must resolve to --muted.',
+        );
+      },
+    );
+
+    testWidgets(
+      'AC: No badge uses raw Material chrome (Colors.blue/grey/orange)',
+      (WidgetTester tester) async {
+        await _bindTallTestSurface(tester);
+        await tester.pumpWidget(
+          buildPanel(
+            game: gameWithFactions,
+            humanPlayerId: humanPlayerId,
+            topology: topology,
+          ),
+        );
+        await _pumpPanelBuilt(tester);
+
+        final allLabels = ['GP', 'Minor', 'Tribe'];
+        for (final label in allLabels) {
+          final finder = find.text(label);
+          if (finder.evaluate().isEmpty) continue;
+          final widget = tester.widget<Text>(finder.first);
+          final color = widget.style?.color;
+          // Reject the prior hardcoded Material palette for these labels.
+          expect(color, isNot(equals(Colors.blue)),
+              reason: '$label badge must not use Colors.blue.');
+          expect(color, isNot(equals(Colors.grey)),
+              reason: '$label badge must not use Colors.grey.');
+          expect(color, isNot(equals(Colors.orange)),
+              reason: '$label badge must not use Colors.orange.');
+        }
+      },
+    );
+  });
 }
