@@ -107,6 +107,20 @@ The dialog is modal; it does not auto-dismiss without a player choice.
 
 ---
 
+## Dark-theme treatment
+
+Per `SPEC/ui/pixel-art-ui-catalog.md` § Editorial-monocle palette and Refs #2869 R1–R5, the dialog renders against `AppThemes.editorialMonocle`:
+
+- **Title** (`quickBattle_combatAt`): theme `titleMedium` (display font, Cinzel via `editorialMonocleDisplayFontFamily`) with `color: --accent` and `letterSpacing: 0.05` (matching `CtTopBar._titleStyle`). No `--fg` fallback for the title color — the accent reading is what marks the dialog as a combat decision point.
+- **Body** (`quickBattle_chooseCombatMode` or `quickBattle_capitalSiegeQuickBattleOnly`): theme `bodyMedium` with `color: --muted` for the secondary descriptive line. Body text never uses `--accent`.
+- **Quick Battle button (primary)**: `CtNinePatchButton`; its `child` is a `Text(quickBattle_quickBattle)` with explicit `style: titleSmall.copyWith(color: --accent)`. The brass nine-patch chrome remains the asset-driven default; the primary reading comes from the accent-coloured label.
+- **Auto-Resolve button (secondary)**: `CtNinePatchButton`; its `child` is a `Text(quickBattle_autoResolve)` with explicit `style: titleSmall.copyWith(color: --muted)`. The muted label visually de-emphasises the secondary action while keeping the same touch target geometry as Quick Battle.
+- All colors resolve from `EditorialMonoclePalette` (no hex literals in widget code) per `colonizethis-ui-design.mdc`.
+
+Outline-style chrome for the Auto-Resolve button (a dedicated `--border`-outlined `CtNinePatchButton` variant per Refs #2869 R4 mockup) is a follow-up tracked against #2859 button-variant work; it is not delivered by S2.
+
+---
+
 ## Acceptance Criteria (Given–When–Then)
 
 - Given the dialog is opened via `OpenDialogEvent(combatModeChoiceDialogId, {'provinceName': 'Lisbon', 'isCapitalSiege': false})`,
@@ -132,6 +146,18 @@ The dialog is modal; it does not auto-dismiss without a player choice.
 - Given the dialog is mounted,
   When the UI layer renders the widget tree,
   Then there is exactly one `CtDialogShell` and zero Material `ElevatedButton`, `TextButton`, or `OutlinedButton` widgets in the dialog subtree.
+
+- Given the dialog is mounted inside `AppThemes.editorialMonocle`,
+  When the UI layer renders the title,
+  Then the rendered `Text` for the localized `quickBattle_combatAt` line resolves `style.color` to `EditorialMonoclePalette.accent` and `style.letterSpacing` to `0.05`.
+
+- Given the dialog is mounted inside `AppThemes.editorialMonocle` with `isCapitalSiege: false`,
+  When the UI layer renders the body line,
+  Then the rendered `Text` for the localized `quickBattle_chooseCombatMode` line resolves `style.color` to `EditorialMonoclePalette.muted`.
+
+- Given the dialog is mounted inside `AppThemes.editorialMonocle` with `isCapitalSiege: false`,
+  When the UI layer renders the action row,
+  Then the `CtNinePatchButton` child `Text` for `quickBattle_autoResolve` resolves `style.color` to `EditorialMonoclePalette.muted`, and the `CtNinePatchButton` child `Text` for `quickBattle_quickBattle` resolves `style.color` to `EditorialMonoclePalette.accent`.
 
 ---
 
