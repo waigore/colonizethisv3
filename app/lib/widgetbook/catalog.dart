@@ -70,6 +70,7 @@ import '../widgets/ct_main_menu_collage.dart';
 import '../widgets/ct_progress_bar.dart';
 import '../widgets/ct_resource_cell.dart';
 import '../widgets/ct_section_label.dart';
+import '../widgets/ct_slider.dart';
 import '../widgets/ct_toggle_switch.dart';
 import '../widgets/ct_top_bar.dart';
 import '../widgets/resource_icon.dart';

@@ -295,7 +295,8 @@ List<WidgetbookNode> get diplomacyDetailScreenDirectories => [
 ];
 
 /// Stories for the dark editorial-monocle theme primitives introduced by
-/// issue #2859 S1/S4/S8/S9/S10/S11/S12/S13 (`CtGradients`, `CtDialogShell`,
+/// issue #2859 S1/S4/S7/S8/S9/S10/S11/S12/S13 (`CtGradients`, `CtSlider`,
+/// `CtDialogShell`,
 /// `CtBrassDivider`, `CtToggleSwitch`, `CtSectionLabel`, `CtResourceCell`,
 /// `CtProgressBar`, `CtBackButton`, `CtTopBar`) and issue #2860 S1/S2/S4
 /// (`CtCompassRose`, `CtMainMenuCollage`, `CtFleurDeLisOrnament`).
@@ -311,6 +312,10 @@ List<WidgetbookNode> get ctDarkThemePrimitiveDirectories => [
       WidgetbookUseCase(
         name: 'CtDialogShell — dark frame',
         builder: (context) => _CtDialogShellStory(),
+      ),
+      WidgetbookUseCase(
+        name: 'CtSlider — value sweep',
+        builder: (context) => const _CtSliderStory(),
       ),
       WidgetbookUseCase(
         name: 'CtBrassDivider — wide and narrow',
@@ -448,6 +453,57 @@ class _CtGradientsStory extends StatelessWidget {
             ),
             const SizedBox(height: 16),
           ],
+        ],
+      ),
+    );
+  }
+}
+
+class _CtSliderStory extends StatefulWidget {
+  const _CtSliderStory();
+
+  @override
+  State<_CtSliderStory> createState() => _CtSliderStoryState();
+}
+
+class _CtSliderStoryState extends State<_CtSliderStory> {
+  double _value = 0.4;
+
+  @override
+  Widget build(BuildContext context) {
+    return _CtDarkPrimitiveScaffold(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            // ignore: avoid_hardcoded_strings_in_widgets
+            'Value ${_value.toStringAsFixed(2)}',
+            style: const TextStyle(color: Colors.white70),
+          ),
+          const SizedBox(height: 8),
+          CtSlider(
+            value: _value,
+            min: 0,
+            max: 1,
+            divisions: 10,
+            onChanged: (v) => setState(() => _value = v),
+          ),
+          const SizedBox(height: 24),
+          const Text(
+            // ignore: avoid_hardcoded_strings_in_widgets
+            'Comfort headroom active',
+            style: TextStyle(color: Colors.white70),
+          ),
+          const SizedBox(height: 8),
+          CtSlider(
+            value: 0.3,
+            min: 0,
+            max: 1,
+            divisions: 10,
+            comfortHeadroomActive: true,
+            onChanged: (_) {},
+          ),
         ],
       ),
     );
