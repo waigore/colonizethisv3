@@ -295,10 +295,11 @@ List<WidgetbookNode> get diplomacyDetailScreenDirectories => [
 ];
 
 /// Stories for the dark editorial-monocle theme primitives introduced by
-/// issue #2859 S1/S8/S10/S13 (`CtGradients`, `CtBrassDivider`,
-/// `CtSectionLabel`, `CtProgressBar`) and issue #2860 S1/S2/S4
-/// (`CtCompassRose`, `CtMainMenuCollage`, `CtFleurDeLisOrnament`).
-/// SPEC/ui/pixel-art-ui-catalog.md § Editorial-monocle palette.
+/// issue #2859 S1/S8/S9/S10/S11/S12/S13 (`CtGradients`, `CtBrassDivider`,
+/// `CtToggleSwitch`, `CtSectionLabel`, `CtResourceCell`, `CtProgressBar`,
+/// `CtBackButton`, `CtTopBar`) and issue #2860 S1/S2/S4 (`CtCompassRose`,
+/// `CtMainMenuCollage`, `CtFleurDeLisOrnament`). SPEC/ui/pixel-art-ui-catalog.md
+/// § Editorial-monocle palette.
 List<WidgetbookNode> get ctDarkThemePrimitiveDirectories => [
   WidgetbookFolder(
     name: 'Ct- Dark Theme Primitives',
@@ -318,6 +319,22 @@ List<WidgetbookNode> get ctDarkThemePrimitiveDirectories => [
       WidgetbookUseCase(
         name: 'CtProgressBar — value sweep',
         builder: (context) => _CtProgressBarStory(),
+      ),
+      WidgetbookUseCase(
+        name: 'CtToggleSwitch — interactive states',
+        builder: (context) => const _CtToggleSwitchStory(),
+      ),
+      WidgetbookUseCase(
+        name: 'CtResourceCell — delta sign sweep',
+        builder: (context) => _CtResourceCellStory(),
+      ),
+      WidgetbookUseCase(
+        name: 'CtBackButton — interactive states',
+        builder: (context) => const _CtBackButtonStory(),
+      ),
+      WidgetbookUseCase(
+        name: 'CtTopBar — slot composition',
+        builder: (context) => const _CtTopBarStory(),
       ),
       WidgetbookUseCase(
         name: 'CtCompassRose — size sweep',
@@ -493,6 +510,228 @@ class _CtProgressBarStory extends StatelessWidget {
           Text('Disabled (40%)'),
           SizedBox(height: 4),
           CtProgressBar(value: 0.4, enabled: false, label: '40%'),
+        ],
+      ),
+    );
+  }
+}
+
+class _CtToggleSwitchStory extends StatefulWidget {
+  const _CtToggleSwitchStory();
+
+  @override
+  State<_CtToggleSwitchStory> createState() => _CtToggleSwitchStoryState();
+}
+
+class _CtToggleSwitchStoryState extends State<_CtToggleSwitchStory> {
+  bool _interactive = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return _CtDarkPrimitiveScaffold(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            // ignore: avoid_hardcoded_strings_in_widgets
+            'Off (static)',
+            style: TextStyle(color: Colors.white70),
+          ),
+          const SizedBox(height: 4),
+          CtToggleSwitch(value: false, onChanged: (_) {}),
+          const SizedBox(height: 16),
+          const Text(
+            // ignore: avoid_hardcoded_strings_in_widgets
+            'On (static)',
+            style: TextStyle(color: Colors.white70),
+          ),
+          const SizedBox(height: 4),
+          CtToggleSwitch(value: true, onChanged: (_) {}),
+          const SizedBox(height: 16),
+          const Text(
+            // ignore: avoid_hardcoded_strings_in_widgets
+            'Interactive (tap to toggle)',
+            style: TextStyle(color: Colors.white70),
+          ),
+          const SizedBox(height: 4),
+          CtToggleSwitch(
+            value: _interactive,
+            onChanged: (v) => setState(() => _interactive = v),
+          ),
+          const SizedBox(height: 16),
+          const Text(
+            // ignore: avoid_hardcoded_strings_in_widgets
+            'Disabled off (onChanged: null)',
+            style: TextStyle(color: Colors.white70),
+          ),
+          const SizedBox(height: 4),
+          const CtToggleSwitch(value: false, onChanged: null),
+          const SizedBox(height: 16),
+          const Text(
+            // ignore: avoid_hardcoded_strings_in_widgets
+            'Disabled on (onChanged: null)',
+            style: TextStyle(color: Colors.white70),
+          ),
+          const SizedBox(height: 4),
+          const CtToggleSwitch(value: true, onChanged: null),
+        ],
+      ),
+    );
+  }
+}
+
+class _CtResourceCellStory extends StatelessWidget {
+  Widget _icon(String commodityId) {
+    return ResourceIcon(commodityId: commodityId, size: 20);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return _CtDarkPrimitiveScaffold(
+      child: SizedBox(
+        width: 220,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            CtResourceCell(
+              iconBuilder: (_) => _icon('grain'),
+              // ignore: avoid_hardcoded_strings_in_widgets
+              name: 'Grain',
+              quantity: 1240,
+              delta: 45,
+            ),
+            const SizedBox(height: 6),
+            CtResourceCell(
+              iconBuilder: (_) => _icon('meat'),
+              // ignore: avoid_hardcoded_strings_in_widgets
+              name: 'Meat',
+              quantity: 870,
+            ),
+            const SizedBox(height: 6),
+            CtResourceCell(
+              iconBuilder: (_) => _icon('timber'),
+              // ignore: avoid_hardcoded_strings_in_widgets
+              name: 'Timber',
+              quantity: 920,
+              delta: -40,
+            ),
+            const SizedBox(height: 6),
+            CtResourceCell(
+              iconBuilder: (_) => _icon('iron'),
+              // ignore: avoid_hardcoded_strings_in_widgets
+              name: 'Iron',
+              quantity: 430,
+              delta: 0,
+            ),
+            const SizedBox(height: 6),
+            CtResourceCell(
+              iconBuilder: (_) => _icon('refinedSugar'),
+              // ignore: avoid_hardcoded_strings_in_widgets
+              name: 'Refined Sugar — long label demo',
+              quantity: 1234567,
+              delta: 12,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _CtBackButtonStory extends StatefulWidget {
+  const _CtBackButtonStory();
+
+  @override
+  State<_CtBackButtonStory> createState() => _CtBackButtonStoryState();
+}
+
+class _CtBackButtonStoryState extends State<_CtBackButtonStory> {
+  int _taps = 0;
+
+  @override
+  Widget build(BuildContext context) {
+    return _CtDarkPrimitiveScaffold(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            // ignore: avoid_hardcoded_strings_in_widgets
+            'Default (hover / press to inspect states)',
+            style: TextStyle(color: Colors.white70),
+          ),
+          const SizedBox(height: 4),
+          CtBackButton(onPressed: () => setState(() => _taps++)),
+          const SizedBox(height: 16),
+          const Text(
+            // ignore: avoid_hardcoded_strings_in_widgets
+            'Disabled',
+            style: TextStyle(color: Colors.white70),
+          ),
+          const SizedBox(height: 4),
+          const CtBackButton(enabled: false),
+          const SizedBox(height: 16),
+          Text(
+            // ignore: avoid_hardcoded_strings_in_widgets
+            'taps: $_taps',
+            style: const TextStyle(color: Colors.white70),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _CtTopBarStory extends StatelessWidget {
+  const _CtTopBarStory();
+
+  @override
+  Widget build(BuildContext context) {
+    return _CtDarkPrimitiveScaffold(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: const [
+          Text(
+            // ignore: avoid_hardcoded_strings_in_widgets
+            'Title only',
+            style: TextStyle(color: Colors.white70),
+          ),
+          SizedBox(height: 4),
+          CtTopBar(
+            // ignore: avoid_hardcoded_strings_in_widgets
+            title: 'Production',
+          ),
+          SizedBox(height: 16),
+          Text(
+            // ignore: avoid_hardcoded_strings_in_widgets
+            'Back-label + icon + title',
+            style: TextStyle(color: Colors.white70),
+          ),
+          SizedBox(height: 4),
+          CtTopBar(
+            // ignore: avoid_hardcoded_strings_in_widgets
+            title: 'Production',
+            // ignore: avoid_hardcoded_strings_in_widgets
+            backButtonLabel: 'Map',
+            icon: Icon(Icons.factory_outlined, size: 18, color: Colors.white),
+          ),
+          SizedBox(height: 16),
+          Text(
+            // ignore: avoid_hardcoded_strings_in_widgets
+            'Disabled back affordance',
+            style: TextStyle(color: Colors.white70),
+          ),
+          SizedBox(height: 4),
+          CtTopBar(
+            // ignore: avoid_hardcoded_strings_in_widgets
+            title: 'Production',
+            // ignore: avoid_hardcoded_strings_in_widgets
+            backButtonLabel: 'Map',
+            backButtonEnabled: false,
+          ),
         ],
       ),
     );
