@@ -322,6 +322,191 @@ void main() {
         'No saved games. Start a new game first.',
       );
     });
+
+    // SPEC/ui/main-menu.md § Responsive rules; SPEC/ui/mockups/SHEL10002-main-menu.html
+    // `@media (max-width: 430px)`. Refs #2870 S6.
+    Future<void> pumpAtSize(
+      WidgetTester tester, {
+      required Size size,
+      required MainMenuVariant variant,
+    }) async {
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+      await tester.binding.setSurfaceSize(size);
+      await tester.pumpWidget(
+        MediaQuery(
+          data: MediaQueryData(size: size),
+          child: buildMainMenu(
+            variant: variant,
+            onNewGame: () {},
+            onLoadGame: () {},
+            onSettings: () {},
+            onQuit: () {},
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+    }
+
+    testWidgets('AC Narrow ≤ 430 dp (plain): menu body padding compacts to '
+        'EdgeInsets.symmetric(horizontal: 12, vertical: 24)', (
+      WidgetTester tester,
+    ) async {
+      await pumpAtSize(
+        tester,
+        size: const Size(360, 640),
+        variant: MainMenuVariant.plain,
+      );
+
+      final Padding bodyPadding = tester.widget<Padding>(
+        find.byKey(const Key(kMainMenuBodyPaddingKey)),
+      );
+      expect(bodyPadding.padding, kMainMenuBodyPaddingNarrow);
+    });
+
+    testWidgets('AC Wide > 430 dp (plain): menu body padding stays at default '
+        'EdgeInsets.symmetric(horizontal: 24)', (WidgetTester tester) async {
+      await pumpAtSize(
+        tester,
+        size: const Size(800, 600),
+        variant: MainMenuVariant.plain,
+      );
+
+      final Padding bodyPadding = tester.widget<Padding>(
+        find.byKey(const Key(kMainMenuBodyPaddingKey)),
+      );
+      expect(bodyPadding.padding, kMainMenuBodyPaddingDefault);
+    });
+
+    testWidgets('AC Narrow ≤ 430 dp (pixelArt): menu body padding compacts and '
+        'button label letter-spacing reduces to narrow constant', (
+      WidgetTester tester,
+    ) async {
+      await pumpAtSize(
+        tester,
+        size: const Size(360, 640),
+        variant: MainMenuVariant.pixelArt,
+      );
+
+      final Padding bodyPadding = tester.widget<Padding>(
+        find.byKey(const Key(kMainMenuBodyPaddingKey)),
+      );
+      expect(bodyPadding.padding, kMainMenuBodyPaddingNarrow);
+
+      // Every wood-panel button label Text in the pixelArt tree has the
+      // narrow letter-spacing applied; default-spacing labels are absent.
+      expect(
+        find.byWidgetPredicate(
+          (Widget w) =>
+              w is Text &&
+              w.style?.letterSpacing == kMainMenuButtonLetterSpacingNarrow,
+        ),
+        findsWidgets,
+      );
+      expect(
+        find.byWidgetPredicate(
+          (Widget w) =>
+              w is Text &&
+              w.style?.letterSpacing == kMainMenuButtonLetterSpacingDefault,
+        ),
+        findsNothing,
+      );
+    });
+
+    testWidgets(
+      'AC Wide > 430 dp (pixelArt): menu body padding stays default and '
+      'button label letter-spacing stays at default constant',
+      (WidgetTester tester) async {
+        await pumpAtSize(
+          tester,
+          size: const Size(800, 600),
+          variant: MainMenuVariant.pixelArt,
+        );
+
+        final Padding bodyPadding = tester.widget<Padding>(
+          find.byKey(const Key(kMainMenuBodyPaddingKey)),
+        );
+        expect(bodyPadding.padding, kMainMenuBodyPaddingDefault);
+
+        expect(
+          find.byWidgetPredicate(
+            (Widget w) =>
+                w is Text &&
+                w.style?.letterSpacing == kMainMenuButtonLetterSpacingDefault,
+          ),
+          findsWidgets,
+        );
+        expect(
+          find.byWidgetPredicate(
+            (Widget w) =>
+                w is Text &&
+                w.style?.letterSpacing == kMainMenuButtonLetterSpacingNarrow,
+          ),
+          findsNothing,
+        );
+      },
+    );
+
+    testWidgets(
+      'AC Narrow ≤ 430 dp (plain): button label Text widgets carry no '
+      'explicit letter-spacing override (letter-spacing rule is pixelArt-only)',
+      (WidgetTester tester) async {
+        await pumpAtSize(
+          tester,
+          size: const Size(360, 640),
+          variant: MainMenuVariant.plain,
+        );
+
+        // Plain variant uses bare `Text(label)` for menu actions; no
+        // explicit `letterSpacing` is set by main-menu code on those Texts.
+        expect(
+          find.byWidgetPredicate(
+            (Widget w) =>
+                w is Text &&
+                w.style?.letterSpacing == kMainMenuButtonLetterSpacingNarrow,
+          ),
+          findsNothing,
+        );
+        expect(
+          find.byWidgetPredicate(
+            (Widget w) =>
+                w is Text &&
+                w.style?.letterSpacing == kMainMenuButtonLetterSpacingDefault,
+          ),
+          findsNothing,
+        );
+      },
+    );
+
+    testWidgets(
+      'AC ≤ 430 dp boundary: viewport exactly at 430 dp is treated as narrow',
+      (WidgetTester tester) async {
+        await pumpAtSize(
+          tester,
+          size: const Size(kMainMenuNarrowBreakpoint, 640),
+          variant: MainMenuVariant.plain,
+        );
+
+        final Padding bodyPadding = tester.widget<Padding>(
+          find.byKey(const Key(kMainMenuBodyPaddingKey)),
+        );
+        expect(bodyPadding.padding, kMainMenuBodyPaddingNarrow);
+      },
+    );
+
+    testWidgets('AC > 430 dp boundary: viewport 431 dp is treated as wide', (
+      WidgetTester tester,
+    ) async {
+      await pumpAtSize(
+        tester,
+        size: const Size(kMainMenuNarrowBreakpoint + 1, 640),
+        variant: MainMenuVariant.plain,
+      );
+
+      final Padding bodyPadding = tester.widget<Padding>(
+        find.byKey(const Key(kMainMenuBodyPaddingKey)),
+      );
+      expect(bodyPadding.padding, kMainMenuBodyPaddingDefault);
+    });
   });
 
   group('CtGameSetup — SPEC/ui/game-setup.md acceptance criteria', () {
