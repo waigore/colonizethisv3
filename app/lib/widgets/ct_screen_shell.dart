@@ -1,9 +1,20 @@
 import 'package:flutter/material.dart';
 
 import 'ct_panel.dart';
+import 'ct_top_bar.dart';
 
-/// Full-screen pixel-art shell: background + framed content area + title bar.
-/// Replaces visible use of Scaffold/AppBar in user-facing screens.
+/// Full-screen pixel-art shell: dark editorial-monocle background + framed
+/// content area + 36 px [CtTopBar].
+///
+/// Per `Refs #2859` R4 / S5, the legacy [Scaffold]+[AppBar]-style top bar
+/// (full-width [colorScheme.primary] band with [Icons.arrow_back]) is
+/// replaced by [CtTopBar] so the dark theme palette, [CtGradients]
+/// `topBarGradient`, and [CtBackButton] chevron all participate via a
+/// single shared primitive. The existing public API is preserved:
+/// callers still pass [title], [child], and [showBackButton] and continue
+/// to get a screen-shell with title + body framing. SPEC:
+/// `SPEC/ui/pixel-art-ui-catalog.md` § Pixel-art component catalog
+/// (`CtScreenShell` entry).
 class CtScreenShell extends StatelessWidget {
   const CtScreenShell({
     super.key,
@@ -18,51 +29,29 @@ class CtScreenShell extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
+    final ThemeData theme = Theme.of(context);
     return Scaffold(
-      backgroundColor: theme.colorScheme.surface,
+      backgroundColor: theme.scaffoldBackgroundColor,
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(8),
           child: CtPanel(
-            padding: const EdgeInsets.all(8),
+            padding: EdgeInsets.zero,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 8,
-                    vertical: 4,
-                  ),
-                  color: theme.colorScheme.primary.withValues(alpha: 0.8),
-                  child: Row(
-                    children: [
-                      if (showBackButton)
-                        GestureDetector(
-                          onTap: () => Navigator.of(context).pop(),
-                          child: Icon(
-                            Icons.arrow_back,
-                            color: theme.colorScheme.onPrimary,
-                            size: 20,
-                          ),
-                        )
-                      else
-                        const SizedBox(width: 20),
-                      Expanded(
-                        child: Text(
-                          title,
-                          style: theme.textTheme.titleMedium?.copyWith(
-                            color: theme.colorScheme.onPrimary,
-                          ),
-                          textAlign: TextAlign.center,
-                        ),
-                      ),
-                      const SizedBox(width: 20),
-                    ],
+              children: <Widget>[
+                CtTopBar(
+                  title: title,
+                  showBackButton: showBackButton,
+                ),
+                const SizedBox(height: 8),
+                Expanded(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 8),
+                    child: child,
                   ),
                 ),
                 const SizedBox(height: 8),
-                Expanded(child: child),
               ],
             ),
           ),

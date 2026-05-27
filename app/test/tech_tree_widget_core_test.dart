@@ -9,6 +9,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:colonizethis_app/features/game/widgets/tech_tree_widget.dart';
 import 'package:colonizethis_app/features/game/screens/technology_screen.dart';
+import 'package:colonizethis_app/widgets/ct_back_button.dart';
 import 'package:colonizethis_app/widgets/ct_dialog_shell.dart';
 import 'package:colonizethis_app/widgets/ct_screen_shell.dart';
 import 'package:colonizethis_app/providers/app_event_bus_provider.dart';
@@ -123,7 +124,17 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.byType(CtScreenShell), findsOneWidget);
-    expect(find.byIcon(Icons.arrow_back), findsOneWidget);
+    // Refs #2859 R4 / S5 — CtScreenShell now renders a CtBackButton with a
+    // chevron-left glyph instead of the legacy Material AppBar arrow_back
+    // chevron.
+    expect(find.byType(CtBackButton), findsOneWidget);
+    expect(
+      find.descendant(
+        of: find.byType(CtBackButton),
+        matching: find.byIcon(Icons.chevron_left),
+      ),
+      findsOneWidget,
+    );
   });
 
   testWidgets('TechnologyScreen back button pops navigator', (
@@ -150,7 +161,7 @@ void main() {
 
     expect(find.text('Technology'), findsOneWidget);
 
-    await tester.tap(find.byIcon(Icons.arrow_back));
+    await tester.tap(find.byType(CtBackButton));
     await tester.pumpAndSettle();
 
     expect(find.text('Home'), findsOneWidget);
