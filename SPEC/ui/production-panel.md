@@ -30,6 +30,13 @@ Asset filenames and style for commodities and workers appear in [game-toolbar-ic
 
 ## Layout / wireframe
 
+### Top bar (all viewports)
+
+- **Component:** `CtTopBar` (`SPEC/ui/pixel-art-ui-catalog.md` § Pixel-art component catalog → `CtTopBar` entry). Rendered above both subpanels via the `topBar` slot on `CtGameFeatureScreenShell`.
+- **Back affordance:** `CtBackButton` chevron-left glyph followed by the localised muted label `Map` (issue #2862 requirement: `← Map`). Tapping pops the route via `Navigator.maybePop()` so the player returns to the game screen they came from.
+- **Icon + title:** Pixel-art production icon `assets/icons/32/ui_icon_production.png` rendered at 18×18 logical px between the back affordance and the title. Title literal **`Production`** rendered in the dark-theme `titleMedium` slot (Cinzel display family per `AppThemes.editorialMonocle`).
+- **Height + chrome:** Fixed 36 px high (`CtTopBar.height`), filled with `CtGradients.topBarGradient`, capped by a 1 px `--accent-dim` bottom border. Hard-coded colours are forbidden; all tokens resolve through `EditorialMonoclePalette` (issue #2858).
+
 ### Desktop / wide viewport (e.g. width ≥ 600 dp)
 
 - **Subpanel 1 — Available (left):** Compact layout with:
@@ -113,6 +120,9 @@ Folder: **Production Panel** (`app/lib/widgetbook/catalog.dart`).
 
 ## Acceptance criteria
 
+- **Top bar present:** Given the Production screen is mounted for the viewed player on any viewport, when the screen builds its chrome, then the UI layer renders a `CtTopBar` instance above the body whose `title` equals **`Production`**, whose `backButtonLabel` equals **`Map`**, and whose leading `icon` is the pixel-art asset `assets/icons/32/ui_icon_production.png` sized 18×18 logical px.
+- **Top bar back action:** Given the Production screen is mounted under a `Navigator` with at least one prior route on the stack, when the player taps the back affordance in the production top bar, then the UI layer calls `Navigator.maybePop()` on the surrounding context (the screen does not bypass the navigator with a custom transition).
+- **Top bar dark chrome only:** Given the Production screen is mounted, when the top bar paints, then the UI layer uses `CtGradients.topBarGradient` and the `EditorialMonoclePalette.accentDim` 1 px bottom border (no hard-coded light-theme colours such as parchment `#F5F5DC` or raw `colorScheme.primary` fills).
 - **Available (commodity grids):** Given the Production screen is rendered for the viewed player on any viewport, when the Available subpanel builds its commodity grids, then the UI layer arranges the **Food**, **Raw Materials**, and **Manufactured** sections each as a **3-column** grid where every cell shows the leading commodity icon (32×32 per [game-toolbar-icons.md](game-toolbar-icons.md)), the commodity display name, the current quantity, and a parenthetical net-change value rendered **only** when the projected end-of-turn net change for that commodity is non-zero.
 - **Available (workers and labour):** Given the Available subpanel is rendering with the viewed player's `WorkerPool`, when the Workers section is built, then the UI layer renders the worker tiers in a **2-column** grid (icon + tier label + count per cell) and appends a bold **Effective labour** total line at the bottom of the section.
 - **Net change correctness:** Given a loaded `Game`, matching topology and tile maps, the current unresolved `Orders`, and a human production desired-output map, When the UI builds the Available grid for that player, Then each shown parenthetical delta equals the difference between that player’s stockpile **after** `applyEconomyPhasesForPreview` and **before** it, per commodity, for phases Pending build costs → Extraction → Riches-to-treasury → Consumption → Production with that player’s assignments; other players run the same phases with empty default assignments unless specified elsewhere.
