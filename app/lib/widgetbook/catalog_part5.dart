@@ -92,9 +92,7 @@ class _GameSideMenuStoryHostState extends State<_GameSideMenuStoryHost> {
       home: Scaffold(
         body: Stack(
           children: [
-            Positioned.fill(
-              child: Container(color: Colors.black12),
-            ),
+            Positioned.fill(child: Container(color: Colors.black12)),
             GameSideMenu(
               sideMenuOpen: _open,
               onClose: () => setState(() => _open = false),
@@ -181,8 +179,7 @@ class _GameMapNarrowDetailOverlaySlotStoryHostState
                   region: region,
                   humanPlayerId: game.players.first.id,
                   playerView: demoHumanPlayerViewForOverlay,
-                  workTargetSelectionCache:
-                      PerPlayerWorkTargetSelectionCache(),
+                  workTargetSelectionCache: PerPlayerWorkTargetSelectionCache(),
                 ),
               ),
             ],
@@ -194,9 +191,7 @@ class _GameMapNarrowDetailOverlaySlotStoryHostState
 }
 
 ProviderScope _gameMapNarrowDetailOverlaySlotProviderScope() {
-  return ProviderScope(
-    child: const _GameMapNarrowDetailOverlaySlotStoryHost(),
-  );
+  return ProviderScope(child: const _GameMapNarrowDetailOverlaySlotStoryHost());
 }
 
 /// Game map narrow detail overlay slot stories.
@@ -224,18 +219,8 @@ Game _diplomacyDetailStoryGame() {
     ),
     turnTimeMapping: TurnTimeMapping.gdd01,
     players: [
-      Player(
-        id: humanId,
-        displayName: 'England',
-        isHuman: true,
-        treasury: 0,
-      ),
-      Player(
-        id: rivalId,
-        displayName: 'Spain',
-        isHuman: false,
-        treasury: 0,
-      ),
+      Player(id: humanId, displayName: 'England', isHuman: true, treasury: 0),
+      Player(id: rivalId, displayName: 'Spain', isHuman: false, treasury: 0),
     ],
     diplomacyRelations: [
       DiplomacyRelation(
@@ -309,3 +294,202 @@ List<WidgetbookNode> get diplomacyDetailScreenDirectories => [
   ),
 ];
 
+/// Stories for the dark editorial-monocle theme primitives introduced by
+/// issue #2859 S1/S8/S10/S13: `CtGradients`, `CtBrassDivider`,
+/// `CtSectionLabel`, and `CtProgressBar`. SPEC/ui/pixel-art-ui-catalog.md
+/// § Editorial-monocle palette.
+List<WidgetbookNode> get ctDarkThemePrimitiveDirectories => [
+  WidgetbookFolder(
+    name: 'Ct- Dark Theme Primitives',
+    children: [
+      WidgetbookUseCase(
+        name: 'CtGradients — token swatches',
+        builder: (context) => _CtGradientsStory(),
+      ),
+      WidgetbookUseCase(
+        name: 'CtBrassDivider — wide and narrow',
+        builder: (context) => _CtBrassDividerStory(),
+      ),
+      WidgetbookUseCase(
+        name: 'CtSectionLabel — default',
+        builder: (context) => _CtSectionLabelStory(),
+      ),
+      WidgetbookUseCase(
+        name: 'CtProgressBar — value sweep',
+        builder: (context) => _CtProgressBarStory(),
+      ),
+      WidgetbookUseCase(
+        name: 'CtCompassRose — size sweep',
+        builder: (context) => _CtCompassRoseStory(),
+      ),
+      WidgetbookUseCase(
+        name: 'CtFleurDeLisOrnament — flanking pair',
+        builder: (context) => _CtFleurDeLisOrnamentStory(),
+      ),
+    ],
+  ),
+];
+
+class _CtDarkPrimitiveScaffold extends StatelessWidget {
+  const _CtDarkPrimitiveScaffold({required this.child});
+
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return Theme(
+      data: AppThemes.editorialMonocle,
+      child: Material(
+        color: AppThemes.editorialMonocle.scaffoldBackgroundColor,
+        child: Padding(padding: const EdgeInsets.all(24), child: child),
+      ),
+    );
+  }
+}
+
+class _CtGradientsStory extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    final List<({String name, Gradient gradient})> entries = [
+      (name: 'buttonGradient', gradient: CtGradients.buttonGradient),
+      (name: 'panelGradient', gradient: CtGradients.panelGradient),
+      (name: 'rowGradient', gradient: CtGradients.rowGradient),
+      (name: 'topBarGradient', gradient: CtGradients.topBarGradient),
+    ];
+    return _CtDarkPrimitiveScaffold(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          for (final entry in entries) ...[
+            Text(entry.name, style: const TextStyle(color: Colors.white70)),
+            const SizedBox(height: 4),
+            Container(
+              height: 36,
+              decoration: BoxDecoration(gradient: entry.gradient),
+            ),
+            const SizedBox(height: 16),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _CtBrassDividerStory extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return _CtDarkPrimitiveScaffold(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: const [
+          SizedBox(height: 12),
+          CtBrassDivider(),
+          SizedBox(height: 24),
+          SizedBox(width: 120, child: CtBrassDivider()),
+          SizedBox(height: 24),
+          SizedBox(width: 320, child: CtBrassDivider()),
+        ],
+      ),
+    );
+  }
+}
+
+class _CtSectionLabelStory extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return _CtDarkPrimitiveScaffold(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: const [
+          CtSectionLabel('Production'),
+          SizedBox(height: 16),
+          CtSectionLabel(
+            'Diplomatic Relations',
+            padding: EdgeInsets.only(left: 8),
+          ),
+          SizedBox(height: 16),
+          CtSectionLabel('Naval Units'),
+        ],
+      ),
+    );
+  }
+}
+
+class _CtCompassRoseStory extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return _CtDarkPrimitiveScaffold(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: const [
+          CtCompassRose(size: 32),
+          SizedBox(height: 16),
+          CtCompassRose(size: 48),
+          SizedBox(height: 16),
+          CtCompassRose(size: 72),
+        ],
+      ),
+    );
+  }
+}
+
+class _CtFleurDeLisOrnamentStory extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return _CtDarkPrimitiveScaffold(
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        mainAxisAlignment: MainAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: const [
+          CtFleurDeLisOrnament(),
+          SizedBox(width: 16),
+          Text(
+            // ignore: avoid_hardcoded_strings_in_widgets
+            'ColonizeThis',
+            style: TextStyle(fontSize: 28, fontWeight: FontWeight.w700),
+          ),
+          SizedBox(width: 16),
+          CtFleurDeLisOrnament(),
+        ],
+      ),
+    );
+  }
+}
+
+class _CtProgressBarStory extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return _CtDarkPrimitiveScaffold(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        mainAxisSize: MainAxisSize.min,
+        children: const [
+          // ignore: avoid_hardcoded_strings_in_widgets
+          Text('0%'),
+          SizedBox(height: 4),
+          CtProgressBar(value: 0),
+          SizedBox(height: 16),
+          // ignore: avoid_hardcoded_strings_in_widgets
+          Text('30% with label'),
+          SizedBox(height: 4),
+          CtProgressBar(value: 0.3, label: '30%'),
+          SizedBox(height: 16),
+          // ignore: avoid_hardcoded_strings_in_widgets
+          Text('70% (clamped from 1.2)'),
+          SizedBox(height: 4),
+          CtProgressBar(value: 1.2, label: '100%'),
+          SizedBox(height: 16),
+          // ignore: avoid_hardcoded_strings_in_widgets
+          Text('Disabled (40%)'),
+          SizedBox(height: 4),
+          CtProgressBar(value: 0.4, enabled: false, label: '40%'),
+        ],
+      ),
+    );
+  }
+}

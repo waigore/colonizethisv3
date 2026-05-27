@@ -13,7 +13,7 @@ The CtMainMenu widget is presentational and accepts the following parameters. Th
 
 | Parameter | Type | Description |
 |-----------|------|-------------|
-| `variant` | `plain` \| `pixelArt` | Both variants use the **pixel-art component catalog** (CtNinePatchButton, CtScreenShell). **plain:** colonial colour theme only (no background illustration). **pixelArt:** pixel-art assets per table below. |
+| `variant` | `plain` \| `pixelArt` | Both variants use the **Ct-* component catalog** (CtNinePatchButton, CtScreenShell). **plain:** theme scaffold color only (no background illustration, no compass rose, no fleur-de-lis, no brass divider, no scroll brackets — see the **Variant rendering** table below). **pixelArt:** dark editorial-monocle layout per mockup `SPEC/ui/mockups/SHEL10002-main-menu.html` (dark SVG collage, CtCompassRose emblem, fleur-de-lis-flanked title, CtBrassDivider, wood-panel `CtNinePatchButton`, scroll brackets, footer Quit chip). |
 | `state` | `default` \| `afterVictory` \| `noSaves` | **default:** no subtitle; Load Game enabled when saves exist. **afterVictory:** show subtitle "Congratulations, you won your last game." **noSaves:** Load Game disabled with explanatory tooltip/helper text. |
 | `version` | string | Version text shown in footer (e.g. `v1.0.0`). The shell passes this through the shared debug-aware formatter so `CT_DEBUG_CONSOLE=true` renders `v1.0.0 (debug)`. |
 | `onNewGame` | callback | Invoked when user taps New Game. |
@@ -73,6 +73,13 @@ Return from game and resume visibility refresh:
 - Given the user is on the Victory Screen (UXD 03l), when the user activates **Return to Main Menu**, then the shell clears in-memory game state and navigates back to `CtMainMenu`.
 - Given an auto-save slot was written during play and the user has returned to the main menu without restarting the app, when the shell mounts `CtMainMenu`, then the shell re-evaluates `resumeGameVisible` against the current auto-save slot so that **Resume game** appears immediately (no app restart required).
 
+Variant rendering (mockup-aligned dark editorial-monocle):
+
+- Given `CtMainMenu` is rendered with `variant: pixelArt`, when the widget builds, then the UI layer renders the dark SVG collage background, a `CtCompassRose` above the title, a `CtFleurDeLisOrnament` on each side of the "ColonizeThis" title, a `CtBrassDivider` between the logo and buttons regions, wood-panel `CtNinePatchButton` instances for the menu actions, and scroll-bracket gutters flanking the buttons region.
+- Given `CtMainMenu` is rendered with `variant: plain`, when the widget builds, then the UI layer renders no SVG collage, no `CtCompassRose`, no `CtFleurDeLisOrnament`, no `CtBrassDivider`, no scroll-bracket gutters, and no wood-panel chrome on the buttons; only the theme scaffold color, the title text, and plain `CtNinePatchButton` controls are shown.
+- Given the `pixelArt` variant is rendered on a viewport ≤ 430 dp wide, when the buttons region builds, then the wood-panel button labels render with reduced `letter-spacing` (`0.04em` instead of `0.08em`) per the mockup responsive rule.
+- Given `SPEC/ui/main-menu.md` is read after the S0 spec update, when the **Main menu aesthetic (dark editorial-monocle)** section is inspected, then it describes the dark editorial-monocle redesign and embeds (or references) the **Variant rendering** table; no remaining narrative refers to the retired 16th-century pixel-art study-room aesthetic, `ui_main_menu_background.png`, or the legacy PixelLab prompts for this screen.
+
 **Debug indicator formatting.** `CT_DEBUG_CONSOLE` is the sole mode flag for display suffix behavior. The shell must route version display through the shared debug-aware formatter; when the compile-time flag is true, all user-visible app version labels append ` (debug)` as a terminal suffix, and when false/undefined, labels remain unchanged.
 
 **Shell behaviour.** Shell responsibility (first screen after splash, callback wiring, clear in-memory game state on return from game) is defined in the dedicated UI spec [shell-screen.md](shell-screen.md) and the app TDD: [ctdev-app.md](../program/ctdev-app.md) (app screens and navigation). For Flutter shell and route ownership see [repo-and-packages.md](../program/repo-and-packages.md).
@@ -85,30 +92,59 @@ Return from game and resume visibility refresh:
 
 ## Layout / wireframe
 
-Positions, layout, and hierarchy (per UXD 03a; 44dp min touch targets).
+Positions, layout, and hierarchy (per UXD 03a; mockup `SPEC/ui/mockups/SHEL10002-main-menu.html`; 44dp min touch targets).
 
-**Default:**
+**Pixel-art variant (mockup target):**
 
 ```text
-+------------------------------------------------------+
-|                     GAME LOGO                        |
-|                "ColonizeThis V3"                     |
++------------------------------------------------------+   <- background_region
+|  (dark SVG collage: telescope, compass-rose, anchor, |       editorial-monocle bg
+|   sextant, hourglass, muskets, cannon, ship's wheel, |       (--bg / --bg-deep)
+|   soldier silhouette, wave bands, trade-route arcs)  |
+|                                                      |   <- logo_region
+|             "A GAME OF EMPIRE & DISCOVERY"           |       (eyebrow, --muted)
+|                       [ CtCompassRose ]              |       (compass emblem)
+|         🜲    ColonizeThis    🜲                     |       (title flanked by
+|                                                      |        CtFleurDeLisOrnament)
+|        Congratulations, you won your last game.      |       (afterVictory only,
+|                                                      |        --muted italic)
+|                ====<>====                            |       CtBrassDivider
+|                                                      |   <- buttons_region
+|   |  [ New Game ]                  |                 |       (wood-panel buttons,
+|   |  [ Resume Game ] (if auto-save)|                 |        scroll brackets at
+|   |  [ Load Game ]   (or tooltip)  |                 |        left/right gutters)
+|   |  [ Settings ]                  |                 |
 |                                                      |
-|  [ New Game ]                                        |
-|  [ Resume game ]  (only if auto-save exists)         |
-|  [ Load Game ]    (disabled if no saves)             |
-|  [ Settings ]                                        |
-|                                                      |
-|                              v1.0.0                  |
-|                              [ Quit ]                |
+|                                       v3.0.0  [Quit] |   <- footer_region
 +------------------------------------------------------+
 ```
 
-**After victory:** Same layout; add subtitle line below title: "Congratulations, you won your last game."
+**Plain variant:** same regions, but background_region renders only the theme scaffold color (no SVG collage), the logo_region omits the eyebrow / compass / fleur-de-lis / brass divider, and the buttons_region omits the scroll brackets and wood-panel chrome (see the **Variant rendering** table for the per-element mapping).
 
-**Regions (UXD 07–style):** canvas full-screen; logo_region (top, title + optional subtitle); buttons_region (column: New Game, Load Game, Settings); footer_region (version text, Quit button).
+**Regions (UXD 07–style):** background_region (full-screen z-0 canvas); logo_region (top column: eyebrow → CtCompassRose → fleur-de-lis title row → optional subtitle → CtBrassDivider); buttons_region (centered column of CtNinePatchButton; scroll-bracket gutters at left/right edges in pixelArt); footer_region (version text left + Quit button right).
 
-**Layout (pixel-art variant):** The menu content column is constrained to a **maximum width of 400 dp** (content only; padding is additional). Buttons and logo area use this width so that the button asset is never upscaled on typical screens. Content is **centered** (e.g. `Center` + `ConstrainedBox(maxWidth: 400)` in code). All buttons use `CtNinePatchButton`; **Material buttons (ElevatedButton, TextButton, etc.) are not permitted for this screen.**
+**Layout:** The menu content column is constrained to a **maximum width of 400 dp** (content only; padding is additional). Content is **centered** (`Center` + `ConstrainedBox(maxWidth: 400)` in code). All buttons use `CtNinePatchButton`; **Material buttons (ElevatedButton, TextButton, etc.) are not permitted for this screen.**
+
+---
+
+## Variant rendering
+
+Normative mapping for what the `plain` and `pixelArt` variants render for each visual element. This table is the single source of truth for variant divergence; `app/lib/widgets/main_menu.dart` and the Widgetbook stories must match it.
+
+| Element | `plain` variant | `pixelArt` variant |
+|---------|-----------------|--------------------|
+| Background | Theme scaffold color only (no SVG collage, no compass-rose watermark, no grid overlay) | Dark SVG collage (telescope, muskets, anchor, sextant, hourglass, cannon, ship's wheel, soldier silhouette, wave bands, dashed trade-route arcs) over `editorialMonocle` `--bg` |
+| Eyebrow text | Hidden | Visible: "A Game of Empire & Discovery" (small-caps, `--muted`) |
+| Compass rose emblem | Hidden | `CtCompassRose` (8 arms + medallion) above the title row |
+| Title "ColonizeThis" | Plain `Text` (theme heading style) | Display-font title flanked left and right by `CtFleurDeLisOrnament` |
+| After-victory subtitle | Plain `Text` (italic, `bodyMedium`) | Plain `Text` (italic, `--muted`) below the title row |
+| Brass divider | Hidden (no divider; standard spacing only) | `CtBrassDivider` between the logo region and the button panel |
+| Buttons | `CtNinePatchButton` with default chrome | Wood-panel `CtNinePatchButton` (gradient, brass corner brackets, engraved text, hover glow per #2859 R2 / S2) |
+| Scroll brackets flanking buttons | Hidden | Visible bracket ornaments at the left/right gutters of the button panel |
+| Quit button | Standard small `CtNinePatchButton` | Secondary, smaller, muted, border-only (`--muted` foreground, no brass corners) |
+| Footer version text | Theme `bodySmall` | Monospace (`--font-mono`), `--muted` token from #2858 |
+
+For both variants the widget contract (`variant`, `state`, `version`, callbacks, `resumeGameVisible`) is unchanged.
 
 **Mobile:** See [mobile-adaptation.md](mobile-adaptation.md). The main menu scrolls when the viewport is short (wrap content in `SingleChildScrollView`). No breakpoint layout change; vertical list suits narrow width. Safe area and 44 dp touch targets apply.
 
@@ -141,128 +177,91 @@ Positions, layout, and hierarchy (per UXD 03a; 44dp min touch targets).
 | `SHEL10002` | `default` | `state == default` | No subtitle; Load enabled when saves exist. |
 | `SHEL10002a` | `afterVictory` | `state == afterVictory` | Subtitle "Congratulations, you won your last game." |
 | `SHEL10002b` | `noSaves` | `state == noSaves` | Load disabled with helper/tooltip. |
-| — | `plain` / `pixelArt` | `variant` param | Pixel-art assets per tables below when `pixelArt`. |
+| — | `plain` / `pixelArt` | `variant` param | Per **Variant rendering** table: `pixelArt` adds dark SVG collage background, `CtCompassRose`, fleur-de-lis flanking, `CtBrassDivider`, wood-panel buttons, scroll brackets, and `--muted` Quit chip; `plain` renders the theme scaffold only with standard `CtNinePatchButton` controls. |
 
 ---
 
-## Pixel-art assets
+## Main menu aesthetic (dark editorial-monocle)
 
-When the pixel-art variant is used, the following assets are required. Check `assets/images/` first; only generate missing or intentionally replaced assets (ration generation per UI design rule).
-
-| Asset id | pixellab_type | size (px) | Notes |
-|----------|---------------|----------|-------|
-| main_menu_logo | ui_element | 256×64 | **Textless** decorative banner; the title "ColonizeThis V3" is **rendered in Flutter** over the asset (Option B). |
-| main_menu_button | ui_element | 400×48 | Matches max content width 400 dp × button height 48 dp for 1:1 at that width; on narrower screens the image is scaled down only (no upscale = no blur). |
-| main_menu_panel | ui_element | 64×64 | (Optional.) Wooden panel / frame for content area; carved wood bevel per UXD 02. |
-
-**Naming in app:** Snake_case under `assets/images/` per asset rule: `ui_main_menu_logo.png`, `ui_main_menu_button.png`, `ui_main_menu_panel.png`.
-
-**Style lock:** UXD 02 (palette, no anti-aliasing, 1x grid, 16th/17th century); UXD 06 for PixelLab prompt injection when generating.
-
----
-
-## Main menu pixel aesthetic
-
-Single source of truth for look/feel, colour palette, and asset pipeline for the pixel-art variant. Style reference: `ui_main_menu_button.png` only; other existing PNGs are disregarded for look-and-feel.
+Single source of truth for look/feel, colour palette, and decorative primitives of the `pixelArt` variant. The mockup `SPEC/ui/mockups/SHEL10002-main-menu.html` is the visual reference; this section governs how that mockup is realised in Flutter against the `editorialMonocle` theme (issue #2858) and Ct-* catalog primitives (issue #2859 + this issue).
 
 ### Aesthetic
 
-16th-century European / colonial study room. Sturdy, slightly luxurious; dark wood and golden embellishments; pixel art, no anti-aliasing, 1x grid (align with UXD 02).
+Late-Victorian / editorial-monocle dark theme: deep wood-and-brass palette, single-page composition with a heavy background collage, decorative compass-rose emblem above a fleur-de-lis-flanked title, brass divider, and wood-panel buttons. **No** 16th-century pixel-art assets (the prior `ui_main_menu_background.png` / `ui_main_menu_logo.png` / pixel button reference is retired for this screen). All chrome is rendered via Flutter `CustomPainter` / `CtNinePatchButton` against the editorial-monocle palette.
 
-### Color palette (from reference button)
+### Color palette (single source of truth)
 
-- **Frame:** deep reddish-brown (e.g. `#3E1F1A`–`#5A332C`), subtle wood grain.
-- **Inner panel:** warmer reddish-brown (e.g. `#A85C3A`–`#C87A5B`), lighter wood.
-- **Accents:** bright gold filigree — highlight `#E8C838`–`#FFED7F`, shadow `#B08B2A`; dark edge `#7D472D`.
+All colors resolve from the canonical [`pixel-art-ui-catalog.md`](pixel-art-ui-catalog.md) § Editorial-monocle palette tokens (delivered by issue #2858):
 
-Use this palette as the single source of truth for all generated assets.
+- **Backgrounds:** `--bg` (scaffold), `--bg-deep` (collage gradient lows, medallion pinhole).
+- **Surfaces:** `--surface` and `--surface-lite` (wood-panel button gradient stops).
+- **Accents (brass):** `--accent` (compass rose arms, divider diamond, button corner highlights), `--accent-dim` (fleur-de-lis flourish, divider gradient, scroll brackets), `--accent-bright` (divider outline, button hover glow).
+- **Text:** `--fg` (button labels), `--muted` (eyebrow, subtitle, footer version, Quit button label).
+
+Hard-coded hex literals are forbidden in `app/lib/widgets/main_menu.dart` and the supporting Ct-* primitives; tests assert against `EditorialMonoclePalette` tokens.
 
 ### Background
 
-Interior of a 16th-century study: statue, globe, drawing table, windows/doors, and other period-appropriate elements; same palette and pixel style. Asset: `ui_main_menu_background.png`.
+Dark SVG collage rendered via a Flutter `CustomPainter` (`_MainMenuCollagePainter`, S2): telescope, crossed muskets, anchor, sextant, hourglass, cannon, ship's wheel, soldier silhouette, layered wave bands, and dashed trade-route arcs. Painted in `--accent` at low opacity over the scaffold `--bg`. **No external SVG asset is required** — primitives mirror the inline `<svg class="collage-svg">` block of the mockup.
 
-### Logo
+### Logo region
 
-**Fluttering flag with text "ColonizeThis".** Colonial-style fabric flag (not wooden banner); dark reddish brown and gold brass; text "ColonizeThis" on the asset. Optional: Flutter can overlay " V3" or full title. Asset: `ui_main_menu_logo.png` (static), `ui_main_menu_logo_animated.png` (spritesheet when available).
+- **Eyebrow text** "A GAME OF EMPIRE & DISCOVERY" — small-caps, `--muted`, display font.
+- **Compass rose emblem** — `CtCompassRose` (S1; see [`pixel-art-ui-catalog.md`](pixel-art-ui-catalog.md)). Centered above the title row at the default `48 dp` size, scaling to `clamp(32, 6vw, 48) dp` on responsive layouts.
+- **Title row** — display-font "ColonizeThis" headline flanked by `CtFleurDeLisOrnament` (S4) at default `24 x 32 dp`. Title color: `--accent`; ornaments: `--accent-dim` at 0.6 alpha.
+- **Subtitle** (afterVictory only) — italic, `--muted`.
+- **Brass divider** — `CtBrassDivider` (issue #2859, R7) below the subtitle / above the buttons region.
 
-**Logo animation:** flag fluttering in wind. **Primary:** PixelLab `animate_with_text` with static flag as reference, action "flag fluttering in wind" / "gentle waving"; output spritesheet. **Fallback:** If PixelLab output is unusable, Flutter-only — no spritesheet; subtle periodic `Transform` on static logo. Asset when used: `ui_main_menu_logo_animated.png`.
+### Buttons region
 
-### Buttons
+- Each menu entry uses a wood-panel `CtNinePatchButton` (issue #2859 S2 enhancement): linear gradient `--surface-lite` → `--surface` → `--bg-deep` top-to-bottom, top/bottom `--accent-dim` borders, brass corner brackets, engraved text shadow, hover glow.
+- **Scroll brackets** flank the buttons column at left/right gutters: thin vertical bars with `--accent-dim` gradient bookended by tiny ornamental dots. Implemented inline in `CtMainMenu.build()` (S5).
+- **Load Game disabled state:** `Tooltip` wrapping the disabled wood-panel button: "No saved games found." (per [`acceptance criteria`](#acceptance-criteria)).
 
-Base asset: `ui_main_menu_button.png`. **Idle:** subtle glint/shimmer (PixelLab spritesheet; Flutter plays it). **Hover (pointer enter):** (1) Gentle bobbing starts, stops on pointer exit — Flutter only (`Transform.translate`, 2–3 px, subtle). (2) Hovered button uses a slightly darker palette (Flutter `ColorFilter` or semi-transparent dark overlay). **On hover exit:** bobbing stops, palette returns to normal. All motion and contrast changes stay subtle. Glint spritesheet when used: `ui_main_menu_button_animated.png`.
+### Footer region
 
-### Typography (initial)
+- **Version text** — left aligned, monospace (`--font-mono`), `--muted`.
+- **Quit button** — right aligned, secondary `CtNinePatchButton` configuration: smaller height, `--muted` foreground, border-only chrome (no brass corner brackets).
 
-Use a **serif font** for title and button labels in the pixel-art variant (basic colonial theme; e.g. Cinzel, Merriweather, or bundled serif). Pixel font: to be defined and created later; out of scope for this spec.
+### Typography
 
-### MCP tool mapping
+Display font: `Iowan Old Style, Cinzel, Charter, Georgia, serif` (mirrors mockup `--font-display`). Monospace: `SF Mono, ui-monospace, Menlo, monospace` (mockup `--font-mono`). Both stacks resolve through `AppThemes.editorialMonocle` (issue #2858).
 
-| Asset / task | MCP tool | Purpose |
-|--------------|----------|---------|
-| Background (study room) | **PixelLab Bitforge** | Generate from description; `style_image_path` = button PNG; `style_strength` ~60–80. |
-| Logo (static, fluttering flag) | **PixelLab Pixflux** | Colonial flag with text "ColonizeThis"; 256×64. |
-| Logo animation (flag fluttering) | **PixelLab `animate_with_text`** (primary) / **Flutter** (fallback) | Primary: flag as reference, action "flag fluttering in wind"; spritesheet. Fallback: Flutter-only Transform. |
-| Optional panel / frame | **PixelLab Bitforge** | Same style reference. |
-| Palette extraction | **pixel-mcp `analyze_reference`** | Optional; refine Bitforge prompts. |
-| Resize / composite | **Imagesorcery** | Only if needed. |
-| Button contrast/wood (post-process) | **pytool** | [pytool-image-tools.md](pytool-image-tools.md): `button_contrast_wood_pil.py` for PNG; `button_contrast_wood.py` for pixel JSON. Run with `pytool/.venv` (or uv in pytool) activated. |
-| Button animation spritesheet (glint) | **PixelLab `animate_with_text`** | Glint/shimmer only; button as reference; n_frames 4–6. |
-| Button playback, hover bobbing/tint | **Flutter** | Idle: play glint spritesheet. Hover: bobbing + darker tint. |
-| Font (colonial theme) | **None (asset / Google Fonts)** | Serif (e.g. Cinzel, Merriweather). Pixel font deferred. |
+### Responsive rules
 
-All new pixel-art imagery (background, logo, optional panel) is generated with **Bitforge** using the button PNG as the sole style reference. Logo animation: **PixelLab `animate_with_text`** (primary) or Flutter-only (fallback). Button glint: **PixelLab `animate_with_text`**.
+- **Max content width:** 400 dp (mockup `--menu-max: 400px`). Content is centered and additional outer padding may be applied per `CtScreenShell` conventions.
+- **Letter spacing on narrow viewports:** Below `430 dp` viewport width the wood-panel button labels reduce `letter-spacing` from `0.08em` to `0.04em` (mockup `@media` rule). Mobile rules: see [mobile-adaptation.md](mobile-adaptation.md).
 
-### Pixel-art asset table (extended)
+### Decorative-only primitives (no assets)
 
-| Asset id | size (px) | Notes |
-|----------|-----------|-------|
-| main_menu_background | e.g. 640×360 / 800×450 | 16th-century study room interior. Bitforge, style ref = button. |
-| main_menu_logo | 256×64 | Fluttering flag with text "ColonizeThis". Pixflux. |
-| main_menu_logo_animated | (spritesheet) | Optional. Flag fluttering; PixelLab `animate_with_text` primary / Flutter fallback. |
-| main_menu_button | 400×48 | Existing. Static fallback. |
-| main_menu_button_animated | (spritesheet) | Optional. Glint only. PixelLab `animate_with_text`. |
-| main_menu_panel | 64×64 | Optional. Wooden panel. |
+| Primitive | Source | Mockup reference |
+|-----------|--------|------------------|
+| `CtCompassRose` | `app/lib/widgets/ct_compass_rose.dart` | `.compass-rose` / `.compass-rose .arm` / `.compass-rose .medallion` / `.compass-rose .ring` |
+| `CtFleurDeLisOrnament` | `app/lib/widgets/ct_fleur_de_lis_ornament.dart` | `<svg class="title-flank">` block |
+| `CtBrassDivider` | `app/lib/widgets/ct_brass_divider.dart` (issue #2859) | `.brass-divider` |
+| `_MainMenuCollagePainter` (S2; not yet landed) | `app/lib/widgets/main_menu.dart` | `<svg class="collage-svg">` block |
+| Scroll-bracket gutters (S5; not yet landed) | inline in `main_menu.dart` | `.buttons-region::before` / `.buttons-region::after` |
 
----
-
-### PixelLab prompts (exact wording)
-
-For each asset, the **exact** wording used in PixelLab is recorded below so regeneration is reproducible.
-
-**main_menu_background (Bitforge or Pixflux), then upscale to 640×360**
-
-- description: `Pixel art scene. One wooden statue visible in the room. One globe on a wooden stand. One drawing table with papers. Window with daylight. Wooden walls and paneling. Door. 16th century study interior. Dark reddish brown wood and gold brass accents. Crisp pixels, no anti-aliasing.` (Bitforge: add "Same color palette as reference.")
-- **Bitforge:** style_image_path = button PNG (resize to 128×128); style_strength 70; output 128×128; then resize to 640×360.
-- **Pixflux:** width 256, height 144; text_guidance_scale 12; outline single color black outline; shading basic shading; detail medium detail; then resize to 640×360.
-
-**main_menu_logo (fluttering flag with text "ColonizeThis"), 256×64**
-
-- **Pixflux (used):** description: `Pixel art colonial style flag or banner with text ColonizeThis. 16th 17th century, dark reddish brown and gold brass, fabric flag, crisp pixel art no anti-aliasing, limited palette. No wooden frame.` width 256, height 64; text_guidance_scale 12; outline: single color black outline; shading: basic shading; detail: medium detail.
-- **Logo animation (PixelLab `animate_with_text`):** description: `Colonial style fabric flag with text ColonizeThis, dark brown and gold`; action: `flag fluttering in wind, gentle waving`; reference_image_path: static logo (resize to 128×128 if API requires square); width 128, height 128; n_frames 6; save_to_file: `ui_main_menu_logo_animated.png`. If API rejects non-square, use 128×128 reference and output then resize/stretch to 256×64 for display.
-
-**main_menu_button, 400×48**
-
-- description: `Wooden UI button with brass corners, pixel art game UI, 16th 17th century period look, dark wood and gold brass, suitable for menu buttons, crisp pixel art no anti-aliasing, limited palette parchment colonial brown dark wood brass.`
-- outline: single color black outline; shading: basic shading; detail: medium detail; text_guidance_scale: 12.
-
-**main_menu_panel (optional), 64×64**
-
-- description: `Wooden panel frame for content area, carved wood bevel, 16th 17th century pixel art UI, dark wood grain with brass or iron corners, crisp edges no anti-aliasing, UXD palette parchment colonial brown dark wood.`
-- outline: single color black outline; shading: basic shading; detail: medium detail; text_guidance_scale: 12.
+All decorative primitives are self-painted; **no PixelLab / Bitforge / Pixflux asset generation is required** for the `pixelArt` main menu. The legacy `ui_main_menu_background.png` / `ui_main_menu_logo.png` / `ui_main_menu_button.png` / `ui_main_menu_panel.png` assets are no longer referenced by this screen and may be retired once `CtMainMenu` consumes the new primitives (S5).
 
 ---
 
 ## Components
 
 - `CtMainMenu` — presentational menu (`app/lib/widgets/main_menu.dart`).
-- `CtNinePatchButton`, `CtScreenShell` — pixel-art catalog per [pixel-art-ui-catalog.md](pixel-art-ui-catalog.md).
+- `CtNinePatchButton` — wood-panel buttons (enhanced gradient/brass-corner variant per issue #2859 S2 in the `pixelArt` variant).
+- `CtBrassDivider` — divider between logo and buttons regions in the `pixelArt` variant (issue #2859 R7, [pixel-art-ui-catalog.md](pixel-art-ui-catalog.md)).
+- `CtCompassRose` — decorative 8-arm emblem above the title in the `pixelArt` variant (issue #2860 S1, [pixel-art-ui-catalog.md](pixel-art-ui-catalog.md)).
+- `CtFleurDeLisOrnament` — decorative flourish flanking the title in the `pixelArt` variant (issue #2860 S4, [pixel-art-ui-catalog.md](pixel-art-ui-catalog.md)).
+- `CtScreenShell` — pixel-art shell per [pixel-art-ui-catalog.md](pixel-art-ui-catalog.md).
 - Registered in `app/widget_catalog.json` as CtMainMenu (category: screen).
 
 ---
 
 ## Widgetbook
 
-Folder: **Main Menu** (`app/lib/widgetbook/catalog.dart`). Use cases: **Default**, **After victory**, **No saves**, **Pixel art (mobile)** per variant table.
+- **Folder:** **Main Menu** (`app/lib/widgetbook/catalog.dart`) for `CtMainMenu` use cases: **Default**, **After victory**, **No saves**, **Resume game visible**, **Pixel art (mobile)** per the **States and variants** table (each rendered under `AppThemes.editorialMonocle`).
+- **Folder:** **Ct- Dark Theme Primitives** (`app/lib/widgetbook/catalog_part5.dart`) hosts the decorative primitives consumed by this screen: `CtBrassDivider`, `CtCompassRose`, `CtFleurDeLisOrnament`. Each story renders the primitive over `AppThemes.editorialMonocle.scaffoldBackgroundColor` so reviewers see the wood-on-brass contrast in context.
 
 ---
 
