@@ -13,6 +13,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:jenny/jenny.dart';
 import 'package:widgetbook/widgetbook.dart';
 
+import '../config/editorial_monocle_palette.dart';
 import '../config/themes.dart';
 import '../providers/app_event_bus_provider.dart';
 import '../providers/games_provider.dart';
@@ -69,7 +70,9 @@ import '../widgets/ct_loading_indicator.dart';
 import '../widgets/ct_main_menu_collage.dart';
 import '../widgets/ct_progress_bar.dart';
 import '../widgets/ct_resource_cell.dart';
+import '../widgets/ct_screen_shell.dart';
 import '../widgets/ct_section_label.dart';
+import '../widgets/ct_slider.dart';
 import '../widgets/ct_toggle_switch.dart';
 import '../widgets/ct_top_bar.dart';
 import '../widgets/resource_icon.dart';
@@ -215,6 +218,9 @@ List<WidgetbookAddon<dynamic>> get _ctWidgetbookAddons => [
 ];
 
 /// Nine-patch button stories. SPEC/ui/buttons-nine-patch.md; catalog: CtNinePatchButton.
+///
+/// Refs #2859 R1 / S2 — gradient surface, brass corner brackets, engraved
+/// label text, hover/disabled states.
 List<WidgetbookNode> get buttonDirectories => [
   WidgetbookFolder(
     name: 'Buttons',
@@ -223,31 +229,34 @@ List<WidgetbookNode> get buttonDirectories => [
         name: 'CtNinePatchButton',
         builder: (context) => Theme(
           data: AppThemes.editorialMonocle,
-          child: Padding(
-            padding: const EdgeInsets.all(24),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                CtNinePatchButton(
-                  onPressed: () {},
-                  child: Text(appL10n(context).widgetbook_primaryAction),
-                ),
-                const SizedBox(height: 12),
-                CtNinePatchButton(
-                  onPressed: null,
-                  enabled: false,
-                  child: Text(appL10n(context).widgetbook_disabled),
-                ),
-                const SizedBox(height: 12),
-                SizedBox(
-                  width: 200,
-                  child: CtNinePatchButton(
+          child: ColoredBox(
+            color: EditorialMonoclePalette.bg,
+            child: Padding(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  CtNinePatchButton(
                     onPressed: () {},
-                    child: Text(appL10n(context).widgetbook_fixedWidth),
+                    child: Text(appL10n(context).widgetbook_primaryAction),
                   ),
-                ),
-              ],
+                  const SizedBox(height: 12),
+                  CtNinePatchButton(
+                    onPressed: null,
+                    enabled: false,
+                    child: Text(appL10n(context).widgetbook_disabled),
+                  ),
+                  const SizedBox(height: 12),
+                  SizedBox(
+                    width: 200,
+                    child: CtNinePatchButton(
+                      onPressed: () {},
+                      child: Text(appL10n(context).widgetbook_fixedWidth),
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         ),

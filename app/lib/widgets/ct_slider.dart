@@ -1,7 +1,13 @@
+import 'package:colonizethis_app/config/editorial_monocle_palette.dart';
 import 'package:flutter/material.dart';
 
 /// Pixel-art friendly slider for integer or continuous values (`divisions: 0`).
 /// Replaces Material [Slider] in production allocation and region minimap zoom.
+///
+/// Dark editorial-monocle chrome per `SPEC/ui/pixel-art-ui-catalog.md`
+/// § CtSlider and issue #2859 S7: `--surface` track with `--accent-dim`
+/// border, `--accent` fill, round `--accent` thumb with `--accent-bright`
+/// border. All colors resolve from [EditorialMonoclePalette].
 class CtSlider extends StatefulWidget {
   const CtSlider({
     super.key,
@@ -32,7 +38,8 @@ class CtSlider extends StatefulWidget {
   /// SPEC/ui/production-panel.md
   final bool comfortHeadroomActive;
 
-  /// Deeper purple than the filled track; defaults to a fixed deep purple.
+  /// Deeper segment to the right of the thumb when [comfortHeadroomActive] is true.
+  /// Defaults to `--bg-deep` from the editorial-monocle palette.
   final Color? comfortHeadroomColor;
 
   @override
@@ -40,6 +47,10 @@ class CtSlider extends StatefulWidget {
 }
 
 class _CtSliderState extends State<CtSlider> {
+  static const double _trackHeight = 6;
+  static const double _thumbDiameter = 14;
+  static const double _hitTargetHeight = 24;
+
   @override
   void didUpdateWidget(CtSlider oldWidget) {
     super.didUpdateWidget(oldWidget);
@@ -50,36 +61,32 @@ class _CtSliderState extends State<CtSlider> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
     final range = widget.max - widget.min;
     final t = (range > 0 && range.isFinite)
         ? ((widget.value - widget.min) / range).clamp(0.0, 1.0)
         : 0.0;
+    final Color comfortColor =
+        widget.comfortHeadroomColor ?? EditorialMonoclePalette.bgDeep;
 
     return LayoutBuilder(
       builder: (context, constraints) {
         final width = constraints.maxWidth;
-        final trackHeight = 6.0;
-        final handleSize = 14.0;
-        final trackUsable = width.isFinite && width > handleSize
-            ? width - handleSize
+        final trackUsable = width.isFinite && width > _thumbDiameter
+            ? width - _thumbDiameter
             : 0.0;
         final handleX =
             trackUsable > 0 && t.isFinite ? t * trackUsable : 0.0;
-        final thumbCenterX = handleX + handleSize / 2;
-        final comfortColor = widget.comfortHeadroomColor ??
-            const Color(0xFF4527A0); // Deep purple 800 — darker than primary @0.5
+        final thumbCenterX = handleX + _thumbDiameter / 2;
 
         void handleTapOrDrag(Offset localPos) {
           if (range <= 0 || !range.isFinite) {
             widget.onChanged(widget.min);
             return;
           }
-          if (!width.isFinite || width <= handleSize) {
+          if (!width.isFinite || width <= _thumbDiameter) {
             return;
           }
-          final d = width - handleSize;
+          final d = width - _thumbDiameter;
           final x = localPos.dx.clamp(0.0, d);
           final ratio = x / d;
           final raw = widget.min + ratio * range;
@@ -107,20 +114,22 @@ class _CtSliderState extends State<CtSlider> {
               ? (_) => widget.onDragEnd!()
               : null,
           child: SizedBox(
-            height: 24,
+            height: _hitTargetHeight,
             child: Stack(
               alignment: Alignment.centerLeft,
               children: [
-                // Track
                 Positioned(
                   left: 0,
                   right: 0,
-                  top: (24 - trackHeight) / 2,
+                  top: (_hitTargetHeight - _trackHeight) / 2,
                   child: Container(
-                    height: trackHeight,
+                    height: _trackHeight,
                     decoration: BoxDecoration(
-                      color: colorScheme.surface.withValues(alpha: 0.7),
-                      border: Border.all(color: colorScheme.outline, width: 1),
+                      color: EditorialMonoclePalette.surface,
+                      border: Border.all(
+                        color: EditorialMonoclePalette.accentDim,
+                        width: 1,
+                      ),
                     ),
                   ),
                 ),
@@ -130,34 +139,33 @@ class _CtSliderState extends State<CtSlider> {
                   Positioned(
                     left: 1 + thumbCenterX,
                     right: 1,
-                    top: (24 - trackHeight + 2) / 2,
+                    top: (_hitTargetHeight - _trackHeight + 2) / 2,
                     child: Container(
-                      height: trackHeight - 2,
+                      height: _trackHeight - 2,
                       color: comfortColor,
                     ),
                   ),
                 ],
-                // Filled portion
                 Positioned(
                   left: 1,
-                  top: (24 - trackHeight + 2) / 2,
+                  top: (_hitTargetHeight - _trackHeight + 2) / 2,
                   width: thumbCenterX,
                   child: Container(
-                    height: trackHeight - 2,
-                    color: colorScheme.primary.withValues(alpha: 0.5),
+                    height: _trackHeight - 2,
+                    color: EditorialMonoclePalette.accent,
                   ),
                 ),
-                // Handle (square, pixel-ish)
                 Positioned(
                   left: handleX,
-                  top: (24 - handleSize) / 2,
+                  top: (_hitTargetHeight - _thumbDiameter) / 2,
                   child: Container(
-                    width: handleSize,
-                    height: handleSize,
+                    width: _thumbDiameter,
+                    height: _thumbDiameter,
                     decoration: BoxDecoration(
-                      color: colorScheme.primary,
+                      shape: BoxShape.circle,
+                      color: EditorialMonoclePalette.accent,
                       border: Border.all(
-                        color: colorScheme.onPrimary,
+                        color: EditorialMonoclePalette.accentBright,
                         width: 1,
                       ),
                     ),

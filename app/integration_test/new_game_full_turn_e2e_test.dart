@@ -167,13 +167,17 @@ void main() {
       // Replaces the legacy raw `tester.tap(find.byIcon(...))` back-button
       // tap with the shared defensive `ensureVisible` + `hitTestable`
       // resolve recipe so a transient overlay covering the production
-      // screen's AppBar cannot silently drop the back tap and burn the
+      // screen's CtTopBar cannot silently drop the back tap and burn the
       // downstream `wait_until_home_to_capital_after_production_back`
       // timeout against an unmounted HUD (Refs GitHub #2336 AC10 /
       // e2e-ui-stability rule — verify visibility before interaction).
+      //
+      // Refs #2859 R4 / S5 — the production screen's `CtGameFeatureScreenShell`
+      // now embeds `CtTopBar` so the back affordance is a `CtBackButton`
+      // chevron-left glyph, not the legacy Material `Icons.arrow_back`.
       await ensureVisibleAndTapHitTestable(
         tester,
-        find.byIcon(Icons.arrow_back),
+        find.byIcon(Icons.chevron_left),
       );
       await waitUntilFound(
         tester,
