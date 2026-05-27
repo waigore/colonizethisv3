@@ -37,6 +37,77 @@ Any new UI component must either:
 
 ---
 
+## Editorial-monocle palette
+
+Canonical color and typography tokens for the dark `editorialMonocle` theme
+exposed by `AppThemes.editorialMonocle` (`app/lib/config/themes.dart`). This
+table is the **single source of truth** for the running-app theme and is the
+authoritative palette cited by `colonizethis-ui-design.mdc` and the UI
+visual-fidelity quality gates in `implement-github-issue/SKILL.md` and
+`review-pr/SKILL.md`. Per-screen mockups under `SPEC/ui/mockups/` are
+**optional**; if present they illustrate this palette in context, but their
+absence does not block UI implementation work.
+
+### Color tokens
+
+OKLCH values are the editable source. The Dart implementation in
+`app/lib/config/editorial_monocle_palette.dart` converts each triple to the
+sRGB hex shown alongside via the Björn Ottosson OKLab → linear-sRGB matrix
+plus IEC 61966-2-1 gamma encoding. Tests pin the conversion against these
+hex values.
+
+| Token | OKLCH | sRGB (approx.) | Role |
+|-------|-------|----------------|------|
+| `--bg` | `oklch(16% 0.018 50)` | `#140B07` | Scaffold background |
+| `--bg-deep` | `oklch(12% 0.015 45)` | `#0A0403` | Deepest dark (map, deep panels) |
+| `--surface` | `oklch(24% 0.015 45)` | `#261D19` | Cards, panels, rows |
+| `--surface-lite` | `oklch(30% 0.016 52)` | `#352C27` | Raised surfaces, gradient tops |
+| `--fg` | `oklch(88% 0.015 80)` | `#DDD7CD` | Primary text |
+| `--muted` | `oklch(65% 0.025 70)` | `#998D7F` | Secondary text, labels |
+| `--border` | `oklch(40% 0.020 55)` | `#51453E` | Borders, dividers |
+| `--accent` | `oklch(72% 0.14 85)` | `#CD9C1F` | Gold/brass accent |
+| `--accent-dim` | `oklch(60% 0.12 82)` | `#A4780E` | Subdued brass |
+| `--accent-bright` | `oklch(82% 0.13 90)` | `#E5C057` | Hover/active brass |
+| `--danger` | `oklch(62% 0.16 22)` | `#D55759` | War, negative, destructive |
+| `--success` | `oklch(62% 0.12 150)` | `#4A9A5E` | Positive, growth |
+
+**WCAG AA notes.** `--fg` on `--bg` measures ~13.6:1 (body-text AA). `--muted`
+on `--bg` measures ~6.0:1 (secondary). `--accent` on `--bg` measures ~7.8:1
+(decorative/non-text). `--danger` and `--success` on `--bg` measure ≥4.9:1
+and ≥5.6:1 respectively so each clears the AA 4.5:1 text bar required for
+status indicators.
+
+**Issue #2858 deviation note.** The original issue Design proposal set
+`--danger` and `--success` to `L = 0.55`, which yielded ~3.7:1 / ~4.3:1 and
+failed the issue's own AA AC of ≥4.5:1. The canonical lightness for both
+tokens is therefore raised to `L = 0.62` here; chroma and hue are preserved
+so the warm-red / cool-green perceptual identity is unchanged. All other
+tokens match the issue's Design proposal verbatim.
+
+### Font stacks
+
+| Role | Stack |
+|------|-------|
+| Display | `'Iowan Old Style', 'Cinzel', 'Charter', Georgia, serif` |
+| Body | `-apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif` |
+| Mono | `'SF Mono', ui-monospace, Menlo, monospace` |
+
+The Flutter theme realizes Display via `GoogleFonts.cinzel(...)` on
+`headlineMedium`, `headlineSmall`, `titleLarge`, `titleMedium`, and
+`titleSmall`; Body uses Flutter's platform default (`Roboto` on Android,
+system on iOS/desktop) so the system-ui fallback chain applies per OS; Mono
+inherits the platform-default monospace family until a dedicated style is
+needed.
+
+### Backward compatibility
+
+`AppThemes.colonial` and `AppThemes.colonialPixelArt` remain loadable for
+Widgetbook fallback and debug toggles, but the running app's default theme
+is `AppThemes.editorialMonocle`. No code path outside Widgetbook and debug
+toggles may render a screen in the light colonial theme.
+
+---
+
 ## Commodity / resource labels
 
 - Whenever the UI shows a **resource or commodity** by id or human-readable name (lists, province overlay, production, tooltips, etc.), show the **pixel commodity icon** (`ResourceIcon` / `ResourceLabelInline` in app widgets) **immediately to the left** of the text, with a small gap (e.g. 4 logical px). If no icon asset exists for that id, keep the reserved icon width (empty box) so layout stays aligned.

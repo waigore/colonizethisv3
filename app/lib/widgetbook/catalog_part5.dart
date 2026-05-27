@@ -35,7 +35,7 @@ class _PauseMenuPanelStoryHostState extends State<_PauseMenuPanelStoryHost> {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      theme: AppThemes.colonial,
+      theme: AppThemes.editorialMonocle,
       localizationsDelegates: AppLocalizationsBinding.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
       home: Scaffold(
@@ -86,7 +86,7 @@ class _GameSideMenuStoryHostState extends State<_GameSideMenuStoryHost> {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      theme: AppThemes.colonial,
+      theme: AppThemes.editorialMonocle,
       localizationsDelegates: AppLocalizationsBinding.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
       home: Scaffold(
@@ -165,7 +165,7 @@ class _GameMapNarrowDetailOverlaySlotStoryHostState
     final game = demoGameForOverlay;
     final region = demoRegionForOverlay;
     return MaterialApp(
-      theme: AppThemes.colonial,
+      theme: AppThemes.editorialMonocle,
       localizationsDelegates: AppLocalizationsBinding.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
       home: MediaQuery(
@@ -281,7 +281,7 @@ ProviderScope _diplomacyDetailScreenProviderScope() {
       }),
     ],
     child: MaterialApp(
-      theme: AppThemes.colonial,
+      theme: AppThemes.editorialMonocle,
       localizationsDelegates: AppLocalizationsBinding.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
       home: DiplomacyDetailScreen(

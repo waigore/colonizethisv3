@@ -412,7 +412,7 @@ QuickBattleInput _sampleQuickBattleInput() {
 
 MaterialApp _victoryStoryFrame(Widget child) {
   return MaterialApp(
-    theme: AppThemes.colonial,
+    theme: AppThemes.editorialMonocle,
     localizationsDelegates: AppLocalizationsBinding.localizationsDelegates,
     supportedLocales: AppLocalizations.supportedLocales,
     home: Scaffold(body: Center(child: child)),
@@ -421,7 +421,7 @@ MaterialApp _victoryStoryFrame(Widget child) {
 
 MaterialApp _combatStoryFrame(Widget child) {
   return MaterialApp(
-    theme: AppThemes.colonial,
+    theme: AppThemes.editorialMonocle,
     localizationsDelegates: AppLocalizationsBinding.localizationsDelegates,
     supportedLocales: AppLocalizations.supportedLocales,
     home: Scaffold(body: Center(child: child)),
@@ -652,7 +652,7 @@ List<WidgetbookNode> get combatUiDirectories => [
 Widget _shellOrGameStoryFrame({required Widget child, Object? navigatorKey}) {
   return MaterialApp(
     navigatorKey: navigatorKey is GlobalKey<NavigatorState> ? navigatorKey : null,
-    theme: AppThemes.colonial,
+    theme: AppThemes.editorialMonocle,
     localizationsDelegates: AppLocalizationsBinding.localizationsDelegates,
     supportedLocales: AppLocalizations.supportedLocales,
     home: child,

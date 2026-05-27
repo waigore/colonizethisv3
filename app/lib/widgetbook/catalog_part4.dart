@@ -41,7 +41,7 @@ List<WidgetbookNode> get ctDialogueViewDirectories => [
       WidgetbookUseCase(
         name: 'Lines and choice trace',
         builder: (context) => MaterialApp(
-          theme: AppThemes.colonial,
+          theme: AppThemes.editorialMonocle,
           home: const Scaffold(body: _CtDialogueViewStoryHarness()),
         ),
       ),
@@ -145,7 +145,7 @@ List<WidgetbookNode> get gameStartIntroOverlayDirectories => [
       WidgetbookUseCase(
         name: 'Default — single-line intro',
         builder: (context) => MaterialApp(
-          theme: AppThemes.colonial,
+          theme: AppThemes.editorialMonocle,
           localizationsDelegates: AppLocalizationsBinding.localizationsDelegates,
           supportedLocales: AppLocalizations.supportedLocales,
           home: Scaffold(
@@ -197,7 +197,7 @@ List<WidgetbookNode> get overtureDialogueOverlayDirectories => [
       WidgetbookUseCase(
         name: 'Default — two pending overtures',
         builder: (context) => MaterialApp(
-          theme: AppThemes.colonial,
+          theme: AppThemes.editorialMonocle,
           localizationsDelegates: AppLocalizationsBinding.localizationsDelegates,
           supportedLocales: AppLocalizations.supportedLocales,
           home: Scaffold(
@@ -274,7 +274,7 @@ List<WidgetbookNode> get callToArmsDialogueOverlayDirectories => [
       WidgetbookUseCase(
         name: 'Default — two pending calls',
         builder: (context) => MaterialApp(
-          theme: AppThemes.colonial,
+          theme: AppThemes.editorialMonocle,
           localizationsDelegates: AppLocalizationsBinding.localizationsDelegates,
           supportedLocales: AppLocalizations.supportedLocales,
           home: Scaffold(
@@ -306,7 +306,7 @@ List<WidgetbookNode> get callToArmsDialogueOverlayDirectories => [
 
 MaterialApp _moveDialogStoryFrame({required Widget Function(BuildContext) open}) {
   return MaterialApp(
-    theme: AppThemes.colonial,
+    theme: AppThemes.editorialMonocle,
     localizationsDelegates: AppLocalizationsBinding.localizationsDelegates,
     supportedLocales: AppLocalizations.supportedLocales,
     home: Scaffold(

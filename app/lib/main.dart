@@ -11,6 +11,7 @@ import 'app.dart';
 import 'config/constants.dart';
 import 'config/ct_e2e.dart';
 import 'config/map_terrain_config.dart';
+import 'config/themes.dart';
 import 'core/services/app_event_handler_scope.dart';
 import 'core/services/desktop_window_startup_service.dart';
 
@@ -44,6 +45,11 @@ Future<void> bootstrapApp({
   await openHiveBoxSafely(HiveBoxNames.games);
   await openHiveBoxSafely(HiveBoxNames.offlineQueue);
   await ensureDesktopWindowStartup();
+  // Fire-and-forget Cinzel registration for the editorial-monocle theme;
+  // failure (offline + no cache) falls back to platform serif per
+  // `preloadEditorialMonocleFonts`. Skipped under e2e to avoid network
+  // dependencies in the integration_test bootstrap.
+  unawaited(preloadEditorialMonocleFonts(skipInTests: kCtE2EEnabled));
   runAppFn(const ProviderScope(child: AppEventHandlerScope(child: App())));
 }
 
