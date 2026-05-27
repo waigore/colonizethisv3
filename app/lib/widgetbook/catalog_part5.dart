@@ -374,14 +374,14 @@ class _CtDialogShellStory extends StatelessWidget {
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // ignore: avoid_hardcoded_strings_in_widgets
                     Text(
+                      // ignore: avoid_hardcoded_strings_in_widgets
                       'Dialog shell preview',
                       style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
                     ),
                     SizedBox(height: 8),
-                    // ignore: avoid_hardcoded_strings_in_widgets
                     Text(
+                      // ignore: avoid_hardcoded_strings_in_widgets
                       'Frame shows the 2px --accent-dim border and panelGradient background per Refs #2859 R3 / S4.',
                     ),
                   ],
