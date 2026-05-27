@@ -50,6 +50,7 @@ library;
 
 import 'observer_goal_phase.dart';
 import 'phase_planner_dispatch.dart';
+import 'phase_priority_weights.dart';
 
 /// When `true`, `_DeclareWarTargetContext.build` flags the candidate's
 /// `colonialPressure` slot for `_declareWarSuppressedWarConcentrationScore`
@@ -168,3 +169,45 @@ bool resolvePhaseDiplomacyDeclareWarColonialLiteSuppressionActive({
 bool resolvePhaseDiplomacyDeclareWarExpandColonialSuppressionActive({
   required PhasePlanOutcome phasePlan,
 }) => phasePlan.phase == ObserverGoalPhase.expand;
+
+/// Advisory `[0.0, 1.0]` multiplier for the declare-war scoring NW
+/// colonial-pressure exception sourced from
+/// [PhasePriorityWeights.newWorldAcquisition] (Refs #2847 Phase 2
+/// scaffolding).
+///
+/// Weight-aware companion of the structural boolean
+/// [resolvePhaseDiplomacyDeclareWarColonialPressureActive]; the
+/// boolean remains the production source of truth in this
+/// scaffolding slice — `_declareWarSuppressedWarConcentrationScore`
+/// still flags `colonialPressure` from the boolean. Phase 3
+/// orchestrator wiring will multiply the colonial-pressure exception
+/// branch's score adjustment by this weight so the `ownsInvadableNw`
+/// keep-scorable carve-out scales continuously with the active NW
+/// acquisition priority instead of switching on/off at the
+/// EXPAND→COLONIAL boundary.
+///
+/// Pure and deterministic — identical `phasePlan.priorityWeights`
+/// inputs always yield identical `double` results (Refs #2509
+/// Must-have #7). Reads only `phasePlan.priorityWeights`.
+double resolvePhaseDiplomacyDeclareWarColonialPressureWeight({
+  required PhasePlanOutcome phasePlan,
+}) => phasePlan.priorityWeights.newWorldAcquisition;
+
+/// Advisory `[0.0, 1.0]` multiplier for OW declare-war scoring bias
+/// sourced from [PhasePriorityWeights.oldWorldConquest] (Refs #2847
+/// Phase 2 scaffolding).
+///
+/// Pairs with [resolvePhaseDiplomacyDeclareWarColonialPressureWeight]
+/// to form the OW/NW weight pair the Phase 3 orchestrator wiring
+/// will multiply into declare-war scoring. The structural booleans
+/// continue to gate today's suppression matrix
+/// (`resolvePhaseDiplomacyDeclareWarDevelopSuppressionActive`,
+/// `resolvePhaseDiplomacyDeclareWarColonialLiteSuppressionActive`,
+/// `resolvePhaseDiplomacyDeclareWarExpandColonialSuppressionActive`)
+/// unchanged in this scaffolding slice.
+///
+/// Pure and deterministic (Refs #2509 Must-have #7). Reads only
+/// `phasePlan.priorityWeights`.
+double resolvePhaseDiplomacyDeclareWarOldWorldConquestWeight({
+  required PhasePlanOutcome phasePlan,
+}) => phasePlan.priorityWeights.oldWorldConquest;
