@@ -36,6 +36,7 @@ export 'e2e_test_shared_dismiss_ct_dialog_shell_broad_sweep.dart';
 export 'e2e_test_shared_dismiss_ct_dialog_shell_escalation.dart';
 export 'e2e_test_shared_dismiss_generic_ok.dart';
 export 'e2e_test_shared_dismiss_snackbar.dart';
+export 'e2e_test_shared_expansion_tile.dart';
 export 'e2e_test_shared_final_naval_reach_check.dart';
 export 'e2e_test_shared_first_fleet_move.dart';
 export 'e2e_test_shared_fleet_reach_loop_test_total_meta.dart';
@@ -690,101 +691,6 @@ Future<void> e2eDismissTransientUi(
   // shared helper — no inline dismissal recipes remain in this function's
   // overlay branches. Refs GitHub #2336 AC1 / AC2 / Bottleneck 6.
   await e2eDismissCtDialogShellBroadSweepIfPresent(tester, perf: perf);
-}
-
-/// True when [tileElement] (an [ExpansionTile] element) hosts a
-/// [RotationTransition] whose `turns.value` is past the expanded threshold.
-///
-/// Material's default [ExpansionTile] keeps the [Icons.expand_more] icon
-/// mounted whether collapsed or expanded — only its [RotationTransition]
-/// flips from `0.0` (collapsed) to `0.5` (expanded). The previous
-/// `find.byIcon(Icons.expand_more).isEmpty` heuristic therefore never
-/// detected expansion: the loop tapped the same tile up to 32 times,
-/// burning the full 800 ms post-tap budget per outer iteration (~26 s
-/// per call) without leaving the tile expanded. Reading the rotation
-/// state directly is robust against future Material changes that swap the
-/// icon for an `expand_less` variant — at 0.5 turns either icon counts as
-/// expanded. Refs GitHub #2336 H10 / Bottleneck 6.
-bool e2eExpansionTileIsExpanded(Element tileElement) {
-  var expanded = false;
-  void visit(Element e) {
-    if (expanded) return;
-    final w = e.widget;
-    if (w is RotationTransition && w.turns.value > 0.4) {
-      expanded = true;
-      return;
-    }
-    e.visitChildren(visit);
-  }
-
-  tileElement.visitChildren(visit);
-  return expanded;
-}
-
-/// Expands every currently collapsed [ExpansionTile] in the widget tree.
-///
-/// Reads each tile's [RotationTransition] state via
-/// [e2eExpansionTileIsExpanded] so the helper:
-/// 1. **Skips already-expanded tiles** (the previous icon-based check
-///    misidentified all tiles as collapsed because [Icons.expand_more]
-///    stays mounted under [RotationTransition]).
-/// 2. **Taps exactly once per collapsed tile**, then polls until the
-///    rotation crosses the expanded threshold (or the bounded budget
-///    elapses) — no more 26 s no-op cycles per call.
-/// 3. **Exits early** once no collapsed tile remains, mirroring the
-///    documented "expand each once" contract.
-///
-/// Panel-rebuild safe: each outer iteration re-enumerates tiles after a
-/// successful expand, so a list-view rebuild that shifts tile order does
-/// not cause repeated taps on the same tile. Refs GitHub #2336.
-Future<void> e2eExpandEachExpansionTileOnce(WidgetTester tester) async {
-  for (var safety = 0; safety < 32; safety++) {
-    final tiles = find.byType(ExpansionTile);
-    final tileElements = tiles.evaluate().toList();
-    if (tileElements.isEmpty) {
-      return;
-    }
-
-    var expandedOne = false;
-    for (var j = 0; j < tileElements.length; j++) {
-      final tileElement = tileElements[j];
-      if (e2eExpansionTileIsExpanded(tileElement)) {
-        continue;
-      }
-      final tileAt = tiles.at(j);
-      final expandIcon = find.descendant(
-        of: tileAt,
-        matching: find.byIcon(Icons.expand_more),
-      );
-      if (expandIcon.evaluate().isEmpty) {
-        continue;
-      }
-      final iconHit = expandIcon.first;
-      await tester.ensureVisible(iconHit);
-      await e2ePumpUntilConditionOrIdle(
-        tester,
-        () => expandIcon.hitTestable().evaluate().isNotEmpty,
-        timeout: const Duration(milliseconds: 400),
-        phaseName: 'pump_until_expand_icon_tappable',
-      );
-      await tester.tap(iconHit, warnIfMissed: false);
-      await e2ePumpUntilConditionOrIdle(
-        tester,
-        () {
-          final elements = tileAt.evaluate();
-          if (elements.isEmpty) return false;
-          return e2eExpansionTileIsExpanded(elements.single);
-        },
-        timeout: const Duration(milliseconds: 800),
-        phaseName: 'pump_until_expansion_tile_open',
-      );
-      expandedOne = true;
-      break;
-    }
-    if (!expandedOne) {
-      return;
-    }
-  }
 }
 
 Future<void> e2eWaitUntilFound(
