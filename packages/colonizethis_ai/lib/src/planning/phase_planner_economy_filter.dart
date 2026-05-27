@@ -80,6 +80,7 @@ import '../perception/perception_snapshot.dart';
 import 'observer_goal_phase.dart';
 import 'phase_planner_conquest_filter.dart';
 import 'phase_planner_dispatch.dart';
+import 'phase_priority_weights.dart';
 
 /// When `true`, `_runEconomyDomainPlanners` lowers the civilian work
 /// threshold to `kColonialCivilianWorkThresholdCap`, forces the
@@ -411,3 +412,59 @@ bool resolvePhaseEconomyExpandBelowQuotaPeaceZeroRegimentsRebuildActive({
   }
   return regimentCount == 0 && hasInvadableProvinces;
 }
+
+/// Advisory `[0.0, 1.0]` multiplier for the economy-pass colonial
+/// pressure boost (civilian threshold cap, `runFullAiCivilianWork`
+/// force-on, `BuildPickInput.colonialPressure` cargo bonus) sourced
+/// from [PhasePriorityWeights.newWorldAcquisition] (Refs #2847 Phase 2
+/// scaffolding).
+///
+/// Weight-aware companion of the structural boolean
+/// [resolvePhaseEconomyColonialPressureActive]; the boolean remains
+/// the production source of truth in this scaffolding slice. Phase 3
+/// orchestrator wiring will migrate the cargo / civilian-threshold
+/// scoring sites to multiply candidate weights by this resolver so
+/// the colonial cargo bias scales continuously with the active NW
+/// acquisition priority instead of switching on/off at the
+/// EXPAND→COLONIAL boundary.
+///
+/// Pure and deterministic — identical `phasePlan.priorityWeights`
+/// inputs always yield identical `double` results (Refs #2509
+/// Must-have #7). Reads only `phasePlan.priorityWeights`.
+double resolvePhaseEconomyColonialPressureWeight({
+  required PhasePlanOutcome phasePlan,
+}) => phasePlan.priorityWeights.newWorldAcquisition;
+
+/// Advisory `[0.0, 1.0]` multiplier for the OW civilian-work bias
+/// (build / improvement / population orders on OW-owned land)
+/// sourced from [PhasePriorityWeights.oldWorldCivilian] (Refs #2847
+/// Phase 2 scaffolding).
+///
+/// Pairs with [resolvePhaseEconomyNewWorldCivilianWeight] to form the
+/// OW/NW civilian weight pair that future Phase 3 consumer wiring
+/// will multiply into the build-pipeline scoring. The boolean
+/// [resolvePhaseEconomyDevelopActive] remains the production source
+/// of truth for the DEVELOP threshold-cap / force-on civilian
+/// decisions in this slice.
+///
+/// Pure and deterministic (Refs #2509 Must-have #7). Reads only
+/// `phasePlan.priorityWeights`.
+double resolvePhaseEconomyOldWorldCivilianWeight({
+  required PhasePlanOutcome phasePlan,
+}) => phasePlan.priorityWeights.oldWorldCivilian;
+
+/// Advisory `[0.0, 1.0]` multiplier for the NW civilian-work bias
+/// (build / improvement / population orders on NW-owned land)
+/// sourced from [PhasePriorityWeights.newWorldCivilian] (Refs #2847
+/// Phase 2 scaffolding).
+///
+/// Companion of [resolvePhaseEconomyOldWorldCivilianWeight]. The
+/// existing tag-along condition `snapshot.colonial.newWorldProvincesOwned > 0`
+/// at the orchestrator call sites remains the structural gate in
+/// this slice — Phase 3 wiring will fold the NW civilian weight into
+/// the build-pipeline weighting where appropriate.
+///
+/// Pure and deterministic (Refs #2509 Must-have #7).
+double resolvePhaseEconomyNewWorldCivilianWeight({
+  required PhasePlanOutcome phasePlan,
+}) => phasePlan.priorityWeights.newWorldCivilian;

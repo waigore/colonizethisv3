@@ -19,6 +19,7 @@ import 'expand_phase_planner.dart' show ExpandMilitaryPlan;
 import 'observer_goal_phase.dart';
 import 'phase_planner_dispatch.dart';
 import 'phase_planner_military_plans.dart';
+import 'phase_priority_weights.dart';
 
 /// Outcome of [resolvePhaseConquestInvadable] for one player turn.
 class PhaseConquestInvadableResolution {
@@ -161,3 +162,69 @@ bool resolvePhaseConquestExtraPassesActive({
 }) =>
     phasePlan.phase == ObserverGoalPhase.expand ||
     phasePlan.phase == ObserverGoalPhase.colonialLite;
+
+/// Advisory `[0.0, 1.0]` multiplier for NW invasion scoring (declare-war
+/// candidates against tribe/NW-owner targets, NW invasion army-move
+/// destinations) sourced from
+/// [PhasePriorityWeights.newWorldAcquisition] (Refs #2847 Phase 2
+/// scaffolding).
+///
+/// This resolver is the **weight-aware companion** of the structural
+/// boolean [resolvePhaseConquestSuppressNwInvasionScoring]; the boolean
+/// remains the production source of truth in the Phase 2 scaffolding
+/// slice — orchestrator scoring sites do **not** read this weight yet.
+/// Phase 3 consumer wiring (Refs #2847) will migrate NW invasion
+/// scoring sites to multiply candidate scores by this weight so the
+/// EXPAND→COLONIAL transition becomes a continuous curve instead of a
+/// binary cliff (`SPEC/ai/phase-planner-architecture.md` § Soft-phase
+/// priority weights).
+///
+/// Pure and deterministic — identical `phasePlan.priorityWeights`
+/// inputs always yield identical `double` results (Refs #2509
+/// Must-have #7). Reads only `phasePlan.priorityWeights` and never
+/// inspects sibling slots (the per-phase suppression matrix is encoded
+/// in the [PhasePriorityWeights] curve + override floors that the
+/// dispatcher computed once via [computePhasePriorityWeights]).
+double resolvePhaseConquestNwInvasionWeight({
+  required PhasePlanOutcome phasePlan,
+}) => phasePlan.priorityWeights.newWorldAcquisition;
+
+/// Advisory `[0.0, 1.0]` multiplier for OW invasion scoring (declare-war
+/// candidates against OW owners, OW invasion army-move destinations,
+/// frontier-march pressure) sourced from
+/// [PhasePriorityWeights.oldWorldConquest] (Refs #2847 Phase 2
+/// scaffolding).
+///
+/// Companion to [resolvePhaseConquestNwInvasionWeight]; the two
+/// resolvers form the OW/NW weight pair that future Phase 3
+/// consumer-wiring slices will multiply into the conquest scoring
+/// passes. The booleans
+/// [resolvePhaseConquestColonialPressureActive] and
+/// [resolvePhaseConquestExtraPassesActive] remain the production
+/// source of truth for the scoring/extra-pass decisions in this slice.
+///
+/// Pure and deterministic (Refs #2509 Must-have #7). Reads only
+/// `phasePlan.priorityWeights`.
+double resolvePhaseConquestOldWorldInvasionWeight({
+  required PhasePlanOutcome phasePlan,
+}) => phasePlan.priorityWeights.oldWorldConquest;
+
+/// Advisory `[0.0, 1.0]` multiplier for the COLONIAL conquest
+/// colonial-pressure minimum weight floor
+/// (`kConquestArmyMoveMinWeightWhenColonialPressure` today) sourced
+/// from [PhasePriorityWeights.newWorldAcquisition] (Refs #2847 Phase 2
+/// scaffolding).
+///
+/// Companion to the boolean
+/// [resolvePhaseConquestColonialPressureActive] which gates today's
+/// hard "apply the floor" decision under COLONIAL only. The Phase 3
+/// orchestrator-wiring slice will multiply the floor by this weight so
+/// the colonial-pressure boost scales continuously with the active NW
+/// acquisition priority instead of switching on/off at the
+/// EXPAND→COLONIAL boundary.
+///
+/// Pure and deterministic (Refs #2509 Must-have #7). Reads only
+/// `phasePlan.priorityWeights`.
+double resolvePhaseConquestColonialPressureWeight({
+  required PhasePlanOutcome phasePlan,
+}) => phasePlan.priorityWeights.newWorldAcquisition;

@@ -109,6 +109,27 @@ When both predicates fire on the same dispatch, the larger floor (`0.60`) wins. 
 
 `computePhasePriorityWeights({snapshot, game, expandEconomyPlan})` is pure on its inputs (`Refs #2509` Must-have #7): identical inputs always yield field-equal `PhasePriorityWeights`. The function performs no I/O and no logging. The values it produces are advisory inputs to future consumer wiring — they do not affect dispatch routing, planner-module invocation, suppression matrix population, or any emitted order in this slice. Hard structural suppression as described in [Planner module contracts](#planner-module-contracts) above remains the production source of truth until the consumer-wiring slices land (Refs #2847 Phase 2+).
 
+#### Phase 2 weight resolvers (Refs #2847 scaffolding)
+
+The phase-planner filter modules (`phase_planner_conquest_filter.dart`, `phase_planner_goal_filter.dart`, `phase_planner_economy_filter.dart`, `phase_planner_diplomacy_filter.dart`) host the per-domain advisory weight resolvers consumed by future scoring-site migrations. Each resolver is a **pure, deterministic projection** of `phasePlan.priorityWeights` (or a directly supplied `PhasePriorityWeights` value when the call site has no `PhasePlanOutcome`); resolvers perform no I/O, no logging, and no order emission.
+
+The Phase 2 resolvers ship **side by side** with the existing boolean structural-suppression resolvers (`resolvePhaseConquestSuppressNwInvasionScoring`, `resolvePhaseConquestColonialPressureActive`, `resolvePhaseGoalSuppressColonialPressure`, `resolvePhaseGoalColonialPressureActive`, `resolvePhaseEconomyColonialPressureActive`, `resolvePhaseDiplomacyDeclareWarColonialPressureActive`, ...). The booleans remain the production source of truth in this slice — orchestrator scoring sites still consume them unchanged. The weight resolvers exist so Phase 3 consumer wiring can migrate one site at a time without further filter-module churn.
+
+| Domain | Weight resolver | Maps to `priorityWeights` field |
+|--------|-----------------|---------------------------------|
+| Conquest — NW invasion scoring (declare-war / invasion army moves) | `resolvePhaseConquestNwInvasionWeight` | `newWorldAcquisition` |
+| Conquest — OW invasion scoring (declare-war / army moves) | `resolvePhaseConquestOldWorldInvasionWeight` | `oldWorldConquest` |
+| Conquest — colonial pressure minimum weight floor | `resolvePhaseConquestColonialPressureWeight` | `newWorldAcquisition` |
+| Goal — colonial pressure score floors | `resolvePhaseGoalColonialPressureWeight` | `newWorldAcquisition` |
+| Goal — OW conquest goal-score | `resolvePhaseGoalOldWorldConquestWeight` | `oldWorldConquest` |
+| Economy — colonial cargo/civilian boost | `resolvePhaseEconomyColonialPressureWeight` | `newWorldAcquisition` |
+| Economy — OW civilian work bias | `resolvePhaseEconomyOldWorldCivilianWeight` | `oldWorldCivilian` |
+| Economy — NW civilian work bias | `resolvePhaseEconomyNewWorldCivilianWeight` | `newWorldCivilian` |
+| Diplomacy — NW declare-war colonial-pressure exception | `resolvePhaseDiplomacyDeclareWarColonialPressureWeight` | `newWorldAcquisition` |
+| Diplomacy — OW declare-war scoring bias | `resolvePhaseDiplomacyDeclareWarOldWorldConquestWeight` | `oldWorldConquest` |
+
+Each resolver reads only `phasePlan.priorityWeights` (or its `PhasePriorityWeights` parameter) and never inspects sibling `PhasePlanOutcome` slots. Identical `PhasePlanOutcome` (or `PhasePriorityWeights`) inputs always yield identical `double` results in `[0.0, 1.0]` (Refs #2509 Must-have #7). The Phase 3 orchestrator-wiring slice may consume these resolvers as drop-in multipliers at scoring sites where the legacy boolean resolved to "weight = 0 or 1"; the Phase 4 SPEC alignment will retire booleans rendered redundant by that migration.
+
 ### Canonical helper homes
 
 S1 deleted the legacy `colonial_pressure.dart` and `diplomacy_planner_peace_targets.dart` files. The predicates, deciders, and aggregators previously hosted there are now canonical in the phase-planner modules and `observer_goal_phase.dart`. No thin delegating stubs remain.
@@ -146,6 +167,17 @@ The EXPAND-phase sub-deciders that the cross-phase aggregators in `observer_goal
 - Given an `AIWorldSnapshot` and `Game` where both override predicates evaluate `true` on the same dispatch (`treasury == 0`, `newWorldProvincesOwned == 0`, `boostTreasuryRecoveryCargo == true`, `regimentCount == 0`, non-empty `invadableProvinceIdsSorted`), when `computePhasePriorityWeights` runs, then `newWorldAcquisition == 0.60` (the larger of the two floors wins; Refs #2847 § Resource-need overrides "When both predicates fire on the same dispatch, the larger floor wins").
 - Given identical `(AIWorldSnapshot, Game, ExpandEconomyPlan)` inputs, when `computePhasePriorityWeights` runs twice, then both invocations return field-equal `PhasePriorityWeights` instances (Refs #2509 Must-have #7).
 - Given any `(Game, AIWorldSnapshot, personalityId)` routing to any `ObserverGoalPhase`, when `runPhasePlanners` runs, then the returned `PhasePlanOutcome.priorityWeights` field-equals `computePhasePriorityWeights({snapshot, game, expandEconomyPlan: outcome.expandEconomyPlan})` (the dispatcher computes the weight slot from the same EXPAND plan it stores on the outcome; Refs #2847 Phase 1 scaffolding contract).
+- Given a `PhasePlanOutcome` for any `ObserverGoalPhase` with any `PhasePriorityWeights` instance `w` on its `priorityWeights` slot, when `resolvePhaseConquestNwInvasionWeight({phasePlan: outcome})` runs, then the result equals `w.newWorldAcquisition` exactly (no clamping, no transformation; Refs #2847 Phase 2 scaffolding).
+- Given a `PhasePlanOutcome` for any `ObserverGoalPhase` with any `PhasePriorityWeights` instance `w` on its `priorityWeights` slot, when `resolvePhaseConquestOldWorldInvasionWeight({phasePlan: outcome})` runs, then the result equals `w.oldWorldConquest` exactly (Refs #2847 Phase 2 scaffolding).
+- Given a `PhasePlanOutcome` for any `ObserverGoalPhase` with any `PhasePriorityWeights` instance `w` on its `priorityWeights` slot, when `resolvePhaseConquestColonialPressureWeight({phasePlan: outcome})` runs, then the result equals `w.newWorldAcquisition` exactly (Refs #2847 Phase 2 scaffolding).
+- Given a `PhasePriorityWeights` instance `w`, when `resolvePhaseGoalColonialPressureWeight(w)` runs, then the result equals `w.newWorldAcquisition` exactly (Refs #2847 Phase 2 scaffolding).
+- Given a `PhasePriorityWeights` instance `w`, when `resolvePhaseGoalOldWorldConquestWeight(w)` runs, then the result equals `w.oldWorldConquest` exactly (Refs #2847 Phase 2 scaffolding).
+- Given a `PhasePlanOutcome` for any `ObserverGoalPhase` with any `PhasePriorityWeights` instance `w` on its `priorityWeights` slot, when `resolvePhaseEconomyColonialPressureWeight({phasePlan: outcome})` runs, then the result equals `w.newWorldAcquisition` exactly (Refs #2847 Phase 2 scaffolding).
+- Given a `PhasePlanOutcome` for any `ObserverGoalPhase` with any `PhasePriorityWeights` instance `w` on its `priorityWeights` slot, when `resolvePhaseEconomyOldWorldCivilianWeight({phasePlan: outcome})` runs, then the result equals `w.oldWorldCivilian` exactly (Refs #2847 Phase 2 scaffolding).
+- Given a `PhasePlanOutcome` for any `ObserverGoalPhase` with any `PhasePriorityWeights` instance `w` on its `priorityWeights` slot, when `resolvePhaseEconomyNewWorldCivilianWeight({phasePlan: outcome})` runs, then the result equals `w.newWorldCivilian` exactly (Refs #2847 Phase 2 scaffolding).
+- Given a `PhasePlanOutcome` for any `ObserverGoalPhase` with any `PhasePriorityWeights` instance `w` on its `priorityWeights` slot, when `resolvePhaseDiplomacyDeclareWarColonialPressureWeight({phasePlan: outcome})` runs, then the result equals `w.newWorldAcquisition` exactly (Refs #2847 Phase 2 scaffolding).
+- Given a `PhasePlanOutcome` for any `ObserverGoalPhase` with any `PhasePriorityWeights` instance `w` on its `priorityWeights` slot, when `resolvePhaseDiplomacyDeclareWarOldWorldConquestWeight({phasePlan: outcome})` runs, then the result equals `w.oldWorldConquest` exactly (Refs #2847 Phase 2 scaffolding).
+- Given two `PhasePlanOutcome` (or `PhasePriorityWeights`) inputs that are field-equal on the read field, when any of the Phase 2 weight resolvers above runs twice on each input, then both invocations return the same `double` value (Refs #2509 Must-have #7 — determinism for the Phase 2 weight-resolver scaffolding).
 
 ## Interactions
 
