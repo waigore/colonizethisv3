@@ -10,6 +10,7 @@
 library;
 
 import 'observer_goal_phase.dart';
+import 'phase_priority_weights.dart';
 
 /// When `true`, `evaluateStrategicGoalScores` must not apply the late-game
 /// colonial-pressure conquer/expand/diplomacy/trade score floors.
@@ -43,3 +44,38 @@ bool resolvePhaseGoalSuppressColonialPressure(ObserverGoalPhase phase) =>
 /// [resolvePhaseConquestColonialPressureActive].
 bool resolvePhaseGoalColonialPressureActive(ObserverGoalPhase phase) =>
     phase == ObserverGoalPhase.colonial;
+
+/// Advisory `[0.0, 1.0]` multiplier for the goal-score colonial-pressure
+/// floors (`kMinimumColonialConquerScoreWhenPressure`, etc.) sourced
+/// from [PhasePriorityWeights.newWorldAcquisition] (Refs #2847 Phase 2
+/// scaffolding).
+///
+/// Weight-aware companion of the structural booleans
+/// [resolvePhaseGoalSuppressColonialPressure] and
+/// [resolvePhaseGoalColonialPressureActive]; the booleans remain the
+/// production source of truth in this scaffolding slice — Phase 3
+/// orchestrator wiring will migrate goal-score sites to multiply the
+/// floors by this weight so colonial pressure scales continuously with
+/// the active NW acquisition priority instead of switching on/off at
+/// the EXPAND→COLONIAL boundary.
+///
+/// Accepts the [PhasePriorityWeights] value directly (rather than a
+/// `PhasePlanOutcome`) because the goal-score call sites operate on
+/// the weight slot only and never need the rest of the phase-plan
+/// outcome. Pure and deterministic — identical inputs always yield
+/// identical results (Refs #2509 Must-have #7).
+double resolvePhaseGoalColonialPressureWeight(PhasePriorityWeights weights) =>
+    weights.newWorldAcquisition;
+
+/// Advisory `[0.0, 1.0]` multiplier for the goal-score OW-conquest
+/// bias sourced from [PhasePriorityWeights.oldWorldConquest] (Refs
+/// #2847 Phase 2 scaffolding).
+///
+/// Companion to [resolvePhaseGoalColonialPressureWeight]; the two
+/// resolvers form the OW/NW weight pair the Phase 3 orchestrator
+/// wiring will multiply into the goal-score conquer/expand bias. The
+/// booleans remain the production source of truth in this slice.
+///
+/// Pure and deterministic (Refs #2509 Must-have #7).
+double resolvePhaseGoalOldWorldConquestWeight(PhasePriorityWeights weights) =>
+    weights.oldWorldConquest;

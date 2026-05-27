@@ -79,6 +79,57 @@ Planner modules never call each other. The orchestrator passes `planColonialAcqu
 - Enter **DEVELOP** when OW ≥ 10 and no visible colonial targets.
 - **COLONIAL-lite** is a parallel entry inside EXPAND (turn ≥ `kObserverColonialLiteMinTurn`, OW ≥ `kObserverColonialLiteNearQuotaOw` and below quota, global `newWorld|` not all GP-owned).
 
+### Soft-phase priority weights (Refs #2847 — scaffolding)
+
+`PhasePlanOutcome` carries an additive `priorityWeights` slot ([PhasePriorityWeights] value class in `phase_priority_weights.dart`) computed once per dispatch by `runPhasePlanners` from `(AIWorldSnapshot, Game, ExpandEconomyPlan)`. The slot exists so downstream slices can migrate scoring sites from hard structural suppression to soft weight multipliers without further dispatcher changes; this scaffolding slice does **not** change any production behaviour and no current consumer reads `priorityWeights` (Refs #2847 Phase 1).
+
+The four normative domain weights model "how much should the planner bias toward this domain right now" as deterministic `double` values in `[0.0, 1.0]`:
+
+| Domain | OW=0..6 | OW=7 | OW=8 | OW=9 | OW=10 | OW=11 | OW=12 | OW=13+ |
+|--------|---------|------|------|------|-------|-------|-------|--------|
+| `oldWorldConquest` | 0.95 | 0.95 | 0.90 | 0.80 | 0.60 | 0.40 | 0.20 | 0.10 |
+| `newWorldAcquisition` | 0.05 | 0.05 | 0.10 | 0.20 | 0.40 | 0.60 | 0.80 | 0.90 |
+| `oldWorldCivilian` | 0.90 | 0.90 | 0.85 | 0.75 | 0.55 | 0.35 | 0.15 | 0.05 |
+| `newWorldCivilian` | 0.10 | 0.10 | 0.15 | 0.25 | 0.45 | 0.65 | 0.85 | 0.95 |
+
+Curve values are **starting hypotheses** per issue #2847 § Tuning methodology — never zero in either domain so no module is structurally suppressed, OW-vs-NW pair crosses near OW=10 to mirror the current EXPAND→COLONIAL hard transition, and 0.05 NW priority at OW≤7 keeps the early-game OW sprint dominant (19:1 ratio at OW=0..7).
+
+#### Resource-need overrides
+
+Override predicates raise weight floors when the snapshot indicates a GP cannot reach OW conquest without an income/regiment bootstrap. Floors apply only when the predicate evaluates `true`; otherwise the curve value stands.
+
+| Predicate (all must hold) | Floor raised to |
+|---------------------------|-----------------|
+| `economy.treasury == 0` **and** `colonial.newWorldProvincesOwned == 0` **and** `expandEconomyPlan.boostTreasuryRecoveryCargo == true` | `newWorldAcquisition` floor = `0.60` |
+| `regimentCountForPlayer(game, snapshot.playerId) == 0` **and** `conquest.invadableProvinceIdsSorted.isNotEmpty` | `newWorldAcquisition` floor = `0.30` |
+
+When both predicates fire on the same dispatch, the larger floor (`0.60`) wins. `oldWorldConquest` is **never weakened** by an override — overrides only lift NW weights, so a GP with viable OW targets keeps its full OW priority.
+
+#### Determinism and SPEC-first contract
+
+`computePhasePriorityWeights({snapshot, game, expandEconomyPlan})` is pure on its inputs (`Refs #2509` Must-have #7): identical inputs always yield field-equal `PhasePriorityWeights`. The function performs no I/O and no logging. The values it produces are advisory inputs to future consumer wiring — they do not affect dispatch routing, planner-module invocation, suppression matrix population, or any emitted order in this slice. Hard structural suppression as described in [Planner module contracts](#planner-module-contracts) above remains the production source of truth until the consumer-wiring slices land (Refs #2847 Phase 2+).
+
+#### Phase 2 weight resolvers (Refs #2847 scaffolding)
+
+The phase-planner filter modules (`phase_planner_conquest_filter.dart`, `phase_planner_goal_filter.dart`, `phase_planner_economy_filter.dart`, `phase_planner_diplomacy_filter.dart`) host the per-domain advisory weight resolvers consumed by future scoring-site migrations. Each resolver is a **pure, deterministic projection** of `phasePlan.priorityWeights` (or a directly supplied `PhasePriorityWeights` value when the call site has no `PhasePlanOutcome`); resolvers perform no I/O, no logging, and no order emission.
+
+The Phase 2 resolvers ship **side by side** with the existing boolean structural-suppression resolvers (`resolvePhaseConquestSuppressNwInvasionScoring`, `resolvePhaseConquestColonialPressureActive`, `resolvePhaseGoalSuppressColonialPressure`, `resolvePhaseGoalColonialPressureActive`, `resolvePhaseEconomyColonialPressureActive`, `resolvePhaseDiplomacyDeclareWarColonialPressureActive`, ...). The booleans remain the production source of truth in this slice — orchestrator scoring sites still consume them unchanged. The weight resolvers exist so Phase 3 consumer wiring can migrate one site at a time without further filter-module churn.
+
+| Domain | Weight resolver | Maps to `priorityWeights` field |
+|--------|-----------------|---------------------------------|
+| Conquest — NW invasion scoring (declare-war / invasion army moves) | `resolvePhaseConquestNwInvasionWeight` | `newWorldAcquisition` |
+| Conquest — OW invasion scoring (declare-war / army moves) | `resolvePhaseConquestOldWorldInvasionWeight` | `oldWorldConquest` |
+| Conquest — colonial pressure minimum weight floor | `resolvePhaseConquestColonialPressureWeight` | `newWorldAcquisition` |
+| Goal — colonial pressure score floors | `resolvePhaseGoalColonialPressureWeight` | `newWorldAcquisition` |
+| Goal — OW conquest goal-score | `resolvePhaseGoalOldWorldConquestWeight` | `oldWorldConquest` |
+| Economy — colonial cargo/civilian boost | `resolvePhaseEconomyColonialPressureWeight` | `newWorldAcquisition` |
+| Economy — OW civilian work bias | `resolvePhaseEconomyOldWorldCivilianWeight` | `oldWorldCivilian` |
+| Economy — NW civilian work bias | `resolvePhaseEconomyNewWorldCivilianWeight` | `newWorldCivilian` |
+| Diplomacy — NW declare-war colonial-pressure exception | `resolvePhaseDiplomacyDeclareWarColonialPressureWeight` | `newWorldAcquisition` |
+| Diplomacy — OW declare-war scoring bias | `resolvePhaseDiplomacyDeclareWarOldWorldConquestWeight` | `oldWorldConquest` |
+
+Each resolver reads only `phasePlan.priorityWeights` (or its `PhasePriorityWeights` parameter) and never inspects sibling `PhasePlanOutcome` slots. Identical `PhasePlanOutcome` (or `PhasePriorityWeights`) inputs always yield identical `double` results in `[0.0, 1.0]` (Refs #2509 Must-have #7). The Phase 3 orchestrator-wiring slice may consume these resolvers as drop-in multipliers at scoring sites where the legacy boolean resolved to "weight = 0 or 1"; the Phase 4 SPEC alignment will retire booleans rendered redundant by that migration.
+
 ### Canonical helper homes
 
 S1 deleted the legacy `colonial_pressure.dart` and `diplomacy_planner_peace_targets.dart` files. The predicates, deciders, and aggregators previously hosted there are now canonical in the phase-planner modules and `observer_goal_phase.dart`. No thin delegating stubs remain.
@@ -109,6 +160,24 @@ The EXPAND-phase sub-deciders that the cross-phase aggregators in `observer_goal
 - Given a GP in DEVELOP at war with any Great Powers, when `planDevelopPeace(game, snapshot)` runs, then the returned list contains exactly the at-war GP `factionId`s sorted ascending.
 - Given a GP in DEVELOP with idle Builder units and unimproved extractable resource tiles on GP-owned land, when `planDevelopCivilian(game, snapshot)` runs, then the returned `List<WorkOrder>` contains `build_improvement` orders priority-ranked highest by tile yield score before any lexicographic fallback (Refs #2509 § DEVELOP § planDevelopCivilian). For each tile in priority order, `planDevelopCivilian` pairs it with the closest unassigned same-region idle Builder by Manhattan distance over the `regionId|localId|x|y` tile-key coordinates, tiebreaking by ascending Builder `id`; cross-region Builders are excluded (no naval Builder transport in DEVELOP), so a tile whose region has no remaining idle Builder is left out of the returned list (Refs #2848 § S2).
 - Given a GP in COLONIAL-lite (turn ≥ `kObserverColonialLiteMinTurn`, OW = `kObserverColonialLiteNearQuotaOw`, global NW not all GP-owned) with embassy to a visible NW tribe, when `planColonialLiteOvertures(game, snapshot)` and `planColonialLiteNaval(game, snapshot)` run, then the returned overture list contains that tribe's `factionId` and the naval plan contains no invasion-transport entry (suppressed in COLONIAL-lite per Refs #2509 § COLONIAL-lite).
+- Given an `AIWorldSnapshot` with `conquest.oldWorldProvincesOwned` set to any integer `ow` in `[0, 7]`, `computePhasePriorityWeights` returns a `PhasePriorityWeights` whose `oldWorldConquest == 0.95`, `newWorldAcquisition == 0.05`, `oldWorldCivilian == 0.90`, and `newWorldCivilian == 0.10` (curve plateau below the early-sprint inflection per Refs #2847 § Soft-phase priority weights curve table).
+- Given an `AIWorldSnapshot` with `conquest.oldWorldProvincesOwned == 10` and the resource-need override predicates both `false` (non-zero treasury, NW provinces > 0, no boost cargo, regiment count ≥ 1), when `computePhasePriorityWeights({snapshot, game, expandEconomyPlan: ExpandEconomyPlan.defaultPlan})` runs, then the result has `oldWorldConquest == 0.60`, `newWorldAcquisition == 0.40`, `oldWorldCivilian == 0.55`, and `newWorldCivilian == 0.45` (cross-over row per Refs #2847 § Soft-phase priority weights curve table; no override floor applied).
+- Given an `AIWorldSnapshot` with `conquest.oldWorldProvincesOwned == 7`, `economy.treasury == 0`, `colonial.newWorldProvincesOwned == 0`, an `ExpandEconomyPlan` whose `boostTreasuryRecoveryCargo == true`, and `regimentCountForPlayer(game, snapshot.playerId) >= 1`, when `computePhasePriorityWeights({snapshot, game, expandEconomyPlan: plan})` runs, then the result has `newWorldAcquisition == 0.60` (treasury-recovery override floor) and `oldWorldConquest == 0.95` (curve value unchanged — overrides never weaken OW conquest; Refs #2847 § Resource-need overrides).
+- Given an `AIWorldSnapshot` with `conquest.oldWorldProvincesOwned == 7`, `conquest.invadableProvinceIdsSorted` non-empty, an `ExpandEconomyPlan` whose `boostTreasuryRecoveryCargo == false`, and `regimentCountForPlayer(game, snapshot.playerId) == 0`, when `computePhasePriorityWeights({snapshot, game, expandEconomyPlan: plan})` runs, then the result has `newWorldAcquisition == 0.30` (zero-regiment override floor) and `oldWorldConquest == 0.95` (curve value unchanged; Refs #2847 § Resource-need overrides).
+- Given an `AIWorldSnapshot` and `Game` where both override predicates evaluate `true` on the same dispatch (`treasury == 0`, `newWorldProvincesOwned == 0`, `boostTreasuryRecoveryCargo == true`, `regimentCount == 0`, non-empty `invadableProvinceIdsSorted`), when `computePhasePriorityWeights` runs, then `newWorldAcquisition == 0.60` (the larger of the two floors wins; Refs #2847 § Resource-need overrides "When both predicates fire on the same dispatch, the larger floor wins").
+- Given identical `(AIWorldSnapshot, Game, ExpandEconomyPlan)` inputs, when `computePhasePriorityWeights` runs twice, then both invocations return field-equal `PhasePriorityWeights` instances (Refs #2509 Must-have #7).
+- Given any `(Game, AIWorldSnapshot, personalityId)` routing to any `ObserverGoalPhase`, when `runPhasePlanners` runs, then the returned `PhasePlanOutcome.priorityWeights` field-equals `computePhasePriorityWeights({snapshot, game, expandEconomyPlan: outcome.expandEconomyPlan})` (the dispatcher computes the weight slot from the same EXPAND plan it stores on the outcome; Refs #2847 Phase 1 scaffolding contract).
+- Given a `PhasePlanOutcome` for any `ObserverGoalPhase` with any `PhasePriorityWeights` instance `w` on its `priorityWeights` slot, when `resolvePhaseConquestNwInvasionWeight({phasePlan: outcome})` runs, then the result equals `w.newWorldAcquisition` exactly (no clamping, no transformation; Refs #2847 Phase 2 scaffolding).
+- Given a `PhasePlanOutcome` for any `ObserverGoalPhase` with any `PhasePriorityWeights` instance `w` on its `priorityWeights` slot, when `resolvePhaseConquestOldWorldInvasionWeight({phasePlan: outcome})` runs, then the result equals `w.oldWorldConquest` exactly (Refs #2847 Phase 2 scaffolding).
+- Given a `PhasePlanOutcome` for any `ObserverGoalPhase` with any `PhasePriorityWeights` instance `w` on its `priorityWeights` slot, when `resolvePhaseConquestColonialPressureWeight({phasePlan: outcome})` runs, then the result equals `w.newWorldAcquisition` exactly (Refs #2847 Phase 2 scaffolding).
+- Given a `PhasePriorityWeights` instance `w`, when `resolvePhaseGoalColonialPressureWeight(w)` runs, then the result equals `w.newWorldAcquisition` exactly (Refs #2847 Phase 2 scaffolding).
+- Given a `PhasePriorityWeights` instance `w`, when `resolvePhaseGoalOldWorldConquestWeight(w)` runs, then the result equals `w.oldWorldConquest` exactly (Refs #2847 Phase 2 scaffolding).
+- Given a `PhasePlanOutcome` for any `ObserverGoalPhase` with any `PhasePriorityWeights` instance `w` on its `priorityWeights` slot, when `resolvePhaseEconomyColonialPressureWeight({phasePlan: outcome})` runs, then the result equals `w.newWorldAcquisition` exactly (Refs #2847 Phase 2 scaffolding).
+- Given a `PhasePlanOutcome` for any `ObserverGoalPhase` with any `PhasePriorityWeights` instance `w` on its `priorityWeights` slot, when `resolvePhaseEconomyOldWorldCivilianWeight({phasePlan: outcome})` runs, then the result equals `w.oldWorldCivilian` exactly (Refs #2847 Phase 2 scaffolding).
+- Given a `PhasePlanOutcome` for any `ObserverGoalPhase` with any `PhasePriorityWeights` instance `w` on its `priorityWeights` slot, when `resolvePhaseEconomyNewWorldCivilianWeight({phasePlan: outcome})` runs, then the result equals `w.newWorldCivilian` exactly (Refs #2847 Phase 2 scaffolding).
+- Given a `PhasePlanOutcome` for any `ObserverGoalPhase` with any `PhasePriorityWeights` instance `w` on its `priorityWeights` slot, when `resolvePhaseDiplomacyDeclareWarColonialPressureWeight({phasePlan: outcome})` runs, then the result equals `w.newWorldAcquisition` exactly (Refs #2847 Phase 2 scaffolding).
+- Given a `PhasePlanOutcome` for any `ObserverGoalPhase` with any `PhasePriorityWeights` instance `w` on its `priorityWeights` slot, when `resolvePhaseDiplomacyDeclareWarOldWorldConquestWeight({phasePlan: outcome})` runs, then the result equals `w.oldWorldConquest` exactly (Refs #2847 Phase 2 scaffolding).
+- Given two `PhasePlanOutcome` (or `PhasePriorityWeights`) inputs that are field-equal on the read field, when any of the Phase 2 weight resolvers above runs twice on each input, then both invocations return the same `double` value (Refs #2509 Must-have #7 — determinism for the Phase 2 weight-resolver scaffolding).
 
 ## Interactions
 
