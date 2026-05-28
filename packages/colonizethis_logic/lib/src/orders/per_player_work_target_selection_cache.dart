@@ -273,16 +273,8 @@ class PerPlayerWorkTargetSelectionCache {
     return merged;
   }
 
-  static Iterable<Unit> _humanCivilianUnits(Game game, String playerId) sync* {
-    for (final unit in game.worldState.oldWorld.units) {
-      if (unit.ownerId == playerId) {
-        yield unit;
-      }
-    }
-    for (final unit in game.worldState.newWorld.units) {
-      if (unit.ownerId == playerId) {
-        yield unit;
-      }
-    }
-  }
+  static Iterable<Unit> _humanCivilianUnits(Game game, String playerId) =>
+      game.worldState.allUnitsById.values.where(
+        (unit) => unit.ownerId == playerId,
+      );
 }
