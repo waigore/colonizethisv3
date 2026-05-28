@@ -118,6 +118,7 @@ class _ResultView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = appL10n(context);
+    final theme = Theme.of(context);
     final winnerText = switch (result.winner) {
       QuickBattleWinner.attacker => l10n.quickBattle_attackerWins(
         l10n.quickBattle_attackerDefaultName,
@@ -134,13 +135,18 @@ class _ResultView extends StatelessWidget {
         children: [
           Text(
             l10n.quickBattle_battleResult(winnerText),
-            style: Theme.of(context).textTheme.titleMedium,
+            style: theme.textTheme.titleMedium?.copyWith(
+              color: theme.colorScheme.primary,
+            ),
           ),
           const SizedBox(height: 8),
           if (result.provinceFlips)
             Text(
               l10n.quickBattle_provinceCaptured,
-              style: TextStyle(fontWeight: FontWeight.bold),
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                color: theme.colorScheme.error,
+              ),
             ),
           const SizedBox(height: 8),
           Text(
@@ -148,12 +154,14 @@ class _ResultView extends StatelessWidget {
               l10n.quickBattle_attackerDefaultName,
               result.attackerCasualties.length,
             ),
+            style: theme.textTheme.bodySmall,
           ),
           Text(
             l10n.quickBattle_casualties(
               l10n.quickBattle_defenderDefaultName,
               result.defenderCasualties.length,
             ),
+            style: theme.textTheme.bodySmall,
           ),
           const SizedBox(height: 16),
           Align(
