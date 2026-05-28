@@ -365,6 +365,8 @@ mixin _GameMapAreaStatePart2
                               emptyLabel: 'No player events last turn.',
                             ),
                           ),
+                        if (!isNarrow && widget.game.victory == null)
+                          GameMapPlayersBar(game: widget.game),
                       ],
                     ),
                   ),

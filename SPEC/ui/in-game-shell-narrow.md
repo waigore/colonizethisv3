@@ -55,14 +55,14 @@ Widget contract and navigation: **[game-side-menu.md](game-side-menu.md)**. Paus
 
 - **Scope:** Applies in any state where pressing Android system back from the in-game shell would leave the current game screen.
 - **Interception:** The in-game shell traps Android back before route pop, then decides whether to present confirmation.
-- **Dialog:** The app shows a pixel-art confirmation dialog using **CtDialogShell** and **CtNinePatchButton** (no Material `AlertDialog` / Material action buttons).
+- **Dialog:** The app shows a pixel-art confirmation dialog using **CtDialogShell** and **CtNinePatchButton** (no Material `AlertDialog` / Material action buttons). The host call MUST resolve `barrierColor` to `EditorialMonoclePalette.dialogScrim` ([pixel-art-ui-catalog.md](pixel-art-ui-catalog.md) § Dialog scrim) instead of the Flutter default `Colors.black54` so the scrim matches every other modal on the running app theme.
 - **Text:**
-  - Title: `Exit game?`
-  - Body: `Your current progress will be lost if not saved.`
+  - Title: `Exit game?` (rendered in `--accent`, display font slot)
+  - Body: `Your current progress will be lost if not saved.` (rendered in `--fg`)
   - Actions: `Cancel` and `Exit`
 - **Actions:**
-  - `Cancel` dismisses the dialog and keeps the player on the in-game shell.
-  - `Exit` navigates to the main menu (`Routes.shell`), ending the in-game shell route.
+  - `Cancel` dismisses the dialog and keeps the player on the in-game shell. `Cancel` is rendered with the default `CtNinePatchButton` brass styling.
+  - `Exit` navigates to the main menu (`Routes.shell`), ending the in-game shell route. `Exit` is the destructive action: the button label is rendered in `--danger` (`EditorialMonoclePalette.danger`) so the destructive intent is visually distinct from `Cancel`.
 - **Dismissal:** Tapping outside the dialog (barrier area) dismisses the dialog and keeps the player in-game.
 
 ---
@@ -120,6 +120,8 @@ Hamburger menu (when open):
 - **Given** the exit confirmation dialog is visible, **when** the user taps `Cancel`, **then** the UI layer dismisses the dialog and remains on the in-game shell.
 - **Given** the exit confirmation dialog is visible, **when** the user taps outside the dialog, **then** the UI layer dismisses the dialog and remains on the in-game shell.
 - **Given** the exit confirmation dialog is visible, **when** the user taps `Exit`, **then** the UI layer navigates to the main menu route (`Routes.shell`).
+- **Given** the exit confirmation dialog is shown via `showDialog`, **when** the underlying widget tree is built, **then** the `barrierColor` passed to `showDialog` equals `EditorialMonoclePalette.dialogScrim` (no `Colors.black54` literal in the host code).
+- **Given** the exit confirmation dialog is visible, **when** the `Exit` action label is rendered, **then** the label text colour resolves to `EditorialMonoclePalette.danger` so the destructive action is visually distinct from `Cancel` (which keeps the default brass label color).
 
 ---
 

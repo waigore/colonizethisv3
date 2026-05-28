@@ -33,18 +33,29 @@
 ## Layout / wireframe
 
 ```text
-Scaffold
-  AppBar(title: factionDisplayName, back -> PopNavigationEvent)
-  body: ListView (padding 16h x 8v)
-    CtPanel — current relation (state · one-word score label, or "—")
-    section: History (titleMedium)
-      [empty] diplomacy_detail_noEvents
-      OR Card per event (year/turn label + formatDiplomaticEvent sentence)
-    if kind == greatPower:
-      section: Dossier (titleMedium)
-        [empty] diplomacy_detail_noDossier
-        OR rows: turn label + evidence description (newest first)
+Scaffold (background: --bg)
+  SafeArea
+    Column
+      CtTopBar (title: factionDisplayName, chevron back -> PopNavigationEvent)
+      Center / ConstrainedBox (maxWidth: 600)
+        ListView (padding 14h x 14v, gap 14 between cards)
+          DetailCard — title "CURRENT RELATION"
+            RelationSummary (state word in --danger / --success + one-word score label, or "—")
+          DetailCard — title "DIPLOMATIC HISTORY"
+            [empty] diplomacy_detail_noEvents (italic --muted)
+            OR LeftBorderTile per event (mono --accent-dim year/turn label + sentence)
+          if kind == greatPower:
+            DetailCard — title "DOSSIER"
+              [empty] diplomacy_detail_noDossier (italic --muted)
+              OR LeftBorderTile per evidence entry (mono --accent-dim turn label + description)
 ```
+
+Visual chrome notes (per [mockups/GAME30002-diplomacy-detail-screen.html](mockups/GAME30002-diplomacy-detail-screen.html)):
+
+- `CtTopBar` paints the `--surface-lite → --surface` gradient with a `--accent-dim` bottom border; the title uses the display font in `--accent`.
+- `DetailCard` chrome paints a `--surface-lite → --surface → --bg-deep` vertical gradient with a 1 px `--border` outline and 14 px inner padding.
+- Card titles use the display font in `--muted` uppercase, 13 px, letter-spacing `0.06 em`. They render as **upper-case** text (e.g. `DIPLOMATIC HISTORY`) on platforms without smcp glyphs.
+- `LeftBorderTile` paints a `--surface` background with a 2 px `--accent-dim` left border, 10×12 px inner padding, an 11 px monospace `--accent-dim` label line, and a `--fg` body sentence.
 
 Outgoing subsidy/grant pending copy from the diplomacy **list** row is **not** duplicated here (see [`diplomacy-panel.md`](diplomacy-panel.md) § Per-faction row).
 
@@ -79,7 +90,19 @@ History ordering: `(turn desc, intraTurnIndex desc)` via `diplomaticHistoryForPa
 
 - Given the screen is mounted for a Great Power target with `relation` at peace and score 70,
   When the widget builds,
-  Then the UI layer shows the localized peace label and a non-empty relation score display string in the summary `CtPanel`.
+  Then the UI layer shows the localized peace label and a non-empty relation score display string in the current-relation `DetailCard`.
+
+- Given `relation.atWar` is `true`,
+  When the current-relation `DetailCard` renders,
+  Then the localized war state label resolves its text colour to `EditorialMonoclePalette.danger` per mockup `.relation-row .war`.
+
+- Given `relation.atWar` is `false` and `relation` is non-null,
+  When the current-relation `DetailCard` renders,
+  Then the localized peace state label resolves its text colour to `EditorialMonoclePalette.success` per mockup `.relation-row .state`.
+
+- Given the widget builds,
+  When the chrome is inspected,
+  Then the screen scaffold background resolves to `EditorialMonoclePalette.bg`, exactly one `CtTopBar` is present, the legacy Material `AppBar` is absent, and the `CtTopBar` carries a `CtBackButton` chevron.
 
 - Given `kind` is not `FactionKind.greatPower`,
   When the widget builds,
@@ -93,7 +116,7 @@ History ordering: `(turn desc, intraTurnIndex desc)` via `diplomaticHistoryForPa
   When the widget builds,
   Then the UI layer renders at least one `Card` whose body includes text from `formatDiplomaticEvent` for that event.
 
-- Given the app bar back button is visible,
+- Given the `CtTopBar` back button is visible,
   When the user taps it,
   Then the UI layer emits exactly one `PopNavigationEvent` on `appEventBusProvider`.
 
