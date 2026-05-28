@@ -363,9 +363,9 @@ void main() {
       );
     });
 
-    group('geographic peer-war lock NW futility (Refs #2847 H5 + H3)', () {
+    group('geographic peer-war lock NW futility (Refs #2847 H3 + Resource-need override)', () {
       test(
-        'H5+H3: trap band + lock + zero NW -> forceRebuild, no cargo boost',
+        'lock + trap band + zero NW + treasury<cheapest -> forceRebuild AND cargo boost',
         () {
           final game = _expandGame(
             players: [
@@ -389,18 +389,21 @@ void main() {
             planExpandEconomy(game: game, snapshot: snapshot),
             const ExpandEconomyPlan(
               forceCheapestRegimentBuild: true,
-              boostTreasuryRecoveryCargo: false,
+              boostTreasuryRecoveryCargo: true,
             ),
             reason:
-                'Arm D (H3) fires without treasury gate; arm C suppressed '
-                '(H5) because overseas cargo cannot deliver riches with '
-                'zero NW ownership under geographic peer-war lock.',
+                'Arm D (H3) fires without treasury gate (force-rebuild under '
+                'the lock). Arm C also fires under the lock so the cargo '
+                'signal feeds the resource-need NW=0.60 weight floor in '
+                'phase_priority_weights.dart — suppressing the boost would '
+                'disable the soft-phase resource-need override (Refs #2847 '
+                '§ Resource-need overrides).',
           );
         },
       );
 
       test(
-        'H5 negative: NW ownership restores cargo boost when treasury low',
+        'lock negative: NW ownership keeps cargo boost firing when treasury low',
         () {
           final game = _expandGame(
             players: [
