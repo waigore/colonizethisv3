@@ -72,7 +72,7 @@ class GameMapPlayersBar extends StatelessWidget {
     if (tuple == null) {
       return EditorialMonoclePalette.muted;
     }
-    return Color.fromARGB(0xFF, tuple.$1, tuple.$2, tuple.$3);
+    return Color.fromRGBO(tuple.$1, tuple.$2, tuple.$3, 1.0);
   }
 
   @override
