@@ -111,8 +111,16 @@ void main() {
         return;
       }
 
+      // The assigned slot card now visibly renders the tech name (Refs
+      // #2864 S3 — slot card assigned-tech body), so the assertion is
+      // scoped to the bottom-sheet ListView contents only (AC4: the
+      // selection list must not offer the already-assigned tech).
+      final bottomSheetMatches = find.descendant(
+        of: find.byType(ListView),
+        matching: find.text(techDisplayName(techA)),
+      );
       expect(
-        find.text(techDisplayName(techA)),
+        bottomSheetMatches,
         findsNothing,
         reason:
             'Tech already assigned to slot 1 should not appear in slot 2 list',

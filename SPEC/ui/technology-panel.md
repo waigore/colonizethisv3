@@ -80,7 +80,14 @@ The panel does **not** show locked techs in the assignment list. When there are 
 
 ## Slot behaviour
 
-- **Slots:** Count = `player.researchSlots` (default 3; 4 with University). Each slot shows label (e.g. “Slot 1”), assigned tech (if any) with progress, and actions: Cancel (if assigned), Choose tech.
+- **Slots:** The Slots tab always renders exactly four slot cards in slot-index order regardless of `player.researchSlots`. The active slot count remains `player.researchSlots` (default 3; 4 with University); the locked-slot rule below covers the fourth card when the player has not researched University.
+- **Locked slot 4 (University):** When `player.researchSlots` is `null` or strictly less than `4`, the fourth slot card renders as a **locked placeholder**:
+  - The card body is rendered at exactly `0.45` opacity (the mockup `.slot-card[style="opacity:.45"]` value).
+  - The slot header label reads exactly `"Slot 4 (University)"` (no other content in the header).
+  - In place of the assigned-tech body / progress / empty-state, the card body shows exactly one footnote line `"Requires University tech"` in `--muted` italic.
+  - The card renders no Cancel and no Choose tech action button.
+  - The card emits no `ResearchOrder` mutations.
+- Each active slot card (indices `0..player.researchSlots - 1`) shows label (e.g. “Slot 1”), assigned tech (if any) with progress, and actions: Cancel (if assigned), Choose tech.
 - **Choose tech:** Opens a dialog or bottom sheet listing only the choosable techs (researchable, not in another slot). Selecting a tech assigns it to that slot and closes the dialog.
 - **Cancel:** Clears the slot (order removed); progress for that tech is lost on resolution per [research-resolution.md](../program/research-resolution.md).
 - **Goal slot:** Out of scope for this spec; only assignment slots are defined here.
@@ -102,6 +109,12 @@ The panel does **not** show locked techs in the assignment list. When there are 
 - **Given** the user has assigned tech A to slot 1, **when** the user opens “Choose tech” for slot 2, **then** tech A does not appear in the list for slot 2 (no duplicate assignment).
 
 - **Given** the Technology panel is shown with a game that has world state and visibility, **when** the assignment list is computed, **then** discovery techs (e.g. discovery_of_sugar) are included only if the player has revealed the corresponding resource(s), using the same rule as the tech tree (`hasRevealedResourceForPlayer`).
+
+- **Given** the Slots tab is rendered for any player, **when** the slot list is computed, **then** the UI layer renders exactly four slot cards in slot-index order regardless of `player.researchSlots`.
+
+- **Given** `player.researchSlots` is `null` or strictly less than `4`, **when** the fourth slot card is rendered, **then** the UI layer renders the card body at opacity `0.45`, sets the header label to exactly `"Slot 4 (University)"`, shows exactly the footnote line `"Requires University tech"` in place of any assigned-tech / progress / empty-state content, and renders no Cancel and no Choose tech button on that card.
+
+- **Given** `player.researchSlots` is greater than or equal to `4`, **when** the fourth slot card is rendered, **then** the UI layer renders the card at full opacity (not the locked `0.45`), uses the standard slot label `"Slot 4"`, and renders Cancel (when assigned) and Choose tech buttons as on the other active slots.
 
 ## Integration
 
