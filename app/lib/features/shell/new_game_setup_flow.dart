@@ -10,6 +10,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'package:colonizethis_app/config/editorial_monocle_palette.dart';
 import 'package:colonizethis_app/config/routes.dart';
 import 'package:colonizethis_app/perf/app_perf_trace.dart';
 import 'package:colonizethis_app/core/services/game_service.dart';
@@ -138,36 +139,68 @@ Future<bool> _showNewGameErrorDialog({
     context: ctx,
     useRootNavigator: true,
     builder: (ctx) => CtDialogShell(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            l10n.shell_newGameError_title,
-            style: Theme.of(ctx).textTheme.titleMedium,
-          ),
-          const SizedBox(height: 8),
-          SelectableText(error.toString()),
-          const SizedBox(height: 16),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.end,
-            children: [
-              CtNinePatchButton(
-                onPressed: () => Navigator.of(ctx).pop(false),
-                child: Text(l10n.common_close),
-              ),
-              const SizedBox(width: 8),
-              CtNinePatchButton(
-                onPressed: () => Navigator.of(ctx).pop(true),
-                child: Text(l10n.shell_newGameError_retry),
-              ),
-            ],
-          ),
-        ],
+      child: _NewGameErrorCard(
+        title: l10n.shell_newGameError_title,
+        message: error.toString(),
+        closeLabel: l10n.common_close,
+        retryLabel: l10n.shell_newGameError_retry,
       ),
     ),
   );
   return retry ?? false;
+}
+
+/// `--danger`-bordered error card painted inside the [CtDialogShell] when
+/// new-game setup fails. SPEC/ui/game-initializing.md § Failure and retry;
+/// dark-theme contract from issue #2867 R34 (error visual state).
+class _NewGameErrorCard extends StatelessWidget {
+  const _NewGameErrorCard({
+    required this.title,
+    required this.message,
+    required this.closeLabel,
+    required this.retryLabel,
+  });
+
+  final String title;
+  final String message;
+  final String closeLabel;
+  final String retryLabel;
+
+  @override
+  Widget build(BuildContext context) {
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        border: Border.all(color: EditorialMonoclePalette.danger, width: 1),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(title, style: Theme.of(context).textTheme.titleMedium),
+            const SizedBox(height: 8),
+            SelectableText(message),
+            const SizedBox(height: 16),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                CtNinePatchButton(
+                  onPressed: () => Navigator.of(context).pop(false),
+                  child: Text(closeLabel),
+                ),
+                const SizedBox(width: 8),
+                CtNinePatchButton(
+                  onPressed: () => Navigator.of(context).pop(true),
+                  child: Text(retryLabel),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 }
 
 String _stepLabel(BuildContext context, int stepIndex) {
@@ -260,9 +293,9 @@ class _NewGameSetupProgressDialogState
             ),
             const SizedBox(height: 20),
             CtLoadingIndicator(
-              size: 40,
+              size: 48,
               strokeWidth: 2,
-              color: theme.colorScheme.primary,
+              color: EditorialMonoclePalette.accent,
               center: false,
             ),
             const SizedBox(height: 16),

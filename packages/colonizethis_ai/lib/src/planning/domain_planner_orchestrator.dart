@@ -598,6 +598,20 @@ _BuildPassResult _appendEconomyBuildOrders({
       candidatesForBuild = regimentsOnly;
     }
   }
+  // Refs #2847 Phase 3 economy build-pick wiring: source the cargo
+  // bonus activation/scale from the soft-phase NW acquisition weight
+  // sitting on the dispatched phase plan instead of the legacy
+  // `colonialPressure` boolean. The boolean is still passed through as
+  // the null-weight fallback path, but `colonialPressureWeight` is the
+  // production source of truth — at the early-sprint default curve
+  // (newWorldAcquisition = 0.05 for OW <= 7) the cargo bonus
+  // collapses to a token nudge (`+2.5 * 0.05 = +0.125`) so the OW
+  // conquest sprint is not dominated by colonial pressure, while at
+  // the COLONIAL plateau the bonus reaches `+2.5` identity-equal to
+  // the legacy hard-phase path.
+  final colonialPressureWeight = resolvePhaseEconomyColonialPressureWeight(
+    phasePlan: phasePlan,
+  );
   final chosen = pickBuildOrder(
     ctx: ctx,
     input: BuildPickInput(
@@ -606,6 +620,7 @@ _BuildPassResult _appendEconomyBuildOrders({
       provincesToVictory: snapshot.conquest.provincesToVictory,
       oldWorldProvincesOwned: snapshot.conquest.oldWorldProvincesOwned,
       colonialPressure: colonialPressure,
+      colonialPressureWeight: colonialPressureWeight,
       militaryRebuildCrisis:
           (forceRegimentRebuild || expandEconomy.forceCheapestRegimentBuild) &&
           (atWarWithGpBlocker ||

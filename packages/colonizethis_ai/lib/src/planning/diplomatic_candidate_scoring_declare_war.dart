@@ -76,6 +76,7 @@ final class _DeclareWarTargetContext {
     required this.isMinorTarget,
     required this.ownsInvadableNw,
     required this.colonialPressure,
+    required this.nwAcquisitionWeight,
     required this.isTribeTarget,
     required this.stalledOwExpansion,
     required this.ownsInvadableOwMinor,
@@ -118,6 +119,31 @@ final class _DeclareWarTargetContext {
   final bool isMinorTarget;
   final bool ownsInvadableNw;
   final bool colonialPressure;
+
+  /// Soft-phase NW acquisition weight for the active player turn (Refs
+  /// #2847 Phase 3 diplomacy declare-war wiring). Sourced from
+  /// `resolvePhaseDiplomacyDeclareWarColonialPressureWeight(phasePlan)`
+  /// when a [PhasePlanOutcome] is threaded through, otherwise mapped
+  /// from the legacy boolean
+  /// `shouldSuppressNewWorldDeclareWarInvasionAndPurchase` (`true ->
+  /// 0.0`, `false -> 1.0`) so callers without a phase plan keep the
+  /// pre-soft-phase hard-suppress semantics.
+  ///
+  /// Consumed by `_declareWarSuppressedExpandColonialScore`,
+  /// `_declareWarSuppressedColonialLiteScore`, and the
+  /// `_declareWarSuppressedWarConcentrationScore` colonial-pressure
+  /// carve-out: when `nwAcquisitionWeight <= 0.0` the NW colonial
+  /// declare-war candidates (tribe / NW owner / colonial-adjacent
+  /// owner) collapse to `kDeclareWarNonAdjacentSuppressedScore`
+  /// (legacy hard-suppress equivalent); when `> 0.0` the NW candidates
+  /// remain scorable and the colonial-pressure carve-out preserves
+  /// stalled-OW tribe declare-war scoring. The default soft-phase
+  /// curve never produces `0.0` (min `0.05` at OW≤7) so the production
+  /// hot path now keeps NW declare-war reachable at low priority
+  /// instead of being structurally collapsed under EXPAND /
+  /// COLONIAL-lite (Refs #2847 § Soft-phase priority weights).
+  final double nwAcquisitionWeight;
+
   final bool isTribeTarget;
   final bool stalledOwExpansion;
   final bool ownsInvadableOwMinor;
@@ -180,27 +206,35 @@ final class _DeclareWarTargetContext {
     final isMinorTarget = isMinorOrTribeFaction(game, order.targetFactionId);
     final ownsInvadableNw = snapshot.colonial.invadableNewWorldProvinceIdsSorted
         .any((pid) => provinceOwner[pid] == order.targetFactionId);
-    // Refs #2509 S5: derive colonial-pressure from the dispatched phase
-    // plan when available — `resolvePhaseDiplomacyDeclareWarColonialPressureActive`
-    // returns `true` only under `ObserverGoalPhase.colonial`, mirroring the
-    // economy and conquest resolvers. Falls back to the legacy three-predicate
-    // compute when no phase plan was threaded through (test paths and other
-    // callers; the orchestrator always passes `phasePlan` so production runs
-    // route through the phase-derived value). The legacy path retires
-    // structurally in S1 once every consumer migrates.
-    final colonialPressure = phasePlan != null
-        ? resolvePhaseDiplomacyDeclareWarColonialPressureActive(
+    // Refs #2847 Phase 3 diplomacy wiring: derive the NW acquisition
+    // weight from the dispatched phase plan when available, and
+    // collapse the legacy COLONIAL-only `colonialPressure` boolean to
+    // `nwAcquisitionWeight > 0.0` so the colonial-pressure carve-out
+    // in `_declareWarSuppressedWarConcentrationScore` scales continuously
+    // with the soft-phase NW priority instead of switching on/off at
+    // the EXPAND→COLONIAL boundary
+    // (`SPEC/ai/phase-planner-architecture.md` § Soft-phase priority
+    // weights). Falls back to the legacy three-predicate compute when no
+    // phase plan was threaded through (test paths and other callers);
+    // the orchestrator always passes `phasePlan` so production runs
+    // route through the weight-derived value. The legacy path retires
+    // structurally once every consumer migrates.
+    final nwAcquisitionWeight = phasePlan != null
+        ? resolvePhaseDiplomacyDeclareWarColonialPressureWeight(
             phasePlan: phasePlan,
           )
-        : hasColonialAcquisitionTargets(snapshot.colonial) &&
-              !isStalledOldWorldGpBlockerFocus(
-                game: game,
-                snapshot: snapshot,
-              ) &&
-              !shouldSuppressNewWorldColonialOrders(
-                snapshot: snapshot,
-                game: game,
-              );
+        : (hasColonialAcquisitionTargets(snapshot.colonial) &&
+                  !isStalledOldWorldGpBlockerFocus(
+                    game: game,
+                    snapshot: snapshot,
+                  ) &&
+                  !shouldSuppressNewWorldColonialOrders(
+                    snapshot: snapshot,
+                    game: game,
+                  )
+              ? 1.0
+              : 0.0);
+    final colonialPressure = nwAcquisitionWeight > 0.0;
     final isTribeTarget = isTribeFaction(game, order.targetFactionId);
     final stalledOwExpansion = isObserverConquestExpansionPressure(
       snapshot.conquest.oldWorldProvincesOwned,
@@ -288,6 +322,7 @@ final class _DeclareWarTargetContext {
       isMinorTarget: isMinorTarget,
       ownsInvadableNw: ownsInvadableNw,
       colonialPressure: colonialPressure,
+      nwAcquisitionWeight: nwAcquisitionWeight,
       isTribeTarget: isTribeTarget,
       stalledOwExpansion: stalledOwExpansion,
       ownsInvadableOwMinor: ownsInvadableOwMinor,
@@ -351,26 +386,20 @@ int? _declareWarSuppressedDevelopPhaseScore(_DeclareWarTargetContext ctx) {
 }
 
 int? _declareWarSuppressedExpandColonialScore(_DeclareWarTargetContext ctx) {
-  // Refs #2509 S5: derive EXPAND NW-colonial suppression from the
-  // dispatched phase plan instead of recomputing
-  // `shouldSuppressNewWorldColonialOrders` (which itself recomputes
-  // `observerGoalPhaseFor`) per declare-war candidate. Phase-derived
-  // `true/false` is field-equal to the legacy
-  // `phase == ObserverGoalPhase.expand` compute across every phase, so
-  // the migration is behaviour-preserving for the EXPAND-collapse
-  // scoring branch. Falls back to the legacy compute when no phase
-  // plan was threaded through; the orchestrator always passes
-  // `phasePlan` so production runs route through the phase-derived
-  // value.
-  final expandSuppress = ctx.phasePlan != null
-      ? resolvePhaseDiplomacyDeclareWarExpandColonialSuppressionActive(
-          phasePlan: ctx.phasePlan!,
-        )
-      : shouldSuppressNewWorldColonialOrders(
-          snapshot: ctx.snapshot,
-          game: ctx.game,
-        );
-  if (!expandSuppress) {
+  // Refs #2847 Phase 3 diplomacy wiring: derive EXPAND NW-colonial
+  // suppression from the soft-phase NW acquisition weight on the
+  // dispatched phase plan instead of the boolean
+  // `resolvePhaseDiplomacyDeclareWarExpandColonialSuppressionActive`
+  // (`phase == ObserverGoalPhase.expand`). The legacy hard-suppress
+  // contract is preserved exactly at `nwAcquisitionWeight <= 0.0`
+  // (mirroring `runConquestArmyMovePlanner`'s NW invadable-bonus zeroing
+  // gate); the default soft-phase curve produces a `0.05` early-sprint
+  // floor at OW<=7, so EXPAND turns now keep NW declare-war candidates
+  // scorable at low priority rather than structurally collapsing them.
+  // Callers without a phase plan use the legacy-derived weight (1.0 /
+  // 0.0) from `_DeclareWarTargetContext.build`, preserving the
+  // pre-soft-phase behaviour for tests and other entry points.
+  if (ctx.nwAcquisitionWeight > 0.0) {
     return null;
   }
   if (ctx.isTribeTarget || ctx.ownsInvadableNw || ctx.isColonialAdjacentOwner) {
@@ -400,24 +429,23 @@ int? _declareWarSuppressedExpandColonialScore(_DeclareWarTargetContext ctx) {
 // stays distinct from the broader DEVELOP suppression
 // (`_declareWarSuppressedDevelopPhaseScore`).
 int? _declareWarSuppressedColonialLiteScore(_DeclareWarTargetContext ctx) {
-  // Refs #2509 S5: derive COLONIAL-lite NW-colonial suppression from
-  // the dispatched phase plan instead of recomputing
-  // `observerGoalPhaseFor` per declare-war candidate. Phase-derived
-  // `true/false` is field-equal to the legacy
-  // `phase == ObserverGoalPhase.colonialLite` compute across every
-  // phase, so the migration is behaviour-preserving for the
-  // COLONIAL-lite NW-collapse scoring branch (issue #2509 §
-  // COLONIAL-lite scope summary "Suppressed: NW declareWar"). Falls
-  // back to the legacy compute when no phase plan was threaded
-  // through; the orchestrator always passes `phasePlan` so production
-  // runs route through the phase-derived value.
-  final colonialLiteSuppress = ctx.phasePlan != null
-      ? resolvePhaseDiplomacyDeclareWarColonialLiteSuppressionActive(
-          phasePlan: ctx.phasePlan!,
-        )
-      : observerGoalPhaseFor(snapshot: ctx.snapshot, game: ctx.game) ==
-            ObserverGoalPhase.colonialLite;
-  if (!colonialLiteSuppress) {
+  // Refs #2847 Phase 3 diplomacy wiring: collapsed to the same soft-phase
+  // NW-weight predicate as `_declareWarSuppressedExpandColonialScore`.
+  // Under the soft-phase curve both EXPAND and COLONIAL-lite share the
+  // same low-NW-priority profile (early-sprint plateau at OW<=9), so the
+  // suppression contract is "NW colonial declare-war collapses iff
+  // `nwAcquisitionWeight <= 0.0`" — which is reached only when an
+  // explicit phase-plan override sets the weight to `0.0` (no override
+  // does so today; default curves never produce `0.0`).
+  //
+  // The branch remains in the suppression chain (rather than being
+  // inlined into the EXPAND branch) so the structural ordering matches
+  // `_declareWarSuppressedScore` and so future Phase 4 SPEC alignment
+  // can retire the EXPAND / COLONIAL-lite Phase 2 boolean resolvers
+  // independently of this scoring path. Callers without a phase plan
+  // use the legacy-derived weight (1.0 / 0.0) from
+  // `_DeclareWarTargetContext.build`.
+  if (ctx.nwAcquisitionWeight > 0.0) {
     return null;
   }
   if (ctx.isTribeTarget || ctx.ownsInvadableNw || ctx.isColonialAdjacentOwner) {

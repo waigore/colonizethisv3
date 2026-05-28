@@ -1043,9 +1043,9 @@
   "@moveArmy_groupUnowned": {
     "description": "Header label for unowned province destinations in move army dialog."
   },
-  "moveArmy_invadeProvinceTitle": "Invade province?",
+  "moveArmy_invadeProvinceTitle": "Declare war?",
   "@moveArmy_invadeProvinceTitle": {
-    "description": "Confirm dialog title for entering hostile territory with army movement."
+    "description": "Confirm dialog title for the destructive war-confirmation sub-dialog when an invasion army move is requested (issue #2867 R9)."
   },
   "moveArmy_invadeProvinceBody": "Moving into {ownerLabel} territory will declare war this turn and then move the army. Continue?",
   "@moveArmy_invadeProvinceBody": {
@@ -1981,6 +1981,14 @@
   "@gameSetup_title": {
     "description": "Game setup screen title."
   },
+  "gameSetup_eyebrow": "New Campaign",
+  "@gameSetup_eyebrow": {
+    "description": "Eyebrow text rendered uppercased above the Game Setup title in the dark editorial-monocle pixelArt variant."
+  },
+  "gameSetup_intro": "Choose six great powers and a leader variant for each.",
+  "@gameSetup_intro": {
+    "description": "Italic intro line shown below the Game Setup title in the dark editorial-monocle pixelArt variant."
+  },
   "gameSetup_starting": "Starting…",
   "@gameSetup_starting": {
     "description": "Loading state label while starting a game from setup."
@@ -2457,6 +2465,18 @@
   "diplomacy_section_tribes": "Tribes",
   "@diplomacy_section_tribes": {
     "description": "Diplomacy list section heading."
+  },
+  "diplomacy_filter_all": "All",
+  "@diplomacy_filter_all": {
+    "description": "Diplomacy panel mode-bar filter label: show all factions."
+  },
+  "diplomacy_filter_greatPowersOnly": "Great Powers only",
+  "@diplomacy_filter_greatPowersOnly": {
+    "description": "Diplomacy panel mode-bar filter label: show only Great Powers."
+  },
+  "diplomacy_filter_minorsOnly": "Minors only",
+  "@diplomacy_filter_minorsOnly": {
+    "description": "Diplomacy panel mode-bar filter label: show Minor Nations and Tribes only (no Great Powers)."
   },
   "diplomacy_relationState_war": "War",
   "@diplomacy_relationState_war": {

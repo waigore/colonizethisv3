@@ -8,10 +8,12 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'army_conquest_prep.dart';
 import 'domain_planner_orchestrator.dart';
 import 'economy_planner.dart';
+import 'expand_phase_planner.dart' show ExpandEconomyPlan;
 import 'goal_manager.dart';
 import 'observer_goal_phase.dart';
 import 'phase_planner_dispatch.dart';
 import 'phase_planner_goal_filter.dart';
+import 'phase_priority_weights.dart';
 import 'ai_order_reporting.dart';
 import 'ai_trace_builder.dart';
 import '../perception/perception_snapshot.dart';
@@ -87,10 +89,29 @@ StrategicOrderTraceResult generateStrategicOrdersWithTrace({
   final suppressColonialPressure = resolvePhaseGoalSuppressColonialPressure(
     observerGoalPhase,
   );
+  // Refs #2847 Phase 3 goal-score wiring: pre-compute the soft-phase
+  // priority weights from the pre-prep snapshot/game so the
+  // `evaluateStrategicGoalScores` colonial-pressure penalty/floor pass
+  // can scale continuously with `newWorldAcquisition` instead of switching
+  // on/off at the EXPAND→COLONIAL hard-phase boundary. The dispatch path's
+  // EXPAND economy plan is computed downstream inside `runPhasePlanners`,
+  // so the goal-eval call site uses `ExpandEconomyPlan.defaultPlan` for
+  // its weight derivation — the curve and the zero-regiment override fire
+  // here, but the treasury-recovery override (which depends on
+  // `boostTreasuryRecoveryCargo`) only activates once the EXPAND plan is
+  // available downstream. A follow-up slice can hoist the EXPAND plan to
+  // close that gap; this slice migrates the structural EXPAND→COLONIAL
+  // gate that was the primary source of the 10-OW cliff.
+  final goalColonialPressureWeight = computePhasePriorityWeights(
+    snapshot: snapshot,
+    game: game,
+    expandEconomyPlan: ExpandEconomyPlan.defaultPlan,
+  ).newWorldAcquisition;
   final goalScores = evaluateStrategicGoalScores(
     snapshot,
     config,
     observerGoalPhase: observerGoalPhase,
+    colonialPressureWeight: goalColonialPressureWeight,
   );
   var primaryGoal = selectPrimaryGoal(
     snapshot,
@@ -99,6 +120,7 @@ StrategicOrderTraceResult generateStrategicOrdersWithTrace({
     nationId: nationId,
     turn: turn,
     observerGoalPhase: observerGoalPhase,
+    colonialPressureWeight: goalColonialPressureWeight,
   );
   if (suppressColonialPressure &&
       snapshot.conquest.provincesToVictory >

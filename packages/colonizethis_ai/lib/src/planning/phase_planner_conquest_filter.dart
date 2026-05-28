@@ -14,6 +14,8 @@
 /// DEVELOP suppressions).
 library;
 
+import 'package:colonizethis_data/colonizethis_data.dart';
+
 import 'colonial_phase_planner.dart' show ColonialMilitaryPlan;
 import 'expand_phase_planner.dart' show ExpandMilitaryPlan;
 import 'observer_goal_phase.dart';
@@ -39,7 +41,8 @@ class PhaseConquestInvadableResolution {
   final List<String> phasePlanInvadableSorted;
 
   /// When [useLegacyInvadable] is `true`, exclude NW invadable provinces
-  /// from the legacy union (EXPAND / COLONIAL-lite structural suppression).
+  /// from the legacy union when [resolvePhaseConquestNwInvasionWeight] is
+  /// `<= 0.0` for the active [PhasePlanOutcome] (Refs #2847 Phase 3).
   final bool structuralNewWorldSuppressed;
 
   /// When `true`, `runConquestArmyMovePlanner` returns without emitting
@@ -73,13 +76,13 @@ PhaseConquestInvadableResolution resolvePhaseConquestInvadable({
     );
   }
 
-  final suppressNewWorld =
-      phasePlan.phase == ObserverGoalPhase.expand ||
-      phasePlan.phase == ObserverGoalPhase.colonialLite;
+  final nwInvasionWeight = resolvePhaseConquestNwInvasionWeight(
+    phasePlan: phasePlan,
+  );
 
   return PhaseConquestInvadableResolution(
     useLegacyInvadable: true,
-    structuralNewWorldSuppressed: suppressNewWorld,
+    structuralNewWorldSuppressed: nwInvasionWeight <= 0.0,
   );
 }
 
@@ -169,15 +172,13 @@ bool resolvePhaseConquestExtraPassesActive({
 /// [PhasePriorityWeights.newWorldAcquisition] (Refs #2847 Phase 2
 /// scaffolding).
 ///
-/// This resolver is the **weight-aware companion** of the structural
-/// boolean [resolvePhaseConquestSuppressNwInvasionScoring]; the boolean
-/// remains the production source of truth in the Phase 2 scaffolding
-/// slice — orchestrator scoring sites do **not** read this weight yet.
-/// Phase 3 consumer wiring (Refs #2847) will migrate NW invasion
-/// scoring sites to multiply candidate scores by this weight so the
-/// EXPAND→COLONIAL transition becomes a continuous curve instead of a
-/// binary cliff (`SPEC/ai/phase-planner-architecture.md` § Soft-phase
-/// priority weights).
+/// Production NW invasion scoring multiplier for
+/// `runConquestArmyMovePlanner` (Refs #2847 Phase 3). Replaces the
+/// boolean [resolvePhaseConquestSuppressNwInvasionScoring] at the
+/// conquest army-move scoring sites so the EXPAND→COLONIAL transition
+/// is a continuous curve instead of a binary cliff
+/// (`SPEC/ai/phase-planner-architecture.md` § Soft-phase priority
+/// weights). The boolean remains for legacy call sites not yet migrated.
 ///
 /// Pure and deterministic — identical `phasePlan.priorityWeights`
 /// inputs always yield identical `double` results (Refs #2509
@@ -228,3 +229,48 @@ double resolvePhaseConquestOldWorldInvasionWeight({
 double resolvePhaseConquestColonialPressureWeight({
   required PhasePlanOutcome phasePlan,
 }) => phasePlan.priorityWeights.newWorldAcquisition;
+
+/// Returns the COLONIAL conquest army-move minimum weight floor scaled by
+/// the soft-phase NW acquisition weight (Refs #2847 Phase 3 conquest
+/// colonial-pressure floor wiring).
+///
+/// `runConquestArmyMovePlanner` consumes this helper as the production
+/// source of truth for the colonial-pressure minimum-weight floor that
+/// previously activated as a hard `weight = kConquestArmyMoveMinWeightWhenColonialPressure`
+/// step under the boolean [resolvePhaseConquestColonialPressureActive].
+/// The new helper scales that floor linearly with [colonialPressureWeight]
+/// so the floor magnitude tracks the soft-phase NW acquisition priority:
+///
+/// - `colonialPressureWeight <= 0.0` returns `0` (no floor applied — legacy
+///   `colonialPressure: false` equivalent; the conquest army-move pass
+///   keeps whatever upstream weight the other floors produced).
+/// - `colonialPressureWeight == 1.0` returns
+///   [kConquestArmyMoveMinWeightWhenColonialPressure] exactly — identity-equal
+///   to the legacy COLONIAL hard-phase floor.
+/// - Intermediate `colonialPressureWeight` values return
+///   `round(kConquestArmyMoveMinWeightWhenColonialPressure × colonialPressureWeight)`,
+///   matching the continuous-scale contract used by the goal-score floors,
+///   the economy build-pick cargo bonus, and the diplomacy declare-war
+///   carve-out (`SPEC/ai/phase-planner-architecture.md` § Phase 3 consumer
+///   wiring).
+///
+/// At the early-sprint default curve (`newWorldAcquisition = 0.05` for
+/// `oldWorldProvincesOwned <= 7`) the floor collapses to
+/// `round(45 × 0.05) = 2` — well below the
+/// `kConquestArmyMoveMinWeightWhenStalled` / stalled-expansion floors so
+/// the OW conquest sprint is not dominated by colonial-pressure pulls.
+///
+/// Pure and deterministic — identical [colonialPressureWeight] inputs
+/// always yield identical `int` results (Refs #2509 Must-have #7).
+/// Performs no I/O, no logging, no order emission. The function is a
+/// projection of a single scalar input and never reads
+/// `PhasePlanOutcome`, snapshot, or `Game` state.
+int conquestColonialPressureMinWeightFloor({
+  required double colonialPressureWeight,
+}) {
+  if (colonialPressureWeight <= 0.0) {
+    return 0;
+  }
+  final clamped = colonialPressureWeight > 1.0 ? 1.0 : colonialPressureWeight;
+  return (kConquestArmyMoveMinWeightWhenColonialPressure * clamped).round();
+}
