@@ -11,6 +11,7 @@ import 'package:colonizethis_app/config/themes.dart';
 import 'package:colonizethis_app/widgets/ct_dropdown.dart';
 import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
 import 'package:colonizethis_app/widgets/game_setup.dart';
+import 'package:colonizethis_app/widgets/gp_default_map_color_swatch.dart';
 import 'package:colonizethis_app/widgets/main_menu.dart';
 
 void main() {
@@ -739,6 +740,177 @@ void main() {
           find.byKey(const ValueKey<String>('gameSetupTitlePlain')),
           findsOneWidget,
         );
+      },
+    );
+
+    // -------------------------------------------------------------------
+    // Issue #2868 S2 — slot row chrome, swatches, leader-disabled.
+    // -------------------------------------------------------------------
+
+    testWidgets(
+      'AC Issue #2868 R9: slot nation dropdown renders the GP map-colour '
+      'swatch on the closed trigger after a nation is selected',
+      (WidgetTester tester) async {
+        final gpIds = defaultNamingConfig.greatPowers
+            .map((g) => g.id)
+            .take(6)
+            .toList();
+        final leaderMap = <String, String>{
+          for (final id in gpIds)
+            id: defaultNamingConfig.gpById(id)!.defaultLeaderVariantId,
+        };
+        await tester.pumpWidget(
+          buildGameSetup(
+            initialOrderedGpIds: gpIds,
+            initialLeaderVariantByGpId: leaderMap,
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        expect(find.byType(GpDefaultMapColorSwatch), findsNWidgets(6));
+      },
+    );
+
+    testWidgets(
+      'AC Issue #2868 R9: nation picker rows render the GP colour swatch '
+      'next to each option when the dropdown is opened',
+      (WidgetTester tester) async {
+        await tester.pumpWidget(buildGameSetup());
+        await tester.pumpAndSettle();
+
+        expect(find.byType(GpDefaultMapColorSwatch), findsNothing);
+
+        await tester.tap(find.text('Select nation').first);
+        await tester.pumpAndSettle();
+
+        final swatches = find.byType(GpDefaultMapColorSwatch);
+        expect(swatches, findsWidgets);
+        final allGpCount = defaultNamingConfig.greatPowers.length;
+        expect(swatches.evaluate().length, equals(allGpCount));
+      },
+    );
+
+    testWidgets(
+      'AC Issue #2868 R10: leader dropdown for an unselected nation slot is '
+      'rendered at 0.4 opacity and ignores pointer events',
+      (WidgetTester tester) async {
+        await tester.pumpWidget(buildGameSetup());
+        await tester.pumpAndSettle();
+
+        final disabledLeaderFinder = find.descendant(
+          of: find.byType(Opacity),
+          matching: find.widgetWithText(CtDropdown<String>, 'Select leader'),
+        );
+        expect(disabledLeaderFinder, findsNWidgets(6));
+
+        final opacities = tester
+            .widgetList<Opacity>(
+              find.ancestor(
+                of: find.widgetWithText(
+                  CtDropdown<String>,
+                  'Select leader',
+                ),
+                matching: find.byType(Opacity),
+              ),
+            )
+            .map((w) => w.opacity)
+            .toList();
+        expect(opacities, isNotEmpty);
+        for (final value in opacities) {
+          expect(value, closeTo(0.4, 1e-9));
+        }
+
+        final beforeTap = find.text('Select leader').evaluate().length;
+        await tester.tap(
+          find.widgetWithText(CtDropdown<String>, 'Select leader').first,
+          warnIfMissed: false,
+        );
+        await tester.pumpAndSettle();
+        final afterTap = find.text('Select leader').evaluate().length;
+        expect(afterTap, equals(beforeTap));
+      },
+    );
+
+    testWidgets(
+      'AC Issue #2868 R10: leader dropdown becomes interactive (no 0.4 '
+      'opacity wrapper) after the slot has a nation selected',
+      (WidgetTester tester) async {
+        final gpIds = defaultNamingConfig.greatPowers
+            .map((g) => g.id)
+            .take(6)
+            .toList();
+        final leaderMap = <String, String>{
+          for (final id in gpIds)
+            id: defaultNamingConfig.gpById(id)!.defaultLeaderVariantId,
+        };
+        await tester.pumpWidget(
+          buildGameSetup(
+            initialOrderedGpIds: gpIds,
+            initialLeaderVariantByGpId: leaderMap,
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        expect(find.text('Select leader'), findsNothing);
+
+        expect(find.text('Queen Victoria'), findsOneWidget);
+      },
+    );
+
+    testWidgets(
+      'AC Issue #2868 R7: pixelArt variant renders the brass-strip slot '
+      'row chrome (gradient + accent-dim 1.5px borders on all four sides)',
+      (WidgetTester tester) async {
+        await tester.pumpWidget(
+          buildGameSetup(variant: GameSetupVariant.pixelArt),
+        );
+        await tester.pumpAndSettle();
+
+        final decoratedContainers = tester
+            .widgetList<Container>(find.byType(Container))
+            .where((c) {
+              final dec = c.decoration;
+              if (dec is! BoxDecoration) return false;
+              return dec.gradient is LinearGradient && dec.border is Border;
+            })
+            .toList();
+
+        final brassRowContainers = decoratedContainers.where((c) {
+          final border = (c.decoration as BoxDecoration).border! as Border;
+          final sides = <BorderSide>[
+            border.top,
+            border.bottom,
+            border.left,
+            border.right,
+          ];
+          return sides.every((side) {
+            return side.width == 1.5 &&
+                side.color == EditorialMonoclePalette.accentDim;
+          });
+        }).toList();
+
+        expect(brassRowContainers.length, equals(6));
+      },
+    );
+
+    testWidgets(
+      'AC Issue #2868 R7 negative: plain variant does NOT paint the brass '
+      '1.5px slot-row borders (no chrome regression onto non-pixelArt path)',
+      (WidgetTester tester) async {
+        await tester.pumpWidget(buildGameSetup());
+        await tester.pumpAndSettle();
+
+        final hasBrassChrome = tester
+            .widgetList<Container>(find.byType(Container))
+            .any((c) {
+              final dec = c.decoration;
+              if (dec is! BoxDecoration) return false;
+              final border = dec.border;
+              if (border is! Border) return false;
+              return border.top.width == 1.5 &&
+                  border.top.color == EditorialMonoclePalette.accentDim;
+            });
+        expect(hasBrassChrome, isFalse);
       },
     );
   });
