@@ -296,11 +296,9 @@ mixin _GameMapAreaStatePart2
                         ],
                         if (_sideMenuOpen) ...[
                           Positioned.fill(
-                            child: GestureDetector(
-                              behavior: HitTestBehavior.opaque,
-                              onTap: () =>
+                            child: GameSideMenuScrim(
+                              onDismiss: () =>
                                   setState(() => _sideMenuOpen = false),
-                              child: Container(color: Colors.black54),
                             ),
                           ),
                           GameSideMenu(
