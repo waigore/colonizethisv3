@@ -1087,6 +1087,12 @@ abstract class AppLocalizations {
   /// Game setup screen title.
   String get gameSetup_title;
 
+  /// Eyebrow text rendered uppercased above the Game Setup title in the dark editorial-monocle pixelArt variant.
+  String get gameSetup_eyebrow;
+
+  /// Italic intro line shown below the Game Setup title in the dark editorial-monocle pixelArt variant.
+  String get gameSetup_intro;
+
   /// Loading state label while starting a game from setup.
   String get gameSetup_starting;
 
@@ -1299,6 +1305,15 @@ abstract class AppLocalizations {
 
   /// Diplomacy list section heading.
   String get diplomacy_section_tribes;
+
+  /// Diplomacy panel mode-bar filter label: show all factions.
+  String get diplomacy_filter_all;
+
+  /// Diplomacy panel mode-bar filter label: show only Great Powers.
+  String get diplomacy_filter_greatPowersOnly;
+
+  /// Diplomacy panel mode-bar filter label: show Minor Nations and Tribes only (no Great Powers).
+  String get diplomacy_filter_minorsOnly;
 
   /// One-word war state in diplomacy UI.
   String get diplomacy_relationState_war;

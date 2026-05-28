@@ -31,6 +31,8 @@ import 'package:colonizethis_app/features/game/widgets/move_fleet_dialog.dart';
 import 'package:colonizethis_app/features/game/widgets/naval_units_panel.dart';
 import 'package:colonizethis_app/features/game/widgets/pause_menu_panel.dart';
 import 'package:colonizethis_app/features/game/widgets/province_sea_zone_detail_overlay.dart';
+import 'package:colonizethis_app/features/game/widgets/train_civilians_dialog.dart';
+import 'package:colonizethis_app/features/game/widgets/train_military_dialog.dart';
 import 'package:colonizethis_app/features/game/widgets/transfer_to_home_fleet_dialog.dart';
 import 'package:colonizethis_app/features/game/widgets/turn_news_dialog.dart';
 import 'package:colonizethis_app/features/shell/new_game_leader_selection_dialog.dart';
@@ -85,6 +87,14 @@ const Map<String, ({String actual, String expected})> _bindings = {
   'NavalUnitsPanel': (
     actual: NavalUnitsPanel.screenId,
     expected: UiScreenIds.navalUnitsPanel,
+  ),
+  'TrainCiviliansDialog': (
+    actual: TrainCiviliansDialog.screenId,
+    expected: UiScreenIds.trainCiviliansDialog,
+  ),
+  'TrainMilitaryDialog': (
+    actual: TrainMilitaryDialog.screenId,
+    expected: UiScreenIds.trainMilitaryDialog,
   ),
   'NewGameLeaderSelectionDialog': (
     actual: NewGameLeaderSelectionDialog.screenId,
