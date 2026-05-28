@@ -54,6 +54,8 @@ import 'package:colonizethis_ai/src/planning/phase_planner_conquest_filter.dart'
 import 'package:colonizethis_ai/src/planning/phase_planner_diplomacy_filter.dart';
 import 'package:colonizethis_ai/src/planning/phase_planner_economy_filter.dart';
 import 'package:colonizethis_ai/src/planning/phase_planner_goal_filter.dart';
+import 'package:colonizethis_ai/src/planning/phase_planner_naval_filter.dart'
+    show resolvePhaseNavalColonialPressureWeight;
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
@@ -280,6 +282,89 @@ void main() {
             ),
           );
         }
+      });
+    });
+  });
+
+  group('Phase 3 weight resolvers — naval filter', () {
+    group('resolvePhaseNavalColonialPressureWeight', () {
+      test('returns priorityWeights.newWorldAcquisition exactly', () {
+        for (final phase in ObserverGoalPhase.values) {
+          expect(
+            resolvePhaseNavalColonialPressureWeight(
+              phasePlan: _outcomeWithWeights(
+                phase: phase,
+                weights: _unique,
+              ),
+            ),
+            equals(_unique.newWorldAcquisition),
+            reason:
+                'phase $phase: resolver must project '
+                'newWorldAcquisition (${_unique.newWorldAcquisition})',
+          );
+        }
+      });
+
+      test('phase-independent — same weights, different phases', () {
+        final results = <double>{
+          for (final phase in ObserverGoalPhase.values)
+            resolvePhaseNavalColonialPressureWeight(
+              phasePlan: _outcomeWithWeights(phase: phase, weights: _alt),
+            ),
+        };
+        expect(
+          results,
+          <double>{_alt.newWorldAcquisition},
+          reason:
+              'naval colonial-pressure weight resolver must depend only '
+              'on priorityWeights, not outcome.phase',
+        );
+      });
+
+      test('sibling-slot independence — populated COLONIAL / EXPAND '
+          'slots do not affect result', () {
+        for (final phase in ObserverGoalPhase.values) {
+          final populated = resolvePhaseNavalColonialPressureWeight(
+            phasePlan: _outcomeWithWeights(
+              phase: phase,
+              weights: _unique,
+              populateSiblingSlots: true,
+            ),
+          );
+          final empty = resolvePhaseNavalColonialPressureWeight(
+            phasePlan: _outcomeWithWeights(phase: phase, weights: _unique),
+          );
+          expect(populated, equals(empty));
+          expect(populated, equals(_unique.newWorldAcquisition));
+        }
+      });
+
+      test('matches resolvePhaseConquestNwInvasionWeight on the same '
+          'PhasePlanOutcome (both project newWorldAcquisition)', () {
+        for (final phase in ObserverGoalPhase.values) {
+          final outcome = _outcomeWithWeights(phase: phase, weights: _alt);
+          expect(
+            resolvePhaseNavalColonialPressureWeight(phasePlan: outcome),
+            equals(
+              resolvePhaseConquestNwInvasionWeight(phasePlan: outcome),
+            ),
+            reason:
+                'naval / conquest NW projection must agree on the same '
+                'newWorldAcquisition field',
+          );
+        }
+      });
+
+      test('deterministic across three calls (Must-have #7)', () {
+        final outcome = _outcomeWithWeights(
+          phase: ObserverGoalPhase.expand,
+          weights: _alt,
+        );
+        final a = resolvePhaseNavalColonialPressureWeight(phasePlan: outcome);
+        final b = resolvePhaseNavalColonialPressureWeight(phasePlan: outcome);
+        final c = resolvePhaseNavalColonialPressureWeight(phasePlan: outcome);
+        expect(a, b);
+        expect(b, c);
       });
     });
   });
@@ -561,6 +646,7 @@ void main() {
           phasePlan: outcome,
         ),
         resolvePhaseGoalColonialPressureWeight(_unique),
+        resolvePhaseNavalColonialPressureWeight(phasePlan: outcome),
       ]) {
         expect(actual, equals(_unique.newWorldAcquisition));
       }
