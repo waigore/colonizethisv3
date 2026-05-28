@@ -12,6 +12,7 @@ import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_app/config/ct_e2e_last_panel_snapshot.dart';
 import 'package:colonizethis_app/features/game/production_recipe_affordance.dart';
 import 'package:colonizethis_app/l10n/l10n.dart';
+import 'package:colonizethis_app/widgets/ct_resource_cell.dart';
 
 Set<String> _inputCommodityIds() {
   final inputIds = <String>{};
@@ -63,62 +64,46 @@ void _addAvailableTexts(
   out.add(l10n.production_available);
   out.add(l10n.production_breakdown);
 
-  if (availableFood.isNotEmpty) {
-    out.add(l10n.production_food);
-    for (final c in availableFood) {
-      final name = c.displayName ?? c.id;
-      final qty = player.stockpile.quantityOf(c.id);
-      final change = netChanges[c.id] ?? 0;
-      final changeSeg = change == 0 ? '' : ' (${change > 0 ? '+' : ''}$change)';
-      out.add(l10n.production_commodityStock(name, qty, changeSeg));
-    }
-  }
-
-  out.add(l10n.production_rawMaterials);
-  for (final c in rawMaterials) {
+  void addCommodityCellTexts(Commodity c) {
     final name = c.displayName ?? c.id;
     final qty = player.stockpile.quantityOf(c.id);
     final change = netChanges[c.id] ?? 0;
-    final changeSeg = change == 0 ? '' : ' (${change > 0 ? '+' : ''}$change)';
-    out.add(l10n.production_commodityStock(name, qty, changeSeg));
-  }
-
-  if (manufactured.isNotEmpty) {
-    out.add(l10n.production_manufactured);
-    for (final c in manufactured) {
-      final name = c.displayName ?? c.id;
-      final qty = player.stockpile.quantityOf(c.id);
-      final change = netChanges[c.id] ?? 0;
-      final changeSeg = change == 0 ? '' : ' (${change > 0 ? '+' : ''}$change)';
-      out.add(l10n.production_commodityStock(name, qty, changeSeg));
+    out.add(name);
+    out.add(CtResourceCell.formatQuantity(qty));
+    if (change != 0) {
+      out.add(CtResourceCell.formattedDeltaText(change)!);
     }
   }
 
-  out.add(l10n.production_workers);
-  out.add(
-    l10n.production_workerCount(
-      _workerDisplayName('peasant', l10n),
-      player.workerPool.peasants,
-    ),
-  );
-  out.add(
-    l10n.production_workerCount(
-      _workerDisplayName('apprentice', l10n),
-      player.workerPool.apprentices,
-    ),
-  );
-  out.add(
-    l10n.production_workerCount(
-      _workerDisplayName('journeyman', l10n),
-      player.workerPool.journeymen,
-    ),
-  );
-  out.add(
-    l10n.production_workerCount(
-      _workerDisplayName('master', l10n),
-      player.workerPool.masters,
-    ),
-  );
+  void addWorkerCellTexts(String workerType, int count) {
+    out.add(_workerDisplayName(workerType, l10n));
+    out.add(CtResourceCell.formatQuantity(count));
+  }
+
+  if (availableFood.isNotEmpty) {
+    out.add(l10n.production_food.toUpperCase());
+    for (final c in availableFood) {
+      addCommodityCellTexts(c);
+    }
+  }
+
+  out.add(l10n.production_rawMaterials.toUpperCase());
+  for (final c in rawMaterials) {
+    addCommodityCellTexts(c);
+  }
+
+  if (manufactured.isNotEmpty) {
+    out.add(l10n.production_manufactured.toUpperCase());
+    for (final c in manufactured) {
+      addCommodityCellTexts(c);
+    }
+  }
+
+  out.add(l10n.production_workers.toUpperCase());
+  addWorkerCellTexts('peasant', player.workerPool.peasants);
+  addWorkerCellTexts('apprentice', player.workerPool.apprentices);
+  addWorkerCellTexts('journeyman', player.workerPool.journeymen);
+  addWorkerCellTexts('master', player.workerPool.masters);
   out.add(l10n.production_effectiveLabour(effectiveLabour));
 }
 

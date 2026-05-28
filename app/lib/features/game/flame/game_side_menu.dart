@@ -2,6 +2,7 @@ import 'package:colonizethis_models/colonizethis_models.dart' as ct_models;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../config/editorial_monocle_palette.dart';
 import '../../../config/routes.dart';
 import '../../../config/ui_screen_ids.dart';
 import '../../../l10n/l10n.dart';
@@ -12,7 +13,9 @@ import '../../../widgets/ct_nine_patch_button.dart';
 import '../../../widgets/ct_panel.dart';
 
 /// Slide-out hamburger menu: **Game Parameters** (read-only) and **Debug log**.
-/// Empire actions use [GameMapEmpireLeftRail]. SPEC/ui/in-game-shell-narrow.md.
+/// Empire actions use [GameMapEmpireLeftRail]. SPEC/ui/in-game-shell-narrow.md
+/// and SPEC/ui/game-side-menu.md (§ Dark-theme chrome for the colour
+/// contract of the icons, labels, and the close (×) glyph).
 class GameSideMenu extends ConsumerWidget {
   const GameSideMenu({
     required this.sideMenuOpen,
@@ -26,6 +29,9 @@ class GameSideMenu extends ConsumerWidget {
   final VoidCallback onClose;
 
   static const double _kSideMenuWidth = 240;
+
+  /// Side length of the leading Material icon glyphs in each menu row.
+  static const double _kRowIconSize = 20;
 
   void _openGameParameters(BuildContext context, WidgetRef ref) {
     final game = ref.read(currentGameProvider);
@@ -42,6 +48,20 @@ class GameSideMenu extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = appL10n(context);
+    final ThemeData theme = Theme.of(context);
+    // Body label colour for Game Parameters / Debug log rows.
+    // SPEC: game-side-menu.md § Dark-theme chrome.
+    final TextStyle labelStyle = (theme.textTheme.bodyMedium ?? const TextStyle())
+        .copyWith(color: EditorialMonoclePalette.fg);
+    // Close (×) glyph colour. Mirrors ProvinceSeaZoneDetailOverlay close
+    // control (Refs #2865 PR #2894): muted token because the close button
+    // is a secondary affordance (Escape / scrim-tap / drag-left close the
+    // menu too).
+    final TextStyle closeGlyphStyle =
+        (theme.textTheme.titleMedium ?? const TextStyle()).copyWith(
+          color: EditorialMonoclePalette.muted,
+          fontWeight: FontWeight.w700,
+        );
     return TweenAnimationBuilder<Offset>(
       key: ValueKey(sideMenuOpen),
       tween: Tween<Offset>(
@@ -70,7 +90,10 @@ class GameSideMenu extends ConsumerWidget {
               Row(
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
-                  CtNinePatchButton(onPressed: onClose, child: const Text('×')),
+                  CtNinePatchButton(
+                    onPressed: onClose,
+                    child: Text('×', style: closeGlyphStyle),
+                  ),
                 ],
               ),
               const SizedBox(height: 8),
@@ -78,11 +101,16 @@ class GameSideMenu extends ConsumerWidget {
                 onPressed: () => _openGameParameters(context, ref),
                 child: Row(
                   children: [
-                    const Icon(Icons.tune, size: 20),
+                    Icon(
+                      Icons.tune,
+                      size: _kRowIconSize,
+                      color: EditorialMonoclePalette.accentDim,
+                    ),
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
                         l10n.gameParameters_menuEntry,
+                        style: labelStyle,
                         overflow: TextOverflow.ellipsis,
                       ),
                     ),
@@ -101,11 +129,16 @@ class GameSideMenu extends ConsumerWidget {
                 },
                 child: Row(
                   children: [
-                    const Icon(Icons.bug_report, size: 20),
+                    Icon(
+                      Icons.bug_report,
+                      size: _kRowIconSize,
+                      color: EditorialMonoclePalette.accentDim,
+                    ),
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
                         l10n.debugLog_title,
+                        style: labelStyle,
                         overflow: TextOverflow.ellipsis,
                       ),
                     ),
@@ -115,6 +148,44 @@ class GameSideMenu extends ConsumerWidget {
             ],
           ),
         ),
+      ),
+    );
+  }
+}
+
+/// Tappable scrim behind [GameSideMenu] when it is open.
+///
+/// Lives in the same file as [GameSideMenu] so the side menu and its
+/// scrim share a single visual contract (SPEC:
+/// `SPEC/ui/in-game-shell-narrow.md` § Modal behaviour). Resolves the
+/// scrim colour from [EditorialMonoclePalette.dialogScrim] — the canonical
+/// `--dialog-scrim` token (`oklch(8% 0.01 30 / 0.70)`) shared with every
+/// other dark-theme modal scrim (exit-confirm dialog, overture, victory,
+/// call to arms, intervention) per
+/// `SPEC/ui/pixel-art-ui-catalog.md` § Dialog scrim.
+///
+/// Hard-coded literals such as `Colors.black54` are regressions; the
+/// associated `app/test/game_side_menu_scrim_test.dart` pins this contract.
+class GameSideMenuScrim extends StatelessWidget {
+  const GameSideMenuScrim({required this.onDismiss, super.key});
+
+  /// Invoked when the user taps the scrim (closes the side menu). The host
+  /// (`GameMapArea`) clears its own `_sideMenuOpen` flag.
+  final VoidCallback onDismiss;
+
+  /// Stable widget key for the scrim surface — surfaced for widget tests
+  /// so the scrim `Container.color` can be asserted without re-implementing
+  /// the host's `if (sideMenuOpen) ...` mounting.
+  static const Key surfaceKey = Key('game_side_menu_scrim_surface');
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: onDismiss,
+      child: Container(
+        key: surfaceKey,
+        color: EditorialMonoclePalette.dialogScrim,
       ),
     );
   }

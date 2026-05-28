@@ -1088,6 +1088,12 @@ abstract class AppLocalizations {
   /// Game setup screen title.
   String get gameSetup_title;
 
+  /// Eyebrow text rendered uppercased above the Game Setup title in the dark editorial-monocle pixelArt variant.
+  String get gameSetup_eyebrow;
+
+  /// Italic intro line shown below the Game Setup title in the dark editorial-monocle pixelArt variant.
+  String get gameSetup_intro;
+
   /// Loading state label while starting a game from setup.
   String get gameSetup_starting;
 
