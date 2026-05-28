@@ -63,3 +63,13 @@ const Key kRegionMinimapCustomPaintKey = Key('region_minimap_custom_paint');
 
 /// Key for the region minimap zoom slider. SPEC/ui/empire-overview.md § Region minimap.
 const Key kRegionMinimapZoomSliderKey = Key('region_minimap_zoom_slider');
+
+/// Key for the floating players bar widget (top-right of the wide map stack).
+/// SPEC/ui/empire-overview.md § Players bar.
+const Key kGameMapPlayersBarKey = Key('game_map_players_bar');
+
+/// Test/integration key prefix for a single player chip row inside the players bar.
+/// Concatenate with the `Player.id` to obtain a stable per-row key:
+///   `Key('${kGameMapPlayerChipKeyPrefix}${player.id}')`.
+/// SPEC/ui/empire-overview.md § Players bar.
+const String kGameMapPlayerChipKeyPrefix = 'game_map_player_chip:';

@@ -228,7 +228,7 @@ mixin _AppLocalizationsEnStrings2 on AppLocalizations {
   String get moveArmy_groupUnowned => 'Unowned';
 
   @override
-  String get moveArmy_invadeProvinceTitle => 'Invade province?';
+  String get moveArmy_invadeProvinceTitle => 'Declare war?';
 
   @override
   String moveArmy_invadeProvinceBody(String ownerLabel) {

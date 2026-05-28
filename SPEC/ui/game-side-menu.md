@@ -90,9 +90,44 @@ The widget itself never reads `turnResolutionBlockingProvider`; the side menu re
 - `GestureDetector` — picks up drag-left close gesture.
 - [`CtPanel`](buttons-nine-patch.md) — pixel-art frame around the body.
 - [`CtNinePatchButton`](buttons-nine-patch.md) — every interactive row (close, Game Parameters, Debug log).
-- `Icon(Icons.tune, size: 20)` (Game Parameters), `Icon(Icons.bug_report, size: 20)` (Debug log) — Material icons matching `app/lib/features/game/flame/game_side_menu.dart`.
+- `Icon(Icons.tune, size: 20)` (Game Parameters), `Icon(Icons.bug_report, size: 20)` (Debug log) — Material icons matching `app/lib/features/game/flame/game_side_menu.dart`. Both icons resolve their colour from the dark-theme palette per § Dark-theme chrome below.
 - Localized strings: `appL10n(context).gameParameters_menuEntry`, `appL10n(context).debugLog_title`.
 - Local dialog: `GameParametersDialog` (`app/lib/features/game/widgets/game_parameters_dialog.dart`) for the read-only Infinite mode display.
+
+---
+
+## Dark-theme chrome
+
+`GameSideMenu` renders inside the dark editorial-monocle theme (`AppThemes.editorialMonocle`). All glyph and label colours MUST resolve from [`EditorialMonoclePalette`](../../app/lib/config/editorial_monocle_palette.dart) tokens — no `Theme.of(context).colorScheme.*` fallbacks, no `Colors.*` literals — so the side menu reads with the same chrome contract as `GameTopBar`, `CtTopBar`, and the exit-confirm dialog (Refs #2861).
+
+| Element | Token | Notes |
+|---------|-------|-------|
+| Game Parameters icon (`Icons.tune`, 20 dp) | `EditorialMonoclePalette.accentDim` | Matches the muted leading-glyph cadence of `CtBackButton` / `_GameTopBarHamburger` (idle). |
+| Game Parameters label text | `EditorialMonoclePalette.fg` | Body text in the brass-foreground token (same as `ExitConfirmDialog` body). |
+| Debug log icon (`Icons.bug_report`, 20 dp) | `EditorialMonoclePalette.accentDim` | Same token as Game Parameters icon — sibling rows render consistently. |
+| Debug log label text | `EditorialMonoclePalette.fg` | Same as Game Parameters label. |
+| Close (×) glyph | `EditorialMonoclePalette.muted` | Mirrors the `ProvinceSeaZoneDetailOverlay` close control (Refs #2865 PR #2894). The glyph uses the muted token because it is a secondary affordance — Escape / scrim-tap / drag-left close the menu without the user reaching for the `×`. |
+| Close (×) button outer chrome | `CtNinePatchButton` default | The close button is still a `CtNinePatchButton` (no special variant), so the surrounding brass corner-brackets / gradient resolve from the canonical button chrome. Only the glyph text colour is pinned to `--muted`. |
+
+The widget keeps using `CtPanel` for the surrounding frame (which already paints the editorial-monocle gradient and accent borders); no new outer chrome is introduced here.
+
+### Acceptance Criteria — Dark-theme chrome
+
+- Given `GameSideMenu` is mounted with `sideMenuOpen: true` against `AppThemes.editorialMonocle`,
+  When the widget tree is inspected,
+  Then the `Icon(Icons.tune, size: 20)` row's `Icon.color` equals `EditorialMonoclePalette.accentDim` and the `Icon(Icons.bug_report, size: 20)` row's `Icon.color` equals `EditorialMonoclePalette.accentDim`.
+
+- Given `GameSideMenu` is mounted with `sideMenuOpen: true` against `AppThemes.editorialMonocle`,
+  When the widget tree is inspected,
+  Then the close (×) button's `Text` widget has a `style.color` equal to `EditorialMonoclePalette.muted`.
+
+- Given `GameSideMenu` is mounted with `sideMenuOpen: true` against `AppThemes.editorialMonocle`,
+  When the widget tree is inspected,
+  Then the `Text` widget rendering `appL10n(context).gameParameters_menuEntry` and the `Text` widget rendering `appL10n(context).debugLog_title` each have a `style.color` equal to `EditorialMonoclePalette.fg`.
+
+- Given the `GameSideMenu` Dart source is read,
+  When the file is scanned,
+  Then it contains zero `Colors.*` literal references for the icon/label/close colours (the only allowed `Colors.*` usage is inside test fixtures or framework defaults — not in the rendered chrome path).
 
 ---
 

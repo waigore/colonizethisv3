@@ -94,10 +94,10 @@ void main() {
         );
         await pumpSettleCapped(tester);
 
-        expect(find.textContaining('Timber:'), findsOneWidget);
-        expect(find.textContaining(RegExp(r'\(-10\)')), findsOneWidget);
-        expect(find.textContaining('Lumber:'), findsOneWidget);
-        expect(find.textContaining(RegExp(r'\(\+5\)')), findsOneWidget);
+        expect(find.text('Timber'), findsOneWidget);
+        expect(find.text('-10'), findsOneWidget);
+        expect(find.text('Lumber'), findsOneWidget);
+        expect(find.text('+5'), findsOneWidget);
       },
     );
 
@@ -107,7 +107,7 @@ void main() {
       await tester.pumpWidget(buildScreen());
       await pumpSettleCapped(tester);
 
-      expect(find.textContaining('Timber:'), findsOneWidget);
+      expect(find.text('Timber'), findsOneWidget);
 
       final sliders = find.byType(CtSlider);
       expect(sliders, findsNWidgets(ProductionRecipesCatalog.all.length));
@@ -115,8 +115,8 @@ void main() {
       await tester.drag(sliders.first, const Offset(80, 0));
       await pumpSyncFrames(tester);
 
-      expect(find.textContaining('Timber:'), findsOneWidget);
-      expect(find.textContaining(RegExp(r'\(|\+|-')), findsWidgets);
+      expect(find.text('Timber'), findsOneWidget);
+      expect(find.textContaining(RegExp(r'[+-]\d+')), findsWidgets);
     });
 
     testWidgets('pending build orders affect Available net deltas', (
@@ -139,8 +139,8 @@ void main() {
       );
       await pumpSettleCapped(tester);
 
-      expect(find.textContaining('Paper:'), findsOneWidget);
-      expect(find.textContaining(RegExp(r'\(-2\)')), findsOneWidget);
+      expect(find.text('Paper'), findsOneWidget);
+      expect(find.text('-2'), findsOneWidget);
     });
 
     testWidgets(
