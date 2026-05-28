@@ -57,11 +57,33 @@ NavalRunGate computeNavalRunGate({
           game: ctx.game,
         );
   }
-  if (hasColonialTargets) {
-    weight += kColonialNavalWeightBonus;
-  }
-  if (hasColonialTargets && weight < kColonialNavalMinWeightWhenPressure) {
-    weight = kColonialNavalMinWeightWhenPressure;
+  // Refs #2847 Phase 3 naval colonial-pressure floor wiring: source the
+  // colonial-pressure weight bonus and minimum-weight floor from the
+  // soft-phase NW acquisition weight on the dispatched phase plan
+  // instead of the legacy boolean directive. The null-phase-plan
+  // fallback maps the legacy boolean (`hasColonialTargets`) to
+  // `1.0 / 0.0` so callers without a `PhasePlanOutcome` preserve
+  // pre-Phase-3 behaviour exactly (identity-equal at the curve
+  // extremes). At the early-sprint default curve
+  // (`newWorldAcquisition = 0.05` for OW <= 7) the bonus / floor
+  // collapse to token nudges below `kNavalRunMinWeight` so the OW
+  // conquest sprint is not dominated by colonial-pressure pulls;
+  // under the resource-need override (`newWorldAcquisition = 0.60`
+  // when treasury / NW / cargo predicates hold) the floor crosses
+  // `kNavalRunMinWeight` and engages naval planning under EXPAND
+  // recovery without requiring the GP to reach COLONIAL first.
+  final colonialPressureWeight = phasePlan != null
+      ? resolvePhaseNavalColonialPressureWeight(phasePlan: phasePlan)
+      : (hasColonialTargets ? 1.0 : 0.0);
+  final colonialPressureBonus = navalColonialPressureWeightBonus(
+    colonialPressureWeight: colonialPressureWeight,
+  );
+  final colonialPressureFloor = navalColonialPressureMinWeightFloor(
+    colonialPressureWeight: colonialPressureWeight,
+  );
+  weight += colonialPressureBonus;
+  if (weight < colonialPressureFloor) {
+    weight = colonialPressureFloor;
   }
   return NavalRunGate(weight: weight, hasColonialTargets: hasColonialTargets);
 }
