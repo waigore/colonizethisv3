@@ -158,69 +158,12 @@ mixin _GameMapAreaStatePart2
                             onOpenMapDisplayOptions: () {
                               showDialog<void>(
                                 context: context,
+                                barrierColor: EditorialMonoclePalette
+                                    .dialogScrim,
                                 builder: (context) {
-                                  return AlertDialog(
-                                    title: Text(l10n.map_displayOptions_title),
-                                    content: Consumer(
-                                      builder: (context, ref, child) {
-                                        return Column(
-                                          mainAxisSize: MainAxisSize.min,
-                                          children: [
-                                            SwitchListTile(
-                                              title: Text(
-                                                l10n.map_displayOptions_showProvinceOverlay,
-                                              ),
-                                              value: _mapViewState
-                                                  .showProvinceOverlay,
-                                              onChanged: (value) {
-                                                _setMapViewState(
-                                                  _mapViewState.copyWith(
-                                                    showProvinceOverlay: value,
-                                                  ),
-                                                );
-                                              },
-                                            ),
-                                            SwitchListTile(
-                                              title: Text(
-                                                l10n.map_displayOptions_showProvinceOwnership,
-                                              ),
-                                              value: _mapViewState
-                                                  .showProvinceOwnershipTint,
-                                              onChanged: (value) {
-                                                _setMapViewState(
-                                                  _mapViewState.copyWith(
-                                                    showProvinceOwnershipTint:
-                                                        value,
-                                                  ),
-                                                );
-                                              },
-                                            ),
-                                            SwitchListTile(
-                                              title: Text(
-                                                l10n.map_displayOptions_showProvinceNames,
-                                              ),
-                                              value: _mapViewState
-                                                  .showProvinceNamesLayer,
-                                              onChanged: (value) {
-                                                _setMapViewState(
-                                                  _mapViewState.copyWith(
-                                                    showProvinceNamesLayer:
-                                                        value,
-                                                  ),
-                                                );
-                                              },
-                                            ),
-                                          ],
-                                        );
-                                      },
-                                    ),
-                                    actions: [
-                                      TextButton(
-                                        onPressed: () =>
-                                            Navigator.of(context).maybePop(),
-                                        child: Text(l10n.common_close),
-                                      ),
-                                    ],
+                                  return GameMapOptionsDialog(
+                                    initialState: _mapViewState,
+                                    onChanged: _setMapViewState,
                                   );
                                 },
                               );
