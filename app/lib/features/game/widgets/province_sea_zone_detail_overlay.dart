@@ -24,6 +24,7 @@ import 'package:flutter/material.dart';
 import 'package:colonizethis_app/core/utils/prefixed_id.dart';
 
 import '../../../config/constants.dart';
+import '../../../config/editorial_monocle_palette.dart';
 import '../../../config/ui_screen_ids.dart';
 import 'province_panel_labels.dart';
 import 'province_panel_pending_orders.dart';
@@ -163,7 +164,7 @@ class ProvinceSeaZoneDetailOverlay extends StatelessWidget {
             mainAxisSize: isNarrow ? MainAxisSize.min : MainAxisSize.max,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _buildOverlayHeader(),
+              _buildOverlayHeader(context),
               Flexible(child: _buildOverlayBody(isNarrow, content)),
             ],
           ),
@@ -199,7 +200,7 @@ class ProvinceSeaZoneDetailOverlay extends StatelessWidget {
     return constraints.maxHeight;
   }
 
-  Widget _buildOverlayHeader() {
+  Widget _buildOverlayHeader(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.only(left: 12, right: 8, top: 8),
       child: Row(
@@ -207,7 +208,7 @@ class ProvinceSeaZoneDetailOverlay extends StatelessWidget {
           Expanded(
             child: Text(
               _isSeaZone(displayId) ? 'Sea zone' : 'Province',
-              style: _kOverlayTitleStyle,
+              style: _overlayTitleStyle(context),
             ),
           ),
           _OverlayCloseButton(onClose: onClose),
@@ -238,17 +239,38 @@ class ProvinceSeaZoneDetailOverlay extends StatelessWidget {
   }
 }
 
-/// Pixel-art overlay title text style (non-Material).
-const TextStyle _kOverlayTitleStyle = TextStyle(
-  fontSize: 16,
-  fontWeight: FontWeight.bold,
-);
+/// Pixel-art overlay title text style (non-Material) under the dark
+/// editorial-monocle theme. Mirrors `CtTopBar` title typography: display
+/// font from `theme.textTheme.titleMedium`, `--accent` colour from
+/// [EditorialMonoclePalette], and `letterSpacing: 0.05`.
+/// See SPEC/ui/province-sea-zone-detail-overlay.md § Dark-theme chrome.
+TextStyle _overlayTitleStyle(BuildContext context) {
+  final ThemeData theme = Theme.of(context);
+  final TextStyle base =
+      theme.textTheme.titleMedium ??
+      const TextStyle(fontSize: 16, fontWeight: FontWeight.bold);
+  return base.copyWith(
+    color: EditorialMonoclePalette.accent,
+    fontWeight: FontWeight.bold,
+    letterSpacing: 0.05,
+  );
+}
 
-/// Pixel-art close control (non-Material). Key [kOverlayCloseKey] for tests.
+/// Pixel-art close control (non-Material) keyed for tests as
+/// [kOverlayCloseKey]. Border colour resolves to `--accent-dim` and the
+/// `×` glyph paints in `--muted` per
+/// SPEC/ui/province-sea-zone-detail-overlay.md § Dark-theme chrome.
 class _OverlayCloseButton extends StatelessWidget {
   const _OverlayCloseButton({this.onClose});
 
   static const Key kOverlayCloseKey = Key('overlay_close');
+
+  /// Width of the brass-toned border around the glyph (matches catalog 1 px).
+  static const double _borderWidth = 1;
+
+  /// Font size of the `×` glyph (preserved from prior chrome so the close
+  /// control retains its visual weight relative to the header title).
+  static const double _glyphFontSize = 18;
 
   final VoidCallback? onClose;
 
@@ -260,9 +282,18 @@ class _OverlayCloseButton extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
         decoration: BoxDecoration(
-          border: Border.all(color: Theme.of(context).colorScheme.outline),
+          border: Border.all(
+            color: EditorialMonoclePalette.accentDim,
+            width: _borderWidth,
+          ),
         ),
-        child: const Text('×', style: TextStyle(fontSize: 18)),
+        child: Text(
+          '×',
+          style: TextStyle(
+            fontSize: _glyphFontSize,
+            color: EditorialMonoclePalette.muted,
+          ),
+        ),
       ),
     );
   }
