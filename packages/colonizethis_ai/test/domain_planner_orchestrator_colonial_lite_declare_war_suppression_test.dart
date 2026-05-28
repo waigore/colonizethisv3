@@ -1,55 +1,46 @@
-// Pins the COLONIAL-lite phase New World `declareWar` suppression rule from
-// issue #2509 at the `runDomainPlanners` integration boundary:
+// Pins the COLONIAL-lite phase New World `declareWar` contract at the
+// `runDomainPlanners` integration boundary after the Phase 3 soft-weight
+// wiring slice (Refs #2847):
 //
-//   SPEC/ai/ai-architecture.md § Observer goal phases (Full AI),
-//   COLONIAL-lite: "turn >= kObserverColonialLiteMinTurn (120), OW
-//   >= kObserverColonialLiteNearQuotaOw (9) and below quota, global newWorld|
-//   not all GP-owned: allows establishOverture, colonial naval/cargo;
-//   suppresses NW declareWar, invasion army moves, and purchase_land only."
+//   SPEC/ai/phase-planner-architecture.md § Soft-phase priority weights:
+//   "The default soft-phase curve never emits `0.0` (min `0.05` at OW<=7)
+//   so EXPAND and COLONIAL-lite turns now keep NW declare-war reachable
+//   at low priority instead of structurally collapsing."
 //
-// The predicate that drives this suppression is
-// `shouldSuppressNewWorldDeclareWarInvasionAndPurchase` in
-// `observer_goal_phase.dart`, which returns true for EXPAND, COLONIAL-lite,
-// and DEVELOP and false for COLONIAL. Predicate-level coverage of the
-// COLONIAL-lite branch lives in
-// `packages/colonizethis_ai/test/observer_goal_phase_work_order_filter_branches_test.dart`
-// (group `shouldSuppressNewWorldDeclareWarInvasionAndPurchase`) and the
-// phase function boundary at OW=9 turn>=120 is pinned by
-// `observer_goal_phase_test.dart` (group `observerGoalPhaseFor`).
+// The legacy COLONIAL-lite hard-suppress rule from issue #2509
+// (`shouldSuppressNewWorldDeclareWarInvasionAndPurchase` true for
+// EXPAND / COLONIAL-lite / DEVELOP) has been replaced for the
+// EXPAND / COLONIAL-lite NW colonial declare-war scoring branches by a
+// soft-weight gate on `_DeclareWarTargetContext.nwAcquisitionWeight`:
+// `_declareWarSuppressedExpandColonialScore` and
+// `_declareWarSuppressedColonialLiteScore` only collapse NW colonial
+// declare-war candidates when `nwAcquisitionWeight <= 0.0`, which the
+// default curve never produces. Hard structural suppression now requires
+// an explicit `priorityWeights.newWorldAcquisition == 0.0` override
+// (pinned by `phase_planner_diplomacy_declare_war_soft_weight_wiring_test.dart`).
+// DEVELOP still routes off the boolean DEVELOP resolver and remains
+// fully suppressed.
 //
 // Sibling orchestrator-level pins exercise the **EXPAND** half
 // (`domain_planner_orchestrator_expand_nw_declare_war_suppression_test.dart`,
-// PR #2647), the **COLONIAL** allow side (`domain_planner_orchestrator_colonial_tribe_declare_war_test.dart`,
+// PR #2647), the **COLONIAL** allow side
+// (`domain_planner_orchestrator_colonial_tribe_declare_war_test.dart`,
 // PR #2616), and the **DEVELOP** half
 // (`domain_planner_orchestrator_develop_declare_war_suppression_test.dart`,
-// PR #2619). The COLONIAL-lite half is currently only covered indirectly
-// via the predicate test plus the sibling `domain_planner_orchestrator_colonial_lite_test.dart`
-// (PR #2624), which feeds the orchestrator the **non-declareWar** diplomacy
-// pass only (its fake API surfaces `establishOverture` + work candidates;
-// `suggestDeclareWarOrders` filters by `type == declareWar` and returns an
-// empty list). A future tuning slice that left the predicate intact but
-// rewired `domain_planner_orchestrator.dart` / `diplomacy_planner.dart` so
-// the `declareWarOnly` pass bypassed `shouldSuppressNewWorldDeclareWarInvasionAndPurchase`
-// — for example by widening a forced-declare helper (mirroring
-// `_defaultStartOwMinorDeclarePlannerResultIfNeeded`) to also fire for NW
-// tribe targets near the OW quota — would silently re-emit NW `declareWar`
-// in COLONIAL-lite and pull near-quota GPs off the OW expansion path
-// before turn 100, regressing the canonical seed-42 `--verify-conquest`
-// per-GP +3 net OW gain gate at turn 100
-// (`SPEC/program/run_observer_game-tool.md`).
+// PR #2619).
 //
 // The negative control re-runs the same scenario with one extra OW
 // province (OW=10) so the GP enters **COLONIAL** instead of COLONIAL-lite.
-// In COLONIAL the same `declareWar` candidate **must** be emitted by the
+// In COLONIAL the same `declareWar` candidate is emitted by the
 // orchestrator (acquisition priority rule "Join Empire ->
-// purchase_land -> declare-war + NW invasion"); a regression that
-// over-suppressed COLONIAL would also fail the positive case if the two
-// branches collapsed into a single rule.
+// purchase_land -> declare-war + NW invasion").
 //
 // Coverage layers:
-//   - Positive (COLONIAL-lite): merged diplomatic orders do **not**
-//     contain `declareWar` toward the NW tribe candidate the fake API
-//     provides (OW=9, turn=120, tribe-owned NW visible).
+//   - Positive (COLONIAL-lite, default soft-phase weight): merged
+//     diplomatic orders **contain** `declareWar` toward the NW tribe
+//     candidate the fake API provides (OW=9, turn=120, tribe-owned NW
+//     visible). A regression that re-introduces structural collapse
+//     for COLONIAL-lite would fail this assert.
 //   - Negative control (COLONIAL): the same `declareWar` candidate **is**
 //     emitted by the orchestrator at OW=10 same turn (boundary between
 //     COLONIAL-lite and COLONIAL is OW=9 vs OW=10 per
@@ -290,7 +281,7 @@ void main() {
     'runDomainPlanners COLONIAL-lite-phase NW declareWar suppression',
     () {
       test(
-        'COLONIAL-lite drops declareWar toward NW tribe colonial target',
+        'COLONIAL-lite keeps declareWar toward NW tribe colonial target scorable at default soft-phase weight',
         () {
           final game = _scenarioGame(
             gp1OwProvinces: _gp1OwProvincesAtColonialLiteFloor,
@@ -326,19 +317,19 @@ void main() {
 
           expect(
             _declareWarTargets(orders),
-            isNot(contains(_tribeId)),
+            contains(_tribeId),
             reason:
-                'COLONIAL-lite must drop declareWar toward NW colonial '
-                'targets so the near-quota GP keeps pursuing OW expansion '
-                'to the quota of 10 without trading away the OW conquest '
-                'path before turn 100 (SPEC § Observer goal phases (Full '
-                'AI), COLONIAL-lite suppression list: "NW declareWar, '
-                'invasion army moves, purchase_land"). A non-empty contains '
-                'list here indicates the orchestrator surfaced a declareWar '
-                'the COLONIAL-lite branch of '
-                'shouldSuppressNewWorldDeclareWarInvasionAndPurchase should '
-                'have collapsed — most likely a forced/short-circuit '
-                'declare-war helper bypassing the score gate.',
+                'Phase 3 diplomacy declare-war wiring (Refs #2847; SPEC '
+                '§ Soft-phase priority weights) replaces the legacy '
+                'hard structural collapse with a soft-weight gate on '
+                '`nwAcquisitionWeight`. The default soft-phase curve at '
+                'OW=9 yields `newWorldAcquisition == 0.20` (> 0.0), so '
+                'COLONIAL-lite must keep NW colonial declare-war '
+                'candidates scorable at low priority instead of '
+                'structurally collapsing them. Hard-suppress is now '
+                'only reached via an explicit `priorityWeights.newWorldAcquisition '
+                '== 0.0` override, pinned by '
+                '`phase_planner_diplomacy_declare_war_soft_weight_wiring_test.dart`.',
           );
         },
       );
