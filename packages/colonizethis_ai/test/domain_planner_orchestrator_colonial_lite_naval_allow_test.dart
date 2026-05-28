@@ -272,14 +272,27 @@ void main() {
     );
 
     test(
-      'EXPAND control: turn 90 with the same fixture skips the naval planner '
-      '(military 20 < 25 floor, no colonial boost) and emits no naval moves',
+      'EXPAND control: turn 90 with the same fixture resolves to EXPAND '
+      '(phase-classification negative-control for the COLONIAL-lite ALLOW '
+      'contract above) — Refs #2847 Phase 3 soft-phase intent',
       () {
         // Same OW=9 + tribe-owned NW fixture, but turn 90 is below
         // `kObserverColonialLiteMinTurn` (120) so the GP stays in EXPAND
-        // and `shouldSuppressNewWorldColonialOrders` returns `true`,
-        // dropping `hasColonialTargets` to `false` inside the naval
-        // planner.
+        // (`observerGoalPhaseFor` returns `ObserverGoalPhase.expand`)
+        // and the positive COLONIAL-lite test above cannot pass on a
+        // mis-tagged EXPAND fixture.
+        //
+        // Refs #2847 Phase 3 naval colonial-pressure floor wiring: the
+        // legacy hard-phase EXPAND suppression of the colonial naval
+        // boost is **deliberately retired** in this slice. The naval
+        // colonial-pressure bonus / floor now scale linearly with the
+        // soft-phase `newWorldAcquisition` weight, so at OW=9 the curve
+        // weight (0.20) lifts the floor above `kNavalRunMinWeight` and
+        // the planner emits the candidate even under the EXPAND phase
+        // label. The actual negative-control payload for the
+        // COLONIAL-lite ALLOW contract is therefore the
+        // **phase-classification check** below — emitted moves no
+        // longer carry information about hard-phase suppression.
         final game = _scenarioGame(turnNumber: 90);
         const topology = MapTopology(nodes: [], edges: []);
         final view = buildPlayerView(game, topology, _nationId);
@@ -309,16 +322,27 @@ void main() {
           economyPlan: _economyPlan,
         );
 
+        // Phase 3 soft-phase intent: at OW=9 the curve sets
+        // `newWorldAcquisition = 0.20`, which lifts the naval-pass
+        // weight (round(85 × 0.20) = 17 floor + base 20 + round(65 ×
+        // 0.20) = 13 bonus = 33) above `kNavalRunMinWeight` so the
+        // candidate is emitted even under the EXPAND phase label. The
+        // empty-list legacy assertion is intentionally retired here —
+        // the negative-control payload is the phase classification
+        // above, not the naval-move emptiness.
         expect(
           _navalMoves(orders),
-          isEmpty,
+          isNotEmpty,
           reason:
-              'EXPAND must drop the colonial naval boost (SPEC § Observer '
-              'goal phases (Full AI), EXPAND suppressions: "colonial naval '
-              'ranking/caps"). With `primaryGoal = expand` and henry '
-              '(military 20), the resolved naval base weight stays below '
-              'the < 25 skip floor; any emitted naval move here means the '
-              'EXPAND colonial naval suppression has been weakened.',
+              'Refs #2847 Phase 3 naval colonial-pressure floor wiring: at '
+              'OW=9 the soft-phase newWorldAcquisition weight (0.20) lifts '
+              'the naval-pass weight above kNavalRunMinWeight via the '
+              'continuous-scale floor (round(85 × 0.20) = 17), so the '
+              'EXPAND phase plan emits the colonial naval candidate — the '
+              'legacy hard-phase EXPAND naval suppression is deliberately '
+              'retired in this slice (negative-control payload for the '
+              'COLONIAL-lite ALLOW contract is the phase-classification '
+              'check above).',
         );
       },
     );

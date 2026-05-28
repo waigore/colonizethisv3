@@ -66,6 +66,7 @@ import '../widgets/ct_brass_divider.dart';
 import '../widgets/ct_choice_chip.dart';
 import '../widgets/ct_compass_rose.dart';
 import '../widgets/ct_dialog_shell.dart';
+import '../widgets/ct_dropdown.dart';
 import '../widgets/ct_fleur_de_lis_ornament.dart';
 import '../widgets/ct_gradients.dart';
 import '../widgets/ct_loading_indicator.dart';
@@ -414,6 +415,25 @@ List<WidgetbookNode> get mainMenuDirectories => [
           context,
           CtMainMenu(
             variant: MainMenuVariant.plain,
+            state: MainMenuState.default_,
+            version: 'v1.0.0',
+            onNewGame: () {},
+            onLoadGame: () {},
+            onSettings: () {},
+            onQuit: () {},
+          ),
+        ),
+      ),
+      WidgetbookUseCase(
+        // SPEC/ui/main-menu.md § Responsive rules — exercises the
+        // `≤ 430 dp` narrow override (compact padding + reduced button
+        // letter-spacing) against the `pixelArt` variant on a 360 dp
+        // viewport.
+        name: 'Pixel art (mobile)',
+        builder: (context) => mobileViewport(
+          context,
+          CtMainMenu(
+            variant: MainMenuVariant.pixelArt,
             state: MainMenuState.default_,
             version: 'v1.0.0',
             onNewGame: () {},

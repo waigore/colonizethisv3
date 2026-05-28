@@ -60,6 +60,18 @@ The widget owns no internal state. It pops itself via `Navigator.of(context).pop
   - `appL10n(context).quickBattle_casualties(defenderName, result.defenderCasualties.length)`.
 - 16 dp gap, then `Align(alignment: centerRight)` containing a single `CtNinePatchButton` labeled `appL10n(context).quickBattle_ok`.
 
+### Color contract (dark editorial-monocle)
+
+All text colors resolve from theme tokens (canonical OKLCH palette in `SPEC/ui/pixel-art-ui-catalog.md` § Editorial-monocle palette). Hardcoded color literals are forbidden per Refs #2869 R1 / R19.
+
+| Element | Color token | Resolves via |
+|---------|-------------|--------------|
+| Winner text (`titleMedium`) | `--accent` | `Theme.of(context).colorScheme.primary` |
+| `quickBattle_provinceCaptured` line (bold) | `--danger` | `Theme.of(context).colorScheme.error` |
+| Attacker / defender casualty rows | `--muted` (via `bodySmall`) | `Theme.of(context).textTheme.bodySmall?.color` |
+
+The inline `_ResultView` rendered inside `QuickBattleScreen` (post-result phase) shares this exact color contract; the only allowed divergence is the action button label (`game_intervention_continue` vs `quickBattle_ok`).
+
 ---
 
 ## States and variants
@@ -123,6 +135,18 @@ The dialog is modal; it does not auto-dismiss.
 - Given the dialog is mounted,
   When the UI layer renders the widget tree,
   Then there is exactly one `CtDialogShell`, zero Material `ElevatedButton`, `TextButton`, or `OutlinedButton`, and exactly one `CtNinePatchButton` labeled with `quickBattle_ok`.
+
+- Given the dialog is mounted under `AppThemes.editorialMonocle`,
+  When the UI layer renders the winner text `Text` widget,
+  Then the resolved `TextStyle.color` equals `Theme.of(context).colorScheme.primary` (the editorial-monocle `--accent` OKLCH token) — no hardcoded color literal is used.
+
+- Given the dialog is mounted under `AppThemes.editorialMonocle` with `result.provinceFlips == true`,
+  When the UI layer renders the `quickBattle_provinceCaptured` line,
+  Then the resolved `TextStyle.color` equals `Theme.of(context).colorScheme.error` (the editorial-monocle `--danger` OKLCH token) and `TextStyle.fontWeight == FontWeight.bold`.
+
+- Given the dialog is mounted under `AppThemes.editorialMonocle`,
+  When the UI layer renders each casualty row,
+  Then the row uses `Theme.of(context).textTheme.bodySmall` (whose `color` resolves to the editorial-monocle `--muted` token) and no hardcoded color literal overrides it.
 
 ---
 
