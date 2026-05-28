@@ -17,6 +17,7 @@ import '../../../providers/games_provider.dart';
 import '../../../widgets/ct_nine_patch_button.dart';
 import '../../../widgets/resource_icon.dart';
 import 'civilian_units_sort.dart';
+import 'train_dialog_chrome.dart';
 import 'units/shared/region_section_header.dart';
 import 'units/shared/units_entity_action_row.dart';
 import 'units/shared/units_panel_region_label.dart';

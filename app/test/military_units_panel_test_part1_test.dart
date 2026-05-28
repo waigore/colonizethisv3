@@ -237,8 +237,8 @@ void main() {
           expect(find.byType(ListTile), findsAtLeastNWidgets(1));
           expect(find.byType(UnitsEntityActionRow), findsAtLeastNWidgets(1));
           expect(
-            find.text('Old World').evaluate().isNotEmpty ||
-                find.text('New World').evaluate().isNotEmpty,
+            find.text('OLD WORLD').evaluate().isNotEmpty ||
+                find.text('NEW WORLD').evaluate().isNotEmpty,
             isTrue,
           );
         }

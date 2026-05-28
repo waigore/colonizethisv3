@@ -193,8 +193,8 @@ void main() {
         if (fleets > 0) {
           expect(find.byType(ExpansionTile), findsAtLeastNWidgets(1));
           expect(
-            find.text('Old World').evaluate().isNotEmpty ||
-                find.text('New World').evaluate().isNotEmpty,
+            find.text('OLD WORLD').evaluate().isNotEmpty ||
+                find.text('NEW WORLD').evaluate().isNotEmpty,
             isTrue,
           );
         }
@@ -479,8 +479,10 @@ void main() {
         await tester.pumpAndSettle();
 
         // Old/New World headers should appear when fleets exist in both regions.
-        expect(find.text('Old World'), findsAtLeastNWidgets(1));
-        expect(find.text('New World'), findsAtLeastNWidgets(1));
+        // Per #2866 S1–S3, RegionSectionHeader renders via CtSectionLabel which
+        // uppercases the label text.
+        expect(find.text('OLD WORLD'), findsAtLeastNWidgets(1));
+        expect(find.text('NEW WORLD'), findsAtLeastNWidgets(1));
 
         Finder tileFinder = find.widgetWithText(
           ExpansionTile,
