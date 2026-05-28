@@ -44,7 +44,8 @@ int provinceCountOwnedBy(Game game, String factionId) {
 
 /// Old World provinces owned by [factionId] (observer conquest / survival peace).
 int oldWorldProvinceCountOwnedBy(Game game, String factionId) {
-  return game.worldState.oldWorld.provinces
+  return game.worldState
+      .provincesForRegion(kRegionOldWorld)
       .where((p) => p.ownerId == factionId)
       .length;
 }

@@ -60,6 +60,32 @@ const String _nationId = 'gp1';
 const String _tribeId = 'tribe1';
 const String _tribeNwProvince = 'newWorld|tribe1_nw0';
 
+// Explicit NW-acquisition-zero phase plan emulating the legacy
+// hard-suppress contract for EXPAND-phase regression assertions
+// (Refs #2847 Phase 3 — soft-weight migration). The production
+// `_curveWeightsForOw(7)` curve emits `newWorldAcquisition = 0.05`
+// (early-sprint plateau), which scoring-side migration in
+// `_declareWarSuppressedExpandColonialScore` treats as
+// "reachable at low priority" — see the PR's
+// `phase_planner_diplomacy_declare_war_soft_weight_wiring_test.dart`.
+// Tests that pin the strict hard-suppress regression contract
+// thread this explicit override through the orchestrator so
+// `nwAcquisitionWeight == 0.0` collapses NW colonial declare-war
+// candidates. SPEC § Observer goal phases (Full AI), EXPAND
+// suppressions: "NW declareWar/establishOverture..." remains the
+// effective contract under this override.
+const PhasePriorityWeights _nwAcquisitionZeroExpand = PhasePriorityWeights(
+  oldWorldConquest: 0.95,
+  newWorldAcquisition: 0.0,
+  oldWorldCivilian: 0.90,
+  newWorldCivilian: 0.10,
+);
+
+const PhasePlanOutcome _expandPhasePlanHardSuppressNw = PhasePlanOutcome(
+  phase: ObserverGoalPhase.expand,
+  priorityWeights: _nwAcquisitionZeroExpand,
+);
+
 // Sub-quota OW set (< `kObserverConquestMinOwProvincesPerGp` = 10) so
 // `isBelowObserverConquestQuota` is true and the GP enters EXPAND per
 // `observerGoalPhaseFor`. Mirrors the EXPAND fixture shape used by the
@@ -290,19 +316,31 @@ void main() {
         seeds: AISeedBundle.fromTurnSeed(2509240),
         suggestionAPI: _nwTribeDeclareWarApi,
         economyPlan: _economyPlan,
+        // Pin the legacy EXPAND hard-suppress contract by threading an
+        // explicit `newWorldAcquisition = 0.0` override through the
+        // orchestrator (Refs #2847 Phase 3). Under the soft-weight
+        // production curve `_curveWeightsForOw(7)` returns 0.05 and the
+        // scoring path now keeps NW declare-war reachable at low
+        // priority — see
+        // `phase_planner_diplomacy_declare_war_soft_weight_wiring_test.dart`.
+        // This test continues to assert the strict regression contract.
+        phasePlan: _expandPhasePlanHardSuppressNw,
       );
 
       expect(
         _declareWarTargets(orders),
         isNot(contains(_tribeId)),
         reason:
-            'EXPAND must drop declareWar toward NW colonial targets so '
-            'the GP stays focused on OW expansion to the quota of 10 '
-            '(SPEC § Observer goal phases (Full AI), EXPAND suppressions: '
-            '"NW declareWar/establishOverture..."). A non-empty contains '
-            'list here indicates the orchestrator surfaced a declareWar '
-            'the scoring path collapsed to 0 — most likely a forced/'
-            'short-circuit declare-war helper bypassing the score gate.',
+            'Under the explicit `newWorldAcquisition = 0.0` override '
+            '(legacy hard-suppress regression contract), EXPAND must '
+            'drop declareWar toward NW colonial targets so the GP stays '
+            'focused on OW expansion to the quota of 10 (SPEC § Observer '
+            'goal phases (Full AI), EXPAND suppressions: "NW declareWar/'
+            'establishOverture..."). A non-empty contains list here '
+            'indicates the orchestrator surfaced a declareWar the '
+            'scoring path should have collapsed to 0 — most likely a '
+            'forced/short-circuit declare-war helper bypassing the '
+            'score gate.',
       );
     });
 
@@ -370,6 +408,7 @@ void main() {
         seeds: AISeedBundle.fromTurnSeed(turnSeed),
         suggestionAPI: _nwTribeDeclareWarApi,
         economyPlan: _economyPlan,
+        phasePlan: _expandPhasePlanHardSuppressNw,
       );
 
       final firstRun = runOnce(2509242);

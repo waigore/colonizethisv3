@@ -83,7 +83,9 @@ class CtResourceCell extends StatelessWidget {
 
   /// Renders an integer with thousands separators (`1_240` → `1,240`).
   /// Kept inline so the widget does not pull in `intl` for a single use.
-  @visibleForTesting
+  /// Also reused by the production-panel e2e text-mirror fixture
+  /// (`production_panel_e2e_expected_lines.dart`) so it stays stable across
+  /// callers.
   static String formatQuantity(int value) {
     final String raw = value.abs().toString();
     final StringBuffer out = StringBuffer();
