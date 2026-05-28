@@ -20,6 +20,7 @@ Future<void> _pumpButton(
   WidgetTester tester, {
   required VoidCallback? onPressed,
   bool enabled = true,
+  bool dangerVariant = false,
   Widget child = const Text('Confirm'),
 }) async {
   await tester.pumpWidget(
@@ -32,6 +33,7 @@ Future<void> _pumpButton(
             child: CtNinePatchButton(
               onPressed: onPressed,
               enabled: enabled,
+              dangerVariant: dangerVariant,
               child: child,
             ),
           ),
@@ -221,6 +223,54 @@ void main() {
       );
       expect(painters, findsOneWidget);
       expect(CtNinePatchButton.cornerBracketSize, 10);
+    },
+  );
+
+  testWidgets(
+    'danger variant resolves border and engraved label to --danger',
+    (WidgetTester tester) async {
+      // SPEC/ui/pixel-art-ui-catalog.md § Pixel-art component catalog
+      // (CtNinePatchButton) → Danger variant: border + label switch to
+      // `--danger`, gradient surface and brass corner brackets unchanged.
+      await _pumpButton(
+        tester,
+        onPressed: () {},
+        dangerVariant: true,
+        child: const Text('Declare War'),
+      );
+
+      final DecoratedBox box = _findButtonSurfaceDecoratedBox(tester);
+      final BoxDecoration decoration = box.decoration as BoxDecoration;
+
+      // Gradient unchanged.
+      final LinearGradient gradient = decoration.gradient! as LinearGradient;
+      expect(
+        gradient.colors,
+        CtGradients.buttonGradient.colors,
+        reason: 'Danger variant must keep the canonical button gradient.',
+      );
+
+      // Border resolves to --danger (not --border).
+      final Border border = decoration.border! as Border;
+      expect(
+        border.top.color,
+        EditorialMonoclePalette.danger,
+        reason: 'Danger variant must paint a --danger border.',
+      );
+
+      // Engraved label colour resolves to --danger (not --accent).
+      final RichText rich = tester.widget<RichText>(
+        find.descendant(
+          of: find.text('Declare War'),
+          matching: find.byType(RichText),
+        ),
+      );
+      final TextSpan span = rich.text as TextSpan;
+      expect(
+        span.style?.color,
+        EditorialMonoclePalette.danger,
+        reason: 'Danger variant must paint the engraved label in --danger.',
+      );
     },
   );
 }
