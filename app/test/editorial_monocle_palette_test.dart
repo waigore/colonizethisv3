@@ -128,4 +128,38 @@ void main() {
       expect(a, greaterThanOrEqualTo(1.0));
     });
   });
+
+  group('EditorialMonoclePalette dialog scrim token', () {
+    test('alpha matches the SPEC pin (0.70)', () {
+      expect(EditorialMonoclePalette.dialogScrimAlpha, 0.70);
+    });
+
+    test('dialogScrim applies the canonical alpha to the base color', () {
+      final Color scrim = EditorialMonoclePalette.dialogScrim;
+      expect(
+        scrim.a,
+        closeTo(EditorialMonoclePalette.dialogScrimAlpha, 1e-6),
+        reason: 'dialogScrim must use the SPEC-pinned alpha',
+      );
+      final Color base = oklchToColor(
+        EditorialMonoclePalette.dialogScrimBaseToken,
+      );
+      // RGB channels are derived from the base OKLCH token; alpha differs.
+      expect(scrim.r, closeTo(base.r, 1e-6));
+      expect(scrim.g, closeTo(base.g, 1e-6));
+      expect(scrim.b, closeTo(base.b, 1e-6));
+    });
+
+    test('dialogScrim base token is darker than --bg-deep', () {
+      // Sanity check from the SPEC narrative ("darker than --bg-deep").
+      final Color scrimBase = oklchToColor(
+        EditorialMonoclePalette.dialogScrimBaseToken,
+      );
+      final double scrimLum = wcagRelativeLuminance(scrimBase);
+      final double bgDeepLum = wcagRelativeLuminance(
+        EditorialMonoclePalette.bgDeep,
+      );
+      expect(scrimLum, lessThan(bgDeepLum));
+    });
+  });
 }

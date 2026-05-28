@@ -1,4 +1,7 @@
+import 'package:colonizethis_app/config/editorial_monocle_palette.dart';
 import 'package:colonizethis_app/features/game/flame/victory_overlay.dart';
+import 'package:colonizethis_app/widgets/ct_brass_divider.dart';
+import 'package:colonizethis_app/widgets/ct_gradients.dart';
 import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
 import 'package:colonizethis_app/widgets/debug_init_game.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
@@ -41,8 +44,9 @@ void main() {
     );
   }
 
-  testWidgets('VictoryOverlay renders victory label and winner sentence',
-      (WidgetTester tester) async {
+  testWidgets('VictoryOverlay renders victory label and winner sentence', (
+    WidgetTester tester,
+  ) async {
     final victory = ct_models.VictoryState(
       winnerPlayerId: winnerPlayerId,
       type: ct_models.VictoryType.military,
@@ -50,18 +54,17 @@ void main() {
     );
 
     await tester.pumpWidget(
-      MaterialApp(
-        home: buildVictoryRoute(victory: victory),
-      ),
+      MaterialApp(home: buildVictoryRoute(victory: victory)),
     );
     await tester.pumpAndSettle();
 
-    expect(find.text('Military victory'), findsOneWidget);
+    expect(find.text('MILITARY VICTORY'), findsOneWidget);
     expect(find.textContaining('wins on turn 12'), findsOneWidget);
   });
 
-  testWidgets('VictoryOverlay "View final state" dismisses overlay',
-      (WidgetTester tester) async {
+  testWidgets('VictoryOverlay "View final state" dismisses overlay', (
+    WidgetTester tester,
+  ) async {
     final victory = ct_models.VictoryState(
       winnerPlayerId: winnerPlayerId,
       type: ct_models.VictoryType.military,
@@ -69,21 +72,19 @@ void main() {
     );
 
     await tester.pumpWidget(
-      MaterialApp(
-        home: buildVictoryRoute(victory: victory),
-      ),
+      MaterialApp(home: buildVictoryRoute(victory: victory)),
     );
     await tester.pumpAndSettle();
 
-    expect(find.text('Military victory'), findsOneWidget);
+    expect(find.text('MILITARY VICTORY'), findsOneWidget);
     await tester.tap(find.text('View final state'));
     await tester.pumpAndSettle();
-    expect(find.text('Military victory'), findsNothing);
+    expect(find.text('MILITARY VICTORY'), findsNothing);
   });
 
-  testWidgets(
-      'VictoryOverlay "Return to main menu" emits NavigateToShellEvent',
-      (WidgetTester tester) async {
+  testWidgets('VictoryOverlay "Return to main menu" emits NavigateToShellEvent', (
+    WidgetTester tester,
+  ) async {
     final victory = ct_models.VictoryState(
       winnerPlayerId: winnerPlayerId,
       type: ct_models.VictoryType.military,
@@ -97,9 +98,7 @@ void main() {
     addTearDown(sub.cancel);
 
     await tester.pumpWidget(
-      MaterialApp(
-        home: buildVictoryRoute(victory: victory, bus: victoryTestBus),
-      ),
+      MaterialApp(home: buildVictoryRoute(victory: victory, bus: victoryTestBus)),
     );
     await tester.pumpAndSettle();
 
@@ -109,8 +108,9 @@ void main() {
     expect(emitted, isA<ct_models.NavigateToShellEvent>());
   });
 
-  testWidgets('VictoryPanel uses first player when winner id is unknown',
-      (WidgetTester tester) async {
+  testWidgets('VictoryPanel uses first player when winner id is unknown', (
+    WidgetTester tester,
+  ) async {
     final victory = ct_models.VictoryState(
       winnerPlayerId: 'nonexistent-player',
       type: ct_models.VictoryType.military,
@@ -135,5 +135,134 @@ void main() {
     expect(find.textContaining('turn 45'), findsOneWidget);
     expect(find.byType(CtNinePatchButton), findsNWidgets(2));
   });
-}
 
+  testWidgets(
+    'VictoryOverlay scrim resolves to EditorialMonoclePalette.dialogScrim',
+    (WidgetTester tester) async {
+      final victory = ct_models.VictoryState(
+        winnerPlayerId: winnerPlayerId,
+        type: ct_models.VictoryType.military,
+        turnNumber: 7,
+      );
+
+      await tester.pumpWidget(
+        MaterialApp(home: buildVictoryRoute(victory: victory)),
+      );
+      await tester.pumpAndSettle();
+
+      // The overlay's outermost colored Container is the scrim wash; it must
+      // resolve to the canonical --dialog-scrim token, not Colors.black54.
+      final Iterable<Container> scrimContainers = tester
+          .widgetList<Container>(
+            find.descendant(
+              of: find.byType(VictoryOverlay),
+              matching: find.byType(Container),
+            ),
+          )
+          .where((c) => c.color == EditorialMonoclePalette.dialogScrim);
+      expect(scrimContainers, isNotEmpty,
+          reason:
+              'VictoryOverlay must wash the screen with the canonical '
+              '--dialog-scrim token, not Colors.black54 or a hex literal.');
+    },
+  );
+
+  testWidgets(
+    'VictoryPanel surface paints CtGradients.victoryPanelGradient under a 2px '
+    '--accent border',
+    (WidgetTester tester) async {
+      final victory = ct_models.VictoryState(
+        winnerPlayerId: winnerPlayerId,
+        type: ct_models.VictoryType.military,
+        turnNumber: 50,
+      );
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: VictoryPanel(
+              game: game,
+              victory: victory,
+              bus: victoryTestBus,
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      final Iterable<DecoratedBox> decoratedBoxes = tester
+          .widgetList<DecoratedBox>(
+            find.descendant(
+              of: find.byType(VictoryPanel),
+              matching: find.byType(DecoratedBox),
+            ),
+          )
+          .where((box) {
+            final decoration = box.decoration;
+            if (decoration is! BoxDecoration) return false;
+            if (decoration.gradient != CtGradients.victoryPanelGradient) {
+              return false;
+            }
+            final BoxBorder? border = decoration.border;
+            if (border is! Border) return false;
+            return border.top.width == VictoryPanel.borderWidth &&
+                border.top.color == EditorialMonoclePalette.accent;
+          });
+      expect(decoratedBoxes, isNotEmpty,
+          reason:
+              'VictoryPanel must paint the brass-bordered ceremonial surface '
+              'with CtGradients.victoryPanelGradient + a 2px --accent border.');
+    },
+  );
+
+  testWidgets('VictoryPanel renders a CtBrassDivider between title and body',
+      (WidgetTester tester) async {
+    final victory = ct_models.VictoryState(
+      winnerPlayerId: winnerPlayerId,
+      type: ct_models.VictoryType.military,
+      turnNumber: 30,
+    );
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: VictoryPanel(
+            game: game,
+            victory: victory,
+            bus: victoryTestBus,
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.byType(CtBrassDivider), findsOneWidget);
+  });
+
+  testWidgets('VictoryPanel renders no Material Elevated/Text/Outlined buttons',
+      (WidgetTester tester) async {
+    final victory = ct_models.VictoryState(
+      winnerPlayerId: winnerPlayerId,
+      type: ct_models.VictoryType.military,
+      turnNumber: 4,
+    );
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: VictoryPanel(
+            game: game,
+            victory: victory,
+            bus: victoryTestBus,
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.byType(ElevatedButton), findsNothing);
+    expect(find.byType(TextButton), findsNothing);
+    expect(find.byType(OutlinedButton), findsNothing);
+    expect(find.byType(CtNinePatchButton), findsNWidgets(2));
+  });
+}
