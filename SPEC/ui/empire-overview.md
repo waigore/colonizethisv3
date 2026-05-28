@@ -87,6 +87,25 @@
 
 **Acceptance (minimap ↔ main map):** Given the active region’s `RegionMapViewData.cellSize` matches the main `CtRegionMap` cell size, when the minimap is visible and a viewport snapshot exists for that region, then the white viewport rectangle matches the main map’s visible world area (center and span within tolerance for rounding). When the user taps a point on the minimap, then the main map camera centers on the corresponding world position (clamped). When the user drags on the minimap, then the camera pans in the same direction with world delta consistent with the snapshot’s world scale (same `cellSizePx` / map extents as [map-widget.md](map-widget.md) § Region minimap camera sync).
 
+### Players bar (in-game map stack)
+
+- **Placement:** Floating column at the **top-right** of the in-game map `Stack`, anchored below the top bar + tab bar chrome (`top: 78 dp`, `right: 6 dp`). Sits **above** the map and minimap layers but **below** dialog scrims (Map options, victory).
+- **Visibility:** Shown on the wide / desktop layout only. Narrow viewports (`< kNarrowBreakpoint`, 600 dp) hide the bar entirely per [mobile-adaptation.md](mobile-adaptation.md) (implemented under issue #2870; this spec authorises the wide-only baseline). The bar is hidden during the [`victory-overlay.md`](victory-overlay.md) state (no chip column behind the victory scrim).
+- **Order:** One chip per **Great Power** player (`Game.players` filtered to non-tribe entries, sorted by `player.id` ascending). Tribes and minor nations are **not** rendered as chips. Order is deterministic for fixed inputs.
+- **Chip content:** Each chip renders three slots: a `8 × 8 dp` colour **swatch**, the player's **display name** (`Player.displayName`), and a **score** counter formatted with thousands separators (`NumberFormat.decimalPattern()` in `en_US`).
+- **Score semantics:** The score equals the count of Old World provinces currently owned by that player (`worldState.oldWorld.provinces.where((p) => p.ownerId == player.id).length`). This number tracks progress toward the military-victory threshold (`31+` OW provinces, see [victory.md](../game/victory.md)). When the count is `0`, the chip still renders with `0`.
+- **Swatch colour:** Resolved from the same canonical map ownership tint used by [map-widget.md](map-widget.md) § Province ownership — `factionOwnershipColorMapForOldWorld(game)`. This guarantees the chip swatch matches the GP tint a player sees on the map for the same player id. When `Game.greatPowerColorOverride` defines a colour for that GP, that override is honoured (the function merges overrides automatically).
+- **Chip chrome:** Pixel-art surface: `1 dp` `--border` outline, vertical gradient from `--surface` to `--bg-deep`, body text in `--muted`, score text in `--accent-dim` using the dark-theme monospace stack (`textTheme.bodySmall` with monospace family). Chip padding `3 dp × 6 dp`; right-aligned content; chip min-width `80 dp`. Hard-coded hex literals are forbidden — all colours resolve via `EditorialMonoclePalette`.
+- **Interaction:** The chip column is **non-interactive** in this slice (no tap targets, no hit registration); pointer events pass through to the map layer beneath.
+
+**Acceptance (players bar):**
+
+- Given the in-game map is visible and `Game.players` contains two non-tribe players `gp_a` and `gp_b` with `displayName == 'England'` / `'France'` and Old World province ownership `4` / `3`, **when** the wide layout (`MediaQuery.size.width >= kNarrowBreakpoint`) renders the map stack, **then** the players bar is mounted with two chip rows in deterministic `gp_a, gp_b` order, the first chip text contains `England` and `4`, the second contains `France` and `3`.
+- Given the in-game map is visible with two GP players, **when** the wide layout renders, **then** each chip's swatch widget paints the colour returned by `factionOwnershipColorMapForOldWorld(game)` for that GP `playerId`.
+- Given the in-game map is visible and `Game.victory != null`, **when** the map stack renders, **then** the players bar is **not** mounted (the chip column is hidden so it does not paint behind the victory overlay scrim).
+- Given the in-game map is visible with two GP players, **when** the narrow layout (`MediaQuery.size.width < kNarrowBreakpoint`) renders, **then** the players bar is **not** mounted (mobile hide behaviour authoritatively governed by [mobile-adaptation.md](mobile-adaptation.md) / issue #2870).
+- Given the in-game map is visible with no non-tribe players, **when** the wide layout renders, **then** the players bar is **not** mounted (no chips column is painted for an empty roster).
+
 ---
 
 ## Layout / wireframe
@@ -100,6 +119,7 @@
 | [E]   – base: terrain [+ resources + labels per 4-step cycle]    |
 | [E]   – bottom-left: [layer][home][map options] (horizontal)     |
 |       – minimap bottom-right                                     |
+|       – players bar top-right (wide only)                        |
 +------------------------------------------------------------------+
 |  (narrow: province detail may overlay bottom of map stack)        |
 +------------------------------------------------------------------+

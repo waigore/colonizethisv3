@@ -14,6 +14,7 @@ import 'package:colonizethis_app/features/game/widgets/province_overlay_demo_dat
         sampleTileKeyForProvinceOverlay;
 import 'package:colonizethis_app/providers/app_event_bus_provider.dart';
 import 'package:colonizethis_app/providers/map_province_panel_provider.dart';
+import 'package:colonizethis_app/widgets/ct_back_button.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
@@ -252,7 +253,8 @@ void main() {
           bus: bus,
         );
 
-        expect(find.text('Dossier'), findsOneWidget);
+        // Refs #2863 S5: card titles are uppercased per mockup GAME30002.
+        expect(find.text('DOSSIER'), findsOneWidget);
         expect(find.text('evidence line'), findsOneWidget);
       },
     );
@@ -276,7 +278,7 @@ void main() {
           bus: bus,
         );
 
-        expect(find.text('Dossier'), findsNothing);
+        expect(find.text('DOSSIER'), findsNothing);
       },
     );
 
@@ -329,7 +331,9 @@ void main() {
           bus: bus,
         );
 
-        await tester.tap(find.byIcon(Icons.arrow_back));
+        // Refs #2863 S5: detail screen now renders a CtTopBar with a
+        // CtBackButton chevron instead of the legacy Material AppBar.
+        await tester.tap(find.byType(CtBackButton));
         await tester.pumpAndSettle();
 
         expect(events.whereType<PopNavigationEvent>(), hasLength(1));

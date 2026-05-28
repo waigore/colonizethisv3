@@ -5,8 +5,11 @@ import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
 
+import '../../../config/editorial_monocle_palette.dart';
 import '../../../config/ui_screen_ids.dart';
 import '../../../l10n/l10n.dart';
+import '../../../widgets/ct_dialog_shell.dart';
+import 'chrome/ct_nine_patch_button.dart';
 
 String moveArmyFactionGroupHeaderLabel(
   Game game,
@@ -201,20 +204,45 @@ class _MoveArmyDialogState extends State<MoveArmyDialog> {
     );
     final ok = await showDialog<bool>(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text(l10n.moveArmy_invadeProvinceTitle),
-        content: Text(l10n.moveArmy_invadeProvinceBody(ownerLabel)),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(false),
-            child: Text(l10n.common_cancel),
+      builder: (ctx) {
+        final theme = Theme.of(ctx);
+        final titleStyle = (theme.textTheme.titleMedium ?? const TextStyle())
+            .copyWith(color: EditorialMonoclePalette.danger);
+        final bodyStyle = (theme.textTheme.bodyMedium ?? const TextStyle())
+            .copyWith(color: EditorialMonoclePalette.fg);
+        return CtDialogShell(
+          borderColor: EditorialMonoclePalette.danger,
+          borderWidth: CtDialogShell.dangerBorderWidth,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(l10n.moveArmy_invadeProvinceTitle, style: titleStyle),
+              const SizedBox(height: 8),
+              Text(
+                l10n.moveArmy_invadeProvinceBody(ownerLabel),
+                style: bodyStyle,
+              ),
+              const SizedBox(height: 16),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  CtNinePatchButton(
+                    onPressed: () => Navigator.of(ctx).pop(false),
+                    child: Text(l10n.common_cancel),
+                  ),
+                  const SizedBox(width: 8),
+                  CtNinePatchButton(
+                    dangerVariant: true,
+                    onPressed: () => Navigator.of(ctx).pop(true),
+                    child: Text(l10n.moveArmy_declareWarAndMove),
+                  ),
+                ],
+              ),
+            ],
           ),
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(true),
-            child: Text(l10n.moveArmy_declareWarAndMove),
-          ),
-        ],
-      ),
+        );
+      },
     );
     if (ok == true && context.mounted) {
       _emitAndClose(entry);

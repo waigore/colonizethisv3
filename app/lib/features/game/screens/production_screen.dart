@@ -6,6 +6,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../config/app_constants.dart';
 import '../../../config/ct_e2e.dart';
 import '../../../config/ct_e2e_last_panel_snapshot.dart';
 import '../../../config/ui_screen_ids.dart';
@@ -15,6 +16,8 @@ import '../../../providers/production_allocation_provider.dart';
 import '../shell_player_context.dart';
 import '../widgets/observe_mode_not_defined_panel.dart';
 import '../../../widgets/ct_game_feature_screen_shell.dart';
+import '../../../widgets/ct_top_bar.dart';
+import '../../../widgets/strict_asset_icon.dart';
 import '../widgets/production_commodity_breakdown_dialog.dart';
 import '../widgets/production_labour_helpers.dart';
 import '../widgets/production_panel.dart';
@@ -46,12 +49,42 @@ class ProductionScreen extends ConsumerWidget {
   /// Optional tile maps when [panelTopologyOverride] is set.
   final Map<String, TileMapResult>? panelTileMapByRegionOverride;
 
+  /// Localized back-button label rendered immediately after the chevron
+  /// on the dark-theme `CtTopBar`. SPEC/ui/production-panel.md § Top bar
+  /// requires the literal `"Map"` so the affordance reads `"← Map"`.
+  // ignore: avoid_hardcoded_strings_in_widgets
+  static const String _topBarBackLabel = 'Map';
+
+  /// Title text shown in the dark-theme `CtTopBar`. SPEC mandates the
+  /// literal `"Production"` (Cinzel display font is configured at the
+  /// theme level).
+  // ignore: avoid_hardcoded_strings_in_widgets
+  static const String _topBarTitle = 'Production';
+
+  /// Pixel-art icon asset rendered between the back affordance and the
+  /// title (SPEC § Top bar — 18 px production icon).
+  static const String _topBarIconAsset =
+      '${kAppIconAssetPrefix}ui_icon_production.png';
+
+  /// Stable widget key for the production top bar — lets widget tests
+  /// pin the dark-theme chrome without coupling to localized strings.
+  static const Key topBarKey = ValueKey<String>('productionScreenTopBar');
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return CtGameFeatureScreenShell(
       game: game,
-      title: 'Production',
       attachGameToUiListener: attachGameToUiListener,
+      topBar: CtTopBar(
+        key: topBarKey,
+        title: _topBarTitle,
+        backButtonLabel: _topBarBackLabel,
+        icon: const StrictAssetIcon(
+          assetPath: _topBarIconAsset,
+          width: 18,
+          height: 18,
+        ),
+      ),
       bodyBuilder: (context, shellRef, displayGame) {
         if (shellPanelsNotDefined(shellRef)) {
           return const ObserveModeNotDefinedPanel(title: 'Production');

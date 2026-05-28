@@ -1,7 +1,9 @@
 import 'package:colonizethis_app/config/constants.dart';
+import 'package:colonizethis_app/config/editorial_monocle_palette.dart';
 import 'package:colonizethis_app/config/themes.dart';
 import 'package:colonizethis_app/core/services/game_service.dart';
 import 'package:colonizethis_app/features/game/flame/game_screen.dart';
+import 'package:colonizethis_app/features/game/flame/game_side_menu.dart';
 import 'package:colonizethis_app/providers/game_service_provider.dart';
 import 'package:colonizethis_app/providers/games_box_provider.dart';
 import 'package:colonizethis_app/providers/games_provider.dart';
@@ -70,12 +72,17 @@ void main() {
 
     expect(find.text('Debug log'), findsOneWidget);
     expect(find.text('Production'), findsNothing);
-    final overlayTapTarget = find.byWidgetPredicate(
-      (w) => w is Container && w.color == Colors.black54,
-    );
+    // SPEC: in-game-shell-narrow.md § Modal behaviour — the scrim resolves
+    // to the canonical EditorialMonoclePalette.dialogScrim token (no
+    // Colors.black54 literal). The host extracts the layer as
+    // GameSideMenuScrim so we can also exercise the dismiss callback via
+    // its stable surface key.
+    final overlayTapTarget = find.byKey(GameSideMenuScrim.surfaceKey);
     expect(overlayTapTarget, findsOneWidget);
+    final Container scrim = tester.widget<Container>(overlayTapTarget);
+    expect(scrim.color, EditorialMonoclePalette.dialogScrim);
 
-    await tester.tap(overlayTapTarget.first, warnIfMissed: false);
+    await tester.tap(overlayTapTarget, warnIfMissed: false);
     await tester.pump(const Duration(milliseconds: 800));
 
     expect(find.text('Debug log'), findsNothing);

@@ -2,6 +2,9 @@
 // - SPEC/ui/move-army-dialog.md
 // - SPEC/ui/move-fleet-dialog.md
 
+import 'package:colonizethis_app/config/editorial_monocle_palette.dart';
+import 'package:colonizethis_app/features/game/widgets/chrome/ct_nine_patch_button.dart';
+import 'package:colonizethis_app/widgets/ct_dialog_shell.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
@@ -226,7 +229,7 @@ void main() {
         await tester.tap(find.text('Confirm'));
         await tester.pumpAndSettle();
 
-        expect(find.text('Invade province?'), findsOneWidget);
+        expect(find.text('Declare war?'), findsOneWidget);
         await tester.tap(find.text('Declare war and move'));
         await tester.pumpAndSettle();
 
@@ -254,12 +257,78 @@ void main() {
         await tester.tap(find.text('Confirm'));
         await tester.pumpAndSettle();
 
-        expect(find.text('Invade province?'), findsOneWidget);
-        await tester.tap(find.widgetWithText(TextButton, 'Cancel').first);
+        expect(find.text('Declare war?'), findsOneWidget);
+        await tester.tap(
+          find.widgetWithText(CtNinePatchButton, 'Cancel').first,
+        );
         await tester.pumpAndSettle();
 
         expect(captured, isNull);
         expect(find.byType(MoveArmyDialog), findsOneWidget);
+      },
+    );
+
+    testWidgets(
+      'war-confirmation sub-dialog renders inside CtDialogShell with --danger 1px border (Refs #2867 R9)',
+      (WidgetTester tester) async {
+        await pumpDialog(tester, bus: AppEventBus.create());
+        await tester.tap(find.byType(DropdownButtonFormField<String>));
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('Invade Dest').last);
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('Confirm'));
+        await tester.pumpAndSettle();
+
+        expect(find.byType(CtDialogShell), findsOneWidget);
+        expect(find.text('Declare war?'), findsOneWidget);
+
+        final CtDialogShell shell = tester.widget<CtDialogShell>(
+          find.byType(CtDialogShell),
+        );
+        expect(shell.borderColor, EditorialMonoclePalette.danger);
+        expect(shell.borderWidth, CtDialogShell.dangerBorderWidth);
+        expect(shell.borderWidth, 1);
+      },
+    );
+
+    testWidgets(
+      'war-confirmation actions are CtNinePatchButton with danger primary (Refs #2867 R9)',
+      (WidgetTester tester) async {
+        await pumpDialog(tester, bus: AppEventBus.create());
+        await tester.tap(find.byType(DropdownButtonFormField<String>));
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('Invade Dest').last);
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('Confirm'));
+        await tester.pumpAndSettle();
+
+        final CtNinePatchButton primary = tester.widget<CtNinePatchButton>(
+          find.widgetWithText(CtNinePatchButton, 'Declare war and move'),
+        );
+        expect(primary.dangerVariant, isTrue);
+
+        final CtNinePatchButton cancel = tester.widget<CtNinePatchButton>(
+          find.widgetWithText(CtNinePatchButton, 'Cancel'),
+        );
+        expect(cancel.dangerVariant, isFalse);
+
+        // No Material AlertDialog/TextButton chrome paints the war-confirm
+        // sub-dialog (per SPEC/ui/pixel-art-ui-catalog.md § Material design ban
+        // and SPEC/ui/move-army-dialog.md § Invade-confirm sub-dialog).
+        expect(
+          find.descendant(
+            of: find.byType(CtDialogShell),
+            matching: find.byType(AlertDialog),
+          ),
+          findsNothing,
+        );
+        expect(
+          find.descendant(
+            of: find.byType(CtDialogShell),
+            matching: find.byType(TextButton),
+          ),
+          findsNothing,
+        );
       },
     );
 
