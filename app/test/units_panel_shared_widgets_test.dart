@@ -7,8 +7,10 @@ import 'package:colonizethis_app/features/game/widgets/units/shared/location_sec
 import 'package:colonizethis_app/features/game/widgets/units/shared/region_section_header.dart';
 import 'package:colonizethis_app/features/game/widgets/units/shared/units_entity_action_row.dart';
 import 'package:colonizethis_app/features/game/widgets/units/shared/units_panel_region_label.dart';
+import 'package:colonizethis_app/features/game/widgets/units/shared/units_panel_row_chrome.dart';
 import 'package:colonizethis_app/features/game/widgets/units/shared/units_panel_shell.dart';
 import 'package:colonizethis_app/widgets/ct_back_button.dart';
+import 'package:colonizethis_app/widgets/ct_section_label.dart';
 import 'package:colonizethis_app/widgets/ct_top_bar.dart';
 
 void main() {
@@ -26,13 +28,16 @@ void main() {
   });
 
   group('RegionSectionHeader', () {
-    testWidgets('shows label text', (WidgetTester tester) async {
+    testWidgets('renders label via CtSectionLabel (#2866)', (
+      WidgetTester tester,
+    ) async {
       await tester.pumpWidget(
         const MaterialApp(
           home: Scaffold(body: RegionSectionHeader(label: 'Old World')),
         ),
       );
-      expect(find.text('Old World'), findsOneWidget);
+      expect(find.byType(CtSectionLabel), findsOneWidget);
+      expect(find.text('OLD WORLD'), findsOneWidget);
     });
   });
 
@@ -294,6 +299,7 @@ void main() {
 
       expect(find.text('Left details'), findsOneWidget);
       expect(find.text('Move'), findsOneWidget);
+      expect(find.byType(UnitsPanelRowChrome), findsOneWidget);
     });
 
     testWidgets('switches action button to icon-only on narrow width', (
