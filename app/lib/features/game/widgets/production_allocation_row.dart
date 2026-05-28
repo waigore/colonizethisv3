@@ -98,6 +98,7 @@ class ProductionAllocationRow extends StatelessWidget {
             style: theme.textTheme.bodySmall,
           ),
         ),
+        const SizedBox(width: 4),
         ProductionAllocationStepButton(
           enabled: canDecrement,
           readDesired: () => desiredOutputByRecipe,
@@ -112,6 +113,7 @@ class ProductionAllocationRow extends StatelessWidget {
           tooltip: l10n.production_allocationDecrementRecipe,
           assetFileName: _uiIconProductionAllocDecrement,
         ),
+        const SizedBox(width: 4),
         ProductionAllocationStepButton(
           enabled: canIncrement,
           readDesired: () => desiredOutputByRecipe,
@@ -126,6 +128,7 @@ class ProductionAllocationRow extends StatelessWidget {
           tooltip: l10n.production_allocationIncrementRecipe,
           assetFileName: _uiIconProductionAllocIncrement,
         ),
+        const SizedBox(width: 4),
         ProductionAllocationActionIconButton(
           enabled: canIncrement,
           readDesired: () => desiredOutputByRecipe,
@@ -140,6 +143,7 @@ class ProductionAllocationRow extends StatelessWidget {
           tooltip: l10n.production_allocationMaximizeRecipe,
           assetFileName: _uiIconProductionAllocMaximize,
         ),
+        const SizedBox(width: 4),
         ProductionAllocationActionIconButton(
           enabled: _desired > 0,
           readDesired: () => desiredOutputByRecipe,
@@ -181,22 +185,19 @@ class ProductionAllocationRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final affordance = _affordance;
     final maxAchievable = affordance.maxDesiredOutput;
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          _buildHeader(affordance),
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              Expanded(child: _buildSlider(maxAchievable)),
-              _buildActionButtons(maxAchievable),
-            ],
-          ),
-        ],
-      ),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        _buildHeader(affordance),
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Expanded(child: _buildSlider(maxAchievable)),
+            _buildActionButtons(maxAchievable),
+          ],
+        ),
+      ],
     );
   }
 }
