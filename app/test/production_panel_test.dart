@@ -10,6 +10,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:colonizethis_app/features/game/production_recipe_affordance.dart';
 import 'package:colonizethis_app/features/game/widgets/production_panel.dart';
 import 'package:colonizethis_app/l10n/l10n.dart';
+import 'package:colonizethis_app/widgets/ct_resource_cell.dart';
+import 'package:colonizethis_app/widgets/ct_section_label.dart';
 import 'package:colonizethis_app/widgets/ct_slider.dart';
 import 'package:colonizethis_app/widgets/resource_icon.dart';
 import 'package:colonizethis_app/widgets/strict_asset_icon.dart';
@@ -145,10 +147,11 @@ void main() {
       await pumpSettleCapped(tester);
 
       expect(find.text('Available'), findsOneWidget);
-      expect(find.text('Food'), findsOneWidget);
-      expect(find.text('Raw Materials'), findsOneWidget);
-      expect(find.text('Manufactured'), findsOneWidget);
-      expect(find.text('Workers'), findsOneWidget);
+      expect(find.byType(CtSectionLabel), findsAtLeastNWidgets(4));
+      expect(find.text('FOOD'), findsOneWidget);
+      expect(find.text('RAW MATERIALS'), findsOneWidget);
+      expect(find.text('MANUFACTURED'), findsOneWidget);
+      expect(find.text('WORKERS'), findsOneWidget);
       expect(find.textContaining('Effective labour:'), findsOneWidget);
     });
 
@@ -158,9 +161,10 @@ void main() {
       await tester.pumpWidget(buildPanel(player: fullPlayer));
       await pumpSettleCapped(tester);
 
-      expect(find.textContaining('Timber:'), findsOneWidget);
-      expect(find.textContaining('Iron:'), findsOneWidget);
-      expect(find.textContaining('Coal:'), findsOneWidget);
+      expect(find.byType(CtResourceCell), findsAtLeastNWidgets(3));
+      expect(find.text('Timber'), findsOneWidget);
+      expect(find.text('Iron'), findsOneWidget);
+      expect(find.text('Coal'), findsOneWidget);
     });
 
     testWidgets('Allocation subpanel shows recipe labels with inputs', (
@@ -467,10 +471,10 @@ void main() {
       );
       await pumpSettleCapped(tester);
 
-      expect(find.textContaining('Timber:'), findsOneWidget);
-      expect(find.textContaining(RegExp(r'\(-10\)')), findsOneWidget);
-      expect(find.textContaining('Lumber:'), findsOneWidget);
-      expect(find.textContaining(RegExp(r'\(\+5\)')), findsOneWidget);
+      expect(find.text('Timber'), findsOneWidget);
+      expect(find.text('-10'), findsOneWidget);
+      expect(find.text('Lumber'), findsOneWidget);
+      expect(find.text('+5'), findsOneWidget);
     });
 
     testWidgets('Partial availability: sliders capped by achievable runs', (
@@ -546,6 +550,99 @@ void main() {
       expect(find.textContaining('Lumber'), findsWidgets);
       expect(find.textContaining('Fabric'), findsWidgets);
     });
+
+    testWidgets(
+      'Available section labels use CtSectionLabel for Food / Raw Materials / '
+      'Manufactured / Workers (Refs #2862 S2)',
+      (WidgetTester tester) async {
+        await tester.pumpWidget(buildPanel(player: fullPlayer));
+        await pumpSettleCapped(tester);
+
+        Finder labelWithText(String text) => find.descendant(
+          of: find.byType(CtSectionLabel),
+          matching: find.text(text),
+        );
+        expect(labelWithText('FOOD'), findsOneWidget);
+        expect(labelWithText('RAW MATERIALS'), findsOneWidget);
+        expect(labelWithText('MANUFACTURED'), findsOneWidget);
+        expect(labelWithText('WORKERS'), findsOneWidget);
+      },
+    );
+
+    testWidgets(
+      'Available commodity cells use CtResourceCell with sign-prefixed '
+      'positive deltas (Refs #2862 S2)',
+      (WidgetTester tester) async {
+        final isolatedGame = Game(
+          id: 'production-panel-dark-positive',
+          worldState: WorldState(
+            turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+            oldWorld: const RegionData(),
+            newWorld: const RegionData(),
+          ),
+          players: [fullPlayer],
+        );
+        await tester.pumpWidget(
+          buildPanel(
+            player: fullPlayer,
+            gameOverride: isolatedGame,
+            desiredOutputByRecipe: {'lumber_from_timber': 2},
+          ),
+        );
+        await pumpSettleCapped(tester);
+
+        final lumberCell = find.byKey(
+          const ValueKey<String>('production_available_cell_lumber'),
+        );
+        expect(lumberCell, findsOneWidget);
+        expect(
+          find.descendant(of: lumberCell, matching: find.text('Lumber')),
+          findsOneWidget,
+        );
+        expect(
+          find.descendant(of: lumberCell, matching: find.text('+2')),
+          findsOneWidget,
+        );
+      },
+    );
+
+    testWidgets(
+      'Available commodity cells omit delta region when net change is zero '
+      '(Refs #2862 S2)',
+      (WidgetTester tester) async {
+        await tester.pumpWidget(buildPanel(player: fullPlayer));
+        await pumpSettleCapped(tester);
+
+        final timberCell = find.byKey(
+          const ValueKey<String>('production_available_cell_timber'),
+        );
+        expect(timberCell, findsOneWidget);
+        final cellWidget = tester.widget<CtResourceCell>(timberCell);
+        expect(cellWidget.delta, isNull);
+      },
+    );
+
+    testWidgets(
+      'Workers section renders one CtResourceCell per worker tier '
+      '(Refs #2862 S2)',
+      (WidgetTester tester) async {
+        await tester.pumpWidget(buildPanel(player: fullPlayer));
+        await pumpSettleCapped(tester);
+
+        for (final tier in const <String>[
+          'peasant',
+          'apprentice',
+          'journeyman',
+          'master',
+        ]) {
+          expect(
+            find.byKey(ValueKey<String>('production_available_worker_$tier')),
+            findsOneWidget,
+            reason: 'Worker cell for $tier should be present',
+          );
+        }
+      },
+    );
   });
 
   group('ResourceIcon', () {
