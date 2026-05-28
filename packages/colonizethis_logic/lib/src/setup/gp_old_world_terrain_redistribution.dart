@@ -5,6 +5,7 @@ import 'package:colonizethis_logic/src/logging.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../constants.dart';
+import '../world/province_lookup.dart';
 import 'town_capital_occupancy.dart';
 
 /// Salt for deterministic tie-breaks when assigning Hamilton +1 remainders.
@@ -20,7 +21,7 @@ String _owTileKey(String localProvinceId, int x, int y) => CapitalTile.tileKey(
 
 Map<String, String> _ownerByLocalProvinceId(Game game) {
   final m = <String, String>{};
-  for (final p in game.worldState.oldWorld.provinces) {
+  for (final p in game.worldState.provincesForRegion(kRegionOldWorld)) {
     m[ProvinceId.localIdFrom(p.id)] = p.ownerId ?? '';
   }
   return m;
