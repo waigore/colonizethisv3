@@ -1043,9 +1043,9 @@
   "@moveArmy_groupUnowned": {
     "description": "Header label for unowned province destinations in move army dialog."
   },
-  "moveArmy_invadeProvinceTitle": "Invade province?",
+  "moveArmy_invadeProvinceTitle": "Declare war?",
   "@moveArmy_invadeProvinceTitle": {
-    "description": "Confirm dialog title for entering hostile territory with army movement."
+    "description": "Confirm dialog title for the destructive war-confirmation sub-dialog when an invasion army move is requested (issue #2867 R9)."
   },
   "moveArmy_invadeProvinceBody": "Moving into {ownerLabel} territory will declare war this turn and then move the army. Continue?",
   "@moveArmy_invadeProvinceBody": {
