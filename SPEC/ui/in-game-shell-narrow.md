@@ -41,7 +41,7 @@ Widget contract and navigation: **[game-side-menu.md](game-side-menu.md)**. Paus
   - Pointer interaction (tap, drag, scroll, hover) is **captured by the side menu layer** and **does not reach the map widget** or underlying in-game UI.
   - Keyboard interaction that would otherwise affect the map or in-game UI is **ignored by the map** while the menu is open.
   - **OS / platform-level gestures** (system back, platform edge-swipes) continue to work as normal; modality only applies to the app content layer.
-- **Scrim:** A dimmed background (scrim) is shown behind the side menu while it is open.
+- **Scrim:** A dimmed background (scrim) is shown behind the side menu while it is open. The scrim colour MUST resolve to `EditorialMonoclePalette.dialogScrim` — the canonical `--dialog-scrim` token defined in [pixel-art-ui-catalog.md](pixel-art-ui-catalog.md) § Dialog scrim — so the wash matches every other modal scrim on the editorial-monocle theme (exit-confirm dialog, overture, call to arms, intervention, victory). Hard-coded scrim colours such as `Colors.black54` are treated as regressions.
 - **Exception — region minimap:** The bottom-right **region minimap** (see [empire-overview.md](empire-overview.md) § Region minimap) stays **above** the scrim so it remains tappable; the main map under the scrim stays non-interactive. This is an intentional exception to “map under scrim” for minimap hit targets only.
 - **Dismissal:**
   - Pressing **Escape** (or the equivalent back key on desktop/web) closes the side menu.
@@ -116,6 +116,7 @@ Hamburger menu (when open):
 - **Given** the side menu is **open**, **when** the user performs a keyboard action that would normally affect the map (e.g. map hotkeys), **then** the map does not react while the menu is open.
 - **Given** the side menu is **open**, **when** the user taps or clicks outside the menu (on the dimmed background), **then** the side menu closes and that tap/click is **not** forwarded to the map (no province selection or camera movement is triggered).
 - **Given** the side menu is **open**, **when** the user presses **Escape** (or the platform back key where applicable), **then** the side menu closes and focus/input returns to the in-game shell.
+- **Given** the side menu is **open**, **when** the scrim layer behind the side menu is built, **then** its `Container` colour equals `EditorialMonoclePalette.dialogScrim` (no `Colors.black54` literal in the host code).
 - **Given** the in-game shell is visible and Android back would leave the game screen, **when** the user presses Android back, **then** the UI layer shows a pixel-art confirmation dialog with title `Exit game?`, body `Your current progress will be lost if not saved.`, and actions `Cancel` and `Exit`.
 - **Given** the exit confirmation dialog is visible, **when** the user taps `Cancel`, **then** the UI layer dismisses the dialog and remains on the in-game shell.
 - **Given** the exit confirmation dialog is visible, **when** the user taps outside the dialog, **then** the UI layer dismisses the dialog and remains on the in-game shell.
