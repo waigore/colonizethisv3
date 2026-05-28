@@ -118,6 +118,20 @@ Widget civilianUnitsPanelWithRiverpod({
   );
 }
 
+/// Host for Widgetbook use cases that need a nested [MaterialApp]. Without an
+/// explicit [ThemeData], nested apps default to Material light and break dark
+/// editorial-monocle review for unit panels and train dialogs (Refs #2866 S6).
+Widget widgetbookEditorialMonocleApp({required Widget child}) {
+  return MaterialApp(
+    debugShowCheckedModeBanner: false,
+    theme: AppThemes.editorialMonocle,
+    home: Scaffold(
+      backgroundColor: AppThemes.editorialMonocle.scaffoldBackgroundColor,
+      body: child,
+    ),
+  );
+}
+
 /// Invoked from `lib/widgetbook.dart` [main]; safe to call from tests after binding init.
 void bootstrapWidgetbook() {
   runApp(const CtWidgetbookApp());
@@ -581,15 +595,13 @@ List<WidgetbookNode> get trainCiviliansDialogDirectories => [
               ...game.players.where((p) => p.id != humanPlayerId),
             ],
           );
-          return MaterialApp(
-            home: Scaffold(
-              body: Center(
-                child: TrainCiviliansDialog(
-                  game: richGame,
-                  humanPlayerId: humanPlayerId,
-                  currentOrders: const Orders(),
-                  bus: AppEventBus.create(),
-                ),
+          return widgetbookEditorialMonocleApp(
+            child: Center(
+              child: TrainCiviliansDialog(
+                game: richGame,
+                humanPlayerId: humanPlayerId,
+                currentOrders: const Orders(),
+                bus: AppEventBus.create(),
               ),
             ),
           );
@@ -616,15 +628,13 @@ List<WidgetbookNode> get trainCiviliansDialogDirectories => [
               ...game.players.where((p) => p.id != humanPlayerId),
             ],
           );
-          return MaterialApp(
-            home: Scaffold(
-              body: Center(
-                child: TrainCiviliansDialog(
-                  game: noTechGame,
-                  humanPlayerId: humanPlayerId,
-                  currentOrders: const Orders(),
-                  bus: AppEventBus.create(),
-                ),
+          return widgetbookEditorialMonocleApp(
+            child: Center(
+              child: TrainCiviliansDialog(
+                game: noTechGame,
+                humanPlayerId: humanPlayerId,
+                currentOrders: const Orders(),
+                bus: AppEventBus.create(),
               ),
             ),
           );
@@ -650,15 +660,13 @@ List<WidgetbookNode> get trainCiviliansDialogDirectories => [
               ...game.players.where((p) => p.id != humanPlayerId),
             ],
           );
-          return MaterialApp(
-            home: Scaffold(
-              body: Center(
-                child: TrainCiviliansDialog(
-                  game: poorGame,
-                  humanPlayerId: humanPlayerId,
-                  currentOrders: const Orders(),
-                  bus: AppEventBus.create(),
-                ),
+          return widgetbookEditorialMonocleApp(
+            child: Center(
+              child: TrainCiviliansDialog(
+                game: poorGame,
+                humanPlayerId: humanPlayerId,
+                currentOrders: const Orders(),
+                bus: AppEventBus.create(),
               ),
             ),
           );
