@@ -135,7 +135,17 @@ When both predicates fire on the same dispatch, the larger floor (`0.60`) wins. 
 - Callers that omit `colonialPressureWeight` (tests, legacy entry points) keep the legacy boolean resolution: `observerGoalPhase` routes off `resolvePhaseGoalColonialPressureActive`; callers without either parameter fall through to the `!suppressColonialPressure && hasColonialAcquisitionTargets && !shouldSuppressNewWorldColonialOrders` compose.
 - When both `colonialPressureWeight` and `observerGoalPhase` are supplied, the weight takes precedence over the boolean phase gate.
 
-Other scoring sites (economy colonial pressure, colonial-pressure minimum weight) still use the Phase 2 boolean resolvers until their Phase 3 slices land. Hard structural suppression for planner-module dispatch (which modules run per phase) remains unchanged in this slice.
+#### Phase 3 consumer wiring — economy build-pick cargo bonus (Refs #2847)
+
+`pickBuildOrder` (`build_planner.dart`) consumes `resolvePhaseEconomyColonialPressureWeight` through a new optional `BuildPickInput.colonialPressureWeight` slot as the production multiplier for the colonial cargo bonus the build pipeline applies to cargo-capable ships:
+
+- The cargo-bonus pass activates iff the effective scale is `> 0.0`. When `BuildPickInput.colonialPressureWeight` is non-null the effective scale equals the weight clamped to `[0.0, 1.0]`. When the weight is `null` the effective scale falls back to the legacy boolean `BuildPickInput.colonialPressure` (`true -> 1.0`, `false -> 0.0`).
+- When active, the cargo nudge applied in `pickBuildOrder` (`+2.5` to ships with `cargoHold > 0`) scales linearly with the effective scale. At `colonialPressureWeight == 1.0` the bonus is identity-equal to the legacy `colonialPressure == true` path (`+2.5`); at `colonialPressureWeight == 0.0` the bonus is identity-equal to `colonialPressure == false` (no bonus).
+- At the early-sprint default curve (`newWorldAcquisition = 0.05` for OW ≤ 7) the cargo bonus collapses to a token nudge (`+2.5 × 0.05 = +0.125`) — well below the `kBuildRegimentBonusWhenStalledExpansion = +4.0` regiment bias under stalled-expansion pressure so the early OW conquest sprint is not dominated by colonial cargo cargo.
+- `domain_planner_orchestrator.dart` sources the weight via `resolvePhaseEconomyColonialPressureWeight(phasePlan: phasePlan)` and threads both the legacy boolean (for the null-weight fallback path) and the weight (production source of truth) into `BuildPickInput`.
+- Callers that construct `BuildPickInput` directly without supplying `colonialPressureWeight` (tests, legacy entry points) keep the legacy boolean behaviour exactly.
+
+Other scoring sites (economy civilian threshold cap, colonial-pressure minimum weight) still use the Phase 2 boolean resolvers until their Phase 3 slices land. Hard structural suppression for planner-module dispatch (which modules run per phase) remains unchanged in this slice.
 
 #### Phase 2 weight resolvers (Refs #2847 scaffolding)
 
@@ -216,6 +226,12 @@ The EXPAND-phase sub-deciders that the cross-phase aggregators in `observer_goal
 - Given the same snapshot as the previous AC, when `evaluateStrategicGoalScores({observerGoalPhase: ObserverGoalPhase.colonial, colonialPressureWeight: 0.0})` runs, then `conquer < kMinimumColonialConquerScoreWhenPressure` (weight takes precedence over the COLONIAL phase boolean; Refs #2847 Phase 3 goal-score wiring).
 - Given the same snapshot as the previous AC, when `evaluateStrategicGoalScores({observerGoalPhase: ObserverGoalPhase.expand, colonialPressureWeight: 1.0})` runs, then `conquer >= kMinimumColonialConquerScoreWhenPressure` (weight takes precedence over the EXPAND phase boolean suppress; Refs #2847 Phase 3 goal-score wiring).
 - Given identical `(AIWorldSnapshot, AIConfig, colonialPressureWeight)` inputs, when `evaluateStrategicGoalScores` runs twice, then both invocations return field-equal `Map<StrategicGoal, int>` instances (Refs #2509 Must-have #7 — determinism for the Phase 3 goal-score wiring).
+- Given a `BuildPickInput` whose `buildCandidates` includes a cargo-capable ship (`cargoHold > 0`) and a regiment, with `colonialPressure: false`, `cargoPreference: CargoPreference.none`, and `colonialPressureWeight: 1.0`, when `pickBuildOrder` runs against that input, then the ship candidate receives a `+2.5` cargo bonus identity-equal to the legacy `colonialPressure: true` path (the weight takes precedence over the legacy boolean at full weight; Refs #2847 Phase 3 economy build-pick wiring).
+- Given the same input as the previous AC except `colonialPressureWeight: 0.0`, when `pickBuildOrder` runs, then the ship candidate receives no colonial-pressure cargo bonus identity-equal to the legacy `colonialPressure: false` path (the weight gates the bonus off at `<= 0.0` regardless of the legacy boolean; Refs #2847 Phase 3 economy build-pick wiring regression guard).
+- Given the same input as the previous AC except `colonialPressureWeight: 0.5`, when `pickBuildOrder` runs, then the ship candidate's cargo bonus equals `+2.5 × 0.5 = +1.25` (continuous linear scaling between the legacy hard-on / hard-off magnitudes; Refs #2847 Phase 3 economy build-pick wiring).
+- Given the same input as the previous AC except `colonialPressureWeight: 0.05` (early-sprint default curve), when `pickBuildOrder` runs, then the ship candidate's cargo bonus equals `+2.5 × 0.05 = +0.125` — strictly less than the regiment's `kBuildRegimentBonusWhenStalledExpansion = +4.0` under stalled-expansion pressure so the OW conquest sprint is not dominated by the colonial cargo nudge (Refs #2847 Phase 3 economy build-pick wiring).
+- Given a `BuildPickInput` with `colonialPressure: true` and `colonialPressureWeight: null`, when `pickBuildOrder` runs, then the cargo bonus is `+2.5` identity-equal to the pre-Phase-3 legacy path (null-weight callers keep the legacy boolean activation/scale; Refs #2847 Phase 3 economy build-pick wiring legacy fallback).
+- Given identical `(PlannerContext, BuildPickInput)` inputs with `colonialPressureWeight` pinned to any `[0.0, 1.0]` value, when `pickBuildOrder` runs twice, then both invocations return the same `BuildUnitOrder?` (Refs #2509 Must-have #7 — determinism for the Phase 3 economy build-pick wiring).
 
 ## Interactions
 

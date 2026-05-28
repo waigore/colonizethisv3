@@ -8,6 +8,25 @@ import '../util/ai_random_utils.dart';
 final _log = packageLogger();
 
 /// Per-invocation inputs for [pickBuildOrder] (Refs #2521 planner parameter cap).
+///
+/// Soft-phase NW acquisition wiring (Refs #2847 Phase 3): when
+/// [colonialPressureWeight] is non-null the build-pipeline cargo bonus
+/// derives its activation gate from `colonialPressureWeight > 0.0`
+/// (legacy hard-suppress preserved at `<= 0.0`) and scales the cargo
+/// bonus magnitude (the `+2.5` cargo nudge applied to cargo-capable
+/// ships in [pickBuildOrder]) by `colonialPressureWeight` clamped to
+/// `[0.0, 1.0]`. The weight path is identity-equal to the legacy
+/// hard-phase `colonialPressure == true` behaviour at
+/// `colonialPressureWeight == 1.0` and identity-equal to
+/// `colonialPressure == false` at `colonialPressureWeight == 0.0`,
+/// preserving the production build-pipeline contract at the
+/// EXPAND→COLONIAL boundary while allowing the curve values from
+/// `phase_priority_weights.dart` to ramp the colonial cargo bias
+/// continuously across OW counts on the dispatch path.
+///
+/// When [colonialPressureWeight] is null the legacy boolean resolution
+/// runs unchanged: [colonialPressure] alone drives the cargo bonus gate
+/// and scale (`true -> 1.0`, `false -> 0.0`).
 class BuildPickInput {
   const BuildPickInput({
     required this.buildCandidates,
@@ -15,6 +34,7 @@ class BuildPickInput {
     this.provincesToVictory = 0,
     this.oldWorldProvincesOwned = 0,
     this.colonialPressure = false,
+    this.colonialPressureWeight,
     this.militaryRebuildCrisis = false,
   });
 
@@ -23,6 +43,15 @@ class BuildPickInput {
   final int provincesToVictory;
   final int oldWorldProvincesOwned;
   final bool colonialPressure;
+
+  /// Optional soft-phase NW acquisition weight in `[0.0, 1.0]` (Refs
+  /// #2847 Phase 3 economy build-pick wiring). When supplied this
+  /// value takes precedence over [colonialPressure] for both the
+  /// cargo-bonus activation gate (`weight > 0.0`) and the bonus
+  /// magnitude (cargo bonus scales linearly with the weight). When
+  /// `null` the legacy boolean path keyed off [colonialPressure]
+  /// runs unchanged.
+  final double? colonialPressureWeight;
   final bool militaryRebuildCrisis;
 }
 
@@ -40,7 +69,19 @@ BuildUnitOrder? pickBuildOrder({
   final cargoPreference = input.cargoPreference;
   final provincesToVictory = input.provincesToVictory;
   final oldWorldProvincesOwned = input.oldWorldProvincesOwned;
-  final colonialPressure = input.colonialPressure;
+  final colonialPressureWeight = input.colonialPressureWeight;
+  // Refs #2847 Phase 3 economy build-pick wiring: derive a single
+  // `[0.0, 1.0]` cargo-bonus scale from the optional soft-phase NW
+  // acquisition weight. The weight takes precedence over the legacy
+  // boolean (`true -> 1.0`, `false -> 0.0`) when supplied so the
+  // production dispatch path can ramp the colonial cargo bias
+  // continuously across the OW priority curve, while callers that
+  // omit the weight (tests, legacy entry points) keep the legacy
+  // boolean activation/scale exactly.
+  final colonialPressureScale = colonialPressureWeight != null
+      ? colonialPressureWeight.clamp(0.0, 1.0).toDouble()
+      : (input.colonialPressure ? 1.0 : 0.0);
+  final colonialPressureActive = colonialPressureScale > 0.0;
   final militaryRebuildCrisis = input.militaryRebuildCrisis;
   if (buildCandidates.isEmpty) return null;
   if (militaryRebuildCrisis) {
@@ -115,8 +156,8 @@ BuildUnitOrder? pickBuildOrder({
     double personalityBonus = 0.0;
     if (isShip) {
       personalityBonus = thresholds.researchNaval / 100.0;
-      if (colonialPressure && cargoHold > 0) {
-        cargoBonus += 2.5;
+      if (colonialPressureActive && cargoHold > 0) {
+        cargoBonus += 2.5 * colonialPressureScale;
       }
     } else if (isRegiment) {
       personalityBonus = thresholds.researchMilitary / 100.0;
