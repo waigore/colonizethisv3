@@ -85,9 +85,18 @@ Back navigation:
 Loading state:
 
 - Given the widget is constructed with `state: loading`, when the screen renders, then the UI layer renders **Start Game** in its disabled state.
-- Given the widget is constructed with `state: loading`, when the screen renders, then the UI layer renders a visible loading indicator inside the screen body (per Wireframe § Loading: a "Starting…" label and/or spinner).
+- Given the widget is constructed with `state: loading`, when the screen renders, then the UI layer renders a visible loading indicator inside the screen body and the localized **"Generating world…"** label resolved from `gameSetup_loadingGeneratingWorld` (per Wireframe § Loading: dim-scrim overlay over header + slot rows, spinner + label in front).
 - Given the widget is constructed with `state: loading`, when the screen renders, then every slot's nation and leader dropdowns are disabled and tapping them opens no list.
 - Given the widget is constructed with `state: loading`, when the screen renders, then the **Back** button remains enabled and tappable.
+
+Loading overlay chrome (Refs #2868 § R15; `pixelArt` and `plain` variants):
+
+- Given the widget is constructed with `state: loading`, when the screen renders, then the UI layer wraps the header + slot-rows region in an [`Opacity`] widget with opacity equal to **0.4** so the underlying content reads as dimmed.
+- Given the widget is constructed with `state: loading`, when the screen renders, then the UI layer wraps the same header + slot-rows region in an [`IgnorePointer`] with `ignoring: true` so the dimmed slot dropdowns and brass chrome cannot receive taps.
+- Given the widget is constructed with `state: loading`, when the screen renders, then the UI layer paints a [`Positioned.fill`] scrim layer over the dimmed region whose colour resolves from `EditorialMonoclePalette.dialogScrim` (the canonical modal-scrim token).
+- Given the widget is constructed with `state: loading`, when the screen renders, then the UI layer renders a centered `Column` in front of the scrim containing a `CtLoadingIndicator` (48 px, `EditorialMonoclePalette.accent`) followed by the localized **"Generating world…"** label resolved from `gameSetup_loadingGeneratingWorld` (key `gameSetupLoadingLabel`).
+- Given the widget is constructed with `state: default_`, when the screen renders, then the UI layer renders no scrim, no `IgnorePointer(ignoring: true)` wrapper around the slot rows, and no centered loading label widget (the dim-overlay chrome is gated to `state: loading`).
+- Given the widget is constructed with `state: loading`, when the user taps the **Back** button, then the **Back** button's `onBack` callback fires once because the **Back** button paints outside the scrim layer (the scrim only covers the header + slot rows region, not the action buttons).
 
 Slot-row chrome and swatch dots (issue #2868 § R7/R9/R10; pixelArt variant):
 
@@ -164,7 +173,7 @@ The header chrome (eyebrow + title + intro + divider) is the dark editorial-mono
 
 When the user has selected a nation and leader for every slot, Start Game becomes enabled. Nation dropdown for a slot lists "Select nation" (empty) plus GPs not selected in other slots. Leader dropdown lists "Select leader" (empty) until a nation is chosen, then that nation’s variants. When nation changes, leader resets to that nation’s default.
 
-**Loading:** Same layout; Start Game disabled; a visible loading indicator ("Starting…" label and/or spinner) is required; Back enabled.
+**Loading:** Same column layout; Start Game disabled; **Back remains enabled and tappable**. The header + slot-rows region is dimmed (`Opacity(0.4)` + `IgnorePointer(ignoring: true)`) and covered by an `EditorialMonoclePalette.dialogScrim` scrim. A centered loading affordance — `CtLoadingIndicator` (48 px, `EditorialMonoclePalette.accent`) above the localized **"Generating world…"** label (key `gameSetup_loadingGeneratingWorld`) — paints in front of the scrim. The scrim only covers the dimmed region; the action buttons (Start Game, Back) paint below it so the Back button remains tappable.
 
 **Regions (UXD 07–style):** canvas full-screen; `eyebrow_region` ("NEW CAMPAIGN"), `title_region` ("Game Setup"), `intro_region` (one-line intro), `divider_region` (`CtBrassDivider`), `slots_region` (scrollable: six rows, each with slot label, nation dropdown, leader dropdown), `buttons_region` (Start Game, Back); `loading_region` is present in `loading` state.
 
