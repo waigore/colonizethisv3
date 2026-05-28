@@ -324,15 +324,16 @@ bool expandRecentlyPeacedWithGreatPower({
   return false;
 }
 
-/// Whether [planExpandEconomy] should suppress treasury-recovery cargo
-/// and widen the insufficient-regiment force-build arm (Refs #2847 § H5,
-/// § H3).
+/// Whether [planExpandEconomy] should widen the insufficient-regiment
+/// force-build arm (Arm D) under the EXPAND-trap (Refs #2847 § H3).
 ///
 /// Fires when the active player owns zero New World provinces and the
-/// geographic peer-war lock predicate holds for the sole OW adjacent Great
-/// Power. Overseas cargo preference cannot deliver riches under EXPAND
-/// (NW colonial orders are structurally suppressed) when there is no NW
-/// ownership to receive deliveries.
+/// geographic peer-war lock predicate holds for the sole OW adjacent
+/// Great Power. The cargo-recovery boost in Arm C is left to fire
+/// independently (the cargo signal is the planner-output the resource-
+/// need NW=0.60 weight floor in `phase_priority_weights.dart` consumes
+/// per § Resource-need overrides; suppressing it under the lock would
+/// also disable the override the soft-phase design depends on).
 ///
 /// Pure and deterministic — identical inputs always yield identical
 /// results (Refs #2509 Must-have #7).
@@ -1400,11 +1401,15 @@ class ExpandEconomyPlan {
 ///     and non-empty invadable OW frontier and effective treasury
 ///     ≥ cheapest regiment cost) holds.
 ///   - `boostTreasuryRecoveryCargo: true` when arm C
-///     (effective treasury < cheapest regiment cost) holds unless
-///     [expandIsGeographicPeerWarLockNoNwTreasuryRecovery] is true
-///     (Refs #2847 § H5 — futile overseas cargo under zero NW
-///     ownership + geographic peer-war lock). Composes with arm A when
-///     arm C is not suppressed.
+///     (effective treasury < cheapest regiment cost) holds, including
+///     under the geographic peer-war lock. The cargo signal is the
+///     planner-output the resource-need NW=0.60 weight floor in
+///     `phase_priority_weights.dart` consumes (Refs #2847 §
+///     Resource-need overrides); suppressing it under the lock would
+///     also disable the override the soft-phase design depends on
+///     (the H5 lock-suppression that earlier landed on this arm has
+///     been reverted in favour of restoring the override coupling).
+///     Composes with arm A whenever both predicates hold.
 ///   - `forceCheapestRegimentBuild: true` when arm D holds (Refs #2847
 ///     § H3): geographic peer-war lock with zero NW ownership,
 ///     `0 < regimentCount < kBelowQuotaPeaceMinRegimentsBeforeDeclareWar`,
@@ -1461,9 +1466,15 @@ ExpandEconomyPlan planExpandEconomy({
   // of regimentCount per the spec literal wording — boosts cargo so a
   // GP in EXPAND with low cash always benefits from delivering riches,
   // matching the SPEC/ai/ai-architecture.md "Treasury recovery cargo"
-  // intent). Suppressed under geographic peer-war lock with zero NW
-  // ownership (Refs #2847 § H5).
-  final armC = effectiveTreasury < cheapest && !futilityLock;
+  // intent). Fires under the geographic peer-war lock too: the cargo
+  // signal is what the resource-need NW=0.60 weight floor consumes in
+  // `phase_priority_weights.dart`, so suppressing the boost under the
+  // lock also disables the override the issue's soft-phase design
+  // depends on (Refs #2847 § Resource-need overrides). Cargo delivery
+  // may be futile until the GP acquires its first NW colony, but the
+  // signal correctly marks the GP as needing overseas income so
+  // downstream NW scoring biases activate.
+  final armC = effectiveTreasury < cheapest;
 
   return ExpandEconomyPlan(
     forceCheapestRegimentBuild: armA || armB || armD,
