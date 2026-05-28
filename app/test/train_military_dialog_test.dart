@@ -178,7 +178,7 @@ void main() {
       of: find.byType(CtDialogShell),
       matching: find.byType(Scrollable),
     );
-    final closeButton = find.byIcon(Icons.close);
+    final closeButton = find.text('×');
     await tester.dragUntilVisible(
       closeButton,
       shellScrollable,

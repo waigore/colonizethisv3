@@ -15,7 +15,6 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:colonizethis_app/config/editorial_monocle_palette.dart';
 import 'package:colonizethis_app/features/game/widgets/diplomacy_panel.dart';
 import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
-import 'package:colonizethis_app/widgets/ct_panel.dart';
 import 'package:colonizethis_app/widgets/debug_init_game.dart';
 
 /// `pumpAndSettle` hangs here: Flame nine-patch widgets can keep the ticker
@@ -232,7 +231,10 @@ void main() {
       );
       await _pumpPanelBuilt(tester);
 
-      expect(find.byType(CtPanel), findsAtLeastNWidgets(1));
+      // SPEC/ui/diplomacy-panel.md § Per-faction row → Row chrome: rows
+      // render as flat gradient tiles, not nine-patch CtPanel frames.
+      // The presence of at least one row is asserted indirectly by the
+      // faction display name showing up below.
       final firstGp = gameWithFactions.players
           .where((p) => p.id != humanPlayerId)
           .map((p) => p.displayName)
@@ -242,7 +244,7 @@ void main() {
       }
     });
 
-    testWidgets('AC: Relation state shown (Peace or War)', (
+    testWidgets('AC: Relation state badge shows PEACE or WAR label', (
       WidgetTester tester,
     ) async {
       await _bindTallTestSurface(tester);
@@ -255,10 +257,15 @@ void main() {
       );
       await _pumpPanelBuilt(tester);
 
+      // SPEC/ui/diplomacy-panel.md § Relation state badge: the badge
+      // label is the uppercase string `WAR` or `PEACE`, never the
+      // sentence-case `War` / `Peace` literals.
       expect(
-        find.textContaining('Peace').evaluate().isNotEmpty ||
-            find.textContaining('War').evaluate().isNotEmpty,
+        find.text('WAR').evaluate().isNotEmpty ||
+            find.text('PEACE').evaluate().isNotEmpty,
         isTrue,
+        reason:
+            'Every faction row must render the uppercase relation-state badge.',
       );
     });
 
@@ -1110,4 +1117,8 @@ void main() {
       },
     );
   });
+
+  // Faction-row chrome, relation-state badges, and war-button danger variant
+  // tests live in `diplomacy_panel_chrome_test.dart` to keep this file under
+  // the repo non-comment line ceiling.
 }

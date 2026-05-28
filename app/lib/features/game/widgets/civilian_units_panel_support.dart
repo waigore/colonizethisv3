@@ -508,7 +508,7 @@ class _UnitRow extends ConsumerWidget {
   }
 }
 
-/// Dense chip matching training cost rows (`train_military_dialog`). SPEC/ui/civilian-units-panel.md.
+/// Dense chip matching train-dialog resource chips. SPEC/ui/civilian-units-panel.md.
 class _AssignedCostChip extends StatelessWidget {
   const _AssignedCostChip({required this.child});
 
@@ -516,17 +516,6 @@ class _AssignedCostChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        color: Theme.of(
-          context,
-        ).colorScheme.surfaceContainerHighest.withValues(alpha: 0.4),
-        borderRadius: BorderRadius.circular(4),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
-        child: child,
-      ),
-    );
+    return TrainDialogResourceChip(child: child);
   }
 }

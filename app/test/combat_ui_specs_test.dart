@@ -3,6 +3,7 @@
 // - SPEC/ui/quick-battle-action-selector.md
 // - SPEC/ui/combat-mode-choice-dialog.md
 // - SPEC/ui/quick-battle-result-dialog.md
+// - SPEC/ui/quick-battle-screen.md (inline result view chrome parity)
 
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
@@ -15,6 +16,7 @@ import 'package:colonizethis_app/features/game/combat/combat_mode_choice_dialog.
 import 'package:colonizethis_app/features/game/combat/quick_battle_action_selector.dart';
 import 'package:colonizethis_app/features/game/combat/quick_battle_deployment_view.dart';
 import 'package:colonizethis_app/features/game/combat/quick_battle_result_dialog.dart';
+import 'package:colonizethis_app/features/game/combat/quick_battle_screen.dart';
 import 'package:colonizethis_app/widgets/ct_dialog_shell.dart';
 import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
 
@@ -493,6 +495,195 @@ void main() {
       expect(find.text('OK'), findsNothing);
       // Underlying open button is visible again — dialog popped.
       expect(find.text('open'), findsOneWidget);
+    });
+
+    // Refs #2869 R18-R19 + SPEC/ui/quick-battle-result-dialog.md § Color contract.
+    // Pins the dark editorial-monocle color tokens (--accent winner,
+    // --danger provinceCaptured, --muted casualty rows) resolve via
+    // theme.colorScheme / textTheme.bodySmall and not via hardcoded literals.
+    testWidgets(
+        'dark editorial-monocle: winner text resolves to --accent (theme.colorScheme.primary)',
+        (WidgetTester tester) async {
+      await tester.pumpWidget(_darkFrame(
+        const QuickBattleResultDialog(
+          result: QuickBattleResult(
+            winner: QuickBattleWinner.attacker,
+            attackerCasualties: ['a1'],
+            defenderCasualties: ['d1'],
+            provinceFlips: true,
+          ),
+          attackerName: 'Castile',
+          defenderName: 'England',
+        ),
+      ));
+
+      final Text title = tester.widget<Text>(
+        find.text('Battle Result: Castile wins'),
+      );
+      expect(title.style?.color, EditorialMonoclePalette.accent);
+    });
+
+    testWidgets(
+        'dark editorial-monocle: provinceCaptured line resolves to --danger and is bold',
+        (WidgetTester tester) async {
+      await tester.pumpWidget(_darkFrame(
+        const QuickBattleResultDialog(
+          result: QuickBattleResult(
+            winner: QuickBattleWinner.attacker,
+            attackerCasualties: ['a1'],
+            defenderCasualties: ['d1'],
+            provinceFlips: true,
+          ),
+          attackerName: 'Castile',
+          defenderName: 'England',
+        ),
+      ));
+
+      final Text captured = tester.widget<Text>(find.text('Province captured.'));
+      expect(captured.style?.color, EditorialMonoclePalette.danger);
+      expect(captured.style?.fontWeight, FontWeight.bold);
+    });
+
+    testWidgets(
+        'dark editorial-monocle: casualty rows use bodySmall and resolve to --muted',
+        (WidgetTester tester) async {
+      await tester.pumpWidget(_darkFrame(
+        const QuickBattleResultDialog(
+          result: QuickBattleResult(
+            winner: QuickBattleWinner.attacker,
+            attackerCasualties: ['a1', 'a2'],
+            defenderCasualties: ['d1'],
+            provinceFlips: false,
+          ),
+          attackerName: 'Castile',
+          defenderName: 'England',
+        ),
+      ));
+
+      final Text attackerRow = tester.widget<Text>(
+        find.text('Castile casualties: 2'),
+      );
+      final Text defenderRow = tester.widget<Text>(
+        find.text('England casualties: 1'),
+      );
+      expect(attackerRow.style?.color, EditorialMonoclePalette.muted);
+      expect(defenderRow.style?.color, EditorialMonoclePalette.muted);
+    });
+
+    testWidgets(
+        'defender holds (provinceFlips=false) suppresses captured banner under dark theme',
+        (WidgetTester tester) async {
+      await tester.pumpWidget(_darkFrame(
+        const QuickBattleResultDialog(
+          result: QuickBattleResult(
+            winner: QuickBattleWinner.defender,
+            attackerCasualties: ['a1'],
+            defenderCasualties: ['d1'],
+            provinceFlips: false,
+          ),
+          attackerName: 'Castile',
+          defenderName: 'England',
+        ),
+      ));
+
+      expect(find.text('Province captured.'), findsNothing);
+    });
+  });
+
+  group('QuickBattleScreen inline _ResultView color parity (Refs #2869 R18)', () {
+    // The screen's non-interactive path auto-resolves on first frame and
+    // unmounts the round-phase widgets, swapping in the private `_ResultView`.
+    // These tests pin that the inline view applies the same color contract
+    // as the standalone `QuickBattleResultDialog`.
+    QuickBattleInput buildInput() {
+      return const QuickBattleInput(
+        attackerFactionId: 'gp1',
+        defenderFactionId: 'gp2',
+        attackerDeployment: QuickBattleDeployment(
+          groups: [
+            QuickBattleGroup(
+              lane: QuickBattleLane.center,
+              line: QuickBattleLine.front,
+              unitIds: ['a1', 'a2', 'a3'],
+              cohesion: 3,
+            ),
+          ],
+        ),
+        defenderDeployment: QuickBattleDeployment(
+          groups: [
+            QuickBattleGroup(
+              lane: QuickBattleLane.center,
+              line: QuickBattleLine.front,
+              unitIds: ['d1'],
+              cohesion: 3,
+            ),
+          ],
+        ),
+        provinceId: 'oldWorld|p1',
+        regionId: 'oldWorld',
+        maxRounds: 3,
+      );
+    }
+
+    testWidgets(
+        'dark editorial-monocle: inline winner title resolves to --accent',
+        (WidgetTester tester) async {
+      await tester.pumpWidget(_darkFrame(
+        QuickBattleScreen(
+          input: buildInput(),
+          onComplete: (_) {},
+        ),
+      ));
+      await tester.pump();
+
+      // The inline result view always renders a `Battle Result:` title.
+      final Finder titleFinder = find.textContaining('Battle Result:');
+      expect(titleFinder, findsOneWidget);
+      final Text title = tester.widget<Text>(titleFinder);
+      expect(title.style?.color, EditorialMonoclePalette.accent);
+    });
+
+    testWidgets(
+        'dark editorial-monocle: inline casualty rows resolve to --muted',
+        (WidgetTester tester) async {
+      await tester.pumpWidget(_darkFrame(
+        QuickBattleScreen(
+          input: buildInput(),
+          onComplete: (_) {},
+        ),
+      ));
+      await tester.pump();
+
+      // Casualty rows render with `Attacker casualties: N` / `Defender
+      // casualties: N` (default l10n names because the inline view does
+      // not thread custom names through).
+      final Finder attackerRowFinder = find.textContaining('Attacker casualties:');
+      final Finder defenderRowFinder = find.textContaining('Defender casualties:');
+      expect(attackerRowFinder, findsOneWidget);
+      expect(defenderRowFinder, findsOneWidget);
+
+      final Text attackerRow = tester.widget<Text>(attackerRowFinder);
+      final Text defenderRow = tester.widget<Text>(defenderRowFinder);
+      expect(attackerRow.style?.color, EditorialMonoclePalette.muted);
+      expect(defenderRow.style?.color, EditorialMonoclePalette.muted);
+    });
+
+    testWidgets(
+        'dark editorial-monocle: Continue button is the only action button on the inline view',
+        (WidgetTester tester) async {
+      await tester.pumpWidget(_darkFrame(
+        QuickBattleScreen(
+          input: buildInput(),
+          onComplete: (_) {},
+        ),
+      ));
+      await tester.pump();
+
+      expect(find.text('Continue'), findsOneWidget);
+      expect(find.byType(ElevatedButton), findsNothing);
+      expect(find.byType(TextButton), findsNothing);
+      expect(find.byType(OutlinedButton), findsNothing);
+      expect(find.byType(FilledButton), findsNothing);
     });
   });
 }

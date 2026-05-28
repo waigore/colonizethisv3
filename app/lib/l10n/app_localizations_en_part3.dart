@@ -380,6 +380,9 @@ mixin _AppLocalizationsEnStrings3 on AppLocalizations {
   String get gameSetup_starting => 'Starting…';
 
   @override
+  String get gameSetup_loadingGeneratingWorld => 'Generating world…';
+
+  @override
   String get gameSetup_startGame => 'Start Game';
 
   @override

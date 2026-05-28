@@ -79,6 +79,14 @@ When the user **taps/clicks a map tile** (not hover), the shell shows detail for
 
 Non-Material, pixel-art friendly: `CtPanel`, `CtTabStrip`, explicit text styles (UXD 02). Overlay widget receives **`displayId`**, **`selectedTileKey`**, and **`playerView`** from parents; it does **not** import `mapProvincePanelProvider`.
 
+### Dark-theme chrome (header + close control)
+
+The overlay frame uses the editorial-monocle dark tokens from [`pixel-art-ui-catalog.md`](pixel-art-ui-catalog.md) § Editorial-monocle palette and matches the typographic convention shared with `CtTopBar` / combat dialogs:
+
+- **Overlay title** (`Province` or `Sea zone` label rendered above the tab strip / section column) resolves to **`EditorialMonoclePalette.accent`** with **`letterSpacing: 0.05`** so the heading reads as the brass accent line found across other dark surfaces.
+- **Close control** (the `×` glyph in the upper-right) borders with **`EditorialMonoclePalette.accentDim`** (1 px) and renders the glyph in **`EditorialMonoclePalette.muted`**; the tap target keeps key `overlay_close` and continues to invoke `onClose`.
+- No hex literals or raw Material colour scheme lookups (e.g. `colorScheme.outline`) are introduced by the header chrome; all colours resolve from the `EditorialMonoclePalette` tokens above. Section body styling is owned by S4/S5/S6 slices and is not in this contract.
+
 ---
 
 ## Province overlay content
@@ -158,6 +166,11 @@ Folder: **Province Overlay**. Map stories use provider overrides; Flame map does
 
 ## Acceptance criteria
 
+- **Dark-theme overlay title:** Given the overlay mounts under `AppThemes.editorialMonocle`, when the header builds the `Province` or `Sea zone` title text, then the UI layer applies `EditorialMonoclePalette.accent` as the title color and `letterSpacing: 0.05` on the resolved `TextStyle`.
+- **Dark-theme close control border:** Given the overlay mounts under `AppThemes.editorialMonocle`, when the close control (`overlay_close` key) builds, then the UI layer renders a 1 px border colored `EditorialMonoclePalette.accentDim` around the `×` glyph.
+- **Dark-theme close glyph color:** Given the overlay mounts under `AppThemes.editorialMonocle`, when the close glyph renders, then the UI layer paints the `×` text in `EditorialMonoclePalette.muted`.
+- **Dark-theme chrome avoids Material defaults:** Given the overlay mounts under `AppThemes.editorialMonocle`, when the header or close control builds, then the UI layer does not call `Theme.of(context).colorScheme.outline` or use a `const TextStyle` without a `EditorialMonoclePalette`-sourced color for the title and close glyph.
+- **Close control tap fires onClose:** Given the overlay is mounted and an `onClose` callback is supplied, when the user taps the widget with key `overlay_close`, then the system invokes `onClose` exactly once per tap and the `overlay_close` key remains addressable across header restyles.
 - **Map/panel decoupling:** Given the implementation files for the Flame `CtRegionMap` widget and `ProvinceSeaZoneDetailOverlay`, when those files are inspected for imports, then neither imports nor references the other; the map embedding layer reads and writes `mapProvincePanelProvider` and passes plain data plus callbacks (`selectedTileKey`, `secondaryHighlightTileKey`, `onMapTileTappedForDetail`) into the map widget's constructor.
 - **Tap opens/updates the overlay:** Given the overlay is closed or showing a different tile, when the user taps or clicks a map tile, then `mapProvincePanelProvider` records the tapped tile in `selectedTileKey`, sets `overlayOpen` to true, and the overlay's Tile section renders content derived from that exact `selectedTileKey`.
 - **Hover never updates selection:** Given the user's pointer is hovering over a map tile without a tap or click, when the pointer moves, then the UI layer does not change `selectedTileKey`, does not toggle `overlayOpen`, and does not change the overlay's Tile section content (hover may still update map-only hover visuals).
