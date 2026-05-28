@@ -622,7 +622,8 @@ abstract class AppLocalizations {
   /// Header label for unowned province destinations in move army dialog.
   String get moveArmy_groupUnowned;
 
-  /// Confirm dialog title for entering hostile territory with army movement.
+  /// Confirm dialog title for the destructive war-confirmation sub-dialog when
+  /// an invasion army move is requested (issue #2867 R9).
   String get moveArmy_invadeProvinceTitle;
 
   /// Confirm dialog text for hostile army movement.
@@ -1087,6 +1088,12 @@ abstract class AppLocalizations {
   /// Game setup screen title.
   String get gameSetup_title;
 
+  /// Eyebrow text rendered uppercased above the Game Setup title in the dark editorial-monocle pixelArt variant.
+  String get gameSetup_eyebrow;
+
+  /// Italic intro line shown below the Game Setup title in the dark editorial-monocle pixelArt variant.
+  String get gameSetup_intro;
+
   /// Loading state label while starting a game from setup.
   String get gameSetup_starting;
 
@@ -1299,6 +1306,15 @@ abstract class AppLocalizations {
 
   /// Diplomacy list section heading.
   String get diplomacy_section_tribes;
+
+  /// Diplomacy panel mode-bar filter label: show all factions.
+  String get diplomacy_filter_all;
+
+  /// Diplomacy panel mode-bar filter label: show only Great Powers.
+  String get diplomacy_filter_greatPowersOnly;
+
+  /// Diplomacy panel mode-bar filter label: show Minor Nations and Tribes only (no Great Powers).
+  String get diplomacy_filter_minorsOnly;
 
   /// One-word war state in diplomacy UI.
   String get diplomacy_relationState_war;

@@ -66,21 +66,32 @@ void main() {
       expect(resolution.skipConquestPass, isTrue);
     });
 
-    test('EXPAND default plan falls back with structural NW suppression', () {
-      const outcome = PhasePlanOutcome(phase: ObserverGoalPhase.expand);
-      final resolution = resolvePhaseConquestInvadable(phasePlan: outcome);
-      expect(resolution.skipConquestPass, isFalse);
-      expect(resolution.useLegacyInvadable, isTrue);
-      expect(resolution.structuralNewWorldSuppressed, isTrue);
-    });
+    test(
+      'EXPAND default plan falls back with soft NW weight (not structurally suppressed)',
+      () {
+        const outcome = PhasePlanOutcome(phase: ObserverGoalPhase.expand);
+        final resolution = resolvePhaseConquestInvadable(phasePlan: outcome);
+        expect(resolution.skipConquestPass, isFalse);
+        expect(resolution.useLegacyInvadable, isTrue);
+        expect(
+          resolvePhaseConquestNwInvasionWeight(phasePlan: outcome),
+          PhasePriorityWeights.earlySprintDefault.newWorldAcquisition,
+        );
+        expect(resolution.structuralNewWorldSuppressed, isFalse);
+      },
+    );
 
     test(
-      'COLONIAL-lite default plan falls back with structural NW suppression',
+      'COLONIAL-lite default plan falls back with soft NW weight (not structurally suppressed)',
       () {
         const outcome = PhasePlanOutcome(phase: ObserverGoalPhase.colonialLite);
         final resolution = resolvePhaseConquestInvadable(phasePlan: outcome);
         expect(resolution.useLegacyInvadable, isTrue);
-        expect(resolution.structuralNewWorldSuppressed, isTrue);
+        expect(
+          resolvePhaseConquestNwInvasionWeight(phasePlan: outcome),
+          PhasePriorityWeights.earlySprintDefault.newWorldAcquisition,
+        );
+        expect(resolution.structuralNewWorldSuppressed, isFalse);
       },
     );
 

@@ -119,6 +119,15 @@ mixin _AppLocalizationsEnStrings4 on AppLocalizations {
   String get diplomacy_section_tribes => 'Tribes';
 
   @override
+  String get diplomacy_filter_all => 'All';
+
+  @override
+  String get diplomacy_filter_greatPowersOnly => 'Great Powers only';
+
+  @override
+  String get diplomacy_filter_minorsOnly => 'Minors only';
+
+  @override
   String get diplomacy_relationState_war => 'War';
 
   @override

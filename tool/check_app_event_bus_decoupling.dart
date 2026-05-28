@@ -57,6 +57,10 @@ const Set<String> _allowedFeatureLocalDialogFiles = <String>{
   'app/lib/features/game/flame/game_map_area_part2.dart',
   'app/lib/features/game/flame/next_turn_confirmation_dialog.dart',
   'app/lib/features/game/flame/game_screen.dart',
+  // Android back / exit-to-main-menu confirm dialog extracted from
+  // game_screen.dart per `SPEC/ui/in-game-shell-narrow.md` "Android back
+  // confirm". Local by design — `SPEC/program/app-ui-wiring.md` line 84.
+  'app/lib/features/game/flame/exit_confirm_dialog.dart',
   'app/lib/features/game/widgets/tech_tree_widget.dart',
   'app/lib/features/game/widgets/technology_panel.dart',
   'app/lib/features/shell/new_game_setup_flow.dart',

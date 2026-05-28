@@ -65,4 +65,37 @@ class CtGradients {
       EditorialMonoclePalette.surface,
     ],
   );
+
+  /// Deeper vertical gradient used by ceremonial brass-bordered overlays
+  /// such as the `VictoryOverlay`'s panel (SPEC/ui/victory-overlay.md). Top
+  /// edge is the raised `--surface-lite` tone; bottom edge sinks to
+  /// `--bg-deep` to read as a heavier ceremonial card distinct from the
+  /// canonical [panelGradient].
+  static LinearGradient get victoryPanelGradient => LinearGradient(
+    begin: Alignment.topCenter,
+    end: Alignment.bottomCenter,
+    colors: <Color>[
+      EditorialMonoclePalette.surfaceLite,
+      EditorialMonoclePalette.bgDeep,
+    ],
+  );
+
+  /// Vertical gradient for compact icon-only chrome on the in-game map,
+  /// notably the [GameMapEmpireLeftRail](../features/game/flame/game_map_empire_left_rail.dart)
+  /// dark editorial-monocle buttons (`SPEC/ui/empire-buttons.md` § Styling,
+  /// `SPEC/ui/mockups/GAME10001-game-screen.html` `.empire-btn`).
+  ///
+  /// Mirrors the `victoryPanelGradient` stops (`--surface-lite` → `--bg-deep`)
+  /// but is kept as a separate semantic constant so per-surface tweaks land
+  /// in one place. The 36 dp rail surface reads as a raised, pressable button
+  /// against the deeper map background while the gradient still anchors the
+  /// 1 px `--border` outline used at the surface edge.
+  static LinearGradient get railButtonGradient => LinearGradient(
+    begin: Alignment.topCenter,
+    end: Alignment.bottomCenter,
+    colors: <Color>[
+      EditorialMonoclePalette.surfaceLite,
+      EditorialMonoclePalette.bgDeep,
+    ],
+  );
 }

@@ -52,6 +52,7 @@ import 'turn_resolution_processing_dialog.dart';
 import 'turn_resolution_progress_labels.dart';
 import 'turn_resolution_result_applier.dart';
 import '../utils/map_location_resolver.dart';
+import '../widgets/game_map_players_bar.dart';
 import '../widgets/player_turn_event_feed.dart';
 
 part 'game_map_area_part1.dart';

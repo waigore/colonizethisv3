@@ -61,7 +61,7 @@ Implementation: `app/lib/features/game/widgets/move_army_dialog.dart`. Wrapped M
 | Empty | `armyMovePickerDestinations` returns `[]` | Dropdown replaced with `moveArmy_noValidDestinations`; Confirm disabled. |
 | Owned-only | All destinations have `isPlayerOwned == true` | Single `Your provinces` group. Confirm enabled when a row is selected. |
 | Mixed groups | Destinations include both player-owned and other-owned entries | Dropdown shows `Your provinces` first, then per-faction groups in source order from `armyMovePickerDestinations`. |
-| Invade-confirm | Selected entry has `requiresDeclareWarOnConfirm == true` | Tapping `Confirm` opens a second `AlertDialog` (`moveArmy_invadeProvinceTitle` / `moveArmy_invadeProvinceBody(<ownerLabel>)`) with `common_cancel` and `moveArmy_declareWarAndMove`. |
+| Invade-confirm | Selected entry has `requiresDeclareWarOnConfirm == true` | Tapping `Confirm` opens a destructive-flow sub-dialog inside a `CtDialogShell` framed with a **1px `--danger` border** (per issue #2867 R9) — title `moveArmy_invadeProvinceTitle` (`Declare war?`) and body `moveArmy_invadeProvinceBody(<ownerLabel>)`. Actions are pixel-art `CtNinePatchButton`s: secondary `common_cancel` (default brass styling) and danger-primary `moveArmy_declareWarAndMove` (`dangerVariant: true`). No Material `AlertDialog` / `TextButton` chrome. |
 | Draft / view refresh | `draftOrders`, `game`, `army`, or `playerView` changed (`didUpdateWidget`) | Validator and cached destinations rebuild; `_selected` is cleared if the prior selection is no longer offered (falls back to first entry or `null`). |
 
 The dialog **does not** mutate game state. All state changes flow through the bus event and turn-resolution pipeline.
@@ -90,8 +90,9 @@ The dialog **does not** mutate game state. All state changes flow through the bu
 
 ## Components
 
-- `AlertDialog`, `DropdownButtonFormField`, `DropdownMenuItem`, `TextButton` (Material).
-- Localized keys (`appL10n(context)`): `moveArmy_title`, `moveArmy_destinationProvince`, `moveArmy_noValidDestinations`, `moveArmy_groupYourProvinces`, `moveArmy_groupUnowned`, `moveArmy_invadeProvinceTitle`, `moveArmy_invadeProvinceBody`, `moveArmy_declareWarAndMove`, `common_cancel`, `common_confirm`.
+- **Outer dialog (DLG20001):** `AlertDialog`, `DropdownButtonFormField`, `DropdownMenuItem`, `TextButton` (Material). Full editorial-monocle restyle to `CtDialogShell` is tracked under issue #2867 § S1; this spec records the current chrome until that slice lands.
+- **Invade-confirm sub-dialog (DLG20001 → war confirmation):** `CtDialogShell` with `borderColor: EditorialMonoclePalette.danger` and `borderWidth: CtDialogShell.dangerBorderWidth` (1px); destructive primary `CtNinePatchButton(dangerVariant: true)` + secondary `CtNinePatchButton` for cancel. No Material `AlertDialog` / `TextButton` chrome.
+- Localized keys (`appL10n(context)`): `moveArmy_title`, `moveArmy_destinationProvince`, `moveArmy_noValidDestinations`, `moveArmy_groupYourProvinces`, `moveArmy_groupUnowned`, `moveArmy_invadeProvinceTitle` (`Declare war?`), `moveArmy_invadeProvinceBody`, `moveArmy_declareWarAndMove`, `common_cancel`, `common_confirm`.
 
 ---
 
@@ -106,6 +107,10 @@ The dialog **does not** mutate game state. All state changes flow through the bu
 - Given the selected destination has `requiresDeclareWarOnConfirm == true` and the user taps Confirm and then `moveArmy_declareWarAndMove` in the secondary dialog, when the system processes the gesture, then the emitted `ArmyMoveRequestedEvent.declareWarTargetFactionId` equals the destination's `ownerFactionId`.
 
 - Given the selected destination has `requiresDeclareWarOnConfirm == true` and the user taps `common_cancel` in the secondary dialog, when the system processes the gesture, then no `ArmyMoveRequestedEvent` is emitted and `MoveArmyDialog` remains mounted.
+
+- Given the selected destination has `requiresDeclareWarOnConfirm == true` and the user taps `Confirm`, when the war-confirmation sub-dialog is mounted, then the sub-dialog renders inside a `CtDialogShell` with `borderColor` resolving to `EditorialMonoclePalette.danger` and `borderWidth` equal to `CtDialogShell.dangerBorderWidth` (1px), and the title text reads `moveArmy_invadeProvinceTitle` (`Declare war?`). No Material `AlertDialog` widget is rendered as part of the sub-dialog (per issue #2867 R9 and `SPEC/ui/pixel-art-ui-catalog.md` § Material design ban).
+
+- Given the war-confirmation sub-dialog is mounted, when its action buttons are inspected, then the primary action labelled `moveArmy_declareWarAndMove` is a `CtNinePatchButton` with `dangerVariant: true`, the secondary action labelled `common_cancel` is a `CtNinePatchButton` with `dangerVariant: false`, and neither action uses a Material `TextButton`.
 
 - Given `armyMovePickerDestinations` returns an empty list for the current `(game, army, topology, draftOrders, playerView)`, when `MoveArmyDialog` builds, then no `DropdownButtonFormField<String>` is rendered, the `moveArmy_noValidDestinations` text is shown, and the Confirm `TextButton.onPressed` is `null`.
 
