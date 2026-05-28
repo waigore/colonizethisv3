@@ -8,6 +8,7 @@ import 'package:flutter/material.dart';
 
 import '../../../config/editorial_monocle_palette.dart';
 import '../../../config/routes.dart';
+import '../../../config/themes.dart' show editorialMonocleDisplayFontFamily;
 import '../../../core/services/app_event_handler_scope.dart';
 import '../../../core/services/subscription_tracker.dart';
 import '../../../l10n/l10n.dart';
@@ -18,6 +19,8 @@ import 'diplomacy_panel_rows.dart';
 import 'fnv1a_hash_constants.dart';
 
 export 'diplomacy_panel_rows.dart';
+
+part 'diplomacy_panel_chrome.dart';
 
 /// Full-page diplomacy panel. SPEC/ui/diplomacy-panel.md.
 class DiplomacyPanel extends StatefulWidget {
@@ -159,15 +162,7 @@ class _DiplomacyPanelState extends State<DiplomacyPanel> {
   }
 
   Widget _sectionHeader(BuildContext context, String title) {
-    return Padding(
-      padding: const EdgeInsets.only(top: 16, bottom: 8),
-      child: Text(
-        title,
-        style: Theme.of(
-          context,
-        ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
-      ),
-    );
+    return _DiplomacySectionHeader(title: title);
   }
 
   void _submitOrDialog(DiplomaticOrder order) {
@@ -529,25 +524,7 @@ class _DiplomacyRow extends StatelessWidget {
   }
 
   Widget _kindChip(BuildContext context, FactionKind kind) {
-    final (label, color) = switch (kind) {
-      FactionKind.greatPower => ('GP', Colors.blue),
-      FactionKind.minor => ('Minor', Colors.grey),
-      FactionKind.tribe => ('Tribe', Colors.orange),
-    };
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.2),
-        borderRadius: BorderRadius.circular(4),
-      ),
-      child: Text(
-        label,
-        style: Theme.of(context).textTheme.labelSmall?.copyWith(
-          color: color,
-          fontWeight: FontWeight.w600,
-        ),
-      ),
-    );
+    return _FactionKindBadge(kind: kind);
   }
 
   String _overtureStageLabel(OvertureStage stage) {
@@ -680,3 +657,4 @@ class _DiplomacyModeButton extends StatelessWidget {
     );
   }
 }
+
