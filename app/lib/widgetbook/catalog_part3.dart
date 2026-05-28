@@ -476,6 +476,36 @@ List<WidgetbookNode> get victoryUiDirectories => [
   ),
 ];
 
+/// Players bar stories. SPEC/ui/empire-overview.md § Players bar
+/// (issue #2861 S6). Renders the floating Great-Power chip column from the
+/// in-game map stack against a representative map-background scrim so the
+/// dark editorial-monocle chrome reads in isolation.
+List<WidgetbookNode> get playersBarDirectories => [
+  WidgetbookFolder(
+    name: 'Players Bar',
+    children: [
+      WidgetbookUseCase(
+        name: 'Default — debug game (wide)',
+        builder: (context) {
+          final game = getDebugInitGameResult().game;
+          return _victoryStoryFrame(
+            SizedBox(
+              width: 400,
+              height: 320,
+              child: Stack(
+                children: [
+                  ColoredBox(color: EditorialMonoclePalette.bgDeep),
+                  GameMapPlayersBar(game: game),
+                ],
+              ),
+            ),
+          );
+        },
+      ),
+    ],
+  ),
+];
+
 /// Exit-confirm dialog stories. SPEC/ui/in-game-shell-narrow.md § Android
 /// back confirm. Demonstrates the dark editorial-monocle scrim host, the
 /// `--accent` title, the `--fg` body, and the `--danger` Exit label.
