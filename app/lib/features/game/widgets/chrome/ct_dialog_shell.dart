@@ -8,8 +8,12 @@ import '../../../../widgets/ct_gradients.dart';
 /// chrome, no Material `AlertDialog`/`Dialog` visuals).
 ///
 /// **Visual contract:**
-/// - **Frame:** 2px `--accent-dim` border on all four sides
-///   ([EditorialMonoclePalette.accentDim]).
+/// - **Frame:** Default 2px `--accent-dim` border on all four sides
+///   ([EditorialMonoclePalette.accentDim]). Callers MAY override [borderColor]
+///   and [borderWidth] for destructive-flow sub-dialogs (e.g. the move-army
+///   war confirmation per `SPEC/ui/move-army-dialog.md` § Sub-dialog uses
+///   `borderColor: --danger` and `borderWidth: 1`). All overrides MUST still
+///   resolve from the canonical palette tokens; no hard-coded hex literals.
 /// - **Background:** Top-to-bottom panel gradient sourced from
 ///   [CtGradients.panelGradient]. No hard-coded hex literals; gradient stops
 ///   resolve from the dark-theme tokens (`--surface` → `--bg`).
@@ -30,6 +34,8 @@ class CtDialogShell extends StatelessWidget {
     this.maxWidth = 480,
     this.maxHeight = 600,
     this.padding = const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+    this.borderColor,
+    this.borderWidth = defaultBorderWidth,
   });
 
   /// Dialog body content (title, text, actions column/rows).
@@ -44,12 +50,31 @@ class CtDialogShell extends StatelessWidget {
   /// Inner padding between frame border and [child].
   final EdgeInsetsGeometry padding;
 
-  /// Per #2859 R3 / S4 AC: frame border is 2px `--accent-dim` on every side.
-  static const double _borderWidth = 2;
+  /// Optional override for the frame border color. Defaults to
+  /// [EditorialMonoclePalette.accentDim] when `null` (the canonical
+  /// editorial-monocle dialog border per #2859 R3 / S4). Destructive-flow
+  /// sub-dialogs SHOULD pass [EditorialMonoclePalette.danger] together with
+  /// [borderWidth] `1` to mark the surface as dangerous (see
+  /// `SPEC/ui/move-army-dialog.md` § Invade-confirm sub-dialog).
+  final Color? borderColor;
+
+  /// Frame border width. Defaults to [defaultBorderWidth] (2px) per #2859 R3 /
+  /// S4. Destructive-flow sub-dialogs (red `--danger` border) SHOULD pass
+  /// [dangerBorderWidth] (1px) per `SPEC/ui/move-army-dialog.md` AC.
+  final double borderWidth;
+
+  /// Default frame border width — 2px `--accent-dim` per #2859 R3 / S4.
+  static const double defaultBorderWidth = 2;
+
+  /// Frame border width for danger-variant sub-dialogs — 1px `--danger` per
+  /// `SPEC/ui/move-army-dialog.md` AC (war confirmation).
+  static const double dangerBorderWidth = 1;
 
   @override
   Widget build(BuildContext context) {
     final ThemeData theme = Theme.of(context);
+    final Color resolvedBorderColor =
+        borderColor ?? EditorialMonoclePalette.accentDim;
 
     return Dialog(
       backgroundColor: Colors.transparent,
@@ -62,8 +87,8 @@ class CtDialogShell extends StatelessWidget {
             decoration: BoxDecoration(
               gradient: CtGradients.panelGradient,
               border: Border.all(
-                color: EditorialMonoclePalette.accentDim,
-                width: _borderWidth,
+                color: resolvedBorderColor,
+                width: borderWidth,
               ),
             ),
             child: CustomScrollView(
