@@ -1097,8 +1097,11 @@ abstract class AppLocalizations {
   /// Italic intro line shown below the Game Setup title in the dark editorial-monocle pixelArt variant.
   String get gameSetup_intro;
 
-  /// Loading state label while starting a game from setup.
+  /// Loading state label while starting a game from setup (retained for backward compatibility; the in-screen dim overlay now uses gameSetup_loadingGeneratingWorld per #2868 R15).
   String get gameSetup_starting;
+
+  /// Loading overlay label shown beneath the spinner while the Game Setup screen is generating a new world (Refs #2868 R15).
+  String get gameSetup_loadingGeneratingWorld;
 
   /// Primary button to begin play from game setup.
   String get gameSetup_startGame;

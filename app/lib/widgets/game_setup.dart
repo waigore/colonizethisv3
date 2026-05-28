@@ -138,29 +138,19 @@ class _CtGameSetupState extends State<CtGameSetup> {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     const SizedBox(height: 24),
-                    _GameSetupHeader(variant: widget.variant),
-                    const SizedBox(height: 24),
-                    _buildSlots(context, narrow: narrow),
-                    const SizedBox(height: 24),
-                    if (_isLoading)
-                      Padding(
-                        padding: const EdgeInsets.only(bottom: 12),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            const CtLoadingIndicator(
-                              size: 20,
-                              strokeWidth: 2,
-                              center: false,
-                            ),
-                            const SizedBox(width: 8),
-                            Text(
-                              l10n.gameSetup_starting,
-                              style: Theme.of(context).textTheme.bodySmall,
-                            ),
-                          ],
-                        ),
+                    _GameSetupLoadingRegion(
+                      isLoading: _isLoading,
+                      loadingLabel: l10n.gameSetup_loadingGeneratingWorld,
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          _GameSetupHeader(variant: widget.variant),
+                          const SizedBox(height: 24),
+                          _buildSlots(context, narrow: narrow),
+                        ],
                       ),
+                    ),
+                    const SizedBox(height: 24),
                     _GameSetupMenuButton(
                       label: l10n.gameSetup_startGame,
                       variant: widget.variant,
@@ -541,6 +531,92 @@ class _GameSetupPixelArtHeader extends StatelessWidget {
         ),
         const SizedBox(height: _GameSetupHeader._introToDividerGap),
         const CtBrassDivider(key: ValueKey<String>('gameSetupBrassDivider')),
+      ],
+    );
+  }
+}
+
+/// Loading-state dim/scrim overlay for the Game Setup header + slot rows.
+///
+/// Implements `Refs #2868` R15 — when [isLoading] is `true`, the underlying
+/// [child] is wrapped in `Opacity(0.4)` + `IgnorePointer(ignoring: true)`,
+/// a [`Positioned.fill`] scrim painted in
+/// [EditorialMonoclePalette.dialogScrim] covers the dimmed region, and a
+/// centered [`Column`] paints the loading affordance (a 48 px
+/// [`CtLoadingIndicator`] above the localized [loadingLabel]) in front of
+/// the scrim.
+///
+/// When [isLoading] is `false`, the widget renders exactly [child] (no
+/// `Stack`, no scrim, no `IgnorePointer`), so the default state matches the
+/// pre-#2868 S4 layout one-for-one and adds no test-visible chrome.
+///
+/// The overlay is scoped to the header + slot-rows region only; consumers
+/// (see [`CtGameSetup.build`]) keep the Start Game and Back action buttons
+/// outside this widget so the Back affordance remains visible, enabled,
+/// and tappable during the loading state (per `SPEC/ui/game-setup.md`
+/// "Loading" AC that Back remains enabled).
+class _GameSetupLoadingRegion extends StatelessWidget {
+  const _GameSetupLoadingRegion({
+    required this.isLoading,
+    required this.loadingLabel,
+    required this.child,
+  });
+
+  final bool isLoading;
+  final String loadingLabel;
+  final Widget child;
+
+  /// Dim opacity applied to the underlying content per #2868 R15
+  /// ("dimmed content"). Matches the disabled-control opacity convention
+  /// shared with `CtNinePatchButton`, `CtBackButton`, and the slot-row
+  /// leader-dropdown disabled state (#2868 R10).
+  static const double dimmedContentOpacity = 0.4;
+
+  /// Spinner side length painted inside the overlay column.
+  static const double spinnerSize = 48;
+
+  /// Vertical gap between the spinner and the "Generating world…" label.
+  static const double spinnerToLabelGap = 16;
+
+  @override
+  Widget build(BuildContext context) {
+    if (!isLoading) {
+      return child;
+    }
+    final ThemeData theme = Theme.of(context);
+    return Stack(
+      alignment: Alignment.center,
+      children: <Widget>[
+        IgnorePointer(
+          ignoring: true,
+          child: Opacity(opacity: dimmedContentOpacity, child: child),
+        ),
+        Positioned.fill(
+          child: IgnorePointer(
+            ignoring: true,
+            child: ColoredBox(color: EditorialMonoclePalette.dialogScrim),
+          ),
+        ),
+        Column(
+          mainAxisSize: MainAxisSize.min,
+          children: <Widget>[
+            CtLoadingIndicator(
+              size: spinnerSize,
+              strokeWidth: 2,
+              color: EditorialMonoclePalette.accent,
+              center: false,
+            ),
+            const SizedBox(height: spinnerToLabelGap),
+            Text(
+              loadingLabel,
+              key: const ValueKey<String>('gameSetupLoadingLabel'),
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: EditorialMonoclePalette.fg,
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
       ],
     );
   }

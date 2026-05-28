@@ -9,6 +9,45 @@ import 'ct_fleur_de_lis_ornament.dart';
 import 'ct_main_menu_collage.dart';
 import 'ct_nine_patch_button.dart';
 
+/// Narrow-viewport breakpoint for the main menu in logical pixels.
+///
+/// At or below this width the menu container compacts its horizontal padding
+/// and the `pixelArt` variant button labels reduce `letter-spacing` per
+/// `SPEC/ui/mockups/SHEL10002-main-menu.html` `@media (max-width: 430px)` and
+/// `SPEC/ui/main-menu.md` § Responsive rules.
+const double kMainMenuNarrowBreakpoint = 430;
+
+/// Letter-spacing (logical pixels) applied to `pixelArt` variant menu-button
+/// labels at viewports wider than [kMainMenuNarrowBreakpoint]. Mirrors the
+/// mockup `.menu-btn { letter-spacing: 0.08em }` default at the ~16dp font
+/// size used by the wood-panel button text style.
+const double kMainMenuButtonLetterSpacingDefault = 1.2;
+
+/// Letter-spacing (logical pixels) applied to `pixelArt` variant menu-button
+/// labels at viewports `≤ kMainMenuNarrowBreakpoint`. Mirrors the mockup
+/// `.menu-btn { letter-spacing: 0.04em }` narrow override.
+const double kMainMenuButtonLetterSpacingNarrow = 0.6;
+
+/// Menu container padding at viewports `> kMainMenuNarrowBreakpoint`.
+/// Default desktop / wide layout.
+const EdgeInsets kMainMenuBodyPaddingDefault = EdgeInsets.symmetric(
+  horizontal: 24,
+);
+
+/// Menu container padding at viewports `≤ kMainMenuNarrowBreakpoint`.
+/// Compacts horizontal padding and adds explicit vertical padding to mirror
+/// the mockup `.menu-container { padding: 24px 12px; }` narrow override.
+const EdgeInsets kMainMenuBodyPaddingNarrow = EdgeInsets.symmetric(
+  horizontal: 12,
+  vertical: 24,
+);
+
+/// Stable `Key` value for the menu body `Padding` widget that owns the
+/// responsive padding resolution. Used by widget tests to assert the
+/// padding flips between [kMainMenuBodyPaddingDefault] and
+/// [kMainMenuBodyPaddingNarrow] at [kMainMenuNarrowBreakpoint].
+const String kMainMenuBodyPaddingKey = 'main_menu_body_padding';
+
 /// Visual variant of the main menu. SPEC/ui/main-menu.md; UXD 03a.
 enum MainMenuVariant {
   /// Theme-scaffold only fallback: standard Flutter widgets with the
@@ -213,28 +252,38 @@ class _MainMenuBody extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SafeArea(
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 24),
-        child: Center(
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 400),
-            child: SingleChildScrollView(
-              child: _MainMenuBodyContent(
-                variant: variant,
-                showAfterVictorySubtitle: showAfterVictorySubtitle,
-                loadGameEnabled: loadGameEnabled,
-                resumeGameVisible: resumeGameVisible,
-                version: version,
-                onNewGame: onNewGame,
-                onResumeGame: onResumeGame,
-                onLoadGame: onLoadGame,
-                onSettings: onSettings,
-                onQuit: onQuit,
-                logoBuilder: logoBuilder,
+      child: LayoutBuilder(
+        builder: (BuildContext context, BoxConstraints constraints) {
+          final bool narrow = constraints.maxWidth <= kMainMenuNarrowBreakpoint;
+          final EdgeInsets padding = narrow
+              ? kMainMenuBodyPaddingNarrow
+              : kMainMenuBodyPaddingDefault;
+          return Padding(
+            key: const Key(kMainMenuBodyPaddingKey),
+            padding: padding,
+            child: Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 400),
+                child: SingleChildScrollView(
+                  child: _MainMenuBodyContent(
+                    variant: variant,
+                    showAfterVictorySubtitle: showAfterVictorySubtitle,
+                    loadGameEnabled: loadGameEnabled,
+                    resumeGameVisible: resumeGameVisible,
+                    narrow: narrow,
+                    version: version,
+                    onNewGame: onNewGame,
+                    onResumeGame: onResumeGame,
+                    onLoadGame: onLoadGame,
+                    onSettings: onSettings,
+                    onQuit: onQuit,
+                    logoBuilder: logoBuilder,
+                  ),
+                ),
               ),
             ),
-          ),
-        ),
+          );
+        },
       ),
     );
   }
@@ -246,6 +295,7 @@ class _MainMenuBodyContent extends StatelessWidget {
     required this.showAfterVictorySubtitle,
     required this.loadGameEnabled,
     required this.resumeGameVisible,
+    required this.narrow,
     required this.version,
     required this.onNewGame,
     required this.onResumeGame,
@@ -259,6 +309,7 @@ class _MainMenuBodyContent extends StatelessWidget {
   final bool showAfterVictorySubtitle;
   final bool loadGameEnabled;
   final bool resumeGameVisible;
+  final bool narrow;
   final String version;
   final VoidCallback onNewGame;
   final VoidCallback? onResumeGame;
@@ -307,6 +358,7 @@ class _MainMenuBodyContent extends StatelessWidget {
       _MenuButton(
         label: l10n.mainMenu_newGame,
         variant: variant,
+        narrow: narrow,
         onPressed: onNewGame,
       ),
       if (resumeGameVisible) ...[
@@ -314,6 +366,7 @@ class _MainMenuBodyContent extends StatelessWidget {
         _MenuButton(
           label: l10n.mainMenu_resumeGame,
           variant: variant,
+          narrow: narrow,
           onPressed: onResumeGame!,
         ),
       ],
@@ -321,12 +374,14 @@ class _MainMenuBodyContent extends StatelessWidget {
       _LoadGameButton(
         enabled: loadGameEnabled,
         variant: variant,
+        narrow: narrow,
         onPressed: onLoadGame,
       ),
       const SizedBox(height: 12),
       _MenuButton(
         label: l10n.mainMenu_settings,
         variant: variant,
+        narrow: narrow,
         onPressed: onSettings,
       ),
       const SizedBox(height: 32),
@@ -335,6 +390,7 @@ class _MainMenuBodyContent extends StatelessWidget {
       _MenuButton(
         label: l10n.mainMenu_quit,
         variant: variant,
+        narrow: narrow,
         onPressed: onQuit,
       ),
       const SizedBox(height: 24),
@@ -346,17 +402,23 @@ class _MenuButton extends StatelessWidget {
   const _MenuButton({
     required this.label,
     required this.variant,
+    required this.narrow,
     required this.onPressed,
   });
 
   final String label;
   final MainMenuVariant variant;
+  final bool narrow;
   final VoidCallback onPressed;
 
   @override
   Widget build(BuildContext context) {
     if (variant == MainMenuVariant.pixelArt) {
-      return _PixelArtButton(label: label, onPressed: onPressed);
+      return _PixelArtButton(
+        label: label,
+        narrow: narrow,
+        onPressed: onPressed,
+      );
     }
     return SizedBox(
       width: double.infinity,
@@ -369,11 +431,13 @@ class _PixelArtButton extends StatefulWidget {
   const _PixelArtButton({
     required this.label,
     required this.onPressed,
+    required this.narrow,
     this.enabled = true,
   });
 
   final String label;
   final VoidCallback onPressed;
+  final bool narrow;
   final bool enabled;
 
   @override
@@ -447,7 +511,14 @@ class _PixelArtButtonState extends State<_PixelArtButton>
               onPressed: widget.enabled ? widget.onPressed : null,
               enabled: widget.enabled,
               minHeight: 48,
-              child: Text(widget.label),
+              child: Text(
+                widget.label,
+                style: TextStyle(
+                  letterSpacing: widget.narrow
+                      ? kMainMenuButtonLetterSpacingNarrow
+                      : kMainMenuButtonLetterSpacingDefault,
+                ),
+              ),
             ),
           ),
         ),
@@ -460,11 +531,13 @@ class _LoadGameButton extends StatelessWidget {
   const _LoadGameButton({
     required this.enabled,
     required this.variant,
+    required this.narrow,
     required this.onPressed,
   });
 
   final bool enabled;
   final MainMenuVariant variant;
+  final bool narrow;
   final VoidCallback onPressed;
 
   @override
@@ -476,6 +549,7 @@ class _LoadGameButton extends StatelessWidget {
         child: _PixelArtButton(
           label: l10n.mainMenu_loadGame,
           enabled: enabled,
+          narrow: narrow,
           onPressed: onPressed,
         ),
       );

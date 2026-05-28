@@ -1,7 +1,11 @@
 import 'package:colonizethis_app/l10n/l10n.dart';
 import 'package:flutter/material.dart';
 
+import '../../../../../config/editorial_monocle_palette.dart';
+
 /// Sub-header for a province or sea zone within a region in military/naval panels.
+///
+/// Uses `--muted` for the location line (`Refs #2866` S2/S3).
 class LocationSectionHeader extends StatelessWidget {
   const LocationSectionHeader({
     super.key,
@@ -19,7 +23,8 @@ class LocationSectionHeader extends StatelessWidget {
       child: Text(
         appL10n(context).locationSection_headerLine(label, regionLabel),
         style: Theme.of(context).textTheme.titleSmall?.copyWith(
-          color: Theme.of(context).colorScheme.onSurface,
+          color: EditorialMonoclePalette.muted,
+          fontWeight: FontWeight.w500,
         ),
       ),
     );

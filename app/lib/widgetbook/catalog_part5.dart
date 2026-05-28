@@ -264,6 +264,10 @@ List<WidgetbookNode> get ctDarkThemePrimitiveDirectories => [
         builder: (context) => const _CtScreenShellStory(),
       ),
       WidgetbookUseCase(
+        name: 'CtDropdown — chevron rotation',
+        builder: (context) => const _CtDropdownStory(),
+      ),
+      WidgetbookUseCase(
         name: 'CtCompassRose — size sweep',
         builder: (context) => _CtCompassRoseStory(),
       ),
@@ -823,6 +827,58 @@ class _CtScreenShellStory extends StatelessWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+/// Showcases [CtDropdown] R5d chevron rotation under the dark
+/// editorial-monocle theme. See SPEC/ui/pixel-art-ui-catalog.md
+/// § Pixel-art component catalog (CtDropdown) and issue #2859 R5d / S6.
+class _CtDropdownStory extends StatefulWidget {
+  const _CtDropdownStory();
+
+  @override
+  State<_CtDropdownStory> createState() => _CtDropdownStoryState();
+}
+
+class _CtDropdownStoryState extends State<_CtDropdownStory> {
+  static const List<String> _options = <String>[
+    // ignore: avoid_hardcoded_strings_in_widgets
+    'England',
+    // ignore: avoid_hardcoded_strings_in_widgets
+    'France',
+    // ignore: avoid_hardcoded_strings_in_widgets
+    'Spain',
+  ];
+
+  String? _value;
+
+  @override
+  Widget build(BuildContext context) {
+    return _CtDarkPrimitiveScaffold(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          const Text(
+            // ignore: avoid_hardcoded_strings_in_widgets
+            'Tap the trigger — chevron rotates 180° over 120ms '
+            '(open), and rotates back when the picker closes.',
+            style: TextStyle(color: Colors.white70),
+          ),
+          const SizedBox(height: 12),
+          SizedBox(
+            width: 220,
+            child: CtDropdown<String>(
+              value: _value,
+              items: _options,
+              // ignore: avoid_hardcoded_strings_in_widgets
+              hint: 'Select nation',
+              onChanged: (v) => setState(() => _value = v),
+            ),
+          ),
+        ],
       ),
     );
   }

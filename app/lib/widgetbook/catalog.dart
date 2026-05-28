@@ -66,6 +66,7 @@ import '../widgets/ct_brass_divider.dart';
 import '../widgets/ct_choice_chip.dart';
 import '../widgets/ct_compass_rose.dart';
 import '../widgets/ct_dialog_shell.dart';
+import '../widgets/ct_dropdown.dart';
 import '../widgets/ct_fleur_de_lis_ornament.dart';
 import '../widgets/ct_gradients.dart';
 import '../widgets/ct_loading_indicator.dart';
@@ -115,6 +116,20 @@ Widget civilianUnitsPanelWithRiverpod({
       }),
     ],
     child: child,
+  );
+}
+
+/// Host for Widgetbook use cases that need a nested [MaterialApp]. Without an
+/// explicit [ThemeData], nested apps default to Material light and break dark
+/// editorial-monocle review for unit panels and train dialogs (Refs #2866 S6).
+Widget widgetbookEditorialMonocleApp({required Widget child}) {
+  return MaterialApp(
+    debugShowCheckedModeBanner: false,
+    theme: AppThemes.editorialMonocle,
+    home: Scaffold(
+      backgroundColor: AppThemes.editorialMonocle.scaffoldBackgroundColor,
+      body: child,
+    ),
   );
 }
 
@@ -409,6 +424,25 @@ List<WidgetbookNode> get mainMenuDirectories => [
           ),
         ),
       ),
+      WidgetbookUseCase(
+        // SPEC/ui/main-menu.md § Responsive rules — exercises the
+        // `≤ 430 dp` narrow override (compact padding + reduced button
+        // letter-spacing) against the `pixelArt` variant on a 360 dp
+        // viewport.
+        name: 'Pixel art (mobile)',
+        builder: (context) => mobileViewport(
+          context,
+          CtMainMenu(
+            variant: MainMenuVariant.pixelArt,
+            state: MainMenuState.default_,
+            version: 'v1.0.0',
+            onNewGame: () {},
+            onLoadGame: () {},
+            onSettings: () {},
+            onQuit: () {},
+          ),
+        ),
+      ),
     ],
   ),
 ];
@@ -581,15 +615,13 @@ List<WidgetbookNode> get trainCiviliansDialogDirectories => [
               ...game.players.where((p) => p.id != humanPlayerId),
             ],
           );
-          return MaterialApp(
-            home: Scaffold(
-              body: Center(
-                child: TrainCiviliansDialog(
-                  game: richGame,
-                  humanPlayerId: humanPlayerId,
-                  currentOrders: const Orders(),
-                  bus: AppEventBus.create(),
-                ),
+          return widgetbookEditorialMonocleApp(
+            child: Center(
+              child: TrainCiviliansDialog(
+                game: richGame,
+                humanPlayerId: humanPlayerId,
+                currentOrders: const Orders(),
+                bus: AppEventBus.create(),
               ),
             ),
           );
@@ -616,15 +648,13 @@ List<WidgetbookNode> get trainCiviliansDialogDirectories => [
               ...game.players.where((p) => p.id != humanPlayerId),
             ],
           );
-          return MaterialApp(
-            home: Scaffold(
-              body: Center(
-                child: TrainCiviliansDialog(
-                  game: noTechGame,
-                  humanPlayerId: humanPlayerId,
-                  currentOrders: const Orders(),
-                  bus: AppEventBus.create(),
-                ),
+          return widgetbookEditorialMonocleApp(
+            child: Center(
+              child: TrainCiviliansDialog(
+                game: noTechGame,
+                humanPlayerId: humanPlayerId,
+                currentOrders: const Orders(),
+                bus: AppEventBus.create(),
               ),
             ),
           );
@@ -650,15 +680,13 @@ List<WidgetbookNode> get trainCiviliansDialogDirectories => [
               ...game.players.where((p) => p.id != humanPlayerId),
             ],
           );
-          return MaterialApp(
-            home: Scaffold(
-              body: Center(
-                child: TrainCiviliansDialog(
-                  game: poorGame,
-                  humanPlayerId: humanPlayerId,
-                  currentOrders: const Orders(),
-                  bus: AppEventBus.create(),
-                ),
+          return widgetbookEditorialMonocleApp(
+            child: Center(
+              child: TrainCiviliansDialog(
+                game: poorGame,
+                humanPlayerId: humanPlayerId,
+                currentOrders: const Orders(),
+                bus: AppEventBus.create(),
               ),
             ),
           );
