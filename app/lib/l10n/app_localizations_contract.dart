@@ -622,7 +622,8 @@ abstract class AppLocalizations {
   /// Header label for unowned province destinations in move army dialog.
   String get moveArmy_groupUnowned;
 
-  /// Confirm dialog title for entering hostile territory with army movement.
+  /// Confirm dialog title for the destructive war-confirmation sub-dialog when
+  /// an invasion army move is requested (issue #2867 R9).
   String get moveArmy_invadeProvinceTitle;
 
   /// Confirm dialog text for hostile army movement.
