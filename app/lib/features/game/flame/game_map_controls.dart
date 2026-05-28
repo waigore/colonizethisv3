@@ -1,18 +1,14 @@
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 import 'package:colonizethis_app/l10n/l10n.dart';
-import '../../../config/app_assets.dart';
-import '../../../config/ct_e2e.dart';
-import '../../../widgets/ct_choice_chip.dart';
-import '../../../widgets/strict_asset_icon.dart';
 import '../../../providers/observe_session_provider.dart';
 import '../widgets/game_top_bar.dart';
+import '../widgets/game_tab_bar.dart';
 import '../widgets/player_turn_event_feed.dart';
-import 'game_screen_shared.dart'
-    show kCargoHoldIndicatorKey, kTreasuryIndicatorKey;
 
-/// Top bar and region chips for the in-game map shell.
-class GameMapControls extends StatefulWidget {
+/// Top bar and tab bar for the in-game map shell.
+///
+/// Hosts [GameTopBar] (36 px) and [GameTabBar] (34 px) per issue #2861 S1/S2.
+class GameMapControls extends StatelessWidget {
   const GameMapControls({
     required this.sideMenuOpen,
     required this.onToggleSideMenu,
@@ -57,200 +53,55 @@ class GameMapControls extends StatefulWidget {
   final bool playerTurnEventsFeedNotDefined;
 
   @override
-  State<GameMapControls> createState() => _GameMapControlsState();
-}
-
-class _GameMapControlsState extends State<GameMapControls> {
-  static final NumberFormat _exactTreasuryFormat =
-      NumberFormat.decimalPattern();
-  static final NumberFormat _abbrevTreasuryFormat = NumberFormat.compact(
-    locale: 'en_US',
-  );
-  bool _showExactTreasury = true;
-
-  String _formatTreasury(int value) {
-    if (_showExactTreasury) {
-      return _exactTreasuryFormat.format(value);
-    }
-    final compactRaw = _abbrevTreasuryFormat.format(value);
-    final compact = compactRaw.replaceAll('K', 'k');
-    if (compact.contains('.') || !compact.endsWith('k')) {
-      return compact;
-    }
-    return compact.replaceFirst('k', '.0k');
-  }
-
-  Color? _treasuryDeltaColor(int? delta) {
-    if (delta == null || delta == 0) {
-      return null;
-    }
-    return delta > 0 ? Colors.green : Colors.red;
-  }
-
-  String? _treasuryDeltaLabel(int? delta) {
-    if (delta == null || delta == 0) {
-      return null;
-    }
-    if (delta > 0) {
-      return '+$delta';
-    }
-    return '$delta';
-  }
-
-  @override
   Widget build(BuildContext context) {
     final l10n = appL10n(context);
-    final treasuryLabel = widget.treasuryNotDefined
+    final cargoHoldLabel = cargoNotDefined
         ? kObserveNotDefinedLabel
-        : _formatTreasury(widget.treasury);
-    final deltaLabel = widget.treasuryNotDefined
-        ? null
-        : _treasuryDeltaLabel(widget.treasuryDelta);
-    final deltaColor = _treasuryDeltaColor(deltaLabel == null ? null : widget.treasuryDelta);
+        : l10n.mapControls_cargoHold(
+            isCargoUsedReliable ? '$cargoUsed' : '—',
+            '$cargoCapacity',
+          );
+
     return Column(
       children: [
         GameTopBar(
-          onToggleSideMenu: widget.onToggleSideMenu,
-          onNextTurn: widget.onNextTurn,
-          nextTurnEnabled: widget.nextTurnEnabled,
-          nextTurnText: widget.nextTurnText,
+          onToggleSideMenu: onToggleSideMenu,
+          onNextTurn: onNextTurn,
+          nextTurnEnabled: nextTurnEnabled,
+          nextTurnText: nextTurnText,
           menuTooltip: l10n.gameMap_menuTooltip,
-          observeBannerLabel: widget.observeBannerLabel,
+          observeBannerLabel: observeBannerLabel,
         ),
-        Padding(
-          padding: const EdgeInsets.symmetric(vertical: 8),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              Expanded(
-                child: LayoutBuilder(
-                  builder: (context, constraints) {
-                    return SingleChildScrollView(
-                      scrollDirection: Axis.horizontal,
-                      child: ConstrainedBox(
-                        constraints: BoxConstraints(
-                          minWidth: constraints.maxWidth,
-                        ),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            CtChoiceChip(
-                              label: Text(l10n.region_oldWorld),
-                              selected: widget.regionIndex == 0,
-                              onSelected: (_) => widget.onRegionIndexChanged(0),
-                            ),
-                            const SizedBox(width: 8),
-                            // E2E-only wrapper: same layout as bare chip; adds a stable subtree key
-                            // for integration tests (`kCtE2ERegionTabNewWorldKey`).
-                            if (kCtE2EEnabled)
-                              KeyedSubtree(
-                                key: kCtE2ERegionTabNewWorldKey,
-                                child: CtChoiceChip(
-                                  label: Text(l10n.region_newWorld),
-                                  selected: widget.regionIndex == 1,
-                                  onSelected: (_) =>
-                                      widget.onRegionIndexChanged(1),
-                                ),
-                              )
-                            else
-                              CtChoiceChip(
-                                label: Text(l10n.region_newWorld),
-                                selected: widget.regionIndex == 1,
-                                onSelected: (_) =>
-                                    widget.onRegionIndexChanged(1),
-                              ),
-                            const SizedBox(width: 10),
-                            GestureDetector(
-                              key: kTreasuryIndicatorKey,
-                              onTap: () => setState(
-                                () => _showExactTreasury = !_showExactTreasury,
-                              ),
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 8,
-                                  vertical: 6,
-                                ),
-                                color: Colors.black.withValues(alpha: 0.1),
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    const StrictAssetIcon(
-                                      assetPath:
-                                          '${kAppIconAssetPrefix}ui_icon_treasury_coin.png',
-                                      width: 16,
-                                      height: 16,
-                                    ),
-                                    const SizedBox(width: 4),
-                                    Text(treasuryLabel),
-                                    if (deltaLabel != null) ...[
-                                      const SizedBox(width: 4),
-                                      Text(
-                                        deltaLabel,
-                                        style: TextStyle(color: deltaColor),
-                                      ),
-                                    ],
-                                  ],
-                                ),
-                              ),
-                            ),
-                            const SizedBox(width: 10),
-                            Container(
-                              key: kCargoHoldIndicatorKey,
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 8,
-                                vertical: 6,
-                              ),
-                              color: Colors.black.withValues(alpha: 0.1),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  const StrictAssetIcon(
-                                    assetPath:
-                                        '${kAppIconAssetPrefix}ui_icon_cargo_hold.png',
-                                    width: 16,
-                                    height: 16,
-                                  ),
-                                  const SizedBox(width: 4),
-                                  Text(
-                                    widget.cargoNotDefined
-                                        ? kObserveNotDefinedLabel
-                                        : l10n.mapControls_cargoHold(
-                                            widget.isCargoUsedReliable
-                                                ? '${widget.cargoUsed}'
-                                                : '—',
-                                            '${widget.cargoCapacity}',
-                                          ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    );
-                  },
-                ),
-              ),
-              if (widget.playerTurnEventsFeedNotDefined)
-                Padding(
+        GameTabBar(
+          regionIndex: regionIndex,
+          onRegionIndexChanged: onRegionIndexChanged,
+          oldWorldLabel: l10n.region_oldWorld,
+          newWorldLabel: l10n.region_newWorld,
+          treasury: treasury,
+          treasuryDelta: treasuryDelta,
+          treasuryNotDefined: treasuryNotDefined,
+          treasuryObserveLabel: kObserveNotDefinedLabel,
+          cargoUsed: cargoUsed,
+          cargoCapacity: cargoCapacity,
+          cargoNotDefined: cargoNotDefined,
+          isCargoUsedReliable: isCargoUsedReliable,
+          cargoHoldLabel: cargoHoldLabel,
+          trailing: playerTurnEventsFeedNotDefined
+              ? Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 4),
                   child: Text(
                     kObserveNotDefinedLabel,
                     style: Theme.of(context).textTheme.bodySmall,
                   ),
                 )
-              else
-                PlayerTurnEventsFeedToggleButton(
-                  eventCount: widget.playerTurnEventsFeedCount,
+              : PlayerTurnEventsFeedToggleButton(
+                  eventCount: playerTurnEventsFeedCount,
                   tooltip: l10n.playerTurnFeed_eventsChip(
-                    widget.playerTurnEventsFeedCount,
+                    playerTurnEventsFeedCount,
                   ),
-                  showFeed: widget.showPlayerTurnEventsFeed,
-                  onPressed: widget.onTogglePlayerTurnEventsFeed,
+                  showFeed: showPlayerTurnEventsFeed,
+                  onPressed: onTogglePlayerTurnEventsFeed,
                 ),
-            ],
-          ),
         ),
       ],
     );
