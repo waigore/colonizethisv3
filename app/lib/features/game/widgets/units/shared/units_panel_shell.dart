@@ -1,8 +1,19 @@
 import 'package:flutter/material.dart';
 
+import '../../../../../config/editorial_monocle_palette.dart';
 import '../../../../../widgets/ct_panel.dart';
+import '../../../../../widgets/ct_top_bar.dart';
 
-/// Shared layout: constrained panel, [CtPanel], title row, and list or empty state.
+/// Shared layout: constrained panel, [CtPanel], dark editorial-monocle
+/// [CtTopBar] title chrome, and list or empty state.
+///
+/// Implements `Refs #2866` S1 shared chrome: the title row is rendered via
+/// [CtTopBar] (`showBackButton: false`) so all three unit panels (civilian,
+/// military, naval) inherit the canonical 36 px gradient bar + 1 px
+/// `--accent-dim` bottom border and `--accent` title colour from #2858 /
+/// #2859. The empty-state message resolves to [EditorialMonoclePalette.muted]
+/// in italic so the empty surface keeps the dark-theme palette instead of
+/// the default Material `onSurfaceVariant` token.
 class UnitsPanelShell extends StatelessWidget {
   const UnitsPanelShell({
     super.key,
@@ -28,6 +39,26 @@ class UnitsPanelShell extends StatelessWidget {
     maxHeight: 500,
   );
 
+  /// Horizontal gap between trailing actions in the [CtTopBar] trailing slot.
+  static const double _trailingActionsSpacing = 4;
+
+  Widget? _buildTrailing() {
+    if (actions.isEmpty) {
+      return null;
+    }
+    if (actions.length == 1) {
+      return actions.first;
+    }
+    final List<Widget> spaced = <Widget>[];
+    for (int i = 0; i < actions.length; i++) {
+      if (i > 0) {
+        spaced.add(const SizedBox(width: _trailingActionsSpacing));
+      }
+      spaced.add(actions[i]);
+    }
+    return Row(mainAxisSize: MainAxisSize.min, children: spaced);
+  }
+
   @override
   Widget build(BuildContext context) {
     return ConstrainedBox(
@@ -40,19 +71,10 @@ class UnitsPanelShell extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Padding(
-                padding: const EdgeInsets.fromLTRB(12, 8, 8, 4),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        title,
-                        style: Theme.of(context).textTheme.titleMedium,
-                      ),
-                    ),
-                    ...actions,
-                  ],
-                ),
+              CtTopBar(
+                title: title,
+                showBackButton: false,
+                trailing: _buildTrailing(),
               ),
               Flexible(
                 child: hasContent
@@ -68,9 +90,8 @@ class UnitsPanelShell extends StatelessWidget {
                             emptyMessage,
                             style: Theme.of(context).textTheme.bodyMedium
                                 ?.copyWith(
-                                  color: Theme.of(
-                                    context,
-                                  ).colorScheme.onSurfaceVariant,
+                                  color: EditorialMonoclePalette.muted,
+                                  fontStyle: FontStyle.italic,
                                 ),
                           ),
                         ),

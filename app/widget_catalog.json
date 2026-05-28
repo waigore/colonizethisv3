@@ -43,5 +43,50 @@
     "category": "game/panel",
     "source": "pipeline",
     "widgetbook_story_path": "Production Panel"
+  },
+  {
+    "id": "ct_civilian_units_panel",
+    "name": "CivilianUnitsPanel",
+    "dart_file_path": "lib/features/game/widgets/civilian_units_panel.dart",
+    "constructor_props": "game: Game, humanPlayerId: String, civilianOwnerIds: Set<String>?, bus: AppEventBus, currentOrders: Orders, tileScopeTileKey: String?, initialSelectedUnitId: String?, explorerOnly: bool, builderOnly: bool, prospectShortcutTargetTileKey: String?, exploreShortcutTargetTileKey: String?, buildImprovementShortcutTargetTileKey: String?, readOnly: bool",
+    "category": "game/panel",
+    "source": "pipeline",
+    "widgetbook_story_path": "Civilian Units Panel"
+  },
+  {
+    "id": "ct_military_units_panel",
+    "name": "MilitaryUnitsPanel",
+    "dart_file_path": "lib/features/game/widgets/military_units_panel.dart",
+    "constructor_props": "game: Game, humanPlayerId: String, bus: AppEventBus, topology: MapTopology, draftOrders: Orders, readOnly: bool",
+    "category": "game/panel",
+    "source": "pipeline",
+    "widgetbook_story_path": "Military Units Panel"
+  },
+  {
+    "id": "ct_naval_units_panel",
+    "name": "NavalUnitsPanel",
+    "dart_file_path": "lib/features/game/widgets/naval_units_panel.dart",
+    "constructor_props": "game: Game, humanPlayerId: String, bus: AppEventBus, topology: MapTopology, draftOrders: Orders, tileMapByRegion: Map<String, TileMapResult>?, topologyByRegion: Map<String, MapTopology>?, locationScopeKey: String?, initialSelectedFleetId: String?, tileScopeTileKey: String?, readOnly: bool",
+    "category": "game/panel",
+    "source": "pipeline",
+    "widgetbook_story_path": "Naval Units Panel"
+  },
+  {
+    "id": "ct_train_civilians_dialog",
+    "name": "TrainCiviliansDialog",
+    "dart_file_path": "lib/features/game/widgets/train_civilians_dialog.dart",
+    "constructor_props": "game: Game, humanPlayerId: String, currentOrders: Orders, bus: AppEventBus",
+    "category": "game/dialog",
+    "source": "pipeline",
+    "widgetbook_story_path": "Train Civilians Dialog"
+  },
+  {
+    "id": "ct_train_military_dialog",
+    "name": "TrainMilitaryDialog",
+    "dart_file_path": "lib/features/game/widgets/train_military_dialog.dart",
+    "constructor_props": "game: Game, humanPlayerId: String, currentOrders: Orders, bus: AppEventBus",
+    "category": "game/dialog",
+    "source": "pipeline",
+    "widgetbook_story_path": "Train Military Dialog"
   }
 ]
