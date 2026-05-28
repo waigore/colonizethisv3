@@ -18,7 +18,7 @@
 | 6 | technology | Technology | Opens Technology screen |
 | 7 (debug only) | debug_console | Debug Console | Toggles non-modal in-map debug console overlay |
 
-Icons and assets: [game-toolbar-icons.md](game-toolbar-icons.md) — files live in `app/assets/icons/` as `ui_icon_<id>.png` (32×32; display at 20×20 in buttons). The `naval_units` button uses `ui_icon_naval_units.png` and opens the Naval Units panel defined in [naval-units-panel.md](naval-units-panel.md).
+Icons and assets: [game-toolbar-icons.md](game-toolbar-icons.md) — files live in `app/assets/icons/` as `ui_icon_<id>.png` (32×32 source; display at 24×24 inside the 36×36 dp wide-layout rail button per § Styling below, narrow rail measurements per [mobile-adaptation.md](mobile-adaptation.md)). The `naval_units` button uses `ui_icon_naval_units.png` and opens the Naval Units panel defined in [naval-units-panel.md](naval-units-panel.md).
 
 ---
 
@@ -42,8 +42,27 @@ See [in-game-shell-narrow.md](in-game-shell-narrow.md) for modal behaviour and d
 
 ## Styling (left rail)
 
-- **Icon row/column:** `Material` + `InkWell` + `StrictAssetIcon` at **20×20** with light semi-opaque backing, aligned with map tool buttons ([GameMapCornerControls](../../app/lib/features/game/flame/game_map_corner_controls.dart)) for visual consistency.
-- Asset paths: `ui_icon_<id>.png` per [game-toolbar-icons.md](game-toolbar-icons.md); missing or invalid assets throw `FlutterError`.
+Dark editorial-monocle chrome aligned to `SPEC/ui/mockups/GAME10001-game-screen.html` (`.left-rail` / `.empire-btn`) and `SPEC/ui/pixel-art-ui-catalog.md` § Editorial-monocle palette. Issue #2861 R4.
+
+- **Tap target (wide / desktop):** Each rail icon button paints a **36 × 36 dp** square surface. Narrow-layout measurement is **26 × 26 dp** per [mobile-adaptation.md](mobile-adaptation.md) and is governed by issue #2870; this spec authorises the wide-layout baseline only.
+- **Rail layout:** Vertical `Column` with a **3 dp** vertical gap between consecutive icon buttons. The rail anchors at `left: kEdgeSwipeStripWidth` of the map `Stack` and starts from the top of the rail container (host owns vertical placement); the rail itself has no inner padding around the button column.
+- **Surface chrome:** Vertical gradient from `--surface-lite` (top, `EditorialMonoclePalette.surfaceLite`) to `--bg-deep` (bottom, `EditorialMonoclePalette.bgDeep`), painted via `CtGradients.railButtonGradient`. A **1 dp** outline in `--border` (`EditorialMonoclePalette.border`) frames every edge of the surface.
+- **Icon glyph:** Centered `StrictAssetIcon` rendered at **24 × 24 dp**, tinted via a colour overlay using the same token cycle as the surface chrome: `--accent-dim` default, `--accent` on hover, `--accent-bright` on pressed. Pointer hover lifts the outline from `--border` to `--accent-dim` to mirror the mockup `.empire-btn:hover` rule.
+- **Disabled state:** When a button is disabled (e.g., debug-only icon hidden), the button is **removed from the tree** rather than rendered greyed out. Visible buttons are always interactive.
+- **Tooltip:** Each button hosts a `Tooltip` with the label from the [Definition](#definition) table; the localised string is the source of truth. The mockup's CSS hover tooltip is the inspiration for the side-mounted dark popup; the Flutter `Tooltip` provides the equivalent behaviour with the default platform timing.
+- **Accessibility:** Each button is wrapped in `Semantics(button: true, label: <tooltip>)` so assistive tech still reports the action even when the visual is icon-only.
+- **Tokens / no light hex:** All chrome and glyph colours resolve from [EditorialMonoclePalette](../../app/lib/config/editorial_monocle_palette.dart). Hard-coded light hex (e.g. `Colors.white.withOpacity(0.9)`, parchment `#F5F5DC`) is forbidden in the rail — those colours regress the dark theme mandate from `colonizethis-ui-design.mdc`.
+- **Asset error handling:** Asset paths follow `ui_icon_<id>.png` per [game-toolbar-icons.md](game-toolbar-icons.md); missing or invalid assets throw `FlutterError`.
+
+### Acceptance criteria (left rail chrome)
+
+- **Given** the in-game map is rendered on the wide layout (`MediaQuery.size.width ≥ kNarrowBreakpoint`), **when** [GameMapEmpireLeftRail](../../app/lib/features/game/flame/game_map_empire_left_rail.dart) lays out the six core empire buttons (`production`, `civilian_units`, `military_units`, `naval_units`, `diplomacy`, `technology`), **then** every visible rail icon button paints a **36 × 36 dp** square surface.
+- **Given** the rail is rendered, **when** the chrome painter resolves a single rail button's surface, **then** the surface paints `CtGradients.railButtonGradient` (vertical gradient from `EditorialMonoclePalette.surfaceLite` to `EditorialMonoclePalette.bgDeep`) and a **1 dp** outline in `EditorialMonoclePalette.border`.
+- **Given** the rail is rendered, **when** the chrome painter resolves a rail button's icon glyph, **then** the glyph paints `StrictAssetIcon` at exactly **24 × 24 dp**, tinted via `EditorialMonoclePalette.accentDim` while the button is idle.
+- **Given** the rail is rendered, **when** the user hovers the `production` rail button with a pointer device, **then** the outline updates to `EditorialMonoclePalette.accentDim` and the icon-glyph tint updates to `EditorialMonoclePalette.accent`.
+- **Given** the rail is rendered, **when** the user presses (pointer-down or active highlight) the `production` rail button, **then** the icon-glyph tint updates to `EditorialMonoclePalette.accentBright`.
+- **Given** the rail is rendered, **when** the layout resolves the rail column, **then** consecutive rail buttons have a **3 dp** vertical gap between them and no other padding inside the rail column.
+- **Given** the rail is rendered, **when** the layout enumerates colour usage anywhere inside the rail buttons, **then** no rail node paints `Colors.white`, `Colors.black`, or other light-theme parchment hex literals; every colour resolves from `EditorialMonoclePalette` tokens.
 
 ---
 
@@ -52,4 +71,6 @@ See [in-game-shell-narrow.md](in-game-shell-narrow.md) for modal behaviour and d
 - [game-toolbar-icons.md](game-toolbar-icons.md) — icon assets and prompts
 - [in-game-shell-narrow.md](in-game-shell-narrow.md) — side menu implementation
 - [empire-overview.md](empire-overview.md) — in-game shell
-- [pixel-art-ui-catalog.md](pixel-art-ui-catalog.md) — CtNinePatchButton
+- [pixel-art-ui-catalog.md](pixel-art-ui-catalog.md) — CtNinePatchButton + editorial-monocle palette
+- [mobile-adaptation.md](mobile-adaptation.md) — narrow rail measurement (26 × 26 dp, deferred to issue #2870)
+- [`SPEC/ui/mockups/GAME10001-game-screen.html`](mockups/GAME10001-game-screen.html) — canonical visual contract (`.empire-btn`)

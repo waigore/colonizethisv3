@@ -4,15 +4,12 @@ import 'package:colonizethis_app/l10n/l10n.dart';
 import '../../../config/app_assets.dart';
 import '../../../config/ct_e2e.dart';
 import '../../../widgets/ct_choice_chip.dart';
-import '../../../widgets/ct_nine_patch_button.dart';
 import '../../../widgets/strict_asset_icon.dart';
 import '../../../providers/observe_session_provider.dart';
+import '../widgets/game_top_bar.dart';
 import '../widgets/player_turn_event_feed.dart';
 import 'game_screen_shared.dart'
-    show
-        kCargoHoldIndicatorKey,
-        kGameMapNextTurnButtonKey,
-        kTreasuryIndicatorKey;
+    show kCargoHoldIndicatorKey, kTreasuryIndicatorKey;
 
 /// Top bar and region chips for the in-game map shell.
 class GameMapControls extends StatefulWidget {
@@ -112,37 +109,13 @@ class _GameMapControlsState extends State<GameMapControls> {
     final deltaColor = _treasuryDeltaColor(deltaLabel == null ? null : widget.treasuryDelta);
     return Column(
       children: [
-        Padding(
-          padding: const EdgeInsets.symmetric(vertical: 4),
-          child: Row(
-            children: [
-              IconButton(
-                icon: const Icon(Icons.menu),
-                onPressed: widget.onToggleSideMenu,
-                tooltip: l10n.gameMap_menuTooltip,
-              ),
-              if (widget.observeBannerLabel != null)
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 8),
-                  child: Text(
-                    widget.observeBannerLabel!,
-                    style: const TextStyle(
-                      fontWeight: FontWeight.w600,
-                      fontSize: 13,
-                    ),
-                  ),
-                ),
-              Expanded(
-                child: CtNinePatchButton(
-                  key: kGameMapNextTurnButtonKey,
-                  onPressed: widget.nextTurnEnabled
-                      ? () => widget.onNextTurn()
-                      : null,
-                  child: Text(widget.nextTurnText),
-                ),
-              ),
-            ],
-          ),
+        GameTopBar(
+          onToggleSideMenu: widget.onToggleSideMenu,
+          onNextTurn: widget.onNextTurn,
+          nextTurnEnabled: widget.nextTurnEnabled,
+          nextTurnText: widget.nextTurnText,
+          menuTooltip: l10n.gameMap_menuTooltip,
+          observeBannerLabel: widget.observeBannerLabel,
         ),
         Padding(
           padding: const EdgeInsets.symmetric(vertical: 8),
