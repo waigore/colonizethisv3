@@ -1991,7 +1991,11 @@
   },
   "gameSetup_starting": "Starting…",
   "@gameSetup_starting": {
-    "description": "Loading state label while starting a game from setup."
+    "description": "Loading state label while starting a game from setup (retained for backward compatibility; the in-screen dim overlay now uses gameSetup_loadingGeneratingWorld per #2868 R15)."
+  },
+  "gameSetup_loadingGeneratingWorld": "Generating world…",
+  "@gameSetup_loadingGeneratingWorld": {
+    "description": "Loading overlay label shown beneath the spinner while the Game Setup screen is generating a new world (Refs #2868 R15)."
   },
   "gameSetup_startGame": "Start Game",
   "@gameSetup_startGame": {
