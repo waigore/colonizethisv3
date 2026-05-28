@@ -1,6 +1,6 @@
 ---
 name: manage-pr-agent
-description: Keeps open pull requests moving through CI and GitHub workflows in an orderly manner. Enforces one open PR per GitHub issue (via consolidate-prs), throttles concurrent CI to at most two PRs with running workflows at a time (pausing excess via `[skip ci]` empty commits plus cancelling in-flight runs), and unblocks PRs that have been blocked for more than one hour (via fix-pr). Performs actions once and then ends the run without waiting for merges, CI, or unblock confirmation. Use when the user asks to tidy, throttle, unblock, or generally manage in-flight PRs.
+description: Keeps open pull requests moving through CI and GitHub workflows in an orderly manner. Enforces one open PR per GitHub issue (via consolidate-prs) and maintains a running-CI quota of 2 PRs (both floor and ceiling) by pausing excess via `[skip ci]` empty commits, resuming paused PRs, and unblocking stalled PRs via fix-pr (older PRs first) whenever the quota has headroom. Performs actions once and then ends the run without waiting for merges, CI, or unblock confirmation. Use when the user asks to tidy, throttle, unblock, or generally manage in-flight PRs.
 ---
 
 # Manage PR Agent (ColonizeThis)
@@ -11,9 +11,9 @@ Use when the user asks to:
 
 - Triage and move open PRs along through CI / review workflows.
 - Enforce one-PR-per-issue across the repo.
-- Throttle GitHub Actions usage when too many PRs are burning runner
-  minutes at once.
-- Unblock PRs that have been stuck for a while.
+- Throttle GitHub Actions usage so a constant 2 PRs are running CI at a
+  time (both floor and ceiling).
+- Unblock stalled PRs to keep PRs flowing toward merge.
 
 This skill performs one orderly pass and **ends**. It never sits waiting
 for merges, unblocks, or workflow completion.
@@ -25,9 +25,11 @@ Read and apply these strictly — do not invent lighter substitutes:
 - `.cursor/skills/consolidate-prs/SKILL.md` — used end-to-end whenever any
   open issue has two or more referencing open PRs. Apply that skill's
   workflow per affected issue; do not collapse PRs by hand.
-- `.cursor/skills/fix-pr/SKILL.md` — used end-to-end for every PR identified
-  as blocked for **more than one hour** (see "Stalled detection" below).
-  Discover the PR via `gh`, then pass its number/URL into that skill.
+- `.cursor/skills/fix-pr/SKILL.md` — used end-to-end on stalled PRs picked
+  during the maintain-CI-throughput phase (see phase 3). Apply only while
+  the running-CI count is under the quota of 2, generally **oldest PR
+  first**. Discover the PR via `gh`, then pass its number/URL into that
+  skill.
 
 Also follow `AGENTS.md`, `CONTRIBUTING.md`, and `.cursor/rules/`.
 
@@ -88,63 +90,46 @@ orphan-run cancellation.
 After consolidation, **re-fetch** the open-PR set (step 1's command); the
 PR list will have changed and downstream phases must use the updated set.
 
-### 3. Unblock PRs blocked > 1 hour (fix-pr)
+### 3. Maintain CI throughput target of 2
 
-#### Stalled detection (per PR)
+The quota is **2 PRs with CI running** — both floor and ceiling. Fewer
+than 2 wastes throughput; more than 2 wastes runner minutes. **Skip this
+phase entirely when total open PRs < 2** (the quota cannot be filled).
 
-A PR qualifies for `fix-pr` in this run when **all** hold:
+#### Compute counts
 
-1. It is **stalled** (per phase 1's definition), AND
-2. It has been stalled for **more than 60 minutes**. Estimate "stalled
-   for" as the most recent of:
-   - `updatedAt` of the PR, or
-   - `completedAt` of its most recent failed/cancelled required check
-     (from `statusCheckRollup`), or
-   - the head-commit author/commit timestamp
-     (`gh api repos/{owner}/{repo}/commits/<sha> --jq '.commit.committer.date'`).
+From the (refreshed) phase 1 data, let:
 
-   Use the latest available signal; if it is `> 60m` ago relative to "now",
-   the PR qualifies.
+- `R` = open PRs with **Has running workflows == true** (phase 1).
+- `P` = open **non-fork** PRs whose head-commit subject contains a
+  recognised skip directive — `[skip ci]`, `[ci skip]`, `[no ci]`,
+  `[skip actions]`, or `[actions skip]`. These are the resumable PRs.
+- `S` = stalled open PRs (phase 1 definition), **excluding** any already
+  in `P`, ordered by `updatedAt` ascending (oldest first).
 
-The 1-hour floor exists so this agent does not stomp on another agent's
-in-flight work. **Skip** any PR whose stalled signal is younger than 60
-minutes — leave it alone this run.
+#### Cases
 
-#### Action
+- `R > 2` → **Pause** `R - 2` PRs.
+- `R < 2` → **Fill** toward `R == 2`.
+- `R == 2` → no-op; record "quota met" in the report.
 
-For each qualifying PR (oldest stalled timestamp first):
+Pause / resume / fix-pr calls are fire-and-forget; the agent does not
+wait for CI to start or stop. Each successful push to a head branch
+logically increments the projected `R` by 1 for the duration of this
+phase only.
 
-- Apply `.cursor/skills/fix-pr/SKILL.md` strictly end-to-end against that
-  PR's number/URL.
-- After pushing the fix (or determining no fix is possible without
-  out-of-scope changes), **do not wait** for remote CI. Move on.
+#### Pause (R > 2)
 
-### 4. Throttle CI to at most 2 PRs with running workflows
+Keep the two highest-priority running PRs and pause the rest. Priority
+order (highest first):
 
-#### Count
-
-Refresh open PRs and count those with **Has running workflows == true**
-(phase 1 definition). Let this be `R`.
-
-If `R <= 2`, skip this phase entirely.
-
-#### Choose which PRs to pause
-
-When `R > 2`, **keep** the two highest-priority running PRs and **pause**
-the rest. Priority order (highest first):
-
-1. PRs this agent just operated on in phase 2 or 3 of this run (their CI
+1. PRs this agent just operated on in phase 2 of this run (their CI
    needs to validate the fresh push).
 2. PRs marked `mergeable == MERGEABLE` whose only remaining wait is CI
-   (these are closest to landing).
+   (closest to landing).
 3. Non-draft PRs over drafts.
 4. Newer `updatedAt` over older (older has had more chances; pausing it
    once is cheap).
-
-Apply tie-breakers in order; record the chosen "keep" set and the "pause"
-set explicitly in the final report.
-
-#### Pause a PR
 
 For each PR in the pause set:
 
@@ -160,44 +145,59 @@ For each PR in the pause set:
    ```
 
    Only cancel runs whose `event` is `pull_request` or
-   `pull_request_target` and whose `headSha` matches the PR's current head
-   commit. Do **not** cancel `push`, `schedule`, `workflow_dispatch`, or
-   `merge_group` runs based on this rule alone.
+   `pull_request_target` and whose `headSha` matches the PR's current
+   head commit. Do **not** cancel `push`, `schedule`, `workflow_dispatch`,
+   or `merge_group` runs based on this rule alone.
 
-2. Prevent the next push from re-triggering CI by ensuring the latest
-   commit message on the PR's head branch contains a recognised skip
-   directive. GitHub Actions honours any of `[skip ci]`, `[ci skip]`,
-   `[no ci]`, `[skip actions]`, `[actions skip]` in the **subject** of the
-   head commit. Use `[skip ci]`.
-
-   Prefer an **empty commit** appended to the head branch — this avoids
-   rewriting history and works on PRs the agent did not author:
+2. Append an empty `[skip ci]` commit to the head branch so the next
+   push does not retrigger CI. Use an empty commit (no history rewrite,
+   works on PRs the agent did not author):
 
    ```bash
    git fetch origin <headRefName>
    git checkout -B _pause/<headRefName> origin/<headRefName>
-   git commit --allow-empty -m "[skip ci] manage-pr-agent: pause CI to honour 2-concurrent-PR budget"
+   git commit --allow-empty -m "[skip ci] manage-pr-agent: pause CI to honour 2-PR quota"
    git push origin HEAD:<headRefName>
    ```
 
-   If the PR head lives on a fork (`headRepositoryOwner.login` differs
-   from the upstream owner), the agent typically lacks push rights. In
-   that case **do not pause** — record the PR in the report as
-   "fork-owned, cannot pause" and pick the next-lowest-priority owned PR
-   instead.
+   Fork-owned PRs (`headRepositoryOwner.login` differs from upstream)
+   cannot be paused via push — **skip** them and pick the
+   next-lowest-priority owned PR instead. Record the skipped fork PR in
+   the report.
 
 3. Do **not** convert the PR to draft, mark it as "do not merge", change
    labels, or add review-blocking comments. The pause is purely a CI
    budget tool.
 
-#### Un-pausing is out of scope
+#### Fill (R < 2)
 
-This agent only pauses. Resuming CI on a paused PR happens automatically
-the next time a normal (non-skip) commit lands on the head branch, or the
-next time `fix-pr` runs on it. The agent does **not** loop back to verify
-the pause took effect.
+Push toward projected `R == 2`. Stop as soon as projected `R == 2` or
+both `P` and `S` are exhausted for this run. The goal is **PRs moving
+toward merge**; the agent has discretion over which lever to pull next
+and may interleave them.
 
-### 5. End the run
+- **Resume a paused PR** (from `P`) by appending a non-skip empty commit
+  to its head branch — cheap; retriggers CI without altering content:
+
+  ```bash
+  git fetch origin <headRefName>
+  git checkout -B _resume/<headRefName> origin/<headRefName>
+  git commit --allow-empty -m "chore: resume CI (manage-pr-agent)"
+  git push origin HEAD:<headRefName>
+  ```
+
+- **Unblock a stalled PR** (from `S`) by applying
+  `.cursor/skills/fix-pr/SKILL.md` strictly end-to-end against that PR's
+  number/URL. Generally prefer the **oldest `updatedAt` first**; the
+  agent may pick a clearly-closer-to-merge PR instead (e.g., one whose
+  only failure is a flaky check) and must record the deviation in the
+  report.
+
+Fork-owned PRs cannot be resumed via push — skip them for resume too and
+record in the report. Fork-owned PRs still count toward `R` when their
+CI is running.
+
+### 4. End the run
 
 Do not poll workflow runs, mergeability, or label state after acting. Emit
 the report (next section) and stop.
@@ -210,20 +210,23 @@ Produce one consolidated report with these sections (omit empty ones):
 - Per issue handled: issue number/URL, canonical PR, redundant PRs closed,
   outcomes — or delegate to the `consolidate-prs` skill's own report.
 
-**Unblocks (phase 3)**
-- Per PR: number/URL, stalled-for duration, `fix-pr` outcome (one line),
-  push SHA if any.
-- PRs skipped because stalled < 60 min: list with the stalled timestamp.
-
-**CI throttle (phase 4)**
-- Total running PRs before/after.
-- Kept-running PRs (with rationale: priority rule that won).
-- Paused PRs: number/URL, cancelled `databaseId`s, push SHA of the
-  `[skip ci]` empty commit.
-- PRs that should have been paused but were skipped (fork-owned, etc.).
+**CI throughput (phase 3)**
+- Total open PRs; `R` before; projected `R` after; quota target = 2.
+- Branch taken: pause (`R > 2`), fill (`R < 2`), or quota met (`R == 2`).
+- **Paused PRs** (when pausing): number/URL, cancelled `databaseId`s,
+  push SHA of the `[skip ci]` empty commit, and the priority rule that
+  saved each kept-running PR.
+- **Resumed PRs** (when filling): number/URL, push SHA of the resume
+  commit.
+- **Unblocked PRs** (when filling): number/URL, `fix-pr` outcome (one
+  line), push SHA if any. Note any deviation from oldest-first ordering
+  with a one-line reason.
+- **Skipped**: fork-owned PRs (cannot pause/resume), candidates left
+  untouched because the quota was already met, etc.
 
 **No-op phases**
-- One line per phase that had no candidates.
+- One line per phase that had no candidates (including "open PRs < 2,
+  quota phase skipped" when applicable).
 
 ## Guardrails
 
@@ -233,11 +236,15 @@ Produce one consolidated report with these sections (omit empty ones):
 - Never delete remote branches.
 - Never bypass required checks; pausing is for budget only and is undone
   by the next normal commit.
+- Never merge PRs. The agent only keeps PRs *in a mergeable state*;
+  merging is performed by the normal review/merge workflow.
 - Never `gh run cancel` a workflow run whose event is not
   `pull_request`/`pull_request_target` based on this skill's throttle rule
   alone.
+- Resume CI only via plain non-skip empty commits (e.g.,
+  `chore: resume CI`); never force-push, never rewrite history.
 - If `gh` is unavailable, emit the exact prepared commands and commit
   bodies for manual follow-up instead of guessing.
-- If a PR's head is on a fork and pausing requires a push, skip pausing
-  that PR and surface it in the report rather than attempting force-push
-  or branch creation in the upstream repo.
+- If a PR's head is on a fork and pause/resume requires a push, skip the
+  PR for both directions and surface it in the report rather than
+  attempting force-push or branch creation in the upstream repo.
