@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../../../widgets/ct_nine_patch_button.dart';
+import 'units_panel_row_chrome.dart';
 
 /// Shared unit/fleet row layout:
 /// - details on the left
@@ -25,50 +26,54 @@ class UnitsEntityActionRow extends StatelessWidget {
     return LayoutBuilder(
       builder: (context, constraints) {
         final iconOnly = constraints.maxWidth < iconOnlyBreakpoint;
-        return Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Expanded(child: details),
-            if (actions.isNotEmpty) ...[
-              const SizedBox(width: 8),
-              Flexible(
-                fit: FlexFit.loose,
-                child: Align(
-                  alignment: Alignment.topRight,
-                  child: Wrap(
-                    spacing: spacing,
-                    runSpacing: spacing,
-                    alignment: WrapAlignment.end,
-                    children: [
-                      for (final action in actions)
-                        Tooltip(
-                          message: action.tooltip,
-                          child: CtNinePatchButton(
-                            onPressed: action.onPressed,
-                            enabled: action.onPressed != null,
-                            padding: EdgeInsets.symmetric(
-                              horizontal: iconOnly ? 8 : 10,
-                              vertical: 6,
+        return UnitsPanelRowChrome(
+          margin: EdgeInsets.zero,
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(child: details),
+              if (actions.isNotEmpty) ...[
+                const SizedBox(width: 8),
+                Flexible(
+                  fit: FlexFit.loose,
+                  child: Align(
+                    alignment: Alignment.topRight,
+                    child: Wrap(
+                      spacing: spacing,
+                      runSpacing: spacing,
+                      alignment: WrapAlignment.end,
+                      children: [
+                        for (final action in actions)
+                          Tooltip(
+                            message: action.tooltip,
+                            child: CtNinePatchButton(
+                              onPressed: action.onPressed,
+                              enabled: action.onPressed != null,
+                              padding: EdgeInsets.symmetric(
+                                horizontal: iconOnly ? 8 : 10,
+                                vertical: 6,
+                              ),
+                              minHeight: 32,
+                              child: iconOnly
+                                  ? Icon(action.icon, size: 16)
+                                  : Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Icon(action.icon, size: 16),
+                                        const SizedBox(width: 4),
+                                        Text(action.label),
+                                      ],
+                                    ),
                             ),
-                            minHeight: 32,
-                            child: iconOnly
-                                ? Icon(action.icon, size: 16)
-                                : Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      Icon(action.icon, size: 16),
-                                      const SizedBox(width: 4),
-                                      Text(action.label),
-                                    ],
-                                  ),
                           ),
-                        ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
-              ),
+              ],
             ],
-          ],
+          ),
         );
       },
     );

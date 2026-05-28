@@ -34,15 +34,13 @@ List<WidgetbookNode> get trainMilitaryDialogDirectories => [
               ...game.players.where((p) => p.id != humanPlayerId),
             ],
           );
-          return MaterialApp(
-            home: Scaffold(
-              body: Center(
-                child: TrainMilitaryDialog(
-                  game: richGame,
-                  humanPlayerId: humanPlayerId,
-                  currentOrders: const Orders(),
-                  bus: AppEventBus.create(),
-                ),
+          return widgetbookEditorialMonocleApp(
+            child: Center(
+              child: TrainMilitaryDialog(
+                game: richGame,
+                humanPlayerId: humanPlayerId,
+                currentOrders: const Orders(),
+                bus: AppEventBus.create(),
               ),
             ),
           );
