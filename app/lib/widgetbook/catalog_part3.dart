@@ -476,6 +476,23 @@ List<WidgetbookNode> get victoryUiDirectories => [
   ),
 ];
 
+/// Exit-confirm dialog stories. SPEC/ui/in-game-shell-narrow.md § Android
+/// back confirm. Demonstrates the dark editorial-monocle scrim host, the
+/// `--accent` title, the `--fg` body, and the `--danger` Exit label.
+List<WidgetbookNode> get exitConfirmDialogDirectories => [
+  WidgetbookFolder(
+    name: 'Exit Confirm Dialog',
+    children: [
+      WidgetbookUseCase(
+        name: 'Default — danger Exit + brass Cancel',
+        builder: (context) {
+          return _victoryStoryFrame(const ExitConfirmDialog());
+        },
+      ),
+    ],
+  ),
+];
+
 /// Combat UI stories.
 /// SPEC/ui/quick-battle-screen.md, quick-battle-deployment-view.md,
 /// quick-battle-action-selector.md, combat-mode-choice-dialog.md,

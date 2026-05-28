@@ -46,6 +46,7 @@ import '../features/game/dialogue/intervention_dialogue_overlay.dart';
 import '../features/game/dialogue/overture_dialogue_overlay.dart';
 import '../features/game/flame/game_screen.dart';
 import '../features/game/flame/game_side_menu.dart';
+import '../features/game/flame/exit_confirm_dialog.dart';
 import '../features/game/flame/victory_overlay.dart';
 import '../features/game/flame/region_map_component.dart'
     show CtMapVisibilityMode;
@@ -176,6 +177,7 @@ List<WidgetbookNode> get _ctWidgetbookDirectories => [
   ...callToArmsDialogueOverlayDirectories,
   ...turnNewsDialogDirectories,
   ...victoryUiDirectories,
+  ...exitConfirmDialogDirectories,
   ...combatUiDirectories,
   ...moveArmyDialogDirectories,
   ...moveFleetDialogDirectories,
