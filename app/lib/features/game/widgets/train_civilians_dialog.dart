@@ -5,6 +5,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
 
 import '../../../config/app_assets.dart';
+import '../../../config/ui_screen_ids.dart';
 import '../../../l10n/l10n.dart';
 import '../../../widgets/ct_dialog_shell.dart';
 import '../../../widgets/ct_nine_patch_button.dart';
@@ -19,6 +20,9 @@ class TrainCiviliansDialog extends StatefulWidget {
     required this.currentOrders,
     required this.bus,
   });
+
+  /// SPEC/ui/train-civilians-dialog.md — [UiScreenIds.trainCiviliansDialog].
+  static const screenId = UiScreenIds.trainCiviliansDialog;
 
   final Game game;
   final String humanPlayerId;

@@ -351,6 +351,13 @@ mixin _AppLocalizationsEnStrings3 on AppLocalizations {
   String get gameSetup_title => 'Game Setup';
 
   @override
+  String get gameSetup_eyebrow => 'New Campaign';
+
+  @override
+  String get gameSetup_intro =>
+      'Choose six great powers and a leader variant for each.';
+
+  @override
   String get gameSetup_starting => 'Starting…';
 
   @override

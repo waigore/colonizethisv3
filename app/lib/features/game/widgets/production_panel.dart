@@ -4,9 +4,12 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
 
 import '../../../config/constants.dart';
+import '../../../config/editorial_monocle_palette.dart';
 import '../../../l10n/l10n.dart';
 import '../../../widgets/ct_nine_patch_button.dart';
 import '../../../widgets/ct_panel.dart';
+import '../../../widgets/ct_resource_cell.dart';
+import '../../../widgets/ct_section_label.dart';
 import '../../../widgets/resource_icon.dart';
 import 'production_allocation_row.dart';
 import 'production_labour_helpers.dart';
@@ -185,60 +188,48 @@ class _AvailableSubpanel extends StatelessWidget {
   final ProductionLabourCallbacks? labourCallbacks;
   final bool canEditLabour;
 
-  Widget _buildCommodityRow(Commodity c, int qty, int change, ThemeData theme) {
+  Widget _buildCommodityCell(Commodity c, int qty, int change) {
     final name = c.displayName ?? c.id;
-    final changeSeg = change == 0 ? '' : ' (${change > 0 ? '+' : ''}$change)';
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        ResourceIcon(commodityId: c.id, size: 16),
-        const SizedBox(width: 4),
-        Flexible(
-          child: Text(
-            l10n.production_commodityStock(name, qty, changeSeg),
-            style: theme.textTheme.bodySmall,
-            overflow: TextOverflow.ellipsis,
-          ),
-        ),
-      ],
+    return CtResourceCell(
+      key: ValueKey<String>('production_available_cell_${c.id}'),
+      iconBuilder: (_) => ResourceIcon(
+        commodityId: c.id,
+        size: CtResourceCell.leadingIconSize,
+      ),
+      name: name,
+      quantity: qty,
+      delta: change == 0 ? null : change,
     );
   }
 
   Widget _buildCommodityGrid(
     List<Commodity> commodities,
     Map<String, int> netChanges,
-    ThemeData theme,
   ) {
-    return LayoutBuilder(
-      builder: (context, constraints) => Wrap(
-        spacing: 8,
-        runSpacing: 4,
-        children: commodities.map((c) {
-          final qty = player.stockpile.quantityOf(c.id);
-          final change = netChanges[c.id] ?? 0;
-          return SizedBox(
-            width: constraints.maxWidth,
-            child: _buildCommodityRow(c, qty, change, theme),
-          );
-        }).toList(),
-      ),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: <Widget>[
+        for (int i = 0; i < commodities.length; i++) ...<Widget>[
+          if (i > 0) const SizedBox(height: 4),
+          _buildCommodityCell(
+            commodities[i],
+            player.stockpile.quantityOf(commodities[i].id),
+            netChanges[commodities[i].id] ?? 0,
+          ),
+        ],
+      ],
     );
   }
 
-  Widget _buildWorkerRow(String workerType, int count, ThemeData theme) {
-    return Row(
-      mainAxisSize: MainAxisSize.max,
-      children: [
-        WorkerIcon(workerType: workerType, size: 16),
-        const SizedBox(width: 4),
-        Flexible(
-          child: Text(
-            l10n.production_workerCount(_workerDisplayName(workerType), count),
-            style: theme.textTheme.bodySmall,
-            overflow: TextOverflow.ellipsis,
-          ),
-        ),
-      ],
+  Widget _buildWorkerCell(String workerType, int count) {
+    return CtResourceCell(
+      key: ValueKey<String>('production_available_worker_$workerType'),
+      iconBuilder: (_) => WorkerIcon(
+        workerType: workerType,
+        size: CtResourceCell.leadingIconSize,
+      ),
+      name: _workerDisplayName(workerType),
+      quantity: count,
     );
   }
 
@@ -260,15 +251,14 @@ class _AvailableSubpanel extends StatelessWidget {
   List<Widget> _buildFoodSection(
     List<Commodity> availableFood,
     Map<String, int> netChanges,
-    ThemeData theme,
   ) {
     if (availableFood.isEmpty) {
       return const <Widget>[];
     }
     return <Widget>[
-      Text(l10n.production_food, style: theme.textTheme.labelMedium),
-      const SizedBox(height: 4),
-      _buildCommodityGrid(availableFood, netChanges, theme),
+      CtSectionLabel(l10n.production_food),
+      const SizedBox(height: 6),
+      _buildCommodityGrid(availableFood, netChanges),
       const SizedBox(height: 12),
     ];
   }
@@ -277,19 +267,18 @@ class _AvailableSubpanel extends StatelessWidget {
     List<Commodity> rawMaterials,
     List<Commodity> manufactured,
     Map<String, int> netChanges,
-    ThemeData theme,
   ) {
     final children = <Widget>[
-      Text(l10n.production_rawMaterials, style: theme.textTheme.labelMedium),
-      const SizedBox(height: 4),
-      _buildCommodityGrid(rawMaterials, netChanges, theme),
+      CtSectionLabel(l10n.production_rawMaterials),
+      const SizedBox(height: 6),
+      _buildCommodityGrid(rawMaterials, netChanges),
     ];
     if (manufactured.isNotEmpty) {
       children.addAll([
         const SizedBox(height: 12),
-        Text(l10n.production_manufactured, style: theme.textTheme.labelMedium),
-        const SizedBox(height: 4),
-        _buildCommodityGrid(manufactured, netChanges, theme),
+        CtSectionLabel(l10n.production_manufactured),
+        const SizedBox(height: 6),
+        _buildCommodityGrid(manufactured, netChanges),
       ]);
     }
     return children;
@@ -298,18 +287,18 @@ class _AvailableSubpanel extends StatelessWidget {
   List<Widget> _buildWorkerSection(ThemeData theme) {
     final children = <Widget>[
       const SizedBox(height: 12),
-      Text(l10n.production_workers, style: theme.textTheme.labelMedium),
-      const SizedBox(height: 4),
+      CtSectionLabel(l10n.production_workers),
+      const SizedBox(height: 6),
       Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          _buildWorkerRow('peasant', player.workerPool.peasants, theme),
+          _buildWorkerCell('peasant', player.workerPool.peasants),
           const SizedBox(height: 4),
-          _buildWorkerRow('apprentice', player.workerPool.apprentices, theme),
+          _buildWorkerCell('apprentice', player.workerPool.apprentices),
           const SizedBox(height: 4),
-          _buildWorkerRow('journeyman', player.workerPool.journeymen, theme),
+          _buildWorkerCell('journeyman', player.workerPool.journeymen),
           const SizedBox(height: 4),
-          _buildWorkerRow('master', player.workerPool.masters, theme),
+          _buildWorkerCell('master', player.workerPool.masters),
         ],
       ),
     ];
@@ -326,9 +315,9 @@ class _AvailableSubpanel extends StatelessWidget {
     }
     children.addAll(<Widget>[
       const SizedBox(height: 8),
-      Text(
-        l10n.production_effectiveLabour(effectiveLabour),
-        style: theme.textTheme.bodySmall?.copyWith(fontWeight: FontWeight.w600),
+      _EffectiveLabourTotal(
+        text: l10n.production_effectiveLabour(effectiveLabour),
+        theme: theme,
       ),
     ]);
     return children;
@@ -377,17 +366,44 @@ class _AvailableSubpanel extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 8),
-            ..._buildFoodSection(availableFood, netChanges, theme),
-            ..._buildMaterialsSection(
-              rawMaterials,
-              manufactured,
-              netChanges,
-              theme,
-            ),
+            ..._buildFoodSection(availableFood, netChanges),
+            ..._buildMaterialsSection(rawMaterials, manufactured, netChanges),
             ..._buildWorkerSection(theme),
           ],
         ),
       ),
+    );
+  }
+}
+
+/// Right-aligned **Effective labour** total rendered with the dark
+/// editorial-monocle accent color, monospace tabular figures, and a
+/// 1px `--accent-dim` top border, per the issue #2862 Available subpanel
+/// requirement R8 (right-aligned, accent color, bordered top).
+class _EffectiveLabourTotal extends StatelessWidget {
+  const _EffectiveLabourTotal({required this.text, required this.theme});
+
+  final String text;
+  final ThemeData theme;
+
+  @override
+  Widget build(BuildContext context) {
+    final base = theme.textTheme.bodySmall ?? const TextStyle(fontSize: 12);
+    final style = base.copyWith(
+      color: EditorialMonoclePalette.accent,
+      fontWeight: FontWeight.w600,
+      fontFamilyFallback: const <String>['SF Mono', 'Menlo', 'monospace'],
+      fontFeatures: const <FontFeature>[FontFeature.tabularFigures()],
+    );
+    return Container(
+      width: double.infinity,
+      decoration: BoxDecoration(
+        border: Border(
+          top: BorderSide(color: EditorialMonoclePalette.accentDim, width: 1),
+        ),
+      ),
+      padding: const EdgeInsets.only(top: 4),
+      child: Text(text, style: style, textAlign: TextAlign.right),
     );
   }
 }

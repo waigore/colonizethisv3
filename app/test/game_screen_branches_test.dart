@@ -98,7 +98,7 @@ void main() {
     );
     await tester.pump(const Duration(milliseconds: 200));
 
-    expect(find.text('Military victory'), findsOneWidget);
+    expect(find.text('MILITARY VICTORY'), findsOneWidget);
     expect(find.textContaining('wins on turn 7'), findsOneWidget);
   });
 

@@ -16,17 +16,44 @@ enum StrategicGoal { defend, expand, conquer, trade, tech, diplomacy }
 
 /// Computes the effective strategic-goal candidate scores before weighted
 /// random selection. Used by both the planner and trace export.
+///
+/// Soft-phase NW acquisition wiring (Refs #2847 Phase 3): when
+/// [colonialPressureWeight] is non-null, the goal-score colonial-pressure
+/// penalty/floor pass derives its activation gate from
+/// `colonialPressureWeight > 0.0` (legacy hard-suppress preserved when
+/// `colonialPressureWeight <= 0.0`) and scales the penalty magnitudes and
+/// score floors by `colonialPressureWeight` clamped to `[0.0, 1.0]`. The
+/// soft path is identity-equal to the legacy hard-phase
+/// `phaseColonialPressureActive == true` behaviour when
+/// `colonialPressureWeight == 1.0`, preserving the production goal-score
+/// contract at the EXPAND→COLONIAL boundary while allowing the curve
+/// values from `phase_priority_weights.dart` to ramp colonial pressure
+/// continuously across OW counts on the dispatch path.
+///
+/// When [colonialPressureWeight] is null, the legacy boolean resolution
+/// runs unchanged: callers passing [observerGoalPhase] route off
+/// [resolvePhaseGoalColonialPressureActive], and tests/legacy callers
+/// without either parameter fall through to the
+/// `!suppressColonialPressure && hasColonialAcquisitionTargets &&
+/// !shouldSuppressNewWorldColonialOrders` compose.
 Map<StrategicGoal, int> evaluateStrategicGoalScores(
   AIWorldSnapshot snapshot,
   AIConfig config, {
   ObserverGoalPhase? observerGoalPhase,
   bool suppressColonialPressure = false,
+  double? colonialPressureWeight,
 }) {
-  final phaseColonialPressureActive = observerGoalPhase != null
+  final effectiveColonialPressureWeight = colonialPressureWeight == null
+      ? null
+      : colonialPressureWeight.clamp(0.0, 1.0).toDouble();
+  final phaseColonialPressureActive = effectiveColonialPressureWeight != null
+      ? effectiveColonialPressureWeight > 0.0
+      : observerGoalPhase != null
       ? resolvePhaseGoalColonialPressureActive(observerGoalPhase)
       : !suppressColonialPressure &&
             hasColonialAcquisitionTargets(snapshot.colonial) &&
             !shouldSuppressNewWorldColonialOrders(snapshot: snapshot);
+  final colonialPressureScale = effectiveColonialPressureWeight ?? 1.0;
   final weights = getGoalWeightsForLeader(config.personalityId);
   final thresholds = getThresholdsForLeader(config.personalityId);
 
@@ -97,13 +124,24 @@ Map<StrategicGoal, int> evaluateStrategicGoalScores(
     }
   }
   if (phaseColonialPressureActive) {
-    diplomacy -= kColonialDiplomacyGoalPenaltyWhenPressure;
-    trade -= kColonialTradeGoalPenaltyWhenPressure;
-    if (expand < kMinimumColonialExpandScoreWhenPressure) {
-      expand = kMinimumColonialExpandScoreWhenPressure;
+    final scaledDiplomacyPenalty =
+        (kColonialDiplomacyGoalPenaltyWhenPressure * colonialPressureScale)
+            .round();
+    final scaledTradePenalty =
+        (kColonialTradeGoalPenaltyWhenPressure * colonialPressureScale).round();
+    final scaledExpandFloor =
+        (kMinimumColonialExpandScoreWhenPressure * colonialPressureScale)
+            .round();
+    final scaledConquerFloor =
+        (kMinimumColonialConquerScoreWhenPressure * colonialPressureScale)
+            .round();
+    diplomacy -= scaledDiplomacyPenalty;
+    trade -= scaledTradePenalty;
+    if (expand < scaledExpandFloor) {
+      expand = scaledExpandFloor;
     }
-    if (conquer < kMinimumColonialConquerScoreWhenPressure) {
-      conquer = kMinimumColonialConquerScoreWhenPressure;
+    if (conquer < scaledConquerFloor) {
+      conquer = scaledConquerFloor;
     }
   }
   if (provincesToVictory > kConquerScoreFloorProvincesToVictoryThreshold &&
@@ -174,6 +212,14 @@ String majorConstraintForStrategicGoal(
 
 /// Selects primary strategic goal from snapshot, personality, and agenda modifiers.
 /// Deterministic given [snapshot], [config], and [goalSeed].
+///
+/// When [colonialPressureWeight] is non-null, the underlying
+/// [evaluateStrategicGoalScores] call routes its colonial-pressure
+/// penalty/floor pass through the soft-phase NW acquisition weight (Refs
+/// #2847 Phase 3 goal-score wiring); identity-equal to the legacy
+/// hard-phase behaviour at `colonialPressureWeight == 1.0`. Otherwise
+/// the legacy boolean resolution from [observerGoalPhase] /
+/// [suppressColonialPressure] is preserved exactly.
 StrategicGoal selectPrimaryGoal(
   AIWorldSnapshot snapshot,
   AIConfig config,
@@ -182,12 +228,14 @@ StrategicGoal selectPrimaryGoal(
   required int turn,
   ObserverGoalPhase? observerGoalPhase,
   bool suppressColonialPressure = false,
+  double? colonialPressureWeight,
 }) {
   final candidates = evaluateStrategicGoalScores(
     snapshot,
     config,
     observerGoalPhase: observerGoalPhase,
     suppressColonialPressure: suppressColonialPressure,
+    colonialPressureWeight: colonialPressureWeight,
   );
 
   _log.d(

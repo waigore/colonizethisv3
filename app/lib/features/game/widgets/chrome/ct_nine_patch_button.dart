@@ -85,7 +85,9 @@ class CtNinePatchButton extends StatefulWidget {
   /// (border, label, and hover all stay on `--danger`). The gradient
   /// surface and brass corner brackets are unchanged. Used by destructive
   /// action buttons such as the diplomacy panel `Declare War` button per
-  /// `SPEC/ui/diplomacy-panel.md` § Action button styling and
+  /// `SPEC/ui/diplomacy-panel.md` § Action button styling, the move-army
+  /// war confirmation `Declare war and move` button per
+  /// `SPEC/ui/move-army-dialog.md` § Invade-confirm sub-dialog, and
   /// `SPEC/ui/pixel-art-ui-catalog.md` § Pixel-art component catalog
   /// (CtNinePatchButton). Defaults to `false`.
   final bool dangerVariant;

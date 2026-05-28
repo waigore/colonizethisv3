@@ -718,13 +718,22 @@ void main() {
         );
         await tester.pump(const Duration(milliseconds: 200));
 
-        expect(find.textContaining('victory'), findsOneWidget);
+        // The restyled overlay (Refs #2861, SPEC/ui/victory-overlay.md) renders
+        // the title in uppercase ("MILITARY VICTORY"); accept either case so a
+        // future copy tweak doesn't silently break this assertion.
+        expect(
+          find.textContaining(RegExp('victory', caseSensitive: false)),
+          findsOneWidget,
+        );
 
         await tester.tap(find.text('View final state'));
         await tester.pump(const Duration(milliseconds: 200));
 
         // Overlay should be gone but we should still be on the Game screen shell.
-        expect(find.textContaining('victory'), findsNothing);
+        expect(
+          find.textContaining(RegExp('victory', caseSensitive: false)),
+          findsNothing,
+        );
         expect(find.byType(GameScreen), findsOneWidget);
       },
       timeout: const Timeout(Duration(seconds: 20)),

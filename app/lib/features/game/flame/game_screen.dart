@@ -19,7 +19,6 @@ import '../../../../providers/turn_resolution_blocking_provider.dart';
 import '../../../../providers/turn_resolution_runner_provider.dart';
 import '../../../core/services/turn_resolution_blocking_service.dart';
 import '../../../core/services/turn_resolution_runner.dart';
-import '../../../../widgets/ct_dialog_shell.dart';
 import '../../../widgets/ct_nine_patch_button.dart';
 import '../../../widgets/ct_screen_shell.dart';
 import '../../../widgets/game_to_ui_bus_listener.dart';
@@ -28,6 +27,7 @@ import '../dialogue/call_to_arms_dialogue_overlay.dart';
 import '../dialogue/game_start_intro_overlay.dart';
 import '../dialogue/intervention_dialogue_overlay.dart';
 import '../dialogue/overture_dialogue_overlay.dart';
+import 'exit_confirm_dialog.dart';
 import 'game_canvas.dart';
 import 'game_map_area.dart';
 import 'game_map_area_state_logic.dart';
@@ -43,45 +43,6 @@ final _gameScreenLog = packageLogger('logic');
 /// Emits [OpenPauseMenuPanelEvent]; shell event handler shows the bottom sheet.
 void _showPauseMenu(AppEventBus bus) {
   bus.emit(const OpenPauseMenuPanelEvent());
-}
-
-Future<bool> _showExitToMainMenuConfirmDialog(BuildContext context) async {
-  final l10n = appL10n(context);
-  final shouldExit = await showDialog<bool>(
-    context: context,
-    barrierDismissible: true,
-    useRootNavigator: true,
-    builder: (ctx) => CtDialogShell(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            l10n.game_exitConfirm_title,
-            style: Theme.of(ctx).textTheme.titleMedium,
-          ),
-          const SizedBox(height: 8),
-          Text(l10n.game_exitConfirm_body),
-          const SizedBox(height: 16),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.end,
-            children: [
-              CtNinePatchButton(
-                onPressed: () => Navigator.of(ctx).pop(false),
-                child: Text(l10n.common_cancel),
-              ),
-              const SizedBox(width: 8),
-              CtNinePatchButton(
-                onPressed: () => Navigator.of(ctx).pop(true),
-                child: Text(l10n.game_exitConfirm_exit),
-              ),
-            ],
-          ),
-        ],
-      ),
-    ),
-  );
-  return shouldExit ?? false;
 }
 
 Future<void> _runFlameCanvasNextTurn(
@@ -386,7 +347,7 @@ class GameScreen extends ConsumerWidget {
       canPop: false,
       onPopInvokedWithResult: (didPop, result) async {
         if (didPop || !context.mounted) return;
-        final shouldExit = await _showExitToMainMenuConfirmDialog(context);
+        final shouldExit = await showExitToMainMenuConfirmDialog(context);
         if (!shouldExit || !context.mounted) return;
         ref.read(appEventBusProvider).emit(const NavigateToShellEvent());
       },

@@ -33,6 +33,19 @@ class EditorialMonoclePalette {
   static const OklchToken dangerToken = OklchToken(0.62, 0.16, 22);
   static const OklchToken successToken = OklchToken(0.62, 0.12, 150);
 
+  /// Modal scrim opaque base. Resolves with `dialogScrimAlpha` to the
+  /// canonical `--dialog-scrim` color documented in
+  /// `SPEC/ui/pixel-art-ui-catalog.md` § Dialog scrim
+  /// (`oklch(8% 0.01 30 / 0.70)`). Kept as a separate token from
+  /// `--bg-deep` so the wash reads as a near-black dim layer even when the
+  /// underlying surface is already very dark.
+  static const OklchToken dialogScrimBaseToken = OklchToken(0.08, 0.01, 30);
+
+  /// Canonical alpha applied on top of [dialogScrimBaseToken] to produce
+  /// `EditorialMonoclePalette.dialogScrim`. Pinned at `0.70` per
+  /// `SPEC/ui/pixel-art-ui-catalog.md` § Dialog scrim.
+  static const double dialogScrimAlpha = 0.70;
+
   static Color get bg => oklchToColor(bgToken);
   static Color get bgDeep => oklchToColor(bgDeepToken);
   static Color get surface => oklchToColor(surfaceToken);
@@ -45,6 +58,15 @@ class EditorialMonoclePalette {
   static Color get accentBright => oklchToColor(accentBrightToken);
   static Color get danger => oklchToColor(dangerToken);
   static Color get success => oklchToColor(successToken);
+
+  /// Universal modal scrim color for `showDialog` `barrierColor` and
+  /// full-screen overlay scrims (victory, overture, call to arms,
+  /// intervention, exit-confirm). Resolves
+  /// [dialogScrimBaseToken] to an opaque sRGB color and then applies
+  /// [dialogScrimAlpha] (0.70). SPEC: `SPEC/ui/pixel-art-ui-catalog.md`
+  /// § Dialog scrim.
+  static Color get dialogScrim =>
+      oklchToColor(dialogScrimBaseToken).withValues(alpha: dialogScrimAlpha);
 }
 
 /// Immutable OKLCH triple. Lightness is the OKLab L (0..1), chroma is
