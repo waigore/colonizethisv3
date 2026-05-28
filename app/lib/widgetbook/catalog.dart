@@ -27,6 +27,7 @@ import '../features/game/combat/quick_battle_screen.dart';
 import '../features/game/widgets/civilian_units_panel.dart';
 import '../features/game/widgets/diplomacy_dialogs.dart';
 import '../features/game/widgets/diplomacy_panel.dart';
+import '../features/game/widgets/game_map_players_bar.dart';
 import '../features/game/widgets/military_units_panel.dart';
 import '../features/game/widgets/naval_units_panel.dart';
 import '../features/game/widgets/pause_menu_panel.dart';
@@ -46,6 +47,7 @@ import '../features/game/dialogue/intervention_dialogue_overlay.dart';
 import '../features/game/dialogue/overture_dialogue_overlay.dart';
 import '../features/game/flame/game_screen.dart';
 import '../features/game/flame/game_side_menu.dart';
+import '../features/game/flame/exit_confirm_dialog.dart';
 import '../features/game/flame/victory_overlay.dart';
 import '../features/game/flame/region_map_component.dart'
     show CtMapVisibilityMode;
@@ -89,6 +91,7 @@ part 'catalog_part2.dart';
 part 'catalog_part3.dart';
 part 'catalog_part4.dart';
 part 'catalog_part5.dart';
+part 'catalog_part6.dart';
 
 Unit? _unitByIdForCatalog(Game game, String unitId) {
   for (final u in game.worldState.oldWorld.units) {
@@ -176,6 +179,8 @@ List<WidgetbookNode> get _ctWidgetbookDirectories => [
   ...callToArmsDialogueOverlayDirectories,
   ...turnNewsDialogDirectories,
   ...victoryUiDirectories,
+  ...playersBarDirectories,
+  ...exitConfirmDialogDirectories,
   ...combatUiDirectories,
   ...moveArmyDialogDirectories,
   ...moveFleetDialogDirectories,

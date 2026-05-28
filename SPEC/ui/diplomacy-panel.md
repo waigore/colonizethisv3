@@ -34,17 +34,59 @@ A faction is **discovered** iff the player has a **diplomatic relation** with th
 
 ---
 
+## Section headings
+
+Faction rows are grouped into three sections in this order: **Great Powers**, **Minor Nations**, **Tribes**. Each non-empty section is preceded by a heading rendered per [mockups/GAME30001-diplomacy-panel.html](mockups/GAME30001-diplomacy-panel.html) `.section-head`:
+
+- Display font (`Cinzel` / `Iowan Old Style` per [pixel-art-ui-catalog.md](pixel-art-ui-catalog.md) § Editorial-monocle palette font stacks); `font-weight: 600`; small positive letter-spacing.
+- Text color `--accent`.
+- 2 px bottom border in `--accent-dim` spanning the heading container width.
+
+The heading is otherwise an inert label (no tap target).
+
+---
+
 ## Per-faction row
 
-- **Left:** Faction name (displayName or id), type badge (GP / Minor / Tribe), current **diplomatic state**: relation state (AT_PEACE / AT_WAR), **one-word relation state** (Hostile / Unfriendly / Cordial / Friendly) derived from the hidden relation score per [diplomacy.md](../game/diplomacy.md) § Player-facing relation display. The numeric relation score is **not** shown. For Minor/Tribe: overture stage (none, Trade Consulate, Embassy, NAP, Join Empire) if any. For **Great Powers:** the **power score** per [diplomacy.md](../game/diplomacy.md) § Great Power power score is shown; if the GP’s score is higher than the player’s, the score is shown in **red**, otherwise in **green**.
+- **Left:** Faction name (displayName or id), type badge (GP / Minor / Tribe), current **diplomatic state**: relation state (AT_PEACE / AT_WAR), **one-word relation state** (Hostile / Unfriendly / Cordial / Friendly) derived from the hidden relation score per [diplomacy.md](../game/diplomacy.md) § Player-facing relation display. The numeric relation score is **not** shown. For Minor/Tribe: overture stage (none, Trade Consulate, Embassy, NAP, Join Empire) if any. For **Great Powers:** a **power comparison percentage** is shown — a derived display only, not a new data field. See **Power comparison percentage (Great Power rows only)** below.
+- **Type badge colors (editorial-monocle dark theme):** The type badge uses mono font and the canonical [pixel-art-ui-catalog.md](pixel-art-ui-catalog.md) § Editorial-monocle palette tokens per [mockups/GAME30001-diplomacy-panel.html](mockups/GAME30001-diplomacy-panel.html) `.f-badge`. Great Power rows use `--accent-dim` background with `--bg-deep` foreground; Minor Nation rows use `--muted` background with `--bg-deep` foreground; Tribe rows are **outlined** — transparent background, `--muted` border and `--muted` foreground. No hardcoded Material chrome colors are permitted.
 - **Outgoing economic diplomacy (list row only):** On the **same row**, below the relation line, when the human Great Power has **active or pending** economic diplomacy toward this faction (receiver-centric copy): **Active subsidy:** `Outgoing subsidy: £N/turn to {displayName}` when `Game.subsidyStates` has `payerId` = human GP and `targetId` = this row’s faction. **Pending grant:** `Pending grant aid: £N (resolves end of turn)` when current-turn orders include `grantAid` toward this faction. **Pending subsidy:** `Pending subsidy: £N/turn (resolves end of turn)` when current-turn orders include `setSubsidy` toward this faction. Omit each line when not applicable. Do **not** duplicate this block on the Diplomacy Detail screen for current product (list row is the source of truth).
 - **Right:** **Available diplomatic actions** for the player toward that faction. Actions are those explicitly in SPEC/game/diplomacy.md and SPEC/program/orders.md: Declare War, Offer Peace, Alliance (GP only), Establish Overture (stage), **Grant Aid**, **Set Subsidy** as **separate** buttons when each is valid. Grant Aid requires Embassy; Set Subsidy requires Consulate or Embassy — hide or omit a button when its preconditions are not met. Only show actions that are **valid** per the diplomatic order validator (same rules as order submission). Any counterparty that is a valid target for aid/subsidy per game rules (Great Power, Minor, or Tribe) uses the same button rules.
 
-Tapping anywhere on a faction row (or an explicit “Details” affordance in that row) opens a **Diplomacy Detail** view for that faction, scoped to the current player’s Great Power.
+### Power comparison percentage (Great Power rows only)
+
+Replaces the previously displayed absolute **power score** per [diplomacy.md](../game/diplomacy.md) § Great Power power score with a relative comparison to the human player. **Derived display only** — no new data field is required; both inputs are read from the existing `greatPowerPowerScore` source already consumed by the diplomacy panel rows.
+
+- **Formula:** `pct = round(((gpPowerScore - playerPowerScore) / max(playerPowerScore, 1)) * 100)`.
+- **Format:** `+N%` when `pct > 0`, `−N%` when `pct < 0`, `0%` when `pct == 0`. Use the unicode minus sign `−` (U+2212), not the ASCII hyphen-minus, to match the mockup.
+- **Color:** Red (`--danger`) when the GP is stronger than the player (`pct > 0`); green (`--success`) when the GP is weaker (`pct ≤ 0`). Preserves the red/green semantic from the prior absolute-score display.
+- **Zero-player guard:** `max(playerPowerScore, 1)` so a player at score 0 still yields a finite percentage (no division-by-zero).
+
+Tapping anywhere on a faction row (or an explicit “Details” affordance in that row) opens the **Diplomacy Detail** screen for that faction (GAME30002), scoped to the current player’s Great Power. See [Diplomacy Detail navigation](#diplomacy-detail-view-per-faction) below.
+
+---
+
+## Mode bar (filter)
+
+A bottom filter bar lets the player narrow the visible faction list. The bar is anchored to the bottom of the diplomacy panel with a top divider; buttons use mono font with inactive label `--muted`, active/hover label `--accent`, and `--accent-dim` border on the active item per [mockups/GAME30001-diplomacy-panel.html](mockups/GAME30001-diplomacy-panel.html) `.mode-bar`.
+
+| Mode | Label | Visible sections |
+|------|-------|------------------|
+| `all` (default) | "All" | Great Powers, Minor Nations, Tribes |
+| `gp` | "Great Powers only" | Great Powers only |
+| `minors` | "Minors only" | Minor Nations **and** Tribes (no Great Powers) |
+
+Notes:
+
+- The "Minors only" mode includes **both** Minor Nations **and** Tribes, matching mockup `setMode('minors')`. The word "Minors" is used loosely as shorthand for "non-Great-Power factions"; the panel still groups them into separate "Minor Nations" and "Tribes" sections when both are present.
+- Filter state is local UI state in `_DiplomacyPanelState`; it does not persist across panel close/reopen.
+- The mode bar is independent of the `discovered factions` rule — switching modes never reveals undiscovered factions.
 
 ---
 
 ## Diplomacy Detail view (per faction)
+
+Navigation contract: the detail view (**GAME30002**) is a **full-page route**, not an in-panel overlay. Tapping a faction row emits `NavigateToRouteEvent(Routes.diplomacyDetail, …)` with `factionId`, `factionDisplayName`, `kind`, and `relation` payload per [`app-event-bus.md`](../program/app-event-bus.md); the shell pushes `DiplomacyDetailScreen` over the diplomacy panel. The detail-overlay HTML block inside the GAME30001 mockup ([mockups/GAME30001-diplomacy-panel.html](mockups/GAME30001-diplomacy-panel.html)) is **illustrative** of the detail content layout and is **not** implemented as an in-panel overlay. The canonical visual layout for the full-page detail screen is [mockups/GAME30002-diplomacy-detail-screen.html](mockups/GAME30002-diplomacy-detail-screen.html).
 
 Widget contract, layout, navigation, and acceptance criteria: **[diplomacy-detail-screen.md](diplomacy-detail-screen.md)**. When the user opens the detail view for a faction `B` while controlling Great Power `A`, the UI shows:
 
@@ -53,7 +95,7 @@ Widget contract, layout, navigation, and acceptance criteria: **[diplomacy-detai
   - A **year label** derived from the event’s `turn` using the game calendar mapping (e.g. `1505 (Turn 12)`).
   - A human-readable sentence describing the event (e.g. `We declared war on Spain.`, `We established an Embassy with Bavaria.`, `Our subsidies to Bavaria were cancelled when war began.`).
   - If an event involves a faction that is not yet discovered by the current player (no relation, outside visibility rules), that faction’s name is shown as `Unknown faction` in the text.
-- **Dossier subpanel (Great Powers only):** When `B` is a Great Power, a secondary panel or tab within the detail view shows the **AI dossier** for `B` from the perspective of `A`, per [SPEC/ai/ai-dossier.md](../ai/ai-dossier.md). The dossier uses only PlayerView-safe data.
+- **Dossier subpanel (Great Powers only):** When `B` is a Great Power, a secondary panel or tab within the detail view shows the **AI dossier** for `B` from the perspective of `A`, per [SPEC/ai/ai-dossier.md](../ai/ai-dossier.md). The dossier uses only PlayerView-safe data. The dossier subpanel is **in scope** for visual restyling against [mockups/GAME30002-diplomacy-detail-screen.html](mockups/GAME30002-diplomacy-detail-screen.html) `.dossier` chrome (mono `Turn N` label + sentence rows, `--accent-dim` left border) — the restyle does not change dossier data sources, evidence mechanics, or PlayerView-safety contracts.
 
 Events are read from the flat diplomatic history list on `Game`, filtered to those whose `participants` include both `A` and `B`, and ordered by `(turn desc, intraTurnIndex desc)`.
 
@@ -135,7 +177,10 @@ At least one story that shows the Diplomacy panel using a **real game** (e.g. fr
 
 - Given the user is in-game and taps the dove icon in the toolbar, the UI opens the Diplomacy panel as a full-page screen.
 - Given the Diplomacy panel is open, it lists only discovered factions, grouped as Great Powers, Minor Nations, Tribes; GPs sorted by military power then province count.
-- Given a faction row, the panel shows current relation state (Peace/War) and the **one-word relation state** (Hostile, Unfriendly, Cordial, Friendly) derived from the hidden score per SPEC/game/diplomacy.md § Player-facing relation display; it does **not** show the numeric relation score. For Minor/Tribe it shows overture stage. For Great Powers it shows the **power score** (SPEC/game/diplomacy.md § Great Power power score) in **red** when the GP’s score is higher than the player’s, otherwise in **green**. To the right it shows only valid diplomatic actions for that faction.
+- Given a faction row, the panel shows current relation state (Peace/War) and the **one-word relation state** (Hostile, Unfriendly, Cordial, Friendly) derived from the hidden score per SPEC/game/diplomacy.md § Player-facing relation display; it does **not** show the numeric relation score. For Minor/Tribe it shows overture stage. For Great Powers it shows the **power comparison percentage** (see § Power comparison percentage) instead of the absolute score: `+N%` rendered in `--danger` (red) when the GP is stronger than the human player, `0%` or `−N%` rendered in `--success` (green) when the GP is at or below the human player's score. To the right it shows only valid diplomatic actions for that faction.
+- Given a Great Power row where `gpPowerScore = 110` and `playerPowerScore = 100`, when the row is rendered, then the power-comparison text is `+10%` and the text color resolves to `--danger` (red) per § Power comparison percentage.
+- Given a Great Power row where `gpPowerScore = 78` and `playerPowerScore = 100`, when the row is rendered, then the power-comparison text is `−22%` (using the U+2212 minus sign) and the text color resolves to `--success` (green) per § Power comparison percentage.
+- Given a Great Power row where `playerPowerScore = 0`, when the row is rendered, then the percentage computation uses `max(playerPowerScore, 1)` so no division-by-zero error occurs and a finite percentage value is shown.
 - Given the user taps an action button, the UI shows a **confirmation dialog** with the action name and target faction. Tapping "Confirm" in the dialog submits the diplomatic order; tapping "Cancel" dismisses without submitting.
 - Given the user has **already submitted** a diplomatic order for a (player, target, order type) combination, when the panel renders the action button for that order type toward that target, the button label shows **"Cancel"** and the action is **not shown** again in the suggested actions list for that faction.
 - Given the user has a pending diplomatic order toward a target faction, when the user taps the **"Cancel" button** for that pending order, the UI removes that order from the current turn's order set (toggle off) and the action reappears as a suggested action for that faction.
@@ -145,8 +190,15 @@ At least one story that shows the Diplomacy panel using a **real game** (e.g. fr
 - Given the human player has an active subsidy in `Game.subsidyStates` paying the row’s faction, when the Diplomacy list row renders, then it shows that ongoing **£/turn** amount on the row (outgoing from the player).
 - Given the human player has queued `grantAid` toward the row’s faction in the current turn’s orders, when the list row renders, then it shows a **pending grant** line with that amount until the order is removed or the turn resolves.
 - Given the human player has an embassy toward a Minor Nation or Tribe and trade-agreement commodity capacity applies per [diplomacy-resolution.md](../program/diplomacy-resolution.md) (`tradeSlotsForGp`: **0** without embassy, **3** with embassy baseline, **6** with embassy when the human GP has **`trade_fairs`** unlocked), when the UI surfaces trade or economic copy that depends on that capacity, then the UI layer reflects **per-agreement commodity-slot** semantics (not a binary 0/1 “trade on/off” model).
+- Given the diplomacy panel is open with at least one non-empty faction group, when a section heading widget is rendered for that group, then the heading text color resolves to `--accent` per the editorial-monocle palette in [pixel-art-ui-catalog.md](pixel-art-ui-catalog.md), and its container exposes a 2 px bottom border in `--accent-dim`.
+- Given the diplomacy panel is open and at least one Great Power row is rendered, when the GP type badge is inspected, then its background resolves to `--accent-dim` and its foreground resolves to `--bg-deep` from the editorial-monocle palette (no Material primary or `Colors.blue` chrome).
+- Given the diplomacy panel is open and at least one Minor Nation row is rendered, when the Minor type badge is inspected, then its background resolves to `--muted` and its foreground resolves to `--bg-deep` from the editorial-monocle palette (no Material grey chrome).
+- Given the diplomacy panel is open and at least one Tribe row is rendered, when the Tribe type badge is inspected, then it renders as an outlined chip: transparent background, 1 px `--muted` border, foreground text color `--muted` (no Material orange chrome).
+- Given the diplomacy panel is open with default state, when the bottom mode bar is inspected, then the "All" filter button is active (text in `--accent`, `--accent-dim` border) and the other two ("Great Powers only", "Minors only") render as inactive (text in `--muted`, no accent border).
+- Given the user taps "Great Powers only" in the mode bar, when the list re-renders, then only Great Power rows are visible — no Minor Nation or Tribe rows are present in the rendered widget tree.
+- Given the user taps "Minors only" in the mode bar, when the list re-renders, then both Minor Nation and Tribe rows are visible (using their normal section headings) and no Great Power rows are present in the rendered widget tree.
 
-- **Diplomacy Detail — open:** Given the Diplomacy panel is open and shows at least one faction row, when the user taps that row (or its Details affordance), then the UI opens a Diplomacy Detail view scoped to the current player’s Great Power and the tapped faction.
+- **Diplomacy Detail — open via full-page route:** Given the Diplomacy panel is open and shows at least one faction row, when the user taps that row (or its Details affordance), then the UI layer emits `NavigateToRouteEvent(Routes.diplomacyDetail, { game, humanPlayerId, factionId, factionDisplayName, kind, relation })` so the shell pushes `DiplomacyDetailScreen` as a full-page route (never an in-panel overlay).
 - **Diplomacy Detail — history contents:** Given the Diplomacy Detail view is open for Great Power `A` and faction `B`, when the UI renders the history panel, then it shows all and only those `DiplomaticEvent` entries from the Game’s diplomatic history whose `participants` include both `A` and `B`, ordered by newest first (highest `turn`, then highest `intraTurnIndex`).
 - **Diplomacy Detail — year and turn:** Given a `DiplomaticEvent` in the history panel, when the UI renders its timestamp, then it shows a year label derived from the event’s `turn` using the game calendar mapping and includes the raw turn number in parentheses (e.g. `1505 (Turn 12)`).
 - **Diplomacy Detail — unknown faction substitution:** Given a `DiplomaticEvent` in the history panel that involves a third faction `C` that is not discovered by the current player, when the UI renders that event, then the faction `C` is shown as `Unknown faction` while `A` and `B` (if discovered) are shown by their normal display names.

@@ -16,6 +16,9 @@ export 'src/tile_map_visualization.dart';
 export 'src/tile_map_visualization_shared.dart'
     show
         continentSeedMarkerRgb,
+        factionOwnershipColorMapForGame,
+        factionOwnershipColorMapForNewWorld,
+        factionOwnershipColorMapForOldWorld,
         geographicGameWorldLegendResources,
         geographicGameWorldResourceGlyphLetter,
         geographicGameWorldResourceGlyphs,

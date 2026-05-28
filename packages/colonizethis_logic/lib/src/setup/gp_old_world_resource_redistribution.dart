@@ -8,6 +8,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../constants.dart';
 import '../world/game_world_mutations.dart';
+import '../world/province_lookup.dart';
 import '../world/tile_key_coordinates.dart';
 import 'setup_exceptions.dart';
 import 'town_capital_occupancy.dart';
@@ -37,7 +38,7 @@ String _owTileKey(String localProvinceId, int x, int y) => CapitalTile.tileKey(
 /// Maps local province grid id → owning faction id for Old World provinces.
 Map<String, String> _ownerByLocalProvinceId(Game game) {
   final m = <String, String>{};
-  for (final p in game.worldState.oldWorld.provinces) {
+  for (final p in game.worldState.provincesForRegion(kRegionOldWorld)) {
     m[ProvinceId.localIdFrom(p.id)] = p.ownerId ?? '';
   }
   return m;
