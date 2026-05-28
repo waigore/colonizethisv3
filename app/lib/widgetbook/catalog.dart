@@ -27,6 +27,7 @@ import '../features/game/combat/quick_battle_screen.dart';
 import '../features/game/widgets/civilian_units_panel.dart';
 import '../features/game/widgets/diplomacy_dialogs.dart';
 import '../features/game/widgets/diplomacy_panel.dart';
+import '../features/game/widgets/game_map_players_bar.dart';
 import '../features/game/widgets/military_units_panel.dart';
 import '../features/game/widgets/naval_units_panel.dart';
 import '../features/game/widgets/pause_menu_panel.dart';
@@ -177,6 +178,7 @@ List<WidgetbookNode> get _ctWidgetbookDirectories => [
   ...callToArmsDialogueOverlayDirectories,
   ...turnNewsDialogDirectories,
   ...victoryUiDirectories,
+  ...playersBarDirectories,
   ...exitConfirmDialogDirectories,
   ...combatUiDirectories,
   ...moveArmyDialogDirectories,
