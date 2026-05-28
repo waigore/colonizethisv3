@@ -84,6 +84,15 @@ Loading state:
 - Given the widget is constructed with `state: loading`, when the screen renders, then every slot's nation and leader dropdowns are disabled and tapping them opens no list.
 - Given the widget is constructed with `state: loading`, when the screen renders, then the **Back** button remains enabled and tappable.
 
+Slot-row chrome and swatch dots (issue #2868 § R7/R9/R10; pixelArt variant):
+
+- Given the widget is constructed with `variant: pixelArt`, when the screen renders, then each of the six player-slot rows is wrapped in a `Container` that paints the dark-theme row gradient (`CtGradients.rowGradient`) and a 1.5 px brass border on all four sides (top/bottom borders + left/right edge strips, color `EditorialMonoclePalette.accentDim`).
+- Given the widget is constructed with `variant: plain`, when the screen renders, then no slot row paints the 1.5 px `EditorialMonoclePalette.accentDim` border chrome (the chrome is gated to the `pixelArt` variant; the plain variant keeps the pre-#2868 theme-only layout).
+- Given any slot has a nation selected, when the slot's nation dropdown closed trigger renders, then the UI layer renders the GP map-colour swatch (`GpDefaultMapColorSwatch`) immediately preceding the nation label, using the `greatPowerDefaultColorRgb` mapping for that gpId.
+- Given the user opens any slot's nation dropdown, when the picker list renders, then every non-empty option row renders a leading `GpDefaultMapColorSwatch` matching that option's gpId; the empty "Select nation" row renders no swatch.
+- Given any slot has no nation selected (`gpId == ''`), when the slot's leader dropdown renders, then the UI layer wraps the dropdown in an `Opacity` widget with `opacity == 0.4` and an `IgnorePointer(ignoring: true)`, so the dropdown is visually dimmed and tapping it does not open the picker.
+- Given a slot transitions from no-nation to a selected-nation state, when the slot rebuilds, then the leader dropdown is no longer wrapped in the `Opacity(0.4)` + `IgnorePointer` wrappers and accepts taps to open the leader picker.
+
 **Interaction.** The widget holds per-slot state (ordered list of six gpIds and leader variant per gpId) and exposes it via `onStartGame(orderedGpIdsForSlots, leaderVariantByGpId)`. No routing logic lives in the widget.
 
 **App flow after Start Game.** When the user taps Start Game, the shell builds GameSetupConfig and starts game initialization. The shell shows progress per [Game initialization (new game)](game-initializing.md) (coarse steps; modal or full screen). On success the shell navigates to the [Empire overview](empire-overview.md) (in-game shell). On failure the shell shows an error dialog with retry (new seed) per that spec, not silent navigation to Main Menu.

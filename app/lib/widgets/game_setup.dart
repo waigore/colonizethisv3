@@ -2,11 +2,14 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:flutter/material.dart';
 
 import '../config/constants.dart';
+import '../config/editorial_monocle_palette.dart';
 import '../config/ui_screen_ids.dart';
 import '../l10n/l10n.dart';
 import 'ct_dropdown.dart';
+import 'ct_gradients.dart';
 import 'ct_loading_indicator.dart';
 import 'ct_nine_patch_button.dart';
+import 'gp_default_map_color_swatch.dart';
 
 /// Visual variant of the Game Setup screen. SPEC/ui/game-setup.md; UXD 03b.
 enum GameSetupVariant {
@@ -232,6 +235,9 @@ class _CtGameSetupState extends State<CtGameSetup> {
       itemLabel: (id) => id.isEmpty
           ? l10n.gameSetup_selectNation
           : (widget.naming.gpById(id)?.countryName ?? id),
+      itemLeading: (ctx, id) => id.isEmpty
+          ? null
+          : GpDefaultMapColorSwatch(greatPowerId: id),
       onChanged: _isLoading
           ? (_) {}
           : (value) {
@@ -254,13 +260,7 @@ class _CtGameSetupState extends State<CtGameSetup> {
     );
 
     final Widget leaderDropdown = gpId.isEmpty
-        ? CtDropdown<String>(
-            value: '',
-            items: const [''],
-            hint: l10n.gameSetup_selectLeader,
-            itemLabel: (_) => l10n.gameSetup_selectLeader,
-            onChanged: (_) {},
-          )
+        ? _buildDisabledLeaderDropdown(l10n.gameSetup_selectLeader)
         : CtDropdown<String>(
             value: variants.any((v) => v.id == currentVariantId)
                 ? currentVariantId
@@ -277,35 +277,76 @@ class _CtGameSetupState extends State<CtGameSetup> {
                   },
           );
 
-    if (narrow) {
-      return Padding(
-        padding: const EdgeInsets.only(bottom: 12),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            labelWidget,
-            const SizedBox(height: 4),
-            nationDropdown,
-            const SizedBox(height: 4),
-            leaderDropdown,
-          ],
-        ),
-      );
-    }
+    return _SlotRowChrome(
+      variant: widget.variant,
+      child: narrow
+          ? _buildNarrowSlotBody(
+              labelWidget: labelWidget,
+              nationDropdown: nationDropdown,
+              leaderDropdown: leaderDropdown,
+            )
+          : _buildWideSlotBody(
+              labelWidget: labelWidget,
+              nationDropdown: nationDropdown,
+              leaderDropdown: leaderDropdown,
+            ),
+    );
+  }
 
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          SizedBox(width: 100, child: labelWidget),
-          const SizedBox(width: 8),
-          Expanded(flex: 1, child: nationDropdown),
-          const SizedBox(width: 8),
-          Expanded(flex: 1, child: leaderDropdown),
-        ],
+  /// Leader picker rendered at [_SlotRowChrome.disabledLeaderOpacity] when no
+  /// nation has been selected for the slot, per #2868 R10 ("Leader dropdown
+  /// disabled until nation selected; 0.4 opacity when no nation"). The
+  /// disabled widget is still the same `CtDropdown<String>` shape so the
+  /// surrounding layout (row/column widths, gap spacing) is unchanged when
+  /// the nation becomes selected.
+  Widget _buildDisabledLeaderDropdown(String hint) {
+    return Opacity(
+      opacity: _SlotRowChrome.disabledLeaderOpacity,
+      child: IgnorePointer(
+        ignoring: true,
+        child: CtDropdown<String>(
+          value: '',
+          items: const [''],
+          hint: hint,
+          itemLabel: (_) => hint,
+          onChanged: (_) {},
+        ),
       ),
+    );
+  }
+
+  Widget _buildNarrowSlotBody({
+    required Widget labelWidget,
+    required Widget nationDropdown,
+    required Widget leaderDropdown,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        labelWidget,
+        const SizedBox(height: 4),
+        nationDropdown,
+        const SizedBox(height: 4),
+        leaderDropdown,
+      ],
+    );
+  }
+
+  Widget _buildWideSlotBody({
+    required Widget labelWidget,
+    required Widget nationDropdown,
+    required Widget leaderDropdown,
+  }) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        SizedBox(width: 100, child: labelWidget),
+        const SizedBox(width: 8),
+        Expanded(flex: 1, child: nationDropdown),
+        const SizedBox(width: 8),
+        Expanded(flex: 1, child: leaderDropdown),
+      ],
     );
   }
 
@@ -380,6 +421,83 @@ class _GameSetupMenuButton extends StatelessWidget {
         onPressed: onPressed,
         enabled: enabled && onPressed != null,
         child: Text(label),
+      ),
+    );
+  }
+}
+
+/// Dark editorial-monocle slot-row chrome for [`CtGameSetup`] player slots.
+///
+/// Implements `Refs #2868` S2 / R7: each slot row paints
+/// [CtGradients.rowGradient] as its surface, draws a 1.5 px brass top and
+/// bottom border in `--accent-dim`, and paints 1.5 px brass edge strips on
+/// the left and right inside that border. All colors resolve from
+/// [EditorialMonoclePalette] tokens (issue #2858); no hard-coded hex.
+///
+/// The chrome only renders in the [GameSetupVariant.pixelArt] variant
+/// (matching the S1 header chrome convention in PR #2887). In the
+/// [GameSetupVariant.plain] variant the chrome falls back to a transparent
+/// pass-through wrapper that preserves the previous spacing
+/// ([rowVerticalGap] below each row) so the slot widget tree shape is
+/// stable across variants for existing tests.
+class _SlotRowChrome extends StatelessWidget {
+  const _SlotRowChrome({required this.variant, required this.child});
+
+  final GameSetupVariant variant;
+  final Widget child;
+
+  /// Brass border / edge-strip thickness per #2868 R7 (1.5 px).
+  static const double brassStripThickness = 1.5;
+
+  /// Inner horizontal padding clearing the 1.5 px edge strips so dropdown
+  /// chrome inside the row never paints over them. Kept at zero so the
+  /// dropdown surfaces meet the brass edge strips with no inset; the
+  /// dropdowns supply their own internal padding.
+  static const double rowHorizontalPadding = 0;
+
+  /// Inner vertical padding clearing the brass top / bottom borders so
+  /// dropdown chrome stays clear of them. Kept at zero so the slot row
+  /// adds only the 1.5 px brass borders (≈ 3 px per row total) on top of
+  /// the previous layout height, preserving widget-test viewport fit.
+  static const double rowVerticalPadding = 0;
+
+  /// Vertical gap between consecutive slot rows. Kept equal to the
+  /// pre-S2 spacing so the page layout does not shift in existing tests.
+  static const double rowVerticalGap = 12;
+
+  /// Disabled leader-dropdown opacity per #2868 R10 ("0.4 opacity when no
+  /// nation"). Defined here so [`CtGameSetup`] and tests share one source.
+  static const double disabledLeaderOpacity = 0.4;
+
+  @override
+  Widget build(BuildContext context) {
+    if (variant != GameSetupVariant.pixelArt) {
+      return Padding(
+        padding: const EdgeInsets.only(bottom: rowVerticalGap),
+        child: child,
+      );
+    }
+    final BorderSide brass = BorderSide(
+      color: EditorialMonoclePalette.accentDim,
+      width: brassStripThickness,
+    );
+    return Padding(
+      padding: const EdgeInsets.only(bottom: rowVerticalGap),
+      child: Container(
+        decoration: BoxDecoration(
+          gradient: CtGradients.rowGradient,
+          border: Border(
+            top: brass,
+            bottom: brass,
+            left: brass,
+            right: brass,
+          ),
+        ),
+        padding: const EdgeInsets.symmetric(
+          horizontal: rowHorizontalPadding,
+          vertical: rowVerticalPadding,
+        ),
+        child: child,
       ),
     );
   }
