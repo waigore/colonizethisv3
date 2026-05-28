@@ -6,12 +6,14 @@ import 'package:flutter/material.dart';
 import '../../../config/constants.dart';
 import '../../../config/editorial_monocle_palette.dart';
 import '../../../l10n/l10n.dart';
+import '../../../widgets/ct_brass_divider.dart';
 import '../../../widgets/ct_nine_patch_button.dart';
 import '../../../widgets/ct_panel.dart';
 import '../../../widgets/ct_resource_cell.dart';
 import '../../../widgets/ct_section_label.dart';
 import '../../../widgets/resource_icon.dart';
 import 'production_allocation_row.dart';
+import 'production_allocation_row_chrome.dart';
 import 'production_labour_helpers.dart';
 import 'production_labour_section.dart';
 
@@ -484,20 +486,44 @@ class _AllocationSubpanel extends StatelessWidget {
     );
   }
 
-  Iterable<Widget> _buildAllocationRows(ThemeData theme) {
-    return ProductionRecipesCatalog.all.map(
-      (recipe) => ProductionAllocationRow(
-        key: ValueKey<String>('production_alloc_row_${recipe.id}'),
-        recipe: recipe,
-        player: player,
-        effectiveLabour: effectiveLabour,
-        desiredOutputByRecipe: desiredOutputByRecipe,
-        onDesiredOutputChanged: onDesiredOutputChanged,
-        buildRecipeLabel: (value) => _buildRecipeLabel(value, theme),
-        l10n: l10n,
-        theme: theme,
-      ),
-    );
+  /// Builds the recipe rows interleaved with `CtBrassDivider`s per
+  /// `SPEC/ui/production-panel.md` § Allocation row chrome — exactly
+  /// `N - 1` dividers between consecutive rows, none at the leading or
+  /// trailing edges (`Refs #2862` S3 / R13).
+  List<Widget> _buildAllocationRows(ThemeData theme) {
+    final recipes = ProductionRecipesCatalog.all;
+    if (recipes.isEmpty) {
+      return const <Widget>[];
+    }
+    final widgets = <Widget>[];
+    for (int i = 0; i < recipes.length; i++) {
+      if (i > 0) {
+        widgets.add(
+          const Padding(
+            padding: EdgeInsets.symmetric(vertical: 4),
+            child: CtBrassDivider(),
+          ),
+        );
+      }
+      final recipe = recipes[i];
+      widgets.add(
+        ProductionAllocationRowChrome(
+          key: ValueKey<String>('production_alloc_row_chrome_${recipe.id}'),
+          child: ProductionAllocationRow(
+            key: ValueKey<String>('production_alloc_row_${recipe.id}'),
+            recipe: recipe,
+            player: player,
+            effectiveLabour: effectiveLabour,
+            desiredOutputByRecipe: desiredOutputByRecipe,
+            onDesiredOutputChanged: onDesiredOutputChanged,
+            buildRecipeLabel: (value) => _buildRecipeLabel(value, theme),
+            l10n: l10n,
+            theme: theme,
+          ),
+        ),
+      );
+    }
+    return widgets;
   }
 
   List<Widget> _buildLabourSummary(
