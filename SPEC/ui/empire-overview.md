@@ -38,6 +38,17 @@
 - **Cargo hold indicator:** In the same control row as the region tabs, the UI shows a non-interactive cargo hold indicator with a crate icon and a numeric value in the exact format `used/capacity` (no spaces). `capacity` is the total cargo holds from all ships in the human player's Home Fleet (`cargoHoldsForHomeFleet`), and `used` is the total overseas resources extracted for that player in the current world state (sum of `computeExtraction(...).overseas` values for the player). The indicator is global (single total, not per-region) and remains visible when switching region tabs.
 - **Update contract:** The cargo hold indicator updates only when cargo-relevant game state changes (for example, fleet composition changes or extraction-relevant state changes) through the app's event bus/provider wiring; no animation or interaction is applied.
 
+### Tab bar chrome (dark editorial-monocle)
+
+Implementation: [`GameTabBar`](../../app/lib/features/game/widgets/game_tab_bar.dart) hosted by [`GameMapControls`](../../app/lib/features/game/flame/game_map_controls.dart) directly under [`GameTopBar`](../../app/lib/features/game/widgets/game_top_bar.dart). Mockup: [GAME10001-game-screen.html](mockups/GAME10001-game-screen.html) (`.tabbar`, `.region-tab`, `.treasury`, `.cargo-hold`).
+
+- **Height:** Fixed **34 dp** (`GameTabBar.height`).
+- **Chrome:** `--surface` fill with a **1 px** `--border` bottom edge (no gradient on the bar itself).
+- **Region tabs:** Inactive tabs paint a vertical `--bg-deep` → `--surface` gradient with a **1 px** `--border` outline on the top/left/right edges; label colour `--muted`. Active tab paints `--bg` fill, `--accent-dim` top/left/right borders, and a **2 px** `--accent` bottom border; label colour `--accent`.
+- **Treasury:** Coin icon (`ui_icon_treasury_coin.png`, 18×18 dp) + monospace value in `--accent-dim`; optional projected delta in `--success` (positive) or `--danger` (negative) at 10 sp. Tapping toggles exact/abbreviated formatting (unchanged behaviour).
+- **Cargo:** Crate icon (18×18 dp) + monospace `used/capacity` in `--muted`, separated from treasury by a **1 px** `--border` left rule.
+- **News toggle:** Trailing slot on the tab bar row (see [player-turn-event-feed.md](player-turn-event-feed.md)); not restyled in this slice.
+
 ---
 
 ## Map area
@@ -179,6 +190,11 @@ Folder: **Map Widget** — stories for map area with fixture topology and view d
 - **Given** the Empire overview map widget is visible, **when** the user taps or clicks on a province tile, **then** the map widget invokes its province-selection callback with that province's tile key.
 - **Given** the Empire overview map widget has invoked the province-selection callback with a province tile key, **when** the shell handles that callback, **then** the screen can render province details for that selection (details content TBD per [province-sea-zone-detail-overlay.md](province-sea-zone-detail-overlay.md)).
 - **Given** the Empire overview screen is displayed on either a desktop viewport (≥ shell breakpoint width) or a mobile viewport (< shell breakpoint width), **when** the user switches between regions, **then** the UI layer uses the same tab-based region-switching control on both viewports, and on mobile renders only one region's map at a time (no side-by-side regions; tab system only).
+- **Given** the in-game shell map chrome is visible, **when** the UI renders the tab bar, **then** the tab bar surface is exactly **34 dp** tall and paints `--surface` with a **1 px** `--border` bottom edge.
+- **Given** the Old World region tab is active, **when** the tab bar renders, **then** the Old World tab label resolves to `--accent` and the tab paints a **2 px** `--accent` bottom border.
+- **Given** the New World region tab is inactive, **when** the tab bar renders, **then** the New World tab label resolves to `--muted` and the tab does not paint a **2 px** `--accent` bottom border.
+- **Given** unresolved orders project a treasury delta of `250` for the human player, **when** the treasury indicator renders on the tab bar, **then** the delta suffix resolves to `--success`.
+- **Given** unresolved orders project a treasury delta of `-400` for the human player, **when** the treasury indicator renders on the tab bar, **then** the delta suffix resolves to `--danger`.
 - **Given** the in-game shell control row is visible, **when** the UI renders region tabs, **then** the UI layer also renders a non-interactive cargo hold indicator beside the tabs with a crate icon and text formatted exactly as `used/capacity` (no spaces).
 - **Given** the in-game shell control row is visible, **when** the UI renders region tabs, **then** the UI layer also renders a treasury indicator between the `New World` tab and cargo hold indicator using icon `ui_icon_treasury_coin.png`.
 - **Given** the human player's treasury is `12345`, **when** the treasury indicator is in exact mode, **then** the UI layer displays `12,345` with no currency symbol.
