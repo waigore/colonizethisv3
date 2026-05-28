@@ -232,9 +232,24 @@ Orders runConquestArmyMovePlanner({
       weight < kConquestArmyMoveMinWeightWhenCriticallyWeakNoGpWar) {
     weight = kConquestArmyMoveMinWeightWhenCriticallyWeakNoGpWar;
   }
-  if (colonialPressureActive &&
-      weight < kConquestArmyMoveMinWeightWhenColonialPressure) {
-    weight = kConquestArmyMoveMinWeightWhenColonialPressure;
+  // Refs #2847 Phase 3 conquest colonial-pressure floor wiring: source
+  // the floor magnitude from the soft-phase NW acquisition weight on the
+  // dispatched phase plan instead of the legacy hard
+  // `kConquestArmyMoveMinWeightWhenColonialPressure` floor. The null-phase-plan
+  // fallback maps the legacy boolean (`colonialPressureActive`) to
+  // `1.0 / 0.0` so callers without a `PhasePlanOutcome` preserve
+  // pre-Phase-3 behaviour exactly. At the early-sprint default curve
+  // (`newWorldAcquisition = 0.05` for OW <= 7) the floor collapses to
+  // `round(45 * 0.05) = 2`, well below the stalled-expansion floors so
+  // the OW conquest sprint is not dominated by colonial-pressure pulls.
+  final colonialPressureWeight = phasePlan != null
+      ? resolvePhaseConquestColonialPressureWeight(phasePlan: phasePlan)
+      : (colonialPressureActive ? 1.0 : 0.0);
+  final colonialPressureFloor = conquestColonialPressureMinWeightFloor(
+    colonialPressureWeight: colonialPressureWeight,
+  );
+  if (weight < colonialPressureFloor) {
+    weight = colonialPressureFloor;
   }
   if (weight < 10) {
     _log.d(
