@@ -2466,6 +2466,18 @@
   "@diplomacy_section_tribes": {
     "description": "Diplomacy list section heading."
   },
+  "diplomacy_filter_all": "All",
+  "@diplomacy_filter_all": {
+    "description": "Diplomacy panel mode-bar filter label: show all factions."
+  },
+  "diplomacy_filter_greatPowersOnly": "Great Powers only",
+  "@diplomacy_filter_greatPowersOnly": {
+    "description": "Diplomacy panel mode-bar filter label: show only Great Powers."
+  },
+  "diplomacy_filter_minorsOnly": "Minors only",
+  "@diplomacy_filter_minorsOnly": {
+    "description": "Diplomacy panel mode-bar filter label: show Minor Nations and Tribes only (no Great Powers)."
+  },
   "diplomacy_relationState_war": "War",
   "@diplomacy_relationState_war": {
     "description": "One-word war state in diplomacy UI."

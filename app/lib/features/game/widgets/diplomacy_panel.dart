@@ -6,7 +6,9 @@ import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
 
+import '../../../config/editorial_monocle_palette.dart';
 import '../../../config/routes.dart';
+import '../../../config/themes.dart' show editorialMonocleDisplayFontFamily;
 import '../../../core/services/app_event_handler_scope.dart';
 import '../../../core/services/subscription_tracker.dart';
 import '../../../l10n/l10n.dart';
@@ -17,6 +19,8 @@ import 'diplomacy_panel_rows.dart';
 import 'fnv1a_hash_constants.dart';
 
 export 'diplomacy_panel_rows.dart';
+
+part 'diplomacy_panel_chrome.dart';
 
 /// Full-page diplomacy panel. SPEC/ui/diplomacy-panel.md.
 class DiplomacyPanel extends StatefulWidget {
@@ -46,6 +50,10 @@ class DiplomacyPanel extends StatefulWidget {
 class _DiplomacyPanelState extends State<DiplomacyPanel> {
   final Map<String, String> _moodByLeaderId = <String, String>{};
   final SubscriptionTracker _subscriptions = SubscriptionTracker();
+
+  /// Bottom-mode-bar filter (SPEC/ui/diplomacy-panel.md § Mode bar (filter)).
+  /// Local UI state — does not persist across panel close/reopen.
+  DiplomacyFilterMode _filterMode = DiplomacyFilterMode.all;
 
   @override
   void initState() {
@@ -85,11 +93,17 @@ class _DiplomacyPanelState extends State<DiplomacyPanel> {
           tribes.add(r);
       }
     }
+    final showGps = diplomacyFilterShowsKind(
+      _filterMode,
+      FactionKind.greatPower,
+    );
+    final showMinors = diplomacyFilterShowsKind(_filterMode, FactionKind.minor);
+    final showTribes = diplomacyFilterShowsKind(_filterMode, FactionKind.tribe);
 
-    return ListView(
+    final list = ListView(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       children: [
-        if (gps.isNotEmpty) ...[
+        if (showGps && gps.isNotEmpty) ...[
           _sectionHeader(context, l10n.diplomacy_section_greatPowers),
           ...gps.map(
             (r) => _DiplomacyRow(
@@ -100,7 +114,7 @@ class _DiplomacyPanelState extends State<DiplomacyPanel> {
             ),
           ),
         ],
-        if (minors.isNotEmpty) ...[
+        if (showMinors && minors.isNotEmpty) ...[
           _sectionHeader(context, l10n.diplomacy_section_minorNations),
           ...minors.map(
             (r) => _DiplomacyRow(
@@ -111,7 +125,7 @@ class _DiplomacyPanelState extends State<DiplomacyPanel> {
             ),
           ),
         ],
-        if (tribes.isNotEmpty) ...[
+        if (showTribes && tribes.isNotEmpty) ...[
           _sectionHeader(context, l10n.diplomacy_section_tribes),
           ...tribes.map(
             (r) => _DiplomacyRow(
@@ -132,18 +146,23 @@ class _DiplomacyPanelState extends State<DiplomacyPanel> {
           ),
       ],
     );
+
+    return Column(
+      children: [
+        Expanded(child: list),
+        _DiplomacyModeBar(
+          mode: _filterMode,
+          onModeChanged: (next) {
+            if (next == _filterMode) return;
+            setState(() => _filterMode = next);
+          },
+        ),
+      ],
+    );
   }
 
   Widget _sectionHeader(BuildContext context, String title) {
-    return Padding(
-      padding: const EdgeInsets.only(top: 16, bottom: 8),
-      child: Text(
-        title,
-        style: Theme.of(
-          context,
-        ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
-      ),
-    );
+    return _DiplomacySectionHeader(title: title);
   }
 
   void _submitOrDialog(DiplomaticOrder order) {
@@ -369,7 +388,6 @@ class _DiplomacyRow extends StatelessWidget {
   }
 
   Widget _buildHeaderRow(BuildContext context) {
-    final l10n = appL10n(context);
     return Row(
       children: [
         Text(
@@ -380,22 +398,37 @@ class _DiplomacyRow extends StatelessWidget {
         ),
         const SizedBox(width: 8),
         _kindChip(context, data.kind),
-        if (data.powerScore != null) ...[
-          const SizedBox(width: 8),
-          Text(
-            l10n.diplomacy_panel_powerScore(data.powerScore!),
-            style: Theme.of(context).textTheme.labelMedium?.copyWith(
-              color:
-                  data.playerPowerScore != null &&
-                      data.powerScore! > data.playerPowerScore!
-                  ? Colors.red
-                  : Colors.green,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-        ],
+        ..._buildPowerComparison(context),
       ],
     );
+  }
+
+  /// Renders the Great Power power-comparison percentage per
+  /// SPEC/ui/diplomacy-panel.md § Power comparison percentage.
+  List<Widget> _buildPowerComparison(BuildContext context) {
+    final int? gpScore = data.powerScore;
+    final int? playerScore = data.playerPowerScore;
+    if (gpScore == null || playerScore == null) {
+      return const [];
+    }
+    final int pct = powerComparisonPercent(gpScore, playerScore);
+    final String text = formatPowerComparisonPercent(pct);
+    // SPEC: red (--danger) when GP stronger (pct > 0), green (--success) when
+    // weaker or equal (pct <= 0). Token colors live in the editorial-monocle
+    // palette so the row matches the dark theme rather than raw Material reds.
+    final Color color = pct > 0
+        ? EditorialMonoclePalette.danger
+        : EditorialMonoclePalette.success;
+    return [
+      const SizedBox(width: 8),
+      Text(
+        text,
+        style: Theme.of(context).textTheme.labelMedium?.copyWith(
+          color: color,
+          fontWeight: FontWeight.w600,
+        ),
+      ),
+    ];
   }
 
   String _relationSummary(BuildContext context) {
@@ -491,25 +524,7 @@ class _DiplomacyRow extends StatelessWidget {
   }
 
   Widget _kindChip(BuildContext context, FactionKind kind) {
-    final (label, color) = switch (kind) {
-      FactionKind.greatPower => ('GP', Colors.blue),
-      FactionKind.minor => ('Minor', Colors.grey),
-      FactionKind.tribe => ('Tribe', Colors.orange),
-    };
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.2),
-        borderRadius: BorderRadius.circular(4),
-      ),
-      child: Text(
-        label,
-        style: Theme.of(context).textTheme.labelSmall?.copyWith(
-          color: color,
-          fontWeight: FontWeight.w600,
-        ),
-      ),
-    );
+    return _FactionKindBadge(kind: kind);
   }
 
   String _overtureStageLabel(OvertureStage stage) {
@@ -549,3 +564,97 @@ class _ActionButton extends StatelessWidget {
     );
   }
 }
+
+/// Bottom mode-bar filter for the Diplomacy panel.
+///
+/// SPEC/ui/diplomacy-panel.md § Mode bar (filter): anchored to the bottom of
+/// the panel with a `--border` top divider; buttons use mono font with
+/// inactive label `--muted`, active label `--accent`, and `--accent-dim`
+/// border on the active item.
+class _DiplomacyModeBar extends StatelessWidget {
+  const _DiplomacyModeBar({required this.mode, required this.onModeChanged});
+
+  final DiplomacyFilterMode mode;
+  final ValueChanged<DiplomacyFilterMode> onModeChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = appL10n(context);
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        border: Border(
+          top: BorderSide(color: EditorialMonoclePalette.border, width: 1),
+        ),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            _DiplomacyModeButton(
+              label: l10n.diplomacy_filter_all,
+              isActive: mode == DiplomacyFilterMode.all,
+              onPressed: () => onModeChanged(DiplomacyFilterMode.all),
+            ),
+            const SizedBox(width: 8),
+            _DiplomacyModeButton(
+              label: l10n.diplomacy_filter_greatPowersOnly,
+              isActive: mode == DiplomacyFilterMode.greatPowersOnly,
+              onPressed: () =>
+                  onModeChanged(DiplomacyFilterMode.greatPowersOnly),
+            ),
+            const SizedBox(width: 8),
+            _DiplomacyModeButton(
+              label: l10n.diplomacy_filter_minorsOnly,
+              isActive: mode == DiplomacyFilterMode.minorsOnly,
+              onPressed: () => onModeChanged(DiplomacyFilterMode.minorsOnly),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _DiplomacyModeButton extends StatelessWidget {
+  const _DiplomacyModeButton({
+    required this.label,
+    required this.isActive,
+    required this.onPressed,
+  });
+
+  final String label;
+  final bool isActive;
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    final Color labelColor = isActive
+        ? EditorialMonoclePalette.accent
+        : EditorialMonoclePalette.muted;
+    final Border? border = isActive
+        ? Border.all(color: EditorialMonoclePalette.accentDim, width: 1)
+        : null;
+    return InkWell(
+      onTap: onPressed,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+        decoration: BoxDecoration(
+          border: border,
+          borderRadius: BorderRadius.circular(2),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            color: labelColor,
+            fontFamily: 'monospace',
+            fontFamilyFallback: const ['Courier'],
+            fontSize: 12,
+            fontWeight: isActive ? FontWeight.w600 : FontWeight.w400,
+          ),
+        ),
+      ),
+    );
+  }
+}
+

@@ -12,6 +12,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'package:colonizethis_app/config/editorial_monocle_palette.dart';
 import 'package:colonizethis_app/features/game/widgets/diplomacy_panel.dart';
 import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
 import 'package:colonizethis_app/widgets/ct_panel.dart';
@@ -485,5 +486,628 @@ void main() {
         contains(DiplomaticOrderType.declareWar),
       );
     });
+  });
+
+  group('powerComparisonPercent', () {
+    test('GP stronger than player produces positive percentage', () {
+      expect(powerComparisonPercent(110, 100), 10);
+    });
+
+    test('GP weaker than player produces negative percentage', () {
+      expect(powerComparisonPercent(78, 100), -22);
+    });
+
+    test('equal scores produce zero percentage', () {
+      expect(powerComparisonPercent(100, 100), 0);
+    });
+
+    test('rounding uses banker-agnostic round() (positive)', () {
+      // (105 - 100) / 100 = 0.05 → +5
+      expect(powerComparisonPercent(105, 100), 5);
+      // (114 - 100) / 100 = 0.14 → +14
+      expect(powerComparisonPercent(114, 100), 14);
+    });
+
+    test('zero playerPowerScore uses max(playerScore, 1) guard', () {
+      // With denominator clamped to 1, (50 - 0) / 1 = 50 → +5000%
+      expect(powerComparisonPercent(50, 0), 5000);
+      // (0 - 0) / max(0, 1) = 0 → 0%, finite (no NaN, no division-by-zero)
+      expect(powerComparisonPercent(0, 0), 0);
+    });
+
+    test('negative playerPowerScore is still guarded by max(.., 1)', () {
+      // The SPEC formula uses `max(playerPowerScore, 1)`; a defensive call
+      // with a negative `playerPowerScore` must not produce a sign flip via a
+      // negative denominator. Result must be a finite integer using `1` as
+      // the effective denominator.
+      expect(powerComparisonPercent(50, -10), 6000);
+    });
+  });
+
+  group('formatPowerComparisonPercent', () {
+    test('positive percentage uses ASCII plus and percent suffix', () {
+      expect(formatPowerComparisonPercent(10), '+10%');
+      expect(formatPowerComparisonPercent(1), '+1%');
+    });
+
+    test('negative percentage uses unicode minus sign (U+2212)', () {
+      // U+2212 MINUS SIGN, not U+002D HYPHEN-MINUS.
+      expect(formatPowerComparisonPercent(-22), '\u221222%');
+      expect(formatPowerComparisonPercent(-1), '\u22121%');
+      expect(formatPowerComparisonPercent(-22).startsWith('\u2212'), isTrue);
+      expect(formatPowerComparisonPercent(-22).startsWith('-'), isFalse);
+    });
+
+    test('zero percentage formats as "0%" without sign', () {
+      expect(formatPowerComparisonPercent(0), '0%');
+    });
+  });
+
+  group('diplomacyFilterShowsKind', () {
+    test('mode `all` shows every faction kind', () {
+      for (final kind in FactionKind.values) {
+        expect(
+          diplomacyFilterShowsKind(DiplomacyFilterMode.all, kind),
+          isTrue,
+          reason: 'DiplomacyFilterMode.all must accept $kind',
+        );
+      }
+    });
+
+    test('mode `greatPowersOnly` shows only Great Power rows', () {
+      expect(
+        diplomacyFilterShowsKind(
+          DiplomacyFilterMode.greatPowersOnly,
+          FactionKind.greatPower,
+        ),
+        isTrue,
+      );
+      expect(
+        diplomacyFilterShowsKind(
+          DiplomacyFilterMode.greatPowersOnly,
+          FactionKind.minor,
+        ),
+        isFalse,
+      );
+      expect(
+        diplomacyFilterShowsKind(
+          DiplomacyFilterMode.greatPowersOnly,
+          FactionKind.tribe,
+        ),
+        isFalse,
+      );
+    });
+
+    test(
+      'mode `minorsOnly` shows Minor Nations and Tribes but not Great Powers',
+      () {
+        expect(
+          diplomacyFilterShowsKind(
+            DiplomacyFilterMode.minorsOnly,
+            FactionKind.minor,
+          ),
+          isTrue,
+        );
+        expect(
+          diplomacyFilterShowsKind(
+            DiplomacyFilterMode.minorsOnly,
+            FactionKind.tribe,
+          ),
+          isTrue,
+        );
+        expect(
+          diplomacyFilterShowsKind(
+            DiplomacyFilterMode.minorsOnly,
+            FactionKind.greatPower,
+          ),
+          isFalse,
+        );
+      },
+    );
+  });
+
+  group('DiplomacyPanel mode bar', () {
+    testWidgets(
+      'AC: default state — All button active (--accent), others inactive (--muted)',
+      (WidgetTester tester) async {
+        await _bindTallTestSurface(tester);
+        await tester.pumpWidget(
+          buildPanel(
+            game: gameWithFactions,
+            humanPlayerId: humanPlayerId,
+            topology: topology,
+          ),
+        );
+        await _pumpPanelBuilt(tester);
+
+        final allButton = tester.widget<Text>(find.text('All'));
+        expect(
+          allButton.style?.color,
+          EditorialMonoclePalette.accent,
+          reason: 'Default "All" filter must render in --accent.',
+        );
+
+        final gpOnlyButton = tester.widget<Text>(find.text('Great Powers only'));
+        expect(
+          gpOnlyButton.style?.color,
+          EditorialMonoclePalette.muted,
+          reason: 'Inactive "Great Powers only" filter must render in --muted.',
+        );
+
+        final minorsOnlyButton = tester.widget<Text>(find.text('Minors only'));
+        expect(
+          minorsOnlyButton.style?.color,
+          EditorialMonoclePalette.muted,
+          reason: 'Inactive "Minors only" filter must render in --muted.',
+        );
+      },
+    );
+
+    testWidgets(
+      'AC: tapping "Great Powers only" hides Minor Nation and Tribe rows',
+      (WidgetTester tester) async {
+        await _bindTallTestSurface(tester);
+        await tester.pumpWidget(
+          buildPanel(
+            game: gameWithFactions,
+            humanPlayerId: humanPlayerId,
+            topology: topology,
+          ),
+        );
+        await _pumpPanelBuilt(tester);
+
+        // Sanity: default "All" view includes the Great Powers heading.
+        expect(find.text('Great Powers'), findsOneWidget);
+
+        await tester.tap(find.text('Great Powers only'));
+        await _pumpPanelBuilt(tester);
+
+        expect(
+          find.text('Great Powers'),
+          findsOneWidget,
+          reason: 'Great Powers heading must remain after filter switch.',
+        );
+        expect(
+          find.text('Minor Nations'),
+          findsNothing,
+          reason: 'Minor Nations section must be hidden when GP-only is active.',
+        );
+        expect(
+          find.text('Tribes'),
+          findsNothing,
+          reason: 'Tribes section must be hidden when GP-only is active.',
+        );
+
+        final activeLabel = tester.widget<Text>(
+          find.text('Great Powers only'),
+        );
+        expect(
+          activeLabel.style?.color,
+          EditorialMonoclePalette.accent,
+          reason: 'Selected mode-bar button label must use --accent.',
+        );
+      },
+    );
+
+    testWidgets(
+      'AC: tapping "Minors only" hides Great Power rows but keeps Minors and Tribes',
+      (WidgetTester tester) async {
+        await _bindTallTestSurface(tester);
+        await tester.pumpWidget(
+          buildPanel(
+            game: gameWithFactions,
+            humanPlayerId: humanPlayerId,
+            topology: topology,
+          ),
+        );
+        await _pumpPanelBuilt(tester);
+
+        // Sanity: GP section starts visible.
+        expect(find.text('Great Powers'), findsOneWidget);
+
+        await tester.tap(find.text('Minors only'));
+        await _pumpPanelBuilt(tester);
+
+        expect(
+          find.text('Great Powers'),
+          findsNothing,
+          reason: 'Great Powers section must be hidden when Minors-only is active.',
+        );
+        // Both Minor and Tribe sections may or may not appear depending on
+        // discovered factions in the debug-init game; assert that whichever
+        // are present render at least once and the GP section is gone.
+        final rows = buildDiplomacyRows(
+          gameWithFactions,
+          topology,
+          humanPlayerId,
+          const Orders(),
+        );
+        final hasMinors = rows.any((r) => r.kind == FactionKind.minor);
+        final hasTribes = rows.any((r) => r.kind == FactionKind.tribe);
+        if (hasMinors) {
+          expect(find.text('Minor Nations'), findsOneWidget);
+        }
+        if (hasTribes) {
+          expect(find.text('Tribes'), findsOneWidget);
+        }
+
+        final activeLabel = tester.widget<Text>(find.text('Minors only'));
+        expect(
+          activeLabel.style?.color,
+          EditorialMonoclePalette.accent,
+          reason: 'Selected mode-bar button label must use --accent.',
+        );
+      },
+    );
+
+    testWidgets('AC: mode bar renders all three filter labels', (
+      WidgetTester tester,
+    ) async {
+      await _bindTallTestSurface(tester);
+      await tester.pumpWidget(
+        buildPanel(
+          game: gameWithFactions,
+          humanPlayerId: humanPlayerId,
+          topology: topology,
+        ),
+      );
+      await _pumpPanelBuilt(tester);
+
+      expect(find.text('All'), findsOneWidget);
+      expect(find.text('Great Powers only'), findsOneWidget);
+      expect(find.text('Minors only'), findsOneWidget);
+    });
+  });
+
+  group('DiplomacyPanel GP power-comparison rendering', () {
+    testWidgets('AC: GP +10% renders in --danger color', (
+      WidgetTester tester,
+    ) async {
+      await _bindTallTestSurface(tester);
+      await tester.pumpWidget(
+        buildPanel(
+          game: gameWithFactions,
+          humanPlayerId: humanPlayerId,
+          topology: topology,
+        ),
+      );
+      await _pumpPanelBuilt(tester);
+
+      final rows = buildDiplomacyRows(
+        gameWithFactions,
+        topology,
+        humanPlayerId,
+        const Orders(),
+      );
+      final stronger = rows
+          .where(
+            (r) =>
+                r.kind == FactionKind.greatPower &&
+                r.powerScore != null &&
+                r.playerPowerScore != null &&
+                r.powerScore! > r.playerPowerScore!,
+          )
+          .toList();
+      if (stronger.isEmpty) {
+        // No qualifying row in the debug-init game; skip dynamically rather
+        // than failing — the helper-level tests already pin the formula.
+        return;
+      }
+      for (final r in stronger) {
+        final pct = powerComparisonPercent(r.powerScore!, r.playerPowerScore!);
+        if (pct <= 0) continue;
+        final expectedText = formatPowerComparisonPercent(pct);
+        final finder = find.text(expectedText);
+        expect(
+          finder,
+          findsAtLeastNWidgets(1),
+          reason: 'Expected "$expectedText" for ${r.displayName}',
+        );
+        final widget = tester.widget<Text>(finder.first);
+        expect(
+          widget.style?.color,
+          EditorialMonoclePalette.danger,
+          reason: 'Stronger GP percentage must use --danger',
+        );
+      }
+    });
+
+    testWidgets('AC: GP ≤0% renders in --success color', (
+      WidgetTester tester,
+    ) async {
+      await _bindTallTestSurface(tester);
+      await tester.pumpWidget(
+        buildPanel(
+          game: gameWithFactions,
+          humanPlayerId: humanPlayerId,
+          topology: topology,
+        ),
+      );
+      await _pumpPanelBuilt(tester);
+
+      final rows = buildDiplomacyRows(
+        gameWithFactions,
+        topology,
+        humanPlayerId,
+        const Orders(),
+      );
+      final weakerOrEqual = rows
+          .where(
+            (r) =>
+                r.kind == FactionKind.greatPower &&
+                r.powerScore != null &&
+                r.playerPowerScore != null &&
+                r.powerScore! <= r.playerPowerScore!,
+          )
+          .toList();
+      if (weakerOrEqual.isEmpty) {
+        return;
+      }
+      for (final r in weakerOrEqual) {
+        final pct = powerComparisonPercent(r.powerScore!, r.playerPowerScore!);
+        if (pct > 0) continue;
+        final expectedText = formatPowerComparisonPercent(pct);
+        final finder = find.text(expectedText);
+        expect(
+          finder,
+          findsAtLeastNWidgets(1),
+          reason: 'Expected "$expectedText" for ${r.displayName}',
+        );
+        final widget = tester.widget<Text>(finder.first);
+        expect(
+          widget.style?.color,
+          EditorialMonoclePalette.success,
+          reason: 'Weaker/equal GP percentage must use --success',
+        );
+      }
+    });
+
+    testWidgets(
+      'absolute "Power: N" score label is no longer rendered on GP rows',
+      (WidgetTester tester) async {
+        await _bindTallTestSurface(tester);
+        await tester.pumpWidget(
+          buildPanel(
+            game: gameWithFactions,
+            humanPlayerId: humanPlayerId,
+            topology: topology,
+          ),
+        );
+        await _pumpPanelBuilt(tester);
+
+        // SPEC: percentage replaces the absolute score. No row should render
+        // text starting with "Power: ".
+        expect(find.textContaining('Power: '), findsNothing);
+      },
+    );
+  });
+
+  group('DiplomacyPanel section headings (editorial-monocle)', () {
+    testWidgets(
+      'AC: Section heading text resolves to --accent color',
+      (WidgetTester tester) async {
+        await _bindTallTestSurface(tester);
+        await tester.pumpWidget(
+          buildPanel(
+            game: gameWithFactions,
+            humanPlayerId: humanPlayerId,
+            topology: topology,
+          ),
+        );
+        await _pumpPanelBuilt(tester);
+
+        final heading = tester.widget<Text>(find.text('Great Powers'));
+        expect(
+          heading.style?.color,
+          EditorialMonoclePalette.accent,
+          reason:
+              'Section heading must render in --accent per editorial-monocle.',
+        );
+        expect(
+          heading.style?.fontFamily,
+          'Cinzel',
+          reason: 'Section heading must use the editorial-monocle display font.',
+        );
+      },
+    );
+
+    testWidgets(
+      'AC: Section heading container exposes a 2 px --accent-dim bottom border',
+      (WidgetTester tester) async {
+        await _bindTallTestSurface(tester);
+        await tester.pumpWidget(
+          buildPanel(
+            game: gameWithFactions,
+            humanPlayerId: humanPlayerId,
+            topology: topology,
+          ),
+        );
+        await _pumpPanelBuilt(tester);
+
+        final headingFinder = find.text('Great Powers');
+        final decorated = find.ancestor(
+          of: headingFinder,
+          matching: find.byType(DecoratedBox),
+        );
+        expect(decorated, findsAtLeastNWidgets(1));
+        final box = tester.widget<DecoratedBox>(decorated.first);
+        final decoration = box.decoration as BoxDecoration;
+        final BorderSide bottom = decoration.border!.bottom;
+        expect(bottom.color, EditorialMonoclePalette.accentDim);
+        expect(bottom.width, 2);
+      },
+    );
+  });
+
+  group('DiplomacyPanel faction kind badges (editorial-monocle)', () {
+    testWidgets(
+      'AC: GP badge background --accent-dim and foreground --bg-deep',
+      (WidgetTester tester) async {
+        await _bindTallTestSurface(tester);
+        await tester.pumpWidget(
+          buildPanel(
+            game: gameWithFactions,
+            humanPlayerId: humanPlayerId,
+            topology: topology,
+          ),
+        );
+        await _pumpPanelBuilt(tester);
+
+        // Only assert if the debug-init game actually has a GP row.
+        final rows = buildDiplomacyRows(
+          gameWithFactions,
+          topology,
+          humanPlayerId,
+          const Orders(),
+        );
+        final hasGp = rows.any((r) => r.kind == FactionKind.greatPower);
+        if (!hasGp) return;
+
+        final gpText = find.text('GP').first;
+        final container = tester.widget<Container>(
+          find.ancestor(of: gpText, matching: find.byType(Container)).first,
+        );
+        final decoration = container.decoration as BoxDecoration;
+        expect(
+          decoration.color,
+          EditorialMonoclePalette.accentDim,
+          reason: 'GP badge background must resolve to --accent-dim.',
+        );
+        expect(
+          decoration.border,
+          isNull,
+          reason: 'GP badge must not draw an outline border.',
+        );
+        final textWidget = tester.widget<Text>(gpText);
+        expect(
+          textWidget.style?.color,
+          EditorialMonoclePalette.bgDeep,
+          reason: 'GP badge foreground must resolve to --bg-deep.',
+        );
+      },
+    );
+
+    testWidgets(
+      'AC: Minor badge background --muted and foreground --bg-deep',
+      (WidgetTester tester) async {
+        await _bindTallTestSurface(tester);
+        await tester.pumpWidget(
+          buildPanel(
+            game: gameWithFactions,
+            humanPlayerId: humanPlayerId,
+            topology: topology,
+          ),
+        );
+        await _pumpPanelBuilt(tester);
+
+        final rows = buildDiplomacyRows(
+          gameWithFactions,
+          topology,
+          humanPlayerId,
+          const Orders(),
+        );
+        final hasMinor = rows.any((r) => r.kind == FactionKind.minor);
+        if (!hasMinor) return;
+
+        final minorText = find.text('Minor').first;
+        final container = tester.widget<Container>(
+          find.ancestor(of: minorText, matching: find.byType(Container)).first,
+        );
+        final decoration = container.decoration as BoxDecoration;
+        expect(
+          decoration.color,
+          EditorialMonoclePalette.muted,
+          reason: 'Minor badge background must resolve to --muted.',
+        );
+        expect(
+          decoration.border,
+          isNull,
+          reason: 'Minor badge must not draw an outline border.',
+        );
+        final textWidget = tester.widget<Text>(minorText);
+        expect(
+          textWidget.style?.color,
+          EditorialMonoclePalette.bgDeep,
+          reason: 'Minor badge foreground must resolve to --bg-deep.',
+        );
+      },
+    );
+
+    testWidgets(
+      'AC: Tribe badge outlined with --muted border, transparent background',
+      (WidgetTester tester) async {
+        await _bindTallTestSurface(tester);
+        await tester.pumpWidget(
+          buildPanel(
+            game: gameWithFactions,
+            humanPlayerId: humanPlayerId,
+            topology: topology,
+          ),
+        );
+        await _pumpPanelBuilt(tester);
+
+        final rows = buildDiplomacyRows(
+          gameWithFactions,
+          topology,
+          humanPlayerId,
+          const Orders(),
+        );
+        final hasTribe = rows.any((r) => r.kind == FactionKind.tribe);
+        if (!hasTribe) return;
+
+        final tribeText = find.text('Tribe').first;
+        final container = tester.widget<Container>(
+          find.ancestor(of: tribeText, matching: find.byType(Container)).first,
+        );
+        final decoration = container.decoration as BoxDecoration;
+        expect(
+          decoration.color,
+          isNull,
+          reason: 'Tribe badge background must be transparent (null).',
+        );
+        expect(decoration.border, isNotNull);
+        expect(
+          decoration.border!.top.color,
+          EditorialMonoclePalette.muted,
+          reason: 'Tribe badge outline must use --muted.',
+        );
+        final textWidget = tester.widget<Text>(tribeText);
+        expect(
+          textWidget.style?.color,
+          EditorialMonoclePalette.muted,
+          reason: 'Tribe badge foreground must resolve to --muted.',
+        );
+      },
+    );
+
+    testWidgets(
+      'AC: No badge uses raw Material chrome (Colors.blue/grey/orange)',
+      (WidgetTester tester) async {
+        await _bindTallTestSurface(tester);
+        await tester.pumpWidget(
+          buildPanel(
+            game: gameWithFactions,
+            humanPlayerId: humanPlayerId,
+            topology: topology,
+          ),
+        );
+        await _pumpPanelBuilt(tester);
+
+        final allLabels = ['GP', 'Minor', 'Tribe'];
+        for (final label in allLabels) {
+          final finder = find.text(label);
+          if (finder.evaluate().isEmpty) continue;
+          final widget = tester.widget<Text>(finder.first);
+          final color = widget.style?.color;
+          // Reject the prior hardcoded Material palette for these labels.
+          expect(color, isNot(equals(Colors.blue)),
+              reason: '$label badge must not use Colors.blue.');
+          expect(color, isNot(equals(Colors.grey)),
+              reason: '$label badge must not use Colors.grey.');
+          expect(color, isNot(equals(Colors.orange)),
+              reason: '$label badge must not use Colors.orange.');
+        }
+      },
+    );
   });
 }

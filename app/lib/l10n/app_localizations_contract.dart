@@ -1306,6 +1306,15 @@ abstract class AppLocalizations {
   /// Diplomacy list section heading.
   String get diplomacy_section_tribes;
 
+  /// Diplomacy panel mode-bar filter label: show all factions.
+  String get diplomacy_filter_all;
+
+  /// Diplomacy panel mode-bar filter label: show only Great Powers.
+  String get diplomacy_filter_greatPowersOnly;
+
+  /// Diplomacy panel mode-bar filter label: show Minor Nations and Tribes only (no Great Powers).
+  String get diplomacy_filter_minorsOnly;
+
   /// One-word war state in diplomacy UI.
   String get diplomacy_relationState_war;
 

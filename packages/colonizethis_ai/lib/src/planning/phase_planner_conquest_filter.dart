@@ -39,7 +39,8 @@ class PhaseConquestInvadableResolution {
   final List<String> phasePlanInvadableSorted;
 
   /// When [useLegacyInvadable] is `true`, exclude NW invadable provinces
-  /// from the legacy union (EXPAND / COLONIAL-lite structural suppression).
+  /// from the legacy union when [resolvePhaseConquestNwInvasionWeight] is
+  /// `<= 0.0` for the active [PhasePlanOutcome] (Refs #2847 Phase 3).
   final bool structuralNewWorldSuppressed;
 
   /// When `true`, `runConquestArmyMovePlanner` returns without emitting
@@ -73,13 +74,13 @@ PhaseConquestInvadableResolution resolvePhaseConquestInvadable({
     );
   }
 
-  final suppressNewWorld =
-      phasePlan.phase == ObserverGoalPhase.expand ||
-      phasePlan.phase == ObserverGoalPhase.colonialLite;
+  final nwInvasionWeight = resolvePhaseConquestNwInvasionWeight(
+    phasePlan: phasePlan,
+  );
 
   return PhaseConquestInvadableResolution(
     useLegacyInvadable: true,
-    structuralNewWorldSuppressed: suppressNewWorld,
+    structuralNewWorldSuppressed: nwInvasionWeight <= 0.0,
   );
 }
 
@@ -169,15 +170,13 @@ bool resolvePhaseConquestExtraPassesActive({
 /// [PhasePriorityWeights.newWorldAcquisition] (Refs #2847 Phase 2
 /// scaffolding).
 ///
-/// This resolver is the **weight-aware companion** of the structural
-/// boolean [resolvePhaseConquestSuppressNwInvasionScoring]; the boolean
-/// remains the production source of truth in the Phase 2 scaffolding
-/// slice — orchestrator scoring sites do **not** read this weight yet.
-/// Phase 3 consumer wiring (Refs #2847) will migrate NW invasion
-/// scoring sites to multiply candidate scores by this weight so the
-/// EXPAND→COLONIAL transition becomes a continuous curve instead of a
-/// binary cliff (`SPEC/ai/phase-planner-architecture.md` § Soft-phase
-/// priority weights).
+/// Production NW invasion scoring multiplier for
+/// `runConquestArmyMovePlanner` (Refs #2847 Phase 3). Replaces the
+/// boolean [resolvePhaseConquestSuppressNwInvasionScoring] at the
+/// conquest army-move scoring sites so the EXPAND→COLONIAL transition
+/// is a continuous curve instead of a binary cliff
+/// (`SPEC/ai/phase-planner-architecture.md` § Soft-phase priority
+/// weights). The boolean remains for legacy call sites not yet migrated.
 ///
 /// Pure and deterministic — identical `phasePlan.priorityWeights`
 /// inputs always yield identical `double` results (Refs #2509
