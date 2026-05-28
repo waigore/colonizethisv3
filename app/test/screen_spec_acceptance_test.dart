@@ -712,7 +712,7 @@ void main() {
       );
       await tester.pump();
 
-      expect(find.text('Starting…'), findsOneWidget);
+      expect(find.text('Generating world…'), findsOneWidget);
       final startFinder = find.widgetWithText(CtNinePatchButton, 'Start Game');
       expect(tester.widget<CtNinePatchButton>(startFinder).enabled, isFalse);
       await tester.tap(find.text('Back'));
@@ -1096,6 +1096,101 @@ void main() {
                   border.top.color == EditorialMonoclePalette.accentDim;
             });
         expect(hasBrassChrome, isFalse);
+      },
+    );
+
+    // -------------------------------------------------------------------
+    // Issue #2868 S4 — loading dim/scrim overlay (Refs #2868 R15).
+    // -------------------------------------------------------------------
+
+    testWidgets(
+      'AC Issue #2868 R15: loading state shows the "Generating world…" '
+      'label keyed gameSetupLoadingLabel above a dialogScrim wash',
+      (WidgetTester tester) async {
+        await tester.pumpWidget(
+          buildGameSetup(state: GameSetupState.loading),
+        );
+        await tester.pump();
+
+        expect(
+          find.byKey(const ValueKey<String>('gameSetupLoadingLabel')),
+          findsOneWidget,
+        );
+        expect(find.text('Generating world…'), findsOneWidget);
+
+        final scrimBoxes = tester.widgetList<ColoredBox>(
+          find.byType(ColoredBox),
+        );
+        final hasScrim = scrimBoxes.any(
+          (box) => box.color == EditorialMonoclePalette.dialogScrim,
+        );
+        expect(hasScrim, isTrue);
+      },
+    );
+
+    testWidgets(
+      'AC Issue #2868 R15: loading state wraps the header + slot rows in '
+      'Opacity(0.4) and IgnorePointer(ignoring: true)',
+      (WidgetTester tester) async {
+        await tester.pumpWidget(
+          buildGameSetup(state: GameSetupState.loading),
+        );
+        await tester.pump();
+
+        final dimmedOpacityFinder = find.ancestor(
+          of: find.widgetWithText(CtDropdown<String>, 'Select nation').first,
+          matching: find.byWidgetPredicate(
+            (Widget w) => w is Opacity && w.opacity == 0.4,
+          ),
+        );
+        expect(dimmedOpacityFinder, findsWidgets);
+
+        final dimmedIgnorePointerFinder = find.ancestor(
+          of: find.widgetWithText(CtDropdown<String>, 'Select nation').first,
+          matching: find.byWidgetPredicate(
+            (Widget w) => w is IgnorePointer && w.ignoring == true,
+          ),
+        );
+        expect(dimmedIgnorePointerFinder, findsWidgets);
+      },
+    );
+
+    testWidgets(
+      'AC Issue #2868 R15 negative: default state renders no dialogScrim '
+      'ColoredBox and no gameSetupLoadingLabel widget',
+      (WidgetTester tester) async {
+        await tester.pumpWidget(buildGameSetup());
+        await tester.pumpAndSettle();
+
+        expect(
+          find.byKey(const ValueKey<String>('gameSetupLoadingLabel')),
+          findsNothing,
+        );
+        expect(find.text('Generating world…'), findsNothing);
+
+        final hasScrim = tester
+            .widgetList<ColoredBox>(find.byType(ColoredBox))
+            .any((box) => box.color == EditorialMonoclePalette.dialogScrim);
+        expect(hasScrim, isFalse);
+      },
+    );
+
+    testWidgets(
+      'AC Issue #2868 R15: Back button remains tappable under the loading '
+      'scrim (scrim covers the dim region only, not the action buttons)',
+      (WidgetTester tester) async {
+        var backCalled = false;
+        await tester.pumpWidget(
+          buildGameSetup(
+            state: GameSetupState.loading,
+            onBack: () => backCalled = true,
+          ),
+        );
+        await tester.pump();
+
+        await tester.tap(find.text('Back'));
+        await tester.pump();
+        expect(backCalled, isTrue);
       },
     );
   });
