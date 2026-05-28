@@ -63,6 +63,10 @@ const Set<String> _allowedFeatureLocalDialogFiles = <String>{
   'app/lib/features/game/flame/exit_confirm_dialog.dart',
   'app/lib/features/game/widgets/tech_tree_widget.dart',
   'app/lib/features/game/widgets/technology_panel.dart',
+  // Bottom-sheet split out of `technology_panel.dart` to keep the panel
+  // file under the 700-line `repo.game_widgets_file_size` cap. Same
+  // local-by-design rationale as the parent file (Refs #2864 S3 split).
+  'app/lib/features/game/widgets/technology_panel_orders.dart',
   'app/lib/features/shell/new_game_setup_flow.dart',
   // Split / move fleet — `SPEC/program/app-ui-wiring.md` "Split fleet" /
   // "Move fleet" paragraphs.
