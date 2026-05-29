@@ -307,6 +307,7 @@ mixin _GameMapAreaStatePart2
                             child: PlayerTurnEventFeedCard(
                               entries: feedEntries,
                               emptyLabel: 'No player events last turn.',
+                              narrow: true,
                             ),
                           ),
                         if (!isNarrow && widget.game.victory == null)
