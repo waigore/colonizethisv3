@@ -14,6 +14,12 @@ const Duration kCtDropdownChevronAnimationDuration = Duration(milliseconds: 120)
 const double _kChevronOpenTurns = 0.5;
 const double _kChevronClosedTurns = 0.0;
 
+/// Width of the picker row's accent left-edge indicator. Pinned to 1 dp so
+/// selected and unselected rows occupy identical horizontal space — the
+/// unselected variant paints a fully transparent border at the same width,
+/// keeping the layout stable across selection changes (Refs #2859 R5c).
+const double kCtDropdownPickerSelectedLeftEdgeWidth = 1.0;
+
 /// Pixel-art dropdown: nine-patch button + modal list of options.
 ///
 /// Trigger chevron animates between chevron-down (closed) and chevron-up
@@ -48,6 +54,16 @@ class CtDropdown<T> extends StatefulWidget {
   /// assert turn counts and durations without depending on widget tree order.
   static const Key kChevronAnimatedRotationKey = Key(
     'ct_dropdown_chevron_animated_rotation',
+  );
+
+  /// Test hook: the [Key] of the outer [DecoratedBox] wrapping the picker
+  /// row whose value matches the current trigger [value]. Tests can locate
+  /// the selected row via this key to assert the R5c selected-state visual
+  /// (1 px `--accent` left-edge border + `--accent-dim` background tint)
+  /// without depending on tree order. Only the selected row exposes this
+  /// key; non-selected rows render without it.
+  static const Key kCtDropdownPickerSelectedRowKey = Key(
+    'ct_dropdown_picker_selected_row',
   );
 
   @override
@@ -151,28 +167,48 @@ class _CtDropdownState<T> extends State<CtDropdown<T>> {
                   final v = widget.items[index];
                   final label = _labelFor(v);
                   final rowLeading = widget.itemLeading?.call(context, v);
+                  final bool isSelected =
+                      widget.value != null && v == widget.value;
                   return Padding(
                     padding: const EdgeInsets.only(bottom: 4),
-                    child: CtNinePatchButton(
-                      onPressed: () {
-                        Navigator.of(ctx).pop(v);
-                      },
-                      enabled: true,
-                      child: Align(
-                        alignment: Alignment.centerLeft,
-                        child: Row(
-                          children: [
-                            if (rowLeading != null) ...[
-                              rowLeading,
-                              const SizedBox(width: 8),
-                            ],
-                            Expanded(
-                              child: Text(
-                                label,
-                                overflow: TextOverflow.ellipsis,
+                    child: DecoratedBox(
+                      key: isSelected
+                          ? CtDropdown.kCtDropdownPickerSelectedRowKey
+                          : null,
+                      decoration: BoxDecoration(
+                        color: isSelected
+                            ? EditorialMonoclePalette.accentDim
+                            : null,
+                        border: Border(
+                          left: BorderSide(
+                            color: isSelected
+                                ? EditorialMonoclePalette.accent
+                                : Colors.transparent,
+                            width: kCtDropdownPickerSelectedLeftEdgeWidth,
+                          ),
+                        ),
+                      ),
+                      child: CtNinePatchButton(
+                        onPressed: () {
+                          Navigator.of(ctx).pop(v);
+                        },
+                        enabled: true,
+                        child: Align(
+                          alignment: Alignment.centerLeft,
+                          child: Row(
+                            children: [
+                              if (rowLeading != null) ...[
+                                rowLeading,
+                                const SizedBox(width: 8),
+                              ],
+                              Expanded(
+                                child: Text(
+                                  label,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
                               ),
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
                       ),
                     ),
