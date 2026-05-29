@@ -920,6 +920,21 @@ abstract class AppLocalizations {
   /// Bottom-sheet empty-state when no selectable technologies exist.
   String get technologyPanel_noTechsAvailable;
 
+  /// Section heading above the researched-techs chip grid (Refs #2864 S2).
+  String get technologyPanel_researchedTechsHeading;
+
+  /// Section heading above the slot cards (Refs #2864 S3).
+  String get technologyPanel_researchSlotsHeading;
+
+  /// Locked slot card header label (Refs #2864 S0/S3).
+  String technologyPanel_lockedSlotLabel(int slot);
+
+  /// Locked slot card body footnote (Refs #2864 S0/S3).
+  String get technologyPanel_lockedSlotFootnote;
+
+  /// Monospace RP progress label rendered next to the slot progress bar (Refs #2864 S3).
+  String technologyPanel_slotRpProgress(int progress, int cost);
+
   /// Bottom-sheet row subtitle for selectable technology.
   String technologyPanel_pickSubtitle(String era, String category, int cost);
 

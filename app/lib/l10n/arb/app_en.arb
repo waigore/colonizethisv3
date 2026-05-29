@@ -1647,6 +1647,39 @@
   "@technologyPanel_noTechsAvailable": {
     "description": "Bottom-sheet empty-state when no selectable technologies exist."
   },
+  "technologyPanel_researchedTechsHeading": "Researched Techs",
+  "@technologyPanel_researchedTechsHeading": {
+    "description": "Section heading above the researched-techs chip grid on the Slots tab (Refs #2864 S2)."
+  },
+  "technologyPanel_researchSlotsHeading": "Research Slots",
+  "@technologyPanel_researchSlotsHeading": {
+    "description": "Section heading above the slot cards on the Slots tab (Refs #2864 S3)."
+  },
+  "technologyPanel_lockedSlotLabel": "Slot {slot} (University)",
+  "@technologyPanel_lockedSlotLabel": {
+    "description": "Locked slot card header label when the player has not researched University (Refs #2864 S0/S3).",
+    "placeholders": {
+      "slot": {
+        "type": "int"
+      }
+    }
+  },
+  "technologyPanel_lockedSlotFootnote": "Requires University tech",
+  "@technologyPanel_lockedSlotFootnote": {
+    "description": "Locked slot card body footnote when the player has not researched University (Refs #2864 S0/S3)."
+  },
+  "technologyPanel_slotRpProgress": "{progress} / {cost} RP",
+  "@technologyPanel_slotRpProgress": {
+    "description": "Monospace RP progress label rendered next to the slot progress bar (Refs #2864 S3).",
+    "placeholders": {
+      "progress": {
+        "type": "int"
+      },
+      "cost": {
+        "type": "int"
+      }
+    }
+  },
   "technologyPanel_pickSubtitle": "Era {era} - {category} - {cost} RP",
   "@technologyPanel_pickSubtitle": {
     "description": "Bottom-sheet row subtitle for selectable technology.",

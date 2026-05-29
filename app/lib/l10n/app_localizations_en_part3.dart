@@ -136,6 +136,25 @@ mixin _AppLocalizationsEnStrings3 on AppLocalizations {
       'No techs available to research';
 
   @override
+  String get technologyPanel_researchedTechsHeading => 'Researched Techs';
+
+  @override
+  String get technologyPanel_researchSlotsHeading => 'Research Slots';
+
+  @override
+  String technologyPanel_lockedSlotLabel(int slot) {
+    return 'Slot $slot (University)';
+  }
+
+  @override
+  String get technologyPanel_lockedSlotFootnote => 'Requires University tech';
+
+  @override
+  String technologyPanel_slotRpProgress(int progress, int cost) {
+    return '$progress / $cost RP';
+  }
+
+  @override
   String technologyPanel_pickSubtitle(String era, String category, int cost) {
     return 'Era $era - $category - $cost RP';
   }
