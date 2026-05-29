@@ -8,7 +8,7 @@ import 'package:flutter/material.dart';
 import '../../../config/app_assets.dart';
 import '../../../l10n/l10n.dart';
 import '../../../widgets/ct_nine_patch_button.dart';
-import '../../../widgets/strict_asset_icon.dart';
+import 'production_allocation_row_buttons.dart';
 import 'production_labour_helpers.dart';
 
 const _uiIconLabourIncrement = 'ui_icon_production_alloc_increment.png';
@@ -195,6 +195,18 @@ class _DisbandTierButton extends StatelessWidget {
   }
 }
 
+/// Per-tier `+` / `−` control for the Labour Controls section.
+///
+/// Renders the shared dark editorial-monocle 26 × 26 step-button surface
+/// ([ProductionStepButtonSurface]) so the Available subpanel's per-tier
+/// recruit/train controls reuse the same chrome as the Allocation
+/// subpanel's per-recipe ± / maximize / clear controls — `SPEC/ui/production-panel.md`
+/// § Allocation step buttons explicitly mandates this contract reuse
+/// (`Refs #2862` § Labour Controls).
+///
+/// The surface fades to [kProductionAllocationStepButtonDisabledOpacity]
+/// when [enabled] is false; tap gestures are gated by the same flag so
+/// disabled controls never dispatch [onPressed].
 class _LabourIconButton extends StatelessWidget {
   const _LabourIconButton({
     required this.enabled,
@@ -215,16 +227,10 @@ class _LabourIconButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final path = '$kAppIconAssetPrefix$assetFileName';
-    final icon = Opacity(
-      opacity: enabled ? 1 : 0.35,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 4),
-        child: StrictAssetIcon(
-          assetPath: path,
-          width: _iconSize,
-          height: _iconSize,
-        ),
-      ),
+    final surface = ProductionStepButtonSurface(
+      enabled: enabled,
+      iconAssetPath: path,
+      iconSize: _iconSize,
     );
     return Semantics(
       button: true,
@@ -236,7 +242,7 @@ class _LabourIconButton extends StatelessWidget {
           color: Colors.transparent,
           child: InkWell(
             onTap: enabled ? onPressed : null,
-            child: icon,
+            child: surface,
           ),
         ),
       ),
