@@ -445,13 +445,30 @@ class _DiplomacyRow extends StatelessWidget {
   }
 
   Widget _buildHeaderRow(BuildContext context) {
+    // SPEC/ui/mobile-adaptation.md § 7 Minimum-viewport pin: at
+    // `kMinViewportWidth` (320 dp) the inner Row width is ~262 dp once the
+    // ListView, row padding, and chrome border are subtracted. A long
+    // faction display name (e.g. `Holy Roman Empire`) plus the
+    // `_FactionKindBadge` chip and the optional `+N% / −N%` power
+    // comparison label exceeds that budget by ~162 px without a
+    // shrinkable child, producing the documented overflow. Wrap the name
+    // in `Flexible` + `TextOverflow.ellipsis` so the name absorbs all
+    // available width and shrinks gracefully at narrow viewports while
+    // the chip + percentage retain their natural size for legibility.
+    // SPEC/ui/diplomacy-panel.md § Per-faction row text layout is
+    // preserved: the chip, optional percentage, and their leading gap
+    // continue to anchor to the name's trailing edge.
     return Row(
       children: [
-        Text(
-          data.displayName,
-          style: Theme.of(
-            context,
-          ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w600),
+        Flexible(
+          child: Text(
+            data.displayName,
+            style: Theme.of(
+              context,
+            ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w600),
+            overflow: TextOverflow.ellipsis,
+            maxLines: 1,
+          ),
         ),
         const SizedBox(width: 8),
         _kindChip(context, data.kind),
