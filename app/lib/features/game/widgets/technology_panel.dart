@@ -225,7 +225,7 @@ class TechnologyPanel extends StatelessWidget {
             : null,
         onChooseTech: canEdit
             ? () {
-                showChooseTechBottomSheet(
+                showChooseTechDialog(
                   context: context,
                   game: game,
                   slotIndex: index,
