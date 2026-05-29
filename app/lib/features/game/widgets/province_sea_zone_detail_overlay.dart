@@ -17,6 +17,7 @@ import 'package:colonizethis_map/colonizethis_map.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_app/l10n/l10n.dart';
 import 'package:colonizethis_app/widgets/ct_panel.dart';
+import 'package:colonizethis_app/widgets/ct_section_label.dart';
 import 'package:colonizethis_app/widgets/ct_tab_strip.dart';
 import 'package:colonizethis_app/widgets/resource_icon.dart';
 import 'package:flutter/material.dart';
@@ -340,54 +341,7 @@ _OverlayContent _provinceContent({
       l10n.provinceOverlay_sectionTile,
       Text(l10n.provinceOverlay_unknown),
     );
-    final sections = Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Text(
-          l10n.provinceOverlay_sectionPolitical,
-          style: const TextStyle(fontWeight: FontWeight.bold),
-        ),
-        const SizedBox(height: 4),
-        Text(l10n.provinceOverlay_unknown),
-        const SizedBox(height: 12),
-        Text(
-          l10n.provinceOverlay_sectionTile,
-          style: const TextStyle(fontWeight: FontWeight.bold),
-        ),
-        const SizedBox(height: 4),
-        Text(l10n.provinceOverlay_unknown),
-        const SizedBox(height: 12),
-        Text(
-          l10n.provinceOverlay_sectionEconomic,
-          style: const TextStyle(fontWeight: FontWeight.bold),
-        ),
-        const SizedBox(height: 4),
-        Text(l10n.provinceOverlay_unknown),
-        const SizedBox(height: 12),
-        Text(
-          l10n.provinceOverlay_sectionMilitary,
-          style: const TextStyle(fontWeight: FontWeight.bold),
-        ),
-        const SizedBox(height: 4),
-        Text(l10n.provinceOverlay_unknown),
-        const SizedBox(height: 12),
-        Text(
-          l10n.provinceOverlay_sectionCivilian,
-          style: const TextStyle(fontWeight: FontWeight.bold),
-        ),
-        const SizedBox(height: 4),
-        Text(l10n.provinceOverlay_unknown),
-        const SizedBox(height: 12),
-        Text(
-          l10n.provinceOverlay_sectionNaval,
-          style: const TextStyle(fontWeight: FontWeight.bold),
-        ),
-        const SizedBox(height: 4),
-        Text(l10n.provinceOverlay_unknown),
-      ],
-    );
-    final tabLabels = [
+    final obfuscatedSectionTitles = <String>[
       l10n.provinceOverlay_sectionPolitical,
       l10n.provinceOverlay_sectionTile,
       l10n.provinceOverlay_sectionEconomic,
@@ -395,6 +349,15 @@ _OverlayContent _provinceContent({
       l10n.provinceOverlay_sectionCivilian,
       l10n.provinceOverlay_sectionNaval,
     ];
+    final sections = Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        for (final title in obfuscatedSectionTitles)
+          _buildSection(title, Text(l10n.provinceOverlay_unknown)),
+      ],
+    );
+    final tabLabels = obfuscatedSectionTitles;
     final tabViews = [
       politicalObs,
       tileObs,
@@ -640,21 +603,7 @@ _OverlayContent _seaZoneContent({
     final sections = Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
-      children: [
-        Text(
-          l10n.provinceOverlay_sectionPolitical,
-          style: const TextStyle(fontWeight: FontWeight.bold),
-        ),
-        const SizedBox(height: 4),
-        Text(l10n.provinceOverlay_unknown),
-        const SizedBox(height: 12),
-        Text(
-          l10n.provinceOverlay_sectionNaval,
-          style: const TextStyle(fontWeight: FontWeight.bold),
-        ),
-        const SizedBox(height: 4),
-        Text(l10n.provinceOverlay_unknown),
-      ],
+      children: [politicalObs, navalObs],
     );
     return _OverlayContent(
       tabLabels: tabLabels,
