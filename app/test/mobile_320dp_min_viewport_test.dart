@@ -206,6 +206,90 @@ void main() {
         },
       );
 
+      // The 320 dp minimum viewport sits below the 430 dp main-menu
+      // narrow breakpoint (`kMainMenuNarrowBreakpoint`), so the menu
+      // container must paint the compact `kMainMenuBodyPaddingNarrow`
+      // padding rather than the default desktop padding. Existing
+      // `screen_spec_acceptance_test.dart` AC pins this at the 430 dp
+      // boundary and at 360 dp; this pin closes the same visual contract
+      // at the absolute minimum supported viewport per
+      // `SPEC/ui/mobile-adaptation.md` § 4 Main Menu (`≤ 430 dp`) and § 7
+      // (`kMinViewportWidth = 320 dp`). Refs #2870 S10 + S6.
+      testWidgets(
+        'AC1 (positive) CtMainMenu plain @ 320×640: menu body padding is the '
+        'compact kMainMenuBodyPaddingNarrow (≤ 430 dp narrow contract)',
+        (WidgetTester tester) async {
+          await _pumpAtSize(
+            tester,
+            _wrapMainMenu(),
+            size: _kMinViewport,
+          );
+
+          expect(tester.takeException(), isNull);
+          final Padding bodyPadding = tester.widget<Padding>(
+            find.byKey(const Key(kMainMenuBodyPaddingKey)),
+          );
+          expect(
+            bodyPadding.padding,
+            kMainMenuBodyPaddingNarrow,
+            reason:
+                'CtMainMenu at 320 dp (well below the 430 dp narrow '
+                'breakpoint) must use the compact narrow padding from '
+                'SPEC/ui/mobile-adaptation.md § 4 Main Menu.',
+          );
+        },
+      );
+
+      // The pixelArt variant has an additional narrow rule: the wood-panel
+      // menu button labels reduce letter-spacing from
+      // `kMainMenuButtonLetterSpacingDefault` to
+      // `kMainMenuButtonLetterSpacingNarrow` per
+      // `SPEC/ui/mockups/SHEL10002-main-menu.html` `.menu-btn @media
+      // (max-width: 430px)`. Pin both the padding and the letter-spacing
+      // at the 320 dp minimum viewport.
+      testWidgets(
+        'AC1 (positive) CtMainMenu pixelArt @ 320×640: compact padding plus '
+        'narrow button letter-spacing (≤ 430 dp narrow contract)',
+        (WidgetTester tester) async {
+          await _pumpAtSize(
+            tester,
+            _wrapMainMenu(variant: MainMenuVariant.pixelArt),
+            size: _kMinViewport,
+          );
+
+          expect(tester.takeException(), isNull);
+          final Padding bodyPadding = tester.widget<Padding>(
+            find.byKey(const Key(kMainMenuBodyPaddingKey)),
+          );
+          expect(bodyPadding.padding, kMainMenuBodyPaddingNarrow);
+
+          expect(
+            find.byWidgetPredicate(
+              (Widget w) =>
+                  w is Text &&
+                  w.style?.letterSpacing ==
+                      kMainMenuButtonLetterSpacingNarrow,
+            ),
+            findsWidgets,
+            reason:
+                'pixelArt menu-button labels at 320 dp must use the narrow '
+                'letter-spacing per the ≤ 430 dp rule.',
+          );
+          expect(
+            find.byWidgetPredicate(
+              (Widget w) =>
+                  w is Text &&
+                  w.style?.letterSpacing ==
+                      kMainMenuButtonLetterSpacingDefault,
+            ),
+            findsNothing,
+            reason:
+                'No pixelArt menu-button labels at 320 dp may carry the '
+                'wider default letter-spacing.',
+          );
+        },
+      );
+
       testWidgets(
         'AC2 (positive) CtGameSetup plain @ 320×640: no exception, '
         'six player-slot rows render (stacked layout per § 4)',
