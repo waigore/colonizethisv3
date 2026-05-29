@@ -352,6 +352,10 @@ jobs:
         if: needs.changes.outputs.tests == 'true'
         run: dart pub get
 
+      - name: Package test runner regression checks (issue #2957)
+        if: needs.changes.outputs.tests == 'true'
+        run: bash tool/test_run_package_tests.sh
+
       - name: Package tests and coverage gates
         if: needs.changes.outputs.tests == 'true'
         env:
