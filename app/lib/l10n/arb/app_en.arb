@@ -978,6 +978,10 @@
       }
     }
   },
+  "gameStartIntroOverlay_title": "A New World Awaits",
+  "@gameStartIntroOverlay_title": {
+    "description": "Display-font title shown above the brass divider in the dark editorial-monocle game start intro overlay (SHEL/OVL10001)."
+  },
   "game_overture_loadError": "Could not load overture dialogue: {error}",
   "@game_overture_loadError": {
     "description": "Error shown when overture dialogue fails to load.",
