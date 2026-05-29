@@ -589,6 +589,9 @@ abstract class AppLocalizations {
   /// Error shown when intro dialogue fails to load.
   String game_intro_loadError(String error);
 
+  /// Display-font title shown above the brass divider in the dark editorial-monocle game start intro overlay (SHEL/OVL10001).
+  String get gameStartIntroOverlay_title;
+
   /// Error shown when overture dialogue fails to load.
   String game_overture_loadError(String error);
 

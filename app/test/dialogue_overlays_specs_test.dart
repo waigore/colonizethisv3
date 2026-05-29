@@ -19,11 +19,15 @@
 /// Refs GitHub #2753.
 library;
 
+import 'dart:io' show File;
+
+import 'package:colonizethis_app/config/editorial_monocle_palette.dart';
 import 'package:colonizethis_app/config/themes.dart';
 import 'package:colonizethis_app/features/game/dialogue/call_to_arms_dialogue_overlay.dart';
 import 'package:colonizethis_app/features/game/dialogue/ct_dialogue_view.dart';
 import 'package:colonizethis_app/features/game/dialogue/game_start_intro_overlay.dart';
 import 'package:colonizethis_app/features/game/dialogue/overture_dialogue_overlay.dart';
+import 'package:colonizethis_app/widgets/ct_brass_divider.dart';
 import 'package:colonizethis_app/widgets/ct_dialog_shell.dart';
 import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
@@ -246,6 +250,145 @@ void main() {
         expect(dismissedCount, 1);
       },
     );
+
+    // AC: title region + CtBrassDivider precede the dialogue body in every
+    // non-dismissed state. Pins SPEC/ui/game-start-intro-overlay.md
+    // § Components and § Acceptance Criteria for the dark editorial-monocle
+    // restyle (Refs #2867 S10).
+    testWidgets(
+      'every non-dismissed state renders the title + CtBrassDivider chrome '
+      'in declared order',
+      (WidgetTester tester) async {
+        await tester.pumpWidget(
+          _wrapIntroOverlay(
+            bundle: _InlineYarnAssetBundle(_kIntroYarn),
+            onDismissed: () {},
+          ),
+        );
+        await _pumpUntilSettled(tester);
+
+        expect(find.text('A New World Awaits'), findsOneWidget);
+        expect(find.byType(CtBrassDivider), findsOneWidget);
+
+        await tester.tap(find.byType(CtNinePatchButton));
+        await _pumpUntilSettled(tester);
+
+        expect(find.text('A New World Awaits'), findsOneWidget);
+        expect(find.byType(CtBrassDivider), findsOneWidget);
+        expect(find.text('I shall.'), findsOneWidget);
+      },
+    );
+
+    testWidgets(
+      'error state also renders the title + CtBrassDivider chrome above '
+      'the localized error message',
+      (WidgetTester tester) async {
+        await tester.pumpWidget(
+          _wrapIntroOverlay(
+            bundle: _MissingNodeAssetBundle(),
+            onDismissed: () {},
+          ),
+        );
+        await _pumpUntilSettled(tester);
+
+        expect(find.text('A New World Awaits'), findsOneWidget);
+        expect(find.byType(CtBrassDivider), findsOneWidget);
+        expect(
+          find.textContaining('Could not load intro dialogue'),
+          findsOneWidget,
+        );
+      },
+    );
+
+    // AC: scrim color resolves from EditorialMonoclePalette.dialogScrim
+    // (no hex literal). Pins the "no Colors.black54" contract from
+    // SPEC/ui/game-start-intro-overlay.md § Acceptance Criteria
+    // (Refs #2867 S10).
+    testWidgets(
+      'scrim layer paints EditorialMonoclePalette.dialogScrim in both the '
+      'presenting-line and error states',
+      (WidgetTester tester) async {
+        await tester.pumpWidget(
+          _wrapIntroOverlay(
+            bundle: _InlineYarnAssetBundle(_kIntroYarn),
+            onDismissed: () {},
+          ),
+        );
+        await _pumpUntilSettled(tester);
+
+        final lineMaterials = tester
+            .widgetList<Material>(
+              find.descendant(
+                of: find.byType(GameStartIntroOverlay),
+                matching: find.byType(Material),
+              ),
+            )
+            .where((m) => m.color == EditorialMonoclePalette.dialogScrim);
+        expect(
+          lineMaterials,
+          isNotEmpty,
+          reason:
+              'presenting-line scrim must paint '
+              'EditorialMonoclePalette.dialogScrim, not a hex literal.',
+        );
+        expect(
+          tester.widgetList<Material>(find.byType(Material)).any(
+            (m) => m.color == Colors.black54,
+          ),
+          isFalse,
+          reason: 'No Material may paint the legacy Colors.black54 scrim.',
+        );
+
+        await tester.pumpWidget(
+          _wrapIntroOverlay(
+            bundle: _MissingNodeAssetBundle(),
+            onDismissed: () {},
+          ),
+        );
+        await _pumpUntilSettled(tester);
+
+        final errorMaterials = tester
+            .widgetList<Material>(
+              find.descendant(
+                of: find.byType(GameStartIntroOverlay),
+                matching: find.byType(Material),
+              ),
+            )
+            .where((m) => m.color == EditorialMonoclePalette.dialogScrim);
+        expect(
+          errorMaterials,
+          isNotEmpty,
+          reason:
+              'error scrim must also paint '
+              'EditorialMonoclePalette.dialogScrim, not a hex literal.',
+        );
+      },
+    );
+
+    // Static check: the widget source must not paint a hex-literal scrim
+    // (e.g. Colors.black54). This pins the SPEC ban so future regressions
+    // are caught even when the runtime widget tree is shallowly inspected.
+    test('widget source does not reference Colors.black54 as the scrim '
+        '(SPEC/ui/game-start-intro-overlay.md § Components)', () {
+      final source = File(
+        'lib/features/game/dialogue/game_start_intro_overlay.dart',
+      ).readAsStringSync();
+      expect(
+        source.contains('Colors.black54'),
+        isFalse,
+        reason:
+            'Refs #2867 S10: intro overlay scrim must resolve from the '
+            'EditorialMonoclePalette.dialogScrim token; Colors.black54 was '
+            'the legacy hex-literal scrim and must not return.',
+      );
+      expect(
+        source.contains('EditorialMonoclePalette.dialogScrim'),
+        isTrue,
+        reason:
+            'Refs #2867 S10: intro overlay scrim must reference the '
+            'canonical EditorialMonoclePalette.dialogScrim token.',
+      );
+    });
   });
 
   group('OvertureDialogueOverlay (SPEC/ui/overture-dialogue-overlay.md)', () {

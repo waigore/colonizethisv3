@@ -40,28 +40,39 @@ The overlay is meant to be **single-shot per game id per session**: once the hos
 ## Layout / wireframe
 
 ```text
-+----------------------------------------------+
-| Stack                                        |
-|   widget.child                               |
-|   Material(color: Colors.black54)            |
-|     Center                                   |
-|       CtDialogShell(maxWidth: 520)           |
-|         Padding(all: 20)                     |
-|           Column(mainAxisSize: min)          |
-|             -- presenting line --            |
-|             Text(line.text, bodyMedium)      |
-|             SizedBox(height: 16)             |
-|             Align(centerRight)               |
-|               CtNinePatchButton(Continue)    |
-|             -- presenting choice --          |
-|             ListView of                      |
-|               CtNinePatchButton(option.text) |
-|             -- transient / loading --        |
-|             GameStartIntroLoadingIndicator   |
-+----------------------------------------------+
++----------------------------------------------------+
+| Stack                                              |
+|   widget.child                                     |
+|   Material(color: EditorialMonoclePalette.         |
+|             dialogScrim)                           |
+|     Center                                         |
+|       CtDialogShell(maxWidth: 520)                 |
+|         Padding(all: 20)                           |
+|           Column(mainAxisSize: min, crossAxis:     |
+|                  stretch)                          |
+|             Text(l10n.gameStartIntroOverlay_title) |
+|               style: titleMedium (Cinzel display), |
+|                      color: accent, centered,      |
+|                      letterSpacing: 0.05em         |
+|             SizedBox(height: 12)                   |
+|             CtBrassDivider()                       |
+|             SizedBox(height: 14)                   |
+|             -- presenting line --                  |
+|             Text(line.text, bodyMedium, centered)  |
+|             SizedBox(height: 16)                   |
+|             Align(center)                          |
+|               CtNinePatchButton(Continue)          |
+|             -- presenting choice --                |
+|             Column of stretched, vertically        |
+|               stacked CtNinePatchButton(option)    |
+|             -- transient / loading --              |
+|             GameStartIntroLoadingIndicator         |
++----------------------------------------------------+
 ```
 
-Error mode renders the same `Stack` but the `CtDialogShell` body is the localized error message (`l10n.game_intro_loadError`) plus a single Continue button (`l10n.game_intervention_continue`).
+Error mode renders the same `Stack` (with the editorial-monocle scrim) and the `CtDialogShell` body is the title row, the brass divider, then the localized error message (`l10n.game_intro_loadError`) and a single centered Continue button (`l10n.game_intervention_continue`).
+
+The scrim color resolves from the canonical `EditorialMonoclePalette.dialogScrim` token (see [`pixel-art-ui-catalog.md`](pixel-art-ui-catalog.md) § Dialog scrim and `app/lib/config/editorial_monocle_palette.dart`). No hex literal (e.g. `Colors.black54`) may appear in the widget source for the scrim layer.
 
 ---
 
@@ -69,11 +80,11 @@ Error mode renders the same `Stack` but the `CtDialogShell` body is the localize
 
 | State | Trigger | Render |
 |-------|---------|--------|
-| Loading | `_view == null && _runner == null && _loadError == null` | `Stack` with `widget.child`, scrim, and `GameStartIntroLoadingIndicator` inside `CtDialogShell`. |
-| Presenting line | `_view!.currentLine != null` | Line text + right-aligned Continue button (`l10n.game_intervention_continue`); tap calls `_view!.advanceLine()`. |
-| Presenting choice | `_view!.currentLine == null && _view!.currentChoice != null` | Vertical stack of one `CtNinePatchButton` per `choice.options[i]`; tap calls `_view!.selectOption(i)`. |
-| Transient between Jenny events | Both `currentLine` and `currentChoice` are `null` while `_dialogueFinished == false` | Loading indicator inside the shell. |
-| Error | `_loadError != null` | Localized error text + Continue button; tapping Continue clears `_loadError` and invokes `widget.onDismissed` so the host advances even when the Yarn asset is broken. |
+| Loading | `_view == null && _runner == null && _loadError == null` | `Stack` with `widget.child`, scrim, and `GameStartIntroLoadingIndicator` inside `CtDialogShell` below the title + brass divider. |
+| Presenting line | `_view!.currentLine != null` | Title + brass divider, then centered line text + centered Continue button (`l10n.game_intervention_continue`); tap calls `_view!.advanceLine()`. |
+| Presenting choice | `_view!.currentLine == null && _view!.currentChoice != null` | Title + brass divider, then a vertical stack of one stretched `CtNinePatchButton` per `choice.options[i]`; tap calls `_view!.selectOption(i)`. |
+| Transient between Jenny events | Both `currentLine` and `currentChoice` are `null` while `_dialogueFinished == false` | Title + brass divider + loading indicator inside the shell. |
+| Error | `_loadError != null` | Title + brass divider, then localized error text + centered Continue button; tapping Continue clears `_loadError` and invokes `widget.onDismissed` so the host advances even when the Yarn asset is broken. |
 | Dismissed | `_dialogueFinished == true` **or** `_view == null && _runner == null` after error-Continue | Renders `widget.child` only — no scrim, no shell. |
 
 ---
@@ -101,11 +112,13 @@ The overlay does not use `AppEventBus` or `Navigator`; host route stays mounted.
 ## Components
 
 - `CtDialogShell` (`app/lib/widgets/ct_dialog_shell.dart`) — frame.
+- `CtBrassDivider` (`app/lib/widgets/ct_brass_divider.dart`) — decorative 8 px ornate divider between the title region and the dialogue / error body (per `SPEC/ui/pixel-art-ui-catalog.md` § *CtBrassDivider*).
 - `CtNinePatchButton` (`app/lib/widgets/ct_nine_patch_button.dart`) — Continue and option buttons (no Material buttons in dialogue chrome).
 - `CtLoadingIndicator` (`app/lib/widgets/ct_loading_indicator.dart`) — wrapped as `GameStartIntroLoadingIndicator` so the catalog can story it without re-importing the shared widget.
+- `EditorialMonoclePalette.dialogScrim` (`app/lib/config/editorial_monocle_palette.dart`) — scrim color resolved from the canonical OKLCH token (`SPEC/ui/pixel-art-ui-catalog.md` § Dialog scrim). The widget MUST NOT paint a hex-literal scrim (e.g. `Colors.black54`).
 - `CtDialogueView` ([`ct-dialogue-view.md`](ct-dialogue-view.md)) — the Jenny adapter that owns Line / Choice state.
 - `jenny.DialogueRunner` — Jenny's runner; receives the single `CtDialogueView` in `dialogueViews:`.
-- Localized strings via `appL10n(context).game_intervention_continue` and `appL10n(context).game_intro_loadError(...)`.
+- Localized strings via `appL10n(context).gameStartIntroOverlay_title`, `appL10n(context).game_intervention_continue`, and `appL10n(context).game_intro_loadError(...)`.
 
 ---
 
@@ -149,6 +162,18 @@ The overlay does not use `AppEventBus` or `Navigator`; host route stays mounted.
 - Given the overlay's `widget.child` is a `KeyedSubtree` whose key persists across rebuilds,
   When the overlay transitions from presenting-line to dismissed,
   Then the `KeyedSubtree` is **not** remounted (the child remains in the tree the whole time and host state is preserved).
+
+- Given a `GameStartIntroOverlay` is mounted with a Yarn `AssetBundle` that contains the `game_start_intro` node,
+  When the loading, presenting-line, presenting-choice, or error state renders,
+  Then the dialog tree contains exactly one `Text` matching `appL10n(context).gameStartIntroOverlay_title` followed by exactly one `CtBrassDivider`, in declared order.
+
+- Given the overlay is rendering any non-dismissed state,
+  When the widget tree is inspected,
+  Then the scrim layer is a `Material` whose `color` is `EditorialMonoclePalette.dialogScrim` (resolved from the canonical OKLCH token), and `Colors.black54` (or any other hex-literal `Color`) is **not** present as the scrim color anywhere in the source widget file.
+
+- Given the overlay is presenting a Yarn line,
+  When the user inspects the Continue button container,
+  Then the `CtNinePatchButton` is centered (`Align(Alignment.center)`) inside the dialog column rather than right-aligned, matching the editorial-monocle mockup `SPEC/ui/mockups/OVL10001-game-intro-overlay.html`.
 
 ---
 
