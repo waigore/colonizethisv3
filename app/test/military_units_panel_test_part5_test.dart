@@ -529,14 +529,11 @@ void main() {
         await tester.pumpAndSettle();
 
         expect(find.byType(MoveArmyDialog), findsOneWidget);
-        await tester.tap(find.byType(DropdownButtonFormField<String>));
-        await tester.pumpAndSettle();
+        expect(find.text('YOUR PROVINCES'), findsOneWidget);
 
-        expect(find.text('Your provinces'), findsWidgets);
-
-        await tester.tap(find.text('New Port').last);
-        await tester.pumpAndSettle();
-        await tester.tap(find.text('Confirm'));
+        await tester.tap(find.text('New Port'));
+        await tester.pump();
+        await tester.tap(find.widgetWithText(CtNinePatchButton, 'Confirm'));
         await tester.pumpAndSettle();
 
         expect(captured, isNotNull);
@@ -726,15 +723,15 @@ void main() {
       await tester.tap(moveButton.first);
       await tester.pumpAndSettle();
 
-      await tester.tap(find.byType(DropdownButtonFormField<String>));
-      await tester.pumpAndSettle();
-      await tester.tap(find.text('Hostile').last);
-      await tester.pumpAndSettle();
-      await tester.tap(find.text('Confirm'));
+      await tester.tap(find.text('Hostile'));
+      await tester.pump();
+      await tester.tap(find.widgetWithText(CtNinePatchButton, 'Confirm'));
       await tester.pumpAndSettle();
 
       expect(find.text('Declare war and move'), findsOneWidget);
-      await tester.tap(find.text('Declare war and move'));
+      await tester.tap(
+        find.widgetWithText(CtNinePatchButton, 'Declare war and move'),
+      );
       await tester.pumpAndSettle();
 
       expect(captured, isNotNull);

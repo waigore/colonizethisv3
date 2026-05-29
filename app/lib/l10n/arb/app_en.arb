@@ -1051,6 +1051,19 @@
   "@moveArmy_groupUnowned": {
     "description": "Header label for unowned province destinations in move army dialog."
   },
+  "moveArmy_groupInvasionTargets": "Invasion targets",
+  "@moveArmy_groupInvasionTargets": {
+    "description": "Section header for other-owned invasion destinations in move army dialog (#2867 R6)."
+  },
+  "moveArmy_declareWarOnTrigger": "declare war on {ownerLabel}",
+  "@moveArmy_declareWarOnTrigger": {
+    "description": "Invasion row trigger label in danger italic (#2867 R8).",
+    "placeholders": {
+      "ownerLabel": {
+        "type": "String"
+      }
+    }
+  },
   "moveArmy_invadeProvinceTitle": "Declare war?",
   "@moveArmy_invadeProvinceTitle": {
     "description": "Confirm dialog title for the destructive war-confirmation sub-dialog when an invasion army move is requested (issue #2867 R9)."
@@ -1068,9 +1081,9 @@
   "@moveArmy_declareWarAndMove": {
     "description": "Confirm action label for hostile army movement."
   },
-  "moveArmy_title": "Move army {armyId}",
+  "moveArmy_title": "Move army — Army {armyId}",
   "@moveArmy_title": {
-    "description": "Move army dialog title with army id.",
+    "description": "Move army dialog title with army id (#2867 R5).",
     "placeholders": {
       "armyId": {
         "type": "String"

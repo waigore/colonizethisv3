@@ -231,6 +231,14 @@ mixin _AppLocalizationsEnStrings2 on AppLocalizations {
   String get moveArmy_groupUnowned => 'Unowned';
 
   @override
+  String get moveArmy_groupInvasionTargets => 'Invasion targets';
+
+  @override
+  String moveArmy_declareWarOnTrigger(String ownerLabel) {
+    return 'declare war on $ownerLabel';
+  }
+
+  @override
   String get moveArmy_invadeProvinceTitle => 'Declare war?';
 
   @override
@@ -243,7 +251,7 @@ mixin _AppLocalizationsEnStrings2 on AppLocalizations {
 
   @override
   String moveArmy_title(String armyId) {
-    return 'Move army $armyId';
+    return 'Move army — Army $armyId';
   }
 
   @override

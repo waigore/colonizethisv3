@@ -171,22 +171,23 @@ void main() {
     }
 
     testWidgets(
-      'renders a single dialog with the destination dropdown for valid inputs',
+      'renders CtDialogShell with section labels and no Material dropdown (Refs #2867 S1)',
       (WidgetTester tester) async {
         await pumpDialog(tester, bus: AppEventBus.create());
         expect(find.byType(MoveArmyDialog), findsOneWidget);
-        expect(find.byType(DropdownButtonFormField<String>), findsOneWidget);
-        expect(find.text('Destination province'), findsOneWidget);
-      },
-    );
-
-    testWidgets(
-      'groups destinations with "Your provinces" header before player-owned entries',
-      (WidgetTester tester) async {
-        await pumpDialog(tester, bus: AppEventBus.create());
-        await tester.tap(find.byType(DropdownButtonFormField<String>));
-        await tester.pumpAndSettle();
-        expect(find.text('Your provinces'), findsWidgets);
+        expect(find.byType(CtDialogShell), findsOneWidget);
+        expect(find.byType(CtSectionLabel), findsAtLeastNWidgets(2));
+        expect(find.text('YOUR PROVINCES'), findsOneWidget);
+        expect(find.text('INVASION TARGETS'), findsOneWidget);
+        expect(find.textContaining('Move army — Army aspecs'), findsOneWidget);
+        expect(find.byType(DropdownButtonFormField<String>), findsNothing);
+        expect(
+          find.descendant(
+            of: find.byType(CtDialogShell),
+            matching: find.byType(AlertDialog),
+          ),
+          findsNothing,
+        );
       },
     );
 
@@ -201,7 +202,7 @@ void main() {
         addTearDown(sub.cancel);
 
         await pumpDialog(tester, bus: bus);
-        await tester.tap(find.text('Confirm'));
+        await tester.tap(find.widgetWithText(CtNinePatchButton, 'Confirm'));
         await tester.pumpAndSettle();
 
         expect(captured, isNotNull);
@@ -209,6 +210,14 @@ void main() {
         expect(captured!.moveOrder.armyId, 'aspecs');
         expect(captured!.declareWarTargetFactionId, isNull);
         expect(find.byType(MoveArmyDialog), findsNothing);
+      },
+    );
+
+    testWidgets(
+      'invasion row shows declare-war trigger in danger italic (Refs #2867 R8)',
+      (WidgetTester tester) async {
+        await pumpDialog(tester, bus: AppEventBus.create());
+        expect(find.text('declare war on Specs Rival'), findsOneWidget);
       },
     );
 
@@ -223,11 +232,9 @@ void main() {
         addTearDown(sub.cancel);
 
         await pumpDialog(tester, bus: bus);
-        await tester.tap(find.byType(DropdownButtonFormField<String>));
-        await tester.pumpAndSettle();
-        await tester.tap(find.text('Invade Dest').last);
-        await tester.pumpAndSettle();
-        await tester.tap(find.text('Confirm'));
+        await tester.tap(find.text('Invade Dest'));
+        await tester.pump();
+        await tester.tap(find.widgetWithText(CtNinePatchButton, 'Confirm'));
         await tester.pumpAndSettle();
 
         expect(find.text('Declare war?'), findsOneWidget);
@@ -251,16 +258,21 @@ void main() {
         addTearDown(sub.cancel);
 
         await pumpDialog(tester, bus: bus);
-        await tester.tap(find.byType(DropdownButtonFormField<String>));
-        await tester.pumpAndSettle();
-        await tester.tap(find.text('Invade Dest').last);
-        await tester.pumpAndSettle();
-        await tester.tap(find.text('Confirm'));
+        await tester.tap(find.text('Invade Dest'));
+        await tester.pump();
+        await tester.tap(find.widgetWithText(CtNinePatchButton, 'Confirm'));
         await tester.pumpAndSettle();
 
         expect(find.text('Declare war?'), findsOneWidget);
+        final subShell = find.ancestor(
+          of: find.text('Declare war?'),
+          matching: find.byType(CtDialogShell),
+        );
         await tester.tap(
-          find.widgetWithText(CtNinePatchButton, 'Cancel').first,
+          find.descendant(
+            of: subShell,
+            matching: find.widgetWithText(CtNinePatchButton, 'Cancel'),
+          ),
         );
         await tester.pumpAndSettle();
 
@@ -273,18 +285,16 @@ void main() {
       'war-confirmation sub-dialog renders inside CtDialogShell with --danger 1px border (Refs #2867 R9)',
       (WidgetTester tester) async {
         await pumpDialog(tester, bus: AppEventBus.create());
-        await tester.tap(find.byType(DropdownButtonFormField<String>));
-        await tester.pumpAndSettle();
-        await tester.tap(find.text('Invade Dest').last);
-        await tester.pumpAndSettle();
-        await tester.tap(find.text('Confirm'));
+        await tester.tap(find.text('Invade Dest'));
+        await tester.pump();
+        await tester.tap(find.widgetWithText(CtNinePatchButton, 'Confirm'));
         await tester.pumpAndSettle();
 
-        expect(find.byType(CtDialogShell), findsOneWidget);
+        expect(find.byType(CtDialogShell), findsWidgets);
         expect(find.text('Declare war?'), findsOneWidget);
 
         final CtDialogShell shell = tester.widget<CtDialogShell>(
-          find.byType(CtDialogShell),
+          find.byType(CtDialogShell).last,
         );
         expect(shell.borderColor, EditorialMonoclePalette.danger);
         expect(shell.borderWidth, CtDialogShell.dangerBorderWidth);
@@ -296,20 +306,32 @@ void main() {
       'war-confirmation actions are CtNinePatchButton with danger primary (Refs #2867 R9)',
       (WidgetTester tester) async {
         await pumpDialog(tester, bus: AppEventBus.create());
-        await tester.tap(find.byType(DropdownButtonFormField<String>));
-        await tester.pumpAndSettle();
-        await tester.tap(find.text('Invade Dest').last);
-        await tester.pumpAndSettle();
-        await tester.tap(find.text('Confirm'));
+        await tester.tap(find.text('Invade Dest'));
+        await tester.pump();
+        await tester.tap(find.widgetWithText(CtNinePatchButton, 'Confirm'));
         await tester.pumpAndSettle();
 
+        final subShell = find.ancestor(
+          of: find.text('Declare war?'),
+          matching: find.byType(CtDialogShell),
+        );
+
         final CtNinePatchButton primary = tester.widget<CtNinePatchButton>(
-          find.widgetWithText(CtNinePatchButton, 'Declare war and move'),
+          find.descendant(
+            of: subShell,
+            matching: find.widgetWithText(
+              CtNinePatchButton,
+              'Declare war and move',
+            ),
+          ),
         );
         expect(primary.dangerVariant, isTrue);
 
         final CtNinePatchButton cancel = tester.widget<CtNinePatchButton>(
-          find.widgetWithText(CtNinePatchButton, 'Cancel'),
+          find.descendant(
+            of: subShell,
+            matching: find.widgetWithText(CtNinePatchButton, 'Cancel'),
+          ),
         );
         expect(cancel.dangerVariant, isFalse);
 
@@ -318,14 +340,14 @@ void main() {
         // and SPEC/ui/move-army-dialog.md § Invade-confirm sub-dialog).
         expect(
           find.descendant(
-            of: find.byType(CtDialogShell),
+            of: subShell,
             matching: find.byType(AlertDialog),
           ),
           findsNothing,
         );
         expect(
           find.descendant(
-            of: find.byType(CtDialogShell),
+            of: subShell,
             matching: find.byType(TextButton),
           ),
           findsNothing,
@@ -344,7 +366,7 @@ void main() {
         addTearDown(sub.cancel);
 
         await pumpDialog(tester, bus: bus);
-        await tester.tap(find.text('Cancel'));
+        await tester.tap(find.widgetWithText(CtNinePatchButton, 'Cancel'));
         await tester.pumpAndSettle();
 
         expect(captured, isNull);
@@ -445,8 +467,8 @@ void main() {
 
         expect(find.text('No valid destinations.'), findsOneWidget);
         expect(find.byType(DropdownButtonFormField<String>), findsNothing);
-        final confirmButton = tester.widget<TextButton>(
-          find.widgetWithText(TextButton, 'Confirm'),
+        final confirmButton = tester.widget<CtNinePatchButton>(
+          find.widgetWithText(CtNinePatchButton, 'Confirm'),
         );
         expect(confirmButton.onPressed, isNull);
       },
