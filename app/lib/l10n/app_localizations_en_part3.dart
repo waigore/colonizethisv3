@@ -160,6 +160,11 @@ mixin _AppLocalizationsEnStrings3 on AppLocalizations {
   }
 
   @override
+  String technologyPanel_chooseTechDialogTitle(int slot) {
+    return 'Choose Tech \u2014 Slot $slot';
+  }
+
+  @override
   String get technologyPanel_slotCancelled => 'Research slot cancelled';
 
   @override
