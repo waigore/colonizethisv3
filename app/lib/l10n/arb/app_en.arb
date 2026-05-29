@@ -1686,7 +1686,7 @@
   },
   "technologyPanel_pickSubtitle": "Era {era} - {category} - {cost} RP",
   "@technologyPanel_pickSubtitle": {
-    "description": "Bottom-sheet row subtitle for selectable technology.",
+    "description": "Choose-tech dialog row subtitle (mono / muted) for a selectable technology.",
     "placeholders": {
       "era": {
         "type": "String"
@@ -1695,6 +1695,15 @@
         "type": "String"
       },
       "cost": {
+        "type": "int"
+      }
+    }
+  },
+  "technologyPanel_chooseTechDialogTitle": "Choose Tech \u2014 Slot {slot}",
+  "@technologyPanel_chooseTechDialogTitle": {
+    "description": "Title row of the Choose-tech dialog opened from a slot card. Uses an em dash between 'Choose Tech' and the slot number.",
+    "placeholders": {
+      "slot": {
         "type": "int"
       }
     }
@@ -2045,6 +2054,14 @@
   "gameSetup_back": "Back",
   "@gameSetup_back": {
     "description": "Back button on game setup screen."
+  },
+  "gameSetup_cancel": "Cancel",
+  "@gameSetup_cancel": {
+    "description": "Cancel affordance in the Game Setup action row (Refs #2868 R12; pixelArt variant). Returns the user to the main menu by invoking onBack."
+  },
+  "gameSetup_backToMainMenu": "Back to Main Menu",
+  "@gameSetup_backToMainMenu": {
+    "description": "Label rendered beside the CtBackButton glyph below the action row in the Game Setup pixelArt variant (Refs #2868 R14). Both the glyph and the label tap target invoke onBack."
   },
   "gameSetup_player1You": "Player 1 (You)",
   "@gameSetup_player1You": {

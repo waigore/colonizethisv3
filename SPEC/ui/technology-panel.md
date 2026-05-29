@@ -88,9 +88,25 @@ The panel does **not** show locked techs in the assignment list. When there are 
   - The card renders no Cancel and no Choose tech action button.
   - The card emits no `ResearchOrder` mutations.
 - Each active slot card (indices `0..player.researchSlots - 1`) shows label (e.g. “Slot 1”), assigned tech (if any) with progress, and actions: Cancel (if assigned), Choose tech.
-- **Choose tech:** Opens a dialog or bottom sheet listing only the choosable techs (researchable, not in another slot). Selecting a tech assigns it to that slot and closes the dialog.
+- **Choose tech:** Opens the dark editorial-monocle Choose-tech dialog (see § Choose-tech dialog) listing only the choosable techs (researchable, not in another slot). Selecting a tech assigns it to that slot and closes the dialog.
 - **Cancel:** Clears the slot (order removed); progress for that tech is lost on resolution per [research-resolution.md](../program/research-resolution.md).
 - **Goal slot:** Out of scope for this spec; only assignment slots are defined here.
+
+## Choose-tech dialog
+
+The Choose-tech dialog is the dark editorial-monocle modal opened by the slot card "Choose tech" button. It is a `CtDialogShell`-based modal (no Material `AlertDialog`/`Dialog`/`showModalBottomSheet`/`ListTile` chrome) and follows the visual contract in `SPEC/ui/mockups/GAME40001-technology-panel.html` `.tech-dialog` / `.dialog-card`:
+
+- **Frame:** `CtDialogShell` default 2 px `--accent-dim` border on all four sides; canonical panel gradient background; `maxWidth = 480` (catalog default).
+- **Scrim (barrier):** The modal route `barrierColor` MUST resolve to `EditorialMonoclePalette.dialogScrim` (the `--dialog-scrim` token from `pixel-art-ui-catalog.md` § Dialog scrim). Hard-coded `Colors.black54` or hex literals are regressions.
+- **Title row:** Single line `"Choose Tech — Slot N"` (where `N = slotIndex + 1`), rendered in the display font in `--accent`.
+- **Option rows (when at least one choosable tech exists):** Vertical column where each option is a tappable row containing:
+  - Tech category icon at 22 px (resolved via `techCategoryIconAssetPath`, omitted when null).
+  - Tech display name in body font / `--fg` / 600 weight (per mockup `.t-name`).
+  - Subtitle line in mono font / `--muted` carrying era, category, and cost in research points (existing `technologyPanel_pickSubtitle` content; rendered in mono / muted style per mockup `.t-cost`).
+  - Tapping the row assigns that tech via `applyAssignTechToSlot` and closes the dialog.
+- **Empty state (no choosable techs):** Single italic muted line `"No techs available to research"` (existing `technologyPanel_noTechsAvailable`) replaces the option list. The Close button (below) is still rendered.
+- **Footer:** A single full-width `CtNinePatchButton` labelled `"Close"` (existing `common_close`) dismisses the dialog without mutating orders.
+- **Implementation pin:** `app/lib/features/game/widgets/technology_panel_orders.dart` exposes `showChooseTechDialog(...)` (replacing the legacy `showChooseTechBottomSheet`). The dialog body widget is private to that file or co-located alongside it.
 
 ## Data
 
@@ -115,6 +131,12 @@ The panel does **not** show locked techs in the assignment list. When there are 
 - **Given** `player.researchSlots` is `null` or strictly less than `4`, **when** the fourth slot card is rendered, **then** the UI layer renders the card body at opacity `0.45`, sets the header label to exactly `"Slot 4 (University)"`, shows exactly the footnote line `"Requires University tech"` in place of any assigned-tech / progress / empty-state content, and renders no Cancel and no Choose tech button on that card.
 
 - **Given** `player.researchSlots` is greater than or equal to `4`, **when** the fourth slot card is rendered, **then** the UI layer renders the card at full opacity (not the locked `0.45`), uses the standard slot label `"Slot 4"`, and renders Cancel (when assigned) and Choose tech buttons as on the other active slots.
+
+- **Given** the user is on the Technology panel and taps "Choose tech" for slot index `N - 1` (`N` in `1..4`), **when** the modal is shown, **then** the UI layer mounts a `CtDialogShell` modal whose route `barrierColor` is exactly `EditorialMonoclePalette.dialogScrim`, and renders the title row `"Choose Tech — Slot N"`. The UI layer mounts no Material `AlertDialog`, `Dialog`, `showModalBottomSheet`, or `ListTile` chrome on this route.
+
+- **Given** the Choose-tech dialog is shown for a slot and the choosable-tech list is empty (no techs both researchable for the player and not already assigned to another slot), **when** the dialog body is rendered, **then** the UI layer renders exactly the line `"No techs available to research"` and a single `"Close"` `CtNinePatchButton`, and renders no option rows.
+
+- **Given** the Choose-tech dialog is shown for a slot and the choosable-tech list is non-empty, **when** the user taps the `"Close"` `CtNinePatchButton`, **then** the UI layer pops the dialog route, the player's `Orders.researchOrdersByPlayerId` are unchanged, and no `ResearchOrder` mutation is dispatched via `onOrdersChanged`.
 
 ## Integration
 
