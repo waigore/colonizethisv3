@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart' as ct_models;
 
+import '../../../config/constants.dart';
 import '../../../config/editorial_monocle_palette.dart';
 import '../../../config/ui_screen_ids.dart';
 import '../../../l10n/l10n.dart';
@@ -93,15 +94,24 @@ class VictoryPanel extends StatelessWidget {
   static const double cornerBracketStroke = 1.5;
   static const double cornerBracketAlpha = 0.7;
 
+  /// Laurel font size (logical px) at default and narrow viewport widths.
+  /// Pinned to the lower bound of the mockup's `clamp(24px,5vw,36px)` so the
+  /// narrow flip lands on the same value the mockup hits at small widths.
+  /// SPEC/ui/victory-overlay.md § Narrow viewport.
+  static const double laurelFontSizeWide = 28;
+  static const double laurelFontSizeNarrow = 24;
+
   @override
   Widget build(BuildContext context) {
+    final bool narrow =
+        MediaQuery.sizeOf(context).width < kNarrowBreakpoint;
     return ConstrainedBox(
       constraints: const BoxConstraints(maxWidth: maxWidth),
       child: Padding(
         padding: const EdgeInsets.all(24),
         child: Stack(
           children: <Widget>[
-            _buildPanelSurface(context),
+            _buildPanelSurface(context, narrow: narrow),
             const Positioned(
               top: cornerBracketInset,
               left: cornerBracketInset,
@@ -118,7 +128,7 @@ class VictoryPanel extends StatelessWidget {
     );
   }
 
-  Widget _buildPanelSurface(BuildContext context) {
+  Widget _buildPanelSurface(BuildContext context, {required bool narrow}) {
     return DecoratedBox(
       decoration: BoxDecoration(
         gradient: CtGradients.victoryPanelGradient,
@@ -129,12 +139,12 @@ class VictoryPanel extends StatelessWidget {
       ),
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 28),
-        child: _buildPanelColumn(context),
+        child: _buildPanelColumn(context, narrow: narrow),
       ),
     );
   }
 
-  Widget _buildPanelColumn(BuildContext context) {
+  Widget _buildPanelColumn(BuildContext context, {required bool narrow}) {
     final l10n = appL10n(context);
     final ct_models.Player winner =
         game.playerById(victory.winnerPlayerId) ?? game.players.first;
@@ -142,18 +152,22 @@ class VictoryPanel extends StatelessWidget {
       ct_models.VictoryType.military => l10n.victory_military,
     };
     final ThemeData theme = Theme.of(context);
-    final TextStyle? titleStyle = theme.textTheme.headlineSmall?.copyWith(
+    final TextStyle? titleBase =
+        narrow ? theme.textTheme.titleMedium : theme.textTheme.headlineSmall;
+    final TextStyle? titleStyle = titleBase?.copyWith(
       color: EditorialMonoclePalette.accent,
       letterSpacing: 1.2,
       fontWeight: FontWeight.w700,
     );
-    final TextStyle? bodyStyle = theme.textTheme.bodyLarge?.copyWith(
+    final TextStyle? bodyBase =
+        narrow ? theme.textTheme.bodyMedium : theme.textTheme.bodyLarge;
+    final TextStyle? bodyStyle = bodyBase?.copyWith(
       color: EditorialMonoclePalette.fg,
     );
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: <Widget>[
-        const _VictoryLaurelRow(),
+        _VictoryLaurelRow(narrow: narrow),
         const SizedBox(height: 10),
         Text(
           victoryLabel.toUpperCase(),
@@ -169,49 +183,76 @@ class VictoryPanel extends StatelessWidget {
           textAlign: TextAlign.center,
         ),
         const SizedBox(height: 24),
-        _buildActionRow(context, l10n),
+        _buildActionRow(context, l10n, narrow: narrow),
       ],
     );
   }
 
-  Widget _buildActionRow(BuildContext context, AppLocalizations l10n) {
+  Widget _buildActionRow(
+    BuildContext context,
+    AppLocalizations l10n, {
+    required bool narrow,
+  }) {
     final ThemeData theme = Theme.of(context);
     final TextStyle? secondaryButtonStyle = theme.textTheme.titleSmall?.copyWith(
       color: EditorialMonoclePalette.muted,
     );
+    final Widget primary = CtNinePatchButton(
+      onPressed: () => bus.emit(const ct_models.NavigateToShellEvent()),
+      child: Text(l10n.victory_returnToMainMenu),
+    );
+    final Widget secondary = CtNinePatchButton(
+      onPressed: () {
+        onViewFinalState?.call();
+      },
+      child: Text(
+        l10n.victory_viewFinalState,
+        style: secondaryButtonStyle,
+      ),
+    );
+    if (narrow) {
+      // SPEC/ui/victory-overlay.md § Narrow viewport: stacked vertical Column
+      // mirroring the mockup's `flex-wrap:wrap` + `min-width:clamp(120,...)`
+      // collapse to a single column at narrow widths.
+      return Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: <Widget>[
+          primary,
+          const SizedBox(height: 8),
+          secondary,
+        ],
+      );
+    }
     return Wrap(
       alignment: WrapAlignment.center,
       spacing: 12,
       runSpacing: 8,
-      children: <Widget>[
-        CtNinePatchButton(
-          onPressed: () => bus.emit(const ct_models.NavigateToShellEvent()),
-          child: Text(l10n.victory_returnToMainMenu),
-        ),
-        CtNinePatchButton(
-          onPressed: () {
-            onViewFinalState?.call();
-          },
-          child: Text(
-            l10n.victory_viewFinalState,
-            style: secondaryButtonStyle,
-          ),
-        ),
-      ],
+      children: <Widget>[primary, secondary],
     );
   }
 }
 
 /// Three-glyph laurel decoration sitting above the victory-type label. Uses
 /// Unicode glyphs in `--accent` at 0.6 alpha (no asset dependency).
+///
+/// Renders at [VictoryPanel.laurelFontSizeNarrow] when [narrow] is true and at
+/// [VictoryPanel.laurelFontSizeWide] otherwise. SPEC/ui/victory-overlay.md
+/// § Narrow viewport pins both values (lower-bound of the mockup's
+/// `clamp(24px,5vw,36px)` for narrow; default for wide).
 class _VictoryLaurelRow extends StatelessWidget {
-  const _VictoryLaurelRow();
+  const _VictoryLaurelRow({required this.narrow});
+
+  final bool narrow;
 
   @override
   Widget build(BuildContext context) {
+    final double fontSize = narrow
+        ? VictoryPanel.laurelFontSizeNarrow
+        : VictoryPanel.laurelFontSizeWide;
     final TextStyle laurelStyle = TextStyle(
       color: EditorialMonoclePalette.accent.withValues(alpha: 0.6),
-      fontSize: 28,
+      fontSize: fontSize,
       height: 1,
     );
     return Row(
