@@ -199,6 +199,29 @@ S1 deleted the legacy `colonial_pressure.dart` and `diplomacy_planner_peace_targ
 
 The EXPAND-phase sub-deciders that the cross-phase aggregators in `observer_goal_phase.dart` fan across remain canonical in `expand_phase_planner.dart` and its part files. Tests that previously pinned the deleted-file delegating stubs now exercise the canonical helpers directly through the public ai-package API.
 
+### AI conquest-prep auto-split (Refs #2925)
+
+`prepareConquestFieldArmy` (`packages/colonizethis_ai/lib/src/planning/army_conquest_prep.dart`) mutates the planning `Game` via `applyArmySplit` so subsequent suggestion and validation passes can issue moves from a **non-Home** field army at the capital. The Home Army never marches per [SPEC/game/military-armies.md](../game/military-armies.md) § Home Army; the auto-split is the only sanctioned AI-side path that lets a stuck Home Army's regiments reach the field-army flow.
+
+Trigger predicates (`shouldPrep`):
+
+- `primaryGoal == StrategicGoal.conquer`, **or**
+- `provincesToVictory > kBuildRegimentVictoryPaceThreshold`, **or**
+- `stalled == isStalledOldWorldExpansion(oldWorldProvincesOwned)` (`oldWorldProvincesOwned <= kStalledOldWorldProvinceThreshold`).
+
+Split behaviour at the capital, given `shouldPrep == true`:
+
+| Home regiments | `stalled` | Existing field army at capital | Outcome |
+|----------------|-----------|--------------------------------|---------|
+| 0 | any | any | no-op (nothing to split). |
+| 1 | `false` | any | no-op (preserves the prior `length < 2` floor; only fires when stalled). |
+| 1 | `true` | irrelevant | split the sole regiment into a new field army; Home Army left with **0** regiments (not deleted). |
+| 2+ | `false` | none | split `length ~/ 2` (clamped `[1, length - 1]`) — preserves the legacy single-split path. |
+| 2+ | `false` | ≥ 1 | no-op (existing field army already covers the conquest pass). |
+| 2+ | `true` | any | repeat the per-iteration split up to `kStalledConquestFieldArmySplitCap` field armies, leaving the Home Army with the residual regiments (loop terminates when the Home Army runs out of regiments or the cap is reached). |
+
+The Home Army movement-rejection acceptance in [SPEC/game/military-armies.md](../game/military-armies.md) § Acceptance criteria remains in force unchanged — every land move order whose source army is the Home Army and whose destination is not the capital is still rejected by the validator. The AI obeys this rule by splitting first, then issuing the move from the resulting field army id.
+
 ## Acceptance criteria
 
 - Given a GP in EXPAND with non-empty `ConquestSummary.invadableProvinceIdsSorted` and a minor in `adjacentOwnerFactionIdsSorted` owning such a province, when `planExpandDeclareWar(game, snapshot)` runs, then it returns that minor's `factionId` (deterministic).
@@ -269,6 +292,10 @@ The EXPAND-phase sub-deciders that the cross-phase aggregators in `observer_goal
 - Given `navalColonialPressureMinWeightFloor(colonialPressureWeight: 0.05)` matching the early-sprint default curve `newWorldAcquisition = 0.05` for OW ≤ 7, when the helper runs, then the result equals `4` (`round(85 × 0.05)`) — strictly less than `kNavalRunMinWeight` (25) so the early OW conquest sprint cannot engage the naval pass on the colonial-pressure floor alone (Refs #2847 Phase 3 naval colonial-pressure floor wiring early-sprint pin).
 - Given `navalColonialPressureMinWeightFloor(colonialPressureWeight: 0.60)` matching the resource-need NW treasury-recovery override floor (`kPhasePriorityNwTreasuryRecoveryFloor`), when the helper runs, then the result equals `51` (`round(85 × 0.60)`) — strictly greater than `kNavalRunMinWeight` (25) so naval planning engages under EXPAND-lock recovery without requiring the GP to reach COLONIAL first (Refs #2847 Phase 3 naval colonial-pressure floor wiring resource-need override pin).
 - Given identical `colonialPressureWeight` inputs, when `navalColonialPressureWeightBonus` and `navalColonialPressureMinWeightFloor` each run twice, then both invocations return the same `int` value (Refs #2509 Must-have #7 — determinism for the Phase 3 naval colonial-pressure floor wiring).
+- Given a `Game` where the active player's Home Army at the capital holds **exactly one** regiment and no other army owned by that player exists at the capital, and `isStalledOldWorldExpansion(oldWorldProvincesOwned)` returns `true` (so `stalled == true`), when `prepareConquestFieldArmy(game: …, nationId: …, provincesToVictory: …, oldWorldProvincesOwned: …, primaryGoal: StrategicGoal.expand)` runs, then the returned `Game.worldState.armies` contains the same Home Army id with `regimentUnitIds.length == 0`, exactly one new non-Home army owned by the player stationed at the capital with `regimentUnitIds.length == 1` carrying the original regiment unit id, and `isHomeArmy == false` on that new army (Refs #2925 § Approach C sole-regiment auto-split).
+- Given a `Game` where the active player's Home Army at the capital holds **exactly one** regiment, `oldWorldProvincesOwned > kStalledOldWorldProvinceThreshold` (so `stalled == false`), `primaryGoal != StrategicGoal.conquer`, and `provincesToVictory <= kBuildRegimentVictoryPaceThreshold`, when `prepareConquestFieldArmy(...)` runs, then the returned `Game.worldState.armies` is `==`-equal to the input armies list — no split occurs, the prior `length < 2` no-op floor is preserved (Refs #2925 § Approach C non-stalled regression guard).
+- Given a `Game` where the active player's Home Army at the capital holds two or more regiments and no field army exists at the capital, `stalled == false`, and `primaryGoal == StrategicGoal.conquer`, when `prepareConquestFieldArmy(...)` runs, then exactly one new non-Home field army is created at the capital with `regimentUnitIds.length == max(1, length ~/ 2)` and the Home Army retains the remaining regiments (Refs #2925 § Approach C non-stalled legacy single-split path preserved).
+- Given a `Game` where the active player's Home Army at the capital holds the sole regiment under the same stalled conditions as the first AC above, when `prepareConquestFieldArmy(...)` returns the mutated `Game` and a subsequent land move order is constructed with that **Home Army id** as the source and a non-capital destination, then `validateOrders` rejects the order (the home-army no-march invariant in [SPEC/game/military-armies.md](../game/military-armies.md) § Acceptance criteria is preserved verbatim; AI must use the new field army id; Refs #2925).
 
 ## Interactions
 
