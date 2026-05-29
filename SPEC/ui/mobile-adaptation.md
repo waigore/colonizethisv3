@@ -64,8 +64,9 @@ This rule covers four normalised Flutter dp breakpoints, each matching a per-scr
 | Corner controls     | 24 × 24 dp                                                     | 32 × 32 dp                                          | `GAME10001-game-screen.html` `.corner-btn @media`; [empire-overview.md](empire-overview.md) § Corner controls            |
 | Players bar         | Hidden (not present in widget tree)                            | Visible (per-player chip strip)                     | `GAME10001-game-screen.html` `.players-bar @media`                                                                       |
 | Province / sea detail | Full-width bottom sheet, height ~33 vh, accent-dim top border | Right side panel, width 320 dp                       | `GAME10001-game-screen.html` `.province-panel @media`; [in-game-shell-narrow.md](in-game-shell-narrow.md) § Province/sea zone detail overlay |
+| Victory overlay (OVL20001) | Laurel `24` px, title `titleMedium`, body `bodyMedium`, action buttons stacked in a vertical `Column` (full-width) | Laurel `28` px, title `headlineSmall`, body `bodyLarge`, actions in a `Wrap` row (12 dp spacing) | [victory-overlay.md](victory-overlay.md) § Narrow viewport; `OVL20001-game-victory-overlay.html` `.victory-actions { flex-wrap:wrap }` + `clamp()` lower bounds |
 
-- The wide-layout widgets themselves (left rail, corner controls, minimap, players bar, province panel) are introduced by their per-screen alignment issues; this section codifies the **narrow measurements** so the cross-cutting adaptation work has a single authoritative source.
+- The wide-layout widgets themselves (left rail, corner controls, minimap, players bar, province panel, victory overlay) are introduced by their per-screen alignment issues; this section codifies the **narrow measurements** so the cross-cutting adaptation work has a single authoritative source.
 
 ### 5. Safe area
 
