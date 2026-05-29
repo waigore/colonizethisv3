@@ -56,6 +56,21 @@ Implementation: `app/lib/features/game/flame/victory_overlay.dart`.
 
 Winner resolution: `game.playerById(victory.winnerPlayerId) ?? game.players.first`.
 
+### Narrow viewport (`< kNarrowBreakpoint`)
+
+Below the canonical in-game shell narrow breakpoint (`kNarrowBreakpoint = 600` dp; see [mobile-adaptation.md](mobile-adaptation.md) § In-game shell) the panel **compacts** to mirror the mockup's `clamp()`-driven behaviour at small viewport widths. The change is one-shot at the breakpoint (no progressive `clamp` in Flutter):
+
+| Element            | Narrow (`< 600` dp)           | Default (`≥ 600` dp)                  | Source                                                                                                |
+|--------------------|-------------------------------|---------------------------------------|-------------------------------------------------------------------------------------------------------|
+| Laurel font size   | 24 logical px                 | 28 logical px                         | `OVL20001-game-victory-overlay.html` `.laurel { font-size:clamp(24px,5vw,36px) }` (lower-bound pin)   |
+| Title style        | Theme `titleMedium` (`~16-18` px) + `--accent`, upper-cased | Theme `headlineSmall` + `--accent`, upper-cased | Mockup `.victory-type { font-size:clamp(16px,3vw,22px) }` (lower-bound pin) |
+| Body style         | Theme `bodyMedium` (`~14` px) + `--fg` | Theme `bodyLarge` + `--fg` | Mockup `.victory-body { font-size:clamp(14px,2.2vw,18px) }` (lower-bound pin) |
+| Action row layout  | Vertical `Column` (full-width buttons stacked top-to-bottom, 8 dp gap) | `Wrap` row (`12` dp spacing, runs wrap when needed) | Mockup `.victory-actions { display:flex; flex-wrap:wrap }` collapses to a single column at narrow widths because each `.victory-btn` keeps `min-width:clamp(120px,25vw,170px)` |
+
+Wide chrome (corner brackets, brass border, scrim wash, gradient) is unchanged. Padding (`28 px`), max-width (`460` dp), and the `CtBrassDivider` row remain identical so the panel's structural shape stays stable across the breakpoint.
+
+Implementers MUST drive the narrow flag from `MediaQuery.sizeOf(context).width < kNarrowBreakpoint` (the same source the rest of the in-game shell uses) so that one viewport rebuild flips every measurement together.
+
 ---
 
 ## Trigger conditions
@@ -143,6 +158,14 @@ Calendar campaign halt (`Game.calendarCampaignHalted == true` with `Game.victory
 - Given `VictoryPanel` is mounted,
   When the title row is built,
   Then a `CtBrassDivider` instance is present in the widget tree between the victory-type label and the winner sentence.
+
+- Given `VictoryPanel` is mounted with a viewport width strictly below `kNarrowBreakpoint` (`600` dp),
+  When the panel is built,
+  Then the action row renders as a vertical `Column` containing both `CtNinePatchButton`s (no `Wrap` widget on the action row), and the laurel row renders its three glyphs at `24` logical-px font size.
+
+- Given `VictoryPanel` is mounted with a viewport width greater than or equal to `kNarrowBreakpoint` (`600` dp),
+  When the panel is built,
+  Then the action row renders inside a `Wrap` widget (regression guard for the wide-layout `flex-wrap:wrap` mockup behaviour), and the laurel row renders its three glyphs at `28` logical-px font size.
 
 ---
 

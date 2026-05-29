@@ -225,6 +225,64 @@ List<WidgetbookNode> get playerTurnEventFeedCardDirectories => [
           ),
         ),
       ),
+      WidgetbookUseCase(
+        name: 'Narrow (360 dp) — populated, clamp(180, 50vw, 260)',
+        builder: (context) => _playerTurnEventFeedCardNarrowStoryFrame(
+          viewportWidth: 360,
+          child: const PlayerTurnEventFeedCard(
+            entries: [
+              PlayerTurnEventFeedEntry(
+                // ignore: avoid_hardcoded_strings_in_widgets
+                text: 'Castile completed Castle in Lisbon.',
+              ),
+              PlayerTurnEventFeedEntry(
+                // ignore: avoid_hardcoded_strings_in_widgets
+                text: 'England declared war on France.',
+              ),
+            ],
+            // ignore: avoid_hardcoded_strings_in_widgets
+            emptyLabel: 'No events this turn.',
+            narrow: true,
+          ),
+        ),
+      ),
+      WidgetbookUseCase(
+        name: 'Narrow (460 dp) — populated, 50vw mid-range',
+        builder: (context) => _playerTurnEventFeedCardNarrowStoryFrame(
+          viewportWidth: 460,
+          child: const PlayerTurnEventFeedCard(
+            entries: [
+              PlayerTurnEventFeedEntry(
+                // ignore: avoid_hardcoded_strings_in_widgets
+                text: 'Castile completed Castle in Lisbon.',
+              ),
+              PlayerTurnEventFeedEntry(
+                // ignore: avoid_hardcoded_strings_in_widgets
+                text: 'England declared war on France.',
+              ),
+              PlayerTurnEventFeedEntry(
+                // ignore: avoid_hardcoded_strings_in_widgets
+                text: 'New trade route established: Lisbon ↔ Bordeaux.',
+              ),
+            ],
+            // ignore: avoid_hardcoded_strings_in_widgets
+            emptyLabel: 'No events this turn.',
+            narrow: true,
+          ),
+        ),
+      ),
+      WidgetbookUseCase(
+        name: 'Narrow (599 dp) — empty, clamp upper bound (260 dp)',
+        builder: (context) => _playerTurnEventFeedCardNarrowStoryFrame(
+          viewportWidth: 599,
+          child: const PlayerTurnEventFeedCard(
+            entries: [],
+            // ignore: avoid_hardcoded_strings_in_widgets
+            emptyLabel: 'No events this turn.',
+            narrow: true,
+          ),
+        ),
+      ),
     ],
   ),
 ];
@@ -451,6 +509,41 @@ MaterialApp _playerTurnEventFeedCardStoryFrame({required Widget child}) {
         child: Padding(
           padding: const EdgeInsets.all(24),
           child: child,
+        ),
+      ),
+    ),
+  );
+}
+
+/// Narrow-viewport news feed card frame: clamps the visible canvas to a
+/// representative narrow viewport width via `MediaQuery.size`, anchors
+/// the card top-right (matching the production stack placement on
+/// narrow), and forwards the editorial-monocle theme so the chrome
+/// reads identically to the wide story (issue #2870 S3 / Req 11; SPEC
+/// `SPEC/ui/player-turn-event-feed.md` § Card chrome — narrow layout).
+MaterialApp _playerTurnEventFeedCardNarrowStoryFrame({
+  required double viewportWidth,
+  required Widget child,
+}) {
+  return MaterialApp(
+    debugShowCheckedModeBanner: false,
+    theme: AppThemes.editorialMonocle,
+    localizationsDelegates: AppLocalizationsBinding.localizationsDelegates,
+    supportedLocales: AppLocalizations.supportedLocales,
+    home: MediaQuery(
+      data: MediaQueryData(size: Size(viewportWidth, 640)),
+      child: Scaffold(
+        backgroundColor: EditorialMonoclePalette.bgDeep,
+        body: SizedBox(
+          width: viewportWidth,
+          height: 640,
+          child: Align(
+            alignment: Alignment.topRight,
+            child: Padding(
+              padding: const EdgeInsets.all(8),
+              child: child,
+            ),
+          ),
         ),
       ),
     ),

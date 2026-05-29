@@ -144,6 +144,21 @@ class _UnreadBadge extends StatelessWidget {
 /// (per `SPEC/ui/player-turn-event-feed.md` § Acceptance criteria); the
 /// header slot is reserved for empty-state copy and event entries only.
 ///
+/// Wide layout (default, `narrow: false`): card width is
+/// [kGameMapWideProvinceSidePanelWidth] (320 dp), so the card and the
+/// open province side panel never sit side-by-side without the wide
+/// inset (issue #2861 S7).
+///
+/// Narrow layout (issue #2870 S3 / Req 11, `MediaQuery.size.width <
+/// kNarrowBreakpoint`): host constructs the card with `narrow: true`.
+/// The card width then resolves to
+/// `clamp(narrowMinWidth, viewport.width / 2, narrowMaxWidth)` dp,
+/// mirroring the mockup `.news-feed-card @media (max-width:600px)
+/// { width:clamp(180px, 50vw, 260px); }` rule from
+/// `SPEC/ui/mockups/GAME10001-game-screen.html`. The province bottom
+/// sheet covers the card from the bottom on narrow, so no wide
+/// side-panel inset applies.
+///
 /// All colours resolve from [EditorialMonoclePalette] tokens (issue #2858);
 /// no hard-coded hex literals. SPEC: `SPEC/ui/player-turn-event-feed.md`.
 class PlayerTurnEventFeedCard extends StatelessWidget {
@@ -151,10 +166,17 @@ class PlayerTurnEventFeedCard extends StatelessWidget {
     super.key,
     required this.entries,
     required this.emptyLabel,
+    this.narrow = false,
   });
 
   final List<PlayerTurnEventFeedEntry> entries;
   final String emptyLabel;
+
+  /// When true, render the card at narrow-viewport measurements per
+  /// `SPEC/ui/mobile-adaptation.md` § In-game shell (issue #2870 S3).
+  /// The width resolves to
+  /// `clamp(narrowMinWidth, viewport.width / 2, narrowMaxWidth)` dp.
+  final bool narrow;
 
   /// Card border thickness (brass strip width). Matches the 1 dp border
   /// used by `GameMapPlayersBar._PlayerChip` for visual cohesion.
@@ -177,10 +199,33 @@ class PlayerTurnEventFeedCard extends StatelessWidget {
   /// reads as a tap target without overflowing adjacent rows.
   static const double tappableRowVerticalPadding = 2;
 
+  /// Lower bound for the narrow-layout card width
+  /// (mockup `clamp(180px, 50vw, 260px)` lower bound).
+  static const double narrowMinWidth = 180;
+
+  /// Upper bound for the narrow-layout card width
+  /// (mockup `clamp(180px, 50vw, 260px)` upper bound).
+  static const double narrowMaxWidth = 260;
+
+  /// Multiplier applied to viewport width to derive the narrow card width
+  /// inside the [narrowMinWidth] – [narrowMaxWidth] envelope (mockup
+  /// `50vw` term).
+  static const double narrowViewportFraction = 0.5;
+
   /// Stable key consumers / tests can use to find the framed surface
   /// inside the floating card (parity with sibling chrome keys such as
   /// `GameTabBar.surfaceKey`).
   static const Key surfaceKey = Key('player_turn_event_feed_card_surface');
+
+  /// Resolves the narrow-layout card width for a given viewport width
+  /// per the mockup `clamp(180px, 50vw, 260px)` rule. Exposed for
+  /// widget-test pinning so the contract stays in step with the SPEC.
+  static double resolveNarrowWidth(double viewportWidth) {
+    final double scaled = viewportWidth * narrowViewportFraction;
+    if (scaled < narrowMinWidth) return narrowMinWidth;
+    if (scaled > narrowMaxWidth) return narrowMaxWidth;
+    return scaled;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -193,8 +238,11 @@ class PlayerTurnEventFeedCard extends StatelessWidget {
       fontSize: 13,
       fontStyle: FontStyle.italic,
     );
+    final double cardWidth = narrow
+        ? resolveNarrowWidth(MediaQuery.sizeOf(context).width)
+        : kGameMapWideProvinceSidePanelWidth;
     return SizedBox(
-      width: kGameMapWideProvinceSidePanelWidth,
+      width: cardWidth,
       child: DecoratedBox(
         key: surfaceKey,
         decoration: BoxDecoration(
