@@ -2525,9 +2525,9 @@
       }
     }
   },
-  "naval_transferToHome_confirm": "Confirm Transfer",
+  "naval_transferToHome_confirm": "Transfer",
   "@naval_transferToHome_confirm": {
-    "description": "Confirm button label for transfer-to-home dialog."
+    "description": "Primary action label for transfer-to-home dialog (#2867 R12)."
   },
   "diplomacy_section_greatPowers": "Great Powers",
   "@diplomacy_section_greatPowers": {
