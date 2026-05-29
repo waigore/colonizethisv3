@@ -71,6 +71,7 @@ import '../widgets/ct_fleur_de_lis_ornament.dart';
 import '../widgets/ct_gradients.dart';
 import '../widgets/ct_loading_indicator.dart';
 import '../widgets/ct_main_menu_collage.dart';
+import '../widgets/ct_panel.dart';
 import '../widgets/ct_progress_bar.dart';
 import '../widgets/ct_resource_cell.dart';
 import '../widgets/ct_screen_shell.dart';
