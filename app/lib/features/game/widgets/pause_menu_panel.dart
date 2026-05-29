@@ -69,12 +69,6 @@ class PauseMenuPanel extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = appL10n(context);
     final theme = Theme.of(context);
-    final titleStyle = theme.textTheme.titleMedium?.copyWith(
-      color: EditorialMonoclePalette.accent,
-      fontWeight: FontWeight.w700,
-      letterSpacing: 0.5,
-    );
-
     return CtDialogShell(
       maxWidth: 360,
       maxHeight: 480,
@@ -87,7 +81,7 @@ class PauseMenuPanel extends StatelessWidget {
             l10n.game_pauseMenu_title,
             key: titleKey,
             textAlign: TextAlign.center,
-            style: titleStyle,
+            style: _titleStyle(theme),
           ),
           const SizedBox(height: 12),
           const Padding(
@@ -96,44 +90,55 @@ class PauseMenuPanel extends StatelessWidget {
             child: CtBrassDivider(),
           ),
           const SizedBox(height: 16),
-          CtNinePatchButton(
-            key: resumeButtonKey,
-            onPressed: _onResumeTap,
-            child: Text(l10n.game_pauseMenu_resume),
-          ),
-          const SizedBox(height: 8),
-          CtNinePatchButton(
-            key: saveGameButtonKey,
-            onPressed: null,
-            enabled: false,
-            child: Text(l10n.game_pauseMenu_saveGame),
-          ),
-          const SizedBox(height: 8),
-          CtNinePatchButton(
-            key: loadGameButtonKey,
-            onPressed: null,
-            enabled: false,
-            child: Text(l10n.game_pauseMenu_loadGame),
-          ),
-          const SizedBox(height: 8),
-          CtNinePatchButton(
-            key: settingsButtonKey,
-            onPressed: null,
-            enabled: false,
-            child: Text(l10n.game_pauseMenu_settings),
-          ),
-          const SizedBox(height: 8),
-          CtNinePatchButton(
-            key: exitToMainMenuButtonKey,
-            dangerVariant: true,
-            onPressed: _onExitToMainMenuTap,
-            child: Text(
-              l10n.game_pauseMenu_exitToMainMenu,
-              style: TextStyle(color: EditorialMonoclePalette.danger),
-            ),
-          ),
+          ..._actionRows(l10n),
         ],
       ),
     );
   }
+
+  TextStyle? _titleStyle(ThemeData theme) =>
+      theme.textTheme.titleMedium?.copyWith(
+        color: EditorialMonoclePalette.accent,
+        fontWeight: FontWeight.w700,
+        letterSpacing: 0.5,
+      );
+
+  List<Widget> _actionRows(AppLocalizations l10n) => <Widget>[
+    CtNinePatchButton(
+      key: resumeButtonKey,
+      onPressed: _onResumeTap,
+      child: Text(l10n.game_pauseMenu_resume),
+    ),
+    const SizedBox(height: 8),
+    CtNinePatchButton(
+      key: saveGameButtonKey,
+      onPressed: null,
+      enabled: false,
+      child: Text(l10n.game_pauseMenu_saveGame),
+    ),
+    const SizedBox(height: 8),
+    CtNinePatchButton(
+      key: loadGameButtonKey,
+      onPressed: null,
+      enabled: false,
+      child: Text(l10n.game_pauseMenu_loadGame),
+    ),
+    const SizedBox(height: 8),
+    CtNinePatchButton(
+      key: settingsButtonKey,
+      onPressed: null,
+      enabled: false,
+      child: Text(l10n.game_pauseMenu_settings),
+    ),
+    const SizedBox(height: 8),
+    CtNinePatchButton(
+      key: exitToMainMenuButtonKey,
+      dangerVariant: true,
+      onPressed: _onExitToMainMenuTap,
+      child: Text(
+        l10n.game_pauseMenu_exitToMainMenu,
+        style: TextStyle(color: EditorialMonoclePalette.danger),
+      ),
+    ),
+  ];
 }
