@@ -212,6 +212,7 @@ void main() {
           find.byType(PlayerTurnEventFeedCard),
         );
         expect(populatedCard.entries.length, 3);
+        expect(populatedCard.narrow, isFalse);
 
         await tester.pumpWidget(
           emptyStory.builder(tester.element(find.byType(View))),
@@ -221,6 +222,40 @@ void main() {
           find.byType(PlayerTurnEventFeedCard),
         );
         expect(emptyCard.entries, isEmpty);
+        expect(emptyCard.narrow, isFalse);
+      },
+    );
+
+    testWidgets(
+      'Player Turn Event Feed Card folder exposes narrow variants '
+      '(Refs #2870 S3)',
+      (WidgetTester tester) async {
+        const narrowUseCaseNames = <String>[
+          'Narrow (360 dp) — populated, clamp(180, 50vw, 260)',
+          'Narrow (460 dp) — populated, 50vw mid-range',
+          'Narrow (599 dp) — empty, clamp upper bound (260 dp)',
+        ];
+        for (final name in narrowUseCaseNames) {
+          final story = _useCase(
+            playerTurnEventFeedCardDirectories,
+            folderName: 'Player Turn Event Feed Card',
+            useCaseName: name,
+          );
+          await tester.pumpWidget(
+            story.builder(tester.element(find.byType(View))),
+          );
+          await tester.pump();
+          final card = tester.widget<PlayerTurnEventFeedCard>(
+            find.byType(PlayerTurnEventFeedCard),
+          );
+          expect(
+            card.narrow,
+            isTrue,
+            reason:
+                'Narrow variant "$name" must construct the card with '
+                'narrow: true so the clamp(180, 50vw, 260) rule applies.',
+          );
+        }
       },
     );
 
