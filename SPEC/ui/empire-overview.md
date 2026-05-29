@@ -88,6 +88,21 @@ Implementation: [`GameTabBar`](../../app/lib/features/game/widgets/game_tab_bar.
 - **Disabled state:** When the underlying callback is `null` (e.g. `homeToCapitalEnabled == false`) the button wraps its tooltip + surface in `IgnorePointer` + `Opacity(0.4)` — the canonical disabled-control opacity shared with `CtNinePatchButton`, `CtBackButton`, `CtToggleSwitch`, and `CtProgressBar`. The border outline and icon tint freeze on the default-state colors (no hover/press color resolution).
 - **Material ban:** The legacy `Material(color: Colors.white …)` overlay around the corner-button row is removed; no white-tinted Material surfaces, raw Material `ElevatedButton`/`IconButton` chrome, or hard-coded light-theme hex literals may paint inside the row. Pointer plumbing remains an `InkWell` under a transparent `Material` (catalog-compatible per [`SPEC/ui/pixel-art-ui-catalog.md`](pixel-art-ui-catalog.md) § Material design ban — `InkWell` itself is not banned, only Material chrome backgrounds).
 
+#### Narrow corner-control measurements (`< kNarrowBreakpoint`)
+
+When the in-game map renders on a narrow viewport (`MediaQuery.size.width < kNarrowBreakpoint`, `600 dp`), the host constructs [GameMapCornerControls](../../app/lib/features/game/flame/game_map_corner_controls.dart) with `narrow: true`. The row then renders at the narrow measurements defined in [mobile-adaptation.md](mobile-adaptation.md) § In-game shell, normative for issue #2870 S3:
+
+- **Tap target:** **24 × 24 dp** per button (mockup `.corner-btn @media (max-width:600px) { width:24px; height:24px }`).
+- **Horizontal gap:** **2 dp** between consecutive buttons (tightened from the wide `3 dp` value to match the compressed `.corner-controls @media (max-width:600px) { left:2px; bottom:2px }` chrome).
+- **Glyph:** Unchanged at **22 × 22 dp** (mockup keeps `.corner-btn img { 22 × 22 }` at narrow); the visible padding around the glyph compresses to 1 dp per side.
+- **Chrome tokens:** Unchanged — narrow buttons keep the wide gradient/border/icon-tint and hover/press contracts above.
+
+**Acceptance (narrow corner controls):**
+
+- **Given** the in-game map is rendered on the narrow layout (`MediaQuery.size.width < kNarrowBreakpoint`), **when** `GameMapCornerControls` is constructed with `narrow: true` and lays out the three corner buttons, **then** every visible corner button paints a **24 × 24 dp** square surface.
+- **Given** the narrow corner controls are rendered, **when** the layout resolves the row, **then** consecutive corner buttons have a **2 dp** horizontal gap between them.
+- **Given** the narrow corner controls are rendered, **when** the chrome painter resolves a corner button's glyph, **then** the glyph paints `StrictAssetIcon` at exactly **22 × 22 dp** (icon size is unchanged from the wide layout).
+
 ### Region minimap (in-game map stack)
 
 - **Placement:** Bottom-right of the map `Stack` in [GameMapArea](../../app/lib/features/game/flame/game_map_area.dart); does not replace bottom-left [GameMapCornerControls](../../app/lib/features/game/flame/game_map_corner_controls.dart) or [GameMapEmpireLeftRail](../../app/lib/features/game/flame/game_map_empire_left_rail.dart).
@@ -104,6 +119,35 @@ Implementation: [`GameTabBar`](../../app/lib/features/game/widgets/game_tab_bar.
 - **Coordination:** Minimap → map uses typed **`RequestRegionMapCameraCenterWorldEvent`**, **`RequestRegionMapCameraPanWorldDeltaEvent`**, and **`RequestRegionMapSetZoomMultiplierEvent`** on `AppEventBus` ([app-event-bus.md](../program/app-event-bus.md)). Map → shell pushes `RegionMapViewportSnapshot` via `CtRegionMap.onViewportSnapshotChanged` (shell coalesces updates per frame; not cross-panel callbacks). Narrow layout: overlap with bottom detail is acceptable.
 
 **Acceptance (minimap):** Given the in-game shell map is visible, when the minimap toggle is on, then the UI shows the active region grid with visibility rules above and a white viewport indicator when the main map has published a matching snapshot. When the user taps the toggle, then the minimap hides or shows for the session only (default on at shell entry). When the user drags on the minimap or the bus emits a pan event for that region, then the main map host remains without exceptions. When the side menu is open, then the minimap stack order keeps it interactive above the scrim.
+
+#### Narrow minimap measurements (`< kNarrowBreakpoint`)
+
+When the in-game map renders on a narrow viewport (`MediaQuery.size.width < kNarrowBreakpoint`, `600 dp`), the host constructs [GameRegionMinimap](../../app/lib/features/game/flame/game_region_minimap.dart) with `narrow: true`. The active region grid then fits its aspect ratio into the narrow bounding box defined in [mobile-adaptation.md](mobile-adaptation.md) § In-game shell, normative for issue #2870 S3:
+
+- **Bounding box:** **90 × 70 dp** (mockup `.minimap-panel @media (max-width:600px) { width:90px; height:70px }`).
+- **Aspect-preserving fit:** Given `aspect = region.width / region.height` and `boxAspect = 90 / 70`, the grid renders at `(90, 90 / aspect)` when `aspect >= boxAspect` (width-limited) and `(70 * aspect, 70)` otherwise (height-limited). The longer side never exceeds `90 dp` and the shorter side never exceeds `70 dp`.
+- **Chrome unchanged:** Panel padding (`panelPadding = 2`), 1 px `--border` outline, toggle button (`32 × 32 dp`), zoom slider, and viewport indicator stroke all keep their wide-layout values. Only the inner grid `mapSize` adapts.
+
+**Acceptance (narrow minimap):**
+
+- **Given** the in-game map is rendered on the narrow layout (`MediaQuery.size.width < kNarrowBreakpoint`) and the minimap toggle is on, **when** `GameRegionMinimap` is constructed with `narrow: true`, **then** the inner `CustomPaint` grid lays out at a `Size` whose width is at most `GameRegionMinimap.narrowMaxWidth` (`90 dp`) and whose height is at most `GameRegionMinimap.narrowMaxHeight` (`70 dp`).
+- **Given** the active region has aspect ratio `>= 90 / 70`, **when** the narrow minimap renders, **then** the grid width equals `GameRegionMinimap.narrowMaxWidth` and the grid height equals `GameRegionMinimap.narrowMaxWidth / aspect` (width-limited fit).
+- **Given** the active region has aspect ratio `< 90 / 70`, **when** the narrow minimap renders, **then** the grid height equals `GameRegionMinimap.narrowMaxHeight` and the grid width equals `GameRegionMinimap.narrowMaxHeight * aspect` (height-limited fit).
+- **Given** the host omits the `narrow` flag (default `false`), **when** the wide minimap renders, **then** the inner grid keeps the pre-#2870 baseline: longer side capped at `GameRegionMinimap.defaultMaxExtent` (`132 dp`), shorter side scaled by aspect (regression guard).
+
+### Region minimap chrome (dark editorial-monocle)
+
+- **Panel surface:** When the minimap is visible, the region grid sits inside a flat panel surface that paints `--bg-deep` fill with a 1 px `--border` outline and 2 dp internal padding around the grid. The mockup `.minimap-panel` (`SPEC/ui/mockups/GAME10001-game-screen.html`) is the visual source of truth; no `Material` overlay paints with `Colors.black`, `Colors.white`, or any other hard-coded light-theme background under the panel. The legacy elevation drop shadow is removed (the dark panel reads against the map without a Material shadow).
+- **Toggle button:** The minimap show/hide toggle (key `region_minimap_toggle`, asset `ui_icon_region_minimap.png`) paints a 32 × 32 dp tap target whose decoration is a flat `--bg-deep` fill with a 1 px `--border` outline (matches mockup `.minimap-toggle`). The centered glyph is a 20 × 20 dp [`StrictAssetIcon`](../../app/lib/widgets/strict_asset_icon.dart) tinted via `ColorFiltered(BlendMode.srcIn)` to `--accent-dim` in the default state. On hover or press the outline shifts to `--accent-dim` and the glyph tint shifts to `--accent-bright`, animated over **120 ms** (`Curves.easeOut`) to match [GameMapCornerControls](../../app/lib/features/game/flame/game_map_corner_controls.dart). No `Material(color: Colors.white …)` background, raw `IconButton`/`ElevatedButton` chrome, or hard-coded light-theme hex literal may paint under the toggle (catalog ban per [pixel-art-ui-catalog.md](pixel-art-ui-catalog.md) § Material design ban).
+- **Viewport indicator:** Remains a white 1.5 px stroke aligned with the main map camera (preserved from the existing minimap contract); the dark chrome here does not change the indicator colour.
+- **Zoom slider chrome:** Continues to use [`CtSlider`](../../app/lib/widgets/ct_slider.dart) and the dark-theme label tokens; no new chrome introduced in this slice.
+
+**Acceptance (minimap chrome):**
+
+- **Given** the in-game shell map is visible and the minimap is in its visible state, **when** the [GameRegionMinimap](../../app/lib/features/game/flame/game_region_minimap.dart) widget tree is inspected, **then** the panel surface around the minimap `CustomPaint` resolves a `DecoratedBox` whose `BoxDecoration.color` equals `EditorialMonoclePalette.bgDeep` and whose `border.top.color` equals `EditorialMonoclePalette.border` (a 1 px outline on all four sides), and no ancestor `Material` widget inside `GameRegionMinimap` paints with `Colors.white` or `Colors.black`.
+- **Given** the in-game shell map is visible, **when** the minimap toggle (key `region_minimap_toggle`) is rendered in its default (unhovered, unpressed) state, **then** its decoration resolves a `BoxDecoration.color == EditorialMonoclePalette.bgDeep` with a 1 px `EditorialMonoclePalette.border` outline and the centered glyph paints under a `ColorFiltered(BlendMode.srcIn)` resolved to `EditorialMonoclePalette.accentDim`.
+- **Given** the in-game shell map is visible and the minimap toggle is in its default state, **when** the user moves the pointer over the toggle, **then** the outline animates to `EditorialMonoclePalette.accentDim` and the glyph tint animates to `EditorialMonoclePalette.accentBright` over `120 ms` (`Curves.easeOut`).
+- **Given** the in-game shell map is visible, **when** the widget tree under [GameRegionMinimap](../../app/lib/features/game/flame/game_region_minimap.dart) is inspected, **then** no `Material` widget paints with `Colors.white`, `Colors.black`, or any other hard-coded light-theme `Color` literal as its background, and no `ElevatedButton`, `FilledButton`, `OutlinedButton`, or `IconButton` paints inside the minimap stack (Material design ban per [`SPEC/ui/pixel-art-ui-catalog.md`](pixel-art-ui-catalog.md) § Material design ban; light-theme color regression per [`colonizethis-ui-design.mdc`](../../.cursor/rules/colonizethis-ui-design.mdc)).
 
 **Acceptance (minimap ↔ main map):** Given the active region’s `RegionMapViewData.cellSize` matches the main `CtRegionMap` cell size, when the minimap is visible and a viewport snapshot exists for that region, then the white viewport rectangle matches the main map’s visible world area (center and span within tolerance for rounding). When the user taps a point on the minimap, then the main map camera centers on the corresponding world position (clamped). When the user drags on the minimap, then the camera pans in the same direction with world delta consistent with the snapshot’s world scale (same `cellSizePx` / map extents as [map-widget.md](map-widget.md) § Region minimap camera sync).
 

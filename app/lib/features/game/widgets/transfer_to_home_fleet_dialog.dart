@@ -2,6 +2,7 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
 
+import '../../../config/editorial_monocle_palette.dart';
 import '../../../config/ui_screen_ids.dart';
 import '../../../l10n/l10n.dart';
 import '../../../widgets/ct_dialog_shell.dart';
@@ -99,9 +100,17 @@ class TransferToHomeFleetDialog extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final ThemeData theme = Theme.of(context);
     final l10n = appL10n(context);
     final sourceInitialCounts = _countsForFleet(sourceFleet);
     final homeInitialCounts = _countsForFleet(homeFleet);
+    final TextStyle titleStyle =
+        (theme.textTheme.titleMedium ?? const TextStyle(fontSize: 16))
+            .copyWith(
+              color: EditorialMonoclePalette.accent,
+              letterSpacing: 0.05 * 16,
+              fontWeight: FontWeight.w600,
+            );
     return CtDialogShell(
       maxWidth: 560,
       maxHeight: 520,
@@ -113,7 +122,7 @@ class TransferToHomeFleetDialog extends StatelessWidget {
           children: [
             Text(
               l10n.naval_transferToHome_dialogTitle,
-              style: Theme.of(context).textTheme.titleLarge,
+              style: titleStyle,
             ),
             const SizedBox(height: 16),
             CtTransferList(
