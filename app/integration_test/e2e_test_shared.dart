@@ -89,6 +89,27 @@ bool e2eGameStartIntroBlocksUi(WidgetTester tester) {
       .isNotEmpty;
 }
 
+/// Default phase label emitted by [e2eAdvanceGameStartIntroUntilDismissed]
+/// when a caller does not override [E2ePerfLog] attribution.
+///
+/// The constant is exposed so widget-test pins and downstream perf-marker
+/// scrapers (for example the GitHub #2336 AC8 baseline timing pipeline via
+/// `tool/run_e2e_timing.sh` / `tool/compare_e2e_timing.sh`) can refer to the
+/// canonical label by name instead of hard-coding the literal string. Mirrors
+/// the [kE2eDefaultWaitForMapHudPhase] convention introduced for the map-HUD
+/// bootstrap wait in PR #2960.
+const String kE2eDefaultAdvanceGameStartIntroPhase =
+    'advance_game_start_intro_until_dismissed';
+
+/// Counter name bumped on every [e2eAdvanceGameStartIntroUntilDismissed]
+/// iteration so a hung intro dismissal surfaces as an attributable counter
+/// spike instead of a silent 15 s wall-clock burn (Refs GitHub #2336 AC8 /
+/// AC10). Mirrors [kE2eWaitForMapHudIterationsCounter] which carries the same
+/// "iteration tally surfaces hangs as a counter spike" contract for the
+/// downstream map-HUD wait.
+const String kE2eAdvanceGameStartIntroIterationsCounter =
+    'advance_game_start_intro_until_dismissed_iterations';
+
 /// Advances yarn intro lines/choices until the overlay no longer blocks taps.
 ///
 /// The spinner / no-tap-target branches previously each paid a fixed 50 ms
@@ -98,15 +119,46 @@ bool e2eGameStartIntroBlocksUi(WidgetTester tester) {
 /// is reset to 25 ms whenever a tap advances the overlay or the loading
 /// indicator clears, mirroring the prepump-free panel openers landed in this
 /// PR. Refs GitHub #2336 AC5 / pump-reduction.
+///
+/// Perf attribution (Refs GitHub #2336 AC8 / baseline measurement):
+///
+/// - When [perf] is non-null, emits one `E2E_TIMING|phase=[phaseName]` line
+///   on every return path with a `result=...` meta tag distinguishing
+///   `result=already_dismissed` (entry-iteration short-circuit; counter
+///   value `1`), `result=advanced` (intro stopped blocking on a later
+///   iteration after one or more pumps or taps), and `result=timeout`
+///   (overall-cap fail path). The phase label defaults to
+///   [kE2eDefaultAdvanceGameStartIntroPhase].
+/// - Bumps the [kE2eAdvanceGameStartIntroIterationsCounter] counter once per
+///   loop iteration (including the iteration that returns success) so a
+///   hung intro dismissal surfaces as a counter spike instead of a silent
+///   wall-clock burn. The counter is incremented before the early-exit check
+///   for that iteration so the `result=already_dismissed` short-circuit
+///   reports `value=1`.
+/// - With `perf: null` (the default for the existing widget-test pins and any
+///   opt-out callers) the helper emits no `E2E_TIMING` / `E2E_COUNTER` lines.
 Future<void> e2eAdvanceGameStartIntroUntilDismissed(
   WidgetTester tester, {
   E2ePerfLog? perf,
   Duration timeout = const Duration(seconds: 15),
+  String phaseName = kE2eDefaultAdvanceGameStartIntroPhase,
 }) async {
+  final sw = Stopwatch()..start();
   final deadline = DateTime.now().add(timeout);
   var idlePollMs = 25;
+  var iterations = 0;
   while (DateTime.now().isBefore(deadline)) {
+    iterations += 1;
+    perf?.bumpCounter(
+      kE2eAdvanceGameStartIntroIterationsCounter,
+      meta: 'phase=$phaseName',
+    );
     if (!e2eGameStartIntroBlocksUi(tester)) {
+      perf?.timing(
+        phaseName,
+        sw.elapsed,
+        meta: iterations == 1 ? 'result=already_dismissed' : 'result=advanced',
+      );
       return;
     }
     if (find.byType(GameStartIntroLoadingIndicator).evaluate().isNotEmpty) {
@@ -141,11 +193,19 @@ Future<void> e2eAdvanceGameStartIntroUntilDismissed(
     }
   }
   if (e2eGameStartIntroBlocksUi(tester)) {
+    perf?.timing(phaseName, sw.elapsed, meta: 'result=timeout');
     fail(
       'Timed out after ${timeout.inSeconds}s advancing game start intro. '
       'Last exception: ${tester.takeException()}',
     );
   }
+  // Implicit success: the wall-clock deadline elapsed but the intro stopped
+  // blocking on the very last iteration (rare, but observable in CI where
+  // the loop's deadline check races a final tap). Attribute as
+  // `result=advanced` — the helper still returned without the fail-path —
+  // so the AC8 timing pipeline does not silently bucket the success into
+  // `result=timeout`.
+  perf?.timing(phaseName, sw.elapsed, meta: 'result=advanced');
 }
 
 Future<void> e2ePumpFor(WidgetTester tester, Duration total) async {
