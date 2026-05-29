@@ -21,6 +21,29 @@ export 'diplomacy_panel_rows.dart';
 
 part 'diplomacy_panel_chrome.dart';
 
+/// Maximum viewport width (Flutter dp) at which the diplomacy faction-row
+/// body switches to its narrow stacked variant (info column above the
+/// action-button cluster, left-aligned).
+///
+/// SPEC/ui/diplomacy-panel.md § Responsive layout — mirrors the
+/// `@media (max-width: 500px)` cutoff in
+/// [mockups/GAME30001-diplomacy-panel.html](../../../../../SPEC/ui/mockups/GAME30001-diplomacy-panel.html)
+/// and the `≤ 500 dp` Diplomacy entry in
+/// [mobile-adaptation.md](../../../../../SPEC/ui/mobile-adaptation.md) § 4.
+///
+/// Exposed at library scope so widget tests can pin the boundary
+/// deterministically without re-deriving the constant.
+const double kDiplomacyRowNarrowMaxWidth = 500.0;
+
+/// Key prefix attached to a faction-row body widget so tests can resolve
+/// the live Row (wide) vs Column (narrow) layout selection driven by
+/// [kDiplomacyRowNarrowMaxWidth].
+///
+/// Each row uses `ValueKey('${kDiplomacyRowBodyKeyPrefix}<factionId>')`.
+/// SPEC/ui/diplomacy-panel.md § Responsive layout cites this key so
+/// widget tests can pin both variants without touching private types.
+const String kDiplomacyRowBodyKeyPrefix = 'diplomacyRowBody:';
+
 /// Full-page diplomacy panel. SPEC/ui/diplomacy-panel.md.
 class DiplomacyPanel extends StatefulWidget {
   const DiplomacyPanel({
@@ -356,20 +379,54 @@ class _DiplomacyRow extends StatelessWidget {
     // is rendered as a flat gradient tile with a 1 px outline and pointer
     // hover behaviour. The InkWell sits inside the hover-aware chrome so
     // taps still navigate to the detail screen (or order-cancel toggle).
+    final double viewportWidth = MediaQuery.sizeOf(context).width;
+    final bool narrow = viewportWidth <= kDiplomacyRowNarrowMaxWidth;
     return _DiplomacyRowChrome(
       child: InkWell(
         onTap: onTap,
         child: Padding(
           padding: const EdgeInsets.all(12),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(child: _buildInfoColumn(context)),
-              _buildActionButtons(),
-            ],
-          ),
+          child: narrow
+              ? _buildNarrowBody(context)
+              : _buildWideBody(context),
         ),
       ),
+    );
+  }
+
+  Key get _bodyKey =>
+      ValueKey('$kDiplomacyRowBodyKeyPrefix${data.factionId}');
+
+  // SPEC/ui/diplomacy-panel.md § Responsive layout (wide variant): info
+  // column shares a Row with the action cluster, anchored trailing-edge.
+  Widget _buildWideBody(BuildContext context) {
+    return Row(
+      key: _bodyKey,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Expanded(child: _buildInfoColumn(context)),
+        _buildActionButtons(),
+      ],
+    );
+  }
+
+  // SPEC/ui/diplomacy-panel.md § Responsive layout (narrow ≤ 500 dp): info
+  // column stacks above the action cluster; cluster aligns leading-edge.
+  Widget _buildNarrowBody(BuildContext context) {
+    final bool hasActions =
+        !readOnly &&
+        (data.actions.isNotEmpty || data.pendingOrderTypes.isNotEmpty);
+    return Column(
+      key: _bodyKey,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        _buildInfoColumn(context),
+        if (hasActions) ...[
+          const SizedBox(height: 8),
+          Align(alignment: Alignment.centerLeft, child: _buildActionButtons()),
+        ],
+      ],
     );
   }
 
