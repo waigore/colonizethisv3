@@ -64,6 +64,24 @@ Dark editorial-monocle chrome aligned to `SPEC/ui/mockups/GAME10001-game-screen.
 - **Given** the rail is rendered, **when** the layout resolves the rail column, **then** consecutive rail buttons have a **3 dp** vertical gap between them and no other padding inside the rail column.
 - **Given** the rail is rendered, **when** the layout enumerates colour usage anywhere inside the rail buttons, **then** no rail node paints `Colors.white`, `Colors.black`, or other light-theme parchment hex literals; every colour resolves from `EditorialMonoclePalette` tokens.
 
+### Narrow rail measurements (`< kNarrowBreakpoint`)
+
+When the in-game map renders on a narrow viewport (`MediaQuery.size.width < kNarrowBreakpoint`, `600 dp`), the host (`GameMapArea`) constructs [GameMapEmpireLeftRail](../../app/lib/features/game/flame/game_map_empire_left_rail.dart) with `narrow: true`. The rail then renders at the narrow measurements defined in [mobile-adaptation.md](mobile-adaptation.md) § In-game shell, normative for issue #2870 S3:
+
+- **Tap target:** **26 × 26 dp** per button (mockup `.empire-btn @media (max-width:600px) { width:26px; height:26px }`).
+- **Vertical gap:** **2 dp** between consecutive buttons (tightened from the wide `3 dp` value so the six-icon column still fits the shorter narrow chrome stack).
+- **Icon glyph:** Unchanged at **24 × 24 dp** (mockup keeps `.empire-btn img { 24 × 24 }` at narrow); the visible padding around the glyph compresses to 1 dp per side.
+- **Tooltip:** Tooltips are suppressed on narrow buttons (touch-only; mobile devices have no hover cursor). The `Semantics(button: true, label: <tooltip>)` wrapper is preserved so assistive tech still reports each action.
+- **Chrome tokens:** Unchanged — narrow buttons keep the wide gradient/border/icon-tint contracts above.
+
+#### Acceptance criteria (narrow rail)
+
+- **Given** the in-game map is rendered on the narrow layout (`MediaQuery.size.width < kNarrowBreakpoint`), **when** `GameMapEmpireLeftRail` is constructed with `narrow: true` and lays out the six core empire buttons, **then** every visible rail icon button paints a **26 × 26 dp** square surface.
+- **Given** the narrow rail is rendered, **when** the layout resolves the rail column, **then** consecutive rail buttons have a **2 dp** vertical gap between them.
+- **Given** the narrow rail is rendered, **when** the chrome painter resolves a rail button's icon glyph, **then** the glyph paints `StrictAssetIcon` at exactly **24 × 24 dp** (icon size is unchanged from the wide layout).
+- **Given** the narrow rail is rendered, **when** the descendant widget tree of any rail button is enumerated, **then** no `Tooltip` widget is mounted under the rail button (tooltips are suppressed for touch-only narrow viewports).
+- **Given** the narrow rail is rendered, **when** the descendant widget tree of each rail button is enumerated, **then** the existing `Semantics(button: true, label: <tooltip>)` wrapper is still mounted so assistive tech reports the action label.
+
 ---
 
 ## References

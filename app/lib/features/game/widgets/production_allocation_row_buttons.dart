@@ -22,8 +22,15 @@ const double kProductionAllocationStepButtonDisabledOpacity = 0.3;
 /// (26 × 26 surface with [CtGradients.buttonGradient] inside a 1 px
 /// `EditorialMonoclePalette.border` outline) and fades the entire surface
 /// to [kProductionAllocationStepButtonDisabledOpacity] when disabled.
-class _ProductionAllocationStepButtonSurface extends StatelessWidget {
-  const _ProductionAllocationStepButtonSurface({
+///
+/// Shared by the Allocation subpanel's per-recipe ± / maximize / clear
+/// controls **and** the Available subpanel's per-tier labour ± controls,
+/// per `SPEC/ui/production-panel.md` § Allocation step buttons (R51 —
+/// "Enabled tap / long-press semantics and the per-tier production tier
+/// labour controls reuse the same step-button surface contract").
+class ProductionStepButtonSurface extends StatelessWidget {
+  const ProductionStepButtonSurface({
+    super.key,
     required this.enabled,
     required this.iconAssetPath,
     required this.iconSize,
@@ -133,7 +140,7 @@ class _ProductionAllocationStepButtonState
   @override
   Widget build(BuildContext context) {
     final path = '$kAppIconAssetPrefix${widget.assetFileName}';
-    final surface = _ProductionAllocationStepButtonSurface(
+    final surface = ProductionStepButtonSurface(
       enabled: widget.enabled,
       iconAssetPath: path,
       iconSize: widget.iconSize,
@@ -186,7 +193,7 @@ class ProductionAllocationActionIconButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final path = '$kAppIconAssetPrefix$assetFileName';
-    final surface = _ProductionAllocationStepButtonSurface(
+    final surface = ProductionStepButtonSurface(
       enabled: enabled,
       iconAssetPath: path,
       iconSize: iconSize,

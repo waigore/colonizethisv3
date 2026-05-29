@@ -707,10 +707,12 @@ void main() {
         );
         await _pumpOverlayLayout(tester);
 
-        expect(find.text('Economic'), findsOneWidget);
-        expect(find.text('Military'), findsOneWidget);
-        expect(find.text('Civilian'), findsOneWidget);
-        expect(find.text('Naval'), findsOneWidget);
+        // Section headers render via CtSectionLabel (Refs #2865 S4) which
+        // upper-cases the label per SPEC § Dark-theme section labels.
+        expect(find.text('ECONOMIC'), findsOneWidget);
+        expect(find.text('MILITARY'), findsOneWidget);
+        expect(find.text('CIVILIAN'), findsOneWidget);
+        expect(find.text('NAVAL'), findsOneWidget);
         expect(find.text('???'), findsNWidgets(4));
         expect(find.textContaining('Ordered: move regiment to'), findsNothing);
       },

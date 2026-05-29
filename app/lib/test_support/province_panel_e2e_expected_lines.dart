@@ -141,8 +141,13 @@ List<String> provincePanelWideLayoutExpectedTexts(
 
   final out = <String>['Province', '×'];
 
+  // Section headers render via CtSectionLabel under the dark editorial-
+  // monocle theme (Refs #2865 S4), which upper-cases the label per SPEC
+  // SPEC/ui/province-sea-zone-detail-overlay.md § Dark-theme section
+  // labels. The expected text mirror must therefore upper-case the title
+  // before adding it to the snapshot output.
   void addSection(String title, void Function() body) {
-    out.add(title);
+    out.add(title.toUpperCase());
     body();
   }
 

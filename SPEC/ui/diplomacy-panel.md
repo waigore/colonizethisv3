@@ -170,6 +170,18 @@ Orders are submitted into the current turn's order set; resolution happens on Ne
 
 ---
 
+## Responsive layout
+
+The faction-row body adapts to a single normative breakpoint per [mockups/GAME30001-diplomacy-panel.html](mockups/GAME30001-diplomacy-panel.html) `@media (max-width: 500px)`. The cross-cutting narrative is owned by [mobile-adaptation.md](mobile-adaptation.md) § 4; this section codifies the diplomacy-row specifics.
+
+- **Breakpoint:** viewport width **≤ 500 dp** (Flutter dp; matches the mockup CSS `max-width: 500px` cutoff and the **`≤ 500 dp`** column in mobile-adaptation.md § 4).
+- **Wide variant (viewport width `> 500 dp`):** the faction-row body lays out the info column and the action-button cluster **side by side** in a `Row`, with the action cluster anchored to the trailing edge. Matches mockup `.faction-row { display:flex; align-items:flex-start }` plus `.f-actions { justify-content:flex-end }`.
+- **Narrow variant (viewport width `≤ 500 dp`):** the faction-row body stacks the action-button cluster **below** the info column, and the action cluster is **left-aligned**. Matches mockup `.faction-row { flex-wrap:wrap }` plus `.f-actions { max-width:none; justify-content:flex-start }`.
+- The breakpoint constant exposed by the implementation (`kDiplomacyRowNarrowMaxWidth = 500.0`) is normative so widget tests can pin the boundary deterministically.
+- **Out of scope:** the panel-level mode bar, section headings, and per-row chrome (gradient, 1 dp border) are **not** re-laid-out at the narrow breakpoint — only the row's info-vs-actions arrangement changes.
+
+---
+
 ## Behavior
 
 ### Incoming (what shows this UI)
@@ -248,3 +260,7 @@ At least one story that shows the Diplomacy panel using a **real game** (e.g. fr
 - **Diplomacy Detail — year and turn:** Given a `DiplomaticEvent` in the history panel, when the UI renders its timestamp, then it shows a year label derived from the event’s `turn` using the game calendar mapping and includes the raw turn number in parentheses (e.g. `1505 (Turn 12)`).
 - **Diplomacy Detail — unknown faction substitution:** Given a `DiplomaticEvent` in the history panel that involves a third faction `C` that is not discovered by the current player, when the UI renders that event, then the faction `C` is shown as `Unknown faction` while `A` and `B` (if discovered) are shown by their normal display names.
 - **Diplomacy Detail — dossier subpanel:** Given the Diplomacy Detail view is open for Great Power `B` (and the current player controls Great Power `A`), when the UI renders the dossier subpanel, then it shows dossier sections for `B` per SPEC/ai/ai-dossier.md using only PlayerView-safe data and does not expose hidden agenda values directly.
+
+- **Faction row wide layout:** Given the Diplomacy panel is open at a viewport width strictly greater than `kDiplomacyRowNarrowMaxWidth` (500 dp), when a faction row renders, then the row body uses a `Row` whose first child is an `Expanded` containing the info column and whose trailing sibling is the action-button `Wrap`, matching `.faction-row { display:flex; align-items:flex-start }` from [mockups/GAME30001-diplomacy-panel.html](mockups/GAME30001-diplomacy-panel.html).
+- **Faction row narrow wrap:** Given the Diplomacy panel is open at a viewport width `≤ kDiplomacyRowNarrowMaxWidth` (500 dp), when a faction row renders, then the row body uses a `Column` whose first child is the info column and whose second child is the action-button `Wrap` aligned to the leading (left) edge, matching the mockup `@media (max-width: 500px)` rule `.faction-row { flex-wrap:wrap }` + `.f-actions { justify-content:flex-start }`.
+- **Faction row narrow does not right-align actions:** Given the Diplomacy panel is open at viewport width `≤ kDiplomacyRowNarrowMaxWidth`, when a faction row renders, then no `Expanded(child: info)` + sibling action cluster `Row` arrangement is present in the row body (so the action buttons never render trailing-edge anchored under the narrow rule).

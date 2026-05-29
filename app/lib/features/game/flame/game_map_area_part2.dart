@@ -140,6 +140,7 @@ mixin _GameMapAreaStatePart2
                           child: GameMapEmpireLeftRail(
                             game: widget.game,
                             humanPlayerId: mapPlayerId,
+                            narrow: isNarrow,
                             onIconTappedWhileSelectionMode:
                                 _workTargetSelection != null
                                 ? _cancelWorkTargetSelection
@@ -150,6 +151,7 @@ mixin _GameMapAreaStatePart2
                           left: kMapOverlayEdgeInset,
                           bottom: kMapOverlayEdgeInset,
                           child: GameMapCornerControls(
+                            narrow: isNarrow,
                             onCycleBaseLayerDisplayMode:
                                 _cycleBaseLayerDisplayMode,
                             onCenterOnHomeCapital: _centerOnHumanCapital,
@@ -268,6 +270,7 @@ mixin _GameMapAreaStatePart2
                                 viewportSnapshot: _regionViewportSnapshot,
                                 bus: ref.read(appEventBusProvider),
                                 cellSizePx: _currentRegion.cellSize.toDouble(),
+                                narrow: isNarrow,
                               ),
                             );
                           },
