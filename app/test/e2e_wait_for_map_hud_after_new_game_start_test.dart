@@ -26,6 +26,7 @@ import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import '../integration_test/e2e_test_shared.dart' show E2ePerfLog;
 import '../integration_test/e2e_test_shared_bootstrap.dart';
 
 /// Host that toggles which of the new-game setup states is mounted so the
@@ -411,4 +412,329 @@ void main() {
       );
     },
   );
+
+  // -------- Perf attribution pins (Refs GitHub #2336 AC8 / baseline) --------
+  //
+  // The pins below capture the `E2E_TIMING` / `E2E_COUNTER` markers the helper
+  // emits via [E2ePerfLog] when callers thread a perf log through. The
+  // bootstrap (`e2eBootstrapNewGameToMap`) wires `perf` from the standard
+  // scenario opener, so a silent regression in either the phase label, the
+  // `result=...` meta tag, or the iteration counter would break the AC8
+  // baseline timing pipeline (`tool/run_e2e_timing.sh` +
+  // `tool/compare_e2e_timing.sh`) without surfacing in the existing branch
+  // waterfall tests (which all pass `perf: null` by default).
+
+  group('e2eWaitForMapHudAfterNewGameStart perf attribution', () {
+    testWidgets(
+      'emits result=already_mounted with iterations counter value=1 when HUD is '
+      'already mounted at entry',
+      (WidgetTester tester) async {
+        await _pumpHost(tester, initial: _SetupPhase.mapHud);
+        final perf = E2ePerfLog('pin_wait_for_map_hud');
+        final lines = await _captureDebugPrintsAsync(() async {
+          await e2eWaitForMapHudAfterNewGameStart(
+            tester,
+            overallCap: const Duration(seconds: 5),
+            perf: perf,
+          );
+        });
+
+        final iterationsCounter = lines
+            .where(
+              (line) => line.contains(
+                'name=$kE2eWaitForMapHudIterationsCounter',
+              ),
+            )
+            .toList();
+        expect(
+          iterationsCounter,
+          hasLength(1),
+          reason:
+              'The entry-iteration short-circuit must still bump the '
+              'iterations counter once so a hung bootstrap is distinguishable '
+              'from a fast success in post-run analysis (#2336 AC8).',
+        );
+        expect(
+          iterationsCounter.single,
+          contains('|value=1'),
+          reason:
+              'Counter value at the already_mounted short-circuit must be 1 '
+              '(the single completed iteration) so the AC8 timing pipeline '
+              'can use the counter as the de-duplicated bootstrap-iteration '
+              'tally without double-counting the entry frame.',
+        );
+        expect(
+          iterationsCounter.single,
+          contains('|meta=phase=$kE2eDefaultWaitForMapHudPhase'),
+          reason:
+              'Counter meta must carry the phase label so downstream parsers '
+              'can slice the counter by the same phase=... key used by the '
+              'timing marker.',
+        );
+
+        final timingLines = lines
+            .where(
+              (line) => line.contains(
+                'phase=$kE2eDefaultWaitForMapHudPhase',
+              ) &&
+                  line.startsWith('E2E_TIMING|'),
+            )
+            .toList();
+        expect(
+          timingLines,
+          hasLength(1),
+          reason:
+              'Exactly one `E2E_TIMING|phase=...` line must be emitted on the '
+              'success path so suite aggregators do not double-count the '
+              'bootstrap wait.',
+        );
+        expect(
+          timingLines.single,
+          contains('|meta=result=already_mounted'),
+          reason:
+              'The entry-iteration short-circuit must report '
+              '`result=already_mounted` so the baseline timing pipeline can '
+              'separate fast already-mounted returns from successful polled '
+              'advances (#2336 AC8 attribution).',
+        );
+      },
+    );
+
+    testWidgets(
+      'emits result=advanced and a counter value > 1 when the HUD lands during '
+      'the poll loop',
+      (WidgetTester tester) async {
+        await _pumpHost(
+          tester,
+          initial: _SetupPhase.creatingGame,
+          transitionAfter: const Duration(milliseconds: 120),
+          transitionTo: _SetupPhase.mapHud,
+        );
+        final perf = E2ePerfLog('pin_wait_for_map_hud');
+        final lines = await _captureDebugPrintsAsync(() async {
+          await e2eWaitForMapHudAfterNewGameStart(
+            tester,
+            overallCap: const Duration(seconds: 5),
+            perf: perf,
+          );
+        });
+
+        final iterationsLines = lines
+            .where(
+              (line) => line.contains(
+                'name=$kE2eWaitForMapHudIterationsCounter',
+              ),
+            )
+            .toList();
+        expect(
+          iterationsLines.length,
+          greaterThan(1),
+          reason:
+              'A scheduled-transition success path must bump the iterations '
+              'counter on every loop iteration (including the success one), '
+              'so the AC8 timing pipeline can attribute the wall-clock cost '
+              'to the actual number of polling cycles.',
+        );
+
+        final timingLines = lines
+            .where(
+              (line) => line.contains(
+                'phase=$kE2eDefaultWaitForMapHudPhase',
+              ) &&
+                  line.startsWith('E2E_TIMING|'),
+            )
+            .toList();
+        expect(
+          timingLines,
+          hasLength(1),
+          reason:
+              'Exactly one `E2E_TIMING|phase=...` line must be emitted on the '
+              'polled-advance success path.',
+        );
+        expect(
+          timingLines.single,
+          contains('|meta=result=advanced'),
+          reason:
+              'A polled-advance return must report `result=advanced` (not '
+              '`already_mounted`) so the baseline timing pipeline can '
+              'separate fast and slow successful paths (#2336 AC8 '
+              'attribution).',
+        );
+      },
+    );
+
+    testWidgets(
+      'emits result=timeout on the overall-cap fail path',
+      (WidgetTester tester) async {
+        await _pumpHost(tester, initial: _SetupPhase.idle);
+        final perf = E2ePerfLog('pin_wait_for_map_hud');
+        final lines = <String>[];
+        Object? caught;
+        try {
+          await _runWithDebugPrintCapture(lines, () async {
+            await e2eWaitForMapHudAfterNewGameStart(
+              tester,
+              overallCap: const Duration(milliseconds: 150),
+              perf: perf,
+            );
+          });
+        } catch (e) {
+          caught = e;
+        }
+        expect(
+          caught,
+          isA<TestFailure>(),
+          reason:
+              'Sanity check: the timeout-fail-path test must still raise so '
+              'the perf assertion below is exercised against the same '
+              'fail-fast contract as the no-perf timeout test.',
+        );
+
+        final timingLines = lines
+            .where(
+              (line) => line.contains(
+                'phase=$kE2eDefaultWaitForMapHudPhase',
+              ) &&
+                  line.startsWith('E2E_TIMING|'),
+            )
+            .toList();
+        expect(
+          timingLines,
+          hasLength(1),
+          reason:
+              'Exactly one `E2E_TIMING|phase=...` line must be emitted on the '
+              'timeout fail path so a hung bootstrap surfaces in the AC8 '
+              'timing pipeline (alongside the `TestFailure`) instead of as a '
+              'silent wall-clock burn.',
+        );
+        expect(
+          timingLines.single,
+          contains('|meta=result=timeout'),
+          reason:
+              'The overall-cap fail path must report `result=timeout` so the '
+              'baseline timing pipeline can distinguish a hung bootstrap from '
+              'a successful (slow) one (#2336 AC8 / AC10 attribution).',
+        );
+      },
+    );
+
+    testWidgets(
+      'emits result=error_dialog before failing on "Could not create game"',
+      (WidgetTester tester) async {
+        await _pumpHost(tester, initial: _SetupPhase.errorDialog);
+        final perf = E2ePerfLog('pin_wait_for_map_hud');
+        final lines = <String>[];
+        Object? caught;
+        try {
+          await _runWithDebugPrintCapture(lines, () async {
+            await e2eWaitForMapHudAfterNewGameStart(
+              tester,
+              overallCap: const Duration(seconds: 5),
+              perf: perf,
+            );
+          });
+        } catch (e) {
+          caught = e;
+        }
+        expect(
+          caught,
+          isA<TestFailure>(),
+          reason:
+              'Sanity check: the error-dialog branch must still raise so the '
+              'perf assertion below covers the same fail-fast contract as '
+              'the no-perf error-dialog test.',
+        );
+
+        final timingLines = lines
+            .where(
+              (line) => line.contains(
+                'phase=$kE2eDefaultWaitForMapHudPhase',
+              ) &&
+                  line.startsWith('E2E_TIMING|'),
+            )
+            .toList();
+        expect(
+          timingLines,
+          hasLength(1),
+          reason:
+              'Exactly one `E2E_TIMING|phase=...` line must be emitted on the '
+              'error-dialog fail-fast path so a broken new-game setup is '
+              'attributable in the AC8 timing pipeline (alongside the '
+              '`TestFailure`).',
+        );
+        expect(
+          timingLines.single,
+          contains('|meta=result=error_dialog'),
+          reason:
+              'The error-dialog fail path must report `result=error_dialog` '
+              '(distinct from `result=timeout`) so the baseline timing '
+              'pipeline can separate fast setup-failure paths from genuine '
+              'wall-clock overruns (#2336 AC8 / AC10 attribution).',
+        );
+      },
+    );
+
+    testWidgets(
+      'emits no markers when perf is null (default), preserving the '
+      'opt-in attribution contract',
+      (WidgetTester tester) async {
+        await _pumpHost(tester, initial: _SetupPhase.mapHud);
+        final lines = <String>[];
+        await _runWithDebugPrintCapture(lines, () async {
+          await e2eWaitForMapHudAfterNewGameStart(
+            tester,
+            overallCap: const Duration(seconds: 5),
+          );
+        });
+        final mapHudMarkers = lines
+            .where(
+              (line) =>
+                  line.contains('phase=$kE2eDefaultWaitForMapHudPhase') ||
+                  line.contains('name=$kE2eWaitForMapHudIterationsCounter'),
+            )
+            .toList();
+        expect(
+          mapHudMarkers,
+          isEmpty,
+          reason:
+              'Default `perf: null` must NOT emit any helper-attribution '
+              'markers so callers that opt out of attribution (the existing '
+              'widget-test pins, ad-hoc scenarios, future low-overhead '
+              'integration paths) keep their byte-quiet contract.',
+        );
+      },
+    );
+  });
+}
+
+/// Captures every `debugPrint` line emitted while [body] runs and restores
+/// the original printer afterwards (defensive in `finally` so a thrown
+/// expectation does not leak the override into later tests).
+///
+/// Mirrors the `_captureDebugPrints` helper in
+/// `app/test/e2e_perf_log_markers_test.dart` so the perf-attribution pins
+/// added here use the same capture contract as the canonical `E2ePerfLog`
+/// marker tests. Refs GitHub #2336 AC8 baseline-marker contract.
+Future<List<String>> _captureDebugPrintsAsync(Future<void> Function() body) async {
+  final captured = <String>[];
+  await _runWithDebugPrintCapture(captured, body);
+  return captured;
+}
+
+/// Underlying `debugPrint` override used by [_captureDebugPrintsAsync] and the
+/// fail-path perf tests, which need to inspect the captured lines even when
+/// [body] throws.
+Future<void> _runWithDebugPrintCapture(
+  List<String> out,
+  Future<void> Function() body,
+) async {
+  final original = debugPrint;
+  debugPrint = (String? message, {int? wrapWidth}) {
+    out.add(message ?? '');
+  };
+  try {
+    await body();
+  } finally {
+    debugPrint = original;
+  }
 }

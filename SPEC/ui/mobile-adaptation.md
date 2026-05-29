@@ -64,8 +64,9 @@ This rule covers four normalised Flutter dp breakpoints, each matching a per-scr
 | Corner controls     | 24 × 24 dp                                                     | 32 × 32 dp                                          | `GAME10001-game-screen.html` `.corner-btn @media`; [empire-overview.md](empire-overview.md) § Corner controls            |
 | Players bar         | Hidden (not present in widget tree)                            | Visible (per-player chip strip)                     | `GAME10001-game-screen.html` `.players-bar @media`                                                                       |
 | Province / sea detail | Full-width bottom sheet, height ~33 vh, accent-dim top border | Right side panel, width 320 dp                       | `GAME10001-game-screen.html` `.province-panel @media`; [in-game-shell-narrow.md](in-game-shell-narrow.md) § Province/sea zone detail overlay |
+| Victory overlay (OVL20001) | Laurel `24` px, title `titleMedium`, body `bodyMedium`, action buttons stacked in a vertical `Column` (full-width) | Laurel `28` px, title `headlineSmall`, body `bodyLarge`, actions in a `Wrap` row (12 dp spacing) | [victory-overlay.md](victory-overlay.md) § Narrow viewport; `OVL20001-game-victory-overlay.html` `.victory-actions { flex-wrap:wrap }` + `clamp()` lower bounds |
 
-- The wide-layout widgets themselves (left rail, corner controls, minimap, players bar, province panel) are introduced by their per-screen alignment issues; this section codifies the **narrow measurements** so the cross-cutting adaptation work has a single authoritative source.
+- The wide-layout widgets themselves (left rail, corner controls, minimap, players bar, province panel, victory overlay) are introduced by their per-screen alignment issues; this section codifies the **narrow measurements** so the cross-cutting adaptation work has a single authoritative source.
 
 ### 5. Safe area
 
@@ -75,6 +76,19 @@ This rule covers four normalised Flutter dp breakpoints, each matching a per-scr
 
 - For each screen in Widgetbook, provide at least one **mobile viewport** use case: render the widget inside a constrained viewport (e.g. 360×640 dp) so that mobile layout and scroll can be verified without resizing the window. Document in the widget catalog or story name (e.g. "Default (mobile)").
 - **Mobile-only mockups:** When a screen's mobile layout differs meaningfully from desktop (e.g. stacked vs row, different navigation), consider adding a **mobile-only** Widgetbook use case that is designed and named for the mobile viewport (e.g. "Mobile layout" or "Narrow — stacked slots"). This makes mobile the primary frame for that story and ensures the mobile design is reviewed explicitly.
+
+### 7. Minimum-viewport pin (`kMinViewportWidth = 320`)
+
+The minimum supported viewport width is **`kMinViewportWidth = 320` dp** (from `app/lib/config/constants.dart`). The minimum touch-target size is **`kMinTouchTargetSize = 44` dp** (matching §1 and UXD 03). Both constants are normative for screen tests that pin the AC below.
+
+#### Acceptance criteria
+
+- Given the viewport width is exactly `kMinViewportWidth` (320 dp) and the height is at least 640 dp, when **CtMainMenu** (`plain` and `pixelArt` variants, all `MainMenuState` values) is rendered with the running theme, then `WidgetTester.takeException()` returns `null`, no `RenderFlex` overflow exception is thrown by the framework, and every visible `CtNinePatchButton` reports a rendered height ≥ `kMinTouchTargetSize`.
+- Given the viewport width is exactly `kMinViewportWidth` (320 dp) and the height is at least 640 dp, when **CtGameSetup** (any `GameSetupVariant` × `GameSetupState`) is rendered with the running theme, then `WidgetTester.takeException()` returns `null`, no `RenderFlex` overflow exception is thrown, and the six player-slot rows render in the stacked layout (label / nation dropdown / leader dropdown) defined by §4 Game Setup.
+
+#### Pinning tests
+
+The above ACs are pinned by `app/test/mobile_320dp_min_viewport_test.dart` (Refs #2870 S10).
 
 ---
 
