@@ -268,6 +268,7 @@ mixin _GameMapAreaStatePart2
                                 viewportSnapshot: _regionViewportSnapshot,
                                 bus: ref.read(appEventBusProvider),
                                 cellSizePx: _currentRegion.cellSize.toDouble(),
+                                narrow: isNarrow,
                               ),
                             );
                           },

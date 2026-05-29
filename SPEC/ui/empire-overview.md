@@ -105,6 +105,21 @@ Implementation: [`GameTabBar`](../../app/lib/features/game/widgets/game_tab_bar.
 
 **Acceptance (minimap):** Given the in-game shell map is visible, when the minimap toggle is on, then the UI shows the active region grid with visibility rules above and a white viewport indicator when the main map has published a matching snapshot. When the user taps the toggle, then the minimap hides or shows for the session only (default on at shell entry). When the user drags on the minimap or the bus emits a pan event for that region, then the main map host remains without exceptions. When the side menu is open, then the minimap stack order keeps it interactive above the scrim.
 
+#### Narrow minimap measurements (`< kNarrowBreakpoint`)
+
+When the in-game map renders on a narrow viewport (`MediaQuery.size.width < kNarrowBreakpoint`, `600 dp`), the host constructs [GameRegionMinimap](../../app/lib/features/game/flame/game_region_minimap.dart) with `narrow: true`. The active region grid then fits its aspect ratio into the narrow bounding box defined in [mobile-adaptation.md](mobile-adaptation.md) § In-game shell, normative for issue #2870 S3:
+
+- **Bounding box:** **90 × 70 dp** (mockup `.minimap-panel @media (max-width:600px) { width:90px; height:70px }`).
+- **Aspect-preserving fit:** Given `aspect = region.width / region.height` and `boxAspect = 90 / 70`, the grid renders at `(90, 90 / aspect)` when `aspect >= boxAspect` (width-limited) and `(70 * aspect, 70)` otherwise (height-limited). The longer side never exceeds `90 dp` and the shorter side never exceeds `70 dp`.
+- **Chrome unchanged:** Panel padding (`panelPadding = 2`), 1 px `--border` outline, toggle button (`32 × 32 dp`), zoom slider, and viewport indicator stroke all keep their wide-layout values. Only the inner grid `mapSize` adapts.
+
+**Acceptance (narrow minimap):**
+
+- **Given** the in-game map is rendered on the narrow layout (`MediaQuery.size.width < kNarrowBreakpoint`) and the minimap toggle is on, **when** `GameRegionMinimap` is constructed with `narrow: true`, **then** the inner `CustomPaint` grid lays out at a `Size` whose width is at most `GameRegionMinimap.narrowMaxWidth` (`90 dp`) and whose height is at most `GameRegionMinimap.narrowMaxHeight` (`70 dp`).
+- **Given** the active region has aspect ratio `>= 90 / 70`, **when** the narrow minimap renders, **then** the grid width equals `GameRegionMinimap.narrowMaxWidth` and the grid height equals `GameRegionMinimap.narrowMaxWidth / aspect` (width-limited fit).
+- **Given** the active region has aspect ratio `< 90 / 70`, **when** the narrow minimap renders, **then** the grid height equals `GameRegionMinimap.narrowMaxHeight` and the grid width equals `GameRegionMinimap.narrowMaxHeight * aspect` (height-limited fit).
+- **Given** the host omits the `narrow` flag (default `false`), **when** the wide minimap renders, **then** the inner grid keeps the pre-#2870 baseline: longer side capped at `GameRegionMinimap.defaultMaxExtent` (`132 dp`), shorter side scaled by aspect (regression guard).
+
 ### Region minimap chrome (dark editorial-monocle)
 
 - **Panel surface:** When the minimap is visible, the region grid sits inside a flat panel surface that paints `--bg-deep` fill with a 1 px `--border` outline and 2 dp internal padding around the grid. The mockup `.minimap-panel` (`SPEC/ui/mockups/GAME10001-game-screen.html`) is the visual source of truth; no `Material` overlay paints with `Colors.black`, `Colors.white`, or any other hard-coded light-theme background under the panel. The legacy elevation drop shadow is removed (the dark panel reads against the map without a Material shadow).
