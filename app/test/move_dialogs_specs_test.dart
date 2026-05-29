@@ -5,6 +5,7 @@
 import 'package:colonizethis_app/config/editorial_monocle_palette.dart';
 import 'package:colonizethis_app/features/game/widgets/chrome/ct_nine_patch_button.dart';
 import 'package:colonizethis_app/widgets/ct_dialog_shell.dart';
+import 'package:colonizethis_app/widgets/ct_section_label.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
@@ -571,11 +572,53 @@ void main() {
       (WidgetTester tester) async {
         await pumpDialog(tester, bus: AppEventBus.create());
         expect(find.byType(MoveFleetDialog), findsOneWidget);
-        expect(find.text('Sea zones'), findsOneWidget);
+        // CtSectionLabel renders text upper-cased.
+        expect(find.text('SEA ZONES'), findsOneWidget);
         expect(
           find.textContaining('Move fleet — Fleet fspecs'),
           findsOneWidget,
         );
+      },
+    );
+
+    testWidgets(
+      'dialog is wrapped in CtDialogShell and contains no Material AlertDialog / RadioListTile / TextButton (Refs #2867 R1)',
+      (WidgetTester tester) async {
+        await pumpDialog(tester, bus: AppEventBus.create());
+
+        expect(find.byType(CtDialogShell), findsOneWidget);
+        expect(find.byType(AlertDialog), findsNothing);
+        expect(find.byType(RadioListTile<dynamic>), findsNothing);
+        expect(find.byType(Radio<dynamic>), findsNothing);
+        // Material TextButton banned inside the dialog surface — the catalog
+        // ban only applies to widgets painted by MoveFleetDialog itself, so
+        // we scope the check to descendants of CtDialogShell.
+        expect(
+          find.descendant(
+            of: find.byType(CtDialogShell),
+            matching: find.byType(TextButton),
+          ),
+          findsNothing,
+        );
+      },
+    );
+
+    testWidgets(
+      'section headers use CtSectionLabel (Refs #2867 R6)',
+      (WidgetTester tester) async {
+        await pumpDialog(tester, bus: AppEventBus.create());
+
+        // The fixture only generates sea-zone destinations (no dock ports
+        // resolve through the topology), so the dialog renders exactly one
+        // CtSectionLabel — the sea-zones header. The full sea+port shape is
+        // pinned by SPEC AC and by the broader move_fleet_dialog_test.dart
+        // coverage; the catalog ban below is the regression guard that
+        // matters for the legacy bold-Text headers.
+        expect(find.byType(CtSectionLabel), findsAtLeastNWidgets(1));
+        final CtSectionLabel firstLabel = tester.widget<CtSectionLabel>(
+          find.byType(CtSectionLabel).first,
+        );
+        expect(firstLabel.text, 'Sea zones');
       },
     );
 
@@ -592,7 +635,7 @@ void main() {
         await pumpDialog(tester, bus: bus);
         await tester.tap(find.text('Adjacent Sea'));
         await tester.pump();
-        await tester.tap(find.text('Confirm'));
+        await tester.tap(find.widgetWithText(CtNinePatchButton, 'Confirm'));
         await tester.pumpAndSettle();
 
         expect(captured, isNotNull);
@@ -601,6 +644,28 @@ void main() {
         expect(captured!.moveOrder.destinationSeaZoneId, adjacentSea);
         expect(captured!.moveOrder.destinationPortProvinceId, isNull);
         expect(find.byType(MoveFleetDialog), findsNothing);
+      },
+    );
+
+    testWidgets(
+      'Confirm is disabled until a destination is selected (Refs #2867 R10)',
+      (WidgetTester tester) async {
+        await pumpDialog(tester, bus: AppEventBus.create());
+
+        final CtNinePatchButton confirmBefore =
+            tester.widget<CtNinePatchButton>(
+              find.widgetWithText(CtNinePatchButton, 'Confirm'),
+            );
+        expect(confirmBefore.onPressed, isNull);
+
+        await tester.tap(find.text('Adjacent Sea'));
+        await tester.pump();
+
+        final CtNinePatchButton confirmAfter =
+            tester.widget<CtNinePatchButton>(
+              find.widgetWithText(CtNinePatchButton, 'Confirm'),
+            );
+        expect(confirmAfter.onPressed, isNotNull);
       },
     );
 
@@ -615,7 +680,7 @@ void main() {
         addTearDown(sub.cancel);
 
         await pumpDialog(tester, bus: bus);
-        await tester.tap(find.text('Cancel'));
+        await tester.tap(find.widgetWithText(CtNinePatchButton, 'Cancel'));
         await tester.pumpAndSettle();
 
         expect(captured, isNull);
@@ -715,8 +780,8 @@ void main() {
           findsOneWidget,
         );
         expect(find.text('Move fleet — Fleet flonely'), findsOneWidget);
-        final confirmButton = tester.widget<TextButton>(
-          find.widgetWithText(TextButton, 'Confirm'),
+        final confirmButton = tester.widget<CtNinePatchButton>(
+          find.widgetWithText(CtNinePatchButton, 'Confirm'),
         );
         expect(confirmButton.onPressed, isNull);
       },
