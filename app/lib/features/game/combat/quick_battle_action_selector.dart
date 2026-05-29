@@ -19,16 +19,17 @@ class QuickBattleActionSelector extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = appL10n(context);
-    final TextStyle? cpLabelStyle = Theme.of(
-      context,
-    ).textTheme.titleSmall?.copyWith(color: EditorialMonoclePalette.muted);
+    final TextStyle? titleSmall = Theme.of(context).textTheme.titleSmall;
+    final TextStyle cpStyle = (titleSmall ?? const TextStyle()).copyWith(
+      color: EditorialMonoclePalette.muted,
+    );
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
       children: [
         Text(
           l10n.quickBattle_commandPoints(cpRemaining),
-          style: cpLabelStyle,
+          style: cpStyle,
         ),
         const SizedBox(height: 8),
         Wrap(

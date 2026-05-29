@@ -49,7 +49,8 @@ The widget is mounted by `QuickBattleScreen` whenever its result view is not act
 - Outer layout: `Column` with `crossAxisAlignment: stretch` and `mainAxisSize: min`.
 - 16 dp vertical spacing between attacker and defender blocks.
 - Each side: title `Text` (theme `titleMedium`) followed by a `CtPanel` containing a `Wrap(spacing: 12, runSpacing: 8)` of group rows.
-- Each group row formats as `<Lane> <Line>: <unitCount> units[ (Cohesion <c>)]`. The cohesion suffix is suppressed when `cohesion <= 0`. Group-row `Text` widgets use `Theme.of(context).textTheme.bodySmall` overridden to color `EditorialMonoclePalette.muted` (the `--muted` token in `SPEC/ui/pixel-art-ui-catalog.md` § Editorial-monocle palette) so the row reads as secondary context against the surrounding `--surface` `CtPanel`.
+- Each group row uses the theme's `bodySmall` style with the canonical dark-theme `--muted` token resolved through `EditorialMonoclePalette.muted` (per `SPEC/ui/pixel-art-ui-catalog.md` § Editorial-monocle palette). Hard-coded hex colors or unmodified `bodySmall` foreground colors are regressions.
+- Each group row formats as `<Lane> <Line>: <unitCount> units[ (Cohesion <c>)]`. The cohesion suffix is suppressed when `cohesion <= 0`.
 
 ### Lane and line labels
 
@@ -118,6 +119,10 @@ Both sides always render in the order **attacker → defender** to match resolve
 - Given a `QuickBattleDeploymentView` is mounted with non-null deployments,
   When the user views the screen,
   Then the widget does not emit any `AppEvent`, does not call `Navigator.push`, and does not call `showDialog`.
+
+- Given a `QuickBattleDeploymentView` is mounted with at least one attacker group,
+  When the UI layer renders the widget under `AppThemes.editorialMonocle`,
+  Then every per-group `Text` row resolves its foreground color to `EditorialMonoclePalette.muted` and its `style` is based on `Theme.of(context).textTheme.bodySmall` (the dark-theme `--muted` token; no hard-coded hex literals).
 
 ---
 

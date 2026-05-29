@@ -38,9 +38,10 @@ class QuickBattleDeploymentView extends StatelessWidget {
   }
 
   Widget _buildSideDeployment(BuildContext context, QuickBattleDeployment d) {
-    final TextStyle? rowStyle = Theme.of(
-      context,
-    ).textTheme.bodySmall?.copyWith(color: EditorialMonoclePalette.muted);
+    final TextStyle? bodySmall = Theme.of(context).textTheme.bodySmall;
+    final TextStyle rowStyle = (bodySmall ?? const TextStyle()).copyWith(
+      color: EditorialMonoclePalette.muted,
+    );
     return CtPanel(
       padding: const EdgeInsets.all(12),
       child: Wrap(
