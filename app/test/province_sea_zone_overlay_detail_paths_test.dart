@@ -99,7 +99,9 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      expect(find.text('Tile'), findsOneWidget);
+      // Section headers render via CtSectionLabel (Refs #2865 S4) which
+      // upper-cases the label per SPEC § Dark-theme section labels.
+      expect(find.text('TILE'), findsOneWidget);
       expect(find.text('Coordinates: (${coords.x}, ${coords.y})'), findsOneWidget);
       expect(find.textContaining('Terrain:'), findsOneWidget);
       expect(find.textContaining('Prospected:'), findsOneWidget);
@@ -128,7 +130,7 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      expect(find.text('Tile'), findsOneWidget);
+      expect(find.text('TILE'), findsOneWidget);
       expect(find.textContaining('Coordinates:'), findsNothing);
       expect(find.text('—'), findsAtLeastNWidgets(1));
     });
@@ -168,8 +170,12 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('Sea zone'), findsOneWidget);
-      expect(find.text('Political'), findsOneWidget);
-      expect(find.text('Naval'), findsOneWidget);
+      // Section headers render via CtSectionLabel (Refs #2865 S4) which
+      // upper-cases the label per SPEC § Dark-theme section labels.
+      expect(find.text('POLITICAL'), findsOneWidget);
+      expect(find.text('NAVAL'), findsOneWidget);
+      // Sea-zone overlay never emits the Tile section header in any casing.
+      expect(find.text('TILE'), findsNothing);
       expect(find.text('Tile'), findsNothing);
       expect(find.textContaining('Coordinates:'), findsNothing);
     });
@@ -210,7 +216,9 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('Province'), findsOneWidget);
-      expect(find.text('Tile'), findsOneWidget);
+      // Section headers render via CtSectionLabel (Refs #2865 S4) which
+      // upper-cases the label per SPEC § Dark-theme section labels.
+      expect(find.text('TILE'), findsOneWidget);
     });
 
     testWidgets('AC: Narrow layout uses tab strip for overlay sections', (

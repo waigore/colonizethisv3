@@ -466,6 +466,16 @@ Province? _findProvince(Game game, String provinceId) {
   return null;
 }
 
+// Section header band shared by every province / sea-zone tab body and the
+// wide-layout `sections` column. Renders the canonical CtSectionLabel
+// (Refs #2859 R9) so the title inherits the dark editorial-monocle
+// small-caps + `--accent-dim` underline contract; see
+// SPEC/ui/province-sea-zone-detail-overlay.md § Dark-theme section labels.
+//
+// When [title] is empty (e.g. the narrow-layout obfuscated tab body that
+// already has its label rendered by `CtTabStrip`), the header band is
+// omitted entirely so the obfuscated body does not paint an extra
+// underline beneath the tab strip.
 Widget _buildSection(String title, Widget child) {
   return Padding(
     padding: const EdgeInsets.only(bottom: 12),
@@ -473,8 +483,10 @@ Widget _buildSection(String title, Widget child) {
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
       children: [
-        Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
-        const SizedBox(height: 4),
+        if (title.isNotEmpty) ...[
+          CtSectionLabel(title),
+          const SizedBox(height: 4),
+        ],
         child,
       ],
     ),
