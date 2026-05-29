@@ -20,6 +20,30 @@ import 'fnv1a_hash_constants.dart';
 export 'diplomacy_panel_rows.dart';
 
 part 'diplomacy_panel_chrome.dart';
+part 'diplomacy_panel_mode_bar.dart';
+
+/// Maximum viewport width (Flutter dp) at which the diplomacy faction-row
+/// body switches to its narrow stacked variant (info column above the
+/// action-button cluster, left-aligned).
+///
+/// SPEC/ui/diplomacy-panel.md § Responsive layout — mirrors the
+/// `@media (max-width: 500px)` cutoff in
+/// [mockups/GAME30001-diplomacy-panel.html](../../../../../SPEC/ui/mockups/GAME30001-diplomacy-panel.html)
+/// and the `≤ 500 dp` Diplomacy entry in
+/// [mobile-adaptation.md](../../../../../SPEC/ui/mobile-adaptation.md) § 4.
+///
+/// Exposed at library scope so widget tests can pin the boundary
+/// deterministically without re-deriving the constant.
+const double kDiplomacyRowNarrowMaxWidth = 500.0;
+
+/// Key prefix attached to a faction-row body widget so tests can resolve
+/// the live Row (wide) vs Column (narrow) layout selection driven by
+/// [kDiplomacyRowNarrowMaxWidth].
+///
+/// Each row uses `ValueKey('${kDiplomacyRowBodyKeyPrefix}<factionId>')`.
+/// SPEC/ui/diplomacy-panel.md § Responsive layout cites this key so
+/// widget tests can pin both variants without touching private types.
+const String kDiplomacyRowBodyKeyPrefix = 'diplomacyRowBody:';
 
 /// Full-page diplomacy panel. SPEC/ui/diplomacy-panel.md.
 class DiplomacyPanel extends StatefulWidget {
@@ -356,20 +380,54 @@ class _DiplomacyRow extends StatelessWidget {
     // is rendered as a flat gradient tile with a 1 px outline and pointer
     // hover behaviour. The InkWell sits inside the hover-aware chrome so
     // taps still navigate to the detail screen (or order-cancel toggle).
+    final double viewportWidth = MediaQuery.sizeOf(context).width;
+    final bool narrow = viewportWidth <= kDiplomacyRowNarrowMaxWidth;
     return _DiplomacyRowChrome(
       child: InkWell(
         onTap: onTap,
         child: Padding(
           padding: const EdgeInsets.all(12),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(child: _buildInfoColumn(context)),
-              _buildActionButtons(),
-            ],
-          ),
+          child: narrow
+              ? _buildNarrowBody(context)
+              : _buildWideBody(context),
         ),
       ),
+    );
+  }
+
+  Key get _bodyKey =>
+      ValueKey('$kDiplomacyRowBodyKeyPrefix${data.factionId}');
+
+  // SPEC/ui/diplomacy-panel.md § Responsive layout (wide variant): info
+  // column shares a Row with the action cluster, anchored trailing-edge.
+  Widget _buildWideBody(BuildContext context) {
+    return Row(
+      key: _bodyKey,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Expanded(child: _buildInfoColumn(context)),
+        _buildActionButtons(),
+      ],
+    );
+  }
+
+  // SPEC/ui/diplomacy-panel.md § Responsive layout (narrow ≤ 500 dp): info
+  // column stacks above the action cluster; cluster aligns leading-edge.
+  Widget _buildNarrowBody(BuildContext context) {
+    final bool hasActions =
+        !readOnly &&
+        (data.actions.isNotEmpty || data.pendingOrderTypes.isNotEmpty);
+    return Column(
+      key: _bodyKey,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        _buildInfoColumn(context),
+        if (hasActions) ...[
+          const SizedBox(height: 8),
+          Align(alignment: Alignment.centerLeft, child: _buildActionButtons()),
+        ],
+      ],
     );
   }
 
@@ -589,97 +647,3 @@ class _ActionButton extends StatelessWidget {
     );
   }
 }
-
-/// Bottom mode-bar filter for the Diplomacy panel.
-///
-/// SPEC/ui/diplomacy-panel.md § Mode bar (filter): anchored to the bottom of
-/// the panel with a `--border` top divider; buttons use mono font with
-/// inactive label `--muted`, active label `--accent`, and `--accent-dim`
-/// border on the active item.
-class _DiplomacyModeBar extends StatelessWidget {
-  const _DiplomacyModeBar({required this.mode, required this.onModeChanged});
-
-  final DiplomacyFilterMode mode;
-  final ValueChanged<DiplomacyFilterMode> onModeChanged;
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = appL10n(context);
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        border: Border(
-          top: BorderSide(color: EditorialMonoclePalette.border, width: 1),
-        ),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            _DiplomacyModeButton(
-              label: l10n.diplomacy_filter_all,
-              isActive: mode == DiplomacyFilterMode.all,
-              onPressed: () => onModeChanged(DiplomacyFilterMode.all),
-            ),
-            const SizedBox(width: 8),
-            _DiplomacyModeButton(
-              label: l10n.diplomacy_filter_greatPowersOnly,
-              isActive: mode == DiplomacyFilterMode.greatPowersOnly,
-              onPressed: () =>
-                  onModeChanged(DiplomacyFilterMode.greatPowersOnly),
-            ),
-            const SizedBox(width: 8),
-            _DiplomacyModeButton(
-              label: l10n.diplomacy_filter_minorsOnly,
-              isActive: mode == DiplomacyFilterMode.minorsOnly,
-              onPressed: () => onModeChanged(DiplomacyFilterMode.minorsOnly),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _DiplomacyModeButton extends StatelessWidget {
-  const _DiplomacyModeButton({
-    required this.label,
-    required this.isActive,
-    required this.onPressed,
-  });
-
-  final String label;
-  final bool isActive;
-  final VoidCallback onPressed;
-
-  @override
-  Widget build(BuildContext context) {
-    final Color labelColor = isActive
-        ? EditorialMonoclePalette.accent
-        : EditorialMonoclePalette.muted;
-    final Border? border = isActive
-        ? Border.all(color: EditorialMonoclePalette.accentDim, width: 1)
-        : null;
-    return InkWell(
-      onTap: onPressed,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-        decoration: BoxDecoration(
-          border: border,
-          borderRadius: BorderRadius.circular(2),
-        ),
-        child: Text(
-          label,
-          style: TextStyle(
-            color: labelColor,
-            fontFamily: 'monospace',
-            fontFamilyFallback: const ['Courier'],
-            fontSize: 12,
-            fontWeight: isActive ? FontWeight.w600 : FontWeight.w400,
-          ),
-        ),
-      ),
-    );
-  }
-}
-
