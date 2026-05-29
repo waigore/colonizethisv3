@@ -181,7 +181,6 @@ class _ChooseTechOptionRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final l10n = appL10n(context);
     final iconPath = techCategoryIconAssetPath(tech.category);
     return InkWell(
       onTap: onTap,
@@ -205,46 +204,56 @@ class _ChooseTechOptionRow extends StatelessWidget {
                 ),
                 const SizedBox(width: 8),
               ],
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      techDisplayName(tech.id),
-                      style: TextStyle(
-                        color: EditorialMonoclePalette.fg,
-                        fontWeight: FontWeight.w600,
-                        fontSize: 12,
-                      ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      l10n.technologyPanel_pickSubtitle(
-                        eraRoman(tech.era),
-                        techCategoryLabelL10n(l10n, tech.category),
-                        tech.cost,
-                      ),
-                      style: TextStyle(
-                        color: EditorialMonoclePalette.muted,
-                        fontSize: 10,
-                        fontFamilyFallback: const <String>[
-                          'SF Mono',
-                          'Menlo',
-                          'monospace',
-                        ],
-                        fontFeatures: const <FontFeature>[
-                          FontFeature.tabularFigures(),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
+              Expanded(child: _ChooseTechOptionLabels(tech: tech)),
             ],
           ),
         ),
       ),
+    );
+  }
+}
+
+class _ChooseTechOptionLabels extends StatelessWidget {
+  const _ChooseTechOptionLabels({required this.tech});
+
+  final TechDefinition tech;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = appL10n(context);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(
+          techDisplayName(tech.id),
+          style: TextStyle(
+            color: EditorialMonoclePalette.fg,
+            fontWeight: FontWeight.w600,
+            fontSize: 12,
+          ),
+        ),
+        const SizedBox(height: 2),
+        Text(
+          l10n.technologyPanel_pickSubtitle(
+            eraRoman(tech.era),
+            techCategoryLabelL10n(l10n, tech.category),
+            tech.cost,
+          ),
+          style: TextStyle(
+            color: EditorialMonoclePalette.muted,
+            fontSize: 10,
+            fontFamilyFallback: const <String>[
+              'SF Mono',
+              'Menlo',
+              'monospace',
+            ],
+            fontFeatures: const <FontFeature>[
+              FontFeature.tabularFigures(),
+            ],
+          ),
+        ),
+      ],
     );
   }
 }
