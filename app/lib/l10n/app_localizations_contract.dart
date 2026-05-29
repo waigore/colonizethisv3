@@ -1138,6 +1138,12 @@ abstract class AppLocalizations {
   /// Back button on game setup screen.
   String get gameSetup_back;
 
+  /// Cancel affordance in the Game Setup action row (Refs #2868 R12; pixelArt variant). Returns the user to the main menu by invoking onBack.
+  String get gameSetup_cancel;
+
+  /// Label rendered beside the CtBackButton glyph below the action row in the Game Setup pixelArt variant (Refs #2868 R14). Both the glyph and the label tap target invoke onBack.
+  String get gameSetup_backToMainMenu;
+
   /// Label for the human player slot on game setup.
   String get gameSetup_player1You;
 

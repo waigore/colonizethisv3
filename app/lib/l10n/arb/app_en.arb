@@ -2068,6 +2068,14 @@
   "@gameSetup_back": {
     "description": "Back button on game setup screen."
   },
+  "gameSetup_cancel": "Cancel",
+  "@gameSetup_cancel": {
+    "description": "Cancel affordance in the Game Setup action row (Refs #2868 R12; pixelArt variant). Returns the user to the main menu by invoking onBack."
+  },
+  "gameSetup_backToMainMenu": "Back to Main Menu",
+  "@gameSetup_backToMainMenu": {
+    "description": "Label rendered beside the CtBackButton glyph below the action row in the Game Setup pixelArt variant (Refs #2868 R14). Both the glyph and the label tap target invoke onBack."
+  },
   "gameSetup_player1You": "Player 1 (You)",
   "@gameSetup_player1You": {
     "description": "Label for the human player slot on game setup."

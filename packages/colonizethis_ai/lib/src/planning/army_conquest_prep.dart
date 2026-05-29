@@ -25,10 +25,17 @@ Army? _homeArmyForPlayer(Game game, String nationId) {
 
 /// Splits regiments from the Home Army into a field army at the capital when
 /// the AI is pursuing conquest and all regiments are stuck in the Home Army
-/// (which cannot march). SPEC/game/military-armies.md; SPEC/ai/ai-architecture.md.
+/// (which cannot march). SPEC/game/military-armies.md;
+/// SPEC/ai/phase-planner-architecture.md § AI conquest-prep auto-split.
 ///
 /// Mutates [game] in place via [applyArmySplit] so subsequent suggestion and
 /// validation see the field army id.
+///
+/// Under stalled Old World expansion (`isStalledOldWorldExpansion`), the
+/// sole-regiment Home Army is also split — the single regiment moves into a
+/// new field army at the capital and the Home Army is left with zero
+/// regiments (SPEC-permitted: Home Army is never deleted when empty).
+/// Refs #2925.
 Game prepareConquestFieldArmy({
   required Game game,
   required String nationId,
@@ -65,6 +72,20 @@ Game prepareConquestFieldArmy({
   }
 
   if (stalled) {
+    // Sole-regiment case (Refs #2925): peel the single regiment out of the
+    // Home Army into a new non-Home field army at the capital so subsequent
+    // army-move suggestions (which always skip `isHomeArmy`) can issue moves
+    // from the new id. The Home Army is left with zero regiments
+    // (SPEC-permitted: never deleted when empty). This is a one-shot split;
+    // the multi-split loop below is for the `>= 2` distribution path.
+    if (homeArmy.regimentUnitIds.length == 1) {
+      return applyArmySplit(
+        game: game,
+        playerId: nationId,
+        sourceArmyId: homeArmy.id,
+        unitIdsToMove: [...homeArmy.regimentUnitIds],
+      );
+    }
     var planningGame = game;
     for (var i = fieldArmiesAtCapital;
         i < kStalledConquestFieldArmySplitCap;
