@@ -19,6 +19,9 @@ mixin _AppLocalizationsEnStrings1 on AppLocalizations {
   String get mainMenu_title => 'ColonizeThis V3';
 
   @override
+  String get mainMenu_eyebrow => 'A Game of Empire & Discovery';
+
+  @override
   String get mainMenu_subtitleAfterVictory =>
       'Congratulations, you won your last game.';
 
