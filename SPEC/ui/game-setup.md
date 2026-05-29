@@ -116,6 +116,13 @@ Action buttons and back link (issue #2868 § R12/R13/R14; `pixelArt` variant):
 - Given the widget is constructed with `variant: plain`, when the screen renders, then the action region preserves the pre-#2868 layout (a single-column stack of **Start Game** followed by **Back**, both rendered as full-width `CtNinePatchButton`s wrapped by `_GameSetupMenuButton`) — the `pixelArt` Cancel / two-up row / back-link chrome is not introduced into the plain variant tree.
 - Given the widget is constructed with `state: loading` and `variant: pixelArt`, when the screen renders, then the Cancel affordance, the `CtBackButton` glyph, and the back-link text all paint outside the loading scrim and remain enabled and tappable; tapping the Cancel affordance or either back-link affordance invokes the widget's `onBack` callback (preserving the existing **Loading state** AC that the back affordance stays enabled while the world is generating).
 
+Narrow-viewport slot-row stacking and action-button retention (issue #2868 § R16/R17; both variants unless noted):
+
+- Given the widget is constructed with `variant: pixelArt` and the rendering viewport has width strictly less than `kGameSetupNarrowBreakpoint` (500 dp, defined in `app/lib/config/constants.dart`), when the screen renders, then each of the six player-slot rows lays out the slot label, nation dropdown, and leader dropdown as a vertically-stacked `Column` (slot label on the first line, nation dropdown full width on the second line, leader dropdown full width on the third line), and no slot row body mounts a horizontal `Row` containing all three controls.
+- Given the widget is constructed with `variant: pixelArt` and the rendering viewport has width greater than or equal to `kGameSetupNarrowBreakpoint` (500 dp), when the screen renders, then each of the six player-slot rows lays out the slot label, nation dropdown, and leader dropdown side-by-side in a single horizontal `Row` (label | nation dropdown | leader dropdown), and no slot row body mounts a vertically-stacked `Column` containing all three controls.
+- Given the widget is constructed with `variant: pixelArt` and the rendering viewport has width strictly less than `kGameSetupNarrowBreakpoint` (500 dp), when the screen renders, then the action region keeps the same single content-column layout used at wider viewports — the Cancel and Start Game affordances remain side-by-side in a single horizontal `Row` (each at equal flex) and the `_GameSetupBackLink` region remains beneath that row; the UI layer does not stack Cancel above Start Game and does not reflow the back link inline with the action row.
+- Given the widget is constructed with `variant: plain` and the rendering viewport has width strictly less than `kGameSetupNarrowBreakpoint` (500 dp), when the screen renders, then each of the six player-slot rows lays out the slot label, nation dropdown, and leader dropdown as a vertically-stacked `Column` (label / nation / leader), matching the narrow stacking applied to the `pixelArt` variant so both variants honor the 500 dp breakpoint defined in `kGameSetupNarrowBreakpoint`.
+
 **Interaction.** The widget holds per-slot state (ordered list of six gpIds and leader variant per gpId) and exposes it via `onStartGame(orderedGpIdsForSlots, leaderVariantByGpId)`. No routing logic lives in the widget.
 
 **App flow after Start Game.** When the user taps Start Game, the shell builds GameSetupConfig and starts game initialization. The shell shows progress per [Game initialization (new game)](game-initializing.md) (coarse steps; modal or full screen). On success the shell navigates to the [Empire overview](empire-overview.md) (in-game shell). On failure the shell shows an error dialog with retry (new seed) per that spec, not silent navigation to Main Menu.
@@ -244,7 +251,16 @@ For current product, reuse main menu assets: `ui_main_menu_button.png` for Start
 
 ## Widgetbook
 
-Folder: **Game Setup**. Use cases: **Default**, **Loading** per states table.
+Folder: **Game Setup**. Use cases:
+
+- **Default** — plain variant, default state, desktop viewport.
+- **Loading** — plain variant, loading state, desktop viewport.
+- **Default (pixel)** — pixelArt variant, default state, desktop viewport.
+- **Loading (pixel)** — pixelArt variant, loading state, desktop viewport.
+- **Default (mobile)** — plain variant, default state, 360 × 640 dp mobile viewport (below `kGameSetupNarrowBreakpoint`; exercises the stacked slot-row layout from the narrow-viewport AC block above).
+- **Default (mobile, pixel)** — pixelArt variant, default state, 360 × 640 dp mobile viewport (exercises the dark editorial-monocle chrome under the same narrow stacking; SPEC § *Narrow-viewport slot-row stacking and action-button retention*).
+- **Loading (mobile, pixel)** — pixelArt variant, loading state, 360 × 640 dp mobile viewport (exercises the loading scrim under the narrow layout; SPEC § *Narrow-viewport slot-row stacking and action-button retention* + *Loading overlay chrome*).
+- **All slots selected (pixel)** — pixelArt variant, default state, desktop viewport with every slot pre-filled with a great power and that power's default leader variant (exercises the happy-path Start Game enabled state and the GP map-colour swatches on every closed nation trigger; SPEC § *Slot-row chrome and swatch dots* R9).
 
 ---
 
