@@ -102,7 +102,7 @@ void main() {
     expect(find.textContaining('wins on turn 7'), findsOneWidget);
   });
 
-  testWidgets('GameScreen shows pause menu and opens bottom sheet', (
+  testWidgets('GameScreen shows pause menu modal when menu icon is tapped', (
     WidgetTester tester,
   ) async {
     await tester.pumpWidget(
@@ -123,8 +123,10 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 200));
 
-    expect(find.text('Debug log'), findsOneWidget);
+    expect(find.text('Game Paused'), findsOneWidget);
     expect(find.text('Resume'), findsOneWidget);
+    expect(find.text('Exit to Main Menu'), findsOneWidget);
+    expect(find.text('Debug log'), findsNothing);
   });
 
   testWidgets(
