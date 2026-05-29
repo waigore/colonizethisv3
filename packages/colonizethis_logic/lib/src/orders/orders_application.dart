@@ -67,6 +67,8 @@ Game applyBuildAndWorkOrders(
     return game;
   }
 
+  final initialProvincesByRegion =
+      game.worldState.mutableProvinceListsByRegion();
   final work = WorkOrderState(
     oldUnitsById: Map<String, Unit>.from(
       unitsByIdFromRegion(game.worldState.oldWorld),
@@ -86,8 +88,8 @@ Game applyBuildAndWorkOrders(
     purchasedTilesByTileKey: Map<String, String>.from(
       game.worldState.purchasedTilesByTileKey,
     ),
-    oldProvinces: List<Province>.from(game.worldState.oldWorld.provinces),
-    newProvinces: List<Province>.from(game.worldState.newWorld.provinces),
+    oldProvinces: initialProvincesByRegion[kRegionOldWorld]!,
+    newProvinces: initialProvincesByRegion[kRegionNewWorld]!,
   );
   var state = BuildWorkState(
     game: game,
