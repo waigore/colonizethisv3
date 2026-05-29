@@ -1,8 +1,10 @@
 import 'dart:convert';
 
+import 'package:colonizethis_app/config/editorial_monocle_palette.dart';
 import 'package:colonizethis_app/features/game/flame/game_region_minimap.dart';
 import 'package:colonizethis_app/features/game/flame/game_screen_shared.dart'
     show
+        kRegionMinimapCustomPaintKey,
         kRegionMinimapGestureKey,
         kRegionMinimapToggleKey,
         kRegionMinimapZoomSliderKey;
@@ -10,10 +12,12 @@ import 'package:colonizethis_app/features/game/flame/region_map_viewport_snapsho
     show RegionMapViewportSnapshot, kRegionMapZoomMultiplierMax;
 import 'package:colonizethis_app/features/game/flame/region_minimap_math.dart';
 import 'package:colonizethis_app/widgets/ct_slider.dart';
+import 'package:colonizethis_app/widgets/strict_asset_icon.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_map/colonizethis_map.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
+import 'package:flutter/gestures.dart' show PointerDeviceKind;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -428,5 +432,303 @@ void main() {
 
     expect(find.byKey(kRegionMinimapGestureKey), findsNothing);
     expect(find.byKey(kRegionMinimapZoomSliderKey), findsOneWidget);
+  });
+
+  group('dark editorial-monocle chrome (Refs #2861 S5)', () {
+    testWidgets(
+      'panel ancestor decoration uses --bg-deep fill + --border outline',
+      (WidgetTester tester) async {
+        final bus = AppEventBus.create();
+        addTearDown(bus.dispose);
+
+        final region = _tinyRegion(regionId: 'minimapChromePanelRegion');
+
+        await tester.pumpWidget(
+          _minimapTestShell(
+            GameRegionMinimap(
+              region: region,
+              viewportSnapshot: null,
+              bus: bus,
+              cellSizePx: 24,
+            ),
+          ),
+        );
+        await tester.pump();
+
+        final paintCtx = tester.element(
+          find.byKey(kRegionMinimapCustomPaintKey),
+        );
+        DecoratedBox? panel;
+        paintCtx.visitAncestorElements((element) {
+          final widget = element.widget;
+          if (widget is DecoratedBox) {
+            final deco = widget.decoration;
+            if (deco is BoxDecoration &&
+                deco.color == EditorialMonoclePalette.bgDeep) {
+              panel = widget;
+              return false;
+            }
+          }
+          return true;
+        });
+        expect(
+          panel,
+          isNotNull,
+          reason: 'expected --bg-deep DecoratedBox ancestor',
+        );
+        final deco = panel!.decoration as BoxDecoration;
+        expect(deco.color, EditorialMonoclePalette.bgDeep);
+        final border = deco.border! as Border;
+        expect(border.top.color, EditorialMonoclePalette.border);
+        expect(border.bottom.color, EditorialMonoclePalette.border);
+        expect(border.left.color, EditorialMonoclePalette.border);
+        expect(border.right.color, EditorialMonoclePalette.border);
+        expect(border.top.width, 1);
+      },
+    );
+
+    testWidgets(
+      'no Material under minimap paints with white or black background',
+      (WidgetTester tester) async {
+        final bus = AppEventBus.create();
+        addTearDown(bus.dispose);
+
+        final region = _tinyRegion(regionId: 'minimapChromeNoLightThemeRegion');
+
+        await tester.pumpWidget(
+          _minimapTestShell(
+            GameRegionMinimap(
+              region: region,
+              viewportSnapshot: null,
+              bus: bus,
+              cellSizePx: 24,
+            ),
+          ),
+        );
+        await tester.pump();
+
+        final materials = tester.widgetList<Material>(
+          find.descendant(
+            of: find.byType(GameRegionMinimap),
+            matching: find.byType(Material),
+          ),
+        );
+        for (final m in materials) {
+          expect(
+            m.color,
+            isNot(equals(Colors.white)),
+            reason: 'Material.color must not be Colors.white inside minimap',
+          );
+          expect(
+            m.color,
+            isNot(equals(Colors.black)),
+            reason: 'Material.color must not be Colors.black inside minimap',
+          );
+        }
+      },
+    );
+
+    testWidgets('no Material design buttons paint inside minimap', (
+      WidgetTester tester,
+    ) async {
+      final bus = AppEventBus.create();
+      addTearDown(bus.dispose);
+
+      final region = _tinyRegion(regionId: 'minimapNoMaterialButtons');
+
+      await tester.pumpWidget(
+        _minimapTestShell(
+          GameRegionMinimap(
+            region: region,
+            viewportSnapshot: null,
+            bus: bus,
+            cellSizePx: 24,
+          ),
+        ),
+      );
+      await tester.pump();
+
+      expect(
+        find.descendant(
+          of: find.byType(GameRegionMinimap),
+          matching: find.byType(ElevatedButton),
+        ),
+        findsNothing,
+      );
+      expect(
+        find.descendant(
+          of: find.byType(GameRegionMinimap),
+          matching: find.byType(OutlinedButton),
+        ),
+        findsNothing,
+      );
+      expect(
+        find.descendant(
+          of: find.byType(GameRegionMinimap),
+          matching: find.byType(FilledButton),
+        ),
+        findsNothing,
+      );
+      expect(
+        find.descendant(
+          of: find.byType(GameRegionMinimap),
+          matching: find.byType(IconButton),
+        ),
+        findsNothing,
+      );
+    });
+
+    testWidgets(
+      'toggle default state paints --bg-deep + --border + accent-dim glyph tint',
+      (WidgetTester tester) async {
+        final bus = AppEventBus.create();
+        addTearDown(bus.dispose);
+
+        final region = _tinyRegion(regionId: 'minimapToggleDarkChrome');
+
+        await tester.pumpWidget(
+          _minimapTestShell(
+            GameRegionMinimap(
+              region: region,
+              viewportSnapshot: null,
+              bus: bus,
+              cellSizePx: 24,
+            ),
+          ),
+        );
+        await tester.pump();
+
+        final toggle = find.byKey(kRegionMinimapToggleKey);
+        expect(toggle, findsOneWidget);
+
+        final animated = tester.widget<AnimatedContainer>(
+          find.descendant(of: toggle, matching: find.byType(AnimatedContainer)),
+        );
+        final deco = animated.decoration! as BoxDecoration;
+        expect(deco.color, EditorialMonoclePalette.bgDeep);
+        final border = deco.border! as Border;
+        expect(border.top.color, EditorialMonoclePalette.border);
+        expect(border.top.width, 1);
+
+        final colorFiltered = tester.widget<ColorFiltered>(
+          find.descendant(of: toggle, matching: find.byType(ColorFiltered)),
+        );
+        final filter = ColorFilter.mode(
+          EditorialMonoclePalette.accentDim,
+          BlendMode.srcIn,
+        );
+        expect(colorFiltered.colorFilter, filter);
+
+        final icon = tester.widget<StrictAssetIcon>(
+          find.descendant(of: toggle, matching: find.byType(StrictAssetIcon)),
+        );
+        expect(icon.width, 20);
+        expect(icon.height, 20);
+      },
+    );
+
+    testWidgets(
+      'hover transitions toggle glyph tint to accent-bright + outline to accent-dim',
+      (WidgetTester tester) async {
+        final bus = AppEventBus.create();
+        addTearDown(bus.dispose);
+
+        final region = _tinyRegion(regionId: 'minimapToggleHoverChrome');
+
+        await tester.pumpWidget(
+          _minimapTestShell(
+            GameRegionMinimap(
+              region: region,
+              viewportSnapshot: null,
+              bus: bus,
+              cellSizePx: 24,
+            ),
+          ),
+        );
+        await tester.pump();
+
+        final toggleFinder = find.byKey(kRegionMinimapToggleKey);
+        final gesture = await tester.createGesture(
+          kind: PointerDeviceKind.mouse,
+        );
+        addTearDown(gesture.removePointer);
+        await gesture.addPointer(location: Offset.zero);
+        await gesture.moveTo(tester.getCenter(toggleFinder));
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 200));
+
+        final animated = tester.widget<AnimatedContainer>(
+          find.descendant(
+            of: toggleFinder,
+            matching: find.byType(AnimatedContainer),
+          ),
+        );
+        final deco = animated.decoration! as BoxDecoration;
+        final border = deco.border! as Border;
+        expect(border.top.color, EditorialMonoclePalette.accentDim);
+
+        final colorFiltered = tester.widget<ColorFiltered>(
+          find.descendant(
+            of: toggleFinder,
+            matching: find.byType(ColorFiltered),
+          ),
+        );
+        final filter = ColorFilter.mode(
+          EditorialMonoclePalette.accentBright,
+          BlendMode.srcIn,
+        );
+        expect(colorFiltered.colorFilter, filter);
+      },
+    );
+
+    testWidgets(
+      'panel padding does not affect minimap gesture local coordinates',
+      (WidgetTester tester) async {
+        final bus = AppEventBus.create();
+        final centers = <RequestRegionMapCameraCenterWorldEvent>[];
+        final sub = bus.on<RequestRegionMapCameraCenterWorldEvent>().listen(
+          centers.add,
+        );
+        addTearDown(() async {
+          await sub.cancel();
+          bus.dispose();
+        });
+
+        final region = _tinyRegion(regionId: 'minimapPanelPaddingRegion');
+        const cellSizePx = 24.0;
+        final mw = region.width * cellSizePx;
+        final mh = region.height * cellSizePx;
+
+        await tester.pumpWidget(
+          _minimapTestShell(
+            GameRegionMinimap(
+              region: region,
+              viewportSnapshot: null,
+              bus: bus,
+              cellSizePx: cellSizePx,
+            ),
+          ),
+        );
+        await tester.pump();
+
+        final gestureBox = tester.getSize(find.byKey(kRegionMinimapGestureKey));
+        expect(gestureBox.width, 132);
+        expect(gestureBox.height, 132);
+
+        final topLeft = tester.getTopLeft(find.byKey(kRegionMinimapGestureKey));
+        await tester.tapAt(topLeft + const Offset(2, 2));
+        await tester.pump();
+
+        expect(centers, hasLength(1));
+        final expected = minimapLocalToWorldCenter(
+          localOnMinimap: const Offset(2, 2),
+          minimapSize: const Size(132, 132),
+          mapWidthWorld: mw,
+          mapHeightWorld: mh,
+        );
+        expect(centers.single.worldCenterX, closeTo(expected.dx, 1e-6));
+        expect(centers.single.worldCenterY, closeTo(expected.dy, 1e-6));
+      },
+    );
   });
 }

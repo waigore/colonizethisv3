@@ -38,13 +38,14 @@ Internal state ownership:
 +-----------------------------------------------------------+
 | Stack                                                     |
 |   widget.child                                            |
-|   Material(color: Colors.black54)                         |
+|   Material(color: EditorialMonoclePalette.dialogScrim)    |
 |     Center                                                |
 |       CtDialogShell(maxWidth: 520, maxHeight: 500)        |
 |         Padding(all: 20)                                  |
 |           Column(mainAxisSize: min)                       |
-|             Text(game_callToArms_title, titleMedium)      |
-|             Text(game_callToArms_intro, bodyMedium)       |
+|             Text(game_callToArms_title)  -- accent title  |
+|             Text(game_callToArms_intro)  -- muted italic  |
+|             CtBrassDivider                                |
 |             ListView.builder (shrinkWrap, no scroll)      |
 |               Row(crossAxisAlignment: start)              |
 |                 Expanded(Text(game_callToArms_prompt))    |
@@ -56,6 +57,10 @@ Internal state ownership:
 ```
 
 The prompt text in each row is the localized `game_callToArms_prompt(defenderName, aggressorName)`. Names are resolved from `game.playerById(...)` — if the lookup fails the raw id is shown so the row never collapses to an empty string.
+
+### Editorial-monocle chrome (issue #2867 R24)
+
+Scrim is `Material(color: EditorialMonoclePalette.dialogScrim)` (canonical `--dialog-scrim` token; no `Colors.black54`). Title (`game_callToArms_title`) renders with `EditorialMonoclePalette.accent`, `FontWeight.w600`, and `letterSpacing == 0.05 * resolvedTitleFontSize` (0.05em tracks any text-scale override). Intro line (`game_callToArms_intro`) renders with `EditorialMonoclePalette.muted` color and `FontStyle.italic`. A single `CtBrassDivider` sits between the intro line and the call-row list. Per-row Join, Refuse, Submit buttons and the emitted `CallToArmsDecision` contract are unchanged; `CtToggleSwitch` swap is deferred to a follow-up slice.
 
 ---
 
@@ -81,7 +86,9 @@ There are no loading, transient, or error variants; absence of a Yarn dependency
 ## Components
 
 - `CtDialogShell` (`app/lib/widgets/ct_dialog_shell.dart`) — frame.
+- `CtBrassDivider` (`app/lib/widgets/ct_brass_divider.dart`) — ornamental separator between the intro line and the call-row list (issue #2867 R24 dark chrome).
 - `CtNinePatchButton` (`app/lib/widgets/ct_nine_patch_button.dart`) — Join, Refuse, Submit buttons (no Material buttons in dialogue chrome).
+- `EditorialMonoclePalette` (`app/lib/config/editorial_monocle_palette.dart`) tokens: `dialogScrim` (Material scrim color), `accent` (title color), `muted` (intro color).
 - Localized strings via `appL10n(context)`: `game_callToArms_title`, `game_callToArms_intro`, `game_callToArms_prompt(defender, aggressor)`, `game_callToArms_join`, `game_callToArms_refuse`, and `game_callToArms_submit`.
 
 ---
@@ -113,6 +120,10 @@ There are no loading, transient, or error variants; absence of a Yarn dependency
 - Given the overlay is mounted with one pending call whose `defenderGpId` does not correspond to any player in `game.players`,
   When the widget tree settles,
   Then the prompt row displays the raw `defenderGpId` string in the slot reserved for the defender name (no crash, no empty placeholder).
+
+- Given the overlay is mounted in the `editorialMonocle` theme with at least one pending call,
+  When the rendered widget tree is inspected,
+  Then (a) the `Text` for `game_callToArms_title` resolves `color == EditorialMonoclePalette.accent`, `fontWeight == FontWeight.w600`, and `letterSpacing == 0.05 * style.fontSize`; (b) the `Text` for `game_callToArms_intro` resolves `color == EditorialMonoclePalette.muted` and `fontStyle == FontStyle.italic`; (c) exactly one `CtBrassDivider` is present, painted **below** the intro `Text` and **above** the call-row `ListView`; and (d) the overlay scrim `Material` has `color == EditorialMonoclePalette.dialogScrim` (no `Colors.black54`).
 
 ---
 

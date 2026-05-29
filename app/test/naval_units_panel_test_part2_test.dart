@@ -570,7 +570,7 @@ void main() {
         await tester.pumpAndSettle();
         final confirmTransfer = find.widgetWithText(
           CtNinePatchButton,
-          'Confirm Transfer',
+          'Transfer',
         );
         expect(confirmTransfer, findsOneWidget);
         expect(

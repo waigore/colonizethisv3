@@ -33,10 +33,11 @@ When designing screens for the app, **mobile must be considered from the start.*
 
 ### 4. Narrow viewport layout (breakpoints)
 
-This rule covers three normalised Flutter `LayoutBuilder` dp breakpoints, each matching a per-screen mockup `@media` rule:
+This rule covers four normalised Flutter dp breakpoints, each matching a per-screen mockup `@media` rule:
 
 - **`< 600 dp`** — in-game shell narrow adaptations.
 - **`< 500 dp`** — Game Setup stacked rows.
+- **`≤ 500 dp`** — Diplomacy faction-row stacked layout (action buttons wrap below info, left-aligned). Source: [diplomacy-panel.md](diplomacy-panel.md) § Responsive layout; `SPEC/ui/mockups/GAME30001-diplomacy-panel.html` `@media (max-width: 500px)`.
 - **`≤ 430 dp`** — Main Menu extra-tight padding and letter-spacing.
 
 #### Game Setup (`< 500 dp`)
@@ -79,13 +80,13 @@ This rule covers three normalised Flutter `LayoutBuilder` dp breakpoints, each m
 
 ## Summary table
 
-| Requirement        | Main Menu          | Game Setup        | In-game shell        |
-|--------------------|--------------------|-------------------|----------------------|
-| Max width 400 dp   | ✓                  | ✓                 | —                    |
-| Scroll on overflow | ✓                  | ✓                 | —                    |
-| Safe area          | ✓                  | ✓                 | ✓                    |
-| 44 dp touch        | ✓ (48 dp)          | ✓ (48 dp)         | ✓                    |
-| Narrow breakpoint  | ✓ tight ≤ 430 dp   | ✓ stacked < 500 dp | ✓ side menu < 600 dp |
+| Requirement        | Main Menu          | Game Setup        | Diplomacy panel       | In-game shell        |
+|--------------------|--------------------|-------------------|-----------------------|----------------------|
+| Max width 400 dp   | ✓                  | ✓                 | —                     | —                    |
+| Scroll on overflow | ✓                  | ✓                 | —                     | —                    |
+| Safe area          | ✓                  | ✓                 | ✓                     | ✓                    |
+| 44 dp touch        | ✓ (48 dp)          | ✓ (48 dp)         | ✓                     | ✓                    |
+| Narrow breakpoint  | ✓ tight ≤ 430 dp   | ✓ stacked < 500 dp | ✓ row stacked ≤ 500 dp | ✓ side menu < 600 dp |
 
 ---
 
@@ -93,6 +94,7 @@ This rule covers three normalised Flutter `LayoutBuilder` dp breakpoints, each m
 
 - Main menu: [main-menu.md](main-menu.md) § Responsive rules — layout, scroll, ≤ 430 dp tight-layout rule.
 - Game Setup: [game-setup.md](game-setup.md) — layout, narrow breakpoint, scroll.
+- Diplomacy panel: [diplomacy-panel.md](diplomacy-panel.md) § Responsive layout — faction-row wrapping at ≤ 500 dp.
 - In-game shell (narrow): [in-game-shell-narrow.md](in-game-shell-narrow.md) — side menu, top bar, province/sea detail overlay; [empire-buttons.md](empire-buttons.md) — empire buttons; [empire-overview.md](empire-overview.md) — minimap, corner controls.
-- Per-screen mockups (visual source of truth for `@media` rules normalised above): `SPEC/ui/mockups/SHEL10002-main-menu.html`, `SPEC/ui/mockups/SHEL20001-game-setup.html`, `SPEC/ui/mockups/GAME10001-game-screen.html`.
+- Per-screen mockups (visual source of truth for `@media` rules normalised above): `SPEC/ui/mockups/SHEL10002-main-menu.html`, `SPEC/ui/mockups/SHEL20001-game-setup.html`, `SPEC/ui/mockups/GAME30001-diplomacy-panel.html`, `SPEC/ui/mockups/GAME10001-game-screen.html`.
 - UXD 03: acceptance criteria and touch targets.

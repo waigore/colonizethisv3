@@ -13,7 +13,7 @@
 |--------|------|------------|-------------|
 | `TransferToHomeFleetDialog` | `StatelessWidget` | `sourceFleet` (`Fleet`), `homeFleet` (`Fleet`), `game` (`Game`), `humanPlayerId` (`String`), `bus` (`AppEventBus`) | Local `showDialog` modal opened from `NavalUnitsPanel` regular-fleet **Transfer to Home Fleet** action. Emits a single `NavalTransferShipsRequestedEvent` on confirm. |
 
-Implementation: `app/lib/features/game/widgets/transfer_to_home_fleet_dialog.dart`. Wrapped in `CtDialogShell` (`maxWidth: 560`, `maxHeight: 520`) hosting a `CtTransferList`. Ship instance selection is delegated to `shipInstancesForTransferCounts` (see [naval-units-fleet-management.md](naval-units-fleet-management.md)).
+Implementation: `app/lib/features/game/widgets/transfer_to_home_fleet_dialog.dart`. Wrapped in `CtDialogShell` (`maxWidth: 560`, `maxHeight: 520`, dark editorial-monocle chrome per #2867 R1 — 2 px `--accent-dim` border + `surface-lite → surface → bg-deep` panel gradient) hosting a `CtTransferList`. Ship instance selection is delegated to `shipInstancesForTransferCounts` (see [naval-units-fleet-management.md](naval-units-fleet-management.md)).
 
 ---
 
@@ -21,7 +21,8 @@ Implementation: `app/lib/features/game/widgets/transfer_to_home_fleet_dialog.dar
 
 ```text
 +--------------------------------------------------------+
-| Transfer Ships to Home Fleet                           |  titleLarge
+| CtDialogShell (2 px --accent-dim border)               |
+| Transfer Ships to Home Fleet                           |  title row (--accent, letter-spacing 0.05em)
 +--------------------------------------------------------+
 |  CtTransferList (listHeight: 240)                      |
 |                                                        |
@@ -32,15 +33,16 @@ Implementation: `app/lib/features/game/widgets/transfer_to_home_fleet_dialog.dar
 |  │  Total: 3 ships           │ │  Total: 1 ships     │ |
 |  └───────────────────────────┘ └─────────────────────┘ |
 |                                                        |
-|              [ Cancel ]   [ Confirm Transfer ]         |
+|              [ Cancel ]   [ Transfer ]                 |  CtNinePatchButton row
 +--------------------------------------------------------+
 ```
 
+- Title: `naval_transferToHome_dialogTitle` rendered with dark-theme `titleMedium` in `--accent` and `letter-spacing: 0.05em` per #2867 R2.
 - Body: `Padding(16)` → `Column(min)` with the dialog title and a single `CtTransferList`.
 - `leftTitle` is `naval_transferToHome_sourceTitle(sourceFleet.id)`; `rightTitle` is `naval_homeFleetLabel`. Subtitles are the per-fleet **location label** (sea-zone + region for fleets at sea, otherwise province + region; falls back to region label when neither resolves).
 - `initialLeftCounts` / `initialRightCounts` are derived from each fleet's `shipTypeIds` (one entry per ship instance, aggregated by `typeId`).
 - Empty per-side label: `splitFleet_noShips`. Total label: `splitFleet_totalShips(total)`.
-- Cancel action label: `common_cancel` (from `CtTransferList` default). Confirm label: `naval_transferToHome_confirm` ("Confirm Transfer").
+- Cancel action label: `common_cancel` (from `CtTransferList` default). Primary action label: `naval_transferToHome_confirm` ("Transfer", #2867 R12). Confirm `CtNinePatchButton` is disabled (`CtNinePatchButton.disabledOpacity = 0.4`) until at least one ship row has moved from source to home.
 
 ---
 
@@ -97,9 +99,13 @@ The dialog **does not** mutate game state. All state changes flow through `Naval
 
 - Given the dialog has just opened and no source row counters have been changed, when the user looks at the Confirm button, then `CtTransferList.canConfirm` returns `false` and the Confirm action is disabled.
 
-- Given the user moves at least one carrack from the source side to the home side via the source row `-` button, when the user taps Confirm Transfer, then the UI layer emits exactly one `NavalTransferShipsRequestedEvent` on the supplied bus with `humanPlayerId` equal to `widget.humanPlayerId`, `sourceFleetId` equal to `sourceFleet.id`, `targetFleetId` equal to `homeFleet.id`, and `shipInstanceIdsToTransfer` equal to the deterministic instance ids returned by `shipInstancesForTransferCounts(sourceFleet.ships, movedByType)`, and the dialog is removed from the widget tree.
+- Given the user moves at least one carrack from the source side to the home side via the source row `-` button, when the user taps Transfer, then the UI layer emits exactly one `NavalTransferShipsRequestedEvent` on the supplied bus with `humanPlayerId` equal to `widget.humanPlayerId`, `sourceFleetId` equal to `sourceFleet.id`, `targetFleetId` equal to `homeFleet.id`, and `shipInstanceIdsToTransfer` equal to the deterministic instance ids returned by `shipInstancesForTransferCounts(sourceFleet.ships, movedByType)`, and the dialog is removed from the widget tree.
 
-- Given the user reverts every moved row back to its initial source count, when the user taps Confirm Transfer, then no `NavalTransferShipsRequestedEvent` is emitted and the dialog remains mounted.
+- Given the user reverts every moved row back to its initial source count, when the user taps Transfer, then no `NavalTransferShipsRequestedEvent` is emitted and the dialog remains mounted.
+
+- Given `TransferToHomeFleetDialog` is mounted, when the widget tree is inspected, then the surface is wrapped in exactly one `CtDialogShell`, the title text uses `EditorialMonoclePalette.accent`, and no `AlertDialog` / `TextButton` Material chrome appears among dialog descendants (#2867 R1 regression guard).
+
+- Given the dialog has just opened and no source row counters have changed, when the user looks at the Transfer primary action, then the `CtNinePatchButton` for `naval_transferToHome_confirm` has `enabled == false` (#2867 R12).
 
 - Given the user taps Cancel, when the gesture completes, then no `NavalTransferShipsRequestedEvent` is emitted and the dialog is removed from the widget tree.
 

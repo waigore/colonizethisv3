@@ -16,22 +16,35 @@ import 'game_screen_shared.dart';
 
 /// Always-visible icon column for empire actions on the in-game map.
 ///
-/// SPEC: `SPEC/ui/empire-buttons.md` § Styling (left rail), `SPEC/ui/empire-overview.md`
-/// (map area left rail). Issue #2861 S3 / R4: 36 × 36 dp dark editorial-monocle
-/// chrome with token-resolved gradient + border, hover/pressed states, and
-/// 24 × 24 dp icon glyph. Narrow-layout measurements (26 × 26 dp) remain
-/// authoritatively governed by `SPEC/ui/mobile-adaptation.md` and issue #2870.
+/// SPEC: `SPEC/ui/empire-buttons.md` § Styling (left rail) and § Narrow rail
+/// measurements; `SPEC/ui/empire-overview.md` (map area left rail);
+/// `SPEC/ui/mobile-adaptation.md` § In-game shell (narrow measurements).
+///
+/// Wide layout (issue #2861 S3 / R4): 36 × 36 dp dark editorial-monocle chrome
+/// with token-resolved gradient + border, hover/pressed states, and 24 × 24 dp
+/// icon glyph.
+///
+/// Narrow layout (issue #2870 S3, `MediaQuery.size.width < kNarrowBreakpoint`):
+/// host constructs with `narrow: true`. Rail buttons compress to 26 × 26 dp,
+/// vertical gap tightens from 3 dp to 2 dp, and hover `Tooltip` widgets are
+/// suppressed (touch-only viewports have no hover cursor). The `Semantics`
+/// label is preserved so assistive tech still announces each action.
 class GameMapEmpireLeftRail extends ConsumerWidget {
   const GameMapEmpireLeftRail({
     required this.game,
     required this.humanPlayerId,
     this.onIconTappedWhileSelectionMode,
+    this.narrow = false,
     super.key,
   });
 
   final ct_models.Game game;
   final String humanPlayerId;
   final VoidCallback? onIconTappedWhileSelectionMode;
+
+  /// When true, render the rail at narrow-viewport measurements per
+  /// `SPEC/ui/mobile-adaptation.md` § In-game shell (issue #2870 S3).
+  final bool narrow;
 
   /// Side length of each rail button surface (issue #2861 R4 wide layout).
   static const double buttonSize = 36;
@@ -43,6 +56,17 @@ class GameMapEmpireLeftRail extends ConsumerWidget {
   /// `gap: 3px`).
   static const double rowGap = 3;
 
+  /// Side length of each rail button surface under narrow layout
+  /// (mockup `.empire-btn @media (max-width:600px) { width:26px; height:26px }`;
+  /// authority: `SPEC/ui/mobile-adaptation.md` § In-game shell).
+  static const double narrowButtonSize = 26;
+
+  /// Vertical gap between consecutive rail buttons under narrow layout
+  /// (tightened from 3 dp to keep the six-icon column inside the shorter
+  /// narrow chrome stack; authority: `SPEC/ui/empire-buttons.md` § Narrow
+  /// rail measurements).
+  static const double narrowRowGap = 2;
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final orders = ref.read(currentOrdersProvider);
@@ -50,6 +74,7 @@ class GameMapEmpireLeftRail extends ConsumerWidget {
     final topology = mapData?.combinedTopology ?? MapTopology();
     final bus = ref.read(appEventBusProvider);
     final debugConsoleEnabled = ref.watch(debugConsoleEnabledProvider);
+    final gapHeight = narrow ? narrowRowGap : rowGap;
 
     return Column(
       mainAxisSize: MainAxisSize.min,
@@ -59,6 +84,7 @@ class GameMapEmpireLeftRail extends ConsumerWidget {
           buttonKey: kEmpireProductionButtonKey,
           tooltip: 'Production',
           iconAsset: '${kAppIconAssetPrefix}ui_icon_production.png',
+          narrow: narrow,
           onTap: () {
             onIconTappedWhileSelectionMode?.call();
             bus.emit(
@@ -69,41 +95,45 @@ class GameMapEmpireLeftRail extends ConsumerWidget {
             );
           },
         ),
-        const SizedBox(height: rowGap),
+        SizedBox(height: gapHeight),
         _EmpireRailButton(
           buttonKey: kEmpireCivilianUnitsButtonKey,
           tooltip: 'Civilian Units',
           iconAsset: '${kAppIconAssetPrefix}ui_icon_civilian_units.png',
+          narrow: narrow,
           onTap: () {
             onIconTappedWhileSelectionMode?.call();
             bus.emit(const ct_models.OpenCivilianUnitsPanelEvent());
           },
         ),
-        const SizedBox(height: rowGap),
+        SizedBox(height: gapHeight),
         _EmpireRailButton(
           buttonKey: kEmpireMilitaryUnitsButtonKey,
           tooltip: 'Military Units',
           iconAsset: '${kAppIconAssetPrefix}ui_icon_military_units.png',
+          narrow: narrow,
           onTap: () {
             onIconTappedWhileSelectionMode?.call();
             bus.emit(const ct_models.OpenMilitaryUnitsPanelEvent());
           },
         ),
-        const SizedBox(height: rowGap),
+        SizedBox(height: gapHeight),
         _EmpireRailButton(
           buttonKey: kEmpireNavalUnitsButtonKey,
           tooltip: 'Naval Units',
           iconAsset: '${kAppIconAssetPrefix}ui_icon_naval_units.png',
+          narrow: narrow,
           onTap: () {
             onIconTappedWhileSelectionMode?.call();
             bus.emit(const ct_models.OpenNavalUnitsPanelEvent());
           },
         ),
-        const SizedBox(height: rowGap),
+        SizedBox(height: gapHeight),
         _EmpireRailButton(
           buttonKey: kEmpireDiplomacyButtonKey,
           tooltip: 'Diplomacy',
           iconAsset: '${kAppIconAssetPrefix}ui_icon_diplomacy.png',
+          narrow: narrow,
           onTap: () {
             onIconTappedWhileSelectionMode?.call();
             bus.emit(
@@ -116,11 +146,12 @@ class GameMapEmpireLeftRail extends ConsumerWidget {
             );
           },
         ),
-        const SizedBox(height: rowGap),
+        SizedBox(height: gapHeight),
         _EmpireRailButton(
           buttonKey: kEmpireTechnologyButtonKey,
           tooltip: 'Technology',
           iconAsset: '${kAppIconAssetPrefix}ui_icon_technology.png',
+          narrow: narrow,
           onTap: () {
             onIconTappedWhileSelectionMode?.call();
             bus.emit(
@@ -133,11 +164,12 @@ class GameMapEmpireLeftRail extends ConsumerWidget {
           },
         ),
         if (debugConsoleEnabled) ...<Widget>[
-          const SizedBox(height: rowGap),
+          SizedBox(height: gapHeight),
           _EmpireRailButton(
             buttonKey: kEmpireDebugConsoleButtonKey,
             tooltip: 'Debug Console',
             iconAsset: '${kAppIconAssetPrefix}ui_icon_layer_toggle.png',
+            narrow: narrow,
             onTap: () {
               onIconTappedWhileSelectionMode?.call();
               bus.emit(const ct_models.ToggleDebugConsolePanelEvent());
@@ -162,12 +194,14 @@ class _EmpireRailButton extends StatefulWidget {
     required this.tooltip,
     required this.iconAsset,
     required this.onTap,
+    this.narrow = false,
   });
 
   final Key buttonKey;
   final String tooltip;
   final String iconAsset;
   final VoidCallback onTap;
+  final bool narrow;
 
   static const Duration _animationDuration = Duration(milliseconds: 120);
   static const Curve _animationCurve = Curves.easeOut;
@@ -205,50 +239,55 @@ class _EmpireRailButtonState extends State<_EmpireRailButton> {
 
   @override
   Widget build(BuildContext context) {
-    return MouseRegion(
-      cursor: SystemMouseCursors.click,
-      onEnter: (_) => _handleHover(true),
-      onExit: (_) => _handleHover(false),
-      child: Tooltip(
-        message: widget.tooltip,
-        child: Semantics(
-          button: true,
-          label: widget.tooltip,
-          child: SizedBox(
-            key: widget.buttonKey,
-            width: GameMapEmpireLeftRail.buttonSize,
-            height: GameMapEmpireLeftRail.buttonSize,
-            child: Material(
-              color: Colors.transparent,
-              child: InkWell(
-                onTap: widget.onTap,
-                onHighlightChanged: _handlePressed,
-                child: AnimatedContainer(
-                  duration: _EmpireRailButton._animationDuration,
-                  curve: _EmpireRailButton._animationCurve,
-                  decoration: BoxDecoration(
-                    gradient: CtGradients.railButtonGradient,
-                    border: Border.all(color: _borderColor, width: 1),
-                  ),
-                  child: Center(
-                    child: ColorFiltered(
-                      colorFilter: ColorFilter.mode(
-                        _iconColor,
-                        BlendMode.srcIn,
-                      ),
-                      child: StrictAssetIcon(
-                        assetPath: widget.iconAsset,
-                        width: GameMapEmpireLeftRail.iconSize,
-                        height: GameMapEmpireLeftRail.iconSize,
-                      ),
-                    ),
-                  ),
+    final buttonSize = widget.narrow
+        ? GameMapEmpireLeftRail.narrowButtonSize
+        : GameMapEmpireLeftRail.buttonSize;
+    final surface = SizedBox(
+      key: widget.buttonKey,
+      width: buttonSize,
+      height: buttonSize,
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: widget.onTap,
+          onHighlightChanged: _handlePressed,
+          child: AnimatedContainer(
+            duration: _EmpireRailButton._animationDuration,
+            curve: _EmpireRailButton._animationCurve,
+            decoration: BoxDecoration(
+              gradient: CtGradients.railButtonGradient,
+              border: Border.all(color: _borderColor, width: 1),
+            ),
+            child: Center(
+              child: ColorFiltered(
+                colorFilter: ColorFilter.mode(
+                  _iconColor,
+                  BlendMode.srcIn,
+                ),
+                child: StrictAssetIcon(
+                  assetPath: widget.iconAsset,
+                  width: GameMapEmpireLeftRail.iconSize,
+                  height: GameMapEmpireLeftRail.iconSize,
                 ),
               ),
             ),
           ),
         ),
       ),
+    );
+    final labelled = Semantics(
+      button: true,
+      label: widget.tooltip,
+      child: surface,
+    );
+    final tooltipped = widget.narrow
+        ? labelled
+        : Tooltip(message: widget.tooltip, child: labelled);
+    return MouseRegion(
+      cursor: SystemMouseCursors.click,
+      onEnter: (_) => _handleHover(true),
+      onExit: (_) => _handleHover(false),
+      child: tooltipped,
     );
   }
 }
