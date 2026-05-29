@@ -60,11 +60,20 @@ Internal state ownership (phase 1 — intro):
 |             -- phase 1: transient / loading --            |
 |             CtLoadingIndicator                            |
 |             -- phase 2: offer list --                     |
-|             Text(game_overture_title, titleMedium)        |
-|             Text(game_overture_intro, bodyMedium)         |
+|             Text(game_overture_title, titleMedium,        |
+|                  --accent, letter-spacing 0.05em)         |
+|             CtBrassDivider                                |
+|             Text(game_overture_intro, bodyMedium,         |
+|                  --muted, italic)                         |
 |             ListView.builder (shrinkWrap, no scroll)      |
 |               Row                                         |
-|                 Expanded(Text(game_overture_offerLine))   |
+|                 Expanded(                                 |
+|                   Row(                                    |
+|                     Text(offerer, --accent),              |
+|                     Text(": ", --muted),                  |
+|                     Text(stage, --muted)                  |
+|                   )                                       |
+|                 )                                         |
 |                 CtNinePatchButton(game_overture_accept)   |
 |                 CtNinePatchButton(game_overture_reject)   |
 |             Align(centerRight)                            |
@@ -73,6 +82,13 @@ Internal state ownership (phase 1 — intro):
 *phase 1 uses `maxWidth: 520` only; phase 2 also sets
  `maxHeight: 500` so the shell stays bounded with long lists.
 ```
+
+Phase 2 chrome uses the dark editorial-monocle tokens from `SPEC/ui/pixel-art-ui-catalog.md` § Editorial-monocle palette (also referenced by issue #2867 R2 and R21–R22):
+
+- **Title row:** `Text(game_overture_title)` rendered with `theme.textTheme.titleMedium` color overridden to `EditorialMonoclePalette.accent` and `letter-spacing == fontSize * 0.05` so the canonical `0.05em` letter-spacing resolves at any text scale.
+- **Title → intro separator:** A `CtBrassDivider` is rendered between the title row and the intro `Text` per #2867 R21 (no extra padding inside the divider; vertical breathing room is supplied by 8 dp `SizedBox`es above and below).
+- **Intro line:** `Text(game_overture_intro)` rendered with `theme.textTheme.bodyMedium` color overridden to `EditorialMonoclePalette.muted` and `fontStyle: FontStyle.italic` per #2867 R5.
+- **Offer row label:** The offerer name and stage label are split into two `Text` widgets within a flex row so they can carry distinct colors (#2867 R22). The offerer name renders in `EditorialMonoclePalette.accent`; the stage label renders in `EditorialMonoclePalette.muted`. A `Text(": ")` separator (also `--muted`) keeps the formatted line readable. The full `game_overture_offerLine` localized template is no longer composed in the widget — the per-offer row composes the two parts directly.
 
 Error mode renders the same `Stack` but the `CtDialogShell` body is the localized error message (`l10n.game_overture_loadError`) plus a single Continue button (`l10n.game_intervention_continue`).
 
@@ -116,11 +132,13 @@ No direct `AppEventBus` or `Navigator` usage in the overlay.
 ## Components
 
 - `CtDialogShell` (`app/lib/widgets/ct_dialog_shell.dart`) — frame.
+- `CtBrassDivider` (`app/lib/widgets/ct_brass_divider.dart`) — phase 2 title → intro separator (#2867 R21).
 - `CtNinePatchButton` (`app/lib/widgets/ct_nine_patch_button.dart`) — Continue, option, Accept, Reject, Submit buttons (no Material buttons in dialogue chrome).
 - `CtLoadingIndicator` (`app/lib/widgets/ct_loading_indicator.dart`) — phase-1 loading and transient placeholder.
 - `CtDialogueView` ([`ct-dialogue-view.md`](ct-dialogue-view.md)) — the Jenny adapter that owns line / choice state during phase 1.
 - `jenny.DialogueRunner` — Jenny's runner; receives the single `CtDialogueView` in `dialogueViews:`.
-- Localized strings via `appL10n(context)`: `game_overture_loadError`, `game_intervention_continue`, `game_overture_title`, `game_overture_intro`, `game_overture_offerLine(offerer, stage)`, `game_overture_accept`, `game_overture_reject`, and `game_callToArms_submit` (shared Submit label).
+- `EditorialMonoclePalette` (`app/lib/config/editorial_monocle_palette.dart`) — `accent` (title + offerer name), `muted` (intro + stage label + colon separator) phase-2 colors per the dark editorial-monocle palette.
+- Localized strings via `appL10n(context)`: `game_overture_loadError`, `game_intervention_continue`, `game_overture_title`, `game_overture_intro`, `game_overture_accept`, `game_overture_reject`, and `game_callToArms_submit` (shared Submit label). The `game_overture_offerLine(offerer, stage)` template is **no longer** consumed by phase 2 — the offer row paints `offerer` and `stage` as two distinct `Text` widgets so they can carry different colors per #2867 R22.
 
 ---
 
@@ -135,7 +153,11 @@ No direct `AppEventBus` or `Navigator` usage in the overlay.
 
 - Given an `OvertureDialogueOverlay` is mounted with `skipIntroForTest: true` and exactly one pending overture from offerer `gp_spain` at stage `tradeConsulate`,
   When the widget tree settles,
-  Then the overlay renders one offer row inside a `CtDialogShell`, the row displays the localized `game_overture_offerLine` text built from `gp_spain.displayName` and the localized `tradeConsulate` stage label, and Accept / Reject `CtNinePatchButton`s are visible alongside a Submit `CtNinePatchButton`.
+  Then the overlay renders one offer row inside a `CtDialogShell`, the row contains a `Text` widget whose content equals `gp_spain.displayName` rendered in `EditorialMonoclePalette.accent` and a `Text` widget whose content equals the localized `tradeConsulate` stage label rendered in `EditorialMonoclePalette.muted`, and Accept / Reject `CtNinePatchButton`s are visible alongside a Submit `CtNinePatchButton`.
+
+- Given the overlay is in phase 2 (`skipIntroForTest: true`),
+  When the widget tree is inspected,
+  Then the phase-2 body contains exactly one `CtBrassDivider` rendered between the localized `game_overture_title` title `Text` and the localized `game_overture_intro` intro `Text`, the title `Text.style.color` equals `EditorialMonoclePalette.accent`, the title `Text.style.letterSpacing` equals `style.fontSize! * 0.05` (canonical `0.05em` per #2867 R2), and the intro `Text.style.color` equals `EditorialMonoclePalette.muted` with `fontStyle == FontStyle.italic`.
 
 - Given the overlay is in phase 2 with `n` pending overtures and the default `_accepted` list of all `true`,
   When the user taps **Submit** without changing any toggle,
