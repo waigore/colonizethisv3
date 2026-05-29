@@ -1,0 +1,276 @@
+// Confirms the in-game shell chrome Widgetbook stories added under
+// catalog_part7.dart (Refs #2861 S12) are wired into the catalog and that
+// each story builder mounts a dark editorial-monocle widget tree without
+// throwing. The directories are intentionally tested through the public
+// `*Directories` getters so the test fails if a directory is removed or
+// renamed.
+
+import 'package:colonizethis_app/config/editorial_monocle_palette.dart';
+import 'package:colonizethis_app/features/game/flame/game_map_corner_controls.dart';
+import 'package:colonizethis_app/features/game/widgets/game_map_options_dialog.dart';
+import 'package:colonizethis_app/features/game/widgets/game_tab_bar.dart';
+import 'package:colonizethis_app/features/game/widgets/game_top_bar.dart';
+import 'package:colonizethis_app/features/game/widgets/player_turn_event_feed.dart';
+import 'package:colonizethis_app/widgetbook/catalog.dart';
+import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
+import 'package:flutter/material.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:widgetbook/widgetbook.dart';
+
+/// Locates the single use-case with [useCaseName] inside the
+/// [WidgetbookFolder] whose name matches [folderName], failing with a
+/// readable matcher message if the folder or use case is missing.
+WidgetbookUseCase _useCase(
+  List<WidgetbookNode> directories, {
+  required String folderName,
+  required String useCaseName,
+}) {
+  final folder = directories
+      .whereType<WidgetbookFolder>()
+      .firstWhere(
+        (folder) => folder.name == folderName,
+        orElse: () =>
+            fail('Missing Widgetbook folder: $folderName (got: $directories)'),
+      );
+  final List<WidgetbookNode> children = folder.children ?? const [];
+  final useCase = children
+      .whereType<WidgetbookUseCase>()
+      .firstWhere(
+        (uc) => uc.name == useCaseName,
+        orElse: () => fail(
+          'Missing use case "$useCaseName" in folder "$folderName" '
+          '(got: ${children.map((c) => c.name).toList()})',
+        ),
+      );
+  return useCase;
+}
+
+void main() {
+  suppressLogsForTests();
+
+  group('In-game shell chrome Widgetbook stories (Refs #2861 S12)', () {
+    testWidgets(
+      'Game Top Bar folder exposes default + disabled + observe variants',
+      (WidgetTester tester) async {
+        final defaultStory = _useCase(
+          gameTopBarDirectories,
+          folderName: 'Game Top Bar',
+          useCaseName: 'Default — hamburger + Next turn enabled',
+        );
+        final disabledStory = _useCase(
+          gameTopBarDirectories,
+          folderName: 'Game Top Bar',
+          useCaseName: 'Next turn disabled — turn resolution in progress',
+        );
+        final observeStory = _useCase(
+          gameTopBarDirectories,
+          folderName: 'Game Top Bar',
+          useCaseName: 'Observe banner — observe-mode label',
+        );
+
+        for (final story in <WidgetbookUseCase>[
+          defaultStory,
+          disabledStory,
+          observeStory,
+        ]) {
+          await tester.pumpWidget(story.builder(tester.element(find.byType(View))));
+          await tester.pump();
+          expect(find.byType(GameTopBar), findsOneWidget);
+        }
+      },
+    );
+
+    testWidgets(
+      'Game Top Bar disabled variant renders the bar with the muted button',
+      (WidgetTester tester) async {
+        final disabledStory = _useCase(
+          gameTopBarDirectories,
+          folderName: 'Game Top Bar',
+          useCaseName: 'Next turn disabled — turn resolution in progress',
+        );
+        await tester.pumpWidget(
+          disabledStory.builder(tester.element(find.byType(View))),
+        );
+        await tester.pump();
+
+        final GameTopBar bar = tester.widget<GameTopBar>(
+          find.byType(GameTopBar),
+        );
+        expect(bar.nextTurnEnabled, isFalse);
+      },
+    );
+
+    testWidgets(
+      'Game Tab Bar folder exposes default, region + delta + news variants',
+      (WidgetTester tester) async {
+        const useCaseNames = <String>[
+          'Default — Old World active, no delta',
+          'New World active',
+          'Positive treasury delta (green)',
+          'Negative treasury delta (red)',
+          'News toggle — unread badge',
+          'News toggle — feed open (no badge)',
+        ];
+
+        for (final name in useCaseNames) {
+          final story = _useCase(
+            gameTabBarDirectories,
+            folderName: 'Game Tab Bar',
+            useCaseName: name,
+          );
+          await tester.pumpWidget(
+            story.builder(tester.element(find.byType(View))),
+          );
+          await tester.pump();
+          expect(find.byType(GameTabBar), findsOneWidget);
+          expect(
+            find.byType(PlayerTurnEventsFeedToggleButton),
+            findsOneWidget,
+          );
+        }
+      },
+    );
+
+    testWidgets(
+      'Game Map Corner Controls folder exposes default + disabled variant',
+      (WidgetTester tester) async {
+        final defaultStory = _useCase(
+          gameMapCornerControlsDirectories,
+          folderName: 'Game Map Corner Controls',
+          useCaseName: 'Default — all three buttons enabled',
+        );
+        final disabledStory = _useCase(
+          gameMapCornerControlsDirectories,
+          folderName: 'Game Map Corner Controls',
+          useCaseName: 'Home-to-capital disabled (no human capital)',
+        );
+
+        await tester.pumpWidget(
+          defaultStory.builder(tester.element(find.byType(View))),
+        );
+        await tester.pump();
+        expect(find.byType(GameMapCornerControls), findsOneWidget);
+        final defaultControls = tester.widget<GameMapCornerControls>(
+          find.byType(GameMapCornerControls),
+        );
+        expect(defaultControls.homeToCapitalEnabled, isTrue);
+
+        await tester.pumpWidget(
+          disabledStory.builder(tester.element(find.byType(View))),
+        );
+        await tester.pump();
+        final disabledControls = tester.widget<GameMapCornerControls>(
+          find.byType(GameMapCornerControls),
+        );
+        expect(disabledControls.homeToCapitalEnabled, isFalse);
+      },
+    );
+
+    testWidgets(
+      'Game Map Options Dialog folder exposes defaults + all-on + all-off variants',
+      (WidgetTester tester) async {
+        const useCaseNames = <String>[
+          'Defaults — overlay on, ownership off, names on',
+          'All toggles on',
+          'All toggles off',
+        ];
+        for (final name in useCaseNames) {
+          final story = _useCase(
+            gameMapOptionsDialogDirectories,
+            folderName: 'Game Map Options Dialog',
+            useCaseName: name,
+          );
+          await tester.pumpWidget(
+            story.builder(tester.element(find.byType(View))),
+          );
+          await tester.pump();
+          await tester.pump(const Duration(milliseconds: 200));
+          expect(find.byType(GameMapOptionsDialog), findsOneWidget);
+        }
+      },
+    );
+
+    testWidgets(
+      'Player Turn Event Feed Card folder exposes populated + empty variants',
+      (WidgetTester tester) async {
+        final populatedStory = _useCase(
+          playerTurnEventFeedCardDirectories,
+          folderName: 'Player Turn Event Feed Card',
+          useCaseName: 'Populated — three entries (top entry tappable)',
+        );
+        final emptyStory = _useCase(
+          playerTurnEventFeedCardDirectories,
+          folderName: 'Player Turn Event Feed Card',
+          useCaseName: 'Empty — no events this turn',
+        );
+
+        await tester.pumpWidget(
+          populatedStory.builder(tester.element(find.byType(View))),
+        );
+        await tester.pump();
+        final populatedCard = tester.widget<PlayerTurnEventFeedCard>(
+          find.byType(PlayerTurnEventFeedCard),
+        );
+        expect(populatedCard.entries.length, 3);
+
+        await tester.pumpWidget(
+          emptyStory.builder(tester.element(find.byType(View))),
+        );
+        await tester.pump();
+        final emptyCard = tester.widget<PlayerTurnEventFeedCard>(
+          find.byType(PlayerTurnEventFeedCard),
+        );
+        expect(emptyCard.entries, isEmpty);
+      },
+    );
+
+    testWidgets(
+      'all new in-game shell chrome story frames apply the editorial-monocle scaffold colour',
+      (WidgetTester tester) async {
+        // Sanity-check that the shared story frame in catalog_part7 paints
+        // the canonical dark `--bg-deep` token under the chrome (not the
+        // default light Material scaffold), satisfying the "dark theme"
+        // qualifier in issue #2861 S12. Use one frame per folder so we
+        // catch regressions if a frame helper drifts.
+        const folderUseCases = <(String, String)>[
+          ('Game Top Bar', 'Default — hamburger + Next turn enabled'),
+          ('Game Tab Bar', 'Default — Old World active, no delta'),
+          (
+            'Game Map Corner Controls',
+            'Default — all three buttons enabled',
+          ),
+          (
+            'Player Turn Event Feed Card',
+            'Populated — three entries (top entry tappable)',
+          ),
+        ];
+
+        for (final (folder, useCase) in folderUseCases) {
+          final allDirectories = <WidgetbookNode>[
+            ...gameTopBarDirectories,
+            ...gameTabBarDirectories,
+            ...gameMapCornerControlsDirectories,
+            ...playerTurnEventFeedCardDirectories,
+          ];
+          final story = _useCase(
+            allDirectories,
+            folderName: folder,
+            useCaseName: useCase,
+          );
+          await tester.pumpWidget(
+            story.builder(tester.element(find.byType(View))),
+          );
+          await tester.pump();
+          final Scaffold scaffold = tester.widget<Scaffold>(
+            find.byType(Scaffold),
+          );
+          expect(
+            scaffold.backgroundColor,
+            EditorialMonoclePalette.bgDeep,
+            reason: 'folder=$folder useCase=$useCase',
+          );
+        }
+      },
+    );
+  });
+}
