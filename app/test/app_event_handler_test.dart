@@ -9,6 +9,7 @@ import 'package:colonizethis_app/config/route_paths.dart';
 import 'package:colonizethis_app/core/services/app_event_handler.dart';
 import 'package:colonizethis_app/features/game/combat/combat_mode_choice_dialog.dart';
 import 'package:colonizethis_app/features/game/combat/quick_battle_result_dialog.dart';
+import 'package:colonizethis_app/features/game/widgets/pause_menu_panel.dart';
 
 void main() {
   suppressLogsForTests();
@@ -160,32 +161,41 @@ void main() {
       expect(find.text('base_route'), findsOneWidget);
     });
 
-    testWidgets('OpenPauseMenuPanelEvent opens pause bottom sheet', (
-      tester,
-    ) async {
-      handler.bind();
+    testWidgets(
+      'OpenPauseMenuPanelEvent opens centered PauseMenuPanel modal '
+      'with five action buttons',
+      (tester) async {
+        handler.bind();
 
-      await tester.pumpWidget(
-        MaterialApp(
-          navigatorKey: navKey,
-          home: Scaffold(
-            body: Builder(
-              builder: (context) => TextButton(
-                onPressed: () => bus.emit(const OpenPauseMenuPanelEvent()),
-                child: const Text('open'),
+        await tester.pumpWidget(
+          MaterialApp(
+            navigatorKey: navKey,
+            home: Scaffold(
+              body: Builder(
+                builder: (context) => TextButton(
+                  onPressed: () =>
+                      bus.emit(const OpenPauseMenuPanelEvent()),
+                  child: const Text('open'),
+                ),
               ),
             ),
           ),
-        ),
-      );
-      await tester.pumpAndSettle();
+        );
+        await tester.pumpAndSettle();
 
-      await tester.tap(find.text('open'));
-      await tester.pumpAndSettle();
+        await tester.tap(find.text('open'));
+        await tester.pumpAndSettle();
 
-      expect(find.text('Debug log'), findsOneWidget);
-      expect(find.text('Resume'), findsOneWidget);
-    });
+        expect(find.byType(PauseMenuPanel), findsOneWidget);
+        expect(find.text('Resume'), findsOneWidget);
+        expect(find.text('Save Game'), findsOneWidget);
+        expect(find.text('Load Game'), findsOneWidget);
+        expect(find.text('Settings'), findsOneWidget);
+        expect(find.text('Exit to Main Menu'), findsOneWidget);
+        // Debug log was moved to GameSideMenu in the redesign.
+        expect(find.text('Debug log'), findsNothing);
+      },
+    );
 
     testWidgets('OpenPanelEvent opens registered bottom sheet panel', (
       tester,

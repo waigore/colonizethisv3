@@ -111,6 +111,8 @@ Shell/game entry: **`Routes.shell`**, **`Routes.game`** (see `config/routes.dart
 
 **Return to main menu from in-game / victory:** emit **`NavigateToShellEvent`**; **`AppEventHandler`** pops until **`Routes.shell`** or **`pushNamedAndRemoveUntil`** as needed. Do not call **`Navigator.popUntil`** from **`GameScreen`** / victory UI for that flow.
 
+**Pause-menu exit flow (`RequestExitToMainMenuFlowEvent`):** the pause menu's **Exit to Main Menu** action emits **`ClosePanelEvent`** first (to dismiss the pause modal), then **`RequestExitToMainMenuFlowEvent`** on the bus. **`AppEventHandler`** reacts by scheduling a post-frame `showExitToMainMenuConfirmDialog`; on confirm it emits **`NavigateToShellEvent`** (which then runs the standard pop-until-shell flow); on cancel no further event fires. See [`SPEC/ui/pause-menu-panel.md`](../ui/pause-menu-panel.md) and [`SPEC/ui/in-game-shell-narrow.md`](../ui/in-game-shell-narrow.md) § Android back confirm for the shared confirm-dialog contract.
+
 ---
 
 ## Game feature screen wrapper

@@ -56,9 +56,29 @@
   "@game_pauseMenu_debugLog": {
     "description": "Pause menu option label to open the debug log screen."
   },
+  "game_pauseMenu_title": "Game Paused",
+  "@game_pauseMenu_title": {
+    "description": "Pause menu modal title (SPEC/ui/pause-menu-panel.md, issue #2867 R30)."
+  },
   "game_pauseMenu_resume": "Resume",
   "@game_pauseMenu_resume": {
     "description": "Pause menu option label to resume the game."
+  },
+  "game_pauseMenu_saveGame": "Save Game",
+  "@game_pauseMenu_saveGame": {
+    "description": "Pause menu option label to save the current game (disabled placeholder; backing flow not yet wired)."
+  },
+  "game_pauseMenu_loadGame": "Load Game",
+  "@game_pauseMenu_loadGame": {
+    "description": "Pause menu option label to load a saved game (disabled placeholder; backing flow not yet wired)."
+  },
+  "game_pauseMenu_settings": "Settings",
+  "@game_pauseMenu_settings": {
+    "description": "Pause menu option label to open the settings screen (disabled placeholder; backing flow not yet wired)."
+  },
+  "game_pauseMenu_exitToMainMenu": "Exit to Main Menu",
+  "@game_pauseMenu_exitToMainMenu": {
+    "description": "Pause menu danger action label to exit the current game and return to the main menu."
   },
   "game_pauseMenu_tooltip": "Pause menu",
   "@game_pauseMenu_tooltip": {
