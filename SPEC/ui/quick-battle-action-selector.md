@@ -38,7 +38,7 @@ The widget is mounted by `QuickBattleScreen` only when `interactive == true`. In
 ```
 
 - Outer layout: `Column(crossAxisAlignment: start, mainAxisSize: min)`.
-- CP label: `Text` styled with `Theme.of(context).textTheme.titleSmall`, formatted via `appL10n(context).quickBattle_commandPoints(cpRemaining)`.
+- CP label: `Text` styled with `Theme.of(context).textTheme.titleSmall`, formatted via `appL10n(context).quickBattle_commandPoints(cpRemaining)`. Foreground color resolves to the canonical dark-theme `--muted` token via `EditorialMonoclePalette.muted` (per `SPEC/ui/pixel-art-ui-catalog.md` § Editorial-monocle palette). Hard-coded hex colors or unmodified `titleSmall` foreground colors are regressions.
 - 8 dp vertical gap, then a `Wrap(spacing: 8, runSpacing: 8)` of action buttons.
 - Buttons are `CtNinePatchButton`s with localized labels (`appL10n(context).quickBattle_actionWithCost(label, cost)`); Material `ElevatedButton`/`TextButton` are not permitted.
 
@@ -112,6 +112,10 @@ A button is **enabled** iff `cpRemaining >= cost(action)`; otherwise the button 
 - Given a `QuickBattleActionSelector` is mounted,
   When the UI layer renders the widget,
   Then the widget contains no `ElevatedButton`, `TextButton`, or `OutlinedButton` (Material) widgets.
+
+- Given a `QuickBattleActionSelector` is mounted under `AppThemes.editorialMonocle`,
+  When the UI layer renders the CP indicator `Text`,
+  Then its `style.color` resolves to `EditorialMonoclePalette.muted` and its `style` is based on `Theme.of(context).textTheme.titleSmall` (the dark-theme `--muted` token; no hard-coded hex literals).
 
 ---
 
