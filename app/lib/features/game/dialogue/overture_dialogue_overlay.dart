@@ -146,7 +146,7 @@ class _OvertureDialogueOverlayState extends State<OvertureDialogueOverlay> {
         children: [
           widget.child,
           Material(
-            color: Colors.black54,
+            color: EditorialMonoclePalette.dialogScrim,
             child: Center(
               child: CtDialogShell(
                 child: Padding(
@@ -177,7 +177,7 @@ class _OvertureDialogueOverlayState extends State<OvertureDialogueOverlay> {
         children: [
           widget.child,
           Material(
-            color: Colors.black54,
+            color: EditorialMonoclePalette.dialogScrim,
             child: Center(
               child: CtDialogShell(
                 maxWidth: 520,
@@ -231,7 +231,7 @@ class _OvertureDialogueOverlayState extends State<OvertureDialogueOverlay> {
       children: [
         widget.child,
         Material(
-          color: Colors.black54,
+          color: EditorialMonoclePalette.dialogScrim,
           child: Center(
             child: CtDialogShell(
               maxWidth: 520,

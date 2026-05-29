@@ -44,7 +44,7 @@ Internal state ownership (phase 1 — intro):
 +-----------------------------------------------------------+
 | Stack                                                     |
 |   widget.child                                            |
-|   Material(color: Colors.black54)                         |
+|   Material(color: EditorialMonoclePalette.dialogScrim)    |
 |     Center                                                |
 |       CtDialogShell(maxWidth: 520, maxHeight: 500*)       |
 |         Padding(all: 20)                                  |
@@ -85,6 +85,7 @@ Internal state ownership (phase 1 — intro):
 
 Phase 2 chrome uses the dark editorial-monocle tokens from `SPEC/ui/pixel-art-ui-catalog.md` § Editorial-monocle palette (also referenced by issue #2867 R2 and R21–R22):
 
+- **Scrim:** All three rendered states (phase 1 line/choice/loading, phase 2 offer list, error) wrap the centered `CtDialogShell` in `Material(color: EditorialMonoclePalette.dialogScrim)`, the canonical `--dialog-scrim` token (`oklch(8% 0.01 30 / 0.70)` per `SPEC/ui/pixel-art-ui-catalog.md` § Dialog scrim and `SPEC/ui/dialog-scrim.md` if present). The legacy `Colors.black54` Material fallback MUST NOT appear in the overlay subtree (#2867 R1 / #2858 § Dialog scrim).
 - **Title row:** `Text(game_overture_title)` rendered with `theme.textTheme.titleMedium` color overridden to `EditorialMonoclePalette.accent` and `letter-spacing == fontSize * 0.05` so the canonical `0.05em` letter-spacing resolves at any text scale.
 - **Title → intro separator:** A `CtBrassDivider` is rendered between the title row and the intro `Text` per #2867 R21 (no extra padding inside the divider; vertical breathing room is supplied by 8 dp `SizedBox`es above and below).
 - **Intro line:** `Text(game_overture_intro)` rendered with `theme.textTheme.bodyMedium` color overridden to `EditorialMonoclePalette.muted` and `fontStyle: FontStyle.italic` per #2867 R5.
@@ -154,6 +155,14 @@ No direct `AppEventBus` or `Navigator` usage in the overlay.
 - Given an `OvertureDialogueOverlay` is mounted with `skipIntroForTest: true` and exactly one pending overture from offerer `gp_spain` at stage `tradeConsulate`,
   When the widget tree settles,
   Then the overlay renders one offer row inside a `CtDialogShell`, the row contains a `Text` widget whose content equals `gp_spain.displayName` rendered in `EditorialMonoclePalette.accent` and a `Text` widget whose content equals the localized `tradeConsulate` stage label rendered in `EditorialMonoclePalette.muted`, and Accept / Reject `CtNinePatchButton`s are visible alongside a Submit `CtNinePatchButton`.
+
+- Given an `OvertureDialogueOverlay` is mounted in phase 2 (`skipIntroForTest: true`),
+  When the widget tree is inspected,
+  Then the `CtDialogShell` ancestor `Material` widget has `color == EditorialMonoclePalette.dialogScrim` (the canonical `--dialog-scrim` token per `SPEC/ui/pixel-art-ui-catalog.md` § Dialog scrim).
+
+- Given an `OvertureDialogueOverlay` is mounted in phase 2 (`skipIntroForTest: true`),
+  When every `Material` widget descendant of the `OvertureDialogueOverlay` subtree is inspected,
+  Then no descendant has `color == Colors.black54` (regression guard; the legacy Material default scrim MUST NOT leak into the overture overlay per #2867 R1).
 
 - Given the overlay is in phase 2 (`skipIntroForTest: true`),
   When the widget tree is inspected,

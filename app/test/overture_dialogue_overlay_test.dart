@@ -8,6 +8,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_app/config/editorial_monocle_palette.dart';
 import 'package:colonizethis_app/features/game/dialogue/overture_dialogue_overlay.dart';
 import 'package:colonizethis_app/widgets/ct_brass_divider.dart';
+import 'package:colonizethis_app/widgets/ct_dialog_shell.dart';
 
 void main() {
   suppressLogsForTests();
@@ -249,6 +250,69 @@ void main() {
           find.descendant(of: overlay, matching: find.byType(Card)),
           findsNothing,
         );
+      },
+    );
+
+    testWidgets(
+      'phase 2 scrim resolves to EditorialMonoclePalette.dialogScrim '
+      '(#2867 R1; mirrors intervention overlay S9)',
+      (WidgetTester tester) async {
+        await pumpOverlay(
+          tester,
+          offers: const [
+            OvertureOffer(
+              offererGpId: 'gp2',
+              targetFactionId: 'gp1',
+              stage: OvertureStage.tradeConsulate,
+            ),
+          ],
+          onDecisions: null,
+        );
+
+        final Finder shellFinder = find.byType(
+          CtDialogShell,
+        );
+        expect(shellFinder, findsOneWidget);
+        final Material scrim = tester.widget<Material>(
+          find
+              .ancestor(of: shellFinder, matching: find.byType(Material))
+              .first,
+        );
+        expect(scrim.color, EditorialMonoclePalette.dialogScrim);
+        expect(scrim.color, isNot(Colors.black54));
+      },
+    );
+
+    testWidgets(
+      'no Material descendant uses the legacy Colors.black54 scrim '
+      '(#2867 R1 negative regression guard)',
+      (WidgetTester tester) async {
+        await pumpOverlay(
+          tester,
+          offers: const [
+            OvertureOffer(
+              offererGpId: 'gp2',
+              targetFactionId: 'gp1',
+              stage: OvertureStage.tradeConsulate,
+            ),
+          ],
+          onDecisions: null,
+        );
+
+        final Finder overlay = find.byType(OvertureDialogueOverlay);
+        for (final Element element in find
+            .descendant(of: overlay, matching: find.byType(Material))
+            .evaluate()) {
+          final Material material = element.widget as Material;
+          expect(
+            material.color,
+            isNot(Colors.black54),
+            reason:
+                'Legacy Colors.black54 scrim must not leak into the overture '
+                'overlay; use EditorialMonoclePalette.dialogScrim per '
+                '#2867 R1 / SPEC/ui/pixel-art-ui-catalog.md § Dialog scrim.',
+          );
+        }
       },
     );
   });
