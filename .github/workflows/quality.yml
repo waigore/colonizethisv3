@@ -321,12 +321,15 @@ jobs:
           retention-days: 2
 
   # colonizethis_* package unit tests + package coverage gates (parallel to quality / app tests).
+  # MAX_JOBS is pinned to 4 to match ubuntu-latest vCPU count: with 10 shards each running
+  # its own `dart test` (which pays per-shard JIT/compile cost), MAX_JOBS=6 (script default)
+  # oversubscribed the 4-core runner and caused the job to hit timeout-minutes (Refs #2963).
   package_tests:
     name: Package tests (colonizethis)
     needs: changes
     if: always() && needs.changes.result == 'success'
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    timeout-minutes: 40
     steps:
       - name: Skip when no test-relevant paths changed
         if: needs.changes.outputs.tests != 'true'
@@ -361,6 +364,10 @@ jobs:
         env:
           SUPPRESS_IMAGE_VIEWER: "1"
           PACKAGES_TO_TEST: ${{ needs.changes.outputs.packages_to_test }}
+          # ubuntu-latest provides 4 vCPUs; cap parallel shards to match cores so
+          # `dart test`'s per-shard JIT/compile cost doesn't oversubscribe the runner
+          # and push the job past `timeout-minutes` (Refs #2963 / regression from #2953).
+          PACKAGE_TEST_MAX_JOBS: "4"
         run: bash tool/run_package_tests.sh
 
   quality:
