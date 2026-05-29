@@ -148,7 +148,8 @@ void main() {
       find.textContaining('Move fleet — Fleet f_move (3 destinations)'),
       findsOneWidget,
     );
-    expect(find.text('Sea zones'), findsOneWidget);
+    // CtSectionLabel upper-cases its content per #2859 R9.
+    expect(find.text('SEA ZONES'), findsOneWidget);
     expect(find.text('Warp OW Sea links'), findsOneWidget);
     expect(find.text('Plain OW Sea'), findsOneWidget);
     expect(find.text('Cross NW Sea links to New World'), findsOneWidget);
@@ -316,7 +317,7 @@ void main() {
     await openDialog(tester, bus: bus);
 
     final locateButtons = find.descendant(
-      of: find.byType(AlertDialog),
+      of: find.byType(MoveFleetDialog),
       matching: find.byTooltip('Locate on map'),
     );
     expect(locateButtons, findsNWidgets(3));
@@ -436,7 +437,9 @@ void main() {
         find.text('No adjacent sea zones (check map topology).'),
         findsNothing,
       );
-      expect(find.text('Sea zones'), findsOneWidget);
+      // CtSectionLabel renders the localized header upper-cased; see the
+      // section-header AC in SPEC/ui/move-fleet-dialog.md.
+      expect(find.text('SEA ZONES'), findsOneWidget);
       expect(find.text('Second Sea'), findsOneWidget);
     },
   );
@@ -549,8 +552,11 @@ void main() {
     await tester.tap(find.text('open'));
     await tester.pumpAndSettle();
 
-    expect(find.text('Sea zones'), findsOneWidget);
-    expect(find.text('Provinces (dock)'), findsOneWidget);
+    // CtSectionLabel upper-cases its text per the editorial-monocle catalog
+    // contract (#2859 R9). Section headers in the dialog now read
+    // 'SEA ZONES' / 'PROVINCES (DOCK)'.
+    expect(find.text('SEA ZONES'), findsOneWidget);
+    expect(find.text('PROVINCES (DOCK)'), findsOneWidget);
     expect(find.text('Coastal Province'), findsOneWidget);
     expect(find.textContaining('Beta Sea'), findsOneWidget);
     expect(find.textContaining('Alpha Sea'), findsNothing);
