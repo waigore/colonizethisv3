@@ -76,6 +76,8 @@ Return from game and resume visibility refresh:
 Variant rendering (mockup-aligned dark editorial-monocle):
 
 - Given `CtMainMenu` is rendered with `variant: pixelArt`, when the widget builds, then the UI layer renders the dark SVG collage background, a `CtCompassRose` above the title, a `CtFleurDeLisOrnament` on each side of the "ColonizeThis" title, a `CtBrassDivider` between the logo and buttons regions, wood-panel `CtNinePatchButton` instances for the menu actions, and scroll-bracket gutters flanking the buttons region.
+- Given `CtMainMenu` is rendered with `variant: pixelArt`, when the footer region builds, then the Quit control renders as a secondary chip keyed by `kMainMenuFooterQuitKey` whose intrinsic height is at least `kMainMenuFooterQuitMinHeight` (44 dp) and strictly less than the 48 dp `CtNinePatchButton` primary button height, uses `EditorialMonoclePalette.muted` as the label color, paints `--border` borders on all four edges (no brass corner brackets), and does **not** wrap a `CtNinePatchButton` (verified by `find.descendant(of: find.byType(CtNinePatchButton), matching: find.text('Quit'))` returning no results).
+- Given `CtMainMenu` is rendered with `variant: plain`, when the footer region builds, then the UI layer does **not** render the `kMainMenuFooterQuitKey` chip; the Quit control resolves to a standard `CtNinePatchButton` so existing plain-variant tap and accessibility behavior is preserved.
 - Given `CtMainMenu` is rendered with `variant: plain`, when the widget builds, then the UI layer renders no SVG collage, no `CtCompassRose`, no `CtFleurDeLisOrnament`, no `CtBrassDivider`, no scroll-bracket gutters, and no wood-panel chrome on the buttons; only the theme scaffold color, the title text, and plain `CtNinePatchButton` controls are shown.
 - Given the `pixelArt` variant is rendered on a viewport ≤ 430 dp wide, when the buttons region builds, then the wood-panel button labels render with reduced `letter-spacing` (`0.04em` instead of `0.08em`) per the mockup responsive rule.
 - Given `CtMainMenu` is rendered (in either `plain` or `pixelArt` variant) on a viewport ≤ 430 dp wide, when the menu container builds, then the outer body `Padding` resolves to `EdgeInsets.symmetric(horizontal: 12, vertical: 24)` (matching mockup `.menu-container` `padding: 24px 12px` at `@media (max-width: 430px)`); on a viewport `> 430 dp` wide the same `Padding` resolves to the default `EdgeInsets.symmetric(horizontal: 24)`.
@@ -221,8 +223,8 @@ Dark SVG collage rendered via the `CtMainMenuCollage` widget (S2; `app/lib/widge
 
 ### Footer region
 
-- **Version text** — left aligned, monospace (`--font-mono`), `--muted`.
-- **Quit button** — right aligned, secondary `CtNinePatchButton` configuration: smaller height, `--muted` foreground, border-only chrome (no brass corner brackets).
+- **Version text** — `pixelArt` variant uses an uppercased monospace (`--font-mono`) label in `--muted`; `plain` variant uses theme `bodySmall`.
+- **Quit button** — `pixelArt` variant renders a secondary, smaller chip (key `kMainMenuFooterQuitKey`, min-height `kMainMenuFooterQuitMinHeight` = 44 dp, strictly less than the 48 dp primary buttons) with `--muted` foreground, a `--surface` → `--bg-deep` linear gradient that inverts to `--surface-lite` → `--surface` on hover (foreground brightens to `--accent-bright`), 1 px `--border` on all four sides, and **no brass corner brackets**. The chip is a plain `GestureDetector` over a `DecoratedBox`; it does not wrap `CtNinePatchButton`. The `plain` variant continues to use a standard `CtNinePatchButton` for the Quit control (no `kMainMenuFooterQuitKey` chip).
 
 ### Typography
 

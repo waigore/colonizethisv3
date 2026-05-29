@@ -410,6 +410,40 @@ List<WidgetbookNode> get mainMenuDirectories => [
         ),
       ),
       WidgetbookUseCase(
+        // SPEC/ui/main-menu.md § Variant rendering — exercises the
+        // disabled Load Game tooltip in the `pixelArt` variant for
+        // issue #2860 S6 (Widgetbook coverage of all four states under
+        // editorial-monocle).
+        name: 'No saves (pixel)',
+        builder: (context) => CtMainMenu(
+          variant: MainMenuVariant.pixelArt,
+          state: MainMenuState.noSaves,
+          version: 'v1.0.0',
+          onNewGame: () {},
+          onLoadGame: () {},
+          onSettings: () {},
+          onQuit: () {},
+        ),
+      ),
+      WidgetbookUseCase(
+        // SPEC/ui/main-menu.md § Widget contract — exercises the
+        // `resumeGameVisible: true` branch in the `pixelArt` variant so
+        // Widgetbook covers all four states across both variants per
+        // issue #2860 S6.
+        name: 'Resume game visible (pixel)',
+        builder: (context) => CtMainMenu(
+          variant: MainMenuVariant.pixelArt,
+          state: MainMenuState.default_,
+          version: 'v1.0.0',
+          resumeGameVisible: true,
+          onResumeGame: () {},
+          onNewGame: () {},
+          onLoadGame: () {},
+          onSettings: () {},
+          onQuit: () {},
+        ),
+      ),
+      WidgetbookUseCase(
         name: 'Default (mobile)',
         builder: (context) => mobileViewport(
           context,

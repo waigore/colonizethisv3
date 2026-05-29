@@ -8,7 +8,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:colonizethis_app/config/app_display_strings.dart';
+import 'package:colonizethis_app/config/editorial_monocle_palette.dart';
 import 'package:colonizethis_app/config/themes.dart';
+import 'package:colonizethis_app/features/game/widgets/chrome/ct_nine_patch_button.dart';
 import 'package:colonizethis_app/widgets/ct_brass_divider.dart';
 import 'package:colonizethis_app/widgets/ct_compass_rose.dart';
 import 'package:colonizethis_app/widgets/ct_fleur_de_lis_ornament.dart';
@@ -345,6 +347,108 @@ void main() {
         expect(find.byType(CtFleurDeLisOrnament), findsNWidgets(2));
         expect(find.byType(CtBrassDivider), findsOneWidget);
         expect(find.text('A GAME OF EMPIRE & DISCOVERY'), findsOneWidget);
+      },
+    );
+
+    testWidgets(
+      'AC 9 (pixelArt) Footer Quit: tap on the smaller border-only Quit chip '
+      'invokes onQuit; the chip uses kMainMenuFooterQuitKey and does not '
+      'render as a wood-panel CtNinePatchButton with brass corner brackets',
+      (WidgetTester tester) async {
+        var called = false;
+        await tester.pumpWidget(
+          buildMainMenu(
+            variant: MainMenuVariant.pixelArt,
+            onNewGame: () {},
+            onLoadGame: () {},
+            onSettings: () {},
+            onQuit: () => called = true,
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        final Finder quitChip = find.byKey(
+          const Key(kMainMenuFooterQuitKey),
+        );
+        expect(quitChip, findsOneWidget);
+
+        final RenderBox box = tester.renderObject<RenderBox>(quitChip);
+        expect(
+          box.size.height,
+          lessThan(48),
+          reason:
+              'Footer Quit chip must be smaller than 48 dp primary buttons',
+        );
+        expect(
+          box.size.height,
+          greaterThanOrEqualTo(kMainMenuFooterQuitMinHeight),
+          reason:
+              'Footer Quit chip must clear the 44 dp accessibility minimum',
+        );
+
+        final Finder quitInsideNinePatch = find.descendant(
+          of: find.byType(CtNinePatchButton),
+          matching: find.text('Quit'),
+        );
+        expect(
+          quitInsideNinePatch,
+          findsNothing,
+          reason:
+              'pixelArt Quit must not render inside a wood-panel '
+              'CtNinePatchButton (no brass corner brackets per AC 9)',
+        );
+
+        await tester.tap(quitChip);
+        await tester.pumpAndSettle();
+        expect(called, isTrue);
+      },
+    );
+
+    testWidgets(
+      'AC 9 (pixelArt) Footer Quit foreground: label uses '
+      'EditorialMonoclePalette.muted token, not --fg',
+      (WidgetTester tester) async {
+        await tester.pumpWidget(
+          buildMainMenu(
+            variant: MainMenuVariant.pixelArt,
+            onNewGame: () {},
+            onLoadGame: () {},
+            onSettings: () {},
+            onQuit: () {},
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        final Finder quitChip = find.byKey(
+          const Key(kMainMenuFooterQuitKey),
+        );
+        final Text quitLabel = tester.widget<Text>(
+          find.descendant(of: quitChip, matching: find.text('Quit')),
+        );
+        expect(quitLabel.style?.color, EditorialMonoclePalette.muted);
+      },
+    );
+
+    testWidgets(
+      'AC Variant rendering (plain) Footer Quit: plain variant does not '
+      'render the pixelArt Quit chip key (chip is pixelArt-only)',
+      (WidgetTester tester) async {
+        await tester.pumpWidget(
+          buildMainMenu(
+            onNewGame: () {},
+            onLoadGame: () {},
+            onSettings: () {},
+            onQuit: () {},
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        expect(
+          find.byKey(const Key(kMainMenuFooterQuitKey)),
+          findsNothing,
+          reason:
+              'Footer Quit chip is pixelArt-only per Variant rendering table',
+        );
       },
     );
 
