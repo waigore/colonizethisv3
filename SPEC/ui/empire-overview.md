@@ -88,6 +88,21 @@ Implementation: [`GameTabBar`](../../app/lib/features/game/widgets/game_tab_bar.
 - **Disabled state:** When the underlying callback is `null` (e.g. `homeToCapitalEnabled == false`) the button wraps its tooltip + surface in `IgnorePointer` + `Opacity(0.4)` — the canonical disabled-control opacity shared with `CtNinePatchButton`, `CtBackButton`, `CtToggleSwitch`, and `CtProgressBar`. The border outline and icon tint freeze on the default-state colors (no hover/press color resolution).
 - **Material ban:** The legacy `Material(color: Colors.white …)` overlay around the corner-button row is removed; no white-tinted Material surfaces, raw Material `ElevatedButton`/`IconButton` chrome, or hard-coded light-theme hex literals may paint inside the row. Pointer plumbing remains an `InkWell` under a transparent `Material` (catalog-compatible per [`SPEC/ui/pixel-art-ui-catalog.md`](pixel-art-ui-catalog.md) § Material design ban — `InkWell` itself is not banned, only Material chrome backgrounds).
 
+#### Narrow corner-control measurements (`< kNarrowBreakpoint`)
+
+When the in-game map renders on a narrow viewport (`MediaQuery.size.width < kNarrowBreakpoint`, `600 dp`), the host constructs [GameMapCornerControls](../../app/lib/features/game/flame/game_map_corner_controls.dart) with `narrow: true`. The row then renders at the narrow measurements defined in [mobile-adaptation.md](mobile-adaptation.md) § In-game shell, normative for issue #2870 S3:
+
+- **Tap target:** **24 × 24 dp** per button (mockup `.corner-btn @media (max-width:600px) { width:24px; height:24px }`).
+- **Horizontal gap:** **2 dp** between consecutive buttons (tightened from the wide `3 dp` value to match the compressed `.corner-controls @media (max-width:600px) { left:2px; bottom:2px }` chrome).
+- **Glyph:** Unchanged at **22 × 22 dp** (mockup keeps `.corner-btn img { 22 × 22 }` at narrow); the visible padding around the glyph compresses to 1 dp per side.
+- **Chrome tokens:** Unchanged — narrow buttons keep the wide gradient/border/icon-tint and hover/press contracts above.
+
+**Acceptance (narrow corner controls):**
+
+- **Given** the in-game map is rendered on the narrow layout (`MediaQuery.size.width < kNarrowBreakpoint`), **when** `GameMapCornerControls` is constructed with `narrow: true` and lays out the three corner buttons, **then** every visible corner button paints a **24 × 24 dp** square surface.
+- **Given** the narrow corner controls are rendered, **when** the layout resolves the row, **then** consecutive corner buttons have a **2 dp** horizontal gap between them.
+- **Given** the narrow corner controls are rendered, **when** the chrome painter resolves a corner button's glyph, **then** the glyph paints `StrictAssetIcon` at exactly **22 × 22 dp** (icon size is unchanged from the wide layout).
+
 ### Region minimap (in-game map stack)
 
 - **Placement:** Bottom-right of the map `Stack` in [GameMapArea](../../app/lib/features/game/flame/game_map_area.dart); does not replace bottom-left [GameMapCornerControls](../../app/lib/features/game/flame/game_map_corner_controls.dart) or [GameMapEmpireLeftRail](../../app/lib/features/game/flame/game_map_empire_left_rail.dart).
