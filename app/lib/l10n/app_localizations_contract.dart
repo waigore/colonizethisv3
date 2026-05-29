@@ -292,6 +292,9 @@ abstract class AppLocalizations {
   /// Button: formal protest without military action.
   String get game_intervention_protest;
 
+  /// Title rendered at the top of the intervention overlay's CtDialogShell on every phase (Yarn intro, situation, choice picker, reaction, and degraded error). Resolved by EditorialMonoclePalette.accent per SPEC/ui/screens/pending-intervention-overlay.md § Dark editorial-monocle chrome and issue #2867 R26b.
+  String get game_intervention_overlayTitle;
+
   /// Turn-start news dialog title; turn is the current turn after resolution.
   String turnNews_title(int turn);
 

@@ -312,6 +312,9 @@ mixin _AppLocalizationsEnStrings1 on AppLocalizations {
   String get game_intervention_protest => 'Diplomatic protest';
 
   @override
+  String get game_intervention_overlayTitle => 'Pending Intervention';
+
+  @override
   String turnNews_title(int turn) {
     return 'Turn $turn';
   }
