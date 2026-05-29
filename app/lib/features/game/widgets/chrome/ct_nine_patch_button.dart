@@ -49,6 +49,7 @@ class CtNinePatchButton extends StatefulWidget {
     this.destTileSize = 16,
     this.minHeight = 48,
     this.dangerVariant = false,
+    this.disabledOpacityOverride,
   });
 
   /// Callback fired on tap when [enabled] is `true` and [onPressed] is
@@ -91,6 +92,18 @@ class CtNinePatchButton extends StatefulWidget {
   /// `SPEC/ui/pixel-art-ui-catalog.md` § Pixel-art component catalog
   /// (CtNinePatchButton). Defaults to `false`.
   final bool dangerVariant;
+
+  /// Optional per-instance override for the disabled-state [Opacity] used
+  /// when [enabled] is `false` (or [onPressed] is `null`). When `null`
+  /// (default), the widget falls back to the shared catalog convention
+  /// [CtNinePatchButton.disabledOpacity] (`0.4`) used by `CtBackButton`,
+  /// `CtToggleSwitch`, `CtProgressBar`, and every other dark-theme
+  /// disabled control. Specific call sites whose SPEC mockups require a
+  /// different value (e.g. the in-game Next-turn button — `0.35` per
+  /// `SPEC/ui/game-screen.md` ACs and `.next-turn.disabled` in
+  /// `SPEC/ui/mockups/GAME10001-game-screen.html`, issue #2861 R1) pass
+  /// the desired value here. Must be in the closed range `[0.0, 1.0]`.
+  final double? disabledOpacityOverride;
 
   /// Side length of each brass corner-bracket overlay (R1).
   static const double cornerBracketSize = 10;
@@ -227,8 +240,10 @@ class _CtNinePatchButtonState extends State<CtNinePatchButton> {
     );
 
     if (!widget.enabled) {
+      final double resolvedDisabledOpacity =
+          widget.disabledOpacityOverride ?? CtNinePatchButton.disabledOpacity;
       return Opacity(
-        opacity: CtNinePatchButton.disabledOpacity,
+        opacity: resolvedDisabledOpacity,
         child: IgnorePointer(
           ignoring: true,
           child: framed,
