@@ -65,13 +65,24 @@ for task in "${tasks[@]}"; do
     cd "$ROOT/$pkg_dir"
     cov_dir="coverage.shard$shard"
     rm -rf "$cov_dir"
+    # Disable -e while running the test so a non-zero dart-test exit still
+    # falls through to the rc.* write below; otherwise the parent never sees
+    # the failure (rc.* missing => failure-check loop silently passes).
+    set +e
     dart test --coverage="$cov_dir" -j 1 --reporter=compact \
       --total-shards="$total" --shard-index="$shard" \
       --test-randomize-ordering-seed=42
-    echo "$?" > "$tmpdir/rc.$task_idx"
+    rc=$?
+    set -e
+    echo "$rc" > "$tmpdir/rc.$task_idx"
+    exit "$rc"
   ) &
   bg_pids+=($!)
-  ((task_idx++))
+  # Use $((...)) assignment instead of ((task_idx++)). Under `set -e`,
+  # `((expr))` returns exit status 1 whenever expr evaluates to 0, and
+  # post-increment yields the PRE-increment value, so `((task_idx++))` exits
+  # the script on the very first iteration when task_idx is still 0.
+  task_idx=$((task_idx + 1))
 
   # throttle
   if [ ${#bg_pids[@]} -ge "$MAX_JOBS" ]; then
