@@ -48,7 +48,22 @@ mixin _AppLocalizationsEnStrings1 on AppLocalizations {
   String get game_pauseMenu_debugLog => 'Debug log';
 
   @override
+  String get game_pauseMenu_title => 'Game Paused';
+
+  @override
   String get game_pauseMenu_resume => 'Resume';
+
+  @override
+  String get game_pauseMenu_saveGame => 'Save Game';
+
+  @override
+  String get game_pauseMenu_loadGame => 'Load Game';
+
+  @override
+  String get game_pauseMenu_settings => 'Settings';
+
+  @override
+  String get game_pauseMenu_exitToMainMenu => 'Exit to Main Menu';
 
   @override
   String get game_pauseMenu_tooltip => 'Pause menu';
