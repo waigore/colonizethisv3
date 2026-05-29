@@ -160,6 +160,11 @@ mixin _AppLocalizationsEnStrings3 on AppLocalizations {
   }
 
   @override
+  String technologyPanel_chooseTechDialogTitle(int slot) {
+    return 'Choose Tech \u2014 Slot $slot';
+  }
+
+  @override
   String get technologyPanel_slotCancelled => 'Research slot cancelled';
 
   @override
@@ -387,6 +392,12 @@ mixin _AppLocalizationsEnStrings3 on AppLocalizations {
 
   @override
   String get gameSetup_back => 'Back';
+
+  @override
+  String get gameSetup_cancel => 'Cancel';
+
+  @override
+  String get gameSetup_backToMainMenu => 'Back to Main Menu';
 
   @override
   String get gameSetup_player1You => 'Player 1 (You)';
