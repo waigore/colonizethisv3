@@ -19,7 +19,7 @@ An **army** is a persistent, owner-scoped collection of **land military regiment
 Each Great Power has exactly one **Home Army**, analogous to the **Home Fleet**:
 
 - **Location:** Always stationed in the player’s **capital province** (when a capital exists). The Home Army **does not** execute moves that would leave the capital province (it may reorganize composition via split/combine only; it does not “march” elsewhere). New land regiments from `BuildUnitOrder` **enter the Home Army** at the capital by default.
-- **Persistence:** Like the Home Fleet, the Home Army is **never deleted** when empty (zero regiments). The Military Units panel always surfaces it for the capital region when the human player is a Great Power.
+- **Persistence:** Like the Home Fleet, the Home Army is **never deleted** when empty (zero regiments). The Military Units panel always surfaces it for the capital region when the human player is a Great Power. **AI auto-split note:** Full AI may split the Home Army down to **zero** regiments under stalled Old World expansion — including the sole-regiment case — into a field army at the capital so that conquest army moves can issue from the field army id (the Home Army's no-march invariant is preserved verbatim; see [SPEC/ai/phase-planner-architecture.md](../ai/phase-planner-architecture.md) § AI conquest-prep auto-split; Refs #2925).
 
 **Minors / Tribes / AI:** Use the same army container model in `WorldState`; composition and split/combine UI may be human-only. Until AI specs define army handling, non-human factions **may** use a deterministic implicit army layout (e.g. one army per province containing that faction’s regiments) implemented in logic — must not leave regiments without an army.
 
