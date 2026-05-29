@@ -9,6 +9,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:colonizethis_app/config/editorial_monocle_palette.dart';
 import 'package:colonizethis_app/config/themes.dart';
+import 'package:colonizethis_app/widgets/ct_back_button.dart';
 import 'package:colonizethis_app/widgets/ct_dropdown.dart';
 import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
 import 'package:colonizethis_app/widgets/game_setup.dart';
@@ -240,7 +241,7 @@ void main() {
       expect(find.text('Select nation'), findsNWidgets(6));
     });
 
-    testWidgets('Coverage: pixelArt variant builds and Back works', (
+    testWidgets('Coverage: pixelArt variant builds and Back link works', (
       WidgetTester tester,
     ) async {
       var backCalled = false;
@@ -252,13 +253,17 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      // Dark editorial-monocle header chrome (Refs #2868 S1) makes the
-      // pixelArt setup taller than the 800x600 test viewport; scroll the
-      // Back button into the visible region before tapping.
-      final backFinder = find.text('Back');
-      await tester.ensureVisible(backFinder);
+      // Dark editorial-monocle action region (Refs #2868 S3) replaces the
+      // legacy single "Back" button stack with a Cancel + Start Game row
+      // plus a "Back to Main Menu" link below — also makes the pixelArt
+      // setup taller than the 800x600 test viewport. Scroll the back link
+      // label into the visible region before tapping.
+      final backLinkFinder = find.byKey(
+        const ValueKey<String>('gameSetupBackLinkLabel'),
+      );
+      await tester.ensureVisible(backLinkFinder);
       await tester.pumpAndSettle();
-      await tester.tap(backFinder);
+      await tester.tap(backLinkFinder);
       await tester.pumpAndSettle();
       expect(backCalled, isTrue);
     });
@@ -697,6 +702,182 @@ void main() {
         await tester.tap(find.text('Back'));
         await tester.pump();
         expect(backCalled, isTrue);
+      },
+    );
+
+    // -------------------------------------------------------------------
+    // Issue #2868 S3 — action buttons + back link (Refs #2868 R12/R13/R14).
+    // -------------------------------------------------------------------
+
+    testWidgets(
+      'AC Issue #2868 R12: pixelArt action row renders the bespoke Cancel '
+      'affordance with the localized "Cancel" label',
+      (WidgetTester tester) async {
+        await tester.pumpWidget(
+          buildGameSetup(variant: GameSetupVariant.pixelArt),
+        );
+        await tester.pumpAndSettle();
+
+        final cancelLabelFinder = find.byKey(
+          const ValueKey<String>('gameSetupCancelLabel'),
+        );
+        await tester.ensureVisible(cancelLabelFinder);
+        await tester.pumpAndSettle();
+
+        expect(cancelLabelFinder, findsOneWidget);
+        expect(find.text('Cancel'), findsOneWidget);
+      },
+    );
+
+    testWidgets(
+      'AC Issue #2868 R12: tapping the pixelArt Cancel affordance invokes '
+      'onBack exactly once (shared destination with the back link)',
+      (WidgetTester tester) async {
+        var backCallCount = 0;
+        await tester.pumpWidget(
+          buildGameSetup(
+            variant: GameSetupVariant.pixelArt,
+            onBack: () => backCallCount += 1,
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        final cancelLabelFinder = find.byKey(
+          const ValueKey<String>('gameSetupCancelLabel'),
+        );
+        await tester.ensureVisible(cancelLabelFinder);
+        await tester.pumpAndSettle();
+        await tester.tap(cancelLabelFinder);
+        await tester.pumpAndSettle();
+
+        expect(backCallCount, equals(1));
+      },
+    );
+
+    testWidgets(
+      'AC Issue #2868 R13: pixelArt Start Game uses the canonical '
+      'CtNinePatchButton chrome (primary brass-accent surface)',
+      (WidgetTester tester) async {
+        await tester.pumpWidget(
+          buildGameSetup(variant: GameSetupVariant.pixelArt),
+        );
+        await tester.pumpAndSettle();
+
+        final startFinder = find.widgetWithText(
+          CtNinePatchButton,
+          'Start Game',
+        );
+        await tester.ensureVisible(startFinder);
+        await tester.pumpAndSettle();
+
+        expect(startFinder, findsOneWidget);
+        // Disabled by default because all six slots start unselected.
+        expect(tester.widget<CtNinePatchButton>(startFinder).enabled, isFalse);
+      },
+    );
+
+    testWidgets(
+      'AC Issue #2868 R14: pixelArt back link renders CtBackButton glyph + '
+      '"Back to Main Menu" label below the action row',
+      (WidgetTester tester) async {
+        await tester.pumpWidget(
+          buildGameSetup(variant: GameSetupVariant.pixelArt),
+        );
+        await tester.pumpAndSettle();
+
+        final backLinkLabelFinder = find.byKey(
+          const ValueKey<String>('gameSetupBackLinkLabel'),
+        );
+        await tester.ensureVisible(backLinkLabelFinder);
+        await tester.pumpAndSettle();
+
+        expect(backLinkLabelFinder, findsOneWidget);
+        expect(find.text('Back to Main Menu'), findsOneWidget);
+        expect(find.byType(CtBackButton), findsOneWidget);
+      },
+    );
+
+    testWidgets(
+      'AC Issue #2868 R14: tapping the back-link label invokes onBack '
+      '(label and CtBackButton glyph share the same destination)',
+      (WidgetTester tester) async {
+        var backCallCount = 0;
+        await tester.pumpWidget(
+          buildGameSetup(
+            variant: GameSetupVariant.pixelArt,
+            onBack: () => backCallCount += 1,
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        final backLinkLabelFinder = find.byKey(
+          const ValueKey<String>('gameSetupBackLinkLabel'),
+        );
+        await tester.ensureVisible(backLinkLabelFinder);
+        await tester.pumpAndSettle();
+        await tester.tap(backLinkLabelFinder);
+        await tester.pumpAndSettle();
+
+        expect(backCallCount, equals(1));
+      },
+    );
+
+    testWidgets(
+      'AC Issue #2868 R12/R14 negative: plain variant action region keeps '
+      'the pre-S3 single-column Start/Back stack (no Cancel, no back link)',
+      (WidgetTester tester) async {
+        await tester.pumpWidget(buildGameSetup());
+        await tester.pumpAndSettle();
+
+        expect(find.text('Cancel'), findsNothing);
+        expect(find.text('Back to Main Menu'), findsNothing);
+        expect(find.byType(CtBackButton), findsNothing);
+        expect(
+          find.byKey(const ValueKey<String>('gameSetupCancelLabel')),
+          findsNothing,
+        );
+        expect(
+          find.byKey(const ValueKey<String>('gameSetupBackLinkLabel')),
+          findsNothing,
+        );
+        // Plain variant still surfaces the legacy "Back" button text.
+        expect(find.text('Back'), findsOneWidget);
+      },
+    );
+
+    testWidgets(
+      'AC Issue #2868 R12/R14: pixelArt loading state keeps Cancel and the '
+      'back link tappable (they paint outside the dim/scrim overlay)',
+      (WidgetTester tester) async {
+        var backCallCount = 0;
+        await tester.pumpWidget(
+          buildGameSetup(
+            variant: GameSetupVariant.pixelArt,
+            state: GameSetupState.loading,
+            onBack: () => backCallCount += 1,
+          ),
+        );
+        await tester.pump();
+
+        // `pump` (not `pumpAndSettle`) below because the loading spinner
+        // animates indefinitely; `pumpAndSettle` would time out.
+        final cancelLabelFinder = find.byKey(
+          const ValueKey<String>('gameSetupCancelLabel'),
+        );
+        await tester.ensureVisible(cancelLabelFinder);
+        await tester.pump();
+        await tester.tap(cancelLabelFinder);
+        await tester.pump();
+        expect(backCallCount, equals(1));
+
+        final backLinkLabelFinder = find.byKey(
+          const ValueKey<String>('gameSetupBackLinkLabel'),
+        );
+        await tester.ensureVisible(backLinkLabelFinder);
+        await tester.pump();
+        await tester.tap(backLinkLabelFinder);
+        await tester.pump();
+        expect(backCallCount, equals(2));
       },
     );
   });

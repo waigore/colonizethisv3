@@ -394,6 +394,12 @@ mixin _AppLocalizationsEnStrings3 on AppLocalizations {
   String get gameSetup_back => 'Back';
 
   @override
+  String get gameSetup_cancel => 'Cancel';
+
+  @override
+  String get gameSetup_backToMainMenu => 'Back to Main Menu';
+
+  @override
   String get gameSetup_player1You => 'Player 1 (You)';
 
   @override
