@@ -76,6 +76,19 @@ This rule covers four normalised Flutter dp breakpoints, each matching a per-scr
 - For each screen in Widgetbook, provide at least one **mobile viewport** use case: render the widget inside a constrained viewport (e.g. 360×640 dp) so that mobile layout and scroll can be verified without resizing the window. Document in the widget catalog or story name (e.g. "Default (mobile)").
 - **Mobile-only mockups:** When a screen's mobile layout differs meaningfully from desktop (e.g. stacked vs row, different navigation), consider adding a **mobile-only** Widgetbook use case that is designed and named for the mobile viewport (e.g. "Mobile layout" or "Narrow — stacked slots"). This makes mobile the primary frame for that story and ensures the mobile design is reviewed explicitly.
 
+### 7. Minimum-viewport pin (`kMinViewportWidth = 320`)
+
+The minimum supported viewport width is **`kMinViewportWidth = 320` dp** (from `app/lib/config/constants.dart`). The minimum touch-target size is **`kMinTouchTargetSize = 44` dp** (matching §1 and UXD 03). Both constants are normative for screen tests that pin the AC below.
+
+#### Acceptance criteria
+
+- Given the viewport width is exactly `kMinViewportWidth` (320 dp) and the height is at least 640 dp, when **CtMainMenu** (`plain` and `pixelArt` variants, all `MainMenuState` values) is rendered with the running theme, then `WidgetTester.takeException()` returns `null`, no `RenderFlex` overflow exception is thrown by the framework, and every visible `CtNinePatchButton` reports a rendered height ≥ `kMinTouchTargetSize`.
+- Given the viewport width is exactly `kMinViewportWidth` (320 dp) and the height is at least 640 dp, when **CtGameSetup** (any `GameSetupVariant` × `GameSetupState`) is rendered with the running theme, then `WidgetTester.takeException()` returns `null`, no `RenderFlex` overflow exception is thrown, and the six player-slot rows render in the stacked layout (label / nation dropdown / leader dropdown) defined by §4 Game Setup.
+
+#### Pinning tests
+
+The above ACs are pinned by `app/test/mobile_320dp_min_viewport_test.dart` (Refs #2870 S10).
+
 ---
 
 ## Summary table
