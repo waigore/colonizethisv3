@@ -1,6 +1,7 @@
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
 
+import '../../../config/editorial_monocle_palette.dart';
 import '../../../l10n/l10n.dart';
 import '../../../widgets/ct_nine_patch_button.dart';
 
@@ -18,13 +19,16 @@ class QuickBattleActionSelector extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = appL10n(context);
+    final TextStyle? cpLabelStyle = Theme.of(
+      context,
+    ).textTheme.titleSmall?.copyWith(color: EditorialMonoclePalette.muted);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
       children: [
         Text(
           l10n.quickBattle_commandPoints(cpRemaining),
-          style: Theme.of(context).textTheme.titleSmall,
+          style: cpLabelStyle,
         ),
         const SizedBox(height: 8),
         Wrap(

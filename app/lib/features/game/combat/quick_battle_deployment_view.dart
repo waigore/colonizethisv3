@@ -1,6 +1,7 @@
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
 
+import '../../../config/editorial_monocle_palette.dart';
 import '../../../widgets/ct_panel.dart';
 
 /// Displays Quick Battle deployment (units per lane/line).
@@ -37,6 +38,9 @@ class QuickBattleDeploymentView extends StatelessWidget {
   }
 
   Widget _buildSideDeployment(BuildContext context, QuickBattleDeployment d) {
+    final TextStyle? rowStyle = Theme.of(
+      context,
+    ).textTheme.bodySmall?.copyWith(color: EditorialMonoclePalette.muted);
     return CtPanel(
       padding: const EdgeInsets.all(12),
       child: Wrap(
@@ -46,10 +50,7 @@ class QuickBattleDeploymentView extends StatelessWidget {
           final label = '${_laneLabel(g.lane)} ${_lineLabel(g.line)}';
           final text =
               '$label: ${g.unitIds.length} units${g.cohesion > 0 ? ' (Cohesion ${g.cohesion})' : ''}';
-          return Text(
-            text,
-            style: Theme.of(context).textTheme.bodySmall,
-          );
+          return Text(text, style: rowStyle);
         }).toList(),
       ),
     );

@@ -53,7 +53,7 @@ The widget is presentational with respect to game state — it does not read pro
 
 - Outer container: `CtDialogShell(maxWidth: 400, maxHeight: 500)`.
 - Inner column: `Column(mainAxisSize: min, crossAxisAlignment: stretch)`.
-- Title text: `appL10n(context).quickBattle_round(_round, widget.input.maxRounds)`.
+- Title text: `appL10n(context).quickBattle_round(_round, widget.input.maxRounds)` rendered with `Theme.of(context).textTheme.titleMedium` overridden to color `EditorialMonoclePalette.accent` (the `--accent` token) and `letterSpacing: 0.05em` per the canonical palette in `SPEC/ui/pixel-art-ui-catalog.md` § Editorial-monocle palette and the round-counter row in `SPEC/ui/mockups/CMPT20001-quick-battle-screen.html`.
 - 12 dp gap before the deployment view; 12 dp gap before the action selector or auto-resolve button.
 
 ### Result phase (after resolver returns)
@@ -144,6 +144,10 @@ Hardware back is not handled; orchestrator owns lifecycle until `onComplete`.
 - Given a `QuickBattleScreen` is mounted with an `input.maxRounds == 3`,
   When the round phase is rendered,
   Then the title text equals the localized `quickBattle_round(1, 3)` string.
+
+- Given a `QuickBattleScreen` is mounted with `interactive: false` and `input.maxRounds == 3`,
+  When the round phase is rendered,
+  Then the round-counter `Text` widget resolves its `style.color` to `EditorialMonoclePalette.accent` (the `--accent` token) and its `style.letterSpacing` to `0.05` (em), regardless of whether the ambient theme is `AppThemes.editorialMonocle` or a fallback.
 
 - Given a `QuickBattleResult` returned by the resolver has `provinceFlips == true`,
   When the result view renders,

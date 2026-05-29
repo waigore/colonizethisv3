@@ -49,7 +49,7 @@ The widget is mounted by `QuickBattleScreen` whenever its result view is not act
 - Outer layout: `Column` with `crossAxisAlignment: stretch` and `mainAxisSize: min`.
 - 16 dp vertical spacing between attacker and defender blocks.
 - Each side: title `Text` (theme `titleMedium`) followed by a `CtPanel` containing a `Wrap(spacing: 12, runSpacing: 8)` of group rows.
-- Each group row formats as `<Lane> <Line>: <unitCount> units[ (Cohesion <c>)]`. The cohesion suffix is suppressed when `cohesion <= 0`.
+- Each group row formats as `<Lane> <Line>: <unitCount> units[ (Cohesion <c>)]`. The cohesion suffix is suppressed when `cohesion <= 0`. Group-row `Text` widgets use `Theme.of(context).textTheme.bodySmall` overridden to color `EditorialMonoclePalette.muted` (the `--muted` token in `SPEC/ui/pixel-art-ui-catalog.md` § Editorial-monocle palette) so the row reads as secondary context against the surrounding `--surface` `CtPanel`.
 
 ### Lane and line labels
 
@@ -110,6 +110,10 @@ Both sides always render in the order **attacker → defender** to match resolve
 - Given a `QuickBattleDeploymentView` with attacker groups for lanes `center` and `right` and lines `front` and `support`,
   When the UI layer renders the widget,
   Then each group row uses the canonical labels `Left/Center/Right/Reserve` for lane and `Front/Support` for line, and groups appear in the order returned by `attackerDeployment.groups` (no client-side sort).
+
+- Given a `QuickBattleDeploymentView` with at least one non-empty deployment group on either side,
+  When the UI layer renders the widget,
+  Then every group-row `Text` widget resolves its `style.color` to `EditorialMonoclePalette.muted` (the `--muted` token), independent of the ambient theme.
 
 - Given a `QuickBattleDeploymentView` is mounted with non-null deployments,
   When the user views the screen,

@@ -2,6 +2,7 @@ import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
 
+import '../../../config/editorial_monocle_palette.dart';
 import '../../../config/ui_screen_ids.dart';
 import '../../../l10n/l10n.dart';
 import '../../../widgets/ct_dialog_shell.dart';
@@ -21,6 +22,14 @@ class QuickBattleScreen extends StatefulWidget {
 
   /// SPEC/ui/quick-battle-screen.md — [UiScreenIds.quickBattleScreen].
   static const screenId = UiScreenIds.quickBattleScreen;
+
+  /// Letter-spacing applied to the round-counter title text.
+  ///
+  /// Matches the `0.05em` setter on `.round-counter` in
+  /// `SPEC/ui/mockups/CMPT20001-quick-battle-screen.html`. Documented in
+  /// `SPEC/ui/quick-battle-screen.md` § Layout / wireframe and pinned by
+  /// the round-counter palette AC.
+  static const double roundCounterLetterSpacing = 0.05;
 
   final QuickBattleInput input;
   final ValueChanged<QuickBattleResult> onComplete;
@@ -72,6 +81,11 @@ class _QuickBattleScreenState extends State<QuickBattleScreen> {
         },
       );
     }
+    final ThemeData theme = Theme.of(context);
+    final TextStyle? roundCounterStyle = theme.textTheme.titleMedium?.copyWith(
+      color: EditorialMonoclePalette.accent,
+      letterSpacing: QuickBattleScreen.roundCounterLetterSpacing,
+    );
     return CtDialogShell(
       maxWidth: 400,
       maxHeight: 500,
@@ -81,7 +95,7 @@ class _QuickBattleScreenState extends State<QuickBattleScreen> {
         children: [
           Text(
             l10n.quickBattle_round(_round, widget.input.maxRounds),
-            style: Theme.of(context).textTheme.titleMedium,
+            style: roundCounterStyle,
           ),
           const SizedBox(height: 12),
           QuickBattleDeploymentView(
