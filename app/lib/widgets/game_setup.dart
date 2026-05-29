@@ -698,16 +698,28 @@ class _GameSetupBackLinkState extends State<_GameSetupBackLink> {
               semanticLabel: widget.label,
             ),
             const SizedBox(width: _GameSetupBackLink.glyphToLabelGap),
-            GestureDetector(
-              behavior: HitTestBehavior.opaque,
-              onTap: widget.onPressed,
-              child: AnimatedDefaultTextStyle(
-                duration: _GameSetupBackLink.animationDuration,
-                curve: Curves.easeOut,
-                style: baseStyle.copyWith(color: labelColor),
-                child: Text(
-                  widget.label,
-                  key: const ValueKey<String>('gameSetupBackLinkLabel'),
+            // The label `Flexible` lets the text shrink-to-fit at narrow
+            // viewports (≤ 320 dp) so the row honours
+            // `SPEC/ui/mobile-adaptation.md` § 7 (no `RenderFlex` overflow at
+            // `kMinViewportWidth`). On larger viewports `mainAxisSize: min`
+            // keeps the back link visually centered and the label takes its
+            // intrinsic width — the `Flexible` only constrains the label
+            // when the parent row would otherwise overflow.
+            Flexible(
+              child: GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                onTap: widget.onPressed,
+                child: AnimatedDefaultTextStyle(
+                  duration: _GameSetupBackLink.animationDuration,
+                  curve: Curves.easeOut,
+                  style: baseStyle.copyWith(color: labelColor),
+                  child: Text(
+                    widget.label,
+                    key: const ValueKey<String>('gameSetupBackLinkLabel'),
+                    maxLines: 1,
+                    softWrap: false,
+                    overflow: TextOverflow.ellipsis,
+                  ),
                 ),
               ),
             ),
