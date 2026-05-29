@@ -217,6 +217,102 @@ run_case "AC2 one shard fails (exit 7)" 1 \
   "FAILED: one or more package test shards failed"
 rm -rf "$ac2_root"
 
+# --- AC4 (Refs #2963): PACKAGE_TEST_MAX_JOBS caps concurrent shards --------
+# Repro for the perf regression: the workflow oversubscribed the 4-vCPU runner
+# because the script defaulted to MAX_JOBS=6 and there was no test asserting that
+# the cap is honored. This test uses a fake `dart` shim that bumps a peak-count
+# file via flock around its sleep, so we can assert the script never exceeded
+# MAX_JOBS concurrent shards.
+ac4_root="$(mktemp -d)"
+# Five 1-shard packages → 5 tasks. With MAX_JOBS=2, peak concurrent must be <= 2.
+mkdir -p "$ac4_root/bin" "$ac4_root/tool"
+: > "$ac4_root/peak"
+echo 0 > "$ac4_root/active"
+echo 0 > "$ac4_root/peak"
+for name in colonizethis_models colonizethis_data colonizethis_save colonizethis_map colonizethis_ai; do
+  mkdir -p "$ac4_root/packages/$name/test"
+  cat > "$ac4_root/packages/$name/pubspec.yaml" <<EOF
+name: $name
+environment:
+  sdk: '>=3.0.0 <4.0.0'
+EOF
+  cat > "$ac4_root/packages/$name/test/x_test.dart" <<EOF
+// fake test for $name
+void main() {}
+EOF
+done
+# Fake dart with concurrency counter. flock guards counter file r/w.
+cat > "$ac4_root/bin/dart" <<EOF
+#!/usr/bin/env bash
+set -e
+case "\$1" in
+  test)
+    flock "$ac4_root/active.lock" bash -c '
+      a=\$(cat "$ac4_root/active")
+      a=\$((a + 1))
+      echo \$a > "$ac4_root/active"
+      p=\$(cat "$ac4_root/peak")
+      if [ "\$a" -gt "\$p" ]; then echo \$a > "$ac4_root/peak"; fi
+    '
+    # Sleep long enough that overlap is observable when MAX_JOBS > 1.
+    sleep 0.5
+    flock "$ac4_root/active.lock" bash -c '
+      a=\$(cat "$ac4_root/active")
+      a=\$((a - 1))
+      echo \$a > "$ac4_root/active"
+    '
+    exit 0
+    ;;
+  run)
+    out=""
+    while [ \$# -gt 0 ]; do
+      case "\$1" in
+        -o) out="\$2"; shift 2 ;;
+        *) shift ;;
+      esac
+    done
+    if [ -n "\$out" ]; then
+      mkdir -p "\$(dirname "\$out")"
+      printf 'TN:\nSF:lib/foo.dart\nDA:1,1\nLF:1\nLH:1\nend_of_record\n' > "\$out"
+    fi
+    exit 0
+    ;;
+  pub) exit 0 ;;
+esac
+exit 0
+EOF
+chmod +x "$ac4_root/bin/dart"
+cat > "$ac4_root/bin/lcov" <<'EOF'
+#!/usr/bin/env bash
+exit 0
+EOF
+chmod +x "$ac4_root/bin/lcov"
+cp "$SCRIPT" "$ac4_root/tool/run_package_tests.sh"
+cat > "$ac4_root/tool/check_coverage_threshold.sh" <<'EOF'
+#!/usr/bin/env bash
+exit 0
+EOF
+chmod +x "$ac4_root/tool/check_coverage_threshold.sh"
+
+echo "--- AC4 PACKAGE_TEST_MAX_JOBS caps concurrent shards (Refs #2963) ---"
+set +e
+PATH="$ac4_root/bin:$PATH" \
+  PACKAGES_TO_TEST="colonizethis_models,colonizethis_data,colonizethis_save,colonizethis_map,colonizethis_ai" \
+  PACKAGE_TEST_MAX_JOBS=2 \
+  bash "$ac4_root/tool/run_package_tests.sh" >/dev/null 2>&1
+ac4_rc=$?
+set -e
+peak=$(cat "$ac4_root/peak")
+if [ "$ac4_rc" -eq 0 ] && [ "$peak" -le 2 ] && [ "$peak" -ge 1 ]; then
+  PASS_COUNT=$((PASS_COUNT + 1))
+  echo "  PASS (peak concurrent shards observed: $peak, cap: 2)"
+else
+  FAIL_COUNT=$((FAIL_COUNT + 1))
+  FAIL_NAMES+=("AC4 PACKAGE_TEST_MAX_JOBS caps concurrent shards")
+  echo "  FAIL (exit=$ac4_rc, peak=$peak, expected 1<=peak<=2)"
+fi
+rm -rf "$ac4_root"
+
 # --- summary --------------------------------------------------------------
 echo ""
 echo "=========================================="
