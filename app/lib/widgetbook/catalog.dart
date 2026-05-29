@@ -27,10 +27,14 @@ import '../features/game/combat/quick_battle_screen.dart';
 import '../features/game/widgets/civilian_units_panel.dart';
 import '../features/game/widgets/diplomacy_dialogs.dart';
 import '../features/game/widgets/diplomacy_panel.dart';
+import '../features/game/widgets/game_map_options_dialog.dart';
 import '../features/game/widgets/game_map_players_bar.dart';
+import '../features/game/widgets/game_tab_bar.dart';
+import '../features/game/widgets/game_top_bar.dart';
 import '../features/game/widgets/military_units_panel.dart';
 import '../features/game/widgets/naval_units_panel.dart';
 import '../features/game/widgets/pause_menu_panel.dart';
+import '../features/game/widgets/player_turn_event_feed.dart';
 import '../features/game/widgets/production_commodity_breakdown_dialog.dart';
 import '../features/game/widgets/production_panel.dart';
 import '../features/game/widgets/production_panel_demo_data.dart';
@@ -45,6 +49,7 @@ import '../features/game/dialogue/ct_dialogue_view.dart';
 import '../features/game/dialogue/game_start_intro_overlay.dart';
 import '../features/game/dialogue/intervention_dialogue_overlay.dart';
 import '../features/game/dialogue/overture_dialogue_overlay.dart';
+import '../features/game/flame/game_map_corner_controls.dart';
 import '../features/game/flame/game_screen.dart';
 import '../features/game/flame/game_side_menu.dart';
 import '../features/game/flame/exit_confirm_dialog.dart';
@@ -92,6 +97,7 @@ part 'catalog_part3.dart';
 part 'catalog_part4.dart';
 part 'catalog_part5.dart';
 part 'catalog_part6.dart';
+part 'catalog_part7.dart';
 
 Unit? _unitByIdForCatalog(Game game, String unitId) {
   for (final u in game.worldState.oldWorld.units) {
@@ -204,6 +210,11 @@ List<WidgetbookNode> get _ctWidgetbookDirectories => [
   ...newGameLeaderSelectionDialogDirectories,
   ...shellScreenDirectories,
   ...gameScreenDirectories,
+  ...gameTopBarDirectories,
+  ...gameTabBarDirectories,
+  ...gameMapCornerControlsDirectories,
+  ...gameMapOptionsDialogDirectories,
+  ...playerTurnEventFeedCardDirectories,
   ...pauseMenuPanelDirectories,
   ...gameSideMenuDirectories,
   ...gameMapNarrowDetailOverlaySlotDirectories,
