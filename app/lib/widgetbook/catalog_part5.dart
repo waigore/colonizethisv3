@@ -208,13 +208,12 @@ List<WidgetbookNode> get gameMapNarrowDetailOverlaySlotDirectories => [
 ];
 
 /// Stories for the dark editorial-monocle theme primitives introduced by
-/// issue #2859 S1/S4/S5/S7/S8/S9/S10/S11/S12/S13 (`CtGradients`, `CtSlider`,
-/// `CtDialogShell`,
-/// `CtBrassDivider`, `CtToggleSwitch`, `CtSectionLabel`, `CtResourceCell`,
-/// `CtProgressBar`, `CtBackButton`, `CtTopBar`, `CtScreenShell`) and issue
-/// #2860 S1/S2/S4 (`CtCompassRose`, `CtMainMenuCollage`,
-/// `CtFleurDeLisOrnament`). SPEC/ui/pixel-art-ui-catalog.md § Editorial-monocle
-/// palette.
+/// issue #2859 S1/S3/S4/S5/S7/S8/S9/S10/S11/S12/S13 (`CtGradients`, `CtPanel`,
+/// `CtSlider`, `CtDialogShell`, `CtBrassDivider`, `CtToggleSwitch`,
+/// `CtSectionLabel`, `CtResourceCell`, `CtProgressBar`, `CtBackButton`,
+/// `CtTopBar`, `CtScreenShell`) and issue #2860 S1/S2/S4 (`CtCompassRose`,
+/// `CtMainMenuCollage`, `CtFleurDeLisOrnament`).
+/// SPEC/ui/pixel-art-ui-catalog.md § Editorial-monocle palette.
 List<WidgetbookNode> get ctDarkThemePrimitiveDirectories => [
   WidgetbookFolder(
     name: 'Ct- Dark Theme Primitives',
@@ -222,6 +221,10 @@ List<WidgetbookNode> get ctDarkThemePrimitiveDirectories => [
       WidgetbookUseCase(
         name: 'CtGradients — token swatches',
         builder: (context) => _CtGradientsStory(),
+      ),
+      WidgetbookUseCase(
+        name: 'CtPanel — dark editorial-monocle banded chrome',
+        builder: (context) => const _CtPanelStory(),
       ),
       WidgetbookUseCase(
         name: 'CtDialogShell — dark frame',
@@ -425,6 +428,53 @@ class _CtSliderStoryState extends State<_CtSliderStory> {
             divisions: 10,
             comfortHeadroomActive: true,
             onChanged: (_) {},
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _CtPanelStory extends StatelessWidget {
+  const _CtPanelStory();
+
+  @override
+  Widget build(BuildContext context) {
+    return _CtDarkPrimitiveScaffold(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        mainAxisSize: MainAxisSize.min,
+        children: const [
+          Text(
+            // ignore: avoid_hardcoded_strings_in_widgets
+            'Default padding',
+            style: TextStyle(color: Colors.white70),
+          ),
+          SizedBox(height: 8),
+          CtPanel(
+            child: Text(
+              // ignore: avoid_hardcoded_strings_in_widgets
+              'Panel body — top/bottom 1.5 px --accent-dim strips and panelGradient background per Refs #2859 R2 / S3.',
+            ),
+          ),
+          SizedBox(height: 24),
+          Text(
+            // ignore: avoid_hardcoded_strings_in_widgets
+            'Zero padding (full-bleed body)',
+            style: TextStyle(color: Colors.white70),
+          ),
+          SizedBox(height: 8),
+          CtPanel(
+            padding: EdgeInsets.zero,
+            child: SizedBox(
+              height: 80,
+              child: Center(
+                child: Text(
+                  // ignore: avoid_hardcoded_strings_in_widgets
+                  'EdgeInsets.zero — strips still anchor top and bottom',
+                ),
+              ),
+            ),
           ),
         ],
       ),

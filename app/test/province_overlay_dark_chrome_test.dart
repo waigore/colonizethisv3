@@ -43,14 +43,13 @@ Widget _darkOverlay({
 void main() {
   suppressLogsForTests();
 
-  // Intentionally do not stub the `flutter/assets` bundle in this test
-  // file: with no asset payload, the `NineTileBoxWidget` inside `CtPanel`
-  // falls through to its `errorBuilder` path (`_FallbackPanel` `Container`
-  // chrome) synchronously, which means the overlay header still renders
-  // for chrome assertions while avoiding the asynchronous image-decode
-  // pipeline that otherwise leaks `Codec failed to produce an image`
-  // exceptions past the test body. The Ct fallback panel chrome is
-  // explicitly handled by `_FallbackPanel` in `chrome/ct_panel.dart`.
+  // No asset bundle stubbing is required: per Refs #2859 R2 / S3, `CtPanel`
+  // paints its dark editorial-monocle chrome programmatically from
+  // `CtGradients.panelGradient` and 1.5 px `--accent-dim` border strips, so
+  // it no longer depends on the legacy `ui_button_nine_patch.png` parchment
+  // asset or the asynchronous image-decode pipeline that previously leaked
+  // `Codec failed to produce an image` warnings in this test. The dark-chrome
+  // contract for the panel is pinned by `ct_panel_dark_chrome_test.dart`.
 
   group(
     'ProvinceSeaZoneDetailOverlay dark editorial-monocle chrome (SPEC § Dark-theme chrome)',
