@@ -938,8 +938,12 @@ abstract class AppLocalizations {
   /// Monospace RP progress label rendered next to the slot progress bar (Refs #2864 S3).
   String technologyPanel_slotRpProgress(int progress, int cost);
 
-  /// Bottom-sheet row subtitle for selectable technology.
+  /// Choose-tech dialog row subtitle (mono / muted) for a selectable technology.
   String technologyPanel_pickSubtitle(String era, String category, int cost);
+
+  /// Title row of the Choose-tech dialog opened from a slot card.
+  /// Uses an em dash between 'Choose Tech' and the slot number.
+  String technologyPanel_chooseTechDialogTitle(int slot);
 
   /// Snackbar shown when a research slot assignment is removed.
   String get technologyPanel_slotCancelled;

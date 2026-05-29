@@ -1686,7 +1686,7 @@
   },
   "technologyPanel_pickSubtitle": "Era {era} - {category} - {cost} RP",
   "@technologyPanel_pickSubtitle": {
-    "description": "Bottom-sheet row subtitle for selectable technology.",
+    "description": "Choose-tech dialog row subtitle (mono / muted) for a selectable technology.",
     "placeholders": {
       "era": {
         "type": "String"
@@ -1695,6 +1695,15 @@
         "type": "String"
       },
       "cost": {
+        "type": "int"
+      }
+    }
+  },
+  "technologyPanel_chooseTechDialogTitle": "Choose Tech \u2014 Slot {slot}",
+  "@technologyPanel_chooseTechDialogTitle": {
+    "description": "Title row of the Choose-tech dialog opened from a slot card. Uses an em dash between 'Choose Tech' and the slot number.",
+    "placeholders": {
+      "slot": {
         "type": "int"
       }
     }
