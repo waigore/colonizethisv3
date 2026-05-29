@@ -938,8 +938,12 @@ abstract class AppLocalizations {
   /// Monospace RP progress label rendered next to the slot progress bar (Refs #2864 S3).
   String technologyPanel_slotRpProgress(int progress, int cost);
 
-  /// Bottom-sheet row subtitle for selectable technology.
+  /// Choose-tech dialog row subtitle (mono / muted) for a selectable technology.
   String technologyPanel_pickSubtitle(String era, String category, int cost);
+
+  /// Title row of the Choose-tech dialog opened from a slot card.
+  /// Uses an em dash between 'Choose Tech' and the slot number.
+  String technologyPanel_chooseTechDialogTitle(int slot);
 
   /// Snackbar shown when a research slot assignment is removed.
   String get technologyPanel_slotCancelled;
@@ -1126,6 +1130,12 @@ abstract class AppLocalizations {
 
   /// Back button on game setup screen.
   String get gameSetup_back;
+
+  /// Cancel affordance in the Game Setup action row (Refs #2868 R12; pixelArt variant). Returns the user to the main menu by invoking onBack.
+  String get gameSetup_cancel;
+
+  /// Label rendered beside the CtBackButton glyph below the action row in the Game Setup pixelArt variant (Refs #2868 R14). Both the glyph and the label tap target invoke onBack.
+  String get gameSetup_backToMainMenu;
 
   /// Label for the human player slot on game setup.
   String get gameSetup_player1You;

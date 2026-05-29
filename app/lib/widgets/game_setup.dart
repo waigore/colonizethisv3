@@ -5,6 +5,7 @@ import '../config/constants.dart';
 import '../config/editorial_monocle_palette.dart';
 import '../config/ui_screen_ids.dart';
 import '../l10n/l10n.dart';
+import 'ct_back_button.dart';
 import 'ct_brass_divider.dart';
 import 'ct_dropdown.dart';
 import 'ct_gradients.dart';
@@ -151,18 +152,11 @@ class _CtGameSetupState extends State<CtGameSetup> {
                       ),
                     ),
                     const SizedBox(height: 24),
-                    _GameSetupMenuButton(
-                      label: l10n.gameSetup_startGame,
+                    _GameSetupActionsAndBackRegion(
                       variant: widget.variant,
-                      enabled: _startEnabled,
-                      onPressed: _startEnabled ? _onStartGame : null,
-                    ),
-                    const SizedBox(height: 12),
-                    _GameSetupMenuButton(
-                      label: l10n.gameSetup_back,
-                      variant: widget.variant,
-                      enabled: true,
-                      onPressed: widget.onBack,
+                      startEnabled: _startEnabled,
+                      onStart: _startEnabled ? _onStartGame : null,
+                      onBack: widget.onBack,
                     ),
                     const SizedBox(height: 24),
                   ],
@@ -409,6 +403,316 @@ class _GameSetupMenuButton extends StatelessWidget {
         onPressed: onPressed,
         enabled: enabled && onPressed != null,
         child: Text(label),
+      ),
+    );
+  }
+}
+
+/// Action affordance region for Game Setup: Cancel + Start Game row plus the
+/// "Back to Main Menu" link below (Refs #2868 S3 / R12–R14).
+///
+/// Splits behaviour by variant per `SPEC/ui/game-setup.md`:
+///
+/// - `pixelArt` mirrors the canonical action layout in
+///   `SPEC/ui/mockups/SHEL20001-game-setup.html`: a single horizontal `Row`
+///   placing the bespoke [_GameSetupCancelButton] on the left and the
+///   `CtNinePatchButton`-backed Start Game on the right at equal flex, with
+///   a `_GameSetupBackLink` (CtBackButton glyph + label) rendered beneath.
+/// - `plain` preserves the pre-#2868 single-column stack: full-width Start
+///   Game above a full-width Back button, both rendered via the existing
+///   [_GameSetupMenuButton]. The dual back affordance (Cancel + Back link)
+///   is gated to the `pixelArt` chrome per the SPEC AC block.
+///
+/// Both the Cancel button and the back-link region invoke [onBack]; the
+/// SPEC pins this shared destination because the mockup wires both
+/// `.cancel-btn` and the `.back-link` text to `handleCancel()`.
+class _GameSetupActionsAndBackRegion extends StatelessWidget {
+  const _GameSetupActionsAndBackRegion({
+    required this.variant,
+    required this.startEnabled,
+    required this.onStart,
+    required this.onBack,
+  });
+
+  final GameSetupVariant variant;
+  final bool startEnabled;
+  final VoidCallback? onStart;
+  final VoidCallback onBack;
+
+  /// Horizontal gap between Cancel and Start Game in the pixelArt action row.
+  /// Matches `SPEC/ui/mockups/SHEL20001-game-setup.html` § `.actions`
+  /// `gap:clamp(8px,1.5vw,12px)` normalised at 12 dp for the Flutter scale.
+  static const double actionRowGap = 12;
+
+  /// Vertical gap between the action row and the back-link region below.
+  /// Mirrors the mockup's `.back-link` `margin-top:clamp(10px,2vh,16px)`
+  /// normalised at the centre of that range.
+  static const double actionRowToBackLinkGap = 12;
+
+  /// Vertical gap between Start Game and Back in the plain-variant stack.
+  /// Preserves the pre-#2868 spacing so existing plain-variant tests are
+  /// unaffected by the pixelArt-only action-row introduction.
+  static const double plainVariantStackGap = 12;
+
+  @override
+  Widget build(BuildContext context) {
+    final AppLocalizations l10n = appL10n(context);
+    if (variant != GameSetupVariant.pixelArt) {
+      return Column(
+        mainAxisSize: MainAxisSize.min,
+        children: <Widget>[
+          _GameSetupMenuButton(
+            label: l10n.gameSetup_startGame,
+            variant: variant,
+            enabled: startEnabled,
+            onPressed: onStart,
+          ),
+          const SizedBox(height: plainVariantStackGap),
+          _GameSetupMenuButton(
+            label: l10n.gameSetup_back,
+            variant: variant,
+            enabled: true,
+            onPressed: onBack,
+          ),
+        ],
+      );
+    }
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: <Widget>[
+        IntrinsicHeight(
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: <Widget>[
+              Expanded(
+                child: _GameSetupCancelButton(
+                  label: l10n.gameSetup_cancel,
+                  onPressed: onBack,
+                ),
+              ),
+              const SizedBox(width: actionRowGap),
+              Expanded(
+                child: CtNinePatchButton(
+                  onPressed: onStart,
+                  enabled: startEnabled && onStart != null,
+                  child: Text(l10n.gameSetup_startGame),
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: actionRowToBackLinkGap),
+        _GameSetupBackLink(
+          label: l10n.gameSetup_backToMainMenu,
+          onPressed: onBack,
+        ),
+      ],
+    );
+  }
+}
+
+/// Bespoke Cancel affordance for the Game Setup pixelArt action row
+/// (Refs #2868 R12).
+///
+/// Painted as a tappable [Container] with the dark-theme "cancel-btn" surface
+/// described in `SPEC/ui/mockups/SHEL20001-game-setup.html` § `.cancel-btn`:
+/// a top-to-bottom gradient (`--surface` → `--bg-deep`), a 1 px
+/// `EditorialMonoclePalette.border` outline on every side, a localized label
+/// painted in `EditorialMonoclePalette.muted`, and a 48 dp minimum tap-target
+/// height. Hover lifts the gradient (`--surface-lite` → `--surface`) and
+/// recolours the label to `EditorialMonoclePalette.accentBright` per the
+/// mockup's `.cancel-btn:hover` rule.
+///
+/// All colours resolve from [EditorialMonoclePalette] tokens; no hard-coded
+/// hex literals. Reusing `CtNinePatchButton` is not appropriate here because
+/// the Cancel chrome must visually subordinate to the Start Game primary
+/// surface (no brass corner brackets, no engraved accent text); a bespoke
+/// widget keeps the visual hierarchy from the mockup intact.
+class _GameSetupCancelButton extends StatefulWidget {
+  const _GameSetupCancelButton({required this.label, required this.onPressed});
+
+  final String label;
+  final VoidCallback onPressed;
+
+  /// Minimum tap-target height (Flutter `>= 44 dp` accessibility floor; the
+  /// mockup `.setup-btn` rule pins `min-height:44px`, lifted here to 48 dp
+  /// to match `CtNinePatchButton.minHeight` so the Cancel surface sits flush
+  /// against Start Game in the action row).
+  static const double minHeight = 48;
+
+  /// 1 px neutral outline thickness mirroring the mockup's
+  /// `.cancel-btn { border-top:1px solid var(--border); border-bottom:1px solid var(--border); }`
+  /// rule. The bespoke widget paints all four sides for visual parity with
+  /// the surrounding pixelArt slot-row chrome.
+  static const double borderThickness = 1;
+
+  /// Hover/press fade duration shared with `CtBackButton` and
+  /// `CtNinePatchButton` so action-row hovers feel uniform.
+  static const Duration animationDuration = Duration(milliseconds: 120);
+
+  @override
+  State<_GameSetupCancelButton> createState() => _GameSetupCancelButtonState();
+}
+
+class _GameSetupCancelButtonState extends State<_GameSetupCancelButton> {
+  bool _hovered = false;
+
+  void _setHovered(bool value) {
+    if (_hovered == value) return;
+    setState(() => _hovered = value);
+  }
+
+  LinearGradient get _surfaceGradient {
+    if (_hovered) {
+      return LinearGradient(
+        begin: Alignment.topCenter,
+        end: Alignment.bottomCenter,
+        colors: <Color>[
+          EditorialMonoclePalette.surfaceLite,
+          EditorialMonoclePalette.surface,
+        ],
+      );
+    }
+    return LinearGradient(
+      begin: Alignment.topCenter,
+      end: Alignment.bottomCenter,
+      colors: <Color>[
+        EditorialMonoclePalette.surface,
+        EditorialMonoclePalette.bgDeep,
+      ],
+    );
+  }
+
+  Color get _labelColor =>
+      _hovered
+          ? EditorialMonoclePalette.accentBright
+          : EditorialMonoclePalette.muted;
+
+  @override
+  Widget build(BuildContext context) {
+    final ThemeData theme = Theme.of(context);
+    final TextStyle baseStyle =
+        theme.textTheme.titleSmall ??
+        theme.textTheme.bodyLarge ??
+        const TextStyle();
+    return MouseRegion(
+      onEnter: (_) => _setHovered(true),
+      onExit: (_) => _setHovered(false),
+      cursor: SystemMouseCursors.click,
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: widget.onPressed,
+          child: AnimatedContainer(
+            duration: _GameSetupCancelButton.animationDuration,
+            curve: Curves.easeOut,
+            constraints: const BoxConstraints(
+              minHeight: _GameSetupCancelButton.minHeight,
+            ),
+            decoration: BoxDecoration(
+              gradient: _surfaceGradient,
+              border: Border.all(
+                color: EditorialMonoclePalette.border,
+                width: _GameSetupCancelButton.borderThickness,
+              ),
+            ),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            alignment: Alignment.center,
+            child: Text(
+              widget.label,
+              key: const ValueKey<String>('gameSetupCancelLabel'),
+              style: baseStyle.copyWith(color: _labelColor),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Back-link region rendered below the pixelArt action row (Refs #2868 R14).
+///
+/// Combines a [CtBackButton] glyph (28 × 28 dp tap target, 16 × 16 dp
+/// chevron-left from `Refs #2859` R11) with a localized text label rendered
+/// in `EditorialMonoclePalette.muted`. Tapping either the glyph or the text
+/// invokes [onPressed] (which Game Setup wires to its `onBack` callback) so
+/// the back link mirrors the mockup's `.back-link` affordance — the
+/// secondary, non-button back affordance below the primary action row.
+///
+/// The widget is intentionally not gated on `enabled` because the SPEC AC
+/// pins the back affordance as always tappable (including during the
+/// `loading` state, where the action row is dimmed by the
+/// `_GameSetupLoadingRegion` overlay and the back link sits outside that
+/// region so it remains reachable per `SPEC/ui/game-setup.md` Loading AC).
+class _GameSetupBackLink extends StatefulWidget {
+  const _GameSetupBackLink({required this.label, required this.onPressed});
+
+  final String label;
+  final VoidCallback onPressed;
+
+  /// Horizontal gap between the [CtBackButton] glyph and the label text.
+  /// Tuned to match the mockup's `.back-link` letter-spacing rhythm so the
+  /// glyph reads as part of the link rather than a separate icon button.
+  static const double glyphToLabelGap = 6;
+
+  /// Hover fade duration shared with `CtBackButton` and the
+  /// `_GameSetupCancelButton` so the back-link label hover feels uniform
+  /// alongside the action-row affordances.
+  static const Duration animationDuration = Duration(milliseconds: 120);
+
+  @override
+  State<_GameSetupBackLink> createState() => _GameSetupBackLinkState();
+}
+
+class _GameSetupBackLinkState extends State<_GameSetupBackLink> {
+  bool _hovered = false;
+
+  void _setHovered(bool value) {
+    if (_hovered == value) return;
+    setState(() => _hovered = value);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final ThemeData theme = Theme.of(context);
+    final TextStyle baseStyle =
+        theme.textTheme.labelLarge ??
+        theme.textTheme.bodyMedium ??
+        const TextStyle();
+    final Color labelColor =
+        _hovered
+            ? EditorialMonoclePalette.accentBright
+            : EditorialMonoclePalette.muted;
+    return Center(
+      child: MouseRegion(
+        onEnter: (_) => _setHovered(true),
+        onExit: (_) => _setHovered(false),
+        cursor: SystemMouseCursors.click,
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: <Widget>[
+            CtBackButton(
+              key: const ValueKey<String>('gameSetupBackLinkGlyph'),
+              onPressed: widget.onPressed,
+              semanticLabel: widget.label,
+            ),
+            const SizedBox(width: _GameSetupBackLink.glyphToLabelGap),
+            GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onTap: widget.onPressed,
+              child: AnimatedDefaultTextStyle(
+                duration: _GameSetupBackLink.animationDuration,
+                curve: Curves.easeOut,
+                style: baseStyle.copyWith(color: labelColor),
+                child: Text(
+                  widget.label,
+                  key: const ValueKey<String>('gameSetupBackLinkLabel'),
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
