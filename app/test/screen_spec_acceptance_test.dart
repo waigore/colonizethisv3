@@ -14,8 +14,41 @@ import 'package:colonizethis_app/features/game/widgets/chrome/ct_nine_patch_butt
 import 'package:colonizethis_app/widgets/ct_brass_divider.dart';
 import 'package:colonizethis_app/widgets/ct_compass_rose.dart';
 import 'package:colonizethis_app/widgets/ct_fleur_de_lis_ornament.dart';
+import 'package:colonizethis_app/widgets/ct_gradients.dart';
 import 'package:colonizethis_app/widgets/ct_main_menu_collage.dart';
 import 'package:colonizethis_app/widgets/main_menu.dart';
+
+/// Locates the `CtNinePatchButton` ancestor of the menu label [label] so
+/// tests can drive press gestures against the wood-panel surface itself.
+Finder _woodPanelButtonFinderFor(String label) {
+  return find.ancestor(
+    of: find.text(label),
+    matching: find.byType(CtNinePatchButton),
+  );
+}
+
+/// Returns the gradient-painting `DecoratedBox` painted by the
+/// `CtNinePatchButton` whose label is [label]. The button paints exactly
+/// one such box (the surface), so the finder is unambiguous.
+DecoratedBox _findGradientSurfaceFor(WidgetTester tester, String label) {
+  final Finder boxes = find.descendant(
+    of: _woodPanelButtonFinderFor(label),
+    matching: find.byWidgetPredicate(
+      (Widget w) =>
+          w is DecoratedBox &&
+          w.decoration is BoxDecoration &&
+          (w.decoration as BoxDecoration).gradient != null,
+    ),
+  );
+  expect(
+    boxes,
+    findsAtLeastNWidgets(1),
+    reason:
+        'CtNinePatchButton for "$label" must paint a gradient surface '
+        'DecoratedBox',
+  );
+  return tester.widget<DecoratedBox>(boxes.first);
+}
 
 void main() {
   suppressLogsForTests();
@@ -449,6 +482,164 @@ void main() {
           reason:
               'Footer Quit chip is pixelArt-only per Variant rendering table',
         );
+      },
+    );
+
+    testWidgets(
+      'AC 8 (pixelArt) wood-panel button rest gradient: New Game button '
+      'paints the three-stop CtGradients.woodPanelButtonGradient '
+      '(--surface-lite → --surface → --bg-deep) in the rest state',
+      (WidgetTester tester) async {
+        await tester.pumpWidget(
+          buildMainMenu(
+            variant: MainMenuVariant.pixelArt,
+            onNewGame: () {},
+            onLoadGame: () {},
+            onSettings: () {},
+            onQuit: () {},
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        final DecoratedBox surface = _findGradientSurfaceFor(
+          tester,
+          'New Game',
+        );
+        final BoxDecoration decoration = surface.decoration as BoxDecoration;
+        final LinearGradient gradient = decoration.gradient! as LinearGradient;
+        expect(
+          gradient.colors,
+          CtGradients.woodPanelButtonGradient.colors,
+          reason:
+              'pixelArt wood-panel buttons must paint the three-stop '
+              'CtGradients.woodPanelButtonGradient at rest.',
+        );
+        expect(gradient.stops, CtGradients.woodPanelButtonGradient.stops);
+      },
+    );
+
+    testWidgets(
+      'AC 8 (pixelArt) wood-panel button pressed gradient inversion: while '
+      'a wood-panel button is held, the surface gradient swaps to '
+      'CtGradients.woodPanelButtonGradientPressed; after release the '
+      'gradient reverts to the rest CtGradients.woodPanelButtonGradient',
+      (WidgetTester tester) async {
+        await tester.pumpWidget(
+          buildMainMenu(
+            variant: MainMenuVariant.pixelArt,
+            onNewGame: () {},
+            onLoadGame: () {},
+            onSettings: () {},
+            onQuit: () {},
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        final Finder newGameButton = _woodPanelButtonFinderFor('New Game');
+        final Offset center = tester.getCenter(newGameButton);
+        final TestGesture gesture = await tester.startGesture(center);
+        await tester.pump();
+        await tester.pumpAndSettle();
+
+        final DecoratedBox pressed = _findGradientSurfaceFor(
+          tester,
+          'New Game',
+        );
+        final BoxDecoration pressedDecoration =
+            pressed.decoration as BoxDecoration;
+        final LinearGradient pressedGradient =
+            pressedDecoration.gradient! as LinearGradient;
+        expect(
+          pressedGradient.colors,
+          CtGradients.woodPanelButtonGradientPressed.colors,
+          reason:
+              'Pressed wood-panel button must paint the inverted gradient '
+              '(--bg-deep → --surface → --surface-lite).',
+        );
+
+        await gesture.up();
+        await tester.pumpAndSettle();
+
+        final DecoratedBox released = _findGradientSurfaceFor(
+          tester,
+          'New Game',
+        );
+        final BoxDecoration releasedDecoration =
+            released.decoration as BoxDecoration;
+        final LinearGradient releasedGradient =
+            releasedDecoration.gradient! as LinearGradient;
+        expect(
+          releasedGradient.colors,
+          CtGradients.woodPanelButtonGradient.colors,
+          reason:
+              'Wood-panel button surface must revert to the rest gradient '
+              'once the press gesture completes.',
+        );
+      },
+    );
+
+    testWidgets(
+      'AC 8 negative (plain): pressing a Quit CtNinePatchButton in the plain '
+      'variant does not swap its surface gradient (no pressedGradient '
+      'configured for the legacy 2-stop CtNinePatchButton)',
+      (WidgetTester tester) async {
+        await tester.pumpWidget(
+          MaterialApp(
+            theme: AppThemes.editorialMonocle,
+            home: CtMainMenu(
+              variant: MainMenuVariant.plain,
+              state: MainMenuState.default_,
+              version: formatDebugAwareVersion('v1.0.0'),
+              onNewGame: () {},
+              onLoadGame: () {},
+              onSettings: () {},
+              onQuit: () {},
+            ),
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        final DecoratedBox restSurface = _findGradientSurfaceFor(
+          tester,
+          'Quit',
+        );
+        final BoxDecoration restDecoration =
+            restSurface.decoration as BoxDecoration;
+        final LinearGradient restGradient =
+            restDecoration.gradient! as LinearGradient;
+        expect(
+          restGradient.colors,
+          CtGradients.buttonGradient.colors,
+          reason:
+              'Plain-variant Quit button must paint the canonical 2-stop '
+              'CtGradients.buttonGradient at rest.',
+        );
+
+        final Offset center = tester.getCenter(
+          _woodPanelButtonFinderFor('Quit'),
+        );
+        final TestGesture gesture = await tester.startGesture(center);
+        await tester.pump();
+        await tester.pumpAndSettle();
+
+        final DecoratedBox pressed = _findGradientSurfaceFor(
+          tester,
+          'Quit',
+        );
+        final BoxDecoration pressedDecoration =
+            pressed.decoration as BoxDecoration;
+        final LinearGradient pressedGradient =
+            pressedDecoration.gradient! as LinearGradient;
+        expect(
+          pressedGradient.colors,
+          CtGradients.buttonGradient.colors,
+          reason:
+              'Plain-variant CtNinePatchButton has no pressedGradient and '
+              'must keep the canonical 2-stop gradient while held.',
+        );
+
+        await gesture.up();
+        await tester.pumpAndSettle();
       },
     );
 

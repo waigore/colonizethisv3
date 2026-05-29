@@ -6,6 +6,7 @@ import '../config/ui_screen_ids.dart';
 import 'ct_brass_divider.dart';
 import 'ct_compass_rose.dart';
 import 'ct_fleur_de_lis_ornament.dart';
+import 'ct_gradients.dart';
 import 'ct_main_menu_collage.dart';
 import 'ct_nine_patch_button.dart';
 
@@ -715,6 +716,8 @@ class _PixelArtButtonState extends State<_PixelArtButton>
               onPressed: widget.enabled ? widget.onPressed : null,
               enabled: widget.enabled,
               minHeight: 48,
+              gradient: CtGradients.woodPanelButtonGradient,
+              pressedGradient: CtGradients.woodPanelButtonGradientPressed,
               child: Text(
                 widget.label,
                 style: TextStyle(
