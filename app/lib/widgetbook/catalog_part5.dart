@@ -938,66 +938,6 @@ class _CtDropdownStoryState extends State<_CtDropdownStory> {
   }
 }
 
-/// Showcases [CtDropdown] R5c selected-row highlight under the dark
-/// editorial-monocle theme. The story preselects a non-null value so
-/// opening the picker immediately demonstrates the `--accent-dim` tint
-/// + 1 dp `--accent` left-edge border on the row matching that value.
-/// See SPEC/ui/pixel-art-ui-catalog.md § Pixel-art component catalog
-/// (CtDropdown) and issue #2859 R5c / S6.
-class _CtDropdownSelectedRowStory extends StatefulWidget {
-  const _CtDropdownSelectedRowStory();
-
-  @override
-  State<_CtDropdownSelectedRowStory> createState() =>
-      _CtDropdownSelectedRowStoryState();
-}
-
-class _CtDropdownSelectedRowStoryState
-    extends State<_CtDropdownSelectedRowStory> {
-  static const List<String> _options = <String>[
-    // ignore: avoid_hardcoded_strings_in_widgets
-    'England',
-    // ignore: avoid_hardcoded_strings_in_widgets
-    'France',
-    // ignore: avoid_hardcoded_strings_in_widgets
-    'Spain',
-  ];
-
-  // ignore: avoid_hardcoded_strings_in_widgets
-  String? _value = 'France';
-
-  @override
-  Widget build(BuildContext context) {
-    return _CtDarkPrimitiveScaffold(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          const Text(
-            // ignore: avoid_hardcoded_strings_in_widgets
-            'Tap the trigger — the row matching the current value paints '
-            '--accent-dim tint + 1 dp --accent left edge (R5c); other rows '
-            'paint a transparent same-width left edge so the layout never '
-            'shifts.',
-            style: TextStyle(color: Colors.white70),
-          ),
-          const SizedBox(height: 12),
-          SizedBox(
-            width: 220,
-            child: CtDropdown<String>(
-              value: _value,
-              items: _options,
-              // ignore: avoid_hardcoded_strings_in_widgets
-              hint: 'Select nation',
-              onChanged: (v) => setState(() => _value = v),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
 /// Showcases the [CtMainMenuCollage] painter at full background scale
 /// (mirrors how `CtMainMenu` consumes it via `Positioned.fill`). The host
 /// uses the `editorialMonocle` scaffold color underneath so reviewers see
