@@ -16,12 +16,18 @@ import 'game_screen_shared.dart';
 /// chrome (`CtGradients.railButtonGradient` surface + 1 px `--border`
 /// outline with hover/pressed accent-dim shift) so the row reads as
 /// dark map chrome rather than the legacy white Material overlay.
+///
+/// Narrow layout (issue #2870 S3, `MediaQuery.size.width < kNarrowBreakpoint`):
+/// host constructs with `narrow: true`. Corner buttons compress to 24 × 24 dp
+/// and the horizontal gap tightens from 3 dp to 2 dp per
+/// `SPEC/ui/empire-overview.md` § Narrow corner-control measurements.
 class GameMapCornerControls extends StatelessWidget {
   const GameMapCornerControls({
     required this.onCycleBaseLayerDisplayMode,
     required this.onCenterOnHomeCapital,
     required this.onOpenMapDisplayOptions,
     this.homeToCapitalEnabled = true,
+    this.narrow = false,
     super.key,
   });
 
@@ -29,6 +35,10 @@ class GameMapCornerControls extends StatelessWidget {
   final VoidCallback onCenterOnHomeCapital;
   final VoidCallback onOpenMapDisplayOptions;
   final bool homeToCapitalEnabled;
+
+  /// When true, render the row at narrow-viewport measurements per
+  /// `SPEC/ui/mobile-adaptation.md` § In-game shell (issue #2870 S3).
+  final bool narrow;
 
   /// Side length of each corner control button. Matches mockup
   /// `.corner-btn` 32 × 32 px (`SPEC/ui/mockups/GAME10001-game-screen.html`).
@@ -44,9 +54,22 @@ class GameMapCornerControls extends StatelessWidget {
   /// `.corner-controls` `gap: 3px`.
   static const double rowGap = 3;
 
+  /// Side length of each corner control button under narrow layout
+  /// (mockup `.corner-btn @media (max-width:600px) { width:24px; height:24px }`;
+  /// authority: `SPEC/ui/mobile-adaptation.md` § In-game shell).
+  static const double narrowButtonSize = 24;
+
+  /// Horizontal gap between adjacent corner buttons under narrow layout
+  /// (tightened from 3 dp to match the compressed
+  /// `.corner-controls @media (max-width:600px) { left:2px; bottom:2px }`
+  /// chrome; authority: `SPEC/ui/empire-overview.md` § Narrow corner-control
+  /// measurements).
+  static const double narrowRowGap = 2;
+
   @override
   Widget build(BuildContext context) {
     final l10n = appL10n(context);
+    final gapWidth = narrow ? narrowRowGap : rowGap;
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -55,20 +78,23 @@ class GameMapCornerControls extends StatelessWidget {
           tooltip: l10n.mapCorner_tooltipBaseLayer,
           onTap: onCycleBaseLayerDisplayMode,
           assetPath: '${kAppIconAssetPrefix}ui_icon_layer_toggle.png',
+          narrow: narrow,
         ),
-        const SizedBox(width: rowGap),
+        SizedBox(width: gapWidth),
         _MapCornerIconButton(
           buttonKey: kHomeToCapitalButtonKey,
           tooltip: l10n.mapCorner_tooltipCenterCapital,
           onTap: homeToCapitalEnabled ? onCenterOnHomeCapital : null,
           assetPath: '${kAppIconAssetPrefix}ui_icon_home_capital.png',
+          narrow: narrow,
         ),
-        const SizedBox(width: rowGap),
+        SizedBox(width: gapWidth),
         _MapCornerIconButton(
           buttonKey: kMapDisplayOptionsButtonKey,
           tooltip: l10n.mapCorner_tooltipMapDisplayOptions,
           onTap: onOpenMapDisplayOptions,
           assetPath: '${kAppIconAssetPrefix}ui_icon_map_options.png',
+          narrow: narrow,
         ),
       ],
     );
@@ -94,12 +120,14 @@ class _MapCornerIconButton extends StatefulWidget {
     required this.tooltip,
     required this.onTap,
     required this.assetPath,
+    this.narrow = false,
   });
 
   final Key buttonKey;
   final String tooltip;
   final VoidCallback? onTap;
   final String assetPath;
+  final bool narrow;
 
   /// Animation duration for hover/press border/icon-color transitions.
   /// Matches the `.empire-btn` 120 ms convention used by
@@ -147,10 +175,13 @@ class _MapCornerIconButtonState extends State<_MapCornerIconButton> {
 
   @override
   Widget build(BuildContext context) {
+    final buttonSize = widget.narrow
+        ? GameMapCornerControls.narrowButtonSize
+        : GameMapCornerControls.buttonSize;
     final button = SizedBox(
       key: widget.buttonKey,
-      width: GameMapCornerControls.buttonSize,
-      height: GameMapCornerControls.buttonSize,
+      width: buttonSize,
+      height: buttonSize,
       child: Material(
         color: Colors.transparent,
         child: InkWell(
