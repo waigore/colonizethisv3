@@ -664,6 +664,109 @@ void main() {
       },
     );
 
+    // SPEC/ui/main-menu.md § Buttons region (scroll brackets) and
+    // Variant rendering — scroll-bracket gutters AC.
+    // Mockup: SPEC/ui/mockups/SHEL10002-main-menu.html
+    // .buttons-region::before / .buttons-region::after. Refs #2860 S5.
+    testWidgets(
+      'AC Variant rendering (pixelArt): scroll-bracket gutters flank the buttons region',
+      (WidgetTester tester) async {
+        await tester.pumpWidget(
+          buildMainMenu(
+            variant: MainMenuVariant.pixelArt,
+            onNewGame: () {},
+            onLoadGame: () {},
+            onSettings: () {},
+            onQuit: () {},
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        final Finder leftBracket = find.byKey(
+          const Key(kMainMenuScrollBracketLeftKey),
+        );
+        final Finder rightBracket = find.byKey(
+          const Key(kMainMenuScrollBracketRightKey),
+        );
+        expect(leftBracket, findsOneWidget);
+        expect(rightBracket, findsOneWidget);
+
+        // Both brackets share a common Stack ancestor (the buttons-region
+        // stack); the same Stack is therefore an ancestor of each bracket.
+        final Finder leftStackAncestors = find.ancestor(
+          of: leftBracket,
+          matching: find.byType(Stack),
+        );
+        final Finder rightStackAncestors = find.ancestor(
+          of: rightBracket,
+          matching: find.byType(Stack),
+        );
+        final Set<Element> leftStacks = leftStackAncestors
+            .evaluate()
+            .toSet();
+        final Set<Element> rightStacks = rightStackAncestors
+            .evaluate()
+            .toSet();
+        expect(
+          leftStacks.intersection(rightStacks).isNotEmpty,
+          isTrue,
+          reason:
+              'left and right brackets must share a buttons-region Stack ancestor',
+        );
+      },
+    );
+
+    testWidgets(
+      'AC Variant rendering (plain): no scroll-bracket gutters (negative)',
+      (WidgetTester tester) async {
+        await tester.pumpWidget(
+          buildMainMenu(
+            onNewGame: () {},
+            onLoadGame: () {},
+            onSettings: () {},
+            onQuit: () {},
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        expect(
+          find.byKey(const Key(kMainMenuScrollBracketLeftKey)),
+          findsNothing,
+        );
+        expect(
+          find.byKey(const Key(kMainMenuScrollBracketRightKey)),
+          findsNothing,
+        );
+      },
+    );
+
+    testWidgets(
+      'AC Variant rendering (pixelArt + resumeGameVisible): scroll brackets still flank the resized buttons region',
+      (WidgetTester tester) async {
+        await tester.pumpWidget(
+          buildMainMenu(
+            variant: MainMenuVariant.pixelArt,
+            resumeGameVisible: true,
+            onResumeGame: () {},
+            onNewGame: () {},
+            onLoadGame: () {},
+            onSettings: () {},
+            onQuit: () {},
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        expect(
+          find.byKey(const Key(kMainMenuScrollBracketLeftKey)),
+          findsOneWidget,
+        );
+        expect(
+          find.byKey(const Key(kMainMenuScrollBracketRightKey)),
+          findsOneWidget,
+        );
+      },
+    );
+
     // SPEC/ui/main-menu.md § Responsive rules; SPEC/ui/mockups/SHEL10002-main-menu.html
     // `@media (max-width: 430px)`. Refs #2870 S6.
     Future<void> pumpAtSize(
