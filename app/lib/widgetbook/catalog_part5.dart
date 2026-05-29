@@ -271,6 +271,10 @@ List<WidgetbookNode> get ctDarkThemePrimitiveDirectories => [
         builder: (context) => const _CtDropdownStory(),
       ),
       WidgetbookUseCase(
+        name: 'CtDropdown — selected-row highlight',
+        builder: (context) => const _CtDropdownSelectedRowStory(),
+      ),
+      WidgetbookUseCase(
         name: 'CtCompassRose — size sweep',
         builder: (context) => _CtCompassRoseStory(),
       ),
