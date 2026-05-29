@@ -25,6 +25,7 @@ jobs:
     outputs:
       tests: ${{ steps.filter.outputs.tests }}
       opencode_scope: ${{ steps.filter.outputs.opencode_scope }}
+      packages_to_test: ${{ steps.test_plan.outputs.packages }}
     steps:
       - name: Checkout
         uses: actions/checkout@v6
@@ -60,6 +61,34 @@ jobs:
               - '!.vscode/**'
               - '!.idea/**'
               - '!.husky/**'
+            # Per-package change detection for transitive-downstream selective execution.
+            # Used by compute_package_test_plan.py → packages_to_test output.
+            pkg_models:
+              - 'packages/colonizethis_models/**'
+            pkg_data:
+              - 'packages/colonizethis_data/**'
+            pkg_save:
+              - 'packages/colonizethis_save/**'
+            pkg_map:
+              - 'packages/colonizethis_map/**'
+            pkg_logic:
+              - 'packages/colonizethis_logic/**'
+            pkg_ai:
+              - 'packages/colonizethis_ai/**'
+
+      - name: Compute transitive downstream test plan
+        id: test_plan
+        if: steps.filter.outputs.tests == 'true'
+        run: |
+          PLAN=$(python3 tool/compute_package_test_plan.py \
+            --changed-models="${{ steps.filter.outputs.pkg_models }}" \
+            --changed-data="${{ steps.filter.outputs.pkg_data }}" \
+            --changed-save="${{ steps.filter.outputs.pkg_save }}" \
+            --changed-map="${{ steps.filter.outputs.pkg_map }}" \
+            --changed-logic="${{ steps.filter.outputs.pkg_logic }}" \
+            --changed-ai="${{ steps.filter.outputs.pkg_ai }}" \
+            | python3 -c "import sys,json; print(','.join(json.load(sys.stdin)))")
+          echo "packages=$PLAN" >> "$GITHUB_OUTPUT"
   # Resolved pub cache + .dart_tool + gen-l10n; flutter analyze gate; then pack for shards (--no-pub).
   # `app_build_linux` reuses the same artifact to compile the Linux desktop target (release), catching
   # linker/gen-l10n issues that `flutter analyze` alone can miss.
@@ -297,7 +326,7 @@ jobs:
     needs: changes
     if: always() && needs.changes.result == 'success'
     runs-on: ubuntu-latest
-    timeout-minutes: 90
+    timeout-minutes: 25
     steps:
       - name: Skip when no test-relevant paths changed
         if: needs.changes.outputs.tests != 'true'
@@ -323,11 +352,15 @@ jobs:
         if: needs.changes.outputs.tests == 'true'
         run: dart pub get
 
+      - name: Package test runner regression checks (issue #2957)
+        if: needs.changes.outputs.tests == 'true'
+        run: bash tool/test_run_package_tests.sh
+
       - name: Package tests and coverage gates
         if: needs.changes.outputs.tests == 'true'
         env:
           SUPPRESS_IMAGE_VIEWER: "1"
-          PACKAGE_TEST_JOBS: "2"
+          PACKAGES_TO_TEST: ${{ needs.changes.outputs.packages_to_test }}
         run: bash tool/run_package_tests.sh
 
   quality:
