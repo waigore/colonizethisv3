@@ -8,10 +8,11 @@
 //    `noSaves` state) at exactly `kMinViewportWidth × 640` (320 × 640 dp) and
 //    assert no `RenderFlex` overflow exceptions surface and every visible
 //    `CtNinePatchButton` reports a rendered height ≥ `kMinTouchTargetSize`.
-//  * Render `CtGameSetup` (`plain` + `pixelArt` variants) at the same minimum
-//    viewport and assert the screen pumps without exceptions and the six
-//    player-slot rows stack vertically per § 4 Game Setup (the narrow
-//    `< 500 dp` rule applies trivially at 320 dp).
+//  * Render `CtGameSetup` (`plain` + `pixelArt` variants × `default_` +
+//    `loading` states) at the same minimum viewport and assert the screen
+//    pumps without exceptions and the six player-slot rows stack vertically
+//    per § 4 Game Setup (the narrow `< 500 dp` rule applies trivially at
+//    320 dp).
 //  * Include negative pins that intentionally render at a wide viewport so a
 //    regression in the host overflow detection itself would be caught.
 //
@@ -92,17 +93,33 @@ Widget _wrapGameSetup({
 /// `FlutterError.onError` channel, which `WidgetTester` collects through
 /// `takeException`. This is the same contract several existing tests in
 /// the repo rely on (see `unit_panels_widgetbook_dark_chrome_test.dart`).
+///
+/// When [settleAnimations] is `true` (default) the helper drives
+/// `pumpAndSettle()` to completion. When `false` it pumps a small finite
+/// number of frames instead so screens with **continuous** animations
+/// (e.g. the `CtGameSetup` `loading` state with its always-spinning
+/// loading indicator) can still be exercised against the layout overflow
+/// contract without the framework's settle-loop timing out.
 Future<void> _pumpAtSize(
   WidgetTester tester,
   Widget screen, {
   required Size size,
+  bool settleAnimations = true,
 }) async {
   addTearDown(() => tester.binding.setSurfaceSize(null));
   await tester.binding.setSurfaceSize(size);
   await tester.pumpWidget(
     MediaQuery(data: MediaQueryData(size: size), child: screen),
   );
-  await tester.pumpAndSettle();
+  if (settleAnimations) {
+    await tester.pumpAndSettle();
+  } else {
+    // Two extra frames are enough for the layout pass and any one-frame
+    // post-build microtasks to surface a `RenderFlex` overflow exception
+    // through `WidgetTester.takeException()`.
+    await tester.pump();
+    await tester.pump();
+  }
 }
 
 /// Returns the rendered height (logical pixels) of every visible
@@ -220,15 +237,74 @@ void main() {
 
           expect(tester.takeException(), isNull);
         },
-        // SPEC/ui/mobile-adaptation.md § 7 minimum-viewport pin surfaces a
-        // residual ~1.7 px right-side `RenderFlex` overflow in the pixelArt
-        // header / action region at exactly 320 dp width. The plain variant
-        // and the 320 dp tests above pass; the pixelArt pin is skipped here
-        // (rather than weakened) so the SPEC contract stays normative and a
-        // future slice on `Refs #2870` (or `Refs #2868`) can close the gap
-        // by trimming pixelArt header padding/letter-spacing at the
-        // minimum viewport. The expected-fail is disclosed in the PR body.
-        skip: true,
+      );
+
+      testWidgets(
+        'AC2 (positive) CtGameSetup pixelArt loading @ 320×640: '
+        'no exception (loading scrim + back link share narrow viewport)',
+        (WidgetTester tester) async {
+          await _pumpAtSize(
+            tester,
+            _wrapGameSetup(
+              variant: GameSetupVariant.pixelArt,
+              state: GameSetupState.loading,
+            ),
+            size: _kMinViewport,
+            // The loading state's `CtLoadingIndicator` animates
+            // continuously, so `pumpAndSettle` would never settle.
+            settleAnimations: false,
+          );
+
+          expect(tester.takeException(), isNull);
+          expect(
+            find.byKey(const ValueKey<String>('gameSetupLoadingLabel')),
+            findsOneWidget,
+          );
+        },
+      );
+
+      testWidgets(
+        'AC2 (positive) CtGameSetup plain loading @ 320×640: no exception',
+        (WidgetTester tester) async {
+          await _pumpAtSize(
+            tester,
+            _wrapGameSetup(state: GameSetupState.loading),
+            size: _kMinViewport,
+            settleAnimations: false,
+          );
+
+          expect(tester.takeException(), isNull);
+        },
+      );
+
+      testWidgets(
+        'AC2 (regression) CtGameSetup pixelArt back-link label ellipses at '
+        '320 dp instead of overflowing — Refs #2870 S10 / Refs #2868 R14',
+        (WidgetTester tester) async {
+          await _pumpAtSize(
+            tester,
+            _wrapGameSetup(variant: GameSetupVariant.pixelArt),
+            size: _kMinViewport,
+          );
+
+          expect(tester.takeException(), isNull);
+          // The back-link label remains in the tree (single line, may be
+          // ellipsised by Flexible+TextOverflow.ellipsis when the row would
+          // otherwise overflow). Ellipsised Text widgets still report
+          // `findsOneWidget` because the `Text` element exists; the visual
+          // contract is preserved (1 row, 1 line) regardless of clipping.
+          expect(
+            find.byKey(const ValueKey<String>('gameSetupBackLinkLabel')),
+            findsOneWidget,
+          );
+          // The `CtBackButton` glyph still renders (single 28x28 dp tap
+          // target per `SPEC/ui/game-setup.md` § R14 + `SPEC/ui/`
+          // `pixel-art-ui-catalog.md` § CtBackButton).
+          expect(
+            find.byKey(const ValueKey<String>('gameSetupBackLinkGlyph')),
+            findsOneWidget,
+          );
+        },
       );
 
       testWidgets(
