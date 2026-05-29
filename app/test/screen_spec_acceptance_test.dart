@@ -9,6 +9,10 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:colonizethis_app/config/app_display_strings.dart';
 import 'package:colonizethis_app/config/themes.dart';
+import 'package:colonizethis_app/widgets/ct_brass_divider.dart';
+import 'package:colonizethis_app/widgets/ct_compass_rose.dart';
+import 'package:colonizethis_app/widgets/ct_fleur_de_lis_ornament.dart';
+import 'package:colonizethis_app/widgets/ct_main_menu_collage.dart';
 import 'package:colonizethis_app/widgets/main_menu.dart';
 
 void main() {
@@ -321,6 +325,49 @@ void main() {
         'No saved games. Start a new game first.',
       );
     });
+
+    testWidgets(
+      'AC Variant rendering (pixelArt): collage, compass rose, fleur-de-lis, brass divider all present',
+      (WidgetTester tester) async {
+        await tester.pumpWidget(
+          buildMainMenu(
+            variant: MainMenuVariant.pixelArt,
+            onNewGame: () {},
+            onLoadGame: () {},
+            onSettings: () {},
+            onQuit: () {},
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        expect(find.byType(CtMainMenuCollage), findsOneWidget);
+        expect(find.byType(CtCompassRose), findsOneWidget);
+        expect(find.byType(CtFleurDeLisOrnament), findsNWidgets(2));
+        expect(find.byType(CtBrassDivider), findsOneWidget);
+        expect(find.text('A GAME OF EMPIRE & DISCOVERY'), findsOneWidget);
+      },
+    );
+
+    testWidgets(
+      'AC Variant rendering (plain): no SVG collage, compass rose, fleur-de-lis, or brass divider',
+      (WidgetTester tester) async {
+        await tester.pumpWidget(
+          buildMainMenu(
+            onNewGame: () {},
+            onLoadGame: () {},
+            onSettings: () {},
+            onQuit: () {},
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        expect(find.byType(CtMainMenuCollage), findsNothing);
+        expect(find.byType(CtCompassRose), findsNothing);
+        expect(find.byType(CtFleurDeLisOrnament), findsNothing);
+        expect(find.byType(CtBrassDivider), findsNothing);
+        expect(find.text('A GAME OF EMPIRE & DISCOVERY'), findsNothing);
+      },
+    );
 
     // SPEC/ui/main-menu.md § Responsive rules; SPEC/ui/mockups/SHEL10002-main-menu.html
     // `@media (max-width: 430px)`. Refs #2870 S6.
