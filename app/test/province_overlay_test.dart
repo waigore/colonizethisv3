@@ -75,12 +75,14 @@ void main() {
 
         expect(find.byType(ProvinceSeaZoneDetailOverlay), findsOneWidget);
         expect(find.text('Province'), findsOneWidget);
-        expect(find.text('Tile'), findsOneWidget);
-        expect(find.text('Political'), findsOneWidget);
-        expect(find.text('Economic'), findsOneWidget);
-        expect(find.text('Military'), findsOneWidget);
-        expect(find.text('Civilian'), findsOneWidget);
-        expect(find.text('Naval'), findsOneWidget);
+        // Section headers render via CtSectionLabel (Refs #2865 S4) which
+        // upper-cases the label per SPEC § Dark-theme section labels.
+        expect(find.text('TILE'), findsOneWidget);
+        expect(find.text('POLITICAL'), findsOneWidget);
+        expect(find.text('ECONOMIC'), findsOneWidget);
+        expect(find.text('MILITARY'), findsOneWidget);
+        expect(find.text('CIVILIAN'), findsOneWidget);
+        expect(find.text('NAVAL'), findsOneWidget);
         expect(find.byKey(const Key('overlay_close')), findsOneWidget);
       },
     );
@@ -131,8 +133,10 @@ void main() {
 
       expect(find.byType(ProvinceSeaZoneDetailOverlay), findsOneWidget);
       expect(find.text('Sea zone'), findsOneWidget);
-      expect(find.text('Political'), findsOneWidget);
-      expect(find.text('Naval'), findsOneWidget);
+      // Section headers render via CtSectionLabel (Refs #2865 S4) which
+      // upper-cases the label per SPEC § Dark-theme section labels.
+      expect(find.text('POLITICAL'), findsOneWidget);
+      expect(find.text('NAVAL'), findsOneWidget);
     });
 
     testWidgets('sea zone overlay uses sea-zone display name field', (
