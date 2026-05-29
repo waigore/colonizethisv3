@@ -87,13 +87,14 @@ The minimum supported viewport width is **`kMinViewportWidth = 320` dp** (from `
 - Given the viewport width is exactly `kMinViewportWidth` (320 dp) and the height is at least 640 dp, when **CtGameSetup** (any `GameSetupVariant` × `GameSetupState`) is rendered with the running theme, then `WidgetTester.takeException()` returns `null`, no `RenderFlex` overflow exception is thrown, and the six player-slot rows render in the stacked layout (label / nation dropdown / leader dropdown) defined by §4 Game Setup.
 - Given the viewport width is exactly `kMinViewportWidth` (320 dp) and the height is at least 640 dp, when **ProductionPanel** is rendered with the full or partial production-panel test fixtures, then `WidgetTester.takeException()` returns `null` and both `Available` and `Allocation` labels render (the narrow `_ProductionPanelNarrowLayout` path selected at `MediaQuery.sizeOf(context).width < kNarrowBreakpoint`, per [production-panel.md](production-panel.md) § Layout).
 - Given the viewport width is exactly `kMinViewportWidth` (320 dp) and the height is at least 640 dp, when **DiplomacyPanel** is rendered with the debug-init-game fixture, then `WidgetTester.takeException()` returns `null`, the first discovered faction row's body widget is a `Column` (narrow variant at `≤ kDiplomacyRowNarrowMaxWidth`), and the bottom mode-bar filter chips wrap onto a second run instead of overflowing horizontally (per [diplomacy-panel.md](diplomacy-panel.md) § Mode bar).
+- Given the viewport width is exactly `kMinViewportWidth` (320 dp) and the height is at least 640 dp, when **TechnologyPanel** is rendered inside the same `SingleChildScrollView` + 16 dp padding host as `TechnologyScreen`’s Slots tab (`_SlotsBody`), with the debug-init-game fixture, then `WidgetTester.takeException()` returns `null`, three `ResearchSlotCard` widgets and one `LockedResearchSlotCard` (slot 4) render, and the `RESEARCHED TECHS` section heading is visible (slot cards and researched grid scroll vertically within the host per [technology-panel.md](technology-panel.md) § Body).
 
 #### Pinning tests
 
 The above ACs are pinned by:
 
 - `app/test/mobile_320dp_min_viewport_test.dart` — Main Menu + Game Setup (Refs #2870 S10).
-- `app/test/panels_320dp_min_viewport_test.dart` — ProductionPanel + DiplomacyPanel (Refs #2870 S10).
+- `app/test/panels_320dp_min_viewport_test.dart` — ProductionPanel, DiplomacyPanel, and TechnologyPanel (Refs #2870 S10).
 
 ---
 

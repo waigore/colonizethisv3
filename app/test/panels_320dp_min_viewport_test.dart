@@ -1,7 +1,8 @@
 // Pin the 320 dp minimum-viewport contract for the in-game panels covered by
 // SPEC/ui/mobile-adaptation.md § 7 (Minimum-viewport pin) — extending the
 // existing `mobile_320dp_min_viewport_test.dart` screen-level pins
-// (CtMainMenu / CtGameSetup) to ProductionPanel and DiplomacyPanel, the
+// (CtMainMenu / CtGameSetup) to ProductionPanel, DiplomacyPanel, and
+// TechnologyPanel, the
 // additional surfaces called out in #2870 § Acceptance criteria
 // ("no horizontal overflow at 320 dp on every covered screen").
 //
@@ -38,6 +39,7 @@ import 'package:colonizethis_app/config/constants.dart';
 import 'package:colonizethis_app/config/themes.dart';
 import 'package:colonizethis_app/features/game/widgets/diplomacy_panel.dart';
 import 'package:colonizethis_app/features/game/widgets/production_panel.dart';
+import 'package:colonizethis_app/features/game/widgets/technology_panel.dart';
 import 'package:colonizethis_app/widgets/debug_init_game.dart';
 
 import 'production_panel_test_fixtures.dart';
@@ -129,6 +131,21 @@ Widget _buildDiplomacyPanel({
     topology: topology,
     currentOrders: const Orders(),
     bus: AppEventBus.create(),
+  );
+}
+
+/// Mirrors [TechnologyScreen] `_SlotsBody`: scroll host + panel so the 320 dp
+/// pin exercises the same vertical-scroll contract as production.
+Widget _buildTechnologyPanelSlotsBody({
+  required Game game,
+  required Player player,
+}) {
+  return SingleChildScrollView(
+    padding: const EdgeInsets.all(16),
+    child: TechnologyPanel(
+      game: game,
+      player: player,
+    ),
   );
 }
 
@@ -309,6 +326,67 @@ void main() {
           );
 
           expect(tester.takeException(), isNull);
+        },
+      );
+    },
+  );
+
+  group(
+    'SPEC/ui/mobile-adaptation.md § 7 — TechnologyPanel @ 320 dp '
+    '(Refs #2870 S10)',
+    () {
+      late Game game;
+      late Player player;
+
+      setUpAll(() {
+        final result = getDebugInitGameResult();
+        game = result.game;
+        expect(game.players, isNotEmpty);
+        player = game.players.first;
+      });
+
+      testWidgets(
+        'AC (positive) TechnologyPanel (Slots body host) @ 320×640: no '
+        'RenderFlex overflow exception, four slot cards + researched heading '
+        'render',
+        (WidgetTester tester) async {
+          await _pumpAtSize(
+            tester,
+            _buildTechnologyPanelSlotsBody(game: game, player: player),
+            size: _kMinViewport,
+          );
+
+          expect(
+            tester.takeException(),
+            isNull,
+            reason:
+                'SPEC/ui/mobile-adaptation.md § 7: TechnologyPanel inside '
+                'the TechnologyScreen Slots scroll host must not emit a '
+                'RenderFlex overflow exception at kMinViewportWidth (320 dp). '
+                'Slot cards and the researched grid rely on vertical scroll '
+                'instead of clipping.',
+          );
+          expect(find.byType(SingleChildScrollView), findsOneWidget);
+          // Debug-init player has three active slots + locked slot 4 (University).
+          expect(find.byType(ResearchSlotCard), findsNWidgets(3));
+          expect(find.byType(LockedResearchSlotCard), findsOneWidget);
+          expect(find.text('RESEARCHED TECHS'), findsOneWidget);
+        },
+      );
+
+      testWidgets(
+        'Negative control: TechnologyPanel (Slots body host) @ 1024×768 '
+        'pumps without exception',
+        (WidgetTester tester) async {
+          await _pumpAtSize(
+            tester,
+            _buildTechnologyPanelSlotsBody(game: game, player: player),
+            size: _kWideRegressionViewport,
+          );
+
+          expect(tester.takeException(), isNull);
+          expect(find.byType(ResearchSlotCard), findsNWidgets(3));
+          expect(find.byType(LockedResearchSlotCard), findsOneWidget);
         },
       );
     },
