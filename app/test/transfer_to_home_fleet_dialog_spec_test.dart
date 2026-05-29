@@ -6,7 +6,9 @@ import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'package:colonizethis_app/config/editorial_monocle_palette.dart';
 import 'package:colonizethis_app/features/game/widgets/transfer_to_home_fleet_dialog.dart';
+import 'package:colonizethis_app/widgets/ct_dialog_shell.dart';
 import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
 import 'package:colonizethis_app/widgets/ct_transfer_list.dart';
 
@@ -118,7 +120,32 @@ void main() {
       );
 
       testWidgets(
-        'initial open: no ship movement, no NavalTransferShipsRequestedEvent on Confirm tap',
+        'dialog wraps CtDialogShell with accent title and no Material AlertDialog chrome (#2867 R1)',
+        (WidgetTester tester) async {
+          await pumpDialog(tester, bus: AppEventBus.create());
+          expect(
+            find.descendant(
+              of: find.byType(TransferToHomeFleetDialog),
+              matching: find.byType(CtDialogShell),
+            ),
+            findsOneWidget,
+          );
+          expect(
+            find.descendant(
+              of: find.byType(TransferToHomeFleetDialog),
+              matching: find.byType(AlertDialog),
+            ),
+            findsNothing,
+          );
+          final titleFinder = find.text('Transfer Ships to Home Fleet');
+          expect(titleFinder, findsOneWidget);
+          final titleText = tester.widget<Text>(titleFinder);
+          expect(titleText.style?.color, EditorialMonoclePalette.accent);
+        },
+      );
+
+      testWidgets(
+        'initial open: Transfer primary disabled until a ship moves (#2867 R12)',
         (WidgetTester tester) async {
           NavalTransferShipsRequestedEvent? captured;
           final bus = AppEventBus.create();
@@ -128,14 +155,14 @@ void main() {
           addTearDown(sub.cancel);
 
           await pumpDialog(tester, bus: bus);
-          final confirm = find.widgetWithText(
-            CtNinePatchButton,
-            'Confirm Transfer',
-          );
-          expect(confirm, findsOneWidget);
-          await tester.ensureVisible(confirm);
+          final transfer = find.widgetWithText(CtNinePatchButton, 'Transfer');
+          expect(transfer, findsOneWidget);
+          final button = tester.widget<CtNinePatchButton>(transfer);
+          expect(button.enabled, isFalse);
+
+          await tester.ensureVisible(transfer);
           await tester.pumpAndSettle();
-          await tester.tap(confirm);
+          await tester.tap(transfer);
           await tester.pumpAndSettle();
 
           expect(captured, isNull);

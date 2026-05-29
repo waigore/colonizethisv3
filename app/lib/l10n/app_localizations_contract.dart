@@ -628,6 +628,13 @@ abstract class AppLocalizations {
   /// Header label for unowned province destinations in move army dialog.
   String get moveArmy_groupUnowned;
 
+  /// Section header for other-owned invasion destinations in move army dialog
+  /// (#2867 R6).
+  String get moveArmy_groupInvasionTargets;
+
+  /// Invasion row trigger label in danger italic (#2867 R8).
+  String moveArmy_declareWarOnTrigger(String ownerLabel);
+
   /// Confirm dialog title for the destructive war-confirmation sub-dialog when
   /// an invasion army move is requested (issue #2867 R9).
   String get moveArmy_invadeProvinceTitle;
