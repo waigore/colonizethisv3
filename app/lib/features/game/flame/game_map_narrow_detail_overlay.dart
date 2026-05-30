@@ -15,6 +15,18 @@ import 'per_player_work_target_selection_cache.dart';
 import '../widgets/province_sea_zone_detail_overlay.dart';
 
 /// Narrow-layout bottom sheet host; reads [mapProvincePanelProvider] only.
+///
+/// When the panel is open and a non-empty `displayId` resolves, the slot
+/// mounts [ProvinceSeaZoneDetailOverlay] inside a single `SizedBox` whose
+/// height is fixed at `0.33 * MediaQuery.sizeOf(context).height` and whose
+/// width is [double.infinity] so the host
+/// `Align(alignment: Alignment.bottomCenter)` + `Column(mainAxisSize: MainAxisSize.min)`
+/// in `GameMapArea` (narrow) lets the overlay span the full viewport — the
+/// **Province / sea detail** row of `SPEC/ui/mobile-adaptation.md` § 4 calls
+/// for a *full-width bottom sheet, height ~33 vh, accent-dim top border*.
+/// The accent-dim top border is provided by the nested overlay's outer
+/// `CtPanel` chrome (`SPEC/ui/pixel-art-ui-catalog.md` § CtPanel) so the slot
+/// does not paint its own border.
 class GameMapNarrowDetailOverlaySlot extends ConsumerWidget {
   const GameMapNarrowDetailOverlaySlot({
     required this.game,
@@ -95,6 +107,7 @@ class GameMapNarrowDetailOverlaySlot extends ConsumerWidget {
             workTargetSelectionCache: workTargetSelectionCache,
           );
     return SizedBox(
+      width: double.infinity,
       height: MediaQuery.sizeOf(context).height * 0.33,
       child: ProvinceSeaZoneDetailOverlay(
         game: game,
