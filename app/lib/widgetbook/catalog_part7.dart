@@ -898,8 +898,8 @@ class _GameMapProvinceDetailSidePanelStoryHostState
                   color: EditorialMonoclePalette.bgDeep,
                   child: const Center(
                     child: Text(
-                      'Map area (stand-in)',
                       // ignore: avoid_hardcoded_strings_in_widgets
+                      'Map area (stand-in)',
                     ),
                   ),
                 ),
