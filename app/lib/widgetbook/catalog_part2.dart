@@ -567,6 +567,28 @@ List<WidgetbookNode> get diplomacyPanelDirectories => [
           );
         },
       ),
+      // SPEC/ui/diplomacy-panel.md § Widgetbook — empty-state story.
+      // Renders the panel against a Game whose human player has no
+      // diplomacy relations with any other faction (no other Great
+      // Power, Minor Nation, or Tribe), so `buildDiplomacyRows` returns
+      // an empty list and the panel paints the
+      // `diplomacy_panel_noFactions` empty-state copy under the
+      // editorial-monocle dark chrome. Refs #2863 S7.
+      WidgetbookUseCase(
+        name: 'No factions discovered (empty state)',
+        builder: (context) {
+          return ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 800, maxHeight: 600),
+            child: DiplomacyPanel(
+              game: _diplomacyPanelEmptyGame,
+              humanPlayerId: _diplomacyPanelEmptyHumanPlayerId,
+              topology: const MapTopology(nodes: [], edges: []),
+              currentOrders: const Orders(),
+              bus: AppEventBus(),
+            ),
+          );
+        },
+      ),
       WidgetbookUseCase(
         // SPEC/ui/diplomacy-panel.md § Responsive layout and
         // SPEC/ui/mobile-adaptation.md § 4 (`≤ 500 dp` column): under the
@@ -606,3 +628,41 @@ List<WidgetbookNode> get diplomacyPanelDirectories => [
     ],
   ),
 ];
+
+/// Stable human-player id used by the Diplomacy Panel empty-state
+/// Widgetbook story. SPEC/ui/diplomacy-panel.md § Widgetbook.
+const String _diplomacyPanelEmptyHumanPlayerId = 'gp1';
+
+/// Minimal `Game` for the Diplomacy Panel empty-state Widgetbook story:
+/// a single human-controlled Great Power with no other discovered
+/// factions and no diplomacy relations, so `buildDiplomacyRows` returns
+/// an empty list and the panel paints the `diplomacy_panel_noFactions`
+/// empty-state copy. SPEC/ui/diplomacy-panel.md § Widgetbook empty
+/// state.
+final Game _diplomacyPanelEmptyGame = () {
+  const ow = 'oldWorld';
+  final p1 = Province(
+    id: '$ow|p1',
+    regionId: ow,
+    displayName: 'P1',
+    ownerId: _diplomacyPanelEmptyHumanPlayerId,
+  );
+  final world = WorldState(
+    turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
+    oldWorld: RegionData(provinces: [p1], units: const []),
+    newWorld: const RegionData(),
+    playerVisibilityByTile: const {},
+    playerProspectedTiles: const {},
+  );
+  const player = Player(
+    id: _diplomacyPanelEmptyHumanPlayerId,
+    displayName: 'Solo',
+    isHuman: true,
+  );
+  return Game(
+    id: 'wb-diplomacy-empty',
+    worldState: world,
+    players: const [player],
+    diplomacyRelations: const [],
+  );
+}();
