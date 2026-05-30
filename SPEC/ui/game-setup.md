@@ -244,7 +244,9 @@ For current product, reuse main menu assets: `ui_main_menu_button.png` for Start
 
 ## Widgetbook
 
-Folder: **Game Setup**. Use cases: **Default**, **Loading** per states table.
+Folder: **Game Setup**. Use cases: **Default**, **Loading**, **Default (pixel)**, **Loading (pixel)**, **Default (mobile)** per states table. The **Default (mobile)** use case wraps the `plain` Game Setup in `mobileViewport(context, …)` so reviewers can verify the `< 500 dp` slot-row stacking rule (per `SPEC/ui/mobile-adaptation.md` § 4) without resizing the host window.
+
+The **Default (mobile)** use case must be pinned by `app/test/widgetbook_game_setup_mobile_viewport_test.dart` (Refs #2870 R22 / S9) so its removal or rename surfaces in CI before reviewers lose the narrow-viewport review surface.
 
 ---
 
