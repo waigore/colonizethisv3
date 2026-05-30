@@ -4,14 +4,19 @@
 // in the developer-facing Widgetbook app, not in widget unit tests.
 //
 // In-game shell chrome stories for issue #2861 S12: top bar, tab bar,
-// bottom-left corner controls, map display options dialog, and the player
-// turn-events feed card. Stories for the wide-only players bar, side menu,
-// victory overlay, exit-confirm dialog, game screen, pause menu panel, and
-// the narrow detail overlay slot already live in the earlier catalog parts.
-// Empire left rail and region minimap stories are deferred to a follow-up
-// PR because both widgets read `gameServiceProvider` / region map view data
-// that require a `Hive.box`/topology setup outside the simple chrome
-// previews collected here.
+// bottom-left corner controls, map display options dialog, the player
+// turn-events feed card, the empire left rail (with tooltips), and the
+// region minimap (visible / hidden / narrow). Stories for the wide-only
+// players bar, side menu, victory overlay, exit-confirm dialog, game
+// screen, pause menu panel, and the narrow detail overlay slot already
+// live in the earlier catalog parts.
+//
+// Empire left rail and region minimap stories use stand-in providers
+// scoped to this catalog file: a no-op `GameService` that returns a `null`
+// map cache (so the rail's diplomacy nav payload falls back to
+// `MapTopology()`) and a constant `regionMinimapVisibleProvider` override
+// per use case so reviewers can compare the dark editorial-monocle chrome
+// in the visible and hidden minimap states without a Hive setup.
 part of 'catalog.dart';
 
 /// Game top bar stories. SPEC/ui/in-game-shell-narrow.md § Top bar and
@@ -114,7 +119,10 @@ List<WidgetbookNode> get gameTabBarDirectories => [
 /// Game map corner controls stories. SPEC/ui/empire-overview.md
 /// § Corner controls chrome. Issue #2861 S4 + S12 story (4) corner
 /// controls row, including the disabled home-to-capital variant required
-/// by the AC at `homeToCapitalEnabled: false`.
+/// by the AC at `homeToCapitalEnabled: false`, and the narrow-layout
+/// variant added by issue #2870 S9 pinning the 24 × 24 dp + 2 dp gap
+/// measurements from `SPEC/ui/empire-overview.md` § Narrow corner-control
+/// measurements and `SPEC/ui/mobile-adaptation.md` § In-game shell.
 List<WidgetbookNode> get gameMapCornerControlsDirectories => [
   WidgetbookFolder(
     name: 'Game Map Corner Controls',
@@ -137,6 +145,18 @@ List<WidgetbookNode> get gameMapCornerControlsDirectories => [
             onCenterOnHomeCapital: () {},
             onOpenMapDisplayOptions: () {},
             homeToCapitalEnabled: false,
+          ),
+        ),
+      ),
+      WidgetbookUseCase(
+        name: 'Narrow (360 dp) — 24 × 24 dp buttons, 2 dp gap',
+        builder: (context) => _gameMapCornerControlsNarrowStoryFrame(
+          viewportWidth: 360,
+          child: GameMapCornerControls(
+            narrow: true,
+            onCycleBaseLayerDisplayMode: () {},
+            onCenterOnHomeCapital: () {},
+            onOpenMapDisplayOptions: () {},
           ),
         ),
       ),
@@ -434,6 +454,44 @@ MaterialApp _gameMapCornerControlsStoryFrame({required Widget child}) {
   );
 }
 
+/// Narrow-viewport corner controls frame: clamps the visible canvas to a
+/// representative narrow viewport width via `MediaQuery.size`, anchors
+/// the row bottom-left at the compressed 2 dp inset (matching the
+/// production stack on narrow), and forwards the editorial-monocle theme
+/// so the chrome reads identically to the wide story (issue #2870 S9;
+/// SPEC `SPEC/ui/empire-overview.md` § Narrow corner-control measurements;
+/// `SPEC/ui/mobile-adaptation.md` § In-game shell).
+MaterialApp _gameMapCornerControlsNarrowStoryFrame({
+  required double viewportWidth,
+  required Widget child,
+}) {
+  return MaterialApp(
+    debugShowCheckedModeBanner: false,
+    theme: AppThemes.editorialMonocle,
+    localizationsDelegates: AppLocalizationsBinding.localizationsDelegates,
+    supportedLocales: AppLocalizations.supportedLocales,
+    home: MediaQuery(
+      data: MediaQueryData(size: Size(viewportWidth, 640)),
+      child: Scaffold(
+        backgroundColor: EditorialMonoclePalette.bgDeep,
+        body: SizedBox(
+          width: viewportWidth,
+          height: 640,
+          child: Stack(
+            children: [
+              Positioned(
+                left: 2,
+                bottom: 2,
+                child: child,
+              ),
+            ],
+          ),
+        ),
+      ),
+    ),
+  );
+}
+
 /// Map options dialog frame: opens the dialog inside a [Builder] so the
 /// `showDialog` call gets a context with the editorial-monocle theme,
 /// localizations, and the canonical [EditorialMonoclePalette.dialogScrim]
@@ -548,4 +606,240 @@ MaterialApp _playerTurnEventFeedCardNarrowStoryFrame({
       ),
     ),
   );
+}
+
+/// Empire left rail stories. SPEC/ui/empire-buttons.md § Styling (left rail)
+/// and § Narrow rail measurements. Issue #2861 S3 + S12 story (3) left rail
+/// with tooltips, plus a debug-console variant that exercises the seventh
+/// icon and a narrow variant that pins the 26 × 26 dp narrow-layout
+/// measurements from issue #2870 S3 and `SPEC/ui/mobile-adaptation.md`
+/// § In-game shell.
+List<WidgetbookNode> get gameMapEmpireLeftRailDirectories => [
+  WidgetbookFolder(
+    name: 'Game Map Empire Left Rail',
+    children: [
+      WidgetbookUseCase(
+        name: 'Wide — six core empire buttons with tooltips',
+        builder: (context) => _gameMapEmpireLeftRailStoryFrame(),
+      ),
+      WidgetbookUseCase(
+        name: 'Wide — debug console enabled (7 icons)',
+        builder: (context) => _gameMapEmpireLeftRailStoryFrame(
+          debugConsoleEnabled: true,
+        ),
+      ),
+      WidgetbookUseCase(
+        name: 'Narrow (360 dp) — 26 × 26 dp buttons, tooltips suppressed',
+        builder: (context) => _gameMapEmpireLeftRailStoryFrame(narrow: true),
+      ),
+    ],
+  ),
+];
+
+/// Region minimap stories. SPEC/ui/empire-overview.md § Region minimap and
+/// § Region minimap chrome (dark editorial-monocle). Issue #2861 S5 + S12
+/// story (5) minimap visible / hidden, plus a narrow variant that pins the
+/// 90 × 70 dp narrow-layout sizing from issue #2870 S3 and
+/// `SPEC/ui/mobile-adaptation.md` § In-game shell.
+List<WidgetbookNode> get gameRegionMinimapDirectories => [
+  WidgetbookFolder(
+    name: 'Region Minimap',
+    children: [
+      WidgetbookUseCase(
+        name: 'Visible — wide chrome with viewport rectangle',
+        builder: (context) => _gameRegionMinimapStoryFrame(visible: true),
+      ),
+      WidgetbookUseCase(
+        name: 'Hidden — toggle-only (zoom + show button)',
+        builder: (context) => _gameRegionMinimapStoryFrame(visible: false),
+      ),
+      WidgetbookUseCase(
+        name: 'Narrow — 90 × 70 dp grid (issue #2870 S3)',
+        builder: (context) => _gameRegionMinimapStoryFrame(
+          visible: true,
+          narrow: true,
+        ),
+      ),
+    ],
+  ),
+];
+
+/// Empire left rail story frame: wires a stand-in [GameService] that
+/// returns `null` from [GameService.getMapData] (so the diplomacy nav
+/// payload falls back to an empty [MapTopology]) and overrides
+/// [debugConsoleEnabledProvider] for the debug-icon variant. The rail
+/// renders inside a dark editorial-monocle [Scaffold] with the same
+/// [EditorialMonoclePalette.bgDeep] background as the production map
+/// stack so reviewers compare the rail chrome against a representative
+/// surface.
+Widget _gameMapEmpireLeftRailStoryFrame({
+  bool narrow = false,
+  bool debugConsoleEnabled = false,
+}) {
+  final game = getDebugInitGameResult().game;
+  final humanId = game.players.isNotEmpty ? game.players.first.id : 'gp_human';
+  return ProviderScope(
+    overrides: [
+      appEventBusProvider.overrideWith((ref) {
+        final bus = AppEventBus.create();
+        ref.onDispose(bus.dispose);
+        return bus;
+      }),
+      currentGameProvider.overrideWith(() => CurrentGameNotifier(game)),
+      currentOrdersProvider.overrideWith(
+        () => CurrentOrdersNotifier(const Orders()),
+      ),
+      gameServiceProvider.overrideWith((ref) => _StoryStubGameService()),
+      debugConsoleEnabledProvider.overrideWithValue(debugConsoleEnabled),
+    ],
+    child: MaterialApp(
+      debugShowCheckedModeBanner: false,
+      theme: AppThemes.editorialMonocle,
+      localizationsDelegates: AppLocalizationsBinding.localizationsDelegates,
+      supportedLocales: AppLocalizations.supportedLocales,
+      home: Scaffold(
+        backgroundColor: EditorialMonoclePalette.bgDeep,
+        body: SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Align(
+              alignment: Alignment.topLeft,
+              child: GameMapEmpireLeftRail(
+                game: game,
+                humanPlayerId: humanId,
+                narrow: narrow,
+              ),
+            ),
+          ),
+        ),
+      ),
+    ),
+  );
+}
+
+/// Region minimap story frame: mounts [GameRegionMinimap] inside a
+/// [ProviderScope] that overrides [regionMinimapVisibleProvider] with the
+/// requested visibility so the visible / hidden chrome paths are
+/// exercised deterministically. A synthetic [RegionMapViewportSnapshot]
+/// drives the white viewport rectangle and zoom slider so the
+/// editorial-monocle chrome reads representative of the in-game stack.
+Widget _gameRegionMinimapStoryFrame({
+  required bool visible,
+  bool narrow = false,
+}) {
+  final region = demoRegionForOverlay;
+  final viewport = _storyMinimapViewportSnapshot(region);
+  return ProviderScope(
+    overrides: [
+      regionMinimapVisibleProvider.overrideWith(
+        _StoryRegionMinimapVisibleNotifier.new,
+      ),
+      _storyMinimapInitialVisibleProvider.overrideWithValue(visible),
+    ],
+    child: MaterialApp(
+      debugShowCheckedModeBanner: false,
+      theme: AppThemes.editorialMonocle,
+      localizationsDelegates: AppLocalizationsBinding.localizationsDelegates,
+      supportedLocales: AppLocalizations.supportedLocales,
+      home: Scaffold(
+        backgroundColor: EditorialMonoclePalette.bgDeep,
+        body: MediaQuery(
+          data: MediaQueryData(size: Size(narrow ? 360 : 1500, 640)),
+          child: SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.all(24),
+              child: Align(
+                alignment: Alignment.bottomRight,
+                child: GameRegionMinimap(
+                  region: region,
+                  viewportSnapshot: viewport,
+                  bus: AppEventBus.create(),
+                  cellSizePx: region.cellSize.toDouble(),
+                  narrow: narrow,
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    ),
+  );
+}
+
+/// Synthetic viewport snapshot for the region minimap stories — picks a
+/// world centre at the middle of [region] and a zoom slightly above the
+/// fit zoom so the white viewport rectangle is visibly smaller than the
+/// minimap grid (mockup `.minimap-panel` rule). Deterministic so the
+/// story renders the same chrome every reload.
+RegionMapViewportSnapshot _storyMinimapViewportSnapshot(
+  RegionMapViewData region,
+) {
+  final cellSize = region.cellSize.toDouble();
+  final mapWidthWorld = region.width * cellSize;
+  final mapHeightWorld = region.height * cellSize;
+  const viewportWidthLogical = 600.0;
+  const viewportHeightLogical = 400.0;
+  // Fit zoom = min(viewport / map) so the full map fits. The story zooms
+  // 1.6 × beyond the fit so the white rectangle reads as a window inside
+  // the minimap grid rather than spanning the whole panel.
+  final fitMapZoom =
+      viewportWidthLogical / mapWidthWorld < viewportHeightLogical / mapHeightWorld
+          ? viewportWidthLogical / mapWidthWorld
+          : viewportHeightLogical / mapHeightWorld;
+  return RegionMapViewportSnapshot(
+    regionId: region.regionId,
+    cellSizePx: cellSize,
+    mapWidthWorld: mapWidthWorld,
+    mapHeightWorld: mapHeightWorld,
+    cameraCenterX: mapWidthWorld / 2,
+    cameraCenterY: mapHeightWorld / 2,
+    zoom: fitMapZoom * 1.6,
+    fitMapZoom: fitMapZoom,
+    viewportWidthLogical: viewportWidthLogical,
+    viewportHeightLogical: viewportHeightLogical,
+  );
+}
+
+/// Story-only initial-visibility provider. The story
+/// [_StoryRegionMinimapVisibleNotifier] reads this value once at build
+/// time so each use case can declare its starting state without sharing
+/// state across stories.
+final _storyMinimapInitialVisibleProvider = Provider<bool>((ref) => true);
+
+/// Story override for [RegionMinimapVisibleNotifier] that seeds itself
+/// from [_storyMinimapInitialVisibleProvider]; the production default of
+/// `true` only fires when the override is absent (which never happens in
+/// the story frame). Toggle behaviour is preserved so reviewers can flip
+/// the chrome live from inside a single story.
+class _StoryRegionMinimapVisibleNotifier extends RegionMinimapVisibleNotifier {
+  @override
+  bool build() {
+    return ref.read(_storyMinimapInitialVisibleProvider);
+  }
+}
+
+/// Stand-in [GameService] for the empire-left-rail story.
+///
+/// The production rail reads `gameServiceProvider.getMapData(game.id)` to
+/// derive the topology bundled with the diplomacy navigation event; the
+/// stub returns `null` so the rail falls back to an empty `MapTopology()`
+/// (matching the existing `mapData?.combinedTopology ?? MapTopology()`
+/// fallback in `GameMapEmpireLeftRail.build`). All other `GameService`
+/// methods route through [_StoryStubBox.noSuchMethod] which returns
+/// `null`; the story never invokes them.
+class _StoryStubGameService extends GameService {
+  _StoryStubGameService() : super(_StoryStubBox(), GameSaveAdapter());
+
+  @override
+  GameMapData? getMapData(String gameId) => null;
+}
+
+/// Type-erased [Box] stub for [_StoryStubGameService]. The Hive box is
+/// never read because [_StoryStubGameService] overrides every
+/// `GameService` method that touches the box in the story path, so a
+/// `noSuchMethod`-only impl is safe and avoids opening a real Hive box
+/// from the Widgetbook bootstrap.
+class _StoryStubBox implements Box<dynamic> {
+  @override
+  dynamic noSuchMethod(Invocation invocation) => null;
 }
