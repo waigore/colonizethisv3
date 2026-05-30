@@ -295,7 +295,10 @@ Widget _buildNavalSection({
           ...pending.map(
             (line) => Padding(
               padding: const EdgeInsets.only(left: 4),
-              child: Text(line),
+              child: Text(
+                line,
+                style: TextStyle(color: EditorialMonoclePalette.muted),
+              ),
             ),
           ),
         ],
