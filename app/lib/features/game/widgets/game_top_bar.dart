@@ -3,7 +3,8 @@ import 'package:flutter/material.dart';
 import '../../../config/editorial_monocle_palette.dart';
 import '../../../widgets/ct_gradients.dart';
 import '../../../widgets/ct_nine_patch_button.dart';
-import '../flame/game_screen_shared.dart' show kGameMapNextTurnButtonKey;
+import '../flame/game_screen_shared.dart'
+    show kGameMapNextTurnButtonKey, kNextTurnDisabledOpacity;
 
 /// In-game shell top bar: 36 px dark editorial-monocle chrome with a
 /// 3-line hamburger, an optional observe banner, and the wood-panel
@@ -49,11 +50,17 @@ class GameTopBar extends StatelessWidget {
   /// `SPEC/ui/next-turn-confirmation.md`.
   final Future<void> Function() onNextTurn;
 
-  /// When `false`, the Next-turn button passes `onPressed: null` to
-  /// [CtNinePatchButton] which renders the disabled state
-  /// ([CtNinePatchButton.disabledOpacity] = 0.4) so the button reads as
-  /// non-interactive during turn resolution. SPEC alignment: issue
-  /// #2861 R1 (disabled during turn resolution).
+  /// When `false`, the Next-turn button passes both `enabled: false` and
+  /// `onPressed: null` to [CtNinePatchButton], plus
+  /// `disabledOpacityOverride: kNextTurnDisabledOpacity` (`0.35`), so the
+  /// button reads as non-interactive AND dims to the SPEC-mandated 0.35
+  /// opacity during turn resolution. SPEC alignment: issue #2861 R1 /
+  /// AC#9 (`SPEC/ui/game-screen.md` § Acceptance Criteria; mockup
+  /// `.next-turn.disabled { opacity: 0.35 }` in
+  /// `SPEC/ui/mockups/GAME10001-game-screen.html`). The override is
+  /// scoped to this Next-turn button; other [CtNinePatchButton] call
+  /// sites continue to use the catalog default
+  /// [CtNinePatchButton.disabledOpacity] (`0.4`).
   final bool nextTurnEnabled;
 
   /// Pre-formatted button label (e.g. `Next turn (42 / 1650)` or the
@@ -135,7 +142,9 @@ class GameTopBar extends StatelessWidget {
       ),
       child: CtNinePatchButton(
         key: kGameMapNextTurnButtonKey,
+        enabled: nextTurnEnabled,
         onPressed: nextTurnEnabled ? () => onNextTurn() : null,
+        disabledOpacityOverride: kNextTurnDisabledOpacity,
         minHeight: nextTurnMinHeight,
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
         child: Text(nextTurnText, maxLines: 1),
