@@ -108,6 +108,8 @@ Hamburger menu (when open):
 - **Given** the side menu is closed, **when** the user swipes in from the left edge of the map, **then** the side menu opens and displays **Debug log** (pixel-art style).
 - **Given** the side menu is closed, **when** the user taps the hamburger in the top bar, **then** the side menu opens and displays **Debug log**.
 - **Given** the side menu is open, **when** the user swipes the menu to the left (drag to close), **then** the side menu closes.
+- **Given** the side menu is open, **when** any single `HorizontalDragUpdate` event over the menu surface delivers `details.delta.dx < -5.0` logical pixels, **then** the UI layer invokes the host-supplied `onClose` callback exactly once for that drag event (positive swipe-to-close contract, [game_side_menu.dart](../../app/lib/features/game/flame/game_side_menu.dart) `GameSideMenu._kSwipeToCloseDeltaThreshold`).
+- **Given** the side menu is open, **when** the user performs a horizontal drag whose `details.delta.dx` stays at `>= 0` (right-ward or stationary), **then** the UI layer does **not** invoke `onClose` from the swipe-to-close gesture handler (negative regression guard against accidentally closing on right-swipes or noise).
 - **Given** the side menu is open, **when** the user taps the close (cross) button in the menu, **then** the side menu closes.
 - **Given** the side menu is open, **when** the user taps **Debug log**, **then** the app navigates to the debug log route and the side menu closes.
 - **Given** the side menu is built, **when** it renders, **then** it uses pixel-art layout (CtPanel, CtNinePatchButton for Debug log).
