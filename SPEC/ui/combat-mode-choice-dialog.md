@@ -69,8 +69,8 @@ The widget owns no internal state. It pops itself via `Navigator.of(context).pop
 - 8 dp gap, then explanatory body text:
   - `appL10n(context).quickBattle_capitalSiegeQuickBattleOnly` when `isCapitalSiege == true`.
   - `appL10n(context).quickBattle_chooseCombatMode` otherwise.
-- 16 dp gap, then a `Row(mainAxisAlignment: end)` with action buttons:
-  - Regular: `[ Auto-Resolve ]` (`appL10n(context).quickBattle_autoResolve`) followed by 8 dp spacer and `[ Quick Battle ]` (`appL10n(context).quickBattle_quickBattle`).
+- 16 dp gap, then a `Wrap(alignment: end, spacing: 8, runSpacing: 8)` with action buttons (mirrors mockup `.actions { flex-wrap: wrap }` so both labels fit at `kMinViewportWidth` without horizontal overflow):
+  - Regular: `[ Auto-Resolve ]` (`appL10n(context).quickBattle_autoResolve`) followed by `[ Quick Battle ]` (`appL10n(context).quickBattle_quickBattle`); when the content column is narrower than both buttons side-by-side, the wrap run stacks the second button beneath the first while keeping end alignment.
   - Capital siege: only `[ Quick Battle ]`.
 - Buttons are `CtNinePatchButton`s; Material buttons are not permitted.
 
@@ -158,6 +158,10 @@ Outline-style chrome for the Auto-Resolve button (a dedicated `--border`-outline
 - Given the dialog is mounted inside `AppThemes.editorialMonocle` with `isCapitalSiege: false`,
   When the UI layer renders the action row,
   Then the `CtNinePatchButton` child `Text` for `quickBattle_autoResolve` resolves `style.color` to `EditorialMonoclePalette.muted`, and the `CtNinePatchButton` child `Text` for `quickBattle_quickBattle` resolves `style.color` to `EditorialMonoclePalette.accent`.
+
+- Given the viewport width is exactly `kMinViewportWidth` (320 dp) and `isCapitalSiege: false`,
+  When the UI layer renders `CombatModeChoiceDialog` with `provinceName: 'Lisbon'`,
+  Then `WidgetTester.takeException()` returns `null`, both action labels render, and the action buttons are hosted in a `Wrap` (not a rigid `Row`) so the labels reflow within the ~288 dp `CtDialogShell` content column without horizontal overflow (Refs #2870 S8).
 
 ---
 

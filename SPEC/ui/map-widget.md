@@ -372,7 +372,7 @@ Hover, selection, and overlay behavior:
 ## Layout and reuse
 
 - **Reusable:** The map widget is a single reusable component. It is used by the Empire overview screen (one instance per region when a region is active). It may be reused elsewhere (e.g. debug or other screens) with the same contract.
-- **Widgetbook debug mode:** The Map Widget “Debug mode” stories in Widgetbook use a map from the real map generator and an initialized game (default config); see app `debug_init_game` and map widget directories.
+- **Widgetbook debug mode:** The Map Widget “Debug mode” stories in Widgetbook use a map from the real map generator and an initialized game (default config); see app `debug_init_game` and map widget directories. The folder **Map Widget** also exposes a **Debug mode (mobile)** use case wrapped in `mobileViewport(context, …)` so reviewers can verify the 360 × 640 dp narrow story without resizing the host window. The **Debug mode (mobile)** use case must be pinned by `app/test/widgetbook_map_widget_mobile_viewport_test.dart` (Refs #2870 R22 / S9) so its removal or rename surfaces in CI before reviewers lose the narrow-viewport review surface.
 - **One region per instance:** Each widget instance displays one region's map (e.g. Old World or New World). Region id (or equivalent) is a parameter; data is supplied for that region only.
 - **Desktop and mobile:** Same component; parent controls size. On mobile, one region per map with region switching via tabs (see [empire-overview.md](empire-overview.md)).
 
