@@ -3,15 +3,21 @@
 // and panel-level pins (`mobile_320dp_min_viewport_test.dart`,
 // `panels_320dp_min_viewport_test.dart`) to the simplest in-game dialogs:
 //
-//  * [GameParametersDialog]   — read-only campaign parameters opened from
-//    the hamburger side menu (SPEC/ui/in-game-shell-narrow.md
-//    § Game Parameters).
-//  * [ExitConfirmDialog]      — Android back exit-to-main-menu confirm
-//    (SPEC/ui/in-game-shell-narrow.md § Android back confirm).
-//  * [TurnNewsDialog]         — universal turn-start news modal shown
-//    after each turn resolution (SPEC/ui/turn-news-dialog.md).
+//  * [GameParametersDialog]            — read-only campaign parameters
+//    opened from the hamburger side menu
+//    (SPEC/ui/in-game-shell-narrow.md § Game Parameters).
+//  * [ExitConfirmDialog]               — Android back exit-to-main-menu
+//    confirm (SPEC/ui/in-game-shell-narrow.md § Android back confirm).
+//  * [TurnNewsDialog]                  — universal turn-start news modal
+//    shown after each turn resolution (SPEC/ui/turn-news-dialog.md).
+//  * [GameMapOptionsDialog]            — in-game map display options
+//    (toggle overlay / ownership / names) opened from the empire-overview
+//    corner controls (SPEC/ui/empire-overview.md § Map display options).
+//  * [TurnResolutionProcessingDialog]  — worker-isolate "processing turn"
+//    modal raised while the next-turn isolate runs
+//    (SPEC/program/turn-resolution.md).
 //
-// All three dialogs render their chrome via [CtDialogShell] (Dialog with
+// All five dialogs render their chrome via [CtDialogShell] (Dialog with
 // `insetPadding: 16` and an inner `ConstrainedBox(maxWidth: 400|480)`).
 // At `kMinViewportWidth` (320 dp) the available content width collapses
 // to ~288 dp, which is the most constrained surface either dialog
@@ -31,12 +37,16 @@
 // SPEC: `SPEC/ui/in-game-shell-narrow.md` § Game Parameters and
 // § Android back confirm.
 // SPEC: `SPEC/ui/turn-news-dialog.md` § Layout / wireframe.
+// SPEC: `SPEC/ui/empire-overview.md` § Map display options.
+// SPEC: `SPEC/program/turn-resolution.md` (Processing-turn modal).
 // Refs #2870 S8 (dialogs scale at narrow widths) + S10 (no horizontal
 // overflow at 320 dp on every covered surface).
 
 import 'package:colonizethis_app/config/constants.dart';
 import 'package:colonizethis_app/config/themes.dart';
 import 'package:colonizethis_app/features/game/flame/exit_confirm_dialog.dart';
+import 'package:colonizethis_app/features/game/flame/turn_resolution_processing_dialog.dart';
+import 'package:colonizethis_app/features/game/widgets/game_map_options_dialog.dart';
 import 'package:colonizethis_app/features/game/widgets/game_parameters_dialog.dart';
 import 'package:colonizethis_app/features/game/widgets/turn_news_dialog.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
@@ -72,6 +82,7 @@ Future<void> _pumpDialogAtSize(
   WidgetTester tester,
   Widget dialog, {
   required Size size,
+  bool settle = true,
 }) async {
   addTearDown(() => tester.binding.setSurfaceSize(null));
   await tester.binding.setSurfaceSize(size);
@@ -84,7 +95,15 @@ Future<void> _pumpDialogAtSize(
       ),
     ),
   );
-  await tester.pumpAndSettle();
+  if (settle) {
+    await tester.pumpAndSettle();
+  } else {
+    // Single frame is enough for dialogs that host an indefinite ticker
+    // (e.g. CircularProgressIndicator inside CtLoadingIndicator). The
+    // layout has resolved by the first frame, which is all the 320 dp
+    // overflow contract needs.
+    await tester.pump();
+  }
 }
 
 void main() {
@@ -329,6 +348,123 @@ void main() {
       expect(find.text('Turn 2'), findsOneWidget);
       expect(find.text('England and France are now at war.'), findsOneWidget);
       expect(find.text('Close'), findsOneWidget);
+    });
+  });
+
+  group('SPEC/ui/mobile-adaptation.md § 7 — GameMapOptionsDialog @ 320 dp '
+      '(Refs #2870 S8/S10)', () {
+    // Initial state mirrors the production seed: overlay and ownership tint
+    // ON by default, names layer OFF (matches `MapViewState()` defaults from
+    // `colonizethis_models` and the `mapViewStateNotifierProvider` seed used
+    // by `GameMapArea`).
+    const MapViewState baseState = MapViewState(
+      showProvinceOverlay: true,
+      showProvinceOwnershipTint: true,
+      showProvinceNamesLayer: false,
+    );
+
+    testWidgets(
+      'AC (positive) GameMapOptionsDialog @ 320×640: no RenderFlex '
+      'overflow exception, title + 3 toggle labels + Close action render '
+      '(all three Expanded labels + 12 dp gap + CtToggleSwitch rows must '
+      'fit within the ~288 dp content width)',
+      (WidgetTester tester) async {
+        await _pumpDialogAtSize(
+          tester,
+          GameMapOptionsDialog(
+            initialState: baseState,
+            onChanged: (_) {},
+          ),
+          size: _kMinViewport,
+        );
+
+        expect(
+          tester.takeException(),
+          isNull,
+          reason:
+              'SPEC/ui/mobile-adaptation.md § 7: GameMapOptionsDialog must '
+              'not emit a RenderFlex overflow exception at '
+              'kMinViewportWidth (320 dp). The Expanded label + 12 dp gap + '
+              'CtToggleSwitch row contract from '
+              'SPEC/ui/empire-overview.md § Map display options must wrap '
+              'within the ~288 dp CtDialogShell content column.',
+        );
+        expect(find.text('Map display options'), findsOneWidget);
+        expect(find.text('Show province overlay'), findsOneWidget);
+        expect(find.text('Show province ownership'), findsOneWidget);
+        expect(find.text('Show province names'), findsOneWidget);
+        expect(find.text('Close'), findsOneWidget);
+      },
+    );
+
+    testWidgets('Negative control: GameMapOptionsDialog @ 1024×768 also '
+        'pumps without exception (regression sentinel for the overflow '
+        'contract — keeps the 320 dp positive pin meaningful)', (
+      WidgetTester tester,
+    ) async {
+      await _pumpDialogAtSize(
+        tester,
+        GameMapOptionsDialog(
+          initialState: baseState,
+          onChanged: (_) {},
+        ),
+        size: _kWideRegressionViewport,
+      );
+
+      expect(tester.takeException(), isNull);
+      expect(find.text('Map display options'), findsOneWidget);
+      expect(find.text('Show province overlay'), findsOneWidget);
+      expect(find.text('Close'), findsOneWidget);
+    });
+  });
+
+  group('SPEC/ui/mobile-adaptation.md § 7 — TurnResolutionProcessingDialog '
+      '@ 320 dp (Refs #2870 S8/S10)', () {
+    const String phaseText = 'Resolving turn 3...';
+
+    testWidgets(
+      'AC (positive) TurnResolutionProcessingDialog @ 320×640: no '
+      'RenderFlex overflow exception, title + phase text render '
+      '(the CtLoadingIndicator + 10 dp gap + Expanded phase-text row must '
+      'fit within the ~288 dp CtDialogShell content column)',
+      (WidgetTester tester) async {
+        await _pumpDialogAtSize(
+          tester,
+          const TurnResolutionProcessingDialog(phaseText: phaseText),
+          size: _kMinViewport,
+          settle: false,
+        );
+
+        expect(
+          tester.takeException(),
+          isNull,
+          reason:
+              'SPEC/ui/mobile-adaptation.md § 7: '
+              'TurnResolutionProcessingDialog must not emit a RenderFlex '
+              'overflow exception at kMinViewportWidth (320 dp). The '
+              'CtLoadingIndicator + Expanded(phase text) row from '
+              'SPEC/program/turn-resolution.md (Processing-turn modal) must '
+              'wrap within the ~288 dp CtDialogShell content column.',
+        );
+        expect(find.text('Processing Turn'), findsOneWidget);
+        expect(find.text(phaseText), findsOneWidget);
+      },
+    );
+
+    testWidgets('Negative control: TurnResolutionProcessingDialog @ '
+        '1024×768 also pumps without exception (regression sentinel for '
+        'the overflow contract — keeps the 320 dp positive pin meaningful)',
+        (WidgetTester tester) async {
+      await _pumpDialogAtSize(
+        tester,
+        const TurnResolutionProcessingDialog(phaseText: phaseText),
+        size: _kWideRegressionViewport,
+        settle: false,
+      );
+
+      expect(tester.takeException(), isNull);
+      expect(find.text('Processing Turn'), findsOneWidget);
+      expect(find.text(phaseText), findsOneWidget);
     });
   });
 }
