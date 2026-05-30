@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../config/constants.dart';
 import '../../../config/editorial_monocle_palette.dart';
 import '../../../widgets/ct_gradients.dart';
 import '../../../widgets/ct_nine_patch_button.dart';
@@ -11,9 +12,12 @@ import '../flame/game_screen_shared.dart'
 /// bordered pause affordance, and the wood-panel `Next turn` button.
 ///
 /// SPEC: `SPEC/ui/in-game-shell-narrow.md` § Top bar, `SPEC/ui/empire-overview.md`
-/// (in-game shell), and the canonical [CtTopBar] chrome contract in
+/// (in-game shell), `SPEC/ui/mobile-adaptation.md` § 4 In-game shell
+/// (`< kNarrowBreakpoint`: hamburger + turn-counter / Next-turn button only),
+/// and the canonical [CtTopBar] chrome contract in
 /// `SPEC/ui/pixel-art-ui-catalog.md` § Editorial-monocle palette
-/// (gradient + 1 px `--accent-dim` bottom border). Issue #2861 S1.
+/// (gradient + 1 px `--accent-dim` bottom border). Issue #2861 S1; narrow
+/// top-bar chrome #2870 S10.
 ///
 /// Renders a fixed-height [SizedBox] wrapped in a [DecoratedBox] that
 /// paints [CtGradients.topBarGradient] and a 1 px
@@ -174,7 +178,7 @@ class GameTopBar extends StatelessWidget {
     );
   }
 
-  Widget _buildNextTurnButton() {
+  Widget _buildNextTurnButton({required bool compactHorizontalPadding}) {
     return ConstrainedBox(
       constraints: const BoxConstraints(
         minHeight: nextTurnMinHeight,
@@ -186,14 +190,54 @@ class GameTopBar extends StatelessWidget {
         onPressed: nextTurnEnabled ? () => onNextTurn() : null,
         disabledOpacityOverride: kNextTurnDisabledOpacity,
         minHeight: nextTurnMinHeight,
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-        child: Text(nextTurnText, maxLines: 1),
+        padding: EdgeInsets.symmetric(
+          horizontal: compactHorizontalPadding ? 8 : 12,
+          vertical: 4,
+        ),
+        child: Text(
+          nextTurnText,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+        ),
       ),
     );
   }
 
+  List<Widget> _buildNarrowRowChildren({required bool isMinViewport}) {
+    return <Widget>[
+      _GameTopBarHamburger(onPressed: onToggleSideMenu, tooltip: menuTooltip),
+      const SizedBox(width: leadingGap),
+      Expanded(
+        child: Align(
+          alignment: Alignment.centerRight,
+          child: _buildNextTurnButton(compactHorizontalPadding: isMinViewport),
+        ),
+      ),
+    ];
+  }
+
+  List<Widget> _buildWideRowChildren(BuildContext context) {
+    return <Widget>[
+      _GameTopBarHamburger(onPressed: onToggleSideMenu, tooltip: menuTooltip),
+      const SizedBox(width: leadingGap),
+      if (observeBannerLabel != null) ...<Widget>[
+        _buildObserveBanner(context),
+        const SizedBox(width: leadingGap),
+      ],
+      Expanded(child: Center(child: _buildTurnDisplay(context))),
+      const SizedBox(width: trailingGap),
+      _GameTopBarPauseButton(onPressed: onPausePressed, tooltip: pauseTooltip),
+      const SizedBox(width: trailingGap),
+      _buildNextTurnButton(compactHorizontalPadding: false),
+    ];
+  }
+
   @override
   Widget build(BuildContext context) {
+    final double viewportWidth = MediaQuery.sizeOf(context).width;
+    final bool isNarrow = viewportWidth < kNarrowBreakpoint;
+    final bool isMinViewport = viewportWidth <= kMinViewportWidth;
+
     return SizedBox(
       key: surfaceKey,
       height: height,
@@ -211,25 +255,9 @@ class GameTopBar extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: horizontalPadding),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.center,
-            children: <Widget>[
-              _GameTopBarHamburger(
-                onPressed: onToggleSideMenu,
-                tooltip: menuTooltip,
-              ),
-              const SizedBox(width: leadingGap),
-              if (observeBannerLabel != null) ...<Widget>[
-                _buildObserveBanner(context),
-                const SizedBox(width: leadingGap),
-              ],
-              Expanded(child: Center(child: _buildTurnDisplay(context))),
-              const SizedBox(width: trailingGap),
-              _GameTopBarPauseButton(
-                onPressed: onPausePressed,
-                tooltip: pauseTooltip,
-              ),
-              const SizedBox(width: trailingGap),
-              _buildNextTurnButton(),
-            ],
+            children: isNarrow
+                ? _buildNarrowRowChildren(isMinViewport: isMinViewport)
+                : _buildWideRowChildren(context),
           ),
         ),
       ),

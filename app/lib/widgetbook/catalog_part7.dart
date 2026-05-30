@@ -83,6 +83,27 @@ List<WidgetbookNode> get gameTopBarDirectories => [
           ),
         ),
       ),
+      WidgetbookUseCase(
+        name: 'Mobile viewport — narrow bar (< 600 dp)',
+        builder: (context) => mobileViewport(
+          context,
+          _gameTopBarStoryFrame(
+            child: GameTopBar(
+              onToggleSideMenu: () {},
+              onPausePressed: () {},
+              onNextTurn: () async {},
+              nextTurnEnabled: true,
+              turnDisplayText: 'Turn 42 / Year 1650',
+              // ignore: avoid_hardcoded_strings_in_widgets
+              nextTurnText: 'Next turn (42 / 1650)',
+              // ignore: avoid_hardcoded_strings_in_widgets
+              menuTooltip: 'Menu',
+              // ignore: avoid_hardcoded_strings_in_widgets
+              pauseTooltip: 'Pause menu',
+            ),
+          ),
+        ),
+      ),
     ],
   ),
 ];
