@@ -195,6 +195,7 @@ void main() {
         TurnPhase.navalInterceptionCombat,
         TurnPhase.combat,
         TurnPhase.buildWork,
+        TurnPhase.worldMarket,
         TurnPhase.endOfTurn,
       ]);
     });
