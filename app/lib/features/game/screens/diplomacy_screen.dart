@@ -5,11 +5,14 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../config/app_constants.dart';
 import '../../../config/ui_screen_ids.dart';
 import '../../../providers/app_event_bus_provider.dart';
 import '../../../providers/game_service_provider.dart';
 import '../../../providers/games_provider.dart';
 import '../../../widgets/ct_game_feature_screen_shell.dart';
+import '../../../widgets/ct_top_bar.dart';
+import '../../../widgets/strict_asset_icon.dart';
 import '../shell_player_context.dart'
     show shellPanelsNotDefined, shellPlayerContextProvider;
 import '../widgets/observe_mode_not_defined_panel.dart';
@@ -26,6 +29,27 @@ class DiplomacyScreen extends ConsumerWidget {
   /// SPEC/ui/diplomacy-panel.md — [UiScreenIds.diplomacyScreen].
   static const screenId = UiScreenIds.diplomacyScreen;
 
+  /// Localized back-button label rendered immediately after the chevron
+  /// on the dark-theme `CtTopBar`. SPEC/ui/diplomacy-panel.md § Top bar
+  /// requires the literal `"Map"` so the affordance reads `"← Map"`.
+  // ignore: avoid_hardcoded_strings_in_widgets
+  static const String topBarBackLabel = 'Map';
+
+  /// Title text shown in the dark-theme `CtTopBar`. SPEC mandates the
+  /// literal `"Diplomacy"` (Cinzel display font is configured at the
+  /// theme level).
+  // ignore: avoid_hardcoded_strings_in_widgets
+  static const String topBarTitle = 'Diplomacy';
+
+  /// Pixel-art icon asset rendered between the back affordance and the
+  /// title (SPEC § Top bar — 18 × 18 px diplomacy icon).
+  static const String topBarIconAsset =
+      '${kAppIconAssetPrefix}ui_icon_diplomacy.png';
+
+  /// Stable widget key for the diplomacy top bar — lets widget tests pin
+  /// the dark-theme chrome without coupling to localized strings.
+  static const Key topBarKey = ValueKey<String>('diplomacyScreenTopBar');
+
   final Game game;
   final String humanPlayerId;
 
@@ -34,7 +58,16 @@ class DiplomacyScreen extends ConsumerWidget {
     final bus = ref.watch(appEventBusProvider);
     return CtGameFeatureScreenShell(
       game: game,
-      title: 'Diplomacy',
+      topBar: const CtTopBar(
+        key: topBarKey,
+        title: topBarTitle,
+        backButtonLabel: topBarBackLabel,
+        icon: StrictAssetIcon(
+          assetPath: topBarIconAsset,
+          width: 18,
+          height: 18,
+        ),
+      ),
       bodyBuilder: (context, shellRef, displayGame) {
         if (shellPanelsNotDefined(shellRef)) {
           return const ObserveModeNotDefinedPanel(title: 'Diplomacy');
