@@ -25,6 +25,7 @@ import '../providers/game_service_provider.dart';
 import '../providers/games_provider.dart';
 import '../providers/map_province_panel_provider.dart';
 import '../providers/map_view_provider.dart';
+import '../providers/production_allocation_provider.dart';
 import '../providers/region_minimap_provider.dart';
 import '../features/game/combat/combat_mode_choice_dialog.dart';
 import '../features/game/combat/quick_battle_action_selector.dart';
