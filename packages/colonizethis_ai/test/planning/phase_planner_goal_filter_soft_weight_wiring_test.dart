@@ -58,6 +58,14 @@ const AIConfig _config = AIConfig(
 // diplomacy/trade penalties applied) via the
 // `hasColonialAcquisitionTargets &&
 // !shouldSuppressNewWorldColonialOrders` compose.
+//
+// `economy.treasury` is set well above `cheapestRegimentBuildTreasuryCost()`
+// (cheapest catalog entry = 2000 treasury) so the Refs #2994 F6
+// treasury-acquisition trade bias does NOT fire on this fixture: that
+// bias only applies when `treasury < cheapestRegimentBuildTreasuryCost()`
+// and would otherwise mask the colonial-pressure trade-penalty scaling
+// this test is pinning. Treasury value is otherwise irrelevant to this
+// test's intent.
 const AIWorldSnapshot _colonialPressureSnapshot = AIWorldSnapshot(
   playerId: 'gp1',
   threats: ThreatSummary(),
@@ -71,7 +79,7 @@ const AIWorldSnapshot _colonialPressureSnapshot = AIWorldSnapshot(
     invadableNewWorldProvinceIdsSorted: ['newWorld|p1'],
     adjacentNewWorldOwnerFactionIdsSorted: ['tribe1'],
   ),
-  economy: EconomySummary(),
+  economy: EconomySummary(treasury: 10000),
   relations: {},
 );
 
