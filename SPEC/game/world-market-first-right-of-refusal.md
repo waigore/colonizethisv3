@@ -89,16 +89,36 @@ For each filled deal that is FRR-eligible:
 - **Constants:**
   `kFirstRightMaxProfitRate = 0.40` and
   `kFirstRightRelationScoreMax = 100`.
+- **Purchased-tile index (D1):**
+  `packages/colonizethis_logic/lib/src/economy/world_market/purchased_tile_index.dart`,
+  exported as `PurchasedTileIndex.fromGame(game) →
+  PurchasedTileAttribution? attributionForTileKey(tileKey)`. Eagerly
+  builds a tile-keyed snapshot from `WorldState.purchasedTilesByTileKey`
+  joined against `WorldState.tileKeysByRegionAndProvince` (to resolve
+  the province containing the tile) and `Province.ownerId` (to resolve
+  the source minor/tribe). Only entries whose **source faction is still
+  a minor/tribe** at index-build time are retained — entries where the
+  containing province was subsequently conquered by a GP are filtered
+  out so D2/D4 callers cannot accidentally credit FRR profit on
+  GP-on-GP transactions. Pure, no logger calls, no RNG.
 - **Data sources already on dev:**
   `WorldState.purchasedTilesByTileKey` (set by `purchase_land` work
-  completion in `packages/colonizethis_logic/lib/src/orders/purchase_land_work_completion.dart`).
+  completion in `packages/colonizethis_logic/lib/src/orders/purchase_land_work_completion.dart`)
+  and `WorldState.tileKeysByRegionAndProvince` (game-setup seeded
+  region/province tile bucket map).
 - **D2 / D4 callers** land with the world-market deal-match phase
   (#2989 / #2991) and must invoke this helper per deal at the point
-  where the seller faction and underlying tile are known.
+  where the seller faction and underlying tile are known. The expected
+  call site builds `PurchasedTileIndex.fromGame(game)` once per phase
+  (or once per resolver pass) and looks up `attributionForTileKey` per
+  minor/tribe offer entry whose backing tile resolves to a purchased
+  attribution.
 
 ---
 
 ## Acceptance criteria
+
+### Profit helper (D3)
 
 - **AC-1 — Lower bound:** Given `relationScore == 0` and any `filledQuantity > 0`,
   `pricePerUnit > 0`, when the helper is called, then it returns
@@ -119,3 +139,40 @@ For each filled deal that is FRR-eligible:
   only when the buyer is **not** the owning GP for the purchased tile;
   unit tests for D2/D4 (in #2989's deal-matcher / #2991's transfers)
   must cover this gate.
+
+### Purchased-tile index (D1)
+
+- **AC-D1-1 — Empty world:** Given a `Game` whose `WorldState.purchasedTilesByTileKey`
+  is empty, when `PurchasedTileIndex.fromGame(game)` is built, then
+  `index.length == 0`, `index.isEmpty == true`, and
+  `attributionForTileKey(any)` returns `null`.
+- **AC-D1-2 — Minor-owned purchased tile:** Given a `Game` whose
+  `WorldState.purchasedTilesByTileKey = {tileKey: gpA}` and whose
+  containing province is owned by minor `M1` (declared in
+  `Game.minorNations`), when the index is built, then
+  `attributionForTileKey(tileKey)` returns a `PurchasedTileAttribution`
+  with `owningGpId == 'gpA'`, `sourceFactionId == 'M1'`, and
+  `provinceId` equal to the full prefixed id of the containing
+  province.
+- **AC-D1-3 — Tribe-owned purchased tile:** Given the same scenario as
+  AC-D1-2 but with the province owned by tribe `T1` (declared in
+  `Game.tribes`), when the index is built, then the attribution is
+  returned with `sourceFactionId == 'T1'`.
+- **AC-D1-4 — Post-conquest filter:** Given a purchased tile whose
+  containing province is currently owned by a Great Power (`Player.id`
+  in `Game.players`) instead of a minor/tribe, when the index is
+  built, then the attribution for that tile key is **excluded**
+  (`attributionForTileKey(tileKey) == null`) so FRR cannot fire on
+  GP-on-GP sales.
+- **AC-D1-5 — Unowned province filter:** Given a purchased tile whose
+  containing province has `ownerId == null`, when the index is built,
+  then the attribution for that tile key is **excluded**.
+- **AC-D1-6 — Unmapped tile filter:** Given a `purchasedTilesByTileKey`
+  entry whose tile key is not present in
+  `WorldState.tileKeysByRegionAndProvince` for any province, when the
+  index is built, then the attribution for that tile key is
+  **excluded**.
+- **AC-D1-7 — Determinism:** Given the same `Game` value, when
+  `PurchasedTileIndex.fromGame(game)` is built twice, then both
+  indices return the same attribution set (`index.length` equal;
+  per-tile lookups return equal `PurchasedTileAttribution` records).
