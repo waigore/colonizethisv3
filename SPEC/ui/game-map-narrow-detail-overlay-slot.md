@@ -36,13 +36,18 @@ The slot **does not** write `selectedTileKey` on map taps; `GameMapCanvasStack` 
 +-- Stack (narrow map host) ----------------------------------+
 |  [ map canvas + tools ]                                       |
 |  +-- GameMapNarrowDetailOverlaySlot (bottom, full width) ----+|
-|  | SizedBox(height: 0.33 * screenHeight)                     ||
+|  | SizedBox(width: double.infinity, height: 0.33 * screenH)  ||
 |  |   ProvinceSeaZoneDetailOverlay (scrollable detail)        ||
 |  +-----------------------------------------------------------+|
 +---------------------------------------------------------------+
 ```
 
-Height is fixed at **`MediaQuery.sizeOf(context).height * 0.33`** (one-third of the logical screen height) per [`province-sea-zone-detail-overlay.md`](province-sea-zone-detail-overlay.md) § Narrow full-width map. The child overlay receives the bounded height from this `SizedBox`; it does not apply a second `third` cap.
+The slot wraps `ProvinceSeaZoneDetailOverlay` in a single `SizedBox` whose:
+
+- **Height** equals **`MediaQuery.sizeOf(context).height * 0.33`** (one-third of the logical screen height) per [`province-sea-zone-detail-overlay.md`](province-sea-zone-detail-overlay.md) § Narrow full-width map. The child overlay receives the bounded height from this `SizedBox`; it does not apply a second `third` cap.
+- **Width** is `double.infinity` so the host `Align(alignment: Alignment.bottomCenter)` + `Column(mainAxisSize: MainAxisSize.min)` in `GameMapArea` (narrow) lets the overlay fill the full viewport horizontally per the **Province / sea detail** narrow row of [`mobile-adaptation.md`](mobile-adaptation.md) § 4 (`Full-width bottom sheet, height ~33 vh, accent-dim top border`) and `SPEC/ui/mockups/MAP20001-province-sea-zone-detail.html` `@media (max-width:600px)` (`width:100%`).
+
+The 1.5 dp `--accent-dim` top border required by the same row is provided by `ProvinceSeaZoneDetailOverlay`'s outer `CtPanel` chrome — `CtPanel` paints the canonical `EditorialMonoclePalette.accentDim` strip across the top edge per [`pixel-art-ui-catalog.md`](pixel-art-ui-catalog.md) § CtPanel. The slot therefore does not redeclare a separate border decoration; it only constrains the bounding box.
 
 `displayId` resolution (port harbor sea cell → owning province) matches [`province-sea-zone-detail-overlay.md`](province-sea-zone-detail-overlay.md) § Port harbor sea cell.
 
@@ -89,6 +94,14 @@ Height is fixed at **`MediaQuery.sizeOf(context).height * 0.33`** (one-third of 
 - Given `overlayOpen` is `true` and `selectedTileKey` resolves to a non-empty `displayId` for the supplied `region`,
   When the slot builds on a viewport with logical height `H`,
   Then the UI layer wraps `ProvinceSeaZoneDetailOverlay` in a `SizedBox` whose height equals `0.33 * H` within floating-point tolerance.
+
+- Given `overlayOpen` is `true`, `selectedTileKey` resolves to a non-empty `displayId`, and the slot is mounted in the narrow `GameMapArea` host (`Stack` → `Align(alignment: Alignment.bottomCenter)` → `Column(mainAxisSize: MainAxisSize.min)` → `GameMapNarrowDetailOverlaySlot`) on a viewport of logical width `W`,
+  When the slot builds,
+  Then the wrapping `SizedBox`'s `width` parameter equals `double.infinity` and its rendered horizontal extent equals `W` within floating-point tolerance, so the nested `ProvinceSeaZoneDetailOverlay` is laid out as a full-width bottom sheet per [`mobile-adaptation.md`](mobile-adaptation.md) § 4 Province / sea detail row (`Full-width bottom sheet, height ~33 vh, accent-dim top border`).
+
+- Given `overlayOpen` is `true` and `selectedTileKey` resolves to a non-empty `displayId`,
+  When the slot builds and the rendered widget tree is inspected,
+  Then exactly one `CtPanel` widget is mounted under `GameMapNarrowDetailOverlaySlot` (the chrome of the nested `ProvinceSeaZoneDetailOverlay`) so the canonical `EditorialMonoclePalette.accentDim` top border required by the **Province / sea detail** narrow row of [`mobile-adaptation.md`](mobile-adaptation.md) § 4 is present without the slot itself redeclaring a separate border decoration.
 
 - Given the overlay is open and the user taps the overlay close control (`Key('overlay_close')`),
   When the tap is handled,

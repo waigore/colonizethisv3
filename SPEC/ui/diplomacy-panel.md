@@ -109,6 +109,7 @@ Notes:
 - The "Minors only" mode includes **both** Minor Nations **and** Tribes, matching mockup `setMode('minors')`. The word "Minors" is used loosely as shorthand for "non-Great-Power factions"; the panel still groups them into separate "Minor Nations" and "Tribes" sections when both are present.
 - Filter state is local UI state in `_DiplomacyPanelState`; it does not persist across panel close/reopen.
 - The mode bar is independent of the `discovered factions` rule — switching modes never reveals undiscovered factions.
+- **Minimum viewport (`kMinViewportWidth` = 320 dp):** the three filter chips are laid out in a centred `Wrap` (8 dp spacing / run spacing) so the cluster flows onto a second run when the combined intrinsic width (~458 dp) exceeds the panel body width (~296 dp after horizontal padding). At wider widths all three chips remain on a single centred run, matching the mockup `.mode-bar` cluster. See [mobile-adaptation.md](mobile-adaptation.md) § 7.
 
 ---
 
