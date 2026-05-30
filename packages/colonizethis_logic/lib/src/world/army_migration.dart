@@ -313,10 +313,11 @@ WorldState updateArmyStation(
   );
   final army = _armyById(armies, armyId);
   if (army == null) return worldState;
+  final unitsByRegion = worldState.mutableUnitListsByRegion();
   final relocated = _relocateArmyRegiments(
     regimentUnitIds: army.regimentUnitIds,
-    owUnits: List<Unit>.from(worldState.oldWorld.units),
-    nwUnits: List<Unit>.from(worldState.newWorld.units),
+    owUnits: unitsByRegion[kRegionOldWorld]!,
+    nwUnits: unitsByRegion[kRegionNewWorld]!,
     destinationProvinceId: destinationProvinceId,
     destinationRegionId: regionId,
   );

@@ -85,10 +85,18 @@ The minimum supported viewport width is **`kMinViewportWidth = 320` dp** (from `
 
 - Given the viewport width is exactly `kMinViewportWidth` (320 dp) and the height is at least 640 dp, when **CtMainMenu** (`plain` and `pixelArt` variants, all `MainMenuState` values) is rendered with the running theme, then `WidgetTester.takeException()` returns `null`, no `RenderFlex` overflow exception is thrown by the framework, and every visible `CtNinePatchButton` reports a rendered height ≥ `kMinTouchTargetSize`.
 - Given the viewport width is exactly `kMinViewportWidth` (320 dp) and the height is at least 640 dp, when **CtGameSetup** (any `GameSetupVariant` × `GameSetupState`) is rendered with the running theme, then `WidgetTester.takeException()` returns `null`, no `RenderFlex` overflow exception is thrown, and the six player-slot rows render in the stacked layout (label / nation dropdown / leader dropdown) defined by §4 Game Setup.
+- Given the viewport width is exactly `kMinViewportWidth` (320 dp) and the height is at least 640 dp, when **ProductionPanel** is rendered with the full or partial production-panel test fixtures, then `WidgetTester.takeException()` returns `null` and both `Available` and `Allocation` labels render (the narrow `_ProductionPanelNarrowLayout` path selected at `MediaQuery.sizeOf(context).width < kNarrowBreakpoint`, per [production-panel.md](production-panel.md) § Layout).
 
 #### Pinning tests
 
-The above ACs are pinned by `app/test/mobile_320dp_min_viewport_test.dart` (Refs #2870 S10).
+The above ACs are pinned by:
+
+- `app/test/mobile_320dp_min_viewport_test.dart` — Main Menu + Game Setup (Refs #2870 S10).
+- `app/test/panels_320dp_min_viewport_test.dart` — ProductionPanel (Refs #2870 S10).
+
+#### Known gaps
+
+- **DiplomacyPanel @ 320 dp.** Although `DiplomacyPanel` selects the narrow `Column` body at widths ≤ `kDiplomacyRowNarrowMaxWidth` (500 dp), the faction-row info column still emits a `RenderFlex overflowed by ~162 px on the right` at exactly `kMinViewportWidth` (320 dp). Tracked as a follow-up slice under #2870; once fixed, mirror the ProductionPanel AC above in `panels_320dp_min_viewport_test.dart`.
 
 ---
 
