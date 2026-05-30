@@ -64,6 +64,7 @@ export 'src/economy/resource_extractor.dart';
 export 'src/economy/sea_transport.dart';
 export 'src/economy/worker_action_cost.dart';
 export 'src/economy/worker_economy.dart';
+export 'src/economy/world_market/first_right_profit.dart';
 
 // Orders
 export 'src/orders/orders.dart';
