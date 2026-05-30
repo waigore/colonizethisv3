@@ -33,6 +33,20 @@ class GameSideMenu extends ConsumerWidget {
   /// Side length of the leading Material icon glyphs in each menu row.
   static const double _kRowIconSize = 20;
 
+  /// Per-`HorizontalDragUpdate` `details.delta.dx` threshold (in logical
+  /// pixels, **inclusive lower bound is exclusive**) that triggers
+  /// [onClose] on the swipe-to-close gesture.
+  ///
+  /// `details.delta.dx < kSwipeToCloseDeltaThreshold` (i.e. a left-ward
+  /// drag delivering more than 5 logical pixels in a single update) closes
+  /// the menu; any right-ward (`> 0`) or stationary (`== 0`) delta is
+  /// ignored. SPEC: `SPEC/ui/in-game-shell-narrow.md` § Acceptance criteria
+  /// (positive swipe-to-close contract + right-swipe negative regression
+  /// guard). Public so the pinning test
+  /// (`app/test/game_side_menu_swipe_to_close_test.dart`) references the
+  /// same single source as the production gesture handler.
+  static const double kSwipeToCloseDeltaThreshold = -5.0;
+
   void _openGameParameters(BuildContext context, WidgetRef ref) {
     final game = ref.read(currentGameProvider);
     if (game == null) {
@@ -80,7 +94,7 @@ class GameSideMenu extends ConsumerWidget {
       },
       child: GestureDetector(
         onHorizontalDragUpdate: (details) {
-          if (details.delta.dx < -5) onClose();
+          if (details.delta.dx < kSwipeToCloseDeltaThreshold) onClose();
         },
         child: CtPanel(
           padding: const EdgeInsets.all(8),

@@ -120,6 +120,14 @@ Widget _buildTileImprovementLabel({
   return Text(l10n.provinceOverlay_tileImprovement(improvementLine));
 }
 
+/// Disabled-state opacity for the Tile section inline shortcut icons
+/// (`Explore`, `Prospect`, `Build improvement`). Pinned at `0.65` so the
+/// SPEC § Style / implementation — Dark-theme Tile section body tokens
+/// contract resolves the disabled color deterministically from
+/// [EditorialMonoclePalette.muted].
+@visibleForTesting
+const double kProvinceOverlayTileInlineActionDisabledAlpha = 0.65;
+
 List<Widget> _buildTileRoadLabelWidgets({
   required BuildContext context,
   required AppLocalizations l10n,
@@ -131,7 +139,7 @@ List<Widget> _buildTileRoadLabelWidgets({
   final roadCaptionStyle = TextStyle(
     fontSize: 11,
     height: 1.25,
-    color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.72),
+    color: EditorialMonoclePalette.muted,
   );
   return [
     Text(roadRailTransportLevelPrimaryLine(roadLevel)),
@@ -380,7 +388,9 @@ Widget _buildTileSection({
             Icons.explore,
             color: exploreActionEnabled
                 ? null
-                : Theme.of(context).disabledColor.withValues(alpha: 0.65),
+                : EditorialMonoclePalette.muted.withValues(
+                    alpha: kProvinceOverlayTileInlineActionDisabledAlpha,
+                  ),
           ),
           iconSize: 18,
           visualDensity: VisualDensity.compact,
@@ -393,7 +403,9 @@ Widget _buildTileSection({
             Icons.travel_explore,
             color: prospectActionEnabled
                 ? null
-                : Theme.of(context).disabledColor.withValues(alpha: 0.65),
+                : EditorialMonoclePalette.muted.withValues(
+                    alpha: kProvinceOverlayTileInlineActionDisabledAlpha,
+                  ),
           ),
           iconSize: 18,
           visualDensity: VisualDensity.compact,
@@ -421,7 +433,9 @@ Widget _buildTileSection({
             Icons.handyman,
             color: buildImprovementActionEnabled
                 ? null
-                : Theme.of(context).disabledColor.withValues(alpha: 0.65),
+                : EditorialMonoclePalette.muted.withValues(
+                    alpha: kProvinceOverlayTileInlineActionDisabledAlpha,
+                  ),
           ),
           iconSize: 18,
           visualDensity: VisualDensity.compact,
