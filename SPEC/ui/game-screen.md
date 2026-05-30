@@ -145,6 +145,10 @@ Cross-screen navigation uses bus events only (no `Navigator.pushNamed` for cross
   When `GameScreen.build` runs,
   Then the Next turn `CtNinePatchButton` is rendered with `onPressed == null` (disabled) and the pause `IconButton` remains enabled (gating allows pause-menu opens per [`app-ui-wiring.md`](../program/app-ui-wiring.md)).
 
+- Given the Next turn `CtNinePatchButton` is rendered in its disabled state (`onPressed == null`) — either inside [`GameTopBar`](../../app/lib/features/game/widgets/game_top_bar.dart) on the map view or in the `GameScreen` fallback Flame-canvas branch,
+  When the widget tree is inspected,
+  Then the disabled wrapper is an `Opacity` widget whose `opacity` resolves to `0.35` (matching `.next-turn.disabled { opacity: 0.35 }` in [`mockups/GAME10001-game-screen.html`](mockups/GAME10001-game-screen.html) and issue #2861 R1), and the `CtNinePatchButton` instance is constructed with an explicit `disabledOpacity: 0.35` argument overriding the catalog-default `CtNinePatchButton.disabledOpacity` (`0.4`). The pause `IconButton` and other `CtNinePatchButton` call sites without an explicit override continue to use the catalog-default `0.4` (regression guard).
+
 - Given `GameScreen` is mounted with a bus listener subscribed to `OpenPauseMenuPanelEvent`,
   When the user taps the pause `IconButton`,
   Then the screen emits exactly one `OpenPauseMenuPanelEvent` on the supplied bus.

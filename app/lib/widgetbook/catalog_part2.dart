@@ -567,6 +567,42 @@ List<WidgetbookNode> get diplomacyPanelDirectories => [
           );
         },
       ),
+      WidgetbookUseCase(
+        // SPEC/ui/diplomacy-panel.md § Responsive layout and
+        // SPEC/ui/mobile-adaptation.md § 4 (`≤ 500 dp` column): under the
+        // mobile-viewport frame (360 × 640 dp via [mobileViewport]) the
+        // faction-row body adopts the narrow stacked layout — action
+        // buttons drop below the info column and are left-aligned —
+        // because 360 dp ≤ `kDiplomacyRowNarrowMaxWidth`. Refs #2870 R22
+        // / S9 — "any other screen with responsive variants" extends the
+        // R22 screen list to Diplomacy.
+        name: 'Mobile viewport — narrow rows (≤ 500 dp)',
+        builder: (context) {
+          final result = getDebugInitGameResult();
+          final game = result.game;
+          final humanPlayerId = game.players.isNotEmpty
+              ? game.players.first.id
+              : 'gp1';
+          return mobileViewport(
+            context,
+            MaterialApp(
+              theme: AppThemes.editorialMonocle,
+              localizationsDelegates:
+                  AppLocalizationsBinding.localizationsDelegates,
+              supportedLocales: AppLocalizations.supportedLocales,
+              home: Scaffold(
+                body: DiplomacyPanel(
+                  game: game,
+                  humanPlayerId: humanPlayerId,
+                  topology: result.combinedTopology,
+                  currentOrders: const Orders(),
+                  bus: AppEventBus(),
+                ),
+              ),
+            ),
+          );
+        },
+      ),
     ],
   ),
 ];
