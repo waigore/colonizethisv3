@@ -9,6 +9,7 @@ import 'phase_planner_dispatch.dart';
 import 'phase_planner_economy_filter.dart';
 import 'phase_planner_expand_economy.dart';
 import 'phase_planner_work_order_filter.dart';
+import 'phase_priority_weights.dart' show kPhasePriorityNwTreasuryRecoveryFloor;
 import 'planning_imports.dart';
 import 'goal_manager.dart';
 import '../perception/perception_snapshot.dart';
@@ -443,6 +444,13 @@ _BuildPassResult _appendEconomyBuildOrders({
     phasePlan: phasePlan,
   );
   final expandEconomy = expandEconomyPlanFromPhasePlan(phasePlan);
+  final firstNavalTransportBootstrap =
+      resolvePhaseFirstNavalTransportBootstrapActive(
+        game: ctx.game,
+        snapshot: snapshot,
+        expandEconomyPlan: expandEconomy,
+        playerId: ctx.nationId,
+      );
 
   var buildThreshold =
       30 - getAgendaBuildOrderModifier(ctx.config.hiddenAgendaId);
@@ -590,7 +598,7 @@ _BuildPassResult _appendEconomyBuildOrders({
     );
   }
   var candidatesForBuild = buildCandidates;
-  if (forceRegimentRebuild) {
+  if (forceRegimentRebuild && !firstNavalTransportBootstrap) {
     final regimentsOnly = buildCandidates
         .where((o) => RegimentEconomyCatalog.byId.containsKey(o.unitType))
         .toList();
@@ -609,9 +617,13 @@ _BuildPassResult _appendEconomyBuildOrders({
   // conquest sprint is not dominated by colonial pressure, while at
   // the COLONIAL plateau the bonus reaches `+2.5` identity-equal to
   // the legacy hard-phase path.
-  final colonialPressureWeight = resolvePhaseEconomyColonialPressureWeight(
+  var colonialPressureWeight = resolvePhaseEconomyColonialPressureWeight(
     phasePlan: phasePlan,
   );
+  if (firstNavalTransportBootstrap &&
+      colonialPressureWeight < kPhasePriorityNwTreasuryRecoveryFloor) {
+    colonialPressureWeight = kPhasePriorityNwTreasuryRecoveryFloor;
+  }
   final chosen = pickBuildOrder(
     ctx: ctx,
     input: BuildPickInput(
@@ -622,6 +634,7 @@ _BuildPassResult _appendEconomyBuildOrders({
       colonialPressure: colonialPressure,
       colonialPressureWeight: colonialPressureWeight,
       militaryRebuildCrisis:
+          !firstNavalTransportBootstrap &&
           (forceRegimentRebuild || expandEconomy.forceCheapestRegimentBuild) &&
           (atWarWithGpBlocker ||
               brokeBelowQuotaAtPeace ||
