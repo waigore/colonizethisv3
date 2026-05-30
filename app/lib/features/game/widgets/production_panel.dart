@@ -17,6 +17,27 @@ import 'production_allocation_row_chrome.dart';
 import 'production_labour_helpers.dart';
 import 'production_labour_section.dart';
 
+/// Public layout key planted on the narrow (`< [kNarrowBreakpoint]` dp) variant
+/// of [ProductionPanel] so widget tests and Widgetbook pinning can confirm
+/// that the screen has selected its `_ProductionPanelNarrowLayout` branch
+/// (Available stacked above Allocation, scrollable container) at narrow
+/// viewports.
+///
+/// SPEC: `SPEC/ui/production-panel.md` § States and variants — Narrow
+/// (<600 dp). Refs #2870 R22 / S9 (Widgetbook mobile-viewport stories +
+/// pinning tests for `< 600 dp` layouts).
+const Key kProductionPanelNarrowLayoutKey = ValueKey<String>(
+  'production_panel_narrow_layout',
+);
+
+/// Companion key for the wide (`≥ [kNarrowBreakpoint]` dp) layout branch so a
+/// failing pin test surfaces the actual layout selected by [ProductionPanel]
+/// (rather than a generic "key not found"). Mirrors
+/// [kProductionPanelNarrowLayoutKey].
+const Key kProductionPanelWideLayoutKey = ValueKey<String>(
+  'production_panel_wide_layout',
+);
+
 class ProductionPanel extends StatelessWidget {
   const ProductionPanel({
     super.key,
@@ -103,12 +124,14 @@ class ProductionPanel extends StatelessWidget {
 
     if (isNarrow) {
       return _ProductionPanelNarrowLayout(
+        key: kProductionPanelNarrowLayoutKey,
         availableSubpanel: availableSubpanel,
         allocationSubpanel: allocationSubpanel,
       );
     }
 
     return _ProductionPanelWideLayout(
+      key: kProductionPanelWideLayoutKey,
       availableSubpanel: availableSubpanel,
       allocationSubpanel: allocationSubpanel,
     );
@@ -117,6 +140,7 @@ class ProductionPanel extends StatelessWidget {
 
 class _ProductionPanelNarrowLayout extends StatelessWidget {
   const _ProductionPanelNarrowLayout({
+    super.key,
     required this.availableSubpanel,
     required this.allocationSubpanel,
   });
@@ -142,6 +166,7 @@ class _ProductionPanelNarrowLayout extends StatelessWidget {
 
 class _ProductionPanelWideLayout extends StatelessWidget {
   const _ProductionPanelWideLayout({
+    super.key,
     required this.availableSubpanel,
     required this.allocationSubpanel,
   });

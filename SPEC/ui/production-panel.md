@@ -121,6 +121,15 @@ Asset filenames and style for commodities and workers appear in [game-toolbar-ic
 
 Folder: **Production Panel** (`app/lib/widgetbook/catalog.dart`).
 
+Required use cases (each one builder closure under the `Production Panel` folder):
+
+- `Full availability` — wide editable scenario; full demo player; default viewport.
+- `Partial availability` — wide editable scenario; partial demo player; default viewport.
+- `Full availability (mobile)` — same builder as `Full availability`, wrapped in `mobileViewport(context, …)` so the panel renders at the canonical 360 × 640 dp narrow frame; this story is the player-facing review surface for the `< 600 dp` stacked layout per `States and variants`. **Refs #2870 R22 / S9.**
+- `Partial availability (mobile)` — same builder as `Partial availability`, wrapped in the same `mobileViewport` helper.
+
+The `Full availability (mobile)` use case must be pinned by `app/test/widgetbook_production_panel_mobile_viewport_test.dart` (Refs #2870 R22 / S9) so its removal or rename surfaces in CI before reviewers lose the narrow-viewport review surface, and so the narrow layout selection (`kProductionPanelNarrowLayoutKey`) is asserted at 360 × 640 dp.
+
 ---
 
 ## Acceptance criteria
@@ -151,6 +160,7 @@ Folder: **Production Panel** (`app/lib/widgetbook/catalog.dart`).
 - **Next turn passes human assignments:** Given the human player advances the turn from the Production screen, when the next-turn action fires, then the app converts the current human production desired-output map into `List<AssignedRecipe>` entries (`assignedLabour = desiredOutput × recipe.labourPerOutput`) and passes them as the human player's slot in `defaultAssignmentsByPlayerId` when invoking the turn resolver.
 - **Labour-line over-cap styling:** Given the current human allocation produces a total required labour strictly greater than effective labour for the viewed player, when the Labour summary line renders, then the UI layer renders the line in the error colour and appends the localized "capped next turn" message.
 - **Narrow viewport stack (<600 dp):** Given a viewport width strictly less than **600 dp**, when the Production screen builds its body, then the UI layer stacks the Available and Allocation subpanels vertically (Available on top, Allocation below), wraps the content in a scrollable container so all rows are reachable, and preserves the `CtSectionLabel` headings + `CtResourceCell` rows from the wide layout (each section remains one cell per row at the section's full available width).
+- **Narrow layout key (Widgetbook + tests):** Given a viewport width strictly less than **600 dp**, when `ProductionPanel` renders, then the UI layer mounts the narrow layout subtree under a widget keyed `kProductionPanelNarrowLayoutKey` (`production_panel.dart`); given a viewport width greater than or equal to **600 dp**, the wide layout subtree is keyed `kProductionPanelWideLayoutKey`. Widget tests and the Widgetbook mobile-viewport pinning test (Refs #2870 R22 / S9) MUST locate exactly one of these keys per render and MUST find the narrow key in any 360 × 640 dp `mobileViewport` story.
 - **Wide viewport row (≥600 dp):** Given a viewport width greater than or equal to **600 dp**, when the Production screen builds its body, then the UI layer places the Available and Allocation subpanels side-by-side in a single horizontal row with Available on the left and Allocation on the right.
 - **Breakdown entry:** Given the Production screen with map data and a viewed player, when the Available header renders on wide or narrow viewports, then the breakdown control is a visible **text** button labeled **Breakdown** (not icon-only).
 - **Breakdown table parity:** Given the breakdown dialog open for the current preview inputs, when the table renders, then for every commodity row **Pending build costs + Extraction + Riches to treasury + Consumption + Production** equals the **Total** column and matches `previewStockpileNetDeltaByCommodityForPlayer` for that commodity (or **Total** `0` when the net map omits that id).
