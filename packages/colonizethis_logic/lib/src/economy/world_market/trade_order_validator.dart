@@ -8,14 +8,15 @@
 /// resolver-prep paths under the 15-second turn-resolution budget per
 /// `.cursor/rules/colonizethis-turn-resolution-budget.mdc`.
 ///
-/// `OrderEngine` slot wiring for `tradeOrdersByPlayerId` is deferred to a
-/// follow-up commit on #2989; this layer is independently consumable by the
-/// upcoming suggestion API (#2989 A6) and by UI / AI integration.
 library;
 
 import 'package:colonizethis_data/colonizethis_data.dart' as data;
 import 'package:colonizethis_models/colonizethis_models.dart';
 
+import '../../diplomacy/diplomacy_subsidies_relations_resolver.dart'
+    show worldMarketBidTypeCap;
+import '../../economy/sea_transport.dart' show cargoHoldsForHomeFleet;
+import '../../constants.dart';
 import '../../orders/order_validation_result.dart';
 
 /// Stable rejection-reason codes returned by [TradeOrderValidator.validate].
@@ -85,6 +86,31 @@ class TradeOrderValidationContext {
   /// clamped at 0). Missing entries are treated as `0`. Riches commodities
   /// should not be present (they are rejected by rule 2 anyway).
   final Map<CommodityId, int> availableStockpileByCommodityId;
+}
+
+/// Builds a [TradeOrderValidationContext] from live [Game] state for order
+/// submission and [OrderEngine] validation. Uses current stockpile minus riches
+/// as offer availability until production-input projection wires in
+/// (Issue F / #2994 may pass a richer override via suggestion API).
+TradeOrderValidationContext tradeOrderValidationContextFromGame(
+  Game game,
+  String playerId,
+) {
+  final player = game.playerById(playerId);
+  final available = <CommodityId, int>{};
+  if (player != null) {
+    for (final entry in player.stockpile.quantities.entries) {
+      if (data.richesCommodityIds.contains(entry.key)) continue;
+      if (entry.value <= 0) continue;
+      available[entry.key] = entry.value;
+    }
+  }
+  return TradeOrderValidationContext(
+    playerId: playerId,
+    bidTypeCap: worldMarketBidTypeCap(game, playerId),
+    tradeCargoCapacity: cargoHoldsForHomeFleet(game, playerId),
+    availableStockpileByCommodityId: available,
+  );
 }
 
 /// Validates a single player's full set of [TradeOrder] entries for the turn.

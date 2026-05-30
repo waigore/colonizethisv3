@@ -68,15 +68,15 @@ engine_slots:
     add_with_context_method: addRecruitWorkerOrderWithContext
     remove_method: removeRecruitWorkerOrder
 
+  - order_type: TradeOrder
+    orders_field: tradeOrdersByPlayerId
+    copy_with_param: tradeOrdersByPlayerId
+    log_label: trade
+    add_method: addTradeOrder
+    add_with_context_method: addTradeOrderWithContext
+    remove_method: removeTradeOrder
+
 # Copied in constructor and _copyOrders only; no engine slot or add*Order API.
 storage_only:
   - orders_field: researchOrdersByPlayerId
     copy_with_param: researchOrdersByPlayerId
-
-  # tradeOrdersByPlayerId — registered as storage-only until #2989 A5 (validation)
-  # lands an addTradeOrder engine slot. Carries the new TradeOrder map through
-  # Orders constructor / _copyOrders so the structural manifest↔Orders guard
-  # in tool/generate_order_engine_slots.dart keeps passing while the engine
-  # wiring is still deferred per the PR description (#2989 A5/A6/A7).
-  - orders_field: tradeOrdersByPlayerId
-    copy_with_param: tradeOrdersByPlayerId
