@@ -95,6 +95,7 @@ class Game {
     this.lastHumanResearchCategoryCompletionTurn,
     this.mapViewState = MapViewState.defaults,
     this.worldMarketState = WorldMarketState.empty,
+    this.ftpPartnershipKeys = const {},
   });
 
   final String id;
@@ -186,6 +187,10 @@ class Game {
   /// at game start via [WorldMarketState.withDefaultPrices].
   final WorldMarketState worldMarketState;
 
+  /// Canonical bilateral FTP pair keys (`factionA|factionB`, sorted).
+  /// SPEC/game/world-market.md § Favored Trading Partner.
+  final Set<String> ftpPartnershipKeys;
+
   Map<String, dynamic> toJson() => {
     'id': id,
     'worldState': worldState.toJson(),
@@ -240,6 +245,8 @@ class Game {
       'mapViewState': mapViewState.toJson(),
     if (worldMarketState != WorldMarketState.empty)
       'worldMarketState': worldMarketState.toJson(),
+    if (ftpPartnershipKeys.isNotEmpty)
+      'ftpPartnershipKeys': ftpPartnershipKeys.toList()..sort(),
   };
 
   static Game fromJson(Map<String, dynamic> json) {
@@ -362,6 +369,8 @@ class Game {
             Map<String, dynamic>.from(worldMarketStateRaw),
           )
         : WorldMarketState.empty;
+    final ftpKeysList = json['ftpPartnershipKeys'] as List<dynamic>? ?? [];
+    final ftpPartnershipKeys = ftpKeysList.map((e) => e.toString()).toSet();
     return Game(
       id: json['id'] as String,
       worldState: WorldState.fromJson(
@@ -425,6 +434,7 @@ class Game {
           json['calendarCampaignHalted'] as bool? ?? false,
       infiniteMode: json['infiniteMode'] as bool? ?? false,
       worldMarketState: worldMarketState,
+      ftpPartnershipKeys: ftpPartnershipKeys,
     );
   }
 
@@ -458,6 +468,7 @@ class Game {
     int? lastHumanResearchCategoryCompletionTurn,
     MapViewState? mapViewState,
     WorldMarketState? worldMarketState,
+    Set<String>? ftpPartnershipKeys,
   }) {
     return Game(
       id: id ?? this.id,
@@ -500,6 +511,7 @@ class Game {
           this.lastHumanResearchCategoryCompletionTurn,
       mapViewState: mapViewState ?? this.mapViewState,
       worldMarketState: worldMarketState ?? this.worldMarketState,
+      ftpPartnershipKeys: ftpPartnershipKeys ?? this.ftpPartnershipKeys,
     );
   }
 
@@ -544,7 +556,8 @@ class Game {
           lastHumanResearchCategoryCompletionTurn ==
               other.lastHumanResearchCategoryCompletionTurn &&
           mapViewState == other.mapViewState &&
-          worldMarketState == other.worldMarketState;
+          worldMarketState == other.worldMarketState &&
+          _setEquals(ftpPartnershipKeys, other.ftpPartnershipKeys);
 
   @override
   int get hashCode => Object.hash(
@@ -582,8 +595,17 @@ class Game {
       lastHumanResearchCategoryCompletionTurn,
       mapViewState,
       worldMarketState,
+      Object.hashAll(ftpPartnershipKeys),
     ),
   );
+
+  static bool _setEquals<T>(Set<T> a, Set<T> b) {
+    if (a.length != b.length) return false;
+    for (final value in a) {
+      if (!b.contains(value)) return false;
+    }
+    return true;
+  }
 
   static bool _mapListEquals(
     Map<String, List<int>>? a,

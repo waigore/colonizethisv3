@@ -237,6 +237,7 @@ TurnResolutionResult resolveTurnForGame({
   onProductionComplete,
   TurnPhase? startFromPhase,
   List<OvertureDecision>? overtureDecisions,
+  List<FtpDecision>? ftpDecisions,
   List<InterventionDecision>? interventionDecisions,
   List<CallToArmsDecision>? callToArmsDecisions,
   void Function(TurnPhase phase, TurnPhaseProgressMarker marker)?
@@ -260,6 +261,7 @@ TurnResolutionResult resolveTurnForGame({
       onProductionComplete: onProductionComplete,
       startFromPhase: startFromPhase,
       overtureDecisions: overtureDecisions,
+      ftpDecisions: ftpDecisions,
       interventionDecisions: interventionDecisions,
       callToArmsDecisions: callToArmsDecisions,
       onPhaseProgress: onPhaseProgress,
@@ -302,6 +304,8 @@ String _pendingTurnResolutionMessage(TurnResolutionResult result) {
       'Turn resolution is complete; no pending decisions',
     TurnResolutionPendingOvertures() =>
       'Turn resolution is pending overture decisions; use resumeTurnResolutionWithOvertureDecisions',
+    TurnResolutionPendingFtp() =>
+      'Turn resolution is pending FTP decisions; use resumeTurnResolutionWithFtpDecisions',
     TurnResolutionPendingIntervention() =>
       'Turn resolution is pending intervention decisions; use resumeTurnResolutionWithInterventionDecisions',
     TurnResolutionPendingCallToArms() =>
@@ -345,6 +349,41 @@ TurnResolutionResult resumeTurnResolutionWithOvertureDecisions({
     onProductionComplete: onProductionComplete,
     startFromPhase: TurnPhase.diplomacy,
     overtureDecisions: decisions,
+  );
+}
+
+/// Resumes turn resolution after human FTP accept/reject decisions (Diplomacy phase).
+TurnResolutionResult resumeTurnResolutionWithFtpDecisions({
+  required Game game,
+  required List<FtpDecision> decisions,
+  required MapTopology topology,
+  required Orders orders,
+  Map<String, TileMapResult>? tileMapByRegion,
+  Map<String, MapTopology>? topologyByRegion,
+  Map<String, Map<CommodityId, int>> extractedByPlayerId = const {},
+  List<AssignedRecipe> defaultAssignments = const [],
+  Map<String, List<AssignedRecipe>>? defaultAssignmentsByPlayerId,
+  GameEventBus? eventBus,
+  void Function(DialogueEvent)? onDialogue,
+  void Function(GameEvent)? onGameEvent,
+  void Function(Map<String, Map<String, int>> productionByRecipeByPlayerId)?
+  onProductionComplete,
+}) {
+  return resolveTurnForGame(
+    game: game,
+    topology: topology,
+    orders: orders,
+    tileMapByRegion: tileMapByRegion,
+    topologyByRegion: topologyByRegion,
+    extractedByPlayerId: extractedByPlayerId,
+    defaultAssignments: defaultAssignments,
+    defaultAssignmentsByPlayerId: defaultAssignmentsByPlayerId,
+    eventBus: eventBus,
+    onDialogue: onDialogue,
+    onGameEvent: onGameEvent,
+    onProductionComplete: onProductionComplete,
+    startFromPhase: TurnPhase.diplomacy,
+    ftpDecisions: decisions,
   );
 }
 

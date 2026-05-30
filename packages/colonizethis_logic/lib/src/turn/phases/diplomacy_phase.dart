@@ -27,6 +27,7 @@ TurnPhaseStepOutcome diplomacyTurnPhaseHandler(
     config.orders,
     onDialogue: config.onDialogue,
     overtureDecisions: config.overtureDecisions,
+    ftpDecisions: config.ftpDecisions,
     interventionDecisions: config.interventionDecisions,
     callToArmsDecisions: config.callToArmsDecisions,
   );
@@ -37,6 +38,15 @@ TurnPhaseStepOutcome diplomacyTurnPhaseHandler(
         TurnResolutionPendingOvertures(
           game: diploResult.game,
           pendingOvertures: po,
+        ),
+      );
+    }
+    final pf = diploResult.pendingFtpOffers;
+    if (pf != null && pf.isNotEmpty) {
+      return TurnPhaseStepExit(
+        TurnResolutionPendingFtp(
+          game: diploResult.game,
+          pendingFtpOffers: pf,
         ),
       );
     }

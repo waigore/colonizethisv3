@@ -430,6 +430,19 @@ Phase 13 (`worldMarket`) sits between Build / work and End-of-turn — End-of-tu
 
 - Given `DealMatcher.pairKey('zeta', 'alpha')` and `DealMatcher.pairKey('alpha', 'zeta')`, when both are evaluated, then they return the same canonical key string (`'alpha|zeta'`), so FTP membership set entries are order-independent.
 
+### Favored Trading Partner (FTP) diplomacy
+
+- Storage: `Game.ftpPartnershipKeys` holds canonical bilateral keys (`pairKey(factionA, factionB)` from `diplomacy_relation_lookup.dart`, same format as `DealMatcher.pairKey`).
+- Order: `DiplomaticOrderType.establishFtp` (GP–GP only). Proposer must have embassy-tier overture toward target and relation score ≥ **65** (`relationScoreMinFtp`). Target must accept (human via `FtpDecision` resume path; AI when score ≥ 65 and target holds embassy toward proposer). Both sides need embassy-tier overture before FTP forms.
+- Break: FTP removed on war between the pair or when either side loses embassy-tier overture toward the other (`breakFtpOnWar`, `breakFtpOnEmbassyLoss` in Diplomacy phase step 6).
+- Matching input: `ftpPairKeysFromGame(game)` supplies `DealMatcher.matchDeals` `ftpPairKeys`.
+
+- Given GPs `gp1` and `gp2` with mutual embassy overtures and relation score 70, when `gp1` submits `establishFtp` toward `gp2` and `gp2` is AI-controlled, then after the Diplomacy phase `hasFtpPartnership(game, 'gp1', 'gp2')` is true and a `DiplomaticEvent` with `ftpFormed` is appended.
+
+- Given the same setup but relation score 60, when `gp1` submits `establishFtp` toward `gp2` and `gp2` is AI-controlled, then FTP is not established.
+
+- Given active FTP between `gp1` and `gp2`, when `gp1` declares war on `gp2` in the same Diplomacy phase, then FTP is cleared and a `ftpBroken` event is recorded.
+
 ---
 
 ## Determinism

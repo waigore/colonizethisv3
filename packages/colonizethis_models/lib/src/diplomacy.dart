@@ -138,6 +138,7 @@ enum DiplomaticOrderType {
   offerPeace,
   alliance,
   establishOverture,
+  establishFtp,
   grantAid,
   setSubsidy,
 }
@@ -247,6 +248,8 @@ enum DiplomaticEventType {
   peace,
   allianceFormed,
   allianceBroken,
+  ftpFormed,
+  ftpBroken,
   overtureAccepted,
   overtureRejected,
   joinEmpireResolved,
