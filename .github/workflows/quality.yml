@@ -27,9 +27,13 @@ jobs:
       opencode_scope: ${{ steps.filter.outputs.opencode_scope }}
       packages_changed: ${{ steps.filter.outputs.packages_changed }}
       packages_to_test: ${{ steps.test_plan.outputs.packages }}
+      app_mode: ${{ steps.app_test_plan.outputs.app_mode }}
+      app_tests: ${{ steps.app_test_plan.outputs.app_tests }}
     steps:
       - name: Checkout
         uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
 
       - name: Detect source changes
         id: filter
@@ -53,6 +57,8 @@ jobs:
               - 'tool/embed_tech_effect_summary.dart'
               - 'tool/generate_order_engine_slots.dart'
               - 'tool/verify_order_engine_codegen.sh'
+              - 'tool/compute_app_test_plan.dart'
+              - 'test/compute_app_test_plan_test.dart'
             # True when any changed path is outside repo-root dot-directories (CI/editor meta). OpenCode
             # review is skipped when the PR only touches those paths (e.g. .github, .cursor).
             opencode_scope:
@@ -103,6 +109,54 @@ jobs:
             --changed-ai="${{ steps.filter.outputs.pkg_ai }}" \
             | python3 -c "import sys,json; print(','.join(json.load(sys.stdin)))")
           echo "packages=$PLAN" >> "$GITHUB_OUTPUT"
+
+      - name: Setup Flutter
+        if: steps.filter.outputs.tests == 'true'
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: '3.41.9'
+          cache: true
+
+      - name: Compute app test plan
+        id: app_test_plan
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          LABEL_FULL: ${{ contains(github.event.pull_request.labels.*.name, 'ci:full-app') }}
+        run: |
+          set -euo pipefail
+          if [ "${{ steps.filter.outputs.tests }}" != "true" ]; then
+            echo "app_mode=skip" >> "$GITHUB_OUTPUT"
+            echo "app_tests=" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          if [ "$LABEL_FULL" = "true" ]; then
+            echo "app_mode=full" >> "$GITHUB_OUTPUT"
+            echo "app_tests=" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          if [ -z "$BASE_SHA" ]; then
+            echo "BASE_SHA is empty; defaulting to full mode."
+            echo "app_mode=full" >> "$GITHUB_OUTPUT"
+            echo "app_tests=" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          git fetch --no-tags origin "$BASE_SHA" >/dev/null 2>&1 || true
+          if ! git cat-file -e "$BASE_SHA^{commit}" 2>/dev/null; then
+            echo "BASE_SHA $BASE_SHA not reachable; defaulting to full mode."
+            echo "app_mode=full" >> "$GITHUB_OUTPUT"
+            echo "app_tests=" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          CHANGED=$(git diff --name-only "$BASE_SHA"...HEAD | paste -sd, -)
+          echo "Changed files (count: $(echo "$CHANGED" | tr ',' '\n' | grep -c .)):"
+          echo "$CHANGED" | tr ',' '\n' | sed 's/^/  /' | head -20
+          PLAN=$(dart run tool/compute_app_test_plan.dart --changed-files="$CHANGED")
+          echo "Selector plan: $PLAN"
+          MODE=$(echo "$PLAN" | python3 -c "import sys,json; print(json.load(sys.stdin)['mode'])")
+          TESTS=$(echo "$PLAN" | python3 -c "import sys,json; print(','.join(json.load(sys.stdin)['tests']))")
+          echo "app_mode=$MODE" >> "$GITHUB_OUTPUT"
+          echo "app_tests=$TESTS" >> "$GITHUB_OUTPUT"
   # Resolved pub cache + .dart_tool + gen-l10n; flutter analyze gate; then pack for shards (--no-pub).
   # `app_build_linux` reuses the same artifact to compile the Linux desktop target (release), catching
   # linker/gen-l10n issues that `flutter analyze` alone can miss.
@@ -287,16 +341,16 @@ jobs:
       PUB_CACHE: ${{ github.workspace }}/.pub-cache
       SUPPRESS_IMAGE_VIEWER: "1"
     steps:
-      - name: Skip when no test-relevant paths changed
-        if: needs.changes.outputs.tests != 'true'
-        run: echo "No test-relevant paths matched; skipping app tests."
+      - name: Skip when full app test matrix not required
+        if: needs.changes.outputs.app_mode != 'full'
+        run: echo "App test plan mode=${{ needs.changes.outputs.app_mode }}; skipping full app test shard."
 
       - name: Checkout
-        if: needs.changes.outputs.tests == 'true'
+        if: needs.changes.outputs.app_mode == 'full'
         uses: actions/checkout@v6
 
       - name: Setup Flutter
-        if: needs.changes.outputs.tests == 'true'
+        if: needs.changes.outputs.app_mode == 'full'
         uses: subosito/flutter-action@v2
         with:
           channel: stable
@@ -304,18 +358,18 @@ jobs:
           cache: true
 
       - name: Download app test cache
-        if: needs.changes.outputs.tests == 'true'
+        if: needs.changes.outputs.app_mode == 'full'
         uses: actions/download-artifact@v4
         with:
           name: app-test-cache
           path: _app_test_cache
 
       - name: Restore pub + Dart tool cache
-        if: needs.changes.outputs.tests == 'true'
+        if: needs.changes.outputs.app_mode == 'full'
         run: tar xzf _app_test_cache/app-test-cache.tar.gz -C "$GITHUB_WORKSPACE"
 
       - name: Run Flutter tests (shard)
-        if: needs.changes.outputs.tests == 'true'
+        if: needs.changes.outputs.app_mode == 'full'
         run: |
           set -e
           mkdir -p app/coverage
@@ -327,12 +381,69 @@ jobs:
             --total-shards=${{ env.APP_TEST_TOTAL_SHARDS }} --shard-index=${{ matrix.shard }}
 
       - name: Upload shard coverage
-        if: needs.changes.outputs.tests == 'true'
+        if: needs.changes.outputs.app_mode == 'full'
         uses: actions/upload-artifact@v4
         with:
           name: app-lcov-shard-${{ matrix.shard }}
           path: app/coverage/lcov.shard${{ matrix.shard }}.info
           retention-days: 2
+
+  app_tests_selective:
+    name: App tests (selective)
+    needs: [changes, app_tests_cache]
+    if: |
+      always() &&
+      needs.changes.result == 'success' &&
+      (
+        needs.changes.outputs.app_mode != 'selective' ||
+        needs.app_tests_cache.result == 'success'
+      )
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      PUB_CACHE: ${{ github.workspace }}/.pub-cache
+      SUPPRESS_IMAGE_VIEWER: "1"
+    steps:
+      - name: Skip when selective app tests not required
+        if: needs.changes.outputs.app_mode != 'selective'
+        run: echo "App test plan mode=${{ needs.changes.outputs.app_mode }}; skipping selective app tests."
+
+      - name: Checkout
+        if: needs.changes.outputs.app_mode == 'selective'
+        uses: actions/checkout@v6
+
+      - name: Setup Flutter
+        if: needs.changes.outputs.app_mode == 'selective'
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: '3.41.9'
+          cache: true
+
+      - name: Download app test cache
+        if: needs.changes.outputs.app_mode == 'selective'
+        uses: actions/download-artifact@v4
+        with:
+          name: app-test-cache
+          path: _app_test_cache
+
+      - name: Restore pub + Dart tool cache
+        if: needs.changes.outputs.app_mode == 'selective'
+        run: tar xzf _app_test_cache/app-test-cache.tar.gz -C "$GITHUB_WORKSPACE"
+
+      - name: Run Flutter tests (selective)
+        if: needs.changes.outputs.app_mode == 'selective'
+        env:
+          APP_TESTS: ${{ needs.changes.outputs.app_tests }}
+        run: |
+          set -euo pipefail
+          if [ -z "$APP_TESTS" ]; then
+            echo "No selective app tests listed; failing."
+            exit 1
+          fi
+          cd app
+          mapfile -t rel_tests < <(echo "$APP_TESTS" | tr ',' '\n' | sed 's|^app/||')
+          flutter test "${rel_tests[@]}" --no-pub --reporter=compact -j 1 --no-track-widget-creation
 
   # colonizethis_* package unit tests + package coverage gates (parallel to quality / app tests).
   # MAX_JOBS is pinned to 4 to match ubuntu-latest vCPU count: with 10 shards each running
@@ -464,6 +575,9 @@ jobs:
       - name: Test OrderEngine slot generator (SPEC/program/order-engine.md)
         run: dart test test/generate_order_engine_slots_test.dart --reporter=compact
 
+      - name: Test app test plan selector (SPEC/program/ci-app-selective-tests.md)
+        run: dart test test/compute_app_test_plan_test.dart --reporter=compact
+
       - name: Wang incremental assets gate (Python)
         run: |
           set -euo pipefail
@@ -513,20 +627,20 @@ jobs:
       )
     runs-on: ubuntu-latest
     steps:
-      - name: Skip when no test-relevant paths changed
-        if: needs.changes.outputs.tests != 'true'
-        run: echo "No test-relevant paths matched; skipping app coverage merge."
+      - name: Skip when full app coverage merge not required
+        if: needs.changes.outputs.app_mode != 'full'
+        run: echo "App test plan mode=${{ needs.changes.outputs.app_mode }}; skipping app coverage merge."
 
       - name: Checkout
-        if: needs.changes.outputs.tests == 'true'
+        if: needs.changes.outputs.app_mode == 'full'
         uses: actions/checkout@v6
 
       - name: Install lcov
-        if: needs.changes.outputs.tests == 'true'
+        if: needs.changes.outputs.app_mode == 'full'
         run: sudo apt-get update && sudo apt-get install -y lcov
 
       - name: Download shard coverage
-        if: needs.changes.outputs.tests == 'true'
+        if: needs.changes.outputs.app_mode == 'full'
         uses: actions/download-artifact@v4
         with:
           pattern: app-lcov-shard-*
@@ -534,7 +648,7 @@ jobs:
           path: _lcov_shards
 
       - name: Merge shard lcov into app/coverage/lcov.info
-        if: needs.changes.outputs.tests == 'true'
+        if: needs.changes.outputs.app_mode == 'full'
         run: |
           set -euo pipefail
           mkdir -p app/coverage
@@ -547,6 +661,6 @@ jobs:
           tool/merge_app_lcov_shards.sh "${APP_TEST_TOTAL_SHARDS}"
 
       - name: App coverage gate (app/lib/ >= 80%)
-        if: needs.changes.outputs.tests == 'true'
+        if: needs.changes.outputs.app_mode == 'full'
         run: tool/check_coverage_threshold.sh 80 app
 
