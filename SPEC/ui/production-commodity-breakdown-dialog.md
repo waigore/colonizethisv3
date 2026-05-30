@@ -37,12 +37,14 @@ Implementation: `app/lib/features/game/widgets/production_commodity_breakdown_di
 +--------------------------------------------------------+
 ```
 
-- Header: `production_breakdown_title` (`titleMedium`).
-- Table columns: leading **Commodity** column, one column per value of `EconomyPreviewStockpilePhase` (label resolved by static `_phaseColumnLabel`), and a trailing **Total** column.
-- Rows: three section headers in fixed order — **Food**, **Raw materials** (filtered to commodities that appear as inputs in any `ProductionRecipesCatalog.all` recipe), **Manufactured** — each followed by the commodities in `CommodityCatalog.all` for that category. Sections with zero qualifying commodities collapse to nothing (no header row).
-- Each commodity row renders `ResourceIcon(commodityId: c.id, size: 16)` + display name (`maxLines: 1, ellipsis`) and one cell per phase. Cell value is `_formatDelta(int)`: positive values prefixed with `+`, zero shown as `0`, negative values keep their leading `-`.
+- Header: `production_breakdown_title` rendered with `titleMedium` coloured `--accent` (`EditorialMonoclePalette.accent`). No hard-coded light-theme colours.
+- Table columns: leading **Commodity** column, one column per value of `EconomyPreviewStockpilePhase` (label resolved by static `_phaseColumnLabel`), and a trailing **Total** column. Column headings use `labelSmall` coloured `--muted`; the heading row paints `--surface-lite` as its background.
+- Rows: three section headers in fixed order — **Food**, **Raw materials** (filtered to commodities that appear as inputs in any `ProductionRecipesCatalog.all` recipe), **Manufactured** — each followed by the commodities in `CommodityCatalog.all` for that category. Sections with zero qualifying commodities collapse to nothing (no header row). Section header rows render the label in small-caps `--muted` with a 1 px `--accent-dim` bottom border spanning the row (same visual contract as `CtSectionLabel` without replacing the `DataTable` row structure).
+- Each commodity row renders `ResourceIcon(commodityId: c.id, size: 16)` + display name (`maxLines: 1, ellipsis`, colour `--fg`) and one cell per phase. Cell value is `_formatDelta(int)`: positive values prefixed with `+`, zero shown as `0`, negative values keep their leading `-`. Numeric phase and **Total** cells use the dark-theme monospace stack with tabular figures; cell colour follows the same sign convention as `CtResourceCell` R10 (`+N` → `--success`, `-N` → `--danger`, `0` → `--muted`).
+- Table chrome: horizontal dividers between rows use 1 px `--accent-dim` at 50% opacity; commodity data rows alternate between transparent and `--surface` at 40% opacity for readability on the `CtDialogShell` gradient background.
 - Layout sizes: `headingRowHeight: 40`, `dataRowMinHeight: 32`, `dataRowMaxHeight: 48`. A single horizontal `ScrollController` is owned by the dialog state and disposed in `dispose`.
 - Footer: right-aligned `CtNinePatchButton` with label `common_close`.
+- Modal barrier: callers MUST pass `barrierColor: EditorialMonoclePalette.dialogScrim` to `showDialog` (canonical `--dialog-scrim` per `SPEC/ui/pixel-art-ui-catalog.md` § Dialog scrim).
 
 ---
 
@@ -76,8 +78,8 @@ There is no Confirm/Cancel pair: this dialog is read-only and dismiss-only.
 
 ## Components
 
-- `CtDialogShell`, `CtNinePatchButton`, `ResourceIcon` (see `app/lib/widgets/`).
-- `DataTable`, `DataColumn`, `DataRow`, `DataCell`, `Scrollbar`, `SingleChildScrollView` (Flutter Material).
+- `CtDialogShell`, `CtNinePatchButton`, `ResourceIcon`, `CtResourceCell.deltaColor` / `CtResourceCell.formattedDeltaText` (sign + colour helpers for numeric cells; see `app/lib/widgets/`).
+- `DataTable`, `DataColumn`, `DataRow`, `DataCell`, `Scrollbar`, `SingleChildScrollView` (Flutter Material table primitives only — no Material `AlertDialog` chrome).
 - Logic: `previewStockpilePhaseDeltasByCommodityForPlayer`, `assignedRecipesFromDesiredOutput`, `productionDesiredOutputProvider` (Riverpod).
 - Localized keys via `appL10n(context)`: `production_breakdown_title`, `production_breakdown_commodity`, `production_breakdown_total`, `production_breakdown_phase_pendingBuildCosts`, `production_breakdown_phase_extraction`, `production_breakdown_phase_richesToTreasury`, `production_breakdown_phase_consumption`, `production_breakdown_phase_production`, `production_food`, `production_rawMaterials`, `production_manufactured`, `common_close`.
 
@@ -96,6 +98,16 @@ There is no Confirm/Cancel pair: this dialog is read-only and dismiss-only.
 - Given the user taps the trailing `common_close` button, when the gesture completes, then no `AppEvent` is emitted on any bus and `ProductionCommodityBreakdownDialog` is removed from the widget tree.
 
 - Given the dialog opens with `productionDesiredOutputProvider` returning a non-empty assignment map, when `previewStockpilePhaseDeltasByCommodityForPlayer` is called by the dialog, then `defaultAssignmentsByPlayerId[widget.player.id]` equals `assignedRecipesFromDesiredOutput(desiredOutputByRecipe)`.
+
+- Given the breakdown dialog is mounted under `AppThemes.editorialMonocle`, when the title text renders, then its `TextStyle.color` resolves to `EditorialMonoclePalette.accent` (no hard-coded hex literals).
+
+- Given a commodity row renders a phase cell whose delta value is strictly positive, when the cell text is inspected, then the displayed string is prefixed with `+` and the `TextStyle.color` resolves to `EditorialMonoclePalette.success`.
+
+- Given a commodity row renders a phase cell whose delta value is strictly negative, when the cell text is inspected, then the `TextStyle.color` resolves to `EditorialMonoclePalette.danger`.
+
+- Given a commodity row renders a phase cell whose delta value is zero, when the cell text is inspected, then the displayed string equals `0` and the `TextStyle.color` resolves to `EditorialMonoclePalette.muted`.
+
+- Given `ProductionScreen` opens the breakdown dialog via `showDialog`, when the route is pushed, then `ModalRoute.barrierColor` equals `EditorialMonoclePalette.dialogScrim`.
 
 ---
 
