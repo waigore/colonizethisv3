@@ -95,6 +95,7 @@ Orders copyInitialOrdersForEngine(Orders initialOrders) =>
       navalMissionOrdersByPlayerId: _copyMapOfOrderLists(initialOrders.navalMissionOrdersByPlayerId),
       recruitWorkerOrdersByPlayerId: _copyMapOfOrderLists(initialOrders.recruitWorkerOrdersByPlayerId),
       researchOrdersByPlayerId: _copyMapOfOrderLists(initialOrders.researchOrdersByPlayerId),
+      tradeOrdersByPlayerId: _copyMapOfOrderLists(initialOrders.tradeOrdersByPlayerId),
     );
 
 Orders copyOrdersSnapshotForEngine(Orders o) =>
@@ -108,6 +109,7 @@ Orders copyOrdersSnapshotForEngine(Orders o) =>
       navalMissionOrdersByPlayerId: _copyMapOfOrderLists(o.navalMissionOrdersByPlayerId),
       recruitWorkerOrdersByPlayerId: _copyMapOfOrderLists(o.recruitWorkerOrdersByPlayerId),
       researchOrdersByPlayerId: _copyMapOfOrderLists(o.researchOrdersByPlayerId),
+      tradeOrdersByPlayerId: _copyMapOfOrderLists(o.tradeOrdersByPlayerId),
     );
 
 mixin _OrderEngineGeneratedOrderMethods {
