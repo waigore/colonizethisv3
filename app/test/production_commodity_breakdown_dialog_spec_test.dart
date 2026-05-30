@@ -8,10 +8,23 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'package:colonizethis_app/config/themes.dart';
+import 'package:colonizethis_app/config/editorial_monocle_palette.dart';
 import 'package:colonizethis_app/features/game/widgets/production_commodity_breakdown_dialog.dart';
 import 'package:colonizethis_app/l10n/l10n.dart';
+import 'package:colonizethis_app/providers/production_allocation_provider.dart';
 import 'package:colonizethis_app/widgets/debug_init_game.dart';
 import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
+
+class _SeededProductionDesiredOutputNotifier
+    extends ProductionDesiredOutputNotifier {
+  _SeededProductionDesiredOutputNotifier(this._initial);
+
+  final Map<String, int> _initial;
+
+  @override
+  Map<String, int> build() => _initial;
+}
 
 void main() {
   suppressLogsForTests();
@@ -22,7 +35,7 @@ void main() {
     () {
       Future<void> pumpDialog(
         WidgetTester tester, {
-        AppEventBus? bus,
+        Map<String, int>? desiredOutput,
         Size surfaceSize = const Size(900, 1400),
       }) async {
         addTearDown(tester.view.reset);
@@ -35,7 +48,14 @@ void main() {
         final player = game.playerById(humanPlayerId) ?? game.players.first;
         await tester.pumpWidget(
           ProviderScope(
+            overrides: [
+              if (desiredOutput != null)
+                productionDesiredOutputProvider.overrideWith(
+                  () => _SeededProductionDesiredOutputNotifier(desiredOutput),
+                ),
+            ],
             child: MaterialApp(
+              theme: AppThemes.editorialMonocle,
               localizationsDelegates:
                   AppLocalizationsBinding.localizationsDelegates,
               supportedLocales: AppLocalizations.supportedLocales,
@@ -45,6 +65,7 @@ void main() {
                     onPressed: () {
                       showDialog<void>(
                         context: context,
+                        barrierColor: EditorialMonoclePalette.dialogScrim,
                         builder: (_) => ProductionCommodityBreakdownDialog(
                           game: game,
                           player: player,
@@ -91,6 +112,73 @@ void main() {
       );
 
       testWidgets(
+        'title text uses EditorialMonoclePalette.accent (Refs #2862 S4)',
+        (WidgetTester tester) async {
+          await pumpDialog(tester);
+          final title = tester.widget<Text>(find.text('Commodity breakdown'));
+          expect(title.style?.color, EditorialMonoclePalette.accent);
+        },
+      );
+
+      testWidgets(
+        'zero delta cells use EditorialMonoclePalette.muted (Refs #2862 S4)',
+        (WidgetTester tester) async {
+          await pumpDialog(tester);
+          final zeroCells = tester
+              .widgetList<Text>(find.text('0'))
+              .where((t) => t.style?.color == EditorialMonoclePalette.muted);
+          expect(zeroCells, isNotEmpty);
+        },
+      );
+
+      testWidgets(
+        'positive delta cells use EditorialMonoclePalette.success (Refs #2862 S4)',
+        (WidgetTester tester) async {
+          await pumpDialog(
+            tester,
+            desiredOutput: const {'lumber_from_timber': 5},
+          );
+          final positiveCells = tester
+              .widgetList<Text>(find.textContaining('+'))
+              .where((t) => t.style?.color == EditorialMonoclePalette.success);
+          expect(positiveCells, isNotEmpty);
+        },
+      );
+
+      testWidgets(
+        'negative delta cells use EditorialMonoclePalette.danger (Refs #2862 S4)',
+        (WidgetTester tester) async {
+          await pumpDialog(
+            tester,
+            desiredOutput: const {'lumber_from_timber': 5},
+          );
+          final negativeCells = tester
+              .widgetList<Text>(
+                find.byWidgetPredicate(
+                  (w) =>
+                      w is Text &&
+                      w.data != null &&
+                      w.data!.startsWith('-') &&
+                      w.style?.color == EditorialMonoclePalette.danger,
+                ),
+              )
+              .toList();
+          expect(negativeCells, isNotEmpty);
+        },
+      );
+
+      testWidgets(
+        'showDialog route uses EditorialMonoclePalette.dialogScrim barrier',
+        (WidgetTester tester) async {
+          await pumpDialog(tester);
+          final route = ModalRoute.of(
+            tester.element(find.byType(ProductionCommodityBreakdownDialog)),
+          );
+          expect(route?.barrierColor, EditorialMonoclePalette.dialogScrim);
+        },
+      );
+
+      testWidgets(
         'tapping Close dismisses the dialog and emits no bus events',
         (WidgetTester tester) async {
           var eventCount = 0;
@@ -98,7 +186,7 @@ void main() {
           final sub = bus.on<AppEvent>().listen((_) => eventCount++);
           addTearDown(sub.cancel);
 
-          await pumpDialog(tester, bus: bus);
+          await pumpDialog(tester);
           final closeButton = find.widgetWithText(CtNinePatchButton, 'Close');
           await tester.ensureVisible(closeButton);
           await tester.pumpAndSettle();
