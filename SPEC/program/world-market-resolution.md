@@ -289,6 +289,99 @@ This is the **world-market**-scoped analogue of `tradeSlotsForGp`, which is per-
 
 ---
 
+## Trade order suggestion API
+
+Implementation lives in `packages/colonizethis_logic/lib/src/economy/world_market/trade_order_suggester.dart` and is wired through `OrderSuggestionAPI.suggestTradeOrders` (default impl in `DefaultOrderSuggestionAPI`). Like the validator and matcher, the suggester is **pure** — deterministic for fixed inputs, silent (no logger calls), and safe under the 15-second turn-resolution budget.
+
+The suggester returns a `TradeSuggestionResult` carrying parallel offer and bid `TradeOrder` lists that, by construction, pass `TradeOrderValidator.validate` against the same context numbers. Callers (UI prompts, AI `TreasuryPlanner` per Issue F / #2994) may apply additional ranking but never need to re-clamp for validity.
+
+### Signature
+
+```dart
+class TradeSuggestionContext {
+  const TradeSuggestionContext({
+    required this.playerId,
+    required this.bidTypeCap,
+    required this.tradeCargoCapacity,
+    required this.availableStockpileByCommodityId,
+    required this.commodityNeedByCommodityId,
+    this.offerPriority = 5,
+    this.bidPriority = 5,
+  });
+
+  final String playerId;
+  final int bidTypeCap;
+  final int tradeCargoCapacity;
+  /// `availableStockpileByCommodityId[id]` = projected post-production
+  /// stockpile minus committed industry allocation, clamped at 0. Same
+  /// semantics as `TradeOrderValidationContext.availableStockpileByCommodityId`.
+  final Map<CommodityId, int> availableStockpileByCommodityId;
+  /// `commodityNeedByCommodityId[id]` = projected deficit in units the
+  /// player wants to acquire this turn (forecast consumption + production
+  /// inputs minus projected stockpile, clamped at 0). Riches entries are
+  /// ignored (rule 2). Used for bid suggestions only.
+  final Map<CommodityId, int> commodityNeedByCommodityId;
+  final int offerPriority;
+  final int bidPriority;
+}
+
+class TradeSuggestionResult {
+  const TradeSuggestionResult({
+    this.offers = const <TradeOrder>[],
+    this.bids = const <TradeOrder>[],
+  });
+
+  final List<TradeOrder> offers;
+  final List<TradeOrder> bids;
+}
+
+class TradeOrderSuggester {
+  static TradeSuggestionResult suggest(TradeSuggestionContext context);
+}
+```
+
+### Algorithm
+
+Both selectors iterate commodities in **alphabetical id order** for determinism and skip every entry with `commodityId` in `richesCommodityIds` (rule 2) or `quantity <= 0` (rule 1) before emitting a `TradeOrder`. Mutual-exclusion (rule 3) is enforced at suggestion time: a commodity that has both a positive available stockpile and a positive forecast need is treated as **net** — `net = availableStockpile - need`; positive net produces an offer and zero bid, non-positive net produces a bid (when `need > availableStockpile`) and zero offer. The resulting parallel lists never share a commodity id.
+
+1. **Offer pass** — for every commodity with `net > 0`, emit `TradeOrder(commodityId, type: offer, quantity: net, priority: context.offerPriority, isFtp: false)`. There is no per-commodity offer cap (rule 6 only requires `quantity <= availableStockpile`, which `net` satisfies by construction).
+2. **Bid pass** — maintain `remainingCargoBudget = tradeCargoCapacity` and `admittedBids = 0`. For every commodity with `bidQuantity > 0` (i.e. need exceeds available stockpile):
+   - Compute `cappedQty = min(bidQuantity, remainingCargoBudget, tradeCargoCapacity)`.
+   - When `cappedQty == 0` (capacity exhausted) skip — no zero-quantity bid is emitted.
+   - When `admittedBids == bidTypeCap` (cap exhausted) stop iterating bids — later candidates are silently dropped to keep the suggestion validator-clean.
+   - Otherwise emit `TradeOrder(commodityId, type: bid, quantity: cappedQty, priority: context.bidPriority, isFtp: false)`, decrement `remainingCargoBudget` by `cappedQty`, and increment `admittedBids` by 1.
+
+### Default `OrderSuggestionAPI` wiring
+
+`DefaultOrderSuggestionAPI.suggestTradeOrders` derives the context from `Game` / `PlayerView` as follows. Any layer that lacks a richer projection contributes a conservative zero so the suggester never proposes orders that would violate the validator.
+
+| Field | Source |
+|-------|--------|
+| `bidTypeCap` | `worldMarketBidTypeCap(game, playerId)` |
+| `tradeCargoCapacity` | `cargoHoldsForHomeFleet(game, playerId)` (extraction-tonnage subtraction is folded in by the phase handler in Issue B / #2990) |
+| `availableStockpileByCommodityId` | `Player.stockpile.quantities` minus `richesCommodityIds`; industry-allocation subtraction stays at the validator boundary today and tightens up when the production projection wires in. |
+| `commodityNeedByCommodityId` | empty map until the production-input projection lands; documents the validator-clean default (the suggester emits offers only and `OrderSuggestionAPI` callers must opt in to bids by passing an explicit forecast). |
+
+### Suggestion ACs (executable)
+
+- Given `TradeSuggestionContext(playerId: 'gp1', bidTypeCap: 3, tradeCargoCapacity: 100, availableStockpileByCommodityId: {'timber': 12}, commodityNeedByCommodityId: {})`, when `TradeOrderSuggester.suggest` runs, then `result.offers == [TradeOrder('timber', offer, 12, 5)]` and `result.bids` is empty. The same offers pass `TradeOrderValidator.validate` with reason `accepted`.
+
+- Given `availableStockpileByCommodityId: {'timber': 0}, commodityNeedByCommodityId: {'timber': 8}` and `tradeCargoCapacity: 100`, when the suggester runs, then `result.bids == [TradeOrder('timber', bid, 8, 5)]` (need fully covered) and `result.offers` is empty.
+
+- Given `availableStockpileByCommodityId: {'timber': 5}, commodityNeedByCommodityId: {'timber': 9}`, when the suggester runs, then `net = -4`, `result.bids == [TradeOrder('timber', bid, 4, 5)]` (deficit only — cap is satisfied and cargo holds), and `result.offers` is empty (mutual-exclusion preserved at suggestion time).
+
+- Given `availableStockpileByCommodityId: {'spices': 999, 'gold': 999}, commodityNeedByCommodityId: {'gems': 5}`, when the suggester runs, then `result.offers` and `result.bids` are both empty (riches excluded from both passes).
+
+- Given `bidTypeCap: 0` and any `commodityNeedByCommodityId`, when the suggester runs, then `result.bids` is empty (rule 4 absolute cap respected).
+
+- Given `bidTypeCap: 3` and `commodityNeedByCommodityId: {'coal': 10, 'iron': 10, 'timber': 10, 'wool': 10}` (alphabetical iteration), when the suggester runs, then exactly the first three commodities (`coal`, `iron`, `timber`) appear as bids and `wool` is silently dropped.
+
+- Given `tradeCargoCapacity: 6` and `commodityNeedByCommodityId: {'coal': 4, 'iron': 5}`, when the suggester runs, then `coal` is emitted at quantity `4`, `iron` is partial-capped at `2` (`6 - 4`), and the suggested bids honor cumulative buyer cargo.
+
+- Given any `TradeSuggestionContext`, when the suggester runs and the resulting orders are passed to `TradeOrderValidator.validate` with the same context's `bidTypeCap`, `tradeCargoCapacity`, and `availableStockpileByCommodityId`, then every entry in the parallel result is `accepted` (suggester output is validator-clean by construction).
+
+---
+
 ## Phase placement (informational; covered fully by Issue B / #2990)
 
 Phase 13 (`worldMarket`) sits between Build / work and End-of-turn — End-of-turn renumbers from 13 → 14. The handler will gather `Orders.tradeOrders`, run matching, apply transfers, then call `computeNextPrice` per commodity and store the resulting `WorldMarketState` on `Game`.
