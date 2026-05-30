@@ -43,6 +43,7 @@ This rule covers four normalised Flutter dp breakpoints, each matching a per-scr
 #### Game Setup (`< 500 dp`)
 
 - Each player-slot row uses a **stacked layout**: slot label on one line, nation dropdown full width on the next, leader dropdown full width below. Above the breakpoint, one row: label | nation | leader. Source: [game-setup.md](game-setup.md) and `SPEC/ui/mockups/SHEL20001-game-setup.html` `@media (max-width:499px)`.
+- The same stacked rule applies to **`NewGameLeaderSelectionDialog`** (DLG10001) — the shell-mounted dialog version of Game Setup that runs in the production app — so both Game Setup surfaces honour the 500 dp breakpoint with the same slot-row body switching. Source: [new-game-leader-selection-dialog.md](new-game-leader-selection-dialog.md) § Layout / wireframe and § Acceptance Criteria.
 
 #### Main Menu (`≤ 430 dp`)
 

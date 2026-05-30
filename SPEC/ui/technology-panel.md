@@ -74,6 +74,9 @@ Slots tab content: vertical list of slot rows (label, assigned tech + progress, 
 
 Folder: **Tech Tree** — stories for slots tab with fixture player research state.
 
+- **Mid-game (half researched)** — desktop-width `TechnologyScreen` (Slots tab default) with half the catalog unlocked and one in-progress tech.
+- **Mid-game slots (mobile)** — same fixture inside the shared `mobileViewport` frame (360 × 640 dp) per `SPEC/ui/mobile-adaptation.md` § 6 (Refs #2870 R22 / S9).
+
 ---
 
 ## Purpose
