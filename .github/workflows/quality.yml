@@ -32,6 +32,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
 
       - name: Detect source changes
         id: filter
@@ -118,20 +120,41 @@ jobs:
 
       - name: Compute app test plan
         id: app_test_plan
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          LABEL_FULL: ${{ contains(github.event.pull_request.labels.*.name, 'ci:full-app') }}
         run: |
+          set -euo pipefail
           if [ "${{ steps.filter.outputs.tests }}" != "true" ]; then
             echo "app_mode=skip" >> "$GITHUB_OUTPUT"
             echo "app_tests=" >> "$GITHUB_OUTPUT"
             exit 0
           fi
-          CHANGED=$(git diff --name-only "${{ github.event.pull_request.base.sha }}"...HEAD | paste -sd,)
+          if [ "$LABEL_FULL" = "true" ]; then
+            echo "app_mode=full" >> "$GITHUB_OUTPUT"
+            echo "app_tests=" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          if [ -z "$BASE_SHA" ]; then
+            echo "BASE_SHA is empty; defaulting to full mode."
+            echo "app_mode=full" >> "$GITHUB_OUTPUT"
+            echo "app_tests=" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          git fetch --no-tags origin "$BASE_SHA" >/dev/null 2>&1 || true
+          if ! git cat-file -e "$BASE_SHA^{commit}" 2>/dev/null; then
+            echo "BASE_SHA $BASE_SHA not reachable; defaulting to full mode."
+            echo "app_mode=full" >> "$GITHUB_OUTPUT"
+            echo "app_tests=" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          CHANGED=$(git diff --name-only "$BASE_SHA"...HEAD | paste -sd, -)
+          echo "Changed files (count: $(echo "$CHANGED" | tr ',' '\n' | grep -c .)):"
+          echo "$CHANGED" | tr ',' '\n' | sed 's/^/  /' | head -20
           PLAN=$(dart run tool/compute_app_test_plan.dart --changed-files="$CHANGED")
+          echo "Selector plan: $PLAN"
           MODE=$(echo "$PLAN" | python3 -c "import sys,json; print(json.load(sys.stdin)['mode'])")
           TESTS=$(echo "$PLAN" | python3 -c "import sys,json; print(','.join(json.load(sys.stdin)['tests']))")
-          if [ "${{ contains(github.event.pull_request.labels.*.name, 'ci:full-app') }}" = "true" ]; then
-            MODE=full
-            TESTS=""
-          fi
           echo "app_mode=$MODE" >> "$GITHUB_OUTPUT"
           echo "app_tests=$TESTS" >> "$GITHUB_OUTPUT"
   # Resolved pub cache + .dart_tool + gen-l10n; flutter analyze gate; then pack for shards (--no-pub).
