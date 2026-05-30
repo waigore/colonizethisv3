@@ -176,7 +176,9 @@ The narrow-shell tab strip (`CtTabStrip`) hosting the six province / two sea-zon
 
 ## Widgetbook
 
-Folder: **Province Overlay**. Map stories use provider overrides; Flame map does not import the overlay.
+Folder: **Province Overlay**. Map stories use provider overrides; Flame map does not import the overlay. Use cases: **Standalone — province**, **Standalone — sea zone**, **Standalone (mobile)**, **With map — province selected**, **With map — sea zone selected**.
+
+The **Standalone (mobile)** use case wraps the overlay in `mobileViewport(context, …)` so reviewers can verify the `< 600 dp` narrow body (`MainAxisSize.min`, height capped at ~33 % of viewport per `SPEC/ui/in-game-shell-narrow.md` § Province/sea zone detail overlay) without resizing the host window. The **Standalone (mobile)** use case must be pinned by `app/test/widgetbook_province_overlay_mobile_viewport_test.dart` (Refs #2870 R22 / S9) so its removal or rename surfaces in CI before reviewers lose the narrow-viewport review surface.
 
 ---
 
