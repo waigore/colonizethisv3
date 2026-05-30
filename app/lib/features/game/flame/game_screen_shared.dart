@@ -17,6 +17,7 @@ const double kEdgeSwipeStripWidth = 20;
 
 /// Keys for empire left-rail icon buttons (tests). SPEC/ui/empire-overview.md, empire-buttons.md.
 const Key kEmpireProductionButtonKey = Key('empire_rail_production');
+const Key kEmpireTradeButtonKey = Key('empire_rail_trade');
 const Key kEmpireCivilianUnitsButtonKey = Key('empire_rail_civilian_units');
 const Key kEmpireMilitaryUnitsButtonKey = Key('empire_rail_military_units');
 const Key kEmpireNavalUnitsButtonKey = Key('empire_rail_naval_units');
