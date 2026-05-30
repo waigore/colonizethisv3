@@ -233,6 +233,97 @@ void main() {
     expect(closed, isTrue);
   });
 
+  group('GameSideMenu swipe-to-close contract (Refs #2870 R21)', () {
+    Widget swipeTestScaffold({required VoidCallback onClose}) {
+      return ProviderScope(
+        overrides: [
+          gamesBoxProvider.overrideWith((ref) => gamesBox),
+          gameServiceProvider.overrideWith(
+            (ref) => GameService(gamesBox, GameSaveAdapter()),
+          ),
+          currentGameProvider.overrideWith(() => CurrentGameNotifier(game)),
+          currentOrdersProvider.overrideWith(
+            () => CurrentOrdersNotifier(const Orders()),
+          ),
+          appEventBusProvider.overrideWith((ref) {
+            final bus = AppEventBus.create();
+            ref.onDispose(bus.dispose);
+            return bus;
+          }),
+        ],
+        child: AppEventHandlerScope(
+          child: MaterialApp(
+            navigatorKey: appNavigatorKey,
+            home: Scaffold(
+              body: Stack(
+                children: [
+                  GameSideMenu(sideMenuOpen: true, onClose: onClose),
+                ],
+              ),
+            ),
+          ),
+        ),
+      );
+    }
+
+    testWidgets(
+      'kSwipeToCloseDeltaThreshold pins the SPEC -5.0 logical-pixel threshold',
+      (WidgetTester tester) async {
+        expect(GameSideMenu.kSwipeToCloseDeltaThreshold, -5.0);
+      },
+    );
+
+    testWidgets(
+      'horizontal drag right (positive dx) does NOT invoke onClose '
+      '(SPEC negative regression guard against accidentally closing on right-swipe)',
+      (WidgetTester tester) async {
+        var closed = false;
+        await tester.pumpWidget(
+          swipeTestScaffold(onClose: () => closed = true),
+        );
+        await tester.pumpAndSettle();
+
+        await tester.drag(find.byType(GameSideMenu), const Offset(40, 0));
+        await tester.pumpAndSettle();
+
+        expect(
+          closed,
+          isFalse,
+          reason:
+              'Right-ward horizontal drag (delta.dx > 0) MUST NOT trigger '
+              'the swipe-to-close handler — closing on right-swipe would '
+              'contradict SPEC/ui/in-game-shell-narrow.md § Acceptance '
+              'criteria (negative regression guard).',
+        );
+      },
+    );
+
+    testWidgets(
+      'vertical-only drag (delta.dx == 0) does NOT invoke onClose '
+      '(SPEC negative regression guard — only horizontal left-drag closes)',
+      (WidgetTester tester) async {
+        var closed = false;
+        await tester.pumpWidget(
+          swipeTestScaffold(onClose: () => closed = true),
+        );
+        await tester.pumpAndSettle();
+
+        await tester.drag(find.byType(GameSideMenu), const Offset(0, -40));
+        await tester.pumpAndSettle();
+
+        expect(
+          closed,
+          isFalse,
+          reason:
+              'Vertical-only drag delivers delta.dx == 0 on every update; '
+              'the swipe-to-close handler requires delta.dx < '
+              '${GameSideMenu.kSwipeToCloseDeltaThreshold}, so the menu '
+              'MUST stay open.',
+        );
+      },
+    );
+  });
+
   group('GameSideMenu dark-theme chrome (Refs #2861 S10)', () {
     Widget darkScaffold() {
       return ProviderScope(

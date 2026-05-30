@@ -4,6 +4,7 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:flutter/material.dart';
 
+import 'package:colonizethis_app/config/constants.dart';
 import 'package:colonizethis_app/config/editorial_monocle_palette.dart';
 import 'package:colonizethis_app/config/ui_screen_ids.dart';
 import 'package:colonizethis_app/l10n/l10n.dart';
@@ -454,13 +455,9 @@ class _NewGameLeaderSelectionDialogState
             ),
           ),
           const SizedBox(height: 4),
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              Expanded(child: nationDropdown),
-              const SizedBox(width: 8),
-              Expanded(child: leaderDropdown),
-            ],
+          _SlotPickersBody(
+            nationDropdown: nationDropdown,
+            leaderDropdown: leaderDropdown,
           ),
         ],
       ),
@@ -480,4 +477,67 @@ class _LeaderDialogTextStyles {
   final TextStyle intro;
   final TextStyle fieldLabel;
   final TextStyle helper;
+}
+
+/// Pickers body that switches between a side-by-side `Row` and a vertically
+/// stacked `Column` at the [kGameSetupNarrowBreakpoint] (500 dp) viewport
+/// width, mirroring the `CtGameSetup` narrow-stacking rule so the shell
+/// dialog (DLG10001) honours the same `< 500 dp` rule as the full-screen
+/// Game Setup surface (SHEL20001).
+///
+/// SPEC: `SPEC/ui/new-game-leader-selection-dialog.md` § Layout / wireframe
+/// + Acceptance Criteria narrow-viewport stacking AC; `SPEC/ui/game-setup.md`
+/// § Shell new game dialog; `SPEC/ui/mobile-adaptation.md` § 4 Game Setup.
+class _SlotPickersBody extends StatelessWidget {
+  const _SlotPickersBody({
+    required this.nationDropdown,
+    required this.leaderDropdown,
+  });
+
+  final Widget nationDropdown;
+  final Widget leaderDropdown;
+
+  /// Vertical gap between the nation dropdown and the leader dropdown when
+  /// the slot body is stacked (matches the existing `SizedBox(height: 4)`
+  /// gap between the slot label and pickers).
+  static const double stackedGap = 4;
+
+  /// Key applied to the vertically stacked `Column` body (narrow viewport).
+  /// Tests pin the narrow-stacking AC by asserting one such column per slot.
+  static const Key stackedColumnKey = ValueKey<String>(
+    'newGameLeaderDialogSlotPickersColumn',
+  );
+
+  /// Key applied to the side-by-side `Row` body (wide viewport).
+  /// Tests pin the wide-row AC by asserting one such row per slot.
+  static const Key sideBySideRowKey = ValueKey<String>(
+    'newGameLeaderDialogSlotPickersRow',
+  );
+
+  @override
+  Widget build(BuildContext context) {
+    final bool narrow =
+        MediaQuery.sizeOf(context).width < kGameSetupNarrowBreakpoint;
+    if (narrow) {
+      return Column(
+        key: stackedColumnKey,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          nationDropdown,
+          const SizedBox(height: stackedGap),
+          leaderDropdown,
+        ],
+      );
+    }
+    return Row(
+      key: sideBySideRowKey,
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        Expanded(child: nationDropdown),
+        const SizedBox(width: 8),
+        Expanded(child: leaderDropdown),
+      ],
+    );
+  }
 }

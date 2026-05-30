@@ -53,8 +53,9 @@ Implementation: `app/lib/features/shell/new_game_leader_selection_dialog.dart`. 
   - Title `shell_leaderDialog_title`, keyed `ValueKey<String>('leaderSelectionDialogTitle')`, color `EditorialMonoclePalette.accent`, `letterSpacing == fontSize * 0.05`, `FontWeight.w600`.
   - `CtBrassDivider` keyed `ValueKey<String>('leaderSelectionDialogBrassDivider')` between title and intro.
   - Intro `shell_leaderDialog_intro`, keyed `ValueKey<String>('leaderSelectionDialogIntro')`, color `EditorialMonoclePalette.muted`, `FontStyle.italic`.
-- Slots: six `Column` rows in fixed top-down order; each row hosts a slot label, then a `Row` with two `Expanded(CtDropdown<String>)` — nation on the left, leader on the right.
-  - Slot 0 (`shell_newGame_playerYou`) label uses `EditorialMonoclePalette.accentDim` with `FontWeight.w600`; AI slots use `EditorialMonoclePalette.muted` regular weight.
+- Slots: six `Column` rows in fixed top-down order; each row hosts a slot label, then the slot pickers body. Slot 0 (`shell_newGame_playerYou`) label uses `EditorialMonoclePalette.accentDim` with `FontWeight.w600`; AI slots use `EditorialMonoclePalette.muted` regular weight. The slot pickers body is responsive at the same `kGameSetupNarrowBreakpoint` (500 dp) used by [`CtGameSetup`](game-setup.md):
+  - Wide viewport (`MediaQuery.sizeOf(context).width >= kGameSetupNarrowBreakpoint`, 500 dp): one horizontal `Row` with two `Expanded(CtDropdown<String>)` — nation on the left, leader on the right.
+  - Narrow viewport (`MediaQuery.sizeOf(context).width < kGameSetupNarrowBreakpoint`, 500 dp): a vertical `Column` with the nation dropdown full width on the first line and the leader dropdown full width on the second line, beneath the slot label. Mirrors [`CtGameSetup`](game-setup.md) § Narrow-viewport slot-row stacking and [mobile-adaptation.md](mobile-adaptation.md) § 4 Game Setup so the dialog and full-screen surface honour the same 500 dp rule.
   - Nation dropdown items show a `GpDefaultMapColorSwatch(greatPowerId: id)` leading icon and `naming.gpById(id)?.countryName` label. Items are filtered per slot: only IDs not already chosen in another slot, plus the slot's own current value.
   - Leader dropdown items are the chosen nation's `leaderVariants` by id, labelled by `LeaderVariant.name`. Selection defaults to `defaultLeaderVariantId`.
 - Seed input: `shell_leaderDialog_seedLabel` (`accentDim`, w600), numeric `TextField` (controller seeded with `baseConfig.seed.toString()`; idle/enabled border `EditorialMonoclePalette.border` 1px, focused border `EditorialMonoclePalette.accent` 2px, text color `EditorialMonoclePalette.fg`), helper `shell_leaderDialog_seedHelper` (`EditorialMonoclePalette.muted`). Submit value parsed by `parseSeedInput`.
@@ -134,6 +135,12 @@ Implementation: `app/lib/features/shell/new_game_leader_selection_dialog.dart`. 
 - Given the user toggles the infinite-mode checkbox to `true` and the dialog is otherwise startable, when the user taps Start, then `widget.onConfirmed` receives `infiniteMode == true`.
 
 - Given the user taps Cancel, when the gesture completes, then `widget.onCancel` is invoked exactly once and `widget.onConfirmed` is not invoked.
+
+### Narrow-viewport slot pickers stacking
+
+- Given the dialog is open and `MediaQuery.sizeOf(context).width >= kGameSetupNarrowBreakpoint` (500 dp), when any of the six slot rows render, then the slot body mounts a single horizontal `Row` containing both the nation `CtDropdown<String>` and the leader `CtDropdown<String>` side-by-side (each at equal flex), and the slot body does not mount a vertically-stacked `Column` containing both dropdowns.
+
+- Given the dialog is open and `MediaQuery.sizeOf(context).width < kGameSetupNarrowBreakpoint` (500 dp), when any of the six slot rows render, then the slot body mounts a vertical `Column` with the slot label on the first line, the nation `CtDropdown<String>` full width on the second line, and the leader `CtDropdown<String>` full width on the third line, and the slot body does not mount a horizontal `Row` containing both dropdowns side-by-side. This mirrors the narrow-viewport stacking AC for [`CtGameSetup`](game-setup.md) so both Game Setup surfaces honour the same 500 dp rule defined by [mobile-adaptation.md](mobile-adaptation.md) § 4.
 
 ### Dark editorial-monocle chrome (#2867 S6)
 
