@@ -60,6 +60,36 @@ Extraction and ownership apply per faction; only Great Powers have stockpiles an
 
 ---
 
+## Starting developed resources (Minor Nations and Tribes)
+
+To allow Minors and Tribes to participate in the world market from turn 1 (see [world-market.md](world-market.md) and [program/game-setup-pipeline.md](../program/game-setup-pipeline.md)), the System pre-develops a small fixed number of resource tiles in each Minor Nation's and Tribe's **capital province** during game setup.
+
+**Rule.** For every Minor Nation and Tribe `F` whose capital tile is set:
+
+- Let `R` be `F`'s capital region (`oldWorld` for Minor Nations, `newWorld` for Tribes).
+- Let `P` be `F`'s capital province in `R` (i.e. `F.capitalProvinceId`).
+- Let `K` be the per-capital developed-tile count. **Default `K = 2`**; rulesets may override (see [ruleset-config.md](ruleset-config.md)).
+- The System selects up to `K` **eligible** tiles in `P` and sets each tile's extraction improvement level to **1** (improvement level after setup).
+
+**Tile eligibility.** A tile is **eligible** when **all** of the following hold:
+
+- The tile lies inside `P` (grid cell equals `P`'s local id).
+- The tile is **not** `F`'s capital tile and is **not** any province's `townTileKey` (see § Town/capital tile occupancy in [tile-map-and-generation.md](tile-map-and-generation.md)).
+- The tile has a non-null terrain.
+- The tile has a non-null **resource** id (terrain-allowed resource per [resource-terrain-region-rules.md](resource-terrain-region-rules.md); not stripped by §7d.strip).
+- The tile's current extraction improvement level is `0` (no pre-existing improvement).
+
+**Selection order (deterministic).** Eligible tiles are ranked by **Manhattan distance** from `F`'s capital tile (`|x - cap.x| + |y - cap.y|`), then **y ascending**, then **x ascending**. The System takes the first `min(K, number_of_eligible_tiles)` tiles. When fewer than `K` eligible tiles exist (small or resource-sparse provinces), the System develops every eligible tile and does not raise an error.
+
+**Effects.**
+
+- For each selected tile, the System sets `tileState.improvementLevel(tileKey) = 1`. **Terrain** and **resource** values on the tile are **unchanged** (the setup does not synthesize new resources or change terrain — it only develops resources already present on the map).
+- The selected tiles' resource ids must be the same as the underlying tile map cell.
+
+**Out of scope for this rule.** Connectivity from developed tiles to the Minor/Tribe capital (roads, ports), the extraction pipeline accepting non-Great-Power faction ids, and auto-offer generation onto the world market are all defined elsewhere ([capital-and-connectivity.md](capital-and-connectivity.md), [extraction-and-improvements.md](extraction-and-improvements.md), [world-market.md](world-market.md)) and tracked as separate work. This rule only ensures the starting **developed** state of Minor and Tribe resource tiles is well-defined and deterministic at game setup time.
+
+---
+
 ## Acceptance Criteria
 
 - Given a new game is created with at least one Great Power, one Minor Nation, and one Tribe configured in the ruleset  
@@ -73,3 +103,23 @@ Extraction and ownership apply per faction; only Great Powers have stockpiles an
 - Given a Minor Nation's `effectiveMilitaryLevel` increases because `maxGreatPowerMilitaryLevel` increased during the Minor Regiment Upgrade phase  
   When the System applies parity upgrades for that faction in that phase  
   Then the System upgrades each eligible **land regiment** to the appropriate higher-tier version while preserving any existing damage on that regiment, so parity affects unit quality but not unit counts or general bonuses.
+
+- Given a new game in which a Minor Nation `M` is assigned a capital in an Old World province `P` and `P` contains at least `K = 2` resource-bearing land tiles outside `M`'s capital tile and `P`'s `townTileKey`  
+  When the System runs the game-setup pipeline per [game-setup.md](game-setup.md) and applies the § Starting developed resources rule  
+  Then the System selects exactly `2` eligible tiles in `P` ranked by Manhattan distance from `M`'s capital tile (tie-break `y` ascending, then `x` ascending), sets `tileState.improvementLevel` for each selected tile to `1`, and does not modify those tiles' terrain or resource id.
+
+- Given a new game in which a Tribe `T` is assigned a capital in a New World province `Q` and `Q` contains at least `K = 2` resource-bearing land tiles outside `T`'s capital tile and `Q`'s `townTileKey`  
+  When the System runs the game-setup pipeline and applies the § Starting developed resources rule  
+  Then the System selects exactly `2` eligible tiles in `Q` ranked by Manhattan distance from `T`'s capital tile (tie-break `y` ascending, then `x` ascending), sets `tileState.improvementLevel` for each selected tile to `1`, and does not modify those tiles' terrain or resource id.
+
+- Given a Minor Nation or Tribe `F` whose capital province `P` contains **fewer than** `K = 2` eligible tiles (e.g. a small province with at most one non-town/non-capital resource tile)  
+  When the System applies the § Starting developed resources rule for `F`  
+  Then the System develops every eligible tile in `P` (possibly zero) by setting `tileState.improvementLevel` to `1` for each, does not raise an error, and does not develop any tile outside `P`.
+
+- Given a Minor Nation or Tribe `F` whose `capitalTile` is `null` (e.g. setup did not assign one)  
+  When the System applies the § Starting developed resources rule  
+  Then the System makes no improvement-level change for any tile belonging to `F` and leaves `tileState` unchanged for those tiles.
+
+- Given a new game where each Minor Nation and each Tribe receives `K = 2` developed tiles in its capital province per § Starting developed resources  
+  When the System collects every capital tile and every `townTileKey` in both regions  
+  Then **none** of those capital/town tiles is among the developed tiles selected by this rule and **none** of them has its `tileState.improvementLevel` raised above `0` by this rule.

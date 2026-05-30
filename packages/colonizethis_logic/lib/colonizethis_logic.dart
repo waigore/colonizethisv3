@@ -23,6 +23,7 @@ export 'src/setup/setup_validation_exception.dart';
 export 'src/setup/gp_old_world_resource_redistribution.dart';
 export 'src/setup/gp_old_world_terrain_redistribution.dart';
 export 'src/setup/gp_starting_grain.dart';
+export 'src/setup/minor_tribe_starting_development.dart';
 export 'src/setup/town_capital_occupancy.dart';
 export 'src/setup/effective_setup_seed.dart';
 export 'src/setup/init_game_orchestrator.dart';
