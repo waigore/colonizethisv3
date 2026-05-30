@@ -1,6 +1,6 @@
 ---
 name: manage-pr-agent
-description: Keeps open pull requests moving through CI and GitHub workflows in an orderly manner. Enforces one open PR per GitHub issue (via consolidate-prs) and maintains a running-CI quota of 2 PRs (both floor and ceiling) by pausing excess via `[skip ci]` empty commits and — whenever the quota has headroom and any open PRs exist — filling it by any means necessary: resuming paused PRs, updating mergeable-but-behind PR branches against base, and unblocking stalled PRs via fix-pr (older PRs first). Performs actions once and then ends the run without waiting for merges, CI, or unblock confirmation. Use when the user asks to tidy, throttle, unblock, or generally manage in-flight PRs.
+description: Keeps open pull requests moving through CI and GitHub workflows in an orderly manner. Enforces one open PR per GitHub issue (via consolidate-prs) and maintains a running-CI quota of 2 PRs (both floor and ceiling) by pausing excess via `[skip ci]` empty commits **and cancelling** their in-flight `pull_request` runs (before and after the skip commit). Whenever the quota has headroom and any open PRs exist, fills it by any means necessary: resuming paused PRs, updating mergeable-but-behind PR branches against base, and unblocking stalled PRs via fix-pr (older PRs first). Performs actions once and then ends the run without waiting for merges, CI, or unblock confirmation. Use when the user asks to tidy, throttle, unblock, or generally manage in-flight PRs.
 ---
 
 # Manage PR Agent (ColonizeThis)
@@ -146,27 +146,32 @@ order (highest first):
 4. Newer `updatedAt` over older (older has had more chances; pausing it
    once is cheap).
 
-For each PR in the pause set:
+For each PR in the pause set, **both** run cancellation and the `[skip ci]`
+commit are required. Pushing `[skip ci]` alone is insufficient — stale runs
+from earlier head SHAs on the same branch often keep consuming runners until
+explicitly cancelled.
 
-1. Cancel its currently in-flight workflow runs so they stop consuming
-   runner minutes immediately:
+Use this helper pattern (repeat after the skip commit; see step 3):
 
-   ```bash
-   gh run list --branch <headRefName> --limit 50 --json \
-     databaseId,status,event,headSha,workflowName \
-     --jq '.[] | select(.status=="in_progress" or .status=="queued")'
-   # then for each databaseId:
-   gh run cancel <databaseId>
-   ```
+```bash
+gh run list --branch <headRefName> --limit 50 --json \
+  databaseId,status,event,headSha,workflowName \
+  --jq '.[] | select(.status=="in_progress" or .status=="queued") | select(.event=="pull_request" or .event=="pull_request_target")'
+# then for each databaseId:
+gh run cancel <databaseId>
+```
 
-   Only cancel runs whose `event` is `pull_request` or
-   `pull_request_target` and whose `headSha` matches the PR's current
-   head commit. Do **not** cancel `push`, `schedule`, `workflow_dispatch`,
-   or `merge_group` runs based on this rule alone.
+Cancel **every** matching run on `<headRefName>` regardless of `headSha`
+(pre–skip-ci pushes frequently leave `in_progress` runs whose `headSha` no
+longer equals the PR head). Do **not** cancel `push`, `schedule`,
+`workflow_dispatch`, or `merge_group` runs based on this throttle rule alone.
+Do not wait for cancellation to finish before continuing.
 
-2. Append an empty `[skip ci]` commit to the head branch so the next
-   push does not retrigger CI. Use an empty commit (no history rewrite,
-   works on PRs the agent did not author):
+1. **Cancel before pause** — run the helper above on the PR's
+   `<headRefName>` while the head is still the pre-pause SHA.
+
+2. **Append `[skip ci]`** — empty commit so the next push does not
+   retrigger CI (no history rewrite; works on PRs the agent did not author):
 
    ```bash
    git fetch origin <headRefName>
@@ -176,11 +181,20 @@ For each PR in the pause set:
    ```
 
    Fork-owned PRs (`headRepositoryOwner.login` differs from upstream)
-   cannot be paused via push — **skip** them and pick the
-   next-lowest-priority owned PR instead. Record the skipped fork PR in
-   the report.
+   cannot be paused via push — **skip** them (still cancel any visible
+   `pull_request` runs on that branch if the API allows), pick the
+   next-lowest-priority owned PR for the skip commit instead, and record
+   the skipped fork PR in the report.
 
-3. Do **not** convert the PR to draft, mark it as "do not merge", change
+3. **Cancel after pause** — run the same helper again on
+   `<headRefName>`. This catches runs still winding down from step 1 and
+   any stray re-triggers. A paused PR is not complete until both the HEAD
+   commit carries a recognised skip directive **and** no
+   `pull_request` / `pull_request_target` runs remain `queued` or
+   `in_progress` on that branch (fire-and-forget: issue `gh run cancel`,
+   do not poll).
+
+4. Do **not** convert the PR to draft, mark it as "do not merge", change
    labels, or add review-blocking comments. The pause is purely a CI
    budget tool.
 
@@ -277,9 +291,11 @@ Produce one consolidated report with these sections (omit empty ones):
 **CI throughput (phase 3)**
 - Total open PRs; `R` before; projected `R` after; quota target = 2.
 - Branch taken: pause (`R > 2`), fill (`R < 2`), or quota met (`R == 2`).
-- **Paused PRs** (when pausing): number/URL, cancelled `databaseId`s,
-  push SHA of the `[skip ci]` empty commit, and the priority rule that
-  saved each kept-running PR.
+- **Paused PRs** (when pausing): number/URL, `databaseId`s cancelled
+  **before** and **after** the `[skip ci]` push (note any still
+  `in_progress` at report time without waiting), push SHA of the
+  `[skip ci]` empty commit, and the priority rule that saved each
+  kept-running PR.
 - **Resumed PRs** (when filling): number/URL, push SHA of the resume
   commit.
 - **Updated branches** (when filling): number/URL, mechanism
@@ -310,6 +326,9 @@ Produce one consolidated report with these sections (omit empty ones):
 - Never `gh run cancel` a workflow run whose event is not
   `pull_request`/`pull_request_target` based on this skill's throttle rule
   alone.
+- Pausing a PR **must** include run cancellation (before and after the
+  `[skip ci]` push) on that PR's `<headRefName>`; never treat the skip
+  commit alone as sufficient to stop CI spend.
 - Resume CI only via plain non-skip empty commits (e.g.,
   `chore: resume CI`); never force-push, never rewrite history.
 - Branch updates must use `gh pr update-branch` (merge of base into head
