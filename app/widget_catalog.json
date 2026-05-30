@@ -88,5 +88,14 @@
     "category": "game/dialog",
     "source": "pipeline",
     "widgetbook_story_path": "Train Military Dialog"
+  },
+  {
+    "id": "ct_trade_screen",
+    "name": "TradeScreen",
+    "dart_file_path": "lib/features/game/screens/trade_screen.dart",
+    "constructor_props": "game: Game, player: Player",
+    "category": "game/screen",
+    "source": "pipeline",
+    "widgetbook_story_path": "Trade Screen"
   }
 ]
