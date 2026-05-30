@@ -231,6 +231,14 @@ On mobile: same tab row; map area fills available space; one region visible at a
 
 Folder: **Map Widget** — stories for map area with fixture topology and view data.
 
+Folder: **Game Map Corner Controls** — stories for [GameMapCornerControls](../../app/lib/features/game/flame/game_map_corner_controls.dart) registered from [`gameMapCornerControlsDirectories`](../../app/lib/widgetbook/catalog_part7.dart) and aggregated into `_ctWidgetbookDirectories` in [`catalog.dart`](../../app/lib/widgetbook/catalog.dart). Issue #2861 S4 + S12 story (4) corner controls row, plus the issue #2870 S9 narrow-layout variant.
+
+| Story | Purpose | Authority |
+|-------|---------|-----------|
+| Default — all three buttons enabled | Pins § Corner controls chrome: 32 × 32 dp surface, `CtGradients.railButtonGradient`, 22 × 22 dp glyph, hover/press accent-dim shift. | § Corner controls chrome |
+| Home-to-capital disabled (no human capital) | Exercises the disabled-state path when the underlying callback is `null`: tooltip + surface wrap in `IgnorePointer` + `Opacity(0.4)`. | § Corner controls chrome — Disabled state |
+| Narrow (360 dp) — 24 × 24 dp buttons, 2 dp gap | Pins § Narrow corner-control measurements: 24 × 24 dp surface, 2 dp gap, glyph unchanged at 22 × 22 dp. | § Narrow corner-control measurements; [mobile-adaptation.md](mobile-adaptation.md) § In-game shell |
+
 ---
 
 ## Acceptance criteria
