@@ -20,6 +20,7 @@ mixin _GameMapAreaStatePart2
     final nextTurnText = shell.inObservePhase
         ? 'Observe — Turn $turnNumber ($year)'
         : l10n.game_nextTurnButton(turnNumber, year);
+    final turnDisplayText = l10n.game_turnDisplay(turnNumber, year);
     final cargoSummary = ref.watch(homeFleetCargoSummaryProvider);
     final treasurySummary = ref.watch(treasurySummaryProvider);
     final feedEntries = (this as _GameMapAreaState)._feedEntries();
@@ -30,6 +31,9 @@ mixin _GameMapAreaStatePart2
           sideMenuOpen: _sideMenuOpen,
           onToggleSideMenu: () =>
               setState(() => _sideMenuOpen = !_sideMenuOpen),
+          onPausePressed: () => ref
+              .read(appEventBusProvider)
+              .emit(const ct_models.OpenPauseMenuPanelEvent()),
           onNextTurn: _onNextTurn,
           nextTurnEnabled:
               !_isTurnResolving &&
@@ -37,6 +41,7 @@ mixin _GameMapAreaStatePart2
           regionIndex: _regionIndex,
           onRegionIndexChanged: (i) =>
               setState(() => _regionIndex = i == 0 ? 0 : 1),
+          turnDisplayText: turnDisplayText,
           nextTurnText: nextTurnText,
           cargoUsed: cargoSummary.used,
           cargoCapacity: cargoSummary.capacity,
@@ -77,6 +82,7 @@ mixin _GameMapAreaStatePart2
                     },
                     child: Stack(
                       children: [
+                        const Positioned.fill(child: GameMapAreaBackground()),
                         GameMapCanvasStack(
                           isNarrow: isNarrow,
                           game: widget.game,
