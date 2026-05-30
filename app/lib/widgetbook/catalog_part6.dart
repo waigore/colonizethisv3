@@ -283,3 +283,68 @@ List<WidgetbookNode> get diplomacyDetailScreenDirectories => [
     ],
   ),
 ];
+
+Game _tradeScreenStoryGame() {
+  const humanId = 'gp_human';
+  return Game(
+    id: 'wb_trade_screen',
+    worldState: WorldState(
+      turnState: TurnState(phase: TurnPhase.orders, turnNumber: 1),
+      oldWorld: const RegionData(),
+      newWorld: const RegionData(),
+    ),
+    turnTimeMapping: TurnTimeMapping.gdd01,
+    players: [
+      // ignore: avoid_hardcoded_strings_in_widgets
+      Player(id: humanId, displayName: 'England', isHuman: true, treasury: 500),
+    ],
+    diplomacyRelations: const [],
+    diplomaticHistoryEvents: const [],
+    dossierEvidenceEntries: const [],
+  );
+}
+
+ProviderScope _tradeScreenProviderScope({required Widget child}) {
+  return ProviderScope(
+    overrides: [
+      appEventBusProvider.overrideWith((ref) {
+        final bus = AppEventBus.create();
+        ref.onDispose(bus.dispose);
+        return bus;
+      }),
+    ],
+    child: MaterialApp(
+      theme: AppThemes.editorialMonocle,
+      localizationsDelegates: AppLocalizationsBinding.localizationsDelegates,
+      supportedLocales: AppLocalizations.supportedLocales,
+      home: child,
+    ),
+  );
+}
+
+Widget _tradeScreenDefaultStory() {
+  final game = _tradeScreenStoryGame();
+  final player = game.players.first;
+  return _tradeScreenProviderScope(
+    child: TradeScreen(game: game, player: player),
+  );
+}
+
+/// Trade screen stories. SPEC/ui/trade-screen.md (Refs #2993 E1+E2+E3
+/// scaffold slice — placeholder body until #2989 data types land).
+List<WidgetbookNode> get tradeScreenDirectories => [
+  WidgetbookFolder(
+    name: 'Trade Screen',
+    children: [
+      WidgetbookUseCase(
+        name: 'Scaffold (placeholder)',
+        builder: (context) => _tradeScreenDefaultStory(),
+      ),
+      WidgetbookUseCase(
+        name: 'Scaffold (mobile)',
+        builder: (context) =>
+            mobileViewport(context, _tradeScreenDefaultStory()),
+      ),
+    ],
+  ),
+];

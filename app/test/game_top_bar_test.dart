@@ -1,3 +1,4 @@
+import 'package:colonizethis_app/config/constants.dart';
 import 'package:colonizethis_app/config/editorial_monocle_palette.dart';
 import 'package:colonizethis_app/features/game/flame/game_screen_shared.dart'
     show kGameMapNextTurnButtonKey, kNextTurnDisabledOpacity;
@@ -30,37 +31,49 @@ import 'package:flutter_test/flutter_test.dart';
 ///      for every other call site (regression guard in
 ///      `widgets/ct_nine_patch_button_dark_test.dart`).
 ///   6. The optional observe-mode banner is shown only when supplied.
+void _noop() {}
+
 void main() {
   suppressLogsForTests();
 
   Widget hostFor({
     required VoidCallback onToggleSideMenu,
+    VoidCallback onPausePressed = _noop,
     required Future<void> Function() onNextTurn,
     required bool nextTurnEnabled,
+    String turnDisplayText = 'Turn 42 / Year 1650',
     required String nextTurnText,
     String menuTooltip = 'Menu',
+    String pauseTooltip = 'Pause menu',
     String? observeBannerLabel,
+    double hostWidth = 600,
   }) {
     return MaterialApp(
       home: Scaffold(
-        body: SizedBox(
-          width: 600,
-          height: 200,
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.start,
-            children: <Widget>[
-              GameTopBar(
+        body: MediaQuery(
+          data: MediaQueryData(size: Size(hostWidth, 200)),
+          child: SizedBox(
+            width: hostWidth,
+            height: 200,
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.start,
+              children: <Widget>[
+                GameTopBar(
                 onToggleSideMenu: onToggleSideMenu,
+                onPausePressed: onPausePressed,
                 onNextTurn: onNextTurn,
                 nextTurnEnabled: nextTurnEnabled,
+                turnDisplayText: turnDisplayText,
                 nextTurnText: nextTurnText,
                 menuTooltip: menuTooltip,
+                pauseTooltip: pauseTooltip,
                 observeBannerLabel: observeBannerLabel,
               ),
             ],
           ),
         ),
       ),
+    ),
     );
   }
 
@@ -361,4 +374,89 @@ void main() {
     final tooltip = tester.widget<Tooltip>(tooltipFinder);
     expect(tooltip.message, 'Open in-game menu');
   });
+
+  testWidgets(
+    'center turn display renders turnDisplayText and pause fires onPausePressed',
+    (WidgetTester tester) async {
+      var pauseTaps = 0;
+      await tester.pumpWidget(
+        hostFor(
+          onToggleSideMenu: () {},
+          onPausePressed: () => pauseTaps += 1,
+          onNextTurn: () async {},
+          nextTurnEnabled: true,
+          turnDisplayText: 'Turn 7 / Year 1605',
+          nextTurnText: 'Next turn (7 / 1605)',
+          pauseTooltip: 'Open pause menu',
+        ),
+      );
+      await tester.pump();
+
+      expect(find.byKey(GameTopBar.turnDisplayKey), findsOneWidget);
+      expect(find.text('Turn 7 / Year 1605'), findsOneWidget);
+
+      final pauseFinder = find.byKey(GameTopBar.pauseButtonKey);
+      expect(tester.getSize(pauseFinder).width, GameTopBar.hamburgerSize);
+      expect(tester.getSize(pauseFinder).height, GameTopBar.hamburgerSize);
+
+      await tester.tap(pauseFinder);
+      await tester.pump();
+      expect(pauseTaps, 1);
+    },
+  );
+
+  testWidgets(
+    'narrow layout (< kNarrowBreakpoint) shows hamburger + Next turn only',
+    (WidgetTester tester) async {
+      await tester.pumpWidget(
+        hostFor(
+          onToggleSideMenu: () {},
+          onPausePressed: () {},
+          onNextTurn: () async {},
+          nextTurnEnabled: true,
+          turnDisplayText: 'Turn 42 / Year 1650',
+          nextTurnText: 'Next turn (42 / 1650)',
+          observeBannerLabel: 'Observing: gp1',
+          hostWidth: kMinViewportWidth,
+        ),
+      );
+      await tester.pump();
+
+      expect(
+        tester.takeException(),
+        isNull,
+        reason:
+            'SPEC/ui/mobile-adaptation.md § 4 + § 7: narrow top bar must '
+            'not overflow at kMinViewportWidth.',
+      );
+
+      expect(find.byKey(GameTopBar.hamburgerKey), findsOneWidget);
+      expect(find.byKey(kGameMapNextTurnButtonKey), findsOneWidget);
+      expect(find.textContaining('Next turn'), findsOneWidget);
+      expect(find.byKey(GameTopBar.turnDisplayKey), findsNothing);
+      expect(find.byKey(GameTopBar.pauseButtonKey), findsNothing);
+      expect(find.byKey(GameTopBar.observeBannerKey), findsNothing);
+    },
+  );
+
+  testWidgets(
+    'wide layout (≥ kNarrowBreakpoint) still shows center turn + pause',
+    (WidgetTester tester) async {
+      await tester.pumpWidget(
+        hostFor(
+          onToggleSideMenu: () {},
+          onPausePressed: () {},
+          onNextTurn: () async {},
+          nextTurnEnabled: true,
+          turnDisplayText: 'Turn 42 / Year 1650',
+          nextTurnText: 'Next turn (42 / 1650)',
+          hostWidth: kNarrowBreakpoint,
+        ),
+      );
+      await tester.pump();
+
+      expect(find.byKey(GameTopBar.turnDisplayKey), findsOneWidget);
+      expect(find.byKey(GameTopBar.pauseButtonKey), findsOneWidget);
+    },
+  );
 }

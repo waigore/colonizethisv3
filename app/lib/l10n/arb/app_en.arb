@@ -94,6 +94,20 @@
       }
     }
   },
+  "game_turnDisplay": "Turn {turn} / Year {year}",
+  "@game_turnDisplay": {
+    "description": "Centered turn/year label in the in-game top bar.",
+    "placeholders": {
+      "turn": {
+        "type": "int",
+        "description": "Current turn number."
+      },
+      "year": {
+        "type": "int",
+        "description": "Calendar year derived from the turn."
+      }
+    }
+  },
   "game_nextTurnConfirm_title": "End turn?",
   "@game_nextTurnConfirm_title": {
     "description": "Title of the dialog asking the user to confirm ending the current turn."

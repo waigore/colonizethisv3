@@ -12,10 +12,12 @@ class GameMapControls extends StatelessWidget {
   const GameMapControls({
     required this.sideMenuOpen,
     required this.onToggleSideMenu,
+    required this.onPausePressed,
     required this.onNextTurn,
     required this.nextTurnEnabled,
     required this.regionIndex,
     required this.onRegionIndexChanged,
+    required this.turnDisplayText,
     required this.nextTurnText,
     required this.cargoUsed,
     required this.cargoCapacity,
@@ -34,10 +36,12 @@ class GameMapControls extends StatelessWidget {
 
   final bool sideMenuOpen;
   final VoidCallback onToggleSideMenu;
+  final VoidCallback onPausePressed;
   final Future<void> Function() onNextTurn;
   final bool nextTurnEnabled;
   final int regionIndex;
   final void Function(int index) onRegionIndexChanged;
+  final String turnDisplayText;
   final String nextTurnText;
   final int cargoUsed;
   final int cargoCapacity;
@@ -66,10 +70,13 @@ class GameMapControls extends StatelessWidget {
       children: [
         GameTopBar(
           onToggleSideMenu: onToggleSideMenu,
+          onPausePressed: onPausePressed,
           onNextTurn: onNextTurn,
           nextTurnEnabled: nextTurnEnabled,
+          turnDisplayText: turnDisplayText,
           nextTurnText: nextTurnText,
           menuTooltip: l10n.gameMap_menuTooltip,
+          pauseTooltip: l10n.game_pauseMenu_tooltip,
           observeBannerLabel: observeBannerLabel,
         ),
         GameTabBar(

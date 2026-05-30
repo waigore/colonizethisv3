@@ -15,6 +15,7 @@ enum TurnPhase {
   navalInterceptionCombat,
   combat,
   buildWork,
+  worldMarket,
   endOfTurn,
 }
 
