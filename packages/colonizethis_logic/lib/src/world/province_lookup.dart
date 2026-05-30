@@ -400,4 +400,25 @@ extension WorldStateProvinceLookup on WorldState {
     }
     throw StateError('Unknown region "$regionId"');
   }
+
+  /// Returns fresh mutable copies of the province lists for both regions,
+  /// keyed by [kRegionOldWorld] and [kRegionNewWorld].
+  ///
+  /// Use this from `lib/src/**` callers that stage imperative bulk-mutation
+  /// over both regions before applying via [mapBothRegions] /
+  /// [updateRegionById], replacing hand-rolled
+  /// `List<Province>.from(worldState.oldWorld.provinces)` /
+  /// `List<Province>.from(worldState.newWorld.provinces)` pairs (orders
+  /// application work pipeline, setup naming). Each returned list is an
+  /// independent mutable copy; mutating one does not affect the other or
+  /// the source [WorldState]. The map is mutable; callers may add region
+  /// keys defensively but the canonical contract returns exactly the two
+  /// keys above (Refs #2836 AC 5;
+  /// SPEC/program/logic-dual-region-province-access.md).
+  Map<String, List<Province>> mutableProvinceListsByRegion() {
+    return <String, List<Province>>{
+      kRegionOldWorld: List<Province>.from(oldWorld.provinces),
+      kRegionNewWorld: List<Province>.from(newWorld.provinces),
+    };
+  }
 }

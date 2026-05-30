@@ -7,6 +7,7 @@ import '../constants.dart';
 import '../turn/trace/turn_trace_runtime.dart';
 import 'province_lookup.dart';
 import 'topology_helpers.dart';
+import 'unit_lookup.dart';
 
 /// Movement validation and application.
 /// SPEC/program/movement.md
@@ -195,11 +196,13 @@ _applyCivilianMoveOrders(
   return _withListsAndTotals(ow, nw, totals);
 }
 
-({List<Unit> ow, List<Unit> nw}) _initialUnitListsForCivilianMoves(Game game) =>
-    (
-      ow: List<Unit>.from(game.worldState.oldWorld.units),
-      nw: List<Unit>.from(game.worldState.newWorld.units),
-    );
+({List<Unit> ow, List<Unit> nw}) _initialUnitListsForCivilianMoves(Game game) {
+  final unitsByRegion = game.worldState.mutableUnitListsByRegion();
+  return (
+    ow: unitsByRegion[kRegionOldWorld]!,
+    nw: unitsByRegion[kRegionNewWorld]!,
+  );
+}
 
 ({int ordersSeen, int applied, int ignored}) _zeroMoveTotals() =>
     (ordersSeen: 0, applied: 0, ignored: 0);

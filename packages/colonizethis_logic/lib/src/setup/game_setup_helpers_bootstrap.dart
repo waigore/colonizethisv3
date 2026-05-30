@@ -1,8 +1,7 @@
 part of 'game_setup_helpers.dart';
 
 void _spawnCivilianUnitsOfType({
-  required List<Unit> oldWorldUnits,
-  required List<Unit> newWorldUnits,
+  required Map<String, List<Unit>> unitsByRegion,
   required String ownerId,
   required String capitalProvinceId,
   required String capitalTileKey,
@@ -10,27 +9,30 @@ void _spawnCivilianUnitsOfType({
   required String unitType,
   required int count,
 }) {
-  for (var k = 1; k <= count; k++) {
-    final unit = Unit(
-      id: '${ownerId}_${unitType.toLowerCase()}_$k',
-      type: unitType,
-      ownerId: ownerId,
-      locationProvinceId: capitalProvinceId,
-      status: UnitStatus.idle,
-      tileKey: capitalTileKey,
+  final destination = unitsByRegion[capitalRegionId];
+  if (destination == null) {
+    throw StateError(
+      'Unknown capital region "$capitalRegionId" for owner=$ownerId; '
+      'expected one of $kRegionOldWorld / $kRegionNewWorld.',
     );
-    if (capitalRegionId == kRegionOldWorld) {
-      oldWorldUnits.add(unit);
-    } else {
-      newWorldUnits.add(unit);
-    }
+  }
+  for (var k = 1; k <= count; k++) {
+    destination.add(
+      Unit(
+        id: '${ownerId}_${unitType.toLowerCase()}_$k',
+        type: unitType,
+        ownerId: ownerId,
+        locationProvinceId: capitalProvinceId,
+        status: UnitStatus.idle,
+        tileKey: capitalTileKey,
+      ),
+    );
   }
 }
 
 /// Adds starting civilian units for each civilian-owning faction at its capital tile.
 Game addStartingUnits({required Game game, required GameSetupConfig config}) {
-  var oldWorldUnits = List<Unit>.from(game.worldState.oldWorld.units);
-  var newWorldUnits = List<Unit>.from(game.worldState.newWorld.units);
+  final unitsByRegion = game.worldState.mutableUnitListsByRegion();
 
   Iterable<
     ({
@@ -91,8 +93,7 @@ Game addStartingUnits({required Game game, required GameSetupConfig config}) {
     final unitConfig = config.startingResources.startingCivilianUnits;
     for (final entry in unitConfig.entries) {
       _spawnCivilianUnitsOfType(
-        oldWorldUnits: oldWorldUnits,
-        newWorldUnits: newWorldUnits,
+        unitsByRegion: unitsByRegion,
         ownerId: ownerId,
         capitalProvinceId: capitalProvinceId,
         capitalTileKey: capitalTileKey,
@@ -105,7 +106,7 @@ Game addStartingUnits({required Game game, required GameSetupConfig config}) {
 
   return game.copyWith(
     worldState: game.worldState.mapBothRegionUnits(
-      (rid, _) => rid == kRegionOldWorld ? oldWorldUnits : newWorldUnits,
+      (rid, _) => unitsByRegion[rid]!,
     ),
   );
 }
@@ -115,24 +116,27 @@ void _addStartingRegimentsForPlayer({
   required String capitalProvinceId,
   required String regionId,
   required int regimentCount,
-  required List<Unit> oldWorldUnits,
-  required List<Unit> newWorldUnits,
+  required Map<String, List<Unit>> unitsByRegion,
 }) {
   if (regimentCount <= 0) return;
+  final destination = unitsByRegion[regionId];
+  if (destination == null) {
+    throw StateError(
+      'Unknown capital region "$regionId" for player=${player.id}; '
+      'expected one of $kRegionOldWorld / $kRegionNewWorld.',
+    );
+  }
   final regimentTypeId = startingRegimentTypeForPlayer(player);
   for (var i = 0; i < regimentCount; i++) {
-    final unit = Unit(
-      id: '${player.id}_${regimentTypeId}_reg${i + 1}',
-      type: regimentTypeId,
-      ownerId: player.id,
-      locationProvinceId: capitalProvinceId,
-      status: UnitStatus.idle,
+    destination.add(
+      Unit(
+        id: '${player.id}_${regimentTypeId}_reg${i + 1}',
+        type: regimentTypeId,
+        ownerId: player.id,
+        locationProvinceId: capitalProvinceId,
+        status: UnitStatus.idle,
+      ),
     );
-    if (regionId == kRegionOldWorld) {
-      oldWorldUnits.add(unit);
-    } else {
-      newWorldUnits.add(unit);
-    }
   }
 }
 
@@ -187,8 +191,7 @@ Game addStartingMilitaryAndNaval({
 
   if (regimentCount <= 0 && shipCount <= 0) return game;
 
-  var oldWorldUnits = List<Unit>.from(game.worldState.oldWorld.units);
-  var newWorldUnits = List<Unit>.from(game.worldState.newWorld.units);
+  final unitsByRegion = game.worldState.mutableUnitListsByRegion();
   var fleets = List<Fleet>.from(game.worldState.fleets);
   final fleetIndexById = <String, int>{
     for (var i = 0; i < fleets.length; i++) fleets[i].id: i,
@@ -209,8 +212,7 @@ Game addStartingMilitaryAndNaval({
       capitalProvinceId: capitalProvinceId,
       regionId: regionId,
       regimentCount: regimentCount,
-      oldWorldUnits: oldWorldUnits,
-      newWorldUnits: newWorldUnits,
+      unitsByRegion: unitsByRegion,
     );
 
     nextSeq = _mergeHomeFleetShipsForPlayer(
@@ -226,9 +228,7 @@ Game addStartingMilitaryAndNaval({
 
   return game.copyWith(
     worldState: game.worldState
-        .mapBothRegionUnits(
-          (rid, _) => rid == kRegionOldWorld ? oldWorldUnits : newWorldUnits,
-        )
+        .mapBothRegionUnits((rid, _) => unitsByRegion[rid]!)
         .copyWith(fleets: fleets, nextShipInstanceSeq: nextSeq),
   );
 }
