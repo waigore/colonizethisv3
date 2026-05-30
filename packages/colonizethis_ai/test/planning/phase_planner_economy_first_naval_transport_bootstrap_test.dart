@@ -8,17 +8,14 @@
 // cargo hull under `CargoPreference.strongCargo`.
 
 import 'package:colonizethis_ai/colonizethis_ai.dart';
-import 'package:colonizethis_ai/src/planning/domain_planner_outcome.dart';
 import 'package:colonizethis_ai/src/planning/expand_phase_planner.dart';
 import 'package:colonizethis_ai/src/planning/phase_planner_economy_filter.dart';
-import 'package:colonizethis_ai/src/planning/phase_priority_weights.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
 import '../domain_planner_test_fake_api.dart';
-import '../planner_test_helpers.dart';
 
 const String _nationId = 'gp3';
 const String _owHome = 'oldWorld|gp3_0';
