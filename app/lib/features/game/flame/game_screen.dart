@@ -31,6 +31,8 @@ import 'exit_confirm_dialog.dart';
 import 'game_canvas.dart';
 import 'game_map_area.dart';
 import 'game_map_area_state_logic.dart';
+import 'game_screen_shared.dart'
+    show kGameMapNextTurnButtonKey, kNextTurnDisabledOpacity;
 import 'next_turn_confirmation_dialog.dart';
 import 'turn_resolution_processing_dialog.dart';
 import 'turn_resolution_progress_labels.dart';
@@ -43,6 +45,47 @@ final _gameScreenLog = packageLogger('logic');
 /// Emits [OpenPauseMenuPanelEvent]; shell event handler shows the bottom sheet.
 void _showPauseMenu(AppEventBus bus) {
   bus.emit(const OpenPauseMenuPanelEvent());
+}
+
+/// Builds the Flame-canvas fallback Next-turn `CtNinePatchButton` (used
+/// when `mapViewDataProvider == null`).
+///
+/// Mirrors the in-game `GameTopBar` Next-turn contract: when the button
+/// is disabled (turn resolution in progress or `allowsFullTurnResolution`
+/// is `false`) the host passes both `enabled: false` and
+/// `disabledOpacityOverride: kNextTurnDisabledOpacity` (`0.35`) so the
+/// disabled `Opacity` wrapper resolves to the SPEC-mandated 0.35 (mockup
+/// `.next-turn.disabled` in
+/// `SPEC/ui/mockups/GAME10001-game-screen.html`, issue #2861 R1 / AC#9,
+/// `SPEC/ui/game-screen.md` § Acceptance Criteria) instead of the
+/// catalog-default `CtNinePatchButton.disabledOpacity` (`0.4`).
+Widget _buildFallbackNextTurnButton({
+  required BuildContext context,
+  required WidgetRef ref,
+  required Game game,
+  required bool turnResolutionBlocking,
+}) {
+  final bool nextTurnEnabled = !turnResolutionBlocking &&
+      GameMapAreaStateLogic.allowsFullTurnResolution(game);
+  return CtNinePatchButton(
+    key: kGameMapNextTurnButtonKey,
+    enabled: nextTurnEnabled,
+    onPressed: nextTurnEnabled
+        ? () async {
+            await _runFlameCanvasNextTurn(context, ref, game);
+          }
+        : null,
+    disabledOpacityOverride: kNextTurnDisabledOpacity,
+    child: Text(
+      appL10n(context).game_nextTurnButton(
+        game.worldState.turnState.turnNumber,
+        turnToYear(
+          game.worldState.turnState.turnNumber,
+          game.turnTimeMapping,
+        ),
+      ),
+    ),
+  );
 }
 
 Future<void> _runFlameCanvasNextTurn(
@@ -245,22 +288,11 @@ class GameScreen extends ConsumerWidget {
           Positioned(
             right: 16,
             top: 16,
-            child: CtNinePatchButton(
-              onPressed: turnResolutionBlocking ||
-                      !GameMapAreaStateLogic.allowsFullTurnResolution(game)
-                  ? null
-                  : () async {
-                      await _runFlameCanvasNextTurn(context, ref, game);
-                    },
-              child: Text(
-                appL10n(context).game_nextTurnButton(
-                  game.worldState.turnState.turnNumber,
-                  turnToYear(
-                    game.worldState.turnState.turnNumber,
-                    game.turnTimeMapping,
-                  ),
-                ),
-              ),
+            child: _buildFallbackNextTurnButton(
+              context: context,
+              ref: ref,
+              game: game,
+              turnResolutionBlocking: turnResolutionBlocking,
             ),
           ),
         ],
