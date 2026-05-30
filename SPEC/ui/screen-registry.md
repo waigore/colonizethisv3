@@ -13,7 +13,7 @@ Major flows only; keep this table small.
 | Code | Flow | Sub-flow digits (4th char) |
 |------|------|----------------------------|
 | `SHEL` | App shell, main menu, setup, initializing, pause menu | `1` menu/shell route, `2` game setup, `3` game initializing, `4` pause menu panel |
-| `GAME` | In-game route hosts and side menu | `1` game screen, `2` production route, `3` diplomacy routes, `4` technology route, `5` game side menu |
+| `GAME` | In-game route hosts and side menu | `1` game screen, `2` production route, `3` diplomacy routes, `4` technology route, `5` game side menu, `6` trade route |
 | `MAP` | Map widget and map-attached UI | `1` map area/widget, `2` province/sea-zone overlay |
 | `UNIT` | Unit management panels and train dialogs | `1` civilian, `2` military, `3` naval, `4` train civilians, `5` train military |
 | `DIPL` | Diplomacy panels and grant flows | `1` diplomacy panel/screen, `2` grant/subsidy dialog |
@@ -43,6 +43,7 @@ Status: `draft` = ID reserved, spec incomplete; `active` = spec + Widgetbook + c
 | `GAME30002` | Diplomacy detail screen | [diplomacy-detail-screen.md](diplomacy-detail-screen.md) | `app/lib/features/game/screens/diplomacy_detail_screen.dart` | Diplomacy Detail Screen | active |
 | `GAME40001` | Technology screen | [technology-panel.md](technology-panel.md) | `app/lib/features/game/screens/technology_screen.dart` | Tech Tree | active |
 | `GAME50001` | Game side menu | [game-side-menu.md](game-side-menu.md) | `app/lib/features/game/flame/game_side_menu.dart` | Game Side Menu | active |
+| `GAME60001` | Trade screen | [trade-screen.md](trade-screen.md) | `app/lib/features/game/screens/trade_screen.dart` | Trade Screen | draft |
 | `MAP10001` | Empire overview / map area | [empire-overview.md](empire-overview.md) | `app/lib/features/game/flame/game_map_area.dart` | Map Widget | active |
 | `MAP20001` | Province sea-zone overlay | [province-sea-zone-detail-overlay.md](province-sea-zone-detail-overlay.md) | `app/lib/features/game/widgets/province_sea_zone_detail_overlay.dart` | Province Overlay | active |
 | `UNIT10001` | Civilian units panel | [civilian-units-panel.md](civilian-units-panel.md) | `app/lib/features/game/widgets/civilian_units_panel.dart` | Civilian Units Panel | active |

@@ -31,6 +31,7 @@ final class TurnPhaseHandlerRegistry {
             navalInterceptionCombatTurnPhaseHandler,
         TurnPhase.combat: combatTurnPhaseHandler,
         TurnPhase.buildWork: buildWorkTurnPhaseHandler,
+        TurnPhase.worldMarket: worldMarketTurnPhaseHandler,
         TurnPhase.endOfTurn: endOfTurnTurnPhaseHandler,
       };
 }

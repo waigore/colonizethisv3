@@ -9,7 +9,8 @@
 The top bar shows:
 
 - **Left:** Hamburger control (menu trigger). Opens the side menu.
-- **Center/right:** Turn counter/button (e.g. "Next turn (N / year)").
+- **Center:** Turn display label (e.g. `Turn 42 / Year 1650`) in `--fg` display type.
+- **Right cluster:** Pause button (**28 × 28 dp**, bordered icon-only control per mockup `.pause-btn-sm`) then the wood-panel **Next turn** button (e.g. `Next turn (42 / 1650)`). The pause button emits `OpenPauseMenuPanelEvent` on the app bus (same contract as the legacy Flame-canvas fallback in [`game-screen.md`](game-screen.md)).
 - **Below:** Region tabs (Old World / New World).
 
 The Next turn `CtNinePatchButton` disabled-during-resolution opacity is `0.35` (mockup `.next-turn.disabled` in [GAME10001-game-screen.html](mockups/GAME10001-game-screen.html), issue #2861 R1) and overrides the catalog-default `CtNinePatchButton.disabledOpacity` (`0.4`). Normative AC is in [game-screen.md](game-screen.md) § Acceptance Criteria; other `CtNinePatchButton` call sites continue to use the catalog default.

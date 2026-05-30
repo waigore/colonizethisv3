@@ -39,6 +39,7 @@ import '../../../config/editorial_monocle_palette.dart';
 import '../../../config/ui_screen_ids.dart';
 import 'game_screen_shared.dart';
 import 'game_side_menu.dart';
+import 'game_map_area_background.dart';
 import 'game_map_controls.dart';
 import 'game_map_corner_controls.dart';
 import 'game_map_empire_left_rail.dart';
