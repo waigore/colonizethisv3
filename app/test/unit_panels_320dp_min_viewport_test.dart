@@ -1,9 +1,9 @@
 // Pin the 320 dp minimum-viewport contract for the in-game unit panels
-// (Civilian, Military) — extending the existing screen-, panel-, and
-// dialog-level pins (`mobile_320dp_min_viewport_test.dart`,
+// (Civilian, Military, Naval) — extending the existing screen-, panel-,
+// and dialog-level pins (`mobile_320dp_min_viewport_test.dart`,
 // `panels_320dp_min_viewport_test.dart`,
-// `dialogs_320dp_min_viewport_test.dart`) to two of the major Empire
-// surfaces that mount the `UnitsPanelShell` chrome (`max-width: 400 dp`
+// `dialogs_320dp_min_viewport_test.dart`) to the three Empire surfaces
+// that mount the `UnitsPanelShell` chrome (`max-width: 400 dp`
 // container with `padding: 8`).
 //
 // At `kMinViewportWidth` (320 dp) the shell collapses to a 320 dp host;
@@ -28,21 +28,28 @@
 //    against the same fixture so a regression in the overflow contract
 //    upstream of the panel itself would be caught.
 //
-// Naval units panel is **not** covered here: its row body depends on
-// the bundled nine-patch image asset (see `naval_units_panel_test_part1`
-// for the Flame image pre-warm dance) and a separate, sea-zone-shaped
-// debug fixture; pinning it cleanly under the minimum viewport is a
-// follow-up slice tracked on #2870 S10 alongside the existing naval
-// regression tests.
+// `NavalUnitsPanel` further requires the bundled nine-patch image asset
+// to be pre-warmed into the Flame image cache so the `FleetExpansionTile`
+// chrome (which wraps `CtNinePatchButton` actions) lays out at its true
+// declared height instead of falling back to a `SizedBox.shrink()`
+// silhouette. This file mirrors the existing pre-warm pattern from
+// `panels_320dp_min_viewport_test.dart` (DiplomacyPanel group) so the
+// naval pin renders against the same asset surface as
+// `naval_units_panel_test_part1`.
 //
 // SPEC: `SPEC/ui/mobile-adaptation.md` § 7 (Minimum-viewport pin).
-// SPEC: `SPEC/ui/civilian-units-panel.md`, `SPEC/ui/military-units-panel.md`.
+// SPEC: `SPEC/ui/civilian-units-panel.md`, `SPEC/ui/military-units-panel.md`,
+//        `SPEC/ui/naval-units-panel.md`.
 // Refs #2870 S10.
+
+import 'dart:ui' as ui;
 
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
+import 'package:flame/flame.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -50,6 +57,7 @@ import 'package:colonizethis_app/config/constants.dart';
 import 'package:colonizethis_app/config/themes.dart';
 import 'package:colonizethis_app/features/game/widgets/civilian_units_panel.dart';
 import 'package:colonizethis_app/features/game/widgets/military_units_panel.dart';
+import 'package:colonizethis_app/features/game/widgets/naval_units_panel.dart';
 import 'package:colonizethis_app/widgets/debug_init_game.dart';
 
 /// Minimum supported viewport dimensions for SPEC/ui/mobile-adaptation.md
@@ -120,19 +128,58 @@ Widget _buildMilitaryUnitsPanel({
   );
 }
 
+Widget _buildNavalUnitsPanel({
+  required Game game,
+  required String humanPlayerId,
+  required MapTopology topology,
+}) {
+  return NavalUnitsPanel(
+    game: game,
+    humanPlayerId: humanPlayerId,
+    bus: AppEventBus.create(),
+    topology: topology,
+  );
+}
+
+/// Pre-warms the Flame image cache for the brass nine-patch button asset so
+/// `NavalUnitsPanel`'s `FleetExpansionTile` action chrome lays out at its
+/// true declared height (32 dp) instead of falling back to a
+/// `SizedBox.shrink()` silhouette. Mirrors the helper used by
+/// `panels_320dp_min_viewport_test.dart` (DiplomacyPanel group) and
+/// `naval_units_panel_test_part1`.
+Future<void> _preWarmFlameImageCache() async {
+  try {
+    final bytes = await rootBundle.load(
+      'assets/images/ui_button_nine_patch.png',
+    );
+    final codec = await ui.instantiateImageCodec(bytes.buffer.asUint8List());
+    final frame = await codec.getNextFrame();
+    Flame.images.add('ui_button_nine_patch.png', frame.image);
+    Flame.images.add('assets/images/ui_button_nine_patch.png', frame.image);
+  } catch (_) {
+    // Best-effort: mirrors the resilience of the sibling pin file. The
+    // layout contract under test is overflow-free chrome, not a
+    // pixel-perfect nine-patch render.
+  }
+}
+
 void main() {
   suppressLogsForTests();
 
   late Game game;
+  late MapTopology topology;
   late String humanPlayerId;
 
-  setUpAll(() {
+  setUpAll(() async {
+    await _preWarmFlameImageCache();
     final result = getDebugInitGameResult();
     game = result.game;
+    topology = result.combinedTopology;
     expect(
       game.players,
       isNotEmpty,
-      reason: 'Debug init game must seed at least one player so the panels '
+      reason:
+          'Debug init game must seed at least one player so the panels '
           'render a meaningful unit list at 320 dp.',
     );
     humanPlayerId = game.players.first.id;
@@ -140,110 +187,139 @@ void main() {
 
   setUp(() => AppEventBus.reset());
 
-  group(
-    'SPEC/ui/mobile-adaptation.md § 7 — CivilianUnitsPanel @ 320 dp '
-    '(Refs #2870 S10)',
-    () {
-      testWidgets(
-        'AC (positive) CivilianUnitsPanel @ 320×640: no RenderFlex '
-        'overflow exception, "Civilian Units" title renders',
-        (WidgetTester tester) async {
-          await _pumpAtSize(
-            tester,
-            _buildCivilianUnitsPanel(
-              game: game,
-              humanPlayerId: humanPlayerId,
-            ),
-            size: _kMinViewport,
-          );
-
-          expect(
-            tester.takeException(),
-            isNull,
-            reason:
-                'SPEC/ui/mobile-adaptation.md § 7: CivilianUnitsPanel must '
-                'not emit a RenderFlex overflow exception at '
-                'kMinViewportWidth (320 dp). The UnitsPanelShell chrome '
-                '(CtTopBar + ListView) and per-unit UnitsEntityActionRow '
-                'must fit within the 304 dp content column inside the '
-                'shell padding without overflowing.',
-          );
-          expect(find.text('Civilian Units'), findsOneWidget);
-        },
+  group('SPEC/ui/mobile-adaptation.md § 7 — CivilianUnitsPanel @ 320 dp '
+      '(Refs #2870 S10)', () {
+    testWidgets('AC (positive) CivilianUnitsPanel @ 320×640: no RenderFlex '
+        'overflow exception, "Civilian Units" title renders', (
+      WidgetTester tester,
+    ) async {
+      await _pumpAtSize(
+        tester,
+        _buildCivilianUnitsPanel(game: game, humanPlayerId: humanPlayerId),
+        size: _kMinViewport,
       );
 
-      testWidgets(
-        'Negative control: CivilianUnitsPanel @ 1024×768 also pumps '
+      expect(
+        tester.takeException(),
+        isNull,
+        reason:
+            'SPEC/ui/mobile-adaptation.md § 7: CivilianUnitsPanel must '
+            'not emit a RenderFlex overflow exception at '
+            'kMinViewportWidth (320 dp). The UnitsPanelShell chrome '
+            '(CtTopBar + ListView) and per-unit UnitsEntityActionRow '
+            'must fit within the 304 dp content column inside the '
+            'shell padding without overflowing.',
+      );
+      expect(find.text('Civilian Units'), findsOneWidget);
+    });
+
+    testWidgets('Negative control: CivilianUnitsPanel @ 1024×768 also pumps '
         'without exception (regression sentinel for the overflow '
-        'contract — keeps the 320 dp positive pin meaningful)',
-        (WidgetTester tester) async {
-          await _pumpAtSize(
-            tester,
-            _buildCivilianUnitsPanel(
-              game: game,
-              humanPlayerId: humanPlayerId,
-            ),
-            size: _kWideRegressionViewport,
-          );
-
-          expect(tester.takeException(), isNull);
-          expect(find.text('Civilian Units'), findsOneWidget);
-        },
-      );
-    },
-  );
-
-  group(
-    'SPEC/ui/mobile-adaptation.md § 7 — MilitaryUnitsPanel @ 320 dp '
-    '(Refs #2870 S10)',
-    () {
-      testWidgets(
-        'AC (positive) MilitaryUnitsPanel @ 320×640: no RenderFlex '
-        'overflow exception, "Military Units" title renders',
-        (WidgetTester tester) async {
-          await _pumpAtSize(
-            tester,
-            _buildMilitaryUnitsPanel(
-              game: game,
-              humanPlayerId: humanPlayerId,
-            ),
-            size: _kMinViewport,
-          );
-
-          expect(
-            tester.takeException(),
-            isNull,
-            reason:
-                'SPEC/ui/mobile-adaptation.md § 7: MilitaryUnitsPanel must '
-                'not emit a RenderFlex overflow exception at '
-                'kMinViewportWidth (320 dp). The UnitsPanelShell chrome '
-                '(CtTopBar + ListView), Army ExpansionTile rows, and per-'
-                'army UnitsEntityActionRow must fit within the 304 dp '
-                'content column inside the shell padding without '
-                'overflowing.',
-          );
-          expect(find.text('Military Units'), findsOneWidget);
-        },
+        'contract — keeps the 320 dp positive pin meaningful)', (
+      WidgetTester tester,
+    ) async {
+      await _pumpAtSize(
+        tester,
+        _buildCivilianUnitsPanel(game: game, humanPlayerId: humanPlayerId),
+        size: _kWideRegressionViewport,
       );
 
-      testWidgets(
-        'Negative control: MilitaryUnitsPanel @ 1024×768 also pumps '
+      expect(tester.takeException(), isNull);
+      expect(find.text('Civilian Units'), findsOneWidget);
+    });
+  });
+
+  group('SPEC/ui/mobile-adaptation.md § 7 — MilitaryUnitsPanel @ 320 dp '
+      '(Refs #2870 S10)', () {
+    testWidgets('AC (positive) MilitaryUnitsPanel @ 320×640: no RenderFlex '
+        'overflow exception, "Military Units" title renders', (
+      WidgetTester tester,
+    ) async {
+      await _pumpAtSize(
+        tester,
+        _buildMilitaryUnitsPanel(game: game, humanPlayerId: humanPlayerId),
+        size: _kMinViewport,
+      );
+
+      expect(
+        tester.takeException(),
+        isNull,
+        reason:
+            'SPEC/ui/mobile-adaptation.md § 7: MilitaryUnitsPanel must '
+            'not emit a RenderFlex overflow exception at '
+            'kMinViewportWidth (320 dp). The UnitsPanelShell chrome '
+            '(CtTopBar + ListView), Army ExpansionTile rows, and per-'
+            'army UnitsEntityActionRow must fit within the 304 dp '
+            'content column inside the shell padding without '
+            'overflowing.',
+      );
+      expect(find.text('Military Units'), findsOneWidget);
+    });
+
+    testWidgets('Negative control: MilitaryUnitsPanel @ 1024×768 also pumps '
         'without exception (regression sentinel for the overflow '
-        'contract)',
-        (WidgetTester tester) async {
-          await _pumpAtSize(
-            tester,
-            _buildMilitaryUnitsPanel(
-              game: game,
-              humanPlayerId: humanPlayerId,
-            ),
-            size: _kWideRegressionViewport,
-          );
-
-          expect(tester.takeException(), isNull);
-          expect(find.text('Military Units'), findsOneWidget);
-        },
+        'contract)', (WidgetTester tester) async {
+      await _pumpAtSize(
+        tester,
+        _buildMilitaryUnitsPanel(game: game, humanPlayerId: humanPlayerId),
+        size: _kWideRegressionViewport,
       );
-    },
-  );
+
+      expect(tester.takeException(), isNull);
+      expect(find.text('Military Units'), findsOneWidget);
+    });
+  });
+
+  group('SPEC/ui/mobile-adaptation.md § 7 — NavalUnitsPanel @ 320 dp '
+      '(Refs #2870 S10)', () {
+    testWidgets(
+      'AC (positive) NavalUnitsPanel @ 320×640: no RenderFlex overflow '
+      'exception, "Naval Units" title renders',
+      (WidgetTester tester) async {
+        await _pumpAtSize(
+          tester,
+          _buildNavalUnitsPanel(
+            game: game,
+            humanPlayerId: humanPlayerId,
+            topology: topology,
+          ),
+          size: _kMinViewport,
+        );
+
+        expect(
+          tester.takeException(),
+          isNull,
+          reason:
+              'SPEC/ui/mobile-adaptation.md § 7: NavalUnitsPanel must not '
+              'emit a RenderFlex overflow exception at kMinViewportWidth '
+              '(320 dp). The UnitsPanelShell chrome (CtTopBar with header '
+              'Combine + select-all checkbox + ListView), Fleet '
+              'ExpansionTile rows, and per-fleet UnitsEntityActionRow '
+              'must fit within the 304 dp content column inside the '
+              'shell padding without overflowing.',
+        );
+        expect(find.text('Naval Units'), findsOneWidget);
+      },
+    );
+
+    testWidgets(
+      'Negative control: NavalUnitsPanel @ 1024×768 also pumps without '
+      'exception (regression sentinel for the overflow contract — keeps '
+      'the 320 dp positive pin meaningful)',
+      (WidgetTester tester) async {
+        await _pumpAtSize(
+          tester,
+          _buildNavalUnitsPanel(
+            game: game,
+            humanPlayerId: humanPlayerId,
+            topology: topology,
+          ),
+          size: _kWideRegressionViewport,
+        );
+
+        expect(tester.takeException(), isNull);
+        expect(find.text('Naval Units'), findsOneWidget);
+      },
+    );
+  });
 }
