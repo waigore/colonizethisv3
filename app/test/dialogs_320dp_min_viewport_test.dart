@@ -16,8 +16,11 @@
 //  * [TurnResolutionProcessingDialog]  — worker-isolate "processing turn"
 //    modal raised while the next-turn isolate runs
 //    (SPEC/program/turn-resolution.md).
+//  * [CombatModeChoiceDialog]            — Auto-Resolve vs Quick Battle picker
+//    opened via `OpenDialogEvent('combat_mode_choice')`
+//    (SPEC/ui/combat-mode-choice-dialog.md).
 //
-// All five dialogs render their chrome via [CtDialogShell] (Dialog with
+// All six dialogs render their chrome via [CtDialogShell] (Dialog with
 // `insetPadding: 16` and an inner `ConstrainedBox(maxWidth: 400|480)`).
 // At `kMinViewportWidth` (320 dp) the available content width collapses
 // to ~288 dp, which is the most constrained surface either dialog
@@ -39,11 +42,13 @@
 // SPEC: `SPEC/ui/turn-news-dialog.md` § Layout / wireframe.
 // SPEC: `SPEC/ui/empire-overview.md` § Map display options.
 // SPEC: `SPEC/program/turn-resolution.md` (Processing-turn modal).
+// SPEC: `SPEC/ui/combat-mode-choice-dialog.md`.
 // Refs #2870 S8 (dialogs scale at narrow widths) + S10 (no horizontal
 // overflow at 320 dp on every covered surface).
 
 import 'package:colonizethis_app/config/constants.dart';
 import 'package:colonizethis_app/config/themes.dart';
+import 'package:colonizethis_app/features/game/combat/combat_mode_choice_dialog.dart';
 import 'package:colonizethis_app/features/game/flame/exit_confirm_dialog.dart';
 import 'package:colonizethis_app/features/game/flame/turn_resolution_processing_dialog.dart';
 import 'package:colonizethis_app/features/game/widgets/game_map_options_dialog.dart';
@@ -465,6 +470,120 @@ void main() {
       expect(tester.takeException(), isNull);
       expect(find.text('Processing Turn'), findsOneWidget);
       expect(find.text(phaseText), findsOneWidget);
+    });
+  });
+
+  group('SPEC/ui/mobile-adaptation.md § 7 — CombatModeChoiceDialog @ 320 dp '
+      '(Refs #2870 S8/S10)', () {
+    const String provinceName = 'Lisbon';
+
+    testWidgets(
+      'AC (positive) CombatModeChoiceDialog (regular province) @ 320×640: '
+      'no RenderFlex overflow exception, title + both action labels render '
+      '(the end-aligned Auto-Resolve + 8 dp gap + Quick Battle row must fit '
+      'within the ~288 dp CtDialogShell content column)',
+      (WidgetTester tester) async {
+        await _pumpDialogAtSize(
+          tester,
+          CombatModeChoiceDialog(
+            bus: AppEventBus.create(),
+            provinceName: provinceName,
+            isCapitalSiege: false,
+          ),
+          size: _kMinViewport,
+        );
+
+        expect(
+          tester.takeException(),
+          isNull,
+          reason:
+              'SPEC/ui/mobile-adaptation.md § 7: CombatModeChoiceDialog '
+              '(regular province) must not emit a RenderFlex overflow '
+              'exception at kMinViewportWidth (320 dp). The title + muted '
+              'body + end-aligned Auto-Resolve / Quick Battle '
+              'CtNinePatchButton row from '
+              'SPEC/ui/combat-mode-choice-dialog.md must wrap within the '
+              '~288 dp CtDialogShell content column.',
+        );
+        expect(find.textContaining(provinceName), findsOneWidget);
+        expect(find.textContaining('Auto-Resolve'), findsOneWidget);
+        expect(find.textContaining('Quick Battle'), findsOneWidget);
+      },
+    );
+
+    testWidgets('Negative control: CombatModeChoiceDialog (regular province) '
+        '@ 1024×768 also pumps without exception (regression sentinel for '
+        'the overflow contract — keeps the 320 dp positive pin meaningful)', (
+      WidgetTester tester,
+    ) async {
+      await _pumpDialogAtSize(
+        tester,
+        CombatModeChoiceDialog(
+          bus: AppEventBus.create(),
+          provinceName: provinceName,
+          isCapitalSiege: false,
+        ),
+        size: _kWideRegressionViewport,
+      );
+
+      expect(tester.takeException(), isNull);
+      expect(find.textContaining(provinceName), findsOneWidget);
+      expect(find.textContaining('Auto-Resolve'), findsOneWidget);
+      expect(find.textContaining('Quick Battle'), findsOneWidget);
+    });
+
+    testWidgets(
+      'AC (positive) CombatModeChoiceDialog (capital siege) @ 320×640: '
+      'no RenderFlex overflow exception, title + Quick Battle action render '
+      '(Auto-Resolve is hidden; the single end-aligned Quick Battle button '
+      'must fit within the ~288 dp CtDialogShell content column)',
+      (WidgetTester tester) async {
+        await _pumpDialogAtSize(
+          tester,
+          CombatModeChoiceDialog(
+            bus: AppEventBus.create(),
+            provinceName: 'Madrid',
+            isCapitalSiege: true,
+          ),
+          size: _kMinViewport,
+        );
+
+        expect(
+          tester.takeException(),
+          isNull,
+          reason:
+              'SPEC/ui/mobile-adaptation.md § 7: CombatModeChoiceDialog '
+              '(capital siege) must not emit a RenderFlex overflow '
+              'exception at kMinViewportWidth (320 dp). The forced '
+              'Quick Battle-only action row from '
+              'SPEC/ui/combat-mode-choice-dialog.md must wrap within the '
+              '~288 dp CtDialogShell content column.',
+        );
+        expect(find.textContaining('Madrid'), findsOneWidget);
+        expect(find.textContaining('Auto-Resolve'), findsNothing);
+        expect(find.textContaining('Quick Battle'), findsWidgets);
+      },
+    );
+
+    testWidgets('Negative control: CombatModeChoiceDialog (capital siege) @ '
+        '1024×768 also pumps without exception (regression sentinel for the '
+        'overflow contract — keeps the 320 dp positive pin meaningful)', (
+      WidgetTester tester,
+    ) async {
+      await _pumpDialogAtSize(
+        tester,
+        CombatModeChoiceDialog(
+          bus: AppEventBus.create(),
+          provinceName: 'Madrid',
+          isCapitalSiege: true,
+        ),
+        size: _kWideRegressionViewport,
+      );
+
+      expect(tester.takeException(), isNull);
+      expect(find.textContaining('Madrid'), findsOneWidget);
+      expect(find.textContaining('Auto-Resolve'), findsNothing);
+      expect(find.textContaining('Quick Battle'), findsWidgets);
     });
   });
 }
