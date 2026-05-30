@@ -55,6 +55,33 @@ void main() {
       ]);
     });
 
+    test(
+      'three GPs: FTP A↔B fills before C at same tier; C carry-forward when exhausted (#2989 FTP AC)',
+      () {
+        final result = DealMatcher.matchDeals(
+          matcherInputs(
+            offersByFactionId: {
+              'gpA': [matcherOffer('timber', 10, priority: 1)],
+            },
+            bidsByFactionId: {
+              'gpB': [matcherBid('timber', 10, priority: 1)],
+              'gpC': [matcherBid('timber', 10, priority: 1)],
+            },
+            tradeCapacityByFactionId: const {'gpB': 100, 'gpC': 100},
+            ftpPairKeys: {DealMatcher.pairKey('gpA', 'gpB')},
+          ),
+        );
+
+        expect(result.filledDeals.length, 1);
+        expect(result.filledDeals.single.sellerFactionId, 'gpA');
+        expect(result.filledDeals.single.buyerFactionId, 'gpB');
+        expect(result.filledDeals.single.isFtpMatch, isTrue);
+        expect(result.unfilledBidsByFactionId['gpC'], [
+          matcherBid('timber', 10, priority: 1),
+        ]);
+      },
+    );
+
     test('FTP pair at tier 2 does not fill before non-FTP at tier 1', () {
       final result = DealMatcher.matchDeals(
         matcherInputs(
