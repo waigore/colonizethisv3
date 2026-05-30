@@ -257,10 +257,12 @@ Folder: **Game Setup**. Use cases:
 - **Loading** — plain variant, loading state, desktop viewport.
 - **Default (pixel)** — pixelArt variant, default state, desktop viewport.
 - **Loading (pixel)** — pixelArt variant, loading state, desktop viewport.
-- **Default (mobile)** — plain variant, default state, 360 × 640 dp mobile viewport (below `kGameSetupNarrowBreakpoint`; exercises the stacked slot-row layout from the narrow-viewport AC block above).
+- **Default (mobile)** — plain variant, default state, 360 × 640 dp mobile viewport (below `kGameSetupNarrowBreakpoint`; exercises the stacked slot-row layout from the narrow-viewport AC block above). Wraps the `plain` Game Setup in `mobileViewport(context, …)` so reviewers can verify the `< 500 dp` slot-row stacking rule (per `SPEC/ui/mobile-adaptation.md` § 4) without resizing the host window.
 - **Default (mobile, pixel)** — pixelArt variant, default state, 360 × 640 dp mobile viewport (exercises the dark editorial-monocle chrome under the same narrow stacking; SPEC § *Narrow-viewport slot-row stacking and action-button retention*).
 - **Loading (mobile, pixel)** — pixelArt variant, loading state, 360 × 640 dp mobile viewport (exercises the loading scrim under the narrow layout; SPEC § *Narrow-viewport slot-row stacking and action-button retention* + *Loading overlay chrome*).
 - **All slots selected (pixel)** — pixelArt variant, default state, desktop viewport with every slot pre-filled with a great power and that power's default leader variant (exercises the happy-path Start Game enabled state and the GP map-colour swatches on every closed nation trigger; SPEC § *Slot-row chrome and swatch dots* R9).
+
+The **Default (mobile)** use case must be pinned by `app/test/widgetbook_game_setup_mobile_viewport_test.dart` (Refs #2870 R22 / S9) so its removal or rename surfaces in CI before reviewers lose the narrow-viewport review surface.
 
 ---
 

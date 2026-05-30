@@ -13,7 +13,7 @@
 ## Components
 
 - **Dialog:** `TurnNewsDialog` — title references the resolved turn; scrollable list; primary **Close** / OK.
-- **Widgetbook:** at least one story with sample lines + empty state; mobile viewport if layout differs.
+- **Widgetbook:** Folder **Turn news** (`app/lib/widgetbook/catalog_part2.dart`). Use cases: **Sample lines**, **Empty digest**, **Mobile viewport**. The **Mobile viewport** use case wraps the dialog in `mobileViewport(context, …)` so reviewers can verify the 360 × 640 dp narrow story without resizing the host window. The **Mobile viewport** use case must be pinned by `app/test/widgetbook_turn_news_mobile_viewport_test.dart` (Refs #2870 R22 / S9) so its removal or rename surfaces in CI before reviewers lose the narrow-viewport review surface.
 
 ## Styling (dark theme)
 

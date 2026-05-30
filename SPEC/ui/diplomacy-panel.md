@@ -205,6 +205,8 @@ The faction-row body adapts to a single normative breakpoint per [mockups/GAME30
 
 At least one story that shows the Diplomacy panel using a **real game** (e.g. from init-game or debug init). Ensures the panel works with actual Game/PlayerView data and diplomacy state.
 
+In addition, a **mobile viewport** use case must render the panel inside the shared [mobileViewport](../program/app-ui-wiring.md) frame (360 × 640 dp `MediaQuery` size from `app/lib/widgetbook/catalog.dart`) so the `≤ 500 dp` narrow row variant from [§ Responsive layout](#responsive-layout) is reviewable without window resizing. This satisfies the "any other screen with responsive variants" clause from [mobile-adaptation.md](mobile-adaptation.md) § 6 (Widgetbook verification) for the diplomacy surface listed under [`Refs #2870`](https://github.com/waigore/colonizethisv3/issues/2870) R22.
+
 ---
 
 ## Acceptance criteria
@@ -245,3 +247,5 @@ At least one story that shows the Diplomacy panel using a **real game** (e.g. fr
 - **Faction row wide layout:** Given the Diplomacy panel is open at a viewport width strictly greater than `kDiplomacyRowNarrowMaxWidth` (500 dp), when a faction row renders, then the row body uses a `Row` whose first child is an `Expanded` containing the info column and whose trailing sibling is the action-button `Wrap`, matching `.faction-row { display:flex; align-items:flex-start }` from [mockups/GAME30001-diplomacy-panel.html](mockups/GAME30001-diplomacy-panel.html).
 - **Faction row narrow wrap:** Given the Diplomacy panel is open at a viewport width `≤ kDiplomacyRowNarrowMaxWidth` (500 dp), when a faction row renders, then the row body uses a `Column` whose first child is the info column and whose second child is the action-button `Wrap` aligned to the leading (left) edge, matching the mockup `@media (max-width: 500px)` rule `.faction-row { flex-wrap:wrap }` + `.f-actions { justify-content:flex-start }`.
 - **Faction row narrow does not right-align actions:** Given the Diplomacy panel is open at viewport width `≤ kDiplomacyRowNarrowMaxWidth`, when a faction row renders, then no `Expanded(child: info)` + sibling action cluster `Row` arrangement is present in the row body (so the action buttons never render trailing-edge anchored under the narrow rule).
+
+- **Mobile-viewport Widgetbook story renders narrow rows:** Given the Diplomacy Panel `Mobile viewport — narrow rows (≤ 500 dp)` Widgetbook use case is mounted in a `WidgetTester`, when the builder pumps inside the shared 360 × 640 dp `mobileViewport` frame, then `WidgetTester.takeException()` returns `null` and at least one faction-row body keyed `${kDiplomacyRowBodyKeyPrefix}<factionId>` is a `Column` (the `≤ 500 dp` narrow variant per § Responsive layout), demonstrating the responsive contract is reviewable from Widgetbook without resizing the host window (Refs #2870 R22 / S9).
