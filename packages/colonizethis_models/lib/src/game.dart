@@ -7,6 +7,7 @@ import 'minor_nation.dart';
 import 'player.dart';
 import 'tribe.dart';
 import 'turn_time_mapping.dart';
+import 'world_market.dart';
 import 'world_state.dart';
 
 /// Victory type. Phase 5: military only (31+ OW provinces). SPEC/game/victory.md.
@@ -93,6 +94,7 @@ class Game {
     this.lastHumanCompletedResearchCategory,
     this.lastHumanResearchCategoryCompletionTurn,
     this.mapViewState = MapViewState.defaults,
+    this.worldMarketState = WorldMarketState.empty,
   });
 
   final String id;
@@ -178,6 +180,12 @@ class Game {
   /// Persisted Empire overview map state (zoom + display toggles).
   final MapViewState mapViewState;
 
+  /// World market prices and last-turn activity. SPEC/game/world-market.md,
+  /// SPEC/program/world-market-resolution.md. Defaults to
+  /// [WorldMarketState.empty]; populated from `ResourceRules.defaultMarketPrice`
+  /// at game start via [WorldMarketState.withDefaultPrices].
+  final WorldMarketState worldMarketState;
+
   Map<String, dynamic> toJson() => {
     'id': id,
     'worldState': worldState.toJson(),
@@ -230,6 +238,8 @@ class Game {
           lastHumanResearchCategoryCompletionTurn,
     if (mapViewState != MapViewState.defaults)
       'mapViewState': mapViewState.toJson(),
+    if (worldMarketState != WorldMarketState.empty)
+      'worldMarketState': worldMarketState.toJson(),
   };
 
   static Game fromJson(Map<String, dynamic> json) {
@@ -346,6 +356,12 @@ class Game {
     final mapViewState = mapViewStateRaw is Map<dynamic, dynamic>
         ? MapViewState.fromJson(Map<String, dynamic>.from(mapViewStateRaw))
         : MapViewState.defaults;
+    final worldMarketStateRaw = json['worldMarketState'];
+    final worldMarketState = worldMarketStateRaw is Map<dynamic, dynamic>
+        ? WorldMarketState.fromJson(
+            Map<String, dynamic>.from(worldMarketStateRaw),
+          )
+        : WorldMarketState.empty;
     return Game(
       id: json['id'] as String,
       worldState: WorldState.fromJson(
@@ -408,6 +424,7 @@ class Game {
       calendarCampaignHalted:
           json['calendarCampaignHalted'] as bool? ?? false,
       infiniteMode: json['infiniteMode'] as bool? ?? false,
+      worldMarketState: worldMarketState,
     );
   }
 
@@ -440,6 +457,7 @@ class Game {
     String? lastHumanCompletedResearchCategory,
     int? lastHumanResearchCategoryCompletionTurn,
     MapViewState? mapViewState,
+    WorldMarketState? worldMarketState,
   }) {
     return Game(
       id: id ?? this.id,
@@ -481,6 +499,7 @@ class Game {
           lastHumanResearchCategoryCompletionTurn ??
           this.lastHumanResearchCategoryCompletionTurn,
       mapViewState: mapViewState ?? this.mapViewState,
+      worldMarketState: worldMarketState ?? this.worldMarketState,
     );
   }
 
@@ -524,7 +543,8 @@ class Game {
               other.lastHumanCompletedResearchCategory &&
           lastHumanResearchCategoryCompletionTurn ==
               other.lastHumanResearchCategoryCompletionTurn &&
-          mapViewState == other.mapViewState;
+          mapViewState == other.mapViewState &&
+          worldMarketState == other.worldMarketState;
 
   @override
   int get hashCode => Object.hash(
@@ -561,6 +581,7 @@ class Game {
       lastHumanCompletedResearchCategory,
       lastHumanResearchCategoryCompletionTurn,
       mapViewState,
+      worldMarketState,
     ),
   );
 
