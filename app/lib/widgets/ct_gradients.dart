@@ -29,6 +29,43 @@ class CtGradients {
     ],
   );
 
+  /// Three-stop wood-panel gradient used by the `pixelArt` main-menu
+  /// wood-panel buttons (`SPEC/ui/main-menu.md` § Buttons region; mockup
+  /// `SPEC/ui/mockups/SHEL10002-main-menu.html` `.menu-btn` default
+  /// background). Mirrors the mockup `linear-gradient(180deg,
+  /// var(--surface-lite) 0%, var(--surface) 40%, var(--bg-deep) 100%)`.
+  /// Kept distinct from [buttonGradient] so widespread two-stop
+  /// `CtNinePatchButton` callers stay on the canonical 2-stop surface.
+  static LinearGradient get woodPanelButtonGradient => LinearGradient(
+    begin: Alignment.topCenter,
+    end: Alignment.bottomCenter,
+    stops: const <double>[0.0, 0.4, 1.0],
+    colors: <Color>[
+      EditorialMonoclePalette.surfaceLite,
+      EditorialMonoclePalette.surface,
+      EditorialMonoclePalette.bgDeep,
+    ],
+  );
+
+  /// Inverted three-stop wood-panel gradient applied to the `pixelArt`
+  /// main-menu wood-panel buttons in the **pressed** (`:active`) state per
+  /// the mockup `.menu-btn:active` rule (`linear-gradient(180deg,
+  /// var(--bg-deep) 0%, var(--surface) 40%, var(--surface-lite) 100%)`).
+  /// Inversion preserves the same three palette tokens but reverses their
+  /// vertical order so the top edge reads darker while the button is held —
+  /// the visual "pressed" affordance documented by `SPEC/ui/main-menu.md`
+  /// AC `Wood-panel button pressed gradient inversion`.
+  static LinearGradient get woodPanelButtonGradientPressed => LinearGradient(
+    begin: Alignment.topCenter,
+    end: Alignment.bottomCenter,
+    stops: const <double>[0.0, 0.4, 1.0],
+    colors: <Color>[
+      EditorialMonoclePalette.bgDeep,
+      EditorialMonoclePalette.surface,
+      EditorialMonoclePalette.surfaceLite,
+    ],
+  );
+
   /// Vertical gradient for framed sections such as `CtPanel` and
   /// `CtDialogShell`. Matches the button gradient for a single canonical
   /// surface family but uses the deeper `--bg` tone at the bottom to set

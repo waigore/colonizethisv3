@@ -691,6 +691,7 @@ List<WidgetbookNode> get productionCommodityBreakdownDialogDirectories => [
                   onPressed: () {
                     showDialog<void>(
                       context: innerContext,
+                      barrierColor: EditorialMonoclePalette.dialogScrim,
                       builder: (_) => ProductionCommodityBreakdownDialog(
                         game: game,
                         player: player,

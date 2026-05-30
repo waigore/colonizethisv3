@@ -115,6 +115,72 @@ void main() {
       expect(find.text('Attacker'), findsOneWidget);
       expect(find.text('Defender'), findsOneWidget);
     });
+
+    // Refs #2869 R14 + SPEC/ui/quick-battle-deployment-view.md § Layout.
+    // Pins that group-row text resolves to the canonical `--muted` token
+    // explicitly rather than relying on theme inheritance.
+    testWidgets(
+        'group-row text resolves to --muted under dark editorial-monocle theme',
+        (WidgetTester tester) async {
+      await tester.pumpWidget(_darkFrame(
+        const QuickBattleDeploymentView(
+          attackerDeployment: QuickBattleDeployment(
+            groups: [
+              QuickBattleGroup(
+                lane: QuickBattleLane.center,
+                line: QuickBattleLine.front,
+                unitIds: ['a1', 'a2', 'a3'],
+                cohesion: 3,
+              ),
+            ],
+          ),
+          defenderDeployment: QuickBattleDeployment(
+            groups: [
+              QuickBattleGroup(
+                lane: QuickBattleLane.center,
+                line: QuickBattleLine.front,
+                unitIds: ['d1'],
+                cohesion: 0,
+              ),
+            ],
+          ),
+        ),
+      ));
+
+      final Text attackerRow = tester.widget<Text>(
+        find.text('Center Front: 3 units (Cohesion 3)'),
+      );
+      final Text defenderRow = tester.widget<Text>(
+        find.text('Center Front: 1 units'),
+      );
+      expect(attackerRow.style?.color, EditorialMonoclePalette.muted);
+      expect(defenderRow.style?.color, EditorialMonoclePalette.muted);
+    });
+
+    testWidgets(
+        'group-row text resolves to --muted under fallback Material theme',
+        (WidgetTester tester) async {
+      await tester.pumpWidget(_frame(
+        const QuickBattleDeploymentView(
+          attackerDeployment: QuickBattleDeployment(
+            groups: [
+              QuickBattleGroup(
+                lane: QuickBattleLane.center,
+                line: QuickBattleLine.front,
+                unitIds: ['a1'],
+                cohesion: 2,
+              ),
+            ],
+          ),
+          defenderDeployment: QuickBattleDeployment(),
+        ),
+      ));
+
+      final Text row = tester.widget<Text>(
+        find.text('Center Front: 1 units (Cohesion 2)'),
+      );
+      expect(row.style?.color, EditorialMonoclePalette.muted);
+    });
   });
 
   group('QuickBattleActionSelector (SPEC/ui/quick-battle-action-selector.md)', () {
@@ -184,6 +250,41 @@ void main() {
       }
       await tester.pump();
       expect(taps, 0);
+    });
+
+    // Refs #2869 R17 + SPEC/ui/quick-battle-action-selector.md § Layout.
+    // Pins that the CP indicator text resolves to the `--muted` token
+    // explicitly under both the dark theme and the fallback theme.
+    testWidgets(
+        'CP indicator resolves to --muted under dark editorial-monocle theme',
+        (WidgetTester tester) async {
+      await tester.pumpWidget(_darkFrame(
+        QuickBattleActionSelector(
+          cpRemaining: 3,
+          onActionSelected: (_) {},
+        ),
+      ));
+
+      final Text label = tester.widget<Text>(
+        find.textContaining('Command Points: 3'),
+      );
+      expect(label.style?.color, EditorialMonoclePalette.muted);
+    });
+
+    testWidgets(
+        'CP indicator resolves to --muted under fallback Material theme',
+        (WidgetTester tester) async {
+      await tester.pumpWidget(_frame(
+        QuickBattleActionSelector(
+          cpRemaining: 0,
+          onActionSelected: (_) {},
+        ),
+      ));
+
+      final Text label = tester.widget<Text>(
+        find.textContaining('Command Points: 0'),
+      );
+      expect(label.style?.color, EditorialMonoclePalette.muted);
     });
   });
 
@@ -684,6 +785,80 @@ void main() {
       expect(find.byType(TextButton), findsNothing);
       expect(find.byType(OutlinedButton), findsNothing);
       expect(find.byType(FilledButton), findsNothing);
+    });
+  });
+
+  // Refs #2869 R7 + SPEC/ui/quick-battle-screen.md § Layout / wireframe.
+  // Pins the round-counter title color/letter-spacing contract on the
+  // round phase (interactive == true so the inline result view does not
+  // unmount the title).
+  group('QuickBattleScreen round phase title (Refs #2869 R7)', () {
+    QuickBattleInput buildInput() {
+      return const QuickBattleInput(
+        attackerFactionId: 'gp1',
+        defenderFactionId: 'gp2',
+        attackerDeployment: QuickBattleDeployment(
+          groups: [
+            QuickBattleGroup(
+              lane: QuickBattleLane.center,
+              line: QuickBattleLine.front,
+              unitIds: ['a1', 'a2', 'a3'],
+              cohesion: 3,
+            ),
+          ],
+        ),
+        defenderDeployment: QuickBattleDeployment(
+          groups: [
+            QuickBattleGroup(
+              lane: QuickBattleLane.center,
+              line: QuickBattleLine.front,
+              unitIds: ['d1'],
+              cohesion: 3,
+            ),
+          ],
+        ),
+        provinceId: 'oldWorld|p1',
+        regionId: 'oldWorld',
+        maxRounds: 3,
+      );
+    }
+
+    testWidgets(
+        'dark editorial-monocle: round counter resolves to --accent + 0.05 letter-spacing',
+        (WidgetTester tester) async {
+      await tester.pumpWidget(_darkFrame(
+        QuickBattleScreen(
+          input: buildInput(),
+          onComplete: (_) {},
+          interactive: true,
+        ),
+      ));
+      await tester.pump();
+
+      final Finder titleFinder = find.textContaining('Quick Battle — Round 1');
+      expect(titleFinder, findsOneWidget);
+      final Text title = tester.widget<Text>(titleFinder);
+      expect(title.style?.color, EditorialMonoclePalette.accent);
+      expect(title.style?.letterSpacing, QuickBattleScreen.roundCounterLetterSpacing);
+    });
+
+    testWidgets(
+        'fallback Material theme: round counter still resolves to --accent + 0.05 letter-spacing',
+        (WidgetTester tester) async {
+      await tester.pumpWidget(_frame(
+        QuickBattleScreen(
+          input: buildInput(),
+          onComplete: (_) {},
+          interactive: true,
+        ),
+      ));
+      await tester.pump();
+
+      final Finder titleFinder = find.textContaining('Quick Battle — Round 1');
+      expect(titleFinder, findsOneWidget);
+      final Text title = tester.widget<Text>(titleFinder);
+      expect(title.style?.color, EditorialMonoclePalette.accent);
+      expect(title.style?.letterSpacing, QuickBattleScreen.roundCounterLetterSpacing);
     });
   });
 }
