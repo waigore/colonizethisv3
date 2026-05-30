@@ -51,6 +51,7 @@ import '../features/game/widgets/province_overlay_demo_data.dart';
 import '../features/game/widgets/tech_tree_widget.dart';
 import '../features/game/screens/diplomacy_detail_screen.dart';
 import '../features/game/screens/technology_screen.dart';
+import '../features/game/screens/trade_screen.dart';
 import '../features/game/flame/game_map_narrow_detail_overlay.dart';
 import '../features/game/dialogue/call_to_arms_dialogue_overlay.dart';
 import '../features/game/dialogue/ct_dialogue_view.dart';
@@ -236,6 +237,7 @@ List<WidgetbookNode> get _ctWidgetbookDirectories => [
   ...gameSideMenuDirectories,
   ...gameMapNarrowDetailOverlaySlotDirectories,
   ...diplomacyDetailScreenDirectories,
+  ...tradeScreenDirectories,
   ...ctDarkThemePrimitiveDirectories,
 ];
 
