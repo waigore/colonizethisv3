@@ -25,6 +25,7 @@ jobs:
     outputs:
       tests: ${{ steps.filter.outputs.tests }}
       opencode_scope: ${{ steps.filter.outputs.opencode_scope }}
+      packages_changed: ${{ steps.filter.outputs.packages_changed }}
       packages_to_test: ${{ steps.test_plan.outputs.packages }}
     steps:
       - name: Checkout
@@ -61,6 +62,19 @@ jobs:
               - '!.vscode/**'
               - '!.idea/**'
               - '!.husky/**'
+            # True when any path that can affect package_tests outcomes changed.
+            # Includes packages/** plus workspace + test-runner files that change how
+            # package tests resolve, execute, or gate coverage. Used to skip the
+            # heavy `package_tests` job for app-only / tool-only / SPEC-only PRs
+            # where the one-way dependency direction (app/tool/ctdev -> packages,
+            # never the reverse) makes re-running package tests unnecessary.
+            packages_changed:
+              - 'packages/**'
+              - 'pubspec.yaml'
+              - 'analysis_options.yaml'
+              - 'tool/run_package_tests.sh'
+              - 'tool/compute_package_test_plan.py'
+              - 'tool/check_coverage_threshold.sh'
             # Per-package change detection for transitive-downstream selective execution.
             # Used by compute_package_test_plan.py → packages_to_test output.
             pkg_models:
@@ -324,6 +338,15 @@ jobs:
   # MAX_JOBS is pinned to 4 to match ubuntu-latest vCPU count: with 10 shards each running
   # its own `dart test` (which pays per-shard JIT/compile cost), MAX_JOBS=6 (script default)
   # oversubscribed the 4-core runner and caused the job to hit timeout-minutes (Refs #2963).
+  #
+  # Skipped (step-level) when no path under `packages/**` and no package-test
+  # infrastructure file changed. Safe because every `colonizethis_*` package only
+  # depends on other `colonizethis_*` packages (production deps); `app/`, `tool/*`,
+  # `ctdev/`, and `widgetbook_host/` are downstream consumers. App-only / tool-only
+  # / SPEC-only PRs cannot regress package code. Cross-cutting gates (OrderEngine
+  # codegen, workspace analyzer, custom_lint, repo-lint) live in the `quality` job
+  # and continue to run. Job itself is not gated so required branch checks still
+  # report success.
   package_tests:
     name: Package tests (colonizethis)
     needs: changes
@@ -331,16 +354,16 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 40
     steps:
-      - name: Skip when no test-relevant paths changed
-        if: needs.changes.outputs.tests != 'true'
-        run: echo "No test-relevant paths matched; skipping package tests."
+      - name: Skip when no package paths changed
+        if: needs.changes.outputs.packages_changed != 'true'
+        run: echo "No packages/** or package-test infra paths matched; skipping package tests."
 
       - name: Checkout
-        if: needs.changes.outputs.tests == 'true'
+        if: needs.changes.outputs.packages_changed == 'true'
         uses: actions/checkout@v6
 
       - name: Setup Flutter
-        if: needs.changes.outputs.tests == 'true'
+        if: needs.changes.outputs.packages_changed == 'true'
         uses: subosito/flutter-action@v2
         with:
           channel: stable
@@ -348,15 +371,15 @@ jobs:
           cache: true
 
       - name: Install lcov
-        if: needs.changes.outputs.tests == 'true'
+        if: needs.changes.outputs.packages_changed == 'true'
         run: sudo apt-get update && sudo apt-get install -y lcov
 
       - name: Resolve dependencies
-        if: needs.changes.outputs.tests == 'true'
+        if: needs.changes.outputs.packages_changed == 'true'
         run: dart pub get
 
       - name: Package tests and coverage gates
-        if: needs.changes.outputs.tests == 'true'
+        if: needs.changes.outputs.packages_changed == 'true'
         env:
           SUPPRESS_IMAGE_VIEWER: "1"
           PACKAGES_TO_TEST: ${{ needs.changes.outputs.packages_to_test }}
