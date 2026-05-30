@@ -85,10 +85,14 @@ class CombatModeChoiceDialog extends StatelessWidget {
     final secondaryLabelStyle =
         (theme.textTheme.titleSmall ?? const TextStyle())
             .copyWith(color: EditorialMonoclePalette.muted);
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.end,
+    // Wrap mirrors CMPT10001 `.actions { flex-wrap: wrap }` so both buttons
+    // stay within the CtDialogShell content column at kMinViewportWidth.
+    return Wrap(
+      alignment: WrapAlignment.end,
+      spacing: 8,
+      runSpacing: 8,
       children: [
-        if (!isCapitalSiege) ...[
+        if (!isCapitalSiege)
           CtNinePatchButton(
             onPressed: () => _onModeChosen(context, CombatMode.autoResolve),
             child: Text(
@@ -96,8 +100,6 @@ class CombatModeChoiceDialog extends StatelessWidget {
               style: secondaryLabelStyle,
             ),
           ),
-          const SizedBox(width: 8),
-        ],
         CtNinePatchButton(
           onPressed: () => _onModeChosen(context, CombatMode.quickBattle),
           child: Text(

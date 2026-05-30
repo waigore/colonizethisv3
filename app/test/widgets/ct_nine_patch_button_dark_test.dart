@@ -21,6 +21,9 @@ Future<void> _pumpButton(
   required VoidCallback? onPressed,
   bool enabled = true,
   bool dangerVariant = false,
+  double? disabledOpacityOverride,
+  LinearGradient? gradient,
+  LinearGradient? pressedGradient,
   Widget child = const Text('Confirm'),
 }) async {
   await tester.pumpWidget(
@@ -34,6 +37,9 @@ Future<void> _pumpButton(
               onPressed: onPressed,
               enabled: enabled,
               dangerVariant: dangerVariant,
+              disabledOpacityOverride: disabledOpacityOverride,
+              gradient: gradient,
+              pressedGradient: pressedGradient,
               child: child,
             ),
           ),
@@ -192,6 +198,128 @@ void main() {
   );
 
   testWidgets(
+    'disabledOpacityOverride replaces the catalog 0.4 default when set '
+    '(positive path — issue #2861 R1 / AC#9 next-turn button uses 0.35)',
+    (WidgetTester tester) async {
+      // Mirrors the in-game Next-turn button contract: a per-instance
+      // override of 0.35 replaces the shared catalog default (0.4) for
+      // this widget tree only. SPEC: SPEC/ui/game-screen.md Acceptance
+      // Criteria + .next-turn.disabled in
+      // SPEC/ui/mockups/GAME10001-game-screen.html.
+      await _pumpButton(
+        tester,
+        onPressed: () {},
+        enabled: false,
+        disabledOpacityOverride: 0.35,
+      );
+
+      final Finder overrideFinder = find.descendant(
+        of: find.byType(CtNinePatchButton),
+        matching: find.byWidgetPredicate(
+          (Widget w) => w is Opacity && w.opacity == 0.35,
+        ),
+      );
+      expect(
+        overrideFinder,
+        findsOneWidget,
+        reason:
+            'disabledOpacityOverride: 0.35 must apply Opacity(opacity: 0.35) '
+            'instead of the catalog default 0.4.',
+      );
+
+      final Finder defaultFinder = find.descendant(
+        of: find.byType(CtNinePatchButton),
+        matching: find.byWidgetPredicate(
+          (Widget w) =>
+              w is Opacity && w.opacity == CtNinePatchButton.disabledOpacity,
+        ),
+      );
+      expect(
+        defaultFinder,
+        findsNothing,
+        reason:
+            'When disabledOpacityOverride is set the catalog default 0.4 '
+            'Opacity wrapper must not also paint (no double dim).',
+      );
+    },
+  );
+
+  testWidgets(
+    'disabledOpacityOverride: null preserves the catalog 0.4 default '
+    '(negative / regression guard — every other CtNinePatchButton call '
+    'site must keep the shared disabled convention)',
+    (WidgetTester tester) async {
+      await _pumpButton(
+        tester,
+        onPressed: () {},
+        enabled: false,
+      );
+
+      final Finder defaultFinder = find.descendant(
+        of: find.byType(CtNinePatchButton),
+        matching: find.byWidgetPredicate(
+          (Widget w) =>
+              w is Opacity && w.opacity == CtNinePatchButton.disabledOpacity,
+        ),
+      );
+      expect(
+        defaultFinder,
+        findsOneWidget,
+        reason:
+            'CtNinePatchButton with no disabledOpacityOverride must keep '
+            'the shared catalog convention CtNinePatchButton.disabledOpacity '
+            '(0.4) so CtBackButton, CtToggleSwitch, CtProgressBar, etc. '
+            'continue to read consistently with every other dark-theme '
+            'disabled control.',
+      );
+
+      // Confirm 0.35 is not accidentally applied to non-next-turn buttons.
+      final Finder strayNextTurnFinder = find.descendant(
+        of: find.byType(CtNinePatchButton),
+        matching: find.byWidgetPredicate(
+          (Widget w) => w is Opacity && w.opacity == 0.35,
+        ),
+      );
+      expect(
+        strayNextTurnFinder,
+        findsNothing,
+        reason:
+            'Default CtNinePatchButton must not pick up the 0.35 next-turn '
+            'override when no disabledOpacityOverride is passed.',
+      );
+    },
+  );
+
+  testWidgets(
+    'enabled state with disabledOpacityOverride does not apply any Opacity '
+    'wrapper (the override only takes effect when the button is disabled)',
+    (WidgetTester tester) async {
+      await _pumpButton(
+        tester,
+        onPressed: () {},
+        disabledOpacityOverride: 0.35,
+      );
+
+      final Finder opacityFinder = find.descendant(
+        of: find.byType(CtNinePatchButton),
+        matching: find.byWidgetPredicate(
+          (Widget w) =>
+              w is Opacity &&
+              (w.opacity == 0.35 ||
+                  w.opacity == CtNinePatchButton.disabledOpacity),
+        ),
+      );
+      expect(
+        opacityFinder,
+        findsNothing,
+        reason:
+            'disabledOpacityOverride must only activate when the button is '
+            'disabled; enabled buttons never paint the dimming wrapper.',
+      );
+    },
+  );
+
+  testWidgets(
     'enabled state with non-null onPressed fires callback on tap',
     (WidgetTester tester) async {
       int taps = 0;
@@ -223,6 +351,100 @@ void main() {
       );
       expect(painters, findsOneWidget);
       expect(CtNinePatchButton.cornerBracketSize, 10);
+    },
+  );
+
+  testWidgets(
+    'pressedGradient swaps the surface gradient transiently while held; '
+    'reverts to the rest gradient after the gesture completes',
+    (WidgetTester tester) async {
+      // SPEC/ui/main-menu.md AC `Wood-panel button pressed gradient
+      // inversion`. Drives the button via a fine-grained TestGesture so the
+      // pressed-state surface can be inspected between onTapDown and
+      // onTap/onTapCancel.
+      await _pumpButton(
+        tester,
+        onPressed: () {},
+        gradient: CtGradients.woodPanelButtonGradient,
+        pressedGradient: CtGradients.woodPanelButtonGradientPressed,
+      );
+
+      final DecoratedBox restBox = _findButtonSurfaceDecoratedBox(tester);
+      final BoxDecoration restDecoration = restBox.decoration as BoxDecoration;
+      final LinearGradient restGradient =
+          restDecoration.gradient! as LinearGradient;
+      expect(
+        restGradient.colors,
+        CtGradients.woodPanelButtonGradient.colors,
+        reason: 'Rest state must paint the wood-panel rest gradient.',
+      );
+
+      final Offset center = tester.getCenter(find.byType(CtNinePatchButton));
+      final TestGesture gesture = await tester.startGesture(center);
+      await tester.pump();
+      await tester.pump(CtNinePatchButton.animationDuration);
+      await tester.pumpAndSettle();
+
+      final DecoratedBox pressedBox = _findButtonSurfaceDecoratedBox(tester);
+      final BoxDecoration pressedDecoration =
+          pressedBox.decoration as BoxDecoration;
+      final LinearGradient pressedGradientPainted =
+          pressedDecoration.gradient! as LinearGradient;
+      expect(
+        pressedGradientPainted.colors,
+        CtGradients.woodPanelButtonGradientPressed.colors,
+        reason:
+            'Pressed-state surface must swap to the inverted wood-panel '
+            'pressed gradient (bgDeep → surface → surfaceLite).',
+      );
+
+      await gesture.up();
+      await tester.pumpAndSettle();
+
+      final DecoratedBox releasedBox = _findButtonSurfaceDecoratedBox(tester);
+      final BoxDecoration releasedDecoration =
+          releasedBox.decoration as BoxDecoration;
+      final LinearGradient releasedGradient =
+          releasedDecoration.gradient! as LinearGradient;
+      expect(
+        releasedGradient.colors,
+        CtGradients.woodPanelButtonGradient.colors,
+        reason: 'Surface must revert to the rest gradient once the gesture '
+            'completes (inversion is strictly transient).',
+      );
+    },
+  );
+
+  testWidgets(
+    'when pressedGradient is omitted, pressing the button does not swap the '
+    'surface gradient (default 2-stop CtGradients.buttonGradient is preserved)',
+    (WidgetTester tester) async {
+      // Negative AC: callers that do not opt-in (every non-main-menu
+      // CtNinePatchButton) keep the prior 2-stop visual contract regardless
+      // of press state.
+      await _pumpButton(tester, onPressed: () {});
+
+      final Offset center = tester.getCenter(find.byType(CtNinePatchButton));
+      final TestGesture gesture = await tester.startGesture(center);
+      await tester.pump();
+      await tester.pump(CtNinePatchButton.animationDuration);
+      await tester.pumpAndSettle();
+
+      final DecoratedBox pressedBox = _findButtonSurfaceDecoratedBox(tester);
+      final BoxDecoration pressedDecoration =
+          pressedBox.decoration as BoxDecoration;
+      final LinearGradient pressedGradientPainted =
+          pressedDecoration.gradient! as LinearGradient;
+      expect(
+        pressedGradientPainted.colors,
+        CtGradients.buttonGradient.colors,
+        reason:
+            'Without an opt-in pressedGradient, the canonical 2-stop button '
+            'gradient must still paint while the button is held.',
+      );
+
+      await gesture.up();
+      await tester.pumpAndSettle();
     },
   );
 
