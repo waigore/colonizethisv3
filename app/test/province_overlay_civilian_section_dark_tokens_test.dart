@@ -167,7 +167,7 @@ Finder _foreignMerchantRowFinder() {
   return find.byWidgetPredicate(
     (w) =>
         w is Text &&
-        (w.data ?? '').contains('Merchant') &&
+        (w.data ?? '').contains(kUnitTypeMerchant) &&
         (w.data ?? '').contains('—'),
   );
 }
@@ -185,7 +185,7 @@ void main() {
           final tk = _tileKey(0, 0);
           final ownUnit = Unit(
             id: 'c-own',
-            type: 'Explorer',
+            type: kUnitTypeExplorer,
             ownerId: _humanPlayerId,
             locationProvinceId: _fullProvinceId,
             tileKey: tk,
@@ -240,7 +240,7 @@ void main() {
           final tk = _tileKey(0, 0);
           final foreignUnit = Unit(
             id: 'c-foreign',
-            type: 'Merchant',
+            type: kUnitTypeMerchant,
             ownerId: _foreignPlayerId,
             locationProvinceId: _fullProvinceId,
             // Foreign civilian visibility requires a non-unknown tile
@@ -297,7 +297,7 @@ void main() {
           final tk = _tileKey(0, 0);
           final ownUnit = Unit(
             id: 'c-own',
-            type: 'Explorer',
+            type: kUnitTypeExplorer,
             ownerId: _humanPlayerId,
             locationProvinceId: _fullProvinceId,
             tileKey: tk,
@@ -370,7 +370,7 @@ void main() {
           final tk = _tileKey(0, 0);
           final foreignUnit = Unit(
             id: 'c-foreign',
-            type: 'Merchant',
+            type: kUnitTypeMerchant,
             ownerId: _foreignPlayerId,
             locationProvinceId: _fullProvinceId,
             tileKey: tk,
