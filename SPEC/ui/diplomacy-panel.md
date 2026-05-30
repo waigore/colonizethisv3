@@ -34,6 +34,21 @@ A faction is **discovered** iff the player has a **diplomatic relation** with th
 
 ---
 
+## Top bar (dark editorial-monocle, all viewports)
+
+The diplomacy screen renders its chrome through `CtGameFeatureScreenShell`'s opt-in `topBar` slot so the surrounding `Scaffold` + `SafeArea` + `Column` shell, `GameToUIBusListener`, and ordering of body widgets remain identical to the legacy chrome path. The legacy `CtScreenShell` parchment title bar is **not** used on this surface (R1–R3 of #2863 — full dark editorial-monocle alignment).
+
+- **Component:** `CtTopBar` (`SPEC/ui/pixel-art-ui-catalog.md` § Pixel-art component catalog → `CtTopBar` entry), supplied through the `topBar` slot of `CtGameFeatureScreenShell`. The screen retains `GameToUIBusListener` for live game wiring (default `attachGameToUiListener: true`).
+- **Title text:** literal `Diplomacy`. The display font (`Cinzel` / `Iowan Old Style`) and `--accent` text color resolve from the dark editorial-monocle theme `titleMedium` slot per `CtTopBar` defaults.
+- **Back affordance:** `CtTopBar.backButtonLabel == 'Map'` so the chevron + muted label read together as `← Map`; `onBackPressed` is unset, deferring to `CtBackButton`'s default `Navigator.maybePop()` behavior (which produces the same shell-level pop semantics as the legacy `CtScreenShell` AppBar back button).
+- **Leading icon:** the pixel-art diplomacy icon `assets/icons/32/ui_icon_diplomacy.png` rendered through `StrictAssetIcon` at 18 × 18 logical px, painted between the back affordance and the title (matching the production / technology screens' 18 px convention).
+- **Height + chrome:** Fixed `CtTopBar.height` (36 px), filled with `CtGradients.topBarGradient` (matches `--surface-lite → --surface`), capped by a 1 px `EditorialMonoclePalette.accentDim` bottom border. Hard-coded colours are forbidden; all tokens resolve through `EditorialMonoclePalette`.
+- **Stable widget key:** the top-bar widget carries `DiplomacyScreen.topBarKey` so widget and e2e tests can locate the dark chrome without coupling to localized strings.
+
+The top bar applies to both wide and narrow viewports; mobile adaptation does not change the top-bar contract.
+
+---
+
 ## Section headings
 
 Faction rows are grouped into three sections in this order: **Great Powers**, **Minor Nations**, **Tribes**. Each non-empty section is preceded by a heading rendered per [mockups/GAME30001-diplomacy-panel.html](mockups/GAME30001-diplomacy-panel.html) `.section-head`:
@@ -211,6 +226,11 @@ In addition, a **mobile viewport** use case must render the panel inside the sha
 
 ## Acceptance criteria
 
+- **Top bar present (dark chrome):** **Given** the Diplomacy screen is mounted for the human player on any viewport, **when** the screen builds its chrome, **then** the UI layer renders a `CtTopBar` instance above the body whose `title` equals `"Diplomacy"`, whose `backButtonLabel` equals `"Map"`, and whose leading `icon` is the pixel-art asset `assets/icons/32/ui_icon_diplomacy.png` sized 18 × 18 logical px (no fallback to the legacy `CtScreenShell` parchment chrome).
+- **Top bar gradient + accent border:** **Given** the Diplomacy screen is mounted on any viewport, **when** the `CtTopBar` surface paints, **then** the surface's `BoxDecoration` resolves its gradient to `CtGradients.topBarGradient` and its bottom border colour resolves to `EditorialMonoclePalette.accentDim` with width `1` px.
+- **Top bar Material ban (regression guard):** **Given** the Diplomacy screen is mounted on any viewport, **when** the widget tree is inspected, **then** the diplomacy surface contains no `CtScreenShell` widget (the legacy parchment title-bar path is gone) and no Material `AppBar` widget.
+- **Top bar stable key:** **Given** the Diplomacy screen is mounted on any viewport, **when** the screen builds, **then** the `CtTopBar` carries the stable key `DiplomacyScreen.topBarKey` so widget tests can locate the dark chrome without coupling to localized strings.
+- **Top bar back affordance:** **Given** the Diplomacy screen is pushed over a prior route, **when** the user taps the `CtBackButton` inside the `CtTopBar`, **then** `Navigator.maybePop()` runs and the prior route regains focus (same shell-level pop semantics as the legacy chrome).
 - Given the user is in-game and taps the dove icon in the toolbar, the UI opens the Diplomacy panel as a full-page screen.
 - Given the Diplomacy panel is open, it lists only discovered factions, grouped as Great Powers, Minor Nations, Tribes; GPs sorted by military power then province count.
 - Given a faction row, the panel shows current relation state (Peace/War) and the **one-word relation state** (Hostile, Unfriendly, Cordial, Friendly) derived from the hidden score per SPEC/game/diplomacy.md § Player-facing relation display; it does **not** show the numeric relation score. For Minor/Tribe it shows overture stage. For Great Powers it shows the **power comparison percentage** (see § Power comparison percentage) instead of the absolute score: `+N%` rendered in `--danger` (red) when the GP is stronger than the human player, `0%` or `−N%` rendered in `--success` (green) when the GP is at or below the human player's score. To the right it shows only valid diplomatic actions for that faction.
