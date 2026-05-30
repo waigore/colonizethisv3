@@ -188,4 +188,24 @@ extension WorldStateUnitLookup on WorldState {
     }
     return null;
   }
+
+  /// Returns fresh mutable copies of the unit lists for both regions, keyed
+  /// by [kRegionOldWorld] and [kRegionNewWorld].
+  ///
+  /// Use this from `lib/src/**` callers that stage imperative bulk-mutation
+  /// over both regions before applying via [WorldStateRegionMappers.mapBothRegionUnits],
+  /// replacing hand-rolled `List<Unit>.from(worldState.oldWorld.units)` /
+  /// `List<Unit>.from(worldState.newWorld.units)` pairs (setup bootstrap,
+  /// army migration, civilian moves, orders application). Each returned
+  /// list is an independent mutable copy; mutating one does not affect the
+  /// other or the source [WorldState]. The map is mutable; callers may add
+  /// region keys defensively but the canonical contract returns exactly
+  /// the two keys above (Refs #2836 AC 5;
+  /// SPEC/program/logic-dual-region-province-access.md).
+  Map<String, List<Unit>> mutableUnitListsByRegion() {
+    return <String, List<Unit>>{
+      kRegionOldWorld: List<Unit>.from(oldWorld.units),
+      kRegionNewWorld: List<Unit>.from(newWorld.units),
+    };
+  }
 }
