@@ -57,6 +57,8 @@ import '../features/game/dialogue/ct_dialogue_view.dart';
 import '../features/game/dialogue/game_start_intro_overlay.dart';
 import '../features/game/dialogue/intervention_dialogue_overlay.dart';
 import '../features/game/dialogue/overture_dialogue_overlay.dart';
+import '../features/game/flame/game_map_province_detail_side_panel.dart';
+import '../features/game/flame/per_player_work_target_selection_cache.dart';
 import '../features/game/flame/game_map_corner_controls.dart';
 import '../features/game/flame/game_map_empire_left_rail.dart';
 import '../features/game/flame/game_region_minimap.dart';
@@ -228,6 +230,7 @@ List<WidgetbookNode> get _ctWidgetbookDirectories => [
   ...gameMapEmpireLeftRailDirectories,
   ...gameMapOptionsDialogDirectories,
   ...gameRegionMinimapDirectories,
+  ...gameMapProvinceDetailSidePanelDirectories,
   ...playerTurnEventFeedCardDirectories,
   ...pauseMenuPanelDirectories,
   ...gameSideMenuDirectories,

@@ -47,6 +47,7 @@ WorldState _runWorldStatePhase(WorldState state, TurnPhase phase) {
     case TurnPhase.navalInterceptionCombat:
     case TurnPhase.combat:
     case TurnPhase.buildWork:
+    case TurnPhase.worldMarket:
       return state;
     case TurnPhase.endOfTurn:
       return state.copyWith(
