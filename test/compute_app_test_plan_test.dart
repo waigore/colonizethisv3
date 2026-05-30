@@ -3,7 +3,7 @@ import 'dart:io';
 import 'package:path/path.dart' as p;
 import 'package:test/test.dart';
 
-import '../../compute_app_test_plan.dart';
+import '../tool/compute_app_test_plan.dart';
 
 void main() {
   late Directory repoRoot;

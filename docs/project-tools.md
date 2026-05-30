@@ -337,7 +337,7 @@ Full app tests and the 80% `app/lib/` coverage gate run on the **nightly** workf
 **Tests**
 
 ```bash
-dart test tool/compute_app_test_plan/test/compute_app_test_plan_test.dart --reporter=compact
+dart test test/compute_app_test_plan_test.dart --reporter=compact
 ```
 
 ---

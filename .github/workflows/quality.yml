@@ -56,7 +56,7 @@ jobs:
               - 'tool/generate_order_engine_slots.dart'
               - 'tool/verify_order_engine_codegen.sh'
               - 'tool/compute_app_test_plan.dart'
-              - 'tool/compute_app_test_plan/**'
+              - 'test/compute_app_test_plan_test.dart'
             # True when any changed path is outside repo-root dot-directories (CI/editor meta). OpenCode
             # review is skipped when the PR only touches those paths (e.g. .github, .cursor).
             opencode_scope:
@@ -553,7 +553,7 @@ jobs:
         run: dart test test/generate_order_engine_slots_test.dart --reporter=compact
 
       - name: Test app test plan selector (SPEC/program/ci-app-selective-tests.md)
-        run: dart test tool/compute_app_test_plan/test/compute_app_test_plan_test.dart --reporter=compact
+        run: dart test test/compute_app_test_plan_test.dart --reporter=compact
 
       - name: Wang incremental assets gate (Python)
         run: |
