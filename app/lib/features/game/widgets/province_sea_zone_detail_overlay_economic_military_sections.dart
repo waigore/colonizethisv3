@@ -106,7 +106,10 @@ Widget _buildMilitarySectionByOwner({
             .map(
               (line) => Padding(
                 padding: const EdgeInsets.only(left: 4),
-                child: Text(line),
+                child: Text(
+                  line,
+                  style: TextStyle(color: EditorialMonoclePalette.muted),
+                ),
               ),
             )
             .toList(),
@@ -141,7 +144,13 @@ Widget _buildMilitarySectionByOwner({
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(name, style: const TextStyle(fontWeight: FontWeight.w600)),
+                Text(
+                  name,
+                  style: TextStyle(
+                    color: EditorialMonoclePalette.fg,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
                 ...byType.entries.map((e) {
                   final label = regimentTypeDisplayLabel(l10n, e.key);
                   return Text(
@@ -157,7 +166,10 @@ Widget _buildMilitarySectionByOwner({
           ...pending.map(
             (line) => Padding(
               padding: const EdgeInsets.only(left: 4),
-              child: Text(line),
+              child: Text(
+                line,
+                style: TextStyle(color: EditorialMonoclePalette.muted),
+              ),
             ),
           ),
         ],
