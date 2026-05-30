@@ -166,3 +166,23 @@ Hardware back is not handled; orchestrator owns lifecycle until `onComplete`.
 ## Widgetbook
 
 Catalog directory: `Quick Battle Screen` (registered in `app/lib/widgetbook/catalog.dart`). At least one default use case constructs a non-interactive `QuickBattleScreen` with a sample `QuickBattleInput` (two factions, three or more units per side at `CENTER + FRONT`) and a no-op `onComplete`. Additional use cases are encouraged for the interactive variant.
+
+The `combatUiDirectories` `Quick Battle` folder enumerates the **11 in-scope use cases** for issue #2869 S6 (pinned by `app/test/widgetbook_combat_stories_dark_chrome_test.dart`):
+
+1. `Quick Battle Screen — non-interactive`
+2. `Quick Battle Screen — interactive`
+3. `Deployment view`
+4. `Action selector — full CP`
+5. `Action selector — 1 CP (assault disabled)`
+6. `Action selector — spent (0 CP)`
+7. `Combat mode choice — regular province`
+8. `Combat mode choice — capital siege`
+9. `Quick Battle result — attacker wins, province flips`
+10. `Quick Battle result — defender holds`
+11. `Quick Battle result — mutual exhaustion`
+
+Adding, removing, or renaming an entry in `catalog_part3.dart#combatUiDirectories` must be reflected here and in the pin test simultaneously; #2869 S6's normative scope is "no new stories", so the pinned inventory is the regression guard for that scope.
+
+- Given the Widgetbook combat folder exposes the 11 use cases listed above,
+  When each story builder is pumped under the ambient `AppThemes.editorialMonocle` frame supplied by `_combatStoryFrame` in `app/lib/widgetbook/catalog_part3.dart`,
+  Then the build raises no exception, the resolved `Theme.of(scaffold).brightness` is `Brightness.dark`, `Theme.of(scaffold).scaffoldBackgroundColor` resolves to `EditorialMonoclePalette.bg`, `Theme.of(scaffold).colorScheme.primary` resolves to `EditorialMonoclePalette.accent`, `Theme.of(scaffold).colorScheme.surface` resolves to `EditorialMonoclePalette.surface`, and the rendered widget tree contains no `ElevatedButton`, `TextButton`, or `OutlinedButton` (per `SPEC/ui/pixel-art-ui-catalog.md` § Material design ban).
