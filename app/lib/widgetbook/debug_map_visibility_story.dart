@@ -86,16 +86,34 @@ class _DebugMapVisibilityStoryState extends State<DebugMapVisibilityStory> {
     final mapViewData = debugMapViewDataWithVisibilityForFirstPlayer();
     final region = mapViewData.oldWorld;
 
+    // Fit within the available viewport when narrower than the wide-
+    // layout default (400 × 320). Honours `Refs #2870 R22 / S9` mobile-
+    // viewport pin assertions on the 360 dp story without affecting the
+    // wide stories which run with at least 400 dp of horizontal room.
+    final mqSize = MediaQuery.sizeOf(context);
+    final width = mqSize.width.isFinite && mqSize.width < 400
+        ? mqSize.width
+        : 400.0;
+    final height = mqSize.height.isFinite && mqSize.height < 320
+        ? mqSize.height
+        : 320.0;
+
     return SizedBox(
-      width: 400,
-      height: 320,
+      width: width,
+      height: height,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Padding(
             padding: const EdgeInsets.symmetric(vertical: 8),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
+            // Use `Wrap` so chips re-flow onto multiple lines at narrow
+            // viewport widths (e.g. 360 dp `mobileViewport`) instead of
+            // overflowing the row horizontally — the existing `Row`
+            // assumed wide-layout space and broke `Refs #2870 R22 / S9`
+            // mobile-viewport pin assertions.
+            child: Wrap(
+              spacing: 8,
+              runSpacing: 8,
               children: [
                 CtChoiceChip(
                   label: Text(l10n.mapDebug_fullVisibility),
@@ -106,7 +124,6 @@ class _DebugMapVisibilityStoryState extends State<DebugMapVisibilityStory> {
                     });
                   },
                 ),
-                const SizedBox(width: 8),
                 CtChoiceChip(
                   label: Text(l10n.mapDebug_playerConstrained),
                   selected:
