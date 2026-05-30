@@ -275,10 +275,22 @@ All decorative primitives are self-painted; **no PixelLab / Bitforge / Pixflux a
 
 ## Widgetbook
 
-- **Folder:** **Main Menu** (`app/lib/widgetbook/catalog.dart`) for `CtMainMenu` use cases: **Default**, **After victory**, **No saves**, **Resume game visible**, **Default (mobile)**, **Pixel art (mobile)** per the **States and variants** table (each rendered under `AppThemes.editorialMonocle`).
+- **Folder:** **Main Menu** (`app/lib/widgetbook/catalog.dart`) for `CtMainMenu` use cases (each rendered under `AppThemes.editorialMonocle` in the running Widgetbook host):
+  - **Plain variant — four states:** **Default**, **With resume game**, **After victory**, **No saves**.
+  - **pixelArt variant — four states:** **Default (pixel)**, **Resume game visible (pixel)**, **After victory (pixel)**, **No saves (pixel)**.
+  - **Mobile review (360 × 640 dp):** **Default (mobile)**, **Pixel art (mobile)**.
 - **Folder:** **Ct- Dark Theme Primitives** (`app/lib/widgetbook/catalog_part5.dart`) hosts the decorative primitives consumed by this screen: `CtBrassDivider`, `CtCompassRose`, `CtFleurDeLisOrnament`, `CtMainMenuCollage`. Each story renders the primitive over `AppThemes.editorialMonocle.scaffoldBackgroundColor` so reviewers see the wood-on-brass contrast in context.
 
+The normative **10-story inventory** (desktop + mobile) must be pinned by `app/test/widgetbook_main_menu_stories_editorial_monocle_test.dart` (Refs #2860 S6). That file also pumps every **desktop** use case under `AppThemes.editorialMonocle`, asserts no `ElevatedButton` / `TextButton` / `OutlinedButton` chrome leaks into the tree, and verifies `plain` stories omit pixelArt-only decorative widgets while `pixelArt` stories mount `CtMainMenuCollage`, `CtCompassRose`, `CtFleurDeLisOrnament`, and `CtBrassDivider`.
+
 The **Default (mobile)** and **Pixel art (mobile)** use cases must be pinned by `app/test/widgetbook_main_menu_mobile_viewport_test.dart` (Refs #2870 R22 / S9) so their removal or rename surfaces in CI before reviewers lose the narrow-viewport review surface for the `≤ 430 dp` letter-spacing and compact menu-container padding overrides.
+
+### Widgetbook acceptance (issue #2860 S6)
+
+- Given the `Main Menu` folder in Widgetbook exposes the normative 10-story inventory listed above, when `app/test/widgetbook_main_menu_stories_editorial_monocle_test.dart` runs, then the inventory list matches exactly (renames/removals fail CI).
+- Given any desktop `Main Menu` use case builder is pumped inside `MaterialApp(theme: AppThemes.editorialMonocle)`, when the first frame settles, then `tester.takeException()` is `null`, the rendered `CtMainMenu` subtree contains no `ElevatedButton`, `TextButton`, or `OutlinedButton`, and the resolved `ThemeData` uses `Brightness.dark` with `scaffoldBackgroundColor == EditorialMonoclePalette.bg`, `colorScheme.primary == EditorialMonoclePalette.accent`, and `colorScheme.surface == EditorialMonoclePalette.surface`.
+- Given a desktop **plain** use case is pumped under `AppThemes.editorialMonocle`, when the tree is inspected, then `CtMainMenuCollage`, `CtCompassRose`, `CtFleurDeLisOrnament`, and `CtBrassDivider` are absent (negative regression guard for the **Variant rendering** table).
+- Given a desktop **pixelArt** use case is pumped under `AppThemes.editorialMonocle`, when the tree is inspected, then `CtMainMenuCollage`, `CtCompassRose`, at least one `CtFleurDeLisOrnament`, and exactly one `CtBrassDivider` are present.
 
 ---
 
