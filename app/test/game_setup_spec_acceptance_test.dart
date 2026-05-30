@@ -7,6 +7,7 @@ import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'package:colonizethis_app/config/constants.dart';
 import 'package:colonizethis_app/config/editorial_monocle_palette.dart';
 import 'package:colonizethis_app/config/themes.dart';
 import 'package:colonizethis_app/widgets/ct_back_button.dart';
@@ -878,6 +879,204 @@ void main() {
         await tester.tap(backLinkLabelFinder);
         await tester.pump();
         expect(backCallCount, equals(2));
+      },
+    );
+
+    // -------------------------------------------------------------------
+    // Issue #2868 S5 / S6 — narrow-viewport slot-row stacking + action
+    // button retention (Refs #2868 R16/R17). Mirrors the SPEC AC block
+    // "Narrow-viewport slot-row stacking and action-button retention".
+    //
+    // Layout marker: the wide slot body wraps the slot label in
+    // `SizedBox(width: 100, child: labelWidget)` inside a horizontal `Row`;
+    // the narrow slot body uses a vertical `Column` with no
+    // `SizedBox(width: 100)` wrapper. The presence/absence of that
+    // wrapper around each slot label is therefore a stable structural
+    // signal of which body variant rendered.
+    // -------------------------------------------------------------------
+
+    bool isWideSlotLabelSizedBox(Widget w) =>
+        w is SizedBox && w.width == 100 && w.height == null;
+
+    testWidgets(
+      'AC Issue #2868 R16 pixelArt: viewport < kGameSetupNarrowBreakpoint '
+      'stacks each slot row as a vertical Column (no wide-Row label '
+      'SizedBox(width:100) ancestor)',
+      (WidgetTester tester) async {
+        await tester.pumpWidget(
+          buildGameSetup(
+            variant: GameSetupVariant.pixelArt,
+            viewportSize: const Size(
+              kGameSetupNarrowBreakpoint - 1,
+              1200,
+            ),
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        for (var slotIndex = 0; slotIndex < 6; slotIndex++) {
+          final String label = slotIndex == 0
+              ? 'Player 1 (You)'
+              : 'Player ${slotIndex + 1} (AI)';
+          final labelFinder = find.text(label);
+          expect(labelFinder, findsOneWidget);
+          final wideLabelSized = find.ancestor(
+            of: labelFinder,
+            matching: find.byWidgetPredicate(isWideSlotLabelSizedBox),
+          );
+          expect(
+            wideLabelSized,
+            findsNothing,
+            reason:
+                'narrow viewport (<${kGameSetupNarrowBreakpoint}dp) must '
+                'mount the stacked Column slot body — slot "$label" should '
+                'not be wrapped in the wide-Row SizedBox(width:100) label '
+                'sentinel.',
+          );
+        }
+      },
+    );
+
+    testWidgets(
+      'AC Issue #2868 R16 pixelArt: viewport >= kGameSetupNarrowBreakpoint '
+      'lays each slot row in a horizontal Row with the wide-body label '
+      'SizedBox(width:100) wrapper present for all six slots',
+      (WidgetTester tester) async {
+        await tester.pumpWidget(
+          buildGameSetup(
+            variant: GameSetupVariant.pixelArt,
+            viewportSize: const Size(
+              kGameSetupNarrowBreakpoint + 100,
+              1200,
+            ),
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        var foundCount = 0;
+        for (var slotIndex = 0; slotIndex < 6; slotIndex++) {
+          final String label = slotIndex == 0
+              ? 'Player 1 (You)'
+              : 'Player ${slotIndex + 1} (AI)';
+          final labelFinder = find.text(label);
+          expect(labelFinder, findsOneWidget);
+          final wideLabelSized = find.ancestor(
+            of: labelFinder,
+            matching: find.byWidgetPredicate(isWideSlotLabelSizedBox),
+          );
+          if (wideLabelSized.evaluate().isNotEmpty) {
+            foundCount += 1;
+          }
+        }
+        expect(
+          foundCount,
+          equals(6),
+          reason:
+              'wide viewport (>=${kGameSetupNarrowBreakpoint}dp) must '
+              'mount the wide-Row slot body for every slot — expected each '
+              'of the six labels to be wrapped in SizedBox(width:100).',
+        );
+      },
+    );
+
+    testWidgets(
+      'AC Issue #2868 R16 plain: viewport < kGameSetupNarrowBreakpoint '
+      'also stacks each slot row vertically (plain variant honors the '
+      'same 500dp breakpoint as pixelArt)',
+      (WidgetTester tester) async {
+        await tester.pumpWidget(
+          buildGameSetup(
+            viewportSize: const Size(
+              kGameSetupNarrowBreakpoint - 1,
+              1200,
+            ),
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        final labelFinder = find.text('Player 1 (You)');
+        expect(labelFinder, findsOneWidget);
+        final wideLabelSized = find.ancestor(
+          of: labelFinder,
+          matching: find.byWidgetPredicate(isWideSlotLabelSizedBox),
+        );
+        expect(wideLabelSized, findsNothing);
+      },
+    );
+
+    testWidgets(
+      'AC Issue #2868 R17 pixelArt: narrow viewport keeps Cancel and Start '
+      'Game side-by-side (same Y row, Cancel left of Start) with the '
+      'back-link region rendered beneath the action row',
+      (WidgetTester tester) async {
+        await tester.pumpWidget(
+          buildGameSetup(
+            variant: GameSetupVariant.pixelArt,
+            viewportSize: const Size(
+              kGameSetupNarrowBreakpoint - 1,
+              1600,
+            ),
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        final cancelLabelFinder = find.byKey(
+          const ValueKey<String>('gameSetupCancelLabel'),
+        );
+        await tester.ensureVisible(cancelLabelFinder);
+        await tester.pumpAndSettle();
+        expect(cancelLabelFinder, findsOneWidget);
+
+        final startFinder = find.widgetWithText(
+          CtNinePatchButton,
+          'Start Game',
+        );
+        expect(startFinder, findsOneWidget);
+        await tester.ensureVisible(startFinder);
+        await tester.pumpAndSettle();
+
+        // R17 retention: Cancel and Start Game must remain side-by-side
+        // even at narrow widths (no Cancel-above-Start reflow). Compare
+        // their painted bounds — Cancel center sits left of Start center
+        // on X, and their Y ranges overlap (same horizontal row).
+        final Rect cancelRect = tester.getRect(cancelLabelFinder);
+        final Rect startRect = tester.getRect(startFinder);
+        expect(
+          cancelRect.center.dx < startRect.center.dx,
+          isTrue,
+          reason:
+              'Cancel center.dx (${cancelRect.center.dx}) must sit LEFT of '
+              'Start Game center.dx (${startRect.center.dx}) at narrow '
+              'viewport per #2868 R17.',
+        );
+        expect(
+          cancelRect.top < startRect.bottom && startRect.top < cancelRect.bottom,
+          isTrue,
+          reason:
+              'Cancel Y range [${cancelRect.top}, ${cancelRect.bottom}] and '
+              'Start Game Y range [${startRect.top}, ${startRect.bottom}] '
+              'must overlap (same horizontal row) at narrow viewport per '
+              '#2868 R17 — no Cancel-above-Start reflow.',
+        );
+
+        // Back-link region remains BELOW the action row at narrow widths.
+        final backLinkLabelFinder = find.byKey(
+          const ValueKey<String>('gameSetupBackLinkLabel'),
+        );
+        await tester.ensureVisible(backLinkLabelFinder);
+        await tester.pumpAndSettle();
+        expect(backLinkLabelFinder, findsOneWidget);
+        expect(find.byType(CtBackButton), findsOneWidget);
+        final Rect backLinkRect = tester.getRect(backLinkLabelFinder);
+        expect(
+          backLinkRect.top >= startRect.bottom &&
+              backLinkRect.top >= cancelRect.bottom,
+          isTrue,
+          reason:
+              'back-link Y top (${backLinkRect.top}) must sit at or below '
+              'the Cancel/Start action row bottom — back link must remain '
+              'below the action row at narrow viewport per #2868 R17.',
+        );
       },
     );
   });
