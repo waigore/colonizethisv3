@@ -268,6 +268,9 @@ abstract class AppLocalizations {
   /// Submit all call-to-arms choices.
   String get game_callToArms_submit;
 
+  /// Dialog title shown above the per-prompt situation panel in the intervention overlay (OVL50001).
+  String get game_intervention_title;
+
   /// Error banner when intervention Yarn fails to load.
   String game_intervention_loadError(String error);
 

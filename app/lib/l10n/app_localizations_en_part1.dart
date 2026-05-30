@@ -277,6 +277,9 @@ mixin _AppLocalizationsEnStrings1 on AppLocalizations {
   String get game_callToArms_submit => 'Submit';
 
   @override
+  String get game_intervention_title => 'Pending Intervention';
+
+  @override
   String game_intervention_loadError(String error) {
     return 'Could not load intervention dialogue: $error';
   }

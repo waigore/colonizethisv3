@@ -382,6 +382,10 @@
   "@game_callToArms_submit": {
     "description": "Submit all call-to-arms choices."
   },
+  "game_intervention_title": "Pending Intervention",
+  "@game_intervention_title": {
+    "description": "Dialog title shown above the per-prompt situation panel in the intervention overlay (OVL50001)."
+  },
   "game_intervention_loadError": "Could not load intervention dialogue: {error}",
   "@game_intervention_loadError": {
     "description": "Error banner when intervention Yarn fails to load.",
