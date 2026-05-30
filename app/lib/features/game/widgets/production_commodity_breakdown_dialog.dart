@@ -6,10 +6,12 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../config/editorial_monocle_palette.dart';
 import '../../../l10n/l10n.dart';
 import '../../../providers/production_allocation_provider.dart';
 import '../../../widgets/ct_dialog_shell.dart';
 import '../../../widgets/ct_nine_patch_button.dart';
+import '../../../widgets/ct_resource_cell.dart';
 import '../../../widgets/resource_icon.dart';
 
 /// Dialog showing per-commodity preview deltas for each economy preview phase.
@@ -71,6 +73,70 @@ class _ProductionCommodityBreakdownDialogState
   void dispose() {
     _horizontalScrollController.dispose();
     super.dispose();
+  }
+
+  TextStyle _headingStyle(BuildContext context) {
+    final TextStyle base =
+        Theme.of(context).textTheme.labelSmall ?? const TextStyle(fontSize: 11);
+    return base.copyWith(
+      color: EditorialMonoclePalette.muted,
+      fontWeight: FontWeight.w600,
+    );
+  }
+
+  TextStyle _sectionHeaderStyle(BuildContext context) {
+    final TextStyle base =
+        Theme.of(context).textTheme.labelSmall ?? const TextStyle(fontSize: 11);
+    return base.copyWith(
+      color: EditorialMonoclePalette.muted,
+      fontWeight: FontWeight.w600,
+      fontFeatures: const <FontFeature>[FontFeature.enable('smcp')],
+    );
+  }
+
+  TextStyle _commodityNameStyle(BuildContext context) {
+    final TextStyle base =
+        Theme.of(context).textTheme.bodySmall ?? const TextStyle(fontSize: 12);
+    return base.copyWith(color: EditorialMonoclePalette.fg);
+  }
+
+  TextStyle _deltaCellStyle(BuildContext context, int value) {
+    final TextStyle base =
+        Theme.of(context).textTheme.labelMedium ?? const TextStyle(fontSize: 12);
+    final Color? color = CtResourceCell.deltaColor(value);
+    return base.copyWith(
+      color: color ?? EditorialMonoclePalette.muted,
+      fontFamilyFallback: const <String>['SF Mono', 'Menlo', 'monospace'],
+      fontFeatures: const <FontFeature>[FontFeature.tabularFigures()],
+    );
+  }
+
+  Widget _deltaCell(BuildContext context, int value) {
+    return Text(
+      ProductionCommodityBreakdownDialog._formatDelta(value),
+      maxLines: 1,
+      style: _deltaCellStyle(context, value),
+    );
+  }
+
+  Widget _sectionHeaderCell(BuildContext context, String label) {
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        border: Border(
+          bottom: BorderSide(
+            color: EditorialMonoclePalette.accentDim,
+            width: 1,
+          ),
+        ),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.only(bottom: 2),
+        child: Text(
+          label.toUpperCase(),
+          style: _sectionHeaderStyle(context),
+        ),
+      ),
+    );
   }
 
   @override
@@ -135,11 +201,18 @@ class _ProductionCommodityBreakdownDialogState
       return t;
     }
 
+    var commodityRowIndex = 0;
+
     List<DataRow> rowsFor(List<Commodity> list) {
       return list.map((c) {
         final total = rowTotal(c.id);
         final name = c.displayName ?? c.id;
+        final rowShade = commodityRowIndex.isEven
+            ? Colors.transparent
+            : EditorialMonoclePalette.surface.withValues(alpha: 0.4);
+        commodityRowIndex += 1;
         return DataRow(
+          color: WidgetStatePropertyAll<Color?>(rowShade),
           cells: [
             DataCell(
               Row(
@@ -151,34 +224,24 @@ class _ProductionCommodityBreakdownDialogState
                       name,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: theme.textTheme.bodySmall,
+                      style: _commodityNameStyle(context),
                     ),
                   ),
                 ],
               ),
             ),
             ...EconomyPreviewStockpilePhase.values.map(
-              (p) => DataCell(
-                Text(
-                  ProductionCommodityBreakdownDialog._formatDelta(
-                    phaseValue(c.id, p),
-                  ),
-                  maxLines: 1,
-                ),
-              ),
+              (p) => DataCell(_deltaCell(context, phaseValue(c.id, p))),
             ),
-            DataCell(
-              Text(
-                ProductionCommodityBreakdownDialog._formatDelta(total),
-                maxLines: 1,
-              ),
-            ),
+            DataCell(_deltaCell(context, total)),
           ],
         );
       }).toList();
     }
 
     final phaseColCount = EconomyPreviewStockpilePhase.values.length;
+    final dividerColor =
+        EditorialMonoclePalette.accentDim.withValues(alpha: 0.5);
 
     return CtDialogShell(
       maxWidth: 720,
@@ -189,7 +252,9 @@ class _ProductionCommodityBreakdownDialogState
         children: [
           Text(
             l10n.production_breakdown_title,
-            style: theme.textTheme.titleMedium,
+            style: theme.textTheme.titleMedium?.copyWith(
+              color: EditorialMonoclePalette.accent,
+            ),
           ),
           const SizedBox(height: 8),
           Scrollbar(
@@ -202,6 +267,14 @@ class _ProductionCommodityBreakdownDialogState
                 headingRowHeight: 40,
                 dataRowMinHeight: 32,
                 dataRowMaxHeight: 48,
+                dividerThickness: 1,
+                headingRowColor: WidgetStatePropertyAll<Color?>(
+                  EditorialMonoclePalette.surfaceLite,
+                ),
+                border: TableBorder(
+                  horizontalInside: BorderSide(color: dividerColor),
+                ),
+                headingTextStyle: _headingStyle(context),
                 columns: [
                   DataColumn(label: Text(l10n.production_breakdown_commodity)),
                   ...EconomyPreviewStockpilePhase.values.map(
@@ -222,9 +295,7 @@ class _ProductionCommodityBreakdownDialogState
                     if (commodities.isNotEmpty) ...[
                       DataRow(
                         cells: [
-                          DataCell(
-                            Text(label, style: theme.textTheme.titleSmall),
-                          ),
+                          DataCell(_sectionHeaderCell(context, label)),
                           ...List<DataCell>.generate(
                             phaseColCount + 1,
                             (_) => const DataCell(SizedBox.shrink()),
