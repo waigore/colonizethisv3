@@ -32,17 +32,6 @@
 //    widths `GameMapPlayersBar` reappears so the contrast also pins the
 //    Req 6 narrow-only suppression.
 //
-// Known SPEC § 7 gap (documented inline in the 320 dp test below, with
-// `TODO(#2870 S10)` follow-up): an internal `Row` in the in-game shell
-// (likely the GameTopBar — hamburger + observe banner + centered turn
-// display + pause + Next-turn button) currently overflows horizontally
-// at kMinViewportWidth. The 320 dp pin therefore deliberately drains
-// the exception via `tester.takeException()` so the chrome-presence
-// assertions still execute, and asserts the exception IS present so
-// the follow-up fix surfaces here as a clear delta (flip the
-// assertion back to `isNull`) instead of as a silent regression
-// somewhere else.
-//
 // SPEC: `SPEC/ui/mobile-adaptation.md` § 7 (Minimum-viewport pin).
 // SPEC: `SPEC/ui/empire-overview.md` (left-rail empire buttons + top bar).
 // SPEC: `SPEC/ui/in-game-shell-narrow.md` § Top bar.
@@ -178,47 +167,20 @@ void main() {
     () {
       testWidgets(
         'AC (positive) GameScreen @ 320×640: narrow top bar + '
-        'left-rail chrome renders end-to-end, players bar is hidden '
-        '(Req 6); overflow gap documented for follow-up',
+        'left-rail chrome renders end-to-end without overflow, '
+        'players bar is hidden (Req 6)',
         (WidgetTester tester) async {
           await pumpGameScreenAtSize(tester, size: _kMinViewport);
 
-          // SPEC § 7 (no horizontal overflow at 320 dp) is NOT YET MET
-          // for the live `GameScreen` composite: an internal `Row`
-          // (likely the GameTopBar — hamburger + observe banner +
-          // centered turn display + pause + Next-turn button) overflows
-          // by ~116 px on the right at kMinViewportWidth. This pin
-          // therefore deliberately drains the exception via
-          // `tester.takeException()` so the chrome-presence assertions
-          // below still execute, and documents the gap inline so the
-          // follow-up fix (responsive Next-turn button label / pause
-          // suppression / ellipsized turn display) shows up as a clear
-          // delta against this pin instead of as a silent regression
-          // somewhere else.
-          //
-          // The chrome-presence assertions below (hamburger, turn
-          // counter, left-rail empire buttons, players-bar hidden) are
-          // the in-progress portion of Refs #2870 S10 + Req 6 that the
-          // existing 320 dp pin coverage gap was missing. Pinning them
-          // here is what makes the players-bar `findsNothing` contract
-          // a regression guard rather than a silently-true expectation.
-          //
-          // TODO(#2870 S10): Once the GameScreen-side overflow at
-          // 320 dp is closed, flip this assertion back to
-          // `expect(tester.takeException(), isNull, ...)` and remove
-          // the drain below. The wide negative control (1024 × 768)
-          // already asserts no exception so the regression contract on
-          // the host overflow detection itself stays intact.
-          final Object? overflowAt320 = tester.takeException();
           expect(
-            overflowAt320,
-            isNotNull,
+            tester.takeException(),
+            isNull,
             reason:
-                'Pre-condition pin: at kMinViewportWidth (320 dp) the '
-                'in-game shell currently overflows horizontally. When '
-                'this expectation flips (overflow is fixed), update '
-                'the assertion above to the SPEC § 7 contract '
-                '(takeException() is null) and delete the drain.',
+                'SPEC/ui/mobile-adaptation.md § 7: at kMinViewportWidth '
+                '(320 dp) the live GameScreen composite must pump without '
+                'a RenderFlex overflow exception. The narrow GameTopBar '
+                'layout (hamburger + trailing Next-turn button only) '
+                'closes the prior ~116 px top-bar overflow gap.',
           );
 
           expect(
