@@ -7,6 +7,8 @@
 
 import 'package:colonizethis_app/config/editorial_monocle_palette.dart';
 import 'package:colonizethis_app/features/game/flame/game_map_corner_controls.dart';
+import 'package:colonizethis_app/features/game/flame/game_map_empire_left_rail.dart';
+import 'package:colonizethis_app/features/game/flame/game_region_minimap.dart';
 import 'package:colonizethis_app/features/game/widgets/game_map_options_dialog.dart';
 import 'package:colonizethis_app/features/game/widgets/game_tab_bar.dart';
 import 'package:colonizethis_app/features/game/widgets/game_top_bar.dart';
@@ -295,6 +297,121 @@ void main() {
     );
 
     testWidgets(
+      'Game Map Empire Left Rail folder exposes wide, debug-console, and narrow variants',
+      (WidgetTester tester) async {
+        const wideUseCaseName = 'Wide — six core empire buttons with tooltips';
+        const debugConsoleUseCaseName =
+            'Wide — debug console enabled (7 icons)';
+        const narrowUseCaseName =
+            'Narrow (360 dp) — 26 × 26 dp buttons, tooltips suppressed';
+
+        final wideStory = _useCase(
+          gameMapEmpireLeftRailDirectories,
+          folderName: 'Game Map Empire Left Rail',
+          useCaseName: wideUseCaseName,
+        );
+        final debugConsoleStory = _useCase(
+          gameMapEmpireLeftRailDirectories,
+          folderName: 'Game Map Empire Left Rail',
+          useCaseName: debugConsoleUseCaseName,
+        );
+        final narrowStory = _useCase(
+          gameMapEmpireLeftRailDirectories,
+          folderName: 'Game Map Empire Left Rail',
+          useCaseName: narrowUseCaseName,
+        );
+
+        await tester.pumpWidget(
+          wideStory.builder(tester.element(find.byType(View))),
+        );
+        await tester.pump();
+        final wideRail = tester.widget<GameMapEmpireLeftRail>(
+          find.byType(GameMapEmpireLeftRail),
+        );
+        expect(wideRail.narrow, isFalse);
+        expect(find.byType(Tooltip), findsWidgets);
+
+        await tester.pumpWidget(
+          debugConsoleStory.builder(tester.element(find.byType(View))),
+        );
+        await tester.pump();
+        expect(find.byType(GameMapEmpireLeftRail), findsOneWidget);
+
+        await tester.pumpWidget(
+          narrowStory.builder(tester.element(find.byType(View))),
+        );
+        await tester.pump();
+        final narrowRail = tester.widget<GameMapEmpireLeftRail>(
+          find.byType(GameMapEmpireLeftRail),
+        );
+        expect(
+          narrowRail.narrow,
+          isTrue,
+          reason:
+              'Narrow story must construct the rail with narrow: true so '
+              'the 26 × 26 dp measurements and Tooltip suppression apply.',
+        );
+      },
+    );
+
+    testWidgets(
+      'Region Minimap folder exposes visible, hidden, and narrow variants',
+      (WidgetTester tester) async {
+        const visibleUseCaseName =
+            'Visible — wide chrome with viewport rectangle';
+        const hiddenUseCaseName = 'Hidden — toggle-only (zoom + show button)';
+        const narrowUseCaseName = 'Narrow — 90 × 70 dp grid (issue #2870 S3)';
+
+        final visibleStory = _useCase(
+          gameRegionMinimapDirectories,
+          folderName: 'Region Minimap',
+          useCaseName: visibleUseCaseName,
+        );
+        final hiddenStory = _useCase(
+          gameRegionMinimapDirectories,
+          folderName: 'Region Minimap',
+          useCaseName: hiddenUseCaseName,
+        );
+        final narrowStory = _useCase(
+          gameRegionMinimapDirectories,
+          folderName: 'Region Minimap',
+          useCaseName: narrowUseCaseName,
+        );
+
+        await tester.pumpWidget(
+          visibleStory.builder(tester.element(find.byType(View))),
+        );
+        await tester.pump();
+        final visibleMinimap = tester.widget<GameRegionMinimap>(
+          find.byType(GameRegionMinimap),
+        );
+        expect(visibleMinimap.narrow, isFalse);
+        expect(visibleMinimap.viewportSnapshot, isNotNull);
+
+        await tester.pumpWidget(
+          hiddenStory.builder(tester.element(find.byType(View))),
+        );
+        await tester.pump();
+        expect(find.byType(GameRegionMinimap), findsOneWidget);
+
+        await tester.pumpWidget(
+          narrowStory.builder(tester.element(find.byType(View))),
+        );
+        await tester.pump();
+        final narrowMinimap = tester.widget<GameRegionMinimap>(
+          find.byType(GameRegionMinimap),
+        );
+        expect(
+          narrowMinimap.narrow,
+          isTrue,
+          reason:
+              'Narrow story must construct the minimap with narrow: true so '
+              'the 90 × 70 dp bounding box from mobile-adaptation.md applies.',
+        );
+      },
+    );
+
+    testWidgets(
       'all new in-game shell chrome story frames apply the editorial-monocle scaffold colour',
       (WidgetTester tester) async {
         // Sanity-check that the shared story frame in catalog_part7 paints
@@ -310,6 +427,11 @@ void main() {
             'Default — all three buttons enabled',
           ),
           (
+            'Game Map Empire Left Rail',
+            'Wide — six core empire buttons with tooltips',
+          ),
+          ('Region Minimap', 'Visible — wide chrome with viewport rectangle'),
+          (
             'Player Turn Event Feed Card',
             'Populated — three entries (top entry tappable)',
           ),
@@ -320,6 +442,8 @@ void main() {
             ...gameTopBarDirectories,
             ...gameTabBarDirectories,
             ...gameMapCornerControlsDirectories,
+            ...gameMapEmpireLeftRailDirectories,
+            ...gameRegionMinimapDirectories,
             ...playerTurnEventFeedCardDirectories,
           ];
           final story = _useCase(
@@ -327,12 +451,19 @@ void main() {
             folderName: folder,
             useCaseName: useCase,
           );
+          // Reset to a barebones tree before each story so Riverpod
+          // ProviderScopes used by different stories don't reuse the
+          // same element (which would otherwise hit
+          // `Tried to change the number of overrides` per Riverpod
+          // `ProviderContainer.updateOverrides`).
+          await tester.pumpWidget(const SizedBox.shrink());
+          await tester.pump();
           await tester.pumpWidget(
             story.builder(tester.element(find.byType(View))),
           );
           await tester.pump();
           final Scaffold scaffold = tester.widget<Scaffold>(
-            find.byType(Scaffold),
+            find.byType(Scaffold).first,
           );
           expect(
             scaffold.backgroundColor,

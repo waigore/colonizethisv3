@@ -84,6 +84,20 @@ When the in-game map renders on a narrow viewport (`MediaQuery.size.width < kNar
 
 ---
 
+## Widgetbook stories
+
+Catalog folder **Game Map Empire Left Rail** — registered from [`gameMapEmpireLeftRailDirectories`](../../app/lib/widgetbook/catalog_part7.dart) and aggregated into `_ctWidgetbookDirectories` in [`catalog.dart`](../../app/lib/widgetbook/catalog.dart). Issue #2861 S12 story (3) "left rail with tooltips".
+
+| Story | Purpose | Authority |
+|-------|---------|-----------|
+| Wide — six core empire buttons with tooltips | Pins § Styling (left rail): 36 × 36 dp surface, `CtGradients.railButtonGradient`, 24 × 24 dp glyph, `Tooltip` per button. | § Styling (left rail) |
+| Wide — debug console enabled (7 icons) | Exercises the seventh `debug_console` icon gated behind `debugConsoleEnabledProvider` (`CT_DEBUG_CONSOLE=true` in production). | § Definition, § Display |
+| Narrow (360 dp) — 26 × 26 dp buttons, tooltips suppressed | Pins § Narrow rail measurements: 26 × 26 dp surface, 2 dp gap, suppressed `Tooltip` widgets, preserved `Semantics` label. | § Narrow rail measurements; [mobile-adaptation.md](mobile-adaptation.md) § In-game shell |
+
+Stories provide a stand-in `gameServiceProvider` whose `getMapData(...)` returns `null` so the rail's diplomacy nav payload falls back to the existing empty `MapTopology()` branch in `GameMapEmpireLeftRail.build`. No Hive box is opened from the Widgetbook bootstrap.
+
+---
+
 ## References
 
 - [game-toolbar-icons.md](game-toolbar-icons.md) — icon assets and prompts
