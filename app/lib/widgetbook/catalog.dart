@@ -422,6 +422,40 @@ List<WidgetbookNode> get mainMenuDirectories => [
         ),
       ),
       WidgetbookUseCase(
+        // SPEC/ui/main-menu.md § Variant rendering — exercises the
+        // disabled Load Game tooltip in the `pixelArt` variant for
+        // issue #2860 S6 (Widgetbook coverage of all four states under
+        // editorial-monocle).
+        name: 'No saves (pixel)',
+        builder: (context) => CtMainMenu(
+          variant: MainMenuVariant.pixelArt,
+          state: MainMenuState.noSaves,
+          version: 'v1.0.0',
+          onNewGame: () {},
+          onLoadGame: () {},
+          onSettings: () {},
+          onQuit: () {},
+        ),
+      ),
+      WidgetbookUseCase(
+        // SPEC/ui/main-menu.md § Widget contract — exercises the
+        // `resumeGameVisible: true` branch in the `pixelArt` variant so
+        // Widgetbook covers all four states across both variants per
+        // issue #2860 S6.
+        name: 'Resume game visible (pixel)',
+        builder: (context) => CtMainMenu(
+          variant: MainMenuVariant.pixelArt,
+          state: MainMenuState.default_,
+          version: 'v1.0.0',
+          resumeGameVisible: true,
+          onResumeGame: () {},
+          onNewGame: () {},
+          onLoadGame: () {},
+          onSettings: () {},
+          onQuit: () {},
+        ),
+      ),
+      WidgetbookUseCase(
         name: 'Default (mobile)',
         builder: (context) => mobileViewport(
           context,
@@ -461,6 +495,27 @@ List<WidgetbookNode> get mainMenuDirectories => [
 
 /// All choices unselected on load. SPEC/ui/game-setup.md.
 List<String> _unselectedInitialOrderedGpIds() => List.filled(6, '');
+
+/// Six distinct GP ids drawn from [defaultNamingConfig] — the same default
+/// six powers used by `GameSetupConfig.defaultConfig`. Powers the
+/// "All slots selected (pixel)" Widgetbook story below so reviewers can
+/// see the happy-path swatch row + Start Game enabled state without
+/// having to manually fill every slot (SPEC/ui/game-setup.md § Slot-row
+/// chrome and swatch dots; R9).
+List<String> _allSelectedInitialOrderedGpIds() =>
+    defaultNamingConfig.greatPowers.map((g) => g.id).take(6).toList();
+
+/// Default leader variant per gp id for [_allSelectedInitialOrderedGpIds].
+Map<String, String> _allSelectedInitialLeaderVariantByGpId() {
+  final Map<String, String> map = <String, String>{};
+  for (final String id in _allSelectedInitialOrderedGpIds()) {
+    final gp = defaultNamingConfig.gpById(id);
+    if (gp != null && gp.leaderVariants.isNotEmpty) {
+      map[id] = gp.defaultLeaderVariantId;
+    }
+  }
+  return map;
+}
 
 /// Game Setup stories. SPEC/ui/game-setup.md; UXD 03b.
 List<WidgetbookNode> get gameSetupDirectories => [
@@ -528,6 +583,48 @@ List<WidgetbookNode> get gameSetupDirectories => [
             onStartGame: (_, _) {},
             onBack: () {},
           ),
+        ),
+      ),
+      WidgetbookUseCase(
+        name: 'Default (mobile, pixel)',
+        builder: (context) => mobileViewport(
+          context,
+          CtGameSetup(
+            variant: GameSetupVariant.pixelArt,
+            state: GameSetupState.default_,
+            naming: defaultNamingConfig,
+            initialOrderedGpIds: _unselectedInitialOrderedGpIds(),
+            initialLeaderVariantByGpId: const {},
+            onStartGame: (_, _) {},
+            onBack: () {},
+          ),
+        ),
+      ),
+      WidgetbookUseCase(
+        name: 'Loading (mobile, pixel)',
+        builder: (context) => mobileViewport(
+          context,
+          CtGameSetup(
+            variant: GameSetupVariant.pixelArt,
+            state: GameSetupState.loading,
+            naming: defaultNamingConfig,
+            initialOrderedGpIds: _unselectedInitialOrderedGpIds(),
+            initialLeaderVariantByGpId: const {},
+            onStartGame: (_, _) {},
+            onBack: () {},
+          ),
+        ),
+      ),
+      WidgetbookUseCase(
+        name: 'All slots selected (pixel)',
+        builder: (context) => CtGameSetup(
+          variant: GameSetupVariant.pixelArt,
+          state: GameSetupState.default_,
+          naming: defaultNamingConfig,
+          initialOrderedGpIds: _allSelectedInitialOrderedGpIds(),
+          initialLeaderVariantByGpId: _allSelectedInitialLeaderVariantByGpId(),
+          onStartGame: (_, _) {},
+          onBack: () {},
         ),
       ),
     ],

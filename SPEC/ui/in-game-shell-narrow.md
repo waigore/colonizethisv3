@@ -12,6 +12,8 @@ The top bar shows:
 - **Center/right:** Turn counter/button (e.g. "Next turn (N / year)").
 - **Below:** Region tabs (Old World / New World).
 
+The Next turn `CtNinePatchButton` disabled-during-resolution opacity is `0.35` (mockup `.next-turn.disabled` in [GAME10001-game-screen.html](mockups/GAME10001-game-screen.html), issue #2861 R1) and overrides the catalog-default `CtNinePatchButton.disabledOpacity` (`0.4`). Normative AC is in [game-screen.md](game-screen.md) § Acceptance Criteria; other `CtNinePatchButton` call sites continue to use the catalog default.
+
 **No empire buttons in the top bar.** Empire actions are on the **map left rail** (always visible).
 
 ---
