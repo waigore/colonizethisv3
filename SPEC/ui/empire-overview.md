@@ -231,6 +231,16 @@ On mobile: same tab row; map area fills available space; one region visible at a
 
 Folder: **Map Widget** — stories for map area with fixture topology and view data.
 
+Folder: **Region Minimap** — stories for [GameRegionMinimap](../../app/lib/features/game/flame/game_region_minimap.dart) registered from [`gameRegionMinimapDirectories`](../../app/lib/widgetbook/catalog_part7.dart) and aggregated into `_ctWidgetbookDirectories` in [`catalog.dart`](../../app/lib/widgetbook/catalog.dart). Issue #2861 S12 story (5) "region minimap visible / hidden".
+
+| Story | Purpose | Authority |
+|-------|---------|-----------|
+| Visible — wide chrome with viewport rectangle | Pins § Region minimap chrome: `--bg-deep` panel surface, 1 px `--border` outline, 32 × 32 dp toggle button with `--accent-dim` glyph, white viewport rectangle. | § Region minimap, § Region minimap chrome |
+| Hidden — toggle-only (zoom + show button) | Exercises the collapsed state when `regionMinimapVisibleProvider == false`: only the zoom slider and "show minimap" toggle paint; the grid + viewport rectangle are not mounted. | § Region minimap (Toggle, session-only) |
+| Narrow — 90 × 70 dp grid (issue #2870 S3) | Pins § Narrow minimap measurements: width-or-height-limited fit inside the 90 × 70 dp bounding box; panel chrome unchanged from wide. | § Narrow minimap measurements; [mobile-adaptation.md](mobile-adaptation.md) § In-game shell |
+
+Stories drive a deterministic [`RegionMapViewportSnapshot`](../../app/lib/features/game/flame/region_map_viewport_snapshot.dart) (`zoom = fitMapZoom × 1.6`) so the viewport rectangle reads as a visible window inside the minimap grid in the visible-chrome story.
+
 Folder: **Game Map Corner Controls** — stories for [GameMapCornerControls](../../app/lib/features/game/flame/game_map_corner_controls.dart) registered from [`gameMapCornerControlsDirectories`](../../app/lib/widgetbook/catalog_part7.dart) and aggregated into `_ctWidgetbookDirectories` in [`catalog.dart`](../../app/lib/widgetbook/catalog.dart). Issue #2861 S4 + S12 story (4) corner controls row, plus the issue #2870 S9 narrow-layout variant.
 
 | Story | Purpose | Authority |

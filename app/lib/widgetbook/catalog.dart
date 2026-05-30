@@ -6,19 +6,26 @@ import 'dart:convert';
 import 'package:colonizethis_app/core/utils/prefixed_id.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
+import 'package:colonizethis_map/colonizethis_map.dart' show RegionMapViewData;
 import 'package:colonizethis_models/colonizethis_models.dart';
+import 'package:colonizethis_save/colonizethis_save.dart' show GameSaveAdapter;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:hive/hive.dart' show Box;
 import 'package:jenny/jenny.dart';
 import 'package:widgetbook/widgetbook.dart';
 
 import '../config/editorial_monocle_palette.dart';
 import '../config/themes.dart';
+import '../core/services/game_service.dart' show GameMapData, GameService;
 import '../providers/app_event_bus_provider.dart';
+import '../providers/debug_console_provider.dart';
+import '../providers/game_service_provider.dart';
 import '../providers/games_provider.dart';
 import '../providers/map_province_panel_provider.dart';
 import '../providers/map_view_provider.dart';
+import '../providers/region_minimap_provider.dart';
 import '../features/game/combat/combat_mode_choice_dialog.dart';
 import '../features/game/combat/quick_battle_action_selector.dart';
 import '../features/game/combat/quick_battle_deployment_view.dart';
@@ -50,9 +57,12 @@ import '../features/game/dialogue/game_start_intro_overlay.dart';
 import '../features/game/dialogue/intervention_dialogue_overlay.dart';
 import '../features/game/dialogue/overture_dialogue_overlay.dart';
 import '../features/game/flame/game_map_corner_controls.dart';
+import '../features/game/flame/game_map_empire_left_rail.dart';
+import '../features/game/flame/game_region_minimap.dart';
 import '../features/game/flame/game_screen.dart';
 import '../features/game/flame/game_side_menu.dart';
 import '../features/game/flame/exit_confirm_dialog.dart';
+import '../features/game/flame/region_map_viewport_snapshot.dart';
 import '../features/game/flame/victory_overlay.dart';
 import '../features/game/flame/region_map_component.dart'
     show CtMapVisibilityMode;
@@ -214,7 +224,9 @@ List<WidgetbookNode> get _ctWidgetbookDirectories => [
   ...gameTopBarDirectories,
   ...gameTabBarDirectories,
   ...gameMapCornerControlsDirectories,
+  ...gameMapEmpireLeftRailDirectories,
   ...gameMapOptionsDialogDirectories,
+  ...gameRegionMinimapDirectories,
   ...playerTurnEventFeedCardDirectories,
   ...pauseMenuPanelDirectories,
   ...gameSideMenuDirectories,
