@@ -31,6 +31,7 @@ Widget _buildEconomicSection({
                     resId,
                     l10n.province_economic_withImprovement(row.impBase),
                   ),
+                  style: TextStyle(color: EditorialMonoclePalette.fg),
                 ),
               ),
             ],
@@ -56,6 +57,7 @@ Widget _buildEconomicSection({
                     resId,
                     l10n.province_economic_improvableSuffix,
                   ),
+                  style: TextStyle(color: EditorialMonoclePalette.muted),
                 ),
               ),
             ],
@@ -220,6 +222,7 @@ Widget _buildCivilianSectionFiltered({
             );
             return Text(
               l10n.provinceOverlay_unitTarget(u.type, targetLabel),
+              style: TextStyle(color: EditorialMonoclePalette.fg),
             );
           }
           return Text(
@@ -227,6 +230,7 @@ Widget _buildCivilianSectionFiltered({
               u.type,
               unitStatusDisplayLabel(l10n, u.status),
             ),
+            style: TextStyle(color: EditorialMonoclePalette.fg),
           );
         }
         final o = _ownerName(game, u.ownerId);
@@ -236,6 +240,7 @@ Widget _buildCivilianSectionFiltered({
             u.type,
             unitStatusDisplayLabel(l10n, u.status),
           ),
+          style: TextStyle(color: EditorialMonoclePalette.muted),
         );
       }).toList(),
     ),
