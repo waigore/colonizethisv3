@@ -43,6 +43,37 @@ List<WidgetbookNode> get productionPanelDirectories => [
   ),
 ];
 
+/// Mid-game [TechnologyScreen] fixture (Slots tab default) for Widgetbook.
+/// SPEC/ui/technology-panel.md § Widgetbook; Refs #2870 R22 / S9.
+Widget _midGameTechnologyScreenStory(BuildContext context) {
+  final result = getDebugInitGameResult();
+  final game = result.game;
+  if (game.players.isEmpty) {
+    return Center(child: Text(appL10n(context).widgetbook_noPlayers));
+  }
+  final basePlayer = game.players.first;
+  // Unlock roughly half of all techs (first 22 from catalog order).
+  final allIds = techCatalog.keys.toList()..sort();
+  final half = (allIds.length / 2).floor();
+  final unlockedIds = allIds.take(half).toList();
+  final techUnlocked = Map<String, bool>.fromEntries(
+    unlockedIds.map((id) => MapEntry(id, true)),
+  );
+  // One tech in progress (first not-yet-unlocked tech at 60 RP).
+  final inProgressId = allIds.length > half ? allIds[half] : null;
+  final researchProgressByTechId = inProgressId != null
+      ? <String, int>{inProgressId: 60}
+      : <String, int>{};
+  final midGamePlayer = basePlayer.copyWith(
+    techUnlocked: techUnlocked,
+    researchProgressByTechId: researchProgressByTechId,
+  );
+  final midGame = game.copyWith(
+    players: [midGamePlayer, ...game.players.skip(1)],
+  );
+  return TechnologyScreen(game: midGame, player: midGamePlayer);
+}
+
 /// Tech Tree Widget stories. SPEC/ui/tech-tree-widget.md.
 List<WidgetbookNode> get techTreeDirectories => [
   WidgetbookFolder(
@@ -51,38 +82,21 @@ List<WidgetbookNode> get techTreeDirectories => [
       WidgetbookUseCase(
         name: 'Mid-game (half researched)',
         builder: (context) {
-          final result = getDebugInitGameResult();
-          final game = result.game;
-          if (game.players.isEmpty) {
-            return Center(child: Text(appL10n(context).widgetbook_noPlayers));
-          }
-          final basePlayer = game.players.first;
-          // Unlock roughly half of all techs (first 22 from catalog order).
-          final allIds = techCatalog.keys.toList()..sort();
-          final half = (allIds.length / 2).floor();
-          final unlockedIds = allIds.take(half).toList();
-          final techUnlocked = Map<String, bool>.fromEntries(
-            unlockedIds.map((id) => MapEntry(id, true)),
-          );
-          // One tech in progress (first not-yet-unlocked tech at 60 RP).
-          final inProgressId = allIds.length > half ? allIds[half] : null;
-          final researchProgressByTechId = inProgressId != null
-              ? <String, int>{inProgressId: 60}
-              : <String, int>{};
-          final midGamePlayer = basePlayer.copyWith(
-            techUnlocked: techUnlocked,
-            researchProgressByTechId: researchProgressByTechId,
-          );
-          final midGame = game.copyWith(
-            players: [midGamePlayer, ...game.players.skip(1)],
-          );
           return MaterialApp(
             theme: AppThemes.editorialMonocle,
-            home: Scaffold(
-              body: TechnologyScreen(game: midGame, player: midGamePlayer),
-            ),
+            home: Scaffold(body: _midGameTechnologyScreenStory(context)),
           );
         },
+      ),
+      WidgetbookUseCase(
+        name: 'Mid-game slots (mobile)',
+        builder: (context) => mobileViewport(
+          context,
+          MaterialApp(
+            theme: AppThemes.editorialMonocle,
+            home: Scaffold(body: _midGameTechnologyScreenStory(context)),
+          ),
+        ),
       ),
       WidgetbookUseCase(
         name: 'Tech tree only (mid-game)',
