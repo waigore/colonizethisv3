@@ -293,6 +293,7 @@ Widget _buildNavalSection({
                 fleetLabel,
                 shipParts,
               ),
+              style: TextStyle(color: EditorialMonoclePalette.fg),
             );
           }),
         if (pending.isNotEmpty) ...[
