@@ -75,8 +75,10 @@
 library;
 
 import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../perception/perception_snapshot.dart';
+import 'expand_phase_planner.dart' show ExpandEconomyPlan;
 import 'observer_goal_phase.dart';
 import 'phase_planner_conquest_filter.dart';
 import 'phase_planner_dispatch.dart';
@@ -468,3 +470,51 @@ double resolvePhaseEconomyOldWorldCivilianWeight({
 double resolvePhaseEconomyNewWorldCivilianWeight({
   required PhasePlanOutcome phasePlan,
 }) => phasePlan.priorityWeights.newWorldCivilian;
+
+/// Resource-need override predicate (Refs #2847 § Resource-need overrides).
+///
+/// True when treasury recovery cargo is active, the GP owns no NW
+/// provinces, and cash treasury is exactly zero — the same triple that
+/// lifts `newWorldAcquisition` to [kPhasePriorityNwTreasuryRecoveryFloor].
+bool resolvePhaseNwTreasuryRecoveryResourceNeedOverrideActive({
+  required AIWorldSnapshot snapshot,
+  required ExpandEconomyPlan expandEconomyPlan,
+}) =>
+    snapshot.economy.treasury == 0 &&
+    snapshot.colonial.newWorldProvincesOwned == 0 &&
+    expandEconomyPlan.boostTreasuryRecoveryCargo;
+
+/// Returns `true` when [playerId] owns at least one naval hull with
+/// `cargoHold > 0` in any fleet.
+bool playerOwnsCargoCapableNavalUnit(Game game, String playerId) {
+  for (final fleet in game.worldState.fleets) {
+    if (fleet.ownerId != playerId) continue;
+    for (final ship in fleet.ships) {
+      if (NavalStatsCatalog.get(ship.typeId).cargoHold > 0) {
+        return true;
+      }
+    }
+  }
+  return false;
+}
+
+/// First-naval-transport bootstrap (Refs #2847 Phase 3).
+///
+/// When active, `_appendEconomyBuildOrders` keeps cargo-capable ship
+/// candidates in the build pick and suppresses the regiment-only
+/// `militaryRebuildCrisis` short-circuit so the orchestrator can emit a
+/// first NW-acquisition transport under the treasury-recovery override.
+///
+/// The build pipeline's own treasury/material affordability check is
+/// unchanged — this relaxes only planner-level regiment bias.
+bool resolvePhaseFirstNavalTransportBootstrapActive({
+  required Game game,
+  required AIWorldSnapshot snapshot,
+  required ExpandEconomyPlan expandEconomyPlan,
+  required String playerId,
+}) =>
+    resolvePhaseNwTreasuryRecoveryResourceNeedOverrideActive(
+      snapshot: snapshot,
+      expandEconomyPlan: expandEconomyPlan,
+    ) &&
+    !playerOwnsCargoCapableNavalUnit(game, playerId);
