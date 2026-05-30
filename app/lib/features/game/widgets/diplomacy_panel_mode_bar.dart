@@ -26,22 +26,31 @@ class _DiplomacyModeBar extends StatelessWidget {
       ),
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
+        // SPEC/ui/mobile-adaptation.md § 7 Minimum-viewport pin: the three
+        // filter labels ("All", "Great Powers only", "Minors only") total
+        // ~458 dp intrinsic width but the panel body is only ~296 dp wide
+        // at `kMinViewportWidth` (320 dp) once the ListView horizontal
+        // padding is subtracted. A centered `Row` overflows by ~162 px on
+        // the right at that width. `Wrap` keeps the mockup's centred
+        // cluster at wide widths (all three chips fit on one run) and lets
+        // the buttons flow onto a second run at the minimum viewport
+        // without clipping or horizontal scroll.
+        child: Wrap(
+          alignment: WrapAlignment.center,
+          spacing: 8,
+          runSpacing: 8,
           children: [
             _DiplomacyModeButton(
               label: l10n.diplomacy_filter_all,
               isActive: mode == DiplomacyFilterMode.all,
               onPressed: () => onModeChanged(DiplomacyFilterMode.all),
             ),
-            const SizedBox(width: 8),
             _DiplomacyModeButton(
               label: l10n.diplomacy_filter_greatPowersOnly,
               isActive: mode == DiplomacyFilterMode.greatPowersOnly,
               onPressed: () =>
                   onModeChanged(DiplomacyFilterMode.greatPowersOnly),
             ),
-            const SizedBox(width: 8),
             _DiplomacyModeButton(
               label: l10n.diplomacy_filter_minorsOnly,
               isActive: mode == DiplomacyFilterMode.minorsOnly,
