@@ -119,7 +119,10 @@ List<WidgetbookNode> get gameTabBarDirectories => [
 /// Game map corner controls stories. SPEC/ui/empire-overview.md
 /// § Corner controls chrome. Issue #2861 S4 + S12 story (4) corner
 /// controls row, including the disabled home-to-capital variant required
-/// by the AC at `homeToCapitalEnabled: false`.
+/// by the AC at `homeToCapitalEnabled: false`, and the narrow-layout
+/// variant added by issue #2870 S9 pinning the 24 × 24 dp + 2 dp gap
+/// measurements from `SPEC/ui/empire-overview.md` § Narrow corner-control
+/// measurements and `SPEC/ui/mobile-adaptation.md` § In-game shell.
 List<WidgetbookNode> get gameMapCornerControlsDirectories => [
   WidgetbookFolder(
     name: 'Game Map Corner Controls',
@@ -142,6 +145,18 @@ List<WidgetbookNode> get gameMapCornerControlsDirectories => [
             onCenterOnHomeCapital: () {},
             onOpenMapDisplayOptions: () {},
             homeToCapitalEnabled: false,
+          ),
+        ),
+      ),
+      WidgetbookUseCase(
+        name: 'Narrow (360 dp) — 24 × 24 dp buttons, 2 dp gap',
+        builder: (context) => _gameMapCornerControlsNarrowStoryFrame(
+          viewportWidth: 360,
+          child: GameMapCornerControls(
+            narrow: true,
+            onCycleBaseLayerDisplayMode: () {},
+            onCenterOnHomeCapital: () {},
+            onOpenMapDisplayOptions: () {},
           ),
         ),
       ),
@@ -433,6 +448,44 @@ MaterialApp _gameMapCornerControlsStoryFrame({required Widget child}) {
               child: child,
             ),
           ],
+        ),
+      ),
+    ),
+  );
+}
+
+/// Narrow-viewport corner controls frame: clamps the visible canvas to a
+/// representative narrow viewport width via `MediaQuery.size`, anchors
+/// the row bottom-left at the compressed 2 dp inset (matching the
+/// production stack on narrow), and forwards the editorial-monocle theme
+/// so the chrome reads identically to the wide story (issue #2870 S9;
+/// SPEC `SPEC/ui/empire-overview.md` § Narrow corner-control measurements;
+/// `SPEC/ui/mobile-adaptation.md` § In-game shell).
+MaterialApp _gameMapCornerControlsNarrowStoryFrame({
+  required double viewportWidth,
+  required Widget child,
+}) {
+  return MaterialApp(
+    debugShowCheckedModeBanner: false,
+    theme: AppThemes.editorialMonocle,
+    localizationsDelegates: AppLocalizationsBinding.localizationsDelegates,
+    supportedLocales: AppLocalizations.supportedLocales,
+    home: MediaQuery(
+      data: MediaQueryData(size: Size(viewportWidth, 640)),
+      child: Scaffold(
+        backgroundColor: EditorialMonoclePalette.bgDeep,
+        body: SizedBox(
+          width: viewportWidth,
+          height: 640,
+          child: Stack(
+            children: [
+              Positioned(
+                left: 2,
+                bottom: 2,
+                child: child,
+              ),
+            ],
+          ),
         ),
       ),
     ),

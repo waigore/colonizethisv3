@@ -156,6 +156,7 @@ void main() {
           find.byType(GameMapCornerControls),
         );
         expect(defaultControls.homeToCapitalEnabled, isTrue);
+        expect(defaultControls.narrow, isFalse);
 
         await tester.pumpWidget(
           disabledStory.builder(tester.element(find.byType(View))),
@@ -165,6 +166,40 @@ void main() {
           find.byType(GameMapCornerControls),
         );
         expect(disabledControls.homeToCapitalEnabled, isFalse);
+        expect(disabledControls.narrow, isFalse);
+      },
+    );
+
+    testWidgets(
+      'Game Map Corner Controls folder exposes narrow variant '
+      '(Refs #2870 S9)',
+      (WidgetTester tester) async {
+        final narrowStory = _useCase(
+          gameMapCornerControlsDirectories,
+          folderName: 'Game Map Corner Controls',
+          useCaseName: 'Narrow (360 dp) — 24 × 24 dp buttons, 2 dp gap',
+        );
+        await tester.pumpWidget(
+          narrowStory.builder(tester.element(find.byType(View))),
+        );
+        await tester.pump();
+        final narrowControls = tester.widget<GameMapCornerControls>(
+          find.byType(GameMapCornerControls),
+        );
+        expect(
+          narrowControls.narrow,
+          isTrue,
+          reason:
+              'Narrow variant must construct GameMapCornerControls with '
+              'narrow: true so the 24 × 24 dp / 2 dp gap rule applies.',
+        );
+        expect(
+          narrowControls.homeToCapitalEnabled,
+          isTrue,
+          reason:
+              'Narrow story exercises the active state (all three buttons '
+              'enabled) at the narrow measurements.',
+        );
       },
     );
 
