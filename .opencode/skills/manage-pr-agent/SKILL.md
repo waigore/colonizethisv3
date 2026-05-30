@@ -20,8 +20,9 @@ That file is normative. It defines:
 - A single **Maintain CI throughput target of 2** phase (both floor and
   ceiling) that, depending on the current running-CI count `R`:
   - Pauses excess PRs when `R > 2` (cancel in-flight
-    `pull_request` / `pull_request_target` runs, then push an empty
-    `[skip ci]` commit on the PR's head branch).
+    `pull_request` / `pull_request_target` runs on the head branch,
+    push an empty `[skip ci]` commit, then cancel again — all branch
+    runs regardless of `headSha`).
   - Fills toward `R == 2` when `R < 2` by either **resuming** a paused
     PR (plain non-skip empty commit on its head branch) or **unblocking**
     a stalled PR via strict `.cursor/skills/fix-pr/SKILL.md`, generally
