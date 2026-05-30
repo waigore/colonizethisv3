@@ -68,6 +68,15 @@ void main() {
         ),
         'Set Subsidy (£500)',
       );
+      expect(
+        diplomacyActionLabel(
+          const DiplomaticOrder(
+            type: DiplomaticOrderType.establishFtp,
+            targetFactionId: 'gp2',
+          ),
+        ),
+        'Establish FTP',
+      );
     });
   });
 
