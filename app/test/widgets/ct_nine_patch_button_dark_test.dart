@@ -22,6 +22,8 @@ Future<void> _pumpButton(
   bool enabled = true,
   bool dangerVariant = false,
   double? disabledOpacityOverride,
+  LinearGradient? gradient,
+  LinearGradient? pressedGradient,
   Widget child = const Text('Confirm'),
 }) async {
   await tester.pumpWidget(
@@ -36,6 +38,8 @@ Future<void> _pumpButton(
               enabled: enabled,
               dangerVariant: dangerVariant,
               disabledOpacityOverride: disabledOpacityOverride,
+              gradient: gradient,
+              pressedGradient: pressedGradient,
               child: child,
             ),
           ),
@@ -347,6 +351,100 @@ void main() {
       );
       expect(painters, findsOneWidget);
       expect(CtNinePatchButton.cornerBracketSize, 10);
+    },
+  );
+
+  testWidgets(
+    'pressedGradient swaps the surface gradient transiently while held; '
+    'reverts to the rest gradient after the gesture completes',
+    (WidgetTester tester) async {
+      // SPEC/ui/main-menu.md AC `Wood-panel button pressed gradient
+      // inversion`. Drives the button via a fine-grained TestGesture so the
+      // pressed-state surface can be inspected between onTapDown and
+      // onTap/onTapCancel.
+      await _pumpButton(
+        tester,
+        onPressed: () {},
+        gradient: CtGradients.woodPanelButtonGradient,
+        pressedGradient: CtGradients.woodPanelButtonGradientPressed,
+      );
+
+      final DecoratedBox restBox = _findButtonSurfaceDecoratedBox(tester);
+      final BoxDecoration restDecoration = restBox.decoration as BoxDecoration;
+      final LinearGradient restGradient =
+          restDecoration.gradient! as LinearGradient;
+      expect(
+        restGradient.colors,
+        CtGradients.woodPanelButtonGradient.colors,
+        reason: 'Rest state must paint the wood-panel rest gradient.',
+      );
+
+      final Offset center = tester.getCenter(find.byType(CtNinePatchButton));
+      final TestGesture gesture = await tester.startGesture(center);
+      await tester.pump();
+      await tester.pump(CtNinePatchButton.animationDuration);
+      await tester.pumpAndSettle();
+
+      final DecoratedBox pressedBox = _findButtonSurfaceDecoratedBox(tester);
+      final BoxDecoration pressedDecoration =
+          pressedBox.decoration as BoxDecoration;
+      final LinearGradient pressedGradientPainted =
+          pressedDecoration.gradient! as LinearGradient;
+      expect(
+        pressedGradientPainted.colors,
+        CtGradients.woodPanelButtonGradientPressed.colors,
+        reason:
+            'Pressed-state surface must swap to the inverted wood-panel '
+            'pressed gradient (bgDeep → surface → surfaceLite).',
+      );
+
+      await gesture.up();
+      await tester.pumpAndSettle();
+
+      final DecoratedBox releasedBox = _findButtonSurfaceDecoratedBox(tester);
+      final BoxDecoration releasedDecoration =
+          releasedBox.decoration as BoxDecoration;
+      final LinearGradient releasedGradient =
+          releasedDecoration.gradient! as LinearGradient;
+      expect(
+        releasedGradient.colors,
+        CtGradients.woodPanelButtonGradient.colors,
+        reason: 'Surface must revert to the rest gradient once the gesture '
+            'completes (inversion is strictly transient).',
+      );
+    },
+  );
+
+  testWidgets(
+    'when pressedGradient is omitted, pressing the button does not swap the '
+    'surface gradient (default 2-stop CtGradients.buttonGradient is preserved)',
+    (WidgetTester tester) async {
+      // Negative AC: callers that do not opt-in (every non-main-menu
+      // CtNinePatchButton) keep the prior 2-stop visual contract regardless
+      // of press state.
+      await _pumpButton(tester, onPressed: () {});
+
+      final Offset center = tester.getCenter(find.byType(CtNinePatchButton));
+      final TestGesture gesture = await tester.startGesture(center);
+      await tester.pump();
+      await tester.pump(CtNinePatchButton.animationDuration);
+      await tester.pumpAndSettle();
+
+      final DecoratedBox pressedBox = _findButtonSurfaceDecoratedBox(tester);
+      final BoxDecoration pressedDecoration =
+          pressedBox.decoration as BoxDecoration;
+      final LinearGradient pressedGradientPainted =
+          pressedDecoration.gradient! as LinearGradient;
+      expect(
+        pressedGradientPainted.colors,
+        CtGradients.buttonGradient.colors,
+        reason:
+            'Without an opt-in pressedGradient, the canonical 2-stop button '
+            'gradient must still paint while the button is held.',
+      );
+
+      await gesture.up();
+      await tester.pumpAndSettle();
     },
   );
 

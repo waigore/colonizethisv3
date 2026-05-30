@@ -3,15 +3,28 @@
 // and panel-level pins (`mobile_320dp_min_viewport_test.dart`,
 // `panels_320dp_min_viewport_test.dart`) to the simplest in-game dialogs:
 //
-//  * [GameParametersDialog]   — read-only campaign parameters opened from
-//    the hamburger side menu (SPEC/ui/in-game-shell-narrow.md
-//    § Game Parameters).
-//  * [ExitConfirmDialog]      — Android back exit-to-main-menu confirm
-//    (SPEC/ui/in-game-shell-narrow.md § Android back confirm).
-//  * [TurnNewsDialog]         — universal turn-start news modal shown
-//    after each turn resolution (SPEC/ui/turn-news-dialog.md).
+//  * [GameParametersDialog]            — read-only campaign parameters
+//    opened from the hamburger side menu
+//    (SPEC/ui/in-game-shell-narrow.md § Game Parameters).
+//  * [ExitConfirmDialog]               — Android back exit-to-main-menu
+//    confirm (SPEC/ui/in-game-shell-narrow.md § Android back confirm).
+//  * [TurnNewsDialog]                  — universal turn-start news modal
+//    shown after each turn resolution (SPEC/ui/turn-news-dialog.md).
+//  * [GameMapOptionsDialog]            — in-game map display options
+//    (toggle overlay / ownership / names) opened from the empire-overview
+//    corner controls (SPEC/ui/empire-overview.md § Map display options).
+//  * [TurnResolutionProcessingDialog]  — worker-isolate "processing turn"
+//    modal raised while the next-turn isolate runs
+//    (SPEC/program/turn-resolution.md).
+//  * [CombatModeChoiceDialog]            — Auto-Resolve vs Quick Battle picker
+//    opened via `OpenDialogEvent('combat_mode_choice')`
+//    (SPEC/ui/combat-mode-choice-dialog.md).
+//  * [NextTurnConfirmationDialog]        — top-bar "Next turn" confirm (DLG60001)
+//    (SPEC/ui/next-turn-confirmation.md).
+//  * [QuickBattleResultDialog]           — post–Quick Battle outcome modal
+//    (SPEC/ui/quick-battle-result-dialog.md).
 //
-// All three dialogs render their chrome via [CtDialogShell] (Dialog with
+// All eight dialogs render their chrome via [CtDialogShell] (Dialog with
 // `insetPadding: 16` and an inner `ConstrainedBox(maxWidth: 400|480)`).
 // At `kMinViewportWidth` (320 dp) the available content width collapses
 // to ~288 dp, which is the most constrained surface either dialog
@@ -31,14 +44,25 @@
 // SPEC: `SPEC/ui/in-game-shell-narrow.md` § Game Parameters and
 // § Android back confirm.
 // SPEC: `SPEC/ui/turn-news-dialog.md` § Layout / wireframe.
+// SPEC: `SPEC/ui/empire-overview.md` § Map display options.
+// SPEC: `SPEC/program/turn-resolution.md` (Processing-turn modal).
+// SPEC: `SPEC/ui/combat-mode-choice-dialog.md`.
+// SPEC: `SPEC/ui/next-turn-confirmation.md`.
+// SPEC: `SPEC/ui/quick-battle-result-dialog.md`.
 // Refs #2870 S8 (dialogs scale at narrow widths) + S10 (no horizontal
 // overflow at 320 dp on every covered surface).
 
 import 'package:colonizethis_app/config/constants.dart';
 import 'package:colonizethis_app/config/themes.dart';
+import 'package:colonizethis_app/features/game/combat/combat_mode_choice_dialog.dart';
+import 'package:colonizethis_app/features/game/combat/quick_battle_result_dialog.dart';
 import 'package:colonizethis_app/features/game/flame/exit_confirm_dialog.dart';
+import 'package:colonizethis_app/features/game/flame/next_turn_confirmation_dialog.dart';
+import 'package:colonizethis_app/features/game/flame/turn_resolution_processing_dialog.dart';
+import 'package:colonizethis_app/features/game/widgets/game_map_options_dialog.dart';
 import 'package:colonizethis_app/features/game/widgets/game_parameters_dialog.dart';
 import 'package:colonizethis_app/features/game/widgets/turn_news_dialog.dart';
+import 'package:colonizethis_app/l10n/l10n.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
@@ -72,19 +96,30 @@ Future<void> _pumpDialogAtSize(
   WidgetTester tester,
   Widget dialog, {
   required Size size,
+  bool settle = true,
 }) async {
   addTearDown(() => tester.binding.setSurfaceSize(null));
   await tester.binding.setSurfaceSize(size);
   await tester.pumpWidget(
     MaterialApp(
       theme: AppThemes.editorialMonocle,
+      localizationsDelegates: AppLocalizationsBinding.localizationsDelegates,
+      supportedLocales: AppLocalizations.supportedLocales,
       home: MediaQuery(
         data: MediaQueryData(size: size),
         child: Scaffold(body: Center(child: dialog)),
       ),
     ),
   );
-  await tester.pumpAndSettle();
+  if (settle) {
+    await tester.pumpAndSettle();
+  } else {
+    // Single frame is enough for dialogs that host an indefinite ticker
+    // (e.g. CircularProgressIndicator inside CtLoadingIndicator). The
+    // layout has resolved by the first frame, which is all the 320 dp
+    // overflow contract needs.
+    await tester.pump();
+  }
 }
 
 void main() {
@@ -329,6 +364,354 @@ void main() {
       expect(find.text('Turn 2'), findsOneWidget);
       expect(find.text('England and France are now at war.'), findsOneWidget);
       expect(find.text('Close'), findsOneWidget);
+    });
+  });
+
+  group('SPEC/ui/mobile-adaptation.md § 7 — GameMapOptionsDialog @ 320 dp '
+      '(Refs #2870 S8/S10)', () {
+    // Initial state mirrors the production seed: overlay and ownership tint
+    // ON by default, names layer OFF (matches `MapViewState()` defaults from
+    // `colonizethis_models` and the `mapViewStateNotifierProvider` seed used
+    // by `GameMapArea`).
+    const MapViewState baseState = MapViewState(
+      showProvinceOverlay: true,
+      showProvinceOwnershipTint: true,
+      showProvinceNamesLayer: false,
+    );
+
+    testWidgets(
+      'AC (positive) GameMapOptionsDialog @ 320×640: no RenderFlex '
+      'overflow exception, title + 3 toggle labels + Close action render '
+      '(all three Expanded labels + 12 dp gap + CtToggleSwitch rows must '
+      'fit within the ~288 dp content width)',
+      (WidgetTester tester) async {
+        await _pumpDialogAtSize(
+          tester,
+          GameMapOptionsDialog(
+            initialState: baseState,
+            onChanged: (_) {},
+          ),
+          size: _kMinViewport,
+        );
+
+        expect(
+          tester.takeException(),
+          isNull,
+          reason:
+              'SPEC/ui/mobile-adaptation.md § 7: GameMapOptionsDialog must '
+              'not emit a RenderFlex overflow exception at '
+              'kMinViewportWidth (320 dp). The Expanded label + 12 dp gap + '
+              'CtToggleSwitch row contract from '
+              'SPEC/ui/empire-overview.md § Map display options must wrap '
+              'within the ~288 dp CtDialogShell content column.',
+        );
+        expect(find.text('Map display options'), findsOneWidget);
+        expect(find.text('Show province overlay'), findsOneWidget);
+        expect(find.text('Show province ownership'), findsOneWidget);
+        expect(find.text('Show province names'), findsOneWidget);
+        expect(find.text('Close'), findsOneWidget);
+      },
+    );
+
+    testWidgets('Negative control: GameMapOptionsDialog @ 1024×768 also '
+        'pumps without exception (regression sentinel for the overflow '
+        'contract — keeps the 320 dp positive pin meaningful)', (
+      WidgetTester tester,
+    ) async {
+      await _pumpDialogAtSize(
+        tester,
+        GameMapOptionsDialog(
+          initialState: baseState,
+          onChanged: (_) {},
+        ),
+        size: _kWideRegressionViewport,
+      );
+
+      expect(tester.takeException(), isNull);
+      expect(find.text('Map display options'), findsOneWidget);
+      expect(find.text('Show province overlay'), findsOneWidget);
+      expect(find.text('Close'), findsOneWidget);
+    });
+  });
+
+  group('SPEC/ui/mobile-adaptation.md § 7 — TurnResolutionProcessingDialog '
+      '@ 320 dp (Refs #2870 S8/S10)', () {
+    const String phaseText = 'Resolving turn 3...';
+
+    testWidgets(
+      'AC (positive) TurnResolutionProcessingDialog @ 320×640: no '
+      'RenderFlex overflow exception, title + phase text render '
+      '(the CtLoadingIndicator + 10 dp gap + Expanded phase-text row must '
+      'fit within the ~288 dp CtDialogShell content column)',
+      (WidgetTester tester) async {
+        await _pumpDialogAtSize(
+          tester,
+          const TurnResolutionProcessingDialog(phaseText: phaseText),
+          size: _kMinViewport,
+          settle: false,
+        );
+
+        expect(
+          tester.takeException(),
+          isNull,
+          reason:
+              'SPEC/ui/mobile-adaptation.md § 7: '
+              'TurnResolutionProcessingDialog must not emit a RenderFlex '
+              'overflow exception at kMinViewportWidth (320 dp). The '
+              'CtLoadingIndicator + Expanded(phase text) row from '
+              'SPEC/program/turn-resolution.md (Processing-turn modal) must '
+              'wrap within the ~288 dp CtDialogShell content column.',
+        );
+        expect(find.text('Processing Turn'), findsOneWidget);
+        expect(find.text(phaseText), findsOneWidget);
+      },
+    );
+
+    testWidgets('Negative control: TurnResolutionProcessingDialog @ '
+        '1024×768 also pumps without exception (regression sentinel for '
+        'the overflow contract — keeps the 320 dp positive pin meaningful)',
+        (WidgetTester tester) async {
+      await _pumpDialogAtSize(
+        tester,
+        const TurnResolutionProcessingDialog(phaseText: phaseText),
+        size: _kWideRegressionViewport,
+        settle: false,
+      );
+
+      expect(tester.takeException(), isNull);
+      expect(find.text('Processing Turn'), findsOneWidget);
+      expect(find.text(phaseText), findsOneWidget);
+    });
+  });
+
+  group('SPEC/ui/mobile-adaptation.md § 7 — CombatModeChoiceDialog @ 320 dp '
+      '(Refs #2870 S8/S10)', () {
+    const String provinceName = 'Lisbon';
+
+    testWidgets(
+      'AC (positive) CombatModeChoiceDialog (regular province) @ 320×640: '
+      'no RenderFlex overflow exception, title + both action labels render '
+      '(the end-aligned Auto-Resolve + 8 dp gap + Quick Battle row must fit '
+      'within the ~288 dp CtDialogShell content column)',
+      (WidgetTester tester) async {
+        await _pumpDialogAtSize(
+          tester,
+          CombatModeChoiceDialog(
+            bus: AppEventBus.create(),
+            provinceName: provinceName,
+            isCapitalSiege: false,
+          ),
+          size: _kMinViewport,
+        );
+
+        expect(
+          tester.takeException(),
+          isNull,
+          reason:
+              'SPEC/ui/mobile-adaptation.md § 7: CombatModeChoiceDialog '
+              '(regular province) must not emit a RenderFlex overflow '
+              'exception at kMinViewportWidth (320 dp). The title + muted '
+              'body + end-aligned Auto-Resolve / Quick Battle '
+              'CtNinePatchButton row from '
+              'SPEC/ui/combat-mode-choice-dialog.md must wrap within the '
+              '~288 dp CtDialogShell content column.',
+        );
+        expect(find.textContaining(provinceName), findsOneWidget);
+        expect(find.textContaining('Auto-Resolve'), findsOneWidget);
+        expect(find.textContaining('Quick Battle'), findsOneWidget);
+      },
+    );
+
+    testWidgets('Negative control: CombatModeChoiceDialog (regular province) '
+        '@ 1024×768 also pumps without exception (regression sentinel for '
+        'the overflow contract — keeps the 320 dp positive pin meaningful)', (
+      WidgetTester tester,
+    ) async {
+      await _pumpDialogAtSize(
+        tester,
+        CombatModeChoiceDialog(
+          bus: AppEventBus.create(),
+          provinceName: provinceName,
+          isCapitalSiege: false,
+        ),
+        size: _kWideRegressionViewport,
+      );
+
+      expect(tester.takeException(), isNull);
+      expect(find.textContaining(provinceName), findsOneWidget);
+      expect(find.textContaining('Auto-Resolve'), findsOneWidget);
+      expect(find.textContaining('Quick Battle'), findsOneWidget);
+    });
+
+    testWidgets(
+      'AC (positive) CombatModeChoiceDialog (capital siege) @ 320×640: '
+      'no RenderFlex overflow exception, title + Quick Battle action render '
+      '(Auto-Resolve is hidden; the single end-aligned Quick Battle button '
+      'must fit within the ~288 dp CtDialogShell content column)',
+      (WidgetTester tester) async {
+        await _pumpDialogAtSize(
+          tester,
+          CombatModeChoiceDialog(
+            bus: AppEventBus.create(),
+            provinceName: 'Madrid',
+            isCapitalSiege: true,
+          ),
+          size: _kMinViewport,
+        );
+
+        expect(
+          tester.takeException(),
+          isNull,
+          reason:
+              'SPEC/ui/mobile-adaptation.md § 7: CombatModeChoiceDialog '
+              '(capital siege) must not emit a RenderFlex overflow '
+              'exception at kMinViewportWidth (320 dp). The forced '
+              'Quick Battle-only action row from '
+              'SPEC/ui/combat-mode-choice-dialog.md must wrap within the '
+              '~288 dp CtDialogShell content column.',
+        );
+        expect(find.textContaining('Madrid'), findsOneWidget);
+        expect(find.textContaining('Auto-Resolve'), findsNothing);
+        expect(find.textContaining('Quick Battle'), findsWidgets);
+      },
+    );
+
+    testWidgets('Negative control: CombatModeChoiceDialog (capital siege) @ '
+        '1024×768 also pumps without exception (regression sentinel for the '
+        'overflow contract — keeps the 320 dp positive pin meaningful)', (
+      WidgetTester tester,
+    ) async {
+      await _pumpDialogAtSize(
+        tester,
+        CombatModeChoiceDialog(
+          bus: AppEventBus.create(),
+          provinceName: 'Madrid',
+          isCapitalSiege: true,
+        ),
+        size: _kWideRegressionViewport,
+      );
+
+      expect(tester.takeException(), isNull);
+      expect(find.textContaining('Madrid'), findsOneWidget);
+      expect(find.textContaining('Auto-Resolve'), findsNothing);
+      expect(find.textContaining('Quick Battle'), findsWidgets);
+    });
+  });
+
+  group('SPEC/ui/mobile-adaptation.md § 7 — NextTurnConfirmationDialog '
+      '@ 320 dp (Refs #2870 S8/S10)', () {
+    const int currentTurn = 7;
+
+    testWidgets(
+      'AC (positive) NextTurnConfirmationDialog @ 320×640: no '
+      'RenderFlex overflow exception, title + body + No + Yes render '
+      '(the end-aligned No + 8 dp gap + Yes row must fit within the '
+      '~288 dp CtDialogShell content column)',
+      (WidgetTester tester) async {
+        await _pumpDialogAtSize(
+          tester,
+          const NextTurnConfirmationDialog(currentTurn: currentTurn),
+          size: _kMinViewport,
+        );
+
+        expect(
+          tester.takeException(),
+          isNull,
+          reason:
+              'SPEC/ui/mobile-adaptation.md § 7: NextTurnConfirmationDialog '
+              'must not emit a RenderFlex overflow exception at '
+              'kMinViewportWidth (320 dp). The title + body + end-aligned '
+              'No / Yes CtNinePatchButton row from '
+              'SPEC/ui/next-turn-confirmation.md must wrap within the '
+              '~288 dp CtDialogShell content column.',
+        );
+        expect(find.text('End turn?'), findsOneWidget);
+        expect(find.textContaining('Turn 7 will end'), findsOneWidget);
+        expect(find.text('No'), findsOneWidget);
+        expect(find.text('Yes'), findsOneWidget);
+      },
+    );
+
+    testWidgets('Negative control: NextTurnConfirmationDialog @ 1024×768 '
+        'also pumps without exception (regression sentinel for the overflow '
+        'contract — keeps the 320 dp positive pin meaningful)', (
+      WidgetTester tester,
+    ) async {
+      await _pumpDialogAtSize(
+        tester,
+        const NextTurnConfirmationDialog(currentTurn: currentTurn),
+        size: _kWideRegressionViewport,
+      );
+
+      expect(tester.takeException(), isNull);
+      expect(find.text('End turn?'), findsOneWidget);
+      expect(find.text('No'), findsOneWidget);
+      expect(find.text('Yes'), findsOneWidget);
+    });
+  });
+
+  group('SPEC/ui/mobile-adaptation.md § 7 — QuickBattleResultDialog @ 320 dp '
+      '(Refs #2870 S8/S10)', () {
+    const QuickBattleResult attackerWinsFlips = QuickBattleResult(
+      winner: QuickBattleWinner.attacker,
+      attackerCasualties: ['a3'],
+      defenderCasualties: ['d1', 'd2'],
+      provinceFlips: true,
+    );
+
+    testWidgets(
+      'AC (positive) QuickBattleResultDialog (attacker wins, provinceFlips) '
+      '@ 320×640: no RenderFlex overflow exception, winner + captured banner '
+      '+ casualty rows + OK render (the title + optional captured line + two '
+      'casualty bodySmall rows + trailing OK must fit within the ~288 dp '
+      'CtDialogShell content column)',
+      (WidgetTester tester) async {
+        await _pumpDialogAtSize(
+          tester,
+          const QuickBattleResultDialog(
+            result: attackerWinsFlips,
+            attackerName: 'Castile',
+            defenderName: 'England',
+          ),
+          size: _kMinViewport,
+        );
+
+        expect(
+          tester.takeException(),
+          isNull,
+          reason:
+              'SPEC/ui/mobile-adaptation.md § 7: QuickBattleResultDialog '
+              '(attacker wins + provinceFlips) must not emit a RenderFlex '
+              'overflow exception at kMinViewportWidth (320 dp). The winner '
+              'title, captured banner, casualty rows, and trailing OK action '
+              'from SPEC/ui/quick-battle-result-dialog.md must wrap within '
+              'the ~288 dp CtDialogShell content column.',
+        );
+        expect(find.textContaining('Castile'), findsWidgets);
+        expect(find.textContaining('England'), findsWidgets);
+        expect(find.textContaining('captured'), findsOneWidget);
+        expect(find.text('OK'), findsOneWidget);
+      },
+    );
+
+    testWidgets('Negative control: QuickBattleResultDialog @ 1024×768 also '
+        'pumps without exception (regression sentinel for the overflow '
+        'contract — keeps the 320 dp positive pin meaningful)', (
+      WidgetTester tester,
+    ) async {
+      await _pumpDialogAtSize(
+        tester,
+        const QuickBattleResultDialog(
+          result: attackerWinsFlips,
+          attackerName: 'Castile',
+          defenderName: 'England',
+        ),
+        size: _kWideRegressionViewport,
+      );
+
+      expect(tester.takeException(), isNull);
+      expect(find.textContaining('Castile'), findsWidgets);
+      expect(find.text('OK'), findsOneWidget);
     });
   });
 }

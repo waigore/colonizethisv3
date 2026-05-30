@@ -50,6 +50,8 @@ class CtNinePatchButton extends StatefulWidget {
     this.minHeight = 48,
     this.dangerVariant = false,
     this.disabledOpacityOverride,
+    this.gradient,
+    this.pressedGradient,
   });
 
   /// Callback fired on tap when [enabled] is `true` and [onPressed] is
@@ -105,6 +107,25 @@ class CtNinePatchButton extends StatefulWidget {
   /// the desired value here. Must be in the closed range `[0.0, 1.0]`.
   final double? disabledOpacityOverride;
 
+  /// Optional surface gradient override. When `null` (default), the button
+  /// paints [CtGradients.buttonGradient] so existing call sites continue to
+  /// render the canonical 2-stop `--surface-lite` → `--surface` surface.
+  /// Bespoke variants — notably the `pixelArt` main-menu wood-panel button
+  /// per `SPEC/ui/main-menu.md` § Buttons region — pass a 3-stop gradient
+  /// (`CtGradients.woodPanelButtonGradient`).
+  final LinearGradient? gradient;
+
+  /// Optional pressed-state gradient. When non-`null`, replaces the surface
+  /// gradient while the button is actively held (between `onTapDown` and
+  /// `onTap` / `onTapCancel`). Mirrors the mockup `.menu-btn:active` rule
+  /// in `SPEC/ui/mockups/SHEL10002-main-menu.html` and AC
+  /// `Wood-panel button pressed gradient inversion` in
+  /// `SPEC/ui/main-menu.md`. When `null` the button keeps painting
+  /// [gradient] (or [CtGradients.buttonGradient] when `gradient` is also
+  /// `null`) regardless of press state, preserving the prior visual contract
+  /// for every existing call site.
+  final LinearGradient? pressedGradient;
+
   /// Side length of each brass corner-bracket overlay (R1).
   static const double cornerBracketSize = 10;
 
@@ -140,6 +161,7 @@ class CtNinePatchButton extends StatefulWidget {
 
 class _CtNinePatchButtonState extends State<CtNinePatchButton> {
   bool _hovered = false;
+  bool _pressed = false;
 
   bool get _isInteractive => widget.enabled && widget.onPressed != null;
 
@@ -147,6 +169,21 @@ class _CtNinePatchButtonState extends State<CtNinePatchButton> {
     if (!_isInteractive) return;
     if (_hovered == entered) return;
     setState(() => _hovered = entered);
+  }
+
+  void _setPressed(bool pressed) {
+    if (!_isInteractive) return;
+    if (_pressed == pressed) return;
+    setState(() => _pressed = pressed);
+  }
+
+  LinearGradient get _surfaceGradient {
+    final LinearGradient defaultGradient =
+        widget.gradient ?? CtGradients.buttonGradient;
+    if (_pressed && widget.pressedGradient != null) {
+      return widget.pressedGradient!;
+    }
+    return defaultGradient;
   }
 
   Color get _cornerColor {
@@ -219,7 +256,7 @@ class _CtNinePatchButtonState extends State<CtNinePatchButton> {
       curve: CtNinePatchButton.animationCurve,
       constraints: BoxConstraints(minHeight: widget.minHeight),
       decoration: BoxDecoration(
-        gradient: CtGradients.buttonGradient,
+        gradient: _surfaceGradient,
         border: Border.all(
           color: _borderColor,
           width: CtNinePatchButton.borderWidth,
@@ -261,6 +298,10 @@ class _CtNinePatchButtonState extends State<CtNinePatchButton> {
         color: Colors.transparent,
         child: InkWell(
           onTap: _isInteractive ? widget.onPressed : null,
+          onTapDown: _isInteractive ? (_) => _setPressed(true) : null,
+          onTapUp: _isInteractive ? (_) => _setPressed(false) : null,
+          onTapCancel: _isInteractive ? () => _setPressed(false) : null,
+          onHighlightChanged: _isInteractive ? _setPressed : null,
           child: framed,
         ),
       ),
