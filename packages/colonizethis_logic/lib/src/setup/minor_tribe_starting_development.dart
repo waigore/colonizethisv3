@@ -7,6 +7,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../constants.dart';
 import '../world/game_world_mutations.dart';
+import 'setup_exceptions.dart';
 import 'town_capital_occupancy.dart';
 
 /// Default per-capital developed tile count for Minor Nations and Tribes at
@@ -99,10 +100,10 @@ MinorTribeStartingDevelopmentResult applyMinorTribeStartingDevelopment({
   int maxTilesPerCapital = kMinorTribeStartingDevelopedTilesPerCapital,
 }) {
   if (maxTilesPerCapital < 0) {
-    throw ArgumentError.value(
-      maxTilesPerCapital,
-      'maxTilesPerCapital',
-      'must be >= 0',
+    throw SetupConfigConstraintException(
+      code: 'minor_tribe_starting_development_negative_count',
+      details:
+          'maxTilesPerCapital must be >= 0; got $maxTilesPerCapital',
     );
   }
   final result = <String, List<String>>{};
