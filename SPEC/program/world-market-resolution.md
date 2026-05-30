@@ -181,6 +181,114 @@ For each commodity that appears in any offer or bid (commodities iterated in alp
 
 ---
 
+## Trade order validation
+
+Implementation lives in `packages/colonizethis_logic/lib/src/economy/world_market/trade_order_validator.dart`. Like the matching and pricing layers, the validator is **pure** (deterministic for fixed inputs, no logger calls, no I/O) and safe to call from order-submission, suggestion, and resolver-prep paths inside the 15-second budget.
+
+The validator inspects the **full set** of `TradeOrder` entries a single player intends to submit this turn and returns a parallel result list. It does **not** look at carry-forward queues — carry-forwards are re-evaluated at the start of the next turn against current stockpile and cargo per [world-market.md § Trade orders](../game/world-market.md) rule 5.
+
+### Signature
+
+```dart
+class TradeOrderValidationContext {
+  const TradeOrderValidationContext({
+    required this.playerId,
+    required this.bidTypeCap,
+    required this.tradeCargoCapacity,
+    required this.availableStockpileByCommodityId,
+  });
+
+  /// Submitting faction id; informational (no cross-player checks here).
+  final String playerId;
+
+  /// 0 / 3 / 6 cap on distinct bid commodities for this player this turn.
+  /// Pre-computed by callers via [worldMarketBidTypeCap] (see below).
+  final int bidTypeCap;
+
+  /// Cross-commodity cargo budget for this player's bids this turn (units).
+  /// Per `SPEC/game/world-market.md` § Cargo, this is
+  /// `max(0, totalHomeFleetCargoHolds - overseasExtractionActualTonnage)`.
+  /// Wired by the phase handler (Issue B / #2990).
+  final int tradeCargoCapacity;
+
+  /// Per-commodity quantity available to offer this turn, after committed
+  /// industry allocation has been subtracted from the projected post-production
+  /// stockpile (`stockpile[id] - industryAllocation[id]`, clamped at 0).
+  /// Riches commodities are not present in this map.
+  final Map<CommodityId, int> availableStockpileByCommodityId;
+}
+
+class TradeOrderValidator {
+  /// Validates a player's full submission for the turn. Returns a parallel
+  /// `List<OrderValidationResult>` aligned to [proposedOrders]; each entry is
+  /// `accepted` or `rejected` with one of the [tradeOrderRejectionReasons]
+  /// stable codes.
+  static List<OrderValidationResult> validate({
+    required TradeOrderValidationContext context,
+    required List<TradeOrder> proposedOrders,
+  });
+}
+```
+
+### Validation rules
+
+Rules are applied **once per submitted order** in the order received, with two
+**pre-pass** classifiers computed first (mutual-exclusion sets and distinct bid
+commodity sequence) so determinism does not depend on submission interleaving.
+
+| # | Rule | Stable rejection reason code |
+|---|------|------------------------------|
+| 1 | `TradeOrder.quantity > 0` | `tradeOrderInvalidQuantity` |
+| 2 | `TradeOrder.commodityId` is not in `richesCommodityIds` (riches do not trade — see `SPEC/game/commodity-catalog.md`). | `tradeOrderRichesNotTradeable` |
+| 3 | A commodity may have only **one** intent per turn: every `TradeOrder` whose `commodityId` appears as **both** a bid and an offer across `proposedOrders` is rejected (both sides — neither survives). | `tradeOrderMutualExclusion` |
+| 4 | Distinct bid commodity count must be ≤ `bidTypeCap`. Bids are admitted in submission order until the cap is reached; bids that introduce a **new** commodity past the cap are rejected (later bids on already-admitted commodities still pass this gate). | `tradeOrderBidTypeCapExceeded` |
+| 5 | Per-commodity bid quantity ≤ `tradeCargoCapacity`. | `tradeOrderBidExceedsCargoCapacity` |
+| 6 | Per-commodity offer quantity ≤ `availableStockpileByCommodityId[commodityId] ?? 0`. | `tradeOrderOfferExceedsStockpile` |
+
+Rules 1–2 are intrinsic to the order. Rules 3–4 are computed from the submitted set. Rules 5–6 are per-order quantity checks. The validator records the **first** failing rule for each rejected order (deterministic order: 1 → 2 → 3 → 4 → 5/6). Accepted orders return `OrderValidationResult.accepted()`.
+
+Stable rejection codes are exposed as `String` constants on `TradeOrderRejectionReasons` (e.g. `TradeOrderRejectionReasons.invalidQuantity`) so UI, AI suggestion, and tests can branch on them without parsing free-text.
+
+### Bid type cap helper
+
+`worldMarketBidTypeCap(Game game, String playerId)` lives in
+`packages/colonizethis_logic/lib/src/diplomacy/diplomacy_subsidies_relations_resolver.dart`
+next to [`tradeSlotsForGp`](diplomacy-resolution.md). Semantics:
+
+- `0` when the player has no embassy (`OvertureStage.embassy` or stronger) with **any** target faction.
+- `3` when the player has at least one embassy and has not unlocked `kTechIdTradeFairs`.
+- `6` when the player has at least one embassy **and** has unlocked `kTechIdTradeFairs`.
+
+This is the **world-market**-scoped analogue of `tradeSlotsForGp`, which is per-target (overture/treaty negotiation). The market is global, so the cap aggregates across all of the player's embassies.
+
+### Validation ACs (executable)
+
+- Given `TradeOrderValidationContext(bidTypeCap: 3, tradeCargoCapacity: 100, availableStockpileByCommodityId: {'timber': 50})` and a single `TradeOrder(commodityId: 'timber', type: offer, quantity: 10, priority: 1)`, when `TradeOrderValidator.validate` runs, then the result is `[OrderValidationResult.accepted()]`.
+
+- Given a player whose submission contains both `TradeOrder(timber, bid, 5, 1)` and `TradeOrder(timber, offer, 5, 1)`, when validation runs, then **both** orders are rejected with reason `TradeOrderRejectionReasons.mutualExclusion`.
+
+- Given `TradeOrder(spices, offer, 5, 1)` and `availableStockpileByCommodityId: {'spices': 999}` (riches), when validation runs, then the order is rejected with reason `TradeOrderRejectionReasons.richesNotTradeable` regardless of stockpile size.
+
+- Given `TradeOrder(timber, bid, 0, 1)`, when validation runs, then the order is rejected with reason `TradeOrderRejectionReasons.invalidQuantity` (zero-quantity orders are not admitted; `TradeOrder` allows `quantity >= 0` at construction so callers cannot rely on the constructor to drop them).
+
+- Given `bidTypeCap = 0` and any bid in the submission, when validation runs, then every bid is rejected with reason `TradeOrderRejectionReasons.bidTypeCapExceeded` and every offer is judged independently against rules 5–6.
+
+- Given `bidTypeCap = 3` and bids on `[timber, iron, coal, wool]` (four distinct commodities, submission order), when validation runs, then the first three bids are accepted (subject to rules 5–6) and the fourth (`wool`) is rejected with reason `TradeOrderRejectionReasons.bidTypeCapExceeded`. A subsequent bid for an already-admitted commodity (e.g. another `timber` bid) does **not** count as a new type and passes rule 4.
+
+- Given `bidTypeCap = 6` and bids on `[timber, iron, coal, wool, hides, cattle, grain]`, when validation runs, then the seventh distinct-commodity bid (`grain`) is rejected with reason `TradeOrderRejectionReasons.bidTypeCapExceeded`.
+
+- Given `tradeCargoCapacity = 10` and a single `TradeOrder(timber, bid, 12, 1)`, when validation runs, then the order is rejected with reason `TradeOrderRejectionReasons.bidExceedsCargoCapacity`. A separate `TradeOrder(timber, bid, 10, 1)` from the same player on a fresh validator pass is accepted (per-commodity cap, not cross-commodity sum — cross-commodity cargo enforcement happens in the matching engine).
+
+- Given `availableStockpileByCommodityId: {'timber': 5}` and `TradeOrder(timber, offer, 10, 1)`, when validation runs, then the order is rejected with reason `TradeOrderRejectionReasons.offerExceedsStockpile`. The validator does **not** silently cap the quantity — callers (suggestion API, UI) must clamp before submission per `SPEC/game/world-market.md` rule 4.
+
+- Given `worldMarketBidTypeCap(game, playerId)` for a player with **no** overtures or only `OvertureStage.tradeConsulate` overtures, when the helper runs, then the cap is `0`.
+
+- Given `worldMarketBidTypeCap(game, playerId)` for a player with at least one `OvertureStage.embassy` (or `nap` / `joinEmpire`) overture and `kTechIdTradeFairs` **not** unlocked, when the helper runs, then the cap is `3`.
+
+- Given `worldMarketBidTypeCap(game, playerId)` for a player with at least one embassy-tier overture and `techUnlocked[kTechIdTradeFairs] == true`, when the helper runs, then the cap is `6`.
+
+---
+
 ## Phase placement (informational; covered fully by Issue B / #2990)
 
 Phase 13 (`worldMarket`) sits between Build / work and End-of-turn — End-of-turn renumbers from 13 → 14. The handler will gather `Orders.tradeOrders`, run matching, apply transfers, then call `computeNextPrice` per commodity and store the resulting `WorldMarketState` on `Game`.

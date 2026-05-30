@@ -19,7 +19,8 @@ import 'overture_resolver.dart';
 import 'war_resolver.dart';
 
 export 'diplomacy_relation_lookup.dart';
-export 'diplomacy_subsidies_relations_resolver.dart' show tradeSlotsForGp;
+export 'diplomacy_subsidies_relations_resolver.dart'
+    show tradeSlotsForGp, worldMarketBidTypeCap;
 export 'intervention_resolver.dart'
     show applyInterventionChoice, needsInterventionChoice;
 
