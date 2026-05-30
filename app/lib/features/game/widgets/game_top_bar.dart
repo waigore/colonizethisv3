@@ -203,6 +203,35 @@ class GameTopBar extends StatelessWidget {
     );
   }
 
+  List<Widget> _buildNarrowRowChildren({required bool isMinViewport}) {
+    return <Widget>[
+      _GameTopBarHamburger(onPressed: onToggleSideMenu, tooltip: menuTooltip),
+      const SizedBox(width: leadingGap),
+      Expanded(
+        child: Align(
+          alignment: Alignment.centerRight,
+          child: _buildNextTurnButton(compactHorizontalPadding: isMinViewport),
+        ),
+      ),
+    ];
+  }
+
+  List<Widget> _buildWideRowChildren(BuildContext context) {
+    return <Widget>[
+      _GameTopBarHamburger(onPressed: onToggleSideMenu, tooltip: menuTooltip),
+      const SizedBox(width: leadingGap),
+      if (observeBannerLabel != null) ...<Widget>[
+        _buildObserveBanner(context),
+        const SizedBox(width: leadingGap),
+      ],
+      Expanded(child: Center(child: _buildTurnDisplay(context))),
+      const SizedBox(width: trailingGap),
+      _GameTopBarPauseButton(onPressed: onPausePressed, tooltip: pauseTooltip),
+      const SizedBox(width: trailingGap),
+      _buildNextTurnButton(compactHorizontalPadding: false),
+    ];
+  }
+
   @override
   Widget build(BuildContext context) {
     final double viewportWidth = MediaQuery.sizeOf(context).width;
@@ -227,40 +256,8 @@ class GameTopBar extends StatelessWidget {
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: isNarrow
-                ? <Widget>[
-                    _GameTopBarHamburger(
-                      onPressed: onToggleSideMenu,
-                      tooltip: menuTooltip,
-                    ),
-                    const SizedBox(width: leadingGap),
-                    Expanded(
-                      child: Align(
-                        alignment: Alignment.centerRight,
-                        child: _buildNextTurnButton(
-                          compactHorizontalPadding: isMinViewport,
-                        ),
-                      ),
-                    ),
-                  ]
-                : <Widget>[
-                    _GameTopBarHamburger(
-                      onPressed: onToggleSideMenu,
-                      tooltip: menuTooltip,
-                    ),
-                    const SizedBox(width: leadingGap),
-                    if (observeBannerLabel != null) ...<Widget>[
-                      _buildObserveBanner(context),
-                      const SizedBox(width: leadingGap),
-                    ],
-                    Expanded(child: Center(child: _buildTurnDisplay(context))),
-                    const SizedBox(width: trailingGap),
-                    _GameTopBarPauseButton(
-                      onPressed: onPausePressed,
-                      tooltip: pauseTooltip,
-                    ),
-                    const SizedBox(width: trailingGap),
-                    _buildNextTurnButton(compactHorizontalPadding: false),
-                  ],
+                ? _buildNarrowRowChildren(isMinViewport: isMinViewport)
+                : _buildWideRowChildren(context),
           ),
         ),
       ),
