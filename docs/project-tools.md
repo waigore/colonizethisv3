@@ -314,9 +314,37 @@ Paste the script output into the PR description for AC8–AC9 evidence.
 
 ---
 
+## compute_app_test_plan.dart (PR app test selection)
+
+Computes which `app/test/**` files CI should run for a pull-request diff using a static import graph over `app/lib` and `app/test`. Spec: [SPEC/program/ci-app-selective-tests.md](../SPEC/program/ci-app-selective-tests.md).
+
+**Invocation**
+
+```bash
+dart run tool/compute_app_test_plan.dart --changed-files="$(git diff --name-only origin/dev...HEAD | paste -sd,)"
+```
+
+**Output**
+
+JSON on stdout: `{"mode":"full|selective|skip","tests":["app/test/..."]}`.
+
+- **`selective`** — run only listed tests (typical app-only Dart edits).
+- **`full`** — run the full two-shard app matrix (assets, package changes, `ci:full-app` label).
+- **`skip`** — no app tests (tool-only / non-app PRs).
+
+Full app tests and the 80% `app/lib/` coverage gate run on the **nightly** workflow (`app_full_tests_*` jobs in `.github/workflows/nightly.yml`), not on every PR.
+
+**Tests**
+
+```bash
+dart test test/compute_app_test_plan_test.dart --reporter=compact
+```
+
+---
+
 ## run_quality_gate_tests.sh (CI verification)
 
-Runs the same test and coverage steps as the GitHub Quality workflow (`.github/workflows/quality.yml`): **Wang incremental assets** (`python3 pytool/test_wang_incremental_assets_and_preview.py`; CI installs **`python3-pil`** via apt; locally install Pillow e.g. `python3 -m pip install pillow` or use your `pytool` venv), packages via **`tool/run_package_tests.sh`** (CI job **`package_tests`**), app (Flutter) with **app widget coverage gate ≥ 80%** (applies to `lib/widgets/` only; see SPEC/program/test-logging.md), ctdev (Flutter), `run_observer_game` coverage gate. **Tool packages** and **sim_scenarios** are in the nightly gate — see **`tool/run_nightly_gate_tests.sh`** and [SPEC/program/test-logging.md](../SPEC/program/test-logging.md). Use this to verify the PR quality gate locally before pushing.
+Runs the same test and coverage steps as the GitHub Quality workflow (`.github/workflows/quality.yml`): **Wang incremental assets** (`python3 pytool/test_wang_incremental_assets_and_preview.py`; CI installs **`python3-pil`** via apt; locally install Pillow e.g. `python3 -m pip install pillow` or use your `pytool` venv), packages via **`tool/run_package_tests.sh`** (CI job **`package_tests`**), app (Flutter) with **app widget coverage gate ≥ 80%** (applies to `lib/widgets/` only; see SPEC/program/test-logging.md), ctdev (Flutter), `run_observer_game` coverage gate. **PR CI** uses selective app tests via **`tool/compute_app_test_plan.dart`**; the full app matrix + coverage gate is **nightly only**. **Tool packages** and **sim_scenarios** are in the nightly gate — see **`tool/run_nightly_gate_tests.sh`** and [SPEC/program/test-logging.md](../SPEC/program/test-logging.md). Use this to verify the PR quality gate locally before pushing.
 
 **Invocation**
 
@@ -330,7 +358,7 @@ Requires `dart`, `flutter`, and `lcov` (e.g. `sudo apt-get install lcov`).
 
 ## run_nightly_gate_tests.sh (nightly CI)
 
-Runs tool package `dart test` for `tool/sim_scenarios`, `tool/sim_combat_montecarlo`, `tool/sim_combat`, `tool/generate_map`, `tool/init_game`, `tool/sim_economy`, `tool/show_tech`, then **`melos run sim_scenarios`**. Same as the **integration** job in `.github/workflows/nightly.yml` (daily **23:00 Asia/Hong_Kong**). Observer campaign verify is a separate job in that workflow. Spec: [SPEC/program/test-logging.md](../SPEC/program/test-logging.md).
+Runs tool package `dart test` for `tool/sim_scenarios`, `tool/sim_combat_montecarlo`, `tool/sim_combat`, `tool/generate_map`, `tool/init_game`, `tool/sim_economy`, `tool/show_tech`, then **`melos run sim_scenarios`**. Same as the **integration** job in `.github/workflows/nightly.yml` (daily **23:00 Asia/Hong_Kong**). The same workflow also runs **full app tests + 80% coverage** (`app_full_tests_*` jobs) and observer campaign verify. Spec: [SPEC/program/test-logging.md](../SPEC/program/test-logging.md).
 
 **Invocation**
 
