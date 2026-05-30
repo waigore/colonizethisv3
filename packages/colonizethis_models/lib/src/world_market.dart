@@ -1,3 +1,4 @@
+import 'model_validation_exception.dart';
 import 'stockpile.dart';
 
 /// World market data types for the per-turn commodity trading system.
@@ -20,7 +21,11 @@ enum TradeOrderType {
     for (final t in TradeOrderType.values) {
       if (t.name == value) return t;
     }
-    throw ArgumentError.value(value, 'value', 'unknown TradeOrderType');
+    throw ModelValidationException.value(
+      value,
+      'value',
+      'unknown TradeOrderType',
+    );
   }
 }
 
@@ -40,7 +45,11 @@ enum TradeOrderStatus {
     for (final s in TradeOrderStatus.values) {
       if (s.name == value) return s;
     }
-    throw ArgumentError.value(value, 'value', 'unknown TradeOrderStatus');
+    throw ModelValidationException.value(
+      value,
+      'value',
+      'unknown TradeOrderStatus',
+    );
   }
 }
 
@@ -58,21 +67,25 @@ class TradeOrder {
     this.isFtp = false,
   }) {
     if (commodityId.isEmpty) {
-      throw ArgumentError.value(
+      throw ModelValidationException.value(
         commodityId,
         'commodityId',
         'commodityId must not be empty',
       );
     }
     if (quantity < 0) {
-      throw ArgumentError.value(
+      throw ModelValidationException.value(
         quantity,
         'quantity',
         'quantity must be non-negative',
       );
     }
     if (priority < 1) {
-      throw ArgumentError.value(priority, 'priority', 'priority must be >= 1');
+      throw ModelValidationException.value(
+        priority,
+        'priority',
+        'priority must be >= 1',
+      );
     }
   }
 
@@ -109,7 +122,7 @@ class TradeOrder {
   static TradeOrder fromJson(Map<String, dynamic> json) {
     final id = json['commodityId'];
     if (id is! String) {
-      throw ArgumentError.value(
+      throw ModelValidationException.value(
         id,
         'commodityId',
         'TradeOrder.fromJson: commodityId must be String',
@@ -117,7 +130,7 @@ class TradeOrder {
     }
     final typeRaw = json['type'];
     if (typeRaw is! String) {
-      throw ArgumentError.value(
+      throw ModelValidationException.value(
         typeRaw,
         'type',
         'TradeOrder.fromJson: type must be String',
@@ -128,7 +141,7 @@ class TradeOrder {
         ? qtyRaw
         : int.tryParse(qtyRaw?.toString() ?? '');
     if (qty == null) {
-      throw ArgumentError.value(
+      throw ModelValidationException.value(
         qtyRaw,
         'quantity',
         'TradeOrder.fromJson: quantity must be int',
@@ -137,7 +150,7 @@ class TradeOrder {
     final prRaw = json['priority'];
     final pr = prRaw is int ? prRaw : int.tryParse(prRaw?.toString() ?? '');
     if (pr == null) {
-      throw ArgumentError.value(
+      throw ModelValidationException.value(
         prRaw,
         'priority',
         'TradeOrder.fromJson: priority must be int',
