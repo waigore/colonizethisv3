@@ -8,6 +8,7 @@
 import 'package:colonizethis_app/config/editorial_monocle_palette.dart';
 import 'package:colonizethis_app/features/game/flame/game_map_corner_controls.dart';
 import 'package:colonizethis_app/features/game/flame/game_map_empire_left_rail.dart';
+import 'package:colonizethis_app/features/game/flame/game_map_province_detail_side_panel.dart';
 import 'package:colonizethis_app/features/game/flame/game_region_minimap.dart';
 import 'package:colonizethis_app/features/game/widgets/game_map_options_dialog.dart';
 import 'package:colonizethis_app/features/game/widgets/game_tab_bar.dart';
@@ -412,6 +413,30 @@ void main() {
     );
 
     testWidgets(
+      'Game Map Province Side Panel folder exposes open + closed variants',
+      (WidgetTester tester) async {
+        const useCaseNames = <String>[
+          'Open — wide layout panel visible',
+          'Closed — panel collapsed',
+        ];
+
+        for (final name in useCaseNames) {
+          final story = _useCase(
+            gameMapProvinceDetailSidePanelDirectories,
+            folderName: 'Game Map Province Side Panel',
+            useCaseName: name,
+          );
+          await tester.pumpWidget(
+            story.builder(tester.element(find.byType(View))),
+          );
+          await tester.pump();
+          await tester.pump(const Duration(milliseconds: 100));
+          expect(find.byType(GameMapProvinceDetailSidePanel), findsOneWidget);
+        }
+      },
+    );
+
+    testWidgets(
       'all new in-game shell chrome story frames apply the editorial-monocle scaffold colour',
       (WidgetTester tester) async {
         // Sanity-check that the shared story frame in catalog_part7 paints
@@ -432,6 +457,10 @@ void main() {
           ),
           ('Region Minimap', 'Visible — wide chrome with viewport rectangle'),
           (
+            'Game Map Province Side Panel',
+            'Open — wide layout panel visible',
+          ),
+          (
             'Player Turn Event Feed Card',
             'Populated — three entries (top entry tappable)',
           ),
@@ -444,6 +473,7 @@ void main() {
             ...gameMapCornerControlsDirectories,
             ...gameMapEmpireLeftRailDirectories,
             ...gameRegionMinimapDirectories,
+            ...gameMapProvinceDetailSidePanelDirectories,
             ...playerTurnEventFeedCardDirectories,
           ];
           final story = _useCase(

@@ -53,6 +53,7 @@ Implementation: [`GameTabBar`](../../app/lib/features/game/widgets/game_tab_bar.
 
 ## Map area
 
+- **Background chrome:** The map stack paints a non-interactive backdrop behind [CtRegionMap](../../app/lib/widgets/ct_region_map.dart) via [GameMapAreaBackground](../../app/lib/features/game/flame/game_map_area_background.dart). The surface fills with `--bg-deep`, adds two low-opacity radial washes (mockup `.map-area` ellipses), and overlays a **48 dp** square grid at **60%** opacity with lines tinted from `--border` at **8%** alpha (mockup `.map-grid`). No hard-coded light-theme hex literals; the grid must not intercept pointer events.
 - **Content:** One instance of the map widget per active view. When the user switches tabs, the map widget is updated or swapped to show the selected region's map.
 - **Layers:** Base tile layer always; **province overlay** (province/sea boundary strokes), **province ownership** (Great Power land tint), and **political** overlay togglable by the user where the shell exposes them (see Map display options). **Base layer display mode** and related map tools sit in a **horizontal icon row** at the **bottom-left** of the map (see below). **Empire actions** (Production, units, Diplomacy, Technology) use an **always-visible icon column** along the **left** of the map (east of the edge-swipe strip); see [empire-buttons.md](empire-buttons.md).
 - **Interaction:** Pan, zoom (fit-relative continuous band per [map-widget.md](map-widget.md) § Viewport, scale, pan, zoom), tap/click for province selection. Map widget fires `onProvinceSelected`; the Empire overview screen responds (e.g. show province details in a panel or bottom sheet; content TBD).
@@ -240,6 +241,13 @@ Folder: **Region Minimap** — stories for [GameRegionMinimap](../../app/lib/fea
 | Narrow — 90 × 70 dp grid (issue #2870 S3) | Pins § Narrow minimap measurements: width-or-height-limited fit inside the 90 × 70 dp bounding box; panel chrome unchanged from wide. | § Narrow minimap measurements; [mobile-adaptation.md](mobile-adaptation.md) § In-game shell |
 
 Stories drive a deterministic [`RegionMapViewportSnapshot`](../../app/lib/features/game/flame/region_map_viewport_snapshot.dart) (`zoom = fitMapZoom × 1.6`) so the viewport rectangle reads as a visible window inside the minimap grid in the visible-chrome story.
+
+Folder: **Game Map Province Side Panel** — stories for [GameMapProvinceDetailSidePanel](../../app/lib/features/game/flame/game_map_province_detail_side_panel.dart) registered from [`gameMapProvinceDetailSidePanelDirectories`](../../app/lib/widgetbook/catalog_part7.dart). Issue #2861 S12 story (9) province panel open/closed on wide layout (≥ 600 dp).
+
+| Story | Purpose | Authority |
+|-------|---------|-----------|
+| Open — wide layout panel visible | Pins the 320 dp right column with province detail chrome when `mapProvincePanelProvider.overlayOpen` is true after a sample tile tap. | § Province panel (wide shell); [in-game-shell-narrow.md](in-game-shell-narrow.md) § Province/sea zone detail overlay |
+| Closed — panel collapsed | Exercises the `SizedBox.shrink()` path when the panel provider is closed so reviewers compare against the open chrome. | § Province panel (wide shell) |
 
 Folder: **Game Map Corner Controls** — stories for [GameMapCornerControls](../../app/lib/features/game/flame/game_map_corner_controls.dart) registered from [`gameMapCornerControlsDirectories`](../../app/lib/widgetbook/catalog_part7.dart) and aggregated into `_ctWidgetbookDirectories` in [`catalog.dart`](../../app/lib/widgetbook/catalog.dart). Issue #2861 S4 + S12 story (4) corner controls row, plus the issue #2870 S9 narrow-layout variant.
 

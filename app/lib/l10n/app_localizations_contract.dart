@@ -81,6 +81,9 @@ abstract class AppLocalizations {
   /// Label for the Next Turn button showing current turn and year.
   String game_nextTurnButton(int turn, int year);
 
+  /// Centered turn/year label in the in-game top bar.
+  String game_turnDisplay(int turn, int year);
+
   /// Title of the dialog asking the user to confirm ending the current turn.
   String get game_nextTurnConfirm_title;
 
