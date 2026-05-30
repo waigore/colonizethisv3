@@ -97,6 +97,22 @@ class GameMapEmpireLeftRail extends ConsumerWidget {
         ),
         SizedBox(height: gapHeight),
         _EmpireRailButton(
+          buttonKey: kEmpireTradeButtonKey,
+          tooltip: 'Trade',
+          iconAsset: '${kAppIconAssetPrefix}ui_icon_trade.png',
+          narrow: narrow,
+          onTap: () {
+            onIconTappedWhileSelectionMode?.call();
+            bus.emit(
+              ct_models.NavigateToRouteEvent(Routes.trade, {
+                'game': game,
+                'humanPlayerId': humanPlayerId,
+              }),
+            );
+          },
+        ),
+        SizedBox(height: gapHeight),
+        _EmpireRailButton(
           buttonKey: kEmpireCivilianUnitsButtonKey,
           tooltip: 'Civilian Units',
           iconAsset: '${kAppIconAssetPrefix}ui_icon_civilian_units.png',

@@ -7,8 +7,8 @@ import '../flame/game_screen_shared.dart'
     show kGameMapNextTurnButtonKey, kNextTurnDisabledOpacity;
 
 /// In-game shell top bar: 36 px dark editorial-monocle chrome with a
-/// 3-line hamburger, an optional observe banner, and the wood-panel
-/// `Next turn` button.
+/// 3-line hamburger, centered turn display, optional observe banner,
+/// bordered pause affordance, and the wood-panel `Next turn` button.
 ///
 /// SPEC: `SPEC/ui/in-game-shell-narrow.md` § Top bar, `SPEC/ui/empire-overview.md`
 /// (in-game shell), and the canonical [CtTopBar] chrome contract in
@@ -34,16 +34,24 @@ class GameTopBar extends StatelessWidget {
   const GameTopBar({
     super.key,
     required this.onToggleSideMenu,
+    required this.onPausePressed,
     required this.onNextTurn,
     required this.nextTurnEnabled,
+    required this.turnDisplayText,
     required this.nextTurnText,
     required this.menuTooltip,
+    required this.pauseTooltip,
     this.observeBannerLabel,
   });
 
   /// Tap callback for the leading hamburger. Opens the in-game side menu
   /// (Debug log + Game Parameters) per `SPEC/ui/game-side-menu.md`.
   final VoidCallback onToggleSideMenu;
+
+  /// Tap callback for the bordered pause affordance. The host emits
+  /// `OpenPauseMenuPanelEvent` on the app bus per
+  /// `SPEC/ui/in-game-shell-narrow.md` § Top bar.
+  final VoidCallback onPausePressed;
 
   /// Tap callback for the trailing wood-panel `Next turn` button. The
   /// host handles the confirmation + processing dialog flow per
@@ -63,6 +71,10 @@ class GameTopBar extends StatelessWidget {
   /// [CtNinePatchButton.disabledOpacity] (`0.4`).
   final bool nextTurnEnabled;
 
+  /// Centered turn/year label (e.g. `Turn 42 / Year 1650`). The host
+  /// owns i18n formatting via `game_turnDisplay`.
+  final String turnDisplayText;
+
   /// Pre-formatted button label (e.g. `Next turn (42 / 1650)` or the
   /// observe-mode `Observe — Turn 42 (1650)` fallback). The host owns
   /// the i18n + turn/year formatting.
@@ -71,6 +83,9 @@ class GameTopBar extends StatelessWidget {
   /// Accessibility tooltip for the hamburger affordance. The caller
   /// resolves the localised string (`appL10n(context).gameMap_menuTooltip`).
   final String menuTooltip;
+
+  /// Accessibility tooltip for the pause affordance (`game_pauseMenu_tooltip`).
+  final String pauseTooltip;
 
   /// Optional muted banner rendered between the hamburger and the Next
   /// turn button. Shown when the shell is in observe mode; `null` in the
@@ -111,6 +126,12 @@ class GameTopBar extends StatelessWidget {
   /// integration / widget tests.
   static const Key hamburgerKey = Key('game_top_bar_hamburger');
 
+  /// Stable widget key for the centered turn display label.
+  static const Key turnDisplayKey = Key('game_top_bar_turn_display');
+
+  /// Stable widget key for the pause affordance.
+  static const Key pauseButtonKey = Key('game_top_bar_pause');
+
   /// Stable widget key for the optional observe banner text.
   static const Key observeBannerKey = Key('game_top_bar_observe_banner');
 
@@ -131,6 +152,25 @@ class GameTopBar extends StatelessWidget {
       style: observeStyle,
       maxLines: 1,
       overflow: TextOverflow.ellipsis,
+    );
+  }
+
+  Widget _buildTurnDisplay(BuildContext context) {
+    final ThemeData theme = Theme.of(context);
+    final TextStyle turnStyle =
+        (theme.textTheme.bodyMedium ?? const TextStyle(fontSize: 13)).copyWith(
+          color: EditorialMonoclePalette.fg,
+          fontWeight: FontWeight.w600,
+          fontSize: 13,
+          letterSpacing: 0.04 * 13,
+        );
+    return Text(
+      turnDisplayText,
+      key: turnDisplayKey,
+      style: turnStyle,
+      maxLines: 1,
+      overflow: TextOverflow.ellipsis,
+      textAlign: TextAlign.center,
     );
   }
 
@@ -181,7 +221,12 @@ class GameTopBar extends StatelessWidget {
                 _buildObserveBanner(context),
                 const SizedBox(width: leadingGap),
               ],
-              const Spacer(),
+              Expanded(child: Center(child: _buildTurnDisplay(context))),
+              const SizedBox(width: trailingGap),
+              _GameTopBarPauseButton(
+                onPressed: onPausePressed,
+                tooltip: pauseTooltip,
+              ),
               const SizedBox(width: trailingGap),
               _buildNextTurnButton(),
             ],
@@ -201,6 +246,100 @@ class GameTopBar extends StatelessWidget {
 ///
 /// Wrapped in [MouseRegion] for cursor feedback and a [Material] / [InkWell]
 /// for accurate hit-testing inside the top bar.
+/// 28 x 28 bordered pause tap target per mockup `.pause-btn-sm`.
+class _GameTopBarPauseButton extends StatefulWidget {
+  const _GameTopBarPauseButton({required this.onPressed, required this.tooltip});
+
+  final VoidCallback onPressed;
+  final String tooltip;
+
+  static const double _hoverBackgroundAlpha = 0.4;
+  static const double _pressedBackgroundAlpha = 0.6;
+  static const Duration _animationDuration = Duration(milliseconds: 120);
+  static const Curve _animationCurve = Curves.easeOut;
+
+  @override
+  State<_GameTopBarPauseButton> createState() => _GameTopBarPauseButtonState();
+}
+
+class _GameTopBarPauseButtonState extends State<_GameTopBarPauseButton> {
+  bool _hovered = false;
+  bool _pressed = false;
+
+  void _handleHover(bool entered) {
+    if (_hovered == entered) return;
+    setState(() => _hovered = entered);
+  }
+
+  void _handlePressed(bool pressed) {
+    if (_pressed == pressed) return;
+    setState(() => _pressed = pressed);
+  }
+
+  Color get _borderColor {
+    if (_hovered || _pressed) return EditorialMonoclePalette.accentDim;
+    return EditorialMonoclePalette.border;
+  }
+
+  Color get _glyphColor {
+    if (_hovered || _pressed) return EditorialMonoclePalette.accentBright;
+    return EditorialMonoclePalette.accentDim;
+  }
+
+  Color get _backgroundColor {
+    if (_pressed) {
+      return EditorialMonoclePalette.surfaceLite.withValues(
+        alpha: _GameTopBarPauseButton._pressedBackgroundAlpha,
+      );
+    }
+    if (_hovered) {
+      return EditorialMonoclePalette.surfaceLite.withValues(
+        alpha: _GameTopBarPauseButton._hoverBackgroundAlpha,
+      );
+    }
+    return Colors.transparent;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return MouseRegion(
+      cursor: SystemMouseCursors.click,
+      onEnter: (_) => _handleHover(true),
+      onExit: (_) => _handleHover(false),
+      child: SizedBox(
+        key: GameTopBar.pauseButtonKey,
+        width: GameTopBar.hamburgerSize,
+        height: GameTopBar.hamburgerSize,
+        child: Tooltip(
+          message: widget.tooltip,
+          child: Material(
+            color: Colors.transparent,
+            child: InkWell(
+              onTap: widget.onPressed,
+              onHighlightChanged: _handlePressed,
+              child: AnimatedContainer(
+                duration: _GameTopBarPauseButton._animationDuration,
+                curve: _GameTopBarPauseButton._animationCurve,
+                decoration: BoxDecoration(
+                  color: _backgroundColor,
+                  border: Border.all(color: _borderColor, width: 1),
+                ),
+                child: Center(
+                  child: Icon(
+                    Icons.play_arrow,
+                    size: 14,
+                    color: _glyphColor,
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class _GameTopBarHamburger extends StatefulWidget {
   const _GameTopBarHamburger({required this.onPressed, required this.tooltip});
 

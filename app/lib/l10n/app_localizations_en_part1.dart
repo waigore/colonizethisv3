@@ -72,6 +72,11 @@ mixin _AppLocalizationsEnStrings1 on AppLocalizations {
   }
 
   @override
+  String game_turnDisplay(int turn, int year) {
+    return 'Turn $turn / Year $year';
+  }
+
+  @override
   String get game_nextTurnConfirm_title => 'End turn?';
 
   @override
