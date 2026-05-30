@@ -94,6 +94,8 @@ Each **resolved turn** in the session loop measures the same segment as the app 
 
 Pass **`--verify-colonial-expansion`** after a successful run (exit **6** on failure; requires `--max-turns >= 150` or no turn cap). Rollup computation: `lib/observer_extractable_rollup.dart` (init static resource grid ∩ GP-owned provinces at verify turn; excludes capital and province town tiles per [extraction-and-improvements.md](../game/extraction-and-improvements.md)).
 
+**Phase-entry budget (Refs #2848).** Complementing the turn-150 colonial gate, every Great Power `gp1`–`gp6` must reach `ObserverGoalPhase.colonial` by turn **90** on seed **42** (leaves **≥ 60** post-entry turns for NW acquisition + improvements). Measurement check only — **not** wired into `--verify-colonial-expansion` exit codes. Regression-guarded by `packages/colonizethis_ai/test/seed42_observer_colonial_phase_entry_budget_test.dart` (currently `skip`ped pending EXPAND-side gating; Refs #2847 / #2924 / #2925).
+
 Unit tests cover parsers; full observer runs are slow and are **not** in the default `quality` gate. **Nightly:** `.github/workflows/nightly.yml` job `observer_conquest_verify` runs seed **42**, **150** turns, **`--verify-conquest`**, **`--verify-colonial-expansion`**, and **`--verify-workforce`** daily at **23:00 Asia/Hong_Kong** (`0 15 * * *` UTC; `workflow_dispatch` supported).
 
 ## Workforce sustain verification (Refs #2692 S10 + S10b)

@@ -53,7 +53,7 @@ The widget is presentational with respect to game state — it does not read pro
 
 - Outer container: `CtDialogShell(maxWidth: 400, maxHeight: 500)`.
 - Inner column: `Column(mainAxisSize: min, crossAxisAlignment: stretch)`.
-- Title text: `appL10n(context).quickBattle_round(_round, widget.input.maxRounds)`.
+- Title text: `appL10n(context).quickBattle_round(_round, widget.input.maxRounds)` rendered with `Theme.of(context).textTheme.titleMedium` overridden to color `EditorialMonoclePalette.accent` (the `--accent` token) and `letterSpacing: 0.05em` per the canonical palette in `SPEC/ui/pixel-art-ui-catalog.md` § Editorial-monocle palette and the round-counter row in `SPEC/ui/mockups/CMPT20001-quick-battle-screen.html`.
 - 12 dp gap before the deployment view; 12 dp gap before the action selector or auto-resolve button.
 
 ### Result phase (after resolver returns)
@@ -145,6 +145,10 @@ Hardware back is not handled; orchestrator owns lifecycle until `onComplete`.
   When the round phase is rendered,
   Then the title text equals the localized `quickBattle_round(1, 3)` string.
 
+- Given a `QuickBattleScreen` is mounted with `interactive: false` and `input.maxRounds == 3`,
+  When the round phase is rendered,
+  Then the round-counter `Text` widget resolves its `style.color` to `EditorialMonoclePalette.accent` (the `--accent` token) and its `style.letterSpacing` to `0.05` (em), regardless of whether the ambient theme is `AppThemes.editorialMonocle` or a fallback.
+
 - Given a `QuickBattleResult` returned by the resolver has `provinceFlips == true`,
   When the result view renders,
   Then the result view displays the localized `quickBattle_provinceCaptured` line in bold above the casualty counts.
@@ -162,3 +166,23 @@ Hardware back is not handled; orchestrator owns lifecycle until `onComplete`.
 ## Widgetbook
 
 Catalog directory: `Quick Battle Screen` (registered in `app/lib/widgetbook/catalog.dart`). At least one default use case constructs a non-interactive `QuickBattleScreen` with a sample `QuickBattleInput` (two factions, three or more units per side at `CENTER + FRONT`) and a no-op `onComplete`. Additional use cases are encouraged for the interactive variant.
+
+The `combatUiDirectories` `Quick Battle` folder enumerates the **11 in-scope use cases** for issue #2869 S6 (pinned by `app/test/widgetbook_combat_stories_dark_chrome_test.dart`):
+
+1. `Quick Battle Screen — non-interactive`
+2. `Quick Battle Screen — interactive`
+3. `Deployment view`
+4. `Action selector — full CP`
+5. `Action selector — 1 CP (assault disabled)`
+6. `Action selector — spent (0 CP)`
+7. `Combat mode choice — regular province`
+8. `Combat mode choice — capital siege`
+9. `Quick Battle result — attacker wins, province flips`
+10. `Quick Battle result — defender holds`
+11. `Quick Battle result — mutual exhaustion`
+
+Adding, removing, or renaming an entry in `catalog_part3.dart#combatUiDirectories` must be reflected here and in the pin test simultaneously; #2869 S6's normative scope is "no new stories", so the pinned inventory is the regression guard for that scope.
+
+- Given the Widgetbook combat folder exposes the 11 use cases listed above,
+  When each story builder is pumped under the ambient `AppThemes.editorialMonocle` frame supplied by `_combatStoryFrame` in `app/lib/widgetbook/catalog_part3.dart`,
+  Then the build raises no exception, the resolved `Theme.of(scaffold).brightness` is `Brightness.dark`, `Theme.of(scaffold).scaffoldBackgroundColor` resolves to `EditorialMonoclePalette.bg`, `Theme.of(scaffold).colorScheme.primary` resolves to `EditorialMonoclePalette.accent`, `Theme.of(scaffold).colorScheme.surface` resolves to `EditorialMonoclePalette.surface`, and the rendered widget tree contains no `ElevatedButton`, `TextButton`, or `OutlinedButton` (per `SPEC/ui/pixel-art-ui-catalog.md` § Material design ban).
