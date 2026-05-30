@@ -263,8 +263,10 @@ All decorative primitives are self-painted; **no PixelLab / Bitforge / Pixflux a
 
 ## Widgetbook
 
-- **Folder:** **Main Menu** (`app/lib/widgetbook/catalog.dart`) for `CtMainMenu` use cases: **Default**, **After victory**, **No saves**, **Resume game visible**, **Pixel art (mobile)** per the **States and variants** table (each rendered under `AppThemes.editorialMonocle`).
+- **Folder:** **Main Menu** (`app/lib/widgetbook/catalog.dart`) for `CtMainMenu` use cases: **Default**, **After victory**, **No saves**, **Resume game visible**, **Default (mobile)**, **Pixel art (mobile)** per the **States and variants** table (each rendered under `AppThemes.editorialMonocle`).
 - **Folder:** **Ct- Dark Theme Primitives** (`app/lib/widgetbook/catalog_part5.dart`) hosts the decorative primitives consumed by this screen: `CtBrassDivider`, `CtCompassRose`, `CtFleurDeLisOrnament`, `CtMainMenuCollage`. Each story renders the primitive over `AppThemes.editorialMonocle.scaffoldBackgroundColor` so reviewers see the wood-on-brass contrast in context.
+
+The **Default (mobile)** and **Pixel art (mobile)** use cases must be pinned by `app/test/widgetbook_main_menu_mobile_viewport_test.dart` (Refs #2870 R22 / S9) so their removal or rename surfaces in CI before reviewers lose the narrow-viewport review surface for the `≤ 430 dp` letter-spacing and compact menu-container padding overrides.
 
 ---
 
