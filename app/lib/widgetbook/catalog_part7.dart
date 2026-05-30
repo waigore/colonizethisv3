@@ -32,12 +32,16 @@ List<WidgetbookNode> get gameTopBarDirectories => [
         builder: (context) => _gameTopBarStoryFrame(
           child: GameTopBar(
             onToggleSideMenu: () {},
+            onPausePressed: () {},
             onNextTurn: () async {},
             nextTurnEnabled: true,
+            turnDisplayText: 'Turn 42 / Year 1650',
             // ignore: avoid_hardcoded_strings_in_widgets
             nextTurnText: 'Next turn (42 / 1650)',
             // ignore: avoid_hardcoded_strings_in_widgets
             menuTooltip: 'Menu',
+            // ignore: avoid_hardcoded_strings_in_widgets
+            pauseTooltip: 'Pause menu',
           ),
         ),
       ),
@@ -46,12 +50,16 @@ List<WidgetbookNode> get gameTopBarDirectories => [
         builder: (context) => _gameTopBarStoryFrame(
           child: GameTopBar(
             onToggleSideMenu: () {},
+            onPausePressed: () {},
             onNextTurn: () async {},
             nextTurnEnabled: false,
+            turnDisplayText: 'Turn 42 / Year 1650',
             // ignore: avoid_hardcoded_strings_in_widgets
             nextTurnText: 'Next turn (42 / 1650)',
             // ignore: avoid_hardcoded_strings_in_widgets
             menuTooltip: 'Menu',
+            // ignore: avoid_hardcoded_strings_in_widgets
+            pauseTooltip: 'Pause menu',
           ),
         ),
       ),
@@ -60,12 +68,16 @@ List<WidgetbookNode> get gameTopBarDirectories => [
         builder: (context) => _gameTopBarStoryFrame(
           child: GameTopBar(
             onToggleSideMenu: () {},
+            onPausePressed: () {},
             onNextTurn: () async {},
             nextTurnEnabled: true,
+            turnDisplayText: 'Turn 42 / Year 1650',
             // ignore: avoid_hardcoded_strings_in_widgets
             nextTurnText: 'Observe — Turn 42 (1650)',
             // ignore: avoid_hardcoded_strings_in_widgets
             menuTooltip: 'Menu',
+            // ignore: avoid_hardcoded_strings_in_widgets
+            pauseTooltip: 'Pause menu',
             // ignore: avoid_hardcoded_strings_in_widgets
             observeBannerLabel: 'Observing (Castile)',
           ),
@@ -664,6 +676,28 @@ List<WidgetbookNode> get gameRegionMinimapDirectories => [
   ),
 ];
 
+/// Wide-layout province side panel stories. SPEC/ui/in-game-shell-narrow.md
+/// § Province/sea zone detail overlay (wide). Issue #2861 S12 story (9).
+List<WidgetbookNode> get gameMapProvinceDetailSidePanelDirectories => [
+  WidgetbookFolder(
+    name: 'Game Map Province Side Panel',
+    children: [
+      WidgetbookUseCase(
+        name: 'Open — wide layout panel visible',
+        builder: (context) => _gameMapProvinceDetailSidePanelProviderScope(
+          initialOpen: true,
+        ),
+      ),
+      WidgetbookUseCase(
+        name: 'Closed — panel collapsed',
+        builder: (context) => _gameMapProvinceDetailSidePanelProviderScope(
+          initialOpen: false,
+        ),
+      ),
+    ],
+  ),
+];
+
 /// Empire left rail story frame: wires a stand-in [GameService] that
 /// returns `null` from [GameService.getMapData] (so the diplomacy nav
 /// payload falls back to an empty [MapTopology]) and overrides
@@ -816,6 +850,94 @@ class _StoryRegionMinimapVisibleNotifier extends RegionMinimapVisibleNotifier {
   bool build() {
     return ref.read(_storyMinimapInitialVisibleProvider);
   }
+}
+
+class _GameMapProvinceDetailSidePanelStoryHost extends ConsumerStatefulWidget {
+  const _GameMapProvinceDetailSidePanelStoryHost({required this.initialOpen});
+
+  final bool initialOpen;
+
+  @override
+  ConsumerState<_GameMapProvinceDetailSidePanelStoryHost> createState() =>
+      _GameMapProvinceDetailSidePanelStoryHostState();
+}
+
+class _GameMapProvinceDetailSidePanelStoryHostState
+    extends ConsumerState<_GameMapProvinceDetailSidePanelStoryHost> {
+  final PerPlayerWorkTargetSelectionCache _workTargetSelectionCache =
+      PerPlayerWorkTargetSelectionCache();
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.initialOpen) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        ref
+            .read(mapProvincePanelProvider.notifier)
+            .reportMapTileTapped(sampleTileKeyForProvinceOverlay);
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final game = demoGameForOverlay;
+    final region = demoRegionForOverlay;
+    return MaterialApp(
+      theme: AppThemes.editorialMonocle,
+      localizationsDelegates: AppLocalizationsBinding.localizationsDelegates,
+      supportedLocales: AppLocalizations.supportedLocales,
+      home: MediaQuery(
+        data: const MediaQueryData(size: Size(900, 640)),
+        child: Scaffold(
+          backgroundColor: EditorialMonoclePalette.bgDeep,
+          body: Row(
+            children: [
+              Expanded(
+                child: ColoredBox(
+                  color: EditorialMonoclePalette.bgDeep,
+                  child: const Center(
+                    child: Text(
+                      'Map area (stand-in)',
+                      // ignore: avoid_hardcoded_strings_in_widgets
+                    ),
+                  ),
+                ),
+              ),
+              GameMapProvinceDetailSidePanel(
+                game: game,
+                region: region,
+                humanPlayerId: game.players.first.id,
+                playerView: demoHumanPlayerViewForOverlay,
+                workTargetSelectionCache: _workTargetSelectionCache,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+ProviderScope _gameMapProvinceDetailSidePanelProviderScope({
+  required bool initialOpen,
+}) {
+  final game = demoGameForOverlay;
+  return ProviderScope(
+    overrides: [
+      appEventBusProvider.overrideWith((ref) {
+        final bus = AppEventBus.create();
+        ref.onDispose(bus.dispose);
+        return bus;
+      }),
+      currentGameProvider.overrideWith(() => CurrentGameNotifier(game)),
+      currentOrdersProvider.overrideWith(
+        () => CurrentOrdersNotifier(const Orders()),
+      ),
+      gameServiceProvider.overrideWith((ref) => _StoryStubGameService()),
+    ],
+    child: _GameMapProvinceDetailSidePanelStoryHost(initialOpen: initialOpen),
+  );
 }
 
 /// Stand-in [GameService] for the empire-left-rail story.
