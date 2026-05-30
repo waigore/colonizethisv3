@@ -222,6 +222,7 @@ Widget _buildCivilianSectionFiltered({
             );
             return Text(
               l10n.provinceOverlay_unitTarget(u.type, targetLabel),
+              style: TextStyle(color: EditorialMonoclePalette.fg),
             );
           }
           return Text(
@@ -229,6 +230,7 @@ Widget _buildCivilianSectionFiltered({
               u.type,
               unitStatusDisplayLabel(l10n, u.status),
             ),
+            style: TextStyle(color: EditorialMonoclePalette.fg),
           );
         }
         final o = _ownerName(game, u.ownerId);
@@ -238,6 +240,7 @@ Widget _buildCivilianSectionFiltered({
             u.type,
             unitStatusDisplayLabel(l10n, u.status),
           ),
+          style: TextStyle(color: EditorialMonoclePalette.muted),
         );
       }).toList(),
     ),
