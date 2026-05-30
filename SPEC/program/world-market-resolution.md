@@ -125,6 +125,62 @@ Determinism: pure function of inputs. Inputs must be non-negative integers; the 
 
 ---
 
+## Deal matching engine
+
+Implementation lives in `packages/colonizethis_logic/lib/src/economy/world_market/deal_matcher.dart`. Like price discovery, the matcher is pure (deterministic for fixed inputs, no logger calls) and safe to call from hot turn-resolution paths inside the 15-second budget.
+
+### Signature
+
+```dart
+typedef DealMatchInputs = ({
+  Map<String, List<TradeOrder>> offersByFactionId,
+  Map<String, List<TradeOrder>> bidsByFactionId,
+  Map<String, int> tradeCapacityByFactionId,
+  Map<CommodityId, double> pricesByCommodityId,
+  Set<String> ftpPairKeys,
+});
+
+class DealMatcher {
+  /// Canonical key for an unordered bilateral faction pair (FTP membership
+  /// is symmetric). Returns `min(a,b) + '|' + max(a,b)`.
+  static String pairKey(String a, String b);
+
+  /// Runs a single matching pass and returns the deals, carry-forwards,
+  /// and per-commodity activity totals.
+  static DealMatchResult matchDeals(DealMatchInputs inputs);
+}
+```
+
+### Algorithm
+
+For each commodity that appears in any offer or bid (commodities iterated in alphabetical id order for determinism):
+
+1. Collect all offers as `(sellerFactionId, TradeOrder)` entries; collect all bids as `(buyerFactionId, TradeOrder)` entries.
+2. Group entries by integer `priority`. Process priority tiers in **ascending integer order** (tier `1` first — lower integer is higher precedence).
+3. Inside each tier, run two passes:
+   - **Pass 1 — FTP-only.** Iterate offers in `(sellerFactionId, faction-local index)` order. For each offer, iterate bids in `(buyerFactionId, faction-local index)` order and attempt a fill **only if** `ftpPairKeys` contains `pairKey(sellerFactionId, buyerFactionId)`. Buyer cargo (`remainingCargoByBuyerFactionId`) is consulted before each match attempt; if the buyer has zero cargo left, skip the bid.
+   - **Pass 2 — Any.** Iterate the remaining offers and bids (those with `remaining > 0`) in the same order and attempt matches regardless of FTP.
+4. A match attempt produces `matchQty = min(offer.remaining, bid.remaining, buyer.remainingCargo)`. When `matchQty > 0` the matcher emits a `FilledDeal(sellerFactionId, buyerFactionId, commodityId, quantity: matchQty, pricePerUnit: pricesByCommodityId[commodityId] ?? 0.0, isFtpMatch: <ftp-paired>)`, decrements the offer's and bid's remaining quantities, and decrements `remainingCargoByBuyerFactionId[buyerFactionId]` by `matchQty`.
+5. After all tiers process for a commodity, any offer with `remaining > 0` is preserved in `unfilledOffersByFactionId` (keyed by `sellerFactionId`, original order ordering preserved). Bids likewise feed `unfilledBidsByFactionId`. Orders whose remaining is `0` are not preserved.
+6. The carry-forward `TradeOrder` instances are constructed via `copyWith(quantity: remaining)` so unrelated fields (priority, isFtp, type) survive the next-turn re-entry intact.
+
+`activityByCommodityId` records, per commodity that had any submitted volume, a `MarketActivity` with:
+
+- `totalBidQuantity` — sum of all input bid `quantity` values for the commodity (across all factions).
+- `totalOfferQuantity` — sum of all input offer `quantity` values for the commodity.
+- `filledQuantity` — sum of `quantity` across all emitted `FilledDeal`s for the commodity.
+- `priceChangePercent` — `0.0`. Price discovery is composed separately by the phase handler (see Issue B / #2990) using `PriceDiscovery.computeNextPrice`, because only the phase handler knows which inputs are newly-submitted vs carry-forward (carry-forwards are excluded from the supply/demand signal per `SPEC/game/world-market.md` § Price discovery).
+
+### Edge cases
+
+- Missing price for a commodity (`pricesByCommodityId` lookup returns `null`) is recorded on emitted `FilledDeal`s as `pricePerUnit = 0.0`. The phase handler is responsible for seeding `pricesByCommodityId` from `WorldMarketState.prices`; a missing entry signals a setup defect, not a runtime failure.
+- A faction with bids but no entry in `tradeCapacityByFactionId` is treated as having `tradeCapacity = 0` — none of its bids fill, all carry forward.
+- An offer or bid with `quantity == 0` is treated as already exhausted — no `FilledDeal` is emitted, no carry-forward record is generated for it.
+- `ftpPairKeys` is consulted as a set; ordering of pairs inside the set does not affect output. The canonical `pairKey` ensures the input set need not be duplicated for both `(a,b)` and `(b,a)`.
+- First right of refusal is **not** handled by this engine (see Issue D / #2992). When implemented, it will pre-flag matched pairs ahead of the standard tier loop.
+
+---
+
 ## Phase placement (informational; covered fully by Issue B / #2990)
 
 Phase 13 (`worldMarket`) sits between Build / work and End-of-turn — End-of-turn renumbers from 13 → 14. The handler will gather `Orders.tradeOrders`, run matching, apply transfers, then call `computeNextPrice` per commodity and store the resulting `WorldMarketState` on `Game`.
@@ -156,6 +212,22 @@ Phase 13 (`worldMarket`) sits between Build / work and End-of-turn — End-of-tu
 - Given a `computeNextPrice` invocation with `oldPrice = 0.0` (defensive guard) and any volumes, when the function runs, then it returns `max(0.0, basePrice * 0.30) = basePrice * 0.30` (price recovers to the floor instead of staying at zero).
 
 - Given `computeMarketActivity(inputs, filledQuantity: 5)` where the new price equals the old price, when the function runs, then the result `MarketActivity` has `priceChangePercent == 0.0`, `totalBidQuantity == newBidQuantity`, `totalOfferQuantity == newOfferQuantity`, and `filledQuantity == 5`.
+
+### Deal matching engine
+
+- Given a single commodity with one offer `(seller: 'a', quantity: 10, priority: 1)` and one bid `(buyer: 'b', quantity: 5, priority: 1)`, prices `{commodity: 30.0}`, `tradeCapacity['b'] = 10`, and `ftpPairKeys = {}`, when `DealMatcher.matchDeals` runs, then the result has one `FilledDeal(seller: 'a', buyer: 'b', quantity: 5, pricePerUnit: 30.0, isFtpMatch: false)`, the offer carries forward at quantity `5` under `unfilledOffersByFactionId['a']`, no bid carry-forward is recorded, and `activityByCommodityId[commodity] = MarketActivity(totalBidQuantity: 5, totalOfferQuantity: 10, filledQuantity: 5, priceChangePercent: 0.0)`.
+
+- Given priority tier `1` contains a non-FTP `(seller, buyer)` pair with offer `10` and bid `10`, and tier `2` contains an FTP pair with offer `10` and bid `10`, when matching runs, then the tier-1 pair fills first (priority integer takes absolute precedence over FTP) — tier `2`'s FTP pair fills next only if cargo remains, and the resulting `FilledDeal.isFtpMatch` flags reflect each pair's FTP membership.
+
+- Given priority tier `1` contains an FTP pair `(a, b)` with offer `5` and bid `5`, and a non-FTP pair `(a, c)` with offer `5` and bid `5`, when matching runs, then the FTP pair fills first within tier `1` (FTP is the same-tier tiebreaker) and produces a `FilledDeal(isFtpMatch: true)`; the non-FTP pair fills next from the offer's remaining quantity if any (which is `0` in this scenario, so no second deal is emitted).
+
+- Given a buyer with `tradeCapacity = 15` who submits a priority-1 bid `A x 8` and a priority-2 bid `B x 10`, and offers cover both, when matching runs, then `A` fills `8`, `remainingCargo = 7`, `B` partial-fills `7`, `B`'s carry-forward quantity is `3`, and `activityByCommodityId['B'].filledQuantity = 7`.
+
+- Given a faction has bids but no entry in `tradeCapacityByFactionId`, when matching runs, then no deals are emitted for that faction and every bid for that faction is preserved at its original quantity in `unfilledBidsByFactionId`.
+
+- Given an offer with `quantity = 0` and a bid with positive quantity at the same priority tier, when matching runs, then no `FilledDeal` is emitted from that offer, the zero-quantity offer is not carried forward, and the bid remains unfilled (carries forward at its full quantity if no other offer matches).
+
+- Given `DealMatcher.pairKey('zeta', 'alpha')` and `DealMatcher.pairKey('alpha', 'zeta')`, when both are evaluated, then they return the same canonical key string (`'alpha|zeta'`), so FTP membership set entries are order-independent.
 
 ---
 
