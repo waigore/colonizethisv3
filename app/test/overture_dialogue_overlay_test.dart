@@ -7,6 +7,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'package:colonizethis_app/config/editorial_monocle_palette.dart';
 import 'package:colonizethis_app/features/game/dialogue/overture_dialogue_overlay.dart';
+import 'package:colonizethis_app/features/game/widgets/chrome/ct_nine_patch_button.dart';
 import 'package:colonizethis_app/widgets/ct_brass_divider.dart';
 import 'package:colonizethis_app/widgets/ct_dialog_shell.dart';
 
@@ -53,7 +54,7 @@ void main() {
 
   group('OvertureDialogueOverlay', () {
     testWidgets(
-      'skipIntroForTest: Accept/Reject toggles and Submit yields decisions',
+      'skipIntroForTest: Accept first + Reject second + Submit yields decisions in order (#2867 R23 / AC4)',
       (WidgetTester tester) async {
         final offers = <OvertureOffer>[
           const OvertureOffer(
@@ -84,6 +85,15 @@ void main() {
         // Separator between offerer and stage is its own --muted Text.
         expect(find.text(': '), findsNWidgets(2));
 
+        // Every row starts undecided per #2867 R23 / AC4, so Submit is
+        // disabled and tapping it must be a no-op. `warnIfMissed: false`
+        // because the disabled button intentionally ignores hit-tests.
+        await tester.tap(find.text('Submit'), warnIfMissed: false);
+        await tester.pump();
+        expect(submitted, isNull);
+
+        await tester.tap(find.text('Accept').first);
+        await tester.pump();
         await tester.tap(find.text('Reject').last);
         await tester.pump();
 
@@ -96,6 +106,111 @@ void main() {
         expect(submitted![1].accepted, isFalse);
         expect(submitted![0].stage, OvertureStage.tradeConsulate);
         expect(submitted![1].stage, OvertureStage.embassy);
+      },
+    );
+
+    testWidgets(
+      'phase 2 Submit is disabled until every row has a non-null decision '
+      '(#2867 R23 / AC4 — positive enable transition)',
+      (WidgetTester tester) async {
+        final offers = <OvertureOffer>[
+          const OvertureOffer(
+            offererGpId: 'gp2',
+            targetFactionId: 'gp1',
+            stage: OvertureStage.tradeConsulate,
+          ),
+          const OvertureOffer(
+            offererGpId: 'gp2',
+            targetFactionId: 'gp1',
+            stage: OvertureStage.embassy,
+          ),
+        ];
+
+        await pumpOverlay(tester, offers: offers, onDecisions: null);
+
+        final Finder submitFinder = find.byKey(
+          const ValueKey<String>('overtureSubmitButton'),
+        );
+        expect(submitFinder, findsOneWidget);
+
+        CtNinePatchButton submitButton() =>
+            tester.widget<CtNinePatchButton>(submitFinder);
+
+        expect(
+          submitButton().enabled,
+          isFalse,
+          reason:
+              'Submit must start disabled when every overture row defaults '
+              'to undecided (#2867 R23).',
+        );
+
+        await tester.tap(find.text('Accept').first);
+        await tester.pump();
+        expect(
+          submitButton().enabled,
+          isFalse,
+          reason:
+              'Submit must remain disabled when only the first row has been '
+              'decided (#2867 R23 negative case).',
+        );
+
+        await tester.tap(find.text('Reject').last);
+        await tester.pump();
+        expect(
+          submitButton().enabled,
+          isTrue,
+          reason:
+              'Submit must enable once every overture row has a non-null '
+              'decision (#2867 R23 positive case).',
+        );
+      },
+    );
+
+    testWidgets(
+      'phase 2 Submit disabled while only the second row is decided '
+      '(#2867 R23 / AC4 — negative case)',
+      (WidgetTester tester) async {
+        final offers = <OvertureOffer>[
+          const OvertureOffer(
+            offererGpId: 'gp2',
+            targetFactionId: 'gp1',
+            stage: OvertureStage.tradeConsulate,
+          ),
+          const OvertureOffer(
+            offererGpId: 'gp2',
+            targetFactionId: 'gp1',
+            stage: OvertureStage.embassy,
+          ),
+        ];
+        List<OvertureDecision>? submitted;
+
+        await pumpOverlay(
+          tester,
+          offers: offers,
+          onDecisions: (d) => submitted = List.of(d),
+        );
+
+        await tester.tap(find.text('Reject').last);
+        await tester.pump();
+
+        final Finder submitFinder = find.byKey(
+          const ValueKey<String>('overtureSubmitButton'),
+        );
+        final CtNinePatchButton submitButton = tester
+            .widget<CtNinePatchButton>(submitFinder);
+        expect(submitButton.enabled, isFalse);
+
+        // `warnIfMissed: false` because the disabled button intentionally
+        // ignores hit-tests (per CtNinePatchButton § Disabled).
+        await tester.tap(find.text('Submit'), warnIfMissed: false);
+        await tester.pump();
+        expect(
+          submitted,
+          isNull,
+          reason:
+              'Tapping the disabled Submit must not invoke onDecisions '
+              'while any row is still undecided (#2867 R23).',
+        );
       },
     );
 

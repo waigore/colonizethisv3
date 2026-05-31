@@ -51,17 +51,31 @@ class _OvertureDialogueOverlayState extends State<OvertureDialogueOverlay> {
   bool _introDone = false;
   CtDialogueView? _view;
   Object? _loadError;
-  late List<bool> _accepted;
+
+  /// Per-offer decisions; `null` means the player has not yet tapped Accept
+  /// or Reject on that row. The Submit button stays disabled until every
+  /// entry is non-null (issue #2867 R23 / AC4).
+  late List<bool?> _accepted;
 
   @override
   void initState() {
     super.initState();
-    _accepted = List.filled(widget.pendingOvertures.length, true);
+    _accepted = List<bool?>.filled(widget.pendingOvertures.length, null);
     if (widget.skipIntroForTest) {
       _introDone = true;
     } else {
       _loadAndRunIntro();
     }
+  }
+
+  /// True when every pending overture row has a non-null decision; gates the
+  /// phase-2 Submit `CtNinePatchButton` per #2867 R23 (`SPEC/ui/overture-dialogue-overlay.md`
+  /// § Acceptance Criteria — non-null decision required).
+  bool get _allDecided {
+    for (final bool? value in _accepted) {
+      if (value == null) return false;
+    }
+    return true;
   }
 
   Future<void> _loadAndRunIntro() async {
@@ -131,7 +145,28 @@ class _OvertureDialogueOverlayState extends State<OvertureDialogueOverlay> {
           offererGpId: offer.offererGpId,
           targetFactionId: offer.targetFactionId,
           stage: offer.stage,
-          accepted: _accepted[i],
+          accepted: _accepted[i] ?? true,
+        ),
+      );
+    }
+    widget.onDecisions(decisions);
+  }
+
+  /// Degraded error-state submit: the Yarn intro failed to load, so the
+  /// per-offer Accept/Reject UI is never shown. Emit a deterministic
+  /// `accepted == true` decision per offer so the host can still resume
+  /// turn resolution (`SPEC/ui/overture-dialogue-overlay.md` § AC error
+  /// variant). This bypasses the R23 non-null gate by design — the player
+  /// has no interactive choice in this variant.
+  void _submitErrorFallback() {
+    final decisions = <OvertureDecision>[];
+    for (final OvertureOffer offer in widget.pendingOvertures) {
+      decisions.add(
+        OvertureDecision(
+          offererGpId: offer.offererGpId,
+          targetFactionId: offer.targetFactionId,
+          stage: offer.stage,
+          accepted: true,
         ),
       );
     }
@@ -157,7 +192,7 @@ class _OvertureDialogueOverlayState extends State<OvertureDialogueOverlay> {
                       Text(l10n.game_overture_loadError('$_loadError')),
                       const SizedBox(height: 16),
                       CtNinePatchButton(
-                        onPressed: () => _submit(),
+                        onPressed: _submitErrorFallback,
                         child: Text(l10n.game_intervention_continue),
                       ),
                     ],
@@ -282,7 +317,9 @@ class _OvertureDialogueOverlayState extends State<OvertureDialogueOverlay> {
                     Align(
                       alignment: Alignment.centerRight,
                       child: CtNinePatchButton(
-                        onPressed: _submit,
+                        key: const ValueKey<String>('overtureSubmitButton'),
+                        enabled: _allDecided,
+                        onPressed: _allDecided ? _submit : null,
                         child: Text(l10n.game_callToArms_submit),
                       ),
                     ),
