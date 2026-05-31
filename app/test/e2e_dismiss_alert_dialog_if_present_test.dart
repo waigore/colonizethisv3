@@ -660,4 +660,294 @@ void main() {
       },
     );
   });
+
+  // The following group pins the inner-helper perf attribution surface added
+  // alongside the dispatcher-level [e2eDismissTransientUi] result-tag
+  // taxonomy (Refs GitHub #2336 AC8 baseline timing). The integration suite
+  // cannot validate the inner-helper attribution directly today
+  // (`app_e2e_linux` is a no-op per `SPEC/program/e2e-integration-tests.md` §
+  // CI), so this widget-test layer is the only per-PR pin for the new
+  // inner-helper markers and their `result=...` taxonomy.
+  group('e2eDismissAlertDialogIfPresent perf attribution', () {
+    test(
+      'phase constant matches the documented `dismiss_alert_dialog` label',
+      () {
+        expect(
+          kE2eDefaultDismissAlertDialogPhase,
+          'dismiss_alert_dialog',
+          reason:
+              'Phase constant must stay byte-equivalent so the AC8 baseline '
+              'timing pipeline can key on the same phase=... label as the '
+              'docs in `SPEC/program/e2e-integration-tests.md` § Determinism '
+              '(Dismiss-alert-dialog inner perf attribution bullet).',
+        );
+      },
+    );
+
+    testWidgets(
+      'emits result=not_present without the dispatcher counter when no '
+      'AlertDialog is mounted',
+      (WidgetTester tester) async {
+        final perf = E2ePerfLog('alert_dialog_phase_not_present_pin');
+        await tester.pumpWidget(
+          const MaterialApp(home: Scaffold(body: SizedBox())),
+        );
+
+        final lines = await _captureDebugPrints(() async {
+          await e2eDismissAlertDialogIfPresent(tester, perf: perf);
+        });
+
+        final timing = lines
+            .where(
+              (line) =>
+                  line.contains('phase=$kE2eDefaultDismissAlertDialogPhase') &&
+                  line.startsWith('E2E_TIMING|'),
+            )
+            .toList();
+        expect(
+          timing,
+          hasLength(1),
+          reason:
+              'Exactly one inner-helper `E2E_TIMING|phase=...` line must be '
+              'emitted on the no-AlertDialog short-circuit. Captured: $lines',
+        );
+        expect(
+          timing.single,
+          contains('|meta=result=not_present'),
+          reason:
+              'Empty-tree dismissal must report `result=not_present` so the '
+              'AC8 timing pipeline can separate cheap no-op short-circuits '
+              'from real dismissals.',
+        );
+        expect(
+          _hasAnyAlertDialogCounterLine(
+            lines,
+            test: 'alert_dialog_phase_not_present_pin',
+          ),
+          isFalse,
+          reason:
+              'No-AlertDialog short-circuit must not bump '
+              '`dismiss_alert_dialog_calls` (the helper returned false '
+              'without tapping or popping). Captured: $lines',
+        );
+      },
+    );
+
+    testWidgets(
+      'emits result=labelled_tap alongside the dispatcher counter when a '
+      'labelled action is dispatched',
+      (WidgetTester tester) async {
+        final perf = E2ePerfLog('alert_dialog_phase_labelled_tap_pin');
+        await tester.pumpWidget(
+          MaterialApp(
+            home: _AlertDialogHost(
+              dialogBuilder: (context) => AlertDialog(
+                title: const Text('phase-labelled-tap'),
+                actions: [
+                  TextButton(
+                    onPressed: () => Navigator.of(context).pop(),
+                    child: const Text('Close'),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 250));
+
+        late bool dismissed;
+        final lines = await _captureDebugPrints(() async {
+          dismissed = await e2eDismissAlertDialogIfPresent(tester, perf: perf);
+        });
+        await tester.pump(const Duration(milliseconds: 50));
+
+        expect(dismissed, isTrue);
+        final timing = lines
+            .where(
+              (line) =>
+                  line.contains('phase=$kE2eDefaultDismissAlertDialogPhase') &&
+                  line.startsWith('E2E_TIMING|'),
+            )
+            .toList();
+        expect(
+          timing,
+          hasLength(1),
+          reason:
+              'Exactly one inner-helper `E2E_TIMING|phase=...` line must be '
+              'emitted on the labelled-tap success path. Captured: $lines',
+        );
+        expect(
+          timing.single,
+          contains('|meta=result=labelled_tap'),
+          reason:
+              'A successful labelled dismissal must report '
+              '`result=labelled_tap` so the AC8 timing pipeline can '
+              'separate the labelled-tap arm from the handlePopRoute '
+              'fallback arm.',
+        );
+      },
+    );
+
+    testWidgets(
+      'emits result=pop_route_fallback alongside the dispatcher counter '
+      'when no labelled button is hit-testable',
+      (WidgetTester tester) async {
+        final perf = E2ePerfLog('alert_dialog_phase_fallback_pin');
+        await tester.pumpWidget(
+          MaterialApp(
+            home: _AlertDialogHost(
+              dialogBuilder: (context) => const AlertDialog(
+                title: Text('phase-fallback'),
+                content: Text('No labelled actions'),
+              ),
+            ),
+          ),
+        );
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 250));
+
+        final lines = await _captureDebugPrints(() async {
+          await e2eDismissAlertDialogIfPresent(tester, perf: perf);
+        });
+        await tester.pump(const Duration(milliseconds: 50));
+
+        final timing = lines
+            .where(
+              (line) =>
+                  line.contains('phase=$kE2eDefaultDismissAlertDialogPhase') &&
+                  line.startsWith('E2E_TIMING|'),
+            )
+            .toList();
+        expect(
+          timing,
+          hasLength(1),
+          reason:
+              'Exactly one inner-helper `E2E_TIMING|phase=...` line must be '
+              'emitted on the handlePopRoute fallback path. Captured: '
+              '$lines',
+        );
+        expect(
+          timing.single,
+          contains('|meta=result=pop_route_fallback'),
+          reason:
+              'A handlePopRoute-fallback dismissal must report '
+              '`result=pop_route_fallback` so the AC8 timing pipeline can '
+              'separate this last-resort arm from real labelled taps. A '
+              'silent regression that never tagged the fallback would '
+              'mask growing pop-route usage in CI runs.',
+        );
+      },
+    );
+
+    testWidgets(
+      'no perf line emitted when perf is null (default opt-out contract)',
+      (WidgetTester tester) async {
+        await tester.pumpWidget(
+          MaterialApp(
+            home: _AlertDialogHost(
+              dialogBuilder: (context) => AlertDialog(
+                title: const Text('phase-quiet'),
+                actions: [
+                  TextButton(
+                    onPressed: () => Navigator.of(context).pop(),
+                    child: const Text('Close'),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 250));
+
+        final lines = await _captureDebugPrints(() async {
+          await e2eDismissAlertDialogIfPresent(tester);
+        });
+        await tester.pump(const Duration(milliseconds: 50));
+
+        final phaseLines = lines
+            .where(
+              (line) =>
+                  line.startsWith('E2E_TIMING|') &&
+                  line.contains('phase=$kE2eDefaultDismissAlertDialogPhase'),
+            )
+            .toList();
+        expect(
+          phaseLines,
+          isEmpty,
+          reason:
+              'Default `perf: null` must preserve the byte-quiet contract: '
+              'no `E2E_TIMING|phase=dismiss_alert_dialog` line should be '
+              'emitted for opt-out callers. Captured: $lines',
+        );
+      },
+    );
+
+    testWidgets(
+      'custom phaseName reaches the inner-helper emission and does NOT also '
+      'emit under the default label',
+      (WidgetTester tester) async {
+        const customPhase = 'alert_dialog_custom_phase_label';
+        final perf = E2ePerfLog('alert_dialog_custom_phase_pin');
+        await tester.pumpWidget(
+          MaterialApp(
+            home: _AlertDialogHost(
+              dialogBuilder: (context) => AlertDialog(
+                title: const Text('phase-custom'),
+                actions: [
+                  TextButton(
+                    onPressed: () => Navigator.of(context).pop(),
+                    child: const Text('Close'),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 250));
+
+        final lines = await _captureDebugPrints(() async {
+          await e2eDismissAlertDialogIfPresent(
+            tester,
+            perf: perf,
+            phaseName: customPhase,
+          );
+        });
+        await tester.pump(const Duration(milliseconds: 50));
+
+        final customTiming = lines
+            .where(
+              (line) =>
+                  line.contains('phase=$customPhase|') &&
+                  line.startsWith('E2E_TIMING|'),
+            )
+            .toList();
+        expect(
+          customTiming,
+          hasLength(1),
+          reason:
+              'Custom phaseName must be threaded through to the inner-helper '
+              'E2E_TIMING emission so distinct dispatch sites can stay '
+              'separable in perf-timing dumps. Captured: $lines',
+        );
+        final defaultTiming = lines
+            .where(
+              (line) =>
+                  line.contains('phase=$kE2eDefaultDismissAlertDialogPhase|') &&
+                  line.startsWith('E2E_TIMING|'),
+            )
+            .toList();
+        expect(
+          defaultTiming,
+          isEmpty,
+          reason:
+              'A custom phaseName must NOT also surface under the default '
+              'phase label; otherwise scrapers that aggregate by the default '
+              'phase would double-count custom-labelled calls.',
+        );
+      },
+    );
+  });
 }
