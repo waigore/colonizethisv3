@@ -128,12 +128,68 @@ Given current `Stockpile`, `productionAssignments`, and `game.worldMarketState.p
 
 ---
 
+## Partial-fill-aware forecasting (Refs #2994 F8)
+
+F8 layers two pure refinements onto `runTreasuryPlanner`: skip orders already represented by Issue A's carry-forward queue, and discount forecasted treasury inflow by the previous turn's offer-side fill rate. All inputs come from `game.worldMarketState`; no new lookups, logging, or `WorldState` traversals.
+
+### Carry-forward de-duplication
+
+For each commodity `id`, sum the player's current carry-forward residuals:
+
+```
+carryForwardOffers[id] = Σ order.quantity in worldMarketState.carryForwardOffersByFactionId[playerId]
+carryForwardBids[id]   = Σ order.quantity in worldMarketState.carryForwardBidsByFactionId[playerId]
+```
+
+Subtract them from the surplus / deficit gap before populating the suggester maps:
+
+- `surplus(id) = projected[id] − (consumption + inputs + safety) − carryForwardOffers[id]`
+- `deficit(id) = (consumption + inputs) − projected[id] − carryForwardBids[id]`
+
+Non-positive results drop the commodity from `available` / `need`, so the suggester never emits a new order whose intent is already represented in Issue A's queue.
+
+### Prior-turn fill-rate-aware offer urgency
+
+For each commodity `id`:
+
+```
+fillRateOffer(id) =
+    if lastTurnActivity[id] is null OR totalOfferQuantity <= 0: 1.0
+    else clamp(filledQuantity / totalOfferQuantity, 0.0, 1.0)
+```
+
+`1.0` is the deterministic default for the first market turn and for commodities the previous aggregator never touched — matches the existing F2 "no prior data → assume fully fillable" convention.
+
+Forecasted inflow (rounded to integer treasury units) drives the urgency switch:
+
+```
+expectedOfferInflow = round(Σ available[id] * marketPrice[id] * fillRateOffer(id))
+treasuryForecast    = treasury + expectedOfferInflow
+offerPriority       = treasuryForecast < cheapestRegimentBuildTreasuryCost()
+                          ? kTreasuryOfferPriorityUrgent
+                          : kTreasuryOfferPriorityModerate
+```
+
+`treasuryForecast` — not raw `treasury` — gates urgency. Markets with reliable demand (`fillRate ≈ 1.0`) preserve F1–F5 behaviour; markets that cleared zero of the player's prior offers leave the planner urgent even when the nominal stockpile value looks generous.
+
+### Determinism and budget
+
+`carryForwardOffers`, `carryForwardBids`, `fillRateOffer`, `expectedOfferInflow`, and `treasuryForecast` are pure functions of `game.worldMarketState`, `availableStockpileByCommodityId`, and the price map. No hot-path logging; same 15-second turn-resolution budget envelope as F1–F5.
+
+### Acceptance criteria (F8)
+
+- Given an AI Great Power whose `carryForwardOffersByFactionId[playerId]` contains a `TradeOrder(timber, offer, quantity=Q1)` and whose computed timber surplus is `Q1 + R` with `R > 0`, when `runTreasuryPlanner` runs, then it emits exactly one new timber offer with `quantity == R`.
+- Given an AI Great Power whose `carryForwardOffersByFactionId[playerId]` contains a `TradeOrder(timber, offer, quantity=Q1)` and whose computed timber surplus equals `Q1`, when `runTreasuryPlanner` runs, then it emits no new timber offer.
+- Given an AI Great Power whose `carryForwardBidsByFactionId[playerId]` contains a `TradeOrder(fabric, bid, quantity=Q1)` and whose computed fabric deficit equals `Q1`, when `runTreasuryPlanner` runs, then it emits no new fabric bid.
+- Given an AI Great Power with `treasury` below `cheapestRegimentBuildTreasuryCost()`, an abundant timber surplus, and a previous-turn `MarketActivity` for timber with `totalOfferQuantity > 0` and `filledQuantity == 0`, when `runTreasuryPlanner` runs, then `treasuryForecast == treasury` (zero discounted inflow) and the timber offer carries `kTreasuryOfferPriorityUrgent`.
+- Given an AI Great Power with `treasury` just below `cheapestRegimentBuildTreasuryCost()`, an abundant timber surplus at the default `timber` market price, and a previous-turn `MarketActivity` for timber with `filledQuantity / totalOfferQuantity == 1.0` (full fill), when `runTreasuryPlanner` runs, then `treasuryForecast >= cheapestRegimentBuildTreasuryCost()` (full-fill credit) and the timber offer carries `kTreasuryOfferPriorityModerate`.
+- Given two `runTreasuryPlanner` invocations whose inputs (including `carryForward*ByFactionId` and `lastTurnActivity`) are identical, when both runs complete, then they return identical `List<TradeOrder>` outputs.
+
 ## Out of scope for this SPEC slice
 
 The following remain under remaining `#2994` subtasks:
 
-- Full treasury inflow/outflow forecasting (riches phase, subsidies, build/research spend) beyond the surplus/need maps above (F1 extension).
-- Partial-fill-aware forecasting using previous-turn `MarketActivity` (F8).
+- Full treasury inflow/outflow forecasting (riches phase, subsidies, build/research spend) beyond the surplus/need maps and F8 offer-inflow discount above (F1 extension).
 - Observer-game seed-42 trade-behaviour verification and budget profiling (F9 / F10).
 - Overseas extraction tonnage subtraction from trade cargo once extraction publishes per-player planned tonnage.
 
