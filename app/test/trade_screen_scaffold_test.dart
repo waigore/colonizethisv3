@@ -381,23 +381,14 @@ void main() {
     );
 
     testWidgets(
-      'each tab body renders its dark editorial-monocle title — Market '
-      '(visible by default) and Deal Book (after tap)',
+      'Deal Book tab body still renders its dark editorial-monocle '
+      'placeholder title — Deal Book (after tap)',
       (tester) async {
         await tester.pumpWidget(buildTradeRouteHost());
         await pumpSettleCapped(tester);
 
         await tester.tap(find.text('open trade'));
         await pumpSettleCapped(tester);
-
-        // Market tab body is on stage by default — title renders to the
-        // visible foreground.
-        final marketTitle = find.descendant(
-          of: find.byKey(TradeScreen.marketTabBodyKey),
-          // ignore: avoid_hardcoded_strings_in_widgets
-          matching: find.text('Market'),
-        );
-        expect(marketTitle, findsOneWidget);
 
         // Tap the Deal Book tab label to swap the on-stage child.
         final dealBookLabel = find.descendant(
@@ -408,8 +399,10 @@ void main() {
         await tester.tap(dealBookLabel);
         await pumpSettleCapped(tester);
 
-        // After tap, the Deal Book tab body is on stage and its title
-        // renders.
+        // After tap, the Deal Book tab body is on stage and its
+        // placeholder title renders inside the tab body keyed
+        // tradeScreenDealBookTabBody (Refs #2993 E6 follow-up replaces
+        // this placeholder with the live ledger).
         final dealBookTitle = find.descendant(
           of: find.byKey(TradeScreen.dealBookTabBodyKey),
           // ignore: avoid_hardcoded_strings_in_widgets

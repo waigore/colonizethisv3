@@ -145,6 +145,51 @@ class CallToArmsPending {
   int get hashCode => Object.hash(allyGpId, defenderGpId, aggressorGpId);
 }
 
+/// One FTP proposal awaiting the target GP's accept/reject decision.
+class FtpOffer {
+  const FtpOffer({
+    required this.proposerGpId,
+    required this.targetGpId,
+  });
+
+  final String proposerGpId;
+  final String targetGpId;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is FtpOffer &&
+          proposerGpId == other.proposerGpId &&
+          targetGpId == other.targetGpId;
+
+  @override
+  int get hashCode => Object.hash(proposerGpId, targetGpId);
+}
+
+/// Target GP's decision for one [FtpOffer].
+class FtpDecision {
+  const FtpDecision({
+    required this.proposerGpId,
+    required this.targetGpId,
+    required this.accepted,
+  });
+
+  final String proposerGpId;
+  final String targetGpId;
+  final bool accepted;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is FtpDecision &&
+          proposerGpId == other.proposerGpId &&
+          targetGpId == other.targetGpId &&
+          accepted == other.accepted;
+
+  @override
+  int get hashCode => Object.hash(proposerGpId, targetGpId, accepted);
+}
+
 /// Human ally's decision for one call to arms.
 class CallToArmsDecision {
   const CallToArmsDecision({
@@ -178,6 +223,7 @@ class DiplomacyPhaseResult {
   const DiplomacyPhaseResult(
     this.game, {
     this.pendingOvertures,
+    this.pendingFtpOffers,
     this.pendingInterventions,
     this.pendingCallToArms,
   });
@@ -185,6 +231,8 @@ class DiplomacyPhaseResult {
   final Game game;
   /// Non-null when phase suspended because an overture targets a human GP.
   final List<OvertureOffer>? pendingOvertures;
+  /// Non-null when phase suspended because an FTP proposal targets a human GP.
+  final List<FtpOffer>? pendingFtpOffers;
   /// Non-null when phase suspended for intervention choices (GP with embassy or purchased land).
   final List<InterventionPrompt>? pendingInterventions;
   /// Non-null when phase suspended because a human ally must accept/refuse call to arms.
@@ -192,6 +240,7 @@ class DiplomacyPhaseResult {
 
   bool get isPending =>
       (pendingOvertures != null && pendingOvertures!.isNotEmpty) ||
+      (pendingFtpOffers != null && pendingFtpOffers!.isNotEmpty) ||
       (pendingInterventions != null && pendingInterventions!.isNotEmpty) ||
       (pendingCallToArms != null && pendingCallToArms!.isNotEmpty);
 }
@@ -215,6 +264,18 @@ class TurnResolutionComplete extends TurnResolutionResult {
   final Game game;
   /// Null when [game.victory] was set this resolution (news dialog suppressed).
   final TurnNewsDigest? turnNewsDigest;
+}
+
+/// Turn resolution suspended: FTP proposals need human target accept/reject.
+class TurnResolutionPendingFtp extends TurnResolutionResult {
+  const TurnResolutionPendingFtp({
+    required this.game,
+    required this.pendingFtpOffers,
+  });
+
+  @override
+  final Game game;
+  final List<FtpOffer> pendingFtpOffers;
 }
 
 /// Turn resolution suspended: [game] is state at suspension; [pendingOvertures]

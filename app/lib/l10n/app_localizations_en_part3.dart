@@ -552,6 +552,20 @@ mixin _AppLocalizationsEnStrings3 on AppLocalizations {
   String get production_labourDisband => 'Disband';
 
   @override
+  String get production_labourTierUnlocked => '(unlocked)';
+
+  @override
+  String get production_labourTierLocked => '(locked)';
+
+  @override
+  String production_labourTierLabel(String tier, String state) {
+    return '$tier $state';
+  }
+
+  @override
+  String get production_labourControlsSectionLabel => 'Labour Controls';
+
+  @override
   String production_workerCount(String name, int count) {
     return '$name: $count';
   }

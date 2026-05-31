@@ -154,7 +154,8 @@ List<FleetRow> flattenNavalTree(
   int merchants,
   int cargoCapacity,
   double strength,
-}) _navalFleetShipAggregates(Fleet fleet) {
+})
+_navalFleetShipAggregates(Fleet fleet) {
   final shipCounts = <String, int>{};
   var totalShips = 0;
   var warships = 0;
@@ -183,7 +184,9 @@ List<FleetRow> flattenNavalTree(
   );
 }
 
-({String? regionId, String? localId}) _capitalTileRegionParts(CapitalTile? tile) {
+({String? regionId, String? localId}) _capitalTileRegionParts(
+  CapitalTile? tile,
+) {
   if (tile == null) return (regionId: null, localId: null);
   final tileKey = tile.toTileKey();
   final parsed = tryParseTileKey(tileKey);
@@ -268,17 +271,10 @@ String? _navalProjectedLocationScopeForFleet({
     );
   }
   if (fleet.isAtSea && fleet.seaZoneId != null) {
-    return _navalNormalizedSeaScope(
-      topology,
-      fleet.seaZoneId!,
-      fleet.regionId,
-    );
+    return _navalNormalizedSeaScope(topology, fleet.seaZoneId!, fleet.regionId);
   }
   if (fleet.inPortAtProvinceId != null) {
-    final province = tryGetProvince(
-      game.worldState,
-      fleet.inPortAtProvinceId!,
-    );
+    final province = tryGetProvince(game.worldState, fleet.inPortAtProvinceId!);
     if (province != null) {
       return _navalNormalizedPortScopeForProvince(province);
     }
@@ -307,7 +303,8 @@ void _appendNavalAtSeaFleetRow({
     double strength,
     Map<String, int> shipCounts,
     int cargoCapacity,
-  }) agg,
+  })
+  agg,
   required Map<String, List<FleetRow>> seas,
 }) {
   final seaZoneId =
@@ -325,7 +322,8 @@ void _appendNavalAtSeaFleetRow({
     regionId: rowRegionId,
     seaZoneId: zoneKey,
   );
-  final locationLabel = '${unitsPanelRegionLabel(rowRegionId)} — $zoneLabel';
+  final locationLabel =
+      '${unitsPanelRegionLabel(rowRegionId)} — $zoneLabel ${l10n.naval_units_locAtSea}';
   final tileKey = tileKeyForNavalFleetAtSea(
     game: game,
     regionId: rowRegionId,
@@ -382,7 +380,8 @@ void _appendNavalInPortFleetRow({
     double strength,
     Map<String, int> shipCounts,
     int cargoCapacity,
-  }) agg,
+  })
+  agg,
   required Map<String, List<FleetRow>> ports,
   required List<FleetRow?> homeFleetSlot,
 }) {
@@ -401,7 +400,7 @@ void _appendNavalInPortFleetRow({
   final locationKey = _navalNormalizedPortScopeForProvince(province);
   final tileKey = tileKeyForProvinceLocation(game, province);
   final locationLabel =
-      '${unitsPanelRegionLabel(rowRegionId)} — ${province.displayName ?? province.id}';
+      '${unitsPanelRegionLabel(rowRegionId)} — ${province.displayName ?? province.id} ${l10n.naval_units_locInPort}';
   final row = FleetRow(
     fleetId: fleet.id,
     label: isHomeFleet
@@ -440,11 +439,8 @@ void _appendNavalInPortFleetRow({
   ports.putIfAbsent(fullProvinceId, () => []).add(row);
 }
 
-({
-  String regionId,
-  FleetRow? homeFleet,
-  List<NavalTreeLocationNode> locations,
-})? _navalTreeGroupForRegion({
+({String regionId, FleetRow? homeFleet, List<NavalTreeLocationNode> locations})?
+_navalTreeGroupForRegion({
   required Game game,
   required String humanPlayerId,
   required MapTopology topology,
@@ -595,11 +591,7 @@ void _appendNavalInPortFleetRow({
   if (homeFleetRow == null && locations.isEmpty) {
     return null;
   }
-  return (
-    regionId: regionId,
-    homeFleet: homeFleetRow,
-    locations: locations,
-  );
+  return (regionId: regionId, homeFleet: homeFleetRow, locations: locations);
 }
 
 List<

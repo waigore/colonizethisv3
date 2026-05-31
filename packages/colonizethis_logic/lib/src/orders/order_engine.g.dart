@@ -84,6 +84,16 @@ const _orderSlotRecruitWorkerOrder = _OrderSlot<RecruitWorkerOrder>(
   label: 'recruit worker',
 );
 
+Map<String, List<TradeOrder>> _orderEngineGetTradeOrder(Orders o) => o.tradeOrdersByPlayerId;
+
+Orders _orderEngineWithTradeOrder(Orders o, Map<String, List<TradeOrder>> m) => o.copyWith(tradeOrdersByPlayerId: m);
+
+const _orderSlotTradeOrder = _OrderSlot<TradeOrder>(
+  getter: _orderEngineGetTradeOrder,
+  updater: _orderEngineWithTradeOrder,
+  label: 'trade',
+);
+
 Orders copyInitialOrdersForEngine(Orders initialOrders) =>
     Orders(
       moveOrdersByPlayerId: _copyMapOfOrderLists(initialOrders.moveOrdersByPlayerId),
@@ -94,6 +104,7 @@ Orders copyInitialOrdersForEngine(Orders initialOrders) =>
       navalMoveOrdersByPlayerId: _copyMapOfOrderLists(initialOrders.navalMoveOrdersByPlayerId),
       navalMissionOrdersByPlayerId: _copyMapOfOrderLists(initialOrders.navalMissionOrdersByPlayerId),
       recruitWorkerOrdersByPlayerId: _copyMapOfOrderLists(initialOrders.recruitWorkerOrdersByPlayerId),
+      tradeOrdersByPlayerId: _copyMapOfOrderLists(initialOrders.tradeOrdersByPlayerId),
       researchOrdersByPlayerId: _copyMapOfOrderLists(initialOrders.researchOrdersByPlayerId),
     );
 
@@ -107,6 +118,7 @@ Orders copyOrdersSnapshotForEngine(Orders o) =>
       navalMoveOrdersByPlayerId: _copyMapOfOrderLists(o.navalMoveOrdersByPlayerId),
       navalMissionOrdersByPlayerId: _copyMapOfOrderLists(o.navalMissionOrdersByPlayerId),
       recruitWorkerOrdersByPlayerId: _copyMapOfOrderLists(o.recruitWorkerOrdersByPlayerId),
+      tradeOrdersByPlayerId: _copyMapOfOrderLists(o.tradeOrdersByPlayerId),
       researchOrdersByPlayerId: _copyMapOfOrderLists(o.researchOrdersByPlayerId),
     );
 
@@ -278,6 +290,27 @@ mixin _OrderEngineGeneratedOrderMethods {
 
   void removeRecruitWorkerOrder(String playerId, int index) =>
       (this as OrderEngine).removeOrderForSlot(playerId, index, _orderSlotRecruitWorkerOrder);
+
+  OrderValidationResult addTradeOrder(String playerId, TradeOrder order) =>
+      (this as OrderEngine).addOrderForSlot(playerId, order, _orderSlotTradeOrder);
+
+  OrderValidationResult addTradeOrderWithContext(
+    Game game,
+    MapTopology topology,
+    String playerId,
+    TradeOrder order, {
+    Map<String, TileMapResult>? tileMapByRegion,
+  }) => (this as OrderEngine).addOrderForSlotWithContext(
+    game,
+    topology,
+    playerId,
+    order,
+    _orderSlotTradeOrder,
+    tileMapByRegion: tileMapByRegion,
+  );
+
+  void removeTradeOrder(String playerId, int index) =>
+      (this as OrderEngine).removeOrderForSlot(playerId, index, _orderSlotTradeOrder);
 
 }
 

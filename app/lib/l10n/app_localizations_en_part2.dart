@@ -400,6 +400,40 @@ mixin _AppLocalizationsEnStrings2 on AppLocalizations {
   }
 
   @override
+  String get naval_units_locInPort => '(in port)';
+
+  @override
+  String get naval_units_locAtSea => '(at sea)';
+
+  @override
+  String get naval_units_homeFleetChip => 'HOME';
+
+  @override
+  String get naval_units_compositionRoleWarship => 'Warship';
+
+  @override
+  String get naval_units_compositionRoleMerchant => 'Merchant';
+
+  @override
+  String naval_units_compositionCount(int count) {
+    return '\u00d7$count';
+  }
+
+  @override
+  String naval_units_compositionSummary(
+    int total,
+    int warships,
+    int merchants,
+  ) {
+    return 'Total ships: $total \u00b7 Warships: $warships \u00b7 Merchants: $merchants';
+  }
+
+  @override
+  String naval_units_cargoCapacityHolds(int capacity) {
+    return 'Cargo capacity: $capacity holds';
+  }
+
+  @override
   String get diplomacy_setSubsidy => 'Set subsidy';
 
   @override
@@ -489,5 +523,4 @@ mixin _AppLocalizationsEnStrings2 on AppLocalizations {
 
   @override
   String get civilian_units_assign => 'Assign';
-
 }

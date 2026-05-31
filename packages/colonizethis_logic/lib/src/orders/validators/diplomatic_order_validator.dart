@@ -7,6 +7,7 @@ import '../order_validation_result.dart';
 import 'diplomatic/alliance_validator.dart';
 import 'diplomatic/declare_war_validator.dart';
 import 'diplomatic/diplomatic_sub_validator.dart';
+import 'diplomatic/establish_ftp_validator.dart';
 import 'diplomatic/establish_overture_validator.dart';
 import 'diplomatic/grant_aid_validator.dart';
 import 'diplomatic/offer_peace_validator.dart';
@@ -76,6 +77,9 @@ class DiplomaticOrderValidator extends StatefulValidator {
       ),
       DiplomaticOrderType.alliance: allianceSubValidator(subValidatorContext),
       DiplomaticOrderType.establishOverture: establishOvertureSubValidator(
+        subValidatorContext,
+      ),
+      DiplomaticOrderType.establishFtp: establishFtpSubValidator(
         subValidatorContext,
       ),
       DiplomaticOrderType.grantAid: grantAidSubValidator(subValidatorContext),
