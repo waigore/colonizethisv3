@@ -19,7 +19,7 @@ library;
 import 'dart:convert' show LineSplitter;
 import 'dart:io' show Directory, File, FileSystemEntity;
 
-import 'package:flutter_test/flutter_test.dart';
+import 'package:colonizethis_test/test.dart';
 
 void main() {
   group('Refs #2914 S1: debug console scrim uses EditorialMonoclePalette', () {
