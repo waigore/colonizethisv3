@@ -449,5 +449,170 @@ void main() {
       expect(jmRow.canPop, isTrue);
       expect(jmRow.canDisband, isTrue);
     });
+
+    test(
+      'techUnlocked is true for peasant when techUnlocked map is null or empty',
+      () {
+        final player = _gpWithPool();
+        final rows = buildProductionLabourRowData(
+          player: player,
+          currentOrders: const Orders(),
+          canEdit: true,
+        );
+        final peasantRow = rows.firstWhere(
+          (r) => r.tier == WorkerTier.peasant,
+        );
+        expect(peasantRow.techUnlocked, isTrue);
+      },
+    );
+
+    test(
+      'techUnlocked is false for trained tiers when techUnlocked map is null',
+      () {
+        final player = _gpWithPool();
+        final rows = buildProductionLabourRowData(
+          player: player,
+          currentOrders: const Orders(),
+          canEdit: true,
+        );
+        for (final tier in [
+          WorkerTier.apprentice,
+          WorkerTier.journeyman,
+          WorkerTier.master,
+        ]) {
+          final row = rows.firstWhere((r) => r.tier == tier);
+          expect(
+            row.techUnlocked,
+            isFalse,
+            reason: 'tier ${tier.id} should be locked without techUnlocked',
+          );
+        }
+      },
+    );
+
+    test(
+      'techUnlocked tracks per-tier required techs in WorkerActionEconomyCatalog',
+      () {
+        final player = _gpWithPool(
+          techUnlocked: const {
+            kTechIdApprenticeWorkers: true,
+            kTechIdSugarRefining: true,
+            kTechIdTrainedJourneymen: true,
+            kTechIdCigarProduction: true,
+            // Master tech gates intentionally left unlocked=false.
+          },
+        );
+        final rows = buildProductionLabourRowData(
+          player: player,
+          currentOrders: const Orders(),
+          canEdit: true,
+        );
+        final byTier = {for (final r in rows) r.tier: r};
+        expect(byTier[WorkerTier.peasant]!.techUnlocked, isTrue);
+        expect(byTier[WorkerTier.apprentice]!.techUnlocked, isTrue);
+        expect(byTier[WorkerTier.journeyman]!.techUnlocked, isTrue);
+        expect(byTier[WorkerTier.master]!.techUnlocked, isFalse);
+      },
+    );
+
+    test(
+      'techUnlocked is false when a required tech entry is present but false',
+      () {
+        final player = _gpWithPool(
+          techUnlocked: const {
+            kTechIdApprenticeWorkers: true,
+            kTechIdSugarRefining: false,
+          },
+        );
+        final rows = buildProductionLabourRowData(
+          player: player,
+          currentOrders: const Orders(),
+          canEdit: true,
+        );
+        final apprenticeRow = rows.firstWhere(
+          (r) => r.tier == WorkerTier.apprentice,
+        );
+        expect(apprenticeRow.techUnlocked, isFalse);
+      },
+    );
+  });
+
+  group('isWorkerTierTechUnlocked', () {
+    test('returns true for peasant regardless of techUnlocked', () {
+      expect(
+        isWorkerTierTechUnlocked(
+          player: _gpWithPool(),
+          tier: WorkerTier.peasant,
+        ),
+        isTrue,
+      );
+      expect(
+        isWorkerTierTechUnlocked(
+          player: _gpWithPool(techUnlocked: const {}),
+          tier: WorkerTier.peasant,
+        ),
+        isTrue,
+      );
+    });
+
+    test(
+      'returns true for a trained tier iff every required tech id is true',
+      () {
+        final fullyUnlocked = _gpWithPool(
+          techUnlocked: const {
+            kTechIdMasterArtisans: true,
+            kTechIdHatProduction: true,
+          },
+        );
+        expect(
+          isWorkerTierTechUnlocked(
+            player: fullyUnlocked,
+            tier: WorkerTier.master,
+          ),
+          isTrue,
+        );
+
+        final partial = _gpWithPool(
+          techUnlocked: const {kTechIdMasterArtisans: true},
+        );
+        expect(
+          isWorkerTierTechUnlocked(player: partial, tier: WorkerTier.master),
+          isFalse,
+          reason: 'missing kTechIdHatProduction',
+        );
+      },
+    );
+
+    test(
+      'returns false when techUnlocked is null and tier has tech gate',
+      () {
+        expect(
+          isWorkerTierTechUnlocked(
+            player: _gpWithPool(),
+            tier: WorkerTier.journeyman,
+          ),
+          isFalse,
+        );
+      },
+    );
+
+    test(
+      'returns false when a required tech entry is present but false',
+      () {
+        final player = _gpWithPool(
+          techUnlocked: const {
+            kTechIdTrainedJourneymen: false,
+            kTechIdCigarProduction: true,
+          },
+        );
+        expect(
+          isWorkerTierTechUnlocked(
+            player: player,
+            tier: WorkerTier.journeyman,
+          ),
+          isFalse,
+        );
+      },
+    );
   });
 }

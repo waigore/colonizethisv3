@@ -127,6 +127,28 @@ class PurchasedTileIndex {
     return PurchasedTileIndex._(attributions);
   }
 
+  /// Builds an index directly from a known set of attributions.
+  ///
+  /// Intended for unit tests of FRR-aware callers (deal matcher D2,
+  /// treasury transfer D4) that should not need to construct a full
+  /// [Game] just to seed a few attribution rows. Production code MUST
+  /// continue to use [PurchasedTileIndex.fromGame] so the post-conquest
+  /// and minor/tribe-ownership filters in the class-level documentation
+  /// stay enforced — `forTesting` performs no filtering and trusts the
+  /// caller to pass already-filtered attributions.
+  ///
+  /// The first attribution per `tileKey` wins on duplicate keys, matching
+  /// the contract of [PurchasedTileIndex.fromGame].
+  factory PurchasedTileIndex.forTesting(
+    Iterable<PurchasedTileAttribution> attributions,
+  ) {
+    final byTileKey = <String, PurchasedTileAttribution>{};
+    for (final attribution in attributions) {
+      byTileKey.putIfAbsent(attribution.tileKey, () => attribution);
+    }
+    return PurchasedTileIndex._(byTileKey);
+  }
+
   final Map<String, PurchasedTileAttribution> _byTileKey;
 
   /// Returns the attribution for [tileKey], or `null` when the tile is
