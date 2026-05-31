@@ -477,3 +477,61 @@ List<WidgetbookNode> get tradeScreenDirectories => [
     ],
   ),
 ];
+
+/// Story for [CtFullScreenDialogueShell] (issue #2914 S2).
+///
+/// Demonstrates the reusable scrim + centered [CtDialogShell] shell that
+/// the four blocking dialogue overlays (overture, call-to-arms,
+/// intervention, game-start intro) now share. The backdrop slot mirrors
+/// a "fake game canvas" the scrim dims; the body slot composes a
+/// representative title + brass divider + body content stack so the
+/// catalog can preview the canonical scrim token, frame, and inner
+/// padding from `SPEC/ui/pixel-art-ui-catalog.md` §
+/// *CtFullScreenDialogueShell*. Registered as the "CtFullScreenDialogueShell
+/// — scrim + framed body" use case via `ctDarkThemePrimitiveDirectories`
+/// in `catalog_part5.dart`; the class itself lives here so
+/// `catalog_part5.dart` stays under the `repo.part_unit_size` 1000-line
+/// ceiling.
+class _CtFullScreenDialogueShellStory extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Theme(
+      data: AppThemes.editorialMonocle,
+      child: CtFullScreenDialogueShell(
+        backdrop: ColoredBox(
+          color: AppThemes.editorialMonocle.scaffoldBackgroundColor,
+          child: Center(
+            child: Text(
+              // ignore: avoid_hardcoded_strings_in_widgets
+              'underlying canvas / app shell',
+              style: TextStyle(color: EditorialMonoclePalette.muted),
+            ),
+          ),
+        ),
+        body: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text(
+              // ignore: avoid_hardcoded_strings_in_widgets
+              'Overlay title',
+              style: TextStyle(
+                color: EditorialMonoclePalette.accent,
+                fontWeight: FontWeight.w700,
+                letterSpacing: 0.05 * 16,
+                fontSize: 16,
+              ),
+            ),
+            const SizedBox(height: 8),
+            const CtBrassDivider(),
+            const SizedBox(height: 12),
+            const Text(
+              // ignore: avoid_hardcoded_strings_in_widgets
+              'Reusable scrim + framed body shared by overture, call-to-arms, intervention, and game-start intro overlays (Refs #2914 S2).',
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}

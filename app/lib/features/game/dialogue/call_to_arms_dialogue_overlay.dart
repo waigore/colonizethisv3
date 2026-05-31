@@ -6,7 +6,7 @@ import 'package:flutter/material.dart';
 
 import '../../../../l10n/l10n.dart';
 import '../../../../widgets/ct_brass_divider.dart';
-import '../../../../widgets/ct_dialog_shell.dart';
+import '../../../../widgets/ct_full_screen_dialogue_shell.dart';
 import '../../../../widgets/ct_nine_patch_button.dart';
 
 /// Blocking overlay: human ally accepts or refuses each pending call to arms.
@@ -93,87 +93,68 @@ class _CallToArmsDialogueOverlayState extends State<CallToArmsDialogueOverlay> {
       color: EditorialMonoclePalette.muted,
       fontStyle: FontStyle.italic,
     );
-    return Stack(
-      children: [
-        widget.child,
-        Material(
-          color: EditorialMonoclePalette.dialogScrim,
-          child: Center(
-            child: CtDialogShell(
-              maxWidth: 520,
-              maxHeight: 500,
-              child: Padding(
-                padding: const EdgeInsets.all(20),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
+    return CtFullScreenDialogueShell(
+      backdrop: widget.child,
+      maxHeight: 500,
+      body: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text(l10n.game_callToArms_title, style: titleStyle),
+          const SizedBox(height: 8),
+          Text(l10n.game_callToArms_intro, style: introStyle),
+          const SizedBox(height: 12),
+          const CtBrassDivider(),
+          const SizedBox(height: 12),
+          ListView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            itemCount: items.length,
+            itemBuilder: (context, i) {
+              final c = items[i];
+              return Padding(
+                padding: const EdgeInsets.only(bottom: 12),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      l10n.game_callToArms_title,
-                      style: titleStyle,
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      l10n.game_callToArms_intro,
-                      style: introStyle,
-                    ),
-                    const SizedBox(height: 12),
-                    const CtBrassDivider(),
-                    const SizedBox(height: 12),
-                    ListView.builder(
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
-                      itemCount: items.length,
-                      itemBuilder: (context, i) {
-                        final c = items[i];
-                        return Padding(
-                          padding: const EdgeInsets.only(bottom: 12),
-                          child: Row(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Expanded(
-                                child: Text(
-                                  l10n.game_callToArms_prompt(
-                                    _gpName(c.defenderGpId),
-                                    _gpName(c.aggressorGpId),
-                                  ),
-                                ),
-                              ),
-                              CtNinePatchButton(
-                                onPressed: () {
-                                  setState(() => _join[i] = true);
-                                },
-                                child: Text(l10n.game_callToArms_join),
-                              ),
-                              const SizedBox(width: 8),
-                              CtNinePatchButton(
-                                onPressed: () {
-                                  setState(() => _join[i] = false);
-                                },
-                                child: Text(l10n.game_callToArms_refuse),
-                              ),
-                            ],
-                          ),
-                        );
-                      },
-                    ),
-                    const SizedBox(height: 8),
-                    Align(
-                      alignment: Alignment.centerRight,
-                      child: CtNinePatchButton(
-                        key: const ValueKey<String>('callToArmsSubmitButton'),
-                        enabled: _allDecided,
-                        onPressed: _allDecided ? _submit : null,
-                        child: Text(l10n.game_callToArms_submit),
+                    Expanded(
+                      child: Text(
+                        l10n.game_callToArms_prompt(
+                          _gpName(c.defenderGpId),
+                          _gpName(c.aggressorGpId),
+                        ),
                       ),
+                    ),
+                    CtNinePatchButton(
+                      onPressed: () {
+                        setState(() => _join[i] = true);
+                      },
+                      child: Text(l10n.game_callToArms_join),
+                    ),
+                    const SizedBox(width: 8),
+                    CtNinePatchButton(
+                      onPressed: () {
+                        setState(() => _join[i] = false);
+                      },
+                      child: Text(l10n.game_callToArms_refuse),
                     ),
                   ],
                 ),
-              ),
+              );
+            },
+          ),
+          const SizedBox(height: 8),
+          Align(
+            alignment: Alignment.centerRight,
+            child: CtNinePatchButton(
+              key: const ValueKey<String>('callToArmsSubmitButton'),
+              enabled: _allDecided,
+              onPressed: _allDecided ? _submit : null,
+              child: Text(l10n.game_callToArms_submit),
             ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }

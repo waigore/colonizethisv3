@@ -12,7 +12,7 @@ import 'package:jenny/jenny.dart';
 
 import '../../../../l10n/l10n.dart';
 import '../../../../widgets/ct_brass_divider.dart';
-import '../../../../widgets/ct_dialog_shell.dart';
+import '../../../../widgets/ct_full_screen_dialogue_shell.dart';
 import '../../../../widgets/ct_loading_indicator.dart';
 import '../../../../widgets/ct_nine_patch_button.dart';
 import 'ct_dialogue_view.dart';
@@ -350,11 +350,13 @@ class _InterventionDialogueOverlayState
     return widget.child;
   }
 
-  /// Wrap the per-phase body in the dark editorial-monocle scrim + `CtDialogShell`
-  /// with the canonical "Pending Intervention" title + [CtBrassDivider] header
-  /// rendered on every phase (#2867 R1 / R2 / R26b; SPEC
-  /// `SPEC/ui/screens/pending-intervention-overlay.md` § Dark editorial-monocle
-  /// chrome).
+  /// Wrap the per-phase body in the dark editorial-monocle scrim +
+  /// [CtFullScreenDialogueShell] with the canonical "Pending Intervention"
+  /// title + [CtBrassDivider] header rendered on every phase (#2867 R1 / R2 /
+  /// R26b; SPEC `SPEC/ui/screens/pending-intervention-overlay.md` § Dark
+  /// editorial-monocle chrome). The scrim + framed shell scaffold lives in
+  /// [CtFullScreenDialogueShell] (issue #2914 S2) so this method only owns
+  /// the per-overlay title / divider composition.
   Widget _buildScrimmedShell({
     required BuildContext context,
     required List<Widget> bodyChildren,
@@ -363,38 +365,27 @@ class _InterventionDialogueOverlayState
     final l10n = appL10n(context);
     final ThemeData theme = Theme.of(context);
     final TextStyle titleStyle = _overlayTitleStyle(theme);
-    return Stack(
-      children: [
-        widget.child,
-        Material(
-          color: EditorialMonoclePalette.dialogScrim,
-          child: Center(
-            child: CtDialogShell(
-              maxWidth: _kInterventionShellMaxWidth,
-              child: Padding(
-                padding: bodyPadding,
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    Text(
-                      l10n.game_intervention_overlayTitle,
-                      key: const ValueKey<String>(kInterventionOverlayTitleKey),
-                      style: titleStyle,
-                    ),
-                    const SizedBox(height: _kTitleToDividerGap),
-                    const CtBrassDivider(
-                      key: ValueKey<String>(kInterventionOverlayBrassDividerKey),
-                    ),
-                    const SizedBox(height: _kDividerToBodyGap),
-                    ...bodyChildren,
-                  ],
-                ),
-              ),
-            ),
+    return CtFullScreenDialogueShell(
+      backdrop: widget.child,
+      maxWidth: _kInterventionShellMaxWidth,
+      padding: bodyPadding,
+      body: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text(
+            l10n.game_intervention_overlayTitle,
+            key: const ValueKey<String>(kInterventionOverlayTitleKey),
+            style: titleStyle,
           ),
-        ),
-      ],
+          const SizedBox(height: _kTitleToDividerGap),
+          const CtBrassDivider(
+            key: ValueKey<String>(kInterventionOverlayBrassDividerKey),
+          ),
+          const SizedBox(height: _kDividerToBodyGap),
+          ...bodyChildren,
+        ],
+      ),
     );
   }
 
