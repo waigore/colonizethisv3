@@ -253,10 +253,26 @@ class WorldMarketState {
   const WorldMarketState({
     this.prices = const <CommodityId, double>{},
     this.lastTurnActivity = const <CommodityId, MarketActivity>{},
+    this.carryForwardOffersByFactionId =
+        const <String, List<TradeOrder>>{},
+    this.carryForwardBidsByFactionId =
+        const <String, List<TradeOrder>>{},
   });
 
   final Map<CommodityId, double> prices;
   final Map<CommodityId, MarketActivity> lastTurnActivity;
+
+  /// Per-faction unfilled offer carry-forwards from the previous turn's
+  /// market phase. Re-entered into matching at the start of the next turn,
+  /// subject to stockpile/cargo re-validation per `SPEC/game/world-market.md`
+  /// § Order persistence.
+  final Map<String, List<TradeOrder>> carryForwardOffersByFactionId;
+
+  /// Per-faction unfilled bid carry-forwards from the previous turn's
+  /// market phase. Re-entered into matching at the start of the next turn,
+  /// subject to stockpile/cargo re-validation per `SPEC/game/world-market.md`
+  /// § Order persistence.
+  final Map<String, List<TradeOrder>> carryForwardBidsByFactionId;
 
   static const empty = WorldMarketState();
 
@@ -275,10 +291,16 @@ class WorldMarketState {
   WorldMarketState copyWith({
     Map<CommodityId, double>? prices,
     Map<CommodityId, MarketActivity>? lastTurnActivity,
+    Map<String, List<TradeOrder>>? carryForwardOffersByFactionId,
+    Map<String, List<TradeOrder>>? carryForwardBidsByFactionId,
   }) {
     return WorldMarketState(
       prices: prices ?? this.prices,
       lastTurnActivity: lastTurnActivity ?? this.lastTurnActivity,
+      carryForwardOffersByFactionId:
+          carryForwardOffersByFactionId ?? this.carryForwardOffersByFactionId,
+      carryForwardBidsByFactionId:
+          carryForwardBidsByFactionId ?? this.carryForwardBidsByFactionId,
     );
   }
 
@@ -288,6 +310,14 @@ class WorldMarketState {
       for (final entry in lastTurnActivity.entries)
         entry.key: entry.value.toJson(),
     },
+    if (carryForwardOffersByFactionId.isNotEmpty)
+      'carryForwardOffersByFactionId': _serializeCarryForward(
+        carryForwardOffersByFactionId,
+      ),
+    if (carryForwardBidsByFactionId.isNotEmpty)
+      'carryForwardBidsByFactionId': _serializeCarryForward(
+        carryForwardBidsByFactionId,
+      ),
   };
 
   static WorldMarketState fromJson(Map<String, dynamic> json) {
@@ -316,6 +346,12 @@ class WorldMarketState {
     return WorldMarketState(
       prices: Map.unmodifiable(prices),
       lastTurnActivity: Map.unmodifiable(activity),
+      carryForwardOffersByFactionId: _deserializeCarryForward(
+        json['carryForwardOffersByFactionId'],
+      ),
+      carryForwardBidsByFactionId: _deserializeCarryForward(
+        json['carryForwardBidsByFactionId'],
+      ),
     );
   }
 
@@ -325,7 +361,15 @@ class WorldMarketState {
       other is WorldMarketState &&
           runtimeType == other.runtimeType &&
           _mapEquals(prices, other.prices) &&
-          _mapEquals(lastTurnActivity, other.lastTurnActivity);
+          _mapEquals(lastTurnActivity, other.lastTurnActivity) &&
+          _carryMapEquals(
+            carryForwardOffersByFactionId,
+            other.carryForwardOffersByFactionId,
+          ) &&
+          _carryMapEquals(
+            carryForwardBidsByFactionId,
+            other.carryForwardBidsByFactionId,
+          );
 
   @override
   int get hashCode {
@@ -338,8 +382,43 @@ class WorldMarketState {
     return Object.hash(
       Object.hashAll(priceEntries),
       Object.hashAll(activityEntries),
+      Object.hashAll(carryForwardOffersByFactionId.keys),
+      Object.hashAll(carryForwardBidsByFactionId.keys),
     );
   }
+}
+
+Map<String, List<Map<String, dynamic>>> _serializeCarryForward(
+  Map<String, List<TradeOrder>> map,
+) {
+  final result = <String, List<Map<String, dynamic>>>{};
+  for (final entry in map.entries) {
+    result[entry.key] = entry.value.map((o) => o.toJson()).toList();
+  }
+  return result;
+}
+
+Map<String, List<TradeOrder>> _deserializeCarryForward(Object? raw) {
+  if (raw is! Map<dynamic, dynamic>) {
+    return const <String, List<TradeOrder>>{};
+  }
+  final result = <String, List<TradeOrder>>{};
+  raw.forEach((key, value) {
+    if (value is List<dynamic>) {
+      final orders = <TradeOrder>[];
+      for (final entry in value) {
+        if (entry is Map<dynamic, dynamic>) {
+          orders.add(
+            TradeOrder.fromJson(Map<String, dynamic>.from(entry)),
+          );
+        }
+      }
+      if (orders.isNotEmpty) {
+        result[key.toString()] = List.unmodifiable(orders);
+      }
+    }
+  });
+  return Map.unmodifiable(result);
 }
 
 /// A single offer/bid pairing executed in the market phase.

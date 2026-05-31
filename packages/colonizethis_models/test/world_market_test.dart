@@ -206,6 +206,80 @@ void main() {
     test('empty constants are equal', () {
       expect(WorldMarketState.empty, equals(const WorldMarketState()));
     });
+
+    test('carry-forward maps default to empty and omit from JSON when empty', () {
+      const state = WorldMarketState();
+      expect(state.carryForwardOffersByFactionId, isEmpty);
+      expect(state.carryForwardBidsByFactionId, isEmpty);
+      final json = state.toJson();
+      expect(json.containsKey('carryForwardOffersByFactionId'), isFalse);
+      expect(json.containsKey('carryForwardBidsByFactionId'), isFalse);
+    });
+
+    test('round-trips carry-forward offers and bids through JSON', () {
+      final state = WorldMarketState.empty.copyWith(
+        carryForwardOffersByFactionId: {
+          'gp1': [
+            TradeOrder(
+              commodityId: 'timber',
+              type: TradeOrderType.offer,
+              quantity: 5,
+              priority: 2,
+            ),
+          ],
+        },
+        carryForwardBidsByFactionId: {
+          'gp2': [
+            TradeOrder(
+              commodityId: 'iron',
+              type: TradeOrderType.bid,
+              quantity: 3,
+              priority: 1,
+              isFtp: true,
+            ),
+          ],
+        },
+      );
+      final restored = WorldMarketState.fromJson(state.toJson());
+      expect(restored, equals(state));
+      expect(
+        restored.carryForwardOffersByFactionId['gp1']!.single.quantity,
+        5,
+      );
+      expect(
+        restored.carryForwardBidsByFactionId['gp2']!.single.isFtp,
+        isTrue,
+      );
+    });
+
+    test('equality reflects carry-forward differences', () {
+      final base = WorldMarketState.empty.copyWith(
+        carryForwardOffersByFactionId: {
+          'gp1': [
+            TradeOrder(
+              commodityId: 'timber',
+              type: TradeOrderType.offer,
+              quantity: 5,
+              priority: 2,
+            ),
+          ],
+        },
+      );
+      final differentQty = WorldMarketState.empty.copyWith(
+        carryForwardOffersByFactionId: {
+          'gp1': [
+            TradeOrder(
+              commodityId: 'timber',
+              type: TradeOrderType.offer,
+              quantity: 6,
+              priority: 2,
+            ),
+          ],
+        },
+      );
+      expect(base, isNot(equals(differentQty)));
+      expect(base, equals(base.copyWith()));
+    });
   });
 
   group('FilledDeal', () {
