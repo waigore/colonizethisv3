@@ -118,15 +118,23 @@ For each filled deal that is FRR-eligible:
   transfer) and the Deal Book UI can identify FRR-applied flows.
   Passing `null` (or an empty index) preserves legacy behavior for
   pre-#2992 callers and tests.
-- **D4 caller (overseas-profit treasury transfer)** lands with the
-  world-market phase handler (#2990 B3) and consumes the
-  `isFirstRightOfRefusalMatch` flag together with the same
-  `purchasedTileIndex` row to compute and credit the owning GP's
-  overseas-profit cut via [computeFirstRightProfit] from D3. The
-  expected call site builds `PurchasedTileIndex.fromGame(game)` once
-  per phase (or once per resolver pass) and looks up
-  `attributionForTileKey` per minor/tribe offer entry whose backing
-  tile resolves to a purchased attribution.
+- **D4 aggregator** is a pure helper at
+  `packages/colonizethis_logic/lib/src/economy/world_market/first_right_credits.dart`
+  — `computeFirstRightCredits({filledDeals, purchasedTileIndex,
+  relationScoreFor}) → FirstRightCreditsResult` (per-deal
+  `FirstRightDealCredit` records plus `treasuryCreditByGpId`). It
+  reads `FilledDeal.sellerOriginTileKey` (propagated by D2), looks up
+  the attribution, skips deals where `buyerFactionId == owningGpId`
+  (the D2 path is never double-credited), and calls
+  [computeFirstRightProfit]. Deterministic, no logger / RNG / `Game`
+  access (15-second budget safe).
+- **D4 caller (phase handler)** lands with #2990 B3. The expected call
+  site builds `PurchasedTileIndex.fromGame(game)`, runs
+  `DealMatcher.matchDeals` with that index, then
+  `computeFirstRightCredits` on the matcher output, and credits each
+  owning GP's treasury by the aggregated amount; the remainder of the
+  buyer's payment is the minor/tribe sink per
+  `SPEC/game/world-market.md` Requirement 9.
 
 ---
 
@@ -240,3 +248,45 @@ Tested in
   matching runs, then the FRR pre-pass is skipped and the deal flows
   through the standard tier loop, preserving the legacy contract for
   pre-#2992 callers.
+- **AC-D2-8 — `sellerOriginTileKey` propagated on FilledDeal.** Given a
+  matcher input whose offer carries a non-null
+  `TradeOrder.originTileKey`, when `DealMatcher.matchDeals` emits a
+  deal consuming that offer (FRR pre-pass match **or** standard tier
+  match), then the resulting `FilledDeal.sellerOriginTileKey` equals
+  the offer's `originTileKey`; offers with no `originTileKey` emit
+  deals with `sellerOriginTileKey == null`.
+
+### Treasury transfer (D4)
+
+Tested in
+`packages/colonizethis_logic/test/economy/world_market/first_right_credits_test.dart`.
+
+- **AC-D4-1 — Positive credit.** Given attribution `{tileKey: 'k1',
+  owningGpId: 'gpA', sourceFactionId: 'M1'}`, relation `gpA↔M1 = 75`,
+  and a `FilledDeal(buyer: 'gpB', quantity: 10, pricePerUnit: 20.0,
+  sellerOriginTileKey: 'k1')`, when `computeFirstRightCredits` runs,
+  then one `FirstRightDealCredit(owningGpId: 'gpA', relationScore: 75,
+  profit.profitRate: 0.30, profit.profitTreasury: 60.0)` is produced,
+  `treasuryCreditByGpId == {'gpA': 60.0}`, and
+  `totalProfitTreasury == 60.0`.
+- **AC-D4-2 — Buyer == owning GP excluded.** Given a matcher-emitted
+  D2 FRR-match deal (`buyerFactionId == owningGpId`,
+  `isFirstRightOfRefusalMatch == true`), when the helper runs, then no
+  credit is produced and `treasuryCreditByGpId` is empty (D2 path is
+  never double-credited).
+- **AC-D4-3 — Zero relation produces audit row only.** Given the
+  AC-D4-1 inputs but `relationScore == 0`, then the helper records a
+  `FirstRightDealCredit` with `profit == FirstRightProfit.zero` and
+  `treasuryCreditByGpId == {'gpA': 0.0}` (no treasury moves).
+- **AC-D4-4 — Out-of-scope skipped.** Given any of
+  `sellerOriginTileKey == null`, unmapped tile key, `quantity <= 0`,
+  or `pricePerUnit <= 0`, then the deal yields no credit.
+- **AC-D4-5 — Multi-GP aggregation.** Given attributions
+  `{k1: gpA/M1, k2: gpB/M1, k3: gpA/M2}`, relations
+  `(gpA↔M1=100, gpB↔M1=50, gpA↔M2=25)`, and three deals to buyer
+  `gpC`: `(k1:10@10.0, k2:4@5.0, k3:2@3.0)`, then
+  `treasuryCreditByGpId == {'gpA': 40.6, 'gpB': 4.0}` and
+  `totalProfitTreasury == 44.6`.
+- **AC-D4-6 — Null or empty index returns empty result.** Given any
+  non-empty `filledDeals` plus a `null` or empty `purchasedTileIndex`,
+  then the helper returns `FirstRightCreditsResult.empty`.
