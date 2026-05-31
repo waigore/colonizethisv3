@@ -43,6 +43,7 @@ Implementation: `app/lib/features/game/widgets/transfer_to_home_fleet_dialog.dar
 - `initialLeftCounts` / `initialRightCounts` are derived from each fleet's `shipTypeIds` (one entry per ship instance, aggregated by `typeId`).
 - Empty per-side label: `splitFleet_noShips`. Total label: `splitFleet_totalShips(total)`.
 - Cancel action label: `common_cancel` (from `CtTransferList` default). Primary action label: `naval_transferToHome_confirm` ("Transfer", #2867 R12). Confirm `CtNinePatchButton` is disabled (`CtNinePatchButton.disabledOpacity = 0.4`) until at least one ship row has moved from source to home.
+- Narrow-viewport layout: When the `CtTransferList` constraint maxWidth is below `kCtTransferListSideBySideMinWidth` (`360` dp) — which is always the case at `kMinViewportWidth` (`320` dp) because `CtDialogShell` inset (`16` dp each side) + outer padding (`16` dp each side) + body padding (`16` dp each side) leaves a ~`224` dp body column — the two side panels stack vertically (`source` above `home`) and the trailing Cancel / Transfer action row flows through a `Wrap(alignment: end)` so the Cinzel engraved labels never overflow horizontally per [mobile-adaptation.md](mobile-adaptation.md) § 7.
 
 ---
 

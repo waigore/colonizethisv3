@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_app/config/app_assets.dart';
+import 'package:colonizethis_app/config/editorial_monocle_palette.dart';
 import 'package:colonizethis_app/config/ui_screen_ids.dart';
 import 'package:flutter/material.dart';
 import 'package:colonizethis_app/package_logger.dart';
@@ -10,6 +11,7 @@ import 'package:flutter/services.dart';
 import 'package:jenny/jenny.dart';
 
 import '../../../../l10n/l10n.dart';
+import '../../../../widgets/ct_brass_divider.dart';
 import '../../../../widgets/ct_dialog_shell.dart';
 import '../../../../widgets/ct_loading_indicator.dart';
 import '../../../../widgets/ct_nine_patch_button.dart';
@@ -229,166 +231,205 @@ class _InterventionDialogueOverlayState
   Widget build(BuildContext context) {
     final l10n = appL10n(context);
     if (_loadError != null) {
-      return Stack(
-        children: [
-          widget.child,
-          Material(
-            color: Colors.black54,
-            child: Center(
-              child: CtDialogShell(
-                maxWidth: 520,
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      Text(
-                        l10n.game_intervention_loadError(_loadError.toString()),
-                        style: Theme.of(context).textTheme.bodyMedium,
-                      ),
-                      const SizedBox(height: 16),
-                      Text(
-                        l10n.game_intervention_degradedHint,
-                        style: Theme.of(context).textTheme.bodySmall,
-                      ),
-                      const SizedBox(height: 16),
-                      Align(
-                        alignment: Alignment.centerRight,
-                        child: CtNinePatchButton(
-                          onPressed: _degradedSubmitDoNothing,
-                          child: Text(l10n.game_intervention_continue),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
+      return _buildScrimmedShell(
+        context: context,
+        bodyChildren: [
+          Text(
+            l10n.game_intervention_loadError(_loadError.toString()),
+            style: Theme.of(context).textTheme.bodyMedium,
+          ),
+          const SizedBox(height: 16),
+          Text(
+            l10n.game_intervention_degradedHint,
+            style: Theme.of(context).textTheme.bodySmall,
+          ),
+          const SizedBox(height: 16),
+          Align(
+            alignment: Alignment.centerRight,
+            child: CtNinePatchButton(
+              onPressed: _degradedSubmitDoNothing,
+              child: Text(l10n.game_intervention_continue),
             ),
           ),
         ],
+        bodyPadding: const EdgeInsets.all(16),
       );
     }
 
     if (_project == null || _runner == null || _view == null) {
-      return Stack(
-        children: [
-          widget.child,
-          Material(
-            color: Colors.black54,
-            child: Center(
-              child: CtDialogShell(
-                child: const Padding(
-                  padding: EdgeInsets.all(24),
-                  child: CtLoadingIndicator(),
-                ),
-              ),
+      return _buildScrimmedShell(
+        context: context,
+        bodyChildren: const [
+          Padding(
+            padding: EdgeInsets.symmetric(vertical: 8),
+            child: Align(
+              alignment: Alignment.center,
+              child: CtLoadingIndicator(),
             ),
           ),
         ],
       );
     }
 
-    Widget? dialoguePanel;
     if (_yarnUiActive) {
       final line = _view!.currentLine;
       final choice = _view!.currentChoice;
-      dialoguePanel = CtDialogShell(
-        maxWidth: 520,
-        child: Padding(
-          padding: const EdgeInsets.all(20),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              if (line != null) ...[
-                Text(line.text, style: Theme.of(context).textTheme.bodyLarge),
-                const SizedBox(height: 16),
-                Align(
-                  alignment: Alignment.centerRight,
-                  child: CtNinePatchButton(
-                    onPressed: () => _view!.advanceLine(),
-                    child: Text(l10n.game_intervention_continue),
-                  ),
+      return _buildScrimmedShell(
+        context: context,
+        bodyChildren: [
+          if (line != null) ...[
+            Text(line.text, style: Theme.of(context).textTheme.bodyLarge),
+            const SizedBox(height: 16),
+            Align(
+              alignment: Alignment.centerRight,
+              child: CtNinePatchButton(
+                onPressed: () => _view!.advanceLine(),
+                child: Text(l10n.game_intervention_continue),
+              ),
+            ),
+          ] else if (choice != null) ...[
+            ...choice.options.asMap().entries.map(
+              (entry) => Padding(
+                padding: const EdgeInsets.only(bottom: 8),
+                child: CtNinePatchButton(
+                  onPressed: () => _view!.selectOption(entry.key),
+                  child: Text(entry.value.text),
                 ),
-              ] else if (choice != null) ...[
-                ...choice.options.asMap().entries.map(
-                  (entry) => Padding(
-                    padding: const EdgeInsets.only(bottom: 8),
-                    child: CtNinePatchButton(
-                      onPressed: () => _view!.selectOption(entry.key),
-                      child: Text(entry.value.text),
-                    ),
-                  ),
-                ),
-              ] else
-                const CtLoadingIndicator(),
-            ],
-          ),
-        ),
+              ),
+            ),
+          ] else
+            const Align(
+              alignment: Alignment.center,
+              child: CtLoadingIndicator(),
+            ),
+        ],
       );
     } else if (_awaitingChoice) {
       final prompt = widget.prompts[_promptIndex];
-      dialoguePanel = CtDialogShell(
-        maxWidth: 520,
-        child: Padding(
-          padding: const EdgeInsets.all(20),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Text(
-                l10n.game_intervention_resolutionProgress(
-                  _promptIndex + 1,
-                  widget.prompts.length,
-                ),
-                style: Theme.of(context).textTheme.titleSmall,
-              ),
-              const SizedBox(height: 12),
-              Text(
-                l10n.game_intervention_situation(
-                  _factionDisplayName(widget.game, prompt.aggressorGpId),
-                  _factionDisplayName(
-                    widget.game,
-                    prompt.defenderMinorOrTribeId,
-                  ),
-                  _factionDisplayName(widget.game, prompt.interveningGpId),
-                ),
-                style: Theme.of(context).textTheme.bodyMedium,
-              ),
-              const SizedBox(height: 16),
-              CtNinePatchButton(
-                onPressed: () => _pick(InterventionChoice.intervene),
-                child: Text(l10n.game_intervention_intervene),
-              ),
-              const SizedBox(height: 8),
-              CtNinePatchButton(
-                onPressed: () => _pick(InterventionChoice.doNothing),
-                child: Text(l10n.game_intervention_doNothing),
-              ),
-              const SizedBox(height: 8),
-              CtNinePatchButton(
-                onPressed: () => _pick(InterventionChoice.protest),
-                child: Text(l10n.game_intervention_protest),
-              ),
-            ],
+      return _buildScrimmedShell(
+        context: context,
+        bodyChildren: [
+          Text(
+            l10n.game_intervention_resolutionProgress(
+              _promptIndex + 1,
+              widget.prompts.length,
+            ),
+            style: Theme.of(context).textTheme.titleSmall,
           ),
-        ),
+          const SizedBox(height: 12),
+          Text(
+            l10n.game_intervention_situation(
+              _factionDisplayName(widget.game, prompt.aggressorGpId),
+              _factionDisplayName(
+                widget.game,
+                prompt.defenderMinorOrTribeId,
+              ),
+              _factionDisplayName(widget.game, prompt.interveningGpId),
+            ),
+            style: Theme.of(context).textTheme.bodyMedium,
+          ),
+          const SizedBox(height: 16),
+          CtNinePatchButton(
+            onPressed: () => _pick(InterventionChoice.intervene),
+            child: Text(l10n.game_intervention_intervene),
+          ),
+          const SizedBox(height: 8),
+          CtNinePatchButton(
+            onPressed: () => _pick(InterventionChoice.doNothing),
+            child: Text(l10n.game_intervention_doNothing),
+          ),
+          const SizedBox(height: 8),
+          CtNinePatchButton(
+            onPressed: () => _pick(InterventionChoice.protest),
+            child: Text(l10n.game_intervention_protest),
+          ),
+        ],
       );
     }
 
-    if (dialoguePanel == null) {
-      return widget.child;
-    }
+    return widget.child;
+  }
 
+  /// Wrap the per-phase body in the dark editorial-monocle scrim + `CtDialogShell`
+  /// with the canonical "Pending Intervention" title + [CtBrassDivider] header
+  /// rendered on every phase (#2867 R1 / R2 / R26b; SPEC
+  /// `SPEC/ui/screens/pending-intervention-overlay.md` § Dark editorial-monocle
+  /// chrome).
+  Widget _buildScrimmedShell({
+    required BuildContext context,
+    required List<Widget> bodyChildren,
+    EdgeInsetsGeometry bodyPadding = const EdgeInsets.all(20),
+  }) {
+    final l10n = appL10n(context);
+    final ThemeData theme = Theme.of(context);
+    final TextStyle titleStyle = _overlayTitleStyle(theme);
     return Stack(
       children: [
         widget.child,
         Material(
-          color: Colors.black54,
-          child: Center(child: dialoguePanel),
+          color: EditorialMonoclePalette.dialogScrim,
+          child: Center(
+            child: CtDialogShell(
+              maxWidth: _kInterventionShellMaxWidth,
+              child: Padding(
+                padding: bodyPadding,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Text(
+                      l10n.game_intervention_overlayTitle,
+                      key: const ValueKey<String>(kInterventionOverlayTitleKey),
+                      style: titleStyle,
+                    ),
+                    const SizedBox(height: _kTitleToDividerGap),
+                    const CtBrassDivider(
+                      key: ValueKey<String>(kInterventionOverlayBrassDividerKey),
+                    ),
+                    const SizedBox(height: _kDividerToBodyGap),
+                    ...bodyChildren,
+                  ],
+                ),
+              ),
+            ),
+          ),
         ),
       ],
     );
   }
+
+  /// Canonical title style per #2867 R2: `--accent` text with a 0.05em
+  /// letter-spacing computed from the resolved title `fontSize` so the
+  /// spacing scales with theme `titleMedium` overrides.
+  TextStyle _overlayTitleStyle(ThemeData theme) {
+    final TextStyle base =
+        theme.textTheme.titleMedium ?? const TextStyle(fontSize: 16);
+    final double fontSize = base.fontSize ?? 16;
+    return base.copyWith(
+      color: EditorialMonoclePalette.accent,
+      letterSpacing: fontSize * _kOverlayTitleLetterSpacingEm,
+    );
+  }
 }
+
+/// Stable key for the "Pending Intervention" title `Text` widget so widget
+/// tests can pin the dark editorial-monocle chrome contract without matching
+/// localized strings.
+const String kInterventionOverlayTitleKey = 'interventionOverlayTitle';
+
+/// Stable key for the [CtBrassDivider] beneath the title.
+const String kInterventionOverlayBrassDividerKey =
+    'interventionOverlayBrassDivider';
+
+/// Maximum content width inside `CtDialogShell` for the intervention overlay.
+/// Shared with the prior layout (520 dp).
+const double _kInterventionShellMaxWidth = 520;
+
+/// Vertical gap between the title and the [CtBrassDivider] (#2867 SPEC table).
+const double _kTitleToDividerGap = 8;
+
+/// Vertical gap between the [CtBrassDivider] and the per-phase body.
+const double _kDividerToBodyGap = 12;
+
+/// Canonical 0.05em letter-spacing factor for the overlay title (#2867 R2).
+const double _kOverlayTitleLetterSpacingEm = 0.05;

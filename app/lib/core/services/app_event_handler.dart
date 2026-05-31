@@ -28,6 +28,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../config/editorial_monocle_palette.dart';
 import '../../features/game/shell_player_context.dart';
 import '../../features/game/widgets/observe_mode_not_defined_panel.dart';
 
@@ -36,6 +37,7 @@ import '../../config/constants.dart';
 import '../../config/ct_e2e.dart';
 import '../../config/ct_e2e_last_panel_snapshot.dart';
 import 'subscription_tracker.dart';
+import '../../features/game/flame/exit_confirm_dialog.dart';
 import '../../features/game/widgets/civilian_units_panel.dart';
 import '../../features/game/widgets/military_units_panel.dart';
 import '../../features/game/widgets/naval_units_panel.dart';
@@ -116,6 +118,8 @@ class AppEventHandler {
         _navigateToShell(nav);
       case PopNavigationEvent():
         nav?.pop();
+      case RequestExitToMainMenuFlowEvent():
+        _handleRequestExitToMainMenuFlow(nav);
       case OpenPauseMenuPanelEvent():
         _openPauseMenuPanel(event, nav);
       case OpenCivilianUnitsPanelEvent():
@@ -232,10 +236,31 @@ class AppEventHandler {
     NavigatorState? nav,
   ) async {
     if (nav == null) return;
-    await showModalBottomSheet<void>(
+    await showDialog<void>(
       context: nav.context,
+      useRootNavigator: true,
+      barrierColor: EditorialMonoclePalette.dialogScrim,
       builder: (ctx) => PauseMenuPanel(bus: _bus),
     );
+  }
+
+  /// Pause-menu Exit to Main Menu flow. The pause sheet has already emitted
+  /// [ClosePanelEvent] before this event fires, so the sheet is being
+  /// dismissed via `Navigator.maybePop`. We schedule the exit-confirm
+  /// dialog after the current frame so the closing pop completes before
+  /// the new modal mounts (preventing the confirm dialog from being torn
+  /// down with the pause sheet). SPEC: `SPEC/ui/pause-menu-panel.md`
+  /// § Navigation, `SPEC/ui/in-game-shell-narrow.md` § Android back confirm.
+  void _handleRequestExitToMainMenuFlow(NavigatorState? nav) {
+    if (nav == null) return;
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      final state = _navigatorKey.currentState;
+      final ctx = state?.context;
+      if (state == null || ctx == null || !ctx.mounted) return;
+      final confirmed = await showExitToMainMenuConfirmDialog(ctx);
+      if (!confirmed) return;
+      _bus.emit(const NavigateToShellEvent());
+    });
   }
 
   void _navigateToShell(NavigatorState? nav) {
