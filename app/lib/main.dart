@@ -36,6 +36,7 @@ Future<void> bootstrapApp({
   required Future<void> Function(String name) openHiveBoxSafely,
   required Future<void> Function() ensureDesktopWindowStartup,
   required void Function(Widget app) runAppFn,
+  Future<void> Function()? preloadFonts,
 }) async {
   ensureBindingInitialized();
   initSessionLogBuffer();
@@ -48,8 +49,13 @@ Future<void> bootstrapApp({
   // Fire-and-forget Cinzel registration for the editorial-monocle theme;
   // failure (offline + no cache) falls back to platform serif per
   // `preloadEditorialMonocleFonts`. Skipped under e2e to avoid network
-  // dependencies in the integration_test bootstrap.
-  unawaited(preloadEditorialMonocleFonts(skipInTests: kCtE2EEnabled));
+  // dependencies in the integration_test bootstrap. Tests inject a no-op
+  // via [preloadFonts] so the GoogleFonts asset-not-found path does not
+  // surface as a zoned error after the test completes.
+  final preload =
+      preloadFonts ??
+      () => preloadEditorialMonocleFonts(skipInTests: kCtE2EEnabled);
+  unawaited(preload());
   runAppFn(const ProviderScope(child: AppEventHandlerScope(child: App())));
 }
 
