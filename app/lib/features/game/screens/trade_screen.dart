@@ -487,6 +487,7 @@ class _MarketTabContent extends ConsumerWidget {
       mainAxisSize: MainAxisSize.min,
       children: <Widget>[
         Text(
+          // ignore: avoid_hardcoded_strings_in_widgets
           '${TradeScreen.cargoIndicatorPrefix} $clampedRemaining',
           key: TradeScreen.marketCargoIndicatorKey,
           style: cargoIndicatorStyle,
