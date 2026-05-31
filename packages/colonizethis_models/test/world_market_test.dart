@@ -289,12 +289,13 @@ void main() {
   });
 
   group('MarketActivity', () {
-    test('empty has zeroed fields and empty notes', () {
+    test('empty has zeroed fields and empty deals/notes', () {
       const m = MarketActivity.empty;
       expect(m.totalBidQuantity, 0);
       expect(m.totalOfferQuantity, 0);
       expect(m.filledQuantity, 0);
       expect(m.priceChangePercent, 0.0);
+      expect(m.deals, isEmpty);
       expect(m.notes, isEmpty);
     });
 
@@ -309,12 +310,84 @@ void main() {
       expect(restored, equals(original));
     });
 
+    test('deals defaults to empty list and is omitted from JSON when empty', () {
+      const m = MarketActivity(
+        totalBidQuantity: 5,
+        totalOfferQuantity: 5,
+        filledQuantity: 5,
+      );
+      expect(m.deals, isEmpty);
+      expect(m.toJson().containsKey('deals'), isFalse);
+    });
+
     test('toJson omits notes when empty', () {
       const m = MarketActivity(
         totalBidQuantity: 1,
         totalOfferQuantity: 1,
       );
       expect(m.toJson().containsKey('notes'), isFalse);
+    });
+
+    test(
+      'round-trips through JSON with deals (preserves order and FRR flag — '
+      'Refs #2993 E6 ledger surface)',
+      () {
+        const original = MarketActivity(
+          totalBidQuantity: 12,
+          totalOfferQuantity: 12,
+          filledQuantity: 12,
+          priceChangePercent: 0.0,
+          deals: <FilledDeal>[
+            FilledDeal(
+              sellerFactionId: 'gpA',
+              buyerFactionId: 'gpB',
+              commodityId: 'timber',
+              quantity: 5,
+              pricePerUnit: 30.0,
+            ),
+            FilledDeal(
+              sellerFactionId: 'M1',
+              buyerFactionId: 'gpA',
+              commodityId: 'timber',
+              quantity: 7,
+              pricePerUnit: 30.0,
+              isFirstRightOfRefusalMatch: true,
+              sellerOriginTileKey: 'oldWorld|M1|0|0',
+            ),
+          ],
+        );
+        final restored = MarketActivity.fromJson(original.toJson());
+        expect(restored, equals(original));
+        expect(restored.deals, hasLength(2));
+        expect(restored.deals.first.buyerFactionId, 'gpB');
+        expect(restored.deals.last.isFirstRightOfRefusalMatch, isTrue);
+      },
+    );
+
+    test('equality reflects deals differences', () {
+      const a = MarketActivity(
+        deals: <FilledDeal>[
+          FilledDeal(
+            sellerFactionId: 'gpA',
+            buyerFactionId: 'gpB',
+            commodityId: 'timber',
+            quantity: 5,
+            pricePerUnit: 30.0,
+          ),
+        ],
+      );
+      const b = MarketActivity(
+        deals: <FilledDeal>[
+          FilledDeal(
+            sellerFactionId: 'gpA',
+            buyerFactionId: 'gpB',
+            commodityId: 'timber',
+            quantity: 6, // different quantity
+            pricePerUnit: 30.0,
+          ),
+        ],
+      );
+      expect(a, isNot(equals(b)));
     });
   });
 

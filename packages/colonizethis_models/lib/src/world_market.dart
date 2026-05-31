@@ -365,6 +365,14 @@ class MarketActivityNote {
 /// price discovery aggregation contract in
 /// `SPEC/game/world-market.md` § Price discovery.
 ///
+/// `deals` carries the per-commodity sequence of [FilledDeal] entries that
+/// the deal matcher produced for the resolved turn (see
+/// `SPEC/program/world-market-resolution.md` § Step F Activity rollup and
+/// § Data model). The Deal Book UI (`#2993` E6) consumes this list,
+/// filtered by buyer/seller faction id, to render the player's ledger.
+/// The list is **always** stored unmodifiable; callers must not mutate it
+/// in place.
+///
 /// `notes` carries audit-grade events scoped to this commodity for the
 /// resolved turn (currently: dropped carry-forwards per
 /// `SPEC/program/world-market-resolution.md` § Step A Gather). The list is
@@ -375,6 +383,7 @@ class MarketActivity {
     this.totalOfferQuantity = 0,
     this.filledQuantity = 0,
     this.priceChangePercent = 0.0,
+    this.deals = const <FilledDeal>[],
     this.notes = const <MarketActivityNote>[],
   });
 
@@ -382,6 +391,7 @@ class MarketActivity {
   final int totalOfferQuantity;
   final int filledQuantity;
   final double priceChangePercent;
+  final List<FilledDeal> deals;
   final List<MarketActivityNote> notes;
 
   static const empty = MarketActivity();
@@ -391,6 +401,8 @@ class MarketActivity {
     'totalOfferQuantity': totalOfferQuantity,
     'filledQuantity': filledQuantity,
     'priceChangePercent': priceChangePercent,
+    if (deals.isNotEmpty)
+      'deals': [for (final d in deals) d.toJson()],
     if (notes.isNotEmpty)
       'notes': [for (final n in notes) n.toJson()],
   };
@@ -401,6 +413,16 @@ class MarketActivity {
     double doubleOrZero(Object? v) {
       if (v is num) return v.toDouble();
       return double.tryParse(v?.toString() ?? '') ?? 0.0;
+    }
+
+    final dealsRaw = json['deals'];
+    final deals = <FilledDeal>[];
+    if (dealsRaw is List<dynamic>) {
+      for (final entry in dealsRaw) {
+        if (entry is Map<dynamic, dynamic>) {
+          deals.add(FilledDeal.fromJson(Map<String, dynamic>.from(entry)));
+        }
+      }
     }
 
     final notesRaw = json['notes'];
@@ -420,6 +442,9 @@ class MarketActivity {
       totalOfferQuantity: intOrZero(json['totalOfferQuantity']),
       filledQuantity: intOrZero(json['filledQuantity']),
       priceChangePercent: doubleOrZero(json['priceChangePercent']),
+      deals: deals.isEmpty
+          ? const <FilledDeal>[]
+          : List<FilledDeal>.unmodifiable(deals),
       notes: notes.isEmpty
           ? const <MarketActivityNote>[]
           : List<MarketActivityNote>.unmodifiable(notes),
@@ -435,6 +460,7 @@ class MarketActivity {
           totalOfferQuantity == other.totalOfferQuantity &&
           filledQuantity == other.filledQuantity &&
           priceChangePercent == other.priceChangePercent &&
+          _listEquals(deals, other.deals) &&
           _listEquals(notes, other.notes);
 
   @override
@@ -443,6 +469,7 @@ class MarketActivity {
     totalOfferQuantity,
     filledQuantity,
     priceChangePercent,
+    Object.hashAll(deals),
     Object.hashAll(notes),
   );
 }

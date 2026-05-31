@@ -268,6 +268,7 @@ void main() {
           researchPlannerRan: true,
           conquestArmyMovePlannerRan: true,
           conquestPasses: 22,
+          tradePlannerRan: false,
           workThreshold: 40,
           buildThreshold: 30,
           researchThreshold: 40,
@@ -316,11 +317,13 @@ void main() {
         researchPlannerRan: false,
         conquestArmyMovePlannerRan: true,
         conquestPasses: 1,
+        tradePlannerRan: false,
       );
       final json = gates.toJson();
       expect(json.containsKey('thresholds'), isFalse);
       expect(json['workPlannerRan'], isFalse);
       expect(json['conquestPasses'], 1);
+      expect(json['tradePlannerRan'], isFalse);
     });
 
     test('compactPhasePlanJson omits empty arms and surfaces lower-case method names',

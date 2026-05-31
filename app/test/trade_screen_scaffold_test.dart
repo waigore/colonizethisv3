@@ -381,8 +381,8 @@ void main() {
     );
 
     testWidgets(
-      'Deal Book tab body still renders its dark editorial-monocle '
-      'placeholder title — Deal Book (after tap)',
+      'Deal Book tab body mounts the live ledger content (Refs #2993 E6) '
+      'after the user taps the Deal Book label',
       (tester) async {
         await tester.pumpWidget(buildTradeRouteHost());
         await pumpSettleCapped(tester);
@@ -399,16 +399,35 @@ void main() {
         await tester.tap(dealBookLabel);
         await pumpSettleCapped(tester);
 
-        // After tap, the Deal Book tab body is on stage and its
-        // placeholder title renders inside the tab body keyed
-        // tradeScreenDealBookTabBody (Refs #2993 E6 follow-up replaces
-        // this placeholder with the live ledger).
-        final dealBookTitle = find.descendant(
-          of: find.byKey(TradeScreen.dealBookTabBodyKey),
-          // ignore: avoid_hardcoded_strings_in_widgets
-          matching: find.text('Deal Book'),
+        // After tap, the Deal Book tab body is on stage and renders the
+        // live ledger content root keyed `tradeScreenDealBookContent`
+        // (Refs #2993 E6) under the same `tradeScreenDealBookTabBody`
+        // body root — the tab-body key remained stable so existing
+        // tab-switch tests continue to pin the same affordance.
+        expect(find.byKey(TradeScreen.dealBookTabBodyKey), findsOneWidget);
+        expect(
+          find.descendant(
+            of: find.byKey(TradeScreen.dealBookTabBodyKey),
+            matching: find.byKey(TradeScreen.dealBookContentKey),
+          ),
+          findsOneWidget,
         );
-        expect(dealBookTitle, findsOneWidget);
+        // Both bids and offers panel containers are always present in
+        // the live content; their per-row contents are exercised by the
+        // dedicated E6 panel tests in trade_screen_deal_book_tab_e6_test.dart.
+        expect(find.byKey(TradeScreen.dealBookBidsPanelKey), findsOneWidget);
+        expect(
+          find.byKey(TradeScreen.dealBookOffersPanelKey),
+          findsOneWidget,
+        );
+        expect(
+          find.byKey(TradeScreen.dealBookBidsTotalsKey),
+          findsOneWidget,
+        );
+        expect(
+          find.byKey(TradeScreen.dealBookOffersTotalsKey),
+          findsOneWidget,
+        );
       },
     );
   });
