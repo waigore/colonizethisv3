@@ -164,6 +164,110 @@ Map<String, ConnectivityResult> resolveConnectivity({
   return result;
 }
 
+/// Returns per-faction [ConnectivityResult] for **non-Great-Power factions**
+/// (Minor Nations and Tribes). Keys are `MinorNation.id` and `Tribe.id`; there
+/// is no overlap with Great Power player ids returned by [resolveConnectivity].
+///
+/// Iterates `Game.minorNations` and `Game.tribes` instead of `Game.players` and
+/// shares the same Road and Town rules as Great Power connectivity per
+/// [SPEC/game/capital-and-connectivity.md] § Connectivity (Game Rule). Three
+/// non-Great-Power-specific differences are normative in
+/// [SPEC/game/capital-and-connectivity.md] § Non-Great-Power capital connectivity
+/// and [SPEC/game/factions.md] § Minor and Tribe capital connectivity:
+///
+///   1. **Land-only output.** Minors and Tribes do not own provinces in the
+///      other region; the overseas branch in § Connectivity (Game Rule) cannot
+///      match because of the per-faction ownership filter.
+///   2. **No blockade interaction.** The resolver passes an **empty** blockade
+///      set so World-Market participation is independent of fleets on Blockade
+///      missions, per [SPEC/game/world-market.md] § Minor and tribe auto-sell.
+///   3. **No GP-only town-development bump.** Capital-province
+///      `townDevelopmentLevel = 4` is set for Great Powers only.
+///
+/// Factions with `capitalTile == null` or `capitalProvinceId == null` (e.g.
+/// before [SPEC/game/capital-and-connectivity.md] § Minor Nation and Tribe
+/// terminal fall removes the entry) are emitted with an empty
+/// [ConnectivityResult]. Empty `Game.minorNations` and `Game.tribes` returns
+/// an empty map without iterating Great Power state.
+///
+/// Output is consumed by `computeNonGreatPowerExtraction` (issue #2991 C2 in
+/// `economy/non_gp_extraction.dart`) which treats the result as the per-faction
+/// connectivity input it does not compute itself.
+Map<String, ConnectivityResult> resolveNonGreatPowerConnectivity({
+  required Game game,
+  required Map<String, TileMapResult> tileMapByRegion,
+  required MapTopology topology,
+}) {
+  if (game.minorNations.isEmpty && game.tribes.isEmpty) {
+    return const <String, ConnectivityResult>{};
+  }
+  logicLog.d(
+    'non_gp connectivity resolve start minors=${game.minorNations.length} '
+    'tribes=${game.tribes.length} '
+    'regions=${tileMapByRegion.keys.join(",")}',
+  );
+  final provinceIdsByType = provinceNodeIds(topology);
+  final topologySeaZones = seaZoneNodeIds(topology);
+  final portInfo = _portToProvinceSeaZone(game.worldState);
+  // Reuses the same single dual-region province scan used for Great Powers
+  // (Refs #2394). The cache buckets ownership by `Province.ownerId`, which for
+  // non-Great-Power-owned provinces equals the `MinorNation.id` or `Tribe.id`,
+  // so the cache surface is faction-agnostic and no separate bucketing is
+  // required.
+  final perFaction = _buildPerPlayerProvinceCaches(game);
+  final ownedByFaction = perFaction.ownedByPlayer;
+  final townByTileKeyByFaction = perFaction.townByTileKeyByPlayer;
+  final result = <String, ConnectivityResult>{};
+
+  void runForFaction({
+    required String factionId,
+    required CapitalTile? capitalTile,
+    required String? capitalProvinceId,
+  }) {
+    if (capitalTile == null || capitalProvinceId == null) {
+      logicLog.d('non_gp connectivity resolve faction=$factionId skipped (no capital)');
+      result[factionId] = const ConnectivityResult(connected: {});
+      return;
+    }
+    final cr = _connectedTilesForPlayer(
+      game: game,
+      playerId: factionId,
+      capital: capitalTile,
+      tileMapByRegion: tileMapByRegion,
+      topology: topology,
+      provinceIdsByType: provinceIdsByType,
+      seaZoneNodeIds: topologySeaZones,
+      portInfo: portInfo,
+      owned: ownedByFaction[factionId] ?? const <String>{},
+      townByTileKey:
+          townByTileKeyByFaction[factionId] ?? const <String, Province>{},
+      blockadedPortProvinces: const <String>{},
+    );
+    result[factionId] = cr;
+  }
+
+  for (final minor in game.minorNations) {
+    runForFaction(
+      factionId: minor.id,
+      capitalTile: minor.capitalTile,
+      capitalProvinceId: minor.capitalProvinceId,
+    );
+  }
+  for (final tribe in game.tribes) {
+    runForFaction(
+      factionId: tribe.id,
+      capitalTile: tribe.capitalTile,
+      capitalProvinceId: tribe.capitalProvinceId,
+    );
+  }
+
+  final summary = result.entries
+      .map((e) => '${e.key}:${e.value.connected.length}')
+      .join(' ');
+  logicLog.d('non_gp connectivity resolve end $summary');
+  return result;
+}
+
 /// Buckets a single dual-region province pass by playerId so per-player work
 /// below avoids repeating that scan. Returned maps key by `Province.ownerId`
 /// and include only provinces with a non-null owner. (Refs #2394.)

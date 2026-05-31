@@ -10,7 +10,7 @@ Connectivity in this document applies **only to extraction**: it determines whic
 
 ## Capital
 
-The **capital** is a designated home province plus a **specific tile** within that province (e.g. `(regionId, provinceId, x, y)`). It is chosen in a **capital-choice phase** before the game starts. The sea-bound requirement applies to **Great Power** capitals only: the topology must have at least one P<->S edge for that province. Minor Nations and Tribes may have inland capitals; they do not participate in extraction or transport. See [capital-choice-phase.md](capital-choice-phase.md).
+The **capital** is a designated home province plus a **specific tile** within that province (e.g. `(regionId, provinceId, x, y)`). It is chosen in a **capital-choice phase** before the game starts. The sea-bound requirement applies to **Great Power** capitals only: the topology must have at least one P<->S edge for that province. Minor Nations and Tribes may have inland capitals; they do **not** consume sea transport. They **do** receive capital-tile-rooted connectivity for **non-Great-Power extraction** that feeds the World Market phase (see § Non-Great-Power capital connectivity and [factions.md](factions.md) § Minor and Tribe capital connectivity). See [capital-choice-phase.md](capital-choice-phase.md).
 
 ---
 
@@ -128,6 +128,22 @@ Blockade affects **connectivity** for extraction. It is determined by enemy flee
 - **Capital province blockaded:** If the **capital province** itself is blockaded (an enemy fleet at sea is blockading the capital's port), then for that player **all overseas** provinces and **all same-region provinces that are only reachable via sea** (i.e. no land path from capital) are **not** connected. In effect, the entire sea-based connectivity is severed; only tiles reachable by land (road/rail) from the capital remain connected.
 
 Connectivity is recomputed each turn; blockade state is taken from the current fleet missions and positions (only **at-sea** fleets on Blockade count) before the extraction phase. Implementation must pass a set of blockaded province ids (or equivalent) into the connectivity resolver so that these rules are applied; see [extraction-pipeline.md](../program/extraction-pipeline.md).
+
+---
+
+## Non-Great-Power capital connectivity
+
+Minor Nations and Tribes use the **same per-tile connectivity rules** as Great Powers (§ Connectivity (Game Rule)) so that the System can compute which non-Great-Power tiles contribute to per-faction extraction in the World Market phase ([world-market.md](world-market.md) § Minor and tribe auto-sell, [extraction-and-improvements.md](extraction-and-improvements.md) § Non-Great-Power extraction). The resolver iterates `Game.minorNations` and `Game.tribes` instead of `Game.players` and emits one `ConnectivityResult` per faction id, keyed by the Minor Nation id or Tribe id.
+
+Three differences apply to non-Great-Power factions:
+
+- **Land-only output.** Minor Nations are Old-World-only and Tribes are New-World-only per [factions.md](factions.md), so every owned non-Great-Power tile is in the same region as the faction's capital. The Road and Town rules apply unchanged within that region; the overseas branch in § Connectivity (Game Rule) cannot match because non-Great-Power factions never own provinces in the other region.
+- **No blockade interaction for market access.** § Blockade severs Great Power port-province connectivity. For Minor Nations and Tribes the resolver passes an **empty** blockade set: war does not block their World-Market participation per [world-market.md](world-market.md) § Minor and tribe auto-sell. (Combat outcomes still affect ownership and capital reassignment normally — see § Capital loss and reassignment, § Minor Nation and Tribe terminal fall.)
+- **No GP-only town-development bump.** Capital-province `townDevelopmentLevel` is set to `4` for **Great Power** capitals only (§ Capital province town development (Great Powers), § Capital loss and reassignment). Minor Nations and Tribes inherit whatever `townDevelopmentLevel` § Town per province assigned to their capital province; the non-Great-Power resolver does not mutate it.
+
+The resolver entry point is **separate** from the Great Power `resolveConnectivity` so that Great Power blockade computations and capital-bound state (e.g. `capitalProvinceId`) are not affected. Both resolvers share the same per-tile Road and Town rules and the same path-transport-cap computation, so per-tile outputs for any faction with the same owned set, capital tile, and tile state are identical regardless of faction type. Connectivity is recomputed each turn (§ Dynamic Recompute) just like for Great Powers.
+
+When a Minor Nation or Tribe has `capitalTile == null` (e.g. before § Minor Nation and Tribe terminal fall removes the entry), the resolver emits an empty `ConnectivityResult` for that faction id; no provinces contribute, and the World Market phase treats the faction as having no auto-offers that turn.
 
 ---
 
