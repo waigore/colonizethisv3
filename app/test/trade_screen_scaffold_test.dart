@@ -1,5 +1,5 @@
-// Widget tests for the TradeScreen scaffold slice
-// (Refs #2993 E1+E2+E3). SPEC/ui/trade-screen.md.
+// Widget tests for the TradeScreen scaffold slices
+// (Refs #2993 E1+E2+E3 chrome + E4 two-tab body). SPEC/ui/trade-screen.md.
 
 import 'package:colonizethis_app/app.dart';
 import 'package:colonizethis_app/config/constants.dart';
@@ -20,6 +20,7 @@ import 'package:colonizethis_app/providers/games_box_provider.dart';
 import 'package:colonizethis_app/providers/games_provider.dart';
 import 'package:colonizethis_app/providers/game_service_provider.dart';
 import 'package:colonizethis_app/widgets/ct_back_button.dart';
+import 'package:colonizethis_app/widgets/ct_tab_strip.dart';
 import 'package:colonizethis_app/widgets/ct_top_bar.dart';
 import 'package:colonizethis_app/widgets/debug_init_game.dart';
 import 'package:colonizethis_app/widgets/strict_asset_icon.dart';
@@ -205,8 +206,8 @@ void main() {
         expect(icon.width, 18);
         expect(icon.height, 18);
 
-        // Scaffold placeholder body renders for non-observe sessions.
-        expect(find.byKey(TradeScreen.placeholderBodyKey), findsOneWidget);
+        // Two-tab body renders for non-observe sessions.
+        expect(find.byKey(TradeScreen.tabsBodyKey), findsOneWidget);
         expect(find.byType(ObserveModeNotDefinedPanel), findsNothing);
 
         // Negative regression guard: no legacy light Material AppBar chrome.
@@ -216,7 +217,7 @@ void main() {
 
     testWidgets(
       'TradeScreen routes to ObserveModeNotDefinedPanel under global observe '
-      'mode and hides the scaffold placeholder body',
+      'mode and hides the two-tab body and per-tab keyed bodies',
       (tester) async {
         await tester.pumpWidget(buildTradeRouteHost(globalObserve: true));
         await pumpSettleCapped(tester);
@@ -235,8 +236,11 @@ void main() {
         // ignore: avoid_hardcoded_strings_in_widgets
         expect(observePanel.title, 'Trade');
 
-        // Negative AC: the placeholder body must NOT appear in observe mode.
-        expect(find.byKey(TradeScreen.placeholderBodyKey), findsNothing);
+        // Negative AC: none of the tab body keys must appear in observe mode.
+        expect(find.byKey(TradeScreen.tabsBodyKey), findsNothing);
+        expect(find.byKey(TradeScreen.marketTabBodyKey), findsNothing);
+        expect(find.byKey(TradeScreen.dealBookTabBodyKey), findsNothing);
+        expect(find.byType(CtTabStrip), findsNothing);
       },
     );
 
@@ -260,6 +264,158 @@ void main() {
 
         expect(find.byType(TradeScreen), findsNothing);
         expect(find.text('open trade'), findsOneWidget);
+      },
+    );
+  });
+
+  group('TradeScreen tab scaffold slice (Refs #2993 E4)', () {
+    testWidgets(
+      'tabs body hosts a CtTabStrip with literal Market + Deal Book labels in order',
+      (tester) async {
+        await tester.pumpWidget(buildTradeRouteHost());
+        await pumpSettleCapped(tester);
+
+        await tester.tap(find.text('open trade'));
+        await pumpSettleCapped(tester);
+
+        expect(find.byKey(TradeScreen.tabsBodyKey), findsOneWidget);
+
+        final stripFinder = find.descendant(
+          of: find.byKey(TradeScreen.tabsBodyKey),
+          matching: find.byType(CtTabStrip),
+        );
+        expect(stripFinder, findsOneWidget);
+
+        final CtTabStrip strip = tester.widget<CtTabStrip>(stripFinder);
+        expect(strip.tabLabels, <String>[
+          TradeScreen.marketTabLabel,
+          TradeScreen.dealBookTabLabel,
+        ]);
+        expect(strip.tabViews.length, 2);
+      },
+    );
+
+    testWidgets(
+      'both Market and Deal Book tab body keys are mounted (IndexedStack '
+      'keeps non-selected tab in tree, off-stage)',
+      (tester) async {
+        await tester.pumpWidget(buildTradeRouteHost());
+        await pumpSettleCapped(tester);
+
+        await tester.tap(find.text('open trade'));
+        await pumpSettleCapped(tester);
+
+        // Default selection foregrounds the Market tab; that body is on
+        // stage and resolves under default `skipOffstage: true`.
+        expect(find.byKey(TradeScreen.marketTabBodyKey), findsOneWidget);
+
+        // Non-selected Deal Book tab is wrapped in Visibility(visible:
+        // false) by IndexedStack and reads as off-stage to default
+        // finders. Asserting `skipOffstage: false` confirms the widget
+        // is still in the tree (state is preserved) — the contract that
+        // lets E5/E6 swap each tab body in place without remounting the
+        // tab strip.
+        expect(
+          find.byKey(TradeScreen.dealBookTabBodyKey, skipOffstage: false),
+          findsOneWidget,
+          reason:
+              'IndexedStack mounts both tab bodies; the non-selected '
+              'Deal Book body must remain in the element tree so E6 can '
+              'replace it in place.',
+        );
+        // Conversely the off-stage Deal Book body must not be reachable
+        // from default (skipOffstage: true) finders — that is the
+        // visible/foregrounded contract for the default Market tab.
+        expect(find.byKey(TradeScreen.dealBookTabBodyKey), findsNothing);
+      },
+    );
+
+    testWidgets(
+      'tapping the Deal Book label switches the foregrounded IndexedStack '
+      'child to the Deal Book tab body',
+      (tester) async {
+        await tester.pumpWidget(buildTradeRouteHost());
+        await pumpSettleCapped(tester);
+
+        await tester.tap(find.text('open trade'));
+        await pumpSettleCapped(tester);
+
+        // Locate the IndexedStack created by CtTabStrip; verify default
+        // selection is index 0 (Market).
+        final stackFinder = find.descendant(
+          of: find.byKey(TradeScreen.tabsBodyKey),
+          matching: find.byType(IndexedStack),
+        );
+        expect(stackFinder, findsOneWidget);
+        IndexedStack stack = tester.widget<IndexedStack>(stackFinder);
+        expect(
+          stack.index,
+          0,
+          reason:
+              'SPEC/ui/trade-screen.md § Acceptance criteria — Tab '
+              'scaffold slice: default selection is the Market tab '
+              '(index 0).',
+        );
+
+        // Tap the `Deal Book` label inside the tab strip.
+        final dealBookLabel = find.descendant(
+          of: find.byType(CtTabStrip),
+          matching: find.text(TradeScreen.dealBookTabLabel),
+        );
+        expect(dealBookLabel, findsOneWidget);
+        await tester.tap(dealBookLabel);
+        await pumpSettleCapped(tester);
+
+        // After the tap the IndexedStack should foreground the Deal Book
+        // tab body (index 1).
+        stack = tester.widget<IndexedStack>(stackFinder);
+        expect(
+          stack.index,
+          1,
+          reason:
+              'SPEC/ui/trade-screen.md § Acceptance criteria — tapping '
+              '`Deal Book` foregrounds the Deal Book tab body keyed '
+              'tradeScreenDealBookTabBody.',
+        );
+      },
+    );
+
+    testWidgets(
+      'each tab body renders its dark editorial-monocle title — Market '
+      '(visible by default) and Deal Book (after tap)',
+      (tester) async {
+        await tester.pumpWidget(buildTradeRouteHost());
+        await pumpSettleCapped(tester);
+
+        await tester.tap(find.text('open trade'));
+        await pumpSettleCapped(tester);
+
+        // Market tab body is on stage by default — title renders to the
+        // visible foreground.
+        final marketTitle = find.descendant(
+          of: find.byKey(TradeScreen.marketTabBodyKey),
+          // ignore: avoid_hardcoded_strings_in_widgets
+          matching: find.text('Market'),
+        );
+        expect(marketTitle, findsOneWidget);
+
+        // Tap the Deal Book tab label to swap the on-stage child.
+        final dealBookLabel = find.descendant(
+          of: find.byType(CtTabStrip),
+          matching: find.text(TradeScreen.dealBookTabLabel),
+        );
+        expect(dealBookLabel, findsOneWidget);
+        await tester.tap(dealBookLabel);
+        await pumpSettleCapped(tester);
+
+        // After tap, the Deal Book tab body is on stage and its title
+        // renders.
+        final dealBookTitle = find.descendant(
+          of: find.byKey(TradeScreen.dealBookTabBodyKey),
+          // ignore: avoid_hardcoded_strings_in_widgets
+          matching: find.text('Deal Book'),
+        );
+        expect(dealBookTitle, findsOneWidget);
       },
     );
   });
