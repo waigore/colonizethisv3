@@ -286,6 +286,24 @@ List<WidgetbookNode> get diplomacyDetailScreenDirectories => [
 
 Game _tradeScreenStoryGame() {
   const humanId = 'gp_human';
+  // Seed the world market state so the Refs #2993 E5a read-only
+  // commodity table renders representative prices + previous-turn
+  // aggregate volumes for a handful of commodities — the remaining
+  // rows render the em-dash price glyph + `Bids 0 / Offers 0` zero
+  // default so reviewers can see both code paths at a glance.
+  const Map<CommodityId, double> prices = <CommodityId, double>{
+    'timber': 30.0,
+    'iron': 80.0,
+    'grain': 50.0,
+    'fabric': 120.0,
+    'castIron': 175.0,
+  };
+  const Map<CommodityId, MarketActivity> activity =
+      <CommodityId, MarketActivity>{
+    'timber': MarketActivity(totalBidQuantity: 12, totalOfferQuantity: 8),
+    'iron': MarketActivity(totalBidQuantity: 5, totalOfferQuantity: 14),
+    'grain': MarketActivity(totalBidQuantity: 18, totalOfferQuantity: 18),
+  };
   return Game(
     id: 'wb_trade_screen',
     worldState: WorldState(
@@ -301,6 +319,10 @@ Game _tradeScreenStoryGame() {
     diplomacyRelations: const [],
     diplomaticHistoryEvents: const [],
     dossierEvidenceEntries: const [],
+    worldMarketState: const WorldMarketState(
+      prices: prices,
+      lastTurnActivity: activity,
+    ),
   );
 }
 
@@ -330,9 +352,16 @@ Widget _tradeScreenDefaultStory() {
   );
 }
 
-/// Trade screen stories. SPEC/ui/trade-screen.md (Refs #2993 E1+E2+E3+E4
-/// scaffold slice — two-tab body with placeholder panels until #2989 /
-/// #2990 data types land for the live Market and Deal Book content).
+/// Trade screen stories. SPEC/ui/trade-screen.md.
+///
+/// Refs #2993 E1+E2+E3+E4 ship the route, screen ID, left-rail button,
+/// dark editorial-monocle chrome, and the durable two-tab body. Refs
+/// #2993 E5a (this slice) adds the Market tab's read-only commodity
+/// table sourced from `Game.worldMarketState` — the story Game seeds a
+/// representative subset of `prices` + `lastTurnActivity` so reviewers
+/// can see both the populated and zero-default rendering paths in one
+/// scroll. The Deal Book tab body remains the placeholder until Refs
+/// #2993 E6.
 List<WidgetbookNode> get tradeScreenDirectories => [
   WidgetbookFolder(
     name: 'Trade Screen',
