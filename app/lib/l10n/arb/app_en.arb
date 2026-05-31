@@ -1370,6 +1370,59 @@
       }
     }
   },
+  "naval_units_locInPort": "(in port)",
+  "@naval_units_locInPort": {
+    "description": "Inline qualifier appended to a fleet's location label when the fleet is docked at a port province. SPEC/ui/naval-units-panel.md R28."
+  },
+  "naval_units_locAtSea": "(at sea)",
+  "@naval_units_locAtSea": {
+    "description": "Inline qualifier appended to a fleet's location label when the fleet is in a sea zone. SPEC/ui/naval-units-panel.md R28."
+  },
+  "naval_units_homeFleetChip": "HOME",
+  "@naval_units_homeFleetChip": {
+    "description": "Uppercase chip rendered next to the Home Fleet name in the naval units panel. SPEC/ui/naval-units-panel.md R26."
+  },
+  "naval_units_compositionRoleWarship": "Warship",
+  "@naval_units_compositionRoleWarship": {
+    "description": "Role tag in the fleet expanded composition table for warship ship types (cargoHold == 0). SPEC/ui/naval-units-panel.md R29."
+  },
+  "naval_units_compositionRoleMerchant": "Merchant",
+  "@naval_units_compositionRoleMerchant": {
+    "description": "Role tag in the fleet expanded composition table for merchant ship types (cargoHold > 0). SPEC/ui/naval-units-panel.md R29."
+  },
+  "naval_units_compositionCount": "\u00d7{count}",
+  "@naval_units_compositionCount": {
+    "description": "Count cell in the fleet expanded composition table, e.g. \u00d72. SPEC/ui/naval-units-panel.md R29.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "naval_units_compositionSummary": "Total ships: {total} \u00b7 Warships: {warships} \u00b7 Merchants: {merchants}",
+  "@naval_units_compositionSummary": {
+    "description": "Single-line composition summary rendered beneath the expanded fleet composition table. SPEC/ui/naval-units-panel.md R29.",
+    "placeholders": {
+      "total": {
+        "type": "int"
+      },
+      "warships": {
+        "type": "int"
+      },
+      "merchants": {
+        "type": "int"
+      }
+    }
+  },
+  "naval_units_cargoCapacityHolds": "Cargo capacity: {capacity} holds",
+  "@naval_units_cargoCapacityHolds": {
+    "description": "Home-Fleet cargo capacity line rendered between the composition table and the summary in the expanded fleet view. SPEC/ui/naval-units-panel.md R29.",
+    "placeholders": {
+      "capacity": {
+        "type": "int"
+      }
+    }
+  },
   "diplomacy_setSubsidy": "Set subsidy",
   "@diplomacy_setSubsidy": {
     "description": "Diplomacy dialog title for setting subsidy amount."

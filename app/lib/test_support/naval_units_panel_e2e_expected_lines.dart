@@ -14,6 +14,13 @@ import 'package:colonizethis_app/features/game/widgets/utils/naval_tree_builder.
 import 'package:colonizethis_app/features/game/widgets/units/shared/units_panel_region_label.dart';
 import 'package:colonizethis_app/l10n/l10n.dart';
 
+String _roleLabelFor(String typeId, AppLocalizations l10n) {
+  final stats = NavalStatsCatalog.get(typeId);
+  return stats.cargoHold > 0
+      ? l10n.naval_units_compositionRoleMerchant
+      : l10n.naval_units_compositionRoleWarship;
+}
+
 void _addFleetRowTexts({
   required List<String> out,
   required FleetRow row,
@@ -21,7 +28,13 @@ void _addFleetRowTexts({
   required bool expansionTilesOpen,
 }) {
   out.add(row.label);
-  // UnitsEntityActionRow: label (details) then Move/Split; then ExpansionTile subtitle.
+  if (row.isHomeFleet) {
+    // Mockup `.home-tag` rendered next to the name (Refs #2866 S8 R26).
+    out.add(l10n.naval_units_homeFleetChip);
+  }
+  // UnitsEntityActionRow (dense): label (details) then Move (when allowed),
+  // Split, and the icon-only Locate control (no text label). Refs #2866 S8
+  // R25 + R27.
   if (!row.isHomeFleet) {
     out.add(l10n.common_move);
   }
@@ -37,28 +50,29 @@ void _addFleetRowTexts({
   if (row.shipCountsByType.isEmpty) {
     out.add(l10n.naval_units_noShipsInFleet);
   } else {
+    // Mockup `.fleet-row .f-expanded table` columns are `Type | ×Count |
+    // Role` per ship type (Refs #2866 S8 R29).
     for (final entry in row.shipCountsByType.entries) {
-      out.add(
-        l10n.naval_units_shipTypeCount(
-          shipTypeDisplayName(entry.key),
-          entry.value,
-        ),
-      );
+      out.add(shipTypeDisplayName(entry.key));
+      out.add(l10n.naval_units_compositionCount(entry.value));
+      out.add(_roleLabelFor(entry.key, l10n));
     }
   }
-  out.add(l10n.naval_units_strength(row.strength.toStringAsFixed(1)));
-  out.add(l10n.naval_units_totalShips(row.totalShips));
-  if (row.warshipCount > 0) {
-    out.add(l10n.naval_units_warships(row.warshipCount));
+  // Home Fleet only: `Cargo capacity: X holds` between the table and the
+  // summary band; non-home fleets no longer render a cargo line in the
+  // expanded view.
+  if (row.isHomeFleet) {
+    out.add(l10n.naval_units_cargoCapacityHolds(row.cargoCapacity));
   }
-  if (row.merchantCount > 0) {
-    out.add(l10n.naval_units_merchants(row.merchantCount));
-  }
+  // Single-line composition summary + retained Strength line.
   out.add(
-    row.isHomeFleet
-        ? l10n.naval_units_cargoCapacity(row.cargoCapacity)
-        : l10n.naval_units_cargoCapacityIfAssigned(row.cargoCapacity),
+    l10n.naval_units_compositionSummary(
+      row.totalShips,
+      row.warshipCount,
+      row.merchantCount,
+    ),
   );
+  out.add(l10n.naval_units_strength(row.strength.toStringAsFixed(1)));
 }
 
 /// In-order [Text.data] for [NavalUnitsPanel] preorder traversal.
