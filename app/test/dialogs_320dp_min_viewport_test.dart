@@ -23,12 +23,26 @@
 //    (SPEC/ui/next-turn-confirmation.md).
 //  * [QuickBattleResultDialog]           — post–Quick Battle outcome modal
 //    (SPEC/ui/quick-battle-result-dialog.md).
+//  * [SplitArmyDialog]                   — split regiments from one army
+//    into a new army at the same province
+//    (SPEC/ui/military-units-army-management.md).
+//  * [SplitFleetDialog]                  — split ships from one fleet
+//    into a new fleet at the same sea-zone or port
+//    (SPEC/game/ships-and-naval.md § Fleet management).
+//  * [TransferToHomeFleetDialog]         — transfer ships from a source
+//    fleet into the player's home fleet in port
+//    (SPEC/ui/transfer-to-home-fleet-dialog.md).
 //
-// All eight dialogs render their chrome via [CtDialogShell] (Dialog with
-// `insetPadding: 16` and an inner `ConstrainedBox(maxWidth: 400|480)`).
-// At `kMinViewportWidth` (320 dp) the available content width collapses
-// to ~288 dp, which is the most constrained surface either dialog
-// renders against in production. The pins assert:
+// All eleven dialogs render their chrome via [CtDialogShell]. The first
+// eight pass `maxWidth: 400` or `maxWidth: 480`; the three new
+// CtTransferList-hosted dialogs (split army / split fleet / transfer to
+// home fleet) pass the wider `maxWidth: 520` / `maxWidth: 560` so the
+// side-by-side columns can render at default widths. At
+// `kMinViewportWidth` (320 dp) every shell collapses to the same ~288 dp
+// content width — the outer `Dialog.insetPadding` (16 dp each side)
+// dominates whenever the viewport is narrower than the configured
+// `maxWidth`, so the wider CtTransferList dialogs share the same narrow
+// budget as the simpler shells in this file. The pins assert:
 //
 //  * `WidgetTester.takeException()` is `null` so no `RenderFlex`
 //    overflow exception escapes the framework — the contract the other
@@ -61,6 +75,9 @@ import 'package:colonizethis_app/features/game/flame/next_turn_confirmation_dial
 import 'package:colonizethis_app/features/game/flame/turn_resolution_processing_dialog.dart';
 import 'package:colonizethis_app/features/game/widgets/game_map_options_dialog.dart';
 import 'package:colonizethis_app/features/game/widgets/game_parameters_dialog.dart';
+import 'package:colonizethis_app/features/game/widgets/split_army_dialog.dart';
+import 'package:colonizethis_app/features/game/widgets/split_fleet_dialog.dart';
+import 'package:colonizethis_app/features/game/widgets/transfer_to_home_fleet_dialog.dart';
 import 'package:colonizethis_app/features/game/widgets/turn_news_dialog.dart';
 import 'package:colonizethis_app/l10n/l10n.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
@@ -712,6 +729,313 @@ void main() {
       expect(tester.takeException(), isNull);
       expect(find.textContaining('Castile'), findsWidgets);
       expect(find.text('OK'), findsOneWidget);
+    });
+  });
+
+  group('SPEC/ui/mobile-adaptation.md § 7 — SplitArmyDialog @ 320 dp '
+      '(Refs #2870 S8/S10)', () {
+    // Minimal Game fixture: one human GP, one province in oldWorld owned by
+    // the human, one in-province levy regiment. Mirrors the fixture shape
+    // used by `split_army_dialog_test.dart` so the narrow pin exercises the
+    // same `CtTransferList` layout path that ships in production.
+    Game gameWithOneRegimentArmy() {
+      const province = Province(
+        id: 'cap',
+        regionId: 'oldWorld',
+        displayName: 'Lisbon',
+      );
+      final unit = Unit(
+        id: 'levy_1',
+        type: 'peasant_levy',
+        ownerId: 'gp1',
+        locationProvinceId: 'oldWorld|cap',
+      );
+      return Game(
+        id: 'g1',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
+          oldWorld: RegionData(
+            provinces: const [province],
+            units: [unit],
+          ),
+          newWorld: const RegionData(),
+        ),
+        players: const [
+          Player(id: 'gp1', displayName: 'Human', isHuman: true, treasury: 0),
+        ],
+      );
+    }
+
+    final Army oneLevyArmy = Army(
+      id: 'army_1',
+      ownerId: 'gp1',
+      regionId: 'oldWorld',
+      stationedProvinceId: 'oldWorld|cap',
+      regimentUnitIds: const ['levy_1'],
+    );
+
+    testWidgets(
+      'AC (positive) SplitArmyDialog (non-home) @ 320×640: no RenderFlex '
+      'overflow exception, "Split Army" title + "Confirm Split" action + '
+      'transfer-list left/right column titles render',
+      (WidgetTester tester) async {
+        await _pumpDialogAtSize(
+          tester,
+          SplitArmyDialog(
+            army: oneLevyArmy,
+            game: gameWithOneRegimentArmy(),
+            humanPlayerId: 'gp1',
+            bus: AppEventBus.create(),
+            isHomeArmy: false,
+          ),
+          size: _kMinViewport,
+        );
+
+        expect(
+          tester.takeException(),
+          isNull,
+          reason:
+              'SPEC/ui/mobile-adaptation.md § 7: SplitArmyDialog must not '
+              'emit a RenderFlex overflow exception at kMinViewportWidth '
+              '(320 dp). The "Split Army" title + side-by-side '
+              'CtTransferList columns ("Army <id>" + "New Army") with '
+              'shared 220 dp list height, the +/- move controls, and the '
+              'trailing Cancel / Confirm Split row must all fit within '
+              'the ~288 dp CtDialogShell content column at 320 dp — '
+              'CtDialogShell `maxWidth: 520` does not take effect at this '
+              'viewport because `Dialog.insetPadding` (16 dp each side) '
+              'dominates, leaving the same ~288 dp budget as the simpler '
+              'shells pinned above this group.',
+        );
+        expect(find.text('Split Army'), findsOneWidget);
+        expect(find.text('Confirm Split'), findsOneWidget);
+        // CtTransferList column titles surface so the dialog body is
+        // actually exercised at the narrow size (vs an empty no-op).
+        expect(find.text('Army army_1'), findsOneWidget);
+        expect(find.text('New Army'), findsOneWidget);
+      },
+    );
+
+    testWidgets('Negative control: SplitArmyDialog @ 1024×768 also pumps '
+        'without exception (regression sentinel for the overflow contract — '
+        'keeps the 320 dp positive pin meaningful)', (
+      WidgetTester tester,
+    ) async {
+      await _pumpDialogAtSize(
+        tester,
+        SplitArmyDialog(
+          army: oneLevyArmy,
+          game: gameWithOneRegimentArmy(),
+          humanPlayerId: 'gp1',
+          bus: AppEventBus.create(),
+          isHomeArmy: false,
+        ),
+        size: _kWideRegressionViewport,
+      );
+
+      expect(tester.takeException(), isNull);
+      expect(find.text('Split Army'), findsOneWidget);
+      expect(find.text('Confirm Split'), findsOneWidget);
+    });
+  });
+
+  group('SPEC/ui/mobile-adaptation.md § 7 — SplitFleetDialog @ 320 dp '
+      '(Refs #2870 S8/S10)', () {
+    // Minimal Game fixture: one human GP, one sea-zone display name so the
+    // dialog's `_fleetLocationLabel()` resolves to a non-"Unknown" string,
+    // and no provinces (the at-sea fleet does not need one). Mirrors the
+    // at-sea fixture used by `split_fleet_dialog_test.dart`.
+    Game minimalSeaZoneGame() {
+      return Game(
+        id: 'g1',
+        worldState: const WorldState(
+          turnState: TurnState(phase: TurnPhase.orders, turnNumber: 0),
+          oldWorld: RegionData(),
+          newWorld: RegionData(),
+          seaZoneDisplayNameById: {'oldWorld|s1': 'Adriatic Display'},
+        ),
+        players: const [
+          Player(id: 'gp1', displayName: 'Human', isHuman: true, treasury: 0),
+        ],
+      );
+    }
+
+    final Fleet oneCarrackAtSea = Fleet(
+      id: 'f_split',
+      ownerId: 'gp1',
+      regionId: 'oldWorld',
+      seaZoneId: 's1',
+      shipTypeIds: const ['carrack'],
+    );
+
+    testWidgets(
+      'AC (positive) SplitFleetDialog (non-home) @ 320×640: no RenderFlex '
+      'overflow exception, "Split Fleet" title + "Confirm Split" action + '
+      'New Fleet right-column title render',
+      (WidgetTester tester) async {
+        await _pumpDialogAtSize(
+          tester,
+          SplitFleetDialog(
+            originalFleet: oneCarrackAtSea,
+            game: minimalSeaZoneGame(),
+            humanPlayerId: 'gp1',
+            bus: AppEventBus.create(),
+            isHomeFleet: false,
+          ),
+          size: _kMinViewport,
+        );
+
+        expect(
+          tester.takeException(),
+          isNull,
+          reason:
+              'SPEC/ui/mobile-adaptation.md § 7: SplitFleetDialog must not '
+              'emit a RenderFlex overflow exception at kMinViewportWidth '
+              '(320 dp). The "Split Fleet" title + side-by-side '
+              'CtTransferList columns ("Fleet <id>" + "New Fleet") with '
+              'shared 220 dp list height, the +/- move controls, and the '
+              'trailing Cancel / Confirm Split row must all fit within '
+              'the ~288 dp CtDialogShell content column at 320 dp — '
+              'CtDialogShell `maxWidth: 520` is dominated by '
+              '`Dialog.insetPadding` at this viewport.',
+        );
+        expect(find.text('Split Fleet'), findsOneWidget);
+        expect(find.text('Confirm Split'), findsOneWidget);
+        // CtTransferList "New Fleet" right-column title surfaces so the
+        // dialog body is actually exercised at the narrow size.
+        expect(find.text('New Fleet'), findsOneWidget);
+      },
+    );
+
+    testWidgets('Negative control: SplitFleetDialog @ 1024×768 also pumps '
+        'without exception (regression sentinel for the overflow contract — '
+        'keeps the 320 dp positive pin meaningful)', (
+      WidgetTester tester,
+    ) async {
+      await _pumpDialogAtSize(
+        tester,
+        SplitFleetDialog(
+          originalFleet: oneCarrackAtSea,
+          game: minimalSeaZoneGame(),
+          humanPlayerId: 'gp1',
+          bus: AppEventBus.create(),
+          isHomeFleet: false,
+        ),
+        size: _kWideRegressionViewport,
+      );
+
+      expect(tester.takeException(), isNull);
+      expect(find.text('Split Fleet'), findsOneWidget);
+      expect(find.text('Confirm Split'), findsOneWidget);
+    });
+  });
+
+  group('SPEC/ui/mobile-adaptation.md § 7 — TransferToHomeFleetDialog @ 320 dp '
+      '(Refs #2870 S8/S10)', () {
+    // Minimal Game fixture: one human GP, one capital province (Lisbon) for
+    // the in-port home fleet, and one sea-zone display name so the source
+    // fleet's at-sea location label resolves to a non-"Unknown" string.
+    Game gameWithCapitalAndSeaZone() {
+      const capital = Province(
+        id: 'cap',
+        regionId: 'oldWorld',
+        displayName: 'Lisbon',
+      );
+      return Game(
+        id: 'g1',
+        worldState: const WorldState(
+          turnState: TurnState(phase: TurnPhase.orders, turnNumber: 0),
+          oldWorld: RegionData(provinces: [capital]),
+          newWorld: RegionData(),
+          seaZoneDisplayNameById: {'oldWorld|s1': 'Adriatic'},
+        ),
+        players: const [
+          Player(id: 'gp1', displayName: 'Human', isHuman: true, treasury: 0),
+        ],
+      );
+    }
+
+    final Fleet sourceFleetAtSea = Fleet(
+      id: 'f_src',
+      ownerId: 'gp1',
+      regionId: 'oldWorld',
+      seaZoneId: 's1',
+      shipTypeIds: const ['carrack'],
+    );
+
+    final Fleet homeFleetInPort = Fleet(
+      id: 'home_fleet',
+      ownerId: 'gp1',
+      regionId: 'oldWorld',
+      inPortAtProvinceId: 'oldWorld|cap',
+      shipTypeIds: const ['carrack'],
+    );
+
+    testWidgets(
+      'AC (positive) TransferToHomeFleetDialog @ 320×640: no RenderFlex '
+      'overflow exception, dialog title + "Home Fleet" right column + '
+      '"Transfer" action render',
+      (WidgetTester tester) async {
+        await _pumpDialogAtSize(
+          tester,
+          TransferToHomeFleetDialog(
+            sourceFleet: sourceFleetAtSea,
+            homeFleet: homeFleetInPort,
+            game: gameWithCapitalAndSeaZone(),
+            humanPlayerId: 'gp1',
+            bus: AppEventBus.create(),
+          ),
+          size: _kMinViewport,
+        );
+
+        expect(
+          tester.takeException(),
+          isNull,
+          reason:
+              'SPEC/ui/mobile-adaptation.md § 7: TransferToHomeFleetDialog '
+              'must not emit a RenderFlex overflow exception at '
+              'kMinViewportWidth (320 dp). The title row + side-by-side '
+              'CtTransferList columns ("Fleet <id>" + "Home Fleet") with '
+              'shared 240 dp list height, the +/- move controls, and the '
+              'trailing Cancel / Transfer action row must all fit within '
+              'the ~288 dp CtDialogShell content column at 320 dp — '
+              'CtDialogShell `maxWidth: 560` is dominated by '
+              '`Dialog.insetPadding` at this viewport.',
+        );
+        expect(
+          find.text('Transfer Ships to Home Fleet'),
+          findsOneWidget,
+        );
+        expect(find.text('Transfer'), findsOneWidget);
+        // Home Fleet right-column title surfaces so the dialog body is
+        // actually exercised at the narrow size.
+        expect(find.text('Home Fleet'), findsOneWidget);
+      },
+    );
+
+    testWidgets('Negative control: TransferToHomeFleetDialog @ 1024×768 also '
+        'pumps without exception (regression sentinel for the overflow '
+        'contract — keeps the 320 dp positive pin meaningful)', (
+      WidgetTester tester,
+    ) async {
+      await _pumpDialogAtSize(
+        tester,
+        TransferToHomeFleetDialog(
+          sourceFleet: sourceFleetAtSea,
+          homeFleet: homeFleetInPort,
+          game: gameWithCapitalAndSeaZone(),
+          humanPlayerId: 'gp1',
+          bus: AppEventBus.create(),
+        ),
+        size: _kWideRegressionViewport,
+      );
+
+      expect(tester.takeException(), isNull);
+      expect(
+        find.text('Transfer Ships to Home Fleet'),
+        findsOneWidget,
+      );
+      expect(find.text('Transfer'), findsOneWidget);
     });
   });
 }

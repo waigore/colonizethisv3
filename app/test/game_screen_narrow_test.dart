@@ -713,7 +713,7 @@ void main() {
     }
 
     testWidgets(
-      'pause menu opens bottom sheet and shows debug log entry',
+      'pause menu opens modal with Resume and Exit to Main Menu actions (no Debug log)',
       (WidgetTester tester) async {
         await tester.pumpWidget(
           buildGameScreenWithPauseMenu(game: debugResult.game),
@@ -724,7 +724,10 @@ void main() {
         await tester.pump();
         await tester.pump(const Duration(milliseconds: 200));
 
-        expect(find.text('Debug log'), findsOneWidget);
+        expect(find.text('Game Paused'), findsOneWidget);
+        expect(find.text('Resume'), findsOneWidget);
+        expect(find.text('Exit to Main Menu'), findsOneWidget);
+        expect(find.text('Debug log'), findsNothing);
       },
       timeout: const Timeout(Duration(seconds: 20)),
     );

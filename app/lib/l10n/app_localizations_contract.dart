@@ -60,8 +60,23 @@ abstract class AppLocalizations {
   /// Pause menu option label to open the debug log screen.
   String get game_pauseMenu_debugLog;
 
+  /// Pause menu modal title (SPEC/ui/pause-menu-panel.md, issue #2867 R30).
+  String get game_pauseMenu_title;
+
   /// Pause menu option label to resume the game.
   String get game_pauseMenu_resume;
+
+  /// Pause menu option label to save the current game (disabled placeholder; backing flow not yet wired).
+  String get game_pauseMenu_saveGame;
+
+  /// Pause menu option label to load a saved game (disabled placeholder; backing flow not yet wired).
+  String get game_pauseMenu_loadGame;
+
+  /// Pause menu option label to open the settings screen (disabled placeholder; backing flow not yet wired).
+  String get game_pauseMenu_settings;
+
+  /// Pause menu danger action label to exit the current game and return to the main menu.
+  String get game_pauseMenu_exitToMainMenu;
 
   /// Tooltip for the pause menu button in the in-game UI.
   String get game_pauseMenu_tooltip;
@@ -294,6 +309,9 @@ abstract class AppLocalizations {
 
   /// Button: formal protest without military action.
   String get game_intervention_protest;
+
+  /// Title rendered at the top of the intervention overlay's CtDialogShell on every phase (Yarn intro, situation, choice picker, reaction, and degraded error). Resolved by EditorialMonoclePalette.accent per SPEC/ui/screens/pending-intervention-overlay.md § Dark editorial-monocle chrome and issue #2867 R26b.
+  String get game_intervention_overlayTitle;
 
   /// Turn-start news dialog title; turn is the current turn after resolution.
   String turnNews_title(int turn);

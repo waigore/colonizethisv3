@@ -6,9 +6,11 @@ part of 'catalog.dart';
 
 /// Pause menu panel stories. SPEC/ui/pause-menu-panel.md.
 ///
-/// Renders [PauseMenuPanel] inside a plain [Scaffold] body so the catalog can
-/// preview the row layout without the modal bottom-sheet scrim that
-/// [AppEventHandler] uses in production.
+/// Renders the new 5-button [PauseMenuPanel] modal centered over the
+/// editorial-monocle scrim ([EditorialMonoclePalette.dialogScrim]) so the
+/// catalog can preview the [CtDialogShell] frame, brass divider, and
+/// action stack matching the production `showDialog` host used by
+/// [AppEventHandler]. (Issue #2867 R30, S11.)
 class _PauseMenuPanelStoryHost extends StatefulWidget {
   const _PauseMenuPanelStoryHost();
 
@@ -39,11 +41,9 @@ class _PauseMenuPanelStoryHostState extends State<_PauseMenuPanelStoryHost> {
       localizationsDelegates: AppLocalizationsBinding.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
       home: Scaffold(
-        body: SafeArea(
-          child: Align(
-            alignment: Alignment.bottomCenter,
-            child: PauseMenuPanel(bus: _bus),
-          ),
+        backgroundColor: EditorialMonoclePalette.dialogScrim,
+        body: Center(
+          child: PauseMenuPanel(bus: _bus),
         ),
       ),
     );
@@ -56,7 +56,7 @@ List<WidgetbookNode> get pauseMenuPanelDirectories => [
     name: 'Pause Menu Panel',
     children: [
       WidgetbookUseCase(
-        name: 'Default',
+        name: 'Default — centered modal',
         builder: (context) => const _PauseMenuPanelStoryHost(),
       ),
     ],

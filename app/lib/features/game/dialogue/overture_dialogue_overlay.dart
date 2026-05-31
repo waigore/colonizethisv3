@@ -1,6 +1,7 @@
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_app/config/app_assets.dart';
+import 'package:colonizethis_app/config/editorial_monocle_palette.dart';
 import 'package:colonizethis_app/config/ui_screen_ids.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -8,6 +9,7 @@ import 'package:colonizethis_app/package_logger.dart';
 import 'package:jenny/jenny.dart';
 
 import '../../../../l10n/l10n.dart';
+import '../../../../widgets/ct_brass_divider.dart';
 import '../../../../widgets/ct_dialog_shell.dart';
 import '../../../../widgets/ct_loading_indicator.dart';
 import '../../../../widgets/ct_nine_patch_button.dart';
@@ -144,7 +146,7 @@ class _OvertureDialogueOverlayState extends State<OvertureDialogueOverlay> {
         children: [
           widget.child,
           Material(
-            color: Colors.black54,
+            color: EditorialMonoclePalette.dialogScrim,
             child: Center(
               child: CtDialogShell(
                 child: Padding(
@@ -175,7 +177,7 @@ class _OvertureDialogueOverlayState extends State<OvertureDialogueOverlay> {
         children: [
           widget.child,
           Material(
-            color: Colors.black54,
+            color: EditorialMonoclePalette.dialogScrim,
             child: Center(
               child: CtDialogShell(
                 maxWidth: 520,
@@ -222,11 +224,14 @@ class _OvertureDialogueOverlayState extends State<OvertureDialogueOverlay> {
 
     // Phase 2: list of offers with Accept/Reject + Submit
     final offers = widget.pendingOvertures;
+    final ThemeData theme = Theme.of(context);
+    final TextStyle titleStyle = _phaseTwoTitleStyle(theme);
+    final TextStyle introStyle = _phaseTwoIntroStyle(theme);
     return Stack(
       children: [
         widget.child,
         Material(
-          color: Colors.black54,
+          color: EditorialMonoclePalette.dialogScrim,
           child: Center(
             child: CtDialogShell(
               maxWidth: 520,
@@ -239,12 +244,18 @@ class _OvertureDialogueOverlayState extends State<OvertureDialogueOverlay> {
                   children: [
                     Text(
                       l10n.game_overture_title,
-                      style: Theme.of(context).textTheme.titleMedium,
+                      key: const ValueKey<String>('overtureTitle'),
+                      style: titleStyle,
                     ),
-                    const SizedBox(height: 8),
+                    const SizedBox(height: _titleToDividerGap),
+                    const CtBrassDivider(
+                      key: ValueKey<String>('overtureBrassDivider'),
+                    ),
+                    const SizedBox(height: _dividerToIntroGap),
                     Text(
                       l10n.game_overture_intro,
-                      style: Theme.of(context).textTheme.bodyMedium,
+                      key: const ValueKey<String>('overtureIntro'),
+                      style: introStyle,
                     ),
                     const SizedBox(height: 16),
                     ListView.builder(
@@ -253,33 +264,17 @@ class _OvertureDialogueOverlayState extends State<OvertureDialogueOverlay> {
                       itemCount: offers.length,
                       itemBuilder: (context, i) {
                         final offer = offers[i];
-                        return Padding(
-                          padding: const EdgeInsets.only(bottom: 12),
-                          child: Row(
-                            children: [
-                              Expanded(
-                                child: Text(
-                                  l10n.game_overture_offerLine(
-                                    _offererDisplayName(offer.offererGpId),
-                                    _stageLabel(l10n, offer.stage),
-                                  ),
-                                ),
-                              ),
-                              CtNinePatchButton(
-                                onPressed: () {
-                                  setState(() => _accepted[i] = true);
-                                },
-                                child: Text(l10n.game_overture_accept),
-                              ),
-                              const SizedBox(width: 8),
-                              CtNinePatchButton(
-                                onPressed: () {
-                                  setState(() => _accepted[i] = false);
-                                },
-                                child: Text(l10n.game_overture_reject),
-                              ),
-                            ],
-                          ),
+                        return _OvertureOfferRow(
+                          offerer: _offererDisplayName(offer.offererGpId),
+                          stageLabel: _stageLabel(l10n, offer.stage),
+                          acceptLabel: l10n.game_overture_accept,
+                          rejectLabel: l10n.game_overture_reject,
+                          onAccept: () {
+                            setState(() => _accepted[i] = true);
+                          },
+                          onReject: () {
+                            setState(() => _accepted[i] = false);
+                          },
                         );
                       },
                     ),
@@ -298,6 +293,118 @@ class _OvertureDialogueOverlayState extends State<OvertureDialogueOverlay> {
           ),
         ),
       ],
+    );
+  }
+
+  /// Phase-2 title style per #2867 R2 / R21: `--accent` color and a 0.05em
+  /// letter-spacing computed from the resolved title `fontSize` so the
+  /// canonical letter-spacing scales with theme overrides.
+  TextStyle _phaseTwoTitleStyle(ThemeData theme) {
+    final TextStyle base =
+        theme.textTheme.titleMedium ?? const TextStyle(fontSize: 16);
+    final double fontSize = base.fontSize ?? 16;
+    return base.copyWith(
+      color: EditorialMonoclePalette.accent,
+      letterSpacing: fontSize * _titleLetterSpacingEm,
+    );
+  }
+
+  /// Phase-2 intro style per #2867 R5 / R21: italic body text in `--muted`.
+  TextStyle _phaseTwoIntroStyle(ThemeData theme) =>
+      (theme.textTheme.bodyMedium ?? const TextStyle()).copyWith(
+        color: EditorialMonoclePalette.muted,
+        fontStyle: FontStyle.italic,
+      );
+
+  /// Canonical title letter-spacing factor per #2867 R2 (0.05em).
+  static const double _titleLetterSpacingEm = 0.05;
+
+  /// Vertical gap between phase-2 title and the [CtBrassDivider].
+  static const double _titleToDividerGap = 8;
+
+  /// Vertical gap between the [CtBrassDivider] and the intro line.
+  static const double _dividerToIntroGap = 8;
+}
+
+/// Phase-2 offer row. Splits the offerer display name and the localized
+/// stage label into two `Text` widgets so they can paint distinct
+/// editorial-monocle palette colors per #2867 R22 (`--accent` for the
+/// offerer, `--muted` for the stage label).
+class _OvertureOfferRow extends StatelessWidget {
+  const _OvertureOfferRow({
+    required this.offerer,
+    required this.stageLabel,
+    required this.acceptLabel,
+    required this.rejectLabel,
+    required this.onAccept,
+    required this.onReject,
+  });
+
+  final String offerer;
+  final String stageLabel;
+  final String acceptLabel;
+  final String rejectLabel;
+  final VoidCallback onAccept;
+  final VoidCallback onReject;
+
+  @override
+  Widget build(BuildContext context) {
+    final ThemeData theme = Theme.of(context);
+    final TextStyle base =
+        theme.textTheme.bodyMedium ?? const TextStyle(fontSize: 14);
+    final TextStyle offererStyle = base.copyWith(
+      color: EditorialMonoclePalette.accent,
+      fontWeight: FontWeight.w600,
+    );
+    final TextStyle separatorStyle = base.copyWith(
+      color: EditorialMonoclePalette.muted,
+    );
+    final TextStyle stageStyle = base.copyWith(
+      color: EditorialMonoclePalette.muted,
+    );
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Row(
+        children: [
+          Expanded(
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Flexible(
+                  child: Text(
+                    offerer,
+                    key: const ValueKey<String>('overtureOfferOfferer'),
+                    style: offererStyle,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+                Text(
+                  ': ',
+                  key: const ValueKey<String>('overtureOfferSeparator'),
+                  style: separatorStyle,
+                ),
+                Flexible(
+                  child: Text(
+                    stageLabel,
+                    key: const ValueKey<String>('overtureOfferStage'),
+                    style: stageStyle,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          CtNinePatchButton(
+            onPressed: onAccept,
+            child: Text(acceptLabel),
+          ),
+          const SizedBox(width: 8),
+          CtNinePatchButton(
+            onPressed: onReject,
+            child: Text(rejectLabel),
+          ),
+        ],
+      ),
     );
   }
 }
