@@ -8,6 +8,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
 
 import '../../../config/app_assets.dart';
+import '../../../config/editorial_monocle_palette.dart';
 import '../../../l10n/l10n.dart';
 import '../utils/tech_ui_helpers.dart';
 import '../../../widgets/ct_dialog_shell.dart';

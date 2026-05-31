@@ -23,7 +23,7 @@ class _TechTreeEdgePainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     final posByTech = {for (final p in positions) p.techId: p};
     final paint = Paint()
-      ..color = Colors.grey.shade600
+      ..color = EditorialMonoclePalette.border
       ..strokeWidth = _edgeStrokeWidth
       ..style = PaintingStyle.stroke;
 
@@ -96,7 +96,7 @@ class _TechNode extends StatelessWidget {
   }
 
   _TechNodeStyle _nodeStyle() {
-    final color = _categoryColors[tech.category] ?? Colors.grey;
+    final color = _categoryColors[tech.category] ?? EditorialMonoclePalette.muted;
     final locked = !state.researched && !state.inProgress && !state.available;
     if (state.researched) {
       return _TechNodeStyle(
@@ -123,8 +123,8 @@ class _TechNode extends StatelessWidget {
       );
     }
     return _TechNodeStyle(
-      fillColor: Colors.grey.shade200,
-      borderColor: Colors.grey.shade400,
+      fillColor: EditorialMonoclePalette.surface,
+      borderColor: EditorialMonoclePalette.border,
       borderWidth: 1,
       locked: locked,
     );
@@ -151,7 +151,7 @@ class _TechNode extends StatelessWidget {
             overflow: TextOverflow.ellipsis,
             style: TextStyle(
               fontSize: 10,
-              color: locked ? Colors.grey : null,
+              color: locked ? EditorialMonoclePalette.muted : null,
               fontWeight: state.researched ? FontWeight.w600 : null,
             ),
           ),

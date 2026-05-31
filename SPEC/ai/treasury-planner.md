@@ -83,14 +83,49 @@ The bias never affects `defend`, `expand`, `conquer`, `tech`, or `diplomacy`; th
 
 ---
 
+## Trade-order generation (Refs #2994 F1–F5, F7)
+
+### Module
+
+- `packages/colonizethis_ai/lib/src/planning/treasury_planner.dart` — `runTreasuryPlanner(...)`.
+- Called from `runEconomyPlanner` after production assignments are chosen; results are stored on `EconomyPlan.tradeOrders` and merged into `Orders.tradeOrdersByPlayerId` by `generateStrategicOrdersWithTrace` (F7 wiring).
+
+### Surplus / need maps (F1–F3)
+
+Given current `Stockpile`, `productionAssignments`, and `game.worldMarketState.prices`:
+
+1. **Project** post-production stockpile by simulating assigned recipes.
+2. **Track** commodities that appear in the stockpile, projected stockpile, recipe inputs/outputs from assignments, or the food category.
+3. **Consumption forecast** — `kShortageThreshold` for food; for commodities with production input needs, `min(need, kShortageThreshold)`; otherwise half-threshold for other tracked commodities.
+4. **Safety buffer** — `2×` consumption for food, `1×` for others.
+5. **Sell surplus** — `available[id] = max(0, projected − (consumption + inputs + safety))`.
+6. **Buy deficit** — `need[id] = max(0, (consumption + inputs) − projected)` only when market price is strictly below the cheapest recipe production cost for that commodity (F3 price gate).
+
+### Priority and cargo (F4–F5)
+
+- Delegates offer/bid quantity selection to `TradeOrderSuggester` with the computed maps.
+- **Bid priority tiers:** essential inputs (manufactured/advanced) = 1, luxury = 2, raw = 3, food = 4. Re-sorts admitted bids after the suggester pass.
+- **Offer priority:** `2` (urgent) when `treasury < cheapestRegimentBuildTreasuryCost()`, else `5` (moderate).
+- **Cargo:** `max(0, cargoHoldsForHomeFleet(game, playerId))` — overseas extraction tonnage reservation deferred until extraction publishes planned tonnage on the pipeline (same deferral as world-market phase handler Refs #2990 B3).
+- **Bid type cap:** `worldMarketBidTypeCap(game, playerId)` (embassy / trade-fairs diplomacy gates).
+
+### Acceptance criteria (F1–F5 / F7)
+
+- Given an AI GP with timber stockpile well above reserve and `treasury` below `cheapestRegimentBuildTreasuryCost()`, when `runTreasuryPlanner` runs, then it emits at least one `TradeOrderType.offer` for timber at priority `2`.
+- Given an AI GP with embassy overture, fabric production input need, and market fabric price below recipe input cost, when `runTreasuryPlanner` runs, then it emits a `TradeOrderType.bid` for fabric at priority `1`.
+- Given an AI GP with no embassy (`bidTypeCap == 0`), when `runTreasuryPlanner` runs, then it emits offers only (no bids).
+- Given identical inputs, when `runTreasuryPlanner` runs twice, then both runs return identical `List<TradeOrder>`.
+
+---
+
 ## Out of scope for this SPEC slice
 
-The following are tracked under the remaining `#2994` subtasks and are not specified here:
+The following remain under remaining `#2994` subtasks:
 
-- `TreasuryPlanner` module: treasury inflow/outflow forecasting (F1), sell-surplus heuristic (F2), buy-deficit heuristic (F3), priority ordering (F4), integration into `runEconomyPlanner()` (F5).
+- Full treasury inflow/outflow forecasting (riches phase, subsidies, build/research spend) beyond the surplus/need maps above (F1 extension).
 - Partial-fill-aware forecasting using previous-turn `MarketActivity` (F8).
 - Observer-game seed-42 trade-behaviour verification and budget profiling (F9 / F10).
-- Wiring `StrategicGoal.trade` selection through the domain orchestrator into actual emitted trade orders (F7); this slice changes only the goal score, not the downstream dispatch.
+- Overseas extraction tonnage subtraction from trade cargo once extraction publishes per-player planned tonnage.
 
 ---
 
