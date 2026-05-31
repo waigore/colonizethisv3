@@ -225,6 +225,7 @@ class DealMatcher {
           quantity: matchQty,
           pricePerUnit: pricePerUnit,
           isFirstRightOfRefusalMatch: true,
+          sellerOriginTileKey: offer.order.originTileKey,
         ),
       );
       offer.remaining -= matchQty;
@@ -287,6 +288,7 @@ class DealMatcher {
           quantity: matchQty,
           pricePerUnit: pricePerUnit,
           isFtpMatch: ftp,
+          sellerOriginTileKey: offer.order.originTileKey,
         ),
       );
       offer.remaining -= matchQty;
