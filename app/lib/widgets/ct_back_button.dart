@@ -120,7 +120,11 @@ class _CtBackButtonState extends State<CtBackButton> {
         alpha: CtBackButton.hoverBackgroundAlpha,
       );
     }
-    return const Color(0x00000000);
+    // Default (not hovered, not pressed) — fully transparent so no panel
+    // is painted, while keeping the `surfaceLite` token as the animation
+    // anchor so `AnimatedContainer` can lerp alpha 0 → 0.4 → 0.6 within
+    // a single palette-bound color (Refs #2914 S4 — no raw hex literals).
+    return EditorialMonoclePalette.surfaceLite.withValues(alpha: 0);
   }
 
   @override

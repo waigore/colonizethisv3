@@ -66,6 +66,22 @@ void main() {
     );
 
     testWidgets(
+      'default background uses --surface-lite with alpha 0 — animation anchor '
+      '(Refs #2914 S4, no raw const Color(0x...) literal)',
+      (tester) async {
+        await pumpBackButton(tester, CtBackButton(onPressed: () {}));
+        final Color bg = bodyColor(tester);
+        final Color expected = EditorialMonoclePalette.surfaceLite.withValues(
+          alpha: 0,
+        );
+        expect(bg.r, closeTo(expected.r, 1e-6));
+        expect(bg.g, closeTo(expected.g, 1e-6));
+        expect(bg.b, closeTo(expected.b, 1e-6));
+        expect(bg.a, 0);
+      },
+    );
+
+    testWidgets(
       'hover state: glyph --accent + --surface-lite background @ 40%',
       (tester) async {
         await pumpBackButton(tester, CtBackButton(onPressed: () {}));
