@@ -2,6 +2,7 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:flutter/material.dart';
 
 import '../config/editorial_monocle_palette.dart';
+import 'ct_radius.dart';
 
 /// Small preview of a Great Power’s default map / ownership RGB from GDD 09
 /// (`greatPowerDefaultColorRgb`). Used beside nation names in pickers.
@@ -27,7 +28,7 @@ class GpDefaultMapColorSwatch extends StatelessWidget {
         border: Border.all(
           color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.45),
         ),
-        borderRadius: BorderRadius.circular(2),
+        borderRadius: BorderRadius.circular(CtRadius.small),
       ),
     );
   }
