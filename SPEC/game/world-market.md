@@ -1,116 +1,82 @@
 # World Market
 
-**SPEC/game** — Single global commodity market: bid/offer trading, supply-and-demand price discovery, cargo-constrained shipping, FTP partnerships, first right of refusal. Authorized by [#2988](https://github.com/waigore/colonizethisv3/issues/2988); core slice tracker [#2989](https://github.com/waigore/colonizethisv3/issues/2989). Phase order: [turn-resolution-phases.md](../program/turn-resolution-phases.md). Algorithm: [world-market-resolution.md](../program/world-market-resolution.md). Commodity ids and excluded riches: [commodity-catalog.md](commodity-catalog.md).
+**SPEC/game** — Player-facing commodity market: bid/offer orders, deal matching, price discovery, Favored Trading Partner (FTP), and first right of refusal on purchased minor/tribe tiles. Authority: parent design [issue #2988](https://github.com/waigore/colonizethisv3/issues/2988). Resolution details: [world-market-resolution.md](../program/world-market-resolution.md). Phase placement: [turn-resolution-phases.md](../program/turn-resolution-phases.md) § Phase 13. UI: [trade-screen.md](../ui/trade-screen.md). AI: [treasury-planner.md](../ai/treasury-planner.md) (planned).
+
+> **Status:** Draft foundation. Issues #2989–#2994 implement the engine, AI, and UI sliced from this design. When implementation lands, replace any "(planned)" link target with the published file.
 
 ---
 
-## Scope
+## Tradeable commodities
 
-The World Market lets every faction (Great Powers, minors, tribes) submit per-turn `TradeOrder` entries to buy or sell commodities. The market clears once per turn after Build / work and before End-of-turn. Cleared deals transfer commodities and treasury between participants and update each commodity's market price for the next turn.
+The market clears all commodities defined in [commodity-catalog.md](commodity-catalog.md) **except** the riches set (`gold`, `silver`, `gems`, `diamonds`, `spices`). Riches continue to auto-convert to treasury in phase 3 ([turn-resolution-phases.md](../program/turn-resolution-phases.md) § Riches to treasury). Twenty-two of the twenty-eight commodities are tradeable today: 2 food, 11 raw materials, 9 manufactured. The catalog's reserved `luxury` category is empty per [commodity-catalog.md](commodity-catalog.md) § Categories and contributes no tradeable ids.
 
-Riches (gold, silver, gems, diamonds, spices) are **not** traded — they continue to auto-convert via the riches-to-treasury phase per [commodity-catalog.md § Riches and treasury](commodity-catalog.md). All other commodities (food, raw, manufactured) participate.
-
----
+Every Great Power, Minor Nation, and Tribe participates in the same single global market. There are no regional or per-continent markets, no player-set ask/bid prices, and no trade routes drawn on the map; the market is a strategic abstraction layered above the canonical sea-transport simulation ([ships-and-naval.md](ships-and-naval.md) § Cargo capacity).
 
 ## Trade orders
 
-A `TradeOrder` carries:
+Great Powers submit `TradeOrder` entries alongside other orders in phase 1 ([turn-resolution-phases.md](../program/turn-resolution-phases.md) § Orders; the `TradeOrder` shape is added to [orders.md](../program/orders.md) by issue #2989). Each order names a `commodityId`, a `type` (`bid` or `offer`), a positive integer `quantity`, and an integer `priority` (1 = highest tier; lower-priority tiers are matched only after higher tiers exhaust). Minor Nations and Tribes never submit orders themselves: their extracted commodities are emitted as system-authored offers in phase 13 (see § Minor and tribe auto-sell).
 
-- `commodityId` — canonical id from [commodity-catalog.md](commodity-catalog.md), excluding riches.
-- `type` — `bid` (buy) or `offer` (sell).
-- `quantity` — non-negative integer units.
-- `priority` — positive integer; 1 is highest. Lower integer = higher precedence.
-- `isFtp` — derived flag set during matching when the offer/bid pair belongs to FTP-linked factions.
+### Validation rules
 
-Ordering rules:
-
-1. A faction may either bid or offer a given commodity in a turn, never both.
-2. Offers may list any number of distinct commodities.
-3. Bid commodity-type count is capped by `tradeSlotsForGp` ([diplomacy-resolution.md](../program/diplomacy-resolution.md)): 0 without embassy, 3 with embassy, 6 with embassy + `trade_fairs`. Per-commodity bid quantity is capped by trade cargo capacity.
-4. Offers require post-production stockpile ≥ offered quantity per commodity.
-5. Carry-forward unfilled orders re-enter matching the next turn but **do not** contribute to that turn's price discovery aggregation. They are dropped if stockpile (offers) or cargo (bids) constraints no longer hold.
-
----
+- **Mutual exclusion per commodity.** A Great Power may either offer or bid for a given commodity in a turn, never both. Selling commodity A while buying commodity B in the same turn is allowed; submitting both directions for the same commodity rejects all of that GP's orders for that commodity.
+- **Bid type cap (`tradeSlotsForGp`).** The number of distinct commodities a GP may bid on in one turn is **0** without an embassy toward any target, **3** with embassy (baseline), and **6** with embassy and `trade_fairs` ([diplomacy-resolution.md](../program/diplomacy-resolution.md) § Integration; [tech-tree-labour-economy.md](tech-tree-labour-economy.md) § trade_fairs). Offers are not subject to the type cap.
+- **Per-commodity quantity cap.** Each bid quantity is capped at the GP's trade cargo capacity (see § Cargo). Each offer quantity is capped at the GP's post-production projected stockpile minus industry-allocation reservations ([stockpiles-and-production.md](stockpiles-and-production.md) § Production flow).
+- **Riches excluded.** Trade orders for any commodity in the riches set are rejected at validation.
 
 ## Price discovery
 
-Each commodity's price starts at the `defaultMarketPrice` from [resource-terrain-region-rules.md](resource-terrain-region-rules.md). After matching each turn:
+Each commodity starts at the default market price defined in the resource–terrain–region table in [resource-terrain-region-rules.md](resource-terrain-region-rules.md). After phase 13 deal matching, each commodity's price updates by:
 
-```
-volume = totalNewBidQuantity + totalNewOfferQuantity   (carry-forwards excluded)
+\[
+\Delta\% = 0.5 \times \frac{\text{totalBid}_{\text{new}} - \text{totalOffer}_{\text{new}}}{\text{totalBid}_{\text{new}} + \text{totalOffer}_{\text{new}}}, \quad \text{capped at} \pm 20\%
+\]
 
-if volume == 0:
-  newPrice = oldPrice
-else:
-  rawDelta = 0.5 * (totalNewBidQuantity - totalNewOfferQuantity) / volume
-  cappedDelta = clamp(rawDelta, -0.20, +0.20)
-  candidate = oldPrice * (1 + cappedDelta)
-  newPrice = max(candidate, basePrice * 0.30)
-```
+`totalBid_new` / `totalOffer_new` aggregate **only** newly-submitted quantities for the current turn. Carry-forward unfilled quantities from prior turns are excluded from price discovery (they continue to participate in matching). When `totalBid_new + totalOffer_new` is zero, the price is unchanged. The new price is clamped to a floor of **30 % of the commodity's default market price**.
 
-Rules:
-
-- Aggregation uses **only newly-submitted** bid/offer quantities for the current turn. Carry-forwards still match but are excluded from the supply/demand signal so they cannot bias prices over multiple turns.
-- The cap `±0.20` applies symmetrically. The floor is exactly 30% of `basePrice`. Prices have no ceiling.
-- Deals clear at `oldPrice` (price valid for this turn). `newPrice` applies next turn.
-
----
+Deals clear at the **old** price (pre-update). The new price applies to the next turn.
 
 ## Cargo
 
-Trade shipping is buyer-funded. Sellers do not consume cargo holds. Per faction:
-
-```
-tradeCapacity = max(0, totalHomeFleetCargoHolds - overseasExtractionActualTonnage)
-```
-
-`overseasExtractionActualTonnage` is the **actual** tonnage shipped this turn, not the maximum reservation. Unused extraction capacity is released to trade.
-
-During matching, cargo tracking is **per-buyer** across all commodities. As bids fill, `buyer.remainingCargo` decreases by filled quantity; when remaining cargo runs out the next bid receives a partial fill or none.
-
----
+Trade shipping consumes a GP's cargo holds. The buyer ships purchased commodities; the seller does not consume cargo. Per-turn trade cargo capacity equals `max(0, totalHomeFleetCargoHolds − overseasExtractionActualTonnage)`: overseas extraction reserves and ships first, and only the **actual** tonnage shipped by extraction is subtracted (any reserved-but-unused extraction capacity becomes available for trade) per [auto-transport.md](../program/auto-transport.md) § Sea Transport (Overseas Only). Trade shipping is not subject to naval interception.
 
 ## Favored Trading Partner (FTP)
 
-A new bilateral agreement (separate from NAP and alliance):
+FTP is a bilateral diplomatic agreement separate from alliances, Non-Aggression Pacts, and overtures ([diplomacy.md](diplomacy.md) § Diplomatic Order Types). An FTP requires:
 
-- Established via `DiplomaticOrder.establishFTP`. Both sides accept; AI threshold ≥ 65 relation score.
-- Requires an active embassy with the target.
-- Broken automatically when either side declares war or when the embassy is lost.
+- An existing embassy with the target (minimum `tradeConsulate` overture stage),
+- Bilateral acceptance (AI-controlled targets accept when their hidden relation score is `≥ 65`; human targets respond via the standard overture prompt),
+- It is automatically broken when either side declares war on the other or when the embassy is lost.
 
-Effect on matching: within a single integer priority tier, FTP-linked offer/bid pairs sort ahead of non-FTP pairs. The integer priority **always** evaluates first — FTP never elevates a pair across tiers.
-
----
+FTP affects matching only as a tiebreaker within the same integer priority tier (see [world-market-resolution.md](../program/world-market-resolution.md) § Matching). FTP never elevates a pair across priority tiers and never overrides first right of refusal.
 
 ## First right of refusal
 
-When a Great Power's Merchant has purchased land from a minor or tribe, commodities extracted from those tiles still belong to the minor/tribe (auto-offered). If the owning GP also bids for that commodity, the bid moves to the absolute front of the queue (above FTP and every integer tier) and matches first against the purchased-tile offer. If the owning GP does not bid, other GPs bid normally and the owning GP receives:
+When a Great Power has purchased a tile from a Minor or Tribe via the Merchant `purchase_land` work order ([diplomacy.md](diplomacy.md) § GP–Minor — Purchase land (Merchant)), commodities extracted from that tile are auto-offered by the owning minor/tribe (see § Minor and tribe auto-sell). The owning GP receives two privileges:
 
-```
-profitRate = (relationScore / 100) * 0.40   // bounded to [0, 0.40]
-profit = filledQuantity * pricePerUnit * profitRate
-```
+- **Bid priority.** If the owning GP submits a bid for the same commodity in that turn, that bid is matched against the purchased-tile offer at **absolute highest priority** (above FTP and above all integer priority tiers).
+- **Overseas profit.** If the owning GP submits no bid and another GP buys the commodity, the owning GP receives a treasury credit equal to `filledQuantity × pricePerUnit × profitRate`, where `profitRate = (relationScore / 100) × 0.40`. The `relationScore` is the hidden 0–100 GP-to-minor/tribe relation per [diplomacy.md](diplomacy.md) § Relation Model; it is clamped 0–100 at source, so `profitRate ∈ [0, 0.40]`.
 
-`relationScore` is the 0–100 hidden score from [diplomacy.md § Relation Model](diplomacy.md). The remainder is sunk per the minor/tribe treasury sink rule (no faction is credited).
+## Minor and tribe auto-sell
 
-## Acceptance criteria
+Minor Nations and Tribes have starting developed resources connected to their capitals ([factions.md](factions.md) § Minor Nation, § Tribe). Their extracted commodities are auto-emitted as priority-1 offers by the world market phase. Minors and Tribes never bid and have no treasury wallet: payments from buyers are debited normally and removed from the economy as a treasury sink, except for the owning-GP profit share described above ([world-market-resolution.md](../program/world-market-resolution.md) § Treasury sink).
 
-- Given a Great Power player whose stockpile holds 100 timber, when the player submits an offer of `timber × 10 @ priority 1`, then the order is recorded on `Orders.tradeOrders[playerId]` and a parallel `bid` for `timber` from the same player is rejected with error `trade_order_mutual_exclusion`.
+## Order persistence
 
-- Given a commodity with newly-submitted bid 20, newly-submitted offer 10, and `oldPrice = 100`, when price discovery runs, then `volume = 30`, `cappedDelta ≈ 0.1667` (under ±0.20), and `newPrice ≈ 116.67`.
-
-- Given a commodity with newly-submitted bid 0, newly-submitted offer 0, and a 50-unit carry-forward bid, when price discovery runs, then `volume = 0` and `newPrice = oldPrice` (carry-forwards excluded).
-
-- Given a commodity whose candidate price falls below `basePrice × 0.30`, when price discovery runs, then `newPrice = basePrice × 0.30` exactly (floor clamp).
-
-- Given a buyer with `tradeCapacity = 15`, a priority-1 bid `A × 8` and a priority-2 bid `B × 10` (offers abundant), when matching runs, then `A` fills 8, `remainingCargo = 7`, `B` partial-fills 7, and 3 units of `B` carry forward.
-
-- Given two FTP factions and a non-FTP third faction submitting matching pairs at the same priority tier 1, then the FTP pair fills first within tier 1; given the FTP pair sits at tier 2 and the non-FTP pair at tier 1, then the tier-1 non-FTP pair fills first (priority integer absolutely beats FTP).
-
-- Given an unfilled offer for `timber × 6` from turn N, when turn N+1 begins and the offering faction's `timber` stockpile has dropped below 6, then the carry-forward offer is dropped (not partially preserved) and recorded with status `dropped_insufficient_stockpile`.
+Unfilled bids and offers are carried forward to the next turn so long as the submitting GP can still cover them: offers are dropped when the submitter's start-of-turn stockpile no longer covers the carry-forward quantity; bids are dropped when the submitter's start-of-turn trade cargo capacity is insufficient. Dropped carry-forwards are recorded in next-turn market activity for the Deal Book UI ([trade-screen.md](../ui/trade-screen.md) § Deal Book tab). Newly-submitted orders for the same commodity merge their quantity with the carry-forward at match time but are still tracked separately for price-discovery aggregation.
 
 ---
 
-## Where stored
+## Acceptance criteria
 
-Market state lives on the in-memory `Game` model as `WorldMarketState`. Order entries live on `Orders.tradeOrders` per [orders.md](../program/orders.md). Default market prices are loaded once at game start from `ResourceRules.defaultMarketPrice` ([resource-terrain-region-rules.md](resource-terrain-region-rules.md)); the floor uses the same value as `basePrice` for every commodity.
+- **Riches excluded.** Given a Great Power submits a `TradeOrder` for any commodity in the riches set (`gold`, `silver`, `gems`, `diamonds`, `spices`), when the order validator runs, then the system rejects the order with reason `trade_order_riches_excluded` and the riches continue to auto-convert in phase 3 Riches-to-treasury.
+- **Mutual exclusion per commodity.** Given a Great Power submits both a bid and an offer for the same commodity in the same turn, when validation runs, then the system rejects every trade order for that commodity submitted by that GP and emits an `Orders` error with reason `trade_order_mutual_exclusion`.
+- **Bid type cap honours `tradeSlotsForGp`.** Given a Great Power's embassy/tech state yields `tradeSlotsForGp(player) = N` (0, 3, or 6 per [diplomacy-resolution.md](../program/diplomacy-resolution.md)), when validation runs against bids for `N+1` distinct commodities, then the system rejects the `N+1`-th distinct-commodity bid with reason `trade_order_bid_type_cap_exceeded` and accepts the first `N`.
+- **Price floor.** Given a commodity whose default market price is `B`, when phase 13 would compute a new price below `0.30 × B`, then the system clamps the published next-turn price to exactly `0.30 × B`.
+- **Price discovery uses current-turn aggregation only.** Given a commodity with a carry-forward unfilled bid quantity of 50 from prior turns and no newly-submitted bids or offers this turn, when phase 13 runs, then the system treats `totalBid_new = 0` and `totalOffer_new = 0`, the price is unchanged, and the carry-forward bid remains in the matching queue for the next turn.
+- **Cargo released by under-used extraction.** Given a turn in which overseas extraction reserves 20 cargo holds but ships only 12 actual tonnage, when phase 13 computes trade cargo capacity for that GP, then the system computes `tradeCapacity = max(0, totalHomeFleetCargoHolds − 12)` (the unused 8 holds are released to trade) per [auto-transport.md](../program/auto-transport.md) § Sea Transport (Overseas Only).
+- **First right of refusal — bid priority.** Given Great Power A owns a tile purchased from Minor M producing timber, when GP A submits a timber bid and other GPs also submit timber bids at any priority tier, then the matching engine fills GP A's bid against M's timber offer before any FTP pair and before any other integer priority tier for that commodity.
+- **First right of refusal — overseas profit.** Given Great Power A owns a tile purchased from Minor M (relation score `R ∈ [0, 100]`), GP A submits no bid, and GP B buys `Q` units of M's commodity at price `P` per unit, then the system credits GP A treasury by exactly `Q × P × (R / 100) × 0.40` and the remainder of the sale proceeds is removed as a treasury sink (see [world-market-resolution.md](../program/world-market-resolution.md) § Treasury sink).
+- **Carry-forward drop on stockpile shortfall.** Given a carry-forward offer of quantity `Q` for commodity `C` from a previous turn, when at the start of the next turn the submitter's stockpile for `C` is less than `Q`, then the system drops the carry-forward (no partial preservation) and records a `carry_forward_dropped_stockpile_insufficient` market-activity entry for the Deal Book.
+- **Carry-forward drop on cargo shortfall.** Given a carry-forward bid of quantity `Q` from a previous turn, when at the start of the next turn the submitter's trade cargo capacity is less than `Q`, then the system drops the carry-forward (no partial preservation) and records a `carry_forward_dropped_cargo_insufficient` market-activity entry for the Deal Book.
+- **FTP requires embassy + bilateral acceptance.** Given two Great Powers without an embassy toward each other, when one submits a `DiplomaticOrder.establishFTP` targeting the other, then the system rejects the order with reason `ftp_requires_embassy` and no FTP record is created.
+- **FTP breaks on war.** Given two Great Powers with an active FTP, when either declares war on the other in phase 6 Diplomacy, then the system removes the FTP record before phase 13 runs and any FTP tiebreaking for that pair does not apply in the same turn.
