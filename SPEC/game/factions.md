@@ -56,7 +56,7 @@ A **faction** is an entity that owns provinces (in any region) and has a defined
 | Defend            | Yes         | Yes          | Yes    |
 | Provinces count to victory | OW yes | Yes (for controller) | No |
 
-Extraction and ownership apply per faction; only Great Powers have stockpiles and receive extraction in the economy phase. Minors and Tribes' production may feed trade/market per economy spec.
+Extraction and ownership apply per faction. Great Powers extract into their `Player.stockpile` via `computeExtraction` in the Extraction phase. Minor Nations and Tribes do not have a `Player.stockpile`; their extraction is computed by a parallel non-GP function whose per-faction totals feed the World Market phase as system-authored offers (see [extraction-and-improvements.md](extraction-and-improvements.md) § Non-Great-Power extraction (Minor Nations and Tribes) and [world-market.md](world-market.md) § Minor and tribe auto-sell).
 
 ---
 

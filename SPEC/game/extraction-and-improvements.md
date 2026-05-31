@@ -104,6 +104,38 @@ Each **Great Power** player with a non-null **`capitalTile`** receives a fixed q
   When the System runs `computeExtraction` for that game state  
   Then that player's **land** extraction totals include **B** additional units of commodity id `grain`, even when that player's connected tile set is empty.
 
+### Non-Great-Power extraction (Minor Nations and Tribes)
+
+Minor Nations and Tribes are **not** `Game.players` (they do not hold a `Player` stockpile and never submit orders per [factions.md](factions.md)). Their extraction is computed by a parallel function on the same per-tile formula, with three differences from Great Power extraction:
+
+1. **Tech cap:** Minors and Tribes do **not** research tech. Their per-tile production uses **`defaultExtractionCap = 1`** for every resource — no per-resource cap unlock, no scalar override. The improvement level on a non-GP tile is therefore clamped to **`min(improvementLevel, 1)`** before the transport-cap step in § Extraction formula and town development cap. Starting developed tiles seeded per [factions.md](factions.md) § Starting developed resources (Minor Nations and Tribes) are at improvement level **1** by design, so this clamp does not reduce baseline yield.
+
+2. **Prospecting:** Minors and Tribes do **not** have Explorers and never prospect. **Mineral resources** (iron, copper, tin, coal, silver, gold, gems, diamonds) on non-GP tiles are **always excluded** from non-GP extraction (the § Mineral Prospecting Gate's "(b) prospected" arm can never be satisfied). Non-mineral resources (grain, meat, wool, horses, timber, sugarCane, tobacco, cotton, furs, spices) follow the same formula as GPs.
+
+3. **No overseas, no capital-tile grain bonus:** Minors are Old-World-only and Tribes are New-World-only per [factions.md](factions.md); every tile a non-GP faction owns is in the **same region** as that faction's capital. Non-GP extraction therefore produces **land-only** totals — no overseas bucket, no naval-interception interaction, no cargo allocation. The `capitalTileGrainBonusPerTurn` (Great-Power-only by definition above) is **not** added to non-GP totals.
+
+Connectivity resolution for non-GP factions is specified separately under [capital-and-connectivity.md](capital-and-connectivity.md); the non-GP extraction function takes a per-faction `ConnectivityResult` as input so the connectivity resolver and the extraction pipeline remain decoupled.
+
+Non-GP extraction totals are returned per-faction-id (minor or tribe id) and are consumed by the World Market phase as system-authored offers — they are **not** added to any `Player.stockpile` and do **not** flow through Riches-to-treasury, Consumption, or Production. The full auto-offer flow is specified in [world-market.md](world-market.md) § Minor and tribe auto-sell.
+
+**Acceptance criteria**
+
+- Given a Minor Nation `m` with a `capitalProvinceId` in region `OW`, a connected non-mineral resource tile with improvement level `L ≥ 1`, transport cap `T ≥ 1`, and the province's `townDevelopmentLevel` is `D`  
+  When the System runs non-GP extraction for `m`  
+  Then `m`'s extraction totals for that resource's commodity include exactly `min(min(L, 1), T, D')` units, where `D' = D` if the tile is in `m`'s capital province (or a non-capital province with port town connected to capital per § Extraction formula and town development cap) and `D' = ∞` otherwise
+
+- Given a Tribe `t` with a `capitalProvinceId` in region `NW` and a connected **mineral** resource tile (iron, copper, tin, coal, silver, gold, gems, or diamonds) of any improvement level  
+  When the System runs non-GP extraction for `t`  
+  Then `t`'s extraction totals do **not** include any units for that mineral commodity (minerals are excluded for non-GP factions because Minors and Tribes never prospect)
+
+- Given a Minor Nation `m` with `capitalTile` set and `Game.capitalTileGrainBonusPerTurn` equal to a non-negative integer `B`  
+  When the System runs non-GP extraction for `m`  
+  Then `m`'s extraction totals do **not** include the `B` grain bonus (the bonus is Great-Power-only); `m`'s grain total is determined solely by connected grain tile yields
+
+- Given the System runs non-GP extraction for any Minor Nation or Tribe  
+  When the function returns its result  
+  Then every per-faction totals map produced contains only **land** quantities (no overseas bucket), and the function does **not** invoke sea-transport allocation, naval interception, or `Player`-stockpile mutation
+
 ### Improvement Build Eligibility (Builder)
 
 A Builder may build an improvement on a tile only if: (a) the tile has a **resource** (per terrain/ruleset; no improvement on empty tiles), (b) the tile's improvement level is below the **max improvement level** (4), and (c) the **next** improvement level (current + 1) does not exceed the player's **tech-allowed extraction cap** (see [tech-and-extraction-cap.md](tech-and-extraction-cap.md)). The order engine rejects build_improvement work orders when the tile has no resource or when the player lacks sufficient tech to build the next level.
