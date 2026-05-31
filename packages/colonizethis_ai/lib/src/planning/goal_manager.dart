@@ -4,6 +4,7 @@ import 'planning_imports.dart';
 
 import '../util/ai_random_utils.dart';
 import '../perception/perception_snapshot.dart';
+import 'expand_phase_planner.dart' show cheapestRegimentBuildTreasuryCost;
 import 'observer_goal_phase.dart';
 import 'phase_planner_goal_filter.dart';
 
@@ -159,6 +160,25 @@ Map<StrategicGoal, int> evaluateStrategicGoalScores(
     if (snapshot.conquest.adjacentOwnerFactionIdsSorted.isNotEmpty &&
         expand < kMinimumConquerScoreWhenFarFromVictory) {
       expand = kMinimumConquerScoreWhenFarFromVictory;
+    }
+  }
+
+  // Treasury-acquisition trade bias (Refs #2994 F6). Applied last so that a
+  // broke AI ( `treasury <= 0` ) escapes the stalled-OW `trade <= 35` clamp
+  // and the colonial-pressure / far-from-victory trade penalties before the
+  // score map is returned. See `SPEC/ai/treasury-planner.md`.
+  final treasury = snapshot.economy.treasury;
+  final cheapestRegimentTreasuryCost = cheapestRegimentBuildTreasuryCost();
+  if (treasury <= 0) {
+    if (trade < kEmergencyTradeGoalDominantFloor) {
+      trade = kEmergencyTradeGoalDominantFloor;
+    }
+  } else if (treasury < cheapestRegimentTreasuryCost) {
+    final ratio = treasury / cheapestRegimentTreasuryCost;
+    final boost =
+        ((1.0 - ratio) * kTreasuryAcquisitionTradeBoostMax).round();
+    if (boost > 0) {
+      trade += boost;
     }
   }
 
