@@ -382,11 +382,25 @@ void main() {
             'the legacy hex-literal scrim and must not return.',
       );
       expect(
-        source.contains('EditorialMonoclePalette.dialogScrim'),
+        source.contains('EditorialMonoclePalette.dialogScrim') ||
+            source.contains('CtFullScreenDialogueShell'),
         isTrue,
         reason:
-            'Refs #2867 S10: intro overlay scrim must reference the '
-            'canonical EditorialMonoclePalette.dialogScrim token.',
+            'Refs #2867 S10 / #2914 S2: intro overlay scrim must resolve to '
+            'the canonical EditorialMonoclePalette.dialogScrim token, either '
+            'directly or via the shared CtFullScreenDialogueShell wrapper '
+            '(which paints that token).',
+      );
+      final shellSource = File(
+        'lib/widgets/ct_full_screen_dialogue_shell.dart',
+      ).readAsStringSync();
+      expect(
+        shellSource.contains('EditorialMonoclePalette.dialogScrim'),
+        isTrue,
+        reason:
+            'Refs #2914 S2: CtFullScreenDialogueShell is the canonical scrim '
+            'host for dialogue overlays and must paint '
+            'EditorialMonoclePalette.dialogScrim.',
       );
     });
   });

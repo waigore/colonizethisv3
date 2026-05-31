@@ -10,7 +10,7 @@ import 'package:jenny/jenny.dart';
 
 import '../../../../l10n/l10n.dart';
 import '../../../../widgets/ct_brass_divider.dart';
-import '../../../../widgets/ct_dialog_shell.dart';
+import '../../../../widgets/ct_full_screen_dialogue_shell.dart';
 import '../../../../widgets/ct_loading_indicator.dart';
 import '../../../../widgets/ct_nine_patch_button.dart';
 import 'ct_dialogue_view.dart';
@@ -177,83 +177,56 @@ class _OvertureDialogueOverlayState extends State<OvertureDialogueOverlay> {
   Widget build(BuildContext context) {
     final l10n = appL10n(context);
     if (_loadError != null) {
-      return Stack(
-        children: [
-          widget.child,
-          Material(
-            color: EditorialMonoclePalette.dialogScrim,
-            child: Center(
-              child: CtDialogShell(
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(l10n.game_overture_loadError('$_loadError')),
-                      const SizedBox(height: 16),
-                      CtNinePatchButton(
-                        onPressed: _submitErrorFallback,
-                        child: Text(l10n.game_intervention_continue),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
+      return CtFullScreenDialogueShell(
+        backdrop: widget.child,
+        padding: const EdgeInsets.all(16),
+        body: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(l10n.game_overture_loadError('$_loadError')),
+            const SizedBox(height: 16),
+            CtNinePatchButton(
+              onPressed: _submitErrorFallback,
+              child: Text(l10n.game_intervention_continue),
             ),
-          ),
-        ],
+          ],
+        ),
       );
     }
 
     if (!_introDone) {
       final line = _view?.currentLine;
       final choice = _view?.currentChoice;
-      return Stack(
-        children: [
-          widget.child,
-          Material(
-            color: EditorialMonoclePalette.dialogScrim,
-            child: Center(
-              child: CtDialogShell(
-                maxWidth: 520,
-                child: Padding(
-                  padding: const EdgeInsets.all(20),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      if (line != null) ...[
-                        Text(
-                          line.text,
-                          style: Theme.of(context).textTheme.bodyLarge,
-                        ),
-                        const SizedBox(height: 16),
-                        Align(
-                          alignment: Alignment.centerRight,
-                          child: CtNinePatchButton(
-                            onPressed: () => _view!.advanceLine(),
-                            child: Text(l10n.game_intervention_continue),
-                          ),
-                        ),
-                      ] else if (choice != null) ...[
-                        ...choice.options.asMap().entries.map(
-                          (entry) => Padding(
-                            padding: const EdgeInsets.only(bottom: 8),
-                            child: CtNinePatchButton(
-                              onPressed: () => _view!.selectOption(entry.key),
-                              child: Text(entry.value.text),
-                            ),
-                          ),
-                        ),
-                      ] else
-                        const CtLoadingIndicator(),
-                    ],
+      return CtFullScreenDialogueShell(
+        backdrop: widget.child,
+        body: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            if (line != null) ...[
+              Text(line.text, style: Theme.of(context).textTheme.bodyLarge),
+              const SizedBox(height: 16),
+              Align(
+                alignment: Alignment.centerRight,
+                child: CtNinePatchButton(
+                  onPressed: () => _view!.advanceLine(),
+                  child: Text(l10n.game_intervention_continue),
+                ),
+              ),
+            ] else if (choice != null) ...[
+              ...choice.options.asMap().entries.map(
+                (entry) => Padding(
+                  padding: const EdgeInsets.only(bottom: 8),
+                  child: CtNinePatchButton(
+                    onPressed: () => _view!.selectOption(entry.key),
+                    child: Text(entry.value.text),
                   ),
                 ),
               ),
-            ),
-          ),
-        ],
+            ] else
+              const CtLoadingIndicator(),
+          ],
+        ),
       );
     }
 
@@ -262,74 +235,61 @@ class _OvertureDialogueOverlayState extends State<OvertureDialogueOverlay> {
     final ThemeData theme = Theme.of(context);
     final TextStyle titleStyle = _phaseTwoTitleStyle(theme);
     final TextStyle introStyle = _phaseTwoIntroStyle(theme);
-    return Stack(
-      children: [
-        widget.child,
-        Material(
-          color: EditorialMonoclePalette.dialogScrim,
-          child: Center(
-            child: CtDialogShell(
-              maxWidth: 520,
-              maxHeight: 500,
-              child: Padding(
-                padding: const EdgeInsets.all(20),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    Text(
-                      l10n.game_overture_title,
-                      key: const ValueKey<String>('overtureTitle'),
-                      style: titleStyle,
-                    ),
-                    const SizedBox(height: _titleToDividerGap),
-                    const CtBrassDivider(
-                      key: ValueKey<String>('overtureBrassDivider'),
-                    ),
-                    const SizedBox(height: _dividerToIntroGap),
-                    Text(
-                      l10n.game_overture_intro,
-                      key: const ValueKey<String>('overtureIntro'),
-                      style: introStyle,
-                    ),
-                    const SizedBox(height: 16),
-                    ListView.builder(
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
-                      itemCount: offers.length,
-                      itemBuilder: (context, i) {
-                        final offer = offers[i];
-                        return _OvertureOfferRow(
-                          offerer: _offererDisplayName(offer.offererGpId),
-                          stageLabel: _stageLabel(l10n, offer.stage),
-                          acceptLabel: l10n.game_overture_accept,
-                          rejectLabel: l10n.game_overture_reject,
-                          onAccept: () {
-                            setState(() => _accepted[i] = true);
-                          },
-                          onReject: () {
-                            setState(() => _accepted[i] = false);
-                          },
-                        );
-                      },
-                    ),
-                    const SizedBox(height: 8),
-                    Align(
-                      alignment: Alignment.centerRight,
-                      child: CtNinePatchButton(
-                        key: const ValueKey<String>('overtureSubmitButton'),
-                        enabled: _allDecided,
-                        onPressed: _allDecided ? _submit : null,
-                        child: Text(l10n.game_callToArms_submit),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
+    return CtFullScreenDialogueShell(
+      backdrop: widget.child,
+      maxHeight: 500,
+      body: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text(
+            l10n.game_overture_title,
+            key: const ValueKey<String>('overtureTitle'),
+            style: titleStyle,
+          ),
+          const SizedBox(height: _titleToDividerGap),
+          const CtBrassDivider(
+            key: ValueKey<String>('overtureBrassDivider'),
+          ),
+          const SizedBox(height: _dividerToIntroGap),
+          Text(
+            l10n.game_overture_intro,
+            key: const ValueKey<String>('overtureIntro'),
+            style: introStyle,
+          ),
+          const SizedBox(height: 16),
+          ListView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            itemCount: offers.length,
+            itemBuilder: (context, i) {
+              final offer = offers[i];
+              return _OvertureOfferRow(
+                offerer: _offererDisplayName(offer.offererGpId),
+                stageLabel: _stageLabel(l10n, offer.stage),
+                acceptLabel: l10n.game_overture_accept,
+                rejectLabel: l10n.game_overture_reject,
+                onAccept: () {
+                  setState(() => _accepted[i] = true);
+                },
+                onReject: () {
+                  setState(() => _accepted[i] = false);
+                },
+              );
+            },
+          ),
+          const SizedBox(height: 8),
+          Align(
+            alignment: Alignment.centerRight,
+            child: CtNinePatchButton(
+              key: const ValueKey<String>('overtureSubmitButton'),
+              enabled: _allDecided,
+              onPressed: _allDecided ? _submit : null,
+              child: Text(l10n.game_callToArms_submit),
             ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 

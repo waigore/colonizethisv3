@@ -231,6 +231,10 @@ List<WidgetbookNode> get ctDarkThemePrimitiveDirectories => [
         builder: (context) => _CtDialogShellStory(),
       ),
       WidgetbookUseCase(
+        name: 'CtFullScreenDialogueShell — scrim + framed body',
+        builder: (context) => _CtFullScreenDialogueShellStory(),
+      ),
+      WidgetbookUseCase(
         name: 'CtSlider — value sweep',
         builder: (context) => const _CtSliderStory(),
       ),
