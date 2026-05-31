@@ -1,7 +1,7 @@
 // Treasury planner: World Market trade orders for AI GPs. SPEC/ai/treasury-planner.md.
 
 import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:colonizethis_logic/colonizethis_logic.dart'
+import 'package:colonizethis_logic/ai_api.dart'
     show cargoHoldsForHomeFleet, worldMarketBidTypeCap;
 import 'package:colonizethis_logic/order_suggestion_api.dart'
     show TradeOrderSuggester, TradeSuggestionContext;
