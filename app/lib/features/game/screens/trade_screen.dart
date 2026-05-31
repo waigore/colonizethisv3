@@ -1,24 +1,39 @@
 // Full-screen World Market Trade screen. SPEC/ui/trade-screen.md.
 //
-// **Scope of the current slice (Refs #2993 E5a — Market tab read-only
-// commodity table):** route + screen ID + dark editorial-monocle chrome +
-// observe-mode guard + two-tab body (Market + Deal Book). The Market tab
-// now renders a read-only commodity table sourced from `Game.worldMarketState`
-// (last market price + previous-turn aggregate `Bids / Offers` volumes per
-// commodity, sorted alphabetically by display name). The Deal Book tab
-// remains a placeholder until `MarketActivity` per-player ledger work
-// lands (Refs #2989, #2990, #2993 E6).
+// **Scope (Refs #2993 E5a + E5b):**
+// - E5a (already shipped) — route + screen ID + dark editorial-monocle
+//   chrome + observe-mode guard + two-tab body (Market + Deal Book) +
+//   read-only commodity table (last market price + previous-turn
+//   aggregate `Bids / Offers` volumes per commodity, sorted alphabetically
+//   by display name).
+// - E5b (this slice) — interactive bid/offer/none direction selector and
+//   quantity stepper per row, wired to `currentOrdersProvider` so each
+//   change updates `Orders.tradeOrdersByPlayerId[player.id]` via the
+//   pure helpers `applyTradeOrderForPlayer` / `removeTradeOrderForPlayer`
+//   in `colonizethis_logic`. Mutual exclusion is structural: at most
+//   one staged `TradeOrder` per (player, commodityId) pair, so toggling
+//   from `Bid` to `Offer` (or vice versa) replaces the prior direction
+//   in place. Observe mode (the GP-observation `canMutateViaUi == false`
+//   case, distinct from the "global observe / panels not defined"
+//   sentinel) wraps the controls in `IgnorePointer` and visually dims
+//   them so the table reads as read-only.
 //
-// The interactive Market controls (bid/offer toggle, quantity stepper,
-// priority dropdown, cargo-remaining indicator) remain deferred to
-// follow-up slices that depend on `currentOrdersProvider` plumbing
-// (Refs #2993 E5b — Cargo) and the Deal Book live ledger (Refs #2993 E6).
-// The two-tab structure is the durable wireframe those follow-up slices
-// continue to build on, so the contract this file ships matches what
+// Deferred to follow-up slices:
+// - Priority dropdown (default priority 1 today; integration with the
+//   `kMaxTradePriority` API surface is tracked under #2989).
+// - Cross-commodity cargo-remaining indicator + per-stepper cap +
+//   warning (Refs #2993 E5c).
+// - Deal Book live ledger (Refs #2993 E6) once the per-player ledger
+//   surface ships on top of #2989 / #2990's `MarketActivity` + world-market
+//   turn phase.
+//
+// The two-tab structure is the durable wireframe E5c / E6 continue to
+// build on, so the contract this file ships matches what
 // `SPEC/ui/trade-screen.md` § Layout / wireframe records as the canonical
 // body for the screen.
 
 import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -26,6 +41,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../config/app_constants.dart';
 import '../../../config/editorial_monocle_palette.dart';
 import '../../../config/ui_screen_ids.dart';
+import '../../../providers/games_provider.dart';
+import '../../../widgets/ct_choice_chip.dart';
 import '../../../widgets/ct_game_feature_screen_shell.dart';
 import '../../../widgets/ct_panel.dart';
 import '../../../widgets/ct_tab_strip.dart';
@@ -100,6 +117,70 @@ class TradeScreen extends ConsumerWidget {
   static Key marketCommodityRowKey(CommodityId commodityId) =>
       ValueKey<String>('tradeScreenMarketRow:$commodityId');
 
+  /// Per-row key for the `None` direction chip on a Market tab row
+  /// (Refs #2993 E5b). Tapping the chip removes any staged trade order
+  /// for the commodity from `currentOrdersProvider`.
+  static Key marketRowNoneChipKey(CommodityId commodityId) =>
+      ValueKey<String>('tradeScreenMarketRow:$commodityId:none');
+
+  /// Per-row key for the `Bid` direction chip on a Market tab row
+  /// (Refs #2993 E5b). Tapping the chip stages a `TradeOrderType.bid`
+  /// for the commodity (replacing any prior offer for that commodity).
+  static Key marketRowBidChipKey(CommodityId commodityId) =>
+      ValueKey<String>('tradeScreenMarketRow:$commodityId:bid');
+
+  /// Per-row key for the `Offer` direction chip on a Market tab row
+  /// (Refs #2993 E5b). Tapping the chip stages a `TradeOrderType.offer`
+  /// for the commodity (replacing any prior bid for that commodity).
+  static Key marketRowOfferChipKey(CommodityId commodityId) =>
+      ValueKey<String>('tradeScreenMarketRow:$commodityId:offer');
+
+  /// Per-row key for the decrement button of the quantity stepper on a
+  /// Market tab row (Refs #2993 E5b). Disabled when there is no staged
+  /// trade order for the commodity or when its quantity is at the lower
+  /// bound (`marketRowQuantityMin`).
+  static Key marketRowDecrementKey(CommodityId commodityId) =>
+      ValueKey<String>('tradeScreenMarketRow:$commodityId:decrement');
+
+  /// Per-row key for the increment button of the quantity stepper on a
+  /// Market tab row (Refs #2993 E5b). Increments the staged trade order
+  /// quantity by 1.
+  static Key marketRowIncrementKey(CommodityId commodityId) =>
+      ValueKey<String>('tradeScreenMarketRow:$commodityId:increment');
+
+  /// Per-row key for the quantity readout (`Text`) of the stepper on a
+  /// Market tab row (Refs #2993 E5b). Shows the staged
+  /// `TradeOrder.quantity` (or `marketRowQuantityIdleGlyph` when no
+  /// trade order is staged for the commodity).
+  static Key marketRowQuantityTextKey(CommodityId commodityId) =>
+      ValueKey<String>('tradeScreenMarketRow:$commodityId:quantity');
+
+  /// Lower bound for the per-row quantity stepper when a trade order is
+  /// staged. Setting the stepper below 1 is equivalent to choosing
+  /// `None`, which removes the order — so the stepper is clamped at 1
+  /// while a direction is selected.
+  static const int marketRowQuantityMin = 1;
+
+  /// Default starting quantity when the player first selects `Bid` or
+  /// `Offer` on a row that has no staged trade order. Always 1 (the
+  /// stepper minimum); the player increments from there. The
+  /// per-commodity / cargo cap clamps the upper bound in #2993 E5c.
+  static const int marketRowQuantityDefault = 1;
+
+  /// Default `TradeOrder.priority` assigned when the player first
+  /// stages a `Bid` or `Offer` on a row. The interactive priority
+  /// dropdown is deferred to a follow-up slice; until the
+  /// `kMaxTradePriority` API surface is wired (#2989), the row uses the
+  /// highest tier (priority 1) so staged orders are stable.
+  // ignore: avoid-non-null-assertion
+  static const int marketRowDefaultPriority = 1;
+
+  /// Glyph rendered in the per-row quantity readout when no trade order
+  /// is staged for a commodity (`None` direction). Mirrors the price
+  /// em-dash so the visual language is consistent across the row.
+  // ignore: avoid_hardcoded_strings_in_widgets
+  static const String marketRowQuantityIdleGlyph = '—';
+
   /// Stable widget key for the Deal Book tab placeholder body. Pin point
   /// for widget tests asserting the Deal Book tab body is present in the
   /// tab strip's `IndexedStack` (visible when the Deal Book tab is
@@ -141,9 +222,13 @@ class TradeScreen extends ConsumerWidget {
           // ignore: avoid_hardcoded_strings_in_widgets
           return const ObserveModeNotDefinedPanel(title: 'Trade');
         }
+        final bool canEdit =
+            shellRef.read(shellPlayerContextProvider).canMutateViaUi;
         return _TradeScreenTabsBody(
           key: tabsBodyKey,
           game: displayGame,
+          playerId: player.id,
+          canEdit: canEdit,
         );
       },
     );
@@ -155,17 +240,24 @@ class TradeScreen extends ConsumerWidget {
 /// Hosts a [CtTabStrip] inside a [CtPanel] so the dark editorial-monocle
 /// surface mirrors the chrome already established for sibling
 /// full-screen feature surfaces (production, diplomacy). The Market tab
-/// renders a read-only commodity table sourced from
-/// [Game.worldMarketState] (Refs #2993 E5a); the Deal Book tab keeps the
-/// placeholder copy until the per-player ledger work for Refs #2993 E6
-/// lands. The two-tab structure stays as the durable wireframe so the
-/// follow-up interactive Market controls (toggle, stepper, priority
-/// dropdown, cargo indicator) can swap each tab body in place without
-/// remounting the strip.
+/// now renders the interactive bid/offer/none + quantity stepper row
+/// sourced from [Game.worldMarketState] + `currentOrdersProvider`
+/// (Refs #2993 E5a + E5b); the Deal Book tab keeps the placeholder copy
+/// until the per-player ledger work for Refs #2993 E6 lands. The
+/// two-tab structure stays as the durable wireframe so the follow-up
+/// cargo indicator + priority dropdown + Deal Book ledger slices can
+/// swap each tab body in place without remounting the strip.
 class _TradeScreenTabsBody extends StatelessWidget {
-  const _TradeScreenTabsBody({super.key, required this.game});
+  const _TradeScreenTabsBody({
+    super.key,
+    required this.game,
+    required this.playerId,
+    required this.canEdit,
+  });
 
   final Game game;
+  final String playerId;
+  final bool canEdit;
 
   @override
   Widget build(BuildContext context) {
@@ -182,6 +274,8 @@ class _TradeScreenTabsBody extends StatelessWidget {
             _MarketTabContent(
               key: TradeScreen.marketTabBodyKey,
               game: game,
+              playerId: playerId,
+              canEdit: canEdit,
             ),
             const _DealBookTabPlaceholder(
               key: TradeScreen.dealBookTabBodyKey,
@@ -193,7 +287,7 @@ class _TradeScreenTabsBody extends StatelessWidget {
   }
 }
 
-/// Read-only commodity table for the Market tab (Refs #2993 E5a).
+/// Interactive commodity table for the Market tab (Refs #2993 E5a + E5b).
 ///
 /// Renders one row per tradeable commodity (the full
 /// [CommodityCatalog.all] list with [CommodityCategory.riches] and
@@ -206,18 +300,29 @@ class _TradeScreenTabsBody extends StatelessWidget {
 ///   renders when the commodity is absent from the state map (an
 ///   empty / un-seeded market — typically only seen in tests),
 /// * the previous-turn aggregate volume line `Bids X / Offers Y` from
-///   [WorldMarketState.lastTurnActivity] (`bodySmall`, `--muted`).
+///   [WorldMarketState.lastTurnActivity] (`bodySmall`, `--muted`),
+/// * the interactive direction selector (`None` / `Bid` / `Offer`)
+///   wired to `currentOrdersProvider` so each chip tap stages or
+///   removes a [TradeOrder] for the commodity (Refs #2993 E5b),
+/// * the interactive quantity stepper (`-` / quantity / `+`) that
+///   adjusts the staged [TradeOrder.quantity] when a direction is
+///   selected; idle when the row is `None`.
 ///
 /// Rows are sorted by display name (case-insensitive) so the order is
 /// deterministic for widget tests and Widgetbook stories. The list is
-/// scrollable (the future bid/offer controls in Refs #2993 E5b extend
-/// each row in place; the cargo indicator header from Refs #2993 E5c
-/// lands above the list when its plumbing arrives — Refs #2988 §UI
-/// Design).
-class _MarketTabContent extends StatelessWidget {
-  const _MarketTabContent({super.key, required this.game});
+/// scrollable (the cargo indicator header from Refs #2993 E5c lands
+/// above the list when its plumbing arrives — Refs #2988 §UI Design).
+class _MarketTabContent extends ConsumerWidget {
+  const _MarketTabContent({
+    super.key,
+    required this.game,
+    required this.playerId,
+    required this.canEdit,
+  });
 
   final Game game;
+  final String playerId;
+  final bool canEdit;
 
   /// Rendered when a commodity has no entry in [WorldMarketState.prices]
   /// (typically only happens in unit tests / Widgetbook stories that
@@ -233,8 +338,31 @@ class _MarketTabContent extends StatelessWidget {
   // ignore: avoid_hardcoded_strings_in_widgets
   static const String offersLabel = 'Offers';
 
+  /// Localized chip label for the `None` direction (no staged trade
+  /// order on this row).
+  // ignore: avoid_hardcoded_strings_in_widgets
+  static const String noneChipLabel = 'None';
+
+  /// Localized chip label for the `Bid` direction (stages a
+  /// [TradeOrderType.bid] for the commodity).
+  // ignore: avoid_hardcoded_strings_in_widgets
+  static const String bidChipLabel = 'Bid';
+
+  /// Localized chip label for the `Offer` direction (stages a
+  /// [TradeOrderType.offer] for the commodity).
+  // ignore: avoid_hardcoded_strings_in_widgets
+  static const String offerChipLabel = 'Offer';
+
+  /// Tooltip / semantic label for the decrement stepper button.
+  // ignore: avoid_hardcoded_strings_in_widgets
+  static const String decrementSemanticLabel = 'Decrease quantity';
+
+  /// Tooltip / semantic label for the increment stepper button.
+  // ignore: avoid_hardcoded_strings_in_widgets
+  static const String incrementSemanticLabel = 'Increase quantity';
+
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final ThemeData theme = Theme.of(context);
     final TextStyle nameStyle =
         (theme.textTheme.titleSmall ?? const TextStyle(fontSize: 14))
@@ -245,9 +373,13 @@ class _MarketTabContent extends StatelessWidget {
     final TextStyle volumeStyle =
         (theme.textTheme.bodySmall ?? const TextStyle(fontSize: 12))
             .copyWith(color: EditorialMonoclePalette.muted);
+    final TextStyle quantityStyle =
+        (theme.textTheme.titleSmall ?? const TextStyle(fontSize: 14))
+            .copyWith(color: EditorialMonoclePalette.accentBright);
 
     final List<Commodity> rows = _tradeableCommoditiesSortedByDisplayName();
     final WorldMarketState market = game.worldMarketState;
+    final Orders orders = ref.watch(currentOrdersProvider);
 
     // SingleChildScrollView + Column (instead of ListView.builder) so
     // every commodity row is built up-front. Widget tests pin all 22
@@ -255,7 +387,7 @@ class _MarketTabContent extends StatelessWidget {
     // by the catalog size (22) so the eager build cost is negligible
     // and the deterministic ordering survives Widgetbook stories that
     // render the screen inside a non-scrollable container.
-    return SingleChildScrollView(
+    final Widget list = SingleChildScrollView(
       key: TradeScreen.marketCommodityListKey,
       padding: EdgeInsets.zero,
       child: Column(
@@ -267,6 +399,7 @@ class _MarketTabContent extends StatelessWidget {
               key: TradeScreen.marketCommodityRowKey(rows[index].id),
               padding: EdgeInsets.only(top: index == 0 ? 0 : 12),
               child: _MarketCommodityRow(
+                commodityId: rows[index].id,
                 commodityDisplayName:
                     rows[index].displayName ?? rows[index].id,
                 priceText: _formatPrice(market.prices[rows[index].id]),
@@ -274,14 +407,109 @@ class _MarketTabContent extends StatelessWidget {
                   market.lastTurnActivity[rows[index].id] ??
                       MarketActivity.empty,
                 ),
+                stagedOrder: tradeOrderForPlayerCommodity(
+                  orders,
+                  playerId,
+                  rows[index].id,
+                ),
                 nameStyle: nameStyle,
                 priceStyle: priceStyle,
                 volumeStyle: volumeStyle,
+                quantityStyle: quantityStyle,
+                onDirectionChanged: (TradeOrderType? next) =>
+                    _handleDirectionChanged(ref, rows[index].id, next),
+                onIncrement: () =>
+                    _handleQuantityDelta(ref, rows[index].id, 1),
+                onDecrement: () =>
+                    _handleQuantityDelta(ref, rows[index].id, -1),
               ),
             ),
         ],
       ),
     );
+
+    // Observe-mode (canMutateViaUi == false): wrap in IgnorePointer +
+    // Opacity so the table reads as read-only without remounting the
+    // row tree (callbacks still fire-safe when not used; the tap is
+    // simply blocked by IgnorePointer).
+    if (!canEdit) {
+      return Opacity(
+        opacity: _observeModeOpacity,
+        child: IgnorePointer(child: list),
+      );
+    }
+    return list;
+  }
+
+  /// Visual dim factor applied to the Market tab body when the screen
+  /// is in observe mode (`canMutateViaUi == false`). Matches the
+  /// editorial-monocle conventions for read-only surfaces.
+  static const double _observeModeOpacity = 0.7;
+
+  void _handleDirectionChanged(
+    WidgetRef ref,
+    CommodityId commodityId,
+    TradeOrderType? next,
+  ) {
+    final CurrentOrdersNotifier notifier =
+        ref.read(currentOrdersProvider.notifier);
+    final Orders orders = ref.read(currentOrdersProvider);
+    if (next == null) {
+      final Orders updated = removeTradeOrderForPlayer(
+        orders: orders,
+        playerId: playerId,
+        commodityId: commodityId,
+      );
+      if (!identical(updated, orders)) notifier.replaceAll(updated);
+      return;
+    }
+    final TradeOrder? prior = tradeOrderForPlayerCommodity(
+      orders,
+      playerId,
+      commodityId,
+    );
+    final int quantity =
+        prior?.quantity ?? TradeScreen.marketRowQuantityDefault;
+    final int priority =
+        prior?.priority ?? TradeScreen.marketRowDefaultPriority;
+    final TradeOrder nextOrder = TradeOrder(
+      commodityId: commodityId,
+      type: next,
+      quantity: quantity,
+      priority: priority,
+    );
+    final Orders updated = applyTradeOrderForPlayer(
+      orders: orders,
+      playerId: playerId,
+      order: nextOrder,
+    );
+    notifier.replaceAll(updated);
+  }
+
+  void _handleQuantityDelta(
+    WidgetRef ref,
+    CommodityId commodityId,
+    int delta,
+  ) {
+    final CurrentOrdersNotifier notifier =
+        ref.read(currentOrdersProvider.notifier);
+    final Orders orders = ref.read(currentOrdersProvider);
+    final TradeOrder? prior = tradeOrderForPlayerCommodity(
+      orders,
+      playerId,
+      commodityId,
+    );
+    if (prior == null) return; // No staged direction → ignore.
+    final int rawNext = prior.quantity + delta;
+    if (rawNext < TradeScreen.marketRowQuantityMin) return;
+    if (rawNext == prior.quantity) return;
+    final TradeOrder nextOrder = prior.copyWith(quantity: rawNext);
+    final Orders updated = applyTradeOrderForPlayer(
+      orders: orders,
+      playerId: playerId,
+      order: nextOrder,
+    );
+    notifier.replaceAll(updated);
   }
 
   static String _volumeText(MarketActivity activity) {
@@ -312,25 +540,48 @@ class _MarketTabContent extends StatelessWidget {
   }
 }
 
-/// One row of the Market tab read-only commodity table. Lays the
-/// content on a two-line column so the row remains overflow-safe at
-/// the 320 dp minimum viewport (SPEC/ui/mobile-adaptation.md §7).
+/// One row of the Market tab commodity table. Lays the read-only
+/// content on the first two lines and the interactive direction
+/// selector + stepper on a third line so the row remains overflow-safe
+/// at the 320 dp minimum viewport (SPEC/ui/mobile-adaptation.md §7).
 class _MarketCommodityRow extends StatelessWidget {
   const _MarketCommodityRow({
+    required this.commodityId,
     required this.commodityDisplayName,
     required this.priceText,
     required this.volumeText,
+    required this.stagedOrder,
     required this.nameStyle,
     required this.priceStyle,
     required this.volumeStyle,
+    required this.quantityStyle,
+    required this.onDirectionChanged,
+    required this.onIncrement,
+    required this.onDecrement,
   });
 
+  final CommodityId commodityId;
   final String commodityDisplayName;
   final String priceText;
   final String volumeText;
+  final TradeOrder? stagedOrder;
   final TextStyle nameStyle;
   final TextStyle priceStyle;
   final TextStyle volumeStyle;
+  final TextStyle quantityStyle;
+  final ValueChanged<TradeOrderType?> onDirectionChanged;
+  final VoidCallback onIncrement;
+  final VoidCallback onDecrement;
+
+  bool get _hasStagedOrder => stagedOrder != null;
+
+  String get _quantityText => stagedOrder == null
+      ? TradeScreen.marketRowQuantityIdleGlyph
+      : stagedOrder!.quantity.toString();
+
+  bool get _canDecrement =>
+      stagedOrder != null &&
+      stagedOrder!.quantity > TradeScreen.marketRowQuantityMin;
 
   @override
   Widget build(BuildContext context) {
@@ -355,7 +606,148 @@ class _MarketCommodityRow extends StatelessWidget {
         ),
         const SizedBox(height: 2),
         Text(volumeText, style: volumeStyle),
+        const SizedBox(height: 6),
+        _MarketCommodityRowControls(
+          commodityId: commodityId,
+          stagedType: stagedOrder?.type,
+          quantityText: _quantityText,
+          quantityStyle: quantityStyle,
+          canDecrement: _canDecrement,
+          canIncrement: _hasStagedOrder,
+          onDirectionChanged: onDirectionChanged,
+          onIncrement: onIncrement,
+          onDecrement: onDecrement,
+        ),
       ],
+    );
+  }
+}
+
+/// Interactive controls strip below the static read-only data on a
+/// Market tab commodity row (Refs #2993 E5b).
+class _MarketCommodityRowControls extends StatelessWidget {
+  const _MarketCommodityRowControls({
+    required this.commodityId,
+    required this.stagedType,
+    required this.quantityText,
+    required this.quantityStyle,
+    required this.canDecrement,
+    required this.canIncrement,
+    required this.onDirectionChanged,
+    required this.onIncrement,
+    required this.onDecrement,
+  });
+
+  final CommodityId commodityId;
+  final TradeOrderType? stagedType;
+  final String quantityText;
+  final TextStyle quantityStyle;
+  final bool canDecrement;
+  final bool canIncrement;
+  final ValueChanged<TradeOrderType?> onDirectionChanged;
+  final VoidCallback onIncrement;
+  final VoidCallback onDecrement;
+
+  @override
+  Widget build(BuildContext context) {
+    return Wrap(
+      spacing: 6,
+      runSpacing: 6,
+      crossAxisAlignment: WrapCrossAlignment.center,
+      children: <Widget>[
+        CtChoiceChip(
+          key: TradeScreen.marketRowNoneChipKey(commodityId),
+          selected: stagedType == null,
+          onSelected: (_) => onDirectionChanged(null),
+          label: const Text(_MarketTabContent.noneChipLabel),
+        ),
+        CtChoiceChip(
+          key: TradeScreen.marketRowBidChipKey(commodityId),
+          selected: stagedType == TradeOrderType.bid,
+          onSelected: (_) => onDirectionChanged(TradeOrderType.bid),
+          label: const Text(_MarketTabContent.bidChipLabel),
+        ),
+        CtChoiceChip(
+          key: TradeScreen.marketRowOfferChipKey(commodityId),
+          selected: stagedType == TradeOrderType.offer,
+          onSelected: (_) => onDirectionChanged(TradeOrderType.offer),
+          label: const Text(_MarketTabContent.offerChipLabel),
+        ),
+        _StepperButton(
+          buttonKey: TradeScreen.marketRowDecrementKey(commodityId),
+          // ignore: avoid_hardcoded_strings_in_widgets
+          glyph: '−',
+          semanticLabel: _MarketTabContent.decrementSemanticLabel,
+          onPressed: canDecrement ? onDecrement : null,
+        ),
+        SizedBox(
+          width: 28,
+          child: Text(
+            quantityText,
+            key: TradeScreen.marketRowQuantityTextKey(commodityId),
+            style: quantityStyle,
+            textAlign: TextAlign.center,
+          ),
+        ),
+        _StepperButton(
+          buttonKey: TradeScreen.marketRowIncrementKey(commodityId),
+          // ignore: avoid_hardcoded_strings_in_widgets
+          glyph: '+',
+          semanticLabel: _MarketTabContent.incrementSemanticLabel,
+          onPressed: canIncrement ? onIncrement : null,
+        ),
+      ],
+    );
+  }
+}
+
+/// Compact stepper button used by [_MarketCommodityRowControls]. Uses
+/// an `InkWell` so the chrome stays in the editorial-monocle palette
+/// (no Material elevated buttons or accent splash colours).
+class _StepperButton extends StatelessWidget {
+  const _StepperButton({
+    required this.buttonKey,
+    required this.glyph,
+    required this.semanticLabel,
+    required this.onPressed,
+  });
+
+  final Key buttonKey;
+  final String glyph;
+  final String semanticLabel;
+  final VoidCallback? onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    final ThemeData theme = Theme.of(context);
+    final TextStyle glyphStyle =
+        (theme.textTheme.titleSmall ?? const TextStyle(fontSize: 14))
+            .copyWith(
+              color: onPressed == null
+                  ? EditorialMonoclePalette.muted
+                  : EditorialMonoclePalette.accent,
+            );
+    final Color borderColor = onPressed == null
+        ? EditorialMonoclePalette.muted
+        : EditorialMonoclePalette.accent;
+    return Semantics(
+      button: true,
+      enabled: onPressed != null,
+      label: semanticLabel,
+      child: InkWell(
+        key: buttonKey,
+        onTap: onPressed,
+        child: Container(
+          width: 28,
+          height: 24,
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            color: EditorialMonoclePalette.surface.withValues(alpha: 0.5),
+            border: Border.all(color: borderColor, width: 1),
+          ),
+          child: Text(glyph, style: glyphStyle),
+        ),
+      ),
     );
   }
 }

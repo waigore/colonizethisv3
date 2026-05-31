@@ -326,7 +326,10 @@ Game _tradeScreenStoryGame() {
   );
 }
 
-ProviderScope _tradeScreenProviderScope({required Widget child}) {
+ProviderScope _tradeScreenProviderScope({
+  required Widget child,
+  Orders? initialOrders,
+}) {
   return ProviderScope(
     overrides: [
       appEventBusProvider.overrideWith((ref) {
@@ -334,6 +337,9 @@ ProviderScope _tradeScreenProviderScope({required Widget child}) {
         ref.onDispose(bus.dispose);
         return bus;
       }),
+      if (initialOrders != null)
+        currentOrdersProvider
+            .overrideWith(() => CurrentOrdersNotifier(initialOrders)),
     ],
     child: MaterialApp(
       theme: AppThemes.editorialMonocle,
@@ -344,11 +350,38 @@ ProviderScope _tradeScreenProviderScope({required Widget child}) {
   );
 }
 
-Widget _tradeScreenDefaultStory() {
+Widget _tradeScreenDefaultStory({Orders? initialOrders}) {
   final game = _tradeScreenStoryGame();
   final player = game.players.first;
   return _tradeScreenProviderScope(
+    initialOrders: initialOrders,
     child: TradeScreen(game: game, player: player),
+  );
+}
+
+/// Pre-staged Orders snapshot used by the "Market tab — staged bid +
+/// offer (Refs #2993 E5b)" use case so reviewers see both an active
+/// `Bid` direction and an active `Offer` direction with non-default
+/// quantities, mirroring what a player who has interacted with the
+/// row controls would see when they re-open the screen.
+Orders _tradeScreenStoryStagedOrders() {
+  return Orders(
+    tradeOrdersByPlayerId: <String, List<TradeOrder>>{
+      'gp_human': <TradeOrder>[
+        TradeOrder(
+          commodityId: 'timber',
+          type: TradeOrderType.bid,
+          quantity: 4,
+          priority: 1,
+        ),
+        TradeOrder(
+          commodityId: 'fabric',
+          type: TradeOrderType.offer,
+          quantity: 7,
+          priority: 1,
+        ),
+      ],
+    },
   );
 }
 
@@ -356,12 +389,16 @@ Widget _tradeScreenDefaultStory() {
 ///
 /// Refs #2993 E1+E2+E3+E4 ship the route, screen ID, left-rail button,
 /// dark editorial-monocle chrome, and the durable two-tab body. Refs
-/// #2993 E5a (this slice) adds the Market tab's read-only commodity
-/// table sourced from `Game.worldMarketState` — the story Game seeds a
+/// #2993 E5a adds the Market tab's read-only commodity table sourced
+/// from `Game.worldMarketState`. Refs #2993 E5b (this slice) wires the
+/// per-row interactive bid/offer/none direction selector and quantity
+/// stepper to `currentOrdersProvider`. The story Game seeds a
 /// representative subset of `prices` + `lastTurnActivity` so reviewers
 /// can see both the populated and zero-default rendering paths in one
-/// scroll. The Deal Book tab body remains the placeholder until Refs
-/// #2993 E6.
+/// scroll; the staged-orders use case additionally seeds a `Bid` on
+/// timber and an `Offer` on fabric so the per-row selected chip + non-1
+/// quantity readout render. The Deal Book tab body remains the
+/// placeholder until Refs #2993 E6.
 List<WidgetbookNode> get tradeScreenDirectories => [
   WidgetbookFolder(
     name: 'Trade Screen',
@@ -374,6 +411,12 @@ List<WidgetbookNode> get tradeScreenDirectories => [
         name: 'Scaffold (mobile)',
         builder: (context) =>
             mobileViewport(context, _tradeScreenDefaultStory()),
+      ),
+      WidgetbookUseCase(
+        name: 'Market tab — staged bid + offer (Refs #2993 E5b)',
+        builder: (context) => _tradeScreenDefaultStory(
+          initialOrders: _tradeScreenStoryStagedOrders(),
+        ),
       ),
     ],
   ),

@@ -4,7 +4,7 @@
 **SPEC/ui** — Full-screen World Market trade surface. Implementation: `app/lib/features/game/screens/trade_screen.dart`.
 **Widgetbook:** `Trade Screen` → `app/lib/widgetbook/catalog.dart`. Game rules: [world-market.md](../game/world-market.md); resolution algorithm: [world-market-resolution.md](../program/world-market-resolution.md); core data model deferred to issue [#2989](https://github.com/waigore/colonizethisv3/issues/2989); UI scope tracked in issue [#2993](https://github.com/waigore/colonizethisv3/issues/2993). Parent design: [issue #2988](https://github.com/waigore/colonizethisv3/issues/2988).
 
-> **Status:** Draft. This document records the contract for the scaffold slices: E1+E2+E3 ship the route, screen ID, left-rail button, and dark editorial-monocle chrome; E4 lands the durable two-tab body structure (Market + Deal Book). The Market tab now renders the **read-only commodity table** (`#2993` E5a) sourced from `Game.worldMarketState` — one row per tradeable commodity with last market price + previous-turn aggregate `Bids / Offers` volumes. The interactive Market controls (bid/offer toggle, quantity stepper, priority dropdown, cargo-remaining indicator) ship in follow-up `#2993` E5 slices, and the Deal Book live ledger ships in `#2993` E6 once a per-player ledger surface lands on top of #2989 / #2990's `MarketActivity` + world-market turn phase.
+> **Status:** Draft. This document records the contract for the scaffold slices: E1+E2+E3 ship the route, screen ID, left-rail button, and dark editorial-monocle chrome; E4 lands the durable two-tab body structure (Market + Deal Book). The Market tab now renders the **commodity table with interactive bid/offer/none direction selector + quantity stepper** (`#2993` E5a + E5b) sourced from `Game.worldMarketState` and `currentOrdersProvider`. Each row shows last market price + previous-turn aggregate `Bids / Offers` volumes alongside the interactive controls; the controls write `Orders.tradeOrdersByPlayerId[player.id]` via the pure helpers `applyTradeOrderForPlayer` / `removeTradeOrderForPlayer` in `colonizethis_logic`. The remaining Market controls (priority dropdown, cargo-remaining indicator) ship in follow-up `#2993` E5c slices, and the Deal Book live ledger ships in `#2993` E6 once a per-player ledger surface lands on top of #2989 / #2990's `MarketActivity` + world-market turn phase.
 
 ---
 
@@ -25,6 +25,12 @@ The screen exposes static keys consumed by widget tests:
 - `TradeScreen.marketTabBodyKey` — `ValueKey<String>('tradeScreenMarketTabBody')` (Market tab body root; visible by default; spans the placeholder, the read-only commodity table from `#2993` E5a, and the future interactive controls).
 - `TradeScreen.marketCommodityListKey` — `ValueKey<String>('tradeScreenMarketCommodityList')` (scrollable container inside the Market tab body hosting the per-commodity rows; introduced by `#2993` E5a).
 - `TradeScreen.marketCommodityRowKey(CommodityId)` — `ValueKey<String>('tradeScreenMarketRow:<commodityId>')` (per-row key so widget tests can pin a specific commodity without text matching; introduced by `#2993` E5a).
+- `TradeScreen.marketRowNoneChipKey(CommodityId)` — `ValueKey<String>('tradeScreenMarketRow:<id>:none')` (per-row `None` direction chip; tap removes any staged trade order for the commodity — Refs `#2993` E5b).
+- `TradeScreen.marketRowBidChipKey(CommodityId)` — `ValueKey<String>('tradeScreenMarketRow:<id>:bid')` (per-row `Bid` direction chip; tap stages a `TradeOrderType.bid` for the commodity, replacing any prior offer — Refs `#2993` E5b).
+- `TradeScreen.marketRowOfferChipKey(CommodityId)` — `ValueKey<String>('tradeScreenMarketRow:<id>:offer')` (per-row `Offer` direction chip; tap stages a `TradeOrderType.offer` for the commodity, replacing any prior bid — Refs `#2993` E5b).
+- `TradeScreen.marketRowDecrementKey(CommodityId)` — `ValueKey<String>('tradeScreenMarketRow:<id>:decrement')` (per-row stepper `−` button; decrements `TradeOrder.quantity` by 1, clamped at `marketRowQuantityMin = 1` — Refs `#2993` E5b).
+- `TradeScreen.marketRowIncrementKey(CommodityId)` — `ValueKey<String>('tradeScreenMarketRow:<id>:increment')` (per-row stepper `+` button; increments `TradeOrder.quantity` by 1 — Refs `#2993` E5b).
+- `TradeScreen.marketRowQuantityTextKey(CommodityId)` — `ValueKey<String>('tradeScreenMarketRow:<id>:quantity')` (per-row quantity readout; renders the staged `TradeOrder.quantity` or `marketRowQuantityIdleGlyph` (`—`) when no direction is staged — Refs `#2993` E5b).
 - `TradeScreen.dealBookTabBodyKey` — `ValueKey<String>('tradeScreenDealBookTabBody')` (Deal Book tab body root; visible after the user taps the `Deal Book` label).
 
 ---
@@ -58,14 +64,22 @@ Padding (16 dp)
         ├── tabLabels: ['Market', 'Deal Book']
         └── tabViews (IndexedStack)
             ├── _MarketTabContent      // keyed `tradeScreenMarketTabBody`
-            │   └── SingleChildScrollView (keyed `tradeScreenMarketCommodityList`)
-            │       └── Column (one row per tradeable commodity, 22 rows)
-            │           └── Padding (keyed `tradeScreenMarketRow:<id>`)
-            │               └── _MarketCommodityRow
-            │                   ├── Row
-            │                   │   ├── Text <displayName> (titleSmall, --accent)
-            │                   │   └── Text <price | "—"> (titleSmall, --accentBright)
-            │                   └── Text 'Bids N / Offers M' (bodySmall, --muted)
+            │   └── (Opacity + IgnorePointer when `canMutateViaUi == false`)
+            │       └── SingleChildScrollView (keyed `tradeScreenMarketCommodityList`)
+            │           └── Column (one row per tradeable commodity, 22 rows)
+            │               └── Padding (keyed `tradeScreenMarketRow:<id>`)
+            │                   └── _MarketCommodityRow
+            │                       ├── Row
+            │                       │   ├── Text <displayName> (titleSmall, --accent)
+            │                       │   └── Text <price | "—"> (titleSmall, --accentBright)
+            │                       ├── Text 'Bids N / Offers M' (bodySmall, --muted)
+            │                       └── Wrap (per-row interactive controls — Refs #2993 E5b)
+            │                           ├── CtChoiceChip 'None'  (`...:none`)
+            │                           ├── CtChoiceChip 'Bid'   (`...:bid`)
+            │                           ├── CtChoiceChip 'Offer' (`...:offer`)
+            │                           ├── _StepperButton '−'   (`...:decrement`)
+            │                           ├── Text <quantity | '—'> (`...:quantity`)
+            │                           └── _StepperButton '+'   (`...:increment`)
             └── _DealBookTabPlaceholder // keyed `tradeScreenDealBookTabBody`
                 └── CtPanel
                     ├── Text 'Deal Book' (titleMedium, --accent)
@@ -82,15 +96,15 @@ The Market tab body is the read-only commodity table (`#2993` E5a). It iterates 
 
 The Deal Book placeholder body uses canonical palette tokens only and carries copy naming the parent and depending issues (`#2989`, `#2990`, `#2993` E6) so reviewers can see which follow-up unlocks its live ledger.
 
-### Body (planned — follow-up `#2993` E5 + E6)
+### Body (planned — follow-up `#2993` E5c + E6)
 
-The Market read-only table above is the foundation. Follow-up slices extend each commodity row in place inside the same tab strip:
+The Market interactive table above is the foundation. Follow-up slices extend each commodity row in place inside the same tab strip:
 
-- **Market tab — interactive controls (`#2993` E5b):** bid/offer toggle (segmented control), quantity stepper, priority dropdown bound to `#2989 kMaxTradePriority`. The toggle, stepper, and dropdown extend each row in place; the row keying and ordering contract above is preserved so tests pinning row keys continue to resolve.
+- **Market tab — priority dropdown (`#2993` E5b cont.):** integer dropdown bounded by the `kMaxTradePriority` (or equivalent) value exposed by the data API in `#2989`. The current slice defaults staged trade orders to priority 1 and flags the integration for the follow-up bound.
 - **Market tab — cargo indicator (`#2993` E5c):** persistent header strip above the commodity list shows `Cargo remaining: X` and clamps any bid stepper that would exceed the cross-commodity cap.
 - **Deal Book tab (E6):** two-panel ledger of the previous turn's filled / partial / unfilled bids and offers, with treasury totals.
 
-When E5b / E5c / E6 land, replace the relevant subsections of this document (row content, header strip, ledger layout) without changing the surrounding tab strip / `CtPanel` / padding chrome — the tab structure stays the same.
+When E5c / E6 land, replace the relevant subsections of this document (header strip, ledger layout) without changing the surrounding tab strip / `CtPanel` / padding chrome — the tab structure stays the same.
 
 ---
 
@@ -103,19 +117,24 @@ When E5b / E5c / E6 land, replace the relevant subsections of this document (row
 | Left rail Trade button | `kEmpireTradeButtonKey` tapped | `NavigateToRouteEvent(Routes.trade, …)` → push `TradeScreen`. |
 | Direct route (deep link / test harness) | Caller supplies `RoutePaths.trade` settings with `game` + `humanPlayerId` args | `_buildGameRoute` resolves player and mounts `TradeScreen`. |
 
-### User actions → outcomes (scaffold slice — E1+E2+E3+E4)
+### User actions → outcomes
 
 | Control / gesture | When enabled | Emits / calls | Side effects |
 |-------------------|--------------|---------------|--------------|
 | `CtTopBar` back affordance | Always | `Navigator.maybePop()` | Returns to the previous route (in-game shell). |
 | Tab label `Market` | Always (default selection) | `CtTabStrip` internal `setState(selectedIndex = 0)` | `IndexedStack` foregrounds the Market tab body keyed `tradeScreenMarketTabBody`. |
 | Tab label `Deal Book` | Always | `CtTabStrip` internal `setState(selectedIndex = 1)` | `IndexedStack` foregrounds the Deal Book tab body keyed `tradeScreenDealBookTabBody`. |
+| Per-row `None` chip (`marketRowNoneChipKey`) | `canMutateViaUi == true` | `removeTradeOrderForPlayer(orders, playerId, commodityId)` written to `currentOrdersProvider`. | Removes any staged `TradeOrder` for the row's commodity from `Orders.tradeOrdersByPlayerId[player.id]`. |
+| Per-row `Bid` chip (`marketRowBidChipKey`) | `canMutateViaUi == true` | `applyTradeOrderForPlayer(...TradeOrder(commodityId, type: bid, quantity: prior?.quantity ?? marketRowQuantityDefault, priority: prior?.priority ?? marketRowDefaultPriority))` written to `currentOrdersProvider`. | Stages a bid for the commodity. If a prior offer exists for the same commodity, it is replaced (mutual exclusion: one staged `TradeOrder` per `(player, commodityId)`). |
+| Per-row `Offer` chip (`marketRowOfferChipKey`) | `canMutateViaUi == true` | `applyTradeOrderForPlayer(...TradeOrder(commodityId, type: offer, quantity: prior?.quantity ?? marketRowQuantityDefault, priority: prior?.priority ?? marketRowDefaultPriority))` written to `currentOrdersProvider`. | Stages an offer for the commodity. Mutual exclusion: replaces any prior bid. |
+| Per-row stepper `+` (`marketRowIncrementKey`) | `canMutateViaUi == true` AND a direction is staged | `applyTradeOrderForPlayer(...prior.copyWith(quantity: prior.quantity + 1))`. | Increments the staged `TradeOrder.quantity` by 1. No-op when no direction is staged. |
+| Per-row stepper `−` (`marketRowDecrementKey`) | `canMutateViaUi == true` AND staged direction has `quantity > marketRowQuantityMin` | `applyTradeOrderForPlayer(...prior.copyWith(quantity: prior.quantity − 1))`. | Decrements the staged `TradeOrder.quantity` by 1. Clamped at `marketRowQuantityMin` (1); going below 1 is reached via the `None` chip. |
 
-No bid/offer/priority controls render in this slice — they ship with E5/E6.
+Observe-mode (`canMutateViaUi == false`, distinct from the global-observe / panels-not-defined sentinel covered by variant `c`): the Market tab body is wrapped in `IgnorePointer` and dimmed by an `Opacity` of `0.7`; the chips and stepper buttons remain mounted (so the static read-only data renders) but taps are blocked and `currentOrdersProvider` is not mutated. This matches the production-screen read-only pattern (`canEdit ? panel : IgnorePointer(child: panel)`).
 
-### Future user actions (`#2993` E5 + E6)
+### Future user actions (`#2993` E5c + E6)
 
-The interactive contract is documented in `#2988` § UI Design (Market tab toggles, quantity steppers, priority dropdowns, cargo indicator behaviour, Deal Book read-only ledger, observe-mode disabling). Mirror those rows into this **Behavior** table when E5/E6 land — the tab-switch rows above stay untouched because the tab structure does not change.
+The interactive contract for the priority dropdown, cargo-remaining indicator, cargo warning, and Deal Book read-only ledger is documented in `#2988` § UI Design. Mirror those rows into this **Behavior** table when E5c / E6 land — the tab-switch and direction-chip rows above stay untouched because the tab + row structure does not change.
 
 ---
 
@@ -189,6 +208,19 @@ Follow-up E5b/E5c/E6 slices append `Market tab — interactive controls`, `Marke
 - **Given** the same conditions and `Game.worldMarketState.lastTurnActivity` contains `{'timber': MarketActivity(totalBidQuantity: 12, totalOfferQuantity: 8)}` (and no entry for `'fabric'`), **when** the Market tab body renders, **then** the `tradeScreenMarketRow:timber` row contains the text `Bids 12 / Offers 8` and the `tradeScreenMarketRow:fabric` row contains the text `Bids 0 / Offers 0` (zero-default for commodities absent from the activity map).
 - **Given** the `TradeScreen` is mounted with a human player and observe mode is **not** active, **then** the `tradeScreenMarketCommodityList` widget is present **only** under the `tradeScreenMarketTabBody` subtree (not under the off-stage `tradeScreenDealBookTabBody` subtree, even when reached via `find.byKey(..., skipOffstage: false)`).
 
-### Full screen (follow-up `#2993` E5b / E5c / E6 — implement when bodies land)
+### Market tab — interactive bid/offer/quantity controls (`#2993` E5b)
 
-Migrate the remaining parent-issue ACs from `#2988` § Acceptance criteria — UI into Given–When–Then rows under this section as each follow-up slice ships (bid/offer toggle, mutual exclusion, Deal Book ledger, cargo warning, observe-mode disabling).
+- **Given** the `TradeScreen` is mounted with a human player, observe mode is **not** active, and no `TradeOrder` is staged for the row's commodity, **then** the per-row direction chips render the `None` chip selected and the `Bid` / `Offer` chips unselected, and the quantity readout (`marketRowQuantityTextKey`) renders the canonical em-dash glyph `marketRowQuantityIdleGlyph` (`—`).
+- **Given** the same conditions, **when** the user taps the row's `Bid` chip (`marketRowBidChipKey`), **then** `currentOrdersProvider` is mutated so `Orders.tradeOrdersByPlayerId[player.id]` contains exactly one `TradeOrder` for the commodity with `type = TradeOrderType.bid`, `quantity = TradeScreen.marketRowQuantityDefault` (1), and `priority = TradeScreen.marketRowDefaultPriority` (1).
+- **Given** the row already has a staged `TradeOrder(type: bid, quantity: 2)` for the commodity, **when** the user taps the row's `Offer` chip (`marketRowOfferChipKey`), **then** the staged `TradeOrder` for that commodity is replaced by `TradeOrder(type: offer, quantity: 2, priority: 1)` (the prior quantity is preserved across the direction change) and `tradeOrdersByPlayerId[player.id]` contains exactly **one** TradeOrder for the commodity (mutual exclusion: at most one staged direction per `(player, commodityId)` pair).
+- **Given** the row already has a staged `TradeOrder` for the commodity, **when** the user taps the row's `None` chip (`marketRowNoneChipKey`), **then** the staged `TradeOrder` for that commodity is removed from `tradeOrdersByPlayerId[player.id]`.
+- **Given** the row has a staged `TradeOrder(quantity: q)` with `q < INT32_MAX`, **when** the user taps the row's increment button (`marketRowIncrementKey`), **then** the staged TradeOrder is updated to `quantity: q + 1` and the quantity readout renders the new value.
+- **Given** the row has a staged `TradeOrder(quantity: q)` with `q > marketRowQuantityMin` (1), **when** the user taps the row's decrement button (`marketRowDecrementKey`), **then** the staged TradeOrder is updated to `quantity: q − 1`.
+- **Given** the row has a staged `TradeOrder(quantity: 1)` (at the lower bound `marketRowQuantityMin`), **when** the user taps the row's decrement button, **then** the staged TradeOrder is unchanged (the stepper is clamped at the lower bound; going below 1 is reached via the `None` chip rather than the decrement button).
+- **Given** the row has **no** staged `TradeOrder` (None direction), **when** the user taps the row's increment or decrement button, **then** `currentOrdersProvider` is **not** mutated (stepper taps without a staged direction are silent no-ops; the user must pick `Bid` or `Offer` first).
+- **Given** the row for commodity X has a staged `TradeOrder(type: bid)` and the user toggles a different commodity Y to `Offer`, **then** both rows have a staged TradeOrder simultaneously — `tradeOrdersByPlayerId[player.id].length == 2` — confirming mutual exclusion is per-commodity, not per-player.
+- **Given** the `TradeScreen` is mounted with `shellPlayerContextProvider.canMutateViaUi == false` (observing another GP — distinct from the `showPlayerChrome == false` global-observe sentinel covered by variant `c`), **when** the user attempts to tap any of the row's direction chips, increment, or decrement buttons, **then** `currentOrdersProvider` is **not** mutated (the Market tab body is wrapped in `IgnorePointer` so taps do not propagate); the chips and stepper remain mounted in the widget tree so the read-only data still renders.
+
+### Full screen (follow-up `#2993` E5c / E6 — implement when bodies land)
+
+Migrate the remaining parent-issue ACs from `#2988` § Acceptance criteria — UI into Given–When–Then rows under this section as each follow-up slice ships (priority dropdown bound to `kMaxTradePriority`, Deal Book ledger, cargo-remaining indicator, cargo warning).

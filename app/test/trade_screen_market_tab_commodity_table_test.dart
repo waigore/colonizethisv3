@@ -243,7 +243,13 @@ void main() {
                 'formatted to one decimal place.',
           );
 
-          // Unseeded commodity row shows the canonical em-dash glyph.
+          // Unseeded commodity row shows the canonical em-dash glyph in
+          // the price slot. Note: an em-dash also renders in the
+          // quantity readout when no trade order is staged for the row
+          // (Refs #2993 E5b), so the expectation pins both em-dashes
+          // are present (price-unknown sentinel + quantity-idle glyph)
+          // and that the quantity readout key resolves to its own
+          // em-dash text widget.
           final ironRow = find.byKey(
             TradeScreen.marketCommodityRowKey(CommodityCatalog.iron.id),
           );
@@ -256,11 +262,30 @@ void main() {
                 '—',
               ),
             ),
+            findsNWidgets(2),
+            reason:
+                'SPEC/ui/trade-screen.md § Body — Market tab: the '
+                'price slot shows the em-dash glyph when the commodity '
+                'is absent from `WorldMarketState.prices`. The quantity '
+                'readout (Refs #2993 E5b) also shows an em-dash when '
+                'no TradeOrder is staged for the row, so the row '
+                'currently renders two em-dashes when both conditions '
+                'hold (the case exercised by this test).',
+          );
+          // The quantity-idle em-dash specifically lives under the
+          // quantity readout key — keep this scoped pin so a future
+          // regression that swaps the quantity glyph still surfaces a
+          // readable failure.
+          expect(
+            find.byKey(
+              TradeScreen.marketRowQuantityTextKey(CommodityCatalog.iron.id),
+            ),
             findsOneWidget,
             reason:
-                'SPEC/ui/trade-screen.md § Body — Market tab: rows for '
-                'commodities absent from `WorldMarketState.prices` show '
-                'the em-dash glyph as the price-unknown sentinel.',
+                'Refs #2993 E5b — every commodity row exposes its '
+                'quantity readout via the marketRowQuantityTextKey, '
+                'including rows whose staged TradeOrder is empty (the '
+                'idle em-dash glyph).',
           );
         },
       );
