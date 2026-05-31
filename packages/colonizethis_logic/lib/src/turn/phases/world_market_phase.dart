@@ -34,10 +34,15 @@ import '../turn_resolver_config.dart';
 /// 1. Gathers Great-Power offers/bids from `Orders.tradeOrdersByPlayerId`.
 /// 2. Merges previous-turn carry-forwards stored on
 ///    `WorldMarketState.carryForwardOffersByFactionId` /
-///    `carryForwardBidsByFactionId` (re-validation against current
-///    stockpile/cargo per `SPEC/game/world-market.md` § Order persistence
-///    will land in a follow-up commit alongside the validator's
-///    re-entry hook).
+///    `carryForwardBidsByFactionId`, re-validating each carry-forward
+///    against the submitter's **start-of-phase** stockpile (for offers)
+///    and trade cargo capacity (for bids) per
+///    `SPEC/game/world-market.md` § Order persistence and
+///    `SPEC/program/world-market-resolution.md` § Step A Gather.
+///    Carry-forwards whose constraint can no longer be met are dropped
+///    before matching and recorded as `MarketActivityNote` entries on
+///    the affected commodity's `MarketActivity` so the Deal Book and
+///    observer traces can explain the drop.
 /// 3. Computes per-GP `tradeCargoCapacity` as
 ///    `max(0, cargoHoldsForHomeFleet − overseasExtractionShippedTonnage)`,
 ///    where the overseas tonnage signal is the per-player value the
@@ -98,13 +103,46 @@ TurnPhaseStepOutcome worldMarketTurnPhaseHandler(
     if (bids.isNotEmpty) newBidsByFactionId[entry.key] = bids;
   }
 
+  // Compute start-of-phase trade cargo capacity and stockpile per GP. These
+  // values gate (a) carry-forward re-validation per
+  // `SPEC/program/world-market-resolution.md` § Step A.3 and (b) the
+  // matcher's downstream cargo cap. Minor/tribe sellers are not GPs and
+  // are absent from these maps, which is intentional — carry-forwards are
+  // only re-validated for known GP factions; unknown faction ids fall
+  // through unchanged for now (no upstream owner to re-check), matching
+  // the matcher's GP-only validation surface.
+  final fleetsByIdStartOfPhase = fleetsByIdForWorld(game.worldState);
+  final tradeCapacityByFactionId = <String, int>{};
+  final stockpileByFactionId = <String, Stockpile>{};
+  final extractionTonnageByPlayerId =
+      acc.overseasExtractionShippedTonnageByPlayerId;
+  for (final player in game.players) {
+    stockpileByFactionId[player.id] = player.stockpile;
+    final homeFleetHolds = cargoHoldsForHomeFleet(
+      game,
+      player.id,
+      fleetsById: fleetsByIdStartOfPhase,
+    );
+    final shippedByExtraction =
+        extractionTonnageByPlayerId[player.id] ?? 0;
+    final tradeCapacity = homeFleetHolds - shippedByExtraction;
+    tradeCapacityByFactionId[player.id] = tradeCapacity > 0 ? tradeCapacity : 0;
+  }
+
+  final carryForwardValidation = _validateCarryForwards(
+    carryForwardOffersByFactionId: priorMarket.carryForwardOffersByFactionId,
+    carryForwardBidsByFactionId: priorMarket.carryForwardBidsByFactionId,
+    stockpileByFactionId: stockpileByFactionId,
+    tradeCapacityByFactionId: tradeCapacityByFactionId,
+  );
+
   final mergedOffersByFactionId = _mergeOrdersByFaction(
     newOffersByFactionId,
-    priorMarket.carryForwardOffersByFactionId,
+    carryForwardValidation.validOffersByFactionId,
   );
   final mergedBidsByFactionId = _mergeOrdersByFaction(
     newBidsByFactionId,
-    priorMarket.carryForwardBidsByFactionId,
+    carryForwardValidation.validBidsByFactionId,
   );
 
   final hasAnyOrders =
@@ -124,6 +162,13 @@ TurnPhaseStepOutcome worldMarketTurnPhaseHandler(
         totalOfferQuantity: entry.value.offer,
       );
     }
+    // Attach any drop notes even when no surviving orders remain — the
+    // Deal Book / observer trace still needs to see the dropped
+    // carry-forwards for the resolved turn.
+    _attachDropNotes(
+      activity: activity,
+      notesByCommodity: carryForwardValidation.dropNotesByCommodity,
+    );
     final updatedMarket = priorMarket.copyWith(
       lastTurnActivity: Map<CommodityId, MarketActivity>.unmodifiable(activity),
       carryForwardOffersByFactionId: const <String, List<TradeOrder>>{},
@@ -132,22 +177,6 @@ TurnPhaseStepOutcome worldMarketTurnPhaseHandler(
     return TurnPhaseStepContinue(
       acc.copyWith(game: game.copyWith(worldMarketState: updatedMarket)),
     );
-  }
-
-  final fleetsByIdStartOfPhase = fleetsByIdForWorld(game.worldState);
-  final tradeCapacityByFactionId = <String, int>{};
-  final extractionTonnageByPlayerId =
-      acc.overseasExtractionShippedTonnageByPlayerId;
-  for (final player in game.players) {
-    final homeFleetHolds = cargoHoldsForHomeFleet(
-      game,
-      player.id,
-      fleetsById: fleetsByIdStartOfPhase,
-    );
-    final shippedByExtraction =
-        extractionTonnageByPlayerId[player.id] ?? 0;
-    final tradeCapacity = homeFleetHolds - shippedByExtraction;
-    tradeCapacityByFactionId[player.id] = tradeCapacity > 0 ? tradeCapacity : 0;
   }
 
   final ftpPairKeys = ftpPairKeysFromGame(game);
@@ -186,6 +215,10 @@ TurnPhaseStepOutcome worldMarketTurnPhaseHandler(
     newQuantitiesByCommodity: newQuantitiesByCommodity,
     priorPrices: priorMarket.prices,
     newPrices: newPrices,
+  );
+  _attachDropNotes(
+    activity: activity,
+    notesByCommodity: carryForwardValidation.dropNotesByCommodity,
   );
 
   final updatedMarket = priorMarket.copyWith(
@@ -345,6 +378,151 @@ int _basePriceForCommodityId(CommodityId id) {
     if (entry.key.name == id) return entry.value;
   }
   return 0;
+}
+
+/// Result of [_validateCarryForwards]: surviving carry-forward orders that
+/// pass the start-of-phase stockpile (offers) and trade cargo capacity
+/// (bids) re-checks, plus the [MarketActivityNote] entries the phase
+/// should attach to per-commodity `MarketActivity` for dropped orders.
+class _CarryForwardValidationResult {
+  const _CarryForwardValidationResult({
+    required this.validOffersByFactionId,
+    required this.validBidsByFactionId,
+    required this.dropNotesByCommodity,
+  });
+
+  final Map<String, List<TradeOrder>> validOffersByFactionId;
+  final Map<String, List<TradeOrder>> validBidsByFactionId;
+  final Map<CommodityId, List<MarketActivityNote>> dropNotesByCommodity;
+}
+
+/// Re-validates carry-forward orders against the submitter's current
+/// stockpile (offers) and trade cargo capacity (bids), implementing the
+/// drop branch of `SPEC/game/world-market.md` § Order persistence and
+/// `SPEC/program/world-market-resolution.md` § Step A Gather (A.3).
+///
+/// Per faction the carry-forwards are walked in original list order so
+/// that earlier orders (higher submission priority) consume the available
+/// stockpile/capacity first; later orders that would push the cumulative
+/// kept total above the constraint are dropped and recorded as a
+/// [MarketActivityNote]. Factions that are not present in
+/// [stockpileByFactionId] / [tradeCapacityByFactionId] (e.g. minor/tribe
+/// sellers whose offers persist through purchased-tile plumbing) keep all
+/// their carry-forward orders unchanged — there is no GP-side constraint
+/// to enforce on them in this slice.
+_CarryForwardValidationResult _validateCarryForwards({
+  required Map<String, List<TradeOrder>> carryForwardOffersByFactionId,
+  required Map<String, List<TradeOrder>> carryForwardBidsByFactionId,
+  required Map<String, Stockpile> stockpileByFactionId,
+  required Map<String, int> tradeCapacityByFactionId,
+}) {
+  final validOffers = <String, List<TradeOrder>>{};
+  final validBids = <String, List<TradeOrder>>{};
+  final notesByCommodity = <CommodityId, List<MarketActivityNote>>{};
+
+  void recordNote(MarketActivityNote note) {
+    final list = notesByCommodity.putIfAbsent(
+      note.commodityId,
+      () => <MarketActivityNote>[],
+    );
+    list.add(note);
+  }
+
+  for (final entry in carryForwardOffersByFactionId.entries) {
+    final factionId = entry.key;
+    final orders = entry.value;
+    if (orders.isEmpty) continue;
+    final stockpile = stockpileByFactionId[factionId];
+    if (stockpile == null) {
+      validOffers[factionId] = List<TradeOrder>.from(orders);
+      continue;
+    }
+    final cumulativeByCommodity = <CommodityId, int>{};
+    final kept = <TradeOrder>[];
+    for (final order in orders) {
+      final available = stockpile.quantityOf(order.commodityId);
+      final alreadyKept = cumulativeByCommodity[order.commodityId] ?? 0;
+      if (alreadyKept + order.quantity <= available) {
+        cumulativeByCommodity[order.commodityId] = alreadyKept + order.quantity;
+        kept.add(order);
+      } else {
+        recordNote(
+          MarketActivityNote(
+            kind: MarketActivityNoteKind
+                .carryForwardDroppedStockpileInsufficient,
+            factionId: factionId,
+            commodityId: order.commodityId,
+            quantity: order.quantity,
+          ),
+        );
+      }
+    }
+    if (kept.isNotEmpty) validOffers[factionId] = kept;
+  }
+
+  for (final entry in carryForwardBidsByFactionId.entries) {
+    final factionId = entry.key;
+    final orders = entry.value;
+    if (orders.isEmpty) continue;
+    final capacity = tradeCapacityByFactionId[factionId];
+    if (capacity == null) {
+      validBids[factionId] = List<TradeOrder>.from(orders);
+      continue;
+    }
+    int cumulative = 0;
+    final kept = <TradeOrder>[];
+    for (final order in orders) {
+      if (cumulative + order.quantity <= capacity) {
+        cumulative += order.quantity;
+        kept.add(order);
+      } else {
+        recordNote(
+          MarketActivityNote(
+            kind:
+                MarketActivityNoteKind.carryForwardDroppedCargoInsufficient,
+            factionId: factionId,
+            commodityId: order.commodityId,
+            quantity: order.quantity,
+          ),
+        );
+      }
+    }
+    if (kept.isNotEmpty) validBids[factionId] = kept;
+  }
+
+  return _CarryForwardValidationResult(
+    validOffersByFactionId: validOffers,
+    validBidsByFactionId: validBids,
+    dropNotesByCommodity: notesByCommodity,
+  );
+}
+
+/// Merges carry-forward drop notes into `activity` per commodity. The
+/// notes list on `MarketActivity` is replaced (notes always come from
+/// this phase invocation; prior-turn notes are not re-emitted), and the
+/// final list is unmodifiable to keep `MarketActivity` immutable.
+void _attachDropNotes({
+  required Map<CommodityId, MarketActivity> activity,
+  required Map<CommodityId, List<MarketActivityNote>> notesByCommodity,
+}) {
+  if (notesByCommodity.isEmpty) return;
+  for (final entry in notesByCommodity.entries) {
+    if (entry.value.isEmpty) continue;
+    final commodity = entry.key;
+    final notes = List<MarketActivityNote>.unmodifiable(entry.value);
+    final existing = activity[commodity];
+    if (existing == null) {
+      activity[commodity] = MarketActivity(notes: notes);
+    } else {
+      activity[commodity] = MarketActivity(
+        totalBidQuantity: existing.totalBidQuantity,
+        totalOfferQuantity: existing.totalOfferQuantity,
+        filledQuantity: existing.filledQuantity,
+        priceChangePercent: existing.priceChangePercent,
+        notes: notes,
+      );
+    }
+  }
 }
 
 Map<CommodityId, MarketActivity> _buildActivity({
