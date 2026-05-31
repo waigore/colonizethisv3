@@ -32,12 +32,26 @@ class CallToArmsDialogueOverlay extends StatefulWidget {
 }
 
 class _CallToArmsDialogueOverlayState extends State<CallToArmsDialogueOverlay> {
-  late List<bool> _join;
+  /// Per-call decisions; `null` means the player has not yet tapped Join or
+  /// Refuse on that row. The Submit button stays disabled until every entry
+  /// is non-null (issue #2867 R25 / AC5).
+  late List<bool?> _join;
 
   @override
   void initState() {
     super.initState();
-    _join = List.filled(widget.pending.length, true);
+    _join = List<bool?>.filled(widget.pending.length, null);
+  }
+
+  /// True when every pending call row has a non-null decision; gates the
+  /// Submit `CtNinePatchButton` per #2867 R25
+  /// (`SPEC/ui/call-to-arms-dialogue-overlay.md` § Acceptance Criteria —
+  /// non-null decision required).
+  bool get _allDecided {
+    for (final bool? value in _join) {
+      if (value == null) return false;
+    }
+    return true;
   }
 
   String _gpName(String gpId) {
@@ -54,7 +68,7 @@ class _CallToArmsDialogueOverlayState extends State<CallToArmsDialogueOverlay> {
           allyGpId: c.allyGpId,
           defenderGpId: c.defenderGpId,
           aggressorGpId: c.aggressorGpId,
-          accepted: _join[i],
+          accepted: _join[i] ?? true,
         ),
       );
     }
@@ -147,7 +161,9 @@ class _CallToArmsDialogueOverlayState extends State<CallToArmsDialogueOverlay> {
                     Align(
                       alignment: Alignment.centerRight,
                       child: CtNinePatchButton(
-                        onPressed: _submit,
+                        key: const ValueKey<String>('callToArmsSubmitButton'),
+                        enabled: _allDecided,
+                        onPressed: _allDecided ? _submit : null,
                         child: Text(l10n.game_callToArms_submit),
                       ),
                     ),

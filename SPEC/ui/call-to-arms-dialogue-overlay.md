@@ -19,7 +19,7 @@
 
 Internal state ownership:
 
-- Maintains `_join: List<bool>` (default `true`) — one entry per pending call — toggled by the row-level Join and Refuse buttons.
+- Maintains `_join: List<bool?>` (default `null` for every entry — i.e. undecided) — one entry per pending call — toggled by the row-level Join and Refuse buttons. Join tap sets the entry to `true`; Refuse tap sets it to `false`. Per issue #2867 R25 the Submit button stays disabled until **every** entry is non-null.
 - Does **not** own a `CtDialogueView`, `DialogueRunner`, or any Yarn asset. There is no intro phase; the overlay renders the decision list as soon as it is mounted.
 
 ---
@@ -28,7 +28,7 @@ Internal state ownership:
 
 - **Entry:** Rendered by `GameScreen` when `pendingDiplomacyProvider` exposes `PendingCallToArms(pending)` (see [`pending-diplomacy-state.md`](pending-diplomacy-state.md) and [`game-screen.md`](game-screen.md)). The notifier is replaced wholesale on each turn-resolution result, so a single overlay instance handles all calls for one resume cycle.
 - **Asset load:** None. The overlay has no Yarn integration, no Jenny `DialogueRunner`, and does not call `rootBundle.loadString`. No failure path needs an error affordance.
-- **Dismissal:** Exclusively driven by the player tapping **Submit**. The overlay does not provide a per-call dismiss or close button; the player must resolve every row before submitting (rows always carry a current `_join[i]` value, so Submit is always enabled).
+- **Dismissal:** Exclusively driven by the player tapping **Submit**. The overlay does not provide a per-call dismiss or close button; the player must resolve every row before submitting — Submit is **disabled** while any `_join[i]` is still `null` (issue #2867 R25) and becomes enabled only after the player has tapped Join or Refuse for every pending call.
 
 ---
 
@@ -68,8 +68,8 @@ Scrim is `Material(color: EditorialMonoclePalette.dialogScrim)` (canonical `--di
 
 | State | Trigger | Render |
 |-------|---------|--------|
-| Decision list | Overlay is mounted with `pending.length >= 1` | One Join/Refuse row per `pending[i]`; Join sets `_join[i] = true`, Refuse sets `_join[i] = false`. Submit calls `onDecisions(...)` with one `CallToArmsDecision` per pending using the current `_join` value. |
-| Empty decision list | Overlay is mounted with `pending.length == 0` | The shell still renders the title / intro labels and a Submit button; Submit invokes `onDecisions` with an empty list so the host can clear the pending provider. |
+| Decision list | Overlay is mounted with `pending.length >= 1` | One Join/Refuse row per `pending[i]`; every entry starts undecided (`_join[i] == null`). Join tap sets `_join[i] = true`, Refuse tap sets `_join[i] = false`. Submit is **disabled** while any entry is still `null` (issue #2867 R25); when every entry is non-null, Submit becomes enabled and a tap calls `onDecisions(...)` with one `CallToArmsDecision` per pending using the resolved `_join!` value. |
+| Empty decision list | Overlay is mounted with `pending.length == 0` | The shell still renders the title / intro labels and a Submit button; Submit is enabled (there is no row to gate on) and tapping it invokes `onDecisions` with an empty list so the host can clear the pending provider. |
 
 There are no loading, transient, or error variants; absence of a Yarn dependency is what differentiates this overlay from [`overture-dialogue-overlay.md`](overture-dialogue-overlay.md) and [`game-start-intro-overlay.md`](game-start-intro-overlay.md).
 
@@ -105,13 +105,21 @@ There are no loading, transient, or error variants; absence of a Yarn dependency
   When the widget tree settles,
   Then the overlay renders one row inside a `CtDialogShell` whose prompt is the localized `game_callToArms_prompt('Portugal', 'Spain')`, with Join, Refuse, and Submit `CtNinePatchButton`s visible.
 
-- Given the overlay is mounted with `n` pending calls and the default `_join` list of all `true`,
-  When the user taps **Submit** without changing any toggle,
-  Then `onDecisions` is invoked exactly once with a `List<CallToArmsDecision>` of length `n`, each entry has `accepted == true`, and the `allyGpId` / `defenderGpId` / `aggressorGpId` fields exactly match the corresponding `pending[i]`.
+- Given the overlay is mounted with `n >= 1` pending calls and every `_join[i]` defaults to `null`,
+  When the widget tree settles before any Join / Refuse tap,
+  Then the Submit `CtNinePatchButton` reports `enabled == false` so the player cannot submit decisions that have not been made (issue #2867 R25).
+
+- Given the overlay is mounted with two pending calls and every `_join[i]` is still `null`,
+  When the user taps Join on the first row but leaves the second row undecided,
+  Then the Submit `CtNinePatchButton` remains `enabled == false` and `onDecisions` has not been invoked (issue #2867 R25 negative case).
 
 - Given the overlay is mounted with two pending calls,
-  When the user taps **Refuse** on the first row and **Join** (already selected) on the second row, then taps **Submit**,
-  Then `onDecisions` is invoked exactly once with `decisions[0].accepted == false` and `decisions[1].accepted == true`, and the list order matches `pending` exactly.
+  When the user taps Refuse on the first row and Join on the second row,
+  Then the Submit `CtNinePatchButton` becomes `enabled == true`, tapping Submit invokes `onDecisions` exactly once with `decisions[0].accepted == false` and `decisions[1].accepted == true`, and the list order matches `pending` exactly.
+
+- Given the overlay is mounted with `n` pending calls and every row has been resolved via Join / Refuse tap,
+  When the user taps Submit once,
+  Then `onDecisions` is invoked exactly once with a `List<CallToArmsDecision>` of length `n`, and each entry's `allyGpId` / `defenderGpId` / `aggressorGpId` exactly match the corresponding `pending[i]`.
 
 - Given the overlay is constructed with an empty `pending` list,
   When the widget tree settles,

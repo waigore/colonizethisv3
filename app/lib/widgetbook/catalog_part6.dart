@@ -385,19 +385,69 @@ Orders _tradeScreenStoryStagedOrders() {
   );
 }
 
+/// Pre-staged Orders snapshot used by the "Market tab — cargo
+/// saturated (Refs #2993 E5c)" use case so reviewers see the
+/// `Cargo remaining: 0` indicator alongside the dark-theme `--danger`
+/// warning row without having to drive the stepper themselves. The
+/// story Game has no home fleet so `cargoHoldsForHomeFleet` falls back
+/// to `defaultCargoHoldsStub = 24`; saturating bids therefore total
+/// 24 across four commodities to leave room for offers on the rest.
+Orders _tradeScreenStoryCargoSaturatedOrders() {
+  return Orders(
+    tradeOrdersByPlayerId: <String, List<TradeOrder>>{
+      'gp_human': <TradeOrder>[
+        TradeOrder(
+          commodityId: 'timber',
+          type: TradeOrderType.bid,
+          quantity: 8,
+          priority: 1,
+        ),
+        TradeOrder(
+          commodityId: 'iron',
+          type: TradeOrderType.bid,
+          quantity: 6,
+          priority: 1,
+        ),
+        TradeOrder(
+          commodityId: 'grain',
+          type: TradeOrderType.bid,
+          quantity: 6,
+          priority: 1,
+        ),
+        TradeOrder(
+          commodityId: 'castIron',
+          type: TradeOrderType.bid,
+          quantity: 4,
+          priority: 1,
+        ),
+        TradeOrder(
+          commodityId: 'fabric',
+          type: TradeOrderType.offer,
+          quantity: 7,
+          priority: 1,
+        ),
+      ],
+    },
+  );
+}
+
 /// Trade screen stories. SPEC/ui/trade-screen.md.
 ///
 /// Refs #2993 E1+E2+E3+E4 ship the route, screen ID, left-rail button,
 /// dark editorial-monocle chrome, and the durable two-tab body. Refs
 /// #2993 E5a adds the Market tab's read-only commodity table sourced
-/// from `Game.worldMarketState`. Refs #2993 E5b (this slice) wires the
-/// per-row interactive bid/offer/none direction selector and quantity
-/// stepper to `currentOrdersProvider`. The story Game seeds a
-/// representative subset of `prices` + `lastTurnActivity` so reviewers
-/// can see both the populated and zero-default rendering paths in one
-/// scroll; the staged-orders use case additionally seeds a `Bid` on
-/// timber and an `Offer` on fabric so the per-row selected chip + non-1
-/// quantity readout render. The Deal Book tab body remains the
+/// from `Game.worldMarketState`. Refs #2993 E5b wires the per-row
+/// interactive bid/offer/none direction selector and quantity stepper
+/// to `currentOrdersProvider`. Refs #2993 E5c (this slice) adds the
+/// persistent cross-commodity cargo indicator + cap + saturation
+/// warning. The story Game seeds a representative subset of `prices`
+/// + `lastTurnActivity` so reviewers can see both the populated and
+/// zero-default rendering paths in one scroll; the staged-orders use
+/// case additionally seeds a `Bid` on timber and an `Offer` on fabric
+/// so the per-row selected chip + non-1 quantity readout render. The
+/// cargo-saturated use case seeds bids totalling `defaultCargoHoldsStub`
+/// (24) so the indicator reads `Cargo remaining: 0` and the dark-theme
+/// `--danger` warning row mounts. The Deal Book tab body remains the
 /// placeholder until Refs #2993 E6.
 List<WidgetbookNode> get tradeScreenDirectories => [
   WidgetbookFolder(
@@ -416,6 +466,12 @@ List<WidgetbookNode> get tradeScreenDirectories => [
         name: 'Market tab — staged bid + offer (Refs #2993 E5b)',
         builder: (context) => _tradeScreenDefaultStory(
           initialOrders: _tradeScreenStoryStagedOrders(),
+        ),
+      ),
+      WidgetbookUseCase(
+        name: 'Market tab — cargo saturated (Refs #2993 E5c)',
+        builder: (context) => _tradeScreenDefaultStory(
+          initialOrders: _tradeScreenStoryCargoSaturatedOrders(),
         ),
       ),
     ],

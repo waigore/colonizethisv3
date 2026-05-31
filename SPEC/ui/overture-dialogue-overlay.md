@@ -25,7 +25,7 @@ Internal state ownership (phase 1 — intro):
 - Owns at most one `CtDialogueView` and one `jenny.DialogueRunner` during the Yarn intro phase.
 - Reads the Yarn source from `kDialogueOvertureAsset` (`assets/dialogue/overture.yarn`) via `rootBundle`; the asset bundle is not configurable in production but the intro itself can be bypassed with `skipIntroForTest`.
 - Hard-codes the intro node id `DialoguePoint/overture_target_response`; throws a `StateError` (caught and surfaced as `_loadError`) when the node is missing from the parsed asset.
-- Maintains `_accepted: List<bool>` (default `true`) — one entry per pending overture — toggled by the row-level Accept and Reject buttons in phase 2.
+- Maintains `_accepted: List<bool?>` (default `null` for every entry — i.e. undecided) — one entry per pending overture — toggled by the row-level Accept and Reject buttons in phase 2. Accept tap sets the entry to `true`; Reject tap sets it to `false`. Per issue #2867 R23 the Submit button stays disabled until **every** entry is non-null.
 
 ---
 
@@ -103,7 +103,7 @@ Error mode renders the same `Stack` but the `CtDialogShell` body is the localize
 | Presenting line (phase 1) | `!_introDone && _view!.currentLine != null` | Line text + right-aligned Continue button; tap calls `_view!.advanceLine()`. |
 | Presenting choice (phase 1) | `!_introDone && _view!.currentLine == null && _view!.currentChoice != null` | Vertical stack of one `CtNinePatchButton` per `choice.options[i]`; tap calls `_view!.selectOption(i)`. |
 | Transient (phase 1) | `!_introDone && _view!.currentLine == null && _view!.currentChoice == null` | `CtLoadingIndicator` inside the shell. |
-| Offer list (phase 2) | `_introDone && _loadError == null` | Title + intro + one Accept/Reject row per `pendingOvertures[i]`; Accept sets `_accepted[i] = true`, Reject sets `_accepted[i] = false`. Submit calls `onDecisions(...)` with one `OvertureDecision` per offer using the current `_accepted` value. |
+| Offer list (phase 2) | `_introDone && _loadError == null` | Title + intro + one Accept/Reject row per `pendingOvertures[i]`; every entry starts undecided (`_accepted[i] == null`). Accept tap sets `_accepted[i] = true`, Reject tap sets `_accepted[i] = false`. Submit is **disabled** while any entry is still `null` (issue #2867 R23); when every entry is non-null, Submit becomes enabled and a tap calls `onDecisions(...)` with one `OvertureDecision` per offer using the resolved `_accepted!` value. |
 | Error | `_loadError != null` | Localized error text (`game_overture_loadError`) + single Continue button; tapping Continue invokes `_submit()` immediately (so the host advances even when the Yarn asset is broken). |
 
 Exactly one variant is rendered at a time. Phase 2 is the only state in which Accept / Reject toggles are interactive; phase 1 has no offer rows.
@@ -123,8 +123,8 @@ Exactly one variant is rendered at a time. Phase 2 is the only state in which Ac
 | Control / gesture | When enabled | Emits / calls | Side effects |
 |-------------------|--------------|---------------|--------------|
 | Yarn Continue / options | Phase 1 intro | Jenny runner advances | — |
-| Accept / Reject toggles | Phase 2 | Updates `_accepted` list | — |
-| Submit | Phase 2 | `onDecisions(List<OvertureDecision>)` once | Host calls `resumeOvertureDecisions` and clears pending state. |
+| Accept / Reject toggles | Phase 2 | Updates `_accepted[i]` to `true` (Accept) or `false` (Reject) | Re-evaluates Submit enable state. |
+| Submit | Phase 2; **disabled** until every `_accepted[i]` is non-null (#2867 R23) | `onDecisions(List<OvertureDecision>)` once | Host calls `resumeOvertureDecisions` and clears pending state. |
 
 No direct `AppEventBus` or `Navigator` usage in the overlay.
 
@@ -168,13 +168,21 @@ No direct `AppEventBus` or `Navigator` usage in the overlay.
   When the widget tree is inspected,
   Then the phase-2 body contains exactly one `CtBrassDivider` rendered between the localized `game_overture_title` title `Text` and the localized `game_overture_intro` intro `Text`, the title `Text.style.color` equals `EditorialMonoclePalette.accent`, the title `Text.style.letterSpacing` equals `style.fontSize! * 0.05` (canonical `0.05em` per #2867 R2), and the intro `Text.style.color` equals `EditorialMonoclePalette.muted` with `fontStyle == FontStyle.italic`.
 
-- Given the overlay is in phase 2 with `n` pending overtures and the default `_accepted` list of all `true`,
-  When the user taps **Submit** without changing any toggle,
-  Then `onDecisions` is invoked exactly once with a `List<OvertureDecision>` of length `n`, each entry has `accepted == true`, and the `offererGpId` / `targetFactionId` / `stage` fields exactly match the corresponding `pendingOvertures[i]`.
+- Given the overlay is in phase 2 with `n >= 1` pending overtures and every `_accepted[i]` defaults to `null`,
+  When the widget tree settles before any Accept / Reject tap,
+  Then the Submit `CtNinePatchButton` reports `enabled == false` so the player cannot submit decisions that have not been made (issue #2867 R23).
+
+- Given the overlay is in phase 2 with two pending overtures and every `_accepted[i]` is still `null`,
+  When the user taps Accept on the first row but leaves the second row undecided,
+  Then the Submit `CtNinePatchButton` remains `enabled == false` and `onDecisions` has not been invoked (issue #2867 R23 negative case).
 
 - Given the overlay is in phase 2 with two pending overtures,
-  When the user taps **Reject** on the second row and then **Submit**,
-  Then `onDecisions` is invoked exactly once with `decisions[0].accepted == true` and `decisions[1].accepted == false`, and no further widget rebuild changes the order of the decisions.
+  When the user taps Accept on the first row and Reject on the second row,
+  Then the Submit `CtNinePatchButton` becomes `enabled == true`, tapping Submit invokes `onDecisions` exactly once with `decisions[0].accepted == true` and `decisions[1].accepted == false`, and the order matches `pendingOvertures` exactly.
+
+- Given the overlay is in phase 2 with `n` pending overtures and every row has been resolved via Accept / Reject tap,
+  When the user taps Submit once,
+  Then `onDecisions` is invoked exactly once with a `List<OvertureDecision>` of length `n`, and each entry's `offererGpId` / `targetFactionId` / `stage` exactly match the corresponding `pendingOvertures[i]`.
 
 - Given the overlay's Yarn asset load fails (`_loadError != null` with any exception),
   When the widget rebuilds after `setState`,
@@ -182,7 +190,7 @@ No direct `AppEventBus` or `Navigator` usage in the overlay.
 
 - Given the overlay is in the error variant,
   When the user taps the error-state Continue button,
-  Then `onDecisions` is invoked exactly once with one `OvertureDecision` per `pendingOvertures` entry (`accepted == true` by default) so the host can still resume turn resolution.
+  Then `onDecisions` is invoked exactly once with one `OvertureDecision` per `pendingOvertures` entry; each entry uses `accepted == true` as the deterministic degraded fallback so the host can still resume turn resolution even though the Yarn intro asset failed to load. The R23 "non-null decision" gating applies only to the interactive phase-2 list; the error-state Continue button has no such gate because the player has no per-offer choice in this variant.
 
 - Given the overlay is mounted with a custom `CtLogger`,
   When `_loadAndRunIntro` throws,

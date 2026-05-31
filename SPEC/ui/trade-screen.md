@@ -4,7 +4,7 @@
 **SPEC/ui** — Full-screen World Market trade surface. Implementation: `app/lib/features/game/screens/trade_screen.dart`.
 **Widgetbook:** `Trade Screen` → `app/lib/widgetbook/catalog.dart`. Game rules: [world-market.md](../game/world-market.md); resolution algorithm: [world-market-resolution.md](../program/world-market-resolution.md); core data model deferred to issue [#2989](https://github.com/waigore/colonizethisv3/issues/2989); UI scope tracked in issue [#2993](https://github.com/waigore/colonizethisv3/issues/2993). Parent design: [issue #2988](https://github.com/waigore/colonizethisv3/issues/2988).
 
-> **Status:** Draft. This document records the contract for the scaffold slices: E1+E2+E3 ship the route, screen ID, left-rail button, and dark editorial-monocle chrome; E4 lands the durable two-tab body structure (Market + Deal Book). The Market tab now renders the **commodity table with interactive bid/offer/none direction selector + quantity stepper** (`#2993` E5a + E5b) sourced from `Game.worldMarketState` and `currentOrdersProvider`. Each row shows last market price + previous-turn aggregate `Bids / Offers` volumes alongside the interactive controls; the controls write `Orders.tradeOrdersByPlayerId[player.id]` via the pure helpers `applyTradeOrderForPlayer` / `removeTradeOrderForPlayer` in `colonizethis_logic`. The remaining Market controls (priority dropdown, cargo-remaining indicator) ship in follow-up `#2993` E5c slices, and the Deal Book live ledger ships in `#2993` E6 once a per-player ledger surface lands on top of #2989 / #2990's `MarketActivity` + world-market turn phase.
+> **Status:** Draft. This document records the contract for the scaffold slices: E1+E2+E3 ship the route, screen ID, left-rail button, and dark editorial-monocle chrome; E4 lands the durable two-tab body structure (Market + Deal Book). The Market tab now renders the **commodity table with interactive bid/offer/none direction selector + quantity stepper + cross-commodity cargo indicator and warning** (`#2993` E5a + E5b + E5c) sourced from `Game.worldMarketState`, `Game.worldState.fleets` (via `cargoHoldsForHomeFleet`), and `currentOrdersProvider`. Each row shows last market price + previous-turn aggregate `Bids / Offers` volumes alongside the interactive controls; the controls write `Orders.tradeOrdersByPlayerId[player.id]` via the pure helpers `applyTradeOrderForPlayer` / `removeTradeOrderForPlayer` in `colonizethis_logic`, and the cross-commodity bid total is clamped to the player's trade cargo capacity. The remaining Market control (priority dropdown) ships when the data API in #2989 exposes `kMaxTradePriority`, and the Deal Book live ledger ships in `#2993` E6 once a per-player ledger surface lands on top of #2989 / #2990's `MarketActivity` + world-market turn phase.
 
 ---
 
@@ -31,6 +31,8 @@ The screen exposes static keys consumed by widget tests:
 - `TradeScreen.marketRowDecrementKey(CommodityId)` — `ValueKey<String>('tradeScreenMarketRow:<id>:decrement')` (per-row stepper `−` button; decrements `TradeOrder.quantity` by 1, clamped at `marketRowQuantityMin = 1` — Refs `#2993` E5b).
 - `TradeScreen.marketRowIncrementKey(CommodityId)` — `ValueKey<String>('tradeScreenMarketRow:<id>:increment')` (per-row stepper `+` button; increments `TradeOrder.quantity` by 1 — Refs `#2993` E5b).
 - `TradeScreen.marketRowQuantityTextKey(CommodityId)` — `ValueKey<String>('tradeScreenMarketRow:<id>:quantity')` (per-row quantity readout; renders the staged `TradeOrder.quantity` or `marketRowQuantityIdleGlyph` (`—`) when no direction is staged — Refs `#2993` E5b).
+- `TradeScreen.marketCargoIndicatorKey` — `ValueKey<String>('tradeScreenMarketCargoIndicator')` (persistent header strip above the commodity list; renders the `Cargo remaining: X` text where `X = max(0, tradeCargoCapacity − totalStagedBidQuantity)` for the human player — Refs `#2993` E5c).
+- `TradeScreen.marketCargoWarningKey` — `ValueKey<String>('tradeScreenMarketCargoWarning')` (per-screen warning row rendered immediately below the cargo indicator when `remainingCargo == 0` AND `totalStagedBidQuantity > 0`; absent otherwise — Refs `#2993` E5c).
 - `TradeScreen.dealBookTabBodyKey` — `ValueKey<String>('tradeScreenDealBookTabBody')` (Deal Book tab body root; visible after the user taps the `Deal Book` label).
 
 ---
@@ -65,21 +67,27 @@ Padding (16 dp)
         └── tabViews (IndexedStack)
             ├── _MarketTabContent      // keyed `tradeScreenMarketTabBody`
             │   └── (Opacity + IgnorePointer when `canMutateViaUi == false`)
-            │       └── SingleChildScrollView (keyed `tradeScreenMarketCommodityList`)
-            │           └── Column (one row per tradeable commodity, 22 rows)
-            │               └── Padding (keyed `tradeScreenMarketRow:<id>`)
-            │                   └── _MarketCommodityRow
-            │                       ├── Row
-            │                       │   ├── Text <displayName> (titleSmall, --accent)
-            │                       │   └── Text <price | "—"> (titleSmall, --accentBright)
-            │                       ├── Text 'Bids N / Offers M' (bodySmall, --muted)
-            │                       └── Wrap (per-row interactive controls — Refs #2993 E5b)
-            │                           ├── CtChoiceChip 'None'  (`...:none`)
-            │                           ├── CtChoiceChip 'Bid'   (`...:bid`)
-            │                           ├── CtChoiceChip 'Offer' (`...:offer`)
-            │                           ├── _StepperButton '−'   (`...:decrement`)
-            │                           ├── Text <quantity | '—'> (`...:quantity`)
-            │                           └── _StepperButton '+'   (`...:increment`)
+            │       └── Column
+            │           ├── Text 'Cargo remaining: X' (`tradeScreenMarketCargoIndicator`,
+            │           │     bodySmall, --accent — Refs #2993 E5c)
+            │           ├── Text 'Cargo limit reached …' (`tradeScreenMarketCargoWarning`,
+            │           │     bodySmall, --danger — only when remainingCargo == 0
+            │           │     AND totalStagedBidQuantity > 0)
+            │           └── SingleChildScrollView (keyed `tradeScreenMarketCommodityList`)
+            │               └── Column (one row per tradeable commodity, 22 rows)
+            │                   └── Padding (keyed `tradeScreenMarketRow:<id>`)
+            │                       └── _MarketCommodityRow
+            │                           ├── Row
+            │                           │   ├── Text <displayName> (titleSmall, --accent)
+            │                           │   └── Text <price | "—"> (titleSmall, --accentBright)
+            │                           ├── Text 'Bids N / Offers M' (bodySmall, --muted)
+            │                           └── Wrap (per-row interactive controls — Refs #2993 E5b)
+            │                               ├── CtChoiceChip 'None'  (`...:none`)
+            │                               ├── CtChoiceChip 'Bid'   (`...:bid`)
+            │                               ├── CtChoiceChip 'Offer' (`...:offer`)
+            │                               ├── _StepperButton '−'   (`...:decrement`)
+            │                               ├── Text <quantity | '—'> (`...:quantity`)
+            │                               └── _StepperButton '+'   (`...:increment`)
             └── _DealBookTabPlaceholder // keyed `tradeScreenDealBookTabBody`
                 └── CtPanel
                     ├── Text 'Deal Book' (titleMedium, --accent)
@@ -96,15 +104,29 @@ The Market tab body is the read-only commodity table (`#2993` E5a). It iterates 
 
 The Deal Book placeholder body uses canonical palette tokens only and carries copy naming the parent and depending issues (`#2989`, `#2990`, `#2993` E6) so reviewers can see which follow-up unlocks its live ledger.
 
-### Body (planned — follow-up `#2993` E5c + E6)
+### Cargo indicator + per-stepper cap + warning (`#2993` E5c)
 
-The Market interactive table above is the foundation. Follow-up slices extend each commodity row in place inside the same tab strip:
+Above the commodity list the Market tab body renders a persistent header column with two text rows:
+
+- `tradeScreenMarketCargoIndicator` — `Cargo remaining: X` where `X = max(0, tradeCargoCapacity − totalStagedBidQuantity)`. `tradeCargoCapacity` is `cargoHoldsForHomeFleet(game, player.id)` (the home-fleet cargo holds, falling back to `defaultCargoHoldsStub = 24` when the player has no home fleet yet). `totalStagedBidQuantity` is the sum of `TradeOrder.quantity` across all staged `TradeOrderType.bid` orders for `player.id` in `currentOrdersProvider`. The text is live: as bids are incremented / decremented / toggled to offers / removed via the `None` chip, the indicator updates immediately. Offers do not consume cargo (per `#2988` § Cargo Constraint Model) and are excluded from the sum.
+- `tradeScreenMarketCargoWarning` — only mounted when `remainingCargo == 0` AND `totalStagedBidQuantity > 0`. Renders the literal `Cargo limit reached — increase your fleet capacity or reduce bids.` in `EditorialMonoclePalette.danger` (`bodySmall`). When `remainingCargo > 0` or `totalStagedBidQuantity == 0`, this widget is **absent** from the tree (`find.byKey(marketCargoWarningKey)` resolves to zero widgets).
+
+The per-row bid stepper and direction chips honour the cross-commodity cap:
+
+- **Increment a staged bid:** allowed only when `remainingCargo > 0`. When `remainingCargo == 0`, the increment tap is a silent no-op (`currentOrdersProvider` is not mutated) so the cross-commodity bid total never exceeds `tradeCargoCapacity`. Decrement and offer-side increment / decrement are unaffected by the cap (offers do not consume cargo and decrementing a bid only frees cargo).
+- **Toggle a row to `Bid` from `None` / `Offer`:** allowed only when at least 1 unit fits — i.e. the row's `maxAllowedBidQuantity = remainingCargo + priorBidContribution > 0`, where `priorBidContribution` is the row's prior `TradeOrder.quantity` when its prior direction was already `Bid` (and 0 otherwise). The new staged `TradeOrder.quantity` is `min(desiredQuantity, maxAllowedBidQuantity)` where `desiredQuantity` is the prior `TradeOrder.quantity` (preserved across direction changes) when it exists, otherwise `marketRowQuantityDefault` (1). When `maxAllowedBidQuantity <= 0` the toggle is a silent no-op and the row remains in its prior direction.
+- **Toggle a row to `Offer` / `None`:** never blocked by cargo (offers and `None` free or don't consume cargo).
+
+`tradeCargoCapacity == 0` is a valid state: the indicator renders `Cargo remaining: 0`, no bids can be staged via direction toggle or increment, and the warning row is absent until at least one bid is staged (which itself is impossible at capacity 0, so the warning row never mounts at capacity 0 — the indicator alone communicates the no-cargo state).
+
+### Body (planned — follow-up `#2993` E5b cont. + E6)
+
+The Market interactive table above plus the E5c cargo indicator are the foundation. Follow-up slices extend each commodity row in place inside the same tab strip:
 
 - **Market tab — priority dropdown (`#2993` E5b cont.):** integer dropdown bounded by the `kMaxTradePriority` (or equivalent) value exposed by the data API in `#2989`. The current slice defaults staged trade orders to priority 1 and flags the integration for the follow-up bound.
-- **Market tab — cargo indicator (`#2993` E5c):** persistent header strip above the commodity list shows `Cargo remaining: X` and clamps any bid stepper that would exceed the cross-commodity cap.
 - **Deal Book tab (E6):** two-panel ledger of the previous turn's filled / partial / unfilled bids and offers, with treasury totals.
 
-When E5c / E6 land, replace the relevant subsections of this document (header strip, ledger layout) without changing the surrounding tab strip / `CtPanel` / padding chrome — the tab structure stays the same.
+When E6 lands, replace the relevant subsections of this document (ledger layout) without changing the surrounding tab strip / `CtPanel` / padding chrome — the tab structure stays the same.
 
 ---
 
@@ -129,12 +151,15 @@ When E5c / E6 land, replace the relevant subsections of this document (header st
 | Per-row `Offer` chip (`marketRowOfferChipKey`) | `canMutateViaUi == true` | `applyTradeOrderForPlayer(...TradeOrder(commodityId, type: offer, quantity: prior?.quantity ?? marketRowQuantityDefault, priority: prior?.priority ?? marketRowDefaultPriority))` written to `currentOrdersProvider`. | Stages an offer for the commodity. Mutual exclusion: replaces any prior bid. |
 | Per-row stepper `+` (`marketRowIncrementKey`) | `canMutateViaUi == true` AND a direction is staged | `applyTradeOrderForPlayer(...prior.copyWith(quantity: prior.quantity + 1))`. | Increments the staged `TradeOrder.quantity` by 1. No-op when no direction is staged. |
 | Per-row stepper `−` (`marketRowDecrementKey`) | `canMutateViaUi == true` AND staged direction has `quantity > marketRowQuantityMin` | `applyTradeOrderForPlayer(...prior.copyWith(quantity: prior.quantity − 1))`. | Decrements the staged `TradeOrder.quantity` by 1. Clamped at `marketRowQuantityMin` (1); going below 1 is reached via the `None` chip. |
+| Per-row stepper `+` on a `Bid` row when `remainingCargo == 0` | `canMutateViaUi == true` AND staged `TradeOrderType.bid` AND `remainingCargo == 0` | No-op — `currentOrdersProvider` is **not** mutated. | Cross-commodity bid total stays at `tradeCargoCapacity`; the `tradeScreenMarketCargoWarning` row remains mounted (it was already mounted at saturation). |
+| Per-row `Bid` chip when toggle would exceed cargo (`maxAllowedBidQuantity > 0` AND `desiredQuantity > maxAllowedBidQuantity`) | `canMutateViaUi == true` | `applyTradeOrderForPlayer(... TradeOrder(type: bid, quantity: maxAllowedBidQuantity, …))`. | Staged bid is clamped to the remaining cargo (`desiredQuantity` falls back from the prior `quantity` to the remaining cargo when it is smaller). |
+| Per-row `Bid` chip when no bid fits (`maxAllowedBidQuantity <= 0`) | `canMutateViaUi == true` | No-op — `currentOrdersProvider` is **not** mutated. | Row stays in its prior direction; cross-commodity bid total stays at `tradeCargoCapacity`; the `tradeScreenMarketCargoWarning` row remains mounted. |
 
 Observe-mode (`canMutateViaUi == false`, distinct from the global-observe / panels-not-defined sentinel covered by variant `c`): the Market tab body is wrapped in `IgnorePointer` and dimmed by an `Opacity` of `0.7`; the chips and stepper buttons remain mounted (so the static read-only data renders) but taps are blocked and `currentOrdersProvider` is not mutated. This matches the production-screen read-only pattern (`canEdit ? panel : IgnorePointer(child: panel)`).
 
-### Future user actions (`#2993` E5c + E6)
+### Future user actions (`#2993` E5b cont. + E6)
 
-The interactive contract for the priority dropdown, cargo-remaining indicator, cargo warning, and Deal Book read-only ledger is documented in `#2988` § UI Design. Mirror those rows into this **Behavior** table when E5c / E6 land — the tab-switch and direction-chip rows above stay untouched because the tab + row structure does not change.
+The interactive contract for the priority dropdown (bound to `kMaxTradePriority` once #2989 exposes it) and the Deal Book read-only ledger is documented in `#2988` § UI Design. Mirror those rows into this **Behavior** table when the follow-up slices land — the tab-switch, direction-chip, and cargo-indicator rows above stay untouched because the tab + row + header structure does not change.
 
 ---
 
@@ -146,7 +171,9 @@ The interactive contract for the priority dropdown, cargo-remaining indicator, c
 | `GAME60001` | Default — Deal Book tab (b) | Human player active; user has tapped the `Deal Book` tab label | Dark chrome + `_TradeScreenTabsBody` with the Deal Book tab (`tradeScreenDealBookTabBody`) foregrounded; the body remains the placeholder `CtPanel` until `#2993` E6 lands the live ledger. |
 | `GAME60001` | Observe mode (c) | `shellPanelsNotDefined(ref) == true` | Body switches to `ObserveModeNotDefinedPanel(title: 'Trade')`; the tab strip (and both tab bodies) are not mounted under this branch. |
 
-When the follow-up E5b/E5c/E6 slices land, the variant table stays as is — only each tab body's render description changes from "placeholder" / "read-only commodity table" to the live interactive Market controls / Deal Book ledger.
+When the follow-up E6 slice lands, the variant table stays as is — only the Deal Book tab body's render description changes from "placeholder" to the live ledger.
+
+The Market tab body's cargo indicator + warning state described in [§ Cargo indicator + per-stepper cap + warning (`#2993` E5c)](#cargo-indicator--per-stepper-cap--warning-2993-e5c) is an internal substate of variant `a` (Default — Market tab): the indicator row is always mounted under `tradeScreenMarketTabBody`; the warning row mounts and dismounts as the staged-bid total saturates / desaturates the player's `tradeCargoCapacity`.
 
 ---
 
@@ -166,14 +193,16 @@ When the follow-up E5b/E5c/E6 slices land, the variant table stays as is — onl
 
 Folder name **Trade Screen** in `app/lib/widgetbook/catalog.dart` (registered via `tradeScreenDirectories`).
 
-Use cases for the current slice (E1+E2+E3+E4+E5a):
+Use cases for the current slice (E1+E2+E3+E4+E5a+E5b+E5c):
 
 | Use case | Proves |
 |----------|--------|
-| `Scaffold (Market tab)` | Default mount of `TradeScreen` with the dark `CtTopBar` and `_TradeScreenTabsBody` showing the Market tab read-only commodity table selected (the initial state visited by every gameplay session). |
+| `Scaffold (Market tab)` | Default mount of `TradeScreen` with the dark `CtTopBar` and `_TradeScreenTabsBody` showing the Market tab read-only commodity table selected (the initial state visited by every gameplay session). The cargo indicator renders `Cargo remaining: 24` (home-fleet stub capacity, no staged bids). |
 | `Scaffold (mobile)` | Same default story inside `mobileViewport` (360 × 640 dp) to satisfy the per-spec mobile use case (`SPEC/ui/mobile-adaptation.md`). |
+| `Market tab — staged bid + offer (Refs #2993 E5b)` | Story Game with `currentOrdersProvider` pre-seeded so reviewers see an active `Bid` (timber, qty 4) and `Offer` (fabric, qty 7) without needing to drive the chips themselves. Cargo indicator reads `Cargo remaining: 20` (`24 − 4`). |
+| `Market tab — cargo saturated (Refs #2993 E5c)` | Story Game with `currentOrdersProvider` pre-seeded to stage bids whose total quantity equals `tradeCargoCapacity` so the cargo indicator reads `Cargo remaining: 0` and the warning row `tradeScreenMarketCargoWarning` is mounted. Reviewers can confirm the dark-theme `--danger` palette and the cargo-limit copy without touching the chips. |
 
-Follow-up E5b/E5c/E6 slices append `Market tab — interactive controls`, `Market tab — cargo warning`, `Deal Book tab — mixed fills`, etc. as the bodies land. The tab structure remains the same; only each tab body's content advances.
+Follow-up E5b cont./E6 slices append `Market tab — priority dropdown`, `Deal Book tab — mixed fills`, etc. as the bodies land. The tab structure remains the same; only each tab body's content advances.
 
 ---
 
@@ -221,6 +250,19 @@ Follow-up E5b/E5c/E6 slices append `Market tab — interactive controls`, `Marke
 - **Given** the row for commodity X has a staged `TradeOrder(type: bid)` and the user toggles a different commodity Y to `Offer`, **then** both rows have a staged TradeOrder simultaneously — `tradeOrdersByPlayerId[player.id].length == 2` — confirming mutual exclusion is per-commodity, not per-player.
 - **Given** the `TradeScreen` is mounted with `shellPlayerContextProvider.canMutateViaUi == false` (observing another GP — distinct from the `showPlayerChrome == false` global-observe sentinel covered by variant `c`), **when** the user attempts to tap any of the row's direction chips, increment, or decrement buttons, **then** `currentOrdersProvider` is **not** mutated (the Market tab body is wrapped in `IgnorePointer` so taps do not propagate); the chips and stepper remain mounted in the widget tree so the read-only data still renders.
 
-### Full screen (follow-up `#2993` E5c / E6 — implement when bodies land)
+### Market tab — cross-commodity cargo indicator + cap + warning (`#2993` E5c)
 
-Migrate the remaining parent-issue ACs from `#2988` § Acceptance criteria — UI into Given–When–Then rows under this section as each follow-up slice ships (priority dropdown bound to `kMaxTradePriority`, Deal Book ledger, cargo-remaining indicator, cargo warning).
+- **Given** the `TradeScreen` is mounted with a human player, observe mode is **not** active, the player has no home fleet (`cargoHoldsForHomeFleet` falls back to `defaultCargoHoldsStub = 24`), and `currentOrdersProvider.tradeOrdersByPlayerId[player.id]` is empty (or contains only offers), **then** the Market tab body contains exactly one widget keyed `TradeScreen.marketCargoIndicatorKey` whose visible `Text` is `Cargo remaining: 24` and **no** widget keyed `TradeScreen.marketCargoWarningKey` is mounted (`find.byKey(marketCargoWarningKey)` resolves to zero widgets).
+- **Given** the same conditions and the player has staged `TradeOrder`s totalling 7 across two commodities (e.g. `Bid` timber qty 4 + `Bid` iron qty 3), **then** the cargo indicator visible `Text` is `Cargo remaining: 17` (`24 − 7`) and the cargo warning row is still absent.
+- **Given** the player has `tradeCargoCapacity = 10` (e.g. via a home-fleet override) and has staged `Bid`s totalling 10 across commodities (`Bid` timber qty 6 + `Bid` iron qty 4), **then** the cargo indicator reads `Cargo remaining: 0` AND the cargo warning row keyed `TradeScreen.marketCargoWarningKey` is mounted with the literal text `Cargo limit reached — increase your fleet capacity or reduce bids.`.
+- **Given** the player has `tradeCargoCapacity = 10`, has staged `Bid` timber qty 6 (cargo remaining 4), and is staging on commodity X via `marketRowIncrementKey`, **when** the user repeatedly taps the `+` button on commodity X, **then** the staged quantity for commodity X increments by 1 per tap up to qty 4 (cargo remaining 0); the next `+` tap on commodity X is a silent no-op (`currentOrdersProvider` is **not** mutated), the staged TradeOrder.quantity stays at 4, the cargo indicator reads `Cargo remaining: 0`, and `tradeScreenMarketCargoWarning` is mounted.
+- **Given** the player has `tradeCargoCapacity = 10`, has staged `Bid` timber qty 6 and `Bid` iron qty 4 (cargo remaining 0), **when** the user taps the `Bid` chip on commodity grain (`marketRowBidChipKey('grain')`), **then** the toggle is a silent no-op (`currentOrdersProvider` is **not** mutated, no `TradeOrder` for grain is staged), cargo indicator stays at `Cargo remaining: 0`, and the warning row stays mounted. The cross-commodity bid total stays at 10 and never exceeds `tradeCargoCapacity`.
+- **Given** the player has `tradeCargoCapacity = 10` and a staged `Offer` for fabric qty 8 (offers don't consume cargo so cargo remaining is 10), **when** the user taps the `Bid` chip on commodity fabric (toggling fabric's direction from `Offer` to `Bid`), **then** the staged `TradeOrder` for fabric is replaced by `TradeOrder(type: bid, quantity: 8)` (the prior quantity is preserved because it fits inside cargo capacity) and the cargo indicator updates to `Cargo remaining: 2`.
+- **Given** the player has `tradeCargoCapacity = 10`, has staged `Bid` timber qty 9 (cargo remaining 1), and has a staged `Offer` for fabric qty 5, **when** the user taps the `Bid` chip on commodity fabric, **then** the staged `TradeOrder` for fabric is replaced by `TradeOrder(type: bid, quantity: 1)` (the prior 5 is clamped to the remaining cargo of 1, not the prior offer's 5) and the cargo indicator updates to `Cargo remaining: 0` and the warning row is mounted.
+- **Given** the player has `tradeCargoCapacity = 10`, has staged `Bid` timber qty 10 (cargo remaining 0), **when** the user taps the `−` button on timber (`marketRowDecrementKey('timber')`), **then** the staged `TradeOrder.quantity` for timber decrements to 9, the cargo indicator updates to `Cargo remaining: 1`, and the warning row keyed `TradeScreen.marketCargoWarningKey` is removed from the widget tree.
+- **Given** the player has `tradeCargoCapacity = 10`, has staged `Bid` timber qty 10, **when** the user taps the `None` chip on timber (`marketRowNoneChipKey('timber')`), **then** the staged `TradeOrder` for timber is removed, the cargo indicator updates to `Cargo remaining: 10`, and the warning row is removed (because `totalStagedBidQuantity == 0`).
+- **Given** the `TradeScreen` is mounted with `shellPlayerContextProvider.canMutateViaUi == false`, **then** the cargo indicator and (when applicable) warning row remain mounted with the same text values as in the editable case (they read directly from `Game` + `currentOrdersProvider` regardless of the observe-mode `IgnorePointer`).
+
+### Full screen (follow-up `#2993` E5b cont. / E6 — implement when bodies land)
+
+Migrate the remaining parent-issue ACs from `#2988` § Acceptance criteria — UI into Given–When–Then rows under this section as each follow-up slice ships (priority dropdown bound to `kMaxTradePriority`, Deal Book ledger).
