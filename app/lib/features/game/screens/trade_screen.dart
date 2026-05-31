@@ -1,34 +1,46 @@
 // Full-screen World Market Trade screen. SPEC/ui/trade-screen.md.
 //
-// **Scope (Refs #2993 E5a + E5b):**
+// **Scope (Refs #2993 E5a + E5b + E5c):**
 // - E5a (already shipped) — route + screen ID + dark editorial-monocle
 //   chrome + observe-mode guard + two-tab body (Market + Deal Book) +
 //   read-only commodity table (last market price + previous-turn
 //   aggregate `Bids / Offers` volumes per commodity, sorted alphabetically
 //   by display name).
-// - E5b (this slice) — interactive bid/offer/none direction selector and
-//   quantity stepper per row, wired to `currentOrdersProvider` so each
-//   change updates `Orders.tradeOrdersByPlayerId[player.id]` via the
+// - E5b (already shipped) — interactive bid/offer/none direction selector
+//   and quantity stepper per row, wired to `currentOrdersProvider` so
+//   each change updates `Orders.tradeOrdersByPlayerId[player.id]` via the
 //   pure helpers `applyTradeOrderForPlayer` / `removeTradeOrderForPlayer`
 //   in `colonizethis_logic`. Mutual exclusion is structural: at most
 //   one staged `TradeOrder` per (player, commodityId) pair, so toggling
 //   from `Bid` to `Offer` (or vice versa) replaces the prior direction
-//   in place. Observe mode (the GP-observation `canMutateViaUi == false`
-//   case, distinct from the "global observe / panels not defined"
-//   sentinel) wraps the controls in `IgnorePointer` and visually dims
-//   them so the table reads as read-only.
+//   in place.
+// - E5c (this slice) — cross-commodity cargo-remaining indicator + cap +
+//   warning. A persistent header strip above the commodity list renders
+//   `Cargo remaining: X` where `X = max(0, tradeCargoCapacity − totalBid)`.
+//   `tradeCargoCapacity` is `cargoHoldsForHomeFleet(game, player.id)`
+//   (falling back to `defaultCargoHoldsStub = 24` when the player has no
+//   home fleet). `totalBid` is the sum of staged `TradeOrderType.bid`
+//   quantities for the player; offers don't consume cargo (per #2988
+//   §Cargo Constraint Model). When the cap is reached
+//   (`remainingCargo == 0 AND totalBid > 0`), a warning row is mounted
+//   below the indicator. Bid increments and `Bid` toggles are clamped
+//   so the cross-commodity bid total never exceeds `tradeCargoCapacity`.
+//
+// Observe mode (the GP-observation `canMutateViaUi == false` case,
+// distinct from the "global observe / panels not defined" sentinel)
+// wraps the controls in `IgnorePointer` and visually dims them so the
+// table reads as read-only; the cargo indicator + warning stay live
+// (they read directly from `Game` + `currentOrdersProvider`).
 //
 // Deferred to follow-up slices:
 // - Priority dropdown (default priority 1 today; integration with the
 //   `kMaxTradePriority` API surface is tracked under #2989).
-// - Cross-commodity cargo-remaining indicator + per-stepper cap +
-//   warning (Refs #2993 E5c).
 // - Deal Book live ledger (Refs #2993 E6) once the per-player ledger
 //   surface ships on top of #2989 / #2990's `MarketActivity` + world-market
 //   turn phase.
 //
-// The two-tab structure is the durable wireframe E5c / E6 continue to
-// build on, so the contract this file ships matches what
+// The two-tab structure is the durable wireframe E6 continues to build
+// on, so the contract this file ships matches what
 // `SPEC/ui/trade-screen.md` § Layout / wireframe records as the canonical
 // body for the screen.
 
@@ -180,6 +192,35 @@ class TradeScreen extends ConsumerWidget {
   /// em-dash so the visual language is consistent across the row.
   // ignore: avoid_hardcoded_strings_in_widgets
   static const String marketRowQuantityIdleGlyph = '—';
+
+  /// Stable widget key for the cross-commodity cargo indicator header
+  /// rendered above the Market tab commodity list (Refs #2993 E5c).
+  /// The widget at this key renders `Cargo remaining: X` where
+  /// `X = max(0, tradeCargoCapacity − totalStagedBidQuantity)`.
+  static const Key marketCargoIndicatorKey =
+      ValueKey<String>('tradeScreenMarketCargoIndicator');
+
+  /// Stable widget key for the cargo-limit warning row rendered below
+  /// the cargo indicator (Refs #2993 E5c). Only mounted when
+  /// `remainingCargo == 0` AND `totalStagedBidQuantity > 0`; absent
+  /// otherwise so widget tests can `expect(find.byKey(...), findsNothing)`
+  /// in the steady non-saturated state.
+  static const Key marketCargoWarningKey =
+      ValueKey<String>('tradeScreenMarketCargoWarning');
+
+  /// Localized cargo indicator prefix. SPEC/ui/trade-screen.md §
+  /// Cargo indicator pins the literal `"Cargo remaining:"` so widget
+  /// tests can drive the indicator via `find.text` without coupling to
+  /// the localization catalog before the trade screen is l10n-ised.
+  // ignore: avoid_hardcoded_strings_in_widgets
+  static const String cargoIndicatorPrefix = 'Cargo remaining:';
+
+  /// Cargo-limit warning copy rendered below the cargo indicator when
+  /// the staged cross-commodity bid total saturates the player's
+  /// `tradeCargoCapacity` (Refs #2993 E5c).
+  // ignore: avoid_hardcoded_strings_in_widgets
+  static const String cargoLimitWarningText =
+      'Cargo limit reached — increase your fleet capacity or reduce bids.';
 
   /// Stable widget key for the Deal Book tab placeholder body. Pin point
   /// for widget tests asserting the Deal Book tab body is present in the
@@ -376,10 +417,23 @@ class _MarketTabContent extends ConsumerWidget {
     final TextStyle quantityStyle =
         (theme.textTheme.titleSmall ?? const TextStyle(fontSize: 14))
             .copyWith(color: EditorialMonoclePalette.accentBright);
+    final TextStyle cargoIndicatorStyle =
+        (theme.textTheme.bodySmall ?? const TextStyle(fontSize: 12))
+            .copyWith(color: EditorialMonoclePalette.accent);
+    final TextStyle cargoWarningStyle =
+        (theme.textTheme.bodySmall ?? const TextStyle(fontSize: 12))
+            .copyWith(color: EditorialMonoclePalette.danger);
 
     final List<Commodity> rows = _tradeableCommoditiesSortedByDisplayName();
     final WorldMarketState market = game.worldMarketState;
     final Orders orders = ref.watch(currentOrdersProvider);
+
+    final int tradeCargoCapacity = cargoHoldsForHomeFleet(game, playerId);
+    final int totalStagedBid = _totalStagedBidQuantity(orders, playerId);
+    final int remainingCargo = tradeCargoCapacity - totalStagedBid;
+    final int clampedRemaining = remainingCargo < 0 ? 0 : remainingCargo;
+    final bool warningVisible =
+        clampedRemaining == 0 && totalStagedBid > 0;
 
     // SingleChildScrollView + Column (instead of ListView.builder) so
     // every commodity row is built up-front. Widget tests pin all 22
@@ -428,17 +482,60 @@ class _MarketTabContent extends ConsumerWidget {
       ),
     );
 
-    // Observe-mode (canMutateViaUi == false): wrap in IgnorePointer +
-    // Opacity so the table reads as read-only without remounting the
-    // row tree (callbacks still fire-safe when not used; the tap is
-    // simply blocked by IgnorePointer).
+    final Widget header = Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: <Widget>[
+        Text(
+          '${TradeScreen.cargoIndicatorPrefix} $clampedRemaining',
+          key: TradeScreen.marketCargoIndicatorKey,
+          style: cargoIndicatorStyle,
+        ),
+        if (warningVisible) ...<Widget>[
+          const SizedBox(height: 4),
+          Text(
+            TradeScreen.cargoLimitWarningText,
+            key: TradeScreen.marketCargoWarningKey,
+            style: cargoWarningStyle,
+          ),
+        ],
+        const SizedBox(height: 8),
+      ],
+    );
+
+    final Widget body = Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      mainAxisSize: MainAxisSize.min,
+      children: <Widget>[
+        header,
+        // Flexible so the scrollable list still wins remaining height
+        // when the body is mounted inside a constrained column (the
+        // ancestor CtPanel + IndexedStack); when unconstrained it falls
+        // back to the natural intrinsic height.
+        Flexible(child: list),
+      ],
+    );
+
+    // Observe-mode (canMutateViaUi == false): wrap the **interactive**
+    // list in IgnorePointer + Opacity so the chips and stepper read as
+    // read-only, but leave the cargo indicator + warning header live
+    // (they're read-only telemetry that should still surface state).
     if (!canEdit) {
-      return Opacity(
-        opacity: _observeModeOpacity,
-        child: IgnorePointer(child: list),
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        mainAxisSize: MainAxisSize.min,
+        children: <Widget>[
+          header,
+          Flexible(
+            child: Opacity(
+              opacity: _observeModeOpacity,
+              child: IgnorePointer(child: list),
+            ),
+          ),
+        ],
       );
     }
-    return list;
+    return body;
   }
 
   /// Visual dim factor applied to the Market tab body when the screen
@@ -468,10 +565,35 @@ class _MarketTabContent extends ConsumerWidget {
       playerId,
       commodityId,
     );
-    final int quantity =
+    final int desiredQuantity =
         prior?.quantity ?? TradeScreen.marketRowQuantityDefault;
     final int priority =
         prior?.priority ?? TradeScreen.marketRowDefaultPriority;
+
+    int quantity = desiredQuantity;
+    if (next == TradeOrderType.bid) {
+      // Refs #2993 E5c: clamp the staged bid quantity so the
+      // cross-commodity bid total never exceeds the player's
+      // tradeCargoCapacity. The row's own prior bid contribution (if
+      // any) is added back because it is already included in the
+      // running total and will be replaced by `applyTradeOrderForPlayer`.
+      final int tradeCargoCapacity =
+          cargoHoldsForHomeFleet(game, playerId);
+      final int totalStagedBid = _totalStagedBidQuantity(orders, playerId);
+      final int priorBidContribution =
+          prior?.type == TradeOrderType.bid ? prior!.quantity : 0;
+      final int maxAllowedBidQuantity =
+          (tradeCargoCapacity - totalStagedBid) + priorBidContribution;
+      if (maxAllowedBidQuantity <= 0) {
+        // Cargo budget exhausted — refuse the toggle so the row stays
+        // in its prior direction (or remains `None`). The warning row
+        // is already mounted (or will mount as soon as a bid lands).
+        return;
+      }
+      if (desiredQuantity > maxAllowedBidQuantity) {
+        quantity = maxAllowedBidQuantity;
+      }
+    }
     final TradeOrder nextOrder = TradeOrder(
       commodityId: commodityId,
       type: next,
@@ -503,6 +625,16 @@ class _MarketTabContent extends ConsumerWidget {
     final int rawNext = prior.quantity + delta;
     if (rawNext < TradeScreen.marketRowQuantityMin) return;
     if (rawNext == prior.quantity) return;
+    if (prior.type == TradeOrderType.bid && delta > 0) {
+      // Refs #2993 E5c: increment is blocked when the cross-commodity
+      // bid budget is exhausted. The row's own current quantity is
+      // already part of `totalStagedBid` — we only need any unused
+      // headroom to grow it by `delta`.
+      final int tradeCargoCapacity =
+          cargoHoldsForHomeFleet(game, playerId);
+      final int totalStagedBid = _totalStagedBidQuantity(orders, playerId);
+      if (totalStagedBid + delta > tradeCargoCapacity) return;
+    }
     final TradeOrder nextOrder = prior.copyWith(quantity: rawNext);
     final Orders updated = applyTradeOrderForPlayer(
       orders: orders,
@@ -510,6 +642,20 @@ class _MarketTabContent extends ConsumerWidget {
       order: nextOrder,
     );
     notifier.replaceAll(updated);
+  }
+
+  /// Returns the sum of `TradeOrder.quantity` across all staged
+  /// `TradeOrderType.bid` orders for [playerId] in [orders]. Offers do
+  /// not consume cargo (per `#2988` § Cargo Constraint Model) and are
+  /// excluded from the sum.
+  static int _totalStagedBidQuantity(Orders orders, String playerId) {
+    final List<TradeOrder>? list = orders.tradeOrdersByPlayerId[playerId];
+    if (list == null || list.isEmpty) return 0;
+    int total = 0;
+    for (final TradeOrder o in list) {
+      if (o.type == TradeOrderType.bid) total += o.quantity;
+    }
+    return total;
   }
 
   static String _volumeText(MarketActivity activity) {
