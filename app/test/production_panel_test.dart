@@ -11,6 +11,7 @@ import 'package:colonizethis_app/config/editorial_monocle_palette.dart';
 import 'package:colonizethis_app/features/game/production_recipe_affordance.dart';
 import 'package:colonizethis_app/features/game/widgets/production_allocation_row.dart';
 import 'package:colonizethis_app/features/game/widgets/production_allocation_row_chrome.dart';
+import 'package:colonizethis_app/features/game/widgets/production_labour_helpers.dart';
 import 'package:colonizethis_app/features/game/widgets/production_panel.dart';
 import 'package:colonizethis_app/l10n/l10n.dart';
 import 'package:colonizethis_app/widgets/ct_brass_divider.dart';
@@ -745,6 +746,127 @@ void main() {
         // require at least N-1 to appear (one between each pair of recipe
         // rows in the allocation subpanel).
         expect(totalDividers, greaterThanOrEqualTo(recipeCount - 1));
+      },
+    );
+
+    // S7 — Labour Controls subsection placement (Refs #2862 S7a).
+
+    Widget buildPanelWithLabourCallbacks({
+      required Player player,
+      Orders currentOrders = const Orders(),
+      bool canEditLabour = true,
+    }) {
+      final game = productionPanelTestGameFor(player);
+      final captured = <Map<String, int>>[];
+      final labourCallbacks = ProductionLabourCallbacks(
+        onAppendRecruitOrder: (_) {},
+        onPopLastRecruitOrder: (_) {},
+        onDisband: (_) {},
+      );
+      return MaterialApp(
+        localizationsDelegates:
+            AppLocalizationsBinding.localizationsDelegates,
+        supportedLocales: const [Locale('en')],
+        home: Scaffold(
+          body: SizedBox(
+            width: 800,
+            height: 700,
+            child: ProductionPanel(
+              game: game,
+              player: player,
+              desiredOutputByRecipe: const {},
+              netDeltasByCommodity: const {},
+              onDesiredOutputChanged: captured.add,
+              currentOrders: currentOrders,
+              labourCallbacks: labourCallbacks,
+              canEditLabour: canEditLabour,
+            ),
+          ),
+        ),
+      );
+    }
+
+    testWidgets(
+      'Labour Controls CtSectionLabel appears below Effective Labour (Refs #2862 S7a)',
+      (WidgetTester tester) async {
+        await tester.pumpWidget(
+          buildPanelWithLabourCallbacks(player: fullPlayer),
+        );
+        await pumpSettleCapped(tester);
+
+        final labourControlsLabel = find.descendant(
+          of: find.byType(CtSectionLabel),
+          matching: find.text('LABOUR CONTROLS'),
+        );
+        expect(labourControlsLabel, findsOneWidget);
+
+        final effectiveLabour = find.textContaining('Effective labour:');
+        expect(effectiveLabour, findsOneWidget);
+
+        final effectiveY = tester.getTopLeft(effectiveLabour).dy;
+        final labourY = tester.getTopLeft(labourControlsLabel).dy;
+        expect(
+          labourY,
+          greaterThan(effectiveY),
+          reason: 'Labour Controls section label must render below the '
+              'Effective Labour line per SPEC § Labour Controls (12-A).',
+        );
+      },
+    );
+
+    testWidgets(
+      'Labour Controls subsection is omitted when callbacks are not provided '
+      '(no orphan section label; Refs #2862 S7a)',
+      (WidgetTester tester) async {
+        // `buildPanel` does not pass currentOrders / labourCallbacks.
+        await tester.pumpWidget(buildPanel(player: fullPlayer));
+        await pumpSettleCapped(tester);
+
+        expect(
+          find.descendant(
+            of: find.byType(CtSectionLabel),
+            matching: find.text('LABOUR CONTROLS'),
+          ),
+          findsNothing,
+        );
+      },
+    );
+
+    testWidgets(
+      'Workers section uses Effective Labour line then Labour Controls label '
+      '(no action buttons above Effective Labour; Refs #2862 S7a)',
+      (WidgetTester tester) async {
+        await tester.pumpWidget(
+          buildPanelWithLabourCallbacks(player: fullPlayer),
+        );
+        await pumpSettleCapped(tester);
+
+        final effectiveLabour = find.textContaining('Effective labour:');
+        final l10n = lookupAppLocalizations(const Locale('en'));
+        // The disband button for the apprentice row (if rendered) must
+        // appear below the Effective Labour line.
+        final apprenticeDisband = find.byKey(
+          const ValueKey<String>('production_labour_disband_apprentices'),
+        );
+        if (apprenticeDisband.evaluate().isNotEmpty) {
+          final effectiveY = tester.getTopLeft(effectiveLabour).dy;
+          final disbandY = tester.getTopLeft(apprenticeDisband).dy;
+          expect(
+            disbandY,
+            greaterThan(effectiveY),
+            reason: 'Disband control must render below Effective Labour.',
+          );
+        }
+        // The peasant tier label parenthetical must also appear.
+        expect(
+          find.text(
+            l10n.production_labourTierLabel(
+              l10n.production_workers_peasants,
+              l10n.production_labourTierUnlocked,
+            ),
+          ),
+          findsOneWidget,
+        );
       },
     );
   });

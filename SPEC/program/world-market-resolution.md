@@ -224,6 +224,7 @@ typedef DealMatchInputs = ({
   Map<String, int> tradeCapacityByFactionId,
   Map<CommodityId, double> pricesByCommodityId,
   Set<String> ftpPairKeys,
+  PurchasedTileIndex? purchasedTileIndex, // null disables FRR (legacy)
 });
 
 class DealMatcher {
@@ -235,8 +236,9 @@ class DealMatcher {
 For each commodity that appears in any offer or bid (commodities iterated in alphabetical id order for determinism):
 
 1. Collect all offers as `(sellerFactionId, TradeOrder)` entries; collect all bids as `(buyerFactionId, TradeOrder)` entries.
-2. Group entries by integer `priority`. Process priority tiers in **ascending integer order** (tier `1` first — lower integer is higher precedence).
-3. Inside each tier, run two passes:
+2. **First Right of Refusal pre-pass (issue #2992 D2).** When `purchasedTileIndex` is non-`null` and non-empty, iterate offers in `(sellerFactionId, faction-local index)` order. For each offer whose `TradeOrder.originTileKey` resolves through `purchasedTileIndex.attributionForTileKey`, look up the `owningGpId`. Iterate that owning GP's bids for the same commodity in `factionLocalIndex` order and attempt fills **before** any priority-tier loop. Each emitted `FilledDeal` carries `isFirstRightOfRefusalMatch: true` and ignores FTP membership for this match. Buyer cargo (`remainingCargoByBuyerFactionId`) is decremented per match. The pre-pass is a no-op when `purchasedTileIndex` is `null` (preserves the legacy contract for callers that have not yet wired FRR).
+3. Group remaining entries by integer `priority`. Process priority tiers in **ascending integer order** (tier `1` first — lower integer is higher precedence).
+4. Inside each tier, run two passes:
    - **Pass 1 — FTP-only.** Iterate offers in `(sellerFactionId, faction-local index)` order. For each offer, iterate bids in `(buyerFactionId, faction-local index)` order and attempt a fill **only if** `ftpPairKeys` contains `pairKey(sellerFactionId, buyerFactionId)`. Buyer cargo (`remainingCargoByBuyerFactionId`) is consulted before each match attempt; if the buyer has zero cargo left, skip the bid.
    - **Pass 2 — Any.** Iterate the remaining offers and bids (those with `remaining > 0`) in the same order and attempt matches regardless of FTP.
 4. A match attempt produces `matchQty = min(offer.remaining, bid.remaining, buyer.remainingCargo)`. When `matchQty > 0` the matcher emits a `FilledDeal(sellerFactionId, buyerFactionId, commodityId, quantity: matchQty, pricePerUnit: pricesByCommodityId[commodityId] ?? 0.0, isFtpMatch: <ftp-paired>)`, decrements the offer's and bid's remaining quantities, and decrements `remainingCargoByBuyerFactionId[buyerFactionId]` by `matchQty`.
@@ -251,7 +253,7 @@ Edge cases:
 - A faction with bids but no entry in `tradeCapacityByFactionId` is treated as having `tradeCapacity = 0` — none of its bids fill, all carry forward.
 - An offer or bid with `quantity == 0` is treated as already exhausted — no `FilledDeal` is emitted, no carry-forward record is generated for it.
 - `ftpPairKeys` is consulted as a set; ordering of pairs inside the set does not affect output. The canonical `pairKey` ensures the input set need not be duplicated for both `(a,b)` and `(b,a)`.
-- First right of refusal is **not** handled by this engine (see Issue D / #2992). When implemented, it will pre-flag matched pairs ahead of the standard tier loop.
+- First right of refusal **is** handled by this engine when `purchasedTileIndex` is supplied (see Issue D / #2992 D2). Offers without an `originTileKey`, offers whose `originTileKey` is not in the index, and runs with a `null` index all skip the FRR pre-pass and behave exactly as the legacy tier loop. The D4 treasury transfer (overseas-profit credit to the owning GP) is a separate phase-handler responsibility — it consumes `FilledDeal.isFirstRightOfRefusalMatch` to identify FRR-applied flows and looks up the owning GP via the same `purchasedTileIndex` row to compute the relation-based profit per `SPEC/game/world-market-first-right-of-refusal.md` § Treasury transfer (D4).
 
 ---
 

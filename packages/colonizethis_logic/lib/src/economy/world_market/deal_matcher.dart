@@ -1,6 +1,7 @@
 /// Deal matching engine for the world market phase.
 ///
 /// SPEC/game/world-market.md § Trade orders / Cargo / FTP,
+/// SPEC/game/world-market-first-right-of-refusal.md § Rules,
 /// SPEC/program/world-market-resolution.md § Deal matching engine.
 ///
 /// The matcher is pure: deterministic for fixed inputs and silent (no logger
@@ -9,12 +10,17 @@
 /// `.cursor/rules/colonizethis-turn-resolution-budget.mdc`.
 ///
 /// This slice covers priority-queue fills, the same-tier FTP tiebreaker,
-/// partial fills, and per-buyer cross-commodity cargo tracking. First right
-/// of refusal is intentionally not handled here — that pre-flagging will
-/// land with Issue D / #2992.
+/// partial fills, per-buyer cross-commodity cargo tracking, and the First
+/// Right of Refusal (FRR) absolute-priority override added by Issue D /
+/// #2992 D2: when a minor/tribe offer carries a non-null
+/// `originTileKey` that resolves through [PurchasedTileIndex], the owning
+/// Great Power's bids for the same commodity match against that offer
+/// before any integer-priority tier or FTP pair runs.
 library;
 
 import 'package:colonizethis_models/colonizethis_models.dart';
+
+import 'purchased_tile_index.dart';
 
 /// Inputs for a single [DealMatcher.matchDeals] pass.
 ///
@@ -25,13 +31,16 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 /// per `SPEC/game/world-market.md` § Cargo). `pricesByCommodityId` MUST be
 /// the `oldPrice` map valid for the current turn (deals clear at oldPrice).
 /// `ftpPairKeys` MUST contain canonical bilateral keys produced via
-/// [DealMatcher.pairKey].
+/// [DealMatcher.pairKey]. `purchasedTileIndex`, when supplied, gates the
+/// First Right of Refusal absolute-priority pass — pass `null` to disable
+/// FRR (legacy behavior; matches pre-#2992 callers).
 typedef DealMatchInputs = ({
   Map<String, List<TradeOrder>> offersByFactionId,
   Map<String, List<TradeOrder>> bidsByFactionId,
   Map<String, int> tradeCapacityByFactionId,
   Map<CommodityId, double> pricesByCommodityId,
   Set<String> ftpPairKeys,
+  PurchasedTileIndex? purchasedTileIndex,
 });
 
 /// Internal mutable bookkeeping for a single order participating in matching.
@@ -99,6 +108,10 @@ class DealMatcher {
     final offerStatesByFaction = _indexOrdersByFaction(inputs.offersByFactionId);
     final bidStatesByFaction = _indexOrdersByFaction(inputs.bidsByFactionId);
 
+    final purchasedTileIndex = inputs.purchasedTileIndex;
+    final firstRightEnabled =
+        purchasedTileIndex != null && purchasedTileIndex.isNotEmpty;
+
     for (final commodityId in commodityIds) {
       final commodityOffers = _orderedStatesForCommodity(
         offerStatesByFaction,
@@ -115,14 +128,27 @@ class DealMatcher {
 
       if (commodityOffers.isNotEmpty && commodityBids.isNotEmpty) {
         final price = inputs.pricesByCommodityId[commodityId] ?? 0.0;
+
+        if (firstRightEnabled) {
+          filledQuantity += _runFirstRightMatching(
+            commodityOffers: commodityOffers,
+            commodityBids: commodityBids,
+            commodityId: commodityId,
+            pricePerUnit: price,
+            purchasedTileIndex: purchasedTileIndex,
+            remainingCargo: remainingCargo,
+            filledOut: filled,
+          );
+        }
+
         final tiers = _collectPriorityTiers(commodityOffers, commodityBids);
 
         for (final tier in tiers) {
           final tierOffers = commodityOffers
-              .where((s) => s.order.priority == tier)
+              .where((s) => s.order.priority == tier && s.remaining > 0)
               .toList(growable: false);
           final tierBids = commodityBids
-              .where((s) => s.order.priority == tier)
+              .where((s) => s.order.priority == tier && s.remaining > 0)
               .toList(growable: false);
 
           filledQuantity += _runTierMatching(
@@ -156,6 +182,83 @@ class DealMatcher {
     );
   }
 
+  /// Runs the First Right of Refusal absolute-priority pass for one
+  /// commodity per `SPEC/game/world-market-first-right-of-refusal.md` and
+  /// `SPEC/program/world-market-resolution.md` § Step B (absolute-priority
+  /// tier above tier 1).
+  ///
+  /// For each offer whose `originTileKey` resolves through
+  /// [purchasedTileIndex], iterate the owning Great Power's bids for the
+  /// same commodity in their submitted (`factionLocalIndex`) order and
+  /// match them ahead of any integer-priority tier. FTP membership is
+  /// ignored — FRR overrides FTP per `SPEC/game/world-market.md`.
+  /// `FilledDeal.isFirstRightOfRefusalMatch` is set to true on emitted
+  /// deals so D4 treasury transfers and the Deal Book UI can identify
+  /// FRR-applied flows. Cargo is consumed normally per buyer.
+  ///
+  /// Offers iterate in `(sellerFactionId, factionLocalIndex)` order to
+  /// preserve determinism. Bids iterate in `factionLocalIndex` order
+  /// within the owning GP's bid list.
+  static int _runFirstRightMatching({
+    required List<_OrderState> commodityOffers,
+    required List<_OrderState> commodityBids,
+    required CommodityId commodityId,
+    required double pricePerUnit,
+    required PurchasedTileIndex purchasedTileIndex,
+    required Map<String, int> remainingCargo,
+    required List<FilledDeal> filledOut,
+  }) {
+    if (commodityOffers.isEmpty || commodityBids.isEmpty) return 0;
+    var filledQuantity = 0;
+
+    int attemptFrrMatch(_OrderState offer, _OrderState bid) {
+      if (offer.remaining <= 0 || bid.remaining <= 0) return 0;
+      final cargoLeft = remainingCargo[bid.factionId] ?? 0;
+      if (cargoLeft <= 0) return 0;
+      final matchQty = _min3(offer.remaining, bid.remaining, cargoLeft);
+      if (matchQty <= 0) return 0;
+      filledOut.add(
+        FilledDeal(
+          sellerFactionId: offer.factionId,
+          buyerFactionId: bid.factionId,
+          commodityId: commodityId,
+          quantity: matchQty,
+          pricePerUnit: pricePerUnit,
+          isFirstRightOfRefusalMatch: true,
+          sellerOriginTileKey: offer.order.originTileKey,
+        ),
+      );
+      offer.remaining -= matchQty;
+      bid.remaining -= matchQty;
+      remainingCargo[bid.factionId] = cargoLeft - matchQty;
+      return matchQty;
+    }
+
+    for (final offer in commodityOffers) {
+      if (offer.remaining <= 0) continue;
+      final originTileKey = offer.order.originTileKey;
+      if (originTileKey == null) continue;
+      final attribution = purchasedTileIndex.attributionForTileKey(
+        originTileKey,
+      );
+      if (attribution == null) continue;
+      final owningGpId = attribution.owningGpId;
+      // FRR overlays the owning GP's purchase intent on the seller's tile;
+      // a buyer == seller scenario would mean the GP somehow auto-offered
+      // its own land, which the index already filters out (purchased tiles
+      // currently owned by a GP are excluded). Guard defensively anyway.
+      if (owningGpId == offer.factionId) continue;
+      for (final bid in commodityBids) {
+        if (offer.remaining <= 0) break;
+        if (bid.factionId != owningGpId) continue;
+        if (bid.remaining <= 0) continue;
+        filledQuantity += attemptFrrMatch(offer, bid);
+      }
+    }
+
+    return filledQuantity;
+  }
+
   static int _runTierMatching({
     required List<_OrderState> tierOffers,
     required List<_OrderState> tierBids,
@@ -185,6 +288,7 @@ class DealMatcher {
           quantity: matchQty,
           pricePerUnit: pricePerUnit,
           isFtpMatch: ftp,
+          sellerOriginTileKey: offer.order.originTileKey,
         ),
       );
       offer.remaining -= matchQty;

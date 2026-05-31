@@ -77,7 +77,8 @@ void main() {
   });
 
   group('TradeOrder serialization', () {
-    test('toJson produces canonical fields', () {
+    test('toJson produces canonical fields and omits originTileKey when null',
+        () {
       final order = TradeOrder(
         commodityId: 'timber',
         type: TradeOrderType.bid,
@@ -92,6 +93,7 @@ void main() {
         'priority': 2,
         'isFtp': true,
       });
+      expect(order.toJson().containsKey('originTileKey'), isFalse);
     });
 
     test('round-trips equal instance with all fields preserved', () {
@@ -151,6 +153,138 @@ void main() {
       final c = a.copyWith(quantity: 6);
       expect(a, equals(b));
       expect(a, isNot(equals(c)));
+    });
+
+    test('equality differs when only originTileKey differs', () {
+      final a = TradeOrder(
+        commodityId: 'timber',
+        type: TradeOrderType.offer,
+        quantity: 5,
+        priority: 1,
+      );
+      final b = TradeOrder(
+        commodityId: 'timber',
+        type: TradeOrderType.offer,
+        quantity: 5,
+        priority: 1,
+        originTileKey: 'oldWorld|M1|0|0',
+      );
+      expect(a, isNot(equals(b)));
+      expect(a.hashCode, isNot(equals(b.hashCode)));
+    });
+
+    test('copyWith preserves originTileKey when not specified', () {
+      final order = TradeOrder(
+        commodityId: 'timber',
+        type: TradeOrderType.offer,
+        quantity: 5,
+        priority: 1,
+        originTileKey: 'oldWorld|M1|0|0',
+      );
+      final copy = order.copyWith(quantity: 3);
+      expect(copy.originTileKey, 'oldWorld|M1|0|0');
+      expect(copy.quantity, 3);
+    });
+
+    test('copyWith can clear originTileKey by passing null explicitly', () {
+      final order = TradeOrder(
+        commodityId: 'timber',
+        type: TradeOrderType.offer,
+        quantity: 5,
+        priority: 1,
+        originTileKey: 'oldWorld|M1|0|0',
+      );
+      final cleared = order.copyWith(originTileKey: null);
+      expect(cleared.originTileKey, isNull);
+    });
+
+    test('copyWith can replace originTileKey with a new value', () {
+      final order = TradeOrder(
+        commodityId: 'timber',
+        type: TradeOrderType.offer,
+        quantity: 5,
+        priority: 1,
+      );
+      final updated = order.copyWith(originTileKey: 'newWorld|T2|3|3');
+      expect(updated.originTileKey, 'newWorld|T2|3|3');
+    });
+  });
+
+  group('TradeOrder originTileKey (#2992 D2)', () {
+    test('originTileKey defaults to null', () {
+      final order = TradeOrder(
+        commodityId: 'timber',
+        type: TradeOrderType.offer,
+        quantity: 5,
+        priority: 1,
+      );
+      expect(order.originTileKey, isNull);
+    });
+
+    test('rejects empty originTileKey', () {
+      expect(
+        () => TradeOrder(
+          commodityId: 'timber',
+          type: TradeOrderType.offer,
+          quantity: 5,
+          priority: 1,
+          originTileKey: '',
+        ),
+        throwsA(
+          isA<ArgumentError>().having(
+            (e) => e.toString(),
+            'message',
+            contains('originTileKey'),
+          ),
+        ),
+      );
+    });
+
+    test('toJson includes originTileKey when set', () {
+      final order = TradeOrder(
+        commodityId: 'timber',
+        type: TradeOrderType.offer,
+        quantity: 5,
+        priority: 1,
+        originTileKey: 'oldWorld|M1|0|0',
+      );
+      expect(order.toJson()['originTileKey'], 'oldWorld|M1|0|0');
+    });
+
+    test('round-trips originTileKey through JSON', () {
+      final order = TradeOrder(
+        commodityId: 'timber',
+        type: TradeOrderType.offer,
+        quantity: 5,
+        priority: 1,
+        originTileKey: 'oldWorld|M1|0|0',
+      );
+      final restored = TradeOrder.fromJson(order.toJson());
+      expect(restored, equals(order));
+      expect(restored.originTileKey, 'oldWorld|M1|0|0');
+    });
+
+    test('fromJson treats missing originTileKey as null', () {
+      final restored = TradeOrder.fromJson({
+        'commodityId': 'timber',
+        'type': 'offer',
+        'quantity': 5,
+        'priority': 1,
+        'isFtp': false,
+      });
+      expect(restored.originTileKey, isNull);
+    });
+
+    test('fromJson treats empty-string originTileKey as null', () {
+      final restored = TradeOrder.fromJson({
+        'commodityId': 'timber',
+        'type': 'offer',
+        'quantity': 5,
+        'priority': 1,
+        'isFtp': false,
+        'originTileKey': '',
+      });
+      expect(restored.originTileKey, isNull);
     });
   });
 
@@ -295,6 +429,60 @@ void main() {
       final restored = FilledDeal.fromJson(deal.toJson());
       expect(restored, equals(deal));
     });
+
+    test('isFirstRightOfRefusalMatch defaults to false', () {
+      const deal = FilledDeal(
+        sellerFactionId: 'f1',
+        buyerFactionId: 'f2',
+        commodityId: 'timber',
+        quantity: 1,
+        pricePerUnit: 1.0,
+      );
+      expect(deal.isFirstRightOfRefusalMatch, isFalse);
+      expect(deal.toJson().containsKey('isFirstRightOfRefusalMatch'), isFalse);
+    });
+
+    test(
+      'isFirstRightOfRefusalMatch round-trips through JSON when true (#2992 D2)',
+      () {
+        const deal = FilledDeal(
+          sellerFactionId: 'M1',
+          buyerFactionId: 'gpA',
+          commodityId: 'timber',
+          quantity: 4,
+          pricePerUnit: 30.0,
+          isFirstRightOfRefusalMatch: true,
+        );
+        final restored = FilledDeal.fromJson(deal.toJson());
+        expect(restored, equals(deal));
+        expect(restored.isFirstRightOfRefusalMatch, isTrue);
+        expect(deal.toJson()['isFirstRightOfRefusalMatch'], true);
+      },
+    );
+
+    test(
+      'equality differs when only isFirstRightOfRefusalMatch differs',
+      () {
+        const ftpDeal = FilledDeal(
+          sellerFactionId: 'a',
+          buyerFactionId: 'b',
+          commodityId: 'timber',
+          quantity: 1,
+          pricePerUnit: 1.0,
+          isFtpMatch: true,
+        );
+        const frrDeal = FilledDeal(
+          sellerFactionId: 'a',
+          buyerFactionId: 'b',
+          commodityId: 'timber',
+          quantity: 1,
+          pricePerUnit: 1.0,
+          isFirstRightOfRefusalMatch: true,
+        );
+        expect(ftpDeal, isNot(equals(frrDeal)));
+        expect(ftpDeal.hashCode, isNot(equals(frrDeal.hashCode)));
+      },
+    );
   });
 
   group('DealMatchResult.empty', () {

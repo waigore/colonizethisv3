@@ -2381,6 +2381,30 @@
   "@production_labourDisband": {
     "description": "Visible label for the Disband button on trained-tier rows."
   },
+  "production_labourTierUnlocked": "(unlocked)",
+  "@production_labourTierUnlocked": {
+    "description": "Parenthetical suffix on a Labour Controls tier label when every required tech is unlocked for the viewed player (peasant always renders this)."
+  },
+  "production_labourTierLocked": "(locked)",
+  "@production_labourTierLocked": {
+    "description": "Parenthetical suffix on a Labour Controls tier label when one or more required techs are missing for the viewed player."
+  },
+  "production_labourTierLabel": "{tier} {state}",
+  "@production_labourTierLabel": {
+    "description": "Concatenation of the tier name and the unlock-state parenthetical for a Labour Controls row (e.g. 'Peasants (unlocked)').",
+    "placeholders": {
+      "tier": {
+        "type": "String"
+      },
+      "state": {
+        "type": "String"
+      }
+    }
+  },
+  "production_labourControlsSectionLabel": "Labour Controls",
+  "@production_labourControlsSectionLabel": {
+    "description": "Title of the Labour Controls subsection in the Production panel Available subpanel."
+  },
   "production_workerCount": "{name}: {count}",
   "@production_workerCount": {
     "description": "Worker type and count in production panel.",
