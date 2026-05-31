@@ -44,6 +44,20 @@ A **faction** is an entity that owns provinces (in any region) and has a defined
 
 ---
 
+## Minor and Tribe capital connectivity
+
+Minor Nations and Tribes have **capital-tile-rooted tile connectivity** so the System can compute which of their owned tiles contribute to **non-Great-Power extraction** for the World Market phase ([world-market.md](world-market.md) § Minor and tribe auto-sell, [extraction-and-improvements.md](extraction-and-improvements.md) § Non-Great-Power extraction). Connectivity uses the **same Road rule and Town rule** as Great Powers ([capital-and-connectivity.md](capital-and-connectivity.md) § Connectivity (Game Rule)) and produces the same per-tile `ConnectivityResult` shape (`connected`, `pathTransportCap`, `connectedByRoadRule`).
+
+Three Minor/Tribe-specific differences are normative in [capital-and-connectivity.md](capital-and-connectivity.md) § Non-Great-Power capital connectivity:
+
+- **Land-only.** Output stays in the faction's capital region (Old World for Minors, New World for Tribes). Cross-region overseas connectivity does not apply because Minors and Tribes do not own provinces in the other region.
+- **No blockade interaction for market access.** Even when a Great Power blockades a Minor's or Tribe's port province via fleet missions, the non-Great-Power connectivity resolver ignores blockade state for World-Market participation; the faction's connectivity output remains the same as with no blockade.
+- **No `townDevelopmentLevel = 4` capital-province bump.** That bump applies only to Great Powers ([capital-and-connectivity.md](capital-and-connectivity.md) § Capital province town development (Great Powers)).
+
+The resolver iterates `Game.minorNations` and `Game.tribes` and is invoked **separately** from the Great Power resolver, so Great Power connectivity, blockade evaluation, and capital reassignment paths are unchanged.
+
+---
+
 ## Summary
 
 | Capability        | Great Power | Minor Nation | Tribe   |
@@ -73,3 +87,31 @@ Extraction and ownership apply per faction; only Great Powers have stockpiles an
 - Given a Minor Nation's `effectiveMilitaryLevel` increases because `maxGreatPowerMilitaryLevel` increased during the Minor Regiment Upgrade phase  
   When the System applies parity upgrades for that faction in that phase  
   Then the System upgrades each eligible **land regiment** to the appropriate higher-tier version while preserving any existing damage on that regiment, so parity affects unit quality but not unit counts or general bonuses.
+
+- Given a Minor Nation `M` with capital tile `C_m` set in an Old World province `P_m` owned by `M`, with no roads on the tile map  
+  When the System runs the non-Great-Power capital connectivity resolver  
+  Then the resolver returns a `ConnectivityResult` keyed by `M.id` whose `connected` set contains `C_m` and every owned 4-adjacent land tile reachable by the same Road rule and Town rule the Great Power resolver applies for an equivalent input — identical per-tile output to a Great Power on the same owned set, capital tile, and tile state.
+
+- Given a Tribe `T` with capital tile `C_t` set in a New World province `P_t` owned by `T`, with a road chain from `C_t` to a non-adjacent owned land tile `T_far` of length ≥ 2  
+  When the System runs the non-Great-Power capital connectivity resolver  
+  Then the resolver returns a `ConnectivityResult` keyed by `T.id` whose `connected` set contains `T_far`, applying the same Road-rule path expansion as Great Power connectivity.
+
+- Given a Minor Nation `M` whose `capitalTile` field is `null`  
+  When the System runs the non-Great-Power capital connectivity resolver  
+  Then the resolver emits an empty `ConnectivityResult` (`connected.isEmpty == true`) for `M.id` and does not throw or mutate Game state.
+
+- Given a Tribe `T` whose `capitalTile` field is `null`  
+  When the System runs the non-Great-Power capital connectivity resolver  
+  Then the resolver emits an empty `ConnectivityResult` for `T.id` and does not throw or mutate Game state.
+
+- Given a `Game` with `minorNations.isEmpty` and `tribes.isEmpty`  
+  When the System runs the non-Great-Power capital connectivity resolver  
+  Then the resolver returns an empty map and does not iterate `Game.players` or compute Great Power connectivity.
+
+- Given a Minor Nation `M` owning a port province `P_port` in the same region as its capital, an enemy Great Power fleet on a Blockade mission targeting `P_port` from an adjacent sea zone, and `M`'s `P_port` tiles connected by Road or Town rule under no-blockade conditions  
+  When the System runs the non-Great-Power capital connectivity resolver  
+  Then `M`'s `ConnectivityResult.connected` for those `P_port` tiles is the **same** as with no blockade present (the resolver passes an empty blockade set per [capital-and-connectivity.md](capital-and-connectivity.md) § Non-Great-Power capital connectivity).
+
+- Given a `Game` with at least one Great Power, one Minor Nation, and one Tribe — each with a valid `capitalTile`  
+  When the System runs Great Power `resolveConnectivity` and the non-Great-Power `resolveNonGreatPowerConnectivity` independently against the same `Game`, tile maps, and topology  
+  Then the Great Power result is keyed only by Great Power player ids, the non-Great-Power result is keyed only by Minor Nation and Tribe ids, and neither call mutates `Game` state.
