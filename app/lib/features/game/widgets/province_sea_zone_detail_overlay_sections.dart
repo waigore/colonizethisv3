@@ -284,12 +284,14 @@ Widget _buildPoliticalSection({
   required String ownerName,
 }) {
   // Dark-theme tokens (Refs #2865, SPEC § Dark-theme Political section body
-  // tokens). Both body rows declare TextStyle.color explicitly so the
-  // editorial-monocle dark theme owns this surface and the section stops
-  // inheriting DefaultTextStyle / Material bodyMedium colours.
-  // `EditorialMonoclePalette.fg` is a runtime getter (OKLCH → Color), so the
-  // style cannot be `const`.
-  final bodyStyle = TextStyle(color: EditorialMonoclePalette.fg);
+  // tokens). Both body rows declare TextStyle.color explicitly via the
+  // shared `_fgBodyStyle()` helper so the editorial-monocle dark theme owns
+  // this surface and the section stops inheriting DefaultTextStyle /
+  // Material bodyMedium colours. The helper is shared with the Tile
+  // live-data rows (coordinates / terrain / civilian units) and the
+  // sea-zone Political display-name row so every live-data body row stays
+  // in sync with one token source.
+  final bodyStyle = _fgBodyStyle();
   return _buildSection(
     l10n.provinceOverlay_sectionPolitical,
     Column(
@@ -449,14 +451,24 @@ Widget _buildTileSection({
     ],
   );
 
+  // Dark-theme tokens (Refs #2865, SPEC § Dark-theme Tile section body
+  // tokens — live-data body rows). The three bare Tile rows that render
+  // exact world-state values (coordinates / terrain / civilian-units count)
+  // resolve their TextStyle.color to EditorialMonoclePalette.fg via the
+  // shared `_fgBodyStyle()` helper so the editorial-monocle dark theme
+  // owns the Tile live-data surface end-to-end (mirroring the Political
+  // "Name" / "Owner" rows). The helper centralises the canonical fg token
+  // shared with Political, Tile, Economic improved-row, Military owner
+  // sub-header, Civilian own-unit, and Naval fleet-summary live-data rows.
+  final bodyStyle = _fgBodyStyle();
   return _buildSection(
     l10n.provinceOverlay_sectionTile,
     Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
       children: [
-        Text(l10n.provinceOverlay_tileCoordinates(x, y)),
-        Text(l10n.provinceOverlay_tileTerrain(terrainStr)),
+        Text(l10n.provinceOverlay_tileCoordinates(x, y), style: bodyStyle),
+        Text(l10n.provinceOverlay_tileTerrain(terrainStr), style: bodyStyle),
         _buildTileResourceLabelRow(
           context: context,
           l10n: l10n,
@@ -470,7 +482,10 @@ Widget _buildTileSection({
           l10n: l10n,
           roadLevel: roadLevel,
         ),
-        Text(l10n.provinceOverlay_tileCivilianUnits(civilianCount)),
+        Text(
+          l10n.provinceOverlay_tileCivilianUnits(civilianCount),
+          style: bodyStyle,
+        ),
       ],
     ),
   );
