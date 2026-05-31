@@ -14,10 +14,10 @@ High-level shape:
 
 ```
 WorldMarketState {
-  Map<CommodityId, double> prices;            // current market price per commodity
-  Map<CommodityId, MarketActivity> activity;  // previous-turn activity (or empty on game start)
-  List<TradeOrder> carryForwardOffers;        // submitter-tagged, with original priority
-  List<TradeOrder> carryForwardBids;          // submitter-tagged, with original priority
+  Map<CommodityId, double> prices;                                // current market price per commodity
+  Map<CommodityId, MarketActivity> activity;                      // previous-turn activity (or empty on game start)
+  Map<FactionId, List<TradeOrder>> carryForwardOffersByFactionId; // submitter-keyed; original priority preserved
+  Map<FactionId, List<TradeOrder>> carryForwardBidsByFactionId;   // submitter-keyed; original priority preserved
 }
 
 MarketActivity {
@@ -81,6 +81,8 @@ class MarketActivity {
 class WorldMarketState {
   final Map<CommodityId, double> prices;
   final Map<CommodityId, MarketActivity> lastTurnActivity;
+  final Map<String, List<TradeOrder>> carryForwardOffersByFactionId;
+  final Map<String, List<TradeOrder>> carryForwardBidsByFactionId;
 }
 
 class FilledDeal {
@@ -165,7 +167,7 @@ The treasury sink is recorded as a `MarketActivityNote` (`treasury_sink_minor_tr
 
 Aggregate `totalBid_new` and `totalOffer_new` per commodity using **only** the newly-submitted current-turn quantities (carry-forward quantities and minor/tribe auto-offers count as carry-forwards-equivalent and are excluded from price discovery, since auto-offers track a steady-state extraction rather than turn-of-submission demand intent). Compute `Δ%` per [world-market.md](../game/world-market.md) § Price discovery, cap at ±20 %, apply multiplicatively, and clamp to the 30 %-of-base floor. Persist the new price into `WorldMarketState.prices` for next-turn matching; this-turn deals already cleared at the **old** price in Step C.
 
-Remaining unfilled offers and bids that originated from a Great-Power submitter (including residuals from partial fills) are tagged with their original priority and submitter and pushed onto `WorldMarketState.carryForwardOffers` / `carryForwardBids` for the next turn. Minor/Tribe auto-offers do not carry forward: each turn re-emits them based on that turn's extraction.
+Remaining unfilled offers and bids that originated from a Great-Power submitter (including residuals from partial fills) are tagged with their original priority and submitter and pushed onto `WorldMarketState.carryForwardOffersByFactionId` / `carryForwardBidsByFactionId` (per-faction-keyed maps mirroring `DealMatchResult.unfilledOffersByFactionId` / `unfilledBidsByFactionId`) for the next turn. Minor/Tribe auto-offers do not carry forward: each turn re-emits them based on that turn's extraction.
 
 ### Step F — Activity rollup
 
@@ -396,12 +398,12 @@ The pure helpers (`computeNextPrice`, `computeMarketActivity`, `DealMatcher.matc
 - **Priority-tier ordering.** Given offer/bid pairs for the same commodity at integer priorities `1` and `2` and no first-right-of-refusal entries, when phase 13 runs, then the matching engine fully fills the priority-1 pair (subject to quantity and cargo) before considering any priority-2 pair, regardless of FTP status on either pair.
 - **FTP within a tier.** Given two offer/bid candidate pairs at the **same** integer priority tier where one pair shares an active FTP record and the other does not, when phase 13 runs, then the FTP pair fills before the non-FTP pair and the non-FTP pair receives only the residual quantity left after the FTP pair clears.
 - **First right of refusal beats FTP.** Given Great Power A owns a tile purchased from Minor M producing commodity `C`, GP A submits a bid for `C`, GP B holds an FTP with M, and GP B submits a bid for `C` at priority 1, when phase 13 runs, then GP A's bid fills first against M's purchased-tile offer (absolute-priority tier) and GP B's FTP pair fills only from any remaining tier-1 offer quantity.
-- **Cargo enforced per-buyer cumulative.** Given a buyer with `tradeCapacity = 15` and matched bids of A = 8 followed by B = 10 in priority order, when phase 13 processes B, then `remainingCargo[buyer] = 7` after A clears, so B receives a `FilledDeal` of exactly 7 units and a residual carry-forward of 3 units is added to `carryForwardBids` with B's original priority and submitter.
+- **Cargo enforced per-buyer cumulative.** Given a buyer with `tradeCapacity = 15` and matched bids of A = 8 followed by B = 10 in priority order, when phase 13 processes B, then `remainingCargo[buyer] = 7` after A clears, so B receives a `FilledDeal` of exactly 7 units and a residual carry-forward of 3 units is added to `carryForwardBidsByFactionId[buyer]` with B's original priority preserved.
 - **Deals clear at old price.** Given the previous turn's `WorldMarketState.prices[c] = P_old` and a `FilledDeal` for commodity `c` of `Q` units this turn, when the system emits the deal in Step C, then `FilledDeal.pricePerUnit = P_old` and any `Δ%`-adjusted next-turn price applies only after Step E completes.
 - **Minor/tribe treasury sink.** Given a `FilledDeal` whose seller is a Minor or Tribe and which is not under first-right-of-refusal overseas profit, when phase 13 applies transfers, then the buyer is debited `Q × P_old`, the buyer's central stockpile gains `Q` units of the commodity, and no faction (including the seller) is credited by any amount.
 - **First-right-of-refusal overseas profit.** Given Great Power A owns a tile purchased from Minor M (hidden relation score `R = 75`), GP A submits no bid, and GP B buys 10 units of M's commodity at `P_old = 20`, when phase 13 runs, then `WorldMarketState.activity[c].deals` contains the GP B fill, the system credits GP A treasury by exactly `10 × 20 × (75 / 100) × 0.40 = 60`, and the remaining `10 × 20 − 60 = 140` is removed via the treasury sink.
 - **Deterministic matching.** Given two phase-13 runs with identical merged-order input, identical `WorldMarketState`, and identical seeds, when both runs execute Step C, then both emit byte-identical sequences of `FilledDeal` entries (same order, same quantities, same buyers/sellers) and produce byte-identical `MarketActivity` payloads.
-- **Carry-forward provenance preserved.** Given a current-turn bid of quantity 10 for commodity `c` at priority 2 that receives a partial fill of 4, when phase 13 produces carry-forwards in Step E, then `WorldMarketState.carryForwardBids` includes one entry with `submitterId`, `commodityId = c`, `quantity = 6`, `priority = 2`, and `isCarryForward = true`, and the entry's `submittedTurn` matches the current turn.
+- **Carry-forward provenance preserved.** Given a current-turn bid by faction `f` of quantity 10 for commodity `c` at priority 2 that receives a partial fill of 4, when phase 13 produces carry-forwards in Step E, then `WorldMarketState.carryForwardBidsByFactionId[f]` contains one `TradeOrder` with `commodityId = c`, `quantity = 6`, `priority = 2` (the submitter is encoded by the map key, preserving attribution without requiring a per-order `submitterId` field).
 - **Phase placement preserved.** Given a turn whose phase sequence runs to completion, when the resolver emits phase markers, then `worldMarket` begins after the `buildWork end` marker and ends before the `endOfTurn start` marker, matching [turn-resolution-phases.md](turn-resolution-phases.md) § Acceptance criteria.
 
 ### Data types (issue #2989)

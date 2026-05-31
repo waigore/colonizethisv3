@@ -60,8 +60,9 @@ void main() {
     });
   });
 
-  group('worldMarketTurnPhaseHandler stub behaviour (Refs #2990 B4 stub)', () {
-    test('returns TurnPhaseStepContinue with unchanged pipeline state', () {
+  group('worldMarketTurnPhaseHandler empty-turn no-op (Refs #2990 B3)', () {
+    test('returns TurnPhaseStepContinue with semantically unchanged Game '
+        'when no trade orders or carry-forwards exist', () {
       final game = Game(
         id: 'g1',
         players: const [Player(id: 'p1', displayName: 'A', isHuman: true)],
@@ -85,12 +86,12 @@ void main() {
       expect(outcome, isA<TurnPhaseStepContinue>());
       final next = (outcome as TurnPhaseStepContinue).pipeline;
       expect(
-        identical(next.game, game),
-        isTrue,
+        next.game,
+        equals(game),
         reason:
-            'Stub handler must not mutate the Game model: no commodity '
-            'transfers, no treasury changes, no carry-forward orders, no '
-            'price updates until #2989 deal-matching wires through B3.',
+            'Empty-turn no-op: no commodity transfers, no treasury changes, '
+            'no carry-forward orders, no price updates per '
+            'SPEC/program/world-market-resolution.md § Phase resolution.',
       );
     });
   });
