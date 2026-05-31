@@ -60,6 +60,7 @@ export 'src/economy/economy_extraction.dart';
 export 'src/economy/economy_production.dart';
 export 'src/economy/economy_preview_stockpile_phase.dart';
 export 'src/economy/economy_riches_to_treasury.dart';
+export 'src/economy/non_gp_extraction.dart';
 export 'src/economy/resource_extractor.dart';
 export 'src/economy/sea_transport.dart';
 export 'src/economy/worker_action_cost.dart';
