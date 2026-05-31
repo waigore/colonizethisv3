@@ -6,9 +6,28 @@
 
 ## Material design ban
 
-- **No Material chrome:** The app **must not** use Material or Cupertino widgets for visible chrome: no `ElevatedButton`, `FilledButton`, `TextButton`, `OutlinedButton`, `AlertDialog`, `Dialog`, `Card`, `ChoiceChip`, `Chip`, `Slider`, `DropdownButton`, `ListTile`, `AppBar`, or Material theming for these.
-- **Plumbing only:** Material is allowed **only** where Flutter requires it for plumbing (e.g. `MaterialApp`, `DefaultTabController`, `ThemeData`, focus/overlay internals). These must not leak default Material visuals into the UI.
-- **CI/test enforcement:** Widget tests should assert against the Ct-* catalog types (e.g. `CtNinePatchButton`, `CtDropdown`, `CtSlider`, `CtScreenShell`) rather than Material button/slider types.
+- **No Material chrome:** The app **must not** use Material or Cupertino widgets for visible chrome: no `ElevatedButton`, `FilledButton`, `TextButton`, `OutlinedButton`, `AlertDialog`, `Dialog`, `Card`, `ChoiceChip`, `Chip`, `FilterChip`, `Slider`, `DropdownButton`, `ListTile`, `SwitchListTile`, generic `IconButton`, generic `Scaffold`, `AppBar`, or Material theming for these.
+- **Ct-\* counterparts (per #2914 Phase 0a):** Each banned widget MUST be replaced with the corresponding Ct-\* catalog widget below. The list below is normative for replacement direction; deviations require either an existing Ct-\* widget that already covers the use (cited in the replacement PR) or a SPEC extension adding a new Ct-\* widget before the replacement lands.
+
+| Banned Material widget | Ct-\* counterpart | Notes |
+|------------------------|-------------------|-------|
+| `ElevatedButton`, `FilledButton`, `TextButton`, `OutlinedButton` | `CtNinePatchButton` | Use `dangerVariant: true` for destructive actions. |
+| `AlertDialog`, `Dialog` | `CtDialogShell` (single dialog) or `CtFullScreenDialogueShell` (scrim + dialog scaffold) | `barrierColor` / scrim resolves through `EditorialMonoclePalette.dialogScrim`. |
+| `Card` | `CtPanel` | In-screen sections; horizontal-band visual contract. |
+| `ChoiceChip`, `Chip`, `FilterChip` | `CtChoiceChip` | Single-select toggle chips. Multi-select pickers compose `CtChoiceChip` rows; no Material `FilterChip` on visible chrome. |
+| `Slider` | `CtSlider` | Continuous and discrete (`divisions`) variants both use `CtSlider`. |
+| `DropdownButton` | `CtDropdown` | Trigger + modal picker inside `CtDialogShell`. |
+| `ListTile`, `SwitchListTile` | `CtToggleSwitch` (paired with `CtSectionLabel` or composed `Row`) | `SwitchListTile`'s combined label + switch composition is reproduced by laying out `CtSectionLabel` (or body text in the active theme `TextTheme` slot) alongside `CtToggleSwitch`; no Material `ListTile` row chrome. |
+| Generic `IconButton` | `CtBackButton` (back-affordance chrome) or `CtNinePatchButton` with an icon `child` (action affordance) | "Generic" here means an `IconButton` used as visible chrome — back arrows, glyph-only action buttons, dialog dismiss buttons. Glyph-only affordances that do not fit `CtBackButton`/`CtNinePatchButton` MUST add a new Ct-\* primitive in this catalog before implementation. |
+| Generic `Scaffold`, `AppBar` | `CtScreenShell` (which embeds `CtTopBar`) | "Generic" here means a `Scaffold` used as visible screen chrome on a route. `MaterialApp`'s internal `Scaffold` plumbing for routing/overlays remains permitted under the Plumbing-only rule below. |
+
+- **Plumbing only:** Material is allowed **only** where Flutter requires it for plumbing (e.g. `MaterialApp`, `DefaultTabController`, `ThemeData`, focus/overlay internals, the implicit `Scaffold` inside route hosts that mount a Ct-\* surface). These must not leak default Material visuals into the UI.
+- **CI/test enforcement:** Widget tests should assert against the Ct-\* catalog types (e.g. `CtNinePatchButton`, `CtDropdown`, `CtSlider`, `CtScreenShell`) rather than Material button/slider types. The `disallowed_ast_patterns` CI gate (`tool/check_disallowed_ast_patterns.dart`) is the enforcement vehicle for `app/lib/features/**` — see issue #2914 Phase 2 G2 for the gate-extension scope that picks up the additions above.
+
+### Acceptance criteria (Material design ban)
+
+- **Given** a developer reads the §Material design ban list, **when** they look for `FilterChip`, `SwitchListTile`, generic `IconButton`, or generic `Scaffold`, **then** each appears in the comma-separated banned-widget list and has a row in the Ct-\* counterparts table identifying the replacement and any usage notes.
+- **Given** a feature file under `app/lib/features/**` introduces one of the banned widgets above as visible chrome, **when** the planned `disallowed_ast_patterns` CI gate (issue #2914 Phase 2 G2) runs, **then** the gate fails the build and reports the file/line of the banned widget; until that gate lands, code review must apply the same rule manually using the table above.
 
 ---
 
@@ -138,6 +157,69 @@ needed.
 Widgetbook fallback and debug toggles, but the running app's default theme
 is `AppThemes.editorialMonocle`. No code path outside Widgetbook and debug
 toggles may render a screen in the light colonial theme.
+
+---
+
+## Spacing and radius tokens
+
+Canonical spacing and corner-radius scales for the dark `editorialMonocle`
+theme. Values are derived from observed `app/lib/widgets/**` and
+`app/lib/features/**` patterns and are formalised here so per-component
+review (issues #2914 S5 / S6) can adopt them in Ct-\* widget defaults and
+feature padding/radius callsites without re-deriving the scale per file.
+
+### Spacing tokens
+
+The Dart implementation lands as `CtSpacing` constants in
+`app/lib/widgets/ct_spacing.dart` (issue #2914 S5). Token names use a
+`xs`/`s`/`m`/`ml`/`l`/`xl`/`xxl` shorthand so callsites read as
+`EdgeInsets.all(CtSpacing.m)` rather than embedding the literal `8`.
+
+| Token | Logical px | Typical role |
+|-------|-----------|--------------|
+| `xs` | `2` | Hairline gaps inside compact widgets (e.g. `CtTransferList` per-row vertical breath, between `CtPanel` accent edge and inner content). |
+| `s` | `6` | Resource-cell horizontal padding and similar tight chrome (e.g. `CtResourceCell` default `EdgeInsets.symmetric(horizontal: s, vertical: 4)`-style usage). |
+| `m` | `8` | Default screen-shell outer padding and panel inner padding for compact surfaces (`CtScreenShell` outer body padding, `CtPanel` default inner padding). |
+| `ml` | `12` | Dialog body line breaks, button row gaps, mid-density panel insets. |
+| `l` | `16` | Standard card / dialog block padding on default-density surfaces (predominant `EdgeInsets.all(16)` usage). |
+| `xl` | `20` | Full-screen dialogue shell inner padding (`CtFullScreenDialogueShell.defaultPadding = EdgeInsets.all(xl)`). |
+| `xxl` | `24` | Roomy main-menu container padding, generous block padding for low-density surfaces. |
+
+The scale is intentionally non-linear: it skips over `4`, `10`, and `14`
+because those values are rare and either approximate (`4 ≈ s/2 or m/2`) or
+better expressed as a per-component override (`14`, used once in default
+densities, is a candidate for explicit override during S5 adoption rather
+than a global token). Per-component review (S5) MAY extend the scale with
+additional named tokens if a value occurs in three or more callsites; new
+tokens MUST land here in the SPEC table before code adoption.
+
+### Radius tokens
+
+The Dart implementation lands as `CtRadius` constants in
+`app/lib/widgets/ct_radius.dart` (issue #2914 S6) and is consumed via
+`BorderRadius.circular(CtRadius.medium)` (or an equivalent helper).
+
+| Token | Logical px | Typical role |
+|-------|-----------|--------------|
+| `small` | `2` | Hairline rounding on chip/tab corners (e.g. `BorderRadius.circular(2)` in `CtChoiceChip` / `CtTabStrip` style frames). |
+| `medium` | `4` | Default rounded chrome on resource cells, transfer list rows, compact panels. |
+| `large` | `8` | Dialog/panel outer frame rounding for default-density surfaces. |
+| `xl` | `12` | Roomy dialog frames and full-screen overlays where the corner radius reads at human scale rather than as pixel-art chamfer. |
+
+The scale stops at `12`. The single observed `BorderRadius.circular(24)`
+callsite is a per-screen affordance (not a global token); per-component
+review (S6) treats it as an explicit override rather than promoting a
+`xxl` radius token. The single observed `BorderRadius.circular(1)` and
+`BorderRadius.circular(6)` callsites are similarly out-of-scale and are
+candidates for adjustment to the nearest defined token during adoption,
+unless per-component review documents an explicit pixel-art reason to
+keep the literal.
+
+### Acceptance criteria (Spacing and radius tokens)
+
+- **Given** a developer reads the §Spacing tokens table, **when** they look for the `xs`, `s`, `m`, `ml`, `l`, `xl`, and `xxl` rows, **then** each token appears with its logical-px value (`2`, `6`, `8`, `12`, `16`, `20`, `24` respectively) and a typical-role description, and the prose around the table calls out the deliberate omissions of `4`, `10`, and `14` from the scale.
+- **Given** a developer reads the §Radius tokens table, **when** they look for the `small`, `medium`, `large`, and `xl` rows, **then** each token appears with its logical-px value (`2`, `4`, `8`, `12` respectively) and a typical-role description, and the prose around the table calls out that observed values `1`, `6`, and `24` are out-of-scale per-component overrides rather than global tokens.
+- **Given** issue #2914 S5 / S6 implements `CtSpacing` and `CtRadius` Dart constants, **when** the implementation is reviewed against this SPEC, **then** every Dart constant name and value matches a row in the corresponding token table and no extra named constants exist that are not present in the SPEC table.
 
 ---
 
