@@ -5,6 +5,7 @@ import '../../diplomacy/diplomacy_relation_lookup.dart' show ftpPairKeysFromGame
 import '../../economy/sea_transport.dart';
 import '../../economy/world_market/deal_matcher.dart';
 import '../../economy/world_market/price_discovery.dart';
+import '../../economy/world_market/purchased_tile_index.dart';
 import '../../world/game_world_mutations.dart';
 import '../turn_pipeline_state.dart';
 import '../turn_resolver_config.dart';
@@ -137,6 +138,7 @@ TurnPhaseStepOutcome worldMarketTurnPhaseHandler(
     tradeCapacityByFactionId: tradeCapacityByFactionId,
     pricesByCommodityId: priorMarket.prices,
     ftpPairKeys: ftpPairKeys,
+    purchasedTileIndex: PurchasedTileIndex.fromGame(game),
   );
   final matchResult = DealMatcher.matchDeals(matchInputs);
 
