@@ -1,3 +1,4 @@
+import 'package:colonizethis_app/config/editorial_monocle_palette.dart';
 import 'package:colonizethis_app/l10n/l10n.dart';
 import 'package:colonizethis_debug_console/colonizethis_debug_console.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
@@ -74,7 +75,7 @@ class _DebugConsoleOverlayPanelState extends State<DebugConsoleOverlayPanel> {
               Expanded(
                 child: Container(
                   padding: const EdgeInsets.all(6),
-                  color: Colors.black54,
+                  color: EditorialMonoclePalette.dialogScrim,
                   child: _buildLogList(),
                 ),
               ),
@@ -136,7 +137,7 @@ class _DebugConsoleOverlayPanelState extends State<DebugConsoleOverlayPanel> {
           hintText: l10n.debugConsole_hintSpawnCivilian,
           hintStyle: TextStyle(color: Colors.white.withValues(alpha: 0.6)),
           filled: true,
-          fillColor: Colors.black54,
+          fillColor: EditorialMonoclePalette.dialogScrim,
           border: OutlineInputBorder(borderRadius: BorderRadius.circular(4)),
         ),
       ),
