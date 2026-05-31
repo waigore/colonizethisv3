@@ -7,7 +7,7 @@ import 'package:flutter/material.dart';
 
 import '../../../config/app_assets.dart';
 import '../../../l10n/l10n.dart';
-import '../../../widgets/ct_nine_patch_button.dart';
+import '../../../widgets/ct_danger_text_button.dart';
 import 'production_allocation_row_buttons.dart';
 import 'production_labour_helpers.dart';
 
@@ -76,7 +76,7 @@ class _ProductionLabourTierRow extends StatelessWidget {
   final AppLocalizations l10n;
   final ThemeData theme;
 
-  String _tierLabel() {
+  String _tierName() {
     switch (data.tier) {
       case WorkerTier.peasant:
         return l10n.production_workers_peasants;
@@ -89,8 +89,16 @@ class _ProductionLabourTierRow extends StatelessWidget {
     }
   }
 
+  String _tierLabelWithUnlockState() {
+    final tierName = _tierName();
+    final state = data.techUnlocked
+        ? l10n.production_labourTierUnlocked
+        : l10n.production_labourTierLocked;
+    return l10n.production_labourTierLabel(tierName, state);
+  }
+
   String _appendTooltip() {
-    final label = _tierLabel();
+    final label = _tierName();
     return data.tier == WorkerTier.peasant
         ? l10n.production_labourRecruitTier(label)
         : l10n.production_labourTrainTier(label);
@@ -109,12 +117,12 @@ class _ProductionLabourTierRow extends StatelessWidget {
     );
   }
 
-  List<Widget> _buildEditActions(String tierLabel) {
+  List<Widget> _buildEditActions(String tierName) {
     return [
       _LabourIconButton(
         enabled: data.canPop,
-        semanticLabel: l10n.production_labourDequeueTier(tierLabel),
-        tooltip: l10n.production_labourDequeueTier(tierLabel),
+        semanticLabel: l10n.production_labourDequeueTier(tierName),
+        tooltip: l10n.production_labourDequeueTier(tierName),
         assetFileName: _uiIconLabourDecrement,
         onPressed: () => callbacks.onPopLastRecruitOrder(data.tier),
       ),
@@ -130,7 +138,7 @@ class _ProductionLabourTierRow extends StatelessWidget {
           tier: data.tier,
           enabled: data.canDisband,
           disbandLabel: l10n.production_labourDisband,
-          tooltip: l10n.production_labourDisbandTier(tierLabel),
+          tooltip: l10n.production_labourDisbandTier(tierName),
           onDisband: callbacks.onDisband,
         ),
     ];
@@ -138,7 +146,8 @@ class _ProductionLabourTierRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final tierLabel = _tierLabel();
+    final tierName = _tierName();
+    final tierLabel = _tierLabelWithUnlockState();
     return Row(
       mainAxisSize: MainAxisSize.max,
       children: [
@@ -151,7 +160,7 @@ class _ProductionLabourTierRow extends StatelessWidget {
         ),
         _buildQueuedSegment(),
         const Spacer(),
-        if (canEdit) ..._buildEditActions(tierLabel),
+        if (canEdit) ..._buildEditActions(tierName),
       ],
     );
   }
@@ -176,20 +185,13 @@ class _DisbandTierButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.only(left: 6),
-      child: MergeSemantics(
-        child: Semantics(
-          button: true,
-          enabled: enabled,
-          label: tooltip,
-          child: Tooltip(
-            message: tooltip,
-            child: CtNinePatchButton(
-              key: ValueKey<String>('production_labour_disband_${tier.id}'),
-              onPressed: enabled ? () => onDisband(tier) : null,
-              child: Text(disbandLabel),
-            ),
-          ),
-        ),
+      child: CtDangerTextButton(
+        key: ValueKey<String>('production_labour_disband_${tier.id}'),
+        enabled: enabled,
+        label: disbandLabel,
+        semanticLabel: tooltip,
+        tooltip: tooltip,
+        onPressed: enabled ? () => onDisband(tier) : null,
       ),
     );
   }
