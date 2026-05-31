@@ -231,18 +231,28 @@ const Object _copyWithUnset = Object();
 /// quantities for the resolved turn (carry-forwards excluded), matching the
 /// price discovery aggregation contract in
 /// `SPEC/game/world-market.md` § Price discovery.
+///
+/// `deals` carries the per-commodity sequence of [FilledDeal] entries that
+/// the deal matcher produced for the resolved turn (see
+/// `SPEC/program/world-market-resolution.md` § Step F Activity rollup and
+/// § Data model). The Deal Book UI (`#2993` E6) consumes this list,
+/// filtered by buyer/seller faction id, to render the player's ledger.
+/// The list is **always** stored unmodifiable; callers must not mutate it
+/// in place.
 class MarketActivity {
   const MarketActivity({
     this.totalBidQuantity = 0,
     this.totalOfferQuantity = 0,
     this.filledQuantity = 0,
     this.priceChangePercent = 0.0,
+    this.deals = const <FilledDeal>[],
   });
 
   final int totalBidQuantity;
   final int totalOfferQuantity;
   final int filledQuantity;
   final double priceChangePercent;
+  final List<FilledDeal> deals;
 
   static const empty = MarketActivity();
 
@@ -251,6 +261,8 @@ class MarketActivity {
     'totalOfferQuantity': totalOfferQuantity,
     'filledQuantity': filledQuantity,
     'priceChangePercent': priceChangePercent,
+    if (deals.isNotEmpty)
+      'deals': [for (final d in deals) d.toJson()],
   };
 
   static MarketActivity fromJson(Map<String, dynamic> json) {
@@ -261,11 +273,24 @@ class MarketActivity {
       return double.tryParse(v?.toString() ?? '') ?? 0.0;
     }
 
+    final dealsRaw = json['deals'];
+    final deals = <FilledDeal>[];
+    if (dealsRaw is List<dynamic>) {
+      for (final entry in dealsRaw) {
+        if (entry is Map<dynamic, dynamic>) {
+          deals.add(FilledDeal.fromJson(Map<String, dynamic>.from(entry)));
+        }
+      }
+    }
+
     return MarketActivity(
       totalBidQuantity: intOrZero(json['totalBidQuantity']),
       totalOfferQuantity: intOrZero(json['totalOfferQuantity']),
       filledQuantity: intOrZero(json['filledQuantity']),
       priceChangePercent: doubleOrZero(json['priceChangePercent']),
+      deals: deals.isEmpty
+          ? const <FilledDeal>[]
+          : List<FilledDeal>.unmodifiable(deals),
     );
   }
 
@@ -277,7 +302,8 @@ class MarketActivity {
           totalBidQuantity == other.totalBidQuantity &&
           totalOfferQuantity == other.totalOfferQuantity &&
           filledQuantity == other.filledQuantity &&
-          priceChangePercent == other.priceChangePercent;
+          priceChangePercent == other.priceChangePercent &&
+          _listEquals(deals, other.deals);
 
   @override
   int get hashCode => Object.hash(
@@ -285,6 +311,7 @@ class MarketActivity {
     totalOfferQuantity,
     filledQuantity,
     priceChangePercent,
+    Object.hashAll(deals),
   );
 }
 

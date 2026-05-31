@@ -354,9 +354,11 @@ Map<CommodityId, MarketActivity> _buildActivity({
   required Map<CommodityId, double> newPrices,
 }) {
   final filledByCommodity = <CommodityId, int>{};
+  final dealsByCommodity = <CommodityId, List<FilledDeal>>{};
   for (final deal in matchResult.filledDeals) {
     filledByCommodity[deal.commodityId] =
         (filledByCommodity[deal.commodityId] ?? 0) + deal.quantity;
+    (dealsByCommodity[deal.commodityId] ??= <FilledDeal>[]).add(deal);
   }
   final commodityIds = <CommodityId>{
     ...newQuantitiesByCommodity.keys,
@@ -371,11 +373,15 @@ Map<CommodityId, MarketActivity> _buildActivity({
     final oldPrice = priorPrices[id] ?? 0.0;
     final newPrice = newPrices[id] ?? oldPrice;
     final percent = oldPrice > 0 ? (newPrice / oldPrice) - 1.0 : 0.0;
+    final deals = dealsByCommodity[id];
     activity[id] = MarketActivity(
       totalBidQuantity: pair.bid,
       totalOfferQuantity: pair.offer,
       filledQuantity: filled,
       priceChangePercent: percent,
+      deals: deals == null
+          ? const <FilledDeal>[]
+          : List<FilledDeal>.unmodifiable(deals),
     );
   }
   return activity;
