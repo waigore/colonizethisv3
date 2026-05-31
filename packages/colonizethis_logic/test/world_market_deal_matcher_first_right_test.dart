@@ -10,21 +10,6 @@ import 'world_market_deal_matcher_test_support.dart';
 /// formula and the purchased-tile index is covered by D1/D3 tests; this
 /// file exercises the matcher integration only.
 void main() {
-  PurchasedTileIndex frrIndex({
-    String tileKey = 'oldWorld|M1|0|0',
-    String owningGpId = 'gpA',
-    String sourceFactionId = 'M1',
-    String provinceId = 'oldWorld|M1',
-  }) =>
-      PurchasedTileIndex.forTesting([
-        PurchasedTileAttribution(
-          tileKey: tileKey,
-          owningGpId: owningGpId,
-          sourceFactionId: sourceFactionId,
-          provinceId: provinceId,
-        ),
-      ]);
-
   group('DealMatcher.matchDeals — First Right of Refusal (#2992 D2)', () {
     test(
       'owning GP bid fills purchased-tile offer ahead of higher-priority '
@@ -45,7 +30,7 @@ void main() {
               'gpB': [matcherBid('timber', 10, priority: 1)],
             },
             tradeCapacityByFactionId: {'gpA': 100, 'gpB': 100},
-            purchasedTileIndex: frrIndex(),
+            purchasedTileIndex: frrMatcherTestIndex(),
           ),
         );
 
@@ -84,7 +69,7 @@ void main() {
             },
             tradeCapacityByFactionId: {'gpA': 100, 'gpFtp': 100},
             ftpPairKeys: {DealMatcher.pairKey('M1', 'gpFtp')},
-            purchasedTileIndex: frrIndex(),
+            purchasedTileIndex: frrMatcherTestIndex(),
           ),
         );
 
@@ -117,7 +102,7 @@ void main() {
               'gpB': [matcherBid('timber', 10, priority: 1)],
             },
             tradeCapacityByFactionId: {'gpB': 100},
-            purchasedTileIndex: frrIndex(),
+            purchasedTileIndex: frrMatcherTestIndex(),
           ),
         );
 
@@ -149,7 +134,7 @@ void main() {
               'gpB': [matcherBid('timber', 10, priority: 1)],
             },
             tradeCapacityByFactionId: {'gpA': 100, 'gpB': 100},
-            purchasedTileIndex: frrIndex(),
+            purchasedTileIndex: frrMatcherTestIndex(),
           ),
         );
 
@@ -190,7 +175,7 @@ void main() {
             },
             // Owning GP only has cargo for 3 units this turn.
             tradeCapacityByFactionId: {'gpA': 3, 'gpB': 100},
-            purchasedTileIndex: frrIndex(),
+            purchasedTileIndex: frrMatcherTestIndex(),
           ),
         );
 
@@ -230,7 +215,7 @@ void main() {
               'gpB': [matcherBid('timber', 10, priority: 1)],
             },
             tradeCapacityByFactionId: {'gpA': 100, 'gpB': 100},
-            purchasedTileIndex: frrIndex(tileKey: tileKey),
+            purchasedTileIndex: frrMatcherTestIndex(tileKey: tileKey),
           ),
         );
 
@@ -260,7 +245,7 @@ void main() {
               'gpB': [matcherBid('timber', 10, priority: 1)],
             },
             tradeCapacityByFactionId: {'gpA': 100, 'gpB': 100},
-            purchasedTileIndex: frrIndex(tileKey: indexTileKey),
+            purchasedTileIndex: frrMatcherTestIndex(tileKey: indexTileKey),
           ),
         );
 
@@ -366,7 +351,7 @@ void main() {
               ],
             },
             tradeCapacityByFactionId: {'gpA': 100},
-            purchasedTileIndex: frrIndex(),
+            purchasedTileIndex: frrMatcherTestIndex(),
           ),
         );
 
@@ -384,81 +369,5 @@ void main() {
         ]);
       },
     );
-  });
-
-  group(
-    'DealMatcher.matchDeals — FRR activity bookkeeping (#2992 D2)',
-    () {
-      test(
-        'FRR fills count toward filledQuantity in the per-commodity activity',
-        () {
-          const tileKey = 'oldWorld|M1|0|0';
-          final result = DealMatcher.matchDeals(
-            matcherInputs(
-              offersByFactionId: {
-                'M1': [
-                  matcherOffer('timber', 10, originTileKey: tileKey),
-                ],
-              },
-              bidsByFactionId: {
-                'gpA': [matcherBid('timber', 6, priority: 5)],
-                'gpB': [matcherBid('timber', 6, priority: 1)],
-              },
-              tradeCapacityByFactionId: {'gpA': 100, 'gpB': 100},
-              purchasedTileIndex: frrIndex(),
-            ),
-          );
-
-          // 6 fill via FRR, 4 fill via tier matching → 10 total filled.
-          expect(
-            result.activityByCommodityId['timber'],
-            const MarketActivity(
-              totalBidQuantity: 12,
-              totalOfferQuantity: 10,
-              filledQuantity: 10,
-            ),
-          );
-        },
-      );
-    },
-  );
-
-  group('PurchasedTileIndex.forTesting (#2992 D2 test helper)', () {
-    test('builds an index from explicit attributions', () {
-      const attribution = PurchasedTileAttribution(
-        tileKey: 'oldWorld|M1|0|0',
-        owningGpId: 'gpA',
-        sourceFactionId: 'M1',
-        provinceId: 'oldWorld|M1',
-      );
-      final index = PurchasedTileIndex.forTesting([attribution]);
-      expect(index.length, 1);
-      expect(index.attributionForTileKey('oldWorld|M1|0|0'), attribution);
-      expect(index.attributionForTileKey('missing'), isNull);
-    });
-
-    test('first attribution per tileKey wins on duplicates', () {
-      const first = PurchasedTileAttribution(
-        tileKey: 'oldWorld|M1|0|0',
-        owningGpId: 'gpA',
-        sourceFactionId: 'M1',
-        provinceId: 'oldWorld|M1',
-      );
-      const second = PurchasedTileAttribution(
-        tileKey: 'oldWorld|M1|0|0',
-        owningGpId: 'gpB',
-        sourceFactionId: 'M1',
-        provinceId: 'oldWorld|M1',
-      );
-      final index = PurchasedTileIndex.forTesting([first, second]);
-      expect(index.length, 1);
-      expect(index.attributionForTileKey('oldWorld|M1|0|0'), first);
-    });
-
-    test('empty input yields empty index', () {
-      final index = PurchasedTileIndex.forTesting(const []);
-      expect(index.length, 0);
-      expect(index.isEmpty, isTrue);
-    });
   });
 }

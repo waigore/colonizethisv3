@@ -43,3 +43,19 @@ DealMatchInputs matcherInputs({
       ftpPairKeys: ftpPairKeys,
       purchasedTileIndex: purchasedTileIndex,
     );
+
+/// Single-tile [PurchasedTileIndex] for FRR matcher tests (#2992 D2).
+PurchasedTileIndex frrMatcherTestIndex({
+  String tileKey = 'oldWorld|M1|0|0',
+  String owningGpId = 'gpA',
+  String sourceFactionId = 'M1',
+  String provinceId = 'oldWorld|M1',
+}) =>
+    PurchasedTileIndex.forTesting([
+      PurchasedTileAttribution(
+        tileKey: tileKey,
+        owningGpId: owningGpId,
+        sourceFactionId: sourceFactionId,
+        provinceId: provinceId,
+      ),
+    ]);
