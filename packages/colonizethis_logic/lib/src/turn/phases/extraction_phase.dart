@@ -91,16 +91,11 @@ Game runExtractionPhase(
       // used at departure, so this is the correct value to subtract from
       // the home-fleet cargo when computing trade cargo capacity in phase
       // 13 (see SPEC/game/world-market.md § Cargo).
-      if (overseasShippedTonnageOut != null && overseasDelivered.isNotEmpty) {
-        var shipped = 0;
-        for (final v in overseasDelivered.values) {
-          shipped += v;
-        }
-        if (shipped > 0) {
-          overseasShippedTonnageOut[player.id] =
-              (overseasShippedTonnageOut[player.id] ?? 0) + shipped;
-        }
-      }
+      _recordOverseasShippedTonnage(
+        overseasShippedTonnageOut,
+        player.id,
+        overseasDelivered,
+      );
       if (overseasDelivered.isNotEmpty) {
         extractionSeed =
             (extractionSeed * kTurnResolutionLcgMultiplier +
@@ -120,6 +115,24 @@ Game runExtractionPhase(
     updatedPlayers.add(player.copyWith(stockpile: stockpile));
   }
   return currentState.withPlayers(updatedPlayers);
+}
+
+void _recordOverseasShippedTonnage(
+  Map<String, int>? out,
+  String playerId,
+  Map<CommodityId, int> overseasDelivered,
+) {
+  if (out == null || overseasDelivered.isEmpty) {
+    return;
+  }
+  var shipped = 0;
+  for (final v in overseasDelivered.values) {
+    shipped += v;
+  }
+  if (shipped <= 0) {
+    return;
+  }
+  out[playerId] = (out[playerId] ?? 0) + shipped;
 }
 
 TurnPhaseStepOutcome extractionTurnPhaseHandler(
