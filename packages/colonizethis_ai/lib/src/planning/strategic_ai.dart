@@ -183,15 +183,10 @@ StrategicOrderTraceResult generateStrategicOrdersWithTrace({
     sameTurnPriorDiplomaticOrders: sameTurnPriorDiplomaticOrders,
     phasePlan: phasePlan,
   );
-  var orders = plannerOutcome.orders;
-  if (economyPlan.tradeOrders.isNotEmpty) {
-    orders = orders.copyWith(
-      tradeOrdersByPlayerId: {
-        ...orders.tradeOrdersByPlayerId,
-        nationId: economyPlan.tradeOrders,
-      },
-    );
-  }
+  // Trade orders are merged into [Orders.tradeOrdersByPlayerId] inside the
+  // domain orchestrator (Refs #2994 F7) so all orchestrator callers see the
+  // same merged output. Keep this read-only here.
+  final orders = plannerOutcome.orders;
   final moveCount = orders.moveOrdersByPlayerId[nationId]?.length ?? 0;
   final armyMoveCount = orders.armyMoveOrdersByPlayerId[nationId]?.length ?? 0;
   final buildCount = orders.buildUnitOrdersByPlayerId[nationId]?.length ?? 0;
