@@ -259,6 +259,17 @@ TextStyle _obfuscatedBodyStyle() =>
 Widget _obfuscatedBodyText(String data) =>
     Text(data, style: _obfuscatedBodyStyle());
 
+/// Shared `TextStyle` for every live-data body row in the overlay that
+/// renders exact world-state values (Political "Name" / "Owner", Tile
+/// section coordinates / terrain / civilian-units, sea-zone "Sea zone"
+/// display name). Centralises the canonical `EditorialMonoclePalette.fg`
+/// foreground token so a future change to the live-data token only updates
+/// `_fgBodyStyle` (and the SPEC). See
+/// SPEC/ui/province-sea-zone-detail-overlay.md § Dark-theme Political /
+/// Tile / sea-zone Political body tokens. `EditorialMonoclePalette.fg` is
+/// a runtime OKLCH → Color getter so this style cannot be `const`.
+TextStyle _fgBodyStyle() => TextStyle(color: EditorialMonoclePalette.fg);
+
 /// Pixel-art overlay title text style (non-Material) under the dark
 /// editorial-monocle theme. Mirrors `CtTopBar` title typography: display
 /// font from `theme.textTheme.titleMedium`, `--accent` colour from
@@ -643,7 +654,7 @@ _OverlayContent _seaZoneContent({
     l10n.provinceOverlay_sectionPolitical,
     Text(
       l10n.provinceOverlay_seaZone(seaName),
-      style: TextStyle(color: EditorialMonoclePalette.fg),
+      style: _fgBodyStyle(),
     ),
   );
   final naval = _buildNavalSection(
