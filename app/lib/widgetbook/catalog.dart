@@ -44,6 +44,7 @@ import '../features/game/widgets/naval_units_panel.dart';
 import '../features/game/widgets/pause_menu_panel.dart';
 import '../features/game/widgets/player_turn_event_feed.dart';
 import '../features/game/widgets/production_commodity_breakdown_dialog.dart';
+import '../features/game/widgets/production_labour_helpers.dart';
 import '../features/game/widgets/production_panel.dart';
 import '../features/game/widgets/production_panel_demo_data.dart';
 import '../features/game/widgets/province_sea_zone_detail_overlay.dart';

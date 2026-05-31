@@ -1270,6 +1270,23 @@ abstract class AppLocalizations {
   /// Visible label for the Disband button on trained-tier rows.
   String get production_labourDisband;
 
+  /// Parenthetical suffix on a Labour Controls tier label when every
+  /// required tech is unlocked for the viewed player (peasant always
+  /// renders this).
+  String get production_labourTierUnlocked;
+
+  /// Parenthetical suffix on a Labour Controls tier label when one or
+  /// more required techs are missing for the viewed player.
+  String get production_labourTierLocked;
+
+  /// Concatenation of the tier name and the unlock-state parenthetical for
+  /// a Labour Controls row (e.g. "Peasants (unlocked)").
+  String production_labourTierLabel(String tier, String state);
+
+  /// Title of the Labour Controls subsection in the Production panel
+  /// Available subpanel.
+  String get production_labourControlsSectionLabel;
+
   /// Worker type and count in production panel.
   String production_workerCount(String name, int count);
 

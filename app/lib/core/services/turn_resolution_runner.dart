@@ -544,6 +544,7 @@ String _resultTypeName(TurnResolutionResult result) {
   return switch (result) {
     TurnResolutionComplete() => 'complete',
     TurnResolutionPendingOvertures() => 'pendingOvertures',
+    TurnResolutionPendingFtp() => 'pendingFtp',
     TurnResolutionPendingIntervention() => 'pendingIntervention',
     TurnResolutionPendingCallToArms() => 'pendingCallToArms',
   };
@@ -563,6 +564,19 @@ Map<String, Object?> _encodeTurnResolutionResult(TurnResolutionResult result) {
                 'offererGpId': offer.offererGpId,
                 'targetFactionId': offer.targetFactionId,
                 'stage': offer.stage.name,
+              },
+            )
+            .toList(growable: false),
+      };
+    case TurnResolutionPendingFtp():
+      return {
+        'type': 'pendingFtp',
+        'game': result.game.toJson(),
+        'pendingFtpOffers': result.pendingFtpOffers
+            .map(
+              (offer) => {
+                'proposerGpId': offer.proposerGpId,
+                'targetGpId': offer.targetGpId,
               },
             )
             .toList(growable: false),
@@ -621,6 +635,20 @@ TurnResolutionResult _decodeTurnResolutionResult(Map<String, dynamic> json) {
           )
           .toList(growable: false);
       return TurnResolutionPendingOvertures(game: game, pendingOvertures: list);
+    case 'pendingFtp':
+      final ftpList = (json['pendingFtpOffers'] as List<dynamic>)
+          .map(
+            (entry) =>
+                Map<String, dynamic>.from(entry as Map<Object?, Object?>),
+          )
+          .map(
+            (entry) => FtpOffer(
+              proposerGpId: entry['proposerGpId'] as String,
+              targetGpId: entry['targetGpId'] as String,
+            ),
+          )
+          .toList(growable: false);
+      return TurnResolutionPendingFtp(game: game, pendingFtpOffers: ftpList);
     case 'pendingIntervention':
       final list = (json['pendingInterventions'] as List<dynamic>)
           .map(

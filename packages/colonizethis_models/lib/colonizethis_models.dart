@@ -33,6 +33,7 @@ export 'src/turn_state.dart';
 export 'src/turn_news_digest.dart';
 export 'src/turn_time_mapping.dart';
 export 'src/unit.dart';
+export 'src/world_market.dart';
 export 'src/world_state.dart';
 export 'src/ai_events.dart';
 export 'src/assigned_recipe.dart';

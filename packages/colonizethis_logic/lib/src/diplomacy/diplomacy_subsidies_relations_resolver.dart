@@ -366,3 +366,29 @@ int tradeSlotsForGp(Game game, String gpId, String targetFactionId) {
   final u = p.techUnlocked ?? const <String, bool>{};
   return u[kTechIdTradeFairs] == true ? 6 : 3;
 }
+
+/// World-market bid-type cap (distinct bid commodities per turn).
+///
+/// Semantics aggregate across **all** of the player's embassies because the
+/// market is global, not per-target. Returns:
+///
+/// - `0` when the player has no embassy-tier overture
+///   ([OvertureState.hasEmbassy]) with any target.
+/// - `3` when the player has at least one embassy-tier overture and has not
+///   unlocked [kTechIdTradeFairs].
+/// - `6` when the player has at least one embassy-tier overture and has
+///   unlocked [kTechIdTradeFairs].
+///
+/// Source of truth: SPEC/program/world-market-resolution.md § Bid type cap
+/// helper. Per-target trade-agreement slots remain governed by
+/// [tradeSlotsForGp]. Refs #2989 A5.
+int worldMarketBidTypeCap(Game game, String playerId) {
+  final p = game.playerById(playerId);
+  if (p == null) return 0;
+  final hasAnyEmbassy = game.overtureStates.any(
+    (o) => o.gpId == playerId && o.hasEmbassy,
+  );
+  if (!hasAnyEmbassy) return 0;
+  final u = p.techUnlocked ?? const <String, bool>{};
+  return u[kTechIdTradeFairs] == true ? 6 : 3;
+}

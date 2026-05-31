@@ -119,6 +119,9 @@ const int relationScoreLevelFriendlyMax = 75;
 /// Minimum score for Friendly (and Allied). Join Empire and similar require >= this.
 const int relationScoreMinFriendly = 51;
 
+/// Minimum relation score for FTP acceptance (proposer and acceptor). SPEC/game/world-market.md.
+const int relationScoreMinFtp = 65;
+
 /// Alliance score band: when forming alliance, score is set/clamped to this range.
 const int relationScoreMinAllied = 76;
 
@@ -271,6 +274,21 @@ List<DiplomacyRelation> upsertRelation(
 OvertureState? getOverture(Game game, String gpId, String targetId) {
   return _overtureStatesByLookupKey(game)[_overtureLookupKey(gpId, targetId)];
 }
+
+/// Embassy-tier overture from [gpId] toward [targetId]. SPEC/game/world-market.md.
+bool hasEmbassyOverture(Game game, String gpId, String targetId) {
+  final o = getOverture(game, gpId, targetId);
+  return o != null && o.hasEmbassy;
+}
+
+/// Bilateral FTP active between [factionId1] and [factionId2].
+bool hasFtpPartnership(Game game, String factionId1, String factionId2) {
+  return game.ftpPartnershipKeys.contains(pairKey(factionId1, factionId2));
+}
+
+/// Active FTP pair keys for world-market matching. SPEC/program/world-market-resolution.md.
+Set<String> ftpPairKeysFromGame(Game game) =>
+    Set<String>.from(game.ftpPartnershipKeys);
 
 /// True when [a] and [b] are at war according to [game.diplomacyRelations].
 bool factionsAtWar(Game game, String a, String b) {
