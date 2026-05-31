@@ -26,7 +26,9 @@ const int kTreasuryOfferPriorityUrgent = 2;
 ///
 /// Runs after [productionAssignments] are chosen in [runEconomyPlanner]. Uses
 /// [TradeOrderSuggester] with treasury-aware surplus/need maps and per-commodity
-/// bid priorities. Refs #2994 F1–F5.
+/// bid priorities. Refs #2994 F1–F5, F8 (carry-forward de-duplication and
+/// prior-fill-rate-aware offer urgency, see SPEC/ai/treasury-planner.md
+/// § Partial-fill-aware forecasting).
 List<TradeOrder> runTreasuryPlanner({
   required Game game,
   required String playerId,
@@ -55,6 +57,19 @@ List<TradeOrder> runTreasuryPlanner({
   final available = <CommodityId, int>{};
   final need = <CommodityId, int>{};
   final marketPrices = game.worldMarketState.prices;
+  // Refs #2994 F8: carry-forward residuals already represented in Issue A's
+  // queues are subtracted from the planner's new-emission gap so the engine
+  // never sees duplicate quantities.
+  final carryForwardOffers = _carryForwardQuantitiesByCommodity(
+    state: game.worldMarketState,
+    playerId: playerId,
+    side: TradeOrderType.offer,
+  );
+  final carryForwardBids = _carryForwardQuantitiesByCommodity(
+    state: game.worldMarketState,
+    playerId: playerId,
+    side: TradeOrderType.bid,
+  );
 
   for (final id in trackedCommodityIds) {
     if (richesCommodityIds.contains(id)) continue;
@@ -71,11 +86,12 @@ List<TradeOrder> runTreasuryPlanner({
         : consumption;
     final reserve = consumption + inputs + safety;
     final projectedQty = projected.quantityOf(id);
-    final surplus = projectedQty - reserve;
+    final surplus = projectedQty - reserve - (carryForwardOffers[id] ?? 0);
     if (surplus > 0) {
       available[id] = surplus;
     }
-    final deficit = (consumption + inputs) - projectedQty;
+    final deficit =
+        (consumption + inputs) - projectedQty - (carryForwardBids[id] ?? 0);
     if (deficit > 0 && _marketPriceBelowProductionCost(id, marketPrices)) {
       need[id] = deficit;
     }
@@ -86,7 +102,13 @@ List<TradeOrder> runTreasuryPlanner({
   }
 
   final threshold = cheapestRegimentBuildTreasuryCost();
-  final offerPriority = treasury < threshold
+  final treasuryForecast = treasury +
+      _expectedOfferInflow(
+        available: available,
+        marketPrices: marketPrices,
+        state: game.worldMarketState,
+      );
+  final offerPriority = treasuryForecast < threshold
       ? kTreasuryOfferPriorityUrgent
       : kTreasuryOfferPriorityModerate;
 
@@ -224,6 +246,70 @@ int _bidPriorityForCommodity(CommodityId commodityId) {
     CommodityCategory.luxury => kTreasuryBidPriorityLuxury,
     CommodityCategory.riches => kTreasuryBidPriorityRawMaterial,
   };
+}
+
+/// Returns prior-turn offer-side fill rate (`0.0`–`1.0`) for [commodityId] from
+/// [state.lastTurnActivity]. Returns `1.0` when no activity exists or
+/// `totalOfferQuantity <= 0`, matching the "no prior data → assume fully
+/// fillable" convention used elsewhere in F2/F3. Refs #2994 F8.
+double _priorTurnOfferFillRate(WorldMarketState state, CommodityId commodityId) {
+  final activity = state.lastTurnActivity[commodityId];
+  if (activity == null) return 1.0;
+  final total = activity.totalOfferQuantity;
+  if (total <= 0) return 1.0;
+  final fillFraction = activity.filledQuantity / total;
+  if (fillFraction.isNaN || !fillFraction.isFinite) return 1.0;
+  if (fillFraction < 0.0) return 0.0;
+  if (fillFraction > 1.0) return 1.0;
+  return fillFraction;
+}
+
+/// Carry-forward residual quantity per commodity for [playerId] on the given
+/// [side], summed across all carry-forward entries. Returns an empty map when
+/// the player has no carry-forward state. Refs #2994 F8.
+Map<CommodityId, int> _carryForwardQuantitiesByCommodity({
+  required WorldMarketState state,
+  required String playerId,
+  required TradeOrderType side,
+}) {
+  final source = switch (side) {
+    TradeOrderType.offer => state.carryForwardOffersByFactionId[playerId],
+    TradeOrderType.bid => state.carryForwardBidsByFactionId[playerId],
+  };
+  if (source == null || source.isEmpty) {
+    return const <CommodityId, int>{};
+  }
+  final result = <CommodityId, int>{};
+  for (final order in source) {
+    if (order.quantity <= 0) continue;
+    result[order.commodityId] =
+        (result[order.commodityId] ?? 0) + order.quantity;
+  }
+  return result;
+}
+
+/// Discounts forecasted treasury inflow from this turn's offers by the
+/// prior-turn offer-side fill rate per commodity, rounded to an integer
+/// treasury unit. A first-ever market turn (no prior activity) returns the
+/// nominal sum (full-fill credit) per the F2/F3 default. Refs #2994 F8.
+int _expectedOfferInflow({
+  required Map<CommodityId, int> available,
+  required Map<CommodityId, double> marketPrices,
+  required WorldMarketState state,
+}) {
+  if (available.isEmpty) return 0;
+  var inflow = 0.0;
+  for (final entry in available.entries) {
+    final commodityId = entry.key;
+    final quantity = entry.value;
+    if (quantity <= 0) continue;
+    final price = marketPrices[commodityId] ?? 0.0;
+    if (price <= 0.0) continue;
+    final fillRate = _priorTurnOfferFillRate(state, commodityId);
+    inflow += quantity * price * fillRate;
+  }
+  if (!inflow.isFinite) return 0;
+  return inflow.round();
 }
 
 List<TradeOrder> _prioritizedBids({
