@@ -284,14 +284,21 @@ Widget _buildPoliticalSection({
   required String name,
   required String ownerName,
 }) {
+  // Dark-theme tokens (Refs #2865, SPEC § Dark-theme Political section body
+  // tokens). Both body rows declare TextStyle.color explicitly so the
+  // editorial-monocle dark theme owns this surface and the section stops
+  // inheriting DefaultTextStyle / Material bodyMedium colours.
+  // `EditorialMonoclePalette.fg` is a runtime getter (OKLCH → Color), so the
+  // style cannot be `const`.
+  final bodyStyle = TextStyle(color: EditorialMonoclePalette.fg);
   return _buildSection(
     l10n.provinceOverlay_sectionPolitical,
     Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
       children: [
-        Text(l10n.provinceOverlay_name(name)),
-        Text(l10n.provinceOverlay_owner(ownerName)),
+        Text(l10n.provinceOverlay_name(name), style: bodyStyle),
+        Text(l10n.provinceOverlay_owner(ownerName), style: bodyStyle),
       ],
     ),
   );
