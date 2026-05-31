@@ -641,7 +641,10 @@ _OverlayContent _seaZoneContent({
   );
   final political = _buildSection(
     l10n.provinceOverlay_sectionPolitical,
-    Text(l10n.provinceOverlay_seaZone(seaName)),
+    Text(
+      l10n.provinceOverlay_seaZone(seaName),
+      style: TextStyle(color: EditorialMonoclePalette.fg),
+    ),
   );
   final naval = _buildNavalSection(
     l10n: l10n,
