@@ -7,7 +7,9 @@
 //
 // Mirrors `province_overlay_military_section_dark_tokens_test.dart`
 // (the Military `MoveOrder` preview-line slice) for the parallel Naval
-// `NavalMoveOrder` preview lines:
+// `NavalMoveOrder` preview lines, plus an explicit fleet-summary
+// roster-line pin that closes the deferred slice flagged in SPEC §
+// Dark-theme Naval section body tokens:
 //
 //  * Positive: a pending in-port `NavalMoveOrder` preview line (rendered
 //    via `provincePanelPendingNavalLines`) resolves its
@@ -20,6 +22,19 @@
 //    Material `bodyMedium` proxy and is distinct from
 //    `EditorialMonoclePalette.muted` under any non-`editorialMonocle`
 //    theme).
+//  * Positive: the in-port fleet-summary roster `Text(...)` row
+//    (rendered from the `provinceOverlay_fleetSummary` localized
+//    string) resolves its `TextStyle.color` to
+//    `EditorialMonoclePalette.fg`, mirroring the Military owner
+//    sub-header / Economic improved-row / Civilian own-unit pattern.
+//  * Negative regression guards: the fleet-summary line MUST NOT fall
+//    through `DefaultTextStyle` (`style?.color == null`) and MUST NOT
+//    resolve to the bare dark Material `bodyMedium` colour
+//    (`Colors.white`). An `isNot(onSurface)` assertion is intentionally
+//    NOT used here because under `editorialMonocle` the dark theme
+//    wires `colorScheme.onSurface` itself to
+//    `EditorialMonoclePalette.fg`, so the guard would tautologically
+//    fail for the correct fleet-summary token value.
 
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:colonizethis_models/colonizethis_models.dart';
@@ -264,6 +279,144 @@ void main() {
                 'Material defaults regression guard: pending preview line '
                 'must resolve to EditorialMonoclePalette.muted (the single '
                 'source).',
+          );
+        },
+      );
+
+      testWidgets(
+        'in-port fleet-summary roster line resolves to '
+        'EditorialMonoclePalette.fg',
+        (WidgetTester tester) async {
+          final game = demoGameForOverlay;
+          final humanId = game.players.first.id;
+          final ownedProvince = _ownedProvinceId(
+            game: game,
+            ownerId: humanId,
+          );
+          // The fleet-summary contract pinned here does not require a
+          // pending NavalMoveOrder; the in-port fleet alone suffices to
+          // render the `provinceOverlay_fleetSummary` roster row.
+          // `_gameWithFleetAndPendingMove` happens to add both, which is
+          // fine — the order does not change the fleet-summary's own
+          // styling.
+          final destination = _someSeaZoneIdForPendingMove(game);
+          final setup = _gameWithFleetAndPendingMove(
+            ownerId: humanId,
+            provinceId: ownedProvince,
+            destinationSeaZoneId: destination,
+          );
+
+          await tester.pumpWidget(
+            _darkOverlay(
+              game: setup.game,
+              displayId: ownedProvince,
+              draftOrders: setup.orders,
+            ),
+          );
+          await tester.pumpAndSettle();
+
+          // `provinceOverlay_fleetSummary` resolves to the literal
+          // "{owner} — {fleetLabel}: {shipParts}" template (see
+          // app/lib/l10n/arb/app_en.arb). The em-dash separator
+          // distinguishes the fleet-summary roster row from the
+          // "Ordered:" pending preview row.
+          final fleetSummaryFinder = find.byWidgetPredicate(
+            (w) =>
+                w is Text &&
+                (w.data ?? '').contains(' — ') &&
+                !(w.data ?? '').startsWith('Ordered:'),
+          );
+          expect(
+            fleetSummaryFinder,
+            findsAtLeastNWidgets(1),
+            reason:
+                'Test setup: the in-port fleet must render its '
+                '`provinceOverlay_fleetSummary` roster row in the Naval '
+                'section.',
+          );
+          final Text fleetSummaryLine = tester.widget<Text>(
+            fleetSummaryFinder.first,
+          );
+          expect(
+            fleetSummaryLine.style?.color,
+            EditorialMonoclePalette.fg,
+            reason:
+                'In-port fleet-summary roster line must resolve '
+                'TextStyle.color to EditorialMonoclePalette.fg per SPEC '
+                '§ Dark-theme Naval section body tokens (parity with the '
+                'Military owner sub-header / Economic improved-row / '
+                'Civilian own-unit patterns).',
+          );
+        },
+      );
+
+      testWidgets(
+        'negative: in-port fleet-summary roster line is not the dark '
+        'Material default and declares its own TextStyle.color',
+        (WidgetTester tester) async {
+          final game = demoGameForOverlay;
+          final humanId = game.players.first.id;
+          final ownedProvince = _ownedProvinceId(
+            game: game,
+            ownerId: humanId,
+          );
+          final destination = _someSeaZoneIdForPendingMove(game);
+          final setup = _gameWithFleetAndPendingMove(
+            ownerId: humanId,
+            provinceId: ownedProvince,
+            destinationSeaZoneId: destination,
+          );
+
+          await tester.pumpWidget(
+            _darkOverlay(
+              game: setup.game,
+              displayId: ownedProvince,
+              draftOrders: setup.orders,
+            ),
+          );
+          await tester.pumpAndSettle();
+
+          final fleetSummaryFinder = find.byWidgetPredicate(
+            (w) =>
+                w is Text &&
+                (w.data ?? '').contains(' — ') &&
+                !(w.data ?? '').startsWith('Ordered:'),
+          );
+          expect(fleetSummaryFinder, findsAtLeastNWidgets(1));
+          final Text fleetSummaryLine = tester.widget<Text>(
+            fleetSummaryFinder.first,
+          );
+          // Note: an `isNot(onSurface)` assertion is intentionally NOT
+          // included here because under `editorialMonocle` the dark
+          // theme wires `colorScheme.onSurface` itself to
+          // `EditorialMonoclePalette.fg`, so the guard would
+          // tautologically fail for the correct fleet-summary token
+          // value (matching the S6 Economic improved-row, S7 Military
+          // owner sub-header, and S8 Civilian own-unit patterns).
+          expect(
+            fleetSummaryLine.style?.color,
+            isNotNull,
+            reason:
+                'Material defaults regression guard: fleet-summary roster '
+                'line must declare its own TextStyle.color rather than '
+                'relying on DefaultTextStyle fall-through (so the contract '
+                'survives a change in ambient bodyMedium colour).',
+          );
+          expect(
+            fleetSummaryLine.style?.color,
+            isNot(equals(Colors.white)),
+            reason:
+                'Material defaults regression guard: fleet-summary roster '
+                'line must not resolve to the dark Material `Colors.white` '
+                'fallback before the editorialMonocle overlay.',
+          );
+          expect(
+            fleetSummaryLine.style?.color,
+            equals(EditorialMonoclePalette.fg),
+            reason:
+                'Material defaults regression guard: fleet-summary roster '
+                'line must resolve to EditorialMonoclePalette.fg (the '
+                'single source).',
           );
         },
       );
