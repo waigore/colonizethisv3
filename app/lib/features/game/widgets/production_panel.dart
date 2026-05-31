@@ -328,10 +328,17 @@ class _AvailableSubpanel extends StatelessWidget {
           _buildWorkerCell('master', player.workerPool.masters),
         ],
       ),
+      const SizedBox(height: 8),
+      _EffectiveLabourTotal(
+        text: l10n.production_effectiveLabour(effectiveLabour),
+        theme: theme,
+      ),
     ];
     if (currentOrders != null && labourCallbacks != null) {
       children.addAll(<Widget>[
-        const SizedBox(height: 8),
+        const SizedBox(height: 12),
+        CtSectionLabel(l10n.production_labourControlsSectionLabel),
+        const SizedBox(height: 6),
         ProductionLabourSection(
           player: player,
           currentOrders: currentOrders!,
@@ -340,13 +347,6 @@ class _AvailableSubpanel extends StatelessWidget {
         ),
       ]);
     }
-    children.addAll(<Widget>[
-      const SizedBox(height: 8),
-      _EffectiveLabourTotal(
-        text: l10n.production_effectiveLabour(effectiveLabour),
-        theme: theme,
-      ),
-    ]);
     return children;
   }
 
