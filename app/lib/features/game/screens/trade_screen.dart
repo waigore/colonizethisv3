@@ -88,7 +88,23 @@ import '../widgets/observe_mode_not_defined_panel.dart';
 /// (Refs #2993 E5a); the Deal Book tab keeps the placeholder copy until
 /// the per-player ledger work for Refs #2993 E6 lands.
 class TradeScreen extends ConsumerWidget {
-  const TradeScreen({super.key, required this.game, required this.player});
+  const TradeScreen({
+    super.key,
+    required this.game,
+    required this.player,
+    this.initialTabIndex = 0,
+  }) : assert(
+          initialTabIndex >= 0 && initialTabIndex < 2,
+          'initialTabIndex must be 0 (Market) or 1 (Deal Book) for TradeScreen',
+        );
+
+  /// Initially-selected tab index for the body's `CtTabStrip`. Defaults
+  /// to `0` so the dark-theme E4 contract (Market tab visible on first
+  /// mount) is preserved for the production route. Story builders /
+  /// widget tests opt into the Deal Book tab (`1`) without simulating a
+  /// label tap; the underlying `CtTabStrip.initialTabIndex` is the only
+  /// surface that propagates the override.
+  final int initialTabIndex;
 
   /// SPEC/ui/trade-screen.md — [UiScreenIds.tradeScreen].
   static const screenId = UiScreenIds.tradeScreen;
@@ -410,6 +426,7 @@ class TradeScreen extends ConsumerWidget {
           game: displayGame,
           playerId: player.id,
           canEdit: canEdit,
+          initialTabIndex: initialTabIndex,
         );
       },
     );
@@ -434,11 +451,13 @@ class _TradeScreenTabsBody extends StatelessWidget {
     required this.game,
     required this.playerId,
     required this.canEdit,
+    this.initialTabIndex = 0,
   });
 
   final Game game;
   final String playerId;
   final bool canEdit;
+  final int initialTabIndex;
 
   @override
   Widget build(BuildContext context) {
@@ -447,6 +466,7 @@ class _TradeScreenTabsBody extends StatelessWidget {
       child: CtPanel(
         padding: const EdgeInsets.all(16),
         child: CtTabStrip(
+          initialTabIndex: initialTabIndex,
           tabLabels: const <String>[
             TradeScreen.marketTabLabel,
             TradeScreen.dealBookTabLabel,

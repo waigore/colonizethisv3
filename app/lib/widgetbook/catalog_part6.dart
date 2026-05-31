@@ -431,6 +431,193 @@ Orders _tradeScreenStoryCargoSaturatedOrders() {
   );
 }
 
+/// Synthetic [Game] for the Deal Book tab Widgetbook stories
+/// (Refs #2993 E7). Mirrors the real-game shape used by the trade
+/// screen runtime: the human player `gp_human` plus a foreign GP
+/// `gp_aragon` so deals can carry distinct buyer/seller faction ids
+/// without leaking foreign carry-forwards into the human Deal Book
+/// (per `SPEC/ui/trade-screen.md` § Deal Book tab — live two-panel
+/// ledger). Callers supply the `worldMarketState` payload so each
+/// story pins the scenario it cares about (empty / mixed) without
+/// duplicating the player setup boilerplate.
+Game _tradeScreenDealBookStoryGame({
+  required WorldMarketState worldMarketState,
+}) {
+  return Game(
+    id: 'wb_trade_screen_deal_book',
+    worldState: WorldState(
+      turnState: TurnState(phase: TurnPhase.orders, turnNumber: 1),
+      oldWorld: const RegionData(),
+      newWorld: const RegionData(),
+    ),
+    turnTimeMapping: TurnTimeMapping.gdd01,
+    players: [
+      // ignore: avoid_hardcoded_strings_in_widgets
+      Player(
+        id: 'gp_human',
+        // ignore: avoid_hardcoded_strings_in_widgets
+        displayName: 'England',
+        isHuman: true,
+        treasury: 500,
+      ),
+      // ignore: avoid_hardcoded_strings_in_widgets
+      Player(
+        id: 'gp_aragon',
+        // ignore: avoid_hardcoded_strings_in_widgets
+        displayName: 'Aragon',
+        isHuman: false,
+        treasury: 500,
+      ),
+    ],
+    diplomacyRelations: const [],
+    diplomaticHistoryEvents: const [],
+    dossierEvidenceEntries: const [],
+    worldMarketState: worldMarketState,
+  );
+}
+
+/// `WorldMarketState` for the empty Deal Book story — no filled deals
+/// and no carry-forwards. Proves the per-side empty-state copy
+/// (`dealBookBidsEmpty` / `dealBookOffersEmpty`) renders together with
+/// the always-mounted `Total spent: 0` / `Total received: 0` rows
+/// (Refs #2993 E6).
+WorldMarketState _tradeScreenDealBookEmptyState() {
+  return const WorldMarketState();
+}
+
+/// `WorldMarketState` for the mixed Deal Book story — one FRR-tagged
+/// buy, one FTP-tagged buy, two filled sales, and a mix of carry
+/// forward bids/offers on both sides. Mirrors the realistic resolved
+/// turn shape so reviewers can verify the dark-theme tag rendering,
+/// the totals math (`qty × price`), and the player-isolation filter
+/// (the foreign carry-forward on `gp_aragon` must not appear in the
+/// human Deal Book).
+WorldMarketState _tradeScreenDealBookMixedState() {
+  const String human = 'gp_human';
+  const String foreign = 'gp_aragon';
+  const Map<CommodityId, MarketActivity> activity =
+      <CommodityId, MarketActivity>{
+    'timber': MarketActivity(
+      totalBidQuantity: 6,
+      totalOfferQuantity: 0,
+      filledQuantity: 6,
+      deals: <FilledDeal>[
+        FilledDeal(
+          sellerFactionId: foreign,
+          buyerFactionId: human,
+          commodityId: 'timber',
+          quantity: 3,
+          pricePerUnit: 30.0,
+          isFirstRightOfRefusalMatch: true,
+        ),
+        FilledDeal(
+          sellerFactionId: foreign,
+          buyerFactionId: human,
+          commodityId: 'timber',
+          quantity: 3,
+          pricePerUnit: 30.0,
+          isFtpMatch: true,
+        ),
+      ],
+    ),
+    'iron': MarketActivity(
+      totalBidQuantity: 4,
+      totalOfferQuantity: 4,
+      filledQuantity: 4,
+      deals: <FilledDeal>[
+        FilledDeal(
+          sellerFactionId: human,
+          buyerFactionId: foreign,
+          commodityId: 'iron',
+          quantity: 4,
+          pricePerUnit: 80.0,
+        ),
+      ],
+    ),
+    'fabric': MarketActivity(
+      totalBidQuantity: 0,
+      totalOfferQuantity: 7,
+      filledQuantity: 7,
+      deals: <FilledDeal>[
+        FilledDeal(
+          sellerFactionId: human,
+          buyerFactionId: foreign,
+          commodityId: 'fabric',
+          quantity: 7,
+          pricePerUnit: 120.0,
+          isFtpMatch: true,
+        ),
+      ],
+    ),
+  };
+  // `TradeOrder` runs runtime validation in its constructor so its
+  // instances are not `const`. The carry-forward maps therefore must
+  // be plain (non-const) literals; `lastTurnActivity` stays `const`
+  // because `FilledDeal` and `MarketActivity` both expose `const`
+  // constructors.
+  return WorldMarketState(
+    lastTurnActivity: activity,
+    carryForwardBidsByFactionId: <String, List<TradeOrder>>{
+      human: <TradeOrder>[
+        TradeOrder(
+          commodityId: 'grain',
+          type: TradeOrderType.bid,
+          quantity: 8,
+          priority: 2,
+        ),
+      ],
+    },
+    carryForwardOffersByFactionId: <String, List<TradeOrder>>{
+      human: <TradeOrder>[
+        TradeOrder(
+          commodityId: 'castIron',
+          type: TradeOrderType.offer,
+          quantity: 4,
+          priority: 1,
+        ),
+      ],
+      // Foreign carry-forward — must not surface in the human Deal Book
+      // because `_DealBookViewData.build` keys by playerId. Included
+      // here so reviewers can verify the player-isolation filter.
+      foreign: <TradeOrder>[
+        TradeOrder(
+          commodityId: 'timber',
+          type: TradeOrderType.offer,
+          quantity: 99,
+          priority: 1,
+        ),
+      ],
+    },
+  );
+}
+
+ProviderScope _tradeScreenDealBookProviderScope({
+  required WorldMarketState worldMarketState,
+}) {
+  final Game game =
+      _tradeScreenDealBookStoryGame(worldMarketState: worldMarketState);
+  final Player player = game.players.firstWhere((p) => p.isHuman);
+  return ProviderScope(
+    overrides: [
+      appEventBusProvider.overrideWith((ref) {
+        final bus = AppEventBus.create();
+        ref.onDispose(bus.dispose);
+        return bus;
+      }),
+    ],
+    child: MaterialApp(
+      theme: AppThemes.editorialMonocle,
+      localizationsDelegates: AppLocalizationsBinding.localizationsDelegates,
+      supportedLocales: AppLocalizations.supportedLocales,
+      // initialTabIndex: 1 → Deal Book tab is foregrounded on first
+      // mount. Backed by `CtTabStrip.initialTabIndex` (Refs #2993 E7);
+      // the production route still uses the default `0` so the
+      // existing Market-default contract (E4 ACs) is preserved.
+      home: TradeScreen(game: game, player: player, initialTabIndex: 1),
+    ),
+  );
+}
+
 /// Trade screen stories. SPEC/ui/trade-screen.md.
 ///
 /// Refs #2993 E1+E2+E3+E4 ship the route, screen ID, left-rail button,
@@ -438,17 +625,17 @@ Orders _tradeScreenStoryCargoSaturatedOrders() {
 /// #2993 E5a adds the Market tab's read-only commodity table sourced
 /// from `Game.worldMarketState`. Refs #2993 E5b wires the per-row
 /// interactive bid/offer/none direction selector and quantity stepper
-/// to `currentOrdersProvider`. Refs #2993 E5c (this slice) adds the
-/// persistent cross-commodity cargo indicator + cap + saturation
-/// warning. The story Game seeds a representative subset of `prices`
-/// + `lastTurnActivity` so reviewers can see both the populated and
-/// zero-default rendering paths in one scroll; the staged-orders use
-/// case additionally seeds a `Bid` on timber and an `Offer` on fabric
-/// so the per-row selected chip + non-1 quantity readout render. The
-/// cargo-saturated use case seeds bids totalling `defaultCargoHoldsStub`
-/// (24) so the indicator reads `Cargo remaining: 0` and the dark-theme
-/// `--danger` warning row mounts. The Deal Book tab body remains the
-/// placeholder until Refs #2993 E6.
+/// to `currentOrdersProvider`. Refs #2993 E5c adds the persistent
+/// cross-commodity cargo indicator + cap + saturation warning. Refs
+/// #2993 E6 swaps the Deal Book placeholder for the live two-panel
+/// ledger sourced from `Game.worldMarketState.lastTurnActivity[*].deals`
+/// and `carryForward{Bids,Offers}ByFactionId[playerId]`. Refs #2993 E7
+/// (this slice) registers the recommended Deal Book Widgetbook stories
+/// — empty, mixed fills + carry-forwards, and mobile (stacked) — so
+/// reviewers can audit the live ledger chrome without driving the tab
+/// strip themselves; each Deal Book use case opts into the secondary
+/// tab via `TradeScreen.initialTabIndex: 1` rather than simulating a
+/// label tap.
 List<WidgetbookNode> get tradeScreenDirectories => [
   WidgetbookFolder(
     name: 'Trade Screen',
@@ -472,6 +659,27 @@ List<WidgetbookNode> get tradeScreenDirectories => [
         name: 'Market tab — cargo saturated (Refs #2993 E5c)',
         builder: (context) => _tradeScreenDefaultStory(
           initialOrders: _tradeScreenStoryCargoSaturatedOrders(),
+        ),
+      ),
+      WidgetbookUseCase(
+        name: 'Deal Book tab — empty (Refs #2993 E7)',
+        builder: (context) => _tradeScreenDealBookProviderScope(
+          worldMarketState: _tradeScreenDealBookEmptyState(),
+        ),
+      ),
+      WidgetbookUseCase(
+        name: 'Deal Book tab — mixed fills + carry-forwards (Refs #2993 E7)',
+        builder: (context) => _tradeScreenDealBookProviderScope(
+          worldMarketState: _tradeScreenDealBookMixedState(),
+        ),
+      ),
+      WidgetbookUseCase(
+        name: 'Deal Book tab — mobile (stacked) (Refs #2993 E7)',
+        builder: (context) => mobileViewport(
+          context,
+          _tradeScreenDealBookProviderScope(
+            worldMarketState: _tradeScreenDealBookMixedState(),
+          ),
         ),
       ),
     ],

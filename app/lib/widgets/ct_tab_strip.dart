@@ -26,8 +26,13 @@ class CtTabStrip extends StatefulWidget {
     required this.tabLabels,
     required this.tabViews,
     EdgeInsets? contentPadding,
+    this.initialTabIndex = 0,
   })  : assert(tabLabels.length == tabViews.length),
         assert(tabLabels.isNotEmpty),
+        assert(
+          initialTabIndex >= 0 && initialTabIndex < tabLabels.length,
+          'initialTabIndex out of bounds for the supplied tabLabels',
+        ),
         contentPadding = contentPadding ?? EdgeInsets.zero;
 
   final List<String> tabLabels;
@@ -35,6 +40,14 @@ class CtTabStrip extends StatefulWidget {
 
   /// Padding around the tab content (IndexedStack).
   final EdgeInsets contentPadding;
+
+  /// Initially-selected tab index when this strip is first mounted.
+  /// Defaults to `0` (the leading tab). Useful for Widgetbook stories
+  /// and tests that need to pin the secondary tab body without
+  /// programmatically tapping the label after the first frame; the
+  /// dark-theme E4 contract for `TradeScreen` documents the default of
+  /// `0` so callers must opt in explicitly.
+  final int initialTabIndex;
 
   /// Inner padding applied to every tab label container.
   static const EdgeInsets tabContentPadding =
@@ -62,7 +75,7 @@ class CtTabStrip extends StatefulWidget {
 }
 
 class _CtTabStripState extends State<CtTabStrip> {
-  int _selectedIndex = 0;
+  late int _selectedIndex = widget.initialTabIndex;
 
   @override
   Widget build(BuildContext context) {

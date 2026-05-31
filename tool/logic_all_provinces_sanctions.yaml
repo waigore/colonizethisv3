@@ -92,3 +92,9 @@ sanctions:
     rationale: Non-GP extraction builds a once-per-call province id index for O(1) tile-to-province lookups across both regions, mirroring resource_extractor.dart for minor nations and tribes.
     spec: SPEC/program/logic-dual-region-province-access.md
     issue: https://github.com/waigore/colonizethisv3/issues/2991
+
+  - path: packages/colonizethis_logic/lib/src/economy/non_gp_extraction.dart
+    line: 166
+    rationale: Non-GP auto-offer generation builds the same once-per-call province id index for O(1) tile-to-province lookups across both regions when emitting minor/tribe per-tile auto-offers (Refs #2991 C4).
+    spec: SPEC/program/logic-dual-region-province-access.md
+    issue: https://github.com/waigore/colonizethisv3/issues/2991
