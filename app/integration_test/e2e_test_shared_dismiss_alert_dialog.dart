@@ -26,6 +26,18 @@ const List<String> kE2eDefaultAlertDialogDismissLabels = <String>[
   'Yes',
 ];
 
+/// Default phase label emitted by [e2eDismissAlertDialogIfPresent] when a
+/// caller does not override [E2ePerfLog] attribution.
+///
+/// Exposed so widget-test pins and downstream perf-marker scrapers (for
+/// example the GitHub #2336 AC8 baseline timing pipeline via
+/// `tool/run_e2e_timing.sh` / `tool/compare_e2e_timing.sh`) can refer to
+/// the canonical inner-helper label by name instead of hard-coding the
+/// literal string. Mirrors the [kE2eDefaultDismissSnackBarPhase] /
+/// [kE2eDefaultDismissGenericOkPhase] / [kE2eDefaultDismissTransientUiPhase]
+/// convention.
+const String kE2eDefaultDismissAlertDialogPhase = 'dismiss_alert_dialog';
+
 /// Dismisses one mounted [AlertDialog] by tapping the first hit-testable
 /// descendant matching [dismissLabels] (priority-ordered), falling back to
 /// `tester.binding.handlePopRoute()` when no labelled button is hit-testable.
@@ -69,14 +81,32 @@ const List<String> kE2eDefaultAlertDialogDismissLabels = <String>[
 /// - Bumps `dismiss_alert_dialog_calls` on [perf] when supplied so observers
 ///   can attribute the cost of stray AlertDialogs across scenarios. The
 ///   counter bumps once per **successful** dismissal attempt — the
-///   no-AlertDialog short-circuit does not emit.
+///   no-AlertDialog short-circuit does not emit. The helper itself emits
+///   exactly one `E2E_TIMING|phase=[phaseName]` line per call (when
+///   [perf] is non-`null`) with a `result=...` meta tag that
+///   distinguishes the three return paths the helper can reach:
+///   `result=not_present` (no AlertDialog mounted; counter is **not**
+///   bumped), `result=labelled_tap` (a label from [dismissLabels] was
+///   tapped and dismiss settle awaited; counter is bumped once), and
+///   `result=pop_route_fallback` (no labelled button was hit-testable so
+///   `tester.binding.handlePopRoute()` was issued and dismiss settle
+///   awaited; counter is bumped once). Default `perf: null` preserves
+///   the byte-quiet contract — no `E2E_TIMING` or `E2E_COUNTER` lines
+///   are emitted for opt-out callers. The dispatcher-level
+///   [e2eDismissTransientUi] always reports its own `result=alert_dialog`
+///   tag for this branch; the inner-helper marker slices the AlertDialog
+///   wall-clock under the dispatcher slice without losing per-branch
+///   detail. Refs GitHub #2336 AC8 baseline timing.
 Future<bool> e2eDismissAlertDialogIfPresent(
   WidgetTester tester, {
   E2ePerfLog? perf,
+  String phaseName = kE2eDefaultDismissAlertDialogPhase,
   Duration dismissTimeout = kE2eDefaultAlertDialogDismissTimeout,
   List<String> dismissLabels = kE2eDefaultAlertDialogDismissLabels,
 }) async {
+  final sw = Stopwatch()..start();
   if (find.byType(AlertDialog).evaluate().isEmpty) {
+    perf?.timing(phaseName, sw.elapsed, meta: 'result=not_present');
     return false;
   }
   perf?.bumpCounter('dismiss_alert_dialog_calls');
@@ -91,6 +121,7 @@ Future<bool> e2eDismissAlertDialogIfPresent(
         find.byType(AlertDialog),
         timeout: dismissTimeout,
       );
+      perf?.timing(phaseName, sw.elapsed, meta: 'result=labelled_tap');
       return true;
     }
   }
@@ -100,5 +131,6 @@ Future<bool> e2eDismissAlertDialogIfPresent(
     find.byType(AlertDialog),
     timeout: dismissTimeout,
   );
+  perf?.timing(phaseName, sw.elapsed, meta: 'result=pop_route_fallback');
   return true;
 }
