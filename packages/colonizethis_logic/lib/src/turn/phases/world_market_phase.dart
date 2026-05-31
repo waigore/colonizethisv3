@@ -38,13 +38,17 @@ import '../turn_resolver_config.dart';
 ///    stockpile/cargo per `SPEC/game/world-market.md` § Order persistence
 ///    will land in a follow-up commit alongside the validator's
 ///    re-entry hook).
-/// 3. Computes per-GP `tradeCargoCapacity` via [cargoHoldsForHomeFleet].
-///    The full `max(0, totalHomeFleetCargoHolds - overseasExtractionActualTonnage)`
-///    formula in `SPEC/game/world-market.md` § Cargo lands once the extraction
-///    phase publishes per-player actual tonnage onto [TurnPipelineState];
-///    until then this slice treats extraction tonnage as zero (the common case
-///    in Issue-B integration tests) and the SPEC AC for cargo released by
-///    extraction is intentionally deferred to that follow-up.
+/// 3. Computes per-GP `tradeCargoCapacity` as
+///    `max(0, cargoHoldsForHomeFleet − overseasExtractionShippedTonnage)`,
+///    where the overseas tonnage signal is the per-player value the
+///    extraction phase published onto
+///    [TurnPipelineState.overseasExtractionShippedTonnageByPlayerId]
+///    (post-cargo-cap, pre-interception). Implements the SPEC AC *Cargo
+///    released by under-used extraction* in
+///    `SPEC/game/world-market.md` § Cargo: any extraction holds reserved
+///    but not consumed are released to trade. Missing entries are treated
+///    as zero tonnage so the legacy direct-handler test path (no upstream
+///    extraction phase) keeps using the full home-fleet capacity.
 /// 4. Runs [DealMatcher.matchDeals] with FTP keys from
 ///    [ftpPairKeysFromGame].
 /// 5. Applies transfers: buyer treasury debit + seller treasury credit (GP
@@ -132,12 +136,18 @@ TurnPhaseStepOutcome worldMarketTurnPhaseHandler(
 
   final fleetsByIdStartOfPhase = fleetsByIdForWorld(game.worldState);
   final tradeCapacityByFactionId = <String, int>{};
+  final extractionTonnageByPlayerId =
+      acc.overseasExtractionShippedTonnageByPlayerId;
   for (final player in game.players) {
-    tradeCapacityByFactionId[player.id] = cargoHoldsForHomeFleet(
+    final homeFleetHolds = cargoHoldsForHomeFleet(
       game,
       player.id,
       fleetsById: fleetsByIdStartOfPhase,
     );
+    final shippedByExtraction =
+        extractionTonnageByPlayerId[player.id] ?? 0;
+    final tradeCapacity = homeFleetHolds - shippedByExtraction;
+    tradeCapacityByFactionId[player.id] = tradeCapacity > 0 ? tradeCapacity : 0;
   }
 
   final ftpPairKeys = ftpPairKeysFromGame(game);
