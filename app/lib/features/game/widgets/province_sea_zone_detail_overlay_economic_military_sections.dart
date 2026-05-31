@@ -1,6 +1,20 @@
 
 part of 'province_sea_zone_detail_overlay.dart';
 
+/// Shared empty-state placeholder body used by the Economic, Military,
+/// Civilian, and Naval sections when their content list is empty.
+///
+/// SPEC: SPEC/ui/province-sea-zone-detail-overlay.md
+/// § Style / implementation — Dark-theme empty-state body tokens (S9).
+///
+/// `EditorialMonoclePalette.muted` is a runtime OKLCH→`Color` getter, so
+/// the [TextStyle] cannot be `const`; the helper centralizes the token
+/// so every empty surface stays in sync (mirroring the obfuscated
+/// `???` helper's single-source pattern).
+Widget _emptyBodyDashText() {
+  return Text('—', style: TextStyle(color: EditorialMonoclePalette.muted));
+}
+
 Widget _buildEconomicSection({
   required AppLocalizations l10n,
   required List<String> resourceKeysSorted,
@@ -68,7 +82,7 @@ Widget _buildEconomicSection({
   }
 
   if (children.isEmpty) {
-    return _buildSection(l10n.provinceOverlay_sectionEconomic, const Text('—'));
+    return _buildSection(l10n.provinceOverlay_sectionEconomic, _emptyBodyDashText());
   }
   return _buildSection(
     l10n.provinceOverlay_sectionEconomic,
@@ -96,7 +110,7 @@ Widget _buildMilitarySectionByOwner({
     l10n: l10n,
   );
   if (military.isEmpty && pending.isEmpty) {
-    return _buildSection(l10n.provinceOverlay_sectionMilitary, const Text('—'));
+    return _buildSection(l10n.provinceOverlay_sectionMilitary, _emptyBodyDashText());
   }
   if (military.isEmpty) {
     return _buildSection(
@@ -157,6 +171,7 @@ Widget _buildMilitarySectionByOwner({
                   final label = regimentTypeDisplayLabel(l10n, e.key);
                   return Text(
                     l10n.provinceOverlay_indentedCount(label, e.value),
+                    style: TextStyle(color: EditorialMonoclePalette.fg),
                   );
                 }),
               ],
@@ -198,7 +213,7 @@ Widget _buildCivilianSectionFiltered({
       )
       .toList();
   if (visible.isEmpty) {
-    return _buildSection(l10n.provinceOverlay_sectionCivilian, const Text('—'));
+    return _buildSection(l10n.provinceOverlay_sectionCivilian, _emptyBodyDashText());
   }
   final workList = draftOrders.workOrdersByPlayerId[humanPlayerId] ?? const [];
   return _buildSection(
@@ -270,7 +285,7 @@ Widget _buildNavalSection({
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
       children: [
-        if (fleets.isEmpty && pending.isEmpty) const Text('—'),
+        if (fleets.isEmpty && pending.isEmpty) _emptyBodyDashText(),
         if (fleets.isNotEmpty)
           ...fleets.map((f) {
             final ownerName = _ownerName(game, f.ownerId);
@@ -293,6 +308,7 @@ Widget _buildNavalSection({
                 fleetLabel,
                 shipParts,
               ),
+              style: TextStyle(color: EditorialMonoclePalette.fg),
             );
           }),
         if (pending.isNotEmpty) ...[
