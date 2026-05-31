@@ -2,7 +2,7 @@
 
 **Screen ID:** `GAME60001` — stable; do not reassign.
 **SPEC/ui** — Full-screen World Market trade surface. Implementation: `app/lib/features/game/screens/trade_screen.dart`.
-**Widgetbook:** `Trade Screen` → `app/lib/widgetbook/catalog.dart`. Game rules: [world-market.md (planned)](../game/world-market.md); core data model deferred to issue [#2989](https://github.com/waigore/colonizethisv3/issues/2989); UI scope tracked in issue [#2993](https://github.com/waigore/colonizethisv3/issues/2993). Parent design: [issue #2988](https://github.com/waigore/colonizethisv3/issues/2988).
+**Widgetbook:** `Trade Screen` → `app/lib/widgetbook/catalog.dart`. Game rules: [world-market.md](../game/world-market.md); resolution algorithm: [world-market-resolution.md](../program/world-market-resolution.md); core data model deferred to issue [#2989](https://github.com/waigore/colonizethisv3/issues/2989); UI scope tracked in issue [#2993](https://github.com/waigore/colonizethisv3/issues/2993). Parent design: [issue #2988](https://github.com/waigore/colonizethisv3/issues/2988).
 
 > **Status:** Draft. This document records the contract for the scaffold slice that ships the route, screen ID, left-rail button, and dark editorial-monocle chrome. The full Market and Deal Book tabs land in follow-up slices once #2989 introduces `WorldMarketState` / `TradeOrder`; this spec is the canonical location to extend when they do.
 
