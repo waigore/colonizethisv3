@@ -7,7 +7,7 @@ import 'package:flutter/material.dart';
 
 import '../../../config/app_assets.dart';
 import '../../../l10n/l10n.dart';
-import '../../../widgets/ct_danger_text_button.dart';
+import 'chrome/ct_danger_text_button.dart';
 import 'production_allocation_row_buttons.dart';
 import 'production_labour_helpers.dart';
 
