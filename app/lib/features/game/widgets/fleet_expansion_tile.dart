@@ -199,82 +199,16 @@ class _FleetExpandedContent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final ships = row.shipCountsByType;
-    final monoLabel = TextStyle(
-      fontFamily: 'monospace',
-      fontSize: 9,
-      color: EditorialMonoclePalette.fg,
-    );
-    final monoCount = TextStyle(
-      fontFamily: 'monospace',
-      fontSize: 9,
-      color: EditorialMonoclePalette.accentDim,
-    );
-    final monoRole = TextStyle(
-      fontFamily: 'monospace',
-      fontSize: 7,
-      color: EditorialMonoclePalette.muted,
-    );
-    final capStyle = TextStyle(
-      fontSize: 9,
-      color: EditorialMonoclePalette.accentDim,
-    );
-    final statsStyle = TextStyle(
-      fontFamily: 'monospace',
-      fontSize: 9,
-      color: EditorialMonoclePalette.muted,
-    );
+    final styles = _ExpandedStyles.create();
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        if (ships.isEmpty)
-          Text(
-            l10n.naval_units_noShipsInFleet,
-            style: monoLabel.copyWith(color: EditorialMonoclePalette.muted),
-          )
-        else
-          Table(
-            columnWidths: const <int, TableColumnWidth>{
-              0: FlexColumnWidth(),
-              1: IntrinsicColumnWidth(),
-              2: IntrinsicColumnWidth(),
-            },
-            border: TableBorder(
-              horizontalInside: BorderSide(
-                color: EditorialMonoclePalette.border,
-                width: 1,
-              ),
-              bottom: BorderSide(
-                color: EditorialMonoclePalette.border,
-                width: 1,
-              ),
-            ),
-            defaultVerticalAlignment: TableCellVerticalAlignment.middle,
-            children: [
-              for (final entry in ships.entries)
-                TableRow(
-                  children: [
-                    _cell(
-                      Text(shipTypeDisplayName(entry.key), style: monoLabel),
-                    ),
-                    _cell(
-                      Text(
-                        l10n.naval_units_compositionCount(entry.value),
-                        style: monoCount,
-                        textAlign: TextAlign.right,
-                      ),
-                      align: Alignment.centerRight,
-                    ),
-                    _cell(Text(_roleLabelFor(entry.key), style: monoRole)),
-                  ],
-                ),
-            ],
-          ),
+        _buildShipsBlock(styles),
         if (row.isHomeFleet) ...[
           const SizedBox(height: 4),
           Text(
             l10n.naval_units_cargoCapacityHolds(row.cargoCapacity),
-            style: capStyle,
+            style: styles.cap,
           ),
         ],
         const SizedBox(height: 2),
@@ -284,12 +218,59 @@ class _FleetExpandedContent extends StatelessWidget {
             row.warshipCount,
             row.merchantCount,
           ),
-          style: statsStyle,
+          style: styles.stats,
         ),
         Text(
           l10n.naval_units_strength(row.strength.toStringAsFixed(1)),
-          style: statsStyle,
+          style: styles.stats,
         ),
+      ],
+    );
+  }
+
+  Widget _buildShipsBlock(_ExpandedStyles styles) {
+    final ships = row.shipCountsByType;
+    if (ships.isEmpty) {
+      return Text(
+        l10n.naval_units_noShipsInFleet,
+        style: styles.label.copyWith(color: EditorialMonoclePalette.muted),
+      );
+    }
+    return Table(
+      columnWidths: const <int, TableColumnWidth>{
+        0: FlexColumnWidth(),
+        1: IntrinsicColumnWidth(),
+        2: IntrinsicColumnWidth(),
+      },
+      border: TableBorder(
+        horizontalInside: BorderSide(
+          color: EditorialMonoclePalette.border,
+          width: 1,
+        ),
+        bottom: BorderSide(
+          color: EditorialMonoclePalette.border,
+          width: 1,
+        ),
+      ),
+      defaultVerticalAlignment: TableCellVerticalAlignment.middle,
+      children: [
+        for (final entry in ships.entries)
+          TableRow(
+            children: [
+              _cell(
+                Text(shipTypeDisplayName(entry.key), style: styles.label),
+              ),
+              _cell(
+                Text(
+                  l10n.naval_units_compositionCount(entry.value),
+                  style: styles.count,
+                  textAlign: TextAlign.right,
+                ),
+                align: Alignment.centerRight,
+              ),
+              _cell(Text(_roleLabelFor(entry.key), style: styles.role)),
+            ],
+          ),
       ],
     );
   }
@@ -307,4 +288,47 @@ class _FleetExpandedContent extends StatelessWidget {
         ? l10n.naval_units_compositionRoleMerchant
         : l10n.naval_units_compositionRoleWarship;
   }
+}
+
+class _ExpandedStyles {
+  const _ExpandedStyles({
+    required this.label,
+    required this.count,
+    required this.role,
+    required this.cap,
+    required this.stats,
+  });
+
+  factory _ExpandedStyles.create() {
+    const mono = 'monospace';
+    return _ExpandedStyles(
+      label: TextStyle(
+        fontFamily: mono,
+        fontSize: 9,
+        color: EditorialMonoclePalette.fg,
+      ),
+      count: TextStyle(
+        fontFamily: mono,
+        fontSize: 9,
+        color: EditorialMonoclePalette.accentDim,
+      ),
+      role: TextStyle(
+        fontFamily: mono,
+        fontSize: 7,
+        color: EditorialMonoclePalette.muted,
+      ),
+      cap: TextStyle(fontSize: 9, color: EditorialMonoclePalette.accentDim),
+      stats: TextStyle(
+        fontFamily: mono,
+        fontSize: 9,
+        color: EditorialMonoclePalette.muted,
+      ),
+    );
+  }
+
+  final TextStyle label;
+  final TextStyle count;
+  final TextStyle role;
+  final TextStyle cap;
+  final TextStyle stats;
 }
