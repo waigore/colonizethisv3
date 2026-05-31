@@ -4,7 +4,7 @@
 **SPEC/ui** — Full-screen World Market trade surface. Implementation: `app/lib/features/game/screens/trade_screen.dart`.
 **Widgetbook:** `Trade Screen` → `app/lib/widgetbook/catalog.dart`. Game rules: [world-market.md](../game/world-market.md); resolution algorithm: [world-market-resolution.md](../program/world-market-resolution.md); core data model deferred to issue [#2989](https://github.com/waigore/colonizethisv3/issues/2989); UI scope tracked in issue [#2993](https://github.com/waigore/colonizethisv3/issues/2993). Parent design: [issue #2988](https://github.com/waigore/colonizethisv3/issues/2988).
 
-> **Status:** Draft. This document records the contract for the scaffold slices: E1+E2+E3 ship the route, screen ID, left-rail button, and dark editorial-monocle chrome; E4 lands the durable two-tab body structure (Market + Deal Book). The Market tab now renders the **commodity table with interactive bid/offer/none direction selector + quantity stepper + cross-commodity cargo indicator and warning** (`#2993` E5a + E5b + E5c) sourced from `Game.worldMarketState`, `Game.worldState.fleets` (via `cargoHoldsForHomeFleet`), and `currentOrdersProvider`. Each row shows last market price + previous-turn aggregate `Bids / Offers` volumes alongside the interactive controls; the controls write `Orders.tradeOrdersByPlayerId[player.id]` via the pure helpers `applyTradeOrderForPlayer` / `removeTradeOrderForPlayer` in `colonizethis_logic`, and the cross-commodity bid total is clamped to the player's trade cargo capacity. The remaining Market control (priority dropdown) ships when the data API in #2989 exposes `kMaxTradePriority`, and the Deal Book live ledger ships in `#2993` E6 once a per-player ledger surface lands on top of #2989 / #2990's `MarketActivity` + world-market turn phase.
+> **Status:** Draft. This document records the contract for the scaffold slices: E1+E2+E3 ship the route, screen ID, left-rail button, and dark editorial-monocle chrome; E4 lands the durable two-tab body structure (Market + Deal Book). The Market tab now renders the **commodity table with interactive bid/offer/none direction selector + quantity stepper + cross-commodity cargo indicator and warning** (`#2993` E5a + E5b + E5c) sourced from `Game.worldMarketState`, `Game.worldState.fleets` (via `cargoHoldsForHomeFleet`), and `currentOrdersProvider`. Each row shows last market price + previous-turn aggregate `Bids / Offers` volumes alongside the interactive controls; the controls write `Orders.tradeOrdersByPlayerId[player.id]` via the pure helpers `applyTradeOrderForPlayer` / `removeTradeOrderForPlayer` in `colonizethis_logic`, and the cross-commodity bid total is clamped to the player's trade cargo capacity. The **Deal Book tab now renders the live two-panel ledger** (`#2993` E6) sourced from `Game.worldMarketState.lastTurnActivity[*].deals` (per-commodity `FilledDeal` ledger emitted by the world-market phase handler — `SPEC/program/world-market-resolution.md` § Step F) and `WorldMarketState.carryForward{Bids,Offers}ByFactionId[playerId]`. The remaining Market control (priority dropdown) ships when the data API in #2989 exposes `kMaxTradePriority`.
 
 ---
 
@@ -33,7 +33,16 @@ The screen exposes static keys consumed by widget tests:
 - `TradeScreen.marketRowQuantityTextKey(CommodityId)` — `ValueKey<String>('tradeScreenMarketRow:<id>:quantity')` (per-row quantity readout; renders the staged `TradeOrder.quantity` or `marketRowQuantityIdleGlyph` (`—`) when no direction is staged — Refs `#2993` E5b).
 - `TradeScreen.marketCargoIndicatorKey` — `ValueKey<String>('tradeScreenMarketCargoIndicator')` (persistent header strip above the commodity list; renders the `Cargo remaining: X` text where `X = max(0, tradeCargoCapacity − totalStagedBidQuantity)` for the human player — Refs `#2993` E5c).
 - `TradeScreen.marketCargoWarningKey` — `ValueKey<String>('tradeScreenMarketCargoWarning')` (per-screen warning row rendered immediately below the cargo indicator when `remainingCargo == 0` AND `totalStagedBidQuantity > 0`; absent otherwise — Refs `#2993` E5c).
-- `TradeScreen.dealBookTabBodyKey` — `ValueKey<String>('tradeScreenDealBookTabBody')` (Deal Book tab body root; visible after the user taps the `Deal Book` label).
+- `TradeScreen.dealBookTabBodyKey` — `ValueKey<String>('tradeScreenDealBookTabBody')` (Deal Book tab body root; visible after the user taps the `Deal Book` label; key remained stable when `#2993` E6 swapped the placeholder for the live ledger).
+- `TradeScreen.dealBookContentKey` — `ValueKey<String>('tradeScreenDealBookContent')` (root of the live Deal Book two-panel ledger content sitting directly under `dealBookTabBodyKey` — Refs `#2993` E6).
+- `TradeScreen.dealBookBidsPanelKey` — `ValueKey<String>('tradeScreenDealBookBidsPanel')` (left/top container for the player's previous-turn buying activity panel; always mounted under the live ledger root — Refs `#2993` E6).
+- `TradeScreen.dealBookOffersPanelKey` — `ValueKey<String>('tradeScreenDealBookOffersPanel')` (right/bottom container for the player's previous-turn selling activity panel; always mounted under the live ledger root — Refs `#2993` E6).
+- `TradeScreen.dealBookBidsTotalsKey` — `ValueKey<String>('tradeScreenDealBookBidsTotals')` (per-panel totals row inside the bids panel; renders `Total spent: N` where `N = Σ (deal.quantity × deal.pricePerUnit).round()` across the player's filled bids only — carry-forwards excluded; always mounted — Refs `#2993` E6).
+- `TradeScreen.dealBookOffersTotalsKey` — `ValueKey<String>('tradeScreenDealBookOffersTotals')` (per-panel totals row inside the offers panel; renders `Total received: N` with the same aggregation rule applied to the player's filled sales; always mounted — Refs `#2993` E6).
+- `TradeScreen.dealBookBidsEmptyKey` — `ValueKey<String>('tradeScreenDealBookBidsEmpty')` (per-panel empty-state copy mounted only when the player has zero filled buys **and** zero carry-forward bids — Refs `#2993` E6).
+- `TradeScreen.dealBookOffersEmptyKey` — `ValueKey<String>('tradeScreenDealBookOffersEmpty')` (per-panel empty-state copy mounted only when the player has zero filled sales **and** zero carry-forward offers — Refs `#2993` E6).
+- `TradeScreen.dealBookFilledRowKey(side, index)` — `ValueKey<String>('tradeScreenDealBookFilledRow:<side>:<index>')` where `side` is `dealBookSideBids` (`'bids'`) or `dealBookSideOffers` (`'offers'`) and `index` is the zero-based position in the per-side filled-deals list (Refs `#2993` E6).
+- `TradeScreen.dealBookUnfilledRowKey(side, index)` — `ValueKey<String>('tradeScreenDealBookUnfilledRow:<side>:<index>')` per-row key for a carry-forward (unfilled) order on the per-side carry-forward list (Refs `#2993` E6).
 
 ---
 
@@ -88,10 +97,52 @@ Padding (16 dp)
             │                               ├── _StepperButton '−'   (`...:decrement`)
             │                               ├── Text <quantity | '—'> (`...:quantity`)
             │                               └── _StepperButton '+'   (`...:increment`)
-            └── _DealBookTabPlaceholder // keyed `tradeScreenDealBookTabBody`
-                └── CtPanel
-                    ├── Text 'Deal Book' (titleMedium, --accent)
-                    └── Text muted scaffold copy (bodyMedium, --muted)
+            └── _DealBookTabContent // keyed `tradeScreenDealBookTabBody`
+                └── Container (keyed `tradeScreenDealBookContent`)
+                    └── LayoutBuilder
+                        ├── (constraints.maxWidth >= dealBookTwoPanelMinWidth)
+                        │   Row
+                        │       ├── Expanded → _DealBookPanel (bids)
+                        │       ├── SizedBox(width: 12)
+                        │       └── Expanded → _DealBookPanel (offers)
+                        └── (otherwise)
+                            Column
+                                ├── _DealBookPanel (bids)
+                                ├── SizedBox(height: 12)
+                                └── _DealBookPanel (offers)
+
+_DealBookPanel (keyed `tradeScreenDealBookBidsPanel` / `tradeScreenDealBookOffersPanel`)
+└── CtPanel (padding 12 dp)
+    └── Column
+        ├── Text <panel title> (titleMedium, --accent)
+        │   panel titles: 'Your bids' | 'Your offers'
+        ├── (if filled.isEmpty AND unfilled.isEmpty)
+        │   Text <empty-state copy> (bodySmall, --muted,
+        │                            keyed dealBook{Side}EmptyKey)
+        ├── (otherwise)
+        │   ├── Text 'Filled' (labelMedium, --accentDim)
+        │   ├── (if filled.isEmpty)
+        │   │   Text 'No deals filled this turn.' (bodySmall, --muted)
+        │   ├── (otherwise) for each filled deal at index i:
+        │   │   _DealBookFilledRow (keyed
+        │   │     dealBookFilledRowKey(side, i))
+        │   │       └── Row
+        │   │           ├── Expanded Text '<commodityId> — qty Q × P = N'
+        │   │           │     (bodyMedium, --fg)
+        │   │           └── Text <FRR | FTP tags> (bodySmall, --muted)
+        │   ├── Text 'Unfilled (carry-forward)' (labelMedium, --accentDim)
+        │   ├── (if unfilled.isEmpty)
+        │   │   Text 'No orders carrying forward.' (bodySmall, --muted)
+        │   └── (otherwise) for each carry-forward order at index i:
+        │       _DealBookUnfilledRow (keyed
+        │         dealBookUnfilledRowKey(side, i))
+        │           └── Text '<commodityId> — qty Q (priority P)'
+        │                 (bodyMedium, --fg)
+        └── Text '<totals label>: <total>' (titleSmall, --accentBright,
+              keyed dealBook{Side}TotalsKey)
+            totals labels: 'Total spent' | 'Total received'
+            totals total = Σ (deal.quantity × deal.pricePerUnit).round()
+                           across filled rows only (carry-forwards excluded)
 ```
 
 The two-tab body is the durable structure each follow-up Market slice (E5b interactive controls, E5c cargo indicator) and Deal Book slice (E6) keep building inside. The `CtTabStrip` widget owns the dark-chrome label band (selected = `--accentBright` text on `--accentDim` 25 % alpha background; unselected = `--muted` text on `--surface` 50 % alpha background; 1 px `--accent` / `--accentDim` border per `pixel-art-ui-catalog.md` § `CtTabStrip`) and the `IndexedStack` that mounts both tab bodies so widget tests can reach either tab via `find.byKey` regardless of which is currently visible. Default selection is the **Market** tab (index 0).
@@ -102,7 +153,30 @@ The Market tab body is the read-only commodity table (`#2993` E5a). It iterates 
 - the **last market price** from `Game.worldMarketState.prices[commodityId]` in `--accentBright` (`titleSmall`), formatted to one decimal place; the canonical em-dash glyph `—` renders when the commodity is absent from `prices` (typically only in tests / Widgetbook stories that instantiate `WorldMarketState.empty`),
 - the **previous-turn aggregate volume** line `Bids X / Offers Y` from `Game.worldMarketState.lastTurnActivity[commodityId]` in `--muted` (`bodySmall`); commodities absent from `lastTurnActivity` default to `Bids 0 / Offers 0` so the column reads consistently.
 
-The Deal Book placeholder body uses canonical palette tokens only and carries copy naming the parent and depending issues (`#2989`, `#2990`, `#2993` E6) so reviewers can see which follow-up unlocks its live ledger.
+### Deal Book ledger content (`#2993` E6)
+
+The Deal Book tab body is now the live two-panel ledger described in the wireframe above. Each panel reads from `Game.worldMarketState`:
+
+- **Filled rows** are sourced from `lastTurnActivity[*].deals`, scoped per panel:
+  - Bids panel includes every `FilledDeal` whose `buyerFactionId == playerId`.
+  - Offers panel includes every `FilledDeal` whose `sellerFactionId == playerId`.
+  - Encounter order is the iteration order of `lastTurnActivity.entries` followed by the per-commodity `deals` list — deterministic for a given resolved-turn state because the world-market phase handler writes the per-commodity `deals` list in matcher emission order (FRR pre-pass → priority tiers → FTP → fallback per `SPEC/program/world-market-resolution.md` § Step F).
+- **Unfilled rows** are sourced from `carryForwardBidsByFactionId[playerId]` (bids panel) and `carryForwardOffersByFactionId[playerId]` (offers panel) in their stored list order.
+- **FRR / FTP tags** render on filled rows when `FilledDeal.isFirstRightOfRefusalMatch` / `isFtpMatch` is true, separated by a space (`FRR FTP` when both are true), in `--muted` `bodySmall` so the chrome reads as an audit annotation rather than a primary control.
+- **Totals row** sums `(deal.quantity × deal.pricePerUnit).round()` across the panel's filled rows only — carry-forwards have not cleared and so do not move treasury yet (per `SPEC/program/world-market-resolution.md` § Step C Treasury). The totals row is always mounted (`Total spent: 0` / `Total received: 0` when no filled deals exist) so widget tests can pin the affordance regardless of activity.
+- **Empty state** mounts the per-side empty-text only when both `filledRows.isEmpty` **and** `unfilledRows.isEmpty`; the totals row remains mounted underneath. When one side is populated and the other empty, each subsection renders its own "No deals filled this turn." / "No orders carrying forward." inline placeholder so the panel structure stays consistent.
+- **Cross-side coexistence:** When the world-market phase emits both `deals` and `MarketActivityNote` drop notes on the same commodity, the Deal Book reads only `deals` for filled rows; drop notes are owned by future observer/Deal Book surfaces (Refs `#2990` B3 follow-up) and are intentionally out of scope for this slice.
+
+The ledger is read-only: there are no interactive controls inside `_DealBookTabContent`, so the observe-mode `IgnorePointer` wrap that protects the Market tab is unnecessary here. The Deal Book content renders identically regardless of `shellPlayerContextProvider.canMutateViaUi`.
+
+### Responsive layout (`#2993` E6)
+
+`_DealBookTabContent` wraps the two panels in a `LayoutBuilder`:
+
+- When the inherited `BoxConstraints.maxWidth >= TradeScreen.dealBookTwoPanelMinWidth` (600 dp), the panels render in a `Row` with `Expanded(child: bidsPanel)`, a 12 dp `SizedBox`, and `Expanded(child: offersPanel)` — both panels share the same top anchor.
+- Below the threshold the panels stack vertically inside a `Column` (`mainAxisSize: MainAxisSize.min`, `crossAxisAlignment: CrossAxisAlignment.stretch`) with a 12 dp `SizedBox` between them. This keeps the Deal Book overflow-safe at the 320 dp minimum viewport per `SPEC/ui/mobile-adaptation.md` § 7.
+
+The 600 dp threshold matches the `kMinViewportWidth` (320 dp) + extra breathing room: between 320–599 dp the panels stack; at 600 dp+ they sit side-by-side.
 
 ### Cargo indicator + per-stepper cap + warning (`#2993` E5c)
 
@@ -119,14 +193,13 @@ The per-row bid stepper and direction chips honour the cross-commodity cap:
 
 `tradeCargoCapacity == 0` is a valid state: the indicator renders `Cargo remaining: 0`, no bids can be staged via direction toggle or increment, and the warning row is absent until at least one bid is staged (which itself is impossible at capacity 0, so the warning row never mounts at capacity 0 — the indicator alone communicates the no-cargo state).
 
-### Body (planned — follow-up `#2993` E5b cont. + E6)
+### Body (planned — follow-up `#2993` E5b cont.)
 
-The Market interactive table above plus the E5c cargo indicator are the foundation. Follow-up slices extend each commodity row in place inside the same tab strip:
+The Market interactive table above plus the E5c cargo indicator are the foundation. The remaining follow-up slice extends the per-row Market controls inside the same tab strip:
 
 - **Market tab — priority dropdown (`#2993` E5b cont.):** integer dropdown bounded by the `kMaxTradePriority` (or equivalent) value exposed by the data API in `#2989`. The current slice defaults staged trade orders to priority 1 and flags the integration for the follow-up bound.
-- **Deal Book tab (E6):** two-panel ledger of the previous turn's filled / partial / unfilled bids and offers, with treasury totals.
 
-When E6 lands, replace the relevant subsections of this document (ledger layout) without changing the surrounding tab strip / `CtPanel` / padding chrome — the tab structure stays the same.
+The Deal Book tab body's live two-panel ledger ships in this commit (Refs `#2993` E6) — see [§ Deal Book ledger content (`#2993` E6)](#deal-book-ledger-content-2993-e6) above for the layout, sources, and totals contract.
 
 ---
 
@@ -157,9 +230,9 @@ When E6 lands, replace the relevant subsections of this document (ledger layout)
 
 Observe-mode (`canMutateViaUi == false`, distinct from the global-observe / panels-not-defined sentinel covered by variant `c`): the Market tab body is wrapped in `IgnorePointer` and dimmed by an `Opacity` of `0.7`; the chips and stepper buttons remain mounted (so the static read-only data renders) but taps are blocked and `currentOrdersProvider` is not mutated. This matches the production-screen read-only pattern (`canEdit ? panel : IgnorePointer(child: panel)`).
 
-### Future user actions (`#2993` E5b cont. + E6)
+### Future user actions (`#2993` E5b cont.)
 
-The interactive contract for the priority dropdown (bound to `kMaxTradePriority` once #2989 exposes it) and the Deal Book read-only ledger is documented in `#2988` § UI Design. Mirror those rows into this **Behavior** table when the follow-up slices land — the tab-switch, direction-chip, and cargo-indicator rows above stay untouched because the tab + row + header structure does not change.
+The interactive contract for the priority dropdown (bound to `kMaxTradePriority` once #2989 exposes it) is documented in `#2988` § UI Design. Mirror those rows into this **Behavior** table when the follow-up slice lands — the tab-switch, direction-chip, and cargo-indicator rows above stay untouched because the tab + row + header structure does not change. The Deal Book ledger ships in this commit (Refs `#2993` E6) and is purely read-only: there are no interactive controls on `_DealBookTabContent`, so the User actions table above already covers every input on the screen.
 
 ---
 
@@ -168,12 +241,12 @@ The interactive contract for the priority dropdown (bound to `kMaxTradePriority`
 | ID | Variant | Trigger | Render difference |
 |----|---------|---------|-------------------|
 | `GAME60001` | Default — Market tab (a) | Human player active; Market tab selected (initial state) | Dark chrome + `_TradeScreenTabsBody` with the Market tab (`tradeScreenMarketTabBody`) foregrounded; the body is the read-only commodity table keyed `tradeScreenMarketCommodityList` with one `tradeScreenMarketRow:<id>` per tradeable commodity (`#2993` E5a). |
-| `GAME60001` | Default — Deal Book tab (b) | Human player active; user has tapped the `Deal Book` tab label | Dark chrome + `_TradeScreenTabsBody` with the Deal Book tab (`tradeScreenDealBookTabBody`) foregrounded; the body remains the placeholder `CtPanel` until `#2993` E6 lands the live ledger. |
+| `GAME60001` | Default — Deal Book tab (b) | Human player active; user has tapped the `Deal Book` tab label | Dark chrome + `_TradeScreenTabsBody` with the Deal Book tab (`tradeScreenDealBookTabBody`) foregrounded; the body is now the live `_DealBookTabContent` two-panel ledger (`tradeScreenDealBookContent`) with `tradeScreenDealBookBidsPanel` / `tradeScreenDealBookOffersPanel` containers and `tradeScreenDealBook{Bids,Offers}Totals` rows always mounted (Refs `#2993` E6). |
 | `GAME60001` | Observe mode (c) | `shellPanelsNotDefined(ref) == true` | Body switches to `ObserveModeNotDefinedPanel(title: 'Trade')`; the tab strip (and both tab bodies) are not mounted under this branch. |
 
-When the follow-up E6 slice lands, the variant table stays as is — only the Deal Book tab body's render description changes from "placeholder" to the live ledger.
-
 The Market tab body's cargo indicator + warning state described in [§ Cargo indicator + per-stepper cap + warning (`#2993` E5c)](#cargo-indicator--per-stepper-cap--warning-2993-e5c) is an internal substate of variant `a` (Default — Market tab): the indicator row is always mounted under `tradeScreenMarketTabBody`; the warning row mounts and dismounts as the staged-bid total saturates / desaturates the player's `tradeCargoCapacity`.
+
+The Deal Book ledger described in [§ Deal Book ledger content (`#2993` E6)](#deal-book-ledger-content-2993-e6) is an internal substate of variant `b` (Default — Deal Book tab): the bids and offers panel containers + per-side totals rows are always mounted under `tradeScreenDealBookContent`; the per-side empty-state, filled, and unfilled rows mount or dismount based on the player's `lastTurnActivity[*].deals` / `carryForward{Bids,Offers}ByFactionId[playerId]` content. Switching back and forth between the Market and Deal Book tabs preserves the IndexedStack state per the E4 contract.
 
 ---
 
@@ -186,6 +259,9 @@ The Market tab body's cargo indicator + warning state described in [§ Cargo ind
 - `CtPanel` (`SPEC/ui/pixel-art-ui-catalog.md` § `CtPanel`) — outer surface for the tabs body and inner surface for each tab placeholder.
 - `CtTabStrip` (`SPEC/ui/pixel-art-ui-catalog.md` § `CtTabStrip`) — dark editorial-monocle tab strip hosting the `Market` and `Deal Book` labels above the `IndexedStack` of tab bodies.
 - `ObserveModeNotDefinedPanel` (`app/lib/features/game/widgets/observe_mode_not_defined_panel.dart`) — shared observe-mode sentinel.
+- `_DealBookTabContent` (`app/lib/features/game/screens/trade_screen.dart`) — read-only two-panel ledger (Refs `#2993` E6) hosting both `_DealBookPanel` instances under a `LayoutBuilder` that picks `Row` vs `Column` based on `dealBookTwoPanelMinWidth`.
+- `_DealBookPanel` (`app/lib/features/game/screens/trade_screen.dart`) — single ledger panel; renders panel title, optional empty-state copy, the Filled / Unfilled sections, and the always-mounted totals row.
+- `_DealBookFilledRow` / `_DealBookUnfilledRow` (`app/lib/features/game/screens/trade_screen.dart`) — per-row widgets keyed by `dealBookFilledRowKey(side, index)` / `dealBookUnfilledRowKey(side, index)`.
 
 ---
 
@@ -202,7 +278,17 @@ Use cases for the current slice (E1+E2+E3+E4+E5a+E5b+E5c):
 | `Market tab — staged bid + offer (Refs #2993 E5b)` | Story Game with `currentOrdersProvider` pre-seeded so reviewers see an active `Bid` (timber, qty 4) and `Offer` (fabric, qty 7) without needing to drive the chips themselves. Cargo indicator reads `Cargo remaining: 20` (`24 − 4`). |
 | `Market tab — cargo saturated (Refs #2993 E5c)` | Story Game with `currentOrdersProvider` pre-seeded to stage bids whose total quantity equals `tradeCargoCapacity` so the cargo indicator reads `Cargo remaining: 0` and the warning row `tradeScreenMarketCargoWarning` is mounted. Reviewers can confirm the dark-theme `--danger` palette and the cargo-limit copy without touching the chips. |
 
-Follow-up E5b cont./E6 slices append `Market tab — priority dropdown`, `Deal Book tab — mixed fills`, etc. as the bodies land. The tab structure remains the same; only each tab body's content advances.
+Recommended Widgetbook use cases for the `#2993` E6 Deal Book slice (mount in `tradeScreenDirectories` as the live content matures):
+
+| Use case | Proves |
+|----------|--------|
+| `Deal Book tab — empty` | Default story Game with `lastTurnActivity == {}` and empty carry-forwards. Reviewers see both empty-state copies (`dealBookBidsEmpty` / `dealBookOffersEmpty`) and `Total spent: 0` / `Total received: 0` totals. |
+| `Deal Book tab — mixed fills + carry-forwards` | Story Game with one filled buy, one filled sale, FRR-tagged + FTP-tagged rows on each side, and at least one carry-forward bid and one carry-forward offer. Proves both Filled / Unfilled subsections render together. |
+| `Deal Book tab — mobile (stacked)` | Same data inside `mobileViewport` (360 × 640 dp) to prove the stacked layout (panels in a `Column`) below `dealBookTwoPanelMinWidth`. |
+
+These use cases share the same data sources as the trade screen runtime (`Game.worldMarketState`) so the Widgetbook contract evolves with the live render automatically.
+
+Follow-up E5b cont. slices append `Market tab — priority dropdown` as the priority API surface lands. The tab structure remains the same; only each tab body's content advances.
 
 ---
 
@@ -263,6 +349,26 @@ Follow-up E5b cont./E6 slices append `Market tab — priority dropdown`, `Deal B
 - **Given** the player has `tradeCargoCapacity = 10`, has staged `Bid` timber qty 10, **when** the user taps the `None` chip on timber (`marketRowNoneChipKey('timber')`), **then** the staged `TradeOrder` for timber is removed, the cargo indicator updates to `Cargo remaining: 10`, and the warning row is removed (because `totalStagedBidQuantity == 0`).
 - **Given** the `TradeScreen` is mounted with `shellPlayerContextProvider.canMutateViaUi == false`, **then** the cargo indicator and (when applicable) warning row remain mounted with the same text values as in the editable case (they read directly from `Game` + `currentOrdersProvider` regardless of the observe-mode `IgnorePointer`).
 
-### Full screen (follow-up `#2993` E5b cont. / E6 — implement when bodies land)
+### Deal Book tab — live two-panel ledger (`#2993` E6)
 
-Migrate the remaining parent-issue ACs from `#2988` § Acceptance criteria — UI into Given–When–Then rows under this section as each follow-up slice ships (priority dropdown bound to `kMaxTradePriority`, Deal Book ledger).
+- **Given** the `TradeScreen` is mounted with a human player, observe mode is **not** active, the player has zero `FilledDeal` entries on `lastTurnActivity[*].deals` (filtered by `buyerFactionId == playerId` and `sellerFactionId == playerId`), and the player has zero carry-forward bids and zero carry-forward offers, **when** the user taps the `Deal Book` tab label, **then** the Deal Book tab body keyed `tradeScreenDealBookTabBody` foregrounds, both `tradeScreenDealBookBidsEmpty` and `tradeScreenDealBookOffersEmpty` widgets are mounted, the `tradeScreenDealBookBidsTotals` widget renders the literal `Total spent: 0`, and the `tradeScreenDealBookOffersTotals` widget renders the literal `Total received: 0`.
+
+- **Given** the `TradeScreen` is mounted with a human player `gp_h`, observe mode is **not** active, and `lastTurnActivity['timber'].deals` contains exactly one `FilledDeal(sellerFactionId: 'gp_a', buyerFactionId: 'gp_h', commodityId: 'timber', quantity: 5, pricePerUnit: 30.0)`, **when** the user taps the `Deal Book` tab label, **then** the widget tree contains exactly one widget keyed `dealBookFilledRowKey(dealBookSideBids, 0)`, no widget keyed `dealBookFilledRowKey(dealBookSideBids, 1)`, the row text is `timber — qty 5 × 30.0 = 150`, no `tradeScreenDealBookBidsEmpty` widget is mounted, and the `tradeScreenDealBookBidsTotals` widget renders the literal `Total spent: 150`.
+
+- **Given** the same conditions and a second, **unrelated** deal `FilledDeal(sellerFactionId: 'gp_a', buyerFactionId: 'gp_b', commodityId: 'iron', quantity: 4, pricePerUnit: 50.0)` is present on `lastTurnActivity['iron'].deals`, **when** the user taps the `Deal Book` tab label, **then** no row keyed `dealBookFilledRowKey(dealBookSideBids, ?)` is mounted for the iron deal (the buyer filter excludes it), and the bids panel total spent remains `150`.
+
+- **Given** the `TradeScreen` is mounted with a human player `gp_h`, observe mode is **not** active, and `lastTurnActivity` contains two filled sales by `gp_h` — `timber qty 7 × 30.0` and `iron qty 3 × 60.0` — both with `sellerFactionId == 'gp_h'`, **when** the user taps the `Deal Book` tab label, **then** the widget tree contains exactly two widgets keyed `dealBookFilledRowKey(dealBookSideOffers, 0)` and `dealBookFilledRowKey(dealBookSideOffers, 1)`, and the `tradeScreenDealBookOffersTotals` widget renders the literal `Total received: 390` (`7×30 + 3×60`).
+
+- **Given** the `TradeScreen` is mounted with a human player `gp_h`, observe mode is **not** active, `lastTurnActivity` is empty, and `carryForwardBidsByFactionId['gp_h']` contains a single `TradeOrder(commodityId: 'timber', type: bid, quantity: 8, priority: 2)`, **when** the user taps the `Deal Book` tab label, **then** the widget tree contains exactly one widget keyed `dealBookUnfilledRowKey(dealBookSideBids, 0)`, the row text is `timber — qty 8 (priority 2)`, no `dealBookFilledRowKey(dealBookSideBids, ?)` widget is mounted, no `tradeScreenDealBookBidsEmpty` widget is mounted, and the `tradeScreenDealBookBidsTotals` widget continues to render the literal `Total spent: 0` (carry-forwards have not cleared and never contribute to treasury totals).
+
+- **Given** the `TradeScreen` is mounted with a human player `gp_h`, observe mode is **not** active, `lastTurnActivity` is empty, and `carryForwardOffersByFactionId` contains entries for `gp_h` (`fabric qty 6 priority 1`, `fabric qty 4 priority 3`) **and** for the foreign GP `gp_a` (`timber qty 99 priority 1`), **when** the user taps the `Deal Book` tab label, **then** the widget tree contains exactly two widgets keyed `dealBookUnfilledRowKey(dealBookSideOffers, 0)` and `dealBookUnfilledRowKey(dealBookSideOffers, 1)`, and no widget with text `timber — qty 99 (priority 1)` is mounted anywhere (player isolation: foreign carry-forwards never leak into the human player's Deal Book).
+
+- **Given** the `TradeScreen` is mounted with a human player `gp_h`, observe mode is **not** active, and `lastTurnActivity['timber'].deals` contains one FRR-tagged buy (`isFirstRightOfRefusalMatch: true`) and one FTP-tagged buy (`isFtpMatch: true`) both with `buyerFactionId == 'gp_h'`, **when** the user taps the `Deal Book` tab label, **then** the widget tree contains exactly two widgets keyed `dealBookFilledRowKey(dealBookSideBids, 0)` and `dealBookFilledRowKey(dealBookSideBids, 1)`, the literal text `FRR` appears exactly once on the page, the literal text `FTP` appears exactly once on the page, and `tradeScreenDealBookBidsTotals` renders the literal `Total spent: 180` (`3×30 + 3×30`).
+
+- **Given** the viewport width is at least `TradeScreen.dealBookTwoPanelMinWidth` (600 dp), **when** the Deal Book tab is foregrounded, **then** `tester.getTopLeft(find.byKey(dealBookOffersPanelKey)).dx` is strictly greater than `tester.getTopLeft(find.byKey(dealBookBidsPanelKey)).dx` and their `dy` values are equal (the panels render side-by-side with a shared top anchor inside the `Row`).
+
+- **Given** the viewport width is exactly `kMinViewportWidth` (320 dp) and the height is at least 640 dp, **when** the Deal Book tab is foregrounded, **then** `tester.takeException()` returns `null`, `tester.getTopLeft(find.byKey(dealBookOffersPanelKey)).dy` is strictly greater than `tester.getTopLeft(find.byKey(dealBookBidsPanelKey)).dy` (the panels stack vertically), and the Deal Book renders inside the 320 dp column without horizontal overflow.
+
+### Full screen (follow-up `#2993` E5b cont.)
+
+Migrate the remaining parent-issue ACs from `#2988` § Acceptance criteria — UI into Given–When–Then rows under this section as each follow-up slice ships (priority dropdown bound to `kMaxTradePriority`).

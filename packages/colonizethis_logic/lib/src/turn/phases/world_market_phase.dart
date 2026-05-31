@@ -500,7 +500,11 @@ _CarryForwardValidationResult _validateCarryForwards({
 /// Merges carry-forward drop notes into `activity` per commodity. The
 /// notes list on `MarketActivity` is replaced (notes always come from
 /// this phase invocation; prior-turn notes are not re-emitted), and the
-/// final list is unmodifiable to keep `MarketActivity` immutable.
+/// final list is unmodifiable to keep `MarketActivity` immutable. Any
+/// `deals` already attached for the commodity (from `_buildActivity`)
+/// are preserved verbatim — drop notes and ledger entries coexist on
+/// the same `MarketActivity` per `SPEC/program/world-market-resolution.md`
+/// § Step F Activity rollup.
 void _attachDropNotes({
   required Map<CommodityId, MarketActivity> activity,
   required Map<CommodityId, List<MarketActivityNote>> notesByCommodity,
@@ -519,6 +523,7 @@ void _attachDropNotes({
         totalOfferQuantity: existing.totalOfferQuantity,
         filledQuantity: existing.filledQuantity,
         priceChangePercent: existing.priceChangePercent,
+        deals: existing.deals,
         notes: notes,
       );
     }
@@ -532,9 +537,11 @@ Map<CommodityId, MarketActivity> _buildActivity({
   required Map<CommodityId, double> newPrices,
 }) {
   final filledByCommodity = <CommodityId, int>{};
+  final dealsByCommodity = <CommodityId, List<FilledDeal>>{};
   for (final deal in matchResult.filledDeals) {
     filledByCommodity[deal.commodityId] =
         (filledByCommodity[deal.commodityId] ?? 0) + deal.quantity;
+    (dealsByCommodity[deal.commodityId] ??= <FilledDeal>[]).add(deal);
   }
   final commodityIds = <CommodityId>{
     ...newQuantitiesByCommodity.keys,
@@ -549,11 +556,15 @@ Map<CommodityId, MarketActivity> _buildActivity({
     final oldPrice = priorPrices[id] ?? 0.0;
     final newPrice = newPrices[id] ?? oldPrice;
     final percent = oldPrice > 0 ? (newPrice / oldPrice) - 1.0 : 0.0;
+    final deals = dealsByCommodity[id];
     activity[id] = MarketActivity(
       totalBidQuantity: pair.bid,
       totalOfferQuantity: pair.offer,
       filledQuantity: filled,
       priceChangePercent: percent,
+      deals: deals == null
+          ? const <FilledDeal>[]
+          : List<FilledDeal>.unmodifiable(deals),
     );
   }
   return activity;
