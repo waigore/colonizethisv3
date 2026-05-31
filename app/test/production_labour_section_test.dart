@@ -4,9 +4,13 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
+import 'package:flutter/gestures.dart' show PointerDeviceKind;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'package:colonizethis_app/config/editorial_monocle_palette.dart';
+import 'package:colonizethis_app/features/game/widgets/chrome/ct_danger_text_button.dart';
+import 'package:colonizethis_app/features/game/widgets/chrome/ct_nine_patch_button.dart';
 import 'package:colonizethis_app/features/game/widgets/production_labour_helpers.dart';
 import 'package:colonizethis_app/features/game/widgets/production_labour_section.dart';
 import 'package:colonizethis_app/l10n/l10n.dart';
@@ -270,5 +274,191 @@ void main() {
         findsNothing,
       );
     });
+
+    // S7b — Tech-gate parenthetical (Refs #2862 S7).
+
+    testWidgets(
+      'tier label suffixes (unlocked) for peasant when techUnlocked is empty',
+      (WidgetTester tester) async {
+        final player = _gpWithPool(peasants: 1);
+        await tester.pumpWidget(_mount(player: player));
+        await pumpSettleCapped(tester);
+
+        final l10n = lookupAppLocalizations(const Locale('en'));
+        expect(
+          find.text(
+            l10n.production_labourTierLabel(
+              l10n.production_workers_peasants,
+              l10n.production_labourTierUnlocked,
+            ),
+          ),
+          findsOneWidget,
+        );
+      },
+    );
+
+    testWidgets(
+      'trained tier label suffixes (locked) when required techs missing',
+      (WidgetTester tester) async {
+        final player = _gpWithPool(peasants: 1);
+        await tester.pumpWidget(_mount(player: player));
+        await pumpSettleCapped(tester);
+
+        final l10n = lookupAppLocalizations(const Locale('en'));
+        for (final tierName in [
+          l10n.production_workers_apprentices,
+          l10n.production_workers_journeymen,
+          l10n.production_workers_masters,
+        ]) {
+          expect(
+            find.text(
+              l10n.production_labourTierLabel(
+                tierName,
+                l10n.production_labourTierLocked,
+              ),
+            ),
+            findsOneWidget,
+            reason: '$tierName must render (locked) suffix',
+          );
+        }
+      },
+    );
+
+    testWidgets(
+      'trained tier label suffixes (unlocked) when all required techs are unlocked',
+      (WidgetTester tester) async {
+        final player = _gpWithPool(
+          peasants: 1,
+          techUnlocked: const {
+            kTechIdApprenticeWorkers: true,
+            kTechIdSugarRefining: true,
+          },
+        );
+        await tester.pumpWidget(_mount(player: player));
+        await pumpSettleCapped(tester);
+
+        final l10n = lookupAppLocalizations(const Locale('en'));
+        expect(
+          find.text(
+            l10n.production_labourTierLabel(
+              l10n.production_workers_apprentices,
+              l10n.production_labourTierUnlocked,
+            ),
+          ),
+          findsOneWidget,
+        );
+      },
+    );
+
+    // S7c — Disband uses CtDangerTextButton (no CtNinePatchButton chrome).
+
+    testWidgets(
+      'disband control renders as CtDangerTextButton and not CtNinePatchButton',
+      (WidgetTester tester) async {
+        final player = _gpWithPool(journeymen: 1);
+        await tester.pumpWidget(_mount(player: player));
+        await pumpSettleCapped(tester);
+
+        // Exactly one disband row per trained tier (3 total) — all
+        // CtDangerTextButton, none CtNinePatchButton.
+        expect(find.byType(CtDangerTextButton), findsNWidgets(3));
+        expect(
+          find.byType(CtNinePatchButton),
+          findsNothing,
+          reason: 'Labour rows must not mount CtNinePatchButton (S7c)',
+        );
+      },
+    );
+
+    testWidgets(
+      'enabled disband CtDangerTextButton idle opacity is 0.7',
+      (WidgetTester tester) async {
+        final player = _gpWithPool(journeymen: 1);
+        await tester.pumpWidget(_mount(player: player));
+        await pumpSettleCapped(tester);
+
+        final disbandFinder = find.byKey(
+          const ValueKey<String>('production_labour_disband_journeymen'),
+        );
+        expect(disbandFinder, findsOneWidget);
+        final opacity = tester.widget<Opacity>(
+          find.descendant(of: disbandFinder, matching: find.byType(Opacity)),
+        );
+        expect(opacity.opacity, CtDangerTextButton.idleOpacity);
+      },
+    );
+
+    testWidgets(
+      'disabled disband CtDangerTextButton uses CtNinePatchButton.disabledOpacity',
+      (WidgetTester tester) async {
+        // No journeyman in pool → disband for journeyman disabled (still mounted).
+        final player = _gpWithPool(peasants: 1);
+        await tester.pumpWidget(_mount(player: player));
+        await pumpSettleCapped(tester);
+
+        final disbandFinder = find.byKey(
+          const ValueKey<String>('production_labour_disband_journeymen'),
+        );
+        expect(disbandFinder, findsOneWidget);
+        final opacity = tester.widget<Opacity>(
+          find.descendant(of: disbandFinder, matching: find.byType(Opacity)),
+        );
+        expect(opacity.opacity, CtNinePatchButton.disabledOpacity);
+      },
+    );
+
+    testWidgets(
+      'disband CtDangerTextButton paints danger border (no hard-coded colours)',
+      (WidgetTester tester) async {
+        final player = _gpWithPool(apprentices: 1);
+        await tester.pumpWidget(_mount(player: player));
+        await pumpSettleCapped(tester);
+
+        final disbandFinder = find.byKey(
+          const ValueKey<String>('production_labour_disband_apprentices'),
+        );
+        // The danger-coloured border lives on an AnimatedContainer painted
+        // by the CtDangerTextButton; assert it resolves through the token.
+        final container = tester.widget<AnimatedContainer>(
+          find.descendant(
+            of: disbandFinder,
+            matching: find.byType(AnimatedContainer),
+          ),
+        );
+        final decoration = container.decoration as BoxDecoration;
+        final border = decoration.border! as Border;
+        expect(border.top.color, EditorialMonoclePalette.danger);
+        expect(border.top.width, 1);
+        expect(decoration.color, Colors.transparent);
+      },
+    );
+
+    testWidgets(
+      'CtDangerTextButton hover lifts opacity to 1.0',
+      (WidgetTester tester) async {
+        final player = _gpWithPool(journeymen: 1);
+        await tester.pumpWidget(_mount(player: player));
+        await pumpSettleCapped(tester);
+
+        final disbandFinder = find.byKey(
+          const ValueKey<String>('production_labour_disband_journeymen'),
+        );
+
+        final gesture = await tester.createGesture(
+          kind: PointerDeviceKind.mouse,
+        );
+        addTearDown(gesture.removePointer);
+        await gesture.addPointer(location: Offset.zero);
+        await tester.pump();
+
+        await gesture.moveTo(tester.getCenter(disbandFinder));
+        await tester.pumpAndSettle(CtDangerTextButton.animationDuration);
+
+        final opacity = tester.widget<Opacity>(
+          find.descendant(of: disbandFinder, matching: find.byType(Opacity)),
+        );
+        expect(opacity.opacity, CtDangerTextButton.hoverOpacity);
+      },
+    );
   });
 }

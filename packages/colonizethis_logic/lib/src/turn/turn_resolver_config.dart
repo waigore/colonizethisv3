@@ -34,6 +34,7 @@ class TurnResolverConfig {
     this.onProductionComplete,
     this.startFromPhase,
     this.overtureDecisions,
+    this.ftpDecisions,
     this.interventionDecisions,
     this.callToArmsDecisions,
     this.phaseHandlerOverrides,
@@ -61,6 +62,7 @@ class TurnResolverConfig {
   onProductionComplete;
   final TurnPhase? startFromPhase;
   final List<OvertureDecision>? overtureDecisions;
+  final List<FtpDecision>? ftpDecisions;
   final List<InterventionDecision>? interventionDecisions;
   final List<CallToArmsDecision>? callToArmsDecisions;
 

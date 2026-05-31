@@ -113,5 +113,13 @@ class FakeOrderSuggestionAPIForDomainPlannerTests implements OrderSuggestionAPI 
       diplomatic
           .where((o) => o.type == DiplomaticOrderType.declareWar)
           .toList();
+
+  @override
+  TradeSuggestionResult suggestTradeOrders(
+    PlayerView view,
+    Game game, {
+    TradeSuggestionContext? contextOverride,
+  }) =>
+      TradeSuggestionResult.empty;
 }
 

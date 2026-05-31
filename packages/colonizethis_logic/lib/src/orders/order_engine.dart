@@ -11,6 +11,7 @@ import 'order_resolution_context.dart';
 import 'projected_effects.dart';
 import 'order_validation_result.dart';
 export 'order_validation_result.dart';
+import '../economy/world_market/trade_order_validator.dart';
 import 'unit_type_helpers.dart';
 export 'validator_bundle.dart'
     show
@@ -279,6 +280,7 @@ class OrderEngine with _OrderEngineGeneratedOrderMethods {
     final diplomatic = _orders.diplomaticOrdersByPlayerId[playerId] ?? [];
     final navals = _orders.navalMoveOrdersByPlayerId[playerId] ?? [];
     final missions = _orders.navalMissionOrdersByPlayerId[playerId] ?? [];
+    final tradeOrders = _orders.tradeOrdersByPlayerId[playerId] ?? [];
 
     final unitsById = Map<String, Unit>.from(game.worldState.allUnitsById);
 
@@ -347,6 +349,7 @@ class OrderEngine with _OrderEngineGeneratedOrderMethods {
       works: works,
       navals: navals,
       missions: missions,
+      tradeOrders: tradeOrders,
     );
     return state.results;
   }
@@ -354,7 +357,7 @@ class OrderEngine with _OrderEngineGeneratedOrderMethods {
   /// Build and run the per-category validation phases for one player.
   /// Mutates [state] (results / rejected / stockpile / treasury / workerPool)
   /// in submission order: move, army-move, recruit-worker, build, work,
-  /// diplomatic, naval, naval-mission.
+  /// diplomatic, naval, naval-mission, trade.
   ///
   /// [resolution] is the per-pass [OrderResolutionContext] snapshot built
   /// once in [validatePlayerOrdersWithContext] (view + unitsById +
@@ -381,6 +384,7 @@ class OrderEngine with _OrderEngineGeneratedOrderMethods {
     required List<WorkOrder> works,
     required List<NavalMoveOrder> navals,
     required List<NavalMissionOrder> missions,
+    required List<TradeOrder> tradeOrders,
   }) {
     OrderValidators newValidatorBundle() => _validatorFactory(
       game,
@@ -457,6 +461,15 @@ class OrderEngine with _OrderEngineGeneratedOrderMethods {
           (
             refreshBundleBefore: true,
             run: (v) => _runNavalPhase(v, state, navals, missions),
+          ),
+          (
+            refreshBundleBefore: false,
+            run: (v) => _runTradeOrderPhase(
+              state,
+              game,
+              playerId,
+              tradeOrders,
+            ),
           ),
         ];
 
@@ -620,6 +633,30 @@ class OrderEngine with _OrderEngineGeneratedOrderMethods {
       (o, prev) =>
           v.navalValidator.validateNavalMission(o, previousRejected: prev),
     );
+  }
+
+  void _runTradeOrderPhase(
+    _OrderValidationRunState state,
+    Game game,
+    String playerId,
+    List<TradeOrder> tradeOrders,
+  ) {
+    if (tradeOrders.isEmpty) return;
+    if (state.rejected) {
+      for (var i = 0; i < tradeOrders.length; i++) {
+        state.results.add(previousInvalidOrderResult);
+      }
+      return;
+    }
+    final context = tradeOrderValidationContextFromGame(game, playerId);
+    final tradeResults = TradeOrderValidator.validate(
+      context: context,
+      proposedOrders: tradeOrders,
+    );
+    state.results.addAll(tradeResults);
+    if (tradeResults.any((r) => !r.isAccepted)) {
+      state.rejected = true;
+    }
   }
 
   /// Dry-run: apply orders via resolver (no mutation of [game]); return projected effects.

@@ -268,4 +268,132 @@ void main() {
       );
     });
   });
+
+  group('Orders.tradeOrdersByPlayerId', () {
+    test('defaults to empty and toJson omits the key when empty', () {
+      const o = Orders();
+      expect(o.tradeOrdersByPlayerId, isEmpty);
+      expect(o.toJson().containsKey('tradeOrdersByPlayerId'), isFalse);
+    });
+
+    test('round-trips multiple bids/offers across players via JSON', () {
+      final o = Orders(
+        tradeOrdersByPlayerId: {
+          'p1': [
+            TradeOrder(
+              commodityId: 'timber',
+              type: TradeOrderType.offer,
+              quantity: 10,
+              priority: 1,
+            ),
+            TradeOrder(
+              commodityId: 'iron',
+              type: TradeOrderType.bid,
+              quantity: 3,
+              priority: 2,
+            ),
+          ],
+          'p2': [
+            TradeOrder(
+              commodityId: 'silk',
+              type: TradeOrderType.bid,
+              quantity: 5,
+              priority: 1,
+              isFtp: true,
+            ),
+          ],
+        },
+      );
+      final restored = Orders.fromJson(o.toJson());
+      expect(restored.tradeOrdersByPlayerId.keys, {'p1', 'p2'});
+      expect(restored.tradeOrdersByPlayerId['p1']!.length, 2);
+      expect(restored.tradeOrdersByPlayerId['p2']!.single.commodityId, 'silk');
+      expect(restored.tradeOrdersByPlayerId['p2']!.single.isFtp, isTrue);
+      expect(restored, o);
+      expect(restored.hashCode, o.hashCode);
+    });
+
+    test('equality false when trade orders differ', () {
+      final a = Orders(
+        tradeOrdersByPlayerId: {
+          'p1': [
+            TradeOrder(
+              commodityId: 'timber',
+              type: TradeOrderType.offer,
+              quantity: 5,
+              priority: 1,
+            ),
+          ],
+        },
+      );
+      final b = Orders(
+        tradeOrdersByPlayerId: {
+          'p1': [
+            TradeOrder(
+              commodityId: 'timber',
+              type: TradeOrderType.offer,
+              quantity: 10,
+              priority: 1,
+            ),
+          ],
+        },
+      );
+      expect(a == b, isFalse);
+    });
+
+    test('copyWith preserves trade orders by default', () {
+      final original = Orders(
+        tradeOrdersByPlayerId: {
+          'p1': [
+            TradeOrder(
+              commodityId: 'timber',
+              type: TradeOrderType.offer,
+              quantity: 5,
+              priority: 1,
+            ),
+          ],
+        },
+      );
+      final copy = original.copyWith();
+      expect(copy, original);
+      expect(copy.tradeOrdersByPlayerId, isNotEmpty);
+    });
+
+    test('copyWith can replace trade orders', () {
+      final original = Orders(
+        tradeOrdersByPlayerId: {
+          'p1': [
+            TradeOrder(
+              commodityId: 'timber',
+              type: TradeOrderType.offer,
+              quantity: 5,
+              priority: 1,
+            ),
+          ],
+        },
+      );
+      final updated = original.copyWith(
+        tradeOrdersByPlayerId: {
+          'p1': [
+            TradeOrder(
+              commodityId: 'iron',
+              type: TradeOrderType.bid,
+              quantity: 2,
+              priority: 1,
+            ),
+          ],
+        },
+      );
+      expect(
+        updated.tradeOrdersByPlayerId['p1']!.single.commodityId,
+        'iron',
+      );
+      expect(updated == original, isFalse);
+    });
+
+    test('fromJson defaults to empty map when key missing', () {
+      final o = Orders.fromJson({});
+      expect(o.tradeOrdersByPlayerId, isEmpty);
+    });
+  });
 }

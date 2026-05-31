@@ -1,6 +1,7 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
+import '../economy/world_market/trade_order_suggester.dart';
 import '../world/player_view.dart';
 import 'order_resolution_context.dart';
 
@@ -71,5 +72,19 @@ abstract class OrderSuggestionAPI {
     MapTopology topology,
     Orders currentOrders, {
     Map<String, TileMapResult>? tileMapByRegion,
+  });
+
+  /// Returns validator-clean offer and bid suggestions for [view]'s player.
+  ///
+  /// SPEC/program/world-market-resolution.md § Trade order suggestion API.
+  /// The default implementation derives a [TradeSuggestionContext] from
+  /// `game` (current stockpile, home-fleet cargo holds, world-market bid
+  /// type cap) and delegates to `TradeOrderSuggester.suggest`. Callers may
+  /// pass an explicit [contextOverride] to inject a richer projection
+  /// (industry allocation, forecast needs) without touching the API surface.
+  TradeSuggestionResult suggestTradeOrders(
+    PlayerView view,
+    Game game, {
+    TradeSuggestionContext? contextOverride,
   });
 }

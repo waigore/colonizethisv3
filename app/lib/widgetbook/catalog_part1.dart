@@ -149,7 +149,13 @@ class _ProductionPanelStoryBody extends ConsumerWidget {
             : partialAvailabilityProductionPlayer());
     final topology = MapTopology();
     const Map<String, TileMapResult>? tileMapByRegion = null;
-    const currentOrders = Orders();
+    // Read the story's `currentOrdersProvider` so the Labour Controls
+    // subsection mounts with the same Riverpod wiring the running
+    // ProductionScreen uses (`ProductionScreen` → `currentOrdersProvider`).
+    // Without callbacks the panel omits the Labour Controls block entirely
+    // (SPEC § Labour Controls — Section placement), so reviewers would lose
+    // the realigned subsection. Refs #2862 S7e.
+    final currentOrders = ref.watch(currentOrdersProvider);
     final desiredOutputByRecipe = ref.watch(productionDesiredOutputProvider);
     final netDeltasByCommodity = previewStockpileNetDeltaByCommodityForPlayer(
       game: game,
@@ -161,12 +167,37 @@ class _ProductionPanelStoryBody extends ConsumerWidget {
         player.id: assignedRecipesFromDesiredOutput(desiredOutputByRecipe),
       },
     );
+    final labourCallbacks = ProductionLabourCallbacks(
+      onAppendRecruitOrder: (tier) {
+        final next = ordersWithAppendedRecruitWorkerOrder(
+          currentOrders: ref.read(currentOrdersProvider),
+          playerId: player.id,
+          tier: tier,
+        );
+        ref.read(currentOrdersProvider.notifier).replaceAll(next);
+      },
+      onPopLastRecruitOrder: (tier) {
+        final next = ordersWithLastRecruitWorkerOrderRemoved(
+          currentOrders: ref.read(currentOrdersProvider),
+          playerId: player.id,
+          tier: tier,
+        );
+        ref.read(currentOrdersProvider.notifier).replaceAll(next);
+      },
+      onDisband: (_) {
+        // Disband mutates the live Game; the Widgetbook story uses a
+        // shared demo game so we deliberately no-op here. Reviewers still
+        // see the danger text button at idle / disabled opacity.
+      },
+    );
     return ProductionPanel(
       game: game,
       player: player,
       desiredOutputByRecipe: desiredOutputByRecipe,
       netDeltasByCommodity: netDeltasByCommodity,
       currentOrders: currentOrders,
+      labourCallbacks: labourCallbacks,
+      canEditLabour: true,
       onOpenCommodityBreakdown: () {
         showDialog<void>(
           context: context,

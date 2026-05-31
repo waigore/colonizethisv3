@@ -7,6 +7,7 @@ import 'minor_nation.dart';
 import 'player.dart';
 import 'tribe.dart';
 import 'turn_time_mapping.dart';
+import 'world_market.dart';
 import 'world_state.dart';
 
 /// Victory type. Phase 5: military only (31+ OW provinces). SPEC/game/victory.md.
@@ -93,6 +94,8 @@ class Game {
     this.lastHumanCompletedResearchCategory,
     this.lastHumanResearchCategoryCompletionTurn,
     this.mapViewState = MapViewState.defaults,
+    this.worldMarketState = WorldMarketState.empty,
+    this.ftpPartnershipKeys = const {},
   });
 
   final String id;
@@ -178,6 +181,16 @@ class Game {
   /// Persisted Empire overview map state (zoom + display toggles).
   final MapViewState mapViewState;
 
+  /// World market prices and last-turn activity. SPEC/game/world-market.md,
+  /// SPEC/program/world-market-resolution.md. Defaults to
+  /// [WorldMarketState.empty]; populated from `ResourceRules.defaultMarketPrice`
+  /// at game start via [WorldMarketState.withDefaultPrices].
+  final WorldMarketState worldMarketState;
+
+  /// Canonical bilateral FTP pair keys (`factionA|factionB`, sorted).
+  /// SPEC/game/world-market.md § Favored Trading Partner.
+  final Set<String> ftpPartnershipKeys;
+
   Map<String, dynamic> toJson() => {
     'id': id,
     'worldState': worldState.toJson(),
@@ -230,6 +243,10 @@ class Game {
           lastHumanResearchCategoryCompletionTurn,
     if (mapViewState != MapViewState.defaults)
       'mapViewState': mapViewState.toJson(),
+    if (worldMarketState != WorldMarketState.empty)
+      'worldMarketState': worldMarketState.toJson(),
+    if (ftpPartnershipKeys.isNotEmpty)
+      'ftpPartnershipKeys': ftpPartnershipKeys.toList()..sort(),
   };
 
   static Game fromJson(Map<String, dynamic> json) {
@@ -346,6 +363,14 @@ class Game {
     final mapViewState = mapViewStateRaw is Map<dynamic, dynamic>
         ? MapViewState.fromJson(Map<String, dynamic>.from(mapViewStateRaw))
         : MapViewState.defaults;
+    final worldMarketStateRaw = json['worldMarketState'];
+    final worldMarketState = worldMarketStateRaw is Map<dynamic, dynamic>
+        ? WorldMarketState.fromJson(
+            Map<String, dynamic>.from(worldMarketStateRaw),
+          )
+        : WorldMarketState.empty;
+    final ftpKeysList = json['ftpPartnershipKeys'] as List<dynamic>? ?? [];
+    final ftpPartnershipKeys = ftpKeysList.map((e) => e.toString()).toSet();
     return Game(
       id: json['id'] as String,
       worldState: WorldState.fromJson(
@@ -408,6 +433,8 @@ class Game {
       calendarCampaignHalted:
           json['calendarCampaignHalted'] as bool? ?? false,
       infiniteMode: json['infiniteMode'] as bool? ?? false,
+      worldMarketState: worldMarketState,
+      ftpPartnershipKeys: ftpPartnershipKeys,
     );
   }
 
@@ -440,6 +467,8 @@ class Game {
     String? lastHumanCompletedResearchCategory,
     int? lastHumanResearchCategoryCompletionTurn,
     MapViewState? mapViewState,
+    WorldMarketState? worldMarketState,
+    Set<String>? ftpPartnershipKeys,
   }) {
     return Game(
       id: id ?? this.id,
@@ -481,6 +510,8 @@ class Game {
           lastHumanResearchCategoryCompletionTurn ??
           this.lastHumanResearchCategoryCompletionTurn,
       mapViewState: mapViewState ?? this.mapViewState,
+      worldMarketState: worldMarketState ?? this.worldMarketState,
+      ftpPartnershipKeys: ftpPartnershipKeys ?? this.ftpPartnershipKeys,
     );
   }
 
@@ -524,7 +555,9 @@ class Game {
               other.lastHumanCompletedResearchCategory &&
           lastHumanResearchCategoryCompletionTurn ==
               other.lastHumanResearchCategoryCompletionTurn &&
-          mapViewState == other.mapViewState;
+          mapViewState == other.mapViewState &&
+          worldMarketState == other.worldMarketState &&
+          _setEquals(ftpPartnershipKeys, other.ftpPartnershipKeys);
 
   @override
   int get hashCode => Object.hash(
@@ -561,8 +594,18 @@ class Game {
       lastHumanCompletedResearchCategory,
       lastHumanResearchCategoryCompletionTurn,
       mapViewState,
+      worldMarketState,
+      Object.hashAll(ftpPartnershipKeys),
     ),
   );
+
+  static bool _setEquals<T>(Set<T> a, Set<T> b) {
+    if (a.length != b.length) return false;
+    for (final value in a) {
+      if (!b.contains(value)) return false;
+    }
+    return true;
+  }
 
   static bool _mapListEquals(
     Map<String, List<int>>? a,
