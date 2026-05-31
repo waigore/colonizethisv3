@@ -58,6 +58,15 @@ enum TradeOrderStatus {
 /// `priority` is a positive integer where 1 is highest precedence; lower
 /// integer = higher precedence. `isFtp` is derived during matching when the
 /// offer/bid pair belongs to FTP-linked factions.
+///
+/// `originTileKey` attributes an offer to a specific minor/tribe tile so
+/// the deal matcher can apply the world-market First Right of Refusal
+/// override per `SPEC/game/world-market-first-right-of-refusal.md`. It is
+/// always `null` on bids and on Great-Power-submitted offers; only
+/// minor/tribe auto-offers (#2991 C2 onwards) populate it. Storing the
+/// origin tile here keeps the deal matcher pure: it can resolve the
+/// owning Great Power via [PurchasedTileIndex] without re-querying
+/// `WorldState`.
 class TradeOrder {
   TradeOrder({
     required this.commodityId,
@@ -65,6 +74,7 @@ class TradeOrder {
     required this.quantity,
     required this.priority,
     this.isFtp = false,
+    this.originTileKey,
   }) {
     if (commodityId.isEmpty) {
       throw ModelValidationException.value(
@@ -87,6 +97,13 @@ class TradeOrder {
         'priority must be >= 1',
       );
     }
+    if (originTileKey != null && originTileKey!.isEmpty) {
+      throw ModelValidationException.value(
+        originTileKey,
+        'originTileKey',
+        'originTileKey must be null or non-empty',
+      );
+    }
   }
 
   final CommodityId commodityId;
@@ -94,6 +111,7 @@ class TradeOrder {
   final int quantity;
   final int priority;
   final bool isFtp;
+  final String? originTileKey;
 
   TradeOrder copyWith({
     CommodityId? commodityId,
@@ -101,6 +119,7 @@ class TradeOrder {
     int? quantity,
     int? priority,
     bool? isFtp,
+    Object? originTileKey = _copyWithUnset,
   }) {
     return TradeOrder(
       commodityId: commodityId ?? this.commodityId,
@@ -108,6 +127,9 @@ class TradeOrder {
       quantity: quantity ?? this.quantity,
       priority: priority ?? this.priority,
       isFtp: isFtp ?? this.isFtp,
+      originTileKey: identical(originTileKey, _copyWithUnset)
+          ? this.originTileKey
+          : originTileKey as String?,
     );
   }
 
@@ -117,6 +139,7 @@ class TradeOrder {
     'quantity': quantity,
     'priority': priority,
     'isFtp': isFtp,
+    if (originTileKey != null) 'originTileKey': originTileKey,
   };
 
   static TradeOrder fromJson(Map<String, dynamic> json) {
@@ -157,12 +180,17 @@ class TradeOrder {
       );
     }
     final ftp = json['isFtp'];
+    final originRaw = json['originTileKey'];
+    final origin = originRaw is String && originRaw.isNotEmpty
+        ? originRaw
+        : null;
     return TradeOrder(
       commodityId: id,
       type: TradeOrderType.fromJsonName(typeRaw),
       quantity: qty,
       priority: pr,
       isFtp: ftp == true,
+      originTileKey: origin,
     );
   }
 
@@ -175,15 +203,27 @@ class TradeOrder {
           type == other.type &&
           quantity == other.quantity &&
           priority == other.priority &&
-          isFtp == other.isFtp;
+          isFtp == other.isFtp &&
+          originTileKey == other.originTileKey;
 
   @override
-  int get hashCode => Object.hash(commodityId, type, quantity, priority, isFtp);
+  int get hashCode => Object.hash(
+    commodityId,
+    type,
+    quantity,
+    priority,
+    isFtp,
+    originTileKey,
+  );
 
   @override
   String toString() =>
-      'TradeOrder($type $commodityId × $quantity @ p$priority${isFtp ? ' FTP' : ''})';
+      'TradeOrder($type $commodityId × $quantity @ p$priority'
+      '${isFtp ? ' FTP' : ''}'
+      '${originTileKey != null ? ' tile:$originTileKey' : ''})';
 }
+
+const Object _copyWithUnset = Object();
 
 /// Per-commodity activity snapshot for the previous market turn.
 ///
@@ -343,6 +383,14 @@ class WorldMarketState {
 }
 
 /// A single offer/bid pairing executed in the market phase.
+///
+/// `isFirstRightOfRefusalMatch` is set when the deal matcher applied the
+/// First Right of Refusal override per
+/// `SPEC/game/world-market-first-right-of-refusal.md` — the buyer is the
+/// owning Great Power for a purchased minor/tribe tile and the offer's
+/// `originTileKey` resolved via `PurchasedTileIndex`. FRR matches always
+/// take priority above FTP within the matcher; the flag also serves as
+/// an audit signal for D4 treasury transfers and Deal Book UI.
 class FilledDeal {
   const FilledDeal({
     required this.sellerFactionId,
@@ -351,6 +399,7 @@ class FilledDeal {
     required this.quantity,
     required this.pricePerUnit,
     this.isFtpMatch = false,
+    this.isFirstRightOfRefusalMatch = false,
   });
 
   final String sellerFactionId;
@@ -359,6 +408,7 @@ class FilledDeal {
   final int quantity;
   final double pricePerUnit;
   final bool isFtpMatch;
+  final bool isFirstRightOfRefusalMatch;
 
   Map<String, dynamic> toJson() => {
     'sellerFactionId': sellerFactionId,
@@ -367,6 +417,8 @@ class FilledDeal {
     'quantity': quantity,
     'pricePerUnit': pricePerUnit,
     'isFtpMatch': isFtpMatch,
+    if (isFirstRightOfRefusalMatch)
+      'isFirstRightOfRefusalMatch': isFirstRightOfRefusalMatch,
   };
 
   static FilledDeal fromJson(Map<String, dynamic> json) {
@@ -384,6 +436,7 @@ class FilledDeal {
       quantity: intOrZero(json['quantity']),
       pricePerUnit: doubleOrZero(json['pricePerUnit']),
       isFtpMatch: json['isFtpMatch'] == true,
+      isFirstRightOfRefusalMatch: json['isFirstRightOfRefusalMatch'] == true,
     );
   }
 
@@ -397,7 +450,8 @@ class FilledDeal {
           commodityId == other.commodityId &&
           quantity == other.quantity &&
           pricePerUnit == other.pricePerUnit &&
-          isFtpMatch == other.isFtpMatch;
+          isFtpMatch == other.isFtpMatch &&
+          isFirstRightOfRefusalMatch == other.isFirstRightOfRefusalMatch;
 
   @override
   int get hashCode => Object.hash(
@@ -407,6 +461,7 @@ class FilledDeal {
     quantity,
     pricePerUnit,
     isFtpMatch,
+    isFirstRightOfRefusalMatch,
   );
 }
 

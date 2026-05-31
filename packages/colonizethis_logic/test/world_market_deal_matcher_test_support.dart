@@ -5,12 +5,14 @@ TradeOrder matcherOffer(
   String commodityId,
   int quantity, {
   int priority = 1,
+  String? originTileKey,
 }) =>
     TradeOrder(
       commodityId: commodityId,
       type: TradeOrderType.offer,
       quantity: quantity,
       priority: priority,
+      originTileKey: originTileKey,
     );
 
 TradeOrder matcherBid(
@@ -31,6 +33,7 @@ DealMatchInputs matcherInputs({
   Map<String, int> tradeCapacityByFactionId = const {},
   Map<CommodityId, double> pricesByCommodityId = const {'timber': 30.0},
   Set<String> ftpPairKeys = const {},
+  PurchasedTileIndex? purchasedTileIndex,
 }) =>
     (
       offersByFactionId: offersByFactionId,
@@ -38,4 +41,5 @@ DealMatchInputs matcherInputs({
       tradeCapacityByFactionId: tradeCapacityByFactionId,
       pricesByCommodityId: pricesByCommodityId,
       ftpPairKeys: ftpPairKeys,
+      purchasedTileIndex: purchasedTileIndex,
     );
