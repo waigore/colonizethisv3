@@ -316,7 +316,7 @@ Paste the script output into the PR description for AC8–AC9 evidence.
 
 ## compute_app_test_plan.dart (PR app test selection)
 
-Computes which `app/test/**` files CI should run for a pull-request diff using a static import graph over `app/lib` and `app/test`. Spec: [SPEC/program/ci-app-selective-tests.md](../SPEC/program/ci-app-selective-tests.md).
+Computes which `app/test/**` files CI should run for a pull-request diff using a static import graph over `app/lib`, `app/test`, and every workspace package's `lib/**` (cross-package edges). Spec: [SPEC/program/ci-app-selective-tests.md](../SPEC/program/ci-app-selective-tests.md).
 
 **Invocation**
 
@@ -326,13 +326,12 @@ dart run tool/compute_app_test_plan.dart --changed-files="$(git diff --name-only
 
 **Output**
 
-JSON on stdout: `{"mode":"full|selective|skip","tests":["app/test/..."]}`.
+JSON on stdout: `{"mode":"selective|skip","tests":["app/test/..."]}`.
 
-- **`selective`** — run only listed tests (typical app-only Dart edits).
-- **`full`** — run the full two-shard app matrix (assets, package changes, `ci:full-app` label).
-- **`skip`** — no app tests (tool-only / non-app PRs).
+- **`selective`** — run only listed tests. Most diffs (including `packages/**` Dart edits) produce a strict subset; an irreducible-fallback set (assets under `app/`, root `pubspec.yaml`, `analysis_options.yaml`, the selector itself, `.github/workflows/quality.yml`) emits the **full sorted app-test list** still tagged `selective`.
+- **`skip`** — no app tests (tool-only / SPEC-only / docs-only PRs).
 
-Full app tests and the 80% `app/lib/` coverage gate run on the **nightly** workflow (`app_full_tests_*` jobs in `.github/workflows/nightly.yml`), not on every PR.
+The selector is a pure function of `--changed-files` and on-disk workspace state and never reads environment variables or PR labels. The `ci:full-app` label override is applied workflow-side in `quality.yml`, not by this binary. Full app tests and the 80% `app/lib/` coverage gate continue to run on the **nightly** workflow (`app_full_tests_*` jobs in `.github/workflows/nightly.yml`).
 
 **Tests**
 

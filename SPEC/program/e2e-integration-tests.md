@@ -77,7 +77,7 @@ Headed runs: **`-d macos`** or **`-d linux`** in a graphical session.
 
 ## CI
 
-- **`app_build_linux`** (`quality.yml`, parallel to **`app_tests_shard`**, shared **`app_tests_cache`**): Ubuntu deps, **`flutter build linux --release --no-pub`**, then **`git`** check that tracked **`app/lib/l10n/*.dart`** match gen output (Refs #2074).
+- **`app_build_linux`** (`quality.yml`, parallel to **`app_tests`**, shared **`app_tests_cache`**): Ubuntu deps, **`flutter build linux --release --no-pub`**, then **`git`** check that tracked **`app/lib/l10n/*.dart`** match gen output (Refs #2074).
 - PR **`quality`** does not run **`app_e2e_linux`**; e2e is separate workflows plus local runs.
 - Shards run **`flutter test test/`** only (`integration_test/` excluded).
 

@@ -4,10 +4,19 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:path/path.dart' as p;
+import 'package:yaml/yaml.dart';
 
-const _packageName = 'colonizethis_app';
 const _appLibPrefix = 'app/lib/';
 const _appTestPrefix = 'app/test/';
+
+// Irreducible fallback set: see SPEC/program/ci-app-selective-tests.md.
+// Any change to these emits `selective` with the full sorted app-test list.
+const _irreducibleFallbackExact = <String>{
+  'pubspec.yaml',
+  'analysis_options.yaml',
+  'tool/compute_app_test_plan.dart',
+  '.github/workflows/quality.yml',
+};
 
 /// Result of [computeAppTestPlan].
 class AppTestPlan {
@@ -22,7 +31,28 @@ class AppTestPlan {
       };
 }
 
+class _WorkspaceLayout {
+  _WorkspaceLayout({required this.packageRoots, required this.walkRoots});
+
+  /// `packageName -> packageRoot` (relative to repo root, forward slashes).
+  /// Spans every workspace member with a parseable `name:` (so all
+  /// `package:<name>/...` URIs imported by walked code can be resolved).
+  final Map<String, String> packageRoots;
+
+  /// Subset of [packageRoots] values whose `lib/` is walked into the import
+  /// graph. Per SPEC D2, this is `packages/<name>` only — tool packages and
+  /// shells (`app`, `widgetbook_host`, `ctdev`) outside `packages/` are not
+  /// walked. `app/lib` and `app/test` are walked separately.
+  final Set<String> walkRoots;
+}
+
 /// Computes which app tests CI should run for [changedFiles] under [repoRoot].
+///
+/// The selector is a pure function of [changedFiles] and on-disk workspace
+/// state. It does not read environment variables, PR labels, or workflow
+/// context (SPEC D1). Output schema is `selective | skip`; the legacy
+/// `full` mode is never emitted — fallback cases produce `selective` with
+/// the full sorted list of `app/test/**/*_test.dart`.
 AppTestPlan computeAppTestPlan({
   required String repoRoot,
   required Iterable<String> changedFiles,
@@ -36,46 +66,59 @@ AppTestPlan computeAppTestPlan({
     return const AppTestPlan(mode: 'skip', tests: []);
   }
 
-  if (_forcesFullRun(normalized)) {
-    return const AppTestPlan(mode: 'full', tests: []);
-  }
-
   final appLibDir = p.join(repoRoot, 'app', 'lib');
   final appTestDir = p.join(repoRoot, 'app', 'test');
-  if (!Directory(appLibDir).existsSync() || !Directory(appTestDir).existsSync()) {
+  if (!Directory(appLibDir).existsSync() ||
+      !Directory(appTestDir).existsSync()) {
     return const AppTestPlan(mode: 'skip', tests: []);
   }
 
-  final graph = _buildImportGraph(repoRoot);
+  final layout = _readWorkspaceLayout(repoRoot);
+  final graph = _buildImportGraph(repoRoot, layout);
   final testClosures = _buildTestClosures(graph);
   final allTests = testClosures.keys.toList()..sort();
 
+  AppTestPlan fullFallback() => AppTestPlan(mode: 'selective', tests: allTests);
+
+  if (_triggersIrreducibleFallback(normalized)) {
+    return fullFallback();
+  }
+
   final changedTests = <String>{};
   final seedFiles = <String>{};
-  var hasAppDartChange = false;
+  var relevantDartChange = false;
 
   for (final path in normalized) {
     if (_isAppTestFile(path)) {
       changedTests.add(path);
-      hasAppDartChange = true;
+      relevantDartChange = true;
       continue;
     }
     if (_isAppLibFile(path)) {
       seedFiles.add(path);
-      hasAppDartChange = true;
+      relevantDartChange = true;
       continue;
     }
     if (_isAppTestHelper(path)) {
       seedFiles.add(path);
-      hasAppDartChange = true;
+      relevantDartChange = true;
+      continue;
+    }
+    if (_isWalkedPackageLibDart(path, layout)) {
+      seedFiles.add(path);
+      relevantDartChange = true;
       continue;
     }
     if (path.startsWith('app/')) {
-      return const AppTestPlan(mode: 'full', tests: []);
+      // Non-Dart asset/config under app/: irreducible fallback.
+      return fullFallback();
     }
+    // Other paths (tool/**, ctdev/**, packages/<name>/test/**,
+    // packages/<name>/pubspec.yaml, SPEC/**, .cursor/**, etc.) are not seeds
+    // and do not select tests.
   }
 
-  if (!hasAppDartChange) {
+  if (!relevantDartChange) {
     return const AppTestPlan(mode: 'skip', tests: []);
   }
 
@@ -89,36 +132,17 @@ AppTestPlan computeAppTestPlan({
 
   final tests = selected.toList()..sort();
   if (tests.isEmpty) {
-    return const AppTestPlan(mode: 'full', tests: []);
+    // A relevant Dart change touched no test closure (e.g. an unreachable
+    // lib file). Be conservative: emit the full fallback rather than an
+    // empty selective.
+    return fullFallback();
   }
   return AppTestPlan(mode: 'selective', tests: tests);
 }
 
-bool _forcesFullRun(Set<String> changedFiles) {
-  const forceFullPrefixes = <String>[
-    'packages/',
-  ];
-  const forceFullExact = <String>{
-    'pubspec.yaml',
-    'analysis_options.yaml',
-    'tool/compute_app_test_plan.dart',
-    '.github/workflows/quality.yml',
-  };
-
+bool _triggersIrreducibleFallback(Set<String> changedFiles) {
   for (final path in changedFiles) {
-    if (forceFullExact.contains(path)) {
-      return true;
-    }
-    for (final prefix in forceFullPrefixes) {
-      if (path.startsWith(prefix)) {
-        return true;
-      }
-    }
-    if (path.startsWith('app/') &&
-        !_isAppLibFile(path) &&
-        !_isAppTestDart(path)) {
-      return true;
-    }
+    if (_irreducibleFallbackExact.contains(path)) return true;
   }
   return false;
 }
@@ -135,29 +159,79 @@ bool _isAppTestFile(String path) =>
 bool _isAppTestHelper(String path) =>
     _isAppTestDart(path) && !path.endsWith('_test.dart');
 
+bool _isWalkedPackageLibDart(String path, _WorkspaceLayout layout) {
+  if (!path.endsWith('.dart')) return false;
+  for (final root in layout.walkRoots) {
+    if (path.startsWith('$root/lib/')) return true;
+  }
+  return false;
+}
+
 String _normalizePath(String path) =>
     p.normalize(path.replaceAll(r'\', '/')).replaceFirst(RegExp(r'^./'), '');
 
 Set<String> _listDartFiles(String rootDir, String repoRoot) {
   final dir = Directory(rootDir);
-  if (!dir.existsSync()) {
-    return {};
-  }
+  if (!dir.existsSync()) return {};
   return dir
       .listSync(recursive: true)
       .whereType<File>()
       .where((file) => file.path.endsWith('.dart'))
-      .map((file) => p.normalize(p.relative(file.path, from: repoRoot)))
+      .map((file) => p
+          .normalize(p.relative(file.path, from: repoRoot))
+          .replaceAll(r'\', '/'))
       .toSet();
 }
 
-Map<String, Set<String>> _buildImportGraph(String repoRoot) {
+_WorkspaceLayout _readWorkspaceLayout(String repoRoot) {
+  final packageRoots = <String, String>{};
+  final walkRoots = <String>{};
+
+  final rootPubspec = File(p.join(repoRoot, 'pubspec.yaml'));
+  if (!rootPubspec.existsSync()) {
+    return _WorkspaceLayout(packageRoots: packageRoots, walkRoots: walkRoots);
+  }
+  final yaml = loadYaml(rootPubspec.readAsStringSync());
+  if (yaml is! YamlMap) {
+    return _WorkspaceLayout(packageRoots: packageRoots, walkRoots: walkRoots);
+  }
+  final workspace = yaml['workspace'];
+  if (workspace is! YamlList) {
+    return _WorkspaceLayout(packageRoots: packageRoots, walkRoots: walkRoots);
+  }
+
+  for (final entry in workspace) {
+    if (entry is! String) continue;
+    final memberRoot = entry.replaceAll(r'\', '/');
+    final memberPubspec = File(p.join(repoRoot, memberRoot, 'pubspec.yaml'));
+    if (!memberPubspec.existsSync()) continue;
+    final memberYaml = loadYaml(memberPubspec.readAsStringSync());
+    if (memberYaml is! YamlMap) continue;
+    final name = memberYaml['name'];
+    if (name is! String) continue;
+    packageRoots[name] = memberRoot;
+    if (memberRoot.startsWith('packages/')) {
+      walkRoots.add(memberRoot);
+    }
+  }
+
+  return _WorkspaceLayout(packageRoots: packageRoots, walkRoots: walkRoots);
+}
+
+Map<String, Set<String>> _buildImportGraph(
+  String repoRoot,
+  _WorkspaceLayout layout,
+) {
   final libRoot = p.join(repoRoot, 'app', 'lib');
   final testRoot = p.join(repoRoot, 'app', 'test');
   final nodes = <String>{
     ..._listDartFiles(libRoot, repoRoot),
     ..._listDartFiles(testRoot, repoRoot),
   };
+  for (final root in layout.walkRoots) {
+    final libDir = p.join(repoRoot, root, 'lib');
+    nodes.addAll(_listDartFiles(libDir, repoRoot));
+  }
 
   final graph = <String, Set<String>>{for (final node in nodes) node: {}};
   for (final relPath in nodes) {
@@ -168,6 +242,7 @@ Map<String, Set<String>> _buildImportGraph(String repoRoot) {
         importingRelPath: relPath,
         importUri: uri,
         nodes: nodes,
+        layout: layout,
       );
       if (resolved != null) {
         graph[relPath]!.add(resolved);
@@ -191,32 +266,29 @@ String? _resolveImport({
   required String importingRelPath,
   required String importUri,
   required Set<String> nodes,
+  required _WorkspaceLayout layout,
 }) {
-  if (importUri.startsWith('dart:')) {
-    return null;
-  }
+  if (importUri.startsWith('dart:')) return null;
 
-  String? candidate;
-  final packagePrefix = 'package:$_packageName/';
-  if (importUri.startsWith(packagePrefix)) {
-    final rel = importUri.substring(packagePrefix.length);
-    candidate = p.normalize(p.join('app', 'lib', rel));
-  } else if (importUri.startsWith('package:')) {
-    return null;
+  String candidate;
+  if (importUri.startsWith('package:')) {
+    final rest = importUri.substring('package:'.length);
+    final slash = rest.indexOf('/');
+    if (slash <= 0) return null;
+    final packageName = rest.substring(0, slash);
+    final relPath = rest.substring(slash + 1);
+    final packageRoot = layout.packageRoots[packageName];
+    if (packageRoot == null) return null;
+    candidate = p.normalize(p.join(packageRoot, 'lib', relPath));
   } else {
-    candidate = p.normalize(
-      p.join(p.dirname(importingRelPath), importUri),
-    );
+    candidate = p.normalize(p.join(p.dirname(importingRelPath), importUri));
   }
 
+  candidate = candidate.replaceAll(r'\', '/');
   if (!candidate.endsWith('.dart')) {
     candidate = '$candidate.dart';
   }
-
-  if (nodes.contains(candidate)) {
-    return candidate;
-  }
-  return null;
+  return nodes.contains(candidate) ? candidate : null;
 }
 
 Map<String, Set<String>> _buildTestClosures(Map<String, Set<String>> graph) {
@@ -229,17 +301,13 @@ Map<String, Set<String>> _buildTestClosures(Map<String, Set<String>> graph) {
 
   Set<String> closureFor(String start) {
     final cached = memo[start];
-    if (cached != null) {
-      return cached;
-    }
+    if (cached != null) return cached;
 
     final visited = <String>{};
     final queue = <String>[start];
     while (queue.isNotEmpty) {
       final current = queue.removeLast();
-      if (!visited.add(current)) {
-        continue;
-      }
+      if (!visited.add(current)) continue;
       for (final dep in graph[current] ?? const {}) {
         queue.add(dep);
       }
@@ -254,9 +322,7 @@ Map<String, Set<String>> _buildTestClosures(Map<String, Set<String>> graph) {
 Iterable<String> _parseChangedFilesArg(String raw) sync* {
   for (final part in raw.split(RegExp(r'[\n,]'))) {
     final trimmed = part.trim();
-    if (trimmed.isNotEmpty) {
-      yield trimmed;
-    }
+    if (trimmed.isNotEmpty) yield trimmed;
   }
 }
 
@@ -287,7 +353,9 @@ void main(List<String> args) {
   }
 
   final repoRoot = _findRepoRoot();
-  final changedFiles = changedRaw == null ? <String>[] : _parseChangedFilesArg(changedRaw);
-  final plan = computeAppTestPlan(repoRoot: repoRoot, changedFiles: changedFiles);
+  final changedFiles =
+      changedRaw == null ? <String>[] : _parseChangedFilesArg(changedRaw);
+  final plan =
+      computeAppTestPlan(repoRoot: repoRoot, changedFiles: changedFiles);
   stdout.writeln(jsonEncode(plan.toJson()));
 }

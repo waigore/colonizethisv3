@@ -15,7 +15,7 @@ on:
 permissions:
   pull-requests: read
 
-# Must match matrix shard list, app_tests_shard job name literal, and merge script below.
+# Must match matrix shard list, `app_tests` job name literal, and merge script below.
 env:
   APP_TEST_TOTAL_SHARDS: "2"
 
@@ -29,6 +29,10 @@ jobs:
       packages_to_test: ${{ steps.test_plan.outputs.packages }}
       app_mode: ${{ steps.app_test_plan.outputs.app_mode }}
       app_tests: ${{ steps.app_test_plan.outputs.app_tests }}
+      # 'true' when (post-override) app_tests equals the full sorted list of
+      # app/test/**/*_test.dart. Drives coverage merge + 80% gate. See
+      # SPEC/program/ci-app-selective-tests.md.
+      app_tests_is_full: ${{ steps.app_test_plan.outputs.app_tests_is_full }}
     steps:
       - name: Checkout
         uses: actions/checkout@v6
@@ -118,6 +122,13 @@ jobs:
           flutter-version: '3.41.9'
           cache: true
 
+      # Always-selective app test plan. See SPEC/program/ci-app-selective-tests.md.
+      # The selector binary is a pure function of --changed-files and on-disk
+      # workspace state (D1). The `ci:full-app` label override is applied here,
+      # workflow-side, not in the selector. The selector emits only
+      # `selective` or `skip`; an irreducible fallback (selector-side) returns
+      # `selective` with the full sorted app-test list. Missing/unreachable
+      # BASE_SHA also forces the full-list selective from this step.
       - name: Compute app test plan
         id: app_test_plan
         env:
@@ -125,38 +136,53 @@ jobs:
           LABEL_FULL: ${{ contains(github.event.pull_request.labels.*.name, 'ci:full-app') }}
         run: |
           set -euo pipefail
+          # Full sorted list of app/test/**/*_test.dart for label-override and
+          # is_full comparison. Computed once and reused.
+          FULL_LIST=$(find app/test -type f -name '*_test.dart' | sort | paste -sd, -)
           if [ "${{ steps.filter.outputs.tests }}" != "true" ]; then
+            echo "No test-relevant paths matched; emitting app_mode=skip."
             echo "app_mode=skip" >> "$GITHUB_OUTPUT"
             echo "app_tests=" >> "$GITHUB_OUTPUT"
+            echo "app_tests_is_full=false" >> "$GITHUB_OUTPUT"
             exit 0
           fi
           if [ "$LABEL_FULL" = "true" ]; then
-            echo "app_mode=full" >> "$GITHUB_OUTPUT"
-            echo "app_tests=" >> "$GITHUB_OUTPUT"
+            echo "ci:full-app label present; overriding selector to full app-test list."
+            echo "app_mode=selective" >> "$GITHUB_OUTPUT"
+            echo "app_tests=$FULL_LIST" >> "$GITHUB_OUTPUT"
+            echo "app_tests_is_full=true" >> "$GITHUB_OUTPUT"
             exit 0
           fi
+          MODE=""
+          TESTS=""
           if [ -z "$BASE_SHA" ]; then
-            echo "BASE_SHA is empty; defaulting to full mode."
-            echo "app_mode=full" >> "$GITHUB_OUTPUT"
-            echo "app_tests=" >> "$GITHUB_OUTPUT"
-            exit 0
+            echo "BASE_SHA is empty; emitting irreducible fallback (full-list selective)."
+            MODE="selective"
+            TESTS="$FULL_LIST"
+          else
+            git fetch --no-tags origin "$BASE_SHA" >/dev/null 2>&1 || true
+            if ! git cat-file -e "$BASE_SHA^{commit}" 2>/dev/null; then
+              echo "BASE_SHA $BASE_SHA not reachable; emitting irreducible fallback."
+              MODE="selective"
+              TESTS="$FULL_LIST"
+            else
+              CHANGED=$(git diff --name-only "$BASE_SHA"...HEAD | paste -sd, -)
+              echo "Changed files (count: $(echo "$CHANGED" | tr ',' '\n' | grep -c .)):"
+              echo "$CHANGED" | tr ',' '\n' | sed 's/^/  /' | head -20
+              PLAN=$(dart run tool/compute_app_test_plan.dart --changed-files="$CHANGED")
+              echo "Selector plan: $PLAN"
+              MODE=$(echo "$PLAN" | python3 -c "import sys,json; print(json.load(sys.stdin)['mode'])")
+              TESTS=$(echo "$PLAN" | python3 -c "import sys,json; print(','.join(json.load(sys.stdin)['tests']))")
+            fi
           fi
-          git fetch --no-tags origin "$BASE_SHA" >/dev/null 2>&1 || true
-          if ! git cat-file -e "$BASE_SHA^{commit}" 2>/dev/null; then
-            echo "BASE_SHA $BASE_SHA not reachable; defaulting to full mode."
-            echo "app_mode=full" >> "$GITHUB_OUTPUT"
-            echo "app_tests=" >> "$GITHUB_OUTPUT"
-            exit 0
+          IS_FULL=false
+          if [ "$MODE" = "selective" ] && [ "$TESTS" = "$FULL_LIST" ]; then
+            IS_FULL=true
           fi
-          CHANGED=$(git diff --name-only "$BASE_SHA"...HEAD | paste -sd, -)
-          echo "Changed files (count: $(echo "$CHANGED" | tr ',' '\n' | grep -c .)):"
-          echo "$CHANGED" | tr ',' '\n' | sed 's/^/  /' | head -20
-          PLAN=$(dart run tool/compute_app_test_plan.dart --changed-files="$CHANGED")
-          echo "Selector plan: $PLAN"
-          MODE=$(echo "$PLAN" | python3 -c "import sys,json; print(json.load(sys.stdin)['mode'])")
-          TESTS=$(echo "$PLAN" | python3 -c "import sys,json; print(','.join(json.load(sys.stdin)['tests']))")
+          echo "Final plan: mode=$MODE is_full=$IS_FULL tests_count=$(echo "$TESTS" | tr ',' '\n' | grep -c . || true)"
           echo "app_mode=$MODE" >> "$GITHUB_OUTPUT"
           echo "app_tests=$TESTS" >> "$GITHUB_OUTPUT"
+          echo "app_tests_is_full=$IS_FULL" >> "$GITHUB_OUTPUT"
   # Resolved pub cache + .dart_tool + gen-l10n; flutter analyze gate; then pack for shards (--no-pub).
   # `app_build_linux` reuses the same artifact to compile the Linux desktop target (release), catching
   # linker/gen-l10n issues that `flutter analyze` alone can miss.
@@ -236,7 +262,7 @@ jobs:
           path: app-test-cache.tar.gz
           retention-days: 2
 
-  # Linux compile gate: parallel to `app_tests_shard` (same cache).
+  # Linux compile gate: parallel to `app_tests` (same cache).
   # Add this job to branch protection if merges must wait on it.
   app_build_linux:
     name: App Linux desktop build (release)
@@ -320,17 +346,19 @@ jobs:
           done
           git diff --exit-code -- "${rels[@]}"
 
-  app_tests_shard:
+  # Always-selective: a single matrix job runs the partitioned subset chosen by
+  # the selector. Coverage flags are enabled only when the post-override list
+  # equals the full sorted app-test list (full-fallback or `ci:full-app`).
+  # See SPEC/program/ci-app-selective-tests.md.
+  app_tests:
     # job.name cannot use env.* (GitHub limitation); keep "2" in sync with APP_TEST_TOTAL_SHARDS and matrix.shard.
     name: App tests (shard ${{ matrix.shard }}/2)
     needs: [changes, app_tests_cache]
     if: |
       always() &&
       needs.changes.result == 'success' &&
-      (
-        needs.changes.outputs.tests != 'true' ||
-        needs.app_tests_cache.result == 'success'
-      )
+      needs.changes.outputs.app_mode == 'selective' &&
+      needs.app_tests_cache.result == 'success'
     runs-on: ubuntu-latest
     timeout-minutes: 30
     strategy:
@@ -340,17 +368,13 @@ jobs:
     env:
       PUB_CACHE: ${{ github.workspace }}/.pub-cache
       SUPPRESS_IMAGE_VIEWER: "1"
+      APP_TESTS: ${{ needs.changes.outputs.app_tests }}
+      APP_TESTS_IS_FULL: ${{ needs.changes.outputs.app_tests_is_full }}
     steps:
-      - name: Skip when full app test matrix not required
-        if: needs.changes.outputs.app_mode != 'full'
-        run: echo "App test plan mode=${{ needs.changes.outputs.app_mode }}; skipping full app test shard."
-
       - name: Checkout
-        if: needs.changes.outputs.app_mode == 'full'
         uses: actions/checkout@v6
 
       - name: Setup Flutter
-        if: needs.changes.outputs.app_mode == 'full'
         uses: subosito/flutter-action@v2
         with:
           channel: stable
@@ -358,92 +382,70 @@ jobs:
           cache: true
 
       - name: Download app test cache
-        if: needs.changes.outputs.app_mode == 'full'
         uses: actions/download-artifact@v4
         with:
           name: app-test-cache
           path: _app_test_cache
 
       - name: Restore pub + Dart tool cache
-        if: needs.changes.outputs.app_mode == 'full'
         run: tar xzf _app_test_cache/app-test-cache.tar.gz -C "$GITHUB_WORKSPACE"
 
-      - name: Run Flutter tests (shard)
-        if: needs.changes.outputs.app_mode == 'full'
-        run: |
-          set -e
-          mkdir -p app/coverage
-          cd app
-          # --no-pub: use packed .pub-cache + .dart_tool from app_tests_cache (same workspace path as build job).
-          flutter test test/ --no-pub --coverage \
-            --coverage-path=coverage/lcov.shard${{ matrix.shard }}.info \
-            --reporter=compact -j 1 --no-track-widget-creation \
-            --total-shards=${{ env.APP_TEST_TOTAL_SHARDS }} --shard-index=${{ matrix.shard }}
-
-      - name: Upload shard coverage
-        if: needs.changes.outputs.app_mode == 'full'
-        uses: actions/upload-artifact@v4
-        with:
-          name: app-lcov-shard-${{ matrix.shard }}
-          path: app/coverage/lcov.shard${{ matrix.shard }}.info
-          retention-days: 2
-
-  app_tests_selective:
-    name: App tests (selective)
-    needs: [changes, app_tests_cache]
-    if: |
-      always() &&
-      needs.changes.result == 'success' &&
-      (
-        needs.changes.outputs.app_mode != 'selective' ||
-        needs.app_tests_cache.result == 'success'
-      )
-    runs-on: ubuntu-latest
-    timeout-minutes: 30
-    env:
-      PUB_CACHE: ${{ github.workspace }}/.pub-cache
-      SUPPRESS_IMAGE_VIEWER: "1"
-    steps:
-      - name: Skip when selective app tests not required
-        if: needs.changes.outputs.app_mode != 'selective'
-        run: echo "App test plan mode=${{ needs.changes.outputs.app_mode }}; skipping selective app tests."
-
-      - name: Checkout
-        if: needs.changes.outputs.app_mode == 'selective'
-        uses: actions/checkout@v6
-
-      - name: Setup Flutter
-        if: needs.changes.outputs.app_mode == 'selective'
-        uses: subosito/flutter-action@v2
-        with:
-          channel: stable
-          flutter-version: '3.41.9'
-          cache: true
-
-      - name: Download app test cache
-        if: needs.changes.outputs.app_mode == 'selective'
-        uses: actions/download-artifact@v4
-        with:
-          name: app-test-cache
-          path: _app_test_cache
-
-      - name: Restore pub + Dart tool cache
-        if: needs.changes.outputs.app_mode == 'selective'
-        run: tar xzf _app_test_cache/app-test-cache.tar.gz -C "$GITHUB_WORKSPACE"
-
-      - name: Run Flutter tests (selective)
-        if: needs.changes.outputs.app_mode == 'selective'
-        env:
-          APP_TESTS: ${{ needs.changes.outputs.app_tests }}
+      # Deterministic round-robin partition: tests are sorted (selector
+      # guarantees), then assigned by index modulo APP_TEST_TOTAL_SHARDS so
+      # the union of shards equals APP_TESTS exactly with no duplicates.
+      - name: Partition tests for this shard
+        id: partition
         run: |
           set -euo pipefail
           if [ -z "$APP_TESTS" ]; then
             echo "No selective app tests listed; failing."
             exit 1
           fi
+          SHARD_INDEX=${{ matrix.shard }}
+          TOTAL=${APP_TEST_TOTAL_SHARDS}
+          # awk uses 1-based NR; convert SHARD_INDEX (0-based) to NR%TOTAL
+          # equivalent (NR-1) % TOTAL == SHARD_INDEX.
+          PARTITION=$(echo "$APP_TESTS" \
+            | tr ',' '\n' \
+            | awk -v idx="$SHARD_INDEX" -v total="$TOTAL" 'NR>0 && (NR-1)%total==idx')
+          PARTITION_COUNT=$(echo "$PARTITION" | grep -c . || true)
+          echo "Shard $SHARD_INDEX of $TOTAL: $PARTITION_COUNT tests"
+          echo "$PARTITION" | sed 's/^/  /' | head -20
+          {
+            echo "partition<<__EOF__"
+            echo "$PARTITION"
+            echo "__EOF__"
+            echo "partition_count=$PARTITION_COUNT"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Run Flutter tests (shard)
+        if: steps.partition.outputs.partition_count != '0'
+        run: |
+          set -euo pipefail
+          mkdir -p app/coverage
           cd app
-          mapfile -t rel_tests < <(echo "$APP_TESTS" | tr ',' '\n' | sed 's|^app/||')
-          flutter test "${rel_tests[@]}" --no-pub --reporter=compact -j 1 --no-track-widget-creation
+          mapfile -t rel_tests < <(printf '%s\n' "${{ steps.partition.outputs.partition }}" | grep -v '^$' | sed 's|^app/||')
+          if [ "$APP_TESTS_IS_FULL" = "true" ]; then
+            # --no-pub: use packed .pub-cache + .dart_tool from app_tests_cache (same workspace path as build job).
+            flutter test "${rel_tests[@]}" --no-pub --coverage \
+              --coverage-path=coverage/lcov.shard${{ matrix.shard }}.info \
+              --reporter=compact -j 1 --no-track-widget-creation
+          else
+            flutter test "${rel_tests[@]}" --no-pub \
+              --reporter=compact -j 1 --no-track-widget-creation
+          fi
+
+      - name: No-op when this shard has no tests
+        if: steps.partition.outputs.partition_count == '0'
+        run: echo "Shard ${{ matrix.shard }} got 0 tests; nothing to run."
+
+      - name: Upload shard coverage
+        if: env.APP_TESTS_IS_FULL == 'true' && steps.partition.outputs.partition_count != '0'
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-lcov-shard-${{ matrix.shard }}
+          path: app/coverage/lcov.shard${{ matrix.shard }}.info
+          retention-days: 2
 
   # colonizethis_* package unit tests + package coverage gates (parallel to quality / app tests).
   # One `dart test` per package with `-j 4` (no intra-package sharding). Packages are run
@@ -615,32 +617,27 @@ jobs:
         if: needs.changes.outputs.tests == 'true'
         run: tool/check_coverage_threshold.sh 80 tool/run_observer_game
 
+  # Coverage merge + 80% gate runs only when the post-override app_tests
+  # equals the full sorted app-test list (irreducible fallback fired or the
+  # `ci:full-app` label was applied). Otherwise the partial selection cannot
+  # meaningfully gate `app/lib/` coverage and the job is skipped.
   quality_app_coverage:
     name: App coverage (merge shards)
-    needs: [changes, app_tests_shard]
+    needs: [changes, app_tests]
     if: |
       always() &&
       needs.changes.result == 'success' &&
-      (
-        needs.changes.outputs.tests != 'true' ||
-        needs.app_tests_shard.result == 'success'
-      )
+      needs.changes.outputs.app_tests_is_full == 'true' &&
+      needs.app_tests.result == 'success'
     runs-on: ubuntu-latest
     steps:
-      - name: Skip when full app coverage merge not required
-        if: needs.changes.outputs.app_mode != 'full'
-        run: echo "App test plan mode=${{ needs.changes.outputs.app_mode }}; skipping app coverage merge."
-
       - name: Checkout
-        if: needs.changes.outputs.app_mode == 'full'
         uses: actions/checkout@v6
 
       - name: Install lcov
-        if: needs.changes.outputs.app_mode == 'full'
         run: sudo apt-get update && sudo apt-get install -y lcov
 
       - name: Download shard coverage
-        if: needs.changes.outputs.app_mode == 'full'
         uses: actions/download-artifact@v4
         with:
           pattern: app-lcov-shard-*
@@ -648,7 +645,6 @@ jobs:
           path: _lcov_shards
 
       - name: Merge shard lcov into app/coverage/lcov.info
-        if: needs.changes.outputs.app_mode == 'full'
         run: |
           set -euo pipefail
           mkdir -p app/coverage
@@ -661,6 +657,5 @@ jobs:
           tool/merge_app_lcov_shards.sh "${APP_TEST_TOTAL_SHARDS}"
 
       - name: App coverage gate (app/lib/ >= 80%)
-        if: needs.changes.outputs.app_mode == 'full'
         run: tool/check_coverage_threshold.sh 80 app
 
