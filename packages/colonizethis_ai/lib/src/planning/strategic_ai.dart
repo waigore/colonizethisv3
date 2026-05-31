@@ -183,14 +183,24 @@ StrategicOrderTraceResult generateStrategicOrdersWithTrace({
     sameTurnPriorDiplomaticOrders: sameTurnPriorDiplomaticOrders,
     phasePlan: phasePlan,
   );
-  final orders = plannerOutcome.orders;
+  var orders = plannerOutcome.orders;
+  if (economyPlan.tradeOrders.isNotEmpty) {
+    orders = orders.copyWith(
+      tradeOrdersByPlayerId: {
+        ...orders.tradeOrdersByPlayerId,
+        nationId: economyPlan.tradeOrders,
+      },
+    );
+  }
   final moveCount = orders.moveOrdersByPlayerId[nationId]?.length ?? 0;
   final armyMoveCount = orders.armyMoveOrdersByPlayerId[nationId]?.length ?? 0;
   final buildCount = orders.buildUnitOrdersByPlayerId[nationId]?.length ?? 0;
   final workCount = orders.workOrdersByPlayerId[nationId]?.length ?? 0;
   final researchCount = orders.researchOrdersByPlayerId[nationId]?.length ?? 0;
+  final tradeCount = orders.tradeOrdersByPlayerId[nationId]?.length ?? 0;
   _log.i(
-    'generated orders nationId=$nationId move=$moveCount armyMove=$armyMoveCount build=$buildCount work=$workCount research=$researchCount',
+    'generated orders nationId=$nationId move=$moveCount armyMove=$armyMoveCount '
+    'build=$buildCount work=$workCount research=$researchCount trade=$tradeCount',
   );
   emitStrategicDialogueAndMood(
     config: config,

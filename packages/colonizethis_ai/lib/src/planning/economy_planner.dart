@@ -7,6 +7,7 @@ import 'phase_planner_dispatch.dart';
 import 'phase_planner_economy_filter.dart';
 import 'planning_imports.dart';
 import 'recipe_scoring.dart';
+import 'treasury_planner.dart';
 
 final _log = packageLogger('economy_planner');
 
@@ -81,6 +82,13 @@ EconomyPlan runEconomyPlanner({
         colonial: colonial,
         belowQuotaPeaceTreasuryRecovery: belowQuotaPeaceTreasuryRecovery,
       ),
+      tradeOrders: runTreasuryPlanner(
+        game: game,
+        playerId: view.playerId,
+        stockpile: stockpile,
+        productionAssignments: const [],
+        treasury: player.treasury,
+      ),
     );
   }
 
@@ -106,13 +114,22 @@ EconomyPlan runEconomyPlanner({
     colonial: colonial,
     belowQuotaPeaceTreasuryRecovery: belowQuotaPeaceTreasuryRecovery,
   );
+  final tradeOrders = runTreasuryPlanner(
+    game: game,
+    playerId: view.playerId,
+    stockpile: stockpile,
+    productionAssignments: assignments,
+    treasury: player.treasury,
+  );
   _log.i(
     'economy plan playerId=${view.playerId} '
-    'cargoPreference=$cargoPref productionAssignmentsCount=${assignments.length}',
+    'cargoPreference=$cargoPref productionAssignmentsCount=${assignments.length} '
+    'tradeOrdersCount=${tradeOrders.length}',
   );
   return EconomyPlan(
     productionAssignments: assignments,
     cargoPreference: cargoPref,
+    tradeOrders: tradeOrders,
   );
 }
 
