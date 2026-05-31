@@ -336,6 +336,137 @@ void main() {
       );
 
       testWidgets(
+        'regiment-type-count indented line resolves to '
+        'EditorialMonoclePalette.fg',
+        (WidgetTester tester) async {
+          final game = demoGameForOverlay;
+          final humanId = game.players.first.id;
+          final ownedProvince = _ownedProvinceId(
+            game: game,
+            ownerId: humanId,
+          );
+          final setup = _gameWithMilitary(
+            ownerId: humanId,
+            provinceId: ownedProvince,
+          );
+
+          await tester.pumpWidget(
+            _darkOverlay(
+              game: setup.game,
+              displayId: ownedProvince,
+              draftOrders: setup.orders,
+            ),
+          );
+          await tester.pumpAndSettle();
+
+          // `_gameWithMilitary` appends one `pikemen` regiment owned by
+          // [humanId] to the demo Old World. With the demo seed the
+          // human-owned demo province contains no other regiments, so
+          // the Military section renders exactly one localized
+          // `provinceOverlay_indentedCount(label, count)` line, which
+          // resolves to `  Pikemen: 1` per `app/lib/l10n/arb/app_en.arb`
+          // (`province_regiment_pikemen` + `provinceOverlay_indentedCount`).
+          final typeCountFinder = find.byWidgetPredicate(
+            (w) => w is Text && (w.data ?? '').trimLeft().startsWith('Pikemen:'),
+          );
+          expect(
+            typeCountFinder,
+            findsAtLeastNWidgets(1),
+            reason:
+                'Test setup: the appended `pikemen` regiment must render '
+                'as a `  Pikemen: 1` indented type-count line in the '
+                'Military section.',
+          );
+          final Text typeCountLine = tester.widget<Text>(
+            typeCountFinder.first,
+          );
+          expect(
+            typeCountLine.style?.color,
+            EditorialMonoclePalette.fg,
+            reason:
+                'Military regiment-type-count line must resolve '
+                'TextStyle.color to EditorialMonoclePalette.fg per SPEC '
+                '§ Dark-theme Military regiment-type-count line colour.',
+          );
+        },
+      );
+
+      testWidgets(
+        'negative: regiment-type-count indented line declares its own '
+        'TextStyle.color and is not Colors.white',
+        (WidgetTester tester) async {
+          final game = demoGameForOverlay;
+          final humanId = game.players.first.id;
+          final ownedProvince = _ownedProvinceId(
+            game: game,
+            ownerId: humanId,
+          );
+          final setup = _gameWithMilitary(
+            ownerId: humanId,
+            provinceId: ownedProvince,
+          );
+
+          await tester.pumpWidget(
+            _darkOverlay(
+              game: setup.game,
+              displayId: ownedProvince,
+              draftOrders: setup.orders,
+            ),
+          );
+          await tester.pumpAndSettle();
+
+          final typeCountFinder = find.byWidgetPredicate(
+            (w) => w is Text && (w.data ?? '').trimLeft().startsWith('Pikemen:'),
+          );
+          expect(typeCountFinder, findsAtLeastNWidgets(1));
+          final Text typeCountLine = tester.widget<Text>(
+            typeCountFinder.first,
+          );
+          // The contract: the type-count line must declare its own
+          // `TextStyle.color`. A `Text(...)` constructed without a
+          // `style` parameter resolves `style?.color` to `null`, the
+          // bare dark-Material `bodyMedium` fallback under another
+          // `ThemeData` is `Colors.white`. Asserting both catches a
+          // regression that drops the explicit
+          // `EditorialMonoclePalette.fg` override.
+          //
+          // `style.color != Theme.of(context).colorScheme.onSurface` is
+          // intentionally NOT asserted because under `editorialMonocle`
+          // the dark theme wires `colorScheme.onSurface` to
+          // `EditorialMonoclePalette.fg`, so an `isNot(onSurface)`
+          // guard would tautologically fail for the type-count line's
+          // correct value (matching the S7 owner sub-header and Naval
+          // fleet-summary patterns).
+          expect(
+            typeCountLine.style?.color,
+            isNotNull,
+            reason:
+                'Material defaults regression guard: the type-count '
+                'line must declare its own TextStyle.color rather than '
+                'relying on DefaultTextStyle fall-through (so the '
+                'contract survives a change in ambient bodyMedium '
+                'colour).',
+          );
+          expect(
+            typeCountLine.style?.color,
+            isNot(equals(Colors.white)),
+            reason:
+                'Material defaults regression guard: type-count line '
+                'must not resolve to the dark Material `Colors.white` '
+                'fallback.',
+          );
+          expect(
+            typeCountLine.style?.color,
+            equals(EditorialMonoclePalette.fg),
+            reason:
+                'Material defaults regression guard: type-count line '
+                'must resolve to EditorialMonoclePalette.fg (the '
+                'single source).',
+          );
+        },
+      );
+
+      testWidgets(
         'negative: pending land MoveOrder preview line is not '
         'Theme.colorScheme.onSurface and is not the dark Material default',
         (WidgetTester tester) async {
