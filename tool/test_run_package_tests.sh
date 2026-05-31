@@ -214,17 +214,17 @@ build_fake_workspace "$ac2_root" \
 run_case "AC2 one shard fails (exit 7)" 1 \
   "colonizethis_models,colonizethis_data,colonizethis_save,colonizethis_map,colonizethis_logic,colonizethis_ai" \
   "$ac2_root" \
-  "FAILED: one or more package test shards failed"
+  "FAILED: one or more package tests failed"
 rm -rf "$ac2_root"
 
-# --- AC4 (Refs #2963): PACKAGE_TEST_MAX_JOBS caps concurrent shards --------
+# --- AC4 (Refs #2963): PACKAGE_TEST_MAX_JOBS caps concurrent package jobs ----
 # Repro for the perf regression: the workflow oversubscribed the 4-vCPU runner
 # because the script defaulted to MAX_JOBS=6 and there was no test asserting that
 # the cap is honored. This test uses a fake `dart` shim that bumps a peak-count
 # file via flock around its sleep, so we can assert the script never exceeded
-# MAX_JOBS concurrent shards.
+# MAX_JOBS concurrent package test processes.
 ac4_root="$(mktemp -d)"
-# Five 1-shard packages → 5 tasks. With MAX_JOBS=2, peak concurrent must be <= 2.
+# Five packages → 5 tasks. With MAX_JOBS=2, peak concurrent must be <= 2.
 mkdir -p "$ac4_root/bin" "$ac4_root/tool"
 : > "$ac4_root/peak"
 echo 0 > "$ac4_root/active"
@@ -294,7 +294,7 @@ exit 0
 EOF
 chmod +x "$ac4_root/tool/check_coverage_threshold.sh"
 
-echo "--- AC4 PACKAGE_TEST_MAX_JOBS caps concurrent shards (Refs #2963) ---"
+echo "--- AC4 PACKAGE_TEST_MAX_JOBS caps concurrent package jobs (Refs #2963) ---"
 set +e
 PATH="$ac4_root/bin:$PATH" \
   PACKAGES_TO_TEST="colonizethis_models,colonizethis_data,colonizethis_save,colonizethis_map,colonizethis_ai" \
@@ -305,10 +305,10 @@ set -e
 peak=$(cat "$ac4_root/peak")
 if [ "$ac4_rc" -eq 0 ] && [ "$peak" -le 2 ] && [ "$peak" -ge 1 ]; then
   PASS_COUNT=$((PASS_COUNT + 1))
-  echo "  PASS (peak concurrent shards observed: $peak, cap: 2)"
+  echo "  PASS (peak concurrent package jobs observed: $peak, cap: 2)"
 else
   FAIL_COUNT=$((FAIL_COUNT + 1))
-  FAIL_NAMES+=("AC4 PACKAGE_TEST_MAX_JOBS caps concurrent shards")
+  FAIL_NAMES+=("AC4 PACKAGE_TEST_MAX_JOBS caps concurrent package jobs")
   echo "  FAIL (exit=$ac4_rc, peak=$peak, expected 1<=peak<=2)"
 fi
 rm -rf "$ac4_root"

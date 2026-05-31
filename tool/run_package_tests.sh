@@ -4,8 +4,9 @@
 # Supports selective execution via PACKAGES_TO_TEST (comma-separated, e.g.
 # "colonizethis_logic,colonizethis_ai").  When unset all six core packages run.
 #
-# Heavy packages are sharded: colonizethis_logic → 4 shards, colonizethis_ai → 2 shards.
-# All shards run in parallel, throttled by PACKAGE_TEST_MAX_JOBS (default 6).
+# One `dart test` process per package (no intra-package sharding). Packages run
+# in parallel, throttled by PACKAGE_TEST_MAX_JOBS (default 6). Intra-package
+# concurrency uses PACKAGE_TEST_CONCURRENCY (default 4, passed to dart test -j).
 #
 # Requires: dart, lcov.  Coverage gates only check packages that were actually tested.
 set -euo pipefail
@@ -24,29 +25,17 @@ else
 fi
 
 MAX_JOBS="${PACKAGE_TEST_MAX_JOBS:-6}"
+TEST_CONCURRENCY="${PACKAGE_TEST_CONCURRENCY:-4}"
 
-# ---- shard configuration (only colonizethis_*-prefixed keys) ----------------
-declare -A SHARD_COUNT=(
-  [colonizethis_models]=1
-  [colonizethis_data]=1
-  [colonizethis_save]=1
-  [colonizethis_map]=1
-  [colonizethis_logic]=4
-  [colonizethis_ai]=2
-)
-
-# ---- collect tasks ----------------------------------------------------------
+# ---- collect tasks (one per package) ---------------------------------------
 tasks=()
 for short in "${PKGS[@]}"; do
   pkg_dir="packages/$short"
   [ -d "$pkg_dir/test" ] || continue
-  total="${SHARD_COUNT[$short]:-1}"
-  for ((s = 0; s < total; s++)); do
-    tasks+=("$pkg_dir|$s|$total")
-  done
+  tasks+=("$pkg_dir")
 done
 
-echo "=== Running ${#tasks[@]} test shards across ${#PKGS[@]} packages ==="
+echo "=== Running ${#tasks[@]} package test jobs across ${#PKGS[@]} packages (-j ${TEST_CONCURRENCY}) ==="
 echo ""
 
 # ---- run all tasks in parallel (throttled) ----------------------------------
@@ -56,21 +45,17 @@ trap 'rm -rf "$tmpdir"' EXIT
 task_idx=0
 declare -a bg_pids=()
 
-for task in "${tasks[@]}"; do
-  IFS='|' read -r pkg_dir shard total <<< "$task"
-
-  echo "  [$task_idx] $pkg_dir (shard $shard/$total)"
+for pkg_dir in "${tasks[@]}"; do
+  echo "  [$task_idx] $pkg_dir"
 
   (
     cd "$ROOT/$pkg_dir"
-    cov_dir="coverage.shard$shard"
-    rm -rf "$cov_dir"
+    rm -rf coverage
     # Disable -e while running the test so a non-zero dart-test exit still
     # falls through to the rc.* write below; otherwise the parent never sees
     # the failure (rc.* missing => failure-check loop silently passes).
     set +e
-    dart test --coverage="$cov_dir" -j 1 --reporter=compact \
-      --total-shards="$total" --shard-index="$shard" \
+    dart test --coverage=coverage -j "$TEST_CONCURRENCY" --reporter=compact \
       --test-randomize-ordering-seed=42
     rc=$?
     set -e
@@ -114,45 +99,26 @@ done
 
 if [ "$failed" -ne 0 ]; then
   echo ""
-  echo "FAILED: one or more package test shards failed (check output above)."
+  echo "FAILED: one or more package tests failed (check output above)."
   exit 1
 fi
 
 echo ""
 echo "=== All package tests passed ==="
 
-# ---- build per-package coverage (format + merge shards) ---------------------
+# ---- build per-package coverage ---------------------------------------------
 for short in "${PKGS[@]}"; do
   pkg_dir="packages/$short"
   [ -d "$pkg_dir/test" ] || continue
-  total="${SHARD_COUNT[$short]:-1}"
 
   echo ""
   echo "=== Coverage: $pkg_dir ==="
 
-  shard_infos=()
-  for ((s = 0; s < total; s++)); do
-    cov_dir="$ROOT/$pkg_dir/coverage.shard$s"
-    if [ -d "$cov_dir" ]; then
-      shard_info="$ROOT/$pkg_dir/coverage/lcov.shard$s.info"
-      (cd "$pkg_dir" && dart run coverage:format_coverage --lcov \
-        -i "coverage.shard$s" -o "coverage/lcov.shard$s.info" \
-        --report-on=lib --package=.)
-      shard_infos+=("$shard_info")
-    fi
-  done
-
-  if [ "${#shard_infos[@]}" -gt 1 ]; then
-    merged="$ROOT/$pkg_dir/coverage/lcov.info"
-    lcov_args=()
-    for info in "${shard_infos[@]}"; do
-      lcov_args+=(-a "$info")
-    done
-    lcov "${lcov_args[@]}" -o "$merged"
-    echo "  Merged ${#shard_infos[@]} shards → coverage/lcov.info"
-  elif [ "${#shard_infos[@]}" -eq 1 ]; then
-    cp "${shard_infos[0]}" "$ROOT/$pkg_dir/coverage/lcov.info"
-    echo "  Single shard, copied to coverage/lcov.info"
+  if [ -d "$ROOT/$pkg_dir/coverage" ]; then
+    (cd "$pkg_dir" && dart run coverage:format_coverage --lcov \
+      -i coverage -o coverage/lcov.info \
+      --report-on=lib --package=.)
+    echo "  Formatted coverage/lcov.info"
   fi
 done
 
