@@ -314,6 +314,34 @@ class GameService {
     return result;
   }
 
+  /// Resumes turn resolution after FTP accept/reject decisions (Diplomacy phase).
+  TurnResolutionResult resumeFtpDecisions(
+    Game game,
+    List<FtpOffer> _pendingFtpOffers,
+    List<FtpDecision> decisions,
+    Orders orders, {
+    void Function(GameEvent)? onGameEvent,
+  }) {
+    final mapData = _requiredMapDataView(game.id);
+    final topo = mapData.combinedTopology;
+    final tileMaps = mapData.tileMapByRegion;
+    final result = _gameServiceResolveTurnWithTrace(
+      this,
+      game: game,
+      config: TurnResolverConfig(
+        topology: topo,
+        orders: orders,
+        tileMapByRegion: tileMaps,
+        eventBus: logicEventBus,
+        onGameEvent: onGameEvent,
+        startFromPhase: TurnPhase.diplomacy,
+        ftpDecisions: decisions,
+      ),
+    );
+    _emitTurnResolutionEvents(result);
+    return result;
+  }
+
   /// Resumes after human intervention choices (GP declared war on Minor/Tribe).
   TurnResolutionResult resumeInterventionDecisions(
     Game game,
@@ -395,6 +423,11 @@ class GameService {
     }
     if (result is TurnResolutionPendingOvertures) {
       eventBus?.emit(OvertureRequiredEvent(overtures: result.pendingOvertures));
+      return;
+    }
+    if (result is TurnResolutionPendingFtp) {
+      // FTP accept/reject UI is follow-up work; pending state is set via
+      // [applyTurnResolutionResult] / [pendingDiplomacyProvider].
       return;
     }
     if (result is TurnResolutionPendingIntervention) {

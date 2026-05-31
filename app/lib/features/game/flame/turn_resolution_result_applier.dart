@@ -16,6 +16,9 @@ void applyTurnResolutionResult(WidgetRef ref, TurnResolutionResult result) {
     case TurnResolutionPendingOvertures():
       gameN.setGame(result.game);
       dipN.setOvertures(result.pendingOvertures);
+    case TurnResolutionPendingFtp():
+      gameN.setGame(result.game);
+      dipN.setFtp(result.pendingFtpOffers);
     case TurnResolutionPendingIntervention():
       gameN.setGame(result.game);
       dipN.setIntervention(result.pendingInterventions);

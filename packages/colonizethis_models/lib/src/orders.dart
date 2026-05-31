@@ -2,6 +2,7 @@ import 'diplomacy.dart';
 import 'model_validation_exception.dart';
 import 'province_id.dart';
 import 'worker_tier.dart';
+import 'world_market.dart';
 
 /// Per-player orders for the current turn.
 /// SPEC/game/world-model.
@@ -17,6 +18,7 @@ class Orders {
     this.researchOrdersByPlayerId = const {},
     this.navalMoveOrdersByPlayerId = const {},
     this.navalMissionOrdersByPlayerId = const {},
+    this.tradeOrdersByPlayerId = const {},
   });
 
   /// Player id -> list of move orders.
@@ -51,6 +53,11 @@ class Orders {
 
   /// Player id -> list of naval mission orders. Phase 6.
   final Map<String, List<NavalMissionOrder>> navalMissionOrdersByPlayerId;
+
+  /// Player id -> list of world-market trade orders (bids and offers).
+  /// Resolved in Phase 13 World Market. SPEC/program/world-market-resolution.md,
+  /// SPEC/game/world-market.md.
+  final Map<String, List<TradeOrder>> tradeOrdersByPlayerId;
 
   Map<String, dynamic> toJson() => {
     'moveOrdersByPlayerId': moveOrdersByPlayerId.map(
@@ -92,6 +99,11 @@ class Orders {
       ),
     if (recruitWorkerOrdersByPlayerId.isNotEmpty)
       'recruitWorkerOrdersByPlayerId': recruitWorkerOrdersByPlayerId.map(
+        (playerId, orders) =>
+            MapEntry(playerId, orders.map((o) => o.toJson()).toList()),
+      ),
+    if (tradeOrdersByPlayerId.isNotEmpty)
+      'tradeOrdersByPlayerId': tradeOrdersByPlayerId.map(
         (playerId, orders) =>
             MapEntry(playerId, orders.map((o) => o.toJson()).toList()),
       ),
@@ -233,6 +245,21 @@ class Orders {
       recruitWorkerByPlayerId[playerId] = list;
     });
 
+    final tradeRaw =
+        json['tradeOrdersByPlayerId'] as Map<dynamic, dynamic>? ?? {};
+    final tradeByPlayerId = <String, List<TradeOrder>>{};
+    tradeRaw.forEach((key, value) {
+      final playerId = key.toString();
+      final list = (value as List<dynamic>? ?? [])
+          .map(
+            (e) => TradeOrder.fromJson(
+              Map<String, dynamic>.from(e as Map<Object?, Object?>),
+            ),
+          )
+          .toList();
+      tradeByPlayerId[playerId] = list;
+    });
+
     return Orders(
       moveOrdersByPlayerId: moveByPlayerId,
       armyMoveOrdersByPlayerId: armyMoveByPlayerId,
@@ -243,6 +270,7 @@ class Orders {
       researchOrdersByPlayerId: researchByPlayerId,
       navalMoveOrdersByPlayerId: navalByPlayerId,
       navalMissionOrdersByPlayerId: missionByPlayerId,
+      tradeOrdersByPlayerId: tradeByPlayerId,
     );
   }
 
@@ -280,6 +308,10 @@ class Orders {
           _mapEquals(
             recruitWorkerOrdersByPlayerId,
             other.recruitWorkerOrdersByPlayerId,
+          ) &&
+          _mapEquals(
+            tradeOrdersByPlayerId,
+            other.tradeOrdersByPlayerId,
           );
 
   @override
@@ -312,6 +344,9 @@ class Orders {
     Object.hashAll(
       recruitWorkerOrdersByPlayerId.entries.map((e) => Object.hashAll(e.value)),
     ),
+    Object.hashAll(
+      tradeOrdersByPlayerId.entries.map((e) => Object.hashAll(e.value)),
+    ),
   );
 
   Orders copyWith({
@@ -324,6 +359,7 @@ class Orders {
     Map<String, List<ResearchOrder>>? researchOrdersByPlayerId,
     Map<String, List<NavalMoveOrder>>? navalMoveOrdersByPlayerId,
     Map<String, List<NavalMissionOrder>>? navalMissionOrdersByPlayerId,
+    Map<String, List<TradeOrder>>? tradeOrdersByPlayerId,
   }) => Orders(
     moveOrdersByPlayerId: moveOrdersByPlayerId ?? this.moveOrdersByPlayerId,
     armyMoveOrdersByPlayerId:
@@ -341,6 +377,8 @@ class Orders {
         navalMoveOrdersByPlayerId ?? this.navalMoveOrdersByPlayerId,
     navalMissionOrdersByPlayerId:
         navalMissionOrdersByPlayerId ?? this.navalMissionOrdersByPlayerId,
+    tradeOrdersByPlayerId:
+        tradeOrdersByPlayerId ?? this.tradeOrdersByPlayerId,
   );
 
   static bool _mapEquals<K, V>(Map<K, List<V>> a, Map<K, List<V>> b) {

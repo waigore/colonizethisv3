@@ -64,6 +64,10 @@ export 'src/economy/resource_extractor.dart';
 export 'src/economy/sea_transport.dart';
 export 'src/economy/worker_action_cost.dart';
 export 'src/economy/worker_economy.dart';
+export 'src/economy/world_market/deal_matcher.dart';
+export 'src/economy/world_market/price_discovery.dart';
+export 'src/economy/world_market/trade_order_suggester.dart';
+export 'src/economy/world_market/trade_order_validator.dart';
 
 // Orders
 export 'src/orders/orders.dart';

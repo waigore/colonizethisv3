@@ -158,6 +158,11 @@ final class PendingDiplomacyCallToArms extends PendingDiplomacyState {
   final List<CallToArmsPending> pending;
 }
 
+final class PendingDiplomacyFtp extends PendingDiplomacyState {
+  const PendingDiplomacyFtp(this.offers);
+  final List<FtpOffer> offers;
+}
+
 class PendingDiplomacyNotifier extends Notifier<PendingDiplomacyState?> {
   PendingDiplomacyNotifier([this._initial]);
 
@@ -176,6 +181,10 @@ class PendingDiplomacyNotifier extends Notifier<PendingDiplomacyState?> {
 
   void setCallToArms(List<CallToArmsPending> pending) {
     state = PendingDiplomacyCallToArms(pending);
+  }
+
+  void setFtp(List<FtpOffer> offers) {
+    state = PendingDiplomacyFtp(offers);
   }
 
   void clear() {

@@ -76,6 +76,10 @@ String formatDiplomaticEvent(
       return '${from ?? 'Unknown'} joined the war against ${to ?? 'Unknown'} (call to arms).';
     case DiplomaticEventType.callToArmsRefused:
       return '${from ?? 'Unknown'} refused call to arms; alliance with ${to ?? 'Unknown'} ended.';
+    case DiplomaticEventType.ftpFormed:
+      return '${from ?? 'Unknown'} established a free trade partnership with ${to ?? 'Unknown'}.';
+    case DiplomaticEventType.ftpBroken:
+      return 'Free trade partnership between ${from ?? 'Unknown'} and ${to ?? 'Unknown'} ended (${e.reason ?? 'cancelled'}).';
   }
 }
 

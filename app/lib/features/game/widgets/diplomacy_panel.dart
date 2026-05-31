@@ -319,6 +319,8 @@ class _DiplomacyPanelState extends State<DiplomacyPanel> {
         return 0.7;
       case DiplomaticOrderType.setSubsidy:
         return 0.5;
+      case DiplomaticOrderType.establishFtp:
+        return 0.5;
     }
   }
 
