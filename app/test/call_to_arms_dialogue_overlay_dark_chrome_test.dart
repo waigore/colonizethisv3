@@ -1,6 +1,7 @@
 import 'package:colonizethis_app/config/editorial_monocle_palette.dart';
 import 'package:colonizethis_app/config/themes.dart';
 import 'package:colonizethis_app/features/game/dialogue/call_to_arms_dialogue_overlay.dart';
+import 'package:colonizethis_app/features/game/widgets/chrome/ct_nine_patch_button.dart';
 import 'package:colonizethis_app/widgets/ct_brass_divider.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
@@ -142,5 +143,39 @@ void main() {
         reason: 'No Material in the overlay should still use Colors.black54.',
       );
     });
+
+    testWidgets(
+      'Submit stays disabled until every pending call has a non-null '
+      'decision (#2867 R25 / AC5)',
+      (WidgetTester tester) async {
+        await pumpOverlay(tester);
+
+        final Finder submitFinder = find.byKey(
+          const ValueKey<String>('callToArmsSubmitButton'),
+        );
+        expect(submitFinder, findsOneWidget);
+
+        CtNinePatchButton submitButton() =>
+            tester.widget<CtNinePatchButton>(submitFinder);
+
+        expect(
+          submitButton().enabled,
+          isFalse,
+          reason:
+              'Submit must start disabled when the row defaults to '
+              'undecided (#2867 R25).',
+        );
+
+        await tester.tap(find.text('Join'));
+        await tester.pump();
+        expect(
+          submitButton().enabled,
+          isTrue,
+          reason:
+              'Submit must enable as soon as every row has a non-null '
+              'decision (#2867 R25 positive case).',
+        );
+      },
+    );
   });
 }

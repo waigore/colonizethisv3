@@ -473,7 +473,8 @@ void main() {
     );
 
     testWidgets(
-      'default Submit emits one OvertureDecision per offer with accepted=true',
+      'tapping Accept on every row emits one OvertureDecision per offer with accepted=true '
+      '(#2867 R23 / AC4 — Submit enables after all decided)',
       (WidgetTester tester) async {
         List<OvertureDecision>? captured;
         await tester.pumpWidget(
@@ -493,6 +494,11 @@ void main() {
             onDecisions: (d) => captured = d,
           ),
         );
+        await _pumpUntilSettled(tester);
+
+        await tester.tap(find.text('Accept').at(0));
+        await _pumpUntilSettled(tester);
+        await tester.tap(find.text('Accept').at(1));
         await _pumpUntilSettled(tester);
 
         await tester.tap(find.text('Submit'));
@@ -510,7 +516,8 @@ void main() {
     );
 
     testWidgets(
-      'tapping Reject on the second row flips that decision before Submit',
+      'tapping Accept on the first row and Reject on the second row before Submit '
+      '(#2867 R23 / AC4 — mixed decision)',
       (WidgetTester tester) async {
         List<OvertureDecision>? captured;
         await tester.pumpWidget(
@@ -532,6 +539,8 @@ void main() {
         );
         await _pumpUntilSettled(tester);
 
+        await tester.tap(find.text('Accept').at(0));
+        await _pumpUntilSettled(tester);
         await tester.tap(find.text('Reject').at(1));
         await _pumpUntilSettled(tester);
 
@@ -543,6 +552,50 @@ void main() {
         expect(captured![0].accepted, isTrue);
         expect(captured![1].accepted, isFalse);
         expect(captured![1].offererGpId, 'gp_portugal');
+      },
+    );
+
+    testWidgets(
+      'Submit stays disabled and does not invoke onDecisions while any '
+      'overture row is still undecided (#2867 R23 / AC4 negative case)',
+      (WidgetTester tester) async {
+        List<OvertureDecision>? captured;
+        await tester.pumpWidget(
+          wrap(
+            offers: const [
+              OvertureOffer(
+                offererGpId: 'gp_spain',
+                targetFactionId: 'gp_player',
+                stage: OvertureStage.tradeConsulate,
+              ),
+              OvertureOffer(
+                offererGpId: 'gp_portugal',
+                targetFactionId: 'gp_player',
+                stage: OvertureStage.embassy,
+              ),
+            ],
+            onDecisions: (d) => captured = d,
+          ),
+        );
+        await _pumpUntilSettled(tester);
+
+        // `warnIfMissed: false` because the disabled button intentionally
+        // ignores hit-tests (per CtNinePatchButton § Disabled).
+        await tester.tap(find.text('Submit'), warnIfMissed: false);
+        await _pumpUntilSettled(tester);
+        expect(captured, isNull);
+
+        await tester.tap(find.text('Accept').at(0));
+        await _pumpUntilSettled(tester);
+        await tester.tap(find.text('Submit'), warnIfMissed: false);
+        await _pumpUntilSettled(tester);
+        expect(
+          captured,
+          isNull,
+          reason:
+              'Submit must remain disabled while the second row is still '
+              'undecided (#2867 R23).',
+        );
       },
     );
 
@@ -646,8 +699,8 @@ void main() {
       );
 
       testWidgets(
-        'default Submit emits one CallToArmsDecision per pending '
-        'with accepted=true',
+        'tapping Join on every row emits one CallToArmsDecision per pending '
+        'with accepted=true (#2867 R25 / AC5 — Submit enables after all decided)',
         (WidgetTester tester) async {
           List<CallToArmsDecision>? captured;
           await tester.pumpWidget(
@@ -667,6 +720,11 @@ void main() {
               onDecisions: (d) => captured = d,
             ),
           );
+          await _pumpUntilSettled(tester);
+
+          await tester.tap(find.text('Join').at(0));
+          await _pumpUntilSettled(tester);
+          await tester.tap(find.text('Join').at(1));
           await _pumpUntilSettled(tester);
 
           await tester.tap(find.text('Submit'));
@@ -682,7 +740,8 @@ void main() {
       );
 
       testWidgets(
-        'tapping Refuse on the first row flips that decision before Submit',
+        'tapping Refuse on the first row and Join on the second row before Submit '
+        '(#2867 R25 / AC5 — mixed decision)',
         (WidgetTester tester) async {
           List<CallToArmsDecision>? captured;
           await tester.pumpWidget(
@@ -704,7 +763,9 @@ void main() {
           );
           await _pumpUntilSettled(tester);
 
-          await tester.tap(find.text('Refuse').first);
+          await tester.tap(find.text('Refuse').at(0));
+          await _pumpUntilSettled(tester);
+          await tester.tap(find.text('Join').at(1));
           await _pumpUntilSettled(tester);
 
           await tester.tap(find.text('Submit'));
@@ -713,6 +774,50 @@ void main() {
           expect(captured, isNotNull);
           expect(captured![0].accepted, isFalse);
           expect(captured![1].accepted, isTrue);
+        },
+      );
+
+      testWidgets(
+        'Submit stays disabled and does not invoke onDecisions while any '
+        'call-to-arms row is still undecided (#2867 R25 / AC5 negative case)',
+        (WidgetTester tester) async {
+          List<CallToArmsDecision>? captured;
+          await tester.pumpWidget(
+            wrap(
+              pending: const [
+                CallToArmsPending(
+                  allyGpId: 'gp_player',
+                  defenderGpId: 'gp_portugal',
+                  aggressorGpId: 'gp_spain',
+                ),
+                CallToArmsPending(
+                  allyGpId: 'gp_player',
+                  defenderGpId: 'gp_spain',
+                  aggressorGpId: 'gp_portugal',
+                ),
+              ],
+              onDecisions: (d) => captured = d,
+            ),
+          );
+          await _pumpUntilSettled(tester);
+
+          // `warnIfMissed: false` because the disabled button intentionally
+          // ignores hit-tests (per CtNinePatchButton § Disabled).
+          await tester.tap(find.text('Submit'), warnIfMissed: false);
+          await _pumpUntilSettled(tester);
+          expect(captured, isNull);
+
+          await tester.tap(find.text('Refuse').at(0));
+          await _pumpUntilSettled(tester);
+          await tester.tap(find.text('Submit'), warnIfMissed: false);
+          await _pumpUntilSettled(tester);
+          expect(
+            captured,
+            isNull,
+            reason:
+                'Submit must remain disabled while the second row is still '
+                'undecided (#2867 R25).',
+          );
         },
       );
 
