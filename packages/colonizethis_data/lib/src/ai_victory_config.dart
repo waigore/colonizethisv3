@@ -391,6 +391,25 @@ const int kColonialDiplomacyGoalPenaltyWhenPressure = 45;
 /// Penalty to trade goal weight under the same colonial pressure.
 const int kColonialTradeGoalPenaltyWhenPressure = 25;
 
+/// `trade` goal floor when the GP is broke (`treasury <= 0`) after every
+/// other modifier in `evaluateStrategicGoalScores` has been applied. Sized
+/// to strictly outrank the worst-case competing goal envelope (stalled-OW
+/// `conquer = math.max(conquer, 120)`, victory-pace + endgame conquer
+/// bonuses up to `40 + 25 = 65`, max base-trade weight `90`), so a treasury
+/// of zero always selects `StrategicGoal.trade` regardless of phase, leader
+/// agenda, or stalled / colonial-pressure clamps on `trade`. World Market —
+/// AI treasury planner; Refs #2994 F6.
+const int kEmergencyTradeGoalDominantFloor = 200;
+
+/// Peak linear bonus added to the `trade` goal score when treasury is
+/// strictly between `0` and `cheapestRegimentBuildTreasuryCost()`. Scales
+/// as `boost = round((1 - treasury / threshold) * kBoostMax)`: near-zero
+/// treasury gets the full `kBoostMax` (lifting a moderate-trade leader near
+/// the stalled-OW conquer floor of `120` so trade competes but does not yet
+/// hit the emergency floor); at-threshold treasury gets `0`. World Market —
+/// AI treasury planner; Refs #2994 F6.
+const int kTreasuryAcquisitionTradeBoostMax = 80;
+
 /// Floor for `expand` under colonial pressure (does not reduce OW floors).
 const int kMinimumColonialExpandScoreWhenPressure = 90;
 

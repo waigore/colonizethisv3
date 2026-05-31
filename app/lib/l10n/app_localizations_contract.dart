@@ -17,7 +17,6 @@ abstract class AppLocalizations {
   /// A list of this localizations delegate's supported locales.
   static const List<Locale> supportedLocales = <Locale>[Locale('en')];
 
-
   /// Window title / application title.
   String get app_title;
 
@@ -299,7 +298,11 @@ abstract class AppLocalizations {
   String game_intervention_resolutionProgress(int current, int total);
 
   /// One-line summary of the war and which GP the player decides for.
-  String game_intervention_situation(String aggressor, String defender, String intervening);
+  String game_intervention_situation(
+    String aggressor,
+    String defender,
+    String intervening,
+  );
 
   /// Button: military intervention on behalf of the defender.
   String get game_intervention_intervene;
@@ -721,7 +724,11 @@ abstract class AppLocalizations {
   String military_units_armySubtitle(int regiments, String location);
 
   /// Army subtitle showing regiment count, location, and a draft move line.
-  String military_units_armySubtitleWithDraft(int regiments, String location, String draftLine);
+  String military_units_armySubtitleWithDraft(
+    int regiments,
+    String location,
+    String draftLine,
+  );
 
   /// Empty-state line for army with no regiments.
   String get military_units_noRegimentsAssigned;
@@ -776,6 +783,40 @@ abstract class AppLocalizations {
 
   /// Cargo capacity line for non-home fleet.
   String naval_units_cargoCapacityIfAssigned(int capacity);
+
+  /// Inline qualifier appended to a fleet's location label when the
+  /// fleet is docked at a port province. SPEC/ui/naval-units-panel.md
+  /// R28.
+  String get naval_units_locInPort;
+
+  /// Inline qualifier appended to a fleet's location label when the
+  /// fleet is in a sea zone. SPEC/ui/naval-units-panel.md R28.
+  String get naval_units_locAtSea;
+
+  /// Uppercase chip rendered next to the Home Fleet name in the naval
+  /// units panel. SPEC/ui/naval-units-panel.md R26.
+  String get naval_units_homeFleetChip;
+
+  /// Role tag in the fleet expanded composition table for warship ship
+  /// types (cargoHold == 0). SPEC/ui/naval-units-panel.md R29.
+  String get naval_units_compositionRoleWarship;
+
+  /// Role tag in the fleet expanded composition table for merchant
+  /// ship types (cargoHold > 0). SPEC/ui/naval-units-panel.md R29.
+  String get naval_units_compositionRoleMerchant;
+
+  /// Count cell in the fleet expanded composition table, e.g. ×2.
+  /// SPEC/ui/naval-units-panel.md R29.
+  String naval_units_compositionCount(int count);
+
+  /// Single-line composition summary rendered beneath the expanded
+  /// fleet composition table. SPEC/ui/naval-units-panel.md R29.
+  String naval_units_compositionSummary(int total, int warships, int merchants);
+
+  /// Home-Fleet cargo capacity line rendered between the composition
+  /// table and the summary in the expanded fleet view.
+  /// SPEC/ui/naval-units-panel.md R29.
+  String naval_units_cargoCapacityHolds(int capacity);
 
   /// Diplomacy dialog title for setting subsidy amount.
   String get diplomacy_setSubsidy;
@@ -928,7 +969,11 @@ abstract class AppLocalizations {
   String technologyPanel_slot(int slot);
 
   /// Research slot subtitle with tech name, progress, and cost label.
-  String technologyPanel_slotSubtitle(String name, int progress, String costLabel);
+  String technologyPanel_slotSubtitle(
+    String name,
+    int progress,
+    String costLabel,
+  );
 
   /// Empty-state subtitle when no tech is assigned to a slot.
   String get technologyPanel_noTechAssigned;
@@ -1115,10 +1160,18 @@ abstract class AppLocalizations {
   String provinceOverlay_unitTarget(String type, String target);
 
   /// Civilian section line for foreign-unit status (no internal unit id).
-  String provinceOverlay_foreignUnitStatus(String owner, String type, String status);
+  String provinceOverlay_foreignUnitStatus(
+    String owner,
+    String type,
+    String status,
+  );
 
   /// Naval section fleet summary line.
-  String provinceOverlay_fleetSummary(String owner, String fleetLabel, String shipParts);
+  String provinceOverlay_fleetSummary(
+    String owner,
+    String fleetLabel,
+    String shipParts,
+  );
 
   /// Province overlay section heading for political details.
   String get provinceOverlay_sectionPolitical;
@@ -1199,7 +1252,11 @@ abstract class AppLocalizations {
   String regionMinimap_zoomSemanticsValue(int pct);
 
   /// Economic row in province overlay: terrain, resource id, and localized detail suffix.
-  String province_economic_resourceRow(String terrain, String resourceId, String detail);
+  String province_economic_resourceRow(
+    String terrain,
+    String resourceId,
+    String detail,
+  );
 
   /// Heading for diplomatic event history on detail screen.
   String get diplomacy_detail_historyTitle;
@@ -1269,6 +1326,23 @@ abstract class AppLocalizations {
 
   /// Visible label for the Disband button on trained-tier rows.
   String get production_labourDisband;
+
+  /// Parenthetical suffix on a Labour Controls tier label when every
+  /// required tech is unlocked for the viewed player (peasant always
+  /// renders this).
+  String get production_labourTierUnlocked;
+
+  /// Parenthetical suffix on a Labour Controls tier label when one or
+  /// more required techs are missing for the viewed player.
+  String get production_labourTierLocked;
+
+  /// Concatenation of the tier name and the unlock-state parenthetical for
+  /// a Labour Controls row (e.g. "Peasants (unlocked)").
+  String production_labourTierLabel(String tier, String state);
+
+  /// Title of the Labour Controls subsection in the Production panel
+  /// Available subpanel.
+  String get production_labourControlsSectionLabel;
 
   /// Worker type and count in production panel.
   String production_workerCount(String name, int count);

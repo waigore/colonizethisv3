@@ -537,8 +537,15 @@ List<WidgetbookNode> get navalUnitsPanelDirectories => [
           final humanPlayerId = game.players.isNotEmpty
               ? game.players.first.id
               : 'gp1';
+          // Mockup `UNIT30001` clamps the panel sidebar to ~340 dp;
+          // 480 dp here keeps the standalone story comfortably inside
+          // `_panelConstraints` (420–640 dp) so reviewers see the dense
+          // R25 action cluster (Move + Split + Locate on one row), the
+          // R26 `HOME` chip on the Home Fleet row, and the R28
+          // `(in port)` / `(at sea)` location qualifier produced by
+          // `naval_tree_builder.dart`.
           return ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 400, maxHeight: 500),
+            constraints: const BoxConstraints(maxWidth: 480, maxHeight: 640),
             child: NavalUnitsPanel(
               game: game,
               humanPlayerId: humanPlayerId,

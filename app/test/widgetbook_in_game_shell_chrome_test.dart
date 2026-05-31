@@ -1,16 +1,21 @@
-// Confirms the in-game shell chrome Widgetbook stories added under
-// catalog_part7.dart (Refs #2861 S12) are wired into the catalog and that
-// each story builder mounts a dark editorial-monocle widget tree without
-// throwing. The directories are intentionally tested through the public
-// `*Directories` getters so the test fails if a directory is removed or
-// renamed.
+// Confirms the in-game shell chrome Widgetbook stories for issue #2861 S12
+// (catalog_part3.dart, catalog_part5.dart, catalog_part7.dart) are wired into
+// the catalog and that each story builder mounts a dark editorial-monocle
+// widget tree without throwing. Directories are tested through the public
+// `*Directories` getters so the test fails if a folder or use case is
+// removed or renamed.
 
 import 'package:colonizethis_app/config/editorial_monocle_palette.dart';
+import 'package:colonizethis_app/features/game/flame/exit_confirm_dialog.dart';
 import 'package:colonizethis_app/features/game/flame/game_map_corner_controls.dart';
 import 'package:colonizethis_app/features/game/flame/game_map_empire_left_rail.dart';
 import 'package:colonizethis_app/features/game/flame/game_map_province_detail_side_panel.dart';
 import 'package:colonizethis_app/features/game/flame/game_region_minimap.dart';
+import 'package:colonizethis_app/features/game/flame/game_screen.dart';
+import 'package:colonizethis_app/features/game/flame/game_side_menu.dart';
+import 'package:colonizethis_app/features/game/flame/victory_overlay.dart';
 import 'package:colonizethis_app/features/game/widgets/game_map_options_dialog.dart';
+import 'package:colonizethis_app/features/game/widgets/game_map_players_bar.dart';
 import 'package:colonizethis_app/features/game/widgets/game_tab_bar.dart';
 import 'package:colonizethis_app/features/game/widgets/game_top_bar.dart';
 import 'package:colonizethis_app/features/game/widgets/player_turn_event_feed.dart';
@@ -433,6 +438,92 @@ void main() {
           await tester.pump(const Duration(milliseconds: 100));
           expect(find.byType(GameMapProvinceDetailSidePanel), findsOneWidget);
         }
+      },
+    );
+
+    testWidgets(
+      'Players Bar folder exposes wide-layout chip column (S12 story 6)',
+      (WidgetTester tester) async {
+        final story = _useCase(
+          playersBarDirectories,
+          folderName: 'Players Bar',
+          useCaseName: 'Default — debug game (wide)',
+        );
+        await tester.pumpWidget(
+          story.builder(tester.element(find.byType(View))),
+        );
+        await tester.pump();
+        expect(find.byType(GameMapPlayersBar), findsOneWidget);
+      },
+    );
+
+    testWidgets(
+      'Game Screen folder exposes wide integrated layout (S12 story 7)',
+      (WidgetTester tester) async {
+        final story = _useCase(
+          gameScreenDirectories,
+          folderName: 'Game Screen',
+          useCaseName: 'Default — no victory',
+        );
+        await tester.pumpWidget(
+          story.builder(tester.element(find.byType(View))),
+        );
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 200));
+        expect(find.byType(GameScreen), findsOneWidget);
+      },
+    );
+
+    testWidgets(
+      'Game Side Menu folder exposes open + closed variants (S12 story 8)',
+      (WidgetTester tester) async {
+        const useCaseNames = <String>['Default — open', 'Closed'];
+
+        for (final name in useCaseNames) {
+          final story = _useCase(
+            gameSideMenuDirectories,
+            folderName: 'Game Side Menu',
+            useCaseName: name,
+          );
+          await tester.pumpWidget(
+            story.builder(tester.element(find.byType(View))),
+          );
+          await tester.pump();
+          await tester.pump(const Duration(milliseconds: 250));
+          expect(find.byType(GameSideMenu), findsOneWidget);
+        }
+      },
+    );
+
+    testWidgets(
+      'Victory folder exposes full scrim overlay (S12 story 12)',
+      (WidgetTester tester) async {
+        final story = _useCase(
+          victoryUiDirectories,
+          folderName: 'Victory',
+          useCaseName: 'Victory overlay — full scrim',
+        );
+        await tester.pumpWidget(
+          story.builder(tester.element(find.byType(View))),
+        );
+        await tester.pump();
+        expect(find.byType(VictoryOverlay), findsOneWidget);
+      },
+    );
+
+    testWidgets(
+      'Exit Confirm Dialog folder exposes default variant (S12 story 13)',
+      (WidgetTester tester) async {
+        final story = _useCase(
+          exitConfirmDialogDirectories,
+          folderName: 'Exit Confirm Dialog',
+          useCaseName: 'Default — danger Exit + brass Cancel',
+        );
+        await tester.pumpWidget(
+          story.builder(tester.element(find.byType(View))),
+        );
+        await tester.pump();
+        expect(find.byType(ExitConfirmDialog), findsOneWidget);
       },
     );
 

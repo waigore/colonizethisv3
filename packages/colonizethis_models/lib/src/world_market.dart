@@ -58,6 +58,15 @@ enum TradeOrderStatus {
 /// `priority` is a positive integer where 1 is highest precedence; lower
 /// integer = higher precedence. `isFtp` is derived during matching when the
 /// offer/bid pair belongs to FTP-linked factions.
+///
+/// `originTileKey` attributes an offer to a specific minor/tribe tile so
+/// the deal matcher can apply the world-market First Right of Refusal
+/// override per `SPEC/game/world-market-first-right-of-refusal.md`. It is
+/// always `null` on bids and on Great-Power-submitted offers; only
+/// minor/tribe auto-offers (#2991 C2 onwards) populate it. Storing the
+/// origin tile here keeps the deal matcher pure: it can resolve the
+/// owning Great Power via [PurchasedTileIndex] without re-querying
+/// `WorldState`.
 class TradeOrder {
   TradeOrder({
     required this.commodityId,
@@ -65,6 +74,7 @@ class TradeOrder {
     required this.quantity,
     required this.priority,
     this.isFtp = false,
+    this.originTileKey,
   }) {
     if (commodityId.isEmpty) {
       throw ModelValidationException.value(
@@ -87,6 +97,13 @@ class TradeOrder {
         'priority must be >= 1',
       );
     }
+    if (originTileKey != null && originTileKey!.isEmpty) {
+      throw ModelValidationException.value(
+        originTileKey,
+        'originTileKey',
+        'originTileKey must be null or non-empty',
+      );
+    }
   }
 
   final CommodityId commodityId;
@@ -94,6 +111,7 @@ class TradeOrder {
   final int quantity;
   final int priority;
   final bool isFtp;
+  final String? originTileKey;
 
   TradeOrder copyWith({
     CommodityId? commodityId,
@@ -101,6 +119,7 @@ class TradeOrder {
     int? quantity,
     int? priority,
     bool? isFtp,
+    Object? originTileKey = _copyWithUnset,
   }) {
     return TradeOrder(
       commodityId: commodityId ?? this.commodityId,
@@ -108,6 +127,9 @@ class TradeOrder {
       quantity: quantity ?? this.quantity,
       priority: priority ?? this.priority,
       isFtp: isFtp ?? this.isFtp,
+      originTileKey: identical(originTileKey, _copyWithUnset)
+          ? this.originTileKey
+          : originTileKey as String?,
     );
   }
 
@@ -117,6 +139,7 @@ class TradeOrder {
     'quantity': quantity,
     'priority': priority,
     'isFtp': isFtp,
+    if (originTileKey != null) 'originTileKey': originTileKey,
   };
 
   static TradeOrder fromJson(Map<String, dynamic> json) {
@@ -157,12 +180,17 @@ class TradeOrder {
       );
     }
     final ftp = json['isFtp'];
+    final originRaw = json['originTileKey'];
+    final origin = originRaw is String && originRaw.isNotEmpty
+        ? originRaw
+        : null;
     return TradeOrder(
       commodityId: id,
       type: TradeOrderType.fromJsonName(typeRaw),
       quantity: qty,
       priority: pr,
       isFtp: ftp == true,
+      originTileKey: origin,
     );
   }
 
@@ -175,15 +203,27 @@ class TradeOrder {
           type == other.type &&
           quantity == other.quantity &&
           priority == other.priority &&
-          isFtp == other.isFtp;
+          isFtp == other.isFtp &&
+          originTileKey == other.originTileKey;
 
   @override
-  int get hashCode => Object.hash(commodityId, type, quantity, priority, isFtp);
+  int get hashCode => Object.hash(
+    commodityId,
+    type,
+    quantity,
+    priority,
+    isFtp,
+    originTileKey,
+  );
 
   @override
   String toString() =>
-      'TradeOrder($type $commodityId × $quantity @ p$priority${isFtp ? ' FTP' : ''})';
+      'TradeOrder($type $commodityId × $quantity @ p$priority'
+      '${isFtp ? ' FTP' : ''}'
+      '${originTileKey != null ? ' tile:$originTileKey' : ''})';
 }
+
+const Object _copyWithUnset = Object();
 
 /// Per-commodity activity snapshot for the previous market turn.
 ///
@@ -253,10 +293,26 @@ class WorldMarketState {
   const WorldMarketState({
     this.prices = const <CommodityId, double>{},
     this.lastTurnActivity = const <CommodityId, MarketActivity>{},
+    this.carryForwardOffersByFactionId =
+        const <String, List<TradeOrder>>{},
+    this.carryForwardBidsByFactionId =
+        const <String, List<TradeOrder>>{},
   });
 
   final Map<CommodityId, double> prices;
   final Map<CommodityId, MarketActivity> lastTurnActivity;
+
+  /// Per-faction unfilled offer carry-forwards from the previous turn's
+  /// market phase. Re-entered into matching at the start of the next turn,
+  /// subject to stockpile/cargo re-validation per `SPEC/game/world-market.md`
+  /// § Order persistence.
+  final Map<String, List<TradeOrder>> carryForwardOffersByFactionId;
+
+  /// Per-faction unfilled bid carry-forwards from the previous turn's
+  /// market phase. Re-entered into matching at the start of the next turn,
+  /// subject to stockpile/cargo re-validation per `SPEC/game/world-market.md`
+  /// § Order persistence.
+  final Map<String, List<TradeOrder>> carryForwardBidsByFactionId;
 
   static const empty = WorldMarketState();
 
@@ -275,10 +331,16 @@ class WorldMarketState {
   WorldMarketState copyWith({
     Map<CommodityId, double>? prices,
     Map<CommodityId, MarketActivity>? lastTurnActivity,
+    Map<String, List<TradeOrder>>? carryForwardOffersByFactionId,
+    Map<String, List<TradeOrder>>? carryForwardBidsByFactionId,
   }) {
     return WorldMarketState(
       prices: prices ?? this.prices,
       lastTurnActivity: lastTurnActivity ?? this.lastTurnActivity,
+      carryForwardOffersByFactionId:
+          carryForwardOffersByFactionId ?? this.carryForwardOffersByFactionId,
+      carryForwardBidsByFactionId:
+          carryForwardBidsByFactionId ?? this.carryForwardBidsByFactionId,
     );
   }
 
@@ -288,6 +350,14 @@ class WorldMarketState {
       for (final entry in lastTurnActivity.entries)
         entry.key: entry.value.toJson(),
     },
+    if (carryForwardOffersByFactionId.isNotEmpty)
+      'carryForwardOffersByFactionId': _serializeCarryForward(
+        carryForwardOffersByFactionId,
+      ),
+    if (carryForwardBidsByFactionId.isNotEmpty)
+      'carryForwardBidsByFactionId': _serializeCarryForward(
+        carryForwardBidsByFactionId,
+      ),
   };
 
   static WorldMarketState fromJson(Map<String, dynamic> json) {
@@ -316,6 +386,12 @@ class WorldMarketState {
     return WorldMarketState(
       prices: Map.unmodifiable(prices),
       lastTurnActivity: Map.unmodifiable(activity),
+      carryForwardOffersByFactionId: _deserializeCarryForward(
+        json['carryForwardOffersByFactionId'],
+      ),
+      carryForwardBidsByFactionId: _deserializeCarryForward(
+        json['carryForwardBidsByFactionId'],
+      ),
     );
   }
 
@@ -325,7 +401,15 @@ class WorldMarketState {
       other is WorldMarketState &&
           runtimeType == other.runtimeType &&
           _mapEquals(prices, other.prices) &&
-          _mapEquals(lastTurnActivity, other.lastTurnActivity);
+          _mapEquals(lastTurnActivity, other.lastTurnActivity) &&
+          _carryMapEquals(
+            carryForwardOffersByFactionId,
+            other.carryForwardOffersByFactionId,
+          ) &&
+          _carryMapEquals(
+            carryForwardBidsByFactionId,
+            other.carryForwardBidsByFactionId,
+          );
 
   @override
   int get hashCode {
@@ -338,11 +422,63 @@ class WorldMarketState {
     return Object.hash(
       Object.hashAll(priceEntries),
       Object.hashAll(activityEntries),
+      Object.hashAll(carryForwardOffersByFactionId.keys),
+      Object.hashAll(carryForwardBidsByFactionId.keys),
     );
   }
 }
 
+Map<String, List<Map<String, dynamic>>> _serializeCarryForward(
+  Map<String, List<TradeOrder>> map,
+) {
+  final result = <String, List<Map<String, dynamic>>>{};
+  for (final entry in map.entries) {
+    result[entry.key] = entry.value.map((o) => o.toJson()).toList();
+  }
+  return result;
+}
+
+Map<String, List<TradeOrder>> _deserializeCarryForward(Object? raw) {
+  if (raw is! Map<dynamic, dynamic>) {
+    return const <String, List<TradeOrder>>{};
+  }
+  final result = <String, List<TradeOrder>>{};
+  raw.forEach((key, value) {
+    if (value is List<dynamic>) {
+      final orders = <TradeOrder>[];
+      for (final entry in value) {
+        if (entry is Map<dynamic, dynamic>) {
+          orders.add(
+            TradeOrder.fromJson(Map<String, dynamic>.from(entry)),
+          );
+        }
+      }
+      if (orders.isNotEmpty) {
+        result[key.toString()] = List.unmodifiable(orders);
+      }
+    }
+  });
+  return Map.unmodifiable(result);
+}
+
 /// A single offer/bid pairing executed in the market phase.
+///
+/// `isFirstRightOfRefusalMatch` is set when the deal matcher applied the
+/// First Right of Refusal override per
+/// `SPEC/game/world-market-first-right-of-refusal.md` — the buyer is the
+/// owning Great Power for a purchased minor/tribe tile and the offer's
+/// `originTileKey` resolved via `PurchasedTileIndex`. FRR matches always
+/// take priority above FTP within the matcher; the flag also serves as
+/// an audit signal for D4 treasury transfers and Deal Book UI.
+///
+/// `sellerOriginTileKey` mirrors the offer-side `TradeOrder.originTileKey`
+/// when the matcher consumed an attributed offer (`null` for offers with
+/// no origin tile). D4 treasury-transfer callers use it together with
+/// `PurchasedTileIndex.attributionForTileKey` to identify deals that
+/// landed on a different buyer than the owning Great Power (which is
+/// where overseas-profit credits accrue per
+/// `SPEC/game/world-market-first-right-of-refusal.md` § Treasury transfer
+/// (D4)).
 class FilledDeal {
   const FilledDeal({
     required this.sellerFactionId,
@@ -351,6 +487,8 @@ class FilledDeal {
     required this.quantity,
     required this.pricePerUnit,
     this.isFtpMatch = false,
+    this.isFirstRightOfRefusalMatch = false,
+    this.sellerOriginTileKey,
   });
 
   final String sellerFactionId;
@@ -359,6 +497,13 @@ class FilledDeal {
   final int quantity;
   final double pricePerUnit;
   final bool isFtpMatch;
+  final bool isFirstRightOfRefusalMatch;
+
+  /// Offer-side `TradeOrder.originTileKey` for this deal, or `null` when
+  /// the offer carried no origin tile. Preserved by the deal matcher so
+  /// D4 (overseas-profit transfer) callers can resolve purchased-tile
+  /// attribution without re-querying matcher internals.
+  final String? sellerOriginTileKey;
 
   Map<String, dynamic> toJson() => {
     'sellerFactionId': sellerFactionId,
@@ -367,6 +512,9 @@ class FilledDeal {
     'quantity': quantity,
     'pricePerUnit': pricePerUnit,
     'isFtpMatch': isFtpMatch,
+    if (isFirstRightOfRefusalMatch)
+      'isFirstRightOfRefusalMatch': isFirstRightOfRefusalMatch,
+    if (sellerOriginTileKey != null) 'sellerOriginTileKey': sellerOriginTileKey,
   };
 
   static FilledDeal fromJson(Map<String, dynamic> json) {
@@ -377,6 +525,7 @@ class FilledDeal {
       return double.tryParse(v?.toString() ?? '') ?? 0.0;
     }
 
+    final tileKey = json['sellerOriginTileKey'];
     return FilledDeal(
       sellerFactionId: json['sellerFactionId']?.toString() ?? '',
       buyerFactionId: json['buyerFactionId']?.toString() ?? '',
@@ -384,6 +533,10 @@ class FilledDeal {
       quantity: intOrZero(json['quantity']),
       pricePerUnit: doubleOrZero(json['pricePerUnit']),
       isFtpMatch: json['isFtpMatch'] == true,
+      isFirstRightOfRefusalMatch: json['isFirstRightOfRefusalMatch'] == true,
+      sellerOriginTileKey: tileKey is String && tileKey.isNotEmpty
+          ? tileKey
+          : null,
     );
   }
 
@@ -397,7 +550,9 @@ class FilledDeal {
           commodityId == other.commodityId &&
           quantity == other.quantity &&
           pricePerUnit == other.pricePerUnit &&
-          isFtpMatch == other.isFtpMatch;
+          isFtpMatch == other.isFtpMatch &&
+          isFirstRightOfRefusalMatch == other.isFirstRightOfRefusalMatch &&
+          sellerOriginTileKey == other.sellerOriginTileKey;
 
   @override
   int get hashCode => Object.hash(
@@ -407,6 +562,8 @@ class FilledDeal {
     quantity,
     pricePerUnit,
     isFtpMatch,
+    isFirstRightOfRefusalMatch,
+    sellerOriginTileKey,
   );
 }
 
