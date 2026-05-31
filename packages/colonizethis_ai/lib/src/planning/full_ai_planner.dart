@@ -127,6 +127,7 @@ FullAIResult generateOrdersForGameFullAI(
   final diploByPlayer = <String, List<DiplomaticOrder>>{};
   final navalByPlayer = <String, List<NavalMoveOrder>>{};
   final missionByPlayer = <String, List<NavalMissionOrder>>{};
+  final tradeByPlayer = <String, List<TradeOrder>>{};
   final economyPlansByPlayerId = <String, EconomyPlan>{};
   final aiTraceSections = <TurnTraceAiSection>[];
 
@@ -210,6 +211,11 @@ FullAIResult generateOrdersForGameFullAI(
       playerId,
       result.orders.navalMissionOrdersByPlayerId[playerId],
     );
+    _addOrdersIfNonEmpty(
+      tradeByPlayer,
+      playerId,
+      result.orders.tradeOrdersByPlayerId[playerId],
+    );
   }
 
   _log.i(
@@ -230,6 +236,7 @@ FullAIResult generateOrdersForGameFullAI(
       researchOrdersByPlayerId: researchByPlayer,
       navalMoveOrdersByPlayerId: navalByPlayer,
       navalMissionOrdersByPlayerId: missionByPlayer,
+      tradeOrdersByPlayerId: tradeByPlayer,
     ),
   );
 

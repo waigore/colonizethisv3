@@ -112,6 +112,8 @@ void _expectEconomyPlansEqual(EconomyPlan a, EconomyPlan b) {
       reason: 'assignedLabour at index $i must be deterministic',
     );
   }
+  expect(a.tradeOrders, b.tradeOrders,
+      reason: 'tradeOrders must be deterministic');
 }
 
 /// Constructs a small but non-trivial Game state for the Full AI determinism
