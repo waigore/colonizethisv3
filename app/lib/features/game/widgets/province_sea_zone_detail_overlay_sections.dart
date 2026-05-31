@@ -1,4 +1,3 @@
-
 /// Supplementary GDD label for [roadLevel] on land tiles (issue #1537 / extraction-and-improvements § Transport Level).
 
 part of 'province_sea_zone_detail_overlay.dart';
@@ -284,14 +283,21 @@ Widget _buildPoliticalSection({
   required String name,
   required String ownerName,
 }) {
+  // Dark-theme tokens (Refs #2865, SPEC § Dark-theme Political section body
+  // tokens). Both body rows declare TextStyle.color explicitly so the
+  // editorial-monocle dark theme owns this surface and the section stops
+  // inheriting DefaultTextStyle / Material bodyMedium colours.
+  // `EditorialMonoclePalette.fg` is a runtime getter (OKLCH → Color), so the
+  // style cannot be `const`.
+  final bodyStyle = TextStyle(color: EditorialMonoclePalette.fg);
   return _buildSection(
     l10n.provinceOverlay_sectionPolitical,
     Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
       children: [
-        Text(l10n.provinceOverlay_name(name)),
-        Text(l10n.provinceOverlay_owner(ownerName)),
+        Text(l10n.provinceOverlay_name(name), style: bodyStyle),
+        Text(l10n.provinceOverlay_owner(ownerName), style: bodyStyle),
       ],
     ),
   );
@@ -342,13 +348,13 @@ Widget _buildTileSection({
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
         children: [
-          Text(l10n.provinceOverlay_tileCoordinatesUnknown),
-          Text(l10n.provinceOverlay_tileTerrainUnknown),
-          Text(l10n.provinceOverlay_tileResourceUnknown),
-          Text(l10n.provinceOverlay_tileProspectedUnknown),
-          Text(l10n.provinceOverlay_tileImprovementUnknown),
-          Text(l10n.provinceOverlay_tileRoadUnknown),
-          Text(l10n.provinceOverlay_tileCivilianUnitsUnknown),
+          _obfuscatedBodyText(l10n.provinceOverlay_tileCoordinatesUnknown),
+          _obfuscatedBodyText(l10n.provinceOverlay_tileTerrainUnknown),
+          _obfuscatedBodyText(l10n.provinceOverlay_tileResourceUnknown),
+          _obfuscatedBodyText(l10n.provinceOverlay_tileProspectedUnknown),
+          _obfuscatedBodyText(l10n.provinceOverlay_tileImprovementUnknown),
+          _obfuscatedBodyText(l10n.provinceOverlay_tileRoadUnknown),
+          _obfuscatedBodyText(l10n.provinceOverlay_tileCivilianUnitsUnknown),
         ],
       ),
     );
@@ -514,6 +520,6 @@ class _ObfuscatedSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return _buildSection('', Text(l10n.provinceOverlay_unknown));
+    return _buildSection('', _obfuscatedBodyText(l10n.provinceOverlay_unknown));
   }
 }

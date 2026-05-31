@@ -158,6 +158,15 @@ Other scoring sites (economy civilian threshold cap) still use the Phase 2 boole
 - At the resource-need override floor (`newWorldAcquisition = 0.60` when `treasury == 0 && newWorldProvincesOwned == 0 && boostTreasuryRecoveryCargo == true` per § Resource-need overrides), the bonus reaches `round(65 × 0.60) = 39` and the floor reaches `round(85 × 0.60) = 51` — both above `kNavalRunMinWeight`, so the naval planner engages under EXPAND-lock recovery without requiring the GP to reach COLONIAL first.
 - The `PhaseNavalDirectiveResolution.colonialPreferenceActive` boolean continues to drive `runNavalPlanner`'s take-cap (`hasColonialTargets ? cap : (cap > 0 ? 1 + rng.nextInt(cap) : 0)`) and the colonial-pressure ranking pass; the Phase 3 slice migrates only the weight-bonus / weight-floor magnitudes from the legacy hard-phase constants to the soft-phase weight scaling.
 
+#### Phase 3 consumer wiring — first-naval-transport bootstrap (Refs #2847)
+
+`_appendEconomyBuildOrders` (`domain_planner_orchestrator.dart`) consumes `resolvePhaseFirstNavalTransportBootstrapActive` (`phase_planner_economy_filter.dart`) when the treasury-recovery resource-need override is active and the GP still owns zero cargo-capable naval hulls:
+
+- Predicate: `resolvePhaseNwTreasuryRecoveryResourceNeedOverrideActive` (`treasury == 0 && newWorldProvincesOwned == 0 && boostTreasuryRecoveryCargo == true`) **and** `!playerOwnsCargoCapableNavalUnit(game, playerId)`.
+- When active, the orchestrator **does not** narrow `candidatesForBuild` to regiments-only under `forceRegimentRebuild`, and `pickBuildOrder` receives `militaryRebuildCrisis: false` so the regiment-only crisis short-circuit cannot suppress ship candidates.
+- `BuildPickInput.colonialPressureWeight` is floored to at least `kPhasePriorityNwTreasuryRecoveryFloor` (`0.60`) so the cargo-ship build bonus engages at the same magnitude as the naval-pass colonial-pressure floor.
+- The build pipeline's treasury/material affordability check is **unchanged** — this slice relaxes only planner-level regiment bias, not build validation.
+
 #### Phase 3 consumer wiring — conquest army-move colonial-pressure floor (Refs #2847)
 
 `runConquestArmyMovePlanner` (`conquest_planner.dart`) consumes the helper `conquestColonialPressureMinWeightFloor(colonialPressureWeight: ...)` (`phase_planner_conquest_filter.dart`) as the production source of truth for the colonial-pressure minimum army-move weight floor that previously activated as a hard `weight = kConquestArmyMoveMinWeightWhenColonialPressure` step under the boolean `resolvePhaseConquestColonialPressureActive`:

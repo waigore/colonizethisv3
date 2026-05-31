@@ -10,9 +10,9 @@
 // icon + literal title `Trade`, 36 dp height) above an
 // observe-mode-aware body. At `kMinViewportWidth` (320 dp) the available
 // width collapses to 320 dp; the chrome and body must still lay out
-// without `RenderFlex` overflow. The current placeholder body
-// (`#2993` E1+E2+E3 scaffold) is exercised under the non-observe path;
-// the `ObserveModeNotDefinedPanel` sentinel is exercised under global
+// without `RenderFlex` overflow. The current two-tab body (`#2993` E1+
+// E2+E3+E4 scaffold) is exercised under the non-observe path; the
+// `ObserveModeNotDefinedPanel` sentinel is exercised under global
 // observe. Both paths satisfy the parent `mobile-adaptation.md` § 7 AC.
 //
 // Each test asserts:
@@ -25,11 +25,11 @@
 //    literal title `Trade` and back label `Map` both render end-to-end so
 //    the layout actually exercises the trade chrome at 320 dp rather than
 //    no-op'ing on an off-screen widget.
-//  * For the default (non-observe) path: the
-//    `tradeScreenScaffoldPlaceholder` key resolves to the placeholder
-//    body widget.
+//  * For the default (non-observe) path: the `tradeScreenTabsBody` key
+//    resolves to the two-tab Market + Deal Book body widget (the durable
+//    structure for the future live commodity / ledger bodies).
 //  * For the global-observe path: `ObserveModeNotDefinedPanel` is mounted
-//    with the localized `Trade` title and the placeholder body is absent.
+//    with the localized `Trade` title and the tabs body is absent.
 //  * A wide negative control at 1024 × 768 dp pumps without exception
 //    against the same fixture so a regression in the overflow contract
 //    upstream of `TradeScreen` itself would be caught.
@@ -179,10 +179,9 @@ void main() {
                 'emit a RenderFlex overflow exception at '
                 'kMinViewportWidth (320 dp). The dark CtTopBar '
                 '(36 dp tall — back chevron + `Map` label + 18 × 18 px '
-                'trade icon + `Trade` title) above the scaffold '
-                'placeholder body (`CtPanel` with 24 dp padding hosting '
-                'the `World Market` title + muted explanatory copy) '
-                'must lay out within the 320 dp column.',
+                'trade icon + `Trade` title) above the two-tab body '
+                '(`CtPanel` hosting `CtTabStrip` with Market + Deal Book '
+                'placeholder bodies) must lay out within the 320 dp column.',
           );
 
           final topBarFinder = find.byKey(TradeScreen.topBarKey);
@@ -192,13 +191,12 @@ void main() {
           expect(topBar.backButtonLabel, TradeScreen.topBarBackLabel);
 
           expect(
-            find.byKey(TradeScreen.placeholderBodyKey),
+            find.byKey(TradeScreen.tabsBodyKey),
             findsOneWidget,
             reason:
-                'Default (non-observe) path must mount the scaffold '
-                'placeholder body keyed `tradeScreenScaffoldPlaceholder` '
-                'at 320 dp. SPEC/ui/trade-screen.md § Body (current '
-                'scaffold slice).',
+                'Default (non-observe) path must mount the two-tab body '
+                'keyed `tradeScreenTabsBody` at 320 dp. '
+                'SPEC/ui/trade-screen.md § Body (current scaffold).',
           );
           expect(
             find.byType(ObserveModeNotDefinedPanel),
@@ -225,7 +223,7 @@ void main() {
 
           expect(tester.takeException(), isNull);
           expect(find.byKey(TradeScreen.topBarKey), findsOneWidget);
-          expect(find.byKey(TradeScreen.placeholderBodyKey), findsOneWidget);
+          expect(find.byKey(TradeScreen.tabsBodyKey), findsOneWidget);
         },
       );
     },
@@ -281,13 +279,12 @@ void main() {
           expect(observePanel.title, 'Trade');
 
           expect(
-            find.byKey(TradeScreen.placeholderBodyKey),
+            find.byKey(TradeScreen.tabsBodyKey),
             findsNothing,
             reason:
-                'Global-observe path MUST NOT mount the scaffold '
-                'placeholder body — SPEC/ui/trade-screen.md § States '
-                'and variants reserves the observe sentinel for that '
-                'branch.',
+                'Global-observe path MUST NOT mount the tabs body — '
+                'SPEC/ui/trade-screen.md § States and variants reserves '
+                'the observe sentinel for that branch.',
           );
         },
       );
