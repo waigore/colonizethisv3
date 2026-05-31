@@ -240,6 +240,25 @@ class ProvinceSeaZoneDetailOverlay extends StatelessWidget {
   }
 }
 
+/// Shared `TextStyle` for every obfuscated `???` body cell in the overlay.
+/// Renders fully-unrevealed province/sea-zone sections, partially-revealed
+/// Tile rows (`Coordinates: ???`, `Terrain: ???`, …), and the intel-gated
+/// Economic / Military / Civilian / Naval body fallbacks in the canonical
+/// hidden-information muted token so the dark editorial-monocle theme owns
+/// the obfuscation surface. See
+/// SPEC/ui/province-sea-zone-detail-overlay.md § Dark-theme obfuscated `???`
+/// body tokens. `EditorialMonoclePalette.muted` is a runtime OKLCH → Color
+/// getter so this style cannot be `const`.
+TextStyle _obfuscatedBodyStyle() =>
+    TextStyle(color: EditorialMonoclePalette.muted);
+
+/// Convenience widget for an obfuscated body `Text(...)` row painted in the
+/// shared muted token. Centralises every `Text(l10n.provinceOverlay_unknown)`
+/// / `Text(l10n.provinceOverlay_tile*Unknown)` call so a future change to the
+/// obfuscation token only updates `_obfuscatedBodyStyle` (and the SPEC).
+Widget _obfuscatedBodyText(String data) =>
+    Text(data, style: _obfuscatedBodyStyle());
+
 /// Pixel-art overlay title text style (non-Material) under the dark
 /// editorial-monocle theme. Mirrors `CtTopBar` title typography: display
 /// font from `theme.textTheme.titleMedium`, `--accent` colour from
@@ -335,11 +354,11 @@ _OverlayContent _provinceContent({
   if (isFullyUnrevealed) {
     final politicalObs = _buildSection(
       l10n.provinceOverlay_sectionPolitical,
-      Text(l10n.provinceOverlay_unknown),
+      _obfuscatedBodyText(l10n.provinceOverlay_unknown),
     );
     final tileObs = _buildSection(
       l10n.provinceOverlay_sectionTile,
-      Text(l10n.provinceOverlay_unknown),
+      _obfuscatedBodyText(l10n.provinceOverlay_unknown),
     );
     final obfuscatedSectionTitles = <String>[
       l10n.provinceOverlay_sectionPolitical,
@@ -354,7 +373,10 @@ _OverlayContent _provinceContent({
       mainAxisSize: MainAxisSize.min,
       children: [
         for (final title in obfuscatedSectionTitles)
-          _buildSection(title, Text(l10n.provinceOverlay_unknown)),
+          _buildSection(
+            title,
+            _obfuscatedBodyText(l10n.provinceOverlay_unknown),
+          ),
       ],
     );
     final tabLabels = obfuscatedSectionTitles;
@@ -488,7 +510,7 @@ _OverlayContent _provinceContent({
         )
       : _buildSection(
           l10n.provinceOverlay_sectionEconomic,
-          Text(l10n.provinceOverlay_unknown),
+          _obfuscatedBodyText(l10n.provinceOverlay_unknown),
         );
   final militarySection = showsFullIntel
       ? _buildMilitarySectionByOwner(
@@ -501,7 +523,7 @@ _OverlayContent _provinceContent({
         )
       : _buildSection(
           l10n.provinceOverlay_sectionMilitary,
-          Text(l10n.provinceOverlay_unknown),
+          _obfuscatedBodyText(l10n.provinceOverlay_unknown),
         );
   final civilianSection = showsFullIntel
       ? _buildCivilianSectionFiltered(
@@ -514,7 +536,7 @@ _OverlayContent _provinceContent({
         )
       : _buildSection(
           l10n.provinceOverlay_sectionCivilian,
-          Text(l10n.provinceOverlay_unknown),
+          _obfuscatedBodyText(l10n.provinceOverlay_unknown),
         );
   final naval = showsFullIntel
       ? _buildNavalSection(
@@ -527,7 +549,7 @@ _OverlayContent _provinceContent({
         )
       : _buildSection(
           l10n.provinceOverlay_sectionNaval,
-          Text(l10n.provinceOverlay_unknown),
+          _obfuscatedBodyText(l10n.provinceOverlay_unknown),
         );
 
   final tabLabels = [
@@ -594,11 +616,11 @@ _OverlayContent _seaZoneContent({
     ];
     final politicalObs = _buildSection(
       l10n.provinceOverlay_sectionPolitical,
-      Text(l10n.provinceOverlay_unknown),
+      _obfuscatedBodyText(l10n.provinceOverlay_unknown),
     );
     final navalObs = _buildSection(
       l10n.provinceOverlay_sectionNaval,
-      Text(l10n.provinceOverlay_unknown),
+      _obfuscatedBodyText(l10n.provinceOverlay_unknown),
     );
     final sections = Column(
       crossAxisAlignment: CrossAxisAlignment.start,
