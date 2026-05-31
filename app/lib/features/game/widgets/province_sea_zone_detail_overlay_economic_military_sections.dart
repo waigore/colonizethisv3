@@ -157,6 +157,7 @@ Widget _buildMilitarySectionByOwner({
                   final label = regimentTypeDisplayLabel(l10n, e.key);
                   return Text(
                     l10n.provinceOverlay_indentedCount(label, e.value),
+                    style: TextStyle(color: EditorialMonoclePalette.fg),
                   );
                 }),
               ],
