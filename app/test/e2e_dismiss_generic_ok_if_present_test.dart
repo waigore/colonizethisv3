@@ -487,4 +487,217 @@ void main() {
       },
     );
   });
+
+  // The following group pins the inner-helper perf attribution surface added
+  // alongside the dispatcher-level [e2eDismissTransientUi] result-tag
+  // taxonomy (Refs GitHub #2336 AC8 baseline timing). The integration suite
+  // cannot validate the inner-helper attribution directly today
+  // (`app_e2e_linux` is a no-op per `SPEC/program/e2e-integration-tests.md` §
+  // CI), so this widget-test layer is the only per-PR pin for the new
+  // inner-helper markers and their `result=...` taxonomy.
+  group('e2eDismissGenericOkIfPresent perf attribution', () {
+    test(
+      'phase constant matches the documented `dismiss_generic_ok` label',
+      () {
+        expect(
+          kE2eDefaultDismissGenericOkPhase,
+          'dismiss_generic_ok',
+          reason:
+              'Phase constant must stay byte-equivalent so the AC8 baseline '
+              'timing pipeline can key on the same phase=... label as the '
+              'docs in `SPEC/program/e2e-integration-tests.md` § Determinism '
+              '(Dismiss-generic-OK inner perf attribution bullet).',
+        );
+      },
+    );
+
+    testWidgets(
+      'emits result=not_present without the dispatcher counter when no '
+      'hit-testable OK label is present',
+      (WidgetTester tester) async {
+        final perf = E2ePerfLog('generic_ok_phase_not_present_pin');
+        await tester.pumpWidget(
+          const MaterialApp(home: Scaffold(body: SizedBox())),
+        );
+
+        final lines = await _captureDebugPrints(() async {
+          await e2eDismissGenericOkIfPresent(tester, perf: perf);
+        });
+
+        final timing = lines
+            .where(
+              (line) =>
+                  line.contains('phase=$kE2eDefaultDismissGenericOkPhase') &&
+                  line.startsWith('E2E_TIMING|'),
+            )
+            .toList();
+        expect(
+          timing,
+          hasLength(1),
+          reason:
+              'Exactly one inner-helper `E2E_TIMING|phase=...` line must be '
+              'emitted on the no-OK short-circuit. Captured: $lines',
+        );
+        expect(
+          timing.single,
+          contains('|meta=result=not_present'),
+          reason:
+              'Empty-tree dismissal must report `result=not_present` so the '
+              'AC8 timing pipeline can separate cheap no-op short-circuits '
+              'from real dismissals.',
+        );
+        expect(
+          _hasAnyGenericOkCounterLine(
+            lines,
+            test: 'generic_ok_phase_not_present_pin',
+          ),
+          isFalse,
+          reason:
+              'No-OK short-circuit must not bump `dismiss_generic_ok_calls` '
+              '(the helper returned false without tapping). Captured: $lines',
+        );
+      },
+    );
+
+    testWidgets(
+      'emits result=tapped alongside the dispatcher counter when the OK '
+      'label is dismissed',
+      (WidgetTester tester) async {
+        final perf = E2ePerfLog('generic_ok_phase_tapped_pin');
+        await tester.pumpWidget(
+          MaterialApp(
+            home: Scaffold(
+              body: Center(
+                child: TextButton(onPressed: () {}, child: const Text('OK')),
+              ),
+            ),
+          ),
+        );
+
+        late bool dismissed;
+        final lines = await _captureDebugPrints(() async {
+          dismissed = await e2eDismissGenericOkIfPresent(tester, perf: perf);
+        });
+        await tester.pump(const Duration(milliseconds: 50));
+
+        expect(dismissed, isTrue);
+        final timing = lines
+            .where(
+              (line) =>
+                  line.contains('phase=$kE2eDefaultDismissGenericOkPhase') &&
+                  line.startsWith('E2E_TIMING|'),
+            )
+            .toList();
+        expect(
+          timing,
+          hasLength(1),
+          reason:
+              'Exactly one inner-helper `E2E_TIMING|phase=...` line must be '
+              'emitted on the success path. Captured: $lines',
+        );
+        expect(
+          timing.single,
+          contains('|meta=result=tapped'),
+          reason:
+              'A successful dismissal must report `result=tapped` so the '
+              'AC8 timing pipeline can separate real dismissals from cheap '
+              'no-op short-circuits.',
+        );
+      },
+    );
+
+    testWidgets(
+      'no perf line emitted when perf is null (default opt-out contract)',
+      (WidgetTester tester) async {
+        await tester.pumpWidget(
+          MaterialApp(
+            home: Scaffold(
+              body: Center(
+                child: TextButton(onPressed: () {}, child: const Text('OK')),
+              ),
+            ),
+          ),
+        );
+
+        final lines = await _captureDebugPrints(() async {
+          await e2eDismissGenericOkIfPresent(tester);
+        });
+        await tester.pump(const Duration(milliseconds: 50));
+
+        final phaseLines = lines
+            .where(
+              (line) =>
+                  line.startsWith('E2E_TIMING|') &&
+                  line.contains('phase=$kE2eDefaultDismissGenericOkPhase'),
+            )
+            .toList();
+        expect(
+          phaseLines,
+          isEmpty,
+          reason:
+              'Default `perf: null` must preserve the byte-quiet contract: '
+              'no `E2E_TIMING|phase=dismiss_generic_ok` line should be '
+              'emitted for opt-out callers. Captured: $lines',
+        );
+      },
+    );
+
+    testWidgets(
+      'custom phaseName reaches the inner-helper emission and does NOT also '
+      'emit under the default label',
+      (WidgetTester tester) async {
+        const customPhase = 'generic_ok_custom_phase_label';
+        final perf = E2ePerfLog('generic_ok_custom_phase_pin');
+        await tester.pumpWidget(
+          MaterialApp(
+            home: Scaffold(
+              body: Center(
+                child: TextButton(onPressed: () {}, child: const Text('OK')),
+              ),
+            ),
+          ),
+        );
+
+        final lines = await _captureDebugPrints(() async {
+          await e2eDismissGenericOkIfPresent(
+            tester,
+            perf: perf,
+            phaseName: customPhase,
+          );
+        });
+        await tester.pump(const Duration(milliseconds: 50));
+
+        final customTiming = lines
+            .where(
+              (line) =>
+                  line.contains('phase=$customPhase|') &&
+                  line.startsWith('E2E_TIMING|'),
+            )
+            .toList();
+        expect(
+          customTiming,
+          hasLength(1),
+          reason:
+              'Custom phaseName must be threaded through to the inner-helper '
+              'E2E_TIMING emission so distinct dispatch sites can stay '
+              'separable in perf-timing dumps. Captured: $lines',
+        );
+        final defaultTiming = lines
+            .where(
+              (line) =>
+                  line.contains('phase=$kE2eDefaultDismissGenericOkPhase|') &&
+                  line.startsWith('E2E_TIMING|'),
+            )
+            .toList();
+        expect(
+          defaultTiming,
+          isEmpty,
+          reason:
+              'A custom phaseName must NOT also surface under the default '
+              'phase label; otherwise scrapers that aggregate by the default '
+              'phase would double-count custom-labelled calls.',
+        );
+      },
+    );
+  });
 }

@@ -1,9 +1,11 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
-import '../../diplomacy/diplomacy_relation_lookup.dart' show ftpPairKeysFromGame;
+import '../../diplomacy/diplomacy_relation_lookup.dart'
+    show ftpPairKeysFromGame, getRelation;
 import '../../economy/sea_transport.dart';
 import '../../economy/world_market/deal_matcher.dart';
+import '../../economy/world_market/first_right_credits.dart';
 import '../../economy/world_market/price_discovery.dart';
 import '../../economy/world_market/purchased_tile_index.dart';
 import '../../world/game_world_mutations.dart';
@@ -24,8 +26,10 @@ import '../turn_resolver_config.dart';
 /// - `SPEC/game/world-market.md` § Trade orders, Cargo, Price discovery,
 ///   Order persistence.
 ///
-/// **Slice scope (Refs #2990 B3, GP↔GP path).** This implementation covers the
-/// Great-Power side of Steps A, C, D, E, and F end-to-end:
+/// **Slice scope (Refs #2990 B3, GP↔GP path + #2992 D4 phase integration).**
+/// This implementation covers the Great-Power side of Steps A, C, D, E, and
+/// F end-to-end, and applies the First Right of Refusal overseas-profit
+/// treasury credit from minor/tribe sales to owning GPs:
 ///
 /// 1. Gathers Great-Power offers/bids from `Orders.tradeOrdersByPlayerId`.
 /// 2. Merges previous-turn carry-forwards stored on
@@ -45,8 +49,14 @@ import '../turn_resolver_config.dart';
 ///    [ftpPairKeysFromGame].
 /// 5. Applies transfers: buyer treasury debit + seller treasury credit (GP
 ///    sellers only) and stockpile delta on both sides. Minor/tribe sellers
-///    and the first-right-of-refusal overseas profit transfer are out of
-///    scope here per Issues C / D (#2991 / #2992).
+///    remain a treasury sink (no faction credited) per
+///    `SPEC/game/world-market.md` Requirement 9; the **owning GP
+///    overseas-profit credit** (Refs #2992 D4) is applied additively
+///    afterward via [computeFirstRightCredits], using the per-GP relation
+///    score with the source minor/tribe (clamped 0–100) and the
+///    `(relationScore / 100) * 0.40` rate per
+///    `SPEC/game/world-market-first-right-of-refusal.md` § Treasury
+///    transfer (D4).
 /// 6. Recomputes per-commodity prices via [PriceDiscovery.computeNextPrice]
 ///    using **only** newly-submitted current-turn quantities (carry-forwards
 ///    are excluded from price aggregation per
@@ -131,6 +141,7 @@ TurnPhaseStepOutcome worldMarketTurnPhaseHandler(
   }
 
   final ftpPairKeys = ftpPairKeysFromGame(game);
+  final purchasedTileIndex = PurchasedTileIndex.fromGame(game);
 
   final matchInputs = (
     offersByFactionId: mergedOffersByFactionId,
@@ -138,13 +149,21 @@ TurnPhaseStepOutcome worldMarketTurnPhaseHandler(
     tradeCapacityByFactionId: tradeCapacityByFactionId,
     pricesByCommodityId: priorMarket.prices,
     ftpPairKeys: ftpPairKeys,
-    purchasedTileIndex: PurchasedTileIndex.fromGame(game),
+    purchasedTileIndex: purchasedTileIndex,
   );
   final matchResult = DealMatcher.matchDeals(matchInputs);
+
+  final firstRightCredits = computeFirstRightCredits(
+    filledDeals: matchResult.filledDeals,
+    purchasedTileIndex: purchasedTileIndex,
+    relationScoreFor: (owningGpId, sourceFactionId) =>
+        getRelation(game, owningGpId, sourceFactionId)?.score ?? 0,
+  );
 
   final updatedPlayers = _applyDealsToPlayers(
     players: game.players,
     filledDeals: matchResult.filledDeals,
+    firstRightTreasuryCreditByGpId: firstRightCredits.treasuryCreditByGpId,
   );
 
   final newPrices = _computeNextPrices(
@@ -161,8 +180,7 @@ TurnPhaseStepOutcome worldMarketTurnPhaseHandler(
 
   final updatedMarket = priorMarket.copyWith(
     prices: Map<CommodityId, double>.unmodifiable(newPrices),
-    lastTurnActivity:
-        Map<CommodityId, MarketActivity>.unmodifiable(activity),
+    lastTurnActivity: Map<CommodityId, MarketActivity>.unmodifiable(activity),
     carryForwardOffersByFactionId: matchResult.unfilledOffersByFactionId,
     carryForwardBidsByFactionId: matchResult.unfilledBidsByFactionId,
   );
@@ -186,10 +204,8 @@ Map<String, List<TradeOrder>> _mergeOrdersByFaction(
   if (newByFaction.isEmpty && carryByFaction.isEmpty) {
     return const <String, List<TradeOrder>>{};
   }
-  final factionIds = <String>{
-    ...newByFaction.keys,
-    ...carryByFaction.keys,
-  }..removeWhere((id) => id.isEmpty);
+  final factionIds = <String>{...newByFaction.keys, ...carryByFaction.keys}
+    ..removeWhere((id) => id.isEmpty);
   final result = <String, List<TradeOrder>>{};
   for (final factionId in factionIds) {
     final merged = <TradeOrder>[
@@ -209,7 +225,8 @@ Map<CommodityId, _NewQuantityPair> _aggregateNewQuantitiesPerCommodity({
   final offer = <CommodityId, int>{};
   for (final list in newOffersByFactionId.values) {
     for (final order in list) {
-      offer[order.commodityId] = (offer[order.commodityId] ?? 0) + order.quantity;
+      offer[order.commodityId] =
+          (offer[order.commodityId] ?? 0) + order.quantity;
     }
   }
   for (final list in newBidsByFactionId.values) {
@@ -220,10 +237,7 @@ Map<CommodityId, _NewQuantityPair> _aggregateNewQuantitiesPerCommodity({
   final all = <CommodityId>{...offer.keys, ...bid.keys};
   final result = <CommodityId, _NewQuantityPair>{};
   for (final id in all) {
-    result[id] = _NewQuantityPair(
-      bid: bid[id] ?? 0,
-      offer: offer[id] ?? 0,
-    );
+    result[id] = _NewQuantityPair(bid: bid[id] ?? 0, offer: offer[id] ?? 0);
   }
   return result;
 }
@@ -231,8 +245,11 @@ Map<CommodityId, _NewQuantityPair> _aggregateNewQuantitiesPerCommodity({
 List<Player> _applyDealsToPlayers({
   required List<Player> players,
   required List<FilledDeal> filledDeals,
+  Map<String, double> firstRightTreasuryCreditByGpId = const <String, double>{},
 }) {
-  if (filledDeals.isEmpty) return players;
+  if (filledDeals.isEmpty && firstRightTreasuryCreditByGpId.isEmpty) {
+    return players;
+  }
   final treasuryById = <String, int>{};
   final stockpileById = <String, Stockpile>{};
   for (final p in players) {
@@ -247,16 +264,33 @@ List<Player> _applyDealsToPlayers({
     if (isGpBuyer) {
       treasuryById[deal.buyerFactionId] =
           (treasuryById[deal.buyerFactionId] ?? 0) - notional;
-      stockpileById[deal.buyerFactionId] = (stockpileById[deal.buyerFactionId] ??
-              Stockpile.empty)
-          .applyDelta(deal.commodityId, deal.quantity);
+      stockpileById[deal.buyerFactionId] =
+          (stockpileById[deal.buyerFactionId] ?? Stockpile.empty).applyDelta(
+            deal.commodityId,
+            deal.quantity,
+          );
     }
     if (isGpSeller) {
       treasuryById[deal.sellerFactionId] =
           (treasuryById[deal.sellerFactionId] ?? 0) + notional;
-      stockpileById[deal.sellerFactionId] = (stockpileById[deal.sellerFactionId] ??
-              Stockpile.empty)
-          .applyDelta(deal.commodityId, -deal.quantity);
+      stockpileById[deal.sellerFactionId] =
+          (stockpileById[deal.sellerFactionId] ?? Stockpile.empty).applyDelta(
+            deal.commodityId,
+            -deal.quantity,
+          );
+    }
+  }
+  // FRR D4: credit owning GPs the overseas-profit cut for minor/tribe
+  // sales triggered when another GP buys from a purchased-tile offer.
+  // The credit is additive on top of any GP-seller credit already applied
+  // (the D4 path is only emitted when buyer != owning GP, so it never
+  // double-credits the matcher's D2 path).
+  if (firstRightTreasuryCreditByGpId.isNotEmpty) {
+    for (final entry in firstRightTreasuryCreditByGpId.entries) {
+      if (!knownPlayerIds.contains(entry.key)) continue;
+      final credit = entry.value;
+      if (credit <= 0.0) continue;
+      treasuryById[entry.key] = (treasuryById[entry.key] ?? 0) + credit.round();
     }
   }
   return [
@@ -320,7 +354,8 @@ Map<CommodityId, MarketActivity> _buildActivity({
   };
   final activity = <CommodityId, MarketActivity>{};
   for (final id in commodityIds) {
-    final pair = newQuantitiesByCommodity[id] ??
+    final pair =
+        newQuantitiesByCommodity[id] ??
         const _NewQuantityPair(bid: 0, offer: 0);
     final filled = filledByCommodity[id] ?? 0;
     final oldPrice = priorPrices[id] ?? 0.0;
