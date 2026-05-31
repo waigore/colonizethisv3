@@ -1,18 +1,24 @@
 // Full-screen World Market Trade screen. SPEC/ui/trade-screen.md.
 //
-// **Scope of this slice (Refs #2993 E4 — tab scaffold):** route + screen ID
-// + dark editorial-monocle chrome + observe-mode guard + two-tab body
-// (Market + Deal Book) with placeholder copy inside each tab.
+// **Scope of the current slice (Refs #2993 E5a — Market tab read-only
+// commodity table):** route + screen ID + dark editorial-monocle chrome +
+// observe-mode guard + two-tab body (Market + Deal Book). The Market tab
+// now renders a read-only commodity table sourced from `Game.worldMarketState`
+// (last market price + previous-turn aggregate `Bids / Offers` volumes per
+// commodity, sorted alphabetically by display name). The Deal Book tab
+// remains a placeholder until `MarketActivity` per-player ledger work
+// lands (Refs #2989, #2990, #2993 E6).
 //
-// The interactive Market tab (commodity rows, bid/offer toggle, quantity
-// stepper, priority dropdown, cargo-remaining indicator) and Deal Book
-// ledger tab content remain deferred to follow-up slices that depend on
-// the `WorldMarketState` / `TradeOrder` types from #2989. The tab strip
-// and per-tab placeholder bodies are the durable UI structure those
-// follow-up slices replace, so the scaffold contract this file ships
-// matches what `SPEC/ui/trade-screen.md` § Layout / wireframe records as
-// the canonical body for the screen until then.
+// The interactive Market controls (bid/offer toggle, quantity stepper,
+// priority dropdown, cargo-remaining indicator) remain deferred to
+// follow-up slices that depend on `currentOrdersProvider` plumbing
+// (Refs #2993 E5b — Cargo) and the Deal Book live ledger (Refs #2993 E6).
+// The two-tab structure is the durable wireframe those follow-up slices
+// continue to build on, so the contract this file ships matches what
+// `SPEC/ui/trade-screen.md` § Layout / wireframe records as the canonical
+// body for the screen.
 
+import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -33,11 +39,10 @@ import '../widgets/observe_mode_not_defined_panel.dart';
 /// Dark editorial-monocle chrome per `SPEC/ui/trade-screen.md` § Top bar: a
 /// `CtTopBar` carrying the `Map` back affordance, the 18 × 18 pixel-art
 /// trade icon, and the literal title `Trade`. The body is a two-tab
-/// `CtTabStrip` (Market + Deal Book) with placeholder copy inside each
-/// tab; once #2989's `WorldMarketState` / `TradeOrder` data types land
-/// the placeholders are replaced with the live Market commodity list and
-/// Deal Book ledger described in `SPEC/ui/trade-screen.md` § Layout /
-/// wireframe.
+/// `CtTabStrip` (Market + Deal Book). The Market tab renders a
+/// read-only commodity table sourced from `game.worldMarketState`
+/// (Refs #2993 E5a); the Deal Book tab keeps the placeholder copy until
+/// the per-player ledger work for Refs #2993 E6 lands.
 class TradeScreen extends ConsumerWidget {
   const TradeScreen({super.key, required this.game, required this.player});
 
@@ -73,12 +78,27 @@ class TradeScreen extends ConsumerWidget {
   /// E5+E6.
   static const Key tabsBodyKey = ValueKey<String>('tradeScreenTabsBody');
 
-  /// Stable widget key for the Market tab placeholder body. Pin point for
-  /// widget tests asserting the Market tab body is present in the tab
-  /// strip's `IndexedStack` (visible when the Market tab is selected,
-  /// which is the default).
+  /// Stable widget key for the Market tab body. Pin point for widget
+  /// tests asserting the Market tab body is present in the tab strip's
+  /// `IndexedStack` (visible when the Market tab is selected, which is
+  /// the default). The same key spans the placeholder, the read-only
+  /// commodity table introduced by Refs #2993 E5a, and the live
+  /// interactive controls planned for follow-up E5 slices.
   static const Key marketTabBodyKey =
       ValueKey<String>('tradeScreenMarketTabBody');
+
+  /// Stable widget key for the scrollable commodity list inside the
+  /// Market tab body (Refs #2993 E5a). Lets widget tests reach the
+  /// `ListView` that hosts the per-commodity rows without coupling to
+  /// the row identities themselves.
+  static const Key marketCommodityListKey =
+      ValueKey<String>('tradeScreenMarketCommodityList');
+
+  /// Per-row key for a Market tab commodity row. Deterministic so widget
+  /// tests can pin a specific commodity (e.g. `timber`) without relying
+  /// on text matching.
+  static Key marketCommodityRowKey(CommodityId commodityId) =>
+      ValueKey<String>('tradeScreenMarketRow:$commodityId');
 
   /// Stable widget key for the Deal Book tab placeholder body. Pin point
   /// for widget tests asserting the Deal Book tab body is present in the
@@ -121,7 +141,10 @@ class TradeScreen extends ConsumerWidget {
           // ignore: avoid_hardcoded_strings_in_widgets
           return const ObserveModeNotDefinedPanel(title: 'Trade');
         }
-        return const _TradeScreenTabsBody(key: tabsBodyKey);
+        return _TradeScreenTabsBody(
+          key: tabsBodyKey,
+          game: displayGame,
+        );
       },
     );
   }
@@ -131,15 +154,18 @@ class TradeScreen extends ConsumerWidget {
 ///
 /// Hosts a [CtTabStrip] inside a [CtPanel] so the dark editorial-monocle
 /// surface mirrors the chrome already established for sibling
-/// full-screen feature surfaces (production, diplomacy). Each tab body is
-/// a placeholder [CtPanel] that names the parent issue and the follow-up
-/// slice unlocking the live content; the placeholders match the contract
-/// recorded in `SPEC/ui/trade-screen.md` § Layout / wireframe and are
-/// the durable structure the live Market commodity list (#2993 E5) and
-/// Deal Book ledger (#2993 E6) replace once #2989's `WorldMarketState`
-/// data types land.
+/// full-screen feature surfaces (production, diplomacy). The Market tab
+/// renders a read-only commodity table sourced from
+/// [Game.worldMarketState] (Refs #2993 E5a); the Deal Book tab keeps the
+/// placeholder copy until the per-player ledger work for Refs #2993 E6
+/// lands. The two-tab structure stays as the durable wireframe so the
+/// follow-up interactive Market controls (toggle, stepper, priority
+/// dropdown, cargo indicator) can swap each tab body in place without
+/// remounting the strip.
 class _TradeScreenTabsBody extends StatelessWidget {
-  const _TradeScreenTabsBody({super.key});
+  const _TradeScreenTabsBody({super.key, required this.game});
+
+  final Game game;
 
   @override
   Widget build(BuildContext context) {
@@ -152,9 +178,14 @@ class _TradeScreenTabsBody extends StatelessWidget {
             TradeScreen.marketTabLabel,
             TradeScreen.dealBookTabLabel,
           ],
-          tabViews: const <Widget>[
-            _MarketTabPlaceholder(key: TradeScreen.marketTabBodyKey),
-            _DealBookTabPlaceholder(key: TradeScreen.dealBookTabBodyKey),
+          tabViews: <Widget>[
+            _MarketTabContent(
+              key: TradeScreen.marketTabBodyKey,
+              game: game,
+            ),
+            const _DealBookTabPlaceholder(
+              key: TradeScreen.dealBookTabBodyKey,
+            ),
           ],
         ),
       ),
@@ -162,30 +193,176 @@ class _TradeScreenTabsBody extends StatelessWidget {
   }
 }
 
-/// Placeholder body for the Market tab (`#2993` E5 unlocks the live
-/// commodity list once #2989 ships `WorldMarketState` / `TradeOrder`).
-class _MarketTabPlaceholder extends StatelessWidget {
-  const _MarketTabPlaceholder({super.key});
+/// Read-only commodity table for the Market tab (Refs #2993 E5a).
+///
+/// Renders one row per tradeable commodity (the full
+/// [CommodityCatalog.all] list with [CommodityCategory.riches] and
+/// `spices` filtered out per SPEC/game/world-market.md §Tradeable
+/// commodities — 22 rows total). Each row pins:
+///
+/// * `commodity name` (`titleSmall`, `--accent`),
+/// * `last market price` from [WorldMarketState.prices] (`titleSmall`,
+///   `--accentBright`) — formatted to one decimal place; a long em dash
+///   renders when the commodity is absent from the state map (an
+///   empty / un-seeded market — typically only seen in tests),
+/// * the previous-turn aggregate volume line `Bids X / Offers Y` from
+///   [WorldMarketState.lastTurnActivity] (`bodySmall`, `--muted`).
+///
+/// Rows are sorted by display name (case-insensitive) so the order is
+/// deterministic for widget tests and Widgetbook stories. The list is
+/// scrollable (the future bid/offer controls in Refs #2993 E5b extend
+/// each row in place; the cargo indicator header from Refs #2993 E5c
+/// lands above the list when its plumbing arrives — Refs #2988 §UI
+/// Design).
+class _MarketTabContent extends StatelessWidget {
+  const _MarketTabContent({super.key, required this.game});
 
-  // ignore: avoid_hardcoded_strings_in_widgets
-  static const String _titleText = 'Market';
+  final Game game;
 
+  /// Rendered when a commodity has no entry in [WorldMarketState.prices]
+  /// (typically only happens in unit tests / Widgetbook stories that
+  /// instantiate `WorldMarketState.empty`).
   // ignore: avoid_hardcoded_strings_in_widgets
-  static const String _bodyText =
-      'Bid and offer controls, the per-commodity price + previous-turn '
-      'volume rows, the priority dropdown, and the cross-commodity '
-      'cargo-remaining indicator land alongside the World Market core '
-      'data types (Refs #2989, #2993 E5).';
+  static const String priceUnknownGlyph = '—';
+
+  /// Inline label prefix for the previous-turn bid volume column.
+  // ignore: avoid_hardcoded_strings_in_widgets
+  static const String bidsLabel = 'Bids';
+
+  /// Inline label prefix for the previous-turn offer volume column.
+  // ignore: avoid_hardcoded_strings_in_widgets
+  static const String offersLabel = 'Offers';
 
   @override
   Widget build(BuildContext context) {
-    return _TabPlaceholderPanel(title: _titleText, body: _bodyText);
+    final ThemeData theme = Theme.of(context);
+    final TextStyle nameStyle =
+        (theme.textTheme.titleSmall ?? const TextStyle(fontSize: 14))
+            .copyWith(color: EditorialMonoclePalette.accent);
+    final TextStyle priceStyle =
+        (theme.textTheme.titleSmall ?? const TextStyle(fontSize: 14))
+            .copyWith(color: EditorialMonoclePalette.accentBright);
+    final TextStyle volumeStyle =
+        (theme.textTheme.bodySmall ?? const TextStyle(fontSize: 12))
+            .copyWith(color: EditorialMonoclePalette.muted);
+
+    final List<Commodity> rows = _tradeableCommoditiesSortedByDisplayName();
+    final WorldMarketState market = game.worldMarketState;
+
+    // SingleChildScrollView + Column (instead of ListView.builder) so
+    // every commodity row is built up-front. Widget tests pin all 22
+    // tradeable rows by key without scrolling; the row count is bounded
+    // by the catalog size (22) so the eager build cost is negligible
+    // and the deterministic ordering survives Widgetbook stories that
+    // render the screen inside a non-scrollable container.
+    return SingleChildScrollView(
+      key: TradeScreen.marketCommodityListKey,
+      padding: EdgeInsets.zero,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        mainAxisSize: MainAxisSize.min,
+        children: <Widget>[
+          for (int index = 0; index < rows.length; index++)
+            Padding(
+              key: TradeScreen.marketCommodityRowKey(rows[index].id),
+              padding: EdgeInsets.only(top: index == 0 ? 0 : 12),
+              child: _MarketCommodityRow(
+                commodityDisplayName:
+                    rows[index].displayName ?? rows[index].id,
+                priceText: _formatPrice(market.prices[rows[index].id]),
+                volumeText: _volumeText(
+                  market.lastTurnActivity[rows[index].id] ??
+                      MarketActivity.empty,
+                ),
+                nameStyle: nameStyle,
+                priceStyle: priceStyle,
+                volumeStyle: volumeStyle,
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  static String _volumeText(MarketActivity activity) {
+    return '$bidsLabel ${activity.totalBidQuantity} / '
+        '$offersLabel ${activity.totalOfferQuantity}';
+  }
+
+  /// Returns the tradeable commodities (catalog minus riches + spices)
+  /// sorted alphabetically by display name (case-insensitive). Spices
+  /// are excluded explicitly per Refs #2988 §UI Design — the Market tab
+  /// shows 22 tradeable rows (full catalog minus riches and spices).
+  static List<Commodity> _tradeableCommoditiesSortedByDisplayName() {
+    final List<Commodity> filtered = <Commodity>[
+      for (final Commodity c in CommodityCatalog.all)
+        if (c.category != CommodityCategory.riches && c.id != 'spices') c,
+    ];
+    filtered.sort((Commodity a, Commodity b) {
+      final String an = (a.displayName ?? a.id).toLowerCase();
+      final String bn = (b.displayName ?? b.id).toLowerCase();
+      return an.compareTo(bn);
+    });
+    return filtered;
+  }
+
+  static String _formatPrice(double? price) {
+    if (price == null) return priceUnknownGlyph;
+    return price.toStringAsFixed(1);
+  }
+}
+
+/// One row of the Market tab read-only commodity table. Lays the
+/// content on a two-line column so the row remains overflow-safe at
+/// the 320 dp minimum viewport (SPEC/ui/mobile-adaptation.md §7).
+class _MarketCommodityRow extends StatelessWidget {
+  const _MarketCommodityRow({
+    required this.commodityDisplayName,
+    required this.priceText,
+    required this.volumeText,
+    required this.nameStyle,
+    required this.priceStyle,
+    required this.volumeStyle,
+  });
+
+  final String commodityDisplayName;
+  final String priceText;
+  final String volumeText;
+  final TextStyle nameStyle;
+  final TextStyle priceStyle;
+  final TextStyle volumeStyle;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: <Widget>[
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.baseline,
+          textBaseline: TextBaseline.alphabetic,
+          children: <Widget>[
+            Expanded(
+              child: Text(
+                commodityDisplayName,
+                style: nameStyle,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+            const SizedBox(width: 8),
+            Text(priceText, style: priceStyle),
+          ],
+        ),
+        const SizedBox(height: 2),
+        Text(volumeText, style: volumeStyle),
+      ],
+    );
   }
 }
 
 /// Placeholder body for the Deal Book tab (`#2993` E6 unlocks the live
-/// previous-turn ledger once #2989 / #2990 ship `MarketActivity` and
-/// the world-market turn phase).
+/// previous-turn ledger once a per-player ledger surface ships on top
+/// of #2989 / #2990's `MarketActivity` + world-market turn phase).
 class _DealBookTabPlaceholder extends StatelessWidget {
   const _DealBookTabPlaceholder({super.key});
 
@@ -197,22 +374,6 @@ class _DealBookTabPlaceholder extends StatelessWidget {
       'Previous-turn filled, partial, and unfilled bids and offers — '
       'with treasury totals — render here once the world-market turn '
       'phase ships (Refs #2989, #2990, #2993 E6).';
-
-  @override
-  Widget build(BuildContext context) {
-    return _TabPlaceholderPanel(title: _titleText, body: _bodyText);
-  }
-}
-
-/// Shared placeholder body for both tabs: a single dark-token
-/// [CtPanel] carrying the tab title and a muted explanatory body. Keeps
-/// each tab's placeholder visually identical so reviewers can confirm
-/// tab-switch behaviour without the chrome biasing the read.
-class _TabPlaceholderPanel extends StatelessWidget {
-  const _TabPlaceholderPanel({required this.title, required this.body});
-
-  final String title;
-  final String body;
 
   @override
   Widget build(BuildContext context) {
@@ -231,9 +392,9 @@ class _TabPlaceholderPanel extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
-            Text(title, style: titleStyle),
+            Text(_titleText, style: titleStyle),
             const SizedBox(height: 8),
-            Text(body, style: bodyStyle),
+            Text(_bodyText, style: bodyStyle),
           ],
         ),
       ),
