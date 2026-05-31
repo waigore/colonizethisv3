@@ -106,13 +106,27 @@ For each filled deal that is FRR-eligible:
   completion in `packages/colonizethis_logic/lib/src/orders/purchase_land_work_completion.dart`)
   and `WorldState.tileKeysByRegionAndProvince` (game-setup seeded
   region/province tile bucket map).
-- **D2 / D4 callers** land with the world-market deal-match phase
-  (#2989 / #2991) and must invoke this helper per deal at the point
-  where the seller faction and underlying tile are known. The expected
-  call site builds `PurchasedTileIndex.fromGame(game)` once per phase
-  (or once per resolver pass) and looks up `attributionForTileKey` per
-  minor/tribe offer entry whose backing tile resolves to a purchased
-  attribution.
+- **D2 (priority override in deal matching) is implemented** in
+  `packages/colonizethis_logic/lib/src/economy/world_market/deal_matcher.dart`.
+  `DealMatcher.matchDeals` accepts an optional `purchasedTileIndex` on
+  its `DealMatchInputs` record; when supplied, the matcher runs an FRR
+  absolute-priority pre-pass per commodity that pairs purchased-tile
+  offers (offers whose `TradeOrder.originTileKey` resolves via the
+  index) with the owning Great Power's bids before the integer-priority
+  tier loop. Emitted deals are flagged via
+  `FilledDeal.isFirstRightOfRefusalMatch = true` so D4 (treasury
+  transfer) and the Deal Book UI can identify FRR-applied flows.
+  Passing `null` (or an empty index) preserves legacy behavior for
+  pre-#2992 callers and tests.
+- **D4 caller (overseas-profit treasury transfer)** lands with the
+  world-market phase handler (#2990 B3) and consumes the
+  `isFirstRightOfRefusalMatch` flag together with the same
+  `purchasedTileIndex` row to compute and credit the owning GP's
+  overseas-profit cut via [computeFirstRightProfit] from D3. The
+  expected call site builds `PurchasedTileIndex.fromGame(game)` once
+  per phase (or once per resolver pass) and looks up
+  `attributionForTileKey` per minor/tribe offer entry whose backing
+  tile resolves to a purchased attribution.
 
 ---
 
@@ -176,3 +190,53 @@ For each filled deal that is FRR-eligible:
   `PurchasedTileIndex.fromGame(game)` is built twice, then both
   indices return the same attribution set (`index.length` equal;
   per-tile lookups return equal `PurchasedTileAttribution` records).
+
+### Priority override (D2)
+
+Tested in
+`packages/colonizethis_logic/test/world_market_deal_matcher_first_right_test.dart`.
+
+- **AC-D2-1 — Owning GP bid wins despite lower-precedence priority.**
+  Given Great Power `gpA` owns a purchased tile from minor `M1`
+  producing `timber`, `M1` auto-offers `timber × 10` with
+  `originTileKey` set to that tile, `gpA` submits a bid for
+  `timber × 10` at integer priority `5`, and rival GP `gpB` submits a
+  bid for `timber × 10` at the higher-precedence integer priority `1`,
+  when `DealMatcher.matchDeals` runs with the purchased-tile index
+  populated, then the only emitted `FilledDeal` has
+  `buyerFactionId == 'gpA'`,
+  `isFirstRightOfRefusalMatch == true`,
+  `isFtpMatch == false`, and `gpB`'s bid carries forward intact.
+- **AC-D2-2 — FRR overrides FTP within the same priority tier.** Given
+  `gpA` owns the purchased tile, `M1` is FTP-paired with `gpFtp`, and
+  both `gpA` and `gpFtp` submit equal-priority bids for the same
+  commodity, when matching runs, then the FRR fill goes to `gpA` first
+  (`isFirstRightOfRefusalMatch == true`, `isFtpMatch == false`) and the
+  FTP partner's bid carries forward when the offer is exhausted.
+- **AC-D2-3 — Owning GP absent: standard tier matching.** Given the
+  owning GP submits **no** bid for the commodity, when the matcher
+  runs, then the purchased-tile offer is matched normally against
+  other GPs' bids (the highest-precedence integer-priority bid wins),
+  and the resulting `FilledDeal.isFirstRightOfRefusalMatch == false`.
+- **AC-D2-4 — Partial FRR fill exposes residual to standard tiers.**
+  Given the owning GP bids only `4` units of a `10`-unit purchased-tile
+  offer, when matching runs, then exactly one `FilledDeal` of `4`
+  units flagged FRR is emitted to the owning GP and the remaining
+  `6` units fill against the highest-precedence rival bid via the
+  normal tier loop (with `isFirstRightOfRefusalMatch == false`).
+- **AC-D2-5 — Per-buyer cumulative cargo still applies inside FRR.**
+  Given the owning GP has `tradeCapacity = 3` and bids `10`, when
+  matching runs, then the FRR pre-pass emits a single `FilledDeal` of
+  `3` units (the cargo cap), the remaining purchased-tile quantity
+  becomes available to rival bids in the standard tier loop, and the
+  owning GP's residual `7` units carry forward.
+- **AC-D2-6 — Offers without `originTileKey` are not affected.** Given
+  a plain offer (no `originTileKey`) and a populated purchased-tile
+  index, when matching runs, then the matcher does **not** invoke
+  the FRR pre-pass for that offer — the standard priority/FTP rules
+  decide the buyer.
+- **AC-D2-7 — `null` purchasedTileIndex disables FRR.** Given the same
+  inputs as AC-D2-1 but with `purchasedTileIndex == null`, when
+  matching runs, then the FRR pre-pass is skipped and the deal flows
+  through the standard tier loop, preserving the legacy contract for
+  pre-#2992 callers.
