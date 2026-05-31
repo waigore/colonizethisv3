@@ -3,9 +3,11 @@ import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'package:colonizethis_app/config/editorial_monocle_palette.dart';
 import 'package:colonizethis_app/config/themes.dart';
 import 'package:colonizethis_app/features/shell/new_game_leader_selection_dialog.dart';
 import 'package:colonizethis_app/l10n/l10n.dart';
+import 'package:colonizethis_app/widgets/ct_brass_divider.dart';
 import 'package:colonizethis_app/widgets/ct_dialog_shell.dart';
 import 'package:colonizethis_app/widgets/ct_dropdown.dart';
 import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
@@ -380,6 +382,95 @@ void main() {
         expect(gotTerrainVariation, closeTo(1.0, 1e-6));
       },
     );
+
+    // Dark editorial-monocle chrome contract (#2867 S6 / R1 / R2 / R21).
+    //
+    // Pins the keyed title color + `letterSpacing == fontSize * 0.05`, the
+    // single keyed `CtBrassDivider` between title and intro, and the muted
+    // italic intro style — mirroring the contract already pinned by the
+    // overture (`overture_dialogue_overlay_test.dart`) and intervention
+    // (`intervention_dialogue_overlay_dark_chrome_test.dart`) overlays so
+    // every #2867 surface enforces the same dark chrome shape.
+    group('Dark editorial-monocle chrome (#2867 S6)', () {
+      testWidgets(
+        'title resolves --accent color and letterSpacing == fontSize * 0.05',
+        (WidgetTester tester) async {
+          await pumpDialog(tester, onConfirmed: (_, _, _, _, _) {});
+          final titleFinder = find.byKey(
+            const ValueKey<String>('leaderSelectionDialogTitle'),
+          );
+          expect(titleFinder, findsOneWidget);
+          final Text title = tester.widget<Text>(titleFinder);
+          expect(title.style?.color, EditorialMonoclePalette.accent);
+          final double fontSize = title.style?.fontSize ?? 16;
+          expect(
+            title.style?.letterSpacing,
+            closeTo(fontSize * 0.05, 1e-9),
+            reason: 'letterSpacing must scale with the resolved fontSize so '
+                'theme text-scale overrides preserve the canonical 0.05em '
+                'ratio (#2867 R2).',
+          );
+        },
+      );
+
+      testWidgets(
+        'renders exactly one CtBrassDivider keyed below the title',
+        (WidgetTester tester) async {
+          await pumpDialog(tester, onConfirmed: (_, _, _, _, _) {});
+          final dividerFinder = find.byKey(
+            const ValueKey<String>('leaderSelectionDialogBrassDivider'),
+          );
+          expect(dividerFinder, findsOneWidget);
+          expect(find.byType(CtBrassDivider), findsOneWidget);
+          final Rect titleRect = tester.getRect(
+            find.byKey(
+              const ValueKey<String>('leaderSelectionDialogTitle'),
+            ),
+          );
+          final Rect dividerRect = tester.getRect(dividerFinder);
+          expect(
+            dividerRect.top,
+            greaterThanOrEqualTo(titleRect.bottom),
+            reason: 'Brass divider must paint below the title band per '
+                '#2867 R21 chrome ordering.',
+          );
+        },
+      );
+
+      testWidgets(
+        'intro paints --muted italic body color',
+        (WidgetTester tester) async {
+          await pumpDialog(tester, onConfirmed: (_, _, _, _, _) {});
+          final introFinder = find.byKey(
+            const ValueKey<String>('leaderSelectionDialogIntro'),
+          );
+          expect(introFinder, findsOneWidget);
+          final Text intro = tester.widget<Text>(introFinder);
+          expect(intro.style?.color, EditorialMonoclePalette.muted);
+          expect(intro.style?.fontStyle, FontStyle.italic);
+        },
+      );
+
+      testWidgets(
+        'title does NOT use the raw textTheme.titleMedium color '
+        '(regression guard against unstyled headings)',
+        (WidgetTester tester) async {
+          await pumpDialog(tester, onConfirmed: (_, _, _, _, _) {});
+          final Text title = tester.widget<Text>(
+            find.byKey(
+              const ValueKey<String>('leaderSelectionDialogTitle'),
+            ),
+          );
+          expect(
+            title.style?.color,
+            isNot(equals(AppThemes.colonial.textTheme.titleMedium?.color)),
+            reason: 'A regression that drops the EditorialMonoclePalette '
+                'override would surface the colonial titleMedium color '
+                'instead of the canonical --accent token (#2867 R1).',
+          );
+        },
+      );
+    });
   });
 
   // Refs #2870 R3 — narrow slot-row stacking parity with `CtGameSetup` so the

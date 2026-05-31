@@ -173,7 +173,8 @@ When **`logicEventBus`** is set, turn resolution passes it into **`resolveTurnFo
 ### AppEventHandler
 
 - Given **`AppEventHandler`** is bound with a registered **`train_civilians`** dialog builder, When the system emits **`OpenDialogEvent('train_civilians')`**, Then **`showDialog`** runs and the dialog widget tree is present.
-- Given **`AppEventHandler`** is bound, When the system emits **`OpenPauseMenuPanelEvent`**, Then a modal bottom sheet appears listing Debug log and Resume.
+- Given **`AppEventHandler`** is bound, When the system emits **`OpenPauseMenuPanelEvent`**, Then a `showDialog`-hosted modal appears containing the five-button `PauseMenuPanel` (Resume, Save Game, Load Game, Settings, Exit to Main Menu) per [`pause-menu-panel.md`](../ui/pause-menu-panel.md).
+- Given **`AppEventHandler`** is bound, When the system emits **`RequestExitToMainMenuFlowEvent`**, Then `showExitToMainMenuConfirmDialog` runs; on confirm the handler emits **`NavigateToShellEvent`**; on cancel no further event fires.
 - Given **`AppEventHandler`** is bound with routes **`shell`** and **`game`** on the stack, When the system emits **`NavigateToShellEvent`**, Then the navigator returns to the **`shell`** route.
 - Given **`AppEventHandler`** is bound, When the system emits **`OpenDialogEvent`** with an unknown **`dialogId`**, Then the handler logs a debug warning and does not throw.
 - Given **`ConfirmDialogEvent`** with **`onResult`**, When the user taps confirm, Then **`onResult(true)`** runs; When the user taps cancel, Then **`onResult(false)`** runs.

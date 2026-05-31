@@ -27,69 +27,43 @@ void main() {
   suppressLogsForTests();
 
   group('PauseMenuPanel (SPEC/ui/pause-menu-panel.md)', () {
+    Widget pauseHost(AppEventBus bus) {
+      return MaterialApp(
+        home: Scaffold(body: PauseMenuPanel(bus: bus)),
+      );
+    }
+
     testWidgets(
-      'AC: renders Debug log and Resume tiles in order with correct icons',
+      'AC: renders title + brass divider + five action buttons in declared order',
       (WidgetTester tester) async {
         final bus = AppEventBus.create();
         addTearDown(bus.dispose);
 
-        await tester.pumpWidget(
-          MaterialApp(
-            home: Scaffold(body: PauseMenuPanel(bus: bus)),
-          ),
-        );
+        await tester.pumpWidget(pauseHost(bus));
         await tester.pumpAndSettle();
 
-        final tiles = tester.widgetList<ListTile>(find.byType(ListTile));
-        expect(tiles, hasLength(2));
-        final tileList = tiles.toList();
+        expect(find.byKey(PauseMenuPanel.titleKey), findsOneWidget);
+        expect(find.byKey(PauseMenuPanel.brassDividerKey), findsOneWidget);
 
-        final firstLeading = tileList.first.leading;
-        expect(firstLeading, isA<Icon>());
-        expect((firstLeading! as Icon).icon, Icons.list);
-
-        final secondLeading = tileList[1].leading;
-        expect(secondLeading, isA<Icon>());
-        expect((secondLeading! as Icon).icon, Icons.play_arrow);
-      },
-    );
-
-    testWidgets(
-      'AC: Debug log emits ClosePanelEvent before NavigateToRouteEvent',
-      (WidgetTester tester) async {
-        final bus = AppEventBus.create();
-        addTearDown(bus.dispose);
-        final events = <AppEvent>[];
-        final sub = bus.stream.listen(events.add);
-        addTearDown(sub.cancel);
-
-        await tester.pumpWidget(
-          MaterialApp(
-            home: Scaffold(body: PauseMenuPanel(bus: bus)),
-          ),
-        );
-        await tester.pumpAndSettle();
-
-        await tester.tap(find.text('Debug log'));
-        await tester.pumpAndSettle();
-
-        expect(events.length, greaterThanOrEqualTo(2));
-        final closeIndex = events.indexWhere((e) => e is ClosePanelEvent);
-        final navIndex = events.indexWhere(
-          (e) => e is NavigateToRouteEvent && e.route == Routes.debugLog,
-        );
-        expect(closeIndex, isNonNegative);
-        expect(navIndex, isNonNegative);
+        final buttons = tester
+            .widgetList<CtNinePatchButton>(find.byType(CtNinePatchButton))
+            .toList();
+        expect(buttons, hasLength(5));
         expect(
-          closeIndex,
-          lessThan(navIndex),
-          reason: 'ClosePanelEvent must precede NavigateToRouteEvent.',
+          buttons.map((b) => b.key).toList(),
+          const <Key>[
+            PauseMenuPanel.resumeButtonKey,
+            PauseMenuPanel.saveGameButtonKey,
+            PauseMenuPanel.loadGameButtonKey,
+            PauseMenuPanel.settingsButtonKey,
+            PauseMenuPanel.exitToMainMenuButtonKey,
+          ],
         );
       },
     );
 
     testWidgets(
-      'AC: Resume emits exactly one ClosePanelEvent and no nav event',
+      'AC: Resume emits exactly one ClosePanelEvent and no other events',
       (WidgetTester tester) async {
         final bus = AppEventBus.create();
         addTearDown(bus.dispose);
@@ -97,14 +71,10 @@ void main() {
         final sub = bus.stream.listen(events.add);
         addTearDown(sub.cancel);
 
-        await tester.pumpWidget(
-          MaterialApp(
-            home: Scaffold(body: PauseMenuPanel(bus: bus)),
-          ),
-        );
+        await tester.pumpWidget(pauseHost(bus));
         await tester.pumpAndSettle();
 
-        await tester.tap(find.text('Resume'));
+        await tester.tap(find.byKey(PauseMenuPanel.resumeButtonKey));
         await tester.pumpAndSettle();
 
         expect(events, hasLength(1));
@@ -114,25 +84,85 @@ void main() {
           isEmpty,
           reason: 'Resume must not emit NavigateToRouteEvent.',
         );
+        expect(
+          events.whereType<RequestExitToMainMenuFlowEvent>(),
+          isEmpty,
+          reason:
+              'Resume must not emit RequestExitToMainMenuFlowEvent.',
+        );
       },
     );
 
     testWidgets(
-      'Negative AC: panel does not render Game Parameters, Exit, or Quit',
+      'AC: Exit to Main Menu emits ClosePanelEvent before '
+      'RequestExitToMainMenuFlowEvent',
+      (WidgetTester tester) async {
+        final bus = AppEventBus.create();
+        addTearDown(bus.dispose);
+        final events = <AppEvent>[];
+        final sub = bus.stream.listen(events.add);
+        addTearDown(sub.cancel);
+
+        await tester.pumpWidget(pauseHost(bus));
+        await tester.pumpAndSettle();
+
+        await tester.tap(
+          find.byKey(PauseMenuPanel.exitToMainMenuButtonKey),
+        );
+        await tester.pumpAndSettle();
+
+        final closeIndex = events.indexWhere((e) => e is ClosePanelEvent);
+        final flowIndex = events.indexWhere(
+          (e) => e is RequestExitToMainMenuFlowEvent,
+        );
+        expect(closeIndex, isNonNegative);
+        expect(flowIndex, isNonNegative);
+        expect(
+          closeIndex,
+          lessThan(flowIndex),
+          reason:
+              'ClosePanelEvent must precede RequestExitToMainMenuFlowEvent.',
+        );
+      },
+    );
+
+    testWidgets(
+      'AC: Save Game / Load Game / Settings are disabled placeholders',
       (WidgetTester tester) async {
         final bus = AppEventBus.create();
         addTearDown(bus.dispose);
 
-        await tester.pumpWidget(
-          MaterialApp(
-            home: Scaffold(body: PauseMenuPanel(bus: bus)),
-          ),
-        );
+        await tester.pumpWidget(pauseHost(bus));
         await tester.pumpAndSettle();
 
-        expect(find.text('Game Parameters'), findsNothing);
-        expect(find.text('Exit to Main Menu'), findsNothing);
-        expect(find.text('Quit to Desktop'), findsNothing);
+        for (final key in const <Key>[
+          PauseMenuPanel.saveGameButtonKey,
+          PauseMenuPanel.loadGameButtonKey,
+          PauseMenuPanel.settingsButtonKey,
+        ]) {
+          final widget = tester.widget<CtNinePatchButton>(find.byKey(key));
+          expect(widget.enabled, isFalse, reason: '$key must be disabled');
+          expect(widget.onPressed, isNull);
+        }
+      },
+    );
+
+    testWidgets(
+      'Negative AC: panel does not render Debug log or Material chrome',
+      (WidgetTester tester) async {
+        final bus = AppEventBus.create();
+        addTearDown(bus.dispose);
+
+        await tester.pumpWidget(pauseHost(bus));
+        await tester.pumpAndSettle();
+
+        // Debug log moved to GameSideMenu per the new SPEC.
+        expect(find.text('Debug log'), findsNothing);
+        // Material chrome is banned by SPEC/ui/pixel-art-ui-catalog.md.
+        expect(find.byType(ListTile), findsNothing);
+        expect(find.byType(AlertDialog), findsNothing);
+        expect(find.byType(Divider), findsNothing);
+        expect(find.byType(AppBar), findsNothing);
       },
     );
   });
