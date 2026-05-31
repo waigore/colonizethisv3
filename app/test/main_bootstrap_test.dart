@@ -24,6 +24,11 @@ void main() {
           runAppFn: (_) {
             runAppZone = Zone.current;
           },
+          // Skip Cinzel preload under unit tests so the production
+          // `GoogleFonts.cinzel()` path (which the offline test config
+          // disables runtime-fetching for) does not surface as an
+          // asynchronous zoned error after this test completes.
+          preloadFonts: () async {},
         );
       },
       (Object error, StackTrace stackTrace) {
@@ -65,6 +70,9 @@ void main() {
       runAppFn: (Widget app) {
         callOrder.add('runApp');
       },
+      preloadFonts: () async {
+        callOrder.add('fonts');
+      },
     );
 
     expect(
@@ -78,6 +86,7 @@ void main() {
         'box:${HiveBoxNames.games}',
         'box:${HiveBoxNames.offlineQueue}',
         'desktop',
+        'fonts',
         'runApp',
       ]),
     );
