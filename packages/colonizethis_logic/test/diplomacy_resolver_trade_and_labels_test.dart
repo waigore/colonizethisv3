@@ -67,6 +67,129 @@ void main() {
     });
   });
 
+  // Refs #2989 A5; SPEC/program/world-market-resolution.md § Bid type cap helper.
+  group('worldMarketBidTypeCap', () {
+    Game gameWith({
+      Map<String, bool> techUnlocked = const {},
+      List<OvertureState> overtures = const [],
+    }) =>
+        Game(
+          id: 'g1',
+          worldState: WorldState(
+            turnState:
+                const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+            oldWorld: const RegionData(),
+            newWorld: const RegionData(),
+          ),
+          players: [
+            Player(
+              id: 'gp1',
+              displayName: 'GP1',
+              isHuman: true,
+              techUnlocked: techUnlocked,
+            ),
+          ],
+          overtureStates: overtures,
+        );
+
+    test('returns 0 when player is unknown', () {
+      final game = gameWith();
+      expect(worldMarketBidTypeCap(game, 'ghost'), 0);
+    });
+
+    test('returns 0 when player has no overtures at all', () {
+      final game = gameWith();
+      expect(worldMarketBidTypeCap(game, 'gp1'), 0);
+    });
+
+    test('returns 0 when player has only trade-consulate overtures', () {
+      final game = gameWith(
+        overtures: const [
+          OvertureState(
+            gpId: 'gp1',
+            targetId: 'minor1',
+            stage: OvertureStage.tradeConsulate,
+            sinceTurn: 0,
+          ),
+        ],
+      );
+      expect(worldMarketBidTypeCap(game, 'gp1'), 0);
+    });
+
+    test('returns 3 with at least one embassy and no trade_fairs', () {
+      final game = gameWith(
+        overtures: const [
+          OvertureState(
+            gpId: 'gp1',
+            targetId: 'minor1',
+            stage: OvertureStage.embassy,
+            sinceTurn: 0,
+          ),
+        ],
+      );
+      expect(worldMarketBidTypeCap(game, 'gp1'), 3);
+    });
+
+    test('returns 3 with NAP overture (NAP implies embassy)', () {
+      final game = gameWith(
+        overtures: const [
+          OvertureState(
+            gpId: 'gp1',
+            targetId: 'minor1',
+            stage: OvertureStage.nap,
+            sinceTurn: 0,
+          ),
+        ],
+      );
+      expect(worldMarketBidTypeCap(game, 'gp1'), 3);
+    });
+
+    test('returns 6 with embassy and trade_fairs', () {
+      final game = gameWith(
+        techUnlocked: {kTechIdTradeFairs: true},
+        overtures: const [
+          OvertureState(
+            gpId: 'gp1',
+            targetId: 'minor1',
+            stage: OvertureStage.embassy,
+            sinceTurn: 0,
+          ),
+        ],
+      );
+      expect(worldMarketBidTypeCap(game, 'gp1'), 6);
+    });
+
+    test(
+      'ignores embassies belonging to a different gp (aggregation is '
+      'per-player, not global)',
+      () {
+        final game = Game(
+          id: 'g1',
+          worldState: WorldState(
+            turnState:
+                const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+            oldWorld: const RegionData(),
+            newWorld: const RegionData(),
+          ),
+          players: const [
+            Player(id: 'gp1', displayName: 'GP1', isHuman: true),
+            Player(id: 'gp2', displayName: 'GP2', isHuman: false),
+          ],
+          overtureStates: const [
+            OvertureState(
+              gpId: 'gp2',
+              targetId: 'minor1',
+              stage: OvertureStage.embassy,
+              sinceTurn: 0,
+            ),
+          ],
+        );
+        expect(worldMarketBidTypeCap(game, 'gp1'), 0);
+        expect(worldMarketBidTypeCap(game, 'gp2'), 3);
+      },
+    );
+  });
+
   group('scoreToLevel', () {
     test('maps score ranges to levels', () {
       expect(scoreToLevel(0), RelationLevel.hostile);

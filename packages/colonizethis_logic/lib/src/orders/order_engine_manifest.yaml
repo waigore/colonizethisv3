@@ -68,6 +68,14 @@ engine_slots:
     add_with_context_method: addRecruitWorkerOrderWithContext
     remove_method: removeRecruitWorkerOrder
 
+  - order_type: TradeOrder
+    orders_field: tradeOrdersByPlayerId
+    copy_with_param: tradeOrdersByPlayerId
+    log_label: trade
+    add_method: addTradeOrder
+    add_with_context_method: addTradeOrderWithContext
+    remove_method: removeTradeOrder
+
 # Copied in constructor and _copyOrders only; no engine slot or add*Order API.
 storage_only:
   - orders_field: researchOrdersByPlayerId

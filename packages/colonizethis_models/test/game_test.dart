@@ -348,5 +348,76 @@ void main() {
       final fromLegacy = Game.fromJson(legacy);
       expect(fromLegacy.diplomaticHistoryEvents, isEmpty);
     });
+
+    test('worldMarketState defaults to empty and is omitted from JSON', () {
+      final game = Game(
+        id: 'g1',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+          oldWorld: const RegionData(),
+          newWorld: const RegionData(),
+        ),
+        players: const [Player(id: 'p1', displayName: 'Spain', isHuman: true)],
+      );
+      expect(game.worldMarketState, WorldMarketState.empty);
+      expect(game.toJson().containsKey('worldMarketState'), isFalse);
+    });
+
+    test('worldMarketState round-trips through JSON when populated', () {
+      final marketState = WorldMarketState.withDefaultPrices(const {
+        'timber': 30,
+        'iron': 80,
+      });
+      final game = Game(
+        id: 'g1',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 5),
+          oldWorld: const RegionData(),
+          newWorld: const RegionData(),
+        ),
+        players: const [Player(id: 'p1', displayName: 'Spain', isHuman: true)],
+        worldMarketState: marketState,
+      );
+      final restored = Game.fromJson(game.toJson());
+      expect(restored.worldMarketState.prices['timber'], 30.0);
+      expect(restored.worldMarketState.prices['iron'], 80.0);
+      expect(restored.worldMarketState, marketState);
+      expect(restored, game);
+      expect(restored.hashCode, game.hashCode);
+    });
+
+    test('worldMarketState defaults to empty when legacy JSON omits it', () {
+      final game = Game(
+        id: 'g1',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+          oldWorld: const RegionData(),
+          newWorld: const RegionData(),
+        ),
+        players: const [Player(id: 'p1', displayName: 'Spain', isHuman: true)],
+      );
+      final json = game.toJson()..remove('worldMarketState');
+      final restored = Game.fromJson(json);
+      expect(restored.worldMarketState, WorldMarketState.empty);
+    });
+
+    test('copyWith replaces worldMarketState', () {
+      final game = Game(
+        id: 'g1',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+          oldWorld: const RegionData(),
+          newWorld: const RegionData(),
+        ),
+        players: const [Player(id: 'p1', displayName: 'Spain', isHuman: true)],
+      );
+      final next = game.copyWith(
+        worldMarketState: WorldMarketState.withDefaultPrices(const {
+          'timber': 25,
+        }),
+      );
+      expect(next.worldMarketState.prices['timber'], 25.0);
+      expect(next == game, isFalse);
+    });
   });
 }
