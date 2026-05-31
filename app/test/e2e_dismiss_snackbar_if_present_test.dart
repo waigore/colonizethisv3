@@ -479,4 +479,280 @@ void main() {
       );
     });
   });
+
+  // The following group pins the inner-helper perf attribution surface added
+  // alongside the dispatcher-level [e2eDismissTransientUi] result-tag
+  // taxonomy (Refs GitHub #2336 AC8 baseline timing). The integration suite
+  // cannot validate the inner-helper attribution directly today
+  // (`app_e2e_linux` is a no-op per `SPEC/program/e2e-integration-tests.md` §
+  // CI), so this widget-test layer is the only per-PR pin for the new
+  // inner-helper markers and their `result=...` taxonomy.
+  group('e2eDismissSnackBarIfPresent perf attribution', () {
+    test('phase constant matches the documented `dismiss_snackbar` label', () {
+      expect(
+        kE2eDefaultDismissSnackBarPhase,
+        'dismiss_snackbar',
+        reason:
+            'Phase constant must stay byte-equivalent so the AC8 baseline '
+            'timing pipeline can key on the same phase=... label as the '
+            'docs in `SPEC/program/e2e-integration-tests.md` § Determinism '
+            '(Dismiss-snackbar inner perf attribution bullet).',
+      );
+    });
+
+    testWidgets(
+      'emits result=not_present without the dispatcher counter when no '
+      'SnackBar is mounted',
+      (WidgetTester tester) async {
+        final perf = E2ePerfLog('snackbar_phase_pin');
+        await tester.pumpWidget(
+          const MaterialApp(home: Scaffold(body: SizedBox())),
+        );
+
+        final lines = await _captureDebugPrints(() async {
+          await e2eDismissSnackBarIfPresent(tester, perf: perf);
+        });
+
+        final timing = lines
+            .where(
+              (line) =>
+                  line.contains('phase=$kE2eDefaultDismissSnackBarPhase') &&
+                  line.startsWith('E2E_TIMING|'),
+            )
+            .toList();
+        expect(
+          timing,
+          hasLength(1),
+          reason:
+              'Exactly one inner-helper `E2E_TIMING|phase=...` line must be '
+              'emitted on the no-SnackBar short-circuit so suite aggregators '
+              'do not double-count the inner wall-clock. Captured: $lines',
+        );
+        expect(
+          timing.single,
+          contains('|meta=result=not_present'),
+          reason:
+              'Empty-tree dismissal must report `result=not_present` so the '
+              'AC8 timing pipeline can separate cheap no-op short-circuits '
+              'from real dismissals.',
+        );
+        expect(
+          _hasAnySnackbarCounterLine(lines, test: 'snackbar_phase_pin'),
+          isFalse,
+          reason:
+              'No-SnackBar short-circuit must not bump '
+              '`dismiss_snackbar_calls` (the helper returned false without '
+              'tapping). Captured: $lines',
+        );
+      },
+    );
+
+    testWidgets(
+      'emits result=no_action without the dispatcher counter when SnackBar '
+      'has no hit-testable TextButton',
+      (WidgetTester tester) async {
+        final perf = E2ePerfLog('snackbar_no_action_phase_pin');
+        await tester.pumpWidget(
+          MaterialApp(
+            home: _SnackBarHost(
+              snackBar: const SnackBar(
+                duration: Duration(seconds: 30),
+                content: Text('no-action-content'),
+              ),
+            ),
+          ),
+        );
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 250));
+
+        final lines = await _captureDebugPrints(() async {
+          await e2eDismissSnackBarIfPresent(tester, perf: perf);
+        });
+
+        final timing = lines
+            .where(
+              (line) =>
+                  line.contains('phase=$kE2eDefaultDismissSnackBarPhase') &&
+                  line.startsWith('E2E_TIMING|'),
+            )
+            .toList();
+        expect(
+          timing,
+          hasLength(1),
+          reason:
+              'Exactly one inner-helper `E2E_TIMING|phase=...` line must be '
+              'emitted on the no-hit-testable-action branch. Captured: '
+              '$lines',
+        );
+        expect(
+          timing.single,
+          contains('|meta=result=no_action'),
+          reason:
+              'A SnackBar without a hit-testable action must report '
+              '`result=no_action` so the AC8 timing pipeline can separate '
+              'this cheap fallthrough path from a real action tap.',
+        );
+        expect(
+          _hasAnySnackbarCounterLine(
+            lines,
+            test: 'snackbar_no_action_phase_pin',
+          ),
+          isFalse,
+          reason:
+              'No-action branch must not bump `dismiss_snackbar_calls` (the '
+              'helper returned false without tapping). Captured: $lines',
+        );
+      },
+    );
+
+    testWidgets('emits result=tapped alongside the dispatcher counter when the '
+        'hit-testable action is dismissed', (WidgetTester tester) async {
+      final perf = E2ePerfLog('snackbar_tapped_phase_pin');
+      await tester.pumpWidget(
+        MaterialApp(
+          home: _SnackBarHost(
+            snackBar: SnackBar(
+              duration: const Duration(seconds: 30),
+              content: const Text('snack-content'),
+              action: SnackBarAction(label: 'Undo', onPressed: () {}),
+            ),
+          ),
+        ),
+      );
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 250));
+
+      late bool dismissed;
+      final lines = await _captureDebugPrints(() async {
+        dismissed = await e2eDismissSnackBarIfPresent(tester, perf: perf);
+      });
+      await tester.pump(const Duration(milliseconds: 50));
+
+      expect(dismissed, isTrue);
+      final timing = lines
+          .where(
+            (line) =>
+                line.contains('phase=$kE2eDefaultDismissSnackBarPhase') &&
+                line.startsWith('E2E_TIMING|'),
+          )
+          .toList();
+      expect(
+        timing,
+        hasLength(1),
+        reason:
+            'Exactly one inner-helper `E2E_TIMING|phase=...` line must be '
+            'emitted on the success path. Captured: $lines',
+      );
+      expect(
+        timing.single,
+        contains('|meta=result=tapped'),
+        reason:
+            'A successful dismissal must report `result=tapped` so the '
+            'AC8 timing pipeline can separate real action taps from the '
+            'cheap no-op short-circuits.',
+      );
+    });
+
+    testWidgets(
+      'no perf line emitted when perf is null (default opt-out contract)',
+      (WidgetTester tester) async {
+        await tester.pumpWidget(
+          MaterialApp(
+            home: _SnackBarHost(
+              snackBar: SnackBar(
+                duration: const Duration(seconds: 30),
+                content: const Text('quiet'),
+                action: SnackBarAction(label: 'Undo', onPressed: () {}),
+              ),
+            ),
+          ),
+        );
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 250));
+
+        final lines = await _captureDebugPrints(() async {
+          await e2eDismissSnackBarIfPresent(tester);
+        });
+        await tester.pump(const Duration(milliseconds: 50));
+
+        final phaseLines = lines
+            .where(
+              (line) =>
+                  line.startsWith('E2E_TIMING|') &&
+                  line.contains('phase=$kE2eDefaultDismissSnackBarPhase'),
+            )
+            .toList();
+        expect(
+          phaseLines,
+          isEmpty,
+          reason:
+              'Default `perf: null` must preserve the byte-quiet contract: '
+              'no `E2E_TIMING|phase=dismiss_snackbar` line should be emitted '
+              'for opt-out callers. Captured: $lines',
+        );
+      },
+    );
+
+    testWidgets(
+      'custom phaseName reaches the inner-helper emission and does NOT also '
+      'emit under the default label',
+      (WidgetTester tester) async {
+        const customPhase = 'snackbar_custom_phase_label';
+        final perf = E2ePerfLog('snackbar_custom_phase_pin');
+        await tester.pumpWidget(
+          MaterialApp(
+            home: _SnackBarHost(
+              snackBar: SnackBar(
+                duration: const Duration(seconds: 30),
+                content: const Text('custom-phase'),
+                action: SnackBarAction(label: 'Undo', onPressed: () {}),
+              ),
+            ),
+          ),
+        );
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 250));
+
+        final lines = await _captureDebugPrints(() async {
+          await e2eDismissSnackBarIfPresent(
+            tester,
+            perf: perf,
+            phaseName: customPhase,
+          );
+        });
+        await tester.pump(const Duration(milliseconds: 50));
+
+        final customTiming = lines
+            .where(
+              (line) =>
+                  line.contains('phase=$customPhase|') &&
+                  line.startsWith('E2E_TIMING|'),
+            )
+            .toList();
+        expect(
+          customTiming,
+          hasLength(1),
+          reason:
+              'Custom phaseName must be threaded through to the inner-helper '
+              'E2E_TIMING emission so distinct dispatch sites can stay '
+              'separable in perf-timing dumps. Captured: $lines',
+        );
+        final defaultTiming = lines
+            .where(
+              (line) =>
+                  line.contains('phase=$kE2eDefaultDismissSnackBarPhase|') &&
+                  line.startsWith('E2E_TIMING|'),
+            )
+            .toList();
+        expect(
+          defaultTiming,
+          isEmpty,
+          reason:
+              'A custom phaseName must NOT also surface under the default '
+              'phase label; otherwise scrapers that aggregate by the default '
+              'phase would double-count custom-labelled calls.',
+        );
+      },
+    );
+  });
 }

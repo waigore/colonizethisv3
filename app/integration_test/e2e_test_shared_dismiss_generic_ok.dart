@@ -19,6 +19,18 @@ const Duration kE2eDefaultGenericOkDismissTimeout = Duration(seconds: 2);
 /// without re-implementing the dismissal recipe.
 const String kE2eDefaultGenericOkLabel = 'OK';
 
+/// Default phase label emitted by [e2eDismissGenericOkIfPresent] when a
+/// caller does not override [E2ePerfLog] attribution.
+///
+/// Exposed so widget-test pins and downstream perf-marker scrapers (for
+/// example the GitHub #2336 AC8 baseline timing pipeline via
+/// `tool/run_e2e_timing.sh` / `tool/compare_e2e_timing.sh`) can refer to
+/// the canonical inner-helper label by name instead of hard-coding the
+/// literal string. Mirrors the [kE2eDefaultDismissSnackBarPhase] /
+/// [kE2eDefaultDismissTransientUiPhase] / [kE2eDefaultWaitForMapHudPhase]
+/// convention.
+const String kE2eDefaultDismissGenericOkPhase = 'dismiss_generic_ok';
+
 /// Dismisses a top-level hit-testable [Text]`('OK')` widget by tapping it and
 /// polling until the label leaves the tree.
 ///
@@ -62,8 +74,21 @@ const String kE2eDefaultGenericOkLabel = 'OK';
 ///   scenarios. The counter bumps once per **successful** dismissal
 ///   attempt — the no-OK short-circuit does not emit. The underlying
 ///   [e2ePumpUntilFinderEmpty] primitive does not currently emit a perf
-///   phase slice, so no `E2E_TIMING` line is produced even when [perf] is
-///   non-`null` (the bump-counter is the only emission).
+///   phase slice, so a direct dispatch into the primitive does not
+///   produce its own `E2E_TIMING` line. The helper itself, however,
+///   emits exactly one `E2E_TIMING|phase=[phaseName]` line per call
+///   (when [perf] is non-`null`) with a `result=...` meta tag that
+///   distinguishes the two return paths the helper can reach:
+///   `result=not_present` (no hit-testable `Text(label)` mounted;
+///   counter is **not** bumped) and `result=tapped` (label tapped and
+///   dismiss settle awaited; counter is bumped once). Default
+///   `perf: null` preserves the byte-quiet contract — no `E2E_TIMING`
+///   or `E2E_COUNTER` lines are emitted for opt-out callers. The
+///   dispatcher-level [e2eDismissTransientUi] always reports its own
+///   `result=generic_ok` tag for this branch; the inner-helper marker
+///   slices the generic-OK wall-clock under the dispatcher slice
+///   without losing per-branch detail. Refs GitHub #2336 AC8 baseline
+///   timing.
 ///
 /// The widget-test pin in `app/test/e2e_dismiss_generic_ok_if_present_test.dart`
 /// carries the behavioural contract because the integration suite cannot
@@ -72,11 +97,14 @@ const String kE2eDefaultGenericOkLabel = 'OK';
 Future<bool> e2eDismissGenericOkIfPresent(
   WidgetTester tester, {
   E2ePerfLog? perf,
+  String phaseName = kE2eDefaultDismissGenericOkPhase,
   Duration dismissTimeout = kE2eDefaultGenericOkDismissTimeout,
   String label = kE2eDefaultGenericOkLabel,
 }) async {
+  final sw = Stopwatch()..start();
   final ok = find.text(label).hitTestable();
   if (ok.evaluate().isEmpty) {
+    perf?.timing(phaseName, sw.elapsed, meta: 'result=not_present');
     return false;
   }
   perf?.bumpCounter('dismiss_generic_ok_calls');
@@ -86,5 +114,6 @@ Future<bool> e2eDismissGenericOkIfPresent(
     find.text(label).hitTestable(),
     timeout: dismissTimeout,
   );
+  perf?.timing(phaseName, sw.elapsed, meta: 'result=tapped');
   return true;
 }
