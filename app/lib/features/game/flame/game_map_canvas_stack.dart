@@ -6,6 +6,7 @@ import 'package:colonizethis_logic/colonizethis_logic.dart' show PlayerView;
 import 'package:colonizethis_models/colonizethis_models.dart' as ct_models;
 import 'package:colonizethis_map/colonizethis_map.dart' show RegionMapViewData;
 
+import '../../../../config/editorial_monocle_palette.dart';
 import '../../../../providers/map_province_panel_provider.dart';
 import 'game_screen_shared.dart' show kGameMapWideProvinceSidePanelWidth;
 import 'region_map_component.dart'
@@ -15,6 +16,13 @@ import '../../../../widgets/ct_region_map.dart' show CtRegionMap;
 import 'game_map_province_detail_side_panel.dart';
 import 'per_player_work_target_selection_cache.dart';
 import 'region_map_viewport_snapshot.dart';
+
+/// Canonical alpha applied to [EditorialMonoclePalette.bgDeep] for the
+/// work-target selection prompt overlay banner background. Pinned at
+/// `0.85` per `SPEC/ui/map-widget.md` § Dark-theme selection prompt overlay
+/// tokens so the banner reads as a framed dark surface against the lit
+/// map while still allowing terrain to glimmer through.
+const double kMapSelectionPromptBackgroundAlpha = 0.85;
 
 /// Renders the Flame-backed map and the wide right-side detail panel.
 /// Map and panel communicate only via [mapProvincePanelProvider].
@@ -144,8 +152,14 @@ class GameMapCanvasStack extends ConsumerWidget {
               child: Center(
                 child: DecoratedBox(
                   decoration: BoxDecoration(
-                    color: Colors.black.withValues(alpha: 0.72),
+                    color: EditorialMonoclePalette.bgDeep.withValues(
+                      alpha: kMapSelectionPromptBackgroundAlpha,
+                    ),
                     borderRadius: BorderRadius.circular(24),
+                    border: Border.all(
+                      color: EditorialMonoclePalette.accentDim,
+                      width: 1,
+                    ),
                   ),
                   child: Padding(
                     padding: const EdgeInsets.symmetric(
@@ -158,7 +172,7 @@ class GameMapCanvasStack extends ConsumerWidget {
                         Text(
                           l10n.map_selectionMode_prompt,
                           style: TextStyle(
-                            color: Colors.white,
+                            color: EditorialMonoclePalette.fg,
                             fontSize: 14,
                             fontWeight: FontWeight.w600,
                           ),
@@ -167,15 +181,19 @@ class GameMapCanvasStack extends ConsumerWidget {
                         TextButton(
                           onPressed: onWorkTargetSelectionCancelled,
                           style: TextButton.styleFrom(
-                            backgroundColor: Colors.white,
-                            foregroundColor: Colors.black,
+                            backgroundColor: EditorialMonoclePalette.surface,
+                            foregroundColor:
+                                EditorialMonoclePalette.accentBright,
                             minimumSize: const Size(0, 34),
                             padding: const EdgeInsets.symmetric(horizontal: 12),
                             tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                           ),
                           child: Text(
                             l10n.map_selectionMode_cancel,
-                            style: TextStyle(fontWeight: FontWeight.w700),
+                            style: TextStyle(
+                              fontWeight: FontWeight.w700,
+                              color: EditorialMonoclePalette.accentBright,
+                            ),
                           ),
                         ),
                       ],
