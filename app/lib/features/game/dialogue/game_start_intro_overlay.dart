@@ -9,7 +9,7 @@ import 'package:jenny/jenny.dart';
 
 import '../../../../l10n/l10n.dart';
 import '../../../../widgets/ct_brass_divider.dart';
-import '../../../../widgets/ct_dialog_shell.dart';
+import '../../../../widgets/ct_full_screen_dialogue_shell.dart';
 import '../../../../widgets/ct_loading_indicator.dart';
 import '../../../../widgets/ct_nine_patch_button.dart';
 import 'ct_dialogue_view.dart';
@@ -123,41 +123,37 @@ class _GameStartIntroOverlayState extends State<GameStartIntroOverlay> {
     final l10n = appL10n(context);
     final theme = Theme.of(context);
     if (_loadError != null) {
-      return _IntroScrim(
-        dialog: CtDialogShell(
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                _IntroTitle(text: l10n.gameStartIntroOverlay_title),
-                const SizedBox(height: 12),
-                const CtBrassDivider(),
-                const SizedBox(height: 14),
-                Text(
-                  l10n.game_intro_loadError('$_loadError'),
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    color: EditorialMonoclePalette.accentDim,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 16),
-                Align(
-                  alignment: Alignment.center,
-                  child: CtNinePatchButton(
-                    onPressed: () {
-                      setState(() => _loadError = null);
-                      widget.onDismissed();
-                    },
-                    child: Text(l10n.game_intervention_continue),
-                  ),
-                ),
-              ],
+      return CtFullScreenDialogueShell(
+        backdrop: widget.child,
+        padding: const EdgeInsets.all(16),
+        body: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            _IntroTitle(text: l10n.gameStartIntroOverlay_title),
+            const SizedBox(height: 12),
+            const CtBrassDivider(),
+            const SizedBox(height: 14),
+            Text(
+              l10n.game_intro_loadError('$_loadError'),
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: EditorialMonoclePalette.accentDim,
+              ),
+              textAlign: TextAlign.center,
             ),
-          ),
+            const SizedBox(height: 16),
+            Align(
+              alignment: Alignment.center,
+              child: CtNinePatchButton(
+                onPressed: () {
+                  setState(() => _loadError = null);
+                  widget.onDismissed();
+                },
+                child: Text(l10n.game_intervention_continue),
+              ),
+            ),
+          ],
         ),
-        child: widget.child,
       );
     }
 
@@ -168,77 +164,46 @@ class _GameStartIntroOverlayState extends State<GameStartIntroOverlay> {
     final line = _view!.currentLine;
     final choice = _view!.currentChoice;
 
-    return _IntroScrim(
-      dialog: CtDialogShell(
-        maxWidth: 520,
-        child: Padding(
-          padding: const EdgeInsets.all(20),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              _IntroTitle(text: l10n.gameStartIntroOverlay_title),
-              const SizedBox(height: 12),
-              const CtBrassDivider(),
-              const SizedBox(height: 14),
-              if (line != null) ...[
-                Text(
-                  line.text,
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    color: theme.colorScheme.onSurface,
-                  ),
-                  textAlign: TextAlign.center,
+    return CtFullScreenDialogueShell(
+      backdrop: widget.child,
+      body: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          _IntroTitle(text: l10n.gameStartIntroOverlay_title),
+          const SizedBox(height: 12),
+          const CtBrassDivider(),
+          const SizedBox(height: 14),
+          if (line != null) ...[
+            Text(
+              line.text,
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: theme.colorScheme.onSurface,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 16),
+            Align(
+              alignment: Alignment.center,
+              child: CtNinePatchButton(
+                onPressed: () => _view!.advanceLine(),
+                child: Text(l10n.game_intervention_continue),
+              ),
+            ),
+          ] else if (choice != null) ...[
+            ...choice.options.asMap().entries.map(
+              (entry) => Padding(
+                padding: const EdgeInsets.only(bottom: 8),
+                child: CtNinePatchButton(
+                  onPressed: () => _view!.selectOption(entry.key),
+                  child: Text(entry.value.text),
                 ),
-                const SizedBox(height: 16),
-                Align(
-                  alignment: Alignment.center,
-                  child: CtNinePatchButton(
-                    onPressed: () => _view!.advanceLine(),
-                    child: Text(l10n.game_intervention_continue),
-                  ),
-                ),
-              ] else if (choice != null) ...[
-                ...choice.options.asMap().entries.map(
-                  (entry) => Padding(
-                    padding: const EdgeInsets.only(bottom: 8),
-                    child: CtNinePatchButton(
-                      onPressed: () => _view!.selectOption(entry.key),
-                      child: Text(entry.value.text),
-                    ),
-                  ),
-                ),
-              ] else
-                const GameStartIntroLoadingIndicator(),
-            ],
-          ),
-        ),
+              ),
+            ),
+          ] else
+            const GameStartIntroLoadingIndicator(),
+        ],
       ),
-      child: widget.child,
-    );
-  }
-}
-
-/// Stack wrapper that paints the editorial-monocle dialog scrim from the
-/// canonical OKLCH token (`EditorialMonoclePalette.dialogScrim`) over
-/// [child], then centers the framed [dialog]. Kept private to the file so
-/// the only intro-overlay scrim entrypoint resolves from the token table
-/// (no hex-literal `Color` in the widget source).
-class _IntroScrim extends StatelessWidget {
-  const _IntroScrim({required this.dialog, required this.child});
-
-  final Widget dialog;
-  final Widget child;
-
-  @override
-  Widget build(BuildContext context) {
-    return Stack(
-      children: [
-        child,
-        Material(
-          color: EditorialMonoclePalette.dialogScrim,
-          child: Center(child: dialog),
-        ),
-      ],
     );
   }
 }
