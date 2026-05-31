@@ -5,8 +5,10 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:flutter/material.dart';
 
 import 'package:colonizethis_app/config/constants.dart';
+import 'package:colonizethis_app/config/editorial_monocle_palette.dart';
 import 'package:colonizethis_app/config/ui_screen_ids.dart';
 import 'package:colonizethis_app/l10n/l10n.dart';
+import 'package:colonizethis_app/widgets/ct_brass_divider.dart';
 import 'package:colonizethis_app/widgets/ct_dialog_shell.dart';
 import 'package:colonizethis_app/widgets/ct_dropdown.dart';
 import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
@@ -158,11 +160,11 @@ class _NewGameLeaderSelectionDialogState
   @override
   Widget build(BuildContext context) {
     final l10n = appL10n(context);
-    final slotWidgets = <Widget>[];
-    for (var i = 0; i < _kNumSlots; i++) {
-      slotWidgets.add(_buildSlotRow(context, i, l10n));
-    }
-
+    final ThemeData theme = Theme.of(context);
+    final _LeaderDialogTextStyles styles = _resolveTextStyles(theme);
+    final slotWidgets = <Widget>[
+      for (var i = 0; i < _kNumSlots; i++) _buildSlotRow(context, i, l10n),
+    ];
     return CtDialogShell(
       maxWidth: 480,
       maxHeight: 720,
@@ -170,15 +172,7 @@ class _NewGameLeaderSelectionDialogState
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            l10n.shell_leaderDialog_title,
-            style: Theme.of(context).textTheme.titleMedium,
-          ),
-          const SizedBox(height: 8),
-          Text(
-            l10n.shell_leaderDialog_intro,
-            style: const TextStyle(fontSize: 14),
-          ),
+          _buildHeader(l10n, styles),
           const SizedBox(height: 16),
           Column(
             mainAxisSize: MainAxisSize.min,
@@ -186,91 +180,186 @@ class _NewGameLeaderSelectionDialogState
             children: slotWidgets,
           ),
           const SizedBox(height: 12),
-          Text(
-            l10n.shell_leaderDialog_seedLabel,
-            style: Theme.of(
-              context,
-            ).textTheme.bodySmall?.copyWith(fontWeight: FontWeight.w600),
-          ),
-          const SizedBox(height: 4),
-          TextField(
-            controller: _seedController,
-            keyboardType: TextInputType.number,
-            decoration: const InputDecoration(
-              isDense: true,
-              border: OutlineInputBorder(),
-            ),
-          ),
-          const SizedBox(height: 6),
-          Text(
-            l10n.shell_leaderDialog_seedHelper,
-            style: TextStyle(
-              fontSize: 12,
-              color: Theme.of(context).colorScheme.onSurfaceVariant,
-            ),
-          ),
+          _buildSeedField(theme, l10n, styles),
           const SizedBox(height: 12),
-          CheckboxListTile(
-            contentPadding: EdgeInsets.zero,
-            controlAffinity: ListTileControlAffinity.leading,
-            value: _infiniteMode,
-            onChanged: (value) {
-              setState(() => _infiniteMode = value ?? false);
-            },
-            title: Text(
-              l10n.shell_leaderDialog_infiniteModeLabel,
-              style: Theme.of(context).textTheme.bodyMedium,
-            ),
-            subtitle: Text(
-              l10n.shell_leaderDialog_infiniteModeHelper,
-              style: TextStyle(
-                fontSize: 12,
-                color: Theme.of(context).colorScheme.onSurfaceVariant,
-              ),
-            ),
-          ),
+          _buildInfiniteModeTile(theme, l10n, styles),
           const SizedBox(height: 12),
-          _buildTerrainVariationField(context, l10n),
+          _buildTerrainVariationField(
+            context,
+            l10n,
+            fieldLabelStyle: styles.fieldLabel,
+            helperStyle: styles.helper,
+          ),
           const SizedBox(height: 16),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.end,
-            children: [
-              CtNinePatchButton(
-                onPressed: widget.onCancel,
-                child: Text(l10n.common_cancel),
-              ),
-              const SizedBox(width: 8),
-              CtNinePatchButton(
-                onPressed: _startEnabled
-                    ? () {
-                        final seed =
-                            NewGameLeaderSelectionDialog.parseSeedInput(
-                              _seedController.text,
-                            );
-                        Navigator.of(context).pop();
-                        widget.onConfirmed(
-                          List<String>.from(_orderedGpIdsBySlot),
-                          Map<String, String>.from(_leaderByGpId),
-                          seed,
-                          _infiniteMode,
-                          _terrainVariation,
-                        );
-                      }
-                    : null,
-                enabled: _startEnabled,
-                child: Text(l10n.common_start),
-              ),
-            ],
-          ),
+          _buildFooterButtons(l10n, context),
         ],
       ),
     );
   }
 
+  _LeaderDialogTextStyles _resolveTextStyles(ThemeData theme) {
+    return _LeaderDialogTextStyles(
+      title: (theme.textTheme.titleMedium ?? const TextStyle(fontSize: 16))
+          .copyWith(
+            color: EditorialMonoclePalette.accent,
+            letterSpacing:
+                (theme.textTheme.titleMedium?.fontSize ?? 16) * 0.05,
+            fontWeight: FontWeight.w600,
+          ),
+      intro: (theme.textTheme.bodyMedium ?? const TextStyle(fontSize: 14))
+          .copyWith(
+            color: EditorialMonoclePalette.muted,
+            fontStyle: FontStyle.italic,
+          ),
+      fieldLabel: (theme.textTheme.bodySmall ?? const TextStyle(fontSize: 12))
+          .copyWith(
+            color: EditorialMonoclePalette.accentDim,
+            fontWeight: FontWeight.w600,
+          ),
+      helper: (theme.textTheme.bodySmall ?? const TextStyle(fontSize: 12))
+          .copyWith(
+            color: EditorialMonoclePalette.muted,
+            fontSize: 12,
+          ),
+    );
+  }
+
+  Widget _buildHeader(
+    AppLocalizations l10n,
+    _LeaderDialogTextStyles styles,
+  ) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          l10n.shell_leaderDialog_title,
+          key: const ValueKey<String>('leaderSelectionDialogTitle'),
+          style: styles.title,
+        ),
+        const SizedBox(height: 8),
+        const CtBrassDivider(
+          key: ValueKey<String>('leaderSelectionDialogBrassDivider'),
+        ),
+        const SizedBox(height: 12),
+        Text(
+          l10n.shell_leaderDialog_intro,
+          key: const ValueKey<String>('leaderSelectionDialogIntro'),
+          style: styles.intro,
+        ),
+      ],
+    );
+  }
+
+  Widget _buildSeedField(
+    ThemeData theme,
+    AppLocalizations l10n,
+    _LeaderDialogTextStyles styles,
+  ) {
+    final OutlineInputBorder idleBorder = OutlineInputBorder(
+      borderRadius: BorderRadius.zero,
+      borderSide: BorderSide(color: EditorialMonoclePalette.border),
+    );
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(l10n.shell_leaderDialog_seedLabel, style: styles.fieldLabel),
+        const SizedBox(height: 4),
+        TextField(
+          controller: _seedController,
+          keyboardType: TextInputType.number,
+          style: theme.textTheme.bodyMedium?.copyWith(
+            color: EditorialMonoclePalette.fg,
+          ),
+          decoration: InputDecoration(
+            isDense: true,
+            border: idleBorder,
+            enabledBorder: idleBorder,
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.zero,
+              borderSide: BorderSide(
+                color: EditorialMonoclePalette.accent,
+                width: 2,
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(height: 6),
+        Text(l10n.shell_leaderDialog_seedHelper, style: styles.helper),
+      ],
+    );
+  }
+
+  Widget _buildInfiniteModeTile(
+    ThemeData theme,
+    AppLocalizations l10n,
+    _LeaderDialogTextStyles styles,
+  ) {
+    return CheckboxListTile(
+      contentPadding: EdgeInsets.zero,
+      controlAffinity: ListTileControlAffinity.leading,
+      value: _infiniteMode,
+      activeColor: EditorialMonoclePalette.accent,
+      checkColor: EditorialMonoclePalette.bgDeep,
+      side: BorderSide(color: EditorialMonoclePalette.border),
+      onChanged: (value) {
+        setState(() => _infiniteMode = value ?? false);
+      },
+      title: Text(
+        l10n.shell_leaderDialog_infiniteModeLabel,
+        style: theme.textTheme.bodyMedium?.copyWith(
+          color: EditorialMonoclePalette.fg,
+        ),
+      ),
+      subtitle: Text(
+        l10n.shell_leaderDialog_infiniteModeHelper,
+        style: styles.helper,
+      ),
+    );
+  }
+
+  Widget _buildFooterButtons(
+    AppLocalizations l10n,
+    BuildContext context,
+  ) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.end,
+      children: [
+        CtNinePatchButton(
+          onPressed: widget.onCancel,
+          child: Text(l10n.common_cancel),
+        ),
+        const SizedBox(width: 8),
+        CtNinePatchButton(
+          onPressed: _startEnabled ? () => _handleStartPressed(context) : null,
+          enabled: _startEnabled,
+          child: Text(l10n.common_start),
+        ),
+      ],
+    );
+  }
+
+  void _handleStartPressed(BuildContext context) {
+    final seed = NewGameLeaderSelectionDialog.parseSeedInput(
+      _seedController.text,
+    );
+    Navigator.of(context).pop();
+    widget.onConfirmed(
+      List<String>.from(_orderedGpIdsBySlot),
+      Map<String, String>.from(_leaderByGpId),
+      seed,
+      _infiniteMode,
+      _terrainVariation,
+    );
+  }
+
   Widget _buildTerrainVariationField(
     BuildContext context,
-    AppLocalizations l10n,
-  ) {
+    AppLocalizations l10n, {
+    required TextStyle fieldLabelStyle,
+    required TextStyle helperStyle,
+  }) {
     final percent = (_terrainVariation * 100).round();
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -278,9 +367,7 @@ class _NewGameLeaderSelectionDialogState
       children: [
         Text(
           l10n.shell_leaderDialog_terrainVariationLabel(percent),
-          style: Theme.of(
-            context,
-          ).textTheme.bodySmall?.copyWith(fontWeight: FontWeight.w600),
+          style: fieldLabelStyle,
         ),
         const SizedBox(height: 6),
         CtSlider(
@@ -295,10 +382,7 @@ class _NewGameLeaderSelectionDialogState
         const SizedBox(height: 6),
         Text(
           l10n.shell_leaderDialog_terrainVariationHelper,
-          style: TextStyle(
-            fontSize: 12,
-            color: Theme.of(context).colorScheme.onSurfaceVariant,
-          ),
+          style: helperStyle,
         ),
       ],
     );
@@ -364,6 +448,9 @@ class _NewGameLeaderSelectionDialogState
           Text(
             _slotLabel(l10n, slotIndex),
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
+              color: slotIndex == 0
+                  ? EditorialMonoclePalette.accentDim
+                  : EditorialMonoclePalette.muted,
               fontWeight: slotIndex == 0 ? FontWeight.w600 : FontWeight.normal,
             ),
           ),
@@ -376,6 +463,20 @@ class _NewGameLeaderSelectionDialogState
       ),
     );
   }
+}
+
+class _LeaderDialogTextStyles {
+  const _LeaderDialogTextStyles({
+    required this.title,
+    required this.intro,
+    required this.fieldLabel,
+    required this.helper,
+  });
+
+  final TextStyle title;
+  final TextStyle intro;
+  final TextStyle fieldLabel;
+  final TextStyle helper;
 }
 
 /// Pickers body that switches between a side-by-side `Row` and a vertically

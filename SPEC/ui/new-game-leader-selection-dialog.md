@@ -21,41 +21,46 @@ Implementation: `app/lib/features/shell/new_game_leader_selection_dialog.dart`. 
 
 ```text
 +----------------------------------------------------------+
-| Choose nations and leaders                               |  titleMedium
-| Choose six great powers and a leader variant for each... |  intro body
+| Choose nations and leaders                               |  --accent, 0.05em
+| ────── ◆ ──────                                          |  CtBrassDivider
+| Choose six great powers and a leader variant for each... |  --muted italic intro
 |                                                          |
-|  Slot 1 (You)                                            |
+|  Slot 1 (You)                                            |  --accent-dim w600
 |  [ ◇ Nation v ]  [ Leader v ]                            |
-|  Slot 2                                                  |
+|  Slot 2                                                  |  --muted regular
 |  [ ◇ Nation v ]  [ Leader v ]                            |
 |  ...                                                     |
 |  Slot 6                                                  |
 |  [ ◇ Nation v ]  [ Leader v ]                            |
 |                                                          |
-|  Game seed                                               |  bodySmall (w600)
-|  [ <text>                              ]                 |  TextField (numeric)
-|  Helper text                                             |  caption
+|  Game seed                                               |  --accent-dim w600
+|  [ <text>                              ]                 |  TextField (numeric, --border idle / --accent focus)
+|  Helper text                                             |  --muted helper
 |                                                          |
-|  [ ] Infinite mode (no victory condition)                |  CheckboxListTile
-|       Helper text                                        |
+|  [ ] Infinite mode (no victory condition)                |  CheckboxListTile (accent active, border idle)
+|       Helper text                                        |  --muted helper
 |                                                          |
-|  Terrain variation: 50%                                  |
+|  Terrain variation: 50%                                  |  --accent-dim w600
 |  [ ───────●────────────────────────── ]   slider 0..1    |
-|  Helper text                                             |
+|  Helper text                                             |  --muted helper
 |                                                          |
 |              [ Cancel ]    [ Start ]                     |
 +----------------------------------------------------------+
 ```
 
-- Header: `shell_leaderDialog_title` (`titleMedium`) + `shell_leaderDialog_intro` (14 pt body).
-- Slots: six `Column` rows in fixed top-down order; each row hosts a slot label, followed by the nation and leader pickers. The slot body is responsive at the same `kGameSetupNarrowBreakpoint` (500 dp) used by [`CtGameSetup`](game-setup.md):
+- Dialog chrome wraps in `CtDialogShell` (`maxWidth: 480`, `maxHeight: 720`), painting the dark editorial-monocle frame (#2867 R1) from `EditorialMonoclePalette`.
+- Header chrome (#2867 R2 + R21):
+  - Title `shell_leaderDialog_title`, keyed `ValueKey<String>('leaderSelectionDialogTitle')`, color `EditorialMonoclePalette.accent`, `letterSpacing == fontSize * 0.05`, `FontWeight.w600`.
+  - `CtBrassDivider` keyed `ValueKey<String>('leaderSelectionDialogBrassDivider')` between title and intro.
+  - Intro `shell_leaderDialog_intro`, keyed `ValueKey<String>('leaderSelectionDialogIntro')`, color `EditorialMonoclePalette.muted`, `FontStyle.italic`.
+- Slots: six `Column` rows in fixed top-down order; each row hosts a slot label, then the slot pickers body. Slot 0 (`shell_newGame_playerYou`) label uses `EditorialMonoclePalette.accentDim` with `FontWeight.w600`; AI slots use `EditorialMonoclePalette.muted` regular weight. The slot pickers body is responsive at the same `kGameSetupNarrowBreakpoint` (500 dp) used by [`CtGameSetup`](game-setup.md):
   - Wide viewport (`MediaQuery.sizeOf(context).width >= kGameSetupNarrowBreakpoint`, 500 dp): one horizontal `Row` with two `Expanded(CtDropdown<String>)` — nation on the left, leader on the right.
-  - Narrow viewport (`MediaQuery.sizeOf(context).width < kGameSetupNarrowBreakpoint`, 500 dp): a vertical `Column` with the slot label on the first line, the nation dropdown full width on the second line, and the leader dropdown full width on the third line. Mirrors [`CtGameSetup`](game-setup.md) § Narrow-viewport slot-row stacking and [mobile-adaptation.md](mobile-adaptation.md) § 4 Game Setup so the dialog and full-screen surface honour the same 500 dp rule.
+  - Narrow viewport (`MediaQuery.sizeOf(context).width < kGameSetupNarrowBreakpoint`, 500 dp): a vertical `Column` with the nation dropdown full width on the first line and the leader dropdown full width on the second line, beneath the slot label. Mirrors [`CtGameSetup`](game-setup.md) § Narrow-viewport slot-row stacking and [mobile-adaptation.md](mobile-adaptation.md) § 4 Game Setup so the dialog and full-screen surface honour the same 500 dp rule.
   - Nation dropdown items show a `GpDefaultMapColorSwatch(greatPowerId: id)` leading icon and `naming.gpById(id)?.countryName` label. Items are filtered per slot: only IDs not already chosen in another slot, plus the slot's own current value.
   - Leader dropdown items are the chosen nation's `leaderVariants` by id, labelled by `LeaderVariant.name`. Selection defaults to `defaultLeaderVariantId`.
-- Seed input: `shell_leaderDialog_seedLabel`, numeric `TextField` (controller seeded with `baseConfig.seed.toString()`), helper `shell_leaderDialog_seedHelper`. Submit value parsed by `parseSeedInput`.
-- Infinite mode: `CheckboxListTile` with leading control, primary `shell_leaderDialog_infiniteModeLabel`, secondary `shell_leaderDialog_infiniteModeHelper`.
-- Terrain variation: label `shell_leaderDialog_terrainVariationLabel(percent)` (percent = `(value * 100).round()`), `CtSlider(min: 0.0, max: 1.0, divisions: 20)`, helper `shell_leaderDialog_terrainVariationHelper`. Default `defaultTerrainVariation == 0.5`.
+- Seed input: `shell_leaderDialog_seedLabel` (`accentDim`, w600), numeric `TextField` (controller seeded with `baseConfig.seed.toString()`; idle/enabled border `EditorialMonoclePalette.border` 1px, focused border `EditorialMonoclePalette.accent` 2px, text color `EditorialMonoclePalette.fg`), helper `shell_leaderDialog_seedHelper` (`EditorialMonoclePalette.muted`). Submit value parsed by `parseSeedInput`.
+- Infinite mode: `CheckboxListTile` with leading control; `activeColor: EditorialMonoclePalette.accent`, `checkColor: EditorialMonoclePalette.bgDeep`, idle `side: BorderSide(color: EditorialMonoclePalette.border)`; primary `shell_leaderDialog_infiniteModeLabel` (`EditorialMonoclePalette.fg`), secondary `shell_leaderDialog_infiniteModeHelper` (`EditorialMonoclePalette.muted`).
+- Terrain variation: label `shell_leaderDialog_terrainVariationLabel(percent)` (percent = `(value * 100).round()`, color `EditorialMonoclePalette.accentDim` w600), `CtSlider(min: 0.0, max: 1.0, divisions: 20)`, helper `shell_leaderDialog_terrainVariationHelper` (`EditorialMonoclePalette.muted`). Default `defaultTerrainVariation == 0.5`.
 - Footer: right-aligned `Row` with `CtNinePatchButton` Cancel (`common_cancel`) and `CtNinePatchButton` Start (`common_start`). Start enabled only when `_startEnabled == true`.
 
 ---
@@ -103,8 +108,9 @@ Implementation: `app/lib/features/shell/new_game_leader_selection_dialog.dart`. 
 
 ## Components
 
-- `CtDialogShell`, `CtDropdown`, `CtNinePatchButton`, `CtSlider`, `GpDefaultMapColorSwatch` (see `app/lib/widgets/`).
-- Material: `TextField`, `CheckboxListTile`, `Row`, `Column`, `Padding`, `Text`.
+- `CtDialogShell`, `CtBrassDivider`, `CtDropdown`, `CtNinePatchButton`, `CtSlider`, `GpDefaultMapColorSwatch` (see `app/lib/widgets/`).
+- `EditorialMonoclePalette` tokens: `accent`, `accentDim`, `muted`, `fg`, `border`, `bgDeep` (no hex literals in widget source per #2867 R1).
+- Material (chrome host only): `TextField`, `CheckboxListTile`, `Row`, `Column`, `Padding`, `Text`.
 - Helpers: `NewGameLeaderSelectionDialog.parseSeedInput`, `defaultTerrainVariation`.
 - Localized keys via `appL10n(context)`: `shell_leaderDialog_title`, `shell_leaderDialog_intro`, `shell_leaderDialog_seedLabel`, `shell_leaderDialog_seedHelper`, `shell_leaderDialog_infiniteModeLabel`, `shell_leaderDialog_infiniteModeHelper`, `shell_leaderDialog_terrainVariationLabel`, `shell_leaderDialog_terrainVariationHelper`, `shell_leaderDialog_selectLeaderHint`, `shell_newGame_playerYou`, `shell_newGame_playerAi`, `shell_newGame_selectNation`, `common_cancel`, `common_start`.
 
@@ -130,9 +136,21 @@ Implementation: `app/lib/features/shell/new_game_leader_selection_dialog.dart`. 
 
 - Given the user taps Cancel, when the gesture completes, then `widget.onCancel` is invoked exactly once and `widget.onConfirmed` is not invoked.
 
+### Narrow-viewport slot pickers stacking
+
 - Given the dialog is open and `MediaQuery.sizeOf(context).width >= kGameSetupNarrowBreakpoint` (500 dp), when any of the six slot rows render, then the slot body mounts a single horizontal `Row` containing both the nation `CtDropdown<String>` and the leader `CtDropdown<String>` side-by-side (each at equal flex), and the slot body does not mount a vertically-stacked `Column` containing both dropdowns.
 
 - Given the dialog is open and `MediaQuery.sizeOf(context).width < kGameSetupNarrowBreakpoint` (500 dp), when any of the six slot rows render, then the slot body mounts a vertical `Column` with the slot label on the first line, the nation `CtDropdown<String>` full width on the second line, and the leader `CtDropdown<String>` full width on the third line, and the slot body does not mount a horizontal `Row` containing both dropdowns side-by-side. This mirrors the narrow-viewport stacking AC for [`CtGameSetup`](game-setup.md) so both Game Setup surfaces honour the same 500 dp rule defined by [mobile-adaptation.md](mobile-adaptation.md) § 4.
+
+### Dark editorial-monocle chrome (#2867 S6)
+
+- Given the dialog is open, when the title `Text` keyed `ValueKey<String>('leaderSelectionDialogTitle')` is inspected, then its `style.color` equals `EditorialMonoclePalette.accent` and `style.letterSpacing` equals `style.fontSize * 0.05` within `1e-9` (so theme text-scale overrides preserve the canonical 0.05em ratio per #2867 R2).
+
+- Given the dialog is open, when the widget tree is scanned, then exactly one `CtBrassDivider` keyed `ValueKey<String>('leaderSelectionDialogBrassDivider')` is rendered and its `top` Y-coordinate is greater than or equal to the title `Text`'s `bottom` Y-coordinate (chrome ordering per #2867 R21).
+
+- Given the dialog is open, when the intro `Text` keyed `ValueKey<String>('leaderSelectionDialogIntro')` is inspected, then its `style.color` equals `EditorialMonoclePalette.muted` and `style.fontStyle` equals `FontStyle.italic`.
+
+- Given the dialog is open under any theme, when the title `Text` is inspected, then its `style.color` is NOT equal to `AppThemes.colonial.textTheme.titleMedium?.color` (regression guard: dropping the EditorialMonoclePalette override would surface the colonial titleMedium color instead of the canonical `--accent` token).
 
 ---
 
