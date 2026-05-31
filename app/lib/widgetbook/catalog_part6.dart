@@ -330,14 +330,15 @@ Widget _tradeScreenDefaultStory() {
   );
 }
 
-/// Trade screen stories. SPEC/ui/trade-screen.md (Refs #2993 E1+E2+E3
-/// scaffold slice — placeholder body until #2989 data types land).
+/// Trade screen stories. SPEC/ui/trade-screen.md (Refs #2993 E1+E2+E3+E4
+/// scaffold slice — two-tab body with placeholder panels until #2989 /
+/// #2990 data types land for the live Market and Deal Book content).
 List<WidgetbookNode> get tradeScreenDirectories => [
   WidgetbookFolder(
     name: 'Trade Screen',
     children: [
       WidgetbookUseCase(
-        name: 'Scaffold (placeholder)',
+        name: 'Scaffold (Market tab)',
         builder: (context) => _tradeScreenDefaultStory(),
       ),
       WidgetbookUseCase(
