@@ -3,11 +3,13 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../../diplomacy/diplomacy_relation_lookup.dart'
     show ftpPairKeysFromGame, getRelation;
+import '../../economy/non_gp_extraction.dart';
 import '../../economy/sea_transport.dart';
 import '../../economy/world_market/deal_matcher.dart';
 import '../../economy/world_market/first_right_credits.dart';
 import '../../economy/world_market/price_discovery.dart';
 import '../../economy/world_market/purchased_tile_index.dart';
+import '../../world/connectivity_resolver.dart';
 import '../../world/game_world_mutations.dart';
 import '../turn_pipeline_state.dart';
 import '../turn_resolver_config.dart';
@@ -103,6 +105,21 @@ TurnPhaseStepOutcome worldMarketTurnPhaseHandler(
     if (bids.isNotEmpty) newBidsByFactionId[entry.key] = bids;
   }
 
+  // Minor/tribe auto-offers (Refs #2991 C4) — `SPEC/program/world-market-resolution.md`
+  // § Step A Gather (Step A.2) and `SPEC/game/world-market.md` § Minor and
+  // tribe auto-sell. Each connected non-GP tile producing a non-riches
+  // commodity contributes one `TradeOrder(type: offer, priority: 1,
+  // originTileKey: tileKey)`. These auto-offers feed the matcher alongside
+  // GP-submitted orders; they are intentionally **not** stored as
+  // carry-forwards (per § Step E "Minor/Tribe auto-offers do not carry
+  // forward") and are excluded from price discovery aggregation (handled
+  // implicitly by `_aggregateNewQuantitiesPerCommodity` keying on
+  // `newOffersByFactionId` only — auto-offers live in their own map).
+  final autoOffersByFactionId = _computeMinorTribeAutoOffers(
+    game: game,
+    config: config,
+  );
+
   // Compute start-of-phase trade cargo capacity and stockpile per GP. These
   // values gate (a) carry-forward re-validation per
   // `SPEC/program/world-market-resolution.md` § Step A.3 and (b) the
@@ -139,6 +156,7 @@ TurnPhaseStepOutcome worldMarketTurnPhaseHandler(
   final mergedOffersByFactionId = _mergeOrdersByFaction(
     newOffersByFactionId,
     carryForwardValidation.validOffersByFactionId,
+    autoOffersByFactionId,
   );
   final mergedBidsByFactionId = _mergeOrdersByFaction(
     newBidsByFactionId,
@@ -221,10 +239,19 @@ TurnPhaseStepOutcome worldMarketTurnPhaseHandler(
     notesByCommodity: carryForwardValidation.dropNotesByCommodity,
   );
 
+  // Minor/tribe auto-offers never carry forward (Refs #2991 C4) per
+  // `SPEC/program/world-market-resolution.md` § Step E: each turn re-emits
+  // them based on that turn's extraction. Restrict carry-forwards to known
+  // Great-Power faction ids; unknown ids (auto-offer minors/tribes and any
+  // other non-GP submitter) are dropped from the persisted map.
+  final gpFactionIds = <String>{for (final p in game.players) p.id};
   final updatedMarket = priorMarket.copyWith(
     prices: Map<CommodityId, double>.unmodifiable(newPrices),
     lastTurnActivity: Map<CommodityId, MarketActivity>.unmodifiable(activity),
-    carryForwardOffersByFactionId: matchResult.unfilledOffersByFactionId,
+    carryForwardOffersByFactionId: _restrictToFactions(
+      matchResult.unfilledOffersByFactionId,
+      gpFactionIds,
+    ),
     carryForwardBidsByFactionId: matchResult.unfilledBidsByFactionId,
   );
 
@@ -242,22 +269,82 @@ class _NewQuantityPair {
 
 Map<String, List<TradeOrder>> _mergeOrdersByFaction(
   Map<String, List<TradeOrder>> newByFaction,
-  Map<String, List<TradeOrder>> carryByFaction,
-) {
-  if (newByFaction.isEmpty && carryByFaction.isEmpty) {
+  Map<String, List<TradeOrder>> carryByFaction, [
+  Map<String, List<TradeOrder>> autoByFaction = const <String, List<TradeOrder>>{},
+]) {
+  if (newByFaction.isEmpty &&
+      carryByFaction.isEmpty &&
+      autoByFaction.isEmpty) {
     return const <String, List<TradeOrder>>{};
   }
-  final factionIds = <String>{...newByFaction.keys, ...carryByFaction.keys}
-    ..removeWhere((id) => id.isEmpty);
+  final factionIds = <String>{
+    ...newByFaction.keys,
+    ...carryByFaction.keys,
+    ...autoByFaction.keys,
+  }..removeWhere((id) => id.isEmpty);
   final result = <String, List<TradeOrder>>{};
   for (final factionId in factionIds) {
     final merged = <TradeOrder>[
       ...newByFaction[factionId] ?? const <TradeOrder>[],
       ...carryByFaction[factionId] ?? const <TradeOrder>[],
+      ...autoByFaction[factionId] ?? const <TradeOrder>[],
     ];
     if (merged.isNotEmpty) result[factionId] = merged;
   }
   return result;
+}
+
+/// Returns a copy of [map] containing only entries keyed by ids in
+/// [allowedFactionIds]. Used to filter carry-forwards to GP-only per
+/// `SPEC/program/world-market-resolution.md` § Step E (minor/tribe
+/// auto-offers do not carry forward).
+Map<String, List<TradeOrder>> _restrictToFactions(
+  Map<String, List<TradeOrder>> map,
+  Set<String> allowedFactionIds,
+) {
+  if (map.isEmpty) return const <String, List<TradeOrder>>{};
+  final filtered = <String, List<TradeOrder>>{};
+  for (final entry in map.entries) {
+    if (!allowedFactionIds.contains(entry.key)) continue;
+    if (entry.value.isEmpty) continue;
+    filtered[entry.key] = entry.value;
+  }
+  if (filtered.isEmpty) return const <String, List<TradeOrder>>{};
+  return Map<String, List<TradeOrder>>.unmodifiable(filtered);
+}
+
+/// Computes non-Great-Power auto-offers for the current turn per
+/// `SPEC/program/world-market-resolution.md` § Step A Gather (Step A.2) and
+/// `SPEC/game/world-market.md` § Minor and tribe auto-sell. Returns an empty
+/// map when [TurnResolverConfig.tileMapByRegion] is absent (legacy direct-
+/// handler tests bypass the auto-transport / tile-map plumbing and rely on
+/// `extractedByPlayerId` instead; in that mode there is no upstream tile data
+/// to walk and the minor/tribe pool is intentionally empty so existing tests
+/// continue to exercise the GP-only matching path).
+Map<String, List<TradeOrder>> _computeMinorTribeAutoOffers({
+  required Game game,
+  required TurnResolverConfig config,
+}) {
+  final tileMaps = config.tileMapByRegion;
+  if (tileMaps == null || tileMaps.isEmpty) {
+    return const <String, List<TradeOrder>>{};
+  }
+  if (game.minorNations.isEmpty && game.tribes.isEmpty) {
+    return const <String, List<TradeOrder>>{};
+  }
+  final connectivity = resolveNonGreatPowerConnectivity(
+    game: game,
+    tileMapByRegion: tileMaps,
+    topology: config.topology,
+  );
+  if (connectivity.isEmpty) {
+    return const <String, List<TradeOrder>>{};
+  }
+  return computeNonGreatPowerAutoOffers(
+    game: game,
+    tileMapByRegion: tileMaps,
+    connectivityByFactionId: connectivity,
+  );
 }
 
 Map<CommodityId, _NewQuantityPair> _aggregateNewQuantitiesPerCommodity({
