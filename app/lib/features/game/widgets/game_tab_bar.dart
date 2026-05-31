@@ -253,7 +253,7 @@ class _GameRegionTab extends StatelessWidget {
   Widget build(BuildContext context) {
     final ThemeData theme = Theme.of(context);
     final TextStyle labelStyle = (theme.textTheme.bodySmall ??
-            const TextStyle(fontSize: 11))
+            const TextStyle(fontSize: 12))
         .copyWith(
           fontWeight: FontWeight.w600,
           letterSpacing: 0.03 * 11,
