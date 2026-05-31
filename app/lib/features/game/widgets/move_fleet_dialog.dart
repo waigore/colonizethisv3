@@ -251,14 +251,15 @@ class _MoveFleetDialogState extends State<MoveFleetDialog> {
                 )
               : moveColumns,
         const SizedBox(height: 16),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.end,
+        Wrap(
+          alignment: WrapAlignment.end,
+          spacing: 8,
+          runSpacing: 8,
           children: [
             CtNinePatchButton(
               onPressed: () => Navigator.pop(context, false),
               child: Text(l10n.common_cancel),
             ),
-            const SizedBox(width: 8),
             CtNinePatchButton(
               enabled: _selected != null,
               onPressed: _selected == null

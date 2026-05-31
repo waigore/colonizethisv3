@@ -289,12 +289,13 @@ void main() {
   });
 
   group('MarketActivity', () {
-    test('empty has zeroed fields', () {
+    test('empty has zeroed fields and empty notes', () {
       const m = MarketActivity.empty;
       expect(m.totalBidQuantity, 0);
       expect(m.totalOfferQuantity, 0);
       expect(m.filledQuantity, 0);
       expect(m.priceChangePercent, 0.0);
+      expect(m.notes, isEmpty);
     });
 
     test('round-trips through JSON', () {
@@ -306,6 +307,121 @@ void main() {
       );
       final restored = MarketActivity.fromJson(original.toJson());
       expect(restored, equals(original));
+    });
+
+    test('toJson omits notes when empty', () {
+      const m = MarketActivity(
+        totalBidQuantity: 1,
+        totalOfferQuantity: 1,
+      );
+      expect(m.toJson().containsKey('notes'), isFalse);
+    });
+  });
+
+  group('MarketActivityNote (#2990 B3 follow-up)', () {
+    test('round-trips stockpile-drop note through JSON', () {
+      const note = MarketActivityNote(
+        kind: MarketActivityNoteKind.carryForwardDroppedStockpileInsufficient,
+        factionId: 'gp1',
+        commodityId: 'timber',
+        quantity: 7,
+      );
+      final restored = MarketActivityNote.fromJson(note.toJson());
+      expect(restored, equals(note));
+      expect(restored.hashCode, equals(note.hashCode));
+    });
+
+    test('round-trips cargo-drop note through JSON', () {
+      const note = MarketActivityNote(
+        kind: MarketActivityNoteKind.carryForwardDroppedCargoInsufficient,
+        factionId: 'gp2',
+        commodityId: 'iron',
+        quantity: 4,
+      );
+      final restored = MarketActivityNote.fromJson(note.toJson());
+      expect(restored, equals(note));
+    });
+
+    test('toJson uses enum names', () {
+      const note = MarketActivityNote(
+        kind: MarketActivityNoteKind.carryForwardDroppedCargoInsufficient,
+        factionId: 'gp1',
+        commodityId: 'timber',
+        quantity: 1,
+      );
+      expect(
+        note.toJson(),
+        {
+          'kind': 'carryForwardDroppedCargoInsufficient',
+          'factionId': 'gp1',
+          'commodityId': 'timber',
+          'quantity': 1,
+        },
+      );
+    });
+
+    test('fromJson rejects unknown kind', () {
+      expect(
+        () => MarketActivityNote.fromJson({
+          'kind': 'totallyMadeUp',
+          'factionId': 'gp1',
+          'commodityId': 'timber',
+          'quantity': 1,
+        }),
+        throwsA(isA<ArgumentError>()),
+      );
+    });
+
+    test('fromJson rejects non-string factionId', () {
+      expect(
+        () => MarketActivityNote.fromJson({
+          'kind': 'carryForwardDroppedStockpileInsufficient',
+          'factionId': 7,
+          'commodityId': 'timber',
+          'quantity': 1,
+        }),
+        throwsA(isA<ArgumentError>()),
+      );
+    });
+
+    test('MarketActivity round-trips a notes list through JSON', () {
+      const original = MarketActivity(
+        totalBidQuantity: 0,
+        totalOfferQuantity: 5,
+        filledQuantity: 0,
+        priceChangePercent: 0.0,
+        notes: [
+          MarketActivityNote(
+            kind: MarketActivityNoteKind
+                .carryForwardDroppedStockpileInsufficient,
+            factionId: 'gp1',
+            commodityId: 'timber',
+            quantity: 7,
+          ),
+        ],
+      );
+      final restored = MarketActivity.fromJson(original.toJson());
+      expect(restored, equals(original));
+      expect(restored.notes.single.factionId, 'gp1');
+      expect(restored.notes.single.quantity, 7);
+    });
+
+    test('MarketActivity equality reflects notes differences', () {
+      const a = MarketActivity(totalOfferQuantity: 1);
+      const b = MarketActivity(
+        totalOfferQuantity: 1,
+        notes: [
+          MarketActivityNote(
+            kind: MarketActivityNoteKind
+                .carryForwardDroppedStockpileInsufficient,
+            factionId: 'gp1',
+            commodityId: 'timber',
+            quantity: 1,
+          ),
+        ],
+      );
+      expect(a, isNot(equals(b)));
+      expect(a.hashCode, isNot(equals(b.hashCode)));
     });
   });
 

@@ -191,14 +191,15 @@ class _MoveArmyDialogState extends State<MoveArmyDialog> {
                 style: bodyStyle,
               ),
               const SizedBox(height: 16),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.end,
+              Wrap(
+                alignment: WrapAlignment.end,
+                spacing: 8,
+                runSpacing: 8,
                 children: [
                   CtNinePatchButton(
                     onPressed: () => Navigator.of(ctx).pop(false),
                     child: Text(l10n.common_cancel),
                   ),
-                  const SizedBox(width: 8),
                   CtNinePatchButton(
                     dangerVariant: true,
                     onPressed: () => Navigator.of(ctx).pop(true),
@@ -323,14 +324,15 @@ class _MoveArmyDialogState extends State<MoveArmyDialog> {
         else
           destinationColumns,
         const SizedBox(height: 16),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.end,
+        Wrap(
+          alignment: WrapAlignment.end,
+          spacing: 8,
+          runSpacing: 8,
           children: [
             CtNinePatchButton(
               onPressed: () => Navigator.of(context).pop(),
               child: Text(l10n.common_cancel),
             ),
-            const SizedBox(width: 8),
             CtNinePatchButton(
               enabled: _selected != null,
               onPressed: _selected == null ? null : _onConfirmPressed,
@@ -407,14 +409,21 @@ class _MoveArmyDestinationRow extends StatelessWidget {
             ),
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
             child: Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
               children: [
                 _MoveArmyRadioDot(selected: selected),
                 const SizedBox(width: 10),
                 Expanded(
-                  child: Text(entry.provinceLabel, style: labelStyle),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(entry.provinceLabel, style: labelStyle),
+                      if (declareWarTriggerLabel != null && triggerStyle != null)
+                        Text(declareWarTriggerLabel!, style: triggerStyle),
+                    ],
+                  ),
                 ),
-                if (declareWarTriggerLabel != null && triggerStyle != null)
-                  Text(declareWarTriggerLabel!, style: triggerStyle),
               ],
             ),
           ),
