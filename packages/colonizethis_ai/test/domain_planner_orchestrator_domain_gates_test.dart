@@ -287,6 +287,7 @@ void main() {
         researchPlannerRan: true,
         conquestArmyMovePlannerRan: true,
         conquestPasses: 22,
+        tradePlannerRan: true,
         workThreshold: 40,
         buildThreshold: 30,
         researchThreshold: 40,
@@ -295,6 +296,7 @@ void main() {
       expect(json['workPlannerRan'], isTrue);
       expect(json['buildPlannerRan'], isFalse);
       expect(json['conquestPasses'], 22);
+      expect(json['tradePlannerRan'], isTrue);
       final thresholds = json['thresholds'] as Map<String, Object?>;
       expect(thresholds['work'], 40);
       expect(thresholds['build'], 30);
