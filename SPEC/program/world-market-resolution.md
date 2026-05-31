@@ -76,6 +76,8 @@ class MarketActivity {
   final int totalOfferQuantity;
   final int filledQuantity;
   final double priceChangePercent;
+  final List<FilledDeal> deals;        // per-commodity Deal Book ledger
+  final List<MarketActivityNote> notes;
 }
 
 class WorldMarketState {
@@ -247,6 +249,10 @@ For each commodity that appears in any offer or bid (commodities iterated in alp
 
 `activityByCommodityId` records, per commodity with submitted volume, a `MarketActivity` with `totalBidQuantity` (sum of input bids), `totalOfferQuantity` (sum of input offers), `filledQuantity` (sum across emitted `FilledDeal`s), and `priceChangePercent = 0.0`. Price discovery is composed separately by the phase handler (Issue B / #2990) using `PriceDiscovery.computeNextPrice`, because only the phase handler knows which inputs are newly-submitted vs carry-forward.
 
+### Phase-handler activity rollup — `deals` ledger (Refs #2993 E6)
+
+`worldMarketTurnPhaseHandler` is the sole writer of `MarketActivity.deals`. After Step C/D it groups the resolved turn's `DealMatchResult.filledDeals` by `commodityId` and writes the per-commodity list (preserving emission order) onto the `MarketActivity` it builds for `WorldMarketState.lastTurnActivity`. The list is stored unmodifiable. Commodities that received submissions but produced zero fills carry an empty `deals` list; commodities with no submissions are absent from `lastTurnActivity` altogether. Carry-forward residuals are **not** in `deals` — they live on `carryForwardOffersByFactionId` / `carryForwardBidsByFactionId` and re-enter next turn's match. The Deal Book UI (`SPEC/ui/trade-screen.md` § Deal Book tab) filters `deals` per the active player's faction id (buyer or seller side) and never mutates the list in place.
+
 Edge cases:
 
 - Missing price for a commodity (`pricesByCommodityId` lookup returns `null`) is recorded on emitted `FilledDeal`s as `pricePerUnit = 0.0`. The phase handler is responsible for seeding `pricesByCommodityId` from `WorldMarketState.prices`; a missing entry signals a setup defect, not a runtime failure.
@@ -405,6 +411,9 @@ The pure helpers (`computeNextPrice`, `computeMarketActivity`, `DealMatcher.matc
 - **Deterministic matching.** Given two phase-13 runs with identical merged-order input, identical `WorldMarketState`, and identical seeds, when both runs execute Step C, then both emit byte-identical sequences of `FilledDeal` entries (same order, same quantities, same buyers/sellers) and produce byte-identical `MarketActivity` payloads.
 - **Carry-forward provenance preserved.** Given a current-turn bid by faction `f` of quantity 10 for commodity `c` at priority 2 that receives a partial fill of 4, when phase 13 produces carry-forwards in Step E, then `WorldMarketState.carryForwardBidsByFactionId[f]` contains one `TradeOrder` with `commodityId = c`, `quantity = 6`, `priority = 2` (the submitter is encoded by the map key, preserving attribution without requiring a per-order `submitterId` field).
 - **Phase placement preserved.** Given a turn whose phase sequence runs to completion, when the resolver emits phase markers, then `worldMarket` begins after the `buildWork end` marker and ends before the `endOfTurn start` marker, matching [turn-resolution-phases.md](turn-resolution-phases.md) § Acceptance criteria.
+- **Deals ledger emitted per commodity (Refs #2993 E6).** Given current-turn submissions that produce one or more `FilledDeal` entries for commodity `c`, when phase 13 builds `MarketActivity` for `c`, then `MarketActivity.deals` contains each `FilledDeal` exactly once in emission order, no `FilledDeal` for any other commodity, and the list is unmodifiable.
+- **Empty deals ledger for unfilled commodity.** Given a commodity `c` receives at least one submitted offer or bid but matching emits no `FilledDeal` for `c` (e.g. offer-only or insufficient cargo), when phase 13 builds `MarketActivity` for `c`, then `MarketActivity.deals.isEmpty` is true (not null, not absent) so the Deal Book UI can iterate it unconditionally.
+- **Deals JSON round-trip.** Given a `WorldMarketState` whose `lastTurnActivity[c].deals` has one or more `FilledDeal` entries, when the state is serialized to JSON and parsed back, then the restored `MarketActivity.deals` equals the original (`==` and `hashCode`) including each `FilledDeal`'s `isFirstRightOfRefusalMatch` and `isFtpMatch` flags.
 
 ### Data types (issue #2989)
 

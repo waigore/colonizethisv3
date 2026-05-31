@@ -229,6 +229,19 @@ DomainPlannerOutcome runDomainPlannersWithOutcome({
   ctx = ctx.withOrders(runResearchPlanner(ctx: ctx));
   emit('aiStageG');
 
+  // Refs #2994 F7: merge treasury-planner trade orders into the orchestrator
+  // output so every caller (strategic-AI entry + the simpler
+  // [runDomainPlanners] test entrypoint) surfaces trade alongside the other
+  // domain order families. Skip the append when the list is empty so
+  // `tradeOrdersByPlayerId` stays absent for that player and existing
+  // `MapEquality` assertions remain stable.
+  final tradePlannerRan = economyPlan.tradeOrders.isNotEmpty;
+  if (tradePlannerRan) {
+    ctx = ctx.withOrders(
+      ctx.orders.appendTradeOrders(nationId, economyPlan.tradeOrders),
+    );
+  }
+
   final domainGateData = DomainGateData(
     workPlannerRan: economyGate.workPlannerRan,
     buildPlannerRan: economyGate.buildPlannerRan,
@@ -238,6 +251,7 @@ DomainPlannerOutcome runDomainPlannersWithOutcome({
     researchPlannerRan: researchWillRun,
     conquestArmyMovePlannerRan: conquestArmyMovePlannerRan,
     conquestPasses: conquestPasses,
+    tradePlannerRan: tradePlannerRan,
     workThreshold: economyGate.workThreshold,
     buildThreshold: economyGate.buildThreshold,
     researchThreshold: researchThreshold,

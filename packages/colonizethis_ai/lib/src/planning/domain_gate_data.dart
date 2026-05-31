@@ -26,6 +26,7 @@ class DomainGateData {
     required this.researchPlannerRan,
     required this.conquestArmyMovePlannerRan,
     required this.conquestPasses,
+    required this.tradePlannerRan,
     this.workThreshold,
     this.buildThreshold,
     this.researchThreshold,
@@ -95,6 +96,18 @@ class DomainGateData {
   /// active phase.
   final int conquestPasses;
 
+  /// Whether the treasury planner emitted at least one trade order for
+  /// this player turn (Refs #2994 F7). `true` iff the orchestrator
+  /// merged a non-empty `economyPlan.tradeOrders` list into
+  /// `Orders.tradeOrdersByPlayerId[nationId]`. `false` covers two cases
+  /// the trace must distinguish only via the per-domain output count:
+  /// the planner ran but produced zero orders (no surplus and no buy
+  /// gate cleared) and the upstream caller passed an `EconomyPlan` with
+  /// no trade orders. Either way the orchestrator skips the
+  /// trade-orders append, so downstream `MapEquality` checks see no
+  /// `nationId` entry under `tradeOrdersByPlayerId`.
+  final bool tradePlannerRan;
+
   /// Computed civilian work threshold (`workThreshold`) used by the
   /// orchestrator's `runFullAiCivilianWork` gate, or `null` when the
   /// orchestrator did not compute a threshold (no domain weight check
@@ -134,6 +147,7 @@ class DomainGateData {
       'researchPlannerRan': researchPlannerRan,
       'conquestArmyMovePlannerRan': conquestArmyMovePlannerRan,
       'conquestPasses': conquestPasses,
+      'tradePlannerRan': tradePlannerRan,
       if (thresholdsJson.isNotEmpty) 'thresholds': thresholdsJson,
     };
   }
