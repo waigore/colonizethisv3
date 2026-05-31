@@ -23,7 +23,7 @@ fi
 
 echo ""
 echo "=== Package tests (colonizethis; CI: package_tests job) ==="
-PACKAGE_TEST_JOBS=4 tool/run_package_tests.sh
+PACKAGE_TEST_MAX_JOBS=4 PACKAGE_TEST_CONCURRENCY=4 tool/run_package_tests.sh
 
 echo ""
 echo "=== Workspace analyze (errors only; includes test/ + integration_test/; CI: quality job) ==="
