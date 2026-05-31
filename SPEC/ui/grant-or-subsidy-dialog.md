@@ -20,22 +20,30 @@ Implementation: `app/lib/features/game/widgets/diplomacy_dialogs.dart` (private 
 
 ```text
 +--------------------------------------------------+
-| Grant aid     (or)     Set subsidy               |  titleMedium
+| Grant aid     (or)     Set subsidy               |  display + --accent + 0.05em
 +--------------------------------------------------+
-| Treasury: £8400   Step: £500                     |  bodySmall
+| Treasury: £8400   Step: £500                     |  body + --muted
+| ------------------------------------------------ |  1 px --border thin divider
 |                                                  |
-|         [ - ]    £ 1,000    [ + ]                |  amount stepper
-|        (Treasury below minimum £500.)            |  shown only when canAdjust=false
+|         [ − ]    £ 1,000    [ + ]                |  stepper (− muted on --bg-deep / + accent on --surface-lite)
+|        (Treasury below minimum £500.)            |  italic --danger, shown only when canAdjust=false
 |                                                  |
 |              [ Cancel ]    [ Submit ]            |
 +--------------------------------------------------+
 ```
 
-- Title: `diplomacy_grantAid` when `isSubsidy == false`; `diplomacy_setSubsidy` when `isSubsidy == true` (`titleMedium`).
-- Treasury / step row: `diplomacy_treasuryStep(treasury, step)` (`bodySmall`).
-- Amount stepper: `Row` centered, `IconButton` (key `diplo_amount_minus`, icon `Icons.remove`), `Text(diplomacy_currencyAmount(amount))` (`titleLarge`), `IconButton` (key `diplo_amount_plus`, icon `Icons.add`). Both step buttons disable (`onPressed: null`) when `canAdjust == false` (treasury below one step).
-- Below-minimum hint: `diplomacy_treasuryBelowMinimum(step)` (`bodySmall`, error color) shown only when `canAdjust == false`.
-- Footer: right-aligned `Row` with `CtNinePatchButton` Cancel (`common_cancel`) and `CtNinePatchButton` Submit (`game_callToArms_submit`). Submit enabled only when `_canSubmit` is true.
+- **Frame:** Wrapped in `CtDialogShell` (2 px `--accent-dim` border, `surface-lite → surface → bg-deep` gradient surface; see [pixel-art-ui-catalog.md](pixel-art-ui-catalog.md) § *CtDialogShell*).
+- **Title:** `diplomacy_grantAid` when `isSubsidy == false`; `diplomacy_setSubsidy` when `isSubsidy == true`. Rendered with the dark-theme `titleMedium` slot (display font / `Cinzel` / `Iowan Old Style` per [pixel-art-ui-catalog.md](pixel-art-ui-catalog.md) § Editorial-monocle palette font stacks), the canonical `EditorialMonoclePalette.accent` color, and `letterSpacing == titleFontSize * 0.05` so the spacing scales with theme text-scale overrides (mirrors the dialog-title convention used by other DLG*/OVL* surfaces under #2867). Stable widget key `Key('grantOrSubsidyDialogTitle')`.
+- **Treasury / step row:** `diplomacy_treasuryStep(treasury, step)`, rendered with the dark-theme `bodySmall` slot and `EditorialMonoclePalette.muted` color. Stable widget key `Key('grantOrSubsidyDialogTreasury')`.
+- **Thin divider:** A 1 dp solid horizontal divider in `EditorialMonoclePalette.border` separates the treasury row from the stepper, matching [mockups/DIPL20001-grant-or-subsidy-dialog.html](mockups/DIPL20001-grant-or-subsidy-dialog.html) `.divider-thin`. Implemented as a `Container` of fixed `height == 1` whose `decoration.color` resolves to `EditorialMonoclePalette.border`. Stable widget key `Key('grantOrSubsidyDialogThinDivider')`.
+- **Amount stepper:** Centered `Row` with three children:
+  - **Minus button:** keyed `diplo_amount_minus`. Surface fill `EditorialMonoclePalette.bgDeep`, 1 dp `EditorialMonoclePalette.border` outline, label `−` (U+2212) painted in `EditorialMonoclePalette.muted` using a monospace `TextStyle`. Disabled (`onPressed == null`) when `canAdjust == false`.
+  - **Amount:** `Text(diplomacy_currencyAmount(amount))` rendered with the dark-theme `headlineSmall` slot (display font), color `EditorialMonoclePalette.fg`, `letterSpacing == amountFontSize * 0.04`, minimum content width 80 dp. Stable widget key `Key('grantOrSubsidyDialogAmount')`.
+  - **Plus button:** keyed `diplo_amount_plus`. Surface fill `EditorialMonoclePalette.surfaceLite`, 1 dp `EditorialMonoclePalette.accentDim` outline, label `+` painted in `EditorialMonoclePalette.accent` using a monospace `TextStyle`. Disabled (`onPressed == null`) when `canAdjust == false`.
+- **Below-minimum hint:** `diplomacy_treasuryBelowMinimum(step)` rendered with the dark-theme `bodySmall` slot, color `EditorialMonoclePalette.danger`, `fontStyle == FontStyle.italic`. Shown only when `canAdjust == false`. Stable widget key `Key('grantOrSubsidyDialogWarning')`.
+- **Footer:** Right-aligned `Row` with `CtNinePatchButton` Cancel (`common_cancel`) and `CtNinePatchButton` Submit (`game_callToArms_submit`). Submit enabled only when `_canSubmit` is true. (Cancel keeps the standard brass label; Submit follows the catalog `CtNinePatchButton` enabled/disabled treatment.)
+
+All colors resolve from `EditorialMonoclePalette` tokens; no hard-coded hex literals are permitted in the implementation (mirrors the regression guard pattern adopted by other DLG*/OVL* dark-chrome slices under #2867).
 
 ---
 
@@ -76,7 +84,8 @@ The `GrantOrSubsidySubmittedEvent` listener (`grant_or_subsidy_listener.dart`) m
 ## Components
 
 - `CtDialogShell`, `CtNinePatchButton` (see `app/lib/widgets/`).
-- Material: `IconButton`, `Icons.remove`, `Icons.add`, `Text`, `Row`, `Column`.
+- `EditorialMonoclePalette` (`app/lib/config/editorial_monocle_palette.dart`) — title/treasury/amount/divider/warning/stepper colors.
+- Flutter primitives: `Text`, `Row`, `Column`, `Container`, `InkWell`/`GestureDetector` for the bespoke stepper buttons keyed `diplo_amount_minus` / `diplo_amount_plus` (the dialog no longer uses Material `IconButton` or `Icons.remove` / `Icons.add` — the chrome paints `−` / `+` glyphs per [mockups/DIPL20001-grant-or-subsidy-dialog.html](mockups/DIPL20001-grant-or-subsidy-dialog.html)).
 - Logic constants: `setSubsidyAmountStep`, `setSubsidyDefaultAmount`, `grantAidAmountStep`, `grantAidDefaultAmount` (from `colonizethis_logic`).
 - Localized keys via `appL10n(context)`: `diplomacy_grantAid`, `diplomacy_setSubsidy`, `diplomacy_treasuryStep`, `diplomacy_currencyAmount`, `diplomacy_treasuryBelowMinimum`, `common_cancel`, `game_callToArms_submit`.
 
@@ -90,13 +99,29 @@ The `GrantOrSubsidySubmittedEvent` listener (`grant_or_subsidy_listener.dart`) m
 
 - Given the human player's `treasury >= grantAidAmountStep` and the dialog is in grant mode, when the dialog opens, then the initial `amount` equals `min(grantAidDefaultAmount, _maxAffordable())` snapped down to the nearest multiple of `grantAidAmountStep`, and the Submit `CtNinePatchButton.enabled` is `true`.
 
-- Given the human player's `treasury < grantAidAmountStep`, when the dialog opens in grant mode, then both `IconButton(key: diplo_amount_minus)` and `IconButton(key: diplo_amount_plus)` have `onPressed == null`, the localized `diplomacy_treasuryBelowMinimum(grantAidAmountStep)` text is rendered, and Submit is disabled.
+- Given the human player's `treasury < grantAidAmountStep`, when the dialog opens in grant mode, then the widgets keyed `diplo_amount_minus` and `diplo_amount_plus` both have `onTap == null` / `enabled == false`, the widget keyed `grantOrSubsidyDialogWarning` renders the localized `diplomacy_treasuryBelowMinimum(grantAidAmountStep)` text, and Submit is disabled.
 
 - Given a Submit-enabled state with amount `A`, when the user taps Submit, then `GrantOrSubsidyDialog` is popped first and the UI layer then emits exactly one `GrantOrSubsidySubmittedEvent` on the supplied bus with `targetFactionId == widget.targetFactionId`, `amount == A`, and `isSubsidy == widget.isSubsidy`.
 
 - Given the user taps Cancel, when the gesture completes, then no `GrantOrSubsidySubmittedEvent` is emitted and the dialog is removed from the widget tree.
 
 - Given the user taps `diplo_amount_plus` while `amount == _maxAffordable()`, when the gesture completes, then `amount` does not exceed `_maxAffordable()` (clamped to that ceiling).
+
+### Dark editorial-monocle chrome (#2863 S6)
+
+- **Title color + letter-spacing:** Given `GrantOrSubsidyDialog` is mounted in either mode, when the widget keyed `grantOrSubsidyDialogTitle` is inspected, then `Text.style.color` resolves to `EditorialMonoclePalette.accent` and `Text.style.letterSpacing` equals `style.fontSize * 0.05` (within 1e-6 dp).
+
+- **Title regression guard (negative):** Given `GrantOrSubsidyDialog` is mounted, when the widget keyed `grantOrSubsidyDialogTitle` is inspected, then `Text.style.color` is **not** the default `textTheme.titleMedium.color` resolved from the ambient `ThemeData` (i.e. the dark chrome override is applied — not the bare theme slot).
+
+- **Treasury color:** Given `GrantOrSubsidyDialog` is mounted, when the widget keyed `grantOrSubsidyDialogTreasury` is inspected, then `Text.style.color` resolves to `EditorialMonoclePalette.muted`.
+
+- **Thin divider:** Given `GrantOrSubsidyDialog` is mounted, when the widget keyed `grantOrSubsidyDialogThinDivider` is inspected, then it is a `Container` whose `constraints` resolve to `height == 1.0` and whose `decoration` paints `EditorialMonoclePalette.border` (regression guard: no `Divider` widget from Material chrome is used).
+
+- **Amount color + letter-spacing:** Given `GrantOrSubsidyDialog` is mounted, when the widget keyed `grantOrSubsidyDialogAmount` is inspected, then `Text.style.color` resolves to `EditorialMonoclePalette.fg` and `Text.style.letterSpacing` equals `style.fontSize * 0.04` (within 1e-6 dp).
+
+- **Warning style:** Given the treasury is below the minimum step (`canAdjust == false`), when the widget keyed `grantOrSubsidyDialogWarning` is inspected, then `Text.style.color` resolves to `EditorialMonoclePalette.danger` and `Text.style.fontStyle` equals `FontStyle.italic`.
+
+- **No Material AlertDialog leak (regression guard):** Given `GrantOrSubsidyDialog` is mounted, when the widget subtree is inspected, then no `AlertDialog`, `ListTile`, or `Card` widget is in the descendant tree (the dialog renders inside `CtDialogShell` only, matching `SPEC/ui/pixel-art-ui-catalog.md` § Material design ban).
 
 ---
 
