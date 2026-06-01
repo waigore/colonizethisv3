@@ -14,6 +14,7 @@ import 'package:colonizethis_app/providers/game_service_provider.dart';
 import 'package:colonizethis_app/providers/games_box_provider.dart';
 import 'package:colonizethis_app/providers/games_provider.dart';
 import 'package:colonizethis_app/providers/map_province_panel_provider.dart';
+import 'package:colonizethis_app/widgets/ct_icon_action.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart'
     show PlayerView, buildPlayerView;
@@ -376,10 +377,9 @@ void main() {
       await pumpNarrowHost(tester);
       final buildImprovementShortcut = find.byWidgetPredicate(
         (Widget w) =>
-            w is IconButton &&
+            w is CtIconAction &&
             w.onPressed != null &&
-            w.icon is Icon &&
-            (w.icon as Icon).icon == Icons.handyman,
+            w.icon == Icons.handyman,
       );
       expect(buildImprovementShortcut, findsOneWidget);
     },

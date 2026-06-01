@@ -10,6 +10,7 @@ import '../../../config/editorial_monocle_palette.dart';
 import '../../../config/ui_screen_ids.dart';
 import '../../../l10n/l10n.dart';
 import '../../../widgets/ct_dialog_shell.dart';
+import '../../../widgets/ct_icon_action.dart';
 import '../../../widgets/ct_section_label.dart';
 import '../utils/map_location_resolver.dart';
 import '../utils/sea_zone_name_resolver.dart';
@@ -359,15 +360,11 @@ class _MoveFleetDestinationRow extends StatelessWidget {
                 Expanded(
                   child: Text(pick.rowLabel, style: labelStyle),
                 ),
-                IconButton(
+                CtIconAction(
                   tooltip: locateTooltip,
-                  icon: Icon(
-                    Icons.my_location,
-                    size: 18,
-                    color: EditorialMonoclePalette.muted,
-                  ),
+                  icon: Icons.my_location,
+                  iconColor: EditorialMonoclePalette.muted,
                   onPressed: onLocate,
-                  visualDensity: VisualDensity.compact,
                 ),
               ],
             ),

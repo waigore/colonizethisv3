@@ -63,6 +63,11 @@ List<WidgetbookNode> get pauseMenuPanelDirectories => [
   ),
 ];
 
+/// Next turn confirmation (DLG60001) and Game Initializing (SHEL30001)
+/// Widgetbook stories live in `catalog_part8.dart` — extracted to keep
+/// this part fragment under the `repo.part_unit_size` 1000-physical-line
+/// ceiling (`SPEC/program/repo-lint.md`).
+
 /// Hosts [GameSideMenu] in a [Stack] so the [Positioned] body has bounded
 /// constraints, matching how [GameMapArea] mounts the drawer in production.
 class _GameSideMenuStoryHost extends StatefulWidget {
@@ -261,6 +266,10 @@ List<WidgetbookNode> get ctDarkThemePrimitiveDirectories => [
       WidgetbookUseCase(
         name: 'CtBackButton — interactive states',
         builder: (context) => const _CtBackButtonStory(),
+      ),
+      WidgetbookUseCase(
+        name: 'CtIconAction — glyph affordance states',
+        builder: (context) => const _CtIconActionStory(),
       ),
       WidgetbookUseCase(
         name: 'CtTopBar — slot composition',
@@ -775,6 +784,9 @@ class _CtBackButtonStoryState extends State<_CtBackButtonStory> {
     );
   }
 }
+
+// _CtIconActionStory is hosted in catalog_part8.dart to keep this part file
+// under the 1000-line repo-lint cap (`repo.part_unit_size`).
 
 class _CtTopBarStory extends StatelessWidget {
   const _CtTopBarStory();

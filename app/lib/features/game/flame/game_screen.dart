@@ -19,6 +19,7 @@ import '../../../../providers/turn_resolution_blocking_provider.dart';
 import '../../../../providers/turn_resolution_runner_provider.dart';
 import '../../../core/services/turn_resolution_blocking_service.dart';
 import '../../../core/services/turn_resolution_runner.dart';
+import '../../../widgets/ct_icon_action.dart';
 import '../../../widgets/ct_nine_patch_button.dart';
 import '../../../widgets/ct_screen_shell.dart';
 import '../../../widgets/game_to_ui_bus_listener.dart';
@@ -279,8 +280,9 @@ class GameScreen extends ConsumerWidget {
           Positioned(
             left: 16,
             top: 16,
-            child: IconButton(
-              icon: const Icon(Icons.menu),
+            child: CtIconAction(
+              icon: Icons.menu,
+              iconSize: 24,
               onPressed: () => _showPauseMenu(ref.read(appEventBusProvider)),
               tooltip: appL10n(context).game_pauseMenu_tooltip,
             ),
