@@ -68,10 +68,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../config/app_constants.dart';
 import '../../../config/editorial_monocle_palette.dart';
 import '../../../config/ui_screen_ids.dart';
+import '../../../l10n/l10n.dart';
 import '../../../providers/games_provider.dart';
 import '../../../widgets/ct_choice_chip.dart';
 import '../../../widgets/ct_game_feature_screen_shell.dart';
 import '../../../widgets/ct_panel.dart';
+import '../../../widgets/ct_section_label.dart';
+import '../../../widgets/ct_spacing.dart';
 import '../../../widgets/ct_tab_strip.dart';
 import '../../../widgets/ct_top_bar.dart';
 import '../../../widgets/resource_icon.dart';
@@ -156,6 +159,31 @@ class TradeScreen extends ConsumerWidget {
   /// the row identities themselves.
   static const Key marketCommodityListKey =
       ValueKey<String>('tradeScreenMarketCommodityList');
+
+  /// Stable widget key for the `Food` category section header inside
+  /// the Market tab commodity list (Refs `#3093` § Layout & grouping
+  /// — sectioned grouping slice). Pin point for widget tests asserting
+  /// the Food section label is mounted at the top of the list with
+  /// the food commodities beneath it. The widget at this key is a
+  /// `CtSectionLabel` whose visible text resolves from
+  /// `l10n.production_food` (English fallback `Food`) so the trade
+  /// screen reuses the existing Production-panel l10n surface.
+  static const Key marketSectionFoodKey =
+      ValueKey<String>('tradeScreenMarketSection:food');
+
+  /// Stable widget key for the `Raw Materials` category section header
+  /// inside the Market tab commodity list (Refs `#3093` § Layout &
+  /// grouping — sectioned grouping slice). Visible text resolves from
+  /// `l10n.production_rawMaterials` (English fallback `Raw Materials`).
+  static const Key marketSectionRawMaterialsKey =
+      ValueKey<String>('tradeScreenMarketSection:rawMaterials');
+
+  /// Stable widget key for the `Manufactured` category section header
+  /// inside the Market tab commodity list (Refs `#3093` § Layout &
+  /// grouping — sectioned grouping slice). Visible text resolves from
+  /// `l10n.production_manufactured` (English fallback `Manufactured`).
+  static const Key marketSectionManufacturedKey =
+      ValueKey<String>('tradeScreenMarketSection:manufactured');
 
   /// Per-row key for a Market tab commodity row. Deterministic so widget
   /// tests can pin a specific commodity (e.g. `timber`) without relying
@@ -517,9 +545,9 @@ class _TradeScreenTabsBody extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(CtSpacing.l),
       child: CtPanel(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(CtSpacing.l),
         child: CtTabStrip(
           initialTabIndex: initialTabIndex,
           tabLabels: const <String>[
@@ -641,7 +669,9 @@ class _MarketTabContent extends ConsumerWidget {
         (theme.textTheme.bodySmall ?? const TextStyle(fontSize: 12))
             .copyWith(color: EditorialMonoclePalette.danger);
 
-    final List<Commodity> rows = _tradeableCommoditiesSortedByDisplayName();
+    final _SectionedTradeableCommodities sectioned =
+        _tradeableCommoditiesByCategory();
+    final AppLocalizations l10n = appL10n(context);
     final WorldMarketState market = game.worldMarketState;
     final Orders orders = ref.watch(currentOrdersProvider);
 
@@ -674,53 +704,68 @@ class _MarketTabContent extends ConsumerWidget {
     // by the catalog size (22) so the eager build cost is negligible
     // and the deterministic ordering survives Widgetbook stories that
     // render the screen inside a non-scrollable container.
+    //
+    // Refs `#3093` — sectioned grouping slice. Rows are grouped by
+    // commodity category (Food → Raw Materials → Manufactured) under
+    // `CtSectionLabel` headers, mirroring the Production panel's
+    // Available subpanel so the two surfaces read consistently. Within
+    // each section, rows follow `CommodityCatalog.all` catalog order
+    // (no per-section alphabetical sort); this matches the Production
+    // panel's intra-section ordering.
+    final List<Widget> sectionWidgets = <Widget>[
+      ..._buildCommoditySectionWidgets(
+        sectionKey: TradeScreen.marketSectionFoodKey,
+        sectionLabel: l10n.production_food,
+        commodities: sectioned.food,
+        offerCap: offerCap,
+        stagedOffers: stagedOffers,
+        market: market,
+        orders: orders,
+        nameStyle: nameStyle,
+        priceStyle: priceStyle,
+        volumeStyle: volumeStyle,
+        quantityStyle: quantityStyle,
+        ref: ref,
+      ),
+      ..._buildCommoditySectionWidgets(
+        sectionKey: TradeScreen.marketSectionRawMaterialsKey,
+        sectionLabel: l10n.production_rawMaterials,
+        commodities: sectioned.rawMaterials,
+        offerCap: offerCap,
+        stagedOffers: stagedOffers,
+        market: market,
+        orders: orders,
+        nameStyle: nameStyle,
+        priceStyle: priceStyle,
+        volumeStyle: volumeStyle,
+        quantityStyle: quantityStyle,
+        ref: ref,
+        isFirstSection: false,
+      ),
+      ..._buildCommoditySectionWidgets(
+        sectionKey: TradeScreen.marketSectionManufacturedKey,
+        sectionLabel: l10n.production_manufactured,
+        commodities: sectioned.manufactured,
+        offerCap: offerCap,
+        stagedOffers: stagedOffers,
+        market: market,
+        orders: orders,
+        nameStyle: nameStyle,
+        priceStyle: priceStyle,
+        volumeStyle: volumeStyle,
+        quantityStyle: quantityStyle,
+        ref: ref,
+        isFirstSection: false,
+      ),
+    ];
+
     final Widget list = SingleChildScrollView(
       key: TradeScreen.marketCommodityListKey,
       padding: EdgeInsets.zero,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         mainAxisSize: MainAxisSize.min,
-        children: <Widget>[
-          for (int index = 0; index < rows.length; index++)
-            Padding(
-              key: TradeScreen.marketCommodityRowKey(rows[index].id),
-              padding: EdgeInsets.only(top: index == 0 ? 0 : 12),
-              child: _MarketCommodityRow(
-                commodityId: rows[index].id,
-                commodityDisplayName:
-                    rows[index].displayName ?? rows[index].id,
-                priceText: _formatPrice(
-                  market.prices[rows[index].id],
-                  commodityId: rows[index].id,
-                ),
-                volumeText: _volumeText(
-                  market.lastTurnActivity[rows[index].id] ??
-                      MarketActivity.empty,
-                ),
-                stagedOrder: tradeOrderForPlayerCommodity(
-                  orders,
-                  playerId,
-                  rows[index].id,
-                ),
-                sellableHeadroom: _sellableHeadroomFor(
-                  offerCap: offerCap,
-                  stagedOffers: stagedOffers,
-                  commodityId: rows[index].id,
-                ),
-                offerCap: offerCap[rows[index].id] ?? 0,
-                nameStyle: nameStyle,
-                priceStyle: priceStyle,
-                volumeStyle: volumeStyle,
-                quantityStyle: quantityStyle,
-                onDirectionChanged: (TradeOrderType? next) =>
-                    _handleDirectionChanged(ref, rows[index].id, next),
-                onIncrement: () =>
-                    _handleQuantityDelta(ref, rows[index].id, 1),
-                onDecrement: () =>
-                    _handleQuantityDelta(ref, rows[index].id, -1),
-              ),
-            ),
-        ],
+        children: sectionWidgets,
       ),
     );
 
@@ -1034,21 +1079,114 @@ class _MarketTabContent extends ConsumerWidget {
         '$offersLabel ${activity.totalOfferQuantity}';
   }
 
-  /// Returns the tradeable commodities (catalog minus riches + spices)
-  /// sorted alphabetically by display name (case-insensitive). Spices
-  /// are excluded explicitly per Refs #2988 §UI Design — the Market tab
-  /// shows 22 tradeable rows (full catalog minus riches and spices).
-  static List<Commodity> _tradeableCommoditiesSortedByDisplayName() {
-    final List<Commodity> filtered = <Commodity>[
-      for (final Commodity c in CommodityCatalog.all)
-        if (c.category != CommodityCategory.riches && c.id != 'spices') c,
+  /// Returns the tradeable commodities grouped by their
+  /// [CommodityCategory] in catalog order (Refs `#3093` § Layout &
+  /// grouping — sectioned grouping slice). Spices and riches are
+  /// excluded per `SPEC/game/world-market.md` § Tradeable commodities,
+  /// leaving 22 rows split across three sections (food / raw materials
+  /// / manufactured). Within each section the per-commodity order
+  /// preserves `CommodityCatalog.all` iteration order so this surface
+  /// matches the Production panel's Available subpanel (which iterates
+  /// the same catalog list filtered by category).
+  static _SectionedTradeableCommodities _tradeableCommoditiesByCategory() {
+    final List<Commodity> food = <Commodity>[];
+    final List<Commodity> rawMaterials = <Commodity>[];
+    final List<Commodity> manufactured = <Commodity>[];
+    for (final Commodity c in CommodityCatalog.all) {
+      if (c.category == CommodityCategory.riches) continue;
+      if (c.id == 'spices') continue;
+      switch (c.category) {
+        case CommodityCategory.food:
+          food.add(c);
+        case CommodityCategory.rawMaterial:
+          rawMaterials.add(c);
+        case CommodityCategory.manufactured:
+          manufactured.add(c);
+        case CommodityCategory.luxury:
+        case CommodityCategory.riches:
+        case CommodityCategory.advanced:
+          break;
+      }
+    }
+    return _SectionedTradeableCommodities(
+      food: food,
+      rawMaterials: rawMaterials,
+      manufactured: manufactured,
+    );
+  }
+
+  /// Builds the widget list that renders one Market commodity category
+  /// section: a `CtSectionLabel` header keyed by [sectionKey] followed
+  /// by the per-commodity rows for [commodities] in their input order.
+  /// Returns an empty list when [commodities] is empty so an absent
+  /// category does not leak an orphan header (defensive — every
+  /// section is non-empty on the live catalog today; a future ruleset
+  /// could thin them out).
+  ///
+  /// [isFirstSection] controls the leading vertical gap so the first
+  /// section snugs against the cargo header without leaving extra
+  /// whitespace, and subsequent sections get a 12 dp separator that
+  /// matches the Production panel's between-section gap.
+  List<Widget> _buildCommoditySectionWidgets({
+    required Key sectionKey,
+    required String sectionLabel,
+    required List<Commodity> commodities,
+    required Map<CommodityId, int> offerCap,
+    required Map<CommodityId, int> stagedOffers,
+    required WorldMarketState market,
+    required Orders orders,
+    required TextStyle nameStyle,
+    required TextStyle priceStyle,
+    required TextStyle volumeStyle,
+    required TextStyle quantityStyle,
+    required WidgetRef ref,
+    bool isFirstSection = true,
+  }) {
+    if (commodities.isEmpty) return const <Widget>[];
+    return <Widget>[
+      if (!isFirstSection) const SizedBox(height: 12),
+      CtSectionLabel(sectionLabel, key: sectionKey),
+      const SizedBox(height: 6),
+      for (int index = 0; index < commodities.length; index++)
+        Padding(
+          key: TradeScreen.marketCommodityRowKey(commodities[index].id),
+          padding: EdgeInsets.only(top: index == 0 ? 0 : 12),
+          child: _MarketCommodityRow(
+            commodityId: commodities[index].id,
+            commodityDisplayName:
+                commodities[index].displayName ?? commodities[index].id,
+            priceText: _formatPrice(
+              market.prices[commodities[index].id],
+              commodityId: commodities[index].id,
+            ),
+            volumeText: _volumeText(
+              market.lastTurnActivity[commodities[index].id] ??
+                  MarketActivity.empty,
+            ),
+            stagedOrder: tradeOrderForPlayerCommodity(
+              orders,
+              playerId,
+              commodities[index].id,
+            ),
+            sellableHeadroom: _sellableHeadroomFor(
+              offerCap: offerCap,
+              stagedOffers: stagedOffers,
+              commodityId: commodities[index].id,
+            ),
+            offerCap: offerCap[commodities[index].id] ?? 0,
+            nameStyle: nameStyle,
+            priceStyle: priceStyle,
+            volumeStyle: volumeStyle,
+            quantityStyle: quantityStyle,
+            onDirectionChanged: (TradeOrderType? next) =>
+                _handleDirectionChanged(ref, commodities[index].id, next),
+            onIncrement: () =>
+                _handleQuantityDelta(ref, commodities[index].id, 1),
+            onDecrement: () =>
+                _handleQuantityDelta(ref, commodities[index].id, -1),
+          ),
+        ),
     ];
-    filtered.sort((Commodity a, Commodity b) {
-      final String an = (a.displayName ?? a.id).toLowerCase();
-      final String bn = (b.displayName ?? b.id).toLowerCase();
-      return an.compareTo(bn);
-    });
-    return filtered;
   }
 
   /// Formats the per-commodity market price for the Market tab row.
@@ -1073,6 +1211,23 @@ class _MarketTabContent extends ConsumerWidget {
     if (effective == null) return priceUnknownGlyph;
     return effective.toString();
   }
+}
+
+/// Pre-grouped tradeable commodities passed from
+/// `_tradeableCommoditiesByCategory()` to the section builder. Holds
+/// the three Market tab sections (food / raw materials / manufactured)
+/// in catalog order so the renderer does not re-iterate
+/// [CommodityCatalog.all] per section.
+class _SectionedTradeableCommodities {
+  const _SectionedTradeableCommodities({
+    required this.food,
+    required this.rawMaterials,
+    required this.manufactured,
+  });
+
+  final List<Commodity> food;
+  final List<Commodity> rawMaterials;
+  final List<Commodity> manufactured;
 }
 
 /// One row of the Market tab commodity table. Lays the read-only

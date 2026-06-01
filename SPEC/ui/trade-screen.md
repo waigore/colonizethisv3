@@ -25,6 +25,9 @@ The screen exposes static keys consumed by widget tests:
 - `TradeScreen.tabsBodyKey` — `ValueKey<String>('tradeScreenTabsBody')` (root of the two-tab Market + Deal Book body; replaces the prior `placeholderBodyKey` from the E1+E2+E3 scaffold and remains stable when E5/E6 swap each tab's body for the live content).
 - `TradeScreen.marketTabBodyKey` — `ValueKey<String>('tradeScreenMarketTabBody')` (Market tab body root; visible by default; spans the placeholder, the read-only commodity table from `#2993` E5a, and the future interactive controls).
 - `TradeScreen.marketCommodityListKey` — `ValueKey<String>('tradeScreenMarketCommodityList')` (scrollable container inside the Market tab body hosting the per-commodity rows; introduced by `#2993` E5a).
+- `TradeScreen.marketSectionFoodKey` — `ValueKey<String>('tradeScreenMarketSection:food')` (per-section `CtSectionLabel` header for the Food category inside the Market tab commodity list — Refs `#3093` § Layout & grouping — sectioned grouping slice).
+- `TradeScreen.marketSectionRawMaterialsKey` — `ValueKey<String>('tradeScreenMarketSection:rawMaterials')` (per-section `CtSectionLabel` header for the Raw Materials category — Refs `#3093` § Layout & grouping — sectioned grouping slice).
+- `TradeScreen.marketSectionManufacturedKey` — `ValueKey<String>('tradeScreenMarketSection:manufactured')` (per-section `CtSectionLabel` header for the Manufactured category — Refs `#3093` § Layout & grouping — sectioned grouping slice).
 - `TradeScreen.marketCommodityRowKey(CommodityId)` — `ValueKey<String>('tradeScreenMarketRow:<commodityId>')` (per-row key so widget tests can pin a specific commodity without text matching; introduced by `#2993` E5a).
 - `TradeScreen.marketRowNoneChipKey(CommodityId)` — `ValueKey<String>('tradeScreenMarketRow:<id>:none')` (per-row `None` direction chip; tap removes any staged trade order for the commodity — Refs `#2993` E5b).
 - `TradeScreen.marketRowBidChipKey(CommodityId)` — `ValueKey<String>('tradeScreenMarketRow:<id>:bid')` (per-row `Bid` direction chip; tap stages a `TradeOrderType.bid` for the commodity, replacing any prior offer — Refs `#2993` E5b).
@@ -86,9 +89,22 @@ Padding (16 dp)
             │           │     bodySmall, --danger — only when remainingCargo == 0
             │           │     AND totalStagedBidQuantity > 0)
             │           └── SingleChildScrollView (keyed `tradeScreenMarketCommodityList`)
-            │               └── Column (one row per tradeable commodity, 22 rows)
+            │               └── Column (one section per CommodityCategory,
+            │                          22 rows total across 3 sections —
+            │                          Refs #3093 sectioned grouping)
+            │                   ├── CtSectionLabel "Food"           (`tradeScreenMarketSection:food`)
+            │                   ├── Padding (keyed `tradeScreenMarketRow:<id>`)
+            │                   │   └── _MarketCommodityRow            // food rows in catalog order
+            │                   │       ... (per food commodity)
+            │                   ├── SizedBox(height: 12)
+            │                   ├── CtSectionLabel "Raw Materials"   (`tradeScreenMarketSection:rawMaterials`)
+            │                   ├── Padding (keyed `tradeScreenMarketRow:<id>`)
+            │                   │   └── _MarketCommodityRow            // rawMaterial rows in catalog order
+            │                   │       ... (per raw-material commodity)
+            │                   ├── SizedBox(height: 12)
+            │                   ├── CtSectionLabel "Manufactured"    (`tradeScreenMarketSection:manufactured`)
             │                   └── Padding (keyed `tradeScreenMarketRow:<id>`)
-            │                       └── _MarketCommodityRow
+            │                       └── _MarketCommodityRow            // manufactured rows in catalog order
             │                           ├── Row                       // (Refs #3093 row-icons slice)
             │                           │   ├── ResourceIcon 20 dp (`...:resourceIcon`)
             │                           │   ├── Text <displayName> (titleSmall, --accent)
@@ -155,7 +171,7 @@ _DealBookPanel (keyed `tradeScreenDealBookBidsPanel` / `tradeScreenDealBookOffer
 
 The two-tab body is the durable structure each follow-up Market slice (E5b interactive controls, E5c cargo indicator) and Deal Book slice (E6) keep building inside. The `CtTabStrip` widget owns the dark-chrome label band (selected = `--accentBright` text on `--accentDim` 25 % alpha background; unselected = `--muted` text on `--surface` 50 % alpha background; 1 px `--accent` / `--accentDim` border per `pixel-art-ui-catalog.md` § `CtTabStrip`) and the `IndexedStack` that mounts both tab bodies so widget tests can reach either tab via `find.byKey` regardless of which is currently visible. Default selection is the **Market** tab (index 0).
 
-The Market tab body is the read-only commodity table (`#2993` E5a). It iterates `CommodityCatalog.all` filtered to the tradeable subset — every commodity whose `CommodityCategory` is **not** `riches` and whose id is **not** `spices` (22 rows total per [`world-market.md`](../game/world-market.md) §Tradeable commodities). Rows are sorted alphabetically by display name (case-insensitive) so the order is deterministic for widget tests and Widgetbook stories. Each row reads:
+The Market tab body is the read-only commodity table (`#2993` E5a). It iterates `CommodityCatalog.all` filtered to the tradeable subset — every commodity whose `CommodityCategory` is **not** `riches` and whose id is **not** `spices` (22 rows total per [`world-market.md`](../game/world-market.md) §Tradeable commodities). Rows are grouped by `CommodityCategory` under `CtSectionLabel` headers — **Food → Raw Materials → Manufactured** — with within-section rows following `CommodityCatalog.all` iteration order so the Market tab mirrors the Production panel Available subpanel ordering (Refs `#3093` § Layout & grouping). Per-section detail and the prior alphabetical-sort fallback are documented in [§ Market tab — sectioned grouping (`#3093` slice)](#market-tab--sectioned-grouping-3093-slice). Each row reads:
 
 - the **commodity display name** in `--accent` (`titleSmall`),
 - the **last market price** from `Game.worldMarketState.prices[commodityId]` in `--accentBright` (`titleSmall`), formatted as a whole integer (prices on `Game.worldMarketState.prices` are integer treasury units per [`world-market.md`](../game/world-market.md) § Price discovery). When the commodity is absent from `prices`, the row falls back to the published default market price from `ResourceRules.defaultRules.defaultMarketPriceForCommodityId(commodityId)` so first-load Market tab sessions never render the em-dash for raw resources whose catalog default price is known. The canonical em-dash glyph `—` renders only when neither the market state nor the catalog has a value (manufactured commodities and other commodities whose first market price is discovered in-game),
@@ -200,6 +216,26 @@ The per-row bid stepper and direction chips honour the cross-commodity cap:
 - **Toggle a row to `Offer` / `None`:** never blocked by cargo (offers and `None` free or don't consume cargo).
 
 `tradeCargoCapacity == 0` is a valid state: the indicator renders `Cargo remaining: 0`, no bids can be staged via direction toggle or increment, and the warning row is absent until at least one bid is staged (which itself is impossible at capacity 0, so the warning row never mounts at capacity 0 — the indicator alone communicates the no-cargo state).
+
+### Market tab — sectioned grouping (`#3093` slice)
+
+The Market tab body groups the 22 tradeable rows under three `CtSectionLabel` headers so the surface mirrors the Production panel's Available subpanel (Refs `#3093` § Layout & grouping). The headers and their backing widget keys are:
+
+| Section header | Widget key | l10n source (English fallback) | Catalog filter |
+|---|---|---|---|
+| Food | `TradeScreen.marketSectionFoodKey` | `l10n.production_food` (`"Food"`) | `CommodityCategory.food` |
+| Raw Materials | `TradeScreen.marketSectionRawMaterialsKey` | `l10n.production_rawMaterials` (`"Raw Materials"`) | `CommodityCategory.rawMaterial` |
+| Manufactured | `TradeScreen.marketSectionManufacturedKey` | `l10n.production_manufactured` (`"Manufactured"`) | `CommodityCategory.manufactured` |
+
+Section ordering and within-section ordering:
+
+- The three sections always render in the fixed order **Food → Raw Materials → Manufactured**; the first non-empty section snugs against the cargo indicator header and each subsequent section is separated by a 12 dp `SizedBox` (mirroring the Production panel's between-section gap).
+- Within each section the rows iterate `CommodityCatalog.all` filtered by category, preserving catalog order. The Market tab does **not** apply an alphabetical sort within or across sections (this supersedes the prior `#2993` E5a alphabetical contract).
+- The Riches set (`gold`, `silver`, `gems`, `diamonds`) and the `spices` advanced commodity are still excluded entirely — they do not contribute a row to any section.
+- An empty section is suppressed (header omitted) so a future ruleset that thins a category cannot leak an orphan header above zero rows. Today's catalog has at least one commodity per section (2 / 11 / 9), so all three headers are always mounted on the live screen.
+- `CtSectionLabel` renders its text in upper-case small-caps per `SPEC/ui/pixel-art-ui-catalog.md` § *CtSectionLabel visual contract*, so the visible labels read `FOOD`, `RAW MATERIALS`, and `MANUFACTURED` regardless of the source locale's casing.
+
+The section headers are scoped to the Market tab body subtree (`tradeScreenMarketTabBody`); they never appear under the off-stage Deal Book tab body (`tradeScreenDealBookTabBody`), matching the rest of the Market tab content.
 
 ### Market tab — sellable readout + offer-side clamp (`#3093` slice)
 
@@ -306,6 +342,7 @@ The Deal Book ledger described in [§ Deal Book ledger content (`#2993` E6)](#de
 - `ResourceIcon` (`app/lib/widgets/resource_icon.dart`) — per-row 20 × 20 leading commodity glyph on each Market row (Refs `#3093` row-icons slice); paints an empty 20 × 20 `SizedBox` fallback when the commodity is absent from the asset map so layout stays stable.
 - `CtPanel` (`SPEC/ui/pixel-art-ui-catalog.md` § `CtPanel`) — outer surface for the tabs body and inner surface for each tab placeholder.
 - `CtTabStrip` (`SPEC/ui/pixel-art-ui-catalog.md` § `CtTabStrip`) — dark editorial-monocle tab strip hosting the `Market` and `Deal Book` labels above the `IndexedStack` of tab bodies.
+- `CtSectionLabel` (`app/lib/widgets/ct_section_label.dart`; `SPEC/ui/pixel-art-ui-catalog.md` § *CtSectionLabel visual contract*) — small-caps section header used by the Market tab to group commodity rows under Food / Raw Materials / Manufactured (Refs `#3093` sectioned grouping slice). Same component the Production panel's Available subpanel uses.
 - `ObserveModeNotDefinedPanel` (`app/lib/features/game/widgets/observe_mode_not_defined_panel.dart`) — shared observe-mode sentinel.
 - `_DealBookTabContent` (`app/lib/features/game/screens/trade_screen.dart`) — read-only two-panel ledger (Refs `#2993` E6) hosting both `_DealBookPanel` instances under a `LayoutBuilder` that picks `Row` vs `Column` based on `dealBookTwoPanelMinWidth`.
 - `_DealBookPanel` (`app/lib/features/game/screens/trade_screen.dart`) — single ledger panel; renders panel title, optional empty-state copy, the Filled / Unfilled sections, and the always-mounted totals row.
@@ -361,7 +398,7 @@ Follow-up E5b cont. slices append `Market tab — priority dropdown` as the prio
 ### Market tab — read-only commodity table (`#2993` E5a)
 
 - **Given** the `TradeScreen` is mounted with a human player, observe mode is **not** active, and `Game.worldMarketState` is otherwise unconstrained, **then** the Market tab body keyed `tradeScreenMarketTabBody` contains exactly one `tradeScreenMarketCommodityList` widget that hosts exactly 22 rows keyed `tradeScreenMarketRow:<commodityId>` — one row for every `Commodity` in `CommodityCatalog.all` whose `category` is not `CommodityCategory.riches` and whose `id` is not `'spices'`.
-- **Given** the same conditions, **then** the row order inside `tradeScreenMarketCommodityList` is the deterministic alphabetical order of the tradeable commodities by display name (case-insensitive; falling back to commodity id when the display name is null) — every row's `Offset.dy` is strictly greater than the previous row's `Offset.dy`.
+- **Given** the same conditions, **then** the row order inside `tradeScreenMarketCommodityList` is the deterministic sectioned order documented in § Market tab — sectioned grouping (`#3093` slice): rows are grouped under three `CtSectionLabel` headers (Food → Raw Materials → Manufactured), within-section rows follow `CommodityCatalog.all` iteration order, and every row's `Offset.dy` is strictly greater than the previous row's `Offset.dy` within the same section (the prior `#2993` E5a alphabetical contract is superseded).
 - **Given** the same conditions and `Game.worldMarketState.prices` contains an entry `{'timber': 30}` (and no entry for `'iron'`, whose published default market price per `ResourceRules.defaultRules` is the integer `80`), **when** the Market tab body renders, **then** the `tradeScreenMarketRow:timber` row contains the text `30` (the integer market value) and the `tradeScreenMarketRow:iron` row contains the text `80` (the catalog default-market-price fallback for raw resources absent from `Game.worldMarketState.prices`).
 - **Given** the same conditions and `Game.worldMarketState.prices` is empty and the row is a manufactured commodity (e.g. `'lumber'`) whose id is not enumerated in `ResourceRules.defaultRules.defaultMarketPrice`, **when** the Market tab body renders, **then** the row's price cell contains the canonical em-dash glyph `—` (`priceUnknownGlyph`) because neither the market state nor the catalog has a published default price for that commodity (manufactured-commodity defaults are tracked as follow-up to `#3093`).
 - **Given** the same conditions and `Game.worldMarketState.lastTurnActivity` contains `{'timber': MarketActivity(totalBidQuantity: 12, totalOfferQuantity: 8)}` (and no entry for `'fabric'`), **when** the Market tab body renders, **then** the `tradeScreenMarketRow:timber` row contains the text `Bids 12 / Offers 8` and the `tradeScreenMarketRow:fabric` row contains the text `Bids 0 / Offers 0` (zero-default for commodities absent from the activity map).
@@ -392,6 +429,16 @@ Follow-up E5b cont. slices append `Market tab — priority dropdown` as the prio
 - **Given** the player has `tradeCargoCapacity = 10`, has staged `Bid` timber qty 10 (cargo remaining 0), **when** the user taps the `−` button on timber (`marketRowDecrementKey('timber')`), **then** the staged `TradeOrder.quantity` for timber decrements to 9, the cargo indicator updates to `Cargo remaining: 1`, and the warning row keyed `TradeScreen.marketCargoWarningKey` is removed from the widget tree.
 - **Given** the player has `tradeCargoCapacity = 10`, has staged `Bid` timber qty 10, **when** the user taps the `None` chip on timber (`marketRowNoneChipKey('timber')`), **then** the staged `TradeOrder` for timber is removed, the cargo indicator updates to `Cargo remaining: 10`, and the warning row is removed (because `totalStagedBidQuantity == 0`).
 - **Given** the `TradeScreen` is mounted with `shellPlayerContextProvider.canMutateViaUi == false`, **then** the cargo indicator and (when applicable) warning row remain mounted with the same text values as in the editable case (they read directly from `Game` + `currentOrdersProvider` regardless of the observe-mode `IgnorePointer`).
+
+### Market tab — sectioned grouping (`#3093` slice)
+
+- **Given** the `TradeScreen` is mounted with a human player and observe mode is **not** active, **then** the widget tree contains exactly one widget keyed `TradeScreen.marketSectionFoodKey`, exactly one widget keyed `TradeScreen.marketSectionRawMaterialsKey`, and exactly one widget keyed `TradeScreen.marketSectionManufacturedKey`, each scoped under the `tradeScreenMarketTabBody` subtree (the three `CtSectionLabel` headers for the Food, Raw Materials, and Manufactured commodity categories).
+- **Given** the same conditions, **when** the section header positions are measured, **then** `tester.getTopLeft(find.byKey(marketSectionRawMaterialsKey)).dy` is strictly greater than `tester.getTopLeft(find.byKey(marketSectionFoodKey)).dy` and `tester.getTopLeft(find.byKey(marketSectionManufacturedKey)).dy` is strictly greater than `tester.getTopLeft(find.byKey(marketSectionRawMaterialsKey)).dy` (the fixed Food → Raw Materials → Manufactured ordering).
+- **Given** the same conditions, **when** each section's commodity rows are measured in `CommodityCatalog.all` iteration order filtered by that section's `CommodityCategory`, **then** every row's `Offset.dy` is strictly greater than its predecessor's (within-section catalog order is preserved); for the Food section this pins `grain` above `meat`, for the Raw Materials section this pins `timber, iron, wool, cotton, coal, sugarCane, tobacco, furs, copper, tin, horses` in that exact order, and for the Manufactured section this pins `lumber, castIron, fabric, refinedSugar, cigars, furHats, steel, paper, bronze` in that exact order.
+- **Given** the same conditions, **when** cross-section row positions are measured, **then** the last Food row sits strictly above the Raw Materials section header, the Raw Materials section header sits strictly above the first Raw Materials row, the last Raw Materials row sits strictly above the Manufactured section header, and the Manufactured section header sits strictly above the first Manufactured row (no commodity row leaks across a section boundary).
+- **Given** the same conditions, **then** the visible text rendered under `marketSectionFoodKey` reads `FOOD` (upper-case via `CtSectionLabel`), under `marketSectionRawMaterialsKey` reads `RAW MATERIALS`, and under `marketSectionManufacturedKey` reads `MANUFACTURED` (resolved from `l10n.production_food` / `production_rawMaterials` / `production_manufactured` with the English-fallback path when the host `MaterialApp` has no localizations delegates).
+- **Given** the same conditions, **then** none of the section header keys appear under the off-stage Deal Book tab body subtree (`find.descendant(of: find.byKey(dealBookTabBodyKey, skipOffstage: false), matching: find.byKey(marketSectionFoodKey))` resolves to zero widgets; same for the other two section keys) — the section headers are scoped to the Market tab body.
+- **Given** the `TradeScreen` is mounted and `shellPanelsNotDefined(ref)` returns `true` (global observe mode), **then** none of `marketSectionFoodKey`, `marketSectionRawMaterialsKey`, or `marketSectionManufacturedKey` appear in the widget tree (only the `ObserveModeNotDefinedPanel` and the dark `CtTopBar` are mounted; section headers ride along with the Market tab body which is not rendered in observe mode).
 
 ### Market tab — sellable readout + offer-side clamp (`#3093` slice)
 

@@ -385,12 +385,18 @@ class _UnitRow extends ConsumerWidget {
     required bool showActions,
     required bool inExplorerShortcutMode,
     required List<String> availableWorkTargetIds,
+    required String? tileKeyForLocate,
+    required String? regionIdForLocate,
   }) {
-    if (!showActions || readOnly) {
+    if (readOnly) {
       return const <UnitsEntityAction>[];
     }
+    final canLocate =
+        tileKeyForLocate != null &&
+        tileKeyForLocate.isNotEmpty &&
+        regionIdForLocate != null;
     return [
-      if (_isIdleNoPending)
+      if (showActions && _isIdleNoPending)
         UnitsEntityAction(
           tooltip: l10n.civilian_units_assign,
           icon: Icons.playlist_add,
@@ -399,44 +405,34 @@ class _UnitRow extends ConsumerWidget {
               ? () => _startShortcutAssign(availableWorkTargetIds)
               : () => _showOrderMenu(context, availableWorkTargetIds),
         ),
-      if (_hasWork)
+      if (showActions && _hasWork)
         UnitsEntityAction(
           tooltip: l10n.common_cancel,
           icon: Icons.cancel_outlined,
           label: l10n.common_cancel,
           onPressed: () => _confirmCancel(context),
         ),
+      // R30: locate is the rightmost action in the action cluster
+      // (mockup `.u-actions .locate-btn`), rendered icon-only. Locate stays
+      // visible on tile-scope rows that hide the Assign/Cancel cluster so
+      // users can still recenter the map on any visible civilian.
+      UnitsEntityAction(
+        tooltip: l10n.common_locate,
+        icon: Icons.my_location,
+        label: l10n.common_locate,
+        iconOnly: true,
+        onPressed: canLocate
+            ? () {
+                bus.emit(
+                  LocateMapTileEvent(
+                    tileKey: tileKeyForLocate,
+                    regionId: regionIdForLocate,
+                  ),
+                );
+              }
+            : null,
+      ),
     ];
-  }
-
-  Widget _buildTitleDetails(
-    AppLocalizations l10n, {
-    required String? tileKeyForLocate,
-    required String? regionIdForLocate,
-  }) {
-    return Row(
-      children: [
-        Expanded(child: Text(unit.type, overflow: TextOverflow.ellipsis)),
-        const SizedBox(width: 4),
-        CtIconAction(
-          tooltip: l10n.common_locate,
-          onPressed:
-              tileKeyForLocate != null &&
-                  tileKeyForLocate.isNotEmpty &&
-                  regionIdForLocate != null
-              ? () {
-                  bus.emit(
-                    LocateMapTileEvent(
-                      tileKey: tileKeyForLocate,
-                      regionId: regionIdForLocate,
-                    ),
-                  );
-                }
-              : null,
-          icon: Icons.my_location,
-        ),
-      ],
-    );
   }
 
   void _handleRowTap() {
@@ -480,28 +476,183 @@ class _UnitRow extends ConsumerWidget {
       showActions: showActions,
       inExplorerShortcutMode: inExplorerShortcutMode,
       availableWorkTargetIds: availableWorkTargetIds,
+      tileKeyForLocate: tileKeyForLocate,
+      regionIdForLocate: regionIdForLocate,
     );
-    return ListTile(
-      selected: isTileScope && isSelectedInTileScope,
-      title: UnitsEntityActionRow(
-        details: _buildTitleDetails(
-          l10n,
-          tileKeyForLocate: tileKeyForLocate,
-          regionIdForLocate: regionIdForLocate,
-        ),
-        actions: rowActions,
-      ),
-      subtitle: Column(
+    final selected = isTileScope && isSelectedInTileScope;
+    return CivilianUnitRowCard(
+      key: ValueKey('civilian-unit-card-${unit.id}'),
+      selected: selected,
+      onTap: _handleRowTap,
+      details: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
         children: [
+          Text(unit.type, overflow: TextOverflow.ellipsis),
           Text(l10n.civilian_units_status(statusLabel)),
           Text(l10n.civilian_units_location(_locationLabel())),
           _buildAssignedToSubtitle(l10n),
         ],
       ),
-      dense: true,
-      onTap: _handleRowTap,
+      actions: rowActions,
+    );
+  }
+}
+
+/// Bordered civilian-unit row card per `SPEC/ui/civilian-units-panel.md`
+/// § Layout / wireframe → Row card chrome and mockup `.unit-row`
+/// (Refs #2866 S9 R30).
+///
+/// Wraps the left detail stack and the right-aligned action cluster inside a
+/// single `DecoratedBox` painted with a vertical
+/// `EditorialMonoclePalette.bgDeep` → `EditorialMonoclePalette.surface`
+/// gradient and a 1 dp border. The default border resolves to
+/// [EditorialMonoclePalette.border]; pointer hover (via [MouseRegion]) and
+/// tile-scope [selected] state both shift the border to
+/// [EditorialMonoclePalette.accentDim] so the card surfaces selection /
+/// pointer feedback without relying on Material `ListTile` chrome.
+///
+/// Public so widget tests can locate civilian rows via
+/// `find.byType(CivilianUnitRowCard)` after the migration off `ListTile`.
+class CivilianUnitRowCard extends StatefulWidget {
+  const CivilianUnitRowCard({
+    super.key,
+    required this.details,
+    required this.actions,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final Widget details;
+  final List<UnitsEntityAction> actions;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  State<CivilianUnitRowCard> createState() => _CivilianUnitRowCardState();
+}
+
+class _CivilianUnitRowCardState extends State<CivilianUnitRowCard> {
+  bool _hovered = false;
+
+  static const double _borderWidth = 1;
+  static const double _innerSpacing = 8;
+  static const double _minRowHeight = 44;
+
+  Color _borderColor() {
+    if (widget.selected || _hovered) {
+      return EditorialMonoclePalette.accentDim;
+    }
+    return EditorialMonoclePalette.border;
+  }
+
+  static final LinearGradient _cardGradient = LinearGradient(
+    begin: Alignment.topCenter,
+    end: Alignment.bottomCenter,
+    colors: <Color>[
+      EditorialMonoclePalette.bgDeep,
+      EditorialMonoclePalette.surface,
+    ],
+  );
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 4),
+      child: MouseRegion(
+        onEnter: (_) {
+          if (!_hovered) setState(() => _hovered = true);
+        },
+        onExit: (_) {
+          if (_hovered) setState(() => _hovered = false);
+        },
+        child: Material(
+          type: MaterialType.transparency,
+          child: InkWell(
+            onTap: widget.onTap,
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                gradient: _cardGradient,
+                border: Border.all(
+                  color: _borderColor(),
+                  width: _borderWidth,
+                ),
+              ),
+              child: Padding(
+                padding: const EdgeInsets.all(_innerSpacing),
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(minHeight: _minRowHeight),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(child: widget.details),
+                      if (widget.actions.isNotEmpty) ...[
+                        const SizedBox(width: 8),
+                        _CivilianUnitCardActions(actions: widget.actions),
+                      ],
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Right-aligned action cluster inside [CivilianUnitRowCard]. Mirrors the
+/// default-mode cluster layout from
+/// [`UnitsEntityActionRow`](units/shared/units_entity_action_row.dart) without
+/// re-applying the outer chrome (the card itself owns the chrome). Each
+/// action renders as a `CtNinePatchButton`; entries with `iconOnly == true`
+/// (e.g. the rightmost Locate action per R30) render icon-only at all
+/// widths.
+class _CivilianUnitCardActions extends StatelessWidget {
+  const _CivilianUnitCardActions({required this.actions});
+
+  final List<UnitsEntityAction> actions;
+
+  static const double _iconOnlyBreakpoint = 200;
+  static const double _spacing = 6;
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final iconOnly = constraints.maxWidth < _iconOnlyBreakpoint;
+        return Wrap(
+          spacing: _spacing,
+          runSpacing: _spacing,
+          alignment: WrapAlignment.end,
+          children: [
+            for (final action in actions)
+              Tooltip(
+                message: action.tooltip,
+                child: CtNinePatchButton(
+                  onPressed: action.onPressed,
+                  enabled: action.onPressed != null,
+                  padding: EdgeInsets.symmetric(
+                    horizontal: iconOnly || action.iconOnly ? 8 : 10,
+                    vertical: 6,
+                  ),
+                  minHeight: 32,
+                  child: iconOnly || action.iconOnly
+                      ? Icon(action.icon, size: 16)
+                      : Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(action.icon, size: 16),
+                            const SizedBox(width: 4),
+                            Text(action.label),
+                          ],
+                        ),
+                ),
+              ),
+          ],
+        );
+      },
     );
   }
 }
