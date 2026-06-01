@@ -346,7 +346,38 @@ class _OvertureOfferRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final ThemeData theme = Theme.of(context);
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          _buildLabelsRow(Theme.of(context)),
+          const SizedBox(height: 8),
+          Wrap(
+            alignment: WrapAlignment.end,
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              CtNinePatchButton(
+                onPressed: onAccept,
+                child: Text(acceptLabel),
+              ),
+              CtNinePatchButton(
+                onPressed: onReject,
+                child: Text(rejectLabel),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Two-tone offerer/stage labels row. Extracted so `build` stays within
+  /// the `repo.dart_file_non_comment_line_size` 60-line per-`build`
+  /// budget when the row is hosted under the stacked
+  /// `Column(Row + Wrap)` layout (issue #2870 S8 / S10).
+  Widget _buildLabelsRow(ThemeData theme) {
     final TextStyle base =
         theme.textTheme.bodyMedium ?? const TextStyle(fontSize: 14);
     final TextStyle offererStyle = base.copyWith(
@@ -359,49 +390,31 @@ class _OvertureOfferRow extends StatelessWidget {
     final TextStyle stageStyle = base.copyWith(
       color: EditorialMonoclePalette.muted,
     );
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
-      child: Row(
-        children: [
-          Expanded(
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Flexible(
-                  child: Text(
-                    offerer,
-                    key: const ValueKey<String>('overtureOfferOfferer'),
-                    style: offererStyle,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-                Text(
-                  ': ',
-                  key: const ValueKey<String>('overtureOfferSeparator'),
-                  style: separatorStyle,
-                ),
-                Flexible(
-                  child: Text(
-                    stageLabel,
-                    key: const ValueKey<String>('overtureOfferStage'),
-                    style: stageStyle,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-              ],
-            ),
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Flexible(
+          child: Text(
+            offerer,
+            key: const ValueKey<String>('overtureOfferOfferer'),
+            style: offererStyle,
+            overflow: TextOverflow.ellipsis,
           ),
-          CtNinePatchButton(
-            onPressed: onAccept,
-            child: Text(acceptLabel),
+        ),
+        Text(
+          ': ',
+          key: const ValueKey<String>('overtureOfferSeparator'),
+          style: separatorStyle,
+        ),
+        Flexible(
+          child: Text(
+            stageLabel,
+            key: const ValueKey<String>('overtureOfferStage'),
+            style: stageStyle,
+            overflow: TextOverflow.ellipsis,
           ),
-          const SizedBox(width: 8),
-          CtNinePatchButton(
-            onPressed: onReject,
-            child: Text(rejectLabel),
-          ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }
