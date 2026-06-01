@@ -84,13 +84,13 @@ class GameMapPlayersBar extends StatelessWidget {
     final ownershipColors = factionOwnershipColorMapForOldWorld(game);
     final scoreFormat = NumberFormat.decimalPattern('en_US');
     final theme = Theme.of(context);
-    final nameStyle = (theme.textTheme.bodySmall ?? const TextStyle(fontSize: 10))
+    final nameStyle = (theme.textTheme.bodySmall ?? const TextStyle(fontSize: 12))
         .copyWith(
           color: EditorialMonoclePalette.muted,
           fontWeight: FontWeight.w500,
           fontSize: 10,
         );
-    final scoreStyle = (theme.textTheme.bodySmall ?? const TextStyle(fontSize: 9))
+    final scoreStyle = (theme.textTheme.bodySmall ?? const TextStyle(fontSize: 12))
         .copyWith(
           color: EditorialMonoclePalette.accentDim,
           fontFeatures: const <FontFeature>[FontFeature.tabularFigures()],

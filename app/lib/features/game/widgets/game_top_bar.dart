@@ -145,7 +145,7 @@ class GameTopBar extends StatelessWidget {
   Widget _buildObserveBanner(BuildContext context) {
     final ThemeData theme = Theme.of(context);
     final TextStyle observeStyle =
-        (theme.textTheme.bodyMedium ?? const TextStyle(fontSize: 13)).copyWith(
+        (theme.textTheme.bodyMedium ?? const TextStyle(fontSize: 14)).copyWith(
           color: EditorialMonoclePalette.muted,
           fontWeight: FontWeight.w600,
           fontSize: 13,
@@ -162,7 +162,7 @@ class GameTopBar extends StatelessWidget {
   Widget _buildTurnDisplay(BuildContext context) {
     final ThemeData theme = Theme.of(context);
     final TextStyle turnStyle =
-        (theme.textTheme.bodyMedium ?? const TextStyle(fontSize: 13)).copyWith(
+        (theme.textTheme.bodyMedium ?? const TextStyle(fontSize: 14)).copyWith(
           color: EditorialMonoclePalette.fg,
           fontWeight: FontWeight.w600,
           fontSize: 13,

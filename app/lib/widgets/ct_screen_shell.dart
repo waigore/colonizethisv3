@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'ct_panel.dart';
+import 'ct_spacing.dart';
 import 'ct_top_bar.dart';
 
 /// Full-screen pixel-art shell: dark editorial-monocle background + framed
@@ -34,7 +35,7 @@ class CtScreenShell extends StatelessWidget {
       backgroundColor: theme.scaffoldBackgroundColor,
       body: SafeArea(
         child: Padding(
-          padding: const EdgeInsets.all(8),
+          padding: const EdgeInsets.all(CtSpacing.m),
           child: CtPanel(
             padding: EdgeInsets.zero,
             child: Column(
@@ -44,14 +45,16 @@ class CtScreenShell extends StatelessWidget {
                   title: title,
                   showBackButton: showBackButton,
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: CtSpacing.m),
                 Expanded(
                   child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 8),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: CtSpacing.m,
+                    ),
                     child: child,
                   ),
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: CtSpacing.m),
               ],
             ),
           ),

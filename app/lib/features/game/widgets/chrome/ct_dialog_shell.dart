@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../../config/editorial_monocle_palette.dart';
 import '../../../../widgets/ct_gradients.dart';
+import '../../../../widgets/ct_spacing.dart';
 
 /// Dark editorial-monocle dialog shell. Implements `Refs #2859` S4 / R3 by
 /// painting a framed surface from the canonical palette tokens (no nine-patch
@@ -33,7 +34,10 @@ class CtDialogShell extends StatelessWidget {
     required this.child,
     this.maxWidth = 480,
     this.maxHeight = 600,
-    this.padding = const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+    this.padding = const EdgeInsets.symmetric(
+      horizontal: CtSpacing.l,
+      vertical: CtSpacing.l,
+    ),
     this.borderColor,
     this.borderWidth = defaultBorderWidth,
   });
@@ -79,7 +83,7 @@ class CtDialogShell extends StatelessWidget {
     return Dialog(
       backgroundColor: Colors.transparent,
       elevation: 0,
-      insetPadding: const EdgeInsets.all(16),
+      insetPadding: const EdgeInsets.all(CtSpacing.l),
       child: Center(
         child: ConstrainedBox(
           constraints: BoxConstraints(maxWidth: maxWidth, maxHeight: maxHeight),
