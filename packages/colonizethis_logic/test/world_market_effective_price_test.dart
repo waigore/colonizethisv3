@@ -1,0 +1,106 @@
+// Unit tests for `effectiveMarketPriceForCommodityId` (Refs #3093).
+//
+// SPEC/game/world-market.md § Treasury budget for bids,
+// SPEC/ui/trade-screen.md § Market tab — treasury bid cap.
+
+import 'package:colonizethis_data/colonizethis_data.dart' as data;
+import 'package:colonizethis_logic/colonizethis_logic.dart';
+import 'package:colonizethis_models/colonizethis_models.dart';
+import 'package:colonizethis_test/test.dart';
+
+import 'world_market_treasury_bid_budget_test_support.dart';
+
+void main() {
+  final data.ResourceRules rules = data.ResourceRules.defaultRules;
+
+  group('effectiveMarketPriceForCommodityId (Refs #3093)', () {
+    test('returns the integer price from worldMarketState.prices when present',
+        () {
+      final game = buildTreasuryBidBudgetGame(prices: const {'timber': 42});
+      expect(
+        effectiveMarketPriceForCommodityId(
+          commodityId: 'timber',
+          worldMarket: game.worldMarketState,
+          resourceRules: rules,
+        ),
+        42,
+      );
+    });
+
+    test(
+        'falls back to ResourceRules.defaultMarketPriceForCommodityId when the '
+        'prices map omits the commodity', () {
+      final game = buildTreasuryBidBudgetGame(
+        prices: const <CommodityId, int>{},
+      );
+      final int? defaultTimber = rules.defaultMarketPriceForCommodityId('timber');
+      expect(defaultTimber, isNotNull);
+      expect(
+        effectiveMarketPriceForCommodityId(
+          commodityId: 'timber',
+          worldMarket: game.worldMarketState,
+          resourceRules: rules,
+        ),
+        defaultTimber,
+      );
+    });
+
+    test('returns null for manufactured commodities without a catalog default',
+        () {
+      final game = buildTreasuryBidBudgetGame(
+        prices: const <CommodityId, int>{},
+      );
+      expect(
+        rules.defaultMarketPriceForCommodityId('lumber'),
+        isNull,
+        reason:
+            'Manufactured commodity defaults are tracked as follow-up to #3093.',
+      );
+      expect(
+        effectiveMarketPriceForCommodityId(
+          commodityId: 'lumber',
+          worldMarket: game.worldMarketState,
+          resourceRules: rules,
+        ),
+        isNull,
+      );
+    });
+
+    test('returns null for riches commodities regardless of stored prices', () {
+      final game = buildTreasuryBidBudgetGame(
+        prices: const {'gold': 1000, 'silver': 500, 'gems': 999},
+      );
+      expect(
+        effectiveMarketPriceForCommodityId(
+          commodityId: 'gold',
+          worldMarket: game.worldMarketState,
+          resourceRules: rules,
+        ),
+        isNull,
+      );
+      expect(
+        effectiveMarketPriceForCommodityId(
+          commodityId: 'silver',
+          worldMarket: game.worldMarketState,
+          resourceRules: rules,
+        ),
+        isNull,
+      );
+    });
+
+    test('treats negative stored prices as missing and falls back to catalog',
+        () {
+      final game = buildTreasuryBidBudgetGame(prices: const {'timber': -5});
+      final int? defaultTimber = rules.defaultMarketPriceForCommodityId('timber');
+      expect(defaultTimber, isNotNull);
+      expect(
+        effectiveMarketPriceForCommodityId(
+          commodityId: 'timber',
+          worldMarket: game.worldMarketState,
+          resourceRules: rules,
+        ),
+        defaultTimber,
+      );
+    });
+  });
+}
