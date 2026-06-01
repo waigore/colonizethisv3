@@ -14,6 +14,7 @@ import 'package:colonizethis_app/providers/games_provider.dart';
 import 'package:colonizethis_app/features/game/widgets/civilian_units_panel.dart';
 import 'package:colonizethis_app/features/game/widgets/units/shared/units_entity_action_row.dart';
 import 'package:colonizethis_app/features/game/widgets/units/shared/units_panel_shell.dart';
+import 'package:colonizethis_app/widgets/ct_icon_action.dart';
 import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
 import 'package:colonizethis_app/widgets/debug_init_game.dart';
 import 'package:colonizethis_app/widgets/resource_icon.dart';
@@ -185,11 +186,11 @@ void main() {
 
         final locateBtn = find.byTooltip('Locate');
         expect(locateBtn, findsOneWidget);
-        final iconButtons = find.byType(IconButton);
-        expect(iconButtons, findsOneWidget);
-        final iconBtn = tester.widget<IconButton>(iconButtons.first);
-        expect(iconBtn.iconSize, 18);
-        expect(iconBtn.visualDensity, VisualDensity.compact);
+        final iconActions = find.byType(CtIconAction);
+        expect(iconActions, findsOneWidget);
+        final iconAction = tester.widget<CtIconAction>(iconActions.first);
+        expect(iconAction.iconSize, CtIconAction.defaultIconSize);
+        expect(iconAction.icon, Icons.my_location);
 
         await tester.tap(locateBtn);
         await tester.pump();

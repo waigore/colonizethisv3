@@ -389,34 +389,24 @@ Widget _buildTileSection({
         child: Text(l10n.provinceOverlay_tileProspected(prospectedLabel)),
       ),
       if (showExploreActionIcon)
-        IconButton(
+        CtIconAction(
           tooltip: l10n.provinceOverlay_tileExploreWithExplorerTooltip,
           onPressed: exploreActionEnabled ? onExploreWithExplorerTap : null,
-          icon: Icon(
-            Icons.explore,
-            color: exploreActionEnabled
-                ? null
-                : EditorialMonoclePalette.muted.withValues(
-                    alpha: kProvinceOverlayTileInlineActionDisabledAlpha,
-                  ),
+          icon: Icons.explore,
+          enabled: exploreActionEnabled,
+          disabledIconColor: EditorialMonoclePalette.muted.withValues(
+            alpha: kProvinceOverlayTileInlineActionDisabledAlpha,
           ),
-          iconSize: 18,
-          visualDensity: VisualDensity.compact,
         ),
       if (showProspectActionIcon)
-        IconButton(
+        CtIconAction(
           tooltip: l10n.provinceOverlay_tileProspectWithExplorerTooltip,
           onPressed: prospectActionEnabled ? onProspectWithExplorerTap : null,
-          icon: Icon(
-            Icons.travel_explore,
-            color: prospectActionEnabled
-                ? null
-                : EditorialMonoclePalette.muted.withValues(
-                    alpha: kProvinceOverlayTileInlineActionDisabledAlpha,
-                  ),
+          icon: Icons.travel_explore,
+          enabled: prospectActionEnabled,
+          disabledIconColor: EditorialMonoclePalette.muted.withValues(
+            alpha: kProvinceOverlayTileInlineActionDisabledAlpha,
           ),
-          iconSize: 18,
-          visualDensity: VisualDensity.compact,
         ),
     ],
   );
@@ -432,21 +422,16 @@ Widget _buildTileSection({
         ),
       ),
       if (showBuildImprovementActionIcon)
-        IconButton(
+        CtIconAction(
           tooltip: l10n.provinceOverlay_tileBuildImprovementTooltip,
           onPressed: buildImprovementActionEnabled
               ? onBuildImprovementTap
               : null,
-          icon: Icon(
-            Icons.handyman,
-            color: buildImprovementActionEnabled
-                ? null
-                : EditorialMonoclePalette.muted.withValues(
-                    alpha: kProvinceOverlayTileInlineActionDisabledAlpha,
-                  ),
+          icon: Icons.handyman,
+          enabled: buildImprovementActionEnabled,
+          disabledIconColor: EditorialMonoclePalette.muted.withValues(
+            alpha: kProvinceOverlayTileInlineActionDisabledAlpha,
           ),
-          iconSize: 18,
-          visualDensity: VisualDensity.compact,
         ),
     ],
   );

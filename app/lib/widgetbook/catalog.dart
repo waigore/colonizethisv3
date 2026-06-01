@@ -54,6 +54,7 @@ import '../features/game/screens/diplomacy_detail_screen.dart';
 import '../features/game/screens/technology_screen.dart';
 import '../features/game/screens/trade_screen.dart';
 import '../features/game/flame/game_map_narrow_detail_overlay.dart';
+import '../features/game/flame/next_turn_confirmation_dialog.dart';
 import '../features/game/dialogue/call_to_arms_dialogue_overlay.dart';
 import '../features/game/dialogue/ct_dialogue_view.dart';
 import '../features/game/dialogue/game_start_intro_overlay.dart';
@@ -78,10 +79,12 @@ import '../features/game/widgets/train_military_dialog.dart';
 import '../features/game/widgets/transfer_to_home_fleet_dialog.dart';
 import '../features/game/widgets/turn_news_dialog.dart';
 import '../features/shell/new_game_leader_selection_dialog.dart';
+import '../features/shell/new_game_setup_flow.dart';
 import '../features/shell/shell_screen.dart';
 import '../l10n/l10n.dart';
 import '../widgets/debug_init_game.dart';
 import '../widgets/ct_back_button.dart';
+import '../widgets/ct_icon_action.dart';
 import '../widgets/ct_brass_divider.dart';
 import '../widgets/ct_choice_chip.dart';
 import '../widgets/ct_compass_rose.dart';
@@ -115,6 +118,7 @@ part 'catalog_part4.dart';
 part 'catalog_part5.dart';
 part 'catalog_part6.dart';
 part 'catalog_part7.dart';
+part 'catalog_part8.dart';
 
 Unit? _unitByIdForCatalog(Game game, String unitId) {
   for (final u in game.worldState.oldWorld.units) {
@@ -236,6 +240,8 @@ List<WidgetbookNode> get _ctWidgetbookDirectories => [
   ...gameMapProvinceDetailSidePanelDirectories,
   ...playerTurnEventFeedCardDirectories,
   ...pauseMenuPanelDirectories,
+  ...nextTurnConfirmationDialogDirectories,
+  ...gameInitializingDirectories,
   ...gameSideMenuDirectories,
   ...gameMapNarrowDetailOverlaySlotDirectories,
   ...diplomacyDetailScreenDirectories,
