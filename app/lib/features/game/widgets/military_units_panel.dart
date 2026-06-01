@@ -10,6 +10,7 @@ import '../../../config/ui_screen_ids.dart';
 import '../../../core/services/app_event_handler_scope.dart'
     show trainMilitaryDialogId;
 import '../../../l10n/l10n.dart';
+import '../../../widgets/ct_icon_action.dart';
 import '../../../widgets/ct_nine_patch_button.dart';
 import 'utils/military_tree_builder.dart';
 import 'move_army_dialog.dart';
@@ -360,12 +361,10 @@ class _ArmyExpansionTile extends StatelessWidget {
           Flexible(child: Text(_armyTitle(), overflow: TextOverflow.ellipsis)),
           if (onLocate != null) ...[
             const SizedBox(width: 4),
-            IconButton(
+            CtIconAction(
               tooltip: l10n.common_locate,
               onPressed: onLocate,
-              icon: const Icon(Icons.my_location),
-              iconSize: 18,
-              visualDensity: VisualDensity.compact,
+              icon: Icons.my_location,
             ),
           ],
         ],

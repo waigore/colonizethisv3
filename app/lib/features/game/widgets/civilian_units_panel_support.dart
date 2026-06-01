@@ -418,7 +418,7 @@ class _UnitRow extends ConsumerWidget {
       children: [
         Expanded(child: Text(unit.type, overflow: TextOverflow.ellipsis)),
         const SizedBox(width: 4),
-        IconButton(
+        CtIconAction(
           tooltip: l10n.common_locate,
           onPressed:
               tileKeyForLocate != null &&
@@ -433,9 +433,7 @@ class _UnitRow extends ConsumerWidget {
                   );
                 }
               : null,
-          icon: const Icon(Icons.my_location),
-          iconSize: 18,
-          visualDensity: VisualDensity.compact,
+          icon: Icons.my_location,
         ),
       ],
     );

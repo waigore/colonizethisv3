@@ -290,3 +290,15 @@ Tested in
 - **AC-D4-6 — Null or empty index returns empty result.** Given any
   non-empty `filledDeals` plus a `null` or empty `purchasedTileIndex`,
   then the helper returns `FirstRightCreditsResult.empty`.
+
+### Issue-level traceability (D5)
+
+The five numbered issue-body ACs of
+[#2992](https://github.com/waigore/colonizethisv3/issues/2992) (#1
+priority override above tiers AND FTP, #2 relation 75 mid-sample
+credit, #3 relation 100 upper-bound 40% credit, #4 relation 0
+zero-credit + buyer == owning GP exclusion, #5 multi-GP attribution
+without cross-credit) are mapped 1:1 to `group(...)`s in
+`packages/colonizethis_logic/test/economy/world_market/first_right_of_refusal_issue_acceptance_criteria_d5_test.dart`.
+The per-component AC tests above remain authoritative; D5 is the
+`verify-github-issue` traceability layer.
