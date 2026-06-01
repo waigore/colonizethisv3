@@ -167,6 +167,10 @@ Calendar campaign halt (`Game.calendarCampaignHalted == true` with `Game.victory
   When the panel is built,
   Then the action row renders inside a `Wrap` widget (regression guard for the wide-layout `flex-wrap:wrap` mockup behaviour), and the laurel row renders its three glyphs at `28` logical-px font size.
 
+- Given `VictoryOverlay` is mounted above a `Stack` host at exactly `kMinViewportWidth` (`320` dp) width and `640` dp height with `Game.victory.type == VictoryType.military`,
+  When the overlay builds,
+  Then `WidgetTester.takeException()` returns `null` (no `RenderFlex` overflow exception from the scrim + centered `VictoryPanel` narrow column wireframe — laurel row, upper-cased title, `CtBrassDivider`, body sentence, stacked vertical `Column` of two `CtNinePatchButton`s per § Narrow viewport — at the minimum supported viewport from [mobile-adaptation.md](mobile-adaptation.md) § 7).
+
 ---
 
 ## Widgetbook
