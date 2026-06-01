@@ -9,6 +9,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:colonizethis_app/config/editorial_monocle_palette.dart';
 import 'package:colonizethis_app/features/game/production_recipe_affordance.dart';
+import 'package:colonizethis_app/features/game/widgets/chrome/ct_danger_text_button.dart';
 import 'package:colonizethis_app/features/game/widgets/production_allocation_row.dart';
 import 'package:colonizethis_app/features/game/widgets/production_allocation_row_chrome.dart';
 import 'package:colonizethis_app/features/game/widgets/production_labour_helpers.dart';
@@ -16,6 +17,7 @@ import 'package:colonizethis_app/features/game/widgets/production_panel.dart';
 import 'package:colonizethis_app/l10n/l10n.dart';
 import 'package:colonizethis_app/widgets/ct_brass_divider.dart';
 import 'package:colonizethis_app/widgets/ct_gradients.dart';
+import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
 import 'package:colonizethis_app/widgets/ct_resource_cell.dart';
 import 'package:colonizethis_app/widgets/ct_section_label.dart';
 import 'package:colonizethis_app/widgets/ct_slider.dart';
@@ -228,13 +230,69 @@ void main() {
       );
       await pumpSettleCapped(tester);
 
-      expect(find.text('Reset'), findsOneWidget);
-      await tester.tap(find.text('Reset'));
+      final resetFinder = find.byKey(
+        const ValueKey<String>('production_allocation_reset_button'),
+      );
+      expect(resetFinder, findsOneWidget);
+      expect(find.descendant(of: resetFinder, matching: find.text('Reset')),
+          findsOneWidget);
+      await tester.tap(resetFinder);
       await pumpSyncFrames(tester);
 
       expect(lastOutput, isNotNull);
       expect(lastOutput!.isEmpty, isTrue);
     });
+
+    testWidgets(
+      'Allocation header Reset renders as CtDangerTextButton (Refs #2862 S8d / C8)',
+      (WidgetTester tester) async {
+        await tester.pumpWidget(buildPanel(player: fullPlayer));
+        await pumpSettleCapped(tester);
+
+        final resetFinder = find.byKey(
+          const ValueKey<String>('production_allocation_reset_button'),
+        );
+        expect(resetFinder, findsOneWidget);
+
+        final reset = tester.widget<CtDangerTextButton>(resetFinder);
+        expect(reset.label, 'Reset');
+        expect(reset.tooltip, 'Reset');
+        expect(reset.enabled, isTrue);
+        expect(reset.onPressed, isNotNull);
+
+        expect(
+          find.descendant(
+            of: resetFinder,
+            matching: find.byType(CtNinePatchButton),
+          ),
+          findsNothing,
+          reason: 'Reset must not fall back to CtNinePatchButton chrome.',
+        );
+      },
+    );
+
+    testWidgets(
+      'negative: production panel does not render Reset as CtNinePatchButton (Refs #2862 S8d / C8)',
+      (WidgetTester tester) async {
+        await tester.pumpWidget(buildPanel(player: fullPlayer));
+        await pumpSettleCapped(tester);
+
+        final ninePatchButtonsWithResetLabel = find.byWidgetPredicate(
+          (Widget w) {
+            if (w is! CtNinePatchButton) return false;
+            final child = w.child;
+            return child is Text && child.data == 'Reset';
+          },
+        );
+        expect(
+          ninePatchButtonsWithResetLabel,
+          findsNothing,
+          reason:
+              'Allocation header Reset must use CtDangerTextButton per #2862 C8, '
+              'not a CtNinePatchButton labelled "Reset".',
+        );
+      },
+    );
 
     testWidgets('allocation increment tap adds one to first recipe', (
       WidgetTester tester,
