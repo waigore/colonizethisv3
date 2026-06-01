@@ -21,7 +21,7 @@ Present **all** `InterventionPrompt` rows for the current pending batch before t
 
 ## Layout (modal)
 
-- **Frame:** `CtDialogShell` centered over the game.
+- **Frame:** `CtDialogShell` centered over the game. The scrim + centered-shell scaffold itself follows the canonical [`CtFullScreenDialogueShell` component spec](../components/ct-full-screen-dialogue-shell.md), shared with the overture, call-to-arms, and game-start intro overlays (Refs #2914 S2 / S9).
 - **Scrim:** `Material` color resolves to the canonical dark-theme dialog scrim token `EditorialMonoclePalette.dialogScrim` (`oklch(8% 0.01 30 / 0.70)` per `SPEC/ui/pixel-art-ui-catalog.md` § Dialog scrim). Hard-coded `Colors.black54` is a regression and forbidden — issue #2867 R1 (universal dialog pattern) and #2858 § Dialog scrim. The scrim token applies to every phase below (intro, situation, choice, reaction, degraded error).
 - **Chrome header (every phase):** Each `CtDialogShell` column is preceded by a small fixed header band rendered in this order:
   1. `Text` widget with the localized `Pending Intervention` title (l10n key `game_intervention_overlayTitle`) styled in `EditorialMonoclePalette.accent` with `letterSpacing = fontSize × 0.05` (canonical 0.05em per #2867 R2). The title `Text` carries the stable key `ValueKey<String>('interventionOverlayTitle')` so widget tests can locate it without matching localized strings.
