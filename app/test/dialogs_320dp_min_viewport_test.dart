@@ -32,8 +32,11 @@
 //  * [TransferToHomeFleetDialog]         — transfer ships from a source
 //    fleet into the player's home fleet in port
 //    (SPEC/ui/transfer-to-home-fleet-dialog.md).
+//  * [PauseMenuPanel]                    — modal pause menu (SHEL40001)
+//    raised by `OpenPauseMenuPanelEvent` from the in-game shell
+//    (SPEC/ui/pause-menu-panel.md).
 //
-// All eleven dialogs render their chrome via [CtDialogShell]. The first
+// All twelve dialogs render their chrome via [CtDialogShell]. The first
 // eight pass `maxWidth: 400` or `maxWidth: 480`; the three new
 // CtTransferList-hosted dialogs (split army / split fleet / transfer to
 // home fleet) pass the wider `maxWidth: 520` / `maxWidth: 560` so the
@@ -75,6 +78,7 @@ import 'package:colonizethis_app/features/game/flame/next_turn_confirmation_dial
 import 'package:colonizethis_app/features/game/flame/turn_resolution_processing_dialog.dart';
 import 'package:colonizethis_app/features/game/widgets/game_map_options_dialog.dart';
 import 'package:colonizethis_app/features/game/widgets/game_parameters_dialog.dart';
+import 'package:colonizethis_app/features/game/widgets/pause_menu_panel.dart';
 import 'package:colonizethis_app/features/game/widgets/split_army_dialog.dart';
 import 'package:colonizethis_app/features/game/widgets/split_fleet_dialog.dart';
 import 'package:colonizethis_app/features/game/widgets/transfer_to_home_fleet_dialog.dart';
@@ -1037,5 +1041,128 @@ void main() {
       );
       expect(find.text('Transfer'), findsOneWidget);
     });
+  });
+
+  group('SPEC/ui/mobile-adaptation.md § 7 — PauseMenuPanel @ 320 dp '
+      '(Refs #2870 S8/S10)', () {
+    // Localized label sentinels mirror the canonical English values from
+    // `app/lib/l10n/arb/app_en.arb` (`game_pauseMenu_*` keys) so the pin
+    // breaks if those strings change without the SPEC + this contract
+    // being refreshed in lockstep. The l10n-resolved order is the same
+    // five rows declared by `pause_menu_panel.dart` (Resume → Save Game
+    // → Load Game → Settings → Exit to Main Menu).
+    const String pauseTitle = 'Game Paused';
+    const String resumeLabel = 'Resume';
+    const String saveGameLabel = 'Save Game';
+    const String loadGameLabel = 'Load Game';
+    const String settingsLabel = 'Settings';
+    const String exitToMainMenuLabel = 'Exit to Main Menu';
+
+    testWidgets(
+      'AC (positive) PauseMenuPanel @ 320×640: no RenderFlex overflow '
+      'exception, "Game Paused" title + five action labels render in '
+      'declared order (Resume / Save Game / Load Game / Settings / Exit '
+      'to Main Menu) — the SPEC/ui/pause-menu-panel.md "vertical stack '
+      'of exactly five CtNinePatchButton actions" must wrap within the '
+      '~288 dp CtDialogShell content column at kMinViewportWidth',
+      (WidgetTester tester) async {
+        final bus = AppEventBus.create();
+        addTearDown(bus.dispose);
+
+        await _pumpDialogAtSize(
+          tester,
+          PauseMenuPanel(bus: bus),
+          size: _kMinViewport,
+        );
+
+        expect(
+          tester.takeException(),
+          isNull,
+          reason:
+              'SPEC/ui/mobile-adaptation.md § 7: PauseMenuPanel must not '
+              'emit a RenderFlex overflow exception at kMinViewportWidth '
+              '(320 dp). The "Game Paused" title + CtBrassDivider + five '
+              'CtNinePatchButton rows from SPEC/ui/pause-menu-panel.md '
+              '§ Layout / wireframe must wrap within the ~288 dp '
+              'CtDialogShell content column — CtDialogShell `maxWidth: '
+              '360` is dominated by `Dialog.insetPadding` (16 dp each '
+              'side) at this viewport, leaving the same ~288 dp budget '
+              'as the simpler shells pinned above this group.',
+        );
+        expect(find.text(pauseTitle), findsOneWidget);
+        expect(find.text(resumeLabel), findsOneWidget);
+        expect(find.text(saveGameLabel), findsOneWidget);
+        expect(find.text(loadGameLabel), findsOneWidget);
+        expect(find.text(settingsLabel), findsOneWidget);
+        expect(find.text(exitToMainMenuLabel), findsOneWidget);
+      },
+    );
+
+    testWidgets(
+      'AC (positive) PauseMenuPanel @ 320×640: declared button order is '
+      'preserved (Resume top, Exit to Main Menu bottom) so the narrow '
+      'pin guards against a row-shuffle regression layered onto the '
+      'overflow-only contract — mirrors the order assertion in '
+      '`pause_menu_panel_test.dart` while exercising the 320 dp budget',
+      (WidgetTester tester) async {
+        final bus = AppEventBus.create();
+        addTearDown(bus.dispose);
+
+        await _pumpDialogAtSize(
+          tester,
+          PauseMenuPanel(bus: bus),
+          size: _kMinViewport,
+        );
+
+        expect(tester.takeException(), isNull);
+        const expectedKeys = <Key>[
+          PauseMenuPanel.resumeButtonKey,
+          PauseMenuPanel.saveGameButtonKey,
+          PauseMenuPanel.loadGameButtonKey,
+          PauseMenuPanel.settingsButtonKey,
+          PauseMenuPanel.exitToMainMenuButtonKey,
+        ];
+        for (final key in expectedKeys) {
+          expect(find.byKey(key), findsOneWidget);
+        }
+        // Top-to-bottom ordering: Resume's top edge is strictly above
+        // Exit to Main Menu's top edge after the narrow layout resolves.
+        final Offset resumeTopLeft = tester.getTopLeft(
+          find.byKey(PauseMenuPanel.resumeButtonKey),
+        );
+        final Offset exitTopLeft = tester.getTopLeft(
+          find.byKey(PauseMenuPanel.exitToMainMenuButtonKey),
+        );
+        expect(
+          resumeTopLeft.dy,
+          lessThan(exitTopLeft.dy),
+          reason:
+              'SPEC/ui/pause-menu-panel.md § Layout / wireframe pins '
+              'Resume above Exit to Main Menu in the vertical stack; '
+              'the 320 dp viewport must not invert this order.',
+        );
+      },
+    );
+
+    testWidgets(
+      'Negative control: PauseMenuPanel @ 1024×768 also pumps without '
+      'exception (regression sentinel for the overflow contract — '
+      'keeps the 320 dp positive pins meaningful)',
+      (WidgetTester tester) async {
+        final bus = AppEventBus.create();
+        addTearDown(bus.dispose);
+
+        await _pumpDialogAtSize(
+          tester,
+          PauseMenuPanel(bus: bus),
+          size: _kWideRegressionViewport,
+        );
+
+        expect(tester.takeException(), isNull);
+        expect(find.text(pauseTitle), findsOneWidget);
+        expect(find.text(resumeLabel), findsOneWidget);
+        expect(find.text(exitToMainMenuLabel), findsOneWidget);
+      },
+    );
   });
 }
