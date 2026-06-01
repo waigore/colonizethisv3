@@ -263,6 +263,10 @@ List<WidgetbookNode> get ctDarkThemePrimitiveDirectories => [
         builder: (context) => const _CtBackButtonStory(),
       ),
       WidgetbookUseCase(
+        name: 'CtIconAction — glyph affordance states',
+        builder: (context) => const _CtIconActionStory(),
+      ),
+      WidgetbookUseCase(
         name: 'CtTopBar — slot composition',
         builder: (context) => const _CtTopBarStory(),
       ),
@@ -775,6 +779,9 @@ class _CtBackButtonStoryState extends State<_CtBackButtonStory> {
     );
   }
 }
+
+// _CtIconActionStory is hosted in catalog_part8.dart to keep this part file
+// under the 1000-line repo-lint cap (`repo.part_unit_size`).
 
 class _CtTopBarStory extends StatelessWidget {
   const _CtTopBarStory();
