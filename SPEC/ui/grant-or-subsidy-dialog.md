@@ -123,6 +123,18 @@ The `GrantOrSubsidySubmittedEvent` listener (`grant_or_subsidy_listener.dart`) m
 
 - **No Material AlertDialog leak (regression guard):** Given `GrantOrSubsidyDialog` is mounted, when the widget subtree is inspected, then no `AlertDialog`, `ListTile`, or `Card` widget is in the descendant tree (the dialog renders inside `CtDialogShell` only, matching `SPEC/ui/pixel-art-ui-catalog.md` § Material design ban).
 
+### 320 dp viewport pin (#2870 S8/S10)
+
+- **Grant mode @ 320×640 (positive):** Given the viewport width equals `kMinViewportWidth` (320 dp) and the height is at least 640 dp, and the dialog is mounted in grant mode (`isSubsidy: false`) against a two-GP `Game` fixture with the human GP's `treasury == 5 * grantAidAmountStep` (so both stepper buttons are enabled and the below-minimum hint stays unmounted), when the dialog renders inside the running editorial-monocle theme, then `WidgetTester.takeException()` returns `null`, the keyed `grantOrSubsidyDialogTitle` renders the `Grant aid` text, the keyed `grantOrSubsidyDialogTreasury` body row renders, the keyed `grantOrSubsidyDialogThinDivider` divider mounts, the keyed `grantOrSubsidyDialogAmount` label and both keyed stepper buttons (`diplo_amount_minus` / `diplo_amount_plus`) mount inside the centered stepper `Row`, the keyed `grantOrSubsidyDialogWarning` is **absent**, and the trailing right-aligned `Cancel` + `Submit` `CtNinePatchButton` labels render — all within the ~288 dp `CtDialogShell` content column (`maxWidth: 480` clamped by outer `Dialog.insetPadding: 16` × 2) without horizontal overflow.
+
+- **Subsidy mode @ 320×640 (positive):** Given the same viewport and fixture but `isSubsidy: true`, when the dialog renders, then `WidgetTester.takeException()` returns `null`, the title slot flips to `Set subsidy`, the keyed `grantOrSubsidyDialogWarning` is absent (treasury comfortably exceeds the smaller `setSubsidyAmountStep == 100`), and both `Cancel` and `Submit` `CtNinePatchButton` labels render within the ~288 dp content column without horizontal overflow.
+
+- **Below-minimum branch @ 320×640 (positive):** Given the same viewport but the human GP's `treasury == grantAidAmountStep - 1` and the dialog is mounted in grant mode (`isSubsidy: false`), when the dialog renders, then `WidgetTester.takeException()` returns `null`, the keyed `grantOrSubsidyDialogWarning` mounts (the optional `_BelowMinimumWarning` row), and the trailing right-aligned `Cancel` + `Submit` `CtNinePatchButton` labels continue to render within the ~288 dp content column without horizontal overflow.
+
+- **Wide negative control:** Given the viewport is `1024 × 768` dp and the dialog is mounted in grant mode against the same `5 * grantAidAmountStep` fixture, when the dialog renders, then `WidgetTester.takeException()` returns `null` and the title + Cancel + Submit labels render — keeping the 320 dp positive pins meaningful by catching upstream regressions in the host overflow contract.
+
+Pinning test: `app/test/grant_or_subsidy_dialog_320dp_min_viewport_test.dart`. The same contract is summarized in [mobile-adaptation.md](mobile-adaptation.md) § 7 (Minimum-viewport pin).
+
 ---
 
 ## Widgetbook
@@ -132,4 +144,4 @@ Catalog folder: **Grant or Subsidy Dialog** (registered in `app/lib/widgetbook/c
 1. **Grant mode — treasury sufficient:** Minimal `Game` + two players; human treasury 5000; demo opener calls `showDialog` with `isSubsidy: false`. Stepper opens at the snapped default amount.
 2. **Subsidy mode — below minimum:** Minimal `Game` + two players; human treasury 100; demo opener calls `showDialog` with `isSubsidy: true`. Both step buttons disabled and below-minimum hint visible.
 
-Automated widget tests: `app/test/diplomacy_dialogs_test.dart` (covers stepper, default amount, submit emit, treasury-below-minimum disable, and Cancel).
+Automated widget tests: `app/test/diplomacy_dialogs_test.dart` (covers stepper, default amount, submit emit, treasury-below-minimum disable, and Cancel); `app/test/grant_or_subsidy_dialog_320dp_min_viewport_test.dart` (320 dp minimum-viewport pin per § 320 dp viewport pin above).
