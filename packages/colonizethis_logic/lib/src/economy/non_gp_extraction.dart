@@ -125,6 +125,114 @@ Map<String, Map<CommodityId, int>> computeNonGreatPowerExtraction({
   return out;
 }
 
+/// Generates priority-1 `TradeOrder` auto-offers for every connected developed
+/// non-Great-Power tile that produces a non-riches commodity, per
+/// `SPEC/program/world-market-resolution.md` § Step A Gather (Step A.2) and
+/// `SPEC/game/world-market.md` § Minor and tribe auto-sell.
+///
+/// One [TradeOrder] is emitted per contributing tile (not aggregated across
+/// tiles for the same commodity) so the offer carries an
+/// `originTileKey` and FRR (`#2992` D2/D4) can attribute purchased-tile flows
+/// per `SPEC/game/world-market-first-right-of-refusal.md`. Each emitted order
+/// uses `type = TradeOrderType.offer`, `priority = 1`, `quantity` equal to the
+/// per-tile units the GP-parity extraction formula yields, and the source
+/// tile key.
+///
+/// Commodities in `richesCommodityIds` are filtered out per
+/// `SPEC/game/world-market.md` Requirement 11 (riches do not trade). The
+/// mineral exclusion already applied inside [computeNonGreatPowerExtraction]
+/// covers the metal/jewel riches (silver/gold/gems/diamonds) before they
+/// reach this stage; the explicit riches filter here additionally suppresses
+/// non-mineral riches (spices) for which no prospecting precondition exists.
+///
+/// Output map keys are minor/tribe faction ids. Factions with no qualifying
+/// auto-offer are omitted (no empty list values). Per-faction order list is
+/// ordered by `(tileKey ascending, commodityId)` so identical inputs produce
+/// identical outputs across runs (Refs `colonizethis-turn-resolution-budget`
+/// determinism contract).
+Map<String, List<TradeOrder>> computeNonGreatPowerAutoOffers({
+  required Game game,
+  required Map<String, TileMapResult> tileMapByRegion,
+  required Map<String, ConnectivityResult> connectivityByFactionId,
+}) {
+  if (game.minorNations.isEmpty && game.tribes.isEmpty) {
+    return const <String, List<TradeOrder>>{};
+  }
+  if (tileMapByRegion.isEmpty) {
+    return const <String, List<TradeOrder>>{};
+  }
+
+  final provincesByFullId = <String, Province>{
+    for (final p in allProvinces(game.worldState)) p.id: p,
+  };
+  final portTileKeys = game.worldState.portsByProvinceSeaboard.values.toSet();
+  final richesIds = richesCommodityIds.toSet();
+
+  final out = <String, List<TradeOrder>>{};
+
+  void runForFaction({
+    required String factionId,
+    required String? capitalProvinceId,
+    required String? capitalRegionId,
+  }) {
+    if (capitalProvinceId == null || capitalRegionId == null) return;
+    final cr = connectivityByFactionId[factionId];
+    if (cr == null) return;
+    final connected = cr.connected;
+    if (connected.isEmpty) return;
+    final orders = <TradeOrder>[];
+    final sortedTileKeys = connected.toList()..sort();
+    for (final tileKey in sortedTileKeys) {
+      final contribution = _computeNonGpTileContribution(
+        game: game,
+        tileMapByRegion: tileMapByRegion,
+        factionCapitalProvinceId: capitalProvinceId,
+        factionCapitalRegionId: capitalRegionId,
+        tileKey: tileKey,
+        connectedTileKeys: connected,
+        pathTransportCap: cr.pathTransportCap,
+        connectedByRoadRule: cr.connectedByRoadRule,
+        portTileKeys: portTileKeys,
+        provincesByFullId: provincesByFullId,
+      );
+      if (contribution == null) continue;
+      if (richesIds.contains(contribution.commodityId)) continue;
+      orders.add(
+        TradeOrder(
+          commodityId: contribution.commodityId,
+          type: TradeOrderType.offer,
+          quantity: contribution.units,
+          priority: 1,
+          originTileKey: tileKey,
+        ),
+      );
+    }
+    if (orders.isNotEmpty) out[factionId] = orders;
+  }
+
+  for (final minor in game.minorNations) {
+    runForFaction(
+      factionId: minor.id,
+      capitalProvinceId: minor.capitalProvinceId,
+      capitalRegionId: minor.capitalTile?.regionId,
+    );
+  }
+  for (final tribe in game.tribes) {
+    runForFaction(
+      factionId: tribe.id,
+      capitalProvinceId: tribe.capitalProvinceId,
+      capitalRegionId: tribe.capitalTile?.regionId,
+    );
+  }
+
+  final totalOffers = out.values.fold<int>(0, (s, l) => s + l.length);
+  logicLog.d(
+    'non_gp_extraction auto-offers factions=${out.length} '
+    'orders=$totalOffers',
+  );
+  return out;
+}
+
 /// Single-commodity contribution from one connected tile owned by a non-GP
 /// faction. Returns null when the tile contributes no units (not connected,
 /// invalid tile key, no resource, mineral resource excluded for non-GPs,

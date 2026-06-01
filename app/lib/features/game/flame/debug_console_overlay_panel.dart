@@ -1,5 +1,7 @@
 import 'package:colonizethis_app/config/editorial_monocle_palette.dart';
 import 'package:colonizethis_app/l10n/l10n.dart';
+import 'package:colonizethis_app/widgets/ct_radius.dart';
+import 'package:colonizethis_app/widgets/ct_spacing.dart';
 import 'package:colonizethis_debug_console/colonizethis_debug_console.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
@@ -62,24 +64,24 @@ class _DebugConsoleOverlayPanelState extends State<DebugConsoleOverlayPanel> {
     final l10n = appL10n(context);
     return Material(
       color: Colors.black.withValues(alpha: 0.85),
-      borderRadius: BorderRadius.circular(8),
+      borderRadius: BorderRadius.circular(CtRadius.large),
       child: SizedBox(
         width: 420,
         height: 220,
         child: Padding(
-          padding: const EdgeInsets.all(8),
+          padding: const EdgeInsets.all(CtSpacing.m),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               _buildHeader(l10n),
               Expanded(
                 child: Container(
-                  padding: const EdgeInsets.all(6),
+                  padding: const EdgeInsets.all(CtSpacing.s),
                   color: EditorialMonoclePalette.dialogScrim,
                   child: _buildLogList(),
                 ),
               ),
-              const SizedBox(height: 6),
+              const SizedBox(height: CtSpacing.s),
               _buildInput(l10n),
             ],
           ),
@@ -138,7 +140,9 @@ class _DebugConsoleOverlayPanelState extends State<DebugConsoleOverlayPanel> {
           hintStyle: TextStyle(color: Colors.white.withValues(alpha: 0.6)),
           filled: true,
           fillColor: EditorialMonoclePalette.dialogScrim,
-          border: OutlineInputBorder(borderRadius: BorderRadius.circular(4)),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(CtRadius.medium),
+          ),
         ),
       ),
     );

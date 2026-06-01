@@ -89,7 +89,7 @@ class CtTopBar extends StatelessWidget {
   TextStyle _titleStyle(BuildContext context) {
     final ThemeData theme = Theme.of(context);
     final TextStyle base =
-        theme.textTheme.titleMedium ?? const TextStyle(fontSize: 14);
+        theme.textTheme.titleMedium ?? const TextStyle(fontSize: 16);
     return base.copyWith(
       color: EditorialMonoclePalette.accent,
       letterSpacing: 0.05,
@@ -99,7 +99,7 @@ class CtTopBar extends StatelessWidget {
   TextStyle _backLabelStyle(BuildContext context) {
     final ThemeData theme = Theme.of(context);
     final TextStyle base =
-        theme.textTheme.bodyMedium ?? const TextStyle(fontSize: 12);
+        theme.textTheme.bodyMedium ?? const TextStyle(fontSize: 14);
     final double opacity = backButtonEnabled
         ? 1.0
         : CtBackButton.disabledOpacity;

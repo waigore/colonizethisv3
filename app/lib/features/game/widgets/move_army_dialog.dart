@@ -387,7 +387,7 @@ class _MoveArmyDestinationRow extends StatelessWidget {
         );
     final TextStyle? triggerStyle = declareWarTriggerLabel == null
         ? null
-        : (theme.textTheme.bodySmall ?? const TextStyle(fontSize: 11))
+        : (theme.textTheme.bodySmall ?? const TextStyle(fontSize: 12))
               .copyWith(
                 color: EditorialMonoclePalette.danger,
                 fontStyle: FontStyle.italic,
