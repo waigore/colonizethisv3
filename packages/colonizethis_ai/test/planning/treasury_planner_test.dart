@@ -159,30 +159,45 @@ void main() {
       },
     );
 
-    test('no embassy yields offers only, no bids', () {
-      final stockpile = const Stockpile()
-          .applyDelta('timber', 80)
-          .applyDelta('fabric', 0);
-      final game = _gameWithStockpile(
-        stockpile: stockpile,
-        treasury: 0,
-      );
-      final orders = runTreasuryPlanner(
-        game: game,
-        playerId: 'gp1',
-        stockpile: stockpile,
-        productionAssignments: const [],
-        treasury: 0,
-      );
-      expect(
-        orders.where((o) => o.type == TradeOrderType.bid),
-        isEmpty,
-      );
-      expect(
-        orders.where((o) => o.type == TradeOrderType.offer),
-        isNotEmpty,
-      );
-    });
+    test(
+      'no embassy and treasury == 0 with no production deficit yields '
+      'offers only — speculative bidding is gated by treasury affluence so '
+      'broke GPs never speculate (Refs #2924 F10; '
+      'SPEC/ai/treasury-planner.md § Affluent-GP speculative bidding)',
+      () {
+        var stockpile = const Stockpile().applyDelta('timber', 80);
+        for (final commodity in CommodityCatalog.all) {
+          if (richesCommodityIds.contains(commodity.id)) continue;
+          if (commodity.id == 'timber') continue;
+          stockpile = stockpile.applyDelta(
+            commodity.id,
+            kSpeculativeBidStockpileTarget * 4,
+          );
+        }
+        final game = _gameWithStockpile(
+          stockpile: stockpile,
+          treasury: 0,
+        );
+        final orders = runTreasuryPlanner(
+          game: game,
+          playerId: 'gp1',
+          stockpile: stockpile,
+          productionAssignments: const [],
+          treasury: 0,
+        );
+        expect(
+          orders.where((o) => o.type == TradeOrderType.bid),
+          isEmpty,
+          reason: 'Treasury below affluence threshold (= 0) must not '
+              'trigger speculative bids; deficit pass also empty because '
+              'every non-riches commodity is well-stocked.',
+        );
+        expect(
+          orders.where((o) => o.type == TradeOrderType.offer),
+          isNotEmpty,
+        );
+      },
+    );
 
     test('deterministic for identical inputs', () {
       final stockpile = const Stockpile().applyDelta('timber', 60);
@@ -447,6 +462,214 @@ void main() {
               o.type == TradeOrderType.offer,
         );
         expect(timberOffer.priority, kTreasuryOfferPriorityModerate);
+      },
+    );
+
+    Stockpile stockpileWellStockedExcept(
+      Iterable<CommodityId> excluded,
+    ) {
+      final excludedSet = excluded.toSet();
+      var stockpile = const Stockpile();
+      for (final commodity in CommodityCatalog.all) {
+        if (richesCommodityIds.contains(commodity.id)) continue;
+        if (excludedSet.contains(commodity.id)) continue;
+        stockpile = stockpile.applyDelta(
+          commodity.id,
+          kSpeculativeBidStockpileTarget * 4,
+        );
+      }
+      return stockpile;
+    }
+
+    test(
+      'affluent treasury without embassy with no prior market activity '
+      'emits exactly one speculative bid for the first eligible food '
+      'commodity (deterministic fallback; Refs #2924 F10)',
+      () {
+        final affluent = treasuryAffluenceThreshold();
+        final stockpile = stockpileWellStockedExcept(const ['grain', 'meat'])
+            .applyDelta('timber', 80);
+        final game = _gameWithStockpile(
+          stockpile: stockpile,
+          treasury: affluent,
+        );
+        final orders = runTreasuryPlanner(
+          game: game,
+          playerId: 'gp1',
+          stockpile: stockpile,
+          productionAssignments: const [],
+          treasury: affluent,
+        );
+        final bids = orders
+            .where((o) => o.type == TradeOrderType.bid)
+            .toList();
+        expect(
+          bids,
+          hasLength(1),
+          reason:
+              'Speculative pass adds at most one synthetic need entry to '
+              'concentrate the single baseline-cap bid slot.',
+        );
+        final bid = bids.single;
+        expect(bid.quantity, kSpeculativeBidStockpileTarget);
+        expect(richesCommodityIds.contains(bid.commodityId), isFalse);
+        expect(
+          bid.commodityId,
+          isNot('timber'),
+          reason: 'Available-side timber is excluded from speculative bids.',
+        );
+        expect(
+          CommodityCatalog.byId[bid.commodityId]?.category,
+          CommodityCategory.food,
+          reason:
+              'Without prior MarketActivity, the speculative pass falls '
+              'back to a food commodity that the F1-F5 deficit pass also '
+              'has reason to bid for.',
+        );
+      },
+    );
+
+    test(
+      'affluent treasury without embassy and a liquid commodity in '
+      'lastTurnActivity bids for that commodity (Refs #2924 F10 — '
+      'liquidity-aware selection)',
+      () {
+        final affluent = treasuryAffluenceThreshold();
+        final stockpile = stockpileWellStockedExcept(const ['iron'])
+            .applyDelta('timber', 80);
+        final game = _gameWithStockpile(
+          stockpile: stockpile,
+          treasury: affluent,
+        ).copyWith(
+          worldMarketState: WorldMarketState(
+            prices: {
+              CommodityCatalog.iron.id: 10.0,
+            },
+            lastTurnActivity: const {
+              'iron': MarketActivity(
+                totalOfferQuantity: 500,
+                filledQuantity: 0,
+              ),
+            },
+          ),
+        );
+        final orders = runTreasuryPlanner(
+          game: game,
+          playerId: 'gp1',
+          stockpile: stockpile,
+          productionAssignments: const [],
+          treasury: affluent,
+        );
+        final bids = orders
+            .where((o) => o.type == TradeOrderType.bid)
+            .toList();
+        expect(bids, hasLength(1));
+        expect(
+          bids.single.commodityId,
+          'iron',
+          reason:
+              'iron has prior-turn offer volume so the liquidity-aware '
+              'selector picks it for the single baseline-cap bid slot.',
+        );
+      },
+    );
+
+    test(
+      'affluent treasury still suppresses speculative bid when projected '
+      'stockpile of every non-riches commodity already meets the target '
+      '(Refs #2924 F10)',
+      () {
+        final affluent = treasuryAffluenceThreshold();
+        var stockpile = const Stockpile();
+        for (final commodity in CommodityCatalog.all) {
+          if (richesCommodityIds.contains(commodity.id)) continue;
+          stockpile = stockpile.applyDelta(
+            commodity.id,
+            kSpeculativeBidStockpileTarget + 4,
+          );
+        }
+        final game = _gameWithStockpile(
+          stockpile: stockpile,
+          treasury: affluent,
+        );
+        final orders = runTreasuryPlanner(
+          game: game,
+          playerId: 'gp1',
+          stockpile: stockpile,
+          productionAssignments: const [],
+          treasury: affluent,
+        );
+        expect(
+          orders.where((o) => o.type == TradeOrderType.bid),
+          isEmpty,
+          reason:
+              'Every commodity already meets kSpeculativeBidStockpileTarget '
+              'so the speculative pass has no positive deficit to emit.',
+        );
+      },
+    );
+
+    test(
+      'below the affluence threshold the speculative pass stays off '
+      '(Refs #2924 F10 — gate is treasuryAffluenceThreshold())',
+      () {
+        final justBelow = treasuryAffluenceThreshold() - 1;
+        var stockpile = const Stockpile().applyDelta('timber', 80);
+        for (final commodity in CommodityCatalog.all) {
+          if (richesCommodityIds.contains(commodity.id)) continue;
+          if (commodity.id == 'timber') continue;
+          stockpile = stockpile.applyDelta(
+            commodity.id,
+            kSpeculativeBidStockpileTarget * 4,
+          );
+        }
+        final game = _gameWithStockpile(
+          stockpile: stockpile,
+          treasury: justBelow,
+        );
+        final orders = runTreasuryPlanner(
+          game: game,
+          playerId: 'gp1',
+          stockpile: stockpile,
+          productionAssignments: const [],
+          treasury: justBelow,
+        );
+        expect(
+          orders.where((o) => o.type == TradeOrderType.bid),
+          isEmpty,
+          reason:
+              'Below treasuryAffluenceThreshold() the speculative-bid '
+              'pass must remain inactive; no deficit bids either because '
+              'every non-riches commodity is well-stocked.',
+        );
+      },
+    );
+
+    test(
+      'speculative pass output is deterministic across identical inputs '
+      '(Refs #2924 F10)',
+      () {
+        final affluent = treasuryAffluenceThreshold();
+        final stockpile = const Stockpile().applyDelta('timber', 80);
+        final game = _gameWithStockpile(
+          stockpile: stockpile,
+          treasury: affluent,
+        );
+        final a = runTreasuryPlanner(
+          game: game,
+          playerId: 'gp1',
+          stockpile: stockpile,
+          productionAssignments: const [],
+          treasury: affluent,
+        );
+        final b = runTreasuryPlanner(
+          game: game,
+          playerId: 'gp1',
+          stockpile: stockpile,
+          productionAssignments: const [],
+          treasury: affluent,
+        );
+        expect(a, b);
       },
     );
 

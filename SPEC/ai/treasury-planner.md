@@ -120,11 +120,57 @@ Given current `Stockpile`, `productionAssignments`, and `game.worldMarketState.p
 
 - Given an AI GP with timber stockpile well above reserve and `treasury` below `cheapestRegimentBuildTreasuryCost()`, when `runTreasuryPlanner` runs, then it emits at least one `TradeOrderType.offer` for timber at priority `2`.
 - Given an AI GP with embassy overture, fabric production input need, and market fabric price below recipe input cost, when `runTreasuryPlanner` runs, then it emits a `TradeOrderType.bid` for fabric at priority `1`.
-- Given an AI GP with no embassy (`bidTypeCap == 0`), when `runTreasuryPlanner` runs, then it emits offers only (no bids).
+- Given an AI GP with no embassy and `treasury == 0` and no production-input consumption deficit, when `runTreasuryPlanner` runs, then it emits offers only (no bids) — speculative bidding is gated by treasury affluence so broke GPs never spend on speculation.
 - Given identical inputs, when `runTreasuryPlanner` runs twice, then both runs return identical `List<TradeOrder>`.
 - Given an `EconomyPlan` whose `tradeOrders` is non-empty for an AI GP, when `runDomainPlannersWithOutcome` runs, then `outcome.orders.tradeOrdersByPlayerId[nationId]` equals `economyPlan.tradeOrders` and `outcome.domainGateData.tradePlannerRan` is `true` (F7 wiring).
 - Given an `EconomyPlan` whose `tradeOrders` is empty, when `runDomainPlannersWithOutcome` runs, then `outcome.orders.tradeOrdersByPlayerId` does not contain `nationId` and `outcome.domainGateData.tradePlannerRan` is `false`.
 - Given identical orchestrator inputs (game / topology / nationId / view / snapshot / config / primary goal / seeds / suggestion API / economy plan / tile maps / phase plan), when `runDomainPlannersWithOutcome` runs twice, then both runs produce identical `outcome.orders.tradeOrdersByPlayerId[nationId]` lists (determinism).
+
+---
+
+## Affluent-GP speculative bidding (Refs #2924 F10)
+
+F10 supplements the F1–F5 deficit-based bid path so the world market clears even when no Great Power currently has a strict input shortfall. Without it the seed-42 "EXPAND geographic peer-war lock" stays gridlocked at zero deals (per the diagnostic in `packages/colonizethis_ai/test/seed42_observer_world_market_lock_recovery_diagnostic_test.dart`): every GP offers, none bids, and the failing GPs never earn treasury through legitimate trade. F10 lets treasury-rich GPs *choose* to spend treasury on inventory ahead of any modelled deficit, providing the buy-side demand that converts other GPs' offers into deals.
+
+### Affluence gate
+
+A GP is **affluent** when `treasury >= kTreasuryAffluenceThreshold = kTreasuryAffluenceThresholdMultiplier × cheapestRegimentBuildTreasuryCost()` (default multiplier `1`, so `>= 2000` treasury — the same band that authorizes a cheapest regiment build). Below the gate the planner uses the F1–F5 path unchanged — broke GPs that cannot afford even one regiment never emit speculative bids.
+
+### Speculative-bid commodity selection
+
+The speculative pass adds **at most one** synthetic entry to the `need` map per invocation so the bid is concentrated on the commodity most likely to clear into a real deal (treasury redistributes only when matching offers exist; spraying bids across commodities with no offers leaves the market gridlocked). Eligibility filter:
+
+- Skip any commodity in `richesCommodityIds` (riches are excluded from world-market trade).
+- Skip any commodity already present in the F1–F5 `need` map (the deficit path already speaks for it).
+- Skip any commodity already present in the F1–F5 `available` map (mutual-exclusion preserved).
+- Require `speculativeGap = kSpeculativeBidStockpileTarget − projectedStockpile[commodityId] − carryForwardBids[commodityId] > 0`. The default target is `kShortageThreshold` (`8`), aligned with `_consumptionForecast` so a successful speculative buy raises stockpile to one full consumption cycle.
+
+Among eligible commodity ids, select **exactly one** in this deterministic order:
+
+1. Commodities with prior-turn `MarketActivity.totalOfferQuantity > 0` — proven liquidity. Sort descending by offer volume, alphabetical tiebreak.
+2. Otherwise food-category commodities (alphabetical) — minor/tribe auto-offers reliably surface food on the next world-market phase.
+3. Otherwise the alphabetical first eligible commodity (deterministic fallback for an empty market — preserves determinism for tests that do not seed `lastTurnActivity`).
+
+Add `need[selectedId] = speculativeGap(selectedId)` and return.
+
+### Price-gate bypass for speculative bids
+
+Speculative bids **do not** apply the F3 "market price strictly below cheapest production cost" gate. The affluent GP is electing to spend treasury on stockpile regardless of unit cost (the alternative is being unable to spend treasury at all). Affordability is still enforced at the validator boundary (`tradeCargoCapacity`, `bidTypeCap`) and at deal-clearing time (treasury debited per filled unit).
+
+### Cap inheritance
+
+Speculative bids share the same `bidTypeCap` and `tradeCargoCapacity` as F1–F5 bids; the deficit pass admits bids first, the speculative pass fills any remaining cap slots in alphabetical commodity order. Because `worldMarketBidTypeCap` returns `kWorldMarketBaselineBidTypeCap` (= `1`) by default ([world-market-resolution.md](../program/world-market-resolution.md) § Bid type cap helper), no-embassy GPs still get at least one speculative bid per turn.
+
+### Determinism and budget
+
+The selection set, scoring, and cap distribution are pure functions of `Stockpile`, `productionAssignments`, `treasury`, `game.worldMarketState`, and the static catalogs. Identical inputs produce identical outputs across runs. No hot-path logging; per-turn cost is bounded by `O(catalog × players)`, well inside the 15-second turn-resolution budget.
+
+### Acceptance criteria (F10)
+
+- Given an AI GP with `treasury >= kTreasuryAffluenceThreshold` (= `1 × cheapestRegimentBuildTreasuryCost()` = `2000`), no recipe-input deficit, an empty stockpile for a non-riches commodity `C`, and `worldMarketBidTypeCap(game, playerId) == kWorldMarketBaselineBidTypeCap` (`1`, no embassy), when `runTreasuryPlanner` runs, then it emits exactly one `TradeOrderType.bid` for `C` with `quantity == kSpeculativeBidStockpileTarget` (`8`) and `priority` set per `_bidPriorityForCommodity(C)`.
+- Given an AI GP whose `treasury < kTreasuryAffluenceThreshold` and no deficit-driven bid, when `runTreasuryPlanner` runs, then it emits no bid (speculative pass is gated off).
+- Given an AI GP whose `treasury >= kTreasuryAffluenceThreshold` and whose projected stockpile of every non-riches commodity is at or above `kSpeculativeBidStockpileTarget`, when `runTreasuryPlanner` runs, then it emits no speculative bid (no commodity has positive `speculativeTarget`).
+- Given identical orchestrator inputs, when `runTreasuryPlanner` runs twice on the affluent path, then both runs return identical `List<TradeOrder>` outputs (determinism preserved by alphabetical commodity ordering and the cap distribution rule).
 
 ---
 
@@ -242,12 +288,99 @@ The seed-42 budget test mirrors `full_ai_first_turn_wall_clock_budget_test.dart`
 - Given the same seed-42 turn-1 init, when `generateOrdersForGameFullAI` and `validateOrdersAndResolveTurnFromTrustedOrders` run end-to-end inside a single `Stopwatch`, then the combined `Stopwatch().elapsedMilliseconds` is less than or equal to `kTurnProcessingWallClockBudgetMs` (15 000 ms).
 - Given a failing budget assertion, when the test reports the failure, then the assertion `reason` contains the structured row `total_ms=<int> full_ai_ms=<int> resolve_ms=<int> trade_orders=<int> budget_ms=15000` so a regression surfaces which phase exceeded the envelope and whether the trade-orders path was exercised in that envelope.
 
+## Seed-42 100-turn per-turn World-Market lock-recovery diagnostic (Refs #2924)
+
+#2924 (EXPAND geographic peer-war lock at `treasury == 0`) requires verifying
+which link of the lock-recovery chain (`StrategicGoal.trade` floor F6 →
+`runTreasuryPlanner` surplus / offers F1–F5/F8 → `world_market_phase` matching
+→ treasury credited per `FilledDeal`) is failing on seed 42 for the four
+failing Great Powers gp3–gp6. The Step-0 baseline posted on #2924 (2026-06-01)
+captured the headline gate metrics (`gpOwGain`, `gpTreasuryUnderCheapestRegimentTurns`,
+turn-99 treasury) reused from the existing `seed42_observer_conquest_s7d_diagnostic_test.dart`
+S7-D rollup; it confirmed Path F **alone, without tuning**, leaves all four
+failing GPs below `cheapestRegimentBuildTreasuryCost()` for 97 of 100 turns.
+
+The Step-0 rollup does **not** decompose where the chain breaks (no
+surplus / no cargo / no bid liquidity / no offer fill / threshold mis-tuned).
+This SPEC slice authorises the **per-turn, per-Great-Power** diagnostic that
+captures every link of the chain in the same seed-42 100-turn loop so the
+failing lever can be isolated before any Path F tuning code lands.
+
+### Verification surface
+
+- Test file: `packages/colonizethis_ai/test/seed42_observer_world_market_diagnostic_test.dart`.
+- Entrypoint exercised: `generateOrdersForGameFullAI` + `validateOrdersAndResolveTurnFromTrustedOrders`
+  in the same 100-turn loop as `seed42_observer_conquest_s7d_diagnostic_test.dart`
+  (Refs #2847 S7-D) so the two diagnostics agree on the simulation harness
+  and either can be cross-referenced when a tuning slice shifts both surfaces.
+- Outputs read (per Great Power per turn, before and after turn resolution):
+  - Treasury (`game.playerById(gpId).treasury`) at start and end of turn,
+    and treasury delta attributable to filled deals as seller / buyer that
+    turn.
+  - Trade-cargo capacity (`cargoHoldsForHomeFleet`) and bid-type cap
+    (`worldMarketBidTypeCap`) — the two suggester preconditions for
+    emitting offers and bids.
+  - Trade orders emitted that turn from `fullAi.orders.tradeOrdersByPlayerId[gpId]`
+    (bid count, offer count, total quantity).
+  - Carry-forward residuals at start of turn from
+    `game.worldMarketState.carryForwardOffersByFactionId[gpId]` /
+    `carryForwardBidsByFactionId[gpId]`.
+  - Filled deals from the resolved turn's
+    `game.worldMarketState.lastTurnActivity` — counts and treasury credited
+    (`quantity * pricePerUnit`) attributed to `gpId` as seller, and
+    attributed to `gpId` as buyer.
+- Aggregate per-GP rollup: cumulative trade orders emitted (bids, offers),
+  cumulative deals as seller / buyer, cumulative treasury credited from
+  market sales, turns with zero `tradeCargoCapacity`, turns with zero
+  `bidTypeCap`, turns under `cheapestRegimentBuildTreasuryCost()` (mirrors
+  S7-D's `gpTreasuryUnderCheapestRegimentTurns` count), and the first turn
+  index (if any) on which treasury crosses `cheapestRegimentBuildTreasuryCost()`.
+- Per-commodity rollup for the four failing GPs (gp3, gp4, gp5, gp6): top-5
+  commodity ids by offer quantity emitted and top-5 commodity ids by
+  filled-deal quantity matched as seller.
+
+### Skip semantics and runtime
+
+The test is skipped by default with the same rationale as
+`seed42_observer_conquest_s7d_diagnostic_test.dart` (long-running, ~4 min on
+the project reference host, no value pinned — re-run manually when the
+diagnostic surface shifts after a Path F tuning slice lands). The lightweight
+assertion mirrors the S7-D pattern: each GP's per-turn record count equals
+the turn count so a regression that silently drops turns from the loop
+still fails the test.
+
+### Acceptance criteria (Refs #2924 per-turn diagnostic)
+
+- Given the seed-42 `runInitGame` output with every Great Power flipped to
+  AI-controlled via `aiControlByGpId`, when the diagnostic test runs the
+  same 100-turn `generateOrdersForGameFullAI` + `validateOrdersAndResolveTurnFromTrustedOrders`
+  loop as `seed42_observer_conquest_s7d_diagnostic_test.dart`, then for
+  every Great Power `gp1..gp6` the test records exactly `100` per-turn
+  entries (one per turn) covering treasury, cargo, bid-type cap, emitted
+  trade-order counts, carry-forward residuals, and filled-deal seller /
+  buyer totals.
+- Given the same 100-turn loop completes, when the test emits the
+  structured diagnostic JSON, then the JSON contains a `gpRollup` object
+  with one entry per `gp1..gp6` exposing `cumulativeOffersEmitted`,
+  `cumulativeBidsEmitted`, `cumulativeDealsAsSeller`,
+  `cumulativeTreasuryCreditedAsSeller`, `cumulativeDealsAsBuyer`,
+  `cumulativeTreasurySpentAsBuyer`, `turnsZeroTradeCargo`,
+  `turnsZeroBidTypeCap`, `turnsTreasuryUnderCheapestRegiment`, and
+  `firstTurnTreasuryCrossesCheapest` (`int` turn index ≥ 1, or `null`
+  when treasury never crosses the threshold across the 100-turn window).
+- Given the same diagnostic JSON, when the test prints it to stdout via
+  `aiLogger`, then the output is wrapped in greppable
+  `WM2924_DIAGNOSTIC_JSON_BEGIN` / `WM2924_DIAGNOSTIC_JSON_END` markers
+  so the rollup can be transcribed into a comment on #2924 without
+  manual reformatting (mirrors the S7-D `S7D_DIAGNOSTIC_JSON_BEGIN/END`
+  contract).
+
 ## Out of scope for this SPEC slice
 
 The following remain under remaining `#2994` subtasks:
 
 - Full treasury inflow/outflow forecasting (riches phase, subsidies, build/research spend) beyond the surplus/need maps and F8 offer-inflow discount above (F1 extension).
-- Observer-game seed-42 multi-turn treasury-growth + phase-varying (EXPAND vs COLONIAL) verification (F9 follow-up — gated on the seed-42 colonial-acquisition gap, Refs #2848 / #2509 S7, the same gate that keeps `seed42_observer_colonial_regression_test.dart` skipped).
+- Observer-game seed-42 multi-turn treasury-growth + phase-varying (EXPAND vs COLONIAL) verification (F9 follow-up — gated on the seed-42 colonial-acquisition gap, Refs #2848 / #2509 S7, the same gate that keeps `seed42_observer_colonial_regression_test.dart` skipped). The Refs #2924 per-turn diagnostic above complements but does not replace this F9 follow-up: the diagnostic does not pin treasury-growth thresholds, only records the chain links so a tuning slice can target the failing lever.
 - Overseas extraction tonnage subtraction from trade cargo once extraction publishes per-player planned tonnage.
 
 ---

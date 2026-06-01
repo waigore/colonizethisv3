@@ -136,24 +136,68 @@ void main() {
       expect(result.reason, TradeOrderRejectionReasons.offerExceedsStockpile);
     });
 
-    test('rejects bid when player has no embassy (bid type cap 0)', () {
-      final game = _gameWith(
-        player: Player(
-          id: 'gp1',
-          displayName: 'GP1',
-          isHuman: true,
-          stockpile: Stockpile.empty,
-        ),
-      );
-      final result = OrderEngine().addTradeOrderWithContext(
-        game,
-        _topology,
-        'gp1',
-        validatorBid(CommodityCatalog.timber.id, 1),
-      );
+    test(
+      'accepts first bid when player has no embassy (baseline bid type cap 1 '
+      'per Refs #2924; SPEC/game/world-market.md § Bid type cap)',
+      () {
+        final game = _gameWith(
+          player: Player(
+            id: 'gp1',
+            displayName: 'GP1',
+            isHuman: true,
+            stockpile: Stockpile.empty,
+          ),
+        );
+        final engine = OrderEngine();
+        final firstResult = engine.addTradeOrderWithContext(
+          game,
+          _topology,
+          'gp1',
+          validatorBid(CommodityCatalog.timber.id, 1),
+        );
 
-      expect(result.isAccepted, isFalse);
-      expect(result.reason, TradeOrderRejectionReasons.bidTypeCapExceeded);
-    });
+        expect(
+          firstResult.isAccepted,
+          isTrue,
+          reason:
+              'Baseline kWorldMarketBaselineBidTypeCap == 1 admits exactly '
+              'one bid even for a no-embassy GP.',
+        );
+      },
+    );
+
+    test(
+      'rejects second distinct-commodity bid when no embassy (baseline bid '
+      'type cap == 1 exhausted; Refs #2924)',
+      () {
+        final game = _gameWith(
+          player: Player(
+            id: 'gp1',
+            displayName: 'GP1',
+            isHuman: true,
+            stockpile: Stockpile.empty,
+          ),
+        );
+        final engine = OrderEngine();
+        engine.addTradeOrderWithContext(
+          game,
+          _topology,
+          'gp1',
+          validatorBid(CommodityCatalog.timber.id, 1),
+        );
+        final secondResult = engine.addTradeOrderWithContext(
+          game,
+          _topology,
+          'gp1',
+          validatorBid(CommodityCatalog.iron.id, 1),
+        );
+
+        expect(secondResult.isAccepted, isFalse);
+        expect(
+          secondResult.reason,
+          TradeOrderRejectionReasons.bidTypeCapExceeded,
+        );
+      },
+    );
   });
 }

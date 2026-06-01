@@ -22,6 +22,27 @@ const int kTreasuryOfferPriorityModerate = 5;
 /// Aggressive sell priority when treasury is below the regiment threshold.
 const int kTreasuryOfferPriorityUrgent = 2;
 
+/// Multiplier on `cheapestRegimentBuildTreasuryCost()` that defines the
+/// "affluent" treasury band where speculative bidding activates. The default
+/// `1` means a GP that can afford at least the cheapest regiment build is
+/// also allowed to spend a small marginal amount on inventory inputs so the
+/// world market clears (Refs #2924 F10). A GP whose treasury is below the
+/// regiment threshold cannot afford regiments **or** speculation; the
+/// affluence gate keeps speculation off for those broke GPs.
+/// SPEC/ai/treasury-planner.md § Affluent-GP speculative bidding.
+const int kTreasuryAffluenceThresholdMultiplier = 1;
+
+/// Target stockpile quantity per non-riches commodity the affluent
+/// speculative-bid pass tries to lift the GP toward when no F1–F5 deficit
+/// already covers that commodity. Aligned with [kShortageThreshold] so a
+/// successful buy completes one full consumption cycle. Refs #2924 F10.
+const int kSpeculativeBidStockpileTarget = kShortageThreshold;
+
+/// Treasury band at which speculative bidding activates. Refs #2924 F10.
+int treasuryAffluenceThreshold() =>
+    kTreasuryAffluenceThresholdMultiplier *
+        cheapestRegimentBuildTreasuryCost();
+
 /// Returns trade orders for one AI-controlled GP after production planning.
 ///
 /// Runs after [productionAssignments] are chosen in [runEconomyPlanner]. Uses
@@ -95,6 +116,20 @@ List<TradeOrder> runTreasuryPlanner({
     if (deficit > 0 && _marketPriceBelowProductionCost(id, marketPrices)) {
       need[id] = deficit;
     }
+  }
+
+  // Refs #2924 F10: affluent GPs spend treasury on inventory ahead of strict
+  // deficits so the world market clears. Gated by treasury affluence so broke
+  // GPs never speculate; the F3 price gate is bypassed because the GP is
+  // choosing to convert treasury into stockpile regardless of unit cost.
+  if (treasury >= treasuryAffluenceThreshold()) {
+    _addSpeculativeBidNeeds(
+      need: need,
+      available: available,
+      projected: projected,
+      carryForwardBids: carryForwardBids,
+      state: game.worldMarketState,
+    );
   }
 
   if (available.isEmpty && need.isEmpty) {
@@ -310,6 +345,84 @@ int _expectedOfferInflow({
   }
   if (!inflow.isFinite) return 0;
   return inflow.round();
+}
+
+/// Speculative-bid pass for affluent GPs (Refs #2924 F10). Mutates [need] in
+/// place with synthetic stockpile-target deficits for non-riches commodities
+/// the F1–F5 path did not already speak for. Adds **at most one** entry per
+/// invocation so bids are concentrated on the commodity most likely to clear
+/// into a real deal (treasury only redistributes when matching offers exist).
+/// Selection order:
+/// 1. Commodities with prior-turn `MarketActivity.totalOfferQuantity > 0`
+///    (descending offer volume, then alphabetical) — proven liquidity.
+/// 2. Otherwise food commodities (deterministic alphabetical) — minor/tribe
+///    auto-offers reliably surface food on the next world-market phase.
+/// 3. Otherwise the alphabetical first non-riches commodity that meets the
+///    target gap (deterministic fallback for an empty market — pure
+///    determinism for tests that do not seed `lastTurnActivity`).
+/// Skips:
+/// - riches commodities (excluded from world-market trade),
+/// - commodities already in [need] (F1–F5 deficit path owns them),
+/// - commodities already in [available] (mutual-exclusion preserved),
+/// - commodities whose projected stockpile already meets
+///   [kSpeculativeBidStockpileTarget] (no positive target),
+/// - commodities whose remaining target is already covered by a carry-forward
+///   bid residual ([carryForwardBids]).
+void _addSpeculativeBidNeeds({
+  required Map<CommodityId, int> need,
+  required Map<CommodityId, int> available,
+  required Stockpile projected,
+  required Map<CommodityId, int> carryForwardBids,
+  required WorldMarketState state,
+}) {
+  bool eligible(CommodityId id) {
+    if (richesCommodityIds.contains(id)) return false;
+    if (need.containsKey(id)) return false;
+    if (available.containsKey(id)) return false;
+    final projectedQty = projected.quantityOf(id);
+    final carryQty = carryForwardBids[id] ?? 0;
+    return kSpeculativeBidStockpileTarget - projectedQty - carryQty > 0;
+  }
+
+  int gapFor(CommodityId id) {
+    final projectedQty = projected.quantityOf(id);
+    final carryQty = carryForwardBids[id] ?? 0;
+    return kSpeculativeBidStockpileTarget - projectedQty - carryQty;
+  }
+
+  int offerVolumeFor(CommodityId id) =>
+      state.lastTurnActivity[id]?.totalOfferQuantity ?? 0;
+
+  final eligibleIds = CommodityCatalog.all
+      .map((c) => c.id)
+      .where(eligible)
+      .toList(growable: false);
+  if (eligibleIds.isEmpty) return;
+
+  CommodityId pick;
+  final liquid = eligibleIds.where((id) => offerVolumeFor(id) > 0).toList()
+    ..sort((a, b) {
+      final volCmp = offerVolumeFor(b).compareTo(offerVolumeFor(a));
+      if (volCmp != 0) return volCmp;
+      return a.compareTo(b);
+    });
+  if (liquid.isNotEmpty) {
+    pick = liquid.first;
+  } else {
+    final foods = eligibleIds
+        .where(
+          (id) => CommodityCatalog.byId[id]?.category == CommodityCategory.food,
+        )
+        .toList()
+      ..sort();
+    if (foods.isNotEmpty) {
+      pick = foods.first;
+    } else {
+      final sortedEligible = [...eligibleIds]..sort();
+      pick = sortedEligible.first;
+    }
+  }
+  need[pick] = gapFor(pick);
 }
 
 List<TradeOrder> _prioritizedBids({
