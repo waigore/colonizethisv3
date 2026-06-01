@@ -6,6 +6,7 @@ import '../../../config/editorial_monocle_palette.dart';
 import '../../../config/ui_screen_ids.dart';
 import '../../../l10n/l10n.dart';
 import '../../../widgets/ct_dialog_shell.dart';
+import '../../../widgets/ct_spacing.dart';
 import '../../../widgets/ct_transfer_list.dart';
 import '../utils/region_labels.dart';
 import '../utils/sea_zone_name_resolver.dart';
@@ -115,7 +116,7 @@ class TransferToHomeFleetDialog extends StatelessWidget {
       maxWidth: 560,
       maxHeight: 520,
       child: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(CtSpacing.l),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,

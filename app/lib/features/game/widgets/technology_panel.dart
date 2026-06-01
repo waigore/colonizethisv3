@@ -9,6 +9,7 @@ import '../../../widgets/ct_brass_divider.dart';
 import '../../../widgets/ct_nine_patch_button.dart';
 import '../../../widgets/ct_progress_bar.dart';
 import '../../../widgets/ct_section_label.dart';
+import '../../../widgets/ct_spacing.dart';
 import '../../../widgets/strict_asset_icon.dart';
 import 'technology_panel_orders.dart';
 
@@ -53,7 +54,7 @@ class TechnologyPanel extends StatelessWidget {
     final canEdit = onOrdersChanged != null;
 
     return Padding(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(CtSpacing.l),
       child: _buildPanelContent(
         context: context,
         l10n: l10n,
