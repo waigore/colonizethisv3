@@ -15,6 +15,7 @@ import '../../../../widgets/ct_brass_divider.dart';
 import '../../../../widgets/ct_full_screen_dialogue_shell.dart';
 import '../../../../widgets/ct_loading_indicator.dart';
 import '../../../../widgets/ct_nine_patch_button.dart';
+import '../../../../widgets/ct_spacing.dart';
 import 'ct_dialogue_view.dart';
 
 /// Blocking intervention dialogue: Yarn intro, per-prompt situation + reaction, three choices.
@@ -252,7 +253,7 @@ class _InterventionDialogueOverlayState
             ),
           ),
         ],
-        bodyPadding: const EdgeInsets.all(16),
+        bodyPadding: const EdgeInsets.all(CtSpacing.l),
       );
     }
 
@@ -360,7 +361,7 @@ class _InterventionDialogueOverlayState
   Widget _buildScrimmedShell({
     required BuildContext context,
     required List<Widget> bodyChildren,
-    EdgeInsetsGeometry bodyPadding = const EdgeInsets.all(20),
+    EdgeInsetsGeometry bodyPadding = const EdgeInsets.all(CtSpacing.xl),
   }) {
     final l10n = appL10n(context);
     final ThemeData theme = Theme.of(context);

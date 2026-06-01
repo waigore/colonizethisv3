@@ -272,7 +272,7 @@ class _UnitRow extends ConsumerWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             Padding(
-              padding: const EdgeInsets.all(12),
+              padding: const EdgeInsets.all(CtSpacing.ml),
               child: Text(
                 appL10n(context).civilian_assignWorkTitle(unit.type),
                 style: Theme.of(context).textTheme.titleSmall,

@@ -19,6 +19,7 @@ import 'package:colonizethis_app/l10n/l10n.dart';
 import 'package:colonizethis_app/widgets/ct_icon_action.dart';
 import 'package:colonizethis_app/widgets/ct_panel.dart';
 import 'package:colonizethis_app/widgets/ct_section_label.dart';
+import 'package:colonizethis_app/widgets/ct_spacing.dart';
 import 'package:colonizethis_app/widgets/ct_tab_strip.dart';
 import 'package:colonizethis_app/widgets/resource_icon.dart';
 import 'package:flutter/material.dart';
@@ -157,7 +158,7 @@ class ProvinceSeaZoneDetailOverlay extends StatelessWidget {
   ) {
     final maxHeight = _resolveMaxHeight(context, constraints, isNarrow);
     return Padding(
-      padding: const EdgeInsets.all(8),
+      padding: const EdgeInsets.all(CtSpacing.m),
       child: ConstrainedBox(
         constraints: BoxConstraints(maxHeight: maxHeight),
         child: CtPanel(
@@ -231,11 +232,11 @@ class ProvinceSeaZoneDetailOverlay extends StatelessWidget {
               ),
             )
             .toList(),
-        contentPadding: const EdgeInsets.all(12),
+        contentPadding: const EdgeInsets.all(CtSpacing.ml),
       );
     }
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.all(CtSpacing.ml),
       child: content.sections,
     );
   }

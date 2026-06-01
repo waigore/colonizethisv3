@@ -72,6 +72,7 @@ import '../../../providers/games_provider.dart';
 import '../../../widgets/ct_choice_chip.dart';
 import '../../../widgets/ct_game_feature_screen_shell.dart';
 import '../../../widgets/ct_panel.dart';
+import '../../../widgets/ct_spacing.dart';
 import '../../../widgets/ct_tab_strip.dart';
 import '../../../widgets/ct_top_bar.dart';
 import '../../../widgets/strict_asset_icon.dart';
@@ -462,9 +463,9 @@ class _TradeScreenTabsBody extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(CtSpacing.l),
       child: CtPanel(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(CtSpacing.l),
         child: CtTabStrip(
           initialTabIndex: initialTabIndex,
           tabLabels: const <String>[
@@ -1260,7 +1261,7 @@ class _DealBookPanel extends StatelessWidget {
     final _DealBookPanelStyles styles = _DealBookPanelStyles.of(context);
     final bool panelEmpty = filledRows.isEmpty && unfilledRows.isEmpty;
     return CtPanel(
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.all(CtSpacing.ml),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,

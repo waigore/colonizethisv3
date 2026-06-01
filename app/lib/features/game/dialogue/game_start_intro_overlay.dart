@@ -12,6 +12,7 @@ import '../../../../widgets/ct_brass_divider.dart';
 import '../../../../widgets/ct_full_screen_dialogue_shell.dart';
 import '../../../../widgets/ct_loading_indicator.dart';
 import '../../../../widgets/ct_nine_patch_button.dart';
+import '../../../../widgets/ct_spacing.dart';
 import 'ct_dialogue_view.dart';
 
 /// Spinner while intro dialogue lines are not yet available. Uses [ThemeData.colorScheme]
@@ -125,7 +126,7 @@ class _GameStartIntroOverlayState extends State<GameStartIntroOverlay> {
     if (_loadError != null) {
       return CtFullScreenDialogueShell(
         backdrop: widget.child,
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(CtSpacing.l),
         body: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,

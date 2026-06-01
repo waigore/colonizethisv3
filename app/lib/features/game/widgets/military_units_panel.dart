@@ -12,6 +12,7 @@ import '../../../core/services/app_event_handler_scope.dart'
 import '../../../l10n/l10n.dart';
 import '../../../widgets/ct_icon_action.dart';
 import '../../../widgets/ct_nine_patch_button.dart';
+import '../../../widgets/ct_spacing.dart';
 import 'utils/military_tree_builder.dart';
 import 'move_army_dialog.dart';
 import 'split_army_dialog.dart';
@@ -418,7 +419,7 @@ class _ArmyExpansionTile extends StatelessWidget {
 
   Widget _buildFooterButtons() {
     return Padding(
-      padding: const EdgeInsets.all(8),
+      padding: const EdgeInsets.all(CtSpacing.m),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.end,
         children: [
