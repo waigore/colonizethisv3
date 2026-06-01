@@ -146,10 +146,27 @@ Game _buildStandaloneGame({
       fleets: fleets,
     ),
     turnTimeMapping: TurnTimeMapping.gdd01,
-    players: const [
-      // ignore: avoid_hardcoded_strings_in_widgets
-      Player(id: _humanPlayerId, displayName: 'England', isHuman: true,
-          treasury: 500),
+    players: [
+      // Refs #3093 — sellable clamp slice. Offer chips + offer-side
+      // `+` are now gated by the per-commodity offer cap
+      // (`stockpile − industryAllocation`). Seed a baseline stockpile
+      // of 99 units for every tradeable commodity so the E8 acceptance
+      // criteria tests (which stage Offer orders without specifying
+      // stockpile) keep passing under the new contract.
+      Player(
+        id: _humanPlayerId,
+        // ignore: avoid_hardcoded_strings_in_widgets
+        displayName: 'England',
+        isHuman: true,
+        treasury: 500,
+        stockpile: Stockpile(
+          quantities: <CommodityId, int>{
+            for (final Commodity c in CommodityCatalog.all)
+              if (c.category != CommodityCategory.riches && c.id != 'spices')
+                c.id: 99,
+          },
+        ),
+      ),
     ],
     diplomacyRelations: const [],
     diplomaticHistoryEvents: const [],

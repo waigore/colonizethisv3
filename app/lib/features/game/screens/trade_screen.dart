@@ -198,6 +198,17 @@ class TradeScreen extends ConsumerWidget {
   static Key marketRowQuantityTextKey(CommodityId commodityId) =>
       ValueKey<String>('tradeScreenMarketRow:$commodityId:quantity');
 
+  /// Per-row key for the inline sellable-headroom readout rendered as
+  /// `(N)` immediately after the commodity name on line 1 of the row.
+  /// `N` is the per-commodity offer cap minus the row's already-staged
+  /// offer quantity, sourced from
+  /// `sellableHeadroomByCommodityId` (Refs #3093 — sellable clamp
+  /// slice). Pin point for widget tests asserting the readout reflects
+  /// the player's stockpile / staged-offer state without coupling to
+  /// text-matching on the parent name line.
+  static Key marketRowSellableReadoutKey(CommodityId commodityId) =>
+      ValueKey<String>('tradeScreenMarketRow:$commodityId:sellable');
+
   /// Lower bound for the per-row quantity stepper when a trade order is
   /// staged. Setting the stepper below 1 is equivalent to choosing
   /// `None`, which removes the order — so the stepper is clamped at 1
@@ -597,6 +608,22 @@ class _MarketTabContent extends ConsumerWidget {
     final bool warningVisible =
         clampedRemaining == 0 && totalStagedBid > 0;
 
+    // Refs #3093 — sellable clamp slice. Compute the per-commodity offer
+    // cap and the player's already-staged offer quantities once per
+    // build so the rows below render `(headroom)` and clamp Offer
+    // toggles / `+` increments consistently. The helpers live in
+    // `colonizethis_logic` (pure functions) and are safe to call per
+    // frame.
+    final Map<CommodityId, int> offerCap = offerCapByCommodityId(
+      game: game,
+      playerId: playerId,
+    );
+    final Map<CommodityId, int> stagedOffers =
+        stagedOfferQuantitiesByCommodityId(
+      orders: orders,
+      playerId: playerId,
+    );
+
     // SingleChildScrollView + Column (instead of ListView.builder) so
     // every commodity row is built up-front. Widget tests pin all 22
     // tradeable rows by key without scrolling; the row count is bounded
@@ -631,6 +658,12 @@ class _MarketTabContent extends ConsumerWidget {
                   playerId,
                   rows[index].id,
                 ),
+                sellableHeadroom: _sellableHeadroomFor(
+                  offerCap: offerCap,
+                  stagedOffers: stagedOffers,
+                  commodityId: rows[index].id,
+                ),
+                offerCap: offerCap[rows[index].id] ?? 0,
                 nameStyle: nameStyle,
                 priceStyle: priceStyle,
                 volumeStyle: volumeStyle,
@@ -759,6 +792,27 @@ class _MarketTabContent extends ConsumerWidget {
       if (desiredQuantity > maxAllowedBidQuantity) {
         quantity = maxAllowedBidQuantity;
       }
+    } else if (next == TradeOrderType.offer) {
+      // Refs #3093 — sellable clamp slice. The per-commodity offer cap
+      // is `stockpile − industryAllocation` (alloc treated as 0 until
+      // a generic projector lands; see
+      // `sellable_quantity.dart`). Mutual exclusion guarantees the row
+      // is the only staged offer for the commodity, so the cap is
+      // applied directly to the row's quantity without subtracting
+      // sibling offers.
+      final int rowCap = offerCapByCommodityId(
+        game: game,
+        playerId: playerId,
+      )[commodityId] ??
+          0;
+      if (rowCap <= 0) {
+        // Stockpile exhausted — refuse the toggle so the row stays in
+        // its prior direction (or remains `None`).
+        return;
+      }
+      if (desiredQuantity > rowCap) {
+        quantity = rowCap;
+      }
     }
     final TradeOrder nextOrder = TradeOrder(
       commodityId: commodityId,
@@ -800,6 +854,18 @@ class _MarketTabContent extends ConsumerWidget {
           cargoHoldsForHomeFleet(game, playerId);
       final int totalStagedBid = _totalStagedBidQuantity(orders, playerId);
       if (totalStagedBid + delta > tradeCargoCapacity) return;
+    } else if (prior.type == TradeOrderType.offer && delta > 0) {
+      // Refs #3093 — sellable clamp slice. Block the `+` tap when the
+      // per-commodity offer cap (`stockpile − industryAllocation`,
+      // alloc=0 today) is exhausted. Mutual exclusion guarantees the
+      // row is the only staged offer for the commodity, so the cap is
+      // applied directly to `prior.quantity + delta`.
+      final int rowCap = offerCapByCommodityId(
+        game: game,
+        playerId: playerId,
+      )[commodityId] ??
+          0;
+      if (prior.quantity + delta > rowCap) return;
     }
     final TradeOrder nextOrder = prior.copyWith(quantity: rawNext);
     final Orders updated = applyTradeOrderForPlayer(
@@ -808,6 +874,24 @@ class _MarketTabContent extends ConsumerWidget {
       order: nextOrder,
     );
     notifier.replaceAll(updated);
+  }
+
+  /// Returns the per-row sellable headroom shown as `(N)` next to the
+  /// commodity name on the Trade Market tab (Refs #3093 — sellable
+  /// clamp slice). Equals `max(0, offerCap[c] − stagedOffer[c])` for
+  /// the row's commodity. Mirrors
+  /// `sellableHeadroomByCommodityId` but with per-row resolution so
+  /// the build path passes one int per row instead of rebuilding the
+  /// full map per child.
+  static int _sellableHeadroomFor({
+    required Map<CommodityId, int> offerCap,
+    required Map<CommodityId, int> stagedOffers,
+    required CommodityId commodityId,
+  }) {
+    final int cap = offerCap[commodityId] ?? 0;
+    final int staged = stagedOffers[commodityId] ?? 0;
+    final int headroom = cap - staged;
+    return headroom < 0 ? 0 : headroom;
   }
 
   /// Returns the sum of `TradeOrder.quantity` across all staged
@@ -881,6 +965,8 @@ class _MarketCommodityRow extends StatelessWidget {
     required this.priceText,
     required this.volumeText,
     required this.stagedOrder,
+    required this.sellableHeadroom,
+    required this.offerCap,
     required this.nameStyle,
     required this.priceStyle,
     required this.volumeStyle,
@@ -895,6 +981,18 @@ class _MarketCommodityRow extends StatelessWidget {
   final String priceText;
   final String volumeText;
   final TradeOrder? stagedOrder;
+
+  /// Refs #3093 — sellable clamp slice. The `(N)` value rendered
+  /// next to the commodity name. Computed in [_MarketTabContent] as
+  /// `max(0, offerCap − stagedOffer)`.
+  final int sellableHeadroom;
+
+  /// Refs #3093 — sellable clamp slice. The per-commodity offer cap
+  /// (`stockpile − industryAllocation`, alloc=0 today). Used to gate
+  /// the Offer chip and offer-side `+` button so they read as
+  /// disabled when the cap is `0`.
+  final int offerCap;
+
   final TextStyle nameStyle;
   final TextStyle priceStyle;
   final TextStyle volumeStyle;
@@ -913,8 +1011,36 @@ class _MarketCommodityRow extends StatelessWidget {
       stagedOrder != null &&
       stagedOrder!.quantity > TradeScreen.marketRowQuantityMin;
 
+  /// True when the row's `+` button can grow the staged order quantity.
+  /// For bids the cross-commodity cargo cap (Refs #2993 E5c) gates this
+  /// via the `_handleQuantityDelta` no-op when cargo is exhausted; for
+  /// offers (Refs #3093) the per-commodity offer cap caps the row at
+  /// `offerCap` so the button reads as disabled at saturation.
+  bool get _canIncrement {
+    if (!_hasStagedOrder) return false;
+    if (stagedOrder!.type == TradeOrderType.offer) {
+      return stagedOrder!.quantity < offerCap;
+    }
+    return true;
+  }
+
+  /// True when the Offer chip can be toggled on. When the per-commodity
+  /// offer cap is `0` (stockpile exhausted) and no offer is already
+  /// staged, the chip reads as disabled so the player gets immediate
+  /// visual feedback that no units are sellable.
+  bool get _canSelectOffer {
+    if (stagedOrder?.type == TradeOrderType.offer) return true;
+    return offerCap > 0;
+  }
+
   @override
   Widget build(BuildContext context) {
+    // Sellable readout style: muted parens read as auxiliary metadata
+    // (not the primary commodity name), matching the Bids/Offers
+    // volume line on line 2.
+    final TextStyle sellableStyle = nameStyle.copyWith(
+      color: EditorialMonoclePalette.muted,
+    );
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
@@ -923,13 +1049,21 @@ class _MarketCommodityRow extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.baseline,
           textBaseline: TextBaseline.alphabetic,
           children: <Widget>[
-            Expanded(
+            Flexible(
               child: Text(
                 commodityDisplayName,
                 style: nameStyle,
                 overflow: TextOverflow.ellipsis,
               ),
             ),
+            const SizedBox(width: 4),
+            Text(
+              // ignore: avoid_hardcoded_strings_in_widgets
+              '($sellableHeadroom)',
+              key: TradeScreen.marketRowSellableReadoutKey(commodityId),
+              style: sellableStyle,
+            ),
+            const Spacer(),
             const SizedBox(width: 8),
             Text(priceText, style: priceStyle),
           ],
@@ -943,7 +1077,8 @@ class _MarketCommodityRow extends StatelessWidget {
           quantityText: _quantityText,
           quantityStyle: quantityStyle,
           canDecrement: _canDecrement,
-          canIncrement: _hasStagedOrder,
+          canIncrement: _canIncrement,
+          canSelectOffer: _canSelectOffer,
           onDirectionChanged: onDirectionChanged,
           onIncrement: onIncrement,
           onDecrement: onDecrement,
@@ -963,6 +1098,7 @@ class _MarketCommodityRowControls extends StatelessWidget {
     required this.quantityStyle,
     required this.canDecrement,
     required this.canIncrement,
+    required this.canSelectOffer,
     required this.onDirectionChanged,
     required this.onIncrement,
     required this.onDecrement,
@@ -974,6 +1110,14 @@ class _MarketCommodityRowControls extends StatelessWidget {
   final TextStyle quantityStyle;
   final bool canDecrement;
   final bool canIncrement;
+
+  /// Refs #3093 — sellable clamp slice. When `false` the Offer chip
+  /// reads as disabled (no `onSelected` handler) so the player cannot
+  /// stage an offer for a commodity whose per-commodity offer cap is
+  /// `0`. Offers already staged on the row remain interactive (the
+  /// player can decrement / drop them) regardless of this gate.
+  final bool canSelectOffer;
+
   final ValueChanged<TradeOrderType?> onDirectionChanged;
   final VoidCallback onIncrement;
   final VoidCallback onDecrement;
@@ -1000,7 +1144,9 @@ class _MarketCommodityRowControls extends StatelessWidget {
         CtChoiceChip(
           key: TradeScreen.marketRowOfferChipKey(commodityId),
           selected: stagedType == TradeOrderType.offer,
-          onSelected: (_) => onDirectionChanged(TradeOrderType.offer),
+          onSelected: canSelectOffer
+              ? (_) => onDirectionChanged(TradeOrderType.offer)
+              : null,
           label: const Text(_MarketTabContent.offerChipLabel),
         ),
         _StepperButton(
