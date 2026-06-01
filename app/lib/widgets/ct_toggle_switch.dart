@@ -20,6 +20,7 @@ class CtToggleSwitch extends StatefulWidget {
     super.key,
     required this.value,
     required this.onChanged,
+    this.onGlowColor,
   });
 
   /// Current on/off state. `true` renders the on-state palette, knob at the
@@ -30,6 +31,19 @@ class CtToggleSwitch extends StatefulWidget {
   /// dartdoc). Otherwise the widget invokes the callback with the negated
   /// value when the user taps.
   final ValueChanged<bool>? onChanged;
+
+  /// Optional override for the active (on-state) knob glow color.
+  ///
+  /// Defaults to `EditorialMonoclePalette.accent` (the canonical brass glow
+  /// from the base R8 visual contract). Pass a different palette token
+  /// (e.g. `EditorialMonoclePalette.success` or `EditorialMonoclePalette.danger`)
+  /// to render the toggle with a semantic glow without re-skinning the
+  /// track/knob foreground (Refs #2867 R22 / R24 — accept/reject and
+  /// join/refuse toggles in the overture and call-to-arms overlays).
+  ///
+  /// SPEC: `SPEC/ui/pixel-art-ui-catalog.md` § Pixel-art component catalog
+  /// (`CtToggleSwitch` entry — glow color override).
+  final Color? onGlowColor;
 
   /// Track width (R8 visual contract).
   static const double trackWidth = 24;
@@ -92,6 +106,9 @@ class _CtToggleSwitchState extends State<CtToggleSwitch> {
     cb(!widget.value);
   }
 
+  Color get _resolvedGlowColor =>
+      widget.onGlowColor ?? EditorialMonoclePalette.accent;
+
   @override
   Widget build(BuildContext context) {
     if (!_enabled) {
@@ -101,6 +118,7 @@ class _CtToggleSwitchState extends State<CtToggleSwitch> {
           value: widget.value,
           hovered: false,
           animated: false,
+          glowColor: _resolvedGlowColor,
         ),
       );
     }
@@ -115,6 +133,7 @@ class _CtToggleSwitchState extends State<CtToggleSwitch> {
           value: widget.value,
           hovered: _hovered,
           animated: true,
+          glowColor: _resolvedGlowColor,
         ),
       ),
     );
@@ -126,11 +145,13 @@ class _CtToggleSwitchTrack extends StatelessWidget {
     required this.value,
     required this.hovered,
     required this.animated,
+    required this.glowColor,
   });
 
   final bool value;
   final bool hovered;
   final bool animated;
+  final Color glowColor;
 
   Color get _trackFill => value
       ? EditorialMonoclePalette.surfaceLite
@@ -200,6 +221,7 @@ class _CtToggleSwitchTrack extends StatelessWidget {
             child: _CtToggleSwitchKnob(
               fill: _knobFill,
               border: _knobBorder,
+              glowColor: glowColor,
               glowAlpha: _glowAlpha,
               duration: duration,
             ),
@@ -214,12 +236,14 @@ class _CtToggleSwitchKnob extends StatelessWidget {
   const _CtToggleSwitchKnob({
     required this.fill,
     required this.border,
+    required this.glowColor,
     required this.glowAlpha,
     required this.duration,
   });
 
   final Color fill;
   final Color border;
+  final Color glowColor;
   final double glowAlpha;
   final Duration duration;
 
@@ -228,7 +252,7 @@ class _CtToggleSwitchKnob extends StatelessWidget {
     final List<BoxShadow>? glow = glowAlpha > 0
         ? <BoxShadow>[
             BoxShadow(
-              color: EditorialMonoclePalette.accent.withValues(
+              color: glowColor.withValues(
                 alpha: glowAlpha,
               ),
               spreadRadius: CtToggleSwitch.glowSpread,

@@ -145,13 +145,14 @@ void main() {
       'AC (positive) OvertureDialogueOverlay (one pending offer) @ '
       '320×640: no RenderFlex overflow exception, "Diplomatic overtures" '
       'title + Accept / Reject / Submit action labels render — the '
-      'phase-2 Column(Row(offerer + ": " + stage) + Wrap(Accept + '
-      'Reject)) from SPEC/ui/overture-dialogue-overlay.md § Layout / '
-      'wireframe must wrap within the ~288 dp CtDialogShell content '
-      'column at kMinViewportWidth (CtFullScreenDialogueShell.maxWidth '
-      '520 is dominated by Dialog.insetPadding 16 dp each side at '
-      '320 dp; the Accept + Reject CtNinePatchButtons flow onto a '
-      'second Wrap run rather than overflowing horizontally).',
+      'phase-2 Column(Row(offerer + ": " + stage) + Wrap(Accept toggle + '
+      'Reject toggle)) from SPEC/ui/overture-dialogue-overlay.md § '
+      'Layout / wireframe must wrap within the ~288 dp CtDialogShell '
+      'content column at kMinViewportWidth (CtFullScreenDialogueShell.'
+      'maxWidth 520 is dominated by Dialog.insetPadding 16 dp each side '
+      'at 320 dp; the labeled Accept + Reject CtToggleSwitch rows flow '
+      'onto a second Wrap run rather than overflowing horizontally per '
+      '#2867 R22).',
       (WidgetTester tester) async {
         await _pumpDialogAtSize(
           tester,
