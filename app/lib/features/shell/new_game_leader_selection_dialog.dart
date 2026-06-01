@@ -48,6 +48,24 @@ class NewGameLeaderSelectionDialog extends StatefulWidget {
   /// Default terrain-variation slider value (matches `GameSetupConfig.terrainVariation` default).
   static const double defaultTerrainVariation = 0.5;
 
+  /// Width of the danger border painted around a slot's nation dropdown when
+  /// the slot's currently-selected Great Power id also appears in another
+  /// slot. Pinned to 1 dp so the visual cue does not shift slot layout.
+  /// SPEC: `SPEC/ui/new-game-leader-selection-dialog.md` § Duplicate slot
+  /// validation feedback (Refs #2867 R19).
+  static const double duplicateSlotBorderWidth = 1.0;
+
+  /// Stable key prefix for the danger-border wrapper rendered around the
+  /// nation dropdown of slot `slotIndex` when that slot is part of a
+  /// duplicate group. Tests pin the per-slot key
+  /// `'newGameLeaderDialogSlotDuplicateBorder_<slotIndex>'` so the positive
+  /// AC can assert that exactly the duplicate slots carry the danger
+  /// border without depending on widget tree order. The wrapper is only
+  /// mounted when the slot is detected as a duplicate; non-duplicate
+  /// slots render the nation dropdown directly without this key.
+  static String duplicateSlotBorderKey(int slotIndex) =>
+      'newGameLeaderDialogSlotDuplicateBorder_$slotIndex';
+
   /// Parses seed field text for [GameSetupConfig.seed]: empty or invalid → 42; negative → 42.
   static int parseSeedInput(String text) {
     final trimmed = text.trim();
@@ -107,6 +125,35 @@ class _NewGameLeaderSelectionDialogState
     super.dispose();
   }
 
+  /// Indices of slots whose currently-selected Great Power id also appears
+  /// in at least one other slot. Empty when every populated slot holds a
+  /// unique GP id. Empty slot ids (`''`) are ignored so unset slots do not
+  /// register as duplicates of one another.
+  ///
+  /// SPEC: `SPEC/ui/new-game-leader-selection-dialog.md` § Duplicate slot
+  /// validation feedback (Refs #2867 R19) — drives the danger border
+  /// painted around the duplicate slot's nation dropdown.
+  Set<int> _duplicateSlotIndices() {
+    final counts = <String, int>{};
+    for (final id in _orderedGpIdsBySlot) {
+      if (id.isEmpty) {
+        continue;
+      }
+      counts[id] = (counts[id] ?? 0) + 1;
+    }
+    final duplicates = <int>{};
+    for (var i = 0; i < _kNumSlots; i++) {
+      final id = _orderedGpIdsBySlot[i];
+      if (id.isEmpty) {
+        continue;
+      }
+      if ((counts[id] ?? 0) > 1) {
+        duplicates.add(i);
+      }
+    }
+    return duplicates;
+  }
+
   List<String> _availableGpIdsForSlot(int slotIndex) {
     final current = _orderedGpIdsBySlot[slotIndex];
     final takenElsewhere = <String>{};
@@ -162,8 +209,15 @@ class _NewGameLeaderSelectionDialogState
     final l10n = appL10n(context);
     final ThemeData theme = Theme.of(context);
     final _LeaderDialogTextStyles styles = _resolveTextStyles(theme);
+    final Set<int> duplicateSlots = _duplicateSlotIndices();
     final slotWidgets = <Widget>[
-      for (var i = 0; i < _kNumSlots; i++) _buildSlotRow(context, i, l10n),
+      for (var i = 0; i < _kNumSlots; i++)
+        _buildSlotRow(
+          context,
+          i,
+          l10n,
+          isDuplicate: duplicateSlots.contains(i),
+        ),
     ];
     return CtDialogShell(
       maxWidth: 480,
@@ -202,8 +256,7 @@ class _NewGameLeaderSelectionDialogState
       title: (theme.textTheme.titleMedium ?? const TextStyle(fontSize: 16))
           .copyWith(
             color: EditorialMonoclePalette.accent,
-            letterSpacing:
-                (theme.textTheme.titleMedium?.fontSize ?? 16) * 0.05,
+            letterSpacing: (theme.textTheme.titleMedium?.fontSize ?? 16) * 0.05,
             fontWeight: FontWeight.w600,
           ),
       intro: (theme.textTheme.bodyMedium ?? const TextStyle(fontSize: 14))
@@ -217,17 +270,11 @@ class _NewGameLeaderSelectionDialogState
             fontWeight: FontWeight.w600,
           ),
       helper: (theme.textTheme.bodySmall ?? const TextStyle(fontSize: 12))
-          .copyWith(
-            color: EditorialMonoclePalette.muted,
-            fontSize: 12,
-          ),
+          .copyWith(color: EditorialMonoclePalette.muted, fontSize: 12),
     );
   }
 
-  Widget _buildHeader(
-    AppLocalizations l10n,
-    _LeaderDialogTextStyles styles,
-  ) {
+  Widget _buildHeader(AppLocalizations l10n, _LeaderDialogTextStyles styles) {
     return Column(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -319,10 +366,7 @@ class _NewGameLeaderSelectionDialogState
     );
   }
 
-  Widget _buildFooterButtons(
-    AppLocalizations l10n,
-    BuildContext context,
-  ) {
+  Widget _buildFooterButtons(AppLocalizations l10n, BuildContext context) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.end,
       children: [
@@ -391,8 +435,9 @@ class _NewGameLeaderSelectionDialogState
   Widget _buildSlotRow(
     BuildContext context,
     int slotIndex,
-    AppLocalizations l10n,
-  ) {
+    AppLocalizations l10n, {
+    bool isDuplicate = false,
+  }) {
     final gpId = _orderedGpIdsBySlot[slotIndex];
     final available = _availableGpIdsForSlot(slotIndex);
     final effectiveGpId = available.contains(gpId) ? gpId : available.first;
@@ -404,7 +449,7 @@ class _NewGameLeaderSelectionDialogState
     final currentVariantId =
         _leaderByGpId[effectiveGpId] ?? gp.defaultLeaderVariantId;
 
-    final nationDropdown = CtDropdown<String>(
+    final Widget nationDropdownCore = CtDropdown<String>(
       value: effectiveGpId,
       items: available,
       hint: l10n.shell_newGame_selectNation,
@@ -424,6 +469,27 @@ class _NewGameLeaderSelectionDialogState
         });
       },
     );
+
+    // Duplicate slot validation feedback (Refs #2867 R19): wrap the nation
+    // dropdown in a 1 dp `--danger` border when this slot's GP id also
+    // appears in another slot. The wrapper is keyed by slot index so widget
+    // tests can assert that exactly the duplicate slots carry the border.
+    // Non-duplicate slots render the dropdown directly (no key) so the
+    // negative AC has a definite absence to assert.
+    final Widget nationDropdown = isDuplicate
+        ? DecoratedBox(
+            key: ValueKey<String>(
+              NewGameLeaderSelectionDialog.duplicateSlotBorderKey(slotIndex),
+            ),
+            decoration: BoxDecoration(
+              border: Border.all(
+                color: EditorialMonoclePalette.danger,
+                width: NewGameLeaderSelectionDialog.duplicateSlotBorderWidth,
+              ),
+            ),
+            child: nationDropdownCore,
+          )
+        : nationDropdownCore;
 
     final leaderDropdown = CtDropdown<String>(
       value: variants.any((v) => v.id == currentVariantId)
