@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import 'ct_spacing.dart';
+
 /// Pixel-art friendly toggle chip (non-Material).
 class CtChoiceChip extends StatelessWidget {
   const CtChoiceChip({
@@ -13,6 +15,16 @@ class CtChoiceChip extends StatelessWidget {
   final bool selected;
   final ValueChanged<bool> onSelected;
 
+  /// Default chip inner padding. Horizontal `CtSpacing.m` (8 px) per
+  /// `SPEC/ui/pixel-art-ui-catalog.md` § *Spacing tokens*; vertical `4`
+  /// is intentionally out-of-scale (the scale skips `4`; mockup-pinned
+  /// per-component override).
+  @visibleForTesting
+  static const EdgeInsetsGeometry defaultPadding = EdgeInsets.symmetric(
+    horizontal: CtSpacing.m,
+    vertical: 4,
+  );
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -25,7 +37,7 @@ class CtChoiceChip extends StatelessWidget {
     return InkWell(
       onTap: () => onSelected(!selected),
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+        padding: defaultPadding,
         decoration: BoxDecoration(
           color: bg,
           border: Border.all(color: border, width: 1),
