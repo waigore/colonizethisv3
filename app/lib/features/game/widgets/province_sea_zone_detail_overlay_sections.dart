@@ -116,7 +116,10 @@ Widget _buildTileImprovementLabel({
     rawResourceId: rawResourceId,
     visibleResourceId: visibleResourceId,
   );
-  return Text(l10n.provinceOverlay_tileImprovement(improvementLine));
+  return Text(
+    l10n.provinceOverlay_tileImprovement(improvementLine),
+    style: _fgBodyStyle(),
+  );
 }
 
 /// Disabled-state opacity for the Tile section inline shortcut icons
@@ -133,7 +136,7 @@ List<Widget> _buildTileRoadLabelWidgets({
   required int? roadLevel,
 }) {
   if (roadLevel == null) {
-    return [Text(l10n.provinceOverlay_tileRoadNone)];
+    return [Text(l10n.provinceOverlay_tileRoadNone, style: _fgBodyStyle())];
   }
   final roadCaptionStyle = TextStyle(
     fontSize: 11,
@@ -141,7 +144,7 @@ List<Widget> _buildTileRoadLabelWidgets({
     color: EditorialMonoclePalette.muted,
   );
   return [
-    Text(roadRailTransportLevelPrimaryLine(roadLevel)),
+    Text(roadRailTransportLevelPrimaryLine(roadLevel), style: _fgBodyStyle()),
     Text(roadRailSupplementaryLabel(roadLevel), style: roadCaptionStyle),
     if (roadLevel == 1)
       Text(kRoadRailPrimitiveVersusRailGloss, style: roadCaptionStyle),
@@ -386,7 +389,10 @@ Widget _buildTileSection({
   final prospectedRow = Row(
     children: [
       Expanded(
-        child: Text(l10n.provinceOverlay_tileProspected(prospectedLabel)),
+        child: Text(
+          l10n.provinceOverlay_tileProspected(prospectedLabel),
+          style: _fgBodyStyle(),
+        ),
       ),
       if (showExploreActionIcon)
         CtIconAction(
@@ -437,14 +443,17 @@ Widget _buildTileSection({
   );
 
   // Dark-theme tokens (Refs #2865, SPEC § Dark-theme Tile section body
-  // tokens — live-data body rows). The three bare Tile rows that render
-  // exact world-state values (coordinates / terrain / civilian-units count)
-  // resolve their TextStyle.color to EditorialMonoclePalette.fg via the
-  // shared `_fgBodyStyle()` helper so the editorial-monocle dark theme
-  // owns the Tile live-data surface end-to-end (mirroring the Political
-  // "Name" / "Owner" rows). The helper centralises the canonical fg token
-  // shared with Political, Tile, Economic improved-row, Military owner
-  // sub-header, Civilian own-unit, and Naval fleet-summary live-data rows.
+  // tokens — live-data body rows). Every Tile row that renders exact
+  // world-state values resolves its TextStyle.color to
+  // EditorialMonoclePalette.fg via the shared `_fgBodyStyle()` helper so
+  // the editorial-monocle dark theme owns the Tile live-data surface
+  // end-to-end. Rows in scope: coordinates, terrain, civilian-units count
+  // (below), plus the Prospected, Improvement, road / railroad primary
+  // numeric line, and sea-tile no-road row (pinned in `prospectedRow`,
+  // `_buildTileImprovementLabel`, and `_buildTileRoadLabelWidgets`). The
+  // helper centralises the canonical fg token shared with Political,
+  // Tile, Economic improved-row, Military owner sub-header, Civilian
+  // own-unit, and Naval fleet-summary live-data rows.
   final bodyStyle = _fgBodyStyle();
   return _buildSection(
     l10n.provinceOverlay_sectionTile,
