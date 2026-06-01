@@ -116,18 +116,21 @@ void main() {
           (recipe.outputQuantity * entry.value);
     }
     return MaterialApp(
-      home: Scaffold(
-        body: SizedBox(
-          width: width,
-          height: height,
-          child: _ProductionPanelTestWrapper(
-            displayGame: displayGame,
-            player: player,
-            initialDesiredOutput: desiredOutputByRecipe,
-            netDeltasByCommodity: netDeltasByCommodity,
-            onDesiredOutputChanged: onDesiredOutputChanged ?? (_) {},
-            onOpenCommodityBreakdown: onOpenCommodityBreakdown,
-            currentOrders: currentOrders,
+      home: MediaQuery(
+        data: MediaQueryData(size: Size(width, height)),
+        child: Scaffold(
+          body: SizedBox(
+            width: width,
+            height: height,
+            child: _ProductionPanelTestWrapper(
+              displayGame: displayGame,
+              player: player,
+              initialDesiredOutput: desiredOutputByRecipe,
+              netDeltasByCommodity: netDeltasByCommodity,
+              onDesiredOutputChanged: onDesiredOutputChanged ?? (_) {},
+              onOpenCommodityBreakdown: onOpenCommodityBreakdown,
+              currentOrders: currentOrders,
+            ),
           ),
         ),
       ),

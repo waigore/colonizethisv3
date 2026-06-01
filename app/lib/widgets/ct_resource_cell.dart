@@ -119,11 +119,32 @@ class CtResourceCell extends StatelessWidget {
     );
   }
 
+  /// Trailing monospace text slot wrapped in `Flexible(fit: loose)` with
+  /// `TextOverflow.ellipsis` and `softWrap: false`. Used for both the quantity
+  /// and the optional delta so the catalog cell fits gracefully when the
+  /// column slot is narrower than the cell's natural content width
+  /// (e.g. mobile 360 dp inside the 3-col Available grid for #2862).
+  Widget _flexibleMonoText(
+    BuildContext context, {
+    required String text,
+    required Color color,
+  }) {
+    return Flexible(
+      fit: FlexFit.loose,
+      child: Text(
+        text,
+        style: _monoStyle(context, color: color),
+        overflow: TextOverflow.ellipsis,
+        maxLines: 1,
+        softWrap: false,
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final String? deltaText = formattedDeltaText(delta);
     final Color? deltaTextColor = deltaColor(delta);
-
     return DecoratedBox(
       decoration: BoxDecoration(
         gradient: CtGradients.rowGradient,
@@ -153,18 +174,17 @@ class CtResourceCell extends StatelessWidget {
               ),
             ),
             const SizedBox(width: itemGap),
-            Text(
-              formatQuantity(quantity),
-              style: _monoStyle(
-                context,
-                color: EditorialMonoclePalette.accentDim,
-              ),
+            _flexibleMonoText(
+              context,
+              text: formatQuantity(quantity),
+              color: EditorialMonoclePalette.accentDim,
             ),
             if (deltaText != null) ...<Widget>[
               const SizedBox(width: quantityToDeltaGap),
-              Text(
-                deltaText,
-                style: _monoStyle(context, color: deltaTextColor!),
+              _flexibleMonoText(
+                context,
+                text: deltaText,
+                color: deltaTextColor!,
               ),
             ],
           ],
