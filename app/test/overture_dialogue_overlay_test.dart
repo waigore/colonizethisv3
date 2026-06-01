@@ -10,6 +10,7 @@ import 'package:colonizethis_app/features/game/dialogue/overture_dialogue_overla
 import 'package:colonizethis_app/features/game/widgets/chrome/ct_nine_patch_button.dart';
 import 'package:colonizethis_app/widgets/ct_brass_divider.dart';
 import 'package:colonizethis_app/widgets/ct_dialog_shell.dart';
+import 'package:colonizethis_app/widgets/ct_toggle_switch.dart';
 
 void main() {
   suppressLogsForTests();
@@ -428,6 +429,221 @@ void main() {
                 '#2867 R1 / SPEC/ui/pixel-art-ui-catalog.md § Dialog scrim.',
           );
         }
+      },
+    );
+  });
+
+  group('OvertureDialogueOverlay R22 CtToggleSwitch (#2867 R22)', () {
+    Finder acceptToggleAt(int rowIndex) => find.byKey(
+      ValueKey<String>('overtureAcceptToggle_$rowIndex'),
+    );
+
+    Finder rejectToggleAt(int rowIndex) => find.byKey(
+      ValueKey<String>('overtureRejectToggle_$rowIndex'),
+    );
+
+    testWidgets(
+      'phase 2 renders Accept + Reject CtToggleSwitch widgets per row with '
+      'the canonical --success / --danger glow tokens',
+      (WidgetTester tester) async {
+        await pumpOverlay(
+          tester,
+          offers: const [
+            OvertureOffer(
+              offererGpId: 'gp2',
+              targetFactionId: 'gp1',
+              stage: OvertureStage.tradeConsulate,
+            ),
+            OvertureOffer(
+              offererGpId: 'gp2',
+              targetFactionId: 'gp1',
+              stage: OvertureStage.embassy,
+            ),
+          ],
+          onDecisions: null,
+        );
+
+        for (var i = 0; i < 2; i++) {
+          expect(acceptToggleAt(i), findsOneWidget);
+          expect(rejectToggleAt(i), findsOneWidget);
+
+          final CtToggleSwitch accept = tester.widget<CtToggleSwitch>(
+            acceptToggleAt(i),
+          );
+          expect(accept.value, isFalse);
+          expect(accept.onGlowColor, EditorialMonoclePalette.success);
+
+          final CtToggleSwitch reject = tester.widget<CtToggleSwitch>(
+            rejectToggleAt(i),
+          );
+          expect(reject.value, isFalse);
+          expect(reject.onGlowColor, EditorialMonoclePalette.danger);
+        }
+      },
+    );
+
+    testWidgets(
+      'no CtNinePatchButton descendants paint the Accept / Reject affordances '
+      'inside the per-offer row (negative regression guard for R22)',
+      (WidgetTester tester) async {
+        await pumpOverlay(
+          tester,
+          offers: const [
+            OvertureOffer(
+              offererGpId: 'gp2',
+              targetFactionId: 'gp1',
+              stage: OvertureStage.tradeConsulate,
+            ),
+          ],
+          onDecisions: null,
+        );
+
+        // Submit is the only CtNinePatchButton expected in phase 2 (Accept /
+        // Reject are now CtToggleSwitch per #2867 R22).
+        final Iterable<CtNinePatchButton> buttons = tester
+            .widgetList<CtNinePatchButton>(find.byType(CtNinePatchButton));
+        expect(buttons, hasLength(1));
+        final CtNinePatchButton only = buttons.single;
+        expect(only.key, const ValueKey<String>('overtureSubmitButton'));
+      },
+    );
+
+    testWidgets(
+      'tapping the Accept toggle commits decision=true and turns Reject off',
+      (WidgetTester tester) async {
+        await pumpOverlay(
+          tester,
+          offers: const [
+            OvertureOffer(
+              offererGpId: 'gp2',
+              targetFactionId: 'gp1',
+              stage: OvertureStage.tradeConsulate,
+            ),
+          ],
+          onDecisions: null,
+        );
+
+        await tester.tap(acceptToggleAt(0));
+        await tester.pump();
+
+        final CtToggleSwitch accept = tester.widget<CtToggleSwitch>(
+          acceptToggleAt(0),
+        );
+        expect(accept.value, isTrue);
+        final CtToggleSwitch reject = tester.widget<CtToggleSwitch>(
+          rejectToggleAt(0),
+        );
+        expect(reject.value, isFalse);
+      },
+    );
+
+    testWidgets(
+      'tapping the Reject toggle commits decision=false and turns Accept off',
+      (WidgetTester tester) async {
+        await pumpOverlay(
+          tester,
+          offers: const [
+            OvertureOffer(
+              offererGpId: 'gp2',
+              targetFactionId: 'gp1',
+              stage: OvertureStage.tradeConsulate,
+            ),
+          ],
+          onDecisions: null,
+        );
+
+        await tester.tap(rejectToggleAt(0));
+        await tester.pump();
+
+        final CtToggleSwitch reject = tester.widget<CtToggleSwitch>(
+          rejectToggleAt(0),
+        );
+        expect(reject.value, isTrue);
+        final CtToggleSwitch accept = tester.widget<CtToggleSwitch>(
+          acceptToggleAt(0),
+        );
+        expect(accept.value, isFalse);
+      },
+    );
+
+    testWidgets(
+      'tapping Accept then Reject swaps the committed decision to false',
+      (WidgetTester tester) async {
+        List<OvertureDecision>? submitted;
+        await pumpOverlay(
+          tester,
+          offers: const [
+            OvertureOffer(
+              offererGpId: 'gp2',
+              targetFactionId: 'gp1',
+              stage: OvertureStage.tradeConsulate,
+            ),
+          ],
+          onDecisions: (d) => submitted = List.of(d),
+        );
+
+        await tester.tap(acceptToggleAt(0));
+        await tester.pump();
+        await tester.tap(rejectToggleAt(0));
+        await tester.pump();
+        await tester.tap(find.byKey(const ValueKey<String>('overtureSubmitButton')));
+        await tester.pump();
+
+        expect(submitted, isNotNull);
+        expect(submitted, hasLength(1));
+        expect(submitted!.first.accepted, isFalse);
+      },
+    );
+
+    testWidgets(
+      'tapping a currently-on toggle reverts the row to undecided and '
+      're-engages the #2867 R23 Submit gate (positive R22 + R23 interaction)',
+      (WidgetTester tester) async {
+        await pumpOverlay(
+          tester,
+          offers: const [
+            OvertureOffer(
+              offererGpId: 'gp2',
+              targetFactionId: 'gp1',
+              stage: OvertureStage.tradeConsulate,
+            ),
+          ],
+          onDecisions: null,
+        );
+
+        final Finder submitFinder = find.byKey(
+          const ValueKey<String>('overtureSubmitButton'),
+        );
+
+        await tester.tap(acceptToggleAt(0));
+        await tester.pump();
+        expect(
+          tester.widget<CtNinePatchButton>(submitFinder).enabled,
+          isTrue,
+          reason:
+              'Single-row overlay enables Submit immediately once a row is '
+              'decided (#2867 R23 positive case).',
+        );
+
+        // Tap the Accept toggle again while currently on -> reverts to
+        // undecided and Submit must disable again.
+        await tester.tap(acceptToggleAt(0));
+        await tester.pump();
+        final CtToggleSwitch accept = tester.widget<CtToggleSwitch>(
+          acceptToggleAt(0),
+        );
+        final CtToggleSwitch reject = tester.widget<CtToggleSwitch>(
+          rejectToggleAt(0),
+        );
+        expect(accept.value, isFalse);
+        expect(reject.value, isFalse);
+        expect(
+          tester.widget<CtNinePatchButton>(submitFinder).enabled,
+          isFalse,
+          reason:
+              'Reverting a row to undecided must re-engage the R23 Submit '
+              'gate so the user cannot submit unintentional decisions.',
+        );
       },
     );
   });
