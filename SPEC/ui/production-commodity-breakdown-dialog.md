@@ -109,6 +109,10 @@ There is no Confirm/Cancel pair: this dialog is read-only and dismiss-only.
 
 - Given `ProductionScreen` opens the breakdown dialog via `showDialog`, when the route is pushed, then `ModalRoute.barrierColor` equals `EditorialMonoclePalette.dialogScrim`.
 
+- Given the viewport width is exactly `kMinViewportWidth` (320 dp) and the height is at least 640 dp, when `ProductionCommodityBreakdownDialog` (PROD20001) is rendered against the `getDebugInitGameResult()` fixture with the seeded human player id, an empty `Orders()`, and the canonical `EditorialMonoclePalette.dialogScrim` `barrierColor`, then `WidgetTester.takeException()` returns `null`, the localized `production_breakdown_title` text and the trailing `common_close` `CtNinePatchButton` both render within the ~288 dp [CtDialogShell](pixel-art-ui-catalog.md) content column (`maxWidth: 720` clamped by outer `Dialog.insetPadding: 16` × 2), exactly one `DataTable` mounts with column count equal to `1 + EconomyPreviewStockpilePhase.values.length + 1` (commodity + per-phase + total) inside a horizontal-axis `SingleChildScrollView` wrapped by a visible `Scrollbar`, and at least one upper-cased section header label (`FOOD` / `RAW MATERIALS` / `MANUFACTURED`) renders inside the table body (cross-reference AC pinned by `app/test/production_commodity_breakdown_dialog_320dp_min_viewport_test.dart`; satisfies the parent contract in [mobile-adaptation.md](mobile-adaptation.md) § 7).
+
+- Given the viewport width is comfortably above every per-screen breakpoint (1024 × 768 dp) and the same fixture is used as the 320 dp positive AC above, when `ProductionCommodityBreakdownDialog` is rendered, then `WidgetTester.takeException()` returns `null` and both the localized `production_breakdown_title` text and trailing `common_close` `CtNinePatchButton` render (wide regression sentinel — keeps the 320 dp positive pin meaningful by catching regressions in the host overflow contract upstream of `ProductionCommodityBreakdownDialog`; cross-reference pinned by `app/test/production_commodity_breakdown_dialog_320dp_min_viewport_test.dart`).
+
 ---
 
 ## Widgetbook
