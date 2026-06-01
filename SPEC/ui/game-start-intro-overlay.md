@@ -111,6 +111,7 @@ The overlay does not use `AppEventBus` or `Navigator`; host route stays mounted.
 
 ## Components
 
+- `CtFullScreenDialogueShell` ([`components/ct-full-screen-dialogue-shell.md`](components/ct-full-screen-dialogue-shell.md)) — canonical scrim + centered `CtDialogShell` scaffold reused by every blocking dialogue overlay; pins the `EditorialMonoclePalette.dialogScrim` token so individual overlays do not redeclare it (Refs #2914 S2 / S9).
 - `CtDialogShell` (`app/lib/widgets/ct_dialog_shell.dart`) — frame.
 - `CtBrassDivider` (`app/lib/widgets/ct_brass_divider.dart`) — decorative 8 px ornate divider between the title region and the dialogue / error body (per `SPEC/ui/pixel-art-ui-catalog.md` § *CtBrassDivider*).
 - `CtNinePatchButton` (`app/lib/widgets/ct_nine_patch_button.dart`) — Continue and option buttons (no Material buttons in dialogue chrome).
