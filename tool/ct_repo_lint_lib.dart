@@ -11,6 +11,7 @@ import 'check_app_hardcoded_ui_strings.dart';
 import 'check_app_no_duplicate_helpers.dart';
 import 'check_app_no_material_alertdialog.dart';
 import 'check_app_no_material_iconbutton.dart';
+import 'check_app_no_material_scaffold.dart';
 import 'check_app_no_material_textbutton.dart';
 import 'check_app_widget_imports.dart';
 import 'check_asset_path_constants.dart';
@@ -825,6 +826,8 @@ int? _tryRunDartRuleInProcess({
       return runCheckAppNoMaterialIconButton(repoRoot);
     case 'repo.app_no_material_textbutton':
       return runCheckAppNoMaterialTextButton(repoRoot);
+    case 'repo.app_no_material_scaffold':
+      return runCheckAppNoMaterialScaffold(repoRoot);
     case 'repo.screen_registry_active_paths':
       return runCheckScreenRegistryActivePaths(repoRoot);
     default:
