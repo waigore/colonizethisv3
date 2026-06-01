@@ -94,26 +94,11 @@ class TechnologyPanel extends StatelessWidget {
               ),
         ),
         const SizedBox(height: 12),
-        CtSectionLabel(l10n.technologyPanel_researchSlotsHeading),
-        const SizedBox(height: 6),
-        Column(
-          children: List.generate(
-            kTechnologyResearchSlotCount,
-            (index) => _buildResearchSlot(
-              context: context,
-              l10n: l10n,
-              index: index,
-              slots: slots,
-              progress: progress,
-              humanPlayerId: humanPlayerId,
-              researchOrdersForPlayer: researchOrdersForPlayer,
-              canEdit: canEdit,
-            ),
-          ),
-        ),
-        const SizedBox(height: 16),
-        const CtBrassDivider(),
-        const SizedBox(height: 12),
+        // Researched Techs renders ABOVE Research Slots per
+        // SPEC/ui/technology-panel.md § Layout / wireframe > Body section
+        // ordering and matches the mockup body markup in
+        // SPEC/ui/mockups/GAME40001-technology-panel.html where
+        // `.researched-heading` precedes `.slots-heading`. Refs #2864 S0/S6.
         CtSectionLabel(l10n.technologyPanel_researchedTechsHeading),
         const SizedBox(height: 6),
         if (researchedIds.isEmpty)
@@ -133,6 +118,26 @@ class TechnologyPanel extends StatelessWidget {
                 ResearchedTechChip(techId: id),
             ],
           ),
+        const SizedBox(height: 16),
+        const CtBrassDivider(),
+        const SizedBox(height: 12),
+        CtSectionLabel(l10n.technologyPanel_researchSlotsHeading),
+        const SizedBox(height: 6),
+        Column(
+          children: List.generate(
+            kTechnologyResearchSlotCount,
+            (index) => _buildResearchSlot(
+              context: context,
+              l10n: l10n,
+              index: index,
+              slots: slots,
+              progress: progress,
+              humanPlayerId: humanPlayerId,
+              researchOrdersForPlayer: researchOrdersForPlayer,
+              canEdit: canEdit,
+            ),
+          ),
+        ),
         if (progress.isNotEmpty) ...[
           const SizedBox(height: 12),
           CtSectionLabel(l10n.technologyPanel_inProgress),
