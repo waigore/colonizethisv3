@@ -116,6 +116,14 @@ Debug log is **not** rendered by the pause menu — it lives in [`game-side-menu
   When the widget tree is inspected,
   Then no Material `ListTile`, `Card`, `AlertDialog`, `AppBar`, or `Divider` widget is present, in accordance with `SPEC/ui/pixel-art-ui-catalog.md` § Material design ban. (The single `Dialog` mounted internally by `CtDialogShell` is sanctioned chrome and is the only `Dialog` permitted in the tree.)
 
+- Given `PauseMenuPanel` is mounted at a viewport of `kMinViewportWidth × 640` (320 × 640 dp) under `AppThemes.editorialMonocle`,
+  When the widget pumps,
+  Then `WidgetTester.takeException()` is `null` (no `RenderFlex` overflow exception escapes the framework), and the localized `Game Paused` title plus all five action labels (`Resume`, `Save Game`, `Load Game`, `Settings`, `Exit to Main Menu`) render exactly once each per [`SPEC/ui/mobile-adaptation.md`](mobile-adaptation.md) § 7 (Minimum-viewport pin). The `CtDialogShell` `maxWidth: 360` is dominated by `Dialog.insetPadding` at this viewport so the content column collapses to ~288 dp; the title, divider, and stacked button rows must wrap within that budget. Wide regression sentinel at `1024 × 768` dp must also pump without exception.
+
+- Given `PauseMenuPanel` is mounted at the 320 × 640 dp minimum viewport,
+  When the laid-out widget tree is inspected,
+  Then the declared top-to-bottom button order from § Layout / wireframe is preserved: the rendered top-left `dy` of the `Resume` button (`PauseMenuPanel.resumeButtonKey`) is strictly less than the rendered top-left `dy` of the `Exit to Main Menu` button (`PauseMenuPanel.exitToMainMenuButtonKey`). The narrow viewport must not invert the vertical order of any of the five action rows.
+
 ---
 
 ## Widgetbook
