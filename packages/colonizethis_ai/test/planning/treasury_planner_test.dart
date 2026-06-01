@@ -12,12 +12,25 @@ Game _gameWithStockpile({
   required Stockpile stockpile,
   required int treasury,
   List<OvertureState> overtures = const [],
+  int turnNumber = 1,
+  List<Player>? extraPlayers,
 }) {
   const ow = 'oldWorld';
+  final players = [
+    Player(
+      id: 'gp1',
+      displayName: 'GP1',
+      isHuman: false,
+      capitalProvinceId: '$ow|p1',
+      stockpile: stockpile,
+      treasury: treasury,
+    ),
+    ...?extraPlayers,
+  ];
   return Game(
     id: 'g1',
     worldState: WorldState(
-      turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+      turnState: TurnState(phase: TurnPhase.orders, turnNumber: turnNumber),
       oldWorld: RegionData(
         provinces: [
           Province(id: '$ow|p1', regionId: ow, ownerId: 'gp1'),
@@ -25,16 +38,7 @@ Game _gameWithStockpile({
       ),
       newWorld: const RegionData(),
     ),
-    players: [
-      Player(
-        id: 'gp1',
-        displayName: 'GP1',
-        isHuman: false,
-        capitalProvinceId: '$ow|p1',
-        stockpile: stockpile,
-        treasury: treasury,
-      ),
-    ],
+    players: players,
     overtureStates: overtures,
     worldMarketState: WorldMarketState.withDefaultPrices(const {
       'timber': 20,
@@ -161,8 +165,8 @@ void main() {
 
     test(
       'no embassy and treasury == 0 with no production deficit yields '
-      'offers only — speculative bidding is gated by treasury affluence so '
-      'broke GPs never speculate (Refs #2924 F10; '
+      'offers only for non-designated buyer — speculative bidding is gated '
+      'by treasury affluence so broke GPs never speculate (Refs #2924 F10; '
       'SPEC/ai/treasury-planner.md § Affluent-GP speculative bidding)',
       () {
         var stockpile = const Stockpile().applyDelta('timber', 80);
@@ -177,7 +181,19 @@ void main() {
         final game = _gameWithStockpile(
           stockpile: stockpile,
           treasury: 0,
+          turnNumber: 1,
+          extraPlayers: const [
+            Player(
+              id: 'gp2',
+              displayName: 'GP2',
+              isHuman: false,
+              capitalProvinceId: 'oldWorld|p2',
+              stockpile: Stockpile.empty,
+              treasury: 0,
+            ),
+          ],
         );
+        expect(lockRecoveryDesignatedBuyerId(game), 'gp2');
         final orders = runTreasuryPlanner(
           game: game,
           playerId: 'gp1',
@@ -190,12 +206,59 @@ void main() {
           isEmpty,
           reason: 'Treasury below affluence threshold (= 0) must not '
               'trigger speculative bids; deficit pass also empty because '
-              'every non-riches commodity is well-stocked.',
+              'every non-riches commodity is well-stocked. gp1 is not the '
+              'F11 designated buyer on turn 1.',
         );
         expect(
           orders.where((o) => o.type == TradeOrderType.offer),
           isNotEmpty,
         );
+      },
+    );
+
+    test(
+      'lock-recovery designated buyer bids liquid food at urgent priority '
+      'and does not offer that commodity (Refs #2924 F11)',
+      () {
+        var stockpile = const Stockpile().applyDelta('grain', 200);
+        for (final commodity in CommodityCatalog.all) {
+          if (richesCommodityIds.contains(commodity.id)) continue;
+          if (commodity.id == 'grain') continue;
+          stockpile = stockpile.applyDelta(commodity.id, 4);
+        }
+        final game = _gameWithStockpile(
+          stockpile: stockpile,
+          treasury: 0,
+          turnNumber: 0,
+        ).copyWith(
+          worldMarketState: WorldMarketState.withDefaultPrices(const {
+            'grain': 10,
+            'timber': 20,
+          }).copyWith(
+            lastTurnActivity: {
+              'grain': const MarketActivity(
+                totalBidQuantity: 0,
+                totalOfferQuantity: 100,
+                filledQuantity: 0,
+              ),
+            },
+          ),
+        );
+        expect(lockRecoveryDesignatedBuyerId(game), 'gp1');
+        final orders = runTreasuryPlanner(
+          game: game,
+          playerId: 'gp1',
+          stockpile: stockpile,
+          productionAssignments: const [],
+          treasury: 0,
+        );
+        final grainBids = orders
+            .where((o) => o.type == TradeOrderType.bid && o.commodityId == 'grain');
+        final grainOffers = orders
+            .where((o) => o.type == TradeOrderType.offer && o.commodityId == 'grain');
+        expect(grainBids, isNotEmpty);
+        expect(grainOffers, isEmpty);
+        expect(grainBids.first.priority, kTreasuryOfferPriorityUrgent);
       },
     );
 
