@@ -304,6 +304,136 @@ void main() {
         0,
       );
     });
+
+    test(
+        'default projectedNonBidTreasuryDelta == 0 preserves the legacy '
+        '"raw treasury" contract for callers without a projection', () {
+      final game = _buildGame(treasury: 175);
+      // Equivalent to the previous group's "raw treasury" case — included
+      // here to document that the new parameter defaults to zero so legacy
+      // callers (AI suggestion, Widgetbook stories, isolated widget tests
+      // without `treasurySummaryProvider` map data) keep working.
+      expect(
+        treasuryAvailableForBidsByPlayer(
+          game: game,
+          playerId: _humanPlayerId,
+        ),
+        treasuryAvailableForBidsByPlayer(
+          game: game,
+          playerId: _humanPlayerId,
+          projectedNonBidTreasuryDelta: 0,
+        ),
+      );
+      expect(
+        treasuryAvailableForBidsByPlayer(
+          game: game,
+          playerId: _humanPlayerId,
+          projectedNonBidTreasuryDelta: 0,
+        ),
+        175,
+      );
+    });
+
+    test(
+        'projectedNonBidTreasuryDelta < 0 subtracts the absolute deficit '
+        'from raw treasury (positive AC #1)', () {
+      final game = _buildGame(treasury: 100);
+      expect(
+        treasuryAvailableForBidsByPlayer(
+          game: game,
+          playerId: _humanPlayerId,
+          // Player has 40 treasury of non-bid pending costs this turn
+          // (build / recruit / civilian / subsidy commitments).
+          projectedNonBidTreasuryDelta: -40,
+        ),
+        60,
+      );
+    });
+
+    test(
+        'projectedNonBidTreasuryDelta > 0 leaves the budget at raw treasury '
+        '(conservative — net non-bid income never raises the budget)', () {
+      final game = _buildGame(treasury: 100);
+      expect(
+        treasuryAvailableForBidsByPlayer(
+          game: game,
+          playerId: _humanPlayerId,
+          // Player has 50 treasury of net non-bid income projected (e.g.
+          // extraction sales). The clamp ignores income — the budget stays
+          // at raw treasury so the player cannot commit treasury they
+          // only project to earn.
+          projectedNonBidTreasuryDelta: 50,
+        ),
+        100,
+        reason:
+            'Net non-bid income must not raise the bid budget per SPEC § '
+            'Treasury budget for bids (conservative clamp).',
+      );
+    });
+
+    test(
+        'projected deficit equal to treasury clamps the budget at exactly 0',
+        () {
+      final game = _buildGame(treasury: 80);
+      expect(
+        treasuryAvailableForBidsByPlayer(
+          game: game,
+          playerId: _humanPlayerId,
+          projectedNonBidTreasuryDelta: -80,
+        ),
+        0,
+      );
+    });
+
+    test(
+        'projected deficit larger than treasury still clamps at 0 (not negative)',
+        () {
+      final game = _buildGame(treasury: 50);
+      expect(
+        treasuryAvailableForBidsByPlayer(
+          game: game,
+          playerId: _humanPlayerId,
+          projectedNonBidTreasuryDelta: -120,
+        ),
+        0,
+      );
+    });
+
+    test(
+        'projectedNonBidTreasuryDelta is ignored when treasury is already 0',
+        () {
+      final game = _buildGame(treasury: 0);
+      expect(
+        treasuryAvailableForBidsByPlayer(
+          game: game,
+          playerId: _humanPlayerId,
+          projectedNonBidTreasuryDelta: 25,
+        ),
+        0,
+      );
+      expect(
+        treasuryAvailableForBidsByPlayer(
+          game: game,
+          playerId: _humanPlayerId,
+          projectedNonBidTreasuryDelta: -25,
+        ),
+        0,
+      );
+    });
+
+    test(
+        'unknown playerId returns 0 even when a non-zero '
+        'projectedNonBidTreasuryDelta is supplied', () {
+      final game = _buildGame(treasury: 100);
+      expect(
+        treasuryAvailableForBidsByPlayer(
+          game: game,
+          playerId: 'gp_ghost',
+          projectedNonBidTreasuryDelta: -30,
+        ),
+        0,
+      );
+    });
   });
 
   group('composition: UI clamp budget math (Refs #3093)', () {
@@ -393,6 +523,64 @@ void main() {
       );
       expect(rowPrice, 30);
       expect(currentSpend + delta * rowPrice! > budget, isTrue);
+    });
+
+    test(
+        'treasury 100, projectedDelta=-40 (UI reconstructs non-bid delta with '
+        'no staged bids), market price timber 30 → budget = 60, default qty '
+        '1 fits and headroom permits up to qty 2 (spend 60)', () {
+      final game = _buildGame(
+        treasury: 100,
+        prices: const {'timber': 30},
+      );
+      // UI maps: projectedDelta from treasurySummaryProvider, no staged bids
+      // yet. projectedNonBidDelta = projectedDelta + stagedBidSpend = -40.
+      final int budget = treasuryAvailableForBidsByPlayer(
+        game: game,
+        playerId: _humanPlayerId,
+        projectedNonBidTreasuryDelta: -40,
+      );
+      final int currentSpend = stagedBidTotalSpendByPlayer(
+        orders: const Orders(),
+        playerId: _humanPlayerId,
+        game: game,
+        resourceRules: rules,
+      );
+      final int headroom = budget - currentSpend;
+      final int? rowPrice = effectiveMarketPriceForCommodityId(
+        commodityId: 'timber',
+        worldMarket: game.worldMarketState,
+        resourceRules: rules,
+      );
+      expect(budget, 60);
+      expect(rowPrice, 30);
+      expect(headroom ~/ rowPrice!, 2);
+    });
+
+    test(
+        'treasury 50, projectedNonBidTreasuryDelta=-60 → budget clamps to 0 '
+        'so no bid (even default qty 1) can be staged on any priced '
+        'commodity (silent no-op gate)', () {
+      final game = _buildGame(
+        treasury: 50,
+        prices: const {'timber': 30},
+      );
+      final int budget = treasuryAvailableForBidsByPlayer(
+        game: game,
+        playerId: _humanPlayerId,
+        projectedNonBidTreasuryDelta: -60,
+      );
+      final int? rowPrice = effectiveMarketPriceForCommodityId(
+        commodityId: 'timber',
+        worldMarket: game.worldMarketState,
+        resourceRules: rules,
+      );
+      expect(budget, 0);
+      expect(rowPrice, 30);
+      // The UI silent-no-ops the toggle because budget − otherBidSpend (0) is
+      // less than rowPrice. The composition mirrors the row-toggle gate
+      // implemented in `trade_screen.dart` for the bid clamp.
+      expect(budget < rowPrice!, isTrue);
     });
   });
 }

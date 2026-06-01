@@ -9,16 +9,25 @@
 /// resolver-prep, and per-frame UI paths under the 15-second
 /// turn-resolution budget (`.cursor/rules/colonizethis-turn-resolution-budget.mdc`).
 ///
-/// Scope today (#3093 — treasury bid budget slice): the helpers expose
-/// the **player's raw treasury** as the bid budget plus the per-player
-/// running bid-spend total computed from `currentOrdersProvider`. The
-/// "treasury minus all other pending costs" reduction called out in
-/// SPEC (production / recruit-train / civilian / subsidy commitments)
-/// is a planned follow-up — the UI clamp landing alongside this helper
-/// only subtracts the player's own already-staged bid spend, so the
-/// contract is unambiguous: every staged bid's total spend
-/// (`quantity × effectiveMarketPrice`) sums to at most `treasury`. The
-/// validator-side enforcement is also a follow-up (see SPEC).
+/// Scope (#3093 — treasury bid budget slices):
+///
+/// * `effectiveMarketPriceForCommodityId` and `stagedBidTotalSpendByPlayer`
+///   compose the per-player running bid-spend total from
+///   `currentOrdersProvider`.
+/// * `treasuryAvailableForBidsByPlayer` returns the player's bid budget.
+///   When the caller supplies `projectedNonBidTreasuryDelta` (the signed
+///   treasury change from the player's **non-bid** staged orders this turn
+///   — i.e. `projectOrderEffects(orders).treasuryDelta` plus the player's
+///   own running bid spend so the bid contribution is netted back out)
+///   the helper subtracts the projected **deficit** from raw treasury
+///   (a non-positive delta becomes a positive deficit; a positive delta
+///   is ignored so net income from non-bid orders never raises the
+///   budget). With the default `projectedNonBidTreasuryDelta == 0` the
+///   helper falls back to the legacy "raw treasury" contract for
+///   callers that don't run a projection.
+///
+/// Validator-side enforcement of the cross-commodity bid treasury cap
+/// remains a planned follow-up (see SPEC).
 library;
 
 import 'package:colonizethis_data/colonizethis_data.dart' as data;
@@ -88,28 +97,57 @@ int stagedBidTotalSpendByPlayer({
 
 /// Treasury budget [playerId] may commit to bids this turn.
 ///
-/// Today returns the player's raw `treasury` field (per
-/// `Player.treasury`). The "treasury minus all other pending costs"
-/// reduction described in `SPEC/game/world-market.md`
-/// § Treasury budget for bids is a planned refinement: production,
-/// recruit/train, civilian-work, and subsidy commitments will be
-/// subtracted via a generic projector once one is available. Until
-/// then, callers (UI + validator) factor in the player's own staged
-/// **other** bid spend by composing this helper with
-/// [stagedBidTotalSpendByPlayer], so the effective treasury budget for
-/// the row currently being clamped is:
+/// Returns `max(0, treasury − pendingNonBidDeficit)`, where
+/// `pendingNonBidDeficit = max(0, −projectedNonBidTreasuryDelta)`. The
+/// helper therefore stays **conservative**:
+///
+/// * A negative `projectedNonBidTreasuryDelta` (the player's non-bid
+///   staged orders — build / recruit / civilian work / subsidies — would
+///   net-debit treasury this turn) reduces the bid budget by exactly
+///   that deficit.
+/// * A non-negative `projectedNonBidTreasuryDelta` (net income or
+///   neutral) leaves the bid budget at the raw `treasury` value; net
+///   non-bid income never raises the budget so the clamp never lets the
+///   player commit treasury they only project to earn.
+///
+/// `projectedNonBidTreasuryDelta` defaults to `0`, which preserves the
+/// legacy "raw treasury" contract for callers that do not run a
+/// projection (e.g. Widgetbook stories, isolated widget tests, and AI
+/// suggestion paths that have not yet wired projection).
+///
+/// Callers (UI + validator) factor in the player's own staged **other**
+/// bid spend by composing this helper with [stagedBidTotalSpendByPlayer],
+/// so the effective treasury budget for the row currently being clamped
+/// is:
 ///
 ///     treasuryAvailableForBidsByPlayer(...) - (
 ///        stagedBidTotalSpendByPlayer(...) - rowPriorBidSpend
 ///     )
 ///
+/// The Trade Screen Market tab computes
+/// `projectedNonBidTreasuryDelta` as
+/// `treasurySummaryProvider.projectedDelta + stagedBidTotalSpendByPlayer(...)`
+/// (`projectedDelta` is the signed `projectOrderEffects(orders)` net
+/// treasury change including bids; adding the player's running bid spend
+/// back reconstructs the non-bid contribution) per
+/// `SPEC/ui/trade-screen.md` § Market tab — treasury bid cap. When the
+/// projection is unavailable
+/// (`treasurySummaryProvider.projectedDelta == null`) the UI passes `0`
+/// and the helper falls back to raw treasury.
+///
 /// Returns `0` when [playerId] does not resolve to a player.
 int treasuryAvailableForBidsByPlayer({
   required Game game,
   required String playerId,
+  int projectedNonBidTreasuryDelta = 0,
 }) {
   final player = game.playerById(playerId);
   if (player == null) return 0;
   final int treasury = player.treasury;
-  return treasury < 0 ? 0 : treasury;
+  if (treasury <= 0) return 0;
+  final int pendingDeficit = projectedNonBidTreasuryDelta < 0
+      ? -projectedNonBidTreasuryDelta
+      : 0;
+  final int budget = treasury - pendingDeficit;
+  return budget < 0 ? 0 : budget;
 }
