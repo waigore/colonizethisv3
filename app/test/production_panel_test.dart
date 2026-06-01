@@ -36,6 +36,7 @@ class _ProductionPanelTestWrapper extends StatefulWidget {
     required this.netDeltasByCommodity,
     required this.onDesiredOutputChanged,
     this.onOpenCommodityBreakdown,
+    this.currentOrders,
   });
 
   final Game displayGame;
@@ -44,6 +45,7 @@ class _ProductionPanelTestWrapper extends StatefulWidget {
   final Map<String, int> netDeltasByCommodity;
   final ValueChanged<Map<String, int>> onDesiredOutputChanged;
   final VoidCallback? onOpenCommodityBreakdown;
+  final Orders? currentOrders;
 
   @override
   State<_ProductionPanelTestWrapper> createState() =>
@@ -73,6 +75,7 @@ class _ProductionPanelTestWrapperState extends State<_ProductionPanelTestWrapper
         widget.onDesiredOutputChanged(next);
       },
       onOpenCommodityBreakdown: widget.onOpenCommodityBreakdown,
+      currentOrders: widget.currentOrders,
     );
   }
 }
@@ -94,6 +97,7 @@ void main() {
     Map<String, int> desiredOutputByRecipe = const {},
     ValueChanged<Map<String, int>>? onDesiredOutputChanged,
     VoidCallback? onOpenCommodityBreakdown,
+    Orders? currentOrders,
     double width = 800,
     double height = 500,
   }) {
@@ -123,6 +127,7 @@ void main() {
             netDeltasByCommodity: netDeltasByCommodity,
             onDesiredOutputChanged: onDesiredOutputChanged ?? (_) {},
             onOpenCommodityBreakdown: onOpenCommodityBreakdown,
+            currentOrders: currentOrders,
           ),
         ),
       ),
@@ -667,6 +672,38 @@ void main() {
           find.descendant(of: lumberCell, matching: find.text('+2')),
           findsOneWidget,
         );
+      },
+    );
+
+    testWidgets(
+      'Available commodity quantity subtracts staged trade offers '
+      '(Refs #3093)',
+      (WidgetTester tester) async {
+        await tester.pumpWidget(
+          buildPanel(
+            player: fullPlayer,
+            currentOrders: Orders(
+              tradeOrdersByPlayerId: {
+                fullPlayer.id: [
+                  TradeOrder(
+                    commodityId: CommodityCatalog.fabric.id,
+                    type: TradeOrderType.offer,
+                    quantity: 4,
+                    priority: 5,
+                  ),
+                ],
+              },
+            ),
+          ),
+        );
+        await pumpSettleCapped(tester);
+
+        final fabricCell = find.byKey(
+          const ValueKey<String>('production_available_cell_fabric'),
+        );
+        expect(fabricCell, findsOneWidget);
+        final cellWidget = tester.widget<CtResourceCell>(fabricCell);
+        expect(cellWidget.quantity, 46);
       },
     );
 
