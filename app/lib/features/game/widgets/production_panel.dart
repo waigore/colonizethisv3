@@ -105,6 +105,7 @@ class ProductionPanel extends StatelessWidget {
     final outputCommodityIds = _outputCommodityIds;
     final isNarrow = MediaQuery.sizeOf(context).width < kNarrowBreakpoint;
     final availableSubpanel = _AvailableSubpanel(
+      game: game,
       player: player,
       effectiveLabour: effectiveLabour,
       inputCommodityIds: inputCommodityIds,
@@ -194,6 +195,7 @@ class _ProductionPanelWideLayout extends StatelessWidget {
 
 class _AvailableSubpanel extends StatelessWidget {
   const _AvailableSubpanel({
+    required this.game,
     required this.player,
     required this.effectiveLabour,
     required this.inputCommodityIds,
@@ -206,6 +208,7 @@ class _AvailableSubpanel extends StatelessWidget {
     this.canEditLabour = false,
   });
 
+  final Game game;
   final Player player;
   final int effectiveLabour;
   final Set<String> inputCommodityIds;
@@ -216,6 +219,20 @@ class _AvailableSubpanel extends StatelessWidget {
   final Orders? currentOrders;
   final ProductionLabourCallbacks? labourCallbacks;
   final bool canEditLabour;
+
+  /// Quantity shown in Available commodity cells for tradeable stock.
+  ///
+  /// Matches the Trade Market tab `(N)` sellable readout:
+  /// `sellableHeadroomByCommodityId` (offer cap minus staged offers).
+  /// Riches and zero-stockpile commodities fall back to raw stockpile.
+  int _displayedStockpileQuantity(
+    Commodity c,
+    Map<CommodityId, int> sellableByCommodityId,
+  ) {
+    final headroom = sellableByCommodityId[c.id];
+    if (headroom != null) return headroom;
+    return player.stockpile.quantityOf(c.id);
+  }
 
   Widget _buildCommodityCell(Commodity c, int qty, int change) {
     final name = c.displayName ?? c.id;
@@ -234,6 +251,7 @@ class _AvailableSubpanel extends StatelessWidget {
   Widget _buildCommodityGrid(
     List<Commodity> commodities,
     Map<String, int> netChanges,
+    Map<CommodityId, int> sellableByCommodityId,
   ) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -242,7 +260,10 @@ class _AvailableSubpanel extends StatelessWidget {
           if (i > 0) const SizedBox(height: 4),
           _buildCommodityCell(
             commodities[i],
-            player.stockpile.quantityOf(commodities[i].id),
+            _displayedStockpileQuantity(
+              commodities[i],
+              sellableByCommodityId,
+            ),
             netChanges[commodities[i].id] ?? 0,
           ),
         ],
@@ -280,6 +301,7 @@ class _AvailableSubpanel extends StatelessWidget {
   List<Widget> _buildFoodSection(
     List<Commodity> availableFood,
     Map<String, int> netChanges,
+    Map<CommodityId, int> sellableByCommodityId,
   ) {
     if (availableFood.isEmpty) {
       return const <Widget>[];
@@ -287,7 +309,7 @@ class _AvailableSubpanel extends StatelessWidget {
     return <Widget>[
       CtSectionLabel(l10n.production_food),
       const SizedBox(height: 6),
-      _buildCommodityGrid(availableFood, netChanges),
+      _buildCommodityGrid(availableFood, netChanges, sellableByCommodityId),
       const SizedBox(height: 12),
     ];
   }
@@ -296,18 +318,19 @@ class _AvailableSubpanel extends StatelessWidget {
     List<Commodity> rawMaterials,
     List<Commodity> manufactured,
     Map<String, int> netChanges,
+    Map<CommodityId, int> sellableByCommodityId,
   ) {
     final children = <Widget>[
       CtSectionLabel(l10n.production_rawMaterials),
       const SizedBox(height: 6),
-      _buildCommodityGrid(rawMaterials, netChanges),
+      _buildCommodityGrid(rawMaterials, netChanges, sellableByCommodityId),
     ];
     if (manufactured.isNotEmpty) {
       children.addAll([
         const SizedBox(height: 12),
         CtSectionLabel(l10n.production_manufactured),
         const SizedBox(height: 6),
-        _buildCommodityGrid(manufactured, netChanges),
+        _buildCommodityGrid(manufactured, netChanges, sellableByCommodityId),
       ]);
     }
     return children;
@@ -356,6 +379,11 @@ class _AvailableSubpanel extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final netChanges = netDeltasByCommodity;
+    final sellableByCommodityId = sellableHeadroomByCommodityId(
+      game: game,
+      playerId: player.id,
+      orders: currentOrders ?? const Orders(),
+    );
 
     final rawMaterials = CommodityCatalog.all
         .where(
@@ -395,8 +423,17 @@ class _AvailableSubpanel extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 8),
-            ..._buildFoodSection(availableFood, netChanges),
-            ..._buildMaterialsSection(rawMaterials, manufactured, netChanges),
+            ..._buildFoodSection(
+              availableFood,
+              netChanges,
+              sellableByCommodityId,
+            ),
+            ..._buildMaterialsSection(
+              rawMaterials,
+              manufactured,
+              netChanges,
+              sellableByCommodityId,
+            ),
             ..._buildWorkerSection(theme),
           ],
         ),
