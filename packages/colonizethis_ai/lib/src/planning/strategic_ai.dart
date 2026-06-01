@@ -166,6 +166,8 @@ StrategicOrderTraceResult generateStrategicOrdersWithTrace({
     colonial: snapshot.colonial,
     snapshot: planningSnapshot,
     phasePlan: phasePlan,
+    tileMapByRegion: tileMapByRegion,
+    topology: topology,
   );
   final plannerOutcome = runDomainPlannersWithOutcome(
     game: planningGame,
