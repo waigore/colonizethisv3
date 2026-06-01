@@ -66,7 +66,7 @@ class _ProductionPanelGridTestWrapperState
 
 /// Returns the Wrap children whose first descendant `SizedBox` has the largest
 /// non-zero width and contains a [CtResourceCell] with `cellKey`. The Wrap is
-/// used by [_AvailableCellGrid] to lay out commodity / worker cells in a
+/// used by `AvailableCellGrid` to lay out commodity / worker cells in a
 /// fixed-column grid; this helper resolves the row width chosen for the
 /// commodity slot at test time.
 double _slotWidthFor(WidgetTester tester, Key cellKey) {
@@ -150,7 +150,7 @@ void main() {
 
         final gridBox = tester.getRect(gridFinder);
         final approxColWidth =
-            (gridBox.width - 6 /* _AvailableCellGrid._columnSpacing */) /
+            (gridBox.width - 6 /* AvailableCellGrid.columnSpacing */) /
                 kProductionAvailableWorkerGridColumns;
 
         for (final w in <double>[
@@ -227,7 +227,7 @@ void main() {
 
         final gridBox = tester.getRect(gridFinder);
         final approxColWidth =
-            (gridBox.width - 6 /* _AvailableCellGrid._columnSpacing */) /
+            (gridBox.width - 6 /* AvailableCellGrid.columnSpacing */) /
                 kProductionAvailableWorkerGridColumns;
 
         final peasantWidth = _slotWidthFor(
