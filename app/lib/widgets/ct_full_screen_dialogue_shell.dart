@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../config/editorial_monocle_palette.dart';
 import 'ct_dialog_shell.dart';
+import 'ct_spacing.dart';
 
 /// Reusable full-screen scrim + centered [CtDialogShell] wrapper for blocking
 /// dialogue overlays (overture, call-to-arms, intervention, game-start intro
@@ -66,10 +67,12 @@ class CtFullScreenDialogueShell extends StatelessWidget {
   /// (e.g. overture phase-2 / call-to-arms at 500) pass it explicitly.
   static const double defaultMaxHeight = 600;
 
-  /// Canonical inner padding for dialogue overlay bodies (20 dp on each
-  /// side — matches the dominant call-site pattern). Error fallbacks may
-  /// override with `EdgeInsets.all(16)`.
-  static const EdgeInsetsGeometry defaultPadding = EdgeInsets.all(20);
+  /// Canonical inner padding for dialogue overlay bodies (`CtSpacing.xl`
+  /// = 20 dp on each side — matches the dominant call-site pattern).
+  /// Error fallbacks may override with `EdgeInsets.all(CtSpacing.l)`.
+  static const EdgeInsetsGeometry defaultPadding = EdgeInsets.all(
+    CtSpacing.xl,
+  );
 
   @override
   Widget build(BuildContext context) {

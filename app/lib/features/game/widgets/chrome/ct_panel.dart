@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../../config/editorial_monocle_palette.dart';
 import '../../../../widgets/ct_gradients.dart';
+import '../../../../widgets/ct_spacing.dart';
 
 /// Dark editorial-monocle framed panel.
 ///
@@ -21,8 +22,9 @@ import '../../../../widgets/ct_gradients.dart';
 ///   border so the panel reads as a horizontally-banded section rather than a
 ///   full frame (`CtDialogShell` owns the four-sided frame contract per
 ///   #2859 R3).
-/// - **Padding:** Configurable inner padding around [child]; defaults to 12 px
-///   on all sides matching the legacy parchment panel's content inset.
+/// - **Padding:** Configurable inner padding around [child]; defaults to
+///   `CtSpacing.ml` (12 px) on all sides matching the legacy parchment
+///   panel's content inset.
 /// - **No nine-patch asset dependency:** All chrome is painted programmatically
 ///   from canonical palette tokens — no hard-coded hex literals, no asset
 ///   bundle lookup, no async image-decode pipeline.
@@ -32,7 +34,7 @@ class CtPanel extends StatelessWidget {
   const CtPanel({
     super.key,
     required this.child,
-    this.padding = const EdgeInsets.all(12),
+    this.padding = const EdgeInsets.all(CtSpacing.ml),
     this.destTileSize = 16,
   });
 

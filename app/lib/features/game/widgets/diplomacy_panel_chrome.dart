@@ -37,7 +37,7 @@ class _DiplomacySectionHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     final ThemeData theme = Theme.of(context);
     final TextStyle baseStyle =
-        theme.textTheme.titleMedium ?? const TextStyle(fontSize: 14);
+        theme.textTheme.titleMedium ?? const TextStyle(fontSize: 16);
     final TextStyle headingStyle = baseStyle.copyWith(
       color: EditorialMonoclePalette.accent,
       fontFamily: editorialMonocleDisplayFontFamily,

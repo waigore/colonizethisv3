@@ -204,7 +204,7 @@ class _CardTitle extends StatelessWidget {
   Widget build(BuildContext context) {
     final ThemeData theme = Theme.of(context);
     final TextStyle baseDisplay =
-        theme.textTheme.titleSmall ?? const TextStyle(fontSize: 13);
+        theme.textTheme.titleSmall ?? const TextStyle(fontSize: 14);
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
       child: Text(
@@ -414,7 +414,7 @@ class _LeftBorderTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final ThemeData theme = Theme.of(context);
     final TextStyle bodyBase =
-        theme.textTheme.bodyMedium ?? const TextStyle(fontSize: 13);
+        theme.textTheme.bodyMedium ?? const TextStyle(fontSize: 14);
     return DecoratedBox(
       decoration: BoxDecoration(
         color: EditorialMonoclePalette.surface,

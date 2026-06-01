@@ -369,8 +369,8 @@ class _AmountLabel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final base = theme.textTheme.headlineSmall ?? const TextStyle(fontSize: 22);
-    final double fontSize = base.fontSize ?? 22;
+    final base = theme.textTheme.headlineSmall ?? const TextStyle(fontSize: 24);
+    final double fontSize = base.fontSize ?? 24;
     final style = base.copyWith(
       color: EditorialMonoclePalette.fg,
       letterSpacing: fontSize * 0.04,
