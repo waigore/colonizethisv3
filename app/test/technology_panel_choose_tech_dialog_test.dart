@@ -44,7 +44,16 @@ void main() {
   }
 
   Future<void> openChooseTechDialog(WidgetTester tester) async {
-    await tester.tap(find.text('Choose tech').first);
+    // SPEC/ui/technology-panel.md § Slots tab — section ordering
+    // (Refs #2864 S0/S6) places the Researched Techs grid above the
+    // Research Slots block. Variants with many researched techs push
+    // the first "Choose tech" button off the default 800×600 test
+    // viewport, so ensureVisible scrolls it back into the hit region
+    // before tapping.
+    final chooseTech = find.text('Choose tech').first;
+    await tester.ensureVisible(chooseTech);
+    await tester.pumpAndSettle();
+    await tester.tap(chooseTech);
     await tester.pumpAndSettle();
   }
 
