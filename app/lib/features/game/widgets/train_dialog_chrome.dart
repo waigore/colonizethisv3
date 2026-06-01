@@ -4,6 +4,7 @@ import '../../../config/editorial_monocle_palette.dart';
 import '../../../widgets/ct_brass_divider.dart';
 import '../../../widgets/ct_gradients.dart';
 import '../../../widgets/ct_nine_patch_button.dart';
+import '../../../widgets/ct_radius.dart';
 
 /// Locked train-dialog row opacity per `SPEC/ui/train-civilians-dialog.md` /
 /// `SPEC/ui/train-military-dialog.md` and #2866 AC (0.4).
@@ -114,7 +115,7 @@ class TrainDialogResourceChip extends StatelessWidget {
           color: EditorialMonoclePalette.accentDim,
           width: 1,
         ),
-        borderRadius: BorderRadius.circular(4),
+        borderRadius: BorderRadius.circular(CtRadius.medium),
       ),
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
