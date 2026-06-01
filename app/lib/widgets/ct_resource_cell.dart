@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../config/editorial_monocle_palette.dart';
 import 'ct_gradients.dart';
+import 'ct_spacing.dart';
 
 /// Compact icon + name + quantity (+ optional signed delta) row for the dark
 /// editorial-monocle theme.
@@ -31,7 +32,7 @@ class CtResourceCell extends StatelessWidget {
     required this.name,
     required this.quantity,
     this.delta,
-    this.padding = const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+    this.padding = const EdgeInsets.symmetric(horizontal: CtSpacing.s, vertical: 4),
   });
 
   /// Consumer-supplied painter for the leading icon. Returned widget is
@@ -50,8 +51,12 @@ class CtResourceCell extends StatelessWidget {
   /// `null` omits the delta region entirely.
   final int? delta;
 
-  /// Outer padding for the cell (`4px` vertical / `6px` horizontal by
-  /// default, matching the mockup `.resource-cell { padding: 4px 6px }`).
+  /// Outer padding for the cell (`4px` vertical / `CtSpacing.s` (6px)
+  /// horizontal by default, matching the mockup
+  /// `.resource-cell { padding: 4px 6px }`). The vertical `4` is
+  /// intentionally out-of-scale per
+  /// `SPEC/ui/pixel-art-ui-catalog.md` § *Spacing tokens* (the scale
+  /// skips `4`; mockup-pinned per-component override).
   final EdgeInsetsGeometry padding;
 
   /// Leading icon slot size (`20x20 px`), matching the mockup.

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 
 import 'ct_nine_patch_button.dart';
 import 'ct_panel.dart';
+import 'ct_spacing.dart';
 
 /// Side-by-side two-panel layout requires at least this many logical pixels of
 /// inner width (the constraint passed to [CtTransferList] by its parent shell,
@@ -351,9 +352,13 @@ class _TransferSidePanel extends StatelessWidget {
   final void Function(String itemId) onMoveAllToLeft;
 
   static const double _rowButtonMinHeight = 40;
+
+  /// Per-row transfer-button padding. Horizontal `CtSpacing.m` (8 px) and
+  /// vertical `CtSpacing.s` (6 px) per
+  /// `SPEC/ui/pixel-art-ui-catalog.md` § *Spacing tokens*.
   static const EdgeInsets _rowButtonPadding = EdgeInsets.symmetric(
-    horizontal: 8,
-    vertical: 6,
+    horizontal: CtSpacing.m,
+    vertical: CtSpacing.s,
   );
 
   @override
@@ -366,11 +371,11 @@ class _TransferSidePanel extends StatelessWidget {
           Text(title, style: Theme.of(context).textTheme.titleSmall),
           if (subtitle != null)
             Text(subtitle!, style: Theme.of(context).textTheme.bodySmall),
-          const SizedBox(height: 8),
+          const SizedBox(height: CtSpacing.m),
           const Divider(height: 1),
-          const SizedBox(height: 8),
+          const SizedBox(height: CtSpacing.m),
           _buildListArea(context),
-          const SizedBox(height: 8),
+          const SizedBox(height: CtSpacing.m),
           const Divider(height: 1),
           const SizedBox(height: 4),
           Text(
@@ -417,7 +422,7 @@ class _TransferSidePanel extends StatelessWidget {
       style: Theme.of(context).textTheme.bodyMedium,
     );
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 2),
+      padding: const EdgeInsets.symmetric(vertical: CtSpacing.xs),
       child: Material(
         color: Colors.transparent,
         child: Padding(
