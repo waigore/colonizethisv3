@@ -13,6 +13,7 @@ import '../../../core/services/app_event_handler_scope.dart';
 import '../../../core/services/subscription_tracker.dart';
 import '../../../l10n/l10n.dart';
 import '../../../widgets/ct_nine_patch_button.dart';
+import '../../../widgets/ct_spacing.dart';
 import 'diplomacy_order_helpers.dart';
 import 'diplomacy_panel_rows.dart';
 import 'fnv1a_hash_constants.dart';
@@ -161,7 +162,7 @@ class _DiplomacyPanelState extends State<DiplomacyPanel> {
         ],
         if (rows.isEmpty)
           Padding(
-            padding: const EdgeInsets.all(24),
+            padding: const EdgeInsets.all(CtSpacing.xxl),
             child: Text(
               l10n.diplomacy_panel_noFactions,
               style: Theme.of(context).textTheme.bodyLarge,
@@ -388,7 +389,7 @@ class _DiplomacyRow extends StatelessWidget {
       child: InkWell(
         onTap: onTap,
         child: Padding(
-          padding: const EdgeInsets.all(12),
+          padding: const EdgeInsets.all(CtSpacing.ml),
           child: narrow
               ? _buildNarrowBody(context)
               : _buildWideBody(context),

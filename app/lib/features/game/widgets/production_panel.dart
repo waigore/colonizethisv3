@@ -11,6 +11,7 @@ import '../../../widgets/ct_nine_patch_button.dart';
 import '../../../widgets/ct_panel.dart';
 import '../../../widgets/ct_resource_cell.dart';
 import '../../../widgets/ct_section_label.dart';
+import '../../../widgets/ct_spacing.dart';
 import '../../../widgets/resource_icon.dart';
 import 'production_allocation_row.dart';
 import 'production_allocation_row_chrome.dart';
@@ -151,7 +152,7 @@ class _ProductionPanelNarrowLayout extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(CtSpacing.l),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -177,7 +178,7 @@ class _ProductionPanelWideLayout extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(CtSpacing.l),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -370,7 +371,7 @@ class _AvailableSubpanel extends StatelessWidget {
         .toList();
 
     return CtPanel(
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.all(CtSpacing.ml),
       child: SingleChildScrollView(
         child: Column(
           mainAxisSize: MainAxisSize.min,

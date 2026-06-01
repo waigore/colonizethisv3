@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../../../config/editorial_monocle_palette.dart';
 import '../../../../../widgets/ct_panel.dart';
+import '../../../../../widgets/ct_spacing.dart';
 import '../../../../../widgets/ct_top_bar.dart';
 
 /// Shared layout: constrained panel, [CtPanel], dark editorial-monocle
@@ -64,7 +65,7 @@ class UnitsPanelShell extends StatelessWidget {
     return ConstrainedBox(
       constraints: panelConstraints,
       child: Padding(
-        padding: const EdgeInsets.all(8),
+        padding: const EdgeInsets.all(CtSpacing.m),
         child: CtPanel(
           padding: EdgeInsets.zero,
           child: Column(
@@ -84,7 +85,7 @@ class UnitsPanelShell extends StatelessWidget {
                         children: listChildren,
                       )
                     : Padding(
-                        padding: const EdgeInsets.all(24),
+                        padding: const EdgeInsets.all(CtSpacing.xxl),
                         child: Center(
                           child: Text(
                             emptyMessage,

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../providers/observe_session_provider.dart';
 import '../../../widgets/ct_panel.dart';
+import '../../../widgets/ct_spacing.dart';
 
 /// Placeholder for P4–P17 chrome when global observe hides player-scoped data.
 /// SPEC/ui/observe-mode.md.
@@ -13,9 +14,9 @@ class ObserveModeNotDefinedPanel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.all(24),
+      padding: const EdgeInsets.all(CtSpacing.xxl),
       child: CtPanel(
-        padding: const EdgeInsets.all(24),
+        padding: const EdgeInsets.all(CtSpacing.xxl),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,

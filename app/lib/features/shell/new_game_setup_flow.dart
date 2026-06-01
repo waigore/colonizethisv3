@@ -22,6 +22,7 @@ import 'package:colonizethis_app/features/shell/new_game_setup_seed_for_attempt.
 import 'package:colonizethis_app/widgets/ct_dialog_shell.dart';
 import 'package:colonizethis_app/widgets/ct_loading_indicator.dart';
 import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
+import 'package:colonizethis_app/widgets/ct_spacing.dart';
 
 final _log = packageLogger('shell');
 
@@ -202,7 +203,7 @@ class NewGameErrorCard extends StatelessWidget {
         border: Border.all(color: EditorialMonoclePalette.danger, width: 1),
       ),
       child: Padding(
-        padding: const EdgeInsets.all(12),
+        padding: const EdgeInsets.all(CtSpacing.ml),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,

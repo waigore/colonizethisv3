@@ -10,6 +10,7 @@ import '../../../config/editorial_monocle_palette.dart';
 import '../../../config/ui_screen_ids.dart';
 import '../../../providers/games_provider.dart';
 import '../../../widgets/ct_game_feature_screen_shell.dart';
+import '../../../widgets/ct_spacing.dart';
 import '../../../widgets/ct_top_bar.dart';
 import '../../../widgets/strict_asset_icon.dart';
 import '../shell_player_context.dart';
@@ -248,7 +249,7 @@ class _SlotsBody extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(CtSpacing.l),
       child: TechnologyPanel(
         game: game,
         player: player,

@@ -11,6 +11,7 @@ import '../../../providers/games_provider.dart';
 import '../widgets/game_parameters_dialog.dart';
 import '../../../widgets/ct_nine_patch_button.dart';
 import '../../../widgets/ct_panel.dart';
+import '../../../widgets/ct_spacing.dart';
 
 /// Slide-out hamburger menu: **Game Parameters** (read-only) and **Debug log**.
 /// Empire actions use [GameMapEmpireLeftRail]. SPEC/ui/in-game-shell-narrow.md
@@ -97,7 +98,7 @@ class GameSideMenu extends ConsumerWidget {
           if (details.delta.dx < kSwipeToCloseDeltaThreshold) onClose();
         },
         child: CtPanel(
-          padding: const EdgeInsets.all(8),
+          padding: const EdgeInsets.all(CtSpacing.m),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [

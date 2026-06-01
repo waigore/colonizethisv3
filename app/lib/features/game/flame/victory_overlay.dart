@@ -10,6 +10,7 @@ import '../../../l10n/l10n.dart';
 import '../../../widgets/ct_brass_divider.dart';
 import '../../../widgets/ct_gradients.dart';
 import '../../../widgets/ct_nine_patch_button.dart';
+import '../../../widgets/ct_spacing.dart';
 
 /// Stateful overlay so "View final state" can hide the panel without a route (SPEC/game/victory.md).
 ///
@@ -108,7 +109,7 @@ class VictoryPanel extends StatelessWidget {
     return ConstrainedBox(
       constraints: const BoxConstraints(maxWidth: maxWidth),
       child: Padding(
-        padding: const EdgeInsets.all(24),
+        padding: const EdgeInsets.all(CtSpacing.xxl),
         child: Stack(
           children: <Widget>[
             _buildPanelSurface(context, narrow: narrow),
