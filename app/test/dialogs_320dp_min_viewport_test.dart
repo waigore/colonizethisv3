@@ -36,16 +36,24 @@
 //    raised by `OpenPauseMenuPanelEvent` from the in-game shell
 //    (SPEC/ui/pause-menu-panel.md).
 //
-// All twelve dialogs render their chrome via [CtDialogShell]. The first
-// eight pass `maxWidth: 400` or `maxWidth: 480`; the three new
-// CtTransferList-hosted dialogs (split army / split fleet / transfer to
-// home fleet) pass the wider `maxWidth: 520` / `maxWidth: 560` so the
-// side-by-side columns can render at default widths. At
-// `kMinViewportWidth` (320 dp) every shell collapses to the same ~288 dp
-// content width — the outer `Dialog.insetPadding` (16 dp each side)
-// dominates whenever the viewport is narrower than the configured
-// `maxWidth`, so the wider CtTransferList dialogs share the same narrow
-// budget as the simpler shells in this file. The pins assert:
+// The [CallToArmsDialogueOverlay] (OVL40001) call-to-arms decision
+// overlay shares the same 320 dp pin contract but lives in a sibling
+// file (`call_to_arms_dialogue_overlay_320dp_min_viewport_test.dart`)
+// so this host file stays under the
+// `repo.dart_file_non_comment_line_size` 1000 non-comment-line budget
+// (`SPEC/program/repo-lint.md`).
+//
+// All twelve surfaces in this file render their chrome via
+// [CtDialogShell]. The first eight pass `maxWidth: 400` or
+// `maxWidth: 480`; the three CtTransferList-hosted dialogs (split army /
+// split fleet / transfer to home fleet) pass the wider `maxWidth: 520` /
+// `maxWidth: 560` so the side-by-side columns can render at default
+// widths. At `kMinViewportWidth` (320 dp) every shell collapses to the
+// same ~288 dp content width — the outer `Dialog.insetPadding` (16 dp
+// each side) dominates whenever the viewport is narrower than the
+// configured `maxWidth`, so the wider CtTransferList dialogs share the
+// same narrow budget as the simpler shells in this file. The pins
+// assert:
 //
 //  * `WidgetTester.takeException()` is `null` so no `RenderFlex`
 //    overflow exception escapes the framework — the contract the other

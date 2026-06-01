@@ -47,16 +47,19 @@ Internal state ownership:
 |             Text(game_callToArms_intro)  -- muted italic  |
 |             CtBrassDivider                                |
 |             ListView.builder (shrinkWrap, no scroll)      |
-|               Row(crossAxisAlignment: start)              |
-|                 Expanded(Text(game_callToArms_prompt))    |
-|                 CtNinePatchButton(game_callToArms_join)   |
-|                 CtNinePatchButton(game_callToArms_refuse) |
+|               Column(crossAxisAlignment: stretch)         |
+|                 Text(game_callToArms_prompt)              |
+|                 Wrap(alignment: end, spacing: 8)          |
+|                   CtNinePatchButton(game_callToArms_join) |
+|                   CtNinePatchButton(game_callToArms_refuse)|
 |             Align(centerRight)                            |
 |               CtNinePatchButton(game_callToArms_submit)   |
 +-----------------------------------------------------------+
 ```
 
 The prompt text in each row is the localized `game_callToArms_prompt(defenderName, aggressorName)`. Names are resolved from `game.playerById(...)` — if the lookup fails the raw id is shown so the row never collapses to an empty string.
+
+Per-call rows stack the prompt above an end-aligned `Wrap` of the Join + Refuse `CtNinePatchButton`s (no per-row `Row` with `Expanded(prompt) + buttons`). At narrow viewports the two buttons can flow onto a second run rather than overflowing horizontally, and the prompt text always has the full dialog content column width to wrap onto multiple lines (issue #2870 S8 / S10 narrow-viewport contract — see [mobile-adaptation.md](mobile-adaptation.md) § 7).
 
 ### Editorial-monocle chrome (issue #2867 R24)
 
@@ -133,6 +136,8 @@ There are no loading, transient, or error variants; absence of a Yarn dependency
 - Given the overlay is mounted in the `editorialMonocle` theme with at least one pending call,
   When the rendered widget tree is inspected,
   Then (a) the `Text` for `game_callToArms_title` resolves `color == EditorialMonoclePalette.accent`, `fontWeight == FontWeight.w600`, and `letterSpacing == 0.05 * style.fontSize`; (b) the `Text` for `game_callToArms_intro` resolves `color == EditorialMonoclePalette.muted` and `fontStyle == FontStyle.italic`; (c) exactly one `CtBrassDivider` is present, painted **below** the intro `Text` and **above** the call-row `ListView`; and (d) the overlay scrim `Material` has `color == EditorialMonoclePalette.dialogScrim` (no `Colors.black54`).
+
+- Given the viewport width is exactly `kMinViewportWidth` (320 dp) and the height is at least 640 dp, when the overlay is mounted with one or two pending calls against the three-GP `Game` fixture (`gp_player` / `gp_portugal` / `gp_spain`), then `WidgetTester.takeException()` returns `null`, the `Call to arms` title renders, every pending row mounts a Join + Refuse `CtNinePatchButton` pair end-aligned via the per-row `Wrap`, and the trailing `Submit` `CtNinePatchButton` renders (the per-call `Column(Text + Wrap(Join + Refuse))` from § Layout / wireframe must wrap within the ~288 dp `CtDialogShell` content column without horizontal overflow per [mobile-adaptation.md](mobile-adaptation.md) § 7).
 
 ---
 
