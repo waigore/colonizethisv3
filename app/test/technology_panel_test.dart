@@ -196,7 +196,15 @@ void main() {
     await tester.pumpAndSettle();
 
     // Choose tech is rendered for each slot when editing is enabled.
-    await tester.tap(find.text('Choose tech').first);
+    // Scroll the button into view first: SPEC/ui/technology-panel.md §
+    // Slots tab — section ordering (Refs #2864 S0/S6) places the
+    // Researched Techs grid above the Research Slots block, and with
+    // every tech unlocked the chip grid pushes the first slot card's
+    // "Choose tech" button below the default 800×600 test viewport.
+    final chooseTech = find.text('Choose tech').first;
+    await tester.ensureVisible(chooseTech);
+    await tester.pumpAndSettle();
+    await tester.tap(chooseTech);
     await tester.pumpAndSettle();
 
     expect(find.text('No techs available to research'), findsOneWidget);

@@ -36,6 +36,17 @@ Technology screen hosts research slots UI: slot count from `player.researchSlots
 
 Slots tab content: vertical list of slot rows (label, assigned tech + progress, Cancel / Choose tech). Choose-tech opens the dark editorial-monocle Choose-tech dialog (see § Choose-tech dialog) listing researchable techs only.
 
+#### Slots tab — section ordering (normative)
+
+The body of the Slots tab MUST render the following sections in this top-to-bottom order, matching the mockup body markup in [`mockups/GAME40001-technology-panel.html`](mockups/GAME40001-technology-panel.html) where `.researched-heading` + `.researched-grid` precede `.slots-heading` + `#slots-container`:
+
+1. **Researched Techs** — `CtSectionLabel` heading (`technologyPanel_researchedTechsHeading`) followed by the read-only `ResearchedTechChip` `Wrap` grid (or the empty-state line when the player has no researched techs).
+2. **Section divider** — a single `CtBrassDivider` separates the Researched Techs block from the Research Slots block below it.
+3. **Research Slots** — `CtSectionLabel` heading (`technologyPanel_researchSlotsHeading`) followed by the four slot cards per § Slot behaviour.
+4. **In-progress techs (optional, auxiliary)** — When `Player.researchProgressByTechId` is non-empty, an auxiliary `In progress` block renders at the bottom of the panel below the Research Slots section.
+
+Reversing the ordering of (1) ↔ (3) — including via an intervening `CtBrassDivider` placement that visually swaps the two sections — is a regression. Refs #2864 S0/S6.
+
 ---
 
 ## Behavior
@@ -147,6 +158,8 @@ The Choose-tech dialog is the dark editorial-monocle modal opened by the slot ca
 - **Given** `player.researchSlots` is `null` or strictly less than `4`, **when** the fourth slot card is rendered, **then** the UI layer renders the card body at opacity `0.45`, sets the header label to exactly `"Slot 4 (University)"`, shows exactly the footnote line `"Requires University tech"` in place of any assigned-tech / progress / empty-state content, and renders no Cancel and no Choose tech button on that card.
 
 - **Given** `player.researchSlots` is greater than or equal to `4`, **when** the fourth slot card is rendered, **then** the UI layer renders the card at full opacity (not the locked `0.45`), uses the standard slot label `"Slot 4"`, and renders Cancel (when assigned) and Choose tech buttons as on the other active slots.
+
+- **Slots tab section ordering (Refs #2864 S0/S6):** **Given** the Slots tab is rendered for any player on any viewport, **when** the body widget tree is laid out, **then** the `CtSectionLabel` carrying the localized `technologyPanel_researchedTechsHeading` text appears at a strictly smaller vertical offset (smaller `Offset.dy`) than the `CtSectionLabel` carrying the localized `technologyPanel_researchSlotsHeading` text, matching the mockup body markup (`SPEC/ui/mockups/GAME40001-technology-panel.html`: `.researched-heading` precedes `.slots-heading`).
 
 - **Top bar present (dark chrome):** **Given** the Technology screen is mounted for the viewed player on any viewport, **when** the screen builds its chrome, **then** the UI layer renders a `CtTopBar` instance above the body whose `title` equals `"Technology"`, whose `backButtonLabel` equals `"Map"`, and whose leading `icon` is the pixel-art asset `assets/icons/32/ui_icon_technology.png` sized 18 × 18 logical px (no fallback to the legacy `CtScreenShell` parchment chrome).
 

@@ -196,6 +196,64 @@ void main() {
     );
   });
 
+  group('Slots-tab section ordering (Refs #2864 S0/S6 ordering AC)', () {
+    testWidgets(
+      'positive: RESEARCHED TECHS heading renders strictly above RESEARCH SLOTS heading (Offset.dy)',
+      (WidgetTester tester) async {
+        // Mix of researched techs (drives the chip grid) and at least
+        // one in-progress tech (exercises the auxiliary section without
+        // disturbing the primary ordering invariant).
+        final ids = techCatalog.keys.take(2).toList();
+        final unlocked = {for (final id in ids) id: true};
+        final player = basePlayer.copyWith(
+          researchSlots: 3,
+          techUnlocked: unlocked,
+        );
+        final localGame = game.copyWith(
+          players: [player, ...game.players.skip(1)],
+        );
+        await tester.pumpWidget(host(localGame, player));
+        await tester.pumpAndSettle();
+
+        final researchedHeadingY =
+            tester.getTopLeft(find.text('RESEARCHED TECHS')).dy;
+        final slotsHeadingY =
+            tester.getTopLeft(find.text('RESEARCH SLOTS')).dy;
+        expect(
+          researchedHeadingY,
+          lessThan(slotsHeadingY),
+          reason:
+              'SPEC/ui/technology-panel.md § Slots tab — section ordering '
+              '(Refs #2864 S0/S6) requires the Researched Techs heading to '
+              'render strictly above the Research Slots heading; matches '
+              'mockup .researched-heading precedes .slots-heading.',
+        );
+      },
+    );
+
+    testWidgets(
+      'positive: ordering holds even when the player has zero researched techs '
+      '(empty-state line still precedes the slots heading)',
+      (WidgetTester tester) async {
+        final player = basePlayer.copyWith(
+          researchSlots: 3,
+          techUnlocked: <String, bool>{},
+        );
+        final localGame = game.copyWith(
+          players: [player, ...game.players.skip(1)],
+        );
+        await tester.pumpWidget(host(localGame, player));
+        await tester.pumpAndSettle();
+
+        final researchedHeadingY =
+            tester.getTopLeft(find.text('RESEARCHED TECHS')).dy;
+        final slotsHeadingY =
+            tester.getTopLeft(find.text('RESEARCH SLOTS')).dy;
+        expect(researchedHeadingY, lessThan(slotsHeadingY));
+      },
+    );
+  });
+
   group('Slot card chrome (Refs #2864 AC S3)', () {
     testWidgets(
       'assigned slot uses CtProgressBar and the canonical RP label format',
