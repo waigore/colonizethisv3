@@ -14,6 +14,34 @@ import '../../../widgets/ct_nine_patch_button.dart';
 import '../../../widgets/ct_resource_cell.dart';
 import '../../../widgets/resource_icon.dart';
 
+/// Minimum viewport width at which the breakdown dialog drops the
+/// trailing horizontal `Scrollbar` + `SingleChildScrollView` and lets the
+/// 7-column `DataTable` lay out without horizontal scroll.
+///
+/// SPEC/ui/production-commodity-breakdown-dialog.md § Layout (viewport-
+/// adaptive dialog width). Refs #2862 S8c / C6.
+const double kProductionBreakdownDialogWideViewportThreshold = 900;
+
+/// `CtDialogShell.maxWidth` used when the surrounding viewport is at least
+/// [kProductionBreakdownDialogWideViewportThreshold]. Chosen so the 7
+/// column `DataTable` (`Commodity` + 5 phase columns + `Total`) lays out
+/// without horizontal scroll at desktop / wide viewports while still
+/// leaving comfortable insets on either side of the dialog frame.
+///
+/// SPEC/ui/production-commodity-breakdown-dialog.md § Layout (viewport-
+/// adaptive dialog width). Refs #2862 S8c / C6.
+const double kProductionBreakdownDialogWideMaxWidth = 900;
+
+/// `CtDialogShell.maxWidth` used when the surrounding viewport is
+/// strictly narrower than [kProductionBreakdownDialogWideViewportThreshold].
+/// Keeps the historical narrow cap so the horizontal `Scrollbar` +
+/// `SingleChildScrollView` fallback path remains the same on small
+/// viewports.
+///
+/// SPEC/ui/production-commodity-breakdown-dialog.md § Layout (viewport-
+/// adaptive dialog width). Refs #2862 S8c / C6.
+const double kProductionBreakdownDialogNarrowMaxWidth = 720;
+
 /// Dialog showing per-commodity preview deltas for each economy preview phase.
 class ProductionCommodityBreakdownDialog extends ConsumerStatefulWidget {
   const ProductionCommodityBreakdownDialog({
@@ -243,8 +271,100 @@ class _ProductionCommodityBreakdownDialogState
     final dividerColor =
         EditorialMonoclePalette.accentDim.withValues(alpha: 0.5);
 
+    final viewportWidth = MediaQuery.of(context).size.width;
+    final isWideViewport =
+        viewportWidth >= kProductionBreakdownDialogWideViewportThreshold;
+    final resolvedMaxWidth = isWideViewport
+        ? kProductionBreakdownDialogWideMaxWidth
+        : kProductionBreakdownDialogNarrowMaxWidth;
+
+    final dataTable = DataTable(
+      headingRowHeight: 40,
+      dataRowMinHeight: 32,
+      dataRowMaxHeight: 48,
+      dividerThickness: 1,
+      // Tighten DataTable's default column padding (`columnSpacing` 56 dp /
+      // `horizontalMargin` 24 dp) so the 7-column breakdown fits inside the
+      // wide-viewport `CtDialogShell` body without requiring a horizontal
+      // scroll affordance at viewport width >= 900 dp. The looser defaults
+      // pushed the table's intrinsic width past the dialog's content column
+      // and forced a RenderFlex overflow on the wide path. The narrow path
+      // still wraps the table in a `Scrollbar` + horizontal
+      // `SingleChildScrollView` so the same table remains reachable below
+      // the 900 dp viewport threshold (see the conditional below).
+      // SPEC/ui/production-commodity-breakdown-dialog.md § Layout >
+      // Viewport-adaptive dialog width. Refs #2862 S8c / C6.
+      columnSpacing: 24,
+      horizontalMargin: 12,
+      headingRowColor: WidgetStatePropertyAll<Color?>(
+        EditorialMonoclePalette.surfaceLite,
+      ),
+      border: TableBorder(
+        horizontalInside: BorderSide(color: dividerColor),
+      ),
+      headingTextStyle: _headingStyle(context),
+      columns: [
+        DataColumn(label: Text(l10n.production_breakdown_commodity)),
+        ...EconomyPreviewStockpilePhase.values.map(
+          (p) => DataColumn(
+            label: Text(
+              ProductionCommodityBreakdownDialog._phaseColumnLabel(
+                l10n,
+                p,
+              ),
+              softWrap: true,
+            ),
+          ),
+        ),
+        DataColumn(label: Text(l10n.production_breakdown_total)),
+      ],
+      rows: [
+        for (final (label, commodities) in sections)
+          if (commodities.isNotEmpty) ...[
+            DataRow(
+              cells: [
+                DataCell(_sectionHeaderCell(context, label)),
+                ...List<DataCell>.generate(
+                  phaseColCount + 1,
+                  (_) => const DataCell(SizedBox.shrink()),
+                ),
+              ],
+            ),
+            ...rowsFor(commodities),
+          ],
+      ],
+    );
+
+    // Wide viewports use the larger `maxWidth` so the 7-column DataTable
+    // fits comfortably without the user needing to scroll horizontally,
+    // and the visible Scrollbar chrome is suppressed so the dialog does
+    // not advertise a scroll affordance the user does not need. Narrow
+    // viewports keep the historical narrow cap and surface the
+    // horizontal Scrollbar chrome so the wide table stays reachable.
+    //
+    // Both viewports keep the underlying horizontal `SingleChildScrollView`
+    // in place: it lets the DataTable measure to its intrinsic width
+    // (avoiding a RenderFlex overflow if the table is fractionally wider
+    // than the dialog content column) and remains the SPEC's "Wide table"
+    // escape hatch at narrow widths.
+    //
+    // SPEC/ui/production-commodity-breakdown-dialog.md § Layout > Viewport-
+    // adaptive dialog width. Refs #2862 S8c / C6.
+    final Widget scrollableTable = SingleChildScrollView(
+      controller: _horizontalScrollController,
+      scrollDirection: Axis.horizontal,
+      child: dataTable,
+    );
+    final Widget tableBody = isWideViewport
+        ? scrollableTable
+        : Scrollbar(
+            controller: _horizontalScrollController,
+            thumbVisibility: true,
+            child: scrollableTable,
+          );
+
     return CtDialogShell(
-      maxWidth: 720,
+      maxWidth: resolvedMaxWidth,
       maxHeight: 560,
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -257,57 +377,7 @@ class _ProductionCommodityBreakdownDialogState
             ),
           ),
           const SizedBox(height: 8),
-          Scrollbar(
-            controller: _horizontalScrollController,
-            thumbVisibility: true,
-            child: SingleChildScrollView(
-              controller: _horizontalScrollController,
-              scrollDirection: Axis.horizontal,
-              child: DataTable(
-                headingRowHeight: 40,
-                dataRowMinHeight: 32,
-                dataRowMaxHeight: 48,
-                dividerThickness: 1,
-                headingRowColor: WidgetStatePropertyAll<Color?>(
-                  EditorialMonoclePalette.surfaceLite,
-                ),
-                border: TableBorder(
-                  horizontalInside: BorderSide(color: dividerColor),
-                ),
-                headingTextStyle: _headingStyle(context),
-                columns: [
-                  DataColumn(label: Text(l10n.production_breakdown_commodity)),
-                  ...EconomyPreviewStockpilePhase.values.map(
-                    (p) => DataColumn(
-                      label: Text(
-                        ProductionCommodityBreakdownDialog._phaseColumnLabel(
-                          l10n,
-                          p,
-                        ),
-                        softWrap: true,
-                      ),
-                    ),
-                  ),
-                  DataColumn(label: Text(l10n.production_breakdown_total)),
-                ],
-                rows: [
-                  for (final (label, commodities) in sections)
-                    if (commodities.isNotEmpty) ...[
-                      DataRow(
-                        cells: [
-                          DataCell(_sectionHeaderCell(context, label)),
-                          ...List<DataCell>.generate(
-                            phaseColCount + 1,
-                            (_) => const DataCell(SizedBox.shrink()),
-                          ),
-                        ],
-                      ),
-                      ...rowsFor(commodities),
-                    ],
-                ],
-              ),
-            ),
-          ),
+          tableBody,
           const SizedBox(height: 12),
           Align(
             alignment: Alignment.centerRight,

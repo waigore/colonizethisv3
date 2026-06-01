@@ -10,6 +10,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:colonizethis_app/config/themes.dart';
 import 'package:colonizethis_app/config/editorial_monocle_palette.dart';
+import 'package:colonizethis_app/features/game/widgets/chrome/ct_dialog_shell.dart';
 import 'package:colonizethis_app/features/game/widgets/production_commodity_breakdown_dialog.dart';
 import 'package:colonizethis_app/l10n/l10n.dart';
 import 'package:colonizethis_app/providers/production_allocation_provider.dart';
@@ -198,6 +199,102 @@ void main() {
             findsNothing,
           );
           expect(eventCount, 0);
+        },
+      );
+
+      // S8c — viewport-adaptive dialog width pins (Refs #2862 S8c / C6).
+
+      testWidgets(
+        'wide viewport (>= 900 dp) drops Scrollbar chrome and uses wide maxWidth',
+        (WidgetTester tester) async {
+          // 900 dp viewport hits the threshold exactly; the wide path
+          // applies (>= comparison).
+          await pumpDialog(tester);
+
+          final shell = tester.widget<CtDialogShell>(
+            find.byType(CtDialogShell),
+          );
+          expect(
+            shell.maxWidth,
+            kProductionBreakdownDialogWideMaxWidth,
+            reason:
+                'wide viewport must use kProductionBreakdownDialogWideMaxWidth',
+          );
+
+          // Wide layout drops the visible Scrollbar wrapper around the
+          // DataTable: there should be no Scrollbar ancestor of the
+          // DataTable. The underlying horizontal SingleChildScrollView
+          // is retained so the DataTable measures to its intrinsic
+          // width (and stays inside the dialog's content column) but
+          // the dialog does not advertise a scroll affordance the user
+          // does not need at the wide viewport.
+          final scrollbarAroundTable = find.ancestor(
+            of: find.byType(DataTable),
+            matching: find.byType(Scrollbar),
+          );
+          expect(
+            scrollbarAroundTable,
+            findsNothing,
+            reason:
+                'wide viewport must drop the Scrollbar chrome around the '
+                'DataTable so it does not advertise a scroll affordance '
+                'the user does not need',
+          );
+
+          // Column count is preserved — no phase column hidden.
+          final dataTable = tester.widget<DataTable>(find.byType(DataTable));
+          expect(
+            dataTable.columns.length,
+            1 + EconomyPreviewStockpilePhase.values.length + 1,
+          );
+        },
+      );
+
+      testWidgets(
+        'narrow viewport (< 900 dp) keeps horizontal Scrollbar fallback and narrow maxWidth',
+        (WidgetTester tester) async {
+          // 720 dp viewport is strictly below the wide threshold so the
+          // historical Scrollbar + SingleChildScrollView path applies.
+          await pumpDialog(tester, surfaceSize: const Size(720, 1400));
+
+          final shell = tester.widget<CtDialogShell>(
+            find.byType(CtDialogShell),
+          );
+          expect(
+            shell.maxWidth,
+            kProductionBreakdownDialogNarrowMaxWidth,
+            reason:
+                'narrow viewport must use kProductionBreakdownDialogNarrowMaxWidth',
+          );
+
+          // Narrow path mounts a horizontal SingleChildScrollView under a
+          // visible Scrollbar so every phase column remains reachable on
+          // small viewports.
+          final horizontalScrolls = find.byWidgetPredicate(
+            (w) =>
+                w is SingleChildScrollView &&
+                w.scrollDirection == Axis.horizontal,
+          );
+          expect(
+            horizontalScrolls,
+            findsOneWidget,
+            reason:
+                'narrow viewport must keep horizontal SingleChildScrollView',
+          );
+
+          final scrollbar = tester.widget<Scrollbar>(
+            find.ancestor(
+              of: find.byType(DataTable),
+              matching: find.byType(Scrollbar),
+            ),
+          );
+          expect(scrollbar.thumbVisibility, isTrue);
+
+          final dataTable = tester.widget<DataTable>(find.byType(DataTable));
+          expect(
+            dataTable.columns.length,
+            1 + EconomyPreviewStockpilePhase.values.length + 1,
+          );
         },
       );
     },
