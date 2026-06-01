@@ -7,20 +7,24 @@
 // resolves from [EditorialMonoclePalette.bgDeep] at
 // `kMapSelectionPromptBackgroundAlpha = 0.85` with a 1 px
 // [EditorialMonoclePalette.accentDim] border; the prompt text resolves to
-// [EditorialMonoclePalette.fg]; the `cancel` action paints its background
-// with [EditorialMonoclePalette.surface] and its label foreground with
-// [EditorialMonoclePalette.accentBright]; Material `Colors.black` /
-// `Colors.white` / Material colour-scheme lookups are forbidden on the
-// banner chrome.
+// [EditorialMonoclePalette.fg]; the `cancel` action renders as a
+// [CtNinePatchButton] (Ct-* catalog counterpart per the Material
+// `TextButton` ban in `SPEC/ui/pixel-art-ui-catalog.md` § Material design
+// ban) with the compact `kMapSelectionPromptCancelMinHeight = 34`
+// minimum tap-target height; Material `Colors.black` / `Colors.white` /
+// Material colour-scheme lookups are forbidden on the banner chrome.
 //
 // Refs #2861 (in-game shell + empire overview — dark editorial-monocle
 // chrome alignment for the map area selection prompt).
+// Refs #2914 (S8 Material ban — cancel control replaced with
+// `CtNinePatchButton`).
 
 import 'package:colonizethis_app/config/constants.dart';
 import 'package:colonizethis_app/config/editorial_monocle_palette.dart';
 import 'package:colonizethis_app/config/themes.dart';
 import 'package:colonizethis_app/features/game/flame/game_map_area.dart';
 import 'package:colonizethis_app/features/game/flame/game_map_canvas_stack.dart';
+import 'package:colonizethis_app/features/game/widgets/chrome/ct_nine_patch_button.dart';
 import 'package:colonizethis_app/core/services/game_service.dart';
 import 'package:colonizethis_app/providers/app_event_bus_provider.dart';
 import 'package:colonizethis_app/providers/game_service_provider.dart';
@@ -195,45 +199,70 @@ void main() {
   );
 
   testWidgets(
-    'cancel action paints surface bg and accentBright fg',
+    'cancel action renders as CtNinePatchButton with the compact tap '
+    'minimum height pinned by SPEC (no Material TextButton)',
     (WidgetTester tester) async {
       await pumpAndEnterSelectionMode(tester);
 
-      final cancelButton = tester.widget<TextButton>(
+      // Material `TextButton` is banned on this surface per
+      // `SPEC/ui/pixel-art-ui-catalog.md` § Material design ban and
+      // Refs #2914 S8.
+      expect(
+        find.byType(TextButton),
+        findsNothing,
+        reason: 'cancel control must not fall back to Material TextButton',
+      );
+
+      final Finder cancelFinder = find.ancestor(
+        of: find.text('cancel'),
+        matching: find.byType(CtNinePatchButton),
+      );
+      expect(
+        cancelFinder,
+        findsOneWidget,
+        reason:
+            'cancel control must render via the CtNinePatchButton catalog '
+            'widget so it inherits the canonical brass chrome',
+      );
+
+      final CtNinePatchButton cancelButton = tester.widget<CtNinePatchButton>(
+        cancelFinder,
+      );
+      expect(
+        cancelButton.minHeight,
+        equals(kMapSelectionPromptCancelMinHeight),
+        reason:
+            'banner cancel must use the compact 34 dp minHeight pinned by '
+            'SPEC § Cancel button surface (not the catalog default 48 dp)',
+      );
+      expect(
+        cancelButton.padding,
+        equals(const EdgeInsets.symmetric(horizontal: 12, vertical: 4)),
+      );
+    },
+  );
+
+  testWidgets(
+    'tapping the cancel CtNinePatchButton invokes the cancel callback '
+    'and exits selection mode',
+    (WidgetTester tester) async {
+      await pumpAndEnterSelectionMode(tester);
+
+      await tester.tap(
         find.ancestor(
           of: find.text('cancel'),
-          matching: find.byType(TextButton),
+          matching: find.byType(CtNinePatchButton),
         ),
       );
-      final style = cancelButton.style;
-      expect(style, isNotNull);
+      await tester.pumpAndSettle();
 
-      // ButtonStyle exposes resolved colours via MaterialStateProperty;
-      // the selection-prompt cancel button declares static colours from
-      // EditorialMonoclePalette, so resolve against an empty state set.
-      final resolvedBg = style!.backgroundColor?.resolve(<WidgetState>{});
-      final resolvedFg = style.foregroundColor?.resolve(<WidgetState>{});
-      expect(resolvedBg, equals(EditorialMonoclePalette.surface));
-      expect(resolvedFg, equals(EditorialMonoclePalette.accentBright));
-      // Material primaries are forbidden — must not paint white-on-black.
       expect(
-        resolvedBg,
-        isNot(equals(const Color(0xFFFFFFFF))),
-        reason: 'cancel button background must not paint Material Colors.white',
+        find.text('Select a tile, or click cancel'),
+        findsNothing,
+        reason:
+            'selection prompt overlay must dismiss after the cancel '
+            'affordance is activated',
       );
-      expect(
-        resolvedFg,
-        isNot(equals(const Color(0xFF000000))),
-        reason: 'cancel button label must not paint Material Colors.black',
-      );
-
-      // The inner Text label MUST also explicitly set the accent-bright
-      // colour so the foreground holds whether ButtonStyle is overridden
-      // by a future M3 default.
-      final cancelLabel = tester.widget<Text>(find.text('cancel'));
-      final labelStyle = cancelLabel.style;
-      expect(labelStyle, isNotNull);
-      expect(labelStyle!.color, equals(EditorialMonoclePalette.accentBright));
     },
   );
 
@@ -241,6 +270,13 @@ void main() {
     'kMapSelectionPromptBackgroundAlpha is pinned at 0.85 per SPEC',
     () {
       expect(kMapSelectionPromptBackgroundAlpha, equals(0.85));
+    },
+  );
+
+  test(
+    'kMapSelectionPromptCancelMinHeight is pinned at 34 per SPEC',
+    () {
+      expect(kMapSelectionPromptCancelMinHeight, equals(34));
     },
   );
 }
