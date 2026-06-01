@@ -39,6 +39,8 @@ EconomyPlan runEconomyPlanner({
   ColonialSummary colonial = const ColonialSummary(),
   AIWorldSnapshot? snapshot,
   PhasePlanOutcome? phasePlan,
+  Map<String, TileMapResult>? tileMapByRegion,
+  MapTopology? topology,
 }) {
   final player = game.playerById(view.playerId);
   if (player == null) {
@@ -88,6 +90,8 @@ EconomyPlan runEconomyPlanner({
         stockpile: stockpile,
         productionAssignments: const [],
         treasury: player.treasury,
+        tileMapByRegion: tileMapByRegion,
+        topology: topology,
       ),
     );
   }
@@ -120,6 +124,8 @@ EconomyPlan runEconomyPlanner({
     stockpile: stockpile,
     productionAssignments: assignments,
     treasury: player.treasury,
+    tileMapByRegion: tileMapByRegion,
+    topology: topology,
   );
   _log.i(
     'economy plan playerId=${view.playerId} '

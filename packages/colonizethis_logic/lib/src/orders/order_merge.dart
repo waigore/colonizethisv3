@@ -46,6 +46,10 @@ Orders mergeOrderLists({
       humanOrders.navalMissionOrdersByPlayerId,
       aiOrders.navalMissionOrdersByPlayerId,
     ),
+    tradeOrdersByPlayerId: _mergeTradeOrders(
+      humanOrders.tradeOrdersByPlayerId,
+      aiOrders.tradeOrdersByPlayerId,
+    ),
   );
   return merged;
 }
@@ -58,7 +62,8 @@ bool _isEmpty(Orders o) =>
     o.diplomaticOrdersByPlayerId.isEmpty &&
     o.researchOrdersByPlayerId.isEmpty &&
     o.navalMoveOrdersByPlayerId.isEmpty &&
-    o.navalMissionOrdersByPlayerId.isEmpty;
+    o.navalMissionOrdersByPlayerId.isEmpty &&
+    o.tradeOrdersByPlayerId.isEmpty;
 
 Map<String, List<MoveOrder>> _mergeMoveOrders(
   Map<String, List<MoveOrder>> human,
@@ -154,6 +159,26 @@ Map<String, List<NavalMissionOrder>> _mergeNavalMissionOrders(
   Map<String, List<NavalMissionOrder>> ai,
 ) =>
     _mergeByConflictKey(human, ai, (o) => o.fleetId);
+
+/// Human trade orders for a player replace AI trade for that player (Refs
+/// #2994 F7, #2924 world-market path).
+Map<String, List<TradeOrder>> _mergeTradeOrders(
+  Map<String, List<TradeOrder>> human,
+  Map<String, List<TradeOrder>> ai,
+) {
+  final allPlayerIds = {...human.keys, ...ai.keys}.toList()..sort();
+  final result = <String, List<TradeOrder>>{};
+  for (final playerId in allPlayerIds) {
+    final humanList = human[playerId] ?? [];
+    final aiList = ai[playerId] ?? [];
+    if (humanList.isNotEmpty) {
+      result[playerId] = humanList;
+    } else if (aiList.isNotEmpty) {
+      result[playerId] = aiList;
+    }
+  }
+  return result;
+}
 
 Map<String, List<T>> _mergeByConflictKey<T>(
   Map<String, List<T>> human,

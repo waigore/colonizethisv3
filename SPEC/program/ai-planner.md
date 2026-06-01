@@ -52,6 +52,7 @@ Combined human + AI orders into deterministic list for turn resolution using **`
 - Stable ordering (player id → unit id → order type).
 - Human-controlled units cannot receive AI orders; AI emits at most one order per unit.
 - All merged orders validated; invalid orders dropped without breaking determinism.
+- **Trade orders** (`tradeOrdersByPlayerId`): when the human player has no trade rows for a GP, AI treasury-planner trade rows are included; when the human has any trade rows for that GP, human rows replace AI for that GP (Refs #2994 F7, #2924).
 
 When full AI (Phase 6) runs, the economy planner produces **production assignments** and **cargo preference** per AI GP ([economy-planner.md](../ai/economy-planner.md)). The caller must pass per-player production assignments into the turn resolver (Production phase) and may pass cargo preference to the naval planner. Human production choices come from UI or saved state; merge semantics for production are per-player (each player's assignments used for that player only).
 
