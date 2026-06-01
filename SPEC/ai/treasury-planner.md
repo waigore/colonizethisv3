@@ -113,7 +113,7 @@ Given current `Stockpile`, `productionAssignments`, and `game.worldMarketState.p
 - Delegates offer/bid quantity selection to `TradeOrderSuggester` with the computed maps.
 - **Bid priority tiers:** essential inputs (manufactured/advanced) = 1, luxury = 2, raw = 3, food = 4. Re-sorts admitted bids after the suggester pass.
 - **Offer priority:** `2` (urgent) when `treasury < cheapestRegimentBuildTreasuryCost()`, else `5` (moderate).
-- **Cargo:** `max(0, cargoHoldsForHomeFleet(game, playerId))` — overseas extraction tonnage reservation deferred until extraction publishes planned tonnage on the pipeline (same deferral as world-market phase handler Refs #2990 B3).
+- **Cargo:** When `runEconomyPlanner` supplies `tileMapByRegion` and `topology`, `tradeCargoCapacityForGreatPower` forecasts `max(0, cargoHoldsForHomeFleet − overseasShippedTonnage)` using the same extraction + `allocateOverseasToStockpile` path as phase 12/13 (`packages/colonizethis_logic/lib/src/economy/trade_cargo_capacity.dart`, Refs #2924). Without tile maps, falls back to full home-fleet holds (legacy test path).
 - **Bid type cap:** `worldMarketBidTypeCap(game, playerId)` (embassy / trade-fairs diplomacy gates).
 
 ### Acceptance criteria (F1–F5 / F7)
@@ -171,6 +171,37 @@ The selection set, scoring, and cap distribution are pure functions of `Stockpil
 - Given an AI GP whose `treasury < kTreasuryAffluenceThreshold` and no deficit-driven bid, when `runTreasuryPlanner` runs, then it emits no bid (speculative pass is gated off).
 - Given an AI GP whose `treasury >= kTreasuryAffluenceThreshold` and whose projected stockpile of every non-riches commodity is at or above `kSpeculativeBidStockpileTarget`, when `runTreasuryPlanner` runs, then it emits no speculative bid (no commodity has positive `speculativeTarget`).
 - Given identical orchestrator inputs, when `runTreasuryPlanner` runs twice on the affluent path, then both runs return identical `List<TradeOrder>` outputs (determinism preserved by alphabetical commodity ordering and the cap distribution rule).
+
+---
+
+## Lock-recovery liquidity alignment (Refs #2924 F11)
+
+F11 closes the seed-42 gridlock where every GP emits urgent **offers** (typically `grain`) below the regiment treasury threshold but **bids** target other commodities and land on different integer priority tiers than urgent offers, so [DealMatcher](../program/world-market-resolution.md) clears zero deals and `lifetimeSellerCredit` stays at `0` (see `packages/colonizethis_ai/test/seed42_observer_world_market_lock_recovery_diagnostic_test.dart`).
+
+### Priority-tier alignment
+
+When `treasuryForecast < cheapestRegimentBuildTreasuryCost()`, emitted bids use the same `priority` as urgent offers (`kTreasuryOfferPriorityUrgent` = `2`) instead of `_bidPriorityForCommodity`. Per `SPEC/game/world-market.md` § Trade orders, matching runs only **within** the same integer priority tier; misaligned tiers were the primary mechanical break after F10 restored bid-side cap.
+
+### Rotating designated buyer
+
+When `treasuryForecast` is below the regiment threshold:
+
+1. `lockRecoveryDesignatedBuyerId(game)` selects `sortedGreatPowerIds[turnNumber % count]` (deterministic rotation).
+2. That GP adds a synthetic `need` entry for the lock-recovery food commodity (highest prior-turn `MarketActivity.totalOfferQuantity` among food ids; default alphabetical first food when activity is empty) with quantity `kSpeculativeBidStockpileTarget` minus any carry-forward bid residual — **not** capped by projected stockpile surplus, because the bid exists to supply buy-side liquidity for other GPs' urgent offers. Other commodities are stripped from `need` for that GP so the single `bidTypeCap` slot cannot be spent on fabric/bronze deficits.
+3. The designated buyer **removes** that commodity from `available` so it does not offer and bid the same commodity (validator mutual-exclusion rule 3).
+4. All other GPs keep urgent offers on their surplus food; the designated buyer's bid at priority `2` matches those offers in the same tier.
+5. Non-designated GPs **do not** emit deficit or speculative bids while below the regiment threshold (their single `bidTypeCap` slot would target non-grain commodities that do not match the urgent grain offers). F1–F5 deficit bids resume once `treasuryForecast >= cheapestRegimentBuildTreasuryCost()`.
+
+No affordability bypass: buyers debit treasury at deal time (treasury may go negative). Speculative bidding (F10) remains gated by `treasuryAffluenceThreshold`.
+
+### Acceptance criteria (F11)
+
+- Given `treasuryForecast < cheapestRegimentBuildTreasuryCost()` and `playerId == lockRecoveryDesignatedBuyerId(game)`, when `runTreasuryPlanner` runs, then it emits at least one `TradeOrderType.bid` for the lock-recovery food commodity at `priority == kTreasuryOfferPriorityUrgent` and emits no `TradeOrderType.offer` for that commodity.
+- Given the same forecast but `playerId != lockRecoveryDesignatedBuyerId(game)`, when `runTreasuryPlanner` runs, then it emits offers only (no bids) so the single `bidTypeCap` slot is not wasted on non-grain commodities that cannot match urgent grain offers.
+- Given `treasuryForecast < cheapestRegimentBuildTreasuryCost()`, when `runTreasuryPlanner` emits any bid, then each bid's `priority` equals `kTreasuryOfferPriorityUrgent` (tier alignment).
+- Given identical inputs, when `runTreasuryPlanner` runs twice, then `lockRecoveryDesignatedBuyerId` and the emitted trade orders are identical (determinism).
+- Given tile maps and topology where overseas extraction would consume all home-fleet cargo holds, when `runTreasuryPlanner` runs with those maps, then `TradeOrderSuggester` receives `tradeCargoCapacity == 0` (no bids that cannot clear at world-market phase).
+- Given the same fixture but `tileMapByRegion` omitted, when `runTreasuryPlanner` runs, then `tradeCargoCapacity` equals `cargoHoldsForHomeFleet` (backward-compatible unit-test path).
 
 ---
 

@@ -2,7 +2,7 @@
 
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/ai_api.dart'
-    show cargoHoldsForHomeFleet, worldMarketBidTypeCap;
+    show cargoHoldsForHomeFleet, tradeCargoCapacityForGreatPower, worldMarketBidTypeCap;
 import 'package:colonizethis_logic/order_suggestion_api.dart'
     show TradeOrderSuggester, TradeSuggestionContext;
 import 'package:colonizethis_models/colonizethis_models.dart';
@@ -56,13 +56,23 @@ List<TradeOrder> runTreasuryPlanner({
   required Stockpile stockpile,
   required List<AssignedRecipe> productionAssignments,
   required int treasury,
+  Map<String, TileMapResult>? tileMapByRegion,
+  MapTopology? topology,
 }) {
   final bidTypeCap = worldMarketBidTypeCap(game, playerId);
-  final homeFleetHolds = cargoHoldsForHomeFleet(game, playerId);
-  // Overseas extraction tonnage reservation lands when extraction publishes
-  // per-player planned tonnage on the pipeline; until then treat as zero
-  // (same deferral as world-market phase handler Refs #2990 B3).
-  final tradeCargoCapacity = homeFleetHolds < 0 ? 0 : homeFleetHolds;
+  final tradeCargoCapacity = tileMapByRegion != null &&
+          tileMapByRegion.isNotEmpty &&
+          topology != null
+      ? tradeCargoCapacityForGreatPower(
+          game: game,
+          playerId: playerId,
+          tileMapByRegion: tileMapByRegion,
+          topology: topology,
+        )
+      : () {
+          final homeFleetHolds = cargoHoldsForHomeFleet(game, playerId);
+          return homeFleetHolds < 0 ? 0 : homeFleetHolds;
+        }();
 
   final projected = _projectStockpileAfterProduction(
     stockpile: stockpile,
@@ -118,6 +128,18 @@ List<TradeOrder> runTreasuryPlanner({
     }
   }
 
+  final threshold = cheapestRegimentBuildTreasuryCost();
+  final treasuryForecast = treasury +
+      _expectedOfferInflow(
+        available: available,
+        marketPrices: marketPrices,
+        state: game.worldMarketState,
+      );
+  final offerPriority = treasuryForecast < threshold
+      ? kTreasuryOfferPriorityUrgent
+      : kTreasuryOfferPriorityModerate;
+  final lockRecoveryUrgent = treasuryForecast < threshold;
+
   // Refs #2924 F10: affluent GPs spend treasury on inventory ahead of strict
   // deficits so the world market clears. Gated by treasury affluence so broke
   // GPs never speculate; the F3 price gate is bypassed because the GP is
@@ -132,20 +154,33 @@ List<TradeOrder> runTreasuryPlanner({
     );
   }
 
+  // Refs #2924 F11: when every GP is below the regiment threshold they all
+  // emit urgent offers (typically grain) but bids land on other commodities
+  // and priority tiers, so the matcher clears zero deals. One rotating GP per
+  // turn bids the liquid food commodity at the same priority as urgent offers
+  // and withholds that commodity from its offer set (mutual exclusion).
+  if (lockRecoveryUrgent) {
+    _applyLockRecoveryLiquidityBid(
+      playerId: playerId,
+      game: game,
+      need: need,
+      available: available,
+      carryForwardBids: carryForwardBids,
+    );
+    final liquidity = _lockRecoveryLiquidityCommodity(game.worldMarketState);
+    if (playerId == lockRecoveryDesignatedBuyerId(game)) {
+      // Keep only the liquidity food bid so the single bidTypeCap slot is not
+      // consumed by fabric/bronze deficits that cannot match urgent grain offers.
+      need.removeWhere((id, _) => id != liquidity);
+    } else {
+      // Non-designated GPs only sell during lock recovery.
+      need.clear();
+    }
+  }
+
   if (available.isEmpty && need.isEmpty) {
     return const <TradeOrder>[];
   }
-
-  final threshold = cheapestRegimentBuildTreasuryCost();
-  final treasuryForecast = treasury +
-      _expectedOfferInflow(
-        available: available,
-        marketPrices: marketPrices,
-        state: game.worldMarketState,
-      );
-  final offerPriority = treasuryForecast < threshold
-      ? kTreasuryOfferPriorityUrgent
-      : kTreasuryOfferPriorityModerate;
 
   final suggestion = TradeOrderSuggester.suggest(
     TradeSuggestionContext(
@@ -165,6 +200,11 @@ List<TradeOrder> runTreasuryPlanner({
     need: need,
     bidTypeCap: bidTypeCap,
     tradeCargoCapacity: tradeCargoCapacity,
+    offerPriority: offerPriority,
+    alignBidPriorityWithUrgentOffers: lockRecoveryUrgent,
+    preferCommodityId: lockRecoveryUrgent
+        ? _lockRecoveryLiquidityCommodity(game.worldMarketState)
+        : null,
   );
 
   return [...offers, ...bids];
@@ -425,11 +465,87 @@ void _addSpeculativeBidNeeds({
   need[pick] = gapFor(pick);
 }
 
+/// Food commodity with the highest prior-turn offer volume on the world
+/// market; used as the lock-recovery bid target when every GP is selling
+/// surplus food under urgent offers. Refs #2924 F11.
+CommodityId _lockRecoveryLiquidityCommodity(WorldMarketState state) {
+  CommodityId? bestId;
+  var bestVolume = 0;
+  for (final entry in state.lastTurnActivity.entries) {
+    final commodityId = entry.key;
+    final commodity = CommodityCatalog.byId[commodityId];
+    if (commodity == null || commodity.category != CommodityCategory.food) {
+      continue;
+    }
+    final volume = entry.value.totalOfferQuantity;
+    if (volume > bestVolume) {
+      bestVolume = volume;
+      bestId = commodityId;
+      continue;
+    }
+    if (volume == bestVolume &&
+        bestId != null &&
+        commodityId.compareTo(bestId) < 0) {
+      bestId = commodityId;
+    }
+  }
+  if (bestId != null) return bestId;
+  final foods = CommodityCatalog.all
+      .where((c) => c.category == CommodityCategory.food)
+      .map((c) => c.id)
+      .toList(growable: false)
+    ..sort();
+  return foods.isNotEmpty ? foods.first : 'grain';
+}
+
+/// Sorted Great Power ids for deterministic per-turn buyer rotation.
+List<String> _sortedGreatPowerIds(Game game) {
+  final ids = <String>[
+    for (final player in game.players) player.id,
+  ]..sort();
+  return ids;
+}
+
+/// One GP per turn acts as the market buyer for the lock-recovery food
+/// commodity so other GPs' urgent offers can clear. Refs #2924 F11.
+String lockRecoveryDesignatedBuyerId(Game game) {
+  final gpIds = _sortedGreatPowerIds(game);
+  if (gpIds.isEmpty) return '';
+  final turn = game.worldState.turnState.turnNumber;
+  return gpIds[turn % gpIds.length];
+}
+
+/// Designated buyer bids [commodityId] and does not offer it this turn.
+void _applyLockRecoveryLiquidityBid({
+  required String playerId,
+  required Game game,
+  required Map<CommodityId, int> need,
+  required Map<CommodityId, int> available,
+  required Map<CommodityId, int> carryForwardBids,
+}) {
+  if (playerId != lockRecoveryDesignatedBuyerId(game)) return;
+  final commodityId = _lockRecoveryLiquidityCommodity(game.worldMarketState);
+  available.remove(commodityId);
+  // Liquidity bid: buy-side demand for other GPs' urgent food offers, not a
+  // stockpile deficit. Use a fixed target quantity independent of projected
+  // surplus so a designated buyer with large food stockpiles still clears deals.
+  final carryQty = carryForwardBids[commodityId] ?? 0;
+  final liquidityQty = kSpeculativeBidStockpileTarget - carryQty;
+  if (liquidityQty <= 0) return;
+  final existing = need[commodityId] ?? 0;
+  if (liquidityQty > existing) {
+    need[commodityId] = liquidityQty;
+  }
+}
+
 List<TradeOrder> _prioritizedBids({
   required List<TradeOrder> rawBids,
   required Map<CommodityId, int> need,
   required int bidTypeCap,
   required int tradeCargoCapacity,
+  required int offerPriority,
+  required bool alignBidPriorityWithUrgentOffers,
+  CommodityId? preferCommodityId,
 }) {
   if (rawBids.isEmpty || bidTypeCap <= 0 || tradeCargoCapacity <= 0) {
     return const <TradeOrder>[];
@@ -439,6 +555,10 @@ List<TradeOrder> _prioritizedBids({
   };
   final orderedIds = need.keys.toList(growable: false)
     ..sort((a, b) {
+      if (preferCommodityId != null) {
+        if (a == preferCommodityId) return -1;
+        if (b == preferCommodityId) return 1;
+      }
       final priorityCmp =
           _bidPriorityForCommodity(a).compareTo(_bidPriorityForCommodity(b));
       if (priorityCmp != 0) return priorityCmp;
@@ -460,7 +580,9 @@ List<TradeOrder> _prioritizedBids({
     result.add(
       bid.copyWith(
         quantity: cappedQty,
-        priority: _bidPriorityForCommodity(commodityId),
+        priority: alignBidPriorityWithUrgentOffers
+            ? offerPriority
+            : _bidPriorityForCommodity(commodityId),
       ),
     );
     remainingCargo -= cappedQty;

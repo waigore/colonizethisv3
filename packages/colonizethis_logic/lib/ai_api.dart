@@ -40,6 +40,8 @@ export 'src/diplomacy/diplomacy_subsidies_relations_resolver.dart'
 export 'src/economy/economy_riches_to_treasury.dart'
     show pendingRichesTreasuryDelta;
 export 'src/economy/sea_transport.dart' show cargoHoldsForHomeFleet;
+export 'src/economy/trade_cargo_capacity.dart'
+    show tradeCargoCapacityForGreatPower;
 export 'src/economy/worker_economy.dart' show effectiveLabourForWorkers;
 export 'src/orders/draft_orders_mutations.dart'
     show applyArmyMoveOrderForPlayer;
