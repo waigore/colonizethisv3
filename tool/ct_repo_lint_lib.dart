@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:path/path.dart' as p;
 import 'package:yaml/yaml.dart';
 
+import 'check_app_editorial_monocle_colors.dart';
 import 'check_app_event_bus_decoupling.dart';
 import 'check_app_event_handler_scope_logic_boundary.dart';
 import 'check_app_hardcoded_ui_strings.dart';
@@ -813,6 +814,8 @@ int? _tryRunDartRuleInProcess({
       return runCheckAppNoDuplicateHelpers(repoRoot);
     case 'repo.app_widget_imports':
       return runCheckAppWidgetImports(repoRoot);
+    case 'repo.app_editorial_monocle_colors':
+      return runCheckAppEditorialMonocleColors(repoRoot);
     case 'repo.screen_registry_active_paths':
       return runCheckScreenRegistryActivePaths(repoRoot);
     default:

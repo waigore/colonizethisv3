@@ -322,6 +322,13 @@ rules:
     runner: dart
     script: tool/check_app_ct_loading_indicator.dart
 
+  - rule_id: repo.app_editorial_monocle_colors
+    group: ui_structure
+    title: "app/lib/features must resolve colors through EditorialMonoclePalette (Refs #2914)"
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_app_editorial_monocle_colors.dart
+
   - rule_id: repo.logic_dual_region_province_field_access
     group: architecture
     title: colonizethis_logic limits direct oldWorld/newWorld province list access
