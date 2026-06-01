@@ -254,8 +254,25 @@ void main() {
           matching: find.byType(CtNinePatchButton),
         ),
       );
-      await tester.pumpAndSettle();
+      // Flame's `GameWidget` keeps tickers active, so `pumpAndSettle` will
+      // never settle here. Poll with bounded `pump`s instead, matching the
+      // entry-side pattern in `pumpAndEnterSelectionMode` above.
+      var promptDismissed = false;
+      for (var i = 0; i < 200; i++) {
+        await tester.pump(const Duration(milliseconds: 5));
+        if (find.text('Select a tile, or click cancel').evaluate().isEmpty) {
+          promptDismissed = true;
+          break;
+        }
+      }
 
+      expect(
+        promptDismissed,
+        isTrue,
+        reason:
+            'selection prompt overlay must dismiss after the cancel '
+            'affordance is activated',
+      );
       expect(
         find.text('Select a tile, or click cancel'),
         findsNothing,
