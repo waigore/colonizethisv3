@@ -14,6 +14,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
 import '../../test_fixtures.dart';
+import 'purchased_tile_riches_test_support.dart';
 
 void main() {
   group('computePurchasedTileRichesCredits — riches handoff per #2991 C5', () {
@@ -22,7 +23,7 @@ void main() {
       'minor province credits owning GP at improvementLevel × basePrice × '
       'multiplier',
       () {
-        final game = _purchasedTileScenario(
+        final game = purchasedTileScenario(
           resource: Resource.gold,
           improvementLevel: 1,
           roadLevel: 1,
@@ -32,7 +33,7 @@ void main() {
 
         final result = computePurchasedTileRichesCredits(
           game: game,
-          tileMapByRegion: _tileMapByRegion(Resource.gold),
+          tileMapByRegion: tileMapByRegionForResource(Resource.gold),
           purchasedTileIndex: index,
         );
 
@@ -57,14 +58,14 @@ void main() {
     test(
       'multiplier is honoured: richesCashMultiplier=1.5 applies before truncation',
       () {
-        final game = _purchasedTileScenario(
+        final game = purchasedTileScenario(
           resource: Resource.spices,
           improvementLevel: 1,
           roadLevel: 1,
         );
         final result = computePurchasedTileRichesCredits(
           game: game,
-          tileMapByRegion: _tileMapByRegion(Resource.spices),
+          tileMapByRegion: tileMapByRegionForResource(Resource.spices),
           purchasedTileIndex: PurchasedTileIndex.fromGame(game),
           richesCashMultiplier: 1.5,
         );
@@ -80,14 +81,14 @@ void main() {
       'AC purchased-tile riches handoff — non-riches resource: timber tile '
       'produces no credit (commodities flow through world market instead)',
       () {
-        final game = _purchasedTileScenario(
+        final game = purchasedTileScenario(
           resource: Resource.timber,
           improvementLevel: 1,
           roadLevel: 1,
         );
         final result = computePurchasedTileRichesCredits(
           game: game,
-          tileMapByRegion: _tileMapByRegion(Resource.timber),
+          tileMapByRegion: tileMapByRegionForResource(Resource.timber),
           purchasedTileIndex: PurchasedTileIndex.fromGame(game),
         );
 
@@ -101,14 +102,14 @@ void main() {
       'AC purchased-tile riches handoff — unimproved tile: improvementLevel=0 '
       'produces no credit even when the resource is in the riches set',
       () {
-        final game = _purchasedTileScenario(
+        final game = purchasedTileScenario(
           resource: Resource.silver,
           improvementLevel: 0,
           roadLevel: 1,
         );
         final result = computePurchasedTileRichesCredits(
           game: game,
-          tileMapByRegion: _tileMapByRegion(Resource.silver),
+          tileMapByRegion: tileMapByRegionForResource(Resource.silver),
           purchasedTileIndex: PurchasedTileIndex.fromGame(game),
         );
 
@@ -121,14 +122,14 @@ void main() {
       'tile with no road and no port produces no credit (transport level 0 '
       'caps yield to 0)',
       () {
-        final game = _purchasedTileScenario(
+        final game = purchasedTileScenario(
           resource: Resource.gold,
           improvementLevel: 1,
           roadLevel: 0,
         );
         final result = computePurchasedTileRichesCredits(
           game: game,
-          tileMapByRegion: _tileMapByRegion(Resource.gold),
+          tileMapByRegion: tileMapByRegionForResource(Resource.gold),
           purchasedTileIndex: PurchasedTileIndex.fromGame(game),
         );
 
@@ -139,7 +140,7 @@ void main() {
 
     test('port-flagged tile yields even without road (port = transport 4)', () {
       const tileKey = 'oldWorld|M1|0|0';
-      final game = _purchasedTileScenario(
+      final game = purchasedTileScenario(
         resource: Resource.diamonds,
         improvementLevel: 1,
         roadLevel: 0,
@@ -147,7 +148,7 @@ void main() {
       );
       final result = computePurchasedTileRichesCredits(
         game: game,
-        tileMapByRegion: _tileMapByRegion(Resource.diamonds),
+        tileMapByRegion: tileMapByRegionForResource(Resource.diamonds),
         purchasedTileIndex: PurchasedTileIndex.fromGame(game),
       );
 
@@ -190,7 +191,7 @@ void main() {
         );
         final result = computePurchasedTileRichesCredits(
           game: game,
-          tileMapByRegion: _tileMapByRegion(Resource.gold),
+          tileMapByRegion: tileMapByRegionForResource(Resource.gold),
           purchasedTileIndex: PurchasedTileIndex.fromGame(game),
         );
 
@@ -227,7 +228,7 @@ void main() {
         );
         final result = computePurchasedTileRichesCredits(
           game: game,
-          tileMapByRegion: {ow: _singleResourceMap(Resource.spices)},
+          tileMapByRegion: {ow: singleResourceTileMap(Resource.spices)},
           purchasedTileIndex: PurchasedTileIndex.fromGame(game),
         );
 
@@ -309,7 +310,7 @@ void main() {
       final game = TestFixtures.minimalGame();
       final result = computePurchasedTileRichesCredits(
         game: game,
-        tileMapByRegion: _tileMapByRegion(Resource.gold),
+        tileMapByRegion: tileMapByRegionForResource(Resource.gold),
         purchasedTileIndex: PurchasedTileIndex.fromGame(game),
       );
 
@@ -318,7 +319,7 @@ void main() {
     });
 
     test('empty tileMapByRegion returns empty result', () {
-      final game = _purchasedTileScenario(
+      final game = purchasedTileScenario(
         resource: Resource.gold,
         improvementLevel: 1,
         roadLevel: 1,
@@ -333,12 +334,12 @@ void main() {
     });
 
     test('determinism — two calls with the same inputs return equal credits', () {
-      final game = _purchasedTileScenario(
+      final game = purchasedTileScenario(
         resource: Resource.gems,
         improvementLevel: 1,
         roadLevel: 1,
       );
-      final tileMaps = _tileMapByRegion(Resource.gems);
+      final tileMaps = tileMapByRegionForResource(Resource.gems);
       final index = PurchasedTileIndex.fromGame(game);
       final r1 = computePurchasedTileRichesCredits(
         game: game,
@@ -358,60 +359,4 @@ void main() {
       );
     });
   });
-}
-
-/// Builds a single-region tileMapByRegion map for `oldWorld` placing
-/// [resource] at coordinates `(0, 0)` of province `M1`.
-Map<String, TileMapResult> _tileMapByRegion(Resource resource) {
-  return {'oldWorld': _singleResourceMap(resource)};
-}
-
-TileMapResult _singleResourceMap(Resource resource) => TileMapResult(
-      width: 1,
-      height: 1,
-      grid: [
-        ['M1'],
-      ],
-      resourceGrid: [
-        [resource],
-      ],
-    );
-
-/// Canonical scenario: minor `M1` owns province `oldWorld|M1`; tile
-/// `oldWorld|M1|0|0` was previously purchased by `gpA`.
-Game _purchasedTileScenario({
-  required Resource resource,
-  required int improvementLevel,
-  required int roadLevel,
-  Map<String, String>? portsByProvinceSeaboard,
-}) {
-  const ow = 'oldWorld';
-  const minorProvinceId = '$ow|M1';
-  const tileKey = '$ow|M1|0|0';
-  TileMapState tileState = const TileMapState();
-  if (improvementLevel > 0) {
-    tileState = tileState.setImprovement(tileKey, improvementLevel);
-  }
-  if (roadLevel > 0) {
-    tileState = tileState.setRoadLevel(tileKey, roadLevel);
-  }
-  return TestFixtures.minimalGame(
-    players: const [
-      Player(id: 'gpA', displayName: 'GP A', isHuman: true),
-    ],
-    oldWorld: const RegionData(
-      provinces: [
-        Province(id: minorProvinceId, regionId: ow, ownerId: 'M1'),
-      ],
-    ),
-    tileKeysByRegionAndProvince: const {
-      ow: {
-        minorProvinceId: [tileKey],
-      },
-    },
-    minorNations: const [MinorNation(id: 'M1', displayName: 'Minor 1')],
-    purchasedTilesByTileKey: const {tileKey: 'gpA'},
-    tileState: tileState,
-    portsByProvinceSeaboard: portsByProvinceSeaboard,
-  );
 }
