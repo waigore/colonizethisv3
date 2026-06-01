@@ -53,7 +53,7 @@ void main() {
           sellerStockpile: const Stockpile().applyDelta('timber', 10),
           sellerTreasury: 100,
           buyerTreasury: 1000,
-          marketPrices: const {'timber': 30.0},
+          marketPrices: const {'timber': 30},
         ),
         topology: topology,
         orders: Orders(
@@ -97,7 +97,7 @@ void main() {
             sellerStockpile: const Stockpile().applyDelta('timber', 3),
             sellerTreasury: 0,
             buyerTreasury: 1000,
-            marketPrices: const {'timber': 30.0},
+            marketPrices: const {'timber': 30},
           ),
           topology: topology,
           orders: Orders(
@@ -219,7 +219,7 @@ Game _twoGpTradeGame({
   required Stockpile sellerStockpile,
   required int sellerTreasury,
   required int buyerTreasury,
-  Map<CommodityId, double> marketPrices = const {'timber': 30.0},
+  Map<CommodityId, int> marketPrices = const {'timber': 30},
 }) {
   return Game(
     id: 'g1',

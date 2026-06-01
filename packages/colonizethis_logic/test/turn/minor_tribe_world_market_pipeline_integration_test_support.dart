@@ -10,7 +10,7 @@ const MapTopology kEmptyTopology = MapTopology(nodes: [], edges: []);
 
 Game minorTimberAutoOfferPipelineGame({
   required int buyerTreasury,
-  double timberPrice = 30.0,
+  int timberPrice = 30,
 }) {
   const ow = 'oldWorld';
   const minorProvinceId = '$ow|m1';
@@ -71,7 +71,7 @@ Map<String, TileMapResult> minorTimberTileMapByRegion() =>
 
 Game purchasedTimberBidPipelineGame({
   required int gpATreasury,
-  double timberPrice = 25.0,
+  int timberPrice = 25,
 }) {
   const ow = 'oldWorld';
   const minorProvinceId = '$ow|M1';

@@ -72,12 +72,13 @@ import '../../../providers/games_provider.dart';
 import '../../../widgets/ct_choice_chip.dart';
 import '../../../widgets/ct_game_feature_screen_shell.dart';
 import '../../../widgets/ct_panel.dart';
-import '../../../widgets/ct_spacing.dart';
 import '../../../widgets/ct_tab_strip.dart';
 import '../../../widgets/ct_top_bar.dart';
 import '../../../widgets/strict_asset_icon.dart';
 import '../shell_player_context.dart';
 import '../widgets/observe_mode_not_defined_panel.dart';
+
+part 'trade_screen_deal_book.dart';
 
 /// Full-screen World Market trade screen.
 ///
@@ -198,6 +199,17 @@ class TradeScreen extends ConsumerWidget {
   /// trade order is staged for the commodity).
   static Key marketRowQuantityTextKey(CommodityId commodityId) =>
       ValueKey<String>('tradeScreenMarketRow:$commodityId:quantity');
+
+  /// Per-row key for the inline sellable-headroom readout rendered as
+  /// `(N)` immediately after the commodity name on line 1 of the row.
+  /// `N` is the per-commodity offer cap minus the row's already-staged
+  /// offer quantity, sourced from
+  /// `sellableHeadroomByCommodityId` (Refs #3093 — sellable clamp
+  /// slice). Pin point for widget tests asserting the readout reflects
+  /// the player's stockpile / staged-offer state without coupling to
+  /// text-matching on the parent name line.
+  static Key marketRowSellableReadoutKey(CommodityId commodityId) =>
+      ValueKey<String>('tradeScreenMarketRow:$commodityId:sellable');
 
   /// Lower bound for the per-row quantity stepper when a trade order is
   /// staged. Setting the stepper below 1 is equivalent to choosing
@@ -463,9 +475,9 @@ class _TradeScreenTabsBody extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.all(CtSpacing.l),
+      padding: const EdgeInsets.all(16),
       child: CtPanel(
-        padding: const EdgeInsets.all(CtSpacing.l),
+        padding: const EdgeInsets.all(16),
         child: CtTabStrip(
           initialTabIndex: initialTabIndex,
           tabLabels: const <String>[
@@ -598,6 +610,22 @@ class _MarketTabContent extends ConsumerWidget {
     final bool warningVisible =
         clampedRemaining == 0 && totalStagedBid > 0;
 
+    // Refs #3093 — sellable clamp slice. Compute the per-commodity offer
+    // cap and the player's already-staged offer quantities once per
+    // build so the rows below render `(headroom)` and clamp Offer
+    // toggles / `+` increments consistently. The helpers live in
+    // `colonizethis_logic` (pure functions) and are safe to call per
+    // frame.
+    final Map<CommodityId, int> offerCap = offerCapByCommodityId(
+      game: game,
+      playerId: playerId,
+    );
+    final Map<CommodityId, int> stagedOffers =
+        stagedOfferQuantitiesByCommodityId(
+      orders: orders,
+      playerId: playerId,
+    );
+
     // SingleChildScrollView + Column (instead of ListView.builder) so
     // every commodity row is built up-front. Widget tests pin all 22
     // tradeable rows by key without scrolling; the row count is bounded
@@ -619,7 +647,10 @@ class _MarketTabContent extends ConsumerWidget {
                 commodityId: rows[index].id,
                 commodityDisplayName:
                     rows[index].displayName ?? rows[index].id,
-                priceText: _formatPrice(market.prices[rows[index].id]),
+                priceText: _formatPrice(
+                  market.prices[rows[index].id],
+                  commodityId: rows[index].id,
+                ),
                 volumeText: _volumeText(
                   market.lastTurnActivity[rows[index].id] ??
                       MarketActivity.empty,
@@ -629,6 +660,12 @@ class _MarketTabContent extends ConsumerWidget {
                   playerId,
                   rows[index].id,
                 ),
+                sellableHeadroom: _sellableHeadroomFor(
+                  offerCap: offerCap,
+                  stagedOffers: stagedOffers,
+                  commodityId: rows[index].id,
+                ),
+                offerCap: offerCap[rows[index].id] ?? 0,
                 nameStyle: nameStyle,
                 priceStyle: priceStyle,
                 volumeStyle: volumeStyle,
@@ -757,6 +794,27 @@ class _MarketTabContent extends ConsumerWidget {
       if (desiredQuantity > maxAllowedBidQuantity) {
         quantity = maxAllowedBidQuantity;
       }
+    } else if (next == TradeOrderType.offer) {
+      // Refs #3093 — sellable clamp slice. The per-commodity offer cap
+      // is `stockpile − industryAllocation` (alloc treated as 0 until
+      // a generic projector lands; see
+      // `sellable_quantity.dart`). Mutual exclusion guarantees the row
+      // is the only staged offer for the commodity, so the cap is
+      // applied directly to the row's quantity without subtracting
+      // sibling offers.
+      final int rowCap = offerCapByCommodityId(
+        game: game,
+        playerId: playerId,
+      )[commodityId] ??
+          0;
+      if (rowCap <= 0) {
+        // Stockpile exhausted — refuse the toggle so the row stays in
+        // its prior direction (or remains `None`).
+        return;
+      }
+      if (desiredQuantity > rowCap) {
+        quantity = rowCap;
+      }
     }
     final TradeOrder nextOrder = TradeOrder(
       commodityId: commodityId,
@@ -798,6 +856,18 @@ class _MarketTabContent extends ConsumerWidget {
           cargoHoldsForHomeFleet(game, playerId);
       final int totalStagedBid = _totalStagedBidQuantity(orders, playerId);
       if (totalStagedBid + delta > tradeCargoCapacity) return;
+    } else if (prior.type == TradeOrderType.offer && delta > 0) {
+      // Refs #3093 — sellable clamp slice. Block the `+` tap when the
+      // per-commodity offer cap (`stockpile − industryAllocation`,
+      // alloc=0 today) is exhausted. Mutual exclusion guarantees the
+      // row is the only staged offer for the commodity, so the cap is
+      // applied directly to `prior.quantity + delta`.
+      final int rowCap = offerCapByCommodityId(
+        game: game,
+        playerId: playerId,
+      )[commodityId] ??
+          0;
+      if (prior.quantity + delta > rowCap) return;
     }
     final TradeOrder nextOrder = prior.copyWith(quantity: rawNext);
     final Orders updated = applyTradeOrderForPlayer(
@@ -806,6 +876,24 @@ class _MarketTabContent extends ConsumerWidget {
       order: nextOrder,
     );
     notifier.replaceAll(updated);
+  }
+
+  /// Returns the per-row sellable headroom shown as `(N)` next to the
+  /// commodity name on the Trade Market tab (Refs #3093 — sellable
+  /// clamp slice). Equals `max(0, offerCap[c] − stagedOffer[c])` for
+  /// the row's commodity. Mirrors
+  /// `sellableHeadroomByCommodityId` but with per-row resolution so
+  /// the build path passes one int per row instead of rebuilding the
+  /// full map per child.
+  static int _sellableHeadroomFor({
+    required Map<CommodityId, int> offerCap,
+    required Map<CommodityId, int> stagedOffers,
+    required CommodityId commodityId,
+  }) {
+    final int cap = offerCap[commodityId] ?? 0;
+    final int staged = stagedOffers[commodityId] ?? 0;
+    final int headroom = cap - staged;
+    return headroom < 0 ? 0 : headroom;
   }
 
   /// Returns the sum of `TradeOrder.quantity` across all staged
@@ -844,9 +932,27 @@ class _MarketTabContent extends ConsumerWidget {
     return filtered;
   }
 
-  static String _formatPrice(double? price) {
-    if (price == null) return priceUnknownGlyph;
-    return price.toStringAsFixed(1);
+  /// Formats the per-commodity market price for the Market tab row.
+  ///
+  /// Prices on `Game.worldMarketState.prices` are integers per
+  /// `SPEC/game/world-market.md` § Price discovery and SPEC/ui/trade-screen.md
+  /// § Market tab — read-only commodity table. When the prices map lacks an
+  /// entry for a tradeable commodity, this helper falls back to the
+  /// `defaultMarketPrice` int from `ResourceRules.defaultRules` (per the
+  /// resource catalog) so the row never renders the unknown-price em-dash
+  /// for raw resources whose catalog default price is published. The
+  /// canonical em-dash glyph remains the fallback only when neither the
+  /// market state nor the catalog has a value (manufactured commodities,
+  /// whose first market price is discovered in-game, are not enumerated in
+  /// `ResourceRules.defaultMarketPrice` today and so render the em-dash
+  /// until they participate in a market turn — tracked as follow-up to
+  /// #3093).
+  static String _formatPrice(int? price, {required CommodityId commodityId}) {
+    final int? effective =
+        price ?? ResourceRules.defaultRules
+            .defaultMarketPriceForCommodityId(commodityId);
+    if (effective == null) return priceUnknownGlyph;
+    return effective.toString();
   }
 }
 
@@ -861,6 +967,8 @@ class _MarketCommodityRow extends StatelessWidget {
     required this.priceText,
     required this.volumeText,
     required this.stagedOrder,
+    required this.sellableHeadroom,
+    required this.offerCap,
     required this.nameStyle,
     required this.priceStyle,
     required this.volumeStyle,
@@ -875,6 +983,18 @@ class _MarketCommodityRow extends StatelessWidget {
   final String priceText;
   final String volumeText;
   final TradeOrder? stagedOrder;
+
+  /// Refs #3093 — sellable clamp slice. The `(N)` value rendered
+  /// next to the commodity name. Computed in [_MarketTabContent] as
+  /// `max(0, offerCap − stagedOffer)`.
+  final int sellableHeadroom;
+
+  /// Refs #3093 — sellable clamp slice. The per-commodity offer cap
+  /// (`stockpile − industryAllocation`, alloc=0 today). Used to gate
+  /// the Offer chip and offer-side `+` button so they read as
+  /// disabled when the cap is `0`.
+  final int offerCap;
+
   final TextStyle nameStyle;
   final TextStyle priceStyle;
   final TextStyle volumeStyle;
@@ -893,8 +1013,36 @@ class _MarketCommodityRow extends StatelessWidget {
       stagedOrder != null &&
       stagedOrder!.quantity > TradeScreen.marketRowQuantityMin;
 
+  /// True when the row's `+` button can grow the staged order quantity.
+  /// For bids the cross-commodity cargo cap (Refs #2993 E5c) gates this
+  /// via the `_handleQuantityDelta` no-op when cargo is exhausted; for
+  /// offers (Refs #3093) the per-commodity offer cap caps the row at
+  /// `offerCap` so the button reads as disabled at saturation.
+  bool get _canIncrement {
+    if (!_hasStagedOrder) return false;
+    if (stagedOrder!.type == TradeOrderType.offer) {
+      return stagedOrder!.quantity < offerCap;
+    }
+    return true;
+  }
+
+  /// True when the Offer chip can be toggled on. When the per-commodity
+  /// offer cap is `0` (stockpile exhausted) and no offer is already
+  /// staged, the chip reads as disabled so the player gets immediate
+  /// visual feedback that no units are sellable.
+  bool get _canSelectOffer {
+    if (stagedOrder?.type == TradeOrderType.offer) return true;
+    return offerCap > 0;
+  }
+
   @override
   Widget build(BuildContext context) {
+    // Sellable readout style: muted parens read as auxiliary metadata
+    // (not the primary commodity name), matching the Bids/Offers
+    // volume line on line 2.
+    final TextStyle sellableStyle = nameStyle.copyWith(
+      color: EditorialMonoclePalette.muted,
+    );
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
@@ -903,13 +1051,21 @@ class _MarketCommodityRow extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.baseline,
           textBaseline: TextBaseline.alphabetic,
           children: <Widget>[
-            Expanded(
+            Flexible(
               child: Text(
                 commodityDisplayName,
                 style: nameStyle,
                 overflow: TextOverflow.ellipsis,
               ),
             ),
+            const SizedBox(width: 4),
+            Text(
+              // ignore: avoid_hardcoded_strings_in_widgets
+              '($sellableHeadroom)',
+              key: TradeScreen.marketRowSellableReadoutKey(commodityId),
+              style: sellableStyle,
+            ),
+            const Spacer(),
             const SizedBox(width: 8),
             Text(priceText, style: priceStyle),
           ],
@@ -923,7 +1079,8 @@ class _MarketCommodityRow extends StatelessWidget {
           quantityText: _quantityText,
           quantityStyle: quantityStyle,
           canDecrement: _canDecrement,
-          canIncrement: _hasStagedOrder,
+          canIncrement: _canIncrement,
+          canSelectOffer: _canSelectOffer,
           onDirectionChanged: onDirectionChanged,
           onIncrement: onIncrement,
           onDecrement: onDecrement,
@@ -943,6 +1100,7 @@ class _MarketCommodityRowControls extends StatelessWidget {
     required this.quantityStyle,
     required this.canDecrement,
     required this.canIncrement,
+    required this.canSelectOffer,
     required this.onDirectionChanged,
     required this.onIncrement,
     required this.onDecrement,
@@ -954,6 +1112,14 @@ class _MarketCommodityRowControls extends StatelessWidget {
   final TextStyle quantityStyle;
   final bool canDecrement;
   final bool canIncrement;
+
+  /// Refs #3093 — sellable clamp slice. When `false` the Offer chip
+  /// reads as disabled (no `onSelected` handler) so the player cannot
+  /// stage an offer for a commodity whose per-commodity offer cap is
+  /// `0`. Offers already staged on the row remain interactive (the
+  /// player can decrement / drop them) regardless of this gate.
+  final bool canSelectOffer;
+
   final ValueChanged<TradeOrderType?> onDirectionChanged;
   final VoidCallback onIncrement;
   final VoidCallback onDecrement;
@@ -980,7 +1146,9 @@ class _MarketCommodityRowControls extends StatelessWidget {
         CtChoiceChip(
           key: TradeScreen.marketRowOfferChipKey(commodityId),
           selected: stagedType == TradeOrderType.offer,
-          onSelected: (_) => onDirectionChanged(TradeOrderType.offer),
+          onSelected: canSelectOffer
+              ? (_) => onDirectionChanged(TradeOrderType.offer)
+              : null,
           label: const Text(_MarketTabContent.offerChipLabel),
         ),
         _StepperButton(
@@ -1062,395 +1230,3 @@ class _StepperButton extends StatelessWidget {
   }
 }
 
-/// Live Deal Book tab body (Refs #2993 E6). Renders the player's
-/// previous-turn buying and selling activity in a two-panel ledger
-/// sourced from `Game.worldMarketState.lastTurnActivity[*].deals`
-/// (filtered by `buyerFactionId` / `sellerFactionId`) and
-/// `carryForward{Bids,Offers}ByFactionId[playerId]`.
-///
-/// Layout collapses to a single stacked column below
-/// `TradeScreen.dealBookTwoPanelMinWidth` so the 320 dp minimum viewport
-/// stays overflow-safe (`SPEC/ui/mobile-adaptation.md` § 7). On wider
-/// viewports the bids panel sits left of the offers panel inside a
-/// `Row`.
-class _DealBookTabContent extends StatelessWidget {
-  const _DealBookTabContent({
-    super.key,
-    required this.game,
-    required this.playerId,
-  });
-
-  final Game game;
-  final String playerId;
-
-  @override
-  Widget build(BuildContext context) {
-    final _DealBookViewData data = _DealBookViewData.build(
-      worldMarket: game.worldMarketState,
-      playerId: playerId,
-    );
-    return Container(
-      key: TradeScreen.dealBookContentKey,
-      alignment: Alignment.topLeft,
-      child: LayoutBuilder(
-        builder: (context, constraints) {
-          final bool wide =
-              constraints.maxWidth >= TradeScreen.dealBookTwoPanelMinWidth;
-          return _layoutPanels(
-            bidsPanel: _buildBidsPanel(data),
-            offersPanel: _buildOffersPanel(data),
-            wide: wide,
-          );
-        },
-      ),
-    );
-  }
-
-  _DealBookPanel _buildBidsPanel(_DealBookViewData data) {
-    return _DealBookPanel(
-      key: TradeScreen.dealBookBidsPanelKey,
-      panelTitle: TradeScreen.dealBookBidsPanelTitle,
-      side: TradeScreen.dealBookSideBids,
-      filledRows: data.filledBids,
-      unfilledRows: data.unfilledBids,
-      totalsKey: TradeScreen.dealBookBidsTotalsKey,
-      emptyKey: TradeScreen.dealBookBidsEmptyKey,
-      totalsLabel: TradeScreen.dealBookTotalSpentLabel,
-      totalsAmount: data.totalSpent,
-      emptyText: TradeScreen.dealBookBidsEmptyText,
-    );
-  }
-
-  _DealBookPanel _buildOffersPanel(_DealBookViewData data) {
-    return _DealBookPanel(
-      key: TradeScreen.dealBookOffersPanelKey,
-      panelTitle: TradeScreen.dealBookOffersPanelTitle,
-      side: TradeScreen.dealBookSideOffers,
-      filledRows: data.filledOffers,
-      unfilledRows: data.unfilledOffers,
-      totalsKey: TradeScreen.dealBookOffersTotalsKey,
-      emptyKey: TradeScreen.dealBookOffersEmptyKey,
-      totalsLabel: TradeScreen.dealBookTotalReceivedLabel,
-      totalsAmount: data.totalReceived,
-      emptyText: TradeScreen.dealBookOffersEmptyText,
-    );
-  }
-
-  Widget _layoutPanels({
-    required Widget bidsPanel,
-    required Widget offersPanel,
-    required bool wide,
-  }) {
-    if (wide) {
-      return Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: <Widget>[
-          Expanded(child: bidsPanel),
-          const SizedBox(width: 12),
-          Expanded(child: offersPanel),
-        ],
-      );
-    }
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: <Widget>[
-        bidsPanel,
-        const SizedBox(height: 12),
-        offersPanel,
-      ],
-    );
-  }
-}
-
-/// Pure value object built from `WorldMarketState` for the player's
-/// Deal Book view. Holds the four per-side row lists (filled / unfilled
-/// for bids and offers) and the two treasury totals. Pulled out so the
-/// rendering widget tree stays declarative and unit-testable.
-class _DealBookViewData {
-  const _DealBookViewData({
-    required this.filledBids,
-    required this.filledOffers,
-    required this.unfilledBids,
-    required this.unfilledOffers,
-    required this.totalSpent,
-    required this.totalReceived,
-  });
-
-  factory _DealBookViewData.build({
-    required WorldMarketState worldMarket,
-    required String playerId,
-  }) {
-    final List<FilledDeal> bids = <FilledDeal>[];
-    final List<FilledDeal> offers = <FilledDeal>[];
-    for (final MarketActivity activity in worldMarket.lastTurnActivity.values) {
-      for (final FilledDeal deal in activity.deals) {
-        if (deal.buyerFactionId == playerId) bids.add(deal);
-        if (deal.sellerFactionId == playerId) offers.add(deal);
-      }
-    }
-    int spent = 0;
-    for (final FilledDeal deal in bids) {
-      spent += (deal.quantity * deal.pricePerUnit).round();
-    }
-    int received = 0;
-    for (final FilledDeal deal in offers) {
-      received += (deal.quantity * deal.pricePerUnit).round();
-    }
-    return _DealBookViewData(
-      filledBids: List<FilledDeal>.unmodifiable(bids),
-      filledOffers: List<FilledDeal>.unmodifiable(offers),
-      unfilledBids:
-          worldMarket.carryForwardBidsByFactionId[playerId] ??
-              const <TradeOrder>[],
-      unfilledOffers:
-          worldMarket.carryForwardOffersByFactionId[playerId] ??
-              const <TradeOrder>[],
-      totalSpent: spent,
-      totalReceived: received,
-    );
-  }
-
-  final List<FilledDeal> filledBids;
-  final List<FilledDeal> filledOffers;
-  final List<TradeOrder> unfilledBids;
-  final List<TradeOrder> unfilledOffers;
-  final int totalSpent;
-  final int totalReceived;
-}
-
-/// Single ledger panel (one of `Your bids` / `Your offers`). Wraps the
-/// rows in a [CtPanel] so the dark editorial-monocle surface matches the
-/// sibling panels on this screen. Sections inside the panel:
-///
-/// * Title row (`titleMedium`, `--accent`).
-/// * Filled section heading + rows (or in-panel empty placeholder).
-/// * Unfilled section heading + rows (or in-panel empty placeholder).
-/// * Totals row pinned by [totalsKey].
-///
-/// When **both** `filledRows.isEmpty` and `unfilledRows.isEmpty`, the
-/// per-section headings collapse and a single empty-state line keyed
-/// [emptyKey] is rendered. The totals row remains mounted regardless so
-/// widget tests can pin the affordance.
-class _DealBookPanel extends StatelessWidget {
-  const _DealBookPanel({
-    super.key,
-    required this.panelTitle,
-    required this.side,
-    required this.filledRows,
-    required this.unfilledRows,
-    required this.totalsKey,
-    required this.emptyKey,
-    required this.totalsLabel,
-    required this.totalsAmount,
-    required this.emptyText,
-  });
-
-  final String panelTitle;
-  final String side;
-  final List<FilledDeal> filledRows;
-  final List<TradeOrder> unfilledRows;
-  final Key totalsKey;
-  final Key emptyKey;
-  final String totalsLabel;
-  final int totalsAmount;
-  final String emptyText;
-
-  @override
-  Widget build(BuildContext context) {
-    final _DealBookPanelStyles styles = _DealBookPanelStyles.of(context);
-    final bool panelEmpty = filledRows.isEmpty && unfilledRows.isEmpty;
-    return CtPanel(
-      padding: const EdgeInsets.all(CtSpacing.ml),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: <Widget>[
-          Text(panelTitle, style: styles.title),
-          const SizedBox(height: 8),
-          if (panelEmpty)
-            Text(emptyText, key: emptyKey, style: styles.muted)
-          else
-            ..._buildSections(styles),
-          const SizedBox(height: 12),
-          Text(
-            // ignore: avoid_hardcoded_strings_in_widgets
-            '$totalsLabel: $totalsAmount',
-            key: totalsKey,
-            style: styles.totals,
-          ),
-        ],
-      ),
-    );
-  }
-
-  List<Widget> _buildSections(_DealBookPanelStyles styles) {
-    return <Widget>[
-      Text(TradeScreen.dealBookFilledHeading, style: styles.sectionHeading),
-      const SizedBox(height: 4),
-      ..._buildFilledRows(styles),
-      const SizedBox(height: 8),
-      Text(TradeScreen.dealBookUnfilledHeading, style: styles.sectionHeading),
-      const SizedBox(height: 4),
-      ..._buildUnfilledRows(styles),
-    ];
-  }
-
-  List<Widget> _buildFilledRows(_DealBookPanelStyles styles) {
-    if (filledRows.isEmpty) {
-      return <Widget>[
-        Text(TradeScreen.dealBookFilledEmptyText, style: styles.muted),
-      ];
-    }
-    return <Widget>[
-      for (int i = 0; i < filledRows.length; i++)
-        Padding(
-          padding: EdgeInsets.only(top: i == 0 ? 0 : 2),
-          child: _DealBookFilledRow(
-            rowKey: TradeScreen.dealBookFilledRowKey(side, i),
-            deal: filledRows[i],
-            rowStyle: styles.body,
-            tagStyle: styles.muted,
-          ),
-        ),
-    ];
-  }
-
-  List<Widget> _buildUnfilledRows(_DealBookPanelStyles styles) {
-    if (unfilledRows.isEmpty) {
-      return <Widget>[
-        Text(TradeScreen.dealBookUnfilledEmptyText, style: styles.muted),
-      ];
-    }
-    return <Widget>[
-      for (int i = 0; i < unfilledRows.length; i++)
-        Padding(
-          padding: EdgeInsets.only(top: i == 0 ? 0 : 2),
-          child: _DealBookUnfilledRow(
-            rowKey: TradeScreen.dealBookUnfilledRowKey(side, i),
-            order: unfilledRows[i],
-            rowStyle: styles.body,
-          ),
-        ),
-    ];
-  }
-}
-
-/// Resolved per-panel text styles, isolated as a value object so the
-/// [_DealBookPanel] build path stays under the 60-line cap.
-class _DealBookPanelStyles {
-  const _DealBookPanelStyles({
-    required this.title,
-    required this.sectionHeading,
-    required this.body,
-    required this.muted,
-    required this.totals,
-  });
-
-  factory _DealBookPanelStyles.of(BuildContext context) {
-    final ThemeData theme = Theme.of(context);
-    return _DealBookPanelStyles(
-      title: (theme.textTheme.titleMedium ?? const TextStyle(fontSize: 16))
-          .copyWith(color: EditorialMonoclePalette.accent),
-      sectionHeading:
-          (theme.textTheme.labelMedium ?? const TextStyle(fontSize: 12))
-              .copyWith(color: EditorialMonoclePalette.accentDim),
-      body: (theme.textTheme.bodyMedium ?? const TextStyle(fontSize: 14))
-          .copyWith(color: EditorialMonoclePalette.fg),
-      muted: (theme.textTheme.bodySmall ?? const TextStyle(fontSize: 12))
-          .copyWith(color: EditorialMonoclePalette.muted),
-      totals: (theme.textTheme.titleSmall ?? const TextStyle(fontSize: 14))
-          .copyWith(color: EditorialMonoclePalette.accentBright),
-    );
-  }
-
-  final TextStyle title;
-  final TextStyle sectionHeading;
-  final TextStyle body;
-  final TextStyle muted;
-  final TextStyle totals;
-}
-
-/// Single filled-deal row inside a Deal Book panel. Lays out
-/// `commodity — qty × price = notional` with optional FRR / FTP tags so
-/// the player can audit how the deal cleared per
-/// `SPEC/game/world-market.md` § Matching + § First Right of Refusal.
-class _DealBookFilledRow extends StatelessWidget {
-  const _DealBookFilledRow({
-    required this.rowKey,
-    required this.deal,
-    required this.rowStyle,
-    required this.tagStyle,
-  });
-
-  final Key rowKey;
-  final FilledDeal deal;
-  final TextStyle rowStyle;
-  final TextStyle tagStyle;
-
-  // ignore: avoid_hardcoded_strings_in_widgets
-  static const String _frrTag = 'FRR';
-  // ignore: avoid_hardcoded_strings_in_widgets
-  static const String _ftpTag = 'FTP';
-
-  @override
-  Widget build(BuildContext context) {
-    final int notional = (deal.quantity * deal.pricePerUnit).round();
-    final String priceText = deal.pricePerUnit.toStringAsFixed(1);
-    final List<String> tags = <String>[
-      if (deal.isFirstRightOfRefusalMatch) _frrTag,
-      if (deal.isFtpMatch) _ftpTag,
-    ];
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.baseline,
-      textBaseline: TextBaseline.alphabetic,
-      key: rowKey,
-      children: <Widget>[
-        Expanded(
-          child: Text(
-            // ignore: avoid_hardcoded_strings_in_widgets
-            '${deal.commodityId} — qty ${deal.quantity} × $priceText '
-            '= $notional',
-            style: rowStyle,
-            overflow: TextOverflow.ellipsis,
-          ),
-        ),
-        if (tags.isNotEmpty) ...<Widget>[
-          const SizedBox(width: 6),
-          Text(
-            // ignore: avoid_hardcoded_strings_in_widgets
-            tags.join(' '),
-            style: tagStyle,
-          ),
-        ],
-      ],
-    );
-  }
-}
-
-/// Single carry-forward order row inside a Deal Book panel. The order
-/// has not cleared yet so there is no per-unit price or notional —
-/// `commodity — qty N (priority P)` is the canonical readout.
-class _DealBookUnfilledRow extends StatelessWidget {
-  const _DealBookUnfilledRow({
-    required this.rowKey,
-    required this.order,
-    required this.rowStyle,
-  });
-
-  final Key rowKey;
-  final TradeOrder order;
-  final TextStyle rowStyle;
-
-  @override
-  Widget build(BuildContext context) {
-    return Text(
-      // ignore: avoid_hardcoded_strings_in_widgets
-      '${order.commodityId} — qty ${order.quantity} '
-      '(priority ${order.priority})',
-      key: rowKey,
-      style: rowStyle,
-      overflow: TextOverflow.ellipsis,
-    );
-  }
-}

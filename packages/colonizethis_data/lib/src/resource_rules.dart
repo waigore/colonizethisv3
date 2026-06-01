@@ -32,6 +32,35 @@ class ResourceRules {
     return price > 0 ? 1.0 / price : 1.0;
   }
 
+  /// Returns the integer default market price for a `CommodityId` string when
+  /// the id matches a [Resource] enum name (the raw-resource commodities
+  /// `grain`, `meat`, `wool`, `horses`, `timber`, `iron`, `copper`, `tin`,
+  /// `coal`, `sugarCane`, `tobacco`, `cotton`, `furs`, `spices`, `silver`,
+  /// `gold`, `gems`, `diamonds`).
+  ///
+  /// Returns `null` for commodities not enumerated in
+  /// [defaultMarketPrice] — currently the manufactured commodities
+  /// (`bronze`, `castIron`, `fabric`, `lumber`, `paper`, `steel`,
+  /// `refinedSugar`, `cigars`, `furHats`). Manufactured commodities derive
+  /// their first market price from in-game discovery rather than from a
+  /// fixed catalog entry; SPEC/game/world-market.md § Price discovery clamps
+  /// their floor at the most recent persisted price (the helper at
+  /// `world_market_phase._basePriceForCommodityId` returns 0 for unknown
+  /// ids so the floor stays inert mid-game).
+  ///
+  /// Used by trade UI surfaces (and any future seed code) to render a
+  /// catalog-grounded fallback when `WorldMarketState.prices` lacks an
+  /// entry. The mapping `CommodityId == Resource.name` mirrors the
+  /// convention enforced by the production pipeline (see
+  /// `world_market_phase.dart`).
+  int? defaultMarketPriceForCommodityId(String commodityId) {
+    if (commodityId.isEmpty) return null;
+    for (final entry in defaultMarketPrice.entries) {
+      if (entry.key.name == commodityId) return entry.value;
+    }
+    return null;
+  }
+
   /// Whether resource [r] is allowed in region [regionId] (e.g. 'oldWorld', 'newWorld').
   bool isAllowedInRegion(Resource r, String regionId) {
     final rule = regionRule[r];

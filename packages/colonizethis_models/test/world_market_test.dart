@@ -499,12 +499,17 @@ void main() {
   });
 
   group('WorldMarketState', () {
-    test('withDefaultPrices populates prices and leaves activity empty', () {
+    test('withDefaultPrices populates prices as int and leaves activity empty',
+        () {
       final state = WorldMarketState.withDefaultPrices({
         'timber': 30,
         'iron': 80,
       });
-      expect(state.prices, {'timber': 30.0, 'iron': 80.0});
+      // Post-#3093: `WorldMarketState.prices` is now `Map<CommodityId, int>`
+      // (floored at persistence boundary per
+      // SPEC/game/world-market.md § Price discovery).
+      expect(state.prices, <CommodityId, int>{'timber': 30, 'iron': 80});
+      expect(state.prices['timber'], isA<int>());
       expect(state.lastTurnActivity, isEmpty);
     });
 
@@ -524,6 +529,39 @@ void main() {
       );
       final restored = WorldMarketState.fromJson(state.toJson());
       expect(restored, equals(state));
+      expect(restored.prices['timber'], isA<int>());
+      expect(restored.prices['timber'], 30);
+    });
+
+    test('fromJson floors legacy double prices to int (backward compat)', () {
+      // Pre-#3093 saves wrote `prices` as `Map<CommodityId, double>`.
+      // The new `fromJson` floors any non-integer numeric value so the
+      // in-memory map is always int-valued without forcing a save migration.
+      final restored = WorldMarketState.fromJson(<String, dynamic>{
+        'prices': <String, dynamic>{
+          'timber': 29.99,
+          'iron': 80.5,
+          'coal': 100,
+        },
+        'lastTurnActivity': <String, dynamic>{},
+      });
+      expect(restored.prices, <CommodityId, int>{
+        'timber': 29,
+        'iron': 80,
+        'coal': 100,
+      });
+      expect(restored.prices['timber'], isA<int>());
+    });
+
+    test('fromJson clamps negative numeric prices to 0 (defensive)', () {
+      // SPEC/game/world-market.md § Price discovery clamps the floor at
+      // 30% of base price (always non-negative). A hand-edited save with a
+      // negative price would have been a logic bug pre-#3093; the new
+      // floor migration treats it as zero rather than crashing.
+      final restored = WorldMarketState.fromJson(<String, dynamic>{
+        'prices': <String, dynamic>{'timber': -5.0},
+      });
+      expect(restored.prices['timber'], 0);
     });
 
     test('empty constants are equal', () {

@@ -27,7 +27,7 @@ void main() {
       // attempt to fill from the dropped offer. Expectation: offer dropped,
       // no fill, bid carries forward, dropped note recorded on activity.
       final priorMarket = WorldMarketState.empty.copyWith(
-        prices: const {'timber': 30.0},
+        prices: const {'timber': 30},
         carryForwardOffersByFactionId: {
           'gpSeller': [
             TradeOrder(
@@ -44,7 +44,7 @@ void main() {
           sellerStockpile: const Stockpile().applyDelta('timber', 2),
           sellerTreasury: 0,
           buyerTreasury: 1000,
-          marketPrices: const {'timber': 30.0},
+          marketPrices: const {'timber': 30},
         ).copyWith(worldMarketState: priorMarket),
       );
       final config = TurnResolverConfig(
@@ -106,7 +106,7 @@ void main() {
       // seller's 30-timber offer unfilled.
       const oversizedBidQuantity = 30; // > defaultCargoHoldsStub (24)
       final priorMarket = WorldMarketState.empty.copyWith(
-        prices: const {'timber': 30.0},
+        prices: const {'timber': 30},
         carryForwardBidsByFactionId: {
           'gpBuyer': [
             TradeOrder(
@@ -123,7 +123,7 @@ void main() {
           sellerStockpile: const Stockpile().applyDelta('timber', 30),
           sellerTreasury: 0,
           buyerTreasury: 100000,
-          marketPrices: const {'timber': 30.0},
+          marketPrices: const {'timber': 30},
         ).copyWith(worldMarketState: priorMarket),
       );
       final config = TurnResolverConfig(
@@ -182,7 +182,7 @@ void main() {
       // Seller carried forward a 3-timber offer and has 5 timber on hand;
       // a matching new bid arrives and fills the carry-forward.
       final priorMarket = WorldMarketState.empty.copyWith(
-        prices: const {'timber': 30.0},
+        prices: const {'timber': 30},
         carryForwardOffersByFactionId: {
           'gpSeller': [
             TradeOrder(
@@ -199,7 +199,7 @@ void main() {
           sellerStockpile: const Stockpile().applyDelta('timber', 5),
           sellerTreasury: 0,
           buyerTreasury: 1000,
-          marketPrices: const {'timber': 30.0},
+          marketPrices: const {'timber': 30},
         ).copyWith(worldMarketState: priorMarket),
       );
       final config = TurnResolverConfig(
@@ -246,7 +246,7 @@ void main() {
       // bid fits, the second pushes the cumulative kept total above the
       // cargo cap and must be dropped.
       final priorMarket = WorldMarketState.empty.copyWith(
-        prices: const {'timber': 30.0, 'iron': 80.0},
+        prices: const {'timber': 30, 'iron': 80},
         carryForwardBidsByFactionId: {
           'gpBuyer': [
             TradeOrder(
@@ -269,7 +269,7 @@ void main() {
           sellerStockpile: Stockpile.empty,
           sellerTreasury: 0,
           buyerTreasury: 100000,
-          marketPrices: const {'timber': 30.0, 'iron': 80.0},
+          marketPrices: const {'timber': 30, 'iron': 80},
         ).copyWith(worldMarketState: priorMarket),
       );
       final config = TurnResolverConfig(

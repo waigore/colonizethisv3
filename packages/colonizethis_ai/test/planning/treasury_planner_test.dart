@@ -135,9 +135,9 @@ void main() {
         ).copyWith(
           worldMarketState: WorldMarketState(
             prices: {
-              CommodityCatalog.fabric.id: 5.0,
-              CommodityCatalog.wool.id: 50.0,
-              CommodityCatalog.cotton.id: 50.0,
+              CommodityCatalog.fabric.id: 5,
+              CommodityCatalog.wool.id: 50,
+              CommodityCatalog.cotton.id: 50,
             },
           ),
         );
@@ -297,7 +297,7 @@ void main() {
           treasury: 0,
         ).copyWith(
           worldMarketState: WorldMarketState(
-            prices: {CommodityCatalog.timber.id: 20.0},
+            prices: {CommodityCatalog.timber.id: 20},
             carryForwardOffersByFactionId: {
               'gp1': [
                 TradeOrder(
@@ -347,7 +347,7 @@ void main() {
           treasury: 0,
         ).copyWith(
           worldMarketState: WorldMarketState(
-            prices: {CommodityCatalog.timber.id: 20.0},
+            prices: {CommodityCatalog.timber.id: 20},
             carryForwardOffersByFactionId: {
               'gp1': [
                 TradeOrder(
@@ -407,9 +407,9 @@ void main() {
         ).copyWith(
           worldMarketState: WorldMarketState(
             prices: {
-              CommodityCatalog.fabric.id: 5.0,
-              CommodityCatalog.wool.id: 50.0,
-              CommodityCatalog.cotton.id: 50.0,
+              CommodityCatalog.fabric.id: 5,
+              CommodityCatalog.wool.id: 50,
+              CommodityCatalog.cotton.id: 50,
             },
             carryForwardBidsByFactionId: {
               'gp1': [
@@ -458,7 +458,7 @@ void main() {
           treasury: treasury,
         ).copyWith(
           worldMarketState: WorldMarketState(
-            prices: {CommodityCatalog.timber.id: 20.0},
+            prices: {CommodityCatalog.timber.id: 20},
             lastTurnActivity: {
               CommodityCatalog.timber.id: const MarketActivity(
                 totalOfferQuantity: 100,
@@ -503,7 +503,7 @@ void main() {
           treasury: treasury,
         ).copyWith(
           worldMarketState: WorldMarketState(
-            prices: {CommodityCatalog.timber.id: 20.0},
+            prices: {CommodityCatalog.timber.id: 20},
             lastTurnActivity: {
               CommodityCatalog.timber.id: const MarketActivity(
                 totalOfferQuantity: 100,
@@ -606,7 +606,7 @@ void main() {
         ).copyWith(
           worldMarketState: WorldMarketState(
             prices: {
-              CommodityCatalog.iron.id: 10.0,
+              CommodityCatalog.iron.id: 10,
             },
             lastTurnActivity: const {
               'iron': MarketActivity(
@@ -745,7 +745,7 @@ void main() {
           treasury: 0,
         ).copyWith(
           worldMarketState: WorldMarketState(
-            prices: {CommodityCatalog.timber.id: 20.0},
+            prices: {CommodityCatalog.timber.id: 20},
             lastTurnActivity: {
               CommodityCatalog.timber.id: const MarketActivity(
                 totalOfferQuantity: 40,

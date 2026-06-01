@@ -59,7 +59,7 @@ Game _buildGame({
     diplomaticHistoryEvents: const [],
     dossierEvidenceEntries: const [],
     worldMarketState: WorldMarketState(
-      prices: const <CommodityId, double>{},
+      prices: const <CommodityId, int>{},
       lastTurnActivity: activity,
       carryForwardOffersByFactionId: carryForwardOffers,
       carryForwardBidsByFactionId: carryForwardBids,
