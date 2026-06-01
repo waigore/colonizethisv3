@@ -72,6 +72,7 @@ import '../../../providers/games_provider.dart';
 import '../../../widgets/ct_choice_chip.dart';
 import '../../../widgets/ct_game_feature_screen_shell.dart';
 import '../../../widgets/ct_panel.dart';
+import '../../../widgets/ct_spacing.dart';
 import '../../../widgets/ct_tab_strip.dart';
 import '../../../widgets/ct_top_bar.dart';
 import '../../../widgets/strict_asset_icon.dart';
@@ -475,9 +476,9 @@ class _TradeScreenTabsBody extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(CtSpacing.l),
       child: CtPanel(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(CtSpacing.l),
         child: CtTabStrip(
           initialTabIndex: initialTabIndex,
           tabLabels: const <String>[
@@ -794,6 +795,53 @@ class _MarketTabContent extends ConsumerWidget {
       if (desiredQuantity > maxAllowedBidQuantity) {
         quantity = maxAllowedBidQuantity;
       }
+      // Refs #3093 — treasury bid budget cap. The cross-commodity bid
+      // total spend (`Σ qty × effectiveMarketPrice`) must not exceed
+      // the player's `treasuryAvailableForBidsByPlayer` (today: raw
+      // treasury; pending-cost subtraction is a documented follow-up
+      // per `SPEC/game/world-market.md` § Treasury budget for bids).
+      // Subtract the row's own prior bid contribution to the running
+      // spend total so this row's *replacement* quantity is measured
+      // against the fresh headroom.
+      //
+      // When `rowPrice` is null (manufactured commodities whose first
+      // market price is discovered in-game and the catalog has no
+      // default — the row's price text reads as the em-dash) the
+      // treasury clamp is **skipped** so the cargo cap remains the
+      // only constraint. The validator-side enforcement (follow-up)
+      // covers the spend-over-treasury case independently.
+      final int? rowPrice = effectiveMarketPriceForCommodityId(
+        commodityId: commodityId,
+        worldMarket: game.worldMarketState,
+        resourceRules: ResourceRules.defaultRules,
+      );
+      if (rowPrice != null && rowPrice > 0) {
+        final int treasuryBudget = treasuryAvailableForBidsByPlayer(
+          game: game,
+          playerId: playerId,
+        );
+        final int totalStagedBidSpend = stagedBidTotalSpendByPlayer(
+          orders: orders,
+          playerId: playerId,
+          game: game,
+          resourceRules: ResourceRules.defaultRules,
+        );
+        final int priorRowBidSpend = prior?.type == TradeOrderType.bid
+            ? prior!.quantity * rowPrice
+            : 0;
+        final int otherBidSpend = totalStagedBidSpend - priorRowBidSpend;
+        final int treasuryHeadroom = treasuryBudget - otherBidSpend;
+        if (treasuryHeadroom < rowPrice) {
+          // Not enough treasury to bid even 1 unit at the row's price
+          // → silent no-op so the row stays in its prior direction.
+          return;
+        }
+        final int treasuryQuantityCap = treasuryHeadroom ~/ rowPrice;
+        if (quantity > treasuryQuantityCap) {
+          quantity = treasuryQuantityCap;
+        }
+        if (quantity <= 0) return;
+      }
     } else if (next == TradeOrderType.offer) {
       // Refs #3093 — sellable clamp slice. The per-commodity offer cap
       // is `stockpile − industryAllocation` (alloc treated as 0 until
@@ -856,6 +904,36 @@ class _MarketTabContent extends ConsumerWidget {
           cargoHoldsForHomeFleet(game, playerId);
       final int totalStagedBid = _totalStagedBidQuantity(orders, playerId);
       if (totalStagedBid + delta > tradeCargoCapacity) return;
+      // Refs #3093 — treasury bid budget cap. Block the `+` tap when
+      // the cross-commodity bid total spend would exceed the player's
+      // available treasury. The row's own current spend is already
+      // part of `totalStagedBidSpend` — we only need the extra `delta`
+      // at the row's effective per-unit price to fit inside the
+      // remaining treasury budget.
+      //
+      // When `rowPrice` is null (manufactured commodities with no
+      // catalog default — the row's price reads as the em-dash) the
+      // treasury check is **skipped** so the cargo cap remains the
+      // only constraint; the validator-side enforcement (follow-up)
+      // catches over-spend cases independently.
+      final int? rowPrice = effectiveMarketPriceForCommodityId(
+        commodityId: commodityId,
+        worldMarket: game.worldMarketState,
+        resourceRules: ResourceRules.defaultRules,
+      );
+      if (rowPrice != null && rowPrice > 0) {
+        final int treasuryBudget = treasuryAvailableForBidsByPlayer(
+          game: game,
+          playerId: playerId,
+        );
+        final int totalStagedBidSpend = stagedBidTotalSpendByPlayer(
+          orders: orders,
+          playerId: playerId,
+          game: game,
+          resourceRules: ResourceRules.defaultRules,
+        );
+        if (totalStagedBidSpend + delta * rowPrice > treasuryBudget) return;
+      }
     } else if (prior.type == TradeOrderType.offer && delta > 0) {
       // Refs #3093 — sellable clamp slice. Block the `+` tap when the
       // per-commodity offer cap (`stockpile − industryAllocation`,
