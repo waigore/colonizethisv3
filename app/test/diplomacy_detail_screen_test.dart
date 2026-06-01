@@ -3,6 +3,7 @@ import 'package:colonizethis_app/features/game/screens/diplomacy_detail_screen.d
 import 'package:colonizethis_app/features/game/widgets/diplomacy_panel.dart';
 import 'package:colonizethis_app/providers/app_event_bus_provider.dart';
 import 'package:colonizethis_app/widgets/ct_back_button.dart';
+import 'package:colonizethis_app/widgets/ct_game_feature_screen_shell.dart';
 import 'package:colonizethis_app/widgets/ct_top_bar.dart';
 import 'package:colonizethis_app/widgets/debug_init_game.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
@@ -580,6 +581,13 @@ void main() {
       expect(find.byType(CtTopBar), findsOneWidget);
       expect(find.byType(CtBackButton), findsOneWidget);
       expect(find.byType(AppBar), findsNothing);
+
+      expect(find.byType(CtGameFeatureScreenShell), findsOneWidget);
+      final CtGameFeatureScreenShell shell = tester.widget(
+        find.byType(CtGameFeatureScreenShell),
+      );
+      expect(shell.backgroundColor, EditorialMonoclePalette.bg);
+      expect(shell.attachGameToUiListener, isFalse);
 
       final Scaffold scaffold = tester.widget(find.byType(Scaffold));
       expect(scaffold.backgroundColor, EditorialMonoclePalette.bg);

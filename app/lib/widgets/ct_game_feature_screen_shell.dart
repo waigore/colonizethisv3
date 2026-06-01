@@ -32,6 +32,7 @@ class CtGameFeatureScreenShell extends ConsumerWidget {
     this.topBar,
     this.showBackButton = true,
     this.attachGameToUiListener = true,
+    this.backgroundColor,
   }) : assert(
          topBar != null || title != null,
          'CtGameFeatureScreenShell requires either a topBar widget '
@@ -54,6 +55,17 @@ class CtGameFeatureScreenShell extends ConsumerWidget {
   final bool showBackButton;
   final bool attachGameToUiListener;
 
+  /// Optional background colour for the dark-chrome [Scaffold]. Only
+  /// consulted when [topBar] is non-null (dark editorial-monocle chrome
+  /// path). Defaults to `Theme.of(context).colorScheme.surface` — the
+  /// same token the panel-style game feature screens use. Detail screens
+  /// that paint on `EditorialMonoclePalette.bg` (e.g. the diplomacy
+  /// detail screen, GAME30002) pass that token explicitly so the shell
+  /// honours the per-screen mockup background without each consumer
+  /// hand-rolling its own [Scaffold] (which would trip the
+  /// `repo.app_no_material_scaffold` lint).
+  final Color? backgroundColor;
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final live = attachGameToUiListener ? ref.watch(currentGameProvider) : null;
@@ -61,7 +73,11 @@ class CtGameFeatureScreenShell extends ConsumerWidget {
 
     final Widget body = bodyBuilder(context, ref, displayGame);
     final Widget shell = topBar != null
-        ? _DarkChromeShell(topBar: topBar!, body: body)
+        ? _DarkChromeShell(
+            topBar: topBar!,
+            body: body,
+            backgroundColor: backgroundColor,
+          )
         : CtScreenShell(
             title: title!,
             showBackButton: showBackButton,
@@ -75,16 +91,21 @@ class CtGameFeatureScreenShell extends ConsumerWidget {
 }
 
 class _DarkChromeShell extends StatelessWidget {
-  const _DarkChromeShell({required this.topBar, required this.body});
+  const _DarkChromeShell({
+    required this.topBar,
+    required this.body,
+    this.backgroundColor,
+  });
 
   final Widget topBar;
   final Widget body;
+  final Color? backgroundColor;
 
   @override
   Widget build(BuildContext context) {
     final ThemeData theme = Theme.of(context);
     return Scaffold(
-      backgroundColor: theme.colorScheme.surface,
+      backgroundColor: backgroundColor ?? theme.colorScheme.surface,
       body: SafeArea(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,

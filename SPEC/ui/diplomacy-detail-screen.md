@@ -33,9 +33,9 @@
 ## Layout / wireframe
 
 ```text
-Scaffold (background: --bg)
-  SafeArea
-    Column
+CtGameFeatureScreenShell (backgroundColor: --bg, attachGameToUiListener: false)
+  SafeArea (owned by shell)
+    Column (owned by shell)
       CtTopBar (title: factionDisplayName, chevron back -> PopNavigationEvent)
       Center / ConstrainedBox (maxWidth: 600)
         ListView (padding 14h x 14v, gap 14 between cards)
@@ -49,6 +49,18 @@ Scaffold (background: --bg)
               [empty] diplomacy_detail_noDossier (italic --muted)
               OR LeftBorderTile per evidence entry (mono --accent-dim turn label + description)
 ```
+
+`CtGameFeatureScreenShell` owns the screen-level `Scaffold` (with the
+`EditorialMonoclePalette.bg` background passed via the shell's
+`backgroundColor` parameter), the `SafeArea`, and the top-bar / body
+`Column`. Detail screens no longer construct `Scaffold` themselves; the
+`repo.app_no_material_scaffold` lint enforces the same Ct-* shell
+contract that `repo.app_no_material_iconbutton`,
+`repo.app_no_material_alertdialog`, and `repo.app_no_material_textbutton`
+already enforce for chrome catalog widgets (`SPEC/program/repo-lint.md`).
+`attachGameToUiListener` is `false` because the screen does not need
+the live-`Game` rebind that the shell uses for panel-style game
+features.
 
 Visual chrome notes (per [mockups/GAME30002-diplomacy-detail-screen.html](mockups/GAME30002-diplomacy-detail-screen.html)):
 
@@ -102,7 +114,7 @@ History ordering: `(turn desc, intraTurnIndex desc)` via `diplomaticHistoryForPa
 
 - Given the widget builds,
   When the chrome is inspected,
-  Then the screen scaffold background resolves to `EditorialMonoclePalette.bg`, exactly one `CtTopBar` is present, the legacy Material `AppBar` is absent, and the `CtTopBar` carries a `CtBackButton` chevron.
+  Then the screen chrome is rendered via `CtGameFeatureScreenShell` with `backgroundColor: EditorialMonoclePalette.bg` (no direct Material `Scaffold` is constructed by `DiplomacyDetailScreen` itself, per `repo.app_no_material_scaffold`), exactly one `CtTopBar` is present, the legacy Material `AppBar` is absent, and the `CtTopBar` carries a `CtBackButton` chevron.
 
 - Given `kind` is not `FactionKind.greatPower`,
   When the widget builds,
