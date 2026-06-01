@@ -82,6 +82,7 @@ import '../features/shell/shell_screen.dart';
 import '../l10n/l10n.dart';
 import '../widgets/debug_init_game.dart';
 import '../widgets/ct_back_button.dart';
+import '../widgets/ct_icon_action.dart';
 import '../widgets/ct_brass_divider.dart';
 import '../widgets/ct_choice_chip.dart';
 import '../widgets/ct_compass_rose.dart';
@@ -115,6 +116,7 @@ part 'catalog_part4.dart';
 part 'catalog_part5.dart';
 part 'catalog_part6.dart';
 part 'catalog_part7.dart';
+part 'catalog_part8.dart';
 
 Unit? _unitByIdForCatalog(Game game, String unitId) {
   for (final u in game.worldState.oldWorld.units) {
