@@ -161,6 +161,18 @@ Hardware back is not handled; orchestrator owns lifecycle until `onComplete`.
   When the framework runs `build`,
   Then the widget tree contains exactly one `CtDialogShell` with `maxWidth: 400` and `maxHeight: 500` and no Material `ElevatedButton`, `TextButton`, or `OutlinedButton`.
 
+- Given the viewport width is exactly `kMinViewportWidth` (320 dp) and the height is at least 640 dp,
+  When `QuickBattleScreen` is mounted with `interactive: false` against a minimal two-faction `QuickBattleInput` (one CENTER + FRONT group per side, `maxRounds = 3`) and a no-op `onComplete`,
+  Then after the first `setState`-driven pump `WidgetTester.takeException()` returns `null`, the localized `quickBattle_battleResult(...)` winner sentence and both `quickBattle_casualties` rows render, and the trailing `Continue` `CtNinePatchButton` label renders within the ~288 dp `CtDialogShell` content column (cross-referenced from [mobile-adaptation.md](mobile-adaptation.md) § 7 — the `Dialog.insetPadding: 16` collapses the configured `maxWidth: 400` to ~288 dp at the 320 dp viewport so the result view body must lay out without horizontal overflow).
+
+- Given the viewport width is exactly `kMinViewportWidth` (320 dp) and the height is at least 640 dp,
+  When `QuickBattleScreen` is mounted with `interactive: true` against the same minimal `QuickBattleInput` and a no-op `onComplete`,
+  Then `WidgetTester.takeException()` returns `null`, the round-counter title (`Quick Battle — Round 1 / 3`) and the `Command Points: 3` action-selector header both render, every `QuickBattleActionSelector` `Wrap` child (`Volley Fire`, `Defend`, `Maneuver`, `Fall Back`, `Assault`) is mounted, and the `Resolve (Auto)` button is absent (cross-referenced from [mobile-adaptation.md](mobile-adaptation.md) § 7 — the round-counter `Text`, the `QuickBattleDeploymentView` `CtPanel` + `Wrap` of lane/line rows, and the action `Wrap` of five `CtNinePatchButton` chips must lay out within the ~288 dp `CtDialogShell` content column without horizontal overflow; the action chips MUST flow onto extra runs rather than overflowing horizontally).
+
+- Given the viewport width is 1024 dp and the height is 768 dp,
+  When `QuickBattleScreen` is mounted with `interactive: false` against the same minimal `QuickBattleInput` and a no-op `onComplete`,
+  Then after the first `setState`-driven pump `WidgetTester.takeException()` returns `null` and the result-view `Battle Result: …` winner sentence + trailing `Continue` action both render (wide regression sentinel for the 320 dp result-view AC above — keeps the narrow positive pin meaningful by exercising the same fixture at a comfortable viewport).
+
 ---
 
 ## Widgetbook
