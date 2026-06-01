@@ -120,11 +120,57 @@ Given current `Stockpile`, `productionAssignments`, and `game.worldMarketState.p
 
 - Given an AI GP with timber stockpile well above reserve and `treasury` below `cheapestRegimentBuildTreasuryCost()`, when `runTreasuryPlanner` runs, then it emits at least one `TradeOrderType.offer` for timber at priority `2`.
 - Given an AI GP with embassy overture, fabric production input need, and market fabric price below recipe input cost, when `runTreasuryPlanner` runs, then it emits a `TradeOrderType.bid` for fabric at priority `1`.
-- Given an AI GP with no embassy (`bidTypeCap == 0`), when `runTreasuryPlanner` runs, then it emits offers only (no bids).
+- Given an AI GP with no embassy and `treasury == 0` and no production-input consumption deficit, when `runTreasuryPlanner` runs, then it emits offers only (no bids) — speculative bidding is gated by treasury affluence so broke GPs never spend on speculation.
 - Given identical inputs, when `runTreasuryPlanner` runs twice, then both runs return identical `List<TradeOrder>`.
 - Given an `EconomyPlan` whose `tradeOrders` is non-empty for an AI GP, when `runDomainPlannersWithOutcome` runs, then `outcome.orders.tradeOrdersByPlayerId[nationId]` equals `economyPlan.tradeOrders` and `outcome.domainGateData.tradePlannerRan` is `true` (F7 wiring).
 - Given an `EconomyPlan` whose `tradeOrders` is empty, when `runDomainPlannersWithOutcome` runs, then `outcome.orders.tradeOrdersByPlayerId` does not contain `nationId` and `outcome.domainGateData.tradePlannerRan` is `false`.
 - Given identical orchestrator inputs (game / topology / nationId / view / snapshot / config / primary goal / seeds / suggestion API / economy plan / tile maps / phase plan), when `runDomainPlannersWithOutcome` runs twice, then both runs produce identical `outcome.orders.tradeOrdersByPlayerId[nationId]` lists (determinism).
+
+---
+
+## Affluent-GP speculative bidding (Refs #2924 F10)
+
+F10 supplements the F1–F5 deficit-based bid path so the world market clears even when no Great Power currently has a strict input shortfall. Without it the seed-42 "EXPAND geographic peer-war lock" stays gridlocked at zero deals (per the diagnostic in `packages/colonizethis_ai/test/seed42_observer_world_market_lock_recovery_diagnostic_test.dart`): every GP offers, none bids, and the failing GPs never earn treasury through legitimate trade. F10 lets treasury-rich GPs *choose* to spend treasury on inventory ahead of any modelled deficit, providing the buy-side demand that converts other GPs' offers into deals.
+
+### Affluence gate
+
+A GP is **affluent** when `treasury >= kTreasuryAffluenceThreshold = kTreasuryAffluenceThresholdMultiplier × cheapestRegimentBuildTreasuryCost()` (default multiplier `1`, so `>= 2000` treasury — the same band that authorizes a cheapest regiment build). Below the gate the planner uses the F1–F5 path unchanged — broke GPs that cannot afford even one regiment never emit speculative bids.
+
+### Speculative-bid commodity selection
+
+The speculative pass adds **at most one** synthetic entry to the `need` map per invocation so the bid is concentrated on the commodity most likely to clear into a real deal (treasury redistributes only when matching offers exist; spraying bids across commodities with no offers leaves the market gridlocked). Eligibility filter:
+
+- Skip any commodity in `richesCommodityIds` (riches are excluded from world-market trade).
+- Skip any commodity already present in the F1–F5 `need` map (the deficit path already speaks for it).
+- Skip any commodity already present in the F1–F5 `available` map (mutual-exclusion preserved).
+- Require `speculativeGap = kSpeculativeBidStockpileTarget − projectedStockpile[commodityId] − carryForwardBids[commodityId] > 0`. The default target is `kShortageThreshold` (`8`), aligned with `_consumptionForecast` so a successful speculative buy raises stockpile to one full consumption cycle.
+
+Among eligible commodity ids, select **exactly one** in this deterministic order:
+
+1. Commodities with prior-turn `MarketActivity.totalOfferQuantity > 0` — proven liquidity. Sort descending by offer volume, alphabetical tiebreak.
+2. Otherwise food-category commodities (alphabetical) — minor/tribe auto-offers reliably surface food on the next world-market phase.
+3. Otherwise the alphabetical first eligible commodity (deterministic fallback for an empty market — preserves determinism for tests that do not seed `lastTurnActivity`).
+
+Add `need[selectedId] = speculativeGap(selectedId)` and return.
+
+### Price-gate bypass for speculative bids
+
+Speculative bids **do not** apply the F3 "market price strictly below cheapest production cost" gate. The affluent GP is electing to spend treasury on stockpile regardless of unit cost (the alternative is being unable to spend treasury at all). Affordability is still enforced at the validator boundary (`tradeCargoCapacity`, `bidTypeCap`) and at deal-clearing time (treasury debited per filled unit).
+
+### Cap inheritance
+
+Speculative bids share the same `bidTypeCap` and `tradeCargoCapacity` as F1–F5 bids; the deficit pass admits bids first, the speculative pass fills any remaining cap slots in alphabetical commodity order. Because `worldMarketBidTypeCap` returns `kWorldMarketBaselineBidTypeCap` (= `1`) by default ([world-market-resolution.md](../program/world-market-resolution.md) § Bid type cap helper), no-embassy GPs still get at least one speculative bid per turn.
+
+### Determinism and budget
+
+The selection set, scoring, and cap distribution are pure functions of `Stockpile`, `productionAssignments`, `treasury`, `game.worldMarketState`, and the static catalogs. Identical inputs produce identical outputs across runs. No hot-path logging; per-turn cost is bounded by `O(catalog × players)`, well inside the 15-second turn-resolution budget.
+
+### Acceptance criteria (F10)
+
+- Given an AI GP with `treasury >= kTreasuryAffluenceThreshold` (= `1 × cheapestRegimentBuildTreasuryCost()` = `2000`), no recipe-input deficit, an empty stockpile for a non-riches commodity `C`, and `worldMarketBidTypeCap(game, playerId) == kWorldMarketBaselineBidTypeCap` (`1`, no embassy), when `runTreasuryPlanner` runs, then it emits exactly one `TradeOrderType.bid` for `C` with `quantity == kSpeculativeBidStockpileTarget` (`8`) and `priority` set per `_bidPriorityForCommodity(C)`.
+- Given an AI GP whose `treasury < kTreasuryAffluenceThreshold` and no deficit-driven bid, when `runTreasuryPlanner` runs, then it emits no bid (speculative pass is gated off).
+- Given an AI GP whose `treasury >= kTreasuryAffluenceThreshold` and whose projected stockpile of every non-riches commodity is at or above `kSpeculativeBidStockpileTarget`, when `runTreasuryPlanner` runs, then it emits no speculative bid (no commodity has positive `speculativeTarget`).
+- Given identical orchestrator inputs, when `runTreasuryPlanner` runs twice on the affluent path, then both runs return identical `List<TradeOrder>` outputs (determinism preserved by alphabetical commodity ordering and the cap distribution rule).
 
 ---
 

@@ -309,11 +309,12 @@ Rules 1–2 are intrinsic to the order. Rules 3–4 are computed from the submit
 
 `worldMarketBidTypeCap(Game game, String playerId)` lives in `packages/colonizethis_logic/lib/src/diplomacy/diplomacy_subsidies_relations_resolver.dart` next to `tradeSlotsForGp` ([diplomacy-resolution.md](diplomacy-resolution.md)):
 
-- `0` when the player has no embassy (`OvertureStage.embassy` or stronger) with **any** target faction.
+- `0` only when [playerId] is not a known player (`Game.playerById` returns `null`).
+- `kWorldMarketBaselineBidTypeCap` (= **1**) when the player exists and has no embassy (`OvertureStage.embassy` or stronger) with **any** target faction. This baseline keeps the global market liquid for every Great Power — including EXPAND-phase GPs that are structurally blocked from emitting NW-only `establishOverture` orders (`SPEC/ai/phase-planner-architecture.md` § EXPAND planner suppressions) — so treasury can still redistribute through legitimate trade per [world-market.md](../game/world-market.md) § Bid type cap.
 - `3` when the player has at least one embassy and has not unlocked `kTechIdTradeFairs`.
 - `6` when the player has at least one embassy **and** has unlocked `kTechIdTradeFairs`.
 
-This is the **world-market**-scoped analogue of `tradeSlotsForGp` (which is per-target). The market is global, so the cap aggregates across all of the player's embassies.
+This is the **world-market**-scoped analogue of `tradeSlotsForGp` (which is per-target). The market is global, so the cap aggregates across all of the player's embassies. The baseline `1`-cap step preserves the embassy gradient (`1 → 3 → 6`): diplomatic investment still multiplies trade reach.
 
 ---
 
@@ -454,7 +455,8 @@ The pure helpers (`computeNextPrice`, `computeMarketActivity`, `DealMatcher.matc
 - Given `bidTypeCap = 6` and bids on `[timber, iron, coal, wool, hides, cattle, grain]`, when validation runs, then the seventh distinct-commodity bid (`grain`) is rejected with reason `TradeOrderRejectionReasons.bidTypeCapExceeded`.
 - Given `tradeCargoCapacity = 10` and a single `TradeOrder(timber, bid, 12, 1)`, when validation runs, then the order is rejected with reason `TradeOrderRejectionReasons.bidExceedsCargoCapacity`.
 - Given `availableStockpileByCommodityId: {'timber': 5}` and `TradeOrder(timber, offer, 10, 1)`, when validation runs, then the order is rejected with reason `TradeOrderRejectionReasons.offerExceedsStockpile`. The validator does **not** silently cap the quantity — callers (suggestion API, UI) must clamp before submission per `SPEC/game/world-market.md` rule 4.
-- Given `worldMarketBidTypeCap(game, playerId)` for a player with **no** overtures or only `OvertureStage.tradeConsulate` overtures, when the helper runs, then the cap is `0`.
+- Given `worldMarketBidTypeCap(game, playerId)` for a player with **no** overtures or only `OvertureStage.tradeConsulate` overtures, when the helper runs, then the cap is `kWorldMarketBaselineBidTypeCap` (`1`) — baseline participation in the global market for any known Great Power.
+- Given `worldMarketBidTypeCap(game, playerId)` for a `playerId` that does not exist in `game.players`, when the helper runs, then the cap is `0` (ghost-player guard; baseline cap applies only to known players).
 - Given `worldMarketBidTypeCap(game, playerId)` for a player with at least one `OvertureStage.embassy` (or `nap` / `joinEmpire`) overture and `kTechIdTradeFairs` **not** unlocked, when the helper runs, then the cap is `3`.
 - Given `worldMarketBidTypeCap(game, playerId)` for a player with at least one embassy-tier overture and `techUnlocked[kTechIdTradeFairs] == true`, when the helper runs, then the cap is `6`.
 
