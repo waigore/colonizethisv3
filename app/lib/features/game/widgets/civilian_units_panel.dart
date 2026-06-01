@@ -16,6 +16,7 @@ import '../../../l10n/l10n.dart';
 import '../../../providers/games_provider.dart';
 import '../../../widgets/ct_icon_action.dart';
 import '../../../widgets/ct_nine_patch_button.dart';
+import '../../../widgets/ct_spacing.dart';
 import '../../../widgets/resource_icon.dart';
 import 'civilian_units_sort.dart';
 import 'train_dialog_chrome.dart';

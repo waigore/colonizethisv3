@@ -18,6 +18,7 @@ import '../../../config/editorial_monocle_palette.dart';
 import '../../../l10n/l10n.dart';
 import '../../../widgets/ct_dialog_shell.dart';
 import '../../../widgets/ct_nine_patch_button.dart';
+import '../../../widgets/ct_spacing.dart';
 import '../../../widgets/strict_asset_icon.dart';
 import '../utils/tech_ui_helpers.dart';
 
@@ -192,7 +193,7 @@ class _ChooseTechOptionRow extends StatelessWidget {
           ),
         ),
         child: Padding(
-          padding: const EdgeInsets.all(8),
+          padding: const EdgeInsets.all(CtSpacing.m),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
