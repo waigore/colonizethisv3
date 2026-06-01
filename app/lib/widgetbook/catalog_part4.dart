@@ -73,10 +73,7 @@ class _CtDialogueViewStoryHarnessState
     final project = YarnProject();
     project.parse(_kCtDialogueViewStorySource);
     final view = CtDialogueView();
-    final runner = DialogueRunner(
-      yarnProject: project,
-      dialogueViews: [view],
-    );
+    final runner = DialogueRunner(yarnProject: project, dialogueViews: [view]);
     view.onStateChanged = (_, _) {
       if (mounted) setState(() {});
     };
@@ -146,7 +143,8 @@ List<WidgetbookNode> get gameStartIntroOverlayDirectories => [
         name: 'Default — single-line intro',
         builder: (context) => MaterialApp(
           theme: AppThemes.editorialMonocle,
-          localizationsDelegates: AppLocalizationsBinding.localizationsDelegates,
+          localizationsDelegates:
+              AppLocalizationsBinding.localizationsDelegates,
           supportedLocales: AppLocalizations.supportedLocales,
           home: Scaffold(
             body: GameStartIntroOverlay(
@@ -198,7 +196,8 @@ List<WidgetbookNode> get overtureDialogueOverlayDirectories => [
         name: 'Default — two pending overtures',
         builder: (context) => MaterialApp(
           theme: AppThemes.editorialMonocle,
-          localizationsDelegates: AppLocalizationsBinding.localizationsDelegates,
+          localizationsDelegates:
+              AppLocalizationsBinding.localizationsDelegates,
           supportedLocales: AppLocalizations.supportedLocales,
           home: Scaffold(
             body: OvertureDialogueOverlay(
@@ -217,9 +216,7 @@ List<WidgetbookNode> get overtureDialogueOverlayDirectories => [
               ],
               skipIntroForTest: true,
               onDecisions: (_) {},
-              child: Center(
-                child: Text(appL10n(context).widgetbook_gameShell),
-              ),
+              child: Center(child: Text(appL10n(context).widgetbook_gameShell)),
             ),
           ),
         ),
@@ -275,7 +272,8 @@ List<WidgetbookNode> get callToArmsDialogueOverlayDirectories => [
         name: 'Default — two pending calls',
         builder: (context) => MaterialApp(
           theme: AppThemes.editorialMonocle,
-          localizationsDelegates: AppLocalizationsBinding.localizationsDelegates,
+          localizationsDelegates:
+              AppLocalizationsBinding.localizationsDelegates,
           supportedLocales: AppLocalizations.supportedLocales,
           home: Scaffold(
             body: CallToArmsDialogueOverlay(
@@ -293,9 +291,7 @@ List<WidgetbookNode> get callToArmsDialogueOverlayDirectories => [
                 ),
               ],
               onDecisions: (_) {},
-              child: Center(
-                child: Text(appL10n(context).widgetbook_gameShell),
-              ),
+              child: Center(child: Text(appL10n(context).widgetbook_gameShell)),
             ),
           ),
         ),
@@ -304,15 +300,15 @@ List<WidgetbookNode> get callToArmsDialogueOverlayDirectories => [
   ),
 ];
 
-MaterialApp _moveDialogStoryFrame({required Widget Function(BuildContext) open}) {
+MaterialApp _moveDialogStoryFrame({
+  required Widget Function(BuildContext) open,
+}) {
   return MaterialApp(
     theme: AppThemes.editorialMonocle,
     localizationsDelegates: AppLocalizationsBinding.localizationsDelegates,
     supportedLocales: AppLocalizations.supportedLocales,
     home: Scaffold(
-      body: Center(
-        child: Builder(builder: open),
-      ),
+      body: Center(child: Builder(builder: open)),
     ),
   );
 }
@@ -828,6 +824,57 @@ List<WidgetbookNode> get newGameLeaderSelectionDialogDirectories => [
                 },
                 // ignore: avoid_hardcoded_strings_in_widgets
                 child: const Text('Open New Game Leader Selection'),
+              );
+            },
+          );
+        },
+      ),
+      WidgetbookUseCase(
+        name: 'Duplicate slot regression — England in slots 1 and 6',
+        builder: (context) {
+          // Two slots carry the same Great Power id ("england"). Demonstrates
+          // the duplicate slot validation feedback contract (Refs #2867
+          // R19): both duplicate slot rows wrap their nation `CtDropdown` in
+          // a 1 dp `EditorialMonoclePalette.danger` `DecoratedBox`, and the
+          // Start `CtNinePatchButton` remains disabled until the duplicate
+          // is resolved. SPEC:
+          // `SPEC/ui/new-game-leader-selection-dialog.md` § Duplicate slot
+          // validation feedback.
+          final base = GameSetupConfig(
+            selectedGreatPowerIds: const [
+              'england',
+              'france',
+              'spain',
+              'portugal',
+              'netherlands',
+              'england',
+            ],
+          );
+          final naming = defaultNamingConfig;
+          final initial = <String, String>{};
+          for (final gpId in base.selectedGreatPowerIds) {
+            final gp = naming.gpById(gpId);
+            if (gp != null && gp.leaderVariants.isNotEmpty) {
+              initial[gpId] = gp.defaultLeaderVariantId;
+            }
+          }
+          return _moveDialogStoryFrame(
+            open: (innerContext) {
+              return ElevatedButton(
+                onPressed: () {
+                  showDialog<void>(
+                    context: innerContext,
+                    builder: (_) => NewGameLeaderSelectionDialog(
+                      baseConfig: base,
+                      naming: naming,
+                      initialLeaderByGpId: initial,
+                      onCancel: () => Navigator.of(innerContext).pop(),
+                      onConfirmed: (_, _, _, _, _) {},
+                    ),
+                  );
+                },
+                // ignore: avoid_hardcoded_strings_in_widgets
+                child: const Text('Open Duplicate-Slot Leader Selection'),
               );
             },
           );

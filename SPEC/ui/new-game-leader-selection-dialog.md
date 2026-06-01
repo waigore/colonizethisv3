@@ -62,6 +62,7 @@ Implementation: `app/lib/features/shell/new_game_leader_selection_dialog.dart`. 
 - Infinite mode: `CheckboxListTile` with leading control; `activeColor: EditorialMonoclePalette.accent`, `checkColor: EditorialMonoclePalette.bgDeep`, idle `side: BorderSide(color: EditorialMonoclePalette.border)`; primary `shell_leaderDialog_infiniteModeLabel` (`EditorialMonoclePalette.fg`), secondary `shell_leaderDialog_infiniteModeHelper` (`EditorialMonoclePalette.muted`).
 - Terrain variation: label `shell_leaderDialog_terrainVariationLabel(percent)` (percent = `(value * 100).round()`, color `EditorialMonoclePalette.accentDim` w600), `CtSlider(min: 0.0, max: 1.0, divisions: 20)`, helper `shell_leaderDialog_terrainVariationHelper` (`EditorialMonoclePalette.muted`). Default `defaultTerrainVariation == 0.5`.
 - Footer: right-aligned `Row` with `CtNinePatchButton` Cancel (`common_cancel`) and `CtNinePatchButton` Start (`common_start`). Start enabled only when `_startEnabled == true`.
+- Duplicate slot validation feedback (#2867 R19): when the slot's currently-selected Great Power id (`_orderedGpIdsBySlot[slotIndex]`) also appears in at least one other slot's ordered list, the nation `CtDropdown<String>` is wrapped in a `DecoratedBox` keyed `ValueKey<String>('newGameLeaderDialogSlotDuplicateBorder_<slotIndex>')` whose `Border.all` resolves to `EditorialMonoclePalette.danger` at `NewGameLeaderSelectionDialog.duplicateSlotBorderWidth` (1 dp). Non-duplicate slots render the nation dropdown directly without that wrapper.
 
 ---
 
@@ -79,7 +80,7 @@ Implementation: `app/lib/features/shell/new_game_leader_selection_dialog.dart`. 
 |-------|-----------|-----|
 | Initial / default | All six slots populated with their `defaultLeaderVariantId` and the default seed | Start enabled. |
 | Slot empty | Any `_orderedGpIdsBySlot[i].isEmpty` | Start disabled (`_startEnabled == false`). |
-| Slot duplicate | Same GP id appears in more than one slot | Start disabled (`_startEnabled == false`). |
+| Slot duplicate | Same GP id appears in more than one slot | Start disabled (`_startEnabled == false`). Every duplicate slot's nation `CtDropdown<String>` is wrapped in a `DecoratedBox` keyed `ValueKey<String>('newGameLeaderDialogSlotDuplicateBorder_<slotIndex>')` that paints a `EditorialMonoclePalette.danger` `Border.all` at `NewGameLeaderSelectionDialog.duplicateSlotBorderWidth` (1 dp). |
 | Missing leader variants | `_leaderByGpId[id]` not in `gp.leaderVariants` for any slot | Start disabled (`_startEnabled == false`). |
 | Slot reassignment | User picks a new nation for slot i | `_orderedGpIdsBySlot[i]` updates; `_leaderByGpId[newId]` resets to `defaultLeaderVariantId`. |
 | Leader change | User picks a new leader variant for slot i | `_leaderByGpId[effectiveGpId]` updates only. |
@@ -144,6 +145,14 @@ Implementation: `app/lib/features/shell/new_game_leader_selection_dialog.dart`. 
 
 - Given the viewport size is exactly `Size(kMinViewportWidth, 640)` (320 × 640 dp) and the dialog is rendered with `baseConfig = GameSetupConfig.defaultConfig`, `naming = defaultNamingConfig`, and the default per-GP leader-variant map, when the dialog builds, then `WidgetTester.takeException()` returns `null` (no `RenderFlex` overflow exception surfaces through the framework), every one of the six slot rows mounts the stacked column body keyed `ValueKey<String>('newGameLeaderDialogSlotPickersColumn')` (so `find.byKey(...).evaluate().length == 6`), no slot mounts the wide row body keyed `ValueKey<String>('newGameLeaderDialogSlotPickersRow')`, the dialog title `New game — Setup`, the six slot labels `Player 1 (You)` through `Player 6 (AI)`, and the trailing `Cancel` and `Start` `CtNinePatchButton` labels all render within the ~288 dp `CtDialogShell` content column, and every rendered `CtNinePatchButton` reports a rendered height `>= kMinTouchTargetSize` (44 dp) per [mobile-adaptation.md](mobile-adaptation.md) § 1. Pinned by `app/test/mobile_320dp_min_viewport_test.dart` group `SPEC/ui/mobile-adaptation.md § 7 — NewGameLeaderSelectionDialog @ 320 dp` (Refs #2870 S7/S8/S10).
 
+### Duplicate slot validation feedback (#2867 R19)
+
+- Given the dialog is open and at least two slots share the same Great Power id (`_orderedGpIdsBySlot[i] == _orderedGpIdsBySlot[j]` for some `i != j`, ignoring empty ids), when each affected slot row builds, then the nation `CtDropdown<String>` of every duplicate slot is wrapped in a `DecoratedBox` keyed `ValueKey<String>('newGameLeaderDialogSlotDuplicateBorder_<slotIndex>')` painting a 1 dp `EditorialMonoclePalette.danger` `Border.all`, and the Start `CtNinePatchButton.enabled` remains `false` (mirrors `_startEnabled` rejecting duplicates).
+
+- Given the dialog is open and every populated slot holds a unique Great Power id, when the slot rows build, then no `DecoratedBox` keyed with the `'newGameLeaderDialogSlotDuplicateBorder_'` prefix is mounted under any slot row (negative AC: the danger border is only painted for duplicates).
+
+- Given the dialog opens with `baseConfig.selectedGreatPowerIds` containing a duplicate Great Power id, when the user changes the duplicate slot's nation to a previously unused id via the nation dropdown, then the danger-border wrapper for that slot unmounts on the next build (no `ValueKey<String>('newGameLeaderDialogSlotDuplicateBorder_<slotIndex>')` remains for the now-unique slot) and the Start `CtNinePatchButton.enabled` flips to `true` once all six slots hold unique non-empty ids.
+
 ### Dark editorial-monocle chrome (#2867 S6)
 
 - Given the dialog is open, when the title `Text` keyed `ValueKey<String>('leaderSelectionDialogTitle')` is inspected, then its `style.color` equals `EditorialMonoclePalette.accent` and `style.letterSpacing` equals `style.fontSize * 0.05` within `1e-9` (so theme text-scale overrides preserve the canonical 0.05em ratio per #2867 R2).
@@ -158,12 +167,12 @@ Implementation: `app/lib/features/shell/new_game_leader_selection_dialog.dart`. 
 
 ## Widgetbook
 
-Catalog folder: **New Game Leader Selection Dialog** (registered in `app/lib/widgetbook/catalog.dart`). Use cases:
+Catalog folder: **New Game Leader Selection Dialog** (registered in `app/lib/widgetbook/catalog.dart` via `app/lib/widgetbook/catalog_part4.dart`). Use cases:
 
 1. **Default — six slots populated:** Opens with `GameSetupConfig.defaultConfig.selectedGreatPowerIds`, default leader variants for each, seed `42`, infinite mode off, terrain variation `0.5`. Start is enabled.
-2. **Initial — empty slot regression:** Same wiring as default but with `selectedGreatPowerIds` length 0; demonstrates that Start is disabled until the user picks a nation for every slot.
+2. **Duplicate slot regression — England in slots 1 and 6:** Opens with `selectedGreatPowerIds` set to `['england', 'france', 'spain', 'portugal', 'netherlands', 'england']` so slot 1 and slot 6 share the same Great Power id. Demonstrates the duplicate slot validation feedback contract (#2867 R19): both duplicate slot rows wrap their nation `CtDropdown` in the keyed 1 dp `EditorialMonoclePalette.danger` `DecoratedBox`, and Start stays disabled until the duplicate is resolved.
 
 Automated widget tests:
 
-- `app/test/new_game_leader_selection_dialog_test.dart` — six-slot rendering, default ordering, seed parsing, infinite-mode toggle, terrain-variation slider, Cancel, slot reassignment, Start payload, and the 500 dp wide↔narrow slot-pickers boundary.
+- `app/test/new_game_leader_selection_dialog_test.dart` — six-slot rendering, default ordering, seed parsing, infinite-mode toggle, terrain-variation slider, Cancel, slot reassignment, Start payload, the 500 dp wide↔narrow slot-pickers boundary, and the duplicate slot validation feedback contract (positive: duplicate slot's nation dropdown carries the danger-border wrapper; negative: no danger-border wrapper when all six slots are unique; recovery: replacing the duplicate clears the wrapper and re-enables Start).
 - `app/test/mobile_320dp_min_viewport_test.dart` group `SPEC/ui/mobile-adaptation.md § 7 — NewGameLeaderSelectionDialog @ 320 dp` — minimum-viewport pin (Refs #2870 S7/S8/S10): no `RenderFlex` overflow at 320 × 640 dp, every slot renders the stacked column body (no wide row body), title + six slot labels + Cancel + Start labels visible, every rendered `CtNinePatchButton` ≥ 44 dp tall, and a 1024 × 768 negative regression sentinel that flips the contract so the wide row body is the only one mounted.
