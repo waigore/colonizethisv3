@@ -92,7 +92,10 @@ Clicking "Split Fleet" opens a modal dialog: **Split Fleet Dialog**.
 
 Split Fleet uses a reusable app-level transfer component (`CtTransferList`) for
 dual-list quantity movement. The naval split dialog configures this component
-with fleet-specific labels and validation.
+with fleet-specific labels and validation. The canonical composite contract
+(props, layout, narrow-stack threshold) lives in
+[`components/ct-transfer-list.md`](components/ct-transfer-list.md); this
+section restates only the naval-specific API surface (Refs #2914 S9).
 
 `CtTransferList` API requirements:
 
