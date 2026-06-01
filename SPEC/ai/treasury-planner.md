@@ -288,12 +288,99 @@ The seed-42 budget test mirrors `full_ai_first_turn_wall_clock_budget_test.dart`
 - Given the same seed-42 turn-1 init, when `generateOrdersForGameFullAI` and `validateOrdersAndResolveTurnFromTrustedOrders` run end-to-end inside a single `Stopwatch`, then the combined `Stopwatch().elapsedMilliseconds` is less than or equal to `kTurnProcessingWallClockBudgetMs` (15 000 ms).
 - Given a failing budget assertion, when the test reports the failure, then the assertion `reason` contains the structured row `total_ms=<int> full_ai_ms=<int> resolve_ms=<int> trade_orders=<int> budget_ms=15000` so a regression surfaces which phase exceeded the envelope and whether the trade-orders path was exercised in that envelope.
 
+## Seed-42 100-turn per-turn World-Market lock-recovery diagnostic (Refs #2924)
+
+#2924 (EXPAND geographic peer-war lock at `treasury == 0`) requires verifying
+which link of the lock-recovery chain (`StrategicGoal.trade` floor F6 →
+`runTreasuryPlanner` surplus / offers F1–F5/F8 → `world_market_phase` matching
+→ treasury credited per `FilledDeal`) is failing on seed 42 for the four
+failing Great Powers gp3–gp6. The Step-0 baseline posted on #2924 (2026-06-01)
+captured the headline gate metrics (`gpOwGain`, `gpTreasuryUnderCheapestRegimentTurns`,
+turn-99 treasury) reused from the existing `seed42_observer_conquest_s7d_diagnostic_test.dart`
+S7-D rollup; it confirmed Path F **alone, without tuning**, leaves all four
+failing GPs below `cheapestRegimentBuildTreasuryCost()` for 97 of 100 turns.
+
+The Step-0 rollup does **not** decompose where the chain breaks (no
+surplus / no cargo / no bid liquidity / no offer fill / threshold mis-tuned).
+This SPEC slice authorises the **per-turn, per-Great-Power** diagnostic that
+captures every link of the chain in the same seed-42 100-turn loop so the
+failing lever can be isolated before any Path F tuning code lands.
+
+### Verification surface
+
+- Test file: `packages/colonizethis_ai/test/seed42_observer_world_market_diagnostic_test.dart`.
+- Entrypoint exercised: `generateOrdersForGameFullAI` + `validateOrdersAndResolveTurnFromTrustedOrders`
+  in the same 100-turn loop as `seed42_observer_conquest_s7d_diagnostic_test.dart`
+  (Refs #2847 S7-D) so the two diagnostics agree on the simulation harness
+  and either can be cross-referenced when a tuning slice shifts both surfaces.
+- Outputs read (per Great Power per turn, before and after turn resolution):
+  - Treasury (`game.playerById(gpId).treasury`) at start and end of turn,
+    and treasury delta attributable to filled deals as seller / buyer that
+    turn.
+  - Trade-cargo capacity (`cargoHoldsForHomeFleet`) and bid-type cap
+    (`worldMarketBidTypeCap`) — the two suggester preconditions for
+    emitting offers and bids.
+  - Trade orders emitted that turn from `fullAi.orders.tradeOrdersByPlayerId[gpId]`
+    (bid count, offer count, total quantity).
+  - Carry-forward residuals at start of turn from
+    `game.worldMarketState.carryForwardOffersByFactionId[gpId]` /
+    `carryForwardBidsByFactionId[gpId]`.
+  - Filled deals from the resolved turn's
+    `game.worldMarketState.lastTurnActivity` — counts and treasury credited
+    (`quantity * pricePerUnit`) attributed to `gpId` as seller, and
+    attributed to `gpId` as buyer.
+- Aggregate per-GP rollup: cumulative trade orders emitted (bids, offers),
+  cumulative deals as seller / buyer, cumulative treasury credited from
+  market sales, turns with zero `tradeCargoCapacity`, turns with zero
+  `bidTypeCap`, turns under `cheapestRegimentBuildTreasuryCost()` (mirrors
+  S7-D's `gpTreasuryUnderCheapestRegimentTurns` count), and the first turn
+  index (if any) on which treasury crosses `cheapestRegimentBuildTreasuryCost()`.
+- Per-commodity rollup for the four failing GPs (gp3, gp4, gp5, gp6): top-5
+  commodity ids by offer quantity emitted and top-5 commodity ids by
+  filled-deal quantity matched as seller.
+
+### Skip semantics and runtime
+
+The test is skipped by default with the same rationale as
+`seed42_observer_conquest_s7d_diagnostic_test.dart` (long-running, ~4 min on
+the project reference host, no value pinned — re-run manually when the
+diagnostic surface shifts after a Path F tuning slice lands). The lightweight
+assertion mirrors the S7-D pattern: each GP's per-turn record count equals
+the turn count so a regression that silently drops turns from the loop
+still fails the test.
+
+### Acceptance criteria (Refs #2924 per-turn diagnostic)
+
+- Given the seed-42 `runInitGame` output with every Great Power flipped to
+  AI-controlled via `aiControlByGpId`, when the diagnostic test runs the
+  same 100-turn `generateOrdersForGameFullAI` + `validateOrdersAndResolveTurnFromTrustedOrders`
+  loop as `seed42_observer_conquest_s7d_diagnostic_test.dart`, then for
+  every Great Power `gp1..gp6` the test records exactly `100` per-turn
+  entries (one per turn) covering treasury, cargo, bid-type cap, emitted
+  trade-order counts, carry-forward residuals, and filled-deal seller /
+  buyer totals.
+- Given the same 100-turn loop completes, when the test emits the
+  structured diagnostic JSON, then the JSON contains a `gpRollup` object
+  with one entry per `gp1..gp6` exposing `cumulativeOffersEmitted`,
+  `cumulativeBidsEmitted`, `cumulativeDealsAsSeller`,
+  `cumulativeTreasuryCreditedAsSeller`, `cumulativeDealsAsBuyer`,
+  `cumulativeTreasurySpentAsBuyer`, `turnsZeroTradeCargo`,
+  `turnsZeroBidTypeCap`, `turnsTreasuryUnderCheapestRegiment`, and
+  `firstTurnTreasuryCrossesCheapest` (`int` turn index ≥ 1, or `null`
+  when treasury never crosses the threshold across the 100-turn window).
+- Given the same diagnostic JSON, when the test prints it to stdout via
+  `aiLogger`, then the output is wrapped in greppable
+  `WM2924_DIAGNOSTIC_JSON_BEGIN` / `WM2924_DIAGNOSTIC_JSON_END` markers
+  so the rollup can be transcribed into a comment on #2924 without
+  manual reformatting (mirrors the S7-D `S7D_DIAGNOSTIC_JSON_BEGIN/END`
+  contract).
+
 ## Out of scope for this SPEC slice
 
 The following remain under remaining `#2994` subtasks:
 
 - Full treasury inflow/outflow forecasting (riches phase, subsidies, build/research spend) beyond the surplus/need maps and F8 offer-inflow discount above (F1 extension).
-- Observer-game seed-42 multi-turn treasury-growth + phase-varying (EXPAND vs COLONIAL) verification (F9 follow-up — gated on the seed-42 colonial-acquisition gap, Refs #2848 / #2509 S7, the same gate that keeps `seed42_observer_colonial_regression_test.dart` skipped).
+- Observer-game seed-42 multi-turn treasury-growth + phase-varying (EXPAND vs COLONIAL) verification (F9 follow-up — gated on the seed-42 colonial-acquisition gap, Refs #2848 / #2509 S7, the same gate that keeps `seed42_observer_colonial_regression_test.dart` skipped). The Refs #2924 per-turn diagnostic above complements but does not replace this F9 follow-up: the diagnostic does not pin treasury-growth thresholds, only records the chain links so a tuning slice can target the failing lever.
 - Overseas extraction tonnage subtraction from trade cargo once extraction publishes per-player planned tonnage.
 
 ---
