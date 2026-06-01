@@ -88,7 +88,7 @@ class _DiplomacyModeButton extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
         decoration: BoxDecoration(
           border: border,
-          borderRadius: BorderRadius.circular(2),
+          borderRadius: BorderRadius.circular(CtRadius.small),
         ),
         child: Text(
           label,
