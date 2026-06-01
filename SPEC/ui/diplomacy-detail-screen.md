@@ -136,6 +136,14 @@ History ordering: `(turn desc, intraTurnIndex desc)` via `diplomaticHistoryForPa
   When the event sentence is formatted,
   Then the UI layer shows `Unknown faction` for that party name in the sentence text.
 
+- Given the viewport width is exactly `kMinViewportWidth` (320 dp) and the height is at least 640 dp and the screen is mounted for a Great Power target with one seeded history event and one seeded dossier entry,
+  When the widget builds,
+  Then the UI layer renders exactly one `CtTopBar` with the target faction `displayName` as its title and a descendant `CtBackButton`, the `CURRENT RELATION` / `DIPLOMATIC HISTORY` / `DOSSIER` `_DetailCard` titles all render in the `ListView` body, and `WidgetTester.takeException()` returns `null` (per [mobile-adaptation.md](mobile-adaptation.md) § 7 — minimum-viewport pin; the screen must lay out without horizontal overflow inside the 320 dp column).
+
+- Given the viewport width is exactly `kMinViewportWidth` (320 dp) and the height is at least 640 dp and the screen is mounted with `kind = FactionKind.minor`, empty history, and empty dossier entries,
+  When the widget builds,
+  Then the UI layer renders the `CURRENT RELATION` and `DIPLOMATIC HISTORY` titles but does NOT mount the `DOSSIER` title, and `WidgetTester.takeException()` returns `null` (negative AC for the GP-only branch at the minimum viewport per [mobile-adaptation.md](mobile-adaptation.md) § 7).
+
 ---
 
 ## Widgetbook
