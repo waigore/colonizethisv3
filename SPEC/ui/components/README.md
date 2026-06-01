@@ -11,3 +11,4 @@ Create `<kebab-name>.md` before duplicating composite layout in multiple screen 
 | Component | File | Consumed by |
 |-----------|------|-------------|
 | `CtFullScreenDialogueShell` | [`ct-full-screen-dialogue-shell.md`](ct-full-screen-dialogue-shell.md) | `OVL10001` (game-start intro), `OVL30001` (overture), `OVL40001` (call-to-arms), `OVL50001` (pending intervention). |
+| `CtGameFeatureScreenShell` | [`ct-game-feature-screen-shell.md`](ct-game-feature-screen-shell.md) | `GAME20001` (production), `GAME30001` (diplomacy), `GAME40001` (technology), `GAME60001` (trade). |

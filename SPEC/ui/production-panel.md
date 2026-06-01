@@ -32,7 +32,7 @@ Asset filenames and style for commodities and workers appear in [game-toolbar-ic
 
 ### Top bar (all viewports)
 
-- **Component:** `CtTopBar` (`SPEC/ui/pixel-art-ui-catalog.md` § Pixel-art component catalog → `CtTopBar` entry). Rendered above both subpanels via the `topBar` slot on `CtGameFeatureScreenShell`.
+- **Component:** `CtTopBar` (`SPEC/ui/pixel-art-ui-catalog.md` § Pixel-art component catalog → `CtTopBar` entry). Rendered above both subpanels via the `topBar` slot on `CtGameFeatureScreenShell` (composite contract: [`components/ct-game-feature-screen-shell.md`](components/ct-game-feature-screen-shell.md)).
 - **Back affordance:** `CtBackButton` chevron-left glyph followed by the localised muted label `Map` (issue #2862 requirement: `← Map`). Tapping pops the route via `Navigator.maybePop()` so the player returns to the game screen they came from.
 - **Icon + title:** Pixel-art production icon `assets/icons/32/ui_icon_production.png` rendered at 18×18 logical px between the back affordance and the title. Title literal **`Production`** rendered in the dark-theme `titleMedium` slot (Cinzel display family per `AppThemes.editorialMonocle`).
 - **Height + chrome:** Fixed 36 px high (`CtTopBar.height`), filled with `CtGradients.topBarGradient`, capped by a 1 px `--accent-dim` bottom border. Hard-coded colours are forbidden; all tokens resolve through `EditorialMonoclePalette` (issue #2858).
