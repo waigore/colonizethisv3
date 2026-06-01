@@ -63,6 +63,11 @@ List<WidgetbookNode> get pauseMenuPanelDirectories => [
   ),
 ];
 
+/// Next turn confirmation (DLG60001) and Game Initializing (SHEL30001)
+/// Widgetbook stories live in `catalog_part8.dart` — extracted to keep
+/// this part fragment under the `repo.part_unit_size` 1000-physical-line
+/// ceiling (`SPEC/program/repo-lint.md`).
+
 /// Hosts [GameSideMenu] in a [Stack] so the [Positioned] body has bounded
 /// constraints, matching how [GameMapArea] mounts the drawer in production.
 class _GameSideMenuStoryHost extends StatefulWidget {
