@@ -1,10 +1,12 @@
 // Golden + widget checks per #1990 testing strategy branch (A): wide side panel uses a
 // pixel golden; narrow host asserts the Build improvement shortcut (avoids fragile
-// cross-engine / cross-arch golden drift on CI).
+// cross-engine / cross-arch golden drift on CI). Hosts use AppThemes.editorialMonocle
+// per MAP20001 dark-theme contract (Refs #2865).
 // Pipeline contract: SPEC/program/order-suggestions.md § Province Tile `Build improvement`
 // shortcut enablement.
 
 import 'package:colonizethis_app/config/constants.dart';
+import 'package:colonizethis_app/config/themes.dart';
 import 'package:colonizethis_app/core/services/game_service.dart';
 import 'package:colonizethis_app/features/game/flame/game_map_narrow_detail_overlay.dart';
 import 'package:colonizethis_app/features/game/flame/game_map_province_detail_side_panel.dart';
@@ -274,7 +276,7 @@ void main() {
           ),
         ],
         child: MaterialApp(
-          theme: ThemeData(useMaterial3: true),
+          theme: AppThemes.editorialMonocle,
           home: Scaffold(
             body: Center(
               child: RepaintBoundary(
@@ -333,7 +335,7 @@ void main() {
           ),
         ],
         child: MaterialApp(
-          theme: ThemeData(useMaterial3: true),
+          theme: AppThemes.editorialMonocle,
           home: Scaffold(
             body: Align(
               alignment: Alignment.bottomCenter,
