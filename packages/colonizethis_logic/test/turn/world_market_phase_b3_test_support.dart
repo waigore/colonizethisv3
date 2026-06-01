@@ -11,7 +11,7 @@ Game gameWithTwoGps({
   required Stockpile sellerStockpile,
   required int sellerTreasury,
   required int buyerTreasury,
-  required Map<CommodityId, double> marketPrices,
+  required Map<CommodityId, int> marketPrices,
 }) {
   return Game(
     id: 'g1',

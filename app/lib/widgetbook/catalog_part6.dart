@@ -291,12 +291,14 @@ Game _tradeScreenStoryGame() {
   // aggregate volumes for a handful of commodities — the remaining
   // rows render the em-dash price glyph + `Bids 0 / Offers 0` zero
   // default so reviewers can see both code paths at a glance.
-  const Map<CommodityId, double> prices = <CommodityId, double>{
-    'timber': 30.0,
-    'iron': 80.0,
-    'grain': 50.0,
-    'fabric': 120.0,
-    'castIron': 175.0,
+  // Post-#3093: WorldMarketState.prices is `Map<CommodityId, int>` (floored at
+  // persistence boundary per SPEC/game/world-market.md § Price discovery).
+  const Map<CommodityId, int> prices = <CommodityId, int>{
+    'timber': 30,
+    'iron': 80,
+    'grain': 50,
+    'fabric': 120,
+    'castIron': 175,
   };
   const Map<CommodityId, MarketActivity> activity =
       <CommodityId, MarketActivity>{

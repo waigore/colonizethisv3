@@ -250,7 +250,7 @@ Map<CommodityId, int> _inputNeedsFromAssignments(
 
 bool _marketPriceBelowProductionCost(
   CommodityId commodityId,
-  Map<CommodityId, double> marketPrices,
+  Map<CommodityId, int> marketPrices,
 ) {
   final marketPrice = marketPrices[commodityId];
   if (marketPrice == null) return true;
@@ -259,7 +259,7 @@ bool _marketPriceBelowProductionCost(
     if (recipe.outputCommodityId != commodityId) continue;
     var inputCost = 0.0;
     for (final entry in recipe.inputQuantities.entries) {
-      final inputPrice = marketPrices[entry.key] ?? 0.0;
+      final inputPrice = marketPrices[entry.key] ?? 0;
       inputCost += inputPrice * entry.value;
     }
     final perUnit = inputCost / recipe.outputQuantity;
@@ -329,7 +329,7 @@ Map<CommodityId, int> _carryForwardQuantitiesByCommodity({
 /// nominal sum (full-fill credit) per the F2/F3 default. Refs #2994 F8.
 int _expectedOfferInflow({
   required Map<CommodityId, int> available,
-  required Map<CommodityId, double> marketPrices,
+  required Map<CommodityId, int> marketPrices,
   required WorldMarketState state,
 }) {
   if (available.isEmpty) return 0;
@@ -338,8 +338,8 @@ int _expectedOfferInflow({
     final commodityId = entry.key;
     final quantity = entry.value;
     if (quantity <= 0) continue;
-    final price = marketPrices[commodityId] ?? 0.0;
-    if (price <= 0.0) continue;
+    final price = marketPrices[commodityId] ?? 0;
+    if (price <= 0) continue;
     final fillRate = _priorTurnOfferFillRate(state, commodityId);
     inflow += quantity * price * fillRate;
   }

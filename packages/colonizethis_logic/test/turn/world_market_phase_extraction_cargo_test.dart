@@ -38,7 +38,7 @@ void main() {
             sellerStockpile: const Stockpile().applyDelta('timber', 30),
             sellerTreasury: 0,
             buyerTreasury: 100000,
-            marketPrices: const {'timber': 30.0},
+            marketPrices: const {'timber': 30},
           );
           // Sanity: the default stub for a player without a home fleet is
           // 24 — anchor the assertion on the public constant so the test
@@ -115,7 +115,7 @@ void main() {
             sellerStockpile: const Stockpile().applyDelta('timber', 10),
             sellerTreasury: 0,
             buyerTreasury: 100000,
-            marketPrices: const {'timber': 30.0},
+            marketPrices: const {'timber': 30},
           );
           final acc = TurnPipelineState(
             game: game,
@@ -182,7 +182,7 @@ void main() {
             sellerStockpile: const Stockpile().applyDelta('timber', 5),
             sellerTreasury: 0,
             buyerTreasury: 1000,
-            marketPrices: const {'timber': 30.0},
+            marketPrices: const {'timber': 30},
           );
           final acc = TurnPipelineState(
             game: game,
@@ -244,7 +244,7 @@ void main() {
             sellerStockpile: const Stockpile().applyDelta('timber', 5),
             sellerTreasury: 0,
             buyerTreasury: 1000,
-            marketPrices: const {'timber': 30.0},
+            marketPrices: const {'timber': 30},
           );
           final acc = TurnPipelineState(game: game);
           final config = TurnResolverConfig(
@@ -298,7 +298,7 @@ Game _gameWithTwoGps({
   required Stockpile sellerStockpile,
   required int sellerTreasury,
   required int buyerTreasury,
-  required Map<CommodityId, double> marketPrices,
+  required Map<CommodityId, int> marketPrices,
 }) {
   return Game(
     id: 'g1',

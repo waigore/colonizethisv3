@@ -31,7 +31,7 @@ Game frrIntegrationGame({
   required int initialOwningGpTreasury,
   required int initialBuyerGpTreasury,
   required int relationScore,
-  required Map<CommodityId, double> marketPrices,
+  required Map<CommodityId, int> marketPrices,
 }) {
   return TestFixtures.minimalGame(
     players: [

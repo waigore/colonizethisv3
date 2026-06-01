@@ -657,7 +657,7 @@ void main() {
         'received of 0',
         (tester) async {
           final WorldMarketState worldMarket = WorldMarketState(
-            prices: const <CommodityId, double>{},
+            prices: const <CommodityId, int>{},
             lastTurnActivity: const <CommodityId, MarketActivity>{
               // Filled portion of the timber bid (5 of 10 at 8.4).
               'timber': MarketActivity(

@@ -23,7 +23,7 @@ void main() {
           initialOwningGpTreasury: 100,
           initialBuyerGpTreasury: 1000,
           relationScore: 75,
-          marketPrices: const {'timber': 20.0},
+          marketPrices: const {'timber': 20},
         ),
         tradeOrdersByPlayerId: {
           'M1': minorTimberOffer(
@@ -47,7 +47,7 @@ void main() {
           initialOwningGpTreasury: 100,
           initialBuyerGpTreasury: 1000,
           relationScore: 0,
-          marketPrices: const {'timber': 20.0},
+          marketPrices: const {'timber': 20},
         ),
         tradeOrdersByPlayerId: {
           'M1': minorTimberOffer(
@@ -73,7 +73,7 @@ void main() {
             initialOwningGpTreasury: 100,
             initialBuyerGpTreasury: 1000,
             relationScore: 100,
-            marketPrices: const {'timber': 10.0},
+            marketPrices: const {'timber': 10},
           ),
           tradeOrdersByPlayerId: {
             'M1': minorTimberOffer(
@@ -94,7 +94,7 @@ void main() {
           initialOwningGpTreasury: 1000,
           initialBuyerGpTreasury: 0,
           relationScore: 100,
-          marketPrices: const {'timber': 20.0},
+          marketPrices: const {'timber': 20},
         ),
         tradeOrdersByPlayerId: {
           'M1': minorTimberOffer(
@@ -163,7 +163,7 @@ void main() {
             ],
           ).copyWith(
             worldMarketState: WorldMarketState.empty.copyWith(
-              prices: const {'timber': 10.0},
+              prices: const {'timber': 10},
             ),
           );
 
@@ -196,7 +196,7 @@ void main() {
           initialOwningGpTreasury: 100,
           initialBuyerGpTreasury: 1000,
           relationScore: 100,
-          marketPrices: const {'timber': 20.0},
+          marketPrices: const {'timber': 20},
         ),
         tradeOrdersByPlayerId: {
           'M1': minorTimberOffer(quantity: 10),

@@ -25,7 +25,7 @@ void main() {
           sellerStockpile: const Stockpile().applyDelta('timber', 10),
           sellerTreasury: 100,
           buyerTreasury: 1000,
-          marketPrices: const {'timber': 30.0},
+          marketPrices: const {'timber': 30},
         ),
       );
       final config = TurnResolverConfig(
@@ -84,7 +84,7 @@ void main() {
           sellerStockpile: const Stockpile().applyDelta('timber', 20),
           sellerTreasury: 0,
           buyerTreasury: 1000,
-          marketPrices: const {'timber': 30.0},
+          marketPrices: const {'timber': 30},
         ),
       );
       final config = TurnResolverConfig(
@@ -116,7 +116,7 @@ void main() {
           .pipeline
           .game;
 
-      expect(next.worldMarketState.prices['timber'], closeTo(30.0, 1e-9));
+      expect(next.worldMarketState.prices['timber'], 30);
       expect(
         next.worldMarketState.lastTurnActivity['timber']!.priceChangePercent,
         closeTo(0.0, 1e-9),
@@ -129,7 +129,7 @@ void main() {
           sellerStockpile: const Stockpile().applyDelta('timber', 3),
           sellerTreasury: 0,
           buyerTreasury: 1000,
-          marketPrices: const {'timber': 30.0},
+          marketPrices: const {'timber': 30},
         ),
       );
       final config = TurnResolverConfig(
@@ -178,7 +178,7 @@ void main() {
 
     test('previous-turn carry-forward bids re-enter matching this turn', () {
       final priorMarket = WorldMarketState.empty.copyWith(
-        prices: const {'timber': 30.0},
+        prices: const {'timber': 30},
         carryForwardBidsByFactionId: {
           'gpBuyer': [
             TradeOrder(
@@ -195,7 +195,7 @@ void main() {
           sellerStockpile: const Stockpile().applyDelta('timber', 4),
           sellerTreasury: 0,
           buyerTreasury: 1000,
-          marketPrices: const {'timber': 30.0},
+          marketPrices: const {'timber': 30},
         ).copyWith(worldMarketState: priorMarket),
       );
       final config = TurnResolverConfig(
@@ -247,7 +247,7 @@ void main() {
     test('absent buyer cargo capacity blocks fills (per-buyer cumulative '
         'cargo guard)', () {
       final priorMarket = WorldMarketState.empty.copyWith(
-        prices: const {'timber': 30.0},
+        prices: const {'timber': 30},
       );
       // Build a game where the buyer has no home fleet (cargo capacity = 0
       // when no ships and no defaultCargoHoldsStub fallback applies). The
@@ -260,7 +260,7 @@ void main() {
           sellerStockpile: Stockpile.empty,
           sellerTreasury: 0,
           buyerTreasury: 1000,
-          marketPrices: const {'timber': 30.0},
+          marketPrices: const {'timber': 30},
         ).copyWith(worldMarketState: priorMarket),
       );
       final config = TurnResolverConfig(
@@ -305,13 +305,13 @@ void main() {
     test('empty orders + empty carry-forwards yield empty activity, no price '
         'change, no carry-forwards', () {
       final priorMarket = WorldMarketState.empty.copyWith(
-        prices: const {'timber': 30.0, 'iron': 80.0},
+        prices: const {'timber': 30, 'iron': 80},
       );
       final game = _gameWithTwoGps(
         sellerStockpile: Stockpile.empty,
         sellerTreasury: 0,
         buyerTreasury: 0,
-        marketPrices: const {'timber': 30.0, 'iron': 80.0},
+        marketPrices: const {'timber': 30, 'iron': 80},
       ).copyWith(worldMarketState: priorMarket);
       final acc = TurnPipelineState(game: game);
       final config = TurnResolverConfig(
@@ -338,7 +338,7 @@ Game _gameWithTwoGps({
   required Stockpile sellerStockpile,
   required int sellerTreasury,
   required int buyerTreasury,
-  required Map<CommodityId, double> marketPrices,
+  required Map<CommodityId, int> marketPrices,
 }) {
   return Game(
     id: 'g1',

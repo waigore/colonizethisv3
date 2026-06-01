@@ -475,9 +475,18 @@ class MarketActivity {
 }
 
 /// Aggregate market state stored on `Game` between turns.
+///
+/// `prices` stores integer per-commodity market prices (post-floor of the
+/// price-discovery output). SPEC/game/world-market.md § Price discovery
+/// requires the persisted price be floored to the nearest integer; the
+/// inner floating-point math in [PriceDiscovery.computeNextPrice] is
+/// retained for the supply/demand delta but the world-market phase floors
+/// the result before storing it here. Older save files that wrote `double`
+/// prices remain loadable: [fromJson] floors any incoming numeric value to
+/// the nearest integer so the in-memory map is always int-valued.
 class WorldMarketState {
   const WorldMarketState({
-    this.prices = const <CommodityId, double>{},
+    this.prices = const <CommodityId, int>{},
     this.lastTurnActivity = const <CommodityId, MarketActivity>{},
     this.carryForwardOffersByFactionId =
         const <String, List<TradeOrder>>{},
@@ -485,7 +494,7 @@ class WorldMarketState {
         const <String, List<TradeOrder>>{},
   });
 
-  final Map<CommodityId, double> prices;
+  final Map<CommodityId, int> prices;
   final Map<CommodityId, MarketActivity> lastTurnActivity;
 
   /// Per-faction unfilled offer carry-forwards from the previous turn's
@@ -505,17 +514,14 @@ class WorldMarketState {
   /// Builds an initial state seeded from `defaultMarketPrice` integers
   /// (one entry per non-riches commodity). Activity map starts empty.
   static WorldMarketState withDefaultPrices(Map<CommodityId, int> basePrices) {
-    final populated = <CommodityId, double>{
-      for (final entry in basePrices.entries) entry.key: entry.value.toDouble(),
-    };
     return WorldMarketState(
-      prices: Map.unmodifiable(populated),
+      prices: Map<CommodityId, int>.unmodifiable(basePrices),
       lastTurnActivity: const <CommodityId, MarketActivity>{},
     );
   }
 
   WorldMarketState copyWith({
-    Map<CommodityId, double>? prices,
+    Map<CommodityId, int>? prices,
     Map<CommodityId, MarketActivity>? lastTurnActivity,
     Map<String, List<TradeOrder>>? carryForwardOffersByFactionId,
     Map<String, List<TradeOrder>>? carryForwardBidsByFactionId,
@@ -548,14 +554,13 @@ class WorldMarketState {
 
   static WorldMarketState fromJson(Map<String, dynamic> json) {
     final pricesRaw = json['prices'];
-    final prices = <CommodityId, double>{};
+    final prices = <CommodityId, int>{};
     if (pricesRaw is Map<dynamic, dynamic>) {
       pricesRaw.forEach((key, value) {
         final id = key.toString();
-        final price = value is num
-            ? value.toDouble()
-            : double.tryParse(value?.toString() ?? '') ?? 0.0;
-        prices[id] = price;
+        final intValue = _coerceToFlooredInt(value);
+        if (intValue == null) return;
+        prices[id] = intValue;
       });
     }
     final actRaw = json['lastTurnActivity'];
@@ -579,6 +584,25 @@ class WorldMarketState {
         json['carryForwardBidsByFactionId'],
       ),
     );
+  }
+
+  /// Coerces a JSON-decoded price value to a non-negative floored int.
+  /// Supports the legacy `double` storage and any string fallback that
+  /// stringified the price (defensive; new saves write int directly via
+  /// `toJson`). Returns `null` for unparseable values so the caller can
+  /// drop the entry entirely.
+  static int? _coerceToFlooredInt(Object? value) {
+    if (value is int) {
+      return value < 0 ? 0 : value;
+    }
+    if (value is num) {
+      final floored = value.floor();
+      return floored < 0 ? 0 : floored;
+    }
+    final parsed = double.tryParse(value?.toString() ?? '');
+    if (parsed == null) return null;
+    final floored = parsed.floor();
+    return floored < 0 ? 0 : floored;
   }
 
   @override

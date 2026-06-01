@@ -33,7 +33,9 @@ Each commodity starts at the default market price defined in the resource–terr
 
 `totalBid_new` / `totalOffer_new` aggregate **only** newly-submitted quantities for the current turn. Carry-forward unfilled quantities from prior turns are excluded from price discovery (they continue to participate in matching). When `totalBid_new + totalOffer_new` is zero, the price is unchanged. The new price is clamped to a floor of **30 % of the commodity's default market price**.
 
-Deals clear at the **old** price (pre-update). The new price applies to the next turn.
+Published commodity prices on `WorldMarketState.prices` are **integer treasury units** (`Map<CommodityId, int>`): the engine computes the raw next-turn price in floating point and floors it to an `int` at the persistence boundary so every consumer (UI, deals, AI) reads a whole-number price. Negative numeric values from legacy saves are clamped to `0` on load.
+
+Deals clear at the **old** integer price (pre-update). The new integer price applies to the next turn.
 
 ## Cargo
 

@@ -51,5 +51,37 @@ void main() {
         isFalse,
       );
     });
+
+    group('defaultMarketPriceForCommodityId (Refs #3093)', () {
+      final rules = ResourceRules.defaultRules;
+
+      test('returns the int default price for a raw-resource commodity', () {
+        expect(rules.defaultMarketPriceForCommodityId('timber'), 30);
+        expect(rules.defaultMarketPriceForCommodityId('iron'), 80);
+        expect(rules.defaultMarketPriceForCommodityId('grain'), isNotNull);
+        expect(rules.defaultMarketPriceForCommodityId('grain'), isA<int>());
+      });
+
+      test('returns null for an unknown commodity id', () {
+        expect(rules.defaultMarketPriceForCommodityId('not_a_commodity'), isNull);
+      });
+
+      test('returns null for the empty string', () {
+        expect(rules.defaultMarketPriceForCommodityId(''), isNull);
+      });
+
+      test(
+          'returns null for manufactured commodities not enumerated in '
+          'defaultMarketPrice (catalog fallback is deferred per SPEC follow-up)',
+          () {
+        // Manufactured commodity ids are intentionally absent from
+        // ResourceRules.defaultMarketPrice today; SPEC/ui/trade-screen.md §
+        // Market tab — read-only commodity table documents the em-dash
+        // fallback for these rows until they discover a price in-game.
+        expect(rules.defaultMarketPriceForCommodityId('lumber'), isNull);
+        expect(rules.defaultMarketPriceForCommodityId('castIron'), isNull);
+        expect(rules.defaultMarketPriceForCommodityId('fabric'), isNull);
+      });
+    });
   });
 }

@@ -204,7 +204,10 @@ TurnPhaseStepOutcome worldMarketTurnPhaseHandler(
     offersByFactionId: mergedOffersByFactionId,
     bidsByFactionId: mergedBidsByFactionId,
     tradeCapacityByFactionId: tradeCapacityByFactionId,
-    pricesByCommodityId: priorMarket.prices,
+    pricesByCommodityId: <CommodityId, double>{
+      for (final entry in priorMarket.prices.entries)
+        entry.key: entry.value.toDouble(),
+    },
     ftpPairKeys: ftpPairKeys,
     purchasedTileIndex: purchasedTileIndex,
   );
@@ -246,7 +249,7 @@ TurnPhaseStepOutcome worldMarketTurnPhaseHandler(
   // other non-GP submitter) are dropped from the persisted map.
   final gpFactionIds = <String>{for (final p in game.players) p.id};
   final updatedMarket = priorMarket.copyWith(
-    prices: Map<CommodityId, double>.unmodifiable(newPrices),
+    prices: Map<CommodityId, int>.unmodifiable(newPrices),
     lastTurnActivity: Map<CommodityId, MarketActivity>.unmodifiable(activity),
     carryForwardOffersByFactionId: _restrictToFactions(
       matchResult.unfilledOffersByFactionId,
@@ -432,21 +435,33 @@ List<Player> _applyDealsToPlayers({
   ];
 }
 
-Map<CommodityId, double> _computeNextPrices({
-  required Map<CommodityId, double> priorPrices,
+/// Computes the next-turn integer prices for every commodity with newly-
+/// submitted activity this turn. Carries the prior integer price forward
+/// for any commodity that did not see activity (preserves the existing
+/// behavior of `_computeNextPrices` that returned a full prices map).
+///
+/// `SPEC/game/world-market.md` § Price discovery requires the persisted
+/// price to be the integer floor of `PriceDiscovery.computeNextPrice`; the
+/// floating-point math is retained internally for the supply/demand delta
+/// but the world-market phase floors the result before storing it on
+/// `WorldMarketState.prices`. Floor is non-negative because
+/// `PriceDiscovery.computeNextPrice` returns a non-negative double (the
+/// price floor of `basePrice * 0.30` is non-negative).
+Map<CommodityId, int> _computeNextPrices({
+  required Map<CommodityId, int> priorPrices,
   required Map<CommodityId, _NewQuantityPair> newQuantitiesByCommodity,
 }) {
-  final out = <CommodityId, double>{...priorPrices};
+  final out = <CommodityId, int>{...priorPrices};
   for (final entry in newQuantitiesByCommodity.entries) {
     final basePrice = _basePriceForCommodityId(entry.key);
-    final oldPrice = priorPrices[entry.key] ?? basePrice.toDouble();
+    final oldPrice = priorPrices[entry.key]?.toDouble() ?? basePrice.toDouble();
     final next = PriceDiscovery.computeNextPrice((
       oldPrice: oldPrice,
       basePrice: basePrice,
       newBidQuantity: entry.value.bid,
       newOfferQuantity: entry.value.offer,
     ));
-    out[entry.key] = next;
+    out[entry.key] = next.floor();
   }
   return out;
 }
@@ -620,8 +635,8 @@ void _attachDropNotes({
 Map<CommodityId, MarketActivity> _buildActivity({
   required DealMatchResult matchResult,
   required Map<CommodityId, _NewQuantityPair> newQuantitiesByCommodity,
-  required Map<CommodityId, double> priorPrices,
-  required Map<CommodityId, double> newPrices,
+  required Map<CommodityId, int> priorPrices,
+  required Map<CommodityId, int> newPrices,
 }) {
   final filledByCommodity = <CommodityId, int>{};
   final dealsByCommodity = <CommodityId, List<FilledDeal>>{};
@@ -640,7 +655,7 @@ Map<CommodityId, MarketActivity> _buildActivity({
         newQuantitiesByCommodity[id] ??
         const _NewQuantityPair(bid: 0, offer: 0);
     final filled = filledByCommodity[id] ?? 0;
-    final oldPrice = priorPrices[id] ?? 0.0;
+    final oldPrice = priorPrices[id] ?? 0;
     final newPrice = newPrices[id] ?? oldPrice;
     final percent = oldPrice > 0 ? (newPrice / oldPrice) - 1.0 : 0.0;
     final deals = dealsByCommodity[id];

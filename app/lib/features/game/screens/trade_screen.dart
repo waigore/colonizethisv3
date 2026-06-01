@@ -618,7 +618,10 @@ class _MarketTabContent extends ConsumerWidget {
                 commodityId: rows[index].id,
                 commodityDisplayName:
                     rows[index].displayName ?? rows[index].id,
-                priceText: _formatPrice(market.prices[rows[index].id]),
+                priceText: _formatPrice(
+                  market.prices[rows[index].id],
+                  commodityId: rows[index].id,
+                ),
                 volumeText: _volumeText(
                   market.lastTurnActivity[rows[index].id] ??
                       MarketActivity.empty,
@@ -843,9 +846,27 @@ class _MarketTabContent extends ConsumerWidget {
     return filtered;
   }
 
-  static String _formatPrice(double? price) {
-    if (price == null) return priceUnknownGlyph;
-    return price.toStringAsFixed(1);
+  /// Formats the per-commodity market price for the Market tab row.
+  ///
+  /// Prices on `Game.worldMarketState.prices` are integers per
+  /// `SPEC/game/world-market.md` § Price discovery and SPEC/ui/trade-screen.md
+  /// § Market tab — read-only commodity table. When the prices map lacks an
+  /// entry for a tradeable commodity, this helper falls back to the
+  /// `defaultMarketPrice` int from `ResourceRules.defaultRules` (per the
+  /// resource catalog) so the row never renders the unknown-price em-dash
+  /// for raw resources whose catalog default price is published. The
+  /// canonical em-dash glyph remains the fallback only when neither the
+  /// market state nor the catalog has a value (manufactured commodities,
+  /// whose first market price is discovered in-game, are not enumerated in
+  /// `ResourceRules.defaultMarketPrice` today and so render the em-dash
+  /// until they participate in a market turn — tracked as follow-up to
+  /// #3093).
+  static String _formatPrice(int? price, {required CommodityId commodityId}) {
+    final int? effective =
+        price ?? ResourceRules.defaultRules
+            .defaultMarketPriceForCommodityId(commodityId);
+    if (effective == null) return priceUnknownGlyph;
+    return effective.toString();
   }
 }
 
