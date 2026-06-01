@@ -375,16 +375,32 @@ class _AvailableSubpanel extends StatelessWidget {
     return children;
   }
 
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
+  Widget _buildHeader(ThemeData theme) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Expanded(
+          child: Text(
+            l10n.production_available,
+            style: theme.textTheme.titleSmall,
+          ),
+        ),
+        if (onOpenCommodityBreakdown != null)
+          CtNinePatchButton(
+            onPressed: onOpenCommodityBreakdown,
+            child: Text(l10n.production_breakdown),
+          ),
+      ],
+    );
+  }
+
+  List<Widget> _buildBodyChildren(ThemeData theme) {
     final netChanges = netDeltasByCommodity;
     final sellableByCommodityId = sellableHeadroomByCommodityId(
       game: game,
       playerId: player.id,
       orders: currentOrders ?? const Orders(),
     );
-
     final rawMaterials = CommodityCatalog.all
         .where(
           (c) =>
@@ -398,44 +414,34 @@ class _AvailableSubpanel extends StatelessWidget {
     final availableFood = CommodityCatalog.all
         .where((c) => c.category == CommodityCategory.food)
         .toList();
+    return <Widget>[
+      _buildHeader(theme),
+      const SizedBox(height: 8),
+      ..._buildFoodSection(
+        availableFood,
+        netChanges,
+        sellableByCommodityId,
+      ),
+      ..._buildMaterialsSection(
+        rawMaterials,
+        manufactured,
+        netChanges,
+        sellableByCommodityId,
+      ),
+      ..._buildWorkerSection(theme),
+    ];
+  }
 
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return CtPanel(
       padding: const EdgeInsets.all(CtSpacing.ml),
       child: SingleChildScrollView(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Expanded(
-                  child: Text(
-                    l10n.production_available,
-                    style: theme.textTheme.titleSmall,
-                  ),
-                ),
-                if (onOpenCommodityBreakdown != null)
-                  CtNinePatchButton(
-                    onPressed: onOpenCommodityBreakdown,
-                    child: Text(l10n.production_breakdown),
-                  ),
-              ],
-            ),
-            const SizedBox(height: 8),
-            ..._buildFoodSection(
-              availableFood,
-              netChanges,
-              sellableByCommodityId,
-            ),
-            ..._buildMaterialsSection(
-              rawMaterials,
-              manufactured,
-              netChanges,
-              sellableByCommodityId,
-            ),
-            ..._buildWorkerSection(theme),
-          ],
+          children: _buildBodyChildren(theme),
         ),
       ),
     );
