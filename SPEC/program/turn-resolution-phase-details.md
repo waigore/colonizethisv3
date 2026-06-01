@@ -34,6 +34,8 @@ Full resolution per [diplomacy-resolution.md](diplomacy-resolution.md): overture
 
 For each riches commodity (gold, silver, gems, diamonds, spices): add quantity × basePrice × **richesCashMultiplier** to treasury; remove from stockpile. Base prices: spices = 50; others from spawn weights. **richesCashMultiplier** is optional (default 1.0); scenario or ruleset may override (e.g. Search for El Dorado 1.5). Where the value is defined: [ruleset-config.md](ruleset-config.md) (economy.riches_cash_multiplier). Reference: Imperialism II 02-economy, GDD 04.
 
+After applying each Great Power's own stockpile riches, the phase additionally credits **owning Great Powers** for riches yielded by tiles they previously purchased from a Minor or Tribe via the Merchant `purchase_land` work order. Per [world-market.md](../game/world-market.md) § First right of refusal § Riches handoff, riches commodities are not auto-offered on the world market; instead the per-tile non-Great-Power extraction yield ([extraction-and-improvements.md](../game/extraction-and-improvements.md) § Non-Great-Power extraction, with mineral filter bypassed for purchased tiles) for any tile whose resource is in the riches set is converted to the buyer Great Power's treasury at `units × richesBasePrice(commodityId) × richesCashMultiplier` (truncated to int). The set of eligible purchased tiles is sourced from [PurchasedTileIndex.fromGame](world-market-resolution.md) so post-conquest provinces (now owned by a Great Power) are filtered out — a conquered province's riches resume flowing through phase 2 Extraction and the new owner's own stockpile.
+
 ---
 
 ## Consumption
