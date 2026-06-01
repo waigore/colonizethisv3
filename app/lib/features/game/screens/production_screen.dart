@@ -53,14 +53,19 @@ class ProductionScreen extends ConsumerWidget {
   /// Localized back-button label rendered immediately after the chevron
   /// on the dark-theme `CtTopBar`. SPEC/ui/production-panel.md § Top bar
   /// requires the literal `"Map"` so the affordance reads `"← Map"`.
+  /// Exposed so widget tests (notably the 320 dp viewport pin) can
+  /// assert against the SPEC string without coupling to the localization
+  /// indirection or duplicating the literal — mirrors the pattern used
+  /// by `TradeScreen`, `DiplomacyScreen`, and `TechnologyScreen`.
   // ignore: avoid_hardcoded_strings_in_widgets
-  static const String _topBarBackLabel = 'Map';
+  static const String topBarBackLabel = 'Map';
 
   /// Title text shown in the dark-theme `CtTopBar`. SPEC mandates the
   /// literal `"Production"` (Cinzel display font is configured at the
-  /// theme level).
+  /// theme level). Exposed so widget tests can match against the SPEC
+  /// string — see [topBarBackLabel] for the same rationale.
   // ignore: avoid_hardcoded_strings_in_widgets
-  static const String _topBarTitle = 'Production';
+  static const String topBarTitle = 'Production';
 
   /// Pixel-art icon asset rendered between the back affordance and the
   /// title (SPEC § Top bar — 18 px production icon).
@@ -78,8 +83,8 @@ class ProductionScreen extends ConsumerWidget {
       attachGameToUiListener: attachGameToUiListener,
       topBar: CtTopBar(
         key: topBarKey,
-        title: _topBarTitle,
-        backButtonLabel: _topBarBackLabel,
+        title: topBarTitle,
+        backButtonLabel: topBarBackLabel,
         icon: const StrictAssetIcon(
           assetPath: _topBarIconAsset,
           width: 18,
