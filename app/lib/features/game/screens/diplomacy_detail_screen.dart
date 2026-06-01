@@ -9,6 +9,7 @@ import '../../../config/editorial_monocle_palette.dart';
 import '../../../config/ui_screen_ids.dart';
 import '../../../l10n/l10n.dart';
 import '../../../providers/app_event_bus_provider.dart';
+import '../../../widgets/ct_game_feature_screen_shell.dart';
 import '../../../widgets/ct_top_bar.dart';
 import '../widgets/diplomacy_panel.dart';
 
@@ -132,61 +133,56 @@ class DiplomacyDetailScreen extends ConsumerWidget {
     final history = diplomaticHistoryForPair(game, humanPlayerId, factionId);
     int year(int turn) => turnToYear(turn, game.turnTimeMapping);
 
-    return Scaffold(
+    return CtGameFeatureScreenShell(
+      game: game,
+      attachGameToUiListener: false,
       backgroundColor: EditorialMonoclePalette.bg,
-      body: SafeArea(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: <Widget>[
-            CtTopBar(
-              title: factionDisplayName,
-              onBackPressed: () => bus.emit(const PopNavigationEvent()),
-            ),
-            Expanded(
-              child: Center(
-                child: ConstrainedBox(
-                  constraints: const BoxConstraints(maxWidth: contentMaxWidth),
-                  child: ListView(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: contentPadding,
-                      vertical: contentPadding,
-                    ),
-                    children: <Widget>[
-                      _DetailCard(
-                        title: l10n.diplomacy_detail_currentRelation,
-                        child: _RelationSummary(relation: relation, l10n: l10n),
-                      ),
-                      const SizedBox(height: cardSpacing),
-                      _DetailCard(
-                        title: l10n.diplomacy_detail_historyTitle,
-                        child: _HistorySection(
-                          history: history,
-                          formatYear: year,
-                          formatSentence: (e) =>
-                              formatDiplomaticEvent(e, game, humanPlayerId),
-                          l10n: l10n,
-                        ),
-                      ),
-                      if (kind == FactionKind.greatPower) ...<Widget>[
-                        const SizedBox(height: cardSpacing),
-                        _DetailCard(
-                          title: l10n.diplomacy_detail_dossierTitle,
-                          child: _DossierSection(
-                            game: game,
-                            observerId: humanPlayerId,
-                            subjectId: factionId,
-                            l10n: l10n,
-                          ),
-                        ),
-                      ],
-                    ],
+      topBar: CtTopBar(
+        title: factionDisplayName,
+        onBackPressed: () => bus.emit(const PopNavigationEvent()),
+      ),
+      bodyBuilder: (BuildContext context, WidgetRef _, Game _) {
+        return Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: contentMaxWidth),
+            child: ListView(
+              padding: const EdgeInsets.symmetric(
+                horizontal: contentPadding,
+                vertical: contentPadding,
+              ),
+              children: <Widget>[
+                _DetailCard(
+                  title: l10n.diplomacy_detail_currentRelation,
+                  child: _RelationSummary(relation: relation, l10n: l10n),
+                ),
+                const SizedBox(height: cardSpacing),
+                _DetailCard(
+                  title: l10n.diplomacy_detail_historyTitle,
+                  child: _HistorySection(
+                    history: history,
+                    formatYear: year,
+                    formatSentence: (e) =>
+                        formatDiplomaticEvent(e, game, humanPlayerId),
+                    l10n: l10n,
                   ),
                 ),
-              ),
+                if (kind == FactionKind.greatPower) ...<Widget>[
+                  const SizedBox(height: cardSpacing),
+                  _DetailCard(
+                    title: l10n.diplomacy_detail_dossierTitle,
+                    child: _DossierSection(
+                      game: game,
+                      observerId: humanPlayerId,
+                      subjectId: factionId,
+                      l10n: l10n,
+                    ),
+                  ),
+                ],
+              ],
             ),
-          ],
-        ),
-      ),
+          ),
+        );
+      },
     );
   }
 }

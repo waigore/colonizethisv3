@@ -8,6 +8,7 @@ import 'package:colonizethis_map/colonizethis_map.dart' show RegionMapViewData;
 
 import '../../../../config/editorial_monocle_palette.dart';
 import '../../../../providers/map_province_panel_provider.dart';
+import '../widgets/chrome/ct_nine_patch_button.dart';
 import 'game_screen_shared.dart' show kGameMapWideProvinceSidePanelWidth;
 import 'region_map_component.dart'
     show BaseLayerDisplayMode, CtMapVisibilityMode;
@@ -16,6 +17,14 @@ import '../../../../widgets/ct_region_map.dart' show CtRegionMap;
 import 'game_map_province_detail_side_panel.dart';
 import 'per_player_work_target_selection_cache.dart';
 import 'region_map_viewport_snapshot.dart';
+
+/// Compact minimum tap-target height applied to the selection-prompt
+/// banner's `cancel` [CtNinePatchButton]. Pinned to keep the inline
+/// affordance vertically proportional to the surrounding banner row
+/// (banner padding is 8 logical px vertical) without inflating the prompt
+/// to the catalog default 48 dp button. SPEC: `SPEC/ui/map-widget.md`
+/// § Dark-theme selection prompt overlay tokens.
+const double kMapSelectionPromptCancelMinHeight = 34;
 
 /// Canonical alpha applied to [EditorialMonoclePalette.bgDeep] for the
 /// work-target selection prompt overlay banner background. Pinned at
@@ -178,22 +187,16 @@ class GameMapCanvasStack extends ConsumerWidget {
                           ),
                         ),
                         const SizedBox(width: 10),
-                        TextButton(
+                        CtNinePatchButton(
                           onPressed: onWorkTargetSelectionCancelled,
-                          style: TextButton.styleFrom(
-                            backgroundColor: EditorialMonoclePalette.surface,
-                            foregroundColor:
-                                EditorialMonoclePalette.accentBright,
-                            minimumSize: const Size(0, 34),
-                            padding: const EdgeInsets.symmetric(horizontal: 12),
-                            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                          minHeight: kMapSelectionPromptCancelMinHeight,
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 4,
                           ),
                           child: Text(
                             l10n.map_selectionMode_cancel,
-                            style: TextStyle(
-                              fontWeight: FontWeight.w700,
-                              color: EditorialMonoclePalette.accentBright,
-                            ),
+                            style: const TextStyle(fontWeight: FontWeight.w700),
                           ),
                         ),
                       ],

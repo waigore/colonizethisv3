@@ -23,7 +23,7 @@ Technology screen hosts research slots UI: slot count from `player.researchSlots
 
 ### Top bar (dark editorial-monocle, all viewports)
 
-- **Component:** `CtTopBar` (`SPEC/ui/pixel-art-ui-catalog.md` § Pixel-art component catalog → `CtTopBar` entry), supplied through the `topBar` slot of `CtGameFeatureScreenShell` so the screen reuses the shared `Scaffold` + `SafeArea` + `Column` body shell and retains `GameToUIBusListener` for live game wiring.
+- **Component:** `CtTopBar` (`SPEC/ui/pixel-art-ui-catalog.md` § Pixel-art component catalog → `CtTopBar` entry), supplied through the `topBar` slot of `CtGameFeatureScreenShell` so the screen reuses the shared `Scaffold` + `SafeArea` + `Column` body shell and retains `GameToUIBusListener` for live game wiring (composite contract: [`components/ct-game-feature-screen-shell.md`](components/ct-game-feature-screen-shell.md)).
 - **Back affordance:** `CtBackButton` chevron-left glyph followed by the muted label `Map` so the affordance reads `← Map`. The button's default behaviour calls `Navigator.maybePop()` and is a no-op when there is no prior route on the stack.
 - **Icon + title:** Pixel-art technology icon `assets/icons/32/ui_icon_technology.png` rendered at 18 × 18 logical px between the back affordance and the title. The title literal is `Technology`, rendered in the dark-theme `titleMedium` slot (Cinzel display family per `AppThemes.editorialMonocle`).
 - **Height + chrome:** Fixed `CtTopBar.height` (36 px), filled with `CtGradients.topBarGradient`, capped by a 1 px `EditorialMonoclePalette.accentDim` bottom border. Hard-coded colours are forbidden; all tokens resolve through `EditorialMonoclePalette`.
