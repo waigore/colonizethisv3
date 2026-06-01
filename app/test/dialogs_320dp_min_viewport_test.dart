@@ -35,12 +35,18 @@
 //  * [PauseMenuPanel]                    — modal pause menu (SHEL40001)
 //    raised by `OpenPauseMenuPanelEvent` from the in-game shell
 //    (SPEC/ui/pause-menu-panel.md).
+//  * [CallToArmsDialogueOverlay]         — blocking call-to-arms decision
+//    overlay (OVL40001) shown after turn resolution returns one or more
+//    pending calls for a human-controlled ally
+//    (SPEC/ui/call-to-arms-dialogue-overlay.md).
 //
-// All twelve dialogs render their chrome via [CtDialogShell]. The first
-// eight pass `maxWidth: 400` or `maxWidth: 480`; the three new
+// All thirteen surfaces render their chrome via [CtDialogShell]. The first
+// eight pass `maxWidth: 400` or `maxWidth: 480`; the three
 // CtTransferList-hosted dialogs (split army / split fleet / transfer to
 // home fleet) pass the wider `maxWidth: 520` / `maxWidth: 560` so the
-// side-by-side columns can render at default widths. At
+// side-by-side columns can render at default widths; the call-to-arms
+// overlay wraps the same shell inside a [CtFullScreenDialogueShell]
+// (scrim + centered shell at `maxWidth: 520`, `maxHeight: 500`). At
 // `kMinViewportWidth` (320 dp) every shell collapses to the same ~288 dp
 // content width — the outer `Dialog.insetPadding` (16 dp each side)
 // dominates whenever the viewport is narrower than the configured
@@ -66,6 +72,7 @@
 // SPEC: `SPEC/ui/combat-mode-choice-dialog.md`.
 // SPEC: `SPEC/ui/next-turn-confirmation.md`.
 // SPEC: `SPEC/ui/quick-battle-result-dialog.md`.
+// SPEC: `SPEC/ui/call-to-arms-dialogue-overlay.md` § Layout / wireframe.
 // Refs #2870 S8 (dialogs scale at narrow widths) + S10 (no horizontal
 // overflow at 320 dp on every covered surface).
 
@@ -73,6 +80,7 @@ import 'package:colonizethis_app/config/constants.dart';
 import 'package:colonizethis_app/config/themes.dart';
 import 'package:colonizethis_app/features/game/combat/combat_mode_choice_dialog.dart';
 import 'package:colonizethis_app/features/game/combat/quick_battle_result_dialog.dart';
+import 'package:colonizethis_app/features/game/dialogue/call_to_arms_dialogue_overlay.dart';
 import 'package:colonizethis_app/features/game/flame/exit_confirm_dialog.dart';
 import 'package:colonizethis_app/features/game/flame/next_turn_confirmation_dialog.dart';
 import 'package:colonizethis_app/features/game/flame/turn_resolution_processing_dialog.dart';
@@ -84,6 +92,7 @@ import 'package:colonizethis_app/features/game/widgets/split_fleet_dialog.dart';
 import 'package:colonizethis_app/features/game/widgets/transfer_to_home_fleet_dialog.dart';
 import 'package:colonizethis_app/features/game/widgets/turn_news_dialog.dart';
 import 'package:colonizethis_app/l10n/l10n.dart';
+import 'package:colonizethis_logic/colonizethis_logic.dart' show CallToArmsPending;
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
@@ -1162,6 +1171,143 @@ void main() {
         expect(find.text(pauseTitle), findsOneWidget);
         expect(find.text(resumeLabel), findsOneWidget);
         expect(find.text(exitToMainMenuLabel), findsOneWidget);
+      },
+    );
+  });
+
+  group('SPEC/ui/mobile-adaptation.md § 7 — CallToArmsDialogueOverlay @ '
+      '320 dp (Refs #2870 S8/S10)', () {
+    // Minimal Game fixture: three GPs so a single pending call can resolve
+    // `defenderGpId` / `aggressorGpId` to display names. Mirrors the
+    // fixture used by `call_to_arms_dialogue_overlay_dark_chrome_test.dart`
+    // so the narrow-pin tests exercise the same name-resolution path as
+    // the existing chrome pins.
+    Game ctaGame() {
+      return const Game(
+        id: 'cta_320',
+        worldState: WorldState(
+          turnState: TurnState(phase: TurnPhase.orders, turnNumber: 5),
+          oldWorld: RegionData(),
+          newWorld: RegionData(),
+        ),
+        players: [
+          Player(id: 'gp_player', displayName: 'Player', isHuman: true),
+          Player(id: 'gp_portugal', displayName: 'Portugal', isHuman: false),
+          Player(id: 'gp_spain', displayName: 'Spain', isHuman: false),
+        ],
+      );
+    }
+
+    const CallToArmsPending singlePendingCall = CallToArmsPending(
+      allyGpId: 'gp_player',
+      defenderGpId: 'gp_portugal',
+      aggressorGpId: 'gp_spain',
+    );
+
+    // English l10n sentinels for the title and the three action labels
+    // (mirrors `app/lib/l10n/arb/app_en.arb` `game_callToArms_*` keys).
+    // Pinned here so the narrow-pin breaks if those strings change without
+    // the SPEC + this contract being refreshed in lockstep.
+    const String ctaTitle = 'Call to arms';
+    const String ctaJoinLabel = 'Join';
+    const String ctaRefuseLabel = 'Refuse';
+    const String ctaSubmitLabel = 'Submit';
+
+    testWidgets(
+      'AC (positive) CallToArmsDialogueOverlay (one pending call) @ '
+      '320×640: no RenderFlex overflow exception, "Call to arms" title + '
+      'Join / Refuse / Submit action labels render — the per-call '
+      'Column(Text + Wrap(Join + Refuse)) stack from '
+      'SPEC/ui/call-to-arms-dialogue-overlay.md § Layout / wireframe must '
+      'wrap within the ~288 dp CtDialogShell content column at '
+      'kMinViewportWidth (CtFullScreenDialogueShell.maxWidth 520 is '
+      'dominated by Dialog.insetPadding 16 dp each side at 320 dp)',
+      (WidgetTester tester) async {
+        await _pumpDialogAtSize(
+          tester,
+          CallToArmsDialogueOverlay(
+            game: ctaGame(),
+            pending: const [singlePendingCall],
+            onDecisions: (_) {},
+            child: const SizedBox.expand(),
+          ),
+          size: _kMinViewport,
+        );
+
+        expect(
+          tester.takeException(),
+          isNull,
+          reason:
+              'SPEC/ui/mobile-adaptation.md § 7: CallToArmsDialogueOverlay '
+              'must not emit a RenderFlex overflow exception at '
+              'kMinViewportWidth (320 dp). The per-call '
+              'Column(Text + Wrap(Join + Refuse)) stack under the '
+              'CtFullScreenDialogueShell scrim + CtDialogShell chrome '
+              'must wrap within the ~288 dp content column.',
+        );
+        expect(find.text(ctaTitle), findsOneWidget);
+        expect(find.text(ctaJoinLabel), findsOneWidget);
+        expect(find.text(ctaRefuseLabel), findsOneWidget);
+        expect(find.text(ctaSubmitLabel), findsOneWidget);
+      },
+    );
+
+    testWidgets(
+      'AC (positive) CallToArmsDialogueOverlay (two pending calls) @ '
+      '320×640: no RenderFlex overflow exception, both Join + Refuse '
+      'rows mount within the ~288 dp content column (the ListView.builder '
+      'shrink-wrapped body from SPEC/ui/call-to-arms-dialogue-overlay.md '
+      '§ Layout / wireframe wraps every per-call Column stack at the '
+      'narrow viewport without horizontal overflow)',
+      (WidgetTester tester) async {
+        const CallToArmsPending secondPendingCall = CallToArmsPending(
+          allyGpId: 'gp_player',
+          defenderGpId: 'gp_spain',
+          aggressorGpId: 'gp_portugal',
+        );
+
+        await _pumpDialogAtSize(
+          tester,
+          CallToArmsDialogueOverlay(
+            game: ctaGame(),
+            pending: const [singlePendingCall, secondPendingCall],
+            onDecisions: (_) {},
+            child: const SizedBox.expand(),
+          ),
+          size: _kMinViewport,
+        );
+
+        expect(tester.takeException(), isNull);
+        expect(find.text(ctaTitle), findsOneWidget);
+        // Two rows -> two Join buttons + two Refuse buttons + one Submit
+        // action (the Submit button label is shared across the row count).
+        expect(find.text(ctaJoinLabel), findsNWidgets(2));
+        expect(find.text(ctaRefuseLabel), findsNWidgets(2));
+        expect(find.text(ctaSubmitLabel), findsOneWidget);
+      },
+    );
+
+    testWidgets(
+      'Negative control: CallToArmsDialogueOverlay @ 1024×768 also pumps '
+      'without exception (regression sentinel for the overflow contract — '
+      'keeps the 320 dp positive pins meaningful)',
+      (WidgetTester tester) async {
+        await _pumpDialogAtSize(
+          tester,
+          CallToArmsDialogueOverlay(
+            game: ctaGame(),
+            pending: const [singlePendingCall],
+            onDecisions: (_) {},
+            child: const SizedBox.expand(),
+          ),
+          size: _kWideRegressionViewport,
+        );
+
+        expect(tester.takeException(), isNull);
+        expect(find.text(ctaTitle), findsOneWidget);
+        expect(find.text(ctaJoinLabel), findsOneWidget);
+        expect(find.text(ctaRefuseLabel), findsOneWidget);
+        expect(find.text(ctaSubmitLabel), findsOneWidget);
       },
     );
   });

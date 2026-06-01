@@ -112,31 +112,41 @@ class _CallToArmsDialogueOverlayState extends State<CallToArmsDialogueOverlay> {
             itemCount: items.length,
             itemBuilder: (context, i) {
               final c = items[i];
+              // Per-call rows stack the prompt above an end-aligned Wrap of
+              // Join + Refuse buttons so the row never relies on a horizontal
+              // Row(Expanded(prompt) + buttons) fitting at narrow viewports
+              // (issue #2870 S8 / S10; SPEC/ui/call-to-arms-dialogue-overlay.md
+              // § Layout / wireframe; SPEC/ui/mobile-adaptation.md § 7).
               return Padding(
                 padding: const EdgeInsets.only(bottom: 12),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    Expanded(
-                      child: Text(
-                        l10n.game_callToArms_prompt(
-                          _gpName(c.defenderGpId),
-                          _gpName(c.aggressorGpId),
-                        ),
+                    Text(
+                      l10n.game_callToArms_prompt(
+                        _gpName(c.defenderGpId),
+                        _gpName(c.aggressorGpId),
                       ),
                     ),
-                    CtNinePatchButton(
-                      onPressed: () {
-                        setState(() => _join[i] = true);
-                      },
-                      child: Text(l10n.game_callToArms_join),
-                    ),
-                    const SizedBox(width: 8),
-                    CtNinePatchButton(
-                      onPressed: () {
-                        setState(() => _join[i] = false);
-                      },
-                      child: Text(l10n.game_callToArms_refuse),
+                    const SizedBox(height: 8),
+                    Wrap(
+                      alignment: WrapAlignment.end,
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: [
+                        CtNinePatchButton(
+                          onPressed: () {
+                            setState(() => _join[i] = true);
+                          },
+                          child: Text(l10n.game_callToArms_join),
+                        ),
+                        CtNinePatchButton(
+                          onPressed: () {
+                            setState(() => _join[i] = false);
+                          },
+                          child: Text(l10n.game_callToArms_refuse),
+                        ),
+                      ],
                     ),
                   ],
                 ),
