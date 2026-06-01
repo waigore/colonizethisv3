@@ -92,29 +92,46 @@ void main() {
           overtureStates: overtures,
         );
 
-    test('returns 0 when player is unknown', () {
+    test('returns 0 when player is unknown (ghost-player guard)', () {
       final game = gameWith();
       expect(worldMarketBidTypeCap(game, 'ghost'), 0);
     });
 
-    test('returns 0 when player has no overtures at all', () {
-      final game = gameWith();
-      expect(worldMarketBidTypeCap(game, 'gp1'), 0);
-    });
+    test(
+      'returns kWorldMarketBaselineBidTypeCap (1) when player has no '
+      'overtures at all (Refs #2924; SPEC/game/world-market.md § Bid type '
+      'cap baseline participation)',
+      () {
+        final game = gameWith();
+        expect(
+          worldMarketBidTypeCap(game, 'gp1'),
+          kWorldMarketBaselineBidTypeCap,
+        );
+        expect(kWorldMarketBaselineBidTypeCap, 1);
+      },
+    );
 
-    test('returns 0 when player has only trade-consulate overtures', () {
-      final game = gameWith(
-        overtures: const [
-          OvertureState(
-            gpId: 'gp1',
-            targetId: 'minor1',
-            stage: OvertureStage.tradeConsulate,
-            sinceTurn: 0,
-          ),
-        ],
-      );
-      expect(worldMarketBidTypeCap(game, 'gp1'), 0);
-    });
+    test(
+      'returns kWorldMarketBaselineBidTypeCap (1) when player has only '
+      'trade-consulate overtures (Refs #2924; the baseline cap precedes the '
+      'embassy-tier 3-cap upgrade)',
+      () {
+        final game = gameWith(
+          overtures: const [
+            OvertureState(
+              gpId: 'gp1',
+              targetId: 'minor1',
+              stage: OvertureStage.tradeConsulate,
+              sinceTurn: 0,
+            ),
+          ],
+        );
+        expect(
+          worldMarketBidTypeCap(game, 'gp1'),
+          kWorldMarketBaselineBidTypeCap,
+        );
+      },
+    );
 
     test('returns 3 with at least one embassy and no trade_fairs', () {
       final game = gameWith(
@@ -184,7 +201,14 @@ void main() {
             ),
           ],
         );
-        expect(worldMarketBidTypeCap(game, 'gp1'), 0);
+        expect(
+          worldMarketBidTypeCap(game, 'gp1'),
+          kWorldMarketBaselineBidTypeCap,
+          reason:
+              'gp1 is a known player without any embassy of its own, so it '
+              'gets the baseline cap of 1 (Refs #2924); gp2 keeps the '
+              'embassy-tier 3-cap.',
+        );
         expect(worldMarketBidTypeCap(game, 'gp2'), 3);
       },
     );

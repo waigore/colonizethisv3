@@ -36,7 +36,7 @@ export 'src/orders/order_suggestion_move_army.dart'
     show armyMoveCandidateDestinationProvinceIds;
 export 'src/world/movement.dart' show neighborProvinceIdsInRegion;
 export 'src/diplomacy/diplomacy_subsidies_relations_resolver.dart'
-    show worldMarketBidTypeCap;
+    show kWorldMarketBaselineBidTypeCap, worldMarketBidTypeCap;
 export 'src/economy/economy_riches_to_treasury.dart'
     show pendingRichesTreasuryDelta;
 export 'src/economy/sea_transport.dart' show cargoHoldsForHomeFleet;
