@@ -89,6 +89,7 @@ The dialog **does not** mutate game state. All state changes flow through `Naval
 ## Components
 
 - `CtDialogShell`, `CtTransferList` (see [shared widgets](../program/app-ui-wiring.md) and `app/lib/widgets/ct_transfer_list.dart`).
+- `CtTransferList` ([`components/ct-transfer-list.md`](components/ct-transfer-list.md)) — canonical dual-list transfer scaffold reused by Split Fleet, Split Army, and Transfer to Home Fleet; pins the `kCtTransferListSideBySideMinWidth = 360 dp` narrow-stack threshold so this dialog inherits the 320 dp viewport contract without redeclaring it (Refs #2914 S9).
 - Helper: `shipInstancesForTransferCounts` (from `colonizethis_models`).
 - Localized keys via `appL10n(context)`: `naval_transferToHome_dialogTitle`, `naval_transferToHome_sourceTitle`, `naval_homeFleetLabel`, `naval_transferToHome_confirm`, `splitFleet_noShips`, `splitFleet_totalShips`, `common_cancel`.
 
