@@ -26,6 +26,7 @@ library;
 
 import 'dart:io' show File;
 
+import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter_test/flutter_test.dart';
 
 const String _kSpecPath = '../SPEC/ui/components/ct-transfer-list.md';
@@ -34,6 +35,7 @@ const String _kComponentsReadmePath = '../SPEC/ui/components/README.md';
 String _readSpec() => File(_kSpecPath).readAsStringSync();
 
 void main() {
+  suppressLogsForTests();
   group(
     'SPEC/ui/components/ct-transfer-list.md (#2914 S9)',
     () {
