@@ -4,7 +4,6 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
 
 import '../../../config/constants.dart';
-import '../../../config/editorial_monocle_palette.dart';
 import '../../../l10n/l10n.dart';
 import '../../../widgets/ct_brass_divider.dart';
 import '../../../widgets/ct_nine_patch_button.dart';
@@ -16,6 +15,7 @@ import '../../../widgets/resource_icon.dart';
 import 'chrome/ct_danger_text_button.dart';
 import 'production_allocation_row.dart';
 import 'production_allocation_row_chrome.dart';
+import 'production_available_grid.dart';
 import 'production_labour_helpers.dart';
 import 'production_labour_section.dart';
 
@@ -38,6 +38,29 @@ const Key kProductionPanelNarrowLayoutKey = ValueKey<String>(
 /// [kProductionPanelNarrowLayoutKey].
 const Key kProductionPanelWideLayoutKey = ValueKey<String>(
   'production_panel_wide_layout',
+);
+
+/// Column count used by the Available subpanel commodity sections (Food, Raw
+/// Materials, Manufactured) per `SPEC/ui/production-panel.md` § Layout —
+/// Available subpanel "Commodity grid layout" (mockup `.grid-3col`, owner
+/// decision **C7** / S8b for issue #2862). Applies on every viewport width.
+const int kProductionAvailableCommodityGridColumns = 3;
+
+/// Column count used by the Available subpanel Workers section per
+/// `SPEC/ui/production-panel.md` § Layout — Available subpanel "Workers
+/// section" (mockup `.grid-2col`, owner decision **C7** / S8b for issue
+/// #2862). Applies on every viewport width.
+const int kProductionAvailableWorkerGridColumns = 2;
+
+/// Key string planted on the Workers grid container so widget tests can
+/// assert the 2-column worker layout (Refs #2862 S8b).
+const String kProductionAvailableWorkerGridKeyValue =
+    'production_available_worker_grid';
+
+/// Stable widget key for the Workers grid container; tests can locate the
+/// grid via this key without crawling the section ancestors.
+const Key kProductionAvailableWorkerGridKey = ValueKey<String>(
+  kProductionAvailableWorkerGridKeyValue,
 );
 
 class ProductionPanel extends StatelessWidget {
@@ -253,20 +276,18 @@ class _AvailableSubpanel extends StatelessWidget {
     Map<String, int> netChanges,
     Map<CommodityId, int> sellableByCommodityId,
   ) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: <Widget>[
-        for (int i = 0; i < commodities.length; i++) ...<Widget>[
-          if (i > 0) const SizedBox(height: 4),
+    return AvailableCellGrid(
+      key: ValueKey<String>(
+        'production_available_commodity_grid_${commodities.map((c) => c.id).join('_')}',
+      ),
+      columnCount: kProductionAvailableCommodityGridColumns,
+      cells: <Widget>[
+        for (final commodity in commodities)
           _buildCommodityCell(
-            commodities[i],
-            _displayedStockpileQuantity(
-              commodities[i],
-              sellableByCommodityId,
-            ),
-            netChanges[commodities[i].id] ?? 0,
+            commodity,
+            _displayedStockpileQuantity(commodity, sellableByCommodityId),
+            netChanges[commodity.id] ?? 0,
           ),
-        ],
       ],
     );
   }
@@ -341,20 +362,18 @@ class _AvailableSubpanel extends StatelessWidget {
       const SizedBox(height: 12),
       CtSectionLabel(l10n.production_workers),
       const SizedBox(height: 6),
-      Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
+      AvailableCellGrid(
+        key: kProductionAvailableWorkerGridKey,
+        columnCount: kProductionAvailableWorkerGridColumns,
+        cells: <Widget>[
           _buildWorkerCell('peasant', player.workerPool.peasants),
-          const SizedBox(height: 4),
           _buildWorkerCell('apprentice', player.workerPool.apprentices),
-          const SizedBox(height: 4),
           _buildWorkerCell('journeyman', player.workerPool.journeymen),
-          const SizedBox(height: 4),
           _buildWorkerCell('master', player.workerPool.masters),
         ],
       ),
       const SizedBox(height: 8),
-      _EffectiveLabourTotal(
+      EffectiveLabourTotal(
         text: l10n.production_effectiveLabour(effectiveLabour),
         theme: theme,
       ),
@@ -444,38 +463,6 @@ class _AvailableSubpanel extends StatelessWidget {
           children: _buildBodyChildren(theme),
         ),
       ),
-    );
-  }
-}
-
-/// Right-aligned **Effective labour** total rendered with the dark
-/// editorial-monocle accent color, monospace tabular figures, and a
-/// 1px `--accent-dim` top border, per the issue #2862 Available subpanel
-/// requirement R8 (right-aligned, accent color, bordered top).
-class _EffectiveLabourTotal extends StatelessWidget {
-  const _EffectiveLabourTotal({required this.text, required this.theme});
-
-  final String text;
-  final ThemeData theme;
-
-  @override
-  Widget build(BuildContext context) {
-    final base = theme.textTheme.bodySmall ?? const TextStyle(fontSize: 12);
-    final style = base.copyWith(
-      color: EditorialMonoclePalette.accent,
-      fontWeight: FontWeight.w600,
-      fontFamilyFallback: const <String>['SF Mono', 'Menlo', 'monospace'],
-      fontFeatures: const <FontFeature>[FontFeature.tabularFigures()],
-    );
-    return Container(
-      width: double.infinity,
-      decoration: BoxDecoration(
-        border: Border(
-          top: BorderSide(color: EditorialMonoclePalette.accentDim, width: 1),
-        ),
-      ),
-      padding: const EdgeInsets.only(top: 4),
-      child: Text(text, style: style, textAlign: TextAlign.right),
     );
   }
 }
