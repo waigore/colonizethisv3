@@ -324,7 +324,7 @@ rules:
 
   - rule_id: repo.app_editorial_monocle_colors
     group: ui_structure
-    title: "app/lib/features must resolve colors through EditorialMonoclePalette (Refs #2914)"
+    title: "app/lib/features and app/lib/widgets must resolve colors through EditorialMonoclePalette (Refs #2914 S4/G1)"
     spec: SPEC/program/repo-lint.md
     runner: dart
     script: tool/check_app_editorial_monocle_colors.dart

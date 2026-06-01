@@ -287,6 +287,192 @@ const sample = TextStyle(color: Colors.black54);
       expect(logs.join('\n'), contains('app/lib/features not found'));
     });
 
+    test(
+      'fails when a file under app/lib/widgets/ uses a banned Material color '
+      '(extended scope for #2914 §S4)',
+      () {
+        final temp = Directory.systemTemp.createTempSync(
+          'check_app_editorial_monocle_colors_widgets_named_',
+        );
+        addTearDown(() => temp.deleteSync(recursive: true));
+
+        // features/ root must exist for the check to run; populate with a
+        // clean placeholder so the widgets/ scan is what surfaces.
+        File('${temp.path}/app/lib/features/.keep.dart')
+          ..createSync(recursive: true)
+          ..writeAsStringSync('// keep\n');
+        File('${temp.path}/app/lib/widgets/bad_widget.dart')
+          ..createSync(recursive: true)
+          ..writeAsStringSync('''
+import 'package:flutter/material.dart';
+
+const placeholder = TextStyle(color: Colors.black54);
+''');
+
+        final logs = <String>[];
+        final code = runCheckAppEditorialMonocleColors(
+          temp.path,
+          info: logs.add,
+          err: logs.add,
+        );
+
+        expect(code, 1);
+        expect(
+          logs.join('\n'),
+          contains('app/lib/widgets/bad_widget.dart:3: Colors.black54'),
+        );
+      },
+    );
+
+    test(
+      'fails when a file under app/lib/widgets/ uses a raw const Color(0x...) '
+      'hex literal (extended scope for #2914 §S4)',
+      () {
+        final temp = Directory.systemTemp.createTempSync(
+          'check_app_editorial_monocle_colors_widgets_hex_',
+        );
+        addTearDown(() => temp.deleteSync(recursive: true));
+
+        File('${temp.path}/app/lib/features/.keep.dart')
+          ..createSync(recursive: true)
+          ..writeAsStringSync('// keep\n');
+        File('${temp.path}/app/lib/widgets/bad_hex_widget.dart')
+          ..createSync(recursive: true)
+          ..writeAsStringSync('''
+import 'package:flutter/material.dart';
+
+const accentConst = const Color(0xFFCC0000);
+''');
+
+        final logs = <String>[];
+        final code = runCheckAppEditorialMonocleColors(
+          temp.path,
+          info: logs.add,
+          err: logs.add,
+        );
+
+        expect(code, 1);
+        expect(
+          logs.join('\n'),
+          contains(
+            'app/lib/widgets/bad_hex_widget.dart:3: const Color(0x',
+          ),
+        );
+      },
+    );
+
+    test(
+      'allowlists app/lib/widgets/ canvas-compositing files '
+      '(ct_main_menu_collage.dart, main_menu.dart)',
+      () {
+        final temp = Directory.systemTemp.createTempSync(
+          'check_app_editorial_monocle_colors_widgets_compositing_',
+        );
+        addTearDown(() => temp.deleteSync(recursive: true));
+
+        File('${temp.path}/app/lib/features/.keep.dart')
+          ..createSync(recursive: true)
+          ..writeAsStringSync('// keep\n');
+
+        // ct_main_menu_collage.dart — saveLayer alpha multiplier; the
+        // const Color(0xFFFFFFFF) literal is a compositing argument.
+        File('${temp.path}/app/lib/widgets/ct_main_menu_collage.dart')
+          ..createSync(recursive: true)
+          ..writeAsStringSync('''
+import 'package:flutter/material.dart';
+
+final layerPaint = Paint()
+  ..color = const Color(0xFFFFFFFF).withValues(alpha: 0.8);
+''');
+
+        // main_menu.dart — hover ColorFilter.mode darken composite; the
+        // Colors.black literal is a blend operand, not a theme reference.
+        File('${temp.path}/app/lib/widgets/main_menu.dart')
+          ..createSync(recursive: true)
+          ..writeAsStringSync('''
+import 'package:flutter/material.dart';
+
+final hoverFilter = ColorFilter.mode(
+  Colors.black.withValues(alpha: 0.15),
+  BlendMode.darken,
+);
+''');
+
+        final code = runCheckAppEditorialMonocleColors(
+          temp.path,
+          info: (_) {},
+          err: (_) {},
+        );
+
+        expect(code, 0);
+      },
+    );
+
+    test(
+      'does not scan test files inside app/lib/widgets/ '
+      '(production surface only)',
+      () {
+        final temp = Directory.systemTemp.createTempSync(
+          'check_app_editorial_monocle_colors_widgets_test_skip_',
+        );
+        addTearDown(() => temp.deleteSync(recursive: true));
+
+        File('${temp.path}/app/lib/features/.keep.dart')
+          ..createSync(recursive: true)
+          ..writeAsStringSync('// keep\n');
+        File('${temp.path}/app/lib/widgets/some_widget_test.dart')
+          ..createSync(recursive: true)
+          ..writeAsStringSync('''
+import 'package:flutter/material.dart';
+
+const sample = TextStyle(color: Colors.black54);
+''');
+
+        final code = runCheckAppEditorialMonocleColors(
+          temp.path,
+          info: (_) {},
+          err: (_) {},
+        );
+
+        expect(code, 0);
+      },
+    );
+
+    test(
+      'passes when app/lib/widgets/ is absent from the scanned tree '
+      '(scan is opportunistic, not required)',
+      () {
+        final temp = Directory.systemTemp.createTempSync(
+          'check_app_editorial_monocle_colors_widgets_absent_',
+        );
+        addTearDown(() => temp.deleteSync(recursive: true));
+
+        File('${temp.path}/app/lib/features/game/widgets/clean.dart')
+          ..createSync(recursive: true)
+          ..writeAsStringSync('''
+import 'package:flutter/material.dart';
+import 'package:colonizethis_app/config/editorial_monocle_palette.dart';
+
+class Clean extends StatelessWidget {
+  const Clean({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(color: EditorialMonoclePalette.fg);
+  }
+}
+''');
+
+        final code = runCheckAppEditorialMonocleColors(
+          temp.path,
+          info: (_) {},
+          err: (_) {},
+        );
+
+        expect(code, 0);
+      },
+    );
+
     test('reports file path and line number on violation', () {
       final temp = Directory.systemTemp.createTempSync(
         'check_app_editorial_monocle_colors_line_',
@@ -383,6 +569,25 @@ const sample = TextStyle(color: Colors.black54);
     });
 
     test(
+      'skips app/lib/widgets/ canvas-compositing files (Refs #2914 §S4 '
+      'extended scope)',
+      () {
+        const compositing = <String>[
+          'app/lib/widgets/ct_main_menu_collage.dart',
+          'app/lib/widgets/main_menu.dart',
+        ];
+        for (final path in compositing) {
+          expect(
+            shouldSkipAppEditorialMonocleColorsFile(path),
+            isTrue,
+            reason: 'expected $path to be allowlisted as a canvas-'
+                'compositing file (alpha multiplier / blend operand)',
+          );
+        }
+      },
+    );
+
+    test(
       'does not skip ordinary feature widgets (in scope for the check)',
       () {
         expect(
@@ -400,6 +605,31 @@ const sample = TextStyle(color: Colors.black54);
         expect(
           shouldSkipAppEditorialMonocleColorsFile(
             'app/lib/features/game/flame/game_side_menu.dart',
+          ),
+          isFalse,
+        );
+      },
+    );
+
+    test(
+      'does not skip ordinary app/lib/widgets/ files (in scope for the check '
+      'under #2914 §S4 extended scope)',
+      () {
+        expect(
+          shouldSkipAppEditorialMonocleColorsFile(
+            'app/lib/widgets/ct_dialog_shell.dart',
+          ),
+          isFalse,
+        );
+        expect(
+          shouldSkipAppEditorialMonocleColorsFile(
+            'app/lib/widgets/ct_nine_patch_button.dart',
+          ),
+          isFalse,
+        );
+        expect(
+          shouldSkipAppEditorialMonocleColorsFile(
+            'app/lib/widgets/ct_section_label.dart',
           ),
           isFalse,
         );
