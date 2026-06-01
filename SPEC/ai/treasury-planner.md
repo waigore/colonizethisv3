@@ -185,12 +185,50 @@ offerPriority       = treasuryForecast < cheapestRegimentBuildTreasuryCost()
 - Given an AI Great Power with `treasury` just below `cheapestRegimentBuildTreasuryCost()`, an abundant timber surplus at the default `timber` market price, and a previous-turn `MarketActivity` for timber with `filledQuantity / totalOfferQuantity == 1.0` (full fill), when `runTreasuryPlanner` runs, then `treasuryForecast >= cheapestRegimentBuildTreasuryCost()` (full-fill credit) and the timber offer carries `kTreasuryOfferPriorityModerate`.
 - Given two `runTreasuryPlanner` invocations whose inputs (including `carryForward*ByFactionId` and `lastTurnActivity`) are identical, when both runs complete, then they return identical `List<TradeOrder>` outputs.
 
+## Observer-game seed-42 trade-order emission (Refs #2994 F9)
+
+F9 closes the orchestrator-level verification gap for F1–F8 by pinning the
+deterministic outcome of `generateOrdersForGameFullAI` on the canonical
+`GameSetupConfig(seed: 42)` initialisation. Unit tests under
+`packages/colonizethis_ai/test/planning/treasury_planner_test.dart` already
+cover the per-planner emission rules; F9 instead verifies that the production
+**Full AI** entrypoint — running through `runEconomyPlanner` →
+`runDomainPlannersWithOutcome` (F7 wiring) → `supplementMutualStalledGreatPowerPeaceOrders`
+— actually surfaces those orders on a real seed-42 starting state without any
+test fixtures or hand-built game objects.
+
+### Verification surface
+
+- Test file: `packages/colonizethis_ai/test/seed42_observer_treasury_planner_trade_emission_test.dart`.
+- Entrypoint exercised: `generateOrdersForGameFullAI(game, topology, tileMapByRegion: …)` against the seed-42 game `init.game.copyWith(aiControlByGpId: {for (final p in init.game.players) p.id: true})`.
+- Output read: `result.orders.tradeOrdersByPlayerId` — the same map persisted to `Orders` after F7 orchestrator append.
+
+### Why turn 1
+
+Seed-42 GPs stay in EXPAND for the full observer horizon (see
+`seed42_observer_colonial_regression_test.dart` § skip rationale). A turn-1
+inspection therefore deterministically captures the **EXPAND-phase** trade
+emission baseline without needing the broader 150-turn observer loop, keeps the
+test inside the same single-turn budget envelope as `full_ai_first_turn_wall_clock_budget_test.dart`,
+and avoids the carry-forward state that later turns would introduce. Once the
+seed-42 colonial-acquisition gap (Refs #2848 / #2509 S7) closes, a follow-up
+slice can extend the same trace to a phase-varying assertion across EXPAND →
+COLONIAL turns.
+
+### Acceptance criteria (F9 — turn-1 emission pin)
+
+- Given the seed-42 `runInitGame` output (`GameSetupConfig(seed: 42)`, default options) with every Great Power flipped to AI-controlled via `aiControlByGpId`, when `generateOrdersForGameFullAI` runs once for turn 1, then `result.orders.tradeOrdersByPlayerId.values.expand((list) => list)` is non-empty — at least one Great Power emits at least one `TradeOrder`.
+- Given the same seed-42 turn-1 invocation, when the test inspects each Great Power `gp1..gp6` in `result.orders.tradeOrdersByPlayerId`, then every emitted `TradeOrder` satisfies the F1–F5 invariants: `quantity > 0`, `priority` ∈ `{1, 2, 3, 4, 5}` (matches `kTreasuryBidPriority*` / `kTreasuryOfferPriority*`), `commodityId` is not in `richesCommodityIds`, and `type` is one of `TradeOrderType.bid` or `TradeOrderType.offer`.
+- Given the same seed-42 turn-1 invocation runs twice in succession, when both runs complete, then `result.orders.tradeOrdersByPlayerId` is equal across runs (determinism — mirrors the existing `generateOrdersForGameFullAI determinism` pin in `full_ai_planner_determinism_test.dart`).
+- Given a failing assertion in any of the criteria above, when the test reports the failure, then the assertion `reason` contains a per-GP trace row `gp<n>  tradeOrders=<count>  bids=<count>  offers=<count>  treasury=<int>  phase=<ObserverGoalPhase>` so a future regression in `runTreasuryPlanner` or the orchestrator F7 append surfaces structured per-GP context (matches the trace-table pattern used by `seed42_expand_phase_turn1_pin_test.dart`).
+
 ## Out of scope for this SPEC slice
 
 The following remain under remaining `#2994` subtasks:
 
 - Full treasury inflow/outflow forecasting (riches phase, subsidies, build/research spend) beyond the surplus/need maps and F8 offer-inflow discount above (F1 extension).
-- Observer-game seed-42 trade-behaviour verification and budget profiling (F9 / F10).
+- Observer-game seed-42 multi-turn treasury-growth + phase-varying (EXPAND vs COLONIAL) verification (F9 follow-up — gated on the seed-42 colonial-acquisition gap, Refs #2848 / #2509 S7, the same gate that keeps `seed42_observer_colonial_regression_test.dart` skipped).
+- Observer-game seed-42 budget profiling for `TreasuryPlanner + market resolution` against the 15-second `kTurnProcessingWallClockBudgetMs` envelope (F10 — extends the existing `full_ai_first_turn_wall_clock_budget_test.dart` envelope with the trade-orders-enabled assertion explicit).
 - Overseas extraction tonnage subtraction from trade cargo once extraction publishes per-player planned tonnage.
 
 ---
