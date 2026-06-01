@@ -66,16 +66,15 @@ Internal state ownership (phase 1 — intro):
 |             Text(game_overture_intro, bodyMedium,         |
 |                  --muted, italic)                         |
 |             ListView.builder (shrinkWrap, no scroll)      |
-|               Row                                         |
-|                 Expanded(                                 |
-|                   Row(                                    |
-|                     Text(offerer, --accent),              |
-|                     Text(": ", --muted),                  |
-|                     Text(stage, --muted)                  |
-|                   )                                       |
+|               Column(crossAxisAlignment: stretch) -- per offer
+|                 Row(                                      |
+|                   Text(offerer, --accent),                |
+|                   Text(": ", --muted),                    |
+|                   Text(stage, --muted)                    |
 |                 )                                         |
-|                 CtNinePatchButton(game_overture_accept)   |
-|                 CtNinePatchButton(game_overture_reject)   |
+|                 Wrap(alignment: end, spacing: 8)          |
+|                   CtNinePatchButton(game_overture_accept) |
+|                   CtNinePatchButton(game_overture_reject) |
 |             Align(centerRight)                            |
 |               CtNinePatchButton(game_callToArms_submit)   |
 +-----------------------------------------------------------+
@@ -90,6 +89,7 @@ Phase 2 chrome uses the dark editorial-monocle tokens from `SPEC/ui/pixel-art-ui
 - **Title → intro separator:** A `CtBrassDivider` is rendered between the title row and the intro `Text` per #2867 R21 (no extra padding inside the divider; vertical breathing room is supplied by 8 dp `SizedBox`es above and below).
 - **Intro line:** `Text(game_overture_intro)` rendered with `theme.textTheme.bodyMedium` color overridden to `EditorialMonoclePalette.muted` and `fontStyle: FontStyle.italic` per #2867 R5.
 - **Offer row label:** The offerer name and stage label are split into two `Text` widgets within a flex row so they can carry distinct colors (#2867 R22). The offerer name renders in `EditorialMonoclePalette.accent`; the stage label renders in `EditorialMonoclePalette.muted`. A `Text(": ")` separator (also `--muted`) keeps the formatted line readable. The full `game_overture_offerLine` localized template is no longer composed in the widget — the per-offer row composes the two parts directly.
+- **Offer row layout (stacked at narrow widths):** Each per-offer body is a `Column(crossAxisAlignment: stretch)` containing the labels `Row` above an end-aligned `Wrap(alignment: WrapAlignment.end, spacing: 8, runSpacing: 8)` that holds the Accept and Reject `CtNinePatchButton`s. The stacked layout mirrors `SPEC/ui/call-to-arms-dialogue-overlay.md` § Layout / wireframe so the two `CtNinePatchButton`s flow onto a second run at narrow viewports (`kMinViewportWidth` 320 dp) instead of overflowing horizontally, and the labels `Row` always has the full content column width to wrap on (issue #2870 S8 / S10; `SPEC/ui/mobile-adaptation.md` § 7).
 
 Error mode renders the same `Stack` but the `CtDialogShell` body is the localized error message (`l10n.game_overture_loadError`) plus a single Continue button (`l10n.game_intervention_continue`).
 
@@ -200,6 +200,10 @@ No direct `AppEventBus` or `Navigator` usage in the overlay.
 - Given the overlay is constructed with an empty `pendingOvertures` list,
   When the player advances the phase-1 intro to completion (or `skipIntroForTest == true`),
   Then phase 2 renders the title / intro labels and Submit, the offer list view contains zero rows, and tapping Submit invokes `onDecisions` with an empty list.
+
+- Given an `OvertureDialogueOverlay` is mounted in phase 2 (`skipIntroForTest: true`) with one or more pending overtures at a `kMinViewportWidth × 640` (320 × 640 dp) viewport,
+  When the widget tree settles,
+  Then `WidgetTester.takeException()` is `null` (no `RenderFlex` overflow exception escapes the framework — the same contract pinned by `dialogs_320dp_min_viewport_test.dart` and `call_to_arms_dialogue_overlay_320dp_min_viewport_test.dart`), every per-offer body lays out as the stacked `Column(Row(offerer + ": " + stage) + Wrap(Accept + Reject))` from § Layout / wireframe so the Accept and Reject `CtNinePatchButton`s flow onto a second run rather than overflowing horizontally, and the localized `game_overture_title`, `game_overture_accept`, `game_overture_reject`, and `game_callToArms_submit` labels still render end-to-end so the layout actually exercises the phase-2 body at the minimum viewport (`SPEC/ui/mobile-adaptation.md` § 7 / Refs #2870 S8 + S10 for OVL30001).
 
 ---
 
