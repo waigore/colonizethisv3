@@ -43,7 +43,7 @@ The civilian units panel gives the player a single place to see every civilian u
 
 ## Layout / wireframe
 
-Bottom sheet (up to ~⅓ screen height); scrollable grouped list by region; per-unit rows with locate and assign actions on the right.
+Bottom sheet (up to ~⅓ screen height); scrollable grouped list by region; per-unit rows with locate and assign actions on the right. The outer chrome (`ConstrainedBox` + `CtPanel` + `CtTopBar` + scrollable list / empty state) is the shared **[`UnitsPanelShell`](components/units-panel-shell.md)** composite.
 
 ---
 
