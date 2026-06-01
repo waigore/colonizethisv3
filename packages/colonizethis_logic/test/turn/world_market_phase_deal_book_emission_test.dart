@@ -26,7 +26,7 @@ void main() {
               sellerStockpile: const Stockpile().applyDelta('timber', 10),
               sellerTreasury: 0,
               buyerTreasury: 1000,
-              marketPrices: const {'timber': 30.0},
+              marketPrices: const {'timber': 30},
             ),
           );
           final config = TurnResolverConfig(
@@ -81,7 +81,7 @@ void main() {
                   .applyDelta('iron', 4),
               sellerTreasury: 0,
               buyerTreasury: 10000,
-              marketPrices: const {'timber': 30.0, 'iron': 80.0},
+              marketPrices: const {'timber': 30, 'iron': 80},
             ),
           );
           final config = TurnResolverConfig(
@@ -159,7 +159,7 @@ void main() {
               sellerStockpile: const Stockpile().applyDelta('timber', 10),
               sellerTreasury: 0,
               buyerTreasury: 0,
-              marketPrices: const {'timber': 30.0},
+              marketPrices: const {'timber': 30},
             ),
           );
           final config = TurnResolverConfig(
@@ -209,7 +209,7 @@ void main() {
               sellerStockpile: const Stockpile().applyDelta('timber', 3),
               sellerTreasury: 0,
               buyerTreasury: 1000,
-              marketPrices: const {'timber': 30.0},
+              marketPrices: const {'timber': 30},
             ),
           );
           final config = TurnResolverConfig(
@@ -258,14 +258,14 @@ void main() {
         'empty-turn semantics: no activity entries, no deals',
         () {
           final priorMarket = WorldMarketState.empty.copyWith(
-            prices: const {'timber': 30.0},
+            prices: const {'timber': 30},
           );
           final acc = TurnPipelineState(
             game: _gameWithTwoGps(
               sellerStockpile: Stockpile.empty,
               sellerTreasury: 0,
               buyerTreasury: 0,
-              marketPrices: const {'timber': 30.0},
+              marketPrices: const {'timber': 30},
             ).copyWith(worldMarketState: priorMarket),
           );
           final config = TurnResolverConfig(
@@ -289,7 +289,7 @@ Game _gameWithTwoGps({
   required Stockpile sellerStockpile,
   required int sellerTreasury,
   required int buyerTreasury,
-  required Map<CommodityId, double> marketPrices,
+  required Map<CommodityId, int> marketPrices,
 }) {
   return Game(
     id: 'g1',

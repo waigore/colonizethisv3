@@ -28,7 +28,7 @@ void main() {
         () {
           final game = _gameWithBuyerAndMinor(
             buyerTreasury: 1000,
-            timberPrice: 30.0,
+            timberPrice: 30,
           );
           final acc = TurnPipelineState(game: game);
           final config = TurnResolverConfig(
@@ -97,7 +97,7 @@ void main() {
         () {
           final game = _gameWithBuyerAndMinor(
             buyerTreasury: 0,
-            timberPrice: 30.0,
+            timberPrice: 30,
           );
           final acc = TurnPipelineState(game: game);
           final config = TurnResolverConfig(
@@ -132,7 +132,7 @@ void main() {
         () {
           final game = _gameWithBuyerAndMinor(
             buyerTreasury: 0,
-            timberPrice: 30.0,
+            timberPrice: 30,
           );
           final acc = TurnPipelineState(game: game);
           final config = TurnResolverConfig(
@@ -163,7 +163,7 @@ void main() {
 
 Game _gameWithBuyerAndMinor({
   required int buyerTreasury,
-  required double timberPrice,
+  required int timberPrice,
 }) {
   final minorProvince = Province(
     id: 'oldWorld|m1',

@@ -1,5 +1,6 @@
 // Widget tests for the Market tab read-only commodity table
-// (Refs #2993 E5a). SPEC/ui/trade-screen.md § Body — Market tab.
+// (Refs #2993 E5a + #3093 integer-price refresh).
+// SPEC/ui/trade-screen.md § Body — Market tab.
 //
 // Exercises the durable contract for the Market tab body:
 //
@@ -9,9 +10,12 @@
 //  * deterministic alphabetical sort by display name so widget tests
 //    and Widgetbook stories pin the same ordering,
 //  * last market price sourced from `Game.worldMarketState.prices`
-//    (rendered as the em-dash glyph `—` when the commodity is absent
-//    from the map — typically only seen in tests / Widgetbook stories
-//    that instantiate `WorldMarketState.empty`),
+//    (integer, post-#3093). Rows fall back to
+//    `ResourceRules.defaultMarketPrice` when the prices map lacks an
+//    entry for a raw-resource commodity (e.g. iron — base price 80);
+//    rows for manufactured commodities (no catalog default today) still
+//    render the em-dash glyph `—` until they participate in a market
+//    turn. Tracked as follow-up to #3093.
 //  * previous-turn aggregate volume line `Bids X / Offers Y` sourced
 //    from `Game.worldMarketState.lastTurnActivity`.
 //
@@ -35,7 +39,7 @@ import 'package:flutter_test/flutter_test.dart';
 /// Game factory in `catalog_part6.dart` so the same data shape proves
 /// the contract in both surfaces.
 Game _buildGame({
-  Map<CommodityId, double>? prices,
+  Map<CommodityId, int>? prices,
   Map<CommodityId, MarketActivity>? activity,
 }) {
   return Game(
@@ -54,7 +58,7 @@ Game _buildGame({
     diplomaticHistoryEvents: const [],
     dossierEvidenceEntries: const [],
     worldMarketState: WorldMarketState(
-      prices: prices ?? const <CommodityId, double>{},
+      prices: prices ?? const <CommodityId, int>{},
       lastTurnActivity:
           activity ?? const <CommodityId, MarketActivity>{},
     ),
@@ -218,42 +222,57 @@ void main() {
       );
 
       testWidgets(
-        'renders the live `WorldMarketState.prices` price for a seeded '
-        'commodity (timber=30.0 → `30.0`) and the em-dash glyph for an '
-        'unseeded commodity (iron, absent from the prices map)',
+        'renders the live `WorldMarketState.prices` integer price for a '
+        'seeded commodity (timber=30 → `30`) and falls back to the resource '
+        'catalog default for an unseeded raw-resource commodity '
+        '(iron → `80`); manufactured commodities without a catalog default '
+        'still render the em-dash (Refs #3093)',
         (tester) async {
           await _pumpTradeScreen(
             tester,
             game: _buildGame(
-              prices: const <CommodityId, double>{'timber': 30.0},
+              prices: const <CommodityId, int>{'timber': 30},
             ),
           );
 
-          // Seeded commodity row shows the formatted price text.
+          // Seeded commodity row shows the integer price text (Refs #3093 —
+          // `Map<CommodityId, int>` post-floor at persistence boundary).
           final timberRow = find.byKey(
             TradeScreen.marketCommodityRowKey(CommodityCatalog.timber.id),
           );
           expect(timberRow, findsOneWidget);
           expect(
-            find.descendant(of: timberRow, matching: find.text('30.0')),
+            find.descendant(of: timberRow, matching: find.text('30')),
             findsOneWidget,
             reason:
-                'SPEC/ui/trade-screen.md § Body — Market tab: the price '
-                'cell reads `Game.worldMarketState.prices[commodityId]` '
-                'formatted to one decimal place.',
+                'SPEC/ui/trade-screen.md § Body — Market tab (Refs #3093): '
+                'the price cell reads `Game.worldMarketState.prices[id]` '
+                'as a whole integer (price storage is now '
+                '`Map<CommodityId, int>` per #3093 issue body § Price '
+                'presentation & data model).',
           );
 
-          // Unseeded commodity row shows the canonical em-dash glyph in
-          // the price slot. Note: an em-dash also renders in the
-          // quantity readout when no trade order is staged for the row
-          // (Refs #2993 E5b), so the expectation pins both em-dashes
-          // are present (price-unknown sentinel + quantity-idle glyph)
-          // and that the quantity readout key resolves to its own
-          // em-dash text widget.
+          // Unseeded raw-resource commodity row falls back to the resource
+          // catalog default integer price (#3093 — iron defaults to 80 via
+          // `ResourceRules.defaultRules.defaultMarketPriceForCommodityId`).
           final ironRow = find.byKey(
             TradeScreen.marketCommodityRowKey(CommodityCatalog.iron.id),
           );
           expect(ironRow, findsOneWidget);
+          expect(
+            find.descendant(of: ironRow, matching: find.text('80')),
+            findsOneWidget,
+            reason:
+                'SPEC/ui/trade-screen.md § Body — Market tab (Refs #3093): '
+                'rows fall back to the resource catalog '
+                '`defaultMarketPrice` integer when '
+                '`WorldMarketState.prices` lacks an entry. Iron is a raw '
+                'resource with catalog default 80.',
+          );
+          // Negative pin: iron must NOT render the em-dash price glyph
+          // (the price-slot em-dash is reserved for the manufactured
+          // commodities whose catalog default has not been wired yet).
+          // The quantity-idle em-dash is a separate concern below.
           expect(
             find.descendant(
               of: ironRow,
@@ -262,16 +281,15 @@ void main() {
                 '—',
               ),
             ),
-            findsNWidgets(2),
+            findsOneWidget,
             reason:
-                'SPEC/ui/trade-screen.md § Body — Market tab: the '
-                'price slot shows the em-dash glyph when the commodity '
-                'is absent from `WorldMarketState.prices`. The quantity '
-                'readout (Refs #2993 E5b) also shows an em-dash when '
-                'no TradeOrder is staged for the row, so the row '
-                'currently renders two em-dashes when both conditions '
-                'hold (the case exercised by this test).',
+                'Refs #3093 — only the quantity-idle em-dash remains in '
+                'an iron row when no trade order is staged. The price-'
+                'slot em-dash must NOT appear for raw-resource commodities '
+                'with a catalog default (regression guard against losing '
+                'the catalog fallback).',
           );
+
           // The quantity-idle em-dash specifically lives under the
           // quantity readout key — keep this scoped pin so a future
           // regression that swaps the quantity glyph still surfaces a
@@ -286,6 +304,30 @@ void main() {
                 'quantity readout via the marketRowQuantityTextKey, '
                 'including rows whose staged TradeOrder is empty (the '
                 'idle em-dash glyph).',
+          );
+
+          // Manufactured commodity row (no catalog default today): the
+          // em-dash glyph remains in the price slot until the commodity
+          // participates in a market turn. This pins the explicit deferral
+          // documented in `_formatPrice`.
+          final lumberRow = find.byKey(
+            TradeScreen.marketCommodityRowKey(CommodityCatalog.lumber.id),
+          );
+          expect(lumberRow, findsOneWidget);
+          expect(
+            find.descendant(
+              of: lumberRow,
+              matching: find.text(
+                // ignore: avoid_hardcoded_strings_in_widgets
+                '—',
+              ),
+            ),
+            findsNWidgets(2),
+            reason:
+                'Refs #3093 — manufactured commodities are not enumerated '
+                'in `ResourceRules.defaultMarketPrice`; their price slot '
+                'continues to render the em-dash glyph (and the quantity-'
+                'idle em-dash also renders when no TradeOrder is staged).',
           );
         },
       );

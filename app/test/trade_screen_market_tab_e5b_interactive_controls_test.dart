@@ -37,6 +37,16 @@ import 'package:flutter_test/flutter_test.dart';
 const String _humanPlayerId = 'gp_h';
 
 Game _buildGame() {
+  // Refs #3093 — sellable clamp slice. The Offer chip + offer-side
+  // `+` are now gated by the per-commodity offer cap
+  // (`stockpile − industryAllocation`). Seed a baseline stockpile of
+  // 99 units for every tradeable commodity so the E5b interactive-
+  // control tests (which stage Offer orders without specifying
+  // stockpile) keep passing under the new contract.
+  final Map<CommodityId, int> stockpile = <CommodityId, int>{
+    for (final Commodity c in CommodityCatalog.all)
+      if (c.category != CommodityCategory.riches && c.id != 'spices') c.id: 99,
+  };
   return Game(
     id: 'test_trade_screen_e5b',
     worldState: WorldState(
@@ -45,10 +55,15 @@ Game _buildGame() {
       newWorld: const RegionData(),
     ),
     turnTimeMapping: TurnTimeMapping.gdd01,
-    players: const [
-      // ignore: avoid_hardcoded_strings_in_widgets
-      Player(id: _humanPlayerId, displayName: 'England', isHuman: true,
-          treasury: 500),
+    players: [
+      Player(
+        id: _humanPlayerId,
+        // ignore: avoid_hardcoded_strings_in_widgets
+        displayName: 'England',
+        isHuman: true,
+        treasury: 500,
+        stockpile: Stockpile(quantities: stockpile),
+      ),
     ],
     diplomacyRelations: const [],
     diplomaticHistoryEvents: const [],

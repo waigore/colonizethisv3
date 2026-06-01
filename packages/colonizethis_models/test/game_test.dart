@@ -379,8 +379,11 @@ void main() {
         worldMarketState: marketState,
       );
       final restored = Game.fromJson(game.toJson());
-      expect(restored.worldMarketState.prices['timber'], 30.0);
-      expect(restored.worldMarketState.prices['iron'], 80.0);
+      // Post-#3093: prices are stored as integers (floored at persistence
+      // boundary per SPEC/game/world-market.md § Price discovery).
+      expect(restored.worldMarketState.prices['timber'], 30);
+      expect(restored.worldMarketState.prices['iron'], 80);
+      expect(restored.worldMarketState.prices['timber'], isA<int>());
       expect(restored.worldMarketState, marketState);
       expect(restored, game);
       expect(restored.hashCode, game.hashCode);
@@ -416,7 +419,9 @@ void main() {
           'timber': 25,
         }),
       );
-      expect(next.worldMarketState.prices['timber'], 25.0);
+      // Post-#3093: prices are stored as integers.
+      expect(next.worldMarketState.prices['timber'], 25);
+      expect(next.worldMarketState.prices['timber'], isA<int>());
       expect(next == game, isFalse);
     });
   });
