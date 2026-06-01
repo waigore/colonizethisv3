@@ -13,6 +13,7 @@ import '../../../widgets/ct_resource_cell.dart';
 import '../../../widgets/ct_section_label.dart';
 import '../../../widgets/ct_spacing.dart';
 import '../../../widgets/resource_icon.dart';
+import 'chrome/ct_danger_text_button.dart';
 import 'production_allocation_row.dart';
 import 'production_allocation_row_chrome.dart';
 import 'production_labour_helpers.dart';
@@ -504,9 +505,11 @@ class _AllocationSubpanel extends StatelessWidget {
             style: theme.textTheme.titleSmall,
           ),
         ),
-        CtNinePatchButton(
+        CtDangerTextButton(
+          key: const ValueKey<String>('production_allocation_reset_button'),
           onPressed: () => onDesiredOutputChanged({}),
-          child: Text(l10n.common_reset),
+          label: l10n.common_reset,
+          tooltip: l10n.common_reset,
         ),
       ],
     );
