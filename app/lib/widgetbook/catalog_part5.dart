@@ -676,6 +676,30 @@ class _CtToggleSwitchStoryState extends State<_CtToggleSwitchStory> {
           ),
           const SizedBox(height: 4),
           const CtToggleSwitch(value: true, onChanged: null),
+          const SizedBox(height: 16),
+          const Text(
+            // ignore: avoid_hardcoded_strings_in_widgets
+            'On with --success glow (overture Accept toggle — #2867 R22)',
+            style: TextStyle(color: Colors.white70),
+          ),
+          const SizedBox(height: 4),
+          CtToggleSwitch(
+            value: true,
+            onGlowColor: EditorialMonoclePalette.success,
+            onChanged: (_) {},
+          ),
+          const SizedBox(height: 16),
+          const Text(
+            // ignore: avoid_hardcoded_strings_in_widgets
+            'On with --danger glow (overture Reject toggle — #2867 R22)',
+            style: TextStyle(color: Colors.white70),
+          ),
+          const SizedBox(height: 4),
+          CtToggleSwitch(
+            value: true,
+            onGlowColor: EditorialMonoclePalette.danger,
+            onChanged: (_) {},
+          ),
         ],
       ),
     );
