@@ -1156,50 +1156,17 @@ class _MarketCommodityRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Sellable readout style: muted parens read as auxiliary metadata
-    // (not the primary commodity name), matching the Bids/Offers
-    // volume line on line 2.
-    final TextStyle sellableStyle = nameStyle.copyWith(
-      color: EditorialMonoclePalette.muted,
-    );
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
       children: <Widget>[
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: <Widget>[
-            ResourceIcon(
-              key: TradeScreen.marketRowResourceIconKey(commodityId),
-              commodityId: commodityId,
-              size: TradeScreen.marketRowResourceIconSize,
-            ),
-            const SizedBox(width: 4),
-            Flexible(
-              child: Text(
-                commodityDisplayName,
-                style: nameStyle,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ),
-            const SizedBox(width: 4),
-            Text(
-              // ignore: avoid_hardcoded_strings_in_widgets
-              '($sellableHeadroom)',
-              key: TradeScreen.marketRowSellableReadoutKey(commodityId),
-              style: sellableStyle,
-            ),
-            const Spacer(),
-            const SizedBox(width: 8),
-            StrictAssetIcon(
-              key: TradeScreen.marketRowPriceCoinIconKey(commodityId),
-              assetPath: TradeScreen.marketRowPriceCoinAssetPath,
-              width: TradeScreen.marketRowPriceCoinIconSize,
-              height: TradeScreen.marketRowPriceCoinIconSize,
-            ),
-            const SizedBox(width: 4),
-            Text(priceText, style: priceStyle),
-          ],
+        _MarketCommodityRowHeader(
+          commodityId: commodityId,
+          commodityDisplayName: commodityDisplayName,
+          priceText: priceText,
+          sellableHeadroom: sellableHeadroom,
+          nameStyle: nameStyle,
+          priceStyle: priceStyle,
         ),
         const SizedBox(height: 2),
         Text(volumeText, style: volumeStyle),
@@ -1216,6 +1183,71 @@ class _MarketCommodityRow extends StatelessWidget {
           onIncrement: onIncrement,
           onDecrement: onDecrement,
         ),
+      ],
+    );
+  }
+}
+
+/// Top read-only line of a Market tab commodity row (Refs #3093):
+/// resource icon, commodity name, sellable `(N)` headroom readout,
+/// a flexible spacer, then the coin icon and current market price.
+/// Extracted from `_MarketCommodityRow.build` to keep the parent
+/// `build` body within the `widget_build_method_too_long` AST cap.
+class _MarketCommodityRowHeader extends StatelessWidget {
+  const _MarketCommodityRowHeader({
+    required this.commodityId,
+    required this.commodityDisplayName,
+    required this.priceText,
+    required this.sellableHeadroom,
+    required this.nameStyle,
+    required this.priceStyle,
+  });
+
+  final CommodityId commodityId;
+  final String commodityDisplayName;
+  final String priceText;
+  final int sellableHeadroom;
+  final TextStyle nameStyle;
+  final TextStyle priceStyle;
+
+  @override
+  Widget build(BuildContext context) {
+    final TextStyle sellableStyle = nameStyle.copyWith(
+      color: EditorialMonoclePalette.muted,
+    );
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: <Widget>[
+        ResourceIcon(
+          key: TradeScreen.marketRowResourceIconKey(commodityId),
+          commodityId: commodityId,
+          size: TradeScreen.marketRowResourceIconSize,
+        ),
+        const SizedBox(width: 4),
+        Flexible(
+          child: Text(
+            commodityDisplayName,
+            style: nameStyle,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ),
+        const SizedBox(width: 4),
+        Text(
+          // ignore: avoid_hardcoded_strings_in_widgets
+          '($sellableHeadroom)',
+          key: TradeScreen.marketRowSellableReadoutKey(commodityId),
+          style: sellableStyle,
+        ),
+        const Spacer(),
+        const SizedBox(width: 8),
+        StrictAssetIcon(
+          key: TradeScreen.marketRowPriceCoinIconKey(commodityId),
+          assetPath: TradeScreen.marketRowPriceCoinAssetPath,
+          width: TradeScreen.marketRowPriceCoinIconSize,
+          height: TradeScreen.marketRowPriceCoinIconSize,
+        ),
+        const SizedBox(width: 4),
+        Text(priceText, style: priceStyle),
       ],
     );
   }
