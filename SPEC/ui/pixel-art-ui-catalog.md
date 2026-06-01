@@ -126,13 +126,14 @@ tokens match the issue's Design proposal verbatim.
 
 ### Hard-coded color ban
 
-Production UI surface under `app/lib/features/**/*.dart` MUST resolve colors
-through `EditorialMonoclePalette` tokens (or `CtGradients`) rather than the
-banned Material color literals listed below. This codifies #2914 § Target
-state §1 ("All colors in feature code resolve through `EditorialMonoclePalette`
-tokens; zero `Colors.*` / `const Color(...)` in files outside `config/` and
-`widgets/`") into a PR-blocking gate (`repo.app_editorial_monocle_colors` —
-see `SPEC/program/repo-lint.md`).
+Production UI surface under `app/lib/features/**/*.dart` and the design-system
+catalog directory `app/lib/widgets/**/*.dart` MUST resolve colors through
+`EditorialMonoclePalette` tokens (or `CtGradients`) rather than the banned
+Material color literals listed below. This codifies #2914 § Target state §1
+("All colors in feature code resolve through `EditorialMonoclePalette`
+tokens") and §S4 ("Zero `const Color(0x...)` in `app/lib/features/` and
+`app/lib/widgets/`") into a PR-blocking gate
+(`repo.app_editorial_monocle_colors` — see `SPEC/program/repo-lint.md`).
 
 **Banned literals (CI-enforced):**
 
@@ -168,6 +169,8 @@ see `SPEC/program/repo-lint.md`).
 | `app/lib/features/debug_log/debug_log_viewer_screen.dart` | Dev-tooling screen SYS10001 — relaxed per #2914 Risks / edge cases. |
 | `app/lib/features/game/flame/debug_console_overlay_panel.dart` | Dev-tooling screen SYS20001 — relaxed per #2914 Risks / edge cases. |
 | `app/lib/features/game/widgets/chrome/**` | Ct-* catalog widget implementations. These widgets implement the design-system primitives; consumer code in the rest of `features/**` must use the catalog widget, not raw Material colors. |
+| `app/lib/widgets/ct_main_menu_collage.dart` | Decorative `CustomPainter` `saveLayer` alpha multiplier (`Paint().color = const Color(0xFFFFFFFF).withValues(alpha: _collageOpacity)`). The literal is a compositing argument — any other color would tint the layer contents — and the editorial-monocle palette has no semantic token for pure-white-alpha compositing. Analogous to the Flame renderer allowlist. |
+| `app/lib/widgets/main_menu.dart` | Main-menu button hover `ColorFilter.mode(Colors.black.withValues(alpha: 0.15), BlendMode.darken)` composite. The literal is a blend operand whose semantic role is "darken by 15%", not a theme color reference; the editorial-monocle palette has no semantic token for compositing-only blend operands. |
 
 **Per-line exclusion:** Lines starting with `//` (or `///` dartdoc) are
 skipped so this document and similar narrative references in source can
@@ -184,14 +187,21 @@ mention the banned tokens by name without tripping the check.
   a non-allowlisted file under `app/lib/features/**/*.dart`, **when** repo
   lint runs the same rule, **then** the run fails and the failure output
   lists the offending `file:line` plus the banned `const Color(0x` prefix.
-- **Given** a contributor uses `Colors.transparent` in any feature file (for
-  hit-testing or non-rendering surfaces), **when** repo lint runs the same
-  rule, **then** the run passes for that line (the rule deliberately omits
-  `transparent` from the ban list).
-- **Given** a file path is on the whole-file allowlist documented above,
-  **when** repo lint runs the same rule, **then** the rule does not flag
-  banned literals inside that file (scope-only exclusion; the rule does not
-  load keyed per-violation waivers).
+- **Given** a contributor adds a banned Material color literal or a raw
+  `const Color(0x...)` hex literal to a non-allowlisted file under
+  `app/lib/widgets/**/*.dart` (the design-system catalog directory in scope
+  for #2914 §S4), **when** repo lint runs the same rule, **then** the run
+  fails and the failure output lists the offending `file:line: literal`.
+- **Given** a contributor uses `Colors.transparent` in any feature or widget
+  file (for hit-testing or non-rendering surfaces), **when** repo lint runs
+  the same rule, **then** the run passes for that line (the rule
+  deliberately omits `transparent` from the ban list).
+- **Given** a file path is on the whole-file allowlist documented above
+  (including the `app/lib/widgets/` canvas-compositing entries
+  `ct_main_menu_collage.dart` and `main_menu.dart`), **when** repo lint runs
+  the same rule, **then** the rule does not flag banned literals inside that
+  file (scope-only exclusion; the rule does not load keyed per-violation
+  waivers).
 
 ### Material IconButton ban
 

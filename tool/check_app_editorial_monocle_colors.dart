@@ -3,20 +3,22 @@ import 'dart:io';
 
 import 'package:path/path.dart' as p;
 
-/// PR-blocking structural check: production UI surface under `app/lib/features/`
-/// must resolve colors through `EditorialMonoclePalette` tokens (and
-/// `CtGradients`) rather than hard-coded Material color literals or raw
-/// `const Color(0x...)` hex values.
+/// PR-blocking structural check: production UI surface under
+/// `app/lib/features/` and `app/lib/widgets/` must resolve colors through
+/// `EditorialMonoclePalette` tokens (and `CtGradients`) rather than
+/// hard-coded Material color literals or raw `const Color(0x...)` hex
+/// values.
 ///
 /// SPEC:
 /// - `SPEC/ui/pixel-art-ui-catalog.md` § Editorial-monocle palette / Dialog scrim
 /// - `SPEC/ui/pixel-art-ui-catalog.md` § Hard-coded color ban (this rule)
 /// - `SPEC/program/repo-lint.md`
 ///
-/// Refs #2914 (target state §1, Phase 2 §G1).
+/// Refs #2914 (target state §1, Phase 1 §S4, Phase 2 §G1).
 ///
 /// Scope (production UI surface, non-test, non-generated):
 /// - `app/lib/features/**/*.dart`
+/// - `app/lib/widgets/**/*.dart`
 ///
 /// Skipped (whole-file path exclusions per repo-lint scope-only policy in
 /// `SPEC/program/repo-lint.md` § "Policy: no violation allowlists"):
@@ -38,6 +40,15 @@ import 'package:path/path.dart' as p;
 ///    fallbacks where palette tokens are non-`const`. Consumer code in
 ///    `features/**` must still use the catalog widget, not raw Material
 ///    colors.
+/// 5. **`app/lib/widgets/` CustomPainter / canvas compositing files** —
+///    decorative `CustomPainter` paints (e.g. `ct_main_menu_collage.dart`)
+///    and `ColorFilter.mode` darken/lighten composites (e.g. the main-menu
+///    button hover filter in `main_menu.dart`) treat the color value as a
+///    compositing argument (alpha multiplier or blend operand), not a theme
+///    palette reference. The editorial-monocle palette has no semantic
+///    token for these compositing-only colors, and replacing them with
+///    palette tokens would tint the rendered output. Analogous to the
+///    Flame renderer allowlist for the same reason.
 ///
 /// Per-line skips:
 /// - Lines starting with `//` (line comments) and `///` (dartdoc) so this
@@ -51,6 +62,11 @@ int runCheckAppEditorialMonocleColors(
   final logI = info ?? stdout.writeln;
   final logE = err ?? stderr.writeln;
 
+  // Scope: production UI surface under app/lib/features/** plus the
+  // app/lib/widgets/** design-system catalog directory. The features
+  // root must exist for the check to be meaningful; the widgets root
+  // is scanned when present (some test-fixture trees only populate
+  // features/).
   final featuresDir = Directory(
     p.join(repoRoot, 'app', 'lib', 'features'),
   );
@@ -60,39 +76,48 @@ int runCheckAppEditorialMonocleColors(
     );
     return 1;
   }
+  final widgetsDir = Directory(
+    p.join(repoRoot, 'app', 'lib', 'widgets'),
+  );
 
   final violations = <String>[];
-  for (final entity in featuresDir.listSync(
-    recursive: true,
-    followLinks: false,
-  )) {
-    if (entity is! File || !entity.path.endsWith('.dart')) {
-      continue;
-    }
-    final relativePath = p
-        .relative(entity.path, from: repoRoot)
-        .replaceAll('\\', '/');
-    if (_shouldSkipAppEditorialMonocleColorsFile(relativePath)) {
-      continue;
-    }
+  final scanRoots = <Directory>[
+    featuresDir,
+    if (widgetsDir.existsSync()) widgetsDir,
+  ];
+  for (final root in scanRoots) {
+    for (final entity in root.listSync(
+      recursive: true,
+      followLinks: false,
+    )) {
+      if (entity is! File || !entity.path.endsWith('.dart')) {
+        continue;
+      }
+      final relativePath = p
+          .relative(entity.path, from: repoRoot)
+          .replaceAll('\\', '/');
+      if (_shouldSkipAppEditorialMonocleColorsFile(relativePath)) {
+        continue;
+      }
 
-    final lines = const LineSplitter().convert(entity.readAsStringSync());
-    for (var i = 0; i < lines.length; i++) {
-      final line = lines[i];
-      final trimmed = line.trimLeft();
-      if (trimmed.startsWith('//')) {
-        // Also covers '///' dartdoc — see header note.
-        continue;
+      final lines = const LineSplitter().convert(entity.readAsStringSync());
+      for (var i = 0; i < lines.length; i++) {
+        final line = lines[i];
+        final trimmed = line.trimLeft();
+        if (trimmed.startsWith('//')) {
+          // Also covers '///' dartdoc — see header note.
+          continue;
+        }
+        final match = bannedColorLiteralPattern.firstMatch(line);
+        if (match == null) {
+          continue;
+        }
+        violations.add(
+          '$relativePath:${i + 1}: ${match.group(0)!} -> use '
+          'EditorialMonoclePalette token (see SPEC/ui/pixel-art-ui-catalog.md '
+          '§ Editorial-monocle palette)',
+        );
       }
-      final match = bannedColorLiteralPattern.firstMatch(line);
-      if (match == null) {
-        continue;
-      }
-      violations.add(
-        '$relativePath:${i + 1}: ${match.group(0)!} -> use '
-        'EditorialMonoclePalette token (see SPEC/ui/pixel-art-ui-catalog.md '
-        '§ Editorial-monocle palette)',
-      );
     }
   }
 
@@ -105,8 +130,9 @@ int runCheckAppEditorialMonocleColors(
 
   logE(
     'check_app_editorial_monocle_colors: found ${violations.length} '
-    'violation(s) under app/lib/features/ (banned hard-coded color literal; '
-    'use EditorialMonoclePalette token or a Ct-* catalog widget):',
+    'violation(s) under app/lib/features/ and app/lib/widgets/ '
+    '(banned hard-coded color literal; use EditorialMonoclePalette token '
+    'or a Ct-* catalog widget):',
   );
   for (final violation in violations) {
     logE(' - $violation');
@@ -183,6 +209,14 @@ const Set<String> _appEditorialMonocleColorsAllowedFiles = <String>{
   // (Debug Console Overlay). Relaxed per #2914 Risks / edge cases.
   'app/lib/features/debug_log/debug_log_viewer_screen.dart',
   'app/lib/features/game/flame/debug_console_overlay_panel.dart',
+  // app/lib/widgets/ canvas-compositing files — the color literal is a
+  // compositing argument (alpha multiplier in `Paint.color` for a
+  // `saveLayer` decorative overlay, or the `ColorFilter.mode` blend
+  // operand for a hover-darken filter), not a theme palette reference.
+  // The editorial-monocle palette has no semantic token for these
+  // compositing-only colors, analogous to the Flame renderer allowlist.
+  'app/lib/widgets/ct_main_menu_collage.dart',
+  'app/lib/widgets/main_menu.dart',
 };
 
 const Set<String> _appEditorialMonocleColorsAllowedDirPrefixes = <String>{
