@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../../config/editorial_monocle_palette.dart';
 import '../../../../widgets/ct_gradients.dart';
+import '../../../../widgets/ct_spacing.dart';
 
 /// Dark editorial-monocle primary/secondary/action button.
 ///
@@ -32,7 +33,9 @@ import '../../../../widgets/ct_gradients.dart';
 /// - **Disabled:** Entire widget renders at [disabledOpacity] (0.4) and
 ///   suppresses pointer events / hover.
 /// - **Touch target:** Minimum [minHeight] (default 48 dp); inner padding is
-///   16 px horizontal / 12 px vertical unless [padding] overrides.
+///   `CtSpacing.l` (16 px) horizontal / `CtSpacing.ml` (12 px) vertical
+///   unless [padding] overrides. Tokens resolve through
+///   `SPEC/ui/pixel-art-ui-catalog.md` § *Spacing tokens*.
 ///
 /// All colours resolve from [EditorialMonoclePalette] tokens (`--surface`,
 /// `--surface-lite`, `--accent`, `--accent-bright`, `--border`); no
@@ -65,9 +68,21 @@ class CtNinePatchButton extends StatefulWidget {
   /// pointer events.
   final bool enabled;
 
-  /// Override for inner padding. Defaults to 16 px horizontal / 12 px
-  /// vertical, matching the legacy nine-patch button's content inset.
+  /// Override for inner padding. Defaults to [defaultPadding]
+  /// (`CtSpacing.l` horizontal / `CtSpacing.ml` vertical) per
+  /// `SPEC/ui/pixel-art-ui-catalog.md` § *Spacing tokens*, matching the
+  /// legacy nine-patch button's content inset.
   final EdgeInsetsGeometry? padding;
+
+  /// Default inner padding applied when [padding] is `null`.
+  /// `CtSpacing.l` (16 px) horizontal / `CtSpacing.ml` (12 px) vertical
+  /// per `SPEC/ui/pixel-art-ui-catalog.md` § *Spacing tokens*. Exposed so
+  /// widget tests and Widgetbook stories can pin the canonical default
+  /// without re-deriving the literal.
+  static const EdgeInsetsGeometry defaultPadding = EdgeInsets.symmetric(
+    horizontal: CtSpacing.l,
+    vertical: CtSpacing.ml,
+  );
 
   /// Retained for backward compatibility with the legacy nine-patch
   /// rendering. The dark editorial-monocle visual contract no longer
@@ -218,8 +233,7 @@ class _CtNinePatchButtonState extends State<CtNinePatchButton> {
   Widget build(BuildContext context) {
     final ThemeData theme = Theme.of(context);
     final EdgeInsetsGeometry padding =
-        widget.padding ??
-        const EdgeInsets.symmetric(horizontal: 16, vertical: 12);
+        widget.padding ?? CtNinePatchButton.defaultPadding;
 
     final TextStyle baseTextStyle =
         theme.textTheme.titleSmall ??
