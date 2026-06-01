@@ -1,5 +1,5 @@
 // Widget tests for the Market tab read-only commodity table
-// (Refs #2993 E5a + #3093 integer-price refresh).
+// (Refs #2993 E5a + #3093 integer-price refresh + sectioned grouping).
 // SPEC/ui/trade-screen.md § Body — Market tab.
 //
 // Exercises the durable contract for the Market tab body:
@@ -7,8 +7,11 @@
 //  * one row per tradeable commodity (full CommodityCatalog minus
 //    riches and `spices` — 22 rows total per SPEC/game/world-market.md
 //    §Tradeable commodities),
-//  * deterministic alphabetical sort by display name so widget tests
-//    and Widgetbook stories pin the same ordering,
+//  * Production-style sectioned grouping (`#3093` § Layout & grouping):
+//    the rows are grouped by [CommodityCategory] under `CtSectionLabel`
+//    headers — Food → Raw Materials → Manufactured — and within each
+//    section the rows follow `CommodityCatalog.all` catalog order
+//    (mirroring the Production panel's Available subpanel),
 //  * last market price sourced from `Game.worldMarketState.prices`
 //    (integer, post-#3093). Rows fall back to
 //    `ResourceRules.defaultMarketPrice` when the prices map lacks an
@@ -164,60 +167,239 @@ void main() {
       );
 
       testWidgets(
-        'rows are sorted alphabetically by display name (case-insensitive) '
-        '— deterministic order pin',
+        'rows are grouped under Food / Raw Materials / Manufactured '
+        'CtSectionLabel headers in catalog order — deterministic order '
+        'pin (#3093 sectioned grouping)',
         (tester) async {
           await _pumpTradeScreen(tester, game: _buildGame());
 
-          final List<Commodity> tradeable = <Commodity>[
+          // All three section headers mounted in order Food → Raw
+          // Materials → Manufactured. The pin verifies their vertical
+          // positions in the parent column, which guarantees the
+          // expected reading order.
+          final Offset foodHeaderOffset = tester.getTopLeft(
+            find.byKey(TradeScreen.marketSectionFoodKey),
+          );
+          final Offset rawMaterialsHeaderOffset = tester.getTopLeft(
+            find.byKey(TradeScreen.marketSectionRawMaterialsKey),
+          );
+          final Offset manufacturedHeaderOffset = tester.getTopLeft(
+            find.byKey(TradeScreen.marketSectionManufacturedKey),
+          );
+
+          expect(
+            rawMaterialsHeaderOffset.dy,
+            greaterThan(foodHeaderOffset.dy),
+            reason:
+                'SPEC/ui/trade-screen.md § Market tab — sectioned '
+                'grouping (#3093): the Raw Materials section header must '
+                'appear below the Food section header.',
+          );
+          expect(
+            manufacturedHeaderOffset.dy,
+            greaterThan(rawMaterialsHeaderOffset.dy),
+            reason:
+                'SPEC/ui/trade-screen.md § Market tab — sectioned '
+                'grouping (#3093): the Manufactured section header must '
+                'appear below the Raw Materials section header.',
+          );
+
+          // Each section contains its category's commodities in
+          // CommodityCatalog.all iteration order (the same order the
+          // Production panel uses). Build the expected per-section
+          // lists from the live catalog so a future ruleset extension
+          // automatically reflects in the assertion without manual
+          // edits.
+          final List<Commodity> foodCommodities = <Commodity>[
             for (final Commodity c in CommodityCatalog.all)
-              if (c.category != CommodityCategory.riches && c.id != 'spices') c,
+              if (c.category == CommodityCategory.food && c.id != 'spices') c,
           ];
-          final List<Commodity> expectedOrder = List<Commodity>.of(tradeable)
-            ..sort((Commodity a, Commodity b) {
-              final String an = (a.displayName ?? a.id).toLowerCase();
-              final String bn = (b.displayName ?? b.id).toLowerCase();
-              return an.compareTo(bn);
-            });
-
-          final List<Offset> positions = <Offset>[
-            for (final Commodity c in expectedOrder)
-              tester.getTopLeft(
-                find.byKey(TradeScreen.marketCommodityRowKey(c.id)),
-              ),
+          final List<Commodity> rawMaterialCommodities = <Commodity>[
+            for (final Commodity c in CommodityCatalog.all)
+              if (c.category == CommodityCategory.rawMaterial &&
+                  c.id != 'spices')
+                c,
+          ];
+          final List<Commodity> manufacturedCommodities = <Commodity>[
+            for (final Commodity c in CommodityCatalog.all)
+              if (c.category == CommodityCategory.manufactured &&
+                  c.id != 'spices')
+                c,
           ];
 
-          for (int i = 1; i < positions.length; i++) {
-            expect(
-              positions[i].dy,
-              greaterThan(positions[i - 1].dy),
-              reason:
-                  'Row `${expectedOrder[i].id}` must appear below row '
-                  '`${expectedOrder[i - 1].id}` (alphabetical by display '
-                  'name, case-insensitive).',
-            );
+          for (final List<Commodity> sectionRows in <List<Commodity>>[
+            foodCommodities,
+            rawMaterialCommodities,
+            manufacturedCommodities,
+          ]) {
+            for (int i = 1; i < sectionRows.length; i++) {
+              final Offset prior = tester.getTopLeft(
+                find.byKey(
+                  TradeScreen.marketCommodityRowKey(sectionRows[i - 1].id),
+                ),
+              );
+              final Offset current = tester.getTopLeft(
+                find.byKey(
+                  TradeScreen.marketCommodityRowKey(sectionRows[i].id),
+                ),
+              );
+              expect(
+                current.dy,
+                greaterThan(prior.dy),
+                reason:
+                    'Row `${sectionRows[i].id}` must appear below row '
+                    '`${sectionRows[i - 1].id}` (catalog order within '
+                    'its category section).',
+              );
+            }
           }
 
-          // Concrete spot-check: `Cast iron` precedes `Cigars` precedes
-          // `Coal` (deterministic alphabetical pin so a regression in
-          // the comparator surfaces with a readable failure).
-          final castIron = tester.getTopLeft(
+          // Cross-section pin: the last food row must precede the Raw
+          // Materials header which must precede the first raw-material
+          // row; likewise for the manufactured boundary. This catches
+          // regressions where a single commodity slips out of its
+          // section into the wrong bucket.
+          final Offset lastFoodRow = tester.getTopLeft(
             find.byKey(
-              TradeScreen.marketCommodityRowKey(CommodityCatalog.castIron.id),
+              TradeScreen.marketCommodityRowKey(foodCommodities.last.id),
             ),
           );
-          final cigars = tester.getTopLeft(
+          final Offset firstRawMaterialRow = tester.getTopLeft(
             find.byKey(
-              TradeScreen.marketCommodityRowKey(CommodityCatalog.cigars.id),
+              TradeScreen.marketCommodityRowKey(
+                rawMaterialCommodities.first.id,
+              ),
             ),
           );
-          final coal = tester.getTopLeft(
+          expect(
+            lastFoodRow.dy,
+            lessThan(rawMaterialsHeaderOffset.dy),
+            reason:
+                'The last Food row (`${foodCommodities.last.id}`) must '
+                'sit above the Raw Materials section header.',
+          );
+          expect(
+            rawMaterialsHeaderOffset.dy,
+            lessThan(firstRawMaterialRow.dy),
+            reason:
+                'The Raw Materials section header must sit above the '
+                'first Raw Materials row '
+                '(`${rawMaterialCommodities.first.id}`).',
+          );
+
+          final Offset lastRawMaterialRow = tester.getTopLeft(
             find.byKey(
-              TradeScreen.marketCommodityRowKey(CommodityCatalog.coal.id),
+              TradeScreen.marketCommodityRowKey(
+                rawMaterialCommodities.last.id,
+              ),
             ),
           );
-          expect(castIron.dy, lessThan(cigars.dy));
-          expect(cigars.dy, lessThan(coal.dy));
+          final Offset firstManufacturedRow = tester.getTopLeft(
+            find.byKey(
+              TradeScreen.marketCommodityRowKey(
+                manufacturedCommodities.first.id,
+              ),
+            ),
+          );
+          expect(
+            lastRawMaterialRow.dy,
+            lessThan(manufacturedHeaderOffset.dy),
+            reason:
+                'The last Raw Materials row '
+                '(`${rawMaterialCommodities.last.id}`) must sit above '
+                'the Manufactured section header.',
+          );
+          expect(
+            manufacturedHeaderOffset.dy,
+            lessThan(firstManufacturedRow.dy),
+            reason:
+                'The Manufactured section header must sit above the '
+                'first Manufactured row '
+                '(`${manufacturedCommodities.first.id}`).',
+          );
+        },
+      );
+
+      testWidgets(
+        'CtSectionLabel headers render their localized labels '
+        '(Food / Raw Materials / Manufactured)',
+        (tester) async {
+          await _pumpTradeScreen(tester, game: _buildGame());
+
+          // Section labels rendered as upper-case small-caps by
+          // CtSectionLabel; pin the visible (upper-cased) literal.
+          expect(
+            find.descendant(
+              of: find.byKey(TradeScreen.marketSectionFoodKey),
+              // ignore: avoid_hardcoded_strings_in_widgets
+              matching: find.text('FOOD'),
+            ),
+            findsOneWidget,
+            reason:
+                'CtSectionLabel renders its text in upper-case so the '
+                'Food header should read `FOOD` (l10n English fallback '
+                'when the host MaterialApp has no l10n delegates).',
+          );
+          expect(
+            find.descendant(
+              of: find.byKey(TradeScreen.marketSectionRawMaterialsKey),
+              // ignore: avoid_hardcoded_strings_in_widgets
+              matching: find.text('RAW MATERIALS'),
+            ),
+            findsOneWidget,
+            reason:
+                'CtSectionLabel renders its text in upper-case so the '
+                'Raw Materials header should read `RAW MATERIALS`.',
+          );
+          expect(
+            find.descendant(
+              of: find.byKey(TradeScreen.marketSectionManufacturedKey),
+              // ignore: avoid_hardcoded_strings_in_widgets
+              matching: find.text('MANUFACTURED'),
+            ),
+            findsOneWidget,
+            reason:
+                'CtSectionLabel renders its text in upper-case so the '
+                'Manufactured header should read `MANUFACTURED`.',
+          );
+        },
+      );
+
+      testWidgets(
+        'every section header is mounted inside the Market tab body '
+        '(not under the off-stage Deal Book tab body)',
+        (tester) async {
+          await _pumpTradeScreen(tester, game: _buildGame());
+
+          for (final Key sectionKey in <Key>[
+            TradeScreen.marketSectionFoodKey,
+            TradeScreen.marketSectionRawMaterialsKey,
+            TradeScreen.marketSectionManufacturedKey,
+          ]) {
+            expect(
+              find.descendant(
+                of: find.byKey(TradeScreen.marketTabBodyKey),
+                matching: find.byKey(sectionKey),
+              ),
+              findsOneWidget,
+              reason:
+                  'Section header `$sectionKey` must be mounted inside '
+                  'the Market tab body keyed `marketTabBodyKey`.',
+            );
+            expect(
+              find.descendant(
+                of: find.byKey(
+                  TradeScreen.dealBookTabBodyKey,
+                  skipOffstage: false,
+                ),
+                matching: find.byKey(sectionKey),
+              ),
+              findsNothing,
+              reason:
+                  'Section header `$sectionKey` must NOT leak into the '
+                  'off-stage Deal Book tab body subtree.',
+            );
+          }
         },
       );
 
