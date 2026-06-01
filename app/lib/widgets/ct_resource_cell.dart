@@ -153,18 +153,30 @@ class CtResourceCell extends StatelessWidget {
               ),
             ),
             const SizedBox(width: itemGap),
-            Text(
-              formatQuantity(quantity),
-              style: _monoStyle(
-                context,
-                color: EditorialMonoclePalette.accentDim,
+            Flexible(
+              fit: FlexFit.loose,
+              child: Text(
+                formatQuantity(quantity),
+                style: _monoStyle(
+                  context,
+                  color: EditorialMonoclePalette.accentDim,
+                ),
+                overflow: TextOverflow.ellipsis,
+                maxLines: 1,
+                softWrap: false,
               ),
             ),
             if (deltaText != null) ...<Widget>[
               const SizedBox(width: quantityToDeltaGap),
-              Text(
-                deltaText,
-                style: _monoStyle(context, color: deltaTextColor!),
+              Flexible(
+                fit: FlexFit.loose,
+                child: Text(
+                  deltaText,
+                  style: _monoStyle(context, color: deltaTextColor!),
+                  overflow: TextOverflow.ellipsis,
+                  maxLines: 1,
+                  softWrap: false,
+                ),
               ),
             ],
           ],

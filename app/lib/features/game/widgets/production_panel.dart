@@ -40,6 +40,29 @@ const Key kProductionPanelWideLayoutKey = ValueKey<String>(
   'production_panel_wide_layout',
 );
 
+/// Column count used by the Available subpanel commodity sections (Food, Raw
+/// Materials, Manufactured) per `SPEC/ui/production-panel.md` § Layout —
+/// Available subpanel "Commodity grid layout" (mockup `.grid-3col`, owner
+/// decision **C7** / S8b for issue #2862). Applies on every viewport width.
+const int kProductionAvailableCommodityGridColumns = 3;
+
+/// Column count used by the Available subpanel Workers section per
+/// `SPEC/ui/production-panel.md` § Layout — Available subpanel "Workers
+/// section" (mockup `.grid-2col`, owner decision **C7** / S8b for issue
+/// #2862). Applies on every viewport width.
+const int kProductionAvailableWorkerGridColumns = 2;
+
+/// Key string planted on the Workers grid container so widget tests can
+/// assert the 2-column worker layout (Refs #2862 S8b).
+const String kProductionAvailableWorkerGridKeyValue =
+    'production_available_worker_grid';
+
+/// Stable widget key for the Workers grid container; tests can locate the
+/// grid via this key without crawling the section ancestors.
+const Key kProductionAvailableWorkerGridKey = ValueKey<String>(
+  kProductionAvailableWorkerGridKeyValue,
+);
+
 class ProductionPanel extends StatelessWidget {
   const ProductionPanel({
     super.key,
@@ -235,17 +258,18 @@ class _AvailableSubpanel extends StatelessWidget {
     List<Commodity> commodities,
     Map<String, int> netChanges,
   ) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: <Widget>[
-        for (int i = 0; i < commodities.length; i++) ...<Widget>[
-          if (i > 0) const SizedBox(height: 4),
+    return _AvailableCellGrid(
+      key: ValueKey<String>(
+        'production_available_commodity_grid_${commodities.map((c) => c.id).join('_')}',
+      ),
+      columnCount: kProductionAvailableCommodityGridColumns,
+      cells: <Widget>[
+        for (final commodity in commodities)
           _buildCommodityCell(
-            commodities[i],
-            player.stockpile.quantityOf(commodities[i].id),
-            netChanges[commodities[i].id] ?? 0,
+            commodity,
+            player.stockpile.quantityOf(commodity.id),
+            netChanges[commodity.id] ?? 0,
           ),
-        ],
       ],
     );
   }
@@ -318,15 +342,13 @@ class _AvailableSubpanel extends StatelessWidget {
       const SizedBox(height: 12),
       CtSectionLabel(l10n.production_workers),
       const SizedBox(height: 6),
-      Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
+      _AvailableCellGrid(
+        key: kProductionAvailableWorkerGridKey,
+        columnCount: kProductionAvailableWorkerGridColumns,
+        cells: <Widget>[
           _buildWorkerCell('peasant', player.workerPool.peasants),
-          const SizedBox(height: 4),
           _buildWorkerCell('apprentice', player.workerPool.apprentices),
-          const SizedBox(height: 4),
           _buildWorkerCell('journeyman', player.workerPool.journeymen),
-          const SizedBox(height: 4),
           _buildWorkerCell('master', player.workerPool.masters),
         ],
       ),
@@ -401,6 +423,59 @@ class _AvailableSubpanel extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+}
+
+/// Renders a fixed-column grid of `CtResourceCell`-shaped cells for the
+/// Available subpanel (Refs #2862 S8b, owner decision **C7**).
+///
+/// Cells are laid out via `LayoutBuilder` + `Wrap` so each cell occupies a
+/// `(maxWidth - (columnCount - 1) * spacing) / columnCount` slot. The trailing
+/// row may be partially filled when `cells.length` is not a multiple of
+/// [columnCount]; the remaining slot space is left empty so the grid keeps
+/// equal column widths even when only one or two cells are present (e.g. a
+/// Manufactured section with a single recipe output).
+///
+/// SPEC: `SPEC/ui/production-panel.md` § Layout — Available subpanel
+/// "Commodity grid layout" / "Workers section".
+class _AvailableCellGrid extends StatelessWidget {
+  const _AvailableCellGrid({
+    super.key,
+    required this.columnCount,
+    required this.cells,
+  }) : assert(columnCount > 0);
+
+  final int columnCount;
+  final List<Widget> cells;
+
+  static const double _columnSpacing = 6;
+  static const double _rowSpacing = 4;
+
+  @override
+  Widget build(BuildContext context) {
+    if (cells.isEmpty) {
+      return const SizedBox.shrink();
+    }
+    return LayoutBuilder(
+      builder: (BuildContext context, BoxConstraints constraints) {
+        final double maxWidth = constraints.maxWidth.isFinite
+            ? constraints.maxWidth
+            : MediaQuery.sizeOf(context).width;
+        final double cellWidth =
+            (maxWidth - (columnCount - 1) * _columnSpacing) / columnCount;
+        final double effectiveCellWidth = cellWidth.isFinite && cellWidth > 0
+            ? cellWidth
+            : maxWidth;
+        return Wrap(
+          spacing: _columnSpacing,
+          runSpacing: _rowSpacing,
+          children: <Widget>[
+            for (final Widget cell in cells)
+              SizedBox(width: effectiveCellWidth, child: cell),
+          ],
+        );
+      },
     );
   }
 }
