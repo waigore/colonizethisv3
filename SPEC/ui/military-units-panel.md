@@ -50,7 +50,7 @@ Unchanged from [naval-units-panel.md](naval-units-panel.md): same grouping (regi
 
 ## Layout / wireframe
 
-Side panel or bottom sheet (viewport-dependent); **Land** and **Naval** branches; expandable army/fleet rows with row actions on the right.
+Side panel or bottom sheet (viewport-dependent); **Land** and **Naval** branches; expandable army/fleet rows with row actions on the right. The outer chrome (`ConstrainedBox` + `CtPanel` + `CtTopBar` + scrollable list / empty state) is the shared **[`UnitsPanelShell`](components/units-panel-shell.md)** composite.
 
 ---
 

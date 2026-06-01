@@ -77,7 +77,7 @@ When the shell opens the panel via **`OpenNavalUnitsPanelEvent`** with `location
 
 ## Layout / wireframe
 
-Side panel (CtPanel) beside map on wide viewports; scrollable fleet tree grouped by region → Home Fleet → ports → sea zones.
+Side panel (CtPanel) beside map on wide viewports; scrollable fleet tree grouped by region → Home Fleet → ports → sea zones. The outer chrome (`ConstrainedBox` + `CtPanel` + `CtTopBar` + scrollable list / empty state) is the shared **[`UnitsPanelShell`](components/units-panel-shell.md)** composite (with the panel widening its `panelConstraints` on `>= 1280` dp viewports).
 
 ---
 
