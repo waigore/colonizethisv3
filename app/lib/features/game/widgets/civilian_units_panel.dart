@@ -14,7 +14,7 @@ import '../../../config/ui_screen_ids.dart';
 import '../../../core/services/app_event_handler_scope.dart';
 import '../../../l10n/l10n.dart';
 import '../../../providers/games_provider.dart';
-import '../../../widgets/ct_icon_action.dart';
+import '../../../config/editorial_monocle_palette.dart';
 import '../../../widgets/ct_nine_patch_button.dart';
 import '../../../widgets/ct_spacing.dart';
 import '../../../widgets/resource_icon.dart';

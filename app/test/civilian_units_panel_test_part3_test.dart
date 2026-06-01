@@ -12,7 +12,6 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:colonizethis_app/core/services/app_event_handler_scope.dart';
 import 'package:colonizethis_app/providers/games_provider.dart';
 import 'package:colonizethis_app/features/game/widgets/civilian_units_panel.dart';
-import 'package:colonizethis_app/features/game/widgets/units/shared/units_entity_action_row.dart';
 import 'package:colonizethis_app/features/game/widgets/units/shared/units_panel_shell.dart';
 import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
 import 'package:colonizethis_app/widgets/debug_init_game.dart';
@@ -605,7 +604,7 @@ void main() {
     });
 
     testWidgets(
-      'tile-scoped mode: Tile then Train in header; no Tile on ListTiles',
+      'tile-scoped mode: Tile then Train in header; no Tile on unit rows',
       (WidgetTester tester) async {
         final units = [
           ...game.worldState.oldWorld.units,
@@ -663,7 +662,7 @@ void main() {
 
         expect(
           find.descendant(
-            of: find.byType(ListTile),
+            of: find.byType(CivilianUnitRowCard),
             matching: find.text('Tile'),
           ),
           findsNothing,

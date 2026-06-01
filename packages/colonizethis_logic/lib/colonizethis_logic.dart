@@ -74,6 +74,7 @@ export 'src/economy/world_market/purchased_tile_index.dart';
 export 'src/economy/world_market/sellable_quantity.dart';
 export 'src/economy/world_market/trade_order_suggester.dart';
 export 'src/economy/world_market/trade_order_validator.dart';
+export 'src/economy/world_market/treasury_bid_budget.dart';
 
 // Orders
 export 'src/orders/orders.dart';

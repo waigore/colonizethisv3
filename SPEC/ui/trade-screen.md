@@ -25,6 +25,9 @@ The screen exposes static keys consumed by widget tests:
 - `TradeScreen.tabsBodyKey` — `ValueKey<String>('tradeScreenTabsBody')` (root of the two-tab Market + Deal Book body; replaces the prior `placeholderBodyKey` from the E1+E2+E3 scaffold and remains stable when E5/E6 swap each tab's body for the live content).
 - `TradeScreen.marketTabBodyKey` — `ValueKey<String>('tradeScreenMarketTabBody')` (Market tab body root; visible by default; spans the placeholder, the read-only commodity table from `#2993` E5a, and the future interactive controls).
 - `TradeScreen.marketCommodityListKey` — `ValueKey<String>('tradeScreenMarketCommodityList')` (scrollable container inside the Market tab body hosting the per-commodity rows; introduced by `#2993` E5a).
+- `TradeScreen.marketSectionFoodKey` — `ValueKey<String>('tradeScreenMarketSection:food')` (per-section `CtSectionLabel` header for the Food category inside the Market tab commodity list — Refs `#3093` § Layout & grouping — sectioned grouping slice).
+- `TradeScreen.marketSectionRawMaterialsKey` — `ValueKey<String>('tradeScreenMarketSection:rawMaterials')` (per-section `CtSectionLabel` header for the Raw Materials category — Refs `#3093` § Layout & grouping — sectioned grouping slice).
+- `TradeScreen.marketSectionManufacturedKey` — `ValueKey<String>('tradeScreenMarketSection:manufactured')` (per-section `CtSectionLabel` header for the Manufactured category — Refs `#3093` § Layout & grouping — sectioned grouping slice).
 - `TradeScreen.marketCommodityRowKey(CommodityId)` — `ValueKey<String>('tradeScreenMarketRow:<commodityId>')` (per-row key so widget tests can pin a specific commodity without text matching; introduced by `#2993` E5a).
 - `TradeScreen.marketRowNoneChipKey(CommodityId)` — `ValueKey<String>('tradeScreenMarketRow:<id>:none')` (per-row `None` direction chip; tap removes any staged trade order for the commodity — Refs `#2993` E5b).
 - `TradeScreen.marketRowBidChipKey(CommodityId)` — `ValueKey<String>('tradeScreenMarketRow:<id>:bid')` (per-row `Bid` direction chip; tap stages a `TradeOrderType.bid` for the commodity, replacing any prior offer — Refs `#2993` E5b).
@@ -84,9 +87,22 @@ Padding (16 dp)
             │           │     bodySmall, --danger — only when remainingCargo == 0
             │           │     AND totalStagedBidQuantity > 0)
             │           └── SingleChildScrollView (keyed `tradeScreenMarketCommodityList`)
-            │               └── Column (one row per tradeable commodity, 22 rows)
+            │               └── Column (one section per CommodityCategory,
+            │                          22 rows total across 3 sections —
+            │                          Refs #3093 sectioned grouping)
+            │                   ├── CtSectionLabel "Food"           (`tradeScreenMarketSection:food`)
+            │                   ├── Padding (keyed `tradeScreenMarketRow:<id>`)
+            │                   │   └── _MarketCommodityRow            // food rows in catalog order
+            │                   │       ... (per food commodity)
+            │                   ├── SizedBox(height: 12)
+            │                   ├── CtSectionLabel "Raw Materials"   (`tradeScreenMarketSection:rawMaterials`)
+            │                   ├── Padding (keyed `tradeScreenMarketRow:<id>`)
+            │                   │   └── _MarketCommodityRow            // rawMaterial rows in catalog order
+            │                   │       ... (per raw-material commodity)
+            │                   ├── SizedBox(height: 12)
+            │                   ├── CtSectionLabel "Manufactured"    (`tradeScreenMarketSection:manufactured`)
             │                   └── Padding (keyed `tradeScreenMarketRow:<id>`)
-            │                       └── _MarketCommodityRow
+            │                       └── _MarketCommodityRow            // manufactured rows in catalog order
             │                           ├── Row
             │                           │   ├── Text <displayName> (titleSmall, --accent)
             │                           │   └── Text <price | "—"> (titleSmall, --accentBright)
@@ -148,7 +164,7 @@ _DealBookPanel (keyed `tradeScreenDealBookBidsPanel` / `tradeScreenDealBookOffer
 
 The two-tab body is the durable structure each follow-up Market slice (E5b interactive controls, E5c cargo indicator) and Deal Book slice (E6) keep building inside. The `CtTabStrip` widget owns the dark-chrome label band (selected = `--accentBright` text on `--accentDim` 25 % alpha background; unselected = `--muted` text on `--surface` 50 % alpha background; 1 px `--accent` / `--accentDim` border per `pixel-art-ui-catalog.md` § `CtTabStrip`) and the `IndexedStack` that mounts both tab bodies so widget tests can reach either tab via `find.byKey` regardless of which is currently visible. Default selection is the **Market** tab (index 0).
 
-The Market tab body is the read-only commodity table (`#2993` E5a). It iterates `CommodityCatalog.all` filtered to the tradeable subset — every commodity whose `CommodityCategory` is **not** `riches` and whose id is **not** `spices` (22 rows total per [`world-market.md`](../game/world-market.md) §Tradeable commodities). Rows are sorted alphabetically by display name (case-insensitive) so the order is deterministic for widget tests and Widgetbook stories. Each row reads:
+The Market tab body is the read-only commodity table (`#2993` E5a). It iterates `CommodityCatalog.all` filtered to the tradeable subset — every commodity whose `CommodityCategory` is **not** `riches` and whose id is **not** `spices` (22 rows total per [`world-market.md`](../game/world-market.md) §Tradeable commodities). Rows are grouped by `CommodityCategory` under `CtSectionLabel` headers — **Food → Raw Materials → Manufactured** — with within-section rows following `CommodityCatalog.all` iteration order so the Market tab mirrors the Production panel Available subpanel ordering (Refs `#3093` § Layout & grouping). Per-section detail and the prior alphabetical-sort fallback are documented in [§ Market tab — sectioned grouping (`#3093` slice)](#market-tab--sectioned-grouping-3093-slice). Each row reads:
 
 - the **commodity display name** in `--accent` (`titleSmall`),
 - the **last market price** from `Game.worldMarketState.prices[commodityId]` in `--accentBright` (`titleSmall`), formatted as a whole integer (prices on `Game.worldMarketState.prices` are integer treasury units per [`world-market.md`](../game/world-market.md) § Price discovery). When the commodity is absent from `prices`, the row falls back to the published default market price from `ResourceRules.defaultRules.defaultMarketPriceForCommodityId(commodityId)` so first-load Market tab sessions never render the em-dash for raw resources whose catalog default price is known. The canonical em-dash glyph `—` renders only when neither the market state nor the catalog has a value (manufactured commodities and other commodities whose first market price is discovered in-game),
@@ -194,6 +210,26 @@ The per-row bid stepper and direction chips honour the cross-commodity cap:
 
 `tradeCargoCapacity == 0` is a valid state: the indicator renders `Cargo remaining: 0`, no bids can be staged via direction toggle or increment, and the warning row is absent until at least one bid is staged (which itself is impossible at capacity 0, so the warning row never mounts at capacity 0 — the indicator alone communicates the no-cargo state).
 
+### Market tab — sectioned grouping (`#3093` slice)
+
+The Market tab body groups the 22 tradeable rows under three `CtSectionLabel` headers so the surface mirrors the Production panel's Available subpanel (Refs `#3093` § Layout & grouping). The headers and their backing widget keys are:
+
+| Section header | Widget key | l10n source (English fallback) | Catalog filter |
+|---|---|---|---|
+| Food | `TradeScreen.marketSectionFoodKey` | `l10n.production_food` (`"Food"`) | `CommodityCategory.food` |
+| Raw Materials | `TradeScreen.marketSectionRawMaterialsKey` | `l10n.production_rawMaterials` (`"Raw Materials"`) | `CommodityCategory.rawMaterial` |
+| Manufactured | `TradeScreen.marketSectionManufacturedKey` | `l10n.production_manufactured` (`"Manufactured"`) | `CommodityCategory.manufactured` |
+
+Section ordering and within-section ordering:
+
+- The three sections always render in the fixed order **Food → Raw Materials → Manufactured**; the first non-empty section snugs against the cargo indicator header and each subsequent section is separated by a 12 dp `SizedBox` (mirroring the Production panel's between-section gap).
+- Within each section the rows iterate `CommodityCatalog.all` filtered by category, preserving catalog order. The Market tab does **not** apply an alphabetical sort within or across sections (this supersedes the prior `#2993` E5a alphabetical contract).
+- The Riches set (`gold`, `silver`, `gems`, `diamonds`) and the `spices` advanced commodity are still excluded entirely — they do not contribute a row to any section.
+- An empty section is suppressed (header omitted) so a future ruleset that thins a category cannot leak an orphan header above zero rows. Today's catalog has at least one commodity per section (2 / 11 / 9), so all three headers are always mounted on the live screen.
+- `CtSectionLabel` renders its text in upper-case small-caps per `SPEC/ui/pixel-art-ui-catalog.md` § *CtSectionLabel visual contract*, so the visible labels read `FOOD`, `RAW MATERIALS`, and `MANUFACTURED` regardless of the source locale's casing.
+
+The section headers are scoped to the Market tab body subtree (`tradeScreenMarketTabBody`); they never appear under the off-stage Deal Book tab body (`tradeScreenDealBookTabBody`), matching the rest of the Market tab content.
+
 ### Market tab — sellable readout + offer-side clamp (`#3093` slice)
 
 Each Market row exposes the player's **per-commodity sellable headroom** so the Offer chip and offer-side `+` stepper never exceed the player's available stock (the offer-side mirror of the cross-commodity bid cap in [§ Cargo indicator + per-stepper cap + warning (`#2993` E5c)](#cargo-indicator--per-stepper-cap--warning-2993-e5c)). The headroom is computed by the logic-side helpers in `colonizethis_logic` (`offerCapByCommodityId`, `stagedOfferQuantitiesByCommodityId`, `sellableHeadroomByCommodityId`; exported via `colonizethis_logic.dart`) and equals `max(0, offerCap − stagedOfferQuantity)`, where:
@@ -207,6 +243,22 @@ UI surface:
 - **Toggle a row to `Offer` from `None` / `Bid`:** allowed only when `offerCap > 0`. The new staged `TradeOrder.quantity` is `min(desiredQuantity, offerCap)` where `desiredQuantity` is the prior `TradeOrder.quantity` when it exists, otherwise `marketRowQuantityDefault` (1). When `offerCap <= 0` the toggle is a silent no-op and the row stays in its prior direction.
 - **Increment a staged offer:** allowed only when the current `TradeOrder.quantity < offerCap`. At saturation (`quantity == offerCap`) the `marketRowIncrementKey` tap is a silent no-op (`currentOrdersProvider` is **not** mutated). Decrement and `None` are unaffected (decrementing only frees headroom).
 - The bid-side clamp from E5c continues to apply unchanged. Mutual exclusion still wins: toggling `Offer` on a row that already has a staged `Bid` replaces the bid (subject to the offer-side clamp), and toggling `Bid` on a row that already has a staged `Offer` replaces the offer (subject to the cargo cap).
+
+### Market tab — treasury bid cap (`#3093` slice)
+
+Each Market row's Bid toggle / bid-side `+` stepper is gated against the player's **treasury budget for bids** so the cross-commodity sum of bid spend (`Σ quantity × effectiveMarketPrice`) never exceeds the player's available treasury (the bid-side mirror of the cross-commodity cargo cap in [§ Cargo indicator + per-stepper cap + warning (`#2993` E5c)](#cargo-indicator--per-stepper-cap--warning-2993-e5c)). The cap is computed by the logic-side helpers in `colonizethis_logic` (`treasuryAvailableForBidsByPlayer`, `stagedBidTotalSpendByPlayer`, `effectiveMarketPriceForCommodityId`; exported via `colonizethis_logic.dart`) and equals `treasuryAvailableForBidsByPlayer − (stagedBidTotalSpendByPlayer − rowPriorBidSpend)`, where:
+
+- `treasuryAvailableForBidsByPlayer` is the player's raw `treasury` field today. Subtracting other pending costs (production / recruit-train / civilian work / subsidies) per [`world-market.md`](../game/world-market.md) § Treasury budget for bids is a planned refinement; the UI clamp landing first only subtracts the player's own already-staged bid spend.
+- `stagedBidTotalSpendByPlayer` sums `quantity × effectiveMarketPrice` across every staged `TradeOrderType.bid` for the player.
+- `rowPriorBidSpend` is `prior.quantity × effectiveMarketPrice` when the row already has a staged bid (and 0 otherwise) — subtracted so the row's *replacement* quantity is measured against the fresh headroom, mirroring the cargo-cap `priorBidContribution` rule.
+- `effectiveMarketPrice` is the integer price on `Game.worldMarketState.prices[commodityId]` when present, falling back to `ResourceRules.defaultMarketPriceForCommodityId(commodityId)` (the catalog default). When neither source returns a value, the bid clamp refuses the toggle (no spend can be evaluated for a row whose price text reads as the em-dash).
+
+UI surface:
+
+- **Toggle a row to `Bid` from `None` / `Offer`:** allowed only when the treasury headroom for the row fits at least one unit at `rowPrice`. The new staged `TradeOrder.quantity` is `min(desiredQuantity, cargoMaxAllowedBidQuantity, treasuryQuantityCap)` where `treasuryQuantityCap = treasuryHeadroom ~/ rowPrice`. When `treasuryHeadroom < rowPrice` (and `rowPrice > 0`) the toggle is a silent no-op (`currentOrdersProvider` is not mutated) and the row stays in its prior direction.
+- **Increment a staged bid:** allowed only when `stagedBidTotalSpendByPlayer + delta × rowPrice ≤ treasuryAvailableForBidsByPlayer`. At treasury saturation the `marketRowIncrementKey` tap is a silent no-op. Decrement is unaffected (decrementing only frees treasury).
+- **Unpriced commodities (`rowPrice == null`):** when the row has no effective per-unit price (manufactured commodity whose first market price is discovered in-game and no catalog default — the row's price text reads as the em-dash), the treasury clamp is **skipped** so the cargo cap from E5c remains the only constraint on the row's Bid toggle / `+` increment. The validator-side enforcement landing in a follow-up rejects over-spend bids for unpriced commodities at order submission time.
+- The cargo cap from E5c continues to apply unchanged — both caps are checked and the **stricter** of the two governs the row's increment / toggle outcome. Offers do not consume treasury and are not gated by this cap.
 
 ### Body (planned — follow-up `#2993` E5b cont.)
 
@@ -273,6 +325,7 @@ The Deal Book ledger described in [§ Deal Book ledger content (`#2993` E6)](#de
 - `StrictAssetIcon` (`app/lib/widgets/strict_asset_icon.dart`) — renders the 32 × 32 source PNG at the 18 × 18 top-bar size.
 - `CtPanel` (`SPEC/ui/pixel-art-ui-catalog.md` § `CtPanel`) — outer surface for the tabs body and inner surface for each tab placeholder.
 - `CtTabStrip` (`SPEC/ui/pixel-art-ui-catalog.md` § `CtTabStrip`) — dark editorial-monocle tab strip hosting the `Market` and `Deal Book` labels above the `IndexedStack` of tab bodies.
+- `CtSectionLabel` (`app/lib/widgets/ct_section_label.dart`; `SPEC/ui/pixel-art-ui-catalog.md` § *CtSectionLabel visual contract*) — small-caps section header used by the Market tab to group commodity rows under Food / Raw Materials / Manufactured (Refs `#3093` sectioned grouping slice). Same component the Production panel's Available subpanel uses.
 - `ObserveModeNotDefinedPanel` (`app/lib/features/game/widgets/observe_mode_not_defined_panel.dart`) — shared observe-mode sentinel.
 - `_DealBookTabContent` (`app/lib/features/game/screens/trade_screen.dart`) — read-only two-panel ledger (Refs `#2993` E6) hosting both `_DealBookPanel` instances under a `LayoutBuilder` that picks `Row` vs `Column` based on `dealBookTwoPanelMinWidth`.
 - `_DealBookPanel` (`app/lib/features/game/screens/trade_screen.dart`) — single ledger panel; renders panel title, optional empty-state copy, the Filled / Unfilled sections, and the always-mounted totals row.
@@ -328,7 +381,7 @@ Follow-up E5b cont. slices append `Market tab — priority dropdown` as the prio
 ### Market tab — read-only commodity table (`#2993` E5a)
 
 - **Given** the `TradeScreen` is mounted with a human player, observe mode is **not** active, and `Game.worldMarketState` is otherwise unconstrained, **then** the Market tab body keyed `tradeScreenMarketTabBody` contains exactly one `tradeScreenMarketCommodityList` widget that hosts exactly 22 rows keyed `tradeScreenMarketRow:<commodityId>` — one row for every `Commodity` in `CommodityCatalog.all` whose `category` is not `CommodityCategory.riches` and whose `id` is not `'spices'`.
-- **Given** the same conditions, **then** the row order inside `tradeScreenMarketCommodityList` is the deterministic alphabetical order of the tradeable commodities by display name (case-insensitive; falling back to commodity id when the display name is null) — every row's `Offset.dy` is strictly greater than the previous row's `Offset.dy`.
+- **Given** the same conditions, **then** the row order inside `tradeScreenMarketCommodityList` is the deterministic sectioned order documented in § Market tab — sectioned grouping (`#3093` slice): rows are grouped under three `CtSectionLabel` headers (Food → Raw Materials → Manufactured), within-section rows follow `CommodityCatalog.all` iteration order, and every row's `Offset.dy` is strictly greater than the previous row's `Offset.dy` within the same section (the prior `#2993` E5a alphabetical contract is superseded).
 - **Given** the same conditions and `Game.worldMarketState.prices` contains an entry `{'timber': 30}` (and no entry for `'iron'`, whose published default market price per `ResourceRules.defaultRules` is the integer `80`), **when** the Market tab body renders, **then** the `tradeScreenMarketRow:timber` row contains the text `30` (the integer market value) and the `tradeScreenMarketRow:iron` row contains the text `80` (the catalog default-market-price fallback for raw resources absent from `Game.worldMarketState.prices`).
 - **Given** the same conditions and `Game.worldMarketState.prices` is empty and the row is a manufactured commodity (e.g. `'lumber'`) whose id is not enumerated in `ResourceRules.defaultRules.defaultMarketPrice`, **when** the Market tab body renders, **then** the row's price cell contains the canonical em-dash glyph `—` (`priceUnknownGlyph`) because neither the market state nor the catalog has a published default price for that commodity (manufactured-commodity defaults are tracked as follow-up to `#3093`).
 - **Given** the same conditions and `Game.worldMarketState.lastTurnActivity` contains `{'timber': MarketActivity(totalBidQuantity: 12, totalOfferQuantity: 8)}` (and no entry for `'fabric'`), **when** the Market tab body renders, **then** the `tradeScreenMarketRow:timber` row contains the text `Bids 12 / Offers 8` and the `tradeScreenMarketRow:fabric` row contains the text `Bids 0 / Offers 0` (zero-default for commodities absent from the activity map).
@@ -360,6 +413,16 @@ Follow-up E5b cont. slices append `Market tab — priority dropdown` as the prio
 - **Given** the player has `tradeCargoCapacity = 10`, has staged `Bid` timber qty 10, **when** the user taps the `None` chip on timber (`marketRowNoneChipKey('timber')`), **then** the staged `TradeOrder` for timber is removed, the cargo indicator updates to `Cargo remaining: 10`, and the warning row is removed (because `totalStagedBidQuantity == 0`).
 - **Given** the `TradeScreen` is mounted with `shellPlayerContextProvider.canMutateViaUi == false`, **then** the cargo indicator and (when applicable) warning row remain mounted with the same text values as in the editable case (they read directly from `Game` + `currentOrdersProvider` regardless of the observe-mode `IgnorePointer`).
 
+### Market tab — sectioned grouping (`#3093` slice)
+
+- **Given** the `TradeScreen` is mounted with a human player and observe mode is **not** active, **then** the widget tree contains exactly one widget keyed `TradeScreen.marketSectionFoodKey`, exactly one widget keyed `TradeScreen.marketSectionRawMaterialsKey`, and exactly one widget keyed `TradeScreen.marketSectionManufacturedKey`, each scoped under the `tradeScreenMarketTabBody` subtree (the three `CtSectionLabel` headers for the Food, Raw Materials, and Manufactured commodity categories).
+- **Given** the same conditions, **when** the section header positions are measured, **then** `tester.getTopLeft(find.byKey(marketSectionRawMaterialsKey)).dy` is strictly greater than `tester.getTopLeft(find.byKey(marketSectionFoodKey)).dy` and `tester.getTopLeft(find.byKey(marketSectionManufacturedKey)).dy` is strictly greater than `tester.getTopLeft(find.byKey(marketSectionRawMaterialsKey)).dy` (the fixed Food → Raw Materials → Manufactured ordering).
+- **Given** the same conditions, **when** each section's commodity rows are measured in `CommodityCatalog.all` iteration order filtered by that section's `CommodityCategory`, **then** every row's `Offset.dy` is strictly greater than its predecessor's (within-section catalog order is preserved); for the Food section this pins `grain` above `meat`, for the Raw Materials section this pins `timber, iron, wool, cotton, coal, sugarCane, tobacco, furs, copper, tin, horses` in that exact order, and for the Manufactured section this pins `lumber, castIron, fabric, refinedSugar, cigars, furHats, steel, paper, bronze` in that exact order.
+- **Given** the same conditions, **when** cross-section row positions are measured, **then** the last Food row sits strictly above the Raw Materials section header, the Raw Materials section header sits strictly above the first Raw Materials row, the last Raw Materials row sits strictly above the Manufactured section header, and the Manufactured section header sits strictly above the first Manufactured row (no commodity row leaks across a section boundary).
+- **Given** the same conditions, **then** the visible text rendered under `marketSectionFoodKey` reads `FOOD` (upper-case via `CtSectionLabel`), under `marketSectionRawMaterialsKey` reads `RAW MATERIALS`, and under `marketSectionManufacturedKey` reads `MANUFACTURED` (resolved from `l10n.production_food` / `production_rawMaterials` / `production_manufactured` with the English-fallback path when the host `MaterialApp` has no localizations delegates).
+- **Given** the same conditions, **then** none of the section header keys appear under the off-stage Deal Book tab body subtree (`find.descendant(of: find.byKey(dealBookTabBodyKey, skipOffstage: false), matching: find.byKey(marketSectionFoodKey))` resolves to zero widgets; same for the other two section keys) — the section headers are scoped to the Market tab body.
+- **Given** the `TradeScreen` is mounted and `shellPanelsNotDefined(ref)` returns `true` (global observe mode), **then** none of `marketSectionFoodKey`, `marketSectionRawMaterialsKey`, or `marketSectionManufacturedKey` appear in the widget tree (only the `ObserveModeNotDefinedPanel` and the dark `CtTopBar` are mounted; section headers ride along with the Market tab body which is not rendered in observe mode).
+
 ### Market tab — sellable readout + offer-side clamp (`#3093` slice)
 
 - **Given** the `TradeScreen` is mounted with a human player whose `Player.stockpile.quantities['timber'] == 10` and `currentOrdersProvider` has no staged offers for timber, **then** the Market row for timber renders a widget keyed `TradeScreen.marketRowSellableReadoutKey('timber')` whose visible text is `(10)`, and the `marketRowOfferChipKey('timber')` `CtChoiceChip` is rendered in the enabled (non-disabled) visual state.
@@ -369,6 +432,15 @@ Follow-up E5b cont. slices append `Market tab — priority dropdown` as the prio
 - **Given** the player has `Player.stockpile.quantities['timber'] == 5` and a staged `Bid` for timber qty 8 (e.g. left over from a prior cargo configuration), **when** the user taps `marketRowOfferChipKey('timber')`, **then** the staged `TradeOrder` is replaced by `TradeOrder(type: offer, quantity: 5)` (the prior 8 is clamped to the offer cap of 5) and the sellable readout updates to `(0)`.
 - **Given** the player has staged offers on two distinct commodities and **then** decrements one of them via `marketRowDecrementKey`, **then** that row's sellable readout increments by 1 and the other row's readout is unchanged.
 - **Given** the player has a staged `Bid` for timber qty 7 (bids do not consume offer headroom), **then** the timber row's sellable readout still renders the raw `offerCap == stockpile` (e.g. `(5)`) and the Offer chip's enabled/disabled state is determined solely by `offerCap`, **not** by staged bids on the same commodity.
+
+### Market tab — treasury bid cap (`#3093` slice)
+
+- **Given** the `TradeScreen` is mounted with a human player whose `Player.treasury == 100`, `Game.worldMarketState.prices == {timber: 30}`, and `currentOrdersProvider` has no staged trade orders, **when** the user taps the `Bid` chip on timber (`marketRowBidChipKey('timber')`), **then** a `TradeOrder(commodityId: 'timber', type: bid, quantity: 1)` is staged (`marketRowQuantityDefault == 1` fits inside the treasury budget of `100 / 30 == 3`), the staged-bid-total-spend `1 × 30 == 30` is at most `100`, and the cargo cap continues to apply unchanged.
+- **Given** the player has `Player.treasury == 100`, market price `timber: 30`, and a staged `Bid` for timber qty 3 (total bid spend `3 × 30 == 90`), **when** the user taps `marketRowIncrementKey('timber')`, **then** the staged quantity grows to 4 only if `(3 + 1) × 30 == 120 ≤ 100` — since it is **not**, the increment tap is a silent no-op (`currentOrdersProvider` is **not** mutated), the staged `TradeOrder.quantity` stays at 3, and the cargo indicator is unaffected.
+- **Given** the player has `Player.treasury == 100`, market price `timber: 30`, a staged `Bid` for timber qty 3 (total bid spend 90), and the user toggles a fresh row commodity `iron` (market price 80) to `Bid`, **then** the toggle is a silent no-op because the treasury headroom `100 − 90 == 10` is less than the row price `80` (`treasuryHeadroom < rowPrice`); the row stays `None`, the staged timber bid is unchanged, and no `TradeOrder` for iron is added.
+- **Given** the player has `Player.treasury == 100`, market price `iron: 80`, no staged trade orders, **when** the user toggles `marketRowBidChipKey('iron')`, **then** the staged `TradeOrder(commodityId: 'iron', type: bid)` is staged with `quantity == min(marketRowQuantityDefault, treasuryHeadroom ~/ rowPrice) == min(1, 100 ~/ 80) == 1`; cargo cap and treasury cap both apply but neither further clamps the default-1 staged quantity.
+- **Given** the player has `Player.treasury == 50`, market price `timber: 30`, a staged `Offer` for timber qty 4 (offers do not consume treasury), **when** the user taps `marketRowBidChipKey('timber')` (toggling timber from `Offer` to `Bid`), **then** the staged `TradeOrder` for timber is replaced by `TradeOrder(type: bid, quantity: min(4, treasuryQuantityCap) == min(4, 50 ~/ 30) == 1)` and the staged-bid-total-spend `1 × 30 == 30` is at most `50`.
+- **Given** the player has `Player.treasury == 100`, `Game.worldMarketState.prices` is empty for the row's commodity, and the catalog default price for that commodity is **also** absent (manufactured commodity whose first price is discovered in-game), **when** the user taps `marketRowBidChipKey(commodityId)`, **then** the **treasury** clamp is skipped (`rowPrice == null` cannot be evaluated against the budget) and the cargo cap is the only constraint; the staged `TradeOrder(type: bid, quantity: min(marketRowQuantityDefault, cargoMaxAllowedBidQuantity))` is added when cargo allows, and the row's price text continues to render the canonical em-dash glyph. The validator-side enforcement (follow-up) catches over-spend cases for unpriced commodities independently.
 
 ### Deal Book tab — live two-panel ledger (`#2993` E6)
 
