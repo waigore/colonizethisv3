@@ -8,6 +8,7 @@ import '../../../l10n/l10n.dart';
 import '../../../config/app_assets.dart';
 import '../../../widgets/ct_dialog_shell.dart';
 import '../../../widgets/ct_nine_patch_button.dart';
+import '../../../widgets/ct_spacing.dart';
 import '../../../widgets/resource_icon.dart';
 import '../../../widgets/strict_asset_icon.dart';
 import '../utils/commodity_ui_helpers.dart';
@@ -192,7 +193,12 @@ class _TrainMilitaryDialogState extends State<TrainMilitaryDialog> {
         }
       },
       child: CtDialogShell(
-        padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+        padding: const EdgeInsets.fromLTRB(
+          CtSpacing.l,
+          CtSpacing.ml,
+          CtSpacing.l,
+          CtSpacing.l,
+        ),
         child: _buildDialogContent(context, l10n),
       ),
     );

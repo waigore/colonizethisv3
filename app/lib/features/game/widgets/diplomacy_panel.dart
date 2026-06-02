@@ -126,7 +126,10 @@ class _DiplomacyPanelState extends State<DiplomacyPanel> {
     final showTribes = diplomacyFilterShowsKind(_filterMode, FactionKind.tribe);
 
     final list = ListView(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      padding: const EdgeInsets.symmetric(
+        horizontal: CtSpacing.l,
+        vertical: CtSpacing.m,
+      ),
       children: [
         if (showGps && gps.isNotEmpty) ...[
           _sectionHeader(context, l10n.diplomacy_section_greatPowers),

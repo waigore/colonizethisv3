@@ -597,7 +597,10 @@ class _SlotCardChrome extends StatelessWidget {
         ),
       ),
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+        padding: const EdgeInsets.symmetric(
+          horizontal: 10,
+          vertical: CtSpacing.m,
+        ),
         child: child,
       ),
     );
