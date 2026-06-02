@@ -9,11 +9,24 @@ import '../../../../providers/app_event_bus_provider.dart';
 import '../../../../providers/game_service_provider.dart';
 import '../../../../providers/games_provider.dart';
 import '../../../../providers/map_province_panel_provider.dart';
+import '../../../core/services/game_service.dart' show GameMapData;
 import 'game_map_area_state_logic.dart';
 import 'per_player_work_target_selection_cache.dart';
 import '../widgets/province_sea_zone_detail_overlay.dart';
 
 /// Narrow-layout bottom sheet host; reads [mapProvincePanelProvider] only.
+///
+/// When the panel is open and a non-empty `displayId` resolves, the slot
+/// mounts [ProvinceSeaZoneDetailOverlay] inside a single `SizedBox` whose
+/// height is fixed at `0.33 * MediaQuery.sizeOf(context).height` and whose
+/// width is [double.infinity] so the host
+/// `Align(alignment: Alignment.bottomCenter)` + `Column(mainAxisSize: MainAxisSize.min)`
+/// in `GameMapArea` (narrow) lets the overlay span the full viewport — the
+/// **Province / sea detail** row of `SPEC/ui/mobile-adaptation.md` § 4 calls
+/// for a *full-width bottom sheet, height ~33 vh, accent-dim top border*.
+/// The accent-dim top border is provided by the nested overlay's outer
+/// `CtPanel` chrome (`SPEC/ui/pixel-art-ui-catalog.md` § CtPanel) so the slot
+/// does not paint its own border.
 class GameMapNarrowDetailOverlaySlot extends ConsumerWidget {
   const GameMapNarrowDetailOverlaySlot({
     required this.game,
@@ -21,6 +34,8 @@ class GameMapNarrowDetailOverlaySlot extends ConsumerWidget {
     required this.humanPlayerId,
     required this.playerView,
     required this.workTargetSelectionCache,
+    this.omniscientDetail = false,
+    this.canMutateViaUi = true,
     super.key,
   });
 
@@ -29,6 +44,8 @@ class GameMapNarrowDetailOverlaySlot extends ConsumerWidget {
   final String humanPlayerId;
   final PlayerView playerView;
   final PerPlayerWorkTargetSelectionCache workTargetSelectionCache;
+  final bool omniscientDetail;
+  final bool canMutateViaUi;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -49,7 +66,7 @@ class GameMapNarrowDetailOverlaySlot extends ConsumerWidget {
     if (displayId.isEmpty) {
       return const SizedBox.shrink();
     }
-    dynamic mapData;
+    GameMapData? mapData;
     try {
       mapData = ref.watch(gameServiceProvider).getMapData(game.id);
     } catch (_) {
@@ -90,6 +107,7 @@ class GameMapNarrowDetailOverlaySlot extends ConsumerWidget {
             workTargetSelectionCache: workTargetSelectionCache,
           );
     return SizedBox(
+      width: double.infinity,
       height: MediaQuery.sizeOf(context).height * 0.33,
       child: ProvinceSeaZoneDetailOverlay(
         game: game,
@@ -104,12 +122,15 @@ class GameMapNarrowDetailOverlaySlot extends ConsumerWidget {
             .setSecondaryHighlight(k),
         onClose: () =>
             ref.read(mapProvincePanelProvider.notifier).closeOverlay(),
-        showProspectActionIcon: prospectState.showIcon,
-        prospectActionEnabled: prospectState.enabled,
-        showExploreActionIcon: exploreState.showIcon,
-        exploreActionEnabled: exploreState.enabled,
-        showBuildImprovementActionIcon: buildImprovementState.showIcon,
-        buildImprovementActionEnabled: buildImprovementState.enabled,
+      showProspectActionIcon: canMutateViaUi && prospectState.showIcon,
+      prospectActionEnabled: canMutateViaUi && prospectState.enabled,
+      showExploreActionIcon: canMutateViaUi && exploreState.showIcon,
+      exploreActionEnabled: canMutateViaUi && exploreState.enabled,
+      showBuildImprovementActionIcon:
+          canMutateViaUi && buildImprovementState.showIcon,
+      buildImprovementActionEnabled:
+          canMutateViaUi && buildImprovementState.enabled,
+      omniscientDetail: omniscientDetail,
         onExploreWithExplorerTap:
             exploreState.enabled && panel.selectedTileKey != null
             ? () {

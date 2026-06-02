@@ -1,14 +1,15 @@
 import 'package:colonizethis_test/test.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/src/orders/order_engine.dart';
+import 'package:colonizethis_logic/src/orders/order_resolution_context.dart';
 import 'package:colonizethis_logic/src/orders/validators/army_move_validator.dart';
 import 'package:colonizethis_logic/src/orders/validators/build_order_validator.dart';
 import 'package:colonizethis_logic/src/orders/validators/diplomatic_order_validator.dart';
 import 'package:colonizethis_logic/src/orders/validators/move_validator.dart';
 import 'package:colonizethis_logic/src/orders/validators/naval_order_validator.dart';
+import 'package:colonizethis_logic/src/orders/validators/recruit_worker_order_validator.dart';
 import 'package:colonizethis_logic/src/orders/validators/work_order_validator.dart';
 import 'package:colonizethis_logic/src/diplomacy/diplomacy_resolver.dart';
-import 'package:colonizethis_logic/src/world/player_view.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'test_fixtures.dart';
@@ -21,9 +22,8 @@ class _AlwaysRejectMoveValidator extends MoveValidator {
     MoveOrder order,
     Game game,
     String playerId,
-    Map<String, Unit> unitsById,
+    OrderResolutionContext context,
     List<DiplomaticOrder> diplomaticOrders,
-    PlayerView view,
     MapTopology topology, {
     required bool previousRejected,
     DiplomacyFactionMembership? factionMembership,
@@ -51,9 +51,8 @@ void main() {
             Game game,
             Player player,
             String playerId,
-            PlayerView view,
+            OrderResolutionContext resolution,
             MapTopology topology,
-            Map<String, Unit> unitsById,
             List<DiplomaticOrder> diplomaticOrders,
             Map<String, TileMapResult>? tileMapByRegion,
             Set<String> civilianDraftMoveUnitIds,
@@ -61,13 +60,13 @@ void main() {
             Stockpile stockpile,
             int treasury,
             DiplomacyFactionMembership factionMembership,
+            WorkerPool workerPool,
           ) {
             final workContext = buildWorkOrderValidationContext(
               game: game,
               player: player,
               playerId: playerId,
-              view: view,
-              unitsById: unitsById,
+              resolution: resolution,
               devExclusiveTiles: devExclusiveTiles,
               tileMapByRegion: tileMapByRegion,
               civilianDraftMoveUnitIds: civilianDraftMoveUnitIds,
@@ -78,6 +77,9 @@ void main() {
             return OrderValidators(
               moveValidator: const _AlwaysRejectMoveValidator(),
               armyMoveValidator: const ArmyMoveValidator(),
+              recruitWorkerValidator: RecruitWorkerOrderValidator(
+                player: player,
+              ),
               buildValidator: BuildOrderValidator(game: game, player: player),
               workValidator: WorkOrderValidator(
                 context: workContext,
@@ -109,50 +111,51 @@ void main() {
   });
 
   test(
-    'validatePlayerOrdersWithContext builds five validator bundles '
-    '(shared move+army, then fresh per later category; Refs #2391 AC7)',
+    'validatePlayerOrdersWithContext builds six validator bundles '
+    '(shared move+army, then fresh per later category; #2391 AC7, #2692 S4)',
     () {
-    var factoryCalls = 0;
-    final game = TestFixtures.minimalGame();
-    final topology = MapTopology(nodes: const [], edges: const []);
-    final engine = OrderEngine(
-      initialOrders: const Orders(),
-      validatorFactory:
-          (
-            Game game,
-            Player player,
-            String playerId,
-            PlayerView view,
-            MapTopology topology,
-            Map<String, Unit> unitsById,
-            List<DiplomaticOrder> diplomaticOrders,
-            Map<String, TileMapResult>? tileMapByRegion,
-            Set<String> civilianDraftMoveUnitIds,
-            Set<String> devExclusiveTiles,
-            Stockpile stockpile,
-            int treasury,
-            DiplomacyFactionMembership factionMembership,
-          ) {
-            factoryCalls++;
-            return createOrderValidators(
-              game: game,
-              player: player,
-              playerId: playerId,
-              view: view,
-              topology: topology,
-              unitsById: unitsById,
-              diplomaticOrders: diplomaticOrders,
-              tileMapByRegion: tileMapByRegion,
-              civilianDraftMoveUnitIds: civilianDraftMoveUnitIds,
-              devExclusiveTiles: devExclusiveTiles,
-              stockpile: stockpile,
-              treasury: treasury,
-              factionMembership: factionMembership,
-            );
-          },
-    );
+      var factoryCalls = 0;
+      final game = TestFixtures.minimalGame();
+      final topology = MapTopology(nodes: const [], edges: const []);
+      final engine = OrderEngine(
+        initialOrders: const Orders(),
+        validatorFactory:
+            (
+              Game game,
+              Player player,
+              String playerId,
+              OrderResolutionContext resolution,
+              MapTopology topology,
+              List<DiplomaticOrder> diplomaticOrders,
+              Map<String, TileMapResult>? tileMapByRegion,
+              Set<String> civilianDraftMoveUnitIds,
+              Set<String> devExclusiveTiles,
+              Stockpile stockpile,
+              int treasury,
+              DiplomacyFactionMembership factionMembership,
+              WorkerPool workerPool,
+            ) {
+              factoryCalls++;
+              return createOrderValidators(
+                game: game,
+                player: player,
+                playerId: playerId,
+                resolution: resolution,
+                topology: topology,
+                diplomaticOrders: diplomaticOrders,
+                tileMapByRegion: tileMapByRegion,
+                civilianDraftMoveUnitIds: civilianDraftMoveUnitIds,
+                devExclusiveTiles: devExclusiveTiles,
+                stockpile: stockpile,
+                treasury: treasury,
+                factionMembership: factionMembership,
+                workerPool: workerPool,
+              );
+            },
+      );
 
-    engine.validatePlayerOrdersWithContext(game, topology, 'h1');
-    expect(factoryCalls, 5);
-  });
+      engine.validatePlayerOrdersWithContext(game, topology, 'h1');
+      expect(factoryCalls, 6);
+    },
+  );
 }

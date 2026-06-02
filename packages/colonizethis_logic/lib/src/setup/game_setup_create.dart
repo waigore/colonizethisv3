@@ -14,6 +14,7 @@ import 'game_setup_topology.dart';
 import 'gp_old_world_resource_redistribution.dart';
 import 'gp_old_world_terrain_redistribution.dart';
 import 'gp_starting_grain.dart';
+import 'minor_tribe_starting_development.dart';
 import 'init_town_roads.dart';
 import 'initial_visibility.dart';
 import 'setup_exceptions.dart';
@@ -167,6 +168,14 @@ GameSetupResult createGameFromGeneratedMaps({
   );
   game = gpGrain.game;
   tileMapByRegion[kRegionOldWorld] = gpGrain.tileMap;
+
+  // 7d.dev Minor Nation and Tribe starting developed resources.
+  // SPEC/game/factions.md § Starting developed resources; SPEC/program/game-setup-pipeline.md § 7d.dev.
+  final minorTribeDev = applyMinorTribeStartingDevelopment(
+    game: game,
+    tileMapByRegion: tileMapByRegion,
+  );
+  game = minorTribeDev.game;
 
   // 7d.bis Init town → capital roads (per-region via config). SPEC/game/capital-and-connectivity.md.
   game = applyInitTownRoadsToCapitals(
@@ -451,6 +460,7 @@ Game _buildInitialGame({
     mapViewState: MapViewState.defaults.copyWith(
       zoomMultiplier: initialMapZoomMultiplier,
     ),
+    infiniteMode: config.infiniteMode,
   );
 }
 

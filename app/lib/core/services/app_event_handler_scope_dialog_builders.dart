@@ -34,35 +34,45 @@ extension _DialogBuilders on _AppEventHandlerScopeState {
       naming: naming,
       initialLeaderByGpId: initialSelections,
       onCancel: () => Navigator.of(ctx).pop(),
-      onConfirmed: (orderedGreatPowerIds, leaderVariantByGpId, seed) {
-        final navCtx = appNavigatorKey.currentContext;
-        if (navCtx == null) {
-          _logShell.w(
-            'appNavigatorKey has no context; skipping new game setup',
-          );
-          return;
-        }
-        final rootContainer = ProviderScope.containerOf(navCtx);
-        final templateConfig = GameSetupConfig(
-          selectedGreatPowerIds: orderedGreatPowerIds,
-          leaderVariantByGpId: leaderVariantByGpId,
-          continentCount: baseConfig.continentCount,
-          minorNationCount: baseConfig.minorNationCount,
-          tribeCount: baseConfig.tribeCount,
-          numProvincesOldWorld: baseConfig.numProvincesOldWorld,
-          numProvincesNewWorld: baseConfig.numProvincesNewWorld,
-          minProvincesPerMinor: baseConfig.minProvincesPerMinor,
-          seed: seed,
-          startingResources: baseConfig.startingResources,
-          initTownRoadWiringRegionIds: baseConfig.initTownRoadWiringRegionIds,
-        );
-        unawaited(
-          runNewGameSetupAfterLeaderPick(
-            container: rootContainer,
-            templateConfig: templateConfig,
-          ),
-        );
-      },
+      onConfirmed:
+          (
+            orderedGreatPowerIds,
+            leaderVariantByGpId,
+            seed,
+            infiniteMode,
+            terrainVariation,
+          ) {
+            final navCtx = appNavigatorKey.currentContext;
+            if (navCtx == null) {
+              _logShell.w(
+                'appNavigatorKey has no context; skipping new game setup',
+              );
+              return;
+            }
+            final rootContainer = ProviderScope.containerOf(navCtx);
+            final templateConfig = GameSetupConfig(
+              selectedGreatPowerIds: orderedGreatPowerIds,
+              leaderVariantByGpId: leaderVariantByGpId,
+              continentCount: baseConfig.continentCount,
+              minorNationCount: baseConfig.minorNationCount,
+              tribeCount: baseConfig.tribeCount,
+              numProvincesOldWorld: baseConfig.numProvincesOldWorld,
+              numProvincesNewWorld: baseConfig.numProvincesNewWorld,
+              minProvincesPerMinor: baseConfig.minProvincesPerMinor,
+              seed: seed,
+              infiniteMode: infiniteMode,
+              terrainVariation: terrainVariation,
+              startingResources: baseConfig.startingResources,
+              initTownRoadWiringRegionIds: baseConfig.initTownRoadWiringRegionIds,
+            );
+            unawaited(
+              runNewGameSetupAfterLeaderPick(
+                navigatorKey: appNavigatorKey,
+                container: rootContainer,
+                templateConfig: templateConfig,
+              ),
+            );
+          },
     );
   }
 
@@ -74,7 +84,10 @@ extension _DialogBuilders on _AppEventHandlerScopeState {
     }
     return TrainCiviliansDialog(
       game: game,
-      humanPlayerId: _AppEventHandlerScopeState._humanPlayerId(game),
+      humanPlayerId: resolveShellPanelPlayerId(
+        container.read(shellPlayerContextProvider),
+        game,
+      ),
       currentOrders: container.read(currentOrdersProvider),
       bus: container.read(appEventBusProvider),
     );
@@ -88,7 +101,10 @@ extension _DialogBuilders on _AppEventHandlerScopeState {
     }
     return TrainMilitaryDialog(
       game: game,
-      humanPlayerId: _AppEventHandlerScopeState._humanPlayerId(game),
+      humanPlayerId: resolveShellPanelPlayerId(
+        container.read(shellPlayerContextProvider),
+        game,
+      ),
       currentOrders: container.read(currentOrdersProvider),
       bus: container.read(appEventBusProvider),
     );
@@ -105,7 +121,10 @@ extension _DialogBuilders on _AppEventHandlerScopeState {
     }
     return GrantOrSubsidyDialog(
       game: game,
-      humanPlayerId: _AppEventHandlerScopeState._humanPlayerId(game),
+      humanPlayerId: resolveShellPanelPlayerId(
+        container.read(shellPlayerContextProvider),
+        game,
+      ),
       targetFactionId: params?['targetFactionId'] as String? ?? '',
       isSubsidy: params?['isSubsidy'] == true,
       bus: container.read(appEventBusProvider),

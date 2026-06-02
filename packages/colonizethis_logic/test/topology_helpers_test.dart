@@ -131,6 +131,83 @@ void main() {
     });
   });
 
+  group('nodesAdjacentTo (Refs #2560)', () {
+    test('returns all adjacent node ids regardless of node type', () {
+      const topology = MapTopology(
+        nodes: [
+          TopologyNode(
+            id: 'sea1',
+            regionId: 'oldWorld',
+            type: TopologyNodeType.seaZone,
+          ),
+          TopologyNode(
+            id: 'sea2',
+            regionId: 'oldWorld',
+            type: TopologyNodeType.seaZone,
+          ),
+          TopologyNode(
+            id: 'sea3',
+            regionId: 'oldWorld',
+            type: TopologyNodeType.seaZone,
+          ),
+          TopologyNode(
+            id: 'p1',
+            regionId: 'oldWorld',
+            type: TopologyNodeType.province,
+          ),
+        ],
+        edges: [
+          TopologyEdge(id1: 'sea1', id2: 'sea2'),
+          TopologyEdge(id1: 'sea3', id2: 'sea1'),
+          TopologyEdge(id1: 'p1', id2: 'sea1'),
+        ],
+      );
+
+      // Sea-zone seed: returns both adjacent sea zones and an adjacent
+      // province, mirroring the naval-retreat probe semantics that the
+      // previous private `_adjacentSeaZones` provided.
+      final adjFromSea1 = nodesAdjacentTo(topology, 'sea1');
+      expect(adjFromSea1, containsAll(<String>['sea2', 'sea3', 'p1']));
+      expect(adjFromSea1.length, 3);
+
+      // Province seed: returns the sea zone neighbour via the P–S edge.
+      expect(nodesAdjacentTo(topology, 'p1'), equals(<String>['sea1']));
+
+      // Unknown node id: empty.
+      expect(nodesAdjacentTo(topology, 'missing'), isEmpty);
+    });
+
+    test('order follows topology.edges insertion order', () {
+      const topology = MapTopology(
+        nodes: [
+          TopologyNode(
+            id: 'a',
+            regionId: 'oldWorld',
+            type: TopologyNodeType.seaZone,
+          ),
+          TopologyNode(
+            id: 'b',
+            regionId: 'oldWorld',
+            type: TopologyNodeType.seaZone,
+          ),
+          TopologyNode(
+            id: 'c',
+            regionId: 'oldWorld',
+            type: TopologyNodeType.seaZone,
+          ),
+        ],
+        edges: [
+          TopologyEdge(id1: 'a', id2: 'b'),
+          TopologyEdge(id1: 'c', id2: 'a'),
+        ],
+      );
+
+      // Single forward pass over edges keeps the order callers historically
+      // relied on for the "first acceptable neighbour" probe.
+      expect(nodesAdjacentTo(topology, 'a'), equals(<String>['b', 'c']));
+    });
+  });
+
   group('topology node id caches (Refs #2316 P2 #15)', () {
     // Per-topology Expando caches: hot-path callers (connectivity, naval,
     // fog) reuse the same set/map instance across calls. Behaviour must be

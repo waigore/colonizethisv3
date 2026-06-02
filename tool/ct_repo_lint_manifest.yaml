@@ -41,6 +41,13 @@ rules:
     runner: dart
     script: tool/check_logic_dedup_logger.dart
 
+  - rule_id: repo.ai_planner_context
+    group: architecture
+    title: colonizethis_ai domain planners must use PlannerContext (Refs #2521)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_ai_planner_context.dart
+
   - rule_id: repo.dart_long_string_switches
     group: structure
     title: Long string-literal switch checks
@@ -54,6 +61,20 @@ rules:
     spec: SPEC/program/order-suggestions.md
     runner: shell
     argv: [tool/check_app_lib_no_suggest_work_orders.sh]
+
+  - rule_id: repo.app_lib_player_by_id_lookup
+    group: architecture
+    title: app/lib must use game.playerById for id lookups (Refs #2575)
+    spec: SPEC/program/repo-lint.md
+    runner: shell
+    argv: [tool/check_app_lib_player_by_id_lookup.sh]
+
+  - rule_id: repo.app_lib_fleet_by_id_lookup
+    group: architecture
+    title: app/lib must use game.fleetById for id lookups (Refs #2575)
+    spec: SPEC/program/repo-lint.md
+    runner: shell
+    argv: [tool/check_app_lib_fleet_by_id_lookup.sh]
 
   - rule_id: repo.flutter_action_pins
     group: structure
@@ -137,12 +158,26 @@ rules:
     script: tool/check_debug_console_logic_contract_boundary.dart
     pr_incremental: true
 
+  - rule_id: repo.debug_console_shared_helpers
+    group: structure
+    title: debug console shared parse and executor helpers
+    spec: SPEC/program/debug-console-internals.md
+    runner: dart
+    script: tool/check_debug_console_shared_helpers.dart
+
   - rule_id: repo.app_event_handler_scope_logic_boundary
     group: architecture
     title: app_event_handler_scope must not import features/game/logic directly
     spec: SPEC/program/repo-lint.md
     runner: dart
     script: tool/check_app_event_handler_scope_logic_boundary.dart
+
+  - rule_id: repo.app_event_bus_decoupling
+    group: architecture
+    title: app/lib must decouple via AppEventBus / appNavigatorKey choke point (Refs #2626)
+    spec: SPEC/program/app-ui-wiring.md
+    runner: dart
+    script: tool/check_app_event_bus_decoupling.dart
 
   - rule_id: repo.subscription_tracker
     group: structure
@@ -214,6 +249,20 @@ rules:
     runner: dart
     script: tool/check_game_widgets_file_size.dart
 
+  - rule_id: repo.logic_diplomatic_sub_validator_size
+    group: architecture
+    title: colonizethis_logic diplomatic sub-validators are factory functions, not bespoke `implements DiplomaticSubValidator` classes (Refs #2560)
+    spec: SPEC/program/orders.md
+    runner: dart
+    script: tool/check_logic_diplomatic_sub_validator_size.dart
+
+  - rule_id: repo.logic_work_target_switch
+    group: architecture
+    title: colonizethis_logic work-target dispatch goes through registry maps, not enumerated `switch` on `kWorkTarget*` constants (Refs #2560)
+    spec: SPEC/program/orders.md
+    runner: dart
+    script: tool/check_logic_work_target_switch.dart
+
   - rule_id: repo.logic_test_file_size
     group: structure
     title: colonizethis_logic package tests must stay at or below 400 physical lines
@@ -273,6 +322,62 @@ rules:
     runner: dart
     script: tool/check_app_ct_loading_indicator.dart
 
+  - rule_id: repo.app_editorial_monocle_colors
+    group: ui_structure
+    title: "app/lib/features and app/lib/widgets must resolve colors through EditorialMonoclePalette (Refs #2914 S4/G1)"
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_app_editorial_monocle_colors.dart
+
+  - rule_id: repo.app_no_material_iconbutton
+    group: ui_structure
+    title: "app/lib/features must use CtIconAction instead of Material IconButton (Refs #2914 G2)"
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_app_no_material_iconbutton.dart
+
+  - rule_id: repo.app_no_material_alertdialog
+    group: ui_structure
+    title: "app/lib/features must use CtDialogShell instead of Material AlertDialog (Refs #2914 G2)"
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_app_no_material_alertdialog.dart
+
+  - rule_id: repo.app_no_material_textbutton
+    group: ui_structure
+    title: "app/lib/features must use CtNinePatchButton instead of Material TextButton (Refs #2914 G2)"
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_app_no_material_textbutton.dart
+
+  - rule_id: repo.app_no_material_scaffold
+    group: ui_structure
+    title: "app/lib/features must use CtGameFeatureScreenShell / CtScreenShell instead of Material Scaffold (Refs #2914 G2)"
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_app_no_material_scaffold.dart
+
+  - rule_id: repo.app_no_material_filterchip
+    group: ui_structure
+    title: "app/lib/features must use CtChoiceChip instead of Material FilterChip (Refs #2914 G2)"
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_app_no_material_filterchip.dart
+
+  - rule_id: repo.app_no_material_switchlisttile
+    group: ui_structure
+    title: "app/lib/features must compose CtSectionLabel + CtToggleSwitch instead of Material SwitchListTile (Refs #2914 G2)"
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_app_no_material_switchlisttile.dart
+
+  - rule_id: repo.app_no_material_chip
+    group: ui_structure
+    title: "app/lib/features must compose palette-token primitives or CtChoiceChip instead of Material Chip (Refs #2914 G2)"
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_app_no_material_chip.dart
+
   - rule_id: repo.logic_dual_region_province_field_access
     group: architecture
     title: colonizethis_logic limits direct oldWorld/newWorld province list access
@@ -286,6 +391,20 @@ rules:
     spec: SPEC/program/logic-dual-region-province-access.md
     runner: dart
     script: tool/check_logic_all_provinces_sanctioned_calls.dart
+
+  - rule_id: repo.logic_units_by_id_rebuild
+    group: architecture
+    title: colonizethis_logic must use WorldState.allUnitsById, not unitsByIdFromWorld( (Refs #2836)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_logic_units_by_id_rebuild.dart
+
+  - rule_id: repo.logic_validator_units_params
+    group: architecture
+    title: colonizethis_logic orders/ helpers must thread OrderResolutionContext instead of Map<String, Unit> unitsById (Refs #2836)
+    spec: SPEC/program/logic-validator-units-params.md
+    runner: dart
+    script: tool/check_logic_validator_units_params.dart
 
   - rule_id: repo.app_hardcoded_ui_strings
     group: ui_i18n
@@ -303,3 +422,10 @@ rules:
     spec: SPEC/program/repo-lint.md
     runner: dart
     script: tool/check_app_no_duplicate_helpers.dart
+
+  - rule_id: repo.screen_registry_active_paths
+    group: ui_structure
+    title: "active screen-registry rows must point to existing app/lib Dart files (Refs #2801)"
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_screen_registry_active_paths.dart

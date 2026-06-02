@@ -14,12 +14,14 @@ class GrantOrSubsidyListener extends StatefulWidget {
     required this.game,
     required this.humanPlayerId,
     required this.child,
+    this.readOnly = false,
   });
 
   final AppEventBus bus;
   final Game game;
   final String humanPlayerId;
   final Widget child;
+  final bool readOnly;
 
   @override
   State<GrantOrSubsidyListener> createState() => _GrantOrSubsidyListenerState();
@@ -49,8 +51,9 @@ class _GrantOrSubsidyListenerState extends State<GrantOrSubsidyListener> {
         _moodByLeaderId[event.leaderId] = event.toMood;
       }),
     );
-    _subscriptions.track(
-      widget.bus.on<GrantOrSubsidySubmittedEvent>().listen((event) {
+    if (!widget.readOnly) {
+      _subscriptions.track(
+        widget.bus.on<GrantOrSubsidySubmittedEvent>().listen((event) {
         final targetName = _targetName(event.targetFactionId);
         final actionName = event.isSubsidy ? 'Set subsidy' : 'Grant aid';
         widget.bus.emit(
@@ -93,7 +96,8 @@ class _GrantOrSubsidyListenerState extends State<GrantOrSubsidyListener> {
           ),
         );
       }),
-    );
+      );
+    }
   }
 
   @override

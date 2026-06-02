@@ -136,8 +136,32 @@ mixin _AppLocalizationsEnStrings3 on AppLocalizations {
       'No techs available to research';
 
   @override
+  String get technologyPanel_researchedTechsHeading => 'Researched Techs';
+
+  @override
+  String get technologyPanel_researchSlotsHeading => 'Research Slots';
+
+  @override
+  String technologyPanel_lockedSlotLabel(int slot) {
+    return 'Slot $slot (University)';
+  }
+
+  @override
+  String get technologyPanel_lockedSlotFootnote => 'Requires University tech';
+
+  @override
+  String technologyPanel_slotRpProgress(int progress, int cost) {
+    return '$progress / $cost RP';
+  }
+
+  @override
   String technologyPanel_pickSubtitle(String era, String category, int cost) {
     return 'Era $era - $category - $cost RP';
+  }
+
+  @override
+  String technologyPanel_chooseTechDialogTitle(int slot) {
+    return 'Choose Tech \u2014 Slot $slot';
   }
 
   @override
@@ -307,18 +331,17 @@ mixin _AppLocalizationsEnStrings3 on AppLocalizations {
   }
 
   @override
-  String provinceOverlay_unitTarget(String type, String id, String target) {
-    return '$type ($id): $target';
+  String provinceOverlay_unitTarget(String type, String target) {
+    return '$type: $target';
   }
 
   @override
   String provinceOverlay_foreignUnitStatus(
     String owner,
     String type,
-    String id,
     String status,
   ) {
-    return '$owner — $type ($id): $status';
+    return '$owner — $type: $status';
   }
 
   @override
@@ -352,13 +375,29 @@ mixin _AppLocalizationsEnStrings3 on AppLocalizations {
   String get gameSetup_title => 'Game Setup';
 
   @override
+  String get gameSetup_eyebrow => 'New Campaign';
+
+  @override
+  String get gameSetup_intro =>
+      'Choose six great powers and a leader variant for each.';
+
+  @override
   String get gameSetup_starting => 'Starting…';
+
+  @override
+  String get gameSetup_loadingGeneratingWorld => 'Generating world…';
 
   @override
   String get gameSetup_startGame => 'Start Game';
 
   @override
   String get gameSetup_back => 'Back';
+
+  @override
+  String get gameSetup_cancel => 'Cancel';
+
+  @override
+  String get gameSetup_backToMainMenu => 'Back to Main Menu';
 
   @override
   String get gameSetup_player1You => 'Player 1 (You)';
@@ -483,6 +522,48 @@ mixin _AppLocalizationsEnStrings3 on AppLocalizations {
   @override
   String get production_labourInsufficient =>
       'Insufficient labour — production will be capped next turn';
+
+  @override
+  String production_labourQueued(int count) {
+    return 'Queued: $count';
+  }
+
+  @override
+  String production_labourRecruitTier(String tier) {
+    return 'Recruit $tier';
+  }
+
+  @override
+  String production_labourTrainTier(String tier) {
+    return 'Train $tier';
+  }
+
+  @override
+  String production_labourDequeueTier(String tier) {
+    return 'Cancel last queued $tier';
+  }
+
+  @override
+  String production_labourDisbandTier(String tier) {
+    return 'Disband $tier';
+  }
+
+  @override
+  String get production_labourDisband => 'Disband';
+
+  @override
+  String get production_labourTierUnlocked => '(unlocked)';
+
+  @override
+  String get production_labourTierLocked => '(locked)';
+
+  @override
+  String production_labourTierLabel(String tier, String state) {
+    return '$tier $state';
+  }
+
+  @override
+  String get production_labourControlsSectionLabel => 'Labour Controls';
 
   @override
   String production_workerCount(String name, int count) {

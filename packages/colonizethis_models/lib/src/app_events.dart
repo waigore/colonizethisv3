@@ -93,6 +93,21 @@ class OpenPauseMenuPanelEvent extends UIActionEvent {
   const OpenPauseMenuPanelEvent();
 }
 
+/// Request the app-layer exit-to-main-menu confirmation flow.
+///
+/// Emitted by the pause menu (`PauseMenuPanel`) when the player taps
+/// **Exit to Main Menu**. The shell-level event handler responds by
+/// showing the standard exit-confirm dialog
+/// (`showExitToMainMenuConfirmDialog`); on confirm the handler emits
+/// [NavigateToShellEvent], on cancel no further event fires.
+///
+/// SPEC: `SPEC/ui/pause-menu-panel.md` § Navigation,
+/// `SPEC/ui/in-game-shell-narrow.md` § Android back confirm,
+/// `SPEC/program/app-ui-wiring.md`.
+class RequestExitToMainMenuFlowEvent extends UIActionEvent {
+  const RequestExitToMainMenuFlowEvent();
+}
+
 /// Civilian units bottom sheet. App handler supplies [Game] / orders from Riverpod.
 /// Pending work removal and in-progress cancel use [SessionCommandEvent]s (bus), not
 /// closures on this event — see SPEC/program/app-event-bus.md.
@@ -569,6 +584,23 @@ class RevealDebugProvinceEvent extends SessionCommandEvent {
   final String humanPlayerId;
   final String target;
   final bool targetIsFullProvinceId;
+}
+
+/// Exit in-app observe mode. SPEC/ui/observe-mode.md.
+class SetObserveModeOffEvent extends SessionCommandEvent {
+  const SetObserveModeOffEvent();
+}
+
+/// Enter global (omniscient) in-app observe mode. SPEC/ui/observe-mode.md.
+class SetObserveModeGlobalEvent extends SessionCommandEvent {
+  const SetObserveModeGlobalEvent();
+}
+
+/// Enter player-scoped in-app observe mode for [targetPlayerId].
+class SetObserveModePlayerEvent extends SessionCommandEvent {
+  const SetObserveModePlayerEvent({required this.targetPlayerId});
+
+  final String targetPlayerId;
 }
 
 /// Request to append one diplomatic order for [playerId] in current-turn draft.

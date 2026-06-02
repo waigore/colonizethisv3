@@ -4,9 +4,18 @@ import 'dart:io';
 import 'package:path/path.dart' as p;
 import 'package:yaml/yaml.dart';
 
-import 'check_app_hardcoded_ui_strings.dart';
+import 'check_app_editorial_monocle_colors.dart';
+import 'check_app_event_bus_decoupling.dart';
 import 'check_app_event_handler_scope_logic_boundary.dart';
+import 'check_app_hardcoded_ui_strings.dart';
 import 'check_app_no_duplicate_helpers.dart';
+import 'check_app_no_material_alertdialog.dart';
+import 'check_app_no_material_chip.dart';
+import 'check_app_no_material_filterchip.dart';
+import 'check_app_no_material_iconbutton.dart';
+import 'check_app_no_material_scaffold.dart';
+import 'check_app_no_material_switchlisttile.dart';
+import 'check_app_no_material_textbutton.dart';
 import 'check_app_widget_imports.dart';
 import 'check_asset_path_constants.dart';
 import 'check_canonical_province_tile_keys.dart';
@@ -18,21 +27,28 @@ import 'check_custom_exceptions.dart';
 import 'check_dart_file_non_comment_line_size.dart';
 import 'check_debug_handler_one_per_file.dart';
 import 'check_debug_console_logic_contract_boundary.dart';
+import 'check_debug_console_shared_helpers.dart';
 import 'check_disallowed_ast_patterns.dart';
 import 'check_long_string_switches.dart';
 import 'check_flutter_action_pins.dart';
 import 'check_function_size.dart';
 import 'check_game_widgets_file_size.dart';
 import 'check_land_province_bucket_keys.dart';
+import 'check_logic_diplomatic_sub_validator_size.dart';
+import 'check_logic_work_target_switch.dart';
 import 'check_logic_test_file_size.dart';
 import 'check_logic_dead_files.dart';
 import 'check_logic_dedup_logger.dart';
+import 'check_ai_planner_context.dart';
 import 'check_logic_all_provinces_sanctioned_calls.dart';
 import 'check_logic_dual_region_province_field_access.dart';
+import 'check_logic_units_by_id_rebuild.dart';
+import 'check_logic_validator_units_params.dart';
 import 'check_no_flame_in_widgets.dart';
 import 'check_no_screen_in_game_widgets.dart';
 import 'check_part_unit_size.dart';
 import 'check_repeated_magic_numbers.dart';
+import 'check_screen_registry_active_paths.dart';
 import 'check_subscription_tracker.dart';
 import 'check_tech_id_constants.dart';
 import 'check_work_target_constants.dart';
@@ -690,6 +706,13 @@ int _runOneRule({
 
 /// Runs manifest Dart rules in-process when wired; returns `null` to fall back
 /// to `dart run` (unknown [RepoLintRule.ruleId] or future scripts).
+///
+/// The dispatch is split into category-scoped helpers so each individual
+/// `switch` stays below the `repo.dart_long_string_switches` 49-case ceiling
+/// even as new manifest rules are added. The split is purely structural —
+/// dispatch order (app-specific first, then generic repo-wide) is preserved
+/// because `_tryRunAppRuleInProcess` returns `null` for non-app ids and the
+/// caller falls back to the generic dispatch unchanged.
 int? _tryRunDartRuleInProcess({
   required RepoLintRule rule,
   required String repoRoot,
@@ -698,6 +721,15 @@ int? _tryRunDartRuleInProcess({
   List<String>? incrementalPaths;
   if (rule.prIncremental && incrementalCsv != null) {
     incrementalPaths = repoLintSplitRelativeDartPathsArg(incrementalCsv);
+  }
+
+  final int? appResult = _tryRunAppRuleInProcess(
+    ruleId: rule.ruleId,
+    repoRoot: repoRoot,
+    incrementalPaths: incrementalPaths,
+  );
+  if (appResult != null) {
+    return appResult;
   }
 
   switch (rule.ruleId) {
@@ -721,8 +753,12 @@ int? _tryRunDartRuleInProcess({
         repoRoot,
         incrementalRelativeDartPaths: incrementalPaths,
       );
+    case 'repo.debug_console_shared_helpers':
+      return runCheckDebugConsoleSharedHelpers(repoRoot);
     case 'repo.app_event_handler_scope_logic_boundary':
       return runCheckAppEventHandlerScopeLogicBoundary(repoRoot);
+    case 'repo.app_event_bus_decoupling':
+      return runCheckAppEventBusDecoupling(repoRoot);
     case 'repo.control_flow_nesting_depth':
       return runCheckControlFlowNestingDepth(repoRoot);
     case 'repo.repeated_magic_numbers':
@@ -735,15 +771,16 @@ int? _tryRunDartRuleInProcess({
       return runCheckDebugHandlerOnePerFile(repoRoot);
     case 'repo.game_widgets_file_size':
       return runCheckGameWidgetsFileSize(repoRoot);
+    case 'repo.logic_diplomatic_sub_validator_size':
+      return runCheckLogicDiplomaticSubValidatorSize(repoRoot);
+    case 'repo.logic_work_target_switch':
+      return runCheckLogicWorkTargetSwitch(repoRoot);
     case 'repo.logic_test_file_size':
       // Full-tree enforcement (GitHub #2288): the #2216 file-size debt is now
       // cleared across `packages/colonizethis_logic/test/**`, so the rule
       // scans the entire tree when no changed-file baseline is provided and
       // narrows to changed files when CI supplies an incremental baseline.
-      return runCheckLogicTestFileSize(
-        repoRoot,
-        targetFiles: incrementalPaths,
-      );
+      return runCheckLogicTestFileSize(repoRoot, targetFiles: incrementalPaths);
     case 'repo.dart_file_non_comment_line_size':
       return runCheckDartFileNonCommentLineSize(
         repoRoot,
@@ -784,16 +821,56 @@ int? _tryRunDartRuleInProcess({
       return runCheckLogicDualRegionProvinceFieldAccess(repoRoot);
     case 'repo.logic_all_provinces_sanctioned_calls':
       return runCheckLogicAllProvincesSanctionedCalls(repoRoot);
+    case 'repo.logic_units_by_id_rebuild':
+      return runCheckLogicUnitsByIdRebuild(repoRoot);
+    case 'repo.logic_validator_units_params':
+      return runCheckLogicValidatorUnitsParams(repoRoot);
     case 'repo.logic_dead_files':
       return runCheckLogicDeadFiles(repoRoot);
     case 'repo.logic_dedup_logger':
       return runCheckLogicDedupLogger(repoRoot);
+    case 'repo.ai_planner_context':
+      return runCheckAiPlannerContext(repoRoot);
+    case 'repo.screen_registry_active_paths':
+      return runCheckScreenRegistryActivePaths(repoRoot);
+    default:
+      return null;
+  }
+}
+
+/// Dispatch helper for `repo.app_*` manifest rules. Keeps the main
+/// `_tryRunDartRuleInProcess` switch under the `repo.dart_long_string_switches`
+/// 49-case ceiling as new app-scoped rules are added (e.g. the Material widget
+/// ban family per #2914). Returns `null` for non-app rule ids so the caller
+/// falls back to the generic dispatch.
+int? _tryRunAppRuleInProcess({
+  required String ruleId,
+  required String repoRoot,
+  required List<String>? incrementalPaths,
+}) {
+  switch (ruleId) {
     case 'repo.app_hardcoded_ui_strings':
       return runCheckAppHardcodedUiStrings(repoRoot);
     case 'repo.app_no_duplicate_helpers':
       return runCheckAppNoDuplicateHelpers(repoRoot);
     case 'repo.app_widget_imports':
       return runCheckAppWidgetImports(repoRoot);
+    case 'repo.app_editorial_monocle_colors':
+      return runCheckAppEditorialMonocleColors(repoRoot);
+    case 'repo.app_no_material_alertdialog':
+      return runCheckAppNoMaterialAlertDialog(repoRoot);
+    case 'repo.app_no_material_chip':
+      return runCheckAppNoMaterialChip(repoRoot);
+    case 'repo.app_no_material_filterchip':
+      return runCheckAppNoMaterialFilterChip(repoRoot);
+    case 'repo.app_no_material_iconbutton':
+      return runCheckAppNoMaterialIconButton(repoRoot);
+    case 'repo.app_no_material_switchlisttile':
+      return runCheckAppNoMaterialSwitchListTile(repoRoot);
+    case 'repo.app_no_material_textbutton':
+      return runCheckAppNoMaterialTextButton(repoRoot);
+    case 'repo.app_no_material_scaffold':
+      return runCheckAppNoMaterialScaffold(repoRoot);
     default:
       return null;
   }

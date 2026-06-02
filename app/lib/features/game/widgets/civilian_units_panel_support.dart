@@ -16,67 +16,11 @@ const Map<String, String> _workTargetLabels = {
   kWorkTargetPurchaseLand: 'Purchase land',
 };
 
-/// Builds prefixed province id -> province display name from [game].
-Map<String, String> _provinceNamesByPrefixedId(Game game) {
-  final out = <String, String>{};
-  for (final p in game.worldState.oldWorld.provinces) {
-    out['${p.regionId}|${p.id}'] = p.displayName ?? p.id;
-  }
-  for (final p in game.worldState.newWorld.provinces) {
-    out['${p.regionId}|${p.id}'] = p.displayName ?? p.id;
-  }
-  return out;
-}
-
-/// Returns true if [unit] is a civilian (not military, not naval). SPEC/game/civilian-units.md.
-bool _isCivilianUnit(Unit unit) {
-  final role = unitRoleForType(unit.type);
-  if (role == null) return false;
-  return role != UnitRole.military && role != UnitRole.naval;
-}
-
-/// Civilian units for one region, sorted by province name then type then id.
-List<Unit> _civilianUnitsInRegion(
-  List<Unit> units,
-  String humanPlayerId,
-  Map<String, String> provinceNames,
-  Orders currentOrders,
-) {
-  final list = units
-      .where(
-        (u) =>
-            u.ownerId == humanPlayerId &&
-            u.tileKey != null &&
-            _isCivilianUnit(u),
-      )
-      .toList();
-  list.sort((a, b) {
-    final tileA = projectedCivilianTileKey(
-      unit: a,
-      playerId: humanPlayerId,
-      orders: currentOrders,
-    );
-    final tileB = projectedCivilianTileKey(
-      unit: b,
-      playerId: humanPlayerId,
-      orders: currentOrders,
-    );
-    final provA = Unit.provinceIdFromTileKey(tileA);
-    final provB = Unit.provinceIdFromTileKey(tileB);
-    final regionA = Unit.regionIdFromTileKey(tileA) ?? '';
-    final regionB = Unit.regionIdFromTileKey(tileB) ?? '';
-    final prefixedA = '$regionA|$provA';
-    final prefixedB = '$regionB|$provB';
-    final nameA = provinceNames[prefixedA] ?? prefixedA;
-    final nameB = provinceNames[prefixedB] ?? prefixedB;
-    final nameCmp = nameA.compareTo(nameB);
-    if (nameCmp != 0) return nameCmp;
-    final typeCmp = a.type.compareTo(b.type);
-    if (typeCmp != 0) return typeCmp;
-    return a.id.compareTo(b.id);
-  });
-  return list;
-}
+// Sort/partition helpers live in `civilian_units_sort.dart` (public surface):
+// `provinceNamesByPrefixedId`, `isCivilianUnit`, `civilianUnitsInRegion`, and
+// `civilianSortProvinceName`. They are imported by the panel library root
+// (`civilian_units_panel.dart`) and visible here through the shared library
+// scope. Refs #2575 (Phase 4 testability).
 
 /// Pending assigned-to line plus optional cost strip. SPEC/ui/civilian-units-panel.md.
 class _PendingAssignedResolution {
@@ -179,6 +123,7 @@ class _UnitRow extends ConsumerWidget {
     required this.prospectShortcutTargetTileKey,
     required this.exploreShortcutTargetTileKey,
     required this.buildImprovementShortcutTargetTileKey,
+    this.readOnly = false,
   });
 
   final Game game;
@@ -194,6 +139,7 @@ class _UnitRow extends ConsumerWidget {
   final String? prospectShortcutTargetTileKey;
   final String? exploreShortcutTargetTileKey;
   final String? buildImprovementShortcutTargetTileKey;
+  final bool readOnly;
 
   List<WorkOrder> get _pendingForPlayer =>
       currentOrders.workOrdersByPlayerId[humanPlayerId] ?? const [];
@@ -326,7 +272,7 @@ class _UnitRow extends ConsumerWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             Padding(
-              padding: const EdgeInsets.all(12),
+              padding: const EdgeInsets.all(CtSpacing.ml),
               child: Text(
                 appL10n(context).civilian_assignWorkTitle(unit.type),
                 style: Theme.of(context).textTheme.titleSmall,
@@ -439,12 +385,18 @@ class _UnitRow extends ConsumerWidget {
     required bool showActions,
     required bool inExplorerShortcutMode,
     required List<String> availableWorkTargetIds,
+    required String? tileKeyForLocate,
+    required String? regionIdForLocate,
   }) {
-    if (!showActions) {
+    if (readOnly) {
       return const <UnitsEntityAction>[];
     }
+    final canLocate =
+        tileKeyForLocate != null &&
+        tileKeyForLocate.isNotEmpty &&
+        regionIdForLocate != null;
     return [
-      if (_isIdleNoPending)
+      if (showActions && _isIdleNoPending)
         UnitsEntityAction(
           tooltip: l10n.civilian_units_assign,
           icon: Icons.playlist_add,
@@ -453,46 +405,34 @@ class _UnitRow extends ConsumerWidget {
               ? () => _startShortcutAssign(availableWorkTargetIds)
               : () => _showOrderMenu(context, availableWorkTargetIds),
         ),
-      if (_hasWork)
+      if (showActions && _hasWork)
         UnitsEntityAction(
           tooltip: l10n.common_cancel,
           icon: Icons.cancel_outlined,
           label: l10n.common_cancel,
           onPressed: () => _confirmCancel(context),
         ),
+      // R30: locate is the rightmost action in the action cluster
+      // (mockup `.u-actions .locate-btn`), rendered icon-only. Locate stays
+      // visible on tile-scope rows that hide the Assign/Cancel cluster so
+      // users can still recenter the map on any visible civilian.
+      UnitsEntityAction(
+        tooltip: l10n.common_locate,
+        icon: Icons.my_location,
+        label: l10n.common_locate,
+        iconOnly: true,
+        onPressed: canLocate
+            ? () {
+                bus.emit(
+                  LocateMapTileEvent(
+                    tileKey: tileKeyForLocate,
+                    regionId: regionIdForLocate,
+                  ),
+                );
+              }
+            : null,
+      ),
     ];
-  }
-
-  Widget _buildTitleDetails(
-    AppLocalizations l10n, {
-    required String? tileKeyForLocate,
-    required String? regionIdForLocate,
-  }) {
-    return Row(
-      children: [
-        Expanded(child: Text(unit.type, overflow: TextOverflow.ellipsis)),
-        const SizedBox(width: 4),
-        IconButton(
-          tooltip: l10n.common_locate,
-          onPressed:
-              tileKeyForLocate != null &&
-                  tileKeyForLocate.isNotEmpty &&
-                  regionIdForLocate != null
-              ? () {
-                  bus.emit(
-                    LocateMapTileEvent(
-                      tileKey: tileKeyForLocate,
-                      regionId: regionIdForLocate,
-                    ),
-                  );
-                }
-              : null,
-          icon: const Icon(Icons.my_location),
-          iconSize: 18,
-          visualDensity: VisualDensity.compact,
-        ),
-      ],
-    );
   }
 
   void _handleRowTap() {
@@ -536,33 +476,188 @@ class _UnitRow extends ConsumerWidget {
       showActions: showActions,
       inExplorerShortcutMode: inExplorerShortcutMode,
       availableWorkTargetIds: availableWorkTargetIds,
+      tileKeyForLocate: tileKeyForLocate,
+      regionIdForLocate: regionIdForLocate,
     );
-    return ListTile(
-      selected: isTileScope && isSelectedInTileScope,
-      title: UnitsEntityActionRow(
-        details: _buildTitleDetails(
-          l10n,
-          tileKeyForLocate: tileKeyForLocate,
-          regionIdForLocate: regionIdForLocate,
-        ),
-        actions: rowActions,
-      ),
-      subtitle: Column(
+    final selected = isTileScope && isSelectedInTileScope;
+    return CivilianUnitRowCard(
+      key: ValueKey('civilian-unit-card-${unit.id}'),
+      selected: selected,
+      onTap: _handleRowTap,
+      details: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
         children: [
+          Text(unit.type, overflow: TextOverflow.ellipsis),
           Text(l10n.civilian_units_status(statusLabel)),
           Text(l10n.civilian_units_location(_locationLabel())),
           _buildAssignedToSubtitle(l10n),
         ],
       ),
-      dense: true,
-      onTap: _handleRowTap,
+      actions: rowActions,
     );
   }
 }
 
-/// Dense chip matching training cost rows (`train_military_dialog`). SPEC/ui/civilian-units-panel.md.
+/// Bordered civilian-unit row card per `SPEC/ui/civilian-units-panel.md`
+/// § Layout / wireframe → Row card chrome and mockup `.unit-row`
+/// (Refs #2866 S9 R30).
+///
+/// Wraps the left detail stack and the right-aligned action cluster inside a
+/// single `DecoratedBox` painted with a vertical
+/// `EditorialMonoclePalette.bgDeep` → `EditorialMonoclePalette.surface`
+/// gradient and a 1 dp border. The default border resolves to
+/// [EditorialMonoclePalette.border]; pointer hover (via [MouseRegion]) and
+/// tile-scope [selected] state both shift the border to
+/// [EditorialMonoclePalette.accentDim] so the card surfaces selection /
+/// pointer feedback without relying on Material `ListTile` chrome.
+///
+/// Public so widget tests can locate civilian rows via
+/// `find.byType(CivilianUnitRowCard)` after the migration off `ListTile`.
+class CivilianUnitRowCard extends StatefulWidget {
+  const CivilianUnitRowCard({
+    super.key,
+    required this.details,
+    required this.actions,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final Widget details;
+  final List<UnitsEntityAction> actions;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  State<CivilianUnitRowCard> createState() => _CivilianUnitRowCardState();
+}
+
+class _CivilianUnitRowCardState extends State<CivilianUnitRowCard> {
+  bool _hovered = false;
+
+  static const double _borderWidth = 1;
+  static const double _innerSpacing = 8;
+  static const double _minRowHeight = 44;
+
+  Color _borderColor() {
+    if (widget.selected || _hovered) {
+      return EditorialMonoclePalette.accentDim;
+    }
+    return EditorialMonoclePalette.border;
+  }
+
+  static final LinearGradient _cardGradient = LinearGradient(
+    begin: Alignment.topCenter,
+    end: Alignment.bottomCenter,
+    colors: <Color>[
+      EditorialMonoclePalette.bgDeep,
+      EditorialMonoclePalette.surface,
+    ],
+  );
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 4),
+      child: MouseRegion(
+        onEnter: (_) {
+          if (!_hovered) setState(() => _hovered = true);
+        },
+        onExit: (_) {
+          if (_hovered) setState(() => _hovered = false);
+        },
+        child: Material(
+          type: MaterialType.transparency,
+          child: InkWell(
+            onTap: widget.onTap,
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                gradient: _cardGradient,
+                border: Border.all(
+                  color: _borderColor(),
+                  width: _borderWidth,
+                ),
+              ),
+              child: Padding(
+                padding: const EdgeInsets.all(_innerSpacing),
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(minHeight: _minRowHeight),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(child: widget.details),
+                      if (widget.actions.isNotEmpty) ...[
+                        const SizedBox(width: 8),
+                        _CivilianUnitCardActions(actions: widget.actions),
+                      ],
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Right-aligned action cluster inside [CivilianUnitRowCard]. Mirrors the
+/// default-mode cluster layout from
+/// [`UnitsEntityActionRow`](units/shared/units_entity_action_row.dart) without
+/// re-applying the outer chrome (the card itself owns the chrome). Each
+/// action renders as a `CtNinePatchButton`; entries with `iconOnly == true`
+/// (e.g. the rightmost Locate action per R30) render icon-only at all
+/// widths.
+class _CivilianUnitCardActions extends StatelessWidget {
+  const _CivilianUnitCardActions({required this.actions});
+
+  final List<UnitsEntityAction> actions;
+
+  static const double _iconOnlyBreakpoint = 200;
+  static const double _spacing = 6;
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final iconOnly = constraints.maxWidth < _iconOnlyBreakpoint;
+        return Wrap(
+          spacing: _spacing,
+          runSpacing: _spacing,
+          alignment: WrapAlignment.end,
+          children: [
+            for (final action in actions)
+              Tooltip(
+                message: action.tooltip,
+                child: CtNinePatchButton(
+                  onPressed: action.onPressed,
+                  enabled: action.onPressed != null,
+                  padding: EdgeInsets.symmetric(
+                    horizontal: iconOnly || action.iconOnly ? 8 : 10,
+                    vertical: 6,
+                  ),
+                  minHeight: 32,
+                  child: iconOnly || action.iconOnly
+                      ? Icon(action.icon, size: 16)
+                      : Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(action.icon, size: 16),
+                            const SizedBox(width: 4),
+                            Text(action.label),
+                          ],
+                        ),
+                ),
+              ),
+          ],
+        );
+      },
+    );
+  }
+}
+
+/// Dense chip matching train-dialog resource chips. SPEC/ui/civilian-units-panel.md.
 class _AssignedCostChip extends StatelessWidget {
   const _AssignedCostChip({required this.child});
 
@@ -570,17 +665,6 @@ class _AssignedCostChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        color: Theme.of(
-          context,
-        ).colorScheme.surfaceContainerHighest.withValues(alpha: 0.4),
-        borderRadius: BorderRadius.circular(4),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
-        child: child,
-      ),
-    );
+    return TrainDialogResourceChip(child: child);
   }
 }

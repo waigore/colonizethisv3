@@ -6,6 +6,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../constants.dart';
 import '../world/fog_resolution.dart';
+import '../world/game_world_mutations.dart';
 import '../world/player_view.dart';
 import '../world/province_lookup.dart';
 
@@ -138,7 +139,7 @@ Game applyInitialVisibility({
     tileKeysByRegionAndProvince: tileKeysByRegionAndProvince,
     resourceByTileKey: resourceByTileKey,
   );
-  var resultGame = game.copyWith(worldState: updatedWorldState);
+  var resultGame = game.withWorldState(updatedWorldState);
 
   // Apply coastal sea zone full visibility for Great Powers.
   // SPEC/program/fog-and-exploration-resolution.md § Coastal sea zone full visibility.
@@ -150,10 +151,8 @@ Game applyInitialVisibility({
     topologyByRegion: topologyByRegion,
   );
 
-  resultGame = resultGame.copyWith(
-    worldState: resultGame.worldState.copyWith(
-      playerVisibilityByTile: visibilityAfterCoastal,
-    ),
+  resultGame = resultGame.updateWorldState(
+    (ws) => ws.copyWith(playerVisibilityByTile: visibilityAfterCoastal),
   );
 
   return resultGame;

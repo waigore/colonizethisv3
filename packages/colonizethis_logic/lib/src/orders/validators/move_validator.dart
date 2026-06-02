@@ -3,13 +3,18 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../../diplomacy/diplomacy_resolver.dart';
 import '../../world/civilian_tile_occupancy.dart';
-import '../../world/player_view.dart';
 import '../../world/province_lookup.dart';
+import '../order_resolution_context.dart';
 import '../order_validation_result.dart';
 import '../order_visibility.dart';
 
 /// Validates move orders. SPEC/program/orders.md § Move orders.
 /// Used by OrderEngine in validatePlayerOrdersWithContext.
+///
+/// Accepts the canonical [OrderResolutionContext] record so the per-pass
+/// `view` + `unitsById` snapshot is reused across many candidate probes
+/// without rebuilding the unit map or [PlayerView] (Refs #2836 AC 3;
+/// SPEC/program/logic-validator-units-params.md).
 class MoveValidator extends OrderValidator {
   const MoveValidator();
 
@@ -17,9 +22,8 @@ class MoveValidator extends OrderValidator {
     MoveOrder order,
     Game game,
     String playerId,
-    Map<String, Unit> unitsById,
+    OrderResolutionContext context,
     List<DiplomaticOrder> diplomaticOrders,
-    PlayerView view,
     MapTopology topology, {
     required bool previousRejected,
     DiplomacyFactionMembership? factionMembership,
@@ -27,7 +31,7 @@ class MoveValidator extends OrderValidator {
     return shortCircuitIfPreviousRejected(
       previousRejected: previousRejected,
       body: () {
-        final unit = unitsById[order.unitId];
+        final unit = context.unitsById[order.unitId];
         if (unit == null || unit.ownerId != playerId) {
           return OrderValidationResult.rejected('Invalid move');
         }
@@ -48,10 +52,18 @@ class MoveValidator extends OrderValidator {
         final unitRegion = unit.tileKey != null && unit.tileKey!.isNotEmpty
             ? Unit.requireRegionIdFromTileKey(unit.tileKey)
             : ProvinceId.regionIdFrom(
-                resolveToFullProvinceId(game.worldState, unit.locationProvinceId),
+                resolveToFullProvinceId(
+                  game.worldState,
+                  unit.locationProvinceId,
+                ),
               );
 
-        if (!moveSourceVisibilityOk(view, unitRegion, unit.locationProvinceId) ||
+        final view = context.view;
+        if (!moveSourceVisibilityOk(
+              view,
+              unitRegion,
+              unit.locationProvinceId,
+            ) ||
             !moveDestinationTileVisibilityOk(view, destTile)) {
           return OrderValidationResult.rejected(
             'Source or destination not visible',

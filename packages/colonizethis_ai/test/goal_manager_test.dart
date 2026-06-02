@@ -55,7 +55,7 @@ void main() {
           threats: ThreatSummary(),
           opportunities: OpportunitySummary(),
           conquest: ConquestSummary(
-            oldWorldProvincesOwned: 7,
+            oldWorldProvincesOwned: kObserverConquestMinOwProvincesPerGp,
             provincesToVictory: 24,
           ),
           colonial: ColonialSummary(
@@ -86,6 +86,33 @@ void main() {
         );
       },
     );
+
+    test('stalled Old World holdings favor conquer over diplomacy for henry', () {
+      const snapshot = AIWorldSnapshot(
+        playerId: 'gp4',
+        threats: ThreatSummary(),
+        opportunities: OpportunitySummary(),
+        conquest: ConquestSummary(
+          oldWorldProvincesOwned: 7,
+          provincesToVictory: 24,
+        ),
+        colonial: ColonialSummary(
+          invadableNewWorldProvinceIdsSorted: ['newWorld|p1'],
+        ),
+        economy: EconomySummary(),
+        relations: {},
+      );
+      const config = AIConfig(
+        leaderId: 'henry',
+        personalityId: 'henry',
+        hiddenAgendaId: 'merchant',
+      );
+      final scores = evaluateStrategicGoalScores(snapshot, config);
+      expect(
+        scores[StrategicGoal.conquer]!,
+        greaterThan(scores[StrategicGoal.diplomacy]!),
+      );
+    });
 
     test(
       'colonial pressure raises conquer/expand above diplomacy for peacemaker',

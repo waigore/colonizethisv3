@@ -16,16 +16,23 @@ import 'package:colonizethis_logic/colonizethis_logic.dart'
 import 'package:colonizethis_map/colonizethis_map.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_app/l10n/l10n.dart';
+import 'package:colonizethis_app/widgets/ct_icon_action.dart';
 import 'package:colonizethis_app/widgets/ct_panel.dart';
+import 'package:colonizethis_app/widgets/ct_section_label.dart';
+import 'package:colonizethis_app/widgets/ct_spacing.dart';
 import 'package:colonizethis_app/widgets/ct_tab_strip.dart';
 import 'package:colonizethis_app/widgets/resource_icon.dart';
 import 'package:flutter/material.dart';
 
+import 'package:colonizethis_app/core/utils/prefixed_id.dart';
+
 import '../../../config/constants.dart';
+import '../../../config/editorial_monocle_palette.dart';
+import '../../../config/ui_screen_ids.dart';
 import 'province_panel_labels.dart';
 import 'province_panel_pending_orders.dart';
 import '../utils/sea_zone_name_resolver.dart';
-
+import 'province_overlay_unit_partition.dart';
 
 /// Overlay showing province or sea zone details. Toggleable; responsive; max 1/3 screen.
 /// [displayId] is the province or sea-zone id (`regionId|localId`) for tab content;
@@ -35,6 +42,9 @@ part 'province_sea_zone_detail_overlay_sections.dart';
 part 'province_sea_zone_detail_overlay_economic_military_sections.dart';
 
 class ProvinceSeaZoneDetailOverlay extends StatelessWidget {
+  /// SPEC/ui/province-sea-zone-detail-overlay.md — [UiScreenIds.provinceSeaZoneOverlay].
+  static const screenId = UiScreenIds.provinceSeaZoneOverlay;
+
   const ProvinceSeaZoneDetailOverlay({
     super.key,
     required this.game,
@@ -55,6 +65,7 @@ class ProvinceSeaZoneDetailOverlay extends StatelessWidget {
     this.showBuildImprovementActionIcon = false,
     this.buildImprovementActionEnabled = false,
     this.onBuildImprovementTap,
+    this.omniscientDetail = false,
   });
 
   final Game game;
@@ -80,11 +91,13 @@ class ProvinceSeaZoneDetailOverlay extends StatelessWidget {
   final bool buildImprovementActionEnabled;
   final VoidCallback? onBuildImprovementTap;
 
+  /// When true, show full tile/province intel from raw [Game] (global observe).
+  final bool omniscientDetail;
+
   bool _isSeaZone(String id) {
-    final parts = id.split('|');
-    if (parts.length < 2) return false;
-    if (parts[0] != region.regionId) return false;
-    final localId = parts.skip(1).join('|');
+    final regionPart = prefixedIdRegionSegment(id);
+    if (regionPart == null || regionPart != region.regionId) return false;
+    final localId = prefixedIdLocalSegment(id);
     for (final cell in region.cells) {
       if (cell.regionCellId == localId) return cell.isSea;
     }
@@ -133,6 +146,7 @@ class ProvinceSeaZoneDetailOverlay extends StatelessWidget {
       showBuildImprovementActionIcon: showBuildImprovementActionIcon,
       buildImprovementActionEnabled: buildImprovementActionEnabled,
       onBuildImprovementTap: onBuildImprovementTap,
+      omniscientDetail: omniscientDetail,
     );
   }
 
@@ -144,7 +158,7 @@ class ProvinceSeaZoneDetailOverlay extends StatelessWidget {
   ) {
     final maxHeight = _resolveMaxHeight(context, constraints, isNarrow);
     return Padding(
-      padding: const EdgeInsets.all(8),
+      padding: const EdgeInsets.all(CtSpacing.m),
       child: ConstrainedBox(
         constraints: BoxConstraints(maxHeight: maxHeight),
         child: CtPanel(
@@ -153,7 +167,7 @@ class ProvinceSeaZoneDetailOverlay extends StatelessWidget {
             mainAxisSize: isNarrow ? MainAxisSize.min : MainAxisSize.max,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _buildOverlayHeader(),
+              _buildOverlayHeader(context),
               Flexible(child: _buildOverlayBody(isNarrow, content)),
             ],
           ),
@@ -189,7 +203,7 @@ class ProvinceSeaZoneDetailOverlay extends StatelessWidget {
     return constraints.maxHeight;
   }
 
-  Widget _buildOverlayHeader() {
+  Widget _buildOverlayHeader(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.only(left: 12, right: 8, top: 8),
       child: Row(
@@ -197,7 +211,7 @@ class ProvinceSeaZoneDetailOverlay extends StatelessWidget {
           Expanded(
             child: Text(
               _isSeaZone(displayId) ? 'Sea zone' : 'Province',
-              style: _kOverlayTitleStyle,
+              style: _overlayTitleStyle(context),
             ),
           ),
           _OverlayCloseButton(onClose: onClose),
@@ -218,27 +232,78 @@ class ProvinceSeaZoneDetailOverlay extends StatelessWidget {
               ),
             )
             .toList(),
-        contentPadding: const EdgeInsets.all(12),
+        contentPadding: const EdgeInsets.all(CtSpacing.ml),
       );
     }
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.all(CtSpacing.ml),
       child: content.sections,
     );
   }
 }
 
-/// Pixel-art overlay title text style (non-Material).
-const TextStyle _kOverlayTitleStyle = TextStyle(
-  fontSize: 16,
-  fontWeight: FontWeight.bold,
-);
+/// Shared `TextStyle` for every obfuscated `???` body cell in the overlay.
+/// Renders fully-unrevealed province/sea-zone sections, partially-revealed
+/// Tile rows (`Coordinates: ???`, `Terrain: ???`, …), and the intel-gated
+/// Economic / Military / Civilian / Naval body fallbacks in the canonical
+/// hidden-information muted token so the dark editorial-monocle theme owns
+/// the obfuscation surface. See
+/// SPEC/ui/province-sea-zone-detail-overlay.md § Dark-theme obfuscated `???`
+/// body tokens. `EditorialMonoclePalette.muted` is a runtime OKLCH → Color
+/// getter so this style cannot be `const`.
+TextStyle _obfuscatedBodyStyle() =>
+    TextStyle(color: EditorialMonoclePalette.muted);
 
-/// Pixel-art close control (non-Material). Key [kOverlayCloseKey] for tests.
+/// Convenience widget for an obfuscated body `Text(...)` row painted in the
+/// shared muted token. Centralises every `Text(l10n.provinceOverlay_unknown)`
+/// / `Text(l10n.provinceOverlay_tile*Unknown)` call so a future change to the
+/// obfuscation token only updates `_obfuscatedBodyStyle` (and the SPEC).
+Widget _obfuscatedBodyText(String data) =>
+    Text(data, style: _obfuscatedBodyStyle());
+
+/// Shared `TextStyle` for every live-data body row in the overlay that
+/// renders exact world-state values (Political "Name" / "Owner", Tile
+/// section coordinates / terrain / civilian-units, sea-zone "Sea zone"
+/// display name). Centralises the canonical `EditorialMonoclePalette.fg`
+/// foreground token so a future change to the live-data token only updates
+/// `_fgBodyStyle` (and the SPEC). See
+/// SPEC/ui/province-sea-zone-detail-overlay.md § Dark-theme Political /
+/// Tile / sea-zone Political body tokens. `EditorialMonoclePalette.fg` is
+/// a runtime OKLCH → Color getter so this style cannot be `const`.
+TextStyle _fgBodyStyle() => TextStyle(color: EditorialMonoclePalette.fg);
+
+/// Pixel-art overlay title text style (non-Material) under the dark
+/// editorial-monocle theme. Mirrors `CtTopBar` title typography: display
+/// font from `theme.textTheme.titleMedium`, `--accent` colour from
+/// [EditorialMonoclePalette], and `letterSpacing: 0.05`.
+/// See SPEC/ui/province-sea-zone-detail-overlay.md § Dark-theme chrome.
+TextStyle _overlayTitleStyle(BuildContext context) {
+  final ThemeData theme = Theme.of(context);
+  final TextStyle base =
+      theme.textTheme.titleMedium ??
+      const TextStyle(fontSize: 16, fontWeight: FontWeight.bold);
+  return base.copyWith(
+    color: EditorialMonoclePalette.accent,
+    fontWeight: FontWeight.bold,
+    letterSpacing: 0.05,
+  );
+}
+
+/// Pixel-art close control (non-Material) keyed for tests as
+/// [kOverlayCloseKey]. Border colour resolves to `--accent-dim` and the
+/// `×` glyph paints in `--muted` per
+/// SPEC/ui/province-sea-zone-detail-overlay.md § Dark-theme chrome.
 class _OverlayCloseButton extends StatelessWidget {
   const _OverlayCloseButton({this.onClose});
 
   static const Key kOverlayCloseKey = Key('overlay_close');
+
+  /// Width of the brass-toned border around the glyph (matches catalog 1 px).
+  static const double _borderWidth = 1;
+
+  /// Font size of the `×` glyph (preserved from prior chrome so the close
+  /// control retains its visual weight relative to the header title).
+  static const double _glyphFontSize = 18;
 
   final VoidCallback? onClose;
 
@@ -250,9 +315,18 @@ class _OverlayCloseButton extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
         decoration: BoxDecoration(
-          border: Border.all(color: Theme.of(context).colorScheme.outline),
+          border: Border.all(
+            color: EditorialMonoclePalette.accentDim,
+            width: _borderWidth,
+          ),
         ),
-        child: const Text('×', style: TextStyle(fontSize: 18)),
+        child: Text(
+          '×',
+          style: TextStyle(
+            fontSize: _glyphFontSize,
+            color: EditorialMonoclePalette.muted,
+          ),
+        ),
       ),
     );
   }
@@ -278,11 +352,12 @@ _OverlayContent _provinceContent({
   required bool showBuildImprovementActionIcon,
   required bool buildImprovementActionEnabled,
   VoidCallback? onBuildImprovementTap,
+  bool omniscientDetail = false,
 }) {
-  final parts = provinceId.split('|');
-  final regionId = parts.isNotEmpty ? parts[0] : region.regionId;
-  final localProvinceId = parts.length >= 2 ? parts[1] : provinceId;
+  final regionId = prefixedIdRegionSegment(provinceId) ?? region.regionId;
+  final localProvinceId = prefixedIdLocalSegment(provinceId);
   final isFullyUnrevealed =
+      !omniscientDetail &&
       region.regionId == regionId &&
       !region.cells.any(
         (c) =>
@@ -292,60 +367,13 @@ _OverlayContent _provinceContent({
   if (isFullyUnrevealed) {
     final politicalObs = _buildSection(
       l10n.provinceOverlay_sectionPolitical,
-      Text(l10n.provinceOverlay_unknown),
+      _obfuscatedBodyText(l10n.provinceOverlay_unknown),
     );
     final tileObs = _buildSection(
       l10n.provinceOverlay_sectionTile,
-      Text(l10n.provinceOverlay_unknown),
+      _obfuscatedBodyText(l10n.provinceOverlay_unknown),
     );
-    final sections = Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Text(
-          l10n.provinceOverlay_sectionPolitical,
-          style: const TextStyle(fontWeight: FontWeight.bold),
-        ),
-        const SizedBox(height: 4),
-        Text(l10n.provinceOverlay_unknown),
-        const SizedBox(height: 12),
-        Text(
-          l10n.provinceOverlay_sectionTile,
-          style: const TextStyle(fontWeight: FontWeight.bold),
-        ),
-        const SizedBox(height: 4),
-        Text(l10n.provinceOverlay_unknown),
-        const SizedBox(height: 12),
-        Text(
-          l10n.provinceOverlay_sectionEconomic,
-          style: const TextStyle(fontWeight: FontWeight.bold),
-        ),
-        const SizedBox(height: 4),
-        Text(l10n.provinceOverlay_unknown),
-        const SizedBox(height: 12),
-        Text(
-          l10n.provinceOverlay_sectionMilitary,
-          style: const TextStyle(fontWeight: FontWeight.bold),
-        ),
-        const SizedBox(height: 4),
-        Text(l10n.provinceOverlay_unknown),
-        const SizedBox(height: 12),
-        Text(
-          l10n.provinceOverlay_sectionCivilian,
-          style: const TextStyle(fontWeight: FontWeight.bold),
-        ),
-        const SizedBox(height: 4),
-        Text(l10n.provinceOverlay_unknown),
-        const SizedBox(height: 12),
-        Text(
-          l10n.provinceOverlay_sectionNaval,
-          style: const TextStyle(fontWeight: FontWeight.bold),
-        ),
-        const SizedBox(height: 4),
-        Text(l10n.provinceOverlay_unknown),
-      ],
-    );
-    final tabLabels = [
+    final obfuscatedSectionTitles = <String>[
       l10n.provinceOverlay_sectionPolitical,
       l10n.provinceOverlay_sectionTile,
       l10n.provinceOverlay_sectionEconomic,
@@ -353,6 +381,18 @@ _OverlayContent _provinceContent({
       l10n.provinceOverlay_sectionCivilian,
       l10n.provinceOverlay_sectionNaval,
     ];
+    final sections = Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        for (final title in obfuscatedSectionTitles)
+          _buildSection(
+            title,
+            _obfuscatedBodyText(l10n.provinceOverlay_unknown),
+          ),
+      ],
+    );
+    final tabLabels = obfuscatedSectionTitles;
     final tabViews = [
       politicalObs,
       tileObs,
@@ -371,32 +411,29 @@ _OverlayContent _provinceContent({
   final regionData = provinceId.startsWith('newWorld')
       ? game.worldState.newWorld
       : game.worldState.oldWorld;
-  final units = regionData.units
-      .where((u) => u.locationProvinceId == provinceId)
-      .toList();
-  final military = units.where((u) => isMilitaryUnit(u.type)).toList();
-  final civilian = units.where((u) => !isMilitaryUnit(u.type)).toList();
-  final visibleCivilianCount = civilian
-      .where(
-        (u) => foreignCivilianVisibleToPlayer(
-          unit: u,
-          viewerPlayerId: humanPlayerId,
-          view: playerView,
-        ),
-      )
-      .length;
+  final partitioned = partitionProvinceOverlayUnits(
+    regionUnits: regionData.units,
+    provinceId: provinceId,
+    humanPlayerId: humanPlayerId,
+    playerView: playerView,
+  );
+  final military = partitioned.military;
+  final civilian = partitioned.civilian;
+  final visibleCivilianCount = partitioned.visibleCivilianCount;
   final fleetsInPort = fleetsInPortAtProvince(game.worldState, provinceId);
   final tileKeys =
       game.worldState.tileKeysByRegionAndProvince[region
           .regionId]?[provinceId] ??
       [];
-  final showsFullIntel = provincePanelShowsFullTileDerivedIntel(
-    game: game,
-    view: playerView,
-    humanPlayerId: humanPlayerId,
-    provinceId: provinceId,
-    provinceTileKeys: tileKeys,
-  );
+  final showsFullIntel =
+      omniscientDetail ||
+      provincePanelShowsFullTileDerivedIntel(
+        game: game,
+        view: playerView,
+        humanPlayerId: humanPlayerId,
+        provinceId: provinceId,
+        provinceTileKeys: tileKeys,
+      );
   final resourceByTile = game.worldState.resourceByTileKey;
   final tileState = game.worldState.tileState;
   final prospected = game.worldState.playerProspectedTiles[humanPlayerId] ?? {};
@@ -406,12 +443,16 @@ _OverlayContent _provinceContent({
   final byResImprovable = <String, List<({String tileKey, String terrain})>>{};
   for (final tk in tileKeys) {
     final res = resourceByTile[tk];
-    final parts = tk.split('|');
-    if (parts.length < 4) continue;
-    if (!prospected.contains(tk)) continue;
+    if (tryParseTileKey(tk) == null) continue;
+    if (!omniscientDetail && !prospected.contains(tk)) continue;
     final imp = tileState.improvementLevel(tk);
-    final visLevel = playerView.visibilityForTile(tk);
-    final visibleRes = resourceIdVisibleInPlayerView(playerView, tk, res);
+    final visLevel = omniscientDetail
+        ? VisibilityLevel.fullyVisible
+        : playerView.visibilityForTile(tk);
+    if (!omniscientDetail && visLevel == VisibilityLevel.unknown) continue;
+    final visibleRes = omniscientDetail
+        ? res
+        : resourceIdVisibleInPlayerView(playerView, tk, res);
 
     if (visibleRes == null) continue;
 
@@ -482,7 +523,7 @@ _OverlayContent _provinceContent({
         )
       : _buildSection(
           l10n.provinceOverlay_sectionEconomic,
-          Text(l10n.provinceOverlay_unknown),
+          _obfuscatedBodyText(l10n.provinceOverlay_unknown),
         );
   final militarySection = showsFullIntel
       ? _buildMilitarySectionByOwner(
@@ -495,7 +536,7 @@ _OverlayContent _provinceContent({
         )
       : _buildSection(
           l10n.provinceOverlay_sectionMilitary,
-          Text(l10n.provinceOverlay_unknown),
+          _obfuscatedBodyText(l10n.provinceOverlay_unknown),
         );
   final civilianSection = showsFullIntel
       ? _buildCivilianSectionFiltered(
@@ -508,7 +549,7 @@ _OverlayContent _provinceContent({
         )
       : _buildSection(
           l10n.provinceOverlay_sectionCivilian,
-          Text(l10n.provinceOverlay_unknown),
+          _obfuscatedBodyText(l10n.provinceOverlay_unknown),
         );
   final naval = showsFullIntel
       ? _buildNavalSection(
@@ -521,7 +562,7 @@ _OverlayContent _provinceContent({
         )
       : _buildSection(
           l10n.provinceOverlay_sectionNaval,
-          Text(l10n.provinceOverlay_unknown),
+          _obfuscatedBodyText(l10n.provinceOverlay_unknown),
         );
 
   final tabLabels = [
@@ -567,9 +608,8 @@ _OverlayContent _seaZoneContent({
   required String humanPlayerId,
   required Orders draftOrders,
 }) {
-  final parts = seaZoneId.split('|');
-  final regionId = parts.isNotEmpty ? parts[0] : 'oldWorld';
-  final localSeaZoneId = parts.length >= 2 ? parts[1] : seaZoneId;
+  final regionId = prefixedIdRegionSegment(seaZoneId) ?? 'oldWorld';
+  final localSeaZoneId = prefixedIdLocalSegment(seaZoneId);
   final fleets = game.worldState.fleets
       .where((f) => f.regionId == regionId && f.seaZoneId == localSeaZoneId)
       .toList();
@@ -589,30 +629,16 @@ _OverlayContent _seaZoneContent({
     ];
     final politicalObs = _buildSection(
       l10n.provinceOverlay_sectionPolitical,
-      Text(l10n.provinceOverlay_unknown),
+      _obfuscatedBodyText(l10n.provinceOverlay_unknown),
     );
     final navalObs = _buildSection(
       l10n.provinceOverlay_sectionNaval,
-      Text(l10n.provinceOverlay_unknown),
+      _obfuscatedBodyText(l10n.provinceOverlay_unknown),
     );
     final sections = Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
-      children: [
-        Text(
-          l10n.provinceOverlay_sectionPolitical,
-          style: const TextStyle(fontWeight: FontWeight.bold),
-        ),
-        const SizedBox(height: 4),
-        Text(l10n.provinceOverlay_unknown),
-        const SizedBox(height: 12),
-        Text(
-          l10n.provinceOverlay_sectionNaval,
-          style: const TextStyle(fontWeight: FontWeight.bold),
-        ),
-        const SizedBox(height: 4),
-        Text(l10n.provinceOverlay_unknown),
-      ],
+      children: [politicalObs, navalObs],
     );
     return _OverlayContent(
       tabLabels: tabLabels,
@@ -628,7 +654,10 @@ _OverlayContent _seaZoneContent({
   );
   final political = _buildSection(
     l10n.provinceOverlay_sectionPolitical,
-    Text(l10n.provinceOverlay_seaZone(seaName)),
+    Text(
+      l10n.provinceOverlay_seaZone(seaName),
+      style: _fgBodyStyle(),
+    ),
   );
   final naval = _buildNavalSection(
     l10n: l10n,

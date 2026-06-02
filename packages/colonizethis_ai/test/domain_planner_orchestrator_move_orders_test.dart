@@ -3,6 +3,7 @@ import 'package:colonizethis_ai/colonizethis_ai.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
+import 'planner_test_helpers.dart';
 
 void main() {
   group('runDomainPlanners', () {
@@ -25,30 +26,11 @@ void main() {
       );
       const topology = MapTopology(nodes: [], edges: []);
       final view = buildPlayerView(game, topology, 'gp1');
-      final snapshot = AIWorldSnapshot.fromPlayerView(view);
-      const config = AIConfig(
-        leaderId: 'victoria',
-        personalityId: 'victoria',
-        hiddenAgendaId: 'peacemaker',
-      );
-      final seeds = AISeedBundle.fromTurnSeed(999);
-      const api = DefaultOrderSuggestionAPI();
-
-      const economyPlan = EconomyPlan(
-        productionAssignments: [],
-        cargoPreference: CargoPreference.none,
-      );
-      final orders = runDomainPlanners(
+      final orders = runDomainPlannersInTest(
         game: game,
         topology: topology,
-        nationId: 'gp1',
         view: view,
-        snapshot: snapshot,
-        config: config,
-        primaryGoal: StrategicGoal.expand,
-        seeds: seeds,
-        suggestionAPI: api,
-        economyPlan: economyPlan,
+        turnSeed: 999,
       );
 
       expect(orders.moveOrdersByPlayerId.isEmpty, isTrue);
@@ -117,30 +99,12 @@ void main() {
         edges: const [TopologyEdge(id1: 'p1', id2: 'p2')],
       );
       final view = buildPlayerView(game, topology, 'gp1');
-      final snapshot = AIWorldSnapshot.fromPlayerView(view);
-      const config = AIConfig(
-        leaderId: 'victoria',
-        personalityId: 'victoria',
-        hiddenAgendaId: 'peacemaker',
-      );
-      final seeds = AISeedBundle.fromTurnSeed(100);
-      const api = DefaultOrderSuggestionAPI();
-
-      const economyPlan = EconomyPlan(
-        productionAssignments: [],
-        cargoPreference: CargoPreference.none,
-      );
-      final orders = runDomainPlanners(
+      final orders = runDomainPlannersInTest(
         game: game,
         topology: topology,
-        nationId: 'gp1',
         view: view,
-        snapshot: snapshot,
-        config: config,
+        turnSeed: 100,
         primaryGoal: StrategicGoal.expand,
-        seeds: seeds,
-        suggestionAPI: api,
-        economyPlan: economyPlan,
       );
 
       expect(orders, isNotNull);
@@ -245,29 +209,12 @@ void main() {
         edges: const [],
       );
       final view = buildPlayerView(game, topology, 'gp1');
-      final snapshot = AIWorldSnapshot.fromPlayerView(view);
-      const config = AIConfig(
-        leaderId: 'victoria',
-        personalityId: 'victoria',
-        hiddenAgendaId: 'peacemaker',
-      );
-      final seeds = AISeedBundle.fromTurnSeed(77);
-      const api = DefaultOrderSuggestionAPI();
-      const economyPlan = EconomyPlan(
-        productionAssignments: [],
-        cargoPreference: CargoPreference.none,
-      );
-      final orders = runDomainPlanners(
+      final orders = runDomainPlannersInTest(
         game: game,
         topology: topology,
-        nationId: 'gp1',
         view: view,
-        snapshot: snapshot,
-        config: config,
+        turnSeed: 77,
         primaryGoal: StrategicGoal.conquer,
-        seeds: seeds,
-        suggestionAPI: api,
-        economyPlan: economyPlan,
       );
 
       expect(orders.armyMoveOrdersByPlayerId['gp1'], isNotNull);

@@ -1,0 +1,105 @@
+# Observer workforce sustain verifier
+
+**SPEC/program** — Verifier for the **15-regiment workforce sustain** metric from issue **#2692** Requirement §21. Lives in `tool/run_observer_game/lib/observer_workforce_verify.dart`. Consumes the `workerPool`, `luxuryStockpile`, and `lastTurnLuxuryProduction` blocks added to player rollups in `ObserverSnapshot` v3 / v4 (see [run_observer_game-tool.md](run_observer_game-tool.md)). Stakeholder decisions: GitHub **#2692**.
+
+## Scope
+
+In scope (landed across **S10a**, **S10**, and **S10b**):
+
+- **Verifier library (S10a)**
+  - Schema reader: `WorkerPoolCounts workerPoolCountsForPlayer(Map snapshotJson, String playerId)` returns the player's pool counts or `WorkerPoolCounts.zero` for missing / malformed / v2 rollups.
+  - Per-GP verifier: `List<String> verifyPerGpWorkforceSustain({...})` checks each canonical Great Power (`gp1`–`gp6`) against the provisional thresholds and returns one human-readable failure line per failing threshold per GP.
+  - Disk reader: `List<String> verifyObserverWorkforceFromTraceDir(String tracesGameDir, {int endTurn = 100, ...})` loads `turn-<endTurn>.snapshot.json` and delegates to the per-GP verifier; reports a single `missing end snapshot: <path>` line when the file is absent.
+- **CLI + nightly wiring (S10)**
+  - `--verify-workforce` flag in `tool/run_observer_game/lib/run_observer_game_cli.dart`. Requires `--max-turns >= kObserverWorkforceCanonicalTurn` (or no cap). On verification failure the CLI exits with code **`kExitWorkforceVerifyFailed` (8)** and emits one `workforce_verify: …` line on stderr per failure. On pass, the CLI emits a single confirmation line on stdout.
+  - When `--verify-workforce` is the only active verify flag the runner enters minimal trace mode (no merged trace, no HTML) and writes only `turn-000100.snapshot.json` plus `run-summary.json` (Refs #2534). Combined verify flags union their canonical turns via `requiredObserverSnapshotTurns(...)` in `observer_minimal_trace.dart`.
+  - `.github/workflows/nightly.yml` job `observer_conquest_verify` runs `--verify-workforce` alongside `--verify-conquest` and `--verify-colonial-expansion` daily at **23:00 Asia/Hong_Kong** (`0 15 * * *` UTC).
+- **Luxury sustain (S10b)**
+  - Schema reader: `int luxuryAvailableForPlayer(Map snapshotJson, String playerId, String commodityId)` returns `luxuryStockpile + lastTurnLuxuryProduction` for the given commodity, or `0` when the player rollup or either block is missing (older v3 snapshots).
+  - Per-GP luxury verifier: `List<String> verifyPerGpLuxurySustain({required Map turnEndSnapshot})` checks `available >= tier count` for each `(tier, matched luxury commodity)` pair where the tier count is non-zero, in fixed iteration order apprentice → journeyman → master, per Great Power.
+  - `verifyPerGpWorkforceSustain` and `verifyObserverWorkforceFromTraceDir` accept `checkLuxurySustain` (default `true`); callers may opt out for back-compat with v3 snapshot fixtures.
+  - Snapshot capture wiring: `observer_session_runner.dart` passes `onProductionComplete` into `validateOrdersAndResolveTurnFromTrustedOrders` and forwards the resulting `productionByRecipeByPlayerId` to `buildObserverSnapshotJson`, which aggregates recipe outputs by `outputCommodityId` for the three v4 luxury commodities.
+
+Out of scope (tracked as #2692 follow-ups):
+
+- Food production (`grain + meat`) checks from Requirement §21 bullet 3. Grain and meat are extracted (not recipe outputs) so a per-turn production snapshot needs a different data channel than the production-phase callback. Gated by `kObserverWorkforceFoodProductionDeferred` in the verifier so future work can grep the marker. The legacy alias `kObserverWorkforceFoodLuxuryDeferred` is preserved as a `@Deprecated` constant pointing at the new flag so existing call sites do not regress silently.
+
+## Provisional thresholds (v1; tunable in S10a)
+
+Per Requirement §21 of issue **#2692**, recorded here as the source of truth for the verifier constants:
+
+| Constant | Default | Meaning |
+|----------|---------|---------|
+| `kObserverWorkforceCanonicalTurn` | `100` | Turn whose snapshot is read by `verifyObserverWorkforceFromTraceDir`. |
+| `kObserverWorkforceMinPeasants` | `15` | Lower bound on `peasants` per Great Power; covers one full 15-regiment build cycle plus a reservation buffer per `SPEC/game/workers-and-population.md` § Peasant reservation. |
+| `kObserverWorkforceMinTrained` | `8` | Lower bound on `apprentices + journeymen + masters` per Great Power; effective-labour buffer for production chains. |
+| `kObserverWorkforceFoodProductionDeferred` | `true` | Documents that food production (grain + meat) sustain checks are not yet enforced. Luxury sustain is enforced (S10b). |
+| `kObserverWorkforceFoodLuxuryDeferred` | `true` (`@Deprecated`) | Back-compat alias pointing at `kObserverWorkforceFoodProductionDeferred`; new code should reference the narrower flag. |
+| `kObserverWorkforceApprenticeLuxuryCommodityId` | `refinedSugar` | Matched luxury commodity for the apprentice tier (§21 bullet 4). |
+| `kObserverWorkforceJourneymanLuxuryCommodityId` | `cigars` | Matched luxury commodity for the journeyman tier. |
+| `kObserverWorkforceMasterLuxuryCommodityId` | `furHats` | Matched luxury commodity for the master tier. |
+| `kObserverWorkforceLuxuryTierMapping` | `[(apprentices, refinedSugar), (journeymen, cigars), (masters, furHats)]` | Fixed iteration order driving `verifyPerGpLuxurySustain` failure ordering. |
+
+S10a observer-trace analysis on **seed 42** (issue #2692 AC #7a) may revise these constants before the nightly gate (S10) is wired; the defaults above are the starting point.
+
+## Acceptance
+
+- Given an `ObserverSnapshot` v3 player rollup with `workerPool = {peasants: P, apprentices: A, journeymen: J, masters: M}`  
+  When the System invokes `workerPoolCountsForPlayer(snapshot, playerId)` with that rollup's `playerId`  
+  Then the System returns `WorkerPoolCounts(peasants: P, apprentices: A, journeymen: J, masters: M)` and `WorkerPoolCounts.trained == A + J + M`.
+
+- Given a snapshot whose `players` list is missing, is not a list, or contains no entry for `playerId`  
+  When the System invokes `workerPoolCountsForPlayer(snapshot, playerId)`  
+  Then the System returns `WorkerPoolCounts.zero`.
+
+- Given a snapshot where every `gp1`–`gp6` player rollup contains `peasants >= 15` and `apprentices + journeymen + masters >= 8`  
+  When the System invokes `verifyPerGpWorkforceSustain(turnEndSnapshot: snapshot)` with default thresholds  
+  Then the System returns an empty `List<String>`.
+
+- Given a snapshot where exactly one Great Power (`gpX`) has `peasants < 15` AND `apprentices + journeymen + masters < 8` and all other Great Powers meet both thresholds  
+  When the System invokes `verifyPerGpWorkforceSustain(turnEndSnapshot: snapshot)` with default thresholds  
+  Then the System returns exactly **two** failure lines: one starting with `gpX peasants=` and one starting with `gpX trained=`, and no failure lines for any other Great Power.
+
+- Given a trace directory containing no `turn-000100.snapshot.json`  
+  When the System invokes `verifyObserverWorkforceFromTraceDir(tracesGameDir: dir)` with the default `endTurn`  
+  Then the System returns a single failure line containing `missing end snapshot:` followed by the expected snapshot path.
+
+- Given a trace directory containing a `turn-000050.snapshot.json` where every `gp1`–`gp6` has `peasants == 8` and `apprentices == 1`  
+  When the System invokes `verifyObserverWorkforceFromTraceDir(tracesGameDir: dir, endTurn: 50)`  
+  Then the System returns at least one failure line containing `peasants=8` and at least one containing `trained=1`.
+
+- Given CLI arguments `--output <dir> --max-turns 50 --verify-workforce`  
+  When the System invokes `runObserverGameCli(arguments: [...])`  
+  Then the System exits with code `kExitUsage` and writes a stderr line that mentions `--verify-workforce` and `>= kObserverWorkforceCanonicalTurn`.
+
+- Given the CLI ran a successful observer session with `--verify-workforce` and the resulting `turn-000100.snapshot.json` contains every Great Power `gp1`–`gp6` with `peasants < 15`  
+  When the System runs the workforce verification block in `runObserverGameCli`  
+  Then the System exits with code `kExitWorkforceVerifyFailed` (8) and writes one `workforce_verify: <gpId> peasants=<n> …` line to stderr per failing threshold per GP.
+
+- Given the nightly workflow `.github/workflows/nightly.yml` job `observer_conquest_verify`  
+  When the System renders the rendered `dart run …/run_observer_game.dart …` command line  
+  Then the command line contains `--verify-conquest`, `--verify-colonial-expansion`, **and** `--verify-workforce`, plus `--seed 42` and `--max-turns 150`.
+
+- Given a v4 player rollup with `luxuryStockpile = {refinedSugar: 4}` and `lastTurnLuxuryProduction = {refinedSugar: 3}` for `playerId = gp1`  
+  When the System invokes `luxuryAvailableForPlayer(snapshot, 'gp1', 'refinedSugar')`  
+  Then the System returns `7` (sum of stockpile and last-turn production).
+
+- Given a v3 player rollup that has no `luxuryStockpile` or `lastTurnLuxuryProduction` blocks  
+  When the System invokes `luxuryAvailableForPlayer(snapshot, playerId, commodityId)` for any commodity id  
+  Then the System returns `0` (treats missing blocks as zero availability).
+
+- Given a v4 snapshot where every `gp1`–`gp6` rollup has zero apprentices, journeymen, and masters  
+  When the System invokes `verifyPerGpLuxurySustain(turnEndSnapshot: snapshot)`  
+  Then the System returns an empty `List<String>` regardless of `luxuryStockpile` or `lastTurnLuxuryProduction` values (tier counts of `0` skip the check).
+
+- Given a v4 snapshot for `gp1` with `workerPool = {peasants: 20, apprentices: 4, journeymen: 2, masters: 1}` and matched luxury blocks `{refinedSugar: 1+1, cigars: 0+1, furHats: 0+0}` (`stockpile + production` per commodity)  
+  When the System invokes `verifyPerGpLuxurySustain(turnEndSnapshot: snapshot)`  
+  Then the System returns exactly three failure lines in fixed order starting with `gp1 apprentices=4 refinedSugar_available=2 …`, `gp1 journeymen=2 cigars_available=1 …`, and `gp1 masters=1 furHats_available=0 …`, and each line ends with `(need <commodityId>_available >= <tier count>)`.
+
+- Given a v4 snapshot where every `gp1`–`gp6` rollup has `workerPool.apprentices = 5`, `workerPool.journeymen = 3`, `workerPool.masters = 1`, and matched luxury blocks with `stockpile + production >= tier count` for every tier  
+  When the System invokes `verifyPerGpWorkforceSustain(turnEndSnapshot: snapshot)` with default arguments  
+  Then the System returns an empty `List<String>` (the luxury pass runs but reports no shortfalls).
+
+- Given a v4 snapshot where every `gp1`–`gp6` rollup meets the peasant / trained thresholds but has zero `luxuryStockpile` and zero `lastTurnLuxuryProduction` for every commodity  
+  When the System invokes `verifyPerGpWorkforceSustain(turnEndSnapshot: snapshot, checkLuxurySustain: false)`  
+  Then the System returns an empty `List<String>` (opt-out preserves S10a behaviour for v3-style fixtures).

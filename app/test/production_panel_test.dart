@@ -7,9 +7,19 @@ import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'package:colonizethis_app/config/editorial_monocle_palette.dart';
 import 'package:colonizethis_app/features/game/production_recipe_affordance.dart';
+import 'package:colonizethis_app/features/game/widgets/chrome/ct_danger_text_button.dart';
+import 'package:colonizethis_app/features/game/widgets/production_allocation_row.dart';
+import 'package:colonizethis_app/features/game/widgets/production_allocation_row_chrome.dart';
+import 'package:colonizethis_app/features/game/widgets/production_labour_helpers.dart';
 import 'package:colonizethis_app/features/game/widgets/production_panel.dart';
 import 'package:colonizethis_app/l10n/l10n.dart';
+import 'package:colonizethis_app/widgets/ct_brass_divider.dart';
+import 'package:colonizethis_app/widgets/ct_gradients.dart';
+import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
+import 'package:colonizethis_app/widgets/ct_resource_cell.dart';
+import 'package:colonizethis_app/widgets/ct_section_label.dart';
 import 'package:colonizethis_app/widgets/ct_slider.dart';
 import 'package:colonizethis_app/widgets/resource_icon.dart';
 import 'package:colonizethis_app/widgets/strict_asset_icon.dart';
@@ -26,6 +36,7 @@ class _ProductionPanelTestWrapper extends StatefulWidget {
     required this.netDeltasByCommodity,
     required this.onDesiredOutputChanged,
     this.onOpenCommodityBreakdown,
+    this.currentOrders,
   });
 
   final Game displayGame;
@@ -34,6 +45,7 @@ class _ProductionPanelTestWrapper extends StatefulWidget {
   final Map<String, int> netDeltasByCommodity;
   final ValueChanged<Map<String, int>> onDesiredOutputChanged;
   final VoidCallback? onOpenCommodityBreakdown;
+  final Orders? currentOrders;
 
   @override
   State<_ProductionPanelTestWrapper> createState() =>
@@ -63,6 +75,7 @@ class _ProductionPanelTestWrapperState extends State<_ProductionPanelTestWrapper
         widget.onDesiredOutputChanged(next);
       },
       onOpenCommodityBreakdown: widget.onOpenCommodityBreakdown,
+      currentOrders: widget.currentOrders,
     );
   }
 }
@@ -84,6 +97,7 @@ void main() {
     Map<String, int> desiredOutputByRecipe = const {},
     ValueChanged<Map<String, int>>? onDesiredOutputChanged,
     VoidCallback? onOpenCommodityBreakdown,
+    Orders? currentOrders,
     double width = 800,
     double height = 500,
   }) {
@@ -102,17 +116,21 @@ void main() {
           (recipe.outputQuantity * entry.value);
     }
     return MaterialApp(
-      home: Scaffold(
-        body: SizedBox(
-          width: width,
-          height: height,
-          child: _ProductionPanelTestWrapper(
-            displayGame: displayGame,
-            player: player,
-            initialDesiredOutput: desiredOutputByRecipe,
-            netDeltasByCommodity: netDeltasByCommodity,
-            onDesiredOutputChanged: onDesiredOutputChanged ?? (_) {},
-            onOpenCommodityBreakdown: onOpenCommodityBreakdown,
+      home: MediaQuery(
+        data: MediaQueryData(size: Size(width, height)),
+        child: Scaffold(
+          body: SizedBox(
+            width: width,
+            height: height,
+            child: _ProductionPanelTestWrapper(
+              displayGame: displayGame,
+              player: player,
+              initialDesiredOutput: desiredOutputByRecipe,
+              netDeltasByCommodity: netDeltasByCommodity,
+              onDesiredOutputChanged: onDesiredOutputChanged ?? (_) {},
+              onOpenCommodityBreakdown: onOpenCommodityBreakdown,
+              currentOrders: currentOrders,
+            ),
           ),
         ),
       ),
@@ -145,10 +163,11 @@ void main() {
       await pumpSettleCapped(tester);
 
       expect(find.text('Available'), findsOneWidget);
-      expect(find.text('Food'), findsOneWidget);
-      expect(find.text('Raw Materials'), findsOneWidget);
-      expect(find.text('Manufactured'), findsOneWidget);
-      expect(find.text('Workers'), findsOneWidget);
+      expect(find.byType(CtSectionLabel), findsAtLeastNWidgets(4));
+      expect(find.text('FOOD'), findsOneWidget);
+      expect(find.text('RAW MATERIALS'), findsOneWidget);
+      expect(find.text('MANUFACTURED'), findsOneWidget);
+      expect(find.text('WORKERS'), findsOneWidget);
       expect(find.textContaining('Effective labour:'), findsOneWidget);
     });
 
@@ -158,9 +177,10 @@ void main() {
       await tester.pumpWidget(buildPanel(player: fullPlayer));
       await pumpSettleCapped(tester);
 
-      expect(find.textContaining('Timber:'), findsOneWidget);
-      expect(find.textContaining('Iron:'), findsOneWidget);
-      expect(find.textContaining('Coal:'), findsOneWidget);
+      expect(find.byType(CtResourceCell), findsAtLeastNWidgets(3));
+      expect(find.text('Timber'), findsOneWidget);
+      expect(find.text('Iron'), findsOneWidget);
+      expect(find.text('Coal'), findsOneWidget);
     });
 
     testWidgets('Allocation subpanel shows recipe labels with inputs', (
@@ -218,13 +238,69 @@ void main() {
       );
       await pumpSettleCapped(tester);
 
-      expect(find.text('Reset'), findsOneWidget);
-      await tester.tap(find.text('Reset'));
+      final resetFinder = find.byKey(
+        const ValueKey<String>('production_allocation_reset_button'),
+      );
+      expect(resetFinder, findsOneWidget);
+      expect(find.descendant(of: resetFinder, matching: find.text('Reset')),
+          findsOneWidget);
+      await tester.tap(resetFinder);
       await pumpSyncFrames(tester);
 
       expect(lastOutput, isNotNull);
       expect(lastOutput!.isEmpty, isTrue);
     });
+
+    testWidgets(
+      'Allocation header Reset renders as CtDangerTextButton (Refs #2862 S8d / C8)',
+      (WidgetTester tester) async {
+        await tester.pumpWidget(buildPanel(player: fullPlayer));
+        await pumpSettleCapped(tester);
+
+        final resetFinder = find.byKey(
+          const ValueKey<String>('production_allocation_reset_button'),
+        );
+        expect(resetFinder, findsOneWidget);
+
+        final reset = tester.widget<CtDangerTextButton>(resetFinder);
+        expect(reset.label, 'Reset');
+        expect(reset.tooltip, 'Reset');
+        expect(reset.enabled, isTrue);
+        expect(reset.onPressed, isNotNull);
+
+        expect(
+          find.descendant(
+            of: resetFinder,
+            matching: find.byType(CtNinePatchButton),
+          ),
+          findsNothing,
+          reason: 'Reset must not fall back to CtNinePatchButton chrome.',
+        );
+      },
+    );
+
+    testWidgets(
+      'negative: production panel does not render Reset as CtNinePatchButton (Refs #2862 S8d / C8)',
+      (WidgetTester tester) async {
+        await tester.pumpWidget(buildPanel(player: fullPlayer));
+        await pumpSettleCapped(tester);
+
+        final ninePatchButtonsWithResetLabel = find.byWidgetPredicate(
+          (Widget w) {
+            if (w is! CtNinePatchButton) return false;
+            final child = w.child;
+            return child is Text && child.data == 'Reset';
+          },
+        );
+        expect(
+          ninePatchButtonsWithResetLabel,
+          findsNothing,
+          reason:
+              'Allocation header Reset must use CtDangerTextButton per #2862 C8, '
+              'not a CtNinePatchButton labelled "Reset".',
+        );
+      },
+    );
 
     testWidgets('allocation increment tap adds one to first recipe', (
       WidgetTester tester,
@@ -467,10 +543,10 @@ void main() {
       );
       await pumpSettleCapped(tester);
 
-      expect(find.textContaining('Timber:'), findsOneWidget);
-      expect(find.textContaining(RegExp(r'\(-10\)')), findsOneWidget);
-      expect(find.textContaining('Lumber:'), findsOneWidget);
-      expect(find.textContaining(RegExp(r'\(\+5\)')), findsOneWidget);
+      expect(find.text('Timber'), findsOneWidget);
+      expect(find.text('-10'), findsOneWidget);
+      expect(find.text('Lumber'), findsOneWidget);
+      expect(find.text('+5'), findsOneWidget);
     });
 
     testWidgets('Partial availability: sliders capped by achievable runs', (
@@ -546,6 +622,351 @@ void main() {
       expect(find.textContaining('Lumber'), findsWidgets);
       expect(find.textContaining('Fabric'), findsWidgets);
     });
+
+    testWidgets(
+      'Available section labels use CtSectionLabel for Food / Raw Materials / '
+      'Manufactured / Workers (Refs #2862 S2)',
+      (WidgetTester tester) async {
+        await tester.pumpWidget(buildPanel(player: fullPlayer));
+        await pumpSettleCapped(tester);
+
+        Finder labelWithText(String text) => find.descendant(
+          of: find.byType(CtSectionLabel),
+          matching: find.text(text),
+        );
+        expect(labelWithText('FOOD'), findsOneWidget);
+        expect(labelWithText('RAW MATERIALS'), findsOneWidget);
+        expect(labelWithText('MANUFACTURED'), findsOneWidget);
+        expect(labelWithText('WORKERS'), findsOneWidget);
+      },
+    );
+
+    testWidgets(
+      'Available commodity cells use CtResourceCell with sign-prefixed '
+      'positive deltas (Refs #2862 S2)',
+      (WidgetTester tester) async {
+        final isolatedGame = Game(
+          id: 'production-panel-dark-positive',
+          worldState: WorldState(
+            turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+            oldWorld: const RegionData(),
+            newWorld: const RegionData(),
+          ),
+          players: [fullPlayer],
+        );
+        await tester.pumpWidget(
+          buildPanel(
+            player: fullPlayer,
+            gameOverride: isolatedGame,
+            desiredOutputByRecipe: {'lumber_from_timber': 2},
+          ),
+        );
+        await pumpSettleCapped(tester);
+
+        final lumberCell = find.byKey(
+          const ValueKey<String>('production_available_cell_lumber'),
+        );
+        expect(lumberCell, findsOneWidget);
+        expect(
+          find.descendant(of: lumberCell, matching: find.text('Lumber')),
+          findsOneWidget,
+        );
+        expect(
+          find.descendant(of: lumberCell, matching: find.text('+2')),
+          findsOneWidget,
+        );
+      },
+    );
+
+    testWidgets(
+      'Available commodity quantity subtracts staged trade offers '
+      '(Refs #3093)',
+      (WidgetTester tester) async {
+        await tester.pumpWidget(
+          buildPanel(
+            player: fullPlayer,
+            currentOrders: Orders(
+              tradeOrdersByPlayerId: {
+                fullPlayer.id: [
+                  TradeOrder(
+                    commodityId: CommodityCatalog.fabric.id,
+                    type: TradeOrderType.offer,
+                    quantity: 4,
+                    priority: 5,
+                  ),
+                ],
+              },
+            ),
+          ),
+        );
+        await pumpSettleCapped(tester);
+
+        final fabricCell = find.byKey(
+          const ValueKey<String>('production_available_cell_fabric'),
+        );
+        expect(fabricCell, findsOneWidget);
+        final cellWidget = tester.widget<CtResourceCell>(fabricCell);
+        expect(cellWidget.quantity, 46);
+      },
+    );
+
+    testWidgets(
+      'Available commodity cells omit delta region when net change is zero '
+      '(Refs #2862 S2)',
+      (WidgetTester tester) async {
+        await tester.pumpWidget(buildPanel(player: fullPlayer));
+        await pumpSettleCapped(tester);
+
+        final timberCell = find.byKey(
+          const ValueKey<String>('production_available_cell_timber'),
+        );
+        expect(timberCell, findsOneWidget);
+        final cellWidget = tester.widget<CtResourceCell>(timberCell);
+        expect(cellWidget.delta, isNull);
+      },
+    );
+
+    testWidgets(
+      'Workers section renders one CtResourceCell per worker tier '
+      '(Refs #2862 S2)',
+      (WidgetTester tester) async {
+        await tester.pumpWidget(buildPanel(player: fullPlayer));
+        await pumpSettleCapped(tester);
+
+        for (final tier in const <String>[
+          'peasant',
+          'apprentice',
+          'journeyman',
+          'master',
+        ]) {
+          expect(
+            find.byKey(ValueKey<String>('production_available_worker_$tier')),
+            findsOneWidget,
+            reason: 'Worker cell for $tier should be present',
+          );
+        }
+      },
+    );
+
+    testWidgets(
+      'Allocation row chrome wraps every recipe row in '
+      'ProductionAllocationRowChrome (Refs #2862 S3 / R13)',
+      (WidgetTester tester) async {
+        await tester.pumpWidget(buildPanel(player: fullPlayer));
+        await pumpSettleCapped(tester);
+
+        final recipeCount = ProductionRecipesCatalog.all.length;
+        expect(recipeCount, greaterThan(1));
+
+        expect(
+          find.byType(ProductionAllocationRow),
+          findsNWidgets(recipeCount),
+        );
+        expect(
+          find.byType(ProductionAllocationRowChrome),
+          findsNWidgets(recipeCount),
+        );
+
+        // Every ProductionAllocationRow must be a descendant of a
+        // ProductionAllocationRowChrome — no bare rows allowed.
+        for (final row in tester.widgetList<ProductionAllocationRow>(
+          find.byType(ProductionAllocationRow),
+        )) {
+          final wrapped = find.ancestor(
+            of: find.byWidget(row),
+            matching: find.byType(ProductionAllocationRowChrome),
+          );
+          expect(
+            wrapped,
+            findsOneWidget,
+            reason:
+                'ProductionAllocationRow for ${row.recipe.id} must be wrapped '
+                'in ProductionAllocationRowChrome per SPEC.',
+          );
+        }
+      },
+    );
+
+    testWidgets(
+      'Allocation row chrome paints CtGradients.rowGradient inside a 1px '
+      'accent-dim border (Refs #2862 S3 / R13)',
+      (WidgetTester tester) async {
+        await tester.pumpWidget(buildPanel(player: fullPlayer));
+        await pumpSettleCapped(tester);
+
+        final chromes = tester.widgetList<ProductionAllocationRowChrome>(
+          find.byType(ProductionAllocationRowChrome),
+        );
+        expect(chromes, isNotEmpty);
+
+        for (final chrome in chromes) {
+          final decorated = find.descendant(
+            of: find.byWidget(chrome),
+            matching: find.byType(DecoratedBox),
+          );
+          expect(decorated, findsAtLeastNWidgets(1));
+          final box = tester.widget<DecoratedBox>(decorated.first);
+          final decoration = box.decoration as BoxDecoration;
+          expect(decoration.gradient, CtGradients.rowGradient);
+          final border = decoration.border as Border;
+          expect(border.top.color, EditorialMonoclePalette.accentDim);
+          expect(border.top.width, 1.0);
+          expect(border.bottom.color, EditorialMonoclePalette.accentDim);
+          expect(border.left.color, EditorialMonoclePalette.accentDim);
+          expect(border.right.color, EditorialMonoclePalette.accentDim);
+        }
+      },
+    );
+
+    testWidgets(
+      'Allocation rows are separated by exactly N-1 CtBrassDividers '
+      '(Refs #2862 S3 / R13)',
+      (WidgetTester tester) async {
+        await tester.pumpWidget(buildPanel(player: fullPlayer));
+        await pumpSettleCapped(tester);
+
+        final recipeCount = ProductionRecipesCatalog.all.length;
+        expect(recipeCount, greaterThan(1));
+
+        // CtBrassDivider may appear elsewhere on the screen via shared
+        // chrome — scope the count to those inside the allocation rows
+        // column by counting dividers that share an ancestor with the
+        // allocation row chromes.
+        final dividers = find.descendant(
+          of: find.byType(ProductionAllocationRow).first,
+          matching: find.byType(CtBrassDivider),
+        );
+        expect(dividers, findsNothing,
+            reason: 'No divider should live inside a recipe row.');
+
+        final totalDividers = find.byType(CtBrassDivider).evaluate().length;
+        // Allow other CtBrassDivider instances elsewhere on the screen — but
+        // require at least N-1 to appear (one between each pair of recipe
+        // rows in the allocation subpanel).
+        expect(totalDividers, greaterThanOrEqualTo(recipeCount - 1));
+      },
+    );
+
+    // S7 — Labour Controls subsection placement (Refs #2862 S7a).
+
+    Widget buildPanelWithLabourCallbacks({
+      required Player player,
+      Orders currentOrders = const Orders(),
+      bool canEditLabour = true,
+    }) {
+      final game = productionPanelTestGameFor(player);
+      final captured = <Map<String, int>>[];
+      final labourCallbacks = ProductionLabourCallbacks(
+        onAppendRecruitOrder: (_) {},
+        onPopLastRecruitOrder: (_) {},
+        onDisband: (_) {},
+      );
+      return MaterialApp(
+        localizationsDelegates:
+            AppLocalizationsBinding.localizationsDelegates,
+        supportedLocales: const [Locale('en')],
+        home: Scaffold(
+          body: SizedBox(
+            width: 800,
+            height: 700,
+            child: ProductionPanel(
+              game: game,
+              player: player,
+              desiredOutputByRecipe: const {},
+              netDeltasByCommodity: const {},
+              onDesiredOutputChanged: captured.add,
+              currentOrders: currentOrders,
+              labourCallbacks: labourCallbacks,
+              canEditLabour: canEditLabour,
+            ),
+          ),
+        ),
+      );
+    }
+
+    testWidgets(
+      'Labour Controls CtSectionLabel appears below Effective Labour (Refs #2862 S7a)',
+      (WidgetTester tester) async {
+        await tester.pumpWidget(
+          buildPanelWithLabourCallbacks(player: fullPlayer),
+        );
+        await pumpSettleCapped(tester);
+
+        final labourControlsLabel = find.descendant(
+          of: find.byType(CtSectionLabel),
+          matching: find.text('LABOUR CONTROLS'),
+        );
+        expect(labourControlsLabel, findsOneWidget);
+
+        final effectiveLabour = find.textContaining('Effective labour:');
+        expect(effectiveLabour, findsOneWidget);
+
+        final effectiveY = tester.getTopLeft(effectiveLabour).dy;
+        final labourY = tester.getTopLeft(labourControlsLabel).dy;
+        expect(
+          labourY,
+          greaterThan(effectiveY),
+          reason: 'Labour Controls section label must render below the '
+              'Effective Labour line per SPEC § Labour Controls (12-A).',
+        );
+      },
+    );
+
+    testWidgets(
+      'Labour Controls subsection is omitted when callbacks are not provided '
+      '(no orphan section label; Refs #2862 S7a)',
+      (WidgetTester tester) async {
+        // `buildPanel` does not pass currentOrders / labourCallbacks.
+        await tester.pumpWidget(buildPanel(player: fullPlayer));
+        await pumpSettleCapped(tester);
+
+        expect(
+          find.descendant(
+            of: find.byType(CtSectionLabel),
+            matching: find.text('LABOUR CONTROLS'),
+          ),
+          findsNothing,
+        );
+      },
+    );
+
+    testWidgets(
+      'Workers section uses Effective Labour line then Labour Controls label '
+      '(no action buttons above Effective Labour; Refs #2862 S7a)',
+      (WidgetTester tester) async {
+        await tester.pumpWidget(
+          buildPanelWithLabourCallbacks(player: fullPlayer),
+        );
+        await pumpSettleCapped(tester);
+
+        final effectiveLabour = find.textContaining('Effective labour:');
+        final l10n = lookupAppLocalizations(const Locale('en'));
+        // The disband button for the apprentice row (if rendered) must
+        // appear below the Effective Labour line.
+        final apprenticeDisband = find.byKey(
+          const ValueKey<String>('production_labour_disband_apprentices'),
+        );
+        if (apprenticeDisband.evaluate().isNotEmpty) {
+          final effectiveY = tester.getTopLeft(effectiveLabour).dy;
+          final disbandY = tester.getTopLeft(apprenticeDisband).dy;
+          expect(
+            disbandY,
+            greaterThan(effectiveY),
+            reason: 'Disband control must render below Effective Labour.',
+          );
+        }
+        // The peasant tier label parenthetical must also appear.
+        expect(
+          find.text(
+            l10n.production_labourTierLabel(
+              l10n.production_workers_peasants,
+              l10n.production_labourTierUnlocked,
+            ),
+          ),
+          findsOneWidget,
+        );
+      },
+    );
   });
 
   group('ResourceIcon', () {

@@ -2,6 +2,7 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../diplomacy/diplomacy_relation_lookup.dart';
+import '../world/province_lookup.dart';
 import '../world/province_ownership_transfer.dart';
 
 /// Applies immediate province flips when a Great Power army moves into an
@@ -86,7 +87,6 @@ Game applyUnopposedProvinceCaptures(Game game, Orders orders) {
     }
   }
 
-  processRegion(state.worldState.oldWorld);
-  processRegion(state.worldState.newWorld);
+  state.worldState.forEachRegion((_, region) => processRegion(region));
   return state;
 }

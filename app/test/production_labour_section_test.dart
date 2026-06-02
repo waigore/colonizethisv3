@@ -1,0 +1,709 @@
+// Widget tests for ProductionLabourSection. SPEC/ui/production-panel.md
+// § Labour Controls, SPEC/game/workers-and-population.md.
+
+import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:colonizethis_models/colonizethis_models.dart';
+import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
+import 'package:flutter/gestures.dart' show PointerDeviceKind;
+import 'package:flutter/material.dart';
+import 'package:flutter_test/flutter_test.dart';
+
+import 'package:colonizethis_app/config/editorial_monocle_palette.dart';
+import 'package:colonizethis_app/features/game/widgets/chrome/ct_danger_text_button.dart';
+import 'package:colonizethis_app/features/game/widgets/chrome/ct_nine_patch_button.dart';
+import 'package:colonizethis_app/features/game/widgets/production_labour_helpers.dart';
+import 'package:colonizethis_app/features/game/widgets/production_labour_section.dart';
+import 'package:colonizethis_app/l10n/l10n.dart';
+
+import 'widget_test_pumps.dart';
+
+const _playerId = 'gp_labour_widget_test';
+
+Player _gpWithPool({
+  int peasants = 0,
+  int apprentices = 0,
+  int journeymen = 0,
+  int masters = 0,
+  int treasury = 0,
+  Map<String, int> stockpile = const {},
+  Map<String, bool>? techUnlocked,
+}) {
+  return Player(
+    id: _playerId,
+    displayName: 'Labour widget GP',
+    isHuman: true,
+    workerPool: WorkerPool(
+      peasants: peasants,
+      apprentices: apprentices,
+      journeymen: journeymen,
+      masters: masters,
+    ),
+    stockpile: Stockpile(quantities: Map<String, int>.from(stockpile)),
+    treasury: treasury,
+    techUnlocked: techUnlocked,
+  );
+}
+
+class _Capture {
+  final List<WorkerTier> appended = [];
+  final List<WorkerTier> popped = [];
+  final List<WorkerTier> disbanded = [];
+
+  ProductionLabourCallbacks asCallbacks() {
+    return ProductionLabourCallbacks(
+      onAppendRecruitOrder: appended.add,
+      onPopLastRecruitOrder: popped.add,
+      onDisband: disbanded.add,
+    );
+  }
+}
+
+Widget _mount({
+  required Player player,
+  Orders currentOrders = const Orders(),
+  bool canEdit = true,
+  ProductionLabourCallbacks? callbacks,
+}) {
+  return MaterialApp(
+    localizationsDelegates:
+        AppLocalizationsBinding.localizationsDelegates,
+    supportedLocales: const [Locale('en')],
+    home: Scaffold(
+      body: SizedBox(
+        width: 800,
+        height: 600,
+        child: ProductionLabourSection(
+          player: player,
+          currentOrders: currentOrders,
+          canEdit: canEdit,
+          callbacks: callbacks ?? _Capture().asCallbacks(),
+        ),
+      ),
+    ),
+  );
+}
+
+void main() {
+  suppressLogsForTests();
+
+  group('ProductionLabourSection', () {
+    testWidgets('renders one row per tier (peasant + 3 trained) with disband only on trained tiers', (
+      WidgetTester tester,
+    ) async {
+      final player = _gpWithPool(peasants: 1, apprentices: 1, journeymen: 1, masters: 1);
+      await tester.pumpWidget(_mount(player: player));
+      await pumpSettleCapped(tester);
+
+      // All four tier rows present.
+      for (final tier in kProductionLabourTierOrder) {
+        expect(
+          find.byKey(ValueKey<String>('production_labour_row_${tier.id}')),
+          findsOneWidget,
+          reason: 'expected row for ${tier.id}',
+        );
+      }
+
+      // Three trained tiers each render a keyed visible Disband button.
+      // The peasant row reserves an invisible Disband-shaped placeholder
+      // so −/+ align across rows (Refs #2862 S8a) — that placeholder is
+      // unkeyed, excluded from semantics, and not tappable. Use the
+      // tier-keyed finder to count visible Disband affordances only.
+      for (final tier in const <WorkerTier>[
+        WorkerTier.apprentice,
+        WorkerTier.journeyman,
+        WorkerTier.master,
+      ]) {
+        expect(
+          find.byKey(ValueKey<String>('production_labour_disband_${tier.id}')),
+          findsOneWidget,
+          reason: 'expected visible Disband for ${tier.id}',
+        );
+      }
+      expect(
+        find.byKey(const ValueKey<String>('production_labour_disband_peasants')),
+        findsNothing,
+        reason: 'peasant row must not mount a keyed Disband control (S8e)',
+      );
+    });
+
+    testWidgets('tapping + on peasant invokes onAppendRecruitOrder with peasant', (
+      WidgetTester tester,
+    ) async {
+      final capture = _Capture();
+      final player = _gpWithPool(
+        stockpile: {CommodityCatalog.fabric.id: 2},
+      );
+      await tester.pumpWidget(
+        _mount(player: player, callbacks: capture.asCallbacks()),
+      );
+      await pumpSettleCapped(tester);
+
+      final l10n = lookupAppLocalizations(const Locale('en'));
+      await tester.tap(
+        find.bySemanticsLabel(
+          l10n.production_labourRecruitTier(l10n.production_workers_peasants),
+        ),
+      );
+      await pumpSyncFrames(tester);
+
+      expect(capture.appended, [WorkerTier.peasant]);
+    });
+
+    testWidgets('tapping − dequeues last matching tier order', (
+      WidgetTester tester,
+    ) async {
+      final capture = _Capture();
+      final player = _gpWithPool(
+        peasants: 1,
+        treasury: 500,
+        stockpile: {CommodityCatalog.paper.id: 5},
+        techUnlocked: const {
+          kTechIdTrainedJourneymen: true,
+          kTechIdCigarProduction: true,
+        },
+      );
+      final orders = Orders(
+        recruitWorkerOrdersByPlayerId: {
+          _playerId: const [RecruitWorkerOrder(targetTier: WorkerTier.journeyman)],
+        },
+      );
+      await tester.pumpWidget(
+        _mount(
+          player: player,
+          currentOrders: orders,
+          callbacks: capture.asCallbacks(),
+        ),
+      );
+      await pumpSettleCapped(tester);
+
+      final l10n = lookupAppLocalizations(const Locale('en'));
+      await tester.tap(
+        find.bySemanticsLabel(
+          l10n.production_labourDequeueTier(l10n.production_workers_journeymen),
+        ),
+      );
+      await pumpSyncFrames(tester);
+
+      expect(capture.popped, [WorkerTier.journeyman]);
+    });
+
+    testWidgets('Queued: N badge appears only when count > 0', (
+      WidgetTester tester,
+    ) async {
+      final player = _gpWithPool(peasants: 1);
+      final orders = Orders(
+        recruitWorkerOrdersByPlayerId: {
+          _playerId: const [
+            RecruitWorkerOrder(targetTier: WorkerTier.peasant),
+            RecruitWorkerOrder(targetTier: WorkerTier.peasant),
+          ],
+        },
+      );
+      await tester.pumpWidget(
+        _mount(player: player, currentOrders: orders),
+      );
+      await pumpSettleCapped(tester);
+
+      expect(find.text('Queued: 2'), findsOneWidget);
+      // Other tiers have no queued orders so no badge appears for them.
+      expect(find.text('Queued: 0'), findsNothing);
+    });
+
+    testWidgets('+ stepper for tech-locked apprentice tier is disabled (no callback on tap)', (
+      WidgetTester tester,
+    ) async {
+      final capture = _Capture();
+      final player = _gpWithPool(
+        peasants: 5,
+        treasury: 5000,
+        stockpile: {CommodityCatalog.paper.id: 50},
+      );
+      await tester.pumpWidget(
+        _mount(player: player, callbacks: capture.asCallbacks()),
+      );
+      await pumpSettleCapped(tester);
+
+      final l10n = lookupAppLocalizations(const Locale('en'));
+      await tester.tap(
+        find.bySemanticsLabel(
+          l10n.production_labourTrainTier(l10n.production_workers_apprentices),
+        ),
+        warnIfMissed: false,
+      );
+      await pumpSyncFrames(tester);
+
+      expect(capture.appended, isEmpty);
+    });
+
+    testWidgets('disband control fires onDisband with the trained tier', (
+      WidgetTester tester,
+    ) async {
+      final capture = _Capture();
+      // Three Disband buttons (one per trained tier); only journeyman enabled.
+      final player = _gpWithPool(journeymen: 1);
+      await tester.pumpWidget(
+        _mount(player: player, callbacks: capture.asCallbacks()),
+      );
+      await pumpSettleCapped(tester);
+
+      await tester.tap(
+        find.byKey(const ValueKey<String>('production_labour_disband_journeymen')),
+      );
+      await pumpSyncFrames(tester);
+
+      expect(capture.disbanded, [WorkerTier.journeyman]);
+    });
+
+    testWidgets('disband is disabled when no worker of that tier (no callback)', (
+      WidgetTester tester,
+    ) async {
+      final capture = _Capture();
+      // No trained workers at all — all three disband buttons rendered, disabled.
+      final player = _gpWithPool(peasants: 1);
+      await tester.pumpWidget(
+        _mount(player: player, callbacks: capture.asCallbacks()),
+      );
+      await pumpSettleCapped(tester);
+
+      await tester.tap(
+        find.byKey(const ValueKey<String>('production_labour_disband_masters')),
+        warnIfMissed: false,
+      );
+      await pumpSyncFrames(tester);
+
+      expect(capture.disbanded, isEmpty);
+    });
+
+    testWidgets('canEdit=false hides all action buttons', (
+      WidgetTester tester,
+    ) async {
+      final player = _gpWithPool(peasants: 2, journeymen: 1);
+      await tester.pumpWidget(_mount(player: player, canEdit: false));
+      await pumpSettleCapped(tester);
+
+      // No disband buttons rendered when read-only.
+      expect(find.text('Disband'), findsNothing);
+      final l10n = lookupAppLocalizations(const Locale('en'));
+      // Append/dequeue semantic labels do not appear because read-only mode
+      // skips emitting any action button.
+      expect(
+        find.bySemanticsLabel(
+          l10n.production_labourRecruitTier(l10n.production_workers_peasants),
+        ),
+        findsNothing,
+      );
+    });
+
+    // S7b — Tech-gate parenthetical (Refs #2862 S7).
+
+    testWidgets(
+      'tier label suffixes (unlocked) for peasant when techUnlocked is empty',
+      (WidgetTester tester) async {
+        final player = _gpWithPool(peasants: 1);
+        await tester.pumpWidget(_mount(player: player));
+        await pumpSettleCapped(tester);
+
+        final l10n = lookupAppLocalizations(const Locale('en'));
+        expect(
+          find.text(
+            l10n.production_labourTierLabel(
+              l10n.production_workers_peasants,
+              l10n.production_labourTierUnlocked,
+            ),
+          ),
+          findsOneWidget,
+        );
+      },
+    );
+
+    testWidgets(
+      'trained tier label suffixes (locked) when required techs missing',
+      (WidgetTester tester) async {
+        final player = _gpWithPool(peasants: 1);
+        await tester.pumpWidget(_mount(player: player));
+        await pumpSettleCapped(tester);
+
+        final l10n = lookupAppLocalizations(const Locale('en'));
+        for (final tierName in [
+          l10n.production_workers_apprentices,
+          l10n.production_workers_journeymen,
+          l10n.production_workers_masters,
+        ]) {
+          expect(
+            find.text(
+              l10n.production_labourTierLabel(
+                tierName,
+                l10n.production_labourTierLocked,
+              ),
+            ),
+            findsOneWidget,
+            reason: '$tierName must render (locked) suffix',
+          );
+        }
+      },
+    );
+
+    testWidgets(
+      'trained tier label suffixes (unlocked) when all required techs are unlocked',
+      (WidgetTester tester) async {
+        final player = _gpWithPool(
+          peasants: 1,
+          techUnlocked: const {
+            kTechIdApprenticeWorkers: true,
+            kTechIdSugarRefining: true,
+          },
+        );
+        await tester.pumpWidget(_mount(player: player));
+        await pumpSettleCapped(tester);
+
+        final l10n = lookupAppLocalizations(const Locale('en'));
+        expect(
+          find.text(
+            l10n.production_labourTierLabel(
+              l10n.production_workers_apprentices,
+              l10n.production_labourTierUnlocked,
+            ),
+          ),
+          findsOneWidget,
+        );
+      },
+    );
+
+    // S7c — Disband uses CtDangerTextButton (no CtNinePatchButton chrome).
+
+    testWidgets(
+      'disband control renders as CtDangerTextButton and not CtNinePatchButton',
+      (WidgetTester tester) async {
+        final player = _gpWithPool(journeymen: 1);
+        await tester.pumpWidget(_mount(player: player));
+        await pumpSettleCapped(tester);
+
+        // Three trained tiers each render a visible Disband
+        // `CtDangerTextButton`, plus the peasant row reserves an invisible
+        // `CtDangerTextButton` slot (`Visibility(visible: false)`) so −/+
+        // align with trained rows per #2862 S8a / C4. Total = 4 mounted
+        // CtDangerTextButton instances, none of which are
+        // `CtNinePatchButton` (S7c invariant preserved).
+        expect(find.byType(CtDangerTextButton), findsNWidgets(4));
+        expect(
+          find.byType(CtNinePatchButton),
+          findsNothing,
+          reason: 'Labour rows must not mount CtNinePatchButton (S7c)',
+        );
+      },
+    );
+
+    testWidgets(
+      'enabled disband CtDangerTextButton idle opacity is 0.7',
+      (WidgetTester tester) async {
+        final player = _gpWithPool(journeymen: 1);
+        await tester.pumpWidget(_mount(player: player));
+        await pumpSettleCapped(tester);
+
+        final disbandFinder = find.byKey(
+          const ValueKey<String>('production_labour_disband_journeymen'),
+        );
+        expect(disbandFinder, findsOneWidget);
+        final opacity = tester.widget<Opacity>(
+          find.descendant(of: disbandFinder, matching: find.byType(Opacity)),
+        );
+        expect(opacity.opacity, CtDangerTextButton.idleOpacity);
+      },
+    );
+
+    testWidgets(
+      'disabled disband CtDangerTextButton uses CtNinePatchButton.disabledOpacity',
+      (WidgetTester tester) async {
+        // No journeyman in pool → disband for journeyman disabled (still mounted).
+        final player = _gpWithPool(peasants: 1);
+        await tester.pumpWidget(_mount(player: player));
+        await pumpSettleCapped(tester);
+
+        final disbandFinder = find.byKey(
+          const ValueKey<String>('production_labour_disband_journeymen'),
+        );
+        expect(disbandFinder, findsOneWidget);
+        final opacity = tester.widget<Opacity>(
+          find.descendant(of: disbandFinder, matching: find.byType(Opacity)),
+        );
+        expect(opacity.opacity, CtNinePatchButton.disabledOpacity);
+      },
+    );
+
+    testWidgets(
+      'disband CtDangerTextButton paints danger border (no hard-coded colours)',
+      (WidgetTester tester) async {
+        final player = _gpWithPool(apprentices: 1);
+        await tester.pumpWidget(_mount(player: player));
+        await pumpSettleCapped(tester);
+
+        final disbandFinder = find.byKey(
+          const ValueKey<String>('production_labour_disband_apprentices'),
+        );
+        // The danger-coloured border lives on an AnimatedContainer painted
+        // by the CtDangerTextButton; assert it resolves through the token.
+        final container = tester.widget<AnimatedContainer>(
+          find.descendant(
+            of: disbandFinder,
+            matching: find.byType(AnimatedContainer),
+          ),
+        );
+        final decoration = container.decoration as BoxDecoration;
+        final border = decoration.border! as Border;
+        expect(border.top.color, EditorialMonoclePalette.danger);
+        expect(border.top.width, 1);
+        expect(decoration.color, Colors.transparent);
+      },
+    );
+
+    testWidgets(
+      'CtDangerTextButton hover lifts opacity to 1.0',
+      (WidgetTester tester) async {
+        final player = _gpWithPool(journeymen: 1);
+        await tester.pumpWidget(_mount(player: player));
+        await pumpSettleCapped(tester);
+
+        final disbandFinder = find.byKey(
+          const ValueKey<String>('production_labour_disband_journeymen'),
+        );
+
+        final gesture = await tester.createGesture(
+          kind: PointerDeviceKind.mouse,
+        );
+        addTearDown(gesture.removePointer);
+        await gesture.addPointer(location: Offset.zero);
+        await tester.pump();
+
+        await gesture.moveTo(tester.getCenter(disbandFinder));
+        await tester.pumpAndSettle(CtDangerTextButton.animationDuration);
+
+        final opacity = tester.widget<Opacity>(
+          find.descendant(of: disbandFinder, matching: find.byType(Opacity)),
+        );
+        expect(opacity.opacity, CtDangerTextButton.hoverOpacity);
+      },
+    );
+
+    // S8a — Trailing alignment of −/+ across rows + Disband flush right
+    // (SPEC/ui/production-panel.md § Labour Controls (12-A) > Trailing
+    // alignment).
+
+    testWidgets(
+      '−/+ steppers share screen-x across peasant and trained rows (S8a)',
+      (WidgetTester tester) async {
+        final player = _gpWithPool(
+          peasants: 1,
+          apprentices: 1,
+          journeymen: 1,
+          masters: 1,
+          techUnlocked: const {
+            kTechIdApprenticeWorkers: true,
+            kTechIdSugarRefining: true,
+          },
+        );
+        await tester.pumpWidget(_mount(player: player));
+        await pumpSettleCapped(tester);
+
+        final l10n = lookupAppLocalizations(const Locale('en'));
+
+        Offset minusCentreFor(WorkerTier tier, String tierName) {
+          final rowKey = ValueKey<String>('production_labour_row_${tier.id}');
+          return tester.getCenter(
+            find.descendant(
+              of: find.byKey(rowKey),
+              matching: find.bySemanticsLabel(
+                l10n.production_labourDequeueTier(tierName),
+              ),
+            ),
+          );
+        }
+
+        Offset plusCentreFor(WorkerTier tier, String tierName, String verb) {
+          final rowKey = ValueKey<String>('production_labour_row_${tier.id}');
+          return tester.getCenter(
+            find.descendant(
+              of: find.byKey(rowKey),
+              matching: find.bySemanticsLabel(verb),
+            ),
+          );
+        }
+
+        final peasantMinus = minusCentreFor(
+          WorkerTier.peasant,
+          l10n.production_workers_peasants,
+        );
+        final apprenticeMinus = minusCentreFor(
+          WorkerTier.apprentice,
+          l10n.production_workers_apprentices,
+        );
+        final journeymanMinus = minusCentreFor(
+          WorkerTier.journeyman,
+          l10n.production_workers_journeymen,
+        );
+        final masterMinus = minusCentreFor(
+          WorkerTier.master,
+          l10n.production_workers_masters,
+        );
+
+        expect(
+          apprenticeMinus.dx,
+          closeTo(peasantMinus.dx, 0.5),
+          reason: '− on apprentice must align with peasant per S8a / C4',
+        );
+        expect(
+          journeymanMinus.dx,
+          closeTo(peasantMinus.dx, 0.5),
+          reason: '− on journeyman must align with peasant per S8a / C4',
+        );
+        expect(
+          masterMinus.dx,
+          closeTo(peasantMinus.dx, 0.5),
+          reason: '− on master must align with peasant per S8a / C4',
+        );
+
+        final peasantPlus = plusCentreFor(
+          WorkerTier.peasant,
+          l10n.production_workers_peasants,
+          l10n.production_labourRecruitTier(l10n.production_workers_peasants),
+        );
+        final apprenticePlus = plusCentreFor(
+          WorkerTier.apprentice,
+          l10n.production_workers_apprentices,
+          l10n.production_labourTrainTier(l10n.production_workers_apprentices),
+        );
+        final journeymanPlus = plusCentreFor(
+          WorkerTier.journeyman,
+          l10n.production_workers_journeymen,
+          l10n.production_labourTrainTier(l10n.production_workers_journeymen),
+        );
+        final masterPlus = plusCentreFor(
+          WorkerTier.master,
+          l10n.production_workers_masters,
+          l10n.production_labourTrainTier(l10n.production_workers_masters),
+        );
+
+        expect(
+          apprenticePlus.dx,
+          closeTo(peasantPlus.dx, 0.5),
+          reason: '+ on apprentice must align with peasant per S8a / C4',
+        );
+        expect(
+          journeymanPlus.dx,
+          closeTo(peasantPlus.dx, 0.5),
+          reason: '+ on journeyman must align with peasant per S8a / C4',
+        );
+        expect(
+          masterPlus.dx,
+          closeTo(peasantPlus.dx, 0.5),
+          reason: '+ on master must align with peasant per S8a / C4',
+        );
+
+        // Disband sits flush to the right edge: strictly to the right of +
+        // on the same row.
+        for (final tier in const <WorkerTier>[
+          WorkerTier.apprentice,
+          WorkerTier.journeyman,
+          WorkerTier.master,
+        ]) {
+          final disbandCentre = tester.getCenter(
+            find.byKey(ValueKey<String>('production_labour_disband_${tier.id}')),
+          );
+          final plusCentreSameRow = plusCentreFor(
+            tier,
+            switch (tier) {
+              WorkerTier.apprentice => l10n.production_workers_apprentices,
+              WorkerTier.journeyman => l10n.production_workers_journeymen,
+              WorkerTier.master => l10n.production_workers_masters,
+              WorkerTier.peasant => l10n.production_workers_peasants,
+            },
+            l10n.production_labourTrainTier(switch (tier) {
+              WorkerTier.apprentice => l10n.production_workers_apprentices,
+              WorkerTier.journeyman => l10n.production_workers_journeymen,
+              WorkerTier.master => l10n.production_workers_masters,
+              WorkerTier.peasant => l10n.production_workers_peasants,
+            }),
+          );
+          expect(
+            disbandCentre.dx,
+            greaterThan(plusCentreSameRow.dx),
+            reason:
+                'Disband must sit to the right of + on ${tier.id} row (S8a)',
+          );
+        }
+      },
+    );
+
+    testWidgets(
+      'peasant row reserves invisible Disband slot (S8a)',
+      (WidgetTester tester) async {
+        final player = _gpWithPool(peasants: 1);
+        await tester.pumpWidget(_mount(player: player));
+        await pumpSettleCapped(tester);
+
+        // Reserved peasant slot is unkeyed and excluded from semantics; only
+        // the 3 trained rows render keyed Disband controls. Total mounted
+        // CtDangerTextButton instances = 4 (3 visible + 1 reserved).
+        expect(find.byType(CtDangerTextButton), findsNWidgets(4));
+        expect(
+          find.byKey(const ValueKey<String>('production_labour_disband_peasants')),
+          findsNothing,
+        );
+      },
+    );
+
+    // S8e — Disband enabled iff `pool.<tier> >= 1` (positive + negative
+    // pins per SPEC/ui/production-panel.md § Labour Controls (12-A)).
+
+    testWidgets(
+      'Disband is enabled when pool.<tier> == 1 and canEdit is true (S8e positive)',
+      (WidgetTester tester) async {
+        final capture = _Capture();
+        final player = _gpWithPool(apprentices: 1);
+        await tester.pumpWidget(
+          _mount(player: player, callbacks: capture.asCallbacks()),
+        );
+        await pumpSettleCapped(tester);
+
+        final disbandFinder = find.byKey(
+          const ValueKey<String>('production_labour_disband_apprentices'),
+        );
+        expect(disbandFinder, findsOneWidget);
+        final opacity = tester.widget<Opacity>(
+          find.descendant(of: disbandFinder, matching: find.byType(Opacity)),
+        );
+        expect(opacity.opacity, CtDangerTextButton.idleOpacity);
+
+        await tester.tap(disbandFinder);
+        await pumpSyncFrames(tester);
+
+        expect(capture.disbanded, [WorkerTier.apprentice]);
+      },
+    );
+
+    testWidgets(
+      'Disband is disabled when pool.<tier> == 0 (S8e negative)',
+      (WidgetTester tester) async {
+        final capture = _Capture();
+        final player = _gpWithPool(peasants: 1);
+        await tester.pumpWidget(
+          _mount(player: player, callbacks: capture.asCallbacks()),
+        );
+        await pumpSettleCapped(tester);
+
+        final disbandFinder = find.byKey(
+          const ValueKey<String>('production_labour_disband_apprentices'),
+        );
+        expect(disbandFinder, findsOneWidget);
+        final opacity = tester.widget<Opacity>(
+          find.descendant(of: disbandFinder, matching: find.byType(Opacity)),
+        );
+        expect(opacity.opacity, CtNinePatchButton.disabledOpacity);
+
+        await tester.tap(disbandFinder, warnIfMissed: false);
+        await pumpSyncFrames(tester);
+
+        expect(capture.disbanded, isEmpty);
+      },
+    );
+  });
+}

@@ -5,6 +5,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import '../diplomacy/diplomacy_resolver.dart';
 import '../world/player_view.dart';
 import 'incremental_candidate_validator.dart';
+import 'order_resolution_context.dart';
 
 export '../diplomacy/overture_stage_helpers.dart';
 
@@ -46,8 +47,8 @@ IncrementalCandidateValidator buildIncrementalCandidateValidator({
   required String playerId,
   required Orders baseOrders,
   Map<String, TileMapResult>? tileMapByRegion,
-  PlayerView? view,
-  Map<String, Unit>? unitsById,
+  OrderResolutionContext? resolution,
+
   /// When callers already built membership for this [game], pass it to avoid a
   /// second [DiplomacyFactionMembership.from] inside the validator.
   DiplomacyFactionMembership? factionMembership,
@@ -59,8 +60,7 @@ IncrementalCandidateValidator buildIncrementalCandidateValidator({
     playerId: playerId,
     basePrefix: baseOrders,
     tileMapByRegion: tileMapByRegion,
-    view: view,
-    unitsById: unitsById,
+    resolution: resolution,
     factionMembership: factionMembership,
   );
 }
@@ -77,8 +77,7 @@ IncrementalCandidateValidator incrementalValidatorForCandidateProbe({
   required String playerId,
   required Orders baseOrders,
   Map<String, TileMapResult>? tileMapByRegion,
-  PlayerView? view,
-  Map<String, Unit>? unitsById,
+  OrderResolutionContext? resolution,
   DiplomacyFactionMembership? factionMembership,
   IncrementalCandidateValidator? sharedCandidateValidator,
 }) {
@@ -99,8 +98,7 @@ IncrementalCandidateValidator incrementalValidatorForCandidateProbe({
     playerId: playerId,
     baseOrders: baseOrders,
     tileMapByRegion: tileMapByRegion,
-    view: view,
-    unitsById: unitsById,
+    resolution: resolution,
     factionMembership: factionMembership,
   );
 }
@@ -112,8 +110,7 @@ bool isMoveOrderAccepted(
   Orders baseOrders,
   MoveOrder candidate, {
   IncrementalCandidateValidator? sharedCandidateValidator,
-  PlayerView? view,
-  Map<String, Unit>? unitsById,
+  OrderResolutionContext? resolution,
   DiplomacyFactionMembership? factionMembership,
 }) {
   // Stateless candidate-probe path: validate the candidate against an
@@ -126,8 +123,7 @@ bool isMoveOrderAccepted(
     topology: topology,
     playerId: playerId,
     baseOrders: baseOrders,
-    view: view,
-    unitsById: unitsById,
+    resolution: resolution,
     factionMembership: factionMembership,
     sharedCandidateValidator: sharedCandidateValidator,
   );
@@ -141,8 +137,7 @@ bool isArmyMoveOrderAccepted(
   Orders baseOrders,
   ArmyMoveOrder candidate, {
   IncrementalCandidateValidator? sharedCandidateValidator,
-  PlayerView? view,
-  Map<String, Unit>? unitsById,
+  OrderResolutionContext? resolution,
   DiplomacyFactionMembership? factionMembership,
 }) {
   // Stateless candidate-probe path: validate the candidate against
@@ -154,8 +149,7 @@ bool isArmyMoveOrderAccepted(
     topology: topology,
     playerId: playerId,
     baseOrders: baseOrders,
-    view: view,
-    unitsById: unitsById,
+    resolution: resolution,
     factionMembership: factionMembership,
     sharedCandidateValidator: sharedCandidateValidator,
   );
@@ -170,8 +164,7 @@ bool isWorkOrderAccepted(
   WorkOrder candidate, {
   Map<String, TileMapResult>? tileMapByRegion,
   IncrementalCandidateValidator? sharedCandidateValidator,
-  PlayerView? view,
-  Map<String, Unit>? unitsById,
+  OrderResolutionContext? resolution,
   DiplomacyFactionMembership? factionMembership,
 }) {
   final validator = incrementalValidatorForCandidateProbe(
@@ -180,8 +173,7 @@ bool isWorkOrderAccepted(
     playerId: playerId,
     baseOrders: baseOrders,
     tileMapByRegion: tileMapByRegion,
-    view: view,
-    unitsById: unitsById,
+    resolution: resolution,
     factionMembership: factionMembership,
     sharedCandidateValidator: sharedCandidateValidator,
   );
@@ -195,8 +187,7 @@ bool isBuildOrderAccepted(
   Orders baseOrders,
   BuildUnitOrder candidate, {
   IncrementalCandidateValidator? sharedCandidateValidator,
-  PlayerView? view,
-  Map<String, Unit>? unitsById,
+  OrderResolutionContext? resolution,
   DiplomacyFactionMembership? factionMembership,
 }) {
   final validator = incrementalValidatorForCandidateProbe(
@@ -204,8 +195,7 @@ bool isBuildOrderAccepted(
     topology: topology,
     playerId: playerId,
     baseOrders: baseOrders,
-    view: view,
-    unitsById: unitsById,
+    resolution: resolution,
     factionMembership: factionMembership,
     sharedCandidateValidator: sharedCandidateValidator,
   );
@@ -219,8 +209,7 @@ bool isNavalMoveOrderAccepted(
   Orders baseOrders,
   NavalMoveOrder candidate, {
   IncrementalCandidateValidator? sharedCandidateValidator,
-  PlayerView? view,
-  Map<String, Unit>? unitsById,
+  OrderResolutionContext? resolution,
   DiplomacyFactionMembership? factionMembership,
 }) {
   // Stateless candidate-probe path. SPEC/program/order-suggestions.md
@@ -230,8 +219,7 @@ bool isNavalMoveOrderAccepted(
     topology: topology,
     playerId: playerId,
     baseOrders: baseOrders,
-    view: view,
-    unitsById: unitsById,
+    resolution: resolution,
     factionMembership: factionMembership,
     sharedCandidateValidator: sharedCandidateValidator,
   );
@@ -245,8 +233,7 @@ bool isNavalMissionOrderAccepted(
   Orders baseOrders,
   NavalMissionOrder candidate, {
   IncrementalCandidateValidator? sharedCandidateValidator,
-  PlayerView? view,
-  Map<String, Unit>? unitsById,
+  OrderResolutionContext? resolution,
   DiplomacyFactionMembership? factionMembership,
 }) {
   // Stateless candidate-probe path. SPEC/program/order-suggestions.md
@@ -256,8 +243,7 @@ bool isNavalMissionOrderAccepted(
     topology: topology,
     playerId: playerId,
     baseOrders: baseOrders,
-    view: view,
-    unitsById: unitsById,
+    resolution: resolution,
     factionMembership: factionMembership,
     sharedCandidateValidator: sharedCandidateValidator,
   );
@@ -271,13 +257,13 @@ bool isDiplomaticOrderAccepted(
   Orders baseOrders,
   DiplomaticOrder candidate, {
   Map<String, TileMapResult>? tileMapByRegion,
+
   /// When callers probe many candidates for the same `(game, topology,
-  /// playerId)` (for example diplomatic suggestion loops), they may pass the
-  /// same [view] / [unitsById] built once to skip redundant `buildPlayerView`
-  /// and `unitsByIdFromWorld` scans. Refs #2394; `SPEC/program/order-suggestions.md`
-  /// § Throughput bounds.
-  PlayerView? view,
-  Map<String, Unit>? unitsById,
+  /// playerId)` (for example diplomatic suggestion loops), they may pass
+  /// [resolution] built once to skip redundant `buildPlayerView` and unit-map
+  /// scans. Refs #2394, #2836; `SPEC/program/order-suggestions.md` § Throughput
+  /// bounds.
+  OrderResolutionContext? resolution,
   DiplomacyFactionMembership? factionMembership,
   IncrementalCandidateValidator? sharedCandidateValidator,
 }) {
@@ -287,8 +273,7 @@ bool isDiplomaticOrderAccepted(
     playerId: playerId,
     baseOrders: baseOrders,
     tileMapByRegion: tileMapByRegion,
-    view: view,
-    unitsById: unitsById,
+    resolution: resolution,
     factionMembership: factionMembership,
     sharedCandidateValidator: sharedCandidateValidator,
   );

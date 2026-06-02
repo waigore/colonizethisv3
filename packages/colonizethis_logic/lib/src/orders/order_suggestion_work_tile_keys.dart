@@ -6,6 +6,7 @@ import '../diplomacy/diplomacy_resolver.dart';
 import '../world/player_view.dart';
 import '../world/unit_lookup.dart';
 import 'incremental_candidate_validator.dart';
+import 'order_resolution_context.dart';
 import 'order_suggestion_context.dart';
 import 'order_suggestion_helpers.dart';
 import 'order_suggestion_work_tile_prefilter.dart';
@@ -23,15 +24,20 @@ Set<String> getValidWorkOrderTileKeys(
   String workTarget,
   Orders currentOrders, {
   Map<String, TileMapResult>? tileMapByRegion,
+
   /// When callers evaluate many tile highlights for the same player and
   /// [currentOrders], they may pass a shared [PlayerView] (Refs #2394).
   PlayerView? view,
-  /// Optional units index; must match [game.worldState] when supplied.
-  Map<String, Unit>? unitsById,
+
+  /// Optional pass snapshot; must match [game] when supplied.
+  OrderResolutionContext? resolution,
+
   /// Optional faction snapshot; must match [game] when supplied.
   DiplomacyFactionMembership? factionMembership,
+
   /// When non-null, must match `(game, topology, playerId, currentOrders, …)`.
   IncrementalCandidateValidator? sharedCandidateValidator,
+
   /// When non-null, must match [view.provincesById] owned by [playerId].
   Set<String>? playerOwnedProvinceIds,
 }) {
@@ -67,11 +73,19 @@ Set<String> getValidWorkOrderTileKeys(
       sharedCandidateValidator?.factionMembershipSnapshot ??
       factionMembership ??
       DiplomacyFactionMembership.from(game);
-  final effectiveUnitsById = unitsById ?? unitsByIdFromWorld(game.worldState);
+  final effectiveResolution =
+      resolution ??
+      (sharedCandidateValidator != null
+          ? (
+              view: sharedCandidateValidator.view,
+              unitsById: sharedCandidateValidator.unitsById,
+              provinceById: sharedCandidateValidator.view.provincesById,
+            )
+          : orderResolutionContextFromView(effectiveView, game));
   final effectiveOwnedProvinceIds =
       playerOwnedProvinceIds ??
       <String>{
-        for (final e in effectiveView.provincesById.entries)
+        for (final e in effectiveResolution.provinceById.entries)
           if (e.value.ownerId == playerId) e.key,
       };
   final candidateValidator =
@@ -82,8 +96,7 @@ Set<String> getValidWorkOrderTileKeys(
         playerId: playerId,
         baseOrders: currentOrders,
         tileMapByRegion: tileMapByRegion,
-        view: effectiveView,
-        unitsById: effectiveUnitsById,
+        resolution: effectiveResolution,
         factionMembership: effectiveFactionMembership,
       );
   final raw = rawCandidateTilesForWorkTarget(
@@ -135,8 +148,8 @@ Set<String> getValidWorkOrderTileKeysWithVisibility({
   Map<String, TileMapResult>? tileMapByRegion,
   IncrementalCandidateValidator? sharedCandidateValidator,
 
-  /// Optional units index; must match [game.worldState] when supplied.
-  Map<String, Unit>? unitsById,
+  /// Optional pass snapshot; must match [game] when supplied.
+  OrderResolutionContext? resolution,
 
   /// When non-null, must match ids from [view.provincesById] owned by the player.
   /// Callers that invoke this many times per pass should supply a shared set to
@@ -170,9 +183,11 @@ Set<String> getValidWorkOrderTileKeysWithVisibility({
     ignorePendingWorkOrderUnitId: unitId,
   );
 
-  final factionMembership = sharedCandidateValidator?.factionMembershipSnapshot ??
+  final factionMembership =
+      sharedCandidateValidator?.factionMembershipSnapshot ??
       DiplomacyFactionMembership.from(game);
-  final ownedProvinceIds = playerOwnedProvinceIds ??
+  final ownedProvinceIds =
+      playerOwnedProvinceIds ??
       <String>{
         for (final e in view.provincesById.entries)
           if (e.value.ownerId == playerId) e.key,
@@ -189,7 +204,15 @@ Set<String> getValidWorkOrderTileKeysWithVisibility({
     factionMembership: factionMembership,
   );
   final sortedVisible = sortedVisibleWorkTargetCandidates(view, raw);
-  final effectiveUnitsById = unitsById ?? unitsByIdFromWorld(game.worldState);
+  final effectiveResolution =
+      resolution ??
+      (sharedCandidateValidator != null
+          ? (
+              view: sharedCandidateValidator.view,
+              unitsById: sharedCandidateValidator.unitsById,
+              provinceById: sharedCandidateValidator.view.provincesById,
+            )
+          : orderResolutionContextFromView(view, game));
   final candidateValidator =
       sharedCandidateValidator ??
       buildIncrementalCandidateValidator(
@@ -198,8 +221,7 @@ Set<String> getValidWorkOrderTileKeysWithVisibility({
         playerId: playerId,
         baseOrders: currentOrders,
         tileMapByRegion: tileMapByRegion,
-        view: view,
-        unitsById: effectiveUnitsById,
+        resolution: effectiveResolution,
         factionMembership: factionMembership,
       );
 

@@ -1,0 +1,864 @@
+// Pins SPEC/ui combat dialog and sub-view contracts:
+// - SPEC/ui/quick-battle-deployment-view.md
+// - SPEC/ui/quick-battle-action-selector.md
+// - SPEC/ui/combat-mode-choice-dialog.md
+// - SPEC/ui/quick-battle-result-dialog.md
+// - SPEC/ui/quick-battle-screen.md (inline result view chrome parity)
+
+import 'package:colonizethis_models/colonizethis_models.dart';
+import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
+import 'package:flutter/material.dart';
+import 'package:flutter_test/flutter_test.dart';
+
+import 'package:colonizethis_app/config/editorial_monocle_palette.dart';
+import 'package:colonizethis_app/config/themes.dart';
+import 'package:colonizethis_app/features/game/combat/combat_mode_choice_dialog.dart';
+import 'package:colonizethis_app/features/game/combat/quick_battle_action_selector.dart';
+import 'package:colonizethis_app/features/game/combat/quick_battle_deployment_view.dart';
+import 'package:colonizethis_app/features/game/combat/quick_battle_result_dialog.dart';
+import 'package:colonizethis_app/features/game/combat/quick_battle_screen.dart';
+import 'package:colonizethis_app/widgets/ct_dialog_shell.dart';
+import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
+
+Widget _frame(Widget child) {
+  return MaterialApp(
+    home: Scaffold(body: child),
+  );
+}
+
+Widget _darkFrame(Widget child) {
+  return MaterialApp(
+    theme: AppThemes.editorialMonocle,
+    home: Scaffold(body: child),
+  );
+}
+
+void main() {
+  suppressLogsForTests();
+
+  group('QuickBattleDeploymentView (SPEC/ui/quick-battle-deployment-view.md)', () {
+    testWidgets('renders attacker and defender headers with custom names',
+        (WidgetTester tester) async {
+      await tester.pumpWidget(_frame(
+        const QuickBattleDeploymentView(
+          attackerDeployment: QuickBattleDeployment(
+            groups: [
+              QuickBattleGroup(
+                lane: QuickBattleLane.center,
+                line: QuickBattleLine.front,
+                unitIds: ['a1', 'a2', 'a3'],
+                cohesion: 3,
+              ),
+            ],
+          ),
+          defenderDeployment: QuickBattleDeployment(
+            groups: [
+              QuickBattleGroup(
+                lane: QuickBattleLane.center,
+                line: QuickBattleLine.front,
+                unitIds: ['d1', 'd2'],
+                cohesion: 3,
+              ),
+            ],
+          ),
+          attackerName: 'Castile',
+          defenderName: 'England',
+        ),
+      ));
+
+      expect(find.text('Castile'), findsOneWidget);
+      expect(find.text('England'), findsOneWidget);
+      expect(find.text('Center Front: 3 units (Cohesion 3)'), findsOneWidget);
+      expect(find.text('Center Front: 2 units (Cohesion 3)'), findsOneWidget);
+    });
+
+    testWidgets('omits cohesion suffix when cohesion is 0',
+        (WidgetTester tester) async {
+      await tester.pumpWidget(_frame(
+        const QuickBattleDeploymentView(
+          attackerDeployment: QuickBattleDeployment(
+            groups: [
+              QuickBattleGroup(
+                lane: QuickBattleLane.center,
+                line: QuickBattleLine.front,
+                unitIds: ['a1'],
+                cohesion: 0,
+              ),
+            ],
+          ),
+          defenderDeployment: QuickBattleDeployment(
+            groups: [
+              QuickBattleGroup(
+                lane: QuickBattleLane.center,
+                line: QuickBattleLine.front,
+                unitIds: ['d1'],
+                cohesion: 1,
+              ),
+            ],
+          ),
+        ),
+      ));
+
+      expect(find.text('Center Front: 1 units'), findsOneWidget);
+      expect(find.text('Center Front: 1 units (Cohesion 1)'), findsOneWidget);
+    });
+
+    testWidgets('uses default Attacker / Defender headers when names are omitted',
+        (WidgetTester tester) async {
+      await tester.pumpWidget(_frame(
+        const QuickBattleDeploymentView(
+          attackerDeployment: QuickBattleDeployment(),
+          defenderDeployment: QuickBattleDeployment(),
+        ),
+      ));
+
+      expect(find.text('Attacker'), findsOneWidget);
+      expect(find.text('Defender'), findsOneWidget);
+    });
+
+    // Refs #2869 R14 + SPEC/ui/quick-battle-deployment-view.md § Layout.
+    // Pins that group-row text resolves to the canonical `--muted` token
+    // explicitly rather than relying on theme inheritance.
+    testWidgets(
+        'group-row text resolves to --muted under dark editorial-monocle theme',
+        (WidgetTester tester) async {
+      await tester.pumpWidget(_darkFrame(
+        const QuickBattleDeploymentView(
+          attackerDeployment: QuickBattleDeployment(
+            groups: [
+              QuickBattleGroup(
+                lane: QuickBattleLane.center,
+                line: QuickBattleLine.front,
+                unitIds: ['a1', 'a2', 'a3'],
+                cohesion: 3,
+              ),
+            ],
+          ),
+          defenderDeployment: QuickBattleDeployment(
+            groups: [
+              QuickBattleGroup(
+                lane: QuickBattleLane.center,
+                line: QuickBattleLine.front,
+                unitIds: ['d1'],
+                cohesion: 0,
+              ),
+            ],
+          ),
+        ),
+      ));
+
+      final Text attackerRow = tester.widget<Text>(
+        find.text('Center Front: 3 units (Cohesion 3)'),
+      );
+      final Text defenderRow = tester.widget<Text>(
+        find.text('Center Front: 1 units'),
+      );
+      expect(attackerRow.style?.color, EditorialMonoclePalette.muted);
+      expect(defenderRow.style?.color, EditorialMonoclePalette.muted);
+    });
+
+    testWidgets(
+        'group-row text resolves to --muted under fallback Material theme',
+        (WidgetTester tester) async {
+      await tester.pumpWidget(_frame(
+        const QuickBattleDeploymentView(
+          attackerDeployment: QuickBattleDeployment(
+            groups: [
+              QuickBattleGroup(
+                lane: QuickBattleLane.center,
+                line: QuickBattleLine.front,
+                unitIds: ['a1'],
+                cohesion: 2,
+              ),
+            ],
+          ),
+          defenderDeployment: QuickBattleDeployment(),
+        ),
+      ));
+
+      final Text row = tester.widget<Text>(
+        find.text('Center Front: 1 units (Cohesion 2)'),
+      );
+      expect(row.style?.color, EditorialMonoclePalette.muted);
+    });
+  });
+
+  group('QuickBattleActionSelector (SPEC/ui/quick-battle-action-selector.md)', () {
+    testWidgets('with cpRemaining=3 every action button is enabled',
+        (WidgetTester tester) async {
+      QuickBattleAction? picked;
+      await tester.pumpWidget(_frame(
+        QuickBattleActionSelector(
+          cpRemaining: 3,
+          onActionSelected: (a) => picked = a,
+        ),
+      ));
+
+      // No Material buttons in the selector — pixel-art only.
+      expect(find.byType(ElevatedButton), findsNothing);
+      expect(find.byType(TextButton), findsNothing);
+      expect(find.byType(OutlinedButton), findsNothing);
+
+      await tester.tap(find.textContaining('Volley Fire'));
+      await tester.pump();
+      expect(picked, QuickBattleAction.volleyFire);
+    });
+
+    testWidgets('with cpRemaining=1 the 2-CP buttons are disabled',
+        (WidgetTester tester) async {
+      var taps = 0;
+      await tester.pumpWidget(_frame(
+        QuickBattleActionSelector(
+          cpRemaining: 1,
+          onActionSelected: (_) => taps++,
+        ),
+      ));
+
+      // 1-CP action remains tappable.
+      await tester.tap(find.textContaining('Volley Fire'));
+      await tester.pump();
+      expect(taps, 1);
+
+      // 2-CP actions must not invoke the callback (button disabled, hit-test no-op).
+      await tester.tap(find.textContaining('Assault'), warnIfMissed: false);
+      await tester.pump();
+      expect(taps, 1);
+
+      await tester.tap(find.textContaining('Fall Back'), warnIfMissed: false);
+      await tester.pump();
+      expect(taps, 1);
+    });
+
+    testWidgets('with cpRemaining=0 every action button is disabled',
+        (WidgetTester tester) async {
+      var taps = 0;
+      await tester.pumpWidget(_frame(
+        QuickBattleActionSelector(
+          cpRemaining: 0,
+          onActionSelected: (_) => taps++,
+        ),
+      ));
+
+      for (final label in const [
+        'Volley Fire',
+        'Defend',
+        'Maneuver',
+        'Fall Back',
+        'Assault',
+      ]) {
+        await tester.tap(find.textContaining(label), warnIfMissed: false);
+      }
+      await tester.pump();
+      expect(taps, 0);
+    });
+
+    // Refs #2869 R17 + SPEC/ui/quick-battle-action-selector.md § Layout.
+    // Pins that the CP indicator text resolves to the `--muted` token
+    // explicitly under both the dark theme and the fallback theme.
+    testWidgets(
+        'CP indicator resolves to --muted under dark editorial-monocle theme',
+        (WidgetTester tester) async {
+      await tester.pumpWidget(_darkFrame(
+        QuickBattleActionSelector(
+          cpRemaining: 3,
+          onActionSelected: (_) {},
+        ),
+      ));
+
+      final Text label = tester.widget<Text>(
+        find.textContaining('Command Points: 3'),
+      );
+      expect(label.style?.color, EditorialMonoclePalette.muted);
+    });
+
+    testWidgets(
+        'CP indicator resolves to --muted under fallback Material theme',
+        (WidgetTester tester) async {
+      await tester.pumpWidget(_frame(
+        QuickBattleActionSelector(
+          cpRemaining: 0,
+          onActionSelected: (_) {},
+        ),
+      ));
+
+      final Text label = tester.widget<Text>(
+        find.textContaining('Command Points: 0'),
+      );
+      expect(label.style?.color, EditorialMonoclePalette.muted);
+    });
+  });
+
+  group('CombatModeChoiceDialog (SPEC/ui/combat-mode-choice-dialog.md)', () {
+    testWidgets(
+        'regular province emits autoResolve on Auto-Resolve and pops the route',
+        (WidgetTester tester) async {
+      final bus = AppEventBus.create();
+      final received = <CombatMode>[];
+      final sub = bus.on<CombatModeChosenEvent>().listen((e) {
+        received.add(e.mode);
+      });
+      addTearDown(() async {
+        await sub.cancel();
+      });
+
+      await tester.pumpWidget(_frame(
+        Builder(builder: (ctx) {
+          return TextButton(
+            child: const Text('open'),
+            onPressed: () {
+              showDialog<void>(
+                context: ctx,
+                builder: (_) => CombatModeChoiceDialog(
+                  bus: bus,
+                  provinceName: 'Lisbon',
+                  isCapitalSiege: false,
+                ),
+              );
+            },
+          );
+        }),
+      ));
+
+      await tester.tap(find.text('open'));
+      await tester.pumpAndSettle();
+
+      expect(find.textContaining('Lisbon'), findsOneWidget);
+      expect(find.textContaining('Auto-Resolve'), findsOneWidget);
+      expect(find.textContaining('Quick Battle'), findsOneWidget);
+
+      await tester.tap(find.textContaining('Auto-Resolve'));
+      await tester.pumpAndSettle();
+
+      expect(received, [CombatMode.autoResolve]);
+      // Dialog popped — the underlying open button is visible again.
+      expect(find.text('open'), findsOneWidget);
+    });
+
+    testWidgets('regular province emits quickBattle on Quick Battle',
+        (WidgetTester tester) async {
+      final bus = AppEventBus.create();
+      final received = <CombatMode>[];
+      final sub = bus.on<CombatModeChosenEvent>().listen((e) {
+        received.add(e.mode);
+      });
+      addTearDown(() async {
+        await sub.cancel();
+      });
+
+      await tester.pumpWidget(_frame(
+        Builder(builder: (ctx) {
+          return TextButton(
+            child: const Text('open'),
+            onPressed: () {
+              showDialog<void>(
+                context: ctx,
+                builder: (_) => CombatModeChoiceDialog(
+                  bus: bus,
+                  provinceName: 'Lisbon',
+                  isCapitalSiege: false,
+                ),
+              );
+            },
+          );
+        }),
+      ));
+
+      await tester.tap(find.text('open'));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.textContaining('Quick Battle'));
+      await tester.pumpAndSettle();
+
+      expect(received, [CombatMode.quickBattle]);
+    });
+
+    testWidgets('capital siege variant only renders Quick Battle button',
+        (WidgetTester tester) async {
+      final bus = AppEventBus.create();
+      final received = <CombatMode>[];
+      final sub = bus.on<CombatModeChosenEvent>().listen((e) {
+        received.add(e.mode);
+      });
+      addTearDown(() async {
+        await sub.cancel();
+      });
+
+      await tester.pumpWidget(_frame(
+        Builder(builder: (ctx) {
+          return TextButton(
+            child: const Text('open'),
+            onPressed: () {
+              showDialog<void>(
+                context: ctx,
+                builder: (_) => CombatModeChoiceDialog(
+                  bus: bus,
+                  provinceName: 'Madrid',
+                  isCapitalSiege: true,
+                ),
+              );
+            },
+          );
+        }),
+      ));
+
+      await tester.tap(find.text('open'));
+      await tester.pumpAndSettle();
+
+      expect(find.textContaining('Auto-Resolve'), findsNothing);
+      // Exactly one pixel-art button is rendered (the Quick Battle button);
+      // the body text may also include the phrase "Quick Battle" so we count
+      // CtNinePatchButton instances rather than text occurrences.
+      expect(find.byType(CtNinePatchButton), findsOneWidget);
+
+      await tester.tap(find.byType(CtNinePatchButton));
+      await tester.pumpAndSettle();
+
+      expect(received, [CombatMode.quickBattle]);
+    });
+
+    testWidgets(
+        'dark editorial-monocle chrome: title resolves to --accent + 0.05 letter-spacing',
+        (WidgetTester tester) async {
+      final bus = AppEventBus.create();
+      await tester.pumpWidget(_darkFrame(
+        CombatModeChoiceDialog(
+          bus: bus,
+          provinceName: 'Lisbon',
+          isCapitalSiege: false,
+        ),
+      ));
+
+      final Text title = tester.widget<Text>(find.textContaining('Lisbon'));
+      expect(title.style?.color, EditorialMonoclePalette.accent);
+      expect(title.style?.letterSpacing, 0.05);
+    });
+
+    testWidgets(
+        'dark editorial-monocle chrome: regular body text resolves to --muted',
+        (WidgetTester tester) async {
+      final bus = AppEventBus.create();
+      await tester.pumpWidget(_darkFrame(
+        CombatModeChoiceDialog(
+          bus: bus,
+          provinceName: 'Lisbon',
+          isCapitalSiege: false,
+        ),
+      ));
+
+      final Text body = tester.widget<Text>(find.text('Choose combat mode:'));
+      expect(body.style?.color, EditorialMonoclePalette.muted);
+    });
+
+    testWidgets(
+        'dark editorial-monocle chrome: capital-siege body text resolves to --muted',
+        (WidgetTester tester) async {
+      final bus = AppEventBus.create();
+      await tester.pumpWidget(_darkFrame(
+        CombatModeChoiceDialog(
+          bus: bus,
+          provinceName: 'Madrid',
+          isCapitalSiege: true,
+        ),
+      ));
+
+      final Finder bodyFinder = find.text(
+        'Capital siege — Quick Battle only (no auto-resolve).',
+      );
+      expect(bodyFinder, findsOneWidget);
+      final Text body = tester.widget<Text>(bodyFinder);
+      expect(body.style?.color, EditorialMonoclePalette.muted);
+    });
+
+    testWidgets(
+        'dark editorial-monocle chrome: Quick Battle label resolves to --accent, Auto-Resolve label resolves to --muted',
+        (WidgetTester tester) async {
+      final bus = AppEventBus.create();
+      await tester.pumpWidget(_darkFrame(
+        CombatModeChoiceDialog(
+          bus: bus,
+          provinceName: 'Lisbon',
+          isCapitalSiege: false,
+        ),
+      ));
+
+      final Text autoLabel = tester.widget<Text>(find.text('Auto-Resolve'));
+      expect(autoLabel.style?.color, EditorialMonoclePalette.muted);
+
+      final Text qbLabel = tester.widget<Text>(find.text('Quick Battle'));
+      expect(qbLabel.style?.color, EditorialMonoclePalette.accent);
+    });
+
+    testWidgets(
+        'dark editorial-monocle chrome: regular variant has exactly one CtDialogShell and zero Material action buttons',
+        (WidgetTester tester) async {
+      final bus = AppEventBus.create();
+      await tester.pumpWidget(_darkFrame(
+        CombatModeChoiceDialog(
+          bus: bus,
+          provinceName: 'Lisbon',
+          isCapitalSiege: false,
+        ),
+      ));
+
+      expect(find.byType(CtDialogShell), findsOneWidget);
+      expect(find.byType(ElevatedButton), findsNothing);
+      expect(find.byType(OutlinedButton), findsNothing);
+      expect(find.byType(FilledButton), findsNothing);
+    });
+  });
+
+  group('QuickBattleResultDialog (SPEC/ui/quick-battle-result-dialog.md)', () {
+    testWidgets('attacker wins + provinceFlips renders captured banner',
+        (WidgetTester tester) async {
+      await tester.pumpWidget(_frame(
+        const QuickBattleResultDialog(
+          result: QuickBattleResult(
+            winner: QuickBattleWinner.attacker,
+            attackerCasualties: ['a3'],
+            defenderCasualties: ['d1', 'd2'],
+            provinceFlips: true,
+          ),
+          attackerName: 'Castile',
+          defenderName: 'England',
+        ),
+      ));
+
+      expect(find.textContaining('Castile'), findsWidgets);
+      expect(find.textContaining('England'), findsWidgets);
+      expect(find.textContaining('captured'), findsOneWidget);
+      expect(find.text('OK'), findsOneWidget);
+    });
+
+    testWidgets('defender holds suppresses captured banner',
+        (WidgetTester tester) async {
+      await tester.pumpWidget(_frame(
+        const QuickBattleResultDialog(
+          result: QuickBattleResult(
+            winner: QuickBattleWinner.defender,
+            attackerCasualties: ['a1', 'a2'],
+            defenderCasualties: ['d1'],
+            provinceFlips: false,
+          ),
+          attackerName: 'Castile',
+          defenderName: 'England',
+        ),
+      ));
+
+      expect(find.textContaining('captured'), findsNothing);
+    });
+
+    testWidgets('mutual exhaustion suppresses captured banner',
+        (WidgetTester tester) async {
+      await tester.pumpWidget(_frame(
+        const QuickBattleResultDialog(
+          result: QuickBattleResult(
+            winner: QuickBattleWinner.mutualExhaustion,
+            attackerCasualties: ['a1'],
+            defenderCasualties: ['d1'],
+            provinceFlips: false,
+          ),
+        ),
+      ));
+
+      expect(find.textContaining('captured'), findsNothing);
+      expect(find.text('OK'), findsOneWidget);
+    });
+
+    testWidgets('OK button pops the dialog route',
+        (WidgetTester tester) async {
+      await tester.pumpWidget(_frame(
+        Builder(builder: (ctx) {
+          return TextButton(
+            child: const Text('open'),
+            onPressed: () {
+              showDialog<void>(
+                context: ctx,
+                builder: (_) => const QuickBattleResultDialog(
+                  result: QuickBattleResult(
+                    winner: QuickBattleWinner.attacker,
+                    attackerCasualties: [],
+                    defenderCasualties: [],
+                    provinceFlips: true,
+                  ),
+                ),
+              );
+            },
+          );
+        }),
+      ));
+
+      await tester.tap(find.text('open'));
+      await tester.pumpAndSettle();
+      expect(find.text('OK'), findsOneWidget);
+
+      await tester.tap(find.text('OK'));
+      await tester.pumpAndSettle();
+      expect(find.text('OK'), findsNothing);
+      // Underlying open button is visible again — dialog popped.
+      expect(find.text('open'), findsOneWidget);
+    });
+
+    // Refs #2869 R18-R19 + SPEC/ui/quick-battle-result-dialog.md § Color contract.
+    // Pins the dark editorial-monocle color tokens (--accent winner,
+    // --danger provinceCaptured, --muted casualty rows) resolve via
+    // theme.colorScheme / textTheme.bodySmall and not via hardcoded literals.
+    testWidgets(
+        'dark editorial-monocle: winner text resolves to --accent (theme.colorScheme.primary)',
+        (WidgetTester tester) async {
+      await tester.pumpWidget(_darkFrame(
+        const QuickBattleResultDialog(
+          result: QuickBattleResult(
+            winner: QuickBattleWinner.attacker,
+            attackerCasualties: ['a1'],
+            defenderCasualties: ['d1'],
+            provinceFlips: true,
+          ),
+          attackerName: 'Castile',
+          defenderName: 'England',
+        ),
+      ));
+
+      final Text title = tester.widget<Text>(
+        find.text('Battle Result: Castile wins'),
+      );
+      expect(title.style?.color, EditorialMonoclePalette.accent);
+    });
+
+    testWidgets(
+        'dark editorial-monocle: provinceCaptured line resolves to --danger and is bold',
+        (WidgetTester tester) async {
+      await tester.pumpWidget(_darkFrame(
+        const QuickBattleResultDialog(
+          result: QuickBattleResult(
+            winner: QuickBattleWinner.attacker,
+            attackerCasualties: ['a1'],
+            defenderCasualties: ['d1'],
+            provinceFlips: true,
+          ),
+          attackerName: 'Castile',
+          defenderName: 'England',
+        ),
+      ));
+
+      final Text captured = tester.widget<Text>(find.text('Province captured.'));
+      expect(captured.style?.color, EditorialMonoclePalette.danger);
+      expect(captured.style?.fontWeight, FontWeight.bold);
+    });
+
+    testWidgets(
+        'dark editorial-monocle: casualty rows use bodySmall and resolve to --muted',
+        (WidgetTester tester) async {
+      await tester.pumpWidget(_darkFrame(
+        const QuickBattleResultDialog(
+          result: QuickBattleResult(
+            winner: QuickBattleWinner.attacker,
+            attackerCasualties: ['a1', 'a2'],
+            defenderCasualties: ['d1'],
+            provinceFlips: false,
+          ),
+          attackerName: 'Castile',
+          defenderName: 'England',
+        ),
+      ));
+
+      final Text attackerRow = tester.widget<Text>(
+        find.text('Castile casualties: 2'),
+      );
+      final Text defenderRow = tester.widget<Text>(
+        find.text('England casualties: 1'),
+      );
+      expect(attackerRow.style?.color, EditorialMonoclePalette.muted);
+      expect(defenderRow.style?.color, EditorialMonoclePalette.muted);
+    });
+
+    testWidgets(
+        'defender holds (provinceFlips=false) suppresses captured banner under dark theme',
+        (WidgetTester tester) async {
+      await tester.pumpWidget(_darkFrame(
+        const QuickBattleResultDialog(
+          result: QuickBattleResult(
+            winner: QuickBattleWinner.defender,
+            attackerCasualties: ['a1'],
+            defenderCasualties: ['d1'],
+            provinceFlips: false,
+          ),
+          attackerName: 'Castile',
+          defenderName: 'England',
+        ),
+      ));
+
+      expect(find.text('Province captured.'), findsNothing);
+    });
+  });
+
+  group('QuickBattleScreen inline _ResultView color parity (Refs #2869 R18)', () {
+    // The screen's non-interactive path auto-resolves on first frame and
+    // unmounts the round-phase widgets, swapping in the private `_ResultView`.
+    // These tests pin that the inline view applies the same color contract
+    // as the standalone `QuickBattleResultDialog`.
+    QuickBattleInput buildInput() {
+      return const QuickBattleInput(
+        attackerFactionId: 'gp1',
+        defenderFactionId: 'gp2',
+        attackerDeployment: QuickBattleDeployment(
+          groups: [
+            QuickBattleGroup(
+              lane: QuickBattleLane.center,
+              line: QuickBattleLine.front,
+              unitIds: ['a1', 'a2', 'a3'],
+              cohesion: 3,
+            ),
+          ],
+        ),
+        defenderDeployment: QuickBattleDeployment(
+          groups: [
+            QuickBattleGroup(
+              lane: QuickBattleLane.center,
+              line: QuickBattleLine.front,
+              unitIds: ['d1'],
+              cohesion: 3,
+            ),
+          ],
+        ),
+        provinceId: 'oldWorld|p1',
+        regionId: 'oldWorld',
+        maxRounds: 3,
+      );
+    }
+
+    testWidgets(
+        'dark editorial-monocle: inline winner title resolves to --accent',
+        (WidgetTester tester) async {
+      await tester.pumpWidget(_darkFrame(
+        QuickBattleScreen(
+          input: buildInput(),
+          onComplete: (_) {},
+        ),
+      ));
+      await tester.pump();
+
+      // The inline result view always renders a `Battle Result:` title.
+      final Finder titleFinder = find.textContaining('Battle Result:');
+      expect(titleFinder, findsOneWidget);
+      final Text title = tester.widget<Text>(titleFinder);
+      expect(title.style?.color, EditorialMonoclePalette.accent);
+    });
+
+    testWidgets(
+        'dark editorial-monocle: inline casualty rows resolve to --muted',
+        (WidgetTester tester) async {
+      await tester.pumpWidget(_darkFrame(
+        QuickBattleScreen(
+          input: buildInput(),
+          onComplete: (_) {},
+        ),
+      ));
+      await tester.pump();
+
+      // Casualty rows render with `Attacker casualties: N` / `Defender
+      // casualties: N` (default l10n names because the inline view does
+      // not thread custom names through).
+      final Finder attackerRowFinder = find.textContaining('Attacker casualties:');
+      final Finder defenderRowFinder = find.textContaining('Defender casualties:');
+      expect(attackerRowFinder, findsOneWidget);
+      expect(defenderRowFinder, findsOneWidget);
+
+      final Text attackerRow = tester.widget<Text>(attackerRowFinder);
+      final Text defenderRow = tester.widget<Text>(defenderRowFinder);
+      expect(attackerRow.style?.color, EditorialMonoclePalette.muted);
+      expect(defenderRow.style?.color, EditorialMonoclePalette.muted);
+    });
+
+    testWidgets(
+        'dark editorial-monocle: Continue button is the only action button on the inline view',
+        (WidgetTester tester) async {
+      await tester.pumpWidget(_darkFrame(
+        QuickBattleScreen(
+          input: buildInput(),
+          onComplete: (_) {},
+        ),
+      ));
+      await tester.pump();
+
+      expect(find.text('Continue'), findsOneWidget);
+      expect(find.byType(ElevatedButton), findsNothing);
+      expect(find.byType(TextButton), findsNothing);
+      expect(find.byType(OutlinedButton), findsNothing);
+      expect(find.byType(FilledButton), findsNothing);
+    });
+  });
+
+  // Refs #2869 R7 + SPEC/ui/quick-battle-screen.md § Layout / wireframe.
+  // Pins the round-counter title color/letter-spacing contract on the
+  // round phase (interactive == true so the inline result view does not
+  // unmount the title).
+  group('QuickBattleScreen round phase title (Refs #2869 R7)', () {
+    QuickBattleInput buildInput() {
+      return const QuickBattleInput(
+        attackerFactionId: 'gp1',
+        defenderFactionId: 'gp2',
+        attackerDeployment: QuickBattleDeployment(
+          groups: [
+            QuickBattleGroup(
+              lane: QuickBattleLane.center,
+              line: QuickBattleLine.front,
+              unitIds: ['a1', 'a2', 'a3'],
+              cohesion: 3,
+            ),
+          ],
+        ),
+        defenderDeployment: QuickBattleDeployment(
+          groups: [
+            QuickBattleGroup(
+              lane: QuickBattleLane.center,
+              line: QuickBattleLine.front,
+              unitIds: ['d1'],
+              cohesion: 3,
+            ),
+          ],
+        ),
+        provinceId: 'oldWorld|p1',
+        regionId: 'oldWorld',
+        maxRounds: 3,
+      );
+    }
+
+    testWidgets(
+        'dark editorial-monocle: round counter resolves to --accent + 0.05 letter-spacing',
+        (WidgetTester tester) async {
+      await tester.pumpWidget(_darkFrame(
+        QuickBattleScreen(
+          input: buildInput(),
+          onComplete: (_) {},
+          interactive: true,
+        ),
+      ));
+      await tester.pump();
+
+      final Finder titleFinder = find.textContaining('Quick Battle — Round 1');
+      expect(titleFinder, findsOneWidget);
+      final Text title = tester.widget<Text>(titleFinder);
+      expect(title.style?.color, EditorialMonoclePalette.accent);
+      expect(title.style?.letterSpacing, QuickBattleScreen.roundCounterLetterSpacing);
+    });
+
+    testWidgets(
+        'fallback Material theme: round counter still resolves to --accent + 0.05 letter-spacing',
+        (WidgetTester tester) async {
+      await tester.pumpWidget(_frame(
+        QuickBattleScreen(
+          input: buildInput(),
+          onComplete: (_) {},
+          interactive: true,
+        ),
+      ));
+      await tester.pump();
+
+      final Finder titleFinder = find.textContaining('Quick Battle — Round 1');
+      expect(titleFinder, findsOneWidget);
+      final Text title = tester.widget<Text>(titleFinder);
+      expect(title.style?.color, EditorialMonoclePalette.accent);
+      expect(title.style?.letterSpacing, QuickBattleScreen.roundCounterLetterSpacing);
+    });
+  });
+}

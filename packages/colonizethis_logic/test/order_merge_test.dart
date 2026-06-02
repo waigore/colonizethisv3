@@ -288,6 +288,53 @@ void main() {
       expect(merged.moveOrdersByPlayerId['p2']!.map((o) => o.unitId), containsAll(['u2', 'u2b']));
     });
 
+    test('merges AI trade orders when human has none (Refs #2924)', () {
+      const human = Orders();
+      final ai = Orders(
+        tradeOrdersByPlayerId: {
+          'gp1': [
+            TradeOrder(
+              commodityId: 'grain',
+              type: TradeOrderType.bid,
+              quantity: 3,
+              priority: 2,
+            ),
+          ],
+        },
+      );
+      final merged = mergeOrderLists(humanOrders: human, aiOrders: ai);
+      expect(merged.tradeOrdersByPlayerId['gp1']?.single.commodityId, 'grain');
+    });
+
+    test('human trade orders replace AI trade for same player', () {
+      final human = Orders(
+        tradeOrdersByPlayerId: {
+          'gp1': [
+            TradeOrder(
+              commodityId: 'timber',
+              type: TradeOrderType.offer,
+              quantity: 5,
+              priority: 2,
+            ),
+          ],
+        },
+      );
+      final ai = Orders(
+        tradeOrdersByPlayerId: {
+          'gp1': [
+            TradeOrder(
+              commodityId: 'grain',
+              type: TradeOrderType.bid,
+              quantity: 3,
+              priority: 2,
+            ),
+          ],
+        },
+      );
+      final merged = mergeOrderLists(humanOrders: human, aiOrders: ai);
+      expect(merged.tradeOrdersByPlayerId['gp1']!.single.commodityId, 'timber');
+    });
+
     test('merge uses stable player ordering', () {
       final human = Orders(
         moveOrdersByPlayerId: {

@@ -28,11 +28,16 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../config/editorial_monocle_palette.dart';
+import '../../features/game/shell_player_context.dart';
+import '../../features/game/widgets/observe_mode_not_defined_panel.dart';
+
 import '../../config/routes.dart';
 import '../../config/constants.dart';
 import '../../config/ct_e2e.dart';
 import '../../config/ct_e2e_last_panel_snapshot.dart';
 import 'subscription_tracker.dart';
+import '../../features/game/flame/exit_confirm_dialog.dart';
 import '../../features/game/widgets/civilian_units_panel.dart';
 import '../../features/game/widgets/military_units_panel.dart';
 import '../../features/game/widgets/naval_units_panel.dart';
@@ -40,6 +45,7 @@ import '../../features/game/widgets/pause_menu_panel.dart';
 import '../../providers/app_event_bus_provider.dart';
 import '../../providers/game_service_provider.dart';
 import '../../providers/games_provider.dart';
+import '../../providers/observe_session_provider.dart';
 import '../../providers/turn_resolution_blocking_provider.dart';
 
 typedef DialogBuilder =
@@ -112,6 +118,8 @@ class AppEventHandler {
         _navigateToShell(nav);
       case PopNavigationEvent():
         nav?.pop();
+      case RequestExitToMainMenuFlowEvent():
+        _handleRequestExitToMainMenuFlow(nav);
       case OpenPauseMenuPanelEvent():
         _openPauseMenuPanel(event, nav);
       case OpenCivilianUnitsPanelEvent():
@@ -142,8 +150,26 @@ class AppEventHandler {
     }
   }
 
+  static const _observeBlockedDialogIds = {
+    'train_civilians',
+    'train_military',
+    'grant_or_subsidy',
+  };
+
   Future<void> _openDialog(OpenDialogEvent event, NavigatorState? nav) async {
     if (nav == null) return;
+    if (_observeBlockedDialogIds.contains(event.dialogId)) {
+      final ctx = nav.context;
+      final container = ProviderScope.containerOf(ctx);
+      if (!container.read(shellPlayerContextProvider).canMutateViaUi) {
+        _onShowSnackBar?.call(
+          const ShowSnackBarEvent(
+            message: 'Observe mode: UI actions are read-only.',
+          ),
+        );
+        return;
+      }
+    }
     final builder = _dialogBuilders[event.dialogId];
     if (builder == null) {
       debugPrint('[AppEventHandler] No dialog builder for: ${event.dialogId}');
@@ -210,10 +236,31 @@ class AppEventHandler {
     NavigatorState? nav,
   ) async {
     if (nav == null) return;
-    await showModalBottomSheet<void>(
+    await showDialog<void>(
       context: nav.context,
+      useRootNavigator: true,
+      barrierColor: EditorialMonoclePalette.dialogScrim,
       builder: (ctx) => PauseMenuPanel(bus: _bus),
     );
+  }
+
+  /// Pause-menu Exit to Main Menu flow. The pause sheet has already emitted
+  /// [ClosePanelEvent] before this event fires, so the sheet is being
+  /// dismissed via `Navigator.maybePop`. We schedule the exit-confirm
+  /// dialog after the current frame so the closing pop completes before
+  /// the new modal mounts (preventing the confirm dialog from being torn
+  /// down with the pause sheet). SPEC: `SPEC/ui/pause-menu-panel.md`
+  /// § Navigation, `SPEC/ui/in-game-shell-narrow.md` § Android back confirm.
+  void _handleRequestExitToMainMenuFlow(NavigatorState? nav) {
+    if (nav == null) return;
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      final state = _navigatorKey.currentState;
+      final ctx = state?.context;
+      if (state == null || ctx == null || !ctx.mounted) return;
+      final confirmed = await showExitToMainMenuConfirmDialog(ctx);
+      if (!confirmed) return;
+      _bus.emit(const NavigateToShellEvent());
+    });
   }
 
   void _navigateToShell(NavigatorState? nav) {
@@ -224,6 +271,7 @@ class AppEventHandler {
         final container = ProviderScope.containerOf(ctx, listen: false);
         container.read(currentGameProvider.notifier).clear();
         container.read(currentOrdersProvider.notifier).clear();
+        container.read(observeSessionProvider.notifier).reset();
       } catch (e, st) {
         _log.d(
           'navigateToShell: skipped in-memory game clear (no ProviderScope)',
@@ -259,7 +307,10 @@ class AppEventHandler {
           if (game == null) {
             return const SizedBox.shrink();
           }
-          final humanPlayerId = _humanPlayerId(game);
+          final shell = ref.read(shellPlayerContextProvider);
+          final civilianOwnerIds = resolveCivilianMarkerOwnerIds(shell, game);
+          final panelPlayerId = shellPanelPlayerId(ref, game);
+          final readOnly = !shell.canMutateViaUi;
           final currentOrders = ref.watch(currentOrdersProvider);
           final bus = ref.watch(appEventBusProvider);
           final isNarrow = MediaQuery.sizeOf(context).width < kNarrowBreakpoint;
@@ -269,8 +320,14 @@ class AppEventHandler {
             constraints: BoxConstraints(maxHeight: maxHeight),
             child: CivilianUnitsPanel(
               game: game,
-              humanPlayerId: humanPlayerId,
+              humanPlayerId:
+                  panelPlayerId ??
+                  (civilianOwnerIds.isNotEmpty
+                      ? civilianOwnerIds.first
+                      : game.players.first.id),
+              civilianOwnerIds: civilianOwnerIds,
               bus: bus,
+              readOnly: readOnly,
               currentOrders: currentOrders,
               tileScopeTileKey: event.tileScopeTileKey,
               initialSelectedUnitId: event.initialSelectedUnitId,
@@ -306,7 +363,12 @@ class AppEventHandler {
           if (game == null) {
             return const SizedBox.shrink();
           }
-          final humanPlayerId = _humanPlayerId(game);
+          if (shellPanelsNotDefined(ref)) {
+            return const ObserveModeNotDefinedPanel(title: 'Military Units');
+          }
+          final humanPlayerId = shellPanelPlayerId(ref, game);
+          final readOnly =
+              !ref.read(shellPlayerContextProvider).canMutateViaUi;
           final bus = ref.watch(appEventBusProvider);
           final mapData = ref.watch(gameServiceProvider).getMapData(game.id);
           final draftOrders = ref.watch(currentOrdersProvider);
@@ -314,6 +376,7 @@ class AppEventHandler {
             game: game,
             humanPlayerId: humanPlayerId,
             bus: bus,
+            readOnly: readOnly,
             topology: mapData?.combinedTopology ?? const MapTopology(),
             draftOrders: draftOrders,
           );
@@ -335,7 +398,12 @@ class AppEventHandler {
           if (game == null) {
             return const SizedBox.shrink();
           }
-          final humanPlayerId = _humanPlayerId(game);
+          if (shellPanelsNotDefined(ref)) {
+            return const ObserveModeNotDefinedPanel(title: 'Naval Units');
+          }
+          final humanPlayerId = shellPanelPlayerId(ref, game);
+          final readOnly =
+              !ref.read(shellPlayerContextProvider).canMutateViaUi;
           final bus = ref.watch(appEventBusProvider);
           final mapData = ref.watch(gameServiceProvider).getMapData(game.id);
           final draftOrders = ref.watch(currentOrdersProvider);
@@ -343,6 +411,7 @@ class AppEventHandler {
             game: game,
             humanPlayerId: humanPlayerId,
             bus: bus,
+            readOnly: readOnly,
             topology: mapData?.combinedTopology ?? const MapTopology(),
             draftOrders: draftOrders,
             tileMapByRegion: mapData?.tileMapByRegion,
@@ -358,13 +427,6 @@ class AppEventHandler {
       // updates it post–next-turn so fleet E2E can skip reopening the panel (Refs #2336).
       _bus.emit(const UnitsPanelClosedEvent('naval'));
     });
-  }
-
-  String _humanPlayerId(Game game) {
-    for (final p in game.players) {
-      if (p.isHuman) return p.id;
-    }
-    return game.players.first.id;
   }
 
   /// While turn resolution blocks UI bus actions, pause menu remains reachable (#2160).

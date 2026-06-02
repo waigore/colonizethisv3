@@ -1,14 +1,19 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_ai/package_logger.dart';
 import 'package:colonizethis_logic/ai_api.dart'
-    show PlayerView, TurnTraceAiSection;
+    show PlayerView, TurnTraceAiSection, buildPlayerView;
 import 'package:colonizethis_logic/order_suggestion_api.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'army_conquest_prep.dart';
 import 'domain_planner_orchestrator.dart';
 import 'economy_planner.dart';
+import 'expand_phase_planner.dart' show ExpandEconomyPlan;
 import 'goal_manager.dart';
+import 'observer_goal_phase.dart';
+import 'phase_planner_dispatch.dart';
+import 'phase_planner_goal_filter.dart';
+import 'phase_priority_weights.dart';
 import 'ai_order_reporting.dart';
 import 'ai_trace_builder.dart';
 import '../perception/perception_snapshot.dart';
@@ -49,15 +54,15 @@ StrategicOrderResult generateStrategicOrders({
 class StrategicOrderTraceResult {
   const StrategicOrderTraceResult({
     required this.result,
-    required this.aiTraceSection,
     required this.game,
+    this.aiTraceSection,
   });
 
   final StrategicOrderResult result;
-  final TurnTraceAiSection aiTraceSection;
 
   /// [Game] after any in-turn army prep (e.g. Home Army split for conquest).
   final Game game;
+  final TurnTraceAiSection? aiTraceSection;
 }
 
 StrategicOrderTraceResult generateStrategicOrdersWithTrace({
@@ -72,18 +77,56 @@ StrategicOrderTraceResult generateStrategicOrdersWithTrace({
   void Function(DialogueEvent)? onDialogue,
   void Function(PortraitMoodEvent)? onMood,
   void Function(String phaseId)? onStagedPlannerProgress,
+  Orders? sameTurnPriorDiplomaticOrders,
 }) {
   final turn = game.worldState.turnState.turnNumber;
   _log.i('generateStrategicOrders nationId=$nationId turn=$turn');
   final snapshot = AIWorldSnapshot.fromPlayerView(view, topology: topology);
-  final goalScores = evaluateStrategicGoalScores(snapshot, config);
-  final primaryGoal = selectPrimaryGoal(
+  final observerGoalPhase = observerGoalPhaseFor(
+    snapshot: snapshot,
+    game: game,
+  );
+  final suppressColonialPressure = resolvePhaseGoalSuppressColonialPressure(
+    observerGoalPhase,
+  );
+  // Refs #2847 Phase 3 goal-score wiring: pre-compute the soft-phase
+  // priority weights from the pre-prep snapshot/game so the
+  // `evaluateStrategicGoalScores` colonial-pressure penalty/floor pass
+  // can scale continuously with `newWorldAcquisition` instead of switching
+  // on/off at the EXPAND→COLONIAL hard-phase boundary. The dispatch path's
+  // EXPAND economy plan is computed downstream inside `runPhasePlanners`,
+  // so the goal-eval call site uses `ExpandEconomyPlan.defaultPlan` for
+  // its weight derivation — the curve and the zero-regiment override fire
+  // here, but the treasury-recovery override (which depends on
+  // `boostTreasuryRecoveryCargo`) only activates once the EXPAND plan is
+  // available downstream. A follow-up slice can hoist the EXPAND plan to
+  // close that gap; this slice migrates the structural EXPAND→COLONIAL
+  // gate that was the primary source of the 10-OW cliff.
+  final goalColonialPressureWeight = computePhasePriorityWeights(
+    snapshot: snapshot,
+    game: game,
+    expandEconomyPlan: ExpandEconomyPlan.defaultPlan,
+  ).newWorldAcquisition;
+  final goalScores = evaluateStrategicGoalScores(
+    snapshot,
+    config,
+    observerGoalPhase: observerGoalPhase,
+    colonialPressureWeight: goalColonialPressureWeight,
+  );
+  var primaryGoal = selectPrimaryGoal(
     snapshot,
     config,
     seeds.goalSeed,
     nationId: nationId,
     turn: turn,
+    observerGoalPhase: observerGoalPhase,
+    colonialPressureWeight: goalColonialPressureWeight,
   );
+  if (suppressColonialPressure &&
+      snapshot.conquest.provincesToVictory >
+          kConquerScoreFloorProvincesToVictoryThreshold) {
+    primaryGoal = StrategicGoal.conquer;
+  }
   _log.d('primaryGoal=$primaryGoal');
   final planningGame = prepareConquestFieldArmy(
     game: game,
@@ -92,19 +135,46 @@ StrategicOrderTraceResult generateStrategicOrdersWithTrace({
     oldWorldProvincesOwned: snapshot.conquest.oldWorldProvincesOwned,
     primaryGoal: primaryGoal,
   );
+  final planningView = planningGame == game
+      ? view
+      : buildPlayerView(planningGame, topology, nationId);
+  final planningSnapshot = planningView == view
+      ? snapshot
+      : AIWorldSnapshot.fromPlayerView(planningView, topology: topology);
+  // Refs #2509 S5: dispatch the phase plan once per AI player turn against
+  // the planning-state inputs and thread the resolved `PhasePlanOutcome`
+  // into both `runEconomyPlanner` and the orchestrator. The dispatch is
+  // hoisted *above* `runEconomyPlanner` so the economy planner can derive
+  // the EXPAND below-quota peace treasury-recovery cargo boost via the
+  // phase-planner economy resolvers
+  // (`resolvePhaseEconomyExpandBelowQuotaPeaceZeroRegimentsRebuildActive`
+  // and `resolvePhaseEconomyExpandBelowQuotaPeaceInsufficientRegimentsActive`)
+  // instead of recomputing `isBelowQuotaPeaceTreasuryRecovery` from
+  // `colonial_pressure.dart`. The orchestrator continues to consume the
+  // same plan so the dispatch runs exactly once per AI player turn against
+  // the same `(planningGame, planningSnapshot, personalityId)` inputs.
+  final phasePlan = runPhasePlanners(
+    game: planningGame,
+    snapshot: planningSnapshot,
+    personalityId: config.personalityId,
+  );
   final economyPlan = runEconomyPlanner(
     game: planningGame,
-    view: view,
+    view: planningView,
     config: config,
     seeds: seeds,
     colonial: snapshot.colonial,
+    snapshot: planningSnapshot,
+    phasePlan: phasePlan,
+    tileMapByRegion: tileMapByRegion,
+    topology: topology,
   );
   final plannerOutcome = runDomainPlannersWithOutcome(
     game: planningGame,
     topology: topology,
     nationId: nationId,
-    view: view,
-    snapshot: snapshot,
+    view: planningView,
+    snapshot: planningSnapshot,
     config: config,
     primaryGoal: primaryGoal,
     seeds: seeds,
@@ -112,15 +182,22 @@ StrategicOrderTraceResult generateStrategicOrdersWithTrace({
     economyPlan: economyPlan,
     tileMapByRegion: tileMapByRegion,
     onStagedPlannerProgress: onStagedPlannerProgress,
+    sameTurnPriorDiplomaticOrders: sameTurnPriorDiplomaticOrders,
+    phasePlan: phasePlan,
   );
+  // Trade orders are merged into [Orders.tradeOrdersByPlayerId] inside the
+  // domain orchestrator (Refs #2994 F7) so all orchestrator callers see the
+  // same merged output. Keep this read-only here.
   final orders = plannerOutcome.orders;
   final moveCount = orders.moveOrdersByPlayerId[nationId]?.length ?? 0;
   final armyMoveCount = orders.armyMoveOrdersByPlayerId[nationId]?.length ?? 0;
   final buildCount = orders.buildUnitOrdersByPlayerId[nationId]?.length ?? 0;
   final workCount = orders.workOrdersByPlayerId[nationId]?.length ?? 0;
   final researchCount = orders.researchOrdersByPlayerId[nationId]?.length ?? 0;
+  final tradeCount = orders.tradeOrdersByPlayerId[nationId]?.length ?? 0;
   _log.i(
-    'generated orders nationId=$nationId move=$moveCount armyMove=$armyMoveCount build=$buildCount work=$workCount research=$researchCount',
+    'generated orders nationId=$nationId move=$moveCount armyMove=$armyMoveCount '
+    'build=$buildCount work=$workCount research=$researchCount trade=$tradeCount',
   );
   emitStrategicDialogueAndMood(
     config: config,
@@ -148,6 +225,9 @@ StrategicOrderTraceResult generateStrategicOrdersWithTrace({
       finalOrders: finalOrders,
       declaredWarTargetFactionId: plannerOutcome.declaredWarTargetFactionId,
       conquestArmyMoveCount: plannerOutcome.conquestArmyMoveCount,
+      observerGoalPhase: observerGoalPhase,
+      phasePlan: plannerOutcome.phasePlan ?? phasePlan,
+      domainGateData: plannerOutcome.domainGateData,
     ),
   );
 }

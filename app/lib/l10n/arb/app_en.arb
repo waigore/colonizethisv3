@@ -20,6 +20,10 @@
   "@mainMenu_title": {
     "description": "Main menu title text when not using the pixel-art logo."
   },
+  "mainMenu_eyebrow": "A Game of Empire & Discovery",
+  "@mainMenu_eyebrow": {
+    "description": "Small-caps eyebrow tagline shown above the title in the pixel-art editorial-monocle main menu variant."
+  },
   "mainMenu_subtitleAfterVictory": "Congratulations, you won your last game.",
   "@mainMenu_subtitleAfterVictory": {
     "description": "Subtitle shown on the main menu after the player has won their last game."
@@ -52,9 +56,29 @@
   "@game_pauseMenu_debugLog": {
     "description": "Pause menu option label to open the debug log screen."
   },
+  "game_pauseMenu_title": "Game Paused",
+  "@game_pauseMenu_title": {
+    "description": "Pause menu modal title (SPEC/ui/pause-menu-panel.md, issue #2867 R30)."
+  },
   "game_pauseMenu_resume": "Resume",
   "@game_pauseMenu_resume": {
     "description": "Pause menu option label to resume the game."
+  },
+  "game_pauseMenu_saveGame": "Save Game",
+  "@game_pauseMenu_saveGame": {
+    "description": "Pause menu option label to save the current game (disabled placeholder; backing flow not yet wired)."
+  },
+  "game_pauseMenu_loadGame": "Load Game",
+  "@game_pauseMenu_loadGame": {
+    "description": "Pause menu option label to load a saved game (disabled placeholder; backing flow not yet wired)."
+  },
+  "game_pauseMenu_settings": "Settings",
+  "@game_pauseMenu_settings": {
+    "description": "Pause menu option label to open the settings screen (disabled placeholder; backing flow not yet wired)."
+  },
+  "game_pauseMenu_exitToMainMenu": "Exit to Main Menu",
+  "@game_pauseMenu_exitToMainMenu": {
+    "description": "Pause menu danger action label to exit the current game and return to the main menu."
   },
   "game_pauseMenu_tooltip": "Pause menu",
   "@game_pauseMenu_tooltip": {
@@ -79,6 +103,20 @@
   "game_nextTurnButton": "Next turn ({turn} / {year})",
   "@game_nextTurnButton": {
     "description": "Label for the Next Turn button showing current turn and year.",
+    "placeholders": {
+      "turn": {
+        "type": "int",
+        "description": "Current turn number."
+      },
+      "year": {
+        "type": "int",
+        "description": "Calendar year derived from the turn."
+      }
+    }
+  },
+  "game_turnDisplay": "Turn {turn} / Year {year}",
+  "@game_turnDisplay": {
+    "description": "Centered turn/year label in the in-game top bar.",
     "placeholders": {
       "turn": {
         "type": "int",
@@ -260,6 +298,60 @@
     "description": "Helper text explaining 0 vs fixed seed for the new-game leader dialog."
   },
 
+  "shell_leaderDialog_infiniteModeLabel": "Infinite mode (turns progress past 1800)",
+  "@shell_leaderDialog_infiniteModeLabel": {
+    "description": "Checkbox label for infinite campaign mode in the new-game leader dialog."
+  },
+  "shell_leaderDialog_infiniteModeHelper": "When enabled, the campaign continues past calendar year 1800 until a military victory.",
+  "@shell_leaderDialog_infiniteModeHelper": {
+    "description": "Helper text for infinite mode in the new-game leader dialog."
+  },
+
+  "shell_leaderDialog_terrainVariationLabel": "Terrain variation ({percent}%)",
+  "@shell_leaderDialog_terrainVariationLabel": {
+    "description": "Slider label for terrain noise variation in the new-game leader dialog, including the current percent value.",
+    "placeholders": {
+      "percent": {
+        "type": "int",
+        "description": "Current terrain variation as a 0-100 integer percent."
+      }
+    }
+  },
+  "shell_leaderDialog_terrainVariationHelper": "Higher values produce more mixed terrain (0 keeps legacy clumps).",
+  "@shell_leaderDialog_terrainVariationHelper": {
+    "description": "Helper text under the terrain variation slider."
+  },
+
+  "gameParameters_title": "Game Parameters",
+  "@gameParameters_title": {
+    "description": "Title of the read-only in-game game parameters dialog."
+  },
+  "gameParameters_menuEntry": "Game Parameters",
+  "@gameParameters_menuEntry": {
+    "description": "Hamburger menu entry that opens the game parameters dialog."
+  },
+  "gameParameters_infiniteModeHeading": "Infinite mode",
+  "@gameParameters_infiniteModeHeading": {
+    "description": "Row label prefix for infinite mode in the game parameters dialog."
+  },
+  "gameParameters_infiniteModeOn": "On",
+  "@gameParameters_infiniteModeOn": {
+    "description": "Infinite mode enabled value in the game parameters dialog."
+  },
+  "gameParameters_infiniteModeOff": "Off",
+  "@gameParameters_infiniteModeOff": {
+    "description": "Infinite mode disabled value in the game parameters dialog."
+  },
+  "gameParameters_infiniteModeLine": "Infinite mode: {value}",
+  "@gameParameters_infiniteModeLine": {
+    "description": "Infinite mode row in the game parameters dialog.",
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+
   "shell_newGameProgress_title": "Creating game",
   "@shell_newGameProgress_title": {
     "description": "Title of the modal shown while a new game is being generated."
@@ -382,6 +474,10 @@
   "game_intervention_protest": "Diplomatic protest",
   "@game_intervention_protest": {
     "description": "Button: formal protest without military action."
+  },
+  "game_intervention_overlayTitle": "Pending Intervention",
+  "@game_intervention_overlayTitle": {
+    "description": "Title rendered at the top of the intervention overlay's CtDialogShell on every phase (Yarn intro, situation, choice picker, reaction, and degraded error). Resolved by EditorialMonoclePalette.accent per SPEC/ui/screens/pending-intervention-overlay.md § Dark editorial-monocle chrome and issue #2867 R26b."
   },
   "turnNews_title": "Turn {turn}",
   "@turnNews_title": {
@@ -920,6 +1016,10 @@
       }
     }
   },
+  "gameStartIntroOverlay_title": "A New World Awaits",
+  "@gameStartIntroOverlay_title": {
+    "description": "Display-font title shown above the brass divider in the dark editorial-monocle game start intro overlay (SHEL/OVL10001)."
+  },
   "game_overture_loadError": "Could not load overture dialogue: {error}",
   "@game_overture_loadError": {
     "description": "Error shown when overture dialogue fails to load.",
@@ -989,9 +1089,22 @@
   "@moveArmy_groupUnowned": {
     "description": "Header label for unowned province destinations in move army dialog."
   },
-  "moveArmy_invadeProvinceTitle": "Invade province?",
+  "moveArmy_groupInvasionTargets": "Invasion targets",
+  "@moveArmy_groupInvasionTargets": {
+    "description": "Section header for other-owned invasion destinations in move army dialog (#2867 R6)."
+  },
+  "moveArmy_declareWarOnTrigger": "declare war on {ownerLabel}",
+  "@moveArmy_declareWarOnTrigger": {
+    "description": "Invasion row trigger label in danger italic (#2867 R8).",
+    "placeholders": {
+      "ownerLabel": {
+        "type": "String"
+      }
+    }
+  },
+  "moveArmy_invadeProvinceTitle": "Declare war?",
   "@moveArmy_invadeProvinceTitle": {
-    "description": "Confirm dialog title for entering hostile territory with army movement."
+    "description": "Confirm dialog title for the destructive war-confirmation sub-dialog when an invasion army move is requested (issue #2867 R9)."
   },
   "moveArmy_invadeProvinceBody": "Moving into {ownerLabel} territory will declare war this turn and then move the army. Continue?",
   "@moveArmy_invadeProvinceBody": {
@@ -1006,9 +1119,9 @@
   "@moveArmy_declareWarAndMove": {
     "description": "Confirm action label for hostile army movement."
   },
-  "moveArmy_title": "Move army {armyId}",
+  "moveArmy_title": "Move army — Army {armyId}",
   "@moveArmy_title": {
-    "description": "Move army dialog title with army id.",
+    "description": "Move army dialog title with army id (#2867 R5).",
     "placeholders": {
       "armyId": {
         "type": "String"
@@ -1251,6 +1364,59 @@
   "naval_units_cargoCapacityIfAssigned": "Cargo capacity (if assigned): {capacity}",
   "@naval_units_cargoCapacityIfAssigned": {
     "description": "Cargo capacity line for non-home fleet.",
+    "placeholders": {
+      "capacity": {
+        "type": "int"
+      }
+    }
+  },
+  "naval_units_locInPort": "(in port)",
+  "@naval_units_locInPort": {
+    "description": "Inline qualifier appended to a fleet's location label when the fleet is docked at a port province. SPEC/ui/naval-units-panel.md R28."
+  },
+  "naval_units_locAtSea": "(at sea)",
+  "@naval_units_locAtSea": {
+    "description": "Inline qualifier appended to a fleet's location label when the fleet is in a sea zone. SPEC/ui/naval-units-panel.md R28."
+  },
+  "naval_units_homeFleetChip": "HOME",
+  "@naval_units_homeFleetChip": {
+    "description": "Uppercase chip rendered next to the Home Fleet name in the naval units panel. SPEC/ui/naval-units-panel.md R26."
+  },
+  "naval_units_compositionRoleWarship": "Warship",
+  "@naval_units_compositionRoleWarship": {
+    "description": "Role tag in the fleet expanded composition table for warship ship types (cargoHold == 0). SPEC/ui/naval-units-panel.md R29."
+  },
+  "naval_units_compositionRoleMerchant": "Merchant",
+  "@naval_units_compositionRoleMerchant": {
+    "description": "Role tag in the fleet expanded composition table for merchant ship types (cargoHold > 0). SPEC/ui/naval-units-panel.md R29."
+  },
+  "naval_units_compositionCount": "\u00d7{count}",
+  "@naval_units_compositionCount": {
+    "description": "Count cell in the fleet expanded composition table, e.g. \u00d72. SPEC/ui/naval-units-panel.md R29.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "naval_units_compositionSummary": "Total ships: {total} \u00b7 Warships: {warships} \u00b7 Merchants: {merchants}",
+  "@naval_units_compositionSummary": {
+    "description": "Single-line composition summary rendered beneath the expanded fleet composition table. SPEC/ui/naval-units-panel.md R29.",
+    "placeholders": {
+      "total": {
+        "type": "int"
+      },
+      "warships": {
+        "type": "int"
+      },
+      "merchants": {
+        "type": "int"
+      }
+    }
+  },
+  "naval_units_cargoCapacityHolds": "Cargo capacity: {capacity} holds",
+  "@naval_units_cargoCapacityHolds": {
+    "description": "Home-Fleet cargo capacity line rendered between the composition table and the summary in the expanded fleet view. SPEC/ui/naval-units-panel.md R29.",
     "placeholders": {
       "capacity": {
         "type": "int"
@@ -1589,9 +1755,42 @@
   "@technologyPanel_noTechsAvailable": {
     "description": "Bottom-sheet empty-state when no selectable technologies exist."
   },
+  "technologyPanel_researchedTechsHeading": "Researched Techs",
+  "@technologyPanel_researchedTechsHeading": {
+    "description": "Section heading above the researched-techs chip grid on the Slots tab (Refs #2864 S2)."
+  },
+  "technologyPanel_researchSlotsHeading": "Research Slots",
+  "@technologyPanel_researchSlotsHeading": {
+    "description": "Section heading above the slot cards on the Slots tab (Refs #2864 S3)."
+  },
+  "technologyPanel_lockedSlotLabel": "Slot {slot} (University)",
+  "@technologyPanel_lockedSlotLabel": {
+    "description": "Locked slot card header label when the player has not researched University (Refs #2864 S0/S3).",
+    "placeholders": {
+      "slot": {
+        "type": "int"
+      }
+    }
+  },
+  "technologyPanel_lockedSlotFootnote": "Requires University tech",
+  "@technologyPanel_lockedSlotFootnote": {
+    "description": "Locked slot card body footnote when the player has not researched University (Refs #2864 S0/S3)."
+  },
+  "technologyPanel_slotRpProgress": "{progress} / {cost} RP",
+  "@technologyPanel_slotRpProgress": {
+    "description": "Monospace RP progress label rendered next to the slot progress bar (Refs #2864 S3).",
+    "placeholders": {
+      "progress": {
+        "type": "int"
+      },
+      "cost": {
+        "type": "int"
+      }
+    }
+  },
   "technologyPanel_pickSubtitle": "Era {era} - {category} - {cost} RP",
   "@technologyPanel_pickSubtitle": {
-    "description": "Bottom-sheet row subtitle for selectable technology.",
+    "description": "Choose-tech dialog row subtitle (mono / muted) for a selectable technology.",
     "placeholders": {
       "era": {
         "type": "String"
@@ -1600,6 +1799,15 @@
         "type": "String"
       },
       "cost": {
+        "type": "int"
+      }
+    }
+  },
+  "technologyPanel_chooseTechDialogTitle": "Choose Tech \u2014 Slot {slot}",
+  "@technologyPanel_chooseTechDialogTitle": {
+    "description": "Title row of the Choose-tech dialog opened from a slot card. Uses an em dash between 'Choose Tech' and the slot number.",
+    "placeholders": {
+      "slot": {
         "type": "int"
       }
     }
@@ -1857,14 +2065,11 @@
       }
     }
   },
-  "provinceOverlay_unitTarget": "{type} ({id}): {target}",
+  "provinceOverlay_unitTarget": "{type}: {target}",
   "@provinceOverlay_unitTarget": {
-    "description": "Civilian section line for unit target or status.",
+    "description": "Civilian section line for unit target or status (no internal unit id).",
     "placeholders": {
       "type": {
-        "type": "String"
-      },
-      "id": {
         "type": "String"
       },
       "target": {
@@ -1872,17 +2077,14 @@
       }
     }
   },
-  "provinceOverlay_foreignUnitStatus": "{owner} — {type} ({id}): {status}",
+  "provinceOverlay_foreignUnitStatus": "{owner} — {type}: {status}",
   "@provinceOverlay_foreignUnitStatus": {
-    "description": "Civilian section line for foreign-unit status.",
+    "description": "Civilian section line for foreign-unit status (no internal unit id).",
     "placeholders": {
       "owner": {
         "type": "String"
       },
       "type": {
-        "type": "String"
-      },
-      "id": {
         "type": "String"
       },
       "status": {
@@ -1933,9 +2135,21 @@
   "@gameSetup_title": {
     "description": "Game setup screen title."
   },
+  "gameSetup_eyebrow": "New Campaign",
+  "@gameSetup_eyebrow": {
+    "description": "Eyebrow text rendered uppercased above the Game Setup title in the dark editorial-monocle pixelArt variant."
+  },
+  "gameSetup_intro": "Choose six great powers and a leader variant for each.",
+  "@gameSetup_intro": {
+    "description": "Italic intro line shown below the Game Setup title in the dark editorial-monocle pixelArt variant."
+  },
   "gameSetup_starting": "Starting…",
   "@gameSetup_starting": {
-    "description": "Loading state label while starting a game from setup."
+    "description": "Loading state label while starting a game from setup (retained for backward compatibility; the in-screen dim overlay now uses gameSetup_loadingGeneratingWorld per #2868 R15)."
+  },
+  "gameSetup_loadingGeneratingWorld": "Generating world…",
+  "@gameSetup_loadingGeneratingWorld": {
+    "description": "Loading overlay label shown beneath the spinner while the Game Setup screen is generating a new world (Refs #2868 R15)."
   },
   "gameSetup_startGame": "Start Game",
   "@gameSetup_startGame": {
@@ -1944,6 +2158,14 @@
   "gameSetup_back": "Back",
   "@gameSetup_back": {
     "description": "Back button on game setup screen."
+  },
+  "gameSetup_cancel": "Cancel",
+  "@gameSetup_cancel": {
+    "description": "Cancel affordance in the Game Setup action row (Refs #2868 R12; pixelArt variant). Returns the user to the main menu by invoking onBack."
+  },
+  "gameSetup_backToMainMenu": "Back to Main Menu",
+  "@gameSetup_backToMainMenu": {
+    "description": "Label rendered beside the CtBackButton glyph below the action row in the Game Setup pixelArt variant (Refs #2868 R14). Both the glyph and the label tap target invoke onBack."
   },
   "gameSetup_player1You": "Player 1 (You)",
   "@gameSetup_player1You": {
@@ -2163,6 +2385,79 @@
   "@production_labourInsufficient": {
     "description": "Warning when allocated labour exceeds effective labour."
   },
+  "production_labourQueued": "Queued: {count}",
+  "@production_labourQueued": {
+    "description": "Pending recruit-worker order count shown on a tier row in the Labour controls.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "production_labourRecruitTier": "Recruit {tier}",
+  "@production_labourRecruitTier": {
+    "description": "Tooltip and semantics label for the + stepper on the peasant row.",
+    "placeholders": {
+      "tier": {
+        "type": "String"
+      }
+    }
+  },
+  "production_labourTrainTier": "Train {tier}",
+  "@production_labourTrainTier": {
+    "description": "Tooltip and semantics label for the + stepper on a trained-tier row.",
+    "placeholders": {
+      "tier": {
+        "type": "String"
+      }
+    }
+  },
+  "production_labourDequeueTier": "Cancel last queued {tier}",
+  "@production_labourDequeueTier": {
+    "description": "Tooltip and semantics label for the − stepper on any tier row.",
+    "placeholders": {
+      "tier": {
+        "type": "String"
+      }
+    }
+  },
+  "production_labourDisbandTier": "Disband {tier}",
+  "@production_labourDisbandTier": {
+    "description": "Tooltip and semantics label for the Disband control on a trained-tier row.",
+    "placeholders": {
+      "tier": {
+        "type": "String"
+      }
+    }
+  },
+  "production_labourDisband": "Disband",
+  "@production_labourDisband": {
+    "description": "Visible label for the Disband button on trained-tier rows."
+  },
+  "production_labourTierUnlocked": "(unlocked)",
+  "@production_labourTierUnlocked": {
+    "description": "Parenthetical suffix on a Labour Controls tier label when every required tech is unlocked for the viewed player (peasant always renders this)."
+  },
+  "production_labourTierLocked": "(locked)",
+  "@production_labourTierLocked": {
+    "description": "Parenthetical suffix on a Labour Controls tier label when one or more required techs are missing for the viewed player."
+  },
+  "production_labourTierLabel": "{tier} {state}",
+  "@production_labourTierLabel": {
+    "description": "Concatenation of the tier name and the unlock-state parenthetical for a Labour Controls row (e.g. 'Peasants (unlocked)').",
+    "placeholders": {
+      "tier": {
+        "type": "String"
+      },
+      "state": {
+        "type": "String"
+      }
+    }
+  },
+  "production_labourControlsSectionLabel": "Labour Controls",
+  "@production_labourControlsSectionLabel": {
+    "description": "Title of the Labour Controls subsection in the Production panel Available subpanel."
+  },
   "production_workerCount": "{name}: {count}",
   "@production_workerCount": {
     "description": "Worker type and count in production panel.",
@@ -2345,9 +2640,9 @@
       }
     }
   },
-  "naval_transferToHome_confirm": "Confirm Transfer",
+  "naval_transferToHome_confirm": "Transfer",
   "@naval_transferToHome_confirm": {
-    "description": "Confirm button label for transfer-to-home dialog."
+    "description": "Primary action label for transfer-to-home dialog (#2867 R12)."
   },
   "diplomacy_section_greatPowers": "Great Powers",
   "@diplomacy_section_greatPowers": {
@@ -2360,6 +2655,18 @@
   "diplomacy_section_tribes": "Tribes",
   "@diplomacy_section_tribes": {
     "description": "Diplomacy list section heading."
+  },
+  "diplomacy_filter_all": "All",
+  "@diplomacy_filter_all": {
+    "description": "Diplomacy panel mode-bar filter label: show all factions."
+  },
+  "diplomacy_filter_greatPowersOnly": "Great Powers only",
+  "@diplomacy_filter_greatPowersOnly": {
+    "description": "Diplomacy panel mode-bar filter label: show only Great Powers."
+  },
+  "diplomacy_filter_minorsOnly": "Minors only",
+  "@diplomacy_filter_minorsOnly": {
+    "description": "Diplomacy panel mode-bar filter label: show Minor Nations and Tribes only (no Great Powers)."
   },
   "diplomacy_relationState_war": "War",
   "@diplomacy_relationState_war": {

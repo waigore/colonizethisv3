@@ -183,7 +183,7 @@ void main() {
           game,
           topology,
           emptyOrders,
-          unitsById: unitsById,
+          resolution: orderResolutionContextFromView(view, game, unitsById: unitsById),
         );
         expect(moveShared, moveDefault);
         final missionDefault = api.suggestNavalMissionOrders(
@@ -197,7 +197,7 @@ void main() {
           game,
           topology,
           emptyOrders,
-          unitsById: unitsById,
+          resolution: orderResolutionContextFromView(view, game, unitsById: unitsById),
         );
         expect(missionShared, missionDefault);
       },
@@ -213,5 +213,72 @@ void main() {
       );
       expect(list, isA<List<DiplomaticOrder>>());
     });
+
+    test('suggestRecruitWorkerOrders returns list (#2692 S7)', () {
+      const api = DefaultOrderSuggestionAPI();
+      final list = api.suggestRecruitWorkerOrders(
+        view,
+        game,
+        topology,
+        emptyOrders,
+      );
+      expect(list, isA<List<RecruitWorkerOrder>>());
+    });
+
+    test(
+      'suggestRecruitWorkerOrders includes peasant when fabric is affordable '
+      '(#2692 S7)',
+      () {
+        const api = DefaultOrderSuggestionAPI();
+        const ow = 'oldWorld';
+        final stockpile = const Stockpile().applyDelta(
+          CommodityCatalog.fabric.id,
+          4,
+        );
+        final gameWithFabric = Game(
+          id: 'g1',
+          worldState: WorldState(
+            turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+            oldWorld: RegionData(
+              provinces: [Province(id: '$ow|p1', regionId: ow, ownerId: 'gp1')],
+            ),
+            newWorld: const RegionData(),
+          ),
+          players: [
+            Player(
+              id: 'gp1',
+              displayName: 'A',
+              isHuman: false,
+              capitalProvinceId: '$ow|p1',
+              stockpile: stockpile,
+            ),
+          ],
+        );
+        final topo = MapTopology(
+          nodes: const [
+            TopologyNode(
+              id: 'p1',
+              regionId: 'oldWorld',
+              type: TopologyNodeType.province,
+            ),
+          ],
+          edges: const [],
+        );
+        final v = buildPlayerView(gameWithFabric, topo, 'gp1');
+        final list = api.suggestRecruitWorkerOrders(
+          v,
+          gameWithFabric,
+          topo,
+          const Orders(),
+        );
+        expect(
+          list.any((o) => o.targetTier == WorkerTier.peasant),
+          isTrue,
+          reason:
+              'API impl must surface peasant recruit when 2 fabric affords '
+              'the cost row',
+        );
+      },
+    );
   });
 }

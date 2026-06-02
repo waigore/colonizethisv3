@@ -3,6 +3,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../constants.dart';
 import 'army_ids.dart';
+import 'game_world_mutations.dart';
 import 'province_lookup.dart';
 import 'unit_lookup.dart';
 
@@ -82,7 +83,7 @@ Game _ensureHomeArmiesExist(Game game) {
     changed = _ensureHomeArmyForPlayer(ws, armies, player) || changed;
   }
   if (!changed) return game;
-  return game.copyWith(worldState: ws.copyWith(armies: armies));
+  return game.withArmies(armies);
 }
 
 bool _ensureHomeArmyForPlayer(WorldState ws, List<Army> armies, Player player) {
@@ -118,11 +119,8 @@ Game _rebuildArmiesFromMilitaryUnits(Game game) {
   _appendFieldArmies(ws, byArmyKey, militaryUnits, armies);
   armies.sort((a, b) => a.id.compareTo(b.id));
   final nextSeq = _nextArmySequence(armies);
-  return game.copyWith(
-    worldState: ws.copyWith(
-      armies: armies,
-      nextArmySeq: nextSeq < 2 ? 2 : nextSeq,
-    ),
+  return game.updateWorldState(
+    (ws) => ws.copyWith(armies: armies, nextArmySeq: nextSeq < 2 ? 2 : nextSeq),
   );
 }
 
@@ -315,10 +313,11 @@ WorldState updateArmyStation(
   );
   final army = _armyById(armies, armyId);
   if (army == null) return worldState;
+  final unitsByRegion = worldState.mutableUnitListsByRegion();
   final relocated = _relocateArmyRegiments(
     regimentUnitIds: army.regimentUnitIds,
-    owUnits: List<Unit>.from(worldState.oldWorld.units),
-    nwUnits: List<Unit>.from(worldState.newWorld.units),
+    owUnits: unitsByRegion[kRegionOldWorld]!,
+    nwUnits: unitsByRegion[kRegionNewWorld]!,
     destinationProvinceId: destinationProvinceId,
     destinationRegionId: regionId,
   );
@@ -356,10 +355,9 @@ WorldState _worldStateWithUpdatedArmyAndUnits(
   List<Army> armies,
   List<Unit> owUnits,
   List<Unit> nwUnits,
-) =>
-    worldState.copyWith(armies: armies).mapBothRegionUnits((regionId, _) {
-      return regionId == kRegionOldWorld ? owUnits : nwUnits;
-    });
+) => worldState.copyWith(armies: armies).mapBothRegionUnits((regionId, _) {
+  return regionId == kRegionOldWorld ? owUnits : nwUnits;
+});
 
 List<Army> _retargetArmyStation(
   List<Army> armies,

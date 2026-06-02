@@ -3,6 +3,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../diplomacy/diplomacy_resolver.dart';
 import '../world/player_view.dart';
+import 'order_resolution_context.dart';
 import 'order_suggestion_context.dart';
 import 'order_suggestion_helpers.dart';
 import 'order_suggestion_work_tile_keys.dart';
@@ -106,15 +107,18 @@ AvailableWorkTargetsForUnit getAvailableWorkTargetsForUnit({
   // Reuse [view] and a one-time units index: this path runs on Assign/panel
   // open and must not pay redundant buildPlayerView / all-units scans per target
   // (Refs #2394, SPEC/program/order-suggestions.md § Throughput bounds).
-  final unitsById = {for (final u in view.ownUnits) u.id: u};
+  final passResolution = orderResolutionContextFromView(
+    view,
+    game,
+    unitsById: {for (final u in view.ownUnits) u.id: u},
+  );
   final sharedValidator = buildIncrementalCandidateValidator(
     game: game,
     topology: topology,
     playerId: playerId,
     baseOrders: currentOrders,
     tileMapByRegion: tileMapByRegion,
-    view: view,
-    unitsById: unitsById,
+    resolution: passResolution,
     factionMembership: factionMembership,
   );
   final byTarget = <String, Set<String>>{};
@@ -129,7 +133,7 @@ AvailableWorkTargetsForUnit getAvailableWorkTargetsForUnit({
       currentOrders: currentOrders,
       tileMapByRegion: tileMapByRegion,
       sharedCandidateValidator: sharedValidator,
-      unitsById: unitsById,
+      resolution: passResolution,
       playerOwnedProvinceIds: playerOwnedProvinceIds,
     );
     if (tiles.isNotEmpty) {

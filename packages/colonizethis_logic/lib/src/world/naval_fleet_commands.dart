@@ -1,5 +1,6 @@
 import 'package:colonizethis_models/colonizethis_models.dart';
 
+import 'game_world_mutations.dart';
 import 'naval.dart';
 
 /// Returns [game] unchanged if the fleet is missing or [shipInstanceIdsToNewFleet] is empty.
@@ -57,9 +58,7 @@ Game applyNavalSplitFleet({
     newFleet,
   ];
 
-  return game.copyWith(
-    worldState: game.worldState.copyWith(fleets: updatedFleets),
-  );
+  return game.withFleets(updatedFleets);
 }
 
 /// Transfers selected ship instances from [sourceFleetId] into [targetFleetId].
@@ -126,7 +125,5 @@ Game applyNavalTransferShipsBetweenFleets({
     ],
   ];
 
-  return game.copyWith(
-    worldState: game.worldState.copyWith(fleets: updatedFleets),
-  );
+  return game.withFleets(updatedFleets);
 }

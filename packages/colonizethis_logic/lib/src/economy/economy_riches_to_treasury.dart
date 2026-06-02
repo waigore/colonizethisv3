@@ -49,3 +49,18 @@ RichesToTreasuryResult resolveRichesToTreasury({
     treasuryDelta: totalCash,
   );
 }
+
+/// Cash that [resolveRichesToTreasury] would add for [stockpile] before the
+/// riches-to-treasury phase runs in the same turn.
+///
+/// Build orders are validated at order submission while [TurnPhase.richesToTreasury]
+/// runs before [TurnPhase.buildWork], so suggestion and validation treat this
+/// delta as part of effective treasury for build affordability (Refs #2509).
+int pendingRichesTreasuryDelta({
+  required Stockpile stockpile,
+  double richesCashMultiplier = 1.0,
+}) =>
+    resolveRichesToTreasury(
+      stockpile: stockpile,
+      richesCashMultiplier: richesCashMultiplier,
+    ).treasuryDelta;

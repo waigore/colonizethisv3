@@ -1,4 +1,6 @@
 import 'package:colonizethis_app/config/ct_e2e.dart';
+import 'package:colonizethis_app/features/game/dialogue/game_start_intro_overlay.dart';
+import 'package:colonizethis_app/features/game/flame/game_screen_shared.dart';
 import 'package:colonizethis_app/l10n/app_localizations_lookup.dart';
 import 'package:colonizethis_app/widgets/ct_choice_chip.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
@@ -220,4 +222,51 @@ void main() {
       );
     },
   );
+
+  testWidgets(
+    'e2eGameStartIntroBlocksUi is false when overlay only wraps map child',
+    (WidgetTester tester) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          home: GameStartIntroOverlay(
+            onDismissed: () {},
+            child: const SizedBox(key: Key('map_child')),
+          ),
+        ),
+      );
+      expect(e2eGameStartIntroBlocksUi(tester), isFalse);
+    },
+  );
+
+  testWidgets(
+    'e2eGameStartIntroBlocksUi is true while intro spinner is visible',
+    (WidgetTester tester) async {
+      await tester.pumpWidget(
+        const MaterialApp(home: GameStartIntroLoadingIndicator()),
+      );
+      expect(e2eGameStartIntroBlocksUi(tester), isTrue);
+    },
+  );
+
+  testWidgets('e2eReadNextTurnButtonLabel reads keyed next-turn chip text', (
+    WidgetTester tester,
+  ) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: Center(
+            child: TextButton(
+              key: kGameMapNextTurnButtonKey,
+              onPressed: () {},
+              child: const Text('Next turn (1 / 1492)'),
+            ),
+          ),
+        ),
+      ),
+    );
+    expect(
+      e2eReadNextTurnButtonLabel(tester),
+      'Next turn (1 / 1492)',
+    );
+  });
 }

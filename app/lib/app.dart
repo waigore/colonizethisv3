@@ -5,6 +5,7 @@ import 'package:colonizethis_app/l10n/l10n.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_app/config/app_display_strings.dart';
 import 'package:colonizethis_app/config/desktop_window_settings.dart';
+import 'package:colonizethis_app/providers/app_event_bus_provider.dart';
 import 'package:colonizethis_app/providers/settings_provider.dart';
 
 import 'config/routes.dart';
@@ -33,7 +34,7 @@ class App extends ConsumerWidget {
           formatDebugAwareTitle(appL10n(context).app_title),
       localizationsDelegates: AppLocalizationsBinding.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
-      theme: AppThemes.light,
+      theme: AppThemes.editorialMonocle,
       initialRoute: Routes.shell,
       onGenerateRoute: Routes.generate,
     );
@@ -45,7 +46,9 @@ class App extends ConsumerWidget {
             PlatformMenuItem(
               label: rootL10n.menu_debugLog,
               onSelected: () {
-                AppEventBus().emit(const NavigateToRouteEvent(Routes.debugLog));
+                ref
+                    .read(appEventBusProvider)
+                    .emit(const NavigateToRouteEvent(Routes.debugLog));
               },
             ),
             if (isDesktopMenuPlatform)

@@ -64,6 +64,38 @@ void main() {
       expect(overriddenService.turnTraceRootDirectory, overridePath);
     });
 
+    test('saveGame strips observe handoff when prepareGameForPersistence set', () {
+      const gameId = 'observe_strip';
+      final game = Game(
+        id: gameId,
+        worldState: const WorldState(
+          turnState: TurnState(phase: TurnPhase.orders, turnNumber: 1),
+          oldWorld: RegionData(),
+          newWorld: RegionData(),
+        ),
+        players: const [
+          Player(id: 'gp1', displayName: 'Human', isHuman: false),
+          Player(id: 'gp2', displayName: 'AI', isHuman: false),
+        ],
+        aiControlByGpId: {'gp1': true, 'gp2': true},
+      );
+      service.prepareGameForPersistence = (_) => Game(
+        id: gameId,
+        worldState: game.worldState,
+        players: const [
+          Player(id: 'gp1', displayName: 'Human', isHuman: true),
+          Player(id: 'gp2', displayName: 'AI', isHuman: false),
+        ],
+        aiControlByGpId: const {},
+      );
+      service.saveGame(game);
+
+      final loaded = GameSaveAdapter().load(box, gameId);
+      expect(loaded, isNotNull);
+      expect(loaded!.players.firstWhere((p) => p.id == 'gp1').isHuman, isTrue);
+      expect(loaded.aiControlByGpId, isEmpty);
+    });
+
     test('loadGame returns null when required map data is missing', () {
       const gameId = 'missing_map_data';
       final game = Game(

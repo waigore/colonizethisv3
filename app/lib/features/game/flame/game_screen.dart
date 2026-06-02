@@ -10,14 +10,16 @@ import 'package:flutter/material.dart';
 import 'package:colonizethis_app/l10n/l10n.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../config/ui_screen_ids.dart';
 import '../../../../providers/app_event_bus_provider.dart';
 import '../../../../providers/game_service_provider.dart';
 import '../../../../providers/games_provider.dart';
 import '../../../../providers/map_view_provider.dart';
 import '../../../../providers/turn_resolution_blocking_provider.dart';
 import '../../../../providers/turn_resolution_runner_provider.dart';
+import '../../../core/services/turn_resolution_blocking_service.dart';
 import '../../../core/services/turn_resolution_runner.dart';
-import '../../../../widgets/ct_dialog_shell.dart';
+import '../../../widgets/ct_icon_action.dart';
 import '../../../widgets/ct_nine_patch_button.dart';
 import '../../../widgets/ct_screen_shell.dart';
 import '../../../widgets/game_to_ui_bus_listener.dart';
@@ -26,9 +28,12 @@ import '../dialogue/call_to_arms_dialogue_overlay.dart';
 import '../dialogue/game_start_intro_overlay.dart';
 import '../dialogue/intervention_dialogue_overlay.dart';
 import '../dialogue/overture_dialogue_overlay.dart';
+import 'exit_confirm_dialog.dart';
 import 'game_canvas.dart';
 import 'game_map_area.dart';
 import 'game_map_area_state_logic.dart';
+import 'game_screen_shared.dart'
+    show kGameMapNextTurnButtonKey, kNextTurnDisabledOpacity;
 import 'next_turn_confirmation_dialog.dart';
 import 'turn_resolution_processing_dialog.dart';
 import 'turn_resolution_progress_labels.dart';
@@ -43,43 +48,45 @@ void _showPauseMenu(AppEventBus bus) {
   bus.emit(const OpenPauseMenuPanelEvent());
 }
 
-Future<bool> _showExitToMainMenuConfirmDialog(BuildContext context) async {
-  final l10n = appL10n(context);
-  final shouldExit = await showDialog<bool>(
-    context: context,
-    barrierDismissible: true,
-    useRootNavigator: true,
-    builder: (ctx) => CtDialogShell(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            l10n.game_exitConfirm_title,
-            style: Theme.of(ctx).textTheme.titleMedium,
-          ),
-          const SizedBox(height: 8),
-          Text(l10n.game_exitConfirm_body),
-          const SizedBox(height: 16),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.end,
-            children: [
-              CtNinePatchButton(
-                onPressed: () => Navigator.of(ctx).pop(false),
-                child: Text(l10n.common_cancel),
-              ),
-              const SizedBox(width: 8),
-              CtNinePatchButton(
-                onPressed: () => Navigator.of(ctx).pop(true),
-                child: Text(l10n.game_exitConfirm_exit),
-              ),
-            ],
-          ),
-        ],
+/// Builds the Flame-canvas fallback Next-turn `CtNinePatchButton` (used
+/// when `mapViewDataProvider == null`).
+///
+/// Mirrors the in-game `GameTopBar` Next-turn contract: when the button
+/// is disabled (turn resolution in progress or `allowsFullTurnResolution`
+/// is `false`) the host passes both `enabled: false` and
+/// `disabledOpacityOverride: kNextTurnDisabledOpacity` (`0.35`) so the
+/// disabled `Opacity` wrapper resolves to the SPEC-mandated 0.35 (mockup
+/// `.next-turn.disabled` in
+/// `SPEC/ui/mockups/GAME10001-game-screen.html`, issue #2861 R1 / AC#9,
+/// `SPEC/ui/game-screen.md` § Acceptance Criteria) instead of the
+/// catalog-default `CtNinePatchButton.disabledOpacity` (`0.4`).
+Widget _buildFallbackNextTurnButton({
+  required BuildContext context,
+  required WidgetRef ref,
+  required Game game,
+  required bool turnResolutionBlocking,
+}) {
+  final bool nextTurnEnabled = !turnResolutionBlocking &&
+      GameMapAreaStateLogic.allowsFullTurnResolution(game);
+  return CtNinePatchButton(
+    key: kGameMapNextTurnButtonKey,
+    enabled: nextTurnEnabled,
+    onPressed: nextTurnEnabled
+        ? () async {
+            await _runFlameCanvasNextTurn(context, ref, game);
+          }
+        : null,
+    disabledOpacityOverride: kNextTurnDisabledOpacity,
+    child: Text(
+      appL10n(context).game_nextTurnButton(
+        game.worldState.turnState.turnNumber,
+        turnToYear(
+          game.worldState.turnState.turnNumber,
+          game.turnTimeMapping,
+        ),
       ),
     ),
   );
-  return shouldExit ?? false;
 }
 
 Future<void> _runFlameCanvasNextTurn(
@@ -249,6 +256,9 @@ Future<void> _runFlameCanvasNextTurn(
 class GameScreen extends ConsumerWidget {
   const GameScreen({super.key});
 
+  /// SPEC/ui/game-screen.md — [UiScreenIds.gameScreen].
+  static const screenId = UiScreenIds.gameScreen;
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final game = ref.watch(currentGameProvider);
@@ -270,8 +280,9 @@ class GameScreen extends ConsumerWidget {
           Positioned(
             left: 16,
             top: 16,
-            child: IconButton(
-              icon: const Icon(Icons.menu),
+            child: CtIconAction(
+              icon: Icons.menu,
+              iconSize: 24,
               onPressed: () => _showPauseMenu(ref.read(appEventBusProvider)),
               tooltip: appL10n(context).game_pauseMenu_tooltip,
             ),
@@ -279,22 +290,11 @@ class GameScreen extends ConsumerWidget {
           Positioned(
             right: 16,
             top: 16,
-            child: CtNinePatchButton(
-              onPressed: turnResolutionBlocking ||
-                      !GameMapAreaStateLogic.allowsFullTurnResolution(game)
-                  ? null
-                  : () async {
-                      await _runFlameCanvasNextTurn(context, ref, game);
-                    },
-              child: Text(
-                appL10n(context).game_nextTurnButton(
-                  game.worldState.turnState.turnNumber,
-                  turnToYear(
-                    game.worldState.turnState.turnNumber,
-                    game.turnTimeMapping,
-                  ),
-                ),
-              ),
+            child: _buildFallbackNextTurnButton(
+              context: context,
+              ref: ref,
+              game: game,
+              turnResolutionBlocking: turnResolutionBlocking,
             ),
           ),
         ],
@@ -381,7 +381,7 @@ class GameScreen extends ConsumerWidget {
       canPop: false,
       onPopInvokedWithResult: (didPop, result) async {
         if (didPop || !context.mounted) return;
-        final shouldExit = await _showExitToMainMenuConfirmDialog(context);
+        final shouldExit = await showExitToMainMenuConfirmDialog(context);
         if (!shouldExit || !context.mounted) return;
         ref.read(appEventBusProvider).emit(const NavigateToShellEvent());
       },

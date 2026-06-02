@@ -8,6 +8,20 @@ const double kNarrowBreakpoint = 600;
 /// SPEC/ui/game-setup.md.
 const double kGameSetupNarrowBreakpoint = 500;
 
+/// Minimum supported viewport width in **logical pixels**. Every screen covered
+/// by `SPEC/ui/mobile-adaptation.md` must render at this width without
+/// horizontal overflow or `RenderFlex` overflow exceptions.
+///
+/// Source: `SPEC/ui/mobile-adaptation.md` § Scope (Target min ~320 dp width)
+/// and issue #2870 § Acceptance criteria (320 dp no horizontal overflow,
+/// 44 dp touch targets).
+const double kMinViewportWidth = 320;
+
+/// Minimum touch-target size in **logical pixels** for any interactive
+/// element (button, list tile, dropdown, chip). Mirrors UXD 03 and
+/// `SPEC/ui/mobile-adaptation.md` § 1 Touch targets.
+const double kMinTouchTargetSize = 44;
+
 /// App and Hive constants. TDD 15 Local Storage box names.
 abstract final class HiveBoxNames {
   static const String settings = 'settings';

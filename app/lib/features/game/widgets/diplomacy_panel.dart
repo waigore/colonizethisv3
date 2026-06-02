@@ -6,17 +6,46 @@ import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
 
+import '../../../config/editorial_monocle_palette.dart';
 import '../../../config/routes.dart';
+import '../../../config/themes.dart' show editorialMonocleDisplayFontFamily;
 import '../../../core/services/app_event_handler_scope.dart';
 import '../../../core/services/subscription_tracker.dart';
 import '../../../l10n/l10n.dart';
 import '../../../widgets/ct_nine_patch_button.dart';
-import '../../../widgets/ct_panel.dart';
+import '../../../widgets/ct_radius.dart';
+import '../../../widgets/ct_spacing.dart';
 import 'diplomacy_order_helpers.dart';
 import 'diplomacy_panel_rows.dart';
 import 'fnv1a_hash_constants.dart';
 
 export 'diplomacy_panel_rows.dart';
+
+part 'diplomacy_panel_chrome.dart';
+part 'diplomacy_panel_mode_bar.dart';
+
+/// Maximum viewport width (Flutter dp) at which the diplomacy faction-row
+/// body switches to its narrow stacked variant (info column above the
+/// action-button cluster, left-aligned).
+///
+/// SPEC/ui/diplomacy-panel.md § Responsive layout — mirrors the
+/// `@media (max-width: 500px)` cutoff in
+/// [mockups/GAME30001-diplomacy-panel.html](../../../../../SPEC/ui/mockups/GAME30001-diplomacy-panel.html)
+/// and the `≤ 500 dp` Diplomacy entry in
+/// [mobile-adaptation.md](../../../../../SPEC/ui/mobile-adaptation.md) § 4.
+///
+/// Exposed at library scope so widget tests can pin the boundary
+/// deterministically without re-deriving the constant.
+const double kDiplomacyRowNarrowMaxWidth = 500.0;
+
+/// Key prefix attached to a faction-row body widget so tests can resolve
+/// the live Row (wide) vs Column (narrow) layout selection driven by
+/// [kDiplomacyRowNarrowMaxWidth].
+///
+/// Each row uses `ValueKey('${kDiplomacyRowBodyKeyPrefix}<factionId>')`.
+/// SPEC/ui/diplomacy-panel.md § Responsive layout cites this key so
+/// widget tests can pin both variants without touching private types.
+const String kDiplomacyRowBodyKeyPrefix = 'diplomacyRowBody:';
 
 /// Full-page diplomacy panel. SPEC/ui/diplomacy-panel.md.
 class DiplomacyPanel extends StatefulWidget {
@@ -28,6 +57,7 @@ class DiplomacyPanel extends StatefulWidget {
     required this.currentOrders,
     required this.bus,
     this.onClose,
+    this.readOnly = false,
   });
 
   final Game game;
@@ -36,6 +66,7 @@ class DiplomacyPanel extends StatefulWidget {
   final Orders currentOrders;
   final AppEventBus bus;
   final VoidCallback? onClose;
+  final bool readOnly;
 
   @override
   State<DiplomacyPanel> createState() => _DiplomacyPanelState();
@@ -44,6 +75,10 @@ class DiplomacyPanel extends StatefulWidget {
 class _DiplomacyPanelState extends State<DiplomacyPanel> {
   final Map<String, String> _moodByLeaderId = <String, String>{};
   final SubscriptionTracker _subscriptions = SubscriptionTracker();
+
+  /// Bottom-mode-bar filter (SPEC/ui/diplomacy-panel.md § Mode bar (filter)).
+  /// Local UI state — does not persist across panel close/reopen.
+  DiplomacyFilterMode _filterMode = DiplomacyFilterMode.all;
 
   @override
   void initState() {
@@ -70,46 +105,65 @@ class _DiplomacyPanelState extends State<DiplomacyPanel> {
       widget.humanPlayerId,
       widget.currentOrders,
     );
-    final gps = rows.where((r) => r.kind == FactionKind.greatPower).toList();
-    final minors = rows.where((r) => r.kind == FactionKind.minor).toList();
-    final tribes = rows.where((r) => r.kind == FactionKind.tribe).toList();
+    final gps = <DiplomacyRowData>[];
+    final minors = <DiplomacyRowData>[];
+    final tribes = <DiplomacyRowData>[];
+    for (final r in rows) {
+      switch (r.kind) {
+        case FactionKind.greatPower:
+          gps.add(r);
+        case FactionKind.minor:
+          minors.add(r);
+        case FactionKind.tribe:
+          tribes.add(r);
+      }
+    }
+    final showGps = diplomacyFilterShowsKind(
+      _filterMode,
+      FactionKind.greatPower,
+    );
+    final showMinors = diplomacyFilterShowsKind(_filterMode, FactionKind.minor);
+    final showTribes = diplomacyFilterShowsKind(_filterMode, FactionKind.tribe);
 
-    return ListView(
+    final list = ListView(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       children: [
-        if (gps.isNotEmpty) ...[
+        if (showGps && gps.isNotEmpty) ...[
           _sectionHeader(context, l10n.diplomacy_section_greatPowers),
           ...gps.map(
             (r) => _DiplomacyRow(
               data: r,
               onAction: _submitOrDialog,
               onTap: () => _openDetail(r),
+              readOnly: widget.readOnly,
             ),
           ),
         ],
-        if (minors.isNotEmpty) ...[
+        if (showMinors && minors.isNotEmpty) ...[
           _sectionHeader(context, l10n.diplomacy_section_minorNations),
           ...minors.map(
             (r) => _DiplomacyRow(
               data: r,
               onAction: _submitOrDialog,
               onTap: () => _openDetail(r),
+              readOnly: widget.readOnly,
             ),
           ),
         ],
-        if (tribes.isNotEmpty) ...[
+        if (showTribes && tribes.isNotEmpty) ...[
           _sectionHeader(context, l10n.diplomacy_section_tribes),
           ...tribes.map(
             (r) => _DiplomacyRow(
               data: r,
               onAction: _submitOrDialog,
               onTap: () => _openDetail(r),
+              readOnly: widget.readOnly,
             ),
           ),
         ],
         if (rows.isEmpty)
           Padding(
-            padding: const EdgeInsets.all(24),
+            padding: const EdgeInsets.all(CtSpacing.xxl),
             child: Text(
               l10n.diplomacy_panel_noFactions,
               style: Theme.of(context).textTheme.bodyLarge,
@@ -117,18 +171,23 @@ class _DiplomacyPanelState extends State<DiplomacyPanel> {
           ),
       ],
     );
+
+    return Column(
+      children: [
+        Expanded(child: list),
+        _DiplomacyModeBar(
+          mode: _filterMode,
+          onModeChanged: (next) {
+            if (next == _filterMode) return;
+            setState(() => _filterMode = next);
+          },
+        ),
+      ],
+    );
   }
 
   Widget _sectionHeader(BuildContext context, String title) {
-    return Padding(
-      padding: const EdgeInsets.only(top: 16, bottom: 8),
-      child: Text(
-        title,
-        style: Theme.of(
-          context,
-        ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
-      ),
-    );
+    return _DiplomacySectionHeader(title: title);
   }
 
   void _submitOrDialog(DiplomaticOrder order) {
@@ -262,6 +321,8 @@ class _DiplomacyPanelState extends State<DiplomacyPanel> {
         return 0.7;
       case DiplomaticOrderType.setSubsidy:
         return 0.5;
+      case DiplomaticOrderType.establishFtp:
+        return 0.5;
     }
   }
 
@@ -305,29 +366,72 @@ class _DiplomacyPanelState extends State<DiplomacyPanel> {
 }
 
 class _DiplomacyRow extends StatelessWidget {
-  const _DiplomacyRow({required this.data, required this.onAction, this.onTap});
+  const _DiplomacyRow({
+    required this.data,
+    required this.onAction,
+    this.onTap,
+    this.readOnly = false,
+  });
 
   final DiplomacyRowData data;
   final void Function(DiplomaticOrder) onAction;
   final VoidCallback? onTap;
+  final bool readOnly;
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
+    // SPEC/ui/diplomacy-panel.md § Per-faction row → Row chrome: each row
+    // is rendered as a flat gradient tile with a 1 px outline and pointer
+    // hover behaviour. The InkWell sits inside the hover-aware chrome so
+    // taps still navigate to the detail screen (or order-cancel toggle).
+    final double viewportWidth = MediaQuery.sizeOf(context).width;
+    final bool narrow = viewportWidth <= kDiplomacyRowNarrowMaxWidth;
+    return _DiplomacyRowChrome(
       child: InkWell(
         onTap: onTap,
-        child: CtPanel(
-          padding: const EdgeInsets.all(12),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(child: _buildInfoColumn(context)),
-              _buildActionButtons(),
-            ],
-          ),
+        child: Padding(
+          padding: const EdgeInsets.all(CtSpacing.ml),
+          child: narrow
+              ? _buildNarrowBody(context)
+              : _buildWideBody(context),
         ),
       ),
+    );
+  }
+
+  Key get _bodyKey =>
+      ValueKey('$kDiplomacyRowBodyKeyPrefix${data.factionId}');
+
+  // SPEC/ui/diplomacy-panel.md § Responsive layout (wide variant): info
+  // column shares a Row with the action cluster, anchored trailing-edge.
+  Widget _buildWideBody(BuildContext context) {
+    return Row(
+      key: _bodyKey,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Expanded(child: _buildInfoColumn(context)),
+        _buildActionButtons(),
+      ],
+    );
+  }
+
+  // SPEC/ui/diplomacy-panel.md § Responsive layout (narrow ≤ 500 dp): info
+  // column stacks above the action cluster; cluster aligns leading-edge.
+  Widget _buildNarrowBody(BuildContext context) {
+    final bool hasActions =
+        !readOnly &&
+        (data.actions.isNotEmpty || data.pendingOrderTypes.isNotEmpty);
+    return Column(
+      key: _bodyKey,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        _buildInfoColumn(context),
+        if (hasActions) ...[
+          const SizedBox(height: 8),
+          Align(alignment: Alignment.centerLeft, child: _buildActionButtons()),
+        ],
+      ],
     );
   }
 
@@ -338,64 +442,109 @@ class _DiplomacyRow extends StatelessWidget {
       children: [
         _buildHeaderRow(context),
         const SizedBox(height: 4),
-        Text(
-          _relationSummary(context),
-          style: Theme.of(context).textTheme.bodySmall,
-        ),
+        _buildRelationRow(context),
         ..._buildOptionalStatusLines(context),
       ],
     );
   }
 
   Widget _buildHeaderRow(BuildContext context) {
-    final l10n = appL10n(context);
+    // SPEC/ui/mobile-adaptation.md § 7 Minimum-viewport pin: at
+    // `kMinViewportWidth` (320 dp) the inner Row width is ~262 dp once the
+    // ListView, row padding, and chrome border are subtracted. A long
+    // faction display name (e.g. `Holy Roman Empire`) plus the
+    // `_FactionKindBadge` chip and the optional `+N% / −N%` power
+    // comparison label exceeds that budget by ~162 px without a
+    // shrinkable child, producing the documented overflow. Wrap the name
+    // in `Flexible` + `TextOverflow.ellipsis` so the name absorbs all
+    // available width and shrinks gracefully at narrow viewports while
+    // the chip + percentage retain their natural size for legibility.
+    // SPEC/ui/diplomacy-panel.md § Per-faction row text layout is
+    // preserved: the chip, optional percentage, and their leading gap
+    // continue to anchor to the name's trailing edge.
     return Row(
       children: [
-        Text(
-          data.displayName,
-          style: Theme.of(
-            context,
-          ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w600),
+        Flexible(
+          child: Text(
+            data.displayName,
+            style: Theme.of(
+              context,
+            ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w600),
+            overflow: TextOverflow.ellipsis,
+            maxLines: 1,
+          ),
         ),
         const SizedBox(width: 8),
         _kindChip(context, data.kind),
-        if (data.powerScore != null) ...[
-          const SizedBox(width: 8),
-          Text(
-            l10n.diplomacy_panel_powerScore(data.powerScore!),
-            style: Theme.of(context).textTheme.labelMedium?.copyWith(
-              color:
-                  data.playerPowerScore != null &&
-                      data.powerScore! > data.playerPowerScore!
-                  ? Colors.red
-                  : Colors.green,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-        ],
+        ..._buildPowerComparison(context),
       ],
     );
   }
 
-  String _relationSummary(BuildContext context) {
-    final l10n = appL10n(context);
-    final rel = data.relation;
-    final stateLabel = rel == null
-        ? '—'
-        : rel.atWar
-        ? l10n.diplomacy_relationState_war
-        : l10n.diplomacy_relationState_peace;
-    // SPEC/game/diplomacy.md § Player-facing relation display: show one-word state, hide score.
-    final relationStateLabel = rel == null
-        ? ''
-        : relationScoreToDisplayLabel(rel.score);
-    final overtureLabel = data.overture == null
+  /// Renders the Great Power power-comparison percentage per
+  /// SPEC/ui/diplomacy-panel.md § Power comparison percentage.
+  List<Widget> _buildPowerComparison(BuildContext context) {
+    final int? gpScore = data.powerScore;
+    final int? playerScore = data.playerPowerScore;
+    if (gpScore == null || playerScore == null) {
+      return const [];
+    }
+    final int pct = powerComparisonPercent(gpScore, playerScore);
+    final String text = formatPowerComparisonPercent(pct);
+    // SPEC: red (--danger) when GP stronger (pct > 0), green (--success) when
+    // weaker or equal (pct <= 0). Token colors live in the editorial-monocle
+    // palette so the row matches the dark theme rather than raw Material reds.
+    final Color color = pct > 0
+        ? EditorialMonoclePalette.danger
+        : EditorialMonoclePalette.success;
+    return [
+      const SizedBox(width: 8),
+      Text(
+        text,
+        style: Theme.of(context).textTheme.labelMedium?.copyWith(
+          color: color,
+          fontWeight: FontWeight.w600,
+        ),
+      ),
+    ];
+  }
+
+  /// Renders the relation summary row per SPEC/ui/diplomacy-panel.md
+  /// § Relation state badge + § Per-faction row. The WAR/PEACE chip uses
+  /// the dedicated [_RelationStateBadge]; the one-word relation state
+  /// (Hostile / Unfriendly / Cordial / Friendly) and the optional
+  /// overture stage stay as inline text.
+  Widget _buildRelationRow(BuildContext context) {
+    final TextStyle? bodySmall = Theme.of(context).textTheme.bodySmall;
+    final DiplomacyRelation? rel = data.relation;
+    if (rel == null) {
+      return Text('—', style: bodySmall);
+    }
+    // SPEC/game/diplomacy.md § Player-facing relation display: show
+    // one-word state, hide score.
+    final String relationStateLabel = relationScoreToDisplayLabel(rel.score);
+    final String overtureLabel = data.overture == null
         ? ''
         : ' · ${_overtureStageLabel(data.overture!.stage)}';
-    if (relationStateLabel.isEmpty) {
-      return '$stateLabel$overtureLabel';
-    }
-    return '$stateLabel · $relationStateLabel$overtureLabel';
+    final String trailing = relationStateLabel.isEmpty
+        ? overtureLabel
+        : ' · $relationStateLabel$overtureLabel';
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        _RelationStateBadge(atWar: rel.atWar),
+        if (trailing.isNotEmpty)
+          Flexible(
+            child: Text(
+              trailing,
+              style: bodySmall,
+              overflow: TextOverflow.ellipsis,
+              maxLines: 2,
+            ),
+          ),
+      ],
+    );
   }
 
   List<Widget> _buildOptionalStatusLines(BuildContext context) {
@@ -443,6 +592,9 @@ class _DiplomacyRow extends StatelessWidget {
   }
 
   Widget _buildActionButtons() {
+    if (readOnly) {
+      return const SizedBox.shrink();
+    }
     return Wrap(
       spacing: 6,
       runSpacing: 6,
@@ -467,25 +619,7 @@ class _DiplomacyRow extends StatelessWidget {
   }
 
   Widget _kindChip(BuildContext context, FactionKind kind) {
-    final (label, color) = switch (kind) {
-      FactionKind.greatPower => ('GP', Colors.blue),
-      FactionKind.minor => ('Minor', Colors.grey),
-      FactionKind.tribe => ('Tribe', Colors.orange),
-    };
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.2),
-        borderRadius: BorderRadius.circular(4),
-      ),
-      child: Text(
-        label,
-        style: Theme.of(context).textTheme.labelSmall?.copyWith(
-          color: color,
-          fontWeight: FontWeight.w600,
-        ),
-      ),
-    );
+    return _FactionKindBadge(kind: kind);
   }
 
   String _overtureStageLabel(OvertureStage stage) {
@@ -512,6 +646,14 @@ class _ActionButton extends StatelessWidget {
   final bool isPending;
   final VoidCallback? onCancel;
 
+  /// SPEC/ui/diplomacy-panel.md § Action button styling — destructive
+  /// `Declare War` action resolves both the button outline and the
+  /// engraved label to the canonical `--danger` token. Pending state
+  /// keeps the default brass chrome so the "Cancel" affordance still
+  /// reads as a recoverable toggle.
+  bool get _isWarVariant =>
+      !isPending && order.type == DiplomaticOrderType.declareWar;
+
   @override
   Widget build(BuildContext context) {
     final label = isPending ? 'Cancel' : diplomacyActionLabel(order);
@@ -520,6 +662,7 @@ class _ActionButton extends StatelessWidget {
       child: CtNinePatchButton(
         onPressed: isPending ? onCancel : onPressed,
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+        dangerVariant: _isWarVariant,
         child: Text(label, style: const TextStyle(fontSize: 12)),
       ),
     );

@@ -19,6 +19,9 @@ mixin _AppLocalizationsEnStrings1 on AppLocalizations {
   String get mainMenu_title => 'ColonizeThis V3';
 
   @override
+  String get mainMenu_eyebrow => 'A Game of Empire & Discovery';
+
+  @override
   String get mainMenu_subtitleAfterVictory =>
       'Congratulations, you won your last game.';
 
@@ -45,7 +48,22 @@ mixin _AppLocalizationsEnStrings1 on AppLocalizations {
   String get game_pauseMenu_debugLog => 'Debug log';
 
   @override
+  String get game_pauseMenu_title => 'Game Paused';
+
+  @override
   String get game_pauseMenu_resume => 'Resume';
+
+  @override
+  String get game_pauseMenu_saveGame => 'Save Game';
+
+  @override
+  String get game_pauseMenu_loadGame => 'Load Game';
+
+  @override
+  String get game_pauseMenu_settings => 'Settings';
+
+  @override
+  String get game_pauseMenu_exitToMainMenu => 'Exit to Main Menu';
 
   @override
   String get game_pauseMenu_tooltip => 'Pause menu';
@@ -66,6 +84,11 @@ mixin _AppLocalizationsEnStrings1 on AppLocalizations {
   @override
   String game_nextTurnButton(int turn, int year) {
     return 'Next turn ($turn / $year)';
+  }
+
+  @override
+  String game_turnDisplay(int turn, int year) {
+    return 'Turn $turn / Year $year';
   }
 
   @override
@@ -192,6 +215,42 @@ mixin _AppLocalizationsEnStrings1 on AppLocalizations {
       'Use 0 for a random world (a new time-based seed each time setup runs). Any other number reproduces the same world for the same settings.';
 
   @override
+  String get shell_leaderDialog_infiniteModeLabel =>
+      'Infinite mode (turns progress past 1800)';
+
+  @override
+  String get shell_leaderDialog_infiniteModeHelper =>
+      'When enabled, the campaign continues past calendar year 1800 until a military victory.';
+
+  @override
+  String shell_leaderDialog_terrainVariationLabel(int percent) =>
+      'Terrain variation ($percent%)';
+
+  @override
+  String get shell_leaderDialog_terrainVariationHelper =>
+      'Higher values produce more mixed terrain (0 keeps legacy clumps).';
+
+  @override
+  String get gameParameters_title => 'Game Parameters';
+
+  @override
+  String get gameParameters_menuEntry => 'Game Parameters';
+
+  @override
+  String get gameParameters_infiniteModeHeading => 'Infinite mode';
+
+  @override
+  String get gameParameters_infiniteModeOn => 'On';
+
+  @override
+  String get gameParameters_infiniteModeOff => 'Off';
+
+  @override
+  String gameParameters_infiniteModeLine(String value) {
+    return 'Infinite mode: $value';
+  }
+
+  @override
   String get shell_newGameProgress_title => 'Creating game';
 
   @override
@@ -271,6 +330,9 @@ mixin _AppLocalizationsEnStrings1 on AppLocalizations {
 
   @override
   String get game_intervention_protest => 'Diplomatic protest';
+
+  @override
+  String get game_intervention_overlayTitle => 'Pending Intervention';
 
   @override
   String turnNews_title(int turn) {

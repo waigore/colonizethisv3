@@ -4,12 +4,17 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import '../../constants.dart';
 import '../../orders/bundled_civilian_work_order.dart';
 import '../../orders/draft_orders_mutations.dart';
+import '../../orders/order_resolution_context.dart';
 import '../../world/army_movement.dart';
+import '../../world/game_world_mutations.dart';
 import '../../world/movement.dart';
 import '../trace/turn_trace_runtime.dart';
+import '../turn_pipeline_state.dart';
+import '../turn_resolver_config.dart';
 import '../../world/naval_resolution.dart';
 import '../../world/player_view.dart';
 import '../../world/province_lookup.dart';
+import '../../world/province_traversal.dart';
 import '../../world/unit_lookup.dart';
 
 Game runMovementPhase(
@@ -24,9 +29,7 @@ Game runMovementPhase(
 
   final moveOrders = orders.moveOrdersByPlayerId;
   if (moveOrders.isNotEmpty) {
-    final ownerByProvinceId = <String, String?>{
-      for (final p in allProvinces(state.worldState)) p.id: p.ownerId,
-    };
+    final ownerByProvinceId = ownerByProvinceIdMap(state.worldState);
 
     final originalOldWorld = state.worldState.oldWorld;
     final originalNewWorld = state.worldState.newWorld;
@@ -77,8 +80,8 @@ Game runMovementPhase(
 
     recordSpyProvinceChanges(originalOldWorld, oldWorld);
     recordSpyProvinceChanges(originalNewWorld, newWorld);
-    state = state.copyWith(
-      worldState: state.worldState.copyWith(
+    state = state.updateWorldState(
+      (ws) => ws.copyWith(
         oldWorld: oldWorld,
         newWorld: newWorld,
         spyRevealTurnsByPlayer: mutableSpyTimers ?? originalSpyTimers,
@@ -133,7 +136,7 @@ Game runMovementPhase(
       isDestinationOwnedByPlayer: isDestinationOwnedByPlayer,
       onArmyMoveOrderTrace: onArmyMoveOrderTrace,
     );
-    state = state.copyWith(worldState: ws);
+    state = state.withWorldState(ws);
   }
 
   final navalOrders = orders.navalMoveOrdersByPlayerId;
@@ -162,7 +165,7 @@ Game applyImplicitBundledCivilianWorkOrderMoves(
     return state;
   }
 
-  final unitById = unitsByIdFromWorld(state.worldState);
+  final unitById = Map<String, Unit>.from(state.worldState.allUnitsById);
   final viewByPlayerId = <String, PlayerView>{};
   for (final entry in workByPlayerId.entries) {
     final playerId = entry.key;
@@ -206,6 +209,11 @@ Game applyImplicitBundledCivilianWorkOrderMoves(
         );
         continue;
       }
+      final resolution = orderResolutionContextFromView(
+        view,
+        state,
+        unitsById: unitById,
+      );
       final destinationTile = firstLegalBundledEntryTileKeyInProvince(
         game: state,
         topology: topology,
@@ -213,8 +221,7 @@ Game applyImplicitBundledCivilianWorkOrderMoves(
         unit: unit,
         destProvinceFullId: destination,
         preferredTargetTileKey: workOrder.targetTileKey,
-        view: view,
-        unitsById: unitById,
+        resolution: resolution,
         diplomaticOrders: diplomatic,
       );
       if (destinationTile == null) {
@@ -258,7 +265,7 @@ Game applyImplicitBundledCivilianWorkOrderMoves(
           );
         });
       }
-      state = state.copyWith(worldState: ws);
+      state = state.withWorldState(ws);
       unitById[unit.id] = movedUnit;
       view = _playerViewWithMovedUnit(view, movedUnit);
       viewByPlayerId[playerId] = view;
@@ -339,3 +346,22 @@ Map<String, List<ArmyMoveOrder>> _preTraceArmyMoveGlobalRejections(
   }
   return filtered;
 }
+
+TurnPhaseStepOutcome movementTurnPhaseHandler(
+  TurnPipelineState acc,
+  TurnResolverConfig config,
+  int turn,
+) => TurnPhaseStepContinue(
+  acc.copyWith(
+    game: runMovementPhase(
+      acc.game,
+      config.topology,
+      config.orders,
+      onCivilianMoveOrderTrace:
+          config.turnTraceRuntime?.handleCivilianMoveOrderTrace,
+      onBundledWorkMoveTrace:
+          config.turnTraceRuntime?.handleBundledWorkMoveTrace,
+      onArmyMoveOrderTrace: config.turnTraceRuntime?.handleArmyMoveOrderTrace,
+    ),
+  ),
+);

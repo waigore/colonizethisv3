@@ -71,6 +71,35 @@ seed/personality/domain-weight thresholds, and per-domain order output. App
 and ctdev exporters may fall back to submitted-order summaries when callers
 provide only an `Orders` payload.
 
+#### Decision-provenance fields (Refs #2832)
+
+Full AI traces additionally surface intermediate planner-gate outputs
+so a reader can deterministically reconstruct the causal chain from
+snapshot state through phase gating to final orders without consulting
+planner source code. Additive fields under `state` and `thresholds`
+(both `additionalProperties: true` in v1, so no schema version bump):
+
+- `state.observerGoalPhase` (string): resolved `ObserverGoalPhase`
+  (`expand` / `colonialLite` / `colonial` / `develop`). Omitted on
+  fallback summary paths.
+- `state.phasePlan` (object): compact `PhasePlanOutcome` projection
+  with null / empty arms omitted. Optional sub-fields:
+  `colonialAcquisition.{targetFactionId, method}`,
+  `expandDeclareWarTarget`, `expandPeaceTargets`,
+  `colonialPeaceTargets`, `colonialLiteOvertures`,
+  `developPeaceTargets`.
+- `thresholds.domainGates` (object): activation booleans
+  (`workPlannerRan`, `buildPlannerRan`, `movePlannerRan`,
+  `diplomacyPlannerRan`, `navalPlannerRan`, `researchPlannerRan`,
+  `conquestArmyMovePlannerRan`), the resolved `conquestPasses` count,
+  and an optional `thresholds.{work,build,research}` sub-object.
+- `thresholds.constants.agendaModifiers` is extended with `spyOrder`,
+  `buildOrder`, and `research` (in addition to existing `conquer` and
+  `diplomacy`).
+
+See [`SPEC/ai/turn-trace-interpretation.md`](../ai/turn-trace-interpretation.md)
+for the field-to-decision mapping and reader-side semantics.
+
 ### Turn-resolution trace (`turn-resolution-trace.v1.schema.json`)
 
 Required top-level fields:
@@ -161,6 +190,9 @@ in-process `GameService.runTurnResolution` path.
 - Given the movement phase processes `ArmyMoveOrder` entries with structured tracing enabled, when an order is rejected because the army is missing, owned by another faction, or a home army, then the runtime emits exactly one `army_move_ignored` event per order with the matching `ignoreReason` and the order's `destinationProvinceId` in the payload.
 - Given the movement phase processes `ArmyMoveOrder` entries with structured tracing enabled, when a same-region move applies via `applyArmyMoveOrdersToRegion`, then the runtime emits one `army_move_applied` event whose payload contains the resolved `destinationProvinceId` and the matching `regionId`.
 - Given the full AI planner generates orders for an AI-controlled player, when the caller reads the returned AI trace section, then the trace contains the player's `factionId`, a `state.winningCandidate.goal` strategic goal string, ranked `state.topAlternates`, `thresholds.constants`, `thresholds.derived`, `thresholds.effective`, `thresholds.gates`, and an `outcome.finalAggregatedOrders` array matching the emitted order domains.
+- Given a full-AI trace, when the caller reads `state.observerGoalPhase` and `state.phasePlan`, then they reflect the resolved `ObserverGoalPhase` (`expand` / `colonialLite` / `colonial` / `develop`) and the matching compact `PhasePlanOutcome` projection — `colonialAcquisition.{targetFactionId,method}` only under COLONIAL, `expand*` arms under EXPAND/COLONIAL-lite, `colonialPeaceTargets` under COLONIAL, `colonialLiteOvertures` under COLONIAL-lite, `developPeaceTargets` under DEVELOP (Refs #2832).
+- Given a full-AI trace whose orchestrator skipped the naval planner via the `kNavalRunMinWeight` gate, when the caller reads `thresholds.domainGates`, then `navalPlannerRan` is `false`; given an active phase of EXPAND or COLONIAL-lite, then `conquestPasses` equals `kStalledConquestArmyMovePasses`; given COLONIAL or DEVELOP, then `conquestPasses` equals `1`.
+- Given a full-AI trace, when the caller reads `thresholds.constants.agendaModifiers`, then it contains the keys `conquer`, `diplomacy`, `spyOrder`, `buildOrder`, and `research`, each holding the integer modifier returned by the corresponding `getAgenda*Modifier` function for the active hidden agenda (default `0`).
 - Given app or ctdev turn trace export receives full AI trace sections for the resolving turn, when the merged trace is written, then the top-level `ai` array uses those full AI trace sections instead of rebuilding only submitted-order summaries.
 - Given no custom trace root override is provided, when the system exports a merged turn trace for `gameId = G` and `turnNumber = N`, then the system writes one JSON file to `tmp/turn-traces/G/` using filename pattern `turn-N-YYYYMMDDTHHMMSSmmmZ.json`.
 - Given a custom trace root override path `R` is provided, when the system exports a merged turn trace for `gameId = G`, then the system writes to `R/turn-traces/G/` and keeps the same filename pattern.

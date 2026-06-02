@@ -8,7 +8,7 @@ part of 'order_suggestion_work.dart';
   required String playerId,
   required Unit unit,
   required Province prov,
-  required Map<String, Unit> unitsById,
+  required OrderResolutionContext resolution,
   required List<DiplomaticOrder> diplomatic,
   required Map<String, Map<String, List<String>>> tileKeysByRegion,
   required IncrementalCandidateValidator candidateValidator,
@@ -59,8 +59,7 @@ part of 'order_suggestion_work.dart';
       playerId: playerId,
       unit: unit,
       order: probe,
-      view: view,
-      unitsById: unitsById,
+      resolution: resolution,
       diplomaticOrders: diplomatic,
     );
     if (!bundled.isAccepted) {
@@ -96,7 +95,7 @@ void _addExplorerWorkSuggestionsForUnit({
   required WorkSuggestionProbeBudget workProbeBudget,
   Map<String, TileMapResult>? tileMapByRegion,
 }) {
-  final unitsById = Map<String, Unit>.from(unitsByIdFromWorld(game.worldState));
+  final resolution = orderResolutionContextFromView(view, game);
   final diplomatic =
       currentOrders.diplomaticOrdersByPlayerId[playerId] ?? const [];
 
@@ -141,7 +140,7 @@ void _addExplorerWorkSuggestionsForUnit({
           playerId: playerId,
           unit: unit,
           prov: prov,
-          unitsById: unitsById,
+          resolution: resolution,
           diplomatic: diplomatic,
           tileKeysByRegion: tileKeysByRegion,
           candidateValidator: candidateValidator,
@@ -175,6 +174,7 @@ void _addExplorerWorkSuggestionsForUnit({
     suggestions: suggestions,
     candidateValidator: candidateValidator,
     workProbeBudget: workProbeBudget,
+    resolution: resolution,
     tileMapByRegion: tileMapByRegion,
   );
 }
@@ -190,7 +190,7 @@ void _addExplorerWorkSuggestionsForUnit({
   required Unit unit,
   required List<String> tilesInProvince,
   required Set<String> prospected,
-  required Map<String, Unit> unitsById,
+  required OrderResolutionContext resolution,
   required List<DiplomaticOrder> diplomaticOrders,
   required IncrementalCandidateValidator candidateValidator,
   required WorkSuggestionProbeBudget workProbeBudget,
@@ -221,8 +221,7 @@ void _addExplorerWorkSuggestionsForUnit({
         target: kWorkTargetProspect,
         targetTileKey: sortedTiles.first,
       ),
-      view: view,
-      unitsById: unitsById,
+      resolution: resolution,
       diplomaticOrders: diplomaticOrders,
     );
     if (!bundled.isAccepted) {
@@ -271,8 +270,13 @@ void _addProspectSuggestionIfEligible({
   required List<WorkOrder> suggestions,
   required IncrementalCandidateValidator candidateValidator,
   required WorkSuggestionProbeBudget workProbeBudget,
+  required OrderResolutionContext resolution,
   Map<String, TileMapResult>? tileMapByRegion,
 }) {
+  // Early bail mirrors [WorkSuggestionPipeline]'s duplicate-pending check so we
+  // skip the per-unit `unitsByIdFromWorld` / province snapshot setup below
+  // when this explorer already has a pending `prospect` order this turn.
+  // The pipeline would log the same `duplicate_pending` line if reached.
   final existingProspect = existingTargetsByUnit[unit.id];
   if (existingProspect != null &&
       existingProspect.contains(kWorkTargetProspect)) {
@@ -288,7 +292,6 @@ void _addProspectSuggestionIfEligible({
     return;
   }
 
-  final unitsById = Map<String, Unit>.from(unitsByIdFromWorld(game.worldState));
   final diplomatic =
       currentOrders.diplomaticOrdersByPlayerId[playerId] ?? const [];
 
@@ -302,83 +305,69 @@ void _addProspectSuggestionIfEligible({
     ..sort((a, b) => a.id.compareTo(b.id));
 
   var lastReason = 'no_valid_tile';
-  final prospectRows = <WorkOrder>[];
-  var provinceProbes = 0;
-  for (final prov in provinces) {
-    provinceProbes++;
-    if (provinceProbes > kMaxExploreProvinceProbesPerUnit) {
-      break;
-    }
-    final regionIdP = prov.regionId;
-    final provinceIdFull = prov.id;
-    if (!provinceHasAtLeastVisibility(
-      view,
-      regionIdP,
-      provinceIdFull,
-      VisibilityLevel.fogged,
-    )) {
-      lastReason = 'visibility';
-      continue;
-    }
-    final tilesInP =
-        tileKeysByRegion[regionIdP]?[provinceIdFull] ?? const <String>[];
-    if (tilesInP.isEmpty) {
-      lastReason = 'no_valid_tile';
-      continue;
-    }
-    final scan = _allAcceptedProspectTilesInProvince(
-      view: view,
-      game: game,
-      topology: topology,
-      currentOrders: currentOrders,
-      playerId: playerId,
-      unit: unit,
-      tilesInProvince: tilesInP,
-      prospected: prospected,
-      unitsById: unitsById,
-      diplomaticOrders: diplomatic,
-      candidateValidator: candidateValidator,
-      workProbeBudget: workProbeBudget,
-      tileMapByRegion: tileMapByRegion,
-    );
-    lastReason = scan.lastReason;
-    for (final tk in scan.tiles) {
-      prospectRows.add(
-        WorkOrder(
-          unitId: unit.id,
-          target: kWorkTargetProspect,
-          targetTileKey: tk,
-        ),
-      );
-    }
-  }
-  if (prospectRows.isEmpty) {
-    logWorkOrderSuggestion(
-      unitId: unit.id,
-      unitType: unit.type,
-      unitRegionId: regionId,
-      atProvinceId: provinceId,
-      workTarget: kWorkTargetProspect,
-      outcome: 'excluded',
-      reason: lastReason,
-    );
-    return;
-  }
-
-  existingTargetsByUnit
-      .putIfAbsent(unit.id, () => <String>{})
-      .add(kWorkTargetProspect);
-  for (final candidate in prospectRows) {
-    suggestions.add(candidate);
-  }
-  logWorkOrderSuggestion(
-    unitId: unit.id,
+  WorkSuggestionPipeline.run(
+    unit: unit,
     unitType: unit.type,
     unitRegionId: regionId,
     atProvinceId: provinceId,
     workTarget: kWorkTargetProspect,
-    outcome: 'included',
-    tile: prospectRows.first.targetTileKey,
-    includedRowCount: prospectRows.length,
+    existingTargetsByUnit: existingTargetsByUnit,
+    suggestions: suggestions,
+    candidatesProvider: () sync* {
+      var provinceProbes = 0;
+      for (final prov in provinces) {
+        provinceProbes++;
+        if (provinceProbes > kMaxExploreProvinceProbesPerUnit) {
+          break;
+        }
+        final regionIdP = prov.regionId;
+        final provinceIdFull = prov.id;
+        if (!provinceHasAtLeastVisibility(
+          view,
+          regionIdP,
+          provinceIdFull,
+          VisibilityLevel.fogged,
+        )) {
+          lastReason = 'visibility';
+          continue;
+        }
+        final tilesInP =
+            tileKeysByRegion[regionIdP]?[provinceIdFull] ?? const <String>[];
+        if (tilesInP.isEmpty) {
+          lastReason = 'no_valid_tile';
+          continue;
+        }
+        final scan = _allAcceptedProspectTilesInProvince(
+          view: view,
+          game: game,
+          topology: topology,
+          currentOrders: currentOrders,
+          playerId: playerId,
+          unit: unit,
+          tilesInProvince: tilesInP,
+          prospected: prospected,
+          resolution: resolution,
+          diplomaticOrders: diplomatic,
+          candidateValidator: candidateValidator,
+          workProbeBudget: workProbeBudget,
+          tileMapByRegion: tileMapByRegion,
+        );
+        lastReason = scan.lastReason;
+        for (final tk in scan.tiles) {
+          yield WorkOrder(
+            unitId: unit.id,
+            target: kWorkTargetProspect,
+            targetTileKey: tk,
+          );
+        }
+      }
+    },
+    candidateAcceptor: (_) => true,
+    noCandidateReason: 'no_valid_tile',
+    resolveNoCandidateReason: () => lastReason,
+    includeAllAccepted: true,
+    maxProbeAttempts:
+        kMaxExploreProvinceProbesPerUnit *
+        kMaxWorkProbeAttemptsPerUnitPerTarget,
   );
 }

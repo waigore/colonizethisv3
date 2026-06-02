@@ -32,6 +32,7 @@ void main() {
       expect(ids, contains('repo.dart_file_non_comment_line_size'));
       expect(ids, contains('repo.land_province_bucket_keys'));
       expect(ids, contains('repo.logic_dual_region_province_field_access'));
+      expect(ids, contains('repo.logic_work_target_switch'));
       expect(ids, contains('repo.app_lib_no_broad_suggest_work_orders'));
       expect(ids, contains('repo.app_hardcoded_ui_strings'));
       expect(

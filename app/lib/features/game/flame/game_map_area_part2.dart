@@ -4,44 +4,23 @@ mixin _GameMapAreaStatePart2
     on _GameMapAreaStatePart1, ConsumerState<GameMapArea> {
   @override
   Widget build(BuildContext context) {
-    final currentOrders = ref.watch(currentOrdersProvider);
     final isNarrow = MediaQuery.sizeOf(context).width < kNarrowBreakpoint;
     final mapTopology = widget.mapViewData.combinedTopology;
-    final humanPlayerView = buildPlayerView(
-      widget.game,
-      mapTopology,
-      _humanPlayerId,
-    );
+    final shell = ref.watch(shellPlayerContextProvider);
+    final mapPlayerId = shell.mapPlayerIdFor(widget.game);
+    final mapPlayerView =
+        shell.playerView ?? buildPlayerView(widget.game, mapTopology, mapPlayerId);
     final l10n = appL10n(context);
-    final mapData = ref.watch(gameServiceProvider).getMapData(widget.game.id);
-    var projectedRegion =
-        GameMapAreaStateLogic.projectCivilianMarkersForHumanDraft(
-          region: _currentRegion,
-          game: widget.game,
-          orders: currentOrders,
-          humanPlayerId: _humanPlayerId,
-        );
-    final tm = mapData?.tileMapByRegion;
-    final tr = mapData?.topologyByRegion;
-    final ct = mapData?.combinedTopology;
-    if (tm != null && tr != null && ct != null) {
-      projectedRegion = GameMapAreaStateLogic.projectFleetMarkersForHumanDraft(
-        region: projectedRegion,
-        game: widget.game,
-        orders: currentOrders,
-        humanPlayerId: _humanPlayerId,
-        tileMapByRegion: tm,
-        topologyByRegion: tr,
-        combinedTopology: ct,
-      );
-    }
-    final nextTurnText = l10n.game_nextTurnButton(
-      widget.game.worldState.turnState.turnNumber,
-      turnToYear(
-        widget.game.worldState.turnState.turnNumber,
-        widget.game.turnTimeMapping,
-      ),
-    );
+    final projectedRegion = ref.watch(
+          humanDraftProjectedRegionProvider(_currentRegion.regionId),
+        ) ??
+        _currentRegion;
+    final turnNumber = widget.game.worldState.turnState.turnNumber;
+    final year = turnToYear(turnNumber, widget.game.turnTimeMapping);
+    final nextTurnText = shell.inObservePhase
+        ? 'Observe — Turn $turnNumber ($year)'
+        : l10n.game_nextTurnButton(turnNumber, year);
+    final turnDisplayText = l10n.game_turnDisplay(turnNumber, year);
     final cargoSummary = ref.watch(homeFleetCargoSummaryProvider);
     final treasurySummary = ref.watch(treasurySummaryProvider);
     final feedEntries = (this as _GameMapAreaState)._feedEntries();
@@ -52,6 +31,9 @@ mixin _GameMapAreaStatePart2
           sideMenuOpen: _sideMenuOpen,
           onToggleSideMenu: () =>
               setState(() => _sideMenuOpen = !_sideMenuOpen),
+          onPausePressed: () => ref
+              .read(appEventBusProvider)
+              .emit(const ct_models.OpenPauseMenuPanelEvent()),
           onNextTurn: _onNextTurn,
           nextTurnEnabled:
               !_isTurnResolving &&
@@ -59,13 +41,18 @@ mixin _GameMapAreaStatePart2
           regionIndex: _regionIndex,
           onRegionIndexChanged: (i) =>
               setState(() => _regionIndex = i == 0 ? 0 : 1),
+          turnDisplayText: turnDisplayText,
           nextTurnText: nextTurnText,
           cargoUsed: cargoSummary.used,
           cargoCapacity: cargoSummary.capacity,
           isCargoUsedReliable: cargoSummary.isCargoUsedReliable,
+          cargoNotDefined: cargoSummary.notDefined,
           treasury: treasurySummary.treasury,
           treasuryDelta: treasurySummary.projectedDelta,
+          treasuryNotDefined: treasurySummary.notDefined,
+          observeBannerLabel: shell.observeBannerLabel,
           playerTurnEventsFeedCount: feedEntries.length,
+          playerTurnEventsFeedNotDefined: !shell.showPlayerChrome,
           showPlayerTurnEventsFeed: _mapViewState.showPlayerTurnEventsFeed,
           onTogglePlayerTurnEventsFeed: _togglePlayerTurnEventsFeedVisibility,
         ),
@@ -95,6 +82,7 @@ mixin _GameMapAreaStatePart2
                     },
                     child: Stack(
                       children: [
+                        const Positioned.fill(child: GameMapAreaBackground()),
                         GameMapCanvasStack(
                           isNarrow: isNarrow,
                           game: widget.game,
@@ -106,8 +94,11 @@ mixin _GameMapAreaStatePart2
                               _mapViewState.showProvinceOwnershipTint,
                           showProvinceNamesLayer:
                               _mapViewState.showProvinceNamesLayer,
-                          humanPlayerId: _humanPlayerId,
-                          playerView: humanPlayerView,
+                          humanPlayerId: mapPlayerId,
+                          playerView: mapPlayerView,
+                          visibilityMode: shell.mapVisibilityMode,
+                          omniscientDetail: shell.omniscientDetail,
+                          canMutateViaUi: shell.canMutateViaUi,
                           workTargetSelectionCache: _workTargetSelectionCache,
                           centerOnTileKey: _centerOnTileKey,
                           validTileKeysForSelection: _validTileKeysForSelection,
@@ -154,7 +145,8 @@ mixin _GameMapAreaStatePart2
                           top: 0,
                           child: GameMapEmpireLeftRail(
                             game: widget.game,
-                            humanPlayerId: _humanPlayerId,
+                            humanPlayerId: mapPlayerId,
+                            narrow: isNarrow,
                             onIconTappedWhileSelectionMode:
                                 _workTargetSelection != null
                                 ? _cancelWorkTargetSelection
@@ -165,75 +157,21 @@ mixin _GameMapAreaStatePart2
                           left: kMapOverlayEdgeInset,
                           bottom: kMapOverlayEdgeInset,
                           child: GameMapCornerControls(
+                            narrow: isNarrow,
                             onCycleBaseLayerDisplayMode:
                                 _cycleBaseLayerDisplayMode,
                             onCenterOnHomeCapital: _centerOnHumanCapital,
+                            homeToCapitalEnabled:
+                                shell.effectiveHumanPlayerId != null,
                             onOpenMapDisplayOptions: () {
                               showDialog<void>(
                                 context: context,
+                                barrierColor: EditorialMonoclePalette
+                                    .dialogScrim,
                                 builder: (context) {
-                                  return AlertDialog(
-                                    title: Text(l10n.map_displayOptions_title),
-                                    content: Consumer(
-                                      builder: (context, ref, child) {
-                                        return Column(
-                                          mainAxisSize: MainAxisSize.min,
-                                          children: [
-                                            SwitchListTile(
-                                              title: Text(
-                                                l10n.map_displayOptions_showProvinceOverlay,
-                                              ),
-                                              value: _mapViewState
-                                                  .showProvinceOverlay,
-                                              onChanged: (value) {
-                                                _setMapViewState(
-                                                  _mapViewState.copyWith(
-                                                    showProvinceOverlay: value,
-                                                  ),
-                                                );
-                                              },
-                                            ),
-                                            SwitchListTile(
-                                              title: Text(
-                                                l10n.map_displayOptions_showProvinceOwnership,
-                                              ),
-                                              value: _mapViewState
-                                                  .showProvinceOwnershipTint,
-                                              onChanged: (value) {
-                                                _setMapViewState(
-                                                  _mapViewState.copyWith(
-                                                    showProvinceOwnershipTint:
-                                                        value,
-                                                  ),
-                                                );
-                                              },
-                                            ),
-                                            SwitchListTile(
-                                              title: Text(
-                                                l10n.map_displayOptions_showProvinceNames,
-                                              ),
-                                              value: _mapViewState
-                                                  .showProvinceNamesLayer,
-                                              onChanged: (value) {
-                                                _setMapViewState(
-                                                  _mapViewState.copyWith(
-                                                    showProvinceNamesLayer:
-                                                        value,
-                                                  ),
-                                                );
-                                              },
-                                            ),
-                                          ],
-                                        );
-                                      },
-                                    ),
-                                    actions: [
-                                      TextButton(
-                                        onPressed: () =>
-                                            Navigator.of(context).maybePop(),
-                                        child: Text(l10n.common_close),
-                                      ),
-                                    ],
+                                  return GameMapOptionsDialog(
+                                    initialState: _mapViewState,
+                                    onChanged: _setMapViewState,
                                   );
                                 },
                               );
@@ -309,11 +247,9 @@ mixin _GameMapAreaStatePart2
                         ],
                         if (_sideMenuOpen) ...[
                           Positioned.fill(
-                            child: GestureDetector(
-                              behavior: HitTestBehavior.opaque,
-                              onTap: () =>
+                            child: GameSideMenuScrim(
+                              onDismiss: () =>
                                   setState(() => _sideMenuOpen = false),
-                              child: Container(color: Colors.black54),
                             ),
                           ),
                           GameSideMenu(
@@ -340,6 +276,7 @@ mixin _GameMapAreaStatePart2
                                 viewportSnapshot: _regionViewportSnapshot,
                                 bus: ref.read(appEventBusProvider),
                                 cellSizePx: _currentRegion.cellSize.toDouble(),
+                                narrow: isNarrow,
                               ),
                             );
                           },
@@ -353,7 +290,8 @@ mixin _GameMapAreaStatePart2
                               final rightInset = gameMapWideOverlayRightInset(
                                 provincePanelOpen: panelOpen,
                               );
-                              if (!_mapViewState.showPlayerTurnEventsFeed) {
+                              if (!shell.showPlayerChrome ||
+                                  !_mapViewState.showPlayerTurnEventsFeed) {
                                 return const SizedBox.shrink();
                               }
                               return Positioned(
@@ -366,15 +304,20 @@ mixin _GameMapAreaStatePart2
                               );
                             },
                           ),
-                        if (isNarrow && _mapViewState.showPlayerTurnEventsFeed)
+                        if (isNarrow &&
+                            shell.showPlayerChrome &&
+                            _mapViewState.showPlayerTurnEventsFeed)
                           Positioned(
                             right: kMapOverlayEdgeInset,
                             top: 56,
                             child: PlayerTurnEventFeedCard(
                               entries: feedEntries,
                               emptyLabel: 'No player events last turn.',
+                              narrow: true,
                             ),
                           ),
+                        if (!isNarrow && widget.game.victory == null)
+                          GameMapPlayersBar(game: widget.game),
                       ],
                     ),
                   ),
@@ -386,7 +329,7 @@ mixin _GameMapAreaStatePart2
                   top: 56,
                   child: DebugConsoleOverlayPanel(
                     bus: ref.read(appEventBusProvider),
-                    humanPlayerId: _humanPlayerId,
+                    humanPlayerId: _debugConsolePlayerId ?? mapPlayerId,
                     readOnlyContextProvider: () {
                       final selectedTileKey =
                           ref.read(mapProvincePanelProvider).selectedTileKey;
@@ -417,8 +360,10 @@ mixin _GameMapAreaStatePart2
                       GameMapNarrowDetailOverlaySlot(
                         game: widget.game,
                         region: projectedRegion,
-                        humanPlayerId: _humanPlayerId,
-                        playerView: humanPlayerView,
+                        humanPlayerId: mapPlayerId,
+                        playerView: mapPlayerView,
+                        omniscientDetail: shell.omniscientDetail,
+                        canMutateViaUi: shell.canMutateViaUi,
                         workTargetSelectionCache: _workTargetSelectionCache,
                       ),
                     ],

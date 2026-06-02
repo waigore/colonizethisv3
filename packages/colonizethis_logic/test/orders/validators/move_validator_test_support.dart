@@ -6,8 +6,16 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 MapTopology moveValidatorTestTwoProvinceTopology(String regionId) {
   return MapTopology(
     nodes: [
-      TopologyNode(id: 'P1', regionId: regionId, type: TopologyNodeType.province),
-      TopologyNode(id: 'P2', regionId: regionId, type: TopologyNodeType.province),
+      TopologyNode(
+        id: 'P1',
+        regionId: regionId,
+        type: TopologyNodeType.province,
+      ),
+      TopologyNode(
+        id: 'P2',
+        regionId: regionId,
+        type: TopologyNodeType.province,
+      ),
     ],
     edges: [const TopologyEdge(id1: 'P1', id2: 'P2')],
   );
@@ -28,4 +36,25 @@ Army moveValidatorTestFieldArmy(
     regimentUnitIds: [unitId],
     isHomeArmy: false,
   );
+}
+
+/// Builds the canonical [OrderResolutionContext] for [MoveValidator] tests
+/// from a [game] + [topology] + [playerId] triple, mirroring the per-pass
+/// snapshot the engine entry-point threads through validator probes
+/// (Refs #2836 AC 3; SPEC/program/logic-validator-units-params.md).
+///
+/// Combines both old-world and new-world units into the same `unitsById`
+/// map so tests that exercise dual-region fixtures get a context whose
+/// unit lookup matches the engine's per-pass build.
+OrderResolutionContext moveValidatorTestContext(
+  Game game,
+  MapTopology topology,
+  String playerId,
+) {
+  final unitsById = <String, Unit>{
+    for (final u in game.worldState.oldWorld.units) u.id: u,
+    for (final u in game.worldState.newWorld.units) u.id: u,
+  };
+  final view = buildPlayerView(game, topology, playerId);
+  return orderResolutionContextFromView(view, game, unitsById: unitsById);
 }

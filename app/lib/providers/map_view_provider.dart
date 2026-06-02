@@ -1,9 +1,14 @@
+import 'package:colonizethis_app/core/utils/prefixed_id.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_map/colonizethis_map.dart';
+import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../config/map_terrain_config.dart';
+import '../features/game/flame/region_map_component.dart'
+    show CtMapVisibilityMode;
+import '../features/game/shell_player_context.dart';
 import '../perf/app_perf_trace.dart';
 import 'game_service_provider.dart';
 import 'games_provider.dart';
@@ -64,32 +69,37 @@ final mapViewDataProvider = Provider<InitGameMapViewData?>((ref) {
     }
     final colorOverride = greatPowerColorOverrideFromGame(game);
 
-    final humanPlayerId =
-        game.players.where((p) => p.isHuman).map((p) => p.id).firstOrNull ??
-        game.players.first.id;
+    final shell = ref.watch(shellPlayerContextProvider);
+    final mapPlayerId = shell.mapPlayerIdFor(game);
     final topology = mapData.combinedTopology;
-    final view = buildPlayerView(game, topology, humanPlayerId);
-    final humanPlayer =
-        game.players.where((p) => p.id == humanPlayerId).firstOrNull ??
+    final view = shell.playerView ??
+        buildPlayerView(game, topology, mapPlayerId);
+    final mapPlayer =
+        game.playerById(mapPlayerId) ??
         game.players.first;
 
     final visibilityByTile = <String, TileVisibility>{};
     final byRegion = game.worldState.tileKeysByRegionAndProvince;
+    final useFullVisibility =
+        shell.mapVisibilityMode == CtMapVisibilityMode.full;
     for (final provinceMap in byRegion.values) {
       for (final tileKeys in provinceMap.values) {
         for (final tileKey in tileKeys) {
-          final level = view.visibilityForTile(tileKey);
-          late TileVisibility visibility;
-          switch (level) {
-            case VisibilityLevel.fullyVisible:
-              visibility = TileVisibility.visible;
-              break;
-            case VisibilityLevel.fogged:
-              visibility = TileVisibility.fogged;
-              break;
-            case VisibilityLevel.unknown:
-              visibility = TileVisibility.unrevealed;
-              break;
+          final TileVisibility visibility;
+          if (useFullVisibility) {
+            visibility = TileVisibility.visible;
+          } else {
+            switch (view.visibilityForTile(tileKey)) {
+              case VisibilityLevel.fullyVisible:
+                visibility = TileVisibility.visible;
+                break;
+              case VisibilityLevel.fogged:
+                visibility = TileVisibility.fogged;
+                break;
+              case VisibilityLevel.unknown:
+                visibility = TileVisibility.unrevealed;
+                break;
+            }
           }
           visibilityByTile[tileKey] = visibility;
         }
@@ -101,7 +111,7 @@ final mapViewDataProvider = Provider<InitGameMapViewData?>((ref) {
       tileMapByRegion: mapData.tileMapByRegion,
       topology: topology,
     );
-    final connectivityForHuman = connectivity[humanPlayer.id];
+    final connectivityForHuman = connectivity[mapPlayer.id];
     final resourceExtractionUnitsByTile = <String, int>{};
     final resourceExtractionEffectiveUnitsByTile = <String, int>{};
     final resourceExtractionBlockedUnitsByTile = <String, int>{};
@@ -109,19 +119,19 @@ final mapViewDataProvider = Provider<InitGameMapViewData?>((ref) {
       final portTileKeys = game.worldState.portsByProvinceSeaboard.values
           .toSet();
       final prospected =
-          game.worldState.playerProspectedTiles[humanPlayer.id] ??
+          game.worldState.playerProspectedTiles[mapPlayer.id] ??
           const <String>{};
       final provincesByFullId = {
         for (final p in game.worldState.oldWorld.provinces) p.id: p,
         for (final p in game.worldState.newWorld.provinces) p.id: p,
       };
       for (final tileKey in connectivityForHuman.connected) {
-        final parts = tileKey.split('|');
-        if (parts.length != 4) {
+        final parsed = tryParseTileKey(tileKey);
+        if (parsed == null) {
           continue;
         }
-        final regionId = parts[0];
-        final localProvinceId = parts[1];
+        final regionId = parsed.regionId;
+        final localProvinceId = parsed.provinceLocalId;
         final ownedByHuman =
             (regionId == 'oldWorld'
                     ? game.worldState.oldWorld.provinces
@@ -129,7 +139,7 @@ final mapViewDataProvider = Provider<InitGameMapViewData?>((ref) {
                 .any(
                   (province) =>
                       province.id == '$regionId|$localProvinceId' &&
-                      province.ownerId == humanPlayer.id,
+                      province.ownerId == mapPlayer.id,
                 );
         if (!ownedByHuman) {
           continue;
@@ -137,14 +147,14 @@ final mapViewDataProvider = Provider<InitGameMapViewData?>((ref) {
         final contribution = computeTileExtractionContributionForPlayer(
           game: game,
           tileMapByRegion: mapData.tileMapByRegion,
-          player: humanPlayer,
+          player: mapPlayer,
           tileKey: tileKey,
           connectedTileKeys: connectivityForHuman.connected,
           pathTransportCap: connectivityForHuman.pathTransportCap,
           connectedByRoadRule: connectivityForHuman.connectedByRoadRule,
           portTileKeys: portTileKeys,
           prospectedTileKeys: prospected,
-          capitalRegionId: humanPlayer.capitalTile?.regionId,
+          capitalRegionId: mapPlayer.capitalTile?.regionId,
           techCapForPlayer: (id) {
             final player = game.playerById(id);
             return extractionCapForUnlocked(player?.techUnlocked);
@@ -157,7 +167,7 @@ final mapViewDataProvider = Provider<InitGameMapViewData?>((ref) {
         final improvementLevel = game.worldState.tileState
             .improvementLevel(tileKey)
             .clamp(0, 4);
-        final techCap = extractionCapForUnlocked(humanPlayer.techUnlocked);
+        final techCap = extractionCapForUnlocked(mapPlayer.techUnlocked);
         final productionUnits =
             (improvementLevel < techCap ? improvementLevel : techCap).clamp(
               0,
@@ -187,6 +197,32 @@ final mapViewDataProvider = Provider<InitGameMapViewData?>((ref) {
           resourceExtractionEffectiveUnitsByTile,
       resourceExtractionBlockedUnitsByTile:
           resourceExtractionBlockedUnitsByTile,
+      civilianMarkerOwnerIds: civilianMarkerOwnerIdsFor(shell, game),
     );
   });
 });
+
+/// Owner set whose civilians get tile markers on the in-game map. Mirrors
+/// the observe-mode contract in SPEC/ui/observe-mode.md and avoids relying
+/// on `Player.isHuman`, which observe handoff clears for every GP. Returns
+/// null when the current shell context implies legacy single-player behavior
+/// (the map builder then falls back to its own `isHuman` filter).
+Set<String>? civilianMarkerOwnerIdsFor(
+  ShellPlayerContext shell,
+  Game game,
+) {
+  // Player observe pins markers to the observed GP only; player chrome stays
+  // visible so we use the panel/viewing id rather than the full GP list.
+  if (shell.inObservePhase && shell.viewingPlayerId != null) {
+    return <String>{shell.viewingPlayerId!};
+  }
+  // Global observe: every faction with civilians may appear on the map (P6).
+  if (shell.inObservePhase) {
+    return <String>{
+      for (final p in game.players) p.id,
+      for (final m in game.minorNations) m.id,
+      for (final t in game.tribes) t.id,
+    };
+  }
+  return null;
+}

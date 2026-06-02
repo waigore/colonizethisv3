@@ -30,12 +30,7 @@ Game resolveBattleContext(
   CombatPhaseGeneralLedger? combatGeneralLedger,
 }) {
   final ledger = combatGeneralLedger ?? CombatPhaseGeneralLedger();
-  RegionData region;
-  if (ctx.regionId == kRegionOldWorld) {
-    region = game.worldState.oldWorld;
-  } else {
-    region = game.worldState.newWorld;
-  }
+  final region = game.worldState.regionDataForIdOrThrow(ctx.regionId);
 
   final unitsById = unitsByIdFromRegion(region);
   final provinceOwnerAtBattleStart =
@@ -209,9 +204,9 @@ Game resolveBattleContext(
     ctx.provinceId,
   );
   if (row != null) {
-    final regionState = ctx.regionId == kRegionOldWorld
-        ? resolved.worldState.oldWorld
-        : resolved.worldState.newWorld;
+    final regionState = resolved.worldState.regionDataForIdOrThrow(
+      ctx.regionId,
+    );
     for (final p in regionState.provinces) {
       if (p.id == row.canonicalProvinceId) {
         ownerAfter = p.ownerId ?? '';

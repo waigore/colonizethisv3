@@ -1,4 +1,3 @@
-
 /// Supplementary GDD label for [roadLevel] on land tiles (issue #1537 / extraction-and-improvements § Transport Level).
 
 part of 'province_sea_zone_detail_overlay.dart';
@@ -50,10 +49,24 @@ List<String> roadRailTileDetailLinesForTests({required int? transportLevel}) {
   required int regionHeight,
   required String selectedTileKey,
 }) {
-  final parts = selectedTileKey.split('|');
-  if (parts.length < 4 || parts[0] != regionId) return null;
-  final x = int.tryParse(parts[parts.length - 2]);
-  final y = int.tryParse(parts[parts.length - 1]);
+  // Defensive parse: last two `|`-separated segments are x|y. Some legacy
+  // overlay call sites construct 5-part keys where the local id itself
+  // contains a `|`; preserve compatibility while still avoiding the
+  // List<String> allocation from `split('|')`.
+  final firstPipe = selectedTileKey.indexOf('|');
+  if (firstPipe <= 0) return null;
+  final keyRegion = selectedTileKey.substring(0, firstPipe);
+  if (keyRegion != regionId) return null;
+  final lastPipe = selectedTileKey.lastIndexOf('|');
+  if (lastPipe <= firstPipe || lastPipe + 1 >= selectedTileKey.length) {
+    return null;
+  }
+  final secondLastPipe = selectedTileKey.lastIndexOf('|', lastPipe - 1);
+  if (secondLastPipe <= firstPipe) return null;
+  final x = int.tryParse(
+    selectedTileKey.substring(secondLastPipe + 1, lastPipe),
+  );
+  final y = int.tryParse(selectedTileKey.substring(lastPipe + 1));
   if (x == null || y == null) {
     return null;
   }
@@ -78,14 +91,29 @@ Widget _buildTileResourceLabelRow({
   required String? resourceVisible,
   required String resourceLabel,
 }) {
+  // Dark-theme tokens (Refs #2865, SPEC § Dark-theme Tile section body
+  // tokens — live-data body rows). Pin the Resource row prefix, the
+  // visible-commodity label rendered by `ResourceLabelInline`, and the
+  // no-resource fallback Text to EditorialMonoclePalette.fg via the
+  // shared `_fgBodyStyle()` helper so the editorial-monocle dark theme
+  // owns these live-data rows alongside coordinates / terrain /
+  // civilian-units / Prospected / Improvement / road primary / sea-tile
+  // no-road. `ResourceLabelInline.labelStyle` is the new opt-in pin
+  // path so the Tile call site can fix the commodity-id label colour
+  // without changing the default fall-through used by the Economic
+  // section row layout (which keeps its existing token contract).
+  final bodyStyle = _fgBodyStyle();
   return Row(
     crossAxisAlignment: CrossAxisAlignment.center,
     children: [
-      Text(l10n.provinceOverlay_tileResourcePrefix),
+      Text(l10n.provinceOverlay_tileResourcePrefix, style: bodyStyle),
       if (resourceVisible != null)
-        ResourceLabelInline(commodityId: resourceVisible)
+        ResourceLabelInline(
+          commodityId: resourceVisible,
+          labelStyle: bodyStyle,
+        )
       else
-        Text(resourceLabel),
+        Text(resourceLabel, style: bodyStyle),
     ],
   );
 }
@@ -103,8 +131,19 @@ Widget _buildTileImprovementLabel({
     rawResourceId: rawResourceId,
     visibleResourceId: visibleResourceId,
   );
-  return Text(l10n.provinceOverlay_tileImprovement(improvementLine));
+  return Text(
+    l10n.provinceOverlay_tileImprovement(improvementLine),
+    style: _fgBodyStyle(),
+  );
 }
+
+/// Disabled-state opacity for the Tile section inline shortcut icons
+/// (`Explore`, `Prospect`, `Build improvement`). Pinned at `0.65` so the
+/// SPEC § Style / implementation — Dark-theme Tile section body tokens
+/// contract resolves the disabled color deterministically from
+/// [EditorialMonoclePalette.muted].
+@visibleForTesting
+const double kProvinceOverlayTileInlineActionDisabledAlpha = 0.65;
 
 List<Widget> _buildTileRoadLabelWidgets({
   required BuildContext context,
@@ -112,15 +151,15 @@ List<Widget> _buildTileRoadLabelWidgets({
   required int? roadLevel,
 }) {
   if (roadLevel == null) {
-    return [Text(l10n.provinceOverlay_tileRoadNone)];
+    return [Text(l10n.provinceOverlay_tileRoadNone, style: _fgBodyStyle())];
   }
   final roadCaptionStyle = TextStyle(
     fontSize: 11,
     height: 1.25,
-    color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.72),
+    color: EditorialMonoclePalette.muted,
   );
   return [
-    Text(roadRailTransportLevelPrimaryLine(roadLevel)),
+    Text(roadRailTransportLevelPrimaryLine(roadLevel), style: _fgBodyStyle()),
     Text(roadRailSupplementaryLabel(roadLevel), style: roadCaptionStyle),
     if (roadLevel == 1)
       Text(kRoadRailPrimitiveVersusRailGloss, style: roadCaptionStyle),
@@ -139,10 +178,10 @@ class _OverlayContent {
 }
 
 String? _economicTerrainTitleForTile(RegionMapViewData region, String tk) {
-  final parts = tk.split('|');
-  if (parts.length < 4 || parts[0] != region.regionId) return null;
-  final x = int.tryParse(parts[2]) ?? -1;
-  final y = int.tryParse(parts[3]) ?? -1;
+  final parsed = tryParseTileKey(tk);
+  if (parsed == null || parsed.regionId != region.regionId) return null;
+  final x = parsed.x;
+  final y = parsed.y;
   if (x < 0 || y < 0 || x >= region.width || y >= region.height) {
     return null;
   }
@@ -262,14 +301,23 @@ Widget _buildPoliticalSection({
   required String name,
   required String ownerName,
 }) {
+  // Dark-theme tokens (Refs #2865, SPEC § Dark-theme Political section body
+  // tokens). Both body rows declare TextStyle.color explicitly via the
+  // shared `_fgBodyStyle()` helper so the editorial-monocle dark theme owns
+  // this surface and the section stops inheriting DefaultTextStyle /
+  // Material bodyMedium colours. The helper is shared with the Tile
+  // live-data rows (coordinates / terrain / civilian units) and the
+  // sea-zone Political display-name row so every live-data body row stays
+  // in sync with one token source.
+  final bodyStyle = _fgBodyStyle();
   return _buildSection(
     l10n.provinceOverlay_sectionPolitical,
     Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
       children: [
-        Text(l10n.provinceOverlay_name(name)),
-        Text(l10n.provinceOverlay_owner(ownerName)),
+        Text(l10n.provinceOverlay_name(name), style: bodyStyle),
+        Text(l10n.provinceOverlay_owner(ownerName), style: bodyStyle),
       ],
     ),
   );
@@ -320,13 +368,13 @@ Widget _buildTileSection({
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
         children: [
-          Text(l10n.provinceOverlay_tileCoordinatesUnknown),
-          Text(l10n.provinceOverlay_tileTerrainUnknown),
-          Text(l10n.provinceOverlay_tileResourceUnknown),
-          Text(l10n.provinceOverlay_tileProspectedUnknown),
-          Text(l10n.provinceOverlay_tileImprovementUnknown),
-          Text(l10n.provinceOverlay_tileRoadUnknown),
-          Text(l10n.provinceOverlay_tileCivilianUnitsUnknown),
+          _obfuscatedBodyText(l10n.provinceOverlay_tileCoordinatesUnknown),
+          _obfuscatedBodyText(l10n.provinceOverlay_tileTerrainUnknown),
+          _obfuscatedBodyText(l10n.provinceOverlay_tileResourceUnknown),
+          _obfuscatedBodyText(l10n.provinceOverlay_tileProspectedUnknown),
+          _obfuscatedBodyText(l10n.provinceOverlay_tileImprovementUnknown),
+          _obfuscatedBodyText(l10n.provinceOverlay_tileRoadUnknown),
+          _obfuscatedBodyText(l10n.provinceOverlay_tileCivilianUnitsUnknown),
         ],
       ),
     );
@@ -356,33 +404,30 @@ Widget _buildTileSection({
   final prospectedRow = Row(
     children: [
       Expanded(
-        child: Text(l10n.provinceOverlay_tileProspected(prospectedLabel)),
+        child: Text(
+          l10n.provinceOverlay_tileProspected(prospectedLabel),
+          style: _fgBodyStyle(),
+        ),
       ),
       if (showExploreActionIcon)
-        IconButton(
+        CtIconAction(
           tooltip: l10n.provinceOverlay_tileExploreWithExplorerTooltip,
           onPressed: exploreActionEnabled ? onExploreWithExplorerTap : null,
-          icon: Icon(
-            Icons.explore,
-            color: exploreActionEnabled
-                ? null
-                : Theme.of(context).disabledColor.withValues(alpha: 0.65),
+          icon: Icons.explore,
+          enabled: exploreActionEnabled,
+          disabledIconColor: EditorialMonoclePalette.muted.withValues(
+            alpha: kProvinceOverlayTileInlineActionDisabledAlpha,
           ),
-          iconSize: 18,
-          visualDensity: VisualDensity.compact,
         ),
       if (showProspectActionIcon)
-        IconButton(
+        CtIconAction(
           tooltip: l10n.provinceOverlay_tileProspectWithExplorerTooltip,
           onPressed: prospectActionEnabled ? onProspectWithExplorerTap : null,
-          icon: Icon(
-            Icons.travel_explore,
-            color: prospectActionEnabled
-                ? null
-                : Theme.of(context).disabledColor.withValues(alpha: 0.65),
+          icon: Icons.travel_explore,
+          enabled: prospectActionEnabled,
+          disabledIconColor: EditorialMonoclePalette.muted.withValues(
+            alpha: kProvinceOverlayTileInlineActionDisabledAlpha,
           ),
-          iconSize: 18,
-          visualDensity: VisualDensity.compact,
         ),
     ],
   );
@@ -398,31 +443,41 @@ Widget _buildTileSection({
         ),
       ),
       if (showBuildImprovementActionIcon)
-        IconButton(
+        CtIconAction(
           tooltip: l10n.provinceOverlay_tileBuildImprovementTooltip,
           onPressed: buildImprovementActionEnabled
               ? onBuildImprovementTap
               : null,
-          icon: Icon(
-            Icons.handyman,
-            color: buildImprovementActionEnabled
-                ? null
-                : Theme.of(context).disabledColor.withValues(alpha: 0.65),
+          icon: Icons.handyman,
+          enabled: buildImprovementActionEnabled,
+          disabledIconColor: EditorialMonoclePalette.muted.withValues(
+            alpha: kProvinceOverlayTileInlineActionDisabledAlpha,
           ),
-          iconSize: 18,
-          visualDensity: VisualDensity.compact,
         ),
     ],
   );
 
+  // Dark-theme tokens (Refs #2865, SPEC § Dark-theme Tile section body
+  // tokens — live-data body rows). Every Tile row that renders exact
+  // world-state values resolves its TextStyle.color to
+  // EditorialMonoclePalette.fg via the shared `_fgBodyStyle()` helper so
+  // the editorial-monocle dark theme owns the Tile live-data surface
+  // end-to-end. Rows in scope: coordinates, terrain, civilian-units count
+  // (below), plus the Prospected, Improvement, road / railroad primary
+  // numeric line, and sea-tile no-road row (pinned in `prospectedRow`,
+  // `_buildTileImprovementLabel`, and `_buildTileRoadLabelWidgets`). The
+  // helper centralises the canonical fg token shared with Political,
+  // Tile, Economic improved-row, Military owner sub-header, Civilian
+  // own-unit, and Naval fleet-summary live-data rows.
+  final bodyStyle = _fgBodyStyle();
   return _buildSection(
     l10n.provinceOverlay_sectionTile,
     Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
       children: [
-        Text(l10n.provinceOverlay_tileCoordinates(x, y)),
-        Text(l10n.provinceOverlay_tileTerrain(terrainStr)),
+        Text(l10n.provinceOverlay_tileCoordinates(x, y), style: bodyStyle),
+        Text(l10n.provinceOverlay_tileTerrain(terrainStr), style: bodyStyle),
         _buildTileResourceLabelRow(
           context: context,
           l10n: l10n,
@@ -436,7 +491,10 @@ Widget _buildTileSection({
           l10n: l10n,
           roadLevel: roadLevel,
         ),
-        Text(l10n.provinceOverlay_tileCivilianUnits(civilianCount)),
+        Text(
+          l10n.provinceOverlay_tileCivilianUnits(civilianCount),
+          style: bodyStyle,
+        ),
       ],
     ),
   );
@@ -452,6 +510,16 @@ Province? _findProvince(Game game, String provinceId) {
   return null;
 }
 
+// Section header band shared by every province / sea-zone tab body and the
+// wide-layout `sections` column. Renders the canonical CtSectionLabel
+// (Refs #2859 R9) so the title inherits the dark editorial-monocle
+// small-caps + `--accent-dim` underline contract; see
+// SPEC/ui/province-sea-zone-detail-overlay.md § Dark-theme section labels.
+//
+// When [title] is empty (e.g. the narrow-layout obfuscated tab body that
+// already has its label rendered by `CtTabStrip`), the header band is
+// omitted entirely so the obfuscated body does not paint an extra
+// underline beneath the tab strip.
 Widget _buildSection(String title, Widget child) {
   return Padding(
     padding: const EdgeInsets.only(bottom: 12),
@@ -459,8 +527,10 @@ Widget _buildSection(String title, Widget child) {
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
       children: [
-        Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
-        const SizedBox(height: 4),
+        if (title.isNotEmpty) ...[
+          CtSectionLabel(title),
+          const SizedBox(height: 4),
+        ],
         child,
       ],
     ),
@@ -474,6 +544,6 @@ class _ObfuscatedSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return _buildSection('', Text(l10n.provinceOverlay_unknown));
+    return _buildSection('', _obfuscatedBodyText(l10n.provinceOverlay_unknown));
   }
 }

@@ -1,0 +1,948 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ColonizeThis — Main Menu</title>
+<style>
+/* ── Direction: editorial-monocle + nautical / brass / mahogany ── */
+:root {
+  --bg:        oklch(16% 0.018 50);
+  --bg-deep:   oklch(12% 0.015 45);
+  --surface:   oklch(24% 0.015 45);
+  --surface-lite: oklch(30% 0.016 52);
+  --fg:        oklch(88% 0.015 80);
+  --muted:     oklch(65% 0.025 70);
+  --border:    oklch(40% 0.02 55);
+  --accent:    oklch(72% 0.14 85);
+  --accent-dim: oklch(60% 0.12 82);
+  --accent-bright: oklch(82% 0.13 90);
+
+  --font-display: 'Iowan Old Style', 'Cinzel', 'Charter', Georgia, serif;
+  --font-body:    -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  --font-mono:    'SF Mono', ui-monospace, Menlo, monospace;
+
+  --menu-max: 400px;
+}
+
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+html, body {
+  min-height: 100vh; min-height: 100dvh;
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--font-body);
+  overflow-x: hidden;
+}
+
+html { overflow-y: auto; scroll-behavior: smooth; }
+
+/* ── Background layer ── */
+.background {
+  position: fixed; inset: 0; z-index: 0;
+  background:
+    radial-gradient(ellipse at 20% 80%, oklch(28% 0.02 40 / 0.25) 0%, transparent 60%),
+    radial-gradient(ellipse at 85% 15%, oklch(25% 0.015 55 / 0.2) 0%, transparent 55%),
+    radial-gradient(ellipse at 50% 50%, oklch(14% 0.012 48 / 0.6) 0%, transparent 70%),
+    var(--bg);
+  overflow: hidden;
+}
+
+/* Nautical compass rose — decorative */
+.background::before {
+  content: '';
+  position: absolute;
+  right: 5vw; bottom: 5vw;
+  width: min(380px, 40vw); height: min(380px, 40vw);
+  background:
+    conic-gradient(
+      from 22.5deg,
+      oklch(40% 0.04 55 / 0.18) 0deg 45deg,
+      transparent 45deg 90deg,
+      oklch(40% 0.04 55 / 0.18) 90deg 135deg,
+      transparent 135deg 180deg,
+      oklch(40% 0.04 55 / 0.18) 180deg 225deg,
+      transparent 225deg 270deg,
+      oklch(40% 0.04 55 / 0.18) 270deg 315deg,
+      transparent 315deg 360deg
+    );
+  border-radius: 50%;
+  border: 1px solid oklch(40% 0.04 55 / 0.25);
+  opacity: 0.35;
+  transform: rotate(-12deg);
+  pointer-events: none;
+}
+
+/* Subtle map grid lines */
+.background::after {
+  content: '';
+  position: absolute; inset: 0;
+  background-image:
+    linear-gradient(oklch(40% 0.02 55 / 0.06) 1px, transparent 1px),
+    linear-gradient(90deg, oklch(40% 0.02 55 / 0.06) 1px, transparent 1px);
+  background-size: 80px 80px;
+  mask-image: radial-gradient(ellipse at 50% 50%, black 30%, transparent 80%);
+  pointer-events: none;
+}
+
+/* ── Collage SVG ── */
+.collage-svg {
+  position: absolute; inset: 0;
+  width: 100%; height: 100%;
+  color: var(--accent);
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0.8;
+}
+
+/* ── Main layout ── */
+.main {
+  position: relative; z-index: 1;
+  display: flex; align-items: center; justify-content: center;
+  min-height: 100vh; min-height: 100svh;
+  padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+}
+
+.menu-container {
+  width: 100%; max-width: var(--menu-max);
+  padding: clamp(16px, 3vw, 48px) clamp(12px, 2vw, 24px);
+  display: flex; flex-direction: column; align-items: center;
+}
+
+/* ── Logo region ── */
+.logo-region {
+  text-align: center;
+  margin-bottom: clamp(24px, 5vh, 48px);
+  position: relative;
+}
+
+.title {
+  font-family: var(--font-display);
+  font-size: clamp(28px, 5vw, 44px);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: var(--accent);
+  text-align: center;
+  line-height: 1.15;
+  text-shadow: 0 2px 12px oklch(65% 0.12 80 / 0.3);
+  user-select: none;
+}
+  /* Ornamental fleur-de-lis flanking the title */
+.title-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(8px, 2vw, 16px);
+}
+.title-flank {
+  width: clamp(18px, 3vw, 28px);
+  height: clamp(22px, 3.5vw, 34px);
+  color: var(--accent-dim);
+  opacity: 0.6;
+  flex-shrink: 0;
+  user-select: none;
+}
+
+.title-small {
+  display: block;
+  font-family: var(--font-display);
+  font-size: clamp(13px, 2vw, 16px);
+  font-weight: 400;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: clamp(6px, 1.5vh, 12px);
+}
+
+.title-emblem {
+  display: block;
+  width: clamp(32px, 6vw, 48px);
+  height: clamp(32px, 6vw, 48px);
+  margin: 0 auto clamp(12px, 2vh, 20px);
+  position: relative;
+  color: var(--accent);
+}
+
+/* Ornate 8-point compass rose */
+.compass-rose {
+  display: block;
+  width: 100%; height: 100%;
+  position: relative;
+}
+.compass-rose::before,
+.compass-rose::after {
+  content: '';
+  position: absolute;
+  background: var(--accent);
+  left: 50%; top: 50%;
+  transform: translate(-50%, -50%);
+}
+.compass-rose::before {
+  width: 2px; height: 100%;
+  opacity: 0.8;
+}
+.compass-rose::after {
+  width: 100%; height: 2px;
+  opacity: 0.8;
+}
+/* Diagonal arms */
+.compass-rose .arm {
+  position: absolute;
+  left: 50%; top: 50%;
+  width: 1.5px; height: 60%;
+  background: var(--accent);
+  opacity: 0.45;
+  transform-origin: center center;
+}
+.compass-rose .arm.arm-ne { transform: translate(-50%, -50%) rotate(45deg); }
+.compass-rose .arm.arm-nw { transform: translate(-50%, -50%) rotate(-45deg); }
+/* Center medallion */
+.compass-rose .medallion {
+  position: absolute;
+  left: 50%; top: 50%;
+  transform: translate(-50%, -50%);
+  width: clamp(8px, 2vw, 12px);
+  height: clamp(8px, 2vw, 12px);
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 8px oklch(75% 0.12 85 / 0.5);
+  z-index: 1;
+}
+.compass-rose .medallion::after {
+  content: '';
+  position: absolute;
+  left: 50%; top: 50%;
+  transform: translate(-50%, -50%);
+  width: 4px; height: 4px;
+  border-radius: 50%;
+  background: var(--bg-deep);
+}
+/* Outer ring */
+.compass-rose .ring {
+  position: absolute;
+  left: 50%; top: 50%;
+  transform: translate(-50%, -50%);
+  width: clamp(24px, 5vw, 36px);
+  height: clamp(24px, 5vw, 36px);
+  border-radius: 50%;
+  border: 1px solid var(--accent);
+  opacity: 0.35;
+}
+
+.subtitle {
+  font-family: var(--font-display);
+  font-size: clamp(13px, 2vw, 15px);
+  font-style: italic;
+  color: var(--muted);
+  margin-bottom: clamp(8px, 2vh, 16px);
+  letter-spacing: 0.03em;
+}
+
+/* ── Ornate brass divider ── */
+.brass-divider {
+  width: clamp(120px, 18vw, 180px);
+  height: 2px;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    var(--accent-dim) 15%,
+    var(--accent) 50%,
+    var(--accent-dim) 85%,
+    transparent 100%
+  );
+  margin: clamp(10px, 2vh, 18px) auto clamp(20px, 3vh, 32px);
+  position: relative;
+}
+/* Diamond centerpiece */
+.brass-divider::before {
+  content: '';
+  position: absolute;
+  left: 50%; top: 50%;
+  transform: translate(-50%, -50%) rotate(45deg);
+  width: 7px; height: 7px;
+  background: var(--accent);
+  border: 1px solid var(--accent-bright);
+  box-shadow: 0 0 6px oklch(75% 0.12 85 / 0.5);
+}
+/* Ornamental dots at ends */
+.brass-divider::after {
+  content: '';
+  position: absolute;
+  left: 50%; top: 50%;
+  transform: translate(-50%, -50%);
+  width: clamp(60px, 10vw, 100px);
+  height: 0;
+  border-top: 1px dotted var(--accent-dim);
+  opacity: 0.4;
+}
+
+/* ── Buttons region ── */
+.buttons-region {
+  width: 100%;
+  display: flex; flex-direction: column;
+  gap: clamp(8px, 1.5vh, 12px);
+  position: relative;
+}
+/* Ornamental scroll brackets flanking the button panel */
+.buttons-region::before,
+.buttons-region::after {
+  content: '';
+  position: absolute;
+  top: 10%; bottom: 10%;
+  width: 4px;
+  background:
+    linear-gradient(180deg,
+      transparent 0%,
+      var(--accent-dim) 8%,
+      var(--accent) 50%,
+      var(--accent-dim) 92%,
+      transparent 100%
+    );
+  opacity: 0.45;
+  border-radius: 2px;
+}
+.buttons-region::before { left: -10px; }
+.buttons-region::after  { right: -10px; }
+/* Tiny ornamental dots along the brackets */
+.buttons-region::before {
+  box-shadow:
+    -2px 6px 0 -1px var(--accent-dim),
+    -2px -6px 0 -1px var(--accent-dim);
+}
+.buttons-region::after {
+  box-shadow:
+    2px 6px 0 -1px var(--accent-dim),
+    2px -6px 0 -1px var(--accent-dim);
+}
+
+/* Wood-panel button */
+.menu-btn {
+  width: 100%;
+  padding: clamp(12px, 2.5vh, 16px) clamp(16px, 3vw, 24px);
+  border: none;
+  background:
+    linear-gradient(
+      180deg,
+      var(--surface-lite) 0%,
+      var(--surface) 40%,
+      var(--bg-deep) 100%
+    );
+  color: var(--fg);
+  font-family: var(--font-display);
+  font-size: clamp(15px, 2.2vw, 18px);
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-align: center;
+  cursor: pointer;
+  position: relative;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  transition: color 0.25s, background 0.25s, text-shadow 0.25s;
+  border-top: 1.5px solid var(--accent-dim);
+  border-bottom: 1.5px solid var(--accent-dim);
+  box-shadow:
+    inset 0 1px 0 oklch(60% 0.08 80 / 0.12),
+    inset 0 -1px 0 oklch(8% 0.01 40 / 0.4);
+  /* Engraved/embossed text */
+  text-shadow:
+    0 1px 0 oklch(8% 0.01 40 / 0.5),
+    0 -1px 0 oklch(60% 0.08 80 / 0.08);
+  min-height: 48px;
+}
+
+.menu-btn::before,
+.menu-btn::after {
+  content: '';
+  position: absolute;
+  top: 0; bottom: 0;
+  width: 2px;
+  background: var(--accent-dim);
+  opacity: 0.6;
+}
+.menu-btn::before { left: 0; }
+.menu-btn::after  { right: 0; }
+
+/* Ornate corner brackets — colonial brass L-brackets */
+.menu-btn .brass-corner {
+  position: absolute;
+  width: 10px; height: 10px;
+  pointer-events: none;
+  opacity: 0.75;
+  transition: opacity 0.25s, border-color 0.25s;
+}
+.menu-btn .brass-corner.tl {
+  top: 3px; left: 3px;
+  border-top: 1.5px solid var(--accent);
+  border-left: 1.5px solid var(--accent);
+}
+.menu-btn .brass-corner.tr {
+  top: 3px; right: 3px;
+  border-top: 1.5px solid var(--accent);
+  border-right: 1.5px solid var(--accent);
+}
+.menu-btn .brass-corner.bl {
+  bottom: 3px; left: 3px;
+  border-bottom: 1.5px solid var(--accent);
+  border-left: 1.5px solid var(--accent);
+}
+.menu-btn .brass-corner.br {
+  bottom: 3px; right: 3px;
+  border-bottom: 1.5px solid var(--accent);
+  border-right: 1.5px solid var(--accent);
+}
+
+/* Decorative tick marks on the bracket arms */
+.menu-btn .brass-corner.tl::after {
+  content: '';
+  position: absolute;
+  top: 4px; left: -1.5px;
+  width: 3px; height: 1px;
+  background: var(--accent);
+}
+.menu-btn .brass-corner.tr::after {
+  content: '';
+  position: absolute;
+  top: 4px; right: -1.5px;
+  width: 3px; height: 1px;
+  background: var(--accent);
+}
+.menu-btn .brass-corner.bl::after {
+  content: '';
+  position: absolute;
+  bottom: 4px; left: -1.5px;
+  width: 3px; height: 1px;
+  background: var(--accent);
+}
+.menu-btn .brass-corner.br::after {
+  content: '';
+  position: absolute;
+  bottom: 4px; right: -1.5px;
+  width: 3px; height: 1px;
+  background: var(--accent);
+}
+
+.menu-btn:hover .brass-corner {
+  opacity: 1;
+}
+.menu-btn:hover .brass-corner.tl {
+  border-color: var(--accent-bright);
+}
+.menu-btn:hover .brass-corner.tr {
+  border-color: var(--accent-bright);
+}
+.menu-btn:hover .brass-corner.bl {
+  border-color: var(--accent-bright);
+}
+.menu-btn:hover .brass-corner.br {
+  border-color: var(--accent-bright);
+}
+
+.menu-btn.disabled .brass-corner { opacity: 0.25; }
+
+.menu-btn:hover {
+  background:
+    linear-gradient(
+      180deg,
+      oklch(35% 0.018 55) 0%,
+      var(--surface-lite) 40%,
+      var(--surface) 100%
+    );
+  color: var(--accent-bright);
+  text-shadow:
+    0 1px 0 oklch(8% 0.01 40 / 0.5),
+    0 -1px 0 oklch(60% 0.08 80 / 0.12),
+    0 0 12px oklch(75% 0.12 85 / 0.3);
+  border-top: 1.5px solid var(--accent);
+  border-bottom: 1.5px solid var(--accent);
+  box-shadow:
+    inset 0 1px 0 oklch(60% 0.08 80 / 0.2),
+    inset 0 -1px 0 oklch(8% 0.01 40 / 0.4),
+    0 0 18px oklch(65% 0.10 80 / 0.15);
+  transition: color 0.15s, background 0.15s, border-color 0.2s, box-shadow 0.2s, text-shadow 0.2s;
+}
+
+.menu-btn:active {
+  background:
+    linear-gradient(
+      180deg,
+      var(--bg-deep) 0%,
+      var(--surface) 40%,
+      var(--surface-lite) 100%
+    );
+}
+
+.menu-btn:focus-visible {
+  outline: 1.5px solid var(--accent);
+  outline-offset: -4px;
+}
+
+.menu-btn.disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  pointer-events: auto;
+}
+.menu-btn.disabled .brass-corner {
+  opacity: 0.25;
+}
+
+/* ── Load Game disabled tooltip ── */
+.tooltip-wrapper {
+  position: relative;
+  width: 100%;
+}
+.tooltip-text {
+  position: absolute;
+  bottom: calc(100% + 6px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--bg-deep);
+  color: var(--muted);
+  font-family: var(--font-body);
+  font-size: 11px;
+  font-style: italic;
+  padding: 5px 12px;
+  border: 1px solid var(--border);
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.2s;
+  z-index: 2;
+}
+.tooltip-wrapper:focus-within .tooltip-text,
+.tooltip-wrapper:hover .tooltip-text {
+  opacity: 1;
+}
+
+/* ── Footer region ── */
+.footer-region {
+  margin-top: clamp(20px, 4vh, 36px);
+  display: flex; flex-direction: column; align-items: center;
+  gap: clamp(10px, 2vh, 16px);
+  width: 100%;
+}
+
+.version {
+  font-family: var(--font-mono);
+  font-size: clamp(10px, 1.5vw, 12px);
+  color: var(--muted);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  opacity: 0.7;
+}
+
+.quit-btn {
+  padding: clamp(8px, 1.5vh, 12px) clamp(16px, 3vw, 24px);
+  border: none;
+  background:
+    linear-gradient(
+      180deg,
+      var(--surface) 0%,
+      var(--bg-deep) 100%
+    );
+  color: var(--muted);
+  font-family: var(--font-display);
+  font-size: clamp(12px, 1.8vw, 14px);
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-align: center;
+  cursor: pointer;
+  min-width: clamp(100px, 30%, 160px);
+  min-height: 44px;
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  position: relative;
+  transition: color 0.2s, background 0.2s;
+  -webkit-tap-highlight-color: transparent;
+}
+.quit-btn::before,
+.quit-btn::after {
+  content: '';
+  position: absolute;
+  top: 0; bottom: 0;
+  width: 1px;
+  background: var(--border);
+}
+.quit-btn::before { left: 0; }
+.quit-btn::after  { right: 0; }
+.quit-btn:hover {
+  color: var(--accent-bright);
+  background:
+    linear-gradient(
+      180deg,
+      var(--surface-lite) 0%,
+      var(--surface) 100%
+    );
+}
+.quit-btn:focus-visible {
+  outline: 1.5px solid var(--accent);
+  outline-offset: -4px;
+}
+
+/* ── State toggle (demo control) ── */
+.state-toggle {
+  position: fixed;
+  bottom: 16px;
+  right: 16px;
+  z-index: 10;
+  display: flex; gap: 6px;
+}
+.state-toggle button {
+  padding: 6px 12px;
+  border: 1px solid var(--border);
+  background: var(--bg-deep);
+  color: var(--muted);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s;
+}
+.state-toggle button:hover,
+.state-toggle button.active {
+  color: var(--accent);
+  border-color: var(--accent-dim);
+}
+
+/* ── Responsive ── */
+@media (max-width: 430px) {
+  .menu-container {
+    padding: 24px 12px;
+  }
+  .menu-btn {
+    letter-spacing: 0.04em;
+  }
+}
+
+@media (min-width: 768px) {
+  .menu-container {
+    padding: 48px 24px;
+  }
+  .title {
+    letter-spacing: 0.08em;
+  }
+}
+
+@media (min-width: 1440px) {
+  :root { --menu-max: 420px; }
+  .title { font-size: 48px; }
+  .menu-btn { font-size: 18px; }
+}
+
+@media (min-width: 1920px) {
+  :root { --menu-max: 440px; }
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  * { transition-duration: 0.01ms !important; }
+}
+</style>
+</head>
+<body>
+
+<div class="background">
+  <svg class="collage-svg" viewBox="0 0 1920 1080" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg">
+
+    <!-- Dashed trade route lines -->
+    <g opacity="0.40">
+      <path d="M240,200 Q400,280 560,380" fill="none" stroke="currentColor" stroke-width="1.2" stroke-dasharray="8 14"/>
+      <path d="M560,380 Q620,480 500,620" fill="none" stroke="currentColor" stroke-width="1.2" stroke-dasharray="8 14"/>
+      <path d="M1560,160 Q1480,300 1420,440" fill="none" stroke="currentColor" stroke-width="1.2" stroke-dasharray="8 14"/>
+      <path d="M1420,440 Q1500,580 1600,680" fill="none" stroke="currentColor" stroke-width="1.2" stroke-dasharray="8 14"/>
+      <path d="M300,780 Q380,680 500,600" fill="none" stroke="currentColor" stroke-width="1" stroke-dasharray="6 12"/>
+    </g>
+
+    <!-- Navigation stars / waypoints -->
+    <g opacity="0.45">
+      <path d="M555,372 L565,382 L555,392 L545,382 Z" fill="currentColor"/>
+      <circle cx="560" cy="380" r="14" fill="none" stroke="currentColor" stroke-width="0.8"/>
+      <path d="M495,612 L505,622 L495,632 L485,622 Z" fill="currentColor"/>
+      <circle cx="500" cy="620" r="11" fill="none" stroke="currentColor" stroke-width="0.8"/>
+      <path d="M1415,432 L1425,442 L1415,452 L1405,442 Z" fill="currentColor"/>
+      <circle cx="1420" cy="440" r="13" fill="none" stroke="currentColor" stroke-width="0.8"/>
+      <path d="M1555,152 L1565,162 L1555,172 L1545,162 Z" fill="currentColor"/>
+      <circle cx="1560" cy="160" r="10" fill="none" stroke="currentColor" stroke-width="0.8"/>
+    </g>
+
+    <!-- Large telescope — top left -->
+    <g transform="translate(140, 120) rotate(-14)" opacity="0.55">
+      <polygon points="0,14 190,24 190,28 0,18" fill="currentColor"/>
+      <polygon points="185,22 220,20 220,32 185,30" fill="currentColor"/>
+      <rect x="50" y="16" width="7" height="18" rx="2.5" fill="currentColor" opacity="0.6"/>
+      <rect x="120" y="19" width="7" height="15" rx="2.5" fill="currentColor" opacity="0.6"/>
+      <rect x="80" y="27" width="12" height="32" rx="3" fill="currentColor" opacity="0.5"/>
+    </g>
+
+    <!-- Spyglass — top left smaller -->
+    <g transform="translate(190, 310) rotate(-6)" opacity="0.50">
+      <polygon points="0,6 95,12 95,14 0,8" fill="currentColor"/>
+      <polygon points="91,11 110,10 110,16 91,15" fill="currentColor"/>
+      <rect x="30" y="8" width="3.5" height="9" rx="1.5" fill="currentColor" opacity="0.7"/>
+      <rect x="60" y="10" width="3.5" height="7" rx="1.5" fill="currentColor" opacity="0.7"/>
+    </g>
+
+    <!-- Crossed muskets — top right -->
+    <g transform="translate(1680, 70) rotate(32)" opacity="0.55">
+      <rect x="0" y="9" width="195" height="6" rx="3" fill="currentColor"/>
+      <polygon points="190,6 235,0 268,14 235,18 195,12" fill="currentColor" opacity="0.8"/>
+      <polygon points="0,7 -12,12 0,17" fill="currentColor" opacity="0.8"/>
+      <rect x="140" y="11" width="22" height="8" rx="3" fill="currentColor" opacity="0.6"/>
+      <rect x="48" y="10" width="70" height="5" rx="2.5" fill="currentColor" opacity="0.5"/>
+    </g>
+    <g transform="translate(1660, 130) rotate(-36)" opacity="0.55">
+      <rect x="0" y="9" width="195" height="6" rx="3" fill="currentColor"/>
+      <polygon points="190,6 235,0 268,14 235,18 195,12" fill="currentColor" opacity="0.8"/>
+      <polygon points="0,7 -12,12 0,17" fill="currentColor" opacity="0.8"/>
+      <rect x="140" y="11" width="22" height="8" rx="3" fill="currentColor" opacity="0.6"/>
+      <rect x="48" y="10" width="70" height="5" rx="2.5" fill="currentColor" opacity="0.5"/>
+    </g>
+
+    <!-- Powder horn — top right -->
+    <g transform="translate(1630, 360) rotate(-40)" opacity="0.50">
+      <path d="M0,15 Q20,0 60,10 Q70,20 40,30 Q10,30 0,15" fill="currentColor"/>
+      <rect x="-2" y="10" width="8" height="4" rx="2" fill="currentColor" opacity="0.8"/>
+    </g>
+
+    <!-- Sextant — mid left -->
+    <g transform="translate(80, 540)" opacity="0.55">
+      <path d="M0,0 A100,100 0 0,1 95,52" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round"/>
+      <line x1="0" y1="0" x2="70" y2="14" stroke="currentColor" stroke-width="2.2"/>
+      <rect x="-4" y="-8" width="12" height="16" rx="2.5" fill="currentColor" opacity="0.6" transform="rotate(-20, 2, 0)"/>
+      <rect x="-6" y="10" width="9" height="22" rx="3.5" fill="currentColor" opacity="0.6"/>
+    </g>
+
+    <!-- Hourglass — mid left lower -->
+    <g transform="translate(130, 710)" opacity="0.55">
+      <rect x="18" y="0" width="34" height="6" rx="3" fill="currentColor" opacity="0.8"/>
+      <rect x="18" y="64" width="34" height="6" rx="3" fill="currentColor" opacity="0.8"/>
+      <line x1="0" y1="3" x2="0" y2="67" stroke="currentColor" stroke-width="2" opacity="0.6"/>
+      <line x1="70" y1="3" x2="70" y2="67" stroke="currentColor" stroke-width="2" opacity="0.6"/>
+      <polygon points="21,6 12,33 58,33 49,6" fill="currentColor" opacity="0.5"/>
+      <polygon points="21,64 12,37 58,37 49,64" fill="currentColor" opacity="0.5"/>
+      <line x1="18" y1="35" x2="52" y2="35" stroke="currentColor" stroke-width="1.2" opacity="0.5"/>
+      <rect x="28" y="32" width="14" height="6" rx="2" fill="currentColor" opacity="0.6"/>
+    </g>
+
+    <!-- Anchor — bottom left -->
+    <g transform="translate(60, 860)" opacity="0.55">
+      <circle cx="58" cy="10" r="11" fill="none" stroke="currentColor" stroke-width="3.5"/>
+      <rect x="53" y="21" width="10" height="78" rx="4" fill="currentColor"/>
+      <rect x="26" y="32" width="64" height="6" rx="3" fill="currentColor"/>
+      <path d="M53,66 Q20,72 10,90 Q22,78 53,72" fill="none" stroke="currentColor" stroke-width="6" stroke-linecap="round"/>
+      <path d="M63,66 Q96,72 106,90 Q94,78 63,72" fill="none" stroke="currentColor" stroke-width="6" stroke-linecap="round"/>
+      <polygon points="6,86 14,86 10,102" fill="currentColor" opacity="0.9"/>
+      <polygon points="102,86 110,86 106,102" fill="currentColor" opacity="0.9"/>
+    </g>
+
+    <!-- Infantry soldier silhouette — mid right -->
+    <g transform="translate(1750, 230)" opacity="0.55">
+      <polygon points="65,10 85,48 45,48" fill="currentColor"/>
+      <rect x="73" y="5" width="28" height="12" rx="5" fill="currentColor"/>
+      <circle cx="85" cy="56" r="10" fill="currentColor"/>
+      <rect x="70" y="65" width="30" height="48" rx="6" fill="currentColor"/>
+      <polygon points="70,100 54,140 80,112" fill="currentColor"/>
+      <polygon points="100,100 116,140 90,112" fill="currentColor"/>
+      <rect x="73" y="110" width="10" height="44" rx="5" fill="currentColor"/>
+      <rect x="87" y="110" width="10" height="44" rx="5" fill="currentColor"/>
+      <line x1="42" y1="52" x2="130" y2="130" stroke="currentColor" stroke-width="4" stroke-linecap="round"/>
+      <polygon points="42,52 34,46 38,40" fill="currentColor"/>
+      <polygon points="130,130 142,136 138,144" fill="currentColor"/>
+    </g>
+
+    <!-- Ship's wheel — mid right -->
+    <g transform="translate(1660, 520)" opacity="0.55">
+      <circle cx="65" cy="65" r="11" fill="currentColor" opacity="0.9"/>
+      <circle cx="65" cy="65" r="46" fill="none" stroke="currentColor" stroke-width="4.5" opacity="0.7"/>
+      <circle cx="65" cy="65" r="60" fill="none" stroke="currentColor" stroke-width="3" opacity="0.5"/>
+      <line x1="65" y1="8" x2="65" y2="56" stroke="currentColor" stroke-width="3.5"/>
+      <line x1="65" y1="74" x2="65" y2="122" stroke="currentColor" stroke-width="3.5"/>
+      <line x1="8" y1="65" x2="56" y2="65" stroke="currentColor" stroke-width="3.5"/>
+      <line x1="74" y1="65" x2="122" y2="65" stroke="currentColor" stroke-width="3.5"/>
+      <line x1="25" y1="25" x2="52" y2="52" stroke="currentColor" stroke-width="2.2"/>
+      <line x1="78" y1="78" x2="105" y2="105" stroke="currentColor" stroke-width="2.2"/>
+      <line x1="25" y1="105" x2="52" y2="78" stroke="currentColor" stroke-width="2.2"/>
+      <line x1="78" y1="52" x2="105" y2="25" stroke="currentColor" stroke-width="2.2"/>
+      <circle cx="65" cy="6" r="7" fill="currentColor" opacity="0.9"/>
+      <circle cx="65" cy="124" r="7" fill="currentColor" opacity="0.9"/>
+      <circle cx="6" cy="65" r="7" fill="currentColor" opacity="0.9"/>
+      <circle cx="124" cy="65" r="7" fill="currentColor" opacity="0.9"/>
+    </g>
+
+    <!-- Cannon — bottom right -->
+    <g transform="translate(1600, 800)" opacity="0.55">
+      <circle cx="38" cy="58" r="22" fill="none" stroke="currentColor" stroke-width="4"/>
+      <circle cx="38" cy="58" r="7" fill="currentColor" opacity="0.8"/>
+      <circle cx="130" cy="58" r="22" fill="none" stroke="currentColor" stroke-width="4"/>
+      <circle cx="130" cy="58" r="7" fill="currentColor" opacity="0.8"/>
+      <rect x="20" y="18" width="128" height="24" rx="5" fill="currentColor" opacity="0.8"/>
+      <rect x="30" y="38" width="7" height="20" rx="3" fill="currentColor" opacity="0.7"/>
+      <rect x="131" y="38" width="7" height="20" rx="3" fill="currentColor" opacity="0.7"/>
+      <polygon points="32,24 150,10 150,20 32,36" fill="currentColor"/>
+      <rect x="60" y="12" width="6" height="15" rx="3" fill="currentColor" opacity="0.7"/>
+      <rect x="105" y="11" width="6" height="13" rx="3" fill="currentColor" opacity="0.7"/>
+      <circle cx="165" cy="28" r="9" fill="currentColor" opacity="0.6"/>
+      <circle cx="165" cy="48" r="9" fill="currentColor" opacity="0.6"/>
+      <circle cx="165" cy="68" r="9" fill="currentColor" opacity="0.6"/>
+      <circle cx="181" cy="38" r="9" fill="currentColor" opacity="0.6"/>
+    </g>
+
+    <!-- Wave pattern at bottom -->
+    <g opacity="0.50">
+      <path d="M0,920 Q40,890 80,920 T160,920 T240,920 T320,920 T400,920 T480,920 T560,920 T640,920 T720,920 T800,920 T880,920 T960,920 T1040,920 T1120,920 T1200,920 T1280,920 T1360,920 T1440,920 T1520,920 T1600,920 T1680,920 T1760,920 T1840,920 T1920,920" fill="none" stroke="currentColor" stroke-width="2"/>
+      <path d="M0,945 Q40,918 80,945 T160,945 T240,945 T320,945 T400,945 T480,945 T560,945 T640,945 T720,945 T800,945 T880,945 T960,945 T1040,945 T1120,945 T1200,945 T1280,945 T1360,945 T1440,945 T1520,945 T1600,945 T1680,945 T1760,945 T1840,945 T1920,945" fill="none" stroke="currentColor" stroke-width="1.4"/>
+      <path d="M0,970 Q40,948 80,970 T160,970 T240,970 T320,970 T400,970 T480,970 T560,970 T640,970 T720,970 T800,970 T880,970 T960,970 T1040,970 T1120,970 T1200,970 T1280,970 T1360,970 T1440,970 T1520,970 T1600,970 T1680,970 T1760,970 T1840,970 T1920,970" fill="none" stroke="currentColor" stroke-width="1"/>
+      <path d="M0,995 Q40,978 80,995 T160,995 T240,995 T320,995 T400,995 T480,995 T560,995 T640,995 T720,995 T800,995 T880,995 T960,995 T1040,995 T1120,995 T1200,995 T1280,995 T1360,995 T1440,995 T1520,995 T1600,995 T1680,995 T1760,995 T1840,995 T1920,995" fill="none" stroke="currentColor" stroke-width="0.7"/>
+    </g>
+  </svg>
+</div>
+
+<main class="main" id="main">
+  <div class="menu-container">
+
+    <div class="logo-region">
+      <span class="title-small">A Game of Empire &amp; Discovery</span>
+
+      <div class="title-emblem">
+        <div class="compass-rose">
+          <span class="arm arm-ne"></span>
+          <span class="arm arm-nw"></span>
+          <span class="ring"></span>
+          <span class="medallion"></span>
+        </div>
+      </div>
+
+      <div class="title-row">
+        <svg class="title-flank" viewBox="0 0 24 32" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round">
+          <ellipse cx="12" cy="6" rx="3" ry="5" fill="currentColor" stroke="none"/>
+          <ellipse cx="5" cy="10" rx="4" ry="3.5" fill="currentColor" stroke="none"/>
+          <ellipse cx="19" cy="10" rx="4" ry="3.5" fill="currentColor" stroke="none"/>
+          <rect x="7" y="14" width="10" height="2.5" rx="1" fill="currentColor" stroke="none"/>
+          <rect x="10.5" y="14" width="3" height="16" rx="1.5" fill="currentColor" stroke="none"/>
+        </svg>
+        <h1 class="title">ColonizeThis</h1>
+        <svg class="title-flank" viewBox="0 0 24 32" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round">
+          <ellipse cx="12" cy="6" rx="3" ry="5" fill="currentColor" stroke="none"/>
+          <ellipse cx="5" cy="10" rx="4" ry="3.5" fill="currentColor" stroke="none"/>
+          <ellipse cx="19" cy="10" rx="4" ry="3.5" fill="currentColor" stroke="none"/>
+          <rect x="7" y="14" width="10" height="2.5" rx="1" fill="currentColor" stroke="none"/>
+          <rect x="10.5" y="14" width="3" height="16" rx="1.5" fill="currentColor" stroke="none"/>
+        </svg>
+      </div>
+
+      <p class="subtitle" id="subtitle" style="display:none">
+        Congratulations, you won your last game.
+      </p>
+
+      <div class="brass-divider"></div>
+    </div>
+
+    <nav class="buttons-region">
+      <button class="menu-btn" id="btn-new-game" onclick="handleAction('new-game')">
+        <span class="brass-corner tl"></span>
+        <span class="brass-corner tr"></span>
+        <span class="brass-corner bl"></span>
+        <span class="brass-corner br"></span>
+        New Game
+      </button>
+
+      <button class="menu-btn" id="btn-resume" style="display:none" onclick="handleAction('resume')">
+        <span class="brass-corner tl"></span>
+        <span class="brass-corner tr"></span>
+        <span class="brass-corner bl"></span>
+        <span class="brass-corner br"></span>
+        Resume Game
+      </button>
+
+      <div class="tooltip-wrapper">
+        <span class="tooltip-text">No saved games found.</span>
+        <button class="menu-btn" id="btn-load" onclick="handleAction('load')">
+          <span class="brass-corner tl"></span>
+          <span class="brass-corner tr"></span>
+          <span class="brass-corner bl"></span>
+          <span class="brass-corner br"></span>
+          Load Game
+        </button>
+      </div>
+
+      <button class="menu-btn" id="btn-settings" onclick="handleAction('settings')">
+        <span class="brass-corner tl"></span>
+        <span class="brass-corner tr"></span>
+        <span class="brass-corner bl"></span>
+        <span class="brass-corner br"></span>
+        Settings
+      </button>
+    </nav>
+
+    <div class="footer-region">
+      <span class="version" id="version-text">v3.0.0</span>
+      <button class="quit-btn" onclick="handleAction('quit')">Quit</button>
+    </div>
+
+  </div>
+</main>
+
+<div class="state-toggle" id="state-toggle">
+  <button data-state="default" class="active" onclick="setState('default')">Default</button>
+  <button data-state="victory" onclick="setState('victory')">After Victory</button>
+  <button data-state="nosaves" onclick="setState('nosaves')">No Saves</button>
+  <button data-state="resume" onclick="setState('resume')">Auto-save exists</button>
+  <button data-state="all" onclick="setState('all')">All</button>
+</div>
+
+<script>
+function setState(s) {
+  document.querySelectorAll('#state-toggle button').forEach(b => b.classList.remove('active'));
+  const btn = document.querySelector(`#state-toggle button[data-state="${s}"]`);
+  if (btn) btn.classList.add('active');
+
+  const subtitle   = document.getElementById('subtitle');
+  const btnResume  = document.getElementById('btn-resume');
+  const btnLoad    = document.getElementById('btn-load');
+  const tooltipEl  = document.querySelector('.tooltip-text');
+
+  subtitle.style.display = 'none';
+  btnResume.style.display = 'none';
+  btnLoad.classList.remove('disabled');
+  tooltipEl.textContent = 'No saved games found.';
+
+  switch (s) {
+    case 'victory':
+      subtitle.style.display = 'block';
+      break;
+    case 'nosaves':
+      btnLoad.classList.add('disabled');
+      break;
+    case 'resume':
+      btnResume.style.display = 'block';
+      break;
+    case 'all':
+      subtitle.style.display = 'block';
+      btnResume.style.display = 'block';
+      btnLoad.classList.add('disabled');
+      break;
+    default:
+      break;
+  }
+}
+
+function handleAction(id) {
+  const el = document.getElementById(`btn-${id === 'new-game' ? 'new-game' : id}`);
+  if (el && el.classList.contains('disabled')) return;
+
+  const names = {
+    'new-game': 'New Game',
+    resume: 'Resume Game',
+    load: 'Load Game',
+    settings: 'Settings',
+    quit: 'Quit'
+  };
+  if (el) {
+    el.style.color = 'var(--accent-bright)';
+    setTimeout(() => { el.style.color = ''; }, 200);
+  }
+  console.log(`[ColonizeThis] Action: ${names[id] || id}`);
+}
+</script>
+
+</body>
+</html>

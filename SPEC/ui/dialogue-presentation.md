@@ -1,6 +1,6 @@
 # Dialogue Presentation (Flutter / Flame)
 
-**SPEC/ui** — How the Flutter app presents AI–human dialogue using Flame and Jenny. Dialogue model: [dialogue-management.md](../ai/dialogue-management.md). Content: [dialogue-content-and-yarn.md](../ai/dialogue-content-and-yarn.md). Technical contract: [dialogue-system.md](../program/dialogue-system.md). Pixel-art catalog: [pixel-art-ui-catalog.md](pixel-art-ui-catalog.md).
+**SPEC/ui** — How the Flutter app presents AI–human dialogue using Flame and Jenny. Dialogue model: [dialogue-management.md](../ai/dialogue-management.md). Content: [dialogue-content-and-yarn.md](../ai/dialogue-content-and-yarn.md). Technical contract: [dialogue-system.md](../program/dialogue-system.md). Pixel-art catalog: [pixel-art-ui-catalog.md](pixel-art-ui-catalog.md). Jenny adapter contract: [ct-dialogue-view.md](ct-dialogue-view.md). Per-overlay specs: [game-start-intro-overlay.md](game-start-intro-overlay.md), [overture-dialogue-overlay.md](overture-dialogue-overlay.md), [call-to-arms-dialogue-overlay.md](call-to-arms-dialogue-overlay.md), [screens/pending-intervention-overlay.md](screens/pending-intervention-overlay.md), [pending-diplomacy-state.md](pending-diplomacy-state.md).
 
 ---
 
@@ -56,4 +56,9 @@ The app presents **PendingDialoguePoint**s from the dialogue system. It uses **J
 - **Given** a blocking dialogue point (e.g. overture_target_response), **when** the app presents it, **then** the app shows a **modal** dialogue (CtDialogShell) with Jenny-driven content (node from contentKey), and the player cannot proceed until they select an option that triggers the resume API with the correct outcome type.
 - **Given** a non-blocking dialogue point with presentationMode **overlay**, **when** the app presents it, **then** the app may show a compact overlay (CtDialogShell or equivalent) over the game; dismissing or selecting “Continue” does not call the resume API; game flow is not blocked.
 - **Given** the player selects “Accept” (or “Reject”) in an overture dialogue, **then** the app calls **resumeTurnResolutionWithOvertureDecisions** with an OvertureDecision list matching the selection(s); no Material AlertDialog or Dialog is used.
+
+---
+
+## Pixel-art
+
 - **Pixel-art:** All visible dialogue chrome (frame, buttons) uses CtDialogShell and CtNinePatchButton (or catalog equivalents) per [pixel-art-ui-catalog.md](pixel-art-ui-catalog.md).

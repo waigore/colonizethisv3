@@ -1,14 +1,32 @@
 # Military Units Panel
 
-**SPEC/ui** — Panel that lists all **land armies** and **naval fleets** owned by the human player. **Land:** grouped like [naval-units-panel.md](naval-units-panel.md) (region → location → expandable force rows). **Naval:** unchanged from prior naval subsection (region → sea zone or port, ship-type aggregates). **Army split/combine:** [military-units-army-management.md](military-units-army-management.md). Integrates with [empire-overview.md](empire-overview.md), [map-widget.md](map-widget.md). Game model: [military-armies.md](../game/military-armies.md), [military-units.md](../game/military-units.md), [ships-and-naval.md](../game/ships-and-naval.md), [world-model.md](../game/world-model.md). Province identity: [world-model-identity.md](../game/world-model-identity.md).
+**Screen ID:** `UNIT20001` — stable; do not reassign.
+**SPEC/ui** — Land armies + naval fleets panel. Implementation: `app/lib/features/game/widgets/military_units_panel.dart`.
+**Widgetbook:** `Military Units Panel` → `app/lib/widgetbook/catalog.dart`. Army management: [military-units-army-management.md](military-units-army-management.md). Integrates with [empire-overview.md](empire-overview.md), [map-widget.md](map-widget.md).
 
-**Separation:** **Army and regiment persistence, order validation, and combine/split mutations** live in **logic/models packages**; the **app** implements presentation, selection, and **AppEventBus** events only ([app-ui-wiring.md](../program/app-ui-wiring.md)).
+**Separation:** Logic owns validation; app emits **AppEventBus** events only ([app-ui-wiring.md](../program/app-ui-wiring.md)).
+
+**Mockup:** [mockups/UNIT20001-military-units-panel.html](mockups/UNIT20001-military-units-panel.html)
+---
+
+## Widget contract
+
+`MilitaryUnitsPanel` — land + naval subsections; emits locate, move, train, split/combine events. See scopes below for row content.
+
+---
+
+## Trigger conditions
+
+- **Access:** Toolbar **Military Units** button.
+- **Desktop / wide:** Side panel / bottom sheet; map visible.
+- **Mobile / narrow:** [mobile-adaptation.md](mobile-adaptation.md).
+- **Train button:** Header **Train** closes panel and emits `OpenDialogEvent(trainMilitaryDialogId)` for [train-military-dialog.md](train-military-dialog.md).
 
 ---
 
 ## Purpose
 
-The military units panel is a single place to see every **army** (composition of regiments, location) and every **fleet** (ship aggregates by sea zone). Land presentation **parallels** the Naval Units panel: pinned **Home Army**, region groups, location nodes, stable ordering, expand for composition, **locate** on map. The player issues **army** movement (not per-regiment) from this panel per TDD/events.
+The military units panel lists every **army** and **fleet** for the human player with locate, move, split/combine, and train entry points.
 
 ---
 
@@ -16,10 +34,10 @@ The military units panel is a single place to see every **army** (composition of
 
 - **Included:** All **armies** owned by the human player from `WorldState.armies` (or per-region equivalent). **Home Army** is always listed for the capital region (even at **zero** regiments), pinned like Home Fleet.
 - **Grouping:** By **region**, then by **province** (stationed province). Under each province: **one row per army** (not one row per regiment type). **Order:** Region headings; within region, **Home Army** section first when capital is in that region; then **province** nodes (stable order by display name or id); within a province, armies in stable order (e.g. by army label or id).
-- **Row content (collapsed):** Army display name (or generated id label). **Location line:** After the regiment count, show the stationed province’s **display name** when `Province.displayName` is set (`Province.displayName ?? Province.id` from world state lookup by full province id); do **not** show raw `stationedProvinceId` alone when a display name exists. Region context remains on the location section header (“name — region”). Short composition summary (e.g. total regiments). Optional **status** from aggregate regiment `Unit.status` (if any Working → show Working). Collapsed rows follow the shared unit-panel row-action widget convention (left details, right left-to-right actions, top-aligned action group, icon-only on narrow widths).
+- **Row content (collapsed):** Army display name (or generated id label). **Location line:** After the regiment count, show the stationed province’s **display name** when `Province.displayName` is set (`Province.displayName ?? Province.id` from world state lookup by full province id); do **not** show raw `stationedProvinceId` alone when a display name exists. Region context remains on the location section header (“name — region”). Short composition summary (e.g. total regiments). Optional **status** from aggregate regiment `Unit.status` (if any Working → show Working). Collapsed rows render via the shared [`UnitsEntityActionRow`](components/units-entity-action-row.md) composite (left details, right left-to-right actions, top-aligned action group, icon-only on narrow widths).
 - **Row content (expanded):** Table of **regiment types** with **counts**, **medals** (range per type if mixed). Each regiment row’s title uses the **roster display name** from [military-units.md](../game/military-units.md) via `regimentTypeDisplayName` in `colonizethis_data` (e.g. `Peasant Levies`), not the persistence code (`peasant_levies`). **Split** / **Combine** per [military-units-army-management.md](military-units-army-management.md). **Move** control: **non-Home** armies only; **Home Army** does **not** show **Move** (cannot leave capital). Move flow emits a bus event; shell/logic applies `ArmyMoveOrder` per [orders.md](../program/orders.md).
 - **Naval ship-type rows (in this panel):** Ship aggregate row titles use `shipTypeDisplayName` in `colonizethis_data` (aligned with [ships-and-naval.md](../game/ships-and-naval.md) roster), not raw `ship_type_id` strings. Unknown ids fall back to the raw id.
-- **Move destination UX (armies):** On **Move**, the panel opens a local dialog with one **province dropdown** whose options are **only** destinations that would yield an **`ArmyMoveOrder` accepted** by the order engine for the **current** game, topology, **PlayerView** visibility, and **current-turn draft orders** (including diplomatic draft orders after any required steps). Two destination classes: (1) **Player-owned** provinces (relocation, including cross-region within the player’s territory per `ArmyMoveValidator`); (2) **Other-owned** provinces in the army’s **current** region with **valid land adjacency** from the army’s province — such a move is an **invasion**. The dropdown lists provinces **grouped by owning faction**, with **the human player’s provinces first** (header e.g. “Your provinces”), then other factions (stable order by faction id or display name). **Invasion + war:** If the destination is owned by a **Great Power, Minor Nation, or Tribe** and the human player is **not** already at war with that owner and does **not** already have a same-turn **declare war** on that owner in the draft, the UI shows a **second confirmation** that the action is an invasion and, on proceed, the shell applies a **`declareWar` diplomatic order** for that owner **together with** the `ArmyMoveOrder` so the **combined** draft validates. If the factions are **already at war**, only the normal move confirm runs (no invasion/war dialog). **Draft parity (land):** The panel watches **`currentOrders`** like the naval subsection; when the draft contains an `ArmyMoveOrder` for an army, the row shows a **pending line** (e.g. `Moving to: …` with destination display name), analogous to naval **Moving to:**, and updates when the draft changes without requiring regiment `Unit.status` to change. **Shell contract:** If the dialog path still produced an invalid combined draft, the shell must **not** commit silently (log at `error`, user-visible failure, debug assertion per TDD).
+- **Move destination UX (armies):** On **Move**, the panel opens a local dialog (see [move-army-dialog.md](move-army-dialog.md) for the authoritative widget contract, layout, states, and bus events) with one **province dropdown** whose options are **only** destinations that would yield an **`ArmyMoveOrder` accepted** by the order engine for the **current** game, topology, **PlayerView** visibility, and **current-turn draft orders** (including diplomatic draft orders after any required steps). Two destination classes: (1) **Player-owned** provinces (relocation, including cross-region within the player’s territory per `ArmyMoveValidator`); (2) **Other-owned** provinces in the army’s **current** region with **valid land adjacency** from the army’s province — such a move is an **invasion**. The dropdown lists provinces **grouped by owning faction**, with **the human player’s provinces first** (header e.g. “Your provinces”), then other factions (stable order by faction id or display name). **Invasion + war:** If the destination is owned by a **Great Power, Minor Nation, or Tribe** and the human player is **not** already at war with that owner and does **not** already have a same-turn **declare war** on that owner in the draft, the UI shows a **second confirmation** that the action is an invasion and, on proceed, the shell applies a **`declareWar` diplomatic order** for that owner **together with** the `ArmyMoveOrder` so the **combined** draft validates. If the factions are **already at war**, only the normal move confirm runs (no invasion/war dialog). **Draft parity (land):** The panel watches **`currentOrders`** like the naval subsection; when the draft contains an `ArmyMoveOrder` for an army, the row shows a **pending line** (e.g. `Moving to: …` with destination display name), analogous to naval **Moving to:**, and updates when the draft changes without requiring regiment `Unit.status` to change. **Shell contract:** If the dialog path still produced an invalid combined draft, the shell must **not** commit silently (log at `error`, user-visible failure, debug assertion per TDD).
 - **Excluded:** Civilian units. Armies/fleets owned by other factions.
 
 ---
@@ -30,12 +48,43 @@ Unchanged from [naval-units-panel.md](naval-units-panel.md): same grouping (regi
 
 ---
 
-## Panel placement and opening
+## Layout / wireframe
 
-- **Access:** Toolbar **Military Units** button; same as before.
-- **Desktop / wide:** Side panel / bottom sheet; map visible.
-- **Mobile / narrow:** [mobile-adaptation.md](mobile-adaptation.md).
-- **Train button:** Header **Train** closes panel and emits `OpenDialogEvent(trainMilitaryDialogId)` for [train-military-dialog.md](train-military-dialog.md).
+Side panel or bottom sheet (viewport-dependent); **Land** and **Naval** branches; expandable army/fleet rows with row actions on the right. The outer chrome (`ConstrainedBox` + `CtPanel` + `CtTopBar` + scrollable list / empty state) is the shared **[`UnitsPanelShell`](components/units-panel-shell.md)** composite.
+
+---
+
+## Behavior
+
+### Incoming (what shows this UI)
+
+| Source | Condition | Result |
+|--------|-----------|--------|
+| Toolbar Military Units | In-game | Panel opens with land + naval sections. |
+
+### User actions → outcomes
+
+| Control / gesture | When enabled | Emits / calls | Side effects |
+|-------------------|--------------|---------------|--------------|
+| Move (army) | Non-Home army | Opens [move-army-dialog.md](move-army-dialog.md) | `ArmyMoveRequestedEvent` on confirm. |
+| Locate | Row action | `LocateMapTileEvent` | Map pan/highlight. |
+| Train (header) | Always | `OpenDialogEvent(trainMilitaryDialogId)` | Closes panel. |
+| Split / Combine | Per army management spec | Bus events per [military-units-army-management.md](military-units-army-management.md) | — |
+
+---
+
+## States and variants
+
+| Variant | Trigger | Render difference |
+|---------|---------|-------------------|
+| Pending move | Draft `ArmyMoveOrder` | Row shows **Moving to:** line. |
+| Empty land / naval | No units | Empty-state copy per section. |
+
+---
+
+## Components
+
+- `MilitaryUnitsPanel`, [move-army-dialog.md](move-army-dialog.md), naval subsection widgets.
 
 ---
 
@@ -88,7 +137,7 @@ Unchanged from [naval-units-panel.md](naval-units-panel.md): same grouping (regi
 
 - Given a regiment or ship type id is absent from the display-name maps, when the panel renders that row, then the UI layer shows the raw id as the label (fallback) and does not throw.
 
-- Given the panel renders army or naval rows with row actions, when the row is shown on wide or narrow widths, then the UI layer uses the shared unit-panel row-action abstraction with details on the left, actions on the right in left-to-right order, and icon-only action rendering on narrow widths.
+- Given the panel renders army or naval rows with row actions, when the row is shown on wide or narrow widths, then the UI layer uses the shared [`UnitsEntityActionRow`](components/units-entity-action-row.md) composite with details on the left, actions on the right in left-to-right order, and icon-only action rendering on narrow widths.
 
 ---
 

@@ -1,8 +1,14 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:flutter/material.dart';
 
+import '../config/editorial_monocle_palette.dart';
+import 'ct_radius.dart';
+
 /// Small preview of a Great Power’s default map / ownership RGB from GDD 09
 /// (`greatPowerDefaultColorRgb`). Used beside nation names in pickers.
+///
+/// Unknown great-power ids fall back to [EditorialMonoclePalette.muted]
+/// (Refs #2914 S4 — no raw `const Color(0x...)` literals in `app/lib/widgets/`).
 class GpDefaultMapColorSwatch extends StatelessWidget {
   const GpDefaultMapColorSwatch({super.key, required this.greatPowerId});
 
@@ -13,7 +19,7 @@ class GpDefaultMapColorSwatch extends StatelessWidget {
     final rgb = greatPowerDefaultColorRgb[greatPowerId];
     final color = rgb != null
         ? Color.fromRGBO(rgb.$1, rgb.$2, rgb.$3, 1)
-        : const Color(0xFF9E9E9E);
+        : EditorialMonoclePalette.muted;
     return Container(
       width: 14,
       height: 14,
@@ -22,7 +28,7 @@ class GpDefaultMapColorSwatch extends StatelessWidget {
         border: Border.all(
           color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.45),
         ),
-        borderRadius: BorderRadius.circular(2),
+        borderRadius: BorderRadius.circular(CtRadius.small),
       ),
     );
   }

@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'dart:ui' as ui;
 
-import 'package:colonizethis_app/features/game/dialogue/game_start_intro_overlay.dart';
 import 'package:colonizethis_app/features/game/flame/civilian_icon_cache.dart';
 import 'package:colonizethis_app/features/game/flame/fleet_icon_cache.dart';
 import 'package:colonizethis_app/features/game/flame/game_screen_shared.dart';
@@ -18,10 +17,20 @@ import 'e2e_test_shared.dart';
 
 /// Loads and decodes each path with bounded concurrency (overlapping I/O +
 /// image decode completion) instead of strictly serial awaits.
+///
+/// Larger batches reduce the number of synchronization points where the loop
+/// awaits *all* in-flight decodes before scheduling the next group, so a slow
+/// decode no longer blocks every other decode in the same batch. The default
+/// is sized to comfortably cover the relocated 64px icon manifest (~60 assets)
+/// in a single batch, while still allowing callers on memory-constrained CI
+/// runners to opt back into smaller chunks. Refs GitHub #2336 AC3.
 Future<List<String>> e2eDecodePngAssetPathsParallel(
   List<String> assetPaths, {
-  int batchSize = 8,
+  int batchSize = 64,
 }) async {
+  if (batchSize <= 0) {
+    throw ArgumentError.value(batchSize, 'batchSize', 'must be positive');
+  }
   final failures = <String>[];
   for (var i = 0; i < assetPaths.length; i += batchSize) {
     final end = i + batchSize > assetPaths.length
@@ -52,64 +61,89 @@ Future<List<String>> e2eDecodePngAssetPathsParallel(
   return failures;
 }
 
-Future<void> _e2eTapGameStartIntroOverlayContinueIfPresent(
-  WidgetTester tester,
-) async {
-  if (find.text('Continue').evaluate().isNotEmpty) {
-    await tester.tap(find.text('Continue').first);
-    await e2ePumpUntilConditionOrIdle(
-      tester,
-      () => find.byType(GameStartIntroOverlay).evaluate().isEmpty,
-      timeout: const Duration(milliseconds: 800),
-      phaseName: 'pump_until_intro_dismissed_after_continue',
-    );
-    return;
-  }
-  if (find.text('I shall.').evaluate().isNotEmpty) {
-    await tester.tap(find.text('I shall.').first);
-    await e2ePumpUntilConditionOrIdle(
-      tester,
-      () => find.byType(GameStartIntroOverlay).evaluate().isEmpty,
-      timeout: const Duration(milliseconds: 800),
-      phaseName: 'pump_until_intro_dismissed_after_i_shall',
-    );
-  }
-}
+/// Default phase label emitted by [e2eWaitForMapHudAfterNewGameStart] when a
+/// caller does not override [E2ePerfLog] attribution.
+///
+/// The constant is exposed so widget-test pins and downstream perf-marker
+/// scrapers (for example the GitHub #2336 AC8 baseline timing tool) can refer
+/// to the legacy label by name instead of hard-coding the literal string.
+const String kE2eDefaultWaitForMapHudPhase =
+    'wait_for_map_hud_after_new_game_start';
+
+/// Counter name bumped on every [e2eWaitForMapHudAfterNewGameStart] iteration
+/// so a hung bootstrap surfaces as an attributable counter spike instead of a
+/// silent 60 s wall-clock burn (Refs GitHub #2336 AC8 / AC10).
+const String kE2eWaitForMapHudIterationsCounter =
+    'wait_for_map_hud_after_new_game_start_iterations';
 
 /// After [Start] is tapped, polls until the in-game map HUD is visible.
 ///
-/// Evaluates success before the first pump; uses exponential backoff on pump
-/// intervals (25ms → … capped at 500ms) per `SPEC/program/e2e-integration-tests.md`
-/// / issue #2336 adaptive polling guidance.
+/// Evaluates success before the first pump; uses [e2eNextIdlePollStepMs]
+/// (25ms → doubling capped at 500ms) per
+/// `SPEC/program/e2e-integration-tests.md` § *Adaptive poll pacing* /
+/// GitHub #2336 AC5 adaptive polling guidance.
+///
+/// Perf attribution (Refs GitHub #2336 AC8 / baseline measurement):
+///
+/// - When [perf] is non-null, emits one `E2E_TIMING|phase=[phaseName]` line
+///   on every return path with a `result=...` meta tag distinguishing
+///   `result=already_mounted` (entry-iteration short-circuit; counter
+///   value `1`), `result=advanced` (HUD landed on a later iteration after
+///   one or more pumps), `result=error_dialog` (fail-fast on
+///   `Could not create game`), and `result=timeout` (overall-cap fail path).
+///   The phase label defaults to [kE2eDefaultWaitForMapHudPhase].
+/// - Bumps the [kE2eWaitForMapHudIterationsCounter] counter once per loop
+///   iteration (including the iteration that returns success) so a hung
+///   bootstrap surfaces as a counter spike instead of a silent wall-clock
+///   burn. The counter is incremented before the early-exit checks for that
+///   iteration so the `result=already_mounted` short-circuit reports
+///   `value=1`.
 Future<void> e2eWaitForMapHudAfterNewGameStart(
   WidgetTester tester, {
   Duration overallCap = const Duration(seconds: 60),
+  E2ePerfLog? perf,
+  String phaseName = kE2eDefaultWaitForMapHudPhase,
 }) async {
+  final sw = Stopwatch()..start();
   final setupDeadline = DateTime.now().add(overallCap);
   var stepMs = 25;
+  var iterations = 0;
   while (DateTime.now().isBefore(setupDeadline)) {
+    iterations += 1;
+    perf?.bumpCounter(
+      kE2eWaitForMapHudIterationsCounter,
+      meta: 'phase=$phaseName',
+    );
     if (find.text('Could not create game').evaluate().isNotEmpty) {
+      perf?.timing(phaseName, sw.elapsed, meta: 'result=error_dialog');
       fail(
         'New game setup failed (error dialog). '
         'Exception: ${tester.takeException()}',
       );
     }
     if (find.byKey(kHomeToCapitalButtonKey).evaluate().isNotEmpty) {
+      await e2eAdvanceGameStartIntroUntilDismissed(tester, perf: perf);
+      perf?.timing(
+        phaseName,
+        sw.elapsed,
+        meta: iterations == 1 ? 'result=already_mounted' : 'result=advanced',
+      );
       return;
     }
-    if (find.byType(GameStartIntroOverlay).evaluate().isNotEmpty) {
-      await _e2eTapGameStartIntroOverlayContinueIfPresent(tester);
+    if (e2eGameStartIntroBlocksUi(tester)) {
+      await e2eAdvanceGameStartIntroUntilDismissed(tester, perf: perf);
       stepMs = 25;
       continue;
     }
     if (find.text('Creating game').evaluate().isNotEmpty) {
       await tester.pump(Duration(milliseconds: stepMs));
-      stepMs = stepMs < 500 ? stepMs * 2 : 500;
+      stepMs = e2eNextIdlePollStepMs(stepMs);
       continue;
     }
     await tester.pump(Duration(milliseconds: stepMs));
-    stepMs = stepMs < 500 ? stepMs * 2 : 500;
+    stepMs = e2eNextIdlePollStepMs(stepMs);
   }
+  perf?.timing(phaseName, sw.elapsed, meta: 'result=timeout');
   fail(
     'Timed out after ${overallCap.inSeconds}s waiting for '
     'map (home→capital). Last exception: ${tester.takeException()}',
@@ -117,6 +151,29 @@ Future<void> e2eWaitForMapHudAfterNewGameStart(
 }
 
 /// Canonical new-game → map HUD path shared by E2E scenarios (Refs #2336).
+///
+/// Adaptive polling notes (GitHub #2336 AC5):
+///
+/// - After the `New Game` tap, [e2eWaitUntilFound] polls for the `Start`
+///   button with check-before-pump + exponential backoff (25 → 500 ms cap)
+///   via the inner [e2eWaitUntilFound] call.
+/// - After the drag that scrolls the dialog to the `Start` button,
+///   [e2ePumpUntilConditionOrIdle] polls for the button becoming
+///   hit-testable with the same check-before-pump cadence.
+/// - After the `Start` tap, [e2ePumpUntilConditionOrIdle] polls for any
+///   post-tap observable (`Creating game` indicator, the home-to-capital
+///   button on instant map gen, the intro-overlay loading branch, or the
+///   `Could not create game` error dialog) with a short 200 ms safety net.
+///   The downstream [e2eWaitForMapHudAfterNewGameStart] then handles the
+///   longer-running adaptive poll up to [overallCap]. The settle slice is
+///   attributable to `pump_until_post_start_tap_settled`.
+/// - After the map HUD mounts, [e2ePumpUntilConditionOrIdle] polls for the
+///   home-to-capital button becoming hit-testable before
+///   [e2eAdvanceGameStartIntroUntilDismissed] dismisses the intro overlay.
+///
+/// No bare single-frame `tester.pump()` settles remain in the body; every
+/// state transition is gated by a condition-based wait so the helper
+/// conforms to AC5 end-to-end.
 Future<void> e2eBootstrapNewGameToMap(
   WidgetTester tester, {
   E2ePerfLog? perf,
@@ -156,9 +213,38 @@ Future<void> e2eBootstrapNewGameToMap(
   );
   await tester.ensureVisible(startButton);
   await tester.tap(startButton);
-  await tester.pump();
+  // Replace the legacy bare single-frame `await tester.pump();` settle with
+  // an adaptive condition-based wait so the helper conforms to GitHub #2336
+  // AC5 (check-before-pump + exponential backoff capped at ≤500 ms). The
+  // poll short-circuits the moment any post-Start-tap observable surfaces
+  // (`Creating game` indicator, the home-to-capital button on instant map
+  // gen, the intro-overlay loading branch, or the `Could not create game`
+  // error dialog), so the canonical success path (which mounts `Creating
+  // game` on the very next frame) returns within a single 25 ms pump
+  // instead of opaque pump-then-blind-handoff sequencing. The downstream
+  // [e2eWaitForMapHudAfterNewGameStart] still runs the longer-running
+  // adaptive poll; this settle is a short, observable safety net so
+  // post-Start-tap latency is attributable to a dedicated
+  // `pump_until_post_start_tap_settled` perf slice. The 200 ms cap is
+  // strictly a fast-path bound — the downstream helper's `overallCap`
+  // (default 60 s) governs the slow path.
+  await e2ePumpUntilConditionOrIdle(
+    tester,
+    () =>
+        find.text('Creating game').evaluate().isNotEmpty ||
+        find.byKey(kHomeToCapitalButtonKey).evaluate().isNotEmpty ||
+        find.text('Could not create game').evaluate().isNotEmpty ||
+        e2eGameStartIntroBlocksUi(tester),
+    timeout: const Duration(milliseconds: 200),
+    perf: perf,
+    phaseName: 'pump_until_post_start_tap_settled',
+  );
 
-  await e2eWaitForMapHudAfterNewGameStart(tester, overallCap: overallCap);
+  await e2eWaitForMapHudAfterNewGameStart(
+    tester,
+    overallCap: overallCap,
+    perf: perf,
+  );
 
   expect(find.byKey(kHomeToCapitalButtonKey), findsOneWidget);
   await e2ePumpUntilConditionOrIdle(
@@ -169,6 +255,7 @@ Future<void> e2eBootstrapNewGameToMap(
     perf: perf,
     phaseName: 'pump_until_home_capital_tappable_after_map',
   );
+  await e2eAdvanceGameStartIntroUntilDismissed(tester, perf: perf);
   perf?.timing('new_game_to_map', phaseSw.elapsed);
 }
 

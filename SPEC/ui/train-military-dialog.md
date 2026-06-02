@@ -1,7 +1,10 @@
 # Train Military Dialog
 
-**SPEC/ui** — Modal dialog for queuing military regiment training orders. Integrates with [military-units-panel.md](military-units-panel.md), [empire-overview.md](empire-overview.md), and [buttons-nine-patch.md](buttons-nine-patch.md). Game model: [military-units.md](../game/military-units.md), [tech-tree-military.md](../game/tech-tree-military.md), [world-model.md](../game/world-model.md). Order model: [orders.md](../program/orders.md). Province identity: [world-model-identity.md](../game/world-model-identity.md).
+**Screen ID:** `UNIT50001` — stable; do not reassign.
+**SPEC/ui** — Modal dialog for queuing military regiment training orders. Implementation: `app/lib/features/game/widgets/train_military_dialog.dart`. Integrates with [military-units-panel.md](military-units-panel.md), [empire-overview.md](empire-overview.md), and [buttons-nine-patch.md](buttons-nine-patch.md). Game model: [military-units.md](../game/military-units.md), [tech-tree-military.md](../game/tech-tree-military.md), [world-model.md](../game/world-model.md). Order model: [orders.md](../program/orders.md). Province identity: [world-model-identity.md](../game/world-model-identity.md).
+**Widgetbook:** `Train Military Dialog` → `app/lib/widgetbook/catalog_part3.dart`.
 
+**Mockup:** [mockups/UNIT50001-train-military-dialog.html](mockups/UNIT50001-train-military-dialog.html)
 ---
 
 ## Purpose

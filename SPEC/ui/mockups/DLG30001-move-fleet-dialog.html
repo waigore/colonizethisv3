@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ColonizeThis — Move Fleet</title>
+<style>
+:root {
+  --bg: oklch(16% 0.018 50); --bg-deep: oklch(12% 0.015 45);
+  --surface: oklch(24% 0.015 45); --surface-lite: oklch(30% 0.016 52);
+  --fg: oklch(88% 0.015 80); --muted: oklch(65% 0.025 70);
+  --border: oklch(40% 0.02 55); --accent: oklch(72% 0.14 85); --accent-dim: oklch(60% 0.12 82);
+  --font-display: 'Iowan Old Style','Cinzel','Charter',Georgia,serif;
+  --font-body: -apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;
+}
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+html,body{min-height:100vh;min-height:100dvh;background:var(--bg);color:var(--fg);font-family:var(--font-body);display:flex;align-items:center;justify-content:center;overflow:hidden}
+.scrim{position:fixed;inset:0;background:oklch(0% 0 0 / 0.6);z-index:0}
+.dialog{position:relative;z-index:1;width:min(92vw,420px);max-height:85vh;background:linear-gradient(180deg,var(--surface-lite) 0%,var(--surface) 20%,var(--bg-deep) 100%);border:2px solid var(--accent-dim);padding:20px;display:flex;flex-direction:column;gap:12px}
+.dialog h3{font-family:var(--font-display);font-size:clamp(16px,2.2vw,20px);font-weight:700;letter-spacing:0.05em;color:var(--accent)}
+.badge{font-size:11px;color:var(--muted);font-weight:400;margin-left:6px}
+.section-label{font-family:var(--font-display);font-size:11px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted);margin-bottom:4px}
+.picks{display:flex;flex-direction:column;gap:5px;max-height:240px;overflow-y:auto}
+.pick{display:flex;align-items:center;gap:8px;padding:8px 10px;background:var(--surface);border:1px solid var(--border);cursor:pointer;transition:border-color 0.15s;font-size:13px}.pick:hover{border-color:var(--accent-dim)}.pick.selected{border-color:var(--accent);background:var(--surface-lite)}
+.pick .radio{width:16px;height:16px;border-radius:50%;border:2px solid var(--border);flex-shrink:0;position:relative}.pick.selected .radio{border-color:var(--accent)}.pick.selected .radio::after{content:'';position:absolute;inset:3px;border-radius:50%;background:var(--accent)}
+.pick .locate{font-size:10px;color:var(--accent-dim);margin-left:auto;cursor:pointer;padding:2px 6px;border:1px solid var(--accent-dim);background:transparent;font-family:var(--font-body)}.pick .locate:hover{color:var(--accent);border-color:var(--accent)}
+.actions{display:flex;gap:10px;justify-content:flex-end;margin-top:6px}
+.btn{padding:10px 22px;font-family:var(--font-display);font-size:14px;font-weight:600;letter-spacing:0.06em;cursor:pointer;border:none;transition:color 0.15s}
+.btn-cancel{background:linear-gradient(180deg,var(--surface) 0%,var(--bg-deep) 100%);border-top:1px solid var(--border);border-bottom:1px solid var(--border);color:var(--muted)}.btn-cancel:hover{color:var(--fg)}
+.btn-confirm{background:linear-gradient(180deg,var(--surface-lite) 0%,var(--surface) 40%,var(--bg-deep) 100%);border-top:1.5px solid var(--accent-dim);border-bottom:1.5px solid var(--accent-dim);color:var(--fg)}.btn-confirm:hover:not(:disabled){color:var(--accent)}.btn-confirm:disabled{opacity:0.4;cursor:not-allowed}
+</style>
+</head>
+<body>
+<div class="scrim" onclick="location.reload()"></div>
+<div class="dialog">
+  <h3>Move fleet — Fleet 2<span class="badge">(7 destinations)</span></h3>
+  <div>
+    <div class="section-label">Sea zones</div>
+    <div class="picks" id="sea-picks"></div>
+  </div>
+  <div>
+    <div class="section-label">Provinces (dock)</div>
+    <div class="picks" id="port-picks"></div>
+  </div>
+  <div class="actions">
+    <button class="btn btn-cancel" onclick="location.reload()">Cancel</button>
+    <button class="btn btn-confirm" id="confirm" disabled onclick="location.reload()">Confirm</button>
+  </div>
+</div>
+<script>
+const sea=[
+  {label:'English Channel',locate:true},
+  {label:'North Sea',locate:true},
+  {label:'Bay of Biscay',locate:true},
+  {label:'Caribbean Sea (warp link)',locate:true},
+  {label:'links to Old World (warp link to Old World)',locate:true}
+]
+const ports=[
+  {label:'London (capital — joins Home Fleet)',locate:true},
+  {label:'Bristol',locate:true}
+]
+let sel=null
+function render(l,id){
+  document.getElementById(id).innerHTML=l.map(p=>`<div class="pick${sel===p.label?' selected':''}" onclick="selectPick('${p.label}')"><span class="radio"></span>${p.label}${p.locate?'<button class="locate" onclick="event.stopPropagation();alert(\'Locate on map\')">locate</button>':''}</div>`).join('')
+}
+function selectPick(v){sel=v;render(sea,'sea-picks');render(ports,'port-picks');document.getElementById('confirm').disabled=false}
+render(sea,'sea-picks');render(ports,'port-picks')
+</script>
+</body>
+</html>

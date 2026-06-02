@@ -13,13 +13,19 @@ import '../turn/turn_resolution_result.dart';
 import '../world/province_lookup.dart';
 import 'alliance_resolver.dart';
 import 'diplomacy_relation_lookup.dart';
+import 'ftp_resolver.dart';
 import 'diplomacy_subsidies_relations_resolver.dart';
 import 'intervention_resolver.dart';
 import 'overture_resolver.dart';
 import 'war_resolver.dart';
 
 export 'diplomacy_relation_lookup.dart';
-export 'diplomacy_subsidies_relations_resolver.dart' show tradeSlotsForGp;
+export 'diplomacy_subsidies_relations_resolver.dart'
+    show kWorldMarketBaselineBidTypeCap, tradeSlotsForGp, worldMarketBidTypeCap;
+export 'ftp_resolver.dart'
+    show aiGpAcceptsFtp, breakFtpOnEmbassyLoss, breakFtpOnWar;
+export 'diplomacy_relation_lookup.dart'
+    show ftpPairKeysFromGame, hasEmbassyOverture, hasFtpPartnership;
 export 'intervention_resolver.dart'
     show applyInterventionChoice, needsInterventionChoice;
 
@@ -110,6 +116,7 @@ DiplomacyPhaseResult resolveDiplomacyPhase(
   Orders orders, {
   void Function(DialogueEvent)? onDialogue,
   List<OvertureDecision>? overtureDecisions,
+  List<FtpDecision>? ftpDecisions,
   List<InterventionDecision>? interventionDecisions,
   List<CallToArmsDecision>? callToArmsDecisions,
 }) {
@@ -152,6 +159,24 @@ DiplomacyPhaseResult resolveDiplomacyPhase(
     turn,
     factionMembership: factionMembership,
   );
+
+  // 4b. Process FTP proposals (GP–GP, two-way accept)
+  final ftpResult = processFtpProposals(
+    state,
+    diploByPlayer,
+    turn,
+    factionMembership: factionMembership,
+    ftpDecisions: ftpDecisions,
+  );
+  state = ftpResult.game;
+  if (ftpResult.pendingFtpOffers != null &&
+      ftpResult.pendingFtpOffers!.isNotEmpty) {
+    diploLog.d('diplomacy phase suspended (pending FTP decisions)');
+    return DiplomacyPhaseResult(
+      state,
+      pendingFtpOffers: ftpResult.pendingFtpOffers,
+    );
+  }
 
   // 5. Process Declare War and Peace
   state = processWarAndPeace(
@@ -199,6 +224,8 @@ DiplomacyPhaseResult resolveDiplomacyPhase(
 
   // 6. War terminates agreements with target
   state = terminateAgreementsOnWar(state);
+  state = breakFtpOnWar(state, turn);
+  state = breakFtpOnEmbassyLoss(state, turn);
 
   // 7. Process ongoing subsidies (+2 per 500 ducats, max +8 per turn)
   // Note: Convergence happens AFTER subsidies

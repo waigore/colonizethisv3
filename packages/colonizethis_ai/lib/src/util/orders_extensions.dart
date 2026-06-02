@@ -74,4 +74,12 @@ extension OrdersAppendExtension on Orders {
           list,
         ),
       );
+
+  Orders appendTradeOrders(String playerId, List<TradeOrder> list) => copyWith(
+    tradeOrdersByPlayerId: _appendOrdersByPlayer(
+      tradeOrdersByPlayerId,
+      playerId,
+      list,
+    ),
+  );
 }

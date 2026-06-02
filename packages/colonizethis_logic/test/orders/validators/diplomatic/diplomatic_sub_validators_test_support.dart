@@ -3,7 +3,19 @@
 library;
 
 import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:colonizethis_logic/colonizethis_logic.dart';
+import 'package:colonizethis_logic/src/orders/validators/diplomatic/diplomatic_sub_validator.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
+
+DiplomaticSubValidatorContext diplomaticSubValidatorContext(
+  Game game,
+  String playerId, {
+  DiplomacyFactionMembership? factionMembership,
+}) => DiplomaticSubValidatorContext(
+  game: game,
+  playerId: playerId,
+  factionMembership: factionMembership,
+);
 
 Game gpMinorGame({
   RelationState relationState = RelationState.atPeace,
@@ -59,11 +71,7 @@ Game twoGpGame({RelationState state = RelationState.atPeace}) {
       Player(id: 'gp2', displayName: 'GP2', isHuman: false),
     ],
     diplomacyRelations: [
-      DiplomacyRelation(
-        factionId1: 'gp1',
-        factionId2: 'gp2',
-        state: state,
-      ),
+      DiplomacyRelation(factionId1: 'gp1', factionId2: 'gp2', state: state),
     ],
   );
 }

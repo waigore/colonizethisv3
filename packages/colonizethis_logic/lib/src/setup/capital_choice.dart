@@ -4,6 +4,7 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../constants.dart';
+import '../world/game_world_mutations.dart';
 import '../world/province_lookup.dart';
 import '../world/player_state_pipeline.dart';
 import 'setup_exceptions.dart';
@@ -277,7 +278,7 @@ Game setCapital({
     provinceId,
   );
 
-  return game.copyWith(worldState: worldState).mapPlayers((p) {
+  return game.withWorldState(worldState).mapPlayers((p) {
     if (p.id != playerId) return p;
     return p.copyWith(capitalProvinceId: provinceId, capitalTile: tile);
   });
@@ -302,6 +303,58 @@ Game setCapitalForReassignment({
     if (p.id != playerId) return p;
     return p.copyWith(capitalProvinceId: provinceId, capitalTile: tile);
   });
+}
+
+/// Sets [minorId]'s capital after runtime reassignment (combat / debug flip). Updates
+/// **only** the Minor Nation's `capitalProvinceId` and `capitalTile`; does not place
+/// ports/roads, does not change any province's `townTileKey` or `townDevelopmentLevel`.
+/// SPEC/game/capital-and-connectivity § Capital loss and reassignment.
+Game setCapitalForMinorReassignment({
+  required Game game,
+  required String minorId,
+  required String provinceId,
+  required CapitalTile tile,
+}) {
+  if (tile.provinceId != provinceId) {
+    throw CapitalTileMismatchException(
+      details:
+          'Capital tile province ${tile.provinceId} does not match $provinceId',
+    );
+  }
+  final updatedMinors = game.minorNations
+      .map(
+        (m) => m.id != minorId
+            ? m
+            : m.copyWith(capitalProvinceId: provinceId, capitalTile: tile),
+      )
+      .toList();
+  return game.copyWith(minorNations: updatedMinors);
+}
+
+/// Sets [tribeId]'s capital after runtime reassignment (combat / debug flip). Updates
+/// **only** the Tribe's `capitalProvinceId` and `capitalTile`; does not place ports/roads,
+/// does not change any province's `townTileKey` or `townDevelopmentLevel`.
+/// SPEC/game/capital-and-connectivity § Capital loss and reassignment.
+Game setCapitalForTribeReassignment({
+  required Game game,
+  required String tribeId,
+  required String provinceId,
+  required CapitalTile tile,
+}) {
+  if (tile.provinceId != provinceId) {
+    throw CapitalTileMismatchException(
+      details:
+          'Capital tile province ${tile.provinceId} does not match $provinceId',
+    );
+  }
+  final updatedTribes = game.tribes
+      .map(
+        (t) => t.id != tribeId
+            ? t
+            : t.copyWith(capitalProvinceId: provinceId, capitalTile: tile),
+      )
+      .toList();
+  return game.copyWith(tribes: updatedTribes);
 }
 
 /// Sets a Minor Nation's capital. Port/road applied only when province is sea-bound.
@@ -337,6 +390,8 @@ Game setCapitalForMinorNation({
     return m.copyWith(capitalProvinceId: provinceId, capitalTile: tile);
   }).toList();
 
+  // Atomic multi-field mutation (worldState + minorNations); kept as raw
+  // copyWith per Issue #2836 AC 6 single-field-only helper scope.
   return game.copyWith(worldState: worldState, minorNations: updatedMinors);
 }
 
@@ -373,6 +428,8 @@ Game setCapitalForTribe({
     return t.copyWith(capitalProvinceId: provinceId, capitalTile: tile);
   }).toList();
 
+  // Atomic multi-field mutation (worldState + tribes); kept as raw copyWith
+  // per Issue #2836 AC 6 single-field-only helper scope.
   return game.copyWith(worldState: worldState, tribes: updatedTribes);
 }
 

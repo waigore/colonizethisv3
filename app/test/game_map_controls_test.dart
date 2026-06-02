@@ -21,10 +21,12 @@ void main() {
         body: GameMapControls(
           sideMenuOpen: false,
           onToggleSideMenu: () {},
+          onPausePressed: () {},
           onNextTurn: onNextTurn,
           nextTurnEnabled: nextTurnEnabled,
           regionIndex: 0,
           onRegionIndexChanged: (_) {},
+          turnDisplayText: 'Turn 1 / Year 1600',
           nextTurnText: 'Next turn',
           cargoUsed: 0,
           cargoCapacity: 0,

@@ -1,6 +1,7 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
+import '../world/province_lookup.dart';
 import '../world/unit_lookup.dart';
 
 /// Battle context for one contested province. SPEC/program/combat-resolution.md.
@@ -113,7 +114,7 @@ List<BattleContext> detectConflicts(Game game, Orders orders) {
   final armiesByOwnerAndProvince = _indexArmiesByOwnerAndProvince(
     game.worldState.armies,
   );
-  final unitById = unitsByIdFromWorld(game.worldState);
+  final unitById = game.worldState.allUnitsById;
   final gpIds = {for (final p in game.players) p.id};
 
   void processRegion(RegionData region) {
@@ -257,19 +258,18 @@ List<BattleContext> detectConflicts(Game game, Orders orders) {
       if (attackers.isEmpty) continue;
 
       final defenderUnitIdSet = defenderUnits.map((u) => u.id).toSet();
-      final defenderArmies = [
-        ...?armiesByOwnerAndProvince[defenderFactionId]?[provinceId],
-      ]
-        ..retainWhere(
-          (army) => army.regimentUnitIds.any(defenderUnitIdSet.contains),
-        )
-        ..sort((a, b) {
-          final countCmp = b.regimentUnitIds.length.compareTo(
-            a.regimentUnitIds.length,
-          );
-          if (countCmp != 0) return countCmp;
-          return a.id.compareTo(b.id);
-        });
+      final defenderArmies =
+          [...?armiesByOwnerAndProvince[defenderFactionId]?[provinceId]]
+            ..retainWhere(
+              (army) => army.regimentUnitIds.any(defenderUnitIdSet.contains),
+            )
+            ..sort((a, b) {
+              final countCmp = b.regimentUnitIds.length.compareTo(
+                a.regimentUnitIds.length,
+              );
+              if (countCmp != 0) return countCmp;
+              return a.id.compareTo(b.id);
+            });
       String? primaryDefenderArmyId;
       if (defenderArmies.isNotEmpty) {
         primaryDefenderArmyId = defenderArmies.first.id;
@@ -297,8 +297,7 @@ List<BattleContext> detectConflicts(Game game, Orders orders) {
     }
   }
 
-  processRegion(game.worldState.oldWorld);
-  processRegion(game.worldState.newWorld);
+  game.worldState.forEachRegion((_, region) => processRegion(region));
 
   contexts.sort((a, b) {
     final regionCompare = a.regionId.compareTo(b.regionId);

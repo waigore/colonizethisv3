@@ -107,4 +107,18 @@ rules:
         - armies
         - fleets
       relative_path_prefix: packages/colonizethis_logic/lib/src/
+  - id: redundant_where_to_list_where_chain
+    message: >-
+      Do not chain .where(...).toList().where(...).
+    match:
+      kind: redundant_where_to_list_where_chain
+  - id: nested_world_state_copywith
+    message: >-
+      Do not chain Game.copyWith(worldState: ...copyWith(...copyWith(...)))
+      across three or more nesting levels in
+      packages/colonizethis_logic/lib/. Use updateWorldState/updateTurnState.
+    match:
+      kind: nested_world_state_copywith
+      relative_path_prefix: packages/colonizethis_logic/lib/
+      outer_argument_name: worldState
 ''';

@@ -26,6 +26,8 @@ Map<String, Object?> orderCountsByDomain(String playerId, Orders orders) {
         (orders.navalMissionOrdersByPlayerId[playerId] ??
                 const <NavalMissionOrder>[])
             .length,
+    'trade':
+        (orders.tradeOrdersByPlayerId[playerId] ?? const <TradeOrder>[]).length,
   };
 }
 
@@ -107,6 +109,16 @@ List<Map<String, Object?>> finalAggregatedOrders(
       'mission': order.mission,
       'targetProvinceId': order.targetProvinceId,
       'targetPortId': order.targetPortId,
+    });
+  }
+  for (final order
+      in orders.tradeOrdersByPlayerId[playerId] ?? const <TradeOrder>[]) {
+    aggregated.add(<String, Object?>{
+      'domain': 'trade',
+      'commodityId': order.commodityId,
+      'type': order.type.name,
+      'quantity': order.quantity,
+      'priority': order.priority,
     });
   }
   return List<Map<String, Object?>>.unmodifiable(aggregated);

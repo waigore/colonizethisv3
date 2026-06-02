@@ -382,3 +382,17 @@ class RegimentEconomyCatalog {
     for (final e in all) e.id: e,
   };
 }
+
+/// Minimum [RegimentEconomy.buildTreasuryCost] across the catalog.
+///
+/// Shared by AI planners and world-market lock-recovery (Refs #2924).
+/// Linear in catalog size; cached callers should memoize if hot.
+int cheapestRegimentBuildTreasuryCost() {
+  var min = 999999999;
+  for (final econ in RegimentEconomyCatalog.byId.values) {
+    if (econ.buildTreasuryCost < min) {
+      min = econ.buildTreasuryCost;
+    }
+  }
+  return min;
+}

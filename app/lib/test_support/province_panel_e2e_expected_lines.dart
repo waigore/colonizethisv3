@@ -1,3 +1,9 @@
+// coverage:ignore-file
+// E2E test fixture; exercised only by integration_test scenarios (which do not
+// run in `flutter test test/`). Pulled into the test isolate's import graph by
+// `app/integration_test/e2e_test_shared_panel_text_match.dart` (Refs #2336);
+// excluded from the app coverage gate using the same convention as
+// `app/lib/widgetbook/catalog*.dart`.
 // Expected plain-text lines for ProvinceSeaZoneDetailOverlay wide layout (scroll column).
 // Mirrors app/lib/features/game/widgets/province_sea_zone_detail_overlay.dart for e2e.
 // If drift fails tests, align this file with the overlay widget.
@@ -6,6 +12,7 @@ import 'package:colonizethis_data/colonizethis_data.dart' show isMilitaryUnit;
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_map/colonizethis_map.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
+import 'package:colonizethis_app/core/utils/prefixed_id.dart';
 import 'package:colonizethis_app/l10n/l10n.dart';
 import 'package:colonizethis_app/config/ct_e2e_last_panel_snapshot.dart';
 import 'package:colonizethis_app/features/game/widgets/province_panel_labels.dart';
@@ -44,9 +51,8 @@ List<String> provincePanelWideLayoutExpectedTexts(
   final draftOrders = snap.draftOrders;
   final selectedTileKey = snap.selectedTileKey;
 
-  final parts = provinceId.split('|');
-  final regionId = parts.isNotEmpty ? parts[0] : region.regionId;
-  final localProvinceId = parts.length >= 2 ? parts[1] : provinceId;
+  final regionId = prefixedIdRegionSegment(provinceId) ?? region.regionId;
+  final localProvinceId = prefixedIdLocalSegment(provinceId);
   final isFullyUnrevealed =
       region.regionId == regionId &&
       !region.cells.any(
@@ -93,8 +99,7 @@ List<String> provincePanelWideLayoutExpectedTexts(
 
   for (final tk in tileKeys) {
     final res = resourceByTile[tk];
-    final tkParts = tk.split('|');
-    if (tkParts.length < 4) continue;
+    if (tryParseTileKey(tk) == null) continue;
     if (!prospected.contains(tk)) continue;
     final imp = tileState.improvementLevel(tk);
     final visLevel = playerView.visibilityForTile(tk);
@@ -136,8 +141,13 @@ List<String> provincePanelWideLayoutExpectedTexts(
 
   final out = <String>['Province', '×'];
 
+  // Section headers render via CtSectionLabel under the dark editorial-
+  // monocle theme (Refs #2865 S4), which upper-cases the label per SPEC
+  // SPEC/ui/province-sea-zone-detail-overlay.md § Dark-theme section
+  // labels. The expected text mirror must therefore upper-case the title
+  // before adding it to the snapshot output.
   void addSection(String title, void Function() body) {
-    out.add(title);
+    out.add(title.toUpperCase());
     body();
   }
 
@@ -147,13 +157,13 @@ List<String> provincePanelWideLayoutExpectedTexts(
   });
 
   addSection('Tile', () {
-    final tkParts = selectedTileKey.split('|');
-    if (tkParts.length < 4 || tkParts[0] != region.regionId) {
+    final parsed = tryParseTileKey(selectedTileKey);
+    if (parsed == null || parsed.regionId != region.regionId) {
       out.add('—');
       return;
     }
-    final x = int.tryParse(tkParts[2]) ?? 0;
-    final y = int.tryParse(tkParts[3]) ?? 0;
+    final x = parsed.x;
+    final y = parsed.y;
     if (x < 0 || x >= region.width || y < 0 || y >= region.height) {
       out.add('—');
       return;
@@ -304,16 +314,16 @@ List<String> provincePanelWideLayoutExpectedTexts(
         }
         if (pending != null) {
           final targetLabel = workOrderTargetDisplayLabel(l10n, pending.target);
-          out.add('${u.type} (${u.id}): $targetLabel');
+          out.add('${u.type}: $targetLabel');
         } else {
           out.add(
-            '${u.type} (${u.id}): ${unitStatusDisplayLabel(l10n, u.status)}',
+            '${u.type}: ${unitStatusDisplayLabel(l10n, u.status)}',
           );
         }
       } else {
         final o = _ownerName(game, u.ownerId);
         out.add(
-          '$o — ${u.type} (${u.id}): ${unitStatusDisplayLabel(l10n, u.status)}',
+          '$o — ${u.type}: ${unitStatusDisplayLabel(l10n, u.status)}',
         );
       }
     }
@@ -393,10 +403,10 @@ String _economicTerrainTitle(String raw) {
 }
 
 String? _economicTerrainTitleForTile(RegionMapViewData region, String tk) {
-  final parts = tk.split('|');
-  if (parts.length < 4 || parts[0] != region.regionId) return null;
-  final x = int.tryParse(parts[2]) ?? -1;
-  final y = int.tryParse(parts[3]) ?? -1;
+  final parsed = tryParseTileKey(tk);
+  if (parsed == null || parsed.regionId != region.regionId) return null;
+  final x = parsed.x;
+  final y = parsed.y;
   if (x < 0 || y < 0 || x >= region.width || y >= region.height) {
     return null;
   }

@@ -1,3 +1,4 @@
+import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../dossier/evidence_rules.dart';
@@ -37,24 +38,64 @@ Game _runWarAndPeaceOrders(
   void Function(DialogueEvent)? onDialogue,
 ) {
   var relations = List<DiplomacyRelation>.from(game.diplomacyRelations);
+  final warOrders = <({String gpId, DiplomaticOrder order})>[];
+  final peaceOrders = <({String gpId, DiplomaticOrder order})>[];
   for (final entry in diploByPlayer.entries) {
     final gpId = entry.key;
     for (final order in entry.value) {
-      final updated = _applyWarPhaseOrder(
-        game: game,
-        relations: relations,
-        gpId: gpId,
-        order: order,
-        turn: turn,
-        peaceOffersByPairKey: peaceOffersByPairKey,
-        factionMembership: factionMembership,
-        onDialogue: onDialogue,
-      );
-      game = updated.game;
-      relations = updated.relations;
+      if (order.type == DiplomaticOrderType.offerPeace) {
+        peaceOrders.add((gpId: gpId, order: order));
+      } else {
+        warOrders.add((gpId: gpId, order: order));
+      }
     }
   }
+  for (final item in warOrders) {
+    final updated = _applyWarPhaseOrder(
+      game: game,
+      relations: relations,
+      gpId: item.gpId,
+      order: item.order,
+      turn: turn,
+      peaceOffersByPairKey: peaceOffersByPairKey,
+      factionMembership: factionMembership,
+      onDialogue: onDialogue,
+    );
+    game = updated.game;
+    relations = updated.relations;
+  }
+  for (final item in peaceOrders) {
+    final updated = _applyWarPhaseOrder(
+      game: game,
+      relations: relations,
+      gpId: item.gpId,
+      order: item.order,
+      turn: turn,
+      peaceOffersByPairKey: peaceOffersByPairKey,
+      factionMembership: factionMembership,
+      onDialogue: onDialogue,
+    );
+    game = updated.game;
+    relations = updated.relations;
+  }
   return game;
+}
+
+int _atWarGreatPowerCount(
+  Game game,
+  String gpId,
+  DiplomacyFactionMembership factionMembership,
+) {
+  var count = 0;
+  for (final rel in game.diplomacyRelations) {
+    if (rel.state != RelationState.atWar) continue;
+    final other = rel.factionId1 == gpId ? rel.factionId2 : rel.factionId1;
+    if (rel.factionId1 != gpId && rel.factionId2 != gpId) continue;
+    if (factionMembership.isGreatPower(other)) {
+      count++;
+    }
+  }
+  return count;
 }
 
 /// GP–GP peace offers by unordered pair (both sides must offer in same phase).
@@ -181,17 +222,50 @@ Map<String, Set<String>> _peaceOfferPairKeysForGreatPowers(
   final bothGreatPowers =
       factionMembership.isGreatPower(gpId) &&
       factionMembership.isGreatPower(targetId);
+  final offerers = peaceOffersByPairKey[key] ?? const <String>{};
+  final collapsedSurvivalPeace = bothGreatPowers &&
+      offerers.length == 1 &&
+      offerers.any(
+        (id) =>
+            oldWorldProvinceCountOwnedBy(game, id) <=
+            kStalledOldWorldProvinceThreshold,
+      );
+  final belowQuotaOutmatchedGpPeace = bothGreatPowers &&
+      offerers.length == 1 &&
+      offerers.any((id) {
+        final own = oldWorldProvinceCountOwnedBy(game, id);
+        final enemyOw = oldWorldProvinceCountOwnedBy(game, targetId);
+        final minLead = own <= kStalledOldWorldProvinceThreshold
+            ? 1
+            : kUnwinnableSoleGpMinProvinceDeficit;
+        return isBelowObserverConquestQuota(own) &&
+            enemyOw >= own + minLead;
+      });
+  final multiFrontConsolidationPeace = bothGreatPowers &&
+      offerers.length == 1 &&
+      offerers.any(
+        (id) => _atWarGreatPowerCount(game, id, factionMembership) >= 2,
+      );
+  final soleGpWarConsolidationPeace = bothGreatPowers &&
+      offerers.length == 1 &&
+      offerers.any(
+        (id) => _atWarGreatPowerCount(game, id, factionMembership) == 1,
+      );
+  final oneSidedGpPeace = collapsedSurvivalPeace ||
+      belowQuotaOutmatchedGpPeace ||
+      multiFrontConsolidationPeace ||
+      soleGpWarConsolidationPeace;
   final hasMutualOffer =
-      bothGreatPowers ? (peaceOffersByPairKey[key]?.length ?? 0) >= 2 : true;
+      !bothGreatPowers || offerers.length >= 2 || oneSidedGpPeace;
   if (rel == null || !rel.atWar) {
     return (game: game, relations: relations);
   }
   var bothSidesAgreed = true;
   if (factionMembership.isGreatPower(targetId) &&
       factionMembership.isGreatPower(gpId)) {
-    final offerers = peaceOffersByPairKey[key] ?? const <String>{};
     bothSidesAgreed =
-        offerers.contains(gpId) && offerers.contains(targetId);
+        (offerers.contains(gpId) && offerers.contains(targetId)) ||
+        oneSidedGpPeace;
   }
   if (!bothSidesAgreed) {
     return (game: game, relations: relations);

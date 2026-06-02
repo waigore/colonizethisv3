@@ -38,7 +38,10 @@ void main() {
     expect(find.byType(TechnologyPanel), findsOneWidget);
     expect(find.textContaining(player.displayName), findsOneWidget);
     expect(find.textContaining('Research slots:'), findsOneWidget);
-    expect(find.text('Researched (0):'), findsOneWidget);
+    // Dark theme uses an explicit section heading, not a count line, for
+    // the researched-techs grid (Refs #2864 S2).
+    expect(find.text('RESEARCHED TECHS'), findsOneWidget);
+    expect(find.text('None yet'), findsOneWidget);
   });
 
   testWidgets('TechnologyPanel hides edit controls when onOrdersChanged is null',
@@ -86,7 +89,11 @@ void main() {
     );
     await tester.pumpAndSettle();
     expect(find.text('None yet'), findsOneWidget);
+    // No Material Chip on the dark-theme researched grid; no
+    // ResearchedTechChip primitive rendered in the empty state either
+    // (Refs #2864 S2).
     expect(find.byType(Chip), findsNothing);
+    expect(find.byType(ResearchedTechChip), findsNothing);
   });
 
   testWidgets('TechnologyPanel shows researched tech chips when player has techs', (WidgetTester tester) async {
@@ -109,8 +116,11 @@ void main() {
       ),
     );
     await tester.pumpAndSettle();
-    expect(find.text('Researched (3):'), findsOneWidget);
-    expect(find.byType(Chip), findsNWidgets(3));
+    // Dark theme heading + three custom chip primitives (Refs #2864 S2).
+    expect(find.text('RESEARCHED TECHS'), findsOneWidget);
+    expect(find.byType(ResearchedTechChip), findsNWidgets(3));
+    // Material `Chip` is banned by the Ct-* catalog.
+    expect(find.byType(Chip), findsNothing);
   });
 
   testWidgets('TechnologyPanel shows in progress section when player has research progress', (WidgetTester tester) async {
@@ -134,7 +144,8 @@ void main() {
       ),
     );
     await tester.pumpAndSettle();
-    expect(find.text('In progress:'), findsOneWidget);
+    // CtSectionLabel renders the heading in upper case (Refs #2864 S2).
+    expect(find.text('IN PROGRESS:'), findsOneWidget);
     expect(find.textContaining('RP'), findsOneWidget);
   });
 
@@ -185,7 +196,15 @@ void main() {
     await tester.pumpAndSettle();
 
     // Choose tech is rendered for each slot when editing is enabled.
-    await tester.tap(find.text('Choose tech').first);
+    // Scroll the button into view first: SPEC/ui/technology-panel.md §
+    // Slots tab — section ordering (Refs #2864 S0/S6) places the
+    // Researched Techs grid above the Research Slots block, and with
+    // every tech unlocked the chip grid pushes the first slot card's
+    // "Choose tech" button below the default 800×600 test viewport.
+    final chooseTech = find.text('Choose tech').first;
+    await tester.ensureVisible(chooseTech);
+    await tester.pumpAndSettle();
+    await tester.tap(chooseTech);
     await tester.pumpAndSettle();
 
     expect(find.text('No techs available to research'), findsOneWidget);

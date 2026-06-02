@@ -35,6 +35,35 @@ void main() {
       expect(restored.calendarCampaignHalted, isTrue);
     });
 
+    test('infiniteMode round-trip JSON', () {
+      final game = Game(
+        id: 'g1',
+        infiniteMode: true,
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+          oldWorld: const RegionData(),
+          newWorld: const RegionData(),
+        ),
+        players: const [Player(id: 'p1', displayName: 'Spain', isHuman: true)],
+      );
+      final restored = Game.fromJson(game.toJson());
+      expect(restored.infiniteMode, isTrue);
+    });
+
+    test('infiniteMode defaults false when missing from JSON', () {
+      final game = Game(
+        id: 'g1',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+          oldWorld: const RegionData(),
+          newWorld: const RegionData(),
+        ),
+        players: const [Player(id: 'p1', displayName: 'Spain', isHuman: true)],
+      );
+      final json = game.toJson()..remove('infiniteMode');
+      expect(Game.fromJson(json).infiniteMode, isFalse);
+    });
+
     test(
       'fromJson accepts turnTimeMapping as Map<dynamic,dynamic> (Hive typing)',
       () {
@@ -318,6 +347,82 @@ void main() {
         ..remove('diplomaticHistoryEvents');
       final fromLegacy = Game.fromJson(legacy);
       expect(fromLegacy.diplomaticHistoryEvents, isEmpty);
+    });
+
+    test('worldMarketState defaults to empty and is omitted from JSON', () {
+      final game = Game(
+        id: 'g1',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+          oldWorld: const RegionData(),
+          newWorld: const RegionData(),
+        ),
+        players: const [Player(id: 'p1', displayName: 'Spain', isHuman: true)],
+      );
+      expect(game.worldMarketState, WorldMarketState.empty);
+      expect(game.toJson().containsKey('worldMarketState'), isFalse);
+    });
+
+    test('worldMarketState round-trips through JSON when populated', () {
+      final marketState = WorldMarketState.withDefaultPrices(const {
+        'timber': 30,
+        'iron': 80,
+      });
+      final game = Game(
+        id: 'g1',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 5),
+          oldWorld: const RegionData(),
+          newWorld: const RegionData(),
+        ),
+        players: const [Player(id: 'p1', displayName: 'Spain', isHuman: true)],
+        worldMarketState: marketState,
+      );
+      final restored = Game.fromJson(game.toJson());
+      // Post-#3093: prices are stored as integers (floored at persistence
+      // boundary per SPEC/game/world-market.md § Price discovery).
+      expect(restored.worldMarketState.prices['timber'], 30);
+      expect(restored.worldMarketState.prices['iron'], 80);
+      expect(restored.worldMarketState.prices['timber'], isA<int>());
+      expect(restored.worldMarketState, marketState);
+      expect(restored, game);
+      expect(restored.hashCode, game.hashCode);
+    });
+
+    test('worldMarketState defaults to empty when legacy JSON omits it', () {
+      final game = Game(
+        id: 'g1',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+          oldWorld: const RegionData(),
+          newWorld: const RegionData(),
+        ),
+        players: const [Player(id: 'p1', displayName: 'Spain', isHuman: true)],
+      );
+      final json = game.toJson()..remove('worldMarketState');
+      final restored = Game.fromJson(json);
+      expect(restored.worldMarketState, WorldMarketState.empty);
+    });
+
+    test('copyWith replaces worldMarketState', () {
+      final game = Game(
+        id: 'g1',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+          oldWorld: const RegionData(),
+          newWorld: const RegionData(),
+        ),
+        players: const [Player(id: 'p1', displayName: 'Spain', isHuman: true)],
+      );
+      final next = game.copyWith(
+        worldMarketState: WorldMarketState.withDefaultPrices(const {
+          'timber': 25,
+        }),
+      );
+      // Post-#3093: prices are stored as integers.
+      expect(next.worldMarketState.prices['timber'], 25);
+      expect(next.worldMarketState.prices['timber'], isA<int>());
+      expect(next == game, isFalse);
     });
   });
 }

@@ -1,9 +1,11 @@
+import 'package:colonizethis_app/core/utils/prefixed_id.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
 
 import '../../../l10n/l10n.dart';
 import '../../../widgets/ct_dialog_shell.dart';
+import '../../../widgets/ct_spacing.dart';
 import '../../../widgets/ct_transfer_list.dart';
 import '../utils/region_labels.dart';
 import '../utils/sea_zone_name_resolver.dart';
@@ -36,9 +38,7 @@ class SplitFleetDialog extends StatelessWidget {
     final fleet = originalFleet;
     if (fleet.isAtSea) {
       final seaZoneId = fleet.seaZoneId!;
-      final localId = seaZoneId.contains('|')
-          ? seaZoneId.split('|').last
-          : seaZoneId;
+      final localId = prefixedIdLocalSegment(seaZoneId);
       final zoneName = seaZoneDisplayName(
         game: game,
         regionId: fleet.regionId,
@@ -88,7 +88,7 @@ class SplitFleetDialog extends StatelessWidget {
       maxWidth: 520,
       maxHeight: 500,
       child: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(CtSpacing.l),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,

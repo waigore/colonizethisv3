@@ -13,6 +13,7 @@ class FakeOrderSuggestionAPIForDomainPlannerTests implements OrderSuggestionAPI 
     required this.navalMission,
     this.diplomatic = const [],
     this.armyMove = const [],
+    this.recruitWorker = const [],
   });
 
   final List<WorkOrder> work;
@@ -23,6 +24,7 @@ class FakeOrderSuggestionAPIForDomainPlannerTests implements OrderSuggestionAPI 
   final List<NavalMissionOrder> navalMission;
   final List<DiplomaticOrder> diplomatic;
   final List<ArmyMoveOrder> armyMove;
+  final List<RecruitWorkerOrder> recruitWorker;
 
   @override
   List<MoveOrder> suggestMoveOrders(
@@ -58,6 +60,14 @@ class FakeOrderSuggestionAPIForDomainPlannerTests implements OrderSuggestionAPI 
   ) => build;
 
   @override
+  List<RecruitWorkerOrder> suggestRecruitWorkerOrders(
+    PlayerView view,
+    Game game,
+    MapTopology topology,
+    Orders currentOrders,
+  ) => recruitWorker;
+
+  @override
   List<ResearchOrder> suggestResearchOrders(
     PlayerView view,
     Game game,
@@ -71,7 +81,7 @@ class FakeOrderSuggestionAPIForDomainPlannerTests implements OrderSuggestionAPI 
     Game game,
     MapTopology topology,
     Orders currentOrders, {
-    Map<String, Unit>? unitsById,
+    OrderResolutionContext? resolution,
   }) => navalMove;
 
   @override
@@ -80,7 +90,7 @@ class FakeOrderSuggestionAPIForDomainPlannerTests implements OrderSuggestionAPI 
     Game game,
     MapTopology topology,
     Orders currentOrders, {
-    Map<String, Unit>? unitsById,
+    OrderResolutionContext? resolution,
   }) => navalMission;
 
   @override
@@ -103,5 +113,13 @@ class FakeOrderSuggestionAPIForDomainPlannerTests implements OrderSuggestionAPI 
       diplomatic
           .where((o) => o.type == DiplomaticOrderType.declareWar)
           .toList();
+
+  @override
+  TradeSuggestionResult suggestTradeOrders(
+    PlayerView view,
+    Game game, {
+    TradeSuggestionContext? contextOverride,
+  }) =>
+      TradeSuggestionResult.empty;
 }
 

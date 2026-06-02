@@ -163,3 +163,26 @@ rules:
     match:
       kind: incremental_validator_for_player_in_loop
       relative_path_prefix: packages/colonizethis_logic/lib/src/
+  - id: redundant_where_to_list_where_chain
+    message: >-
+      Do not chain `.where(...).toList().where(...)`; the intermediate
+      `.toList()` allocates a `List` that the next `.where(...)` only
+      re-iterates. Combine the predicates
+      (`.where((x) => predA(x) && predB(x))`) or build the filtered list once
+      via a single-pass accumulator. Refs #2575 Phase 5,
+      SPEC/program/disallowed-ast-patterns.md.
+    match:
+      kind: redundant_where_to_list_where_chain
+  - id: nested_world_state_copywith
+    message: >-
+      Do not chain `Game.copyWith(worldState: ...copyWith(...copyWith(...)))`
+      across three or more levels in `packages/colonizethis_logic/lib/`.
+      Funnel multi-level world-state mutations through
+      `Game.updateWorldState(...)` / `WorldState.updateTurnState(...)` (see
+      `packages/colonizethis_logic/lib/src/world/game_world_mutations.dart`)
+      so each call site stays at one mutation level. Refs #2560,
+      SPEC/program/disallowed-ast-patterns.md.
+    match:
+      kind: nested_world_state_copywith
+      relative_path_prefix: packages/colonizethis_logic/lib/
+      outer_argument_name: worldState

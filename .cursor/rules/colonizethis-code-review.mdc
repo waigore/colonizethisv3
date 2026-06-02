@@ -18,5 +18,5 @@ When reviewing or generating code, apply this checklist. Canonical policy lives 
 - **Logging:** Runtime logs use `logger`; no `print` (see `colonizethis-core-principles.mdc`).
 - **Flame/Flutter boundary:** No game logic in Flutter `build`.
 - **Reuse:** Check `app/lib/core/utils/`, `app/lib/widgets/`, `app/lib/config/`, `packages/*/lib/src/` before adding.
-- **New widgets:** Catalog + Widgetbook registration (see `colonizethis-ui-design.mdc`).
+- **New screens/widgets:** Screen spec + stable ID per `colonizethis-ui-documentation.mdc`; catalog + Widgetbook per `colonizethis-ui-design.mdc`.
 - **Tests:** Critical paths covered; thresholds and test layers follow `colonizethis-testing.mdc`.

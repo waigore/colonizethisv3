@@ -1,5 +1,6 @@
 # Player Turn Event Feed (map overlay + news toggle)
 
+**Screen ID:** `OVL70001` — stable; do not reassign.
 **SPEC/ui** - Human-player-scoped turn outcomes feed rendered over the in-game map. Uses existing bus wiring (`GameEventBus -> GameEventBridge -> AppEventBus`) and commits one batch per resolved turn.
 
 ---
@@ -51,6 +52,25 @@ Authoritative placement rules are under **Responsibility** (news toggle, wide fe
 
 - **Feed card content**: no `Events` title row; render only event rows or empty-state text.
 
+### Card chrome (dark editorial-monocle)
+
+The floating card uses the canonical dark-theme primitives so it sits next to the empire rail / players bar / minimap with consistent chrome. Issue #2861 S7 anchors this contract:
+
+- Card surface paints `CtGradients.panelGradient` (vertical `--surface` → `--bg`) framed by a `1` dp brass border resolved from `EditorialMonoclePalette.accentDim`. No hard-coded hex literals; no `Material(color: Colors.black…)` legacy chrome.
+- **Wide layout** (host width `>= kNarrowBreakpoint`, i.e. >= 600 dp): card width is `kGameMapWideProvinceSidePanelWidth` (320 dp). The 320 dp anchor keeps feed + open province panel from sitting side-by-side without the wide inset.
+- **Narrow layout** (host width `< kNarrowBreakpoint`, i.e. `< 600` dp; issue #2870 S3 / Req 11): card width is `clamp(180, viewport.width * 0.5, 260)` dp, mirroring the mockup `.news-feed-card @media (max-width:600px) { width:clamp(180px, 50vw, 260px); }` rule from `SPEC/ui/mockups/GAME10001-game-screen.html`. The lower bound (180 dp) preserves a readable two-line entry at 320 dp viewports; the upper bound (260 dp) keeps the card within the available map-stack right column. The province bottom sheet on narrow covers the card from the bottom (no wide inset applies).
+- Inner padding is `10` dp on all sides; the scroll viewport is capped at `220` dp tall.
+- Event rows: body text resolves to `EditorialMonoclePalette.fg`; tappable rows wrap in a `Material(color: Colors.transparent) + InkWell` whose press / hover / splash colour resolves to `EditorialMonoclePalette.surfaceLite`.
+- Empty-state copy resolves to `EditorialMonoclePalette.muted` italic; renders the localized "No major events last turn." string (or `emptyLabel` host override) as one centred line without an `Events` title row.
+
+### Toggle button chrome (dark editorial-monocle)
+
+The newspaper toggle lives in [`GameTabBar`](../../app/lib/features/game/widgets/game_tab_bar.dart)'s trailing slot. Issue #2861 S7 anchors this contract:
+
+- The toggle surface is a 28 dp transparent `Material + InkWell` (no opaque black background); the surrounding `GameTabBar` chrome supplies the visual frame.
+- Newspaper glyph paints at 20 dp and resolves to `EditorialMonoclePalette.accent` while the feed is closed and `EditorialMonoclePalette.accentBright` while the feed is open (so the open state reads as "lit").
+- Unread-count badge background resolves to `EditorialMonoclePalette.danger` at 0.95 alpha; badge text resolves to `EditorialMonoclePalette.bg`. The pill renders 99+ overflow and never falls back to `Colors.redAccent` / `Colors.white`.
+
 ---
 
 ## Acceptance criteria (Given-When-Then)
@@ -71,5 +91,20 @@ Authoritative placement rules are under **Responsibility** (news toggle, wide fe
 - Given a legacy save where `mapViewState.showPlayerTurnEventsFeed` is absent, when the game loads, then the loaded value defaults to `false`.
 - Given a wide-layout map shell with `mapViewState.showPlayerTurnEventsFeed = true` and `mapProvincePanelProvider.overlayOpen = true`, when The UI layer positions the floating feed card on the map stack, then the feed card’s enclosing `Positioned.right` equals **`kGameMapWideStackRightGutter + kGameMapWideProvinceSidePanelWidth`** logical pixels (same numeric rule as the region minimap for that state).
 - Given a wide-layout map shell with `mapViewState.showPlayerTurnEventsFeed = true` and `mapProvincePanelProvider.overlayOpen = false`, when The UI layer positions the floating feed card on the map stack, then the feed card’s enclosing `Positioned.right` equals **`kGameMapWideStackRightGutter`** logical pixels.
+- Given a wide-layout (`>= 600` dp host width) map shell with `mapViewState.showPlayerTurnEventsFeed = true`, when The UI layer renders the `PlayerTurnEventFeedCard`, then the card paints at width `kGameMapWideProvinceSidePanelWidth` (320 dp) (issue #2861 S7).
+- Given a narrow-layout (`< 600` dp host width) map shell with `mapViewState.showPlayerTurnEventsFeed = true`, when The UI layer renders the `PlayerTurnEventFeedCard`, then the card paints at width `clamp(180, viewport.width * 0.5, 260)` dp per the mockup `.news-feed-card @media (max-width:600px)` rule (issue #2870 S3 / Req 11).
+- Given a narrow-layout (`< 600` dp host width) map shell with `mapViewState.showPlayerTurnEventsFeed = true` and `mapProvincePanelProvider.overlayOpen = false`, when The UI layer positions the floating feed card on the map stack, then the feed card's enclosing `Positioned.right` equals **`kMapOverlayEdgeInset`** logical pixels (no wide inset applies on narrow; issue #2870 S3 / Req 11).
+- Given a narrow-layout (`< 600` dp host width) map shell with `mapViewState.showPlayerTurnEventsFeed = true` and `mapProvincePanelProvider.overlayOpen = true`, when The UI layer positions the floating feed card on the map stack, then the feed card's enclosing `Positioned.right` still equals **`kMapOverlayEdgeInset`** logical pixels (the narrow province bottom sheet covers the card from the bottom, not the right, so `gameMapWideOverlayRightInset` MUST NOT apply on narrow; issue #2870 S3 / Req 11).
 - Given a wide-layout map shell with the province side panel open, when the UI renders, then the news icon toggle is a descendant of **GameMapControls** and is not placed as a top-level overlay sibling on the map-area `Stack` that ignores the province column.
 - Given a narrow-layout map shell with the province bottom sheet open, when the UI renders, then the news icon toggle remains inside **GameMapControls** (not a map-stack overlay), so The Player can reach the sheet’s close control without the toggle blocking it.
+
+### Card and toggle chrome (dark editorial-monocle; issue #2861 S7)
+
+- Given the floating feed card renders with at least one entry, when the UI builds the card chrome, then the card’s `DecoratedBox` paints `CtGradients.panelGradient` and a 1 dp `Border.all(color: EditorialMonoclePalette.accentDim, width: 1)`; the legacy `Material(color: Colors.black…)` chrome does not paint inside the card subtree.
+- Given the floating feed card renders with a non-empty entry list, when an event row builds, then the body `Text.style.color` resolves to `EditorialMonoclePalette.fg`; no row paints text in the legacy `Colors.white` token.
+- Given the floating feed card renders with zero entries, when the empty-state copy builds, then the label `Text.style.color` resolves to `EditorialMonoclePalette.muted` and `Text.style.fontStyle == FontStyle.italic`; no row paints text in the legacy `Colors.white70` token.
+- Given the floating feed card renders with at least one tappable entry, when the row builds, then the row is wrapped in a `Material(color: Colors.transparent) + InkWell` whose `splashColor`, `highlightColor`, and `hoverColor` resolve to `EditorialMonoclePalette.surfaceLite`.
+- Given the newspaper toggle button renders with `showFeed == false`, when the glyph paints, then the `Icon.color` resolves to `EditorialMonoclePalette.accent` and the icon data is `Icons.newspaper_outlined`.
+- Given the newspaper toggle button renders with `showFeed == true`, when the glyph paints, then the `Icon.color` resolves to `EditorialMonoclePalette.accentBright` and the icon data is `Icons.newspaper`.
+- Given the newspaper toggle button renders with `eventCount > 0`, when the badge paints, then the badge `Container` decoration uses a colour resolved from `EditorialMonoclePalette.danger` (alpha 0.95) and the badge `Text.style.color` resolves to `EditorialMonoclePalette.bg`; the badge does not paint with `Colors.redAccent` or `Colors.white`.
+- Given any host renders `PlayerTurnEventFeedCard` or `PlayerTurnEventsFeedToggleButton`, when the widget tree is statically inspected for hard-coded `Color` literals (`Colors.black*`, `Colors.white*`, `Colors.redAccent`), then those legacy literals do not appear inside either widget’s source file.

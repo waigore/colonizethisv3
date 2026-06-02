@@ -7,6 +7,7 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
+import 'observer_minimal_trace.dart';
 import 'observer_snapshot_v1.dart';
 import 'package_logger.dart';
 
@@ -24,6 +25,10 @@ Future<int> runObserverSession({
   required String outputRoot,
   required GameSetupConfig setupConfig,
   int? maxTurnsCap,
+  bool verifyConquest = false,
+  bool verifyColonialExpansion = false,
+  bool verifyWorkforce = false,
+  int verifyArtifactCapBytes = kObserverVerifyArtifactSizeCapBytes,
 }) async {
   late final InitGameResult init;
   try {
@@ -40,15 +45,59 @@ Future<int> runObserverSession({
     return 2;
   }
 
+  final minimalTraceMode =
+      verifyConquest || verifyColonialExpansion || verifyWorkforce;
+  final requiredSnapshotTurns = minimalTraceMode
+      ? requiredObserverSnapshotTurns(
+          verifyConquest: verifyConquest,
+          verifyColonialExpansion: verifyColonialExpansion,
+          verifyWorkforce: verifyWorkforce,
+        )
+      : null;
+
+  TurnTraceFileExporter? exporter;
+  if (!minimalTraceMode) {
+    exporter = TurnTraceFileExporter(
+      rootDirectory: '$outputRoot/observer-traces',
+      traceDirectorySegment: '',
+      pruningEnabled: false,
+    );
+  }
+
   Game game = _greatPowersAiOnly(init.game);
-  final exporter = TurnTraceFileExporter(
-    rootDirectory: '$outputRoot/observer-traces',
-    traceDirectorySegment: '',
-    pruningEnabled: false,
-  );
+  final traceRoot = '$outputRoot/observer-traces';
+  final artifactBudget = minimalTraceMode
+      ? ObserverArtifactBudget(capBytes: verifyArtifactCapBytes)
+      : null;
 
   var resolvedCount = 0;
   var terminationReason = 'unknown';
+
+  Future<void> writeTraceArtifact(
+    String gameId,
+    String relativeName,
+    String content,
+  ) async {
+    final budget = artifactBudget;
+    final byteLength = utf8.encode(content).length;
+    if (budget != null) {
+      if (budget.wouldExceed(byteLength)) {
+        stderr.writeln(
+          'observer:artifact_size_cap_exceeded gameId=$gameId '
+          'capBytes=${budget.capBytes} '
+          'written=${budget.bytesWritten} '
+          'nextWrite=$byteLength',
+        );
+        throw _ArtifactSizeCapExceeded();
+      }
+    }
+
+    final traceDir = Directory('$traceRoot/$gameId');
+    await traceDir.create(recursive: true);
+    await File('${traceDir.path}/$relativeName').writeAsString(content);
+
+    budget?.recordBytes(byteLength);
+  }
 
   try {
     while (true) {
@@ -82,19 +131,63 @@ Future<int> runObserverSession({
         (pid, plan) => MapEntry(pid, plan.productionAssignments),
       );
 
-      final phaseTraces = <TurnTracePhaseTrace>[];
-      final traceStartedAt = DateTime.now().toUtc();
-      final traceRuntime = TurnTraceRuntime();
+      Map<String, Map<String, int>>? lastTurnProductionByRecipeByPlayerId;
+      void captureProductionComplete(
+        Map<String, Map<String, int>> productionByRecipeByPlayerId,
+      ) {
+        lastTurnProductionByRecipeByPlayerId = productionByRecipeByPlayerId.map(
+          (pid, byRecipe) =>
+              MapEntry(pid, Map<String, int>.unmodifiable(byRecipe)),
+        );
+      }
 
-      final result = validateOrdersAndResolveTurnFromTrustedOrders(
-        game: gameForResolution,
-        topology: init.combinedTopology,
-        orders: mergedOrders,
-        tileMapByRegion: init.tileMapByRegion,
-        defaultAssignmentsByPlayerId: defaultAssignmentsByPlayerId,
-        onTurnTracePhase: phaseTraces.add,
-        turnTraceRuntime: traceRuntime,
-      );
+      final TurnResolutionResult result;
+      if (minimalTraceMode) {
+        result = validateOrdersAndResolveTurnFromTrustedOrders(
+          game: gameForResolution,
+          topology: init.combinedTopology,
+          orders: mergedOrders,
+          tileMapByRegion: init.tileMapByRegion,
+          defaultAssignmentsByPlayerId: defaultAssignmentsByPlayerId,
+          onProductionComplete: captureProductionComplete,
+        );
+      } else {
+        final phaseTraces = <TurnTracePhaseTrace>[];
+        final traceStartedAt = DateTime.now().toUtc();
+        final traceRuntime = TurnTraceRuntime();
+
+        result = validateOrdersAndResolveTurnFromTrustedOrders(
+          game: gameForResolution,
+          topology: init.combinedTopology,
+          orders: mergedOrders,
+          tileMapByRegion: init.tileMapByRegion,
+          defaultAssignmentsByPlayerId: defaultAssignmentsByPlayerId,
+          onProductionComplete: captureProductionComplete,
+          onTurnTracePhase: phaseTraces.add,
+          turnTraceRuntime: traceRuntime,
+        );
+
+        if (result is TurnResolutionComplete) {
+          final nowUtc = DateTime.now().toUtc();
+          final document = TurnTraceMergedDocument(
+            schemaVersion: kTurnTraceSchemaVersionV1,
+            meta: TurnTraceMeta(
+              gameId: before.id,
+              turnNumber: before.worldState.turnState.turnNumber,
+              traceEnabled: true,
+              source: 'run_observer_game',
+              exportedAt: nowUtc.toIso8601String(),
+              turnStartAt: traceStartedAt.toIso8601String(),
+              turnEndAt: nowUtc.toIso8601String(),
+            ),
+            ai: List<TurnTraceAiSection>.unmodifiable(fullAi.aiTraceSections),
+            turnResolution: TurnTraceResolutionSection(
+              phases: List<TurnTracePhaseTrace>.unmodifiable(phaseTraces),
+            ),
+          );
+          await exporter!.export(document);
+        }
+      }
 
       if (result is! TurnResolutionComplete) {
         _sessionLog.e(
@@ -106,50 +199,44 @@ Future<int> runObserverSession({
 
       game = requireTurnResolutionComplete(result);
 
-      final nowUtc = DateTime.now().toUtc();
-      final document = TurnTraceMergedDocument(
-        schemaVersion: kTurnTraceSchemaVersionV1,
-        meta: TurnTraceMeta(
-          gameId: before.id,
-          turnNumber: before.worldState.turnState.turnNumber,
-          traceEnabled: true,
-          source: 'run_observer_game',
-          exportedAt: nowUtc.toIso8601String(),
-          turnStartAt: traceStartedAt.toIso8601String(),
-          turnEndAt: nowUtc.toIso8601String(),
-        ),
-        ai: List<TurnTraceAiSection>.unmodifiable(fullAi.aiTraceSections),
-        turnResolution: TurnTraceResolutionSection(
-          phases: List<TurnTracePhaseTrace>.unmodifiable(phaseTraces),
-        ),
-      );
-      await exporter.export(document);
-
       final postTurn = game.worldState.turnState.turnNumber;
       final turnLabel = postTurn.toString().padLeft(6, '0');
 
-      final traceDir = Directory('${exporter.rootDirectory}/${before.id}');
+      final writeSnapshot = requiredSnapshotTurns == null ||
+          requiredSnapshotTurns.contains(postTurn);
+      if (writeSnapshot) {
+        final snap = buildObserverSnapshotJson(
+          game,
+          postResolutionTurnNumber: postTurn,
+          tileMapByRegion: init.tileMapByRegion,
+          lastTurnProductionByRecipeByPlayerId:
+              lastTurnProductionByRecipeByPlayerId,
+        );
+        final snapshotText = encodeObserverSnapshotJson(snap);
+        await writeTraceArtifact(
+          before.id,
+          'turn-$turnLabel.snapshot.json',
+          snapshotText,
+        );
 
-      final snap = buildObserverSnapshotJson(
-        game,
-        postResolutionTurnNumber: postTurn,
-        tileMapByRegion: init.tileMapByRegion,
-      );
-      final snapshotText = encodeObserverSnapshotJson(snap);
-      await File(
-        '${traceDir.path}/turn-$turnLabel.snapshot.json',
-      ).writeAsString(snapshotText);
-      await File(
-        '${traceDir.path}/turn-$turnLabel.html',
-      ).writeAsString(renderObserverSnapshotHtml(snapshotText.trimRight()));
+        if (!minimalTraceMode) {
+          await writeTraceArtifact(
+            before.id,
+            'turn-$turnLabel.html',
+            renderObserverSnapshotHtml(snapshotText.trimRight()),
+          );
+        }
+      }
 
       resolvedCount++;
 
       _sessionLog.i(
         'observer:turn_resolved count=$resolvedCount postTurn=$postTurn '
-        'gameId=${game.id}',
+        'gameId=${game.id} minimalTrace=$minimalTraceMode',
       );
     }
+  } on _ArtifactSizeCapExceeded {
+    return kExitArtifactSizeCapExceeded;
   } on Object catch (e, st) {
     _sessionLog.e('observer:run_loop_failed', error: e, stackTrace: st);
     stderr.writeln('observer:run_loop_failed: $e');
@@ -157,7 +244,7 @@ Future<int> runObserverSession({
     return 2;
   }
 
-  final summaryDir = Directory('$outputRoot/observer-traces/${game.id}');
+  final summaryDir = Directory('$traceRoot/${game.id}');
   await summaryDir.create(recursive: true);
 
   final winnerId = game.victory != null
@@ -173,11 +260,18 @@ Future<int> runObserverSession({
     'seed': setupConfig.seed,
     'game_id': game.id,
     'observer_traces_relative': 'observer-traces/${game.id}',
+    if (minimalTraceMode) 'minimal_trace_mode': true,
   };
 
-  await File(
-    '${summaryDir.path}/run-summary.json',
-  ).writeAsString('${const JsonEncoder.withIndent('  ').convert(summary)}\n');
+  final summaryText =
+      '${const JsonEncoder.withIndent('  ').convert(summary)}\n';
+  try {
+    await writeTraceArtifact(game.id, 'run-summary.json', summaryText);
+  } on _ArtifactSizeCapExceeded {
+    return kExitArtifactSizeCapExceeded;
+  }
 
   return 0;
 }
+
+class _ArtifactSizeCapExceeded implements Exception {}

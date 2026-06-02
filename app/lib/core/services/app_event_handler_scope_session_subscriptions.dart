@@ -27,17 +27,40 @@ extension _SessionCommands on _AppEventHandlerScopeState {
       return;
     }
     ref.read(currentGameProvider.notifier).setGame(nextGame);
-    ref.read(gameServiceProvider).saveGame(nextGame);
+    ref.read(gameServiceProvider).saveGame(
+      ref
+          .read(observeSessionProvider.notifier)
+          .prepareGameForPersistence(nextGame),
+    );
     _showSnackBar(ShowSnackBarEvent(message: result.message));
   }
 
+  bool _rejectUiMutationIfObserving() =>
+      rejectUiMutationIfObserving(ref, _showSnackBar);
+
   List<StreamSubscription<dynamic>> _sessionCommandListeners(AppEventBus bus) {
     return [
+      bus.on<SetObserveModeOffEvent>().listen((_) {
+        _unlessTurnResolutionBlocksSession(ref, 'SetObserveModeOffEvent', () {
+          applySetObserveModeOff(ref);
+        });
+      }),
+      bus.on<SetObserveModeGlobalEvent>().listen((_) {
+        _unlessTurnResolutionBlocksSession(ref, 'SetObserveModeGlobalEvent', () {
+          applySetObserveModeGlobal(ref);
+        });
+      }),
+      bus.on<SetObserveModePlayerEvent>().listen((e) {
+        _unlessTurnResolutionBlocksSession(ref, 'SetObserveModePlayerEvent', () {
+          applySetObserveModePlayer(ref, e.targetPlayerId);
+        });
+      }),
       bus.on<RemovePendingWorkOrderRequestedEvent>().listen((e) {
         _unlessTurnResolutionBlocksSession(
           ref,
           'RemovePendingWorkOrderRequestedEvent',
           () {
+            if (_rejectUiMutationIfObserving()) return;
             final current = ref.read(currentOrdersProvider);
             final updated = removePendingWorkOrderAt(
               current,
@@ -53,6 +76,7 @@ extension _SessionCommands on _AppEventHandlerScopeState {
           ref,
           'UpsertPendingCivilianWorkOrderRequestedEvent',
           () {
+            if (_rejectUiMutationIfObserving()) return;
             final current = ref.read(currentOrdersProvider);
             final playerId = e.playerId;
             final workOrder = e.workOrder;
@@ -125,11 +149,16 @@ extension _SessionCommands on _AppEventHandlerScopeState {
           ref,
           'CancelInProgressCivilianWorkRequestedEvent',
           () {
+            if (_rejectUiMutationIfObserving()) return;
             final game = ref.read(currentGameProvider);
             if (game == null) return;
             final newGame = clearUnitCurrentWork(game, e.unitId);
             ref.read(currentGameProvider.notifier).setGame(newGame);
-            ref.read(gameServiceProvider).saveGame(newGame);
+            ref.read(gameServiceProvider).saveGame(
+              ref
+                  .read(observeSessionProvider.notifier)
+                  .prepareGameForPersistence(newGame),
+            );
           },
         );
       }),
@@ -143,6 +172,7 @@ extension _SessionCommands on _AppEventHandlerScopeState {
           ref,
           'NavalSplitFleetRequestedEvent',
           () {
+            if (_rejectUiMutationIfObserving()) return;
             final g = ref.read(currentGameProvider);
             if (g == null) return;
             final newGame = applyNavalSplitFleet(
@@ -160,6 +190,7 @@ extension _SessionCommands on _AppEventHandlerScopeState {
           ref,
           'NavalTransferShipsRequestedEvent',
           () {
+            if (_rejectUiMutationIfObserving()) return;
             final g = ref.read(currentGameProvider);
             if (g == null) return;
             final newGame = applyNavalTransferShipsBetweenFleets(
@@ -178,6 +209,7 @@ extension _SessionCommands on _AppEventHandlerScopeState {
           ref,
           'NavalMoveFleetRequestedEvent',
           () {
+            if (_rejectUiMutationIfObserving()) return;
             final o = ref.read(currentOrdersProvider);
             ref
                 .read(currentOrdersProvider.notifier)
@@ -197,6 +229,7 @@ extension _SessionCommands on _AppEventHandlerScopeState {
           ref,
           'ArmyCombineRequestedEvent',
           () {
+            if (_rejectUiMutationIfObserving()) return;
             final g = ref.read(currentGameProvider);
             if (g == null) return;
             final next = applyArmyCombine(
@@ -210,6 +243,7 @@ extension _SessionCommands on _AppEventHandlerScopeState {
       }),
       bus.on<ArmySplitRequestedEvent>().listen((e) {
         _unlessTurnResolutionBlocksSession(ref, 'ArmySplitRequestedEvent', () {
+          if (_rejectUiMutationIfObserving()) return;
           final g = ref.read(currentGameProvider);
           if (g == null) return;
           final next = applyArmySplit(
@@ -223,6 +257,7 @@ extension _SessionCommands on _AppEventHandlerScopeState {
       }),
       bus.on<ArmyMoveRequestedEvent>().listen((e) {
         _unlessTurnResolutionBlocksSession(ref, 'ArmyMoveRequestedEvent', () {
+          if (_rejectUiMutationIfObserving()) return;
           final g = ref.read(currentGameProvider);
           if (g == null) return;
           final topo =
@@ -287,9 +322,10 @@ extension _SessionCommands on _AppEventHandlerScopeState {
           ref,
           'TrainCivilianBuildOrdersCommittedEvent',
           () {
+            if (_rejectUiMutationIfObserving()) return;
             final g = ref.read(currentGameProvider);
             if (g == null) return;
-            final pid = _AppEventHandlerScopeState._humanPlayerId(g);
+            final pid = shellPanelPlayerId(ref, g);
             final o = ref.read(currentOrdersProvider);
             ref
                 .read(currentOrdersProvider.notifier)
@@ -309,9 +345,10 @@ extension _SessionCommands on _AppEventHandlerScopeState {
           ref,
           'TrainMilitaryBuildOrdersCommittedEvent',
           () {
+            if (_rejectUiMutationIfObserving()) return;
             final g = ref.read(currentGameProvider);
             if (g == null) return;
-            final pid = _AppEventHandlerScopeState._humanPlayerId(g);
+            final pid = shellPanelPlayerId(ref, g);
             final o = ref.read(currentOrdersProvider);
             ref
                 .read(currentOrdersProvider.notifier)
@@ -437,6 +474,7 @@ extension _SessionCommands on _AppEventHandlerScopeState {
           ref,
           'AppendDiplomaticOrderRequestedEvent',
           () {
+            if (_rejectUiMutationIfObserving()) return;
             final current = ref.read(currentOrdersProvider);
             ref
                 .read(currentOrdersProvider.notifier)
@@ -451,6 +489,7 @@ extension _SessionCommands on _AppEventHandlerScopeState {
           ref,
           'RemoveDiplomaticOrderRequestedEvent',
           () {
+            if (_rejectUiMutationIfObserving()) return;
             final current = ref.read(currentOrdersProvider);
             ref
                 .read(currentOrdersProvider.notifier)
@@ -478,7 +517,11 @@ extension _SessionCommands on _AppEventHandlerScopeState {
             return;
           }
           ref.read(currentGameProvider.notifier).setGame(updated);
-          ref.read(gameServiceProvider).saveGame(updated);
+          ref.read(gameServiceProvider).saveGame(
+            ref
+                .read(observeSessionProvider.notifier)
+                .prepareGameForPersistence(updated),
+          );
           _logEvent.i('combat: set default combat mode to ${e.mode.name}');
         });
       }),

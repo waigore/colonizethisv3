@@ -23,6 +23,51 @@ List<AssignedRecipe> assignedRecipesFromDesiredOutput(
   return list;
 }
 
+/// Per-commodity production-input consumption projected from the player's
+/// labour assignments for the next Production phase.
+///
+/// For each [AssignedRecipe] with positive labour, the helper computes
+/// `runs = floor(assignedLabour / recipe.labourPerOutput)` (matching
+/// [resolveProduction]'s own labour-budget math) and accumulates
+/// `inputQuantity × runs` per input commodity. The returned map is the
+/// total per-commodity consumption the resolver will draw from
+/// stockpile when the recipes execute, with zero-valued entries omitted.
+///
+/// Used by the Trade screen Market tab to subtract industry-allocation
+/// reservations from the per-commodity offer cap so the sellable readout
+/// matches `stockpile − productionInputConsumption − stagedOffer` per
+/// `SPEC/game/world-market.md` § Per-commodity quantity cap and the
+/// `colonizethis_ai` treasury planner uses the same projection
+/// internally via `_inputNeedsFromAssignments` — exposing the helper at
+/// the logic boundary lets the UI, validator, and AI converge on a
+/// single projection. SPEC: SPEC/program/order-projections.md
+/// § Production input consumption projection.
+///
+/// The helper is **pure** and runs in O(assignments × inputs); safe to
+/// call per UI frame on a 22-commodity catalog.
+Map<CommodityId, int> productionInputConsumptionByCommodityIdForAssignments(
+  List<AssignedRecipe> productionAssignments,
+) {
+  if (productionAssignments.isEmpty) {
+    return const <CommodityId, int>{};
+  }
+  final consumption = <CommodityId, int>{};
+  for (final assignment in productionAssignments) {
+    if (assignment.assignedLabour <= 0) continue;
+    final recipe = ProductionRecipesCatalog.byId[assignment.recipeId];
+    if (recipe == null) continue;
+    if (recipe.labourPerOutput <= 0) continue;
+    final runs = assignment.assignedLabour ~/ recipe.labourPerOutput;
+    if (runs <= 0) continue;
+    for (final entry in recipe.inputQuantities.entries) {
+      final consumed = entry.value * runs;
+      if (consumed <= 0) continue;
+      consumption[entry.key] = (consumption[entry.key] ?? 0) + consumed;
+    }
+  }
+  return consumption;
+}
+
 class ProductionResult {
   const ProductionResult({
     required this.stockpile,

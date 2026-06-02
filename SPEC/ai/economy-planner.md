@@ -69,6 +69,7 @@ Cargo capacity is the sum of **cargoHold** over ships in the **home fleet** at t
 
 - **Overseas extraction** — Player has meaningful overseas extraction (e.g. New World) that exceeds or is close to current cargo capacity → prefer bringing ships home to increase capacity next turn.
 - **Colonial expansion (Full AI)** — When `ColonialSummary` lists invadable or adjacent New World owners, effective economy weight receives `kColonialCargoPreferenceEconomyBoost` (and `kColonialCargoPreferenceNoNwColoniesBoost` when the GP owns zero NW provinces). See [ai-architecture.md](ai-architecture.md) § Colonial expansion.
+- **EXPAND treasury recovery (Full AI)** — When `isBelowQuotaPeaceTreasuryRecovery` is true (below-quota peace insufficient regiments and effective treasury below cheapest regiment build), effective economy weight receives `kBelowQuotaPeaceTreasuryRecoveryCargoBoost` so cargo preference can rise during EXPAND to pull overseas riches for the next build pass. See [ai-architecture.md](ai-architecture.md) § Observer goal phases.
 - **Economy goal / personality** — High economy domain weight or trade-oriented agenda → more likely to set `prefer_cargo` or `strong_cargo`.
 - **No urgent naval need** — When not at war or not blockading, favouring cargo is safer.
 
@@ -99,6 +100,82 @@ Naval planner and build planner consume this preference; the economy planner onl
 
 ---
 
+## Recruitment planner
+
+The recruitment planner unifies worker recruit / train, regiment build, and ship build decisions for one AI-controlled Great Power per turn. It enforces peasant reservation across all peasant-consuming candidates and the luxury soft cap for trained tiers per [workers-and-population.md](../game/workers-and-population.md). Refs #2692 S8.
+
+### Interface (stable contract)
+
+```dart
+RecruitmentPlan runRecruitmentPlanner({
+  required Game game,
+  required PlayerView view,
+  required Orders currentOrders,
+  required AIConfig config,
+  required AISeedBundle seeds,
+  required ObserverGoalPhase goalPhase,
+  required OrderSuggestionAPI suggestionApi,
+  EconomyPlan? economyPlanHint,
+});
+
+class RecruitmentPlan {
+  final List<RecruitWorkerOrder> recruitOrders;
+  final List<BuildUnitOrder> buildUnitOrders;
+  final List<RejectedRecruitmentSuggestion> rejected;
+}
+
+class RejectedRecruitmentSuggestion {
+  /// One of: `Insufficient workers`, `Soft luxury cap exceeded`.
+  final String reason;
+  /// `WorkerTier.name` for recruit candidates; `BuildUnitOrder.unitType` for builds.
+  final String targetTier;
+}
+```
+
+The signature is **stable across #2509 orchestrator changes**: phase planners (`expand_phase_planner`, `colonial_phase_planner`, `develop_phase_planner`) are the only callers and pass their resolved `ObserverGoalPhase` directly. Algorithm internals may evolve; the public surface above must not.
+
+### Inputs
+
+- `suggestionApi` — emitted orders MUST come from `suggestionApi.suggestRecruitWorkerOrders(...)` and `suggestionApi.suggestBuildOrders(...)`. The planner does not re-validate; it filters the pre-validated candidates by planner-side rules.
+- `currentOrders` — same `Orders` passed to the suggestion API. Pending recruit / military / naval build orders are counted toward the peasant reservation ledger.
+- `goalPhase` — observer-derived phase (`expand`, `colonialLite`, `colonial`, `develop`) selects the emit-order weighting (military builds first in EXPAND / COLONIAL-lite / COLONIAL; recruit / train first in DEVELOP).
+- `economyPlanHint` (optional) — last-turn or projected `EconomyPlan` for the same player. When provided, the planner adds the projected luxury-commodity output (refinedSugar / cigars / furHats) from `productionAssignments` to the sustainable-trained-count denominator.
+
+### Rules
+
+- **Peasant reservation.** Let
+  - `pendingConsumes = (recruit orders in currentOrders that consume a peasant) + (military and naval builds in currentOrders)`
+  - `availablePeasants = view.player.workerPool.peasants − pendingConsumes − sum(this plan's accepted peasant-consuming emissions)`.
+
+  Civilian builds do not consume peasants. Any candidate that would push `availablePeasants` below `0` is dropped into `rejected` with reason `Insufficient workers` and is **not** emitted in `recruitOrders` / `buildUnitOrders`.
+
+- **Soft luxury cap (Requirement #10).** For each trained tier T ∈ {apprentice, journeyman, master}:
+  - `sustainableTrainedCount[T] = stockpile[T-luxury] + projectedOutputThisTurn[T-luxury]` where luxury commodity ids are apprentice → `refinedSugar`, journeyman → `cigars`, master → `furHats`. `projectedOutputThisTurn` is read from `economyPlanHint.productionAssignments` (per-recipe `assignedLabour` → integer runs of the recipe that produces the luxury) when `economyPlanHint` is non-null; otherwise it is `0`.
+  - `deficit = effectiveLabour < targetRecipesLabour × 0.8` where `effectiveLabour = effectiveLabourForWorkers(...)` (current `WorkerPool` + `Stockpile`) and `targetRecipesLabour = sum(assignedLabour) over economyPlanHint.productionAssignments` (or `0` when the hint is null).
+  - `projectedTrainedCount[T] = view.player.workerPool.tierCount(T) + emittedSoFar[T]`.
+  - When `deficit == false`, reject any candidate that would push `projectedTrainedCount[T] > sustainableTrainedCount[T]`.
+  - When `deficit == true`, reject only when `projectedTrainedCount[T] > 1.2 × sustainableTrainedCount[T]` (integer multiplication after rounding `floor`). Above the `1.2 ×` cap, the planner MUST NOT emit further recruit or train orders for that tier this turn (Requirement #10).
+
+  Rejected candidates appear in `rejected` with reason `Soft luxury cap exceeded`. Peasant recruit candidates are not gated by the soft cap.
+
+- **Emit order.** For `goalPhase == develop`, recruit / train candidates are processed before build candidates so trained-tier recruiting wins the peasant budget. For `goalPhase ∈ {expand, colonialLite, colonial}`, build candidates are processed before recruit candidates so military / naval rebuilds win the peasant budget. Within each step, candidates are iterated in the order returned by the suggestion API (deterministic per `SPEC/program/order-suggestions.md` § Rules).
+
+- **Determinism.** Same `(game, view, currentOrders, config, seeds, goalPhase, suggestionApi candidate outputs, economyPlanHint)` MUST produce the same `RecruitmentPlan` (same `recruitOrders`, `buildUnitOrders`, and `rejected` lists in the same order).
+
+- **Suggestion API integration.** Emitted orders MUST be drawn from the suggestion API outputs. The planner MUST NOT manufacture a `RecruitWorkerOrder` or `BuildUnitOrder` that did not come from `suggestionApi.suggestRecruitWorkerOrders(...)` / `suggestionApi.suggestBuildOrders(...)` for the same `(view, game, topology, currentOrders)`.
+
+### Acceptance criteria
+
+- **AC-RP-1 (Peasant reservation).** Given an AI-controlled Great Power player whose `workerPool.peasants == P` and `currentOrders` already consume `C` peasants (recruit train rows + military / naval builds) such that `P − C == 0`, when the recruitment planner runs with a suggestion API that returns one peasant-consuming recruit candidate and one regiment build candidate, then the resulting `RecruitmentPlan.recruitOrders` and `RecruitmentPlan.buildUnitOrders` contain no peasant-consuming entries and both candidates appear in `RecruitmentPlan.rejected` with reason `Insufficient workers`.
+
+- **AC-RP-2 (Soft cap below sustainable).** Given an AI-controlled Great Power player with `effectiveLabour ≥ targetRecipesLabour × 0.8` (no deficit), `workerPool.apprentices == 0`, and `sustainableTrainedCount[apprentice] == 0`, when the recruitment planner runs with a suggestion API that returns an `apprentice` recruit candidate, then `recruitOrders` contains no apprentice entry and the candidate appears in `rejected` with reason `Soft luxury cap exceeded`.
+
+- **AC-RP-3 (Soft cap deficit override).** Given an AI-controlled Great Power player with `effectiveLabour < targetRecipesLabour × 0.8` (deficit), `workerPool.journeymen == 1`, `sustainableTrainedCount[journeyman] == 1` (so `1.2 × 1 == 1` floor), and a `journeyman` recruit candidate from the suggestion API, then `recruitOrders` contains no journeyman entry (the deficit allows projected `2 > 1` cap of `1`, then rounds to `1`) and the candidate appears in `rejected` with reason `Soft luxury cap exceeded`.
+
+- **AC-RP-4 (Deterministic).** Given identical `(game, view, currentOrders, config, seeds, goalPhase, suggestionApi candidate outputs, economyPlanHint)`, when the recruitment planner runs twice, then both returned `RecruitmentPlan` instances have identical `recruitOrders`, `buildUnitOrders`, and `rejected` lists in the same order.
+
+- **AC-RP-5 (Emit order by phase).** Given an AI-controlled Great Power player with `workerPool.peasants == 1`, no `currentOrders` peasant consumes, a suggestion API that returns one peasant-consuming recruit candidate (`apprentice`) and one military build candidate within budget, when `goalPhase == ObserverGoalPhase.develop`, then `recruitOrders` contains the apprentice entry and `buildUnitOrders` is empty; when `goalPhase == ObserverGoalPhase.expand`, then `buildUnitOrders` contains the military entry and `recruitOrders` is empty.
+
 ## Interactions
 
 - [ai-architecture.md](ai-architecture.md) — turn pipeline, domain planning
@@ -107,3 +184,5 @@ Naval planner and build planner consume this preference; the economy planner onl
 - [ai-systems-impl.md](../program/ai-systems-impl.md) — module boundaries, who calls the planner
 - [ai-planner.md](../program/ai-planner.md) — seeding, control rules
 - [turn-resolution-phases.md](../program/turn-resolution-phases.md) — Production phase, per-player assignments
+- [order-suggestions.md](../program/order-suggestions.md) — `suggestRecruitWorkerOrders` and `suggestBuildOrders` (recruitment planner inputs)
+- [workers-and-population.md](../game/workers-and-population.md) — recruit / train cost table, peasant reservation, tech gates

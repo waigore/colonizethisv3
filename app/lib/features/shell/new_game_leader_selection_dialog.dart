@@ -4,10 +4,15 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:flutter/material.dart';
 
+import 'package:colonizethis_app/config/constants.dart';
+import 'package:colonizethis_app/config/editorial_monocle_palette.dart';
+import 'package:colonizethis_app/config/ui_screen_ids.dart';
 import 'package:colonizethis_app/l10n/l10n.dart';
+import 'package:colonizethis_app/widgets/ct_brass_divider.dart';
 import 'package:colonizethis_app/widgets/ct_dialog_shell.dart';
 import 'package:colonizethis_app/widgets/ct_dropdown.dart';
 import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
+import 'package:colonizethis_app/widgets/ct_slider.dart';
 import 'package:colonizethis_app/widgets/gp_default_map_color_swatch.dart';
 
 const int _kNumSlots = 6;
@@ -23,6 +28,9 @@ class NewGameLeaderSelectionDialog extends StatefulWidget {
     required this.onConfirmed,
   });
 
+  /// SPEC/ui/new-game-leader-selection-dialog.md — [UiScreenIds.newGameLeaderSelectionDialog].
+  static const screenId = UiScreenIds.newGameLeaderSelectionDialog;
+
   /// Template for non-GP fields; [GameSetupConfig.selectedGreatPowerIds] supplies initial six nations.
   final GameSetupConfig baseConfig;
   final ResolvedNamingConfig naming;
@@ -32,8 +40,31 @@ class NewGameLeaderSelectionDialog extends StatefulWidget {
     List<String> orderedGreatPowerIds,
     Map<String, String> leaderVariantByGpId,
     int seed,
+    bool infiniteMode,
+    double terrainVariation,
   )
   onConfirmed;
+
+  /// Default terrain-variation slider value (matches `GameSetupConfig.terrainVariation` default).
+  static const double defaultTerrainVariation = 0.5;
+
+  /// Width of the danger border painted around a slot's nation dropdown when
+  /// the slot's currently-selected Great Power id also appears in another
+  /// slot. Pinned to 1 dp so the visual cue does not shift slot layout.
+  /// SPEC: `SPEC/ui/new-game-leader-selection-dialog.md` § Duplicate slot
+  /// validation feedback (Refs #2867 R19).
+  static const double duplicateSlotBorderWidth = 1.0;
+
+  /// Stable key prefix for the danger-border wrapper rendered around the
+  /// nation dropdown of slot `slotIndex` when that slot is part of a
+  /// duplicate group. Tests pin the per-slot key
+  /// `'newGameLeaderDialogSlotDuplicateBorder_<slotIndex>'` so the positive
+  /// AC can assert that exactly the duplicate slots carry the danger
+  /// border without depending on widget tree order. The wrapper is only
+  /// mounted when the slot is detected as a duplicate; non-duplicate
+  /// slots render the nation dropdown directly without this key.
+  static String duplicateSlotBorderKey(int slotIndex) =>
+      'newGameLeaderDialogSlotDuplicateBorder_$slotIndex';
 
   /// Parses seed field text for [GameSetupConfig.seed]: empty or invalid → 42; negative → 42.
   static int parseSeedInput(String text) {
@@ -58,6 +89,9 @@ class _NewGameLeaderSelectionDialogState
   late List<String> _orderedGpIdsBySlot;
   late Map<String, String> _leaderByGpId;
   late final TextEditingController _seedController;
+  bool _infiniteMode = false;
+  double _terrainVariation =
+      NewGameLeaderSelectionDialog.defaultTerrainVariation;
 
   List<String> get _allGpIds =>
       widget.naming.greatPowers.map((g) => g.id).toList();
@@ -89,6 +123,35 @@ class _NewGameLeaderSelectionDialogState
   void dispose() {
     _seedController.dispose();
     super.dispose();
+  }
+
+  /// Indices of slots whose currently-selected Great Power id also appears
+  /// in at least one other slot. Empty when every populated slot holds a
+  /// unique GP id. Empty slot ids (`''`) are ignored so unset slots do not
+  /// register as duplicates of one another.
+  ///
+  /// SPEC: `SPEC/ui/new-game-leader-selection-dialog.md` § Duplicate slot
+  /// validation feedback (Refs #2867 R19) — drives the danger border
+  /// painted around the duplicate slot's nation dropdown.
+  Set<int> _duplicateSlotIndices() {
+    final counts = <String, int>{};
+    for (final id in _orderedGpIdsBySlot) {
+      if (id.isEmpty) {
+        continue;
+      }
+      counts[id] = (counts[id] ?? 0) + 1;
+    }
+    final duplicates = <int>{};
+    for (var i = 0; i < _kNumSlots; i++) {
+      final id = _orderedGpIdsBySlot[i];
+      if (id.isEmpty) {
+        continue;
+      }
+      if ((counts[id] ?? 0) > 1) {
+        duplicates.add(i);
+      }
+    }
+    return duplicates;
   }
 
   List<String> _availableGpIdsForSlot(int slotIndex) {
@@ -144,11 +207,18 @@ class _NewGameLeaderSelectionDialogState
   @override
   Widget build(BuildContext context) {
     final l10n = appL10n(context);
-    final slotWidgets = <Widget>[];
-    for (var i = 0; i < _kNumSlots; i++) {
-      slotWidgets.add(_buildSlotRow(context, i, l10n));
-    }
-
+    final ThemeData theme = Theme.of(context);
+    final _LeaderDialogTextStyles styles = _resolveTextStyles(theme);
+    final Set<int> duplicateSlots = _duplicateSlotIndices();
+    final slotWidgets = <Widget>[
+      for (var i = 0; i < _kNumSlots; i++)
+        _buildSlotRow(
+          context,
+          i,
+          l10n,
+          isDuplicate: duplicateSlots.contains(i),
+        ),
+    ];
     return CtDialogShell(
       maxWidth: 480,
       maxHeight: 720,
@@ -156,15 +226,7 @@ class _NewGameLeaderSelectionDialogState
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            l10n.shell_leaderDialog_title,
-            style: Theme.of(context).textTheme.titleMedium,
-          ),
-          const SizedBox(height: 8),
-          Text(
-            l10n.shell_leaderDialog_intro,
-            style: const TextStyle(fontSize: 14),
-          ),
+          _buildHeader(l10n, styles),
           const SizedBox(height: 16),
           Column(
             mainAxisSize: MainAxisSize.min,
@@ -172,68 +234,210 @@ class _NewGameLeaderSelectionDialogState
             children: slotWidgets,
           ),
           const SizedBox(height: 12),
-          Text(
-            l10n.shell_leaderDialog_seedLabel,
-            style: Theme.of(
-              context,
-            ).textTheme.bodySmall?.copyWith(fontWeight: FontWeight.w600),
-          ),
-          const SizedBox(height: 4),
-          TextField(
-            controller: _seedController,
-            keyboardType: TextInputType.number,
-            decoration: const InputDecoration(
-              isDense: true,
-              border: OutlineInputBorder(),
-            ),
-          ),
-          const SizedBox(height: 6),
-          Text(
-            l10n.shell_leaderDialog_seedHelper,
-            style: TextStyle(
-              fontSize: 12,
-              color: Theme.of(context).colorScheme.onSurfaceVariant,
-            ),
+          _buildSeedField(theme, l10n, styles),
+          const SizedBox(height: 12),
+          _buildInfiniteModeTile(theme, l10n, styles),
+          const SizedBox(height: 12),
+          _buildTerrainVariationField(
+            context,
+            l10n,
+            fieldLabelStyle: styles.fieldLabel,
+            helperStyle: styles.helper,
           ),
           const SizedBox(height: 16),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.end,
-            children: [
-              CtNinePatchButton(
-                onPressed: widget.onCancel,
-                child: Text(l10n.common_cancel),
-              ),
-              const SizedBox(width: 8),
-              CtNinePatchButton(
-                onPressed: _startEnabled
-                    ? () {
-                        final seed =
-                            NewGameLeaderSelectionDialog.parseSeedInput(
-                              _seedController.text,
-                            );
-                        Navigator.of(context).pop();
-                        widget.onConfirmed(
-                          List<String>.from(_orderedGpIdsBySlot),
-                          Map<String, String>.from(_leaderByGpId),
-                          seed,
-                        );
-                      }
-                    : null,
-                enabled: _startEnabled,
-                child: Text(l10n.common_start),
-              ),
-            ],
-          ),
+          _buildFooterButtons(l10n, context),
         ],
       ),
+    );
+  }
+
+  _LeaderDialogTextStyles _resolveTextStyles(ThemeData theme) {
+    return _LeaderDialogTextStyles(
+      title: (theme.textTheme.titleMedium ?? const TextStyle(fontSize: 16))
+          .copyWith(
+            color: EditorialMonoclePalette.accent,
+            letterSpacing: (theme.textTheme.titleMedium?.fontSize ?? 16) * 0.05,
+            fontWeight: FontWeight.w600,
+          ),
+      intro: (theme.textTheme.bodyMedium ?? const TextStyle(fontSize: 14))
+          .copyWith(
+            color: EditorialMonoclePalette.muted,
+            fontStyle: FontStyle.italic,
+          ),
+      fieldLabel: (theme.textTheme.bodySmall ?? const TextStyle(fontSize: 12))
+          .copyWith(
+            color: EditorialMonoclePalette.accentDim,
+            fontWeight: FontWeight.w600,
+          ),
+      helper: (theme.textTheme.bodySmall ?? const TextStyle(fontSize: 12))
+          .copyWith(color: EditorialMonoclePalette.muted, fontSize: 12),
+    );
+  }
+
+  Widget _buildHeader(AppLocalizations l10n, _LeaderDialogTextStyles styles) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          l10n.shell_leaderDialog_title,
+          key: const ValueKey<String>('leaderSelectionDialogTitle'),
+          style: styles.title,
+        ),
+        const SizedBox(height: 8),
+        const CtBrassDivider(
+          key: ValueKey<String>('leaderSelectionDialogBrassDivider'),
+        ),
+        const SizedBox(height: 12),
+        Text(
+          l10n.shell_leaderDialog_intro,
+          key: const ValueKey<String>('leaderSelectionDialogIntro'),
+          style: styles.intro,
+        ),
+      ],
+    );
+  }
+
+  Widget _buildSeedField(
+    ThemeData theme,
+    AppLocalizations l10n,
+    _LeaderDialogTextStyles styles,
+  ) {
+    final OutlineInputBorder idleBorder = OutlineInputBorder(
+      borderRadius: BorderRadius.zero,
+      borderSide: BorderSide(color: EditorialMonoclePalette.border),
+    );
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(l10n.shell_leaderDialog_seedLabel, style: styles.fieldLabel),
+        const SizedBox(height: 4),
+        TextField(
+          controller: _seedController,
+          keyboardType: TextInputType.number,
+          style: theme.textTheme.bodyMedium?.copyWith(
+            color: EditorialMonoclePalette.fg,
+          ),
+          decoration: InputDecoration(
+            isDense: true,
+            border: idleBorder,
+            enabledBorder: idleBorder,
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.zero,
+              borderSide: BorderSide(
+                color: EditorialMonoclePalette.accent,
+                width: 2,
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(height: 6),
+        Text(l10n.shell_leaderDialog_seedHelper, style: styles.helper),
+      ],
+    );
+  }
+
+  Widget _buildInfiniteModeTile(
+    ThemeData theme,
+    AppLocalizations l10n,
+    _LeaderDialogTextStyles styles,
+  ) {
+    return CheckboxListTile(
+      contentPadding: EdgeInsets.zero,
+      controlAffinity: ListTileControlAffinity.leading,
+      value: _infiniteMode,
+      activeColor: EditorialMonoclePalette.accent,
+      checkColor: EditorialMonoclePalette.bgDeep,
+      side: BorderSide(color: EditorialMonoclePalette.border),
+      onChanged: (value) {
+        setState(() => _infiniteMode = value ?? false);
+      },
+      title: Text(
+        l10n.shell_leaderDialog_infiniteModeLabel,
+        style: theme.textTheme.bodyMedium?.copyWith(
+          color: EditorialMonoclePalette.fg,
+        ),
+      ),
+      subtitle: Text(
+        l10n.shell_leaderDialog_infiniteModeHelper,
+        style: styles.helper,
+      ),
+    );
+  }
+
+  Widget _buildFooterButtons(AppLocalizations l10n, BuildContext context) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.end,
+      children: [
+        CtNinePatchButton(
+          onPressed: widget.onCancel,
+          child: Text(l10n.common_cancel),
+        ),
+        const SizedBox(width: 8),
+        CtNinePatchButton(
+          onPressed: _startEnabled ? () => _handleStartPressed(context) : null,
+          enabled: _startEnabled,
+          child: Text(l10n.common_start),
+        ),
+      ],
+    );
+  }
+
+  void _handleStartPressed(BuildContext context) {
+    final seed = NewGameLeaderSelectionDialog.parseSeedInput(
+      _seedController.text,
+    );
+    Navigator.of(context).pop();
+    widget.onConfirmed(
+      List<String>.from(_orderedGpIdsBySlot),
+      Map<String, String>.from(_leaderByGpId),
+      seed,
+      _infiniteMode,
+      _terrainVariation,
+    );
+  }
+
+  Widget _buildTerrainVariationField(
+    BuildContext context,
+    AppLocalizations l10n, {
+    required TextStyle fieldLabelStyle,
+    required TextStyle helperStyle,
+  }) {
+    final percent = (_terrainVariation * 100).round();
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(
+          l10n.shell_leaderDialog_terrainVariationLabel(percent),
+          style: fieldLabelStyle,
+        ),
+        const SizedBox(height: 6),
+        CtSlider(
+          value: _terrainVariation,
+          min: 0.0,
+          max: 1.0,
+          divisions: 20,
+          onChanged: (value) {
+            setState(() => _terrainVariation = value);
+          },
+        ),
+        const SizedBox(height: 6),
+        Text(
+          l10n.shell_leaderDialog_terrainVariationHelper,
+          style: helperStyle,
+        ),
+      ],
     );
   }
 
   Widget _buildSlotRow(
     BuildContext context,
     int slotIndex,
-    AppLocalizations l10n,
-  ) {
+    AppLocalizations l10n, {
+    bool isDuplicate = false,
+  }) {
     final gpId = _orderedGpIdsBySlot[slotIndex];
     final available = _availableGpIdsForSlot(slotIndex);
     final effectiveGpId = available.contains(gpId) ? gpId : available.first;
@@ -245,7 +449,7 @@ class _NewGameLeaderSelectionDialogState
     final currentVariantId =
         _leaderByGpId[effectiveGpId] ?? gp.defaultLeaderVariantId;
 
-    final nationDropdown = CtDropdown<String>(
+    final Widget nationDropdownCore = CtDropdown<String>(
       value: effectiveGpId,
       items: available,
       hint: l10n.shell_newGame_selectNation,
@@ -265,6 +469,27 @@ class _NewGameLeaderSelectionDialogState
         });
       },
     );
+
+    // Duplicate slot validation feedback (Refs #2867 R19): wrap the nation
+    // dropdown in a 1 dp `--danger` border when this slot's GP id also
+    // appears in another slot. The wrapper is keyed by slot index so widget
+    // tests can assert that exactly the duplicate slots carry the border.
+    // Non-duplicate slots render the dropdown directly (no key) so the
+    // negative AC has a definite absence to assert.
+    final Widget nationDropdown = isDuplicate
+        ? DecoratedBox(
+            key: ValueKey<String>(
+              NewGameLeaderSelectionDialog.duplicateSlotBorderKey(slotIndex),
+            ),
+            decoration: BoxDecoration(
+              border: Border.all(
+                color: EditorialMonoclePalette.danger,
+                width: NewGameLeaderSelectionDialog.duplicateSlotBorderWidth,
+              ),
+            ),
+            child: nationDropdownCore,
+          )
+        : nationDropdownCore;
 
     final leaderDropdown = CtDropdown<String>(
       value: variants.any((v) => v.id == currentVariantId)
@@ -289,20 +514,96 @@ class _NewGameLeaderSelectionDialogState
           Text(
             _slotLabel(l10n, slotIndex),
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
+              color: slotIndex == 0
+                  ? EditorialMonoclePalette.accentDim
+                  : EditorialMonoclePalette.muted,
               fontWeight: slotIndex == 0 ? FontWeight.w600 : FontWeight.normal,
             ),
           ),
           const SizedBox(height: 4),
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              Expanded(child: nationDropdown),
-              const SizedBox(width: 8),
-              Expanded(child: leaderDropdown),
-            ],
+          _SlotPickersBody(
+            nationDropdown: nationDropdown,
+            leaderDropdown: leaderDropdown,
           ),
         ],
       ),
+    );
+  }
+}
+
+class _LeaderDialogTextStyles {
+  const _LeaderDialogTextStyles({
+    required this.title,
+    required this.intro,
+    required this.fieldLabel,
+    required this.helper,
+  });
+
+  final TextStyle title;
+  final TextStyle intro;
+  final TextStyle fieldLabel;
+  final TextStyle helper;
+}
+
+/// Pickers body that switches between a side-by-side `Row` and a vertically
+/// stacked `Column` at the [kGameSetupNarrowBreakpoint] (500 dp) viewport
+/// width, mirroring the `CtGameSetup` narrow-stacking rule so the shell
+/// dialog (DLG10001) honours the same `< 500 dp` rule as the full-screen
+/// Game Setup surface (SHEL20001).
+///
+/// SPEC: `SPEC/ui/new-game-leader-selection-dialog.md` § Layout / wireframe
+/// + Acceptance Criteria narrow-viewport stacking AC; `SPEC/ui/game-setup.md`
+/// § Shell new game dialog; `SPEC/ui/mobile-adaptation.md` § 4 Game Setup.
+class _SlotPickersBody extends StatelessWidget {
+  const _SlotPickersBody({
+    required this.nationDropdown,
+    required this.leaderDropdown,
+  });
+
+  final Widget nationDropdown;
+  final Widget leaderDropdown;
+
+  /// Vertical gap between the nation dropdown and the leader dropdown when
+  /// the slot body is stacked (matches the existing `SizedBox(height: 4)`
+  /// gap between the slot label and pickers).
+  static const double stackedGap = 4;
+
+  /// Key applied to the vertically stacked `Column` body (narrow viewport).
+  /// Tests pin the narrow-stacking AC by asserting one such column per slot.
+  static const Key stackedColumnKey = ValueKey<String>(
+    'newGameLeaderDialogSlotPickersColumn',
+  );
+
+  /// Key applied to the side-by-side `Row` body (wide viewport).
+  /// Tests pin the wide-row AC by asserting one such row per slot.
+  static const Key sideBySideRowKey = ValueKey<String>(
+    'newGameLeaderDialogSlotPickersRow',
+  );
+
+  @override
+  Widget build(BuildContext context) {
+    final bool narrow =
+        MediaQuery.sizeOf(context).width < kGameSetupNarrowBreakpoint;
+    if (narrow) {
+      return Column(
+        key: stackedColumnKey,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          nationDropdown,
+          const SizedBox(height: stackedGap),
+          leaderDropdown,
+        ],
+      );
+    }
+    return Row(
+      key: sideBySideRowKey,
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        Expanded(child: nationDropdown),
+        const SizedBox(width: 8),
+        Expanded(child: leaderDropdown),
+      ],
     );
   }
 }

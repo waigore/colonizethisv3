@@ -5,6 +5,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import '../turn/trace/turn_trace_runtime.dart';
 import '../world/army_ids.dart';
 import '../world/army_movement.dart';
+import '../world/game_world_mutations.dart';
 
 final ordersApplicationLog = logicLog;
 
@@ -73,6 +74,7 @@ class BuildWorkState {
     required this.game,
     required this.buildOrders,
     required this.workOrders,
+    this.recruitWorkerOrders = const <String, List<RecruitWorkerOrder>>{},
     this.topology,
     this.tileMapByRegion,
     this.onDialogue,
@@ -81,6 +83,12 @@ class BuildWorkState {
   });
 
   final Game game;
+
+  /// Player id -> queued worker recruit / train orders applied in the worker
+  /// pool sub-phase of Build / work, **before** [buildOrders]. SPEC/game/
+  /// workers-and-population.md § Phase placement.
+  final Map<String, List<RecruitWorkerOrder>> recruitWorkerOrders;
+
   final Map<String, List<BuildUnitOrder>> buildOrders;
   final Map<String, List<WorkOrder>> workOrders;
   final MapTopology? topology;
@@ -91,6 +99,7 @@ class BuildWorkState {
 
   BuildWorkState copyWith({
     Game? game,
+    Map<String, List<RecruitWorkerOrder>>? recruitWorkerOrders,
     Map<String, List<BuildUnitOrder>>? buildOrders,
     Map<String, List<WorkOrder>>? workOrders,
     MapTopology? topology,
@@ -101,6 +110,7 @@ class BuildWorkState {
   }) {
     return BuildWorkState(
       game: game ?? this.game,
+      recruitWorkerOrders: recruitWorkerOrders ?? this.recruitWorkerOrders,
       buildOrders: buildOrders ?? this.buildOrders,
       workOrders: workOrders ?? this.workOrders,
       topology: topology ?? this.topology,
@@ -168,7 +178,7 @@ Game appendMilitaryRegimentToArmy(
         if (a.id == armyId && a.ownerId == player.id) updated else a,
     ];
     armiesById?[armyId] = updated;
-    return game.copyWith(worldState: ws.copyWith(armies: next));
+    return game.withArmies(next);
   }
   final stationed = atHome ? cap : spawnProvinceId;
   final newArmy = Army(
@@ -181,7 +191,7 @@ Game appendMilitaryRegimentToArmy(
   );
   final next = [...ws.armies, newArmy]..sort((a, b) => a.id.compareTo(b.id));
   armiesById?[newArmy.id] = newArmy;
-  return game.copyWith(worldState: ws.copyWith(armies: next));
+  return game.withArmies(next);
 }
 
 Army? _firstArmyByIdAndOwner(List<Army> armies, String armyId, String ownerId) {

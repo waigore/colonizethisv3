@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ColonizeThis — Civilian Units Panel</title>
+<style>
+:root {
+  --bg: oklch(16% 0.018 50); --bg-deep: oklch(12% 0.015 45);
+  --surface: oklch(24% 0.015 45); --surface-lite: oklch(30% 0.016 52);
+  --fg: oklch(88% 0.015 80); --muted: oklch(65% 0.025 70);
+  --border: oklch(40% 0.02 55); --accent: oklch(72% 0.14 85);
+  --accent-dim: oklch(60% 0.12 82); --accent-bright: oklch(82% 0.13 90);
+  --danger: oklch(55% 0.16 22); --success: oklch(55% 0.12 150);
+  --font-display: 'Iowan Old Style', 'Cinzel', 'Charter', Georgia, serif;
+  --font-body: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  --font-mono: 'SF Mono', ui-monospace, Menlo, monospace;
+}
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+html,body{min-height:100vh;min-height:100dvh;background:var(--bg);color:var(--fg);font-family:var(--font-body);overflow:hidden}
+.scrim{position:fixed;inset:0;background:oklch(8% 0.01 30 / .5);z-index:90;display:flex;align-items:flex-end;justify-content:center;padding:env(safe-area-inset-bottom)env(safe-area-inset-left)env(safe-area-inset-right)}
+.sheet{width:100%;max-width:680px;max-height:55vh;max-height:55dvh;background:linear-gradient(180deg,var(--surface)0%,var(--bg-deep)100%);border-top:2px solid var(--accent-dim);border-radius:4px 4px 0 0;display:flex;flex-direction:column;animation:slideUp .3s ease-out}
+@keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+.sheet-header{display:flex;align-items:center;padding:clamp(8px,1.5vh,10px)clamp(10px,2vw,14px);border-bottom:1px solid var(--border);flex-shrink:0}
+.sheet-header h2{font-family:var(--font-display);font-size:clamp(13px,1.8vw,15px);font-weight:600;letter-spacing:.04em;color:var(--accent);flex:1}
+.sheet-header .hdr-btn{padding:4px 10px;background:linear-gradient(180deg,var(--surface-lite),var(--bg-deep));border:1px solid var(--border);color:var(--accent-dim);font-family:var(--font-display);font-size:10px;cursor:pointer;letter-spacing:.04em;transition:color .15s;margin-left:6px}
+.sheet-header .hdr-btn:hover{color:var(--accent-bright)}
+.sheet-header .mode-tag{font-family:var(--font-mono);font-size:9px;color:var(--muted);padding:2px 6px;border:1px solid var(--border);margin-left:8px;letter-spacing:.04em}
+.sheet-body{overflow-y:auto;flex:1;padding:clamp(6px,1vh,10px)clamp(10px,2vw,14px)}
+
+.region-group{margin-bottom:clamp(8px,1.5vh,12px)}
+.region-heading{font-family:var(--font-display);font-size:clamp(10px,1.4vw,12px);font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);padding:3px 0;border-bottom:1px solid var(--border);margin-bottom:clamp(4px,.8vh,6px)}
+
+.unit-row{display:flex;align-items:flex-start;gap:clamp(6px,1vw,10px);padding:clamp(6px,1vh,8px);background:linear-gradient(180deg,var(--bg-deep),var(--surface));border:1px solid var(--border);margin-bottom:4px;transition:border-color .15s;cursor:pointer;min-height:44px}
+.unit-row:hover{border-color:var(--accent-dim)}
+.unit-row .u-details{flex:1;min-width:0}
+.unit-row .u-title{font-family:var(--font-display);font-size:clamp(11px,1.5vw,12px);font-weight:600;letter-spacing:.03em;color:var(--fg)}
+.unit-row .u-location{font-family:var(--font-body);font-size:clamp(10px,1.3vw,11px);color:var(--muted);margin-top:1px}
+.unit-row .u-assigned{font-family:var(--font-body);font-size:clamp(9px,1.2vw,10px);color:var(--accent-dim);margin-top:2px}
+.unit-row .u-assigned .turns{font-family:var(--font-mono);font-size:clamp(8px,1.1vw,9px);color:var(--muted)}
+.unit-row .u-cost{display:flex;gap:3px;flex-wrap:wrap;margin-top:2px}
+.unit-row .u-cost .cost-chip{padding:1px 5px;border:1px solid var(--border);font-family:var(--font-mono);font-size:clamp(7px,1vw,8px);background:var(--bg-deep);color:var(--muted)}
+.unit-row .u-actions{display:flex;align-items:center;gap:4px;flex-shrink:0;padding-top:2px}
+.unit-row .u-actions button{padding:3px 7px;background:linear-gradient(180deg,var(--surface-lite),var(--bg-deep));border:1px solid var(--border);color:var(--accent-dim);font-family:var(--font-display);font-size:9px;letter-spacing:.04em;cursor:pointer;transition:color .15s;white-space:nowrap}
+.unit-row .u-actions button:hover{color:var(--accent-bright);border-color:var(--accent-dim)}
+.unit-row .u-actions button:disabled{opacity:.3;cursor:not-allowed}
+.unit-row .u-actions .locate-btn{width:22px;height:22px;font-size:11px;display:flex;align-items:center;justify-content:center;border-radius:50%;padding:0}
+.unit-row .u-actions .cancel-btn{color:var(--danger);border-color:var(--danger)}
+
+.empty-msg{text-align:center;padding:clamp(16px,3vh,24px);font-family:var(--font-display);font-style:italic;color:var(--muted);font-size:clamp(11px,1.5vw,13px)}
+
+.mode-bar{text-align:center;padding:clamp(10px,2vh,16px);border-top:1px solid var(--border);margin-top:clamp(6px,1vh,10px)}
+.mode-bar button{padding:4px 10px;margin:0 4px;background:linear-gradient(180deg,var(--surface-lite),var(--bg-deep));border:1px solid var(--border);color:var(--muted);font-family:var(--font-mono);font-size:9px;letter-spacing:.04em;cursor:pointer;transition:color .15s,border-color .15s}
+.mode-bar button:hover,.mode-bar button.active{color:var(--accent);border-color:var(--accent-dim)}
+</style>
+</head>
+<body>
+
+<div class="scrim">
+<div class="sheet" id="sheet">
+  <div class="sheet-header">
+    <h2>Civilian Units</h2>
+    <button class="hdr-btn" onclick="document.querySelector('.scrim').style.display='none'">Close</button>
+    <span class="mode-tag" id="mode-tag">·· full list</span>
+  </div>
+  <div class="sheet-body" id="sheet-body"></div>
+  <div class="mode-bar">
+    <button class="active" onclick="switchMode('full')">Full list</button>
+    <button onclick="switchMode('tile')">Tile-scoped (London)</button>
+    <button onclick="switchMode('explorer')">Explorer shortcut</button>
+    <button onclick="switchMode('builder')">Builder shortcut</button>
+  </div>
+</div>
+</div>
+
+<script>
+const allUnits = [
+  {id:1,type:'Explorer',status:'Working',province:'London',region:'Old World',work:'Prospecting — Bolivia',turns:'3 turns',costs:[]},
+  {id:2,type:'Builder',status:'Idle',province:'London',region:'Old World',work:'—',turns:'',costs:[]},
+  {id:3,type:'Builder',status:'Working',province:'Yorkshire',region:'Old World',work:'Build improvement — Road',turns:'1 / 3 turns',costs:[]},
+  {id:4,type:'Engineer',status:'Idle',province:'Lancashire',region:'Old World',work:'—',turns:'',costs:[]},
+  {id:5,type:'Spy',status:'Idle',province:'London',region:'Old World',work:'—',turns:'',costs:[]},
+  {id:6,type:'Merchant',status:'Working',province:'Yorkshire',region:'Old World',work:'Purchase Land — Wool',turns:'2 turns',costs:[{t:'treasury',n:'£2,000'},{t:'mat',n:'Fabric ×4'}]},
+  {id:7,type:'Explorer',status:'Idle',province:'Port Royal',region:'New World',work:'—',turns:'',costs:[]},
+  {id:8,type:'Builder',status:'Idle',province:'Havana',region:'New World',work:'—',turns:'',costs:[]},
+  {id:9,type:'Rail Builder',status:'Idle',province:'Port Royal',region:'New World',work:'—',turns:'',costs:[]},
+];
+
+let mode='full';
+
+function renderUnits(units,scopeLabel){
+  let groups={};
+  for(const u of units){
+    const r=u.region;
+    if(!groups[r])groups[r]=[];
+    groups[r].push(u);
+  }
+  let html='';
+  if(Object.keys(groups).length===0){
+    html=`<div class="empty-msg">No civilian units${scopeLabel?' — '+scopeLabel:''}</div>`;
+  }
+  for(const [reg,ulist] of Object.entries(groups)){
+    html+=`<div class="region-group"><div class="region-heading">${reg}</div>`;
+    for(const u of ulist){
+      const isWorking=u.status==='Working'&&u.work!=='—';
+      html+=`<div class="unit-row" onclick="locateUnit(${u.id})">
+        <div class="u-details">
+          <div class="u-title">${u.type}${u.id===1?' — working':''}</div>
+          <div class="u-location">${u.region} — ${u.province}</div>
+          <div class="u-assigned">Assigned to: ${u.work}${u.turns?' <span class="turns">· '+u.turns+'</span>':''}</div>
+          ${u.costs.length?`<div class="u-cost">${u.costs.map(c=>`<span class="cost-chip">${c.n}</span>`).join('')}</div>`:''}
+        </div>
+        <div class="u-actions">
+          <button class="locate-btn" title="Locate" onclick="event.stopPropagation();alert('Locate ${u.type} at ${u.province}')">⊙</button>
+          ${u.status==='Idle'&&u.id!==2?`<button onclick="event.stopPropagation();alert('Assign ${u.type} #${u.id}')">Assign</button>`:''}
+          ${isWorking?`<button class="cancel-btn" onclick="event.stopPropagation();alert('Cancel work for ${u.type} #${u.id}')">Cancel</button>`:''}
+        </div>
+      </div>`;
+    }
+    html+=`</div>`;
+  }
+  document.getElementById('sheet-body').innerHTML=html;
+  document.getElementById('mode-tag').textContent=scopeLabel?'·· '+scopeLabel:'';
+}
+
+function locateUnit(id){const u=allUnits.find(x=>x.id===id);alert(`Locate & close: ${u.province} (${u.region})`)}
+function switchMode(m){
+  mode=m;
+  document.querySelectorAll('.mode-bar button').forEach(b=>b.classList.toggle('active',b.textContent.toLowerCase().includes(m.split('-')[0])||(m==='full'&&b.textContent==='Full list')));
+  if(m==='full') renderUnits(allUnits,'full list');
+  else if(m==='tile') renderUnits(allUnits.filter(u=>u.province==='London'),'tile-scoped · London');
+  else if(m==='explorer') renderUnits(allUnits.filter(u=>u.type==='Explorer'),'Explorer shortcut');
+  else if(m==='builder') renderUnits(allUnits.filter(u=>u.type==='Builder'||u.type==='Rail Builder'),'Builder shortcut');
+}
+renderUnits(allUnits);
+</script>
+</body>
+</html>

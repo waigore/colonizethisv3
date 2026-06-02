@@ -145,6 +145,7 @@ void main() {
       ),
     );
   }
+
   group('NavalUnitsPanel', () {
     testWidgets('AC: Panel shows title Naval Units', (
       WidgetTester tester,
@@ -193,8 +194,8 @@ void main() {
         if (fleets > 0) {
           expect(find.byType(ExpansionTile), findsAtLeastNWidgets(1));
           expect(
-            find.text('Old World').evaluate().isNotEmpty ||
-                find.text('New World').evaluate().isNotEmpty,
+            find.text('OLD WORLD').evaluate().isNotEmpty ||
+                find.text('NEW WORLD').evaluate().isNotEmpty,
             isTrue,
           );
         }
@@ -411,7 +412,12 @@ void main() {
         await tester.tap(homeTile);
         await tester.pumpAndSettle();
 
-        expect(find.textContaining('Carrack: 1'), findsOneWidget);
+        // Per #2866 S8 R29 the expanded view renders ship rows as a `Table`
+        // with columns `Type | ×Count | Role`, so the ship-type display
+        // label and its count live in separate cells (e.g. `Carrack` +
+        // `×1`). The legacy `Carrack: 1` combined label no longer renders.
+        expect(find.text('Carrack'), findsOneWidget);
+        expect(find.text('×1'), findsAtLeastNWidgets(1));
         expect(find.textContaining('carrack:'), findsNothing);
       },
     );
@@ -479,8 +485,10 @@ void main() {
         await tester.pumpAndSettle();
 
         // Old/New World headers should appear when fleets exist in both regions.
-        expect(find.text('Old World'), findsAtLeastNWidgets(1));
-        expect(find.text('New World'), findsAtLeastNWidgets(1));
+        // Per #2866 S1–S3, RegionSectionHeader renders via CtSectionLabel which
+        // uppercases the label text.
+        expect(find.text('OLD WORLD'), findsAtLeastNWidgets(1));
+        expect(find.text('NEW WORLD'), findsAtLeastNWidgets(1));
 
         Finder tileFinder = find.widgetWithText(
           ExpansionTile,
@@ -1075,6 +1083,5 @@ void main() {
         );
       },
     );
-
   });
 }

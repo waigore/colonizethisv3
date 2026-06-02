@@ -1,35 +1,109 @@
 // coverage:ignore-file
 // Dev-only Widgetbook catalog; excluded from app coverage gate via instrumentation.
 import 'dart:async';
+import 'dart:convert';
 
+import 'package:colonizethis_app/core/utils/prefixed_id.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
+import 'package:colonizethis_map/colonizethis_map.dart' show RegionMapViewData;
 import 'package:colonizethis_models/colonizethis_models.dart';
+import 'package:colonizethis_save/colonizethis_save.dart' show GameSaveAdapter;
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:hive/hive.dart' show Box;
+import 'package:jenny/jenny.dart';
 import 'package:widgetbook/widgetbook.dart';
 
+import '../config/editorial_monocle_palette.dart';
 import '../config/themes.dart';
+import '../core/services/game_service.dart' show GameMapData, GameService;
+import '../providers/app_event_bus_provider.dart';
+import '../providers/debug_console_provider.dart';
+import '../providers/game_service_provider.dart';
 import '../providers/games_provider.dart';
+import '../providers/map_province_panel_provider.dart';
+import '../providers/map_view_provider.dart';
+import '../providers/production_allocation_provider.dart';
+import '../providers/region_minimap_provider.dart';
+import '../features/game/combat/combat_mode_choice_dialog.dart';
+import '../features/game/combat/quick_battle_action_selector.dart';
+import '../features/game/combat/quick_battle_deployment_view.dart';
+import '../features/game/combat/quick_battle_result_dialog.dart';
+import '../features/game/combat/quick_battle_screen.dart';
 import '../features/game/widgets/civilian_units_panel.dart';
+import '../features/game/widgets/diplomacy_dialogs.dart';
 import '../features/game/widgets/diplomacy_panel.dart';
+import '../features/game/widgets/game_map_options_dialog.dart';
+import '../features/game/widgets/game_map_players_bar.dart';
+import '../features/game/widgets/game_tab_bar.dart';
+import '../features/game/widgets/game_top_bar.dart';
 import '../features/game/widgets/military_units_panel.dart';
 import '../features/game/widgets/naval_units_panel.dart';
+import '../features/game/widgets/pause_menu_panel.dart';
+import '../features/game/widgets/player_turn_event_feed.dart';
+import '../features/game/widgets/production_commodity_breakdown_dialog.dart';
+import '../features/game/widgets/production_labour_helpers.dart';
 import '../features/game/widgets/production_panel.dart';
 import '../features/game/widgets/production_panel_demo_data.dart';
 import '../features/game/widgets/province_sea_zone_detail_overlay.dart';
 import '../features/game/widgets/province_overlay_demo_data.dart';
 import '../features/game/widgets/tech_tree_widget.dart';
+import '../features/game/screens/diplomacy_detail_screen.dart';
 import '../features/game/screens/technology_screen.dart';
+import '../features/game/screens/trade_screen.dart';
+import '../features/game/flame/game_map_narrow_detail_overlay.dart';
+import '../features/game/flame/next_turn_confirmation_dialog.dart';
+import '../features/game/dialogue/call_to_arms_dialogue_overlay.dart';
+import '../features/game/dialogue/ct_dialogue_view.dart';
+import '../features/game/dialogue/game_start_intro_overlay.dart';
 import '../features/game/dialogue/intervention_dialogue_overlay.dart';
+import '../features/game/dialogue/overture_dialogue_overlay.dart';
+import '../features/game/flame/game_map_province_detail_side_panel.dart';
+import '../features/game/flame/per_player_work_target_selection_cache.dart';
+import '../features/game/flame/game_map_corner_controls.dart';
+import '../features/game/flame/game_map_empire_left_rail.dart';
+import '../features/game/flame/game_region_minimap.dart';
+import '../features/game/flame/game_screen.dart';
+import '../features/game/flame/game_side_menu.dart';
+import '../features/game/flame/exit_confirm_dialog.dart';
+import '../features/game/flame/region_map_viewport_snapshot.dart';
+import '../features/game/flame/victory_overlay.dart';
 import '../features/game/flame/region_map_component.dart'
     show CtMapVisibilityMode;
+import '../features/game/widgets/move_army_dialog.dart';
+import '../features/game/widgets/move_fleet_dialog.dart';
 import '../features/game/widgets/train_civilians_dialog.dart';
 import '../features/game/widgets/train_military_dialog.dart';
+import '../features/game/widgets/transfer_to_home_fleet_dialog.dart';
 import '../features/game/widgets/turn_news_dialog.dart';
+import '../features/shell/new_game_leader_selection_dialog.dart';
+import '../features/shell/new_game_setup_flow.dart';
+import '../features/shell/shell_screen.dart';
 import '../l10n/l10n.dart';
 import '../widgets/debug_init_game.dart';
+import '../widgets/ct_back_button.dart';
+import '../widgets/ct_icon_action.dart';
+import '../widgets/ct_brass_divider.dart';
 import '../widgets/ct_choice_chip.dart';
+import '../widgets/ct_compass_rose.dart';
+import '../widgets/ct_dialog_shell.dart';
+import '../widgets/ct_dropdown.dart';
+import '../widgets/ct_fleur_de_lis_ornament.dart';
+import '../widgets/ct_full_screen_dialogue_shell.dart';
+import '../widgets/ct_gradients.dart';
+import '../widgets/ct_loading_indicator.dart';
+import '../widgets/ct_main_menu_collage.dart';
+import '../widgets/ct_panel.dart';
+import '../widgets/ct_progress_bar.dart';
+import '../widgets/ct_resource_cell.dart';
+import '../widgets/ct_screen_shell.dart';
+import '../widgets/ct_section_label.dart';
+import '../widgets/ct_slider.dart';
+import '../widgets/ct_toggle_switch.dart';
+import '../widgets/ct_top_bar.dart';
+import '../widgets/resource_icon.dart';
 import 'debug_map_visibility_story.dart';
 import '../widgets/game_setup.dart';
 import '../widgets/main_menu.dart';
@@ -40,6 +114,11 @@ import '../widgets/ct_transfer_list.dart';
 part 'catalog_part1.dart';
 part 'catalog_part2.dart';
 part 'catalog_part3.dart';
+part 'catalog_part4.dart';
+part 'catalog_part5.dart';
+part 'catalog_part6.dart';
+part 'catalog_part7.dart';
+part 'catalog_part8.dart';
 
 Unit? _unitByIdForCatalog(Game game, String unitId) {
   for (final u in game.worldState.oldWorld.units) {
@@ -67,6 +146,20 @@ Widget civilianUnitsPanelWithRiverpod({
   );
 }
 
+/// Host for Widgetbook use cases that need a nested [MaterialApp]. Without an
+/// explicit [ThemeData], nested apps default to Material light and break dark
+/// editorial-monocle review for unit panels and train dialogs (Refs #2866 S6).
+Widget widgetbookEditorialMonocleApp({required Widget child}) {
+  return MaterialApp(
+    debugShowCheckedModeBanner: false,
+    theme: AppThemes.editorialMonocle,
+    home: Scaffold(
+      backgroundColor: AppThemes.editorialMonocle.scaffoldBackgroundColor,
+      body: child,
+    ),
+  );
+}
+
 /// Invoked from `lib/widgetbook.dart` [main]; safe to call from tests after binding init.
 void bootstrapWidgetbook() {
   runApp(const CtWidgetbookApp());
@@ -82,38 +175,110 @@ Widget mobileViewport(BuildContext context, Widget child) {
   );
 }
 
-/// Widgetbook app with colonial theme. SPEC/ui/main-menu.md; UXD 03a. SPEC/ui/game-setup.md; UXD 03b. Mobile viewport: SPEC/ui/mobile-adaptation.md.
+/// Widgetbook app: defaults to `AppThemes.editorialMonocle` (dark) per
+/// `SPEC/ui/pixel-art-ui-catalog.md` § Editorial-monocle palette; the
+/// MaterialThemeAddon below exposes a toolbar toggle between the
+/// editorial-monocle theme and the colonial / colonialPixelArt light
+/// fallbacks. SPEC/ui/main-menu.md; UXD 03a. SPEC/ui/game-setup.md; UXD 03b.
+/// Mobile viewport: SPEC/ui/mobile-adaptation.md.
 class CtWidgetbookApp extends StatelessWidget {
   const CtWidgetbookApp({super.key});
 
   @override
   Widget build(BuildContext context) {
     return Widgetbook.material(
-      directories: [
-        ...buttonDirectories,
-        ...transferListDirectories,
-        ...mainMenuDirectories,
-        ...gameSetupDirectories,
-        ...mapWidgetDirectories,
-        ...provinceOverlayDirectories,
-        ...productionPanelDirectories,
-        ...civilianUnitsPanelDirectories,
-        ...trainCiviliansDialogDirectories,
-        ...trainMilitaryDialogDirectories,
-        ...militaryUnitsPanelDirectories,
-        ...navalUnitsPanelDirectories,
-        ...diplomacyPanelDirectories,
-        ...techTreeDirectories,
-        ...interventionDialogueDirectories,
-        ...turnNewsDialogDirectories,
-      ],
-      lightTheme: AppThemes.colonial,
-      darkTheme: AppThemes.colonial,
+      directories: _ctWidgetbookDirectories,
+      addons: _ctWidgetbookAddons,
+      lightTheme: AppThemes.editorialMonocle,
+      darkTheme: AppThemes.editorialMonocle,
     );
   }
 }
 
+/// Aggregate Widgetbook directories shown in the chrome — split out of
+/// `CtWidgetbookApp.build` to keep the build body under the
+/// `widget_build_method_too_long` budget (`SPEC/program/repo-lint.md`).
+List<WidgetbookNode> get _ctWidgetbookDirectories => [
+  ...buttonDirectories,
+  ...transferListDirectories,
+  ...mainMenuDirectories,
+  ...gameSetupDirectories,
+  ...mapWidgetDirectories,
+  ...provinceOverlayDirectories,
+  ...productionPanelDirectories,
+  ...civilianUnitsPanelDirectories,
+  ...trainCiviliansDialogDirectories,
+  ...trainMilitaryDialogDirectories,
+  ...militaryUnitsPanelDirectories,
+  ...navalUnitsPanelDirectories,
+  ...diplomacyPanelDirectories,
+  ...techTreeDirectories,
+  ...interventionDialogueDirectories,
+  ...ctDialogueViewDirectories,
+  ...gameStartIntroOverlayDirectories,
+  ...overtureDialogueOverlayDirectories,
+  ...callToArmsDialogueOverlayDirectories,
+  ...turnNewsDialogDirectories,
+  ...victoryUiDirectories,
+  ...playersBarDirectories,
+  ...exitConfirmDialogDirectories,
+  ...combatUiDirectories,
+  ...moveArmyDialogDirectories,
+  ...moveFleetDialogDirectories,
+  ...transferToHomeFleetDialogDirectories,
+  ...productionCommodityBreakdownDialogDirectories,
+  ...grantOrSubsidyDialogDirectories,
+  ...newGameLeaderSelectionDialogDirectories,
+  ...shellScreenDirectories,
+  ...gameScreenDirectories,
+  ...gameTopBarDirectories,
+  ...gameTabBarDirectories,
+  ...gameMapCornerControlsDirectories,
+  ...gameMapEmpireLeftRailDirectories,
+  ...gameMapOptionsDialogDirectories,
+  ...gameRegionMinimapDirectories,
+  ...gameMapProvinceDetailSidePanelDirectories,
+  ...playerTurnEventFeedCardDirectories,
+  ...pauseMenuPanelDirectories,
+  ...nextTurnConfirmationDialogDirectories,
+  ...gameInitializingDirectories,
+  ...gameSideMenuDirectories,
+  ...gameMapNarrowDetailOverlaySlotDirectories,
+  ...diplomacyDetailScreenDirectories,
+  ...tradeScreenDirectories,
+  ...ctDarkThemePrimitiveDirectories,
+];
+
+/// Toolbar addons for the Widgetbook chrome — exposes the editorial-monocle
+/// dark default with light-fallback toggles per
+/// `SPEC/ui/pixel-art-ui-catalog.md` § Editorial-monocle palette.
+List<WidgetbookAddon<dynamic>> get _ctWidgetbookAddons => [
+  MaterialThemeAddon(
+    themes: [
+      WidgetbookTheme(
+        name: 'Editorial Monocle (dark)',
+        data: AppThemes.editorialMonocle,
+      ),
+      WidgetbookTheme(
+        name: 'Colonial (light fallback)',
+        data: AppThemes.colonial,
+      ),
+      WidgetbookTheme(
+        name: 'Colonial Pixel Art (light fallback)',
+        data: AppThemes.colonialPixelArt,
+      ),
+    ],
+    initialTheme: WidgetbookTheme(
+      name: 'Editorial Monocle (dark)',
+      data: AppThemes.editorialMonocle,
+    ),
+  ),
+];
+
 /// Nine-patch button stories. SPEC/ui/buttons-nine-patch.md; catalog: CtNinePatchButton.
+///
+/// Refs #2859 R1 / S2 — gradient surface, brass corner brackets, engraved
+/// label text, hover/disabled states.
 List<WidgetbookNode> get buttonDirectories => [
   WidgetbookFolder(
     name: 'Buttons',
@@ -121,32 +286,35 @@ List<WidgetbookNode> get buttonDirectories => [
       WidgetbookUseCase(
         name: 'CtNinePatchButton',
         builder: (context) => Theme(
-          data: AppThemes.colonial,
-          child: Padding(
-            padding: const EdgeInsets.all(24),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                CtNinePatchButton(
-                  onPressed: () {},
-                  child: Text(appL10n(context).widgetbook_primaryAction),
-                ),
-                const SizedBox(height: 12),
-                CtNinePatchButton(
-                  onPressed: null,
-                  enabled: false,
-                  child: Text(appL10n(context).widgetbook_disabled),
-                ),
-                const SizedBox(height: 12),
-                SizedBox(
-                  width: 200,
-                  child: CtNinePatchButton(
+          data: AppThemes.editorialMonocle,
+          child: ColoredBox(
+            color: EditorialMonoclePalette.bg,
+            child: Padding(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  CtNinePatchButton(
                     onPressed: () {},
-                    child: Text(appL10n(context).widgetbook_fixedWidth),
+                    child: Text(appL10n(context).widgetbook_primaryAction),
                   ),
-                ),
-              ],
+                  const SizedBox(height: 12),
+                  CtNinePatchButton(
+                    onPressed: null,
+                    enabled: false,
+                    child: Text(appL10n(context).widgetbook_disabled),
+                  ),
+                  const SizedBox(height: 12),
+                  SizedBox(
+                    width: 200,
+                    child: CtNinePatchButton(
+                      onPressed: () {},
+                      child: Text(appL10n(context).widgetbook_fixedWidth),
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         ),
@@ -163,7 +331,7 @@ List<WidgetbookNode> get transferListDirectories => [
       WidgetbookUseCase(
         name: 'Default',
         builder: (context) => Theme(
-          data: AppThemes.colonial,
+          data: AppThemes.editorialMonocle,
           child: Padding(
             padding: const EdgeInsets.all(24),
             child: SizedBox(
@@ -280,11 +448,64 @@ List<WidgetbookNode> get mainMenuDirectories => [
         ),
       ),
       WidgetbookUseCase(
+        // SPEC/ui/main-menu.md § Variant rendering — exercises the
+        // disabled Load Game tooltip in the `pixelArt` variant for
+        // issue #2860 S6 (Widgetbook coverage of all four states under
+        // editorial-monocle).
+        name: 'No saves (pixel)',
+        builder: (context) => CtMainMenu(
+          variant: MainMenuVariant.pixelArt,
+          state: MainMenuState.noSaves,
+          version: 'v1.0.0',
+          onNewGame: () {},
+          onLoadGame: () {},
+          onSettings: () {},
+          onQuit: () {},
+        ),
+      ),
+      WidgetbookUseCase(
+        // SPEC/ui/main-menu.md § Widget contract — exercises the
+        // `resumeGameVisible: true` branch in the `pixelArt` variant so
+        // Widgetbook covers all four states across both variants per
+        // issue #2860 S6.
+        name: 'Resume game visible (pixel)',
+        builder: (context) => CtMainMenu(
+          variant: MainMenuVariant.pixelArt,
+          state: MainMenuState.default_,
+          version: 'v1.0.0',
+          resumeGameVisible: true,
+          onResumeGame: () {},
+          onNewGame: () {},
+          onLoadGame: () {},
+          onSettings: () {},
+          onQuit: () {},
+        ),
+      ),
+      WidgetbookUseCase(
         name: 'Default (mobile)',
         builder: (context) => mobileViewport(
           context,
           CtMainMenu(
             variant: MainMenuVariant.plain,
+            state: MainMenuState.default_,
+            version: 'v1.0.0',
+            onNewGame: () {},
+            onLoadGame: () {},
+            onSettings: () {},
+            onQuit: () {},
+          ),
+        ),
+      ),
+      WidgetbookUseCase(
+        // SPEC/ui/main-menu.md § Responsive rules — exercises the
+        // `≤ 430 dp` narrow override (compact padding + reduced button
+        // letter-spacing) against the `pixelArt` variant on a 360 dp
+        // viewport.
+        name: 'Pixel art (mobile)',
+        builder: (context) => mobileViewport(
+          context,
+          CtMainMenu(
+            variant: MainMenuVariant.pixelArt,
             state: MainMenuState.default_,
             version: 'v1.0.0',
             onNewGame: () {},
@@ -300,6 +521,27 @@ List<WidgetbookNode> get mainMenuDirectories => [
 
 /// All choices unselected on load. SPEC/ui/game-setup.md.
 List<String> _unselectedInitialOrderedGpIds() => List.filled(6, '');
+
+/// Six distinct GP ids drawn from [defaultNamingConfig] — the same default
+/// six powers used by `GameSetupConfig.defaultConfig`. Powers the
+/// "All slots selected (pixel)" Widgetbook story below so reviewers can
+/// see the happy-path swatch row + Start Game enabled state without
+/// having to manually fill every slot (SPEC/ui/game-setup.md § Slot-row
+/// chrome and swatch dots; R9).
+List<String> _allSelectedInitialOrderedGpIds() =>
+    defaultNamingConfig.greatPowers.map((g) => g.id).take(6).toList();
+
+/// Default leader variant per gp id for [_allSelectedInitialOrderedGpIds].
+Map<String, String> _allSelectedInitialLeaderVariantByGpId() {
+  final Map<String, String> map = <String, String>{};
+  for (final String id in _allSelectedInitialOrderedGpIds()) {
+    final gp = defaultNamingConfig.gpById(id);
+    if (gp != null && gp.leaderVariants.isNotEmpty) {
+      map[id] = gp.defaultLeaderVariantId;
+    }
+  }
+  return map;
+}
 
 /// Game Setup stories. SPEC/ui/game-setup.md; UXD 03b.
 List<WidgetbookNode> get gameSetupDirectories => [
@@ -367,6 +609,48 @@ List<WidgetbookNode> get gameSetupDirectories => [
             onStartGame: (_, _) {},
             onBack: () {},
           ),
+        ),
+      ),
+      WidgetbookUseCase(
+        name: 'Default (mobile, pixel)',
+        builder: (context) => mobileViewport(
+          context,
+          CtGameSetup(
+            variant: GameSetupVariant.pixelArt,
+            state: GameSetupState.default_,
+            naming: defaultNamingConfig,
+            initialOrderedGpIds: _unselectedInitialOrderedGpIds(),
+            initialLeaderVariantByGpId: const {},
+            onStartGame: (_, _) {},
+            onBack: () {},
+          ),
+        ),
+      ),
+      WidgetbookUseCase(
+        name: 'Loading (mobile, pixel)',
+        builder: (context) => mobileViewport(
+          context,
+          CtGameSetup(
+            variant: GameSetupVariant.pixelArt,
+            state: GameSetupState.loading,
+            naming: defaultNamingConfig,
+            initialOrderedGpIds: _unselectedInitialOrderedGpIds(),
+            initialLeaderVariantByGpId: const {},
+            onStartGame: (_, _) {},
+            onBack: () {},
+          ),
+        ),
+      ),
+      WidgetbookUseCase(
+        name: 'All slots selected (pixel)',
+        builder: (context) => CtGameSetup(
+          variant: GameSetupVariant.pixelArt,
+          state: GameSetupState.default_,
+          naming: defaultNamingConfig,
+          initialOrderedGpIds: _allSelectedInitialOrderedGpIds(),
+          initialLeaderVariantByGpId: _allSelectedInitialLeaderVariantByGpId(),
+          onStartGame: (_, _) {},
+          onBack: () {},
         ),
       ),
     ],
@@ -454,7 +738,7 @@ List<WidgetbookNode> get trainCiviliansDialogDirectories => [
           final humanPlayerId = game.players.isNotEmpty
               ? game.players.firstWhere((p) => p.isHuman).id
               : game.players.first.id;
-          final player = game.players.firstWhere((p) => p.id == humanPlayerId);
+          final player = game.playerById(humanPlayerId) ?? game.players.first;
           final richGame = game.copyWith(
             players: [
               player.copyWith(
@@ -466,15 +750,13 @@ List<WidgetbookNode> get trainCiviliansDialogDirectories => [
               ...game.players.where((p) => p.id != humanPlayerId),
             ],
           );
-          return MaterialApp(
-            home: Scaffold(
-              body: Center(
-                child: TrainCiviliansDialog(
-                  game: richGame,
-                  humanPlayerId: humanPlayerId,
-                  currentOrders: const Orders(),
-                  bus: AppEventBus.create(),
-                ),
+          return widgetbookEditorialMonocleApp(
+            child: Center(
+              child: TrainCiviliansDialog(
+                game: richGame,
+                humanPlayerId: humanPlayerId,
+                currentOrders: const Orders(),
+                bus: AppEventBus.create(),
               ),
             ),
           );
@@ -488,7 +770,7 @@ List<WidgetbookNode> get trainCiviliansDialogDirectories => [
           final humanPlayerId = game.players.isNotEmpty
               ? game.players.firstWhere((p) => p.isHuman).id
               : game.players.first.id;
-          final player = game.players.firstWhere((p) => p.id == humanPlayerId);
+          final player = game.playerById(humanPlayerId) ?? game.players.first;
           final noTechGame = game.copyWith(
             players: [
               player.copyWith(
@@ -501,15 +783,13 @@ List<WidgetbookNode> get trainCiviliansDialogDirectories => [
               ...game.players.where((p) => p.id != humanPlayerId),
             ],
           );
-          return MaterialApp(
-            home: Scaffold(
-              body: Center(
-                child: TrainCiviliansDialog(
-                  game: noTechGame,
-                  humanPlayerId: humanPlayerId,
-                  currentOrders: const Orders(),
-                  bus: AppEventBus.create(),
-                ),
+          return widgetbookEditorialMonocleApp(
+            child: Center(
+              child: TrainCiviliansDialog(
+                game: noTechGame,
+                humanPlayerId: humanPlayerId,
+                currentOrders: const Orders(),
+                bus: AppEventBus.create(),
               ),
             ),
           );
@@ -523,7 +803,7 @@ List<WidgetbookNode> get trainCiviliansDialogDirectories => [
           final humanPlayerId = game.players.isNotEmpty
               ? game.players.firstWhere((p) => p.isHuman).id
               : game.players.first.id;
-          final player = game.players.firstWhere((p) => p.id == humanPlayerId);
+          final player = game.playerById(humanPlayerId) ?? game.players.first;
           final poorGame = game.copyWith(
             players: [
               player.copyWith(
@@ -535,15 +815,13 @@ List<WidgetbookNode> get trainCiviliansDialogDirectories => [
               ...game.players.where((p) => p.id != humanPlayerId),
             ],
           );
-          return MaterialApp(
-            home: Scaffold(
-              body: Center(
-                child: TrainCiviliansDialog(
-                  game: poorGame,
-                  humanPlayerId: humanPlayerId,
-                  currentOrders: const Orders(),
-                  bus: AppEventBus.create(),
-                ),
+          return widgetbookEditorialMonocleApp(
+            child: Center(
+              child: TrainCiviliansDialog(
+                game: poorGame,
+                humanPlayerId: humanPlayerId,
+                currentOrders: const Orders(),
+                bus: AppEventBus.create(),
               ),
             ),
           );

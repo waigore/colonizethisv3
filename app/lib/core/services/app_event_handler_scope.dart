@@ -19,8 +19,11 @@ import 'package:colonizethis_app/features/shell/new_game_leader_selection_dialog
 import 'package:colonizethis_app/features/shell/new_game_setup_flow.dart';
 import 'package:colonizethis_app/providers/app_event_bus_provider.dart';
 import 'package:colonizethis_app/providers/game_service_provider.dart';
+import 'package:colonizethis_app/providers/observe_session_provider.dart';
 import 'package:colonizethis_app/providers/games_provider.dart';
 import 'package:colonizethis_app/providers/turn_resolution_blocking_provider.dart';
+import '../../features/game/shell_player_context.dart';
+import 'observe_mode_session_handler.dart';
 
 import 'app_event_handler.dart';
 import 'app_event_handler_debug_flip_province.dart'
@@ -70,6 +73,7 @@ GameSetupConfig _ctE2eNewGameLeaderTemplateConfig() {
     numProvincesNewWorld: 12,
     minProvincesPerMinor: 2,
     seed: d.seed,
+    infiniteMode: d.infiniteMode,
     startingResources: d.startingResources,
     preferredInitialMapZoomMultiplier: d.preferredInitialMapZoomMultiplier,
     initTownRoadWiringRegionIds: d.initTownRoadWiringRegionIds,
@@ -251,10 +255,4 @@ class _AppEventHandlerScopeState extends ConsumerState<AppEventHandlerScope> {
   @override
   Widget build(BuildContext context) => widget.child;
 
-  static String _humanPlayerId(Game game) {
-    for (final p in game.players) {
-      if (p.isHuman) return p.id;
-    }
-    return game.players.first.id;
-  }
 }

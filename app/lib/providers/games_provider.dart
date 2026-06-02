@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 
 import '../config/constants.dart';
+import '../features/game/shell_player_context.dart';
 import 'game_service_provider.dart';
 
 /// List of saved game ids. Refreshed by reading from GameService.
@@ -83,7 +84,9 @@ final availableWorkTargetIdsForUnitProvider =
       final mapData = service.getMapData(game.id);
       final topology = mapData?.combinedTopology ?? const MapTopology();
 
-      final humanPlayerId = game.players.firstWhere((p) => p.isHuman).id;
+      final shell = ref.read(shellPlayerContextProvider);
+      final humanPlayerId =
+          shell.panelPlayerId ?? resolveShellPanelPlayerId(shell, game);
       final view = buildPlayerView(game, topology, humanPlayerId);
 
       return getAvailableWorkTargetsForUnit(
@@ -108,7 +111,9 @@ final devExclusiveReservedWorkTileKeysProvider = Provider<Set<String>>((ref) {
   if (game == null) return {};
 
   final orders = ref.watch(currentOrdersProvider);
-  final humanPlayerId = game.players.firstWhere((p) => p.isHuman).id;
+  final shell = ref.read(shellPlayerContextProvider);
+  final humanPlayerId =
+      shell.panelPlayerId ?? resolveShellPanelPlayerId(shell, game);
   return devExclusiveReservedTileKeysForPlayer(game, orders, humanPlayerId);
 });
 
@@ -153,6 +158,11 @@ final class PendingDiplomacyCallToArms extends PendingDiplomacyState {
   final List<CallToArmsPending> pending;
 }
 
+final class PendingDiplomacyFtp extends PendingDiplomacyState {
+  const PendingDiplomacyFtp(this.offers);
+  final List<FtpOffer> offers;
+}
+
 class PendingDiplomacyNotifier extends Notifier<PendingDiplomacyState?> {
   PendingDiplomacyNotifier([this._initial]);
 
@@ -171,6 +181,10 @@ class PendingDiplomacyNotifier extends Notifier<PendingDiplomacyState?> {
 
   void setCallToArms(List<CallToArmsPending> pending) {
     state = PendingDiplomacyCallToArms(pending);
+  }
+
+  void setFtp(List<FtpOffer> offers) {
+    state = PendingDiplomacyFtp(offers);
   }
 
   void clear() {

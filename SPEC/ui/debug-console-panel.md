@@ -1,7 +1,9 @@
 # Debug console panel
 
+**Screen ID:** `SYS20001` — stable; do not reassign.
 **SPEC/ui** — Debug-only in-map console overlay for immediate debug session commands (spawn, treasury credit, worker pool credit, debug province transfer).
 
+**Mockup:** [mockups/SYS20001-debug-console-panel.html](mockups/SYS20001-debug-console-panel.html)
 ---
 
 ## Glossary
@@ -29,6 +31,9 @@
 - **`/flip_province <regionId> <province_display_name>`** and **`/flip_province <regionId|localId>`** — requests one canonical province ownership transfer to the human player by region-scoped display-name match or direct full-id targeting. Ambiguous display-name matches return deterministic candidate ids and require id-form retry.
 - **`/reveal_province <regionId|localId | province_display_name>`** — reveals one province for the human player by full province id or global display-name exact match (trim + case-insensitive). Unprefixed local ids (e.g. `P12`) are rejected deterministically; ambiguous display-name matches return deterministic candidate ids and require id-form retry.
 - **`/get_tile_basic_info`** — read-only command that reports ids from the current orange tile selection (`mapProvincePanelProvider.selectedTileKey`). Success output is multiline and includes `tile_id: <regionId|localProvinceId|x|y>` and `province_id: <regionId|localProvinceId>`. Missing selection returns deterministic error `No tile is selected.`; malformed selection returns deterministic error `Selected tile key is invalid.`.
+- **`/observe`** — enter **global** in-app observe mode (session-only; see [observe-mode.md](observe-mode.md)). Emits `SetObserveModeGlobalEvent`.
+- **`/observe off`** — exit observe mode. Emits `SetObserveModeOffEvent`.
+- **`/observe <target>`** — enter **player** observe for one Great Power; `<target>` is exact `player_id` or `display_name` (trim, case-insensitive; ambiguous names → candidate list + id retry, same as `/list_players`). Rejects unknown, non-GP, and eliminated GPs (`capitalProvinceId == null`). Emits `SetObserveModePlayerEvent`.
 - **`/list_players`** — read-only command that enumerates all `Game.players` in ascending `player.id` order. Success output starts with `players_count: <N>` and one blank-line-separated block per player with `player_id`, `display_name` (empty/blank `displayName` falls back to `player_id`), `type` (`human` or `ai`), and `eliminated` (`true` when `capitalProvinceId == null`, else `false`). Extra arguments return `Usage: /list_players`. When the submit-time read-only context does not supply a `players` projection, the executor returns deterministic error `Player list is unavailable.` with no events.
 - **`/help`** — Lists supported commands and bounds. `/spawn_regiment`, `/spawn_ship`, `/add_resource`, and `/add_worker` help text must include every canonical id (regiment, ship, commodity, or worker tier) exactly once in stable sorted order, generated from the same source used for parser validation.
 - **Orders-phase gate policy** — `/add_money`, `/add_resource`, `/flip_province`, and `/reveal_province` apply paths are allowed only during human Orders phase. Outside Orders phase, the app listener rejects those applies with deterministic feedback and leaves game state unchanged. **`/add_worker`** is **not** `TurnPhase`-gated in its apply handler (parity with the “no economy-phase modifiers” credit surface for `/add_money` / `/add_worker` above); a valid `CreditDebugWorkerPoolEvent` still mutates `WorkerPool` outside Orders phase.
@@ -43,6 +48,33 @@
 - Successful command emits typed session event and shows feedback via snackbar (same dual path as spawn: executor-queued message plus listener-applied message; dedupe out of scope).
 - Read-only info commands (for example `/get_tile_basic_info`, `/list_players`) append deterministic output and show snackbar feedback without emitting `SessionCommandEvent`.
 - Invalid command shows deterministic error feedback and does not emit session command events.
+
+---
+
+## Visual chrome
+
+The panel renders against the canonical dark editorial-monocle palette
+(`SPEC/ui/pixel-art-ui-catalog.md` § Editorial-monocle palette). No raw
+Material color literals appear in feature code; every surface, glyph,
+and text colour resolves through an `EditorialMonoclePalette` token.
+
+| Region | Token / catalog primitive |
+|--------|---------------------------|
+| Outer panel surface | `EditorialMonoclePalette.bgDeep` at `0.85` alpha |
+| Header title text | `EditorialMonoclePalette.fg` (weight `w700`) |
+| Header close affordance | `CtIconAction` (`Refs #2914` S8 — replaces banned `IconButton`) with `iconColor = EditorialMonoclePalette.fg` |
+| Log readout background | `EditorialMonoclePalette.dialogScrim` |
+| Log readout text | `EditorialMonoclePalette.fg` |
+| Input field text | `EditorialMonoclePalette.fg` |
+| Input field hint | `EditorialMonoclePalette.muted` at `0.6` alpha |
+| Input field fill | `EditorialMonoclePalette.dialogScrim` |
+
+### Acceptance criteria — Visual chrome
+
+- Given the debug console overlay is mounted, when the panel builds, then The UI layer renders the header close affordance as a `CtIconAction` (catalog primitive) and renders **no** Material `IconButton` widgets inside the panel subtree.
+- Given the debug console overlay is mounted, when the panel builds, then The UI layer resolves the header title text colour to `EditorialMonoclePalette.fg`, the input style colour to `EditorialMonoclePalette.fg`, and the input hint colour to `EditorialMonoclePalette.muted` at `0.6` alpha.
+- Given the debug console overlay is mounted, when the panel builds, then The UI layer resolves the outer `Material` surface colour to `EditorialMonoclePalette.bgDeep` at `0.85` alpha and the input fill colour to `EditorialMonoclePalette.dialogScrim`.
+- Given the user taps the header close affordance, when the tap is committed, then the system invokes the panel `onClose` callback exactly once.
 
 ---
 
@@ -79,7 +111,10 @@
 - Given panel input `/flip_province oldWorld` or `/flip_province` with missing arguments, when the player submits, then the UI layer emits no `FlipDebugProvinceOwnershipEvent` and shows deterministic usage feedback.
 - Given `/flip_province` targets a province owned by the active human player, when the app listener applies the event, then the system keeps game state unchanged and returns deterministic feedback `Debug flip_province rejected: target province is already human-owned.`.
 - Given `/flip_province` targets a non-human capital province and the owning faction has no eligible reassignment capital in that same region under existing capital-loss rules, when the app listener applies the event, then the system applies canonical ownership transfer, immediately resolves terminal fall using the same semantics as existing Great Power fall, and returns deterministic success feedback that terminal outcome was resolved in the same transaction.
-- Given `/flip_province` targets a non-human capital province and the owning faction has at least one deterministic eligible reassignment capital, when the app listener applies the event during human Orders phase, then the system applies canonical ownership transfer, immediately runs capital reassignment using the same deterministic eligibility mechanism used by combat capital-loss handling, and then applies Great Power fall evaluation in the same command transaction.
+- Given `/flip_province` targets a non-human capital province and the owning faction has at least one deterministic eligible reassignment capital, when the app listener applies the event during human Orders phase, then the system applies canonical ownership transfer, immediately runs capital reassignment using the same deterministic eligibility mechanism used by combat capital-loss handling, and then applies Great Power fall and Minor Nation / Tribe terminal fall evaluation in the same command transaction.
+- Given `/flip_province` targets the capital province of a Minor Nation that still owns at least one other province in the same original capital region with a valid `townTileKey`, when the app listener applies the event during human Orders phase, then the system applies canonical ownership transfer, sets that Minor Nation's `capitalProvinceId` to the deterministic eligible new capital per [capital-and-connectivity.md](../game/capital-and-connectivity.md) § Capital loss and reassignment, sets `capitalTile` from the new province's `townTileKey`, and does not modify `WorldState.portsByProvinceSeaboard`, `WorldState.tileState`, or `townDevelopmentLevel` for any province.
+- Given `/flip_province` targets the capital province of a Tribe that still owns at least one other province in the same original capital region with a valid `townTileKey`, when the app listener applies the event during human Orders phase, then the system applies canonical ownership transfer and sets that Tribe's `capitalProvinceId` and `capitalTile` from the new province's `townTileKey` only, with no port/road/town-development changes.
+- Given `/flip_province` targets the capital province of a Minor Nation or Tribe whose only owned province in the original capital region is that capital, when the app listener applies the event during human Orders phase, then the system applies canonical ownership transfer, resolves terminal fall in the same transaction per [capital-and-connectivity.md](../game/capital-and-connectivity.md) § Minor Nation and Tribe terminal fall (provinces transferred to the conqueror, faction removed from `Game.minorNations` / `Game.tribes`, units and fleets removed), and returns deterministic success feedback that notes terminal outcome resolved.
 - Given panel input `/reveal_province oldWorld|P1`, when the player submits and parser validation succeeds, then the system emits one `RevealDebugProvinceEvent` with `target=oldWorld|P1` and `targetIsFullProvinceId=true`.
 - Given panel input `/reveal_province New Bordeaux` and more than one province matches globally by normalized display name, when the app listener resolves the target, then the system keeps game state unchanged and returns deterministic disambiguation feedback listing candidate full ids and id-form retry guidance.
 - Given a valid `/reveal_province oldWorld|P1` command during human Orders phase, when the app listener applies the event, then the system sets all land tiles in `oldWorld|P1` to `fullyVisible` for the human player, sets directly adjacent sea-zone water tiles to `fullyVisible`, persists updated game state, and returns deterministic success feedback.
@@ -105,3 +140,4 @@
 
 - **App handler and JSON persistence parity:** `app/test/app_event_handler_scope_test.dart` (`applyDebugFlipProvinceOwnership` — success, Orders-phase gate, unknown-to-human, already-owned, ambiguous name, not found, null owner, `Game.fromJson` / `toJson` round-trip).
 - **Logic downstream after canonical transfer:** `packages/colonizethis_logic/test/debug_flip_province_turn_downstream_test.dart` (`emitProvinceCapturedEvents`, `resolveConnectivity` via `runExtractionPhase`, `findMilitaryVictoryWinner`, `runEndOfTurnPhase`).
+- **Minor Nation and Tribe capital-loss parity:** `app/test/app_event_handler_debug_flip_province_minor_tribe_capital_test.dart` (capital reassignment for Minor Nation and Tribe owners; terminal fall when no eligible reassignment exists in the original capital region; `Game.fromJson` / `toJson` round-trip preserves post-reassignment minor/tribe capital fields).

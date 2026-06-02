@@ -2,6 +2,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../world/army_migration.dart';
 import '../world/civilian_ownership_legality.dart';
+import '../world/game_world_mutations.dart';
 import '../world/province_lookup.dart';
 import '../world/province_ownership_transfer.dart';
 import 'diplomacy_relation_lookup.dart';
@@ -123,7 +124,7 @@ Game _absorbIntoGp(
   }
 
   final provinceIds = _sortedFullProvinceIdsOwnedBy(game, absorbedFactionId);
-  var next = game.copyWith(players: players);
+  var next = game.withPlayers(players);
   final bulk = applyBulkCanonicalProvinceOwnershipTransfers(
     next,
     provinceIdsInOrder: provinceIds,
@@ -178,6 +179,8 @@ Game _absorbIntoGp(
     ws = ws.mapBothRegionUnits(
       (_, units) => _remapAllUnitsFromTo(units, absorbedFactionId, gpId),
     );
+    // Atomic multi-field mutation (generals + worldState); kept as raw
+    // copyWith per Issue #2836 AC 6 single-field-only helper scope.
     next = next.copyWith(generals: generals, worldState: ws);
   } else {
     var ws = next.worldState.copyWith(
@@ -194,7 +197,7 @@ Game _absorbIntoGp(
     ws = ws.mapBothRegionUnits(
       (_, units) => _remapAllUnitsFromTo(units, absorbedFactionId, gpId),
     );
-    next = next.copyWith(worldState: ws);
+    next = next.withWorldState(ws);
   }
 
   next = relocateIllegalCiviliansInChangedProvinces(
@@ -202,8 +205,8 @@ Game _absorbIntoGp(
     changedProvinceIds: Set<String>.from(provinceIds),
   );
 
-  next = next.copyWith(
-    worldState: reconcileArmiesAfterUnitsChanged(next.worldState, next),
+  next = next.withWorldState(
+    reconcileArmiesAfterUnitsChanged(next.worldState, next),
   );
 
   if (kind == _AbsorptionKind.minorOrTribe) {

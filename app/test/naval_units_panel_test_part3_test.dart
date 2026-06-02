@@ -264,7 +264,7 @@ void main() {
 
         final confirmTransfer = find.widgetWithText(
           CtNinePatchButton,
-          'Confirm Transfer',
+          'Transfer',
         );
         expect(confirmTransfer, findsOneWidget);
         expect(

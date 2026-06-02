@@ -1,10 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import 'editorial_monocle_palette.dart';
+
 const Color darkWood = Color(0xFF5D3A1A);
 
 /// App themes. Phase 6: pixel-art canon and styling per UXD apply to existing UIs (03a–03m).
 /// Asset pipeline: `assets/images/` (terrain, nine-patch, main menu art); `assets/icons/` (`ui_icon_*.png`); load via rootBundle or Flame cache.
+///
+/// Default visual mode for the running app is [editorialMonocle] — see
+/// `SPEC/ui/pixel-art-ui-catalog.md` § Editorial-monocle palette. The
+/// legacy [colonial] / [colonialPixelArt] themes are preserved for
+/// Widgetbook fallback and debug toggles only.
 class AppThemes {
   AppThemes._();
 
@@ -81,5 +88,101 @@ class AppThemes {
         bodySmall: GoogleFonts.cinzel(textStyle: baseText.bodySmall),
       ),
     );
+  }
+
+  /// Editorial-monocle dark theme: SPEC/ui/pixel-art-ui-catalog.md
+  /// § Editorial-monocle palette. Tokens resolve via
+  /// [EditorialMonoclePalette]; display text uses the Cinzel font family
+  /// (registered at runtime by [preloadEditorialMonocleFonts]), body text
+  /// uses Flutter's platform sans-serif default so it follows the
+  /// system-ui / -apple-system fallback chain on each OS.
+  ///
+  /// The theme intentionally constructs Cinzel-styled TextStyles with
+  /// `fontFamily: editorialMonocleDisplayFontFamily` directly rather than
+  /// calling `GoogleFonts.cinzel(...)` at construction time. That keeps
+  /// the theme constructor synchronous and hermetic (unit tests can read
+  /// the theme without triggering Google Fonts' offline HTTP fetch). The
+  /// actual font byte loading is done once at app startup via
+  /// [preloadEditorialMonocleFonts]; in production runs the font renders
+  /// as soon as the registration future resolves, with the platform
+  /// serif fallback used until then.
+  static ThemeData get editorialMonocle {
+    final Color bg = EditorialMonoclePalette.bg;
+    final Color surface = EditorialMonoclePalette.surface;
+    final Color surfaceLite = EditorialMonoclePalette.surfaceLite;
+    final Color fg = EditorialMonoclePalette.fg;
+    final Color muted = EditorialMonoclePalette.muted;
+    final Color border = EditorialMonoclePalette.border;
+    final Color accent = EditorialMonoclePalette.accent;
+    final Color accentDim = EditorialMonoclePalette.accentDim;
+    final Color danger = EditorialMonoclePalette.danger;
+
+    final TextTheme base = ThemeData.dark(useMaterial3: true).textTheme;
+    TextStyle? cinzel(TextStyle? source) =>
+        source?.copyWith(color: fg, fontFamily: editorialMonocleDisplayFontFamily);
+    final TextTheme textTheme = base
+        .apply(bodyColor: fg, displayColor: fg)
+        .copyWith(
+          headlineMedium: cinzel(base.headlineMedium),
+          headlineSmall: cinzel(base.headlineSmall),
+          titleLarge: cinzel(base.titleLarge),
+          titleMedium: cinzel(base.titleMedium),
+          titleSmall: cinzel(base.titleSmall),
+          bodyLarge: base.bodyLarge?.copyWith(color: fg),
+          bodyMedium: base.bodyMedium?.copyWith(color: fg),
+          bodySmall: base.bodySmall?.copyWith(color: muted),
+          labelLarge: base.labelLarge?.copyWith(color: fg),
+          labelMedium: base.labelMedium?.copyWith(color: muted),
+          labelSmall: base.labelSmall?.copyWith(color: muted),
+        );
+
+    return ThemeData(
+      useMaterial3: true,
+      brightness: Brightness.dark,
+      colorScheme: ColorScheme.dark(
+        primary: accent,
+        onPrimary: bg,
+        secondary: accentDim,
+        onSecondary: bg,
+        surface: surface,
+        onSurface: fg,
+        surfaceContainerHighest: surfaceLite,
+        outline: border,
+        error: danger,
+        onError: bg,
+      ),
+      scaffoldBackgroundColor: bg,
+      appBarTheme: AppBarTheme(
+        backgroundColor: surfaceLite,
+        foregroundColor: fg,
+        titleTextStyle: textTheme.titleLarge?.copyWith(color: fg),
+      ),
+      dividerColor: border,
+      textTheme: textTheme,
+    );
+  }
+}
+
+/// Font family applied to display / heading text styles in
+/// [AppThemes.editorialMonocle]. Matches Google Fonts' Cinzel family name.
+const String editorialMonocleDisplayFontFamily = 'Cinzel';
+
+/// Trigger an asynchronous registration of the Cinzel display font via the
+/// `google_fonts` package. Call once from app startup; in tests this is a
+/// no-op (skip parameter [skipInTests] = true) so the suite stays hermetic.
+///
+/// Failures are swallowed: when offline (and not cached on disk) the
+/// editorial-monocle display text falls back to the platform serif until a
+/// future run loads it. This keeps Cinzel registration completely separate
+/// from theme construction.
+Future<void> preloadEditorialMonocleFonts({bool skipInTests = false}) async {
+  if (skipInTests) return;
+  try {
+    // Touching the GoogleFonts.cinzel() factory schedules the async font
+    // load. We do not await the result here; downstream renderers use the
+    // platform fallback until the registration future completes.
+    GoogleFonts.cinzel();
+  } catch (_) {
+    // Intentionally swallowed — see method docstring.
   }
 }

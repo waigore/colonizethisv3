@@ -1,11 +1,16 @@
-// Move army dialog. SPEC/ui/military-units-panel.md, SPEC/program/app-ui-wiring.md.
+// Move army dialog. SPEC/ui/move-army-dialog.md, SPEC/program/app-ui-wiring.md.
 
 import 'package:colonizethis_data/colonizethis_data.dart' show MapTopology;
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
 
+import '../../../config/editorial_monocle_palette.dart';
+import '../../../config/ui_screen_ids.dart';
 import '../../../l10n/l10n.dart';
+import '../../../widgets/ct_dialog_shell.dart';
+import '../../../widgets/ct_section_label.dart';
+import 'chrome/ct_nine_patch_button.dart';
 
 String moveArmyFactionGroupHeaderLabel(
   Game game,
@@ -40,6 +45,9 @@ class MoveArmyDialog extends StatefulWidget {
     required this.draftOrders,
     this.playerView,
   });
+
+  /// SPEC/ui/move-army-dialog.md — [UiScreenIds.moveArmyDialog].
+  static const screenId = UiScreenIds.moveArmyDialog;
 
   final Army army;
   final Game game;
@@ -80,12 +88,12 @@ class _MoveArmyDialogState extends State<MoveArmyDialog> {
         topology: widget.topology,
         playerId: widget.humanPlayerId,
         basePrefix: orders,
-        view: view,
-        unitsById: unitsByIdFromWorld(widget.game.worldState),
+        resolution: orderResolutionContextFromView(view, widget.game),
       );
     } else {
-      _sharedCandidateValidator =
-          _sharedCandidateValidator!.forBasePrefix(orders);
+      _sharedCandidateValidator = _sharedCandidateValidator!.forBasePrefix(
+        orders,
+      );
     }
     final armyId = widget.army.id;
     if (_cachedDestinationsOrders != orders ||
@@ -96,7 +104,6 @@ class _MoveArmyDialogState extends State<MoveArmyDialog> {
         playerId: widget.humanPlayerId,
         army: widget.army,
         currentOrders: orders,
-        playerView: view,
         sharedCandidateValidator: _sharedCandidateValidator,
       );
       _cachedDestinationsOrders = orders;
@@ -117,40 +124,6 @@ class _MoveArmyDialogState extends State<MoveArmyDialog> {
       army: widget.army,
       currentOrders: widget.draftOrders,
     );
-  }
-
-  String _groupKey(ArmyMovePickerDestination e) =>
-      e.isPlayerOwned ? '__player__' : e.ownerFactionId;
-
-  List<DropdownMenuItem<String>> _groupedDropdownItems(
-    List<ArmyMovePickerDestination> entries,
-    AppLocalizations l10n,
-  ) {
-    final items = <DropdownMenuItem<String>>[];
-    String? currentGroup;
-    for (final entry in entries) {
-      final g = _groupKey(entry);
-      if (g != currentGroup) {
-        currentGroup = g;
-        items.add(
-          DropdownMenuItem<String>(
-            enabled: false,
-            value: '__header__$g',
-            child: Text(
-              moveArmyFactionGroupHeaderLabel(widget.game, entry, l10n),
-              style: const TextStyle(fontWeight: FontWeight.bold),
-            ),
-          ),
-        );
-      }
-      items.add(
-        DropdownMenuItem<String>(
-          value: entry.fullProvinceId,
-          child: Text(entry.provinceLabel),
-        ),
-      );
-    }
-    return items;
   }
 
   ArmyMovePickerDestination? _selectedEntry(
@@ -198,20 +171,46 @@ class _MoveArmyDialogState extends State<MoveArmyDialog> {
     );
     final ok = await showDialog<bool>(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text(l10n.moveArmy_invadeProvinceTitle),
-        content: Text(l10n.moveArmy_invadeProvinceBody(ownerLabel)),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(false),
-            child: Text(l10n.common_cancel),
+      builder: (ctx) {
+        final theme = Theme.of(ctx);
+        final titleStyle = (theme.textTheme.titleMedium ?? const TextStyle())
+            .copyWith(color: EditorialMonoclePalette.danger);
+        final bodyStyle = (theme.textTheme.bodyMedium ?? const TextStyle())
+            .copyWith(color: EditorialMonoclePalette.fg);
+        return CtDialogShell(
+          borderColor: EditorialMonoclePalette.danger,
+          borderWidth: CtDialogShell.dangerBorderWidth,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(l10n.moveArmy_invadeProvinceTitle, style: titleStyle),
+              const SizedBox(height: 8),
+              Text(
+                l10n.moveArmy_invadeProvinceBody(ownerLabel),
+                style: bodyStyle,
+              ),
+              const SizedBox(height: 16),
+              Wrap(
+                alignment: WrapAlignment.end,
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  CtNinePatchButton(
+                    onPressed: () => Navigator.of(ctx).pop(false),
+                    child: Text(l10n.common_cancel),
+                  ),
+                  CtNinePatchButton(
+                    dangerVariant: true,
+                    onPressed: () => Navigator.of(ctx).pop(true),
+                    child: Text(l10n.moveArmy_declareWarAndMove),
+                  ),
+                ],
+              ),
+            ],
           ),
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(true),
-            child: Text(l10n.moveArmy_declareWarAndMove),
-          ),
-        ],
-      ),
+        );
+      },
     );
     if (ok == true && context.mounted) {
       _emitAndClose(entry);
@@ -251,35 +250,224 @@ class _MoveArmyDialogState extends State<MoveArmyDialog> {
   @override
   Widget build(BuildContext context) {
     final l10n = appL10n(context);
+    final theme = Theme.of(context);
     final entries = _destinationEntries();
-    final items = _groupedDropdownItems(entries, l10n);
+    final owned = entries.where((e) => e.isPlayerOwned).toList();
+    final invasion = entries.where((e) => !e.isPlayerOwned).toList();
 
-    return AlertDialog(
-      title: Text(l10n.moveArmy_title(widget.army.id)),
-      content: SizedBox(
-        width: 320,
-        child: entries.isEmpty
-            ? Text(l10n.moveArmy_noValidDestinations)
-            : DropdownButtonFormField<String>(
-                initialValue: _selected,
-                isExpanded: true,
-                decoration: InputDecoration(
-                  labelText: l10n.moveArmy_destinationProvince,
-                ),
-                items: items,
-                onChanged: (v) => setState(() => _selected = v),
+    final TextStyle titleStyle =
+        (theme.textTheme.titleMedium ?? const TextStyle(fontSize: 16))
+            .copyWith(
+              color: EditorialMonoclePalette.accent,
+              letterSpacing: 0.05 * 16,
+              fontWeight: FontWeight.w600,
+            );
+    final TextStyle emptyStyle =
+        (theme.textTheme.bodyMedium ?? const TextStyle())
+            .copyWith(color: EditorialMonoclePalette.muted);
+
+    Widget sectionRows(
+      List<ArmyMovePickerDestination> sectionEntries, {
+      required bool showDeclareWarTrigger,
+    }) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: sectionEntries
+            .map(
+              (entry) => _MoveArmyDestinationRow(
+                entry: entry,
+                selected: _selected == entry.fullProvinceId,
+                declareWarTriggerLabel: showDeclareWarTrigger &&
+                        entry.requiresDeclareWarOnConfirm
+                    ? l10n.moveArmy_declareWarOnTrigger(
+                        moveArmyFactionGroupHeaderLabel(
+                          widget.game,
+                          entry,
+                          l10n,
+                        ),
+                      )
+                    : null,
+                onTap: () =>
+                    setState(() => _selected = entry.fullProvinceId),
               ),
-      ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.of(context).pop(),
-          child: Text(l10n.common_cancel),
-        ),
-        TextButton(
-          onPressed: _selected == null ? null : _onConfirmPressed,
-          child: Text(l10n.common_confirm),
+            )
+            .toList(),
+      );
+    }
+
+    final destinationColumns = Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        if (owned.isNotEmpty) ...[
+          CtSectionLabel(l10n.moveArmy_groupYourProvinces),
+          const SizedBox(height: 6),
+          sectionRows(owned, showDeclareWarTrigger: false),
+        ],
+        if (invasion.isNotEmpty) ...[
+          if (owned.isNotEmpty) const SizedBox(height: 12),
+          CtSectionLabel(l10n.moveArmy_groupInvasionTargets),
+          const SizedBox(height: 6),
+          sectionRows(invasion, showDeclareWarTrigger: true),
+        ],
+      ],
+    );
+
+    final body = Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Text(l10n.moveArmy_title(widget.army.id), style: titleStyle),
+        const SizedBox(height: 12),
+        if (entries.isEmpty)
+          Text(l10n.moveArmy_noValidDestinations, style: emptyStyle)
+        else
+          destinationColumns,
+        const SizedBox(height: 16),
+        Wrap(
+          alignment: WrapAlignment.end,
+          spacing: 8,
+          runSpacing: 8,
+          children: [
+            CtNinePatchButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: Text(l10n.common_cancel),
+            ),
+            CtNinePatchButton(
+              enabled: _selected != null,
+              onPressed: _selected == null ? null : _onConfirmPressed,
+              child: Text(l10n.common_confirm),
+            ),
+          ],
         ),
       ],
+    );
+
+    return CtDialogShell(child: body);
+  }
+}
+
+/// Single destination row inside `MoveArmyDialog`.
+///
+/// SPEC: `SPEC/ui/move-army-dialog.md` § Layout — radio-row outline contract
+/// (#2867 R7). Invasion rows may append a `declare war on …` trigger in
+/// `--danger` italic body style (#2867 R8).
+class _MoveArmyDestinationRow extends StatelessWidget {
+  const _MoveArmyDestinationRow({
+    required this.entry,
+    required this.selected,
+    required this.onTap,
+    this.declareWarTriggerLabel,
+  });
+
+  final ArmyMovePickerDestination entry;
+  final bool selected;
+  final VoidCallback onTap;
+  final String? declareWarTriggerLabel;
+
+  static const double _selectedBorderWidth = 2;
+  static const double _idleBorderWidth = 1;
+  static const double _dotOuterDiameter = 14;
+  static const double _dotInnerDiameter = 6;
+
+  @override
+  Widget build(BuildContext context) {
+    final ThemeData theme = Theme.of(context);
+    final Color outline = selected
+        ? EditorialMonoclePalette.accent
+        : EditorialMonoclePalette.border;
+    final double outlineWidth = selected
+        ? _selectedBorderWidth
+        : _idleBorderWidth;
+    final TextStyle labelStyle =
+        (theme.textTheme.bodyMedium ?? const TextStyle()).copyWith(
+          color: selected
+              ? EditorialMonoclePalette.fg
+              : EditorialMonoclePalette.fg.withValues(alpha: 0.9),
+        );
+    final TextStyle? triggerStyle = declareWarTriggerLabel == null
+        ? null
+        : (theme.textTheme.bodySmall ?? const TextStyle(fontSize: 12))
+              .copyWith(
+                color: EditorialMonoclePalette.danger,
+                fontStyle: FontStyle.italic,
+                fontWeight: FontWeight.w600,
+              );
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 3),
+      child: Semantics(
+        button: true,
+        selected: selected,
+        label: entry.provinceLabel,
+        child: GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onTap: onTap,
+          child: Container(
+            decoration: BoxDecoration(
+              border: Border.all(color: outline, width: outlineWidth),
+            ),
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                _MoveArmyRadioDot(selected: selected),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(entry.provinceLabel, style: labelStyle),
+                      if (declareWarTriggerLabel != null && triggerStyle != null)
+                        Text(declareWarTriggerLabel!, style: triggerStyle),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _MoveArmyRadioDot extends StatelessWidget {
+  const _MoveArmyRadioDot({required this.selected});
+
+  final bool selected;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: _MoveArmyDestinationRow._dotOuterDiameter,
+      height: _MoveArmyDestinationRow._dotOuterDiameter,
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          Container(
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              border: Border.all(
+                color: selected
+                    ? EditorialMonoclePalette.accent
+                    : EditorialMonoclePalette.border,
+                width: 1,
+              ),
+            ),
+          ),
+          if (selected)
+            Container(
+              width: _MoveArmyDestinationRow._dotInnerDiameter,
+              height: _MoveArmyDestinationRow._dotInnerDiameter,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: EditorialMonoclePalette.accent,
+              ),
+            ),
+        ],
+      ),
     );
   }
 }

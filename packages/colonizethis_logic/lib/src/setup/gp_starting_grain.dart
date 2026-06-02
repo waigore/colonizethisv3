@@ -5,6 +5,7 @@ import 'package:colonizethis_logic/src/logging.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../constants.dart';
+import '../world/game_world_mutations.dart';
 import '../world/tile_key_coordinates.dart';
 import 'town_capital_occupancy.dart';
 
@@ -127,7 +128,7 @@ applyGreatPowerStartingGrainBootstrap({
   }
 
   return (
-    game: game.copyWith(worldState: ws),
+    game: game.withWorldState(ws),
     tileMap: map,
     grainKeysByPlayerId: keysOut,
   );

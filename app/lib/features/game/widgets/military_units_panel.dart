@@ -1,14 +1,18 @@
 // Military units panel. SPEC/ui/military-units-panel.md, SPEC/ui/military-units-army-management.md.
 
 import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:colonizethis_logic/colonizethis_logic.dart' show buildPlayerView;
+import 'package:colonizethis_logic/colonizethis_logic.dart'
+    show buildPlayerView;
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
 
+import '../../../config/ui_screen_ids.dart';
 import '../../../core/services/app_event_handler_scope.dart'
     show trainMilitaryDialogId;
 import '../../../l10n/l10n.dart';
+import '../../../widgets/ct_icon_action.dart';
 import '../../../widgets/ct_nine_patch_button.dart';
+import '../../../widgets/ct_spacing.dart';
 import 'utils/military_tree_builder.dart';
 import 'move_army_dialog.dart';
 import 'split_army_dialog.dart';
@@ -26,13 +30,18 @@ class MilitaryUnitsPanel extends StatefulWidget {
     required this.bus,
     required this.topology,
     required this.draftOrders,
+    this.readOnly = false,
   });
+
+  /// SPEC/ui/military-units-panel.md — [UiScreenIds.militaryUnitsPanel].
+  static const screenId = UiScreenIds.militaryUnitsPanel;
 
   final Game game;
   final String humanPlayerId;
   final AppEventBus bus;
   final MapTopology topology;
   final Orders draftOrders;
+  final bool readOnly;
 
   @override
   State<MilitaryUnitsPanel> createState() => _MilitaryUnitsPanelState();
@@ -126,8 +135,10 @@ class _MilitaryUnitsPanelState extends State<MilitaryUnitsPanel> {
     final groups = buildMilitaryGroups(widget.game, widget.humanPlayerId);
     final flat = flattenMilitaryArmyBlocks(groups);
     final hasAny = groups.isNotEmpty;
-    final canCombine = canCombineArmySelection(flat, _selectedArmyIds);
+    final canCombine =
+        !widget.readOnly && canCombineArmySelection(flat, _selectedArmyIds);
     final headerCheckbox = _headerSelectAllValue(flat);
+    final readOnly = widget.readOnly;
 
     return UnitsPanelShell(
       title: l10n.military_units_title,
@@ -137,6 +148,7 @@ class _MilitaryUnitsPanelState extends State<MilitaryUnitsPanel> {
         flat: flat,
         canCombine: canCombine,
         headerCheckbox: headerCheckbox,
+        readOnly: readOnly,
       ),
       hasContent: hasAny,
       listChildren: _buildListChildren(groups, l10n),
@@ -150,9 +162,10 @@ class _MilitaryUnitsPanelState extends State<MilitaryUnitsPanel> {
     required List<ArmyBlock> flat,
     required bool canCombine,
     required bool? headerCheckbox,
+    required bool readOnly,
   }) {
     return [
-      if (hasAny && flat.isNotEmpty) ...[
+      if (hasAny && flat.isNotEmpty && !readOnly) ...[
         Tooltip(
           message: headerCheckbox == true
               ? l10n.military_units_deselectAllArmies
@@ -175,7 +188,8 @@ class _MilitaryUnitsPanelState extends State<MilitaryUnitsPanel> {
         ),
       ],
       CtNinePatchButton(
-        onPressed: _openTrainDialog,
+        onPressed: readOnly ? null : _openTrainDialog,
+        enabled: !readOnly,
         child: Text(l10n.common_train),
       ),
     ];
@@ -231,14 +245,18 @@ class _MilitaryUnitsPanelState extends State<MilitaryUnitsPanel> {
         draftOrders: widget.draftOrders,
       ),
       isSelectedForCombine: _selectedArmyIds.contains(block.army.id),
+      combineSelectionEnabled: !widget.readOnly,
       onCombineSelectionToggle: () => _toggleArmySelection(block.army.id),
       onLocate: _armyLocateCallback(block),
-      onSplit: block.army.regimentUnitIds.length >= 2
-          ? () => _openSplitDialog(block)
-          : null,
-      onMove: !block.army.isHomeArmy && block.army.regimentUnitIds.isNotEmpty
-          ? () => _openMoveDialog(block)
-          : null,
+      onSplit: widget.readOnly || block.army.regimentUnitIds.length < 2
+          ? null
+          : () => _openSplitDialog(block),
+      onMove:
+          widget.readOnly ||
+              block.army.isHomeArmy ||
+              block.army.regimentUnitIds.isEmpty
+          ? null
+          : () => _openMoveDialog(block),
     );
   }
 
@@ -292,6 +310,7 @@ class _ArmyExpansionTile extends StatelessWidget {
     required this.stationedProvinceDisplayLabel,
     this.draftArmyMoveLine,
     required this.isSelectedForCombine,
+    required this.combineSelectionEnabled,
     required this.onCombineSelectionToggle,
     this.onLocate,
     this.onSplit,
@@ -303,6 +322,7 @@ class _ArmyExpansionTile extends StatelessWidget {
   final String stationedProvinceDisplayLabel;
   final String? draftArmyMoveLine;
   final bool isSelectedForCombine;
+  final bool combineSelectionEnabled;
   final VoidCallback onCombineSelectionToggle;
   final VoidCallback? onLocate;
   final VoidCallback? onSplit;
@@ -332,7 +352,9 @@ class _ArmyExpansionTile extends StatelessWidget {
         children: [
           Checkbox(
             value: isSelectedForCombine,
-            onChanged: (_) => onCombineSelectionToggle(),
+            onChanged: combineSelectionEnabled
+                ? (_) => onCombineSelectionToggle()
+                : null,
             visualDensity: VisualDensity.compact,
             materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
           ),
@@ -340,12 +362,10 @@ class _ArmyExpansionTile extends StatelessWidget {
           Flexible(child: Text(_armyTitle(), overflow: TextOverflow.ellipsis)),
           if (onLocate != null) ...[
             const SizedBox(width: 4),
-            IconButton(
+            CtIconAction(
               tooltip: l10n.common_locate,
               onPressed: onLocate,
-              icon: const Icon(Icons.my_location),
-              iconSize: 18,
-              visualDensity: VisualDensity.compact,
+              icon: Icons.my_location,
             ),
           ],
         ],
@@ -399,7 +419,7 @@ class _ArmyExpansionTile extends StatelessWidget {
 
   Widget _buildFooterButtons() {
     return Padding(
-      padding: const EdgeInsets.all(8),
+      padding: const EdgeInsets.all(CtSpacing.m),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.end,
         children: [

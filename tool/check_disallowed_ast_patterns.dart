@@ -350,6 +350,39 @@ bool _looksLikeTileKeysByRegionAndProvinceLookup(IndexExpression node) {
   return src.contains('tileKeysByRegionAndProvince[');
 }
 
+/// True when [node] is a `.where(...)` invocation whose receiver chain is
+/// `<expr>.where(...).toList()` (i.e. a `.where(...).toList().where(...)`
+/// chain), allocating an intermediate `List` before the next filter.
+bool _isRedundantWhereToListWhereChainPattern(MethodInvocation node) {
+  if (node.methodName.name != 'where') {
+    return false;
+  }
+  if (node.argumentList.arguments.length != 1) {
+    return false;
+  }
+  final outerTarget = node.target;
+  if (outerTarget is! MethodInvocation) {
+    return false;
+  }
+  if (outerTarget.methodName.name != 'toList') {
+    return false;
+  }
+  if (outerTarget.argumentList.arguments.isNotEmpty) {
+    return false;
+  }
+  final innerTarget = outerTarget.target;
+  if (innerTarget is! MethodInvocation) {
+    return false;
+  }
+  if (innerTarget.methodName.name != 'where') {
+    return false;
+  }
+  if (innerTarget.argumentList.arguments.length != 1) {
+    return false;
+  }
+  return true;
+}
+
 bool _isLinearCollectionWhereFirstOrNullPattern(
   PropertyAccess node,
   DisallowedPatternRule rule,
@@ -437,6 +470,72 @@ bool _isIncrementalValidatorForPlayerInLoopPattern(
       if (target is PrefixedIdentifier) {
         return target.identifier.name == 'IncrementalCandidateValidator';
       }
+    }
+  }
+  return false;
+}
+
+/// True when [node] is a `copyWith(...)` invocation that anchors a chain
+/// **three or more** `copyWith` levels deep through the configured outer
+/// named argument (default `worldState`). The detection is structural and
+/// path-scoped to [DisallowedPatternRule.linearCollectionPathPrefix]:
+///
+/// * Level 1: `<expr>.copyWith(<outerArgName>: <inner>)`.
+/// * Level 2: `<inner>` is a `<expr2>.copyWith(<args2>)` invocation.
+/// * Level 3: any named-argument value in `<args2>` is itself a
+///   `<expr3>.copyWith(...)` invocation.
+///
+/// Two-level chains (`game.copyWith(worldState: world.copyWith(oldWorld: ow))`)
+/// are **not** flagged so callers retain a thin escape hatch; deeper chains
+/// must funnel through `updateWorldState` / `updateTurnState` helpers.
+bool _isNestedWorldStateCopyWithChain(
+  MethodInvocation node,
+  DisallowedPatternRule rule,
+  String relativePath,
+) {
+  final prefix = rule.linearCollectionPathPrefix;
+  if (prefix == null || prefix.isEmpty) {
+    return false;
+  }
+  final slashPath = relativePath.replaceAll('\\', '/');
+  if (!slashPath.startsWith(prefix)) {
+    return false;
+  }
+  if (node.methodName.name != 'copyWith') {
+    return false;
+  }
+  final outerArgumentName = rule.nestedCopyWithOuterArgumentName;
+  if (outerArgumentName == null || outerArgumentName.isEmpty) {
+    return false;
+  }
+  Expression? innerExpression;
+  for (final arg in node.argumentList.arguments) {
+    if (arg is! NamedExpression) {
+      continue;
+    }
+    if (arg.name.label.name != outerArgumentName) {
+      continue;
+    }
+    innerExpression = arg.expression;
+    break;
+  }
+  if (innerExpression == null) {
+    return false;
+  }
+  final inner = _unwrapParenthesized(innerExpression);
+  if (inner is! MethodInvocation) {
+    return false;
+  }
+  if (inner.methodName.name != 'copyWith') {
+    return false;
+  }
+  for (final arg in inner.argumentList.arguments) {
+    if (arg is! NamedExpression) {
+      continue;
+    }
+    final value = _unwrapParenthesized(arg.expression);
+    if (value is MethodInvocation && value.methodName.name == 'copyWith') {
+      return true;
     }
   }
   return false;
@@ -587,6 +686,14 @@ class _DisallowedAstVisitor extends RecursiveAstVisitor<void> {
       } else if (rule.kind ==
               DisallowedAstMatchKind.simpleReceiverRemoveAtZero &&
           _isSimpleReceiverRemoveAtZeroPattern(node, rule, path)) {
+        _recordIfAllowed(node, rule);
+      } else if (rule.kind ==
+              DisallowedAstMatchKind.redundantWhereToListWhereChain &&
+          _isRedundantWhereToListWhereChainPattern(node)) {
+        _recordIfAllowed(node, rule);
+      } else if (rule.kind ==
+              DisallowedAstMatchKind.nestedWorldStateCopyWith &&
+          _isNestedWorldStateCopyWithChain(node, rule, path)) {
         _recordIfAllowed(node, rule);
       }
       if (rule.kind ==

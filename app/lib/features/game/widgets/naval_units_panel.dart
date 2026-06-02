@@ -2,13 +2,16 @@
 
 import 'dart:async';
 
+import 'package:colonizethis_app/core/utils/prefixed_id.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:colonizethis_logic/colonizethis_logic.dart' show homeFleetIdFor;
+import 'package:colonizethis_logic/colonizethis_logic.dart'
+    show GamePlayerLookup, homeFleetIdFor;
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
 
 import '../../../config/ct_e2e.dart';
 import '../../../config/ct_e2e_last_panel_snapshot.dart';
+import '../../../config/ui_screen_ids.dart';
 import '../../../l10n/l10n.dart';
 import '../../../widgets/ct_nine_patch_button.dart';
 import 'fleet_expansion_tile.dart';
@@ -34,7 +37,11 @@ class NavalUnitsPanel extends StatefulWidget {
     this.locationScopeKey,
     this.initialSelectedFleetId,
     this.tileScopeTileKey,
+    this.readOnly = false,
   });
+
+  /// SPEC/ui/naval-units-panel.md — [UiScreenIds.navalUnitsPanel].
+  static const screenId = UiScreenIds.navalUnitsPanel;
 
   final Game game;
   final String humanPlayerId;
@@ -46,6 +53,7 @@ class NavalUnitsPanel extends StatefulWidget {
   final String? locationScopeKey;
   final String? initialSelectedFleetId;
   final String? tileScopeTileKey;
+  final bool readOnly;
 
   @override
   State<NavalUnitsPanel> createState() => _NavalUnitsPanelState();
@@ -124,9 +132,8 @@ class _NavalUnitsPanelState extends State<NavalUnitsPanel> {
 
   Fleet? _fleetForRow(FleetRow row) {
     final id = _selectionFleetId(row);
-    for (final f in widget.game.worldState.fleets) {
-      if (f.id == id) return f;
-    }
+    final found = widget.game.fleetById(id);
+    if (found != null) return found;
     if (row.isHomeFleet) {
       final portId = row.inPortAtProvinceId;
       if (portId == null) return null;
@@ -284,10 +291,8 @@ class _NavalUnitsPanelState extends State<NavalUnitsPanel> {
   }) {
     final capRegionId = ProvinceId.regionIdFrom(capitalProvinceId);
     final capLocalId = ProvinceId.localIdFrom(capitalProvinceId);
-    final sourceSeaLocal = sourceSeaZoneId.contains('|')
-        ? sourceSeaZoneId.split('|').last
-        : sourceSeaZoneId;
-    final sourceSeaPrefixed = sourceSeaZoneId.contains('|')
+    final sourceSeaLocal = prefixedIdLocalSegment(sourceSeaZoneId);
+    final sourceSeaPrefixed = prefixedIdHasDelimiter(sourceSeaZoneId)
         ? sourceSeaZoneId
         : '$sourceRegionId|$sourceSeaZoneId';
     final sourceSeaCandidates = <String>{
@@ -411,13 +416,7 @@ class _NavalUnitsPanelState extends State<NavalUnitsPanel> {
 
   void _openSplitDialog(FleetRow row) {
     final id = _selectionFleetId(row);
-    Fleet? fleet;
-    for (final f in widget.game.worldState.fleets) {
-      if (f.id == id) {
-        fleet = f;
-        break;
-      }
-    }
+    final fleet = widget.game.fleetById(id);
     if (fleet == null) return;
 
     final original = fleet;
@@ -435,13 +434,7 @@ class _NavalUnitsPanelState extends State<NavalUnitsPanel> {
 
   Future<void> _openMoveFleetDialog(FleetRow row) async {
     if (row.isHomeFleet) return;
-    Fleet? fleet;
-    for (final f in widget.game.worldState.fleets) {
-      if (f.id == row.fleetId) {
-        fleet = f;
-        break;
-      }
-    }
+    final fleet = widget.game.fleetById(row.fleetId);
     final nonNullFleet = fleet;
     if (nonNullFleet == null) return;
     await showDialog<bool>(
@@ -492,8 +485,9 @@ class _NavalUnitsPanelState extends State<NavalUnitsPanel> {
     final hasAny = tree.any(
       (group) => group.homeFleet != null || group.locations.isNotEmpty,
     );
-    final canCombine = _canCombineSelection(flat);
+    final canCombine = !widget.readOnly && _canCombineSelection(flat);
     final headerCheckbox = _headerSelectAllValue(flat);
+    final readOnly = widget.readOnly;
 
     final panel = UnitsPanelShell(
       title: tileScopeActive
@@ -516,7 +510,7 @@ class _NavalUnitsPanelState extends State<NavalUnitsPanel> {
           ),
         if (tileScopeActive && hasAny && flat.isNotEmpty)
           const SizedBox(width: 4),
-        if (hasAny && flat.isNotEmpty) ...[
+        if (hasAny && flat.isNotEmpty && !readOnly) ...[
           Tooltip(
             message: headerCheckbox == true
                 ? l10n.naval_units_deselectAllFleets
@@ -558,11 +552,14 @@ class _NavalUnitsPanelState extends State<NavalUnitsPanel> {
               isSelectedForCombine: _selectedFleetIds.contains(
                 _selectionFleetId(group.homeFleet!),
               ),
+              combineSelectionEnabled: !readOnly,
               onCombineSelectionToggle: () =>
                   _toggleFleetSelection(group.homeFleet!),
-              onSplitFleet: () => _openSplitDialog(group.homeFleet!),
+              onSplitFleet: readOnly
+                  ? null
+                  : () => _openSplitDialog(group.homeFleet!),
               onMoveFleet: null,
-              isSplitAllowed: true,
+              isSplitAllowed: !readOnly,
             ),
           for (final loc in group.locations) ...[
             LocationSectionHeader(
@@ -584,9 +581,10 @@ class _NavalUnitsPanelState extends State<NavalUnitsPanel> {
                 isSelectedForCombine: _selectedFleetIds.contains(
                   _selectionFleetId(row),
                 ),
+                combineSelectionEnabled: !readOnly,
                 onCombineSelectionToggle: () => _toggleFleetSelection(row),
-                onSplitFleet: () => _openSplitDialog(row),
-                onMoveFleet: () => _openMoveFleetDialog(row),
+                onSplitFleet: readOnly ? null : () => _openSplitDialog(row),
+                onMoveFleet: readOnly ? null : () => _openMoveFleetDialog(row),
                 isSplitAllowed: true,
               ),
           ],

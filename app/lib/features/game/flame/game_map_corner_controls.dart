@@ -1,80 +1,228 @@
 import 'package:flutter/material.dart';
 
 import '../../../config/app_assets.dart';
+import '../../../config/editorial_monocle_palette.dart';
 import '../../../l10n/l10n.dart';
+import '../../../widgets/ct_gradients.dart';
 import '../../../widgets/strict_asset_icon.dart';
 import 'game_screen_shared.dart';
 
-/// Bottom-left horizontal row: map tool buttons for the in-game map.
-/// SPEC/ui/empire-overview.md § Base layer display cycle, Home-to-capital, Map display options.
+/// Bottom-left horizontal row of map tool buttons for the in-game map.
+///
+/// SPEC: `SPEC/ui/empire-overview.md` § Base layer display cycle,
+/// Home-to-capital, Map display options, and § Corner controls chrome
+/// (dark editorial-monocle). Implements `Refs #2861` R5 / S4: each
+/// corner button paints the canonical 32 × 32 dp dark editorial-monocle
+/// chrome (`CtGradients.railButtonGradient` surface + 1 px `--border`
+/// outline with hover/pressed accent-dim shift) so the row reads as
+/// dark map chrome rather than the legacy white Material overlay.
+///
+/// Narrow layout (issue #2870 S3, `MediaQuery.size.width < kNarrowBreakpoint`):
+/// host constructs with `narrow: true`. Corner buttons compress to 24 × 24 dp
+/// and the horizontal gap tightens from 3 dp to 2 dp per
+/// `SPEC/ui/empire-overview.md` § Narrow corner-control measurements.
 class GameMapCornerControls extends StatelessWidget {
   const GameMapCornerControls({
     required this.onCycleBaseLayerDisplayMode,
     required this.onCenterOnHomeCapital,
     required this.onOpenMapDisplayOptions,
+    this.homeToCapitalEnabled = true,
+    this.narrow = false,
     super.key,
   });
 
   final VoidCallback onCycleBaseLayerDisplayMode;
   final VoidCallback onCenterOnHomeCapital;
   final VoidCallback onOpenMapDisplayOptions;
+  final bool homeToCapitalEnabled;
+
+  /// When true, render the row at narrow-viewport measurements per
+  /// `SPEC/ui/mobile-adaptation.md` § In-game shell (issue #2870 S3).
+  final bool narrow;
+
+  /// Side length of each corner control button. Matches mockup
+  /// `.corner-btn` 32 × 32 px (`SPEC/ui/mockups/GAME10001-game-screen.html`).
+  /// The narrow-layout 24 × 24 measurement is governed by
+  /// `SPEC/ui/mobile-adaptation.md` / issue #2870.
+  static const double buttonSize = 32;
+
+  /// Side length of the icon glyph centered inside the button. Matches
+  /// mockup `.corner-btn img` 22 × 22 px.
+  static const double iconSize = 22;
+
+  /// Horizontal gap between adjacent corner buttons. Matches mockup
+  /// `.corner-controls` `gap: 3px`.
+  static const double rowGap = 3;
+
+  /// Side length of each corner control button under narrow layout
+  /// (mockup `.corner-btn @media (max-width:600px) { width:24px; height:24px }`;
+  /// authority: `SPEC/ui/mobile-adaptation.md` § In-game shell).
+  static const double narrowButtonSize = 24;
+
+  /// Horizontal gap between adjacent corner buttons under narrow layout
+  /// (tightened from 3 dp to match the compressed
+  /// `.corner-controls @media (max-width:600px) { left:2px; bottom:2px }`
+  /// chrome; authority: `SPEC/ui/empire-overview.md` § Narrow corner-control
+  /// measurements).
+  static const double narrowRowGap = 2;
 
   @override
   Widget build(BuildContext context) {
     final l10n = appL10n(context);
+    final gapWidth = narrow ? narrowRowGap : rowGap;
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
         _MapCornerIconButton(
-          key: kBaseLayerCycleButtonKey,
+          buttonKey: kBaseLayerCycleButtonKey,
           tooltip: l10n.mapCorner_tooltipBaseLayer,
           onTap: onCycleBaseLayerDisplayMode,
           assetPath: '${kAppIconAssetPrefix}ui_icon_layer_toggle.png',
+          narrow: narrow,
         ),
-        const SizedBox(width: 4),
+        SizedBox(width: gapWidth),
         _MapCornerIconButton(
-          key: kHomeToCapitalButtonKey,
+          buttonKey: kHomeToCapitalButtonKey,
           tooltip: l10n.mapCorner_tooltipCenterCapital,
-          onTap: onCenterOnHomeCapital,
+          onTap: homeToCapitalEnabled ? onCenterOnHomeCapital : null,
           assetPath: '${kAppIconAssetPrefix}ui_icon_home_capital.png',
+          narrow: narrow,
         ),
-        const SizedBox(width: 4),
+        SizedBox(width: gapWidth),
         _MapCornerIconButton(
-          key: kMapDisplayOptionsButtonKey,
+          buttonKey: kMapDisplayOptionsButtonKey,
           tooltip: l10n.mapCorner_tooltipMapDisplayOptions,
           onTap: onOpenMapDisplayOptions,
           assetPath: '${kAppIconAssetPrefix}ui_icon_map_options.png',
+          narrow: narrow,
         ),
       ],
     );
   }
 }
 
-class _MapCornerIconButton extends StatelessWidget {
+/// 32 × 32 dp dark editorial-monocle icon button used inside
+/// [GameMapCornerControls].
+///
+/// Mirrors the mockup `.corner-btn` contract
+/// (`SPEC/ui/mockups/GAME10001-game-screen.html`): the surface paints a
+/// vertical `--surface-lite` → `--bg-deep` gradient via
+/// [CtGradients.railButtonGradient]; a 1 px `--border` outline shifts to
+/// `--accent-dim` on hover or press; the glyph cycles
+/// `--accent-dim` (default) → `--accent-bright` (hover) →
+/// `--accent-bright` (pressed). When [onTap] is `null` the button paints
+/// at the canonical 0.4 disabled opacity (shared convention with
+/// `CtBackButton` / `CtNinePatchButton` / `CtToggleSwitch`) and ignores
+/// pointer input.
+class _MapCornerIconButton extends StatefulWidget {
   const _MapCornerIconButton({
-    super.key,
+    required this.buttonKey,
     required this.tooltip,
     required this.onTap,
     required this.assetPath,
+    this.narrow = false,
   });
 
+  final Key buttonKey;
   final String tooltip;
-  final VoidCallback onTap;
+  final VoidCallback? onTap;
   final String assetPath;
+  final bool narrow;
+
+  /// Animation duration for hover/press border/icon-color transitions.
+  /// Matches the `.empire-btn` 120 ms convention used by
+  /// [GameMapEmpireLeftRail]; the mockup CSS specifies `0.15s` which we
+  /// round to 120 ms for cross-button consistency.
+  static const Duration _animationDuration = Duration(milliseconds: 120);
+  static const Curve _animationCurve = Curves.easeOut;
+
+  /// Disabled-state opacity shared with `CtNinePatchButton` / `CtBackButton`.
+  static const double disabledOpacity = 0.4;
+
+  @override
+  State<_MapCornerIconButton> createState() => _MapCornerIconButtonState();
+}
+
+class _MapCornerIconButtonState extends State<_MapCornerIconButton> {
+  bool _hovered = false;
+  bool _pressed = false;
+
+  bool get _enabled => widget.onTap != null;
+
+  void _handleHover(bool entered) {
+    if (!_enabled) return;
+    if (_hovered == entered) return;
+    setState(() => _hovered = entered);
+  }
+
+  void _handlePressed(bool pressed) {
+    if (!_enabled) return;
+    if (_pressed == pressed) return;
+    setState(() => _pressed = pressed);
+  }
+
+  Color get _borderColor {
+    if (!_enabled) return EditorialMonoclePalette.border;
+    if (_hovered || _pressed) return EditorialMonoclePalette.accentDim;
+    return EditorialMonoclePalette.border;
+  }
+
+  Color get _iconColor {
+    if (!_enabled) return EditorialMonoclePalette.accentDim;
+    if (_pressed || _hovered) return EditorialMonoclePalette.accentBright;
+    return EditorialMonoclePalette.accentDim;
+  }
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      color: Colors.white.withValues(alpha: 0.9),
-      child: Tooltip(
-        message: tooltip,
+    final buttonSize = widget.narrow
+        ? GameMapCornerControls.narrowButtonSize
+        : GameMapCornerControls.buttonSize;
+    final button = SizedBox(
+      key: widget.buttonKey,
+      width: buttonSize,
+      height: buttonSize,
+      child: Material(
+        color: Colors.transparent,
         child: InkWell(
-          onTap: onTap,
-          child: Padding(
-            padding: const EdgeInsets.all(6),
-            child: StrictAssetIcon(assetPath: assetPath, width: 20, height: 20),
+          onTap: widget.onTap,
+          onHighlightChanged: _handlePressed,
+          child: AnimatedContainer(
+            duration: _MapCornerIconButton._animationDuration,
+            curve: _MapCornerIconButton._animationCurve,
+            decoration: BoxDecoration(
+              gradient: CtGradients.railButtonGradient,
+              border: Border.all(color: _borderColor, width: 1),
+            ),
+            child: Center(
+              child: ColorFiltered(
+                colorFilter: ColorFilter.mode(_iconColor, BlendMode.srcIn),
+                child: StrictAssetIcon(
+                  assetPath: widget.assetPath,
+                  width: GameMapCornerControls.iconSize,
+                  height: GameMapCornerControls.iconSize,
+                ),
+              ),
+            ),
           ),
         ),
+      ),
+    );
+    final tooltipped = MouseRegion(
+      cursor: _enabled ? SystemMouseCursors.click : SystemMouseCursors.basic,
+      onEnter: (_) => _handleHover(true),
+      onExit: (_) => _handleHover(false),
+      child: Tooltip(
+        message: widget.tooltip,
+        child: Semantics(button: true, label: widget.tooltip, child: button),
+      ),
+    );
+    if (_enabled) return tooltipped;
+    return IgnorePointer(
+      ignoring: true,
+      child: Opacity(
+        opacity: _MapCornerIconButton.disabledOpacity,
+        child: tooltipped,
       ),
     );
   }

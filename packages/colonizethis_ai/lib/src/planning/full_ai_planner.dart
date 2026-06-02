@@ -1,11 +1,10 @@
 /// Full Phase 6 AI order orchestration (delegates to strategic planners). SPEC/program/ai-planner.md.
 
-import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:colonizethis_logic/ai_api.dart';
 import 'package:colonizethis_logic/order_suggestion_api.dart';
-import 'package:colonizethis_models/colonizethis_models.dart';
 
-import 'package:colonizethis_ai/package_logger.dart';
+import 'diplomacy_planner.dart';
+import 'observer_goal_phase.dart';
+import 'planning_imports.dart';
 import 'strategic_ai.dart';
 
 final _log = packageLogger();
@@ -33,19 +32,9 @@ StrategicOrderResult generateOrdersForPlayerFullAI(
   ).result;
 }
 
-class FullAIPlayerTraceResult {
-  const FullAIPlayerTraceResult({
-    required this.result,
-    required this.game,
-    this.aiTraceSection,
-  });
+typedef FullAIPlayerTraceResult = StrategicOrderTraceResult;
 
-  final StrategicOrderResult result;
-  final Game game;
-  final TurnTraceAiSection? aiTraceSection;
-}
-
-FullAIPlayerTraceResult generateOrdersForPlayerFullAIWithTrace(
+StrategicOrderTraceResult generateOrdersForPlayerFullAIWithTrace(
   Game game,
   MapTopology topology,
   String playerId, {
@@ -54,10 +43,11 @@ FullAIPlayerTraceResult generateOrdersForPlayerFullAIWithTrace(
   void Function(DialogueEvent)? onDialogue,
   void Function(PortraitMoodEvent)? onMood,
   void Function(String phaseId)? onStagedPlannerProgress,
+  Orders? sameTurnPriorDiplomaticOrders,
 }) {
   final player = game.playerById(playerId);
   if (player == null || !isAiControlled(game, player.id)) {
-    return FullAIPlayerTraceResult(
+    return StrategicOrderTraceResult(
       result: const StrategicOrderResult(
         orders: Orders(),
         economyPlan: EconomyPlan(
@@ -66,7 +56,6 @@ FullAIPlayerTraceResult generateOrdersForPlayerFullAIWithTrace(
         ),
       ),
       game: game,
-      aiTraceSection: null,
     );
   }
   final view = buildPlayerView(game, topology, playerId);
@@ -98,12 +87,9 @@ FullAIPlayerTraceResult generateOrdersForPlayerFullAIWithTrace(
     onDialogue: onDialogue,
     onMood: onMood,
     onStagedPlannerProgress: onStagedPlannerProgress,
+    sameTurnPriorDiplomaticOrders: sameTurnPriorDiplomaticOrders,
   );
-  return FullAIPlayerTraceResult(
-    result: traced.result,
-    game: traced.game,
-    aiTraceSection: traced.aiTraceSection,
-  );
+  return traced;
 }
 
 /// Result of full-AI order generation for all AI GPs: merged orders and per-player economy plans.
@@ -141,73 +127,94 @@ FullAIResult generateOrdersForGameFullAI(
   final diploByPlayer = <String, List<DiplomaticOrder>>{};
   final navalByPlayer = <String, List<NavalMoveOrder>>{};
   final missionByPlayer = <String, List<NavalMissionOrder>>{};
+  final tradeByPlayer = <String, List<TradeOrder>>{};
   final economyPlansByPlayerId = <String, EconomyPlan>{};
   final aiTraceSections = <TurnTraceAiSection>[];
 
-  for (final player in game.players) {
-    if (!isAiControlled(game, player.id)) continue;
+  final aiPlayerIds = [
+    for (final p in game.players)
+      if (isAiControlled(game, p.id)) p.id,
+  ];
+  final turn = game.worldState.turnState.turnNumber;
+  // Offset rotation so gp3–gp6 plan before gp1–gp2 on early turns when minors
+  // are still available (observer seed-42 conquest gate; Refs #2509).
+  final rotateStart = aiPlayerIds.isEmpty ? 0 : (turn + 2) % aiPlayerIds.length;
+  final orderedAiPlayerIds = [
+    ...aiPlayerIds.sublist(rotateStart),
+    ...aiPlayerIds.sublist(0, rotateStart),
+  ];
+  for (final playerId in orderedAiPlayerIds) {
     final playerStopwatch = Stopwatch()..start();
-    _log.i('full_ai player_start gameId=${game.id} playerId=${player.id}');
+    _log.i('full_ai player_start gameId=${game.id} playerId=$playerId');
+    final sameTurnPriorDiplomaticOrders = diploByPlayer.isEmpty
+        ? null
+        : Orders(diplomaticOrdersByPlayerId: Map.from(diploByPlayer));
     final traced = generateOrdersForPlayerFullAIWithTrace(
       planningGame,
       topology,
-      player.id,
+      playerId,
       tileMapByRegion: tileMapByRegion,
       orderSuggestionApi: orderSuggestionApi,
       onDialogue: onDialogue,
       onMood: onMood,
       onStagedPlannerProgress: onStagedPlannerProgress,
+      sameTurnPriorDiplomaticOrders: sameTurnPriorDiplomaticOrders,
     );
     _log.i(
-      'full_ai player_complete gameId=${game.id} playerId=${player.id} '
+      'full_ai player_complete gameId=${game.id} playerId=$playerId '
       'elapsedMs=${playerStopwatch.elapsedMilliseconds}',
     );
     planningGame = traced.game;
     final result = traced.result;
-    economyPlansByPlayerId[player.id] = result.economyPlan;
+    economyPlansByPlayerId[playerId] = result.economyPlan;
     final aiTraceSection = traced.aiTraceSection;
     if (aiTraceSection != null) {
       aiTraceSections.add(aiTraceSection);
     }
     _addOrdersIfNonEmpty(
       moveByPlayer,
-      player.id,
-      result.orders.moveOrdersByPlayerId[player.id],
+      playerId,
+      result.orders.moveOrdersByPlayerId[playerId],
     );
     _addOrdersIfNonEmpty(
       armyMoveByPlayer,
-      player.id,
-      result.orders.armyMoveOrdersByPlayerId[player.id],
+      playerId,
+      result.orders.armyMoveOrdersByPlayerId[playerId],
     );
     _addOrdersIfNonEmpty(
       buildByPlayer,
-      player.id,
-      result.orders.buildUnitOrdersByPlayerId[player.id],
+      playerId,
+      result.orders.buildUnitOrdersByPlayerId[playerId],
     );
     _addOrdersIfNonEmpty(
       workByPlayer,
-      player.id,
-      result.orders.workOrdersByPlayerId[player.id],
+      playerId,
+      result.orders.workOrdersByPlayerId[playerId],
     );
     _addOrdersIfNonEmpty(
       researchByPlayer,
-      player.id,
-      result.orders.researchOrdersByPlayerId[player.id],
+      playerId,
+      result.orders.researchOrdersByPlayerId[playerId],
     );
     _addOrdersIfNonEmpty(
       diploByPlayer,
-      player.id,
-      result.orders.diplomaticOrdersByPlayerId[player.id],
+      playerId,
+      result.orders.diplomaticOrdersByPlayerId[playerId],
     );
     _addOrdersIfNonEmpty(
       navalByPlayer,
-      player.id,
-      result.orders.navalMoveOrdersByPlayerId[player.id],
+      playerId,
+      result.orders.navalMoveOrdersByPlayerId[playerId],
     );
     _addOrdersIfNonEmpty(
       missionByPlayer,
-      player.id,
-      result.orders.navalMissionOrdersByPlayerId[player.id],
+      playerId,
+      result.orders.navalMissionOrdersByPlayerId[playerId],
+    );
+    _addOrdersIfNonEmpty(
+      tradeByPlayer,
+      playerId,
+      result.orders.tradeOrdersByPlayerId[playerId],
     );
   }
 
@@ -217,7 +224,9 @@ FullAIResult generateOrdersForGameFullAI(
     'elapsedMs=${totalStopwatch.elapsedMilliseconds}',
   );
 
-  return FullAIResult(
+  final mergedOrders = supplementMutualStalledGreatPowerPeaceOrders(
+    game: game,
+    topology: topology,
     orders: Orders(
       moveOrdersByPlayerId: moveByPlayer,
       armyMoveOrdersByPlayerId: armyMoveByPlayer,
@@ -227,7 +236,12 @@ FullAIResult generateOrdersForGameFullAI(
       researchOrdersByPlayerId: researchByPlayer,
       navalMoveOrdersByPlayerId: navalByPlayer,
       navalMissionOrdersByPlayerId: missionByPlayer,
+      tradeOrdersByPlayerId: tradeByPlayer,
     ),
+  );
+
+  return FullAIResult(
+    orders: mergedOrders,
     economyPlansByPlayerId: economyPlansByPlayerId,
     game: planningGame,
     aiTraceSections: List<TurnTraceAiSection>.unmodifiable(aiTraceSections),

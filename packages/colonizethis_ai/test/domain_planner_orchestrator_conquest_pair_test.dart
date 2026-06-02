@@ -5,6 +5,7 @@ import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'domain_planner_test_fake_api.dart';
+import 'planner_test_helpers.dart';
 
 void main() {
   group('runDomainPlanners conquest pairing', () {
@@ -31,7 +32,21 @@ void main() {
         id: 'g_conquest_pair',
         worldState: WorldState(
           turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
-          oldWorld: RegionData(provinces: [], units: []),
+          oldWorld: RegionData(
+            provinces: const [
+              Province(
+                id: 'oldWorld|p_gp',
+                regionId: 'oldWorld',
+                ownerId: 'gp1',
+              ),
+              Province(
+                id: 'oldWorld|p_minor',
+                regionId: 'oldWorld',
+                ownerId: 'minor1',
+              ),
+            ],
+            units: [],
+          ),
           newWorld: RegionData(provinces: [], units: []),
         ),
         players: const [
@@ -42,40 +57,38 @@ void main() {
             leaderKey: 'napoleon',
           ),
         ],
+        minorNations: const [
+          MinorNation(id: 'minor1', displayName: 'Minor 1'),
+        ],
       );
-      const topology = MapTopology(nodes: [], edges: []);
-      final view = PlayerView(
-        playerId: 'gp1',
-        player: game.players.single,
-        ownUnitsById: const {},
-        provincesById: const {},
-        visibilityByTile: const {},
-        prospectedTiles: const {},
-        diplomacyByOtherId: const {},
+      const topology = MapTopology(
+        nodes: [
+          TopologyNode(
+            id: 'p_gp',
+            regionId: 'oldWorld',
+            type: TopologyNodeType.province,
+          ),
+          TopologyNode(
+            id: 'p_minor',
+            regionId: 'oldWorld',
+            type: TopologyNodeType.province,
+          ),
+        ],
+        edges: [TopologyEdge(id1: 'p_gp', id2: 'p_minor')],
       );
-      final snapshot = AIWorldSnapshot.fromPlayerView(view);
-      const config = AIConfig(
+      final view = buildPlayerView(game, topology, 'gp1');
+      final orders = runDomainPlannersInTest(
+        game: game,
+        topology: topology,
+        view: view,
+        turnSeed: 99,
+        primaryGoal: StrategicGoal.conquer,
+        config: AIConfig(
         leaderId: 'napoleon',
         personalityId: 'napoleon',
         hiddenAgendaId: 'warmonger',
-      );
-      final seeds = AISeedBundle.fromTurnSeed(99);
-      const economyPlan = EconomyPlan(
-        productionAssignments: [],
-        cargoPreference: CargoPreference.none,
-      );
-
-      final orders = runDomainPlanners(
-        game: game,
-        topology: topology,
-        nationId: 'gp1',
-        view: view,
-        snapshot: snapshot,
-        config: config,
-        primaryGoal: StrategicGoal.conquer,
-        seeds: seeds,
+      ),
         suggestionAPI: fakeApi,
-        economyPlan: economyPlan,
       );
 
       final diplo = orders.diplomaticOrdersByPlayerId['gp1'] ?? const [];

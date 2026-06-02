@@ -350,8 +350,8 @@ void main() {
         );
         await tester.pumpAndSettle();
 
-        expect(find.text('New World'), findsOneWidget);
-        expect(find.text('Old World'), findsNothing);
+        expect(find.text('NEW WORLD'), findsOneWidget);
+        expect(find.text('OLD WORLD'), findsNothing);
         expect(find.textContaining('Fleet f1'), findsOneWidget);
       },
     );
@@ -795,7 +795,7 @@ void main() {
         await tester.pumpAndSettle();
         final confirmTransfer = find.widgetWithText(
           CtNinePatchButton,
-          'Confirm Transfer',
+          'Transfer',
         );
         expect(confirmTransfer, findsOneWidget);
         expect(

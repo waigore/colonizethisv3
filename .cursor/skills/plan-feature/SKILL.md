@@ -20,6 +20,7 @@ When proposing design:
 - **Reuse first:** Prefer extending existing modules, services, Flame components, and UI patterns over parallel structures or duplicated logic.
 - **Authoritative docs:** Game/AI behavior → `SPEC/game/` (GDD); architecture → `SPEC/program/` (TDD); derive UI/AI sub-specs from those. Cite **file paths and sections** in the issue where they support or constrain the feature.
 - **Stack boundaries:** Keep Flutter UI and Flame simulation concerns separated; cross-panel UI via **AppEventBus** (not ad hoc `Ref`/callback chains across panels)—see `.cursor/rules/` and `SPEC/program/app-ui-wiring.md`.
+- **Player-app UI documentation:** New or changed screens, dialogs, or overlays require stable screen IDs, exhaustive layout/behavior/variant specs, and Widgetbook linkage per `.cursor/rules/colonizethis-ui-documentation.mdc` and `SPEC/ui/screen-registry.md`. Planning issues should list those deliverables as subtasks/ACs; execution uses **`document-app-ui`** (`.cursor/skills/document-app-ui/SKILL.md`; OpenCode: `.opencode/skills/document-app-ui/SKILL.md`). Style/pixel-art stays in `colonizethis-ui-design.mdc`.
 - **World model:** Province identity uses **(regionId, provinceId)** or prefixed ids—never a bare province id alone when relevant.
 - **New abstractions:** If nothing fits, **suggest** a minimal new abstraction in the issue (name, responsibility, where it would live, what it replaces or sits beside) and flag **SPEC impact** (none / clarification / new section required before implementation).
 
@@ -69,8 +70,8 @@ Produce sections for the issue:
 - **Requirements:** Numbered, testable where possible; separate **must-have** vs **nice-to-have** if the user hinted prioritization.
 - **Assumptions:** Explicit guesses the user confirmed or that remain to validate during implementation; label unconfirmed assumptions.
 - **Non-goals:** What this feature intentionally does not do (prevents scope creep).
-- **Design proposal:** How to implement **within existing patterns**—reuse points, new types/modules only if justified, data flow, UI entry points, events, save/load or ruleset touchpoints if relevant.
-- **SPEC impact:** `none` / `clarification only` / `GDD` / `TDD` / `UI` / `AI` (list paths)—per project SPEC-first policy; no edits in this task.
+- **Design proposal:** How to implement **within existing patterns**—reuse points, new types/modules only if justified, data flow, UI entry points, events, save/load or ruleset touchpoints if relevant. For UI surfaces, name proposed **screen IDs** (category from registry) or “TBD — assign via `document-app-ui`” and whether a new `SPEC/ui/components/` spec is needed.
+- **SPEC impact:** `none` / `clarification only` / `GDD` / `TDD` / `UI` / `AI` (list paths)—per project SPEC-first policy; no edits in this task. UI structure changes imply `SPEC/ui/<screen>.md` + registry row + `UiScreenIds` (document in issue, implement via `document-app-ui`).
 - **Subtasks:** For complex work, a **dependency-aware** breakdown:
   - Order orDAG style: e.g. `1 → 2`, `1 → 3`, `2+3 → 4`
   - Each subtask: short title, one-line objective, **depends on:** ids
@@ -151,5 +152,6 @@ Same as sibling skill: always preserve the full draft if `gh` cannot create the 
 ## Related
 
 - **Bug / gap reports → structured issue (read-only):** [.cursor/skills/create-github-issue/SKILL.md](../create-github-issue/SKILL.md)
+- **Player-app UI documentation (implementation):** [.cursor/skills/document-app-ui/SKILL.md](../document-app-ui/SKILL.md) (OpenCode: `.opencode/skills/document-app-ui/SKILL.md`)
 - **Verify issues:** [.cursor/skills/verify-github-issue/SKILL.md](../verify-github-issue/SKILL.md)
 - **After the issue exists:** implementation follows **AGENTS.md**, **CONTRIBUTING.md**, and `.cursor/rules/` (SPEC-first, testing, UI wiring).

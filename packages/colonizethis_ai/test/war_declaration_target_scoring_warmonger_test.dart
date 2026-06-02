@@ -5,6 +5,7 @@ import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'domain_planner_test_fake_api.dart';
+import 'planner_test_helpers.dart';
 
 void main() {
   group('war declaration target scoring (warmonger)', () {
@@ -15,13 +16,18 @@ void main() {
           turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
           oldWorld: RegionData(
             provinces: [
-              for (var i = 0; i < 19; i++)
+              for (var i = 0; i < 8; i++)
                 Province(
                   id: 'oldWorld|p1_$i',
                   regionId: 'oldWorld',
                   ownerId: 'gp1',
                 ),
-              Province(id: 'oldWorld|p2', regionId: 'oldWorld', ownerId: 'gp2'),
+              for (var i = 0; i < 3; i++)
+                Province(
+                  id: 'oldWorld|p2_$i',
+                  regionId: 'oldWorld',
+                  ownerId: 'gp2',
+                ),
               Province(id: 'oldWorld|p3', regionId: 'oldWorld', ownerId: 'gp3'),
             ],
             units: [],
@@ -56,17 +62,18 @@ void main() {
       );
       final topology = MapTopology(
         nodes: [
-          for (var i = 0; i < 19; i++)
+          for (var i = 0; i < 8; i++)
             TopologyNode(
               id: 'p1_$i',
               regionId: 'oldWorld',
               type: TopologyNodeType.province,
             ),
-          const TopologyNode(
-            id: 'p2',
-            regionId: 'oldWorld',
-            type: TopologyNodeType.province,
-          ),
+          for (var i = 0; i < 3; i++)
+            TopologyNode(
+              id: 'p2_$i',
+              regionId: 'oldWorld',
+              type: TopologyNodeType.province,
+            ),
           const TopologyNode(
             id: 'p3',
             regionId: 'oldWorld',
@@ -74,7 +81,7 @@ void main() {
           ),
         ],
         edges: [
-          const TopologyEdge(id1: 'p1_0', id2: 'p2'),
+          const TopologyEdge(id1: 'p1_0', id2: 'p2_0'),
           const TopologyEdge(id1: 'p1_0', id2: 'p3'),
         ],
       );
@@ -91,7 +98,6 @@ void main() {
         personalityId: 'napoleon',
         hiddenAgendaId: 'warmonger',
       );
-      final seeds = AISeedBundle.fromTurnSeed(222);
       const fakeApi = FakeOrderSuggestionAPIForDomainPlannerTests(
         work: [],
         build: [],
@@ -106,22 +112,14 @@ void main() {
           ),
         ],
       );
-      const economyPlan = EconomyPlan(
-        productionAssignments: [],
-        cargoPreference: CargoPreference.none,
-      );
-
-      final orders = runDomainPlanners(
+      final orders = runDomainPlannersInTest(
         game: game,
         topology: topology,
-        nationId: 'gp1',
-        view: view,
         snapshot: snapshot,
         config: config,
         primaryGoal: StrategicGoal.conquer,
-        seeds: seeds,
+        turnSeed: 222,
         suggestionAPI: fakeApi,
-        economyPlan: economyPlan,
       );
 
       final diplo = orders.diplomaticOrdersByPlayerId['gp1'];

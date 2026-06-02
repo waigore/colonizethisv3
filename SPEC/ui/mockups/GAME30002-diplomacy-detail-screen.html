@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ColonizeThis — Diplomacy Detail</title>
+<style>
+:root {
+  --bg: oklch(16% 0.018 50); --bg-deep: oklch(12% 0.015 45);
+  --surface: oklch(24% 0.015 45); --surface-lite: oklch(30% 0.016 52);
+  --fg: oklch(88% 0.015 80); --muted: oklch(65% 0.025 70);
+  --border: oklch(40% 0.02 55); --accent: oklch(72% 0.14 85); --accent-dim: oklch(60% 0.12 82);
+  --danger: oklch(58% 0.16 22); --success: oklch(58% 0.14 140);
+  --font-display: 'Iowan Old Style','Cinzel','Charter',Georgia,serif;
+  --font-body: -apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;
+}
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+html,body{min-height:100vh;min-height:100dvh;background:var(--bg);color:var(--fg);font-family:var(--font-body);overflow-x:hidden}
+/* Fake game background */
+.bg{position:fixed;inset:0;z-index:0;background:radial-gradient(ellipse at 20% 80%,oklch(28% 0.02 40 / 0.25) 0%,transparent 60%),radial-gradient(ellipse at 85% 15%,oklch(25% 0.015 55 / 0.2) 0%,transparent 55%),var(--bg)}
+.main{position:relative;z-index:1;display:flex;flex-direction:column;min-height:100vh;padding-top:env(safe-area-inset-top)}
+/* App bar */
+.appbar{display:flex;align-items:center;gap:10px;padding:10px 14px;background:linear-gradient(180deg,var(--surface-lite) 0%,var(--surface) 100%);border-bottom:2px solid var(--accent-dim)}
+.appbar .back{width:32px;height:32px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--accent-dim);font-size:20px;background:none;border:none;font-family:var(--font-body)}.appbar .back:hover{color:var(--accent)}
+.appbar h2{font-family:var(--font-display);font-size:clamp(16px,2.2vw,18px);font-weight:700;letter-spacing:0.05em;color:var(--accent)}
+/* Content */
+.content{flex:1;padding:14px clamp(10px,3vw,20px);overflow-y:auto;display:flex;flex-direction:column;gap:14px;max-width:600px;margin:0 auto;width:100%}
+.card{background:linear-gradient(180deg,var(--surface-lite) 0%,var(--surface) 30%,var(--bg-deep) 100%);border:1px solid var(--border);padding:14px}
+.card h3{font-family:var(--font-display);font-size:13px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:var(--muted);margin-bottom:8px}
+.relation-row{display:flex;align-items:center;gap:10px;font-family:var(--font-display);font-size:14px;font-weight:600}.relation-row .state{color:var(--success)}.relation-row .war{color:var(--danger)}
+.score{font-size:12px;color:var(--muted);font-style:italic}
+/* History */
+.event{padding:10px 12px;background:var(--surface);border-left:2px solid var(--accent-dim);margin-bottom:6px;font-size:13px;line-height:1.5;color:var(--fg)}
+.event .year{font-family:monospace;font-size:11px;color:var(--accent-dim);display:block;margin-bottom:3px}
+.event .sentence{color:var(--fg)}
+/* Dossier */
+.dossier{padding:10px 12px;background:var(--surface);border-left:2px solid var(--accent-dim);margin-bottom:6px;font-size:13px;line-height:1.5}
+.dossier .turn{font-family:monospace;font-size:11px;color:var(--accent-dim);display:block;margin-bottom:3px}
+.empty{font-size:12px;color:var(--muted);font-style:italic;padding:8px 0}
+</style>
+</head>
+<body>
+<div class="bg"></div>
+<div class="main">
+  <div class="appbar">
+    <button class="back" onclick="location.reload()">&#x2190;</button>
+    <h2>Spain</h2>
+  </div>
+  <div class="content">
+    <div class="card">
+      <h3>Current relation</h3>
+      <div class="relation-row"><span class="state">&#x2709; Peace</span></div>
+      <div class="score">Relation score: 70 &#x2014; Cordial</div>
+    </div>
+    <div class="card">
+      <h3>History</h3>
+      <div class="event"><span class="year">Turn 42 &#x2014; 1650</span><span class="sentence">England signed a trade agreement with Spain.</span></div>
+      <div class="event"><span class="year">Turn 38 &#x2014; 1646</span><span class="sentence">Spain declared war on Portugal. England remained neutral.</span></div>
+      <div class="event"><span class="year">Turn 30 &#x2014; 1638</span><span class="sentence">England granted aid to Spain (&#xa3;2,500).</span></div>
+    </div>
+    <div class="card">
+      <h3>Dossier</h3>
+      <div class="dossier"><span class="turn">Turn 40 &#x2014; 1648</span>Spanish fleet of 6 ships observed off the coast of Cornwall.</div>
+      <div class="dossier"><span class="turn">Turn 35 &#x2014; 1643</span>Spain has researched Naval Architecture.</div>
+      <div class="dossier"><span class="turn">Turn 32 &#x2014; 1640</span>Spain&#x2019;s treasury exceeds &#xa3;15,000.</div>
+    </div>
+  </div>
+</div>
+</body>
+</html>

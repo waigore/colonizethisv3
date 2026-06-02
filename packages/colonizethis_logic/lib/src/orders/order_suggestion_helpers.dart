@@ -157,7 +157,8 @@ bool _hasPendingDeclareWarToward(
   String playerId,
   String targetFactionId,
 ) {
-  for (final o in draftOrders.diplomaticOrdersByPlayerId[playerId] ?? const []) {
+  for (final o
+      in draftOrders.diplomaticOrdersByPlayerId[playerId] ?? const []) {
     if (o.type == DiplomaticOrderType.declareWar &&
         o.targetFactionId == targetFactionId) {
       return true;
@@ -175,9 +176,7 @@ List<T> filterOrdersByDiplomacy<T>(
 }) {
   final provinceOwner = getProvinceOwnerMap(game);
   // Single-pass minor ids (Refs #2394): avoid O(orders × minors) scans per row.
-  final minorNationIds = <String>{
-    for (final mn in game.minorNations) mn.id,
-  };
+  final minorNationIds = <String>{for (final mn in game.minorNations) mn.id};
   final filtered = <T>[];
   for (final m in orders) {
     final destOwner = provinceOwner[destinationProvinceId(m)];

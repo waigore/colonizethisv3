@@ -8,6 +8,7 @@ import '../diplomacy/diplomacy_resolver.dart';
 import '../world/player_view.dart';
 import '../world/unit_lookup.dart';
 import 'incremental_candidate_validator.dart';
+import 'order_resolution_context.dart';
 import 'order_suggestion_context.dart';
 import 'order_suggestion_work_tile_keys.dart';
 
@@ -100,8 +101,7 @@ class PerPlayerWorkTargetSelectionCache {
       playerId: s.playerId,
       baseOrders: s.currentOrders,
       tileMapByRegion: s.tileMapByRegion,
-      view: s.playerView,
-      unitsById: unitsByIdFromWorld(s.game.worldState),
+      resolution: orderResolutionContextFromView(s.playerView, s.game),
       factionMembership: DiplomacyFactionMembership.from(s.game),
     );
   }
@@ -273,16 +273,8 @@ class PerPlayerWorkTargetSelectionCache {
     return merged;
   }
 
-  static Iterable<Unit> _humanCivilianUnits(Game game, String playerId) sync* {
-    for (final unit in game.worldState.oldWorld.units) {
-      if (unit.ownerId == playerId) {
-        yield unit;
-      }
-    }
-    for (final unit in game.worldState.newWorld.units) {
-      if (unit.ownerId == playerId) {
-        yield unit;
-      }
-    }
-  }
+  static Iterable<Unit> _humanCivilianUnits(Game game, String playerId) =>
+      game.worldState.allUnitsById.values.where(
+        (unit) => unit.ownerId == playerId,
+      );
 }

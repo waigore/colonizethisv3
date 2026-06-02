@@ -6,6 +6,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import '../constants.dart';
 import '../dossier/event_dialogue.dart';
 import '../dossier/evidence_rules.dart';
+import '../world/game_world_mutations.dart';
 import '../world/player_view.dart';
 import '../world/province_lookup.dart';
 import '../world/tile_control.dart';
@@ -15,6 +16,7 @@ import 'orders_application_completed_work.dart';
 import 'orders_application_context.dart';
 import 'orders_application_helpers.dart';
 import 'orders_application_work_phase.dart';
+import 'orders_application_worker_pool_phase.dart';
 import '../turn/trace/turn_trace_runtime.dart';
 
 /// Order application helpers for build and work phases.
@@ -36,7 +38,7 @@ Game clearUnitCurrentWork(Game game, String unitId) {
     final list = region.units.map((u) => u.id == unitId ? cleared : u).toList();
     return RegionData(provinces: region.provinces, units: list);
   });
-  return game.copyWith(worldState: updatedWs);
+  return game.withWorldState(updatedWs);
 }
 
 /// Applies BuildUnitOrder and WorkOrder for all players in [game].
@@ -56,12 +58,17 @@ Game applyBuildAndWorkOrders(
   void Function(DialogueEvent)? onDialogue,
   WorkOrderTraceCallback? onWorkOrderTrace,
 }) {
+  final recruitWorkerOrders = orders.recruitWorkerOrdersByPlayerId;
   final buildOrders = orders.buildUnitOrdersByPlayerId;
   final workOrders = orders.workOrdersByPlayerId;
-  if (buildOrders.isEmpty && workOrders.isEmpty) {
+  if (recruitWorkerOrders.isEmpty &&
+      buildOrders.isEmpty &&
+      workOrders.isEmpty) {
     return game;
   }
 
+  final initialProvincesByRegion =
+      game.worldState.mutableProvinceListsByRegion();
   final work = WorkOrderState(
     oldUnitsById: Map<String, Unit>.from(
       unitsByIdFromRegion(game.worldState.oldWorld),
@@ -81,11 +88,12 @@ Game applyBuildAndWorkOrders(
     purchasedTilesByTileKey: Map<String, String>.from(
       game.worldState.purchasedTilesByTileKey,
     ),
-    oldProvinces: List<Province>.from(game.worldState.oldWorld.provinces),
-    newProvinces: List<Province>.from(game.worldState.newWorld.provinces),
+    oldProvinces: initialProvincesByRegion[kRegionOldWorld]!,
+    newProvinces: initialProvincesByRegion[kRegionNewWorld]!,
   );
   var state = BuildWorkState(
     game: game,
+    recruitWorkerOrders: recruitWorkerOrders,
     buildOrders: buildOrders,
     workOrders: workOrders,
     topology: topology,
@@ -95,6 +103,11 @@ Game applyBuildAndWorkOrders(
     work: work,
   );
 
+  // Worker pool sub-phase runs before unit builds so any recruit / train
+  // peasant consumes settle before military / naval builds re-evaluate the
+  // peasant pool (SPEC/program/turn-resolution-phase-details.md § Build /
+  // work).
+  state = runWorkerPoolPhase(state);
   state = runBuildPhase(state);
   state = runWorkPhase(
     state,
@@ -144,15 +157,15 @@ Game applyBuildAndWorkOrders(
     ),
   );
 
-  final withWorld = state.game.copyWith(worldState: nextWorldState);
+  final nextWorldStateForWork = nextWorldState
+      .copyWith(purchasedTilesByTileKey: state.work.purchasedTilesByTileKey)
+      .mapBothRegionUnits(
+        (regionId, _) => unitsByRegion[regionId] ?? const <Unit>[],
+      );
 
-  return withWorld.copyWith(
+  return state.game.copyWith(
     players: state.work.updatedPlayers,
-    worldState: withWorld.worldState
-        .copyWith(purchasedTilesByTileKey: state.work.purchasedTilesByTileKey)
-        .mapBothRegionUnits(
-          (regionId, _) => unitsByRegion[regionId] ?? const <Unit>[],
-        ),
+    worldState: nextWorldStateForWork,
   );
 }
 

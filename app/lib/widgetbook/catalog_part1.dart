@@ -79,8 +79,13 @@ List<WidgetbookNode> get provinceOverlayDirectories => [
   ),
 ];
 
-/// Production panel with local state for Widgetbook. SPEC/ui/production-panel.md.
-class _ProductionPanelStory extends StatefulWidget {
+/// Production panel story with `ProviderScope` + live Breakdown dialog
+/// wired into the same `previewStockpileNetDeltaByCommodityForPlayer`
+/// preview pipeline the running app uses, per
+/// `SPEC/ui/production-panel.md` § Widgetbook ("Production stories use
+/// `ProviderScope` and the same preview helpers as the app so **Breakdown**
+/// opens a live dialog") and § Integration. Refs #2862 S6.
+class _ProductionPanelStory extends StatelessWidget {
   const _ProductionPanelStory({
     this.playerOverride,
     this.useFullAvailability = true,
@@ -93,30 +98,121 @@ class _ProductionPanelStory extends StatefulWidget {
   final bool useFullAvailability;
 
   @override
-  State<_ProductionPanelStory> createState() => _ProductionPanelStoryState();
+  Widget build(BuildContext context) {
+    // Outer ProviderScope owns the `productionDesiredOutputProvider` Notifier
+    // so the inner ConsumerWidget body and the live Breakdown dialog (pushed
+    // through the Navigator inside `widgetbookEditorialMonocleApp`) read and
+    // write the same desired-output state, matching the production screen's
+    // Riverpod wiring (`ProductionScreen` → `productionDesiredOutputProvider`).
+    return ProviderScope(
+      child: widgetbookEditorialMonocleApp(
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 800, maxHeight: 500),
+            child: _ProductionPanelStoryBody(
+              playerOverride: playerOverride,
+              useFullAvailability: useFullAvailability,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
 }
 
-class _ProductionPanelStoryState extends State<_ProductionPanelStory> {
-  Map<String, int> _desiredOutputByRecipe = const {};
+/// Inner consumer body for [_ProductionPanelStory]. Reads
+/// [productionDesiredOutputProvider] to drive `desiredOutputByRecipe` and
+/// computes `netDeltasByCommodity` through
+/// `previewStockpileNetDeltaByCommodityForPlayer` so signed deltas on the
+/// Available subpanel cells track slider/stepper changes the same way the
+/// in-app `ProductionScreen` does. Tapping the Available **Breakdown**
+/// button opens the live `ProductionCommodityBreakdownDialog`, which itself
+/// re-reads the provider and recomputes the per-phase deltas from the same
+/// preview helper. SPEC/ui/production-panel.md § Widgetbook +
+/// § Acceptance criteria — Breakdown live update.
+class _ProductionPanelStoryBody extends ConsumerWidget {
+  const _ProductionPanelStoryBody({
+    this.playerOverride,
+    this.useFullAvailability = true,
+  });
+
+  final Player? playerOverride;
+  final bool useFullAvailability;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final game = demoGameForOverlay;
     final player =
-        widget.playerOverride ??
-        (widget.useFullAvailability
+        playerOverride ??
+        (useFullAvailability
             ? fullAvailabilityProductionPlayer()
             : partialAvailabilityProductionPlayer());
-    return ConstrainedBox(
-      constraints: const BoxConstraints(maxWidth: 800, maxHeight: 500),
-      child: ProductionPanel(
-        game: game,
-        player: player,
-        desiredOutputByRecipe: _desiredOutputByRecipe,
-        netDeltasByCommodity: const {},
-        onDesiredOutputChanged: (next) =>
-            setState(() => _desiredOutputByRecipe = next),
-      ),
+    final topology = MapTopology();
+    const Map<String, TileMapResult>? tileMapByRegion = null;
+    // Read the story's `currentOrdersProvider` so the Labour Controls
+    // subsection mounts with the same Riverpod wiring the running
+    // ProductionScreen uses (`ProductionScreen` → `currentOrdersProvider`).
+    // Without callbacks the panel omits the Labour Controls block entirely
+    // (SPEC § Labour Controls — Section placement), so reviewers would lose
+    // the realigned subsection. Refs #2862 S7e.
+    final currentOrders = ref.watch(currentOrdersProvider);
+    final desiredOutputByRecipe = ref.watch(productionDesiredOutputProvider);
+    final netDeltasByCommodity = previewStockpileNetDeltaByCommodityForPlayer(
+      game: game,
+      topology: topology,
+      playerId: player.id,
+      tileMapByRegion: tileMapByRegion,
+      currentOrders: currentOrders,
+      defaultAssignmentsByPlayerId: {
+        player.id: assignedRecipesFromDesiredOutput(desiredOutputByRecipe),
+      },
+    );
+    final labourCallbacks = ProductionLabourCallbacks(
+      onAppendRecruitOrder: (tier) {
+        final next = ordersWithAppendedRecruitWorkerOrder(
+          currentOrders: ref.read(currentOrdersProvider),
+          playerId: player.id,
+          tier: tier,
+        );
+        ref.read(currentOrdersProvider.notifier).replaceAll(next);
+      },
+      onPopLastRecruitOrder: (tier) {
+        final next = ordersWithLastRecruitWorkerOrderRemoved(
+          currentOrders: ref.read(currentOrdersProvider),
+          playerId: player.id,
+          tier: tier,
+        );
+        ref.read(currentOrdersProvider.notifier).replaceAll(next);
+      },
+      onDisband: (_) {
+        // Disband mutates the live Game; the Widgetbook story uses a
+        // shared demo game so we deliberately no-op here. Reviewers still
+        // see the danger text button at idle / disabled opacity.
+      },
+    );
+    return ProductionPanel(
+      game: game,
+      player: player,
+      desiredOutputByRecipe: desiredOutputByRecipe,
+      netDeltasByCommodity: netDeltasByCommodity,
+      currentOrders: currentOrders,
+      labourCallbacks: labourCallbacks,
+      canEditLabour: true,
+      onOpenCommodityBreakdown: () {
+        showDialog<void>(
+          context: context,
+          builder: (_) => ProductionCommodityBreakdownDialog(
+            game: game,
+            player: player,
+            topology: topology,
+            tileMapByRegion: tileMapByRegion,
+            currentOrders: currentOrders,
+          ),
+        );
+      },
+      onDesiredOutputChanged: (next) {
+        ref.read(productionDesiredOutputProvider.notifier).replaceAll(next);
+      },
     );
   }
 }
@@ -235,9 +331,12 @@ class _CivilianPanelWithMapStoryState
     if (target == kWorkTargetExplore ||
         target == kWorkTargetStealTech ||
         target == kWorkTargetCounterSpy) {
-      final parts = tileKey.split('|');
-      if (parts.length >= 2) {
-        targetTileKey = '${parts[0]}|${parts[1]}|0|0';
+      final region = prefixedIdRegionSegment(tileKey);
+      if (region != null) {
+        final local = prefixedIdLocalSegment(tileKey);
+        final i = local.indexOf('|');
+        final localProvinceId = i < 0 ? local : local.substring(0, i);
+        targetTileKey = '$region|$localProvinceId|0|0';
       }
     }
     final workOrder = WorkOrder(

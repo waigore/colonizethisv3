@@ -67,6 +67,153 @@ void main() {
     });
   });
 
+  // Refs #2989 A5; SPEC/program/world-market-resolution.md § Bid type cap helper.
+  group('worldMarketBidTypeCap', () {
+    Game gameWith({
+      Map<String, bool> techUnlocked = const {},
+      List<OvertureState> overtures = const [],
+    }) =>
+        Game(
+          id: 'g1',
+          worldState: WorldState(
+            turnState:
+                const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+            oldWorld: const RegionData(),
+            newWorld: const RegionData(),
+          ),
+          players: [
+            Player(
+              id: 'gp1',
+              displayName: 'GP1',
+              isHuman: true,
+              techUnlocked: techUnlocked,
+            ),
+          ],
+          overtureStates: overtures,
+        );
+
+    test('returns 0 when player is unknown (ghost-player guard)', () {
+      final game = gameWith();
+      expect(worldMarketBidTypeCap(game, 'ghost'), 0);
+    });
+
+    test(
+      'returns kWorldMarketBaselineBidTypeCap (1) when player has no '
+      'overtures at all (Refs #2924; SPEC/game/world-market.md § Bid type '
+      'cap baseline participation)',
+      () {
+        final game = gameWith();
+        expect(
+          worldMarketBidTypeCap(game, 'gp1'),
+          kWorldMarketBaselineBidTypeCap,
+        );
+        expect(kWorldMarketBaselineBidTypeCap, 1);
+      },
+    );
+
+    test(
+      'returns kWorldMarketBaselineBidTypeCap (1) when player has only '
+      'trade-consulate overtures (Refs #2924; the baseline cap precedes the '
+      'embassy-tier 3-cap upgrade)',
+      () {
+        final game = gameWith(
+          overtures: const [
+            OvertureState(
+              gpId: 'gp1',
+              targetId: 'minor1',
+              stage: OvertureStage.tradeConsulate,
+              sinceTurn: 0,
+            ),
+          ],
+        );
+        expect(
+          worldMarketBidTypeCap(game, 'gp1'),
+          kWorldMarketBaselineBidTypeCap,
+        );
+      },
+    );
+
+    test('returns 3 with at least one embassy and no trade_fairs', () {
+      final game = gameWith(
+        overtures: const [
+          OvertureState(
+            gpId: 'gp1',
+            targetId: 'minor1',
+            stage: OvertureStage.embassy,
+            sinceTurn: 0,
+          ),
+        ],
+      );
+      expect(worldMarketBidTypeCap(game, 'gp1'), 3);
+    });
+
+    test('returns 3 with NAP overture (NAP implies embassy)', () {
+      final game = gameWith(
+        overtures: const [
+          OvertureState(
+            gpId: 'gp1',
+            targetId: 'minor1',
+            stage: OvertureStage.nap,
+            sinceTurn: 0,
+          ),
+        ],
+      );
+      expect(worldMarketBidTypeCap(game, 'gp1'), 3);
+    });
+
+    test('returns 6 with embassy and trade_fairs', () {
+      final game = gameWith(
+        techUnlocked: {kTechIdTradeFairs: true},
+        overtures: const [
+          OvertureState(
+            gpId: 'gp1',
+            targetId: 'minor1',
+            stage: OvertureStage.embassy,
+            sinceTurn: 0,
+          ),
+        ],
+      );
+      expect(worldMarketBidTypeCap(game, 'gp1'), 6);
+    });
+
+    test(
+      'ignores embassies belonging to a different gp (aggregation is '
+      'per-player, not global)',
+      () {
+        final game = Game(
+          id: 'g1',
+          worldState: WorldState(
+            turnState:
+                const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+            oldWorld: const RegionData(),
+            newWorld: const RegionData(),
+          ),
+          players: const [
+            Player(id: 'gp1', displayName: 'GP1', isHuman: true),
+            Player(id: 'gp2', displayName: 'GP2', isHuman: false),
+          ],
+          overtureStates: const [
+            OvertureState(
+              gpId: 'gp2',
+              targetId: 'minor1',
+              stage: OvertureStage.embassy,
+              sinceTurn: 0,
+            ),
+          ],
+        );
+        expect(
+          worldMarketBidTypeCap(game, 'gp1'),
+          kWorldMarketBaselineBidTypeCap,
+          reason:
+              'gp1 is a known player without any embassy of its own, so it '
+              'gets the baseline cap of 1 (Refs #2924); gp2 keeps the '
+              'embassy-tier 3-cap.',
+        );
+        expect(worldMarketBidTypeCap(game, 'gp2'), 3);
+      },
+    );
+  });
+
   group('scoreToLevel', () {
     test('maps score ranges to levels', () {
       expect(scoreToLevel(0), RelationLevel.hostile);

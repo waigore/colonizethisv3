@@ -8,6 +8,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import '../constants.dart';
 
 import '../combat/military_strength.dart';
+import '../utils/expando_index.dart';
 import '../world/province_lookup.dart';
 
 /// Overture costs per diplomacy-resolution. Consulate £500, Embassy £1000.
@@ -20,27 +21,33 @@ const int joinEmpirePerProvinceCost = 2000;
 
 /// Lazily built per [Game] instance (issue #2268 AC-5). A new [Game] from
 /// [Game.copyWith] does not share expando state with the previous instance.
-final Expando<Map<String, int>> _gameProvinceCountsByOwner =
-    Expando<Map<String, int>>('gameProvinceCountsByOwner');
+/// Routed through the shared [ExpandoIndex] utility so all `colonizethis_logic`
+/// per-[Game] caches share one invalidation contract (Refs #2836 AC 2).
+final ExpandoIndex<Game, Map<String, int>> _gameProvinceCountsByOwnerIndex =
+    ExpandoIndex<Game, Map<String, int>>('gameProvinceCountsByOwner', (game) {
+      final built = <String, int>{};
+      for (final p in allProvinces(game.worldState)) {
+        final oid = p.ownerId;
+        if (oid == null) continue;
+        built[oid] = (built[oid] ?? 0) + 1;
+      }
+      return built;
+    });
 
-Map<String, int> _provinceCountsByOwner(Game game) {
-  var map = _gameProvinceCountsByOwner[game];
-  if (map == null) {
-    final built = <String, int>{};
-    for (final p in allProvinces(game.worldState)) {
-      final oid = p.ownerId;
-      if (oid == null) continue;
-      built[oid] = (built[oid] ?? 0) + 1;
-    }
-    _gameProvinceCountsByOwner[game] = built;
-    map = built;
-  }
-  return map;
-}
+Map<String, int> _provinceCountsByOwner(Game game) =>
+    _gameProvinceCountsByOwnerIndex.get(game);
 
 /// Returns the number of provinces owned by [factionId] (Minor or Tribe) in [game].
 int provinceCountOwnedBy(Game game, String factionId) {
   return _provinceCountsByOwner(game)[factionId] ?? 0;
+}
+
+/// Old World provinces owned by [factionId] (observer conquest / survival peace).
+int oldWorldProvinceCountOwnedBy(Game game, String factionId) {
+  return game.worldState
+      .provincesForRegion(kRegionOldWorld)
+      .where((p) => p.ownerId == factionId)
+      .length;
 }
 
 /// Default weights for Great Power power score. SPEC/game/diplomacy.md § Great Power power score.
@@ -79,11 +86,12 @@ String? pickUniqueGreatPowerLeaderByPowerScore(Game game) {
   for (final s in scores.values) {
     if (s > bestScore) bestScore = s;
   }
-  final leaders = scores.entries
-      .where((e) => e.value == bestScore)
-      .map((e) => e.key)
-      .toList()
-    ..sort();
+  final leaders =
+      scores.entries
+          .where((e) => e.value == bestScore)
+          .map((e) => e.key)
+          .toList()
+        ..sort();
   if (leaders.length != 1) return null;
   return leaders.single;
 }
@@ -110,6 +118,9 @@ const int relationScoreLevelFriendlyMax = 75;
 
 /// Minimum score for Friendly (and Allied). Join Empire and similar require >= this.
 const int relationScoreMinFriendly = 51;
+
+/// Minimum relation score for FTP acceptance (proposer and acceptor). SPEC/game/world-market.md.
+const int relationScoreMinFtp = 65;
 
 /// Alliance score band: when forming alliance, score is set/clamped to this range.
 const int relationScoreMinAllied = 76;
@@ -186,38 +197,42 @@ String pairKey(String a, String b) => a.compareTo(b) <= 0 ? '$a|$b' : '$b|$a';
 
 /// Lazily built per [Game] instance (issue #2268 AC-4). A new [Game] from
 /// [Game.copyWith] does not share expando state with the previous instance.
-final Expando<Map<String, DiplomacyRelation>> _gameDiplomacyRelationsByPairKey =
-    Expando<Map<String, DiplomacyRelation>>('gameDiplomacyRelationsByPairKey');
+/// Routed through the shared [ExpandoIndex] utility (Refs #2836 AC 2).
+final ExpandoIndex<Game, Map<String, DiplomacyRelation>>
+_gameDiplomacyRelationsByPairKeyIndex =
+    ExpandoIndex<Game, Map<String, DiplomacyRelation>>(
+      'gameDiplomacyRelationsByPairKey',
+      (game) {
+        final map = <String, DiplomacyRelation>{};
+        for (final r in game.diplomacyRelations) {
+          map.putIfAbsent(pairKey(r.factionId1, r.factionId2), () => r);
+        }
+        return map;
+      },
+    );
 
 /// Directed GP → Minor/Tribe overture rows, keyed by `_overtureLookupKey`.
-final Expando<Map<String, OvertureState>> _gameOvertureStatesByGpTarget =
-    Expando<Map<String, OvertureState>>('gameOvertureStatesByGpTarget');
+/// Routed through the shared [ExpandoIndex] utility (Refs #2836 AC 2).
+final ExpandoIndex<Game, Map<String, OvertureState>>
+_gameOvertureStatesByGpTargetIndex =
+    ExpandoIndex<Game, Map<String, OvertureState>>(
+      'gameOvertureStatesByGpTarget',
+      (game) {
+        final map = <String, OvertureState>{};
+        for (final o in game.overtureStates) {
+          map.putIfAbsent(_overtureLookupKey(o.gpId, o.targetId), () => o);
+        }
+        return map;
+      },
+    );
 
 String _overtureLookupKey(String gpId, String targetId) => '$gpId|$targetId';
 
-Map<String, DiplomacyRelation> _diplomacyRelationsByPairKey(Game game) {
-  var map = _gameDiplomacyRelationsByPairKey[game];
-  if (map == null) {
-    map = <String, DiplomacyRelation>{};
-    for (final r in game.diplomacyRelations) {
-      map.putIfAbsent(pairKey(r.factionId1, r.factionId2), () => r);
-    }
-    _gameDiplomacyRelationsByPairKey[game] = map;
-  }
-  return map;
-}
+Map<String, DiplomacyRelation> _diplomacyRelationsByPairKey(Game game) =>
+    _gameDiplomacyRelationsByPairKeyIndex.get(game);
 
-Map<String, OvertureState> _overtureStatesByLookupKey(Game game) {
-  var map = _gameOvertureStatesByGpTarget[game];
-  if (map == null) {
-    map = <String, OvertureState>{};
-    for (final o in game.overtureStates) {
-      map.putIfAbsent(_overtureLookupKey(o.gpId, o.targetId), () => o);
-    }
-    _gameOvertureStatesByGpTarget[game] = map;
-  }
-  return map;
-}
+Map<String, OvertureState> _overtureStatesByLookupKey(Game game) =>
+    _gameOvertureStatesByGpTargetIndex.get(game);
 
 /// Returns relation for faction pair, or null if not found.
 DiplomacyRelation? getRelation(
@@ -259,6 +274,21 @@ List<DiplomacyRelation> upsertRelation(
 OvertureState? getOverture(Game game, String gpId, String targetId) {
   return _overtureStatesByLookupKey(game)[_overtureLookupKey(gpId, targetId)];
 }
+
+/// Embassy-tier overture from [gpId] toward [targetId]. SPEC/game/world-market.md.
+bool hasEmbassyOverture(Game game, String gpId, String targetId) {
+  final o = getOverture(game, gpId, targetId);
+  return o != null && o.hasEmbassy;
+}
+
+/// Bilateral FTP active between [factionId1] and [factionId2].
+bool hasFtpPartnership(Game game, String factionId1, String factionId2) {
+  return game.ftpPartnershipKeys.contains(pairKey(factionId1, factionId2));
+}
+
+/// Active FTP pair keys for world-market matching. SPEC/program/world-market-resolution.md.
+Set<String> ftpPairKeysFromGame(Game game) =>
+    Set<String>.from(game.ftpPartnershipKeys);
 
 /// True when [a] and [b] are at war according to [game.diplomacyRelations].
 bool factionsAtWar(Game game, String a, String b) {

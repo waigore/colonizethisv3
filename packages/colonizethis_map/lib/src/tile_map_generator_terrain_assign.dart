@@ -429,6 +429,14 @@ class _TileMapGenTerrainResource {
       distribution,
       rnd,
     );
+    _applyTerrainNoisePerturbation(
+      terrainGrid,
+      grid,
+      component,
+      allowed,
+      distribution,
+      rnd,
+    );
   }
 
   Map<TerrainType, int> _buildComponentTargets(
@@ -921,4 +929,7 @@ class _TileMapGenTerrainResource {
       }
     }
   }
+
+  // Pass 6b.5 noise perturbation methods live in
+  // tile_map_generator_terrain_noise.dart as an extension on this class.
 }

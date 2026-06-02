@@ -23,6 +23,7 @@ export 'src/setup/setup_validation_exception.dart';
 export 'src/setup/gp_old_world_resource_redistribution.dart';
 export 'src/setup/gp_old_world_terrain_redistribution.dart';
 export 'src/setup/gp_starting_grain.dart';
+export 'src/setup/minor_tribe_starting_development.dart';
 export 'src/setup/town_capital_occupancy.dart';
 export 'src/setup/effective_setup_seed.dart';
 export 'src/setup/init_game_orchestrator.dart';
@@ -34,6 +35,7 @@ export 'src/setup/setup_exceptions.dart';
 
 // Turn
 export 'src/turn/economy_debt_rules.dart';
+export 'src/turn/pending_treasury_costs.dart';
 export 'src/turn/research_resolver.dart';
 export 'src/turn/trace/turn_trace_contracts.dart';
 export 'src/turn/trace/turn_trace_file_exporter.dart';
@@ -60,9 +62,20 @@ export 'src/economy/economy_extraction.dart';
 export 'src/economy/economy_production.dart';
 export 'src/economy/economy_preview_stockpile_phase.dart';
 export 'src/economy/economy_riches_to_treasury.dart';
+export 'src/economy/non_gp_extraction.dart';
 export 'src/economy/resource_extractor.dart';
 export 'src/economy/sea_transport.dart';
+export 'src/economy/worker_action_cost.dart';
 export 'src/economy/worker_economy.dart';
+export 'src/economy/world_market/deal_matcher.dart';
+export 'src/economy/world_market/first_right_credits.dart';
+export 'src/economy/world_market/first_right_profit.dart';
+export 'src/economy/world_market/price_discovery.dart';
+export 'src/economy/world_market/purchased_tile_index.dart';
+export 'src/economy/world_market/sellable_quantity.dart';
+export 'src/economy/world_market/trade_order_suggester.dart';
+export 'src/economy/world_market/trade_order_validator.dart';
+export 'src/economy/world_market/treasury_bid_budget.dart';
 
 // Orders
 export 'src/orders/orders.dart';

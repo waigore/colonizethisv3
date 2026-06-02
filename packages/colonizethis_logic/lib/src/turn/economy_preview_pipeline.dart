@@ -4,6 +4,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import '../constants.dart';
 import '../economy/projected_cost_engine.dart';
 import '../economy/economy_preview_stockpile_phase.dart';
+import '../economy/worker_action_cost.dart';
 import '../world/player_state_pipeline.dart';
 import '../world/province_lookup.dart';
 import '../world/unit_lookup.dart';
@@ -26,6 +27,60 @@ Map<String, int> _stockpileCommodityDeltaMap(
     }
   }
   return out;
+}
+
+/// Pending [RecruitWorkerOrder] costs from [Orders.recruitWorkerOrdersByPlayerId],
+/// applied **before** unit-build and material-work pending costs to mirror the
+/// live Build / work resolver order (worker pool sub-phase runs before
+/// [BuildUnitOrder]).
+///
+/// Deducts treasury, materials, and the consumed peasant per
+/// [WorkerActionEconomyCatalog]; increments the order's target tier on the
+/// preview clone. Re-uses [canAffordRecruitWorker] / [applyRecruitWorkerCostDeduction]
+/// so the projection shares the validator/resolver cost source of truth.
+/// SPEC/program/order-projections.md § Production panel stockpile preview phases.
+Game _applyPendingRecruitWorkerOrderCostsForPreview({
+  required Game game,
+  required Orders currentOrders,
+}) {
+  if (currentOrders.recruitWorkerOrdersByPlayerId.isEmpty) {
+    return game;
+  }
+  return game.mapPlayers((player) {
+    final orders = currentOrders.recruitWorkerOrdersByPlayerId[player.id];
+    if (orders == null || orders.isEmpty) {
+      return player;
+    }
+    var workers = player.workerPool;
+    var stockpile = player.stockpile;
+    var treasury = player.treasury;
+    for (final order in orders) {
+      final check = canAffordRecruitWorker(
+        player,
+        order,
+        workers,
+        stockpile,
+        treasury,
+      );
+      if (!check.canAfford) {
+        continue;
+      }
+      final after = applyRecruitWorkerCostDeduction(
+        order,
+        workers,
+        stockpile,
+        treasury,
+      );
+      workers = after.workers;
+      stockpile = after.stockpile;
+      treasury = after.treasury;
+    }
+    return player.copyWith(
+      workerPool: workers,
+      stockpile: stockpile,
+      treasury: treasury,
+    );
+  });
 }
 
 Game _applyPendingBuildOrderCostsForPreview({
@@ -139,8 +194,12 @@ Game _applyPendingStockpileCostsForPreview({
   required Game game,
   required Orders currentOrders,
 }) {
-  final afterBuilds = _applyPendingBuildOrderCostsForPreview(
+  final afterRecruits = _applyPendingRecruitWorkerOrderCostsForPreview(
     game: game,
+    currentOrders: currentOrders,
+  );
+  final afterBuilds = _applyPendingBuildOrderCostsForPreview(
+    game: afterRecruits,
     currentOrders: currentOrders,
   );
   return _applyPendingMaterialWorkOrderCostsForPreview(
@@ -279,10 +338,11 @@ Game applyEconomyPhasesForPreview({
 /// Phases:
 /// Pending build costs → Extraction → Riches-to-treasury → Consumption → Production,
 /// using the same rules as [applyEconomyPhasesForPreview]. Pending build costs
-/// include unresolved unit builds and pending `build_improvement` work-order
-/// material costs (work-phase rules). Other players are
-/// simulated in lockstep so extraction ordering (e.g. fleet updates from
-/// trade interception) matches a full turn.
+/// apply in the live Build / work resolver order: pending
+/// [RecruitWorkerOrder] (worker pool sub-phase costs and tier deltas) first,
+/// then unresolved unit builds, then pending material-backed work-order costs
+/// (work-phase rules). Other players are simulated in lockstep so extraction
+/// ordering (e.g. fleet updates from trade interception) matches a full turn.
 ///
 /// Returns only commodities whose quantity changes; omit zero deltas.
 Map<String, int> previewStockpileNetDeltaByCommodityForPlayer({

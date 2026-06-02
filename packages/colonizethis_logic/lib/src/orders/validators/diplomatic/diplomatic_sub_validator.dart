@@ -1,5 +1,6 @@
 import 'package:colonizethis_models/colonizethis_models.dart';
 
+import '../../../diplomacy/diplomacy_resolver.dart';
 import '../../order_validation_result.dart';
 
 /// Per-`DiplomaticOrderType` validator extracted from
@@ -41,3 +42,63 @@ abstract interface class DiplomaticSubValidator {
 ({OrderValidationResult result, int treasury}) acceptDiplomaticSub(
   int treasury,
 ) => (result: OrderValidationResult.accepted(), treasury: treasury);
+
+/// Shared inputs for per-type diplomatic sub-validators.
+final class DiplomaticSubValidatorContext {
+  const DiplomaticSubValidatorContext({
+    required this.game,
+    required this.playerId,
+    this.factionMembership,
+  });
+
+  final Game game;
+  final String playerId;
+
+  /// Optional precomputed faction classification snapshot reused across
+  /// per-candidate probes to avoid linear `game.players` scans (Refs #2394).
+  final DiplomacyFactionMembership? factionMembership;
+}
+
+/// Type-specific check for a diplomatic sub-validator body.
+typedef DiplomaticSubValidationFn =
+    ({OrderValidationResult result, int treasury}) Function({
+      required DiplomaticOrder order,
+      required int treasury,
+    });
+
+/// Type-specific check invoked after [getRelation] for relation-based rules.
+typedef RelationDiplomaticSubCheck =
+    ({OrderValidationResult result, int treasury}) Function({
+      required DiplomaticOrder order,
+      required DiplomacyRelation? relation,
+      required int treasury,
+    });
+
+/// Wraps a type-specific [check] as a [DiplomaticSubValidator].
+DiplomaticSubValidator delegatedDiplomaticSubValidator(
+  DiplomaticSubValidationFn check,
+) => _DelegatedDiplomaticSubValidator(check);
+
+/// Fetches [getRelation] for [order.targetFactionId], then runs [check].
+DiplomaticSubValidator relationDiplomaticSubValidator(
+  DiplomaticSubValidatorContext ctx,
+  RelationDiplomaticSubCheck check,
+) => delegatedDiplomaticSubValidator(({
+  required DiplomaticOrder order,
+  required int treasury,
+}) {
+  final rel = getRelation(ctx.game, ctx.playerId, order.targetFactionId);
+  return check(order: order, relation: rel, treasury: treasury);
+});
+
+final class _DelegatedDiplomaticSubValidator implements DiplomaticSubValidator {
+  const _DelegatedDiplomaticSubValidator(this._check);
+
+  final DiplomaticSubValidationFn _check;
+
+  @override
+  ({OrderValidationResult result, int treasury}) validate({
+    required DiplomaticOrder order,
+    required int treasury,
+  }) => _check(order: order, treasury: treasury);
+}

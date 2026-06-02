@@ -10,6 +10,7 @@ import '../../../../providers/app_event_bus_provider.dart';
 import '../../../../providers/game_service_provider.dart';
 import '../../../../providers/games_provider.dart';
 import '../../../../providers/map_province_panel_provider.dart';
+import '../../../core/services/game_service.dart' show GameMapData;
 import 'game_map_area_state_logic.dart';
 import 'game_screen_shared.dart' show kGameMapWideProvinceSidePanelWidth;
 import 'per_player_work_target_selection_cache.dart';
@@ -23,6 +24,8 @@ class GameMapProvinceDetailSidePanel extends ConsumerWidget {
     required this.humanPlayerId,
     required this.playerView,
     required this.workTargetSelectionCache,
+    this.omniscientDetail = false,
+    this.canMutateViaUi = true,
     super.key,
   });
 
@@ -31,6 +34,8 @@ class GameMapProvinceDetailSidePanel extends ConsumerWidget {
   final String humanPlayerId;
   final PlayerView playerView;
   final PerPlayerWorkTargetSelectionCache workTargetSelectionCache;
+  final bool omniscientDetail;
+  final bool canMutateViaUi;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -70,7 +75,7 @@ class GameMapProvinceDetailSidePanel extends ConsumerWidget {
         ),
       );
     }
-    dynamic mapData;
+    GameMapData? mapData;
     try {
       mapData = ref.watch(gameServiceProvider).getMapData(game.id);
     } catch (_) {
@@ -121,12 +126,15 @@ class GameMapProvinceDetailSidePanel extends ConsumerWidget {
       onHighlightTile: (k) =>
           ref.read(mapProvincePanelProvider.notifier).setSecondaryHighlight(k),
       onClose: () => ref.read(mapProvincePanelProvider.notifier).closeOverlay(),
-      showProspectActionIcon: prospectState.showIcon,
-      prospectActionEnabled: prospectState.enabled,
-      showExploreActionIcon: exploreState.showIcon,
-      exploreActionEnabled: exploreState.enabled,
-      showBuildImprovementActionIcon: buildImprovementState.showIcon,
-      buildImprovementActionEnabled: buildImprovementState.enabled,
+      showProspectActionIcon: canMutateViaUi && prospectState.showIcon,
+      prospectActionEnabled: canMutateViaUi && prospectState.enabled,
+      showExploreActionIcon: canMutateViaUi && exploreState.showIcon,
+      exploreActionEnabled: canMutateViaUi && exploreState.enabled,
+      showBuildImprovementActionIcon:
+          canMutateViaUi && buildImprovementState.showIcon,
+      buildImprovementActionEnabled:
+          canMutateViaUi && buildImprovementState.enabled,
+      omniscientDetail: omniscientDetail,
       onExploreWithExplorerTap:
           exploreState.enabled && panel.selectedTileKey != null
           ? () {

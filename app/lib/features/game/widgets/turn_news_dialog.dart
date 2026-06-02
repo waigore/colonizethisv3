@@ -1,9 +1,14 @@
 // Turn-start news modal. SPEC/ui/turn-news-dialog.md.
 
+import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
 
+import '../../../config/editorial_monocle_palette.dart';
+import '../../../config/ui_screen_ids.dart';
 import '../../../l10n/l10n.dart';
+import '../../../widgets/ct_dialog_shell.dart';
+import '../../../widgets/ct_nine_patch_button.dart';
 
 /// Prior-turn summary dialog; [newTurnNumber] is current turn after resolution.
 class TurnNewsDialog extends StatelessWidget {
@@ -14,6 +19,8 @@ class TurnNewsDialog extends StatelessWidget {
     required this.newTurnNumber,
   });
 
+  static const screenId = UiScreenIds.turnNewsDialog;
+
   final Game game;
   final TurnNewsDigest digest;
   final int newTurnNumber;
@@ -21,61 +28,56 @@ class TurnNewsDialog extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = appL10n(context);
-    final lines = digest.lines.isEmpty
-        ? <String>[l10n.turnNews_empty]
+    final theme = Theme.of(context);
+    final titleStyle = (theme.textTheme.titleLarge ?? const TextStyle())
+        .copyWith(color: EditorialMonoclePalette.accent);
+    final bodyStyle = (theme.textTheme.bodyMedium ?? const TextStyle())
+        .copyWith(color: EditorialMonoclePalette.fg);
+    final mutedStyle = bodyStyle.copyWith(color: EditorialMonoclePalette.muted);
+    final isEmpty = digest.lines.isEmpty;
+    final lines = isEmpty
+        ? const <String>[]
         : digest.lines.map((e) => formatTurnNewsLine(l10n, game, e)).toList();
 
-    return AlertDialog(
-      title: Text(l10n.turnNews_title(newTurnNumber)),
-      content: SizedBox(
-        width: double.maxFinite,
-        child: ListView(
-          shrinkWrap: true,
-          children: [
-            for (final t in lines)
-              Padding(
-                padding: const EdgeInsets.only(bottom: 8),
-                child: Text(t),
+    return CtDialogShell(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(l10n.turnNews_title(newTurnNumber), style: titleStyle),
+          const SizedBox(height: 12),
+          if (isEmpty)
+            Text(l10n.turnNews_empty, style: mutedStyle)
+          else
+            ConstrainedBox(
+              constraints: const BoxConstraints(maxHeight: 320),
+              child: ListView.builder(
+                shrinkWrap: true,
+                itemCount: lines.length,
+                itemBuilder: (_, i) => Padding(
+                  padding: const EdgeInsets.only(bottom: 8),
+                  child: Text(lines[i], style: bodyStyle),
+                ),
               ),
-          ],
-        ),
+            ),
+          const SizedBox(height: 16),
+          Align(
+            alignment: Alignment.centerRight,
+            child: CtNinePatchButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: Text(l10n.turnNews_close),
+            ),
+          ),
+        ],
       ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.of(context).pop(),
-          child: Text(l10n.turnNews_close),
-        ),
-      ],
     );
   }
 }
 
-String _factionLabel(Game g, String id) {
-  for (final p in g.players) {
-    if (p.id == id) return p.displayName;
-  }
-  for (final m in g.minorNations) {
-    if (m.id == id) return m.displayName ?? m.id;
-  }
-  for (final t in g.tribes) {
-    if (t.id == id) return t.displayName ?? t.id;
-  }
-  return id;
-}
+String _factionLabel(Game g, String id) => g.factionDisplayNameById(id) ?? id;
 
-String _provinceLabel(Game g, String fullProvinceId) {
-  for (final r in [g.worldState.oldWorld, g.worldState.newWorld]) {
-    for (final p in r.provinces) {
-      final full = p.id.contains('|')
-          ? p.id
-          : ProvinceId.full(p.regionId, p.id);
-      if (full == fullProvinceId) {
-        return p.displayName ?? fullProvinceId;
-      }
-    }
-  }
-  return fullProvinceId;
-}
+String _provinceLabel(Game g, String fullProvinceId) =>
+    g.worldState.tryGetProvince(fullProvinceId)?.displayName ?? fullProvinceId;
 
 String _seaZoneLabel(Game g, String seaZoneId) {
   return g.worldState.seaZoneDisplayNameById[seaZoneId] ?? seaZoneId;

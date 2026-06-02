@@ -1,12 +1,8 @@
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:colonizethis_app/config/ct_e2e.dart';
-import 'package:colonizethis_app/config/ct_e2e_last_panel_snapshot.dart';
 import 'package:colonizethis_app/features/game/flame/game_screen_shared.dart';
 import 'e2e_helpers.dart';
-import 'package:colonizethis_app/l10n/l10n.dart';
 import 'package:colonizethis_app/main.dart' show bootstrapForIntegrationTest;
-import 'package:colonizethis_app/test_support/province_panel_e2e_expected_lines.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
 
@@ -17,29 +13,36 @@ void main() {
   testWidgets('new game → capital province panel matches model (wide layout)', (
     WidgetTester tester,
   ) async {
-    const testName = 'new_game_capital_panel';
-    final perf = E2ePerfLog(testName);
-    final testSw = Stopwatch()..start();
-    expect(
-      kCtE2EEnabled,
-      isTrue,
-      reason:
-          'Run with: flutter test integration_test/... --dart-define=CT_E2E=true',
+    // Standard E2E scenario opener (kCtE2EEnabled gate, surface size,
+    // bootstrap, asset preload, new-game-to-map, l10n) lifted into
+    // [enterStandardE2eScenario] so the full-turn and capital-panel
+    // scenarios share one canonical entry sequence. The legacy
+    // capital-panel inline opener did not time the asset-preload slice;
+    // passing `assetPreloadTimingPhase: null` preserves byte-identical
+    // emitted-log behaviour across the lift (no new `asset_preload`
+    // `E2E_TIMING` line). Refs GitHub #2336 AC1 / AC2 / Bottleneck 6.
+    final opener = await enterStandardE2eScenario(
+      tester,
+      testName: 'new_game_capital_panel',
+      bootstrapForIntegrationTest: bootstrapForIntegrationTest,
+      assetPreloadTimingPhase: null,
     );
+    final perf = opener.perf;
+    final testSw = opener.testSw;
+    final l10n = opener.l10n;
+    final ensureUnderWallClock = opener.ensureUnderWallClock;
 
-    await tester.binding.setSurfaceSize(const Size(1280, 720));
-    final bootstrapSw = Stopwatch()..start();
-    await bootstrapForIntegrationTest();
-    await tester.pump();
-    await e2eWaitForNewGameEntry(tester, perf: perf);
-    perf.timing('bootstrap_for_integration_test', bootstrapSw.elapsed);
-    await ensureAllRelocated64pxPngsLoadSuiteOnce();
-
-    final newGameToMapSw = Stopwatch()..start();
-    await bootstrapNewGameToMap(tester, perf: perf);
-    perf.timing('new_game_to_map', newGameToMapSw.elapsed);
-
-    await tester.tap(find.byKey(kHomeToCapitalButtonKey));
+    // Replaces the legacy raw `tester.tap(find.byKey(...))` taps with the
+    // shared defensive `ensureVisible` + `hitTestable` resolve recipe so a
+    // transient overlay or surface clip cannot silently drop the home/marker
+    // tap on a small viewport. The helper is the same primitive the panel
+    // openers consume via `e2eEnsureVisibleAndTapHitTestable` (Refs GitHub
+    // #2336 AC10 / e2e-ui-stability rule — verify visibility before
+    // interaction).
+    await ensureVisibleAndTapHitTestable(
+      tester,
+      find.byKey(kHomeToCapitalButtonKey),
+    );
     await waitUntilFound(
       tester,
       find.byKey(kCtE2EOpenCapitalProvinceDetailKey).hitTestable(),
@@ -49,29 +52,20 @@ void main() {
     );
 
     expect(find.byKey(kCtE2EOpenCapitalProvinceDetailKey), findsOneWidget);
-    await tester.tap(find.byKey(kCtE2EOpenCapitalProvinceDetailKey));
-
-    await waitUntilFound(
+    await ensureVisibleAndTapHitTestable(
       tester,
-      find.byKey(kCtE2EProvincePanelRootKey),
-      timeout: const Duration(seconds: 30),
-      perf: perf,
-      phaseName: 'open_panel_province',
+      find.byKey(kCtE2EOpenCapitalProvinceDetailKey),
     );
+
+    // Pre-lift this was an inline `expectPanelTextsMatchSnapshot` call with
+    // an explicit 30s timeout and the `open_panel_province` phase label;
+    // both are captured byte-identically by
+    // `expectProvincePanelMatchesE2eSnapshot` (Refs GitHub #2336 AC1 / AC2 /
+    // Bottleneck 6).
+    await expectProvincePanelMatchesE2eSnapshot(tester, l10n, perf: perf);
 
     expect(find.byKey(kCtE2EProvincePanelRootKey), findsOneWidget);
-
-    final snap = ctE2eLastPanelSnapshot;
-    expect(snap, isNotNull);
-    final l10n = lookupAppLocalizations(const Locale('en'));
-    final expected = provincePanelWideLayoutExpectedTexts(snap!, l10n);
-
-    final actual = <String>[];
-    collectTextPreorder(
-      tester.element(find.byKey(kCtE2EProvincePanelRootKey)),
-      actual,
-    );
-    expect(actual, orderedEquals(expected));
+    ensureUnderWallClock('test complete');
     perf.timing('test_total', testSw.elapsed);
   });
 }

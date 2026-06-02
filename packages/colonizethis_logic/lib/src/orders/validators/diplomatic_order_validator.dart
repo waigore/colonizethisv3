@@ -7,6 +7,7 @@ import '../order_validation_result.dart';
 import 'diplomatic/alliance_validator.dart';
 import 'diplomatic/declare_war_validator.dart';
 import 'diplomatic/diplomatic_sub_validator.dart';
+import 'diplomatic/establish_ftp_validator.dart';
 import 'diplomatic/establish_overture_validator.dart';
 import 'diplomatic/grant_aid_validator.dart';
 import 'diplomatic/offer_peace_validator.dart';
@@ -56,37 +57,34 @@ class DiplomaticOrderValidator extends StatefulValidator {
        _playerId = playerId,
        _factionMembership = factionMembership,
        super(
-         stockpileState: game.playerById(playerId)?.stockpile ?? Stockpile.empty,
+         stockpileState:
+             game.playerById(playerId)?.stockpile ?? Stockpile.empty,
          treasuryState: initialTreasury,
          workerPoolState:
              game.playerById(playerId)?.workerPool ?? WorkerPool.empty,
        ) {
+    final subValidatorContext = DiplomaticSubValidatorContext(
+      game: _game,
+      playerId: _playerId,
+      factionMembership: _factionMembership,
+    );
     _subValidators = <DiplomaticOrderType, DiplomaticSubValidator>{
-      DiplomaticOrderType.declareWar: DeclareWarSubValidator(
-        game: _game,
-        playerId: _playerId,
+      DiplomaticOrderType.declareWar: declareWarSubValidator(
+        subValidatorContext,
       ),
-      DiplomaticOrderType.offerPeace: OfferPeaceSubValidator(
-        game: _game,
-        playerId: _playerId,
+      DiplomaticOrderType.offerPeace: offerPeaceSubValidator(
+        subValidatorContext,
       ),
-      DiplomaticOrderType.alliance: AllianceSubValidator(
-        game: _game,
-        playerId: _playerId,
-        factionMembership: _factionMembership,
+      DiplomaticOrderType.alliance: allianceSubValidator(subValidatorContext),
+      DiplomaticOrderType.establishOverture: establishOvertureSubValidator(
+        subValidatorContext,
       ),
-      DiplomaticOrderType.establishOverture: EstablishOvertureSubValidator(
-        game: _game,
-        playerId: _playerId,
-        factionMembership: _factionMembership,
+      DiplomaticOrderType.establishFtp: establishFtpSubValidator(
+        subValidatorContext,
       ),
-      DiplomaticOrderType.grantAid: GrantAidSubValidator(
-        game: _game,
-        playerId: _playerId,
-      ),
-      DiplomaticOrderType.setSubsidy: SetSubsidySubValidator(
-        game: _game,
-        playerId: _playerId,
+      DiplomaticOrderType.grantAid: grantAidSubValidator(subValidatorContext),
+      DiplomaticOrderType.setSubsidy: setSubsidySubValidator(
+        subValidatorContext,
       ),
     };
   }

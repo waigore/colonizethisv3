@@ -156,5 +156,244 @@ void main() {
         throwsA(isA<ArgumentError>()),
       );
     });
+
+    test('round-trips recruitWorkerOrdersByPlayerId for every tier', () {
+      const o = Orders(
+        recruitWorkerOrdersByPlayerId: {
+          'p1': [
+            RecruitWorkerOrder(targetTier: WorkerTier.peasant),
+            RecruitWorkerOrder(targetTier: WorkerTier.apprentice),
+            RecruitWorkerOrder(targetTier: WorkerTier.journeyman),
+            RecruitWorkerOrder(targetTier: WorkerTier.master),
+          ],
+        },
+      );
+      final o2 = Orders.fromJson(o.toJson());
+      expect(o2.recruitWorkerOrdersByPlayerId['p1']!.length, 4);
+      expect(
+        o2.recruitWorkerOrdersByPlayerId['p1']!.map((e) => e.targetTier),
+        [
+          WorkerTier.peasant,
+          WorkerTier.apprentice,
+          WorkerTier.journeyman,
+          WorkerTier.master,
+        ],
+      );
+      expect(o2, o);
+      expect(o2.hashCode, o.hashCode);
+    });
+
+    test('toJson omits recruitWorkerOrdersByPlayerId when empty', () {
+      const o = Orders();
+      expect(o.toJson().containsKey('recruitWorkerOrdersByPlayerId'), isFalse);
+    });
+
+    test('equality false when recruit worker orders differ', () {
+      const a = Orders(
+        recruitWorkerOrdersByPlayerId: {
+          'p1': [RecruitWorkerOrder(targetTier: WorkerTier.apprentice)],
+        },
+      );
+      const b = Orders(
+        recruitWorkerOrdersByPlayerId: {
+          'p1': [RecruitWorkerOrder(targetTier: WorkerTier.master)],
+        },
+      );
+      expect(a == b, isFalse);
+    });
+
+    test('copyWith preserves recruit worker orders by default', () {
+      const original = Orders(
+        recruitWorkerOrdersByPlayerId: {
+          'p1': [RecruitWorkerOrder(targetTier: WorkerTier.apprentice)],
+        },
+      );
+      final copy = original.copyWith();
+      expect(copy, original);
+      expect(copy.recruitWorkerOrdersByPlayerId, isNotEmpty);
+    });
+
+    test('copyWith can replace recruit worker orders', () {
+      const original = Orders(
+        recruitWorkerOrdersByPlayerId: {
+          'p1': [RecruitWorkerOrder(targetTier: WorkerTier.apprentice)],
+        },
+      );
+      final updated = original.copyWith(
+        recruitWorkerOrdersByPlayerId: const {
+          'p1': [RecruitWorkerOrder(targetTier: WorkerTier.master)],
+        },
+      );
+      expect(
+        updated.recruitWorkerOrdersByPlayerId['p1']!.single.targetTier,
+        WorkerTier.master,
+      );
+      expect(updated == original, isFalse);
+    });
+
+    test(
+      'RecruitWorkerOrder.fromJson throws on missing targetTier',
+      () {
+        expect(
+          () => RecruitWorkerOrder.fromJson(<String, dynamic>{}),
+          throwsA(isA<ArgumentError>()),
+        );
+      },
+    );
+
+    test(
+      'RecruitWorkerOrder.fromJson throws on empty targetTier',
+      () {
+        expect(
+          () => RecruitWorkerOrder.fromJson({'targetTier': ''}),
+          throwsA(isA<ArgumentError>()),
+        );
+      },
+    );
+
+    test(
+      'RecruitWorkerOrder.fromJson throws on unknown targetTier id',
+      () {
+        expect(
+          () => RecruitWorkerOrder.fromJson({'targetTier': 'engineers'}),
+          throwsA(isA<ArgumentError>()),
+        );
+      },
+    );
+
+    test('RecruitWorkerOrder.toJson uses canonical WorkerTier id', () {
+      expect(
+        const RecruitWorkerOrder(targetTier: WorkerTier.apprentice).toJson(),
+        {'targetTier': 'apprentices'},
+      );
+    });
+  });
+
+  group('Orders.tradeOrdersByPlayerId', () {
+    test('defaults to empty and toJson omits the key when empty', () {
+      const o = Orders();
+      expect(o.tradeOrdersByPlayerId, isEmpty);
+      expect(o.toJson().containsKey('tradeOrdersByPlayerId'), isFalse);
+    });
+
+    test('round-trips multiple bids/offers across players via JSON', () {
+      final o = Orders(
+        tradeOrdersByPlayerId: {
+          'p1': [
+            TradeOrder(
+              commodityId: 'timber',
+              type: TradeOrderType.offer,
+              quantity: 10,
+              priority: 1,
+            ),
+            TradeOrder(
+              commodityId: 'iron',
+              type: TradeOrderType.bid,
+              quantity: 3,
+              priority: 2,
+            ),
+          ],
+          'p2': [
+            TradeOrder(
+              commodityId: 'silk',
+              type: TradeOrderType.bid,
+              quantity: 5,
+              priority: 1,
+              isFtp: true,
+            ),
+          ],
+        },
+      );
+      final restored = Orders.fromJson(o.toJson());
+      expect(restored.tradeOrdersByPlayerId.keys, {'p1', 'p2'});
+      expect(restored.tradeOrdersByPlayerId['p1']!.length, 2);
+      expect(restored.tradeOrdersByPlayerId['p2']!.single.commodityId, 'silk');
+      expect(restored.tradeOrdersByPlayerId['p2']!.single.isFtp, isTrue);
+      expect(restored, o);
+      expect(restored.hashCode, o.hashCode);
+    });
+
+    test('equality false when trade orders differ', () {
+      final a = Orders(
+        tradeOrdersByPlayerId: {
+          'p1': [
+            TradeOrder(
+              commodityId: 'timber',
+              type: TradeOrderType.offer,
+              quantity: 5,
+              priority: 1,
+            ),
+          ],
+        },
+      );
+      final b = Orders(
+        tradeOrdersByPlayerId: {
+          'p1': [
+            TradeOrder(
+              commodityId: 'timber',
+              type: TradeOrderType.offer,
+              quantity: 10,
+              priority: 1,
+            ),
+          ],
+        },
+      );
+      expect(a == b, isFalse);
+    });
+
+    test('copyWith preserves trade orders by default', () {
+      final original = Orders(
+        tradeOrdersByPlayerId: {
+          'p1': [
+            TradeOrder(
+              commodityId: 'timber',
+              type: TradeOrderType.offer,
+              quantity: 5,
+              priority: 1,
+            ),
+          ],
+        },
+      );
+      final copy = original.copyWith();
+      expect(copy, original);
+      expect(copy.tradeOrdersByPlayerId, isNotEmpty);
+    });
+
+    test('copyWith can replace trade orders', () {
+      final original = Orders(
+        tradeOrdersByPlayerId: {
+          'p1': [
+            TradeOrder(
+              commodityId: 'timber',
+              type: TradeOrderType.offer,
+              quantity: 5,
+              priority: 1,
+            ),
+          ],
+        },
+      );
+      final updated = original.copyWith(
+        tradeOrdersByPlayerId: {
+          'p1': [
+            TradeOrder(
+              commodityId: 'iron',
+              type: TradeOrderType.bid,
+              quantity: 2,
+              priority: 1,
+            ),
+          ],
+        },
+      );
+      expect(
+        updated.tradeOrdersByPlayerId['p1']!.single.commodityId,
+        'iron',
+      );
+      expect(updated == original, isFalse);
+    });
+
+    test('fromJson defaults to empty map when key missing', () {
+      final o = Orders.fromJson({});
+      expect(o.tradeOrdersByPlayerId, isEmpty);
+    });
   });
 }

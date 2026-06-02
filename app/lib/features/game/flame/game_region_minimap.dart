@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../config/app_assets.dart';
+import '../../../config/editorial_monocle_palette.dart';
 import '../../../providers/region_minimap_provider.dart';
 import 'region_map_viewport_snapshot.dart'
     show
@@ -37,12 +38,21 @@ const double kRegionMinimapFoggedAlpha = 0.55;
 ///
 /// [cellSizePx] must match [RegionMapViewData.cellSize] used by the Flame-backed region map for this
 /// region so world↔minimap math matches [RegionMapViewportSnapshot] (see SPEC/ui/map-widget.md).
+///
+/// Narrow layout (issue #2870 S3, `MediaQuery.size.width < kNarrowBreakpoint`):
+/// the host constructs this widget with `narrow: true`. The minimap grid then
+/// fits the active region's aspect ratio into a 90 × 70 dp box per
+/// `SPEC/ui/mobile-adaptation.md` § In-game shell and the
+/// `.minimap-panel @media (max-width:600px)` rule in
+/// `SPEC/ui/mockups/GAME10001-game-screen.html`. Wide chrome (corner-control
+/// brackets, panel padding, toggle button, zoom slider) is unchanged.
 class GameRegionMinimap extends ConsumerWidget {
   const GameRegionMinimap({
     required this.region,
     required this.viewportSnapshot,
     required this.bus,
     this.cellSizePx = 24,
+    this.narrow = false,
     super.key,
   });
 
@@ -51,7 +61,57 @@ class GameRegionMinimap extends ConsumerWidget {
   final AppEventBus bus;
   final double cellSizePx;
 
-  static const double _maxExtent = 132;
+  /// When true, fit the grid into the narrow 90 × 70 dp box per
+  /// `SPEC/ui/mobile-adaptation.md` § In-game shell (issue #2870 S3).
+  /// When false (default), preserve the wide-layout behavior of capping
+  /// the longer aspect side at [defaultMaxExtent].
+  final bool narrow;
+
+  /// Long-side cap in dp for the minimap grid under the wide / desktop
+  /// layout. Preserves the pre-#2870 baseline so default-layout
+  /// regression tests keep their existing dimensions.
+  @visibleForTesting
+  static const double defaultMaxExtent = 132;
+
+  /// Width cap in dp for the minimap grid under narrow chrome. Mirrors
+  /// the canonical measurement in `SPEC/ui/mobile-adaptation.md` §
+  /// In-game shell ("90 × 70 dp") and the mockup
+  /// `.minimap-panel @media (max-width:600px)` rule.
+  @visibleForTesting
+  static const double narrowMaxWidth = 90;
+
+  /// Height cap in dp for the minimap grid under narrow chrome. Mirrors
+  /// the canonical measurement in `SPEC/ui/mobile-adaptation.md` §
+  /// In-game shell ("90 × 70 dp") and the mockup
+  /// `.minimap-panel @media (max-width:600px)` rule.
+  @visibleForTesting
+  static const double narrowMaxHeight = 70;
+
+  /// Computes the inner [CustomPaint] grid size for a region of the given
+  /// `aspect` ratio (`region.width / region.height`) under the wide or
+  /// narrow chrome. Visible for testing so the SPEC's 90 × 70 dp bounding
+  /// box and the wide regression baseline can be pinned without pumping
+  /// the full widget tree.
+  @visibleForTesting
+  static Size computeMapSize({required double aspect, required bool narrow}) {
+    if (narrow) {
+      final boxAspect = narrowMaxWidth / narrowMaxHeight;
+      if (aspect >= boxAspect) {
+        return Size(narrowMaxWidth, narrowMaxWidth / aspect);
+      }
+      return Size(narrowMaxHeight * aspect, narrowMaxHeight);
+    }
+    if (aspect >= 1) {
+      return Size(defaultMaxExtent, defaultMaxExtent / aspect);
+    }
+    return Size(defaultMaxExtent * aspect, defaultMaxExtent);
+  }
+
+  /// Internal padding between the dark editorial-monocle minimap panel border
+  /// and the [CustomPaint] grid. Matches mockup `.minimap-panel { padding:2px }`
+  /// (`SPEC/ui/mockups/GAME10001-game-screen.html`). Unchanged at narrow —
+  /// the panel padding is part of the chrome, not the grid box.
+  static const double panelPadding = 2;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -60,12 +120,7 @@ class GameRegionMinimap extends ConsumerWidget {
         ? viewportSnapshot
         : null;
     final aspect = region.width / region.height;
-    late final Size mapSize;
-    if (aspect >= 1) {
-      mapSize = Size(_maxExtent, _maxExtent / aspect);
-    } else {
-      mapSize = Size(_maxExtent * aspect, _maxExtent);
-    }
+    final mapSize = computeMapSize(aspect: aspect, narrow: narrow);
 
     final zoomMultiplier = viewport == null
         ? 1.0
@@ -79,34 +134,42 @@ class GameRegionMinimap extends ConsumerWidget {
       crossAxisAlignment: CrossAxisAlignment.end,
       children: [
         if (visible) ...[
-          Material(
-            color: Colors.black.withValues(alpha: 0.45),
-            elevation: 2,
-            child: Listener(
-              behavior: HitTestBehavior.opaque,
-              onPointerMove: (event) {
-                if (!event.down || event.delta == Offset.zero) {
-                  return;
-                }
-                _onPan(delta: event.delta, mapSize: mapSize);
-              },
-              child: GestureDetector(
-                key: kRegionMinimapGestureKey,
+          DecoratedBox(
+            decoration: BoxDecoration(
+              color: EditorialMonoclePalette.bgDeep,
+              border: Border.all(
+                color: EditorialMonoclePalette.border,
+                width: 1,
+              ),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(panelPadding),
+              child: Listener(
                 behavior: HitTestBehavior.opaque,
-                // Tap-up avoids a center event at pointer-down (which interfered with drags).
-                onTapUp: (d) =>
-                    _onTap(local: d.localPosition, mapSize: mapSize),
-                child: SizedBox(
-                  width: mapSize.width,
-                  height: mapSize.height,
-                  child: CustomPaint(
-                    key: kRegionMinimapCustomPaintKey,
-                    painter: _RegionMinimapPainter(
-                      region: region,
-                      cellSizePx: cellSizePx,
-                      viewport: viewport?.regionId == region.regionId
-                          ? viewport
-                          : null,
+                onPointerMove: (event) {
+                  if (!event.down || event.delta == Offset.zero) {
+                    return;
+                  }
+                  _onPan(delta: event.delta, mapSize: mapSize);
+                },
+                child: GestureDetector(
+                  key: kRegionMinimapGestureKey,
+                  behavior: HitTestBehavior.opaque,
+                  // Tap-up avoids a center event at pointer-down (which interfered with drags).
+                  onTapUp: (d) =>
+                      _onTap(local: d.localPosition, mapSize: mapSize),
+                  child: SizedBox(
+                    width: mapSize.width,
+                    height: mapSize.height,
+                    child: CustomPaint(
+                      key: kRegionMinimapCustomPaintKey,
+                      painter: _RegionMinimapPainter(
+                        region: region,
+                        cellSizePx: cellSizePx,
+                        viewport: viewport?.regionId == region.regionId
+                            ? viewport
+                            : null,
+                      ),
                     ),
                   ),
                 ),
@@ -121,27 +184,10 @@ class GameRegionMinimap extends ConsumerWidget {
           viewportMultiplier: zoomMultiplier,
           trackWidth: mapSize.width,
           theme: Theme.of(context),
-          trailing: Material(
-            key: kRegionMinimapToggleKey,
-            color: Colors.white.withValues(alpha: 0.9),
-            child: Tooltip(
-              message: visible
-                  ? 'Hide region minimap'
-                  : 'Show region minimap',
-              child: InkWell(
-                onTap: () =>
-                    ref.read(regionMinimapVisibleProvider.notifier).toggle(),
-                child: Padding(
-                  padding: const EdgeInsets.all(6),
-                  child: StrictAssetIcon(
-                    assetPath:
-                        '${kAppIconAssetPrefix}ui_icon_region_minimap.png',
-                    width: 20,
-                    height: 20,
-                  ),
-                ),
-              ),
-            ),
+          trailing: _MinimapToggleButton(
+            visible: visible,
+            onTap: () =>
+                ref.read(regionMinimapVisibleProvider.notifier).toggle(),
           ),
         ),
       ],
@@ -223,10 +269,7 @@ class _MinimapZoomControlsState extends State<_MinimapZoomControls> {
 
   double get _displayMultiplier {
     final v = _dragMultiplier ?? widget.viewportMultiplier;
-    return v.clamp(
-      kRegionMapZoomMultiplierMin,
-      kRegionMapZoomMultiplierMax,
-    );
+    return v.clamp(kRegionMapZoomMultiplierMin, kRegionMapZoomMultiplierMax);
   }
 
   @override
@@ -296,6 +339,119 @@ class _MinimapZoomControlsState extends State<_MinimapZoomControls> {
           ),
         ),
       ],
+    );
+  }
+}
+
+/// Dark editorial-monocle 32 × 32 dp show/hide toggle for the region minimap.
+///
+/// Mirrors mockup `.minimap-toggle`
+/// (`SPEC/ui/mockups/GAME10001-game-screen.html`) and the
+/// [GameMapCornerControls](game_map_corner_controls.dart) chrome family
+/// per `SPEC/ui/empire-overview.md` § Region minimap chrome
+/// (dark editorial-monocle): a flat `--bg-deep` surface with a 1 px
+/// `--border` outline, centered glyph tinted via `ColorFiltered(srcIn)`
+/// to `--accent-dim` (default) → `--accent-bright` (hover / pressed),
+/// outline shifting to `--accent-dim` on the same hover / pressed
+/// transition over `120 ms` (`Curves.easeOut`).
+class _MinimapToggleButton extends StatefulWidget {
+  const _MinimapToggleButton({required this.visible, required this.onTap});
+
+  final bool visible;
+  final VoidCallback onTap;
+
+  /// Side length of the toggle tap target. Matches the corner-controls
+  /// 32 dp tap target convention referenced by SPEC `Region minimap`:
+  /// "same padding/hit target pattern as corner controls".
+  static const double buttonSize = 32;
+
+  /// Side length of the centered glyph. Preserves the existing 20 dp
+  /// minimap icon so the visible silhouette inside the dark surface is
+  /// unchanged from the legacy white-Material chrome.
+  static const double iconSize = 20;
+
+  /// Hover/press transition duration. Matches
+  /// [GameMapCornerControls](game_map_corner_controls.dart) so the row
+  /// of map chrome reads as one editorial-monocle family.
+  static const Duration animationDuration = Duration(milliseconds: 120);
+  static const Curve animationCurve = Curves.easeOut;
+
+  @override
+  State<_MinimapToggleButton> createState() => _MinimapToggleButtonState();
+}
+
+class _MinimapToggleButtonState extends State<_MinimapToggleButton> {
+  bool _hovered = false;
+  bool _pressed = false;
+
+  void _setHovered(bool value) {
+    if (_hovered == value) return;
+    setState(() => _hovered = value);
+  }
+
+  void _setPressed(bool value) {
+    if (_pressed == value) return;
+    setState(() => _pressed = value);
+  }
+
+  Color get _borderColor => (_hovered || _pressed)
+      ? EditorialMonoclePalette.accentDim
+      : EditorialMonoclePalette.border;
+
+  Color get _iconColor => (_hovered || _pressed)
+      ? EditorialMonoclePalette.accentBright
+      : EditorialMonoclePalette.accentDim;
+
+  @override
+  Widget build(BuildContext context) {
+    final tooltip = widget.visible
+        ? 'Hide region minimap'
+        : 'Show region minimap';
+    return MouseRegion(
+      cursor: SystemMouseCursors.click,
+      onEnter: (_) => _setHovered(true),
+      onExit: (_) => _setHovered(false),
+      child: Tooltip(
+        message: tooltip,
+        child: Semantics(
+          button: true,
+          label: tooltip,
+          child: SizedBox(
+            key: kRegionMinimapToggleKey,
+            width: _MinimapToggleButton.buttonSize,
+            height: _MinimapToggleButton.buttonSize,
+            child: Material(
+              color: Colors.transparent,
+              child: InkWell(
+                onTap: widget.onTap,
+                onHighlightChanged: _setPressed,
+                child: AnimatedContainer(
+                  duration: _MinimapToggleButton.animationDuration,
+                  curve: _MinimapToggleButton.animationCurve,
+                  decoration: BoxDecoration(
+                    color: EditorialMonoclePalette.bgDeep,
+                    border: Border.all(color: _borderColor, width: 1),
+                  ),
+                  child: Center(
+                    child: ColorFiltered(
+                      colorFilter: ColorFilter.mode(
+                        _iconColor,
+                        BlendMode.srcIn,
+                      ),
+                      child: StrictAssetIcon(
+                        assetPath:
+                            '${kAppIconAssetPrefix}ui_icon_region_minimap.png',
+                        width: _MinimapToggleButton.iconSize,
+                        height: _MinimapToggleButton.iconSize,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
     );
   }
 }

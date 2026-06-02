@@ -338,8 +338,9 @@ Game applyNaming({
   required Map<String, MapTopology> topologyByRegion,
 }) {
   final naming = defaultNamingConfig;
-  final owProvinces = List<Province>.from(game.worldState.oldWorld.provinces);
-  final nwProvinces = List<Province>.from(game.worldState.newWorld.provinces);
+  final provincesByRegion = game.worldState.mutableProvinceListsByRegion();
+  final owProvinces = provincesByRegion[kRegionOldWorld]!;
+  final nwProvinces = provincesByRegion[kRegionNewWorld]!;
   final owById = <String, Province>{for (final p in owProvinces) p.id: p};
   final nwById = <String, Province>{for (final p in nwProvinces) p.id: p};
   final usedOwProvinceDisplayNames = <String>{};
@@ -414,15 +415,14 @@ Game applyNaming({
     return t.copyWith(displayName: namingTribe.displayName);
   }).toList();
 
-  final updatedWorld = game.worldState.copyWith(
-    oldWorld: RegionData(
-      provinces: owById.values.toList()..sort((a, b) => a.id.compareTo(b.id)),
-      units: game.worldState.oldWorld.units,
-    ),
-    newWorld: RegionData(
-      provinces: nwById.values.toList()..sort((a, b) => a.id.compareTo(b.id)),
-      units: game.worldState.newWorld.units,
-    ),
+  final updatedWorld = game.worldState.mapBothRegions((rid, region) {
+    final updatedProvinces = rid == kRegionOldWorld ? owById : nwById;
+    return RegionData(
+      provinces: updatedProvinces.values.toList()
+        ..sort((a, b) => a.id.compareTo(b.id)),
+      units: region.units,
+    );
+  }).copyWith(
     seaZoneDisplayNameById: {
       ...buildSeaZoneDisplayNamesForRegion(
         topology: topologyByRegion[kRegionOldWorld] ?? const MapTopology(),
@@ -438,8 +438,8 @@ Game applyNaming({
   );
 
   gameSetupLog.i(
-    'naming applied ow=${updatedWorld.oldWorld.provinces.length} '
-    'nw=${updatedWorld.newWorld.provinces.length} players=${game.players.length} '
+    'naming applied ow=${updatedWorld.provincesForRegion(kRegionOldWorld).length} '
+    'nw=${updatedWorld.provincesForRegion(kRegionNewWorld).length} players=${game.players.length} '
     'minors=${game.minorNations.length} tribes=${game.tribes.length}',
   );
   if (proceduralFallbackCount > 0) {

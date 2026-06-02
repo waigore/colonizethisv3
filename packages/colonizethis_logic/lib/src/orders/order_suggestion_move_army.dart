@@ -8,6 +8,7 @@ import '../world/province_lookup.dart';
 import '../world/unit_lookup.dart';
 import 'draft_orders_mutations.dart';
 import 'incremental_candidate_validator.dart';
+import 'order_resolution_context.dart';
 import 'order_suggestion_context.dart';
 import 'order_visibility.dart';
 
@@ -123,8 +124,7 @@ List<MoveOrder> suggestMoveOrders(
         playerId: playerId,
         basePrefix: currentOrders,
         factionMembership: DiplomacyFactionMembership.from(game),
-        view: view,
-        unitsById: unitsByIdFromWorld(game.worldState),
+        resolution: orderResolutionContextFromView(view, game),
       );
 
   for (final unit in view.ownUnits) {
@@ -282,9 +282,9 @@ bool _armyMoveNeedsDeclareWarTrial(
 /// skips the fallback owned-province [allProvinces] scan and reuses the
 /// provided set (Refs #2394).
 ///
-/// When [playerView] / [unitsById] are provided (same contract as
+/// When [resolution] is provided (same contract as
 /// [IncrementalCandidateValidator.forPlayer]), each internal validator reuses
-/// them instead of embedding `buildPlayerView` / `unitsByIdFromWorld` scans.
+/// the pass snapshot instead of embedding `buildPlayerView` / unit-map scans.
 /// When [sharedCandidateValidator] is provided for the same suggestion pass,
 /// it is reused (rebound via [IncrementalCandidateValidator.forBasePrefix] when
 /// [currentOrders] differs from the validator's embedded prefix). Callers such
@@ -297,11 +297,12 @@ List<ArmyMovePickerDestination> armyMovePickerDestinations({
   required Army army,
   required Orders currentOrders,
   Set<String>? playerOwnedFullProvinceIds,
-  PlayerView? playerView,
-  Map<String, Unit>? unitsById,
+  OrderResolutionContext? resolution,
+
   /// When callers already built membership for this [game], pass it to skip a
   /// second [DiplomacyFactionMembership.from] scan (Refs #2394).
   DiplomacyFactionMembership? factionMembership,
+
   /// When non-null, must match [playerId] and be built from the same
   /// `(game, topology, …)` tuple; amortizes validator setup across picker calls
   /// in the same pass (Refs #2394).
@@ -319,19 +320,21 @@ List<ArmyMovePickerDestination> armyMovePickerDestinations({
       factionMembership ??
       sharedCandidateValidator?.factionMembershipSnapshot ??
       DiplomacyFactionMembership.from(game);
-  final effectivePlayerView =
-      playerView ?? sharedCandidateValidator?.view;
-  final effectiveUnitsById =
-      unitsById ??
-      sharedCandidateValidator?.unitsById ??
-      (effectivePlayerView != null
-          ? unitsByIdFromWorld(game.worldState)
+  final effectiveResolution =
+      resolution ??
+      (sharedCandidateValidator != null
+          ? (
+              view: sharedCandidateValidator.view,
+              unitsById: sharedCandidateValidator.unitsById,
+              provinceById: sharedCandidateValidator.view.provincesById,
+            )
           : null);
+  final effectivePlayerView = effectiveResolution?.view;
   final ownedProvinceIds =
       playerOwnedFullProvinceIds ??
-      (effectivePlayerView != null
+      (effectiveResolution != null
           ? <String>{
-              for (final e in effectivePlayerView.provincesById.entries)
+              for (final e in effectiveResolution.provinceById.entries)
                 if (e.value.ownerId == playerId) e.key,
             }
           : <String>{
@@ -354,9 +357,13 @@ List<ArmyMovePickerDestination> armyMovePickerDestinations({
       playerId: playerId,
       basePrefix: currentOrders,
       factionMembership: effectiveFactionMembership,
-      view: effectivePlayerView,
-      unitsById:
-          effectiveUnitsById ?? unitsByIdFromWorld(game.worldState),
+      resolution:
+          effectiveResolution ??
+          buildOrderResolutionContext(
+            game: game,
+            topology: topology,
+            playerId: playerId,
+          ),
     ),
   };
   final declareWarTrialValidatorsByTargetFaction =
@@ -384,18 +391,18 @@ List<ArmyMovePickerDestination> armyMovePickerDestinations({
       // war on [ownerId]). Reuse one validator per target faction so multiple
       // provinces with the same owner do not each pay a full PlayerView build
       // (Refs #2394, SPEC/program/order-suggestions.md § Throughput bounds).
-      final trialValidator =
-          declareWarTrialValidatorsByTargetFaction.putIfAbsent(ownerId, () {
-        final trialOrders = ordersWithAppendedDiplomaticOrder(
-          currentOrders,
-          playerId,
-          DiplomaticOrder(
-            type: DiplomaticOrderType.declareWar,
-            targetFactionId: ownerId,
-          ),
-        );
-        return baseValidator.forBasePrefix(trialOrders);
-      });
+      final trialValidator = declareWarTrialValidatorsByTargetFaction
+          .putIfAbsent(ownerId, () {
+            final trialOrders = ordersWithAppendedDiplomaticOrder(
+              currentOrders,
+              playerId,
+              DiplomaticOrder(
+                type: DiplomaticOrderType.declareWar,
+                targetFactionId: ownerId,
+              ),
+            );
+            return baseValidator.forBasePrefix(trialOrders);
+          });
       if (!trialValidator.isArmyMoveAccepted(move)) {
         continue;
       }
@@ -472,8 +479,7 @@ List<ArmyMoveOrder> suggestArmyMoveOrders(
         playerId: playerId,
         basePrefix: currentOrders,
         factionMembership: DiplomacyFactionMembership.from(game),
-        view: view,
-        unitsById: unitsByIdFromWorld(game.worldState),
+        resolution: orderResolutionContextFromView(view, game),
       );
 
   final playerOwnedFullProvinceIds = <String>{

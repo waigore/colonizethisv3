@@ -16,6 +16,19 @@ const _excludedPaths = <String>{
 
   /// Archetype display names; values may match civilian spellings by coincidence.
   'packages/colonizethis_data/lib/src/ai_personality_config.dart',
+
+  /// Hand-maintained app l10n part files (no `flutter gen-l10n` output here):
+  /// English display strings such as the naval composition role label
+  /// `naval_units_compositionRoleMerchant` are user-facing labels, not
+  /// civilian unit-type ids; the same coincident-spelling carve-out as
+  /// `ai_personality_config.dart` applies. App code reaches civilian unit
+  /// types via `kUnitType*` constants from `colonizethis_models`; the l10n
+  /// values here are independent translation strings.
+  'app/lib/l10n/app_localizations_en_part1.dart',
+  'app/lib/l10n/app_localizations_en_part2.dart',
+  'app/lib/l10n/app_localizations_en_part3.dart',
+  'app/lib/l10n/app_localizations_en_part4.dart',
+  'app/lib/l10n/app_localizations_en_part5.dart',
 };
 
 /// Used by `ct_repo_lint` in-process; [info] / [err] default to stdout/stderr.

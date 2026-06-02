@@ -4,6 +4,7 @@ import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../features/game/shell_player_context.dart';
 import 'game_service_provider.dart';
 import 'games_provider.dart';
 
@@ -14,6 +15,7 @@ class HomeFleetCargoSummary {
     required this.used,
     required this.capacity,
     this.isCargoUsedReliable = true,
+    this.notDefined = false,
   });
 
   final int used;
@@ -22,6 +24,7 @@ class HomeFleetCargoSummary {
   /// False when overseas cargo usage could not be computed (e.g. unexpected
   /// failure); [used] is then 0 and the UI should not treat it as authoritative.
   final bool isCargoUsedReliable;
+  final bool notDefined;
 }
 
 final homeFleetCargoSummaryProvider = Provider<HomeFleetCargoSummary>((ref) {
@@ -30,9 +33,12 @@ final homeFleetCargoSummaryProvider = Provider<HomeFleetCargoSummary>((ref) {
     return const HomeFleetCargoSummary(used: 0, capacity: 0);
   }
 
-  final humanPlayer =
-      game.players.where((p) => p.isHuman).firstOrNull ?? game.players.first;
-  final playerId = humanPlayer.id;
+  final shell = ref.watch(shellPlayerContextProvider);
+  if (shell.cargoNotDefined) {
+    return const HomeFleetCargoSummary(used: 0, capacity: 0, notDefined: true);
+  }
+
+  final playerId = shell.viewingPlayerId ?? shell.mapPlayerIdFor(game);
   final capacity = _homeFleetCapacity(game, playerId);
 
   // Some widget tests mount game UI without initializing Hive-backed services.
@@ -81,9 +87,10 @@ final homeFleetCargoSummaryProvider = Provider<HomeFleetCargoSummary>((ref) {
 
 int _homeFleetCapacity(Game game, String playerId) {
   final homeFleetId = homeFleetIdFor(playerId);
-  final homeFleet = game.worldState.fleets
-      .where((f) => f.id == homeFleetId && f.ownerId == playerId)
-      .firstOrNull;
+  final candidate = game.fleetById(homeFleetId);
+  final homeFleet = candidate != null && candidate.ownerId == playerId
+      ? candidate
+      : null;
   if (homeFleet == null) {
     return 0;
   }

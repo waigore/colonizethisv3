@@ -8,7 +8,9 @@ import '../features/game/widgets/diplomacy_panel.dart' show FactionKind;
 import '../features/game/screens/diplomacy_screen.dart';
 import '../features/game/screens/production_screen.dart';
 import '../features/game/screens/technology_screen.dart';
+import '../features/game/screens/trade_screen.dart';
 import '../features/shell/shell_screen.dart';
+import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 class Routes {
@@ -21,6 +23,7 @@ class Routes {
   static const String diplomacy = RoutePaths.diplomacy;
   static const String diplomacyDetail = RoutePaths.diplomacyDetail;
   static const String technology = RoutePaths.technology;
+  static const String trade = RoutePaths.trade;
 
   static Route<dynamic>? generate(RouteSettings settings) {
     switch (settings.name) {
@@ -43,6 +46,7 @@ class Routes {
       case RoutePaths.diplomacy:
       case RoutePaths.diplomacyDetail:
       case RoutePaths.technology:
+      case RoutePaths.trade:
         return _buildGameRoute(settings);
       default:
         return null;
@@ -58,7 +62,7 @@ class Routes {
 
     switch (settings.name) {
       case RoutePaths.production:
-        final player = game.players.firstWhere((p) => p.id == humanPlayerId);
+        final player = game.playerById(humanPlayerId)!;
         return MaterialPageRoute<void>(
           settings: settings,
           builder: (_) => ProductionScreen(game: game, player: player),
@@ -82,10 +86,16 @@ class Routes {
           ),
         );
       case RoutePaths.technology:
-        final player = game.players.firstWhere((p) => p.id == humanPlayerId);
+        final player = game.playerById(humanPlayerId)!;
         return MaterialPageRoute<void>(
           settings: settings,
           builder: (_) => TechnologyScreen(game: game, player: player),
+        );
+      case RoutePaths.trade:
+        final player = game.playerById(humanPlayerId)!;
+        return MaterialPageRoute<void>(
+          settings: settings,
+          builder: (_) => TradeScreen(game: game, player: player),
         );
       default:
         return null;

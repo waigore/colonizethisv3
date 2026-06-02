@@ -6,15 +6,31 @@ import '../../world/connectivity_resolver.dart';
 import '../../economy/economy_extraction.dart';
 import '../../economy/resource_extractor.dart';
 import '../../economy/sea_transport.dart';
+import '../../world/game_world_mutations.dart';
+import '../turn_pipeline_state.dart';
+import '../turn_resolver_config.dart';
 import '../turn_seed_constants.dart';
 
 /// Extraction phase: connectivity, land/overseas extraction, interception.
+///
+/// When [overseasShippedTonnageOut] is supplied, the function additionally
+/// records the post-cargo-cap, pre-interception overseas tonnage actually
+/// shipped per Great Power into the supplied map (keyed by player id). Those
+/// holds are committed at departure regardless of any later trade
+/// interception losses, so they consume ship capacity for the rest of the
+/// turn. Callers that need the cargo-released-to-trade signal documented in
+/// `SPEC/game/world-market.md` § Cargo (the *Cargo released by under-used
+/// extraction* AC) pass a mutable map; legacy callers omit the parameter and
+/// retain the existing behaviour (no tonnage accounting). The scripted
+/// `extractedByPlayerId` fast path bypasses auto-transport entirely, so no
+/// tonnage entries are recorded for that path.
 Game runExtractionPhase(
   Game state,
   MapTopology topology,
   Map<String, TileMapResult>? tileMapByRegion,
-  Map<String, Map<CommodityId, int>> extractedByPlayerId,
-) {
+  Map<String, Map<CommodityId, int>> extractedByPlayerId, {
+  Map<String, int>? overseasShippedTonnageOut,
+}) {
   if (extractedByPlayerId.isNotEmpty) {
     return applyExtractionForPlayers(state, extractedByPlayerId);
   }
@@ -70,6 +86,16 @@ Game runExtractionPhase(
         overseasTotals: tot.overseas,
         allocatedToStockpile: overseasDelivered,
       );
+      // Record the cargo-holds actually committed to overseas trade this
+      // turn before interception adjusts the delivered map. The holds are
+      // used at departure, so this is the correct value to subtract from
+      // the home-fleet cargo when computing trade cargo capacity in phase
+      // 13 (see SPEC/game/world-market.md § Cargo).
+      _recordOverseasShippedTonnage(
+        overseasShippedTonnageOut,
+        player.id,
+        overseasDelivered,
+      );
       if (overseasDelivered.isNotEmpty) {
         extractionSeed =
             (extractionSeed * kTurnResolutionLcgMultiplier +
@@ -82,15 +108,55 @@ Game runExtractionPhase(
           seed: extractionSeed ^ player.id.hashCode,
         );
         overseasDelivered = interception.reducedDelivered;
-        currentState = currentState.copyWith(
-          worldState: currentState.worldState.copyWith(
-            fleets: interception.updatedFleets,
-          ),
-        );
+        currentState = currentState.withFleets(interception.updatedFleets);
       }
       stockpile = applyExtractionToStockpile(stockpile, overseasDelivered);
     }
     updatedPlayers.add(player.copyWith(stockpile: stockpile));
   }
-  return currentState.copyWith(players: updatedPlayers);
+  return currentState.withPlayers(updatedPlayers);
+}
+
+void _recordOverseasShippedTonnage(
+  Map<String, int>? out,
+  String playerId,
+  Map<CommodityId, int> overseasDelivered,
+) {
+  if (out == null || overseasDelivered.isEmpty) {
+    return;
+  }
+  var shipped = 0;
+  for (final v in overseasDelivered.values) {
+    shipped += v;
+  }
+  if (shipped <= 0) {
+    return;
+  }
+  out[playerId] = (out[playerId] ?? 0) + shipped;
+}
+
+TurnPhaseStepOutcome extractionTurnPhaseHandler(
+  TurnPipelineState acc,
+  TurnResolverConfig config,
+  int turn,
+) {
+  // Capture per-player overseas tonnage actually shipped so the world
+  // market phase (#2990, B2 follow-up) can subtract it from the
+  // home-fleet cargo when computing trade cargo capacity. See
+  // SPEC/game/world-market.md § Cargo — AC "Cargo released by under-used
+  // extraction".
+  final shippedTonnageByPlayerId = <String, int>{};
+  final nextGame = runExtractionPhase(
+    acc.game,
+    config.topology,
+    config.tileMapByRegion,
+    config.extractedByPlayerId,
+    overseasShippedTonnageOut: shippedTonnageByPlayerId,
+  );
+  return TurnPhaseStepContinue(
+    acc.copyWith(
+      game: nextGame,
+      overseasExtractionShippedTonnageByPlayerId: shippedTonnageByPlayerId,
+    ),
+  );
 }

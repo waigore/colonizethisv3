@@ -1,43 +1,46 @@
+import 'dart:collection' show UnmodifiableMapView;
+
 import 'package:colonizethis_models/colonizethis_models.dart'
     show Province, ProvinceId, RegionData, Unit, WorldState;
 
 import '../constants.dart';
+import '../utils/expando_index.dart';
 
 /// Id → first list index for one [RegionData.provinces] list instance (Refs #2394).
 /// First matching id wins, matching [List.indexWhere] semantics on duplicates.
-final Expando<Map<String, int>> _provinceFirstIndexByIdForProvinceList =
-    Expando<Map<String, int>>('provinceFirstIndexByIdForProvinceList');
+final ExpandoIndex<List<Province>, Map<String, int>>
+_provinceFirstIndexByIdForProvinceList =
+    ExpandoIndex<List<Province>, Map<String, int>>(
+      'provinceFirstIndexByIdForProvinceList',
+      (provinces) {
+        final built = <String, int>{};
+        for (var i = 0; i < provinces.length; i++) {
+          built.putIfAbsent(provinces[i].id, () => i);
+        }
+        return built;
+      },
+    );
 
 /// Id → province row for one [RegionData.provinces] list instance (Refs #2394).
 /// First matching id wins, matching [List.indexWhere] semantics on duplicates.
-final Expando<Map<String, Province>> _provinceByIdForProvinceList =
-    Expando<Map<String, Province>>('provinceByIdForProvinceList');
+final ExpandoIndex<List<Province>, Map<String, Province>>
+_provinceByIdForProvinceList =
+    ExpandoIndex<List<Province>, Map<String, Province>>(
+      'provinceByIdForProvinceList',
+      (provinces) {
+        final index = <String, Province>{};
+        for (final p in provinces) {
+          index.putIfAbsent(p.id, () => p);
+        }
+        return index;
+      },
+    );
 
-Map<String, int> _provinceFirstIndexByIdForList(List<Province> provinces) {
-  final cached = _provinceFirstIndexByIdForProvinceList[provinces];
-  if (cached != null) {
-    return cached;
-  }
-  final built = <String, int>{};
-  for (var i = 0; i < provinces.length; i++) {
-    built.putIfAbsent(provinces[i].id, () => i);
-  }
-  _provinceFirstIndexByIdForProvinceList[provinces] = built;
-  return built;
-}
+Map<String, int> _provinceFirstIndexByIdForList(List<Province> provinces) =>
+    _provinceFirstIndexByIdForProvinceList.get(provinces);
 
-Map<String, Province> _provinceIdIndexForList(List<Province> provinces) {
-  var index = _provinceByIdForProvinceList[provinces];
-  if (index != null) {
-    return index;
-  }
-  index = <String, Province>{};
-  for (final p in provinces) {
-    index.putIfAbsent(p.id, () => p);
-  }
-  _provinceByIdForProvinceList[provinces] = index;
-  return index;
-}
+Map<String, Province> _provinceIdIndexForList(List<Province> provinces) =>
+    _provinceByIdForProvinceList.get(provinces);
 
 /// O(1) check that [provinces] contains a row whose [Province.id] equals [provinceId].
 ///
@@ -73,6 +76,33 @@ List<Province> decrementFortLevelForProvinceIdIfPresent(
         p,
   ];
 }
+
+/// Old-world-first id → province row (Refs #2836 item 4).
+final class _WorldProvinceIndex {
+  _WorldProvinceIndex({required Map<String, Province> byId})
+    : byIdUnmodifiable = UnmodifiableMapView<String, Province>(byId);
+
+  final UnmodifiableMapView<String, Province> byIdUnmodifiable;
+}
+
+/// Lazily built per [WorldState] instance. A new [WorldState] from
+/// [WorldState.copyWith] gets a fresh cache via identity.
+final ExpandoIndex<WorldState, _WorldProvinceIndex> _worldProvinceIndexByState =
+    ExpandoIndex<WorldState, _WorldProvinceIndex>('worldProvinceIndexByState', (
+      world,
+    ) {
+      final byId = <String, Province>{};
+      for (final p in world.oldWorld.provinces) {
+        byId.putIfAbsent(p.id, () => p);
+      }
+      for (final p in world.newWorld.provinces) {
+        byId.putIfAbsent(p.id, () => p);
+      }
+      return _WorldProvinceIndex(byId: byId);
+    });
+
+_WorldProvinceIndex _provinceIndexForWorld(WorldState world) =>
+    _worldProvinceIndexByState.get(world);
 
 RegionData? _regionForId(WorldState world, String regionId) {
   return regionId == kRegionOldWorld
@@ -215,7 +245,39 @@ List<String> landTileKeysForProvinceBucket(
 
 /// Province lookup helpers on [WorldState] to avoid repeatedly passing the world state.
 extension WorldStateProvinceLookup on WorldState {
+  /// Cross-region province-by-id map (old-world entries first, then new world).
+  ///
+  /// Returns an unmodifiable view cached per [WorldState] identity (Refs #2836
+  /// item 4). Keys are [Province.id] rows from both regions. For prefixed-id
+  /// resolution that parses region segments, use [tryGetProvince].
+  Map<String, Province> get allProvincesById =>
+      _provinceIndexForWorld(this).byIdUnmodifiable;
+
   RegionData? regionDataForId(String regionId) => _regionForId(this, regionId);
+
+  /// Strict variant of [regionDataForId]: returns the region for [regionId] or
+  /// throws [StateError] when unknown.
+  ///
+  /// Use in code paths whose contract guarantees [regionId] is canonical (i.e.
+  /// [kRegionOldWorld] or [kRegionNewWorld]) and where a silent fallback would
+  /// hide a malformed id. Mirrors the `Unknown region` contract of
+  /// [updateRegionById] for symmetry between read and write paths
+  /// (Refs #2836 item 1).
+  RegionData regionDataForIdOrThrow(String regionId) {
+    final region = _regionForId(this, regionId);
+    if (region == null) {
+      throw StateError('Unknown region "$regionId"');
+    }
+    return region;
+  }
+
+  /// Provinces belonging to [regionId]. Returns an empty iterable when the
+  /// region is unknown. Use in `lib/src/**` callers that need a region-scoped
+  /// province iteration without hand-rolled `if (regionId == kRegionOldWorld)`
+  /// branching against `oldWorld.provinces`/`newWorld.provinces`
+  /// (SPEC/program/logic-dual-region-province-access.md).
+  Iterable<Province> provincesForRegion(String regionId) =>
+      _regionForId(this, regionId)?.provinces ?? const <Province>[];
 
   Iterable<Province> allProvinces() sync* {
     yield* oldWorld.provinces;
@@ -299,6 +361,18 @@ extension WorldStateProvinceLookup on WorldState {
     );
   }
 
+  /// Read-only iteration over both regions. [action] is invoked first with
+  /// ([kRegionOldWorld], [oldWorld]), then ([kRegionNewWorld], [newWorld]) —
+  /// same order as [mapBothRegions]. Use for symmetric side-effecting work on
+  /// both regions that does not produce a new [WorldState], replacing
+  /// hand-rolled `processRegion(oldWorld); processRegion(newWorld);` pairs in
+  /// `lib/src/**` (Refs #2836 item 1,
+  /// SPEC/program/logic-dual-region-province-access.md).
+  void forEachRegion(void Function(String regionId, RegionData region) action) {
+    action(kRegionOldWorld, oldWorld);
+    action(kRegionNewWorld, newWorld);
+  }
+
   /// Updates unit lists in both regions; province rows are unchanged.
   WorldState mapBothRegionUnits(
     List<Unit> Function(String regionId, List<Unit> units) updateUnits,
@@ -325,5 +399,26 @@ extension WorldStateProvinceLookup on WorldState {
       return copyWith(newWorld: update(newWorld));
     }
     throw StateError('Unknown region "$regionId"');
+  }
+
+  /// Returns fresh mutable copies of the province lists for both regions,
+  /// keyed by [kRegionOldWorld] and [kRegionNewWorld].
+  ///
+  /// Use this from `lib/src/**` callers that stage imperative bulk-mutation
+  /// over both regions before applying via [mapBothRegions] /
+  /// [updateRegionById], replacing hand-rolled
+  /// `List<Province>.from(worldState.oldWorld.provinces)` /
+  /// `List<Province>.from(worldState.newWorld.provinces)` pairs (orders
+  /// application work pipeline, setup naming). Each returned list is an
+  /// independent mutable copy; mutating one does not affect the other or
+  /// the source [WorldState]. The map is mutable; callers may add region
+  /// keys defensively but the canonical contract returns exactly the two
+  /// keys above (Refs #2836 AC 5;
+  /// SPEC/program/logic-dual-region-province-access.md).
+  Map<String, List<Province>> mutableProvinceListsByRegion() {
+    return <String, List<Province>>{
+      kRegionOldWorld: List<Province>.from(oldWorld.provinces),
+      kRegionNewWorld: List<Province>.from(newWorld.provinces),
+    };
   }
 }
