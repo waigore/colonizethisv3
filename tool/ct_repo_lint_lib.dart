@@ -10,6 +10,7 @@ import 'check_app_event_handler_scope_logic_boundary.dart';
 import 'check_app_hardcoded_ui_strings.dart';
 import 'check_app_no_duplicate_helpers.dart';
 import 'check_app_no_material_alertdialog.dart';
+import 'check_app_no_material_chip.dart';
 import 'check_app_no_material_filterchip.dart';
 import 'check_app_no_material_iconbutton.dart';
 import 'check_app_no_material_scaffold.dart';
@@ -824,6 +825,8 @@ int? _tryRunDartRuleInProcess({
       return runCheckAppEditorialMonocleColors(repoRoot);
     case 'repo.app_no_material_alertdialog':
       return runCheckAppNoMaterialAlertDialog(repoRoot);
+    case 'repo.app_no_material_chip':
+      return runCheckAppNoMaterialChip(repoRoot);
     case 'repo.app_no_material_filterchip':
       return runCheckAppNoMaterialFilterChip(repoRoot);
     case 'repo.app_no_material_iconbutton':
