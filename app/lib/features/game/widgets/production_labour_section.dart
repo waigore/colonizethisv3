@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 
 import '../../../config/app_assets.dart';
 import '../../../l10n/l10n.dart';
+import '../../../widgets/ct_spacing.dart';
 import 'chrome/ct_danger_text_button.dart';
 import 'production_allocation_row_buttons.dart';
 import 'production_labour_helpers.dart';
@@ -109,7 +110,7 @@ class _ProductionLabourTierRow extends StatelessWidget {
       return const SizedBox.shrink();
     }
     return Padding(
-      padding: const EdgeInsets.only(left: 8),
+      padding: const EdgeInsets.only(left: CtSpacing.m),
       child: Text(
         l10n.production_labourQueued(data.queuedCount),
         style: theme.textTheme.labelSmall,
@@ -208,7 +209,7 @@ class _DisbandTierButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.only(left: 6),
+      padding: const EdgeInsets.only(left: CtSpacing.s),
       child: CtDangerTextButton(
         key: ValueKey<String>('production_labour_disband_${tier.id}'),
         enabled: enabled,
@@ -249,7 +250,7 @@ class _DisbandReservedSlot extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.only(left: 6),
+      padding: const EdgeInsets.only(left: CtSpacing.s),
       child: ExcludeSemantics(
         child: IgnorePointer(
           child: Opacity(
@@ -313,10 +314,7 @@ class _LabourIconButton extends StatelessWidget {
         message: tooltip,
         child: Material(
           color: Colors.transparent,
-          child: InkWell(
-            onTap: enabled ? onPressed : null,
-            child: surface,
-          ),
+          child: InkWell(onTap: enabled ? onPressed : null, child: surface),
         ),
       ),
     );
