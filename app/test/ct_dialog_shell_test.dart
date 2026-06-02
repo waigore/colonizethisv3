@@ -183,4 +183,104 @@ void main() {
       expect(border!.bottom.color, EditorialMonoclePalette.accentDim);
     });
   });
+
+  // Refs #2914 S3 — § Hard-coded color ban in SPEC/ui/pixel-art-ui-catalog.md.
+  // The CtDialogShell DefaultTextStyle fallback (used when the host theme's
+  // TextTheme.bodyMedium is null) must resolve to EditorialMonoclePalette.fg
+  // (the canonical --fg primary-text token), not Material's Colors.white.
+  //
+  // In practice Flutter's `ThemeData` constructor / `MaterialApp` theme
+  // pipeline always merges `Typography.englishLike*` defaults onto the
+  // supplied `TextTheme`, so `theme.textTheme.bodyMedium` is non-null at
+  // runtime and the fallback branch is defensive code that's hard to reach
+  // through a normal widget pump. The fallback `TextStyle` is therefore
+  // exposed as a `@visibleForTesting` static getter
+  // (`CtDialogShell.fallbackBodyTextStyle`) and pinned here, which (a) is
+  // the same object the build() method references via the `??` operator —
+  // so this assertion is not circular against build() — and (b) directly
+  // forbids `Colors.white` and other raw Material color literals from being
+  // reintroduced as the fallback color.
+  group('CtDialogShell default text style fallback (#2914 S3)', () {
+    test('fallbackBodyTextStyle resolves to the --fg palette token', () {
+      expect(
+        CtDialogShell.fallbackBodyTextStyle.color,
+        EditorialMonoclePalette.fg,
+        reason:
+            'CtDialogShell.fallbackBodyTextStyle must resolve to the '
+            'canonical --fg palette token (SPEC/ui/pixel-art-ui-catalog.md '
+            '§ Hard-coded color ban; Refs #2914 S3).',
+      );
+    });
+
+    test('fallbackBodyTextStyle does not use raw Material color literals', () {
+      // Explicit negative pins for the most common raw Material colors that
+      // have historically been used as defensive defaults. Adding new
+      // entries here is cheap and forces a deliberate review if anyone
+      // re-introduces a Material literal as the fallback.
+      const List<Color> bannedFallbackColors = <Color>[
+        Colors.white,
+        Colors.black,
+        Color(0xFFFFFFFF),
+        Color(0xFF000000),
+      ];
+      for (final Color banned in bannedFallbackColors) {
+        expect(
+          CtDialogShell.fallbackBodyTextStyle.color,
+          isNot(banned),
+          reason:
+              'CtDialogShell.fallbackBodyTextStyle must resolve from the '
+              'editorial-monocle palette tokens, not raw Material literals '
+              '(banned: $banned). SPEC/ui/pixel-art-ui-catalog.md '
+              '§ Hard-coded color ban; Refs #2914 S3.',
+        );
+      }
+    });
+
+    testWidgets(
+      'when theme.textTheme.bodyMedium is present, DefaultTextStyle uses theme color (not the fallback)',
+      (tester) async {
+        // Behavioral guard: confirm the shell actually consults
+        // `theme.textTheme.bodyMedium` (rather than always picking the
+        // fallback) by pumping a theme with a deterministic bodyMedium
+        // color and inspecting the style the child actually sees.
+        const Color themeBodyColor = Color(0xFF123456);
+        final ThemeData themeWithBodyMedium = ThemeData(
+          useMaterial3: true,
+          textTheme: const TextTheme(
+            bodyMedium: TextStyle(color: themeBodyColor),
+          ),
+        );
+
+        late TextStyle resolvedStyle;
+        await tester.pumpWidget(
+          MaterialApp(
+            theme: themeWithBodyMedium,
+            home: Scaffold(
+              body: Center(
+                child: CtDialogShell(
+                  child: Builder(
+                    builder: (BuildContext context) {
+                      resolvedStyle = DefaultTextStyle.of(context).style;
+                      return const Text('Body');
+                    },
+                  ),
+                ),
+              ),
+            ),
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        expect(tester.takeException(), isNull);
+        expect(resolvedStyle.color, themeBodyColor);
+        expect(
+          resolvedStyle.color,
+          isNot(CtDialogShell.fallbackBodyTextStyle.color),
+          reason:
+              'Fallback must only activate when bodyMedium is null; the '
+              'theme-supplied color must be preserved otherwise.',
+        );
+      },
+    );
+  });
 }
