@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../../../widgets/ct_nine_patch_button.dart';
+import '../../../../../widgets/ct_spacing.dart';
 import 'units_panel_row_chrome.dart';
 
 /// Shared unit/fleet row layout:
@@ -46,7 +47,10 @@ class UnitsEntityActionRow extends StatelessWidget {
         final iconOnly = constraints.maxWidth < iconOnlyBreakpoint;
         return UnitsPanelRowChrome(
           margin: EdgeInsets.zero,
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+          padding: const EdgeInsets.symmetric(
+            horizontal: CtSpacing.m,
+            vertical: 6,
+          ),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
