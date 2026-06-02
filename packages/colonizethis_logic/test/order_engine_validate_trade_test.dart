@@ -145,6 +145,7 @@ void main() {
             id: 'gp1',
             displayName: 'GP1',
             isHuman: true,
+            treasury: 500,
             stockpile: Stockpile.empty,
           ),
         );
@@ -175,6 +176,7 @@ void main() {
             id: 'gp1',
             displayName: 'GP1',
             isHuman: true,
+            treasury: 500,
             stockpile: Stockpile.empty,
           ),
         );

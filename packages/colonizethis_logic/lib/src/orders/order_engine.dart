@@ -469,6 +469,9 @@ class OrderEngine with _OrderEngineGeneratedOrderMethods {
               game,
               playerId,
               tradeOrders,
+              topology,
+              copyOrdersSnapshotForEngine(_orders),
+              tileMapByRegion,
             ),
           ),
         ];
@@ -640,6 +643,9 @@ class OrderEngine with _OrderEngineGeneratedOrderMethods {
     Game game,
     String playerId,
     List<TradeOrder> tradeOrders,
+    MapTopology topology,
+    Orders stagedOrders,
+    Map<String, TileMapResult>? tileMapByRegion,
   ) {
     if (tradeOrders.isEmpty) return;
     if (state.rejected) {
@@ -648,7 +654,13 @@ class OrderEngine with _OrderEngineGeneratedOrderMethods {
       }
       return;
     }
-    final context = tradeOrderValidationContextFromGame(game, playerId);
+    final context = tradeOrderValidationContextFromGame(
+      game,
+      playerId,
+      stagedOrders: stagedOrders,
+      topology: topology,
+      tileMapByRegion: tileMapByRegion,
+    );
     final tradeResults = TradeOrderValidator.validate(
       context: context,
       proposedOrders: tradeOrders,

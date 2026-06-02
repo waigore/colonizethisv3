@@ -121,7 +121,7 @@ void main() {
     );
   });
 
-  group('TradeOrderValidator.validate — rule 5: bid cargo cap', () {
+  group('TradeOrderValidator.validate — rule 6: bid cargo cap', () {
     test('bid quantity > tradeCargoCapacity is rejected', () {
       final results = TradeOrderValidator.validate(
         context: validatorCtx(tradeCargoCapacity: 10),
@@ -158,7 +158,7 @@ void main() {
     );
   });
 
-  group('TradeOrderValidator.validate — rule 6: offer stockpile', () {
+  group('TradeOrderValidator.validate — rule 7: offer stockpile', () {
     test('offer quantity > availableStockpile is rejected', () {
       final results = TradeOrderValidator.validate(
         context: validatorCtx(availableStockpileByCommodityId: {'timber': 5}),

@@ -26,8 +26,7 @@
 ///   helper falls back to the legacy "raw treasury" contract for
 ///   callers that don't run a projection.
 ///
-/// Validator-side enforcement of the cross-commodity bid treasury cap
-/// remains a planned follow-up (see SPEC).
+/// Validator-side enforcement lives in `trade_order_validator.dart` (rule 5).
 library;
 
 import 'package:colonizethis_data/colonizethis_data.dart' as data;

@@ -175,12 +175,7 @@ void main() {
         };
         final all = <TradeOrder>[...result.offers, ...result.bids];
         final validatorResults = TradeOrderValidator.validate(
-          context: TradeOrderValidationContext(
-            playerId: 'gp1',
-            bidTypeCap: worldMarketBidTypeCap(game, 'gp1'),
-            tradeCargoCapacity: cargoHoldsForHomeFleet(game, 'gp1'),
-            availableStockpileByCommodityId: available,
-          ),
+          context: tradeOrderValidationContextFromGame(game, 'gp1'),
           proposedOrders: all,
         );
         for (final r in validatorResults) {
