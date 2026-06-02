@@ -1,4 +1,6 @@
+import 'package:colonizethis_app/config/editorial_monocle_palette.dart';
 import 'package:colonizethis_app/features/game/flame/debug_console_overlay_panel.dart';
+import 'package:colonizethis_app/widgets/ct_icon_action.dart';
 import 'package:colonizethis_debug_console/colonizethis_debug_console.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
@@ -495,5 +497,181 @@ void main() {
       expect(snackbars.last.message, contains('player_id: p1'));
       expect(events, isEmpty);
     });
+  });
+
+  group('DebugConsoleOverlayPanel dark editorial-monocle chrome (Refs #2914 '
+      'S3 + S8)', () {
+    Future<void> pumpPanel(
+      WidgetTester tester, {
+      required AppEventBus bus,
+      VoidCallback? onClose,
+    }) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: DebugConsoleOverlayPanel(
+              bus: bus,
+              humanPlayerId: 'human_1',
+              readOnlyContextProvider: () =>
+                  const DebugConsoleReadOnlyContext(),
+              onClose: onClose ?? () {},
+            ),
+          ),
+        ),
+      );
+      await tester.pump();
+    }
+
+    testWidgets(
+      'panel close affordance is a CtIconAction (no Material IconButton)',
+      (tester) async {
+        final bus = AppEventBus.create();
+        addTearDown(bus.dispose);
+        await pumpPanel(tester, bus: bus);
+
+        final closeFinder = find.byKey(
+          DebugConsoleOverlayPanel.closeButtonKey,
+        );
+        expect(
+          closeFinder,
+          findsOneWidget,
+          reason:
+              'Refs #2914 S8 requires the catalog CtIconAction primitive '
+              '(not the banned Material IconButton) for the close affordance.',
+        );
+        // The keyed widget itself must be the CtIconAction catalog primitive.
+        expect(
+          tester.widget(closeFinder),
+          isA<CtIconAction>(),
+        );
+        expect(
+          find.descendant(
+            of: find.byType(DebugConsoleOverlayPanel),
+            matching: find.byType(CtIconAction),
+          ),
+          findsOneWidget,
+        );
+        expect(
+          find.descendant(
+            of: find.byType(DebugConsoleOverlayPanel),
+            matching: find.byType(IconButton),
+          ),
+          findsNothing,
+          reason:
+              'Banned Material IconButton must not appear in the panel '
+              'subtree (Refs #2914 S8 / SPEC/ui/pixel-art-ui-catalog.md '
+              '\u00a7 Material design ban).',
+        );
+      },
+    );
+
+    testWidgets(
+      'tapping the CtIconAction close affordance invokes onClose',
+      (tester) async {
+        final bus = AppEventBus.create();
+        addTearDown(bus.dispose);
+        var closeCount = 0;
+        await pumpPanel(tester, bus: bus, onClose: () => closeCount += 1);
+
+        await tester.tap(
+          find.byKey(DebugConsoleOverlayPanel.closeButtonKey),
+        );
+        await tester.pump();
+
+        expect(closeCount, 1);
+      },
+    );
+
+    testWidgets(
+      'header title text style colour resolves to '
+      'EditorialMonoclePalette.fg (no Material Colors.white)',
+      (tester) async {
+        final bus = AppEventBus.create();
+        addTearDown(bus.dispose);
+        await pumpPanel(tester, bus: bus);
+
+        final headerText = tester.widget<Text>(
+          find.text('Debug Console'),
+        );
+        expect(headerText.style?.color, EditorialMonoclePalette.fg);
+        expect(headerText.style?.fontWeight, FontWeight.w700);
+      },
+    );
+
+    testWidgets(
+      'TextField input style colour resolves to '
+      'EditorialMonoclePalette.fg (no Material Colors.white)',
+      (tester) async {
+        final bus = AppEventBus.create();
+        addTearDown(bus.dispose);
+        await pumpPanel(tester, bus: bus);
+
+        final input = tester.widget<TextField>(
+          find.byKey(const ValueKey<String>('debug-console-input')),
+        );
+        expect(input.style?.color, EditorialMonoclePalette.fg);
+      },
+    );
+
+    testWidgets(
+      'TextField hint style colour resolves to EditorialMonoclePalette.muted '
+      'with the documented hint alpha (no Material Colors.white)',
+      (tester) async {
+        final bus = AppEventBus.create();
+        addTearDown(bus.dispose);
+        await pumpPanel(tester, bus: bus);
+
+        final input = tester.widget<TextField>(
+          find.byKey(const ValueKey<String>('debug-console-input')),
+        );
+        final hintColor = input.decoration?.hintStyle?.color;
+        final expectedHint = EditorialMonoclePalette.muted.withValues(
+          alpha: DebugConsoleOverlayPanel.hintTextAlpha,
+        );
+        expect(hintColor, expectedHint);
+      },
+    );
+
+    testWidgets(
+      'TextField fill colour resolves to EditorialMonoclePalette.dialogScrim',
+      (tester) async {
+        final bus = AppEventBus.create();
+        addTearDown(bus.dispose);
+        await pumpPanel(tester, bus: bus);
+
+        final input = tester.widget<TextField>(
+          find.byKey(const ValueKey<String>('debug-console-input')),
+        );
+        expect(input.decoration?.filled, isTrue);
+        expect(
+          input.decoration?.fillColor,
+          EditorialMonoclePalette.dialogScrim,
+        );
+      },
+    );
+
+    testWidgets(
+      'outer Material surface colour resolves to '
+      'EditorialMonoclePalette.bgDeep at the documented panel alpha '
+      '(no Material Colors.black)',
+      (tester) async {
+        final bus = AppEventBus.create();
+        addTearDown(bus.dispose);
+        await pumpPanel(tester, bus: bus);
+
+        final panelMaterial = tester.widget<Material>(
+          find
+              .descendant(
+                of: find.byType(DebugConsoleOverlayPanel),
+                matching: find.byType(Material),
+              )
+              .first,
+        );
+        final expectedSurface = EditorialMonoclePalette.bgDeep.withValues(
+          alpha: DebugConsoleOverlayPanel.panelBackgroundAlpha,
+        );
+        expect(panelMaterial.color, expectedSurface);
+      },
+    );
   });
 }
