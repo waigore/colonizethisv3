@@ -118,6 +118,7 @@ class _ProductionLabourTierRow extends StatelessWidget {
   }
 
   List<Widget> _buildEditActions(String tierName) {
+    final disbandLabel = l10n.production_labourDisband;
     return [
       _LabourIconButton(
         enabled: data.canPop,
@@ -137,10 +138,16 @@ class _ProductionLabourTierRow extends StatelessWidget {
         _DisbandTierButton(
           tier: data.tier,
           enabled: data.canDisband,
-          disbandLabel: l10n.production_labourDisband,
+          disbandLabel: disbandLabel,
           tooltip: l10n.production_labourDisbandTier(tierName),
           onDisband: callbacks.onDisband,
-        ),
+        )
+      else
+        // Peasant rows have no visible Disband control but reserve the
+        // same trailing slot width as trained rows so −/+ align across
+        // all tier rows. SPEC/ui/production-panel.md § Labour Controls
+        // (12-A) > Trailing alignment. Refs #2862 S8a / C4 / G5.
+        _DisbandReservedSlot(label: disbandLabel),
     ];
   }
 
@@ -148,18 +155,35 @@ class _ProductionLabourTierRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final tierName = _tierName();
     final tierLabel = _tierLabelWithUnlockState();
+    // Expanded (not Flexible) on the leading tier-label slot so the slot
+    // width is the same across rows. With Flexible.loose the label slot
+    // collapses to the text's intrinsic width, which differs per tier
+    // (e.g. "Peasants (unlocked)" vs "Apprentices (unlocked)") and
+    // shifts the trailing action cluster horizontally — breaking the
+    // trailing-alignment contract in SPEC/ui/production-panel.md
+    // § Labour Controls (12-A) > Trailing alignment. With Expanded, the
+    // label slot occupies all available pre-cluster space, the cluster
+    // anchors flush to the row's right edge, and combined with the
+    // reserved-Disband-slot on the peasant row the −/+ steppers sit at
+    // the same screen-x across every tier row. Refs #2862 S8a / C4 / G5.
     return Row(
       mainAxisSize: MainAxisSize.max,
       children: [
-        Flexible(
-          child: Text(
-            tierLabel,
-            style: theme.textTheme.bodySmall,
-            overflow: TextOverflow.ellipsis,
+        Expanded(
+          child: Row(
+            mainAxisSize: MainAxisSize.max,
+            children: [
+              Flexible(
+                child: Text(
+                  tierLabel,
+                  style: theme.textTheme.bodySmall,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              _buildQueuedSegment(),
+            ],
           ),
         ),
-        _buildQueuedSegment(),
-        const Spacer(),
         if (canEdit) ..._buildEditActions(tierName),
       ],
     );
@@ -195,6 +219,53 @@ class _DisbandTierButton extends StatelessWidget {
       ),
     );
   }
+}
+
+/// Invisible Disband-shaped placeholder used by the peasant row to reserve
+/// the same trailing slot width as trained rows so −/+ step buttons sit at
+/// the same screen-x coordinates across every Labour row.
+///
+/// SPEC/ui/production-panel.md § Labour Controls (12-A) > Trailing
+/// alignment (Refs #2862 S8a / C4 / G5). The reserved slot:
+///
+/// - Carries no widget key (so key-based finders for
+///   `production_labour_disband_<tier>` skip it).
+/// - Wraps the *enabled* [CtDangerTextButton] (with a no-op callback) in
+///   [Opacity] 0.0 so the slot matches the exact rendered dimensions of a
+///   trained-tier Disband button (including the Material / InkWell padded
+///   tap-target inset on enabled buttons) but paints no visible pixels.
+///   A disabled `CtDangerTextButton` would skip the Material / InkWell
+///   wrapping and produce a narrower intrinsic width than the real
+///   enabled Disband — that would mis-align the peasant row's −/+
+///   steppers.
+/// - Wraps the subtree in [ExcludeSemantics] + [IgnorePointer] so screen
+///   readers do not announce a second "Disband" affordance on peasant
+///   rows and pointer events are ignored.
+class _DisbandReservedSlot extends StatelessWidget {
+  const _DisbandReservedSlot({required this.label});
+
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(left: 6),
+      child: ExcludeSemantics(
+        child: IgnorePointer(
+          child: Opacity(
+            opacity: 0.0,
+            child: CtDangerTextButton(
+              enabled: true,
+              label: label,
+              onPressed: _noop,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  static void _noop() {}
 }
 
 /// Per-tier `+` / `−` control for the Labour Controls section.
