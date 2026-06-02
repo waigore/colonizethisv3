@@ -91,14 +91,24 @@ Widget _buildTileResourceLabelRow({
   required String? resourceVisible,
   required String resourceLabel,
 }) {
+  // Dark-theme tokens (Refs #2865, SPEC § Dark-theme Tile section body
+  // tokens — live-data body rows). Pin the Resource row prefix and the
+  // no-resource fallback Text to EditorialMonoclePalette.fg via the
+  // shared `_fgBodyStyle()` helper so the editorial-monocle dark theme
+  // owns these live-data rows alongside coordinates / terrain /
+  // civilian-units / Prospected / Improvement / road primary / sea-tile
+  // no-road. The commodity-icon + visible commodity-id label rendered
+  // by `ResourceLabelInline` is intentionally out of scope here (shared
+  // widget; tracked separately).
+  final bodyStyle = _fgBodyStyle();
   return Row(
     crossAxisAlignment: CrossAxisAlignment.center,
     children: [
-      Text(l10n.provinceOverlay_tileResourcePrefix),
+      Text(l10n.provinceOverlay_tileResourcePrefix, style: bodyStyle),
       if (resourceVisible != null)
         ResourceLabelInline(commodityId: resourceVisible)
       else
-        Text(resourceLabel),
+        Text(resourceLabel, style: bodyStyle),
     ],
   );
 }
