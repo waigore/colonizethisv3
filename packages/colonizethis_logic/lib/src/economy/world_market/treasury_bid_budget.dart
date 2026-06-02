@@ -97,6 +97,45 @@ int stagedBidTotalSpendByPlayer({
   return total;
 }
 
+/// Sum of `quantity × effectiveMarketPrice` across every
+/// **carry-forward** `TradeOrderType.bid` for [playerId] held on
+/// `game.worldMarketState.carryForwardBidsByFactionId[playerId]`.
+///
+/// Carry-forward bids are still "live" from the prior turn and will
+/// be re-matched at phase 13, so the matcher (#3115) clamps the
+/// current-turn buyer treasury against them. AI / planner callers that
+/// pre-size new bids must therefore subtract this notional from the
+/// raw `player.treasury` before sizing any new bid.
+///
+/// Non-positive quantities and bids on commodities with no effective
+/// price (manufactured commodities until in-game price discovery
+/// seeds a price) contribute `0` to the total, matching the validator-
+/// side defensive skip in [stagedBidTotalSpendByPlayer].
+///
+/// Returns `0` when [playerId] has no carry-forward bids.
+int carryForwardBidNotionalByPlayer({
+  required Game game,
+  required String playerId,
+  required data.ResourceRules resourceRules,
+}) {
+  final List<TradeOrder>? list =
+      game.worldMarketState.carryForwardBidsByFactionId[playerId];
+  if (list == null || list.isEmpty) return 0;
+  int total = 0;
+  for (final TradeOrder o in list) {
+    if (o.type != TradeOrderType.bid) continue;
+    if (o.quantity <= 0) continue;
+    final int? price = effectiveMarketPriceForCommodityId(
+      commodityId: o.commodityId,
+      worldMarket: game.worldMarketState,
+      resourceRules: resourceRules,
+    );
+    if (price == null) continue;
+    total += o.quantity * price;
+  }
+  return total;
+}
+
 /// Treasury budget [playerId] may commit to bids this turn.
 ///
 /// Returns `max(0, treasury − pendingNonBidDeficit)`, where
