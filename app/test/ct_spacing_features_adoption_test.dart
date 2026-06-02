@@ -196,6 +196,7 @@ const List<String> _migratedFeatureFiles = <String>[
   'lib/features/game/widgets/diplomacy_panel.dart',
   'lib/features/game/widgets/military_units_panel.dart',
   'lib/features/game/widgets/observe_mode_not_defined_panel.dart',
+  'lib/features/game/widgets/pause_menu_panel.dart',
   'lib/features/game/widgets/production_panel.dart',
   'lib/features/game/widgets/province_sea_zone_detail_overlay.dart',
   'lib/features/game/widgets/split_army_dialog.dart',

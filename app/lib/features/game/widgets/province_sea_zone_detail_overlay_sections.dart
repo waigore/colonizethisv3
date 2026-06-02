@@ -91,14 +91,29 @@ Widget _buildTileResourceLabelRow({
   required String? resourceVisible,
   required String resourceLabel,
 }) {
+  // Dark-theme tokens (Refs #2865, SPEC § Dark-theme Tile section body
+  // tokens — live-data body rows). Pin the Resource row prefix, the
+  // visible-commodity label rendered by `ResourceLabelInline`, and the
+  // no-resource fallback Text to EditorialMonoclePalette.fg via the
+  // shared `_fgBodyStyle()` helper so the editorial-monocle dark theme
+  // owns these live-data rows alongside coordinates / terrain /
+  // civilian-units / Prospected / Improvement / road primary / sea-tile
+  // no-road. `ResourceLabelInline.labelStyle` is the new opt-in pin
+  // path so the Tile call site can fix the commodity-id label colour
+  // without changing the default fall-through used by the Economic
+  // section row layout (which keeps its existing token contract).
+  final bodyStyle = _fgBodyStyle();
   return Row(
     crossAxisAlignment: CrossAxisAlignment.center,
     children: [
-      Text(l10n.provinceOverlay_tileResourcePrefix),
+      Text(l10n.provinceOverlay_tileResourcePrefix, style: bodyStyle),
       if (resourceVisible != null)
-        ResourceLabelInline(commodityId: resourceVisible)
+        ResourceLabelInline(
+          commodityId: resourceVisible,
+          labelStyle: bodyStyle,
+        )
       else
-        Text(resourceLabel),
+        Text(resourceLabel, style: bodyStyle),
     ],
   );
 }

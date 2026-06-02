@@ -6,6 +6,7 @@ import '../../../config/ui_screen_ids.dart';
 import '../../../l10n/l10n.dart';
 import '../../../widgets/ct_brass_divider.dart';
 import '../../../widgets/ct_dialog_shell.dart';
+import '../../../widgets/ct_spacing.dart';
 import 'chrome/ct_nine_patch_button.dart';
 
 /// Pause menu modal for [OpenPauseMenuPanelEvent]. Emits bus events only.
@@ -72,7 +73,7 @@ class PauseMenuPanel extends StatelessWidget {
     return CtDialogShell(
       maxWidth: 360,
       maxHeight: 480,
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+      padding: const EdgeInsets.all(CtSpacing.l),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
