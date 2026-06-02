@@ -10,6 +10,7 @@ import '../../../config/ui_screen_ids.dart';
 import '../../../l10n/l10n.dart';
 import '../../../widgets/ct_dialog_shell.dart';
 import '../../../widgets/ct_nine_patch_button.dart';
+import '../../../widgets/ct_spacing.dart';
 import '../../../widgets/strict_asset_icon.dart';
 import 'train_dialog_chrome.dart';
 import 'train_unit_dialog_helper.dart';
@@ -164,7 +165,12 @@ class _TrainCiviliansDialogState extends State<TrainCiviliansDialog> {
         }
       },
       child: CtDialogShell(
-        padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+        padding: const EdgeInsets.fromLTRB(
+          CtSpacing.l,
+          CtSpacing.ml,
+          CtSpacing.l,
+          CtSpacing.l,
+        ),
         child: _buildDialogContent(context, l10n),
       ),
     );
