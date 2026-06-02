@@ -6,6 +6,7 @@ import 'package:session_log_buffer/session_log_buffer.dart';
 import 'package:colonizethis_app/config/editorial_monocle_palette.dart';
 import 'package:colonizethis_app/config/ui_screen_ids.dart';
 import 'package:colonizethis_app/l10n/l10n.dart';
+import 'package:colonizethis_app/widgets/ct_spacing.dart';
 
 /// Full-screen viewer for session logs with multiselect filters by package and level.
 class DebugLogViewerScreen extends StatefulWidget {
@@ -68,12 +69,12 @@ class _DebugLogViewerScreenState extends State<DebugLogViewerScreen> {
     final l10n = appL10n(context);
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+      padding: const EdgeInsets.all(CtSpacing.m),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(l10n.debugLog_filter_package, style: theme.textTheme.titleSmall),
-          const SizedBox(width: 8),
+          const SizedBox(width: CtSpacing.m),
           Wrap(
             spacing: 4,
             runSpacing: 4,
@@ -94,9 +95,9 @@ class _DebugLogViewerScreenState extends State<DebugLogViewerScreen> {
               );
             }).toList(),
           ),
-          const SizedBox(width: 16),
+          const SizedBox(width: CtSpacing.l),
           Text(l10n.debugLog_filter_level, style: theme.textTheme.titleSmall),
-          const SizedBox(width: 8),
+          const SizedBox(width: CtSpacing.m),
           Wrap(
             spacing: 4,
             runSpacing: 4,
@@ -136,7 +137,10 @@ class _DebugLogViewerScreenState extends State<DebugLogViewerScreen> {
           children: lines.map((line) {
             final isFirst = line == lines.first;
             return Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
+              padding: const EdgeInsets.symmetric(
+                horizontal: CtSpacing.ml,
+                vertical: 2,
+              ),
               decoration: BoxDecoration(
                 color: isFirst ? _levelColor(entry.level).withValues(alpha: 0.08) : null,
               ),

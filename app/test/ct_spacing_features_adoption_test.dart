@@ -307,4 +307,5 @@ const List<String> _migratedFeatureFiles = <String>[
   'lib/features/game/widgets/units/shared/units_panel_row_chrome.dart',
   'lib/features/game/widgets/units/shared/units_panel_shell.dart',
   'lib/features/shell/new_game_setup_flow.dart',
+  'lib/features/debug_log/debug_log_viewer_screen.dart',
 ];
