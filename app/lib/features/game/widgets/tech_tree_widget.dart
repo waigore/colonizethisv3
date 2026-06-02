@@ -13,6 +13,7 @@ import '../../../l10n/l10n.dart';
 import '../utils/tech_ui_helpers.dart';
 import '../../../widgets/ct_dialog_shell.dart';
 import '../../../widgets/ct_nine_patch_button.dart';
+import '../../../widgets/ct_spacing.dart';
 import '../../../widgets/strict_asset_icon.dart';
 import 'tech_effect_summary_lookup.dart';
 
@@ -119,7 +120,10 @@ class TechTreeWidget extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          padding: const EdgeInsets.symmetric(
+            horizontal: CtSpacing.l,
+            vertical: CtSpacing.m,
+          ),
           child: _TechTreeLegend(l10n: l10n),
         ),
         const Divider(height: 1),
