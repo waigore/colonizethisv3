@@ -176,6 +176,12 @@ The overlay does not use `AppEventBus` or `Navigator`; host route stays mounted.
   When the user inspects the Continue button container,
   Then the `CtNinePatchButton` is centered (`Align(Alignment.center)`) inside the dialog column rather than right-aligned, matching the editorial-monocle mockup `SPEC/ui/mockups/OVL10001-game-intro-overlay.html`.
 
+### 320 dp viewport pin (#2870 S8 / S10)
+
+- Given a `GameStartIntroOverlay` is mounted at `kMinViewportWidth × 640` (320 × 640 dp) with a failing `AssetBundle` (forcing the degraded error panel so the overlay routes deterministically through its `CtFullScreenDialogueShell` chrome without depending on the production Yarn asset),
+  When the widget tree settles after `initState`,
+  Then `WidgetTester.takeException()` is `null` (no `RenderFlex` overflow exception escapes the framework — the same contract pinned by `dialogs_320dp_min_viewport_test.dart`, `overture_dialogue_overlay_320dp_min_viewport_test.dart`, and `intervention_dialogue_overlay_320dp_min_viewport_test.dart`), and the localized `gameStartIntroOverlay_title` (`A New World Awaits`) title text, the `CtBrassDivider` chrome anchor, the localized `game_intro_loadError` load-error body, and the `game_intervention_continue` (`Continue`) action label all render end-to-end inside the centered `CtFullScreenDialogueShell` + `CtDialogShell` content column (`SPEC/ui/mobile-adaptation.md` § 7). Because every non-dismissed state of the overlay (loading, presenting-line, presenting-choice, transient, error) composes its body inside the same `CtFullScreenDialogueShell` scaffold above the same title + brass-divider header, this single positive pin proves the 320 dp chrome contract for every state.
+
 ---
 
 ## Widgetbook
