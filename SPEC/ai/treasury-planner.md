@@ -533,6 +533,12 @@ The seed-42 budget test mirrors `full_ai_first_turn_wall_clock_budget_test.dart`
 - Given the same seed-42 turn-1 init, when `generateOrdersForGameFullAI` and `validateOrdersAndResolveTurnFromTrustedOrders` run end-to-end inside a single `Stopwatch`, then the combined `Stopwatch().elapsedMilliseconds` is less than or equal to `kTurnProcessingWallClockBudgetMs` (15 000 ms).
 - Given a failing budget assertion, when the test reports the failure, then the assertion `reason` contains the structured row `total_ms=<int> full_ai_ms=<int> resolve_ms=<int> trade_orders=<int> budget_ms=15000` so a regression surfaces which phase exceeded the envelope and whether the trade-orders path was exercised in that envelope.
 
+## Conservation bound on Path F (Refs #2924)
+
+The lock-recovery liquidity work above (F10–F14) redistributes treasury between Great Powers; it cannot create net Great-Power treasury. Per [world-market-resolution.md](../program/world-market-resolution.md) § Treasury conservation invariant, phase 13 only ever holds the Great-Power treasury pool constant (GP↔GP trade) or reduces it (purchases from minor/tribe auto-offers leak to the treasury sink). The sum of all Great-Power treasuries is therefore **non-increasing** across the World Market phase.
+
+Consequently, a structurally broke peer set (every Great Power below `cheapestRegimentBuildTreasuryCost()`) cannot trade its way above the regiment-build threshold *in aggregate*: the planner can shift which GP holds the limited pool, but the pool itself only grows from a net treasury source outside the market (NW riches conversion via colonial acquisition — "Path E"). Treasury-planner tuning alone cannot close #2924 for seed 42 when the aggregate pool is already below `players × cheapestRegimentBuildTreasuryCost()`; the diagnostic below records the chain links so a tuning slice can confirm whether the gap is liquidity (Path F, in scope here) or aggregate insufficiency (Path E, out of scope for this planner).
+
 ## Seed-42 100-turn per-turn World-Market lock-recovery diagnostic (Refs #2924)
 
 #2924 (EXPAND geographic peer-war lock at `treasury == 0`) requires verifying
