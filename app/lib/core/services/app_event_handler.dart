@@ -47,6 +47,7 @@ import '../../providers/game_service_provider.dart';
 import '../../providers/games_provider.dart';
 import '../../providers/observe_session_provider.dart';
 import '../../providers/turn_resolution_blocking_provider.dart';
+import '../../widgets/ct_confirm_dialog.dart';
 
 typedef DialogBuilder =
     Widget Function(BuildContext context, Map<String, Object?>? params);
@@ -190,25 +191,13 @@ class AppEventHandler {
       return false;
     }
     try {
-      final result = await showDialog<bool>(
-        context: nav.context,
-        useRootNavigator: true,
-        builder: (ctx) => AlertDialog(
-          title: Text(event.title),
-          content: Text(event.message),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(ctx).pop(false),
-              child: Text(event.cancelLabel),
-            ),
-            TextButton(
-              onPressed: () => Navigator.of(ctx).pop(true),
-              child: Text(event.confirmLabel),
-            ),
-          ],
-        ),
+      final confirmed = await showCtConfirmDialog(
+        nav.context,
+        title: event.title,
+        message: event.message,
+        confirmLabel: event.confirmLabel,
+        cancelLabel: event.cancelLabel,
       );
-      final confirmed = result ?? false;
       event.result(confirmed);
       return confirmed;
     } catch (e, st) {
