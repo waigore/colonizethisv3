@@ -110,6 +110,10 @@ List<TradeOrder> runTreasuryPlanner({
     side: TradeOrderType.bid,
   );
 
+  final rawTreasury = treasury < 0 ? 0 : treasury;
+  final threshold = cheapestRegimentBuildTreasuryCost();
+  final brokeForLockRecovery = rawTreasury < threshold;
+
   for (final id in trackedCommodityIds) {
     if (richesCommodityIds.contains(id)) continue;
     final commodity = CommodityCatalog.byId[id];
@@ -149,13 +153,11 @@ List<TradeOrder> runTreasuryPlanner({
     playerId: playerId,
     resourceRules: rules,
   );
-  final rawTreasury = treasury < 0 ? 0 : treasury;
   final treasuryBudgetForBidsRaw =
       rawTreasury - pendingCosts - carryForwardBidNotional;
   final treasuryBudgetForBids =
       treasuryBudgetForBidsRaw < 0 ? 0 : treasuryBudgetForBidsRaw;
 
-  final threshold = cheapestRegimentBuildTreasuryCost();
   final treasuryForecast = treasury +
       _expectedOfferInflow(
         available: available,
@@ -165,7 +167,10 @@ List<TradeOrder> runTreasuryPlanner({
   final offerPriority = treasuryForecast < threshold
       ? kTreasuryOfferPriorityUrgent
       : kTreasuryOfferPriorityModerate;
-  final lockRecoveryUrgent = treasuryForecast < threshold;
+  // Refs #2924 F13: lock-recovery bid suppression uses actual treasury, not
+  // the F8 offer-inflow forecast, so an optimistic forecast cannot exit the
+  // "offers only" path while the GP still holds less than a regiment build.
+  final lockRecoveryUrgent = brokeForLockRecovery;
 
   // Refs #2924 F12: when the GP running this pass is the designated lock-
   // recovery buyer, activate the lock-recovery branch even if its own forecast
@@ -630,17 +635,17 @@ void _applyLockRecoveryLiquidityBid({
   if (playerId != lockRecoveryDesignatedBuyerId(game)) return;
   final commodityId = _lockRecoveryLiquidityCommodity(game.worldMarketState);
   available.remove(commodityId);
-  final carryQty = carryForwardBids[commodityId] ?? 0;
-  final stockpileTargetQty = kSpeculativeBidStockpileTarget - carryQty;
-  if (stockpileTargetQty <= 0) return;
   final pricePerUnit = game.worldMarketState.prices[commodityId] ?? 0;
   if (pricePerUnit <= 0) return;
   final budget =
       treasuryBudgetForBids < 0 ? 0 : treasuryBudgetForBids;
   final affordableQty = budget ~/ pricePerUnit;
-  final liquidityQty = stockpileTargetQty < affordableQty
-      ? stockpileTargetQty
-      : affordableQty;
+  // Refs #2924 F14: lock-recovery liquidity bids use the full per-turn
+  // treasury budget (after pending costs and carry-forward notional), not
+  // the F10 stockpile-target ceiling of 8 units. On seed 42 the designated
+  // buyer's treasury is far below the affluent band; capping at 8 kept per-
+  // deal seller credits too small to approach the regiment threshold.
+  final liquidityQty = affordableQty;
   if (liquidityQty <= 0) return;
   final existing = need[commodityId] ?? 0;
   if (liquidityQty > existing) {

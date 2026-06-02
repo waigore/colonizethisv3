@@ -308,6 +308,63 @@ void main() {
       },
     );
 
+    test(
+      'lock-recovery liquidity bid uses full treasury budget not F10 '
+      'stockpile-target cap (Refs #2924 F14)',
+      () {
+        const grain = 'grain';
+        const grainPrice = 10;
+        final affluentTreasury =
+            cheapestRegimentBuildTreasuryCost() + 100;
+        final baseGame = _gameFor(
+          stockpile: const Stockpile().applyDelta(grain, 200),
+          treasury: 0,
+          prices: {grain: grainPrice},
+          lastTurnActivity: {
+            grain: const MarketActivity(
+              totalBidQuantity: 0,
+              totalOfferQuantity: 50,
+              filledQuantity: 0,
+            ),
+          },
+        );
+        final game = baseGame.copyWith(
+          players: [
+            ...baseGame.players,
+            Player(
+              id: 'gp2',
+              displayName: 'GP2',
+              isHuman: false,
+              capitalProvinceId: 'oldWorld|p2',
+              stockpile: Stockpile.empty,
+              treasury: affluentTreasury,
+            ),
+          ],
+        );
+        final orders = runTreasuryPlanner(
+          game: game,
+          playerId: 'gp2',
+          stockpile: Stockpile.empty,
+          productionAssignments: const [],
+          treasury: affluentTreasury,
+        );
+        final grainBid = _bids(orders).firstWhere(
+          (b) => b.commodityId == grain,
+        );
+        expect(
+          grainBid.quantity,
+          greaterThan(kSpeculativeBidStockpileTarget),
+          reason: 'F14 removes the kSpeculativeBidStockpileTarget (= 8) '
+              'ceiling; quantity may still be cargo-capped below '
+              'treasuryBudgetForBids ~/ price.',
+        );
+        expect(
+          grainBid.quantity * grainPrice,
+          lessThanOrEqualTo(affluentTreasury),
+        );
+      },
+    );
+
     // SPEC/ai/treasury-planner.md § Treasury-budget-aware bid sizing —
     // AC5: when the affluent-speculative pass picks commodity C but the
     // running treasury budget cannot fund the full
