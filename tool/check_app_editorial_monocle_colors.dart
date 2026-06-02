@@ -31,14 +31,18 @@ import 'package:path/path.dart' as p;
 ///    colors (per-resource hue references) keyed by id; the table values are
 ///    the palette source for those resources rather than a bypass of the
 ///    editorial-monocle theme.
-/// 3. **Dev-tooling screens** — `SYS10001` Debug Log Viewer is an
-///    operator-only surface; implementing Ct-* catalog widgets there
-///    remains low-value (see #2914 Risks / edge cases). `SYS20001`
-///    Debug Console Overlay (`debug_console_overlay_panel.dart`) was
-///    promoted out of the allowlist after adopting
-///    [EditorialMonoclePalette] tokens and replacing its `IconButton`
-///    close affordance with `CtIconAction`; see
-///    `SPEC/ui/debug-console-panel.md` § Visual chrome.
+/// 3. **Dev-tooling screens** — both `SYS10001` Debug Log Viewer
+///    (`debug_log_viewer_screen.dart`) and `SYS20001` Debug Console
+///    Overlay (`debug_console_overlay_panel.dart`) were promoted out
+///    of the allowlist after adopting [EditorialMonoclePalette]
+///    tokens for their per-feature colour bypasses. SYS10001's
+///    level→token row tint mapping is pinned in
+///    `SPEC/program/debug-log-viewer.md` § Visual chrome; SYS20001's
+///    chrome contract lives in `SPEC/ui/debug-console-panel.md` §
+///    Visual chrome. Implementing the rest of the Ct-* catalog widget
+///    suite for these operator-only surfaces (banned Material widgets
+///    other than colour tokens) remains low-value per #2914 Risks /
+///    edge cases and is not required for the colour gate.
 /// 4. **`app/lib/features/game/widgets/chrome/**`** — Ct-* catalog widget
 ///    implementations. These widgets implement the design-system primitives
 ///    consumed by the rest of the feature tree and may declare `const`
@@ -210,13 +214,12 @@ const Set<String> _appEditorialMonocleColorsAllowedFiles = <String>{
   'app/lib/features/game/flame/game_region_minimap.dart',
   // Pixel-art palette data (per-resource hue lookup table).
   'app/lib/features/game/flame/resource_icon_disc_palette.dart',
-  // Dev-tooling screens — SYS10001 (Debug Log Viewer). Relaxed per
-  // #2914 Risks / edge cases. SYS20001 (Debug Console Overlay) was
-  // promoted out of the allowlist by the S3 + S8 token-adoption slice;
-  // see `SPEC/ui/debug-console-panel.md` § Visual chrome and the dark
-  // editorial-monocle chrome tests in
-  // `app/test/debug_console_overlay_panel_test.dart`.
-  'app/lib/features/debug_log/debug_log_viewer_screen.dart',
+  // Dev-tooling screens previously allowlisted under #2914 Risks / edge cases:
+  // SYS10001 (Debug Log Viewer, `debug_log_viewer_screen.dart`) was promoted
+  // out of the allowlist by this slice (Refs #2914 S3 — `_levelColor` row
+  // tints now resolve through [EditorialMonoclePalette.danger / .accent /
+  // .accentDim / .muted]); SYS20001 (Debug Console Overlay) was promoted by
+  // the parallel S3 + S8 slice. Both are in scope for the colour gate.
   // app/lib/widgets/ canvas-compositing files — the color literal is a
   // compositing argument (alpha multiplier in `Paint.color` for a
   // `saveLayer` decorative overlay, or the `ColorFilter.mode` blend

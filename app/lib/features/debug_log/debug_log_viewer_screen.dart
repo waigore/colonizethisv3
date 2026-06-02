@@ -3,6 +3,7 @@
 import 'package:flutter/material.dart';
 import 'package:logger/logger.dart';
 import 'package:session_log_buffer/session_log_buffer.dart';
+import 'package:colonizethis_app/config/editorial_monocle_palette.dart';
 import 'package:colonizethis_app/config/ui_screen_ids.dart';
 import 'package:colonizethis_app/l10n/l10n.dart';
 
@@ -153,16 +154,27 @@ class _DebugLogViewerScreenState extends State<DebugLogViewerScreen> {
     );
   }
 
+  /// Row-tint colour per log level, resolved through canonical
+  /// [EditorialMonoclePalette] tokens. The viewer applies the returned colour
+  /// with an `0.08` alpha to the first line of each entry as a subtle
+  /// background wash; the four-tier warm gradient (`danger` → `accent` →
+  /// `accentDim` → `muted`) signals severity within the editorial-monocle
+  /// dark theme without resorting to Material's blue/orange tones, which
+  /// the theme does not define.
+  ///
+  /// SPEC: `SPEC/program/debug-log-viewer.md` § Visual chrome, palette tokens
+  /// per `SPEC/ui/pixel-art-ui-catalog.md` § Editorial-monocle palette.
+  /// Refs #2914 S3 (token adoption / G1 allowlist promotion).
   Color _levelColor(Level level) {
     switch (level) {
       case Level.error:
-        return Colors.red;
+        return EditorialMonoclePalette.danger;
       case Level.warning:
-        return Colors.orange;
+        return EditorialMonoclePalette.accent;
       case Level.info:
-        return Colors.blue;
+        return EditorialMonoclePalette.accentDim;
       default:
-        return Colors.grey;
+        return EditorialMonoclePalette.muted;
     }
   }
 }
