@@ -18,6 +18,8 @@ library;
 import 'package:colonizethis_data/colonizethis_data.dart' as data;
 import 'package:colonizethis_models/colonizethis_models.dart';
 
+import 'treasury_bid_budget.dart' show effectiveMarketPriceForCommodityId;
+
 /// Inputs for one [TradeOrderSuggester.suggest] pass.
 ///
 /// All fields are pre-computed by the caller. The suggester never touches
@@ -32,6 +34,9 @@ class TradeSuggestionContext {
         const <CommodityId, int>{},
     this.commodityNeedByCommodityId =
         const <CommodityId, int>{},
+    this.treasuryBudgetForBids = 1 << 30,
+    this.worldMarketState = const WorldMarketState(),
+    this.resourceRules,
     this.offerPriority = defaultOfferPriority,
     this.bidPriority = defaultBidPriority,
   });
@@ -78,6 +83,19 @@ class TradeSuggestionContext {
 
   /// Priority assigned to suggested bid orders.
   final int bidPriority;
+
+  /// Cross-commodity treasury budget for bids this turn — same semantics as
+  /// [TradeOrderValidationContext.treasuryBudgetForBids].
+  final int treasuryBudgetForBids;
+
+  /// Market prices for [effectiveMarketPriceForCommodityId] when capping bids.
+  final WorldMarketState worldMarketState;
+
+  /// Catalog fallback prices when [worldMarketState] lacks an entry.
+  final data.ResourceRules? resourceRules;
+
+  data.ResourceRules get _resourceRules =>
+      resourceRules ?? data.ResourceRules.defaultRules;
 }
 
 /// Result envelope returned by [TradeOrderSuggester.suggest].
@@ -127,6 +145,7 @@ class TradeOrderSuggester {
     final offers = <TradeOrder>[];
     final bids = <TradeOrder>[];
     var remainingCargoBudget = context.tradeCargoCapacity;
+    var remainingTreasuryBudget = context.treasuryBudgetForBids;
     var admittedBidCount = 0;
     final allowBids = context.bidTypeCap > 0;
 
@@ -159,9 +178,20 @@ class TradeOrderSuggester {
       final bidQuantity = -net; // need > available => positive deficit
       if (bidQuantity <= 0) continue;
       if (remainingCargoBudget <= 0) continue;
-      final cappedQty = bidQuantity < remainingCargoBudget
+      var cappedQty = bidQuantity < remainingCargoBudget
           ? bidQuantity
           : remainingCargoBudget;
+      final int? unitPrice = effectiveMarketPriceForCommodityId(
+        commodityId: commodityId,
+        worldMarket: context.worldMarketState,
+        resourceRules: context._resourceRules,
+      );
+      if (unitPrice != null && unitPrice > 0) {
+        final int maxAffordable = remainingTreasuryBudget ~/ unitPrice;
+        if (cappedQty > maxAffordable) {
+          cappedQty = maxAffordable;
+        }
+      }
       if (cappedQty <= 0) continue;
       bids.add(
         TradeOrder(
@@ -172,6 +202,9 @@ class TradeOrderSuggester {
         ),
       );
       remainingCargoBudget -= cappedQty;
+      if (unitPrice != null && unitPrice > 0) {
+        remainingTreasuryBudget -= cappedQty * unitPrice;
+      }
       admittedBidCount += 1;
     }
 
