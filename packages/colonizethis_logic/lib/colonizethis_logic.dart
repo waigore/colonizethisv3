@@ -70,6 +70,7 @@ export 'src/economy/worker_economy.dart';
 export 'src/economy/world_market/deal_matcher.dart';
 export 'src/economy/world_market/first_right_credits.dart';
 export 'src/economy/world_market/first_right_profit.dart';
+export 'src/economy/world_market/lock_recovery_minor_bids.dart';
 export 'src/economy/world_market/price_discovery.dart';
 export 'src/economy/world_market/purchased_tile_index.dart';
 export 'src/economy/world_market/sellable_quantity.dart';
