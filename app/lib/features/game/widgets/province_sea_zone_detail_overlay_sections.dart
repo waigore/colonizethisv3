@@ -344,9 +344,17 @@ Widget _buildTileSection({
   VoidCallback? onBuildImprovementTap,
 }) {
   if (selectedTileKey == null) {
+    // SPEC: SPEC/ui/province-sea-zone-detail-overlay.md
+    // § Dark-theme Tile section placeholder body tokens (S5 follow-up).
+    // The no-selection guidance prompt is placeholder copy, not live
+    // world-state data, so it resolves to the muted token rather than
+    // falling through `DefaultTextStyle` to the Material `bodyMedium`.
     return _buildSection(
       l10n.provinceOverlay_sectionTile,
-      Text(l10n.provinceOverlay_clickTileForDetails),
+      Text(
+        l10n.provinceOverlay_clickTileForDetails,
+        style: TextStyle(color: EditorialMonoclePalette.muted),
+      ),
     );
   }
   final coords = tryParseProvinceOverlayTileCoords(
@@ -356,7 +364,14 @@ Widget _buildTileSection({
     selectedTileKey: selectedTileKey,
   );
   if (coords == null) {
-    return _buildSection(l10n.provinceOverlay_sectionTile, const Text('—'));
+    // SPEC: SPEC/ui/province-sea-zone-detail-overlay.md
+    // § Dark-theme Tile section placeholder body tokens (S5 follow-up).
+    // Reuse the shared S9 em-dash helper so every `Text('—')` placeholder
+    // surface in the overlay resolves to one muted token source.
+    return _buildSection(
+      l10n.provinceOverlay_sectionTile,
+      _emptyBodyDashText(),
+    );
   }
   final x = coords.x;
   final y = coords.y;
