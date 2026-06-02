@@ -284,7 +284,10 @@ List<WidgetbookNode> get diplomacyDetailScreenDirectories => [
   ),
 ];
 
-Game _tradeScreenStoryGame() {
+Game _tradeScreenStoryGame({
+  int treasury = 500,
+  Map<CommodityId, int>? stockpile,
+}) {
   const humanId = 'gp_human';
   // Seed the world market state so the Refs #2993 E5a read-only
   // commodity table renders representative prices + previous-turn
@@ -316,7 +319,13 @@ Game _tradeScreenStoryGame() {
     turnTimeMapping: TurnTimeMapping.gdd01,
     players: [
       // ignore: avoid_hardcoded_strings_in_widgets
-      Player(id: humanId, displayName: 'England', isHuman: true, treasury: 500),
+      Player(
+        id: humanId,
+        displayName: 'England',
+        isHuman: true,
+        treasury: treasury,
+        stockpile: Stockpile(quantities: stockpile ?? const <CommodityId, int>{}),
+      ),
     ],
     diplomacyRelations: const [],
     diplomaticHistoryEvents: const [],
@@ -352,8 +361,12 @@ ProviderScope _tradeScreenProviderScope({
   );
 }
 
-Widget _tradeScreenDefaultStory({Orders? initialOrders}) {
-  final game = _tradeScreenStoryGame();
+Widget _tradeScreenDefaultStory({
+  Orders? initialOrders,
+  int treasury = 500,
+  Map<CommodityId, int>? stockpile,
+}) {
+  final game = _tradeScreenStoryGame(treasury: treasury, stockpile: stockpile);
   final player = game.players.first;
   return _tradeScreenProviderScope(
     initialOrders: initialOrders,
@@ -394,6 +407,64 @@ Orders _tradeScreenStoryStagedOrders() {
 /// story Game has no home fleet so `cargoHoldsForHomeFleet` falls back
 /// to `defaultCargoHoldsStub = 24`; saturating bids therefore total
 /// 24 across four commodities to leave room for offers on the rest.
+/// Stockpile snapshot for the "Market tab — sectioned grouping (Refs
+/// #3093)" use case: non-zero quantities in each category so reviewers
+/// see Food / Raw Materials / Manufactured headers with populated rows.
+Map<CommodityId, int> _tradeScreenStorySectionedStockpile() {
+  return const <CommodityId, int>{
+    'grain': 42,
+    'meat': 18,
+    'timber': 10,
+    'iron': 25,
+    'fabric': 50,
+    'lumber': 12,
+  };
+}
+
+/// Pre-staged Orders for the "Market tab — sellable clamp (Refs #3093)"
+/// use case: timber offer qty 2 against stockpile 10 → `(8)` readout;
+/// grain stockpile 0 → disabled Offer chip.
+Orders _tradeScreenStorySellableClampOrders() {
+  return Orders(
+    tradeOrdersByPlayerId: <String, List<TradeOrder>>{
+      'gp_human': <TradeOrder>[
+        TradeOrder(
+          commodityId: 'timber',
+          type: TradeOrderType.offer,
+          quantity: 2,
+          priority: 1,
+        ),
+      ],
+    },
+  );
+}
+
+Map<CommodityId, int> _tradeScreenStorySellableClampStockpile() {
+  return const <CommodityId, int>{
+    'timber': 10,
+    'grain': 0,
+    'iron': 5,
+  };
+}
+
+/// Pre-staged Orders for the "Market tab — treasury bid cap (Refs #3093)"
+/// use case: treasury 100 with a timber bid consuming 90 of the budget so
+/// a fresh iron bid (price 80) cannot stage — mirrors the widget test pin.
+Orders _tradeScreenStoryTreasuryBidCapOrders() {
+  return Orders(
+    tradeOrdersByPlayerId: <String, List<TradeOrder>>{
+      'gp_human': <TradeOrder>[
+        TradeOrder(
+          commodityId: 'timber',
+          type: TradeOrderType.bid,
+          quantity: 3,
+          priority: 1,
+        ),
+      ],
+    },
+  );
+}
+
 Orders _tradeScreenStoryCargoSaturatedOrders() {
   return Orders(
     tradeOrdersByPlayerId: <String, List<TradeOrder>>{
@@ -661,6 +732,26 @@ List<WidgetbookNode> get tradeScreenDirectories => [
         name: 'Market tab — cargo saturated (Refs #2993 E5c)',
         builder: (context) => _tradeScreenDefaultStory(
           initialOrders: _tradeScreenStoryCargoSaturatedOrders(),
+        ),
+      ),
+      WidgetbookUseCase(
+        name: 'Market tab — sectioned grouping (Refs #3093)',
+        builder: (context) => _tradeScreenDefaultStory(
+          stockpile: _tradeScreenStorySectionedStockpile(),
+        ),
+      ),
+      WidgetbookUseCase(
+        name: 'Market tab — sellable clamp (Refs #3093)',
+        builder: (context) => _tradeScreenDefaultStory(
+          stockpile: _tradeScreenStorySellableClampStockpile(),
+          initialOrders: _tradeScreenStorySellableClampOrders(),
+        ),
+      ),
+      WidgetbookUseCase(
+        name: 'Market tab — treasury bid cap (Refs #3093)',
+        builder: (context) => _tradeScreenDefaultStory(
+          treasury: 100,
+          initialOrders: _tradeScreenStoryTreasuryBidCapOrders(),
         ),
       ),
       WidgetbookUseCase(
