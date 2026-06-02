@@ -113,7 +113,14 @@ Game _buildGame({int? tradeCargoCapacityOverride}) {
     players: const [
       // ignore: avoid_hardcoded_strings_in_widgets
       Player(id: _humanPlayerId, displayName: 'England', isHuman: true,
-          treasury: 500),
+          // Cargo-cap test: treasury must never bind so the rule-7
+          // bid-treasury cap (active now that manufactured commodities
+          // carry catalog base prices per #3093) cannot clamp the
+          // cargo-cap quantities being asserted here. The largest
+          // possible bid in this file is bounded by tradeCargoCapacity
+          // (max 24 cargo units); a treasury of 100_000 keeps the
+          // most expensive manufactured commodity well within budget.
+          treasury: 100000),
     ],
     diplomacyRelations: const [],
     diplomaticHistoryEvents: const [],

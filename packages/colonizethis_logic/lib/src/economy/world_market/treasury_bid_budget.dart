@@ -41,11 +41,14 @@ import '../../constants.dart' show GamePlayerLookup;
 /// discovery), falling back to
 /// `resourceRules.defaultMarketPriceForCommodityId(commodityId)` when
 /// the market state lacks an entry for [commodityId] (typically on
-/// first-turn games before price discovery runs). Returns `null` only
-/// when **neither** source has a value (manufactured commodities whose
-/// first price is discovered in-game, until that follow-up lands) or
-/// when [commodityId] is in [data.richesCommodityIds] (those do not
-/// trade on the world market per SPEC § Tradeable commodities).
+/// first-turn games before price discovery runs). The catalog default
+/// now covers every tradeable commodity — raw resources (per the
+/// `Resource` enum default-price map) and manufactured commodities
+/// (per `SPEC/game/commodity-catalog.md` § *Manufactured base prices*) —
+/// so `null` is reserved for the defensive case where a future
+/// tradeable commodity ships without a catalog default, or when
+/// [commodityId] is in [data.richesCommodityIds] (those do not trade on
+/// the world market per SPEC § Tradeable commodities).
 ///
 /// Callers should treat a `null` return as "no spend contribution"
 /// (`0`) so bid budget math remains defensive against missing-data

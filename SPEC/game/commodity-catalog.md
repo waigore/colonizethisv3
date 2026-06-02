@@ -33,6 +33,30 @@ Riches (gold, silver, gems, diamonds, spices) convert to treasury each turn in a
 
 ---
 
+## Manufactured base prices
+
+Each manufactured commodity has a **catalog-published base market price** in integer treasury units, derived from the **sum of input prices** of its primary canonical recipe in [production-recipes.md](production-recipes.md). The base price equals exactly that input-cost subtotal — no markup is added at the catalog level — so it represents the **break-even** treasury cost of producing one output unit from raw inputs at their default market prices.
+
+When a recipe accepts an interchangeable raw input (the two `fabric` recipes accept either `wool` or `cotton`), the manufactured base price uses the **cheaper** of the two input prices so the catalog floor matches the most efficient legitimate production path.
+
+| Manufactured commodity | Canonical recipe (per [production-recipes.md](production-recipes.md)) | Input-cost subtotal | Base price |
+|---|---|---|---|
+| `lumber` | `timber × 2` (`30 × 2 = 60`) | `60` | `60` |
+| `fabric` | `wool × 2` (`40 × 2 = 80`; cotton variant is `90`, cheaper input is used) | `80` | `80` |
+| `castIron` | `timber × 2 + iron × 2` (`60 + 160`) | `220` | `220` |
+| `refinedSugar` | `sugarCane × 2` (`35 × 2 = 70`) | `70` | `70` |
+| `cigars` | `tobacco × 3` (`40 × 3 = 120`) | `120` | `120` |
+| `furHats` | `furs × 2` (`55 × 2 = 110`) | `110` | `110` |
+| `steel` | `castIron × 2 + coal × 1` (`220 × 2 + 90`) | `530` | `530` |
+| `paper` | `timber × 3` (`30 × 3 = 90`) | `90` | `90` |
+| `bronze` | `copper × 1 + tin × 1` (`70 + 75`) | `145` | `145` |
+
+These prices are consumed via `ResourceRules.defaultMarketPriceForCommodityId(commodityId)` so the Trade UI, `effectiveMarketPriceForCommodityId`, the bid-validator, and the AI treasury planner all read a non-null fallback for every manufactured commodity before in-game price discovery first runs. World-market price-discovery floors continue to anchor at the **raw-resource** `defaultMarketPrice` map only — manufactured prices act as the initial market reading and are not used to recompute the per-commodity price floor.
+
+The chain of derivations is `raw-resource defaultMarketPrice` (per-Resource catalog in code) → `manufactured base price` (this table) → live `WorldMarketState.prices[c]` (in-game price discovery). Each step is integer-only and defers to the published catalog value when the live state lacks an entry.
+
+---
+
 ## Where Stored
 
 The **commodity catalog** (id list, category per commodity, default price for spawn-weight and market) is defined in ruleset config (program-level constants; no JSON rulesets).
@@ -66,3 +90,11 @@ By **permanent game design**, each player’s **central stockpile** is **unbound
 - Given the game rules define no maximum quantity for any commodity in the player’s **central** stockpile (unbounded storage by design)  
   When any game logic (such as extraction delivery, production, trade, consumption, or riches-to-treasury) changes that player’s central stockpile quantities during a turn  
   Then the System does not apply any storage cap, discard excess for storage reasons, or auto-sell to market due to a full warehouse, and all quantities remain non-negative integers within the engine’s integer range
+
+- Given the active ruleset uses the standard economy profile and `ResourceRules.defaultRules` is loaded  
+  When the System queries `defaultMarketPriceForCommodityId(commodityId)` for any manufactured commodity id in `{ 'lumber', 'fabric', 'castIron', 'refinedSugar', 'cigars', 'furHats', 'steel', 'paper', 'bronze' }`  
+  Then the System returns the matching integer base price from the table under § Manufactured base prices (`lumber=60`, `fabric=80`, `castIron=220`, `refinedSugar=70`, `cigars=120`, `furHats=110`, `steel=530`, `paper=90`, `bronze=145`), and these prices remain constant between turns until in-game price discovery first updates them on `WorldMarketState.prices`
+
+- Given the same ruleset and the System queries `defaultMarketPriceForCommodityId(commodityId)` for any id that is neither a raw-resource id (i.e. an entry on the `Resource` enum) nor a manufactured-commodity id enumerated under § Manufactured base prices (for example `'gold'`, `'spices'`, or `'not_a_commodity'`)  
+  When the call evaluates the catalog  
+  Then the System returns `null` (no catalog-published default price) and does not raise — riches and `spices` are intentionally excluded from the trade-side catalog default because they convert to treasury in a dedicated phase rather than clearing on the world market

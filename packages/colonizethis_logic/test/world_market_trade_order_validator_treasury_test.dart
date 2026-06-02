@@ -73,16 +73,44 @@ void main() {
     );
 
     test(
-      'bids with no effective market price contribute zero treasury spend',
+      'bids with no effective market price contribute zero treasury spend '
+      '(defensive guard against unknown / future commodity ids)',
       () {
+        // Refs #3093 manufactured-default-prices slice — manufactured
+        // commodities now have catalog defaults, so the "no effective
+        // price" branch is exercised against an unknown commodity id
+        // (the validator falls back to `0` spend when neither
+        // `worldMarketState.prices` nor the catalog publishes a value).
+        const String unknownCommodityId = 'not_a_real_commodity';
         final results = TradeOrderValidator.validate(
           context: validatorCtx(
             treasuryBudgetForBids: 0,
             worldMarketState: const WorldMarketState(),
           ),
-          proposedOrders: [validatorBid(CommodityCatalog.lumber.id, 10)],
+          proposedOrders: [validatorBid(unknownCommodityId, 10)],
         );
         expect(results.single.isAccepted, isTrue);
+      },
+    );
+
+    test(
+      'manufactured commodity bids now consume the catalog base price '
+      '(Refs #3093 manufactured-default-prices slice)',
+      () {
+        // Lumber base price per SPEC/game/commodity-catalog.md § Manufactured
+        // base prices is 60. A bid of quantity 10 implies a spend of 600
+        // treasury — exceeding a budget of 100 must trip rule 5.
+        final results = TradeOrderValidator.validate(
+          context: validatorCtx(
+            treasuryBudgetForBids: 100,
+            worldMarketState: const WorldMarketState(),
+          ),
+          proposedOrders: [validatorBid(CommodityCatalog.lumber.id, 10)],
+        );
+        expect(
+          results.single.reason,
+          TradeOrderRejectionReasons.bidExceedsTreasuryBudget,
+        );
       },
     );
   });

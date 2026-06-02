@@ -1,10 +1,12 @@
+import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
 /// Tests for `TradeOrderSuggester.suggest` per
 /// `SPEC/program/world-market-resolution.md` § Trade order suggestion API.
-/// Refs #2989 A6.
+/// Refs #2989 A6. Treasury-cap (rule 5) cases live in
+/// `world_market_trade_order_suggester_treasury_test.dart` (Refs #3123).
 void main() {
   group('TradeOrderSuggester.suggest — empty / defensive paths', () {
     test('empty context returns empty result', () {
@@ -304,6 +306,7 @@ void main() {
         playerId: 'gp1',
         bidTypeCap: 3,
         tradeCargoCapacity: 12,
+        treasuryBudgetForBids: 500,
         availableStockpileByCommodityId: {
           'timber': 10,
           'wool': 0,
@@ -325,7 +328,10 @@ void main() {
           tradeCargoCapacity: context.tradeCargoCapacity,
           availableStockpileByCommodityId:
               context.availableStockpileByCommodityId,
-          treasuryBudgetForBids: 1 << 30,
+          treasuryBudgetForBids: context.treasuryBudgetForBids,
+          worldMarketState: context.worldMarketState,
+          resourceRules: context.resourceRules ??
+              ResourceRules.defaultRules,
         ),
         proposedOrders: all,
       );
