@@ -32,12 +32,16 @@ TradeOrderValidationContext validatorCtx({
   String playerId = 'gp1',
   int bidTypeCap = 6,
   int tradeCargoCapacity = 100,
+  int treasuryBudgetForBids = 1 << 30,
   Map<CommodityId, int> availableStockpileByCommodityId =
       const <CommodityId, int>{},
+  WorldMarketState worldMarketState = const WorldMarketState(),
 }) =>
     TradeOrderValidationContext(
       playerId: playerId,
       bidTypeCap: bidTypeCap,
       tradeCargoCapacity: tradeCargoCapacity,
       availableStockpileByCommodityId: availableStockpileByCommodityId,
+      treasuryBudgetForBids: treasuryBudgetForBids,
+      worldMarketState: worldMarketState,
     );

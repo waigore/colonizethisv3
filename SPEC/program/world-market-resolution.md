@@ -277,12 +277,18 @@ class TradeOrderValidationContext {
     required this.bidTypeCap,
     required this.tradeCargoCapacity,
     required this.availableStockpileByCommodityId,
+    required this.treasuryBudgetForBids,
+    this.worldMarketState = const WorldMarketState(),
+    this.resourceRules = ResourceRules.defaultRules,
   });
 
   final String playerId;
   final int bidTypeCap;                                      // 0 / 3 / 6
   final int tradeCargoCapacity;                              // units
   final Map<CommodityId, int> availableStockpileByCommodityId;
+  final int treasuryBudgetForBids;
+  final WorldMarketState worldMarketState;
+  final ResourceRules resourceRules;
 }
 
 class TradeOrderValidator {
@@ -301,10 +307,11 @@ Rules are applied **once per submitted order** in the order received, with two p
 | 2 | `TradeOrder.commodityId` is not in `richesCommodityIds` (riches do not trade — see `SPEC/game/commodity-catalog.md`). | `tradeOrderRichesNotTradeable` |
 | 3 | A commodity may have only **one** intent per turn: every `TradeOrder` whose `commodityId` appears as **both** a bid and an offer across `proposedOrders` is rejected (both sides — neither survives). | `tradeOrderMutualExclusion` |
 | 4 | Distinct bid commodity count must be ≤ `bidTypeCap`. Bids are admitted in submission order until the cap is reached; bids that introduce a **new** commodity past the cap are rejected (later bids on already-admitted commodities still pass this gate). | `tradeOrderBidTypeCapExceeded` |
-| 5 | Per-commodity bid quantity ≤ `tradeCargoCapacity`. | `tradeOrderBidExceedsCargoCapacity` |
-| 6 | Per-commodity offer quantity ≤ `availableStockpileByCommodityId[commodityId] ?? 0`. | `tradeOrderOfferExceedsStockpile` |
+| 5 | Cross-commodity bid spend: cumulative `Σ (quantity × effectiveMarketPrice)` across admitted bids in submission order must not exceed `treasuryBudgetForBids` (from `treasuryAvailableForBidsByPlayer`, optionally reduced by projected non-bid deficits when the caller supplies staged orders + topology). Bids with no effective price contribute `0` spend. | `tradeOrderBidExceedsTreasuryBudget` |
+| 6 | Per-commodity bid quantity ≤ `tradeCargoCapacity`. | `tradeOrderBidExceedsCargoCapacity` |
+| 7 | Per-commodity offer quantity ≤ `availableStockpileByCommodityId[commodityId] ?? 0`. | `tradeOrderOfferExceedsStockpile` |
 
-Rules 1–2 are intrinsic to the order. Rules 3–4 are computed from the submitted set. Rules 5–6 are per-order quantity checks. The validator records the **first** failing rule for each rejected order (deterministic order: 1 → 2 → 3 → 4 → 5/6). Accepted orders return `OrderValidationResult.accepted()`. Stable rejection codes are exposed as `String` constants on `TradeOrderRejectionReasons` so UI, AI suggestion, and tests can branch on them without parsing free-text.
+Rules 1–2 are intrinsic to the order. Rules 3–4 are computed from the submitted set. Rule 5 tracks running treasury spend across admitted bids in submission order. Rules 6–7 are per-order quantity checks. The validator records the **first** failing rule for each rejected order (deterministic order: 1 → 2 → 3 → 4 → 5 → 6 → 7). Accepted orders return `OrderValidationResult.accepted()`. Stable rejection codes are exposed as `String` constants on `TradeOrderRejectionReasons` so UI, AI suggestion, and tests can branch on them without parsing free-text.
 
 ### Bid type cap helper
 

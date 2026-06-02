@@ -325,6 +325,7 @@ void main() {
           tradeCargoCapacity: context.tradeCargoCapacity,
           availableStockpileByCommodityId:
               context.availableStockpileByCommodityId,
+          treasuryBudgetForBids: 1 << 30,
         ),
         proposedOrders: all,
       );
