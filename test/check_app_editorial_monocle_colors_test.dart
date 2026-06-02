@@ -217,10 +217,8 @@ const fallback = TextStyle(color: Colors.white);
           'app/lib/features/game/flame/region_map_component_render_core.dart';
       const palette =
           'app/lib/features/game/flame/resource_icon_disc_palette.dart';
-      const debugViewer =
-          'app/lib/features/debug_log/debug_log_viewer_screen.dart';
 
-      for (final rel in [flameRenderer, palette, debugViewer]) {
+      for (final rel in [flameRenderer, palette]) {
         File('${temp.path}/$rel')
           ..createSync(recursive: true)
           ..writeAsStringSync('''
@@ -272,6 +270,43 @@ const sample = TextStyle(color: Colors.white);
           contains(
             'app/lib/features/game/flame/debug_console_overlay_panel.dart:3: '
             'Colors.white',
+          ),
+        );
+      },
+    );
+
+    test(
+      'no longer allowlists debug_log_viewer_screen.dart (Refs #2914 S3 '
+      'token adoption: level row tints resolve through EditorialMonoclePalette)',
+      () {
+        final temp = Directory.systemTemp.createTempSync(
+          'check_app_editorial_monocle_colors_debug_log_promoted_',
+        );
+        addTearDown(() => temp.deleteSync(recursive: true));
+
+        const debugLog =
+            'app/lib/features/debug_log/debug_log_viewer_screen.dart';
+        File('${temp.path}/$debugLog')
+          ..createSync(recursive: true)
+          ..writeAsStringSync('''
+import 'package:flutter/material.dart';
+
+const sample = TextStyle(color: Colors.red);
+''');
+
+        final logs = <String>[];
+        final code = runCheckAppEditorialMonocleColors(
+          temp.path,
+          info: logs.add,
+          err: logs.add,
+        );
+
+        expect(code, 1);
+        expect(
+          logs.join('\n'),
+          contains(
+            'app/lib/features/debug_log/debug_log_viewer_screen.dart:3: '
+            'Colors.red',
           ),
         );
       },
@@ -584,14 +619,13 @@ class Clean extends StatelessWidget {
       );
     });
 
-    test('skips canonical Flame renderer + debug + palette files', () {
+    test('skips canonical Flame renderer + palette files', () {
       const skipped = <String>[
         'app/lib/features/game/flame/region_map_component_render_core.dart',
         'app/lib/features/game/flame/region_map_component_render_political.dart',
         'app/lib/features/game/flame/region_map_component_render_markers.dart',
         'app/lib/features/game/flame/game_region_minimap.dart',
         'app/lib/features/game/flame/resource_icon_disc_palette.dart',
-        'app/lib/features/debug_log/debug_log_viewer_screen.dart',
       ];
       for (final path in skipped) {
         expect(
@@ -609,6 +643,20 @@ class Clean extends StatelessWidget {
         expect(
           shouldSkipAppEditorialMonocleColorsFile(
             'app/lib/features/game/flame/debug_console_overlay_panel.dart',
+          ),
+          isFalse,
+        );
+      },
+    );
+
+    test(
+      'does not skip debug_log_viewer_screen.dart (in scope for the '
+      'check after Refs #2914 S3 token adoption: level row tints resolve '
+      'through EditorialMonoclePalette)',
+      () {
+        expect(
+          shouldSkipAppEditorialMonocleColorsFile(
+            'app/lib/features/debug_log/debug_log_viewer_screen.dart',
           ),
           isFalse,
         );
