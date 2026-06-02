@@ -461,7 +461,43 @@ Game _buildInitialGame({
       zoomMultiplier: initialMapZoomMultiplier,
     ),
     infiniteMode: config.infiniteMode,
+    worldMarketState: WorldMarketState.withDefaultPrices(
+      _buildInitialMarketPrices(),
+    ),
   );
+}
+
+/// Builds the initial integer market-price map seeded from
+/// `ResourceRules.defaultRules.defaultMarketPriceForCommodityId` for every
+/// tradeable commodity, per `SPEC/game/world-market.md` § Tradeable
+/// commodities and § Initial price seeding.
+///
+/// Tradeable = every `CommodityCatalog.all` entry **except** the riches set
+/// (`gold`, `silver`, `gems`, `diamonds`, `spices`). Riches auto-convert to
+/// treasury in phase 3 and are excluded from the world market entirely.
+///
+/// Used by [_buildInitialGame] to populate `Game.worldMarketState.prices`
+/// at game start (per #3093 § Price presentation & data model) so the
+/// Trade screen never has to fall back to the canonical em-dash glyph
+/// for a tradeable commodity and the validator / AI treasury planner can
+/// resolve a finite integer price on turn 1. The catalog default already
+/// covers every tradeable id (raw-resource entries in
+/// `ResourceRules.defaultMarketPrice` plus the input-cost-derived
+/// manufactured base prices), so the returned map has exactly one entry
+/// per tradeable commodity (22 today: 2 food + 11 raw materials + 9
+/// manufactured).
+Map<CommodityId, int> _buildInitialMarketPrices() {
+  final rules = ResourceRules.defaultRules;
+  final result = <CommodityId, int>{};
+  for (final commodity in CommodityCatalog.all) {
+    if (commodity.category == CommodityCategory.riches) continue;
+    if (commodity.id == 'spices') continue;
+    final price = rules.defaultMarketPriceForCommodityId(commodity.id);
+    if (price != null) {
+      result[commodity.id] = price;
+    }
+  }
+  return result;
 }
 
 Map<CommodityId, int> _buildInitialStockpileQuantities(GameSetupConfig config) {
