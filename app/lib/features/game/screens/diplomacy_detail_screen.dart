@@ -10,6 +10,7 @@ import '../../../config/ui_screen_ids.dart';
 import '../../../l10n/l10n.dart';
 import '../../../providers/app_event_bus_provider.dart';
 import '../../../widgets/ct_game_feature_screen_shell.dart';
+import '../../../widgets/ct_spacing.dart';
 import '../../../widgets/ct_top_bar.dart';
 import '../widgets/diplomacy_panel.dart';
 
@@ -422,7 +423,10 @@ class _LeftBorderTile extends StatelessWidget {
         ),
       ),
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        padding: const EdgeInsets.symmetric(
+          horizontal: CtSpacing.ml,
+          vertical: 10,
+        ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisSize: MainAxisSize.min,
