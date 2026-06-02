@@ -52,6 +52,7 @@ class CtNinePatchButton extends StatefulWidget {
     this.destTileSize = 16,
     this.minHeight = 48,
     this.dangerVariant = false,
+    this.mutedVariant = false,
     this.disabledOpacityOverride,
     this.gradient,
     this.pressedGradient,
@@ -110,6 +111,22 @@ class CtNinePatchButton extends StatefulWidget {
   /// (CtNinePatchButton). Defaults to `false`.
   final bool dangerVariant;
 
+  /// When `true`, the button renders with a secondary / "muted" emphasis:
+  /// idle border `--accent-dim` (lifts to `--accent` on hover); idle label
+  /// `--muted` (lifts to `--accent` on hover); brass corner brackets at
+  /// [mutedCornerAlphaScale] of their default alpha so the affordance reads
+  /// as visually de-emphasised against a sibling primary `CtNinePatchButton`
+  /// in the same row/column. The gradient surface, padding, drop-shadow,
+  /// and minimum tap target are unchanged so muted buttons remain
+  /// accessible and aligned with their primary siblings. Used by
+  /// **Diplomatic protest** and **Do naught** in the intervention overlay
+  /// per `SPEC/ui/screens/pending-intervention-overlay.md` § Choice-button
+  /// styling and `SPEC/ui/pixel-art-ui-catalog.md` § *CtNinePatchButton*
+  /// (Muted variant; #2867 R26b). Mutually exclusive with [dangerVariant];
+  /// when both are `true`, [dangerVariant] wins so destructive intent is
+  /// never visually weakened. Defaults to `false`.
+  final bool mutedVariant;
+
   /// Optional per-instance override for the disabled-state [Opacity] used
   /// when [enabled] is `false` (or [onPressed] is `null`). When `null`
   /// (default), the widget falls back to the shared catalog convention
@@ -160,6 +177,15 @@ class CtNinePatchButton extends StatefulWidget {
   /// Hover corner-bracket alpha (R1: "opacity 0.75→1.0").
   static const double hoverCornerAlpha = 1.0;
 
+  /// Multiplier applied to [defaultCornerAlpha] / [hoverCornerAlpha] when
+  /// [mutedVariant] is `true` so the brass brackets read as half-strength
+  /// against a sibling primary button (per `SPEC/ui/pixel-art-ui-catalog.md`
+  /// § *CtNinePatchButton* (Muted variant)). With the canonical `0.75 → 1.0`
+  /// alpha cycle this resolves to `0.375 → 0.5` — bright enough that the
+  /// brackets remain visible at narrow viewports, dim enough that the
+  /// muted button does not read as a co-equal primary action.
+  static const double mutedCornerAlphaScale = 0.5;
+
   /// Engraved-text shadow offset (R1: 1 px downward).
   static const Offset engravedShadowOffset = Offset(0, 1);
 
@@ -201,19 +227,33 @@ class _CtNinePatchButtonState extends State<CtNinePatchButton> {
     return defaultGradient;
   }
 
+  /// `dangerVariant` and `mutedVariant` are mutually exclusive — when both
+  /// are `true`, `dangerVariant` wins so destructive intent is never
+  /// visually weakened (per the catalog spec § *CtNinePatchButton* Muted
+  /// variant).
+  bool get _isMutedOnly => widget.mutedVariant && !widget.dangerVariant;
+
   Color get _cornerColor {
     final Color base = _hovered
         ? EditorialMonoclePalette.accentBright
         : EditorialMonoclePalette.accent;
-    final double alpha = _hovered
+    final double rawAlpha = _hovered
         ? CtNinePatchButton.hoverCornerAlpha
         : CtNinePatchButton.defaultCornerAlpha;
+    final double alpha = _isMutedOnly
+        ? rawAlpha * CtNinePatchButton.mutedCornerAlphaScale
+        : rawAlpha;
     return base.withValues(alpha: alpha);
   }
 
   Color get _borderColor {
     if (widget.dangerVariant) {
       return EditorialMonoclePalette.danger;
+    }
+    if (_isMutedOnly) {
+      return _hovered
+          ? EditorialMonoclePalette.accent
+          : EditorialMonoclePalette.accentDim;
     }
     return _hovered
         ? EditorialMonoclePalette.accent
@@ -223,6 +263,11 @@ class _CtNinePatchButtonState extends State<CtNinePatchButton> {
   Color get _textColor {
     if (widget.dangerVariant) {
       return EditorialMonoclePalette.danger;
+    }
+    if (_isMutedOnly) {
+      return _hovered
+          ? EditorialMonoclePalette.accent
+          : EditorialMonoclePalette.muted;
     }
     return _hovered
         ? EditorialMonoclePalette.accentBright
