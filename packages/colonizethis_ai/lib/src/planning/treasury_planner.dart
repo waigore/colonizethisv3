@@ -2,7 +2,13 @@
 
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/ai_api.dart'
-    show cargoHoldsForHomeFleet, tradeCargoCapacityForGreatPower, worldMarketBidTypeCap;
+    show
+        cargoHoldsForHomeFleet,
+        carryForwardBidNotionalByPlayer,
+        effectiveMarketPriceForCommodityId,
+        pendingTreasuryCostsForTurn,
+        tradeCargoCapacityForGreatPower,
+        worldMarketBidTypeCap;
 import 'package:colonizethis_logic/order_suggestion_api.dart'
     show TradeOrderSuggester, TradeSuggestionContext;
 import 'package:colonizethis_models/colonizethis_models.dart';
@@ -57,7 +63,10 @@ List<TradeOrder> runTreasuryPlanner({
   required int treasury,
   Map<String, TileMapResult>? tileMapByRegion,
   MapTopology? topology,
+  Orders currentOrders = const Orders(),
+  ResourceRules? resourceRules,
 }) {
+  final ResourceRules rules = resourceRules ?? ResourceRules.defaultRules;
   final bidTypeCap = worldMarketBidTypeCap(game, playerId);
   final tradeCargoCapacity = tileMapByRegion != null &&
           tileMapByRegion.isNotEmpty &&
@@ -127,6 +136,25 @@ List<TradeOrder> runTreasuryPlanner({
     }
   }
 
+  // Refs #3122: treasury budget that bounds total bid notional this turn.
+  // Mirrors the matcher-side per-buyer clamp introduced by #3115 so the
+  // planner never emits a bid the matcher would have to truncate to zero.
+  final pendingCosts = pendingTreasuryCostsForTurn(
+    game,
+    playerId,
+    currentOrders,
+  );
+  final carryForwardBidNotional = carryForwardBidNotionalByPlayer(
+    game: game,
+    playerId: playerId,
+    resourceRules: rules,
+  );
+  final rawTreasury = treasury < 0 ? 0 : treasury;
+  final treasuryBudgetForBidsRaw =
+      rawTreasury - pendingCosts - carryForwardBidNotional;
+  final treasuryBudgetForBids =
+      treasuryBudgetForBidsRaw < 0 ? 0 : treasuryBudgetForBidsRaw;
+
   final threshold = cheapestRegimentBuildTreasuryCost();
   final treasuryForecast = treasury +
       _expectedOfferInflow(
@@ -181,6 +209,7 @@ List<TradeOrder> runTreasuryPlanner({
       need: need,
       available: available,
       carryForwardBids: carryForwardBids,
+      treasuryBudgetForBids: treasuryBudgetForBids,
     );
     final liquidity = _lockRecoveryLiquidityCommodity(game.worldMarketState);
     if (isDesignatedLockRecoveryBuyer) {
@@ -228,6 +257,9 @@ List<TradeOrder> runTreasuryPlanner({
     preferCommodityId: inLockRecovery
         ? _lockRecoveryLiquidityCommodity(game.worldMarketState)
         : null,
+    treasuryBudgetForBids: treasuryBudgetForBids,
+    worldMarketState: game.worldMarketState,
+    resourceRules: rules,
   );
 
   return [...offers, ...bids];
@@ -577,28 +609,29 @@ String lockRecoveryDesignatedBuyerId(Game game) {
 /// Designated buyer bids [commodityId] and does not offer it this turn.
 ///
 /// Bid quantity is the smaller of the F11 stockpile-target ceiling and
-/// `max(0, buyerTreasury / pricePerUnit)` so the buyer never commits more
-/// treasury than it currently holds (Refs #2924 F12 — treasury-capped).
+/// `max(0, treasuryBudgetForBids / pricePerUnit)` so the buyer never commits
+/// more treasury than it currently holds (Refs #2924 F12 — treasury-capped)
+/// **and** never overcommits against pending costs or carry-forward bid
+/// notional already accounted for in [treasuryBudgetForBids] (Refs #3122).
 void _applyLockRecoveryLiquidityBid({
   required String playerId,
   required Game game,
   required Map<CommodityId, int> need,
   required Map<CommodityId, int> available,
   required Map<CommodityId, int> carryForwardBids,
+  required int treasuryBudgetForBids,
 }) {
   if (playerId != lockRecoveryDesignatedBuyerId(game)) return;
   final commodityId = _lockRecoveryLiquidityCommodity(game.worldMarketState);
   available.remove(commodityId);
-  // Liquidity bid: buy-side demand for other GPs' urgent food offers, not a
-  // stockpile deficit. Use a fixed target quantity independent of projected
-  // surplus so a designated buyer with large food stockpiles still clears deals.
   final carryQty = carryForwardBids[commodityId] ?? 0;
   final stockpileTargetQty = kSpeculativeBidStockpileTarget - carryQty;
   if (stockpileTargetQty <= 0) return;
-  final buyerTreasury = _treasuryForPlayer(game, playerId);
   final pricePerUnit = game.worldMarketState.prices[commodityId] ?? 0;
   if (pricePerUnit <= 0) return;
-  final affordableQty = buyerTreasury < 0 ? 0 : buyerTreasury ~/ pricePerUnit;
+  final budget =
+      treasuryBudgetForBids < 0 ? 0 : treasuryBudgetForBids;
+  final affordableQty = budget ~/ pricePerUnit;
   final liquidityQty = stockpileTargetQty < affordableQty
       ? stockpileTargetQty
       : affordableQty;
@@ -616,6 +649,9 @@ List<TradeOrder> _prioritizedBids({
   required int tradeCargoCapacity,
   required int offerPriority,
   required bool alignBidPriorityWithUrgentOffers,
+  required int treasuryBudgetForBids,
+  required WorldMarketState worldMarketState,
+  required ResourceRules resourceRules,
   int? forceBidPriority,
   CommodityId? preferCommodityId,
 }) {
@@ -639,15 +675,40 @@ List<TradeOrder> _prioritizedBids({
 
   final result = <TradeOrder>[];
   var remainingCargo = tradeCargoCapacity;
+  var remainingTreasuryBudget =
+      treasuryBudgetForBids < 0 ? 0 : treasuryBudgetForBids;
   var admitted = 0;
   for (final commodityId in orderedIds) {
     if (admitted >= bidTypeCap) break;
     if (remainingCargo <= 0) break;
     final bid = byCommodity[commodityId];
     if (bid == null) continue;
-    final cappedQty = bid.quantity < remainingCargo
+    final cargoClampedQty = bid.quantity < remainingCargo
         ? bid.quantity
         : remainingCargo;
+    if (cargoClampedQty <= 0) continue;
+    // Refs #3122: clamp every bid to the running treasury budget so the
+    // matcher (#3115) does not have to truncate to zero/near-zero fills.
+    // When the commodity has no effective price (manufactured commodity
+    // before in-game price discovery seeds a price), fall back to the
+    // cargo-clamped quantity; the matcher applies its own per-tier
+    // accounting if such a bid ever clears.
+    final pricePerUnit = effectiveMarketPriceForCommodityId(
+      commodityId: commodityId,
+      worldMarket: worldMarketState,
+      resourceRules: resourceRules,
+    );
+    int cappedQty;
+    if (pricePerUnit == null) {
+      cappedQty = cargoClampedQty;
+    } else if (pricePerUnit <= 0) {
+      cappedQty = cargoClampedQty;
+    } else {
+      final maxAffordable = remainingTreasuryBudget ~/ pricePerUnit;
+      cappedQty = cargoClampedQty < maxAffordable
+          ? cargoClampedQty
+          : maxAffordable;
+    }
     if (cappedQty <= 0) continue;
     result.add(
       bid.copyWith(
@@ -659,6 +720,9 @@ List<TradeOrder> _prioritizedBids({
       ),
     );
     remainingCargo -= cappedQty;
+    if (pricePerUnit != null && pricePerUnit > 0) {
+      remainingTreasuryBudget -= cappedQty * pricePerUnit;
+    }
     admitted += 1;
   }
   return result;

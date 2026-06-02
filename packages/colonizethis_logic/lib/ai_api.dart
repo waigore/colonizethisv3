@@ -42,6 +42,12 @@ export 'src/economy/economy_riches_to_treasury.dart'
 export 'src/economy/sea_transport.dart' show cargoHoldsForHomeFleet;
 export 'src/economy/trade_cargo_capacity.dart'
     show tradeCargoCapacityForGreatPower;
+export 'src/economy/world_market/treasury_bid_budget.dart'
+    show
+        carryForwardBidNotionalByPlayer,
+        effectiveMarketPriceForCommodityId;
+export 'src/turn/pending_treasury_costs.dart'
+    show pendingTreasuryCostsForTurn;
 export 'src/economy/worker_economy.dart' show effectiveLabourForWorkers;
 export 'src/orders/draft_orders_mutations.dart'
     show applyArmyMoveOrderForPlayer;
