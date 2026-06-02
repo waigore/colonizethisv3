@@ -283,6 +283,8 @@ const List<String> _migratedFeatureFiles = <String>[
   'lib/features/game/widgets/diplomacy_panel_mode_bar.dart',
   'lib/features/game/widgets/game_tab_bar.dart',
   'lib/features/game/widgets/military_units_panel.dart',
+  'lib/features/game/widgets/move_army_dialog.dart',
+  'lib/features/game/widgets/move_fleet_dialog.dart',
   'lib/features/game/widgets/observe_mode_not_defined_panel.dart',
   'lib/features/game/widgets/pause_menu_panel.dart',
   'lib/features/game/widgets/production_allocation_row_chrome.dart',

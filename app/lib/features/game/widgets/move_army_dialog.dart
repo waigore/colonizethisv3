@@ -408,7 +408,10 @@ class _MoveArmyDestinationRow extends StatelessWidget {
             decoration: BoxDecoration(
               border: Border.all(color: outline, width: outlineWidth),
             ),
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+            padding: const EdgeInsets.symmetric(
+              horizontal: 10,
+              vertical: CtSpacing.m,
+            ),
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
