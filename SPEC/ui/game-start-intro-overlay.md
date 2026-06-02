@@ -115,7 +115,7 @@ The overlay does not use `AppEventBus` or `Navigator`; host route stays mounted.
 - `CtDialogShell` (`app/lib/widgets/ct_dialog_shell.dart`) — frame.
 - `CtBrassDivider` (`app/lib/widgets/ct_brass_divider.dart`) — decorative 8 px ornate divider between the title region and the dialogue / error body (per `SPEC/ui/pixel-art-ui-catalog.md` § *CtBrassDivider*).
 - `CtNinePatchButton` (`app/lib/widgets/ct_nine_patch_button.dart`) — Continue and option buttons (no Material buttons in dialogue chrome).
-- `CtLoadingIndicator` (`app/lib/widgets/ct_loading_indicator.dart`) — wrapped as `GameStartIntroLoadingIndicator` so the catalog can story it without re-importing the shared widget.
+- `CtLoadingIndicator` (`app/lib/widgets/ct_loading_indicator.dart`) — wrapped as `GameStartIntroLoadingIndicator` so the catalog can story it without re-importing the shared widget. The wrapper pins the SHEL30001 R32 contract: `size: 48`, `strokeWidth: 2`, `color: EditorialMonoclePalette.accent` (Refs #2867 R28).
 - `EditorialMonoclePalette.dialogScrim` (`app/lib/config/editorial_monocle_palette.dart`) — scrim color resolved from the canonical OKLCH token (`SPEC/ui/pixel-art-ui-catalog.md` § Dialog scrim). The widget MUST NOT paint a hex-literal scrim (e.g. `Colors.black54`).
 - `CtDialogueView` ([`ct-dialogue-view.md`](ct-dialogue-view.md)) — the Jenny adapter that owns Line / Choice state.
 - `jenny.DialogueRunner` — Jenny's runner; receives the single `CtDialogueView` in `dialogueViews:`.
@@ -175,6 +175,10 @@ The overlay does not use `AppEventBus` or `Navigator`; host route stays mounted.
 - Given the overlay is presenting a Yarn line,
   When the user inspects the Continue button container,
   Then the `CtNinePatchButton` is centered (`Align(Alignment.center)`) inside the dialog column rather than right-aligned, matching the editorial-monocle mockup `SPEC/ui/mockups/OVL10001-game-intro-overlay.html`.
+
+- Given the overlay is in the loading or transient-between-events state,
+  When `GameStartIntroLoadingIndicator` is mounted,
+  Then the descendant `CircularProgressIndicator` uses `color: EditorialMonoclePalette.accent`, `strokeWidth: 2`, and is wrapped in a `SizedBox` of `48 × 48` logical px (matching SHEL30001 R32 per #2867 R28).
 
 ### 320 dp viewport pin (#2870 S8 / S10)
 

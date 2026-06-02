@@ -14,8 +14,8 @@
 ///    false (fail-fast: nothing blocks the UI).
 /// 3. `GameStartIntroOverlay` mounted **with** a `CtDialogShell` descendant
 ///    (asset-load error path renders the shell) → returns true.
-/// 4. `GameStartIntroOverlay` mounted **without** a `CtDialogShell` descendant
-///    (initial state before async load completes) → returns false.
+/// 4. `GameStartIntroOverlay` mounted on its first frame while Yarn is still
+///    loading (spinner + `CtDialogShell` chrome) → returns true.
 library;
 
 import 'package:colonizethis_app/features/game/dialogue/game_start_intro_overlay.dart';
@@ -157,8 +157,8 @@ void main() {
   );
 
   testWidgets(
-    'Branch 4 (overlay-without-shell): returns false when the overlay '
-    'has no CtDialogShell descendant yet',
+    'Branch 4 (overlay-loading-first-frame): returns true when the overlay '
+    'renders the loading shell before Yarn finishes loading',
     (WidgetTester tester) async {
       await tester.pumpWidget(
         MaterialApp(
@@ -175,30 +175,27 @@ void main() {
       );
       expect(
         find.byType(GameStartIntroLoadingIndicator),
-        findsNothing,
+        findsOneWidget,
         reason:
-            'precondition: the spinner-precedence branch must not fire — '
-            'the overlay returns just widget.child on its first build, '
-            'before _loadAndRun completes.',
+            'precondition: the overlay must render the SHEL30001-matched '
+            'spinner on the first frame while _loadAndRun is in flight.',
       );
       expect(
         find.descendant(
           of: find.byType(GameStartIntroOverlay),
           matching: find.byType(CtDialogShell),
         ),
-        findsNothing,
+        findsOneWidget,
         reason:
-            'precondition: no CtDialogShell descendant before async load '
-            'completes (the overlay returns widget.child until _view, '
-            '_runner, or _loadError is populated).',
+            'precondition: loading chrome is wrapped in CtDialogShell via '
+            'CtFullScreenDialogueShell per #2867 R28.',
       );
       expect(
         e2eGameStartIntroBlocksUi(tester),
-        isFalse,
+        isTrue,
         reason:
-            'Branch 4: an overlay that has not yet rendered any dialog '
-            'shell must let callers proceed without paying a pump (#2336 '
-            'AC5 short-circuit).',
+            'Branch 4: an overlay still loading Yarn must block callers until '
+            'the intro dismisses (#2336 AC5).',
       );
     },
   );

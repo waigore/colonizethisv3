@@ -32,24 +32,21 @@ void main() {
   suppressLogsForTests();
 
   testWidgets(
-    'short-circuits before paying any pump when intro overlay does not block',
+    'short-circuits before paying any pump when intro does not block UI',
     (WidgetTester tester) async {
-      await tester.pumpWidget(
-        MaterialApp(
-          home: GameStartIntroOverlay(
-            onDismissed: () {},
-            child: const SizedBox(key: Key('map_child')),
-          ),
-        ),
-      );
+      // No GameStartIntroOverlay / GameStartIntroLoadingIndicator mounted —
+      // `e2eGameStartIntroBlocksUi` is false at entry (Branch 2 in
+      // `e2e_game_start_intro_blocks_ui_test.dart`). A mounted overlay on its
+      // first frame now blocks while Yarn loads (#2867 S10 / Branch 4).
+      await tester.pumpWidget(const MaterialApp(home: SizedBox()));
       final sw = Stopwatch()..start();
       await e2eAdvanceGameStartIntroUntilDismissed(tester);
       expect(
         sw.elapsed < const Duration(milliseconds: 200),
         isTrue,
         reason:
-            'Non-blocking overlay must return before any idle pump (#2336 AC5 '
-            'pre-pump short-circuit).',
+            'Non-blocking intro state must return before any idle pump (#2336 '
+            'AC5 pre-pump short-circuit).',
       );
     },
   );
