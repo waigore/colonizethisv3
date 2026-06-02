@@ -209,26 +209,22 @@ Widget fallback() => IconButton(icon: const Icon(Icons.menu), onPressed: () {});
       },
     );
 
-    test('allowlists dev-tooling screens (SYS10001, SYS20001)', () {
+    test('allowlists the Debug Log Viewer dev-tooling screen (SYS10001)', () {
       final temp = Directory.systemTemp.createTempSync(
         'check_app_no_material_iconbutton_devtools_',
       );
       addTearDown(() => temp.deleteSync(recursive: true));
 
-      const debugConsole =
-          'app/lib/features/game/flame/debug_console_overlay_panel.dart';
       const debugViewer =
           'app/lib/features/debug_log/debug_log_viewer_screen.dart';
 
-      for (final rel in [debugConsole, debugViewer]) {
-        File('${temp.path}/$rel')
-          ..createSync(recursive: true)
-          ..writeAsStringSync('''
+      File('${temp.path}/$debugViewer')
+        ..createSync(recursive: true)
+        ..writeAsStringSync('''
 import 'package:flutter/material.dart';
 
 Widget bypass() => IconButton(icon: const Icon(Icons.close), onPressed: () {});
 ''');
-      }
 
       final code = runCheckAppNoMaterialIconButton(
         temp.path,
@@ -238,6 +234,43 @@ Widget bypass() => IconButton(icon: const Icon(Icons.close), onPressed: () {});
 
       expect(code, 0);
     });
+
+    test(
+      'no longer allowlists the Debug Console Overlay (SYS20001) after the '
+      'Refs #2914 S8 CtIconAction migration',
+      () {
+        final temp = Directory.systemTemp.createTempSync(
+          'check_app_no_material_iconbutton_debug_console_promoted_',
+        );
+        addTearDown(() => temp.deleteSync(recursive: true));
+
+        const debugConsole =
+            'app/lib/features/game/flame/debug_console_overlay_panel.dart';
+        File('${temp.path}/$debugConsole')
+          ..createSync(recursive: true)
+          ..writeAsStringSync('''
+import 'package:flutter/material.dart';
+
+Widget bypass() => IconButton(icon: const Icon(Icons.close), onPressed: () {});
+''');
+
+        final logs = <String>[];
+        final code = runCheckAppNoMaterialIconButton(
+          temp.path,
+          info: logs.add,
+          err: logs.add,
+        );
+
+        expect(code, 1);
+        expect(
+          logs.join('\n'),
+          contains(
+            'app/lib/features/game/flame/debug_console_overlay_panel.dart:3: '
+            'IconButton(',
+          ),
+        );
+      },
+    );
 
     test(
       'does not scan test files inside features/ (production surface only)',
@@ -363,7 +396,6 @@ Widget probe() => IconButton(icon: const Icon(Icons.bug_report), onPressed: () {
     test('skips canonical dev-tooling screens', () {
       const skipped = <String>[
         'app/lib/features/debug_log/debug_log_viewer_screen.dart',
-        'app/lib/features/game/flame/debug_console_overlay_panel.dart',
       ];
       for (final path in skipped) {
         expect(
@@ -373,6 +405,19 @@ Widget probe() => IconButton(icon: const Icon(Icons.bug_report), onPressed: () {
         );
       }
     });
+
+    test(
+      'does not skip debug_console_overlay_panel.dart (in scope for the '
+      'check after Refs #2914 S8 CtIconAction migration)',
+      () {
+        expect(
+          shouldSkipAppNoMaterialIconButtonFile(
+            'app/lib/features/game/flame/debug_console_overlay_panel.dart',
+          ),
+          isFalse,
+        );
+      },
+    );
 
     test(
       'does not skip ordinary feature widgets (in scope for the check)',

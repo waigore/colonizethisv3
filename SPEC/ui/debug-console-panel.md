@@ -51,6 +51,33 @@
 
 ---
 
+## Visual chrome
+
+The panel renders against the canonical dark editorial-monocle palette
+(`SPEC/ui/pixel-art-ui-catalog.md` § Editorial-monocle palette). No raw
+Material color literals appear in feature code; every surface, glyph,
+and text colour resolves through an `EditorialMonoclePalette` token.
+
+| Region | Token / catalog primitive |
+|--------|---------------------------|
+| Outer panel surface | `EditorialMonoclePalette.bgDeep` at `0.85` alpha |
+| Header title text | `EditorialMonoclePalette.fg` (weight `w700`) |
+| Header close affordance | `CtIconAction` (`Refs #2914` S8 — replaces banned `IconButton`) with `iconColor = EditorialMonoclePalette.fg` |
+| Log readout background | `EditorialMonoclePalette.dialogScrim` |
+| Log readout text | `EditorialMonoclePalette.fg` |
+| Input field text | `EditorialMonoclePalette.fg` |
+| Input field hint | `EditorialMonoclePalette.muted` at `0.6` alpha |
+| Input field fill | `EditorialMonoclePalette.dialogScrim` |
+
+### Acceptance criteria — Visual chrome
+
+- Given the debug console overlay is mounted, when the panel builds, then The UI layer renders the header close affordance as a `CtIconAction` (catalog primitive) and renders **no** Material `IconButton` widgets inside the panel subtree.
+- Given the debug console overlay is mounted, when the panel builds, then The UI layer resolves the header title text colour to `EditorialMonoclePalette.fg`, the input style colour to `EditorialMonoclePalette.fg`, and the input hint colour to `EditorialMonoclePalette.muted` at `0.6` alpha.
+- Given the debug console overlay is mounted, when the panel builds, then The UI layer resolves the outer `Material` surface colour to `EditorialMonoclePalette.bgDeep` at `0.85` alpha and the input fill colour to `EditorialMonoclePalette.dialogScrim`.
+- Given the user taps the header close affordance, when the tap is committed, then the system invokes the panel `onClose` callback exactly once.
+
+---
+
 ## Acceptance Criteria (Given–When–Then)
 
 - Given `CT_DEBUG_CONSOLE=false`, when `GameMapEmpireLeftRail` is rendered, then the UI layer does not render a debug-console icon.
