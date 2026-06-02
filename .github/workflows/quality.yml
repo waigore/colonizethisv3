@@ -173,7 +173,7 @@ jobs:
           fi
           CHANGED=$(git diff --name-only "$BASE_SHA"...HEAD | paste -sd, -)
           echo "Changed files (count: $(echo "$CHANGED" | tr ',' '\n' | grep -c .)):"
-          echo "$CHANGED" | tr ',' '\n' | sed 's/^/  /' | head -20
+          echo "$CHANGED" | tr ',' '\n' | sed 's/^/  /' | awk 'NR<=20'
           PLAN=$(dart run tool/compute_app_test_plan.dart --changed-files="$CHANGED")
           echo "Selector plan: $PLAN"
           MODE=$(echo "$PLAN" | python3 -c "import sys,json; print(json.load(sys.stdin)['mode'])")
@@ -443,7 +443,7 @@ jobs:
           printf '%s\n' "${partition[@]}" > _partition.txt
           echo "has_tests=true" >> "$GITHUB_OUTPUT"
           echo "Partitioned ${#partition[@]} tests for shard $SHARD_INDEX:"
-          printf '  %s\n' "${partition[@]}" | head -20
+          printf '  %s\n' "${partition[@]}" | awk 'NR<=20'
 
       - name: Run Flutter tests (partition)
         if: |
