@@ -706,6 +706,13 @@ int _runOneRule({
 
 /// Runs manifest Dart rules in-process when wired; returns `null` to fall back
 /// to `dart run` (unknown [RepoLintRule.ruleId] or future scripts).
+///
+/// The dispatch is split into category-scoped helpers so each individual
+/// `switch` stays below the `repo.dart_long_string_switches` 49-case ceiling
+/// even as new manifest rules are added. The split is purely structural —
+/// dispatch order (app-specific first, then generic repo-wide) is preserved
+/// because `_tryRunAppRuleInProcess` returns `null` for non-app ids and the
+/// caller falls back to the generic dispatch unchanged.
 int? _tryRunDartRuleInProcess({
   required RepoLintRule rule,
   required String repoRoot,
@@ -714,6 +721,15 @@ int? _tryRunDartRuleInProcess({
   List<String>? incrementalPaths;
   if (rule.prIncremental && incrementalCsv != null) {
     incrementalPaths = repoLintSplitRelativeDartPathsArg(incrementalCsv);
+  }
+
+  final int? appResult = _tryRunAppRuleInProcess(
+    ruleId: rule.ruleId,
+    repoRoot: repoRoot,
+    incrementalPaths: incrementalPaths,
+  );
+  if (appResult != null) {
+    return appResult;
   }
 
   switch (rule.ruleId) {
@@ -815,6 +831,24 @@ int? _tryRunDartRuleInProcess({
       return runCheckLogicDedupLogger(repoRoot);
     case 'repo.ai_planner_context':
       return runCheckAiPlannerContext(repoRoot);
+    case 'repo.screen_registry_active_paths':
+      return runCheckScreenRegistryActivePaths(repoRoot);
+    default:
+      return null;
+  }
+}
+
+/// Dispatch helper for `repo.app_*` manifest rules. Keeps the main
+/// `_tryRunDartRuleInProcess` switch under the `repo.dart_long_string_switches`
+/// 49-case ceiling as new app-scoped rules are added (e.g. the Material widget
+/// ban family per #2914). Returns `null` for non-app rule ids so the caller
+/// falls back to the generic dispatch.
+int? _tryRunAppRuleInProcess({
+  required String ruleId,
+  required String repoRoot,
+  required List<String>? incrementalPaths,
+}) {
+  switch (ruleId) {
     case 'repo.app_hardcoded_ui_strings':
       return runCheckAppHardcodedUiStrings(repoRoot);
     case 'repo.app_no_duplicate_helpers':
@@ -837,8 +871,6 @@ int? _tryRunDartRuleInProcess({
       return runCheckAppNoMaterialTextButton(repoRoot);
     case 'repo.app_no_material_scaffold':
       return runCheckAppNoMaterialScaffold(repoRoot);
-    case 'repo.screen_registry_active_paths':
-      return runCheckScreenRegistryActivePaths(repoRoot);
     default:
       return null;
   }
