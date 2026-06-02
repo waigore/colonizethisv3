@@ -36,7 +36,10 @@ Widget _buildEconomicSection({
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              ResourceLabelInline(commodityId: resId),
+              ResourceLabelInline(
+                commodityId: resId,
+                labelStyle: TextStyle(color: EditorialMonoclePalette.fg),
+              ),
               const SizedBox(width: 4),
               Expanded(
                 child: Text(
@@ -62,7 +65,10 @@ Widget _buildEconomicSection({
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              ResourceLabelInline(commodityId: resId),
+              ResourceLabelInline(
+                commodityId: resId,
+                labelStyle: TextStyle(color: EditorialMonoclePalette.muted),
+              ),
               const SizedBox(width: 4),
               Expanded(
                 child: Text(
