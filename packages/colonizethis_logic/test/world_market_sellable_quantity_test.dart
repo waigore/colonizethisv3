@@ -207,10 +207,8 @@ void main() {
       final game = _buildGame(
         stockpile: const {'timber': 10},
       );
-      // With stockpile 10, no industry-allocation reservation passed,
-      // and a staged offer of 2 timber, the displayed headroom is 8
-      // (= 10 - 0 - 2). Industry-allocation subtraction is exercised
-      // by the new pin below.
+      // 10 stockpile, no allocation passed, staged 2 → headroom 8
+      // (= 10 - 0 - 2); allocation subtraction exercised by the next pin.
       final orders = _ordersWithOffers([
         TradeOrder(
           commodityId: 'timber',
@@ -249,8 +247,7 @@ void main() {
         productionInputConsumptionByCommodityId: const {'timber': 3},
       );
       expect(sellable['timber'], 5,
-          reason:
-              'Canonical AC: max(0, 10 - 3) - 2 = 5. The Offer chip / `+` '
+          reason: 'Canonical AC: max(0, 10 - 3) - 2 = 5. Offer chip / `+` '
               'stepper must clamp at this sellable headroom.');
     });
 
@@ -379,9 +376,7 @@ void main() {
 
     test('riches commodities are excluded even when staged offers exist',
         () {
-      // Riches should never appear in staged offers (the validator rejects
-      // them), but this pin guards the helper against accidentally
-      // surfacing them in the headroom map.
+      // Defensive: validator rejects riches offers; helper must drop them too.
       final game = _buildGame(
         stockpile: const {'timber': 10, 'gold': 4},
       );
