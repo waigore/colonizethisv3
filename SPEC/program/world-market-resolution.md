@@ -124,8 +124,9 @@ Phase 13 runs after phase 12 Build/work and before phase 14 End-of-turn ([turn-r
 For each commodity, partition into an offer queue and a bid queue. Sort each queue **ascending by integer priority** (so priority 1 fills before priority 2, etc.; lower integer = higher precedence). Within each integer priority tier, sort:
 
 1. **First right of refusal first.** Any bid whose `submitterId` owns at least one purchased tile sourcing this commodity is moved to an **absolute-priority tier above tier 1** for matching purposes (see Step C). Symmetrically, offers with `originTileKey` on that GP's purchased tile are paired into the absolute-priority tier with that GP's bid only.
-2. **FTP tiebreaker.** Among remaining entries at the same integer priority tier, pairs whose `submitterId`s share an active FTP record (from phase 6 Diplomacy) are sorted before non-FTP pairs. FTP never crosses priority tiers.
-3. **Submitter id (deterministic).** Equal-priority, equal-FTP entries sort by ascending `submitterId` then by ascending order id.
+2. **Lock-recovery sellers (Refs #2924).** Within a tier, offers from Great Powers whose `treasury < cheapestRegimentBuildTreasuryCost()` (from `colonizethis_data` `regiment_economy.dart`) sort before other offers; among those sellers, ascending phase-start `treasury` (poorest first) so limited buyer cargo reaches the most broke GPs instead of early faction ids alone.
+3. **FTP tiebreaker.** Among remaining entries at the same integer priority tier, pairs whose `submitterId`s share an active FTP record (from phase 6 Diplomacy) are sorted before non-FTP pairs. FTP never crosses priority tiers.
+4. **Submitter id (deterministic).** Equal-priority, equal-FTP entries sort by ascending `submitterId` then by ascending order id.
 
 ### Step C — Match
 

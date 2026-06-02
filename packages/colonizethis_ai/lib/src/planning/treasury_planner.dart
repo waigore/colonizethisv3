@@ -7,7 +7,6 @@ import 'package:colonizethis_logic/order_suggestion_api.dart'
     show TradeOrderSuggester, TradeSuggestionContext;
 import 'package:colonizethis_models/colonizethis_models.dart';
 
-import 'expand_phase_planner.dart' show cheapestRegimentBuildTreasuryCost;
 import 'recipe_scoring.dart' show kShortageThreshold;
 
 /// Bid priority tiers (1 = highest). Refs #2994 F4.
@@ -498,6 +497,13 @@ CommodityId _lockRecoveryLiquidityCommodity(WorldMarketState state) {
   return foods.isNotEmpty ? foods.first : 'grain';
 }
 
+int _treasuryForPlayer(Game game, String playerId) {
+  for (final player in game.players) {
+    if (player.id == playerId) return player.treasury;
+  }
+  return 0;
+}
+
 /// Sorted Great Power ids for deterministic per-turn buyer rotation.
 List<String> _sortedGreatPowerIds(Game game) {
   final ids = <String>[
@@ -508,11 +514,23 @@ List<String> _sortedGreatPowerIds(Game game) {
 
 /// One GP per turn acts as the market buyer for the lock-recovery food
 /// commodity so other GPs' urgent offers can clear. Refs #2924 F11.
+///
+/// Rotates only among GPs at or above [treasuryAffluenceThreshold] so a
+/// broke designated buyer does not waste the single `bidTypeCap` slot on
+/// grain bids its treasury cannot fund while other GPs' urgent offers
+/// starve (seed-42 gp4/gp6 `totalDealsAsSeller == 0` diagnostic). When no
+/// GP meets the affluence band, falls back to the full sorted GP list.
 String lockRecoveryDesignatedBuyerId(Game game) {
   final gpIds = _sortedGreatPowerIds(game);
   if (gpIds.isEmpty) return '';
+  final threshold = treasuryAffluenceThreshold();
+  final affluent = <String>[
+    for (final id in gpIds)
+      if (_treasuryForPlayer(game, id) >= threshold) id,
+  ];
+  final pool = affluent.isNotEmpty ? affluent : gpIds;
   final turn = game.worldState.turnState.turnNumber;
-  return gpIds[turn % gpIds.length];
+  return pool[turn % pool.length];
 }
 
 /// Designated buyer bids [commodityId] and does not offer it this turn.

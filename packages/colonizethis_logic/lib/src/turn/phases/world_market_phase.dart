@@ -199,6 +199,14 @@ TurnPhaseStepOutcome worldMarketTurnPhaseHandler(
 
   final ftpPairKeys = ftpPairKeysFromGame(game);
   final purchasedTileIndex = PurchasedTileIndex.fromGame(game);
+  final regimentBuildThreshold = cheapestRegimentBuildTreasuryCost();
+  final treasuryByFactionId = <String, int>{
+    for (final player in game.players) player.id: player.treasury,
+  };
+  final lockRecoverySellerPriorityIds = <String>{
+    for (final entry in treasuryByFactionId.entries)
+      if (entry.value < regimentBuildThreshold) entry.key,
+  };
 
   final matchInputs = (
     offersByFactionId: mergedOffersByFactionId,
@@ -210,6 +218,8 @@ TurnPhaseStepOutcome worldMarketTurnPhaseHandler(
     },
     ftpPairKeys: ftpPairKeys,
     purchasedTileIndex: purchasedTileIndex,
+    lockRecoverySellerPriorityIds: lockRecoverySellerPriorityIds,
+    treasuryByFactionId: treasuryByFactionId,
   );
   final matchResult = DealMatcher.matchDeals(matchInputs);
 

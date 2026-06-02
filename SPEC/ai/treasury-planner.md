@@ -186,7 +186,7 @@ When `treasuryForecast < cheapestRegimentBuildTreasuryCost()`, emitted bids use 
 
 When `treasuryForecast` is below the regiment threshold:
 
-1. `lockRecoveryDesignatedBuyerId(game)` selects `sortedGreatPowerIds[turnNumber % count]` (deterministic rotation).
+1. `lockRecoveryDesignatedBuyerId(game)` rotates among Great Powers whose **current** `player.treasury >= treasuryAffluenceThreshold()` (same band as F10 speculative bidding). When no GP meets that band, it falls back to `sortedGreatPowerIds[turnNumber % count]`. This keeps the single `bidTypeCap` liquidity bid on a GP that can fund grain purchases instead of a broke GP whose bids cannot clear other GPs' urgent offers (Refs #2924 F11 follow-up / F12 seller priority in `DealMatcher`).
 2. That GP adds a synthetic `need` entry for the lock-recovery food commodity (highest prior-turn `MarketActivity.totalOfferQuantity` among food ids; default alphabetical first food when activity is empty) with quantity `kSpeculativeBidStockpileTarget` minus any carry-forward bid residual — **not** capped by projected stockpile surplus, because the bid exists to supply buy-side liquidity for other GPs' urgent offers. Other commodities are stripped from `need` for that GP so the single `bidTypeCap` slot cannot be spent on fabric/bronze deficits.
 3. The designated buyer **removes** that commodity from `available` so it does not offer and bid the same commodity (validator mutual-exclusion rule 3).
 4. All other GPs keep urgent offers on their surplus food; the designated buyer's bid at priority `2` matches those offers in the same tier.

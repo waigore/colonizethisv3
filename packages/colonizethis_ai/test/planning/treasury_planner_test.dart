@@ -1,8 +1,6 @@
 /// Treasury planner trade-order generation (Refs #2994 F1–F5, F7 wiring).
 library;
 
-import 'package:colonizethis_ai/src/planning/expand_phase_planner.dart'
-    show cheapestRegimentBuildTreasuryCost;
 import 'package:colonizethis_ai/src/planning/treasury_planner.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
@@ -213,6 +211,29 @@ void main() {
           orders.where((o) => o.type == TradeOrderType.offer),
           isNotEmpty,
         );
+      },
+    );
+
+    test(
+      'lock-recovery designated buyer rotates among affluent GPs only '
+      '(Refs #2924 F11 affluent pool)',
+      () {
+        final game = _gameWithStockpile(
+          stockpile: const Stockpile(),
+          treasury: 0,
+          turnNumber: 3,
+          extraPlayers: [
+            Player(
+              id: 'gp2',
+              displayName: 'GP2',
+              isHuman: false,
+              capitalProvinceId: 'oldWorld|p2',
+              stockpile: Stockpile.empty,
+              treasury: treasuryAffluenceThreshold(),
+            ),
+          ],
+        );
+        expect(lockRecoveryDesignatedBuyerId(game), 'gp2');
       },
     );
 
