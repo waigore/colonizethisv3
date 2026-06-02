@@ -31,7 +31,8 @@
 //      yield the same value (no hidden global mutation, no rng).
 
 import 'package:colonizethis_ai/src/planning/expand_phase_planner.dart';
-import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:colonizethis_data/colonizethis_data.dart'
+    hide cheapestRegimentBuildTreasuryCost;
 import 'package:colonizethis_test/test.dart';
 
 void main() {

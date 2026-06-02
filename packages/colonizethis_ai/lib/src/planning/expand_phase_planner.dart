@@ -107,7 +107,10 @@
 ///     snapshot exposes one.
 library;
 
-import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:colonizethis_data/colonizethis_data.dart'
+    hide cheapestRegimentBuildTreasuryCost;
+import 'package:colonizethis_data/colonizethis_data.dart' as regiment_catalog
+    show cheapestRegimentBuildTreasuryCost;
 import 'package:colonizethis_logic/ai_api.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
@@ -1495,15 +1498,8 @@ ExpandEconomyPlan planExpandEconomy({
 ///
 /// Linear in the catalog size, matching the budget-rule note in
 /// `colonizethis-turn-resolution-budget.mdc`.
-int cheapestRegimentBuildTreasuryCost() {
-  var min = 999999999;
-  for (final econ in RegimentEconomyCatalog.byId.values) {
-    if (econ.buildTreasuryCost < min) {
-      min = econ.buildTreasuryCost;
-    }
-  }
-  return min;
-}
+int cheapestRegimentBuildTreasuryCost() =>
+    regiment_catalog.cheapestRegimentBuildTreasuryCost();
 
 /// Below-quota EXPAND GP with zero standing regiments and a non-empty
 /// invadable Old World frontier.
