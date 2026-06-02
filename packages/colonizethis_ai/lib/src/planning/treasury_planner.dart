@@ -226,7 +226,10 @@ List<TradeOrder> runTreasuryPlanner({
     return const <TradeOrder>[];
   }
 
-  final treasuryBudgetForBids = treasury < 0 ? 0 : treasury;
+  // Refs #3122 + #3127: pass the treasury-budget-aware bid cap (computed above
+  // — `rawTreasury - pendingCosts - carryForwardBidNotional`, floored at 0)
+  // into the suggester so it never emits bids the validator rule 5 would
+  // reject. Subsumes #3127's bare `max(0, treasury)` formulation.
   final suggestion = TradeOrderSuggester.suggest(
     TradeSuggestionContext(
       playerId: playerId,

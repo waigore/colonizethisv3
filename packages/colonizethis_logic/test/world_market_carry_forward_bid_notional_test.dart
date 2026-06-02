@@ -95,15 +95,22 @@ void main() {
 
     test(
       'skips bids whose effective price is null '
-      '(manufactured commodity before in-game price discovery)',
+      '(defensive guard against unknown / future commodity ids)',
       () {
-        // `fabric` is manufactured: no default in ResourceRules.
+        // Refs #3124 cataloged manufactured commodity base prices, so
+        // `fabric` etc. now return non-null defaults. The defensive
+        // "no effective price" branch still protects against unknown /
+        // future commodity ids (see `world_market_staged_bid_spend_test.dart`
+        // — `sums spend across raw + manufactured bids using catalog defaults`
+        // / `skips bids on commodities with no effective price (defensive
+        // guard against unknown / future ids)` for the matching pattern).
+        const unknownCommodityId = 'not_a_commodity';
         expect(
-          rules.defaultMarketPriceForCommodityId('fabric'),
+          rules.defaultMarketPriceForCommodityId(unknownCommodityId),
           isNull,
         );
         final game = _gameWithCarryForwardBids(
-          [_bid('fabric', 5)],
+          [_bid(unknownCommodityId, 5)],
           prices: const <CommodityId, int>{},
         );
         expect(
