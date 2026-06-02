@@ -10,6 +10,7 @@ import '../../../config/editorial_monocle_palette.dart';
 import '../../../l10n/l10n.dart';
 import '../../../widgets/ct_dialog_shell.dart';
 import '../../../widgets/ct_nine_patch_button.dart';
+import '../../../widgets/ct_spacing.dart';
 
 /// Grant or Subsidy dialog widget. Emits [GrantOrSubsidySubmittedEvent] on submit.
 ///
@@ -331,7 +332,10 @@ class _StepperButton extends StatelessWidget {
         minHeight: _height,
       ),
       alignment: Alignment.center,
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+      padding: const EdgeInsets.symmetric(
+        horizontal: 14,
+        vertical: CtSpacing.m,
+      ),
       decoration: BoxDecoration(
         color: background,
         border: Border.all(color: borderColor),
