@@ -49,6 +49,36 @@
 
 ---
 
+## 5a. Visual chrome
+
+The viewer renders against the canonical dark editorial-monocle palette
+(`SPEC/ui/pixel-art-ui-catalog.md` § Editorial-monocle palette). Per-level
+row tints resolve through `EditorialMonoclePalette` tokens rather than raw
+Material `Colors.*` values. The first line of each log entry receives a
+`0.08`-alpha background wash in the colour returned by the table below; all
+subsequent lines of the same entry render without a wash.
+
+| `Level` | Token | Rationale |
+|---------|-------|-----------|
+| `error` | `EditorialMonoclePalette.danger` | Warm-red alert; highest severity. |
+| `warning` | `EditorialMonoclePalette.accent` | Warm-yellow accent; secondary alert. |
+| `info` | `EditorialMonoclePalette.accentDim` | Dimmer warm accent; notable but non-alert. |
+| default (`debug`, `trace`) | `EditorialMonoclePalette.muted` | Neutral wash; low-signal noise. |
+
+The editorial-monocle palette is intentionally warm-monochromatic and does
+not define a "blue/info" token; the four-tier warm gradient above conveys
+severity without re-introducing Material's blue/orange palette.
+
+### Acceptance criteria (Visual chrome)
+
+- Given the debug log viewer is mounted with a buffered `Level.error` entry, when the viewer builds its list, then the UI layer renders the first line of that entry inside a `Container` whose `BoxDecoration.color` equals `EditorialMonoclePalette.danger` with `alpha = 0.08`.
+- Given the debug log viewer is mounted with a buffered `Level.warning` entry, when the viewer builds its list, then the UI layer renders the first line of that entry inside a `Container` whose `BoxDecoration.color` equals `EditorialMonoclePalette.accent` with `alpha = 0.08`.
+- Given the debug log viewer is mounted with a buffered `Level.info` entry, when the viewer builds its list, then the UI layer renders the first line of that entry inside a `Container` whose `BoxDecoration.color` equals `EditorialMonoclePalette.accentDim` with `alpha = 0.08`.
+- Given the debug log viewer is mounted with a buffered `Level.debug` entry and the user has toggled the `debug` level filter on, when the viewer builds its list, then the UI layer renders the first line of that entry inside a `Container` whose `BoxDecoration.color` equals `EditorialMonoclePalette.muted` with `alpha = 0.08`.
+- Given the debug log viewer source file `app/lib/features/debug_log/debug_log_viewer_screen.dart`, when `tool/check_app_editorial_monocle_colors.dart` runs against the repository tree, then the checker does not allowlist this file and reports any raw Material `Colors.*` regression introduced after the Refs #2914 S3 token-adoption slice.
+
+---
+
 ## 6. Coexistence with Sim Log
 
 - The ctdev **Sim Log** (last 10 lines, info+, cleared each turn) is unchanged and remains on the Running Game screen. The debug log viewer is separate: it shows the full session buffer with no turn-based clear and includes debug level. No behavioural change to Sim Log.
