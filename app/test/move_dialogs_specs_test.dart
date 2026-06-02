@@ -3,6 +3,7 @@
 // - SPEC/ui/move-fleet-dialog.md
 
 import 'package:colonizethis_app/config/editorial_monocle_palette.dart';
+import 'package:colonizethis_app/config/themes.dart' show editorialMonocleDisplayFontFamily;
 import 'package:colonizethis_app/features/game/widgets/chrome/ct_nine_patch_button.dart';
 import 'package:colonizethis_app/widgets/ct_dialog_shell.dart';
 import 'package:colonizethis_app/widgets/ct_section_label.dart';
@@ -217,7 +218,53 @@ void main() {
       'invasion row shows declare-war trigger in danger italic (Refs #2867 R8)',
       (WidgetTester tester) async {
         await pumpDialog(tester, bus: AppEventBus.create());
-        expect(find.text('declare war on Specs Rival'), findsOneWidget);
+        final triggerFinder = find.text('declare war on Specs Rival');
+        expect(triggerFinder, findsOneWidget);
+        final TextStyle? style = tester.widget<Text>(triggerFinder).style;
+        expect(
+          style?.color,
+          equals(EditorialMonoclePalette.danger),
+          reason: 'R8 requires the trigger label color to resolve to '
+              '--danger (EditorialMonoclePalette.danger).',
+        );
+        expect(
+          style?.fontStyle,
+          equals(FontStyle.italic),
+          reason: 'R8 requires the trigger label to render in italic body '
+              'style so a serif italic glyph fires.',
+        );
+        expect(
+          style?.fontWeight,
+          equals(FontWeight.w600),
+          reason: 'R8 requires the trigger label to render at semi-bold '
+              'weight (w600) so the danger emphasis reads against a busy row.',
+        );
+      },
+    );
+
+    testWidgets(
+      'invasion row trigger label does NOT pin the editorial-monocle display font (Refs #2867 R8 negative)',
+      (WidgetTester tester) async {
+        await pumpDialog(tester, bus: AppEventBus.create());
+        final triggerFinder = find.text('declare war on Specs Rival');
+        expect(triggerFinder, findsOneWidget);
+        final TextStyle? style = tester.widget<Text>(triggerFinder).style;
+        // R8 is explicit: Cinzel (the editorial-monocle display family) is
+        // display-only and has no italic variant. If the trigger label is
+        // pinned to `editorialMonocleDisplayFontFamily` the italic style
+        // silently falls back to regular weight, regressing the danger
+        // emphasis. Pin the negative invariant so any future regression
+        // (e.g. an accidental `fontFamily: editorialMonocleDisplayFontFamily`
+        // copy from the title style) trips this test before reviewers see
+        // the visual regression.
+        expect(
+          style?.fontFamily,
+          isNot(equals(editorialMonocleDisplayFontFamily)),
+          reason: 'R8 forbids the trigger label from being pinned to the '
+              'editorial-monocle display font ($editorialMonocleDisplayFontFamily) '
+              'because that family has no italic variant; the label must '
+              'inherit the body font stack so italic glyphs render.',
+        );
       },
     );
 
