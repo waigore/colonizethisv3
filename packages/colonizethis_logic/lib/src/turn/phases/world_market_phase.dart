@@ -131,6 +131,12 @@ TurnPhaseStepOutcome worldMarketTurnPhaseHandler(
   final fleetsByIdStartOfPhase = fleetsByIdForWorld(game.worldState);
   final tradeCapacityByFactionId = <String, int>{};
   final stockpileByFactionId = <String, Stockpile>{};
+  // Per-buyer treasury budget passed to the deal matcher (Refs #3115).
+  // Uses `Player.treasury` at phase 13 start clamped at `0` for negative
+  // balances. Phase 13 runs after phase 12 Build/Work so this value
+  // already reflects earlier-phase debits per
+  // `SPEC/program/world-market-resolution.md` § Step C.
+  final treasuryBudgetByBuyerFactionId = <String, int>{};
   final extractionTonnageByPlayerId =
       acc.overseasExtractionShippedTonnageByPlayerId;
   for (final player in game.players) {
@@ -144,6 +150,8 @@ TurnPhaseStepOutcome worldMarketTurnPhaseHandler(
         extractionTonnageByPlayerId[player.id] ?? 0;
     final tradeCapacity = homeFleetHolds - shippedByExtraction;
     tradeCapacityByFactionId[player.id] = tradeCapacity > 0 ? tradeCapacity : 0;
+    treasuryBudgetByBuyerFactionId[player.id] =
+        player.treasury > 0 ? player.treasury : 0;
   }
 
   final carryForwardValidation = _validateCarryForwards(
@@ -204,6 +212,7 @@ TurnPhaseStepOutcome worldMarketTurnPhaseHandler(
     offersByFactionId: mergedOffersByFactionId,
     bidsByFactionId: mergedBidsByFactionId,
     tradeCapacityByFactionId: tradeCapacityByFactionId,
+    treasuryBudgetByBuyerFactionId: treasuryBudgetByBuyerFactionId,
     pricesByCommodityId: <CommodityId, double>{
       for (final entry in priorMarket.prices.entries)
         entry.key: entry.value.toDouble(),
@@ -226,16 +235,36 @@ TurnPhaseStepOutcome worldMarketTurnPhaseHandler(
     firstRightTreasuryCreditByGpId: firstRightCredits.treasuryCreditByGpId,
   );
 
+  // Price-discovery bid-side cap (Refs #3115): aggregate `totalBid_new[c]`
+  // from the filled portion of newly-submitted bids only (not from
+  // submitted quantity). The newly-submitted bids appear at the head of
+  // each faction's merged bid list per `_mergeOrdersByFaction`, so Step C
+  // consumes them before any carry-forward residuals; the per-(faction,
+  // commodity) `min` below allocates filled units to newly-submitted bids
+  // first. See SPEC/program/world-market-resolution.md § Step E.
+  final filledNewBidsByCommodity = _aggregateFilledNewBidsByCommodity(
+    newBidsByFactionId: newBidsByFactionId,
+    filledDeals: matchResult.filledDeals,
+  );
+  final priceDiscoveryByCommodity = _buildPriceDiscoveryPairs(
+    newQuantitiesByCommodity: newQuantitiesByCommodity,
+    filledNewBidsByCommodity: filledNewBidsByCommodity,
+  );
+
   final newPrices = _computeNextPrices(
     priorPrices: priorMarket.prices,
-    newQuantitiesByCommodity: newQuantitiesByCommodity,
+    newQuantitiesByCommodity: priceDiscoveryByCommodity,
   );
 
   final activity = _buildActivity(
     matchResult: matchResult,
-    newQuantitiesByCommodity: newQuantitiesByCommodity,
+    newQuantitiesByCommodity: priceDiscoveryByCommodity,
     priorPrices: priorMarket.prices,
     newPrices: newPrices,
+  );
+  _attachMatcherNotes(
+    activity: activity,
+    matchResult: matchResult,
   );
   _attachDropNotes(
     activity: activity,
@@ -348,6 +377,89 @@ Map<String, List<TradeOrder>> _computeMinorTribeAutoOffers({
     tileMapByRegion: tileMaps,
     connectivityByFactionId: connectivity,
   );
+}
+
+/// Aggregates per-commodity the filled portion of this turn's
+/// newly-submitted bids attributable to each faction (Refs #3115). The
+/// matcher consumes newly-submitted bids at the head of each faction's
+/// merged bid list (see `_mergeOrdersByFaction`), so the filled units
+/// served to any given faction are allocated to its newly-submitted bids
+/// first; carry-forward bids only receive fills once newly-submitted
+/// bids are exhausted. Therefore:
+///
+///     filledNewBids[f, c] = min(submittedNewBids[f, c], filledTotal[f, c])
+///
+/// where `filledTotal[f, c]` is the sum of `FilledDeal.quantity` whose
+/// `buyerFactionId == f` and `commodityId == c`. Summing across factions
+/// yields `totalBid_new[c]` per
+/// `SPEC/program/world-market-resolution.md` § Step E.
+Map<CommodityId, int> _aggregateFilledNewBidsByCommodity({
+  required Map<String, List<TradeOrder>> newBidsByFactionId,
+  required List<FilledDeal> filledDeals,
+}) {
+  if (newBidsByFactionId.isEmpty || filledDeals.isEmpty) {
+    return const <CommodityId, int>{};
+  }
+  final submittedNewByBuyerCommodity = <String, Map<CommodityId, int>>{};
+  for (final entry in newBidsByFactionId.entries) {
+    final byCommodity = <CommodityId, int>{};
+    for (final order in entry.value) {
+      byCommodity[order.commodityId] =
+          (byCommodity[order.commodityId] ?? 0) + order.quantity;
+    }
+    if (byCommodity.isNotEmpty) {
+      submittedNewByBuyerCommodity[entry.key] = byCommodity;
+    }
+  }
+  if (submittedNewByBuyerCommodity.isEmpty) {
+    return const <CommodityId, int>{};
+  }
+  final filledByBuyerCommodity = <String, Map<CommodityId, int>>{};
+  for (final deal in filledDeals) {
+    final byCommodity = filledByBuyerCommodity.putIfAbsent(
+      deal.buyerFactionId,
+      () => <CommodityId, int>{},
+    );
+    byCommodity[deal.commodityId] =
+        (byCommodity[deal.commodityId] ?? 0) + deal.quantity;
+  }
+  final result = <CommodityId, int>{};
+  for (final entry in submittedNewByBuyerCommodity.entries) {
+    final buyerFilled = filledByBuyerCommodity[entry.key];
+    if (buyerFilled == null) continue;
+    for (final commodityEntry in entry.value.entries) {
+      final submitted = commodityEntry.value;
+      final filled = buyerFilled[commodityEntry.key] ?? 0;
+      final attributable = filled <= submitted ? filled : submitted;
+      if (attributable <= 0) continue;
+      result[commodityEntry.key] =
+          (result[commodityEntry.key] ?? 0) + attributable;
+    }
+  }
+  return result;
+}
+
+/// Builds the per-commodity price-discovery aggregation pair used by
+/// `_computeNextPrices` and `_buildActivity` (Refs #3115). Offers report
+/// the submitted quantity unchanged; bids report only the filled portion
+/// of newly-submitted bids per
+/// `SPEC/program/world-market-resolution.md` § Step E.
+Map<CommodityId, _NewQuantityPair> _buildPriceDiscoveryPairs({
+  required Map<CommodityId, _NewQuantityPair> newQuantitiesByCommodity,
+  required Map<CommodityId, int> filledNewBidsByCommodity,
+}) {
+  if (newQuantitiesByCommodity.isEmpty) {
+    return const <CommodityId, _NewQuantityPair>{};
+  }
+  final result = <CommodityId, _NewQuantityPair>{};
+  for (final entry in newQuantitiesByCommodity.entries) {
+    final filledBid = filledNewBidsByCommodity[entry.key] ?? 0;
+    result[entry.key] = _NewQuantityPair(
+      bid: filledBid,
+      offer: entry.value.offer,
+    );
+  }
+  return result;
 }
 
 Map<CommodityId, _NewQuantityPair> _aggregateNewQuantitiesPerCommodity({
@@ -599,14 +711,59 @@ _CarryForwardValidationResult _validateCarryForwards({
   );
 }
 
-/// Merges carry-forward drop notes into `activity` per commodity. The
-/// notes list on `MarketActivity` is replaced (notes always come from
-/// this phase invocation; prior-turn notes are not re-emitted), and the
-/// final list is unmodifiable to keep `MarketActivity` immutable. Any
-/// `deals` already attached for the commodity (from `_buildActivity`)
-/// are preserved verbatim — drop notes and ledger entries coexist on
-/// the same `MarketActivity` per `SPEC/program/world-market-resolution.md`
-/// § Step F Activity rollup.
+/// Forwards the matcher's per-commodity `MarketActivity.notes` (currently
+/// `bidPartialFillTreasuryInsufficient` entries from the treasury-clamp
+/// pass per Refs #3115) onto the phase-built `activity` map. The matcher
+/// runs in isolation, so it carries its own notes inside
+/// `DealMatchResult.activityByCommodityId`; the phase handler's
+/// `_buildActivity` reassembles `MarketActivity` from filled deals and
+/// submitted quantities and would otherwise drop these notes. We merge
+/// them in by appending. Carry-forward drop notes from `_attachDropNotes`
+/// continue to coexist on the same `MarketActivity` (drop notes are
+/// added later in the pipeline and replace the list, so this helper
+/// runs **before** `_attachDropNotes` and uses replacement-with-existing
+/// semantics to preserve any prior notes when the drop-notes attacher
+/// later appends).
+void _attachMatcherNotes({
+  required Map<CommodityId, MarketActivity> activity,
+  required DealMatchResult matchResult,
+}) {
+  if (matchResult.activityByCommodityId.isEmpty) return;
+  for (final entry in matchResult.activityByCommodityId.entries) {
+    final matcherActivity = entry.value;
+    if (matcherActivity.notes.isEmpty) continue;
+    final commodity = entry.key;
+    final existing = activity[commodity];
+    if (existing == null) {
+      activity[commodity] = MarketActivity(
+        notes: List<MarketActivityNote>.unmodifiable(matcherActivity.notes),
+      );
+    } else {
+      final combined = <MarketActivityNote>[
+        ...existing.notes,
+        ...matcherActivity.notes,
+      ];
+      activity[commodity] = MarketActivity(
+        totalBidQuantity: existing.totalBidQuantity,
+        totalOfferQuantity: existing.totalOfferQuantity,
+        filledQuantity: existing.filledQuantity,
+        priceChangePercent: existing.priceChangePercent,
+        deals: existing.deals,
+        notes: List<MarketActivityNote>.unmodifiable(combined),
+      );
+    }
+  }
+}
+
+/// Merges carry-forward drop notes into `activity` per commodity by
+/// **appending** to any notes already attached (matcher-emitted notes
+/// such as `bidPartialFillTreasuryInsufficient` are preserved per Refs
+/// #3115; prior-turn notes are not re-emitted). The final list is
+/// unmodifiable to keep `MarketActivity` immutable. Any `deals` already
+/// attached for the commodity (from `_buildActivity`) are preserved
+/// verbatim — drop notes and ledger entries coexist on the same
+/// `MarketActivity` per `SPEC/program/world-market-resolution.md` § Step F
+/// Activity rollup.
 void _attachDropNotes({
   required Map<CommodityId, MarketActivity> activity,
   required Map<CommodityId, List<MarketActivityNote>> notesByCommodity,
@@ -615,18 +772,23 @@ void _attachDropNotes({
   for (final entry in notesByCommodity.entries) {
     if (entry.value.isEmpty) continue;
     final commodity = entry.key;
-    final notes = List<MarketActivityNote>.unmodifiable(entry.value);
     final existing = activity[commodity];
     if (existing == null) {
-      activity[commodity] = MarketActivity(notes: notes);
+      activity[commodity] = MarketActivity(
+        notes: List<MarketActivityNote>.unmodifiable(entry.value),
+      );
     } else {
+      final combined = <MarketActivityNote>[
+        ...existing.notes,
+        ...entry.value,
+      ];
       activity[commodity] = MarketActivity(
         totalBidQuantity: existing.totalBidQuantity,
         totalOfferQuantity: existing.totalOfferQuantity,
         filledQuantity: existing.filledQuantity,
         priceChangePercent: existing.priceChangePercent,
         deals: existing.deals,
-        notes: notes,
+        notes: List<MarketActivityNote>.unmodifiable(combined),
       );
     }
   }

@@ -28,16 +28,22 @@ import 'purchased_tile_index.dart';
 /// mutates input collections. `tradeCapacityByFactionId` MUST be the
 /// pre-computed per-faction cross-commodity trade cargo capacity
 /// (`max(0, totalHomeFleetCargoHolds - overseasExtractionActualTonnage)`
-/// per `SPEC/game/world-market.md` § Cargo). `pricesByCommodityId` MUST be
-/// the `oldPrice` map valid for the current turn (deals clear at oldPrice).
-/// `ftpPairKeys` MUST contain canonical bilateral keys produced via
-/// [DealMatcher.pairKey]. `purchasedTileIndex`, when supplied, gates the
-/// First Right of Refusal absolute-priority pass — pass `null` to disable
-/// FRR (legacy behavior; matches pre-#2992 callers).
+/// per `SPEC/game/world-market.md` § Cargo). `treasuryBudgetByBuyerFactionId`
+/// MUST be each buyer's `Player.treasury` at phase 13 start, clamped at `0`
+/// for negative balances (`SPEC/program/world-market-resolution.md` § Step C
+/// treasury clamp, Refs #3115). Buyers omitted from this map are treated as
+/// having a `0` treasury budget — mirroring the `tradeCapacityByFactionId`
+/// edge case — so no fills are emitted and every bid carries forward.
+/// `pricesByCommodityId` MUST be the `oldPrice` map valid for the current
+/// turn (deals clear at oldPrice). `ftpPairKeys` MUST contain canonical
+/// bilateral keys produced via [DealMatcher.pairKey]. `purchasedTileIndex`,
+/// when supplied, gates the First Right of Refusal absolute-priority pass —
+/// pass `null` to disable FRR (legacy behavior; matches pre-#2992 callers).
 typedef DealMatchInputs = ({
   Map<String, List<TradeOrder>> offersByFactionId,
   Map<String, List<TradeOrder>> bidsByFactionId,
   Map<String, int> tradeCapacityByFactionId,
+  Map<String, int> treasuryBudgetByBuyerFactionId,
   Map<CommodityId, double> pricesByCommodityId,
   Set<String> ftpPairKeys,
   PurchasedTileIndex? purchasedTileIndex,
@@ -59,6 +65,12 @@ class _OrderState {
   final int factionLocalIndex;
 
   int remaining;
+
+  /// True once the treasury clamp has prevented this bid from fully
+  /// filling at least one match attempt. Drives single-note emission per
+  /// truncated bid per `SPEC/program/world-market-resolution.md` § Step C
+  /// (Refs #3115); only used for bid states (offers leave this `false`).
+  bool treasuryTruncated = false;
 
   TradeOrder asCarryForward() => order.copyWith(quantity: remaining);
 }
@@ -102,8 +114,22 @@ class DealMatcher {
         entry.key: entry.value < 0 ? 0 : entry.value,
     };
 
+    // Per-buyer running treasury accumulator (Refs #3115). Mirrors the
+    // existing `remainingCargo` pattern: initialized from the buyer's
+    // start-of-phase treasury budget (already clamped at 0 for negative
+    // balances by the caller per
+    // `SPEC/program/world-market-resolution.md` § Deal matching engine);
+    // decremented by `round(matchQty × pricePerUnit)` after each emitted
+    // `FilledDeal`. A defensive `< 0` clamp here mirrors the cargo
+    // initialization in case a caller passes a stale negative value.
+    final remainingTreasury = <String, int>{
+      for (final entry in inputs.treasuryBudgetByBuyerFactionId.entries)
+        entry.key: entry.value < 0 ? 0 : entry.value,
+    };
+
     final filled = <FilledDeal>[];
     final activity = <CommodityId, MarketActivity>{};
+    final notesByCommodity = <CommodityId, List<MarketActivityNote>>{};
 
     final offerStatesByFaction = _indexOrdersByFaction(inputs.offersByFactionId);
     final bidStatesByFaction = _indexOrdersByFaction(inputs.bidsByFactionId);
@@ -137,6 +163,7 @@ class DealMatcher {
             pricePerUnit: price,
             purchasedTileIndex: purchasedTileIndex,
             remainingCargo: remainingCargo,
+            remainingTreasury: remainingTreasury,
             filledOut: filled,
           );
         }
@@ -158,18 +185,46 @@ class DealMatcher {
             pricePerUnit: price,
             ftpPairKeys: inputs.ftpPairKeys,
             remainingCargo: remainingCargo,
+            remainingTreasury: remainingTreasury,
             filledOut: filled,
           );
         }
       }
 
+      // Emit one `bidPartialFillTreasuryInsufficient` note per truncated
+      // bid (`SPEC/program/world-market-resolution.md` § Step C, Refs
+      // #3115). Iteration order matches the offers-then-bids walks above;
+      // we re-scan the bid states list to preserve original submission
+      // order across factions (factions are alphabetically ordered by
+      // `_indexOrdersByFaction`, so the resulting note sequence is
+      // deterministic for fixed inputs).
+      for (final state in commodityBids) {
+        if (!state.treasuryTruncated) continue;
+        final commodityNotes = notesByCommodity.putIfAbsent(
+          commodityId,
+          () => <MarketActivityNote>[],
+        );
+        commodityNotes.add(
+          MarketActivityNote(
+            kind: MarketActivityNoteKind.bidPartialFillTreasuryInsufficient,
+            factionId: state.factionId,
+            commodityId: commodityId,
+            quantity: state.order.quantity,
+          ),
+        );
+      }
+
       if (totalOfferQuantity > 0 ||
           totalBidQuantity > 0 ||
           filledQuantity > 0) {
+        final commodityNotes = notesByCommodity[commodityId];
         activity[commodityId] = MarketActivity(
           totalBidQuantity: totalBidQuantity,
           totalOfferQuantity: totalOfferQuantity,
           filledQuantity: filledQuantity,
+          notes: commodityNotes == null
+              ? const <MarketActivityNote>[]
+              : List<MarketActivityNote>.unmodifiable(commodityNotes),
         );
       }
     }
@@ -206,6 +261,7 @@ class DealMatcher {
     required double pricePerUnit,
     required PurchasedTileIndex purchasedTileIndex,
     required Map<String, int> remainingCargo,
+    required Map<String, int> remainingTreasury,
     required List<FilledDeal> filledOut,
   }) {
     if (commodityOffers.isEmpty || commodityBids.isEmpty) return 0;
@@ -215,8 +271,21 @@ class DealMatcher {
       if (offer.remaining <= 0 || bid.remaining <= 0) return 0;
       final cargoLeft = remainingCargo[bid.factionId] ?? 0;
       if (cargoLeft <= 0) return 0;
-      final matchQty = _min3(offer.remaining, bid.remaining, cargoLeft);
-      if (matchQty <= 0) return 0;
+      final desiredQty = _min3(offer.remaining, bid.remaining, cargoLeft);
+      if (desiredQty <= 0) return 0;
+      final maxAffordable = _maxAffordableQuantity(
+        bid: bid,
+        pricePerUnit: pricePerUnit,
+        remainingTreasury: remainingTreasury,
+      );
+      final matchQty = desiredQty <= maxAffordable ? desiredQty : maxAffordable;
+      if (matchQty <= 0) {
+        if (pricePerUnit > 0 && desiredQty > 0) bid.treasuryTruncated = true;
+        return 0;
+      }
+      if (matchQty < desiredQty && pricePerUnit > 0) {
+        bid.treasuryTruncated = true;
+      }
       filledOut.add(
         FilledDeal(
           sellerFactionId: offer.factionId,
@@ -231,6 +300,12 @@ class DealMatcher {
       offer.remaining -= matchQty;
       bid.remaining -= matchQty;
       remainingCargo[bid.factionId] = cargoLeft - matchQty;
+      _decrementTreasury(
+        bid: bid,
+        matchQty: matchQty,
+        pricePerUnit: pricePerUnit,
+        remainingTreasury: remainingTreasury,
+      );
       return matchQty;
     }
 
@@ -266,6 +341,7 @@ class DealMatcher {
     required double pricePerUnit,
     required Set<String> ftpPairKeys,
     required Map<String, int> remainingCargo,
+    required Map<String, int> remainingTreasury,
     required List<FilledDeal> filledOut,
   }) {
     if (tierOffers.isEmpty || tierBids.isEmpty) return 0;
@@ -278,8 +354,21 @@ class DealMatcher {
       if (offer.remaining <= 0 || bid.remaining <= 0) return 0;
       final cargoLeft = remainingCargo[bid.factionId] ?? 0;
       if (cargoLeft <= 0) return 0;
-      final matchQty = _min3(offer.remaining, bid.remaining, cargoLeft);
-      if (matchQty <= 0) return 0;
+      final desiredQty = _min3(offer.remaining, bid.remaining, cargoLeft);
+      if (desiredQty <= 0) return 0;
+      final maxAffordable = _maxAffordableQuantity(
+        bid: bid,
+        pricePerUnit: pricePerUnit,
+        remainingTreasury: remainingTreasury,
+      );
+      final matchQty = desiredQty <= maxAffordable ? desiredQty : maxAffordable;
+      if (matchQty <= 0) {
+        if (pricePerUnit > 0 && desiredQty > 0) bid.treasuryTruncated = true;
+        return 0;
+      }
+      if (matchQty < desiredQty && pricePerUnit > 0) {
+        bid.treasuryTruncated = true;
+      }
       filledOut.add(
         FilledDeal(
           sellerFactionId: offer.factionId,
@@ -294,6 +383,12 @@ class DealMatcher {
       offer.remaining -= matchQty;
       bid.remaining -= matchQty;
       remainingCargo[bid.factionId] = cargoLeft - matchQty;
+      _decrementTreasury(
+        bid: bid,
+        matchQty: matchQty,
+        pricePerUnit: pricePerUnit,
+        remainingTreasury: remainingTreasury,
+      );
       return matchQty;
     }
 
@@ -426,5 +521,41 @@ class DealMatcher {
     var m = a < b ? a : b;
     if (c < m) m = c;
     return m;
+  }
+
+  /// Returns the maximum units the buyer can afford to purchase at
+  /// [pricePerUnit] given their remaining treasury budget. The
+  /// `pricePerUnit == 0` branch preserves legacy free-fill behavior on
+  /// the missing-price defect path per
+  /// `SPEC/program/world-market-resolution.md` § Step C (Refs #3115):
+  /// returns a high cap (`bid.remaining`) so the other three clamps
+  /// dominate.
+  static int _maxAffordableQuantity({
+    required _OrderState bid,
+    required double pricePerUnit,
+    required Map<String, int> remainingTreasury,
+  }) {
+    if (pricePerUnit <= 0.0) return bid.remaining;
+    final treasuryLeft = remainingTreasury[bid.factionId] ?? 0;
+    if (treasuryLeft <= 0) return 0;
+    final affordable = (treasuryLeft / pricePerUnit).floor();
+    return affordable < 0 ? 0 : affordable;
+  }
+
+  /// Decrements the per-buyer running treasury tally after a successful
+  /// match. Skips the decrement on the missing-price defect path so
+  /// free-fill behavior is preserved (no treasury accounting when no
+  /// notional is owed).
+  static void _decrementTreasury({
+    required _OrderState bid,
+    required int matchQty,
+    required double pricePerUnit,
+    required Map<String, int> remainingTreasury,
+  }) {
+    if (pricePerUnit <= 0.0 || matchQty <= 0) return;
+    final notional = (matchQty * pricePerUnit).round();
+    final treasuryLeft = remainingTreasury[bid.factionId] ?? 0;
+    final next = treasuryLeft - notional;
+    remainingTreasury[bid.factionId] = next < 0 ? 0 : next;
   }
 }

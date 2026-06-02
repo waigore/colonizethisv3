@@ -91,12 +91,15 @@ DealMatchInputs _matcherInputs({
   required Map<String, List<TradeOrder>> offersByFactionId,
   required Map<String, List<TradeOrder>> bidsByFactionId,
   required Map<String, int> tradeCapacityByFactionId,
+  Map<String, int>? treasuryBudgetByBuyerFactionId,
   Set<String> ftpPairKeys = const {},
   PurchasedTileIndex? purchasedTileIndex,
 }) => (
   offersByFactionId: offersByFactionId,
   bidsByFactionId: bidsByFactionId,
   tradeCapacityByFactionId: tradeCapacityByFactionId,
+  treasuryBudgetByBuyerFactionId: treasuryBudgetByBuyerFactionId ??
+      {for (final id in bidsByFactionId.keys) id: 1 << 30},
   pricesByCommodityId: const {'timber': 20.0},
   ftpPairKeys: ftpPairKeys,
   purchasedTileIndex: purchasedTileIndex,
