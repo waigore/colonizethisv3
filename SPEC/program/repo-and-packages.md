@@ -129,7 +129,7 @@ Asset-path guard remediation:
 
 ## Pub workspace toolchain
 
-Dart/Flutter pin, `pub.dev` advisories expectations, and intentional “not at Latest” dependency caps (until upstream unblocks) are documented in **[pub-workspace-toolchain.md](pub-workspace-toolchain.md)** and **[CONTRIBUTING.md](../../CONTRIBUTING.md)**. See **GitHub #2073** for the rolling upgrade issue.
+Dart/Flutter pin, `pub.dev` advisories expectations, and intentional “not at Latest” dependency caps (until upstream unblocks) are documented in **[pub-workspace-toolchain.md](pub-workspace-toolchain.md)** (with manual audit driver in **[workspace-outdated-audit.md](workspace-outdated-audit.md)**). See **GitHub #2073** for the rolling upgrade issue.
 
 ---
 
