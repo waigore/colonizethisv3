@@ -206,5 +206,136 @@ void main() {
         );
       },
     );
+
+    test(
+      'admits a bid priced solely from the catalog default when budget '
+      'allows (Refs #3123 AC: rule 5 must not reject for unknown price '
+      'when an initial/default price exists)',
+      () {
+        // SPEC/game/world-market.md § Treasury budget for bids: the
+        // validator falls back to ResourceRules.defaultMarketPriceForCommodityId
+        // when worldMarketState.prices omits the commodity. With a budget
+        // that covers the catalog default, the bid must be accepted —
+        // i.e. rule 5 must never reject solely for "missing live price"
+        // when an initial price exists.
+        final int? catalogTimber =
+            ResourceRules.defaultRules.defaultMarketPriceForCommodityId(
+          CommodityCatalog.timber.id,
+        );
+        expect(catalogTimber, isNotNull,
+            reason: 'timber must have a catalog default for this AC pin');
+        final int budget = catalogTimber! * 2; // covers a quantity-2 bid
+        final results = TradeOrderValidator.validate(
+          context: validatorCtx(
+            treasuryBudgetForBids: budget,
+            worldMarketState: const WorldMarketState(),
+          ),
+          proposedOrders: [validatorBid(CommodityCatalog.timber.id, 2)],
+        );
+        expect(results.single.isAccepted, isTrue,
+            reason: 'rule 5 must use the catalog default and admit when '
+                'cumulative spend fits the budget');
+      },
+    );
+
+    test(
+      'admits a manufactured-commodity bid priced from the catalog '
+      'default when budget allows (Refs #3123 AC, manufactured branch)',
+      () {
+        // Refs #3093 manufactured-default-prices: manufactured commodities
+        // (e.g. lumber) now resolve to a non-null catalog default. Pin
+        // the positive acceptance branch alongside the existing rejection
+        // branch so the AC is symmetric.
+        final int? catalogLumber =
+            ResourceRules.defaultRules.defaultMarketPriceForCommodityId(
+          CommodityCatalog.lumber.id,
+        );
+        expect(catalogLumber, isNotNull,
+            reason: 'lumber must have a manufactured catalog default');
+        final int budget = catalogLumber!; // covers a quantity-1 bid exactly
+        final results = TradeOrderValidator.validate(
+          context: validatorCtx(
+            treasuryBudgetForBids: budget,
+            worldMarketState: const WorldMarketState(),
+          ),
+          proposedOrders: [validatorBid(CommodityCatalog.lumber.id, 1)],
+        );
+        expect(results.single.isAccepted, isTrue);
+      },
+    );
+
+    test(
+      'identical inputs produce identical result lists across two '
+      'validate() calls (Refs #3123 AC: validator determinism)',
+      () {
+        // SPEC/program/world-market-resolution.md § Validation —
+        // determinism: pure validator with no I/O / time / random
+        // dependencies must return byte-identical results for byte-identical
+        // inputs. Pin both an accepted and a rejected order so the
+        // determinism contract covers both result branches.
+        final context = validatorCtx(
+          treasuryBudgetForBids: 100,
+          tradeCargoCapacity: 100,
+          worldMarketState: WorldMarketState(
+            prices: {
+              CommodityCatalog.timber.id: 30,
+              CommodityCatalog.iron.id: 10,
+            },
+          ),
+        );
+        final orders = [
+          validatorBid(CommodityCatalog.timber.id, 4), // 120 — rejected
+          validatorBid(CommodityCatalog.iron.id, 1), // 10 — admitted (greedy)
+        ];
+        final first = TradeOrderValidator.validate(
+          context: context,
+          proposedOrders: orders,
+        );
+        final second = TradeOrderValidator.validate(
+          context: context,
+          proposedOrders: orders,
+        );
+        expect(second, hasLength(first.length));
+        for (var i = 0; i < first.length; i++) {
+          expect(second[i].isAccepted, first[i].isAccepted);
+          expect(second[i].reason, first[i].reason);
+        }
+      },
+    );
+  });
+
+  group(
+      'effectiveMarketPriceForCommodityId — catalog default coverage '
+      '(Refs #3123)', () {
+    test(
+      'every non-riches commodity in the catalog resolves to a non-null '
+      'effective price via the default ResourceRules (no hidden gaps that '
+      "would force a rule-5 'unknown price' rejection in normal play)",
+      () {
+        // SPEC/game/world-market.md § Treasury budget for bids: rule 5
+        // must use worldMarketState.prices ?? catalog default for every
+        // tradeable commodity. This pin guards against silently shipping
+        // a tradeable commodity without a catalog default (which would
+        // otherwise let rule 5 admit unbounded bids on that commodity
+        // because effectiveMarketPriceForCommodityId returns null →
+        // 0 spend contribution).
+        final rules = ResourceRules.defaultRules;
+        for (final commodity in CommodityCatalog.all) {
+          if (richesCommodityIds.contains(commodity.id)) continue;
+          final effective = effectiveMarketPriceForCommodityId(
+            commodityId: commodity.id,
+            worldMarket: const WorldMarketState(),
+            resourceRules: rules,
+          );
+          expect(effective, isNotNull,
+              reason:
+                  'commodity ${commodity.id} (non-riches) must resolve to a '
+                  'non-null catalog default so rule 5 can price it');
+          expect(effective! >= 0, isTrue,
+              reason: 'catalog default for ${commodity.id} must be '
+                  'non-negative');
+        }
+      },
+    );
   });
 }

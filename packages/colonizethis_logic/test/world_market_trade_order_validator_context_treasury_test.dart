@@ -17,15 +17,12 @@ import 'world_market_treasury_bid_budget_test_support.dart';
 
 void main() {
   group('tradeOrderValidationContextFromGame (Refs #3123)', () {
-    test(
-      'positive treasury surfaces as TradeOrderValidationContext.'
-      'treasuryBudgetForBids',
-      () {
-        final game = buildTreasuryBidBudgetGame(treasury: 175);
-        final ctx = tradeOrderValidationContextFromGame(game, humanPlayerId);
-        expect(ctx.treasuryBudgetForBids, 175);
-      },
-    );
+    test('positive treasury surfaces as TradeOrderValidationContext.'
+        'treasuryBudgetForBids', () {
+      final game = buildTreasuryBidBudgetGame(treasury: 175);
+      final ctx = tradeOrderValidationContextFromGame(game, humanPlayerId);
+      expect(ctx.treasuryBudgetForBids, 175);
+    });
 
     test(
       'negative treasury clamps the context budget at 0 (defensive guard)',
@@ -36,42 +33,67 @@ void main() {
       },
     );
 
-    test(
-      'zero treasury surfaces as a zero budget (any priced bid is rejected '
-      'when validated against this context)',
-      () {
-        final game = buildTreasuryBidBudgetGame(
-          treasury: 0,
-          prices: const {'timber': 30},
-        );
-        final ctx = tradeOrderValidationContextFromGame(game, humanPlayerId);
-        expect(ctx.treasuryBudgetForBids, 0);
-        final results = TradeOrderValidator.validate(
-          context: ctx,
-          proposedOrders: [
-            TradeOrder(
-              commodityId: 'timber',
-              type: TradeOrderType.bid,
-              quantity: 1,
-              priority: 1,
-            ),
-          ],
-        );
-        expect(
-          results.single.reason,
-          TradeOrderRejectionReasons.bidExceedsTreasuryBudget,
-        );
-      },
-    );
+    test('negative treasury context rejects any priced bid end-to-end '
+        '(SPEC/game/world-market.md — cross-commodity bid treasury cap, '
+        'clamped negative treasury AC)', () {
+      // Pins the game-side AC "Cross-commodity bid treasury cap —
+      // clamped negative treasury": negative `Player.treasury` clamps
+      // `treasuryBudgetForBids` at 0 via `tradeOrderValidationContextFromGame`,
+      // and the validator then rejects any priced bid with
+      // `trade_order_bid_exceeds_treasury_budget`.
+      final game = buildTreasuryBidBudgetGame(
+        treasury: -25,
+        prices: const {'timber': 30},
+      );
+      final ctx = tradeOrderValidationContextFromGame(game, humanPlayerId);
+      expect(ctx.treasuryBudgetForBids, 0);
+      final results = TradeOrderValidator.validate(
+        context: ctx,
+        proposedOrders: [
+          TradeOrder(
+            commodityId: 'timber',
+            type: TradeOrderType.bid,
+            quantity: 1,
+            priority: 1,
+          ),
+        ],
+      );
+      expect(
+        results.single.reason,
+        TradeOrderRejectionReasons.bidExceedsTreasuryBudget,
+      );
+    });
 
-    test(
-      'ghost player id returns a zero-budget context (ghost guard)',
-      () {
-        final game = buildTreasuryBidBudgetGame(treasury: 200);
-        final ctx = tradeOrderValidationContextFromGame(game, 'gp_ghost');
-        expect(ctx.treasuryBudgetForBids, 0);
-      },
-    );
+    test('zero treasury surfaces as a zero budget (any priced bid is rejected '
+        'when validated against this context)', () {
+      final game = buildTreasuryBidBudgetGame(
+        treasury: 0,
+        prices: const {'timber': 30},
+      );
+      final ctx = tradeOrderValidationContextFromGame(game, humanPlayerId);
+      expect(ctx.treasuryBudgetForBids, 0);
+      final results = TradeOrderValidator.validate(
+        context: ctx,
+        proposedOrders: [
+          TradeOrder(
+            commodityId: 'timber',
+            type: TradeOrderType.bid,
+            quantity: 1,
+            priority: 1,
+          ),
+        ],
+      );
+      expect(
+        results.single.reason,
+        TradeOrderRejectionReasons.bidExceedsTreasuryBudget,
+      );
+    });
+
+    test('ghost player id returns a zero-budget context (ghost guard)', () {
+      final game = buildTreasuryBidBudgetGame(treasury: 200);
+      final ctx = tradeOrderValidationContextFromGame(game, 'gp_ghost');
+      expect(ctx.treasuryBudgetForBids, 0);
+    });
 
     test(
       'deterministic for identical inputs (two calls return identical budgets)',
