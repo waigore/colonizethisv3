@@ -45,20 +45,45 @@ void main() {
       );
     });
 
-    test('returns null for manufactured commodities without a catalog default',
+    test(
+        'falls back to the catalog manufactured base price when the '
+        'prices map omits the commodity (Refs #3093 manufactured-default-prices)',
         () {
       final game = buildTreasuryBidBudgetGame(
         prices: const <CommodityId, int>{},
       );
+      final int? defaultLumber =
+          rules.defaultMarketPriceForCommodityId('lumber');
       expect(
-        rules.defaultMarketPriceForCommodityId('lumber'),
-        isNull,
+        defaultLumber,
+        isNotNull,
         reason:
-            'Manufactured commodity defaults are tracked as follow-up to #3093.',
+            'Manufactured commodities now have catalog defaults per '
+            'SPEC/game/commodity-catalog.md § Manufactured base prices.',
       );
       expect(
         effectiveMarketPriceForCommodityId(
           commodityId: 'lumber',
+          worldMarket: game.worldMarketState,
+          resourceRules: rules,
+        ),
+        defaultLumber,
+      );
+    });
+
+    test(
+        'returns null only when neither prices nor catalog has a value '
+        '(defensive fallback for unknown / future commodity ids)', () {
+      final game = buildTreasuryBidBudgetGame(
+        prices: const <CommodityId, int>{},
+      );
+      expect(
+        rules.defaultMarketPriceForCommodityId('not_a_commodity'),
+        isNull,
+      );
+      expect(
+        effectiveMarketPriceForCommodityId(
+          commodityId: 'not_a_commodity',
           worldMarket: game.worldMarketState,
           resourceRules: rules,
         ),

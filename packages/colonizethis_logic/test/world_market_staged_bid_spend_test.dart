@@ -79,17 +79,49 @@ void main() {
       );
     });
 
-    test('skips bids on commodities with no effective price (no contribution)',
-        () {
+    test(
+        'sums spend across raw + manufactured bids using catalog defaults '
+        '(Refs #3093 manufactured-default-prices)', () {
       final game = buildTreasuryBidBudgetGame(
         prices: const <CommodityId, int>{},
       );
-      expect(rules.defaultMarketPriceForCommodityId('lumber'), isNull);
+      final int? defaultLumber =
+          rules.defaultMarketPriceForCommodityId('lumber');
+      final int? defaultTimber =
+          rules.defaultMarketPriceForCommodityId('timber');
+      expect(defaultLumber, isNotNull);
+      expect(defaultTimber, isNotNull);
       final orders = humanOrdersWith([
         bidOrder('lumber', 5),
         bidOrder('timber', 2),
       ]);
-      final int? defaultTimber = rules.defaultMarketPriceForCommodityId('timber');
+      expect(
+        stagedBidTotalSpendByPlayer(
+          orders: orders,
+          playerId: humanPlayerId,
+          game: game,
+          resourceRules: rules,
+        ),
+        5 * defaultLumber! + 2 * defaultTimber!,
+      );
+    });
+
+    test(
+        'skips bids on commodities with no effective price (defensive guard '
+        'against unknown / future ids)', () {
+      final game = buildTreasuryBidBudgetGame(
+        prices: const <CommodityId, int>{},
+      );
+      expect(
+        rules.defaultMarketPriceForCommodityId('not_a_commodity'),
+        isNull,
+      );
+      final orders = humanOrdersWith([
+        bidOrder('not_a_commodity', 5),
+        bidOrder('timber', 2),
+      ]);
+      final int? defaultTimber =
+          rules.defaultMarketPriceForCommodityId('timber');
       expect(defaultTimber, isNotNull);
       expect(
         stagedBidTotalSpendByPlayer(

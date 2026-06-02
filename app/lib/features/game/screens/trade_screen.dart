@@ -1292,16 +1292,13 @@ class _MarketTabContent extends ConsumerWidget {
   /// Prices on `Game.worldMarketState.prices` are integers per
   /// `SPEC/game/world-market.md` § Price discovery and SPEC/ui/trade-screen.md
   /// § Market tab — read-only commodity table. When the prices map lacks an
-  /// entry for a tradeable commodity, this helper falls back to the
-  /// `defaultMarketPrice` int from `ResourceRules.defaultRules` (per the
-  /// resource catalog) so the row never renders the unknown-price em-dash
-  /// for raw resources whose catalog default price is published. The
-  /// canonical em-dash glyph remains the fallback only when neither the
-  /// market state nor the catalog has a value (manufactured commodities,
-  /// whose first market price is discovered in-game, are not enumerated in
-  /// `ResourceRules.defaultMarketPrice` today and so render the em-dash
-  /// until they participate in a market turn — tracked as follow-up to
-  /// #3093).
+  /// entry for a tradeable commodity, this helper falls back to the catalog
+  /// default from `ResourceRules.defaultRules.defaultMarketPriceForCommodityId`,
+  /// which now covers every tradeable commodity — raw resources (per the
+  /// `Resource` enum default-price map) and manufactured commodities (per
+  /// `SPEC/game/commodity-catalog.md` § Manufactured base prices). The
+  /// canonical em-dash glyph is a defensive fallback retained for future
+  /// commodity additions that ship without a catalog default.
   static String _formatPrice(int? price, {required CommodityId commodityId}) {
     final int? effective =
         price ?? ResourceRules.defaultRules
