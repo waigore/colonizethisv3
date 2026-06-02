@@ -299,6 +299,7 @@ const List<String> _migratedFeatureFiles = <String>[
   'lib/features/game/widgets/train_military_dialog.dart',
   'lib/features/game/widgets/transfer_to_home_fleet_dialog.dart',
   'lib/features/game/widgets/turn_news_dialog.dart',
+  'lib/features/game/widgets/units/shared/units_entity_action_row.dart',
   'lib/features/game/widgets/units/shared/units_panel_row_chrome.dart',
   'lib/features/game/widgets/units/shared/units_panel_shell.dart',
   'lib/features/shell/new_game_setup_flow.dart',
