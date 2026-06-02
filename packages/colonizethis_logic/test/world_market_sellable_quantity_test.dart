@@ -203,15 +203,14 @@ void main() {
 
     test(
         'subtracts staged offer quantity from the cap to produce the '
-        '`(N)` display headroom', () {
+        '`(N)` display headroom (default: industry allocation = 0)', () {
       final game = _buildGame(
         stockpile: const {'timber': 10},
       );
-      // With stockpile 10 and a staged offer of 2 timber, the displayed
-      // headroom is 8 (= 10 - 2). The issue body documents an additional
-      // industry-allocation subtraction (`10 - 3 - 2 = 5`); that wiring
-      // is deferred (see SellableQuantity doc comment) and is intentionally
-      // not part of this slice's pin.
+      // With stockpile 10, no industry-allocation reservation passed,
+      // and a staged offer of 2 timber, the displayed headroom is 8
+      // (= 10 - 0 - 2). Industry-allocation subtraction is exercised
+      // by the new pin below.
       final orders = _ordersWithOffers([
         TradeOrder(
           commodityId: 'timber',
@@ -226,6 +225,110 @@ void main() {
         orders: orders,
       );
       expect(sellable['timber'], 8);
+    });
+
+    test(
+        'industry-allocation reservation: stockpile 10 timber, '
+        'production consumes 3 timber, staged offer 2 → sellable 5 '
+        '(canonical AC for Refs #3093 sellable definition)', () {
+      final game = _buildGame(
+        stockpile: const {'timber': 10},
+      );
+      final orders = _ordersWithOffers([
+        TradeOrder(
+          commodityId: 'timber',
+          type: TradeOrderType.offer,
+          quantity: 2,
+          priority: 1,
+        ),
+      ]);
+      final sellable = sellableHeadroomByCommodityId(
+        game: game,
+        playerId: _humanPlayerId,
+        orders: orders,
+        productionInputConsumptionByCommodityId: const {'timber': 3},
+      );
+      expect(sellable['timber'], 5,
+          reason:
+              'Canonical AC: max(0, 10 - 3) - 2 = 5. The Offer chip / `+` '
+              'stepper must clamp at this sellable headroom.');
+    });
+
+    test(
+        'industry-allocation reservation: when consumption equals '
+        'stockpile, cap is 0 → key omitted (Offer chip disabled)', () {
+      final game = _buildGame(
+        stockpile: const {'timber': 10},
+      );
+      const orders = Orders();
+      final sellable = sellableHeadroomByCommodityId(
+        game: game,
+        playerId: _humanPlayerId,
+        orders: orders,
+        productionInputConsumptionByCommodityId: const {'timber': 10},
+      );
+      expect(sellable.containsKey('timber'), isFalse,
+          reason: 'Full reservation collapses the cap to 0 → key dropped.');
+    });
+
+    test(
+        'industry-allocation reservation: negative consumption entries '
+        'are clamped at 0 (defensive — caller cannot inflate the cap)',
+        () {
+      final game = _buildGame(
+        stockpile: const {'timber': 10},
+      );
+      const orders = Orders();
+      final sellable = sellableHeadroomByCommodityId(
+        game: game,
+        playerId: _humanPlayerId,
+        orders: orders,
+        productionInputConsumptionByCommodityId: const {'timber': -100},
+      );
+      expect(sellable['timber'], 10,
+          reason: 'Negative consumption must not raise sellable above '
+              'raw stockpile.');
+    });
+
+    test(
+        'industry-allocation reservation: empty map matches null '
+        '(both fall back to raw stockpile)', () {
+      final game = _buildGame(
+        stockpile: const {'timber': 10},
+      );
+      const orders = Orders();
+      final viaNull = sellableHeadroomByCommodityId(
+        game: game,
+        playerId: _humanPlayerId,
+        orders: orders,
+      );
+      final viaEmpty = sellableHeadroomByCommodityId(
+        game: game,
+        playerId: _humanPlayerId,
+        orders: orders,
+        productionInputConsumptionByCommodityId:
+            const <CommodityId, int>{},
+      );
+      expect(viaNull['timber'], 10);
+      expect(viaEmpty['timber'], 10);
+    });
+
+    test(
+        'industry-allocation reservation: consumption on one commodity '
+        'does not affect another commodity\'s cap', () {
+      final game = _buildGame(
+        stockpile: const {'timber': 10, 'iron': 7},
+      );
+      const orders = Orders();
+      final sellable = sellableHeadroomByCommodityId(
+        game: game,
+        playerId: _humanPlayerId,
+        orders: orders,
+        productionInputConsumptionByCommodityId: const {'timber': 4},
+      );
+      expect(sellable['timber'], 6);
+      expect(sellable['iron'], 7,
+          reason: 'Iron has no reservation entry → raw stockpile.');
     });
 
     test(
