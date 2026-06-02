@@ -657,13 +657,21 @@ class _ActionButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final label = isPending ? 'Cancel' : diplomacyActionLabel(order);
+    final ThemeData theme = Theme.of(context);
+    // SPEC/ui/pixel-art-ui-catalog.md § Editorial-monocle text theme —
+    // the action-button caption resolves through the M3 `bodySmall` slot
+    // (12 dp) so font, weight, and colour flow from
+    // `AppThemes.editorialMonocle` instead of a hard-coded literal.
+    // Refs #2914 S7.
+    final TextStyle labelStyle =
+        theme.textTheme.bodySmall ?? const TextStyle(fontSize: 12);
     return SizedBox(
       height: 32,
       child: CtNinePatchButton(
         onPressed: isPending ? onCancel : onPressed,
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
         dangerVariant: _isWarVariant,
-        child: Text(label, style: const TextStyle(fontSize: 12)),
+        child: Text(label, style: labelStyle),
       ),
     );
   }
