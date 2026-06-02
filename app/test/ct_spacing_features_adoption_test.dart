@@ -190,6 +190,7 @@ const List<String> _migratedFeatureFiles = <String>[
   'lib/features/game/flame/victory_overlay.dart',
   'lib/features/game/screens/technology_screen.dart',
   'lib/features/game/screens/trade_screen.dart',
+  'lib/features/game/screens/trade_screen_deal_book.dart',
   'lib/features/game/widgets/civilian_units_panel.dart',
   'lib/features/game/widgets/civilian_units_panel_support.dart',
   'lib/features/game/widgets/diplomacy_panel.dart',

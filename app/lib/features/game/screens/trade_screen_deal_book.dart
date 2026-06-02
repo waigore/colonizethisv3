@@ -207,7 +207,7 @@ class _DealBookPanel extends StatelessWidget {
     final _DealBookPanelStyles styles = _DealBookPanelStyles.of(context);
     final bool panelEmpty = filledRows.isEmpty && unfilledRows.isEmpty;
     return CtPanel(
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.all(CtSpacing.ml),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
