@@ -17,7 +17,14 @@ import '../../diplomacy/diplomacy_subsidies_relations_resolver.dart'
     show worldMarketBidTypeCap;
 import '../../economy/sea_transport.dart' show cargoHoldsForHomeFleet;
 import '../../constants.dart';
+import '../../orders/order_projections.dart' show projectOrderEffects;
 import '../../orders/order_validation_result.dart';
+import 'sellable_quantity.dart' show offerCapByCommodityId;
+import 'treasury_bid_budget.dart'
+    show
+        effectiveMarketPriceForCommodityId,
+        stagedBidTotalSpendByPlayer,
+        treasuryAvailableForBidsByPlayer;
 
 /// Stable rejection-reason codes returned by [TradeOrderValidator.validate].
 ///
@@ -42,11 +49,15 @@ abstract final class TradeOrderRejectionReasons {
   static const String bidTypeCapExceeded =
       'trade_order_bid_type_cap_exceeded';
 
-  /// Rule 5 — Per-commodity bid quantity exceeds `tradeCargoCapacity`.
+  /// Rule 5 — Cross-commodity bid spend would exceed `treasuryBudgetForBids`.
+  static const String bidExceedsTreasuryBudget =
+      'trade_order_bid_exceeds_treasury_budget';
+
+  /// Rule 6 — Per-commodity bid quantity exceeds `tradeCargoCapacity`.
   static const String bidExceedsCargoCapacity =
       'trade_order_bid_exceeds_cargo_capacity';
 
-  /// Rule 6 — Per-commodity offer quantity exceeds
+  /// Rule 7 — Per-commodity offer quantity exceeds
   /// `availableStockpileByCommodityId[commodityId] ?? 0`.
   static const String offerExceedsStockpile =
       'trade_order_offer_exceeds_stockpile';
@@ -63,7 +74,10 @@ class TradeOrderValidationContext {
     required this.bidTypeCap,
     required this.tradeCargoCapacity,
     required this.availableStockpileByCommodityId,
-  });
+    required this.treasuryBudgetForBids,
+    this.worldMarketState = const WorldMarketState(),
+    data.ResourceRules? resourceRules,
+  }) : resourceRules = resourceRules ?? data.ResourceRules.defaultRules;
 
   /// Submitting faction id. Informational; the validator does no cross-player
   /// checks.
@@ -86,30 +100,69 @@ class TradeOrderValidationContext {
   /// clamped at 0). Missing entries are treated as `0`. Riches commodities
   /// should not be present (they are rejected by rule 2 anyway).
   final Map<CommodityId, int> availableStockpileByCommodityId;
+
+  /// Maximum `Σ (quantity × effectiveMarketPrice)` across admitted bids this
+  /// turn (`SPEC/game/world-market.md` § Treasury budget for bids).
+  final int treasuryBudgetForBids;
+
+  /// Market prices used to price bid spend (integer treasury units).
+  final WorldMarketState worldMarketState;
+
+  /// Catalog fallback prices when [worldMarketState.prices] lacks an entry.
+  final data.ResourceRules resourceRules;
 }
 
 /// Builds a [TradeOrderValidationContext] from live [Game] state for order
-/// submission and [OrderEngine] validation. Uses current stockpile minus riches
-/// as offer availability until production-input projection wires in
-/// (Issue F / #2994 may pass a richer override via suggestion API).
+/// submission and [OrderEngine] validation.
+///
+/// When [stagedOrders] and [topology] are supplied, the treasury bid budget
+/// subtracts projected non-bid deficits via `projectOrderEffects` (same
+/// composition as the Trade UI per `SPEC/ui/trade-screen.md` § treasury bid
+/// cap). Otherwise the budget is raw treasury only.
 TradeOrderValidationContext tradeOrderValidationContextFromGame(
   Game game,
-  String playerId,
-) {
-  final player = game.playerById(playerId);
-  final available = <CommodityId, int>{};
-  if (player != null) {
-    for (final entry in player.stockpile.quantities.entries) {
-      if (data.richesCommodityIds.contains(entry.key)) continue;
-      if (entry.value <= 0) continue;
-      available[entry.key] = entry.value;
-    }
+  String playerId, {
+  Orders? stagedOrders,
+  data.MapTopology? topology,
+  Map<String, data.TileMapResult>? tileMapByRegion,
+}) {
+  final rules = data.ResourceRules.defaultRules;
+  var treasuryBudget = treasuryAvailableForBidsByPlayer(
+    game: game,
+    playerId: playerId,
+  );
+  if (stagedOrders != null && topology != null) {
+    final projected = projectOrderEffects(
+      game: game,
+      orders: stagedOrders,
+      topology: topology,
+      tileMapByRegion: tileMapByRegion ?? const {},
+      playerId: playerId,
+    );
+    final int bidSpend = stagedBidTotalSpendByPlayer(
+      orders: stagedOrders,
+      playerId: playerId,
+      game: game,
+      resourceRules: rules,
+    );
+    final int projectedDelta = projected.treasuryDelta ?? 0;
+    treasuryBudget = treasuryAvailableForBidsByPlayer(
+      game: game,
+      playerId: playerId,
+      projectedNonBidTreasuryDelta: projectedDelta + bidSpend,
+    );
   }
   return TradeOrderValidationContext(
     playerId: playerId,
     bidTypeCap: worldMarketBidTypeCap(game, playerId),
     tradeCargoCapacity: cargoHoldsForHomeFleet(game, playerId),
-    availableStockpileByCommodityId: available,
+    availableStockpileByCommodityId: offerCapByCommodityId(
+      game: game,
+      playerId: playerId,
+    ),
+    treasuryBudgetForBids: treasuryBudget,
+    worldMarketState: game.worldMarketState,
+    resourceRules: rules,
   );
 }
 
@@ -122,7 +175,7 @@ class TradeOrderValidator {
   /// the [tradeOrderRejectionReasons] stable codes.
   ///
   /// The validator applies rules in deterministic order
-  /// (1 → 2 → 3 → 4 → 5/6) and records the **first** failing rule for each
+  /// (1 → 2 → 3 → 4 → 5 → 6 → 7) and records the **first** failing rule for each
   /// rejected order. Pre-pass classifiers (mutual exclusion, bid type
   /// admission set) are computed once for the whole submission so result
   /// stability does not depend on intra-submission interleaving.
@@ -144,61 +197,116 @@ class TradeOrderValidator {
     );
 
     final results = <OrderValidationResult>[];
+    var runningBidTreasurySpend = 0;
     for (final order in proposedOrders) {
-      results.add(
-        _validateOne(
-          order: order,
-          context: context,
-          mutuallyExcludedCommodityIds: mutuallyExcludedCommodityIds,
-          admittedBidCommodityIds: admittedBidCommodityIds,
-        ),
+      final outcome = _validateOne(
+        order: order,
+        context: context,
+        mutuallyExcludedCommodityIds: mutuallyExcludedCommodityIds,
+        admittedBidCommodityIds: admittedBidCommodityIds,
+        runningBidTreasurySpend: runningBidTreasurySpend,
       );
+      results.add(outcome.result);
+      if (outcome.result.isAccepted && order.type == TradeOrderType.bid) {
+        runningBidTreasurySpend = outcome.nextRunningBidTreasurySpend;
+      }
     }
     return results;
   }
 
-  static OrderValidationResult _validateOne({
+  static ({
+    OrderValidationResult result,
+    int nextRunningBidTreasurySpend,
+  }) _validateOne({
     required TradeOrder order,
     required TradeOrderValidationContext context,
     required Set<CommodityId> mutuallyExcludedCommodityIds,
     required Set<CommodityId> admittedBidCommodityIds,
+    required int runningBidTreasurySpend,
   }) {
     if (order.quantity <= 0) {
-      return OrderValidationResult.rejected(
-        TradeOrderRejectionReasons.invalidQuantity,
+      return (
+        result: OrderValidationResult.rejected(
+          TradeOrderRejectionReasons.invalidQuantity,
+        ),
+        nextRunningBidTreasurySpend: runningBidTreasurySpend,
       );
     }
     if (data.richesCommodityIds.contains(order.commodityId)) {
-      return OrderValidationResult.rejected(
-        TradeOrderRejectionReasons.richesNotTradeable,
+      return (
+        result: OrderValidationResult.rejected(
+          TradeOrderRejectionReasons.richesNotTradeable,
+        ),
+        nextRunningBidTreasurySpend: runningBidTreasurySpend,
       );
     }
     if (mutuallyExcludedCommodityIds.contains(order.commodityId)) {
-      return OrderValidationResult.rejected(
-        TradeOrderRejectionReasons.mutualExclusion,
+      return (
+        result: OrderValidationResult.rejected(
+          TradeOrderRejectionReasons.mutualExclusion,
+        ),
+        nextRunningBidTreasurySpend: runningBidTreasurySpend,
       );
     }
     if (order.type == TradeOrderType.bid) {
       if (!admittedBidCommodityIds.contains(order.commodityId)) {
-        return OrderValidationResult.rejected(
-          TradeOrderRejectionReasons.bidTypeCapExceeded,
+        return (
+          result: OrderValidationResult.rejected(
+            TradeOrderRejectionReasons.bidTypeCapExceeded,
+          ),
+          nextRunningBidTreasurySpend: runningBidTreasurySpend,
+        );
+      }
+      final int orderSpend = _bidOrderTreasurySpend(order, context);
+      if (runningBidTreasurySpend + orderSpend >
+          context.treasuryBudgetForBids) {
+        return (
+          result: OrderValidationResult.rejected(
+            TradeOrderRejectionReasons.bidExceedsTreasuryBudget,
+          ),
+          nextRunningBidTreasurySpend: runningBidTreasurySpend,
         );
       }
       if (order.quantity > context.tradeCargoCapacity) {
-        return OrderValidationResult.rejected(
-          TradeOrderRejectionReasons.bidExceedsCargoCapacity,
+        return (
+          result: OrderValidationResult.rejected(
+            TradeOrderRejectionReasons.bidExceedsCargoCapacity,
+          ),
+          nextRunningBidTreasurySpend: runningBidTreasurySpend,
         );
       }
-      return OrderValidationResult.accepted();
+      return (
+        result: OrderValidationResult.accepted(),
+        nextRunningBidTreasurySpend: runningBidTreasurySpend + orderSpend,
+      );
     }
     final available =
         context.availableStockpileByCommodityId[order.commodityId] ?? 0;
     if (order.quantity > available) {
-      return OrderValidationResult.rejected(
-        TradeOrderRejectionReasons.offerExceedsStockpile,
+      return (
+        result: OrderValidationResult.rejected(
+          TradeOrderRejectionReasons.offerExceedsStockpile,
+        ),
+        nextRunningBidTreasurySpend: runningBidTreasurySpend,
       );
     }
-    return OrderValidationResult.accepted();
+    return (
+      result: OrderValidationResult.accepted(),
+      nextRunningBidTreasurySpend: runningBidTreasurySpend,
+    );
+  }
+
+  static int _bidOrderTreasurySpend(
+    TradeOrder order,
+    TradeOrderValidationContext context,
+  ) {
+    final int? price = effectiveMarketPriceForCommodityId(
+      commodityId: order.commodityId,
+      worldMarket: context.worldMarketState,
+      resourceRules: context.resourceRules,
+    );
+    if (price == null) return 0;
+    return order.quantity * price;
   }
 
   /// Commodity ids that appear in [proposedOrders] as **both** a bid and an

@@ -70,6 +70,7 @@ import '../../../config/editorial_monocle_palette.dart';
 import '../../../config/ui_screen_ids.dart';
 import '../../../l10n/l10n.dart';
 import '../../../providers/games_provider.dart';
+import '../../../providers/treasury_summary_provider.dart';
 import '../../../widgets/ct_choice_chip.dart';
 import '../../../widgets/ct_game_feature_screen_shell.dart';
 import '../../../widgets/ct_panel.dart';
@@ -831,6 +832,29 @@ class _MarketTabContent extends ConsumerWidget {
   /// editorial-monocle conventions for read-only surfaces.
   static const double _observeModeOpacity = 0.7;
 
+  /// Projected treasury change this turn from the player's **non-bid**
+  /// staged orders (build / recruit / civilian / subsidy commitments).
+  ///
+  /// Reads `treasurySummaryProvider.projectedDelta`, which is the signed
+  /// treasury delta from `projectOrderEffects` over the **current**
+  /// `Orders` (which already includes the player's staged bids). Adding
+  /// the player's running bid spend back nets the bid contribution out
+  /// of the projection so the helper passes a non-bid-only delta into
+  /// `treasuryAvailableForBidsByPlayer` per
+  /// `SPEC/ui/trade-screen.md` § Market tab — treasury bid cap.
+  ///
+  /// Returns `0` when `treasurySummaryProvider.projectedDelta` is `null`
+  /// — typical for Widgetbook stories and isolated widget tests that
+  /// run without `gameServiceProvider` map data. The default-zero return
+  /// makes the helper fall back to raw treasury (the legacy contract)
+  /// for those callers.
+  int _projectedNonBidTreasuryDelta(WidgetRef ref, int stagedBidSpend) {
+    final TreasurySummary summary = ref.read(treasurySummaryProvider);
+    final int? projectedDelta = summary.projectedDelta;
+    if (projectedDelta == null) return 0;
+    return projectedDelta + stagedBidSpend;
+  }
+
   void _handleDirectionChanged(
     WidgetRef ref,
     CommodityId commodityId,
@@ -902,15 +926,19 @@ class _MarketTabContent extends ConsumerWidget {
         resourceRules: ResourceRules.defaultRules,
       );
       if (rowPrice != null && rowPrice > 0) {
-        final int treasuryBudget = treasuryAvailableForBidsByPlayer(
-          game: game,
-          playerId: playerId,
-        );
         final int totalStagedBidSpend = stagedBidTotalSpendByPlayer(
           orders: orders,
           playerId: playerId,
           game: game,
           resourceRules: ResourceRules.defaultRules,
+        );
+        final int treasuryBudget = treasuryAvailableForBidsByPlayer(
+          game: game,
+          playerId: playerId,
+          projectedNonBidTreasuryDelta: _projectedNonBidTreasuryDelta(
+            ref,
+            totalStagedBidSpend,
+          ),
         );
         final int priorRowBidSpend = prior?.type == TradeOrderType.bid
             ? prior!.quantity * rowPrice
@@ -1008,15 +1036,19 @@ class _MarketTabContent extends ConsumerWidget {
         resourceRules: ResourceRules.defaultRules,
       );
       if (rowPrice != null && rowPrice > 0) {
-        final int treasuryBudget = treasuryAvailableForBidsByPlayer(
-          game: game,
-          playerId: playerId,
-        );
         final int totalStagedBidSpend = stagedBidTotalSpendByPlayer(
           orders: orders,
           playerId: playerId,
           game: game,
           resourceRules: ResourceRules.defaultRules,
+        );
+        final int treasuryBudget = treasuryAvailableForBidsByPlayer(
+          game: game,
+          playerId: playerId,
+          projectedNonBidTreasuryDelta: _projectedNonBidTreasuryDelta(
+            ref,
+            totalStagedBidSpend,
+          ),
         );
         if (totalStagedBidSpend + delta * rowPrice > treasuryBudget) return;
       }
