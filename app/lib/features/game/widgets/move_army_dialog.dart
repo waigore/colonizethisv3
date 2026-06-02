@@ -373,13 +373,46 @@ class _MoveArmyDestinationRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 3),
+      child: Semantics(
+        button: true,
+        selected: selected,
+        label: entry.provinceLabel,
+        child: GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onTap: onTap,
+          child: _MoveArmyDestinationRowChrome(
+            selected: selected,
+            entry: entry,
+            declareWarTriggerLabel: declareWarTriggerLabel,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _MoveArmyDestinationRowChrome extends StatelessWidget {
+  const _MoveArmyDestinationRowChrome({
+    required this.selected,
+    required this.entry,
+    required this.declareWarTriggerLabel,
+  });
+
+  final bool selected;
+  final ArmyMovePickerDestination entry;
+  final String? declareWarTriggerLabel;
+
+  @override
+  Widget build(BuildContext context) {
     final ThemeData theme = Theme.of(context);
     final Color outline = selected
         ? EditorialMonoclePalette.accent
         : EditorialMonoclePalette.border;
     final double outlineWidth = selected
-        ? _selectedBorderWidth
-        : _idleBorderWidth;
+        ? _MoveArmyDestinationRow._selectedBorderWidth
+        : _MoveArmyDestinationRow._idleBorderWidth;
     final TextStyle labelStyle =
         (theme.textTheme.bodyMedium ?? const TextStyle()).copyWith(
           color: selected
@@ -395,43 +428,31 @@ class _MoveArmyDestinationRow extends StatelessWidget {
                 fontWeight: FontWeight.w600,
               );
 
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 3),
-      child: Semantics(
-        button: true,
-        selected: selected,
-        label: entry.provinceLabel,
-        child: GestureDetector(
-          behavior: HitTestBehavior.opaque,
-          onTap: onTap,
-          child: Container(
-            decoration: BoxDecoration(
-              border: Border.all(color: outline, width: outlineWidth),
-            ),
-            padding: const EdgeInsets.symmetric(
-              horizontal: 10,
-              vertical: CtSpacing.m,
-            ),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.center,
+    return Container(
+      decoration: BoxDecoration(
+        border: Border.all(color: outline, width: outlineWidth),
+      ),
+      padding: const EdgeInsets.symmetric(
+        horizontal: 10,
+        vertical: CtSpacing.m,
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          _MoveArmyRadioDot(selected: selected),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
               children: [
-                _MoveArmyRadioDot(selected: selected),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(entry.provinceLabel, style: labelStyle),
-                      if (declareWarTriggerLabel != null && triggerStyle != null)
-                        Text(declareWarTriggerLabel!, style: triggerStyle),
-                    ],
-                  ),
-                ),
+                Text(entry.provinceLabel, style: labelStyle),
+                if (declareWarTriggerLabel != null && triggerStyle != null)
+                  Text(declareWarTriggerLabel!, style: triggerStyle),
               ],
             ),
           ),
-        ),
+        ],
       ),
     );
   }
