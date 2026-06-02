@@ -35,6 +35,7 @@ export 'src/setup/setup_exceptions.dart';
 
 // Turn
 export 'src/turn/economy_debt_rules.dart';
+export 'src/turn/pending_treasury_costs.dart';
 export 'src/turn/research_resolver.dart';
 export 'src/turn/trace/turn_trace_contracts.dart';
 export 'src/turn/trace/turn_trace_file_exporter.dart';
