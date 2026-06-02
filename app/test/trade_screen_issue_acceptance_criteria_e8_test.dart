@@ -666,10 +666,11 @@ void main() {
     'with correct quantities, prices, and treasury totals (#2993 E8 (d))',
     () {
       testWidgets(
-        'Given a partial timber bid (filled 5 of 10 at price 8.4) plus a '
-        'carry-forward fabric offer of qty 3 (no fills), when the player '
-        'opens the Deal Book tab, then the bids panel shows the timber '
-        'filled row + timber carry-forward row + total spent of 42, and '
+        'Given a partial timber bid (filled 5 of 10 at price 8.4, '
+        'displayed as floor=8) plus a carry-forward fabric offer of qty '
+        '3 (no fills), when the player opens the Deal Book tab, then '
+        'the bids panel shows the timber filled row + timber '
+        'carry-forward row + total spent of 40 (= 5 × floor(8.4)), and '
         'the offers panel shows the fabric carry-forward row with total '
         'received of 0',
         (tester) async {
@@ -722,7 +723,8 @@ void main() {
           );
           await _switchToDealBook(tester);
 
-          // Filled timber row in the bids panel: qty 5 × 8.4 = 42.
+          // Filled timber row in the bids panel: qty 5 × floor(8.4) = 5 × 8 = 40
+          // per `SPEC/ui/trade-screen.md` § Deal Book (integer filled-row prices).
           expect(
             find.byKey(
               TradeScreen.dealBookFilledRowKey(
@@ -733,7 +735,7 @@ void main() {
             findsOneWidget,
           );
           // ignore: avoid_hardcoded_strings_in_widgets
-          expect(find.text('timber — qty 5 × 8.4 = 42'), findsOneWidget);
+          expect(find.text('timber — qty 5 × 8 = 40'), findsOneWidget);
 
           // Unfilled timber carry-forward row in the bids panel.
           expect(
@@ -751,14 +753,16 @@ void main() {
             findsOneWidget,
           );
 
-          // Bids panel total spent = filled notional only = 42 (carry-
-          // forwards do not contribute to treasury totals per SPEC).
+          // Bids panel total spent = filled notional only with integer
+          // unit prices: quantity × floor(pricePerUnit) = 5 × 8 = 40
+          // (carry-forwards do not contribute to treasury totals per
+          // `SPEC/ui/trade-screen.md` § Deal Book).
           final Text bidsTotals = tester.widget<Text>(
             find.byKey(TradeScreen.dealBookBidsTotalsKey),
           );
           expect(
             bidsTotals.data,
-            '${TradeScreen.dealBookTotalSpentLabel}: 42',
+            '${TradeScreen.dealBookTotalSpentLabel}: 40',
           );
 
           // Offers panel: no filled deal, one carry-forward fabric offer.

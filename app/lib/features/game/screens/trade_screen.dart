@@ -456,6 +456,14 @@ class TradeScreen extends ConsumerWidget {
   // ignore: avoid_hardcoded_strings_in_widgets
   static const String dealBookTotalReceivedLabel = 'Total received';
 
+  /// Formats a filled-deal unit price for Deal Book rows (Refs #3093).
+  ///
+  /// `FilledDeal.pricePerUnit` may still be a legacy `double` on older
+  /// saves; display uses `floor` so the readout matches integer market
+  /// prices per `SPEC/game/world-market.md` § Price discovery.
+  static String formatFilledDealUnitPrice(double pricePerUnit) =>
+      pricePerUnit.floor().toString();
+
   /// Localized empty-state copy rendered inside a Deal Book panel's
   /// **Filled** section when the player has no filled rows on that side
   /// (but does have carry-forwards, so the panel itself is non-empty).
