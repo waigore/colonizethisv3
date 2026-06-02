@@ -12,6 +12,7 @@ import '../../../providers/production_allocation_provider.dart';
 import '../../../widgets/ct_dialog_shell.dart';
 import '../../../widgets/ct_nine_patch_button.dart';
 import '../../../widgets/ct_resource_cell.dart';
+import '../../../widgets/ct_spacing.dart';
 import '../../../widgets/resource_icon.dart';
 
 /// Minimum viewport width at which the breakdown dialog drops the
@@ -158,7 +159,7 @@ class _ProductionCommodityBreakdownDialogState
         ),
       ),
       child: Padding(
-        padding: const EdgeInsets.only(bottom: 2),
+        padding: const EdgeInsets.only(bottom: CtSpacing.xs),
         child: Text(
           label.toUpperCase(),
           style: _sectionHeaderStyle(context),
