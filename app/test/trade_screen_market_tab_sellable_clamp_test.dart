@@ -21,6 +21,7 @@ import 'package:colonizethis_app/features/game/flame/region_map_component.dart'
 import 'package:colonizethis_app/features/game/screens/trade_screen.dart';
 import 'package:colonizethis_app/features/game/shell_player_context.dart';
 import 'package:colonizethis_app/providers/games_provider.dart';
+import 'package:colonizethis_app/providers/production_allocation_provider.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
@@ -65,6 +66,7 @@ Future<ProviderContainer> _pumpTradeScreen(
   WidgetTester tester, {
   required Game game,
   Orders initialOrders = const Orders(),
+  Map<String, int> initialDesiredOutputByRecipe = const <String, int>{},
 }) async {
   final Player player = game.players.first;
   final ProviderContainer container = ProviderContainer(
@@ -92,6 +94,11 @@ Future<ProviderContainer> _pumpTradeScreen(
     ],
   );
   addTearDown(container.dispose);
+  if (initialDesiredOutputByRecipe.isNotEmpty) {
+    container
+        .read(productionDesiredOutputProvider.notifier)
+        .replaceAll(initialDesiredOutputByRecipe);
+  }
   await tester.binding.setSurfaceSize(const Size(1024, 4096));
   addTearDown(() => tester.binding.setSurfaceSize(null));
   await tester.pumpWidget(
@@ -132,9 +139,10 @@ void main() {
           ),
         );
 
-        // No staged offers → headroom equals the offer cap (raw stockpile
-        // today, with industry-allocation projection deferred per #3093
-        // follow-up).
+        // No staged offers and no production allocation in this test →
+        // industry-allocation projection contributes 0, headroom equals
+        // the raw stockpile. The new industry-allocation reservation
+        // path is exercised by the canonical AC test below.
         final Finder timberSellable = find.byKey(
           TradeScreen.marketRowSellableReadoutKey(_timber),
         );
@@ -152,6 +160,150 @@ void main() {
           tester.widget<Text>(ironSellable).data,
           // ignore: avoid_hardcoded_strings_in_widgets
           '(7)',
+        );
+      },
+    );
+
+    testWidgets(
+      'canonical AC (Refs #3093): stockpile=10 timber, production '
+      'allocation consumes 3 timber (paper_from_timber @ 3 labour), '
+      'staged offer 2 → `(5)` readout and `+` can only grow the offer '
+      'by 5 (staged quantity caps at 7 = stockpile − reservation)',
+      (tester) async {
+        final ProviderContainer container = await _pumpTradeScreen(
+          tester,
+          game: _buildGame(
+            stockpile: const <CommodityId, int>{'timber': 10},
+          ),
+          initialOrders: Orders(
+            tradeOrdersByPlayerId: {
+              _humanPlayerId: [
+                TradeOrder(
+                  commodityId: _timber,
+                  type: TradeOrderType.offer,
+                  quantity: 2,
+                  priority: 1,
+                ),
+              ],
+            },
+          ),
+          // paper_from_timber consumes 3 timber per run, 3 labour per
+          // output; desired output 1 → assigned labour 3 → runs 1 →
+          // 3 timber reserved.
+          initialDesiredOutputByRecipe: const <String, int>{
+            'paper_from_timber': 1,
+          },
+        );
+
+        // Sellable headroom = max(0, 10 - 3) - 2 = 5.
+        expect(
+          tester
+              .widget<Text>(
+                  find.byKey(TradeScreen.marketRowSellableReadoutKey(_timber)))
+              .data,
+          // ignore: avoid_hardcoded_strings_in_widgets
+          '(5)',
+        );
+
+        // The offer cap (stockpile − reservation) is 7, so 5 +-taps
+        // grow the staged offer from 2 to 7 (= cap). Per the issue AC:
+        // "offer increment cannot exceed 5" — i.e. the player gains
+        // at most +5 units before saturating, which lands the staged
+        // quantity at 7 (matching the cap).
+        for (int i = 0; i < 5; i++) {
+          await tester
+              .tap(find.byKey(TradeScreen.marketRowIncrementKey(_timber)));
+          await tester.pump();
+        }
+        expect(_stagedOrder(container, _timber)?.quantity, 7,
+            reason: 'Five +-taps grow the staged offer from 2 to 7 '
+                '(= 10 stockpile − 3 industry allocation).');
+        expect(
+          tester
+              .widget<Text>(
+                  find.byKey(TradeScreen.marketRowSellableReadoutKey(_timber)))
+              .data,
+          // ignore: avoid_hardcoded_strings_in_widgets
+          '(0)',
+          reason: 'At cap, sellable readout drops to (0).',
+        );
+
+        // Next + tap is a silent no-op; quantity stays at 7.
+        await tester
+            .tap(find.byKey(TradeScreen.marketRowIncrementKey(_timber)));
+        await tester.pump();
+        expect(_stagedOrder(container, _timber)?.quantity, 7,
+            reason: 'Tapping `+` at saturation must not exceed the offer '
+                'cap of 7 (= 10 stockpile − 3 industry allocation).');
+      },
+    );
+
+    testWidgets(
+      'industry-allocation reservation hides the Offer chip when '
+      'allocation fully reserves stockpile (cap drops to 0)',
+      (tester) async {
+        final ProviderContainer container = await _pumpTradeScreen(
+          tester,
+          game: _buildGame(
+            stockpile: const <CommodityId, int>{'timber': 6},
+          ),
+          // Two runs of paper_from_timber consume 6 timber.
+          initialDesiredOutputByRecipe: const <String, int>{
+            'paper_from_timber': 2,
+          },
+        );
+
+        expect(
+          tester
+              .widget<Text>(
+                  find.byKey(TradeScreen.marketRowSellableReadoutKey(_timber)))
+              .data,
+          // ignore: avoid_hardcoded_strings_in_widgets
+          '(0)',
+        );
+        await tester
+            .tap(find.byKey(TradeScreen.marketRowOfferChipKey(_timber)));
+        await tester.pump();
+        expect(_stagedOrder(container, _timber), isNull,
+            reason: 'Full industry-allocation reservation disables the '
+                'Offer chip — tap must be a silent no-op.');
+      },
+    );
+
+    testWidgets(
+      'industry-allocation reservation on one commodity does not '
+      'reduce another commodity\'s sellable headroom',
+      (tester) async {
+        await _pumpTradeScreen(
+          tester,
+          game: _buildGame(
+            stockpile: const <CommodityId, int>{'timber': 10, 'iron': 7},
+          ),
+          // paper_from_timber consumes only timber.
+          initialDesiredOutputByRecipe: const <String, int>{
+            'paper_from_timber': 1,
+          },
+        );
+
+        expect(
+          tester
+              .widget<Text>(
+                  find.byKey(TradeScreen.marketRowSellableReadoutKey(_timber)))
+              .data,
+          // ignore: avoid_hardcoded_strings_in_widgets
+          '(7)',
+          reason: 'Timber sellable = 10 - 3 (paper reservation) = 7.',
+        );
+        expect(
+          tester
+              .widget<Text>(
+                  find.byKey(TradeScreen.marketRowSellableReadoutKey(_iron)))
+              .data,
+          // ignore: avoid_hardcoded_strings_in_widgets
+          '(7)',
+          reason:
+              'Iron has no production allocation; headroom equals raw '
+              'stockpile.',
         );
       },
     );

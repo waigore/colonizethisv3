@@ -70,6 +70,7 @@ import '../../../config/editorial_monocle_palette.dart';
 import '../../../config/ui_screen_ids.dart';
 import '../../../l10n/l10n.dart';
 import '../../../providers/games_provider.dart';
+import '../../../providers/production_allocation_provider.dart';
 import '../../../providers/treasury_summary_provider.dart';
 import '../../../widgets/ct_choice_chip.dart';
 import '../../../widgets/ct_game_feature_screen_shell.dart';
@@ -688,10 +689,22 @@ class _MarketTabContent extends ConsumerWidget {
     // build so the rows below render `(headroom)` and clamp Offer
     // toggles / `+` increments consistently. The helpers live in
     // `colonizethis_logic` (pure functions) and are safe to call per
-    // frame.
+    // frame. Industry-allocation reservations come from the player's
+    // current production assignments (derived from
+    // `productionDesiredOutputProvider`); subtracting them from the
+    // raw stockpile makes the sellable readout match
+    // `SPEC/game/world-market.md` § Per-commodity quantity cap. We
+    // `watch` the provider so allocation changes (e.g. the user
+    // returning from the Production screen) immediately refresh the
+    // sellable readouts without leaving the Market tab.
+    final Map<String, int> desiredOutputByRecipe =
+        ref.watch(productionDesiredOutputProvider);
+    final Map<CommodityId, int> productionInputConsumption =
+        _consumptionForDesiredOutput(desiredOutputByRecipe);
     final Map<CommodityId, int> offerCap = offerCapByCommodityId(
       game: game,
       playerId: playerId,
+      productionInputConsumptionByCommodityId: productionInputConsumption,
     );
     final Map<CommodityId, int> stagedOffers =
         stagedOfferQuantitiesByCommodityId(
@@ -832,6 +845,49 @@ class _MarketTabContent extends ConsumerWidget {
   /// editorial-monocle conventions for read-only surfaces.
   static const double _observeModeOpacity = 0.7;
 
+  /// Projected per-commodity production-input consumption derived from
+  /// the player's current Production-panel labour allocation
+  /// (`productionDesiredOutputProvider` →
+  /// `assignedRecipesFromDesiredOutput`).
+  ///
+  /// Returned as the `productionInputConsumptionByCommodityId`
+  /// argument for `offerCapByCommodityId` / `sellableHeadroomByCommodityId`
+  /// so the sellable readout, Offer chip gating, and Offer `+` stepper
+  /// all honor the player's industry-allocation reservations per
+  /// `SPEC/game/world-market.md` § Per-commodity quantity cap and
+  /// `SPEC/ui/trade-screen.md` § Market tab — sellable readout +
+  /// offer-side clamp.
+  ///
+  /// `build` `watch`es `productionDesiredOutputProvider` so the screen
+  /// rebuilds on allocation changes; the handler paths reuse
+  /// `ref.read` and call this helper to evaluate the same projection
+  /// in their imperative context.
+  ///
+  /// When the desired-output map is empty (player hasn't allocated any
+  /// recipes yet, or the provider is missing under widget tests /
+  /// Widgetbook), the returned map is empty and the offer cap falls
+  /// back to raw stockpile — preserving the legacy contract.
+  Map<CommodityId, int> _projectedProductionConsumption(WidgetRef ref) =>
+      _consumptionForDesiredOutput(ref.read(productionDesiredOutputProvider));
+
+  /// Pure helper: build the per-commodity production-input consumption
+  /// map for a desired-output snapshot. Extracted so `build` (which
+  /// `watch`es the provider) and the handlers (which `read` it) share
+  /// one normalisation path.
+  static Map<CommodityId, int> _consumptionForDesiredOutput(
+    Map<String, int> desiredOutputByRecipe,
+  ) {
+    if (desiredOutputByRecipe.isEmpty) {
+      return const <CommodityId, int>{};
+    }
+    final List<AssignedRecipe> assignments =
+        assignedRecipesFromDesiredOutput(desiredOutputByRecipe);
+    if (assignments.isEmpty) {
+      return const <CommodityId, int>{};
+    }
+    return productionInputConsumptionByCommodityIdForAssignments(assignments);
+  }
+
   /// Projected treasury change this turn from the player's **non-bid**
   /// staged orders (build / recruit / civilian / subsidy commitments).
   ///
@@ -958,15 +1014,20 @@ class _MarketTabContent extends ConsumerWidget {
       }
     } else if (next == TradeOrderType.offer) {
       // Refs #3093 — sellable clamp slice. The per-commodity offer cap
-      // is `stockpile − industryAllocation` (alloc treated as 0 until
-      // a generic projector lands; see
-      // `sellable_quantity.dart`). Mutual exclusion guarantees the row
+      // is `max(0, stockpile − industryAllocation)`. Industry
+      // allocation is the per-commodity input consumption projected
+      // from the player's current production allocations via
+      // `productionInputConsumptionByCommodityIdForAssignments`
+      // (`SPEC/program/order-projections.md` § Production input
+      // consumption projection). Mutual exclusion guarantees the row
       // is the only staged offer for the commodity, so the cap is
       // applied directly to the row's quantity without subtracting
       // sibling offers.
       final int rowCap = offerCapByCommodityId(
         game: game,
         playerId: playerId,
+        productionInputConsumptionByCommodityId:
+            _projectedProductionConsumption(ref),
       )[commodityId] ??
           0;
       if (rowCap <= 0) {
@@ -1054,13 +1115,18 @@ class _MarketTabContent extends ConsumerWidget {
       }
     } else if (prior.type == TradeOrderType.offer && delta > 0) {
       // Refs #3093 — sellable clamp slice. Block the `+` tap when the
-      // per-commodity offer cap (`stockpile − industryAllocation`,
-      // alloc=0 today) is exhausted. Mutual exclusion guarantees the
-      // row is the only staged offer for the commodity, so the cap is
-      // applied directly to `prior.quantity + delta`.
+      // per-commodity offer cap (`max(0, stockpile −
+      // industryAllocation)`) is exhausted. Industry allocation comes
+      // from the player's current production assignments via
+      // `productionInputConsumptionByCommodityIdForAssignments`.
+      // Mutual exclusion guarantees the row is the only staged offer
+      // for the commodity, so the cap is applied directly to
+      // `prior.quantity + delta`.
       final int rowCap = offerCapByCommodityId(
         game: game,
         playerId: playerId,
+        productionInputConsumptionByCommodityId:
+            _projectedProductionConsumption(ref),
       )[commodityId] ??
           0;
       if (prior.quantity + delta > rowCap) return;

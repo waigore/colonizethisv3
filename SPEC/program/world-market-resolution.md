@@ -130,12 +130,16 @@ For each commodity, partition into an offer queue and a bid queue. Sort each que
 
 ### Step C — Match
 
-Maintain a per-buyer running cargo accumulator `remainingCargo[buyerId] = tradeCapacity[buyerId]` (see [world-market.md](../game/world-market.md) § Cargo). For each commodity, iterate priority tiers from the absolute-priority first-right tier downward through integer tiers (1, 2, …). Within each tier, iterate offers in sorted order; for each offer, iterate compatible bids:
+Maintain a per-buyer running cargo accumulator `remainingCargo[buyerId] = tradeCapacity[buyerId]` (see [world-market.md](../game/world-market.md) § Cargo) and a per-buyer running treasury accumulator `remainingTreasury[buyerId] = max(0, treasuryBudget[buyerId])` (see [world-market.md](../game/world-market.md) § Treasury budget for bids; the budget is the buyer's `Player.treasury` at phase 13 start, clamped at `0` for negative balances). For each commodity, iterate priority tiers from the absolute-priority first-right tier downward through integer tiers (1, 2, …). Within each tier, iterate offers in sorted order; for each offer, iterate compatible bids:
 
 ```
+maxAffordable = pricePerUnit > 0
+    ? floor(remainingTreasury[bid.submitterId] / pricePerUnit)
+    : bid.remaining     // missing-price defect path: legacy free-fill preserved
 matchQty = min(offer.remaining,
                bid.remaining,
-               remainingCargo[bid.submitterId])
+               remainingCargo[bid.submitterId],
+               maxAffordable)
 if matchQty > 0:
   emit FilledDeal(seller=offer.submitterId, buyer=bid.submitterId,
                   commodity=c, quantity=matchQty,
@@ -145,9 +149,13 @@ if matchQty > 0:
   offer.remaining -= matchQty
   bid.remaining   -= matchQty
   remainingCargo[bid.submitterId] -= matchQty
+  if pricePerUnit > 0:
+    remainingTreasury[bid.submitterId] -= round(matchQty * pricePerUnit)
 ```
 
-Cargo tracking is **per buyer**, shared across all that buyer's commodities. Once `remainingCargo` reaches zero for a buyer, none of that buyer's remaining bids are filled. Partial fills are emitted as a `FilledDeal` for the matched quantity and a residual remainder on the bid; the residual continues to the next bid/offer pairing in the same tier, then to subsequent tiers if it remains.
+Cargo tracking is **per buyer**, shared across all that buyer's commodities. Once `remainingCargo` reaches zero for a buyer, none of that buyer's remaining bids are filled. Treasury tracking is also **per buyer**, shared across all that buyer's commodities and tiers: once `remainingTreasury` falls below `pricePerUnit` for the current match, that bid produces no further fills in the same phase pass; subsequent bids for the same buyer at any tier or commodity are skipped if they would require treasury the buyer no longer has. Partial fills are emitted as a `FilledDeal` for the matched quantity and a residual remainder on the bid; the residual continues to the next bid/offer pairing in the same tier, then to subsequent tiers if it remains. **In-turn treasury credits are not folded back into the running tally** mid-match: FRR overseas-profit credits and GP-seller credits remain Step-D additive (preserves determinism and avoids a fixed-point pass).
+
+A treasury-truncated bid (residual `> 0` because `maxAffordable` clamped the match) records exactly one `MarketActivityNote` with `kind = bidPartialFillTreasuryInsufficient` on the commodity's `MarketActivity` so the Deal Book and observer tooling can attribute the truncation. The treasury-truncated residual is preserved in `unfilledBidsByFactionId` with original `priority` / `commodityId` / `isFtp` / `originTileKey` and rolls into `WorldMarketState.carryForwardBidsByFactionId` per § Step E.
 
 ### Step D — Apply transfers
 
@@ -168,7 +176,14 @@ The treasury sink is recorded as a `MarketActivityNote` (`treasury_sink_minor_tr
 
 ### Step E — Price discovery and carry-forwards
 
-Aggregate `totalBid_new` and `totalOffer_new` per commodity using **only** the newly-submitted current-turn quantities (carry-forward quantities and minor/tribe auto-offers count as carry-forwards-equivalent and are excluded from price discovery, since auto-offers track a steady-state extraction rather than turn-of-submission demand intent). Compute `Δ%` per [world-market.md](../game/world-market.md) § Price discovery, cap at ±20 %, apply multiplicatively, and clamp to the 30 %-of-base floor. Persist the new price into `WorldMarketState.prices` for next-turn matching; this-turn deals already cleared at the **old** price in Step C.
+Aggregate `totalBid_new` and `totalOffer_new` per commodity from this turn's newly-submitted orders, with a bid-side asymmetry:
+
+- `totalBid_new[c]` aggregates the **filled portion** of this turn's newly-submitted bids for commodity `c`. Concretely: per faction `f` and commodity `c`, `filledNewBids[f, c] = min(submittedNewBids[f, c], filledQuantityByBuyer[f, c])` (newly-submitted bids appear at the head of each faction's merged bid list per § Step A, so Step C consumes them before any carry-forward residuals; the `min` allocates filled units to newly-submitted bids first). Sum `filledNewBids` across factions to obtain `totalBid_new[c]`.
+- `totalOffer_new[c]` aggregates the **submitted** quantity of this turn's newly-submitted offers for commodity `c` (offers are stockpile-bounded by `TradeOrderValidator` rule 7, which already eliminates the anti-gaming surface that bids carry).
+
+Carry-forward quantities (offers and bids) and minor/tribe auto-offers remain excluded from price discovery — they continue to participate in matching but never contribute to `totalBid_new` or `totalOffer_new`.
+
+The bid-side filled-quantity cap prevents a low-treasury or low-cargo Great Power from staging unfillable mega-bids to inflate `Δ%` upward. Compute `Δ%` per [world-market.md](../game/world-market.md) § Price discovery, cap at ±20 %, apply multiplicatively, and clamp to the 30 %-of-base floor. Persist the new price into `WorldMarketState.prices` for next-turn matching; this-turn deals already cleared at the **old** price in Step C.
 
 Remaining unfilled offers and bids that originated from a Great-Power submitter (including residuals from partial fills) are tagged with their original priority and submitter and pushed onto `WorldMarketState.carryForwardOffersByFactionId` / `carryForwardBidsByFactionId` (per-faction-keyed maps mirroring `DealMatchResult.unfilledOffersByFactionId` / `unfilledBidsByFactionId`) for the next turn. Minor/Tribe auto-offers do not carry forward: each turn re-emits them based on that turn's extraction.
 
@@ -225,6 +240,7 @@ typedef DealMatchInputs = ({
   Map<String, List<TradeOrder>> offersByFactionId,
   Map<String, List<TradeOrder>> bidsByFactionId,
   Map<String, int> tradeCapacityByFactionId,
+  Map<String, int> treasuryBudgetByBuyerFactionId, // missing buyer → 0
   Map<CommodityId, double> pricesByCommodityId,
   Set<String> ftpPairKeys,
   PurchasedTileIndex? purchasedTileIndex, // null disables FRR (legacy)
@@ -235,6 +251,8 @@ class DealMatcher {
   static DealMatchResult matchDeals(DealMatchInputs inputs);
 }
 ```
+
+`treasuryBudgetByBuyerFactionId` carries each buyer's `Player.treasury` at phase 13 start, clamped at `0` for negative balances. A buyer that has bids but is missing from this map is treated as having `treasury = 0` (mirroring the existing `tradeCapacityByFactionId` edge case) — no fills are emitted for that buyer and every bid carries forward at original quantity. The matcher decrements a per-buyer `remainingTreasuryByBuyerFactionId` mirror after each emitted `FilledDeal` by `round(matchQty × pricePerUnit)`; this running tally is the fourth term in the `matchQty` clamp (see § Step C). The FRR pre-pass uses the same clamp — FRR fills are not exempt.
 
 For each commodity that appears in any offer or bid (commodities iterated in alphabetical id order for determinism):
 
@@ -423,6 +441,18 @@ The pure helpers (`computeNextPrice`, `computeMarketActivity`, `DealMatcher.matc
 - **Deals ledger emitted per commodity (Refs #2993 E6).** Given current-turn submissions that produce one or more `FilledDeal` entries for commodity `c`, when phase 13 builds `MarketActivity` for `c`, then `MarketActivity.deals` contains each `FilledDeal` exactly once in emission order, no `FilledDeal` for any other commodity, and the list is unmodifiable.
 - **Empty deals ledger for unfilled commodity.** Given a commodity `c` receives at least one submitted offer or bid but matching emits no `FilledDeal` for `c` (e.g. offer-only or insufficient cargo), when phase 13 builds `MarketActivity` for `c`, then `MarketActivity.deals.isEmpty` is true (not null, not absent) so the Deal Book UI can iterate it unconditionally.
 - **Deals JSON round-trip.** Given a `WorldMarketState` whose `lastTurnActivity[c].deals` has one or more `FilledDeal` entries, when the state is serialized to JSON and parsed back, then the restored `MarketActivity.deals` equals the original (`==` and `hashCode`) including each `FilledDeal`'s `isFirstRightOfRefusalMatch` and `isFtpMatch` flags.
+
+### Treasury clamp inside matcher (Refs #3115)
+
+- **Treasury truncates a single oversized bid.** Given a Great Power `gp1` with `treasury = 100` at phase 13 start, a single tier-1 bid for `10` units of `c` at `pricePerUnit = 30`, a matching tier-1 offer of `10` units, and sufficient buyer cargo, when phase 13 runs, then the matcher emits exactly one `FilledDeal(buyer = gp1, commodity = c, quantity = 3, pricePerUnit = 30)`, post-phase `gp1.treasury == 10`, and `WorldMarketState.carryForwardBidsByFactionId['gp1']` contains the residual bid with `quantity = 7` and original `priority` / `commodityId` / `isFtp` preserved.
+- **Treasury exhausts across multiple bids in submission order.** Given `gp1` with `treasury = 100` submits two tier-1 bids in submission order — `A x 5 @ 20` (notional 100) then `B x 5 @ 20` (notional 100) — with matching offers and sufficient cargo, when phase 13 runs, then bid `A` fully fills (`quantity = 5`), bid `B` emits no `FilledDeal`, bid `B`'s full `quantity = 5` carries forward in `carryForwardBidsByFactionId['gp1']`, and post-phase `gp1.treasury == 0`.
+- **Negative-treasury buyer is fully suppressed.** Given `gp1` enters phase 13 with `treasury = -50` (already in debt from earlier phases) and any set of bids and matching offers, when phase 13 runs, then no `FilledDeal` is emitted for `gp1`, every one of `gp1`'s submitted and carry-forward bids is preserved in `carryForwardBidsByFactionId['gp1']` at original quantity, and post-phase `gp1.treasury == -50`.
+- **FRR respects treasury clamp.** Given `gp1` is the owning GP of a first-right-of-refusal offer for `10` units of `c` at `pricePerUnit = 20`, `gp1.treasury = 60`, and `gp1` submits a bid for `c`, when the FRR pre-pass runs, then it emits `FilledDeal(quantity = 3, isFirstRightOfRefusalMatch = true)` and the residual `7` carries forward in `carryForwardBidsByFactionId['gp1']`.
+- **Treasury-insufficient activity note.** Given a treasury-truncated bid (residual `r > 0` because the treasury clamp reduced `matchQty`), when phase 13 records activity notes, then the commodity's `MarketActivity.notes` contains exactly one entry with `kind = bidPartialFillTreasuryInsufficient`, `factionId` equal to the buyer's faction id, and `quantity` equal to the original submitted bid quantity.
+- **Deterministic with treasury clamp.** Given two phase-13 runs with identical merged-order input, identical `WorldMarketState`, identical `treasuryBudgetByBuyerFactionId`, and identical seeds, when both runs execute Step C, then both emit byte-identical sequences of `FilledDeal` entries (same order, same quantities, same buyers/sellers).
+- **Price-discovery bid-side cap at filled quantity.** Given a treasury-truncated bid for commodity `c` (submitted quantity `S = 10`, filled quantity `F = 3`) and an unrelated offer for `c` of submitted quantity `10`, when phase 13 aggregates Step E, then `totalBid_new[c] == 3` (filled) and `totalOffer_new[c] == 10` (submitted), and the price update uses those values per the existing capped formula.
+- **Zero-price commodity preserves legacy free-fill.** Given a bid whose matched offer has `pricePerUnit == 0` (missing-price defect path), when matching runs, then the treasury clamp does not reduce `matchQty` below what the other three clamps would produce, no treasury debit is recorded against `remainingTreasury`, and behavior is preserved relative to the legacy free-fill branch.
+- **Missing budget entry treats buyer as zero-treasury.** Given a call to `DealMatcher.matchDeals` whose `treasuryBudgetByBuyerFactionId` omits buyer `gp1` while `gp1` has bids, when matching runs, then `gp1`'s budget is treated as `0` (mirroring the existing `tradeCapacityByFactionId` edge case), no `FilledDeal` is emitted for `gp1`, and every `gp1` bid carries forward at original quantity.
 
 ### Data types (issue #2989)
 
