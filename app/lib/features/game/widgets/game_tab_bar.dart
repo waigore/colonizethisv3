@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import '../../../config/app_assets.dart';
 import '../../../config/ct_e2e.dart';
 import '../../../config/editorial_monocle_palette.dart';
+import '../../../widgets/ct_spacing.dart';
 import '../../../widgets/strict_asset_icon.dart';
 import '../flame/game_screen_shared.dart'
     show kCargoHoldIndicatorKey, kTreasuryIndicatorKey;
@@ -328,7 +329,7 @@ class _TreasuryIndicator extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 8),
+      padding: const EdgeInsets.symmetric(horizontal: CtSpacing.m),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -364,7 +365,7 @@ class _CargoHoldIndicator extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       key: kCargoHoldIndicatorKey,
-      padding: const EdgeInsets.symmetric(horizontal: 8),
+      padding: const EdgeInsets.symmetric(horizontal: CtSpacing.m),
       decoration: BoxDecoration(
         border: Border(
           left: BorderSide(

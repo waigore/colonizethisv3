@@ -25,7 +25,10 @@ class _DiplomacyModeBar extends StatelessWidget {
         ),
       ),
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        padding: const EdgeInsets.symmetric(
+          horizontal: CtSpacing.ml,
+          vertical: CtSpacing.m,
+        ),
         // SPEC/ui/mobile-adaptation.md § 7 Minimum-viewport pin: the three
         // filter labels ("All", "Great Powers only", "Minors only") total
         // ~458 dp intrinsic width but the panel body is only ~296 dp wide
