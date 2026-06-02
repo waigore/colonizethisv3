@@ -270,6 +270,7 @@ const List<String> _migratedFeatureFiles = <String>[
   'lib/features/game/dialogue/game_start_intro_overlay.dart',
   'lib/features/game/dialogue/intervention_dialogue_overlay.dart',
   'lib/features/game/dialogue/overture_dialogue_overlay.dart',
+  'lib/features/game/flame/game_map_canvas_stack.dart',
   'lib/features/game/flame/game_side_menu.dart',
   'lib/features/game/flame/next_turn_confirmation_dialog.dart',
   'lib/features/game/flame/victory_overlay.dart',

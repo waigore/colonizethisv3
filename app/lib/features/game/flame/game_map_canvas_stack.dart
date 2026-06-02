@@ -8,6 +8,7 @@ import 'package:colonizethis_map/colonizethis_map.dart' show RegionMapViewData;
 
 import '../../../../config/editorial_monocle_palette.dart';
 import '../../../../providers/map_province_panel_provider.dart';
+import '../../../../widgets/ct_spacing.dart';
 import '../widgets/chrome/ct_nine_patch_button.dart';
 import 'game_screen_shared.dart' show kGameMapWideProvinceSidePanelWidth;
 import 'region_map_component.dart'
@@ -173,7 +174,7 @@ class GameMapCanvasStack extends ConsumerWidget {
                   child: Padding(
                     padding: const EdgeInsets.symmetric(
                       horizontal: 14,
-                      vertical: 8,
+                      vertical: CtSpacing.m,
                     ),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
@@ -191,7 +192,7 @@ class GameMapCanvasStack extends ConsumerWidget {
                           onPressed: onWorkTargetSelectionCancelled,
                           minHeight: kMapSelectionPromptCancelMinHeight,
                           padding: const EdgeInsets.symmetric(
-                            horizontal: 12,
+                            horizontal: CtSpacing.ml,
                             vertical: 4,
                           ),
                           child: Text(
