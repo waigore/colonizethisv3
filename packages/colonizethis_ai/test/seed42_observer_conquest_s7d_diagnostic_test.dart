@@ -5,6 +5,8 @@ import 'package:colonizethis_ai/src/planning/army_conquest_prep.dart'
     show regimentCountForPlayer;
 import 'package:colonizethis_ai/src/planning/expand_phase_planner.dart'
     show cheapestRegimentBuildTreasuryCost;
+import 'package:colonizethis_ai/src/planning/treasury_planner.dart'
+    show kTreasuryOfferPriorityUrgent;
 import 'package:colonizethis_data/colonizethis_data.dart'
     hide cheapestRegimentBuildTreasuryCost;
 import 'package:colonizethis_logger/colonizethis_logger.dart';
@@ -261,6 +263,24 @@ import 'package:logger/logger.dart';
 /// and copy the `S7D_DIAGNOSTIC_JSON_*`-delimited block into a fresh
 /// comment on issue #2847 if the diagnostic surface shifts after a
 /// tuning slice lands.
+///
+/// ## Refs #2924 Step 0 — world-market lock-recovery metrics
+///
+/// The same run now also emits a separate
+/// `ISSUE2924_STEP0_JSON_*`-delimited block scoped to the
+/// world-market lock-recovery path required by issue #2924
+/// § Recommended sequencing Step 0. The block records per-GP
+/// totals for: trade orders the AI emits each turn (offers / bids
+/// plus urgent-priority offers at
+/// [kTreasuryOfferPriorityUrgent]); deals matched in phase 13
+/// counted as seller / buyer; treasury credited (seller side
+/// notional) and debited (buyer side notional); transitions of
+/// post-turn treasury across [cheapestRegimentBuildTreasuryCost]
+/// (and the first turn each GP first reaches the threshold);
+/// plus the pre-existing
+/// `gpTreasuryUnderCheapestRegimentTurns` count from the #2847
+/// surface. Copy this block into a fresh comment on issue #2924
+/// when refreshing the Step 0 decision-gate evidence.
 void main() {
   setUpAll(() {
     CtLogger.level = Level.off;
@@ -321,6 +341,54 @@ void main() {
         for (final gpId in gpIds) gpId: 0,
       };
       final lastSnapshotFields = <String, Map<String, Object?>>{};
+
+      // Refs #2924 Step 0 — world-market lock-recovery diagnostics:
+      // per-GP rollups capturing (a) trade orders the AI submits each
+      // turn (offer/bid counts plus urgent-priority offer counts at
+      // [kTreasuryOfferPriorityUrgent]), (b) deals matched in the
+      // world-market phase counted by seller/buyer GP plus treasury
+      // credited/debited per side, and (c) whether/when the post-turn
+      // treasury crosses [cheapestRegimentBuildTreasuryCost]. These
+      // surfaces are issue-2924 specific and live alongside the
+      // existing #2847 S7-D fields so a single run produces both
+      // diagnostic blocks.
+      final tradeOfferCount = <String, int>{
+        for (final gpId in gpIds) gpId: 0,
+      };
+      final tradeUrgentOfferCount = <String, int>{
+        for (final gpId in gpIds) gpId: 0,
+      };
+      final tradeBidCount = <String, int>{
+        for (final gpId in gpIds) gpId: 0,
+      };
+      final dealsAsSeller = <String, int>{
+        for (final gpId in gpIds) gpId: 0,
+      };
+      final dealsAsBuyer = <String, int>{
+        for (final gpId in gpIds) gpId: 0,
+      };
+      final treasuryCredited = <String, int>{
+        for (final gpId in gpIds) gpId: 0,
+      };
+      final treasuryDebited = <String, int>{
+        for (final gpId in gpIds) gpId: 0,
+      };
+      final regimentThresholdCrossingsUp = <String, int>{
+        for (final gpId in gpIds) gpId: 0,
+      };
+      final regimentThresholdFirstReachTurn = <String, int?>{
+        for (final gpId in gpIds) gpId: null,
+      };
+      final treasuryAtTurn99 = <String, int>{
+        for (final gpId in gpIds) gpId: 0,
+      };
+      // Treasury immediately after the previous turn resolved (seeded
+      // from turn-0 pre-resolution treasury so the first crossing
+      // detection compares against game start rather than zero).
+      final treasuryPrevTurn = <String, int>{
+        for (final gpId in gpIds)
+          gpId: game.playerById(gpId)?.treasury ?? 0,
+      };
 
       for (var t = 0; t < 100; t++) {
         // Capture phase / arm decisions *before* the turn resolves so the
@@ -392,6 +460,28 @@ void main() {
           humanOrders: const Orders(),
           aiOrders: fullAi.orders,
         );
+
+        // Refs #2924 Step 0 — count submitted trade orders per GP
+        // from the merged order list that the resolver will apply.
+        // Carry-forward bids/offers re-injected by the world-market
+        // phase are not counted here; this metric reflects what the
+        // AI actively emits each turn.
+        for (final gpId in gpIds) {
+          final tradeOrders = merged.tradeOrdersByPlayerId[gpId];
+          if (tradeOrders == null) continue;
+          for (final order in tradeOrders) {
+            if (order.type == TradeOrderType.offer) {
+              tradeOfferCount[gpId] = (tradeOfferCount[gpId] ?? 0) + 1;
+              if (order.priority >= kTreasuryOfferPriorityUrgent) {
+                tradeUrgentOfferCount[gpId] =
+                    (tradeUrgentOfferCount[gpId] ?? 0) + 1;
+              }
+            } else if (order.type == TradeOrderType.bid) {
+              tradeBidCount[gpId] = (tradeBidCount[gpId] ?? 0) + 1;
+            }
+          }
+        }
+
         final assignments = fullAi.economyPlansByPlayerId.map(
           (pid, plan) => MapEntry(pid, plan.productionAssignments),
         );
@@ -404,6 +494,57 @@ void main() {
         );
         expect(result, isA<TurnResolutionComplete>());
         game = (result as TurnResolutionComplete).game;
+
+        // Refs #2924 Step 0 — tally deals matched per GP from the
+        // post-resolution world-market activity. `lastTurnActivity`
+        // holds the deals that filled during phase 13 of the just-
+        // resolved turn; we accumulate seller/buyer counts and the
+        // resulting treasury credit/debit per GP. Treasury delta is
+        // rounded the same way the world-market phase computes the
+        // notional transfer per `SPEC/program/world-market-resolution.md`.
+        final activity = game.worldMarketState.lastTurnActivity;
+        for (final entry in activity.entries) {
+          for (final deal in entry.value.deals) {
+            final notional = (deal.quantity * deal.pricePerUnit).round();
+            final seller = deal.sellerFactionId;
+            if (treasuryCredited.containsKey(seller)) {
+              dealsAsSeller[seller] = (dealsAsSeller[seller] ?? 0) + 1;
+              treasuryCredited[seller] =
+                  (treasuryCredited[seller] ?? 0) + notional;
+            }
+            final buyer = deal.buyerFactionId;
+            if (treasuryDebited.containsKey(buyer)) {
+              dealsAsBuyer[buyer] = (dealsAsBuyer[buyer] ?? 0) + 1;
+              treasuryDebited[buyer] =
+                  (treasuryDebited[buyer] ?? 0) + notional;
+            }
+          }
+        }
+
+        // Refs #2924 Step 0 — treasury threshold crossings:
+        // count turn boundaries where a GP transitions from
+        // `treasury < cheapestRegimentBuildTreasuryCost` to
+        // `treasury >= cheapestRegimentBuildTreasuryCost` based on
+        // post-resolution treasury. First-reach turn captures the
+        // earliest turn at which each GP's post-turn treasury can
+        // afford the cheapest regiment.
+        final cheapest = cheapestRegimentBuildTreasuryCost();
+        for (final gpId in gpIds) {
+          final after = game.playerById(gpId)?.treasury ?? 0;
+          final before = treasuryPrevTurn[gpId] ?? 0;
+          if (before < cheapest && after >= cheapest) {
+            regimentThresholdCrossingsUp[gpId] =
+                (regimentThresholdCrossingsUp[gpId] ?? 0) + 1;
+          }
+          if (regimentThresholdFirstReachTurn[gpId] == null &&
+              after >= cheapest) {
+            regimentThresholdFirstReachTurn[gpId] = t;
+          }
+          treasuryPrevTurn[gpId] = after;
+          if (t == 99) {
+            treasuryAtTurn99[gpId] = after;
+          }
+        }
       }
 
       final gains = <String, int>{
@@ -438,6 +579,46 @@ void main() {
         'gpTreasuryUnderCheapestRegimentTurns': treasuryUnderCheapestTurns,
         'gpTurn99Snapshot': lastSnapshotFields,
       };
+
+      // Refs #2924 Step 0 — separate structured block scoped to the
+      // world-market lock-recovery diagnostic surface so the issue
+      // comment can transcribe just this block without dragging in
+      // the wider #2847 S7-D payload. Field names mirror the
+      // metrics named in `#2924` § Recommended sequencing Step 0:
+      // trade orders emitted, deals matched, treasury credited /
+      // debited, `cheapestRegimentBuildTreasuryCost` threshold
+      // crossings, and the pre-existing
+      // `gpTreasuryUnderCheapestRegimentTurns` counter.
+      final lockRecoveryDiagnostic = <String, Object?>{
+        'issue': 2924,
+        'step': 'Step 0',
+        'seed': 42,
+        'turns': 100,
+        'cheapestRegimentBuildTreasuryCost':
+            cheapestRegimentBuildTreasuryCost(),
+        'gpTradeOrdersEmitted': {
+          for (final gpId in gpIds)
+            gpId: <String, int>{
+              'offers': tradeOfferCount[gpId] ?? 0,
+              'urgentOffers': tradeUrgentOfferCount[gpId] ?? 0,
+              'bids': tradeBidCount[gpId] ?? 0,
+            },
+        },
+        'gpDealsMatched': {
+          for (final gpId in gpIds)
+            gpId: <String, int>{
+              'asSeller': dealsAsSeller[gpId] ?? 0,
+              'asBuyer': dealsAsBuyer[gpId] ?? 0,
+            },
+        },
+        'gpTreasuryCreditedByDeals': treasuryCredited,
+        'gpTreasuryDebitedByDeals': treasuryDebited,
+        'gpRegimentThresholdCrossingsUp': regimentThresholdCrossingsUp,
+        'gpRegimentThresholdFirstReachTurn': regimentThresholdFirstReachTurn,
+        'gpTreasuryUnderCheapestRegimentTurns': treasuryUnderCheapestTurns,
+        'gpTreasuryAtTurn99': treasuryAtTurn99,
+      };
+
       // Re-enable info-level logging so the structured diagnostic JSON
       // surfaces in stdout via the package logger (the simulation above
       // intentionally ran with logging off to suppress planner noise).
@@ -449,6 +630,11 @@ void main() {
       log.i('S7D_DIAGNOSTIC_JSON_BEGIN');
       log.i(const JsonEncoder.withIndent('  ').convert(diagnostic));
       log.i('S7D_DIAGNOSTIC_JSON_END');
+      log.i('ISSUE2924_STEP0_JSON_BEGIN');
+      log.i(
+        const JsonEncoder.withIndent('  ').convert(lockRecoveryDiagnostic),
+      );
+      log.i('ISSUE2924_STEP0_JSON_END');
 
       // Lightweight assertion: data was actually collected. The diagnostic
       // does not pin arm-fire counts so the planner can be tuned freely
