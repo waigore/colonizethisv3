@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../config/editorial_monocle_palette.dart';
 import '../../../widgets/ct_gradients.dart';
+import '../../../widgets/ct_spacing.dart';
 
 /// Dark editorial-monocle row chrome for a production allocation row.
 ///
@@ -18,7 +19,10 @@ class ProductionAllocationRowChrome extends StatelessWidget {
   const ProductionAllocationRowChrome({
     super.key,
     required this.child,
-    this.padding = const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+    this.padding = const EdgeInsets.symmetric(
+      horizontal: CtSpacing.m,
+      vertical: CtSpacing.m,
+    ),
   });
 
   final Widget child;
