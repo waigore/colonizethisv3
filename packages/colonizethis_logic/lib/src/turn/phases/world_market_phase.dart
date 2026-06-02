@@ -136,10 +136,18 @@ TurnPhaseStepOutcome worldMarketTurnPhaseHandler(
     for (final player in game.players)
       if (player.treasury < regimentBuildThreshold) player.id,
   };
-  // F15: clamp negative balances to zero before matching so seller credits
-  // from lock-recovery deals are not absorbed by effective debt from phases
-  // 1–12 (Refs #2924). Not an affordability bypass — regiment builds still
-  // require `treasury >= cheapestRegimentBuildTreasuryCost()` after phase 13.
+  // F15 (Refs #2924; SPEC/program/world-market-resolution.md § Step A 3.1):
+  // build a phase-13-only view where any broke GP (negative treasury and
+  // below the regiment-build band) is treated as having `treasury = 0`.
+  // The clamped view feeds the matcher's seller-priority sort and the
+  // per-buyer treasury budget so seller credits from urgent offers are
+  // not consumed servicing phase-1–12 debt. Player.treasury is **not**
+  // mutated here — post-phase persistence is computed from original
+  // values plus deal-applied deltas (see `_applyDealsToPlayers`), which
+  // preserves AC#3 (a broke buyer with no fills exits phase 13 with
+  // their original negative balance unchanged). Not an affordability
+  // bypass — regiment builds still require
+  // `treasury >= cheapestRegimentBuildTreasuryCost()` after phase 13.
   final gameForMarket = lockRecoverySellerPriorityIds.isEmpty
       ? game
       : game.copyWith(
@@ -277,7 +285,7 @@ TurnPhaseStepOutcome worldMarketTurnPhaseHandler(
       : lockRecoveryMinorBidsByFactionId.values.first.first.commodityId;
 
   final updatedPlayers = _applyDealsToPlayers(
-    players: gameForMarket.players,
+    players: game.players,
     filledDeals: matchResult.filledDeals,
     firstRightTreasuryCreditByGpId: firstRightCredits.treasuryCreditByGpId,
     lockRecoverySellerPriorityIds: lockRecoverySellerPriorityIds,
@@ -579,8 +587,16 @@ List<Player> _applyDealsToPlayers({
       if (isLockRecoveryLiquiditySale) {
         sellerCredit += kLockRecoverySellerBonusPerLiquidityDeal;
       }
-      treasuryById[deal.sellerFactionId] =
-          (treasuryById[deal.sellerFactionId] ?? 0) + sellerCredit;
+      // F15 floor (Refs #2924 § Step A 3.1): seller credits from lock-recovery
+      // deals are not absorbed servicing phase-1–12 debt. Clamp the running
+      // balance to zero only when crediting a broke GP seller; factions with
+      // no fills keep their original (possibly negative) treasury unchanged.
+      var sellerBalance = treasuryById[deal.sellerFactionId] ?? 0;
+      if (lockRecoverySellerPriorityIds.contains(deal.sellerFactionId) &&
+          sellerBalance < 0) {
+        sellerBalance = 0;
+      }
+      treasuryById[deal.sellerFactionId] = sellerBalance + sellerCredit;
       stockpileById[deal.sellerFactionId] =
           (stockpileById[deal.sellerFactionId] ?? Stockpile.empty).applyDelta(
             deal.commodityId,
