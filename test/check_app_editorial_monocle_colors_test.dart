@@ -217,12 +217,10 @@ const fallback = TextStyle(color: Colors.white);
           'app/lib/features/game/flame/region_map_component_render_core.dart';
       const palette =
           'app/lib/features/game/flame/resource_icon_disc_palette.dart';
-      const debugConsole =
-          'app/lib/features/game/flame/debug_console_overlay_panel.dart';
       const debugViewer =
           'app/lib/features/debug_log/debug_log_viewer_screen.dart';
 
-      for (final rel in [flameRenderer, palette, debugConsole, debugViewer]) {
+      for (final rel in [flameRenderer, palette, debugViewer]) {
         File('${temp.path}/$rel')
           ..createSync(recursive: true)
           ..writeAsStringSync('''
@@ -241,6 +239,43 @@ const debug = TextStyle(color: Colors.white);
 
       expect(code, 0);
     });
+
+    test(
+      'no longer allowlists debug_console_overlay_panel.dart (Refs #2914 S3 + S8 '
+      'token adoption + CtIconAction migration)',
+      () {
+        final temp = Directory.systemTemp.createTempSync(
+          'check_app_editorial_monocle_colors_debug_console_promoted_',
+        );
+        addTearDown(() => temp.deleteSync(recursive: true));
+
+        const debugConsole =
+            'app/lib/features/game/flame/debug_console_overlay_panel.dart';
+        File('${temp.path}/$debugConsole')
+          ..createSync(recursive: true)
+          ..writeAsStringSync('''
+import 'package:flutter/material.dart';
+
+const sample = TextStyle(color: Colors.white);
+''');
+
+        final logs = <String>[];
+        final code = runCheckAppEditorialMonocleColors(
+          temp.path,
+          info: logs.add,
+          err: logs.add,
+        );
+
+        expect(code, 1);
+        expect(
+          logs.join('\n'),
+          contains(
+            'app/lib/features/game/flame/debug_console_overlay_panel.dart:3: '
+            'Colors.white',
+          ),
+        );
+      },
+    );
 
     test(
       'does not scan test files inside features/ (production surface only)',
@@ -557,7 +592,6 @@ class Clean extends StatelessWidget {
         'app/lib/features/game/flame/game_region_minimap.dart',
         'app/lib/features/game/flame/resource_icon_disc_palette.dart',
         'app/lib/features/debug_log/debug_log_viewer_screen.dart',
-        'app/lib/features/game/flame/debug_console_overlay_panel.dart',
       ];
       for (final path in skipped) {
         expect(
@@ -567,6 +601,19 @@ class Clean extends StatelessWidget {
         );
       }
     });
+
+    test(
+      'does not skip debug_console_overlay_panel.dart (in scope for the '
+      'check after Refs #2914 S3 + S8 token adoption)',
+      () {
+        expect(
+          shouldSkipAppEditorialMonocleColorsFile(
+            'app/lib/features/game/flame/debug_console_overlay_panel.dart',
+          ),
+          isFalse,
+        );
+      },
+    );
 
     test(
       'skips app/lib/widgets/ canvas-compositing files (Refs #2914 §S4 '

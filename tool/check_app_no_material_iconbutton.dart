@@ -23,11 +23,14 @@ import 'package:path/path.dart' as p;
 /// `SPEC/program/repo-lint.md` § "Policy: no violation allowlists"):
 ///
 /// 1. **Dev-tooling screens** — `SYS10001` Debug Log Viewer
-///    (`app/lib/features/debug_log/debug_log_viewer_screen.dart`) and
-///    `SYS20001` Debug Console Overlay
-///    (`app/lib/features/game/flame/debug_console_overlay_panel.dart`) are
-///    operator-only surfaces; implementing Ct-* catalog widgets there is
-///    low-value (see #2914 Risks / edge cases).
+///    (`app/lib/features/debug_log/debug_log_viewer_screen.dart`) is an
+///    operator-only surface; implementing Ct-* catalog widgets there
+///    remains low-value (see #2914 Risks / edge cases). `SYS20001`
+///    Debug Console Overlay
+///    (`app/lib/features/game/flame/debug_console_overlay_panel.dart`)
+///    was promoted out of the allowlist after migrating its close
+///    affordance to `CtIconAction`; see
+///    `SPEC/ui/debug-console-panel.md` § Visual chrome.
 /// 2. **`app/lib/features/game/widgets/chrome/**`** — Ct-* catalog widget
 ///    implementations. These widgets implement the design-system
 ///    primitives consumed by the rest of the feature tree and may
@@ -151,10 +154,13 @@ final RegExp bannedIconButtonConstructionPattern = RegExp(
 );
 
 const Set<String> _appNoMaterialIconButtonAllowedFiles = <String>{
-  // Dev-tooling screens — SYS10001 (Debug Log Viewer) and SYS20001
-  // (Debug Console Overlay). Relaxed per #2914 Risks / edge cases.
+  // Dev-tooling screens — SYS10001 (Debug Log Viewer) is still relaxed
+  // per #2914 Risks / edge cases. SYS20001 (Debug Console Overlay) was
+  // promoted out of the allowlist by the Refs #2914 S8 token + catalog
+  // adoption slice (see SPEC/ui/debug-console-panel.md § Visual chrome
+  // and the dark editorial-monocle chrome tests in
+  // app/test/debug_console_overlay_panel_test.dart).
   'app/lib/features/debug_log/debug_log_viewer_screen.dart',
-  'app/lib/features/game/flame/debug_console_overlay_panel.dart',
 };
 
 const Set<String> _appNoMaterialIconButtonAllowedDirPrefixes = <String>{
