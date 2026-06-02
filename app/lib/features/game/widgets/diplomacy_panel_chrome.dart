@@ -45,7 +45,7 @@ class _DiplomacySectionHeader extends StatelessWidget {
       letterSpacing: 0.5,
     );
     return Padding(
-      padding: const EdgeInsets.only(top: 16, bottom: 8),
+      padding: const EdgeInsets.only(top: CtSpacing.l, bottom: CtSpacing.m),
       child: DecoratedBox(
         decoration: BoxDecoration(
           border: Border(
@@ -56,7 +56,7 @@ class _DiplomacySectionHeader extends StatelessWidget {
           ),
         ),
         child: Padding(
-          padding: const EdgeInsets.only(bottom: 6),
+          padding: const EdgeInsets.only(bottom: CtSpacing.s),
           child: Text(title, style: headingStyle),
         ),
       ),
@@ -104,7 +104,10 @@ class _FactionKindBadge extends StatelessWidget {
       ),
     };
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+      padding: const EdgeInsets.symmetric(
+        horizontal: CtSpacing.s,
+        vertical: CtSpacing.xs,
+      ),
       decoration: BoxDecoration(
         color: spec.background,
         border: spec.border == null
