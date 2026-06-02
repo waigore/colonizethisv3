@@ -9,6 +9,7 @@ import '../../../config/ui_screen_ids.dart';
 import '../../../l10n/l10n.dart';
 import '../../../widgets/ct_dialog_shell.dart';
 import '../../../widgets/ct_nine_patch_button.dart';
+import '../../../widgets/ct_spacing.dart';
 
 /// Prior-turn summary dialog; [newTurnNumber] is current turn after resolution.
 class TurnNewsDialog extends StatelessWidget {
@@ -45,7 +46,7 @@ class TurnNewsDialog extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(l10n.turnNews_title(newTurnNumber), style: titleStyle),
-          const SizedBox(height: 12),
+          const SizedBox(height: CtSpacing.ml),
           if (isEmpty)
             Text(l10n.turnNews_empty, style: mutedStyle)
           else
@@ -55,12 +56,12 @@ class TurnNewsDialog extends StatelessWidget {
                 shrinkWrap: true,
                 itemCount: lines.length,
                 itemBuilder: (_, i) => Padding(
-                  padding: const EdgeInsets.only(bottom: 8),
+                  padding: const EdgeInsets.only(bottom: CtSpacing.m),
                   child: Text(lines[i], style: bodyStyle),
                 ),
               ),
             ),
-          const SizedBox(height: 16),
+          const SizedBox(height: CtSpacing.l),
           Align(
             alignment: Alignment.centerRight,
             child: CtNinePatchButton(
