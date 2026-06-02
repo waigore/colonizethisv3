@@ -497,6 +497,56 @@ void main() {
       },
     );
 
+    // SPEC/ai/treasury-planner.md § Treasury-budget-aware bid sizing —
+    // AC1 (strict): given an AI GP with `treasury == 0` and the deficit
+    // path active (the only bid path that can fire at zero treasury per
+    // the planner's preconditions — the speculative pass requires
+    // `treasury >= treasuryAffluenceThreshold()` and the lock-recovery
+    // designated buyer rotation only selects from the affluent pool),
+    // the planner must emit no `TradeOrderType.bid` orders. The
+    // pre-existing "treasury below pricePerUnit suppresses the deficit
+    // bid entirely" case proves the suppression at `treasury == 30`
+    // where `budget < price`; this pin closes the literal `treasury == 0`
+    // boundary against future regressions where the clamp could
+    // accidentally fall back to a non-zero default budget (Refs #3122).
+    test(
+      'treasury == 0 with deficit path active emits no bid orders '
+      '(AC1 strict boundary)',
+      () {
+        final stockpile = const Stockpile().applyDelta('wool', 4);
+        const assignments = [
+          AssignedRecipe(
+            recipeId: 'fabric_from_wool',
+            assignedLabour: 4,
+          ),
+        ];
+        final game = _gameFor(
+          stockpile: stockpile,
+          treasury: 0,
+          prices: {
+            CommodityCatalog.fabric.id: 40,
+            CommodityCatalog.wool.id: 50,
+          },
+          overtures: const [_embassyOverture],
+        );
+        final orders = runTreasuryPlanner(
+          game: game,
+          playerId: _gp,
+          stockpile: stockpile,
+          productionAssignments: assignments,
+          treasury: 0,
+        );
+        expect(
+          _bids(orders),
+          isEmpty,
+          reason: 'AC1 strict: a GP at treasury == 0 with the deficit '
+              'path active must emit zero bid orders — the per-bid '
+              'treasury clamp drops the fabric bid before it can '
+              'consume a bidTypeCap slot.',
+        );
+      },
+    );
+
     test('runTreasuryPlanner remains deterministic with new clamp', () {
       final stockpile = const Stockpile()
           .applyDelta('timber', 80)
