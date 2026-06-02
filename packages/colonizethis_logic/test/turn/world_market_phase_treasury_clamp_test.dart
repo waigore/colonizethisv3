@@ -1,9 +1,8 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:colonizethis_logic/src/turn/phases/world_market_phase.dart';
-import 'package:colonizethis_logic/src/turn/turn_pipeline_state.dart';
-import 'package:colonizethis_logic/src/turn/turn_resolver_config.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
+
+import 'world_market_phase_treasury_clamp_test_support.dart';
 
 /// Phase-handler coverage for the world-market treasury clamp (Refs #3115).
 ///
@@ -20,16 +19,11 @@ void main() {
       'AC#1 — treasury 100, bid 10 @ 30 with offer 10 fills only 3; '
       'treasury post-phase = 10; residual 7 carries forward',
       () {
-        final acc = TurnPipelineState(
-          game: _gameWithTwoGps(
-            sellerStockpile: const Stockpile().applyDelta('timber', 10),
-            sellerTreasury: 0,
-            buyerTreasury: 100,
-            marketPrices: const {'timber': 30},
-          ),
-        );
-        final config = TurnResolverConfig(
-          topology: const MapTopology(nodes: [], edges: []),
+        final next = runTreasuryClampPhase(
+          sellerStockpile: const Stockpile().applyDelta('timber', 10),
+          sellerTreasury: 0,
+          buyerTreasury: 100,
+          marketPrices: const {'timber': 30},
           orders: Orders(
             tradeOrdersByPlayerId: {
               'gpSeller': [
@@ -51,11 +45,6 @@ void main() {
             },
           ),
         );
-
-        final next = (worldMarketTurnPhaseHandler(acc, config, 3)
-                as TurnPhaseStepContinue)
-            .pipeline
-            .game;
 
         final buyer = next.players.firstWhere((p) => p.id == 'gpBuyer');
         expect(buyer.treasury, 10,
@@ -89,18 +78,13 @@ void main() {
       'AC#2 — treasury 100, two tier-1 bids of 5 @ 20 each: '
       'A fills 5, B fills 0 and carries forward; post-phase treasury = 0',
       () {
-        final acc = TurnPipelineState(
-          game: _gameWithTwoGps(
-            sellerStockpile: const Stockpile()
-                .applyDelta('alpha', 5)
-                .applyDelta('beta', 5),
-            sellerTreasury: 0,
-            buyerTreasury: 100,
-            marketPrices: const {'alpha': 20, 'beta': 20},
-          ),
-        );
-        final config = TurnResolverConfig(
-          topology: const MapTopology(nodes: [], edges: []),
+        final next = runTreasuryClampPhase(
+          sellerStockpile: const Stockpile()
+              .applyDelta('alpha', 5)
+              .applyDelta('beta', 5),
+          sellerTreasury: 0,
+          buyerTreasury: 100,
+          marketPrices: const {'alpha': 20, 'beta': 20},
           orders: Orders(
             tradeOrdersByPlayerId: {
               'gpSeller': [
@@ -134,11 +118,6 @@ void main() {
             },
           ),
         );
-
-        final next = (worldMarketTurnPhaseHandler(acc, config, 3)
-                as TurnPhaseStepContinue)
-            .pipeline
-            .game;
 
         final buyer = next.players.firstWhere((p) => p.id == 'gpBuyer');
         expect(buyer.treasury, 0,
@@ -159,16 +138,11 @@ void main() {
       'AC#3 — negative-treasury buyer fully suppressed; all bids carry '
       'forward at submitted quantity; treasury unchanged',
       () {
-        final acc = TurnPipelineState(
-          game: _gameWithTwoGps(
-            sellerStockpile: const Stockpile().applyDelta('timber', 10),
-            sellerTreasury: 0,
-            buyerTreasury: -50,
-            marketPrices: const {'timber': 30},
-          ),
-        );
-        final config = TurnResolverConfig(
-          topology: const MapTopology(nodes: [], edges: []),
+        final next = runTreasuryClampPhase(
+          sellerStockpile: const Stockpile().applyDelta('timber', 10),
+          sellerTreasury: 0,
+          buyerTreasury: -50,
+          marketPrices: const {'timber': 30},
           orders: Orders(
             tradeOrdersByPlayerId: {
               'gpSeller': [
@@ -190,11 +164,6 @@ void main() {
             },
           ),
         );
-
-        final next = (worldMarketTurnPhaseHandler(acc, config, 3)
-                as TurnPhaseStepContinue)
-            .pipeline
-            .game;
 
         final buyer = next.players.firstWhere((p) => p.id == 'gpBuyer');
         expect(buyer.treasury, -50,
@@ -216,16 +185,11 @@ void main() {
         // S = 10 submitted bid, F = 3 filled (treasury-truncated); offer
         // submitted = 10. Expected: totalBidQuantity = 3, totalOfferQuantity
         // = 10.
-        final acc = TurnPipelineState(
-          game: _gameWithTwoGps(
-            sellerStockpile: const Stockpile().applyDelta('timber', 10),
-            sellerTreasury: 0,
-            buyerTreasury: 100,
-            marketPrices: const {'timber': 30},
-          ),
-        );
-        final config = TurnResolverConfig(
-          topology: const MapTopology(nodes: [], edges: []),
+        final next = runTreasuryClampPhase(
+          sellerStockpile: const Stockpile().applyDelta('timber', 10),
+          sellerTreasury: 0,
+          buyerTreasury: 100,
+          marketPrices: const {'timber': 30},
           orders: Orders(
             tradeOrdersByPlayerId: {
               'gpSeller': [
@@ -247,11 +211,6 @@ void main() {
             },
           ),
         );
-
-        final next = (worldMarketTurnPhaseHandler(acc, config, 3)
-                as TurnPhaseStepContinue)
-            .pipeline
-            .game;
 
         final activity =
             next.worldMarketState.lastTurnActivity['timber']!;
@@ -272,16 +231,11 @@ void main() {
         // Δ% should be negative (10 offers vs 3 bids); price drops by
         // the capped amount (subject to the 30%-of-base floor).
         final basePriceTimber = 30; // matches ResourceRules baseline
-        final acc = TurnPipelineState(
-          game: _gameWithTwoGps(
-            sellerStockpile: const Stockpile().applyDelta('timber', 10),
-            sellerTreasury: 0,
-            buyerTreasury: 100,
-            marketPrices: {'timber': basePriceTimber},
-          ),
-        );
-        final config = TurnResolverConfig(
-          topology: const MapTopology(nodes: [], edges: []),
+        final next = runTreasuryClampPhase(
+          sellerStockpile: const Stockpile().applyDelta('timber', 10),
+          sellerTreasury: 0,
+          buyerTreasury: 100,
+          marketPrices: {'timber': basePriceTimber},
           orders: Orders(
             tradeOrdersByPlayerId: {
               'gpSeller': [
@@ -303,11 +257,6 @@ void main() {
             },
           ),
         );
-
-        final next = (worldMarketTurnPhaseHandler(acc, config, 3)
-                as TurnPhaseStepContinue)
-            .pipeline
-            .game;
 
         final priceAfter = next.worldMarketState.prices['timber']!;
         expect(priceAfter, lessThan(basePriceTimber),
@@ -322,16 +271,11 @@ void main() {
       // negative after phase 13 application. Sweep across a few price
       // points to guard against integer-rounding edge cases.
       for (final price in const [7, 13, 30]) {
-        final acc = TurnPipelineState(
-          game: _gameWithTwoGps(
-            sellerStockpile: const Stockpile().applyDelta('timber', 50),
-            sellerTreasury: 0,
-            buyerTreasury: 100,
-            marketPrices: {'timber': price},
-          ),
-        );
-        final config = TurnResolverConfig(
-          topology: const MapTopology(nodes: [], edges: []),
+        final next = runTreasuryClampPhase(
+          sellerStockpile: const Stockpile().applyDelta('timber', 50),
+          sellerTreasury: 0,
+          buyerTreasury: 100,
+          marketPrices: {'timber': price},
           orders: Orders(
             tradeOrdersByPlayerId: {
               'gpSeller': [
@@ -354,11 +298,6 @@ void main() {
           ),
         );
 
-        final next = (worldMarketTurnPhaseHandler(acc, config, 3)
-                as TurnPhaseStepContinue)
-            .pipeline
-            .game;
-
         final buyer = next.players.firstWhere((p) => p.id == 'gpBuyer');
         expect(buyer.treasury, greaterThanOrEqualTo(0),
             reason: 'buyer treasury must not go negative at price $price');
@@ -369,16 +308,11 @@ void main() {
       // Regression guard: with abundant treasury the clamp is inert; the
       // baseline GP↔GP fill (matches `world_market_phase_b3_test`) still
       // produces a 5-unit deal at old price 30.
-      final acc = TurnPipelineState(
-        game: _gameWithTwoGps(
-          sellerStockpile: const Stockpile().applyDelta('timber', 10),
-          sellerTreasury: 100,
-          buyerTreasury: 1000,
-          marketPrices: const {'timber': 30},
-        ),
-      );
-      final config = TurnResolverConfig(
-        topology: const MapTopology(nodes: [], edges: []),
+      final next = runTreasuryClampPhase(
+        sellerStockpile: const Stockpile().applyDelta('timber', 10),
+        sellerTreasury: 100,
+        buyerTreasury: 1000,
+        marketPrices: const {'timber': 30},
         orders: Orders(
           tradeOrdersByPlayerId: {
             'gpSeller': [
@@ -401,11 +335,6 @@ void main() {
         ),
       );
 
-      final next = (worldMarketTurnPhaseHandler(acc, config, 3)
-              as TurnPhaseStepContinue)
-          .pipeline
-          .game;
-
       final buyer = next.players.firstWhere((p) => p.id == 'gpBuyer');
       expect(buyer.treasury, 1000 - 5 * 30);
       expect(buyer.stockpile.quantityOf('timber'), 5);
@@ -418,40 +347,4 @@ void main() {
           reason: 'no truncation notes when treasury is sufficient');
     });
   });
-}
-
-Game _gameWithTwoGps({
-  required Stockpile sellerStockpile,
-  required int sellerTreasury,
-  required int buyerTreasury,
-  required Map<CommodityId, int> marketPrices,
-}) {
-  return Game(
-    id: 'g1',
-    players: [
-      Player(
-        id: 'gpSeller',
-        displayName: 'Seller',
-        isHuman: false,
-        stockpile: sellerStockpile,
-        treasury: sellerTreasury,
-      ),
-      Player(
-        id: 'gpBuyer',
-        displayName: 'Buyer',
-        isHuman: false,
-        stockpile: Stockpile.empty,
-        treasury: buyerTreasury,
-      ),
-    ],
-    worldState: const WorldState(
-      turnState: TurnState(
-        phase: TurnPhase.worldMarket,
-        turnNumber: 3,
-      ),
-      oldWorld: RegionData(),
-      newWorld: RegionData(),
-    ),
-    worldMarketState: WorldMarketState.empty.copyWith(prices: marketPrices),
-  );
 }
