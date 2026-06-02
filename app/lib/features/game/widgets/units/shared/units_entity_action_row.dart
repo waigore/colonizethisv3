@@ -121,7 +121,7 @@ class UnitsEntityActionRow extends StatelessWidget {
               onPressed: action.onPressed,
               enabled: action.onPressed != null,
               padding: EdgeInsets.symmetric(
-                horizontal: iconOnly || action.iconOnly ? 8 : 10,
+                horizontal: iconOnly || action.iconOnly ? CtSpacing.m : 10,
                 vertical: 6,
               ),
               minHeight: 32,
