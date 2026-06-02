@@ -142,6 +142,42 @@ void main() {
     );
 
     testWidgets(
+      'filled bid row floors legacy fractional pricePerUnit to integer '
+      'display (Refs #3093)',
+      (tester) async {
+        final game = _buildGame(
+          activity: const <CommodityId, MarketActivity>{
+            'timber': MarketActivity(
+              totalBidQuantity: 5,
+              totalOfferQuantity: 5,
+              filledQuantity: 5,
+              deals: <FilledDeal>[
+                FilledDeal(
+                  sellerFactionId: 'gp_a',
+                  buyerFactionId: 'gp_h',
+                  commodityId: 'timber',
+                  quantity: 5,
+                  pricePerUnit: 30.9,
+                ),
+              ],
+            ),
+          },
+        );
+        await _pumpDealBookTab(tester, game: game);
+
+        // ignore: avoid_hardcoded_strings_in_widgets
+        expect(find.text('timber — qty 5 × 30 = 150'), findsOneWidget);
+        final bidsTotals = tester.widget<Text>(
+          find.byKey(TradeScreen.dealBookBidsTotalsKey),
+        );
+        expect(
+          bidsTotals.data,
+          '${TradeScreen.dealBookTotalSpentLabel}: 150',
+        );
+      },
+    );
+
+    testWidgets(
       'filled bid (player == buyer) renders with notional and contributes '
       'to the bids panel total spent; unrelated deal is excluded',
       (tester) async {
@@ -211,7 +247,7 @@ void main() {
         // Row text encodes quantity × price = notional and uses the
         // commodity id as the leading label per the SPEC E6 contract.
         // ignore: avoid_hardcoded_strings_in_widgets
-        expect(find.text('timber — qty 5 × 30.0 = 150'), findsOneWidget);
+        expect(find.text('timber — qty 5 × 30 = 150'), findsOneWidget);
 
         // Treasury totals reflect the single filled buy notional only;
         // the unrelated iron deal is excluded by the buyer filter.
