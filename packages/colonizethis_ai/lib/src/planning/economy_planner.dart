@@ -2,7 +2,7 @@
 
 import '../perception/perception_snapshot.dart';
 import 'army_conquest_prep.dart';
-import 'expand_phase_planner.dart';
+import 'expand_phase_planner.dart' hide cheapestRegimentBuildTreasuryCost;
 import 'phase_planner_dispatch.dart';
 import 'phase_planner_economy_filter.dart';
 import 'planning_imports.dart';

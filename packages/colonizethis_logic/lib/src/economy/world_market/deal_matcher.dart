@@ -47,6 +47,13 @@ typedef DealMatchInputs = ({
   Map<CommodityId, double> pricesByCommodityId,
   Set<String> ftpPairKeys,
   PurchasedTileIndex? purchasedTileIndex,
+
+  /// Faction ids whose sell-side orders are sorted ahead of other offers
+  /// within the same priority tier (Refs #2924 F12 — lock-recovery sellers).
+  Set<String> lockRecoverySellerPriorityIds,
+
+  /// Treasury at phase start for lock-recovery sub-ordering (poorest first).
+  Map<String, int> treasuryByFactionId,
 });
 
 /// Internal mutable bookkeeping for a single order participating in matching.
@@ -173,7 +180,13 @@ class DealMatcher {
         for (final tier in tiers) {
           final tierOffers = commodityOffers
               .where((s) => s.order.priority == tier && s.remaining > 0)
-              .toList(growable: false);
+              .toList();
+          _sortOffersLockRecoverySellersFirst(
+            tierOffers,
+            lockRecoverySellerPriorityIds:
+                inputs.lockRecoverySellerPriorityIds,
+            treasuryByFactionId: inputs.treasuryByFactionId,
+          );
           final tierBids = commodityBids
               .where((s) => s.order.priority == tier && s.remaining > 0)
               .toList(growable: false);
@@ -332,6 +345,30 @@ class DealMatcher {
     }
 
     return filledQuantity;
+  }
+
+  /// Within a priority tier, match lock-recovery sellers (treasury below the
+  /// regiment-build band) before affluent GPs so buyer cargo is not exhausted
+  /// on early faction ids alone (Refs #2924 F12).
+  static void _sortOffersLockRecoverySellersFirst(
+    List<_OrderState> tierOffers, {
+    required Set<String> lockRecoverySellerPriorityIds,
+    required Map<String, int> treasuryByFactionId,
+  }) {
+    if (lockRecoverySellerPriorityIds.isEmpty) return;
+    tierOffers.sort((a, b) {
+      final aPriority = lockRecoverySellerPriorityIds.contains(a.factionId);
+      final bPriority = lockRecoverySellerPriorityIds.contains(b.factionId);
+      if (aPriority != bPriority) return aPriority ? -1 : 1;
+      if (aPriority && bPriority) {
+        final aTreasury = treasuryByFactionId[a.factionId] ?? 0;
+        final bTreasury = treasuryByFactionId[b.factionId] ?? 0;
+        if (aTreasury != bTreasury) return aTreasury.compareTo(bTreasury);
+      }
+      final byFaction = a.factionId.compareTo(b.factionId);
+      if (byFaction != 0) return byFaction;
+      return a.factionLocalIndex.compareTo(b.factionLocalIndex);
+    });
   }
 
   static int _runTierMatching({

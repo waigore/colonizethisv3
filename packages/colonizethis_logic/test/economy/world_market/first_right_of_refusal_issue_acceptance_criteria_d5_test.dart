@@ -103,6 +103,8 @@ DealMatchInputs _matcherInputs({
   pricesByCommodityId: const {'timber': 20.0},
   ftpPairKeys: ftpPairKeys,
   purchasedTileIndex: purchasedTileIndex,
+  lockRecoverySellerPriorityIds: const {},
+  treasuryByFactionId: const {},
 );
 
 FilledDeal _otherBuyDeal({

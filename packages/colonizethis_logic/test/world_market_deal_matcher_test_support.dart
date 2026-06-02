@@ -41,6 +41,8 @@ DealMatchInputs matcherInputs({
   Map<CommodityId, double> pricesByCommodityId = const {'timber': 30.0},
   Set<String> ftpPairKeys = const {},
   PurchasedTileIndex? purchasedTileIndex,
+  Set<String> lockRecoverySellerPriorityIds = const {},
+  Map<String, int> treasuryByFactionId = const {},
 }) {
   final budget = treasuryBudgetByBuyerFactionId ??
       {
@@ -55,6 +57,8 @@ DealMatchInputs matcherInputs({
     pricesByCommodityId: pricesByCommodityId,
     ftpPairKeys: ftpPairKeys,
     purchasedTileIndex: purchasedTileIndex,
+    lockRecoverySellerPriorityIds: lockRecoverySellerPriorityIds,
+    treasuryByFactionId: treasuryByFactionId,
   );
 }
 

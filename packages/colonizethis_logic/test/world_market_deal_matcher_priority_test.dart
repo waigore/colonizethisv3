@@ -174,6 +174,30 @@ void main() {
     });
   });
 
+  group('DealMatcher.matchDeals — lock-recovery seller priority (Refs #2924 F12)',
+      () {
+    test('fills lock-recovery seller before earlier-id affluent seller', () {
+      final result = DealMatcher.matchDeals(
+        matcherInputs(
+          offersByFactionId: {
+            'gp1': [matcherOffer('grain', 10, priority: 2)],
+            'gp4': [matcherOffer('grain', 10, priority: 2)],
+          },
+          bidsByFactionId: {
+            'gp2': [matcherBid('grain', 3, priority: 2)],
+          },
+          tradeCapacityByFactionId: const {'gp2': 3},
+          pricesByCommodityId: const {'grain': 10.0},
+          lockRecoverySellerPriorityIds: const {'gp1', 'gp4'},
+          treasuryByFactionId: const {'gp1': 100, 'gp4': -50},
+        ),
+      );
+      expect(result.filledDeals, hasLength(1));
+      expect(result.filledDeals.single.sellerFactionId, 'gp4');
+      expect(result.filledDeals.single.quantity, 3);
+    });
+  });
+
   group('DealMatcher.matchDeals — activity bookkeeping', () {
     test('activity totals reflect input quantities, not just fills', () {
       final result = DealMatcher.matchDeals(
