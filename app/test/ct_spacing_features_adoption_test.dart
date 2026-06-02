@@ -194,6 +194,7 @@ const List<String> _migratedFeatureFiles = <String>[
   'lib/features/game/widgets/civilian_units_panel.dart',
   'lib/features/game/widgets/civilian_units_panel_support.dart',
   'lib/features/game/widgets/diplomacy_panel.dart',
+  'lib/features/game/widgets/diplomacy_panel_chrome.dart',
   'lib/features/game/widgets/military_units_panel.dart',
   'lib/features/game/widgets/observe_mode_not_defined_panel.dart',
   'lib/features/game/widgets/pause_menu_panel.dart',
