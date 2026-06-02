@@ -5,6 +5,7 @@ import '../../../config/editorial_monocle_palette.dart';
 import '../../../config/ui_screen_ids.dart';
 import '../../../widgets/ct_dialog_shell.dart';
 import '../../../widgets/ct_nine_patch_button.dart';
+import '../../../widgets/ct_spacing.dart';
 
 /// Shows the "End turn?" confirmation dialog (DLG60001).
 ///
@@ -47,9 +48,9 @@ class NextTurnConfirmationDialog extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(l10n.game_nextTurnConfirm_title, style: titleStyle),
-          const SizedBox(height: 8),
+          const SizedBox(height: CtSpacing.m),
           Text(l10n.game_nextTurnConfirm_body(currentTurn), style: bodyStyle),
-          const SizedBox(height: 16),
+          const SizedBox(height: CtSpacing.l),
           Row(
             mainAxisAlignment: MainAxisAlignment.end,
             children: [
@@ -57,7 +58,7 @@ class NextTurnConfirmationDialog extends StatelessWidget {
                 onPressed: () => Navigator.of(context).pop(false),
                 child: Text(l10n.common_no),
               ),
-              const SizedBox(width: 8),
+              const SizedBox(width: CtSpacing.m),
               CtNinePatchButton(
                 onPressed: () => Navigator.of(context).pop(true),
                 child: Text(l10n.common_yes),
