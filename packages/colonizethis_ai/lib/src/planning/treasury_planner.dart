@@ -139,11 +139,26 @@ List<TradeOrder> runTreasuryPlanner({
       : kTreasuryOfferPriorityModerate;
   final lockRecoveryUrgent = treasuryForecast < threshold;
 
+  // Refs #2924 F12: when the GP running this pass is the designated lock-
+  // recovery buyer, activate the lock-recovery branch even if its own forecast
+  // is above the regiment threshold (the buyer provides buy-side liquidity for
+  // other broke GPs' urgent offers). Without this branch an affluent designated
+  // buyer never enters the F11 liquidity-bid path because lockRecoveryUrgent
+  // is false for it.
+  final designatedBuyerId = lockRecoveryDesignatedBuyerId(game);
+  final isDesignatedLockRecoveryBuyer =
+      designatedBuyerId.isNotEmpty && playerId == designatedBuyerId;
+  final inLockRecovery =
+      isDesignatedLockRecoveryBuyer || lockRecoveryUrgent;
+
   // Refs #2924 F10: affluent GPs spend treasury on inventory ahead of strict
   // deficits so the world market clears. Gated by treasury affluence so broke
   // GPs never speculate; the F3 price gate is bypassed because the GP is
   // choosing to convert treasury into stockpile regardless of unit cost.
-  if (treasury >= treasuryAffluenceThreshold()) {
+  // Suppressed for the designated lock-recovery buyer (its single bid slot
+  // is committed to the urgent grain liquidity bid below — F12).
+  if (treasury >= treasuryAffluenceThreshold() &&
+      !isDesignatedLockRecoveryBuyer) {
     _addSpeculativeBidNeeds(
       need: need,
       available: available,
@@ -153,12 +168,13 @@ List<TradeOrder> runTreasuryPlanner({
     );
   }
 
-  // Refs #2924 F11: when every GP is below the regiment threshold they all
-  // emit urgent offers (typically grain) but bids land on other commodities
-  // and priority tiers, so the matcher clears zero deals. One rotating GP per
-  // turn bids the liquid food commodity at the same priority as urgent offers
-  // and withholds that commodity from its offer set (mutual exclusion).
-  if (lockRecoveryUrgent) {
+  // Refs #2924 F11/F12: when broke GPs emit urgent offers (typically grain)
+  // but bids land on other commodities or priority tiers, the matcher clears
+  // zero deals. One rotating affluent GP per turn (F12) bids the liquid food
+  // commodity at the same priority as urgent offers — capped by what it can
+  // afford — and withholds that commodity from its offer set (mutual
+  // exclusion). Broke non-designated GPs sell only.
+  if (inLockRecovery) {
     _applyLockRecoveryLiquidityBid(
       playerId: playerId,
       game: game,
@@ -167,12 +183,12 @@ List<TradeOrder> runTreasuryPlanner({
       carryForwardBids: carryForwardBids,
     );
     final liquidity = _lockRecoveryLiquidityCommodity(game.worldMarketState);
-    if (playerId == lockRecoveryDesignatedBuyerId(game)) {
+    if (isDesignatedLockRecoveryBuyer) {
       // Keep only the liquidity food bid so the single bidTypeCap slot is not
       // consumed by fabric/bronze deficits that cannot match urgent grain offers.
       need.removeWhere((id, _) => id != liquidity);
     } else {
-      // Non-designated GPs only sell during lock recovery.
+      // Broke non-designated GPs only sell during lock recovery.
       need.clear();
     }
   }
@@ -194,14 +210,22 @@ List<TradeOrder> runTreasuryPlanner({
   );
 
   final offers = suggestion.offers;
+  // Refs #2924 F11/F12: when the designated buyer is affluent its own forecast
+  // is above the regiment threshold (offerPriority == moderate); the lock-
+  // recovery bid still needs to clear at the urgent integer priority tier so
+  // it matches broke GPs' urgent grain offers. forceBidPriority overrides the
+  // tier-alignment computation so the synthetic grain bid always goes out at
+  // kTreasuryOfferPriorityUrgent regardless of the buyer's own offerPriority.
   final bids = _prioritizedBids(
     rawBids: suggestion.bids,
     need: need,
     bidTypeCap: bidTypeCap,
     tradeCargoCapacity: tradeCargoCapacity,
     offerPriority: offerPriority,
-    alignBidPriorityWithUrgentOffers: lockRecoveryUrgent,
-    preferCommodityId: lockRecoveryUrgent
+    alignBidPriorityWithUrgentOffers: inLockRecovery,
+    forceBidPriority:
+        inLockRecovery ? kTreasuryOfferPriorityUrgent : null,
+    preferCommodityId: inLockRecovery
         ? _lockRecoveryLiquidityCommodity(game.worldMarketState)
         : null,
   );
@@ -512,6 +536,18 @@ List<String> _sortedGreatPowerIds(Game game) {
   return ids;
 }
 
+/// True iff at least one Great Power has `player.treasury <
+/// cheapestRegimentBuildTreasuryCost()`. The lock-recovery liquidity bid is
+/// only useful when at least one broke GP needs buy-side demand for its
+/// urgent offers. Refs #2924 F12.
+bool _anyBrokeGreatPower(Game game) {
+  final threshold = cheapestRegimentBuildTreasuryCost();
+  for (final player in game.players) {
+    if (player.treasury < threshold) return true;
+  }
+  return false;
+}
+
 /// One GP per turn acts as the market buyer for the lock-recovery food
 /// commodity so other GPs' urgent offers can clear. Refs #2924 F11.
 ///
@@ -520,7 +556,12 @@ List<String> _sortedGreatPowerIds(Game game) {
 /// grain bids its treasury cannot fund while other GPs' urgent offers
 /// starve (seed-42 gp4/gp6 `totalDealsAsSeller == 0` diagnostic). When no
 /// GP meets the affluence band, falls back to the full sorted GP list.
+///
+/// Returns the empty string when no Great Power is broke — every GP is
+/// already at or above the regiment threshold and the F1–F5 / F10 paths
+/// handle the steady state without a synthetic grain bid. Refs #2924 F12.
 String lockRecoveryDesignatedBuyerId(Game game) {
+  if (!_anyBrokeGreatPower(game)) return '';
   final gpIds = _sortedGreatPowerIds(game);
   if (gpIds.isEmpty) return '';
   final threshold = treasuryAffluenceThreshold();
@@ -534,6 +575,10 @@ String lockRecoveryDesignatedBuyerId(Game game) {
 }
 
 /// Designated buyer bids [commodityId] and does not offer it this turn.
+///
+/// Bid quantity is the smaller of the F11 stockpile-target ceiling and
+/// `max(0, buyerTreasury / pricePerUnit)` so the buyer never commits more
+/// treasury than it currently holds (Refs #2924 F12 — treasury-capped).
 void _applyLockRecoveryLiquidityBid({
   required String playerId,
   required Game game,
@@ -548,7 +593,15 @@ void _applyLockRecoveryLiquidityBid({
   // stockpile deficit. Use a fixed target quantity independent of projected
   // surplus so a designated buyer with large food stockpiles still clears deals.
   final carryQty = carryForwardBids[commodityId] ?? 0;
-  final liquidityQty = kSpeculativeBidStockpileTarget - carryQty;
+  final stockpileTargetQty = kSpeculativeBidStockpileTarget - carryQty;
+  if (stockpileTargetQty <= 0) return;
+  final buyerTreasury = _treasuryForPlayer(game, playerId);
+  final pricePerUnit = game.worldMarketState.prices[commodityId] ?? 0;
+  if (pricePerUnit <= 0) return;
+  final affordableQty = buyerTreasury < 0 ? 0 : buyerTreasury ~/ pricePerUnit;
+  final liquidityQty = stockpileTargetQty < affordableQty
+      ? stockpileTargetQty
+      : affordableQty;
   if (liquidityQty <= 0) return;
   final existing = need[commodityId] ?? 0;
   if (liquidityQty > existing) {
@@ -563,6 +616,7 @@ List<TradeOrder> _prioritizedBids({
   required int tradeCargoCapacity,
   required int offerPriority,
   required bool alignBidPriorityWithUrgentOffers,
+  int? forceBidPriority,
   CommodityId? preferCommodityId,
 }) {
   if (rawBids.isEmpty || bidTypeCap <= 0 || tradeCargoCapacity <= 0) {
@@ -598,9 +652,10 @@ List<TradeOrder> _prioritizedBids({
     result.add(
       bid.copyWith(
         quantity: cappedQty,
-        priority: alignBidPriorityWithUrgentOffers
-            ? offerPriority
-            : _bidPriorityForCommodity(commodityId),
+        priority: forceBidPriority ??
+            (alignBidPriorityWithUrgentOffers
+                ? offerPriority
+                : _bidPriorityForCommodity(commodityId)),
       ),
     );
     remainingCargo -= cappedQty;

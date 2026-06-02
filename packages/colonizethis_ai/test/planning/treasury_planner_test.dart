@@ -239,7 +239,7 @@ void main() {
 
     test(
       'lock-recovery designated buyer bids liquid food at urgent priority '
-      'and does not offer that commodity (Refs #2924 F11)',
+      'and does not offer that commodity (Refs #2924 F11/F12)',
       () {
         var stockpile = const Stockpile().applyDelta('grain', 200);
         for (final commodity in CommodityCatalog.all) {
@@ -247,10 +247,21 @@ void main() {
           if (commodity.id == 'grain') continue;
           stockpile = stockpile.applyDelta(commodity.id, 4);
         }
+        final affluentTreasury = cheapestRegimentBuildTreasuryCost() + 100;
         final game = _gameWithStockpile(
           stockpile: stockpile,
           treasury: 0,
           turnNumber: 0,
+          extraPlayers: [
+            Player(
+              id: 'gp2',
+              displayName: 'GP2',
+              isHuman: false,
+              capitalProvinceId: 'oldWorld|p2',
+              stockpile: Stockpile.empty,
+              treasury: affluentTreasury,
+            ),
+          ],
         ).copyWith(
           worldMarketState: WorldMarketState.withDefaultPrices(const {
             'grain': 10,
@@ -265,13 +276,18 @@ void main() {
             },
           ),
         );
-        expect(lockRecoveryDesignatedBuyerId(game), 'gp1');
+        expect(
+          lockRecoveryDesignatedBuyerId(game),
+          'gp2',
+          reason: 'gp2 is the affluent GP and gp1 is broke, so the F12 '
+              'affluent-only rotation selects gp2 as designated buyer.',
+        );
         final orders = runTreasuryPlanner(
           game: game,
-          playerId: 'gp1',
-          stockpile: stockpile,
+          playerId: 'gp2',
+          stockpile: Stockpile.empty,
           productionAssignments: const [],
-          treasury: 0,
+          treasury: affluentTreasury,
         );
         final grainBids = orders
             .where((o) => o.type == TradeOrderType.bid && o.commodityId == 'grain');
@@ -279,7 +295,13 @@ void main() {
             .where((o) => o.type == TradeOrderType.offer && o.commodityId == 'grain');
         expect(grainBids, isNotEmpty);
         expect(grainOffers, isEmpty);
-        expect(grainBids.first.priority, kTreasuryOfferPriorityUrgent);
+        expect(
+          grainBids.first.priority,
+          kTreasuryOfferPriorityUrgent,
+          reason: 'F12 forces the affluent designated buyer\'s liquidity bid '
+              'to the urgent tier even though its own forecast is above the '
+              'regiment threshold.',
+        );
       },
     );
 
