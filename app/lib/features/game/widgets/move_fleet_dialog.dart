@@ -12,6 +12,7 @@ import '../../../l10n/l10n.dart';
 import '../../../widgets/ct_dialog_shell.dart';
 import '../../../widgets/ct_icon_action.dart';
 import '../../../widgets/ct_section_label.dart';
+import '../../../widgets/ct_spacing.dart';
 import '../utils/map_location_resolver.dart';
 import '../utils/sea_zone_name_resolver.dart';
 import 'chrome/ct_nine_patch_button.dart';
@@ -224,13 +225,13 @@ class _MoveFleetDialogState extends State<MoveFleetDialog> {
       children: [
         if (seaPicks.isNotEmpty) ...[
           CtSectionLabel(l10n.moveFleet_seaZonesSection),
-          const SizedBox(height: 6),
+          const SizedBox(height: CtSpacing.s),
           ...seaPicks.map(_row),
         ],
         if (portPicks.isNotEmpty) ...[
-          if (seaPicks.isNotEmpty) const SizedBox(height: 12),
+          if (seaPicks.isNotEmpty) const SizedBox(height: CtSpacing.ml),
           CtSectionLabel(l10n.moveFleet_provincesDockSection),
-          const SizedBox(height: 6),
+          const SizedBox(height: CtSpacing.s),
           ...portPicks.map(_row),
         ],
       ],
@@ -241,7 +242,7 @@ class _MoveFleetDialogState extends State<MoveFleetDialog> {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Text(titleText, style: titleStyle),
-        const SizedBox(height: 12),
+        const SizedBox(height: CtSpacing.ml),
         if (picks.isEmpty)
           Text(l10n.moveFleet_noAdjacentSeaZones, style: emptyStyle)
         else
@@ -251,11 +252,11 @@ class _MoveFleetDialogState extends State<MoveFleetDialog> {
                   child: moveColumns,
                 )
               : moveColumns,
-        const SizedBox(height: 16),
+        const SizedBox(height: CtSpacing.l),
         Wrap(
           alignment: WrapAlignment.end,
-          spacing: 8,
-          runSpacing: 8,
+          spacing: CtSpacing.m,
+          runSpacing: CtSpacing.m,
           children: [
             CtNinePatchButton(
               onPressed: () => Navigator.pop(context, false),
