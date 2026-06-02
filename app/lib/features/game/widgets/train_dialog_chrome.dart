@@ -5,6 +5,7 @@ import '../../../widgets/ct_brass_divider.dart';
 import '../../../widgets/ct_gradients.dart';
 import '../../../widgets/ct_nine_patch_button.dart';
 import '../../../widgets/ct_radius.dart';
+import '../../../widgets/ct_spacing.dart';
 
 /// Locked train-dialog row opacity per `SPEC/ui/train-civilians-dialog.md` /
 /// `SPEC/ui/train-military-dialog.md` and #2866 AC (0.4).
@@ -58,7 +59,7 @@ class TrainDialogSectionDivider extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return const Padding(
-      padding: EdgeInsets.symmetric(vertical: 8),
+      padding: EdgeInsets.symmetric(vertical: CtSpacing.m),
       child: CtBrassDivider(),
     );
   }
@@ -87,7 +88,7 @@ class TrainDialogResourceBar extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Wrap(
-          spacing: 16,
+          spacing: CtSpacing.l,
           runSpacing: 4,
           children: [for (final line in lines) Text(line, style: lineStyle)],
         ),
@@ -133,7 +134,7 @@ class TrainDialogUnitRowSurface extends StatelessWidget {
   const TrainDialogUnitRowSurface({
     super.key,
     required this.child,
-    this.margin = const EdgeInsets.only(bottom: 6),
+    this.margin = const EdgeInsets.only(bottom: CtSpacing.s),
   });
 
   final Widget child;
@@ -152,7 +153,10 @@ class TrainDialogUnitRowSurface extends StatelessWidget {
           ),
         ),
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          padding: const EdgeInsets.symmetric(
+            horizontal: CtSpacing.ml,
+            vertical: CtSpacing.m,
+          ),
           child: child,
         ),
       ),
