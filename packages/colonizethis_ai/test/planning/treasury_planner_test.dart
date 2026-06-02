@@ -306,6 +306,72 @@ void main() {
     );
 
     test(
+      'all-broke campaign: no GP liquidity buyer — phase-13 minor bids (F15)',
+      () {
+        final stockpile = const Stockpile().applyDelta('grain', 8);
+        final game = Game(
+          id: 'g1',
+          worldState: WorldState(
+            turnState: TurnState(phase: TurnPhase.orders, turnNumber: 0),
+            oldWorld: const RegionData(),
+            newWorld: const RegionData(),
+          ),
+          players: [
+            Player(
+              id: 'gp1',
+              displayName: 'GP1',
+              isHuman: false,
+              stockpile: stockpile,
+              treasury: 50,
+            ),
+            Player(
+              id: 'gp2',
+              displayName: 'GP2',
+              isHuman: false,
+              stockpile: Stockpile.empty,
+              treasury: 80,
+            ),
+          ],
+          worldMarketState: WorldMarketState.withDefaultPrices(const {
+            'grain': 10,
+          }).copyWith(
+            lastTurnActivity: {
+              'grain': const MarketActivity(
+                totalBidQuantity: 0,
+                totalOfferQuantity: 100,
+                filledQuantity: 0,
+              ),
+            },
+          ),
+        );
+        expect(
+          isLockRecoveryLiquidityBuyer(
+            game: game,
+            playerId: 'gp2',
+            treasuryBudgetForBids: 80,
+            treasuryForecast: 80,
+          ),
+          isFalse,
+          reason: 'F15 buy-side is logic-phase minor auto-bids when no GP is '
+              'affluent.',
+        );
+        final gp2Orders = runTreasuryPlanner(
+          game: game,
+          playerId: 'gp2',
+          stockpile: Stockpile.empty,
+          productionAssignments: const [],
+          treasury: 80,
+        );
+        expect(
+          gp2Orders.where(
+            (o) => o.type == TradeOrderType.bid && o.commodityId == 'grain',
+          ),
+          isEmpty,
+        );
+      },
+    );
+
+    test(
       'broke non-designated GP emits offers only when forecast is above '
       'regiment threshold (Refs #2924 F13)',
       () {

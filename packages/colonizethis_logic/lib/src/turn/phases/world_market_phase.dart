@@ -7,6 +7,7 @@ import '../../economy/non_gp_extraction.dart';
 import '../../economy/sea_transport.dart';
 import '../../economy/world_market/deal_matcher.dart';
 import '../../economy/world_market/first_right_credits.dart';
+import '../../economy/world_market/lock_recovery_minor_bids.dart';
 import '../../economy/world_market/price_discovery.dart';
 import '../../economy/world_market/purchased_tile_index.dart';
 import '../../world/connectivity_resolver.dart';
@@ -120,6 +121,44 @@ TurnPhaseStepOutcome worldMarketTurnPhaseHandler(
     config: config,
   );
 
+  // Lock-recovery minor auto-bids (Refs #2924 F15): when any GP is below the
+  // regiment-build treasury band, each Minor Nation submits a synthetic bid for
+  // the liquidity food commodity. Synthetic treasury/cargo budgets are injected
+  // below so the matcher can clear broke GP urgent offers without debiting a GP
+  // wallet. Bids are not carry-forwarded (same as minor auto-offers).
+  final lockRecoveryMinorBidsByFactionId = computeLockRecoveryMinorAutoBids(
+    game: game,
+    worldMarketState: priorMarket,
+  );
+
+  final regimentBuildThreshold = cheapestRegimentBuildTreasuryCost();
+  final lockRecoverySellerPriorityIds = <String>{
+    for (final player in game.players)
+      if (player.treasury < regimentBuildThreshold) player.id,
+  };
+  // F15 (Refs #2924; SPEC/program/world-market-resolution.md § Step A 3.1):
+  // build a phase-13-only view where any broke GP (negative treasury and
+  // below the regiment-build band) is treated as having `treasury = 0`.
+  // The clamped view feeds the matcher's seller-priority sort and the
+  // per-buyer treasury budget so seller credits from urgent offers are
+  // not consumed servicing phase-1–12 debt. Player.treasury is **not**
+  // mutated here — post-phase persistence is computed from original
+  // values plus deal-applied deltas (see `_applyDealsToPlayers`), which
+  // preserves AC#3 (a broke buyer with no fills exits phase 13 with
+  // their original negative balance unchanged). Not an affordability
+  // bypass — regiment builds still require
+  // `treasury >= cheapestRegimentBuildTreasuryCost()` after phase 13.
+  final gameForMarket = lockRecoverySellerPriorityIds.isEmpty
+      ? game
+      : game.copyWith(
+          players: [
+            for (final p in game.players)
+              lockRecoverySellerPriorityIds.contains(p.id) && p.treasury < 0
+                  ? p.copyWith(treasury: 0)
+                  : p,
+          ],
+        );
+
   // Compute start-of-phase trade cargo capacity and stockpile per GP. These
   // values gate (a) carry-forward re-validation per
   // `SPEC/program/world-market-resolution.md` § Step A.3 and (b) the
@@ -139,10 +178,10 @@ TurnPhaseStepOutcome worldMarketTurnPhaseHandler(
   final treasuryBudgetByBuyerFactionId = <String, int>{};
   final extractionTonnageByPlayerId =
       acc.overseasExtractionShippedTonnageByPlayerId;
-  for (final player in game.players) {
+  for (final player in gameForMarket.players) {
     stockpileByFactionId[player.id] = player.stockpile;
     final homeFleetHolds = cargoHoldsForHomeFleet(
-      game,
+      gameForMarket,
       player.id,
       fleetsById: fleetsByIdStartOfPhase,
     );
@@ -152,6 +191,11 @@ TurnPhaseStepOutcome worldMarketTurnPhaseHandler(
     tradeCapacityByFactionId[player.id] = tradeCapacity > 0 ? tradeCapacity : 0;
     treasuryBudgetByBuyerFactionId[player.id] =
         player.treasury > 0 ? player.treasury : 0;
+  }
+  for (final minorId in lockRecoveryMinorBidsByFactionId.keys) {
+    tradeCapacityByFactionId[minorId] = kLockRecoveryMinorBidCargoCapacity;
+    treasuryBudgetByBuyerFactionId[minorId] =
+        kLockRecoveryMinorSyntheticTreasuryBudget;
   }
 
   final carryForwardValidation = _validateCarryForwards(
@@ -169,6 +213,7 @@ TurnPhaseStepOutcome worldMarketTurnPhaseHandler(
   final mergedBidsByFactionId = _mergeOrdersByFaction(
     newBidsByFactionId,
     carryForwardValidation.validBidsByFactionId,
+    lockRecoveryMinorBidsByFactionId,
   );
 
   final hasAnyOrders =
@@ -207,13 +252,8 @@ TurnPhaseStepOutcome worldMarketTurnPhaseHandler(
 
   final ftpPairKeys = ftpPairKeysFromGame(game);
   final purchasedTileIndex = PurchasedTileIndex.fromGame(game);
-  final regimentBuildThreshold = cheapestRegimentBuildTreasuryCost();
   final treasuryByFactionId = <String, int>{
-    for (final player in game.players) player.id: player.treasury,
-  };
-  final lockRecoverySellerPriorityIds = <String>{
-    for (final entry in treasuryByFactionId.entries)
-      if (entry.value < regimentBuildThreshold) entry.key,
+    for (final player in gameForMarket.players) player.id: player.treasury,
   };
 
   final matchInputs = (
@@ -239,10 +279,17 @@ TurnPhaseStepOutcome worldMarketTurnPhaseHandler(
         getRelation(game, owningGpId, sourceFactionId)?.score ?? 0,
   );
 
+  final lockRecoveryLiquidityCommodityId =
+      lockRecoveryMinorBidsByFactionId.isEmpty
+      ? null
+      : lockRecoveryMinorBidsByFactionId.values.first.first.commodityId;
+
   final updatedPlayers = _applyDealsToPlayers(
     players: game.players,
     filledDeals: matchResult.filledDeals,
     firstRightTreasuryCreditByGpId: firstRightCredits.treasuryCreditByGpId,
+    lockRecoverySellerPriorityIds: lockRecoverySellerPriorityIds,
+    lockRecoveryLiquidityCommodityId: lockRecoveryLiquidityCommodityId,
   );
 
   // Price-discovery bid-side cap (Refs #3115): aggregate `totalBid_new[c]`
@@ -501,6 +548,8 @@ List<Player> _applyDealsToPlayers({
   required List<Player> players,
   required List<FilledDeal> filledDeals,
   Map<String, double> firstRightTreasuryCreditByGpId = const <String, double>{},
+  Set<String> lockRecoverySellerPriorityIds = const <String>{},
+  CommodityId? lockRecoveryLiquidityCommodityId,
 }) {
   if (filledDeals.isEmpty && firstRightTreasuryCreditByGpId.isEmpty) {
     return players;
@@ -513,9 +562,17 @@ List<Player> _applyDealsToPlayers({
   }
   final knownPlayerIds = treasuryById.keys.toSet();
   for (final deal in filledDeals) {
-    final notional = (deal.quantity * deal.pricePerUnit).round();
+    var notional = (deal.quantity * deal.pricePerUnit).round();
     final isGpBuyer = knownPlayerIds.contains(deal.buyerFactionId);
     final isGpSeller = knownPlayerIds.contains(deal.sellerFactionId);
+    final isLockRecoveryLiquiditySale = isGpSeller &&
+        lockRecoverySellerPriorityIds.contains(deal.sellerFactionId) &&
+        lockRecoveryLiquidityCommodityId != null &&
+        deal.commodityId == lockRecoveryLiquidityCommodityId;
+    if (isLockRecoveryLiquiditySale) {
+      // F15: amplified seller credits on liquidity-food clears (Refs #2924).
+      notional *= 2;
+    }
     if (isGpBuyer) {
       treasuryById[deal.buyerFactionId] =
           (treasuryById[deal.buyerFactionId] ?? 0) - notional;
@@ -526,8 +583,20 @@ List<Player> _applyDealsToPlayers({
           );
     }
     if (isGpSeller) {
-      treasuryById[deal.sellerFactionId] =
-          (treasuryById[deal.sellerFactionId] ?? 0) + notional;
+      var sellerCredit = notional;
+      if (isLockRecoveryLiquiditySale) {
+        sellerCredit += kLockRecoverySellerBonusPerLiquidityDeal;
+      }
+      // F15 floor (Refs #2924 § Step A 3.1): seller credits from lock-recovery
+      // deals are not absorbed servicing phase-1–12 debt. Clamp the running
+      // balance to zero only when crediting a broke GP seller; factions with
+      // no fills keep their original (possibly negative) treasury unchanged.
+      var sellerBalance = treasuryById[deal.sellerFactionId] ?? 0;
+      if (lockRecoverySellerPriorityIds.contains(deal.sellerFactionId) &&
+          sellerBalance < 0) {
+        sellerBalance = 0;
+      }
+      treasuryById[deal.sellerFactionId] = sellerBalance + sellerCredit;
       stockpileById[deal.sellerFactionId] =
           (stockpileById[deal.sellerFactionId] ?? Stockpile.empty).applyDelta(
             deal.commodityId,
