@@ -4,7 +4,6 @@ import 'planning_imports.dart';
 
 import '../util/ai_random_utils.dart';
 import '../perception/perception_snapshot.dart';
-import 'expand_phase_planner.dart' show cheapestRegimentBuildTreasuryCost;
 import 'observer_goal_phase.dart';
 import 'phase_planner_goal_filter.dart';
 
